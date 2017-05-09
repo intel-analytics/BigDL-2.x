@@ -24,7 +24,7 @@ Download Images and Annotations from [MSCOCO](http://mscoco.org/dataset/#downloa
 ```bash
 dist/bin/bigdl.sh --
 java -cp pipeline-0.1-SNAPSHOT-jar-with-dependencies.jar:spark-assembly-1.5.1-hadoop2.6.0.jar \
-         com.intel.analytics.bigdl.pipeline.common.dataset.RoiImageSeqGenerator \
+         com.intel.analytics.zoo.pipeline.common.dataset.RoiImageSeqGenerator \
      -f imageFolder -o output
 ```
 
@@ -45,7 +45,7 @@ spark-submit \
 --num-executors 2 \
 --driver-memory 10g \
 --executor-memory 30g \
---class com.intel.analytics.bigdl.pipeline.ssd.example.Predict \
+--class com.intel.analytics.zoo.pipeline.ssd.example.Predict \
 pipeline-0.1-SNAPSHOT-jar-with-dependencies.jar \
 -f $imageDataFolder \
 --folderType seq \

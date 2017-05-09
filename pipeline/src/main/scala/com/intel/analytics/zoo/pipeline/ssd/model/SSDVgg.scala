@@ -14,13 +14,13 @@
  * limitations under the License.
  */
 
-package com.intel.analytics.bigdl.pipeline.ssd.model
+package com.intel.analytics.zoo.pipeline.ssd.model
 
 import com.intel.analytics.bigdl._
 import com.intel.analytics.bigdl.nn._
 import com.intel.analytics.bigdl.numeric.NumericFloat
-import com.intel.analytics.bigdl.pipeline.ssd.PostProcessParam
-import com.intel.analytics.bigdl.pipeline.ssd.model.SSD._
+import com.intel.analytics.zoo.pipeline.ssd.PostProcessParam
+import com.intel.analytics.zoo.pipeline.ssd.model.SSD._
 
 object SSDVgg {
 

@@ -14,13 +14,13 @@
  * limitations under the License.
  */
 
-package com.intel.analytics.bigdl.pipeline.common.nn
+package com.intel.analytics.zoo.pipeline.common.nn
 
 import com.intel.analytics.bigdl.nn.abstractnn.AbstractModule
-import com.intel.analytics.bigdl.pipeline.common.BboxUtil
-import com.intel.analytics.bigdl.pipeline.common.dataset.roiimage.Target
-import com.intel.analytics.bigdl.pipeline.common.nn.DetectionOutput._
-import com.intel.analytics.bigdl.pipeline.ssd.PostProcessParam
+import com.intel.analytics.zoo.pipeline.common.BboxUtil
+import com.intel.analytics.zoo.pipeline.common.dataset.roiimage.Target
+import com.intel.analytics.zoo.pipeline.common.nn.DetectionOutput._
+import com.intel.analytics.zoo.pipeline.ssd.PostProcessParam
 import com.intel.analytics.bigdl.tensor.Tensor
 import com.intel.analytics.bigdl.utils.{T, Table}
 import org.apache.log4j.Logger
@@ -212,42 +212,6 @@ class DetectionOutput(param: PostProcessParam) extends AbstractModule[Table, Tab
       output(1) = results
     }
     output
-
-//    output.resize(numKept, 7)
-//    if (numKept > 0) {
-//      val outputData = output.storage().array()
-//      var outOffset = output.storageOffset() - 1
-//      i = 0
-//      while (i < batch) {
-//        var c = 0
-//        while (c < allIndices(i).length) {
-//          val indices = allIndices(i)(c)
-//          if (indices != null) {
-//            val indicesNum = allIndicesNum(i)(c)
-//            val locLabel = if (param.shareLocation) allDecodedBboxes(i).length - 1 else c
-//            val bboxes = allDecodedBboxes(i)(locLabel)
-//            var bboxesOffset = allDecodedBboxes(i)(locLabel).storageOffset() - 1
-//            var j = 0
-//            while (j < indicesNum) {
-//              val idx = indices(j)
-//              outputData(outOffset) = i
-//              outputData(outOffset + 1) = c
-//              outputData(outOffset + 2) = allConfScores(i)(c).valueAt(idx)
-//              outputData(outOffset + 3) = bboxes.valueAt(idx, 1)
-//              outputData(outOffset + 4) = bboxes.valueAt(idx, 2)
-//              outputData(outOffset + 5) = bboxes.valueAt(idx, 3)
-//              outputData(outOffset + 6) = bboxes.valueAt(idx, 4)
-//              bboxesOffset += 4
-//              outOffset += 7
-//              j += 1
-//            }
-//          }
-//          c += 1
-//        }
-//        i += 1
-//      }
-//    }
-//    output
   }
 
   override def updateGradInput(input: Table, gradOutput: Table): Table = {

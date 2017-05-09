@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.intel.analytics.bigdl.pipeline.common.dataset
+package com.intel.analytics.zoo.pipeline.common.dataset
 
 import java.awt.image.BufferedImage
 import java.io.{ByteArrayInputStream, ByteArrayOutputStream, FileInputStream}
@@ -24,7 +24,7 @@ import javax.imageio.ImageIO
 
 import com.intel.analytics.bigdl.dataset.Transformer
 import com.intel.analytics.bigdl.dataset.image.BGRImage
-import com.intel.analytics.bigdl.pipeline.common.dataset.roiimage.{RoiByteImage, RoiImagePath}
+import com.intel.analytics.zoo.pipeline.common.dataset.roiimage.{RoiByteImage, RoiImagePath}
 
 /**
  * load local image and target if exists

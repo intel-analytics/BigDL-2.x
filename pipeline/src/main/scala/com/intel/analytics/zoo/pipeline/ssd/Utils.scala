@@ -14,12 +14,12 @@
  * limitations under the License.
  */
 
-package com.intel.analytics.bigdl.pipeline.ssd
+package com.intel.analytics.zoo.pipeline.ssd
 
 import java.io.File
 
-import com.intel.analytics.bigdl.pipeline.common.dataset.LocalByteRoiimageReader
-import com.intel.analytics.bigdl.pipeline.common.dataset.roiimage._
+import com.intel.analytics.zoo.pipeline.common.dataset.LocalByteRoiimageReader
+import com.intel.analytics.zoo.pipeline.common.dataset.roiimage._
 import org.apache.hadoop.io.Text
 import org.apache.spark.SparkContext
 import org.apache.spark.rdd.RDD
