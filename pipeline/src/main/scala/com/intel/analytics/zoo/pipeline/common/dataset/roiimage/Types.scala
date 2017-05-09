@@ -14,11 +14,11 @@
  * limitations under the License.
  */
 
-package com.intel.analytics.bigdl.pipeline.common.dataset.roiimage
+package com.intel.analytics.zoo.pipeline.common.dataset.roiimage
 
 import com.intel.analytics.bigdl.dataset.image.BGRImage
 import com.intel.analytics.bigdl.tensor.Tensor
-import com.intel.analytics.bigdl.utils.Table
+import com.intel.analytics.bigdl.utils.{T, Table}
 
 /**
  * Image with region of interest
@@ -100,7 +100,7 @@ case class Target(classes: Tensor[Float], bboxes: Tensor[Float]) {
 
 
   def toTable: Table = {
-    val table = new Table()
+    val table = T()
     table.insert(classes)
     table.insert(bboxes)
   }

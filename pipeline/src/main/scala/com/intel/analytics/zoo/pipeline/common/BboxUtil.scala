@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.intel.analytics.bigdl.pipeline.common
+package com.intel.analytics.zoo.pipeline.common
 
 import com.intel.analytics.bigdl.tensor.Tensor
 import org.apache.log4j.Logger

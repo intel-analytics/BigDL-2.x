@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.intel.analytics.bigdl.pipeline.common.dataset.roiimage
+package com.intel.analytics.zoo.pipeline.common.dataset.roiimage
 
 import com.intel.analytics.bigdl.dataset.Transformer
 

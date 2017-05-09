@@ -14,11 +14,11 @@
  * limitations under the License.
  */
 
-package com.intel.analytics.bigdl.pipeline.common.dataset
+package com.intel.analytics.zoo.pipeline.common.dataset
 
 import java.nio.file.Paths
 
-import com.intel.analytics.bigdl.pipeline.common.dataset.roiimage.{RoiImagePath, Target}
+import com.intel.analytics.zoo.pipeline.common.dataset.roiimage.{RoiImagePath, Target}
 import com.intel.analytics.bigdl.tensor.{Storage, Tensor}
 import org.apache.log4j.Logger
 

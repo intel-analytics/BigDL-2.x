@@ -14,14 +14,14 @@
  * limitations under the License.
  */
 
-package com.intel.analytics.bigdl.pipeline.ssd
+package com.intel.analytics.zoo.pipeline.ssd
 
 import com.intel.analytics.bigdl.Module
 import com.intel.analytics.bigdl.dataset.Transformer
-import com.intel.analytics.bigdl.pipeline.common.dataset.roiimage._
+import com.intel.analytics.zoo.pipeline.common.dataset.roiimage._
 import com.intel.analytics.bigdl.models.utils.ModelBroadcast
 import com.intel.analytics.bigdl.numeric.NumericFloat
-import com.intel.analytics.bigdl.pipeline.common.BboxUtil
+import com.intel.analytics.zoo.pipeline.common.BboxUtil
 import com.intel.analytics.bigdl.tensor.Tensor
 import org.apache.spark.rdd.RDD
 

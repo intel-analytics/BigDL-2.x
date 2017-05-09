@@ -14,9 +14,9 @@
  * limitations under the License.
  */
 
-package com.intel.analytics.bigdl.pipeline.common.dataset
+package com.intel.analytics.zoo.pipeline.common.dataset
 
-import com.intel.analytics.bigdl.pipeline.common.dataset.roiimage.RoiImagePath
+import com.intel.analytics.zoo.pipeline.common.dataset.roiimage.RoiImagePath
 
 abstract class Imdb(val cacheFolder: String = "data/cache") {
   val classes: Array[String]

@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.intel.analytics.bigdl.pipeline.common.dataset.roiimage
+package com.intel.analytics.zoo.pipeline.common.dataset.roiimage
 
 import java.awt.image.BufferedImage
 import java.io.ByteArrayInputStream
@@ -22,7 +22,7 @@ import javax.imageio.ImageIO
 
 import com.intel.analytics.bigdl.dataset.Transformer
 import com.intel.analytics.bigdl.dataset.image.BGRImage
-import com.intel.analytics.bigdl.pipeline.common.BboxUtil
+import com.intel.analytics.zoo.pipeline.common.BboxUtil
 import com.intel.analytics.bigdl.tensor.Tensor
 
 import scala.util.Random

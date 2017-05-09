@@ -14,12 +14,12 @@
  * limitations under the License.
  */
 
-package com.intel.analytics.bigdl.pipeline.common.dataset
+package com.intel.analytics.zoo.pipeline.common.dataset
 
 import java.io.File
 import java.nio.file.Paths
 
-import com.intel.analytics.bigdl.pipeline.common.dataset.roiimage.{RoiByteImageToSeq, RoiImagePath}
+import com.intel.analytics.zoo.pipeline.common.dataset.roiimage.{RoiByteImageToSeq, RoiImagePath}
 import scopt.OptionParser
 
 object RoiImageSeqGenerator {

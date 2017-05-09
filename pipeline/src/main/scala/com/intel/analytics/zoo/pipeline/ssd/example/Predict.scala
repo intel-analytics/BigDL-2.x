@@ -14,11 +14,11 @@
  * limitations under the License.
  */
 
-package com.intel.analytics.bigdl.pipeline.ssd.example
+package com.intel.analytics.zoo.pipeline.ssd.example
 
 import com.intel.analytics.bigdl.dataset.image.Visualizer
 import com.intel.analytics.bigdl.nn.Module
-import com.intel.analytics.bigdl.pipeline.ssd._
+import com.intel.analytics.zoo.pipeline.ssd._
 import com.intel.analytics.bigdl.utils.Engine
 import org.apache.log4j.{Level, Logger}
 import org.apache.spark.SparkContext
@@ -30,7 +30,7 @@ object Predict {
   Logger.getLogger("org").setLevel(Level.ERROR)
   Logger.getLogger("akka").setLevel(Level.ERROR)
   Logger.getLogger("breeze").setLevel(Level.ERROR)
-  Logger.getLogger("com.intel.analytics.bigdl.pipeline.ssd").setLevel(Level.INFO)
+  Logger.getLogger("com.intel.analytics.zoo.pipeline.ssd").setLevel(Level.INFO)
 
   val logger = Logger.getLogger(getClass)
 
@@ -40,7 +40,8 @@ object Predict {
     modelPath: String = "",
     batch: Int = 8,
     vis: Boolean = true,
-    classname: String = "")
+    classname: String = "",
+    nPartition: Int = 1)
 
   val parser = new OptionParser[PascolVocDemoParam]("BigDL SSD Demo") {
     head("BigDL SSD Demo")
@@ -77,6 +78,10 @@ object Predict {
       .text("file store class name")
       .action((x, c) => c.copy(classname = x))
       .required()
+    opt[Int]('p', "partition")
+      .text("file store class name")
+      .action((x, c) => c.copy(nPartition = x))
+      .required()
   }
 
   def main(args: Array[String]): Unit = {
@@ -86,10 +91,9 @@ object Predict {
       Engine.init
       val classNames = Source.fromFile(params.classname).getLines().toArray
       val model = Module.load[Float](params.modelPath)
-      val nPartition = Engine.nodeNumber * Engine.coreNumber
       val data = params.folderType match {
-        case "local" => IOUtils.loadLocalFolder(nPartition, params.imageFolder, sc)
-        case "seq" => IOUtils.loadSeqFiles(nPartition, params.imageFolder, sc)
+        case "local" => IOUtils.loadLocalFolder(params.nPartition, params.imageFolder, sc)
+        case "seq" => IOUtils.loadSeqFiles(params.nPartition, params.imageFolder, sc)
         case _ => throw new IllegalArgumentException(s"invalid folder name ${ params.folderType }")
       }
 
