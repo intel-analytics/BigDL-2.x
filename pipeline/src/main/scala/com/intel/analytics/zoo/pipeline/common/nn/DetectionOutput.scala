@@ -17,15 +17,15 @@
 package com.intel.analytics.zoo.pipeline.common.nn
 
 import com.intel.analytics.bigdl.nn.abstractnn.AbstractModule
+import com.intel.analytics.bigdl.tensor.Tensor
+import com.intel.analytics.bigdl.utils.Table
 import com.intel.analytics.zoo.pipeline.common.BboxUtil
-import com.intel.analytics.zoo.pipeline.common.dataset.roiimage.Target
 import com.intel.analytics.zoo.pipeline.common.nn.DetectionOutput._
 import com.intel.analytics.zoo.pipeline.ssd.PostProcessParam
-import com.intel.analytics.bigdl.tensor.Tensor
-import com.intel.analytics.bigdl.utils.{T, Table}
 import org.apache.log4j.Logger
 
-class DetectionOutput(param: PostProcessParam) extends AbstractModule[Table, Table, Float] {
+@SerialVersionUID(5253792953255433914L)
+class DetectionOutput(param: PostProcessParam) extends AbstractModule[Table, Tensor[Float], Float] {
   @transient private var nms: Nms = _
 
   private def filterBboxes(decodedBboxes: Array[Tensor[Float]],
@@ -137,11 +137,7 @@ class DetectionOutput(param: PostProcessParam) extends AbstractModule[Table, Tab
     }
   }
 
-  override def updateOutput(input: Table): Table = {
-    if (isTraining()) {
-      output = input
-      return output
-    }
+  override def updateOutput(input: Table): Tensor[Float] = {
     if (nms == null) nms = new Nms()
     val loc = input[Tensor[Float]](1)
     val conf = input[Tensor[Float]](2)
@@ -163,60 +159,55 @@ class DetectionOutput(param: PostProcessParam) extends AbstractModule[Table, Tab
     val allDecodedBboxes = BboxUtil.decodeBboxesAll(allLocPreds, priorBoxes, priorVariances,
       numLocClasses, param.bgLabel, false, param.varianceEncodedInTarget, param.shareLocation,
       allLocPreds)
-    var numKept = 0
+    val numKepts = new Array[Int](batch)
+    var maxDetection = 0
 
     i = 0
     while (i < batch) {
-      numKept += filterBboxes(allDecodedBboxes(i), allConfScores(i),
+      val num = filterBboxes(allDecodedBboxes(i), allConfScores(i),
         allIndices(i), allIndicesNum(i))
+      numKepts(i) = num
+      maxDetection = Math.max(maxDetection, num)
       i += 1
     }
-    val results = new Array[Array[Target]](batch)
-    if (numKept > 0) {
+    // the first element is the number of detection numbers
+    output = Tensor[Float](batch, 1 + maxDetection * 6)
+    if (numKepts.sum > 0) {
       i = 0
       while (i < batch) {
+        val outi = output(i + 1)
         var c = 0
-        val result = new Array[Target](param.nClasses)
-        while (c < param.nClasses) {
+        outi.setValue(1, numKepts(i))
+        var offset = 2
+        while (c < allIndices(i).length) {
           val indices = allIndices(i)(c)
           if (indices != null) {
             val indicesNum = allIndicesNum(i)(c)
             val locLabel = if (param.shareLocation) allDecodedBboxes(i).length - 1 else c
             val bboxes = allDecodedBboxes(i)(locLabel)
             var j = 0
-            val classBboxes = Tensor[Float](indicesNum, 4)
-            val classScores = Tensor[Float](indicesNum)
             while (j < indicesNum) {
               val idx = indices(j)
-              classScores.setValue(j + 1, allConfScores(i)(c).valueAt(idx))
-              classBboxes.setValue(j + 1, 1, bboxes.valueAt(idx, 1))
-              classBboxes.setValue(j + 1, 2, bboxes.valueAt(idx, 2))
-              classBboxes.setValue(j + 1, 3, bboxes.valueAt(idx, 3))
-              classBboxes.setValue(j + 1, 4, bboxes.valueAt(idx, 4))
+              outi.setValue(offset, c)
+              outi.setValue(offset + 1, allConfScores(i)(c).valueAt(idx))
+              outi.setValue(offset + 2, bboxes.valueAt(idx, 1))
+              outi.setValue(offset + 3, bboxes.valueAt(idx, 2))
+              outi.setValue(offset + 4, bboxes.valueAt(idx, 3))
+              outi.setValue(offset + 5, bboxes.valueAt(idx, 4))
+              offset += 6
               j += 1
             }
-            // Clip the normalized bbox first.
-            BboxUtil.clipBoxes(classBboxes)
-            result(c) = Target(classScores, classBboxes)
           }
           c += 1
         }
-        results(i) = result
         i += 1
       }
-    }
-    if (output == null) {
-      output = T()
-      output.insert(results)
-    } else {
-      output(1) = results
     }
     output
   }
 
-  override def updateGradInput(input: Table, gradOutput: Table): Table = {
-    gradInput = gradOutput
-    gradInput
+  override def updateGradInput(input: Table, gradOutput: Tensor[Float]): Table = {
+    null
   }
 }
 

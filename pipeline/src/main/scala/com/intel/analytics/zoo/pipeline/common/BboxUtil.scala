@@ -17,9 +17,55 @@
 package com.intel.analytics.zoo.pipeline.common
 
 import com.intel.analytics.bigdl.tensor.Tensor
+import com.intel.analytics.zoo.pipeline.common.dataset.roiimage.Target
 import org.apache.log4j.Logger
 
 object BboxUtil {
+
+  val logger = Logger.getLogger(getClass)
+
+  def decodeOutput(output: Tensor[Float], nclass: Int): Array[Target] = {
+    val num = output.valueAt(1).toInt
+    val result = output.narrow(1, 2, output.nElement() - 1).view(num, 6)
+
+    val indices = getClassIndices(result)
+    val decoded = new Array[Target](nclass)
+    val iter = indices.iterator
+    while (iter.hasNext) {
+      val item = iter.next()
+      val sub = result.narrow(1, item._2._1, item._2._2)
+      decoded(item._1) = Target(sub.select(2, 2),
+        sub.narrow(2, 3, 4))
+    }
+    decoded
+  }
+
+  private def getClassIndices(result: Tensor[Float]): Map[Int, (Int, Int)] = {
+    var indices = Map[Int, (Int, Int)]()
+    if (result.nElement() == 0) return indices
+    var prev = -1f
+    var i = 1
+    var start = 1
+    if (result.size(1) == 1) {
+      indices += (result.valueAt(i, 1).toInt -> (1, 1))
+      return indices
+    }
+    while (i <= result.size(1)) {
+      if (prev != result.valueAt(i, 1)) {
+        if (prev >= 0) {
+          indices += (prev.toInt -> (start, i - start))
+        }
+        start = i
+      }
+      prev = result.valueAt(i, 1)
+      if (i == result.size(1)) {
+        indices += (prev.toInt -> (start, i - start + 1))
+      }
+      i += 1
+    }
+    indices
+  }
+
   // inplace scale
   def scaleBBox(classBboxes: Tensor[Float], height: Float, width: Float): Unit = {
     if (classBboxes.nElement() == 0) return
@@ -29,8 +75,6 @@ object BboxUtil {
     classBboxes.select(2, 4).apply1(_ * height)
   }
 
-
-  val logger = Logger.getLogger(getClass)
 
   private def decodeSingleBbox(i: Int, priorBox: Tensor[Float], priorVariance: Tensor[Float],
     isClipBoxes: Boolean, bbox: Tensor[Float], varianceEncodedInTarget: Boolean,

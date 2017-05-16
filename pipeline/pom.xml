@@ -190,6 +190,21 @@
 
                 <executions>
                     <execution>
+                        <id>python</id>
+                        <inherited>false</inherited>
+                        <configuration>
+                            <finalName>pipeline-${project.version}</finalName>
+                            <descriptors>
+                                <descriptor>assembly/python-zip.xml
+                                </descriptor>
+                            </descriptors>
+                        </configuration>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>single</goal>
+                        </goals>
+                    </execution>
+                    <execution>
                         <phase>package</phase>
                         <goals>
                             <goal>single</goal>

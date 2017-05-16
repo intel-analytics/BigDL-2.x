@@ -98,7 +98,8 @@ object Predict {
       }
 
       val predictor = new Predictor(model,
-        PreProcessParam(params.batch, resolution = 300, (123f, 117f, 104f), false))
+        PreProcessParam(params.batch, resolution = 300, (123f, 117f, 104f), false),
+        classNames.length)
 
       val start = System.nanoTime()
       val output = predictor.predict(data).collect()
@@ -117,9 +118,11 @@ object Predict {
           var classIndex = 1
           val imgId = pair._2.toInt
           while (classIndex < classNames.length) {
-            Visualizer.visDetection(pair._1, classNames(classIndex),
-              output(imgId)(classIndex).classes,
-              output(imgId)(classIndex).bboxes, thresh = 0.6f, outPath = params.outputFolder)
+            if (output(imgId)(classIndex) != null) {
+              Visualizer.visDetection(pair._1, classNames(classIndex),
+                output(imgId)(classIndex).classes,
+                output(imgId)(classIndex).bboxes, thresh = 0.6f, outPath = params.outputFolder)
+            }
             classIndex += 1
           }
         })
