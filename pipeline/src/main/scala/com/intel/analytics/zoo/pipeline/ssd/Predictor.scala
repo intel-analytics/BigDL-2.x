@@ -18,16 +18,17 @@ package com.intel.analytics.zoo.pipeline.ssd
 
 import com.intel.analytics.bigdl.Module
 import com.intel.analytics.bigdl.dataset.Transformer
-import com.intel.analytics.zoo.pipeline.common.dataset.roiimage._
 import com.intel.analytics.bigdl.models.utils.ModelBroadcast
 import com.intel.analytics.bigdl.numeric.NumericFloat
-import com.intel.analytics.zoo.pipeline.common.BboxUtil
 import com.intel.analytics.bigdl.tensor.Tensor
+import com.intel.analytics.zoo.pipeline.common.BboxUtil
+import com.intel.analytics.zoo.pipeline.common.dataset.roiimage._
 import org.apache.spark.rdd.RDD
 
 class Predictor(
-    model: Module[Float],
-    preProcessParam: PreProcessParam) {
+  model: Module[Float],
+  preProcessParam: PreProcessParam,
+  nClass: Int) {
 
   val preProcessor =
     RoiImageResizer(Array(preProcessParam.resolution), resizeRois = false, isEqualResize = true) ->
@@ -35,40 +36,46 @@ class Predictor(
       RoiimageToBatch(preProcessParam.batchSize, false)
 
   def predict(rdd: RDD[RoiByteImage]): RDD[Array[Target]] = {
-    Predictor.predict(rdd, model, preProcessor)
+    Predictor.predict(rdd, model, preProcessor, nClass)
   }
 }
 
 object Predictor {
   def predict(rdd: RDD[RoiByteImage],
-              model: Module[Float],
-              preProcessor: Transformer[RoiByteImage, MiniBatch[Float]]): RDD[Array[Target]] = {
+    model: Module[Float],
+    preProcessor: Transformer[RoiByteImage, MiniBatch[Float]],
+    nclass: Int): RDD[Array[Target]] = {
     model.evaluate()
     val broadcastModel = ModelBroadcast().broadcast(rdd.sparkContext, model)
     rdd.mapPartitions(preProcessor(_)).mapPartitions(dataIter => {
       val localModel = broadcastModel.value()
       dataIter.map(batch => {
-        val result = localModel.forward(batch.data).toTable
-        scaleToOriginal(result(1).asInstanceOf[Array[Array[Target]]], batch.imInfo)
+        val result = localModel.forward(batch.data).toTensor[Float]
+        scaleToOriginal(result, batch.imInfo, nclass)
       }).flatten
     })
   }
 
-  def scaleToOriginal(result: Array[Array[Target]], imInfo: Tensor[Float]): Array[Array[Target]] = {
+  def scaleToOriginal(result: Tensor[Float], imInfo: Tensor[Float],
+    nclass: Int): Array[Array[Target]] = {
     var i = 0
-    val batch = result.length
+    val batch = result.size(1)
+    val decoded = new Array[Array[Target]](batch)
     while (i < batch) {
+      decoded(i) = BboxUtil.decodeOutput(result(i + 1), nclass)
       // Scale the bbox according to the original image size.
       val originalH = imInfo.valueAt(i + 1, 1) * imInfo.valueAt(i + 1, 3)
       val originalW = imInfo.valueAt(i + 1, 2) * imInfo.valueAt(i + 1, 4)
-      val len = result(i).length
+      val len = decoded(i).length
       var j = 0
       while (j < len) {
-        if (result(i)(j) != null) BboxUtil.scaleBBox(result(i)(j).bboxes, originalH, originalW)
+        if (decoded(i)(j) != null) {
+          BboxUtil.scaleBBox(decoded(i)(j).bboxes, originalH, originalW)
+        }
         j += 1
       }
       i += 1
     }
-    result
+    decoded
   }
 }
