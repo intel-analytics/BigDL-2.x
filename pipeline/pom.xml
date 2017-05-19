@@ -7,6 +7,7 @@
     <groupId>com.intel.analytics</groupId>
     <artifactId>pipeline</artifactId>
     <version>0.1-SNAPSHOT</version>
+    <packaging>jar</packaging>
 
     <repositories>
         <repository>
@@ -56,17 +57,36 @@
     </repositories>
 
     <properties>
-        <java.version>1.7</java.version>
-        <javac.version>1.7</javac.version>
-        <scala.major.version>2.10</scala.major.version>
-        <scala.version>2.10.5</scala.version>
-        <scala.macros.version>2.0.1</scala.macros.version>
+
+        <java.version>1.8</java.version>
+        <!--<javac.version>1.8</javac.version>-->
+        <scala.major.version>2.11</scala.major.version>
+        <scala.version>2.11.8</scala.version>
+        <scala.macros.version>2.11</scala.macros.version>
         <scalatest.version>2.2.4</scalatest.version>
-        <spark.version>1.5.1</spark.version>
-        <spark-scope>provided</spark-scope>
+        <spark.version>2.0.1</spark.version>
+        <spark-scope>compile</spark-scope>
+
     </properties>
 
     <dependencies>
+
+            <dependency>
+                <groupId>com.intel.analytics.bigdl</groupId>
+                <artifactId>bigdl-SPARK_2.0</artifactId>
+                <version>0.1.0</version>
+            </dependency>
+            <dependency>
+                <groupId>jflac</groupId>
+                <artifactId>jflac</artifactId>
+                <version>1.3</version>
+            </dependency>
+            <dependency>
+                <groupId>com.github.fommil</groupId>
+                <artifactId>jniloader</artifactId>
+                <version>1.1</version>
+            </dependency>
+
         <dependency>
             <groupId>org.scala-lang</groupId>
             <artifactId>scala-compiler</artifactId>
@@ -103,32 +123,38 @@
             <version>${scalatest.version}</version>
             <scope>${spark-scope}</scope>
         </dependency>
-        <dependency>
-            <groupId>com.intel.analytics.bigdl</groupId>
-            <artifactId>bigdl</artifactId>
-            <version>0.2.0-SNAPSHOT</version>
-        </dependency>
 
         <dependency>
             <groupId>org.apache.spark</groupId>
             <artifactId>spark-core_${scala.major.version}</artifactId>
             <version>${spark.version}</version>
-            <scope>${spark-scope}</scope>
+            <!--<scope>${spark-scope}</scope>-->
         </dependency>
+        <dependency>
+        <groupId>org.apache.spark</groupId>
+        <artifactId>spark-sql_${scala.major.version}</artifactId>
+        <version>${spark.version}</version>
+        </dependency>
+
         <dependency>
             <groupId>org.apache.spark</groupId>
             <artifactId>spark-mllib_${scala.major.version}</artifactId>
             <version>${spark.version}</version>
-            <scope>${spark-scope}</scope>
+            <!--<scope>${spark-scope}</scope>-->
         </dependency>
     </dependencies>
 
     <build>
         <plugins>
             <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <version>3.3</version>
+            </plugin>
+            <plugin>
                 <groupId>net.alchim31.maven</groupId>
                 <artifactId>scala-maven-plugin</artifactId>
-                <version>3.2.0</version>
+                <!--<version>3.2.0</version>-->
                 <executions>
                     <execution>
                         <id>eclipse-add-source</id>
@@ -169,13 +195,13 @@
                     </args>
                     <!-- The following plugin is required to use quasiquotes in Scala 2.10 and is used
                          by Spark SQL for code generation. -->
-                    <compilerPlugins>
-                        <compilerPlugin>
-                            <groupId>org.scalamacros</groupId>
-                            <artifactId>paradise_${scala.version}</artifactId>
-                            <version>${scala.macros.version}</version>
-                        </compilerPlugin>
-                    </compilerPlugins>
+                    <!--<compilerPlugins>-->
+                        <!--<compilerPlugin>-->
+                            <!--<groupId>org.scalamacros</groupId>-->
+                            <!--<artifactId>paradise_${scala.version}</artifactId>-->
+                            <!--<version>${scala.macros.version}</version>-->
+                        <!--</compilerPlugin>-->
+                    <!--</compilerPlugins>-->
                 </configuration>
             </plugin>
 
