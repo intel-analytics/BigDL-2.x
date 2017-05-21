@@ -15,7 +15,6 @@
  */
 package com.intel.analytics.bigdl.nn
 
-import com.intel.analytics.bigdl.nn._
 import com.intel.analytics.bigdl.nn.abstractnn.{AbstractModule, Activity}
 import com.intel.analytics.bigdl.tensor.Tensor
 import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric
@@ -25,8 +24,9 @@ import scala.reflect.ClassTag
 
 @SerialVersionUID( - 643193217505024792L)
 class BiRecurrentDS[T : ClassTag](
-  merge: AbstractModule[Table, Tensor[T], T] = null, isCloneInput: Boolean = true)
-                                 (implicit ev: TensorNumeric[T]) extends Container[Tensor[T], Tensor[T], T] {
+    merge: AbstractModule[Table, Tensor[T], T] = null,
+    isCloneInput: Boolean = true) (implicit ev: TensorNumeric[T])
+  extends Container[Tensor[T], Tensor[T], T] {
 
   val timeDim = 2
   val featDim = 3
@@ -103,7 +103,6 @@ class BiRecurrentDS[T : ClassTag](
   }
 
   override def canEqual(other: Any): Boolean = other.isInstanceOf[BiRecurrentDS[T]]
-
 
   /**
    * Clear cached activities to save storage space or network bandwidth. Note that we use

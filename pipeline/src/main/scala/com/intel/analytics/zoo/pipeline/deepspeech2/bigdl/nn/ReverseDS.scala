@@ -15,13 +15,11 @@
  */
 package com.intel.analytics.bigdl.nn
 
+import scala.reflect.ClassTag
 
-import com.intel.analytics.bigdl.nn._
 import com.intel.analytics.bigdl.nn.abstractnn.TensorModule
 import com.intel.analytics.bigdl.tensor.Tensor
 import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric
-
-import scala.reflect.ClassTag
 
 /**
  * Reverse the input w.r.t given dimension.
@@ -30,9 +28,8 @@ import scala.reflect.ClassTag
  * @param ev
  * @tparam T Numeric type. Only support float/double now
  */
-class ReverseDS[T: ClassTag](dim: Int = 1)
-                          (implicit ev: TensorNumeric[T])
-  extends TensorModule[T] {
+class ReverseDS[T: ClassTag](dim: Int = 1) (implicit ev: TensorNumeric[T])
+    extends TensorModule[T] {
 
   val buffer = Tensor[T]()
 
@@ -90,7 +87,7 @@ class ReverseDS[T: ClassTag](dim: Int = 1)
 
 object ReverseDS {
   def apply[@specialized(Float, Double) T: ClassTag](
-                                                      dimension: Int = 1)(implicit ev: TensorNumeric[T]) : ReverseDS[T] = {
+      dimension: Int = 1)(implicit ev: TensorNumeric[T]) : ReverseDS[T] = {
     new ReverseDS[T](dimension)
   }
 }

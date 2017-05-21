@@ -2,7 +2,6 @@ package com.intel.analytics.zoo.pipeline.deepspeech2.pipeline.acoustic
 
 
 import org.apache.spark.ml.Transformer
-import org.apache.spark.ml.linalg.{Vector, Vectors}
 import org.apache.spark.ml.param._
 import org.apache.spark.ml.util._
 import org.apache.spark.sql.types._

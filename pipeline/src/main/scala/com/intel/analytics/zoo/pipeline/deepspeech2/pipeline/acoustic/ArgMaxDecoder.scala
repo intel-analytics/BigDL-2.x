@@ -19,13 +19,11 @@ package com.intel.analytics.zoo.pipeline.deepspeech2.pipeline.acoustic
 
 import org.apache.spark.ml.Transformer
 import org.apache.spark.ml.attribute.AttributeGroup
-import org.apache.spark.ml.linalg.{Vector, VectorUDT}
 import org.apache.spark.ml.param._
 import org.apache.spark.ml.util._
 import org.apache.spark.sql.functions.{col, struct, udf}
 import org.apache.spark.sql.types._
 import org.apache.spark.sql.{DataFrame, Dataset, Row}
-
 
 class ArgMaxDecoder(override val uid: String)
   extends Transformer with HasInputCol with HasOutputCol with DefaultParamsWritable {
@@ -46,8 +44,8 @@ class ArgMaxDecoder(override val uid: String)
   /** @group setParam */
   def setAlphabet(value: String): this.type = set(alphabet, value)
 
-  val uttLength = new IntParam(this, "uttLength", "uttLength",
-    ParamValidators.gt(0))
+  val uttLength = new IntParam(this, "uttLength", "uttLength", ParamValidators.gt(0))
+  setDefault(uttLength -> 3000)
 
   /** @group getParam */
   def getUttLength: Int = $(uttLength)
@@ -56,6 +54,7 @@ class ArgMaxDecoder(override val uid: String)
   def setUttLength(value: Int): this.type = set(uttLength, value)
 
   val windowSize = new IntParam(this, "windowSize", "windowSize", ParamValidators.gt(0))
+  setDefault(windowSize -> 400)
 
   /** @group getParam */
   def getWindowSize: Int = $(windowSize)
@@ -63,12 +62,20 @@ class ArgMaxDecoder(override val uid: String)
   /** @group setParam */
   def setWindowSize(value: Int): this.type = set(windowSize, value)
 
-  setDefault(windowSize -> 400, uttLength -> 3000)
+  val originalSizeCol: Param[String] = new Param[String](this, "originalSizeCol", "originalSizeCol")
+  setDefault(originalSizeCol -> "originalSize")
+
+  /** @group getParam */
+  def getOriginalSizeCol: String = $(originalSizeCol)
+
+  /** @group setParam */
+  def setOriginalSizeCol(value: String): this.type = set(originalSizeCol, value)
+
   override def transform(dataset: Dataset[_]): DataFrame = {
     val decoder = new BestPathDecoder($(alphabet), 0, 28)
     val outputSchema = transformSchema(dataset.schema)
     val assembleFunc = udf { r: Row =>
-      val originSize = r.getSeq[Float](0).size / $(windowSize)
+      val originSize = r.getInt(0)
       val samples = r.getSeq[Float](1)
       val height = $(alphabet).length
       val width = samples.size / height
@@ -80,10 +87,9 @@ class ArgMaxDecoder(override val uid: String)
       result
     }
 
-    val args = Array("window", $(inputCol) ).map { c => dataset(c) }
+    val args = Array($(originalSizeCol), $(inputCol) ).map { c => dataset(c) }
     val metadata = new AttributeGroup($(outputCol)).toMetadata()
     dataset.select(col("*"), assembleFunc(struct(args: _*)).as($(outputCol), metadata))
-
   }
 
   override def transformSchema(schema: StructType): StructType = {
@@ -95,7 +101,6 @@ class ArgMaxDecoder(override val uid: String)
 
   override def copy(extra: ParamMap): ArgMaxDecoder = defaultCopy(extra)
 }
-
 
 object ArgMaxDecoder extends DefaultParamsReadable[ArgMaxDecoder] {
   override def load(path: String): ArgMaxDecoder = super.load(path)

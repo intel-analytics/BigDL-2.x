@@ -15,12 +15,11 @@
  */
 package com.intel.analytics.bigdl.nn
 
+import scala.reflect.ClassTag
+
 import com.intel.analytics.bigdl.nn.abstractnn.TensorModule
 import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric
 import com.intel.analytics.bigdl.tensor._
-import com.intel.analytics.bigdl.utils.Engine
-
-import scala.reflect.ClassTag
 
 /**
  * Applies HardTanh to each element of input, HardTanh is defined:
@@ -34,11 +33,10 @@ import scala.reflect.ClassTag
  */
 
 class HardTanhDS[T: ClassTag](
-                             val minValue: Double = -1,
-                             val maxValue: Double = 1,
-                             val inplace: Boolean = false
-                           )(implicit ev: TensorNumeric[T])
-  extends TensorModule[T] {
+    val minValue: Double = -1,
+    val maxValue: Double = 1,
+    val inplace: Boolean = false
+    ) (implicit ev: TensorNumeric[T]) extends TensorModule[T] {
   require(maxValue > minValue, "maxValue must be larger than minValue")
 
   val min = ev.fromType[Double](minValue)
@@ -47,8 +45,7 @@ class HardTanhDS[T: ClassTag](
   override def updateOutput(input: Tensor[T]): Tensor[T] = {
     if (inplace) {
       output.set(input)
-    }
-    else {
+    } else {
       output.resizeAs(input)
     }
 
@@ -110,8 +107,6 @@ class HardTanhDS[T: ClassTag](
 
     output
   }
-
-
 
   override def updateGradInput(input: Tensor[T], gradOutput: Tensor[T]): Tensor[T] = {
     require(input.nElement() == gradOutput.nElement(),
@@ -186,9 +181,9 @@ class HardTanhDS[T: ClassTag](
 
 object HardTanhDS {
   def apply[@specialized(Float, Double) T: ClassTag](
-                                                      minValue: Double = -1,
-                                                      maxValue: Double = 1,
-                                                      inplace: Boolean = false)(implicit ev: TensorNumeric[T]) : HardTanhDS[T] = {
+      minValue: Double = -1,
+      maxValue: Double = 1,
+      inplace: Boolean = false)(implicit ev: TensorNumeric[T]) : HardTanhDS[T] = {
     new HardTanhDS[T](minValue, maxValue, inplace)
   }
 }

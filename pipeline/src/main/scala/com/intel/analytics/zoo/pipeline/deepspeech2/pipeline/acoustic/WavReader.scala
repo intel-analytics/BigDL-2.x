@@ -17,19 +17,12 @@
 
 package com.intel.analytics.zoo.pipeline.deepspeech2.pipeline.acoustic
 
-import java.io.{ByteArrayInputStream, File}
-import java.net.URI
-import java.util
-import javax.sound.sampled.AudioSystem
-
 import com.sun.media.sound.WaveFileReader
 import org.apache.hadoop.conf.Configuration
-import org.apache.hadoop.fs.{FileSystem, Path}
+import org.apache.hadoop.fs.Path
 import org.apache.spark.ml.Transformer
 import org.apache.spark.ml.param._
-import org.apache.spark.ml.param.shared.{HasInputCol, HasOutputCol}
 import org.apache.spark.ml.util._
-import org.apache.spark.ml.linalg.{Vector, VectorUDT, Vectors}
 import org.apache.spark.sql.functions.{col, udf}
 import org.apache.spark.sql.types._
 import org.apache.spark.sql.{DataFrame, Dataset}

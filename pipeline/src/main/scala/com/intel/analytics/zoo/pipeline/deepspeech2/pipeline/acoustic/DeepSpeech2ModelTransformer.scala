@@ -30,7 +30,6 @@ class DeepSpeech2ModelTransformer ( override val uid: String, modelPath: String)
   /** @group setParam */
   def setNumFilters(value: Int): this.type = set(numFilters, value)
 
-
   override def transform(dataset: Dataset[_]): DataFrame = {
     val model = DeepSpeech2ModelLoader.loadModel(dataset.sparkSession.sparkContext, modelPath)
     val outputSchema = transformSchema(dataset.schema)

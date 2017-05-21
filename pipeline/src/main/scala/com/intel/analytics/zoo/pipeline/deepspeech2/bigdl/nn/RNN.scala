@@ -27,11 +27,10 @@ import scala.reflect.ClassTag
 
 @SerialVersionUID( 5237686508074490666L)
 class RnnCellDS[T : ClassTag](
-  inputSize: Int = 4,
-  hiddenSize: Int = 3,
-  activation: TensorModule[T],
-  private var initMethod: InitializationMethod = Default)
-                             (implicit ev: TensorNumeric[T])
+    inputSize: Int = 4,
+    hiddenSize: Int = 3,
+    activation: TensorModule[T],
+    private var initMethod: InitializationMethod = Default) (implicit ev: TensorNumeric[T])
   extends Cell[T](Array(hiddenSize)) {
 
   val parallelTable = ParallelTable[T]()
@@ -145,10 +144,10 @@ class RnnCellDS[T : ClassTag](
 
 object RnnCellDS {
   def apply[@specialized(Float, Double) T: ClassTag](
-    inputSize: Int = 4,
-    hiddenSize: Int = 3,
-    activation: TensorModule[T])
-   (implicit ev: TensorNumeric[T]) : RnnCellDS[T] = {
+      inputSize: Int = 4,
+      hiddenSize: Int = 3,
+      activation: TensorModule[T])
+      (implicit ev: TensorNumeric[T]) : RnnCellDS[T] = {
     new RnnCellDS[T](inputSize, hiddenSize, activation)
   }
 }

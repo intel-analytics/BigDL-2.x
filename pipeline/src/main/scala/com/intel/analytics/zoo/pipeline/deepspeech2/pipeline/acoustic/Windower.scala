@@ -18,20 +18,17 @@
 
 package com.intel.analytics.zoo.pipeline.deepspeech2.pipeline.acoustic
 
+import scala.collection.mutable
+
 import org.apache.spark.ml.Transformer
-import org.apache.spark.ml.linalg.{Vector, Vectors}
 import org.apache.spark.ml.param._
 import org.apache.spark.ml.util._
 import org.apache.spark.sql.functions.{col, udf}
 import org.apache.spark.sql.types.{StructField, StructType}
 import org.apache.spark.sql.{DataFrame, Dataset}
 
-import scala.collection.mutable
-
-
 class Windower ( override val uid: String)
   extends Transformer with HasInputCol with HasOutputCol with DefaultParamsWritable {
-
 
   def this() = this(Identifiable.randomUID("Windower"))
 
@@ -41,13 +38,14 @@ class Windower ( override val uid: String)
   /** @group setParam */
   def setOutputCol(value: String): this.type = set(outputCol, value)
 
-
-  val windowSize = new IntParam(this, "windowSize", "windowSize",
-    ParamValidators.gt(0))
+  val windowSize = new IntParam(this, "windowSize", "windowSize", ParamValidators.gt(0))
+  setDefault(windowSize -> 400)
 
   val windowShift = new IntParam(this, "windowShift", "windowShift")
+  setDefault(windowShift -> 160)
 
-  setDefault(windowSize -> 400, windowShift -> 160)
+  val originSizeCol = new Param[String](this, "originalSizeCol", "originalSizeCol")
+  setDefault(originSizeCol -> "originalSize")
 
   /** @group getParam */
   def getWindowSize: Int = $(windowSize)
@@ -61,6 +59,17 @@ class Windower ( override val uid: String)
   /** @group setParam */
   def setWindowShift(value: Int): this.type = set(windowShift, value)
 
+  /** @group setParam */
+  def setOriginalSizeCol(value: String): this.type = set(originSizeCol, value)
+
+  val uttLength = new IntParam(this, "uttLength", "uttLength", ParamValidators.gt(0))
+
+  /** @group getParam */
+  def getUttLength: Int = $(uttLength)
+
+  /** @group setParam */
+  def setUttLength(value: Int): this.type = set(uttLength, value)
+
   override def transform(dataset: Dataset[_]): DataFrame = {
     val outputSchema = transformSchema(dataset.schema)
     val reScale = udf { (samples: mutable.WrappedArray[Float]) =>
@@ -73,7 +82,12 @@ class Windower ( override val uid: String)
       arr
     }
 
+    val getOriginSize = udf { (samples: mutable.WrappedArray[Float]) =>
+      samples.size / $(windowSize)
+    }
+
     dataset.withColumn($(outputCol), reScale(col($(inputCol))))
+      .withColumn($(originSizeCol), getOriginSize(col($(outputCol))))
   }
 
 
