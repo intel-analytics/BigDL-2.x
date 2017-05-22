@@ -57,7 +57,7 @@ class TransposeFlip ( override val uid: String)
 
     val convert = udf { (samples: mutable.WrappedArray[Float]) =>
       val count = samples.size / $(numFilters)
-      val ss = SparkSession.builder().getOrCreate()
+//      val ss = SparkSession.builder().getOrCreate()
       val min = 0
       val max = 255
       val oldMax = samples.max
