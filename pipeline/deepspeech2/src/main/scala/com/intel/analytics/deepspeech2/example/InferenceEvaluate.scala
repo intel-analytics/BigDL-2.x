@@ -2,16 +2,17 @@ package com.intel.analytics.deepspeech2.example
 
 import java.nio.file.Paths
 
+import com.intel.analytics.bigdl.utils.Engine
 import com.intel.analytics.deepspeech2.pipeline.acoustic._
 import com.intel.analytics.deepspeech2.util.{LocalOptimizerPerfParam, parser}
 import org.apache.log4j.{Level, Logger}
+import org.apache.spark.SparkConf
 import org.apache.spark.ml.{Pipeline, PipelineModel}
 import org.apache.spark.ml.feature.FlacReader
 import org.apache.spark.sql.{DataFrame, Row, SparkSession}
 
 /**
  * load trained model to inference the audio files.
- * sample arguments: --modelPath model --dataPath dataSample/dev-clean -n 4 -b 4
  */
 object InferenceEvaluate {
 
@@ -28,7 +29,9 @@ object InferenceEvaluate {
       val numFilters = 13
       logger.info(s"parameters: ${args.mkString(", ")}")
 
-      val spark = SparkSession.builder().appName(this.getClass.getSimpleName).getOrCreate()
+      val conf = Engine.createSparkConf().set("spark.driver.maxResultSize", "20g")
+      val spark = SparkSession.builder().config(conf).appName(this.getClass.getSimpleName).getOrCreate()
+      Engine.init
       val st = System.nanoTime()
 
       val df = dataLoader(spark, param.dataPath, param.numFile, param.partition)
@@ -162,7 +165,7 @@ object InferenceEvaluate {
 
       val spark = df.sparkSession
       import spark.implicits._
-      spark.createDataset(grouped).toDF("path", "output", "target")
+      spark.createDataset(grouped).toDF("path", "output", "target").cache()
     } else {
       model.transform(df).select("path", "output", "target").cache()
     }
