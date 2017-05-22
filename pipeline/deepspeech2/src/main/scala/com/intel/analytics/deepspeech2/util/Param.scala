@@ -11,14 +11,14 @@ object parser {
       .action((v, p) => p.copy(dataPath = v))
       .required()
     opt[String]('m', "modelPath")
-      .text("Path to load the model")
+      .text("Path to load the model. For instance: /path/ds2.model")
       .action((v, p) => p.copy(modelPath = v))
       .required()
-    opt[Int]('b', "batchSize")
-      .text("batch size")
-      .action((v, p) => p.copy(batchSize = v))
+    opt[Int]('p', "partitionNum")
+      .text("partition number. Default is 4.")
+      .action((v, p) => p.copy(partition = v))
     opt[Int]('n', "num")
-      .text("file number")
+      .text("file number. Default is 8")
       .action((v, p) => p.copy(numFile = v))
   }
 }
@@ -26,5 +26,5 @@ object parser {
 case class LocalOptimizerPerfParam(
   dataPath: String = null,
   modelPath: String = null,
-  batchSize: Int = 6,
-  numFile: Int = 50 )
+  partition: Int = 4,
+  numFile: Int = 8 )

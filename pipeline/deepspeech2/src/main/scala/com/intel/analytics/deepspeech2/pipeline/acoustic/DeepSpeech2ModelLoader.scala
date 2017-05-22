@@ -27,7 +27,7 @@ import scala.collection.mutable.ArrayBuffer
 import scala.language.existentials
 import scala.reflect.ClassTag
 
-class DeepSpeech2ModelLoader[T : ClassTag](depth: Int = 1, isPaperVersion: Boolean = false)
+class DeepSpeech2ModelLoader[T : ClassTag](depth: Int = 1)
   (implicit ev: TensorNumeric[T]) {
 
   /**
@@ -63,31 +63,23 @@ class DeepSpeech2ModelLoader[T : ClassTag](depth: Int = 1, isPaperVersion: Boole
   def addBRNN(inputSize: Int, hiddenSize: Int, curDepth: Int)
   : Module[T] = {
     val layers = Sequential()
-    if (isPaperVersion) {
+    if (curDepth == 1) {
       layers
-        .add(TimeDistributed[T](Linear[T](inputSize, hiddenSize, withBias = false)))
-        .add(BatchNormalizationDS[T](hiddenSize, eps = 0.001))
-        .add(BiRecurrentDS[T](isCloneInput = true)
-        .add(RnnCellDS[T](hiddenSize, hiddenSize, HardTanhDS[T](0, 20, true))).setName("birnn" + depth))
+        .add(ConcatTable()
+          .add(Identity[T]())
+          .add(Identity[T]()))
     } else {
-      if (curDepth == 1) {
-        layers
-          .add(ConcatTable()
-            .add(Identity[T]())
-            .add(Identity[T]()))
-      } else {
-        layers
-          .add(BifurcateSplitTable[T](3))
-      }
       layers
-        .add(ParallelTable[T]()
-          .add(TimeDistributed[T](Linear[T](inputSize, hiddenSize, withBias = false)))
-          .add(TimeDistributed[T](Linear[T](inputSize, hiddenSize, withBias = false))))
-        .add(JoinTable[T](2, 2))
-        .add(BatchNormalizationDS[T](hiddenSize * 2, eps = 0.001))
-        .add(BiRecurrentDS[T](JoinTable[T](2, 2), isCloneInput = false)
-          .add(RnnCellDS[T](hiddenSize, hiddenSize, HardTanhDS[T](0, 20, true))).setName("birnn" + depth))
+        .add(BifurcateSplitTable[T](3))
     }
+    layers
+      .add(ParallelTable[T]()
+        .add(TimeDistributed[T](Linear[T](inputSize, hiddenSize, withBias = false)))
+        .add(TimeDistributed[T](Linear[T](inputSize, hiddenSize, withBias = false))))
+      .add(JoinTable[T](2, 2))
+      .add(BatchNormalizationDS[T](hiddenSize * 2, eps = 0.001))
+      .add(BiRecurrentDS[T](JoinTable[T](2, 2), isCloneInput = false)
+        .add(RnnCellDS[T](hiddenSize, hiddenSize, HardTanhDS[T](0, 20, true))).setName("birnn" + depth))
     layers
   }
 
@@ -102,7 +94,7 @@ class DeepSpeech2ModelLoader[T : ClassTag](depth: Int = 1, isPaperVersion: Boole
     i += 1
   }
 
-  val brnnOutputSize = if (isPaperVersion) hiddenSize else hiddenSize * 2
+  val brnnOutputSize = hiddenSize * 2
   val linear1 = TimeDistributed[T](Linear[T](brnnOutputSize, hiddenSize, withBias = false))
   val linear2 = TimeDistributed[T](Linear[T](hiddenSize, nChar, withBias = false))
 
@@ -173,7 +165,7 @@ object DeepSpeech2ModelLoader {
 
   val logger = Logger.getLogger(getClass)
 
-  def loadModel(sc: SparkContext, path: String): Module[Float] = {
-    Module.load[Float](path + "/ds2.model")
+  def loadModel(path: String): Module[Float] = {
+    Module.load[Float](path)
   }
 }
