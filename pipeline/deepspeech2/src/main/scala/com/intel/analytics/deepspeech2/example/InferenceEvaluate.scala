@@ -31,7 +31,8 @@ object InferenceEvaluate {
       val spark = SparkSession.builder().appName(this.getClass.getSimpleName).getOrCreate()
       val st = System.nanoTime()
 
-      val df = dataLoader(spark, param.dataPath, param.numFile)
+      val df = dataLoader(spark, param.dataPath, param.numFile, param.partition)
+
       logger.info(s"${df.count()} audio files, in ${df.rdd.partitions.length} partitions")
       df.show()
 
@@ -43,11 +44,12 @@ object InferenceEvaluate {
     }
   }
 
-  private def dataLoader(spark: SparkSession, path: String, takeNum: Int): DataFrame = {
+  private def dataLoader(spark: SparkSession, path: String, takeNum: Int, partitionNum: Int): DataFrame = {
     val sc = spark.sparkContext
 
     import spark.implicits._
     if (path.toLowerCase().startsWith("hdfs")) {
+      logger.info("load data from hdfs ..")
       val paths = sc.textFile(path + "/mapping.txt")
         .take(takeNum)
         .map { line =>
@@ -59,14 +61,15 @@ object InferenceEvaluate {
       val pathsDF = spark.createDataset(paths).toDF("path", "target").cache()
       val flacReader = new FlacReader().setInputCol("path").setOutputCol("samples")
       val samplesDF = flacReader.transform(pathsDF)
-      samplesDF
+      samplesDF.repartition(partitionNum)
     } else {
       // assume files are stored locally
+      logger.info("load data from local disk ..")
       val paths = sc.textFile(Paths.get(path, "/mapping.txt").toString)
         .take(takeNum)
         .map { line =>
           val firstSpace = line.indexOf(" ")
-          val audioPath = Paths.get(path, line.substring(0, firstSpace)).toString
+          val audioPath = Paths.get(path, line.substring(0, firstSpace)).toString + ".flac"
           val transcript = line.substring(line.indexOf(" ") + 1)
           (audioPath, transcript)
         }
@@ -80,6 +83,7 @@ object InferenceEvaluate {
         (audioPath, samples, transcirpt)
       }
       spark.createDataset(seq).toDF("path", "samples", "target")
+        .repartition(partitionNum)
     }
   }
 
