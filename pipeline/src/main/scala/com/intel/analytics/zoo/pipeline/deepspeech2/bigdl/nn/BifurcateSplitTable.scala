@@ -15,13 +15,12 @@
  */
 package com.intel.analytics.bigdl.nn
 
-import com.intel.analytics.bigdl.nn.SplitTable
+import scala.reflect.ClassTag
+
 import com.intel.analytics.bigdl.nn.abstractnn.AbstractModule
 import com.intel.analytics.bigdl.tensor.Tensor
 import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric
 import com.intel.analytics.bigdl.utils.Table
-
-import scala.reflect.ClassTag
 
 /**
  * Creates a module that takes a Tensor as input and
@@ -65,9 +64,7 @@ class BifurcateSplitTable[T: ClassTag](
     gradInput
   }
 
-
   override def canEqual(other: Any): Boolean = other.isInstanceOf[SplitTable[T]]
-
 
   override def toString: String = s"BifurcateSplitTable($dimension)"
 

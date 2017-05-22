@@ -26,7 +26,7 @@ import org.apache.spark.sql.types._
 import org.apache.spark.sql.{Dataset, Row}
 
 @Experimental
-final class ASREvaluator ( override val uid: String)
+final class ASREvaluator (override val uid: String)
   extends Evaluator with HasPredictionCol with HasLabelCol with DefaultParamsWritable {
 
   def this() = this(Identifiable.randomUID("ASREvaluator"))
@@ -83,7 +83,6 @@ final class ASREvaluator ( override val uid: String)
     case "cer" => false
     case "wer" => false
   }
-
 
   private def stringDistance(s1: String, s2: String): Int = {
     def sd(s1: List[Char], s2: List[Char], costs: List[Int]): Int = s2 match {

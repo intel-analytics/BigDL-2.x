@@ -18,7 +18,6 @@
 
 package org.apache.spark.ml.feature
 
-import java.io.InputStream
 import java.net.URI
 
 import org.apache.hadoop.conf.Configuration
@@ -36,10 +35,10 @@ import org.kc7bfi.jflac.FLACDecoder
 import scala.collection.mutable.ArrayBuffer
 
 
-class FlacReader ( override val uid: String, host: String)
+class FlacReader ( override val uid: String)
   extends Transformer with HasInputCol with HasOutputCol with DefaultParamsWritable {
 
-  def this(host: String) = this(Identifiable.randomUID("FlacReader"), host)
+  def this() = this(Identifiable.randomUID("FlacReader"))
 
   /** @group setParam */
   def setInputCol(value: String): this.type = set(inputCol, value)
@@ -50,9 +49,7 @@ class FlacReader ( override val uid: String, host: String)
   override def transform(dataset: Dataset[_]): DataFrame = {
     val outputSchema = transformSchema(dataset.schema)
     val reScale = udf { path: String =>
-      val fs = FileSystem.get(new URI(host), new Configuration())
-      val is = fs.open(new Path(path))
-      FlacReader.streamToSamples(is)
+      FlacReader.pathToSamples(path)
     }
     dataset.withColumn($(outputCol), reScale(col($(inputCol))))
   }
@@ -72,7 +69,9 @@ object FlacReader extends DefaultParamsReadable[FlacReader] {
 
   override def load(path: String): FlacReader = super.load(path)
 
-  val streamToSamples: InputStream => Array[Float] = (is: InputStream) => {
+  val pathToSamples: String => Array[Float] = (path: String) => {
+    val fs = FileSystem.get(new URI(path), new Configuration())
+    val is = fs.open(new Path(path))
     val decoder = new FLACDecoder(is)
     decoder.readMetadata()
     val buf = new ArrayBuffer[Short]()
@@ -85,6 +84,7 @@ object FlacReader extends DefaultParamsReadable[FlacReader] {
       buf ++= shorts
       frame = decoder.readNextFrame()
     }
+    fs.close()
     buf.map(_.toFloat).toArray
   }
 }

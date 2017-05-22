@@ -15,21 +15,19 @@
  */
 package com.intel.analytics.bigdl.nn
 
-import com.intel.analytics.bigdl.nn._
-import com.intel.analytics.bigdl.nn.abstractnn.TensorModule
-import com.intel.analytics.bigdl.tensor.{DoubleType, FloatType, Tensor}
-import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric
-
 import scala.reflect.ClassTag
+
+import com.intel.analytics.bigdl.tensor.Tensor
+import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric
 
 @SerialVersionUID( - 467695939363389565L)
 class BatchNormalizationDS[@specialized(Float, Double) T: ClassTag](
-  nOutput: Int,
-  eps: Double = 1e-3,
-  momentum: Double = 0.1,
-  affine: Boolean = false)
-  (implicit ev: TensorNumeric[T])
-  extends BatchNormalization[T](nOutput, eps, momentum, affine) {
+    nOutput: Int,
+    eps: Double = 1e-3,
+    momentum: Double = 0.1,
+    affine: Boolean = false)
+    (implicit ev: TensorNumeric[T]
+    ) extends BatchNormalization[T](nOutput, eps, momentum, affine) {
 
   val batchDim = 0
   val timeDim = 1
@@ -97,8 +95,8 @@ class BatchNormalizationDS[@specialized(Float, Double) T: ClassTag](
 
 object BatchNormalizationDS {
   def apply[@specialized(Float, Double) T: ClassTag](
-  nOutput: Int,
-  eps: Double = 1e-5) (implicit ev: TensorNumeric[T]): BatchNormalizationDS[T] = {
+      nOutput: Int,
+      eps: Double = 1e-5) (implicit ev: TensorNumeric[T]): BatchNormalizationDS[T] = {
     new BatchNormalizationDS[T](nOutput, eps)
   }
 }
