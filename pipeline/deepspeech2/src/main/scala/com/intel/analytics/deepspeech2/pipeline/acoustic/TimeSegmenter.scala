@@ -34,15 +34,17 @@ class TimeSegmenter ( override val uid: String)
   override def transform(dataset: Dataset[_]): DataFrame = {
     val outputSchema = transformSchema(dataset.schema)
 
-    val rows = dataset.select("path", $(inputCol)).rdd.zipWithIndex().flatMap { case (r, id) =>
+    val rows = dataset.select("path", "target", $(inputCol)).rdd.zipWithIndex().flatMap { case (r, id) =>
       val path = r.getAs[String](0)
-      val arr = r.getSeq[Float](1).toArray.grouped($(segmentSize))
+      val target = r.getAs[String](1)
+      val arr = r.getSeq[Float](2).toArray.grouped($(segmentSize))
       arr.zipWithIndex.map { case (data, seq) =>
-        Row(path, id, seq, data)
+        Row(path, target, id, seq, data)
       }
     }
     val schema = StructType(Seq(
       StructField("path", StringType, nullable = false),
+      StructField("target", StringType, nullable = false),
       StructField("audio_id", LongType, nullable = false),
       StructField("audio_seq", IntegerType, nullable = false),
       StructField($(outputCol), dataset.schema($(inputCol)).dataType, nullable = false)
@@ -65,4 +67,3 @@ object TimeSegmenter extends DefaultParamsReadable[TimeSegmenter] {
 
   override def load(path: String): TimeSegmenter = super.load(path)
 }
-

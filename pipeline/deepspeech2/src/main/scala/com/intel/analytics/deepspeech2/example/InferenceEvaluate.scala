@@ -7,7 +7,7 @@ import com.intel.analytics.deepspeech2.util.{LocalOptimizerPerfParam, parser}
 import org.apache.log4j.{Level, Logger}
 import org.apache.spark.ml.{Pipeline, PipelineModel}
 import org.apache.spark.ml.feature.FlacReader
-import org.apache.spark.sql.{DataFrame, SparkSession}
+import org.apache.spark.sql.{DataFrame, Row, SparkSession}
 
 /**
  * load trained model to inference the audio files.
@@ -32,13 +32,13 @@ object InferenceEvaluate {
       val st = System.nanoTime()
 
       val df = dataLoader(spark, param.dataPath, param.numFile, param.partition)
-
+      df.repartition(param.partition)
       logger.info(s"${df.count()} audio files, in ${df.rdd.partitions.length} partitions")
       df.show()
 
-      val pipeline = getPipeline(param.modelPath, uttLength, windowSize, windowStride, numFilters)
+      val pipeline = getPipeline(param.modelPath, uttLength, windowSize, windowStride, numFilters, sampleRate, param.segment)
       val model = pipeline.fit(df)
-      evaluate(model, df)
+      evaluate(model, df, param.segment)
 
       logger.info("total time = " + (System.nanoTime() - st) / 1e9)
     }
@@ -88,10 +88,14 @@ object InferenceEvaluate {
   }
 
   private def getPipeline(modelPath: String, uttLength: Int, windowSize: Int,
-      windowStride: Int, numFilter: Int): Pipeline = {
+      windowStride: Int, numFilter: Int, sampleRate: Int, isSegment: Boolean): Pipeline = {
 
-    val windower = new Windower()
+    val segmenter = new TimeSegmenter()
+      .setSegmentSize(sampleRate * 4)
       .setInputCol("samples")
+      .setOutputCol("segments")
+    val windower = new Windower()
+      .setInputCol("segments")
       .setOutputCol("window")
       .setOriginalSizeCol("originalSizeCol")
       .setWindowShift(windowStride)
@@ -123,12 +127,46 @@ object InferenceEvaluate {
       .setUttLength(uttLength)
       .setWindowSize(windowSize)
 
-    new Pipeline().setStages(
-      Array(windower, dftSpecgram, melbank, transposeFlip, modelTransformer, decoder))
+    val pipeline = new Pipeline()
+
+    if (isSegment) {
+      pipeline.setStages(
+        Array(segmenter, windower, dftSpecgram, melbank, transposeFlip, modelTransformer, decoder))
+    } else {
+      windower
+        .setInputCol("samples")
+      pipeline.setStages(
+        Array(windower, dftSpecgram, melbank, transposeFlip, modelTransformer, decoder))
+    }
+
+    pipeline
   }
 
-  private def evaluate(model: PipelineModel, df: DataFrame): Unit = {
-    val result = model.transform(df).select("path", "output", "target").cache()
+  private def evaluate(model: PipelineModel, df: DataFrame, isSegment: Boolean): Unit = {
+
+    val result = if (isSegment) {
+      val results = model.transform(df).select("path", "target", "audio_id", "audio_seq", "output").cache()
+      results.select("path", "audio_id", "audio_seq", "output").show(false)
+
+      val grouped = results.rdd.map {
+        case Row(path: String, target: String, audio_id: Long, audio_seq: Int, output: String) =>
+        (audio_id, (path, target, audio_seq, output))
+      }.groupByKey()
+        .map(_._2)
+        .map { iter =>
+          val path = iter.head._1
+          val target = iter.head._2
+          val text = iter.toArray.sortBy(_._3).map(_._4).mkString(" ")
+          (path, text, target)
+        }
+
+      val spark = df.sparkSession
+      import spark.implicits._
+      spark.createDataset(grouped).toDF("path", "output", "target")
+    } else {
+      model.transform(df).select("path", "output", "target").cache()
+    }
+
     logger.info(s"evaluation result:")
     result.select("output", "target").rdd.map { r =>
       val output = r.getString(0)
@@ -146,5 +184,4 @@ object InferenceEvaluate {
       .setPredictionCol("output").setMetricName("wer").evaluate(result)
     logger.info("wer = " + wer)
   }
-
 }
