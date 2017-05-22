@@ -7,7 +7,7 @@ import com.intel.analytics.util.{LocalOptimizerPerfParam, parser}
 import org.apache.log4j.{Level, Logger}
 import org.apache.spark.ml.{Pipeline, PipelineModel}
 import org.apache.spark.ml.feature.FlacReader
-import org.apache.spark.sql.{DataFrame, SparkSession}
+import org.apache.spark.sql.{DataFrame, Row, SparkSession}
 
 /**
  * load trained model to inference the audio files.
@@ -27,18 +27,24 @@ object InferenceEvaluate {
       val uttLength = 30 * (sampleRate / windowStride)
       val numFilters = 13
       logger.info(s"parameters: ${args.mkString(", ")}")
-
       val spark = SparkSession.builder().appName(this.getClass.getSimpleName).getOrCreate()
-      val st = System.nanoTime()
 
       val df = textLoad(spark, param.dataPath, param.numFile)
       logger.info(s"${df.count()} audio files, in ${df.rdd.partitions.length} partitions")
       df.show()
 
+      val st = System.nanoTime()
       val pipeline = getPipeline(param.modelPath, uttLength, windowSize, windowStride, numFilters)
       val model = pipeline.fit(df)
-      evaluate(model, df)
+      val result = model.transform(df).select("path", "output", "target").cache()
+      logger.info("inference finished: " + (System.nanoTime() - st) / 1e9)
+      logger.info(s"evaluation result:")
+      result.select("output", "target").rdd.collect().foreach { case Row(output, target) =>
+        logger.info(s"output: $output")
+        logger.info(s"target: $target")
+      }
 
+      evaluate(result)
       logger.info("total time = " + (System.nanoTime() - st) / 1e9)
     }
   }
@@ -101,7 +107,7 @@ object InferenceEvaluate {
       .setInputCol("features")
       .setOutputCol("prob")
       .setNumFilters(numFilter)
-    val decoder = new ArgMaxDecoder()
+    val decoder = new LanguageDecoder(modelPath)
       .setInputCol("prob")
       .setOutputCol("output")
       .setOriginalSizeCol("originalSizeCol")
@@ -113,23 +119,17 @@ object InferenceEvaluate {
       Array(windower, dftSpecgram, melbank, transposeFlip, modelTransformer, decoder))
   }
 
-  private def evaluate(model: PipelineModel, df: DataFrame): Unit = {
-    val result = model.transform(df).select("path", "output", "target").cache()
-    logger.info(s"evaluation result:")
-    result.select("output", "target").rdd.map { r =>
-      val output = r.getString(0)
-      val target = r.getString(1)
-      (output, target)
-    }.collect().foreach { case (output, target) =>
-      logger.info(s"output: $output")
-      logger.info(s"target: $target")
-    }
-
-    val cer = new ASREvaluator().setLabelCol("target")
-      .setPredictionCol("output").evaluate(result)
+  private def evaluate(result: DataFrame): Unit = {
+    val cer = new ASREvaluator()
+      .setLabelCol("target")
+      .setPredictionCol("output")
+      .evaluate(result)
     logger.info("cer = " + cer)
-    val wer = new ASREvaluator().setLabelCol("target")
-      .setPredictionCol("output").setMetricName("wer").evaluate(result)
+    val wer = new ASREvaluator()
+      .setLabelCol("target")
+      .setPredictionCol("output")
+      .setMetricName("wer")
+      .evaluate(result)
     logger.info("wer = " + wer)
   }
 
