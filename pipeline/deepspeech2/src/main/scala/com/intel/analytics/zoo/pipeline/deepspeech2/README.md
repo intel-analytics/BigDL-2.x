@@ -23,7 +23,7 @@ Please save your ds2.model to HDFS. For instance, ```hdfs://127.0.0.1:9001/deeps
 
 
 ### script to run ds2 on clusters:
-If the input audio sample is much too long (> 10 seconds), it is suggested to segment your sample into smaller clips. Please setting the -s or --segment argument to be true to indicate whether to segment your input sample or not. The default segment length will be 4 seconds.
+If the input audio sample is much too long (> 10 seconds), it is suggested to segment your sample into smaller clips. Please setting the -s or --segment argument to indicate time duration to segment your input sample. The default segment length will be 30 seconds.
 
 
 #### Spark local mode
@@ -34,7 +34,7 @@ If the input audio sample is much too long (> 10 seconds), it is suggested to se
 --class com.intel.analytics.deepspeech2.example.InferenceEvaluate \
 deepspeech2-0.1-SNAPSHOT-jar-with-dependencies.jar  \
 -d hdfs://127.0.0.1:9001/deepspeech/data/dev-clean \
--m hdfs://127.0.0.1:9001/deepspeech/data -p 4 -n 4 -s false
+-m hdfs://127.0.0.1:9001/deepspeech/data -p 4 -n 4 -s 30
 ```
 
 #### Spark standalone mode
@@ -47,5 +47,5 @@ deepspeech2-0.1-SNAPSHOT-jar-with-dependencies.jar  \
 --class com.intel.analytics.deepspeech2.example.InferenceEvaluate \
 deepspeech2-0.1-SNAPSHOT-jar-with-dependencies.jar \
 -d hdfs://Gondolin-Node-002:9000/deepspeech/data/dev-clean \
--m hdfs://Gondolin-Node-002:9000/deepspeech/data/ds2.model -p 9 -n 27 -s false
+-m hdfs://Gondolin-Node-002:9000/deepspeech/data -p 9 -n 27 -s 30
 ```
