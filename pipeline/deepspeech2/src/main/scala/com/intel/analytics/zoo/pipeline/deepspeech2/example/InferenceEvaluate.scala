@@ -1,8 +1,8 @@
-package com.intel.analytics.deepspeech2.example
+package com.intel.analytics.zoo.pipeline.deepspeech2.example
 
 import com.intel.analytics.bigdl.utils.Engine
-import com.intel.analytics.deepspeech2.pipeline.acoustic._
-import com.intel.analytics.deepspeech2.util.{LocalOptimizerPerfParam, parser}
+import com.intel.analytics.zoo.pipeline.deepspeech2.pipeline.acoustic._
+import com.intel.analytics.zoo.pipeline.deepspeech2.util.{LocalOptimizerPerfParam, parser}
 import org.apache.log4j.{Level, Logger}
 import org.apache.spark.ml.{Pipeline, PipelineModel}
 import org.apache.spark.ml.feature.FlacReader

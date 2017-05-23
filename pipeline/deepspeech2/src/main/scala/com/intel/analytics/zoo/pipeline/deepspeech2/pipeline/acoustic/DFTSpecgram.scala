@@ -1,4 +1,3 @@
-
 /*
  * Licensed to the Apache Software Foundation (ASF) under one or more
  * contributor license agreements.  See the NOTICE file distributed with
@@ -16,24 +15,25 @@
  * limitations under the License.
  */
 
-package com.intel.analytics.deepspeech2.pipeline.acoustic
+package com.intel.analytics.zoo.pipeline.deepspeech2.pipeline.acoustic
 
-import breeze.linalg.{fliplr, DenseMatrix => BDM, DenseVector => BDV}
+import breeze.linalg.{DenseMatrix => BDM, DenseVector => BDV}
+import breeze.math.Complex
+import breeze.signal.fourierTr
 import org.apache.spark.ml.Transformer
-import org.apache.spark.ml.linalg.{Vector, Vectors}
-import org.apache.spark.ml.param.{ParamMap, _}
+import org.apache.spark.ml.param._
 import org.apache.spark.ml.util._
 import org.apache.spark.sql.functions.{col, udf}
 import org.apache.spark.sql.types.{StructField, StructType}
-import org.apache.spark.sql.{DataFrame, Dataset, SparkSession}
+import org.apache.spark.sql.{DataFrame, Dataset}
 
 import scala.collection.mutable
 
-
-class TransposeFlip ( override val uid: String)
+class DFTSpecgram ( override val uid: String)
   extends Transformer with HasInputCol with HasOutputCol with DefaultParamsWritable {
 
-  def this() = this(Identifiable.randomUID("TransposeFlip"))
+
+  def this() = this(Identifiable.randomUID("DFTSpecgram"))
 
   /** @group setParam */
   def setInputCol(value: String): this.type = set(inputCol, value)
@@ -41,46 +41,35 @@ class TransposeFlip ( override val uid: String)
   /** @group setParam */
   def setOutputCol(value: String): this.type = set(outputCol, value)
 
+  val windowSize = new IntParam(this, "windowSize", "windowSize", ParamValidators.gt(0))
 
-  val numFilters = new IntParam(this, "numFilters", "numFilters", ParamValidators.gt(0))
-
-  setDefault(numFilters -> 13)
+  setDefault(windowSize -> 400)
 
   /** @group getParam */
-  def getNumFilters: Int = $(numFilters)
+  def getWindowSize: Int = $(windowSize)
 
   /** @group setParam */
-  def setNumFilters(value: Int): this.type = set(numFilters, value)
+  def setWindowSize(value: Int): this.type = set(windowSize, value)
+
 
   override def transform(dataset: Dataset[_]): DataFrame = {
     val outputSchema = transformSchema(dataset.schema)
-
     val convert = udf { (samples: mutable.WrappedArray[Float]) =>
-      val count = samples.size / $(numFilters)
-//      val ss = SparkSession.builder().getOrCreate()
-      val min = 0
-      val max = 255
-      val oldMax = samples.max
-      val oldMin = samples.min
-      val oldRange = oldMax - oldMin
-
-      val normArray = samples.map { d =>
-        if (!d.isNaN) {
-          val raw = if (oldRange != 0) (d - oldMin) / oldRange else 0.5F
-          raw * 255
-        } else {
-          d
-        }
+      val count = samples.size / $(windowSize)
+      val m = new BDM[Float]($(windowSize), count, samples.toArray).t
+      val compx = m.map(real => Complex(real, 0))
+      for (row <- 0 until m.rows) {
+        val arr = compx(row, ::)
+        val complexArr = arr.inner
+        val dft = fourierTr(complexArr)
+        val spec = dft.map(c => Math.sqrt(c.real * c.real + c.im() * c.im()).toFloat)
+        m(row, ::) := spec.t
       }
-
-      val m = new BDM[Float](count, $(numFilters), normArray.toArray)
-      val result = fliplr(m).t
-      result.data.map(d => Math.round(d).toFloat)
+      val specgram = m (::, 0 until ($(windowSize) / 2 + 1))
+      specgram.toArray
     }
-
     dataset.withColumn($(outputCol), convert(col($(inputCol))))
   }
-
 
   override def transformSchema(schema: StructType): StructType = {
     require(!schema.fieldNames.contains($(outputCol)),
@@ -89,14 +78,13 @@ class TransposeFlip ( override val uid: String)
     StructType(outputFields)
   }
 
-  override def copy(extra: ParamMap): TransposeFlip = defaultCopy(extra)
+  override def copy(extra: ParamMap): DFTSpecgram = defaultCopy(extra)
 }
 
 
-object TransposeFlip extends DefaultParamsReadable[TransposeFlip] {
+object DFTSpecgram extends DefaultParamsReadable[DFTSpecgram] {
 
-  override def load(path: String): TransposeFlip = super.load(path)
+  override def load(path: String): DFTSpecgram = super.load(path)
+
 }
-
-
 

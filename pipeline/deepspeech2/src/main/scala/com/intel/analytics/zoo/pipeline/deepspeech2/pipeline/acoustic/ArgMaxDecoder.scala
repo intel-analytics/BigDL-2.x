@@ -1,5 +1,3 @@
-
-
 /*
  * Licensed to the Apache Software Foundation (ASF) under one or more
  * contributor license agreements.  See the NOTICE file distributed with
@@ -17,27 +15,20 @@
  * limitations under the License.
  */
 
-package com.intel.analytics.deepspeech2.pipeline.acoustic
+package com.intel.analytics.zoo.pipeline.deepspeech2.pipeline.acoustic
 
-import java.io.{BufferedReader, InputStreamReader}
-import java.net.URI
-
-import scala.collection.mutable.ArrayBuffer
-
-import org.apache.hadoop.conf.Configuration
-import org.apache.hadoop.fs.{FileSystem, Path}
 import org.apache.spark.ml.Transformer
 import org.apache.spark.ml.attribute.AttributeGroup
 import org.apache.spark.ml.param._
 import org.apache.spark.ml.util._
 import org.apache.spark.sql.functions.{col, struct, udf}
-import org.apache.spark.sql.types.{StringType, StructField, StructType}
+import org.apache.spark.sql.types._
 import org.apache.spark.sql.{DataFrame, Dataset, Row}
 
-class VocabDecoder(override val uid: String, modelPath: String) extends Transformer
-  with HasInputCol with HasOutputCol with DefaultParamsWritable {
+class ArgMaxDecoder(override val uid: String)
+  extends Transformer with HasInputCol with HasOutputCol with DefaultParamsWritable {
 
-  def this(modelPath: String) = this(Identifiable.randomUID("LanguageDecoder"), modelPath)
+  def this() = this(Identifiable.randomUID("ArgMaxDecoder"))
 
   /** @group setParam */
   def setInputCol(value: String): this.type = set(inputCol, value)
@@ -64,6 +55,7 @@ class VocabDecoder(override val uid: String, modelPath: String) extends Transfor
 
   val windowSize = new IntParam(this, "windowSize", "windowSize", ParamValidators.gt(0))
   setDefault(windowSize -> 400)
+
   /** @group getParam */
   def getWindowSize: Int = $(windowSize)
 
@@ -80,16 +72,6 @@ class VocabDecoder(override val uid: String, modelPath: String) extends Transfor
   def setOriginalSizeCol(value: String): this.type = set(originalSizeCol, value)
 
   override def transform(dataset: Dataset[_]): DataFrame = {
-    val fs = FileSystem.get(new URI(modelPath), new Configuration())
-    val vocab = try {
-      val br = new BufferedReader(new InputStreamReader(fs.open(new Path(modelPath, "vocab.txt"))));
-      val modelVocab = br.lines().toArray().map(_.asInstanceOf[String].trim).filter(_.nonEmpty).map(_.toUpperCase)
-      modelVocab
-    } finally {
-      fs.close()
-    }
-
-    val vocabSet = vocab.toSet
     val decoder = new BestPathDecoder($(alphabet), 0, 28)
     val outputSchema = transformSchema(dataset.schema)
     val assembleFunc = udf { r: Row =>
@@ -102,54 +84,13 @@ class VocabDecoder(override val uid: String, modelPath: String) extends Transfor
         .transpose
       val so = decoder.getSoftmax(modelOutput)
       val result = decoder.decode(so)
-      val words = result.split("\\s+")
-      val buffer = new ArrayBuffer[String]()
-
-      for (word <- words) {
-        val best = if (!vocabSet.contains(word)) {
-          var minDist = Int.MaxValue
-          var minWord = word
-          var i = 0
-          val maxLength = vocab.length
-          var found = false
-          while (i < maxLength && !found) {
-            val w = vocab(i)
-            val dist = stringDistance(w, word)
-            if (dist < minDist) {
-              minDist = dist
-              minWord = w
-            }
-            if(dist <= 1) found = true
-            i += 1
-          }
-          minWord
-        } else {
-          word
-        }
-        buffer += best
-      }
-
-      buffer.mkString(" ").toUpperCase()
+      result
     }
 
     val args = Array($(originalSizeCol), $(inputCol) ).map { c => dataset(c) }
     val metadata = new AttributeGroup($(outputCol)).toMetadata()
-
     dataset.select(col("*"), assembleFunc(struct(args: _*)).as($(outputCol), metadata))
   }
-
-  private def stringDistance(s1: String, s2: String): Int = {
-    def sd(s1: List[Char], s2: List[Char], costs: List[Int]): Int = s2 match {
-      case Nil => costs.last
-      case c2 :: tail => sd( s1, tail,
-        (List(costs.head+1) /: costs.zip(costs.tail).zip(s1))((a,b) => b match {
-          case ((rep,ins), chr) => Math.min( Math.min( ins+1, a.head+1 ), rep + (if (chr==c2) 0 else 1) ) :: a
-        }).reverse
-      )
-    }
-    sd(s1.toList, s2.toList, (0 to s1.length).toList)
-  }
-
 
   override def transformSchema(schema: StructType): StructType = {
     require(!schema.fieldNames.contains($(outputCol)),
@@ -158,11 +99,12 @@ class VocabDecoder(override val uid: String, modelPath: String) extends Transfor
     StructType(outputFields)
   }
 
-  override def copy(extra: ParamMap): VocabDecoder = defaultCopy(extra)
+  override def copy(extra: ParamMap): ArgMaxDecoder = defaultCopy(extra)
 }
 
+object ArgMaxDecoder extends DefaultParamsReadable[ArgMaxDecoder] {
+  override def load(path: String): ArgMaxDecoder = super.load(path)
 
-object VocabDecoder extends DefaultParamsReadable[VocabDecoder] {
-  override def load(path: String): VocabDecoder = super.load(path)
+
 }
 

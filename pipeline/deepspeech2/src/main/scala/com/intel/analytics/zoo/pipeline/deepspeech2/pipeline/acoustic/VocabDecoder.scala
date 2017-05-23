@@ -1,5 +1,3 @@
-package com.intel.analytics.deepspeech2.pipeline.acoustic
-
 
 
 /*
@@ -19,24 +17,27 @@ package com.intel.analytics.deepspeech2.pipeline.acoustic
  * limitations under the License.
  */
 
-import breeze.linalg.{DenseMatrix => BDM, DenseVector => BDV}
+package com.intel.analytics.zoo.pipeline.deepspeech2.pipeline.acoustic
+
+import java.io.{BufferedReader, InputStreamReader}
+import java.net.URI
+
+import scala.collection.mutable.ArrayBuffer
+
+import org.apache.hadoop.conf.Configuration
+import org.apache.hadoop.fs.{FileSystem, Path}
 import org.apache.spark.ml.Transformer
 import org.apache.spark.ml.attribute.AttributeGroup
-import org.apache.spark.ml.linalg.Vector
 import org.apache.spark.ml.param._
 import org.apache.spark.ml.util._
 import org.apache.spark.sql.functions.{col, struct, udf}
 import org.apache.spark.sql.types.{StringType, StructField, StructType}
 import org.apache.spark.sql.{DataFrame, Dataset, Row}
 
-import scala.collection.mutable.ArrayBuffer
-import scala.io.Source
+class VocabDecoder(override val uid: String, modelPath: String) extends Transformer
+  with HasInputCol with HasOutputCol with DefaultParamsWritable {
 
-
-class NGramDecoder(override val uid: String)
-  extends Transformer with HasInputCol with HasOutputCol with DefaultParamsWritable {
-
-  def this() = this(Identifiable.randomUID("LanguageDecoder"))
+  def this(modelPath: String) = this(Identifiable.randomUID("LanguageDecoder"), modelPath)
 
   /** @group setParam */
   def setInputCol(value: String): this.type = set(inputCol, value)
@@ -52,21 +53,8 @@ class NGramDecoder(override val uid: String)
   /** @group setParam */
   def setAlphabet(value: String): this.type = set(alphabet, value)
 
-  val vocab : StringArrayParam =
-    new StringArrayParam(this, "vocab", "vocab")
-
-  val n2List : StringArrayParam =
-    new StringArrayParam(this, "n2List", "n2List")
-
-  setDefault(vocab -> Source.fromFile(
-    "model/wiki-100k.txt"
-  ).getLines().map(_.trim).filter(_.nonEmpty).filter(!_.startsWith("#")).map(_.toUpperCase).toArray.take(100000),
-    n2List -> Source.fromFile(
-      "model/self2.txt"
-    ).getLines().map(_.trim).filter(_.nonEmpty).map(_.toUpperCase).toArray)
-
-  val uttLength = new IntParam(this, "uttLength", "uttLength",
-    ParamValidators.gt(0))
+  val uttLength = new IntParam(this, "uttLength", "uttLength", ParamValidators.gt(0))
+  setDefault(uttLength -> 3000)
 
   /** @group getParam */
   def getUttLength: Int = $(uttLength)
@@ -75,93 +63,79 @@ class NGramDecoder(override val uid: String)
   def setUttLength(value: Int): this.type = set(uttLength, value)
 
   val windowSize = new IntParam(this, "windowSize", "windowSize", ParamValidators.gt(0))
-
+  setDefault(windowSize -> 400)
   /** @group getParam */
   def getWindowSize: Int = $(windowSize)
 
   /** @group setParam */
   def setWindowSize(value: Int): this.type = set(windowSize, value)
 
-  setDefault(windowSize -> 400, uttLength -> 3000)
-
-
-  val n = new IntParam(this, "n", "n", ParamValidators.gt(0))
+  val originalSizeCol: Param[String] = new Param[String](this, "originalSizeCol", "originalSizeCol")
+  setDefault(originalSizeCol -> "originalSize")
 
   /** @group getParam */
-  def getN: Int = $(n)
+  def getOriginalSizeCol: String = $(originalSizeCol)
 
   /** @group setParam */
-  def setN(value: Int): this.type = set(n, value)
-
-  setDefault(n -> 2)
+  def setOriginalSizeCol(value: String): this.type = set(originalSizeCol, value)
 
   override def transform(dataset: Dataset[_]): DataFrame = {
-    val vocabSet = $(vocab).toSet
-    val n2Model = $(n2List).map(s => s.split("\\s+"))
-      .map(arr => ((1 until $(n)).map(i => arr(i)).mkString(","), (arr($(n)), arr(0).toInt))).groupBy(_._1)
-      .map { case (key, values) =>
-        (key, values.map(_._2).sortBy(-_._2).map(_._1).toSeq)
-      }
+    val fs = FileSystem.get(new URI(modelPath), new Configuration())
+    val vocab = try {
+      val br = new BufferedReader(new InputStreamReader(fs.open(new Path(modelPath, "vocab.txt"))));
+      val modelVocab = br.lines().toArray().map(_.asInstanceOf[String].trim).filter(_.nonEmpty).map(_.toUpperCase)
+      modelVocab
+    } finally {
+      fs.close()
+    }
 
+    val vocabSet = vocab.toSet
     val decoder = new BestPathDecoder($(alphabet), 0, 28)
     val outputSchema = transformSchema(dataset.schema)
     val assembleFunc = udf { r: Row =>
-      val originSize = r.getSeq[Float](0).size / $(windowSize)
+      val originSize = r.getInt(0)
       val samples = r.getSeq[Float](1)
       val height = $(alphabet).length
       val width = samples.size / height
       val modelOutput = samples.toArray.grouped(height).toArray
-        .slice(0, width * (originSize) / $(uttLength))
+        .slice(0, width * originSize / $(uttLength))
         .transpose
       val so = decoder.getSoftmax(modelOutput)
       val result = decoder.decode(so)
       val words = result.split("\\s+")
       val buffer = new ArrayBuffer[String]()
 
-      var wi = 0
-      while (wi < words.length) {
-        val word = words(wi)
-        val n_1 = $(n) - 1
-        val lastword = if (wi >= n_1) (0 until n_1).map(k => n_1 - k).map(k => words(wi - k)).mkString(",") else ""
-        val vocabCandidates = $(vocab).map(w => (stringDistance(w, word), w)).filter(_._1 <= 1).map(_._2).toSeq ++ Seq(word)
+      for (word <- words) {
         val best = if (!vocabSet.contains(word)) {
-          val self = search(word, lastword, n2Model, vocabCandidates)
-          if (self.nonEmpty)
-            self.get
-          else
-            vocabCandidates.head
-        } else {
-          if (!n2Model.get(lastword).contains(word)){
-            val self = search(word, lastword, n2Model, vocabCandidates)
-            if (self.nonEmpty)
-              self.get
+          var minDist = Int.MaxValue
+          var minWord = word
+          var i = 0
+          val maxLength = vocab.length
+          var found = false
+          while (i < maxLength && !found) {
+            val w = vocab(i)
+            val dist = stringDistance(w, word)
+            if (dist < minDist) {
+              minDist = dist
+              minWord = w
+            }
+            if(dist <= 1) found = true
+            i += 1
           }
+          minWord
+        } else {
           word
         }
         buffer += best
-        wi += 1
       }
 
       buffer.mkString(" ").toUpperCase()
     }
 
-    val args = Array("window", $(inputCol) ).map { c =>
-      dataset(c)
-    }
+    val args = Array($(originalSizeCol), $(inputCol) ).map { c => dataset(c) }
     val metadata = new AttributeGroup($(outputCol)).toMetadata()
 
     dataset.select(col("*"), assembleFunc(struct(args: _*)).as($(outputCol), metadata))
-  }
-
-  private def search(word: String, lastword: String, ngramModel: Map[String, Seq[String]], vocabCandidates: Seq[String]): Option[String] ={
-    val n_1 = $(n) - 1
-    val ngramCandidats = ngramModel.getOrElse(lastword, Seq[String]())
-    val candidates = ngramCandidats.filter(vocabCandidates.contains(_))
-    if (candidates.nonEmpty)
-      Some(candidates.head)
-    else if (ngramCandidats.nonEmpty)
-      Some(ngramCandidats.head)
-    else None
   }
 
   private def stringDistance(s1: String, s2: String): Int = {
@@ -184,13 +158,11 @@ class NGramDecoder(override val uid: String)
     StructType(outputFields)
   }
 
-  override def copy(extra: ParamMap): NGramDecoder = defaultCopy(extra)
-
-
+  override def copy(extra: ParamMap): VocabDecoder = defaultCopy(extra)
 }
 
 
-object NGramDecoder extends DefaultParamsReadable[NGramDecoder] {
-  override def load(path: String): NGramDecoder = super.load(path)
+object VocabDecoder extends DefaultParamsReadable[VocabDecoder] {
+  override def load(path: String): VocabDecoder = super.load(path)
 }
 
