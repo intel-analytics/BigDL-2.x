@@ -1,5 +1,3 @@
-package com.intel.analytics.deepspeech2.pipeline.acoustic
-
 /*
  * Copyright 2016 The BigDL Authors.
  *
@@ -15,25 +13,24 @@ package com.intel.analytics.deepspeech2.pipeline.acoustic
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+package com.intel.analytics.deepspeech2.pipeline.acoustic
+
+import scala.language.existentials
+import scala.reflect.ClassTag
 
 import com.intel.analytics.bigdl._
 import com.intel.analytics.bigdl.nn._
 import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric
 import com.intel.analytics.bigdl.tensor.{Storage, Tensor}
 import org.apache.hadoop.fs.Path
-import org.apache.log4j.{Level, Logger}
-import org.apache.spark.SparkContext
+import org.apache.log4j.Logger
 
-import scala.collection.mutable.ArrayBuffer
-import scala.language.existentials
-import scala.reflect.ClassTag
-
-class DeepSpeech2ModelLoader[T : ClassTag](depth: Int = 1)
+private[intel] class DeepSpeech2ModelLoader[T : ClassTag](depth: Int = 1)
   (implicit ev: TensorNumeric[T]) {
 
   /**
-    * The configuration of convolution for dp2.
-    */
+   * The configuration of convolution for dp2.
+   */
   val nInputPlane = 1
   val nOutputPlane = 1152
   val kW = 11
@@ -53,14 +50,14 @@ class DeepSpeech2ModelLoader[T : ClassTag](depth: Int = 1)
   val nChar = 29
 
   /**
-    * append BiRNN layers to the deepspeech model.
-    * When isPaperVersion is set to be true, the sequential will construct a DS2 w.r.t implementation from Paper.
-    * Otherwise, it will construct a Nervana's DS2 version.
-    * @param inputSize
-    * @param hiddenSize
-    * @param curDepth
-    * @return
-    */
+   * append BiRNN layers to the deepspeech model.
+   * When isPaperVersion is set to be true, the sequential will construct a DS2 w.r.t implementation from Paper.
+   * Otherwise, it will construct a Nervana's DS2 version.
+   * @param inputSize
+   * @param hiddenSize
+   * @param curDepth
+   * @return
+   */
   def addBRNN(inputSize: Int, hiddenSize: Int, curDepth: Int)
   : Module[T] = {
     val layers = Sequential()
@@ -100,13 +97,13 @@ class DeepSpeech2ModelLoader[T : ClassTag](depth: Int = 1)
   val linear2 = TimeDistributed[T](Linear[T](hiddenSize, nChar, withBias = false))
 
   /**
-    * The deep speech2 model.
-    *****************************************************************************************
-    *
-    *   Convolution -> ReLU -> BiRNN (9 layers) -> Linear -> ReLUClip (HardTanh) -> Linear
-    *
-    *****************************************************************************************
-    */
+   * The deep speech2 model.
+   *****************************************************************************************
+   *
+   *   Convolution -> ReLU -> BiRNN (9 layers) -> Linear -> ReLUClip (HardTanh) -> Linear
+   *
+   *****************************************************************************************
+   */
   val model = Sequential[T]()
     .add(conv)
     .add(ReLU[T]())
@@ -147,10 +144,10 @@ class DeepSpeech2ModelLoader[T : ClassTag](depth: Int = 1)
   }
 
   /**
-    * load in the nervana's dp2 Affine model parameters
-    * @param weights
-    * @param num
-    */
+   * load in the nervana's dp2 Affine model parameters
+   * @param weights
+   * @param num
+   */
   def setLinear0Weight(weights: Array[T], num: Int): Unit = {
     if (num == 0) {
       linear1.parameters()._1(0)
@@ -161,6 +158,7 @@ class DeepSpeech2ModelLoader[T : ClassTag](depth: Int = 1)
     }
   }
 }
+
 
 object DeepSpeech2ModelLoader {
 

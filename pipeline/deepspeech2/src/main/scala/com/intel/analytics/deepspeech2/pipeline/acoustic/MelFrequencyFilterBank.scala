@@ -1,12 +1,11 @@
 /*
- * Licensed to the Apache Software Foundation (ASF) under one or more
- * contributor license agreements.  See the NOTICE file distributed with
- * this work for additional information regarding copyright ownership.
- * The ASF licenses this file to You under the Apache License, Version 2.0
- * (the "License"); you may not use this file except in compliance with
- * the License.  You may obtain a copy of the License at
+ * Copyright 2016 The BigDL Authors.
  *
- *    http://www.apache.org/licenses/LICENSE-2.0
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -30,12 +29,23 @@ import org.apache.spark.sql.{DataFrame, Dataset}
 import scala.collection.mutable
 import scala.collection.mutable.ArrayBuffer
 
-
 class MelFrequencyFilterBank ( override val uid: String)
   extends Transformer with HasInputCol with HasOutputCol with DefaultParamsWritable {
 
 
   def this() = this(Identifiable.randomUID("MelFrequencyFilterBank"))
+
+  val windowSize = new IntParam(this, "windowSize", "windowSize", ParamValidators.gt(0))
+  setDefault(windowSize -> 400)
+
+  val sampleFreq = new IntParam(this, "sampleFreq", "sampleFreq", ParamValidators.gt(0))
+  setDefault(sampleFreq -> 16000)
+
+  val numFilters = new IntParam(this, "numFilters", "numFilters", ParamValidators.gt(0))
+  setDefault(numFilters -> 13)
+
+  val uttLength = new IntParam(this, "uttLength", "uttLength", ParamValidators.gt(0))
+  setDefault(uttLength -> 3000)
 
   /** @group setParam */
   def setInputCol(value: String): this.type = set(inputCol, value)
@@ -43,29 +53,17 @@ class MelFrequencyFilterBank ( override val uid: String)
   /** @group setParam */
   def setOutputCol(value: String): this.type = set(outputCol, value)
 
-
-  val windowSize = new IntParam(this, "windowSize", "windowSize",
-    ParamValidators.gt(0))
-
-  val sampleFreq = new IntParam(this, "sampleFreq", "sampleFreq",
-    ParamValidators.gt(0))
-
   /** @group getParam */
   def getWindowSize: Int = $(windowSize)
 
   /** @group setParam */
   def setWindowSize(value: Int): this.type = set(windowSize, value)
 
-  val numFilters = new IntParam(this, "numFilters", "numFilters",
-    ParamValidators.gt(0))
   /** @group getParam */
   def getNumFilters: Int = $(numFilters)
 
   /** @group setParam */
   def setNumFilters(value: Int): this.type = set(numFilters, value)
-
-  val uttLength = new IntParam(this, "uttLength", "uttLength",
-    ParamValidators.gt(0))
 
   /** @group getParam */
   def getUttLength: Int = $(uttLength)
@@ -78,7 +76,7 @@ class MelFrequencyFilterBank ( override val uid: String)
 
   /** @group setParam */
   def setSampleFreq(value: Int): this.type = set(sampleFreq, value)
-  setDefault(windowSize -> 400, numFilters -> 13, sampleFreq -> 16000)
+
   override def transform(dataset: Dataset[_]): DataFrame = {
     val outputSchema = transformSchema(dataset.schema)
     val filterbank = createFilterBank($(numFilters), $(windowSize), $(sampleFreq))
@@ -147,8 +145,6 @@ class MelFrequencyFilterBank ( override val uid: String)
   private def mel_to_hz(freq_mel: Double): Double = {
     700 * (math.pow(10, freq_mel / 2595.0) - 1)
   }
-
-
 
   override def transformSchema(schema: StructType): StructType = {
     require(!schema.fieldNames.contains($(outputCol)),

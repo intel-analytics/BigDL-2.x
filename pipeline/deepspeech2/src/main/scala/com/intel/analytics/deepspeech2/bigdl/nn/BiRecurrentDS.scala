@@ -49,8 +49,11 @@ class BiRecurrentDS[T : ClassTag](
         .add(Reverse[T](timeDim))
         .add(revLayer)
         .add(ReverseDS[T](timeDim))))
-  if (merge == null) birnn.add(CAddTable[T](true))
-  else birnn.add(merge)
+  if (merge == null) {
+    birnn.add(CAddTable[T](true))
+  }  else {
+    birnn.add(merge)
+  }
 
   override def add(module: AbstractModule[_ <: Activity, _ <: Activity, T]):
     BiRecurrentDS.this.type = {
@@ -64,8 +67,11 @@ class BiRecurrentDS[T : ClassTag](
     output
   }
 
-  override def accGradParameters(input: Tensor[T], gradOutput: Tensor[T],
-                                 scale: Double = 1.0): Unit = {
+  override def accGradParameters(
+      input: Tensor[T],
+      gradOutput: Tensor[T],
+      scale: Double = 1.0): Unit = {
+
     birnn.accGradParameters(input, gradOutput, scale)
   }
 
@@ -136,6 +142,7 @@ class BiRecurrentDS[T : ClassTag](
     state.map(_.hashCode()).foldLeft(0)((a, b) => 31 * a + b)
   }
 }
+
 
 object BiRecurrentDS {
   def apply[@specialized(Float, Double) T: ClassTag](

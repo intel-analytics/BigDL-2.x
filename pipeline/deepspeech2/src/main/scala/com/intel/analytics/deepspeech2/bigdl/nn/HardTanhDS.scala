@@ -37,6 +37,7 @@ class HardTanhDS[T: ClassTag](
     val maxValue: Double = 1,
     val inplace: Boolean = false
     ) (implicit ev: TensorNumeric[T]) extends TensorModule[T] {
+
   require(maxValue > minValue, "maxValue must be larger than minValue")
 
   val min = ev.fromType[Double](minValue)
@@ -178,6 +179,7 @@ class HardTanhDS[T: ClassTag](
     s"nn.HardTanh"
   }
 }
+
 
 object HardTanhDS {
   def apply[@specialized(Float, Double) T: ClassTag](

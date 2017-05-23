@@ -1,12 +1,11 @@
 /*
- * Licensed to the Apache Software Foundation (ASF) under one or more
- * contributor license agreements.  See the NOTICE file distributed with
- * this work for additional information regarding copyright ownership.
- * The ASF licenses this file to You under the Apache License, Version 2.0
- * (the "License"); you may not use this file except in compliance with
- * the License.  You may obtain a copy of the License at
+ * Copyright 2016 The BigDL Authors.
  *
- *    http://www.apache.org/licenses/LICENSE-2.0
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -17,7 +16,6 @@
 
 package com.intel.analytics.deepspeech2.pipeline.acoustic
 
-import org.apache.spark.annotation.Experimental
 import org.apache.spark.ml.evaluation.Evaluator
 import org.apache.spark.ml.param.{Param, ParamMap, ParamValidators}
 import org.apache.spark.ml.util.{DefaultParamsReadable, DefaultParamsWritable, Identifiable}
@@ -25,9 +23,11 @@ import org.apache.spark.sql.functions.col
 import org.apache.spark.sql.types._
 import org.apache.spark.sql.{Dataset, Row}
 
-@Experimental
-final class ASREvaluator (override val uid: String)
-  extends Evaluator with HasPredictionCol with HasLabelCol with DefaultParamsWritable {
+/**
+ * Evaluator for Speech Recognition output.
+ */
+final class ASREvaluator (override val uid: String) extends Evaluator
+  with HasPredictionCol with HasLabelCol with DefaultParamsWritable {
 
   def this() = this(Identifiable.randomUID("ASREvaluator"))
 
@@ -35,6 +35,7 @@ final class ASREvaluator (override val uid: String)
     val allowedParams = ParamValidators.inArray(Array("wer", "cer"))
     new Param(this, "metricName", "metric name in evaluation (wer|cer)", allowedParams)
   }
+  setDefault(metricName -> "cer")
 
   /** @group getParam */
   def getMetricName: String = $(metricName)
@@ -47,8 +48,6 @@ final class ASREvaluator (override val uid: String)
 
   /** @group setParam */
   def setLabelCol(value: String): this.type = set(labelCol, value)
-
-  setDefault(metricName -> "cer")
 
   override def evaluate(dataset: Dataset[_]): Double = {
     val schema = dataset.schema
@@ -76,7 +75,6 @@ final class ASREvaluator (override val uid: String)
       val total = predictionAndLabels.map(_._2).sum()
       err / total
     }
-
   }
 
   override def isLargerBetter: Boolean = $(metricName) match {
@@ -110,6 +108,7 @@ final class ASREvaluator (override val uid: String)
 
   override def copy(extra: ParamMap): ASREvaluator = defaultCopy(extra)
 }
+
 
 object RegressionEvaluator extends DefaultParamsReadable[ASREvaluator] {
 

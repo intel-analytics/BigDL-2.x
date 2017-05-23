@@ -1,5 +1,19 @@
+/*
+ * Copyright 2016 The BigDL Authors.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.intel.analytics.deepspeech2.pipeline.acoustic
-
 
 import org.apache.spark.ml.Transformer
 import org.apache.spark.ml.param._
@@ -7,11 +21,13 @@ import org.apache.spark.ml.util._
 import org.apache.spark.sql.types._
 import org.apache.spark.sql.{DataFrame, Dataset, Row}
 
-
-class TimeSegmenter ( override val uid: String)
-  extends Transformer with HasInputCol with HasOutputCol with DefaultParamsWritable {
+class TimeSegmenter (override val uid: String) extends Transformer
+  with HasInputCol with HasOutputCol with DefaultParamsWritable {
 
   def this() = this(Identifiable.randomUID("TimeSegmenter"))
+
+  val segmentSize = new IntParam(this, "segmentSize", "segmentSize", ParamValidators.gt(0))
+  setDefault(segmentSize -> 16000 * 30)
 
   /** @group setParam */
   def setInputCol(value: String): this.type = set(inputCol, value)
@@ -19,17 +35,11 @@ class TimeSegmenter ( override val uid: String)
   /** @group setParam */
   def setOutputCol(value: String): this.type = set(outputCol, value)
 
-
-  val segmentSize = new IntParam(this, "segmentSize", "segmentSize",
-    ParamValidators.gt(0))
-
   /** @group getParam */
   def getSegmentSize: Int = $(segmentSize)
 
   /** @group setParam */
   def setSegmentSize(value: Int): this.type = set(segmentSize, value)
-
-  setDefault(segmentSize -> 16000 * 30)
 
   override def transform(dataset: Dataset[_]): DataFrame = {
     val outputSchema = transformSchema(dataset.schema)

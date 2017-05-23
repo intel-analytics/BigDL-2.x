@@ -1,4 +1,21 @@
+/*
+ * Copyright 2016 The BigDL Authors.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.intel.analytics.deepspeech2.example
+
+import scala.io.Source
 
 import com.intel.analytics.bigdl.utils.Engine
 import com.intel.analytics.deepspeech2.pipeline.acoustic._
@@ -44,11 +61,16 @@ object InferenceEvaluate {
   }
 
   private def loadData(spark: SparkSession, path: String, takeNum: Int): DataFrame = {
-    val sc = spark.sparkContext
 
+    val sc = spark.sparkContext
     import spark.implicits._
     logger.info(s"load data from $path")
-    val paths = sc.textFile(path + "/mapping.txt")
+    val mappingContent = if (path.toLowerCase().startsWith("hdfs")) {
+      sc.textFile(path + "/mapping.txt").collect()
+    } else {
+      Source.fromFile(path + "/mapping.txt").getLines().toArray
+    }
+    val paths = mappingContent
       .filter(_.startsWith("1462-170142"))
       .take(takeNum)
       .map { line =>
@@ -122,6 +144,7 @@ object InferenceEvaluate {
 
   private def evaluate(model: PipelineModel, df: DataFrame): Unit = {
 
+    // regroup and concat the result transcript from the segments.
     val grouped = model.transform(df).select("path", "target", "audio_id", "audio_seq", "output")
       .rdd.map {
         case Row(path: String, target: String, audio_id: Long, audio_seq: Int, output: String) =>

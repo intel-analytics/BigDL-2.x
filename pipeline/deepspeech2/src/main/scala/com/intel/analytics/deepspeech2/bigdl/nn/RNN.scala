@@ -16,14 +16,13 @@
 
 package com.intel.analytics.bigdl.nn
 
-import com.intel.analytics.bigdl.nn._
+import scala.reflect.ClassTag
+
 import com.intel.analytics.bigdl.nn.abstractnn.{AbstractModule, Activity, TensorModule}
 import com.intel.analytics.bigdl.tensor.Tensor
 import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric
 import com.intel.analytics.bigdl.utils.RandomGenerator._
 import com.intel.analytics.bigdl.utils.Table
-
-import scala.reflect.ClassTag
 
 @SerialVersionUID( 5237686508074490666L)
 class RnnCellDS[T : ClassTag](
@@ -141,6 +140,7 @@ class RnnCellDS[T : ClassTag](
     state.map(_.hashCode()).foldLeft(0)((a, b) => 31 * a + b)
   }
 }
+
 
 object RnnCellDS {
   def apply[@specialized(Float, Double) T: ClassTag](

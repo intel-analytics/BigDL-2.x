@@ -1,12 +1,23 @@
+/*
+ * Copyright 2016 The BigDL Authors.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.intel.analytics.deepspeech2.pipeline.acoustic
 
-import org.apache.spark.ml.linalg.{DenseVector, SparseVector, Vector}
 import org.apache.spark.ml.param.{Param, Params}
 import org.apache.spark.sql.types.{DataType, NumericType, StructField, StructType}
 
-/**
-  * Created by yuhao on 3/9/17.
-  */
 private[pipeline] trait HasInputCol extends Params {
 
   /**
@@ -139,11 +150,11 @@ private[pipeline] object SchemaUtils {
     * @param colName  column name
     * @param dataType  required column data type
     */
-  def checkColumnType(
-                       schema: StructType,
-                       colName: String,
-                       dataType: DataType,
-                       msg: String = ""): Unit = {
+  def checkColumnType (
+      schema: StructType,
+      colName: String,
+      dataType: DataType,
+      msg: String = ""): Unit = {
     val actualDataType = schema(colName).dataType
     val message = if (msg != null && msg.trim.length > 0) " " + msg else ""
     require(actualDataType.equals(dataType),
@@ -155,11 +166,11 @@ private[pipeline] object SchemaUtils {
     * @param colName  column name
     * @param dataTypes  required column data types
     */
-  def checkColumnTypes(
-                        schema: StructType,
-                        colName: String,
-                        dataTypes: Seq[DataType],
-                        msg: String = ""): Unit = {
+  def checkColumnTypes (
+      schema: StructType,
+      colName: String,
+      dataTypes: Seq[DataType],
+      msg: String = ""): Unit = {
     val actualDataType = schema(colName).dataType
     val message = if (msg != null && msg.trim.length > 0) " " + msg else ""
     require(dataTypes.exists(actualDataType.equals),
@@ -171,10 +182,10 @@ private[pipeline] object SchemaUtils {
     * Check whether the given schema contains a column of the numeric data type.
     * @param colName  column name
     */
-  def checkNumericType(
-                        schema: StructType,
-                        colName: String,
-                        msg: String = ""): Unit = {
+  def checkNumericType (
+      schema: StructType,
+      colName: String,
+      msg: String = ""): Unit = {
     val actualDataType = schema(colName).dataType
     val message = if (msg != null && msg.trim.length > 0) " " + msg else ""
     require(actualDataType.isInstanceOf[NumericType], s"Column $colName must be of type " +
@@ -189,11 +200,11 @@ private[pipeline] object SchemaUtils {
     * @param dataType new column data type
     * @return new schema with the input column appended
     */
-  def appendColumn(
-                    schema: StructType,
-                    colName: String,
-                    dataType: DataType,
-                    nullable: Boolean = false): StructType = {
+  def appendColumn (
+      schema: StructType,
+      colName: String,
+      dataType: DataType,
+      nullable: Boolean = false): StructType = {
     if (colName.isEmpty) return schema
     appendColumn(schema, StructField(colName, dataType, nullable))
   }
@@ -209,22 +220,3 @@ private[pipeline] object SchemaUtils {
     StructType(schema.fields :+ col)
   }
 }
-
-
-/*
- * Licensed to the Apache Software Foundation (ASF) under one or more
- * contributor license agreements.  See the NOTICE file distributed with
- * this work for additional information regarding copyright ownership.
- * The ASF licenses this file to You under the Apache License, Version 2.0
- * (the "License"); you may not use this file except in compliance with
- * the License.  You may obtain a copy of the License at
- *
- *    http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-

@@ -35,8 +35,8 @@ import com.intel.analytics.bigdl.utils.Table
 
 @SerialVersionUID( 6506746847756687944L)
 class BifurcateSplitTable[T: ClassTag](
-  var dimension: Int)
-  (implicit ev: TensorNumeric[T]) extends AbstractModule[Tensor[T], Table, T]{
+    var dimension: Int) (implicit ev: TensorNumeric[T])
+  extends AbstractModule[Tensor[T], Table, T] {
 
   override def updateOutput(input: Tensor[T]): Table = {
     val slices = input.size(dimension)
@@ -81,6 +81,7 @@ class BifurcateSplitTable[T: ClassTag](
     state.map(_.hashCode()).foldLeft(0)((a, b) => 31 * a + b)
   }
 }
+
 
 object BifurcateSplitTable {
   def apply[@specialized(Float, Double) T: ClassTag](
