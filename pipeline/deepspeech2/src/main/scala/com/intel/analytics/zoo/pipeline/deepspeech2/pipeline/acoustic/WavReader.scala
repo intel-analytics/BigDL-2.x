@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-package com.intel.analytics.deepspeech2.pipeline.acoustic
+package com.intel.analytics.zoo.pipeline.deepspeech2.pipeline.acoustic
 
 import com.sun.media.sound.WaveFileReader
 import org.apache.hadoop.conf.Configuration
