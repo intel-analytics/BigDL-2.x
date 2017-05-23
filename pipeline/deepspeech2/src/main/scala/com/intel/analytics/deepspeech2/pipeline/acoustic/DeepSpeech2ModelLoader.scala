@@ -20,6 +20,7 @@ import com.intel.analytics.bigdl._
 import com.intel.analytics.bigdl.nn._
 import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric
 import com.intel.analytics.bigdl.tensor.{Storage, Tensor}
+import org.apache.hadoop.fs.Path
 import org.apache.log4j.{Level, Logger}
 import org.apache.spark.SparkContext
 
@@ -166,6 +167,6 @@ object DeepSpeech2ModelLoader {
   val logger = Logger.getLogger(getClass)
 
   def loadModel(path: String): Module[Float] = {
-    Module.load[Float](path)
+    Module.load[Float](new Path(path, "ds2.model").toString)
   }
 }

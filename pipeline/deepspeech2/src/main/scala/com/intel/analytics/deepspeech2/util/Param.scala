@@ -20,8 +20,8 @@ object parser {
     opt[Int]('n', "num")
       .text("file number. Default is 8")
       .action((v, p) => p.copy(numFile = v))
-    opt[Boolean]('s', "segment")
-      .text("whether to segment audio or not. Default is false")
+    opt[Int]('s', "segment")
+      .text("audio segment length in seconds. Default is 30")
       .action((v, p) => p.copy(segment = v))
   }
 }
@@ -31,4 +31,4 @@ case class LocalOptimizerPerfParam(
   modelPath: String = null,
   partition: Int = 4,
   numFile: Int = 8,
-  segment: Boolean = false)
+  segment: Int = 30)

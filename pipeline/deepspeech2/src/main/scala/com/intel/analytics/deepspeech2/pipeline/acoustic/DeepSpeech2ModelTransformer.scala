@@ -16,8 +16,6 @@ class DeepSpeech2ModelTransformer ( override val uid: String, modelPath: String)
 
   def this(modelPath: String) = this(Identifiable.randomUID("DeepSpeech2ModelTransformer"), modelPath)
 
-  val model = DeepSpeech2ModelLoader.loadModel(modelPath)
-
   /** @group setParam */
   def setInputCol(value: String): this.type = set(inputCol, value)
 
@@ -33,6 +31,7 @@ class DeepSpeech2ModelTransformer ( override val uid: String, modelPath: String)
   def setNumFilters(value: Int): this.type = set(numFilters, value)
 
   override def transform(dataset: Dataset[_]): DataFrame = {
+    val model = DeepSpeech2ModelLoader.loadModel(modelPath)
     val outputSchema = transformSchema(dataset.schema)
     val height = $(numFilters)
     val reScale = udf { (samples: mutable.WrappedArray[Float]) =>

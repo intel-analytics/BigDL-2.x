@@ -19,23 +19,25 @@
 
 package com.intel.analytics.deepspeech2.pipeline.acoustic
 
+import java.io.{BufferedReader, InputStreamReader}
+import java.net.URI
+
+import scala.collection.mutable.ArrayBuffer
+
+import org.apache.hadoop.conf.Configuration
+import org.apache.hadoop.fs.{FileSystem, Path}
 import org.apache.spark.ml.Transformer
 import org.apache.spark.ml.attribute.AttributeGroup
-import org.apache.spark.ml.linalg.Vector
 import org.apache.spark.ml.param._
 import org.apache.spark.ml.util._
 import org.apache.spark.sql.functions.{col, struct, udf}
 import org.apache.spark.sql.types.{StringType, StructField, StructType}
 import org.apache.spark.sql.{DataFrame, Dataset, Row}
 
-import scala.collection.mutable.ArrayBuffer
-import scala.io.Source
+class VocabDecoder(override val uid: String, modelPath: String) extends Transformer
+  with HasInputCol with HasOutputCol with DefaultParamsWritable {
 
-
-class LanguageDecoder(override val uid: String)
-  extends Transformer with HasInputCol with HasOutputCol with DefaultParamsWritable {
-
-  def this() = this(Identifiable.randomUID("LanguageDecoder"))
+  def this(modelPath: String) = this(Identifiable.randomUID("LanguageDecoder"), modelPath)
 
   /** @group setParam */
   def setInputCol(value: String): this.type = set(inputCol, value)
@@ -51,16 +53,8 @@ class LanguageDecoder(override val uid: String)
   /** @group setParam */
   def setAlphabet(value: String): this.type = set(alphabet, value)
 
-  val vocab : StringArrayParam =
-    new StringArrayParam(this, "vocab", "vocab")
-
-  setDefault(vocab -> (Source.fromFile(
-    "model/self1.txt"
-  ).getLines()
-    ).map(_.trim).filter(_.nonEmpty).map(_.toUpperCase).toArray)
-
-  val uttLength = new IntParam(this, "uttLength", "uttLength",
-    ParamValidators.gt(0))
+  val uttLength = new IntParam(this, "uttLength", "uttLength", ParamValidators.gt(0))
+  setDefault(uttLength -> 3000)
 
   /** @group getParam */
   def getUttLength: Int = $(uttLength)
@@ -69,26 +63,42 @@ class LanguageDecoder(override val uid: String)
   def setUttLength(value: Int): this.type = set(uttLength, value)
 
   val windowSize = new IntParam(this, "windowSize", "windowSize", ParamValidators.gt(0))
-
+  setDefault(windowSize -> 400)
   /** @group getParam */
   def getWindowSize: Int = $(windowSize)
 
   /** @group setParam */
   def setWindowSize(value: Int): this.type = set(windowSize, value)
 
-  setDefault(windowSize -> 400, uttLength -> 3000)
+  val originalSizeCol: Param[String] = new Param[String](this, "originalSizeCol", "originalSizeCol")
+  setDefault(originalSizeCol -> "originalSize")
+
+  /** @group getParam */
+  def getOriginalSizeCol: String = $(originalSizeCol)
+
+  /** @group setParam */
+  def setOriginalSizeCol(value: String): this.type = set(originalSizeCol, value)
 
   override def transform(dataset: Dataset[_]): DataFrame = {
-    val vocabSet = $(vocab).toSet
+    val fs = FileSystem.get(new URI(modelPath), new Configuration())
+    val vocab = try {
+      val br = new BufferedReader(new InputStreamReader(fs.open(new Path(modelPath, "vocab.txt"))));
+      val modelVocab = br.lines().toArray().map(_.asInstanceOf[String].trim).filter(_.nonEmpty).map(_.toUpperCase)
+      modelVocab
+    } finally {
+      fs.close()
+    }
+
+    val vocabSet = vocab.toSet
     val decoder = new BestPathDecoder($(alphabet), 0, 28)
     val outputSchema = transformSchema(dataset.schema)
     val assembleFunc = udf { r: Row =>
-      val originSize = r.getSeq[Float](0).size / $(windowSize)
+      val originSize = r.getInt(0)
       val samples = r.getSeq[Float](1)
       val height = $(alphabet).length
       val width = samples.size / height
       val modelOutput = samples.toArray.grouped(height).toArray
-        .slice(0, width * (originSize) / $(uttLength))
+        .slice(0, width * originSize / $(uttLength))
         .transpose
       val so = decoder.getSoftmax(modelOutput)
       val result = decoder.decode(so)
@@ -100,10 +110,10 @@ class LanguageDecoder(override val uid: String)
           var minDist = Int.MaxValue
           var minWord = word
           var i = 0
-          val maxLength = $(vocab).length
+          val maxLength = vocab.length
           var found = false
-          while (i < maxLength && found == false) {
-            val w = $(vocab)(i)
+          while (i < maxLength && !found) {
+            val w = vocab(i)
             val dist = stringDistance(w, word)
             if (dist < minDist) {
               minDist = dist
@@ -122,9 +132,7 @@ class LanguageDecoder(override val uid: String)
       buffer.mkString(" ").toUpperCase()
     }
 
-    val args = Array("window", $(inputCol) ).map { c =>
-      dataset(c)
-    }
+    val args = Array($(originalSizeCol), $(inputCol) ).map { c => dataset(c) }
     val metadata = new AttributeGroup($(outputCol)).toMetadata()
 
     dataset.select(col("*"), assembleFunc(struct(args: _*)).as($(outputCol), metadata))
@@ -150,11 +158,11 @@ class LanguageDecoder(override val uid: String)
     StructType(outputFields)
   }
 
-  override def copy(extra: ParamMap): LanguageDecoder = defaultCopy(extra)
+  override def copy(extra: ParamMap): VocabDecoder = defaultCopy(extra)
 }
 
 
-object LanguageDecoder extends DefaultParamsReadable[LanguageDecoder] {
-  override def load(path: String): LanguageDecoder = super.load(path)
+object VocabDecoder extends DefaultParamsReadable[VocabDecoder] {
+  override def load(path: String): VocabDecoder = super.load(path)
 }
 
