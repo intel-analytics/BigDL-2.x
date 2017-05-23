@@ -13,32 +13,30 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+package com.intel.analytics.zoo.pipeline.deepspeech2.pipeline.acoustic
 
-package com.intel.analytics.deepspeech2.pipeline.acoustic
-
-import scala.collection.mutable
-
-import breeze.linalg.{fliplr, DenseMatrix => BDM}
+import com.intel.analytics.bigdl.tensor.{Storage, Tensor}
 import org.apache.spark.ml.Transformer
-import org.apache.spark.ml.param.{ParamMap, _}
-import org.apache.spark.ml.util._
+import org.apache.spark.ml.param.{IntParam, ParamMap, ParamValidators}
+import org.apache.spark.ml.util.{DefaultParamsReadable, DefaultParamsWritable, Identifiable}
 import org.apache.spark.sql.functions.{col, udf}
 import org.apache.spark.sql.types.{StructField, StructType}
 import org.apache.spark.sql.{DataFrame, Dataset}
 
-class TransposeFlip ( override val uid: String)
+import scala.collection.mutable
+
+class DeepSpeech2ModelTransformer ( override val uid: String, modelPath: String)
   extends Transformer with HasInputCol with HasOutputCol with DefaultParamsWritable {
 
-  def this() = this(Identifiable.randomUID("TransposeFlip"))
-
-  val numFilters = new IntParam(this, "numFilters", "numFilters", ParamValidators.gt(0))
-  setDefault(numFilters -> 13)
+  def this(modelPath: String) = this(Identifiable.randomUID("DeepSpeech2ModelTransformer"), modelPath)
 
   /** @group setParam */
   def setInputCol(value: String): this.type = set(inputCol, value)
 
   /** @group setParam */
   def setOutputCol(value: String): this.type = set(outputCol, value)
+
+  val numFilters = new IntParam(this, "numFilters", "numFilters", ParamValidators.gt(0))
 
   /** @group getParam */
   def getNumFilters: Int = $(numFilters)
@@ -47,30 +45,17 @@ class TransposeFlip ( override val uid: String)
   def setNumFilters(value: Int): this.type = set(numFilters, value)
 
   override def transform(dataset: Dataset[_]): DataFrame = {
-
+    val model = DeepSpeech2ModelLoader.loadModel(modelPath)
     val outputSchema = transformSchema(dataset.schema)
-    val convert = udf { (samples: mutable.WrappedArray[Float]) =>
-      val count = samples.size / $(numFilters)
-      // rescale to [0, 255]
-      val min = 0
-      val max = 255
-      val oldMax = samples.max
-      val oldMin = samples.min
-      val oldRange = oldMax - oldMin
-
-      val normArray = samples.map { d =>
-        if (!d.isNaN) {
-          val raw = if (oldRange != 0) (d - oldMin) / oldRange else 0.5F
-          raw * max
-        } else {
-          d
-        }
-      }
-      val m = new BDM[Float](count, $(numFilters), normArray.toArray)
-      val result = fliplr(m).t
-      result.data.map(d => Math.round(d).toFloat)
+    val height = $(numFilters)
+    val reScale = udf { (samples: mutable.WrappedArray[Float]) =>
+      val width = samples.size / height
+      val input = Tensor[Float](Storage(samples.toArray), 1, Array(1, 1, height, width))
+      val output = model.forward(input).toTensor[Float].transpose(2, 3)
+      output.storage().toArray
     }
-    dataset.withColumn($(outputCol), convert(col($(inputCol))))
+
+    dataset.withColumn($(outputCol), reScale(col($(inputCol))))
   }
 
   override def transformSchema(schema: StructType): StructType = {
@@ -80,12 +65,12 @@ class TransposeFlip ( override val uid: String)
     StructType(outputFields)
   }
 
-  override def copy(extra: ParamMap): TransposeFlip = defaultCopy(extra)
-}
-
-object TransposeFlip extends DefaultParamsReadable[TransposeFlip] {
-  override def load(path: String): TransposeFlip = super.load(path)
+  override def copy(extra: ParamMap): DeepSpeech2ModelTransformer = defaultCopy(extra)
 }
 
 
-
+object DeepSpeech2ModelTransformer extends DefaultParamsReadable[DeepSpeech2ModelTransformer] {
+  override def load(path: String): DeepSpeech2ModelTransformer = {
+    super.load(path)
+  }
+}

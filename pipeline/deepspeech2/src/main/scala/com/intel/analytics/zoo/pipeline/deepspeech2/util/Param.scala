@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.intel.analytics.deepspeech2.util
+package com.intel.analytics.zoo.pipeline.deepspeech2.util
 
 import scopt.OptionParser
 

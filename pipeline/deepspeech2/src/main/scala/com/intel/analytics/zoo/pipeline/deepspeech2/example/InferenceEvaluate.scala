@@ -13,20 +13,21 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intel.analytics.deepspeech2.example
+
+package com.intel.analytics.zoo.pipeline.deepspeech2.example
 
 import scala.io.Source
 
 import com.intel.analytics.bigdl.utils.Engine
-import com.intel.analytics.deepspeech2.pipeline.acoustic._
-import com.intel.analytics.deepspeech2.util.{LocalOptimizerPerfParam, parser}
+import com.intel.analytics.zoo.pipeline.deepspeech2.pipeline.acoustic._
+import com.intel.analytics.zoo.pipeline.deepspeech2.util.{LocalOptimizerPerfParam, parser}
 import org.apache.log4j.{Level, Logger}
 import org.apache.spark.ml.{Pipeline, PipelineModel}
 import org.apache.spark.ml.feature.FlacReader
 import org.apache.spark.sql.{DataFrame, Row, SparkSession}
 
 /**
- * load trained model to inference the audio files.
+ * load trained model to inference the labelled audio files, and evaluate the result transcript.
  */
 object InferenceEvaluate {
 

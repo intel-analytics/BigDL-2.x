@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.intel.analytics.deepspeech2.pipeline.acoustic
+package com.intel.analytics.zoo.pipeline.deepspeech2.pipeline.acoustic
 
 import scala.collection.mutable
 

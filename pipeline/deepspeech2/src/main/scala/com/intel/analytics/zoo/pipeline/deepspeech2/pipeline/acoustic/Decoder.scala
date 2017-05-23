@@ -13,7 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intel.analytics.deepspeech2.pipeline.acoustic
+
+package com.intel.analytics.zoo.pipeline.deepspeech2.pipeline.acoustic
 
 import scala.collection.immutable.HashMap
 import scala.collection.mutable.ArrayBuffer
