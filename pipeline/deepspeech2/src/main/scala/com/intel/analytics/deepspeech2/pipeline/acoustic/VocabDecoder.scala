@@ -34,7 +34,7 @@ import org.apache.spark.sql.functions.{col, struct, udf}
 import org.apache.spark.sql.types.{StringType, StructField, StructType}
 import org.apache.spark.sql.{DataFrame, Dataset, Row}
 
-class LanguageDecoder(override val uid: String, modelPath: String) extends Transformer
+class VocabDecoder(override val uid: String, modelPath: String) extends Transformer
   with HasInputCol with HasOutputCol with DefaultParamsWritable {
 
   def this(modelPath: String) = this(Identifiable.randomUID("LanguageDecoder"), modelPath)
@@ -52,18 +52,6 @@ class LanguageDecoder(override val uid: String, modelPath: String) extends Trans
 
   /** @group setParam */
   def setAlphabet(value: String): this.type = set(alphabet, value)
-
-  val vocab : StringArrayParam = new StringArrayParam(this, "vocab", "vocab")
-
-  private val fs = FileSystem.get(new URI(modelPath), new Configuration())
-  try {
-    val br = new BufferedReader(new InputStreamReader(fs.open(new Path(modelPath, "vocab.txt"))));
-    val modelVocab = br.lines().toArray().map(_.asInstanceOf[String].trim).filter(_.nonEmpty).map(_.toUpperCase)
-    setDefault(vocab -> modelVocab)
-  }
-  finally {
-    fs.close()
-  }
 
   val uttLength = new IntParam(this, "uttLength", "uttLength", ParamValidators.gt(0))
   setDefault(uttLength -> 3000)
@@ -92,7 +80,16 @@ class LanguageDecoder(override val uid: String, modelPath: String) extends Trans
   def setOriginalSizeCol(value: String): this.type = set(originalSizeCol, value)
 
   override def transform(dataset: Dataset[_]): DataFrame = {
-    val vocabSet = $(vocab).toSet
+    val fs = FileSystem.get(new URI(modelPath), new Configuration())
+    val vocab = try {
+      val br = new BufferedReader(new InputStreamReader(fs.open(new Path(modelPath, "vocab.txt"))));
+      val modelVocab = br.lines().toArray().map(_.asInstanceOf[String].trim).filter(_.nonEmpty).map(_.toUpperCase)
+      modelVocab
+    } finally {
+      fs.close()
+    }
+
+    val vocabSet = vocab.toSet
     val decoder = new BestPathDecoder($(alphabet), 0, 28)
     val outputSchema = transformSchema(dataset.schema)
     val assembleFunc = udf { r: Row =>
@@ -113,10 +110,10 @@ class LanguageDecoder(override val uid: String, modelPath: String) extends Trans
           var minDist = Int.MaxValue
           var minWord = word
           var i = 0
-          val maxLength = $(vocab).length
+          val maxLength = vocab.length
           var found = false
           while (i < maxLength && !found) {
-            val w = $(vocab)(i)
+            val w = vocab(i)
             val dist = stringDistance(w, word)
             if (dist < minDist) {
               minDist = dist
@@ -161,11 +158,11 @@ class LanguageDecoder(override val uid: String, modelPath: String) extends Trans
     StructType(outputFields)
   }
 
-  override def copy(extra: ParamMap): LanguageDecoder = defaultCopy(extra)
+  override def copy(extra: ParamMap): VocabDecoder = defaultCopy(extra)
 }
 
 
-object LanguageDecoder extends DefaultParamsReadable[LanguageDecoder] {
-  override def load(path: String): LanguageDecoder = super.load(path)
+object VocabDecoder extends DefaultParamsReadable[VocabDecoder] {
+  override def load(path: String): VocabDecoder = super.load(path)
 }
 
