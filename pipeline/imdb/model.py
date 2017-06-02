@@ -14,16 +14,16 @@
 # limitations under the License.
 #
 
-from optparse import OptionParser
-
-from dataset import news20
-import imdb
-from nn.layer import *
-from nn.criterion import *
-from optim.optimizer import *
-from util.common import *
-import numpy as np
 import itertools
+import numpy as np
+from dataset import news20
+from nn.criterion import *
+from nn.layer import *
+from optim.optimizer import *
+from optparse import OptionParser
+from util.common import *
+
+import imdb
 
 padding_value = 1
 start_char = 2
