@@ -6,6 +6,8 @@
 Currently Bigdl has added support for ssd with vgg as base model,
 with 300*300 input resolution.
 
+The python notebook example can be found [here](https://github.com/intel-analytics/analytics-zoo/blob/master/notebook/example/SSD.ipynb)
+
 ## Prepare the dataset
 
 
