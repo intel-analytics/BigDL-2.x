@@ -29,7 +29,7 @@ import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric
  * @tparam T Numeric type. Only support float/double now
  */
 class ReverseDS[T: ClassTag](dim: Int = 1) (implicit ev: TensorNumeric[T])
-    extends TensorModule[T] {
+  extends TensorModule[T] {
 
   val buffer = Tensor[T]()
 
@@ -82,8 +82,8 @@ class ReverseDS[T: ClassTag](dim: Int = 1) (implicit ev: TensorNumeric[T])
   override def hashCode(): Int = super.hashCode()
 
   override def canEqual(other: Any): Boolean = other.isInstanceOf[JoinTable[T]]
-
 }
+
 
 object ReverseDS {
   def apply[@specialized(Float, Double) T: ClassTag](

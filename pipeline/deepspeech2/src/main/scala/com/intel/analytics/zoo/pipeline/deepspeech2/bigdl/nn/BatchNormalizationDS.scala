@@ -25,9 +25,8 @@ class BatchNormalizationDS[@specialized(Float, Double) T: ClassTag](
     nOutput: Int,
     eps: Double = 1e-3,
     momentum: Double = 0.1,
-    affine: Boolean = false)
-    (implicit ev: TensorNumeric[T]
-    ) extends BatchNormalization[T](nOutput, eps, momentum, affine) {
+    affine: Boolean = false)(implicit ev: TensorNumeric[T])
+  extends BatchNormalization[T](nOutput, eps, momentum, affine) {
 
   val batchDim = 0
   val timeDim = 1
@@ -92,6 +91,7 @@ class BatchNormalizationDS[@specialized(Float, Double) T: ClassTag](
     state.map(_.hashCode()).foldLeft(0)((a, b) => 31 * a + b)
   }
 }
+
 
 object BatchNormalizationDS {
   def apply[@specialized(Float, Double) T: ClassTag](
