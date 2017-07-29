@@ -120,20 +120,15 @@ class Bagging[
   override def fit(dataset: Dataset[_]): BaggingModel[M] = {
     Random.setSeed($(seed))
     val models = (0 until $(numModels)).map { _ =>
-//      val bootstrapSample = dataset.sample(true, 1.0, Random.nextLong())
       val sampler = new StratifiedSampler(Map(2 -> 0.05, 1-> 10, 0 -> 1)).setLabel("Class")
       val bootstrapSample = sampler.transform(dataset)
       println("sample fraud: " + bootstrapSample.filter("Class=1").count())
       println("sample normal: " + bootstrapSample.filter("Class=2").count())
-
       val oldclassifier = $(predictor).asInstanceOf[DLClassifier[Float]]
-
       val dlClassifier = new DLClassifier(oldclassifier.model, oldclassifier.criterion, Array(29)).setLabelCol("Class")
         .setBatchSize(oldclassifier.getBatchSize)
         .setMaxEpoch(oldclassifier.getMaxEpoch)
-
-      dlClassifier
-        .fit(bootstrapSample).asInstanceOf[M]
+      dlClassifier.fit(bootstrapSample).asInstanceOf[M]
     }
     copyValues(new BaggingModel[M](uid, models).setParent(this))
   }

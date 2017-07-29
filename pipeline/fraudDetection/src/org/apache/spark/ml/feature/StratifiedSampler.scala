@@ -50,10 +50,6 @@ final class StratifiedSampler private (
   def this(fraction: Map[Any, Double]) =
     this(Identifiable.randomUID("stratifiedSampling"), fraction)
 
-//  @Since("2.0.0")
-//  def this(fraction: java.util.Map[_, Double]) =
-//    this(fraction.asScala.toMap)
-
   /** @group setParam */
   @Since("2.0.0")
   def setSeed(value: Long): this.type = set(seed, value)

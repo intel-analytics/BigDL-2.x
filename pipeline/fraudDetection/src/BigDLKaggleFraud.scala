@@ -5,7 +5,7 @@ import com.intel.analytics.bigdl.utils.Engine
 import org.apache.log4j.{Level, Logger}
 import org.apache.spark.ml.ensemble.Bagging
 import org.apache.spark.ml.evaluation.{BinaryClassificationEvaluator, MulticlassClassificationEvaluator}
-import org.apache.spark.ml.feature.{FuncTransformer, MinMaxScaler, StandardScaler, VectorAssembler}
+import org.apache.spark.ml.feature.{FuncTransformer, StandardScaler, VectorAssembler}
 import org.apache.spark.ml.{DLClassifier, Pipeline}
 import org.apache.spark.sql.functions._
 import org.apache.spark.sql.{DataFrame, SparkSession}
@@ -17,8 +17,7 @@ object BigDLKaggleFraud {
     Logger.getLogger("breeze").setLevel(Level.ERROR)
     val conf = Engine.createSparkConf()
       .set("spark.task.maxFailures", "1")
-    val spark = SparkSession.builder().master("local[4]").appName("ss").config(conf).getOrCreate()
-    import spark.implicits._
+    val spark = SparkSession.builder().master("local[1]").appName("ss").config(conf).getOrCreate()
     Engine.init
 
     val raw = spark.read
