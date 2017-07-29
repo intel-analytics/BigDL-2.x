@@ -82,13 +82,6 @@ final class StratifiedSampler private (
 
   @Since("2.0.0")
   override def transform(data: Dataset[_]): DataFrame = {
-//    transformSchema(data.schema, logging = true)
-//    if (!$(skip)) {
-//      data.stat.sampleBy($(labelCol), fractions, $(seed))
-//    } else {
-//      data.toDF()
-//    }
-
     transformSchema(data.schema)
     val schema = data.schema
     val colId = schema.fieldIndex($(labelCol))
@@ -96,7 +89,6 @@ final class StratifiedSampler private (
       .sampleByKey(true, fractions.toMap)
       .map(_._2)
     data.sqlContext.createDataFrame(result, schema)
-
   }
 
   @Since("2.0.0")
@@ -106,7 +98,6 @@ final class StratifiedSampler private (
       || fractions.keySet.forall(_.isInstanceOf[Int])
       || fractions.keySet.forall(_.isInstanceOf[Boolean]),
       s"only support stratum of type String, Int and Boolean")
-//    require(fractions.values.forall(v => v >= 0 && v <= 1), "sampling rate should be in [0, 1]")
     schema
   }
 
