@@ -6,27 +6,13 @@
 
     <parent>
         <groupId>com.intel.analytics</groupId>
-        <artifactId>DLFeature-parent</artifactId>
+        <artifactId>vision</artifactId>
         <version>0.1-SNAPSHOT</version>
         <relativePath>../pom.xml</relativePath>
     </parent>
 
-    <artifactId>DLfeature-core</artifactId>
+    <artifactId>vision-core</artifactId>
     <version>0.1-SNAPSHOT</version>
-
-    <developers>
-        <developer>
-            <name>Jason Dai</name>
-            <email>jason.dai@intel.com</email>
-            <organization>Intel</organization>
-            <organizationUrl>http://www.intel.com</organizationUrl>
-        </developer>
-    </developers>
-
-    <scm>
-        <connection>scm:git:git@github.com:intel-analytics/BigDL.git</connection>
-        <url>https://github.com/intel-analytics/BigDL/tree/master</url>
-    </scm>
 
     <repositories>
         <repository>
