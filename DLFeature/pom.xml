@@ -1,0 +1,160 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <groupId>com.intel.analytics</groupId>
+    <artifactId>DLFeature-parent</artifactId>
+    <version>0.1-SNAPSHOT</version>
+    <packaging>pom</packaging>
+
+    <name>DLFeature</name>
+    <description>A distributed deep learning DLFeature library for Apache Spark.</description>
+    <url>https://github.com/intel-analytics/BigDL</url>
+
+    <modules>
+        <module>opencv</module>
+        <module>core</module>
+    </modules>
+
+    <developers>
+        <developer>
+            <name>Jason Dai</name>
+            <email>jason.dai@intel.com</email>
+            <organization>Intel</organization>
+            <organizationUrl>http://www.intel.com</organizationUrl>
+        </developer>
+    </developers>
+
+    <scm>
+        <connection>scm:git:git@github.com:intel-analytics/BigDL.git</connection>
+        <url>https://github.com/intel-analytics/BigDL/tree/master</url>
+    </scm>
+
+    <repositories>
+        <repository>
+            <id>central</id>
+            <name>Maven Repository</name>
+            <url>https://repo1.maven.org/maven2</url>
+            <releases>
+                <enabled>true</enabled>
+            </releases>
+            <snapshots>
+                <enabled>false</enabled>
+            </snapshots>
+        </repository>
+        <repository>
+            <id>apache-repo</id>
+            <name>Apache Repository</name>
+            <url>https://repository.apache.org/content/repositories/releases</url>
+            <releases>
+                <enabled>true</enabled>
+            </releases>
+            <snapshots>
+                <enabled>false</enabled>
+            </snapshots>
+        </repository>
+        <repository>
+            <id>jboss-repo</id>
+            <name>JBoss Repository</name>
+            <url>https://repository.jboss.org/nexus/content/repositories/releases</url>
+            <releases>
+                <enabled>true</enabled>
+            </releases>
+            <snapshots>
+                <enabled>false</enabled>
+            </snapshots>
+        </repository>
+        <repository>
+            <id>sonatype</id>
+            <name>sonatype repository</name>
+            <url>https://oss.sonatype.org/content/groups/public/</url>
+            <releases>
+                <enabled>true</enabled>
+            </releases>
+            <snapshots>
+                <enabled>true</enabled>
+            </snapshots>
+        </repository>
+    </repositories>
+
+    <licenses>
+        <license>
+            <name>Apache License, Version 2.0</name>
+            <url>http://www.apache.org/licenses/LICENSE-2.0.txt</url>
+        </license>
+    </licenses>
+
+
+    <properties>
+        <java.version>1.7</java.version>
+        <javac.version>1.7</javac.version>
+        <spark-scope>provided</spark-scope>
+        <scala.major.version>2.11</scala.major.version>
+        <scala.version>2.11.8</scala.version>
+        <scala.macros.version>2.1.0</scala.macros.version>
+        <scalatest.version>2.2.4</scalatest.version>
+        <spark.version>2.1.0</spark.version>
+    </properties>
+
+
+    <profiles>
+        <profile>
+            <id>spark_2.1</id>
+            <activation>
+                <activeByDefault>true</activeByDefault>
+            </activation>
+            <dependencies>
+                <dependency>
+                    <groupId>com.intel.analytics.bigdl</groupId>
+                    <artifactId>bigdl-SPARK_2.1</artifactId>
+                    <version>0.2.0-SNAPSHOT</version>
+                    <scope>${spark-scope}</scope>
+                </dependency>
+            </dependencies>
+        </profile>
+    </profiles>
+
+    <dependencyManagement>
+        <dependencies>
+            <dependency>
+                <groupId>org.scala-lang</groupId>
+                <artifactId>scala-compiler</artifactId>
+                <version>${scala.version}</version>
+                <scope>${spark-scope}</scope>
+            </dependency>
+            <dependency>
+                <groupId>org.scala-lang</groupId>
+                <artifactId>scala-reflect</artifactId>
+                <version>${scala.version}</version>
+                <scope>${spark-scope}</scope>
+            </dependency>
+            <dependency>
+                <groupId>org.scala-lang</groupId>
+                <artifactId>scala-library</artifactId>
+                <version>${scala.version}</version>
+                <scope>${spark-scope}</scope>
+            </dependency>
+            <dependency>
+                <groupId>org.scala-lang</groupId>
+                <artifactId>scala-actors</artifactId>
+                <version>${scala.version}</version>
+                <scope>${spark-scope}</scope>
+            </dependency>
+            <dependency>
+                <groupId>org.scala-lang</groupId>
+                <artifactId>scalap</artifactId>
+                <version>${scala.version}</version>
+                <scope>${spark-scope}</scope>
+            </dependency>
+            <dependency>
+                <groupId>org.scalatest</groupId>
+                <artifactId>scalatest_${scala.major.version}</artifactId>
+                <version>${scalatest.version}</version>
+                <scope>${spark-scope}</scope>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
+
+</project>
