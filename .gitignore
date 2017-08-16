@@ -1,1 +1,5 @@
-.idea/*
+.idea/
+target/
+*.iml
+*.pyc
+*.log
