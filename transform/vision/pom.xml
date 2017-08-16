@@ -5,13 +5,13 @@
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>com.intel.analytics</groupId>
-    <artifactId>DLFeature-parent</artifactId>
+    <artifactId>vision</artifactId>
     <version>0.1-SNAPSHOT</version>
     <packaging>pom</packaging>
 
-    <name>DLFeature</name>
-    <description>A distributed deep learning DLFeature library for Apache Spark.</description>
-    <url>https://github.com/intel-analytics/BigDL</url>
+    <name>vision</name>
+    <description>Vision transformers</description>
+    <url>https://github.com/intel-analytics/analytics-zoo</url>
 
     <modules>
         <module>opencv</module>
@@ -28,8 +28,8 @@
     </developers>
 
     <scm>
-        <connection>scm:git:git@github.com:intel-analytics/BigDL.git</connection>
-        <url>https://github.com/intel-analytics/BigDL/tree/master</url>
+        <connection>scm:git:git@github.com/intel-analytics/analytics-zoo.git</connection>
+        <url>https://github.com/intel-analytics/analytics-zoo/tree/master</url>
     </scm>
 
     <repositories>
