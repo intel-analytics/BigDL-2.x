@@ -80,7 +80,7 @@ class ImageAugmentationSpec extends FlatSpec with Matchers {
     val feature = new Feature
     val classes = Array(11.0, 11.0, 11.0, 16.0, 16.0, 16.0, 11.0, 16.0,
       16.0, 16.0, 16.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
-      0.0, 0.0, 0.0, 0.0, 1.0).map(_.toFloat) //)).resize(2, 11)
+      0.0, 0.0, 0.0, 0.0, 1.0).map(_.toFloat)
     val boxes = Array(2.0, 84.0, 59.0, 248.0,
       68.0, 115.0, 233.0, 279.0,
       64.0, 173.0, 377.0, 373.0,
@@ -91,7 +91,7 @@ class ImageAugmentationSpec extends FlatSpec with Matchers {
       58.0, 54.0, 104.0, 139.0,
       279.0, 1.0, 331.0, 86.0,
       320.0, 22.0, 344.0, 96.0,
-      337.0, 1.0, 390.0, 107.0).map(_.toFloat) //)).resize(11, 4)
+      337.0, 1.0, 390.0, 107.0).map(_.toFloat)
     val label = RoiLabel(Tensor(Storage(classes)).resize(2, 11),
       Tensor(Storage(boxes)).resize(11, 4))
     feature(Feature.mat) = img
@@ -111,7 +111,7 @@ class ImageAugmentationSpec extends FlatSpec with Matchers {
     val feature = new Feature
     val classes = Array(11.0, 11.0, 11.0, 16.0, 16.0, 16.0, 11.0, 16.0,
       16.0, 16.0, 16.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
-      0.0, 0.0, 0.0, 0.0, 1.0).map(_.toFloat) //)).resize(2, 11)
+      0.0, 0.0, 0.0, 0.0, 1.0).map(_.toFloat)
     val boxes = Array(2.0, 84.0, 59.0, 248.0,
       68.0, 115.0, 233.0, 279.0,
       64.0, 173.0, 377.0, 373.0,
@@ -122,12 +122,12 @@ class ImageAugmentationSpec extends FlatSpec with Matchers {
       58.0, 54.0, 104.0, 139.0,
       279.0, 1.0, 331.0, 86.0,
       320.0, 22.0, 344.0, 96.0,
-      337.0, 1.0, 390.0, 107.0).map(_.toFloat) //)).resize(11, 4)
+      337.0, 1.0, 390.0, 107.0).map(_.toFloat)
     val label = RoiLabel(Tensor(Storage(classes)).resize(2, 11),
       Tensor(Storage(boxes)).resize(11, 4))
     feature(Feature.mat) = img
     feature(Feature.label) = label
-    val expand = RoiNormalize() -> new RandomOp(Expand() -> RoiExpand()
+    val expand = RoiNormalize() -> RandomOp(Expand() -> RoiExpand()
       , 0.5)
     expand(feature)
     val tmpFile = java.io.File.createTempFile("module", ".jpg")
@@ -226,6 +226,51 @@ class ImageAugmentationSpec extends FlatSpec with Matchers {
     out.foreach(img => {
       val tmpFile = java.io.File.createTempFile("module", ".jpg")
       val mat = MatWrapper.floatToMat(img.getFloats(), img.getHeight(), img.getWidth())
+      Imgcodecs.imwrite(tmpFile.getAbsolutePath, mat)
+      println(s"save to ${tmpFile.getAbsolutePath}, "
+        + new File(tmpFile.getAbsolutePath).length())
+    })
+  }
+
+  "ImageAugmentation with label and random" should "work properly" in {
+    import scala.sys.process._
+    val resource = getClass().getClassLoader().getResource("image/000025.jpg")
+    val img = Files.readAllBytes(Paths.get(resource.getFile))
+    val classes = Array(11.0, 11.0, 11.0, 16.0, 16.0, 16.0, 11.0, 16.0,
+      16.0, 16.0, 16.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
+      0.0, 0.0, 0.0, 0.0, 1.0).map(_.toFloat)
+    val boxes = Array(2.0, 84.0, 59.0, 248.0,
+      68.0, 115.0, 233.0, 279.0,
+      64.0, 173.0, 377.0, 373.0,
+      320.0, 2.0, 496.0, 375.0,
+      221.0, 4.0, 341.0, 374.0,
+      135.0, 14.0, 220.0, 148.0,
+      69.0, 43.0, 156.0, 177.0,
+      58.0, 54.0, 104.0, 139.0,
+      279.0, 1.0, 331.0, 86.0,
+      320.0, 22.0, 344.0, 96.0,
+      337.0, 1.0, 390.0, 107.0).map(_.toFloat)
+    val label = RoiLabel(Tensor(Storage(classes)).resize(2, 11),
+      Tensor(Storage(boxes)).resize(11, 4))
+
+    val feature = Feature(img, Some(resource.getFile), Some(label))
+    val imgAug = BytesToMat() ->
+      RoiNormalize() ->
+      ColorJitter() ->
+      RandomOp(Expand() -> RoiExpand(), 0.5) ->
+      RandomSampler() ->
+      Resize(300, 300, -1) ->
+      RandomOp(HFlip() -> RoiHFlip(), 0.5) ->
+      MatToFloats()
+    val transformedImg = imgAug(feature)
+
+    val features = Array(feature).toIterator
+    val featureIter = imgAug.toIterator(features)
+
+    featureIter.foreach(img => {
+      val tmpFile = java.io.File.createTempFile("module", ".jpg")
+      val mat = MatWrapper.floatToMat(img.getFloats(), img.getHeight(), img.getWidth())
+      visulize(label, mat)
       Imgcodecs.imwrite(tmpFile.getAbsolutePath, mat)
       println(s"save to ${tmpFile.getAbsolutePath}, "
         + new File(tmpFile.getAbsolutePath).length())

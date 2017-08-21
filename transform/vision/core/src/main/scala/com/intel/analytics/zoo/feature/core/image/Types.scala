@@ -51,11 +51,13 @@ class Feature extends Serializable {
   }
 
   def getWidth(): Int = {
-    inputMat().width()
+    if (state.contains(Feature.width)) state(Feature.width).asInstanceOf[Int]
+    else inputMat().width()
   }
 
   def getHeight(): Int = {
-    inputMat().height()
+    if (state.contains(Feature.height)) state(Feature.height).asInstanceOf[Int]
+    else inputMat().height()
   }
 
   def getOriginalWidth: Int = state(Feature.originalW).asInstanceOf[Int]
@@ -72,7 +74,7 @@ class Feature extends Serializable {
 
 
   def copyTo(storage: Array[Float], offset: Int,
-    toRGB: Boolean = true): Unit = {
+             toRGB: Boolean = true): Unit = {
     val data = getFloats()
     val frameLength = getWidth() * getHeight()
     require(frameLength * 3 + offset <= storage.length)
@@ -101,6 +103,8 @@ object Feature {
   val mat = "mat"
   val bytes = "bytes"
   val floats = "floats"
+  val width = "width"
+  val height = "height"
   // original image width
   val originalW = "originalW"
   val originalH = "originalH"
