@@ -16,7 +16,10 @@
 
 package com.intel.analytics.zoo.feature.core.util
 
+import com.intel.analytics.bigdl.utils.Engine
 import com.intel.analytics.zoo.feature.core.image.{Crop, Resize}
+import org.apache.log4j.{Level, Logger}
+import org.apache.spark.SparkContext
 import org.scalatest.{FlatSpec, Matchers}
 
 class MatWrapperSpec extends FlatSpec with Matchers {
@@ -42,6 +45,24 @@ class MatWrapperSpec extends FlatSpec with Matchers {
       if (x._2 != x._1) {
         println(x._2 - x._1)
       }
+    })
+  }
+
+  "serialize" should "work properly" in {
+    val resource = getClass().getClassLoader().getResource("image/000025.jpg")
+    val img = MatWrapper.read(resource.getFile)
+    println(img.width(), img.height())
+    var sc: SparkContext = null
+
+    Logger.getLogger("org").setLevel(Level.WARN)
+    Logger.getLogger("akka").setLevel(Level.WARN)
+    val conf = Engine.createSparkConf().setMaster("local[2]")
+      .setAppName("BigDL SSD Demo")
+    sc = new SparkContext(conf)
+    Engine.init
+    val rdd = sc.parallelize(Array(img))
+    rdd.foreach(mat => {
+      println(mat.height(), mat.width())
     })
   }
 }
