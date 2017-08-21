@@ -16,20 +16,20 @@
 
 package com.intel.analytics.zoo.feature.core.image
 
+import com.intel.analytics.bigdl.utils.RandomGenerator._
 import com.intel.analytics.zoo.feature.core.util.MatWrapper
 
-class Contrast(delta: Float)
+class Contrast(deltaLow: Double, deltaHigh: Double)
   extends FeatureTransformer {
-  override def transform(input: MatWrapper, output: MatWrapper, feature: Feature): Boolean = {
-    Contrast.transform(input, output, delta)
-    true
+  override def transform(feature: Feature): Unit = {
+    Contrast.transform(feature.inputMat(), feature.inputMat(), RNG.uniform(deltaLow, deltaHigh))
   }
 }
 
 object Contrast {
-  def apply(delta: Float): Contrast = new Contrast(delta)
+  def apply(deltaLow: Double, deltaHigh: Double): Contrast = new Contrast(deltaLow, deltaHigh)
 
-  def transform(input: MatWrapper, output: MatWrapper, delta: Float): MatWrapper = {
+  def transform(input: MatWrapper, output: MatWrapper, delta: Double): MatWrapper = {
     if (Math.abs(delta - 1) > 1e-3) {
       input.convertTo(output, -1, delta, 0)
     } else {

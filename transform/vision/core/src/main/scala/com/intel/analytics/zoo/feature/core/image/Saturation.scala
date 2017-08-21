@@ -18,27 +18,25 @@ package com.intel.analytics.zoo.feature.core.image
 
 import java.util
 
-import com.intel.analytics.bigdl.dataset.Transformer
+import com.intel.analytics.bigdl.utils.RandomGenerator._
 import com.intel.analytics.zoo.feature.core.util.MatWrapper
 import org.opencv.core.{Core, Mat}
 import org.opencv.imgproc.Imgproc
 
 /**
  * Adjust image saturation
- * @param delta
  */
-class Saturation(delta: Float)
+class Saturation(deltaLow: Double, deltaHigh: Double)
   extends FeatureTransformer {
-  override def transform(input: MatWrapper, output: MatWrapper, feature: Feature): Boolean = {
-    Saturation.transform(input, output, delta)
-    true
+  override def transform(feature: Feature): Unit = {
+    Saturation.transform(feature.inputMat(), feature.inputMat(), RNG.uniform(deltaLow, deltaHigh))
   }
 }
 
 object Saturation {
-  def apply(delta: Float): Saturation = new Saturation(delta)
+  def apply(deltaLow: Double, deltaHigh: Double): Saturation = new Saturation(deltaLow, deltaHigh)
 
-  def transform(input: MatWrapper, output: MatWrapper, delta: Float): MatWrapper = {
+  def transform(input: MatWrapper, output: MatWrapper, delta: Double): MatWrapper = {
     if (Math.abs(delta - 1) != 1e-3) {
       // Convert to HSV colorspace
       Imgproc.cvtColor(input, output, Imgproc.COLOR_BGR2HSV)

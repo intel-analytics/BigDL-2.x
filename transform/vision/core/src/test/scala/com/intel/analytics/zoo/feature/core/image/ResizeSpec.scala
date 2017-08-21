@@ -30,8 +30,8 @@ class ResizeSpec extends FlatSpec {
     val img = Files.readAllBytes(Paths.get(resource.getFile))
 
     val r = 500
-    val byteImage2 = Array(ByteImage(img)).toIterator.flatMap(x => {
-      (1 to 10).toIterator.map(i => x.image)
+    val byteImage2 = Array(Feature(img)).toIterator.flatMap(x => {
+      (1 to 10).toIterator.map(i => x(Feature.bytes).asInstanceOf[Array[Byte]])
     })
 
     val reize = new RoiImageResizer(r)
@@ -43,15 +43,14 @@ class ResizeSpec extends FlatSpec {
 
     println("java takes " + (System.nanoTime() - start2) / 1e9)
 
-    val byteImage = Array(ByteImage(img)).toIterator.flatMap(x => {
+    val byteImage = Array(Feature(img)).toIterator.flatMap(x => {
       (1 to 10).toIterator.map(i => x)
     })
-    val imgAug = new BytesToFeature() ->
-      BytesToMat() ->
+    val imgAug = BytesToMat() ->
       Resize(r, r, -1) ->
       new MatToFloats()
     val start = System.nanoTime()
-    val out = imgAug(byteImage)
+    val out = imgAug.toIterator(byteImage)
     out.foreach(img => {
     })
     println("opencv takes " + (System.nanoTime() - start) / 1e9)

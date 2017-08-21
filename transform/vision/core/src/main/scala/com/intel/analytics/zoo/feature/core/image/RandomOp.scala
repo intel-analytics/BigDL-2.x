@@ -16,22 +16,19 @@
 
 package com.intel.analytics.zoo.feature.core.image
 
-import com.intel.analytics.zoo.feature.core.util.MatWrapper
-import org.opencv.core.Core
+import com.intel.analytics.bigdl.utils.RandomGenerator._
 
-class HFlip(threshProb: Double = 0)
-  extends FeatureTransformer {
-
-  override def transform(feature: Feature): Unit = {
-    HFlip.transform(feature.inputMat(), feature.inputMat())
+class RandomOp(transformer: SingleTransformer[Feature, Feature], maxProb: Double)
+  extends SingleTransformer[Feature, Feature] {
+  override def apply(prev: Feature): Feature = {
+    if (RNG.uniform(0, 1) < maxProb) {
+      transformer(prev)
+    }
+    prev
   }
 }
 
-object HFlip {
-  def apply(): HFlip = new HFlip()
-
-  def transform(input: MatWrapper, output: MatWrapper): MatWrapper = {
-    Core.flip(input, output, 1)
-    output
-  }
+object RandomOp {
+  def apply(transformer: SingleTransformer[Feature, Feature], maxProb: Double): RandomOp =
+    new RandomOp(transformer, maxProb)
 }

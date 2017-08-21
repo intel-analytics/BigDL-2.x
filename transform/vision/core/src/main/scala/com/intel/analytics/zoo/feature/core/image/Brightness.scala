@@ -16,27 +16,34 @@
 
 package com.intel.analytics.zoo.feature.core.image
 
+import com.intel.analytics.bigdl.utils.RandomGenerator._
 import com.intel.analytics.zoo.feature.core.util.MatWrapper
 
 /**
  * adjust the image brightness
- * @param delta brightness parameter
- * if delta > 0, increase the brightness
- * if delta < 0, decrease the brightness
+ * @param deltaLow brightness parameter
  */
-class Brightness(delta: Float)
+class Brightness(deltaLow: Double, deltaHigh: Double)
   extends FeatureTransformer {
-  override def transform(input: MatWrapper, output: MatWrapper, feature: Feature): Boolean = {
-    Brightness.transform(input, output, delta)
-    true
+  require(deltaLow <= deltaHigh)
+  override def transform(feature: Feature): Unit = {
+    Brightness.transform(feature.inputMat(), feature.inputMat(), RNG.uniform(deltaLow, deltaHigh))
   }
 }
 
 object Brightness {
-  def apply(delta: Float): Brightness
-  = new Brightness(delta)
+  def apply(deltaLow: Double, deltaHigh: Double): Brightness
+  = new Brightness(deltaLow, deltaHigh)
 
-  def transform(input: MatWrapper, output: MatWrapper, delta: Float): MatWrapper = {
+  /**
+   * if delta > 0, increase the brightness
+   * if delta < 0, decrease the brightness
+   * @param input
+   * @param output
+   * @param delta
+   * @return
+   */
+  def transform(input: MatWrapper, output: MatWrapper, delta: Double): MatWrapper = {
     if (delta != 0) {
       input.convertTo(output, -1, 1, delta)
     } else {

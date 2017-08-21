@@ -16,91 +16,39 @@
 
 package com.intel.analytics.zoo.feature.core.image
 
-import com.intel.analytics.bigdl.dataset.Transformer
 import com.intel.analytics.zoo.feature.core.util.MatWrapper
 import org.apache.log4j.Logger
 
-class BytesToFeature(outKey: String = Feature.bytes) extends Transformer[ByteImage, Feature] {
-  @transient private var feature: Feature = _
-
-  override def apply(prev: Iterator[ByteImage]): Iterator[Feature] = {
-    prev.map(byteImage => {
-      if (feature == null) feature = new Feature
-      feature(outKey) = byteImage.image
-      feature(Feature.path) = byteImage.path
-      feature(Feature.label) = byteImage.label
-      feature.inKey = outKey
-      feature
-    })
-  }
-}
-
-object BytesToFeature {
-  def apply(outKey: String = Feature.bytes): BytesToFeature = new BytesToFeature(outKey)
-}
 
 
-class BytesToMat(inKey: String = Feature.bytes, outKey: String = Feature.mat)
-  extends Transformer[Feature, Feature] {
-
-  override def apply(prev: Iterator[Feature]): Iterator[Feature] = {
-    prev.map(feature => {
-      val bytes = feature(inKey).asInstanceOf[Array[Byte]]
-      var mat: MatWrapper = null
-      try {
-        mat = MatWrapper.toMat(bytes)
-      } catch {
-        case e: Exception =>
-          e.printStackTrace()
-          if (null != mat) mat.release()
-          mat = new MatWrapper()
-      }
-      feature(outKey) = mat
-      feature(Feature.width) = mat.width()
-      feature(Feature.height) = mat.height()
-      feature(Feature.originalW) = mat.width()
-      feature(Feature.originalH) = mat.height()
-      feature.inKey = outKey
-      feature
-    })
+class BytesToMat()
+  extends FeatureTransformer {
+  override def transform(feature: Feature): Unit = {
+    val bytes = feature(Feature.bytes).asInstanceOf[Array[Byte]]
+    var mat: MatWrapper = null
+    try {
+      mat = MatWrapper.toMat(bytes)
+    } catch {
+      case e: Exception =>
+        e.printStackTrace()
+        if (null != mat) mat.release()
+        mat = new MatWrapper()
+    }
+    feature(Feature.mat) = mat
+    feature(Feature.originalW) = mat.width()
+    feature(Feature.originalH) = mat.height()
   }
 }
 
 object BytesToMat {
-  def apply(inKey: String = Feature.bytes, outKey: String = Feature.mat): BytesToMat
-  = new BytesToMat(inKey, outKey)
+  def apply(): BytesToMat = new BytesToMat()
 }
 
 
 class MatToFloats(outKey: String = Feature.floats, meanRGB: Option[(Int, Int, Int)] = None)
-  extends Transformer[Feature, Feature] {
+  extends SingleTransformer[Feature, Feature] {
   @transient private var data: Array[Float] = _
   @transient private var floatMat: MatWrapper = null
-
-  override def apply(prev: Iterator[Feature]): Iterator[Feature] = {
-    prev.map(feature => {
-      var input: MatWrapper = null
-      try {
-        input = feature.inputMat()
-        val height = input.height()
-        val width = input.width()
-        if (null == data || data.length < height * width * 3) {
-          data = new Array[Float](height * width * 3)
-        }
-        if (floatMat == null) {
-          floatMat = new MatWrapper()
-        }
-        feature(outKey) = MatWrapper.toFloatBuf(input, data, floatMat)
-        if (meanRGB.isDefined) {
-          normalize(data, meanRGB.get._1, meanRGB.get._2, meanRGB.get._3)
-        }
-      } finally {
-        feature.inKey = outKey
-        if (null != input) input.release()
-      }
-      feature
-    })
-  }
 
   private def normalize(img: Array[Float], meanR: Int, meanG: Int, meanB: Int): Array[Float] = {
     val content = img
@@ -113,6 +61,28 @@ class MatToFloats(outKey: String = Feature.floats, meanRGB: Option[(Int, Int, In
       i += 3
     }
     img
+  }
+
+  override def apply(feature: Feature): Feature = {
+    var input: MatWrapper = null
+    try {
+      input = feature.inputMat()
+      val height = input.height()
+      val width = input.width()
+      if (null == data || data.length < height * width * 3) {
+        data = new Array[Float](height * width * 3)
+      }
+      if (floatMat == null) {
+        floatMat = new MatWrapper()
+      }
+      feature(outKey) = MatWrapper.toFloatBuf(input, data, floatMat)
+      if (meanRGB.isDefined) {
+        normalize(data, meanRGB.get._1, meanRGB.get._2, meanRGB.get._3)
+      }
+    } finally {
+      if (null != input) input.release()
+    }
+    feature
   }
 }
 

@@ -22,43 +22,18 @@ import com.intel.analytics.bigdl.utils.RandomGenerator._
 import com.intel.analytics.zoo.feature.core.util.{MatWrapper, NormalizedBox}
 import org.opencv.core.{Core, Mat, Rect, Scalar}
 
-import scala.util.Random
 
-class Expand(expandProb: Double = 0.5, maxExpandRatio: Double = 4.0,
-  meansR: Int = 123, meansG: Int = 117, meansB: Int = 104)
+class Expand(meansR: Int = 123, meansG: Int = 117, meansB: Int = 104,
+                  maxExpandRatio: Double = 4.0)
   extends FeatureTransformer {
+
   var expandMat: MatWrapper = _
 
-  override def transform(input: MatWrapper, output: MatWrapper, feature: Feature): Boolean = {
-    if (Math.abs(maxExpandRatio - 1) < 1e-2 || Random.nextFloat() > expandProb) {
-      if (input != output) input.copyTo(output)
-      false
-    } else {
-      if (null == expandMat) expandMat = new MatWrapper()
-      val expandRatio = RNG.uniform(1, maxExpandRatio)
-      val expandBbox = Expand.transform(input, expandRatio, expandMat, meansR, meansG, meansB)
-      expandMat.copyTo(output)
-      if (feature.hasLabel()) {
-        feature("expandBbox") = expandBbox
-      }
-      feature(Feature.height) = output.height()
-      feature(Feature.width) = output.width()
-      if (null != expandMat) expandMat.release()
-      true
-    }
-  }
-}
-
-object Expand {
-  def apply(expandProb: Double = 0.5, maxExpandRatio: Double = 4.0,
-    meansR: Int = 123, meansG: Int = 117, meansB: Int = 104): Expand =
-    new Expand(expandProb, maxExpandRatio, meansR, meansG, meansB)
-
-  def transform(input: MatWrapper, expandRatio: Double,
-    output: MatWrapper,
-    meansR: Int = 123, meansG: Int = 117, meansB: Int = 104): NormalizedBox = {
+  def transform(input: MatWrapper,
+                output: MatWrapper): NormalizedBox = {
     val imgHeight = input.rows()
     val imgWidth = input.cols()
+    val expandRatio = RNG.uniform(1, maxExpandRatio)
     val height = (imgHeight * expandRatio).toInt
     val width = (imgWidth * expandRatio).toInt
     val hOff = RNG.uniform(0, height - imgHeight).floor.toFloat
@@ -85,6 +60,25 @@ object Expand {
     (0 to 2).foreach(channels.get(_).release())
     expandBbox
   }
+
+  override def transform(prev: Feature): Unit = {
+    val mat = prev.inputMat()
+    if (Math.abs(maxExpandRatio - 1) >= 1e-2) {
+      if (null == expandMat) expandMat = new MatWrapper()
+      val expandBbox = transform(mat, expandMat)
+      expandMat.copyTo(mat)
+      if (prev.hasLabel()) {
+        prev("expandBbox") = expandBbox
+      }
+      if (null != expandMat) expandMat.release()
+    }
+  }
+}
+
+object Expand {
+  def apply(meansR: Int = 123, meansG: Int = 117, meansB: Int = 104,
+            maxExpandRatio: Double = 4.0): Expand =
+    new Expand(meansR, meansG, meansB, maxExpandRatio)
 }
 
 
