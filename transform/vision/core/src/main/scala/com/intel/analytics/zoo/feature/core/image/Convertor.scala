@@ -79,6 +79,8 @@ class MatToFloats(outKey: String = Feature.floats, meanRGB: Option[(Int, Int, In
       if (meanRGB.isDefined) {
         normalize(data, meanRGB.get._1, meanRGB.get._2, meanRGB.get._3)
       }
+      feature(Feature.width) = input.width()
+      feature(Feature.height) = input.height()
     } finally {
       if (null != input) input.release()
     }
