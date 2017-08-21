@@ -16,7 +16,7 @@
 
 package com.intel.analytics.zoo.feature.core.util
 
-import java.io.File
+import java.io.{File, IOException, ObjectInputStream, ObjectOutputStream}
 
 import com.intel.analytics.OpenCV
 import org.apache.commons.io.FileUtils
@@ -28,6 +28,30 @@ class MatWrapper() extends Mat with Serializable {
   def this(mat: Mat) {
     this()
     mat.copyTo(this)
+  }
+
+  @throws(classOf[IOException])
+  private def writeObject(out: ObjectOutputStream): Unit = {
+    out.writeInt(rows())
+    out.writeInt(cols())
+    out.writeInt(`type`())
+    val size = (elemSize() * rows() * cols()).toInt
+    out.writeInt(size)
+    val bytes = new Array[Byte](size)
+    get(rows(), cols(), bytes)
+    out.write(bytes)
+  }
+
+  @throws(classOf[IOException])
+  private def readObject(input: ObjectInputStream): Unit = {
+    val rows = input.readInt()
+    val cols = input.readInt()
+    val t = input.readInt()
+    val size = input.readInt()
+    val data = new Array[Byte](size)
+    input.read(data)
+    create(rows, cols, t)
+    put(rows, cols, data)
   }
 }
 
