@@ -19,35 +19,34 @@ package com.intel.analytics.zoo.feature.core.image
 import java.io.File
 import java.nio.file.{Files, Paths}
 
+import com.intel.analytics.bigdl.tensor.{Storage, Tensor}
 import com.intel.analytics.zoo.feature.core.label.roi._
-import com.intel.analytics.zoo.feature.core.util.{MatWrapper, NormalizedBox}
+import com.intel.analytics.zoo.feature.core.util.{BboxUtil, MatWrapper, NormalizedBox}
 import org.opencv.core.{Mat, Point, Scalar}
 import org.opencv.imgcodecs.Imgcodecs
 import org.opencv.imgproc.Imgproc
 import org.scalatest.{FlatSpec, Matchers}
 
-import scala.sys.process._
-
-class ImageAugmentationSpec extends FlatSpec with Matchers{
+class ImageAugmentationSpec extends FlatSpec with Matchers {
   "resize" should "work properly" in {
     val resource = getClass().getClassLoader().getResource("image/000025.jpg")
     val img = MatWrapper.read(resource.getFile)
     val out = Resize.transform(img, img, 300, 300)
     val tmpFile = java.io.File.createTempFile("module", ".jpg")
     Imgcodecs.imwrite(tmpFile.getAbsolutePath, out)
-    println(s"save to ${ tmpFile.getAbsolutePath }, " + new File(tmpFile.getAbsolutePath).length())
+    println(s"save to ${tmpFile.getAbsolutePath}, " + new File(tmpFile.getAbsolutePath).length())
   }
 
   "colorjitter" should "work properly" in {
     val resource = getClass().getClassLoader().getResource("image/000025.jpg")
     val img = MatWrapper.read(resource.getFile)
-    val out = ColorJitter.transform(img, img,
-      0.5, 32, 0.5, 0.5, 1.5, 0.5, 18, 0.5, 0.5, 1.5, 0)
-    val name = s"input000025" +
-      s"colorJitter-${ System.nanoTime() }"
+    val feature = Feature()
+    feature(Feature.mat) = img
+    val colorJitter = ColorJitter()
+    val out = colorJitter(feature)
     val tmpFile = java.io.File.createTempFile("module", ".jpg")
-    Imgcodecs.imwrite(tmpFile.getAbsolutePath, out)
-    println(s"save to ${ tmpFile.getAbsolutePath }, " + new File(tmpFile.getAbsolutePath).length())
+    Imgcodecs.imwrite(tmpFile.getAbsolutePath, img)
+    println(s"save to ${tmpFile.getAbsolutePath}, " + new File(tmpFile.getAbsolutePath).length())
   }
 
   "hflip" should "work properly" in {
@@ -55,23 +54,86 @@ class ImageAugmentationSpec extends FlatSpec with Matchers{
     val img = MatWrapper.read(resource.getFile)
     val out = HFlip.transform(img, img)
     val name = s"input000025" +
-      s"hflip-${ System.nanoTime() }"
+      s"hflip-${System.nanoTime()}"
     val tmpFile = java.io.File.createTempFile("module", ".jpg")
     Imgcodecs.imwrite(tmpFile.getAbsolutePath, out)
-    println(s"save to ${ tmpFile.getAbsolutePath }, " + new File(tmpFile.getAbsolutePath).length())
+    println(s"save to ${tmpFile.getAbsolutePath}, " + new File(tmpFile.getAbsolutePath).length())
   }
 
   "expand" should "work properly" in {
     import scala.sys.process._
     val resource = getClass().getClassLoader().getResource("image/000025.jpg")
     val img = MatWrapper.read(resource.getFile)
-    val expand = new Expand(1)
-    Expand.transform(img, 2, img)
-    val name = s"input000025" +
-      s"expand-${ System.nanoTime() }"
+    val feature = new Feature
+    feature(Feature.mat) = img
+    val expand = new Expand()
+    expand(feature)
     val tmpFile = java.io.File.createTempFile("module", ".jpg")
-    Imgcodecs.imwrite(tmpFile.getAbsolutePath, img)
-    println(s"save to ${ tmpFile.getAbsolutePath }, " + new File(tmpFile.getAbsolutePath).length())
+    Imgcodecs.imwrite(tmpFile.getAbsolutePath, feature.inputMat())
+    println(s"save to ${tmpFile.getAbsolutePath}, " + new File(tmpFile.getAbsolutePath).length())
+  }
+
+  "expand with roi" should "work properly" in {
+    import scala.sys.process._
+    val resource = getClass().getClassLoader().getResource("image/000025.jpg")
+    val img = MatWrapper.read(resource.getFile)
+    val feature = new Feature
+    val classes = Array(11.0, 11.0, 11.0, 16.0, 16.0, 16.0, 11.0, 16.0,
+      16.0, 16.0, 16.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
+      0.0, 0.0, 0.0, 0.0, 1.0).map(_.toFloat) //)).resize(2, 11)
+    val boxes = Array(2.0, 84.0, 59.0, 248.0,
+      68.0, 115.0, 233.0, 279.0,
+      64.0, 173.0, 377.0, 373.0,
+      320.0, 2.0, 496.0, 375.0,
+      221.0, 4.0, 341.0, 374.0,
+      135.0, 14.0, 220.0, 148.0,
+      69.0, 43.0, 156.0, 177.0,
+      58.0, 54.0, 104.0, 139.0,
+      279.0, 1.0, 331.0, 86.0,
+      320.0, 22.0, 344.0, 96.0,
+      337.0, 1.0, 390.0, 107.0).map(_.toFloat) //)).resize(11, 4)
+    val label = RoiLabel(Tensor(Storage(classes)).resize(2, 11),
+      Tensor(Storage(boxes)).resize(11, 4))
+    feature(Feature.mat) = img
+    feature(Feature.label) = label
+    val expand = RoiNormalize() -> Expand() -> RoiExpand()
+    expand(feature)
+    val tmpFile = java.io.File.createTempFile("module", ".jpg")
+    visulize(label, img)
+    Imgcodecs.imwrite(tmpFile.getAbsolutePath, feature.inputMat())
+    println(s"save to ${tmpFile.getAbsolutePath}, " + new File(tmpFile.getAbsolutePath).length())
+  }
+
+  "expand with roi random" should "work properly" in {
+    import scala.sys.process._
+    val resource = getClass().getClassLoader().getResource("image/000025.jpg")
+    val img = MatWrapper.read(resource.getFile)
+    val feature = new Feature
+    val classes = Array(11.0, 11.0, 11.0, 16.0, 16.0, 16.0, 11.0, 16.0,
+      16.0, 16.0, 16.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
+      0.0, 0.0, 0.0, 0.0, 1.0).map(_.toFloat) //)).resize(2, 11)
+    val boxes = Array(2.0, 84.0, 59.0, 248.0,
+      68.0, 115.0, 233.0, 279.0,
+      64.0, 173.0, 377.0, 373.0,
+      320.0, 2.0, 496.0, 375.0,
+      221.0, 4.0, 341.0, 374.0,
+      135.0, 14.0, 220.0, 148.0,
+      69.0, 43.0, 156.0, 177.0,
+      58.0, 54.0, 104.0, 139.0,
+      279.0, 1.0, 331.0, 86.0,
+      320.0, 22.0, 344.0, 96.0,
+      337.0, 1.0, 390.0, 107.0).map(_.toFloat) //)).resize(11, 4)
+    val label = RoiLabel(Tensor(Storage(classes)).resize(2, 11),
+      Tensor(Storage(boxes)).resize(11, 4))
+    feature(Feature.mat) = img
+    feature(Feature.label) = label
+    val expand = RoiNormalize() -> new RandomOp(Expand() -> RoiExpand()
+      , 0.5)
+    expand(feature)
+    val tmpFile = java.io.File.createTempFile("module", ".jpg")
+    visulize(label, img)
+    Imgcodecs.imwrite(tmpFile.getAbsolutePath, feature.inputMat())
+    println(s"save to ${tmpFile.getAbsolutePath}, " + new File(tmpFile.getAbsolutePath).length())
   }
 
   "crop" should "work properly" in {
@@ -81,7 +143,7 @@ class ImageAugmentationSpec extends FlatSpec with Matchers{
     Crop.transform(img, img, NormalizedBox(0, 0f, 1, 0.5f))
     val tmpFile = java.io.File.createTempFile("module", ".jpg")
     Imgcodecs.imwrite(tmpFile.getAbsolutePath, img)
-    println(s"save to ${ tmpFile.getAbsolutePath }, " + new File(tmpFile.getAbsolutePath).length())
+    println(s"save to ${tmpFile.getAbsolutePath}, " + new File(tmpFile.getAbsolutePath).length())
   }
 
   "brightness" should "work properly" in {
@@ -89,10 +151,10 @@ class ImageAugmentationSpec extends FlatSpec with Matchers{
     val img = MatWrapper.read(resource.getFile)
     val out = Brightness.transform(img, img, 32)
     val name = s"input000025" +
-      s"brightness-${ System.nanoTime() }"
+      s"brightness-${System.nanoTime()}"
     val tmpFile = java.io.File.createTempFile("module", ".jpg")
     Imgcodecs.imwrite(tmpFile.getAbsolutePath, out)
-    println(s"save to ${ tmpFile.getAbsolutePath }, " + new File(tmpFile.getAbsolutePath).length())
+    println(s"save to ${tmpFile.getAbsolutePath}, " + new File(tmpFile.getAbsolutePath).length())
   }
 
   "ChannelOrder" should "work properly" in {
@@ -100,10 +162,10 @@ class ImageAugmentationSpec extends FlatSpec with Matchers{
     val img = MatWrapper.read(resource.getFile)
     ChannelOrder.transform(img, img)
     val name = s"input000025" +
-      s"ChannelOrder-${ System.nanoTime() }"
+      s"ChannelOrder-${System.nanoTime()}"
     val tmpFile = java.io.File.createTempFile(name, ".jpg")
     Imgcodecs.imwrite(tmpFile.getAbsolutePath, img)
-    println(s"save to ${ tmpFile.getAbsolutePath }, " + new File(tmpFile.getAbsolutePath).length())
+    println(s"save to ${tmpFile.getAbsolutePath}, " + new File(tmpFile.getAbsolutePath).length())
   }
 
   "Normalize" should "work properly" in {
@@ -152,21 +214,20 @@ class ImageAugmentationSpec extends FlatSpec with Matchers{
     import scala.sys.process._
     val resource = getClass().getClassLoader().getResource("image/000025.jpg")
     val img = Files.readAllBytes(Paths.get(resource.getFile))
-    val byteImage = Array(ByteImage(img)).toIterator
-    val imgAug = new BytesToFeature() ->
-      BytesToMat() ->
+    val features = Array(Feature(img)).toIterator
+    val imgAug = BytesToMat() ->
       ColorJitter() ->
       Expand() ->
       Resize(300, 300, -1) ->
       HFlip() ->
       Normalize((123, 117, 104)) ->
       new MatToFloats()
-    val out = imgAug(byteImage)
+    val out = imgAug.toIterator(features)
     out.foreach(img => {
       val tmpFile = java.io.File.createTempFile("module", ".jpg")
       val mat = MatWrapper.floatToMat(img.getFloats(), img.getHeight(), img.getWidth())
       Imgcodecs.imwrite(tmpFile.getAbsolutePath, mat)
-      println(s"save to ${ tmpFile.getAbsolutePath }, "
+      println(s"save to ${tmpFile.getAbsolutePath}, "
         + new File(tmpFile.getAbsolutePath).length())
     })
   }
@@ -208,29 +269,23 @@ class ImageAugmentationSpec extends FlatSpec with Matchers{
     import scala.sys.process._
     val resource = getClass().getClassLoader().getResource("image/000025.jpg")
     val img = Files.readAllBytes(Paths.get(resource.getFile))
-    val byteImage = Array(ByteImage(img)).toIterator
-    val imgAug = new BytesToFeature() ->
-      BytesToMat() ->
+    val byteImage = Feature(img)
+    val imgAug = BytesToMat() ->
       Crop(useNormalized = false, bbox = Some(NormalizedBox(-1, -1, -1, -1))) ->
       Resize(300, 300, -1) ->
       MatToFloats()
     val out = imgAug(byteImage)
-    out.foreach(img => {
-      img.getFloats().length should be (3 * 300 * 300)
-    })
+    out.getFloats().length should be(3 * 300 * 300)
   }
 
   "Image Transformer with empty byte input" should "work properly" in {
     val img = Array[Byte]()
-    val byteImage = Array(ByteImage(img)).toIterator
-    val imgAug = new BytesToFeature() ->
-      BytesToMat() ->
+    val byteImage = Feature(img)
+    val imgAug = BytesToMat() ->
       Resize(1, 1, -1) ->
       Crop(useNormalized = false, bbox = Some(NormalizedBox(-1, -1, -1, -1))) ->
       MatToFloats()
     val out = imgAug(byteImage)
-    out.foreach(img => {
-      img.getFloats().length should be (3)
-    })
+    out.getFloats().length should be(3)
   }
 }

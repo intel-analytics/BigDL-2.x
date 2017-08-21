@@ -25,7 +25,7 @@ class Crop(useNormalized: Boolean = true,
   roiGenerator: Option[(Feature => NormalizedBox)] = None)
   extends FeatureTransformer {
 
-  override def transform(input: MatWrapper, output: MatWrapper, feature: Feature): Boolean = {
+  override def transform(feature: Feature): Unit = {
     val cropBox = if (bbox.isDefined) {
       bbox.get
     } else if (roiKey.isDefined) {
@@ -44,13 +44,10 @@ class Crop(useNormalized: Boolean = true,
     } else {
       throw new Exception("not supported")
     }
-    Crop.transform(input, output, cropBox, useNormalized)
-    feature(Feature.height) = output.height()
-    feature(Feature.width) = output.width()
+    Crop.transform(feature.inputMat(), feature.inputMat(), cropBox, useNormalized)
     if (feature.hasLabel()) {
       feature("bbox") = cropBox
     }
-    true
   }
 }
 

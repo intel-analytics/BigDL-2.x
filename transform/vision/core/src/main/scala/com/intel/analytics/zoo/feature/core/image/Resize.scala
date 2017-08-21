@@ -38,22 +38,19 @@ class Resize(resizeH: Int, resizeW: Int,
   private val interpMethods = Array(Imgproc.INTER_LINEAR, Imgproc.INTER_CUBIC, Imgproc.INTER_AREA,
     Imgproc.INTER_NEAREST, Imgproc.INTER_LANCZOS4)
 
-  override def transform(input: MatWrapper, output: MatWrapper, feature: Feature): Boolean = {
+  override def transform(feature: Feature): Unit = {
     val interpMethod = if (resizeMode == -1) {
       interpMethods(new Random().nextInt(interpMethods.length))
     } else {
       resizeMode
     }
     try {
-      Resize.transform(input, output, resizeW, resizeH, interpMethod)
+      Resize.transform(feature.inputMat(), feature.inputMat(), resizeW, resizeH, interpMethod)
     } catch {
       case e: Exception =>
         Resize.logger.error(e)
-        output.create(resizeH, resizeW, input.`type`())
+        feature.inputMat().create(resizeH, resizeW, feature.inputMat().`type`())
     }
-    feature(Feature.height) = output.height()
-    feature(Feature.width) = output.width()
-    true
   }
 }
 

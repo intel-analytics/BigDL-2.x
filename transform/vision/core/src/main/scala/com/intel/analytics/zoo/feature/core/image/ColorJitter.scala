@@ -16,7 +16,6 @@
 
 package com.intel.analytics.zoo.feature.core.image
 
-import com.intel.analytics.zoo.feature.core.util.{MatWrapper}
 import com.intel.analytics.bigdl.utils.RandomGenerator.RNG
 /**
  * Random adjust brightness, contrast, hue, saturation
@@ -44,12 +43,22 @@ class ColorJitter(
   require(saturationUpper >= saturationLower, "saturation upper must be >= lower.")
   require(saturationLower >= 0, "saturation lower must be non-negative.")
 
-  override def transform(input: MatWrapper, output: MatWrapper, feature: Feature): Boolean = {
-    ColorJitter.transform(input, output,
-      brightnessProb, brightnessDelta, contrastProb,
-      contrastLower, contrastUpper, hueProb, hueDelta, saturationProb,
-      saturationLower, saturationUpper, randomOrderProb)
-    true
+  private val brightness = RandomOp(Brightness(-brightnessDelta, brightnessDelta), brightnessProb)
+  private val contrast = RandomOp(Contrast(contrastLower, contrastUpper), contrastProb)
+  private val saturation = RandomOp(Saturation(saturationLower, saturationUpper), saturationProb)
+  private val hue = RandomOp(Hue(-hueDelta, hueDelta), hueProb)
+  private val channelOrder = RandomOp(ChannelOrder(), randomOrderProb)
+
+  private val order1 = brightness -> contrast -> saturation -> hue -> channelOrder
+  private val order2 = brightness -> saturation -> hue -> contrast -> channelOrder
+
+  override def transform(feature: Feature): Unit = {
+    val prob = RNG.uniform(0, 1)
+    if (prob > 0.5) {
+      order1(feature)
+    } else {
+      order2(feature)
+    }
   }
 }
 
@@ -67,67 +76,4 @@ object ColorJitter {
 
   def apply(): ColorJitter =
     ColorJitter(0.5, 32, 0.5, 0.5, 1.5, 0.5, 18, 0.5, 0.5, 1.5, 0)
-
-  private def randomOperation(operation: ((MatWrapper, MatWrapper, Float) => MatWrapper),
-    input: MatWrapper, output: MatWrapper, lower: Double, upper: Double,
-    threshProb: Double): Unit = {
-    val prob = RNG.uniform(0, 1)
-    if (prob < threshProb) {
-      val delta = RNG.uniform(lower, upper).toFloat
-      operation(input, output, delta)
-    } else {
-      if (input != output) input.copyTo(output)
-    }
-  }
-
-  private def randomOperation(operation: ((MatWrapper, MatWrapper) => MatWrapper),
-    input: MatWrapper, output: MatWrapper,
-    threshProb: Double): Unit = {
-    val prob = RNG.uniform(0, 1)
-    if (prob < threshProb) {
-      operation(input, output)
-    } else {
-      if (input != output) input.copyTo(output)
-    }
-  }
-
-
-  def transform(input: MatWrapper, output: MatWrapper,
-    brightnessProb: Double, brightnessDelta: Double,
-    contrastProb: Double, contrastLower: Double, contrastUpper: Double,
-    hueProb: Double, hueDelta: Double,
-    saturationProb: Double, saturationLower: Double, saturationUpper: Double,
-    randomOrderProb: Double): MatWrapper = {
-    val prob = RNG.uniform(0, 1)
-    if (prob > 0.5) {
-      // Do random brightness distortion.
-      randomOperation(Brightness.transform, input, output,
-        -brightnessDelta, brightnessDelta, brightnessProb)
-      // Do random contrast distortion.
-      randomOperation(Contrast.transform, output, output,
-        contrastLower, contrastUpper, contrastProb)
-      // Do random saturation distortion.
-      randomOperation(Saturation.transform, output, output,
-        saturationLower, saturationUpper, contrastProb)
-      // Do random hue distortion.
-      randomOperation(Hue.transform, output, output, -hueDelta, hueDelta, hueProb)
-      // Do random reordering of the channels.
-      randomOperation(ChannelOrder.transform, output, output, randomOrderProb)
-    } else {
-      // Do random brightness distortion.
-      randomOperation(Brightness.transform, input, output,
-        -brightnessDelta, brightnessDelta, brightnessProb)
-      // Do random saturation distortion.
-      randomOperation(Saturation.transform, output, output,
-        saturationLower, saturationUpper, contrastProb)
-      // Do random hue distortion.
-      randomOperation(Hue.transform, output, output, -hueDelta, hueDelta, hueProb)
-      // Do random contrast distortion.
-      randomOperation(Contrast.transform, output, output,
-        contrastLower, contrastUpper, contrastProb)
-      // Do random reordering of the channels.
-      randomOperation(ChannelOrder.transform, output, output, randomOrderProb)
-    }
-    output
-  }
 }

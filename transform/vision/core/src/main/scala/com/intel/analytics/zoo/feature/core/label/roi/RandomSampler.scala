@@ -18,7 +18,7 @@ package com.intel.analytics.zoo.feature.core.label.roi
 
 import com.intel.analytics.bigdl.dataset.Transformer
 import com.intel.analytics.bigdl.utils.RandomGenerator._
-import com.intel.analytics.zoo.feature.core.image.{Crop, Feature}
+import com.intel.analytics.zoo.feature.core.image.{Crop, Feature, FeatureTransformer, SingleTransformer}
 import com.intel.analytics.zoo.feature.core.util.NormalizedBox
 import org.opencv.core.Mat
 
@@ -58,7 +58,7 @@ object RandomSampler {
     }
   }
 
-  def apply(): Transformer[Feature, Feature] = {
+  def apply(): SingleTransformer[Feature, Feature] = {
     Crop(roiGenerator = Some(sampleBbox)) -> RoiCrop()
   }
 }

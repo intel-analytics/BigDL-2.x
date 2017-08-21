@@ -23,19 +23,16 @@ import org.opencv.core.{Core, Mat}
 
 /**
  * random change the channel of an image
- * @param randomOrderProb the probability to reorder the channels
  */
-class ChannelOrder(randomOrderProb: Float)
-  extends FeatureTransformer {
-  override def transform(input: MatWrapper, output: MatWrapper, feature: Feature): Boolean = {
-    randomOperation(ChannelOrder.transform, input, output, randomOrderProb)
+class ChannelOrder() extends FeatureTransformer {
+  override def transform(feature: Feature): Unit = {
+    ChannelOrder.transform(feature.inputMat(), feature.inputMat())
   }
 
 }
 
 object ChannelOrder {
-  def apply(randomOrderProb: Float): ChannelOrder
-  = new ChannelOrder(randomOrderProb)
+  def apply(): ChannelOrder = new ChannelOrder()
 
   def transform(input: MatWrapper, output: MatWrapper): MatWrapper = {
     // Split the image to 3 channels.

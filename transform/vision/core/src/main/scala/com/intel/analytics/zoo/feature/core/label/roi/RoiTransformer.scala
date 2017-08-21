@@ -16,24 +16,24 @@
 
 package com.intel.analytics.zoo.feature.core.label.roi
 
-import com.intel.analytics.zoo.feature.core.image.{Feature, FeatureTransformer}
+import com.intel.analytics.zoo.feature.core.image.{Feature, FeatureTransformer, SingleTransformer}
 import com.intel.analytics.zoo.feature.core.util.{BboxUtil, MatWrapper, NormalizedBox}
 
 import scala.collection.mutable.ArrayBuffer
 
 
 case class RoiNormalize() extends FeatureTransformer {
-  override def transform(input: MatWrapper, output: MatWrapper, feature: Feature): Boolean = {
+  override def transform(feature: Feature): Unit = {
     val height = feature.getHeight()
     val width = feature.getWidth()
     val label = feature(Feature.label).asInstanceOf[RoiLabel]
     BboxUtil.scaleBBox(label.bboxes, 1.0f / height, 1.0f / width)
-    true
   }
 }
 
+
 case class RoiCrop() extends FeatureTransformer {
-  override def transform(input: MatWrapper, output: MatWrapper, feature: Feature): Boolean = {
+  override def transform(feature: Feature): Unit = {
     val height = feature.getHeight()
     val width = feature.getWidth()
     val bbox = feature("bbox").asInstanceOf[NormalizedBox]
@@ -56,12 +56,11 @@ case class RoiCrop() extends FeatureTransformer {
       target.classes.setValue(2, i, transformedAnnot(i - 1).difficult)
       i += 1
     }
-    true
   }
 }
 
 case class RoiHFlip() extends FeatureTransformer {
-  override def transform(input: MatWrapper, output: MatWrapper, feature: Feature): Boolean = {
+  override def transform(feature: Feature): Unit = {
     require(feature.hasLabel())
     val roiLabel = feature.getLabel[RoiLabel]
     var i = 1
@@ -77,7 +76,7 @@ case class RoiHFlip() extends FeatureTransformer {
 
 case class RoiExpand() extends FeatureTransformer {
 
-  override def transform(input: MatWrapper, output: MatWrapper, feature: Feature): Boolean = {
+  override def transform(feature: Feature): Unit = {
     require(feature.hasLabel())
     val transformedAnnot = new ArrayBuffer[NormalizedBox]()
     val expandBbox = feature("expandBbox").asInstanceOf[NormalizedBox]
@@ -101,7 +100,6 @@ case class RoiExpand() extends FeatureTransformer {
       target.classes.setValue(2, i, transformedAnnot(i - 1).difficult)
       i += 1
     }
-    true
   }
 }
 

@@ -18,23 +18,22 @@ package com.intel.analytics.zoo.feature.core.image
 
 import java.util
 
-import com.intel.analytics.bigdl.dataset.Transformer
+import com.intel.analytics.bigdl.utils.RandomGenerator._
 import com.intel.analytics.zoo.feature.core.util.MatWrapper
 import org.opencv.core.{Core, Mat}
 import org.opencv.imgproc.Imgproc
 
-class Hue(delta: Float)
+class Hue(deltaLow: Double, deltaHigh: Double)
   extends FeatureTransformer {
-  override def transform(input: MatWrapper, output: MatWrapper, feature: Feature): Boolean = {
-    Hue.transform(input, output, delta)
-    true
+  override def transform(feature: Feature): Unit = {
+    Hue.transform(feature.inputMat(), feature.inputMat(), RNG.uniform(deltaLow, deltaHigh))
   }
 }
 
 object Hue {
-  def apply(delta: Float): Hue = new Hue(delta)
+  def apply(deltaLow: Double, deltaHigh: Double): Hue = new Hue(deltaLow, deltaHigh)
 
-  def transform(input: MatWrapper, output: MatWrapper, delta: Float): MatWrapper = {
+  def transform(input: MatWrapper, output: MatWrapper, delta: Double): MatWrapper = {
     if (delta != 0) {
       // Convert to HSV colorspae
       Imgproc.cvtColor(input, output, Imgproc.COLOR_BGR2HSV)
