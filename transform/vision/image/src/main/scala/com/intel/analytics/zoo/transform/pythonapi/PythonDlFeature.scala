@@ -94,14 +94,14 @@ class PythonDlFeature[T: ClassTag](implicit ev: TensorNumeric[T]) extends Python
   }
 
   def transform(transformer: FeatureTransformer, data: JList[DenseVector]): JList[DenseVector] = {
-    val pipeline = transformer -> MatToFloats()
+    val pipeline = transformer -> MatToFloats(validHeight = 300, validWidth = 300)
     val start = System.nanoTime()
     val shape = data.get(1)
     val mat = OpenCVMat.floatToMat(data.get(0).toArray.map(_.toFloat),
       shape(0).toInt, shape(1).toInt)
     val feature = new ImageFeature()
     feature(ImageFeature.mat) = mat
-    pipeline(feature)
+    pipeline.transform(feature)
     val denseVector = new DenseVector(feature.getFloats().map(_.toDouble))
     val transformedShape = Vectors.dense(feature.getHeight(), feature.getWidth(), 3).toDense
     println("transform takes " + (System.nanoTime() - start) / 1e9)
@@ -110,7 +110,7 @@ class PythonDlFeature[T: ClassTag](implicit ev: TensorNumeric[T]) extends Python
 
   def transformRdd(transformer: FeatureTransformer, dataRdd: JavaRDD[JList[DenseVector]])
   : JavaRDD[JList[DenseVector]] = {
-    val pipeline = transformer -> MatToFloats()
+    val pipeline = transformer -> MatToFloats(validHeight = 300, validWidth = 300)
     val matRdd = dataRdd.rdd.map { tuple => {
       val shape = tuple.get(1)
       val data = tuple.get(0)
@@ -122,7 +122,7 @@ class PythonDlFeature[T: ClassTag](implicit ev: TensorNumeric[T]) extends Python
       feature
     }
     }
-    val transformed = pipeline.toIterator(matRdd)
+    val transformed = pipeline(matRdd)
     transformed.map(feature => {
       val denseVector = new DenseVector(feature.getFloats()
         .slice(0, feature.getHeight() * feature.getWidth() * 3).map(_.toDouble))

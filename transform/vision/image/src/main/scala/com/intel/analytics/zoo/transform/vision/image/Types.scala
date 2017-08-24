@@ -16,7 +16,7 @@
 
 package com.intel.analytics.zoo.transform.vision.image
 
-import com.intel.analytics.bigdl.dataset.Transformer
+import com.intel.analytics.bigdl.dataset.{Transformer}
 import com.intel.analytics.bigdl.utils.RandomGenerator._
 import com.intel.analytics.zoo.transform.vision.image.opencv.OpenCVMat
 
@@ -36,6 +36,8 @@ class ImageFeature extends Serializable {
   }
 
   private val state = new mutable.HashMap[String, Any]()
+
+  var isValid = true
 
 
   def apply[T](key: String): T = state(key).asInstanceOf[T]
@@ -122,7 +124,7 @@ object ImageFeature {
   def apply(): ImageFeature = new ImageFeature()
 }
 
-abstract class FeatureTransformer() extends Serializable {
+abstract class FeatureTransformer() extends Transformer[ImageFeature, ImageFeature] {
   private var outKey: Option[String] = None
 
   def setOutKey(key: String): this.type = {
@@ -130,61 +132,60 @@ abstract class FeatureTransformer() extends Serializable {
     this
   }
 
-  // scalastyle:off methodName
-  // scalastyle:off noSpaceBeforeLeftBracket
-  def -> [C](other: FeatureTransformer): FeatureTransformer = {
-    new SingleChainedTransformer(this, other)
-  }
+  protected def transformMat(feature: ImageFeature): Unit = {}
 
-  def transform(feature: ImageFeature): Unit = {}
-
-  def apply(feature: ImageFeature): ImageFeature = {
+  def transform(feature: ImageFeature): ImageFeature = {
     try {
-      transform(feature)
+      transformMat(feature)
+      if (outKey.isDefined) {
+        require(outKey.get != ImageFeature.mat, s"the output key should not equal to" +
+          s" ${ImageFeature.mat}, please give another name")
+        if (feature.contains(outKey.get)) {
+          val mat = feature(outKey.get).asInstanceOf[OpenCVMat]
+          feature.opencvMat().copyTo(mat)
+        } else {
+          feature(outKey.get) = feature.opencvMat().clone()
+        }
+      }
     } catch {
       case e: Exception =>
         e.printStackTrace()
-    }
-    if (outKey.isDefined) {
-      require(outKey.get != ImageFeature.mat, s"the output key should not equal to" +
-        s" ${ImageFeature.mat}, please give another name")
-      if (feature.contains(outKey.get)) {
-        val mat = feature(outKey.get).asInstanceOf[OpenCVMat]
-        feature.opencvMat().copyTo(mat)
-      } else {
-        feature(outKey.get) = feature.opencvMat().clone()
-      }
+        feature.isValid = false
     }
     feature
   }
 
-  def toIterator: Transformer[ImageFeature, ImageFeature] = {
-    new TransfomerIterator(this)
+  override def apply(prev: Iterator[ImageFeature]): Iterator[ImageFeature] = {
+    prev.map(image => {
+      transform(image)
+      image
+    })
+  }
+
+  // scalastyle:off methodName
+  // scalastyle:off noSpaceBeforeLeftBracket
+  def -> [C](other: FeatureTransformer): FeatureTransformer = {
+    new ChainedFeatureTransformer(this, other)
   }
 }
 
-
-class SingleChainedTransformer
-(first: FeatureTransformer, last: FeatureTransformer)
-  extends FeatureTransformer {
-  override def apply(prev: ImageFeature): ImageFeature = {
+class ChainedFeatureTransformer(first: FeatureTransformer, last: FeatureTransformer) extends
+  FeatureTransformer {
+  override def apply(prev: Iterator[ImageFeature]): Iterator[ImageFeature] = {
     last(first(prev))
   }
-}
 
-
-class TransfomerIterator(singleTransformer: FeatureTransformer)
-  extends Transformer[ImageFeature, ImageFeature] {
-  override def apply(prev: Iterator[ImageFeature]): Iterator[ImageFeature] = {
-    prev.map(singleTransformer(_))
+  override def transform(prev: ImageFeature): ImageFeature = {
+    last.transform(first.transform(prev))
   }
 }
+
 
 class RandomTransformer(transformer: FeatureTransformer, maxProb: Double)
   extends FeatureTransformer {
-  override def apply(prev: ImageFeature): ImageFeature = {
+  override def transform(prev: ImageFeature): ImageFeature = {
     if (RNG.uniform(0, 1) < maxProb) {
-      transformer(prev)
+      transformer.transform(prev)
     }
     prev
   }

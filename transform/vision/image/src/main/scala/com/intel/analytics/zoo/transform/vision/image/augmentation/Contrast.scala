@@ -25,7 +25,7 @@ class Contrast(deltaLow: Double, deltaHigh: Double)
 
   require(deltaHigh >= deltaLow, "contrast upper must be >= lower.")
   require(deltaLow >= 0, "contrast lower must be non-negative.")
-  override def transform(feature: ImageFeature): Unit = {
+  override def transformMat(feature: ImageFeature): Unit = {
     Contrast.transform(feature.opencvMat(), feature.opencvMat(), RNG.uniform(deltaLow, deltaHigh))
   }
 }

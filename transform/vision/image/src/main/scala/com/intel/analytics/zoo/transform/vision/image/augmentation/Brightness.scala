@@ -27,7 +27,7 @@ import com.intel.analytics.zoo.transform.vision.image.{FeatureTransformer, Image
 class Brightness(deltaLow: Double, deltaHigh: Double)
   extends FeatureTransformer {
   require(deltaLow <= deltaHigh)
-  override def transform(feature: ImageFeature): Unit = {
+  override def transformMat(feature: ImageFeature): Unit = {
     Brightness.transform(feature.opencvMat(), feature.opencvMat(), RNG.uniform(deltaLow, deltaHigh))
   }
 }

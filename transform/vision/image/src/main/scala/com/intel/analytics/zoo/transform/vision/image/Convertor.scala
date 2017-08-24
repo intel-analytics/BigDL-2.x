@@ -22,20 +22,21 @@ import org.apache.log4j.Logger
 
 class BytesToMat()
   extends FeatureTransformer {
-  override def transform(feature: ImageFeature): Unit = {
+  override def transform(feature: ImageFeature): ImageFeature = {
     val bytes = feature(ImageFeature.bytes).asInstanceOf[Array[Byte]]
     var mat: OpenCVMat = null
     try {
       mat = OpenCVMat.toMat(bytes)
+      feature(ImageFeature.mat) = mat
+      feature(ImageFeature.originalW) = mat.width()
+      feature(ImageFeature.originalH) = mat.height()
+      feature.isValid = true
     } catch {
       case e: Exception =>
-        e.printStackTrace()
-        if (null != mat) mat.release()
-        mat = new OpenCVMat()
+//        e.printStackTrace()
+        feature.isValid = false
     }
-    feature(ImageFeature.mat) = mat
-    feature(ImageFeature.originalW) = mat.width()
-    feature(ImageFeature.originalH) = mat.height()
+    feature
   }
 }
 
@@ -44,7 +45,8 @@ object BytesToMat {
 }
 
 
-class MatToFloats(outKey: String = ImageFeature.floats, meanRGB: Option[(Int, Int, Int)] = None)
+class MatToFloats(outKey: String = ImageFeature.floats, validHeight: Int, validWidth: Int,
+  meanRGB: Option[(Int, Int, Int)] = None)
   extends FeatureTransformer {
   @transient private var data: Array[Float] = _
   @transient private var floatMat: OpenCVMat = null
@@ -62,27 +64,33 @@ class MatToFloats(outKey: String = ImageFeature.floats, meanRGB: Option[(Int, In
     img
   }
 
-  override def apply(feature: ImageFeature): ImageFeature = {
+  override def transform(feature: ImageFeature): ImageFeature = {
     var input: OpenCVMat = null
-    try {
+    val (height, width) = if (feature.isValid) {
       input = feature.opencvMat()
-      val height = input.height()
-      val width = input.width()
-      if (null == data || data.length < height * width * 3) {
-        data = new Array[Float](height * width * 3)
-      }
-      if (floatMat == null) {
-        floatMat = new OpenCVMat()
-      }
-      feature(outKey) = OpenCVMat.toFloatBuf(input, data, floatMat)
-      if (meanRGB.isDefined) {
-        normalize(data, meanRGB.get._1, meanRGB.get._2, meanRGB.get._3)
-      }
-      feature(ImageFeature.width) = input.width()
-      feature(ImageFeature.height) = input.height()
-    } finally {
-      if (null != input) input.release()
+      (input.height(), input.width())
+    } else {
+      (validHeight, validWidth)
     }
+    if (null == data || data.length < height * width * 3) {
+      data = new Array[Float](height * width * 3)
+    }
+    if (feature.isValid) {
+      try {
+        if (floatMat == null) {
+          floatMat = new OpenCVMat()
+        }
+        OpenCVMat.toFloatBuf(input, data, floatMat)
+        if (meanRGB.isDefined) {
+          normalize(data, meanRGB.get._1, meanRGB.get._2, meanRGB.get._3)
+        }
+      } finally {
+        if (null != input) input.release()
+      }
+    }
+    feature(outKey) = data
+    feature(ImageFeature.width) = width
+    feature(ImageFeature.height) = height
     feature
   }
 }
@@ -90,6 +98,7 @@ class MatToFloats(outKey: String = ImageFeature.floats, meanRGB: Option[(Int, In
 object MatToFloats {
   val logger = Logger.getLogger(getClass)
 
-  def apply(outKey: String = "floats", meanRGB: Option[(Int, Int, Int)] = None): MatToFloats =
-    new MatToFloats(outKey)
+  def apply(outKey: String = "floats", validHeight: Int, validWidth: Int,
+    meanRGB: Option[(Int, Int, Int)] = None): MatToFloats =
+    new MatToFloats(outKey, validHeight, validWidth)
 }
