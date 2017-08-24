@@ -29,6 +29,9 @@ import org.opencv.imgproc.Imgproc
  */
 class Saturation(deltaLow: Double, deltaHigh: Double)
   extends FeatureTransformer {
+
+  require(deltaHigh >= deltaLow, "saturation upper must be >= lower.")
+  require(deltaLow >= 0, "saturation lower must be non-negative.")
   override def transform(feature: ImageFeature): Unit = {
     Saturation.transform(feature.opencvMat(), feature.opencvMat(), RNG.uniform(deltaLow, deltaHigh))
   }

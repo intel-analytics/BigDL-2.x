@@ -51,6 +51,18 @@ class ImageAugmentationSpec extends FlatSpec with Matchers {
     println(s"save to ${tmpFile.getAbsolutePath}, " + new File(tmpFile.getAbsolutePath).length())
   }
 
+  "colorjitter shuffle" should "work properly" in {
+    val resource = getClass().getClassLoader().getResource("image/000025.jpg")
+    val img = OpenCVMat.read(resource.getFile)
+    val feature = ImageFeature()
+    feature(ImageFeature.mat) = img
+    val colorJitter = ColorJitter(shuffle = true)
+    val out = colorJitter(feature)
+    val tmpFile = java.io.File.createTempFile("module", ".jpg")
+    Imgcodecs.imwrite(tmpFile.getAbsolutePath, img)
+    println(s"save to ${tmpFile.getAbsolutePath}, " + new File(tmpFile.getAbsolutePath).length())
+  }
+
   "hflip" should "work properly" in {
     val resource = getClass().getClassLoader().getResource("image/000025.jpg")
     val img = OpenCVMat.read(resource.getFile)

@@ -18,6 +18,9 @@ package com.intel.analytics.zoo.transform.vision.image.augmentation
 
 import com.intel.analytics.bigdl.utils.RandomGenerator.RNG
 import com.intel.analytics.zoo.transform.vision.image._
+
+import scala.util.Random
+
 /**
  * Random adjust brightness, contrast, hue, saturation
  * @param brightnessProb probability to adjust brightness
@@ -30,51 +33,58 @@ import com.intel.analytics.zoo.transform.vision.image._
  * @param saturationProb probability to adjust saturation
  * @param saturationLower saturation lower parameter
  * @param saturationUpper saturation upper parameter
- * @param randomOrderProb random order for different operation
+ * @param randomChannelOrderProb random order for different operation
  */
 class ColorJitter(
   brightnessProb: Double, brightnessDelta: Double,
   contrastProb: Double, contrastLower: Double, contrastUpper: Double,
   hueProb: Double, hueDelta: Double,
   saturationProb: Double, saturationLower: Double, saturationUpper: Double,
-  randomOrderProb: Double) extends FeatureTransformer {
+  randomChannelOrderProb: Double, shuffle: Boolean = false) extends FeatureTransformer {
 
-  require(contrastUpper >= contrastLower, "contrast upper must be >= lower.")
-  require(contrastLower >= 0, "contrast lower must be non-negative.")
-  require(saturationUpper >= saturationLower, "saturation upper must be >= lower.")
-  require(saturationLower >= 0, "saturation lower must be non-negative.")
-
-  private val brightness = RandomTransformer(Brightness(-brightnessDelta, brightnessDelta), brightnessProb)
-  private val contrast = RandomTransformer(Contrast(contrastLower, contrastUpper), contrastProb)
-  private val saturation = RandomTransformer(Saturation(saturationLower, saturationUpper), saturationProb)
+  private val brightness = RandomTransformer(
+    Brightness(-brightnessDelta, brightnessDelta), brightnessProb)
+  private val contrast = RandomTransformer(
+    Contrast(contrastLower, contrastUpper), contrastProb)
+  private val saturation = RandomTransformer(
+    Saturation(saturationLower, saturationUpper), saturationProb)
   private val hue = RandomTransformer(Hue(-hueDelta, hueDelta), hueProb)
-  private val channelOrder = RandomTransformer(ChannelOrder(), randomOrderProb)
+  private val channelOrder = RandomTransformer(ChannelOrder(), randomChannelOrderProb)
 
   private val order1 = brightness -> contrast -> saturation -> hue -> channelOrder
   private val order2 = brightness -> saturation -> hue -> contrast -> channelOrder
 
+  private val transformers = Array(brightness, contrast, saturation, hue, channelOrder)
+
   override def transform(feature: ImageFeature): Unit = {
-    val prob = RNG.uniform(0, 1)
-    if (prob > 0.5) {
-      order1(feature)
+    if (!shuffle) {
+      val prob = RNG.uniform(0, 1)
+      if (prob > 0.5) {
+        order1(feature)
+      } else {
+        order2(feature)
+      }
     } else {
-      order2(feature)
+      val order = Random.shuffle(List.range(0, transformers.length))
+      var shuffledTransformer = transformers(order.head).asInstanceOf[FeatureTransformer]
+      (1 until transformers.length).foreach(i => {
+        shuffledTransformer = shuffledTransformer -> transformers(order(i))
+      })
+
+      shuffledTransformer(feature)
     }
   }
 }
 
 object ColorJitter {
   def apply(
-    brightnessProb: Double, brightnessDelta: Double,
-    contrastProb: Double, contrastLower: Double, contrastUpper: Double,
-    hueProb: Double, hueDelta: Double,
-    saturationProb: Double, saturationLower: Double, saturationUpper: Double,
-    randomOrderProb: Double
+    brightnessProb: Double = 0.5, brightnessDelta: Double = 32,
+    contrastProb: Double = 0.5, contrastLower: Double = 0.5, contrastUpper: Double = 1.5,
+    hueProb: Double = 0.5, hueDelta: Double = 18,
+    saturationProb: Double = 0.5, saturationLower: Double = 0.5, saturationUpper: Double = 1.5,
+    randomOrderProb: Double = 0, shuffle: Boolean = false
   ): ColorJitter =
     new ColorJitter(brightnessProb, brightnessDelta, contrastProb,
       contrastLower, contrastUpper, hueProb, hueDelta, saturationProb,
-      saturationLower, saturationUpper, randomOrderProb)
-
-  def apply(): ColorJitter =
-    ColorJitter(0.5, 32, 0.5, 0.5, 1.5, 0.5, 18, 0.5, 0.5, 1.5, 0)
+      saturationLower, saturationUpper, randomOrderProb, shuffle)
 }
