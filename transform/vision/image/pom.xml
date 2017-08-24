@@ -11,7 +11,7 @@
         <relativePath>../pom.xml</relativePath>
     </parent>
 
-    <artifactId>vision-core</artifactId>
+    <artifactId>vision-image</artifactId>
     <version>0.1-SNAPSHOT</version>
 
     <repositories>

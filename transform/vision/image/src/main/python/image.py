@@ -78,10 +78,10 @@ class Expand(FeatureTransformer):
     def __init__(self, means_r, means_g, means_b, max_expand_ratio, bigdl_type="float"):
             super(Expand, self).__init__(bigdl_type, means_r, means_g, means_b, max_expand_ratio)
 
-class RandomOp(FeatureTransformer):
+class RandomTransformer(FeatureTransformer):
 
     def __init__(self, transformer, prob, bigdl_type="float"):
-            super(RandomOp, self).__init__(bigdl_type, transformer, prob)
+            super(RandomTransformer, self).__init__(bigdl_type, transformer, prob)
 
 class ColorJitter(FeatureTransformer):
 
