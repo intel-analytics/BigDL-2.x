@@ -30,7 +30,7 @@ import org.opencv.core.{Core, CvType, Mat, Scalar}
  */
 class Normalize(meanR: Int, meanG: Int, meanB: Int)
   extends FeatureTransformer {
-  override def transform(feature: ImageFeature): Unit = {
+  override def transformMat(feature: ImageFeature): Unit = {
     Normalize.transform(feature.opencvMat(), feature.opencvMat(), meanR, meanG, meanB)
   }
 }

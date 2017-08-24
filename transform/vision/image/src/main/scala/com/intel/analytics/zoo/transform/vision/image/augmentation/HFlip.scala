@@ -22,7 +22,7 @@ import org.opencv.core.Core
 
 class HFlip() extends FeatureTransformer {
 
-  override def transform(feature: ImageFeature): Unit = {
+  override def transformMat(feature: ImageFeature): Unit = {
     HFlip.transform(feature.opencvMat(), feature.opencvMat())
   }
 }

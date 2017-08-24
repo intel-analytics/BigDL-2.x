@@ -28,7 +28,7 @@ class Crop(useNormalized: Boolean = true,
            roiGenerator: Option[(ImageFeature => NormalizedBox)] = None)
   extends FeatureTransformer {
 
-  override def transform(feature: ImageFeature): Unit = {
+  override def transformMat(feature: ImageFeature): Unit = {
     val cropBox = if (bbox.isDefined) {
       bbox.get
     } else if (roiKey.isDefined) {
@@ -92,8 +92,8 @@ class CenterCrop(cropWidth: Int, cropHeight: Int) extends FeatureTransformer{
 
   val cropper = Crop(roiGenerator = Some(centerRoi))
 
-  override def transform(feature: ImageFeature): Unit = {
-    cropper.transform(feature)
+  override def transformMat(feature: ImageFeature): Unit = {
+    cropper.transformMat(feature)
   }
 }
 
@@ -114,8 +114,8 @@ class RandomCrop(cropWidth: Int, cropHeight: Int) extends FeatureTransformer{
 
   val cropper = Crop(roiGenerator = Some(randomRoi))
 
-  override def transform(feature: ImageFeature): Unit = {
-    cropper.transform(feature)
+  override def transformMat(feature: ImageFeature): Unit = {
+    cropper.transformMat(feature)
   }
 }
 

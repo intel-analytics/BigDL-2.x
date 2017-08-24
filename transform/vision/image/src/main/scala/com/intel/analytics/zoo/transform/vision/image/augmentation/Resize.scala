@@ -39,19 +39,13 @@ class Resize(resizeH: Int, resizeW: Int,
   private val interpMethods = Array(Imgproc.INTER_LINEAR, Imgproc.INTER_CUBIC, Imgproc.INTER_AREA,
     Imgproc.INTER_NEAREST, Imgproc.INTER_LANCZOS4)
 
-  override def transform(feature: ImageFeature): Unit = {
+  override def transformMat(feature: ImageFeature): Unit = {
     val interpMethod = if (resizeMode == -1) {
       interpMethods(new Random().nextInt(interpMethods.length))
     } else {
       resizeMode
     }
-    try {
-      Resize.transform(feature.opencvMat(), feature.opencvMat(), resizeW, resizeH, interpMethod)
-    } catch {
-      case e: Exception =>
-        Resize.logger.error(e)
-        feature.opencvMat().create(resizeH, resizeW, feature.opencvMat().`type`())
-    }
+    Resize.transform(feature.opencvMat(), feature.opencvMat(), resizeW, resizeH, interpMethod)
   }
 }
 

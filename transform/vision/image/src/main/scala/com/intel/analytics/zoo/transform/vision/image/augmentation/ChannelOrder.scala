@@ -26,7 +26,7 @@ import org.opencv.core.{Core, Mat}
  * random change the channel of an image
  */
 class ChannelOrder() extends FeatureTransformer {
-  override def transform(feature: ImageFeature): Unit = {
+  override def transformMat(feature: ImageFeature): Unit = {
     ChannelOrder.transform(feature.opencvMat(), feature.opencvMat())
   }
 

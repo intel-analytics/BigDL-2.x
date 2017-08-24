@@ -23,7 +23,7 @@ import scala.collection.mutable.ArrayBuffer
 
 
 case class RoiNormalize() extends FeatureTransformer {
-  override def transform(feature: ImageFeature): Unit = {
+  override def transformMat(feature: ImageFeature): Unit = {
     val height = feature.getHeight()
     val width = feature.getWidth()
     val label = feature(ImageFeature.label).asInstanceOf[RoiLabel]
@@ -33,7 +33,7 @@ case class RoiNormalize() extends FeatureTransformer {
 
 
 case class RoiCrop() extends FeatureTransformer {
-  override def transform(feature: ImageFeature): Unit = {
+  override def transformMat(feature: ImageFeature): Unit = {
     val height = feature.getHeight()
     val width = feature.getWidth()
     val bbox = feature(ImageFeature.cropBbox).asInstanceOf[NormalizedBox]
@@ -60,7 +60,7 @@ case class RoiCrop() extends FeatureTransformer {
 }
 
 case class RoiHFlip() extends FeatureTransformer {
-  override def transform(feature: ImageFeature): Unit = {
+  override def transformMat(feature: ImageFeature): Unit = {
     require(feature.hasLabel())
     val roiLabel = feature.getLabel[RoiLabel]
     var i = 1
@@ -75,7 +75,7 @@ case class RoiHFlip() extends FeatureTransformer {
 
 case class RoiExpand() extends FeatureTransformer {
 
-  override def transform(feature: ImageFeature): Unit = {
+  override def transformMat(feature: ImageFeature): Unit = {
     require(feature.hasLabel())
     val transformedAnnot = new ArrayBuffer[NormalizedBox]()
     val expandBbox = feature(ImageFeature.expandBbox).asInstanceOf[NormalizedBox]

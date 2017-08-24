@@ -49,9 +49,9 @@ class ResizeSpec extends FlatSpec {
     })
     val imgAug = BytesToMat() ->
       Resize(r, r, -1) ->
-      new MatToFloats()
+      new MatToFloats(validHeight = 300, validWidth = 300)
     val start = System.nanoTime()
-    val out = imgAug.toIterator(byteImage)
+    val out = imgAug(byteImage)
     out.foreach(img => {
     })
     println("opencv takes " + (System.nanoTime() - start) / 1e9)

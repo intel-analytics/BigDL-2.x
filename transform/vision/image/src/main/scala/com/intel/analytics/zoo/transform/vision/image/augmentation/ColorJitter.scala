@@ -56,13 +56,13 @@ class ColorJitter(
 
   private val transformers = Array(brightness, contrast, saturation, hue, channelOrder)
 
-  override def transform(feature: ImageFeature): Unit = {
+  override def transformMat(feature: ImageFeature): Unit = {
     if (!shuffle) {
       val prob = RNG.uniform(0, 1)
       if (prob > 0.5) {
-        order1(feature)
+        order1.transform(feature)
       } else {
-        order2(feature)
+        order2.transform(feature)
       }
     } else {
       val order = Random.shuffle(List.range(0, transformers.length))
@@ -71,7 +71,7 @@ class ColorJitter(
         shuffledTransformer = shuffledTransformer -> transformers(order(i))
       })
 
-      shuffledTransformer(feature)
+      shuffledTransformer.transform(feature)
     }
   }
 }

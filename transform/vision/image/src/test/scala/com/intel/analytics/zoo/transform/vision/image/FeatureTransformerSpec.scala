@@ -29,7 +29,7 @@ import org.opencv.imgcodecs.Imgcodecs
 import org.opencv.imgproc.Imgproc
 import org.scalatest.{FlatSpec, Matchers}
 
-class ImageAugmentationSpec extends FlatSpec with Matchers {
+class FeatureTransformerSpec extends FlatSpec with Matchers {
   "resize" should "work properly" in {
     val resource = getClass().getClassLoader().getResource("image/000025.jpg")
     val img = OpenCVMat.read(resource.getFile)
@@ -45,7 +45,7 @@ class ImageAugmentationSpec extends FlatSpec with Matchers {
     val feature = ImageFeature()
     feature(ImageFeature.mat) = img
     val colorJitter = ColorJitter()
-    val out = colorJitter(feature)
+    val out = colorJitter.transform(feature)
     val tmpFile = java.io.File.createTempFile("module", ".jpg")
     Imgcodecs.imwrite(tmpFile.getAbsolutePath, img)
     println(s"save to ${tmpFile.getAbsolutePath}, " + new File(tmpFile.getAbsolutePath).length())
@@ -57,7 +57,7 @@ class ImageAugmentationSpec extends FlatSpec with Matchers {
     val feature = ImageFeature()
     feature(ImageFeature.mat) = img
     val colorJitter = ColorJitter(shuffle = true)
-    val out = colorJitter(feature)
+    val out = colorJitter.transform(feature)
     val tmpFile = java.io.File.createTempFile("module", ".jpg")
     Imgcodecs.imwrite(tmpFile.getAbsolutePath, img)
     println(s"save to ${tmpFile.getAbsolutePath}, " + new File(tmpFile.getAbsolutePath).length())
@@ -81,7 +81,7 @@ class ImageAugmentationSpec extends FlatSpec with Matchers {
     val feature = new ImageFeature
     feature(ImageFeature.mat) = img
     val expand = new Expand()
-    expand(feature)
+    expand.transform(feature)
     val tmpFile = java.io.File.createTempFile("module", ".jpg")
     Imgcodecs.imwrite(tmpFile.getAbsolutePath, feature.opencvMat())
     println(s"save to ${tmpFile.getAbsolutePath}, " + new File(tmpFile.getAbsolutePath).length())
@@ -111,7 +111,7 @@ class ImageAugmentationSpec extends FlatSpec with Matchers {
     feature(ImageFeature.mat) = img
     feature(ImageFeature.label) = label
     val expand = RoiNormalize() -> Expand() -> RoiExpand()
-    expand(feature)
+    expand.transform(feature)
     val tmpFile = java.io.File.createTempFile("module", ".jpg")
     visulize(label, img)
     Imgcodecs.imwrite(tmpFile.getAbsolutePath, feature.opencvMat())
@@ -143,7 +143,7 @@ class ImageAugmentationSpec extends FlatSpec with Matchers {
     feature(ImageFeature.label) = label
     val expand = RoiNormalize() -> RandomTransformer(Expand() -> RoiExpand()
       , 0.5)
-    expand(feature)
+    expand.transform(feature)
     val tmpFile = java.io.File.createTempFile("module", ".jpg")
     visulize(label, img)
     Imgcodecs.imwrite(tmpFile.getAbsolutePath, feature.opencvMat())
@@ -167,7 +167,7 @@ class ImageAugmentationSpec extends FlatSpec with Matchers {
     val feature = ImageFeature()
     feature(ImageFeature.mat) = img
     val centerCrop = CenterCrop(200, 200)
-    centerCrop(feature)
+    centerCrop.transform(feature)
 //    Crop.transform(img, img, NormalizedBox(0, 0f, 1, 0.5f))
     val tmpFile = java.io.File.createTempFile("module", ".jpg")
     Imgcodecs.imwrite(tmpFile.getAbsolutePath, img)
@@ -181,7 +181,7 @@ class ImageAugmentationSpec extends FlatSpec with Matchers {
     val feature = ImageFeature()
     feature(ImageFeature.mat) = img
     val centerCrop = RandomCrop(200, 200)
-    centerCrop(feature)
+    centerCrop.transform(feature)
     //    Crop.transform(img, img, NormalizedBox(0, 0f, 1, 0.5f))
     val tmpFile = java.io.File.createTempFile("module", ".jpg")
     Imgcodecs.imwrite(tmpFile.getAbsolutePath, img)
@@ -264,8 +264,8 @@ class ImageAugmentationSpec extends FlatSpec with Matchers {
       Resize(300, 300, -1) ->
       HFlip() ->
       Normalize((123, 117, 104)) ->
-      new MatToFloats()
-    val out = imgAug.toIterator(features)
+      new MatToFloats(validHeight = 300, validWidth = 300)
+    val out = imgAug(features)
     out.foreach(img => {
       val tmpFile = java.io.File.createTempFile("module", ".jpg")
       val mat = OpenCVMat.floatToMat(img.getFloats(), img.getHeight(), img.getWidth())
@@ -304,11 +304,11 @@ class ImageAugmentationSpec extends FlatSpec with Matchers {
       RandomSampler() ->
       Resize(300, 300, -1) ->
       RandomTransformer(HFlip() -> RoiHFlip(), 0.5) ->
-      MatToFloats()
-    val transformedImg = imgAug(feature)
+      MatToFloats(validHeight = 300, validWidth = 300)
+    val transformedImg = imgAug.transform(feature)
 
     val features = Array(feature).toIterator
-    val featureIter = imgAug.toIterator(features)
+    val featureIter = imgAug(features)
 
     featureIter.foreach(img => {
       val tmpFile = java.io.File.createTempFile("module", ".jpg")
@@ -361,8 +361,8 @@ class ImageAugmentationSpec extends FlatSpec with Matchers {
     val imgAug = BytesToMat() ->
       Crop(useNormalized = false, bbox = Some(NormalizedBox(-1, -1, -1, -1))) ->
       Resize(300, 300, -1) ->
-      MatToFloats()
-    val out = imgAug(byteImage)
+      MatToFloats(validHeight = 300, validWidth = 300)
+    val out = imgAug.transform(byteImage)
     out.getFloats().length should be(3 * 300 * 300)
   }
 
@@ -372,8 +372,8 @@ class ImageAugmentationSpec extends FlatSpec with Matchers {
     val imgAug = BytesToMat() ->
       Resize(1, 1, -1) ->
       Crop(useNormalized = false, bbox = Some(NormalizedBox(-1, -1, -1, -1))) ->
-      MatToFloats()
-    val out = imgAug(byteImage)
+      MatToFloats(validHeight = 1, validWidth = 1)
+    val out = imgAug.transform(byteImage)
     out.getFloats().length should be(3)
   }
 }
