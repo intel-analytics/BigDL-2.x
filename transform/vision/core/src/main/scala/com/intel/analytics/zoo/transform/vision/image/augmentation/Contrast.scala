@@ -22,6 +22,9 @@ import com.intel.analytics.zoo.transform.vision.image.{FeatureTransformer, Image
 
 class Contrast(deltaLow: Double, deltaHigh: Double)
   extends FeatureTransformer {
+
+  require(deltaHigh >= deltaLow, "contrast upper must be >= lower.")
+  require(deltaLow >= 0, "contrast lower must be non-negative.")
   override def transform(feature: ImageFeature): Unit = {
     Contrast.transform(feature.opencvMat(), feature.opencvMat(), RNG.uniform(deltaLow, deltaHigh))
   }

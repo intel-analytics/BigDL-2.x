@@ -188,6 +188,10 @@ class RandomTransformer(transformer: FeatureTransformer, maxProb: Double)
     }
     prev
   }
+
+  override def toString: String = {
+    s"Random[${transformer.getClass.getCanonicalName}, $maxProb]"
+  }
 }
 
 object RandomTransformer {
