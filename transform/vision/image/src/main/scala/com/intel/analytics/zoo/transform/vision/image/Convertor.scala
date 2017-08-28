@@ -33,7 +33,7 @@ class BytesToMat()
       feature.isValid = true
     } catch {
       case e: Exception =>
-//        e.printStackTrace()
+        e.printStackTrace()
         feature.isValid = false
     }
     feature
