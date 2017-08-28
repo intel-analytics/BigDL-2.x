@@ -16,7 +16,7 @@
 
 package com.intel.analytics.zoo.transform.vision.image
 
-import com.intel.analytics.bigdl.dataset.{Transformer}
+import com.intel.analytics.bigdl.dataset.{ChainedTransformer, Transformer}
 import com.intel.analytics.bigdl.utils.RandomGenerator._
 import com.intel.analytics.zoo.transform.vision.image.opencv.OpenCVMat
 
@@ -164,8 +164,14 @@ abstract class FeatureTransformer() extends Transformer[ImageFeature, ImageFeatu
 
   // scalastyle:off methodName
   // scalastyle:off noSpaceBeforeLeftBracket
-  def -> [C](other: FeatureTransformer): FeatureTransformer = {
+  def -> (other: FeatureTransformer): FeatureTransformer = {
     new ChainedFeatureTransformer(this, other)
+  }
+
+  // scalastyle:off methodName
+  // scalastyle:off noSpaceBeforeLeftBracket
+  override def -> [C](other: Transformer[ImageFeature, C]): Transformer[ImageFeature, C] = {
+    new ChainedTransformer(this, other)
   }
 }
 
