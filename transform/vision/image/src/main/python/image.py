@@ -68,6 +68,11 @@ class Crop(FeatureTransformer):
     def __init__(self, normalized=True, roi=None, roiKey=None, bigdl_type="float"):
         super(Crop, self).__init__(bigdl_type, normalized, roi, roiKey)
 
+class ChannelNormalize(FeatureTransformer):
+
+    def __init__(self, mean_r, mean_b, mean_g, bigdl_type="float"):
+        super(ChannelNormalize, self).__init__(bigdl_type, mean_r, mean_g, mean_b)
+
 
 class RandomCrop(FeatureTransformer):
 

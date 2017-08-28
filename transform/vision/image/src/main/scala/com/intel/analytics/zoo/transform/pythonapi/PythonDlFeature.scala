@@ -121,6 +121,10 @@ class PythonDlFeature[T: ClassTag](implicit ev: TensorNumeric[T]) extends Python
     RandomSampler()
   }
 
+  def createChannelNormalize(meanR: Int, meanG: Int, meanB: Int): FeatureTransformer = {
+    ChannelNormalize((meanR, meanG, meanB))
+  }
+
   def createRoiCrop(): RoiCrop = {
     RoiCrop()
   }

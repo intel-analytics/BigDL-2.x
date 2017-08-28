@@ -217,7 +217,7 @@ class FeatureTransformerSpec extends FlatSpec with Matchers {
     val buf = new OpenCVMat()
     val oriFloats = new Array[Float](img.height() * img.width() * 3)
     OpenCVMat.toFloatBuf(img, oriFloats, buf)
-    Normalize.transform(img, img, 100, 200, 300)
+    ChannelNormalize.transform(img, img, 100, 200, 300)
     val floats = new Array[Float](img.height() * img.width() * 3)
     OpenCVMat.toFloatBuf(img, floats, buf)
 
@@ -238,7 +238,7 @@ class FeatureTransformerSpec extends FlatSpec with Matchers {
     val buf = new OpenCVMat()
     val oriFloats = new Array[Float](img.height() * img.width() * 3)
     OpenCVMat.toFloatBuf(img, oriFloats, buf)
-    Normalize.transform(img, out, 100, 200, 300)
+    ChannelNormalize.transform(img, out, 100, 200, 300)
     val floats = new Array[Float](img.height() * img.width() * 3)
     OpenCVMat.toFloatBuf(out, floats, buf)
 
@@ -263,7 +263,7 @@ class FeatureTransformerSpec extends FlatSpec with Matchers {
       Expand() ->
       Resize(300, 300, -1) ->
       HFlip() ->
-      Normalize((123, 117, 104)) ->
+      ChannelNormalize((123, 117, 104)) ->
       new MatToFloats(validHeight = 300, validWidth = 300)
     val out = imgAug(features)
     out.foreach(img => {
