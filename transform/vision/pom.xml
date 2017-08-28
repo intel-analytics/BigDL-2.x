@@ -14,7 +14,6 @@
     <url>https://github.com/intel-analytics/analytics-zoo</url>
 
     <modules>
-        <module>opencv</module>
         <module>image</module>
     </modules>
 
