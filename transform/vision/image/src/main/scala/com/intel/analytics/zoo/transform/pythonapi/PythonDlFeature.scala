@@ -25,6 +25,8 @@ import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric
 import com.intel.analytics.zoo.transform.vision.image._
 import com.intel.analytics.zoo.transform.vision.image.augmentation._
 import com.intel.analytics.zoo.transform.vision.image.opencv.OpenCVMat
+import com.intel.analytics.zoo.transform.vision.label.roi._
+import com.intel.analytics.zoo.transform.vision.util.NormalizedBox
 import org.apache.spark.api.java.JavaRDD
 import org.apache.spark.mllib.linalg.{DenseVector, Vectors}
 import org.opencv.imgproc.Imgproc
@@ -52,8 +54,14 @@ class PythonDlFeature[T: ClassTag](implicit ev: TensorNumeric[T]) extends Python
     Resize(resizeH, resizeW, resizeMode)
   }
 
-  def createColorJitter(): ColorJitter = {
-    ColorJitter()
+  def createColorJitter(brightnessProb: Double = 0.5, brightnessDelta: Double = 32,
+    contrastProb: Double = 0.5, contrastLower: Double = 0.5, contrastUpper: Double = 1.5,
+    hueProb: Double = 0.5, hueDelta: Double = 18,
+    saturationProb: Double = 0.5, saturationLower: Double = 0.5, saturationUpper: Double = 1.5,
+    randomOrderProb: Double = 0, shuffle: Boolean = false): ColorJitter = {
+    ColorJitter(brightnessProb, brightnessDelta, contrastProb,
+      contrastLower, contrastUpper, hueProb, hueDelta, saturationProb,
+      saturationLower, saturationUpper, randomOrderProb, shuffle)
   }
 
   def createBrightness(deltaLow: Double, deltaHigh: Double): Brightness = {
@@ -68,12 +76,28 @@ class PythonDlFeature[T: ClassTag](implicit ev: TensorNumeric[T]) extends Python
     Contrast(deltaLow, deltaHigh)
   }
 
-  def createCrop(): Crop = {
-    Crop()
+  def createRandomCrop(cropWidth: Int, cropHeight: Int): RandomCrop = {
+    RandomCrop(cropWidth, cropHeight)
+  }
+
+  def createCenterCrop(cropWidth: Int, cropHeight: Int): CenterCrop = {
+    CenterCrop(cropWidth, cropHeight)
+  }
+
+  def createCrop(normalized: Boolean = true, roi: JList[Double], roiKey: String)
+  : Crop = {
+    if (roi != null) {
+      Crop(normalized, bbox = Some(NormalizedBox(roi.get(0).toFloat, roi.get(1).toFloat,
+        roi.get(2).toFloat, roi.get(3).toFloat)))
+    } else if (!roiKey.isEmpty) {
+      Crop(normalized, roiKey = Some(roiKey))
+    } else {
+      null
+    }
   }
 
   def createExpand(meansR: Int = 123, meansG: Int = 117, meansB: Int = 104,
-                   maxExpandRatio: Double = 4.0): Expand = {
+    maxExpandRatio: Double = 4.0): Expand = {
     Expand(meansR, meansG, meansB, maxExpandRatio)
   }
 
@@ -85,7 +109,7 @@ class PythonDlFeature[T: ClassTag](implicit ev: TensorNumeric[T]) extends Python
     Hue(deltaLow, deltaHigh)
   }
 
-  def createRandomOp(transformer: FeatureTransformer, prob: Double): RandomTransformer = {
+  def createRandomTransformer(transformer: FeatureTransformer, prob: Double): RandomTransformer = {
     RandomTransformer(transformer, prob)
   }
 
@@ -93,9 +117,28 @@ class PythonDlFeature[T: ClassTag](implicit ev: TensorNumeric[T]) extends Python
     Saturation(deltaLow, deltaHigh)
   }
 
+  def createRandomSampler(): FeatureTransformer = {
+    RandomSampler()
+  }
+
+  def createRoiCrop(): RoiCrop = {
+    RoiCrop()
+  }
+
+  def createRoiExpand(): RoiExpand = {
+    RoiExpand()
+  }
+
+  def createRoiHFlip(): RoiHFlip = {
+    RoiHFlip()
+  }
+
+  def createRoiNormalize(): RoiNormalize = {
+    RoiNormalize()
+  }
+
   def transform(transformer: FeatureTransformer, data: JList[DenseVector]): JList[DenseVector] = {
     val pipeline = transformer -> MatToFloats(validHeight = 300, validWidth = 300)
-    val start = System.nanoTime()
     val shape = data.get(1)
     val mat = OpenCVMat.floatToMat(data.get(0).toArray.map(_.toFloat),
       shape(0).toInt, shape(1).toInt)
@@ -104,7 +147,6 @@ class PythonDlFeature[T: ClassTag](implicit ev: TensorNumeric[T]) extends Python
     pipeline.transform(feature)
     val denseVector = new DenseVector(feature.getFloats().map(_.toDouble))
     val transformedShape = Vectors.dense(feature.getHeight(), feature.getWidth(), 3).toDense
-    println("transform takes " + (System.nanoTime() - start) / 1e9)
     List(denseVector, transformedShape).asJava
   }
 
