@@ -17,14 +17,14 @@ class FeatureTransformer(JavaValue):
         self.transformers = [self.value]
 
     def transform(self, image, bigdl_type="float"):
-        callBigDlFunc(bigdl_type, "chainTransformer", self.transformers)
+        transformer = callBigDlFunc(bigdl_type, "chainTransformer", self.transformers)
         vector = [Vectors.dense(image), Vectors.dense(image.shape)]
-        transformed = callBigDlFunc(bigdl_type, "transform", self.value, vector)
+        transformed = callBigDlFunc(bigdl_type, "transform", transformer, vector)
         return transformed[0].array.reshape(transformed[1].array)
 
-    def transform_rdd(self, image_rdd, bigdl_type="float"):
+    def __call__(self, image_rdd):
         vector_rdd = image_rdd.map(lambda image: [Vectors.dense(image), Vectors.dense(image.shape)])
-        transformed_rdd = callBigDlFunc(bigdl_type, "transformRdd", self.value, vector_rdd)
+        transformed_rdd = callBigDlFunc("float", "transformRdd", self.value, vector_rdd)
         return transformed_rdd.map(lambda transformed: transformed[0].array.reshape(transformed[1].array))
 
     def __add__(self, other):
@@ -35,7 +35,7 @@ class FeatureTransformer(JavaValue):
 
 class Resize(FeatureTransformer):
 
-    def __init__(self, resize_h, resize_w, resize_mode, bigdl_type="float"):
+    def __init__(self, resize_h, resize_w, resize_mode = 1, bigdl_type="float"):
         super(Resize, self).__init__(bigdl_type, resize_h, resize_w, resize_mode)
 
 class Brightness(FeatureTransformer):
@@ -65,8 +65,19 @@ class Hue(FeatureTransformer):
 
 class Crop(FeatureTransformer):
 
-    def __init__(self, bigdl_type="float"):
-            super(Crop, self).__init__(bigdl_type)
+    def __init__(self, normalized=True, roi=None, roiKey=None, bigdl_type="float"):
+        super(Crop, self).__init__(bigdl_type, normalized, roi, roiKey)
+
+
+class RandomCrop(FeatureTransformer):
+
+    def __init__(self, crop_width, crop_height, bigdl_type="float"):
+        super(RandomCrop, self).__init__(bigdl_type, crop_width, crop_height)
+
+class CenterCrop(FeatureTransformer):
+
+    def __init__(self, crop_width, crop_height, bigdl_type="float"):
+        super(CenterCrop, self).__init__(bigdl_type, crop_width, crop_height)
 
 class HFlip(FeatureTransformer):
 
@@ -75,7 +86,8 @@ class HFlip(FeatureTransformer):
 
 class Expand(FeatureTransformer):
 
-    def __init__(self, means_r, means_g, means_b, max_expand_ratio, bigdl_type="float"):
+    def __init__(self, means_r=123, means_g=117, means_b=104,
+                 max_expand_ratio=4.0, bigdl_type="float"):
             super(Expand, self).__init__(bigdl_type, means_r, means_g, means_b, max_expand_ratio)
 
 class RandomTransformer(FeatureTransformer):
@@ -83,7 +95,56 @@ class RandomTransformer(FeatureTransformer):
     def __init__(self, transformer, prob, bigdl_type="float"):
             super(RandomTransformer, self).__init__(bigdl_type, transformer, prob)
 
+
 class ColorJitter(FeatureTransformer):
 
+    def __init__(self, brightness_prob = 0.5,
+                 brightness_delta = 32.0,
+                 contrast_prob = 0.5,
+                 contrast_lower = 0.5,
+                 contrast_upper = 1.5,
+                 hue_prob = 0.5,
+                 hue_delta = 18.0,
+                 saturation_prob = 0.5,
+                 saturation_lower = 0.5,
+                 saturation_upper = 1.5,
+                 random_order_prob = 0.0,
+                 shuffle = False,
+                 bigdl_type="float"):
+        super(ColorJitter, self).__init__(bigdl_type, brightness_prob,
+                                          brightness_delta,
+                                          contrast_prob,
+                                          contrast_lower,
+                                          contrast_upper,
+                                          hue_prob,
+                                          hue_delta,
+                                          saturation_prob,
+                                          saturation_lower,
+                                          saturation_upper,
+                                          random_order_prob,
+                                          shuffle)
+
+class RandomSampler(FeatureTransformer):
+
+    def __init__(self):
+        super(RandomSampler, self).__init__(bigdl_type)
+
+class RoiCrop(FeatureTransformer):
+
     def __init__(self, bigdl_type="float"):
-        super(ColorJitter, self).__init__(bigdl_type)
+        super(RoiCrop, self).__init__(bigdl_type)
+
+class RoiExpand(FeatureTransformer):
+
+    def __init__(self, bigdl_type="float"):
+        super(RoiExpand, self).__init__(bigdl_type)
+
+class RoiHFlip(FeatureTransformer):
+
+    def __init__(self, bigdl_type="float"):
+        super(RoiHFlip, self).__init__(bigdl_type)
+
+class RoiNormalize(FeatureTransformer):
+
+    def __init__(self, bigdl_type="float"):
+        super(RoiNormalize, self).__init__(bigdl_type)
