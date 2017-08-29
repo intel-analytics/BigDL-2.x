@@ -340,7 +340,7 @@ class FeatureTransformerSpec extends FlatSpec with Matchers {
     val label = RoiLabel(Tensor(Storage(classes)).resize(2, 11),
       Tensor(Storage(boxes)).resize(11, 4))
 
-    val feature = ImageFeature(img, label, resource.getFile)
+    val feature = ImageFeature(img, Some(resource.getFile), Some(label))
     val imgAug = BytesToMat() ->
       RoiNormalize() ->
       ColorJitter() ->

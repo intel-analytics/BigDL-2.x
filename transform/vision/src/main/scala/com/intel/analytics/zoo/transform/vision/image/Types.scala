@@ -25,14 +25,14 @@ import scala.collection.{Iterator, mutable}
 import scala.reflect.ClassTag
 
 class ImageFeature extends Serializable {
-  def this(bytes: Array[Byte], label: Any = null, path: String = null) {
+  def this(bytes: Array[Byte], label: Option[Any] = None, path: Option[String] = None) {
     this
     state(ImageFeature.bytes) = bytes
-    if (null != path) {
-      state(ImageFeature.path) = path
+    if (path.isDefined) {
+      state(ImageFeature.path) = path.get
     }
-    if (null != label) {
-      state(ImageFeature.label) = label
+    if (label.isDefined) {
+      state(ImageFeature.label) = label.get
     }
   }
 
@@ -51,8 +51,8 @@ class ImageFeature extends Serializable {
 
   def hasLabel(): Boolean = state.contains(ImageFeature.label)
 
-  def getFloats(key: String = ImageFeature.floats): Array[Float] = {
-    state(key).asInstanceOf[Array[Float]]
+  def getFloats(): Array[Float] = {
+    state(ImageFeature.floats).asInstanceOf[Array[Float]]
   }
 
   def getWidth(): Int = {
@@ -75,14 +75,13 @@ class ImageFeature extends Serializable {
 
   def clear(): Unit = {
     state.clear()
-    isValid = true
   }
 
 
-  def copyTo(storage: Array[Float], offset: Int, floatKey: String = ImageFeature.floats,
+  def copyTo(storage: Array[Float], offset: Int,
              toRGB: Boolean = true): Unit = {
-    require(contains(floatKey), s"there should be ${floatKey} in ImageFeature")
-    val data = getFloats(floatKey)
+    require(contains(ImageFeature.floats), "there should be floats in ImageFeature")
+    val data = getFloats()
     require(data.length >= getWidth() * getHeight() * 3,
       "float array length should be larger than 3 * ${getWidth()} * ${getHeight()}")
     val frameLength = getWidth() * getHeight()
@@ -120,7 +119,7 @@ object ImageFeature {
   val cropBbox = "cropBbox"
   val expandBbox = "expandBbox"
 
-  def apply(bytes: Array[Byte], label: Any = null, path: String = null)
+  def apply(bytes: Array[Byte], path: Option[String] = None, label: Option[Any] = None)
   : ImageFeature = new ImageFeature(bytes, label, path)
 
   def apply(): ImageFeature = new ImageFeature()
