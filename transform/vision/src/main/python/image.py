@@ -13,23 +13,32 @@ class FeatureTransformer(JavaValue):
     def __init__(self, bigdl_type="float", *args):
         self.value = callBigDlFunc(
             bigdl_type, JavaValue.jvm_class_constructor(self), *args)
-        self.bigdl_type = bigdl_type
-        self.transformers = [self.value]
 
     def transform(self, image, bigdl_type="float"):
-        transformer = callBigDlFunc(bigdl_type, "chainTransformer", self.transformers)
         vector = [Vectors.dense(image), Vectors.dense(image.shape)]
-        transformed = callBigDlFunc(bigdl_type, "transform", transformer, vector)
+        transformed = callBigDlFunc(bigdl_type, "transform", self.value, vector)
         return transformed[0].array.reshape(transformed[1].array)
 
-    def __call__(self, image_rdd):
+    def __call__(self, image_rdd, bigdl_type="float"):
         vector_rdd = image_rdd.map(lambda image: [Vectors.dense(image), Vectors.dense(image.shape)])
-        transformed_rdd = callBigDlFunc("float", "transformRdd", self.value, vector_rdd)
+        transformed_rdd = callBigDlFunc(bigdl_type, "transformRdd", self.value, vector_rdd)
         return transformed_rdd.map(lambda transformed: transformed[0].array.reshape(transformed[1].array))
 
-    def __add__(self, other):
-        self.transformers.append(other.value)
-        return self
+class Pipeline(JavaValue):
+
+    def __init__(self, transformers, bigdl_type="float"):
+        self.transformer = callBigDlFunc(bigdl_type, "chainTransformer", transformers)
+
+    def transform(self, image, bigdl_type="float"):
+        vector = [Vectors.dense(image), Vectors.dense(image.shape)]
+        transformed = callBigDlFunc(bigdl_type, "transform", self.transformer, vector)
+        return transformed[0].array.reshape(transformed[1].array)
+
+    def __call__(self, image_rdd, bigdl_type="float"):
+        vector_rdd = image_rdd.map(lambda image: [Vectors.dense(image), Vectors.dense(image.shape)])
+        transformed_rdd = callBigDlFunc(bigdl_type, "transformRdd", self.transformer, vector_rdd)
+        return transformed_rdd.map(lambda transformed: transformed[0].array.reshape(transformed[1].array))
+
 
 
 
