@@ -135,6 +135,7 @@ abstract class FeatureTransformer() extends Transformer[ImageFeature, ImageFeatu
   protected def transformMat(feature: ImageFeature): Unit = {}
 
   def transform(feature: ImageFeature): ImageFeature = {
+    if (!feature.isValid) return feature
     try {
       transformMat(feature)
       if (outKey.isDefined) {
@@ -156,10 +157,7 @@ abstract class FeatureTransformer() extends Transformer[ImageFeature, ImageFeatu
   }
 
   override def apply(prev: Iterator[ImageFeature]): Iterator[ImageFeature] = {
-    prev.map(image => {
-      transform(image)
-      image
-    })
+    prev.map(transform)
   }
 
   // scalastyle:off methodName
@@ -177,9 +175,6 @@ abstract class FeatureTransformer() extends Transformer[ImageFeature, ImageFeatu
 
 class ChainedFeatureTransformer(first: FeatureTransformer, last: FeatureTransformer) extends
   FeatureTransformer {
-  override def apply(prev: Iterator[ImageFeature]): Iterator[ImageFeature] = {
-    last(first(prev))
-  }
 
   override def transform(prev: ImageFeature): ImageFeature = {
     last.transform(first.transform(prev))

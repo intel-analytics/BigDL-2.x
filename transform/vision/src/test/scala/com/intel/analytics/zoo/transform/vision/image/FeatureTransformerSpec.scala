@@ -23,7 +23,7 @@ import com.intel.analytics.bigdl.tensor.{Storage, Tensor}
 import com.intel.analytics.zoo.transform.vision.image.augmentation._
 import com.intel.analytics.zoo.transform.vision.image.opencv.OpenCVMat
 import com.intel.analytics.zoo.transform.vision.label.roi._
-import com.intel.analytics.zoo.transform.vision.util.{BboxUtil, NormalizedBox}
+import com.intel.analytics.zoo.transform.vision.util.NormalizedBox
 import org.opencv.core.{Mat, Point, Scalar}
 import org.opencv.imgcodecs.Imgcodecs
 import org.opencv.imgproc.Imgproc
@@ -85,6 +85,36 @@ class FeatureTransformerSpec extends FlatSpec with Matchers {
     val tmpFile = java.io.File.createTempFile("module", ".jpg")
     Imgcodecs.imwrite(tmpFile.getAbsolutePath, feature.opencvMat())
     println(s"save to ${tmpFile.getAbsolutePath}, " + new File(tmpFile.getAbsolutePath).length())
+  }
+
+  "ChannelNormalize" should "work properly" in {
+    import scala.sys.process._
+    val resource = getClass().getClassLoader().getResource("image/000025.jpg")
+    val img = OpenCVMat.read(resource.getFile)
+    val feature = new ImageFeature
+    val feature2 = new ImageFeature
+    feature(ImageFeature.mat) = OpenCVMat.read(resource.getFile)
+    feature2(ImageFeature.mat) = OpenCVMat.read(resource.getFile)
+    val normalize = ChannelNormalize((100, 200, 300)) ->
+      MatToFloats(validHeight = img.height(), validWidth = img.width())
+    val normalize2 = MatToFloats(validHeight = img.height(),
+      validWidth = img.width(), meanRGB = Some((100, 200, 300)))
+    var start = System.nanoTime()
+    (1 to 5).foreach(i => {
+      feature(ImageFeature.mat) = OpenCVMat.read(resource.getFile)
+      normalize.transform(feature)
+    })
+
+    println(s"use mat takes ${(System.nanoTime() - start) / 1e9}s")
+    start = System.nanoTime()
+    (1 to 5).foreach(i => {
+      feature2(ImageFeature.mat) = OpenCVMat.read(resource.getFile)
+      normalize2.transform(feature2)
+    })
+    println(s"no mat takes ${(System.nanoTime() - start) / 1e9}s")
+    feature.getFloats().zip(feature2.getFloats()).foreach(x => {
+      assert(x._1 == x._2)
+    })
   }
 
   "expand with roi" should "work properly" in {

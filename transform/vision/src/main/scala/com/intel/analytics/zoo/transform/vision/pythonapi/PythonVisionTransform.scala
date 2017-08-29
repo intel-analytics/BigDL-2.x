@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.intel.analytics.zoo.transform.pythonapi
+package com.intel.analytics.zoo.transform.vision.pythonapi
 
 import java.util.{List => JList}
 
@@ -35,16 +35,16 @@ import scala.collection.JavaConverters._
 import scala.language.existentials
 import scala.reflect.ClassTag
 
-object PythonDlFeature {
+object PythonVisionTransform {
 
-  def ofFloat(): PythonBigDL[Float] = new PythonDlFeature[Float]()
+  def ofFloat(): PythonBigDL[Float] = new PythonVisionTransform[Float]()
 
-  def ofDouble(): PythonBigDL[Double] = new PythonDlFeature[Double]()
+  def ofDouble(): PythonBigDL[Double] = new PythonVisionTransform[Double]()
 
 }
 
 
-class PythonDlFeature[T: ClassTag](implicit ev: TensorNumeric[T]) extends PythonBigDL[T] {
+class PythonVisionTransform[T: ClassTag](implicit ev: TensorNumeric[T]) extends PythonBigDL[T] {
 
   def createTest(str: String): String = {
     return "hello " + str

@@ -17,8 +17,6 @@
 package com.intel.analytics.zoo.transform.vision.image.opencv
 
 import java.io.{File, IOException, ObjectInputStream, ObjectOutputStream}
-
-import com.intel.analytics.OpenCV
 import org.apache.commons.io.FileUtils
 import org.opencv.core.{CvType, Mat, MatOfByte}
 import org.opencv.imgcodecs.Imgcodecs

@@ -49,7 +49,7 @@ class MatToFloats(outKey: String = ImageFeature.floats, validHeight: Int, validW
   meanRGB: Option[(Int, Int, Int)] = None)
   extends FeatureTransformer {
   @transient private var data: Array[Float] = _
-  @transient private var floatMat: OpenCVMat = null
+  @transient private var floatMat: OpenCVMat = _
 
   private def normalize(img: Array[Float], meanR: Int, meanG: Int, meanB: Int): Array[Float] = {
     val content = img
@@ -100,5 +100,5 @@ object MatToFloats {
 
   def apply(outKey: String = "floats", validHeight: Int, validWidth: Int,
     meanRGB: Option[(Int, Int, Int)] = None): MatToFloats =
-    new MatToFloats(outKey, validHeight, validWidth)
+    new MatToFloats(outKey, validHeight, validWidth, meanRGB)
 }
