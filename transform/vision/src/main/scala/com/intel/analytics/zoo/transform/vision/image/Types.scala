@@ -75,6 +75,7 @@ class ImageFeature extends Serializable {
 
   def clear(): Unit = {
     state.clear()
+    isValid = true
   }
 
 
