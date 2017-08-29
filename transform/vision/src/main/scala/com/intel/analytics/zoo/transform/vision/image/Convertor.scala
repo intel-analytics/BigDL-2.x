@@ -23,6 +23,7 @@ import org.apache.log4j.Logger
 class BytesToMat()
   extends FeatureTransformer {
   override def transform(feature: ImageFeature): ImageFeature = {
+    if (!feature.isValid) return feature
     val bytes = feature(ImageFeature.bytes).asInstanceOf[Array[Byte]]
     var mat: OpenCVMat = null
     try {
@@ -30,7 +31,6 @@ class BytesToMat()
       feature(ImageFeature.mat) = mat
       feature(ImageFeature.originalW) = mat.width()
       feature(ImageFeature.originalH) = mat.height()
-      feature.isValid = true
     } catch {
       case e: Exception =>
         e.printStackTrace()
