@@ -67,7 +67,7 @@ class BatchNormalizationDS[@specialized(Float, Double) T: ClassTag](
     gradInput
   }
 
-  override def accGradParameters(input: Tensor[T], gradOutput: Tensor[T], scale: Double): Unit = {
+  override def accGradParameters(input: Tensor[T], gradOutput: Tensor[T]): Unit = {
     val size = input.size()
     input.resize(size(batchDim) * size(timeDim), size(featDim))
     gradOutput.resize(size(batchDim) * size(timeDim), size(featDim))

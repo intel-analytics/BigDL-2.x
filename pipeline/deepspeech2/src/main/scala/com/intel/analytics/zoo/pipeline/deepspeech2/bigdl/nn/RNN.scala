@@ -16,7 +16,6 @@
 
 package com.intel.analytics.bigdl.nn
 
-import com.intel.analytics.bigdl.nn._
 import com.intel.analytics.bigdl.nn.abstractnn.{AbstractModule, Activity, TensorModule}
 import com.intel.analytics.bigdl.tensor.Tensor
 import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric
@@ -25,12 +24,10 @@ import com.intel.analytics.bigdl.utils.Table
 
 import scala.reflect.ClassTag
 
-@SerialVersionUID( 5237686508074490666L)
 class RnnCellDS[T : ClassTag](
-    inputSize: Int = 4,
-    hiddenSize: Int = 3,
-    activation: TensorModule[T],
-    private var initMethod: InitializationMethod = Default) (implicit ev: TensorNumeric[T])
+  inputSize: Int = 4,
+  hiddenSize: Int = 3,
+  activation: TensorModule[T])(implicit ev: TensorNumeric[T])
   extends Cell[T](Array(hiddenSize)) {
 
   val parallelTable = ParallelTable[T]()
@@ -38,9 +35,9 @@ class RnnCellDS[T : ClassTag](
   val h2h = Linear[T](hiddenSize, hiddenSize)
   parallelTable.add(i2h)
   parallelTable.add(h2h)
-  val cAddTable = CAddTable[T](true)
+  val cAddTable = CAddTable[T]()
 
-  var cell: AbstractModule[Activity, Activity, T] =
+  override var cell: AbstractModule[Activity, Activity, T] =
     Sequential[T]()
       .add(parallelTable)
       .add(cAddTable)
@@ -48,28 +45,6 @@ class RnnCellDS[T : ClassTag](
       .add(ConcatTable()
         .add(Identity[T]())
         .add(Identity[T]()))
-
-  def setInitMethod(initMethod: InitializationMethod): this.type = {
-    this.initMethod = initMethod
-    this
-  }
-
-  override def reset(): Unit = {
-    initMethod match {
-      case Default =>
-        parallelTable.modules.foreach( m => {
-          val inputSize = m.asInstanceOf[Linear[T]].weight.size(1).toFloat
-          val outputSize = m.asInstanceOf[Linear[T]].weight.size(2).toFloat
-          val stdv = 6.0 / (inputSize + outputSize)
-          m.asInstanceOf[Linear[T]].weight.apply1( _ =>
-            ev.fromType[Double](RNG.uniform(0, 1) * 2 * stdv - stdv))
-          m.asInstanceOf[Linear[T]].bias.apply1( _ => ev.fromType[Double](0.0))
-        })
-      case _ =>
-        throw new IllegalArgumentException(s"Unsupported initMethod type ${initMethod}")
-    }
-    zeroGradParameters()
-  }
 
   override def updateOutput(input: Table): Table = {
     output = cell.updateOutput(input).toTable
@@ -81,9 +56,8 @@ class RnnCellDS[T : ClassTag](
     gradInput
   }
 
-  override def accGradParameters(input: Table, gradOutput: Table,
-                                 scale: Double = 1.0): Unit = {
-    cell.accGradParameters(input, gradOutput, scale)
+  override def accGradParameters(input: Table, gradOutput: Table): Unit = {
+    cell.accGradParameters(input, gradOutput)
   }
 
   override def updateParameters(learningRate: T): Unit = {
@@ -144,10 +118,9 @@ class RnnCellDS[T : ClassTag](
 
 object RnnCellDS {
   def apply[@specialized(Float, Double) T: ClassTag](
-      inputSize: Int = 4,
-      hiddenSize: Int = 3,
-      activation: TensorModule[T])
-      (implicit ev: TensorNumeric[T]) : RnnCellDS[T] = {
+    inputSize: Int = 4,
+    hiddenSize: Int = 3,
+    activation: TensorModule[T])(implicit ev: TensorNumeric[T]) : RnnCellDS[T] = {
     new RnnCellDS[T](inputSize, hiddenSize, activation)
   }
 }
