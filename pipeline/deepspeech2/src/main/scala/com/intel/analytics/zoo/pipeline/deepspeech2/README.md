@@ -42,7 +42,7 @@ deepspeech2-0.1-SNAPSHOT-jar-with-dependencies.jar  \
 #### Spark standalone mode
 ```shell
 spark-submit \
---master spark://...:7077ls \
+--master spark://...:7077 \
 --executor-cores cores_per_executor \
 --total-executor-cores total_cores_for_the_job \
 --conf "spark.serializer=org.apache.spark.serializer.JavaSerializer" \
