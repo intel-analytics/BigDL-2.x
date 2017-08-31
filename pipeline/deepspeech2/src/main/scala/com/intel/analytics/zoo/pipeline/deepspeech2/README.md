@@ -3,7 +3,7 @@ This Demo code depends on BigDL latest snapshot.
 https://github.com/intel-analytics/BigDL
 
 ### ds2 model (~387MB):
-https://drive.google.com/open?id=0B_s7AwBOnuD-M2FhblZMTGE3eHc
+https://s3-ap-southeast-1.amazonaws.com/bigdl-models/deepspeech2/ds2.model
 
 ### sample audio files:
 
