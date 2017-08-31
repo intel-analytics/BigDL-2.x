@@ -72,6 +72,8 @@
         <spark.version>2.0.1</spark.version>
         <spark-scope>compile</spark-scope>
 
+        <encoding>UTF-8</encoding>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     </properties>
 
     <dependencies>
@@ -79,7 +81,7 @@
             <dependency>
                 <groupId>com.intel.analytics.bigdl</groupId>
                 <artifactId>bigdl-SPARK_2.0</artifactId>
-                <version>0.1.0</version>
+                <version>0.3.0-SNAPSHOT</version>
             </dependency>
             <dependency>
                 <groupId>jflac</groupId>
@@ -165,7 +167,18 @@
             <plugin>
                 <groupId>net.alchim31.maven</groupId>
                 <artifactId>scala-maven-plugin</artifactId>
-                <!--<version>3.2.0</version>-->
+                <version>3.2.2</version>
+                <configuration>
+                    <recompileMode>incremental</recompileMode>
+                    <useZincServer>true</useZincServer>
+                    <args>
+                        <arg>-unchecked</arg>
+                        <arg>-deprecation</arg>
+                        <arg>-feature</arg>
+                    </args>
+                    <scalaCompatVersion>${scala.major.version}</scalaCompatVersion>
+                    <scalaVersion>${scala.version}</scalaVersion>
+                </configuration>
                 <executions>
                     <execution>
                         <id>eclipse-add-source</id>
@@ -195,16 +208,16 @@
                         </goals>
                     </execution>
                 </executions>
-                <configuration>
-                    <scalaVersion>${scala.version}</scalaVersion>
-                    <recompileMode>incremental</recompileMode>
-                    <useZincServer>true</useZincServer>
-                    <args>
-                        <arg>-unchecked</arg>
-                        <arg>-deprecation</arg>
-                        <arg>-feature</arg>
-                    </args>
-                </configuration>
+                <!--<configuration>-->
+                    <!--<scalaVersion>${scala.version}</scalaVersion>-->
+                    <!--<recompileMode>incremental</recompileMode>-->
+                    <!--<useZincServer>true</useZincServer>-->
+                    <!--<args>-->
+                        <!--<arg>-unchecked</arg>-->
+                        <!--<arg>-deprecation</arg>-->
+                        <!--<arg>-feature</arg>-->
+                    <!--</args>-->
+                <!--</configuration>-->
             </plugin>
 
             <plugin>

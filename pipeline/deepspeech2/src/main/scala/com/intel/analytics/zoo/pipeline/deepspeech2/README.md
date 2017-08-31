@@ -1,7 +1,9 @@
 
+This Demo code depends on BigDL latest snapshot.
+https://github.com/intel-analytics/BigDL
 
 ### ds2 model (~387MB):
-https://drive.google.com/open?id=0B_s7AwBOnuD-ckRqQWM3WFctZmM
+https://drive.google.com/open?id=0B_s7AwBOnuD-M2FhblZMTGE3eHc
 
 ### sample audio files:
 
@@ -28,10 +30,10 @@ If the input audio sample is much too long (> 10 seconds), it is suggested to se
 
 #### Spark local mode
 ```shell
-./bigdl.sh -- spark-submit --master local[4] \
+spark-submit --master local[4] \
 --conf spark.driver.memory=20g \
 --conf "spark.serializer=org.apache.spark.serializer.JavaSerializer" \
---class com.intel.analytics.deepspeech2.example.InferenceEvaluate \
+--class com.intel.analytics.zoo.pipeline.deepspeech2.example.InferenceEvaluate \
 deepspeech2-0.1-SNAPSHOT-jar-with-dependencies.jar  \
 -d hdfs://127.0.0.1:9001/deepspeech/data/dev-clean \
 -m hdfs://127.0.0.1:9001/deepspeech/data -p 4 -n 4 -s 30
@@ -39,12 +41,12 @@ deepspeech2-0.1-SNAPSHOT-jar-with-dependencies.jar  \
 
 #### Spark standalone mode
 ```shell
-./bigdl.sh -- spark-submit \
---master spark://... \
+spark-submit \
+--master spark://...:7077 \
 --executor-cores cores_per_executor \
 --total-executor-cores total_cores_for_the_job \
 --conf "spark.serializer=org.apache.spark.serializer.JavaSerializer" \
---class com.intel.analytics.deepspeech2.example.InferenceEvaluate \
+--class com.intel.analytics.zoo.pipeline.deepspeech2.example.InferenceEvaluate \
 deepspeech2-0.1-SNAPSHOT-jar-with-dependencies.jar \
 -d hdfs://Gondolin-Node-002:9000/deepspeech/data/dev-clean \
 -m hdfs://Gondolin-Node-002:9000/deepspeech/data -p 9 -n 27 -s 30

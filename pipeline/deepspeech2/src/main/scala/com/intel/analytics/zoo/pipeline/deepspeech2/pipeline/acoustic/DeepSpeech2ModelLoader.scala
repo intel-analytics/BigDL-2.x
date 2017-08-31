@@ -53,34 +53,23 @@ class DeepSpeech2ModelLoader[T : ClassTag](depth: Int = 1)
   val nChar = 29
 
   /**
-    * append BiRNN layers to the deepspeech model.
-    * When isPaperVersion is set to be true, the sequential will construct a DS2 w.r.t implementation from Paper.
-    * Otherwise, it will construct a Nervana's DS2 version.
-    * @param inputSize
-    * @param hiddenSize
-    * @param curDepth
-    * @return
-    */
+   * append BiRNN layers to the deepspeech model.
+   * When isPaperVersion is set to be true, the sequential will construct a DS2 w.r.t implementation from Paper.
+   * Otherwise, it will construct a Nervana's DS2 version.
+   * @param inputSize
+   * @param hiddenSize
+   * @param curDepth
+   * @return
+   */
   def addBRNN(inputSize: Int, hiddenSize: Int, curDepth: Int)
   : Module[T] = {
+    val isSplitInput = if (curDepth == 1) false else true
     val layers = Sequential()
-    if (curDepth == 1) {
-      layers
-        .add(ConcatTable()
-          .add(Identity[T]())
-          .add(Identity[T]()))
-    } else {
-      layers
-        .add(BifurcateSplitTable[T](3))
-    }
-    layers
-      .add(ParallelTable[T]()
-        .add(TimeDistributed[T](Linear[T](inputSize, hiddenSize, withBias = false)))
-        .add(TimeDistributed[T](Linear[T](inputSize, hiddenSize, withBias = false))))
-      .add(JoinTable[T](2, 2))
-      .add(BatchNormalizationDS[T](hiddenSize * 2, eps = 0.001))
-      .add(BiRecurrentDS[T](JoinTable[T](2, 2), isCloneInput = false)
-        .add(RnnCellDS[T](hiddenSize, hiddenSize, HardTanhDS[T](0, 20, true))).setName("birnn" + depth))
+        .add(BiRecurrent[T](
+          JoinTable[T](2, 2),
+          batchNormParams = BatchNormParams[T](eps = 0.001, affine = false),
+          isSplitInput = isSplitInput)
+          .add(RnnCell[T](inputSize, hiddenSize, HardTanh[T](0, 20, true), isInputWithBias = false)))
     layers
   }
 
@@ -114,7 +103,7 @@ class DeepSpeech2ModelLoader[T : ClassTag](depth: Int = 1)
     .add(Squeeze(4))
     .add(brnn)
     .add(linear1)
-    .add(HardTanhDS[T](0, 20, true))
+    .add(HardTanh[T](0, 20, true))
     .add(linear2)
 
   def reset(): Unit = {
