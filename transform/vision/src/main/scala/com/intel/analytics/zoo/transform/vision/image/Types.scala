@@ -24,14 +24,14 @@ import scala.collection.{Iterator, mutable}
 import scala.reflect.ClassTag
 
 class ImageFeature extends Serializable {
-  def this(bytes: Array[Byte], label: Option[Any] = None, path: Option[String] = None) {
+  def this(bytes: Array[Byte], label: Any, path: String) {
     this
     state(ImageFeature.bytes) = bytes
-    if (path.isDefined) {
-      state(ImageFeature.path) = path.get
+    if (null != path) {
+      state(ImageFeature.path) = path
     }
-    if (label.isDefined) {
-      state(ImageFeature.label) = label.get
+    if (null != label) {
+      state(ImageFeature.label) = label
     }
   }
 
@@ -119,7 +119,7 @@ object ImageFeature {
   val cropBbox = "cropBbox"
   val expandBbox = "expandBbox"
 
-  def apply(bytes: Array[Byte], path: Option[String] = None, label: Option[Any] = None)
+  def apply(bytes: Array[Byte], label: Any = null, path: String = null)
   : ImageFeature = new ImageFeature(bytes, label, path)
 
   def apply(): ImageFeature = new ImageFeature()

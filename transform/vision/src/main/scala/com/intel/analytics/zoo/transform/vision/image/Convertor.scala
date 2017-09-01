@@ -18,6 +18,7 @@ package com.intel.analytics.zoo.transform.vision.image
 
 import com.intel.analytics.zoo.transform.vision.image.opencv.OpenCVMat
 import org.apache.log4j.Logger
+import org.apache.spark.rdd.RDD
 
 
 class BytesToMat()
@@ -45,8 +46,8 @@ object BytesToMat {
 }
 
 
-class MatToFloats(outKey: String = ImageFeature.floats, validHeight: Int, validWidth: Int,
-  meanRGB: Option[(Int, Int, Int)] = None)
+class MatToFloats(validHeight: Int, validWidth: Int,
+  meanRGB: Option[(Int, Int, Int)] = None, outKey: String = ImageFeature.floats)
   extends FeatureTransformer {
   @transient private var data: Array[Float] = _
   @transient private var floatMat: OpenCVMat = _
@@ -98,7 +99,11 @@ class MatToFloats(outKey: String = ImageFeature.floats, validHeight: Int, validW
 object MatToFloats {
   val logger = Logger.getLogger(getClass)
 
-  def apply(outKey: String = "floats", validHeight: Int, validWidth: Int,
-    meanRGB: Option[(Int, Int, Int)] = None): MatToFloats =
-    new MatToFloats(outKey, validHeight, validWidth, meanRGB)
+  def apply(validHeight: Int = 300, validWidth: Int = 300,
+    meanRGB: Option[(Int, Int, Int)] = None, outKey: String = "floats"): MatToFloats =
+    new MatToFloats(validHeight, validWidth, meanRGB, outKey)
+}
+
+case class ImageFeatureRdd(rdd: RDD[ImageFeature]) {
+
 }

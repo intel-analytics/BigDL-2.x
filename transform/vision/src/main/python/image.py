@@ -1,7 +1,7 @@
 import sys
 from bigdl.util.common import JavaValue
 from bigdl.util.common import callBigDlFunc
-from pyspark.mllib.linalg import Vectors
+from bigdl.util.common import *
 
 if sys.version >= '3':
     long = int
@@ -14,33 +14,63 @@ class FeatureTransformer(JavaValue):
         self.value = callBigDlFunc(
             bigdl_type, JavaValue.jvm_class_constructor(self), *args)
 
-    def transform(self, image, bigdl_type="float"):
-        vector = [Vectors.dense(image), Vectors.dense(image.shape)]
-        transformed = callBigDlFunc(bigdl_type, "transform", self.value, vector)
-        return transformed[0].array.reshape(transformed[1].array)
+    def transform(self, image_feature, bigdl_type="float"):
+        callBigDlFunc(bigdl_type, "transformImageFeature", self.value, image_feature)
+        return image_feature
 
-    def __call__(self, image_rdd, bigdl_type="float"):
-        vector_rdd = image_rdd.map(lambda image: [Vectors.dense(image), Vectors.dense(image.shape)])
-        transformed_rdd = callBigDlFunc(bigdl_type, "transformRdd", self.value, vector_rdd)
-        return transformed_rdd.map(lambda transformed: transformed[0].array.reshape(transformed[1].array))
+    def __call__(self, image_feature_rdd, bigdl_type="float"):
+        return callBigDlFunc(bigdl_type,
+                             "transformImageFeatureRdd", self.value, image_feature_rdd)
 
 class Pipeline(JavaValue):
 
     def __init__(self, transformers, bigdl_type="float"):
-        self.transformer = callBigDlFunc(bigdl_type, "chainTransformer", transformers)
+        for transfomer in transformers:
+            assert transfomer.__class__.__bases__[0].__name__ == "FeatureTransformer", "the transformer should be " \
+                                                                                       "subclass of FeatureTransformer"
 
-    def transform(self, image, bigdl_type="float"):
-        vector = [Vectors.dense(image), Vectors.dense(image.shape)]
-        transformed = callBigDlFunc(bigdl_type, "transform", self.transformer, vector)
-        return transformed[0].array.reshape(transformed[1].array)
+        self.transformer = callBigDlFunc(bigdl_type, "chainFeatureTransformer", transformers)
 
-    def __call__(self, image_rdd, bigdl_type="float"):
-        vector_rdd = image_rdd.map(lambda image: [Vectors.dense(image), Vectors.dense(image.shape)])
-        transformed_rdd = callBigDlFunc(bigdl_type, "transformRdd", self.transformer, vector_rdd)
-        return transformed_rdd.map(lambda transformed: transformed[0].array.reshape(transformed[1].array))
+    def transform(self, image_feature, bigdl_type="float"):
+        callBigDlFunc(bigdl_type, "transformImageFeature", self.transformer, image_feature)
+        return image_feature
+
+    def __call__(self, image_feature_rdd, bigdl_type="float"):
+        return callBigDlFunc(bigdl_type,
+                                         "transformImageFeatureRdd", self.transformer, image_feature_rdd)
+
+class ImageFeature(JavaValue):
+
+    def __init__(self, image=None, label=None, path=None, bigdl_type="float"):
+        image_tensor = JTensor.from_ndarray(image) if image is not None else None
+        label_tensor = JTensor.from_ndarray(label) if label is not None else None
+        self.value = callBigDlFunc(
+            bigdl_type, JavaValue.jvm_class_constructor(self), image_tensor, label_tensor, path)
+
+    def to_sample(self, bigdl_type="float"):
+        return callBigDlFunc(bigdl_type, "imageFeatureToSample", self.value)
 
 
+    def get_image(self, bigdl_type="float"):
+        tensor = callBigDlFunc(bigdl_type, "getImage", self.value)
+        return tensor.to_ndarray()
 
+class ImageFeatureRdd(JavaValue):
+
+    def __init__(self, jvalue, bigdl_type, *args):
+        self.value = jvalue if jvalue else callBigDlFunc(
+            bigdl_type, self.jvm_class_constructor(), *args)
+        self.bigdl_type = bigdl_type
+
+
+def ndarray_to_image_feature(ndarray_rdd, bigdl_type="float"):
+    tensor_rdd = ndarray_rdd.map(lambda image: [JTensor.from_ndarray(image)])
+    return callBigDlFunc(bigdl_type, "tensorRddToImageFeatureRdd", tensor_rdd)
+
+
+def image_feature_to_sample(image_feature_rdd, bigdl_type="float"):
+    return callBigDlFunc(bigdl_type,
+                         "imageFeatureRddToSampleRdd", image_feature_rdd)
 
 class Resize(FeatureTransformer):
 
@@ -162,3 +192,11 @@ class RoiNormalize(FeatureTransformer):
 
     def __init__(self, bigdl_type="float"):
         super(RoiNormalize, self).__init__(bigdl_type)
+
+class MatToFloats(FeatureTransformer):
+
+    def __init__(self, valid_height=300, valid_width=300,
+                 mean_r=-1, mean_g=-1, mean_b=-1, out_key = "floats", bigdl_type="float"):
+        super(MatToFloats, self).__init__(bigdl_type, valid_height, valid_width,
+                                          mean_r, mean_g, mean_b, out_key)
+

@@ -24,7 +24,7 @@ import com.intel.analytics.zoo.transform.vision.image.augmentation._
 import com.intel.analytics.zoo.transform.vision.image.opencv.OpenCVMat
 import com.intel.analytics.zoo.transform.vision.label.roi._
 import com.intel.analytics.zoo.transform.vision.util.NormalizedBox
-import org.opencv.core.{Mat, Point, Scalar}
+import org.opencv.core.{CvType, Mat, Point, Scalar}
 import org.opencv.imgcodecs.Imgcodecs
 import org.opencv.imgproc.Imgproc
 import org.scalatest.{FlatSpec, Matchers}
@@ -326,7 +326,7 @@ class FeatureTransformerSpec extends FlatSpec with Matchers {
     val label = RoiLabel(Tensor(Storage(classes)).resize(2, 11),
       Tensor(Storage(boxes)).resize(11, 4))
 
-    val feature = ImageFeature(img, Some(resource.getFile), Some(label))
+    val feature = ImageFeature(img, label, resource.getFile)
     val imgAug = BytesToMat() ->
       RoiNormalize() ->
       ColorJitter() ->
