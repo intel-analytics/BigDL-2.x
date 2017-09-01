@@ -19,7 +19,8 @@ package com.intel.analytics.zoo.transform.vision.pythonapi
 import java.util.{List => JList}
 
 import com.intel.analytics.bigdl.numeric._
-import com.intel.analytics.bigdl.python.api.PythonBigDL
+import com.intel.analytics.bigdl.dataset.{Sample => JSample}
+import com.intel.analytics.bigdl.python.api.{JTensor, PythonBigDL, Sample}
 import com.intel.analytics.bigdl.tensor.{Storage, Tensor}
 import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric
 import com.intel.analytics.zoo.transform.vision.image._
@@ -28,10 +29,8 @@ import com.intel.analytics.zoo.transform.vision.image.opencv.OpenCVMat
 import com.intel.analytics.zoo.transform.vision.label.roi._
 import com.intel.analytics.zoo.transform.vision.util.NormalizedBox
 import org.apache.spark.api.java.JavaRDD
-import org.apache.spark.mllib.linalg.{DenseVector, Vectors}
 import org.opencv.imgproc.Imgproc
 
-import scala.collection.JavaConverters._
 import scala.language.existentials
 import scala.reflect.ClassTag
 
@@ -141,53 +140,93 @@ class PythonVisionTransform[T: ClassTag](implicit ev: TensorNumeric[T]) extends 
     RoiNormalize()
   }
 
-  def transform(transformer: FeatureTransformer, data: JList[DenseVector]): JList[DenseVector] = {
-    val pipeline = transformer -> MatToFloats(validHeight = 300, validWidth = 300)
-    val shape = data.get(1)
-    val mat = OpenCVMat.floatToMat(data.get(0).toArray.map(_.toFloat),
-      shape(0).toInt, shape(1).toInt)
-    val feature = new ImageFeature()
-    feature(ImageFeature.mat) = mat
-    pipeline.transform(feature)
-    val denseVector = new DenseVector(feature.getFloats().map(_.toDouble))
-    val transformedShape = Vectors.dense(feature.getHeight(), feature.getWidth(), 3).toDense
-    List(denseVector, transformedShape).asJava
+  def transformImageFeature(transformer: FeatureTransformer, feature: ImageFeature)
+  : ImageFeature = {
+    transformer.transform(feature)
   }
 
-  def transformRdd(transformer: FeatureTransformer, dataRdd: JavaRDD[JList[DenseVector]])
-  : JavaRDD[JList[DenseVector]] = {
-    val pipeline = transformer -> MatToFloats(validHeight = 300, validWidth = 300)
-    val matRdd = dataRdd.rdd.map { tuple => {
-      val shape = tuple.get(1)
-      val data = tuple.get(0)
-      // data.shape [h, w, c]
-      val mat = OpenCVMat.floatToMat(data.toArray.map(_.toFloat),
-        shape(0).toInt, shape(1).toInt)
-      val feature = new ImageFeature()
-      feature(ImageFeature.mat) = mat
-      feature
-    }
-    }
-    val transformed = pipeline(matRdd)
-    transformed.map(feature => {
-      val denseVector = new DenseVector(feature.getFloats()
-        .slice(0, feature.getHeight() * feature.getWidth() * 3).map(_.toDouble))
-      val transformedShape = Vectors.dense(feature.getHeight(), feature.getWidth(), 3).toDense
-      println(feature.getHeight(), feature.getWidth(), 3)
-      List(denseVector, transformedShape).asJava
+  def transformImageFeatureRdd(transformer: FeatureTransformer, dataRdd: ImageFeatureRdd)
+  : ImageFeatureRdd = {
+    ImageFeatureRdd(transformer(dataRdd.rdd))
+  }
+
+  def tensorRddToImageFeatureRdd(dataRdd: JavaRDD[JList[JTensor]]): ImageFeatureRdd = {
+    val featureRdd = dataRdd.rdd.map(data => {
+      var image: JTensor = null
+      var label: JTensor = null
+      if (data.size() > 0) {
+        image = data.get(0)
+      }
+      if (data.size() > 1) {
+        label = data.get(1)
+      }
+      createImageFeature(image, label)
     })
+    ImageFeatureRdd(featureRdd)
   }
 
-  def chainTransformer(list: JList[FeatureTransformer])
+  def chainFeatureTransformer(list: JList[FeatureTransformer])
   : FeatureTransformer = {
     var cur = list.get(0)
     (1 until list.size()).foreach(t => cur = cur -> list.get(t))
     cur
   }
 
-  def vector2Tensor(vector: DenseVector, shape: JList[Int]): Tensor[Float] = {
-    val data = vector.toArray.map(_.toFloat)
-    Tensor(Storage(data)).resize(shape.asScala.toArray)
+
+  def createImageFeature(data: JTensor = null, label: JTensor = null, path: String = null)
+  : ImageFeature = {
+    val feature = new ImageFeature()
+    if (null != data) {
+      feature(ImageFeature.mat) = OpenCVMat.floatToMat(data.storage, data.shape(0), data.shape(1))
+    }
+    if (null != label) {
+      // todo: may need a method to change label format if needed
+      feature(ImageFeature.label) = toTensor(label)
+    }
+    if (null != path) {
+      feature(ImageFeature.path) = path
+    }
+    feature
+  }
+
+  def createMatToFloats(validH: Int, validW: Int,
+    meanR: Int = -1, meanG: Int = -1, meanB: Int = -1, outKey: String): MatToFloats = {
+    val means = if (-1 != meanR) {
+      Some(meanR, meanG, meanB)
+    } else None
+    MatToFloats(validH, validW, means, outKey)
+  }
+
+  def imageFeatureToSample(imageFeature: ImageFeature): Sample = {
+    require(imageFeature.contains(ImageFeature.floats),
+      "there is no float array in image feature, please call MatToFloats().transform first")
+    // transpose the shape of image from (h, w, c) to (c, h, w)
+    val image = Tensor(Storage(imageFeature.getFloats()))
+      .resize(imageFeature.getHeight(), imageFeature.getWidth(), 3)
+      .transpose(1, 3).transpose(2, 3).contiguous()
+    val label = if (imageFeature.hasLabel()) {
+      imageFeature.getLabel[Tensor[Float]]
+    } else {
+      Tensor[Float](1).fill(-1)
+    }
+    val jSample = JSample[Float](image, label)
+    toPySample(jSample.asInstanceOf[JSample[T]])
+  }
+
+  def imageFeatureRddToSampleRdd(imageFeatureRdd: ImageFeatureRdd): JavaRDD[Sample] = {
+    imageFeatureRdd.rdd.map(imageFeatureToSample).toJavaRDD()
+  }
+
+  def getImage(imageFeature: ImageFeature): JTensor = {
+    if (imageFeature.contains(ImageFeature.floats)) {
+      JTensor(imageFeature.getFloats(), Array(imageFeature.getHeight(), imageFeature.getWidth(), 3),
+        "float")
+    } else {
+      val mat = imageFeature.opencvMat()
+      val floats = new Array[Float](mat.height() * mat.width() * 3)
+      OpenCVMat.toFloatBuf(mat, floats)
+      JTensor(floats, Array(mat.height(), mat.width(), 3), "float")
+    }
   }
 }
 
