@@ -47,12 +47,12 @@ class ImageFeature(JavaValue):
         self.value = callBigDlFunc(
             bigdl_type, JavaValue.jvm_class_constructor(self), image_tensor, label_tensor, path)
 
-    def to_sample(self, bigdl_type="float"):
-        return callBigDlFunc(bigdl_type, "imageFeatureToSample", self.value)
+    def to_sample(self, float_key="floats", to_chw=True, bigdl_type="float"):
+        return callBigDlFunc(bigdl_type, "imageFeatureToSample", self.value, float_key, to_chw)
 
-
-    def get_image(self, bigdl_type="float"):
-        tensor = callBigDlFunc(bigdl_type, "getImage", self.value)
+    def to_ndarray(self, float_key="floats", to_chw=True, bigdl_type="float"):
+        tensor = callBigDlFunc(bigdl_type, "imageFeatureToTensor", self.value,
+                               float_key, to_chw)
         return tensor.to_ndarray()
 
 class ImageFeatureRdd(JavaValue):
@@ -68,9 +68,16 @@ def ndarray_to_image_feature(ndarray_rdd, bigdl_type="float"):
     return callBigDlFunc(bigdl_type, "tensorRddToImageFeatureRdd", tensor_rdd)
 
 
-def image_feature_to_sample(image_feature_rdd, bigdl_type="float"):
+def image_feature_to_sample(image_feature_rdd, float_key="floats", to_chw=True, bigdl_type="float"):
     return callBigDlFunc(bigdl_type,
-                         "imageFeatureRddToSampleRdd", image_feature_rdd)
+                         "imageFeatureRddToSampleRdd", image_feature_rdd, float_key, to_chw)
+
+def image_feature_to_ndarray(image_feature_rdd, float_key="floats",
+                             to_chw=True, bigdl_type="float"):
+    tensor_rdd = callBigDlFunc(bigdl_type,
+                         "imageFeatureRddToTensorRdd", image_feature_rdd, float_key, to_chw)
+    return tensor_rdd.map(lambda tensor: tensor.to_ndarray())
+
 
 class Resize(FeatureTransformer):
 

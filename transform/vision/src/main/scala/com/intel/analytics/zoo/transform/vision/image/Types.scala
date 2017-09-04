@@ -24,7 +24,7 @@ import scala.collection.{Iterator, mutable}
 import scala.reflect.ClassTag
 
 class ImageFeature extends Serializable {
-  def this(bytes: Array[Byte], label: Any, path: String) {
+  def this(bytes: Array[Byte], label: Any = null, path: String = null) {
     this
     state(ImageFeature.bytes) = bytes
     if (null != path) {
@@ -50,8 +50,8 @@ class ImageFeature extends Serializable {
 
   def hasLabel(): Boolean = state.contains(ImageFeature.label)
 
-  def getFloats(): Array[Float] = {
-    state(ImageFeature.floats).asInstanceOf[Array[Float]]
+  def getFloats(key: String = ImageFeature.floats): Array[Float] = {
+    state(key).asInstanceOf[Array[Float]]
   }
 
   def getWidth(): Int = {
@@ -78,10 +78,10 @@ class ImageFeature extends Serializable {
   }
 
 
-  def copyTo(storage: Array[Float], offset: Int,
+  def copyTo(storage: Array[Float], offset: Int, floatKey: String = ImageFeature.floats,
              toRGB: Boolean = true): Unit = {
-    require(contains(ImageFeature.floats), "there should be floats in ImageFeature")
-    val data = getFloats()
+    require(contains(floatKey), s"there should be ${floatKey} in ImageFeature")
+    val data = getFloats(floatKey)
     require(data.length >= getWidth() * getHeight() * 3,
       "float array length should be larger than 3 * ${getWidth()} * ${getHeight()}")
     val frameLength = getWidth() * getHeight()

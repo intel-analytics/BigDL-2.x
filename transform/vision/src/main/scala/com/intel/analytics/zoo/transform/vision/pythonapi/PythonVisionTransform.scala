@@ -28,8 +28,10 @@ import com.intel.analytics.zoo.transform.vision.image.augmentation._
 import com.intel.analytics.zoo.transform.vision.image.opencv.OpenCVMat
 import com.intel.analytics.zoo.transform.vision.label.roi._
 import com.intel.analytics.zoo.transform.vision.util.NormalizedBox
+import org.apache.log4j.Logger
 import org.apache.spark.api.java.JavaRDD
 import org.opencv.imgproc.Imgproc
+import PythonVisionTransform._
 
 import scala.language.existentials
 import scala.reflect.ClassTag
@@ -40,6 +42,7 @@ object PythonVisionTransform {
 
   def ofDouble(): PythonBigDL[Double] = new PythonVisionTransform[Double]()
 
+  val logger = Logger.getLogger(getClass)
 }
 
 
@@ -197,36 +200,47 @@ class PythonVisionTransform[T: ClassTag](implicit ev: TensorNumeric[T]) extends 
     MatToFloats(validH, validW, means, outKey)
   }
 
-  def imageFeatureToSample(imageFeature: ImageFeature): Sample = {
-    require(imageFeature.contains(ImageFeature.floats),
-      "there is no float array in image feature, please call MatToFloats().transform first")
-    // transpose the shape of image from (h, w, c) to (c, h, w)
-    val image = Tensor(Storage(imageFeature.getFloats()))
-      .resize(imageFeature.getHeight(), imageFeature.getWidth(), 3)
-      .transpose(1, 3).transpose(2, 3).contiguous()
+  def imageFeatureToSample(imageFeature: ImageFeature,
+    floatKey: String = ImageFeature.floats, toChw: Boolean = true): Sample = {
+    val imageTensor = imageFeatureToTensor(imageFeature, floatKey, toChw)
+
     val label = if (imageFeature.hasLabel()) {
-      imageFeature.getLabel[Tensor[Float]]
+      imageFeature.getLabel[Tensor[T]]
     } else {
-      Tensor[Float](1).fill(-1)
+      Tensor[T](1).fill(ev.fromType[Float](-1f))
     }
-    val jSample = JSample[Float](image, label)
-    toPySample(jSample.asInstanceOf[JSample[T]])
+    Sample(imageTensor, toJTensor(label), "floats")
   }
 
-  def imageFeatureRddToSampleRdd(imageFeatureRdd: ImageFeatureRdd): JavaRDD[Sample] = {
-    imageFeatureRdd.rdd.map(imageFeatureToSample).toJavaRDD()
+  def imageFeatureRddToSampleRdd(imageFeatureRdd: ImageFeatureRdd,
+    floatKey: String = ImageFeature.floats, toChw: Boolean = true): JavaRDD[Sample] = {
+    imageFeatureRdd.rdd.map(imageFeatureToSample(_, floatKey, toChw)).toJavaRDD()
   }
 
-  def getImage(imageFeature: ImageFeature): JTensor = {
-    if (imageFeature.contains(ImageFeature.floats)) {
-      JTensor(imageFeature.getFloats(), Array(imageFeature.getHeight(), imageFeature.getWidth(), 3),
-        "float")
+  def imageFeatureRddToTensorRdd(imageFeatureRdd: ImageFeatureRdd,
+    floatKey: String = ImageFeature.floats, toChw: Boolean = true): JavaRDD[JTensor] = {
+    imageFeatureRdd.rdd.map(imageFeatureToTensor(_, floatKey, toChw)).toJavaRDD()
+  }
+
+  def imageFeatureToTensor(imageFeature: ImageFeature,
+    floatKey: String = ImageFeature.floats, toChw: Boolean = true): JTensor = {
+    val (floats, size) = if (imageFeature.contains(floatKey)) {
+      (imageFeature.getFloats(floatKey),
+        Array(imageFeature.getHeight(), imageFeature.getWidth(), 3))
     } else {
+      logger.warn(s"please add MatToFloats(out_key = $floatKey) in the end of pipeline if you" +
+        s"are transforming an rdd")
       val mat = imageFeature.opencvMat()
       val floats = new Array[Float](mat.height() * mat.width() * 3)
       OpenCVMat.toFloatBuf(mat, floats)
-      JTensor(floats, Array(mat.height(), mat.width(), 3), "float")
+      (floats, Array(mat.height(), mat.width(), 3))
     }
+    var image = Tensor(Storage(floats)).resize(size)
+    if (toChw) {
+      // transpose the shape of image from (h, w, c) to (c, h, w)
+      image = image.transpose(1, 3).transpose(2, 3).contiguous()
+    }
+    toJTensor(image.asInstanceOf[Tensor[T]])
   }
 }
 

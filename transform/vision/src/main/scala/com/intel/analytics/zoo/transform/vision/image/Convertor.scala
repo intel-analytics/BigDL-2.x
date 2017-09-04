@@ -35,6 +35,8 @@ class BytesToMat()
     } catch {
       case e: Exception =>
         e.printStackTrace()
+        feature(ImageFeature.originalW) = -1
+        feature(ImageFeature.originalH) = -1
         feature.isValid = false
     }
     feature
@@ -100,7 +102,7 @@ object MatToFloats {
   val logger = Logger.getLogger(getClass)
 
   def apply(validHeight: Int = 300, validWidth: Int = 300,
-    meanRGB: Option[(Int, Int, Int)] = None, outKey: String = "floats"): MatToFloats =
+    meanRGB: Option[(Int, Int, Int)] = None, outKey: String = ImageFeature.floats): MatToFloats =
     new MatToFloats(validHeight, validWidth, meanRGB, outKey)
 }
 
