@@ -25,22 +25,24 @@ import scopt.OptionParser
 object RoiImageSeqGenerator {
 
   case class RoiImageSeqGeneratorParams(
-                                         folder: String = "",
-                                         output: String = "",
-                                         parallel: Int = 1,
-                                         blockSize: Int = 12800,
-                                         imageSet: Option[String] = None
+    folder: String = ".",
+    output: String = ".",
+    parallel: Int = 1,
+    blockSize: Int = 12800,
+    imageSet: Option[String] = None
   )
 
-  private val parser = new OptionParser[RoiImageSeqGeneratorParams]("Spark-DL Pascal VOC " +
+  private val parser = new OptionParser[RoiImageSeqGeneratorParams]("BigDL Pascal VOC " +
     "Sequence File Generator") {
-    head("Spark-DL Pascal VOC Sequence File Generator")
+    head("BigDL Pascal VOC Sequence File Generator")
     opt[String]('f', "folder")
       .text("where you put the image data, if this is labeled pascal voc data, put the devkit path")
       .action((x, c) => c.copy(folder = x))
+      .required()
     opt[String]('o', "output folder")
       .text("where you put the generated seq files")
       .action((x, c) => c.copy(output = x))
+      .required()
     opt[Int]('p', "parallel")
       .text("parallel num")
       .action((x, c) => c.copy(parallel = x))
@@ -48,8 +50,7 @@ object RoiImageSeqGenerator {
       .text("block size")
       .action((x, c) => c.copy(blockSize = x))
     opt[String]('i', "imageSet")
-      .text("image set, if this is the pascal voc or coco data," +
-        " put the image set name, e.g. voc_2007_test or coco_testdev")
+      .text("image set, if this is the pascal voc data, put the image set name, e.g. voc_2007_test")
       .action((x, c) => c.copy(imageSet = Some(x)))
   }
 
@@ -58,11 +59,13 @@ object RoiImageSeqGenerator {
       val roidbs = if (param.imageSet.isDefined) {
         Imdb.getImdb(param.imageSet.get, param.folder).getRoidb()
       } else {
-        new File(param.folder).listFiles().map(f => RoiImagePath(f.getAbsolutePath))
+        val file = new File(param.folder)
+        require(file.exists(), s"$file not exists!")
+        file.listFiles().map(f => RoiImagePath(f.getAbsolutePath))
       }
 
       val total = roidbs.length
-      val iter = roidbs.toIterator
+      val iter = Imdb.data(roidbs)
 
       (0 until param.parallel).map(tid => {
         val workingThread = new Thread(new Runnable {

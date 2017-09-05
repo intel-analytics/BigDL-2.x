@@ -16,17 +16,28 @@
 
 package com.intel.analytics.zoo.pipeline.common.nn
 
-import com.intel.analytics.bigdl.nn.abstractnn.AbstractModule
-import com.intel.analytics.bigdl.tensor.Tensor
-import com.intel.analytics.bigdl.utils.Table
+import com.intel.analytics.bigdl.nn.abstractnn.{AbstractModule, Activity}
+import com.intel.analytics.bigdl.nn.{InferReshape, Sequential, SoftMax, TimeDistributed}
 import com.intel.analytics.zoo.pipeline.common.BboxUtil
 import com.intel.analytics.zoo.pipeline.common.nn.DetectionOutput._
-import com.intel.analytics.zoo.pipeline.ssd.PostProcessParam
+import com.intel.analytics.bigdl.tensor.Tensor
+import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric
+import com.intel.analytics.bigdl.utils.Table
+import com.intel.analytics.zoo.pipeline.ssd.model.PostProcessParam
 import org.apache.log4j.Logger
 
+import scala.reflect.ClassTag
+
 @SerialVersionUID(5253792953255433914L)
-class DetectionOutput(param: PostProcessParam) extends AbstractModule[Table, Tensor[Float], Float] {
+class DetectionOutput[T: ClassTag](param: PostProcessParam, postProcess: Boolean = true)
+  (implicit ev: TensorNumeric[T])
+  extends AbstractModule[Table, Activity, T] {
   @transient private var nms: Nms = _
+
+  def setTopK(topK: Int): this.type = {
+    param.keepTopK = topK
+    this
+  }
 
   private def filterBboxes(decodedBboxes: Array[Tensor[Float]],
     confScores: Array[Tensor[Float]], indices: Array[Array[Int]],
@@ -137,10 +148,28 @@ class DetectionOutput(param: PostProcessParam) extends AbstractModule[Table, Ten
     }
   }
 
-  override def updateOutput(input: Table): Tensor[Float] = {
+
+  val confPost = if (postProcess) {
+    Sequential[T]()
+      .add(InferReshape[T](Array(0, -1, param.nClasses)).setName("mbox_conf_reshape"))
+      .add(TimeDistributed[T](SoftMax[T]()).setName("mbox_conf_softmax"))
+      .add(InferReshape[T](Array(0, -1)).setName("mbox_conf_flatten"))
+  } else {
+    null
+  }
+
+  override def updateOutput(input: Table): Activity = {
+    if (isTraining()) {
+      output = input
+      return output
+    }
     if (nms == null) nms = new Nms()
     val loc = input[Tensor[Float]](1)
-    val conf = input[Tensor[Float]](2)
+    val conf = if (postProcess) {
+      confPost.forward(input[Tensor[Float]](2)).toTensor[Float]
+    } else {
+      input[Tensor[Float]](2)
+    }
     val prior = input[Tensor[Float]](3)
     val batch = loc.size(1)
     val numLocClasses = if (param.shareLocation) 1 else param.nClasses
@@ -171,11 +200,11 @@ class DetectionOutput(param: PostProcessParam) extends AbstractModule[Table, Ten
       i += 1
     }
     // the first element is the number of detection numbers
-    output = Tensor[Float](batch, 1 + maxDetection * 6)
+    val out = Tensor[Float](batch, 1 + maxDetection * 6)
     if (numKepts.sum > 0) {
       i = 0
       while (i < batch) {
-        val outi = output(i + 1)
+        val outi = out(i + 1)
         var c = 0
         outi.setValue(1, numKepts(i))
         var offset = 2
@@ -185,6 +214,7 @@ class DetectionOutput(param: PostProcessParam) extends AbstractModule[Table, Ten
             val indicesNum = allIndicesNum(i)(c)
             val locLabel = if (param.shareLocation) allDecodedBboxes(i).length - 1 else c
             val bboxes = allDecodedBboxes(i)(locLabel)
+            var bboxesOffset = allDecodedBboxes(i)(locLabel).storageOffset() - 1
             var j = 0
             while (j < indicesNum) {
               val idx = indices(j)
@@ -203,16 +233,30 @@ class DetectionOutput(param: PostProcessParam) extends AbstractModule[Table, Ten
         i += 1
       }
     }
+    output = out
     output
   }
 
-  override def updateGradInput(input: Table, gradOutput: Tensor[Float]): Table = {
-    null
+  override def updateGradInput(input: Table, gradOutput: Activity): Table = {
+    gradInput = gradOutput.toTable
+    gradInput
+  }
+
+  override def clearState(): DetectionOutput.this.type = {
+    nms = null
+    allLocPreds = null
+    allConfScores = null
+    allIndices = null
+    allIndicesNum = null
+    if (null != confPost) confPost.clearState()
+    this
   }
 }
 
 object DetectionOutput {
   val logger = Logger.getLogger(getClass)
 
-  def apply(param: PostProcessParam): DetectionOutput = new DetectionOutput(param)
+  def apply[@specialized(Float) T: ClassTag](param: PostProcessParam, postProcess: Boolean = true)
+    (implicit ev: TensorNumeric[T]): DetectionOutput[T] =
+    new DetectionOutput[T](param, postProcess)
 }
