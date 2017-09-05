@@ -1,10 +1,10 @@
 #!/bin/bash
 
-# mvn install opencv jar
-if [ ! -f "opencv-analytics-3.2.0.jar" ]
-then
-    wget https://github.com/SeaOfOcean/OpencvWrapper/raw/master/opencv-analytics-3.2.0.jar
-    mvn install:install-file -Dfile=opencv-analytics-3.2.0.jar -DgroupId=com.intel.analytics -DartifactId=opencv-analytics -Dversion=3.2.0 -Dpackaging=jar -DgeneratePom=true
-fi
-# package
+# Assume currently at the root of analytics-zoo
+# mvn install image transformer lib
+cd transform/vision
+mvn clean install
+
+# package ssd
+cd ../../pipeline/ssd
 mvn clean package -DskipTests
