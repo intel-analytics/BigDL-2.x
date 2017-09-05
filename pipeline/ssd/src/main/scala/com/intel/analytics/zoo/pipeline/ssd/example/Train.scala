@@ -29,6 +29,7 @@ import com.intel.analytics.zoo.pipeline.ssd.model.SSDVgg
 import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric.NumericFloat
 import com.intel.analytics.bigdl.utils.{Engine, LoggerFilter}
 import com.intel.analytics.bigdl.visualization.{TrainSummary, ValidationSummary}
+import com.intel.analytics.zoo.pipeline.common.dataset.roiimage.SSDMiniBatch
 import org.apache.log4j.{Level, Logger}
 import org.apache.spark.SparkContext
 import scopt.OptionParser
@@ -46,19 +47,13 @@ object Option {
     modelSnapshot: Option[String] = None,
     stateSnapshot: Option[String] = None,
     classNumber: Int = 21,
-    optimizer: String = "SGD",
-    schedule: String = "multistep",
     batchSize: Int = -1,
     learningRate: Double = 0.001,
     learningRateDecay: Double = 0.1,
     patience: Int = 10,
     warmUpMap: Option[Double] = None,
-    learningRateSteps: Option[Array[Int]] = Some(Array(80000, 100000, 120000)),
     overWriteCheckpoint: Boolean = false,
     maxEpoch: Option[Int] = None,
-    maxIteration: Int = 120000,
-    weightDecay: Double = 0.0005,
-    checkpointIteration: Int = 620,
     weights: Option[String] = None,
     jobName: String = "BigDL SSD Train Example",
     summaryDir: Option[String] = None
@@ -91,12 +86,6 @@ object Option {
     opt[String]("weights")
       .text("pretrained weights")
       .action((x, c) => c.copy(weights = Some(x)))
-    opt[String]("optim")
-      .text("optimizer method")
-      .action((x, c) => c.copy(optimizer = x))
-    opt[String]("schedule")
-      .text("learning rate schedule method")
-      .action((x, c) => c.copy(schedule = x))
     opt[String]("state")
       .text("state snapshot location")
       .action((x, c) => c.copy(stateSnapshot = Some(x)))
@@ -109,9 +98,6 @@ object Option {
     opt[Int]('e', "maxEpoch")
       .text("epoch numbers")
       .action((x, c) => c.copy(maxEpoch = Some(x)))
-    opt[Int]('i', "maxIteration")
-      .text("iteration numbers")
-      .action((x, c) => c.copy(maxIteration = x))
     opt[Double]('l', "learningRate")
       .text("inital learning rate")
       .action((x, c) => c.copy(learningRate = x))
@@ -119,9 +105,6 @@ object Option {
     opt[Double]('d', "learningRateDecay")
       .text("learning rate decay")
       .action((x, c) => c.copy(learningRateDecay = x))
-    opt[String]("step")
-      .text("learning rate steps, split by ,")
-      .action((x, c) => c.copy(learningRateSteps = Some(x.split(",").map(_.toInt))))
     opt[Int]('b', "batchSize")
       .text("batch size")
       .action((x, c) => c.copy(batchSize = x))
@@ -132,15 +115,9 @@ object Option {
     opt[Unit]("overWrite")
       .text("overwrite checkpoint files")
       .action((_, c) => c.copy(overWriteCheckpoint = true))
-    opt[Double]("weightDecay")
-      .text("weight decay")
-      .action((x, c) => c.copy(weightDecay = x))
     opt[Double]("warm")
       .text("warm up map")
       .action((x, c) => c.copy(warmUpMap = Some(x)))
-    opt[Int]("checkpointIteration")
-      .text("checkpoint interval of iterations")
-      .action((x, c) => c.copy(checkpointIteration = x))
     opt[String]("name")
       .text("job name")
       .action((x, c) => c.copy(jobName = x))
@@ -155,7 +132,7 @@ object Train {
 
   LoggerFilter.redirectSparkInfoLogs()
   Logger.getLogger("com.intel.analytics.bigdl.optim").setLevel(Level.INFO)
-  Logger.getLogger("com.intel.analytics.zoo.pipeline").setLevel(Level.INFO)
+  Logger.getLogger("com.intel.analytics.bigdl.pipeline").setLevel(Level.INFO)
 
   import Option._
 
@@ -185,47 +162,17 @@ object Train {
                 param.caffeDefPath.get, param.caffeModelPath.get, matchAll = false)
             }
             model
+          case _ => throw new Exception("currently only test over vgg ssd model")
         }
       }
 
-      logger.info(model)
-
       val warmUpModel = if (param.warmUpMap.isDefined) {
-        val optimMethod = new SGD[Float](
-          learningRate = 0.001,
-          momentum = 0.9,
-          dampening = 0.0,
-          learningRateSchedule = SGD.Step(Int.MaxValue, 1.0))
-
-        val optimizer = Optimizer(
-          model = model,
-          dataset = trainSet,
-          criterion = new MultiBoxLoss[Float](MultiBoxLossParam())
+        val optimMethod = new Adam[Float](
+          learningRate = 0.0001,
+          learningRateDecay = 0.0005
         )
-
-        if (param.checkpoint.isDefined) {
-          optimizer.setCheckpoint(param.checkpoint.get, Trigger.everyEpoch)
-        }
-
-        if (param.overWriteCheckpoint) {
-          optimizer.overWriteCheckpoint()
-        }
-
-        if (param.summaryDir.isDefined) {
-          val trainSummary = TrainSummary(param.summaryDir.get, param.jobName)
-          val validationSummary = ValidationSummary(param.summaryDir.get, param.jobName)
-          optimizer.setTrainSummary(trainSummary)
-          optimizer.setValidationSummary(validationSummary)
-        }
-
-        optimizer
-          .setOptimMethod(optimMethod)
-          .setValidation(Trigger.everyEpoch,
-            valSet.asInstanceOf[DataSet[MiniBatch[Float]]],
-            Array(new MeanAveragePrecision(true, normalized = true,
-              nClass = param.classNumber)))
-          .setEndWhen(Trigger.maxScore(param.warmUpMap.get.toFloat))
-          .optimize()
+        optimize(model, trainSet, valSet, param, optimMethod,
+          Trigger.maxScore(param.warmUpMap.get.toFloat))
       } else {
         model
       }
@@ -233,83 +180,54 @@ object Train {
       val optimMethod = if (param.stateSnapshot.isDefined) {
         OptimMethod.load[Float](param.stateSnapshot.get)
       } else {
-        param.optimizer.toUpperCase match {
-          case "SGD" =>
-            val learningRateSchedule = param.schedule.toLowerCase() match {
-              case "multistep" =>
-                require(param.learningRateDecay > 0, "if you use multistep," +
-                  " make sure learningRateDecay > 0")
-                SGD.MultiStep(param.learningRateSteps.get,
-                  param.learningRateDecay)
-              case "exponential" =>
-                if (param.maxEpoch.isDefined) {
-                  SGD.Exponential(
-                    math.ceil(16551.toDouble / param.batchSize).toInt
-                      * (param.maxEpoch.get / 50),
-                    param.learningRateDecay, true)
-                } else {
-                  SGD.Exponential(param.maxIteration / 50,
-                    param.learningRateDecay, true)
-                }
-              case "plateau" =>
-                SGD.Plateau(monitor = "score", factor = param.learningRateDecay.toFloat,
-                  patience = param.patience, minLr = 1e-5f, mode = "max")
-            }
-            new SGD[Float](
-              learningRate = param.learningRate,
-              momentum = 0.9,
-              dampening = 0.0,
-              learningRateSchedule = learningRateSchedule)
-          case "ADAM" =>
-            new Adam[Float](
-              learningRate = param.learningRate,
-              learningRateDecay = param.learningRateDecay
-            )
-          case _ => throw new UnsupportedOperationException("currently only use sgd or adam")
-        }
-
+        val learningRateSchedule = SGD.Plateau(monitor = "score",
+          factor = param.learningRateDecay.toFloat,
+          patience = param.patience, minLr = 1e-5f, mode = "max")
+        new SGD[Float](
+          learningRate = param.learningRate,
+          momentum = 0.9,
+          dampening = 0.0,
+          learningRateSchedule = learningRateSchedule)
       }
 
-      val optimizer = Optimizer(
-        model = warmUpModel,
-        dataset = trainSet,
-        criterion = new MultiBoxLoss[Float](MultiBoxLossParam())
-      )
-
-      val (checkpointTrigger, testTrigger, endTrigger) = if (param.maxEpoch.isDefined) {
-        (Trigger.everyEpoch, Trigger.everyEpoch, Trigger.maxEpoch(param.maxEpoch.get))
-      } else {
-        (
-          Trigger.severalIteration(param.checkpointIteration),
-          Trigger.severalIteration(param.checkpointIteration),
-          Trigger.maxIteration(param.maxIteration)
-          )
-      }
-
-      if (param.checkpoint.isDefined) {
-        optimizer.setCheckpoint(param.checkpoint.get, checkpointTrigger)
-      }
-
-      if (param.overWriteCheckpoint) {
-        optimizer.overWriteCheckpoint()
-      }
-
-      if (param.summaryDir.isDefined) {
-        val trainSummary = TrainSummary(param.summaryDir.get, param.jobName)
-        val validationSummary = ValidationSummary(param.summaryDir.get, param.jobName)
-        optimizer.setTrainSummary(trainSummary)
-        optimizer.setValidationSummary(validationSummary)
-      }
-
-      optimizer
-        .setOptimMethod(optimMethod)
-        .setValidation(testTrigger,
-          valSet.asInstanceOf[DataSet[MiniBatch[Float]]],
-          Array(new MeanAveragePrecision(true, normalized = true,
-            nClass = param.classNumber)))
-        .setEndWhen(endTrigger)
-        .optimize()
+      optimize(warmUpModel, trainSet, valSet, param, optimMethod,
+        Trigger.maxEpoch(param.maxEpoch.get))
 
     })
+  }
+
+  private def optimize(model: Module[Float],
+    trainSet: DataSet[SSDMiniBatch],
+    valSet: DataSet[SSDMiniBatch], param: TrainParams, optimMethod: OptimMethod[Float],
+    endTrigger: Trigger): Module[Float] = {
+    val optimizer = Optimizer(
+      model = model,
+      dataset = trainSet,
+      criterion = new MultiBoxLoss[Float](MultiBoxLossParam())
+    )
+
+    if (param.checkpoint.isDefined) {
+      optimizer.setCheckpoint(param.checkpoint.get, Trigger.everyEpoch)
+    }
+
+    if (param.overWriteCheckpoint) {
+      optimizer.overWriteCheckpoint()
+    }
+
+    if (param.summaryDir.isDefined) {
+      val trainSummary = TrainSummary(param.summaryDir.get, param.jobName)
+      val validationSummary = ValidationSummary(param.summaryDir.get, param.jobName)
+      trainSummary.setSummaryTrigger("LearningRate", Trigger.severalIteration(1))
+      optimizer.setTrainSummary(trainSummary)
+      optimizer.setValidationSummary(validationSummary)
+    }
+    optimizer
+      .setOptimMethod(optimMethod)
+      .setValidation(Trigger.everyEpoch,
+        valSet.asInstanceOf[DataSet[MiniBatch[Float]]],
+        Array(new MeanAveragePrecision(true, normalized = true,
+          nClass = param.classNumber)))
+      .setEndWhen(endTrigger)
+      .optimize()
   }
 }
