@@ -154,7 +154,7 @@ abstract class FeatureTransformer() extends Transformer[ImageFeature, ImageFeatu
     } catch {
       case e: Exception =>
         val path = if (feature.contains(ImageFeature.path)) feature(ImageFeature.path) else ""
-        logger.warn(s"convert byte to mat fail for ${path}")
+        logger.warn(s"failed ${path} in transformer ${getClass}")
         feature.isValid = false
     }
     feature
