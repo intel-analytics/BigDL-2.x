@@ -48,7 +48,7 @@ class SSDPredictor(
     })
   }
 
-  def postProcess(result: Tensor[Float], batch: SSDMiniBatch) =
+  private def postProcess(result: Tensor[Float], batch: SSDMiniBatch) =
     BboxUtil.scaleBatchOutput(result, batch.imInfo)
 
   def predict(rdd: RDD[SSDByteRecord]): RDD[Tensor[Float]] = {

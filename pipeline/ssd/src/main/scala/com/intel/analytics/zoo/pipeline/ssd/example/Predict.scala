@@ -112,6 +112,7 @@ object Predict {
     opt[Int]('p', "partition")
       .text("number of partitions")
       .action((x, c) => c.copy(nPartition = x))
+      .required()
   }
 
   def main(args: Array[String]): Unit = {
@@ -129,7 +130,8 @@ object Predict {
         // load caffe dynamically
         SSDCaffeLoader.loadCaffe(params.caffeDefPath.get, params.caffeModelPath.get)
       } else {
-        throw new IllegalArgumentException(s"currently only support loading BigDL model or caffe model")
+        throw new IllegalArgumentException(s"currently only support" +
+          s" loading BigDL model or caffe model")
       }
 
       val (data, paths) = params.folderType match {

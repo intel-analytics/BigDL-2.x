@@ -86,6 +86,7 @@ object Test {
     opt[Int]('p', "partition")
       .text("number of partitions")
       .action((x, c) => c.copy(nPartition = x))
+      .required()
   }
 
   def main(args: Array[String]) {
