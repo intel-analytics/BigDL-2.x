@@ -19,6 +19,7 @@ package com.intel.analytics.zoo.transform.vision.image
 import com.intel.analytics.bigdl.dataset.{ChainedTransformer, Transformer}
 import com.intel.analytics.bigdl.utils.RandomGenerator._
 import com.intel.analytics.zoo.transform.vision.image.opencv.OpenCVMat
+import org.apache.log4j.Logger
 
 import scala.collection.{Iterator, mutable}
 import scala.reflect.ClassTag
@@ -126,6 +127,7 @@ object ImageFeature {
 }
 
 abstract class FeatureTransformer() extends Transformer[ImageFeature, ImageFeature] {
+  import FeatureTransformer.logger
   private var outKey: Option[String] = None
 
   def setOutKey(key: String): this.type = {
@@ -151,7 +153,8 @@ abstract class FeatureTransformer() extends Transformer[ImageFeature, ImageFeatu
       }
     } catch {
       case e: Exception =>
-        e.printStackTrace()
+        val path = if (feature.contains(ImageFeature.path)) feature(ImageFeature.path) else ""
+        logger.warn(s"failed ${path} in transformer ${getClass}")
         feature.isValid = false
     }
     feature
@@ -172,6 +175,10 @@ abstract class FeatureTransformer() extends Transformer[ImageFeature, ImageFeatu
   override def -> [C](other: Transformer[ImageFeature, C]): Transformer[ImageFeature, C] = {
     new ChainedTransformer(this, other)
   }
+}
+
+object FeatureTransformer {
+  val logger = Logger.getLogger(getClass)
 }
 
 class ChainedFeatureTransformer(first: FeatureTransformer, last: FeatureTransformer) extends
