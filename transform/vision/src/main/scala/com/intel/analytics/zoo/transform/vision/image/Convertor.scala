@@ -23,6 +23,7 @@ import org.apache.spark.rdd.RDD
 
 class BytesToMat()
   extends FeatureTransformer {
+  import BytesToMat.logger
   override def transform(feature: ImageFeature): ImageFeature = {
     if (!feature.isValid) return feature
     val bytes = feature(ImageFeature.bytes).asInstanceOf[Array[Byte]]
@@ -34,7 +35,8 @@ class BytesToMat()
       feature(ImageFeature.originalH) = mat.height()
     } catch {
       case e: Exception =>
-        e.printStackTrace()
+        val path = if (feature.contains(ImageFeature.path)) feature(ImageFeature.path) else ""
+        logger.warn(s"convert byte to mat fail for ${path}")
         feature(ImageFeature.originalW) = -1
         feature(ImageFeature.originalH) = -1
         feature.isValid = false
@@ -44,6 +46,7 @@ class BytesToMat()
 }
 
 object BytesToMat {
+  val logger = Logger.getLogger(getClass)
   def apply(): BytesToMat = new BytesToMat()
 }
 
