@@ -58,13 +58,32 @@
     <properties>
         <java.version>1.7</java.version>
         <javac.version>1.7</javac.version>
-        <scala.major.version>2.10</scala.major.version>
-        <scala.version>2.10.5</scala.version>
-        <scala.macros.version>2.0.1</scala.macros.version>
+        <scala.major.version>2.11</scala.major.version>
+        <scala.version>2.11.8</scala.version>
+        <scala.macros.version>2.1.0</scala.macros.version>
         <scalatest.version>2.2.4</scalatest.version>
-        <spark.version>1.5.1</spark.version>
+        <spark.version>2.1.0</spark.version>
         <spark-scope>provided</spark-scope>
     </properties>
+
+    <profiles>
+        <profile>
+            <id>mac</id>
+            <dependencies>
+                <dependency>
+                    <groupId>com.intel.analytics.bigdl.native</groupId>
+                    <artifactId>mkl-java-mac</artifactId>
+                    <version>0.2.1-SNAPSHOT</version>
+                    <exclusions>
+                        <exclusion>
+                            <groupId>com.intel.analytics.bigdl.native</groupId>
+                            <artifactId>bigdl-native</artifactId>
+                        </exclusion>
+                    </exclusions>
+                </dependency>
+            </dependencies>
+        </profile>
+    </profiles>
 
     <dependencies>
         <dependency>
@@ -101,12 +120,12 @@
             <groupId>org.scalatest</groupId>
             <artifactId>scalatest_${scala.major.version}</artifactId>
             <version>${scalatest.version}</version>
-            <scope>${spark-scope}</scope>
+            <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>com.intel.analytics.bigdl</groupId>
-            <artifactId>bigdl</artifactId>
-            <version>0.2.0-SNAPSHOT</version>
+            <artifactId>bigdl-SPARK_2.1</artifactId>
+            <version>0.2.1-SNAPSHOT</version>
         </dependency>
 
         <dependency>
@@ -121,6 +140,12 @@
             <version>${spark.version}</version>
             <scope>${spark-scope}</scope>
         </dependency>
+        <dependency>
+            <groupId>com.intel.analytics</groupId>
+            <artifactId>vision</artifactId>
+            <version>0.1-SNAPSHOT</version>
+        </dependency>
+
     </dependencies>
 
     <build>
@@ -179,6 +204,35 @@
                 </configuration>
             </plugin>
 
+            <!-- disable surefire -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-surefire-plugin</artifactId>
+                <version>2.7</version>
+                <configuration>
+                    <skipTests>true</skipTests>
+                </configuration>
+            </plugin>
+            <!-- enable scalatest -->
+            <plugin>
+                <groupId>org.scalatest</groupId>
+                <artifactId>scalatest-maven-plugin</artifactId>
+                <version>1.0</version>
+                <configuration>
+                    <reportsDirectory>${project.build.directory}/surefire-reports</reportsDirectory>
+                    <junitxml>.</junitxml>
+                    <filereports>WDF TestSuite.txt</filereports>
+                </configuration>
+                <executions>
+                    <execution>
+                        <id>test</id>
+                        <goals>
+                            <goal>test</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-assembly-plugin</artifactId>
@@ -190,21 +244,18 @@
 
                 <executions>
                     <execution>
-                        <id>python</id>
-                        <inherited>false</inherited>
-                        <configuration>
-                            <finalName>pipeline-${project.version}</finalName>
-                            <descriptors>
-                                <descriptor>assembly/python-zip.xml
-                                </descriptor>
-                            </descriptors>
-                        </configuration>
                         <phase>package</phase>
                         <goals>
                             <goal>single</goal>
                         </goals>
                     </execution>
                     <execution>
+                        <id>with-spark</id>
+                        <configuration>
+                            <descriptors>
+                                <descriptor>assembly/all-in-one.xml</descriptor>
+                            </descriptors>
+                        </configuration>
                         <phase>package</phase>
                         <goals>
                             <goal>single</goal>

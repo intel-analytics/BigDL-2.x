@@ -16,6 +16,8 @@
 
 package com.intel.analytics.zoo.pipeline.common.dataset
 
+import java.util.concurrent.atomic.AtomicInteger
+
 import com.intel.analytics.zoo.pipeline.common.dataset.roiimage.RoiImagePath
 
 abstract class Imdb(val cacheFolder: String = "data/cache") {
@@ -31,6 +33,7 @@ abstract class Imdb(val cacheFolder: String = "data/cache") {
   protected def loadRoidb: Array[RoiImagePath]
 
   def numClasses: Int = classes.length
+
 }
 
 
@@ -44,10 +47,32 @@ object Imdb {
   def getImdb(name: String, devkitPath: String): Imdb = {
     val items = name.split("_")
     if (items.length < 2) throw new Exception("dataset name error")
-    if (items(0) == "coco") {
+    if (items(0) == "voc") {
+      new PascalVoc(items(1), items(2), devkitPath)
+    } else if (items(0) == "coco") {
       new Coco(items(1), devkitPath)
     } else {
       throw new UnsupportedOperationException("unsupported dataset")
+    }
+  }
+
+
+  def data(roidb: Array[RoiImagePath]): Iterator[RoiImagePath] = {
+    new Iterator[RoiImagePath] {
+      private val index = new AtomicInteger()
+
+      override def hasNext: Boolean = {
+        index.get() < roidb.length
+      }
+
+      override def next(): RoiImagePath = {
+        val curIndex = index.getAndIncrement()
+        if (curIndex < roidb.length) {
+          roidb(curIndex)
+        } else {
+          null.asInstanceOf[RoiImagePath]
+        }
+      }
     }
   }
 }

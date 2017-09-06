@@ -3,59 +3,123 @@
 [SSD](https://research.google.com/pubs/pub44872.html) is one of the state-of-the-art
  object detection pipeline.
 
-Currently Bigdl has added support for ssd with vgg as base model,
-with 300*300 input resolution.
+Currently Bigdl has added support for ssd with vgg and alexnet as base model,
+with 300x300 or 512x512 input resolution.
 
-The python notebook example can be found [here](https://github.com/intel-analytics/analytics-zoo/blob/master/notebook/example/SSD.ipynb)
+## Default Environment
+* JDK 1.7.0_79
+* Spark 2.10
+* Scala 2.11
+
+## Build BigDL analytics jar
+
+1. clone analytics-zoo project
+```bash
+git clone https://github.com/intel-analytics/analytics-zoo.git
+```
+
+2. install image transformer library
+```
+# mvn install image transformer lib
+cd transform/vision
+mvn clean install
+```
+
+3. build ssd project
+cd ${analytics-zoo}/pipeline/ssd
+* Linux
+```bash
+mvn clean package -DskipTests
+```
+* Mac
+```
+mvn clean package -DskipTests -P mac
+```
 
 ## Prepare the dataset
 
+### Loacal images
+If you want to have a try in local images, put them in a flat local folder.
+Have tested with jpg or png images.
 
-## Generate Sequence Files
+### Prepare labeled dataset for validation and training
+1. [Pascal VOC dataset](data/pascal)
+2. [Coco](data/coco)
 
-Get the bigdl.sh script 
-```
-wget https://raw.githubusercontent.com/intel-analytics/BigDL/master/scripts/bigdl.sh
-source bigdl.sh
-```
-
-### get coco dataset
-Download Images and Annotations from [MSCOCO](http://mscoco.org/dataset/#download).
-
-### convert unlabeled image folder
+### Convert unlabeled image folder to sequence file
 ```bash
-dist/bin/bigdl.sh --
-java -cp pipeline-0.1-SNAPSHOT-jar-with-dependencies.jar:spark-assembly-1.5.1-hadoop2.6.0.jar \
-         com.intel.analytics.zoo.pipeline.common.dataset.RoiImageSeqGenerator \
-     -f imageFolder -o output
+./data/tool/convert_image_folder.sh image_folder output
 ```
 
-where ```-f``` is your image folder, ```-o``` is the output folder
+where ```image_folder``` is your image folder, ```output``` is the output folder
 
-## Pretrained model
+## Download pretrained model for evaluation
 
-Provided upon request
+https://github.com/weiliu89/caffe/tree/ssd#models
+
+07+12: SSD300, SSD512
+
+## Run the notebook
+
+1. Get BigDL jar
+* Linux
+```bash
+mkdir BigDL
+cd BigDL
+wget https://repo1.maven.org/maven2/com/intel/analytics/bigdl/dist-spark-2.1.1-scala-2.11.8-linux64/0.2.0/dist-spark-2.1.1-scala-2.11.8-linux64-0.2.0-dist.zip
+unzip dist-spark-2.1.1-scala-2.11.8-linux64/0.2.0/dist-spark-2.1.1-scala-2.11.8-linux64-0.2.0-dist.zip
+```
+* Mac
+```
+mkdir BigDL
+cd BigDL
+wget https://repo1.maven.org/maven2/com/intel/analytics/bigdl/dist-spark-2.1.1-scala-2.11.8-mac/0.2.0/dist-spark-2.1.1-scala-2.11.8-mac-0.2.0-dist.zip
+unzip dist-spark-2.1.1-scala-2.11.8-mac/0.2.0/dist-spark-2.1.1-scala-2.11.8-mac-0.2.0-dist.zip
+```
+2. Get SSD jar
+Download ssd model(vgg+pascal 300x300) from https://drive.google.com/uc?id=0B7vkTZblCs9hM3BmUUJ5Y2dfekk&export=download ,
+then put the model at data/models
+
+3. Start notebook
+
+```bash
+sh data/tool/start_notebook.sh
+```
+Please configure the ```SPARK_HOME``` and ```BigDL_HOME``` as necessary.
+
 
 ## Run the predict example
+We assume that pretrained caffe models are stored in ```data_root=${ssd_root}/data/models```
 Example command for running in Spark cluster (yarn)
 
-```
+```bash
 spark-submit \
 --master yarn \
 --deploy-mode client \
---executor-cores 2 \
+--executor-cores 28 \
 --num-executors 2 \
---driver-memory 10g \
---executor-memory 30g \
+--driver-memory 30g \
+--executor-memory 128g \
 --class com.intel.analytics.zoo.pipeline.ssd.example.Predict \
 pipeline-0.1-SNAPSHOT-jar-with-dependencies.jar \
 -f $imageDataFolder \
 --folderType seq \
 -o output \
---model ssd300x300coco.bigdl
---classname classname.txt \
+--caffeDefPath data/models/VGGNet/VOC0712/SSD_300x300/test.prototxt \
+--caffeModelPath data/models/VGGNet/VOC0712/SSD_300x300/VGG_VOC0712_SSD_300x300_iter_120000.caffemodel \
+-t vgg16 \
+--classname data/pascal/classname.txt \
 -v false \
--b 4
+-s true \
+-p 112 \
+-b 112 \
+-r 300
+```
+
+The output result is save to text file with the following format:
+
+```
+ImageName classId score xmin ymin xmax ymax
 ```
 
 In the above commands
@@ -63,9 +127,96 @@ In the above commands
 * -f: where you put your image data
 * --folderType: It can be seq/local
 * -o: where you put your image output data
-* --model: BigDL serialized model file path
-* --classname: file that store detection class names,
- one line for one class. classnames for coco dataset can be found in
-  src/main/resources/dataset/coco/classname.txt
+* --caffeDefPath: caffe network definition prototxt file path
+* --caffeModelPath: caffe serialized model file path
+* -t: network type, it can be vgg16 or alexnet
+* --classname: file that store detection class names, one line for one class
+* -s: Whether to save detection results
 * -v: whether to visualize detections
+* -p: partition number
+* -b: batch size, it should be n*(partition number)
+* -r: input resolution, 300 or 512
+
+## Run the test example
+
+```bash
+spark-submit \
+--master yarn \
+--deploy-mode client \
+--executor-cores 28 \
+--num-executors 2 \
+--driver-memory 20g \
+--executor-memory 128g \
+--class com.intel.analytics.zoo.pipeline.ssd.example.Test \
+pipeline-0.1-SNAPSHOT-jar-with-dependencies.jar \
+-f $voc_test_data \
+--caffeDefPath data/models/VGGNet/VOC0712/SSD_300x300/test.prototxt \
+--caffeModelPath data/models/VGGNet/VOC0712/SSD_300x300/VGG_VOC0712_SSD_300x300_iter_120000.caffemodel \
+-t vgg16 \
+--nclass 21 \
+-i voc_2007_test \
+-p 112 \
+-b 112 \
+-r 300
+```
+
+In the above commands
+
+* -f: where you put your image data
+* --caffeDefPath: caffe network definition prototxt file path
+* --caffeModelPath: caffe serialized model file path
+* -t: network type, it can be vgg16 or alexnet
+* --nclass: number of detection classes.
+* -i: image set name with the format ```voc_${year}_${imageset}```, e.g. voc_2007_test
+* -p: partition number
+* -b: batch size, it should be n*(partition number)
+* -r: input resolution, 300 or 512
+
+## Run the training example
+1. Get model pretrained in imagenet
+```bash
+./data/models/get_models.sh
+```
+
+2. Submit spark job
+```bash
+spark-submit \
+--master yarn \
+--deploy-mode client \
+--executor-cores 28 \
+--num-executors 4 \
+--driver-memory 20g \
+--executor-memory 128g \
+--class com.intel.analytics.zoo.pipeline.ssd.example.Train \
+pipeline-0.1-SNAPSHOT-jar-with-dependencies.jar \
+-f hdfs://xxxx/your_train_folder \
+-v hdfs://xxxx/your_val_folder \
+-t vgg16 \
+-r 300 \
+--optim SGD \
+--schedule exponential \
+-d 0.95 \
+-e 250 \
+-l 0.0035 \
+-b 112 \
+--classNum 21 \
+--checkpoint checkpoint_folder \
+--caffeDefPath data/models/VGGNet/VGG_ILSVRC_16_layers_fc_reduced_deploy.prototxt \
+--caffeModelPath data/models/VGGNet/VGG_ILSVRC_16_layers_fc_reduced.caffemodel
+```
+In the above commands
+
+* -f: where you put the training data
+* -v: where you put the validation data
+* -t: network type, it can be vgg16
+* -r: input resolution
+* --optim: optimizer type, can be sgd | adam
+* --schedule: learning rate schedule type, can be multistep | poly | sgd
+* -d: learning rate decay
+* -e: max epoch
+* -l: inital learning rate
 * -b: batch size
+* --classNum: class number
+* --checkpoint: where to save your checkpoint model
+* --caffeDefPath: caffe prototxt file
+* --caffeModelPath: pretrained caffe model file

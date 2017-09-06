@@ -12,14 +12,20 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
+ *
  */
 
 package com.intel.analytics.zoo.pipeline.ssd.example
 
-import com.intel.analytics.bigdl.dataset.image.Visualizer
 import com.intel.analytics.bigdl.nn.Module
+import com.intel.analytics.bigdl.pipeline.ssd.IOUtils
+import com.intel.analytics.zoo.pipeline.common.BboxUtil
+import com.intel.analytics.zoo.pipeline.common.caffe.SSDCaffeLoader
+import com.intel.analytics.zoo.pipeline.common.dataset.roiimage.Visualizer
 import com.intel.analytics.zoo.pipeline.ssd._
+import com.intel.analytics.bigdl.tensor.Tensor
 import com.intel.analytics.bigdl.utils.Engine
+import com.intel.analytics.zoo.pipeline.ssd.model.PreProcessParam
 import org.apache.log4j.{Level, Logger}
 import org.apache.spark.SparkContext
 import scopt.OptionParser
@@ -37,10 +43,16 @@ object Predict {
   case class PascolVocDemoParam(imageFolder: String = "",
     outputFolder: String = "data/demo",
     folderType: String = "local",
-    modelPath: String = "",
+    modelType: String = "vgg16",
+    model: Option[String] = None,
+    caffeDefPath: Option[String] = None,
+    caffeModelPath: Option[String] = None,
     batch: Int = 8,
+    savetxt: Boolean = true,
     vis: Boolean = true,
     classname: String = "",
+    resolution: Int = 300,
+    topK: Option[Int] = None,
     nPartition: Int = 1)
 
   val parser = new OptionParser[PascolVocDemoParam]("BigDL SSD Demo") {
@@ -64,13 +76,25 @@ object Predict {
       .text("where you put the output data")
       .action((x, c) => c.copy(outputFolder = x))
       .required()
-    opt[String]("model")
-      .text("BigDL model Path")
-      .action((x, c) => c.copy(modelPath = x))
+    opt[String]('t', "modelType")
+      .text("net type : vgg16 | alexnet")
+      .action((x, c) => c.copy(modelType = x))
       .required()
+    opt[String]("model")
+      .text("BigDL model")
+      .action((x, c) => c.copy(model = Some(x)))
+    opt[String]("caffeDefPath")
+      .text("caffe prototxt")
+      .action((x, c) => c.copy(caffeDefPath = Some(x)))
+    opt[String]("caffeModelPath")
+      .text("caffe model path")
+      .action((x, c) => c.copy(caffeModelPath = Some(x)))
     opt[Int]('b', "batch")
       .text("batch number")
       .action((x, c) => c.copy(batch = x))
+    opt[Boolean]('s', "savetxt")
+      .text("whether to save detection results")
+      .action((x, c) => c.copy(savetxt = x))
     opt[Boolean]('v', "vis")
       .text("whether to visualize the detections")
       .action((x, c) => c.copy(vis = x))
@@ -78,32 +102,60 @@ object Predict {
       .text("file store class name")
       .action((x, c) => c.copy(classname = x))
       .required()
+    opt[Int]('r', "resolution")
+      .text("input resolution 300 or 512")
+      .action((x, c) => c.copy(resolution = x))
+      .required()
+    opt[Int]('k', "topk")
+      .text("return topk results")
+      .action((x, c) => c.copy(topK = Some(x)))
     opt[Int]('p', "partition")
-      .text("file store class name")
+      .text("number of partitions")
       .action((x, c) => c.copy(nPartition = x))
       .required()
   }
 
   def main(args: Array[String]): Unit = {
     parser.parse(args, PascolVocDemoParam()).foreach { params =>
-      val conf = Engine.createSparkConf().setAppName("Spark-DL SSD Demo")
+      val conf = Engine.createSparkConf().setAppName("BigDL SSD Demo")
       val sc = new SparkContext(conf)
       Engine.init
+
       val classNames = Source.fromFile(params.classname).getLines().toArray
-      val model = Module.load[Float](params.modelPath)
-      val data = params.folderType match {
+
+      val model = if (params.model.isDefined) {
+        // load BigDL model
+        Module.load[Float](params.model.get)
+      } else if (params.caffeDefPath.isDefined && params.caffeModelPath.isDefined) {
+        // load caffe dynamically
+        SSDCaffeLoader.loadCaffe(params.caffeDefPath.get, params.caffeModelPath.get)
+      } else {
+        throw new IllegalArgumentException(s"currently only support" +
+          s" loading BigDL model or caffe model")
+      }
+
+      val (data, paths) = params.folderType match {
         case "local" => IOUtils.loadLocalFolder(params.nPartition, params.imageFolder, sc)
         case "seq" => IOUtils.loadSeqFiles(params.nPartition, params.imageFolder, sc)
         case _ => throw new IllegalArgumentException(s"invalid folder name ${ params.folderType }")
       }
 
-      val predictor = new Predictor(model,
-        PreProcessParam(params.batch, resolution = 300, (123f, 117f, 104f), false),
-        classNames.length)
+      val predictor = new SSDPredictor(model,
+        PreProcessParam(params.batch, params.resolution, (123, 117, 104), false, params.nPartition))
 
       val start = System.nanoTime()
-      val output = predictor.predict(data).collect()
-      val recordsNum = output.length
+      val output = predictor.predict(data)
+      if (params.vis) output.cache()
+
+      if (params.savetxt) {
+        output.zip(paths).map { case (res: Tensor[Float], path: String) =>
+          BboxUtil.resultToString(res, path)
+        }.saveAsTextFile(params.outputFolder)
+      } else {
+        output.count()
+      }
+
+      val recordsNum = paths.count()
       val totalTime = (System.nanoTime() - start) / 1e9
       logger.info(s"[Prediction] ${ recordsNum } in $totalTime seconds. Throughput is ${
         recordsNum / totalTime
@@ -114,17 +166,10 @@ object Predict {
           logger.warn("currently only support visualize local folder in Predict")
           return
         }
-        IOUtils.localImagePaths(params.imageFolder).zipWithIndex.foreach(pair => {
-          var classIndex = 1
-          val imgId = pair._2.toInt
-          while (classIndex < classNames.length) {
-            if (output(imgId)(classIndex) != null) {
-              Visualizer.visDetection(pair._1, classNames(classIndex),
-                output(imgId)(classIndex).classes,
-                output(imgId)(classIndex).bboxes, thresh = 0.6f, outPath = params.outputFolder)
-            }
-            classIndex += 1
-          }
+
+        paths.zip(output).foreach(pair => {
+          val decoded = BboxUtil.decodeRois(pair._2)
+          Visualizer.visDetection(pair._1, decoded, classNames, outPath = params.outputFolder)
         })
         logger.info(s"labeled images are saved to ${ params.outputFolder }")
       }
