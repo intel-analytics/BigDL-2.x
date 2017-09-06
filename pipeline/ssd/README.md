@@ -4,7 +4,7 @@
  object detection pipeline.
 
 Currently Bigdl has added support for ssd with vgg and alexnet as base model,
-with 300x300 or 516x516 input resolution.
+with 300x300 or 512x512 input resolution.
 
 ## Default Environment
 * JDK 1.7.0_79
@@ -18,14 +18,22 @@ with 300x300 or 516x516 input resolution.
 git clone https://github.com/intel-analytics/analytics-zoo.git
 ```
 
-2. build
+2. install image transformer library
+```
+# mvn install image transformer lib
+cd transform/vision
+mvn clean install
+```
+
+3. build ssd project
+cd ${analytics-zoo}/pipeline/ssd
 * Linux
 ```bash
-./data/tool/build.sh
+mvn clean package -DskipTests
 ```
 * Mac
 ```
-./data/tool/build_mac.sh
+mvn clean package -DskipTests -P mac
 ```
 
 ## Prepare the dataset
