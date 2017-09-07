@@ -49,7 +49,9 @@ object Option {
     classNumber: Int = 21,
     batchSize: Int = -1,
     learningRate: Double = 0.001,
+    schedule: String = "multistep",
     learningRateDecay: Double = 0.1,
+    learningRateSteps: Option[Array[Int]] = None,
     patience: Int = 10,
     warmUpMap: Option[Double] = None,
     overWriteCheckpoint: Boolean = false,
@@ -102,9 +104,16 @@ object Option {
       .text("inital learning rate")
       .action((x, c) => c.copy(learningRate = x))
       .required()
+    opt[String]("schedule")
+      .text("learning rate schedule")
+      .action((x, c) => c.copy(schedule = x))
+      .required()
     opt[Double]('d', "learningRateDecay")
       .text("learning rate decay")
       .action((x, c) => c.copy(learningRateDecay = x))
+    opt[String]("step")
+      .text("learning rate steps, split by ,")
+      .action((x, c) => c.copy(learningRateSteps = Some(x.split(",").map(_.toInt))))
     opt[Int]('b', "batchSize")
       .text("batch size")
       .action((x, c) => c.copy(batchSize = x))
@@ -180,9 +189,20 @@ object Train {
       val optimMethod = if (param.stateSnapshot.isDefined) {
         OptimMethod.load[Float](param.stateSnapshot.get)
       } else {
-        val learningRateSchedule = SGD.Plateau(monitor = "score",
-          factor = param.learningRateDecay.toFloat,
-          patience = param.patience, minLr = 1e-5f, mode = "max")
+        val learningRateSchedule = param.schedule match {
+          case "multistep" =>
+            val steps = if (param.learningRateSteps.isDefined) {
+              param.learningRateSteps.get
+            } else {
+              Array[Int](80000 / 32 * param.batchSize, 100000 / 32 * param.batchSize,
+                120000 / 32 * param.batchSize)
+            }
+            SGD.MultiStep(steps, param.learningRateDecay)
+          case "plateau" =>
+            SGD.Plateau(monitor = "score",
+              factor = param.learningRateDecay.toFloat,
+              patience = param.patience, minLr = 1e-5f, mode = "max")
+        }
         new SGD[Float](
           learningRate = param.learningRate,
           momentum = 0.9,

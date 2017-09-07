@@ -193,16 +193,17 @@ pipeline-0.1-SNAPSHOT-jar-with-dependencies.jar \
 -v hdfs://xxxx/your_val_folder \
 -t vgg16 \
 -r 300 \
---optim SGD \
---schedule exponential \
--d 0.95 \
+--caffeDefPath ../models/VGGNet/VGG_ILSVRC_16_layers_fc_reduced_deploy.prototxt.txt \
+--caffeModelPath ../models/VGGNet/VGG_ILSVRC_16_layers_fc_reduced.caffemodel \
+--warm 0.5 \
+--schedule plateau \
 -e 250 \
 -l 0.0035 \
 -b 112 \
+-d 0.5 \
+--patience 10 \
 --classNum 21 \
---checkpoint checkpoint_folder \
---caffeDefPath data/models/VGGNet/VGG_ILSVRC_16_layers_fc_reduced_deploy.prototxt \
---caffeModelPath data/models/VGGNet/VGG_ILSVRC_16_layers_fc_reduced.caffemodel
+--checkpoint hdfs://xxx/checkpoint/
 ```
 In the above commands
 
@@ -210,13 +211,14 @@ In the above commands
 * -v: where you put the validation data
 * -t: network type, it can be vgg16
 * -r: input resolution
-* --optim: optimizer type, can be sgd | adam
-* --schedule: learning rate schedule type, can be multistep | poly | sgd
-* -d: learning rate decay
+* --caffeDefPath: caffe prototxt file
+* --caffeModelPath: pretrained caffe model file
+* --warm warm up MAP
+* --schedule: learning rate schedule type, can be multistep | plateau
 * -e: max epoch
 * -l: inital learning rate
 * -b: batch size
+* -d: learning rate decay
+* --patience: epoch to wait when the map does not go up
 * --classNum: class number
 * --checkpoint: where to save your checkpoint model
-* --caffeDefPath: caffe prototxt file
-* --caffeModelPath: pretrained caffe model file
