@@ -52,12 +52,13 @@ object BytesToMat {
 
 
 class MatToFloats(validHeight: Int, validWidth: Int,
-  meanRGB: Option[(Int, Int, Int)] = None, outKey: String = ImageFeature.floats)
+  meanRGB: Option[(Float, Float, Float)] = None, outKey: String = ImageFeature.floats)
   extends FeatureTransformer {
   @transient private var data: Array[Float] = _
   @transient private var floatMat: OpenCVMat = _
 
-  private def normalize(img: Array[Float], meanR: Int, meanG: Int, meanB: Int): Array[Float] = {
+  private def normalize(img: Array[Float],
+    meanR: Float, meanG: Float, meanB: Float): Array[Float] = {
     val content = img
     require(content.length % 3 == 0)
     var i = 0
@@ -105,7 +106,8 @@ object MatToFloats {
   val logger = Logger.getLogger(getClass)
 
   def apply(validHeight: Int = 300, validWidth: Int = 300,
-    meanRGB: Option[(Int, Int, Int)] = None, outKey: String = ImageFeature.floats): MatToFloats =
+    meanRGB: Option[(Float, Float, Float)] = None,
+    outKey: String = ImageFeature.floats): MatToFloats =
     new MatToFloats(validHeight, validWidth, meanRGB, outKey)
 }
 
