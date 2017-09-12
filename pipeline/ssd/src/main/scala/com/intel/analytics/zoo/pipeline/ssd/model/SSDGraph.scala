@@ -29,7 +29,7 @@ import org.apache.log4j.Logger
 
 case class PreProcessParam(batchSize: Int = 4,
   resolution: Int = 300,
-  pixelMeanRGB: (Int, Int, Int),
+  pixelMeanRGB: (Float, Float, Float),
   hasLabel: Boolean, nPartition: Int
 )
 

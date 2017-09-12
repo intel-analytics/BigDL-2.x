@@ -110,7 +110,7 @@ object Test {
       }
 
       val validator = new Validator(model, PreProcessParam(params.batch, params.resolution,
-        (123, 117, 104), true, params.nPartition), evaluator, useNormalized = params.useNormalized)
+        (123f, 117f, 104f), true, params.nPartition), evaluator, useNormalized = params.useNormalized)
 
       validator.test(rdd)
     }
