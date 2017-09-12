@@ -16,13 +16,13 @@
 
 package com.intel.analytics.zoo.transform.vision.image.augmentation
 
-import java.util.Random
-
 import com.intel.analytics.zoo.transform.vision.image.opencv.OpenCVMat
 import com.intel.analytics.zoo.transform.vision.image.{FeatureTransformer, ImageFeature}
 import org.apache.log4j.Logger
 import org.opencv.core.Size
 import org.opencv.imgproc.Imgproc
+
+import scala.util.Random
 
 /**
  *
@@ -61,6 +61,44 @@ object Resize {
   : OpenCVMat = {
     Imgproc.resize(input, output, new Size(resizeW, resizeH), 0, 0, mode)
     output
+  }
+}
+
+/**
+ * resize the image by randomly choosing a scale
+ * @param scales array of scale options that for random choice
+ * @param scaleMultipleOf Resize test images so that its width and height are multiples of
+ * @param maxSize Max pixel size of the longest side of a scaled input image
+ */
+case class RandomResize(scales: Array[Int], scaleMultipleOf: Int = 1,
+  maxSize: Float = 1000f) extends FeatureTransformer {
+
+  override def transformMat(feature: ImageFeature): Unit = {
+    val scaleTo = scales(Random.nextInt(scales.length))
+    val (height, width) = getWidthHeightAfterRatioScale(feature.opencvMat(), scaleTo)
+    Resize.transform(feature.opencvMat(), feature.opencvMat(), width, height)
+  }
+
+  /**
+   * get the width and height of scaled image
+   * @param img original image
+   */
+  def getWidthHeightAfterRatioScale(img: OpenCVMat, scaleTo: Float): (Int, Int) = {
+    val imSizeMin = Math.min(img.width(), img.height())
+    val imSizeMax = Math.max(img.width(), img.height())
+    var imScale = scaleTo.toFloat / imSizeMin.toFloat
+    // Prevent the biggest axis from being more than MAX_SIZE
+    if (Math.round(imScale * imSizeMax) > maxSize) {
+      imScale = maxSize / imSizeMax.toFloat
+    }
+
+    val imScaleH = (Math.floor(img.height() * imScale / scaleMultipleOf) *
+      scaleMultipleOf / img.height()).toFloat
+    val imScaleW = (Math.floor(img.width() * imScale / scaleMultipleOf) *
+      scaleMultipleOf / img.width()).toFloat
+    val width = imScaleW * img.width()
+    val height = imScaleH * img.height()
+    (height.toInt, width.toInt)
   }
 }
 

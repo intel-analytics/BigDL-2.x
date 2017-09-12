@@ -155,6 +155,7 @@ abstract class FeatureTransformer() extends Transformer[ImageFeature, ImageFeatu
       case e: Exception =>
         val path = if (feature.contains(ImageFeature.path)) feature(ImageFeature.path) else ""
         logger.warn(s"failed ${path} in transformer ${getClass}")
+        e.printStackTrace()
         feature.isValid = false
     }
     feature
