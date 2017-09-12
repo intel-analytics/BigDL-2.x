@@ -73,7 +73,7 @@
                 <dependency>
                     <groupId>com.intel.analytics.bigdl.native</groupId>
                     <artifactId>mkl-java-mac</artifactId>
-                    <version>0.2.1-SNAPSHOT</version>
+                    <version>0.3.0-SNAPSHOT</version>
                     <exclusions>
                         <exclusion>
                             <groupId>com.intel.analytics.bigdl.native</groupId>
@@ -125,7 +125,7 @@
         <dependency>
             <groupId>com.intel.analytics.bigdl</groupId>
             <artifactId>bigdl-SPARK_2.1</artifactId>
-            <version>0.2.1-SNAPSHOT</version>
+            <version>0.3.0-SNAPSHOT</version>
         </dependency>
 
         <dependency>
