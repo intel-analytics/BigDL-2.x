@@ -16,13 +16,13 @@
 
 package com.intel.analytics.zoo.transform.vision.image.augmentation
 
-import java.util.Random
-
 import com.intel.analytics.zoo.transform.vision.image.opencv.OpenCVMat
 import com.intel.analytics.zoo.transform.vision.image.{FeatureTransformer, ImageFeature}
 import org.apache.log4j.Logger
 import org.opencv.core.Size
 import org.opencv.imgproc.Imgproc
+
+import scala.util.Random
 
 /**
  *
