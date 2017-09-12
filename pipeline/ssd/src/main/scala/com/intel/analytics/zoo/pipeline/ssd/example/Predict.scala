@@ -141,7 +141,7 @@ object Predict {
       }
 
       val predictor = new SSDPredictor(model,
-        PreProcessParam(params.batch, params.resolution, (123, 117, 104), false, params.nPartition))
+        PreProcessParam(params.batch, params.resolution, (123f, 117f, 104f), false, params.nPartition))
 
       val start = System.nanoTime()
       val output = predictor.predict(data)

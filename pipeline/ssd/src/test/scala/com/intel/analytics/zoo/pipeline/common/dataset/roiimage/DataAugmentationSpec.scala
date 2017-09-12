@@ -55,7 +55,7 @@ class DataAugmentationSpec extends FlatSpec with Matchers with BeforeAndAfter {
       RandomSampler() ->
       Resize(300, 300, -1) ->
       RandomTransformer(HFlip() -> RoiHFlip(), 0.5) ->
-      MatToFloats(validHeight = 300, validWidth = 300, meanRGB = Some(123, 117, 104))
+      MatToFloats(validHeight = 300, validWidth = 300, meanRGB = Some(123f, 117f, 104f))
     val out = imgAug(roidb)
     out.foreach(img => {
       val tmpFile = java.io.File.createTempFile("module", ".jpg")
@@ -64,7 +64,6 @@ class DataAugmentationSpec extends FlatSpec with Matchers with BeforeAndAfter {
       Imgcodecs.imwrite(tmpFile.getAbsolutePath, mat)
       println(s"save to ${tmpFile.getAbsolutePath}, "
         + new File(tmpFile.getAbsolutePath).length())
-      s"display ${tmpFile.getAbsolutePath}" !
     })
 
   }
