@@ -65,7 +65,7 @@ object IOUtils {
       Resize(resolution, resolution, -1) ->
       RandomTransformer(HFlip() -> RoiHFlip(), 0.5) ->
       MatToFloats(validHeight = resolution, validWidth = resolution,
-        meanRGB = Some(123, 117, 104)) ->
+        meanRGB = Some(123f, 117f, 104f)) ->
       RoiImageToBatch(batchSize)
   }
 
@@ -78,7 +78,7 @@ object IOUtils {
       RoiNormalize() ->
       Resize(resolution, resolution) ->
       MatToFloats(validHeight = resolution, validWidth = resolution,
-        meanRGB = Some(123, 117, 104)) ->
+        meanRGB = Some(123f, 117f, 104f)) ->
       RoiImageToBatch(batchSize)
   }
 }
