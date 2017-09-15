@@ -64,5 +64,5 @@ class Rotate(FeatureTransformer):
 
 class AffineTransform(FeatureTransformer):
 
-    def __init__(self, affine_mat, translation=np.zeros(3), clamp_mode="clamp", pad_val=0.0, bigdl_type="float"):
+    def __init__(self, affine_mat, translation=JTensor.from_ndarray(np.zeros(3)), clamp_mode="clamp", pad_val=0.0, bigdl_type="float"):
         super(AffineTransform, self).__init__(bigdl_type, affine_mat, translation, clamp_mode, pad_val)

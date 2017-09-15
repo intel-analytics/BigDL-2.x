@@ -77,7 +77,7 @@ class VisionPythonBigDL[T: ClassTag](implicit ev: TensorNumeric[T]) extends Pyth
     val start_totensor = System.currentTimeMillis()
     val tensor = if (jTensor == null) null else {
       Tensor(storage = Storage[Double](jTensor.storage.map(_.asInstanceOf[Double])),
-        storageOffset = 0,
+        storageOffset = 1,
         size = jTensor.shape)
     }
     tensor
@@ -87,7 +87,7 @@ class VisionPythonBigDL[T: ClassTag](implicit ev: TensorNumeric[T]) extends Pyth
     val start_totensor = System.currentTimeMillis()
     val tensor = if (jTensor == null) null else {
       Tensor(storage = Storage[Float](jTensor.storage),
-        storageOffset = 0,
+        storageOffset = 1,
         size = jTensor.shape)
     }
     tensor
