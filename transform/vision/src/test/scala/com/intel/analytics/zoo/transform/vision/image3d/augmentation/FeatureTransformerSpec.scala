@@ -17,13 +17,12 @@
 package com.intel.analytics.zoo.transform.vision.image3d.augmentation
 
 import com.intel.analytics.bigdl.tensor.Tensor
-import org.scalatest.{FlatSpec, Matchers}
 import com.intel.analytics.bigdl.utils.RandomGenerator._
 import com.intel.analytics.zoo.transform.vision.image3d.Image3D
+import org.scalatest.{FlatSpec, Matchers}
 
-class CropSpec extends FlatSpec with Matchers{
-  "A CropTransformer" should "generate correct output." in{
-    val seed = 100
+class FeatureTransformerSpec extends FlatSpec with Matchers{
+  "FeatureTransformer" should "work properly" in {val seed = 100
     RNG.setSeed(seed)
     val input = Tensor[Float](60, 70, 80)
     input.apply1(e => RNG.uniform(0, 1).toFloat)
@@ -32,25 +31,13 @@ class CropSpec extends FlatSpec with Matchers{
     image(Image3D.height) = 70
     image(Image3D.width) = 80
     val start = Array[Int](10, 20, 20)
-    val patchSize = Array[Int](21, 31, 41)
-    val cropper = Crop(start, patchSize)
-    val output = cropper.transform(image)
-    val result = input.narrow(1, 10, 21).narrow(2, 20, 31).narrow(3, 20, 41)
-      .clone().storage().array()
-    output.getFloats() should be(result)
+    val patchSize = Array[Int](20, 30, 30)
+    val rotAngles = Array[Double](0, 0, math.Pi/3.7)
+    val transformer = Crop(start, patchSize) -> Rotate(rotAngles)
+    val out = transformer.transform(image)
+    assert(out.getDepth() == 20)
+    assert(out.getHeight() == 30)
+    assert(out.getWidth() == 30)
   }
 
-  "A RandomCropTransformer" should "generate correct output." in{
-    val seed = 100
-    RNG.setSeed(seed)
-    val input = Tensor[Float](60, 70, 80)
-    input.apply1(e => RNG.uniform(0, 1).toFloat)
-    val image = Image3D(input.storage().array())
-    image(Image3D.depth) = 60
-    image(Image3D.height) = 70
-    image(Image3D.width) = 80
-    val cropper = RandomCrop(20, 30, 40)
-    val output = cropper.transform(image)
-    assert(output.getFloats().length == 20 * 30 * 40)
-  }
 }

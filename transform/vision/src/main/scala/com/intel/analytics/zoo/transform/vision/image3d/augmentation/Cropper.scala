@@ -60,23 +60,23 @@ class Crop(start: Array[Int], patchSize: Array[Int])
 }
 
 object RandomCrop {
-  def apply(cropDepth: Int, cropWidth: Int, cropHeight: Int): RandomCrop =
-    new RandomCrop(cropDepth, cropWidth, cropHeight)
+  def apply(cropDepth: Int, cropHeight: Int, cropWidth: Int): RandomCrop =
+    new RandomCrop(cropDepth, cropHeight, cropWidth)
 }
 
-class RandomCrop(cropDepth: Int, cropWidth: Int, cropHeight: Int)
+class RandomCrop(cropDepth: Int, cropHeight: Int, cropWidth: Int)
   extends FeatureTransformer{
 
   override def transformTensor(tensor: Tensor[Float]): Tensor[Float] = {
-    require(tensor.size == 3,
+    require(tensor.dim == 3,
       "the transformed image array should have dim 3.")
-    require(tensor.size(1) >= cropHeight,
+    require(tensor.size(1) >= cropDepth,
       "the transformed image depth should be larger than cropped depth.")
-    require(tensor.size(2) >= cropWidth,
+    require(tensor.size(2) >= cropHeight,
       "the transformed image width should be larger than cropped width.")
-    require(tensor.size(3) >= cropHeight,
+    require(tensor.size(3) >= cropWidth,
       "the transformed image height should be larger than cropped height.")
-    val startD = math.ceil(RNG.uniform(1e-2, tensor.size(1) - cropHeight)).toInt
+    val startD = math.ceil(RNG.uniform(1e-2, tensor.size(1) - cropDepth)).toInt
     val startH = math.ceil(RNG.uniform(1e-2, tensor.size(2) - cropHeight)).toInt
     val startW = math.ceil(RNG.uniform(1e-2, tensor.size(3) - cropWidth)).toInt
     require(startD <= tensor.size(1) && startH <= tensor.size(2) && startW <= tensor.size(3),
@@ -91,23 +91,23 @@ class RandomCrop(cropDepth: Int, cropWidth: Int, cropHeight: Int)
 }
 
 object CenterCrop {
-  def apply(cropDepth: Int, cropWidth: Int, cropHeight: Int): CenterCrop =
-    new CenterCrop(cropDepth, cropWidth, cropHeight)
+  def apply(cropDepth: Int, cropHeight: Int, cropWidth: Int): CenterCrop =
+    new CenterCrop(cropDepth, cropHeight, cropWidth)
 }
 
-class CenterCrop(cropDepth: Int, cropWidth: Int, cropHeight: Int)
+class CenterCrop(cropDepth: Int, cropHeight: Int, cropWidth: Int)
   extends FeatureTransformer{
 
   override def transformTensor(tensor: Tensor[Float]): Tensor[Float] = {
-    require(tensor.size == 3,
+    require(tensor.dim == 3,
       "the transformed image array should have dim 3.")
-    require(tensor.size(1) >= cropHeight,
+    require(tensor.size(1) >= cropDepth,
       "the transformed image depth should be larger than cropped depth.")
-    require(tensor.size(2) >= cropWidth,
+    require(tensor.size(2) >= cropHeight,
       "the transformed image width should be larger than cropped width.")
-    require(tensor.size(3) >= cropHeight,
+    require(tensor.size(3) >= cropWidth,
       "the transformed image height should be larger than cropped height.")
-    val startD = (tensor.size(1) - cropHeight)/2
+    val startD = (tensor.size(1) - cropDepth)/2
     val startH = (tensor.size(2) - cropHeight)/2
     val startW = (tensor.size(3) - cropWidth)/2
     require(startD <= tensor.size(1) && startH <= tensor.size(2) && startW <= tensor.size(3),

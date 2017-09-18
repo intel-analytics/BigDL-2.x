@@ -26,8 +26,8 @@ import com.intel.analytics.bigdl.dataset.{Sample => JSample, _}
 import com.intel.analytics.zoo.transform.vision.image3d.augmentation._
 import com.intel.analytics.zoo.transform.vision.image3d._
 
-import java.util.{ArrayList => JArrayList, HashMap => JHashMap, List => JList, Map => JMap}
-//import java.util.{ArrayList => JList}
+import java.util.{List => JList, Map => JMap}
+// import java.util.{ArrayList => JList}
 import java.nio.ByteBuffer
 
 import scala.collection.JavaConverters._
@@ -36,8 +36,6 @@ import scala.reflect.ClassTag
 
 import org.apache.spark.api.java.JavaRDD
 import org.apache.log4j.Logger
-import org.apache.spark.mllib.linalg.DenseVector
-import org.apache.spark.mllib.regression._
 
 object VisionPythonBigDL {
   val logger = Logger.getLogger(
@@ -83,25 +81,15 @@ class VisionPythonBigDL[T: ClassTag](implicit ev: TensorNumeric[T]) extends Pyth
     tensor
   }
 
-  def toFloatTensor(jTensor: JTensor): Tensor[Float] = {
-    val start_totensor = System.currentTimeMillis()
-    val tensor = if (jTensor == null) null else {
-      Tensor(storage = Storage[Float](jTensor.storage),
-        storageOffset = 1,
-        size = jTensor.shape)
-    }
-    tensor
-  }
-
-  def floatTensorToJTensor(tensor: Tensor[Float]): JTensor = {
-    val cloneTensor = tensor.clone()
-    new JTensor(storage = cloneTensor.storage().array(), shape = cloneTensor.size(), "Double")
-  }
-
   def transform(transformer: FeatureTransformer, data: Sample): Sample = {
-    val tensor = toFloatTensor(data.features)
-    val result = transformer.transformTensor(tensor)
-    new Sample(floatTensorToJTensor(result), data.label, data.bigdlType)
+    val image = Image3D(data.features.storage, null, data.label)
+    image(Image3D.depth) = data.features.shape(0)
+    image(Image3D.height) = data.features.shape(1)
+    image(Image3D.width) = data.features.shape(2)
+    val result = transformer.transform(image)
+    val result_shape = Array(result.getDepth(), result.getHeight(), result.getWidth())
+    new Sample(JTensor(storage = result.getFloats(), shape = result_shape, bigdlType = "Double"),
+      data.label, data.bigdlType)
   }
 
   def transformRdd(transformer: FeatureTransformer, dataRdd: JavaRDD[Sample])
