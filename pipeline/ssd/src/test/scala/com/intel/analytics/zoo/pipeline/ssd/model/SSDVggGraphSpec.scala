@@ -17,9 +17,10 @@
 package com.intel.analytics.zoo.pipeline.ssd.model
 
 import com.intel.analytics.bigdl._
+import com.intel.analytics.bigdl.nn.Module
 import com.intel.analytics.bigdl.numeric.NumericFloat
 import com.intel.analytics.bigdl.optim.SGD
-import com.intel.analytics.zoo.pipeline.common.nn.{MultiBoxLoss, MultiBoxLossParam}
+import com.intel.analytics.zoo.pipeline.common.nn.{MultiBoxLoss, MultiBoxLossParam, PriorBox}
 import com.intel.analytics.bigdl.tensor.{Storage, Tensor}
 import com.intel.analytics.bigdl.utils.{T, Table}
 import org.scalatest.{FlatSpec, Matchers}
@@ -137,5 +138,28 @@ class SSDVggGraphSpec extends FlatSpec with Matchers {
     namedModule1.foreach(x => {
       namedModule2(x._1).asInstanceOf[Table] should be(x._2)
     })
+  }
+
+  "save model" should "work" in {
+    val model = SSDVgg(300)
+    val input = Tensor[Float](1, 3, 300, 300)
+    val out = model.forward(input)
+    val tmpFile = java.io.File.createTempFile("module", ".bigdl").toString
+    model.saveModule(tmpFile, true)
+
+    val model2 = Module.loadModule(tmpFile)
+
+    model2.forward(input)
+
+    out should be (model2.output)
+
+  }
+
+  "save priorbox " should "work" in {
+    val priorbox = PriorBox[Float](Array[Float](1f))
+
+    val tmpFile = java.io.File.createTempFile("module", ".bigdl").toString
+    priorbox.saveModule(tmpFile)
+    val model2 = Module.loadModule(tmpFile)
   }
 }
