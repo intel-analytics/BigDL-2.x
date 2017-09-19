@@ -57,7 +57,7 @@ class PascalVoc(val year: String = "2007", val imageSet: String,
     var imdexToPaths = Map[String, (String, String)]()
     list.foreach(y => {
       val dataPath = Paths.get(devkitPath, "/VOC" + y).toFile
-      assert(dataPath.exists(), s"cannot find data folder for ${ name }")
+      assert(dataPath.exists(), s"cannot find data folder ${dataPath} :for ${ name }")
 
       val imageSetFile = Paths.get(dataPath.toString, s"/ImageSets/Main/$imageSet.txt").toFile
       assert(imageSetFile.exists(), "Path does not exist " + imageSetFile.getAbsolutePath)
