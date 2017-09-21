@@ -23,7 +23,6 @@ import com.intel.analytics.bigdl.nn.{Module => _, _}
 import com.intel.analytics.bigdl.tensor.Tensor
 import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric
 import com.intel.analytics.bigdl.utils.Table
-import com.intel.analytics.bigdl.utils.serializer.ModuleSerializable
 import com.intel.analytics.zoo.pipeline.common.BboxUtil
 import com.intel.analytics.zoo.pipeline.common.nn.DetectionOutput.logger
 import com.intel.analytics.zoo.pipeline.ssd.model.PostProcessParam
@@ -264,7 +263,7 @@ class DetectionOutput[T: ClassTag](val nClasses: Int = 21,
   }
 }
 
-object DetectionOutput extends ModuleSerializable {
+object DetectionOutput {
   val logger = Logger.getLogger(getClass)
 
   def apply[@specialized(Float) T: ClassTag](param: PostProcessParam, postProcess: Boolean = true)
