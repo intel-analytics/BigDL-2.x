@@ -54,13 +54,13 @@ object BigDLKaggleFraud {
       .setPredictor(dlClassifier)
       .setLabelCol("Class")
       .setIsClassifier(true)
-      .setNumModels(10)
+      .setNumModels(20)
 
     val model = estimator.fit(trainingData)
 
     val labelConverter2 = new FuncTransformer(udf {d: Double => if (d==2) 0 else d }).setInputCol("Class").setOutputCol("Class")
 
-    (10 to 20).foreach { t =>
+    (20 to 40).foreach { t =>
       println("thresold: " + t)
       val prediction = model.setThreshold(t).transform(validData)
       val finalData = labelConverter2.transform(prediction).cache()
