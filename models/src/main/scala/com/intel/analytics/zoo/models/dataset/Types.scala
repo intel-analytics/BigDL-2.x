@@ -18,24 +18,38 @@ package com.intel.analytics.zoo.models.dataset
 
 import com.intel.analytics.bigdl.tensor.Tensor
 
-import scala.collection.mutable
+import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric.NumericFloat
 
-class ImageBatch(val input: Tensor[Float], val paths : Seq[String]) {
-
-}
-
-class ModelContext {
-  val _context = new mutable.HashMap[String, Any]()
-  def put(key : String, value : Any) = _context(key) = value
-  def get(key : String) : Any = {
-    require(_context.contains(key), s"$key not in context")
-    _context.get(key).get
+@SerialVersionUID(2531602453913423591L)
+class ImageBatch(samples: Seq[ImageSample]) extends Serializable {
+  var input = Tensor[Float]()
+  val infors = Seq[String]()
+  set
+  def set(): this.type = {
+    require(samples.length > 0, "samples are empty")
+    val sizes = Array(samples.length) ++ samples.head.input.size()
+    input = Tensor[Float](sizes)
+    var offset = 0
+    var i = 0
+    while (i < samples.length) {
+      infors :+ samples(i).infor
+      val sampleInput = samples(i).input
+      val length = sampleInput.storage().array().length - sampleInput.storageOffset() + 1
+      NumericFloat.arraycopy(sampleInput.storage().array(), sampleInput.storageOffset() - 1,
+        input.storage().array(),
+      input.storageOffset() - 1 + offset, length)
+      offset += length
+      i += 1
+    }
+    this
   }
 }
 
-object ModelContext {
-  def apply(): ModelContext = new ModelContext()
+object ImageBatch {
+  def apply(samples: Seq[ImageSample]): ImageBatch = new ImageBatch(samples)
 }
+
+case class ImageSample(val input : Tensor[Float], val infor : String)
 
 
 // Classification prediction result

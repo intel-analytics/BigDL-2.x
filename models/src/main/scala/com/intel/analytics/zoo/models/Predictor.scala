@@ -25,9 +25,14 @@ import org.apache.spark.rdd.RDD
 
 trait Predictor {
 
-  def predictLocal(context : ModelContext, preprocessor: Preprocessor) : Array[PredictResult]
+  // def predictLocal(context : ModelContext, preprocessor: Preprocessor) : Array[PredictResult]
 
-  def predict(context : ModelContext, preprocessor: Preprocessor) : RDD[Array[PredictResult]]
+  def predictLocal(path : String, topNum : Int, preprocessor: Preprocessor = null)
+  : Array[PredictResult]
+ // def predict(context : ModelContext, preprocessor: Preprocessor) : RDD[Array[PredictResult]]
+
+  def predictDistributed(paths : RDD[String], topNum : Int, preprocessor: Preprocessor = null):
+    RDD[Array[PredictResult]]
 
   protected def topN(result : Tensor[Float], topN : Int) :
     Array[PredictResult] = {

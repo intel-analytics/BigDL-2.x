@@ -39,7 +39,8 @@ class PixelNormalizer(means : Tensor[Float]) extends FeatureTransformer {
 
     val meansData = means.storage().array()
 
-    require(meansData.length == data.length, s"Image size expected : ${meansData.length}, actual : ${data.length}")
+    require(meansData.length == data.length, s"Image size expected :" +
+      s"${meansData.length}, actual : ${data.length}")
 
     var i = 0
     while (i < data.length) {
@@ -53,4 +54,7 @@ class PixelNormalizer(means : Tensor[Float]) extends FeatureTransformer {
 
   }
 
+}
+object PixelNormalizer{
+ def apply(means : Tensor[Float]): PixelNormalizer = new PixelNormalizer(means)
 }

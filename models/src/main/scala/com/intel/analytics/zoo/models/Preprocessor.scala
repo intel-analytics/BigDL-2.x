@@ -16,8 +16,9 @@
 
 package com.intel.analytics.zoo.models
 
-import com.intel.analytics.zoo.models.dataset.ModelContext
+import com.intel.analytics.bigdl.tensor.Tensor
+import com.intel.analytics.zoo.models.dataset.{ImageSample}
 
 trait Preprocessor {
-  def preprocess(context : ModelContext): Unit
+  def preprocess(path: Iterator[String]): Iterator[ImageSample]
 }

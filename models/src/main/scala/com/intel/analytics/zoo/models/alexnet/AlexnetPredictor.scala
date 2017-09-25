@@ -23,52 +23,57 @@ import com.intel.analytics.bigdl.example.loadmodel.AlexNetPreprocessor.imageSize
 import com.intel.analytics.bigdl.models.utils.ModelBroadcast
 import com.intel.analytics.bigdl.nn.abstractnn.{AbstractModule, Activity}
 import com.intel.analytics.bigdl.tensor.Tensor
+import com.intel.analytics.bigdl.utils.Engine
 import com.intel.analytics.bigdl.utils.serializer.ModuleLoader
 import com.intel.analytics.zoo.models.{Predictor, Preprocessor}
-import com.intel.analytics.zoo.models.dataset.{ImageParam, ModelContext, PredictResult}
-import com.intel.analytics.zoo.models.util.MateToTensor
+import com.intel.analytics.zoo.models.dataset._
 import com.intel.analytics.zoo.transform.vision.image.{BytesToMat, ImageFeature}
 import com.intel.analytics.zoo.transform.vision.image.augmentation.{CenterCrop, PixelNormalizer, Resize}
 import org.apache.commons.io.FileUtils
+import org.apache.spark.{SparkConf, SparkContext}
 import org.apache.spark.rdd.RDD
 
-
-class AlexnetPredictor(modelPath : String, meanPath : String) extends Predictor{
+@SerialVersionUID(6044110396967995592L)
+class AlexnetPredictor(modelPath : String, meanPath : String) extends Predictor with Serializable{
 
   val model : AbstractModule[Activity, Activity, Float] = ModuleLoader.
     loadFromFile[Float](modelPath).evaluate()
 
   val mean : Tensor[Float] = createMean(meanPath)
 
-  val preprocessor =  AlexnetPreprocessor(mean)
+ // val preprocessor =  AlexnetPreprocessor(mean)
 
-  override def predictLocal(context: ModelContext,
-                            preprocessor: Preprocessor = preprocessor): Array[PredictResult] = {
+  val transformer = ImageToMate() -> BytesToMat() -> Resize(256 , 256) ->
+    PixelNormalizer(mean) -> CenterCrop(imageSize, imageSize) -> MateToSample(false)
 
-    preprocessor.preprocess(context)
+  private val batchPerPartition = 4
 
-    val input = context.get(ImageParam.tensorInput.toString).asInstanceOf[Tensor[Float]]
-    val topNum = context.get(ImageParam.topN.toString).asInstanceOf[Int]
+  override def predictLocal(path : String, topNum : Int, preprocessor: Preprocessor = null)
+  : Array[PredictResult] = {
+    val sample = preprocessor.preprocess(Seq(path).iterator).next()
+    val input = sample.input.view(Array(1) ++ sample.input.size())
     val res = model.forward(input).asInstanceOf[Tensor[Float]]
-
     topN(res, topNum)
   }
 
-  override def predict(context: ModelContext, preprocessor: Preprocessor): RDD[Array[PredictResult]] = {
-
-    val batches = context.get(ImageParam.paths.toString).asInstanceOf[RDD[Tensor[Float]]]
-    val broadcastModel = ModelBroadcast().broadcast(batches.sparkContext, model)
-    null
-  }
-
-   def predict(path: String, topNum: Int, preprocessor : Preprocessor): Array[PredictResult] = {
-    val bytes = FileUtils.readFileToByteArray(new java.io.File(path.toString))
-    val feature = ImageFeature()
-    feature(ImageFeature.bytes) = bytes
-    // val transformedFeature = preprocessor.transform(feature)
-    val input = MateToTensor.bGRToFloatTensor(feature, false)
-    val res = model.forward(input).asInstanceOf[Tensor[Float]]
-    topN(res, topNum)
+  override def predictDistributed(paths : RDD[String], topNum : Int, preprocessor: Preprocessor = null):
+    RDD[Array[PredictResult]] = {
+    val partitionNum = paths.partitions.length
+    val totalBatch = batchPerPartition * partitionNum
+    val broadcastModel = ModelBroadcast[Float]().broadcast(paths.sparkContext, model)
+    val broadcastProcessor = paths.sparkContext.broadcast(SampleToBatch(
+      totalBatch = totalBatch, partitionNum = Some(partitionNum)))
+    val predictDataSet = paths.map(path => transformer(Seq(path).iterator))
+    val predictResult = predictDataSet.mapPartitions(partition => {
+      val localModel = broadcastModel.value()
+      val localProcessor = broadcastProcessor.value.cloneTransformer()
+      val minibatch = localProcessor(partition.next())
+      minibatch.map(batch => {
+        val result = localModel.forward(batch.input).asInstanceOf[Tensor[Float]]
+        topN(result, topNum)
+      })
+    })
+    predictResult
   }
 
   private def createMean(meanFile : String) : Tensor[Float] = {
@@ -83,39 +88,23 @@ class AlexnetPredictor(modelPath : String, meanPath : String) extends Predictor{
   }
 }
 
-class AlexnetPreprocessor(mean : Tensor[Float]) extends Preprocessor {
-
-  val transformer =  BytesToMat() -> Resize(256 , 256) ->
-    new PixelNormalizer(mean) -> CenterCrop(imageSize, imageSize)
-
-  override def preprocess(context: ModelContext): Unit = {
-    val rawImg = context.get(ImageParam.rawImg.toString)
-    val feature = ImageFeature()
-    feature(ImageFeature.bytes) = rawImg
-    val transformedInput = transformer.transform(feature)
-    val input = MateToTensor.bGRToFloatTensor(transformedInput, false)
-    context.put(ImageParam.tensorInput.toString, input)
-  }
-}
-object AlexnetPreprocessor {
-  def apply(mean: Tensor[Float]): AlexnetPreprocessor = new AlexnetPreprocessor(mean)
-}
-
 object AlexnetPredictor{
 
   def apply(modelPath: String, meanPath : String): AlexnetPredictor = new AlexnetPredictor(modelPath, meanPath)
 
   def main(args: Array[String]): Unit = {
 
+    val conf = new SparkConf().setMaster("local[1]").setAppName("Test distributed predict")
+    .set("spark.shuffle.reduceLocality.enabled", "false")
+      .set("spark.shuffle.blockTransferService", "nio")
+      .set("spark.scheduler.minRegisteredResourcesRatio", "1.0")
+    val sc = new SparkContext(conf)
+    Engine.init
     val predictor = AlexnetPredictor("/home/jerry/lab/data/bigdl/alexnet.bigdl", "/home/jerry/Downloads/mean.txt")
-    val bytes = FileUtils.readFileToByteArray(new java.io.File("/home/jerry/Downloads/cat.jpeg"))
-    val context = ModelContext()
-    context.put(ImageParam.rawImg.toString, bytes)
-    context.put(ImageParam.topN.toString, 2)
+    //  val res = predictor.predictLocal("/home/jerry/Downloads/cat.jpeg", 2)
+    val paths = sc.parallelize(Array("/home/jerry/Downloads/cat.jpeg"))
 
-    val res = predictor.predictLocal(context)
-
+    val res = predictor.predictDistributed(paths, 2).collect()
     println()
-
   }
 }
