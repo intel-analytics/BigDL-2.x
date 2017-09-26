@@ -19,61 +19,38 @@ package com.intel.analytics.zoo.models.alexnet
 import java.nio.charset.StandardCharsets
 import java.nio.file.{Files, Paths}
 
-import com.intel.analytics.bigdl.example.loadmodel.AlexNetPreprocessor.imageSize
-import com.intel.analytics.bigdl.models.utils.ModelBroadcast
-import com.intel.analytics.bigdl.nn.abstractnn.{AbstractModule, Activity}
+import com.intel.analytics.bigdl.dataset.Transformer
 import com.intel.analytics.bigdl.tensor.Tensor
 import com.intel.analytics.bigdl.utils.Engine
 import com.intel.analytics.bigdl.utils.serializer.ModuleLoader
-import com.intel.analytics.zoo.models.{Predictor, Preprocessor}
+import com.intel.analytics.zoo.models.{Predictor}
 import com.intel.analytics.zoo.models.dataset._
-import com.intel.analytics.zoo.transform.vision.image.{BytesToMat, ImageFeature}
+import com.intel.analytics.zoo.transform.vision.image.{BytesToMat}
 import com.intel.analytics.zoo.transform.vision.image.augmentation.{CenterCrop, PixelNormalizer, Resize}
-import org.apache.commons.io.FileUtils
 import org.apache.spark.{SparkConf, SparkContext}
 import org.apache.spark.rdd.RDD
 
 @SerialVersionUID(6044110396967995592L)
 class AlexnetPredictor(modelPath : String, meanPath : String) extends Predictor with Serializable{
 
-  val model : AbstractModule[Activity, Activity, Float] = ModuleLoader.
-    loadFromFile[Float](modelPath).evaluate()
+  model = ModuleLoader.loadFromFile[Float](modelPath).evaluate()
 
   val mean : Tensor[Float] = createMean(meanPath)
 
- // val preprocessor =  AlexnetPreprocessor(mean)
-
   val transformer = ImageToMate() -> BytesToMat() -> Resize(256 , 256) ->
-    PixelNormalizer(mean) -> CenterCrop(imageSize, imageSize) -> MateToSample(false)
+    PixelNormalizer(mean) -> CenterCrop(227, 227) -> MateToSample(false)
 
-  private val batchPerPartition = 4
 
-  override def predictLocal(path : String, topNum : Int, preprocessor: Preprocessor = null)
+  override def predictLocal(path : String, topNum : Int,
+                            preprocessor: Transformer[String, ImageSample] = transformer)
   : Array[PredictResult] = {
-    val sample = preprocessor.preprocess(Seq(path).iterator).next()
-    val input = sample.input.view(Array(1) ++ sample.input.size())
-    val res = model.forward(input).asInstanceOf[Tensor[Float]]
-    topN(res, topNum)
+    doPredictLocal(path, topNum, preprocessor)
   }
 
-  override def predictDistributed(paths : RDD[String], topNum : Int, preprocessor: Preprocessor = null):
+  override def predictDistributed(paths : RDD[String], topNum : Int ,
+                                  preprocessor: Transformer[String, ImageSample] = transformer):
     RDD[Array[PredictResult]] = {
-    val partitionNum = paths.partitions.length
-    val totalBatch = batchPerPartition * partitionNum
-    val broadcastModel = ModelBroadcast[Float]().broadcast(paths.sparkContext, model)
-    val broadcastProcessor = paths.sparkContext.broadcast(SampleToBatch(
-      totalBatch = totalBatch, partitionNum = Some(partitionNum)))
-    val predictDataSet = paths.map(path => transformer(Seq(path).iterator))
-    val predictResult = predictDataSet.mapPartitions(partition => {
-      val localModel = broadcastModel.value()
-      val localProcessor = broadcastProcessor.value.cloneTransformer()
-      val minibatch = localProcessor(partition.next())
-      minibatch.map(batch => {
-        val result = localModel.forward(batch.input).asInstanceOf[Tensor[Float]]
-        topN(result, topNum)
-      })
-    })
-    predictResult
+    doPredictDistributed(paths, topNum, preprocessor)
   }
 
   private def createMean(meanFile : String) : Tensor[Float] = {
