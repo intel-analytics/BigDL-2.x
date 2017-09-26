@@ -24,7 +24,7 @@ import com.intel.analytics.zoo.transform.vision.image.augmentation._
 import com.intel.analytics.zoo.transform.vision.image.opencv.OpenCVMat
 import com.intel.analytics.zoo.transform.vision.label.roi._
 import com.intel.analytics.zoo.transform.vision.util.NormalizedBox
-import org.opencv.core.{CvType, Mat, Point, Scalar}
+import org.opencv.core.{Mat, Point, Scalar}
 import org.opencv.imgcodecs.Imgcodecs
 import org.opencv.imgproc.Imgproc
 import org.scalatest.{FlatSpec, Matchers}
@@ -98,7 +98,7 @@ class FeatureTransformerSpec extends FlatSpec with Matchers {
     val normalize = ChannelNormalize((100, 200, 300)) ->
       MatToFloats(validHeight = img.height(), validWidth = img.width())
     val normalize2 = MatToFloats(validHeight = img.height(),
-      validWidth = img.width(), meanRGB = Some((100, 200, 300)))
+      validWidth = img.width(), meanRGB = Some((100f, 200f, 300f)))
     var start = System.nanoTime()
     (1 to 5).foreach(i => {
       feature(ImageFeature.mat) = OpenCVMat.read(resource.getFile)
@@ -234,6 +234,20 @@ class FeatureTransformerSpec extends FlatSpec with Matchers {
     val resource = getClass().getClassLoader().getResource("image/000025.jpg")
     val img = OpenCVMat.read(resource.getFile)
     ChannelOrder.transform(img, img)
+    val name = s"input000025" +
+      s"ChannelOrder-${System.nanoTime()}"
+    val tmpFile = java.io.File.createTempFile(name, ".jpg")
+    Imgcodecs.imwrite(tmpFile.getAbsolutePath, img)
+    println(s"save to ${tmpFile.getAbsolutePath}, " + new File(tmpFile.getAbsolutePath).length())
+  }
+
+  "Filler" should "work properly" in {
+    val resource = getClass().getClassLoader().getResource("image/000025.jpg")
+    val img = OpenCVMat.read(resource.getFile)
+    val filler = Filler(0, 0, 0.5f, 0.5f)
+    val feature = ImageFeature()
+    feature(ImageFeature.mat) = img
+    filler.transform(feature)
     val name = s"input000025" +
       s"ChannelOrder-${System.nanoTime()}"
     val tmpFile = java.io.File.createTempFile(name, ".jpg")
