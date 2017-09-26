@@ -31,8 +31,8 @@ class ResnetPreprocessor(modelPath: String)  extends Predictor with Serializable
     loadFromFile[Float](modelPath).evaluate()
 
   val transformer = ImageToMate() -> BytesToMat() -> Resize(256 , 256) ->
-    CenterCrop(imageSize, imageSize) -> ChannelNormalize(0.485f, 0.456f, 0.406f) ->
-    MateToSample(false)
+    CenterCrop(imageSize, imageSize) -> ChannelNormalize((0.485f, 0.456f, 0.406f),
+    0.229, 0.224, 0.225) -> MateToSample(false)
 
   override def predictLocal(path : String, topNum : Int,
                             preprocessor: Transformer[String, ImageSample] = transformer)

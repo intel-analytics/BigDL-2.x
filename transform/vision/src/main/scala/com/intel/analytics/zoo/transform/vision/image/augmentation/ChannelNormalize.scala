@@ -28,16 +28,19 @@ import org.opencv.core.{Core, CvType, Mat, Scalar}
  * @param meanG
  * @param meanB
  */
-class ChannelNormalize(meanR: Float, meanG: Float, meanB: Float)
+class ChannelNormalize(meanR: Float, meanG: Float, meanB: Float,
+                       stdR: Double = 1, stdG: Double = 1, stdB: Double = 1)
   extends FeatureTransformer {
   override def transformMat(feature: ImageFeature): Unit = {
-    ChannelNormalize.transform(feature.opencvMat(), feature.opencvMat(), meanR, meanG, meanB)
+    ChannelNormalize.transform(feature.opencvMat(), feature.opencvMat(),
+      meanR, meanG, meanB, stdR, stdG, stdB)
   }
 }
 
 object ChannelNormalize {
-  def apply(mean: (Float, Float, Float)): ChannelNormalize = {
-    new ChannelNormalize(mean._1, mean._2, mean._3)
+  def apply(mean: (Float, Float, Float),
+            stdR: Double = 1, stdG: Double = 1, stdB: Double = 1): ChannelNormalize = {
+    new ChannelNormalize(mean._1, mean._2, mean._3, stdR, stdG, stdB)
   }
 
   def transform(input: OpenCVMat, output: OpenCVMat,

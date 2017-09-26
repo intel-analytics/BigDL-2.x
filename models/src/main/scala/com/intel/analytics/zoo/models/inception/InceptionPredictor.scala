@@ -30,7 +30,7 @@ class InceptionPredictor(modelPath : String) extends Predictor with Serializable
     loadFromFile[Float](modelPath).evaluate()
 
   val transformer = ImageToMate() -> BytesToMat() -> Resize(256 , 256) ->
-    CenterCrop(224, 224) -> ChannelNormalize(123, 117, 104) ->
+    CenterCrop(224, 224) -> ChannelNormalize((123, 117, 104)) ->
     MateToSample(false)
 
   override def predictLocal(path : String, topNum : Int,
