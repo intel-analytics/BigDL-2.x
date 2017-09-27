@@ -55,6 +55,8 @@ case class ImageSample(val input : Tensor[Float], val infor : String)
 // Classification prediction result
 case class PredictResult(className : String, credit : Float)
 
+// case class PredictResult(imgInfo : String, array: Array[PredictClass])
+
 object ImageParam extends Enumeration {
   type ImageParam = Value
   val rawImg = Value(0, "RawImg")

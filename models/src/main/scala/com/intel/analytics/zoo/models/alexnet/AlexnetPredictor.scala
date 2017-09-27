@@ -68,20 +68,4 @@ class AlexnetPredictor(modelPath : String, meanPath : String) extends Predictor 
 object AlexnetPredictor{
 
   def apply(modelPath: String, meanPath : String): AlexnetPredictor = new AlexnetPredictor(modelPath, meanPath)
-
-  def main(args: Array[String]): Unit = {
-
-    val conf = new SparkConf().setMaster("local[1]").setAppName("Test distributed predict")
-    .set("spark.shuffle.reduceLocality.enabled", "false")
-      .set("spark.shuffle.blockTransferService", "nio")
-      .set("spark.scheduler.minRegisteredResourcesRatio", "1.0")
-    val sc = new SparkContext(conf)
-    Engine.init
-    val predictor = AlexnetPredictor("/home/jerry/lab/data/bigdl/alexnet.bigdl", "/home/jerry/Downloads/mean.txt")
-    //  val res = predictor.predictLocal("/home/jerry/Downloads/cat.jpeg", 2)
-    val paths = sc.parallelize(Array("/home/jerry/Downloads/cat.jpeg"))
-
-    val res = predictor.predictDistributed(paths, 2).collect()
-    println()
-  }
 }
