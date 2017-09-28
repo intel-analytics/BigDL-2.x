@@ -4,3 +4,4 @@ target/
 *.iml
 *.pyc
 *.log
+data/models/*.model

@@ -16,10 +16,13 @@
 
 package com.intel.analytics.zoo.pipeline.common.dataset
 
+import java.io.File
 import java.nio.file.Paths
 
-import com.intel.analytics.zoo.pipeline.common.dataset.roiimage.{RoiImagePath, Target}
+import com.intel.analytics.zoo.pipeline.common.dataset.roiimage.RoiImagePath
 import com.intel.analytics.bigdl.tensor.{Storage, Tensor}
+import com.intel.analytics.zoo.transform.vision.label.roi.RoiLabel
+import org.apache.commons.io.FileUtils
 import org.apache.log4j.Logger
 
 import scala.collection.mutable.ArrayBuffer
@@ -135,8 +138,8 @@ object Coco {
     (x._1._1, x._2)
   }).toMap
 
-  def loadAnnotation(path: String): Target = {
-    val text = Source.fromFile(path).getLines().mkString("\n")
+  def loadAnnotation(path: String): RoiLabel = {
+    val text = FileUtils.readFileToString(new File(path))
     val result = JSON.parseFull(text)
     result match {
       case Some(map: Map[String, Any]) => {
@@ -169,10 +172,11 @@ object Coco {
         // compatible with pascal storage, difficults are all 0
         val clses = new Array[Float](validClasses.length * 2)
         validClasses.copyToArray(clses, 0, validClasses.length)
-        Target(Tensor(Storage(clses)).resize(2, validClasses.length),
+        RoiLabel(Tensor(Storage(clses)).resize(2, validClasses.length),
           Tensor(Storage(validBoxes.toArray)).resize(validBoxes.length / 4, 4))
       }
       case _ => throw new Exception("Parse annotation failed.")
     }
   }
 }
+

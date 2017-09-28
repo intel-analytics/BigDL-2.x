@@ -51,7 +51,7 @@ class PriorBox[T: ClassTag](minSizes: Array[Float], maxSizes: Array[Float] = nul
   var variances: Array[Float] = null, offset: Float = 0.5f,
   var imgH: Int = 0, var imgW: Int = 0, imgSize: Int = 0,
   var stepH: Float = 0, var stepW: Float = 0, step: Float = 0)
-  (implicit ev: TensorNumeric[T]) extends AbstractModule[Table, Tensor[T], T] {
+  (implicit ev: TensorNumeric[T]) extends AbstractModule[Tensor[T], Tensor[T], T] {
 
   private var aspectRatios: ArrayBuffer[Float] = _
   private var numPriors = 0
@@ -130,21 +130,13 @@ class PriorBox[T: ClassTag](minSizes: Array[Float], maxSizes: Array[Float] = nul
    * @param input
    * @return
    */
-  override def updateOutput(input: Table): Tensor[T] = {
-    require(input.length() == 2)
-    val layerData = input[Tensor[T]](1)
-    val imgData = input[Tensor[T]](2)
-    val layerW = layerData.size(4)
-    val layerH = layerData.size(3)
-    var imgWidth = imgW
-    var imgHeight = imgH
-    if (imgW == 0 || imgH == 0) {
-      imgWidth = imgData.size(4)
-      imgHeight = imgData.size(3)
-    }
+  override def updateOutput(input: Tensor[T]): Tensor[T] = {
+    require(imgW > 0 && imgH > 0, "imgW and imgH must > 0")
+    val layerW = input.size(4)
+    val layerH = input.size(3)
     if (stepW == 0 || stepH == 0) {
-      stepW = imgWidth / layerW.toFloat
-      stepH = imgHeight / layerH.toFloat
+      stepW = imgW / layerW.toFloat
+      stepH = imgH / layerH.toFloat
     }
     val dim = layerH * layerW * numPriors * 4
     if (output.nElement() == 2 * dim && output.dim() == 3 &&
@@ -159,10 +151,10 @@ class PriorBox[T: ClassTag](minSizes: Array[Float], maxSizes: Array[Float] = nul
     val offset = output.storageOffset() - 1
     if (classTag[T] == classTag[Float]) {
       val outputData = output.storage().array().asInstanceOf[Array[Float]]
-      computPriorBoxFloat(layerW, layerH, imgWidth, imgHeight, dim, outputData, offset)
+      computPriorBoxFloat(layerW, layerH, imgW, imgH, dim, outputData, offset)
     } else if (classTag[T] == classTag[Double]) {
       val outputData = output.storage().array().asInstanceOf[Array[Double]]
-      computPriorBoxDouble(layerW, layerH, imgWidth, imgHeight, dim, outputData, offset)
+      computPriorBoxDouble(layerW, layerH, imgW, imgH, dim, outputData, offset)
     }
     output
   }
@@ -180,16 +172,16 @@ class PriorBox[T: ClassTag](minSizes: Array[Float], maxSizes: Array[Float] = nul
         var halfBoxH = 0f
         var s = 0
         while (s < minSizes.length) {
-          val minSize = minSizes(s)
-          halfBoxW = minSize / 2
-          halfBoxH = minSize / 2
+          val minSize = minSizes(s).toInt
+          halfBoxW = minSize / 2.0f
+          halfBoxH = minSize / 2.0f
           outputData(idx) = (centerX - halfBoxW) / imgWidth // xmin
           outputData(idx + 1) = (centerY - halfBoxH) / imgHeight // ymin
           outputData(idx + 2) = (centerX + halfBoxW) / imgWidth // xmax
           outputData(idx + 3) = (centerY + halfBoxH) / imgHeight // ymax
           idx += 4
           if (maxSizes != null && maxSizes.length > 0) {
-            val maxSize = maxSizes(s)
+            val maxSize = maxSizes(s).toInt
             // second prior: aspect_ratio = 1, size = sqrt(min_size * max_size)
             halfBoxW = Math.sqrt(minSize * maxSize).toFloat / 2
             halfBoxH = halfBoxW
@@ -328,11 +320,12 @@ class PriorBox[T: ClassTag](minSizes: Array[Float], maxSizes: Array[Float] = nul
    * @param gradOutput
    * @return
    */
-  override def updateGradInput(input: Table, gradOutput: Tensor[T]): Table = {
-    null
+  override def updateGradInput(input: Tensor[T], gradOutput: Tensor[T]): Tensor[T] = {
+    gradInput.resizeAs(input).zero()
+    gradInput
   }
 
-  override def toString: String = "nn.PriorBox"
+  override def toString: String = getName()
 }
 
 object PriorBox {

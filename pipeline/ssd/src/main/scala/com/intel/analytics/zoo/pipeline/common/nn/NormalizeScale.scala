@@ -16,8 +16,9 @@
 
 package com.intel.analytics.zoo.pipeline.common.nn
 
-import com.intel.analytics.bigdl.nn.{CMul, Normalize}
 import com.intel.analytics.bigdl.nn.abstractnn.TensorModule
+import com.intel.analytics.bigdl.nn.{CMul, Normalize}
+import com.intel.analytics.bigdl.optim.Regularizer
 import com.intel.analytics.bigdl.tensor.Tensor
 import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric
 import com.intel.analytics.bigdl.utils.{T, Table}
@@ -25,11 +26,17 @@ import com.intel.analytics.bigdl.utils.{T, Table}
 import scala.reflect.ClassTag
 
 class NormalizeScale[T: ClassTag](val p: Double, val eps: Double = 1e-10,
-  val scale: Double, size: Array[Int])(implicit ev: TensorNumeric[T])
+  val scale: Double, size: Array[Int],
+  var wRegularizer: Regularizer[T] = null)(implicit ev: TensorNumeric[T])
   extends TensorModule[T] {
   val normalize = Normalize[T](p, eps)
-  val cmul = CMul[T](size)
+  val cmul = CMul[T](size, wRegularizer = wRegularizer)
   cmul.weight.fill(ev.fromType(scale))
+
+  override def setScaleW(w: Double): this.type = {
+    cmul.setScaleW(w)
+    this
+  }
 
   override def updateOutput(input: Tensor[T]): Tensor[T] = {
     normalize.forward(input)
@@ -38,8 +45,12 @@ class NormalizeScale[T: ClassTag](val p: Double, val eps: Double = 1e-10,
   }
 
   override def updateGradInput(input: Tensor[T], gradOutput: Tensor[T]): Tensor[T] = {
-    gradInput = cmul.backward(output, normalize.backward(input, gradOutput))
+    gradInput = cmul.updateGradInput(output, normalize.updateGradInput(input, gradOutput))
     gradInput
+  }
+
+  override def accGradParameters(input: Tensor[T], gradOutput: Tensor[T]): Unit = {
+    cmul.accGradParameters(input, gradOutput)
   }
 
   override def parameters(): (Array[Tensor[T]], Array[Tensor[T]]) = {
@@ -53,6 +64,8 @@ class NormalizeScale[T: ClassTag](val p: Double, val eps: Double = 1e-10,
 
 object NormalizeScale {
   def apply[@specialized(Float, Double) T: ClassTag]
-  (p: Double, eps: Double = 1e-10, scale: Double, size: Array[Int])
-    (implicit ev: TensorNumeric[T]): NormalizeScale[T] = new NormalizeScale[T](p, eps, scale, size)
+  (p: Double, eps: Double = 1e-10, scale: Double, size: Array[Int],
+    wRegularizer: Regularizer[T] = null)
+    (implicit ev: TensorNumeric[T]): NormalizeScale[T] =
+    new NormalizeScale[T](p, eps, scale, size, wRegularizer)
 }

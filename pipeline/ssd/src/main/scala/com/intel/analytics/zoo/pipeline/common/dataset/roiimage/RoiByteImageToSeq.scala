@@ -26,6 +26,7 @@ import org.apache.commons.io.FileUtils
 import org.apache.hadoop.conf.Configuration
 import org.apache.hadoop.fs.{Path => hPath}
 import org.apache.hadoop.io.{SequenceFile, Text}
+import RoiByteImageToSeq._
 
 import scala.collection.Iterator
 
@@ -80,6 +81,13 @@ class RoiByteImageToSeq(blockSize: Int, baseFileName: Path) extends
     }
   }
 
+
+}
+
+object RoiByteImageToSeq {
+  def apply(blockSize: Int, baseFileName: Path): RoiByteImageToSeq =
+    new RoiByteImageToSeq(blockSize, baseFileName)
+
   def tensorToBytes(tensor: Tensor[Float]): Array[Byte] = {
     val boxBuffer = ByteBuffer.allocate(tensor.nElement() * 4)
     var i = 0
@@ -90,10 +98,5 @@ class RoiByteImageToSeq(blockSize: Int, baseFileName: Path) extends
     }
     boxBuffer.array()
   }
-}
-
-object RoiByteImageToSeq {
-  def apply(blockSize: Int, baseFileName: Path): RoiByteImageToSeq =
-    new RoiByteImageToSeq(blockSize, baseFileName)
 }
 

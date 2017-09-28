@@ -16,61 +16,49 @@
 
 package com.intel.analytics.zoo.pipeline.common.dataset
 
-import java.awt.image.BufferedImage
-import java.io.{ByteArrayInputStream, ByteArrayOutputStream, FileInputStream}
-import java.nio.channels.Channels
-import java.nio.file.{Path, Paths}
-import javax.imageio.ImageIO
+import java.io.File
+import java.nio.ByteBuffer
 
 import com.intel.analytics.bigdl.dataset.Transformer
-import com.intel.analytics.bigdl.dataset.image.BGRImage
-import com.intel.analytics.zoo.pipeline.common.dataset.roiimage.{RoiByteImage, RoiImagePath}
+import com.intel.analytics.zoo.pipeline.common.dataset.roiimage.{RoiByteImageToSeq, RoiImagePath, SSDByteRecord}
+import org.apache.commons.io.FileUtils
 
 /**
  * load local image and target if exists
  */
-class LocalByteRoiimageReader extends Transformer[RoiImagePath, RoiByteImage] {
-  override def apply(prev: Iterator[RoiImagePath]): Iterator[RoiByteImage] = {
+class LocalByteRoiimageReader extends Transformer[RoiImagePath, SSDByteRecord] {
+  private val preBuffer: ByteBuffer = ByteBuffer.allocate(4 * 2)
+
+  override def apply(prev: Iterator[RoiImagePath]): Iterator[SSDByteRecord] = {
     prev.map(data => {
       transform(data)
     })
   }
 
-  def transform(roiImagePath: RoiImagePath, useBuffer: Boolean = true): RoiByteImage = {
-    val originalImage = LocalByteRoiimageReader.readRawImage(Paths.get(roiImagePath.imagePath))
-    // convert BufferedImage to byte array
-    val baos = new ByteArrayOutputStream()
-    // use jpg will lost some information
-    ImageIO.write(originalImage, "png", baos)
-    baos.flush()
-    val imageInByte = baos.toByteArray
-    baos.close()
-    RoiByteImage(imageInByte, imageInByte.length, roiImagePath.imagePath, roiImagePath.target)
+  def transform(roiImagePath: RoiImagePath, useBuffer: Boolean = true): SSDByteRecord = {
+    val imageInByte = FileUtils.readFileToByteArray(new File(roiImagePath.imagePath))
+    preBuffer.putInt(imageInByte.length)
+    val classLen = if (roiImagePath.target != null) roiImagePath.target.classes.size(2) * 4 else 0
+    preBuffer.putInt(classLen)
+    val data: Array[Byte] = new Array[Byte](preBuffer.capacity + imageInByte.length +
+      classLen * 6 * 4)
+    var startInd = 0
+    System.arraycopy(preBuffer.array, 0, data, 0, preBuffer.capacity)
+    startInd += preBuffer.capacity
+    System.arraycopy(imageInByte, 0, data, startInd, imageInByte.length)
+    startInd += imageInByte.length
+    if (roiImagePath.target != null) {
+      val cls = RoiByteImageToSeq.tensorToBytes(roiImagePath.target.classes)
+      System.arraycopy(cls, 0, data, startInd, cls.length)
+      startInd += cls.length
+      val bbox = RoiByteImageToSeq.tensorToBytes(roiImagePath.target.bboxes)
+      System.arraycopy(bbox, 0, data, startInd, bbox.length)
+    }
+    preBuffer.clear
+    SSDByteRecord(data, roiImagePath.imagePath)
   }
 }
 
 object LocalByteRoiimageReader {
   def apply(): LocalByteRoiimageReader = new LocalByteRoiimageReader()
-
-  def readRawImage(path: Path): BufferedImage = {
-    var fis: FileInputStream = null
-    try {
-      fis = new FileInputStream(path.toString)
-      val channel = fis.getChannel
-      val byteArrayOutputStream = new ByteArrayOutputStream
-      channel.transferTo(0, channel.size, Channels.newChannel(byteArrayOutputStream))
-      val image = ImageIO.read(new ByteArrayInputStream(byteArrayOutputStream.toByteArray))
-      require(image != null, "Can't read file " + path + ", ImageIO.read is null")
-      image
-    } catch {
-      case ex: Exception =>
-        ex.printStackTrace()
-        System.err.println("Can't read file " + path)
-        throw ex
-    } finally {
-      if (fis != null) {
-        fis.close()
-      }
-    }
-  }
 }
