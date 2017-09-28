@@ -18,7 +18,7 @@ package com.intel.analytics.zoo.transform.vision.image3d.augmentation
 
 import com.intel.analytics.zoo.transform.vision.image3d._
 import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric
-import com.intel.analytics.bigdl.tensor.{DoubleType, FloatType, Tensor}
+import com.intel.analytics.bigdl.tensor.{DoubleType, FloatType, Tensor, Storage}
 import scala.reflect.ClassTag
 
 object Rotate {
@@ -53,26 +53,31 @@ class Rotate(rotationAngles: Array[Double])
   private val rotationTensor = yawDataTensor * pitchDataTensor * rollDataTensor
 
   override def transformTensor(tensor: Tensor[Float]): Tensor[Float] = {
-    val dst = Tensor[Float](tensor.size()).fill(0f)
+    val depth = tensor.size(1)
+    val height = tensor.size(2)
+    val width = tensor.size(3)
+    val dstData = Array.fill[Float](depth * height * width)(0f)
     val xc = (tensor.size(1) + 1) / 2.0
     val zc = (tensor.size(2) + 1) / 2.0
     val yc = (tensor.size(3) + 1) / 2.0
     var id, jd, kd: Double = 0
     var ii_0, ii_1, jj_0, jj_1, kk_0, kk_1: Int = 0
-    for (i <- 1 to tensor.size(1)) {
+
+    val data = tensor.storage().array()
+    for (i <- 1 to depth) {
       id = i
-      for (k <- 1 to tensor.size(2)) {
+      for (k <- 1 to height) {
         kd = k
-        for (j <- 1 to tensor.size(3)) {
+        for (j <- 1 to width) {
           var value = -1.0
           var ri, rj, rk, wi, wj, wk: Double = 0
           jd = j
           val coord = Tensor[Double](Array[Double](id - xc, jd - yc, kd - zc), Array[Int](3, 1))
           val rCoord = rotationTensor * coord
-
-          ri = rCoord.valueAt(1, 1)
-          rj = rCoord.valueAt(2, 1)
-          rk = rCoord.valueAt(3, 1)
+          val rData = rCoord.storage().array()
+          ri = rData(0)
+          rj = rData(1)
+          rk = rData(2)
 
           ii_0 = math.floor(ri + xc).toInt
           jj_0 = math.floor(rj + yc).toInt
@@ -86,12 +91,12 @@ class Rotate(rotationAngles: Array[Double])
           wj = rj + yc - jj_0
           wk = rk + zc - kk_0
 
-          if (ii_1 == tensor.size(1) + 1 && wi < 0.5) ii_1 = ii_0
-          else if (ii_1 >= tensor.size(1) + 1) value = 0.0
-          if (jj_1 == tensor.size(3) + 1 && wj < 0.5) jj_1 = jj_0
-          else if (jj_1 >= tensor.size(3) + 1) value = 0.0
-          if (kk_1 == tensor.size(2) + 1 && wk < 0.5) kk_1 = kk_0
-          else if (kk_1 >= tensor.size(2) + 1) value = 0.0
+          if (ii_1 == depth + 1 && wi < 0.5) ii_1 = ii_0
+          else if (ii_1 >= depth + 1) value = 0.0
+          if (jj_1 == width + 1 && wj < 0.5) jj_1 = jj_0
+          else if (jj_1 >= width + 1) value = 0.0
+          if (kk_1 == height + 1 && wk < 0.5) kk_1 = kk_0
+          else if (kk_1 >= height + 1) value = 0.0
 
           if (ii_0 == 0 && wi > 0.5) ii_0 = ii_1
           else if (ii_0 < 1) value = 0.0
@@ -101,19 +106,27 @@ class Rotate(rotationAngles: Array[Double])
           else if (kk_0 < 1) value = 0.0
 
           if (value == -1.0) {
-            value = (1 - wk) * (1 - wj) * (1 - wi) * ((tensor.valueAt(ii_0, kk_0, jj_0)).toDouble) +
-              (1 - wk) * (1 - wj) * wi * ((tensor.valueAt(ii_1, kk_0, jj_0)).toDouble) +
-              (1 - wk) * wj * (1 - wi) * ((tensor.valueAt(ii_0, kk_0, jj_1)).toDouble) +
-              (1 - wk) * wj * wi * ((tensor.valueAt(ii_1, kk_0, jj_1)).toDouble) +
-              wk * (1 - wj) * (1 - wi) * ((tensor.valueAt(ii_0, kk_1, jj_0)).toDouble) +
-              wk * (1 - wj) * wi * ((tensor.valueAt(ii_1, kk_1, jj_0)).toDouble) +
-              wk * wj * (1 - wi) * ((tensor.valueAt(ii_0, kk_1, jj_1)).toDouble) +
-              wk * wj * wi * ((tensor.valueAt(ii_1, kk_1, jj_1)).toDouble)
+            value = (1 - wk) * (1 - wj) * (1 - wi) *
+              (data((ii_0 - 1) * height * width + (kk_0 - 1) * width + jj_0 - 1).toDouble) +
+              (1 - wk) * (1 - wj) * wi *
+                (data((ii_1 - 1) * height * width + (kk_0 - 1) * width + jj_0 - 1).toDouble) +
+              (1 - wk) * wj * (1 - wi) *
+                (data((ii_0 - 1) * height * width + (kk_0 - 1) * width + jj_1 - 1).toDouble) +
+              (1 - wk) * wj * wi *
+                (data((ii_1 - 1) * height * width + (kk_0 - 1) * width + jj_1 -1).toDouble) +
+              wk * (1 - wj) * (1 - wi) *
+                (data((ii_0 - 1) * height * width + (kk_1 - 1) * width + jj_0 - 1).toDouble) +
+              wk * (1 - wj) * wi *
+                (data((ii_1 - 1) * height * width + (kk_1 - 1) * width + jj_0 - 1).toDouble) +
+              wk * wj * (1 - wi) *
+                (data((ii_0 - 1) * height * width + (kk_1 - 1) * width + jj_1 - 1).toDouble) +
+              wk * wj * wi *
+                (data((ii_1 - 1) * height * width + (kk_1 - 1) * width + jj_1 - 1).toDouble)
           }
-          dst.setValue(i, k, j, value.toFloat)
+          dstData((i - 1) * height * width + (k - 1) * width + j - 1) = value.toFloat
         }
       }
     }
-    dst
+    Tensor(storage = Storage[Float](dstData), storageOffset = 1, size = tensor.size())
   }
 }
