@@ -10,15 +10,12 @@ import org.apache.spark.ml.{DLClassifier, Pipeline}
 import org.apache.spark.sql.functions._
 import org.apache.spark.sql.{DataFrame, SparkSession}
 
-
 object BigDLKaggleFraud {
 
   def main(args: Array[String]): Unit = {
-    Logger.getLogger("org").setLevel(Level.ERROR)
-    Logger.getLogger("breeze").setLevel(Level.ERROR)
+
     val conf = Engine.createSparkConf()
-      .set("spark.task.maxFailures", "1")
-    val spark = SparkSession.builder().master("local[1]").appName("ss").config(conf).getOrCreate()
+    val spark = SparkSession.builder().master("local[1]").appName("BigDL Fraud Detection Example:").config(conf).getOrCreate()
     Engine.init
 
     val raw = spark.read
