@@ -10,6 +10,7 @@ import org.apache.spark.ml.{DLClassifier, Pipeline}
 import org.apache.spark.sql.functions._
 import org.apache.spark.sql.{DataFrame, SparkSession}
 
+
 object BigDLKaggleFraud {
 
   def main(args: Array[String]): Unit = {
@@ -28,6 +29,8 @@ object BigDLKaggleFraud {
     val df = raw.select(((1 to 28).map(i => "V" + i) ++ Array("Time", "Amount", "Class")).map(s => col(s).cast("Double")): _*)
 
     println("total: " + df.count())
+    df.groupBy("Class").count().show()
+
     val labelConverter = new FuncTransformer(udf {d: Double => if (d==0) 2 else d }).setInputCol("Class").setOutputCol("Class")
     val assembler = new VectorAssembler().setInputCols((1 to 28).map(i => "V" + i).toArray ++ Array("Amount")).setOutputCol("assembled")
     val scaler = new StandardScaler().setInputCol("assembled").setOutputCol("features")
@@ -47,7 +50,7 @@ object BigDLKaggleFraud {
       .add(LogSoftMax())
     val criterion = ClassNLLCriterion()
     val dlClassifier = new DLClassifier(bigDLModel, criterion, Array(29)).setLabelCol("Class")
-      .setBatchSize(trainingData.count().toInt)
+      .setBatchSize(10000)
       .setMaxEpoch(200)
 
     val estimator = new Bagging()
@@ -91,6 +94,7 @@ object BigDLKaggleFraud {
     println("fp: " + prediction.filter("prediction=1 and Class=0").count())
 
     println()
+    prediction.unpersist()
   }
 
 }

@@ -64,7 +64,7 @@ private[ml] trait BaggingParams[M <: Model[M]]
   /** @group getParam */
   def getThreshold: Int = $(threshold)
 
-  setDefault(numModels-> 3, isClassifier->true)
+  setDefault(numModels-> 3, isClassifier->true, threshold -> 2)
 }
 
 /**
@@ -121,14 +121,10 @@ class Bagging[
     Random.setSeed($(seed))
     val models = (0 until $(numModels)).map { _ =>
       val sampler = new StratifiedSampler(Map(2 -> 0.05, 1-> 10, 0 -> 1)).setLabel("Class")
-      val bootstrapSample = sampler.transform(dataset)
-      println("sample fraud: " + bootstrapSample.filter("Class=1").count())
-      println("sample normal: " + bootstrapSample.filter("Class=2").count())
-      val oldclassifier = $(predictor).asInstanceOf[DLClassifier[Float]]
-      val dlClassifier = new DLClassifier(oldclassifier.model, oldclassifier.criterion, Array(29)).setLabelCol("Class")
-        .setBatchSize(oldclassifier.getBatchSize)
-        .setMaxEpoch(oldclassifier.getMaxEpoch)
-      dlClassifier.fit(bootstrapSample).asInstanceOf[M]
+      val bootstrapSample = sampler.transform(dataset).cache()
+      val dlClassifier = $(predictor).copy(ParamMap.empty)
+      val subModel = dlClassifier.fit(bootstrapSample).asInstanceOf[M]
+      subModel
     }
     copyValues(new BaggingModel[M](uid, models).setParent(this))
   }
@@ -167,7 +163,6 @@ class BaggingModel[M <: Model[M]] private[ml] (
 
   /** @group setParam */
   def setPredictionCol(value: String): this.type = set(predictionCol, value)
-
 
   /** @group setParam */
   def setThreshold(value: Int): this.type = set(threshold, value)
