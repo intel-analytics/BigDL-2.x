@@ -17,9 +17,10 @@
 package com.intel.analytics.zoo.pipeline.ssd.model
 
 import com.intel.analytics.bigdl._
+import com.intel.analytics.bigdl.nn.Module
 import com.intel.analytics.bigdl.numeric.NumericFloat
 import com.intel.analytics.bigdl.optim.SGD
-import com.intel.analytics.zoo.pipeline.common.nn.{MultiBoxLoss, MultiBoxLossParam}
+import com.intel.analytics.zoo.pipeline.common.nn.{MultiBoxLoss, MultiBoxLossParam, PriorBox}
 import com.intel.analytics.bigdl.tensor.{Storage, Tensor}
 import com.intel.analytics.bigdl.utils.{T, Table}
 import org.scalatest.{FlatSpec, Matchers}
@@ -137,5 +138,47 @@ class SSDVggGraphSpec extends FlatSpec with Matchers {
     namedModule1.foreach(x => {
       namedModule2(x._1).asInstanceOf[Table] should be(x._2)
     })
+  }
+
+  "save model" should "work" in {
+    val model = SSDVgg(300)
+    val input = Tensor[Float](1, 3, 300, 300)
+    model.evaluate()
+    val out = model.forward(input).toTensor[Float].clone()
+    val tmpFile = java.io.File.createTempFile("module", ".bigdl").toString
+    model.saveModule(tmpFile, true)
+
+    val model2 = Module.loadModule(tmpFile)
+
+    model2.evaluate()
+    val out2 = model2.forward(input)
+
+    out should be (out2)
+  }
+
+  "save model without forward" should "work" in {
+    val model = SSDVgg(300)
+    val input = Tensor[Float](1, 3, 300, 300)
+    val tmpFile = java.io.File.createTempFile("module", ".bigdl").toString
+    model.saveModule(tmpFile, true)
+  }
+
+  "save priorbox " should "work" in {
+    val isClip = false
+    val isFlip = true
+    val variances = Array(0.1f, 0.1f, 0.2f, 0.2f)
+    val param = ComponetParam(256, 4, minSizes = Array(460.8f),
+      maxSizes = Array(537.6f), aspectRatios = Array(2), isFlip, isClip, variances, 512)
+    val priorbox = PriorBox[Float](minSizes = param.minSizes, maxSizes = param.maxSizes,
+      _aspectRatios = param.aspectRatios, isFlip = param.isFlip, isClip = param.isClip,
+      variances = param.variances, step = param.step, offset = 0.5f, imgH = 512, imgW = 512)
+
+    val input = Tensor[Float](1, 3, 22, 24)
+    val out = priorbox.forward(input).clone()
+    val tmpFile = java.io.File.createTempFile("module", ".bigdl").toString
+    priorbox.saveModule(tmpFile, true)
+    val model2 = Module.loadModule(tmpFile)
+    model2.forward(input)
+    out should be (model2.output)
   }
 }

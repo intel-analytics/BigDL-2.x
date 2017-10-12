@@ -58,7 +58,7 @@ object ModuleUtil {
   private val out2 = Tensor[Float](1)
   private def shareOutput(module: Module[Float]): Unit = {
     if (module.isInstanceOf[Graph[Float]]) {
-      val modules = module.asInstanceOf[Graph[Float]].getExecutions
+      val modules = module.asInstanceOf[Graph[Float]].getForwardExecutions
       var i = 0
       modules.foreach(node => {
         if (node.nextNodes.length > 1) return
@@ -68,9 +68,9 @@ object ModuleUtil {
           && !node.element.isInstanceOf[View[Float]]
           && node.element.output != null) {
           if (i % 2 == 0) {
-            node.element.output.set(out1)
+            node.element.output.toTensor[Float].set(out1)
           } else {
-            node.element.output.set(out2)
+            node.element.output.toTensor[Float].set(out2)
           }
           i += 1
         }
