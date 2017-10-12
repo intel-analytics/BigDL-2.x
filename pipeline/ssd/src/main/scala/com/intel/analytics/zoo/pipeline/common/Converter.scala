@@ -72,7 +72,7 @@ object CaffeConverter {
   def main(args: Array[String]) {
     parser.parse(args, CaffeConverterParam()).foreach { params =>
       val model = SSDCaffeLoader.loadCaffe(params.caffeDefPath, params.caffeModelPath)
-      model.save(params.bigDLModel, overWrite = true)
+      model.saveModule(params.bigDLModel, overWrite = true)
     }
   }
 }

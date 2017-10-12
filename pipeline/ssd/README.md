@@ -55,9 +55,11 @@ where ```image_folder``` is your image folder, ```output``` is the output folder
 
 ## Download pretrained model for evaluation
 
-https://github.com/weiliu89/caffe/tree/ssd#models
-
-07+12: SSD300, SSD512
+* [SSD 300x300 Vgg Pascal VOC](https://s3-ap-southeast-1.amazonaws.com/bigdl-models/ssd/bigdl_ssd_vgg_300x300_voc.model)
+* [SSD 512x512 Vgg Pascal VOC](https://s3-ap-southeast-1.amazonaws.com/bigdl-models/ssd/bigdl_ssd_vgg_512x512_voc.model)
+* [SSD 300x300 Vgg Coco](https://s3-ap-southeast-1.amazonaws.com/bigdl-models/ssd/bigdl_ssd_vgg_300x300_coco.model)
+* [SSD 512x512 Vgg Coco](https://s3-ap-southeast-1.amazonaws.com/bigdl-models/ssd/bigdl_ssd_vgg_512x512_coco.model)
+* [SSD 300x300 MobileNet Pascal VOC](https://s3-ap-southeast-1.amazonaws.com/bigdl-models/ssd/bigdl_ssd_mobilenet_300x300_voc.model)
 
 ## Run the notebook
 
