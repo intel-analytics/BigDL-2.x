@@ -66,17 +66,13 @@ where ```image_folder``` is your image folder, ```output``` is the output folder
 1. Get BigDL jar
 * Linux
 ```bash
-mkdir BigDL
-cd BigDL
-wget https://repo1.maven.org/maven2/com/intel/analytics/bigdl/dist-spark-2.1.1-scala-2.11.8-linux64/0.2.0/dist-spark-2.1.1-scala-2.11.8-linux64-0.2.0-dist.zip
-unzip dist-spark-2.1.1-scala-2.11.8-linux64/0.2.0/dist-spark-2.1.1-scala-2.11.8-linux64-0.2.0-dist.zip
+wget https://oss.sonatype.org/content/groups/public/com/intel/analytics/bigdl/dist-spark-2.1.1-scala-2.11.8-linux64/0.3.0-SNAPSHOT/dist-spark-2.1.1-scala-2.11.8-linux64-0.3.0-20171011.104355-69-dist.zip
+unzip dist-spark-2.1.1-scala-2.11.8-linux64-0.3.0-20171011.104355-69-dist.zip -d ~/BigDL
 ```
 * Mac
 ```
-mkdir BigDL
-cd BigDL
-wget https://repo1.maven.org/maven2/com/intel/analytics/bigdl/dist-spark-2.1.1-scala-2.11.8-mac/0.2.0/dist-spark-2.1.1-scala-2.11.8-mac-0.2.0-dist.zip
-unzip dist-spark-2.1.1-scala-2.11.8-mac/0.2.0/dist-spark-2.1.1-scala-2.11.8-mac-0.2.0-dist.zip
+wget https://oss.sonatype.org/content/groups/public/com/intel/analytics/bigdl/dist-spark-2.1.1-scala-2.11.8-mac/0.3.0-SNAPSHOT/dist-spark-2.1.1-scala-2.11.8-mac-0.3.0-20171012.213708-67-dist.zip
+unzip dist-spark-2.1.1-scala-2.11.8-mac-0.3.0-20171012.213708-67-dist.zip -d ~/BigDL
 ```
 2. Get SSD jar
 Download ssd model(vgg+pascal 300x300) from https://drive.google.com/uc?id=0B7vkTZblCs9hM3BmUUJ5Y2dfekk&export=download ,
