@@ -50,6 +50,12 @@ public class OpenCV {
         }
     }
 
+    public static void loadIfNecessary() {
+        if (!isOpenCVLoaded()) {
+            load();
+        }
+    }
+
     /**
      * Check if opencv is loaded
      * @return
