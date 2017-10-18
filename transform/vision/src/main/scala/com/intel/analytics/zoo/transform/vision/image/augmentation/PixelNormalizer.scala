@@ -27,13 +27,13 @@ import org.opencv.core.{CvType, Mat}
  */
 class PixelNormalizer(means : Array[Float]) extends FeatureTransformer {
 
+  val data = new Array[Float](means.length)
+
   override def transformMat(feature: ImageFeature): Unit = {
     val openCVMat = feature.opencvMat()
     if (openCVMat.`type`() != CvType.CV_32FC3) {
       openCVMat.convertTo(openCVMat, CvType.CV_32FC3)
     }
-
-    val data = new Array[Float](openCVMat.height() * openCVMat.width() *  openCVMat.channels())
 
     openCVMat.get(0, 0, data)
 
