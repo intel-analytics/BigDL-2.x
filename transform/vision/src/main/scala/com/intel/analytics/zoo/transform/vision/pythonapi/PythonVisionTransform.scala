@@ -148,12 +148,12 @@ class PythonVisionTransform[T: ClassTag](implicit ev: TensorNumeric[T]) extends 
     transformer.transform(feature)
   }
 
-  def transformImageFeatureRdd(transformer: FeatureTransformer, dataRdd: ImageFeatureRdd)
-  : ImageFeatureRdd = {
-    ImageFeatureRdd(transformer(dataRdd.rdd))
+  def transformImageFeatureRdd(transformer: FeatureTransformer, dataRdd: ImageFrame)
+  : ImageFrame = {
+    ImageFrame(transformer(dataRdd.rdd))
   }
 
-  def tensorRddToImageFeatureRdd(dataRdd: JavaRDD[JList[JTensor]]): ImageFeatureRdd = {
+  def tensorRddToImageFeatureRdd(dataRdd: JavaRDD[JList[JTensor]]): ImageFrame = {
     val featureRdd = dataRdd.rdd.map(data => {
       var image: JTensor = null
       var label: JTensor = null
@@ -165,7 +165,7 @@ class PythonVisionTransform[T: ClassTag](implicit ev: TensorNumeric[T]) extends 
       }
       createImageFeature(image, label)
     })
-    ImageFeatureRdd(featureRdd)
+    ImageFrame(featureRdd)
   }
 
   def chainedFeatureTransformer(list: JList[FeatureTransformer])
@@ -202,31 +202,39 @@ class PythonVisionTransform[T: ClassTag](implicit ev: TensorNumeric[T]) extends 
 
   def imageFeatureToSample(imageFeature: ImageFeature,
     floatKey: String = ImageFeature.floats, toChw: Boolean = true): Sample = {
-    val imageTensor = imageFeatureToTensor(imageFeature, floatKey, toChw)
+    val imageTensor = imageFeatureToImageTensor(imageFeature, floatKey, toChw)
+    val features = new util.ArrayList[JTensor]()
+    features.add(imageTensor)
+    val label = imageFeatureToLabelTensor(imageFeature)
+    Sample(features, label, "float")
+  }
 
+  def imageFeatureRddToSampleRdd(imageFeatureRdd: ImageFrame,
+    floatKey: String = ImageFeature.floats, toChw: Boolean = true): JavaRDD[Sample] = {
+    imageFeatureRdd.rdd.map(imageFeatureToSample(_, floatKey, toChw)).toJavaRDD()
+  }
+
+  def imageFeatureRddToImageTensorRdd(imageFeatureRdd: ImageFrame,
+    floatKey: String = ImageFeature.floats, toChw: Boolean = true): JavaRDD[JTensor] = {
+    imageFeatureRdd.rdd.map(imageFeatureToImageTensor(_, floatKey, toChw)).toJavaRDD()
+  }
+
+  def imageFeatureRddToLabelTensorRdd(imageFeatureRdd: ImageFrame): JavaRDD[JTensor] = {
+    imageFeatureRdd.rdd.map(imageFeatureToLabelTensor).toJavaRDD()
+  }
+
+  def imageFeatureToImageTensor(imageFeature: ImageFeature,
+    floatKey: String = ImageFeature.floats, toChw: Boolean = true): JTensor = {
+    toJTensor(imageFeature.toTensor(floatKey, toChw).asInstanceOf[Tensor[T]])
+  }
+
+  def imageFeatureToLabelTensor(imageFeature: ImageFeature): JTensor = {
     val label = if (imageFeature.hasLabel()) {
       imageFeature.getLabel[Tensor[T]]
     } else {
       Tensor[T](1).fill(ev.fromType[Float](-1f))
     }
-    val features = new util.ArrayList[JTensor]()
-    features.add(imageTensor)
-    Sample(features, toJTensor(label), "float")
-  }
-
-  def imageFeatureRddToSampleRdd(imageFeatureRdd: ImageFeatureRdd,
-    floatKey: String = ImageFeature.floats, toChw: Boolean = true): JavaRDD[Sample] = {
-    imageFeatureRdd.rdd.map(imageFeatureToSample(_, floatKey, toChw)).toJavaRDD()
-  }
-
-  def imageFeatureRddToTensorRdd(imageFeatureRdd: ImageFeatureRdd,
-    floatKey: String = ImageFeature.floats, toChw: Boolean = true): JavaRDD[JTensor] = {
-    imageFeatureRdd.rdd.map(imageFeatureToTensor(_, floatKey, toChw)).toJavaRDD()
-  }
-
-  def imageFeatureToTensor(imageFeature: ImageFeature,
-    floatKey: String = ImageFeature.floats, toChw: Boolean = true): JTensor = {
-    toJTensor(imageFeature.toTensor(floatKey, toChw).asInstanceOf[Tensor[T]])
+    toJTensor(label)
   }
 }
 
