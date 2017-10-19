@@ -77,22 +77,21 @@
     </properties>
 
     <dependencies>
-
-            <dependency>
-                <groupId>com.intel.analytics.bigdl</groupId>
-                <artifactId>bigdl-SPARK_2.0</artifactId>
-                <version>0.3.0-SNAPSHOT</version>
-            </dependency>
-            <dependency>
-                <groupId>jflac</groupId>
-                <artifactId>jflac</artifactId>
-                <version>1.3</version>
-            </dependency>
-            <dependency>
-                <groupId>com.github.fommil</groupId>
-                <artifactId>jniloader</artifactId>
-                <version>1.1</version>
-            </dependency>
+        <dependency>
+            <groupId>com.intel.analytics.bigdl</groupId>
+            <artifactId>bigdl-SPARK_2.0</artifactId>
+            <version>0.1.0</version>
+        </dependency>
+        <dependency>
+            <groupId>jflac</groupId>
+            <artifactId>jflac</artifactId>
+            <version>1.3</version>
+        </dependency>
+        <dependency>
+            <groupId>com.github.fommil</groupId>
+            <artifactId>jniloader</artifactId>
+            <version>1.1</version>
+        </dependency>
 
         <dependency>
             <groupId>org.scala-lang</groupId>

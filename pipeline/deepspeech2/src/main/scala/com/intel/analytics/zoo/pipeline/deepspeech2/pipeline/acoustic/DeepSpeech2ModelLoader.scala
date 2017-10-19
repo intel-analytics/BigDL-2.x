@@ -65,11 +65,11 @@ class DeepSpeech2ModelLoader[T : ClassTag](depth: Int = 1)
   : Module[T] = {
     val isSplitInput = if (curDepth == 1) false else true
     val layers = Sequential()
-        .add(BiRecurrent[T](
-          JoinTable[T](2, 2),
-          batchNormParams = BatchNormParams[T](eps = 0.001, affine = false),
-          isSplitInput = isSplitInput)
-          .add(RnnCell[T](inputSize, hiddenSize, HardTanh[T](0, 20, true), isInputWithBias = false)))
+//        .add(BiRecurrent[T](
+////          JoinTable[T](2, 2),
+////          batchNormParams = BatchNormParams[T](eps = 0.001, affine = false),
+//          isSplitInput = isSplitInput)
+//          .add(RnnCell[T](inputSize, hiddenSize, HardTanh[T](0, 20, true), isInputWithBias = false)))
     layers
   }
 
@@ -156,6 +156,6 @@ object DeepSpeech2ModelLoader {
   val logger = Logger.getLogger(getClass)
 
   def loadModel(path: String): Module[Float] = {
-    Module.load[Float](new Path(path, "ds2.model").toString)
+    Module.load[Float](new Path(path).toString)
   }
 }
