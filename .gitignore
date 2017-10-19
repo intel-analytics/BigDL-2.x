@@ -1,1 +1,7 @@
 .idea/*
+*.iml
+pipeline/deepspeech2/model
+pipeline/deepspeech2/out/
+pipeline/fraudDetection/out/
+pipeline/fraudDetection/.idea/
+pipeline/fraudDetection/data/
