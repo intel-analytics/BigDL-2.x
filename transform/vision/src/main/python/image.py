@@ -29,7 +29,7 @@ class Pipeline(JavaValue):
             assert transfomer.__class__.__bases__[0].__name__ == "FeatureTransformer", "the transformer should be " \
                                                                                        "subclass of FeatureTransformer"
 
-        self.transformer = callBigDlFunc(bigdl_type, "chainFeatureTransformer", transformers)
+        self.transformer = callBigDlFunc(bigdl_type, "chainedFeatureTransformer", transformers)
 
     def transform(self, image_feature, bigdl_type="float"):
         callBigDlFunc(bigdl_type, "transformImageFeature", self.transformer, image_feature)
@@ -50,7 +50,7 @@ class ImageFeature(JavaValue):
     def to_sample(self, float_key="floats", to_chw=True, bigdl_type="float"):
         return callBigDlFunc(bigdl_type, "imageFeatureToSample", self.value, float_key, to_chw)
 
-    def to_ndarray(self, float_key="floats", to_chw=True, bigdl_type="float"):
+    def get_image(self, float_key="floats", to_chw=True, bigdl_type="float"):
         tensor = callBigDlFunc(bigdl_type, "imageFeatureToTensor", self.value,
                                float_key, to_chw)
         return tensor.to_ndarray()
@@ -203,7 +203,7 @@ class RoiNormalize(FeatureTransformer):
 class MatToFloats(FeatureTransformer):
 
     def __init__(self, valid_height=300, valid_width=300,
-                 mean_r=-1, mean_g=-1, mean_b=-1, out_key = "floats", bigdl_type="float"):
+                 mean_r=-1.0, mean_g=-1.0, mean_b=-1.0, out_key = "floats", bigdl_type="float"):
         super(MatToFloats, self).__init__(bigdl_type, valid_height, valid_width,
                                           mean_r, mean_g, mean_b, out_key)
 

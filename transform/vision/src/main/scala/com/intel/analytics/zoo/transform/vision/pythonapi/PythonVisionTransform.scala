@@ -16,7 +16,8 @@
 
 package com.intel.analytics.zoo.transform.vision.pythonapi
 
-import java.util.{List => JList}
+import java.util
+import java.util.{ArrayList, List => JList}
 
 import com.intel.analytics.bigdl.numeric._
 import com.intel.analytics.bigdl.dataset.{Sample => JSample}
@@ -31,7 +32,6 @@ import com.intel.analytics.zoo.transform.vision.util.NormalizedBox
 import org.apache.log4j.Logger
 import org.apache.spark.api.java.JavaRDD
 import org.opencv.imgproc.Imgproc
-import PythonVisionTransform._
 
 import scala.language.existentials
 import scala.reflect.ClassTag
@@ -168,7 +168,7 @@ class PythonVisionTransform[T: ClassTag](implicit ev: TensorNumeric[T]) extends 
     ImageFeatureRdd(featureRdd)
   }
 
-  def chainFeatureTransformer(list: JList[FeatureTransformer])
+  def chainedFeatureTransformer(list: JList[FeatureTransformer])
   : FeatureTransformer = {
     var cur = list.get(0)
     (1 until list.size()).foreach(t => cur = cur -> list.get(t))
@@ -193,7 +193,7 @@ class PythonVisionTransform[T: ClassTag](implicit ev: TensorNumeric[T]) extends 
   }
 
   def createMatToFloats(validH: Int, validW: Int,
-    meanR: Int = -1, meanG: Int = -1, meanB: Int = -1, outKey: String): MatToFloats = {
+    meanR: Float = -1, meanG: Float = -1, meanB: Float = -1, outKey: String): MatToFloats = {
     val means = if (-1 != meanR) {
       Some(meanR, meanG, meanB)
     } else None
@@ -209,7 +209,9 @@ class PythonVisionTransform[T: ClassTag](implicit ev: TensorNumeric[T]) extends 
     } else {
       Tensor[T](1).fill(ev.fromType[Float](-1f))
     }
-    Sample(imageTensor, toJTensor(label), "floats")
+    val features = new util.ArrayList[JTensor]()
+    features.add(imageTensor)
+    Sample(features, toJTensor(label), "float")
   }
 
   def imageFeatureRddToSampleRdd(imageFeatureRdd: ImageFeatureRdd,
@@ -224,23 +226,7 @@ class PythonVisionTransform[T: ClassTag](implicit ev: TensorNumeric[T]) extends 
 
   def imageFeatureToTensor(imageFeature: ImageFeature,
     floatKey: String = ImageFeature.floats, toChw: Boolean = true): JTensor = {
-    val (floats, size) = if (imageFeature.contains(floatKey)) {
-      (imageFeature.getFloats(floatKey),
-        Array(imageFeature.getHeight(), imageFeature.getWidth(), 3))
-    } else {
-      logger.warn(s"please add MatToFloats(out_key = $floatKey) in the end of pipeline if you" +
-        s"are transforming an rdd")
-      val mat = imageFeature.opencvMat()
-      val floats = new Array[Float](mat.height() * mat.width() * 3)
-      OpenCVMat.toFloatBuf(mat, floats)
-      (floats, Array(mat.height(), mat.width(), 3))
-    }
-    var image = Tensor(Storage(floats)).resize(size)
-    if (toChw) {
-      // transpose the shape of image from (h, w, c) to (c, h, w)
-      image = image.transpose(1, 3).transpose(2, 3).contiguous()
-    }
-    toJTensor(image.asInstanceOf[Tensor[T]])
+    toJTensor(imageFeature.toTensor(floatKey, toChw).asInstanceOf[Tensor[T]])
   }
 }
 
