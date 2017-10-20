@@ -31,6 +31,7 @@ import com.intel.analytics.zoo.transform.vision.label.roi._
 import com.intel.analytics.zoo.transform.vision.util.NormalizedBox
 import org.apache.log4j.Logger
 import org.apache.spark.api.java.JavaRDD
+import org.apache.spark.rdd.RDD
 import org.opencv.imgproc.Imgproc
 
 import scala.language.existentials
@@ -148,23 +149,21 @@ class PythonVisionTransform[T: ClassTag](implicit ev: TensorNumeric[T]) extends 
     transformer.transform(feature)
   }
 
-  def transformImageFeatureRdd(transformer: FeatureTransformer, dataRdd: ImageFrame)
-  : ImageFrame = {
-    ImageFrame(transformer(dataRdd.rdd))
+  def transformImageFrame(transformer: FeatureTransformer, imageFrame: ImageFrame): ImageFrame = {
+    ImageFrame(transformer(imageFrame.rdd))
   }
 
-  def tensorRddToImageFeatureRdd(dataRdd: JavaRDD[JList[JTensor]]): ImageFrame = {
-    val featureRdd = dataRdd.rdd.map(data => {
-      var image: JTensor = null
-      var label: JTensor = null
-      if (data.size() > 0) {
-        image = data.get(0)
-      }
-      if (data.size() > 1) {
-        label = data.get(1)
-      }
-      createImageFeature(image, label)
-    })
+  def createImageFrame(imageRdd: JavaRDD[JTensor], labelRdd: JavaRDD[JTensor]): ImageFrame = {
+    require(null != imageRdd, "imageRdd cannot be null")
+    val featureRdd = if (null != labelRdd) {
+      imageRdd.rdd.zip(labelRdd.rdd).map(data => {
+        createImageFeature(data._1, data._2)
+      })
+    } else {
+      imageRdd.rdd.map(image => {
+        createImageFeature(image, null)
+      })
+    }
     ImageFrame(featureRdd)
   }
 
@@ -209,18 +208,18 @@ class PythonVisionTransform[T: ClassTag](implicit ev: TensorNumeric[T]) extends 
     Sample(features, label, "float")
   }
 
-  def imageFeatureRddToSampleRdd(imageFeatureRdd: ImageFrame,
+  def imageFrameToSampleRdd(imageFrame: ImageFrame,
     floatKey: String = ImageFeature.floats, toChw: Boolean = true): JavaRDD[Sample] = {
-    imageFeatureRdd.rdd.map(imageFeatureToSample(_, floatKey, toChw)).toJavaRDD()
+    imageFrame.rdd.map(imageFeatureToSample(_, floatKey, toChw)).toJavaRDD()
   }
 
-  def imageFeatureRddToImageTensorRdd(imageFeatureRdd: ImageFrame,
+  def imageFrameToImageTensorRdd(imageFrame: ImageFrame,
     floatKey: String = ImageFeature.floats, toChw: Boolean = true): JavaRDD[JTensor] = {
-    imageFeatureRdd.rdd.map(imageFeatureToImageTensor(_, floatKey, toChw)).toJavaRDD()
+    imageFrame.rdd.map(imageFeatureToImageTensor(_, floatKey, toChw)).toJavaRDD()
   }
 
-  def imageFeatureRddToLabelTensorRdd(imageFeatureRdd: ImageFrame): JavaRDD[JTensor] = {
-    imageFeatureRdd.rdd.map(imageFeatureToLabelTensor).toJavaRDD()
+  def imageFrameToLabelTensorRdd(imageFrame: ImageFrame): JavaRDD[JTensor] = {
+    imageFrame.rdd.map(imageFeatureToLabelTensor).toJavaRDD()
   }
 
   def imageFeatureToImageTensor(imageFeature: ImageFeature,
@@ -238,5 +237,9 @@ class PythonVisionTransform[T: ClassTag](implicit ev: TensorNumeric[T]) extends 
   }
 }
 
+
+case class ImageFrame(rdd: RDD[ImageFeature]) {
+
+}
 
 

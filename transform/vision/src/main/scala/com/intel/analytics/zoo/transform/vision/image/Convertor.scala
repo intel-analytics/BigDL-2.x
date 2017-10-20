@@ -111,6 +111,3 @@ object MatToFloats {
     new MatToFloats(validHeight, validWidth, meanRGB, outKey)
 }
 
-case class ImageFrame(rdd: RDD[ImageFeature]) {
-
-}
