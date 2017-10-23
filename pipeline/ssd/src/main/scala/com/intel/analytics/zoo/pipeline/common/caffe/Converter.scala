@@ -623,5 +623,6 @@ abstract class Converter[T: ClassTag](implicit ev: TensorNumeric[T]) {
     caffe2BigDL("ANNOTATEDDATA") = null
     caffe2BigDL("DETECTIONEVALUATE") = null
     caffe2BigDL("MULTIBOXLOSS") = null
+    caffe2BigDL("SILENCE") = null
   }
 }

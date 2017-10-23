@@ -3,10 +3,11 @@
 #setup pathes
 SPARK_HOME=$HOME/spark-2.1.0-bin-hadoop2.7/
 SSD_HOME=$HOME/code/analytics-zoo/pipeline/ssd
+VISION_HOME=$SSD_HOME/../../transform/vision
 BigDL_HOME=$HOME/BigDL
 MASTER="local[2]"
 
-PYTHON_API_ZIP_PATH=${BigDL_HOME}/lib/bigdl-0.3.0-SNAPSHOT-python-api.zip
+PYTHON_API_ZIP_PATH=${VISION_HOME}/target/vision-0.1-SNAPSHOT-python-api.zip,${BigDL_HOME}/lib/bigdl-0.3.0-SNAPSHOT-python-api.zip
 SSD_JAR_PATH=${SSD_HOME}/target/pipeline-0.1-SNAPSHOT-jar-with-dependencies.jar
 
 export PYTHONPATH=${PYTHON_API_ZIP_PATH}:$PYTHONPATH
