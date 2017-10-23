@@ -20,7 +20,7 @@ import com.google.protobuf.GeneratedMessage
 import com.intel.analytics.bigdl.nn.Graph.ModuleNode
 import com.intel.analytics.zoo.pipeline.common.nn.PriorBox
 import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric
-import pipeline.ssd.caffe.Caffe.{LayerParameter, NetParameter}
+import pipeline.caffe.Caffe.{LayerParameter, NetParameter}
 
 import scala.collection.JavaConverters._
 import scala.reflect.ClassTag
@@ -53,9 +53,5 @@ class PriorBoxConvertor[T: ClassTag](implicit ev: TensorNumeric[T]) extends Cust
       variances, offset,
       imgH, imgW, imgSize,
       stepH, stepW, step).setName(getLayerName(layer)).inputs())
-  }
-
-  def getLayerName(layer: GeneratedMessage): String = {
-    layer.asInstanceOf[LayerParameter].getName
   }
 }
