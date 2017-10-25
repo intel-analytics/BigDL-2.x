@@ -1,5 +1,6 @@
 
-This demo code contains the inference based on pre-trained Deep Speech 2 model on BigDL 0.1. (Soon to be updated to 0.3)
+This demo code contains the inference based on pre-trained Deep Speech 2 model on BigDL 0.1.
+(Soon to be updated to 0.3). The example runs on Spark 2.0+
 
 ### ds2 model (~387MB):
 https://drive.google.com/open?id=0B9zID9CU9HQeU1luc2ZKSHA1MjA
