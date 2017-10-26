@@ -34,8 +34,13 @@ object InferenceEvaluate {
       logger.info(s"${df.count()} audio files, in ${df.rdd.partitions.length} partitions")
       df.show()
 
+      val segmenter = new TimeSegmenter()
+        .setSegmentSize(sampleRate * param.segment)
+        .setInputCol("samples")
+        .setOutputCol("segments")
+
       val st = System.nanoTime()
-      val pipeline = getPipeline(param.modelPath, uttLength, windowSize, windowStride, numFilters, sampleRate, param.segment)
+      val pipeline = getPipeline(param.modelPath, uttLength, windowSize, windowStride, numFilters, sampleRate)
       val model = pipeline.fit(df)
 
       evaluate(model, df)
@@ -76,13 +81,9 @@ object InferenceEvaluate {
     }
   }
 
-  private def getPipeline(modelPath: String, uttLength: Int, windowSize: Int,
-      windowStride: Int, numFilter: Int, sampleRate: Int, segment: Int): Pipeline = {
+  private[zoo] def getPipeline(modelPath: String, uttLength: Int, windowSize: Int,
+      windowStride: Int, numFilter: Int, sampleRate: Int): Pipeline = {
 
-    val segmenter = new TimeSegmenter()
-      .setSegmentSize(sampleRate * segment)
-      .setInputCol("samples")
-      .setOutputCol("segments")
     val windower = new Windower()
       .setInputCol("segments")
       .setOutputCol("window")
@@ -108,7 +109,7 @@ object InferenceEvaluate {
       .setInputCol("features")
       .setOutputCol("prob")
       .setNumFilters(numFilter)
-    val decoder = new VocabDecoder(modelPath)
+    val decoder = new ArgMaxDecoder()
       .setInputCol("prob")
       .setOutputCol("output")
       .setOriginalSizeCol("originalSizeCol")
@@ -117,7 +118,7 @@ object InferenceEvaluate {
       .setWindowSize(windowSize)
 
     new Pipeline().setStages(
-        Array(segmenter, windower, dftSpecgram, melbank, transposeFlip, modelTransformer, decoder))
+        Array(windower, dftSpecgram, melbank, transposeFlip, modelTransformer, decoder))
   }
 
   private def evaluate(model: PipelineModel, df: DataFrame): Unit = {
