@@ -82,43 +82,6 @@ abstract class Converter[T: ClassTag](implicit ev: TensorNumeric[T]) {
     }
   }
 
-
-//  def convertDataFromCaffe(netparam: Caffe.NetParameter): Seq[ModuleNode[T]] = {
-//
-//  }
-//    val layerType = getLayerType(layer).toUpperCase
-//    if (layerType.endsWith("DATA") || layerType == "INPUT") {
-      //      var transformer: Transformer[Data, Data] =
-//        if (modelType.toUpperCase().contains("GOOGLENET") ||
-//          modelType.toUpperCase().contains("RESNET")) {
-//          // for googlenet resnet, first resize to 256x256
-//          CVResizer(256)
-//        } else {
-//          IdentityTransformer()
-//        }
-//var transformer: Transformer[Data, Data] = IdentityTransformer()
-//      val param = layer.asInstanceOf[LayerParameter].getTransformParam
-//      var valid = 300
-//      if (param.hasCropSize) {
-//        transformer = transformer -> CenterCrop(param.getCropSize, param.getCropSize)
-//        valid = param.getCropSize
-//      }
-//      if (param.hasResizeParam) {
-//        // equal resize
-//        transformer = transformer -> CVResizer(param.getResizeParam.getWidth)
-//        valid = param.getResizeParam.getWidth
-//      }
-//
-//      val meansRGB = if (param.getMeanValueList.size() > 0) {
-//        Some(param.getMeanValueList.get(2).toInt, param.getMeanValueList.get(1).toInt,
-//          param.getMeanValueList.get(0).toInt)
-//      } else None
-//      transformer -> MatToFloats(validHeight = valid, validWidth = valid, meanRGB = meansRGB)
-//    } else {
-//      null
-//    }
-//  }
-
   protected def fromCaffeReLU(layer: GeneratedMessage): Seq[ModuleNode[T]] = {
     val layerName = getLayerName(layer)
     Seq(ReLU(true).setName(layerName).inputs())
@@ -275,11 +238,17 @@ abstract class Converter[T: ClassTag](implicit ev: TensorNumeric[T]) {
       case EltwiseOp.PROD => CMulTable[T]().setName(layerName).inputs()
       case EltwiseOp.MAX => CMaxTable[T]().setName(layerName).inputs()
       case EltwiseOp.SUM =>
-        val coeff2 = param.getCoeff(1)
-        if (coeff2 > 0) {
+        val coeff1 = if (param.getCoeffCount == 0) 1 else param.getCoeff(0)
+        val coeff2 = if (param.getCoeffCount == 0) 1 else param.getCoeff(1)
+        if (coeff1 == 1 && coeff2 == 1) {
           CAddTable[T]().setName(layerName).inputs()
-        } else {
+        } else if (coeff1 == 1 && coeff2 == -1) {
           CSubTable[T]().setName(layerName).inputs()
+        } else {
+          val mul1 = MulConstant[T](coeff1.toFloat).inputs()
+          val mul2 = MulConstant[T](coeff2.toFloat).inputs()
+          val caddTable = CAddTable[T]().setName(layerName).inputs(mul1, mul2)
+          Graph[T](Array(mul1, mul2), Array(caddTable)).inputs()
         }
       case _ => null
     }

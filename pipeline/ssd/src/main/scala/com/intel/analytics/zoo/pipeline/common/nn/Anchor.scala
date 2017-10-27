@@ -222,16 +222,6 @@ object Anchor {
   def apply(ratios: Array[Float], scales: Array[Float]): Anchor = new Anchor(ratios, scales)
 }
 
-///**
-// * anchor parameters
-// * @param _ratios ratio = height / width
-// * @param _scales scale of width and height
-// */
-//case class AnchorParam(_ratios: Array[Float], _scales: Array[Float]) {
-//  val num: Int = _ratios.length * _scales.length
-//  val ratios: Tensor[Float] = Tensor(Storage(_ratios))
-//  val scales: Tensor[Float] = Tensor(Storage(_scales))
-//}
 
 
 
