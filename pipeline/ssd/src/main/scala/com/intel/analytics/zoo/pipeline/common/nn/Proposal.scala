@@ -54,7 +54,6 @@ class Proposal(preNmsTopN: Int, postNmsTopN: Int, val ratios: Array[Float],
       sortedScores = Tensor[Float]
       sortedInds = Tensor[Float]
       filteredProposals = Tensor[Float]
-//      rpnRois = Tensor[Float]
     }
   }
 
@@ -143,11 +142,6 @@ class Proposal(preNmsTopN: Int, postNmsTopN: Int, val ratios: Array[Float],
       }
       i += 1
     }
-//    if (output.length == 0) {
-//      output.insert(rpnRois)
-//    } else {
-//      output.update(1, rpnRois)
-//    }
     output
   }
 
