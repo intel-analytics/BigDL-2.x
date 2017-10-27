@@ -61,7 +61,7 @@ where ```image_folder``` is your image folder, ```output``` is the output folder
 * [SSD 512x512 Vgg Coco](https://s3-ap-southeast-1.amazonaws.com/bigdl-models/ssd/bigdl_ssd_vgg_512x512_coco.model)
 * [SSD 300x300 MobileNet Pascal VOC](https://s3-ap-southeast-1.amazonaws.com/bigdl-models/ssd/bigdl_ssd_mobilenet_300x300_voc.model)
 
-## Run the python notebook
+## Run the notebook
 
 1. Get BigDL jar
 * Linux
@@ -84,10 +84,7 @@ then put the model at data/models
 sh data/tool/start_notebook.sh
 ```
 Please configure the ```SPARK_HOME``` and ```BigDL_HOME``` as necessary.
-Some python dependencies:
-```
-sudo pip install opencv-python
-```
+
 
 ## Run the predict example
 We assume that pretrained caffe models are stored in ```data_root=${ssd_root}/data/models```
