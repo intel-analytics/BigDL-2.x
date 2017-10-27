@@ -603,9 +603,9 @@ object FrcnnCaffeLoader {
   val customized = new mutable.HashMap[String, Customizable[Float]]()
   customized.put("PYTHON", new PythonConverter())
   customized.put("ROIPOOLING", new RoiPoolingConverter[Float]())
+  val outputs = Array("proposal", "im_info")
 
-  def loadCaffe(defPath: String, modelPath: String,
-    outputs: Array[String] = Array[String]()): Module[Float] = {
+  def loadCaffe(defPath: String, modelPath: String): Module[Float] = {
     val model = CaffeLoader.loadCaffe[Float](defPath, modelPath, customized, outputs)._1
     val proposal = model("proposal").get.asInstanceOf[Proposal]
     val postprocessor = if (proposal.scales.length == 3) {

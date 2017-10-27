@@ -6,17 +6,17 @@ import com.intel.analytics.bigdl.tensor.Tensor
 import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric
 import com.intel.analytics.bigdl.utils.Table
 import com.intel.analytics.zoo.pipeline.common.BboxUtil
+import com.intel.analytics.zoo.pipeline.common.dataset.roiimage.ImageMiniBatch
 
-class FrcnnMiniBatch(val input: Table, val target: Tensor[Float])
-  extends MiniBatch[Float] {
+class FrcnnMiniBatch(feature: Table, label: Tensor[Float]) extends ImageMiniBatch(feature, label) {
 
   private val targetIndices = if (target != null) BboxUtil.getGroundTruthIndices(target) else null
 
-  override def size(): Int = input.length()
+  override def size(): Int = input.toTable.length()
 
   override def slice(offset: Int, length: Int): MiniBatch[Float] = {
     require(length == 1, "only batch 1 is supported")
-    val subInput = input[Table](offset)
+    val subInput = input.toTable[Table](offset)
     val subTarget = if (target != null) {
       var i = 0
       val targetOffset = targetIndices(offset - 1)._1

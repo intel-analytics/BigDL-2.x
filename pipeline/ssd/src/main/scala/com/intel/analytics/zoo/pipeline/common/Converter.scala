@@ -70,7 +70,10 @@ object CaffeConverter {
       .action((x, c) => c.copy(bigDLModel = x))
     opt[String]('t', "modelType")
       .text("model type: ssd or frcnn")
-      .action((x, c) => c.copy(modelType = x))
+      .action((x, c) => {
+        require(x == "ssd" || x == "frcnn", "model type: ssd or frcnn")
+        c.copy(modelType = x)
+      })
   }
 
   def main(args: Array[String]) {

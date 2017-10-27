@@ -238,7 +238,7 @@ class CaffeLoaderSpec extends FlatSpec with Matchers {
     if (!new File(prototxt).exists()) {
       cancel("local test")
     }
-    val model = FrcnnCaffeLoader.loadCaffe(prototxt, caffemodel, Array("proposal", "im_info"))
+    val model = FrcnnCaffeLoader.loadCaffe(prototxt, caffemodel)
       .asInstanceOf[Graph[Float]]
     val input = T()
     input.insert(Tensor[Float](1, 3, 60, 90))
@@ -268,7 +268,7 @@ class CaffeLoaderSpec extends FlatSpec with Matchers {
     if (!new File(prototxt).exists()) {
       cancel("local test")
     }
-    val model = FrcnnCaffeLoader.loadCaffe(prototxt, caffemodel, Array("proposal", "im_info"))
+    val model = FrcnnCaffeLoader.loadCaffe(prototxt, caffemodel)
       .asInstanceOf[Graph[Float]]
     //    val model = DLFile.load[Graph[Float]]("/tmp/pvanet.bin")
     val input = T()
