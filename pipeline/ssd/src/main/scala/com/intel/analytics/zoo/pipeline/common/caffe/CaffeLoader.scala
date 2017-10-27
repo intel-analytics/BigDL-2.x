@@ -24,12 +24,14 @@ import com.intel.analytics.bigdl.nn.Graph.ModuleNode
 import com.intel.analytics.bigdl.nn._
 import com.intel.analytics.bigdl.tensor.Tensor
 import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric
-import com.intel.analytics.bigdl.utils.{File, Table}
+import com.intel.analytics.bigdl.utils.{Table}
+import com.intel.analytics.zoo.pipeline.common.nn.{FrcnnPostprocessor, Proposal}
 import org.apache.hadoop.conf.Configuration
 import org.apache.hadoop.fs.Path
 import org.apache.log4j.Logger
-import pipeline.ssd.caffe.Caffe
-import pipeline.ssd.caffe.Caffe._
+import pipeline.caffe.Caffe
+import pipeline.caffe.Caffe._
+import pipeline.caffe.Caffe.LayerParameter
 
 import scala.collection.JavaConverters._
 import scala.collection.mutable
@@ -38,6 +40,7 @@ import scala.reflect.ClassTag
 
 abstract class Customizable[T: ClassTag](implicit ev: TensorNumeric[T]) {
   var contexts: Map[String, Any] = _
+
   def convertor(layer: GeneratedMessage): Seq[ModuleNode[T]]
 
   def registorContext(name: String, context: Any): Unit = {
@@ -46,10 +49,16 @@ abstract class Customizable[T: ClassTag](implicit ev: TensorNumeric[T]) {
     }
     contexts += (name -> context)
   }
+
+  def getLayerName(layer: GeneratedMessage): String = {
+    layer.asInstanceOf[LayerParameter].getName
+  }
 }
+
 /**
  * An utility to load pre-trained caffe model from prototxt and binary
  * and convert it to BigDL equivalent modules
+ *
  * @param prototxtPath caffe model define prototxt path
  * @param modelPath caffe serialized binary model path
  * @param matchAll if match all modules with parameters
@@ -231,8 +240,8 @@ class CaffeLoader[T: ClassTag](prototxtPath: String, modelPath: String,
       val weight = params[Tensor[T]]("weight")
       require(params != null && weight.nElement() == caffeWeightData.size(),
         s"weight element number is not equal between caffe layer and bigdl module $name, " +
-          s"data shape in caffe is ${ caffeWeight.get.getShape() }," +
-          s" while data shape in bigdl is ${ weight.size().mkString(",") }")
+          s"data shape in caffe is ${caffeWeight.get.getShape()}," +
+          s" while data shape in bigdl is ${weight.size().mkString(",")}")
       var i = 0
       val weightData = weight.storage().array()
       var offset = weight.storageOffset() - 1
@@ -250,8 +259,8 @@ class CaffeLoader[T: ClassTag](prototxtPath: String, modelPath: String,
       val bias = params[Tensor[T]]("bias")
       require(bias.nElement() == caffeBiasList.size(),
         s"bias element number is not equal between caffe layer and bigdl module $name, " +
-          s"data shape in caffe is ${ caffeBias.get.getShape() }," +
-          s" while data shape in bigdl is ${ bias.size().mkString(",") }")
+          s"data shape in caffe is ${caffeBias.get.getShape()}," +
+          s" while data shape in bigdl is ${bias.size().mkString(",")}")
       var i = 0
       val biasData = bias.storage().array()
       var offset = bias.storageOffset() - 1
@@ -264,9 +273,11 @@ class CaffeLoader[T: ClassTag](prototxtPath: String, modelPath: String,
   }
 
   private var isCaffeLoaed: Boolean = false
+
   /**
    * copy caffe parameters to module
    * if matchAll, throw an exception if some layers are not mapped
+   *
    * @param model the model defined in big-dl
    * @return
    */
@@ -294,18 +305,66 @@ class CaffeLoader[T: ClassTag](prototxtPath: String, modelPath: String,
   /**
    * Load caffe model from prototxt file and binary pre-trained model and converted
    * to BigDL graph module
+   *
    * @return BigDL model and criterion
    */
-  def createCaffeModel(): (Module[T], ParallelCriterion[T]) = {
+  def createCaffeModel(outputNames: Array[String] = Array[String]())
+  : (Module[T], ParallelCriterion[T]) = {
     loadCaffe(prototxtPath, modelPath)
     registerCustomizedConverter()
     val layers = createLayers()
-    val inputs = layers.filter(layer => layer.prevNodes.size == 0).toArray
-    val outputs = layers.filter(layer => layer.nextNodes.size == 0).toArray
+    val inputs = layers.filter(layer => layer.prevNodes.isEmpty).toArray
+    val outputs = layers.filter(layer => layer.nextNodes.isEmpty ||
+      outputNames.contains(layer.element.getName())).toArray
     val module = Graph(inputs, outputs)
     module.setName(netparam.getName)
     copyParameters(module)
     (module, criterions)
+  }
+
+  private val dataLayerList = Array("INPUT", "DATA", "DUMMYDATA", "ANNOTATEDDATA")
+
+
+  private def tryConvertInput(layer: GeneratedMessage, layerType: String,
+    layers: ArrayBuffer[ModuleNode[T]],
+    top2LayerMap: mutable.HashMap[String, String],
+    layersMap: mutable.HashMap[String, ModuleNode[T]]): Boolean = {
+    val inputs = if (dataLayerList.contains(layerType)) convertCaffeLayer(layer) else null
+    addInputList(inputs, layers, top2LayerMap, layersMap)
+  }
+
+  // try to get input list (without data layer)
+  private def tryConvertInput(netparam: Caffe.NetParameter,
+    layers: ArrayBuffer[ModuleNode[T]],
+    top2LayerMap: mutable.HashMap[String, String],
+    layersMap: mutable.HashMap[String, ModuleNode[T]]): Boolean = {
+    val inputNames = netparam.getInputList
+    val inputs = if (!inputNames.isEmpty) {
+      (0 until inputNames.size()).map(i => {
+        val input = Input()
+        input.element.setName(inputNames.get(i))
+        input
+      })
+    } else {
+      null
+    }
+    addInputList(inputs, layers, top2LayerMap, layersMap)
+  }
+
+  private def addInputList(inputs: Seq[ModuleNode[T]],
+    layers: ArrayBuffer[ModuleNode[T]],
+    top2LayerMap: mutable.HashMap[String, String],
+    layersMap: mutable.HashMap[String, ModuleNode[T]]): Boolean = {
+    if (null != inputs) {
+      inputs.foreach(input => {
+        top2LayerMap(input.element.getName()) = input.element.getName()
+        layersMap(input.element.getName()) = input
+        layers.append(input)
+      })
+      true
+    } else {
+      false
+    }
   }
 
   // create directed graph based on the module relationships
@@ -344,6 +403,8 @@ class CaffeLoader[T: ClassTag](prototxtPath: String, modelPath: String,
           }
         })
     }
+
+    tryConvertInput(netparam, layers, top2LayerMap, layersMap)
     allLayers.foreach(layer => {
       var name: String = null
       val topList = new ArrayBuffer[String]()
@@ -371,18 +432,22 @@ class CaffeLoader[T: ClassTag](prototxtPath: String, modelPath: String,
         // some criterion layers are not only for loss calculation,
         // we need to separate it with loss function and module
         val isCriterionLayerOnly: Boolean = tryAddCriterion(layerType, name)
-        if (!isCriterionLayerOnly) {
+        val isInput = if (!isCriterionLayerOnly) {
+          tryConvertInput(layer, layerType, layers, top2LayerMap, layersMap)
+        } else false
+
+        if (!isCriterionLayerOnly && !isInput) {
           val nodes = convertCaffeLayer(layer)
           if (nodes != null) {
-            var curr = nodes(0)
+            var curr = nodes.head
             bottomList.foreach(dependency => {
               if (top2LayerMap.contains(dependency)) {
                 layersMap(top2LayerMap(dependency)) -> curr
               }
             })
-            while (curr.nextNodes.size != 0) {
+            while (curr.nextNodes.nonEmpty) {
               layers.append(curr)
-              curr = curr.nextNodes(0)
+              curr = curr.nextNodes.head
             }
             layers.append(curr)
             layersMap(name) = curr
@@ -427,6 +492,7 @@ class CaffeLoader[T: ClassTag](prototxtPath: String, modelPath: String,
   /**
    * Add criterion according to layer type from train protocol
    * if only test/model define prototxt file provided, there won't be criterion detected
+   *
    * @param layerType caffe layer type
    * @param layerName caffe layer name
    * @return if this layer is only criterion layer
@@ -455,9 +521,9 @@ class CaffeLoader[T: ClassTag](prototxtPath: String, modelPath: String,
     val param = getInforgainParam(layerName).get
     val weightBlob = getBlob(layerName, 2)
     if (weightBlob.isDefined) {
-      val size = weightBlob.get.getShape.getDimList.toArray.asInstanceOf[Array[Int]]
+      val size = weightBlob.get.getShape.getDimList.asScala.map(_.toInt).toArray
       val weightData = weightBlob.get.getDataList
-      var weightArr = new Array[T](weightData.size)
+      val weightArr = new Array[T](weightData.size)
       var i = 0
       while (i < weightData.size) {
         weightArr(i) = ev.fromType[Float](weightData.get(i))
@@ -502,6 +568,7 @@ object CaffeLoader {
 
   /**
    * load caffe model dynamically from binary and prototxt file
+   *
    * @param defPath prototxt file which illustrate the caffe model structure
    * @param modelPath binary file containing the weight and bias
    * @param customizedConverters customized layer converter
@@ -509,20 +576,41 @@ object CaffeLoader {
    * @return created module (graph) and criterion
    */
   def loadCaffe[T: ClassTag](defPath: String, modelPath: String,
-    customizedConverters: mutable.HashMap[String, Customizable[T]] = null)
+    customizedConverters: mutable.HashMap[String, Customizable[T]] = null,
+    outputs: Array[String] = Array[String]())
     (implicit ev: TensorNumeric[T]): (Module[T], ParallelCriterion[T]) = {
     val caffeLoader = new CaffeLoader[T](defPath, modelPath, true, customizedConverters)
-    caffeLoader.createCaffeModel()
+    caffeLoader.createCaffeModel(outputs)
   }
 }
 
 object SSDCaffeLoader {
 
   val customized = new mutable.HashMap[String, Customizable[Float]]()
-  val priorBox = new PriorBoxConvertor[Float]()
-  customized.put("PRIORBOX", priorBox)
+  customized.put("PRIORBOX", new PriorBoxConvertor[Float]())
+
+  def loadCaffe(defPath: String, modelPath: String,
+    outputs: Array[String] = Array[String]()): Module[Float] = {
+    CaffeLoader.loadCaffe[Float](defPath, modelPath, customized, outputs)._1
+  }
+}
+
+object FrcnnCaffeLoader {
+
+  val customized = new mutable.HashMap[String, Customizable[Float]]()
+  customized.put("PYTHON", new PythonConverter())
+  customized.put("ROIPOOLING", new RoiPoolingConverter[Float]())
+  val outputs = Array("proposal", "im_info")
 
   def loadCaffe(defPath: String, modelPath: String): Module[Float] = {
-    CaffeLoader.loadCaffe[Float](defPath, modelPath, customized)._1
+    val model = CaffeLoader.loadCaffe[Float](defPath, modelPath, customized, outputs)._1
+    val proposal = model("proposal").get.asInstanceOf[Proposal]
+    val postprocessor = if (proposal.scales.length == 3) {
+      // vgg
+      FrcnnPostprocessor(0.3f, 21, false, 100, 0.05)
+    } else {
+      FrcnnPostprocessor(0.4f, 21, true, 100, 0.05)
+    }
+    Sequential[Float]().add(model).add(postprocessor)
   }
 }

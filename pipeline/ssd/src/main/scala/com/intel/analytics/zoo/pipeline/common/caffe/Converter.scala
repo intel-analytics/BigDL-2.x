@@ -21,14 +21,13 @@ import com.google.protobuf.GeneratedMessage
 import com.intel.analytics.bigdl.nn.Graph._
 import com.intel.analytics.bigdl.nn._
 import com.intel.analytics.bigdl.nn.abstractnn.{AbstractModule, Activity}
-import com.intel.analytics.bigdl.pipeline.common.nn.CaffeSpatialAveragePooling
-import com.intel.analytics.zoo.pipeline.common.nn.SpatialWithinChannelLRN
 import com.intel.analytics.bigdl.tensor.Tensor
 import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric
-import pipeline.ssd.caffe.Caffe.EltwiseParameter.EltwiseOp
-import pipeline.ssd.caffe.Caffe.LRNParameter.NormRegion
-import pipeline.ssd.caffe.Caffe.PoolingParameter.PoolMethod
-import pipeline.ssd.caffe.Caffe._
+import pipeline.caffe.Caffe.EltwiseParameter.EltwiseOp
+import pipeline.caffe.Caffe.LRNParameter.NormRegion
+import pipeline.caffe.Caffe.PoolingParameter.PoolMethod
+import pipeline.caffe.Caffe._
+import pipeline.caffe.Caffe.LayerParameter
 
 import scala.collection.mutable
 import scala.collection.mutable.ArrayBuffer
@@ -128,7 +127,7 @@ abstract class Converter[T: ClassTag](implicit ev: TensorNumeric[T]) {
     val pooling = poolingType match {
       case PoolMethod.MAX => SpatialMaxPooling[T](kw, kh, dw, dh, pw, ph).ceil().
         setName(layerName).inputs()
-      case PoolMethod.AVE => CaffeSpatialAveragePooling[T](kw, kh, dw, dh, pw, ph,
+      case PoolMethod.AVE => SpatialAveragePooling[T](kw, kh, dw, dh, pw, ph,
         param.getGlobalPooling).ceil().
         setName(layerName).inputs()
       case _ => null
@@ -232,15 +231,21 @@ abstract class Converter[T: ClassTag](implicit ev: TensorNumeric[T]) {
     val param = getEltWiseParam(layer).get
     val layerName = getLayerName(layer)
     val opsType = param.getOperation
-    val coeff2 = param.getCoeff(1)
     val ops = opsType match {
       case EltwiseOp.PROD => CMulTable[T]().setName(layerName).inputs()
       case EltwiseOp.MAX => CMaxTable[T]().setName(layerName).inputs()
       case EltwiseOp.SUM =>
-        if (coeff2 < 0) {
+        val coeff1 = if (param.getCoeffCount == 0) 1 else param.getCoeff(0)
+        val coeff2 = if (param.getCoeffCount == 0) 1 else param.getCoeff(1)
+        if (coeff1 == 1 && coeff2 == 1) {
           CAddTable[T]().setName(layerName).inputs()
-        } else {
+        } else if (coeff1 == 1 && coeff2 == -1) {
           CSubTable[T]().setName(layerName).inputs()
+        } else {
+          val mul1 = MulConstant[T](coeff1.toFloat).inputs()
+          val mul2 = MulConstant[T](coeff2.toFloat).inputs()
+          val caddTable = CAddTable[T]().setName(layerName).inputs(mul1, mul2)
+          Graph[T](Array(mul1, mul2), Array(caddTable)).inputs()
         }
       case _ => null
     }
@@ -300,6 +305,8 @@ abstract class Converter[T: ClassTag](implicit ev: TensorNumeric[T]) {
   protected def getPermuteParam(layer: GeneratedMessage): Option[PermuteParameter]
 
   protected def getPriorBoxParam(layer: GeneratedMessage): Option[PriorBoxParameter]
+
+  protected def fromCaffeInput(layer: GeneratedMessage): Seq[ModuleNode[T]]
 
   def toCaffe(moduleNode: AbstractModule[Activity, Tensor[T], T],
     bottoms: ArrayBuffer[String], nextSize: Int): Seq[GeneratedMessage] = {
@@ -585,6 +592,7 @@ abstract class Converter[T: ClassTag](implicit ev: TensorNumeric[T]) {
 
   private def init() = {
     caffe2BigDL("CONVOLUTION") = fromCaffeConvolution
+    caffe2BigDL("DECONVOLUTION") = fromCaffeConvolution
     caffe2BigDL("INNERPRODUCT") = fromCaffeInnerProduct
     caffe2BigDL("INNER_PRODUCT") = fromCaffeInnerProduct
     caffe2BigDL("RELU") = fromCaffeReLU
@@ -618,10 +626,13 @@ abstract class Converter[T: ClassTag](implicit ev: TensorNumeric[T]) {
     caffe2BigDL("NORMALIZE") = fromCaffeNormalize
     caffe2BigDL("PERMUTE") = fromCaffePermute
     caffe2BigDL("DETECTIONOUTPUT") = fromCaffeDetectionOutput
-    caffe2BigDL("INPUT") = null
-    caffe2BigDL("DATA") = null
-    caffe2BigDL("ANNOTATEDDATA") = null
+    caffe2BigDL("INPUT") = fromCaffeInput
+    caffe2BigDL("DATA") = fromCaffeInput
+    caffe2BigDL("DUMMYDATA") = fromCaffeInput
+    caffe2BigDL("ANNOTATEDDATA") = fromCaffeInput
     caffe2BigDL("DETECTIONEVALUATE") = null
     caffe2BigDL("MULTIBOXLOSS") = null
+    caffe2BigDL("SMOOTHL1LOSS") = null
+    caffe2BigDL("SILENCE") = null
   }
 }

@@ -23,10 +23,10 @@ import com.intel.analytics.bigdl.nn.abstractnn.{AbstractModule, Activity}
 import com.intel.analytics.bigdl.tensor.Tensor
 import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric
 import com.intel.analytics.bigdl.utils.Table
-import pipeline.ssd.caffe.Caffe
-import pipeline.ssd.caffe.Caffe.EltwiseParameter.EltwiseOp
-import pipeline.ssd.caffe.Caffe.V1LayerParameter.LayerType
-import pipeline.ssd.caffe.Caffe._
+import pipeline.caffe.Caffe
+import pipeline.caffe.Caffe.EltwiseParameter.EltwiseOp
+import pipeline.caffe.Caffe.V1LayerParameter.LayerType
+import pipeline.caffe.Caffe._
 
 import scala.collection.JavaConverters._
 import scala.collection.mutable.ArrayBuffer
@@ -94,7 +94,7 @@ class V1LayerConverter[T: ClassTag]()
       // Construct a view layer in between
       val view = View[T](nInputPlane).inputs()
       view -> node
-      Seq(view, node)
+      Seq(view)
     } else {
       Seq(node)
     }
@@ -129,6 +129,15 @@ class V1LayerConverter[T: ClassTag]()
   // No implementation in V1
   override protected def fromCaffeTile(layer: GeneratedMessage): Seq[ModuleNode[T]] = {
     throw new UnsupportedOperationException("Tile is not supported in V1 Layer")
+  }
+
+  override protected def fromCaffeInput(layer: GeneratedMessage): Seq[ModuleNode[T]] = {
+    val tops = layer.asInstanceOf[V1LayerParameter].getTopList
+    (0 until tops.size()).map(i => {
+      val input = Input()
+      input.element.setName(tops.get(i))
+      input
+    })
   }
 
   override protected def toCaffeConvolution(module: AbstractModule[Activity, Tensor[T], T],
