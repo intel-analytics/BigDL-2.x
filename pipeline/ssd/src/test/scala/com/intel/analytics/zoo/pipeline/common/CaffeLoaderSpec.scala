@@ -28,7 +28,6 @@ import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric
 import com.intel.analytics.bigdl.utils.{Engine, T}
 import com.intel.analytics.bigdl.utils.RandomGenerator.RNG
 import com.intel.analytics.zoo.pipeline.common.nn.{FrcnnPostprocessor, Proposal}
-import com.intel.analytics.zoo.pipeline.fasterrcnn.model.PostProcessParam
 import org.apache.spark.SparkContext
 import org.scalatest.{FlatSpec, Matchers}
 

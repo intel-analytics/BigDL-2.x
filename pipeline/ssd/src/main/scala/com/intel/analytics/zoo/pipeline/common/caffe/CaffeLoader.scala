@@ -24,10 +24,8 @@ import com.intel.analytics.bigdl.nn.Graph.ModuleNode
 import com.intel.analytics.bigdl.nn._
 import com.intel.analytics.bigdl.tensor.Tensor
 import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric
-import com.intel.analytics.bigdl.utils.{File, Table}
-import com.intel.analytics.zoo.pipeline.common.ModuleUtil
+import com.intel.analytics.bigdl.utils.{Table}
 import com.intel.analytics.zoo.pipeline.common.nn.{FrcnnPostprocessor, Proposal}
-import com.intel.analytics.zoo.pipeline.fasterrcnn.model.PostProcessParam
 import org.apache.hadoop.conf.Configuration
 import org.apache.hadoop.fs.Path
 import org.apache.log4j.Logger
