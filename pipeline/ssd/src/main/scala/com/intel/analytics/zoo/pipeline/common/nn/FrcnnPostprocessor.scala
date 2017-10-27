@@ -21,7 +21,6 @@ import com.intel.analytics.bigdl.tensor.Tensor
 import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric
 import com.intel.analytics.bigdl.utils.Table
 import com.intel.analytics.zoo.pipeline.common.BboxUtil
-import com.intel.analytics.zoo.pipeline.fasterrcnn.model.PostProcessParam
 import com.intel.analytics.zoo.transform.vision.label.roi.RoiLabel
 import org.apache.commons.lang3.SerializationUtils
 import org.apache.log4j.Logger
