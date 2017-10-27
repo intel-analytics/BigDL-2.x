@@ -26,8 +26,7 @@ import com.intel.analytics.bigdl.tensor.Tensor
 import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric
 import com.intel.analytics.bigdl.utils.{File, Table}
 import com.intel.analytics.zoo.pipeline.common.ModuleUtil
-import com.intel.analytics.zoo.pipeline.common.nn.Proposal
-import com.intel.analytics.zoo.pipeline.fasterrcnn.Postprocessor
+import com.intel.analytics.zoo.pipeline.common.nn.{FrcnnPostprocessor, Proposal}
 import com.intel.analytics.zoo.pipeline.fasterrcnn.model.PostProcessParam
 import org.apache.hadoop.conf.Configuration
 import org.apache.hadoop.fs.Path
@@ -610,9 +609,9 @@ object FrcnnCaffeLoader {
     val proposal = model("proposal").get.asInstanceOf[Proposal]
     val postprocessor = if (proposal.scales.length == 3) {
       // vgg
-      Postprocessor(PostProcessParam(0.3f, 21, false, 100, 0.05))
+      FrcnnPostprocessor(0.3f, 21, false, 100, 0.05)
     } else {
-      Postprocessor(PostProcessParam(0.4f, 21, true, 100, 0.05))
+      FrcnnPostprocessor(0.4f, 21, true, 100, 0.05)
     }
     Sequential[Float]().add(model).add(postprocessor)
   }

@@ -5,16 +5,16 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ *      http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
- * limitations under the License.
+ *  limitations under the License.
  */
 
-package com.intel.analytics.zoo.pipeline.fasterrcnn
+package com.intel.analytics.zoo.pipeline.common.nn
 
 import com.intel.analytics.bigdl.numeric.NumericFloat
 import com.intel.analytics.bigdl.tensor.{Storage, Tensor}
@@ -51,7 +51,7 @@ class Anchor(ratios: Array[Float], scales: Array[Float]) extends Serializable {
    * @param featStride stride to move
    * @return shiftX and shiftY
    */
-  private[fasterrcnn] def generateShifts(width: Int, height: Int, featStride: Float):
+  private[pipeline] def generateShifts(width: Int, height: Int, featStride: Float):
   (Tensor[Float], Tensor[Float]) = {
     if (shiftX == null) {
       shiftX = Tensor[Float]
@@ -118,7 +118,7 @@ class Anchor(ratios: Array[Float], scales: Array[Float]) extends Serializable {
    * 1. generate anchors for different ratios (N, 4)
    * 2. for each anchors generated in 1, scale them to get scaled anchors (M*N, 4)
    */
-  private[fasterrcnn] def generateBasicAnchors(_ratios: Array[Float], _scales: Array[Float],
+  private[pipeline] def generateBasicAnchors(_ratios: Array[Float], _scales: Array[Float],
     baseSize: Float = 16): Tensor[Float] = {
     val ratios = Tensor(Storage(_ratios))
     val scales = Tensor(Storage(_scales))

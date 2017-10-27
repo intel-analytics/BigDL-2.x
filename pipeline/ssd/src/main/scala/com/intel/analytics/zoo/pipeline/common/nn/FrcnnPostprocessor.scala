@@ -5,23 +5,22 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ *      http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
- * limitations under the License.
+ *  limitations under the License.
  */
 
-package com.intel.analytics.zoo.pipeline.fasterrcnn
+package com.intel.analytics.zoo.pipeline.common.nn
 
-import com.intel.analytics.bigdl.nn.Nms
 import com.intel.analytics.bigdl.nn.abstractnn.{AbstractModule, Activity}
-import com.intel.analytics.zoo.pipeline.common.BboxUtil
 import com.intel.analytics.bigdl.tensor.Tensor
 import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric
 import com.intel.analytics.bigdl.utils.Table
+import com.intel.analytics.zoo.pipeline.common.BboxUtil
 import com.intel.analytics.zoo.pipeline.fasterrcnn.model.PostProcessParam
 import com.intel.analytics.zoo.transform.vision.label.roi.RoiLabel
 import org.apache.commons.lang3.SerializationUtils
@@ -30,16 +29,16 @@ import org.apache.log4j.Logger
 import scala.collection.mutable.ArrayBuffer
 
 
-object Postprocessor {
+object FrcnnPostprocessor {
   val logger = Logger.getLogger(this.getClass)
 
-  def apply(param: PostProcessParam)(
-    implicit ev: TensorNumeric[Float]): Postprocessor =
-    new Postprocessor(param.nmsThresh, param.nClasses, param.bboxVote, param.maxPerImage,
-      param.thresh)
+  def apply(nmsThresh: Float = 0.3f, nClasses: Int,
+  bboxVote: Boolean, maxPerImage: Int = 100, thresh: Double = 0.05)(
+    implicit ev: TensorNumeric[Float]): FrcnnPostprocessor =
+    new FrcnnPostprocessor(nmsThresh, nClasses, bboxVote, maxPerImage, thresh)
 }
 
-class Postprocessor(var nmsThresh: Float = 0.3f, val nClasses: Int,
+class FrcnnPostprocessor(var nmsThresh: Float = 0.3f, val nClasses: Int,
   var bboxVote: Boolean, var maxPerImage: Int = 100, var thresh: Double = 0.05)(
   implicit ev: TensorNumeric[Float]) extends AbstractModule[Table, Activity, Float] {
 
@@ -220,7 +219,7 @@ class Postprocessor(var nmsThresh: Float = 0.3f, val nClasses: Int,
   }
 
 
-  override def clone(): Postprocessor = {
+  override def clone(): FrcnnPostprocessor = {
     SerializationUtils.clone(this)
   }
 

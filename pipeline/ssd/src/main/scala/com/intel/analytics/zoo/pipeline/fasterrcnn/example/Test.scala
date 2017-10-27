@@ -20,7 +20,7 @@ import com.intel.analytics.bigdl.nn.{Graph, Module}
 import com.intel.analytics.bigdl.utils.Engine
 import com.intel.analytics.zoo.pipeline.common.caffe.FrcnnCaffeLoader
 import com.intel.analytics.zoo.pipeline.common.{IOUtils, MeanAveragePrecision}
-import com.intel.analytics.zoo.pipeline.fasterrcnn.{Postprocessor, Validator}
+import com.intel.analytics.zoo.pipeline.fasterrcnn.Validator
 import com.intel.analytics.zoo.pipeline.fasterrcnn.model.{PostProcessParam, PreProcessParam}
 import org.apache.log4j.{Level, Logger}
 import org.apache.spark.SparkContext
