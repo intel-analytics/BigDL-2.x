@@ -76,7 +76,6 @@ class AspectScale(scale: Int, scaleMultipleOf: Int = 1,
   override def transformMat(feature: ImageFeature): Unit = {
     val (height, width) = AspectScale.getHeightWidthAfterRatioScale(feature.opencvMat(),
       scale, maxSize, scaleMultipleOf)
-    println(height, width)
     Resize.transform(feature.opencvMat(), feature.opencvMat(), width, height)
   }
 }
