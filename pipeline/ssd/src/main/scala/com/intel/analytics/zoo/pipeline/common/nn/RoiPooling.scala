@@ -14,7 +14,8 @@
  *  limitations under the License.
  */
 
-package com.intel.analytics.zoo.pipeline.fasterrcnn
+package com.intel.analytics.zoo.pipeline.common.nn
+
 import com.intel.analytics.bigdl.nn.abstractnn.AbstractModule
 import com.intel.analytics.bigdl.tensor.Tensor
 import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric
