@@ -209,7 +209,8 @@ class Postprocessor(var nmsThresh: Float = 0.3f, val nClasses: Int,
     // post process
     // unscale back to raw image space
     if (boxesBuf == null) boxesBuf = Tensor[Float]
-    boxesBuf.resize(rois.size(1), 4).copy(rois.narrow(2, 2, 4)).div(imInfo.valueAt(1, 3))
+    boxesBuf.resize(rois.size(1), 4).copy(rois.narrow(2, 2, 4))
+    BboxUtil.scaleBBox(boxesBuf, 1 / imInfo.valueAt(1, 3), 1 / imInfo.valueAt(1, 4))
     // Apply bounding-box regression deltas
     val predBoxes = BboxUtil.bboxTransformInv(boxesBuf, boxDeltas)
     BboxUtil.clipBoxes(predBoxes, imInfo.valueAt(1, 1) / imInfo.valueAt(1, 3),

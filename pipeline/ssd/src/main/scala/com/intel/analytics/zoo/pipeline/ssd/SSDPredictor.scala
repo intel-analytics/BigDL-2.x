@@ -48,7 +48,7 @@ class SSDPredictor(
     })
   }
 
-  private def postProcess(result: Tensor[Float], batch: SSDMiniBatch) =
+  private def postProcess(result: Tensor[Float], batch: ImageMiniBatch) =
     BboxUtil.scaleBatchOutput(result, batch.imInfo)
 
   def predict(rdd: RDD[SSDByteRecord]): RDD[Tensor[Float]] = {
@@ -60,7 +60,7 @@ class SSDPredictor(
         RoiImageToBatch(preProcessParam.batchSize, false, Some(preProcessParam.nPartition))
 
     val transformed = Transform(rdd, preProcessor)
-    Predictor.predict(transformed, model, postProcess)
+    Predictor.predict(transformed.asInstanceOf[RDD[ImageMiniBatch]], model, postProcess)
   }
 
   def predictWithFeature(rdd: RDD[ImageFeature]): RDD[ImageFeature] = {

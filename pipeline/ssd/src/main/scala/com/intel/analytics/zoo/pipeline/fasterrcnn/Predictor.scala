@@ -24,7 +24,7 @@ import com.intel.analytics.bigdl.tensor.Tensor
 import com.intel.analytics.zoo.pipeline.common.ModuleUtil
 import com.intel.analytics.zoo.pipeline.common.dataset.roiimage.{RecordToFeature, SSDByteRecord}
 import com.intel.analytics.zoo.pipeline.fasterrcnn.model.PreProcessParam
-import com.intel.analytics.zoo.transform.vision.image.augmentation.AspectScale
+import com.intel.analytics.zoo.transform.vision.image.augmentation.{AspectScale, Resize}
 import com.intel.analytics.zoo.transform.vision.image.{BytesToMat, MatToFloats}
 import org.apache.spark.rdd.RDD
 

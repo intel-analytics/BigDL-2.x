@@ -40,6 +40,7 @@ object Test {
     caffeDefPath: String = "",
     caffeModelPath: String = "",
     nClass: Int = 21,
+    resolution: Int = 600,
     batch: Int = 1,
     nPartition: Int = -1)
 
@@ -70,6 +71,9 @@ object Test {
       .text("class number")
       .action((x, c) => c.copy(nClass = x))
       .required()
+    opt[Int]('r', "resolution")
+      .text("input resolution")
+      .action((x, c) => c.copy(resolution = x))
     opt[Int]('b', "batch")
       .text("batch number")
       .action((x, c) => c.copy(batch = x))
@@ -95,7 +99,8 @@ object Test {
       val (preParam, postParam) = params.modelType.toLowerCase() match {
         case "vgg16" =>
           val postParam = PostProcessParam(0.3f, params.nClass, false, 100, 0.05)
-          val preParam = PreProcessParam(params.batch, nPartition = params.nPartition)
+          val preParam = PreProcessParam(params.batch, Array(params.resolution),
+            nPartition = params.nPartition)
           (preParam, postParam)
 //          (Module.loadCaffe(VggFRcnn(params.nClass,
 //            PostProcessParam(0.3f, params.nClass, false, 100, 0.05)),
