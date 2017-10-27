@@ -50,8 +50,8 @@ class ImageFeature(JavaValue):
         self.value = callBigDlFunc(
             bigdl_type, JavaValue.jvm_class_constructor(self), image_tensor, label_tensor, path)
 
-    def to_sample(self, float_key="floats", to_chw=True):
-        return callBigDlFunc(self.bigdl_type, "imageFeatureToSample", self.value, float_key, to_chw)
+    def to_sample(self, float_key="floats", to_chw=True, with_im_info=False):
+        return callBigDlFunc(self.bigdl_type, "imageFeatureToSample", self.value, float_key, to_chw, with_im_info)
 
     def get_image(self, float_key="floats", to_chw=True):
         tensor = callBigDlFunc(self.bigdl_type, "imageFeatureToImageTensor", self.value,
@@ -61,6 +61,10 @@ class ImageFeature(JavaValue):
     def get_label(self):
         label = callBigDlFunc(self.bigdl_type, "imageFeatureToLabelTensor", self.value)
         return label.to_ndarray()
+
+    def keys(self):
+        return callBigDlFunc(self.bigdl_type, "imageFeatureGetKeys", self.value)
+
 
 class ImageFrame(JavaValue):
     """
@@ -95,12 +99,12 @@ class ImageFrame(JavaValue):
         tensor_rdd = callBigDlFunc(self.bigdl_type, "imageFrameToLabelTensorRdd", self.value)
         return tensor_rdd.map(lambda tensor: tensor.to_ndarray())
 
-    def to_sample(self, float_key="floats", to_chw=True):
+    def to_sample(self, float_key="floats", to_chw=True, with_im_info=False):
         """
         to sample rdd
         """
         return callBigDlFunc(self.bigdl_type,
-                             "imageFrameToSampleRdd", self.value, float_key, to_chw)
+                             "imageFrameToSampleRdd", self.value, float_key, to_chw, with_im_info)
 
 class Resize(FeatureTransformer):
 
@@ -139,8 +143,8 @@ class Crop(FeatureTransformer):
 
 class ChannelNormalize(FeatureTransformer):
 
-    def __init__(self, mean_r, mean_b, mean_g, bigdl_type="float"):
-        super(ChannelNormalize, self).__init__(bigdl_type, mean_r, mean_g, mean_b)
+    def __init__(self, mean_r, mean_b, mean_g, std_r, std_g, std_b, bigdl_type="float"):
+        super(ChannelNormalize, self).__init__(bigdl_type, mean_r, mean_g, mean_b, std_r, std_g, std_b)
 
 
 class RandomCrop(FeatureTransformer):
@@ -229,4 +233,9 @@ class MatToFloats(FeatureTransformer):
                  mean_r=-1.0, mean_g=-1.0, mean_b=-1.0, out_key = "floats", bigdl_type="float"):
         super(MatToFloats, self).__init__(bigdl_type, valid_height, valid_width,
                                           mean_r, mean_g, mean_b, out_key)
+class AspectScale(FeatureTransformer):
+
+    def __init__(self, scale, scale_multiple_of = 1, max_size = 1000, bigdl_type="float"):
+        super(AspectScale, self).__init__(bigdl_type, scale, scale_multiple_of, max_size)
+
 

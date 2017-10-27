@@ -33,6 +33,7 @@ import org.apache.log4j.Logger
 import org.apache.spark.api.java.JavaRDD
 import org.apache.spark.rdd.RDD
 import org.opencv.imgproc.Imgproc
+import collection.JavaConverters._
 
 import scala.language.existentials
 import scala.reflect.ClassTag
@@ -124,8 +125,14 @@ class PythonVisionTransform[T: ClassTag](implicit ev: TensorNumeric[T]) extends 
     RandomSampler()
   }
 
-  def createChannelNormalize(meanR: Int, meanG: Int, meanB: Int): FeatureTransformer = {
-    ChannelNormalize((meanR, meanG, meanB))
+  def createChannelNormalize(meanR: Double, meanG: Double, meanB: Double,
+    stdR: Double = 1, stdG: Double = 1, stdB: Double = 1): FeatureTransformer = {
+    ChannelNormalize(meanR.toFloat, meanG.toFloat, meanB.toFloat,
+      stdR.toFloat, stdG.toFloat, stdB.toFloat)
+  }
+
+  def createAspectScale(scale: Int, scaleMultipleOf: Int, maxSize: Int): FeatureTransformer = {
+    AspectScale(scale, scaleMultipleOf, maxSize)
   }
 
   def createRoiCrop(): RoiCrop = {
@@ -179,7 +186,10 @@ class PythonVisionTransform[T: ClassTag](implicit ev: TensorNumeric[T]) extends 
   : ImageFeature = {
     val feature = new ImageFeature()
     if (null != data) {
-      feature(ImageFeature.mat) = OpenCVMat.floatToMat(data.storage, data.shape(0), data.shape(1))
+      val mat = OpenCVMat.floatToMat(data.storage, data.shape(0), data.shape(1))
+      feature(ImageFeature.mat) = mat
+      feature(ImageFeature.originalW) = mat.width()
+      feature(ImageFeature.originalH) = mat.height()
     }
     if (null != label) {
       // todo: may need a method to change label format if needed
@@ -200,17 +210,27 @@ class PythonVisionTransform[T: ClassTag](implicit ev: TensorNumeric[T]) extends 
   }
 
   def imageFeatureToSample(imageFeature: ImageFeature,
-    floatKey: String = ImageFeature.floats, toChw: Boolean = true): Sample = {
+    floatKey: String = ImageFeature.floats, toChw: Boolean = true,
+    withImInfo: Boolean = false): Sample = {
     val imageTensor = imageFeatureToImageTensor(imageFeature, floatKey, toChw)
     val features = new util.ArrayList[JTensor]()
     features.add(imageTensor)
+    if (withImInfo) {
+      val imInfo = imageFeature.getImInfo()
+      features.add(toJTensor(imInfo.asInstanceOf[Tensor[T]]))
+    }
     val label = imageFeatureToLabelTensor(imageFeature)
     Sample(features, label, "float")
   }
 
+  def imageFeatureGetKeys(imageFeature: ImageFeature): JList[String] = {
+    imageFeature.keys().toList.asJava
+  }
+
   def imageFrameToSampleRdd(imageFrame: ImageFrame,
-    floatKey: String = ImageFeature.floats, toChw: Boolean = true): JavaRDD[Sample] = {
-    imageFrame.rdd.map(imageFeatureToSample(_, floatKey, toChw)).toJavaRDD()
+    floatKey: String = ImageFeature.floats, toChw: Boolean = true, withImInfo: Boolean = false)
+  : JavaRDD[Sample] = {
+    imageFrame.rdd.map(imageFeatureToSample(_, floatKey, toChw, withImInfo)).toJavaRDD()
   }
 
   def imageFrameToImageTensorRdd(imageFrame: ImageFrame,
