@@ -17,10 +17,8 @@
 package com.intel.analytics.zoo.pipeline.common.dataset.roiimage
 
 import com.intel.analytics.bigdl.dataset.{MiniBatch, Sample}
-import com.intel.analytics.bigdl.nn.abstractnn.Activity
 import com.intel.analytics.zoo.pipeline.common.BboxUtil
 import com.intel.analytics.bigdl.tensor.Tensor
-import com.intel.analytics.bigdl.numeric.NumericFloat
 import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric
 import com.intel.analytics.zoo.transform.vision.image.ImageFeature
 import com.intel.analytics.zoo.transform.vision.label.roi.RoiLabel
@@ -35,24 +33,24 @@ case class RoiImagePath(
   target: RoiLabel = null) {
 }
 
-abstract class ImageMiniBatch(val input: Activity, val target: Tensor[Float],
-  val imInfo: Tensor[Float] = null) extends MiniBatch[Float] {
-  var imageFeatures: Array[ImageFeature] = _
-}
 /**
  * A batch of data feed into the model. The first size is batchsize
+ * @param input
+ * @param target
  */
-class SSDMiniBatch(feature: Tensor[Float], label: Tensor[Float],
-  meta: Tensor[Float] = null) extends ImageMiniBatch(feature, label, meta) {
+class SSDMiniBatch(val input: Tensor[Float], val target: Tensor[Float],
+  val imInfo: Tensor[Float] = null)
+  extends MiniBatch[Float] {
 
   private val targetIndices = if (target != null) BboxUtil.getGroundTruthIndices(target) else null
+  var imageFeatures: Array[ImageFeature] = _
 
   override def size(): Int = {
-    input.toTensor.size(1)
+    input.size(1)
   }
 
   override def getInput(): Tensor[Float] = {
-    input.toTensor
+    input
   }
 
   override def getTarget(): Tensor[Float] = {
@@ -60,7 +58,7 @@ class SSDMiniBatch(feature: Tensor[Float], label: Tensor[Float],
   }
 
   override def slice(offset: Int, length: Int): MiniBatch[Float] = {
-    val subInput = input.toTensor.narrow(1, offset, length)
+    val subInput = input.narrow(1, offset, length)
     val subTarget = if (target != null) {
       var i = 0
       val targetOffset = targetIndices(offset - 1)._1
