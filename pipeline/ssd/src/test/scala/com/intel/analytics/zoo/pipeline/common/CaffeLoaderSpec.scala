@@ -230,6 +230,7 @@ class CaffeLoaderSpec extends FlatSpec with Matchers {
       .setAppName("Spark-DL Faster RCNN Test")
     val sc = new SparkContext(conf)
     Engine.init
+
     val prototxt = s"$home/data/caffeModels/vgg16/test.prototxt"
     val caffemodel = s"$home/data/caffeModels/vgg16/test.caffemodel"
 
@@ -237,21 +238,11 @@ class CaffeLoaderSpec extends FlatSpec with Matchers {
       cancel("local test")
     }
     val model = FrcnnCaffeLoader.loadCaffe(prototxt, caffemodel)
-      .asInstanceOf[Graph[Float]]
     val input = T()
     input.insert(Tensor[Float](1, 3, 60, 90))
     input.insert(Tensor[Float](T(60, 90, 1, 1)).resize(1, 4))
-
-    val postprocessor = FrcnnPostprocessor(0.3f, 21, false, 100, 0.05)
-    ModuleUtil.shareMemory(model)
-    val modelWithPostprocess = Sequential[Float]().add(model).add(postprocessor)
-    modelWithPostprocess.saveModule("/tmp/vgg.frcnn", true)
-    modelWithPostprocess.forward(input)
-//    println(model.output.toTable.length())
-//    (1 to model.output.toTable.length()).foreach(i => {
-//      println(model.output.toTable[Tensor[Float]](i).size().mkString("x"))
-//    })
-    // model.saveGraphTopology("/tmp/summary")
+    model.saveModule("/tmp/vgg.frcnn", true)
+    model.forward(input)
   }
 
   "pvanet load" should "work properly" in {
@@ -267,23 +258,13 @@ class CaffeLoaderSpec extends FlatSpec with Matchers {
       cancel("local test")
     }
     val model = FrcnnCaffeLoader.loadCaffe(prototxt, caffemodel)
-      .asInstanceOf[Graph[Float]]
-    //    val model = DLFile.load[Graph[Float]]("/tmp/pvanet.bin")
     val input = T()
     input.insert(Tensor[Float](1, 3, 640, 960))
     input.insert(Tensor[Float](T(640, 960, 1, 1)).resize(1, 4))
-//    model.save("/tmp/pvanet.bin", true)
-//    model.saveModule("/tmp/pvanet.model", true)
     println("save model done")
 
-    //    model.saveGraphTopology("/tmp/summary")
-    val postprocessor = FrcnnPostprocessor(0.4f, 21, true, 100, 0.05)
-    ModuleUtil.shareMemory(model)
-    val modelWithPostprocess = Sequential[Float]().add(model).add(postprocessor)
-
-    modelWithPostprocess.saveModule("/tmp/pvanet.model", true)
-    modelWithPostprocess.forward(input)
-//    model.saveGraphTopology("/tmp/summary")
+    model.saveModule("/tmp/pvanet.model", true)
+    model.forward(input)
   }
 
   "pvanet forward" should "work properly" in {
@@ -325,34 +306,5 @@ class CaffeLoaderSpec extends FlatSpec with Matchers {
     assertEqual2("rois", "proposal")
     TestUtil.assertEqual("cls_prob", modelWithPostprocess("cls_prob").get.output.toTensor[Float], 1e-5)
     TestUtil.assertEqual("bbox_pred", modelWithPostprocess("bbox_pred").get.output.toTensor[Float], 1e-5)
-//    model.saveGraphTopology("/tmp/summary")
-  }
-
-  "load and save" should "work" in {
-    val model = Sequential[Float]()
-    val graph = Input[Float]()
-    val linear = Linear[Float](20, 20)
-    linear.inputs(graph)
-    model.add(linear)
-    model.saveModule("/tmp/model", true)
-    Module.loadModule[Float]("/tmp/model")
-  }
-
-  "load and save2" should "work" in {
-    val model = Proposal(1, 1, Array[Float](0.1f), Array[Float](1f))
-    model.saveModule("/tmp/propsal", true)
-    Module.loadModule[Float]("/tmp/propsal")
-  }
-
-  "ev.scale" should "work" in {
-    val array = new Array[Float](1228800)
-    TensorNumeric.NumericFloat.scal(1, 4096, array, 1883279, 1)
-  }
-
-  "cmul" should "not dump" in {
-    val cmul = CMul[Float](Array[Int](1, 4096, 1, 1))
-    cmul.weight.randn()
-    val input = Tensor[Float](300, 4096).randn()
-    cmul.forward(input)
   }
 }

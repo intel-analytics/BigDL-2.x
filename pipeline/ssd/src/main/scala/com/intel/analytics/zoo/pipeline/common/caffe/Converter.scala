@@ -21,11 +21,8 @@ import com.google.protobuf.GeneratedMessage
 import com.intel.analytics.bigdl.nn.Graph._
 import com.intel.analytics.bigdl.nn._
 import com.intel.analytics.bigdl.nn.abstractnn.{AbstractModule, Activity}
-import com.intel.analytics.bigdl.pipeline.common.nn.CaffeSpatialAveragePooling
-import com.intel.analytics.zoo.pipeline.common.nn.SpatialWithinChannelLRN
 import com.intel.analytics.bigdl.tensor.Tensor
 import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric
-import pipeline.caffe.Caffe
 import pipeline.caffe.Caffe.EltwiseParameter.EltwiseOp
 import pipeline.caffe.Caffe.LRNParameter.NormRegion
 import pipeline.caffe.Caffe.PoolingParameter.PoolMethod
@@ -130,7 +127,7 @@ abstract class Converter[T: ClassTag](implicit ev: TensorNumeric[T]) {
     val pooling = poolingType match {
       case PoolMethod.MAX => SpatialMaxPooling[T](kw, kh, dw, dh, pw, ph).ceil().
         setName(layerName).inputs()
-      case PoolMethod.AVE => CaffeSpatialAveragePooling[T](kw, kh, dw, dh, pw, ph,
+      case PoolMethod.AVE => SpatialAveragePooling[T](kw, kh, dw, dh, pw, ph,
         param.getGlobalPooling).ceil().
         setName(layerName).inputs()
       case _ => null
