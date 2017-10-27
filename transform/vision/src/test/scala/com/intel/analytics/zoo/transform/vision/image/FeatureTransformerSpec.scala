@@ -95,7 +95,7 @@ class FeatureTransformerSpec extends FlatSpec with Matchers {
     val feature2 = new ImageFeature
     feature(ImageFeature.mat) = OpenCVMat.read(resource.getFile)
     feature2(ImageFeature.mat) = OpenCVMat.read(resource.getFile)
-    val normalize = ChannelNormalize((100, 200, 300)) ->
+    val normalize = ChannelNormalize(100, 200, 300) ->
       MatToFloats(validHeight = img.height(), validWidth = img.width())
     val normalize2 = MatToFloats(validHeight = img.height(),
       validWidth = img.width(), meanRGB = Some((100f, 200f, 300f)))
@@ -296,6 +296,14 @@ class FeatureTransformerSpec extends FlatSpec with Matchers {
 
   }
 
+  "getWidthHeightAfterRatioScale" should "work" in {
+    val resource = getClass().getClassLoader().getResource("image/000025.jpg")
+    val img = OpenCVMat.read(resource.getFile)
+    println(img.height(), img.width())
+    val (height, width) = AspectScale.getHeightWidthAfterRatioScale(img, 600, 1000, 1)
+    println(height, width)
+  }
+
 
   "ImageAugmentation" should "work properly" in {
     import scala.sys.process._
@@ -307,7 +315,7 @@ class FeatureTransformerSpec extends FlatSpec with Matchers {
       Expand() ->
       Resize(300, 300, -1) ->
       HFlip() ->
-      ChannelNormalize((123, 117, 104)) ->
+      ChannelNormalize(123, 117, 104) ->
       new MatToFloats(validHeight = 300, validWidth = 300)
     val out = imgAug(features)
     out.foreach(img => {

@@ -16,13 +16,14 @@
 
 package com.intel.analytics.zoo.transform.vision.image
 
-import com.intel.analytics.bigdl.dataset.{ChainedTransformer, Transformer}
+import com.intel.analytics.bigdl.dataset.{ChainedTransformer, Sample, Transformer}
 import com.intel.analytics.bigdl.tensor.{Storage, Tensor}
 import com.intel.analytics.bigdl.utils.RandomGenerator._
+import com.intel.analytics.bigdl.utils.T
 import com.intel.analytics.zoo.transform.vision.image.opencv.OpenCVMat
 import org.apache.log4j.Logger
 
-import scala.collection.{Iterator, mutable}
+import scala.collection.{Iterator, Set, mutable}
 import scala.reflect.ClassTag
 
 class ImageFeature extends Serializable {
@@ -51,6 +52,8 @@ class ImageFeature extends Serializable {
 
   def opencvMat(): OpenCVMat = state(ImageFeature.mat).asInstanceOf[OpenCVMat]
 
+  def keys(): Set[String] = state.keySet
+
   def hasLabel(): Boolean = state.contains(ImageFeature.label)
 
   def getFloats(key: String = ImageFeature.floats): Array[Float] = {
@@ -73,6 +76,11 @@ class ImageFeature extends Serializable {
 
   def getLabel[T: ClassTag]: T = {
     if (hasLabel()) this (ImageFeature.label).asInstanceOf[T] else null.asInstanceOf[T]
+  }
+
+  def getImInfo(): Tensor[Float] = {
+    Tensor[Float](T(getHeight(), getWidth(), getHeight().toFloat / getOriginalHeight,
+      getWidth().toFloat / getOriginalWidth))
   }
 
   def clear(): Unit = {

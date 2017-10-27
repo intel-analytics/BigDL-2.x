@@ -65,25 +65,31 @@ object Resize {
 }
 
 /**
- * resize the image by randomly choosing a scale
- * @param scales array of scale options that for random choice
- * @param scaleMultipleOf Resize test images so that its width and height are multiples of
- * @param maxSize Max pixel size of the longest side of a scaled input image
+ * Resize the image, keep the aspect ratio. scale according to the short edge
+ * @param scale scale size, apply to short edge
+ * @param scaleMultipleOf make the scaled size multiple of some value
+ * @param maxSize max size after scale
  */
-case class RandomResize(scales: Array[Int], scaleMultipleOf: Int = 1,
-  maxSize: Float = 1000f) extends FeatureTransformer {
+class AspectScale(scale: Int, scaleMultipleOf: Int = 1,
+  maxSize: Int = 1000) extends FeatureTransformer {
 
   override def transformMat(feature: ImageFeature): Unit = {
-    val scaleTo = scales(Random.nextInt(scales.length))
-    val (height, width) = getWidthHeightAfterRatioScale(feature.opencvMat(), scaleTo)
+    val (height, width) = AspectScale.getHeightWidthAfterRatioScale(feature.opencvMat(),
+      scale, maxSize, scaleMultipleOf)
     Resize.transform(feature.opencvMat(), feature.opencvMat(), width, height)
   }
+}
 
+object AspectScale {
+
+  def apply(scale: Int, scaleMultipleOf: Int = 1,
+    maxSize: Int = 1000): AspectScale = new AspectScale(scale, scaleMultipleOf, maxSize)
   /**
    * get the width and height of scaled image
    * @param img original image
    */
-  def getWidthHeightAfterRatioScale(img: OpenCVMat, scaleTo: Float): (Int, Int) = {
+  def getHeightWidthAfterRatioScale(img: OpenCVMat, scaleTo: Float,
+    maxSize: Int, scaleMultipleOf: Int): (Int, Int) = {
     val imSizeMin = Math.min(img.width(), img.height())
     val imSizeMax = Math.max(img.width(), img.height())
     var imScale = scaleTo.toFloat / imSizeMin.toFloat
@@ -99,6 +105,24 @@ case class RandomResize(scales: Array[Int], scaleMultipleOf: Int = 1,
     val width = imScaleW * img.width()
     val height = imScaleH * img.height()
     (height.toInt, width.toInt)
+  }
+}
+
+
+/**
+ * resize the image by randomly choosing a scale
+ * @param scales array of scale options that for random choice
+ * @param scaleMultipleOf Resize test images so that its width and height are multiples of
+ * @param maxSize Max pixel size of the longest side of a scaled input image
+ */
+class RandomAspectScale(scales: Array[Int], scaleMultipleOf: Int = 1,
+  maxSize: Int = 1000) extends FeatureTransformer {
+
+  override def transformMat(feature: ImageFeature): Unit = {
+    val scaleTo = scales(Random.nextInt(scales.length))
+    val (height, width) = AspectScale.getHeightWidthAfterRatioScale(feature.opencvMat(),
+      scaleTo, maxSize, scaleMultipleOf)
+    Resize.transform(feature.opencvMat(), feature.opencvMat(), width, height)
   }
 }
 
