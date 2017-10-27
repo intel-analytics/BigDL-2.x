@@ -19,7 +19,7 @@ import com.intel.analytics.bigdl.dataset.Transformer
 import com.intel.analytics.bigdl.utils.File
 import com.intel.analytics.zoo.transform.vision.image.ImageFeature
 
-class ImageToMate extends Transformer[String, ImageFeature]{
+class ImageToBytes extends Transformer[String, ImageFeature]{
   override def apply(prev: Iterator[String]): Iterator[ImageFeature] = {
     prev.map(path => {
       val rawImg = File.readBytes(path)
@@ -31,6 +31,6 @@ class ImageToMate extends Transformer[String, ImageFeature]{
   }
 }
 
-object ImageToMate {
-  def apply(): ImageToMate = new ImageToMate()
+object ImageToBytes {
+  def apply(): ImageToBytes = new ImageToBytes()
 }

@@ -14,32 +14,26 @@
  * limitations under the License.
  */
 
-package com.intel.analytics.zoo.models.alexnet
-
-import java.nio.charset.StandardCharsets
-import java.nio.file.{Files, Paths}
+package com.intel.analytics.zoo.models.squeezenet
 
 import com.intel.analytics.bigdl.dataset.Transformer
-import com.intel.analytics.bigdl.tensor.Tensor
-import com.intel.analytics.bigdl.utils.Engine
 import com.intel.analytics.bigdl.utils.serializer.ModuleLoader
-import com.intel.analytics.zoo.models.{Predictor}
-import com.intel.analytics.zoo.models.dataset._
+import com.intel.analytics.zoo.models.Predictor
+import com.intel.analytics.zoo.models.dataset.{ImageSample, ImageToBytes, MateToSample, PredictResult}
 import com.intel.analytics.zoo.transform.vision.image.{BytesToMat}
-import com.intel.analytics.zoo.transform.vision.image.augmentation.{CenterCrop, PixelNormalizer, Resize}
-import org.apache.spark.{SparkConf, SparkContext}
+import com.intel.analytics.zoo.transform.vision.image.augmentation.{CenterCrop, ChannelNormalize, Resize}
 import org.apache.spark.rdd.RDD
 
-@SerialVersionUID(6044110396967995592L)
-class AlexnetPredictor(modelPath : String, meanPath : String) extends Predictor with Serializable{
+@SerialVersionUID(- 2010415206552736051L)
+class SqueezenetPredictor(modelPath: String) extends Predictor with Serializable {
+  model = ModuleLoader.
+    loadFromFile[Float](modelPath).evaluate()
 
-  model = ModuleLoader.loadFromFile[Float](modelPath).evaluate()
-
-  val mean : Array[Float] = createMean(meanPath)
 
   val transformer = ImageToBytes() -> BytesToMat() -> Resize(256 , 256) ->
-    PixelNormalizer(mean) -> CenterCrop(227, 227) -> MateToSample(false)
-
+    CenterCrop(227, 227) ->
+    ChannelNormalize((123f, 117f, 104f)) ->
+    MateToSample(false)
 
   override def predictLocal(path : String, topNum : Int,
                             preprocessor: Transformer[String, ImageSample] = transformer)
@@ -49,23 +43,12 @@ class AlexnetPredictor(modelPath : String, meanPath : String) extends Predictor 
 
   override def predictDistributed(paths : RDD[String], topNum : Int ,
                                   preprocessor: Transformer[String, ImageSample] = transformer):
-    RDD[Array[PredictResult]] = {
+  RDD[Array[PredictResult]] = {
     doPredictDistributed(paths, topNum, preprocessor)
   }
-
-  private def createMean(meanFile : String) : Array[Float] = {
-    val lines = Files.readAllLines(Paths.get(meanFile), StandardCharsets.UTF_8)
-    val array = new Array[Float](lines.size)
-    lines.toArray.zipWithIndex.foreach {
-      x => {
-        array(x._2) = x._1.toString.toFloat
-      }
-    }
-    array
-  }
 }
 
-object AlexnetPredictor{
-
-  def apply(modelPath: String, meanPath : String): AlexnetPredictor = new AlexnetPredictor(modelPath, meanPath)
+object SqueezenetPredictor {
+  def apply(modelPath: String): SqueezenetPredictor = new SqueezenetPredictor(modelPath)
 }
+

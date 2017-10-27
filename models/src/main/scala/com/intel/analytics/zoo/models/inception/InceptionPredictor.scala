@@ -24,12 +24,13 @@ import com.intel.analytics.zoo.transform.vision.image.BytesToMat
 import com.intel.analytics.zoo.transform.vision.image.augmentation.{CenterCrop, ChannelNormalize, PixelNormalizer, Resize}
 import org.apache.spark.rdd.RDD
 
-class InceptionPredictor(modelPath : String) extends Predictor with Serializable {
+@SerialVersionUID(4579199381142783408L)
+class InceptionV1Predictor(modelPath : String) extends Predictor with Serializable {
 
   model = ModuleLoader.
     loadFromFile[Float](modelPath).evaluate()
 
-  val transformer = ImageToMate() -> BytesToMat() -> Resize(256 , 256) ->
+  val transformer = ImageToBytes() -> BytesToMat() -> Resize(256 , 256) ->
     CenterCrop(224, 224) -> ChannelNormalize((123, 117, 104)) ->
     MateToSample(false)
 
@@ -46,6 +47,6 @@ class InceptionPredictor(modelPath : String) extends Predictor with Serializable
   }
 }
 
-object InceptionPredictor {
-  def apply(modelPath: String): InceptionPredictor = new InceptionPredictor(modelPath)
+object InceptionV1Predictor {
+  def apply(modelPath: String): InceptionV1Predictor = new InceptionV1Predictor(modelPath)
 }
