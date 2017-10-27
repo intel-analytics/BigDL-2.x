@@ -23,9 +23,11 @@ import org.opencv.core.{CvType, Mat}
 
 /**
  *  Pixel level normalizer, data(i) = data(i) - mean(i)
- *  @param means  pixel level mean
+ *  @param means  pixel level mean, following H * W * C order
  */
-class PixelNormalizer(means : Tensor[Float]) extends FeatureTransformer {
+class PixelNormalizer(means : Array[Float]) extends FeatureTransformer {
+
+  val data = new Array[Float](means.length)
 
   override def transformMat(feature: ImageFeature): Unit = {
     val openCVMat = feature.opencvMat()
@@ -33,20 +35,16 @@ class PixelNormalizer(means : Tensor[Float]) extends FeatureTransformer {
       openCVMat.convertTo(openCVMat, CvType.CV_32FC3)
     }
 
-    val data = new Array[Float](openCVMat.height() * openCVMat.width() *  openCVMat.channels())
-
     openCVMat.get(0, 0, data)
 
-    val meansData = means.storage().array()
-
-    require(meansData.length == data.length, s"Image size expected :" +
-      s"${meansData.length}, actual : ${data.length}")
+    require(means.length == data.length, s"Image size expected :" +
+      s"${means.length}, actual : ${data.length}")
 
     var i = 0
     while (i < data.length) {
-      data(i + 2) = data(i + 2) - meansData(i + 2)
-      data(i + 1) = data(i + 1) - meansData(i + 1)
-      data(i + 0) = data(i + 0) - meansData(i + 0)
+      data(i + 2) = data(i + 2) - means(i + 2)
+      data(i + 1) = data(i + 1) - means(i + 1)
+      data(i + 0) = data(i + 0) - means(i + 0)
       i += 3
     }
 
@@ -56,5 +54,5 @@ class PixelNormalizer(means : Tensor[Float]) extends FeatureTransformer {
 
 }
 object PixelNormalizer{
- def apply(means : Tensor[Float]): PixelNormalizer = new PixelNormalizer(means)
+ def apply(means : Array[Float]): PixelNormalizer = new PixelNormalizer(means)
 }

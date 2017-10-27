@@ -29,7 +29,7 @@ import org.opencv.core.{Core, CvType, Mat, Scalar}
  * @param meanB
  */
 class ChannelNormalize(meanR: Float, meanG: Float, meanB: Float,
-                       stdR: Double = 1, stdG: Double = 1, stdB: Double = 1)
+                       stdR: Float = 1, stdG: Float = 1, stdB: Float = 1)
   extends FeatureTransformer {
   override def transformMat(feature: ImageFeature): Unit = {
     ChannelNormalize.transform(feature.opencvMat(), feature.opencvMat(),
@@ -38,14 +38,14 @@ class ChannelNormalize(meanR: Float, meanG: Float, meanB: Float,
 }
 
 object ChannelNormalize {
-  def apply(mean: (Float, Float, Float),
-            stdR: Double = 1, stdG: Double = 1, stdB: Double = 1): ChannelNormalize = {
-    new ChannelNormalize(mean._1, mean._2, mean._3, stdR, stdG, stdB)
+  def apply(meanR: Float, meanG: Float, meanB: Float,
+            stdR: Float = 1, stdG: Float = 1, stdB: Float = 1): ChannelNormalize = {
+    new ChannelNormalize(meanR, meanG, meanB, stdR, stdG, stdB)
   }
 
   def transform(input: OpenCVMat, output: OpenCVMat,
                 meanR: Float, meanG: Float, meanB: Float,
-                stdR: Double = 1, stdG: Double = 1, stdB: Double = 1): Boolean = {
+                stdR: Float = 1, stdG: Float = 1, stdB: Float = 1): Boolean = {
     if (input.`type`() != CvType.CV_32FC3) {
       input.convertTo(input, CvType.CV_32FC3)
     }

@@ -16,26 +16,36 @@
 
 package com.intel.analytics.zoo.pipeline.common.nn
 
+import com.intel.analytics.bigdl.nn.BinaryTreeLSTM.{apply => _}
+import com.intel.analytics.bigdl.nn.Reshape.{apply => _, createBigDLModule => _, createSerializeBigDLModule => _, getClass => _}
 import com.intel.analytics.bigdl.nn.abstractnn.{AbstractModule, Activity}
-import com.intel.analytics.bigdl.nn.{InferReshape, Sequential, SoftMax, TimeDistributed}
-import com.intel.analytics.zoo.pipeline.common.BboxUtil
-import com.intel.analytics.zoo.pipeline.common.nn.DetectionOutput._
+import com.intel.analytics.bigdl.nn.{Module => _, _}
 import com.intel.analytics.bigdl.tensor.Tensor
 import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric
 import com.intel.analytics.bigdl.utils.Table
+import com.intel.analytics.zoo.pipeline.common.BboxUtil
+import com.intel.analytics.zoo.pipeline.common.nn.DetectionOutput.logger
 import com.intel.analytics.zoo.pipeline.ssd.model.PostProcessParam
 import org.apache.log4j.Logger
 
 import scala.reflect.ClassTag
 
 @SerialVersionUID(5253792953255433914L)
-class DetectionOutput[T: ClassTag](param: PostProcessParam, postProcess: Boolean = true)
+class DetectionOutput[T: ClassTag](val nClasses: Int = 21,
+  val shareLocation: Boolean = true,
+  val bgLabel: Int = 0,
+  val nmsThresh: Float = 0.45f,
+  val nmsTopk: Int = 400,
+  var keepTopK: Int = 200,
+  val confThresh: Float = 0.01f,
+  val varianceEncodedInTarget: Boolean = false,
+  val postProcess: Boolean = true)
   (implicit ev: TensorNumeric[T])
   extends AbstractModule[Table, Activity, T] {
   @transient private var nms: Nms = _
 
   def setTopK(topK: Int): this.type = {
-    param.keepTopK = topK
+    keepTopK = topK
     this
   }
 
@@ -44,26 +54,26 @@ class DetectionOutput[T: ClassTag](param: PostProcessParam, postProcess: Boolean
     indicesNum: Array[Int]): Int = {
     var numDet = 0
     var c = 0
-    while (c < param.nClasses) {
-      if (c != param.bgLabel) {
+    while (c < nClasses) {
+      if (c != bgLabel) {
         val scores = confScores(c)
         if (scores.nElement() == 0) {
           logger.warn(s"Could not find confidence predictions for label $c")
         }
-        val label = if (param.shareLocation) decodedBboxes.length - 1 else c
+        val label = if (shareLocation) decodedBboxes.length - 1 else c
         val bboxes = decodedBboxes(label)
         if (bboxes == null || bboxes.nElement() == 0) {
           logger.warn(s"Could not find locƒation predictions for label $label")
           return 0
         }
-        indicesNum(c) = nms.nmsFast(scores, bboxes, param.nmsThresh,
-          param.confThresh, indices(c), param.nmsTopk, normalized = true)
+        indicesNum(c) = nms.nmsFast(scores, bboxes, nmsThresh,
+          confThresh, indices(c), nmsTopk, normalized = true)
 
         numDet += indicesNum(c)
       }
       c += 1
     }
-    if (param.keepTopK > -1 && numDet > param.keepTopK) {
+    if (keepTopK > -1 && numDet > keepTopK) {
       val scoreClassIndex = new Array[(Float, Int, Int)](numDet)
       var c = 0
       var count = 0
@@ -81,23 +91,23 @@ class DetectionOutput[T: ClassTag](param: PostProcessParam, postProcess: Boolean
       // keep top k results per image
       val sortedPairs = scoreClassIndex.sortBy(x => -x._1)
       var i = 0
-      while (i < param.keepTopK) {
+      while (i < keepTopK) {
         val label = sortedPairs(i)._2
         val idx = sortedPairs(i)._3
         indices(label)(indicesNum(label)) = idx
         indicesNum(label) += 1
         i += 1
       }
-      param.keepTopK
+      keepTopK
     } else {
       numDet
     }
   }
 
-  @transient var allLocPreds: Array[Array[Tensor[Float]]] = _
-  @transient var allConfScores: Array[Array[Tensor[Float]]] = _
-  @transient var allIndices: Array[Array[Array[Int]]] = _
-  @transient var allIndicesNum: Array[Array[Int]] = _
+  @transient private var allLocPreds: Array[Array[Tensor[Float]]] = _
+  @transient private var allConfScores: Array[Array[Tensor[Float]]] = _
+  @transient private var allIndices: Array[Array[Array[Int]]] = _
+  @transient private var allIndicesNum: Array[Array[Int]] = _
 
   private def init(batch: Int, numLocClasses: Int, nPriors: Int): Unit = {
     var i = 0
@@ -110,18 +120,18 @@ class DetectionOutput[T: ClassTag](param: PostProcessParam, postProcess: Boolean
       i = 0
       while (i < batch) {
         allLocPreds(i) = new Array[Tensor[Float]](numLocClasses)
-        allConfScores(i) = new Array[Tensor[Float]](param.nClasses)
-        allIndices(i) = new Array[Array[Int]](param.nClasses)
-        allIndicesNum(i) = new Array[Int](param.nClasses)
+        allConfScores(i) = new Array[Tensor[Float]](nClasses)
+        allIndices(i) = new Array[Array[Int]](nClasses)
+        allIndicesNum(i) = new Array[Int](nClasses)
         var c = 0
         while (c < numLocClasses) {
           allLocPreds(i)(c) = Tensor[Float](nPriors, 4)
           c += 1
         }
         c = 0
-        while (c < param.nClasses) {
+        while (c < nClasses) {
           allConfScores(i)(c) = Tensor[Float](nPriors)
-          if (c != param.bgLabel) allIndices(i)(c) = new Array[Int](nPriors)
+          if (c != bgLabel) allIndices(i)(c) = new Array[Int](nPriors)
           c += 1
         }
         i += 1
@@ -136,9 +146,9 @@ class DetectionOutput[T: ClassTag](param: PostProcessParam, postProcess: Boolean
           c += 1
         }
         c = 0
-        while (c < param.nClasses) {
+        while (c < nClasses) {
           allConfScores(i)(c).resize(nPriors)
-          if (c != param.bgLabel && allIndices(i)(c).length < nPriors) {
+          if (c != bgLabel && allIndices(i)(c).length < nPriors) {
             allIndices(i)(c) = new Array[Int](nPriors)
           }
           c += 1
@@ -149,9 +159,9 @@ class DetectionOutput[T: ClassTag](param: PostProcessParam, postProcess: Boolean
   }
 
 
-  val confPost = if (postProcess) {
+  private val confPost = if (postProcess) {
     Sequential[T]()
-      .add(InferReshape[T](Array(0, -1, param.nClasses)).setName("mbox_conf_reshape"))
+      .add(InferReshape[T](Array(0, -1, nClasses)).setName("mbox_conf_reshape"))
       .add(TimeDistributed[T](SoftMax[T]()).setName("mbox_conf_softmax"))
       .add(InferReshape[T](Array(0, -1)).setName("mbox_conf_flatten"))
   } else {
@@ -172,21 +182,21 @@ class DetectionOutput[T: ClassTag](param: PostProcessParam, postProcess: Boolean
     }
     val prior = input[Tensor[Float]](3)
     val batch = loc.size(1)
-    val numLocClasses = if (param.shareLocation) 1 else param.nClasses
+    val numLocClasses = if (shareLocation) 1 else nClasses
     val nPriors = prior.size(3) / 4
 
     var i = 0
 
     init(batch, numLocClasses, nPriors)
 
-    BboxUtil.getLocPredictions(loc, nPriors, numLocClasses, param.shareLocation,
+    BboxUtil.getLocPredictions(loc, nPriors, numLocClasses, shareLocation,
       allLocPreds)
 
-    BboxUtil.getConfidenceScores(conf, nPriors, param.nClasses, allConfScores)
+    BboxUtil.getConfidenceScores(conf, nPriors, nClasses, allConfScores)
     val (priorBoxes, priorVariances) = BboxUtil.getPriorBboxes(prior, nPriors)
 
     val allDecodedBboxes = BboxUtil.decodeBboxesAll(allLocPreds, priorBoxes, priorVariances,
-      numLocClasses, param.bgLabel, false, param.varianceEncodedInTarget, param.shareLocation,
+      numLocClasses, bgLabel, false, varianceEncodedInTarget, shareLocation,
       allLocPreds)
     val numKepts = new Array[Int](batch)
     var maxDetection = 0
@@ -212,7 +222,7 @@ class DetectionOutput[T: ClassTag](param: PostProcessParam, postProcess: Boolean
           val indices = allIndices(i)(c)
           if (indices != null) {
             val indicesNum = allIndicesNum(i)(c)
-            val locLabel = if (param.shareLocation) allDecodedBboxes(i).length - 1 else c
+            val locLabel = if (shareLocation) allDecodedBboxes(i).length - 1 else c
             val bboxes = allDecodedBboxes(i)(locLabel)
             var bboxesOffset = allDecodedBboxes(i)(locLabel).storageOffset() - 1
             var j = 0
@@ -258,5 +268,13 @@ object DetectionOutput {
 
   def apply[@specialized(Float) T: ClassTag](param: PostProcessParam, postProcess: Boolean = true)
     (implicit ev: TensorNumeric[T]): DetectionOutput[T] =
-    new DetectionOutput[T](param, postProcess)
+    new DetectionOutput[T](param.nClasses,
+      param.shareLocation,
+      param.bgLabel,
+      param.nmsThresh,
+      param.nmsTopk,
+      param.keepTopK,
+      param.confThresh,
+      param.varianceEncodedInTarget,
+      postProcess)
 }

@@ -22,6 +22,7 @@ import pipeline.ssd.caffe.Caffe.{LayerParameter, NetParameter, V1LayerParameter}
 import com.google.protobuf.GeneratedMessage
 import com.intel.analytics.bigdl.nn.abstractnn.{AbstractModule, Activity}
 import com.intel.analytics.bigdl.nn.{Graph, View}
+import com.intel.analytics.bigdl.tensor.Tensor
 import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric
 import org.apache.hadoop.conf.Configuration
 import org.apache.hadoop.fs.Path
@@ -74,7 +75,7 @@ class CaffePersister[T: ClassTag](val prototxtPath: String,
     val graph = toGraph()
     val top2Layers = new mutable.HashMap[String, String]()
     val layers = new mutable.HashMap[String, GeneratedMessage]()
-    val executions = graph.getExecutions
+    val executions = graph.getForwardExecutions
     netparam.setName(module.getName)
     executions.foreach(execution => {
       val preModules = execution.prevNodes
@@ -128,7 +129,9 @@ class CaffePersister[T: ClassTag](val prototxtPath: String,
         })
         val nextModules = execution.nextNodes.filter(_.element != null)
         if (useV2) {
-          val caffeLayers = v2Converter.toCaffe(execution.element, bottomList, nextModules.size)
+          val caffeLayers = v2Converter.toCaffe(
+            execution.element.asInstanceOf[AbstractModule[Activity, Tensor[T], T]],
+            bottomList, nextModules.size)
           var curr : LayerParameter = null
           caffeLayers.foreach(layer => {
             val caffeLayer = layer.asInstanceOf[LayerParameter]
@@ -145,7 +148,8 @@ class CaffePersister[T: ClassTag](val prototxtPath: String,
           }
 
         } else {
-          val caffeLayers = v1Converter.toCaffe(execution.element, bottomList, nextModules.size)
+          val caffeLayers = v1Converter.toCaffe(
+            execution.element.asInstanceOf[AbstractModule[Activity, Tensor[T], T]], bottomList, nextModules.size)
           var curr : V1LayerParameter = null
           caffeLayers.foreach(layer => {
             val caffeLayer = layer.asInstanceOf[V1LayerParameter]

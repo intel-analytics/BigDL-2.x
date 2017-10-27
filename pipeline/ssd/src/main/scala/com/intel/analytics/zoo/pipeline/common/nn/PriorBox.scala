@@ -20,7 +20,6 @@ import com.intel.analytics.bigdl.nn.abstractnn.AbstractModule
 import com.intel.analytics.bigdl.tensor.Tensor
 import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric
 import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric.{NumericDouble, NumericFloat}
-import com.intel.analytics.bigdl.utils.Table
 
 import scala.collection.mutable.ArrayBuffer
 import scala.reflect._
@@ -95,7 +94,7 @@ class PriorBox[T: ClassTag](minSizes: Array[Float], maxSizes: Array[Float] = nul
     }
 
     if (imgH != 0 && imgW != 0) {
-      require(imgSize == 0, "Either img_size or img_h/img_w should be specified; not both.")
+//      require(imgSize == 0, "Either img_size or img_h/img_w should be specified; not both.")
       require(imgW > 0 && imgH > 0)
     } else if (imgSize != 0) {
       require(imgSize > 0)
@@ -104,7 +103,7 @@ class PriorBox[T: ClassTag](minSizes: Array[Float], maxSizes: Array[Float] = nul
     }
 
     if (stepH != 0 && stepW != 0) {
-      require(step == 0, "Either step or step_h/step_w should be specified; not both.")
+//      require(step == 0, "Either step or step_h/step_w should be specified; not both.")
       require(stepW > 0 && stepH > 0)
     } else if (step != 0) {
       require(step > 0)

@@ -16,15 +16,18 @@
 
 package com.intel.analytics.zoo.transform.vision.image
 
-import com.intel.analytics.bigdl.dataset.{ChainedTransformer, Transformer}
+import com.intel.analytics.bigdl.dataset.{ChainedTransformer, Sample, Transformer}
+import com.intel.analytics.bigdl.tensor.{Storage, Tensor}
 import com.intel.analytics.bigdl.utils.RandomGenerator._
+import com.intel.analytics.bigdl.utils.T
 import com.intel.analytics.zoo.transform.vision.image.opencv.OpenCVMat
 import org.apache.log4j.Logger
 
-import scala.collection.{Iterator, mutable}
+import scala.collection.{Iterator, Set, mutable}
 import scala.reflect.ClassTag
 
 class ImageFeature extends Serializable {
+  import ImageFeature.logger
   def this(bytes: Array[Byte], label: Any = null, path: String = null) {
     this
     state(ImageFeature.bytes) = bytes
@@ -49,6 +52,8 @@ class ImageFeature extends Serializable {
 
   def opencvMat(): OpenCVMat = state(ImageFeature.mat).asInstanceOf[OpenCVMat]
 
+  def keys(): Set[String] = state.keySet
+
   def hasLabel(): Boolean = state.contains(ImageFeature.label)
 
   def getFloats(key: String = ImageFeature.floats): Array[Float] = {
@@ -71,6 +76,11 @@ class ImageFeature extends Serializable {
 
   def getLabel[T: ClassTag]: T = {
     if (hasLabel()) this (ImageFeature.label).asInstanceOf[T] else null.asInstanceOf[T]
+  }
+
+  def getImInfo(): Tensor[Float] = {
+    Tensor[Float](T(getHeight(), getWidth(), getHeight().toFloat / getOriginalHeight,
+      getWidth().toFloat / getOriginalWidth))
   }
 
   def clear(): Unit = {
@@ -104,6 +114,32 @@ class ImageFeature extends Serializable {
       }
     }
   }
+
+  /**
+   * Convert ImageFeature to image tensor
+   * @param floatKey key that maps the float array
+   * @param toChw transpose the image from hwc to chw
+   * @return tensor that represents an image
+   */
+  def toTensor(floatKey: String, toChw: Boolean = true): Tensor[Float] = {
+    val (floats, size) = if (contains(floatKey)) {
+      (getFloats(floatKey),
+        Array(getHeight(), getWidth(), 3))
+    } else {
+      logger.warn(s"please add MatToFloats(out_key = $floatKey) in the end of pipeline if you" +
+        s"are transforming an rdd")
+      val mat = opencvMat()
+      val floats = new Array[Float](mat.height() * mat.width() * 3)
+      OpenCVMat.toFloatBuf(mat, floats)
+      (floats, Array(mat.height(), mat.width(), 3))
+    }
+    var image = Tensor(Storage(floats)).resize(size)
+    if (toChw) {
+      // transpose the shape of image from (h, w, c) to (c, h, w)
+      image = image.transpose(1, 3).transpose(2, 3).contiguous()
+    }
+    image
+  }
 }
 
 object ImageFeature {
@@ -124,6 +160,8 @@ object ImageFeature {
   : ImageFeature = new ImageFeature(bytes, label, path)
 
   def apply(): ImageFeature = new ImageFeature()
+
+  val logger = Logger.getLogger(getClass)
 }
 
 abstract class FeatureTransformer() extends Transformer[ImageFeature, ImageFeature] {

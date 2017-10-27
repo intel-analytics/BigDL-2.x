@@ -55,26 +55,24 @@ where ```image_folder``` is your image folder, ```output``` is the output folder
 
 ## Download pretrained model for evaluation
 
-https://github.com/weiliu89/caffe/tree/ssd#models
-
-07+12: SSD300, SSD512
+* [SSD 300x300 Vgg Pascal VOC](https://s3-ap-southeast-1.amazonaws.com/bigdl-models/ssd/bigdl_ssd_vgg_300x300_voc.model)
+* [SSD 512x512 Vgg Pascal VOC](https://s3-ap-southeast-1.amazonaws.com/bigdl-models/ssd/bigdl_ssd_vgg_512x512_voc.model)
+* [SSD 300x300 Vgg Coco](https://s3-ap-southeast-1.amazonaws.com/bigdl-models/ssd/bigdl_ssd_vgg_300x300_coco.model)
+* [SSD 512x512 Vgg Coco](https://s3-ap-southeast-1.amazonaws.com/bigdl-models/ssd/bigdl_ssd_vgg_512x512_coco.model)
+* [SSD 300x300 MobileNet Pascal VOC](https://s3-ap-southeast-1.amazonaws.com/bigdl-models/ssd/bigdl_ssd_mobilenet_300x300_voc.model)
 
 ## Run the notebook
 
 1. Get BigDL jar
 * Linux
 ```bash
-mkdir BigDL
-cd BigDL
-wget https://repo1.maven.org/maven2/com/intel/analytics/bigdl/dist-spark-2.1.1-scala-2.11.8-linux64/0.2.0/dist-spark-2.1.1-scala-2.11.8-linux64-0.2.0-dist.zip
-unzip dist-spark-2.1.1-scala-2.11.8-linux64/0.2.0/dist-spark-2.1.1-scala-2.11.8-linux64-0.2.0-dist.zip
+wget https://oss.sonatype.org/content/groups/public/com/intel/analytics/bigdl/dist-spark-2.1.1-scala-2.11.8-linux64/0.3.0-SNAPSHOT/dist-spark-2.1.1-scala-2.11.8-linux64-0.3.0-20171011.104355-69-dist.zip
+unzip dist-spark-2.1.1-scala-2.11.8-linux64-0.3.0-20171011.104355-69-dist.zip -d ~/BigDL
 ```
 * Mac
 ```
-mkdir BigDL
-cd BigDL
-wget https://repo1.maven.org/maven2/com/intel/analytics/bigdl/dist-spark-2.1.1-scala-2.11.8-mac/0.2.0/dist-spark-2.1.1-scala-2.11.8-mac-0.2.0-dist.zip
-unzip dist-spark-2.1.1-scala-2.11.8-mac/0.2.0/dist-spark-2.1.1-scala-2.11.8-mac-0.2.0-dist.zip
+wget https://oss.sonatype.org/content/groups/public/com/intel/analytics/bigdl/dist-spark-2.1.1-scala-2.11.8-mac/0.3.0-SNAPSHOT/dist-spark-2.1.1-scala-2.11.8-mac-0.3.0-20171012.213708-67-dist.zip
+unzip dist-spark-2.1.1-scala-2.11.8-mac-0.3.0-20171012.213708-67-dist.zip -d ~/BigDL
 ```
 2. Get SSD jar
 Download ssd model(vgg+pascal 300x300) from https://drive.google.com/uc?id=0B7vkTZblCs9hM3BmUUJ5Y2dfekk&export=download ,
