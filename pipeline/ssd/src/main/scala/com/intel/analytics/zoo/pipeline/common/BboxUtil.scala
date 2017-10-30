@@ -319,7 +319,7 @@ object BboxUtil {
 
 
   def resultToString(output: Tensor[Float], path: String, toInt: Boolean = true): String = {
-    val decoded = decodeRois(output)
+    val decoded = if (output.dim() == 1) decodeRois(output) else output
     if (decoded.nElement() == 0) ""
     else {
       (1 to decoded.size(1)).map(i => {
