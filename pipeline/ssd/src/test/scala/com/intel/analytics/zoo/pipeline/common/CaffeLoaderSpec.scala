@@ -24,6 +24,7 @@ import com.intel.analytics.zoo.pipeline.common.caffe.{CaffeLoader, FrcnnCaffeLoa
 import com.intel.analytics.zoo.pipeline.ssd.TestUtil
 import com.intel.analytics.zoo.pipeline.ssd.model.{SSDAlexNet, SSDVgg}
 import com.intel.analytics.bigdl.tensor.Tensor
+import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric
 import com.intel.analytics.bigdl.utils.{Engine, T}
 import com.intel.analytics.bigdl.utils.RandomGenerator.RNG
 import com.intel.analytics.zoo.pipeline.common.nn.{FrcnnPostprocessor, Proposal}

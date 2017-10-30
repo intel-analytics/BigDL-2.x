@@ -18,7 +18,6 @@ package com.intel.analytics.zoo.pipeline.common.nn
 
 import com.intel.analytics.zoo.pipeline.ssd.model.ComponetParam
 import com.intel.analytics.bigdl.tensor.{Storage, Tensor}
-import com.intel.analytics.bigdl.utils.T
 import org.scalatest.FlatSpec
 
 class PriorBoxSpec extends FlatSpec {
@@ -31,8 +30,7 @@ class PriorBoxSpec extends FlatSpec {
     val layer = PriorBox[Float](minSizes = param.minSizes, maxSizes = param.maxSizes,
       _aspectRatios = param.aspectRatios, isFlip = param.isFlip, isClip = param.isClip,
       variances = param.variances, step = param.step, offset = 0.5f, imgH = 512, imgW = 512)
-    val feature = Tensor[Float](8, 256, 1, 1)
-    val input = T(feature)
+    val input = Tensor[Float](8, 256, 1, 1)
 
     val out = layer.forward(input)
 
