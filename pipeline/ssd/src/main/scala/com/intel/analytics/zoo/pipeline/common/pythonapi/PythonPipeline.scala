@@ -25,7 +25,7 @@ import com.intel.analytics.bigdl.dataset.{MiniBatch, Sample => JSample}
 import com.intel.analytics.bigdl.python.api.{JTensor, PythonBigDL, Sample}
 import com.intel.analytics.bigdl.tensor.{Storage, Tensor}
 import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric
-import com.intel.analytics.zoo.pipeline.common.dataset.roiimage.{ImageMiniBatch, RoiImageToBatch, SSDMiniBatch}
+import com.intel.analytics.zoo.pipeline.common.dataset.roiimage.{ImageMiniBatch, RoiImageToBatch}
 import com.intel.analytics.zoo.pipeline.common.{ModuleUtil, Predictor}
 import com.intel.analytics.zoo.pipeline.fasterrcnn.{FrcnnMiniBatch, FrcnnToBatch}
 import com.intel.analytics.zoo.transform.vision.pythonapi.{ImageFrame, PythonVisionTransform}

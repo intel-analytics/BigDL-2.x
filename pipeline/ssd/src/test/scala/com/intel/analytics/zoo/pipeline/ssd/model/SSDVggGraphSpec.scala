@@ -174,7 +174,7 @@ class SSDVggGraphSpec extends FlatSpec with Matchers {
       variances = param.variances, step = param.step, offset = 0.5f, imgH = 512, imgW = 512)
 
     val input = Tensor[Float](1, 3, 22, 24)
-    val out = priorbox.forward(input).clone()
+    val out = priorbox.forward(input).toTensor[Float].clone()
     val tmpFile = java.io.File.createTempFile("module", ".bigdl").toString
     priorbox.saveModule(tmpFile, true)
     val model2 = Module.loadModule(tmpFile)

@@ -317,6 +317,8 @@ class CaffeLoader[T: ClassTag](prototxtPath: String, modelPath: String,
     val inputs = layers.filter(layer => layer.prevNodes.isEmpty && layer.nextNodes.nonEmpty).toArray
     val outputs = layers.filter(layer => layer.nextNodes.isEmpty && layer.prevNodes.nonEmpty ||
       outputNames.contains(layer.element.getName())).toArray
+    println("inputs: " + inputs.map(_.element.getName()).mkString(" - "))
+    println("outputs: " + outputs.map(_.element.getName()).mkString(" - "))
     val module = Graph(inputs, outputs)
     module.setName(netparam.getName)
     copyParameters(module)

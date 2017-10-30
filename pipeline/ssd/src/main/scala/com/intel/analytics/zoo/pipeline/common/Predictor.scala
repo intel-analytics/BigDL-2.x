@@ -17,10 +17,10 @@
 package com.intel.analytics.zoo.pipeline.common
 
 import com.intel.analytics.bigdl._
-import com.intel.analytics.bigdl.dataset.{Sample, Transformer}
+import com.intel.analytics.bigdl.dataset.{Transformer}
 import com.intel.analytics.bigdl.models.utils.ModelBroadcast
 import com.intel.analytics.bigdl.numeric.NumericFloat
-import com.intel.analytics.zoo.pipeline.common.dataset.roiimage.{ImageMiniBatch, RoiImageToBatch, SSDMiniBatch}
+import com.intel.analytics.zoo.pipeline.common.dataset.roiimage.{ImageMiniBatch, RoiImageToBatch}
 import com.intel.analytics.bigdl.tensor.Tensor
 import com.intel.analytics.zoo.transform.vision.image.ImageFeature
 import org.apache.spark.rdd.RDD
@@ -28,23 +28,6 @@ import org.apache.spark.rdd.RDD
 import scala.reflect.ClassTag
 
 object Predictor {
-  def predict(rdd: RDD[Sample[Float]], model: Module[Float]): RDD[Tensor[Float]] = {
-    model.evaluate()
-    val broadcastModel = ModelBroadcast().broadcast(rdd.sparkContext, model)
-    rdd.mapPartitions(dataIter => {
-      val localModel = broadcastModel.value()
-      dataIter.flatMap(sample => {
-        sample.feature()
-        val result = localModel.forward(sample.feature()).toTensor[Float]
-        if (result.dim() == 1) {
-          Array(result)
-        } else {
-          result.split(1)
-        }
-      })
-    })
-  }
-
   def detect(rdd: RDD[ImageMiniBatch], model: Module[Float]): RDD[Tensor[Float]] = {
     ModuleUtil.shareMemory(model)
     model.evaluate()

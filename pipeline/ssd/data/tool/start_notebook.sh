@@ -12,7 +12,7 @@ SSD_JAR_PATH=${SSD_HOME}/target/pipeline-0.1-SNAPSHOT-jar-with-dependencies.jar
 
 export PYTHONPATH=${PYTHON_API_ZIP_PATH}:$PYTHONPATH
 export PYSPARK_DRIVER_PYTHON=jupyter
-export PYSPARK_DRIVER_PYTHON_OPTS="notebook --notebook-dir=../../notebook --ip=* --no-browser"
+export PYSPARK_DRIVER_PYTHON_OPTS="notebook --notebook-dir=../../apps --ip=* --no-browser"
 
 ${SPARK_HOME}/bin/pyspark \
     --master ${MASTER} \
