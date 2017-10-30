@@ -16,9 +16,6 @@
 
 package com.intel.analytics.zoo.pipeline.common.pythonapi
 
-import java.util
-import java.util.{ArrayList, List => JList}
-
 import com.intel.analytics.bigdl.Module
 import com.intel.analytics.bigdl.numeric._
 import com.intel.analytics.bigdl.python.api.{JTensor, PythonBigDL}

@@ -50,6 +50,7 @@ object ObjectDetect {
     })
   }
 }
+
 object Predictor {
   def predict(rdd: RDD[SSDMiniBatch],
     model: Module[Float],
