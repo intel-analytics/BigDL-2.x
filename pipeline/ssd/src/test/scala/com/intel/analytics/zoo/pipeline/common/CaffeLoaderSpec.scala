@@ -193,8 +193,8 @@ class CaffeLoaderSpec extends FlatSpec with Matchers {
     if (!new File(prototxt).exists()) {
       cancel("local test")
     }
-    TestUtil.middleRoot = "$home/data/deepbit"
-    val input = TestUtil.loadFeaturesFullPath("$home/data/deepbit/data-2_3_224_224.txt")
+    TestUtil.middleRoot = s"$home/data/deepbit"
+    val input = TestUtil.loadFeaturesFullPath(s"$home/data/deepbit/data-2_3_224_224.txt")
     val model = CaffeLoader.loadCaffe[Float](prototxt, caffemodel)._1
 
     ModuleUtil.shareMemory(model)
@@ -212,7 +212,7 @@ class CaffeLoaderSpec extends FlatSpec with Matchers {
     if (!new File(prototxt).exists()) {
       cancel("local test")
     }
-    TestUtil.middleRoot = "$home/data/deepbit/1.0"
+    TestUtil.middleRoot = s"$home/data/deepbit/1.0"
     val input = TestUtil.loadFeatures("data")
     //    val input = Tensor[Float](1, 3, 227, 227)
     val model = CaffeLoader.loadCaffe[Float](prototxt, caffemodel)._1

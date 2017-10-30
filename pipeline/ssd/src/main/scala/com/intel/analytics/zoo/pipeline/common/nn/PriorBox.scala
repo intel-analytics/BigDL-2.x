@@ -16,7 +16,7 @@
 
 package com.intel.analytics.zoo.pipeline.common.nn
 
-import com.intel.analytics.bigdl.nn.abstractnn.AbstractModule
+import com.intel.analytics.bigdl.nn.abstractnn.{AbstractModule, Activity}
 import com.intel.analytics.bigdl.tensor.Tensor
 import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric
 import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric.{NumericDouble, NumericFloat}
@@ -50,7 +50,7 @@ class PriorBox[T: ClassTag](minSizes: Array[Float], maxSizes: Array[Float] = nul
   var variances: Array[Float] = null, offset: Float = 0.5f,
   var imgH: Int = 0, var imgW: Int = 0, imgSize: Int = 0,
   var stepH: Float = 0, var stepW: Float = 0, step: Float = 0)
-  (implicit ev: TensorNumeric[T]) extends AbstractModule[Tensor[T], Tensor[T], T] {
+  (implicit ev: TensorNumeric[T]) extends AbstractModule[Activity, Tensor[T], T] {
 
   private var aspectRatios: ArrayBuffer[Float] = _
   private var numPriors = 0
@@ -129,10 +129,11 @@ class PriorBox[T: ClassTag](minSizes: Array[Float], maxSizes: Array[Float] = nul
    * @param input
    * @return
    */
-  override def updateOutput(input: Tensor[T]): Tensor[T] = {
+  override def updateOutput(input: Activity): Tensor[T] = {
     require(imgW > 0 && imgH > 0, "imgW and imgH must > 0")
-    val layerW = input.size(4)
-    val layerH = input.size(3)
+    val feature = if (input.isTensor) input.toTensor[Float] else input.toTable[Tensor[Float]](1)
+    val layerW = feature.size(4)
+    val layerH = feature.size(3)
     if (stepW == 0 || stepH == 0) {
       stepW = imgW / layerW.toFloat
       stepH = imgH / layerH.toFloat
@@ -319,8 +320,8 @@ class PriorBox[T: ClassTag](minSizes: Array[Float], maxSizes: Array[Float] = nul
    * @param gradOutput
    * @return
    */
-  override def updateGradInput(input: Tensor[T], gradOutput: Tensor[T]): Tensor[T] = {
-    gradInput.resizeAs(input).zero()
+  override def updateGradInput(input: Activity, gradOutput: Tensor[T]): Activity = {
+    gradInput = null
     gradInput
   }
 

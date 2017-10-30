@@ -313,8 +313,9 @@ class CaffeLoader[T: ClassTag](prototxtPath: String, modelPath: String,
     loadCaffe(prototxtPath, modelPath)
     registerCustomizedConverter()
     val layers = createLayers()
-    val inputs = layers.filter(layer => layer.prevNodes.isEmpty).toArray
-    val outputs = layers.filter(layer => layer.nextNodes.isEmpty ||
+    // some data input is not used, e.g. label
+    val inputs = layers.filter(layer => layer.prevNodes.isEmpty && layer.nextNodes.nonEmpty).toArray
+    val outputs = layers.filter(layer => layer.nextNodes.isEmpty && layer.prevNodes.nonEmpty ||
       outputNames.contains(layer.element.getName())).toArray
     val module = Graph(inputs, outputs)
     module.setName(netparam.getName)
