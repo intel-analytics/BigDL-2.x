@@ -629,6 +629,7 @@ abstract class Converter[T: ClassTag](implicit ev: TensorNumeric[T]) {
     caffe2BigDL("INPUT") = fromCaffeInput
     caffe2BigDL("DATA") = fromCaffeInput
     caffe2BigDL("DUMMYDATA") = fromCaffeInput
+    caffe2BigDL("MEMORYDATA") = fromCaffeInput
     caffe2BigDL("ANNOTATEDDATA") = fromCaffeInput
     caffe2BigDL("DETECTIONEVALUATE") = null
     caffe2BigDL("MULTIBOXLOSS") = null
