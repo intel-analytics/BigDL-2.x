@@ -26,7 +26,7 @@ import com.intel.analytics.bigdl.python.api.{JTensor, PythonBigDL, Sample}
 import com.intel.analytics.bigdl.tensor.{Storage, Tensor}
 import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric
 import com.intel.analytics.zoo.pipeline.common.dataset.roiimage.{ImageMiniBatch, RoiImageToBatch}
-import com.intel.analytics.zoo.pipeline.common.{ModuleUtil, Predictor}
+import com.intel.analytics.zoo.pipeline.common.{ModuleUtil, ObjectDetect, Predictor}
 import com.intel.analytics.zoo.pipeline.fasterrcnn.{FrcnnMiniBatch, FrcnnToBatch}
 import com.intel.analytics.zoo.transform.vision.pythonapi.{ImageFrame, PythonVisionTransform}
 import org.apache.log4j.Logger
@@ -53,7 +53,7 @@ class PythonPipeline[T: ClassTag](implicit ev: TensorNumeric[T]) extends PythonV
   }
 
   def objectPredict(model: Module[Float], imageBatchFrame: ImageBatchFrame): RDD[JTensor] = {
-    val tensorRDD = Predictor.detect(imageBatchFrame.rdd, model)
+    val tensorRDD = ObjectDetect(imageBatchFrame.rdd, model)
     val listRDD = tensorRDD.map { res =>
       val tensor = res.asInstanceOf[Tensor[T]]
       toJTensor(tensor)

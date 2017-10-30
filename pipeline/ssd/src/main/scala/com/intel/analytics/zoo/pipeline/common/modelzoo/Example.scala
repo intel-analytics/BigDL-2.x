@@ -18,16 +18,11 @@ package com.intel.analytics.zoo.pipeline.common.modelzoo
 
 
 import com.intel.analytics.bigdl.nn.Module
-import com.intel.analytics.zoo.pipeline.fasterrcnn.model.{PostProcessParam, PreProcessParam}
-import com.intel.analytics.zoo.pipeline.fasterrcnn.Predictor
 import com.intel.analytics.bigdl.utils.Engine
-import com.intel.analytics.zoo.pipeline.common.{BboxUtil, IOUtils}
-import com.intel.analytics.zoo.pipeline.common.dataset.roiimage.Visualizer
+import com.intel.analytics.zoo.pipeline.common.{IOUtils, ModelType, ObjectDetect}
 import org.apache.log4j.{Level, Logger}
 import org.apache.spark.SparkContext
 import scopt.OptionParser
-
-import scala.io.Source
 
 object Predict {
   Logger.getLogger("org").setLevel(Level.ERROR)
@@ -40,13 +35,13 @@ object Predict {
   case class PredictParam(imageFolder: String = "",
     outputFolder: String = "data/demo",
     folderType: String = "local",
-    modelType: String = "vgg16",
+    modelType: String = "ssd",
+    base: String = "vgg",
     bigdlModel: String = "",
-    caffeDefPath: String = "",
-    caffeModelPath: String = "",
     batch: Int = 8,
     visualize: Boolean = true,
     classname: String = "",
+    resolution: Int = 300,
     nPartition: Int = 1)
 
   val predictParamParser = new OptionParser[PredictParam]("Spark-DL Demo") {
@@ -71,18 +66,20 @@ object Predict {
       .action((x, c) => c.copy(outputFolder = x))
       .required()
     opt[String]('t', "modelType")
-      .text("net type : vgg16 | alexnet | pvanet")
+      .text("ssd | frcnn")
       .action((x, c) => c.copy(modelType = x))
+      .required()
+    opt[String]("base")
+      .text("basenet: vgg | pvanet | mobilenet")
+      .action((x, c) => c.copy(base = x))
       .required()
     opt[String]("model")
       .text("bigdl model path")
       .action((x, c) => c.copy(bigdlModel = x))
-    opt[String]("caffeDefPath")
-      .text("caffe prototxt")
-      .action((x, c) => c.copy(caffeDefPath = x))
-    opt[String]("caffeModelPath")
-      .text("caffe model path")
-      .action((x, c) => c.copy(caffeModelPath = x))
+    opt[Int]('p', "partition")
+      .text("number of partitions")
+      .action((x, c) => c.copy(nPartition = x))
+      .required()
     opt[Int]('b', "batch")
       .text("batch number")
       .action((x, c) => c.copy(batch = x))
@@ -93,9 +90,9 @@ object Predict {
       .text("file store class name")
       .action((x, c) => c.copy(classname = x))
       .required()
-    opt[Int]('p', "partition")
-      .text("number of partitions")
-      .action((x, c) => c.copy(nPartition = x))
+    opt[Int]('r', "resolution")
+      .text("input data resolution")
+      .action((x, c) => c.copy(resolution = x))
       .required()
   }
 
@@ -105,46 +102,38 @@ object Predict {
       val sc = new SparkContext(conf)
       Engine.init
 
-      val classNames = Source.fromFile(params.classname).getLines().toArray
+      val classNames = IOUtils.loadClasses(params.classname)
       val model = Module.loadModule[Float](params.bigdlModel)
-      val (preParam, postParam) = params.modelType match {
-        case "vgg16" =>
-          (PreProcessParam(params.batch, nPartition = params.nPartition),
-            PostProcessParam(0.3f, classNames.length, false, -1, 0))
-        case "pvanet" =>
-          (PreProcessParam(params.batch, Array(640), 32, nPartition = params.nPartition),
-            PostProcessParam(0.4f, classNames.length, true, -1, 0))
-        case _ =>
-          throw new Exception("unsupport network")
-      }
 
       val (data, paths) = params.folderType match {
         case "local" => IOUtils.loadLocalFolder(params.nPartition, params.imageFolder, sc)
         case "seq" => IOUtils.loadSeqFiles(params.nPartition, params.imageFolder, sc)
-        case _ => throw new IllegalArgumentException(s"invalid folder name ${ params.folderType }")
+        case _ => throw new IllegalArgumentException(s"invalid folder name ${params.folderType}")
       }
 
-      val predictor = new Predictor(model, preParam)
-
-      val start = System.nanoTime()
-      val output = predictor.predict(data)
-      if (params.visualize) {
-        output.cache()
+      val input = params.modelType match {
+        case ModelType.ssd =>
+          params.base match {
+            case ModelType.vgg =>
+              IOUtils.preprocessSsdVgg(data, params.resolution, params.nPartition)
+            case ModelType.mobilenet =>
+              IOUtils.preprocessSsdMobilenet(data, params.resolution, params.nPartition)
+          }
+        case ModelType.frcnn =>
+          params.base match {
+            case ModelType.vgg =>
+              IOUtils.preprocessFrcnnVgg(data, params.nPartition)
+            case ModelType.pvanet =>
+              IOUtils.preprocessFrcnnPvanet(data, params.nPartition)
+          }
       }
-      val recordsNum = output.count()
-      val totalTime = (System.nanoTime() - start) / 1e9
-      logger.info(s"[Prediction] ${ recordsNum } in $totalTime seconds. Throughput is ${
-        recordsNum / totalTime
-      } record / sec")
+      val output = ObjectDetect(input, model)
 
       if (params.visualize) {
-        paths.zip(output).foreach(pair => {
-          val decoded = BboxUtil.decodeRois(pair._2)
-          Visualizer.visDetection(pair._1, decoded, classNames, thresh = 0.6f,
-            outPath = params.outputFolder)
-        })
-
-        logger.info(s"labeled images are saved to ${ params.outputFolder }")
+        IOUtils.visualizeDetections(output, paths, classNames, params.outputFolder)
+        logger.info(s"labeled images are saved to ${params.outputFolder}")
+      } else {
+        IOUtils.saveTextResults(output, paths, params.outputFolder)
       }
     }
   }

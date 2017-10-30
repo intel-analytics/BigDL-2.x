@@ -27,8 +27,8 @@ import org.apache.spark.rdd.RDD
 
 import scala.reflect.ClassTag
 
-object Predictor {
-  def detect(rdd: RDD[ImageMiniBatch], model: Module[Float]): RDD[Tensor[Float]] = {
+object ObjectDetect {
+  def apply(rdd: RDD[ImageMiniBatch], model: Module[Float]): RDD[Tensor[Float]] = {
     ModuleUtil.shareMemory(model)
     model.evaluate()
     val broadcastModel = ModelBroadcast().broadcast(rdd.sparkContext, model)
@@ -49,6 +49,8 @@ object Predictor {
       })
     })
   }
+}
+object Predictor {
 
   def predict(rdd: RDD[ImageMiniBatch],
     model: Module[Float],
