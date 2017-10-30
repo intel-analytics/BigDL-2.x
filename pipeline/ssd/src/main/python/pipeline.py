@@ -13,7 +13,7 @@ def share_memory(model):
     return Layer.of(jmodel)
 
 def object_detect(model, image_batch_rdd):
-    tensor_rdd = callBigDlFunc("float", "objectPredict", model, image_batch_rdd)
+    tensor_rdd = callBigDlFunc("float", "objectDetect", model, image_batch_rdd)
     return tensor_rdd.map(lambda tensor: tensor.to_ndarray())
 
 def to_ssd_batch(image_frame, n_partition, batch_per_partition=1):

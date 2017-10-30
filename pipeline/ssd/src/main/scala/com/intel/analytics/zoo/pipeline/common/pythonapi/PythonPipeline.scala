@@ -47,7 +47,7 @@ class PythonPipeline[T: ClassTag](implicit ev: TensorNumeric[T]) extends PythonV
     model
   }
 
-  def objectPredict(model: Module[Float], imageBatchFrame: ImageBatchFrame): RDD[JTensor] = {
+  def objectDetect(model: Module[Float], imageBatchFrame: ImageBatchFrame): RDD[JTensor] = {
     val tensorRDD = ObjectDetect(imageBatchFrame.rdd, model)
     val listRDD = tensorRDD.map { res =>
       val tensor = res.asInstanceOf[Tensor[T]]
