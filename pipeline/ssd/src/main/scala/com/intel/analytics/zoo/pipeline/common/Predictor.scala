@@ -20,7 +20,7 @@ import com.intel.analytics.bigdl._
 import com.intel.analytics.bigdl.dataset.{Transformer}
 import com.intel.analytics.bigdl.models.utils.ModelBroadcast
 import com.intel.analytics.bigdl.numeric.NumericFloat
-import com.intel.analytics.zoo.pipeline.common.dataset.roiimage.{ImageMiniBatch, RoiImageToBatch}
+import com.intel.analytics.zoo.pipeline.common.dataset.roiimage.{ImageMiniBatch, RoiImageToBatch, SSDMiniBatch}
 import com.intel.analytics.bigdl.tensor.Tensor
 import com.intel.analytics.zoo.transform.vision.image.ImageFeature
 import org.apache.spark.rdd.RDD
@@ -51,10 +51,9 @@ object ObjectDetect {
   }
 }
 object Predictor {
-
-  def predict(rdd: RDD[ImageMiniBatch],
+  def predict(rdd: RDD[SSDMiniBatch],
     model: Module[Float],
-    postProcess: (Tensor[Float], ImageMiniBatch) => Tensor[Float])
+    postProcess: (Tensor[Float], SSDMiniBatch) => Tensor[Float])
   : RDD[Tensor[Float]] = {
     model.evaluate()
     val broadcastModel = ModelBroadcast().broadcast(rdd.sparkContext, model)
@@ -74,7 +73,7 @@ object Predictor {
 
   def predict(rdd: RDD[ImageFeature],
     model: Module[Float], outputKey: String, toBatch: RoiImageToBatch,
-    postProcess: (Tensor[Float], ImageMiniBatch) => Tensor[Float])
+    postProcess: (Tensor[Float], SSDMiniBatch) => Tensor[Float])
   : RDD[ImageFeature] = {
     require(toBatch.keepImageFeature)
     model.evaluate()
