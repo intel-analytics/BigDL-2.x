@@ -20,8 +20,7 @@ import java.io.File
 
 import com.intel.analytics.bigdl.tensor.Tensor
 import com.intel.analytics.zoo.pipeline.common.dataset.LocalByteRoiimageReader
-import com.intel.analytics.zoo.pipeline.common.dataset.roiimage._
-import com.intel.analytics.zoo.pipeline.fasterrcnn.FrcnnToBatch
+import com.intel.analytics.zoo.pipeline.common.dataset.roiimage.{FrcnnToBatch, _}
 import com.intel.analytics.zoo.transform.vision.image.{BytesToMat, MatToFloats}
 import com.intel.analytics.zoo.transform.vision.image.augmentation.{AspectScale, ChannelNormalize, Resize}
 import org.apache.hadoop.io.Text

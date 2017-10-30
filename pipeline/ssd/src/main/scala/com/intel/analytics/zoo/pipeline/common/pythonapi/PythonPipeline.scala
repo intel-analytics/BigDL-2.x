@@ -21,13 +21,11 @@ import java.util.{ArrayList, List => JList}
 
 import com.intel.analytics.bigdl.Module
 import com.intel.analytics.bigdl.numeric._
-import com.intel.analytics.bigdl.dataset.{MiniBatch, Sample => JSample}
-import com.intel.analytics.bigdl.python.api.{JTensor, PythonBigDL, Sample}
-import com.intel.analytics.bigdl.tensor.{Storage, Tensor}
+import com.intel.analytics.bigdl.python.api.{JTensor, PythonBigDL}
+import com.intel.analytics.bigdl.tensor.{Tensor}
 import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric
-import com.intel.analytics.zoo.pipeline.common.dataset.roiimage.{ImageMiniBatch, RoiImageToBatch}
-import com.intel.analytics.zoo.pipeline.common.{ModuleUtil, ObjectDetect, Predictor}
-import com.intel.analytics.zoo.pipeline.fasterrcnn.{FrcnnMiniBatch, FrcnnToBatch}
+import com.intel.analytics.zoo.pipeline.common.dataset.roiimage.{FrcnnToBatch, ImageMiniBatch, RoiImageToBatch}
+import com.intel.analytics.zoo.pipeline.common.{ModuleUtil, ObjectDetect}
 import com.intel.analytics.zoo.transform.vision.pythonapi.{ImageFrame, PythonVisionTransform}
 import org.apache.log4j.Logger
 import org.apache.spark.api.java.JavaRDD
