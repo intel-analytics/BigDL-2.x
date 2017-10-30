@@ -29,9 +29,11 @@ class RnnCellDS[T : ClassTag](
   inputSize: Int = 4,
   hiddenSize: Int = 3,
   activation: TensorModule[T],
-  private var initMethod: InitializationMethod = Default)
+  private var initMethod: InitializationMethod = null)
                              (implicit ev: TensorNumeric[T])
   extends Cell[T](Array(hiddenSize)) {
+
+  override var preTopology: TensorModule[T] = null
 
   val parallelTable = ParallelTable[T]()
   val i2h = Identity[T]()
@@ -56,7 +58,7 @@ class RnnCellDS[T : ClassTag](
 
   override def reset(): Unit = {
     initMethod match {
-      case Default =>
+      case null =>
         parallelTable.modules.foreach( m => {
           val inputSize = m.asInstanceOf[Linear[T]].weight.size(1).toFloat
           val outputSize = m.asInstanceOf[Linear[T]].weight.size(2).toFloat
@@ -81,9 +83,8 @@ class RnnCellDS[T : ClassTag](
     gradInput
   }
 
-  override def accGradParameters(input: Table, gradOutput: Table,
-                                 scale: Double = 1.0): Unit = {
-    cell.accGradParameters(input, gradOutput, scale)
+  override def accGradParameters(input: Table, gradOutput: Table): Unit = {
+    cell.accGradParameters(input, gradOutput)
   }
 
   override def updateParameters(learningRate: T): Unit = {

@@ -2,7 +2,7 @@ package com.intel.analytics.zoo.pipeline.deepspeech2.example
 
 import com.intel.analytics.bigdl.utils.Engine
 import com.intel.analytics.zoo.pipeline.deepspeech2.pipeline.acoustic._
-import com.intel.analytics.zoo.pipeline.deepspeech2.util.{LocalOptimizerPerfParam, parser}
+import com.intel.analytics.zoo.pipeline.deepspeech2.util.{DeepSpeech2InferenceParam, parser}
 import org.apache.log4j.{Level, Logger}
 import org.apache.spark.ml.{Pipeline, PipelineModel}
 import org.apache.spark.ml.feature.FlacReader
@@ -18,7 +18,7 @@ object InferenceEvaluate {
 
   def main(args: Array[String]): Unit = {
 
-    parser.parser.parse(args, LocalOptimizerPerfParam()).foreach { param =>
+    parser.parser.parse(args, DeepSpeech2InferenceParam()).foreach { param =>
       val sampleRate = 16000
       val windowSize = 400
       val windowStride = 160

@@ -63,10 +63,9 @@ class BiRecurrentDS[T : ClassTag](
     output
   }
 
-  override def accGradParameters(input: Tensor[T], gradOutput: Tensor[T],
-                                 scale: Double = 1.0): Unit = {
+  override def accGradParameters(input: Tensor[T], gradOutput: Tensor[T]): Unit = {
     val before = System.nanoTime()
-    birnn.accGradParameters(input, gradOutput, scale)
+    birnn.accGradParameters(input, gradOutput)
   }
 
   override def updateGradInput(input: Tensor[T], gradOutput: Tensor[T]): Tensor[T] = {
