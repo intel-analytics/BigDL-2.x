@@ -16,8 +16,8 @@ wget http://msvocds.blob.core.windows.net/coco2015/test2015.zip
 wget http://msvocds.blob.core.windows.net/annotations-1-0-3/instances_train-val2014.zip
 wget http://msvocds.blob.core.windows.net/annotations-1-0-4/image_info_test2014.zip
 wget http://msvocds.blob.core.windows.net/annotations-1-0-4/image_info_test2015.zip
-wget http://www.cs.berkeley.edu/~rbg/faster-rcnn-data/instances_minival2014.json.zip
-wget http://www.cs.berkeley.edu/~rbg/faster-rcnn-data/instances_valminusminival2014.json.zip
+wget https://s3-ap-southeast-1.amazonaws.com/bigdl-models/ssd/instances_minival2014.json.zip
+wget https://s3-ap-southeast-1.amazonaws.com/bigdl-models/ssd/instances_valminusminival2014.json.zip
 
 # Extract the data.
 unzip train2014.zip
