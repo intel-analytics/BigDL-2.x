@@ -59,14 +59,15 @@ case class RoiCrop() extends FeatureTransformer {
   }
 }
 
-case class RoiHFlip() extends FeatureTransformer {
+case class RoiHFlip(normalized: Boolean = true) extends FeatureTransformer {
   override def transformMat(feature: ImageFeature): Unit = {
     require(feature.hasLabel())
     val roiLabel = feature.getLabel[RoiLabel]
     var i = 1
+    val width = if (normalized) 1 else feature.getWidth()
     while (roiLabel.bboxes.nElement() > 0 && i <= roiLabel.bboxes.size(1)) {
-      val x1 = 1 - roiLabel.bboxes.valueAt(i, 1)
-      roiLabel.bboxes.setValue(i, 1, 1 - roiLabel.bboxes.valueAt(i, 3))
+      val x1 = width - roiLabel.bboxes.valueAt(i, 1)
+      roiLabel.bboxes.setValue(i, 1, width - roiLabel.bboxes.valueAt(i, 3))
       roiLabel.bboxes.setValue(i, 3, x1)
       i += 1
     }
@@ -98,6 +99,18 @@ case class RoiExpand() extends FeatureTransformer {
       target.classes.setValue(1, i, transformedAnnot(i - 1).label)
       target.classes.setValue(2, i, transformedAnnot(i - 1).difficult)
       i += 1
+    }
+  }
+}
+
+case class RoiResize(normalized: Boolean = false) extends FeatureTransformer {
+  override def transformMat(feature: ImageFeature): Unit = {
+    require(feature.hasLabel())
+    if (!normalized) {
+      val scaledW = feature.getWidth().toFloat / feature.getOriginalWidth
+      val scaledH = feature.getHeight().toFloat / feature.getOriginalHeight
+      val target = feature.getLabel[RoiLabel]
+        BboxUtil.scaleBBox(target.bboxes, scaledH, scaledW)
     }
   }
 }

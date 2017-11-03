@@ -219,8 +219,8 @@ class RoiExpand(FeatureTransformer):
 
 class RoiHFlip(FeatureTransformer):
 
-    def __init__(self, bigdl_type="float"):
-        super(RoiHFlip, self).__init__(bigdl_type)
+    def __init__(self, normalized=True, bigdl_type="float"):
+        super(RoiHFlip, self).__init__(bigdl_type, normalized)
 
 class RoiNormalize(FeatureTransformer):
 
