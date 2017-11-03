@@ -16,7 +16,7 @@
 package com.intel.analytics.zoo.pipeline.common
 
 import com.intel.analytics.bigdl.nn.Module
-import com.intel.analytics.zoo.pipeline.common.caffe.{SSDCaffeLoader}
+import com.intel.analytics.zoo.pipeline.common.caffe.{FrcnnCaffeLoader, SSDCaffeLoader}
 import scopt.OptionParser
 
 object WeightConverter {
@@ -52,7 +52,8 @@ object CaffeConverter {
   case class CaffeConverterParam(
     caffeDefPath: String = "",
     caffeModelPath: String = "",
-    bigDLModel: String = "")
+    bigDLModel: String = "",
+    modelType: String = "")
 
   val parser = new OptionParser[CaffeConverterParam]("BigDL SSD Caffe Converter") {
     head("BigDL SSD Caffe Converter")
@@ -67,11 +68,20 @@ object CaffeConverter {
     opt[String]('o', "output")
       .text("output bigDL model")
       .action((x, c) => c.copy(bigDLModel = x))
+    opt[String]('t', "modelType")
+      .text("model type: ssd or frcnn")
+      .action((x, c) => {
+        require(x == "ssd" || x == "frcnn", "model type: ssd or frcnn")
+        c.copy(modelType = x)
+      })
   }
 
   def main(args: Array[String]) {
     parser.parse(args, CaffeConverterParam()).foreach { params =>
-      val model = SSDCaffeLoader.loadCaffe(params.caffeDefPath, params.caffeModelPath)
+      val model = params.modelType match {
+        case "ssd" => SSDCaffeLoader.loadCaffe(params.caffeDefPath, params.caffeModelPath)
+        case "frcnn" => FrcnnCaffeLoader.loadCaffe(params.caffeDefPath, params.caffeModelPath)
+      }
       model.saveModule(params.bigDLModel, overWrite = true)
     }
   }

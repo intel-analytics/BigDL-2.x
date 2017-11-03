@@ -122,6 +122,7 @@ object SSDGraph {
 
     val model = Graph(input, Array(loc, conf, priors))
     model.setScaleB(2)
+    stopGradient(model)
     val ssd = Sequential()
     ssd.add(model)
     ssd.add(DetectionOutput(param))
@@ -148,6 +149,13 @@ object SSDGraph {
       val m = module.asInstanceOf[NormalizeScale[Float]]
       m.wRegularizer = wRegularizer
     }
+  }
+
+  private def stopGradient(model: Graph[Float]): Unit = {
+    val priorboxNames = model.modules
+      .filter(_.getClass.getName.toLowerCase().endsWith("priorbox"))
+      .map(_.getName()).toArray
+    model.stopGradient(priorboxNames)
   }
 
 

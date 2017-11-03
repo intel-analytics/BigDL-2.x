@@ -18,6 +18,7 @@ https://drive.google.com/open?id=0B9zID9CU9HQeU1luc2ZKSHA1MjA
    spark-submit --master local[1] \
    --conf spark.driver.memory=20g \
    --conf "spark.serializer=org.apache.spark.serializer.JavaSerializer" \
+   --driver-class-path deepspeech2-0.1-SNAPSHOT-jar-with-dependencies.jar \
    --class com.intel.analytics.zoo.pipeline.deepspeech2.example.InferenceExample \
    deepspeech2-0.1-SNAPSHOT-jar-with-dependencies.jar  \
    -m /path/to/dp2.bigdl -d /path/data/1462-170145-0004.flac -n 1 -p 1 -s 30
