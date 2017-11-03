@@ -25,4 +25,20 @@ https://drive.google.com/open?id=0B9zID9CU9HQeU1luc2ZKSHA1MjA
    ```
 
 
+### Run inference with evaluate:
 
+1. Download model file "dp2.bigdl" from the link above.
+
+2. Import the project into IDE or build with "mvn clean package".
+
+3. script to run ds2 inference evaluate:
+
+```shell
+   spark-submit --master local[1] \
+   --conf spark.driver.memory=20g \
+   --conf "spark.serializer=org.apache.spark.serializer.JavaSerializer" \
+   --driver-class-path deepspeech2-0.3-SNAPSHOT-jar-with-dependencies.jar \
+   --class com.intel.analytics.zoo.pipeline.deepspeech2.example.InferenceEvaluate \
+   deepspeech2-0.3-SNAPSHOT-jar-with-dependencies.jar  \
+   -m /path/to/dp2.bigdl -d /path/data -n 1 -p 1 -s 30
+   ```
