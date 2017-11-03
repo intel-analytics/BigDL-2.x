@@ -6,7 +6,7 @@
 
     <groupId>com.intel.analytics</groupId>
     <artifactId>deepspeech2</artifactId>
-    <version>0.1-SNAPSHOT</version>
+    <version>0.3-SNAPSHOT</version>
     <packaging>jar</packaging>
 
     <repositories>
