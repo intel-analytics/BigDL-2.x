@@ -143,8 +143,8 @@ class PythonVisionTransform[T: ClassTag](implicit ev: TensorNumeric[T]) extends 
     RoiExpand()
   }
 
-  def createRoiHFlip(): RoiHFlip = {
-    RoiHFlip()
+  def createRoiHFlip(normalized: Boolean = true): RoiHFlip = {
+    RoiHFlip(normalized)
   }
 
   def createRoiNormalize(): RoiNormalize = {
