@@ -410,7 +410,7 @@ class FeatureTransformerSpec extends FlatSpec with Matchers {
     val resource = getClass().getClassLoader().getResource("image/000025.jpg")
     val img = Files.readAllBytes(Paths.get(resource.getFile))
     val byteImage = ImageFeature(img)
-    byteImage(ImageFeature.path) = "image/000025.jpg"
+    byteImage(ImageFeature.uri) = "image/000025.jpg"
     val imgAug = BytesToMat() ->
       FixedCrop(-1, -1, -1, -1, normalized = false) ->
       Resize(300, 300, -1) ->

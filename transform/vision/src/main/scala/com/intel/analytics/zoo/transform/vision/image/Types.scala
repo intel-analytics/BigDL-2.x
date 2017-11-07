@@ -28,11 +28,11 @@ import scala.reflect.ClassTag
 
 class ImageFeature extends Serializable {
   import ImageFeature.logger
-  def this(bytes: Array[Byte], label: Any = null, path: String = null) {
+  def this(bytes: Array[Byte], label: Any = null, uri: String = null) {
     this
     state(ImageFeature.bytes) = bytes
-    if (null != path) {
-      state(ImageFeature.path) = path
+    if (null != uri) {
+      state(ImageFeature.uri) = uri
     }
     if (null != label) {
       state(ImageFeature.label) = label
@@ -144,7 +144,7 @@ class ImageFeature extends Serializable {
 
 object ImageFeature {
   val label = "label"
-  val path = "path"
+  val uri = "uri"
   val mat = "mat"
   val bytes = "bytes"
   val floats = "floats"
@@ -191,8 +191,8 @@ abstract class FeatureTransformer() extends Transformer[ImageFeature, ImageFeatu
       }
     } catch {
       case e: Exception =>
-        val path = if (feature.contains(ImageFeature.path)) feature(ImageFeature.path) else ""
-        logger.warn(s"failed ${path} in transformer ${getClass}")
+        val uri = if (feature.contains(ImageFeature.uri)) feature(ImageFeature.uri) else ""
+        logger.warn(s"failed ${uri} in transformer ${getClass}")
         e.printStackTrace()
         feature.isValid = false
     }

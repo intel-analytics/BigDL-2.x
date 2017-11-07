@@ -35,8 +35,8 @@ class BytesToMat()
       feature(ImageFeature.originalH) = mat.height()
     } catch {
       case e: Exception =>
-        val path = if (feature.contains(ImageFeature.path)) feature(ImageFeature.path) else ""
-        logger.warn(s"convert byte to mat fail for ${path}")
+        val uri = if (feature.contains(ImageFeature.uri)) feature(ImageFeature.uri) else ""
+        logger.warn(s"convert byte to mat fail for ${uri}")
         feature(ImageFeature.originalW) = -1
         feature(ImageFeature.originalH) = -1
         feature.isValid = false

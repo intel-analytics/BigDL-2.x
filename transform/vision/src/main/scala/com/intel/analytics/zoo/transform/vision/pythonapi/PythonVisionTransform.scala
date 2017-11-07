@@ -178,7 +178,7 @@ class PythonVisionTransform[T: ClassTag](implicit ev: TensorNumeric[T]) extends 
   }
 
 
-  def createImageFeature(data: JTensor = null, label: JTensor = null, path: String = null)
+  def createImageFeature(data: JTensor = null, label: JTensor = null, uri: String = null)
   : ImageFeature = {
     val feature = new ImageFeature()
     if (null != data) {
@@ -191,8 +191,8 @@ class PythonVisionTransform[T: ClassTag](implicit ev: TensorNumeric[T]) extends 
       // todo: may need a method to change label format if needed
       feature(ImageFeature.label) = toTensor(label)
     }
-    if (null != path) {
-      feature(ImageFeature.path) = path
+    if (null != uri) {
+      feature(ImageFeature.uri) = uri
     }
     feature
   }
