@@ -16,7 +16,7 @@
 
 package com.intel.analytics.zoo.transform.vision.image
 
-import com.intel.analytics.bigdl.dataset.{ChainedTransformer, Sample, Transformer}
+import com.intel.analytics.bigdl.dataset.{ChainedTransformer, Transformer}
 import com.intel.analytics.bigdl.tensor.{Storage, Tensor}
 import com.intel.analytics.bigdl.utils.RandomGenerator._
 import com.intel.analytics.bigdl.utils.T
@@ -246,4 +246,10 @@ class RandomTransformer(transformer: FeatureTransformer, maxProb: Double)
 object RandomTransformer {
   def apply(transformer: FeatureTransformer, maxProb: Double): RandomTransformer =
     new RandomTransformer(transformer, maxProb)
+}
+
+object Image {
+  def read(): ImageFrame = {
+
+  }
 }
