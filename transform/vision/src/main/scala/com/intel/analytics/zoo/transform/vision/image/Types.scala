@@ -340,6 +340,7 @@ object Image {
   def read(path: String): LocalImageFrame = {
     val dir = new File(path)
     require(dir.exists(), s"$path not exists!")
+    require(dir.isDirectory, s"$path is not directory!")
     val images = dir.listFiles().map { p =>
       ImageFeature(FileUtils.readFileToByteArray(p), uri = p.getAbsolutePath)
     }.map(BytesToMat.transform)
