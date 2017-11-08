@@ -51,7 +51,6 @@ class ImageFeature extends Serializable {
     if (null != label) {
       state(ImageFeature.label) = label
     }
-    BytesToMat.transform(this)
   }
 
   private val state = new mutable.HashMap[String, Any]()
@@ -59,7 +58,7 @@ class ImageFeature extends Serializable {
   var isValid = true
 
   def apply[T](key: String): T = {
-    state(key).asInstanceOf[T]
+    if (contains(key)) state(key).asInstanceOf[T] else null.asInstanceOf[T]
   }
 
   def update(key: String, value: Any): Unit = state(key) = value
@@ -328,7 +327,7 @@ object Image {
   def read(path: String, sc: SparkContext): DistributedImageFrame = {
     val images = sc.binaryFiles(path).map { case (p, stream) =>
       ImageFeature(stream.toArray(), uri = p)
-    }
+    }.map(BytesToMat.transform)
     ImageFrame.rdd(images)
   }
 
@@ -343,7 +342,7 @@ object Image {
     require(dir.exists(), s"$path not exists!")
     val images = dir.listFiles().map { p =>
       ImageFeature(FileUtils.readFileToByteArray(p), uri = p.getAbsolutePath)
-    }
+    }.map(BytesToMat.transform)
     ImageFrame.array(images)
   }
 
@@ -359,7 +358,7 @@ object Image {
       val uri = row.getAs[String](ImageFeature.uri)
       val image = row.getAs[Array[Byte]](ImageFeature.bytes)
       ImageFeature(image, uri = uri)
-    })
+    }).map(BytesToMat.transform)
     ImageFrame.rdd(images)
   }
 
