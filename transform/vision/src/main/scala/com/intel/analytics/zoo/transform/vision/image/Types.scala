@@ -249,7 +249,7 @@ object RandomTransformer {
 }
 
 object Image {
-  def read(): ImageFrame = {
-
-  }
+//  def read(): ImageFrame = {
+//
+//  }
 }

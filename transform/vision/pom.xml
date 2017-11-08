@@ -151,6 +151,11 @@
             <scope>system</scope>
             <systemPath>${project.basedir}/src/main/resources/opencv/opencv-320.jar</systemPath>
         </dependency>
+        <dependency>
+            <groupId>org.apache.parquet</groupId>
+            <artifactId>parquet-avro</artifactId>
+            <version>1.9.0</version>
+        </dependency>
     </dependencies>
 
     <build>
