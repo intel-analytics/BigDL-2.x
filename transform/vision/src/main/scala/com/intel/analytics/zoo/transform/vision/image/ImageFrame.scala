@@ -20,16 +20,6 @@ import org.apache.log4j.Logger
 import org.apache.spark.SparkContext
 import org.apache.spark.rdd.RDD
 
-trait ImageFrame {
-  def toLocal(): LocalImageFrame = {
-    this.asInstanceOf[LocalImageFrame]
-  }
-
-  def toDistributed(): DistributedImageFrame = {
-    this.asInstanceOf[DistributedImageFrame]
-  }
-}
-
 object ImageFrame {
   val logger = Logger.getLogger(getClass)
 

@@ -23,8 +23,6 @@ import org.apache.commons.io.FileUtils
 import org.apache.spark.sql.SparkSession
 import org.scalatest.{BeforeAndAfter, FlatSpec, Matchers}
 
-
-
 class ImageSpec extends FlatSpec with Matchers with BeforeAndAfter {
   var spark: SparkSession = null
   val resource = getClass.getClassLoader.getResource("image/")
@@ -41,22 +39,22 @@ class ImageSpec extends FlatSpec with Matchers with BeforeAndAfter {
     val local = Image.read(resource.getFile)
     local.array.length should be(1)
     assert(local.array(0).uri.endsWith("000025.jpg"))
-    assert(local.array(0).image.length == 95959)
+    assert(local.array(0).bytes.length == 95959)
   }
 
   "LocalImageFrame toDistributed" should "work properly" in {
     val local = Image.read(resource.getFile)
-    local.array.foreach(x => println(x.uri, x.image.length))
+    local.array.foreach(x => println(x.uri, x.bytes.length))
     val imageFeature = local.toDistributed(spark.sparkContext).rdd.first()
     assert(imageFeature.uri.endsWith("000025.jpg"))
-    assert(imageFeature.image.length == 95959)
+    assert(imageFeature.bytes.length == 95959)
   }
 
   "read DistributedImageFrame" should "work properly" in {
     val distributed = Image.read(resource.getFile, spark.sparkContext)
     val imageFeature = distributed.rdd.first()
     assert(imageFeature.uri.endsWith("000025.jpg"))
-    assert(imageFeature.image.length == 95959)
+    assert(imageFeature.bytes.length == 95959)
   }
 
   "SequenceFile write and read" should "work properly" in {
@@ -67,7 +65,7 @@ class ImageSpec extends FlatSpec with Matchers with BeforeAndAfter {
     val distributed = Image.readSequenceFile(dir, spark)
     val imageFeature = distributed.rdd.first()
     assert(imageFeature.uri.endsWith("000025.jpg"))
-    assert(imageFeature.image.length == 95959)
+    assert(imageFeature.bytes.length == 95959)
     FileUtils.deleteDirectory(tmpFile)
   }
 }

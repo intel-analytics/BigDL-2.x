@@ -25,19 +25,18 @@ class BytesToMat()
   import BytesToMat.logger
   override def transform(feature: ImageFeature): ImageFeature = {
     if (!feature.isValid) return feature
-    val bytes = feature(ImageFeature.image).asInstanceOf[Array[Byte]]
+    val bytes = feature(ImageFeature.bytes).asInstanceOf[Array[Byte]]
     var mat: OpenCVMat = null
     try {
+      require(null != bytes && bytes.length > 0, "image file bytes should not be empty")
       mat = OpenCVMat.toMat(bytes)
       feature(ImageFeature.mat) = mat
-      feature(ImageFeature.originalW) = mat.width()
-      feature(ImageFeature.originalH) = mat.height()
+      feature(ImageFeature.size) = (mat.height(), mat.width(), mat.channels())
     } catch {
       case e: Exception =>
         val uri = if (feature.contains(ImageFeature.uri)) feature(ImageFeature.uri) else ""
-        logger.warn(s"convert byte to mat fail for ${uri}")
-        feature(ImageFeature.originalW) = -1
-        feature(ImageFeature.originalH) = -1
+        logger.warn(s"convert byte to mat fail for $uri")
+        feature(ImageFeature.size) = (-1, -1, -1)
         feature.isValid = false
     }
     feature
@@ -50,7 +49,7 @@ object BytesToMat {
 }
 
 
-class MatToFloats(validHeight: Int, validWidth: Int,
+class MatToFloats(validHeight: Int, validWidth: Int, validChannels: Int,
   meanRGB: Option[(Float, Float, Float)] = None, outKey: String = ImageFeature.floats)
   extends FeatureTransformer {
   @transient private var data: Array[Float] = _
@@ -72,14 +71,14 @@ class MatToFloats(validHeight: Int, validWidth: Int,
 
   override def transform(feature: ImageFeature): ImageFeature = {
     var input: OpenCVMat = null
-    val (height, width) = if (feature.isValid) {
+    val (height, width, channel) = if (feature.isValid) {
       input = feature.opencvMat()
-      (input.height(), input.width())
+      (input.height(), input.width(), input.channels())
     } else {
-      (validHeight, validWidth)
+      (validHeight, validWidth, validChannels)
     }
-    if (null == data || data.length < height * width * 3) {
-      data = new Array[Float](height * width * 3)
+    if (null == data || data.length < height * width * channel) {
+      data = new Array[Float](height * width * channel)
     }
     if (feature.isValid) {
       try {
@@ -95,8 +94,7 @@ class MatToFloats(validHeight: Int, validWidth: Int,
       }
     }
     feature(outKey) = data
-    feature(ImageFeature.width) = width
-    feature(ImageFeature.height) = height
+    feature(ImageFeature.size) = (height, width, channel)
     feature
   }
 }
@@ -104,9 +102,9 @@ class MatToFloats(validHeight: Int, validWidth: Int,
 object MatToFloats {
   val logger = Logger.getLogger(getClass)
 
-  def apply(validHeight: Int = 300, validWidth: Int = 300,
+  def apply(validHeight: Int = 300, validWidth: Int = 300, validChannels: Int = 3,
     meanRGB: Option[(Float, Float, Float)] = None,
     outKey: String = ImageFeature.floats): MatToFloats =
-    new MatToFloats(validHeight, validWidth, meanRGB, outKey)
+    new MatToFloats(validHeight, validWidth, validChannels, meanRGB, outKey)
 }
 

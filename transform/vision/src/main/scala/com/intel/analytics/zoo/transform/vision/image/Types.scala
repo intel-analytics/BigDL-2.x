@@ -21,23 +21,30 @@ import java.io.File
 import com.intel.analytics.bigdl.dataset.{ChainedTransformer, Transformer}
 import com.intel.analytics.bigdl.tensor.{Storage, Tensor}
 import com.intel.analytics.bigdl.utils.RandomGenerator._
-import com.intel.analytics.bigdl.utils.{Engine, T}
+import com.intel.analytics.bigdl.utils.T
 import com.intel.analytics.zoo.transform.vision.image.opencv.OpenCVMat
 import org.apache.commons.io.FileUtils
-import org.apache.log4j.{Logger}
+import org.apache.log4j.Logger
 import org.apache.spark.SparkContext
-import org.apache.spark.sql.{SparkSession}
+import org.apache.spark.sql.SparkSession
 
-import scala.collection.{Iterator, Set, mutable}
+import scala.collection.{Set, mutable}
 import scala.reflect.ClassTag
 
 class ImageFeature extends Serializable {
 
   import ImageFeature.logger
 
-  def this(image: Array[Byte], label: Any = null, uri: String = null) {
+  /**
+   * Create ImageFeature
+   *
+   * @param bytes image file in bytes
+   * @param label label
+   * @param uri image uri
+   */
+  def this(bytes: Array[Byte], label: Any = null, uri: String = null) {
     this
-    state(ImageFeature.image) = image
+    state(ImageFeature.bytes) = bytes
     if (null != uri) {
       state(ImageFeature.uri) = uri
     }
@@ -49,7 +56,6 @@ class ImageFeature extends Serializable {
   private val state = new mutable.HashMap[String, Any]()
 
   var isValid = true
-
 
   def apply[T](key: String): T = state(key).asInstanceOf[T]
 
@@ -63,36 +69,68 @@ class ImageFeature extends Serializable {
 
   def hasLabel(): Boolean = state.contains(ImageFeature.label)
 
-  def image: Array[Byte] = apply[Array[Byte]](ImageFeature.image)
+  def bytes(): Array[Byte] = apply[Array[Byte]](ImageFeature.bytes)
 
-  def uri: String = apply[String](ImageFeature.uri)
+  def uri(): String = apply[String](ImageFeature.uri)
 
 
   def getFloats(key: String = ImageFeature.floats): Array[Float] = {
     state(key).asInstanceOf[Array[Float]]
   }
 
-  def getWidth(): Int = {
-    if (state.contains(ImageFeature.width)) state(ImageFeature.width).asInstanceOf[Int]
-    else opencvMat().width()
+  /**
+   * get current image size in (height, width, channel)
+   *
+   * @return (height, width, channel)
+   */
+  def getSize: (Int, Int, Int) = {
+    val mat = opencvMat()
+    if (!mat.isReleased) {
+      mat.shape()
+    } else if (contains(ImageFeature.size)) {
+      apply[(Int, Int, Int)](ImageFeature.size)
+    } else {
+      getOriginalSize
+    }
   }
 
-  def getHeight(): Int = {
-    if (state.contains(ImageFeature.height)) state(ImageFeature.height).asInstanceOf[Int]
-    else opencvMat().height()
+  def getHeight(): Int = getSize._1
+
+  def getWidth(): Int = getSize._2
+
+  def getChannel(): Int = getSize._3
+
+  /**
+   * get original image size in (height, width, channel)
+   *
+   * @return (height, width, channel)
+   */
+  def getOriginalSize: (Int, Int, Int) = {
+    if (contains(ImageFeature.originalSize)) {
+      apply[(Int, Int, Int)](ImageFeature.originalSize)
+    } else {
+      logger.warn("there is no original size stored")
+      (-1, -1, -1)
+    }
   }
 
-  def getOriginalWidth: Int = state(ImageFeature.originalW).asInstanceOf[Int]
+  def getOriginalWidth: Int = getOriginalSize._2
 
-  def getOriginalHeight: Int = state(ImageFeature.originalH).asInstanceOf[Int]
+  def getOriginalHeight: Int = getOriginalSize._1
 
   def getLabel[T: ClassTag]: T = {
     if (hasLabel()) this (ImageFeature.label).asInstanceOf[T] else null.asInstanceOf[T]
   }
 
+  /**
+   * imInfo is a tensor that contains height, width, scaleInHeight, scaleInWidth
+   * e.g. it is used in SSD and Faster-RCNN to post process the roi detection
+   */
   def getImInfo(): Tensor[Float] = {
-    Tensor[Float](T(getHeight(), getWidth(), getHeight().toFloat / getOriginalHeight,
-      getWidth().toFloat / getOriginalWidth))
+    val size = getSize
+    val originalSize = getOriginalSize
+    Tensor[Float](T(size._1, size._2, size._1.toFloat / originalSize._1,
+      size._2.toFloat / originalSize._2))
   }
 
   def clear(): Unit = {
@@ -102,11 +140,11 @@ class ImageFeature extends Serializable {
 
 
   def copyTo(storage: Array[Float], offset: Int, floatKey: String = ImageFeature.floats,
-    toRGB: Boolean = true): Unit = {
+             toRGB: Boolean = true): Unit = {
     require(contains(floatKey), s"there should be ${floatKey} in ImageFeature")
     val data = getFloats(floatKey)
     require(data.length >= getWidth() * getHeight() * 3,
-      "float array length should be larger than 3 * ${getWidth()} * ${getHeight()}")
+      s"float array length should be larger than 3 * ${getWidth()} * ${getHeight()}")
     val frameLength = getWidth() * getHeight()
     require(frameLength * 3 + offset <= storage.length)
     var j = 0
@@ -129,7 +167,6 @@ class ImageFeature extends Serializable {
 
   /**
    * Convert ImageFeature to image tensor
-   *
    * @param floatKey key that maps the float array
    * @param toChw transpose the image from hwc to chw
    * @return tensor that represents an image
@@ -160,25 +197,130 @@ object ImageFeature {
   val uri = "uri"
   val mat = "mat"
   // image file in bytes
-  val image = "image"
+  val bytes = "bytes"
   val floats = "floats"
-  val width = "width"
-  val height = "height"
+  val size = "size"
   // original image width
-  val originalW = "originalW"
-  val originalH = "originalH"
+  val originalSize = "originalSize"
   val cropBbox = "cropBbox"
   val expandBbox = "expandBbox"
 
+  /**
+   * Create ImageFeature
+   *
+   * @param bytes image file in bytes
+   * @param label label
+   * @param uri image uri
+   */
   def apply(bytes: Array[Byte], label: Any = null, uri: String = null)
   : ImageFeature = new ImageFeature(bytes, label, uri)
 
   def apply(): ImageFeature = new ImageFeature()
 
+  def fromOpenCVMat(openCVMat: OpenCVMat): ImageFeature = {
+    val imageFeature = new ImageFeature()
+    imageFeature(ImageFeature.mat) = openCVMat
+    imageFeature(ImageFeature.size) = openCVMat.shape()
+    imageFeature
+  }
+
   val logger = Logger.getLogger(getClass)
 }
 
+abstract class FeatureTransformer() extends Transformer[ImageFeature, ImageFeature] {
+
+  import FeatureTransformer.logger
+
+  private var outKey: Option[String] = None
+
+  def setOutKey(key: String): this.type = {
+    outKey = Some(key)
+    this
+  }
+
+  protected def transformMat(feature: ImageFeature): Unit = {}
+
+  def transform(feature: ImageFeature): ImageFeature = {
+    if (!feature.isValid) return feature
+    try {
+      transformMat(feature)
+      if (outKey.isDefined) {
+        require(outKey.get != ImageFeature.mat, s"the output key should not equal to" +
+          s" ${ImageFeature.mat}, please give another name")
+        if (feature.contains(outKey.get)) {
+          val mat = feature(outKey.get).asInstanceOf[OpenCVMat]
+          feature.opencvMat().copyTo(mat)
+        } else {
+          feature(outKey.get) = feature.opencvMat().clone()
+        }
+      }
+    } catch {
+      case e: Exception =>
+        val path = if (feature.contains(ImageFeature.uri)) feature(ImageFeature.uri) else ""
+        logger.warn(s"failed ${path} in transformer ${getClass}")
+        e.printStackTrace()
+        feature.isValid = false
+    }
+    feature
+  }
+
+  override def apply(prev: Iterator[ImageFeature]): Iterator[ImageFeature] = {
+    prev.map(transform)
+  }
+
+  // scalastyle:off methodName
+  // scalastyle:off noSpaceBeforeLeftBracket
+  def ->(other: FeatureTransformer): FeatureTransformer = {
+    new ChainedFeatureTransformer(this, other)
+  }
+
+  // scalastyle:off methodName
+  // scalastyle:off noSpaceBeforeLeftBracket
+  override def ->[C](other: Transformer[ImageFeature, C]): Transformer[ImageFeature, C] = {
+    new ChainedTransformer(this, other)
+  }
+}
+
+object FeatureTransformer {
+  val logger = Logger.getLogger(getClass)
+}
+
+class ChainedFeatureTransformer(first: FeatureTransformer, last: FeatureTransformer) extends
+  FeatureTransformer {
+
+  override def transform(prev: ImageFeature): ImageFeature = {
+    last.transform(first.transform(prev))
+  }
+}
+
+
+class RandomTransformer(transformer: FeatureTransformer, maxProb: Double)
+  extends FeatureTransformer {
+  override def transform(prev: ImageFeature): ImageFeature = {
+    if (RNG.uniform(0, 1) < maxProb) {
+      transformer.transform(prev)
+    }
+    prev
+  }
+
+  override def toString: String = {
+    s"Random[${transformer.getClass.getCanonicalName}, $maxProb]"
+  }
+}
+
+object RandomTransformer {
+  def apply(transformer: FeatureTransformer, maxProb: Double): RandomTransformer =
+    new RandomTransformer(transformer, maxProb)
+}
+
 object Image {
+  /**
+   * Read image as DistributedImageFrame from local file system or HDFS
+   *
+   * @param path path to read images. Local or HDFS. Wildcard character are supported.
+   * @param sc SparkContext
+   * @return DistributedImageFrame
+   */
   def read(path: String, sc: SparkContext): DistributedImageFrame = {
     val images = sc.binaryFiles(path).map { case (p, stream) =>
       ImageFeature(stream.toArray(), uri = p)
@@ -186,6 +328,12 @@ object Image {
     ImageFrame.rdd(images)
   }
 
+  /**
+   * Read image as LocalImageFrame from local directory
+   *
+   * @param path local flatten directory with images
+   * @return LocalImageFrame
+   */
   def read(path: String): LocalImageFrame = {
     val dir = new File(path)
     require(dir.exists(), s"$path not exists!")
@@ -195,22 +343,34 @@ object Image {
     ImageFrame.array(images)
   }
 
-  def readSequenceFile(path: String, sc: SparkSession): DistributedImageFrame = {
-    val df = sc.sqlContext.read.parquet(path)
+  /**
+   * Read sequence file as DistributedImageFrame
+   *
+   * @param path sequence file path
+   * @return DistributedImageFrame
+   */
+  def readSequenceFile(path: String, spark: SparkSession): DistributedImageFrame = {
+    val df = spark.sqlContext.read.parquet(path)
     val images = df.rdd.map(row => {
       val uri = row.getAs[String](ImageFeature.uri)
-      val image = row.getAs[Array[Byte]](ImageFeature.image)
+      val image = row.getAs[Array[Byte]](ImageFeature.bytes)
       ImageFeature(image, uri = uri)
     })
     ImageFrame.rdd(images)
   }
 
+  /**
+   * Write images as sequence file
+   *
+   * @param path path to read images. Local or HDFS. Wildcard character are supported.
+   * @param output sequence file path
+   */
   def writeSequenceFile(path: String, output: String, spark: SparkSession): Unit = {
     import spark.implicits._
     val df = spark.sparkContext.binaryFiles(path)
       .map { case (p, stream) =>
         (p, stream.toArray())
-      }.toDF(ImageFeature.uri, ImageFeature.image)
+      }.toDF(ImageFeature.uri, ImageFeature.bytes)
     df.write.parquet(output)
   }
 }

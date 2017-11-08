@@ -51,6 +51,20 @@ class OpenCVMat() extends Mat with Serializable {
     create(rows, cols, t)
     put(rows, cols, data)
   }
+
+  var isReleased: Boolean = false
+  override def release(): Unit = {
+    super.release()
+    isReleased = true
+  }
+
+  /**
+   * get shape of mat
+   * @return (height, width, channel)
+   */
+  def shape(): (Int, Int, Int) = {
+    (height(), width(), channels())
+  }
 }
 
 object OpenCVMat {

@@ -316,7 +316,7 @@ class FeatureTransformerSpec extends FlatSpec with Matchers {
       Resize(300, 300, -1) ->
       HFlip() ->
       ChannelNormalize(123, 117, 104) ->
-      new MatToFloats(validHeight = 300, validWidth = 300)
+      MatToFloats(validHeight = 300, validWidth = 300)
     val out = imgAug(features)
     out.foreach(img => {
       val tmpFile = java.io.File.createTempFile("module", ".jpg")

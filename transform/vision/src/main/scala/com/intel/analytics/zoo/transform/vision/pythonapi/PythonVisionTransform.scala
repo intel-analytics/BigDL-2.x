@@ -184,8 +184,7 @@ class PythonVisionTransform[T: ClassTag](implicit ev: TensorNumeric[T]) extends 
     if (null != data) {
       val mat = OpenCVMat.floatToMat(data.storage, data.shape(0), data.shape(1))
       feature(ImageFeature.mat) = mat
-      feature(ImageFeature.originalW) = mat.width()
-      feature(ImageFeature.originalH) = mat.height()
+      feature(ImageFeature.size) = mat.shape()
     }
     if (null != label) {
       // todo: may need a method to change label format if needed
@@ -197,12 +196,12 @@ class PythonVisionTransform[T: ClassTag](implicit ev: TensorNumeric[T]) extends 
     feature
   }
 
-  def createMatToFloats(validH: Int, validW: Int,
+  def createMatToFloats(validH: Int, validW: Int, validC: Int,
     meanR: Float = -1, meanG: Float = -1, meanB: Float = -1, outKey: String): MatToFloats = {
     val means = if (-1 != meanR) {
       Some(meanR, meanG, meanB)
     } else None
-    MatToFloats(validH, validW, means, outKey)
+    MatToFloats(validH, validW, validC, means, outKey)
   }
 
   def imageFeatureToSample(imageFeature: ImageFeature,
