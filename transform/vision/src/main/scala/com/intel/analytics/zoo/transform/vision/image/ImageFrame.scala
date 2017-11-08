@@ -17,6 +17,7 @@
 package com.intel.analytics.zoo.transform.vision.image
 
 import org.apache.log4j.Logger
+import org.apache.spark.SparkContext
 import org.apache.spark.rdd.RDD
 
 trait ImageFrame {
@@ -45,6 +46,10 @@ class LocalImageFrame(var array: Array[ImageFeature]) {
   def apply(transformer: FeatureTransformer): LocalImageFrame = {
     array = array.map(transformer.transform)
     this
+  }
+
+  def toDistributed(sc: SparkContext): DistributedImageFrame = {
+    new DistributedImageFrame(sc.parallelize(array))
   }
 }
 

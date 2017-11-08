@@ -32,7 +32,7 @@ class ResizeSpec extends FlatSpec {
 
     val r = 500
     val byteImage2 = Array(ImageFeature(img)).toIterator.flatMap(x => {
-      (1 to 10).toIterator.map(i => x(ImageFeature.bytes).asInstanceOf[Array[Byte]])
+      (1 to 10).toIterator.map(i => x(ImageFeature.image).asInstanceOf[Array[Byte]])
     })
 
     val reize = new RoiImageResizer(r)

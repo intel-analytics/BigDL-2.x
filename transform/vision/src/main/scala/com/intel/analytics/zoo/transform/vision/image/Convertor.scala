@@ -18,7 +18,6 @@ package com.intel.analytics.zoo.transform.vision.image
 
 import com.intel.analytics.zoo.transform.vision.image.opencv.OpenCVMat
 import org.apache.log4j.Logger
-import org.apache.spark.rdd.RDD
 
 
 class BytesToMat()
@@ -26,7 +25,7 @@ class BytesToMat()
   import BytesToMat.logger
   override def transform(feature: ImageFeature): ImageFeature = {
     if (!feature.isValid) return feature
-    val bytes = feature(ImageFeature.bytes).asInstanceOf[Array[Byte]]
+    val bytes = feature(ImageFeature.image).asInstanceOf[Array[Byte]]
     var mat: OpenCVMat = null
     try {
       mat = OpenCVMat.toMat(bytes)

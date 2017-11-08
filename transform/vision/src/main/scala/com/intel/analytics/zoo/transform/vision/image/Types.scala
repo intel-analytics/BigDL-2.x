@@ -17,18 +17,16 @@
 package com.intel.analytics.zoo.transform.vision.image
 
 import java.io.File
-import java.nio.file.Paths
 
-import com.google.common.io.Files
 import com.intel.analytics.bigdl.dataset.{ChainedTransformer, Transformer}
 import com.intel.analytics.bigdl.tensor.{Storage, Tensor}
 import com.intel.analytics.bigdl.utils.RandomGenerator._
 import com.intel.analytics.bigdl.utils.{Engine, T}
 import com.intel.analytics.zoo.transform.vision.image.opencv.OpenCVMat
 import org.apache.commons.io.FileUtils
-import org.apache.log4j.Logger
+import org.apache.log4j.{Logger}
 import org.apache.spark.SparkContext
-import org.apache.spark.sql.{DataFrame, Row, SparkSession}
+import org.apache.spark.sql.{SparkSession}
 
 import scala.collection.{Iterator, Set, mutable}
 import scala.reflect.ClassTag
@@ -37,9 +35,9 @@ class ImageFeature extends Serializable {
 
   import ImageFeature.logger
 
-  def this(bytes: Array[Byte], label: Any = null, uri: String = null) {
+  def this(image: Array[Byte], label: Any = null, uri: String = null) {
     this
-    state(ImageFeature.bytes) = bytes
+    state(ImageFeature.image) = image
     if (null != uri) {
       state(ImageFeature.uri) = uri
     }
@@ -64,6 +62,11 @@ class ImageFeature extends Serializable {
   def keys(): Set[String] = state.keySet
 
   def hasLabel(): Boolean = state.contains(ImageFeature.label)
+
+  def image: Array[Byte] = apply[Array[Byte]](ImageFeature.image)
+
+  def uri: String = apply[String](ImageFeature.uri)
+
 
   def getFloats(key: String = ImageFeature.floats): Array[Float] = {
     state(key).asInstanceOf[Array[Float]]
@@ -156,7 +159,8 @@ object ImageFeature {
   val label = "label"
   val uri = "uri"
   val mat = "mat"
-  val bytes = "bytes"
+  // image file in bytes
+  val image = "image"
   val floats = "floats"
   val width = "width"
   val height = "height"
@@ -170,13 +174,6 @@ object ImageFeature {
   : ImageFeature = new ImageFeature(bytes, label, uri)
 
   def apply(): ImageFeature = new ImageFeature()
-
-  // todo: convert label
-  def fromRow(row: Row): ImageFeature = {
-    val uri = row.getAs[String](ImageFeature.uri)
-    val image = row.getAs[Array[Byte]](ImageFeature.bytes)
-    ImageFeature(image, uri = uri)
-  }
 
   val logger = Logger.getLogger(getClass)
 }
@@ -287,21 +284,19 @@ object Image {
   def readSequenceFile(path: String, sc: SparkSession): DistributedImageFrame = {
     val df = sc.sqlContext.read.parquet(path)
     val images = df.rdd.map(row => {
-      ImageFeature.fromRow(row)
+      val uri = row.getAs[String](ImageFeature.uri)
+      val image = row.getAs[Array[Byte]](ImageFeature.image)
+      ImageFeature(image, uri = uri)
     })
     ImageFrame.rdd(images)
   }
 
   def writeSequenceFile(path: String, output: String, spark: SparkSession): Unit = {
     import spark.implicits._
-    spark.sparkContext.binaryFiles(path).toDF.write.parquet(output)
-  }
-
-
-  def main(args: Array[String]) {
-    val conf = Engine.createSparkConf().setAppName("BigDL SSD Demo")
-    val sc = new SparkContext(conf)
-    Engine.init
-    read("/home/jxy/data/testdata/test")
+    val df = spark.sparkContext.binaryFiles(path)
+      .map { case (p, stream) =>
+        (p, stream.toArray())
+      }.toDF(ImageFeature.uri, ImageFeature.image)
+    df.write.parquet(output)
   }
 }
