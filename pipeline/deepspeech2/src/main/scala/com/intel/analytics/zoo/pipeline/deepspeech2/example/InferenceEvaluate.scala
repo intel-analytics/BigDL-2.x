@@ -49,7 +49,6 @@ object InferenceEvaluate {
     import spark.implicits._
     logger.info(s"load data from $path")
     val paths = sc.textFile(path + "/mapping.txt")
-      .filter(_.startsWith("1462-170142"))
       .take(takeNum)
       .map { line =>
         val firstSpace = line.indexOf(" ")
