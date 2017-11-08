@@ -127,10 +127,9 @@ class ImageFeature extends Serializable {
    * e.g. it is used in SSD and Faster-RCNN to post process the roi detection
    */
   def getImInfo(): Tensor[Float] = {
-    val size = getSize
-    val originalSize = getOriginalSize
-    Tensor[Float](T(size._1, size._2, size._1.toFloat / originalSize._1,
-      size._2.toFloat / originalSize._2))
+    val (height, width, _) = getSize
+    val (oh, ow, _) = getOriginalSize
+    Tensor[Float](T(height, width, height.toFloat / oh, width.toFloat / ow))
   }
 
   def clear(): Unit = {
@@ -195,12 +194,15 @@ class ImageFeature extends Serializable {
 object ImageFeature {
   val label = "label"
   val uri = "uri"
+  // OpenCV mat
   val mat = "mat"
   // image file in bytes
   val bytes = "bytes"
+  // image pixels in float array
   val floats = "floats"
+  // current image size
   val size = "size"
-  // original image width
+  // original image size
   val originalSize = "originalSize"
   val cropBbox = "cropBbox"
   val expandBbox = "expandBbox"
