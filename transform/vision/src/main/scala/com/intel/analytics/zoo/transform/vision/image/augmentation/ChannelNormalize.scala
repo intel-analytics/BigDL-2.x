@@ -32,7 +32,7 @@ class ChannelNormalize(meanR: Float, meanG: Float, meanB: Float,
                        stdR: Float = 1, stdG: Float = 1, stdB: Float = 1)
   extends FeatureTransformer {
   override def transformMat(feature: ImageFeature): Unit = {
-    ChannelNormalize.transform(feature.opencvMat(), feature.opencvMat(),
+    ChannelNormalize.transform(feature.getImage(), feature.getImage(),
       meanR, meanG, meanB, stdR, stdG, stdB)
   }
 }

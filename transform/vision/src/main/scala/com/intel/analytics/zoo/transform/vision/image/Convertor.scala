@@ -19,36 +19,49 @@ package com.intel.analytics.zoo.transform.vision.image
 import com.intel.analytics.zoo.transform.vision.image.opencv.OpenCVMat
 import org.apache.log4j.Logger
 
-
+/**
+ * Transform byte array(original image file in byte) to OpenCVMat
+ */
 class BytesToMat()
   extends FeatureTransformer {
-  import BytesToMat.logger
+
   override def transform(feature: ImageFeature): ImageFeature = {
-    if (!feature.isValid) return feature
-    val bytes = feature(ImageFeature.bytes).asInstanceOf[Array[Byte]]
-    var mat: OpenCVMat = null
-    try {
-      require(null != bytes && bytes.length > 0, "image file bytes should not be empty")
-      mat = OpenCVMat.toMat(bytes)
-      feature(ImageFeature.mat) = mat
-      feature(ImageFeature.size) = (mat.height(), mat.width(), mat.channels())
-    } catch {
-      case e: Exception =>
-        val uri = if (feature.contains(ImageFeature.uri)) feature(ImageFeature.uri) else ""
-        logger.warn(s"convert byte to mat fail for $uri")
-        feature(ImageFeature.size) = (-1, -1, -1)
-        feature.isValid = false
-    }
-    feature
+    BytesToMat.transform(feature)
   }
 }
 
 object BytesToMat {
   val logger = Logger.getLogger(getClass)
   def apply(): BytesToMat = new BytesToMat()
+
+  def transform(feature: ImageFeature): ImageFeature = {
+    if (!feature.isValid) return feature
+    val bytes = feature[Array[Byte]](ImageFeature.bytes)
+    var mat: OpenCVMat = null
+    try {
+      require(null != bytes && bytes.length > 0, "image file bytes should not be empty")
+      mat = OpenCVMat.toMat(bytes)
+      feature(ImageFeature.image) = mat
+      feature(ImageFeature.originalSize) = mat.shape()
+    } catch {
+      case e: Exception =>
+        val uri = if (feature.contains(ImageFeature.uri)) feature(ImageFeature.uri) else ""
+        logger.warn(s"convert byte to mat fail for $uri")
+        feature(ImageFeature.originalSize) = (-1, -1, -1)
+        feature.isValid = false
+    }
+    feature
+  }
 }
 
-
+/**
+ * Transform OpenCVMat to float array, note that in this transformer, the mat is released
+ * @param validHeight valid height in case the mat is invalid
+ * @param validWidth valid width in case the mat is invalid
+ * @param validChannels valid channel in case the mat is invalid
+ * @param meanRGB meansRGB to subtract, it can be replaced by ChannelNormalize
+ * @param outKey key to store float array
+ */
 class MatToFloats(validHeight: Int, validWidth: Int, validChannels: Int,
   meanRGB: Option[(Float, Float, Float)] = None, outKey: String = ImageFeature.floats)
   extends FeatureTransformer {
@@ -72,7 +85,7 @@ class MatToFloats(validHeight: Int, validWidth: Int, validChannels: Int,
   override def transform(feature: ImageFeature): ImageFeature = {
     var input: OpenCVMat = null
     val (height, width, channel) = if (feature.isValid) {
-      input = feature.opencvMat()
+      input = feature.getImage()
       (input.height(), input.width(), input.channels())
     } else {
       (validHeight, validWidth, validChannels)

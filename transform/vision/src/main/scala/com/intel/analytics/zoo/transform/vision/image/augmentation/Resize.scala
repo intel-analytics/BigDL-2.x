@@ -45,7 +45,7 @@ class Resize(resizeH: Int, resizeW: Int,
     } else {
       resizeMode
     }
-    Resize.transform(feature.opencvMat(), feature.opencvMat(), resizeW, resizeH, interpMethod)
+    Resize.transform(feature.getImage(), feature.getImage(), resizeW, resizeH, interpMethod)
   }
 }
 
@@ -74,9 +74,9 @@ class AspectScale(scale: Int, scaleMultipleOf: Int = 1,
   maxSize: Int = 1000) extends FeatureTransformer {
 
   override def transformMat(feature: ImageFeature): Unit = {
-    val (height, width) = AspectScale.getHeightWidthAfterRatioScale(feature.opencvMat(),
+    val (height, width) = AspectScale.getHeightWidthAfterRatioScale(feature.getImage(),
       scale, maxSize, scaleMultipleOf)
-    Resize.transform(feature.opencvMat(), feature.opencvMat(), width, height)
+    Resize.transform(feature.getImage(), feature.getImage(), width, height)
   }
 }
 
@@ -120,9 +120,9 @@ case class RandomAspectScale(scales: Array[Int], scaleMultipleOf: Int = 1,
 
   override def transformMat(feature: ImageFeature): Unit = {
     val scaleTo = scales(Random.nextInt(scales.length))
-    val (height, width) = AspectScale.getHeightWidthAfterRatioScale(feature.opencvMat(),
+    val (height, width) = AspectScale.getHeightWidthAfterRatioScale(feature.getImage(),
       scaleTo, maxSize, scaleMultipleOf)
-    Resize.transform(feature.opencvMat(), feature.opencvMat(), width, height)
+    Resize.transform(feature.getImage(), feature.getImage(), width, height)
   }
 }
 

@@ -33,7 +33,7 @@ class Saturation(deltaLow: Double, deltaHigh: Double)
   require(deltaHigh >= deltaLow, "saturation upper must be >= lower.")
   require(deltaLow >= 0, "saturation lower must be non-negative.")
   override def transformMat(feature: ImageFeature): Unit = {
-    Saturation.transform(feature.opencvMat(), feature.opencvMat(), RNG.uniform(deltaLow, deltaHigh))
+    Saturation.transform(feature.getImage(), feature.getImage(), RNG.uniform(deltaLow, deltaHigh))
   }
 }
 

@@ -23,10 +23,18 @@ import org.apache.spark.rdd.RDD
 object ImageFrame {
   val logger = Logger.getLogger(getClass)
 
+  /**
+   * create LocalImageFrame
+   * @param data array of ImageFeature
+   */
   def array(data: Array[ImageFeature]): LocalImageFrame = {
     new LocalImageFrame(data)
   }
 
+  /**
+   * create DistributedImageFrame
+   * @param data rdd of ImageFeature
+   */
   def rdd(data: RDD[ImageFeature]): DistributedImageFrame = {
     new DistributedImageFrame(data)
   }

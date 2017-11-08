@@ -40,6 +40,7 @@ class ImageSpec extends FlatSpec with Matchers with BeforeAndAfter {
     local.array.length should be(1)
     assert(local.array(0).uri.endsWith("000025.jpg"))
     assert(local.array(0).bytes.length == 95959)
+    local.array(0).getImage().shape() should be((375, 500, 3))
   }
 
   "LocalImageFrame toDistributed" should "work properly" in {
@@ -48,6 +49,7 @@ class ImageSpec extends FlatSpec with Matchers with BeforeAndAfter {
     val imageFeature = local.toDistributed(spark.sparkContext).rdd.first()
     assert(imageFeature.uri.endsWith("000025.jpg"))
     assert(imageFeature.bytes.length == 95959)
+    imageFeature.getImage().shape() should be((375, 500, 3))
   }
 
   "read DistributedImageFrame" should "work properly" in {
@@ -55,6 +57,7 @@ class ImageSpec extends FlatSpec with Matchers with BeforeAndAfter {
     val imageFeature = distributed.rdd.first()
     assert(imageFeature.uri.endsWith("000025.jpg"))
     assert(imageFeature.bytes.length == 95959)
+    imageFeature.getImage().shape() should be((375, 500, 3))
   }
 
   "SequenceFile write and read" should "work properly" in {
