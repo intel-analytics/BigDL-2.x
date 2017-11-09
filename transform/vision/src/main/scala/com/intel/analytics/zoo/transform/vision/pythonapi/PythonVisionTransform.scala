@@ -91,10 +91,10 @@ class PythonVisionTransform[T: ClassTag](implicit ev: TensorNumeric[T]) extends 
   def createCrop(normalized: Boolean = true, roi: JList[Double], roiKey: String)
   : Crop = {
     if (roi != null) {
-      Crop(normalized, bbox = Some(NormalizedBox(roi.get(0).toFloat, roi.get(1).toFloat,
-        roi.get(2).toFloat, roi.get(3).toFloat)))
+      FixedCrop(roi.get(0).toFloat, roi.get(1).toFloat,
+        roi.get(2).toFloat, roi.get(3).toFloat, normalized)
     } else if (!roiKey.isEmpty) {
-      Crop(normalized, roiKey = Some(roiKey))
+      DetectionCrop(roiKey, normalized)
     } else {
       null
     }

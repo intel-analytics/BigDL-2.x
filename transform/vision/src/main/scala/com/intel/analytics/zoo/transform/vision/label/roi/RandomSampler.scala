@@ -24,7 +24,7 @@ import org.opencv.core.Mat
 
 import scala.collection.mutable.ArrayBuffer
 
-object RandomSampler {
+class RandomSampler extends Crop {
   // random cropping samplers
   val batchSamplers = Array(
     new BatchSampler(maxTrials = 1),
@@ -41,7 +41,7 @@ object RandomSampler {
     new BatchSampler(minScale = 0.3, minAspectRatio = 0.5, maxAspectRatio = 2,
       maxOverlap = Some(1.0)))
 
-  def sampleBbox(feature: ImageFeature): NormalizedBox = {
+  def generateRoi(feature: ImageFeature): (Float, Float, Float, Float) = {
     val roiLabel = feature(ImageFeature.label).asInstanceOf[RoiLabel]
     val boxesBuffer = new ArrayBuffer[NormalizedBox]()
     BatchSampler.generateBatchSamples(roiLabel,
@@ -52,14 +52,17 @@ object RandomSampler {
     if (boxesBuffer.nonEmpty) {
       // Randomly pick a sampled bbox and crop the expand_datum.
       val index = (RNG.uniform(0, 1) * boxesBuffer.length).toInt
-      boxesBuffer(index)
+      val bbox = boxesBuffer(index)
+      (bbox.x1, bbox.y1, bbox.x2, bbox.y2)
     } else {
-      NormalizedBox(0, 0, 1, 1)
+      (0, 0, 1, 1)
     }
   }
+}
 
+object RandomSampler {
   def apply(): FeatureTransformer = {
-    Crop(roiGenerator = Some(sampleBbox)) -> RoiCrop()
+    new RandomSampler() -> RoiCrop()
   }
 }
 
