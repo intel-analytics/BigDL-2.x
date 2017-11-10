@@ -2,7 +2,7 @@ package com.intel.analytics.zoo.pipeline.deepspeech2.example
 
 import com.intel.analytics.bigdl.utils.Engine
 import com.intel.analytics.zoo.pipeline.deepspeech2.pipeline.acoustic._
-import com.intel.analytics.zoo.pipeline.deepspeech2.util.{LocalOptimizerPerfParam, parser}
+import com.intel.analytics.zoo.pipeline.deepspeech2.util.{DeepSpeech2InferenceParam, parser}
 import org.apache.log4j.{Level, Logger}
 import org.apache.spark.ml.{Pipeline, PipelineModel}
 import org.apache.spark.ml.feature.FlacReader
@@ -18,7 +18,7 @@ object InferenceEvaluate {
 
   def main(args: Array[String]): Unit = {
 
-    parser.parser.parse(args, LocalOptimizerPerfParam()).foreach { param =>
+    parser.parser.parse(args, DeepSpeech2InferenceParam()).foreach { param =>
       val sampleRate = 16000
       val windowSize = 400
       val windowStride = 160
@@ -34,13 +34,8 @@ object InferenceEvaluate {
       logger.info(s"${df.count()} audio files, in ${df.rdd.partitions.length} partitions")
       df.show()
 
-      val segmenter = new TimeSegmenter()
-        .setSegmentSize(sampleRate * param.segment)
-        .setInputCol("samples")
-        .setOutputCol("segments")
-
       val st = System.nanoTime()
-      val pipeline = getPipeline(param.modelPath, uttLength, windowSize, windowStride, numFilters, sampleRate)
+      val pipeline = getPipeline(param.modelPath, uttLength, windowSize, windowStride, numFilters, sampleRate, param.segment)
       val model = pipeline.fit(df)
 
       evaluate(model, df)
@@ -54,7 +49,6 @@ object InferenceEvaluate {
     import spark.implicits._
     logger.info(s"load data from $path")
     val paths = sc.textFile(path + "/mapping.txt")
-      .filter(_.startsWith("1462-170142"))
       .take(takeNum)
       .map { line =>
         val firstSpace = line.indexOf(" ")
@@ -82,8 +76,12 @@ object InferenceEvaluate {
   }
 
   private[zoo] def getPipeline(modelPath: String, uttLength: Int, windowSize: Int,
-      windowStride: Int, numFilter: Int, sampleRate: Int): Pipeline = {
+      windowStride: Int, numFilter: Int, sampleRate: Int, segment: Int): Pipeline = {
 
+    val segmenter = new TimeSegmenter()
+      .setSegmentSize(sampleRate * segment)
+      .setInputCol("samples")
+      .setOutputCol("segments")
     val windower = new Windower()
       .setInputCol("segments")
       .setOutputCol("window")
@@ -118,7 +116,7 @@ object InferenceEvaluate {
       .setWindowSize(windowSize)
 
     new Pipeline().setStages(
-        Array(windower, dftSpecgram, melbank, transposeFlip, modelTransformer, decoder))
+        Array(segmenter, windower, dftSpecgram, melbank, transposeFlip, modelTransformer, decoder))
   }
 
   private def evaluate(model: PipelineModel, df: DataFrame): Unit = {

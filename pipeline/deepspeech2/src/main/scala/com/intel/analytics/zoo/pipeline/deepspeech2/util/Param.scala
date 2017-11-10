@@ -4,7 +4,7 @@ import scopt.OptionParser
 
 
 object parser {
-  val parser = new OptionParser[LocalOptimizerPerfParam]("DeepSpeech2 Inference") {
+  val parser = new OptionParser[DeepSpeech2InferenceParam]("DeepSpeech2 Inference") {
     head("DS2 inference example")
     opt[String]('d', "dataPath")
       .text("data path (.wav or .flac files). Both local file and HDFS are accepted.")
@@ -26,7 +26,7 @@ object parser {
   }
 }
 
-case class LocalOptimizerPerfParam(
+case class DeepSpeech2InferenceParam(
   dataPath: String = null,
   modelPath: String = null,
   partition: Int = 4,
