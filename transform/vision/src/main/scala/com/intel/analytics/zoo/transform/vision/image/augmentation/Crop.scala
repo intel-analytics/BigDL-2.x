@@ -58,8 +58,7 @@ object Crop {
       x2 = Math.max(Math.min(x2, width), 0f)
       y2 = Math.max(Math.min(y2, height), 0f)
     }
-    val rect = new Rect(x1.toInt, y1.toInt,
-      (x2 - x1 + 1).toInt, (y2 - y1 + 1).toInt)
+    val rect = new Rect(x1.toInt, y1.toInt, (x2 - x1).toInt, (y2 - y1).toInt)
     input.submat(rect).copyTo(output)
     true
   }
