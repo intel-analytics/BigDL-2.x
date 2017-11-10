@@ -136,11 +136,6 @@ class Hue(FeatureTransformer):
     def __init__(self, delta_low, delta_high, bigdl_type="float"):
             super(Hue, self).__init__(bigdl_type, delta_low, delta_high)
 
-class Crop(FeatureTransformer):
-
-    def __init__(self, normalized=True, roi=None, roiKey=None, bigdl_type="float"):
-        super(Crop, self).__init__(bigdl_type, normalized, roi, roiKey)
-
 class ChannelNormalize(FeatureTransformer):
 
     def __init__(self, mean_r, mean_b, mean_g, std_r, std_g, std_b, bigdl_type="float"):
@@ -149,13 +144,23 @@ class ChannelNormalize(FeatureTransformer):
 
 class RandomCrop(FeatureTransformer):
 
-    def __init__(self, crop_width, crop_height, bigdl_type="float"):
-        super(RandomCrop, self).__init__(bigdl_type, crop_width, crop_height)
+    def __init__(self, crop_width, crop_height, is_clip=True, bigdl_type="float"):
+        super(RandomCrop, self).__init__(bigdl_type, crop_width, crop_height, is_clip)
 
 class CenterCrop(FeatureTransformer):
 
-    def __init__(self, crop_width, crop_height, bigdl_type="float"):
-        super(CenterCrop, self).__init__(bigdl_type, crop_width, crop_height)
+    def __init__(self, crop_width, crop_height, is_clip=True, bigdl_type="float"):
+        super(CenterCrop, self).__init__(bigdl_type, crop_width, crop_height, is_clip)
+
+class FixedCrop(FeatureTransformer):
+
+    def __init__(self, x1, y1, x2, y2, normalized=True, is_clip=True, bigdl_type="float"):
+        super(FixedCrop, self).__init__(bigdl_type, x1, y1, x2, y2, normalized, is_clip)
+
+class DetectionCrop(FeatureTransformer):
+
+    def __init__(self, roi_key, normalized=True, bigdl_type="float"):
+        super(DetectionCrop, self).__init__(bigdl_type, roi_key, normalized)
 
 class HFlip(FeatureTransformer):
 

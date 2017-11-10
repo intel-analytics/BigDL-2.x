@@ -17,18 +17,16 @@
 package com.intel.analytics.zoo.transform.vision.pythonapi
 
 import java.util
-import java.util.{ArrayList, List => JList}
+import java.util.{List => JList}
 
 import com.intel.analytics.bigdl.numeric._
-import com.intel.analytics.bigdl.dataset.{Sample => JSample}
 import com.intel.analytics.bigdl.python.api.{JTensor, PythonBigDL, Sample}
-import com.intel.analytics.bigdl.tensor.{Storage, Tensor}
+import com.intel.analytics.bigdl.tensor.{Tensor}
 import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric
 import com.intel.analytics.zoo.transform.vision.image._
 import com.intel.analytics.zoo.transform.vision.image.augmentation._
 import com.intel.analytics.zoo.transform.vision.image.opencv.OpenCVMat
 import com.intel.analytics.zoo.transform.vision.label.roi._
-import com.intel.analytics.zoo.transform.vision.util.NormalizedBox
 import org.apache.log4j.Logger
 import org.apache.spark.api.java.JavaRDD
 import org.apache.spark.rdd.RDD
@@ -80,24 +78,21 @@ class PythonVisionTransform[T: ClassTag](implicit ev: TensorNumeric[T]) extends 
     Contrast(deltaLow, deltaHigh)
   }
 
-  def createRandomCrop(cropWidth: Int, cropHeight: Int): RandomCrop = {
-    RandomCrop(cropWidth, cropHeight)
+  def createRandomCrop(cropWidth: Int, cropHeight: Int, isClip: Boolean): RandomCrop = {
+    RandomCrop(cropWidth, cropHeight, isClip)
   }
 
-  def createCenterCrop(cropWidth: Int, cropHeight: Int): CenterCrop = {
-    CenterCrop(cropWidth, cropHeight)
+  def createCenterCrop(cropWidth: Int, cropHeight: Int, isClip: Boolean): CenterCrop = {
+    CenterCrop(cropWidth, cropHeight, isClip)
   }
 
-  def createCrop(normalized: Boolean = true, roi: JList[Double], roiKey: String)
-  : Crop = {
-    if (roi != null) {
-      Crop(normalized, bbox = Some(NormalizedBox(roi.get(0).toFloat, roi.get(1).toFloat,
-        roi.get(2).toFloat, roi.get(3).toFloat)))
-    } else if (!roiKey.isEmpty) {
-      Crop(normalized, roiKey = Some(roiKey))
-    } else {
-      null
-    }
+  def createFixedCrop(wStart: Float, hStart: Float, wEnd: Float, hEnd: Float, normalized: Boolean,
+    isClip: Boolean): FixedCrop = {
+    FixedCrop(wStart, hStart, wEnd, hEnd, normalized, isClip)
+  }
+
+  def createDetectionCrop(roiKey: String, normalized: Boolean): DetectionCrop = {
+    DetectionCrop(roiKey, normalized)
   }
 
   def createExpand(meansR: Int = 123, meansG: Int = 117, meansB: Int = 104,

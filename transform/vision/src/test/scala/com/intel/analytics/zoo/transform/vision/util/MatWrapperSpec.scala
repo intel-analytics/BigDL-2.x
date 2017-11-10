@@ -27,11 +27,11 @@ class MatWrapperSpec extends FlatSpec with Matchers {
   "toBytes" should "work properly" in {
     val resource = getClass().getClassLoader().getResource("image/000025.jpg")
     val img = OpenCVMat.read(resource.getFile)
-    Crop.transform(img, img, NormalizedBox(0, 0, 0.5f, 0.5f))
+    Crop.transform(img, img, 0, 0, 0.5f, 0.5f)
     Resize.transform(img, img, 300, 300)
 
     val img2 = OpenCVMat.read(resource.getFile)
-    Crop.transform(img2, img2, NormalizedBox(0, 0, 0.5f, 0.5f))
+    Crop.transform(img2, img2, 0, 0, 0.5f, 0.5f)
     val bytes = OpenCVMat.toBytes(img2)
     val mat = OpenCVMat.toMat(bytes)
     Resize.transform(mat, mat, 300, 300)

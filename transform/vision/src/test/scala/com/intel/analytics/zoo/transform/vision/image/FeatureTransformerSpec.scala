@@ -184,7 +184,7 @@ class FeatureTransformerSpec extends FlatSpec with Matchers {
     import scala.sys.process._
     val resource = getClass().getClassLoader().getResource("image/000025.jpg")
     val img = OpenCVMat.read(resource.getFile)
-    Crop.transform(img, img, NormalizedBox(0, 0f, 1, 0.5f))
+    Crop.transform(img, img, 0, 0f, 1, 0.5f)
     val tmpFile = java.io.File.createTempFile("module", ".jpg")
     Imgcodecs.imwrite(tmpFile.getAbsolutePath, img)
     println(s"save to ${tmpFile.getAbsolutePath}, " + new File(tmpFile.getAbsolutePath).length())
@@ -210,8 +210,8 @@ class FeatureTransformerSpec extends FlatSpec with Matchers {
     val img = OpenCVMat.read(resource.getFile)
     val feature = ImageFeature()
     feature(ImageFeature.mat) = img
-    val centerCrop = RandomCrop(200, 200)
-    centerCrop.transform(feature)
+    val crop = RandomCrop(200, 200)
+    crop.transform(feature)
     //    Crop.transform(img, img, NormalizedBox(0, 0f, 1, 0.5f))
     val tmpFile = java.io.File.createTempFile("module", ".jpg")
     Imgcodecs.imwrite(tmpFile.getAbsolutePath, img)
@@ -412,7 +412,7 @@ class FeatureTransformerSpec extends FlatSpec with Matchers {
     val byteImage = ImageFeature(img)
     byteImage(ImageFeature.path) = "image/000025.jpg"
     val imgAug = BytesToMat() ->
-      Crop(useNormalized = false, bbox = Some(NormalizedBox(-1, -1, -1, -1))) ->
+      FixedCrop(-1, -1, -1, -1, normalized = false) ->
       Resize(300, 300, -1) ->
       MatToFloats(validHeight = 300, validWidth = 300)
     val out = imgAug.transform(byteImage)
@@ -424,7 +424,7 @@ class FeatureTransformerSpec extends FlatSpec with Matchers {
     val byteImage = ImageFeature(img)
     val imgAug = BytesToMat() ->
       Resize(1, 1, -1) ->
-      Crop(useNormalized = false, bbox = Some(NormalizedBox(-1, -1, -1, -1))) ->
+      FixedCrop(-1, -1, -1, -1, normalized = false) ->
       MatToFloats(validHeight = 1, validWidth = 1)
     val out = imgAug.transform(byteImage)
     out.getFloats().length should be(3)
