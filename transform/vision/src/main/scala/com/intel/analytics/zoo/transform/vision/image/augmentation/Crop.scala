@@ -23,9 +23,18 @@ import com.intel.analytics.zoo.transform.vision.image.{FeatureTransformer, Image
 import com.intel.analytics.zoo.transform.vision.util.{BboxUtil, NormalizedBox}
 import org.opencv.core.Rect
 
-
+/**
+ * Abstract crop transformer, other crop transformer need to override generateRoi
+ * @param normalized whether the roi is normalized
+ * @param isClip whether to clip the roi to image boundaries
+ */
 abstract class Crop(normalized: Boolean = true, isClip: Boolean = true) extends FeatureTransformer {
 
+  /**
+   * how to generate crop roi
+   * @param feature image feature
+   * @return crop roi
+   */
   def generateRoi(feature: ImageFeature): (Float, Float, Float, Float)
 
   override def transformMat(feature: ImageFeature): Unit = {
