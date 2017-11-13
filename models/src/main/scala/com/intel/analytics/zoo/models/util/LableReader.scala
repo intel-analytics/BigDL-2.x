@@ -23,22 +23,22 @@ import scala.util.parsing.json.JSON
 
 object ImageNetLableReader {
 
-  val prototxt = getClass().getClassLoader().getResource("imageNetCls.lst").getPath
+  val prototxt = getClass().getClassLoader().getResource("imageNetCls.lst")
 
   val indexTolables = new mutable.HashMap[Int, String]()
 
   loadLables
 
   private def loadLables() : Unit = {
-    val source: String = Source.fromFile(prototxt).getLines.mkString
-    val content = JSON.parseFull(source).get.asInstanceOf[Map[String,String]]
-    content.foreach{case (k, v) => {
-      indexTolables(k.toInt) = v
-    }}
+    val source: String = Source.fromURL(prototxt).getLines.mkString
+    val content = JSON.parseFull(source).get.asInstanceOf[Map[String, String]]
+    content.foreach{
+      case (k, v) => indexTolables(k.toInt) = v
+    }
   }
 
   def labelByIndex(index : Int) : String = {
-    require(index >=1 && index <= 1000, "Index invalid")
+    require(index >=1 && index <= 1000, s"Index invalid $index")
     return indexTolables.get(index).get
   }
 

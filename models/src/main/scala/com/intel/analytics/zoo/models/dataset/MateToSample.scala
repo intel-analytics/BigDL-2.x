@@ -45,7 +45,7 @@ class MateToSample(toRGB: Boolean = true) extends Transformer[ImageFeature, Imag
     })
   }
 
-  private def copyTo(from: Array[Float],to: Array[Float], toRGB: Boolean = true): Unit = {
+  private def copyTo(from: Array[Float], to: Array[Float], toRGB: Boolean = true): Unit = {
     val frameLength = from.length / 3
     var j = 0
     if(toRGB) {

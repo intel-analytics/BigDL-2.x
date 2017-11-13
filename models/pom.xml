@@ -13,8 +13,8 @@
     <url>https://github.com/intel-analytics/analytics-zoo</url>
 
     <properties>
-        <java.version>1.7</java.version>
-        <javac.version>1.7</javac.version>
+        <java.version>1.8</java.version>
+        <javac.version>1.8</javac.version>
         <spark-scope>compile</spark-scope>
         <scala.major.version>2.11</scala.major.version>
         <scala.version>2.11.8</scala.version>
@@ -33,7 +33,7 @@
                 <dependency>
                     <groupId>com.intel.analytics.bigdl</groupId>
                     <artifactId>bigdl-SPARK_2.1</artifactId>
-                    <version>0.3.0-SNAPSHOT</version>
+                    <version>0.4.0-SNAPSHOT</version>
                     <scope>${spark-scope}</scope>
                 </dependency>
             </dependencies>
@@ -145,9 +145,9 @@
             <scope>${spark-scope}</scope>
         </dependency>
         <dependency>
-            　　<groupId>com.intel.analytics</groupId>
-            　　<artifactId>vision</artifactId>
-            　　<version>0.1-SNAPSHOT</version>
+            <groupId>com.intel.analytics</groupId>
+            <artifactId>vision</artifactId>
+            <version>0.1-SNAPSHOT</version>
         </dependency>
     </dependencies>
 
@@ -275,41 +275,9 @@
             <plugin>
                 <artifactId>maven-compiler-plugin</artifactId>
                 <configuration>
-                    <source>1.7</source>
-                    <target>1.7</target>
+                    <source>1.8</source>
+                    <target>1.8</target>
                 </configuration>
-            </plugin>
-
-            <plugin>
-                <artifactId>maven-antrun-plugin</artifactId>
-                <version>1.3</version>
-                <executions>
-                    <execution>
-                        <phase>generate-sources</phase>
-                        <configuration>
-                            <tasks>
-                                <echo>Extracting Java classes.</echo>
-                                <unjar src="${project.basedir}/src/main/resources/opencv/opencv-320.jar"
-                                       dest="${project.build.directory}/classes">
-                                    <patternset>
-                                        <include name="**/*.class"/>
-                                    </patternset>
-                                </unjar>
-
-                                <echo>Extracting Java sources.</echo>
-                                <unjar src="${project.basedir}/src/main/resources/opencv/opencv-320.jar"
-                                       dest="${project.build.directory}/upstream-sources">
-                                    <patternset>
-                                        <include name="**/*.java"/>
-                                    </patternset>
-                                </unjar>
-                            </tasks>
-                        </configuration>
-                        <goals>
-                            <goal>run</goal>
-                        </goals>
-                    </execution>
-                </executions>
             </plugin>
 
             <plugin>
@@ -359,6 +327,13 @@
                 </configuration>
                 <executions>
                     <execution>
+                        <id>python</id>
+                        <inherited>false</inherited>
+                        <configuration>
+                            <descriptors>
+                                <descriptor>assembly/python-zip.xml</descriptor>
+                            </descriptors>
+                        </configuration>
                         <phase>package</phase>
                         <goals>
                             <goal>single</goal>

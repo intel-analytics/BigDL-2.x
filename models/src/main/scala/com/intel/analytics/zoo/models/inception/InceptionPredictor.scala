@@ -30,19 +30,19 @@ class InceptionV1Predictor(modelPath : String) extends Predictor with Serializab
   model = ModuleLoader.
     loadFromFile[Float](modelPath).evaluate()
 
-  val transformer = ImageToBytes() -> BytesToMat() -> Resize(256 , 256) ->
-    CenterCrop(224, 224) -> ChannelNormalize((123, 117, 104)) ->
+  val transformer = ImageToBytes() -> BytesToMat() -> Resize(256, 256) ->
+    CenterCrop(224, 224) -> ChannelNormalize(123, 117, 104) ->
     MateToSample(false)
 
   override def predictLocal(path : String, topNum : Int,
                             preprocessor: Transformer[String, ImageSample] = transformer)
-  : Array[PredictResult] = {
+  : PredictResult = {
     doPredictLocal(path, topNum, preprocessor)
   }
 
-  override def predictDistributed(paths : RDD[String], topNum : Int ,
+  override def predictDistributed(paths : RDD[String], topNum : Int,
                                   preprocessor: Transformer[String, ImageSample] = transformer):
-  RDD[Array[PredictResult]] = {
+  RDD[PredictResult] = {
     doPredictDistributed(paths, topNum, preprocessor)
   }
 }

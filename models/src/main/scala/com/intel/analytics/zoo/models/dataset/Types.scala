@@ -23,7 +23,7 @@ import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric.NumericF
 @SerialVersionUID(2531602453913423591L)
 class ImageBatch(samples: Seq[ImageSample]) extends Serializable {
   var input = Tensor[Float]()
-  val infors = Seq[String]()
+  var infors = Seq[String]()
   set
   def set(): this.type = {
     require(samples.length > 0, "samples are empty")
@@ -32,7 +32,7 @@ class ImageBatch(samples: Seq[ImageSample]) extends Serializable {
     var offset = 0
     var i = 0
     while (i < samples.length) {
-      infors :+ samples(i).infor
+      infors = infors :+ samples(i).infor
       val sampleInput = samples(i).input
       val length = sampleInput.storage().array().length - sampleInput.storageOffset() + 1
       NumericFloat.arraycopy(sampleInput.storage().array(), sampleInput.storageOffset() - 1,
@@ -53,14 +53,6 @@ case class ImageSample(val input : Tensor[Float], val infor : String)
 
 
 // Classification prediction result
-case class PredictResult(className : String, credit : Float)
+case class PredictResult(info : String, clsWithCredits: Array[ClassWithCredit])
 
-// case class PredictResult(imgInfo : String, array: Array[PredictClass])
-
-object ImageParam extends Enumeration {
-  type ImageParam = Value
-  val rawImg = Value(0, "RawImg")
-  val tensorInput = Value(1, "TensorInput")
-  val topN = Value(2, "TopN")
-  val paths = Value(3, "Paths")
-}
+case class ClassWithCredit(className : String, credit : Float)

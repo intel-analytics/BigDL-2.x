@@ -42,7 +42,7 @@ class MateToTensor(toRGB: Boolean = true) extends Transformer[ImageFeature, Tens
     })
   }
 
-  private def copyTo(from: Array[Float],to: Array[Float], toRGB: Boolean = true): Unit = {
+  private def copyTo(from: Array[Float], to: Array[Float], toRGB: Boolean = true): Unit = {
     val frameLength = from.length / 3
     var j = 0
     if(toRGB) {

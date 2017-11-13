@@ -57,5 +57,6 @@ class SampleToBatch(totalBatch: Int, partitionNum: Option[Int] = None)
 }
 
 object SampleToBatch {
-  def apply(totalBatch: Int, partitionNum: Option[Int] = None): SampleToBatch = new SampleToBatch(totalBatch, partitionNum)
+  def apply(totalBatch: Int, partitionNum: Option[Int] = None): SampleToBatch
+    = new SampleToBatch(totalBatch, partitionNum)
 }

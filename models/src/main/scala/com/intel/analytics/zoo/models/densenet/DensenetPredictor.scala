@@ -14,24 +14,24 @@
  * limitations under the License.
  */
 
-package com.intel.analytics.zoo.models.mobilenet
+package com.intel.analytics.zoo.models.inception
 
 import com.intel.analytics.bigdl.dataset.Transformer
-import com.intel.analytics.bigdl.example.loadmodel.AlexNetPreprocessor.imageSize
 import com.intel.analytics.bigdl.utils.serializer.ModuleLoader
 import com.intel.analytics.zoo.models.Predictor
 import com.intel.analytics.zoo.models.dataset._
 import com.intel.analytics.zoo.transform.vision.image.{BytesToMat, MatToFloats}
-import com.intel.analytics.zoo.transform.vision.image.augmentation.{CenterCrop, ChannelNormalize, Resize}
+import com.intel.analytics.zoo.transform.vision.image.augmentation.{CenterCrop, ChannelNormalize, PixelNormalizer, Resize}
 import org.apache.spark.rdd.RDD
 
-class MobilenetPredictor(modelPath: String) extends Predictor with Serializable {
+@SerialVersionUID(1078012067749257730L)
+class DensenetPredictor(modelPath : String) extends Predictor with Serializable {
+
   model = ModuleLoader.
     loadFromFile[Float](modelPath).evaluate()
 
   val transformer = ImageToBytes() -> BytesToMat() -> Resize(256, 256) ->
-    CenterCrop(imageSize, imageSize) ->
-    ChannelNormalize(123.68f, 116.78f, 103.94f, 1/0.017f, 1/0.017f, 1/0.017f ) ->
+    CenterCrop(224, 224) -> ChannelNormalize(123f, 117f, 104f, 1/0.017f, 1/0.017f, 1/0.017f) ->
     MateToSample(false)
 
   override def predictLocal(path : String, topNum : Int,
@@ -47,6 +47,6 @@ class MobilenetPredictor(modelPath: String) extends Predictor with Serializable 
   }
 }
 
-object MobilenetPredictor {
-  def apply(modelPath: String): MobilenetPredictor = new MobilenetPredictor(modelPath)
+object DensenetPredictor {
+  def apply(modelPath: String): DensenetPredictor = new DensenetPredictor(modelPath)
 }

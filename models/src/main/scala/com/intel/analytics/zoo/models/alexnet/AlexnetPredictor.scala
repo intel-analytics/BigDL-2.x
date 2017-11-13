@@ -37,19 +37,19 @@ class AlexnetPredictor(modelPath : String, meanPath : String) extends Predictor 
 
   val mean : Array[Float] = createMean(meanPath)
 
-  val transformer = ImageToBytes() -> BytesToMat() -> Resize(256 , 256) ->
+  val transformer = ImageToBytes() -> BytesToMat() -> Resize(256, 256) ->
     PixelNormalizer(mean) -> CenterCrop(227, 227) -> MateToSample(false)
 
 
   override def predictLocal(path : String, topNum : Int,
                             preprocessor: Transformer[String, ImageSample] = transformer)
-  : Array[PredictResult] = {
+  : PredictResult = {
     doPredictLocal(path, topNum, preprocessor)
   }
 
-  override def predictDistributed(paths : RDD[String], topNum : Int ,
+  override def predictDistributed(paths : RDD[String], topNum : Int,
                                   preprocessor: Transformer[String, ImageSample] = transformer):
-    RDD[Array[PredictResult]] = {
+    RDD[PredictResult] = {
     doPredictDistributed(paths, topNum, preprocessor)
   }
 
@@ -67,5 +67,6 @@ class AlexnetPredictor(modelPath : String, meanPath : String) extends Predictor 
 
 object AlexnetPredictor{
 
-  def apply(modelPath: String, meanPath : String): AlexnetPredictor = new AlexnetPredictor(modelPath, meanPath)
+  def apply(modelPath: String, meanPath : String): AlexnetPredictor =
+    new AlexnetPredictor(modelPath, meanPath)
 }
