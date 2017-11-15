@@ -74,7 +74,7 @@ class PascalVoc(val year: String = "2007", val imageSet: String,
 
 object PascalVoc {
   val classes = Array[String](
-    "__background__", // always index 0
+    "__background__", // always index 1 (1-based index)
     "aeroplane", "bicycle", "bird", "boat",
     "bottle", "bus", "car", "cat", "chair",
     "cow", "diningtable", "dog", "horse",
