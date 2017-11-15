@@ -25,6 +25,7 @@ import com.intel.analytics.bigdl.utils.{T, Table}
 
 import scala.reflect.ClassTag
 
+@SerialVersionUID(8394549762420197622L)
 class NormalizeScale[T: ClassTag](val p: Double, val eps: Double = 1e-10,
   val scale: Double, val size: Array[Int],
   var wRegularizer: Regularizer[T] = null)(implicit ev: TensorNumeric[T])

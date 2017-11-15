@@ -69,9 +69,8 @@ object CaffeConverter {
       .text("output bigDL model")
       .action((x, c) => c.copy(bigDLModel = x))
     opt[String]('t', "modelType")
-      .text("model type: ssd or frcnn")
+      .text("model type: general, ssd or frcnn")
       .action((x, c) => {
-        require(x == "ssd" || x == "frcnn", "model type: ssd or frcnn")
         c.copy(modelType = x)
       })
   }
@@ -81,6 +80,7 @@ object CaffeConverter {
       val model = params.modelType match {
         case "ssd" => SSDCaffeLoader.loadCaffe(params.caffeDefPath, params.caffeModelPath)
         case "frcnn" => FrcnnCaffeLoader.loadCaffe(params.caffeDefPath, params.caffeModelPath)
+        case _ => Module.loadCaffeModel[Float](params.caffeDefPath, params.caffeModelPath)
       }
       model.saveModule(params.bigDLModel, overWrite = true)
     }

@@ -30,8 +30,9 @@ import com.intel.analytics.zoo.pipeline.common.BboxUtil
  * scores: holds scores for R regions of interest
  *
  */
-class Proposal(preNmsTopN: Int, postNmsTopN: Int, val ratios: Array[Float],
-  val scales: Array[Float])(
+@SerialVersionUID(5313615238114647805L)
+class Proposal(preNmsTopNTest: Int, postNmsTopNTest: Int, val ratios: Array[Float],
+  val scales: Array[Float], rpnPreNmsTopNTrain: Int, rpnPostNmsTopNTrain: Int)(
   implicit ev: TensorNumeric[Float]) extends AbstractModule[Table, Tensor[Float], Float] {
 
   private val anchorUtil: Anchor = Anchor(ratios, scales)
@@ -39,7 +40,6 @@ class Proposal(preNmsTopN: Int, postNmsTopN: Int, val ratios: Array[Float],
   @transient private var bboxDeltas: Tensor[Float] = _
   @transient private var scores: Tensor[Float] = _
   @transient private var keep: Array[Int] = _
-//  @transient private var rpnRois: Tensor[Float] = _
   @transient private var sortedScores: Tensor[Float] = _
   @transient private var sortedInds: Tensor[Float] = _
   @transient private var filteredProposals: Tensor[Float] = _
@@ -78,7 +78,8 @@ class Proposal(preNmsTopN: Int, postNmsTopN: Int, val ratios: Array[Float],
    */
   override def updateOutput(input: Table): Tensor[Float] = {
     val inputScore = input[Tensor[Float]](1)
-    require(inputScore.size(1) == 1, "currently only support single batch")
+    val imInfo = input[Tensor[Float]](3)
+    require(inputScore.size(1) == 1 && imInfo.size(1) == 1, "currently only support single batch")
     init()
     // transpose from (1, 4A, H, W) to (H * W * A, 4)
     transposeAndReshape(input[Tensor[Float]](2), 4, bboxDeltas)
@@ -88,7 +89,6 @@ class Proposal(preNmsTopN: Int, postNmsTopN: Int, val ratios: Array[Float],
     val scoresOri = inputScore.narrow(2, anchorUtil.anchorNum + 1, anchorUtil.anchorNum)
     transposeAndReshape(scoresOri, 1, scores)
 
-    val imInfo = input[Tensor[Float]](3)
 
     // Generate proposals from bbox deltas and shifted anchors
     // Enumerate all shifts
@@ -103,6 +103,8 @@ class Proposal(preNmsTopN: Int, postNmsTopN: Int, val ratios: Array[Float],
     var keepN = BboxUtil.clipBoxes(proposals, imInfo.valueAt(1, 1), imInfo.valueAt(1, 2), minBoxH
       , minBoxW, scores)
 
+    val preNmsTopN = if (isTraining()) rpnPreNmsTopNTrain else preNmsTopNTest
+    val postNmsTopN = if (isTraining()) rpnPostNmsTopNTrain else postNmsTopNTest
     val topNum = Math.min(preNmsTopN, keepN)
     scores.topk(topNum, dim = 1, increase = false,
       result = sortedScores, indices = sortedInds)
@@ -195,8 +197,9 @@ class Proposal(preNmsTopN: Int, postNmsTopN: Int, val ratios: Array[Float],
 }
 
 object Proposal {
-  def apply(preNmsTopN: Int, postNmsTopN: Int, ratios: Array[Float], scales: Array[Float])
+  def apply(preNmsTopN: Int, postNmsTopN: Int, ratios: Array[Float], scales: Array[Float],
+    rpnPreNmsTopNTrain: Int = 12000, rpnPostNmsTopNTrain: Int = 2000)
     (implicit ev: TensorNumeric[Float]): Proposal
-  = new Proposal(preNmsTopN, postNmsTopN, ratios, scales)
+  = new Proposal(preNmsTopN, postNmsTopN, ratios, scales, rpnPreNmsTopNTrain, rpnPostNmsTopNTrain)
 }
 

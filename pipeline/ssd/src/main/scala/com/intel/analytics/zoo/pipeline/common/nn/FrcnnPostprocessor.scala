@@ -37,6 +37,7 @@ object FrcnnPostprocessor {
     new FrcnnPostprocessor(nmsThresh, nClasses, bboxVote, maxPerImage, thresh)
 }
 
+@SerialVersionUID(5253792953255433914L)
 class FrcnnPostprocessor(var nmsThresh: Float = 0.3f, val nClasses: Int,
   var bboxVote: Boolean, var maxPerImage: Int = 100, var thresh: Double = 0.05)(
   implicit ev: TensorNumeric[Float]) extends AbstractModule[Table, Activity, Float] {
@@ -173,25 +174,35 @@ class FrcnnPostprocessor(var nmsThresh: Float = 0.3f, val nClasses: Int,
       val imageScores = ArrayBuffer[Float]()
       var j = 1
       while (j < nClasses) {
-        val res = results(j).classes
-        if (res.nElement() > 0) {
-          res.apply1(x => {
-            imageScores.append(x)
-            x
-          })
+        if (results(j) != null) {
+          val res = results(j).classes
+          if (res.nElement() > 0) {
+            res.apply1(x => {
+              imageScores.append(x)
+              x
+            })
+          }
         }
         j += 1
       }
       val imageThresh = imageScores.sortWith(_ < _)(imageScores.length - maxPerImage)
       j = 1
       while (j < nClasses) {
-        val box = results(j).bboxes
-        val keep = (1 to box.size(1)).filter(x =>
-          box.valueAt(x, box.size(2)) >= imageThresh).toArray
-        val selectedScores = selectTensor(results(j).classes, keep, 1)
-        val selectedBoxes = selectTensor(results(j).bboxes, keep, 1)
-        results(j).classes.resizeAs(selectedScores).copy(selectedScores)
-        results(j).bboxes.resizeAs(selectedBoxes).copy(selectedBoxes)
+        if (results(j) != null) {
+          val box = results(j).bboxes
+          val keep = (1 to box.size(1)).filter(x =>
+            box.valueAt(x, box.size(2)) >= imageThresh).toArray
+          val selectedScores = selectTensor(results(j).classes, keep, 1)
+          val selectedBoxes = selectTensor(results(j).bboxes, keep, 1)
+          if (selectedScores.nElement() == 0) {
+            // todo: there is a bug in tensor to resizeAs empty tensor
+            results(j).classes.set()
+            results(j).bboxes.set()
+          } else {
+            results(j).classes.resizeAs(selectedScores).copy(selectedScores)
+            results(j).bboxes.resizeAs(selectedBoxes).copy(selectedBoxes)
+          }
+        }
         j += 1
       }
     }
@@ -228,7 +239,9 @@ class FrcnnPostprocessor(var nmsThresh: Float = 0.3f, val nClasses: Int,
       return output
     }
     val imInfo = input[Tensor[Float]](1)
-    val rois = input[Tensor[Float]](2)
+    val roisData = input[Activity](2)
+    val rois = if (roisData.isTable) roisData.toTable[Tensor[Float]](1)
+    else roisData.toTensor[Float]
     val boxDeltas = input[Tensor[Float]](3)
     val scores = input[Tensor[Float]](4)
     require(imInfo.dim() == 2 && imInfo.size(1) == 1 && imInfo.size(2) == 4,
