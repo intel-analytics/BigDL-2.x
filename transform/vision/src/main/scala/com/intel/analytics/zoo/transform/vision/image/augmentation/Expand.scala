@@ -64,7 +64,7 @@ class Expand(meansR: Int = 123, meansG: Int = 117, meansB: Int = 104,
   }
 
   override def transformMat(prev: ImageFeature): Unit = {
-    val mat = prev.getImage()
+    val mat = prev.opencvMat()
     if (Math.abs(maxExpandRatio - 1) >= 1e-2) {
       if (null == expandMat) expandMat = new OpenCVMat()
       val expandBbox = transform(mat, expandMat)

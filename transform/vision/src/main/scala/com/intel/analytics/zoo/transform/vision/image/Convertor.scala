@@ -41,11 +41,11 @@ object BytesToMat {
     try {
       require(null != bytes && bytes.length > 0, "image file bytes should not be empty")
       mat = OpenCVMat.toMat(bytes)
-      feature(ImageFeature.image) = mat
+      feature(ImageFeature.mat) = mat
       feature(ImageFeature.originalSize) = mat.shape()
     } catch {
       case e: Exception =>
-        val uri = if (feature.contains(ImageFeature.uri)) feature(ImageFeature.uri) else ""
+        val uri = feature.uri()
         logger.warn(s"convert byte to mat fail for $uri")
         feature(ImageFeature.originalSize) = (-1, -1, -1)
         feature.isValid = false
@@ -85,7 +85,7 @@ class MatToFloats(validHeight: Int, validWidth: Int, validChannels: Int,
   override def transform(feature: ImageFeature): ImageFeature = {
     var input: OpenCVMat = null
     val (height, width, channel) = if (feature.isValid) {
-      input = feature.getImage()
+      input = feature.opencvMat()
       (input.height(), input.width(), input.channels())
     } else {
       (validHeight, validWidth, validChannels)

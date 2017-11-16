@@ -28,7 +28,7 @@ class Brightness(deltaLow: Double, deltaHigh: Double)
   extends FeatureTransformer {
   require(deltaLow <= deltaHigh)
   override def transformMat(feature: ImageFeature): Unit = {
-    Brightness.transform(feature.getImage(), feature.getImage(), RNG.uniform(deltaLow, deltaHigh))
+    Brightness.transform(feature.opencvMat(), feature.opencvMat(), RNG.uniform(deltaLow, deltaHigh))
   }
 }
 

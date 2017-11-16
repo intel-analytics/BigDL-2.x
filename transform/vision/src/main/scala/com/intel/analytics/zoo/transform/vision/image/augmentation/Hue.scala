@@ -27,7 +27,7 @@ import org.opencv.imgproc.Imgproc
 class Hue(deltaLow: Double, deltaHigh: Double)
   extends FeatureTransformer {
   override def transformMat(feature: ImageFeature): Unit = {
-    Hue.transform(feature.getImage(), feature.getImage(), RNG.uniform(deltaLow, deltaHigh))
+    Hue.transform(feature.opencvMat(), feature.opencvMat(), RNG.uniform(deltaLow, deltaHigh))
   }
 }
 

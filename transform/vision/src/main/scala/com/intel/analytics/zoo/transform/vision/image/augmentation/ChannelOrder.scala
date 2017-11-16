@@ -27,7 +27,7 @@ import org.opencv.core.{Core, Mat}
  */
 class ChannelOrder() extends FeatureTransformer {
   override def transformMat(feature: ImageFeature): Unit = {
-    ChannelOrder.transform(feature.getImage(), feature.getImage())
+    ChannelOrder.transform(feature.opencvMat(), feature.opencvMat())
   }
 
 }

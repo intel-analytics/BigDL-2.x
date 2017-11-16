@@ -30,7 +30,7 @@ class PixelNormalizer(means : Array[Float]) extends FeatureTransformer {
   val data = new Array[Float](means.length)
 
   override def transformMat(feature: ImageFeature): Unit = {
-    val openCVMat = feature.getImage()
+    val openCVMat = feature.opencvMat()
     if (openCVMat.`type`() != CvType.CV_32FC3) {
       openCVMat.convertTo(openCVMat, CvType.CV_32FC3)
     }

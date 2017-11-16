@@ -183,7 +183,7 @@ class PythonVisionTransform[T: ClassTag](implicit ev: TensorNumeric[T]) extends 
     val feature = new ImageFeature()
     if (null != data) {
       val mat = OpenCVMat.floatToMat(data.storage, data.shape(0), data.shape(1))
-      feature(ImageFeature.image) = mat
+      feature(ImageFeature.mat) = mat
       feature(ImageFeature.size) = mat.shape()
     }
     if (null != label) {

@@ -65,7 +65,15 @@ class ImageFeature extends Serializable {
 
   def contains(key: String): Boolean = state.contains(key)
 
-  def getImage(): OpenCVMat = apply[OpenCVMat](ImageFeature.image)
+  /**
+   * get original image file in bytes
+   */
+  def getImage(): Array[Byte] = apply[Array[Byte]](ImageFeature.bytes)
+
+  /**
+   * get opencv mat from ImageFeature, note that it may be empty if it is released
+   */
+  def opencvMat(): OpenCVMat = apply[OpenCVMat](ImageFeature.mat)
 
   def keys(): Set[String] = state.keySet
 
@@ -94,7 +102,7 @@ class ImageFeature extends Serializable {
    * @return (height, width, channel)
    */
   def getSize: (Int, Int, Int) = {
-    val mat = getImage()
+    val mat = opencvMat()
     if (!mat.isReleased) {
       mat.shape()
     } else if (contains(ImageFeature.size)) {
@@ -185,7 +193,7 @@ class ImageFeature extends Serializable {
     } else {
       logger.warn(s"please add MatToFloats(out_key = $floatKey) in the end of pipeline if you" +
         s"are transforming an rdd")
-      val mat = getImage()
+      val mat = opencvMat()
       val floats = new Array[Float](mat.height() * mat.width() * 3)
       OpenCVMat.toFloatBuf(mat, floats)
       (floats, Array(mat.height(), mat.width(), 3))
@@ -203,7 +211,7 @@ object ImageFeature {
   val label = "label"
   val uri = "uri"
   // image in OpenCVMat
-  val image = "image"
+  val mat = "mat"
   // image file in bytes
   val bytes = "bytes"
   // image pixels in float array
@@ -248,13 +256,13 @@ abstract class FeatureTransformer() extends Transformer[ImageFeature, ImageFeatu
     try {
       transformMat(feature)
       if (outKey.isDefined) {
-        require(outKey.get != ImageFeature.image, s"the output key should not equal to" +
-          s" ${ImageFeature.image}, please give another name")
+        require(outKey.get != ImageFeature.mat, s"the output key should not equal to" +
+          s" ${ImageFeature.mat}, please give another name")
         if (feature.contains(outKey.get)) {
           val mat = feature[OpenCVMat](outKey.get)
-          feature.getImage().copyTo(mat)
+          feature.opencvMat().copyTo(mat)
         } else {
-          feature(outKey.get) = feature.getImage().clone()
+          feature(outKey.get) = feature.opencvMat().clone()
         }
       }
     } catch {

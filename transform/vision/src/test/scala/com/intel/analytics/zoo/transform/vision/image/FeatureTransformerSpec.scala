@@ -43,7 +43,7 @@ class FeatureTransformerSpec extends FlatSpec with Matchers {
     val resource = getClass().getClassLoader().getResource("image/000025.jpg")
     val img = OpenCVMat.read(resource.getFile)
     val feature = ImageFeature()
-    feature(ImageFeature.image) = img
+    feature(ImageFeature.mat) = img
     val colorJitter = ColorJitter()
     val out = colorJitter.transform(feature)
     val tmpFile = java.io.File.createTempFile("module", ".jpg")
@@ -55,7 +55,7 @@ class FeatureTransformerSpec extends FlatSpec with Matchers {
     val resource = getClass().getClassLoader().getResource("image/000025.jpg")
     val img = OpenCVMat.read(resource.getFile)
     val feature = ImageFeature()
-    feature(ImageFeature.image) = img
+    feature(ImageFeature.mat) = img
     val colorJitter = ColorJitter(shuffle = true)
     val out = colorJitter.transform(feature)
     val tmpFile = java.io.File.createTempFile("module", ".jpg")
@@ -79,11 +79,11 @@ class FeatureTransformerSpec extends FlatSpec with Matchers {
     val resource = getClass().getClassLoader().getResource("image/000025.jpg")
     val img = OpenCVMat.read(resource.getFile)
     val feature = new ImageFeature
-    feature(ImageFeature.image) = img
+    feature(ImageFeature.mat) = img
     val expand = new Expand()
     expand.transform(feature)
     val tmpFile = java.io.File.createTempFile("module", ".jpg")
-    Imgcodecs.imwrite(tmpFile.getAbsolutePath, feature.getImage())
+    Imgcodecs.imwrite(tmpFile.getAbsolutePath, feature.opencvMat())
     println(s"save to ${tmpFile.getAbsolutePath}, " + new File(tmpFile.getAbsolutePath).length())
   }
 
@@ -93,22 +93,22 @@ class FeatureTransformerSpec extends FlatSpec with Matchers {
     val img = OpenCVMat.read(resource.getFile)
     val feature = new ImageFeature
     val feature2 = new ImageFeature
-    feature(ImageFeature.image) = OpenCVMat.read(resource.getFile)
-    feature2(ImageFeature.image) = OpenCVMat.read(resource.getFile)
+    feature(ImageFeature.mat) = OpenCVMat.read(resource.getFile)
+    feature2(ImageFeature.mat) = OpenCVMat.read(resource.getFile)
     val normalize = ChannelNormalize(100, 200, 300) ->
       MatToFloats(validHeight = img.height(), validWidth = img.width())
     val normalize2 = MatToFloats(validHeight = img.height(),
       validWidth = img.width(), meanRGB = Some((100f, 200f, 300f)))
     var start = System.nanoTime()
     (1 to 5).foreach(i => {
-      feature(ImageFeature.image) = OpenCVMat.read(resource.getFile)
+      feature(ImageFeature.mat) = OpenCVMat.read(resource.getFile)
       normalize.transform(feature)
     })
 
     println(s"use mat takes ${(System.nanoTime() - start) / 1e9}s")
     start = System.nanoTime()
     (1 to 5).foreach(i => {
-      feature2(ImageFeature.image) = OpenCVMat.read(resource.getFile)
+      feature2(ImageFeature.mat) = OpenCVMat.read(resource.getFile)
       normalize2.transform(feature2)
     })
     println(s"no mat takes ${(System.nanoTime() - start) / 1e9}s")
@@ -138,13 +138,13 @@ class FeatureTransformerSpec extends FlatSpec with Matchers {
       337.0, 1.0, 390.0, 107.0).map(_.toFloat)
     val label = RoiLabel(Tensor(Storage(classes)).resize(2, 11),
       Tensor(Storage(boxes)).resize(11, 4))
-    feature(ImageFeature.image) = img
+    feature(ImageFeature.mat) = img
     feature(ImageFeature.label) = label
     val expand = RoiNormalize() -> Expand() -> RoiExpand()
     expand.transform(feature)
     val tmpFile = java.io.File.createTempFile("module", ".jpg")
     visulize(label, img)
-    Imgcodecs.imwrite(tmpFile.getAbsolutePath, feature.getImage())
+    Imgcodecs.imwrite(tmpFile.getAbsolutePath, feature.opencvMat())
     println(s"save to ${tmpFile.getAbsolutePath}, " + new File(tmpFile.getAbsolutePath).length())
   }
 
@@ -169,14 +169,14 @@ class FeatureTransformerSpec extends FlatSpec with Matchers {
       337.0, 1.0, 390.0, 107.0).map(_.toFloat)
     val label = RoiLabel(Tensor(Storage(classes)).resize(2, 11),
       Tensor(Storage(boxes)).resize(11, 4))
-    feature(ImageFeature.image) = img
+    feature(ImageFeature.mat) = img
     feature(ImageFeature.label) = label
     val expand = RoiNormalize() -> RandomTransformer(Expand() -> RoiExpand()
       , 0.5)
     expand.transform(feature)
     val tmpFile = java.io.File.createTempFile("module", ".jpg")
     visulize(label, img)
-    Imgcodecs.imwrite(tmpFile.getAbsolutePath, feature.getImage())
+    Imgcodecs.imwrite(tmpFile.getAbsolutePath, feature.opencvMat())
     println(s"save to ${tmpFile.getAbsolutePath}, " + new File(tmpFile.getAbsolutePath).length())
   }
 
@@ -195,7 +195,7 @@ class FeatureTransformerSpec extends FlatSpec with Matchers {
     val resource = getClass().getClassLoader().getResource("image/000025.jpg")
     val img = OpenCVMat.read(resource.getFile)
     val feature = ImageFeature()
-    feature(ImageFeature.image) = img
+    feature(ImageFeature.mat) = img
     val centerCrop = CenterCrop(200, 200)
     centerCrop.transform(feature)
 //    Crop.transform(img, img, NormalizedBox(0, 0f, 1, 0.5f))
@@ -209,7 +209,7 @@ class FeatureTransformerSpec extends FlatSpec with Matchers {
     val resource = getClass().getClassLoader().getResource("image/000025.jpg")
     val img = OpenCVMat.read(resource.getFile)
     val feature = ImageFeature()
-    feature(ImageFeature.image) = img
+    feature(ImageFeature.mat) = img
     val crop = RandomCrop(200, 200)
     crop.transform(feature)
     //    Crop.transform(img, img, NormalizedBox(0, 0f, 1, 0.5f))
@@ -246,7 +246,7 @@ class FeatureTransformerSpec extends FlatSpec with Matchers {
     val img = OpenCVMat.read(resource.getFile)
     val filler = Filler(0, 0, 0.5f, 0.5f)
     val feature = ImageFeature()
-    feature(ImageFeature.image) = img
+    feature(ImageFeature.mat) = img
     filler.transform(feature)
     val name = s"input000025" +
       s"ChannelOrder-${System.nanoTime()}"
