@@ -63,9 +63,9 @@ class ImageSpec extends FlatSpec with Matchers with BeforeAndAfter {
   "SequenceFile write and read" should "work properly" in {
     val tmpFile = Files.createTempDir()
     val dir = tmpFile.toString + "/parque"
-    Image.writeSequenceFile(resource.getFile, dir, spark)
+    Image.writeParquet(resource.getFile, dir, spark)
 
-    val distributed = Image.readSequenceFile(dir, spark)
+    val distributed = Image.readParquet(dir, spark)
     val imageFeature = distributed.rdd.first()
     assert(imageFeature.uri.endsWith("000025.jpg"))
     assert(imageFeature.bytes.length == 95959)

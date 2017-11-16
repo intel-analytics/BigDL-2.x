@@ -348,12 +348,12 @@ object Image {
   }
 
   /**
-   * Read sequence file as DistributedImageFrame
+   * Read parquet file as DistributedImageFrame
    *
-   * @param path sequence file path
+   * @param path Parquet file path
    * @return DistributedImageFrame
    */
-  def readSequenceFile(path: String, spark: SparkSession): DistributedImageFrame = {
+  def readParquet(path: String, spark: SparkSession): DistributedImageFrame = {
     val df = spark.sqlContext.read.parquet(path)
     val images = df.rdd.map(row => {
       val uri = row.getAs[String](ImageFeature.uri)
@@ -364,12 +364,12 @@ object Image {
   }
 
   /**
-   * Write images as sequence file
+   * Write images as parquet file
    *
    * @param path path to read images. Local or HDFS. Wildcard character are supported.
-   * @param output sequence file path
+   * @param output Parquet file path
    */
-  def writeSequenceFile(path: String, output: String, spark: SparkSession): Unit = {
+  def writeParquet(path: String, output: String, spark: SparkSession): Unit = {
     import spark.implicits._
     val df = spark.sparkContext.binaryFiles(path)
       .map { case (p, stream) =>
