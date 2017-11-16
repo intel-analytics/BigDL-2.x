@@ -39,7 +39,7 @@ abstract class Crop(normalized: Boolean = true, isClip: Boolean = true) extends 
 
   override def transformMat(feature: ImageFeature): Unit = {
     val cropBox = generateRoi(feature)
-    Crop.transform(feature.opencvMat(), feature.opencvMat(),
+    Crop.transform(feature.getImage(), feature.getImage(),
       cropBox._1, cropBox._2, cropBox._3, cropBox._4, normalized, isClip)
     if (feature.hasLabel()) {
       feature(ImageFeature.cropBbox) = cropBox
@@ -82,7 +82,7 @@ object Crop {
  */
 class CenterCrop(cropWidth: Int, cropHeight: Int, isClip: Boolean) extends Crop(false, isClip) {
   override def generateRoi(feature: ImageFeature): (Float, Float, Float, Float) = {
-    val mat = feature.opencvMat()
+    val mat = feature.getImage()
     val height = mat.height().toFloat
     val width = mat.width().toFloat
     val startH = (height - cropHeight) / 2
@@ -106,7 +106,7 @@ object CenterCrop {
 class RandomCrop(cropWidth: Int, cropHeight: Int, isClip: Boolean) extends Crop(false, isClip) {
 
   override def generateRoi(feature: ImageFeature): (Float, Float, Float, Float) = {
-    val mat = feature.opencvMat()
+    val mat = feature.getImage()
     val height = mat.height().toFloat
     val width = mat.width().toFloat
     val startH = math.ceil(RNG.uniform(1e-2, height - cropHeight)).toFloat
