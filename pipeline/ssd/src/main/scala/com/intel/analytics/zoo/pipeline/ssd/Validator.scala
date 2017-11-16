@@ -72,7 +72,7 @@ object Validator {
       miniBatch.map(batch => {
         val result = localModel.forward(batch.input).toTensor[Float]
         if (!useNormalized) BboxUtil.scaleBatchOutput(result, batch.imInfo)
-        recordsNum.add(batch.input.size(1))
+        recordsNum.add(batch.input.toTensor[Float].size(1))
         localEvaluator(result, batch.target)
       })
     }).reduce((left, right) => {

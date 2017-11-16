@@ -244,3 +244,9 @@ class AspectScale(FeatureTransformer):
         super(AspectScale, self).__init__(bigdl_type, scale, scale_multiple_of, max_size)
 
 
+class AspectScale(FeatureTransformer):
+
+    def __init__(self, scale, scale_multiple_of = 1, max_size = 1000, bigdl_type="float"):
+        super(AspectScale, self).__init__(bigdl_type, scale, scale_multiple_of, max_size)
+
+

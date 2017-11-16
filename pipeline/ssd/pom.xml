@@ -248,6 +248,14 @@
 
                 <executions>
                     <execution>
+                        <id>python</id>
+                        <inherited>false</inherited>
+                        <configuration>
+                            <descriptors>
+                                <descriptor>assembly/python-zip.xml
+                                </descriptor>
+                            </descriptors>
+                        </configuration>
                         <phase>package</phase>
                         <goals>
                             <goal>single</goal>
