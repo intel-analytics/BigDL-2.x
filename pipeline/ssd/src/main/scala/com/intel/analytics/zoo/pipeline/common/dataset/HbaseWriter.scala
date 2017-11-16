@@ -43,8 +43,7 @@ object HbaseWriter {
     tableName: String = "image",
     imageFolder: String = "",
     overwrite: Boolean = false,
-    batch: Int = 64,
-    sql: Option[String] = None
+    batch: Int = 64
   )
 
   val parser = new OptionParser[HBaseLoaderParam]("HBaseLoader") {
@@ -91,9 +90,6 @@ object HbaseWriter {
         // Execute the table through admin
         admin.createTable(tableDescriptor)
         logger.info(" Table created ")
-        if (params.sql.isDefined) {
-          ss.sql(params.sql.get)
-        }
       }
 
       val images = new File(params.imageFolder).listFiles()
