@@ -53,6 +53,15 @@ Have tested with jpg or png images.
 
 where ```image_folder``` is your image folder, ```output``` is the output folder
 
+### Import unlabeled image folder to Hbase
+First put the ```hbase-site.xml``` to the folder ```spark-XXX/conf/```
+
+the execute
+```bash
+./data/tool/create_hbase_hive.sh
+```
+please adjust the arguments if necessary
+
 ## Download pretrained model for evaluation
 
 * [SSD 300x300 Vgg Pascal VOC](https://s3-ap-southeast-1.amazonaws.com/bigdl-models/ssd/bigdl_ssd_vgg_300x300_voc.model)
