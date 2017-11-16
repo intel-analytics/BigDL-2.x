@@ -273,13 +273,13 @@ abstract class FeatureTransformer() extends Transformer[ImageFeature, ImageFeatu
 
   // scalastyle:off methodName
   // scalastyle:off noSpaceBeforeLeftBracket
-  def ->(other: FeatureTransformer): FeatureTransformer = {
+  def -> (other: FeatureTransformer): FeatureTransformer = {
     new ChainedFeatureTransformer(this, other)
   }
 
   // scalastyle:off methodName
   // scalastyle:off noSpaceBeforeLeftBracket
-  override def ->[C](other: Transformer[ImageFeature, C]): Transformer[ImageFeature, C] = {
+  override def -> [C](other: Transformer[ImageFeature, C]): Transformer[ImageFeature, C] = {
     new ChainedTransformer(this, other)
   }
 }
