@@ -24,6 +24,7 @@ import com.intel.analytics.zoo.pipeline.common.nn.{DetectionOutput, NormalizeSca
 import com.intel.analytics.bigdl.tensor.Tensor
 import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric
 import com.intel.analytics.bigdl.utils.Table
+import com.intel.analytics.zoo.pipeline.common.nn.PostProcessParam
 import pipeline.caffe.Caffe
 import pipeline.caffe.Caffe.EltwiseParameter.EltwiseOp
 import pipeline.caffe.Caffe.{BlobProto, PoolingParameter, _}
@@ -801,8 +802,8 @@ val imgSize = param.getImgSize
     val confThresh = param.getConfidenceThreshold
     val varianceEncodedInTarget = param.getVarianceEncodedInTarget
 
-    Seq(DetectionOutput[T](nClass, shareLocation, bgLabel, nmsThresh,
-      nmsTopk, keepTopk, confThresh, varianceEncodedInTarget, false)
+    Seq(DetectionOutput[T](PostProcessParam(nClass, shareLocation, bgLabel, nmsThresh,
+      nmsTopk, keepTopk, confThresh, varianceEncodedInTarget), false)
       .setName(getLayerName(layer)).inputs())
   }
 }

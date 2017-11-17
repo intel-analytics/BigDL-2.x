@@ -265,26 +265,6 @@ class DetectionOutput[T: ClassTag](val nClasses: Int = 21,
 object DetectionOutput {
   val logger = Logger.getLogger(getClass)
 
-  def apply[@specialized(Float) T: ClassTag](nClasses: Int,
-    shareLocation: Boolean,
-    bgLabel: Int,
-    nmsThresh: Float,
-    nmsTopk: Int,
-    keepTopK: Int,
-    confThresh: Float,
-    varianceEncodedInTarget: Boolean,
-    postProcess: Boolean)
-    (implicit ev: TensorNumeric[T]): DetectionOutput[T] =
-    new DetectionOutput[T](nClasses,
-      shareLocation,
-      bgLabel,
-      nmsThresh,
-      nmsTopk,
-      keepTopK,
-      confThresh,
-      varianceEncodedInTarget,
-      postProcess)
-
   def apply[@specialized(Float) T: ClassTag](param: PostProcessParam, postProcess: Boolean = true)
     (implicit ev: TensorNumeric[T]): DetectionOutput[T] =
     new DetectionOutput[T](param.nClasses,
