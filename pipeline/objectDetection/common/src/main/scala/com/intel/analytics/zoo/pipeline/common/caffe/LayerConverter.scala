@@ -79,10 +79,12 @@ class LayerConverter[T: ClassTag](implicit ev: TensorNumeric[T]) extends Convert
       val layerType = getLayerType(layer).toUpperCase
       if ("DECONVOLUTION" == layerType) {
         Seq(SpatialFullConvolution[T](nOutPlane.toInt, nInputPlane.toInt,
-          kw, kh, dw, dh, pw, ph, 0, 0, group, noBias = !withBias).setName(getLayerName(layer)).inputs())
+          kw, kh, dw, dh, pw, ph, 0, 0, group, noBias = !withBias)
+          .setName(getLayerName(layer)).inputs())
       } else {
         Seq(SpatialConvolution[T](nInputPlane.toInt, nOutPlane.toInt,
-          kw, kh, dw, dh, pw, ph, group, withBias = withBias).setName(getLayerName(layer)).inputs())
+          kw, kh, dw, dh, pw, ph, group, withBias = withBias)
+          .setName(getLayerName(layer)).inputs())
       }
     } else {
       val dilation = param.getDilation(0)
@@ -120,7 +122,8 @@ class LayerConverter[T: ClassTag](implicit ev: TensorNumeric[T]) extends Convert
   override protected def fromCaffeBatchNormalization(layer: GeneratedMessage):
   Seq[ModuleNode[T]] = {
     val weightBlob = getBlob(layer, 0).get
-    val nOutPlane = if (weightBlob.hasShape) weightBlob.getShape.getDim(0).toInt else weightBlob.getNum
+    val nOutPlane = if (weightBlob.hasShape) weightBlob.getShape.getDim(0).toInt
+    else weightBlob.getNum
     val param = layer.asInstanceOf[LayerParameter].getBatchNormParam
     val eps = param.getEps
     val name = getLayerName(layer)

@@ -5,13 +5,13 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
- *  limitations under the License.
+ * limitations under the License.
  */
 
 package com.intel.analytics.zoo.pipeline.common.caffe
@@ -44,11 +44,10 @@ class PythonConverter(implicit ev: TensorNumeric[Float]) extends Customizable[Fl
     val param = layer.asInstanceOf[LayerParameter].getPythonParam
     val paramStr = param.getParamStr.replaceAll("'", "\"")
     val (ratios, scales) = JSON.parseFull(paramStr) match {
-      case Some(map: Map[String, Any]) => {
+      case Some(map: Map[String, Any]) =>
         val ratios = map("ratios").asInstanceOf[List[Double]].toArray.map(_.toFloat)
         val scales = map("scales").asInstanceOf[List[Double]].toArray.map(_.toFloat)
         (ratios, scales)
-      }
       case _ =>
         val ratios = Array[Float](0.5f, 1.0f, 2.0f)
         val scales = Array[Float](8, 16, 32)

@@ -185,7 +185,9 @@ class CaffeLoaderSpec extends FlatSpec with Matchers {
     assertEqual("downsample")
     assertEqual("roi_pool_conv5")
     assertEqual2("rois", "proposal")
-    TestUtil.assertEqual("cls_prob", modelWithPostprocess("cls_prob").get.output.toTensor[Float], 1e-5)
-    TestUtil.assertEqual("bbox_pred", modelWithPostprocess("bbox_pred").get.output.toTensor[Float], 1e-5)
+    TestUtil.assertEqual("cls_prob",
+      modelWithPostprocess("cls_prob").get.output.toTensor[Float], 1e-5)
+    TestUtil.assertEqual("bbox_pred",
+      modelWithPostprocess("bbox_pred").get.output.toTensor[Float], 1e-5)
   }
 }

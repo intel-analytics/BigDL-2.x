@@ -12,7 +12,6 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
  */
 
 package com.intel.analytics.zoo.pipeline.ssd.example
@@ -141,7 +140,8 @@ object Predict {
       }
 
       val predictor = new SSDPredictor(model,
-        PreProcessParam(params.batch, params.resolution, (123f, 117f, 104f), false, params.nPartition))
+        PreProcessParam(params.batch, params.resolution,
+          (123f, 117f, 104f), false, params.nPartition))
 
       val start = System.nanoTime()
       val output = predictor.predict(data)

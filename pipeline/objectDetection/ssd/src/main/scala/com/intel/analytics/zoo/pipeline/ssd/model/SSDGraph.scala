@@ -104,14 +104,20 @@ object SSDGraph {
     }
 
    val (conf, loc, priors) = if (resolution == 300) {
-      val conf = JoinTable(1, 1).inputs(norm4_3Out._1, fc7Out._1, c6Out._1, c7Out._1, c8Out._1, c9Out._1)
-      val loc = JoinTable(1, 1).inputs(norm4_3Out._2, fc7Out._2, c6Out._2, c7Out._2, c8Out._2, c9Out._2)
-      val priors = JoinTable(2, 2).inputs(norm4_3Out._3, fc7Out._3, c6Out._3, c7Out._3, c8Out._3, c9Out._3)
+      val conf = JoinTable(1, 1)
+        .inputs(norm4_3Out._1, fc7Out._1, c6Out._1, c7Out._1, c8Out._1, c9Out._1)
+      val loc = JoinTable(1, 1)
+        .inputs(norm4_3Out._2, fc7Out._2, c6Out._2, c7Out._2, c8Out._2, c9Out._2)
+      val priors = JoinTable(2, 2)
+        .inputs(norm4_3Out._3, fc7Out._3, c6Out._3, c7Out._3, c8Out._3, c9Out._3)
       (conf, loc, priors)
     } else {
-      val conf = JoinTable(1, 1).inputs(norm4_3Out._1, fc7Out._1, c6Out._1, c7Out._1, c8Out._1, c9Out._1, c10Out._1)
-      val loc = JoinTable(1, 1).inputs(norm4_3Out._2, fc7Out._2, c6Out._2, c7Out._2, c8Out._2, c9Out._2, c10Out._2)
-      val priors = JoinTable(2, 2).inputs(norm4_3Out._3, fc7Out._3, c6Out._3, c7Out._3, c8Out._3, c9Out._3, c10Out._3)
+      val conf = JoinTable(1, 1)
+        .inputs(norm4_3Out._1, fc7Out._1, c6Out._1, c7Out._1, c8Out._1, c9Out._1, c10Out._1)
+      val loc = JoinTable(1, 1)
+        .inputs(norm4_3Out._2, fc7Out._2, c6Out._2, c7Out._2, c8Out._2, c9Out._2, c10Out._2)
+      val priors = JoinTable(2, 2)
+        .inputs(norm4_3Out._3, fc7Out._3, c6Out._3, c7Out._3, c8Out._3, c9Out._3, c10Out._3)
       (conf, loc, priors)
     }
 

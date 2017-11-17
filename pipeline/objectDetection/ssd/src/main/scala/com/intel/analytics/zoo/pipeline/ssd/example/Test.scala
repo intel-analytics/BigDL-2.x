@@ -106,11 +106,13 @@ object Test {
         // load caffe dynamically
         SSDCaffeLoader.loadCaffe(params.caffeDefPath.get, params.caffeModelPath.get)
       } else {
-        throw new IllegalArgumentException(s"currently only support loading BigDL model or caffe model")
+        throw new IllegalArgumentException(
+          s"currently only support loading BigDL model or caffe model")
       }
 
       val validator = new Validator(model, PreProcessParam(params.batch, params.resolution,
-        (123f, 117f, 104f), true, params.nPartition), evaluator, useNormalized = params.useNormalized)
+        (123f, 117f, 104f), true, params.nPartition), evaluator,
+        useNormalized = params.useNormalized)
 
       validator.test(rdd)
     }

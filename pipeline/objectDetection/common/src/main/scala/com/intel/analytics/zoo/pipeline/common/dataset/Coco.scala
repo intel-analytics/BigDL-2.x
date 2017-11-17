@@ -142,7 +142,7 @@ object Coco {
     val text = FileUtils.readFileToString(new File(path))
     val result = JSON.parseFull(text)
     result match {
-      case Some(map: Map[String, Any]) => {
+      case Some(map: Map[String, Any]) =>
         val image = map("image").asInstanceOf[Map[String, Any]]
         val annotations = map("annotation").asInstanceOf[List[Map[String, Any]]]
         val width = image("width").asInstanceOf[Double]
@@ -174,7 +174,6 @@ object Coco {
         validClasses.copyToArray(clses, 0, validClasses.length)
         RoiLabel(Tensor(Storage(clses)).resize(2, validClasses.length),
           Tensor(Storage(validBoxes.toArray)).resize(validBoxes.length / 4, 4))
-      }
       case _ => throw new Exception("Parse annotation failed.")
     }
   }

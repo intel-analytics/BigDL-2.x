@@ -25,7 +25,7 @@ import com.intel.analytics.zoo.pipeline.ssd.model.SSDGraph._
 
 object SSDVgg {
 
-  def VGG16(): (ModuleNode[Float], ModuleNode[Float], ModuleNode[Float]) = {
+  def vgg16(): (ModuleNode[Float], ModuleNode[Float], ModuleNode[Float]) = {
     val conv1_1 = SpatialConvolution(3, 64, 3, 3, 1, 1, 1, 1, propagateBack = false)
       .setInitMethod(weightInitMethod = Xavier, biasInitMethod = Zeros)
       .setName(s"conv1_1").inputs()
@@ -87,11 +87,11 @@ object SSDVgg {
       }
     }
 
-    val (conv1_1, relu4_3, poo5) = VGG16()
+    val (conv1_1, relu4_3, poo5) = vgg16()
 
     val postParam = postProcessParam.getOrElse(PostProcessParam(numClasses))
     if (resolution == 300) {
-      params += "conv4_3_norm" ->ComponetParam(512, 4,
+      params += "conv4_3_norm" -> ComponetParam(512, 4,
         minSizes = Array(priorBoxSizes(0)), maxSizes = Array(priorBoxSizes(1)),
         aspectRatios = Array(2), isFlip, isClip, variances, 8, 300)
       params += "fc7" -> ComponetParam(512, 6,
