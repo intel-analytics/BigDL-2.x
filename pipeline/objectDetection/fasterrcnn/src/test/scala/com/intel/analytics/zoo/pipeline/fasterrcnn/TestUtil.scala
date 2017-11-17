@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.intel.analytics.zoo.pipeline
+package com.intel.analytics.zoo.pipeline.fasterrcnn
 
 import java.io.{File, FileNotFoundException}
 import java.nio.file.Paths

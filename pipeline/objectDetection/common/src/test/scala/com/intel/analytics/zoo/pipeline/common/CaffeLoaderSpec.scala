@@ -22,8 +22,6 @@ import com.intel.analytics.bigdl.nn._
 import com.intel.analytics.zoo.pipeline.common.caffe.{CaffeLoader, FrcnnCaffeLoader, SSDCaffeLoader}
 import com.intel.analytics.bigdl.tensor.Tensor
 import com.intel.analytics.bigdl.utils.{Engine, T}
-import com.intel.analytics.bigdl.utils.RandomGenerator.RNG
-import com.intel.analytics.zoo.pipeline.TestUtil
 import org.apache.spark.SparkContext
 import org.scalatest.{FlatSpec, Matchers}
 
