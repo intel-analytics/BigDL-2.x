@@ -16,9 +16,26 @@
 
 package com.intel.analytics.zoo.transform.vision.image
 
+import java.io.File
+
+import org.apache.commons.io.FileUtils
 import org.apache.log4j.Logger
 import org.apache.spark.SparkContext
 import org.apache.spark.rdd.RDD
+import org.apache.spark.sql.SparkSession
+
+import scala.reflect.ClassTag
+
+trait ImageFrame {
+
+  def transform(transformer: FeatureTransformer): ImageFrame
+
+  // scalastyle:off methodName
+  // scalastyle:off noSpaceBeforeLeftBracket
+  def -> [C: ClassTag](transformer: FeatureTransformer): ImageFrame = {
+    this.transform(transformer)
+  }
+}
 
 object ImageFrame {
   val logger = Logger.getLogger(getClass)
@@ -38,9 +55,70 @@ object ImageFrame {
   def rdd(data: RDD[ImageFeature]): DistributedImageFrame = {
     new DistributedImageFrame(data)
   }
+
+  /**
+   * Read image as DistributedImageFrame from local file system or HDFS
+   *
+   * @param path path to read images. Local or HDFS. Wildcard character are supported.
+   * @param sc SparkContext
+   * @return DistributedImageFrame
+   */
+  def read(path: String, sc: SparkContext): DistributedImageFrame = {
+    val images = sc.binaryFiles(path).map { case (p, stream) =>
+      ImageFeature(stream.toArray(), uri = p)
+    }.map(BytesToMat.transform)
+    ImageFrame.rdd(images)
+  }
+
+  /**
+   * Read image as LocalImageFrame from local directory
+   *
+   * @param path local flatten directory with images
+   * @return LocalImageFrame
+   */
+  def read(path: String): LocalImageFrame = {
+    val dir = new File(path)
+    require(dir.exists(), s"$path not exists!")
+    require(dir.isDirectory, s"$path is not directory!")
+    val images = dir.listFiles().map { p =>
+      ImageFeature(FileUtils.readFileToByteArray(p), uri = p.getAbsolutePath)
+    }.map(BytesToMat.transform)
+    ImageFrame.array(images)
+  }
+
+  /**
+   * Read parquet file as DistributedImageFrame
+   *
+   * @param path Parquet file path
+   * @return DistributedImageFrame
+   */
+  def readParquet(path: String, spark: SparkSession): DistributedImageFrame = {
+    val df = spark.sqlContext.read.parquet(path)
+    val images = df.rdd.map(row => {
+      val uri = row.getAs[String](ImageFeature.uri)
+      val image = row.getAs[Array[Byte]](ImageFeature.bytes)
+      ImageFeature(image, uri = uri)
+    }).map(BytesToMat.transform)
+    ImageFrame.rdd(images)
+  }
+
+  /**
+   * Write images as parquet file
+   *
+   * @param path path to read images. Local or HDFS. Wildcard character are supported.
+   * @param output Parquet file path
+   */
+  def writeParquet(path: String, output: String, spark: SparkSession): Unit = {
+    import spark.implicits._
+    val df = spark.sparkContext.binaryFiles(path)
+      .map { case (p, stream) =>
+        (p, stream.toArray())
+      }.toDF(ImageFeature.uri, ImageFeature.bytes)
+    df.write.parquet(output)
+  }
 }
 
-class LocalImageFrame(var array: Array[ImageFeature]) {
+class LocalImageFrame(var array: Array[ImageFeature]) extends ImageFrame {
   def apply(transformer: FeatureTransformer): LocalImageFrame = {
     array = array.map(transformer.transform)
     this
@@ -49,11 +127,19 @@ class LocalImageFrame(var array: Array[ImageFeature]) {
   def toDistributed(sc: SparkContext): DistributedImageFrame = {
     new DistributedImageFrame(sc.parallelize(array))
   }
+
+  override def transform(transformer: FeatureTransformer): ImageFrame = {
+    this.apply(transformer)
+  }
 }
 
-class DistributedImageFrame(var rdd: RDD[ImageFeature]) {
+class DistributedImageFrame(var rdd: RDD[ImageFeature]) extends ImageFrame {
   def apply(transformer: FeatureTransformer): DistributedImageFrame = {
     rdd = transformer(rdd)
     this
+  }
+
+  override def transform(transformer: FeatureTransformer): ImageFrame = {
+    this.apply(transformer)
   }
 }

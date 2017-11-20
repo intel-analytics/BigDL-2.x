@@ -36,7 +36,7 @@ class ImageSpec extends FlatSpec with Matchers with BeforeAndAfter {
   }
 
   "read LocalImageFrame" should "work properly" in {
-    val local = Image.read(resource.getFile)
+    val local = ImageFrame.read(resource.getFile)
     local.array.length should be(1)
     assert(local.array(0).uri.endsWith("000025.jpg"))
     assert(local.array(0).bytes.length == 95959)
@@ -44,7 +44,7 @@ class ImageSpec extends FlatSpec with Matchers with BeforeAndAfter {
   }
 
   "LocalImageFrame toDistributed" should "work properly" in {
-    val local = Image.read(resource.getFile)
+    val local = ImageFrame.read(resource.getFile)
     local.array.foreach(x => println(x.uri, x.bytes.length))
     val imageFeature = local.toDistributed(spark.sparkContext).rdd.first()
     assert(imageFeature.uri.endsWith("000025.jpg"))
@@ -53,7 +53,7 @@ class ImageSpec extends FlatSpec with Matchers with BeforeAndAfter {
   }
 
   "read DistributedImageFrame" should "work properly" in {
-    val distributed = Image.read(resource.getFile, spark.sparkContext)
+    val distributed = ImageFrame.read(resource.getFile, spark.sparkContext)
     val imageFeature = distributed.rdd.first()
     assert(imageFeature.uri.endsWith("000025.jpg"))
     assert(imageFeature.bytes.length == 95959)
@@ -63,9 +63,9 @@ class ImageSpec extends FlatSpec with Matchers with BeforeAndAfter {
   "SequenceFile write and read" should "work properly" in {
     val tmpFile = Files.createTempDir()
     val dir = tmpFile.toString + "/parque"
-    Image.writeParquet(resource.getFile, dir, spark)
+    ImageFrame.writeParquet(resource.getFile, dir, spark)
 
-    val distributed = Image.readParquet(dir, spark)
+    val distributed = ImageFrame.readParquet(dir, spark)
     val imageFeature = distributed.rdd.first()
     assert(imageFeature.uri.endsWith("000025.jpg"))
     assert(imageFeature.bytes.length == 95959)

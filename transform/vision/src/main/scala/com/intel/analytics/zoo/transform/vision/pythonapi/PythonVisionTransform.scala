@@ -21,17 +21,18 @@ import java.util.{List => JList}
 
 import com.intel.analytics.bigdl.numeric._
 import com.intel.analytics.bigdl.python.api.{JTensor, PythonBigDL, Sample}
-import com.intel.analytics.bigdl.tensor.{Tensor}
+import com.intel.analytics.bigdl.tensor.Tensor
 import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric
 import com.intel.analytics.zoo.transform.vision.image._
 import com.intel.analytics.zoo.transform.vision.image.augmentation._
 import com.intel.analytics.zoo.transform.vision.image.opencv.OpenCVMat
 import com.intel.analytics.zoo.transform.vision.label.roi._
 import org.apache.log4j.Logger
-import org.apache.spark.api.java.JavaRDD
+import org.apache.spark.api.java.{JavaRDD, JavaSparkContext}
+import org.apache.spark.sql.SparkSession
 import org.opencv.imgproc.Imgproc
-import collection.JavaConverters._
 
+import collection.JavaConverters._
 import scala.language.existentials
 import scala.reflect.ClassTag
 
@@ -155,6 +156,11 @@ class PythonVisionTransform[T: ClassTag](implicit ev: TensorNumeric[T]) extends 
     imageFrame(transformer)
   }
 
+  def transformLocalImageFrame(transformer: FeatureTransformer,
+    imageFrame: LocalImageFrame): LocalImageFrame = {
+    imageFrame(transformer)
+  }
+
   def createDistributedImageFrame(imageRdd: JavaRDD[JTensor], labelRdd: JavaRDD[JTensor])
   : DistributedImageFrame = {
     require(null != imageRdd, "imageRdd cannot be null")
@@ -170,8 +176,22 @@ class PythonVisionTransform[T: ClassTag](implicit ev: TensorNumeric[T]) extends 
     new DistributedImageFrame(featureRdd)
   }
 
-  def chainedFeatureTransformer(list: JList[FeatureTransformer])
-  : FeatureTransformer = {
+  def createLocalImageFrame(images: JList[JTensor], labels: JList[JTensor])
+  : LocalImageFrame = {
+    require(null != images, "images cannot be null")
+    val features = if (null != labels) {
+      (0 until images.size()).map(i => {
+        createImageFeature(images.get(i), labels.get(i))
+      })
+    } else {
+      (0 until images.size()).map(i => {
+        createImageFeature(images.get(i), null)
+      })
+    }
+    new LocalImageFrame(features.toArray)
+  }
+
+  def createPipeline(list: JList[FeatureTransformer]): FeatureTransformer = {
     var cur = list.get(0)
     (1 until list.size()).foreach(t => cur = cur -> list.get(t))
     cur
@@ -197,9 +217,9 @@ class PythonVisionTransform[T: ClassTag](implicit ev: TensorNumeric[T]) extends 
   }
 
   def createMatToFloats(validH: Int, validW: Int, validC: Int,
-    meanR: Float = -1, meanG: Float = -1, meanB: Float = -1, outKey: String): MatToFloats = {
+    meanR: Double = -1, meanG: Double = -1, meanB: Double = -1, outKey: String): MatToFloats = {
     val means = if (-1 != meanR) {
-      Some(meanR, meanG, meanB)
+      Some(meanR.toFloat, meanG.toFloat, meanB.toFloat)
     } else None
     MatToFloats(validH, validW, validC, means, outKey)
   }
@@ -237,6 +257,21 @@ class PythonVisionTransform[T: ClassTag](implicit ev: TensorNumeric[T]) extends 
     imageFrame.rdd.map(imageFeatureToLabelTensor).toJavaRDD()
   }
 
+  def localImageFrameToSample(imageFrame: LocalImageFrame,
+    floatKey: String = ImageFeature.floats, toChw: Boolean = true, withImInfo: Boolean = false)
+  : JList[Sample] = {
+    imageFrame.array.map(imageFeatureToSample(_, floatKey, toChw, withImInfo)).toList.asJava
+  }
+
+  def localImageFrameToImageTensor(imageFrame: LocalImageFrame,
+    floatKey: String = ImageFeature.floats, toChw: Boolean = true): JList[JTensor] = {
+    imageFrame.array.map(imageFeatureToImageTensor(_, floatKey, toChw)).toList.asJava
+  }
+
+  def localImageFrameToLabelTensor(imageFrame: LocalImageFrame): JList[JTensor] = {
+    imageFrame.array.map(imageFeatureToLabelTensor).toList.asJava
+  }
+
   def imageFeatureToImageTensor(imageFeature: ImageFeature,
     floatKey: String = ImageFeature.floats, toChw: Boolean = true): JTensor = {
     toJTensor(imageFeature.toTensor(floatKey, toChw).asInstanceOf[Tensor[T]])
@@ -249,6 +284,18 @@ class PythonVisionTransform[T: ClassTag](implicit ev: TensorNumeric[T]) extends 
       Tensor[T](1).fill(ev.fromType[Float](-1f))
     }
     toJTensor(label)
+  }
+
+  def readDist(path: String, sc: JavaSparkContext): DistributedImageFrame = {
+    ImageFrame.read(path, sc)
+  }
+
+  def readLocal(path: String): LocalImageFrame = {
+    ImageFrame.read(path)
+  }
+
+  def readParquet(path: String, ss: SparkSession): DistributedImageFrame = {
+    ImageFrame.readParquet(path, ss)
   }
 }
 

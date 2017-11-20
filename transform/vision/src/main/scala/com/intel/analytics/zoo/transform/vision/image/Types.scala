@@ -92,7 +92,7 @@ class ImageFeature extends Serializable {
    * @param key key that map float array
    * @return float array
    */
-  def getFloats(key: String = ImageFeature.floats): Array[Float] = {
+  def floats(key: String = ImageFeature.floats): Array[Float] = {
     apply[Array[Float]](key)
   }
 
@@ -157,7 +157,7 @@ class ImageFeature extends Serializable {
   def copyTo(storage: Array[Float], offset: Int, floatKey: String = ImageFeature.floats,
              toRGB: Boolean = true): Unit = {
     require(contains(floatKey), s"there should be ${floatKey} in ImageFeature")
-    val data = getFloats(floatKey)
+    val data = floats(floatKey)
     require(data.length >= getWidth() * getHeight() * 3,
       s"float array length should be larger than 3 * ${getWidth()} * ${getHeight()}")
     val frameLength = getWidth() * getHeight()
@@ -187,8 +187,8 @@ class ImageFeature extends Serializable {
    * @return tensor that represents an image
    */
   def toTensor(floatKey: String, toChw: Boolean = true): Tensor[Float] = {
-    val (floats, size) = if (contains(floatKey)) {
-      (getFloats(floatKey),
+    val (data, size) = if (contains(floatKey)) {
+      (floats(floatKey),
         Array(getHeight(), getWidth(), 3))
     } else {
       logger.warn(s"please add MatToFloats(out_key = $floatKey) in the end of pipeline if you" +
@@ -198,7 +198,7 @@ class ImageFeature extends Serializable {
       OpenCVMat.toFloatBuf(mat, floats)
       (floats, Array(mat.height(), mat.width(), 3))
     }
-    var image = Tensor(Storage(floats)).resize(size)
+    var image = Tensor(Storage(data)).resize(size)
     if (toChw) {
       // transpose the shape of image from (h, w, c) to (c, h, w)
       image = image.transpose(1, 3).transpose(2, 3).contiguous()
@@ -322,67 +322,4 @@ class RandomTransformer(transformer: FeatureTransformer, maxProb: Double)
 object RandomTransformer {
   def apply(transformer: FeatureTransformer, maxProb: Double): RandomTransformer =
     new RandomTransformer(transformer, maxProb)
-}
-
-object Image {
-  /**
-   * Read image as DistributedImageFrame from local file system or HDFS
-   *
-   * @param path path to read images. Local or HDFS. Wildcard character are supported.
-   * @param sc SparkContext
-   * @return DistributedImageFrame
-   */
-  def read(path: String, sc: SparkContext): DistributedImageFrame = {
-    val images = sc.binaryFiles(path).map { case (p, stream) =>
-      ImageFeature(stream.toArray(), uri = p)
-    }.map(BytesToMat.transform)
-    ImageFrame.rdd(images)
-  }
-
-  /**
-   * Read image as LocalImageFrame from local directory
-   *
-   * @param path local flatten directory with images
-   * @return LocalImageFrame
-   */
-  def read(path: String): LocalImageFrame = {
-    val dir = new File(path)
-    require(dir.exists(), s"$path not exists!")
-    require(dir.isDirectory, s"$path is not directory!")
-    val images = dir.listFiles().map { p =>
-      ImageFeature(FileUtils.readFileToByteArray(p), uri = p.getAbsolutePath)
-    }.map(BytesToMat.transform)
-    ImageFrame.array(images)
-  }
-
-  /**
-   * Read parquet file as DistributedImageFrame
-   *
-   * @param path Parquet file path
-   * @return DistributedImageFrame
-   */
-  def readParquet(path: String, spark: SparkSession): DistributedImageFrame = {
-    val df = spark.sqlContext.read.parquet(path)
-    val images = df.rdd.map(row => {
-      val uri = row.getAs[String](ImageFeature.uri)
-      val image = row.getAs[Array[Byte]](ImageFeature.bytes)
-      ImageFeature(image, uri = uri)
-    }).map(BytesToMat.transform)
-    ImageFrame.rdd(images)
-  }
-
-  /**
-   * Write images as parquet file
-   *
-   * @param path path to read images. Local or HDFS. Wildcard character are supported.
-   * @param output Parquet file path
-   */
-  def writeParquet(path: String, output: String, spark: SparkSession): Unit = {
-    import spark.implicits._
-    val df = spark.sparkContext.binaryFiles(path)
-      .map { case (p, stream) =>
-        (p, stream.toArray())
-      }.toDF(ImageFeature.uri, ImageFeature.bytes)
-    df.write.parquet(output)
-  }
 }
