@@ -16,7 +16,7 @@
 
 package com.intel.analytics.zoo.transform.vision.util
 
-case class NormalizedBox(var x1: Float, var y1: Float, var x2: Float, var y2: Float) {
+class NormalizedBox(var x1: Float, var y1: Float, var x2: Float, var y2: Float) {
 
   var label: Float = -1
 
@@ -66,5 +66,34 @@ case class NormalizedBox(var x1: Float, var y1: Float, var x2: Float, var y2: Fl
     scaledBox.y1 = y1 * height
     scaledBox.x2 = x2 * width
     scaledBox.y2 = y2 * height
+  }
+
+  override def equals(obj: Any): Boolean = {
+    obj match {
+      case box: NormalizedBox =>
+        if (box.x1 == x1 && box.x2 == x2 && box.y1 == y1 && box.y2 == y2) true
+        else false
+      case _ => false
+    }
+  }
+
+  override def hashCode() : Int = {
+    val seed = 37
+    var hash = super.hashCode()
+    hash = hash * seed + x1.hashCode()
+    hash = hash * seed + y1.hashCode()
+    hash = hash * seed + x2.hashCode()
+    hash = hash * seed + y2.hashCode()
+
+    hash
+  }
+}
+
+object NormalizedBox {
+  def apply(x1: Float, y1: Float, x2: Float, y2: Float): NormalizedBox =
+    new NormalizedBox(x1, y1, x2, y2)
+
+  def apply(box: (Float, Float, Float, Float)): NormalizedBox = {
+    new NormalizedBox(box._1, box._2, box._3, box._4)
   }
 }

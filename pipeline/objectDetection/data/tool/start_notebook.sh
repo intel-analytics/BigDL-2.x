@@ -7,7 +7,7 @@ BigDL_HOME=$HOME/BigDL
 MASTER="local[2]"
 
 PYTHON_API_ZIP_PATH=${BigDL_HOME}/lib/bigdl-0.3.0-SNAPSHOT-python-api.zip
-SSD_JAR_PATH=${SSD_HOME}/target/pipeline-0.1-SNAPSHOT-jar-with-dependencies.jar
+SSD_JAR_PATH=${SSD_HOME}/dist/target/object-detection-0.1-SNAPSHOT-jar-with-dependencies.jar
 
 export PYTHONPATH=${PYTHON_API_ZIP_PATH}:$PYTHONPATH
 export PYSPARK_DRIVER_PYTHON=jupyter

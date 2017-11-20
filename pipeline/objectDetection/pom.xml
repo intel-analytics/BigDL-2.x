@@ -75,6 +75,15 @@
         <spark-scope>provided</spark-scope>
     </properties>
 
+    <profiles>
+        <profile>
+            <id>all-in-one</id>
+            <properties>
+                <spark-scope>compile</spark-scope>
+            </properties>
+        </profile>
+    </profiles>
+
     <dependencies>
         <dependency>
             <groupId>org.scala-lang</groupId>
@@ -134,11 +143,6 @@
             <groupId>com.intel.analytics</groupId>
             <artifactId>vision</artifactId>
             <version>0.1-SNAPSHOT</version>
-        </dependency>
-        <dependency>
-            <groupId>org.apache.hbase</groupId>
-            <artifactId>hbase-client</artifactId>
-            <version>1.2.6</version>
         </dependency>
     </dependencies>
 
