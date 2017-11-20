@@ -101,7 +101,6 @@ case class RoiExpand() extends FeatureTransformer {
       target.classes.setValue(2, i, transformedAnnot(i - 1).difficult)
       i += 1
     }
-    println("after RoiExpand", target.bboxes, target.size())
   }
 }
 
