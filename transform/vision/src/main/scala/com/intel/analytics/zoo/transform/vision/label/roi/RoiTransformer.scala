@@ -36,11 +36,12 @@ case class RoiCrop() extends FeatureTransformer {
   override def transformMat(feature: ImageFeature): Unit = {
     val height = feature.getHeight()
     val width = feature.getWidth()
-    val bbox = feature(ImageFeature.cropBbox).asInstanceOf[NormalizedBox]
+    val bbox = feature(ImageFeature.cropBbox).asInstanceOf[(Float, Float, Float, Float)]
     val target = feature(ImageFeature.label).asInstanceOf[RoiLabel]
     val transformedAnnot = new ArrayBuffer[NormalizedBox]()
     // Transform the annotation according to crop_bbox.
-    AnnotationTransformer.transformAnnotation(width, height, bbox, false, target,
+    AnnotationTransformer.transformAnnotation(width, height,
+      NormalizedBox(bbox), false, target,
       transformedAnnot)
 
     target.bboxes.resize(transformedAnnot.length, 4)
@@ -100,6 +101,7 @@ case class RoiExpand() extends FeatureTransformer {
       target.classes.setValue(2, i, transformedAnnot(i - 1).difficult)
       i += 1
     }
+    println("after RoiExpand", target.bboxes, target.size())
   }
 }
 

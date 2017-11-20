@@ -357,7 +357,7 @@ class FeatureTransformerSpec extends FlatSpec with Matchers {
       Resize(300, 300, -1) ->
       RandomTransformer(HFlip() -> RoiHFlip(), 0.5) ->
       MatToFloats(validHeight = 300, validWidth = 300)
-    val transformedImg = imgAug.transform(feature)
+//    val transformedImg = imgAug.transform(feature)
 
     val features = Array(feature).toIterator
     val featureIter = imgAug(features)
