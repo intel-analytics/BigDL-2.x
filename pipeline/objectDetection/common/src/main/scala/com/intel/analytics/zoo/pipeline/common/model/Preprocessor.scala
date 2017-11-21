@@ -24,13 +24,12 @@ object Preprocessor {
     preprocessSsd(rdd, 300, (123f, 117f, 104f), 1f)
   }
 
-  def preprocessSsdVgg(rdd: ImageFrame, resolution: Int, nPartition: Int): ImageFrame = {
+  def preprocessSsdVgg(rdd: ImageFrame, resolution: Int): ImageFrame = {
     preprocessSsd(rdd, resolution, (123f, 117f, 104f), 1f)
   }
 
   def preprocessSsd(imageFrame: ImageFrame, resolution: Int, meansRGB: (Float, Float, Float),
-    scale: Float,
-    batchPerPartition: Int = 1): ImageFrame = {
+    scale: Float): ImageFrame = {
     imageFrame ->
       BytesToMat() ->
       Resize(resolution, resolution) ->
