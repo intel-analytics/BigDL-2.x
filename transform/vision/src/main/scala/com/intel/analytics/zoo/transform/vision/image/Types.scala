@@ -18,16 +18,15 @@ package com.intel.analytics.zoo.transform.vision.image
 
 import java.io.File
 
-import com.intel.analytics.bigdl.dataset.{ChainedTransformer, Transformer}
+import com.intel.analytics.bigdl.dataset.{ChainedTransformer, MiniBatch, Transformer}
+import com.intel.analytics.bigdl.nn.abstractnn.Activity
 import com.intel.analytics.bigdl.tensor.{Storage, Tensor}
 import com.intel.analytics.bigdl.utils.RandomGenerator._
 import com.intel.analytics.bigdl.utils.T
 import com.intel.analytics.zoo.transform.vision.image.opencv.OpenCVMat
-import org.apache.commons.io.FileUtils
 import org.apache.log4j.Logger
-import org.apache.spark.SparkContext
-import org.apache.spark.sql.SparkSession
 
+import scala.collection.mutable.ArrayBuffer
 import scala.collection.{Set, mutable}
 import scala.reflect.ClassTag
 
@@ -94,6 +93,14 @@ class ImageFeature extends Serializable {
    */
   def floats(key: String = ImageFeature.floats): Array[Float] = {
     apply[Array[Float]](key)
+  }
+
+  def feature(key: String = ImageFeature.feature): Any = {
+    apply(key)
+  }
+
+  def tensorFeature(key: String = ImageFeature.feature): Tensor[Float] = {
+    feature(key).asInstanceOf[Tensor[Float]]
   }
 
   /**
@@ -220,6 +227,8 @@ object ImageFeature {
   val size = "size"
   // original image size
   val originalSize = "originalSize"
+  // image prediction result
+  val feature = "feature"
   val cropBbox = "cropBbox"
   val expandBbox = "expandBbox"
 
@@ -322,4 +331,15 @@ class RandomTransformer(transformer: FeatureTransformer, maxProb: Double)
 object RandomTransformer {
   def apply(transformer: FeatureTransformer, maxProb: Double): RandomTransformer =
     new RandomTransformer(transformer, maxProb)
+}
+
+trait ImageFeatureMiniBatch extends MiniBatch[Float] {
+  var imageFeatures: ArrayBuffer[ImageFeature] = _
+}
+
+trait ImageFeatureToBatch[A <: ImageFeatureMiniBatch]
+  extends Transformer[ImageFeature, A] {
+  def inputToBatch(imageFeatures: ArrayBuffer[ImageFeature]): Activity
+
+  def targetToBatch(imageFeatures: ArrayBuffer[ImageFeature]): Activity = null
 }

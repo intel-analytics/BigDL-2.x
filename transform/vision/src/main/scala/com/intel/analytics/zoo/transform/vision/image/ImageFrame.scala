@@ -18,6 +18,7 @@ package com.intel.analytics.zoo.transform.vision.image
 
 import java.io.File
 
+import com.intel.analytics.bigdl.dataset.Transformer
 import org.apache.commons.io.FileUtils
 import org.apache.log4j.Logger
 import org.apache.spark.SparkContext
@@ -35,6 +36,10 @@ trait ImageFrame {
   def -> [C: ClassTag](transformer: FeatureTransformer): ImageFrame = {
     this.transform(transformer)
   }
+
+  def isLocal(): Boolean = this.isInstanceOf[LocalImageFrame]
+
+  def isDistributed(): Boolean = this.isInstanceOf[DistributedImageFrame]
 }
 
 object ImageFrame {
@@ -115,6 +120,19 @@ object ImageFrame {
         (p, stream.toArray())
       }.toDF(ImageFeature.uri, ImageFeature.bytes)
     df.write.parquet(output)
+  }
+
+
+  implicit def imageFrameToLocal(imageFrame: ImageFrame): LocalImageFrame = {
+    imageFrame.asInstanceOf[LocalImageFrame]
+  }
+
+  implicit def imageFrameToDist(imageFrame: ImageFrame): DistributedImageFrame = {
+    imageFrame.asInstanceOf[DistributedImageFrame]
+  }
+
+  implicit def rddToDistributedImageFrame(rdd: RDD[ImageFeature]): DistributedImageFrame = {
+    ImageFrame.rdd(rdd)
   }
 }
 
