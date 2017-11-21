@@ -16,9 +16,10 @@
 
 package com.intel.analytics.zoo.pipeline.common.dataset.roiimage
 
-import com.intel.analytics.bigdl.dataset.{Transformer, Utils}
+import com.intel.analytics.bigdl.dataset.{Utils}
+import com.intel.analytics.bigdl.nn.abstractnn.Activity
 import com.intel.analytics.bigdl.tensor.{Storage, Tensor}
-import com.intel.analytics.zoo.transform.vision.image.ImageFeature
+import com.intel.analytics.zoo.transform.vision.image.{ImageFeature, ImageFeatureToBatch}
 import com.intel.analytics.zoo.transform.vision.label.roi.RoiLabel
 
 import scala.collection.Iterator
@@ -42,7 +43,7 @@ class RoiImageToBatch(totalBatch: Int,
   convertLabel: Boolean = true,
   partitionNum: Option[Int] = None, val keepImageFeature: Boolean = true,
   inputKey: String = ImageFeature.floats)
-  extends Transformer[ImageFeature, SSDMiniBatch] {
+  extends ImageFeatureToBatch[SSDMiniBatch] {
 
   private val batchPerPartition = Utils.getBatchSize(totalBatch, partitionNum)
 
@@ -55,7 +56,7 @@ class RoiImageToBatch(totalBatch: Int,
       private var featureData: Array[Float] = null
       private var labelData: ArrayBuffer[Float] = null
       private var imInfoData: Array[Float] = null
-      private var maps: Array[ImageFeature] = null
+      private var maps: ArrayBuffer[ImageFeature] = null
       private var width = 0
       private var height = 0
       private val batchSize = batchSizePerPartition
@@ -66,6 +67,7 @@ class RoiImageToBatch(totalBatch: Int,
         if (prev.hasNext) {
           var i = 0
           if (labelData != null) labelData.clear()
+          if (maps != null) maps.clear()
           while (i < batchSize && prev.hasNext) {
             val feature = prev.next()
             height = feature.getHeight()
@@ -73,16 +75,17 @@ class RoiImageToBatch(totalBatch: Int,
             if (featureData == null) {
               featureData = new Array[Float](batchSize * 3 * height * width)
               imInfoData = new Array[Float](batchSize * 4)
-              maps = new Array[ImageFeature](batchSize)
+              maps = new ArrayBuffer[ImageFeature]()
               if (convertLabel) {
                 labelData = new ArrayBuffer[Float]()
               }
             }
             feature.copyTo(featureData, i * width * height * 3, inputKey, false)
-            imInfoData(i * 4) = height
-            imInfoData(i * 4 + 1) = width
-            imInfoData(i * 4 + 2) = feature.getOriginalHeight / height.toFloat
-            imInfoData(i * 4 + 3) = feature.getOriginalWidth / width.toFloat
+            val imInfo = feature.getImInfo()
+            imInfoData(i * 4) = imInfo.valueAt(1)
+            imInfoData(i * 4 + 1) = imInfo.valueAt(2)
+            imInfoData(i * 4 + 2) = imInfo.valueAt(3)
+            imInfoData(i * 4 + 3) = imInfo.valueAt(4)
             if (convertLabel) {
               require(feature.hasLabel(), "if convert label, there should be label")
               val target = feature.getLabel[RoiLabel]
@@ -110,7 +113,7 @@ class RoiImageToBatch(totalBatch: Int,
                 labelData.append(-1)
               }
             }
-            maps(i) = feature
+            maps.append(feature)
             i += 1
           }
 
@@ -136,4 +139,7 @@ class RoiImageToBatch(totalBatch: Int,
       }
     }
   }
+
+  // todo: override it
+  override def inputToBatch(imageFeatures: ArrayBuffer[ImageFeature]): Activity = null
 }

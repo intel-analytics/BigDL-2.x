@@ -20,7 +20,7 @@ import com.intel.analytics.bigdl.dataset.{MiniBatch, Sample}
 import com.intel.analytics.zoo.pipeline.common.BboxUtil
 import com.intel.analytics.bigdl.tensor.Tensor
 import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric
-import com.intel.analytics.zoo.transform.vision.image.ImageFeature
+import com.intel.analytics.zoo.transform.vision.image.{ImageFeatureMiniBatch}
 import com.intel.analytics.zoo.transform.vision.label.roi.RoiLabel
 
 /**
@@ -40,10 +40,9 @@ case class RoiImagePath(
  */
 class SSDMiniBatch(val input: Tensor[Float], val target: Tensor[Float],
   val imInfo: Tensor[Float] = null)
-  extends MiniBatch[Float] {
+  extends ImageFeatureMiniBatch {
 
   private val targetIndices = if (target != null) BboxUtil.getGroundTruthIndices(target) else null
-  var imageFeatures: Array[ImageFeature] = _
 
   override def size(): Int = {
     input.size(1)

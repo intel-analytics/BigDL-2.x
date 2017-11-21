@@ -59,7 +59,7 @@ class DataAugmentationSpec extends FlatSpec with Matchers with BeforeAndAfter {
     val out = imgAug(roidb)
     out.foreach(img => {
       val tmpFile = java.io.File.createTempFile("module", ".jpg")
-      val mat = OpenCVMat.floatToMat(img.getFloats(), img.getHeight(), img.getWidth())
+      val mat = OpenCVMat.floatToMat(img.floats(), img.getHeight(), img.getWidth())
       visulize(img.getLabel[RoiLabel], mat)
       Imgcodecs.imwrite(tmpFile.getAbsolutePath, mat)
       println(s"save to ${tmpFile.getAbsolutePath}, "
