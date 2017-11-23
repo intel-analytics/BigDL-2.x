@@ -54,7 +54,7 @@ class BatchSampler(maxSample: Int = 1, maxTrials: Int = 50,
     // By default, the sampled_bbox is "positive" if no constraints are defined.
     if (minOverlap.isEmpty && maxOverlap.isEmpty) return true
     var i = 1
-    while (target.bboxes.nElement() > 0 && i <= target.bboxes.size(1)) {
+    while (i <= target.size()) {
       val overlap = jaccardOverlap(sampledBox, target.bboxes, i)
       if (minOverlap.isEmpty || overlap >= minOverlap.get) {
         if (maxOverlap.isEmpty || overlap <= maxOverlap.get) {

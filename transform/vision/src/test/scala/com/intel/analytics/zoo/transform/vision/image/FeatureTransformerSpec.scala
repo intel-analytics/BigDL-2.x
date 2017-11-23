@@ -374,7 +374,7 @@ class FeatureTransformerSpec extends FlatSpec with Matchers {
 
   def visulize(label: RoiLabel, mat: Mat): Unit = {
     var i = 1
-    while (label.bboxes.nElement() > 0 && i <= label.bboxes.size(1)) {
+    while (i <= label.size()) {
       Imgproc.rectangle(mat, new Point(label.bboxes.valueAt(i, 1) * mat.width(),
         label.bboxes.valueAt(i, 2) * mat.height()),
         new Point(label.bboxes.valueAt(i, 3) * mat.width(),

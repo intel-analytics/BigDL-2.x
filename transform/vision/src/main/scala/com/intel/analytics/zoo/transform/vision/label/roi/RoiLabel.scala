@@ -47,7 +47,7 @@ case class RoiLabel(classes: Tensor[Float], bboxes: Tensor[Float]) {
   }
 
   def size(): Int = {
-    if (bboxes.nElement() == 0) 0 else bboxes.size(1)
+    if (bboxes.nElement() < 4) 0 else bboxes.size(1)
   }
 }
 
