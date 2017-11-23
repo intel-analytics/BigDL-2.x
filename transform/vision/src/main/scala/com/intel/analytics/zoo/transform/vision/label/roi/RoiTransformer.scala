@@ -66,7 +66,7 @@ case class RoiHFlip(normalized: Boolean = true) extends FeatureTransformer {
     val roiLabel = feature.getLabel[RoiLabel]
     var i = 1
     val width = if (normalized) 1 else feature.getWidth()
-    while (roiLabel.bboxes.nElement() > 0 && i <= roiLabel.bboxes.size(1)) {
+    while (i <= roiLabel.size()) {
       val x1 = width - roiLabel.bboxes.valueAt(i, 1)
       roiLabel.bboxes.setValue(i, 1, width - roiLabel.bboxes.valueAt(i, 3))
       roiLabel.bboxes.setValue(i, 3, x1)
@@ -121,7 +121,7 @@ object AnnotationTransformer {
                           doMirror: Boolean, target: RoiLabel,
                           transformd: ArrayBuffer[NormalizedBox]): Unit = {
     var i = 1
-    while (target.bboxes.nElement() > 0 && i <= target.bboxes.size(1)) {
+    while (i <= target.size()) {
       val resizedBox = NormalizedBox(target.bboxes.valueAt(i, 1),
         target.bboxes.valueAt(i, 2),
         target.bboxes.valueAt(i, 3),
