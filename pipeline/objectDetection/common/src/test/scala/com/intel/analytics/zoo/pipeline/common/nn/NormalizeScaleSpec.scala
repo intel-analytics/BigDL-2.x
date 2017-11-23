@@ -16,7 +16,8 @@
 
 package com.intel.analytics.zoo.pipeline.common.nn
 
-import com.intel.analytics.bigdl.nn.{CMul, Normalize}
+import com.intel.analytics.bigdl.nn.{CMul, Module, Normalize}
+import com.intel.analytics.bigdl.optim.L2Regularizer
 import com.intel.analytics.bigdl.tensor.{Storage, Tensor}
 import org.scalatest.{FlatSpec, Matchers}
 
@@ -343,5 +344,21 @@ class NormalizeScaleSpec extends FlatSpec with Matchers {
       assert(Math.abs(a - b) < 1e-5)
       a
     })
+  }
+
+  "NormalizeScale serializer" should "work properly" in {
+    val module = NormalizeScale[Float](2, scale = 20, size = Array(1, 5, 1, 1),
+      wRegularizer = L2Regularizer[Float](0.2))
+
+    val input = Tensor[Float](1, 2, 3, 4).randn()
+    val res1 = module.forward(input).clone()
+    val tmpFile = java.io.File.createTempFile("module", ".bigdl")
+    module.saveModule(tmpFile.getAbsolutePath, true)
+    val loaded = Module.loadModule[Float](tmpFile.getAbsolutePath)
+    val res2 = loaded.forward(input)
+    res1 should be(res2)
+    if (tmpFile.exists()) {
+      tmpFile.delete()
+    }
   }
 }

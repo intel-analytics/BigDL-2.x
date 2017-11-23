@@ -57,7 +57,7 @@ object AnchorTarget {
 @SerialVersionUID(-6245143347544093145L)
 class AnchorTarget(val ratios: Array[Float], val scales: Array[Float])
   (implicit ev: TensorNumeric[Float]) extends AbstractModule[Table, Table, Float] {
-  @transient var anchorTool: Anchor = _
+  @transient private var anchorTool: Anchor = _
 
   /**
    * Compute bounding-box regression targets for an image.
@@ -101,7 +101,7 @@ class AnchorTarget(val ratios: Array[Float], val scales: Array[Float])
    * filter out-of-image anchors
    * measure GT overlap
    */
-  def getAnchorTarget(featureH: Int, featureW: Int,
+  private def getAnchorTarget(featureH: Int, featureW: Int,
     imgH: Int, imgW: Int, gtBoxes: Tensor[Float], output: Table): Unit = {
     require(gtBoxes.size(2) == 4, "gtBoxes is not a Nx4 tensor")
     if (anchorTool == null) {
@@ -147,7 +147,7 @@ class AnchorTarget(val ratios: Array[Float], val scales: Array[Float])
   }
 
   // label: 1 is positive, 0 is negative, -1 is don't care
-  def getAllLabels(indsInside: Array[Int],
+  private def getAllLabels(indsInside: Array[Int],
     insideAnchorsGtOverlaps: Tensor[Float]): Tensor[Float] = {
     val labels = Tensor[Float](indsInside.length).fill(-1f)
     val argmaxOverlaps = BboxUtil.argmax2(insideAnchorsGtOverlaps, 2)
@@ -200,7 +200,7 @@ class AnchorTarget(val ratios: Array[Float], val scales: Array[Float])
     this
   }
 
-  def sampleLabels(labels: Tensor[Float]): Tensor[Float] = {
+  private def sampleLabels(labels: Tensor[Float]): Tensor[Float] = {
     // subsample positive labels if we have too many
     val numFg = RPN_FG_FRACTION * RPN_BATCHSIZE
     val fgInds = (1 to labels.size(1)).filter(x => labels.valueAt(x) == 1)
@@ -224,7 +224,7 @@ class AnchorTarget(val ratios: Array[Float], val scales: Array[Float])
     labels
   }
 
-  def getBboxInsideWeights(indsInside: Array[Int],
+  private def getBboxInsideWeights(indsInside: Array[Int],
     labels: Tensor[Float]): Tensor[Float] = {
     val bboxInsideWeights = Tensor[Float](indsInside.length, 4)
 
@@ -237,7 +237,7 @@ class AnchorTarget(val ratios: Array[Float], val scales: Array[Float])
     bboxInsideWeights
   }
 
-  def getBboxOutsideWeights(indsInside: Array[Int], labels: Tensor[Float])
+  private def getBboxOutsideWeights(indsInside: Array[Int], labels: Tensor[Float])
   : Tensor[Float] = {
     val bboxOutSideWeights = Tensor[Float](indsInside.length, 4)
 
@@ -264,7 +264,7 @@ class AnchorTarget(val ratios: Array[Float], val scales: Array[Float])
   }
 
 
-  def getIndsInside(width: Int, height: Int,
+  private def getIndsInside(width: Int, height: Int,
     allAnchors: Tensor[Float], allowedBorder: Float): Array[Int] = {
     var indsInside = ArrayBuffer[Int]()
     for (i <- 1 to allAnchors.size(1)) {
@@ -282,7 +282,7 @@ class AnchorTarget(val ratios: Array[Float], val scales: Array[Float])
   /**
    * Unmap a subset of item (data) back to the original set of items (of size count)
    */
-  def unmap(data: Tensor[Float], count: Int, inds: Array[Int],
+  private def unmap(data: Tensor[Float], count: Int, inds: Array[Int],
     fillValue: Float): Tensor[Float] = {
     if (data.nDimension() == 1) {
       val ret = Tensor[Float](count).fill(fillValue)
