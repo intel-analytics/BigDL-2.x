@@ -30,10 +30,10 @@ class BboxPred[T: ClassTag](inputSize: Int,
   withBias: Boolean = true,
   wRegularizer: Regularizer[T] = null,
   bRegularizer: Regularizer[T] = null,
-  nClass: Int)(implicit ev: TensorNumeric[T]) extends Linear[T](
+  nClass: Int,
+  var normalized: Boolean = false)(implicit ev: TensorNumeric[T]) extends Linear[T](
   inputSize, outputSize, withBias, wRegularizer, bRegularizer) {
 
-  private var normalized = false
   private val means = ProposalTarget.BBOX_NORMALIZE_MEANS.reshape(Array(1, 4))
     .expand(Array(nClass, 4)).reshape(Array(nClass * 4)).asInstanceOf[Tensor[T]]
   private val stds = ProposalTarget.BBOX_NORMALIZE_STDS.reshape(Array(1, 4))
@@ -69,6 +69,7 @@ object BboxPred {
     outputSize: Int,
     withBias: Boolean = true,
     wRegularizer: Regularizer[T] = null,
-    bRegularizer: Regularizer[T] = null, nClass: Int)(implicit ev: TensorNumeric[T]): BboxPred[T] =
-    new BboxPred[T](inputSize, outputSize, withBias, wRegularizer, bRegularizer, nClass)
+    bRegularizer: Regularizer[T] = null, nClass: Int,
+    normalized: Boolean = false)(implicit ev: TensorNumeric[T]): BboxPred[T] =
+    new BboxPred[T](inputSize, outputSize, withBias, wRegularizer, bRegularizer, nClass, normalized)
 }
