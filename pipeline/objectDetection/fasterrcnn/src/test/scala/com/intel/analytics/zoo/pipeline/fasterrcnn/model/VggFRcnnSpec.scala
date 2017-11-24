@@ -83,30 +83,11 @@ class VggFRcnnSpec extends FlatSpec with Matchers {
     val input = T(data.clone(), imInfo.clone(), target.clone())
     val res1 = module.forward(input).toTensor[Float].clone()
 
-    val clone = module.cloneModule()
     val tmpFile = java.io.File.createTempFile("module", ".bigdl")
     module.saveModule(tmpFile.getAbsolutePath, true)
     val loaded = Module.loadModule[Float](tmpFile.getAbsolutePath).evaluate()
     val input2 = T(data.clone(), imInfo.clone(), target.clone())
     val res2 = loaded.forward(input2).toTensor[Float]
-
-    val namedModule = Utils.getNamedModules(clone)
-    val namedModule2 = Utils.getNamedModules(loaded)
-    namedModule.keys.foreach(key => {
-      if (namedModule.contains(key) && namedModule2.contains(key)) {
-        val out1 = namedModule(key).output
-        val out2 = namedModule2(key).output
-        if (out1.isTensor) {
-          if (pass(out1.toTensor, out2.toTensor)) {
-//            println(s"${key} pass")
-          } else {
-            println(s"${key} not pass")
-          }
-        }
-      }
-    })
-
-    if (pass(res1, res2)) println("compare pass !")
     res1 should be(res2)
     if (tmpFile.exists()) {
       tmpFile.delete()
