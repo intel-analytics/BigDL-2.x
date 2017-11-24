@@ -59,10 +59,11 @@ class VggFRcnnSpec extends FlatSpec with Matchers {
   }
 
   def pass(out1: Tensor[Float], out2: Tensor[Float]): Boolean = {
+    if (out1.nElement() != out2.nElement()) return false
     var status = true
     out1.toTensor[Float].map(out2.toTensor[Float], (a, b) => {
       if (Math.abs(a - b) > 1e-6) {
-        println(a, b)
+//        println(a, b)
         status = false
       }
       a
@@ -71,9 +72,26 @@ class VggFRcnnSpec extends FlatSpec with Matchers {
   }
 
   "save module" should "work" in {
-    val frcnnGraph = VggFRcnn(21,
+    VggFRcnn.debug = true
+    val module = VggFRcnn(21,
       PostProcessParam(0.3f, 21, false, -1, 0))
-    frcnnGraph.saveModule("/tmp/frcnn.model", true)
+    module.evaluate()
+    val target = Tensor(Storage(Array(0.0, 11.0, 0.0, 0.337411, 0.468211, 0.429096, 0.516061)
+      .map(_.toFloat))).resize(1, 7)
+    val data = Tensor[Float](1, 3, 200, 300).randn()
+    val imInfo = Tensor[Float](T(200, 300, 1, 1)).resize(1, 4)
+    val input = T(data.clone(), imInfo.clone(), target.clone())
+    val res1 = module.forward(input).toTensor[Float].clone()
+
+    val tmpFile = java.io.File.createTempFile("module", ".bigdl")
+    module.saveModule(tmpFile.getAbsolutePath, true)
+    val loaded = Module.loadModule[Float](tmpFile.getAbsolutePath).evaluate()
+    val input2 = T(data.clone(), imInfo.clone(), target.clone())
+    val res2 = loaded.forward(input2).toTensor[Float]
+    res1 should be(res2)
+    if (tmpFile.exists()) {
+      tmpFile.delete()
+    }
   }
 
   "forward backward" should "work" in {
@@ -438,7 +456,8 @@ class VggFRcnnSpec extends FlatSpec with Matchers {
     TestUtil.assertEqual2(TestUtil.loadFeatures("bbox_targets"),
       frcnn("roi-data").get.output.toTable[Tensor[Float]](3), "bbox_targets", 1e-3)
 
-    TestUtil.assertEqual2(TestUtil.loadFeatures("rpn_labels").apply1(x => if(x != -1) x+1 else x),
+    TestUtil.assertEqual2(TestUtil.loadFeatures("rpn_labels").apply1(x =>
+      if (x != -1) x + 1 else x),
       frcnn("rpn-data").get.output.toTable[Tensor[Float]](1), "rpn_labels", 1e-3)
     TestUtil.assertEqual2(TestUtil.loadFeatures("rpn_bbox_targets"),
       frcnn("rpn-data").get.output.toTable[Tensor[Float]](2), "rpn_bbox_targets", 1e-3)
@@ -451,7 +470,8 @@ class VggFRcnnSpec extends FlatSpec with Matchers {
       TestUtil.loadFeatures("cls_scorediff"), "cls_scorediff", 1e-6)
     TestUtil.assertEqual2(gradInput(5),
       TestUtil.loadFeatures("rpn_cls_scorediff").resize(1, 2, 225, 38), "rpn_cls_scorediff", 1e-6)
-    TestUtil.assertEqual2(gradInput(6), TestUtil.loadFeatures("rpn_bbox_preddiff"), "rpn_bbox_preddiff",
+    TestUtil.assertEqual2(gradInput(6),
+      TestUtil.loadFeatures("rpn_bbox_preddiff"), "rpn_bbox_preddiff",
       1e-6)
     gradInput(4) = TestUtil.loadFeatures("cls_scorediff")
     gradInput(3) = TestUtil.loadFeatures("bbox_preddiff")

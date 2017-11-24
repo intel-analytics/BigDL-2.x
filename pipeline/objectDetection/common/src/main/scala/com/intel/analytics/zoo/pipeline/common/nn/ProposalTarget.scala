@@ -51,17 +51,17 @@ object ProposalTarget {
 /**
  * Assign object detection proposals to ground-truth targets. Produces proposal
  * classification labels and bounding-box regression targets.
- * @param batchSize Minibatch size (number of regions of interest [ROIs])
+ * @param roiPerImage Minibatch size (number of regions of interest [ROIs])
  */
 @SerialVersionUID(6250296121335715244L)
-class ProposalTarget(batchSize: Int, numClasses: Int)
+class ProposalTarget(val roiPerImage: Int, val numClasses: Int)
   (implicit ev: TensorNumeric[Float]) extends AbstractModule[Table, Table, Float] {
 
   /**
    * Compute bounding-box regression targets for an image.
    *
    */
-  def computeTargets(sampledRois: Tensor[Float],
+  private[nn] def computeTargets(sampledRois: Tensor[Float],
     gtRois: Tensor[Float],
     labels: Tensor[Float]): Tensor[Float] = {
 
@@ -86,8 +86,7 @@ class ProposalTarget(batchSize: Int, numClasses: Int)
 
   // Fraction of minibatch that is labeled foreground (i.e. class > 0)
   private val FG_FRACTION = 0.25
-  private val rois_per_image = batchSize
-  private val fgRoisPerImage = round(FG_FRACTION * batchSize).toInt
+  private val fgRoisPerImage = round(FG_FRACTION * roiPerImage).toInt
 
   private var fgRoisPerThisImage = 0
   private var bgRoisPerThisImage = 0
@@ -113,14 +112,14 @@ class ProposalTarget(batchSize: Int, numClasses: Int)
     fgInds
   }
 
-  def selectBackgroundRois(maxOverlaps: Tensor[Float]): Array[Int] = {
+  private def selectBackgroundRois(maxOverlaps: Tensor[Float]): Array[Int] = {
     // Select background RoIs as those within [BG_THRESH_LO, BG_THRESH_HI)
     var bgInds = Array.range(1, maxOverlaps.nElement() + 1)
       .filter(i => (maxOverlaps.valueAt(i, 1) < BG_THRESH_HI) &&
         (maxOverlaps.valueAt(i, 1) >= BG_THRESH_LO))
     // Compute number of background RoIs to take from this image (guarding
     // against there being fewer than desired)
-    bgRoisPerThisImage = Math.min(rois_per_image - fgRoisPerThisImage, bgInds.length)
+    bgRoisPerThisImage = Math.min(roiPerImage - fgRoisPerThisImage, bgInds.length)
     // Sample background regions without replacement
     if (bgInds.length > 0) {
       bgInds = if (debug) {
@@ -140,7 +139,7 @@ class ProposalTarget(batchSize: Int, numClasses: Int)
    * @param gts GT boxes (index, label, difficult, x1, y1, x2, y2)
    * @return
    */
-  def sampleRois(roisPlusGts: Tensor[Float],
+  private def sampleRois(roisPlusGts: Tensor[Float],
     gts: Tensor[Float])
   : (Tensor[Float], Tensor[Float], Tensor[Float], Tensor[Float]) = {
     // overlaps: (rois x gt_boxes)

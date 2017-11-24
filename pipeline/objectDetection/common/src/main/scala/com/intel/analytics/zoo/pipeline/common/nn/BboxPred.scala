@@ -23,31 +23,33 @@ import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric
 import org.apache.log4j.Logger
 import BboxPred._
 
-class BboxPred(inputSize: Int,
+import scala.reflect.ClassTag
+
+class BboxPred[T: ClassTag](inputSize: Int,
   outputSize: Int,
   withBias: Boolean = true,
-  wRegularizer: Regularizer[Float] = null,
-  bRegularizer: Regularizer[Float] = null,
-  nClass: Int)(implicit ev: TensorNumeric[Float]) extends Linear(
+  wRegularizer: Regularizer[T] = null,
+  bRegularizer: Regularizer[T] = null,
+  nClass: Int,
+  var normalized: Boolean = false)(implicit ev: TensorNumeric[T]) extends Linear[T](
   inputSize, outputSize, withBias, wRegularizer, bRegularizer) {
 
-  private var normalized = false
   private val means = ProposalTarget.BBOX_NORMALIZE_MEANS.reshape(Array(1, 4))
-    .expand(Array(nClass, 4)).reshape(Array(nClass * 4))
+    .expand(Array(nClass, 4)).reshape(Array(nClass * 4)).asInstanceOf[Tensor[T]]
   private val stds = ProposalTarget.BBOX_NORMALIZE_STDS.reshape(Array(1, 4))
-    .expand(Array(nClass, 4)).reshape(Array(nClass * 4))
-  private val originalWeight = Tensor[Float](1)
-  private val originalBias = Tensor[Float](1)
+    .expand(Array(nClass, 4)).reshape(Array(nClass * 4)).asInstanceOf[Tensor[T]]
+  private val originalWeight = Tensor[T](1)
+  private val originalBias = Tensor[T](1)
 
 
-  override def updateOutput(input: Tensor[Float]): Tensor[Float] = {
+  override def updateOutput(input: Tensor[T]): Tensor[T] = {
     if (!isTraining() && !normalized) {
       logger.info("normalize weight for test")
       originalWeight.resizeAs(weight).copy(weight)
       originalBias.resizeAs(bias).copy(bias)
       weight.cmul(stds.reshape(Array(nClass * 4, 1))
         .expand(Array(nClass * 4, weight.size(2))))
-      bias.cmul(stds).add(1, means)
+      bias.cmul(stds).add(ev.fromType(1), means)
       normalized = true
     } else if (isTraining() && normalized) {
       logger.info("restore net to original state for training")
@@ -63,10 +65,11 @@ class BboxPred(inputSize: Int,
 object BboxPred {
   val logger = Logger.getLogger(getClass)
 
-  def apply(inputSize: Int,
+  def apply[@specialized(Float, Double) T: ClassTag](inputSize: Int,
     outputSize: Int,
     withBias: Boolean = true,
-    wRegularizer: Regularizer[Float] = null,
-    bRegularizer: Regularizer[Float] = null, nClass: Int)(implicit ev: TensorNumeric[Float])
-  : BboxPred = new BboxPred(inputSize, outputSize, withBias, wRegularizer, bRegularizer, nClass)
+    wRegularizer: Regularizer[T] = null,
+    bRegularizer: Regularizer[T] = null, nClass: Int,
+    normalized: Boolean = false)(implicit ev: TensorNumeric[T]): BboxPred[T] =
+    new BboxPred[T](inputSize, outputSize, withBias, wRegularizer, bRegularizer, nClass, normalized)
 }
