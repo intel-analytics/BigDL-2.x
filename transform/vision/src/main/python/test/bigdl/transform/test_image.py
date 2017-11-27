@@ -34,13 +34,73 @@ class TestLayer():
         image_frame = ImageFrame.read(self.image_path, self.sc)
         transformer(image_frame)
         image_frame.transform(transformer)
-        image_frame.to_sample()
+        sample = image_frame.to_sample()
+        sample.count()
 
     def test_colorjitter(self):
         color = ColorJitter(random_order_prob=1.0, shuffle=True)
         self.transformer_test(color)
 
-    def test_
+    def test_resize(self):
+        resize = Resize(200, 200, 1)
+        self.transformer_test(resize)
+
+    def test_fixed_crop_norm(self):
+        crop = FixedCrop(0.0, 0.0, 0.5, 1.0)
+        self.transformer_test(crop)
+
+    def test_fixed_crop_unnorm(self):
+        crop = FixedCrop(0.0, 0.0, 200.0, 200., False)
+        self.transformer_test(crop)
+
+    def test_center_crop(self):
+        crop = CenterCrop(200, 200)
+        self.transformer_test(crop)
+
+    def test_random_crop(self):
+        crop = RandomCrop(200, 200)
+        self.transformer_test(crop)
+
+    def test_expand(self):
+        expand = Expand(means_r=123, means_g=117, means_b=104,
+                        max_expand_ratio=2.0)
+        self.transformer_test(expand)
+
+    def test_hflip(self):
+        transformer = HFlip()
+        self.transformer_test(transformer)
+
+    def test_random_transformer(self):
+        transformer = RandomTransformer(HFlip(), 0.5)
+        self.transformer_test(transformer)
+
+    def test_pipeline(self):
+        transformer = Pipeline([ColorJitter(), HFlip(), Resize(200, 200, 1)])
+        self.transformer_test(transformer)
+
+    def test_get_image(self):
+        image_frame = ImageFrame.read(self.image_path)
+        image_frame.get_image()
+
+    def test_get_label(self):
+        image_frame = ImageFrame.read(self.image_path)
+        image_frame.get_label()
+
+    def test_to_sample(self):
+        image_frame = ImageFrame.read(self.image_path)
+        image_frame.to_sample()
+
+    def test_is_local(self):
+        image_frame = ImageFrame.read(self.image_path)
+        assert image_frame.is_local() is True
+        image_frame = ImageFrame.read(self.image_path, self.sc)
+        assert image_frame.is_local() is False
+
+    def test_is_distributed(self):
+        image_frame = ImageFrame.read(self.image_path)
+        assert image_frame.is_distributed() is False
+        image_frame = ImageFrame.read(self.image_path, self.sc)
+        assert image_frame.is_distributed() is True
 
 if __name__ == "__main__":
     pytest.main([__file__])
