@@ -331,14 +331,3 @@ object RandomTransformer {
   def apply(transformer: FeatureTransformer, maxProb: Double): RandomTransformer =
     new RandomTransformer(transformer, maxProb)
 }
-
-trait ImageFeatureMiniBatch extends MiniBatch[Float] {
-  var imageFeatures: ArrayBuffer[ImageFeature] = _
-}
-
-trait ImageFeatureToBatch[A <: ImageFeatureMiniBatch]
-  extends Transformer[ImageFeature, A] {
-  def inputToBatch(imageFeatures: ArrayBuffer[ImageFeature]): Activity
-
-  def targetToBatch(imageFeatures: ArrayBuffer[ImageFeature]): Activity = null
-}
