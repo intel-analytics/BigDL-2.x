@@ -113,8 +113,8 @@ object OpenCVMat {
   def toFloatBuf(input: Mat, floats: Array[Float], buf: Mat = null): Array[Float] = {
     val bufMat = if (buf == null) new OpenCVMat() else buf
     val floatMat = if (input.`type`() != CvType.CV_32FC3) {
-      input.convertTo(buf, CvType.CV_32FC3)
-      buf
+      input.convertTo(bufMat, CvType.CV_32FC3)
+      bufMat
     } else {
       input
     }

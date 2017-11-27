@@ -19,14 +19,9 @@ class FeatureTransformer(JavaValue):
         return image_feature
 
     def __call__(self, image_frame, bigdl_type="float"):
-        if image_frame.__class__.__name__ == "LocalImageFrame":
-            jframe = callBigDlFunc(bigdl_type,
-                             "transformLocalImageFrame", self.value, image_frame)
-            return LocalImageFrame(jvalue=jframe)
-        else:
-            jframe = callBigDlFunc(bigdl_type,
-                                   "transformDistributedImageFrame", self.value, image_frame)
-            return DistributedImageFrame(jvalue=jframe)
+        jframe = callBigDlFunc(bigdl_type,
+                             "transformImageFrame", self.value, image_frame)
+        return ImageFrame(jvalue=jframe)
 
 class Pipeline(FeatureTransformer):
 
@@ -62,32 +57,58 @@ class ImageFeature(JavaValue):
 
 class ImageFrame(JavaValue):
 
+    def __init__(self, jvalue, bigdl_type="float"):
+        self.value = jvalue
+        self.bigdl_type = bigdl_type
+        if self.is_local():
+            self.image_frame = LocalImageFrame(jvalue=self.value)
+        else:
+            self.image_frame = DistributedImageFrame(jvalue=self.value)
+
+
     @classmethod
     def read(cls, path, sc=None, bigdl_type="float"):
-        if sc:
-            return DistributedImageFrame(jvalue=callBigDlFunc(bigdl_type, "readDist", path, sc))
-        else:
-            return LocalImageFrame(jvalue=callBigDlFunc(bigdl_type, "readLocal", path))
+        return ImageFrame(jvalue=callBigDlFunc(bigdl_type, "read", path, sc))
 
     @classmethod
     def readParquet(cls, path, ss, bigdl_type="float"):
         return DistributedImageFrame(jvalue=callBigDlFunc(bigdl_type, "readParquet", path, ss))
+
+    def is_local(self):
+        return callBigDlFunc(self.bigdl_type, "isLocal", self.value)
+
+    def is_distributed(self):
+        return callBigDlFunc(self.bigdl_type, "isDistributed", self.value)
+
+    def transform(self, transformer, bigdl_type="float"):
+        self.value = callBigDlFunc(bigdl_type,
+                                 "transformImageFrame", transformer, self.value)
+        return self
+
+    def get_image(self, float_key="floats", to_chw=True):
+        return self.image_frame.get_image(float_key, to_chw)
+
+    def get_label(self):
+        return self.image_frame.get_label()
+
+    def to_sample(self, float_key="floats", to_chw=True, with_im_info=False):
+        return self.image_frame.to_sample(float_key, to_chw, with_im_info)
 
 
 class LocalImageFrame(ImageFrame):
     """
     LocalImageFrame wraps a list of ImageFeature
     """
-    def __init__(self, image_rdd=None, label_rdd=None, jvalue=None, bigdl_type="float"):
-        assert jvalue or image_rdd, "jvalue and image_rdd cannot be None in the same time"
+    def __init__(self, image_list=None, label_list=None, jvalue=None, bigdl_type="float"):
+        assert jvalue or image_list, "jvalue and image_list cannot be None in the same time"
         if jvalue:
             self.value = jvalue
         else:
-            # init from image ndarray rdd and label rdd(optional)
-            image_tensor_rdd = image_rdd.map(lambda image: JTensor.from_ndarray(image))
-            label_tensor_rdd = label_rdd.map(lambda label: JTensor.from_ndarray(label)) if label_rdd else None
+            # init from image ndarray list and label rdd(optional)
+            image_tensor_list = image_list.map(lambda image: JTensor.from_ndarray(image))
+            label_tensor_list = label_list.map(lambda label: JTensor.from_ndarray(label)) if label_list else None
             self.value = callBigDlFunc(bigdl_type, JavaValue.jvm_class_constructor(self),
-                                       image_tensor_rdd, label_tensor_rdd)
+                                       image_tensor_list, label_tensor_list)
 
         self.bigdl_type = bigdl_type
 
@@ -112,14 +133,6 @@ class LocalImageFrame(ImageFrame):
         """
         return callBigDlFunc(self.bigdl_type,
                              "localImageFrameToSample", self.value, float_key, to_chw, with_im_info)
-
-    def transform(self, transformer, bigdl_type="float"):
-        jframe = callBigDlFunc(bigdl_type,
-                               "transformLocalImageFrame", transformer, self.value)
-        return LocalImageFrame(jvalue=jframe)
-
-    def __call__(self, transformer, bigdl_type="float"):
-        return self.transform(transformer, bigdl_type)
 
 
 
@@ -162,14 +175,6 @@ class DistributedImageFrame(ImageFrame):
         """
         return callBigDlFunc(self.bigdl_type,
                              "distributedImageFrameToSampleRdd", self.value, float_key, to_chw, with_im_info)
-
-    def transform(self, transformer, bigdl_type="float"):
-        jframe = callBigDlFunc(bigdl_type,
-                               "transformDistributedImageFrame", transformer, self.value)
-        return DistributedImageFrame(jvalue=jframe)
-
-    def __call__(self, transformer, bigdl_type="float"):
-        return self.transform(transformer, bigdl_type)
 
 
 class Resize(FeatureTransformer):

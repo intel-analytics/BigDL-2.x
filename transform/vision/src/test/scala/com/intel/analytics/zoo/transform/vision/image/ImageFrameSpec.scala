@@ -23,7 +23,7 @@ import org.apache.commons.io.FileUtils
 import org.apache.spark.sql.SparkSession
 import org.scalatest.{BeforeAndAfter, FlatSpec, Matchers}
 
-class ImageSpec extends FlatSpec with Matchers with BeforeAndAfter {
+class ImageFrameSpec extends FlatSpec with Matchers with BeforeAndAfter {
   var spark: SparkSession = null
   val resource = getClass.getClassLoader.getResource("image/")
   before {
@@ -36,7 +36,7 @@ class ImageSpec extends FlatSpec with Matchers with BeforeAndAfter {
   }
 
   "read LocalImageFrame" should "work properly" in {
-    val local = ImageFrame.read(resource.getFile)
+    val local = ImageFrame.read(resource.getFile).asInstanceOf[LocalImageFrame]
     local.array.length should be(1)
     assert(local.array(0).uri.endsWith("000025.jpg"))
     assert(local.array(0).bytes.length == 95959)
@@ -44,7 +44,7 @@ class ImageSpec extends FlatSpec with Matchers with BeforeAndAfter {
   }
 
   "LocalImageFrame toDistributed" should "work properly" in {
-    val local = ImageFrame.read(resource.getFile)
+    val local = ImageFrame.read(resource.getFile).asInstanceOf[LocalImageFrame]
     local.array.foreach(x => println(x.uri, x.bytes.length))
     val imageFeature = local.toDistributed(spark.sparkContext).rdd.first()
     assert(imageFeature.uri.endsWith("000025.jpg"))
@@ -54,6 +54,7 @@ class ImageSpec extends FlatSpec with Matchers with BeforeAndAfter {
 
   "read DistributedImageFrame" should "work properly" in {
     val distributed = ImageFrame.read(resource.getFile, spark.sparkContext)
+      .asInstanceOf[DistributedImageFrame]
     val imageFeature = distributed.rdd.first()
     assert(imageFeature.uri.endsWith("000025.jpg"))
     assert(imageFeature.bytes.length == 95959)
@@ -70,5 +71,19 @@ class ImageSpec extends FlatSpec with Matchers with BeforeAndAfter {
     assert(imageFeature.uri.endsWith("000025.jpg"))
     assert(imageFeature.bytes.length == 95959)
     FileUtils.deleteDirectory(tmpFile)
+  }
+
+  "read local" should "work" in {
+    val images = ImageFrame.read(resource.getFile).asInstanceOf[LocalImageFrame]
+    images.array.length should be (1)
+
+    val images2 = ImageFrame.read(resource.getFile + "*.jpg").asInstanceOf[LocalImageFrame]
+    images2.array.length should be (1)
+
+    val images3 = ImageFrame.read(resource.getFile + "000025.jpg").asInstanceOf[LocalImageFrame]
+    images3.array.length should be (1)
+
+    val images4 = ImageFrame.read(resource.getFile + "0000251.jpg").asInstanceOf[LocalImageFrame]
+    images4.array.length should be (0)
   }
 }

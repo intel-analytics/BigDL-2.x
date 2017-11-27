@@ -65,11 +65,6 @@ class ImageFeature extends Serializable {
   def contains(key: String): Boolean = state.contains(key)
 
   /**
-   * get original image file in bytes
-   */
-  def getImage(): Array[Byte] = apply[Array[Byte]](ImageFeature.bytes)
-
-  /**
    * get opencv mat from ImageFeature, note that it may be empty if it is released
    */
   def opencvMat(): OpenCVMat = apply[OpenCVMat](ImageFeature.mat)
@@ -199,7 +194,7 @@ class ImageFeature extends Serializable {
         Array(getHeight(), getWidth(), 3))
     } else {
       logger.warn(s"please add MatToFloats(out_key = $floatKey) in the end of pipeline if you" +
-        s"are transforming an rdd")
+        s" are transforming an rdd")
       val mat = opencvMat()
       val floats = new Array[Float](mat.height() * mat.width() * 3)
       OpenCVMat.toFloatBuf(mat, floats)
@@ -286,6 +281,10 @@ abstract class FeatureTransformer() extends Transformer[ImageFeature, ImageFeatu
 
   override def apply(prev: Iterator[ImageFeature]): Iterator[ImageFeature] = {
     prev.map(transform)
+  }
+
+  def apply(imageFrame: ImageFrame): ImageFrame = {
+    imageFrame.transform(this)
   }
 
   // scalastyle:off methodName

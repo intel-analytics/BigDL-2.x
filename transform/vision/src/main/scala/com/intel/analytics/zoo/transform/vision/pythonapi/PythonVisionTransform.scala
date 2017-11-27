@@ -151,14 +151,10 @@ class PythonVisionTransform[T: ClassTag](implicit ev: TensorNumeric[T]) extends 
     transformer.transform(feature)
   }
 
-  def transformDistributedImageFrame(transformer: FeatureTransformer,
-    imageFrame: DistributedImageFrame): DistributedImageFrame = {
-    imageFrame(transformer)
-  }
 
-  def transformLocalImageFrame(transformer: FeatureTransformer,
-    imageFrame: LocalImageFrame): LocalImageFrame = {
-    imageFrame(transformer)
+  def transformImageFrame(transformer: FeatureTransformer,
+    imageFrame: ImageFrame): ImageFrame = {
+    imageFrame.transform(transformer)
   }
 
   def createDistributedImageFrame(imageRdd: JavaRDD[JTensor], labelRdd: JavaRDD[JTensor])
@@ -286,17 +282,17 @@ class PythonVisionTransform[T: ClassTag](implicit ev: TensorNumeric[T]) extends 
     toJTensor(label)
   }
 
-  def readDist(path: String, sc: JavaSparkContext): DistributedImageFrame = {
-    ImageFrame.read(path, sc)
-  }
-
-  def readLocal(path: String): LocalImageFrame = {
-    ImageFrame.read(path)
+  def read(path: String, sc: JavaSparkContext): ImageFrame = {
+    if (sc == null) ImageFrame.read(path, null) else ImageFrame.read(path, sc.sc)
   }
 
   def readParquet(path: String, ss: SparkSession): DistributedImageFrame = {
     ImageFrame.readParquet(path, ss)
   }
+
+  def isLocal(imageFrame: ImageFrame): Boolean = imageFrame.isLocal()
+
+  def isDistributed(imageFrame: ImageFrame): Boolean = imageFrame.isDistributed()
 }
 
 

@@ -16,15 +16,17 @@
 
 package com.intel.analytics.zoo.transform.vision.image
 
-import java.io.File
 
-import com.intel.analytics.bigdl.dataset.Transformer
+import java.io.{File, FilenameFilter}
+
 import org.apache.commons.io.FileUtils
+import org.apache.commons.io.filefilter.WildcardFileFilter
 import org.apache.log4j.Logger
 import org.apache.spark.SparkContext
 import org.apache.spark.rdd.RDD
 import org.apache.spark.sql.SparkSession
 
+import scala.collection.mutable.ArrayBuffer
 import scala.reflect.ClassTag
 
 trait ImageFrame {
@@ -37,9 +39,9 @@ trait ImageFrame {
     this.transform(transformer)
   }
 
-  def isLocal(): Boolean = this.isInstanceOf[LocalImageFrame]
+  def isLocal(): Boolean
 
-  def isDistributed(): Boolean = this.isInstanceOf[DistributedImageFrame]
+  def isDistributed(): Boolean
 }
 
 object ImageFrame {
@@ -62,34 +64,51 @@ object ImageFrame {
   }
 
   /**
-   * Read image as DistributedImageFrame from local file system or HDFS
+   * Read images as Image Frame
+   * if sc is defined, Read image as DistributedImageFrame from local file system or HDFS
+   * if sc is null, Read image as LocalImageFrame from local file system
    *
-   * @param path path to read images. Local or HDFS. Wildcard character are supported.
+   * @param path path to read images
+   * if sc is defined, path can be local or HDFS. Wildcard character are supported.
+   * if sc is null, path is local directory/image file/image file with wildcard character
    * @param sc SparkContext
-   * @return DistributedImageFrame
+   * @return ImageFrame
    */
-  def read(path: String, sc: SparkContext): DistributedImageFrame = {
-    val images = sc.binaryFiles(path).map { case (p, stream) =>
-      ImageFeature(stream.toArray(), uri = p)
-    }.map(BytesToMat.transform)
-    ImageFrame.rdd(images)
+  def read(path: String, sc: SparkContext = null): ImageFrame = {
+    if (null != sc) {
+      val images = sc.binaryFiles(path).map { case (p, stream) =>
+        ImageFeature(stream.toArray(), uri = p)
+      }.map(BytesToMat.transform)
+      ImageFrame.rdd(images)
+    } else {
+      val files = listLocalFiles(path)
+      val images = files.map { p =>
+        ImageFeature(FileUtils.readFileToByteArray(p), uri = p.getAbsolutePath)
+      }.map(BytesToMat.transform)
+      ImageFrame.array(images)
+    }
   }
 
-  /**
-   * Read image as LocalImageFrame from local directory
-   *
-   * @param path local flatten directory with images
-   * @return LocalImageFrame
-   */
-  def read(path: String): LocalImageFrame = {
-    val dir = new File(path)
-    require(dir.exists(), s"$path not exists!")
-    require(dir.isDirectory, s"$path is not directory!")
-    val images = dir.listFiles().map { p =>
-      ImageFeature(FileUtils.readFileToByteArray(p), uri = p.getAbsolutePath)
-    }.map(BytesToMat.transform)
-    ImageFrame.array(images)
+  private def listLocalFiles(path: String): Array[File] = {
+    val files = new ArrayBuffer[File]()
+    listFiles(path, files)
+    files.toArray
   }
+
+  private def listFiles(path: String, files: ArrayBuffer[File]): Unit = {
+    val file = new File(path)
+    if (file.isDirectory) {
+      file.listFiles().foreach(x => listFiles(x.getAbsolutePath, files))
+    } else if (file.isFile) {
+      files.append(file)
+    } else {
+      val filter = new WildcardFileFilter(file.getName)
+      file.getParentFile.listFiles(new FilenameFilter {
+        override def accept(dir: File, name: String): Boolean = filter.accept(dir, name)
+      }).foreach(x => listFiles(x.getAbsolutePath, files))
+    }
+  }
+
 
   /**
    * Read parquet file as DistributedImageFrame
@@ -121,43 +140,32 @@ object ImageFrame {
       }.toDF(ImageFeature.uri, ImageFeature.bytes)
     df.write.parquet(output)
   }
-
-
-  implicit def imageFrameToLocal(imageFrame: ImageFrame): LocalImageFrame = {
-    imageFrame.asInstanceOf[LocalImageFrame]
-  }
-
-  implicit def imageFrameToDist(imageFrame: ImageFrame): DistributedImageFrame = {
-    imageFrame.asInstanceOf[DistributedImageFrame]
-  }
-
-  implicit def rddToDistributedImageFrame(rdd: RDD[ImageFeature]): DistributedImageFrame = {
-    ImageFrame.rdd(rdd)
-  }
 }
 
 class LocalImageFrame(var array: Array[ImageFeature]) extends ImageFrame {
-  def apply(transformer: FeatureTransformer): LocalImageFrame = {
-    array = array.map(transformer.transform)
-    this
-  }
 
   def toDistributed(sc: SparkContext): DistributedImageFrame = {
     new DistributedImageFrame(sc.parallelize(array))
   }
 
   override def transform(transformer: FeatureTransformer): ImageFrame = {
-    this.apply(transformer)
+    array = array.map(transformer.transform)
+    this
   }
+
+  override def isLocal(): Boolean = true
+
+  override def isDistributed(): Boolean = false
 }
 
 class DistributedImageFrame(var rdd: RDD[ImageFeature]) extends ImageFrame {
-  def apply(transformer: FeatureTransformer): DistributedImageFrame = {
+
+  override def transform(transformer: FeatureTransformer): ImageFrame = {
     rdd = transformer(rdd)
     this
   }
 
-  override def transform(transformer: FeatureTransformer): ImageFrame = {
-    this.apply(transformer)
-  }
+  override def isLocal(): Boolean = false
+
+  override def isDistributed(): Boolean = true
 }
