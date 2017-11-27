@@ -16,23 +16,36 @@
 
 package com.intel.analytics.zoo.transform.vision.image
 
-import com.intel.analytics.bigdl.dataset.{ChainedTransformer, Sample, Transformer}
+import java.io.File
+
+import com.intel.analytics.bigdl.dataset.{ChainedTransformer, MiniBatch, Transformer}
+import com.intel.analytics.bigdl.nn.abstractnn.Activity
 import com.intel.analytics.bigdl.tensor.{Storage, Tensor}
 import com.intel.analytics.bigdl.utils.RandomGenerator._
 import com.intel.analytics.bigdl.utils.T
 import com.intel.analytics.zoo.transform.vision.image.opencv.OpenCVMat
 import org.apache.log4j.Logger
 
-import scala.collection.{Iterator, Set, mutable}
+import scala.collection.mutable.ArrayBuffer
+import scala.collection.{Set, mutable}
 import scala.reflect.ClassTag
 
 class ImageFeature extends Serializable {
+
   import ImageFeature.logger
-  def this(bytes: Array[Byte], label: Any = null, path: String = null) {
+
+  /**
+   * Create ImageFeature
+   *
+   * @param bytes image file in bytes
+   * @param label label
+   * @param uri image uri
+   */
+  def this(bytes: Array[Byte], label: Any = null, uri: String = null) {
     this
     state(ImageFeature.bytes) = bytes
-    if (null != path) {
-      state(ImageFeature.path) = path
+    if (null != uri) {
+      state(ImageFeature.uri) = uri
     }
     if (null != label) {
       state(ImageFeature.label) = label
@@ -43,44 +56,98 @@ class ImageFeature extends Serializable {
 
   var isValid = true
 
-
-  def apply[T](key: String): T = state(key).asInstanceOf[T]
+  def apply[T](key: String): T = {
+    if (contains(key)) state(key).asInstanceOf[T] else null.asInstanceOf[T]
+  }
 
   def update(key: String, value: Any): Unit = state(key) = value
 
   def contains(key: String): Boolean = state.contains(key)
 
-  def opencvMat(): OpenCVMat = state(ImageFeature.mat).asInstanceOf[OpenCVMat]
+  /**
+   * get opencv mat from ImageFeature, note that it may be empty if it is released
+   */
+  def opencvMat(): OpenCVMat = apply[OpenCVMat](ImageFeature.mat)
 
   def keys(): Set[String] = state.keySet
 
   def hasLabel(): Boolean = state.contains(ImageFeature.label)
 
-  def getFloats(key: String = ImageFeature.floats): Array[Float] = {
-    state(key).asInstanceOf[Array[Float]]
+  /**
+   * image file in bytes
+   */
+  def bytes(): Array[Byte] = apply[Array[Byte]](ImageFeature.bytes)
+
+  def uri(): String = apply[String](ImageFeature.uri)
+
+  /**
+   * image pixels in float array
+   *
+   * @param key key that map float array
+   * @return float array
+   */
+  def floats(key: String = ImageFeature.floats): Array[Float] = {
+    apply[Array[Float]](key)
   }
 
-  def getWidth(): Int = {
-    if (state.contains(ImageFeature.width)) state(ImageFeature.width).asInstanceOf[Int]
-    else opencvMat().width()
+  def feature(key: String = ImageFeature.feature): Any = {
+    apply(key)
   }
 
-  def getHeight(): Int = {
-    if (state.contains(ImageFeature.height)) state(ImageFeature.height).asInstanceOf[Int]
-    else opencvMat().height()
+  def tensorFeature(key: String = ImageFeature.feature): Tensor[Float] = {
+    feature(key).asInstanceOf[Tensor[Float]]
   }
 
-  def getOriginalWidth: Int = state(ImageFeature.originalW).asInstanceOf[Int]
-
-  def getOriginalHeight: Int = state(ImageFeature.originalH).asInstanceOf[Int]
-
-  def getLabel[T: ClassTag]: T = {
-    if (hasLabel()) this (ImageFeature.label).asInstanceOf[T] else null.asInstanceOf[T]
+  /**
+   * get current image size in (height, width, channel)
+   *
+   * @return (height, width, channel)
+   */
+  def getSize: (Int, Int, Int) = {
+    val mat = opencvMat()
+    if (!mat.isReleased) {
+      mat.shape()
+    } else if (contains(ImageFeature.size)) {
+      apply[(Int, Int, Int)](ImageFeature.size)
+    } else {
+      getOriginalSize
+    }
   }
 
+  def getHeight(): Int = getSize._1
+
+  def getWidth(): Int = getSize._2
+
+  def getChannel(): Int = getSize._3
+
+  /**
+   * get original image size in (height, width, channel)
+   *
+   * @return (height, width, channel)
+   */
+  def getOriginalSize: (Int, Int, Int) = {
+    if (contains(ImageFeature.originalSize)) {
+      apply[(Int, Int, Int)](ImageFeature.originalSize)
+    } else {
+      logger.warn("there is no original size stored")
+      (-1, -1, -1)
+    }
+  }
+
+  def getOriginalWidth: Int = getOriginalSize._2
+
+  def getOriginalHeight: Int = getOriginalSize._1
+
+  def getLabel[T: ClassTag]: T = apply[T](ImageFeature.label)
+
+  /**
+   * imInfo is a tensor that contains height, width, scaleInHeight, scaleInWidth
+   * e.g. it is used in SSD and Faster-RCNN to post process the roi detection
+   */
   def getImInfo(): Tensor[Float] = {
-    Tensor[Float](T(getHeight(), getWidth(), getHeight().toFloat / getOriginalHeight,
-      getWidth().toFloat / getOriginalWidth))
+    val (height, width, _) = getSize
+    val (oh, ow, _) = getOriginalSize
+    Tensor[Float](T(height, width, height.toFloat / oh, width.toFloat / ow))
   }
 
   def clear(): Unit = {
@@ -92,9 +159,9 @@ class ImageFeature extends Serializable {
   def copyTo(storage: Array[Float], offset: Int, floatKey: String = ImageFeature.floats,
              toRGB: Boolean = true): Unit = {
     require(contains(floatKey), s"there should be ${floatKey} in ImageFeature")
-    val data = getFloats(floatKey)
+    val data = floats(floatKey)
     require(data.length >= getWidth() * getHeight() * 3,
-      "float array length should be larger than 3 * ${getWidth()} * ${getHeight()}")
+      s"float array length should be larger than 3 * ${getWidth()} * ${getHeight()}")
     val frameLength = getWidth() * getHeight()
     require(frameLength * 3 + offset <= storage.length)
     var j = 0
@@ -122,18 +189,18 @@ class ImageFeature extends Serializable {
    * @return tensor that represents an image
    */
   def toTensor(floatKey: String, toChw: Boolean = true): Tensor[Float] = {
-    val (floats, size) = if (contains(floatKey)) {
-      (getFloats(floatKey),
+    val (data, size) = if (contains(floatKey)) {
+      (floats(floatKey),
         Array(getHeight(), getWidth(), 3))
     } else {
       logger.warn(s"please add MatToFloats(out_key = $floatKey) in the end of pipeline if you" +
-        s"are transforming an rdd")
+        s" are transforming an rdd")
       val mat = opencvMat()
       val floats = new Array[Float](mat.height() * mat.width() * 3)
       OpenCVMat.toFloatBuf(mat, floats)
       (floats, Array(mat.height(), mat.width(), 3))
     }
-    var image = Tensor(Storage(floats)).resize(size)
+    var image = Tensor(Storage(data)).resize(size)
     if (toChw) {
       // transpose the shape of image from (h, w, c) to (c, h, w)
       image = image.transpose(1, 3).transpose(2, 3).contiguous()
@@ -144,20 +211,31 @@ class ImageFeature extends Serializable {
 
 object ImageFeature {
   val label = "label"
-  val path = "path"
+  val uri = "uri"
+  // image in OpenCVMat
   val mat = "mat"
+  // image file in bytes
   val bytes = "bytes"
+  // image pixels in float array
   val floats = "floats"
-  val width = "width"
-  val height = "height"
-  // original image width
-  val originalW = "originalW"
-  val originalH = "originalH"
+  // current image size
+  val size = "size"
+  // original image size
+  val originalSize = "originalSize"
+  // image prediction result
+  val feature = "feature"
   val cropBbox = "cropBbox"
   val expandBbox = "expandBbox"
 
-  def apply(bytes: Array[Byte], label: Any = null, path: String = null)
-  : ImageFeature = new ImageFeature(bytes, label, path)
+  /**
+   * Create ImageFeature
+   *
+   * @param bytes image file in bytes
+   * @param label label
+   * @param uri image uri
+   */
+  def apply(bytes: Array[Byte], label: Any = null, uri: String = null)
+  : ImageFeature = new ImageFeature(bytes, label, uri)
 
   def apply(): ImageFeature = new ImageFeature()
 
@@ -165,7 +243,9 @@ object ImageFeature {
 }
 
 abstract class FeatureTransformer() extends Transformer[ImageFeature, ImageFeature] {
+
   import FeatureTransformer.logger
+
   private var outKey: Option[String] = None
 
   def setOutKey(key: String): this.type = {
@@ -183,7 +263,7 @@ abstract class FeatureTransformer() extends Transformer[ImageFeature, ImageFeatu
         require(outKey.get != ImageFeature.mat, s"the output key should not equal to" +
           s" ${ImageFeature.mat}, please give another name")
         if (feature.contains(outKey.get)) {
-          val mat = feature(outKey.get).asInstanceOf[OpenCVMat]
+          val mat = feature[OpenCVMat](outKey.get)
           feature.opencvMat().copyTo(mat)
         } else {
           feature(outKey.get) = feature.opencvMat().clone()
@@ -191,7 +271,7 @@ abstract class FeatureTransformer() extends Transformer[ImageFeature, ImageFeatu
       }
     } catch {
       case e: Exception =>
-        val path = if (feature.contains(ImageFeature.path)) feature(ImageFeature.path) else ""
+        val path = if (feature.contains(ImageFeature.uri)) feature(ImageFeature.uri) else ""
         logger.warn(s"failed ${path} in transformer ${getClass}")
         e.printStackTrace()
         feature.isValid = false
@@ -201,6 +281,10 @@ abstract class FeatureTransformer() extends Transformer[ImageFeature, ImageFeatu
 
   override def apply(prev: Iterator[ImageFeature]): Iterator[ImageFeature] = {
     prev.map(transform)
+  }
+
+  def apply(imageFrame: ImageFrame): ImageFrame = {
+    imageFrame.transform(this)
   }
 
   // scalastyle:off methodName

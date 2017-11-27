@@ -38,6 +38,12 @@
                 </dependency>
             </dependencies>
         </profile>
+        <profile>
+            <id>all-in-one</id>
+            <properties>
+                <spark-scope>compile</spark-scope>
+            </properties>
+        </profile>
     </profiles>
 
     <repositories>

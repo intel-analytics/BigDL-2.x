@@ -18,40 +18,51 @@ package com.intel.analytics.zoo.transform.vision.image
 
 import com.intel.analytics.zoo.transform.vision.image.opencv.OpenCVMat
 import org.apache.log4j.Logger
-import org.apache.spark.rdd.RDD
 
-
+/**
+ * Transform byte array(original image file in byte) to OpenCVMat
+ */
 class BytesToMat()
   extends FeatureTransformer {
-  import BytesToMat.logger
+
   override def transform(feature: ImageFeature): ImageFeature = {
-    if (!feature.isValid) return feature
-    val bytes = feature(ImageFeature.bytes).asInstanceOf[Array[Byte]]
-    var mat: OpenCVMat = null
-    try {
-      mat = OpenCVMat.toMat(bytes)
-      feature(ImageFeature.mat) = mat
-      feature(ImageFeature.originalW) = mat.width()
-      feature(ImageFeature.originalH) = mat.height()
-    } catch {
-      case e: Exception =>
-        val path = if (feature.contains(ImageFeature.path)) feature(ImageFeature.path) else ""
-        logger.warn(s"convert byte to mat fail for ${path}")
-        feature(ImageFeature.originalW) = -1
-        feature(ImageFeature.originalH) = -1
-        feature.isValid = false
-    }
-    feature
+    BytesToMat.transform(feature)
   }
 }
 
 object BytesToMat {
   val logger = Logger.getLogger(getClass)
   def apply(): BytesToMat = new BytesToMat()
+
+  def transform(feature: ImageFeature): ImageFeature = {
+    if (!feature.isValid) return feature
+    val bytes = feature[Array[Byte]](ImageFeature.bytes)
+    var mat: OpenCVMat = null
+    try {
+      require(null != bytes && bytes.length > 0, "image file bytes should not be empty")
+      mat = OpenCVMat.toMat(bytes)
+      feature(ImageFeature.mat) = mat
+      feature(ImageFeature.originalSize) = mat.shape()
+    } catch {
+      case e: Exception =>
+        val uri = feature.uri()
+        logger.warn(s"convert byte to mat fail for $uri")
+        feature(ImageFeature.originalSize) = (-1, -1, -1)
+        feature.isValid = false
+    }
+    feature
+  }
 }
 
-
-class MatToFloats(validHeight: Int, validWidth: Int,
+/**
+ * Transform OpenCVMat to float array, note that in this transformer, the mat is released
+ * @param validHeight valid height in case the mat is invalid
+ * @param validWidth valid width in case the mat is invalid
+ * @param validChannels valid channel in case the mat is invalid
+ * @param meanRGB meansRGB to subtract, it can be replaced by ChannelNormalize
+ * @param outKey key to store float array
+ */
+class MatToFloats(validHeight: Int, validWidth: Int, validChannels: Int,
   meanRGB: Option[(Float, Float, Float)] = None, outKey: String = ImageFeature.floats)
   extends FeatureTransformer {
   @transient private var data: Array[Float] = _
@@ -73,14 +84,14 @@ class MatToFloats(validHeight: Int, validWidth: Int,
 
   override def transform(feature: ImageFeature): ImageFeature = {
     var input: OpenCVMat = null
-    val (height, width) = if (feature.isValid) {
+    val (height, width, channel) = if (feature.isValid) {
       input = feature.opencvMat()
-      (input.height(), input.width())
+      (input.height(), input.width(), input.channels())
     } else {
-      (validHeight, validWidth)
+      (validHeight, validWidth, validChannels)
     }
-    if (null == data || data.length < height * width * 3) {
-      data = new Array[Float](height * width * 3)
+    if (null == data || data.length < height * width * channel) {
+      data = new Array[Float](height * width * channel)
     }
     if (feature.isValid) {
       try {
@@ -96,8 +107,7 @@ class MatToFloats(validHeight: Int, validWidth: Int,
       }
     }
     feature(outKey) = data
-    feature(ImageFeature.width) = width
-    feature(ImageFeature.height) = height
+    feature(ImageFeature.size) = (height, width, channel)
     feature
   }
 }
@@ -105,9 +115,9 @@ class MatToFloats(validHeight: Int, validWidth: Int,
 object MatToFloats {
   val logger = Logger.getLogger(getClass)
 
-  def apply(validHeight: Int = 300, validWidth: Int = 300,
+  def apply(validHeight: Int = 300, validWidth: Int = 300, validChannels: Int = 3,
     meanRGB: Option[(Float, Float, Float)] = None,
     outKey: String = ImageFeature.floats): MatToFloats =
-    new MatToFloats(validHeight, validWidth, meanRGB, outKey)
+    new MatToFloats(validHeight, validWidth, validChannels, meanRGB, outKey)
 }
 

@@ -112,7 +112,7 @@ class FeatureTransformerSpec extends FlatSpec with Matchers {
       normalize2.transform(feature2)
     })
     println(s"no mat takes ${(System.nanoTime() - start) / 1e9}s")
-    feature.getFloats().zip(feature2.getFloats()).foreach(x => {
+    feature.floats().zip(feature2.floats()).foreach(x => {
       assert(x._1 == x._2)
     })
   }
@@ -316,11 +316,11 @@ class FeatureTransformerSpec extends FlatSpec with Matchers {
       Resize(300, 300, -1) ->
       HFlip() ->
       ChannelNormalize(123, 117, 104) ->
-      new MatToFloats(validHeight = 300, validWidth = 300)
+      MatToFloats(validHeight = 300, validWidth = 300)
     val out = imgAug(features)
     out.foreach(img => {
       val tmpFile = java.io.File.createTempFile("module", ".jpg")
-      val mat = OpenCVMat.floatToMat(img.getFloats(), img.getHeight(), img.getWidth())
+      val mat = OpenCVMat.floatToMat(img.floats(), img.getHeight(), img.getWidth())
       Imgcodecs.imwrite(tmpFile.getAbsolutePath, mat)
       println(s"save to ${tmpFile.getAbsolutePath}, "
         + new File(tmpFile.getAbsolutePath).length())
@@ -364,7 +364,7 @@ class FeatureTransformerSpec extends FlatSpec with Matchers {
 
     featureIter.foreach(img => {
       val tmpFile = java.io.File.createTempFile("module", ".jpg")
-      val mat = OpenCVMat.floatToMat(img.getFloats(), img.getHeight(), img.getWidth())
+      val mat = OpenCVMat.floatToMat(img.floats(), img.getHeight(), img.getWidth())
       visulize(label, mat)
       Imgcodecs.imwrite(tmpFile.getAbsolutePath, mat)
       println(s"save to ${tmpFile.getAbsolutePath}, "
@@ -410,13 +410,13 @@ class FeatureTransformerSpec extends FlatSpec with Matchers {
     val resource = getClass().getClassLoader().getResource("image/000025.jpg")
     val img = Files.readAllBytes(Paths.get(resource.getFile))
     val byteImage = ImageFeature(img)
-    byteImage(ImageFeature.path) = "image/000025.jpg"
+    byteImage(ImageFeature.uri) = "image/000025.jpg"
     val imgAug = BytesToMat() ->
       FixedCrop(-1, -1, -1, -1, normalized = false) ->
       Resize(300, 300, -1) ->
       MatToFloats(validHeight = 300, validWidth = 300)
     val out = imgAug.transform(byteImage)
-    out.getFloats().length should be(3 * 300 * 300)
+    out.floats().length should be(3 * 300 * 300)
   }
 
   "Image Transformer with empty byte input" should "work properly" in {
@@ -427,6 +427,6 @@ class FeatureTransformerSpec extends FlatSpec with Matchers {
       FixedCrop(-1, -1, -1, -1, normalized = false) ->
       MatToFloats(validHeight = 1, validWidth = 1)
     val out = imgAug.transform(byteImage)
-    out.getFloats().length should be(3)
+    out.floats().length should be(3)
   }
 }

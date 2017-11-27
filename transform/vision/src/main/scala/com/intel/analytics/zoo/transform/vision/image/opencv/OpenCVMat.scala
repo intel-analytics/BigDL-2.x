@@ -51,6 +51,20 @@ class OpenCVMat() extends Mat with Serializable {
     create(rows, cols, t)
     put(rows, cols, data)
   }
+
+  var isReleased: Boolean = false
+  override def release(): Unit = {
+    super.release()
+    isReleased = true
+  }
+
+  /**
+   * get shape of mat
+   * @return (height, width, channel)
+   */
+  def shape(): (Int, Int, Int) = {
+    (height(), width(), channels())
+  }
 }
 
 object OpenCVMat {
@@ -99,8 +113,8 @@ object OpenCVMat {
   def toFloatBuf(input: Mat, floats: Array[Float], buf: Mat = null): Array[Float] = {
     val bufMat = if (buf == null) new OpenCVMat() else buf
     val floatMat = if (input.`type`() != CvType.CV_32FC3) {
-      input.convertTo(buf, CvType.CV_32FC3)
-      buf
+      input.convertTo(bufMat, CvType.CV_32FC3)
+      bufMat
     } else {
       input
     }
