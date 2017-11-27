@@ -3,7 +3,7 @@
 import pytest
 import os
 import cv2
-from image import *
+from transform.vision.image import *
 
 
 class TestLayer():
@@ -17,7 +17,7 @@ class TestLayer():
     def test_colorjitter(self):
         image = self.get_image_feature()
         color = ColorJitter(random_order_prob=1.0, shuffle=True)
-        color.transform(image_feature)
+        color.transform(image)
 
 if __name__ == "__main__":
     pytest.main([__file__])

@@ -62,6 +62,7 @@ class ImageFeature(JavaValue):
     def __init__(self, image=None, label=None, path=None, bigdl_type="float"):
         image_tensor = JTensor.from_ndarray(image) if image is not None else None
         label_tensor = JTensor.from_ndarray(label) if label is not None else None
+        print image_tensor
         self.bigdl_type = bigdl_type
         self.value = callBigDlFunc(
             bigdl_type, JavaValue.jvm_class_constructor(self), image_tensor, label_tensor, path)
