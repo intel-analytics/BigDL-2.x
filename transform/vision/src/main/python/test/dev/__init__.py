@@ -13,8 +13,3 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-
-from bigdl.util.common import JavaCreator
-
-JavaCreator.set_creator_class(
-    "com.intel.analytics.zoo.transform.vision.pythonapi.PythonVisionTransform")

@@ -1,3 +1,5 @@
+#!/usr/bin/env bash
+
 #
 # Copyright 2016 The BigDL Authors.
 #
@@ -14,7 +16,28 @@
 # limitations under the License.
 #
 
-from bigdl.util.common import JavaCreator
+# run: run-keras.sh python2.7
+. `dirname $0`/prepare_env.sh
 
-JavaCreator.set_creator_class(
-    "com.intel.analytics.zoo.transform.vision.pythonapi.PythonVisionTransform")
+if (( $# < 1)); then
+  echo "Bad parameters. Usage: run-keras.sh python2.7"
+  exit -1
+fi
+
+cd "`dirname $0`"
+
+export DL_CORE_NUMBER=4
+
+echo "${cyan}Using python version: $p${reset}"
+export PYTHON_EXECUTABLE=$p
+export PYSPARK_PYTHON=$p
+export PYSPARK_DRIVER_PYTHON=$p
+$1 -m pytest -v  ../../../pyspark/test/bigdl/keras \
+ --ignore=../../../pyspark/test/bigdl/keras/test_application.py
+
+exit_status=$?
+if [ $exit_status -ne 0 ];
+then
+    exit $exit_status
+fi
+

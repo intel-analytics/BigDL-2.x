@@ -1,3 +1,5 @@
+#!/usr/bin/env bash
+
 #
 # Copyright 2016 The BigDL Authors.
 #
@@ -13,8 +15,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
+BASE="$(cd "`dirname $0`"; pwd)"
 
-from bigdl.util.common import JavaCreator
+echo base $BASE
 
-JavaCreator.set_creator_class(
-    "com.intel.analytics.zoo.transform.vision.pythonapi.PythonVisionTransform")
+$BASE/lint-python && $BASE/run-tests
