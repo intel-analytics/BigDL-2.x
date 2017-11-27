@@ -28,9 +28,7 @@ do
     export PYTHON_EXECUTABLE=$p
     export PYSPARK_PYTHON=$p
     export PYSPARK_DRIVER_PYTHON=$p
-    $p -m pytest -v  ../../../python/test/ \
-    --ignore=../../../python/test/bigdl/caffe/ \
-    --ignore=../../../python/test/bigdl/test_utils.py
+    $p -m pytest -v  ../../../python/test/
 
     exit_status=$?
     if [ $exit_status -ne 0 ];

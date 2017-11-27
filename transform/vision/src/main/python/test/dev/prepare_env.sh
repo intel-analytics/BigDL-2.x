@@ -30,7 +30,7 @@ export PYSPARK_ZIP=`find $SPARK_HOME/python/lib  -type f -iname '*.zip' | tr "\n
 
 export PYTHONPATH=$PYTHONPATH:$PYSPARK_ZIP:$DL_PYTHON_HOME:$DL_PYTHON_HOME/:$DL_PYTHON_HOME/test/dev:$DL_PYTHON_HOME/test/resources/conf/spark-bigdl.conf:$HOME/BigDL/lib/bigdl-0.3.0-python-api.zip
 
-export BIGDL_CLASSPATH=$(find $BIGDL_HOME/target/ -name "*with-dependencies.jar" | head -n 1),$HOME/BigDL/lib/bigdl-SPARK_2.1-0.3.0-jar-with-dependencies.jar
+export BIGDL_CLASSPATH=$(find $BIGDL_HOME/target/ -name "*with-dependencies.jar" | head -n 1):$HOME/BigDL/lib/bigdl-SPARK_2.1-0.3.0-jar-with-dependencies.jar
 echo "BIGDL_CLASSPATH": $BIGDL_CLASSPATH
 
 export PYTHON_EXECUTABLES=("python2.7" "python3.5")
