@@ -60,6 +60,12 @@
                 <spark.version>1.5.1</spark.version>
             </properties>
         </profile>
+        <profile>
+            <id>all-in-one</id>
+            <properties>
+                <spark-scope>compile</spark-scope>
+            </properties>
+        </profile>
     </profiles>
 
     <repositories>

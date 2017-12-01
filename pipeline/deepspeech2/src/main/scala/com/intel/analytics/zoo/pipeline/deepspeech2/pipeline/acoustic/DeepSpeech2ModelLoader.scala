@@ -17,18 +17,25 @@ package com.intel.analytics.zoo.pipeline.deepspeech2.pipeline.acoustic
  */
 
 import com.intel.analytics.bigdl._
-import com.intel.analytics.bigdl.nn._
+import com.intel.analytics.bigdl.nn.{BatchNormParams, BatchNormalization, BiRecurrent, BifurcateSplitTable, ConcatTable, HardTanh, Identity, JoinTable, Linear, ParallelTable, ReLU, RnnCell, RnnCellDS, Sequential, SpatialConvolution, Squeeze, TimeDistributed, Transpose, _}
+import org.apache.hadoop.fs.Path
+import org.apache.log4j.Logger
+
+import scala.language.existentials
+import scala.reflect.ClassTag
+import com.intel.analytics.bigdl._
+import com.intel.analytics.bigdl.nn.abstractnn.AbstractModule
 import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric
 import com.intel.analytics.bigdl.tensor.{Storage, Tensor}
-import org.apache.hadoop.fs.Path
+import com.intel.analytics.bigdl.utils.{Engine, Table}
 import org.apache.log4j.{Level, Logger}
 import org.apache.spark.SparkContext
+import org.apache.spark.sql.SparkSession
 
 import scala.collection.mutable.ArrayBuffer
 import scala.language.existentials
-import scala.reflect.ClassTag
 
-class DeepSpeech2ModelLoader[T : ClassTag](depth: Int = 1)
+class DeepSpeech2ModelLoader[T : ClassTag](depth: Int = 1, isPaperVersion: Boolean = false)
   (implicit ev: TensorNumeric[T]) {
 
   /**
@@ -53,23 +60,35 @@ class DeepSpeech2ModelLoader[T : ClassTag](depth: Int = 1)
   val nChar = 29
 
   /**
-   * append BiRNN layers to the deepspeech model.
-   * When isPaperVersion is set to be true, the sequential will construct a DS2 w.r.t implementation from Paper.
-   * Otherwise, it will construct a Nervana's DS2 version.
-   * @param inputSize
-   * @param hiddenSize
-   * @param curDepth
-   * @return
-   */
+    * append BiRNN layers to the deepspeech model.
+    * When isPaperVersion is set to be true, the sequential will construct a DS2 w.r.t implementation from Paper.
+    * Otherwise, it will construct a Nervana's DS2 version.
+    * @param inputSize
+    * @param hiddenSize
+    * @param curDepth
+    * @return
+    */
   def addBRNN(inputSize: Int, hiddenSize: Int, curDepth: Int)
   : Module[T] = {
-    val isSplitInput = if (curDepth == 1) false else true
     val layers = Sequential()
-        .add(BiRecurrent[T](
-          JoinTable[T](2, 2),
-          batchNormParams = BatchNormParams[T](eps = 0.001, affine = false),
-          isSplitInput = isSplitInput)
-          .add(RnnCell[T](inputSize, hiddenSize, HardTanh[T](0, 20, true), isInputWithBias = false)))
+    if (curDepth == 1) {
+      layers
+        .add(ConcatTable()
+          .add(Identity[T]())
+          .add(Identity[T]()))
+    } else {
+      layers
+        .add(BifurcateSplitTable[T](3))
+    }
+    layers
+      .add(ParallelTable[T]()
+        .add(TimeDistributed[T](Linear[T](inputSize, hiddenSize, withBias = false)))
+        .add(TimeDistributed[T](Linear[T](inputSize, hiddenSize, withBias = false))))
+      .add(JoinTable[T](2, 2))
+      .add(TimeDistributed(BatchNormalization[T](hiddenSize * 2, eps = 0.001, momentum = 0.1, affine = false)))
+      .add(BiRecurrent[T](JoinTable[T](2, 2).asInstanceOf[AbstractModule[Table, Tensor[T], T]], isSplitInput = true)
+      .add(RnnCellDS[T](hiddenSize, hiddenSize, HardTanh[T](0, 20, true)))
+      .setName("birnn" + depth))
     layers
   }
 
@@ -84,7 +103,7 @@ class DeepSpeech2ModelLoader[T : ClassTag](depth: Int = 1)
     i += 1
   }
 
-  val brnnOutputSize = hiddenSize * 2
+  val brnnOutputSize = if (isPaperVersion) hiddenSize else hiddenSize * 2
   val linear1 = TimeDistributed[T](Linear[T](brnnOutputSize, hiddenSize, withBias = false))
   val linear2 = TimeDistributed[T](Linear[T](hiddenSize, nChar, withBias = false))
 
@@ -156,6 +175,6 @@ object DeepSpeech2ModelLoader {
   val logger = Logger.getLogger(getClass)
 
   def loadModel(path: String): Module[Float] = {
-    Module.load[Float](new Path(path, "ds2.model").toString)
+    Module.load[Float](new Path(path).toString)
   }
 }

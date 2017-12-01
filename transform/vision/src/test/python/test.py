@@ -12,7 +12,7 @@ from vision.image3d.transformation import *
 import h5py
 from math import pi
 
-img_path = os.path.abspath(__file__ + "/../../resources/image/a.mat")
+img_path = os.path.abspath(__file__ + "/../../resources/image_3d/a.mat")
 sample = h5py.File(img_path)['meniscus_im']
 sample = np.array(sample)
 sample = Sample.from_ndarray(features=sample, label=np.array(-1))

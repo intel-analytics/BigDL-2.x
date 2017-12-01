@@ -23,31 +23,24 @@ import com.intel.analytics.zoo.transform.vision.image.{FeatureTransformer, Image
 import com.intel.analytics.zoo.transform.vision.util.{BboxUtil, NormalizedBox}
 import org.opencv.core.Rect
 
-class Crop(useNormalized: Boolean = true,
-           bbox: Option[NormalizedBox] = None, roiKey: Option[String] = None,
-           roiGenerator: Option[(ImageFeature => NormalizedBox)] = None)
-  extends FeatureTransformer {
+/**
+ * Abstract crop transformer, other crop transformer need to override generateRoi
+ * @param normalized whether the roi is normalized
+ * @param isClip whether to clip the roi to image boundaries
+ */
+abstract class Crop(normalized: Boolean = true, isClip: Boolean = true) extends FeatureTransformer {
+
+  /**
+   * how to generate crop roi
+   * @param feature image feature
+   * @return crop roi
+   */
+  def generateRoi(feature: ImageFeature): (Float, Float, Float, Float)
 
   override def transformMat(feature: ImageFeature): Unit = {
-    val cropBox = if (bbox.isDefined) {
-      bbox.get
-    } else if (roiKey.isDefined) {
-      var roi = feature(roiKey.get).asInstanceOf[Tensor[Float]]
-      if (roi.dim() == 1) {
-        roi = BboxUtil.decodeRois(roi)
-      }
-      if (roi.nElement() > 0) {
-        NormalizedBox(roi.valueAt(1, 3), roi.valueAt(1, 4), roi.valueAt(1, 5), roi.valueAt(1, 6))
-      } else {
-        NormalizedBox(0, 0, 1, 1)
-      }
-    } else if (roiGenerator.isDefined) {
-      roiGenerator.get(feature)
-    } else {
-      throw new Exception("currently only three mode is accepted, provide the crop bbox," +
-        " or crop bbox tensor, or a method that generate crop bbox")
-    }
-    Crop.transform(feature.opencvMat(), feature.opencvMat(), cropBox, useNormalized)
+    val cropBox = generateRoi(feature)
+    Crop.transform(feature.opencvMat(), feature.opencvMat(),
+      cropBox._1, cropBox._2, cropBox._3, cropBox._4, normalized, isClip)
     if (feature.hasLabel()) {
       feature(ImageFeature.cropBbox) = cropBox
     }
@@ -55,70 +48,130 @@ class Crop(useNormalized: Boolean = true,
 }
 
 object Crop {
-  def apply(useNormalized: Boolean = true,
-            bbox: Option[NormalizedBox] = None, roiKey: Option[String] = None,
-            roiGenerator: Option[(ImageFeature => NormalizedBox)] = None): Crop
-  = new Crop(useNormalized, bbox, roiKey, roiGenerator)
 
-  def transform(input: OpenCVMat, output: OpenCVMat, bbox: NormalizedBox,
-                useNormalized: Boolean = true): Boolean = {
-    val crop = if (useNormalized) {
-      val width = input.width
-      val height = input.height
-      bbox.clipBox(bbox)
-      val scaledBox = new NormalizedBox()
-      bbox.scaleBox(height, width, scaledBox)
-      scaledBox
+  def transform(input: OpenCVMat, output: OpenCVMat,
+    wStart: Float, hStart: Float, wEnd: Float, hEnd: Float, normalized: Boolean = true,
+    isClip: Boolean = true): Boolean = {
+    val width = input.width
+    val height = input.height
+    var (x1, y1, x2, y2) = if (normalized) {
+      // scale back to original size
+      (wStart * width, hStart * height, wEnd * width, hEnd * height)
     } else {
-      bbox
+      (wStart, hStart, wEnd, hEnd)
     }
-    val rect = new Rect(crop.x1.toInt, crop.y1.toInt,
-      crop.width().toInt, crop.height().toInt)
+    if (isClip) {
+      // clip to image boundary
+      x1 = Math.max(Math.min(x1, width), 0f)
+      y1 = Math.max(Math.min(y1, height), 0f)
+      x2 = Math.max(Math.min(x2, width), 0f)
+      y2 = Math.max(Math.min(y2, height), 0f)
+    }
+    val rect = new Rect(x1.toInt, y1.toInt, (x2 - x1).toInt, (y2 - y1).toInt)
     input.submat(rect).copyTo(output)
     true
   }
 }
 
-class CenterCrop(cropWidth: Int, cropHeight: Int) extends FeatureTransformer{
-  def centerRoi(feature: ImageFeature): NormalizedBox = {
+/**
+ * Crop a `cropWidth` x `cropHeight` patch from center of image.
+ * The patch size should be less than the image size.
+ *
+ * @param cropWidth width after crop
+ * @param cropHeight height after crop
+ */
+class CenterCrop(cropWidth: Int, cropHeight: Int, isClip: Boolean) extends Crop(false, isClip) {
+  override def generateRoi(feature: ImageFeature): (Float, Float, Float, Float) = {
     val mat = feature.opencvMat()
     val height = mat.height().toFloat
     val width = mat.width().toFloat
     val startH = (height - cropHeight) / 2
     val startW = (width - cropWidth) / 2
-    NormalizedBox(startW / width, startH / height,
-      (startW + cropWidth) / width, (startH + cropHeight) / height)
-  }
-
-  val cropper = Crop(roiGenerator = Some(centerRoi))
-
-  override def transformMat(feature: ImageFeature): Unit = {
-    cropper.transformMat(feature)
+    (startW, startH, startW + cropWidth, startH + cropHeight)
   }
 }
 
 object CenterCrop {
-  def apply(cropWidth: Int, cropHeight: Int): CenterCrop = new CenterCrop(cropWidth, cropHeight)
+  def apply(cropWidth: Int, cropHeight: Int, isClip: Boolean = true)
+  : CenterCrop = new CenterCrop(cropWidth, cropHeight, isClip)
 }
 
-class RandomCrop(cropWidth: Int, cropHeight: Int) extends FeatureTransformer{
-  def randomRoi(feature: ImageFeature): NormalizedBox = {
+/**
+ * Random crop a `cropWidth` x `cropHeight` patch from an image.
+ * The patch size should be less than the image size.
+ *
+ * @param cropWidth width after crop
+ * @param cropHeight height after crop
+ */
+class RandomCrop(cropWidth: Int, cropHeight: Int, isClip: Boolean) extends Crop(false, isClip) {
+
+  override def generateRoi(feature: ImageFeature): (Float, Float, Float, Float) = {
     val mat = feature.opencvMat()
     val height = mat.height().toFloat
     val width = mat.width().toFloat
     val startH = math.ceil(RNG.uniform(1e-2, height - cropHeight)).toFloat
     val startW = math.ceil(RNG.uniform(1e-2, width - cropWidth)).toFloat
-    NormalizedBox(startW / width, startH / height,
-      (startW + cropWidth) / width, (startH + cropHeight) / height)
-  }
-
-  val cropper = Crop(roiGenerator = Some(randomRoi))
-
-  override def transformMat(feature: ImageFeature): Unit = {
-    cropper.transformMat(feature)
+    (startW, startH, startW + cropWidth, startH + cropHeight)
   }
 }
 
 object RandomCrop {
-  def apply(cropWidth: Int, cropHeight: Int): RandomCrop = new RandomCrop(cropWidth, cropHeight)
+  def apply(cropWidth: Int, cropHeight: Int, isClip: Boolean = true): RandomCrop =
+    new RandomCrop(cropWidth, cropHeight, isClip)
 }
+
+class FixedCrop(wStart: Float, hStart: Float, wEnd: Float, hEnd: Float, normalized: Boolean,
+  isClip: Boolean)
+  extends Crop(normalized, isClip) {
+
+  val cropBox = (wStart.toFloat, hStart.toFloat, wEnd.toFloat, hEnd.toFloat)
+
+  override def generateRoi(feature: ImageFeature): (Float, Float, Float, Float) = {
+    cropBox
+  }
+}
+
+/**
+ * Crop a fixed area of image
+ *
+ * @param hStart start in height
+ * @param hEnd end in height
+ * @param wStart start in width
+ * @param wEnd end in width
+ * @param normalized whether args are normalized, i.e. in range [0, 1]
+ */
+object FixedCrop {
+  def apply(wStart: Float, hStart: Float, wEnd: Float, hEnd: Float, normalized: Boolean,
+    isClip: Boolean = true)
+  : FixedCrop = new FixedCrop(wStart, hStart, wEnd, hEnd, normalized, isClip)
+}
+
+/**
+ * Crop from object detections, each image should has a tensor detection,
+ * which is stored in ImageFeature
+ *
+ * @param roiKey roiKey that map a tensor detection
+ * @param normalized whether is detection is normalized, i.e. in range [0, 1]
+ */
+class DetectionCrop(roiKey: String, normalized: Boolean = true) extends Crop(normalized, true) {
+
+  override def generateRoi(feature: ImageFeature): (Float, Float, Float, Float) = {
+    require(feature(roiKey).isInstanceOf[Tensor[Float]], "currently only support tensor detection")
+    var roi = feature(roiKey).asInstanceOf[Tensor[Float]]
+    if (roi.dim() == 1) {
+      roi = BboxUtil.decodeRois(roi)
+    }
+    if (roi.nElement() > 0) {
+      (roi.valueAt(1, 3), roi.valueAt(1, 4), roi.valueAt(1, 5), roi.valueAt(1, 6))
+    } else {
+      (0, 0, 1, 1)
+    }
+  }
+}
+
+object DetectionCrop {
+  def apply(roiKey: String, normalized: Boolean = true): DetectionCrop =
+    new DetectionCrop(roiKey, normalized)
+}
+
+

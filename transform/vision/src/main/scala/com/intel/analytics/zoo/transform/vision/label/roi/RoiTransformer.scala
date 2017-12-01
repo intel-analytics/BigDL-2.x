@@ -36,11 +36,12 @@ case class RoiCrop() extends FeatureTransformer {
   override def transformMat(feature: ImageFeature): Unit = {
     val height = feature.getHeight()
     val width = feature.getWidth()
-    val bbox = feature(ImageFeature.cropBbox).asInstanceOf[NormalizedBox]
+    val bbox = feature(ImageFeature.cropBbox).asInstanceOf[(Float, Float, Float, Float)]
     val target = feature(ImageFeature.label).asInstanceOf[RoiLabel]
     val transformedAnnot = new ArrayBuffer[NormalizedBox]()
     // Transform the annotation according to crop_bbox.
-    AnnotationTransformer.transformAnnotation(width, height, bbox, false, target,
+    AnnotationTransformer.transformAnnotation(width, height,
+      NormalizedBox(bbox), false, target,
       transformedAnnot)
 
     target.bboxes.resize(transformedAnnot.length, 4)
@@ -59,14 +60,15 @@ case class RoiCrop() extends FeatureTransformer {
   }
 }
 
-case class RoiHFlip() extends FeatureTransformer {
+case class RoiHFlip(normalized: Boolean = true) extends FeatureTransformer {
   override def transformMat(feature: ImageFeature): Unit = {
     require(feature.hasLabel())
     val roiLabel = feature.getLabel[RoiLabel]
     var i = 1
-    while (roiLabel.bboxes.nElement() > 0 && i <= roiLabel.bboxes.size(1)) {
-      val x1 = 1 - roiLabel.bboxes.valueAt(i, 1)
-      roiLabel.bboxes.setValue(i, 1, 1 - roiLabel.bboxes.valueAt(i, 3))
+    val width = if (normalized) 1 else feature.getWidth()
+    while (i <= roiLabel.size()) {
+      val x1 = width - roiLabel.bboxes.valueAt(i, 1)
+      roiLabel.bboxes.setValue(i, 1, width - roiLabel.bboxes.valueAt(i, 3))
       roiLabel.bboxes.setValue(i, 3, x1)
       i += 1
     }
@@ -102,12 +104,24 @@ case class RoiExpand() extends FeatureTransformer {
   }
 }
 
+case class RoiResize(normalized: Boolean = false) extends FeatureTransformer {
+  override def transformMat(feature: ImageFeature): Unit = {
+    require(feature.hasLabel())
+    if (!normalized) {
+      val scaledW = feature.getWidth().toFloat / feature.getOriginalWidth
+      val scaledH = feature.getHeight().toFloat / feature.getOriginalHeight
+      val target = feature.getLabel[RoiLabel]
+        BboxUtil.scaleBBox(target.bboxes, scaledH, scaledW)
+    }
+  }
+}
+
 object AnnotationTransformer {
   def transformAnnotation(imgWidth: Int, imgHeigth: Int, cropedBox: NormalizedBox,
                           doMirror: Boolean, target: RoiLabel,
                           transformd: ArrayBuffer[NormalizedBox]): Unit = {
     var i = 1
-    while (target.bboxes.nElement() > 0 && i <= target.bboxes.size(1)) {
+    while (i <= target.size()) {
       val resizedBox = NormalizedBox(target.bboxes.valueAt(i, 1),
         target.bboxes.valueAt(i, 2),
         target.bboxes.valueAt(i, 3),
