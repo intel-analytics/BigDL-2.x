@@ -87,8 +87,8 @@ class ImageFrame(JavaValue):
         return ImageFrame(jvalue=callBigDlFunc(bigdl_type, "read", path, sc))
 
     @classmethod
-    def readParquet(cls, path, ss, bigdl_type="float"):
-        return DistributedImageFrame(jvalue=callBigDlFunc(bigdl_type, "readParquet", path, ss))
+    def readParquet(cls, path, sqlcontxt, bigdl_type="float"):
+        return DistributedImageFrame(jvalue=callBigDlFunc(bigdl_type, "readParquet", path, sqlcontxt))
 
     def is_local(self):
         return callBigDlFunc(self.bigdl_type, "isLocal", self.value)

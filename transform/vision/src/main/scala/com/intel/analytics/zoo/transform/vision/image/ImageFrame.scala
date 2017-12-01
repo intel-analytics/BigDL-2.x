@@ -24,7 +24,7 @@ import org.apache.commons.io.filefilter.WildcardFileFilter
 import org.apache.log4j.Logger
 import org.apache.spark.SparkContext
 import org.apache.spark.rdd.RDD
-import org.apache.spark.sql.SparkSession
+import org.apache.spark.sql.{SQLContext}
 
 import scala.collection.mutable.ArrayBuffer
 import scala.reflect.ClassTag
@@ -116,8 +116,8 @@ object ImageFrame {
    * @param path Parquet file path
    * @return DistributedImageFrame
    */
-  def readParquet(path: String, spark: SparkSession): DistributedImageFrame = {
-    val df = spark.sqlContext.read.parquet(path)
+  def readParquet(path: String, sqlContxt: SQLContext): DistributedImageFrame = {
+    val df = sqlContxt.read.parquet(path)
     val images = df.rdd.map(row => {
       val uri = row.getAs[String](ImageFeature.uri)
       val image = row.getAs[Array[Byte]](ImageFeature.bytes)
@@ -132,9 +132,9 @@ object ImageFrame {
    * @param path path to read images. Local or HDFS. Wildcard character are supported.
    * @param output Parquet file path
    */
-  def writeParquet(path: String, output: String, spark: SparkSession): Unit = {
-    import spark.implicits._
-    val df = spark.sparkContext.binaryFiles(path)
+  def writeParquet(path: String, output: String, sqlContxt: SQLContext): Unit = {
+    import sqlContxt.implicits._
+    val df = sqlContxt.sparkContext.binaryFiles(path)
       .map { case (p, stream) =>
         (p, stream.toArray())
       }.toDF(ImageFeature.uri, ImageFeature.bytes)

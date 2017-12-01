@@ -29,7 +29,7 @@ import com.intel.analytics.zoo.transform.vision.image.opencv.OpenCVMat
 import com.intel.analytics.zoo.transform.vision.label.roi._
 import org.apache.log4j.Logger
 import org.apache.spark.api.java.{JavaRDD, JavaSparkContext}
-import org.apache.spark.sql.SparkSession
+import org.apache.spark.sql.{SQLContext}
 import org.opencv.imgproc.Imgproc
 
 import collection.JavaConverters._
@@ -286,8 +286,8 @@ class PythonVisionTransform[T: ClassTag](implicit ev: TensorNumeric[T]) extends 
     if (sc == null) ImageFrame.read(path, null) else ImageFrame.read(path, sc.sc)
   }
 
-  def readParquet(path: String, ss: SparkSession): DistributedImageFrame = {
-    ImageFrame.readParquet(path, ss)
+  def readParquet(path: String, sc: SQLContext): DistributedImageFrame = {
+    ImageFrame.readParquet(path, sc)
   }
 
   def isLocal(imageFrame: ImageFrame): Boolean = imageFrame.isLocal()
