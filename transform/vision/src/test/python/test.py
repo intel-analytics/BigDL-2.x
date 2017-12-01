@@ -12,7 +12,8 @@ from vision.image3d.transformation import *
 import h5py
 from math import pi
 
-sample = h5py.File('./a.mat')['meniscus_im']
+img_path = os.path.abspath(__file__ + "/../../resources/image/a.mat")
+sample = h5py.File(img_path)['meniscus_im']
 sample = np.array(sample)
 sample = Sample.from_ndarray(features=sample, label=np.array(-1))
 # sample = np.expand_dims(sample,0)
@@ -59,6 +60,7 @@ pipe = Pipeline([crop, rotate_90])
 out_rdd = pipe(data_rdd)
 out_data = out_rdd.first()
 
+# crop one image
 cropped_sample = crop.transform(sample)
 
 fig = plt.figure(figsize=[10, 10])
