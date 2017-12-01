@@ -26,10 +26,10 @@ class FeatureTransformerSpec extends FlatSpec with Matchers{
     RNG.setSeed(seed)
     val input = Tensor[Float](60, 70, 80)
     input.apply1(e => RNG.uniform(0, 1).toFloat)
-    val image = Image3D(input.storage().array())
-    image(Image3D.depth) = 60
-    image(Image3D.height) = 70
-    image(Image3D.width) = 80
+    val image = Image3D(input)
+//    image(Image3D.depth) = 60
+//    image(Image3D.height) = 70
+//    image(Image3D.width) = 80
     val start = Array[Int](10, 20, 20)
     val patchSize = Array[Int](20, 30, 30)
     val rotAngles = Array[Double](0, 0, math.Pi/3.7)

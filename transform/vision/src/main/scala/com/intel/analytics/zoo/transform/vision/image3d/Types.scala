@@ -16,26 +16,28 @@
 
 package com.intel.analytics.zoo.transform.vision.image3d
 
-import com.intel.analytics.bigdl.tensor.Tensor
-import com.intel.analytics.bigdl.numeric._
 import com.intel.analytics.bigdl.tensor.{Storage, Tensor}
+import com.intel.analytics.bigdl.numeric._
 import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric
 import com.intel.analytics.bigdl.utils.RandomGenerator._
-import com.intel.analytics.bigdl.dataset.Transformer
+import com.intel.analytics.bigdl.dataset.{ChainedTransformer, Transformer}
 
 import scala.collection.{Iterator, mutable}
 import scala.reflect.ClassTag
 
 class Image3D extends Serializable {
-  def this(floats: Array[Float], label: Any, path: String) {
+  def this(data: Tensor[Float], label: Any, path: String) {
     this
-    state(Image3D.floats) = floats
+    state(Image3D.data) = data
     if (null != path) {
       state(Image3D.path) = path
     }
     if (null != label) {
       state(Image3D.label) = label
     }
+    state(Image3D.depth) = data.size(1)
+    state(Image3D.height) = data.size(2)
+    state(Image3D.width) = data.size(3)
   }
 
   private val state = new mutable.HashMap[String, Any]()
@@ -50,11 +52,11 @@ class Image3D extends Serializable {
 
   def hasLabel(): Boolean = state.contains(Image3D.label)
 
-  def getFloats(): Array[Float] = {
-    if (state.contains(Image3D.floats)) {
-      state(Image3D.floats).asInstanceOf[Array[Float]]
+  def getData(): Tensor[Float] = {
+    if (state.contains(Image3D.data)) {
+      state(Image3D.data).asInstanceOf[Tensor[Float]]
     } else {
-      null.asInstanceOf[Array[Float]]
+      null.asInstanceOf[Tensor[Float]]
     }
   }
 
@@ -97,47 +99,19 @@ class Image3D extends Serializable {
   def clear(): Unit = {
     state.clear()
   }
-
-  def copyTo(storage: Array[Float], offset: Int,
-             toRGB: Boolean = true): Unit = {
-    require(contains(Image3D.floats), "there should be floats in Image3D")
-    val data = getFloats()
-    require(data.length >= getDepth() * getWidth() * getHeight() * 3,
-      "float array length should be larger than 3 * ${getDepth()} * ${getWidth()} * ${getHeight()}")
-    val frameLength = getDepth() * getWidth() * getHeight()
-    require(frameLength * 3 + offset <= storage.length)
-    var j = 0
-    if (toRGB) {
-      while (j < frameLength) {
-        storage(offset + j) = data(j * 3 + 2)
-        storage(offset + j + frameLength) = data(j * 3 + 1)
-        storage(offset + j + frameLength * 2) = data(j * 3)
-        j += 1
-      }
-    } else {
-      while (j < frameLength) {
-        storage(offset + j) = data(j * 3)
-        storage(offset + j + frameLength) = data(j * 3 + 1)
-        storage(offset + j + frameLength * 2) = data(j * 3 + 2)
-        j += 1
-      }
-    }
-  }
 }
+
+
 
 object Image3D {
   val label = "label"
   val path = "path"
-  val bytes = "bytes"
-  val floats = "floats"
+  val data = "data"
   val depth = "depth"
   val width = "width"
   val height = "height"
-  // original image width
-  val originalW = "originalW"
-  val originalH = "originalH"
 
-  def apply(data: Array[Float], path: String = null, label: Any = null)
+  def apply(data: Tensor[Float], path: String = null, label: Any = null)
   : Image3D = new Image3D(data, label, path)
 
   def apply(): Image3D = new Image3D()
@@ -150,16 +124,12 @@ abstract class FeatureTransformer() extends Transformer[Image3D, Image3D] {
   def transform(feature: Image3D): Image3D = {
     try {
       // change image to tensor
-      val data = feature.getFloats()
-      val sizes = Array(feature.getDepth(), feature.getHeight(), feature.getWidth())
-      val tensor = Tensor[Float]()
-      tensor.set(Storage[Float](data), sizes = sizes)
-      val out = transformTensor(tensor).clone()
-      feature(Image3D.floats) = out.storage().array()
+      val data = feature.getData()
+      val out = transformTensor(data).clone()
+      feature(Image3D.data) = out
       feature(Image3D.depth) = out.size(1)
       feature(Image3D.height) = out.size(2)
       feature(Image3D.width) = out.size(3)
-//      val result = new Image3D(out.storage().array(), feature.getLabel, feature.getPath)
     } catch {
       case e: Exception =>
         e.printStackTrace()
@@ -179,6 +149,12 @@ abstract class FeatureTransformer() extends Transformer[Image3D, Image3D] {
   // scalastyle:off noSpaceBeforeLeftBracket
   def -> [C](other: FeatureTransformer): FeatureTransformer = {
     new ChainedFeatureTransformer(this, other)
+  }
+
+  // scalastyle:off methodName
+  // scalastyle:off noSpaceBeforeLeftBracket
+  override def -> [C](other: Transformer[Image3D, C]): Transformer[Image3D, C] = {
+    new ChainedTransformer(this, other)
   }
 }
 

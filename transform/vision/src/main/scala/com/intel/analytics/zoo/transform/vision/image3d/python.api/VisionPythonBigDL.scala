@@ -25,9 +25,8 @@ import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric
 import com.intel.analytics.bigdl.dataset.{Sample => JSample, _}
 import com.intel.analytics.zoo.transform.vision.image3d.augmentation._
 import com.intel.analytics.zoo.transform.vision.image3d._
+import java.util.{List => JList, Map => JMap, ArrayList => JArrayList}
 
-import java.util.{List => JList, Map => JMap}
-// import java.util.{ArrayList => JList}
 import java.nio.ByteBuffer
 
 import scala.collection.JavaConverters._
@@ -82,13 +81,15 @@ class VisionPythonBigDL[T: ClassTag](implicit ev: TensorNumeric[T]) extends Pyth
   }
 
   def transform(transformer: FeatureTransformer, data: Sample): Sample = {
-    val image = Image3D(data.features.storage, null, data.label)
-    image(Image3D.depth) = data.features.shape(0)
-    image(Image3D.height) = data.features.shape(1)
-    image(Image3D.width) = data.features.shape(2)
+    val tensor = toTensor(data.features.get(0)).asInstanceOf[Tensor[Float]]
+    val image = Image3D(tensor, null, data.label)
     val result = transformer.transform(image)
     val result_shape = Array(result.getDepth(), result.getHeight(), result.getWidth())
-    new Sample(JTensor(storage = result.getFloats(), shape = result_shape, bigdlType = "Double"),
+    val features = new JArrayList[JTensor]()
+    features.add(JTensor(storage = result.getData().storage().array(),
+      shape = result_shape, bigdlType = "Float"))
+    new Sample(
+      features,
       data.label, data.bigdlType)
   }
 

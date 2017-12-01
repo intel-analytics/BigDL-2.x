@@ -33,6 +33,17 @@ import com.intel.analytics.bigdl.utils.RandomGenerator._
 object Crop {
   def apply(start: Array[Int], patchSize: Array[Int]): Crop =
     new Crop(start, patchSize)
+
+  def crop(tensor: Tensor[Float], start: Array[Int], patchSize: Array[Int]): Tensor[Float] = {
+    require(start(0) <= tensor.size(1) && start(1) <= tensor.size(2) && start(2) <= tensor.size(3),
+      "Cropping indices out of bounds.")
+    require(start(0) + patchSize(0) - 1  <= tensor.size(1)
+      && start(1) + patchSize(1) - 1 <= tensor.size(2)
+      && start(2) + patchSize(2) - 1 <= tensor.size(3), "Cropping indices out of bounds.")
+    tensor.narrow(1, start(0), patchSize(0))
+      .narrow(2, start(1), patchSize(1))
+      .narrow(3, start(2), patchSize(2))
+  }
 }
 
 class Crop(start: Array[Int], patchSize: Array[Int])
@@ -45,17 +56,8 @@ class Crop(start: Array[Int], patchSize: Array[Int])
   require(start.map(t => t >= 0).reduce((a, b) => a && b),
     "'start' values should be nonnegative.")
 
-  private val List(startD, startH, startW) = start.toList
-
   override def transformTensor(tensor: Tensor[Float]): Tensor[Float] = {
-    require(startD <= tensor.size(1) && startH <= tensor.size(2) && startW <= tensor.size(3),
-      "Cropping indices out of bounds.")
-    require(startD + patchSize(0) - 1  <= tensor.size(1)
-      && startH + patchSize(1) - 1 <= tensor.size(2)
-      && startW + patchSize(2) - 1 <= tensor.size(3), "Cropping indices out of bounds.")
-    tensor.narrow(1, startD, patchSize(0))
-      .narrow(2, startH, patchSize(1))
-      .narrow(3, startW, patchSize(2))
+    Crop.crop(tensor, start, patchSize)
   }
 }
 
@@ -79,14 +81,9 @@ class RandomCrop(cropDepth: Int, cropHeight: Int, cropWidth: Int)
     val startD = math.ceil(RNG.uniform(1e-2, tensor.size(1) - cropDepth)).toInt
     val startH = math.ceil(RNG.uniform(1e-2, tensor.size(2) - cropHeight)).toInt
     val startW = math.ceil(RNG.uniform(1e-2, tensor.size(3) - cropWidth)).toInt
-    require(startD <= tensor.size(1) && startH <= tensor.size(2) && startW <= tensor.size(3),
-      "Cropping indices out of bounds.")
-    require(startD + cropDepth - 1  <= tensor.size(1)
-      && startH + cropHeight - 1 <= tensor.size(2)
-      && startW + cropWidth - 1 <= tensor.size(3), "Cropping indices out of bounds.")
-    tensor.narrow(1, startD, cropDepth)
-      .narrow(2, startH, cropHeight)
-      .narrow(3, startW, cropWidth)
+    Crop.crop(tensor,
+      Array[Int](startD, startH, startW),
+      Array[Int](cropDepth, cropHeight, cropWidth))
   }
 }
 
@@ -110,13 +107,8 @@ class CenterCrop(cropDepth: Int, cropHeight: Int, cropWidth: Int)
     val startD = (tensor.size(1) - cropDepth)/2
     val startH = (tensor.size(2) - cropHeight)/2
     val startW = (tensor.size(3) - cropWidth)/2
-    require(startD <= tensor.size(1) && startH <= tensor.size(2) && startW <= tensor.size(3),
-      "Cropping indices out of bounds.")
-    require(startD + cropDepth - 1  <= tensor.size(1)
-      && startH + cropHeight - 1 <= tensor.size(2)
-      && startW + cropWidth - 1 <= tensor.size(3), "Cropping indices out of bounds.")
-    tensor.narrow(1, startD, cropDepth)
-      .narrow(2, startH, cropHeight)
-      .narrow(3, startW, cropWidth)
+    Crop.crop(tensor,
+      Array[Int](startD, startH, startW),
+      Array[Int](cropDepth, cropHeight, cropWidth))
   }
 }

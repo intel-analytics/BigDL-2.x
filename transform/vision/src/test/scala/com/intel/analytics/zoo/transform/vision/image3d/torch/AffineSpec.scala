@@ -49,10 +49,11 @@ class AffineTransformerSpec extends TorchSpec {
     val mat2Tensor = Tensor[Double](mat2Array, Array[Int](2, 2))
     val aff = AffineTransform(matTensor, translation = translation)
     val dims = Array[Int](1, 10, 10)
-    val image = Image3D(input.storage().array().map(_.toFloat))
-    image(Image3D.depth) = 1
-    image(Image3D.height) = 10
-    image(Image3D.width) = 10
+    val tensor = Tensor[Float](
+      storage = Storage[Float](input.storage().array().map(_.toFloat)),
+      storageOffset = 1,
+      size = Array(1, 10, 10))
+    val image = Image3D(tensor)
     val dst = aff.transform(image)
     val code = "require 'image'\n" +
     "dst = image.affinetransform(src,mat,'bilinear',translation)"
@@ -60,7 +61,8 @@ class AffineTransformerSpec extends TorchSpec {
       Map("src" -> input.view(10, 10), "mat" -> mat2Tensor, "translation" -> translation2),
       Array("dst"))
     val dstTorch = torchResult("dst").asInstanceOf[Tensor[Double]]
-    val dstTensor = Tensor[Double](storage = Storage[Double](dst.getFloats().map(_.toDouble)),
+    val dstTensor = Tensor[Double](
+      storage = Storage[Double](dst.getData().storage().array().map(_.toDouble)),
       storageOffset = 1, size = Array(1, 10, 10))
     dstTensor.view(10, 10).map(dstTorch, (v1, v2) => {
       assert(math.abs(v1-v2)<1e-6)
@@ -95,10 +97,11 @@ class AffineTransformerSpec extends TorchSpec {
     val mat2Tensor = Tensor[Double](mat2Array, Array[Int](2, 2))
     val aff = AffineTransform(matTensor, translation = translation)
     val dims = Array[Int](10, 1, 10)
-    val image = Image3D(input.storage().array().map(_.toFloat))
-    image(Image3D.depth) = 10
-    image(Image3D.height) = 1
-    image(Image3D.width) = 10
+    val tensor = Tensor[Float](
+      storage = Storage[Float](input.storage().array().map(_.toFloat)),
+      storageOffset = 1,
+      size = Array(10, 1, 10))
+    val image = Image3D(tensor)
     val dst = aff.transform(image)
     val code = "require 'image'\n" +
     "dst = image.affinetransform(src,mat,'bilinear',translation)"
@@ -106,7 +109,8 @@ class AffineTransformerSpec extends TorchSpec {
       Map("src" -> input.view(10, 10), "mat" -> mat2Tensor, "translation" -> translation2),
       Array("dst"))
     val dstTorch = torchResult("dst").asInstanceOf[Tensor[Double]]
-    val dstTensor = Tensor[Double](storage = Storage[Double](dst.getFloats().map(_.toDouble)),
+    val dstTensor = Tensor[Double](
+      storage = Storage[Double](dst.getData().storage().array().map(_.toDouble)),
       storageOffset = 1, size = Array(10, 1, 10))
     dstTensor.view(10, 10).map(dstTorch, (v1, v2) => {
       assert(math.abs(v1-v2)<1e-6)
@@ -141,10 +145,11 @@ class AffineTransformerSpec extends TorchSpec {
     val mat2Tensor = Tensor[Double](mat2Array, Array[Int](2, 2))
     val aff = AffineTransform(matTensor, translation = translation)
     val dims = Array[Int](10, 10, 1)
-    val image = Image3D(input.storage().array().map(_.toFloat))
-    image(Image3D.depth) = 10
-    image(Image3D.height) = 10
-    image(Image3D.width) = 1
+    val tensor = Tensor[Float](
+      storage = Storage[Float](input.storage().array().map(_.toFloat)),
+      storageOffset = 1,
+      size = Array(10, 10, 1))
+    val image = Image3D(tensor)
     val dst = aff.transform(image)
     val code = "require 'image'\n" +
     "dst = image.affinetransform(src,mat,'bilinear',translation)"
@@ -152,7 +157,8 @@ class AffineTransformerSpec extends TorchSpec {
       Map("src" -> input.view(10, 10), "mat" -> mat2Tensor, "translation" -> translation2),
       Array("dst"))
     val dstTorch = torchResult("dst").asInstanceOf[Tensor[Double]]
-    val dstTensor = Tensor[Double](storage = Storage[Double](dst.getFloats().map(_.toDouble)),
+    val dstTensor = Tensor[Double](
+      storage = Storage[Double](dst.getData().storage().array().map(_.toDouble)),
       storageOffset = 1, size = Array(10, 10, 1))
     dstTensor.view(10, 10).map(dstTorch, (v1, v2) => {
       assert(math.abs(v1-v2)<1e-6)

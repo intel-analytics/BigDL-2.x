@@ -27,17 +27,17 @@ class CropSpec extends FlatSpec with Matchers{
     RNG.setSeed(seed)
     val input = Tensor[Float](60, 70, 80)
     input.apply1(e => RNG.uniform(0, 1).toFloat)
-    val image = Image3D(input.storage().array())
-    image(Image3D.depth) = 60
-    image(Image3D.height) = 70
-    image(Image3D.width) = 80
+    val image = Image3D(input)
+//    image(Image3D.depth) = 60
+//    image(Image3D.height) = 70
+//    image(Image3D.width) = 80
     val start = Array[Int](10, 20, 20)
     val patchSize = Array[Int](21, 31, 41)
     val cropper = Crop(start, patchSize)
     val output = cropper.transform(image)
     val result = input.narrow(1, 10, 21).narrow(2, 20, 31).narrow(3, 20, 41)
       .clone().storage().array()
-    output.getFloats() should be(result)
+    output.getData().storage().array() should be(result)
   }
 
   "A RandomCropTransformer" should "generate correct output." in{
@@ -45,12 +45,12 @@ class CropSpec extends FlatSpec with Matchers{
     RNG.setSeed(seed)
     val input = Tensor[Float](60, 70, 80)
     input.apply1(e => RNG.uniform(0, 1).toFloat)
-    val image = Image3D(input.storage().array())
-    image(Image3D.depth) = 60
-    image(Image3D.height) = 70
-    image(Image3D.width) = 80
+    val image = Image3D(input)
+//    image(Image3D.depth) = 60
+//    image(Image3D.height) = 70
+//    image(Image3D.width) = 80
     val cropper = RandomCrop(20, 30, 40)
     val output = cropper.transform(image)
-    assert(output.getFloats().length == 20 * 30 * 40)
+    assert(output.getData().storage().array().length == 20 *30*40)
   }
 }

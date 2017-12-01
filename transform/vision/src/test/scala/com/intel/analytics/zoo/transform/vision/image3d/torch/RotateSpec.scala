@@ -30,10 +30,7 @@ class RotationTransformerSpec extends TorchSpec {
     input.apply1(e => RNG.uniform(0, 1).toFloat)
     val rotAngles = Array[Double](0, 0, math.Pi/3.7)
     val rot = Rotate(rotAngles)
-    val image = Image3D(input.storage().array())
-    image(Image3D.depth) = 1
-    image(Image3D.height) = 10
-    image(Image3D.width) = 10
+    val image = Image3D(input)
     val dst = rot.transform(image)
     val code = "require 'image'\n" +
     "dst = image.rotate(src,math.pi/3.7,'bilinear')"
@@ -41,9 +38,7 @@ class RotationTransformerSpec extends TorchSpec {
       Map("src" -> input.view(10, 10)),
       Array("dst"))
     val dstTorch = torchResult("dst").asInstanceOf[Tensor[Float]]
-    val dstTensor = Tensor[Float](storage = Storage[Float](dst.getFloats()),
-      storageOffset = 1, size = Array(1, 10, 10))
-    dstTensor.view(10, 10).map(dstTorch, (v1, v2) => {
+    dst.getData().view(10, 10).map(dstTorch, (v1, v2) => {
       assert(math.abs(v1-v2)<1e-6)
       v1
     })
@@ -53,14 +48,11 @@ class RotationTransformerSpec extends TorchSpec {
     torchCheck()
     val seed = 100
     RNG.setSeed(seed)
-    val input = Tensor[Double](10, 1, 10)
-    input.apply1(e => RNG.uniform(0, 1))
+    val input = Tensor[Float](10, 1, 10)
+    input.apply1(e => (RNG.uniform(0, 1).toFloat))
     val rotAngles = Array[Double](math.Pi/3.7, 0, 0)
     val rot = Rotate(rotAngles)
-    val image = Image3D(input.storage().array().map(_.toFloat))
-    image(Image3D.depth) = 10
-    image(Image3D.height) = 1
-    image(Image3D.width) = 10
+    val image = Image3D(input)
     val dst = rot.transform(image)
     // The z-axis is pointing downward so the rotation direction is opposite to normal one.
     val code = "require 'image'\n" +
@@ -68,10 +60,8 @@ class RotationTransformerSpec extends TorchSpec {
     val (luaTime, torchResult) = TH.run(code,
       Map("src" -> input.view(10, 10)),
       Array("dst"))
-    val dstTorch = torchResult("dst").asInstanceOf[Tensor[Double]]
-    val dstTensor = Tensor[Double](storage = Storage[Double](dst.getFloats().map(_.toDouble)),
-      storageOffset = 1, size = Array(10, 1, 10))
-    dstTensor.view(10, 10).map(dstTorch, (v1, v2) => {
+    val dstTorch = torchResult("dst").asInstanceOf[Tensor[Float]]
+    dst.getData().view(10, 10).map(dstTorch, (v1, v2) => {
       assert(math.abs(v1-v2)<1e-6)
       v1
     })
@@ -81,24 +71,19 @@ class RotationTransformerSpec extends TorchSpec {
     torchCheck()
     val seed = 100
     RNG.setSeed(seed)
-    val input = Tensor[Double](10, 10, 1)
-    input.apply1(e => RNG.uniform(0, 1))
+    val input = Tensor[Float](10, 10, 1)
+    input.apply1(e => (RNG.uniform(0, 1).toFloat))
     val rotAngles = Array[Double](0, math.Pi/3.7, 0)
     val rot = Rotate(rotAngles)
-    val image = Image3D(input.storage().array().map(_.toFloat))
-    image(Image3D.depth) = 10
-    image(Image3D.height) = 10
-    image(Image3D.width) = 1
+    val image = Image3D(input)
     val dst = rot.transform(image)
     val code = "require 'image'\n" +
     "dst = image.rotate(src,math.pi/3.7,'bilinear')"
     val (luaTime, torchResult) = TH.run(code,
       Map("src" -> input.view(10, 10)),
       Array("dst"))
-    val dstTorch = torchResult("dst").asInstanceOf[Tensor[Double]]
-    val dstTensor = Tensor[Double](storage = Storage[Double](dst.getFloats().map(_.toDouble)),
-      storageOffset = 1, size = Array(10, 10, 1))
-    dstTensor.view(10, 10).map(dstTorch, (v1, v2) => {
+    val dstTorch = torchResult("dst").asInstanceOf[Tensor[Float]]
+    dst.getData().view(10, 10).map(dstTorch, (v1, v2) => {
       assert(math.abs(v1-v2)<1e-6)
       v1
     })

@@ -59,7 +59,7 @@ extends FeatureTransformer {
     val depth = dst.size(1)
     val height = dst.size(2)
     val width = dst.size(3)
-    val grid_xyz = Tensor[Double](Array[Int](3, depth, height, width))
+    var grid_xyz = Tensor[Double](Array[Int](3, depth, height, width))
     val cz = (depth + 1)/2.0
     val cy = (height + 1)/2.0
     val cx = (width + 1)/2.0
@@ -69,17 +69,17 @@ extends FeatureTransformer {
       grid_xyz.setValue(3, z, y, x, cx-x)
     }
     val view_xyz = grid_xyz.reshape(Array[Int](3, depth * height * width))
-    var field = mat * view_xyz
-    field = grid_xyz - field.reshape(Array[Int](3, depth, height, width))
+    val field = mat * view_xyz
+    grid_xyz = grid_xyz.sub(field.reshape(Array[Int](3, depth, height, width)))
     val translation_mat = Tensor[Double](Array[Int](3, depth, height, width))
     translation_mat(1).fill(translation.valueAt(1))
     translation_mat(2).fill(translation.valueAt(2))
     translation_mat(3).fill(translation.valueAt(3))
-    field(1) = field(1) - translation_mat(1)
-    field(2) = field(2) - translation_mat(2)
-    field(3) = field(3) - translation_mat(3)
+    grid_xyz(1) = grid_xyz(1).sub(translation_mat(1))
+    grid_xyz(2) = grid_xyz(2).sub(translation_mat(2))
+    grid_xyz(3) = grid_xyz(3).sub(translation_mat(3))
     val offset_mode = true
-    val warp_transformer = WarpTransformer(field, offset_mode, clamp_mode, pad_val)
+    val warp_transformer = WarpTransformer(grid_xyz, offset_mode, clamp_mode, pad_val)
     warp_transformer(tensor, dst)
     dst
   }// end apply
