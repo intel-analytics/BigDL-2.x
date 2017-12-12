@@ -53,7 +53,8 @@ object CaffeConverter {
     caffeDefPath: String = "",
     caffeModelPath: String = "",
     bigDLModel: String = "",
-    modelType: String = "")
+    modelType: String = "",
+    modelName: String = "")
 
   val parser = new OptionParser[CaffeConverterParam]("BigDL SSD Caffe Converter") {
     head("BigDL SSD Caffe Converter")
@@ -73,6 +74,10 @@ object CaffeConverter {
       .action((x, c) => {
         c.copy(modelType = x)
       })
+    opt[String]("name").text("model name")
+      .action((x, c) => {
+        c.copy(modelName = x)
+      })
   }
 
   def main(args: Array[String]) {
@@ -82,6 +87,7 @@ object CaffeConverter {
         case "frcnn" => FrcnnCaffeLoader.loadCaffe(params.caffeDefPath, params.caffeModelPath)
         case _ => Module.loadCaffeModel[Float](params.caffeDefPath, params.caffeModelPath)
       }
+      if (params.modelName.nonEmpty) model.setName(params.modelName)
       model.saveModule(params.bigDLModel, overWrite = true)
     }
   }
