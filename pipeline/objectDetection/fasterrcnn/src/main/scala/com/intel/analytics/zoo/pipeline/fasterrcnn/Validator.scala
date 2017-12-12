@@ -19,13 +19,12 @@ package com.intel.analytics.zoo.pipeline.fasterrcnn
 import com.intel.analytics.bigdl._
 import com.intel.analytics.bigdl.dataset.Transformer
 import com.intel.analytics.bigdl.models.utils.ModelBroadcast
-import com.intel.analytics.bigdl.nn.Utils
+import com.intel.analytics.bigdl.nn.{DetectionOutputFrcnn, Utils}
 import com.intel.analytics.bigdl.numeric.NumericFloat
 import com.intel.analytics.bigdl.optim.ValidationMethod
 import com.intel.analytics.zoo.pipeline.common.ModuleUtil
 import com.intel.analytics.zoo.pipeline.common.dataset.{FrcnnMiniBatch, FrcnnToBatch}
 import com.intel.analytics.zoo.pipeline.common.dataset.roiimage.{RecordToFeature, SSDByteRecord}
-import com.intel.analytics.zoo.pipeline.common.nn.FrcnnPostprocessor
 import com.intel.analytics.zoo.pipeline.fasterrcnn.model.{PostProcessParam, PreProcessParam}
 import com.intel.analytics.zoo.transform.vision.image.augmentation.AspectScale
 import com.intel.analytics.zoo.transform.vision.image.{BytesToMat, MatToFloats}
@@ -49,7 +48,7 @@ class Validator(model: Module[Float],
 
 
   val postprocessor = Utils.getNamedModules(model)
-    .find(x => x._2.isInstanceOf[FrcnnPostprocessor]).get._2.asInstanceOf[FrcnnPostprocessor]
+    .find(x => x._2.isInstanceOf[DetectionOutputFrcnn]).get._2.asInstanceOf[DetectionOutputFrcnn]
 
   postprocessor.maxPerImage = postPrecessParam.maxPerImage
   postprocessor.nmsThresh = postPrecessParam.nmsThresh

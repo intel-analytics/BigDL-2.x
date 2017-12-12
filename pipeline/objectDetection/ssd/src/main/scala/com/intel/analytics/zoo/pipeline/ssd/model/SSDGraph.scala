@@ -38,7 +38,7 @@ object SSDGraph {
   def apply(numClasses: Int, resolution: Int, input: ModuleNode[Float],
     basePart1: ModuleNode[Float], basePart2: ModuleNode[Float],
     params: Map[String, ComponetParam],
-    isLastPool: Boolean, normScale: Float, param: PostProcessParam,
+    isLastPool: Boolean, normScale: Float, param: DetectionOutputParam,
     wRegularizer: Regularizer[Float] = L2Regularizer(0.0005),
     bRegularizer: Regularizer[Float] = null)
   : Module[Float] = {
@@ -126,7 +126,7 @@ object SSDGraph {
     stopGradient(model)
     val ssd = Sequential()
     ssd.add(model)
-    ssd.add(DetectionOutput(param))
+    ssd.add(DetectionOutputSSD(param))
     setRegularizer(model, wRegularizer, bRegularizer)
     ssd
   }

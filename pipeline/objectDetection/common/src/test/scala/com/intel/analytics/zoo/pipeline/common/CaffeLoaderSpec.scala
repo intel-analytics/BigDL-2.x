@@ -120,7 +120,7 @@ class CaffeLoaderSpec extends FlatSpec with Matchers {
     val input = T()
     input.insert(Tensor[Float](1, 3, 60, 90))
     input.insert(Tensor[Float](T(60, 90, 1, 1)).resize(1, 4))
-    model.saveModule("/tmp/vgg.frcnn", true)
+    model.saveModule("/tmp/vgg.frcnn", overWrite = true)
     model.forward(input)
   }
 
@@ -142,7 +142,7 @@ class CaffeLoaderSpec extends FlatSpec with Matchers {
     input.insert(Tensor[Float](T(640, 960, 1, 1)).resize(1, 4))
     println("save model done")
 
-    model.saveModule("/tmp/pvanet.model", true)
+    model.saveModule("/tmp/pvanet.model", overWrite = true)
     model.forward(input)
   }
 

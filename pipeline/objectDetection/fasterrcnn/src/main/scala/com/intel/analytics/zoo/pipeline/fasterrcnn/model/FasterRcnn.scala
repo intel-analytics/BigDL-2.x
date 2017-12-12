@@ -20,7 +20,6 @@ import com.intel.analytics.bigdl._
 import com.intel.analytics.bigdl.nn._
 import com.intel.analytics.bigdl.numeric.NumericFloat
 import com.intel.analytics.zoo.pipeline.common.ModuleUtil
-import com.intel.analytics.zoo.pipeline.common.nn.Proposal
 
 object FasterRcnn {
 

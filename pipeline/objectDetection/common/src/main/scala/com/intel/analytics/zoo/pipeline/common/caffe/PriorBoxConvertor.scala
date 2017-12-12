@@ -18,7 +18,7 @@ package com.intel.analytics.zoo.pipeline.common.caffe
 
 import com.google.protobuf.GeneratedMessage
 import com.intel.analytics.bigdl.nn.Graph.ModuleNode
-import com.intel.analytics.zoo.pipeline.common.nn.PriorBox
+import com.intel.analytics.bigdl.nn.PriorBox
 import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric
 import pipeline.caffe.Caffe.{LayerParameter, NetParameter}
 

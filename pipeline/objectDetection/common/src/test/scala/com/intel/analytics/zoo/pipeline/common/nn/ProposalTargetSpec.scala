@@ -343,7 +343,7 @@ class ProposalTargetSpec extends FlatSpec with Matchers {
     layer2.setDebug(true)
     val res1 = layer.forward(input)
     val tmpFile = java.io.File.createTempFile("module", ".bigdl")
-    layer.saveModule(tmpFile.getAbsolutePath, true)
+    layer.saveModule(tmpFile.getAbsolutePath, overWrite = true)
     val loaded = Module.loadModule[Float](tmpFile.getAbsolutePath)
     val res2 = layer2.forward(input).toTable
     res1 should be(res2)

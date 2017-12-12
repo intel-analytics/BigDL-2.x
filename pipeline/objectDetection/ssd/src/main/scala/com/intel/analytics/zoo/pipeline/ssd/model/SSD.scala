@@ -45,7 +45,7 @@ object SSD {
   def apply(numClasses: Int, resolution: Int,
     basePart1: Sequential[Float], basePart2: Sequential[Float],
     params: Map[String, ComponetParam],
-    isLastPool: Boolean, normScale: Float, param: PostProcessParam,
+    isLastPool: Boolean, normScale: Float, param: DetectionOutputParam,
     wRegularizer: Regularizer[Float] = L2Regularizer(0.0005),
     bRegularizer: Regularizer[Float] = null)
   : Module[Float] = {
@@ -101,7 +101,7 @@ object SSD {
       }
     }
     val module = concatResults(model, numClasses, params.size)
-    module.add(DetectionOutput(param))
+    module.add(DetectionOutputSSD(param))
     module.setScaleB(2)
     setRegularizer(module, wRegularizer, bRegularizer)
     module

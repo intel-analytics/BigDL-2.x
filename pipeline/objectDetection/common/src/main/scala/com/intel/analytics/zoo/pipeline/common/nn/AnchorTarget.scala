@@ -26,6 +26,7 @@ import org.apache.log4j.Logger
 import scala.collection.mutable.ArrayBuffer
 import scala.util.Random
 import AnchorTarget._
+import com.intel.analytics.bigdl.nn.Anchor
 
 
 object AnchorTarget {

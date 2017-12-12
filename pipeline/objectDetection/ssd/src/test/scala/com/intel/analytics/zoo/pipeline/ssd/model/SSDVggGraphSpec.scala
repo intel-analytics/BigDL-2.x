@@ -17,10 +17,10 @@
 package com.intel.analytics.zoo.pipeline.ssd.model
 
 import com.intel.analytics.bigdl._
-import com.intel.analytics.bigdl.nn.Module
+import com.intel.analytics.bigdl.nn.{Module, PriorBox}
 import com.intel.analytics.bigdl.numeric.NumericFloat
 import com.intel.analytics.bigdl.optim.SGD
-import com.intel.analytics.zoo.pipeline.common.nn.{MultiBoxLoss, MultiBoxLossParam, PriorBox}
+import com.intel.analytics.zoo.pipeline.common.nn.{MultiBoxLoss, MultiBoxLossParam}
 import com.intel.analytics.bigdl.tensor.{Storage, Tensor}
 import com.intel.analytics.bigdl.utils.{T, Table}
 import org.scalatest.{FlatSpec, Matchers}
@@ -146,7 +146,7 @@ class SSDVggGraphSpec extends FlatSpec with Matchers {
     model.evaluate()
     val out = model.forward(input).toTensor[Float].clone()
     val tmpFile = java.io.File.createTempFile("module", ".bigdl").toString
-    model.saveModule(tmpFile, true)
+    model.saveModule(tmpFile, overWrite = true)
 
     val model2 = Module.loadModule(tmpFile)
 
@@ -160,7 +160,7 @@ class SSDVggGraphSpec extends FlatSpec with Matchers {
     val model = SSDVgg(300)
     val input = Tensor[Float](1, 3, 300, 300)
     val tmpFile = java.io.File.createTempFile("module", ".bigdl").toString
-    model.saveModule(tmpFile, true)
+    model.saveModule(tmpFile, overWrite = true)
   }
 
   "save priorbox " should "work" in {
@@ -176,7 +176,7 @@ class SSDVggGraphSpec extends FlatSpec with Matchers {
     val input = Tensor[Float](1, 3, 22, 24)
     val out = priorbox.forward(input).clone()
     val tmpFile = java.io.File.createTempFile("module", ".bigdl").toString
-    priorbox.saveModule(tmpFile, true)
+    priorbox.saveModule(tmpFile, overWrite = true)
     val model2 = Module.loadModule(tmpFile)
     model2.forward(input)
     out should be (model2.output)

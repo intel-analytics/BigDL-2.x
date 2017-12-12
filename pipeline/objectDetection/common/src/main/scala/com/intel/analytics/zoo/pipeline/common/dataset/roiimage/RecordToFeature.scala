@@ -64,7 +64,7 @@ class RecordToFeature(convertLabel: Boolean = false, outKey: String = ImageFeatu
         RoiLabel(gtClasses, gtBoxes)
       } else null
       feature(outKey) = data
-      feature(ImageFeature.path) = record.path
+      feature(ImageFeature.uri) = record.path
       feature(ImageFeature.label) = target
       feature
     })

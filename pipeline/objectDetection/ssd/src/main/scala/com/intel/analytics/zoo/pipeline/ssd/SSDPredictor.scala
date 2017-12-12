@@ -17,9 +17,8 @@
 package com.intel.analytics.zoo.pipeline.ssd
 
 import com.intel.analytics.bigdl.Module
-import com.intel.analytics.bigdl.nn.Utils
+import com.intel.analytics.bigdl.nn.{DetectionOutputSSD, Utils}
 import com.intel.analytics.zoo.pipeline.common.dataset.roiimage._
-import com.intel.analytics.zoo.pipeline.common.nn.DetectionOutput
 import com.intel.analytics.zoo.pipeline.common.{BboxUtil, ModuleUtil, Predictor, Transform}
 import com.intel.analytics.bigdl.tensor.Tensor
 import com.intel.analytics.zoo.pipeline.ssd.model.PreProcessParam
@@ -41,8 +40,8 @@ class SSDPredictor(
     if (topK.isEmpty) return
     val namedModules = Utils.getNamedModules(model)
     namedModules.values.foreach(layer => {
-      if (layer.isInstanceOf[DetectionOutput[Float]]) {
-        layer.asInstanceOf[DetectionOutput[Float]].setTopK(topK.get)
+      if (layer.isInstanceOf[DetectionOutputSSD[Float]]) {
+        layer.asInstanceOf[DetectionOutputSSD[Float]].setTopK(topK.get)
         return
       }
     })
