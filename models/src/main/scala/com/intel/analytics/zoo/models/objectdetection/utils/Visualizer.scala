@@ -23,9 +23,7 @@ import com.intel.analytics.bigdl.tensor.Tensor
 import com.intel.analytics.bigdl.transform.vision.image.ImageFeature
 import com.intel.analytics.bigdl.transform.vision.image.opencv.OpenCVMat
 import com.intel.analytics.bigdl.transform.vision.image.util.BoundingBox
-import org.opencv.core.{Core, Point, Scalar}
 import org.opencv.imgcodecs.Imgcodecs
-import org.opencv.imgproc.Imgproc
 
 /**
  * used for image object detection
