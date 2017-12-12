@@ -17,9 +17,9 @@
 package com.intel.analytics.zoo.models.objectdetection.example
 
 import com.intel.analytics.bigdl.nn.Module
-import com.intel.analytics.zoo.models.Model._
 import com.intel.analytics.bigdl.utils.Engine
 import com.intel.analytics.bigdl.transform.vision.image.{DistributedImageFrame, ImageFrame}
+import com.intel.analytics.zoo.models.Model._
 import com.intel.analytics.zoo.models.objectdetection.utils.Visualizer
 import org.apache.log4j.{Level, Logger}
 import org.apache.spark.SparkContext
@@ -78,7 +78,7 @@ object Predict {
       val model = Module.loadModule[Float](params.model)
       // todo: add partition to read
       val data = ImageFrame.read(params.imageFolder, sc)
-      val output = model.predictFeature(data).asInstanceOf[DistributedImageFrame]
+      val output = model.predictImageFrame(data).asInstanceOf[DistributedImageFrame]
       output.rdd.foreach(detection => {
         Visualizer.draw(detection, classNames, outPath = params.outputFolder)
       })

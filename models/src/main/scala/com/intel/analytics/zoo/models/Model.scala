@@ -23,15 +23,14 @@ import com.intel.analytics.bigdl.transform.vision.image._
 import com.intel.analytics.zoo.models.utils.Configure
 
 class Model[A <: Activity : ClassTag, B <: Activity : ClassTag, T: ClassTag]
-(model: AbstractModule[A, B, T])(implicit ev: TensorNumeric[T]) {
+(model: AbstractModule[A, B, T], config: Configure)(implicit ev: TensorNumeric[T]) {
 
-  def predictFeature(imageFrame: ImageFrame,
+  def predictImageFrame(imageFrame: ImageFrame,
     outputLayer: String = null,
     shareBuffer: Boolean = false,
     predictKey: String = ImageFeature.predict): ImageFrame = {
     imageFrame match {
       case distImageFrame: DistributedImageFrame =>
-        val config = Configure(model.getName())
         model.predictImage(imageFrame -> config.preProcessor, outputLayer,
           shareBuffer, config.batchPerPartition, predictKey)
       case localImageFrame: LocalImageFrame =>
@@ -43,5 +42,8 @@ class Model[A <: Activity : ClassTag, B <: Activity : ClassTag, T: ClassTag]
 object Model {
   implicit def abstractModuleToModel[T: ClassTag](model: AbstractModule[Activity, Activity, T])(
     implicit ev: TensorNumeric[T])
-  : Model[Activity, Activity, T] = new Model[Activity, Activity, T](model)
+  : Model[Activity, Activity, T] = {
+    val config = Configure(model.getName())
+    new Model[Activity, Activity, T](model, config)
+  }
 }
