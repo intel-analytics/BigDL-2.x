@@ -83,13 +83,12 @@ class FrcnnToBatch(totalBatch: Int,
               }
             }
             require(feature.contains(inputKey), s"there should be ${inputKey} in ImageFeature")
-            val data = feature.getFloats(inputKey)
+            val data = feature.floats(inputKey)
             // hwc to chw
             val featureTensor = Tensor(Storage(data))
               .resize(1, feature.getHeight(), feature.getWidth(), 3).transpose(2, 4).transpose(3, 4)
               .contiguous()
-            val imInfoTensor = Tensor(T(height, width, height.toFloat / feature.getOriginalHeight,
-              width.toFloat / feature.getOriginalWidth)).resize(1, 4)
+            val imInfoTensor = feature.getImInfo().reshape(Array(1, 4))
             input(1) = featureTensor
             input(2) = imInfoTensor
             input(3) = labelTensor

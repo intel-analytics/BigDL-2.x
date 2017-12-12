@@ -61,7 +61,7 @@ object Predictor {
       val localToBatch = broadcastToBatch.value.cloneTransformer()
       val miniBatch = localToBatch(dataIter)
       miniBatch.flatMap(batch => {
-        var result = localModel.forward(batch.input).toTensor[Float]
+        var result = localModel.forward(batch.getInput()).toTensor[Float]
         if (null != postProcess) result = postProcess(result, batch)
         val batchOut = if (result.dim() == 1) {
           Array(result)

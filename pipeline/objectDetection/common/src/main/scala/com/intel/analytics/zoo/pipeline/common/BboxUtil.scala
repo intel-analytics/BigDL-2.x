@@ -18,6 +18,7 @@ package com.intel.analytics.zoo.pipeline.common
 
 import com.intel.analytics.bigdl.tensor.{Storage, Tensor}
 import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric
+import com.intel.analytics.zoo.transform.vision.image.ImageFeature
 import com.intel.analytics.zoo.transform.vision.label.roi.RoiLabel
 import com.intel.analytics.zoo.transform.vision.util.NormalizedBox
 import org.apache.log4j.Logger
@@ -318,6 +319,12 @@ object BboxUtil {
   }
 
 
+  def detectionToString(output: ImageFeature): String = {
+    val detection = output.tensorFeature()
+    val uri = output.uri()
+    resultToString(detection, uri)
+  }
+
   def resultToString(output: Tensor[Float], path: String, toInt: Boolean = true): String = {
     val decoded = decodeRois(output)
     if (decoded.nElement() == 0) ""
@@ -372,6 +379,8 @@ object BboxUtil {
   }
 
   def decodeRois(output: Tensor[Float]): Tensor[Float] = {
+    // ignore if decoded
+    if (output.nElement() < 6 || output.dim() == 2) return output
     val num = output.valueAt(1).toInt
     require(num >= 0, "output number should >= 0")
     if (num == 0) {
@@ -389,8 +398,8 @@ object BboxUtil {
     var i = 0
     while (i < batch) {
       // Scale the bbox according to the original image size.
-      val height = imInfo.valueAt(i + 1, 1) * imInfo.valueAt(i + 1, 3)
-      val width = imInfo.valueAt(i + 1, 2) * imInfo.valueAt(i + 1, 4)
+      val height = imInfo.valueAt(i + 1, 1) / imInfo.valueAt(i + 1, 3)
+      val width = imInfo.valueAt(i + 1, 2) / imInfo.valueAt(i + 1, 4)
       val single = output(i + 1)
       val result = decodeRois(single)
       if (result.nElement() > 0) {
