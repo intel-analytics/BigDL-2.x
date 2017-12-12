@@ -20,7 +20,6 @@ import scala.reflect.ClassTag
 import com.intel.analytics.bigdl.nn.abstractnn.{AbstractModule, Activity}
 import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric
 import com.intel.analytics.bigdl.transform.vision.image._
-import com.intel.analytics.zoo.models.utils.Configure
 
 class Model[A <: Activity : ClassTag, B <: Activity : ClassTag, T: ClassTag]
 (model: AbstractModule[A, B, T], config: Configure)(implicit ev: TensorNumeric[T]) {

@@ -14,10 +14,10 @@
  * limitations under the License.
  */
 
-package com.intel.analytics.zoo.models.utils
+package com.intel.analytics.zoo.models
 
 import com.intel.analytics.bigdl.transform.vision.image.FeatureTransformer
-import com.intel.analytics.zoo.models.objectdetection.utils.{ObjectDetectionConfig, ScaleDetection}
+import com.intel.analytics.zoo.models.objectdetection.utils.ObjectDetectionConfig
 
 
 case class Configure(
@@ -43,7 +43,7 @@ object Configure {
     val model = splits(1)
     val dataset = splits(2)
     val version = splits(3)
-    model.toUpperCase() match {
+    model.toLowerCase() match {
       case obModel if ObjectDetectionConfig.models contains obModel =>
         ObjectDetectionConfig(obModel, dataset, version)
     }

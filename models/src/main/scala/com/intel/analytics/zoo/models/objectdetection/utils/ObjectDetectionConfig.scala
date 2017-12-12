@@ -19,8 +19,8 @@ package com.intel.analytics.zoo.models.objectdetection.utils
 import com.intel.analytics.bigdl.transform.vision.image.augmentation.{AspectScale, ChannelNormalize, Resize}
 import com.intel.analytics.bigdl.transform.vision.image._
 import com.intel.analytics.zoo.models.objectdetection.utils.Dataset.{Coco, Pascal}
-import com.intel.analytics.zoo.models.utils.Configure
 import com.intel.analytics.bigdl.numeric.NumericFloat
+import com.intel.analytics.zoo.models.Configure
 
 object ObjectDetectionConfig {
 
