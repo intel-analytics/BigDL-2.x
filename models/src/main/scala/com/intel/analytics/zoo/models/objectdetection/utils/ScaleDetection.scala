@@ -24,8 +24,6 @@ import com.intel.analytics.bigdl.transform.vision.image.{FeatureTransformer, Ima
 case class ScaleDetection() extends FeatureTransformer {
   override def transform(imageFeature: ImageFeature): ImageFeature = {
     val detection = imageFeature[Tensor[Float]](ImageFeature.predict)
-    val imInfo = imageFeature.getImInfo()
-    println(imInfo)
     // Scale the bbox according to the original image size.
     val height = imageFeature.getOriginalHeight
     val width = imageFeature.getOriginalWidth

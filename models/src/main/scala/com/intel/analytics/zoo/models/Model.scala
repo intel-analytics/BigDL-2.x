@@ -28,13 +28,14 @@ class Model[A <: Activity : ClassTag, B <: Activity : ClassTag, T: ClassTag]
     outputLayer: String = null,
     shareBuffer: Boolean = false,
     predictKey: String = ImageFeature.predict): ImageFrame = {
-    imageFrame match {
+    val result = imageFrame match {
       case distImageFrame: DistributedImageFrame =>
         model.predictImage(imageFrame -> config.preProcessor, outputLayer,
           shareBuffer, config.batchPerPartition, predictKey)
       case localImageFrame: LocalImageFrame =>
         throw new NotImplementedError("local predict is not supported for now, coming soon")
     }
+    config.postProcessor(result)
   }
 }
 
