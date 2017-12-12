@@ -37,7 +37,6 @@ object Predict {
 
   case class PascolVocDemoParam(imageFolder: String = "",
     outputFolder: String = "data/demo",
-    source: String = "folder",
     model: String = "",
     classname: String = "",
     nPartition: Int = 1)
@@ -47,10 +46,6 @@ object Predict {
     opt[String]('f', "folder")
       .text("where you put the demo image data")
       .action((x, c) => c.copy(imageFolder = x))
-      .required()
-    opt[String]("source")
-      .text("data source type")
-      .action((x, c) => c.copy(source = x))
       .required()
     opt[String]('o', "output")
       .text("where you put the output data")
