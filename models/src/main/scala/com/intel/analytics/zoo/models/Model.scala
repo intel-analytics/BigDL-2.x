@@ -32,8 +32,7 @@ class Model[A <: Activity : ClassTag, B <: Activity : ClassTag, T: ClassTag]
     imageFrame match {
       case distImageFrame: DistributedImageFrame =>
         val config = Configure(model.getName())
-        // todo: remove it later
-        model.predictImage(imageFrame ->[Float] config.preProcessor, outputLayer,
+        model.predictImage(imageFrame -> config.preProcessor, outputLayer,
           shareBuffer, config.batchPerPartition, predictKey)
       case localImageFrame: LocalImageFrame =>
         throw new NotImplementedError("local predict is not supported for now, coming soon")
