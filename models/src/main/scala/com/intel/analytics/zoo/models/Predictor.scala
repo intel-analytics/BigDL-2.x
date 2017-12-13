@@ -18,16 +18,17 @@ package com.intel.analytics.zoo.models
 
 import scala.reflect.ClassTag
 import com.intel.analytics.bigdl.nn.abstractnn.{AbstractModule, Activity}
-import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric
 import com.intel.analytics.bigdl.transform.vision.image._
+import com.intel.analytics.zoo.models.objectdetection.utils.ObjectDetectionConfig
 
-class Model[A <: Activity : ClassTag, B <: Activity : ClassTag, T: ClassTag]
-(model: AbstractModule[A, B, T], config: Configure)(implicit ev: TensorNumeric[T]) {
-
-  def predictImageFrame(imageFrame: ImageFrame,
+object Predictor {
+  def predict[A <: Activity : ClassTag, B <: Activity : ClassTag, T: ClassTag]
+  (model: AbstractModule[A, B, T],
+    imageFrame: ImageFrame,
     outputLayer: String = null,
     shareBuffer: Boolean = false,
     predictKey: String = ImageFeature.predict): ImageFrame = {
+    val config = Configure(model.getName())
     val result = imageFrame match {
       case distImageFrame: DistributedImageFrame =>
         model.predictImage(imageFrame -> config.preProcessor, outputLayer,
@@ -39,11 +40,32 @@ class Model[A <: Activity : ClassTag, B <: Activity : ClassTag, T: ClassTag]
   }
 }
 
-object Model {
-  implicit def abstractModuleToModel[T: ClassTag](model: AbstractModule[Activity, Activity, T])(
-    implicit ev: TensorNumeric[T])
-  : Model[Activity, Activity, T] = {
-    val config = Configure(model.getName())
-    new Model[Activity, Activity, T](model, config)
+case class Configure(
+  preProcessor: FeatureTransformer = null,
+  postProcessor: FeatureTransformer = null,
+  batchPerPartition: Int = 4) {
+}
+
+object Configure {
+
+  val splitter = "_"
+
+  /**
+   * Get config for each model
+   *
+   * @param tag pub_model_dataset_version
+   * @return
+   */
+  def apply(tag: String): Configure = {
+    val splits = tag.split(splitter)
+    require(splits.length >= 4, "tag needs at least 4 elements, publisher, model, dataset, version")
+    require(splits(0) == "bigdl", "the model publisher needs to be BigDL")
+    val model = splits(1)
+    val dataset = splits(2)
+    val version = splits(3)
+    model.toLowerCase() match {
+      case obModel if ObjectDetectionConfig.models contains obModel =>
+        ObjectDetectionConfig(obModel, dataset, version)
+    }
   }
 }
