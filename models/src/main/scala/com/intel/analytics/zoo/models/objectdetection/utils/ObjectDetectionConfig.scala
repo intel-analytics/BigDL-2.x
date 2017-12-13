@@ -28,7 +28,9 @@ object ObjectDetectionConfig {
     "ssd-vgg16-512x512",
     "ssd-mobilenet-300x300",
     "frcnn-vgg16",
-    "frcnn-pvanet")
+    "frcnn-vgg16-compress",
+    "frcnn-pvanet",
+    "frcnn-pvanet-compress")
 
   def apply(model: String, dataset: String, version: String): Configure = {
     model match {

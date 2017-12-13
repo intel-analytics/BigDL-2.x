@@ -8,7 +8,7 @@
     <artifactId>models</artifactId>
     <version>0.1-SNAPSHOT</version>
 
-    <name>vision</name>
+    <name>models</name>
     <description>pre-trained models pipeline</description>
     <url>https://github.com/intel-analytics/analytics-zoo</url>
 
@@ -144,15 +144,9 @@
             <version>${spark.version}</version>
             <scope>${spark-scope}</scope>
         </dependency>
-        <dependency>
-            <groupId>com.intel.analytics</groupId>
-            <artifactId>vision</artifactId>
-            <version>0.1-SNAPSHOT</version>
-        </dependency>
     </dependencies>
 
     <build>
-        <sourceDirectory>src/main/java</sourceDirectory>
         <plugins>
             <plugin>
                 <groupId>net.alchim31.maven</groupId>
