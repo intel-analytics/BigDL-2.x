@@ -16,14 +16,17 @@
 
 package com.intel.analytics.zoo.models
 
+import com.intel.analytics.bigdl._
 import scala.reflect.ClassTag
 import com.intel.analytics.bigdl.nn.abstractnn.{AbstractModule, Activity}
 import com.intel.analytics.bigdl.transform.vision.image._
+import com.intel.analytics.bigdl.utils.LocalModule
 import com.intel.analytics.zoo.models.objectdetection.utils.ObjectDetectionConfig
 
 object Predictor {
   /**
    * Model prediction for BigDL model zoo.
+   *
    * @param model BigDL model
    * @param imageFrame local or distributed imageFrame
    * @param outputLayer output layer name, if it is null, use output of last layer
@@ -41,12 +44,14 @@ object Predictor {
     // apply preprocess if preProcessor is defined
     val data = if (null != config.preProcessor) imageFrame -> config.preProcessor else imageFrame
 
-    val result = imageFrame match {
+    val result = data match {
       case distributedImageFrame: DistributedImageFrame =>
-        model.predictImage(data, outputLayer,
+        model.predictImage(distributedImageFrame, outputLayer,
           shareBuffer, config.batchPerPartition, predictKey)
       case localImageFrame: LocalImageFrame =>
-        throw new NotImplementedError("local predict is not supported for now, coming soon")
+        val localModel = LocalModule(model)
+        localModel.predictImage(localImageFrame, outputLayer,
+          shareBuffer, config.batchPerPartition, predictKey)
     }
     // apply post process if defined
     if (null != config.postProcessor) config.postProcessor(result) else result
@@ -67,7 +72,7 @@ object Configure {
    * Get config for each model
    *
    * @param tag publisher_model_dataset_version,
-   *            publisher is required to be bigdl in this model zoo
+   * publisher is required to be bigdl in this model zoo
    * @return
    */
   def apply(tag: String): Configure = {
