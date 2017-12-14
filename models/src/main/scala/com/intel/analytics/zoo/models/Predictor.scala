@@ -22,6 +22,15 @@ import com.intel.analytics.bigdl.transform.vision.image._
 import com.intel.analytics.zoo.models.objectdetection.utils.ObjectDetectionConfig
 
 object Predictor {
+  /**
+   * Model prediction for BigDL model zoo.
+   * @param model BigDL model
+   * @param imageFrame local or distributed imageFrame
+   * @param outputLayer output layer name, if it is null, use output of last layer
+   * @param shareBuffer share buffer of output layer
+   * @param predictKey key to store prediction result
+   * @return imageFrame with prediction
+   */
   def predict[A <: Activity : ClassTag, B <: Activity : ClassTag, T: ClassTag]
   (model: AbstractModule[A, B, T],
     imageFrame: ImageFrame,
@@ -29,14 +38,18 @@ object Predictor {
     shareBuffer: Boolean = false,
     predictKey: String = ImageFeature.predict): ImageFrame = {
     val config = Configure(model.getName())
+    // apply preprocess if preProcessor is defined
+    val data = if (null != config.preProcessor) imageFrame -> config.preProcessor else imageFrame
+
     val result = imageFrame match {
-      case distImageFrame: DistributedImageFrame =>
-        model.predictImage(imageFrame -> config.preProcessor, outputLayer,
+      case distributedImageFrame: DistributedImageFrame =>
+        model.predictImage(data, outputLayer,
           shareBuffer, config.batchPerPartition, predictKey)
       case localImageFrame: LocalImageFrame =>
         throw new NotImplementedError("local predict is not supported for now, coming soon")
     }
-    config.postProcessor(result)
+    // apply post process if defined
+    if (null != config.postProcessor) config.postProcessor(result) else result
   }
 }
 
@@ -53,7 +66,8 @@ object Configure {
   /**
    * Get config for each model
    *
-   * @param tag pub_model_dataset_version
+   * @param tag publisher_model_dataset_version,
+   *            publisher is required to be bigdl in this model zoo
    * @return
    */
   def apply(tag: String): Configure = {
@@ -66,6 +80,7 @@ object Configure {
     model.toLowerCase() match {
       case obModel if ObjectDetectionConfig.models contains obModel =>
         ObjectDetectionConfig(obModel, dataset, version)
+      case _ => throw new Exception(s"$model is not defined in BigDL model zoo")
     }
   }
 }
