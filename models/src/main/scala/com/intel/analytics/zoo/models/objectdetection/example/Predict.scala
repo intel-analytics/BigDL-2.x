@@ -72,7 +72,7 @@ object Predict {
       val classNames = Source.fromFile(params.classname).getLines().toArray
       val model = Module.loadModule[Float](params.model)
       val data = ImageFrame.read(params.imageFolder, sc, params.nPartition)
-      val output = Predictor.predict(model, data).asInstanceOf[DistributedImageFrame]
+      val output = Predictor.predict(model, data).toDistributed()
       output.rdd.foreach(detection => {
         Visualizer.draw(detection, classNames, outPath = params.outputFolder)
       })
