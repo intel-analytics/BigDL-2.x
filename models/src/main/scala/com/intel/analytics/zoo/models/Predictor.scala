@@ -16,13 +16,10 @@
 
 package com.intel.analytics.zoo.models
 
-import com.intel.analytics.bigdl._
-
 import scala.reflect.ClassTag
 import com.intel.analytics.bigdl.nn.abstractnn.{AbstractModule, Activity}
 import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric
 import com.intel.analytics.bigdl.transform.vision.image._
-import com.intel.analytics.bigdl.utils.LocalModule
 import com.intel.analytics.zoo.models.objectdetection.utils.ObjectDetectionConfig
 
 object Predictor {
@@ -46,15 +43,8 @@ object Predictor {
     // apply preprocess if preProcessor is defined
     val data = if (null != config.preProcessor) imageFrame -> config.preProcessor else imageFrame
 
-    val result = data match {
-      case distributedImageFrame: DistributedImageFrame =>
-        model.predictImage(distributedImageFrame, outputLayer,
-          shareBuffer, config.batchPerPartition, predictKey)
-      case localImageFrame: LocalImageFrame =>
-        val localModel = LocalModule[T](model)
-        localModel.predictImage(localImageFrame, outputLayer,
-          shareBuffer, config.batchPerPartition, predictKey)
-    }
+    val result = model.predictImage(data, outputLayer,
+      shareBuffer, config.batchPerPartition, predictKey)
     // apply post process if defined
     if (null != config.postProcessor) config.postProcessor(result) else result
   }
