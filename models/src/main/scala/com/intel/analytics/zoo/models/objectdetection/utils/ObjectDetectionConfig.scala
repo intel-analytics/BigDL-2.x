@@ -24,17 +24,19 @@ import com.intel.analytics.zoo.models.Configure
 
 object ObjectDetectionConfig {
 
-  val models = Array("ssd-vgg16-300x300",
+  val models = Set("ssd-vgg16-300x300",
     "ssd-vgg16-512x512",
     "ssd-mobilenet-300x300",
     "frcnn-vgg16",
     "frcnn-vgg16-compress",
     "frcnn-pvanet",
-    "frcnn-pvanet-compress")
+    "frcnn-pvanet-compress",
+    "ssd-vgg16-300x300-quantize")
 
   def apply(model: String, dataset: String, version: String): Configure = {
     model match {
-      case "ssd-vgg16-300x300" =>
+      case "ssd-vgg16-300x300" |
+           "ssd-vgg16-300x300-quantize" =>
         Configure(ObjectDetectionConfig.preprocessSsdVgg(300, dataset, version),
           ScaleDetection(),
           batchPerPartition = 2)

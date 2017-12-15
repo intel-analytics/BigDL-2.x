@@ -16,6 +16,8 @@
 
 package com.intel.analytics.zoo.models
 
+import com.intel.analytics.bigdl.nn.SpatialShareConvolution
+import com.intel.analytics.bigdl._
 import scala.reflect.ClassTag
 import com.intel.analytics.bigdl.nn.abstractnn.{AbstractModule, Activity}
 import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric
@@ -39,8 +41,10 @@ object Predictor {
     outputLayer: String = null,
     shareBuffer: Boolean = false,
     predictKey: String = ImageFeature.predict)(implicit ev: TensorNumeric[T]): ImageFrame = {
+
+    SpatialShareConvolution.shareConvolution[T](model)
     val config = Configure(model.getName())
-    // apply preprocess if preProcessor is defined
+    // apply preprocessing if preProcessor is defined
     val data = if (null != config.preProcessor) imageFrame -> config.preProcessor else imageFrame
 
     val result = model.predictImage(data, outputLayer,
@@ -63,14 +67,14 @@ object Configure {
   /**
    * Get config for each model
    *
-   * @param tag publisher_model_dataset_version,
+   * @param tag In 'publisher_model_dataset_version' format,
    * publisher is required to be bigdl in this model zoo
    * @return
    */
   def apply(tag: String): Configure = {
     val splits = tag.split(splitter)
     require(splits.length >= 4, "tag needs at least 4 elements, publisher, model, dataset, version")
-    require(splits(0) == "bigdl", "the model publisher needs to be BigDL")
+    require(splits(0) == "bigdl", "the model publisher needs to be bigdl")
     val model = splits(1)
     val dataset = splits(2)
     val version = splits(3)
