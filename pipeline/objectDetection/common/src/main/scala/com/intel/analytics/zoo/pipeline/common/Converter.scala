@@ -54,7 +54,8 @@ object CaffeConverter {
     caffeModelPath: String = "",
     bigDLModel: String = "",
     modelType: String = "",
-    modelName: String = "")
+    modelName: String = "",
+    qunatize: Boolean = false)
 
   val parser = new OptionParser[CaffeConverterParam]("BigDL SSD Caffe Converter") {
     head("BigDL SSD Caffe Converter")
@@ -78,16 +79,21 @@ object CaffeConverter {
       .action((x, c) => {
         c.copy(modelName = x)
       })
+    opt[Boolean]('q', "qunatize").text("qunatize")
+      .action((x, c) => {
+        c.copy(qunatize = x)
+      })
   }
 
   def main(args: Array[String]) {
     parser.parse(args, CaffeConverterParam()).foreach { params =>
-      val model = params.modelType match {
+      var model = params.modelType match {
         case "ssd" => SSDCaffeLoader.loadCaffe(params.caffeDefPath, params.caffeModelPath)
         case "frcnn" => FrcnnCaffeLoader.loadCaffe(params.caffeDefPath, params.caffeModelPath)
         case _ => Module.loadCaffeModel[Float](params.caffeDefPath, params.caffeModelPath)
       }
       if (params.modelName.nonEmpty) model.setName(params.modelName)
+      model = if (params.qunatize) model.quantize() else model
       model.saveModule(params.bigDLModel, overWrite = true)
     }
   }
