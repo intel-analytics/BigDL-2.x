@@ -101,7 +101,7 @@ object Test {
 
       val model = if (params.model.isDefined) {
         // load BigDL model
-        Module.load[Float](params.model.get)
+        Module.loadModule[Float](params.model.get)
       } else if (params.caffeDefPath.isDefined && params.caffeModelPath.isDefined) {
         // load caffe dynamically
         SSDCaffeLoader.loadCaffe(params.caffeDefPath.get, params.caffeModelPath.get)
@@ -109,6 +109,7 @@ object Test {
         throw new IllegalArgumentException(
           s"currently only support loading BigDL model or caffe model")
       }
+      println(s"load model done ${model.getName()}")
 
       val validator = new Validator(model, PreProcessParam(params.batch, params.resolution,
         (123f, 117f, 104f), true, params.nPartition), evaluator,
