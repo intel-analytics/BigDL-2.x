@@ -95,7 +95,7 @@ object Test {
       val model = if (params.isProtobuf) Module.loadCaffe(VggFRcnn(params.nClass,
         PostProcessParam(0.3f, params.nClass, false, 100, 0.05)),
         params.caffeDefPath, params.caffeModelPath)
-      else Module.load[Float](params.bigdlModel)
+      else Module.loadModule[Float](params.bigdlModel)
 
       val (preParam, postParam) = params.modelType.toLowerCase() match {
         case "vgg16" =>
