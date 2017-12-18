@@ -15,7 +15,7 @@
     <properties>
         <java.version>1.8</java.version>
         <javac.version>1.8</javac.version>
-        <spark-scope>compile</spark-scope>
+        <spark-scope>provided</spark-scope>
         <scala.major.version>2.11</scala.major.version>
         <scala.version>2.11.8</scala.version>
         <scala.macros.version>2.1.0</scala.macros.version>
@@ -34,7 +34,6 @@
                     <groupId>com.intel.analytics.bigdl</groupId>
                     <artifactId>bigdl-SPARK_2.1</artifactId>
                     <version>0.4.0-SNAPSHOT</version>
-                    <scope>${spark-scope}</scope>
                 </dependency>
             </dependencies>
         </profile>
