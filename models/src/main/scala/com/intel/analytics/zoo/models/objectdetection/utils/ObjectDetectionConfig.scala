@@ -25,13 +25,18 @@ import com.intel.analytics.zoo.models.Configure
 object ObjectDetectionConfig {
 
   val models = Set("ssd-vgg16-300x300",
+    "ssd-vgg16-300x300-quantize",
     "ssd-vgg16-512x512",
+    "ssd-vgg16-512x512-quantize",
     "ssd-mobilenet-300x300",
     "frcnn-vgg16",
     "frcnn-vgg16-compress",
+    "frcnn-vgg16-quantize",
+    "frcnn-vgg16-compress-quantize",
     "frcnn-pvanet",
+    "frcnn-pvanet-quantize",
     "frcnn-pvanet-compress",
-    "ssd-vgg16-300x300-quantize")
+    "frcnn-vgg16-compress-quantize")
 
   def apply(model: String, dataset: String, version: String): Configure = {
     model match {
@@ -40,7 +45,8 @@ object ObjectDetectionConfig {
         Configure(ObjectDetectionConfig.preprocessSsdVgg(300, dataset, version),
           ScaleDetection(),
           batchPerPartition = 2)
-      case "ssd-vgg16-512x512" =>
+      case "ssd-vgg16-512x512" |
+           "ssd-vgg16-512x512-quantize" =>
         Configure(ObjectDetectionConfig.preprocessSsdVgg(512, dataset, version),
           ScaleDetection(),
           batchPerPartition = 2)
@@ -48,11 +54,19 @@ object ObjectDetectionConfig {
         Configure(ObjectDetectionConfig.preprocessSsdMobilenet(300, dataset, version),
           ScaleDetection(),
           batchPerPartition = 2)
-      case "frcnn-vgg16" =>
+      case "frcnn-vgg16" |
+           "frcnn-vgg16-quantize" |
+           "frcnn-vgg16-compress" |
+           "frcnn-vgg16-compress-quantize" =>
         Configure(ObjectDetectionConfig.preprocessFrcnnVgg(dataset, version),
+          DecodeOutput(),
           batchPerPartition = 1)
-      case "frcnn-pvanet" =>
+      case "frcnn-pvanet" |
+           "frcnn-pvanet-quantize" |
+           "frcnn-pvanet-compress" |
+           "frcnn-pvanet-compress-quantize" =>
         Configure(ObjectDetectionConfig.preprocessFrcnnPvanet(dataset, version),
+          DecodeOutput(),
           batchPerPartition = 1)
     }
   }
@@ -82,7 +96,7 @@ object ObjectDetectionConfig {
   def preprocessFrcnn(resolution: Int, scaleMultipleOf: Int): FeatureTransformer = {
     AspectScale(resolution, scaleMultipleOf) ->
       ChannelNormalize(122.7717f, 115.9465f, 102.9801f) ->
-      MatToTensor() -> ImageFrameToSample()
+      MatToTensor() -> ImInfo() -> ImageFrameToSample(Array(ImageFeature.imageTensor, "ImInfo"))
   }
 
   def preprocessFrcnnVgg(dataset: String, version: String): FeatureTransformer = {
@@ -123,5 +137,10 @@ object Dataset {
   case object Coco extends Dataset {
     val value: String = "COCO"
   }
+}
 
+case class ImInfo() extends FeatureTransformer {
+  override def transformMat(feature: ImageFeature): Unit = {
+    feature("ImInfo") = feature.getImInfo()
+  }
 }

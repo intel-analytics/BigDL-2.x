@@ -17,8 +17,8 @@
 package com.intel.analytics.zoo.models.objectdetection.example
 
 import com.intel.analytics.bigdl.nn.Module
+import com.intel.analytics.bigdl.transform.vision.image.ImageFrame
 import com.intel.analytics.bigdl.utils.Engine
-import com.intel.analytics.bigdl.transform.vision.image.{DistributedImageFrame, ImageFrame}
 import com.intel.analytics.zoo.models.Predictor
 import com.intel.analytics.zoo.models.objectdetection.utils.Visualizer
 import org.apache.log4j.{Level, Logger}
@@ -27,7 +27,7 @@ import scopt.OptionParser
 
 import scala.io.Source
 
-object Predict {
+object PredictLocal {
   Logger.getLogger("org").setLevel(Level.ERROR)
   Logger.getLogger("akka").setLevel(Level.ERROR)
   Logger.getLogger("breeze").setLevel(Level.ERROR)
@@ -35,14 +35,13 @@ object Predict {
 
   val logger = Logger.getLogger(getClass)
 
-  case class PredictParam(image: String = "",
+  case class PredictLocal(image: String = "",
     outputFolder: String = "data/demo",
     model: String = "",
-    classname: String = "",
-    nPartition: Int = 1)
+    classname: String = "")
 
-  val parser = new OptionParser[PredictParam]("BigDL Object Detection Demo") {
-    head("BigDL Object Detection Demo")
+  val parser = new OptionParser[PredictLocal]("BigDL Object Detection Local Demo") {
+    head("BigDL Object Detection Local Demo")
     opt[String]('i', "image")
       .text("where you put the demo image data, can be image folder or image path")
       .action((x, c) => c.copy(image = x))
@@ -58,22 +57,17 @@ object Predict {
       .text("file store class name")
       .action((x, c) => c.copy(classname = x))
       .required()
-    opt[Int]('p', "partition")
-      .text("number of partitions")
-      .action((x, c) => c.copy(nPartition = x))
-      .required()
   }
 
   def main(args: Array[String]): Unit = {
-    parser.parse(args, PredictParam()).foreach { params =>
-      val conf = Engine.createSparkConf().setAppName("BigDL Object Detection Demo")
-      val sc = new SparkContext(conf)
+    parser.parse(args, PredictLocal()).foreach { params =>
+      System.setProperty("bigdl.localMode", "true")
       Engine.init
       val classNames = Source.fromFile(params.classname).getLines().toArray
       val model = Module.loadModule[Float](params.model)
-      val data = ImageFrame.read(params.image, sc, params.nPartition)
-      val output = Predictor.predict(model, data).toDistributed()
-      output.rdd.foreach(detection => {
+      val data = ImageFrame.read(params.image)
+      val output = Predictor.predict(model, data).toLocal()
+      output.array.foreach(detection => {
         Visualizer.draw(detection, classNames, outPath = params.outputFolder)
       })
       logger.info(s"labeled images are saved to ${params.outputFolder}")

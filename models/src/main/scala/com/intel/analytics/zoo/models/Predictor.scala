@@ -73,7 +73,8 @@ object Configure {
    */
   def apply(tag: String): Configure = {
     val splits = tag.split(splitter)
-    require(splits.length >= 4, "tag needs at least 4 elements, publisher, model, dataset, version")
+    require(splits.length >= 4, s"tag ${tag}" +
+      s" needs at least 4 elements, publisher, model, dataset, version")
     require(splits(0) == "bigdl", "the model publisher needs to be bigdl")
     val model = splits(1)
     val dataset = splits(2)
