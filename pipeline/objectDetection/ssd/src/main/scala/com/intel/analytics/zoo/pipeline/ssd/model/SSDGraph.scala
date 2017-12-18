@@ -30,7 +30,8 @@ import org.apache.log4j.Logger
 case class PreProcessParam(batchSize: Int = 4,
   resolution: Int = 300,
   pixelMeanRGB: (Float, Float, Float),
-  hasLabel: Boolean, nPartition: Int
+  hasLabel: Boolean, nPartition: Int,
+  norms: (Float, Float, Float) = (1, 1, 1)
 )
 
 object SSDGraph {

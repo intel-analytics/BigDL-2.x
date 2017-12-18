@@ -19,8 +19,10 @@ package com.intel.analytics.zoo.pipeline.ssd
 import com.intel.analytics.bigdl.Module
 import com.intel.analytics.bigdl.dataset.Transformer
 import com.intel.analytics.bigdl.models.utils.ModelBroadcast
+import com.intel.analytics.bigdl.nn.SpatialShareConvolution
 import com.intel.analytics.bigdl.numeric.NumericFloat
 import com.intel.analytics.bigdl.optim.ValidationMethod
+import com.intel.analytics.bigdl.transform.vision.image.augmentation.ChannelNormalize
 import com.intel.analytics.zoo.pipeline.common.dataset.roiimage._
 import com.intel.analytics.zoo.pipeline.common.{BboxUtil, ModuleUtil}
 import com.intel.analytics.zoo.pipeline.ssd.model.PreProcessParam
@@ -37,15 +39,21 @@ class Validator(model: Module[Float],
   useNormalized: Boolean = true
 ) {
 
-  ModuleUtil.shareMemory(model)
+  SpatialShareConvolution.shareConvolution[Float](model)
 
   val normalizeRoi = if (useNormalized) RoiNormalize() else RandomTransformer(RoiNormalize(), 0)
   val preProcessor = RecordToFeature(true) ->
     BytesToMat() ->
     normalizeRoi ->
     Resize(preProcessParam.resolution, preProcessParam.resolution) ->
+    ChannelNormalize(preProcessParam.pixelMeanRGB._1,
+      preProcessParam.pixelMeanRGB._2,
+      preProcessParam.pixelMeanRGB._3,
+      preProcessParam.norms._1,
+      preProcessParam.norms._2,
+      preProcessParam.norms._3) ->
     MatToFloats(validHeight = preProcessParam.resolution,
-      validWidth = preProcessParam.resolution, meanRGB = Some(preProcessParam.pixelMeanRGB)) ->
+      validWidth = preProcessParam.resolution) ->
     RoiImageToBatch(preProcessParam.batchSize, true, Some(preProcessParam.nPartition))
 
   def test(rdd: RDD[SSDByteRecord]): Unit = {
@@ -81,7 +89,8 @@ object Validator {
     logger.info(s"${evaluator} is ${output}")
 
     val totalTime = (System.nanoTime() - start) / 1e9
-    logger.info(s"[Prediction] ${recordsNum.value} in $totalTime seconds. Throughput is ${
+    logger.info(s"[Prediction] ${recordsNum.value} for ${model.getName()}" +
+      s" in $totalTime seconds. Throughput is ${
       recordsNum.value / totalTime
     } record / sec")
   }
