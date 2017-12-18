@@ -35,17 +35,17 @@ object Predict {
 
   val logger = Logger.getLogger(getClass)
 
-  case class PascolVocDemoParam(imageFolder: String = "",
+  case class PredictParam(image: String = "",
     outputFolder: String = "data/demo",
     model: String = "",
     classname: String = "",
     nPartition: Int = 1)
 
-  val parser = new OptionParser[PascolVocDemoParam]("BigDL SSD Demo") {
-    head("BigDL SSD Demo")
-    opt[String]('f', "folder")
-      .text("where you put the demo image data")
-      .action((x, c) => c.copy(imageFolder = x))
+  val parser = new OptionParser[PredictParam]("BigDL Object Detection Demo") {
+    head("BigDL Object Detection Demo")
+    opt[String]('i', "image")
+      .text("where you put the demo image data, can be image folder or image path")
+      .action((x, c) => c.copy(image = x))
       .required()
     opt[String]('o', "output")
       .text("where you put the output data")
@@ -65,13 +65,13 @@ object Predict {
   }
 
   def main(args: Array[String]): Unit = {
-    parser.parse(args, PascolVocDemoParam()).foreach { params =>
+    parser.parse(args, PredictParam()).foreach { params =>
       val conf = Engine.createSparkConf().setAppName("BigDL Object Detection Demo")
       val sc = new SparkContext(conf)
       Engine.init
       val classNames = Source.fromFile(params.classname).getLines().toArray
       val model = Module.loadModule[Float](params.model)
-      val data = ImageFrame.read(params.imageFolder, sc, params.nPartition)
+      val data = ImageFrame.read(params.image, sc, params.nPartition)
       val output = Predictor.predict(model, data).toDistributed()
       output.rdd.foreach(detection => {
         Visualizer.draw(detection, classNames, outPath = params.outputFolder)
