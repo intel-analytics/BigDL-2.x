@@ -29,7 +29,6 @@ object ObjectDetectionConfig {
     "ssd-vgg16-512x512",
     "ssd-vgg16-512x512-quantize",
     "ssd-mobilenet-300x300",
-    "ssd-mobilenet-300x300-quantize",
     "frcnn-vgg16",
     "frcnn-vgg16-compress",
     "frcnn-vgg16-quantize",
@@ -51,8 +50,7 @@ object ObjectDetectionConfig {
         Configure(ObjectDetectionConfig.preprocessSsdVgg(512, dataset, version),
           ScaleDetection(),
           batchPerPartition = 2)
-      case "ssd-mobilenet-300x300" |
-           "ssd-mobilenet-300x300-quantize" =>
+      case "ssd-mobilenet-300x300" =>
         Configure(ObjectDetectionConfig.preprocessSsdMobilenet(300, dataset, version),
           ScaleDetection(),
           batchPerPartition = 2)
