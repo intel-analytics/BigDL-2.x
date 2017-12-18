@@ -22,12 +22,11 @@ import com.intel.analytics.bigdl.models.utils.ModelBroadcast
 import com.intel.analytics.bigdl.nn.SpatialShareConvolution
 import com.intel.analytics.bigdl.numeric.NumericFloat
 import com.intel.analytics.bigdl.optim.ValidationMethod
-import com.intel.analytics.bigdl.transform.vision.image.augmentation.ChannelNormalize
-import com.intel.analytics.zoo.pipeline.common.dataset.roiimage._
-import com.intel.analytics.zoo.pipeline.common.{BboxUtil, ModuleUtil}
+import com.intel.analytics.zoo.pipeline.common.BboxUtil
+import com.intel.analytics.zoo.pipeline.common.dataset.roiimage.{RecordToFeature, RoiImageToBatch, SSDByteRecord, SSDMiniBatch}
 import com.intel.analytics.zoo.pipeline.ssd.model.PreProcessParam
+import com.intel.analytics.zoo.transform.vision.image.augmentation.{ChannelNormalize, Resize}
 import com.intel.analytics.zoo.transform.vision.image.{BytesToMat, MatToFloats, RandomTransformer}
-import com.intel.analytics.zoo.transform.vision.image.augmentation.Resize
 import com.intel.analytics.zoo.transform.vision.label.roi.RoiNormalize
 import org.apache.log4j.Logger
 import org.apache.spark.rdd.RDD

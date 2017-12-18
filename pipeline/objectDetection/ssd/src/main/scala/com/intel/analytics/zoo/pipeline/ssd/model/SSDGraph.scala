@@ -31,7 +31,7 @@ case class PreProcessParam(batchSize: Int = 4,
   resolution: Int = 300,
   pixelMeanRGB: (Float, Float, Float),
   hasLabel: Boolean, nPartition: Int,
-  norms: (Float, Float, Float) = (1, 1, 1)
+  norms: (Float, Float, Float) = (1f, 1f, 1f)
 )
 
 object SSDGraph {

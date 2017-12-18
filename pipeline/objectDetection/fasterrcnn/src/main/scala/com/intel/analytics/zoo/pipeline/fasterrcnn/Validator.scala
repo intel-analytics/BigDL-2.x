@@ -22,7 +22,7 @@ import com.intel.analytics.bigdl.models.utils.ModelBroadcast
 import com.intel.analytics.bigdl.nn.{DetectionOutputFrcnn, SpatialShareConvolution, Utils}
 import com.intel.analytics.bigdl.numeric.NumericFloat
 import com.intel.analytics.bigdl.optim.ValidationMethod
-import com.intel.analytics.bigdl.transform.vision.image.augmentation.ChannelNormalize
+import com.intel.analytics.zoo.transform.vision.image.augmentation.ChannelNormalize
 import com.intel.analytics.zoo.pipeline.common.dataset.{FrcnnMiniBatch, FrcnnToBatch}
 import com.intel.analytics.zoo.pipeline.common.dataset.roiimage.{RecordToFeature, SSDByteRecord}
 import com.intel.analytics.zoo.pipeline.fasterrcnn.model.{PostProcessParam, PreProcessParam}
