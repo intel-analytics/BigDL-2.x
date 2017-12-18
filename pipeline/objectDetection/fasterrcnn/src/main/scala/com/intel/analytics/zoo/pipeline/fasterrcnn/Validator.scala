@@ -41,7 +41,10 @@ class Validator(model: Module[Float],
     AspectScale(preProcessParam.scales(0), preProcessParam.scaleMultipleOf) ->
     ChannelNormalize(preProcessParam.pixelMeanRGB._1,
       preProcessParam.pixelMeanRGB._2,
-      preProcessParam.pixelMeanRGB._3) ->
+      preProcessParam.pixelMeanRGB._3,
+      preProcessParam.norms._1,
+      preProcessParam.norms._2,
+      preProcessParam.norms._3) ->
     MatToFloats(100, 100) ->
     FrcnnToBatch(preProcessParam.batchSize, true, Some(preProcessParam.nPartition))
 

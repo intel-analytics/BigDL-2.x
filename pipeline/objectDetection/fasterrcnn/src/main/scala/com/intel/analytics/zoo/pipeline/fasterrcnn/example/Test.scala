@@ -43,8 +43,8 @@ object Test {
     nPartition: Int = -1,
     isProtobuf: Boolean = true)
 
-  val testParamParser = new OptionParser[TestParam]("Spark-DL Test") {
-    head("Spark-DL Test")
+  val testParamParser = new OptionParser[TestParam]("BigDL Test") {
+    head("BigDL Test")
     opt[String]('f', "folder")
       .text("where you put the PascolVoc data")
       .action((x, c) => c.copy(folder = x))
@@ -84,7 +84,7 @@ object Test {
 
   def main(args: Array[String]) {
     testParamParser.parse(args, TestParam()).foreach { params =>
-      val conf = Engine.createSparkConf().setAppName("Spark-DL Faster RCNN Test")
+      val conf = Engine.createSparkConf().setAppName(s"BigDL Faster-RCNN Test ${params.bigdlModel}")
       val sc = new SparkContext(conf)
       Engine.init
 
@@ -92,10 +92,7 @@ object Test {
         nClass = params.nClass)
       val rdd = IOUtils.loadSeqFiles(params.nPartition, params.folder, sc)
 
-      val model = if (params.isProtobuf) Module.loadCaffe(VggFRcnn(params.nClass,
-        PostProcessParam(0.3f, params.nClass, false, 100, 0.05)),
-        params.caffeDefPath, params.caffeModelPath)
-      else Module.loadModule[Float](params.bigdlModel)
+      val model = Module.loadModule[Float](params.bigdlModel)
 
       val (preParam, postParam) = params.modelType.toLowerCase() match {
         case "vgg16" =>
