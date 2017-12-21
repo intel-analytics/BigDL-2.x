@@ -18,14 +18,12 @@ package com.intel.analytics.zoo.models.objectdetection.example
 
 import com.intel.analytics.bigdl.nn.Module
 import com.intel.analytics.bigdl.transform.vision.image.ImageFrame
-import com.intel.analytics.bigdl.utils.Engine
+import com.intel.analytics.bigdl.utils.{Engine, File}
 import com.intel.analytics.zoo.models.Predictor
 import com.intel.analytics.zoo.models.objectdetection.utils.Visualizer
 import org.apache.log4j.{Level, Logger}
-import org.apache.spark.SparkContext
+import Predict._
 import scopt.OptionParser
-
-import scala.io.Source
 
 object PredictLocal {
   Logger.getLogger("org").setLevel(Level.ERROR)
@@ -37,8 +35,7 @@ object PredictLocal {
 
   case class PredictLocal(image: String = "",
     outputFolder: String = "data/demo",
-    model: String = "",
-    classname: String = "")
+    model: String = "")
 
   val parser = new OptionParser[PredictLocal]("BigDL Object Detection Local Demo") {
     head("BigDL Object Detection Local Demo")
@@ -53,22 +50,23 @@ object PredictLocal {
     opt[String]("model")
       .text("BigDL model")
       .action((x, c) => c.copy(model = x))
-    opt[String]("classname")
-      .text("file store class name")
-      .action((x, c) => c.copy(classname = x))
-      .required()
   }
 
   def main(args: Array[String]): Unit = {
     parser.parse(args, PredictLocal()).foreach { params =>
       System.setProperty("bigdl.localMode", "true")
       Engine.init
-      val classNames = Source.fromFile(params.classname).getLines().toArray
       val model = Module.loadModule[Float](params.model)
       val data = ImageFrame.read(params.image)
-      val output = Predictor.predict(model, data).toLocal()
-      output.array.foreach(detection => {
-        Visualizer.draw(detection, classNames, outPath = params.outputFolder)
+      val predictor = Predictor(model)
+      val output = predictor.predict(data)
+
+      val visualizer = Visualizer(predictor.configure.labelMap, encoding = "jpg")
+      val visualized = visualizer(output).toLocal()
+
+      visualized.array.foreach(imageFeature => {
+        File.saveBytes(imageFeature[Array[Byte]](Visualizer.visualized),
+          getOutPath(params.outputFolder, imageFeature.uri(), "jpg"), true)
       })
       logger.info(s"labeled images are saved to ${params.outputFolder}")
     }

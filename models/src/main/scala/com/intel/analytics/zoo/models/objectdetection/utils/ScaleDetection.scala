@@ -21,7 +21,7 @@ import com.intel.analytics.bigdl.transform.vision.image.util.BboxUtil
 import com.intel.analytics.bigdl.transform.vision.image.{FeatureTransformer, ImageFeature}
 
 case class ScaleDetection() extends FeatureTransformer {
-  override def transform(imageFeature: ImageFeature): ImageFeature = {
+  override def transformMat(imageFeature: ImageFeature): Unit = {
     val detection = imageFeature[Tensor[Float]](ImageFeature.predict)
     // Scale the bbox according to the original image size.
     val height = imageFeature.getOriginalHeight
@@ -37,7 +37,6 @@ case class ScaleDetection() extends FeatureTransformer {
       result.select(2, 6).mul(height)
     }
     imageFeature(ImageFeature.predict) = result
-    imageFeature
   }
 
   def clipBoxes(bboxes: Tensor[Float]): Tensor[Float] = {
@@ -46,11 +45,10 @@ case class ScaleDetection() extends FeatureTransformer {
 }
 
 case class DecodeOutput() extends FeatureTransformer {
-  override def transform(imageFeature: ImageFeature): ImageFeature = {
+  override def transformMat(imageFeature: ImageFeature): Unit = {
     val detection = imageFeature[Tensor[Float]](ImageFeature.predict)
     val result = BboxUtil.decodeRois(detection)
     imageFeature(ImageFeature.predict) = result
-    imageFeature
   }
 }
 

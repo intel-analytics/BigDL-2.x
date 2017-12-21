@@ -39,35 +39,41 @@ object ObjectDetectionConfig {
     "frcnn-vgg16-compress-quantize")
 
   def apply(model: String, dataset: String, version: String): Configure = {
+    val labelMap = LabelReader(dataset)
     model match {
       case "ssd-vgg16-300x300" |
            "ssd-vgg16-300x300-quantize" =>
         Configure(ObjectDetectionConfig.preprocessSsdVgg(300, dataset, version),
           ScaleDetection(),
-          batchPerPartition = 2)
+          batchPerPartition = 2,
+          labelMap)
       case "ssd-vgg16-512x512" |
            "ssd-vgg16-512x512-quantize" =>
         Configure(ObjectDetectionConfig.preprocessSsdVgg(512, dataset, version),
           ScaleDetection(),
-          batchPerPartition = 2)
+          batchPerPartition = 2,
+          labelMap)
       case "ssd-mobilenet-300x300" =>
         Configure(ObjectDetectionConfig.preprocessSsdMobilenet(300, dataset, version),
           ScaleDetection(),
-          batchPerPartition = 2)
+          batchPerPartition = 2,
+          labelMap)
       case "frcnn-vgg16" |
            "frcnn-vgg16-quantize" |
            "frcnn-vgg16-compress" |
            "frcnn-vgg16-compress-quantize" =>
         Configure(ObjectDetectionConfig.preprocessFrcnnVgg(dataset, version),
           DecodeOutput(),
-          batchPerPartition = 1)
+          batchPerPartition = 1,
+          labelMap)
       case "frcnn-pvanet" |
            "frcnn-pvanet-quantize" |
            "frcnn-pvanet-compress" |
            "frcnn-pvanet-compress-quantize" =>
         Configure(ObjectDetectionConfig.preprocessFrcnnPvanet(dataset, version),
           DecodeOutput(),
-          batchPerPartition = 1)
+          batchPerPartition = 1,
+          labelMap)
     }
   }
 
