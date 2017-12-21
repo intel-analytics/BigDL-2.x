@@ -20,6 +20,12 @@ import com.intel.analytics.bigdl.tensor.Tensor
 import com.intel.analytics.bigdl.transform.vision.image.util.BboxUtil
 import com.intel.analytics.bigdl.transform.vision.image.{FeatureTransformer, ImageFeature}
 
+/**
+ * If the detection is normalized, for example, ssd detected bounding box is in [0, 1],
+ * need to scale the bbox according to the original image size.
+ * Note that in this transformer, the tensor from model output will be decoded,
+ * just like `DecodeOutput`
+ */
 case class ScaleDetection() extends FeatureTransformer {
   override def transformMat(imageFeature: ImageFeature): Unit = {
     val detection = imageFeature[Tensor[Float]](ImageFeature.predict)
@@ -44,6 +50,20 @@ case class ScaleDetection() extends FeatureTransformer {
   }
 }
 
+/**
+ * Decode the detection output
+ * The output of the model prediction is a 1-dim tensor
+ * The first element of tensor is the number(K) of objects detected,
+ * followed by [label score x1 y1 x2 y2] * K
+ * For example, if there are 2 detected objects, then K = 2, the tensor may
+ * looks like
+ * ```2, 1, 0.5, 10, 20, 50, 80, 3, 0.3, 20, 10, 40, 70```
+ * After decoding, it returns a 2-dim tensor, each row represents a detected object
+ * ```
+ * 1, 0.5, 10, 20, 50, 80
+ * 3, 0.3, 20, 10, 40, 70
+ * ```
+ */
 case class DecodeOutput() extends FeatureTransformer {
   override def transformMat(imageFeature: ImageFeature): Unit = {
     val detection = imageFeature[Tensor[Float]](ImageFeature.predict)

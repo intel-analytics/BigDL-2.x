@@ -145,6 +145,10 @@ object Dataset {
   }
 }
 
+/**
+ * Generate imInfo
+ * imInfo is a tensor that contains height, width, scaleInHeight, scaleInWidth
+ */
 case class ImInfo() extends FeatureTransformer {
   override def transformMat(feature: ImageFeature): Unit = {
     feature("ImInfo") = feature.getImInfo()

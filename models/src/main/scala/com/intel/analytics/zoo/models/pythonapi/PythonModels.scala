@@ -23,7 +23,7 @@ import com.intel.analytics.bigdl.transform.vision.image._
 import com.intel.analytics.zoo.models.{Configure, Predictor}
 import java.util.{Map => JMap}
 
-import com.intel.analytics.zoo.models.objectdetection.utils.Visualizer
+import com.intel.analytics.zoo.models.objectdetection.utils._
 
 import scala.collection.JavaConverters._
 import org.apache.log4j.Logger
@@ -73,5 +73,25 @@ class PythonModels[T: ClassTag](implicit ev: TensorNumeric[T]) extends PythonBig
 
   def getLabelMap(configure: Configure): JMap[Int, String] = {
     if (configure.labelMap == null) null else configure.labelMap.asJava
+  }
+
+  def readPascalLabelMap(): JMap[Int, String] = {
+    LabelReader.readPascalLabelMap().asJava
+  }
+
+  def readCocoLabelMap(): JMap[Int, String] = {
+    LabelReader.readCocoLabelMap().asJava
+  }
+
+  def createImInfo(): ImInfo = {
+    ImInfo()
+  }
+
+  def createDecodeOutput(): DecodeOutput = {
+    DecodeOutput()
+  }
+
+  def createScaleDetection(): ScaleDetection = {
+    ScaleDetection()
   }
 }

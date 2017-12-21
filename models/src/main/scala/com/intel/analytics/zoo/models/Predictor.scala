@@ -17,13 +17,20 @@
 package com.intel.analytics.zoo.models
 
 import com.intel.analytics.bigdl.nn.SpatialShareConvolution
-import com.intel.analytics.bigdl._
 import scala.reflect.ClassTag
 import com.intel.analytics.bigdl.nn.abstractnn.{AbstractModule, Activity}
 import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric
 import com.intel.analytics.bigdl.transform.vision.image._
 import com.intel.analytics.zoo.models.objectdetection.utils.ObjectDetectionConfig
 
+/**
+ * Predictor for BigDL models
+ * @param model BigDL model
+ * @param configure configure includes preprocessor, postprocessor, batch size, label mapping
+ *                  models from BigDL model zoo have their default configures
+ *                  if you want to predict over your own model, or if you want to change the
+ *                  default configure, you can pass in a user-defined configure
+ */
 class Predictor[T: ClassTag](
   model: AbstractModule[Activity, Activity, T],
   var configure: Configure = null
@@ -67,7 +74,13 @@ object Predictor {
     new Predictor(model, configure)
 }
 
-
+/**
+ * predictor configure
+ * @param preProcessor preprocessor of ImageFrame before model inference
+ * @param postProcessor postprocessor of ImageFrame after model inference
+ * @param batchPerPartition batch size per partition
+ * @param labelMap label mapping
+ */
 case class Configure(
   preProcessor: FeatureTransformer = null,
   postProcessor: FeatureTransformer = null,

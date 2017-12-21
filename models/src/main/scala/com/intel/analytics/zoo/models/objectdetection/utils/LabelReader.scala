@@ -34,7 +34,7 @@ object LabelReader {
   }
 
   /**
-   * load pascal label map
+   * load coco label map
    */
   def readCocoLabelMap(): Map[Int, String] = {
     readLabelMap("coco_classnames.txt")
