@@ -62,9 +62,10 @@ class PythonModels[T: ClassTag](implicit ev: TensorNumeric[T]) extends PythonBig
     Configure(preProcessor, postProcessor, batchPerPartition, map)
   }
 
-  def createVisualizer(labelMap: JMap[Int, String], thresh: Float = 0.3f): FeatureTransformer = {
-    Visualizer(labelMap.asScala.toMap, thresh, outKey = Visualizer.visualized) ->
-    BytesToMat(Visualizer.visualized) -> MatToFloats()
+  def createVisualizer(labelMap: JMap[Int, String], thresh: Float = 0.3f,
+    encoding: String): FeatureTransformer = {
+    Visualizer(labelMap.asScala.toMap, thresh, encoding, Visualizer.visualized) ->
+    BytesToMat(Visualizer.visualized) -> MatToFloats(shareBuffer = false)
   }
 
   def getConfigure(predictor: Predictor[T]): Configure = {

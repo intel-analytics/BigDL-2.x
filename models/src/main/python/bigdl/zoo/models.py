@@ -53,7 +53,7 @@ class Configure(JavaValue):
     :param pre_processor preprocessor of ImageFrame before model inference
     :param post_processor postprocessor of ImageFrame after model inference
     :param batch_per_partition batch size per partition
-    :param label_map label mapping
+    :param label_map mapping from prediction result indexes to real dataset labels
     """
     def __init__(self, pre_processor=None,
                  post_processor=None,
@@ -78,8 +78,6 @@ class Configure(JavaValue):
 
     def label_map(self):
         return callBigDlFunc(self.bigdl_type, "getLabelMap", self.value)
-
-
 
 class Visualizer(FeatureTransformer):
     """
