@@ -261,8 +261,7 @@
                     <sourceDirectory>${basedir}/src/main/scala</sourceDirectory>
                     <testSourceDirectory>${basedir}/src/test/scala</testSourceDirectory>
                     <configLocation>scalastyle_config.xml</configLocation>
-                    <outputFile>${project.build.directory}/stylecheck/scalastyle-output.xml
-                    </outputFile>
+                    <outputFile>${project.build.directory}/stylecheck/scalastyle-output.xml</outputFile>
                     <outputEncoding>UTF-8</outputEncoding>
                 </configuration>
             </plugin>

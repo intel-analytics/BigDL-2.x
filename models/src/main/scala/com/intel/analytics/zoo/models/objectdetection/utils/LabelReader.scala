@@ -22,7 +22,7 @@ import scala.io.Source
 
 object LabelReader {
   private def readLabelMap(labelFileName: String): Map[Int, String] = {
-    val labelFile = getClass().getClassLoader().getResource("labelmap/" + labelFileName)
+    val labelFile = getClass().getResource(labelFileName)
     Source.fromURL(labelFile).getLines().zipWithIndex.map(x => (x._2, x._1)).toMap
   }
 
@@ -30,14 +30,14 @@ object LabelReader {
    * load pascal label map
    */
   def readPascalLabelMap(): Map[Int, String] = {
-    readLabelMap("pascal_classname.txt")
+    readLabelMap("/pascal_classname.txt")
   }
 
   /**
    * load coco label map
    */
   def readCocoLabelMap(): Map[Int, String] = {
-    readLabelMap("coco_classnames.txt")
+    readLabelMap("/coco_classname.txt")
   }
 
   def apply(dataset: String): Map[Int, String] = {
