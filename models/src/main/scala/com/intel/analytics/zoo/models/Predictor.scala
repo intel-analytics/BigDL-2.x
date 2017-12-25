@@ -17,47 +17,75 @@
 package com.intel.analytics.zoo.models
 
 import com.intel.analytics.bigdl.nn.SpatialShareConvolution
-import com.intel.analytics.bigdl._
 import scala.reflect.ClassTag
 import com.intel.analytics.bigdl.nn.abstractnn.{AbstractModule, Activity}
 import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric
 import com.intel.analytics.bigdl.transform.vision.image._
 import com.intel.analytics.zoo.models.objectdetection.utils.ObjectDetectionConfig
 
-object Predictor {
+/**
+ * Predictor for BigDL models
+ * @param model BigDL model
+ * @param configure configure includes preprocessor, postprocessor, batch size, label mapping
+ *                  models from BigDL model zoo have their default configures
+ *                  if you want to predict over your own model, or if you want to change the
+ *                  default configure, you can pass in a user-defined configure
+ */
+class Predictor[T: ClassTag](
+  model: AbstractModule[Activity, Activity, T],
+  var configure: Configure = null
+)(implicit ev: TensorNumeric[T]) {
+  SpatialShareConvolution.shareConvolution[T](model)
+  configure = if (null == configure) Configure.parse(model.getName()) else configure
+
   /**
    * Model prediction for BigDL model zoo.
    *
-   * @param model BigDL model
    * @param imageFrame local or distributed imageFrame
    * @param outputLayer output layer name, if it is null, use output of last layer
    * @param shareBuffer share buffer of output layer
    * @param predictKey key to store prediction result
    * @return imageFrame with prediction
    */
-  def predict[A <: Activity : ClassTag, B <: Activity : ClassTag, T: ClassTag]
-  (model: AbstractModule[A, B, T],
-    imageFrame: ImageFrame,
+  def predict(imageFrame: ImageFrame,
     outputLayer: String = null,
     shareBuffer: Boolean = false,
-    predictKey: String = ImageFeature.predict)(implicit ev: TensorNumeric[T]): ImageFrame = {
+    predictKey: String = ImageFeature.predict): ImageFrame = {
 
-    SpatialShareConvolution.shareConvolution[T](model)
-    val config = Configure(model.getName())
     // apply preprocessing if preProcessor is defined
-    val data = if (null != config.preProcessor) imageFrame -> config.preProcessor else imageFrame
+    val data = if (null != configure.preProcessor) {
+      imageFrame -> configure.preProcessor
+    } else {
+      imageFrame
+    }
 
     val result = model.predictImage(data, outputLayer,
-      shareBuffer, config.batchPerPartition, predictKey)
+      shareBuffer, configure.batchPerPartition, predictKey)
+
     // apply post process if defined
-    if (null != config.postProcessor) config.postProcessor(result) else result
+    if (null != configure.postProcessor) configure.postProcessor(result) else result
   }
 }
 
+object Predictor {
+  def apply[T: ClassTag](
+    model: AbstractModule[Activity, Activity, T],
+    configure: Configure = null)(implicit ev: TensorNumeric[T]): Predictor[T] =
+    new Predictor(model, configure)
+}
+
+/**
+ * predictor configure
+ * @param preProcessor preprocessor of ImageFrame before model inference
+ * @param postProcessor postprocessor of ImageFrame after model inference
+ * @param batchPerPartition batch size per partition
+ * @param labelMap label mapping
+ */
 case class Configure(
   preProcessor: FeatureTransformer = null,
   postProcessor: FeatureTransformer = null,
-  batchPerPartition: Int = 4) {
+  batchPerPartition: Int = 4,
+  labelMap: Map[Int, String] = null) {
 }
 
 object Configure {
@@ -71,7 +99,7 @@ object Configure {
    * publisher is required to be bigdl in this model zoo
    * @return
    */
-  def apply(tag: String): Configure = {
+  def parse(tag: String): Configure = {
     val splits = tag.split(splitter)
     require(splits.length >= 4, s"tag ${tag}" +
       s" needs at least 4 elements, publisher, model, dataset, version")

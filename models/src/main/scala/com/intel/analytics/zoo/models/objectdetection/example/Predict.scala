@@ -16,16 +16,16 @@
 
 package com.intel.analytics.zoo.models.objectdetection.example
 
+import java.nio.file.Paths
+
 import com.intel.analytics.bigdl.nn.Module
-import com.intel.analytics.bigdl.utils.Engine
-import com.intel.analytics.bigdl.transform.vision.image.{DistributedImageFrame, ImageFrame}
+import com.intel.analytics.bigdl.utils.{Engine, File}
+import com.intel.analytics.bigdl.transform.vision.image.{ImageFrame}
 import com.intel.analytics.zoo.models.Predictor
 import com.intel.analytics.zoo.models.objectdetection.utils.Visualizer
 import org.apache.log4j.{Level, Logger}
 import org.apache.spark.SparkContext
 import scopt.OptionParser
-
-import scala.io.Source
 
 object Predict {
   Logger.getLogger("org").setLevel(Level.ERROR)
@@ -38,7 +38,6 @@ object Predict {
   case class PredictParam(image: String = "",
     outputFolder: String = "data/demo",
     model: String = "",
-    classname: String = "",
     nPartition: Int = 1)
 
   val parser = new OptionParser[PredictParam]("BigDL Object Detection Demo") {
@@ -54,10 +53,6 @@ object Predict {
     opt[String]("model")
       .text("BigDL model")
       .action((x, c) => c.copy(model = x))
-    opt[String]("classname")
-      .text("file store class name")
-      .action((x, c) => c.copy(classname = x))
-      .required()
     opt[Int]('p', "partition")
       .text("number of partitions")
       .action((x, c) => c.copy(nPartition = x))
@@ -69,14 +64,27 @@ object Predict {
       val conf = Engine.createSparkConf().setAppName("BigDL Object Detection Demo")
       val sc = new SparkContext(conf)
       Engine.init
-      val classNames = Source.fromFile(params.classname).getLines().toArray
+
       val model = Module.loadModule[Float](params.model)
       val data = ImageFrame.read(params.image, sc, params.nPartition)
-      val output = Predictor.predict(model, data).toDistributed()
-      output.rdd.foreach(detection => {
-        Visualizer.draw(detection, classNames, outPath = params.outputFolder)
+      val predictor = Predictor(model)
+      val output = predictor.predict(data)
+
+      val visualizer = Visualizer(predictor.configure.labelMap, encoding = "jpg")
+      val visualized = visualizer(output).toDistributed()
+      val result = visualized.rdd.map(imageFeature =>
+        (imageFeature.uri(), imageFeature[Array[Byte]](Visualizer.visualized))).collect()
+
+      result.foreach(x => {
+        File.saveBytes(x._2, getOutPath(params.outputFolder, x._1, "jpg"), true)
       })
       logger.info(s"labeled images are saved to ${params.outputFolder}")
     }
+  }
+
+  def getOutPath(outPath: String, uri: String, encoding: String): String = {
+    Paths.get(outPath,
+      s"detection_${ uri.substring(uri.lastIndexOf("/") + 1,
+        uri.lastIndexOf(".")) }.${encoding}").toString
   }
 }

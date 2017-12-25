@@ -16,27 +16,31 @@
 
 package com.intel.analytics.zoo.models.objectdetection.utils
 
-import java.io.File
-import java.nio.file.Paths
-
 import com.intel.analytics.bigdl.tensor.Tensor
-import com.intel.analytics.bigdl.transform.vision.image.ImageFeature
+import com.intel.analytics.bigdl.transform.vision.image.{FeatureTransformer, ImageFeature}
 import com.intel.analytics.bigdl.transform.vision.image.opencv.OpenCVMat
 import com.intel.analytics.bigdl.transform.vision.image.util.BoundingBox
-import org.opencv.imgcodecs.Imgcodecs
 
 /**
  * used for image object detection
  * visualize detected bounding boxes and their scores to image
  */
-object Visualizer {
+class Visualizer(labelMap: Map[Int, String], thresh: Float = 0.3f,
+  encoding: String = "png", outKey: String = Visualizer.visualized) extends FeatureTransformer {
+  override def transformMat(imageFeature: ImageFeature): Unit = {
+    val rois = imageFeature.predict().asInstanceOf[Tensor[Float]]
+    val uri = imageFeature.uri()
+    val image = imageFeature.bytes()
+    val imageFile = visualizeDetection(image, uri, rois)
+    imageFeature(outKey) = imageFile
+  }
 
-  private def visualize(mat: OpenCVMat, rois: Tensor[Float],
-    classNames: Array[String], thresh: Float): OpenCVMat = {
+
+  private def visualize(mat: OpenCVMat, rois: Tensor[Float]): OpenCVMat = {
     (1 to rois.size(1)).foreach(i => {
       val score = rois.valueAt(i, 2)
       if (score > thresh) {
-        val className = classNames(rois.valueAt(i, 1).toInt)
+        val className = labelMap(rois.valueAt(i, 1).toInt)
         val bbox = BoundingBox(rois.valueAt(i, 3), rois.valueAt(i, 4),
           rois.valueAt(i, 5), rois.valueAt(i, 6))
         mat.drawBoundingBox(bbox, s"$className $score")
@@ -46,27 +50,27 @@ object Visualizer {
   }
 
   private def visualizeDetection(image: Array[Byte],
-    uri: String, rois: Tensor[Float], classNames: Array[String],
-    thresh: Float = 0.3f, outPath: String = "data/demo"): Unit = {
+    uri: String, rois: Tensor[Float]): Array[Byte] = {
     require(rois.dim() == 2, "output dim should be 2")
     require(rois.size(2) == 6, "output should have 6 cols, class score xmin ymin xmax ymax")
-    val f = new File(outPath)
-    if (!f.exists()) {
-      f.mkdirs()
+    var mat: OpenCVMat = null
+    try {
+      mat = OpenCVMat.fromImageBytes(image)
+      visualize(mat, rois)
+      OpenCVMat.imencode(mat, encoding)
+    } finally {
+      if (mat != null) mat.release()
     }
-    val path = Paths.get(outPath,
-      s"detection_${uri.substring(uri.lastIndexOf("/") + 1)}").toString
-    val mat = OpenCVMat.fromImageBytes(image)
-    visualize(mat, rois, classNames, thresh)
-    Imgcodecs.imwrite(path, mat)
-    mat.release()
   }
 
-  def draw(imageFeature: ImageFeature, classNames: Array[String],
-    thresh: Float = 0.3f, outPath: String = "data/demo"): Unit = {
-    val rois = imageFeature.predict().asInstanceOf[Tensor[Float]]
-    val uri = imageFeature.uri()
-    val image = imageFeature.bytes()
-    visualizeDetection(image, uri, rois, classNames, thresh, outPath)
-  }
+}
+
+
+object Visualizer {
+
+  val visualized = "visualized"
+
+  def apply(labelMap: Map[Int, String], thresh: Float = 0.3f,
+    encoding: String = "png", outKey: String = visualized): Visualizer =
+    new Visualizer(labelMap, thresh, encoding, outKey)
 }
