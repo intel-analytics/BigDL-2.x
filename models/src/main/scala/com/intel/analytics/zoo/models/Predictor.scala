@@ -17,10 +17,12 @@
 package com.intel.analytics.zoo.models
 
 import com.intel.analytics.bigdl.nn.SpatialShareConvolution
+
 import scala.reflect.ClassTag
 import com.intel.analytics.bigdl.nn.abstractnn.{AbstractModule, Activity}
 import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric
 import com.intel.analytics.bigdl.transform.vision.image._
+import com.intel.analytics.zoo.models.imageclassification.util.ImageClassificationConfig
 import com.intel.analytics.zoo.models.objectdetection.utils.ObjectDetectionConfig
 
 /**
@@ -110,6 +112,8 @@ object Configure {
     model.toLowerCase() match {
       case obModel if ObjectDetectionConfig.models contains obModel =>
         ObjectDetectionConfig(obModel, dataset, version)
+      case imcModel if ImageClassificationConfig.models contains imcModel =>
+        ImageClassificationConfig(imcModel, dataset, version)
       case _ => throw new Exception(s"$model is not defined in BigDL model zoo")
     }
   }
