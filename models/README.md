@@ -4,7 +4,6 @@
 
 1. PASCAL VOC models
 * [SSD 300x300 MobileNet](https://s3-ap-southeast-1.amazonaws.com/bigdl-models/object-detection/bigdl_ssd-mobilenet-300x300_PASCAL_0.4.0.model)
-* [SSD 300x300 MobileNet Quantize](https://s3-ap-southeast-1.amazonaws.com/bigdl-models/object-detection/bigdl_ssd-mobilenet-300x300-quantize_PASCAL_0.4.0.model)
 * [SSD 300x300 VGG](https://s3-ap-southeast-1.amazonaws.com/bigdl-models/object-detection/bigdl_ssd-vgg16-300x300_PASCAL_0.4.0.model)
 * [SSD 300x300 VGG Quantize](https://s3-ap-southeast-1.amazonaws.com/bigdl-models/object-detection/bigdl_ssd-vgg16-300x300-quantize_PASCAL_0.4.0.model)
 * [SSD 512x512 VGG](https://s3-ap-southeast-1.amazonaws.com/bigdl-models/object-detection/bigdl_ssd-vgg16-512x512_PASCAL_0.4.0.model)
