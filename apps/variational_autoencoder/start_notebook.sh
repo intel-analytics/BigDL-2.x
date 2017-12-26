@@ -41,12 +41,13 @@ if [ ! -f $BIGDL_JAR ]; then
 fi
 
 ${SPARK_HOME}/bin/pyspark \
-  --master local[10] \
-  --driver-memory 40g \
+  --master local[4] \
+  --driver-memory 30g \
   --properties-file ${BIGDL_CONF} \
   --py-files ${BIGDL_PY_ZIP} \
   --jars ${BIGDL_JAR} \
   --conf spark.driver.extraClassPath=${BIGDL_JAR} \
   --conf spark.executor.extraClassPath=${BIGDL_JAR} \
-  --conf spark.sql.catalogImplementation='in-memory'
+  --conf spark.sql.catalogImplementation='in-memory' \
+  --conf spark.memory.fraction=0.75
 
