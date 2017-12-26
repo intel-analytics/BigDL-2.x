@@ -54,21 +54,21 @@ object ImagenetConfig {
   def apply(model: String, dataset: String, version: String): Configure = {
     model match {
       case "alexnet" => Configure(preProcessor = alexnetPreprocessor,
-        postProcessor = LabelOutput(imagenetLabelMap), labelMap = imagenetLabelMap)
+        labelMap = imagenetLabelMap)
       case "inception-v1" => Configure(preProcessor = inceptionV1Preprocessor,
-        postProcessor = LabelOutput(imagenetLabelMap), labelMap = imagenetLabelMap)
+        labelMap = imagenetLabelMap)
       case "resnet-50" => Configure(preProcessor = resnetPreprocessor,
-        postProcessor = LabelOutput(imagenetLabelMap), labelMap = imagenetLabelMap)
+        labelMap = imagenetLabelMap)
       case "vgg-16" => Configure(preProcessor = vggPreprocessor,
-        postProcessor = LabelOutput(imagenetLabelMap), labelMap = imagenetLabelMap)
+        labelMap = imagenetLabelMap)
       case "vgg-19" => Configure(preProcessor = vggPreprocessor,
-        postProcessor = LabelOutput(imagenetLabelMap), labelMap = imagenetLabelMap)
+        labelMap = imagenetLabelMap)
       case "densenet-161" => Configure(preProcessor = densenetPreprocessor,
-        postProcessor = LabelOutput(imagenetLabelMap), labelMap = imagenetLabelMap)
+        labelMap = imagenetLabelMap)
       case "squeezenet" => Configure(preProcessor = squeezenetPreprocessor,
-        postProcessor = LabelOutput(imagenetLabelMap), labelMap = imagenetLabelMap)
+        labelMap = imagenetLabelMap)
       case "mobilenet" => Configure(preProcessor = mobilenetPreprocessor,
-        postProcessor = LabelOutput(imagenetLabelMap), labelMap = imagenetLabelMap)
+        labelMap = imagenetLabelMap)
     }
   }
 

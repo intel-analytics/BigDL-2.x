@@ -13,16 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.intel.analytics.zoo.models.imageclassification.util
 
-import com.intel.analytics.bigdl.tensor.{Tensor}
-import com.intel.analytics.bigdl.transform.vision.image.{FeatureTransformer, ImageFeature}
+import com.intel.analytics.bigdl.tensor.Tensor
+import com.intel.analytics.bigdl.transform.vision.image.ImageFeature
 
-// Map predict index to real lables
-case class LabelOutput(labelMap: Map[Int, String]) extends FeatureTransformer {
 
-  override def transformMat(imageFeature: ImageFeature): Unit = {
+class LabelOutput(labelMap: Map[Int, String]) {
+  def label(imageFeature: ImageFeature): ImageFeature = {
     val predictOutput = imageFeature[Tensor[Float]](ImageFeature.predict)
     val total = predictOutput.nElement()
     val start = predictOutput.storageOffset() - 1
@@ -46,5 +44,10 @@ case class LabelOutput(labelMap: Map[Int, String]) extends FeatureTransformer {
 
     imageFeature(Consts.PREDICT_CLASSES) = classes
     imageFeature(Consts.PREDICT_PROBS) = probilities
+    imageFeature
   }
+}
+
+object LabelOutput {
+  def apply(labelMap: Map[Int, String]): LabelOutput = new LabelOutput(labelMap)
 }
