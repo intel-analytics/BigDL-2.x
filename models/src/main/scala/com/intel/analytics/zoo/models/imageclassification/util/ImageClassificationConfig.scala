@@ -139,6 +139,4 @@ object Dataset {
 
 object Consts {
   val IMAGENET_RESIZE : Int = 256
-  val PREDICT_CLASSES : String = "IMAGE_CLASSES"
-  val PREDICT_PROBS : String = "IMAGE_PROBS"
 }

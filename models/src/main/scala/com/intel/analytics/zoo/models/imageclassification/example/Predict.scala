@@ -68,14 +68,14 @@ object Predict {
       val model = Module.loadModule[Float](params.model)
       val data = ImageFrame.read(params.imageFolder, sc)
       val predictor = Predictor(model)
-      val labelOutput = LabelOutput(predictor.configure.labelMap)
+      val labelOutput = LabelOutput(predictor.configure.labelMap, "clses", "probs")
       val result = predictor.predict(data).toDistributed().rdd.
         map(img => labelOutput.label(img)).collect
       logger.info(s"Prediction result")
       result.foreach(imageFeature => {
         logger.info(s"image : ${imageFeature.uri}, top ${params.topN}")
-        val clsses = imageFeature(Consts.PREDICT_CLASSES).asInstanceOf[Array[String]]
-        val probs = imageFeature(Consts.PREDICT_PROBS).asInstanceOf[Array[Float]]
+        val clsses = imageFeature("clses").asInstanceOf[Array[String]]
+        val probs = imageFeature("probs").asInstanceOf[Array[Float]]
         for (i <- 0 until params.topN) {
           logger.info(s"\t class : ${clsses(i)}, credit : ${probs(i)}")
         }
