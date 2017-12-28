@@ -70,7 +70,11 @@ object Predict {
       val predictor = Predictor(model)
       val labelOutput = LabelOutput(predictor.configure.labelMap, "clses", "probs")
       val result = predictor.predict(data).toDistributed().rdd.
-        map(img => labelOutput.label(img)).collect
+        map(img => {
+          labelOutput.transformMat(img)
+          img
+        }
+        ).collect
       logger.info(s"Prediction result")
       result.foreach(imageFeature => {
         logger.info(s"image : ${imageFeature.uri}, top ${params.topN}")

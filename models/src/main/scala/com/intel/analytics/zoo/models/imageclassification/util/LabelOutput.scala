@@ -16,11 +16,12 @@
 package com.intel.analytics.zoo.models.imageclassification.util
 
 import com.intel.analytics.bigdl.tensor.Tensor
-import com.intel.analytics.bigdl.transform.vision.image.ImageFeature
+import com.intel.analytics.bigdl.transform.vision.image.{FeatureTransformer, ImageFeature}
 
 @SerialVersionUID(-3940915022534165986L)
-class LabelOutput(labelMap: Map[Int, String], clses : String, probs : String) extends Serializable{
-  def label(imageFeature: ImageFeature): ImageFeature = {
+class LabelOutput(labelMap: Map[Int, String], clses : String, probs : String)
+  extends FeatureTransformer{
+  override def transformMat(imageFeature: ImageFeature): Unit = {
     val predictOutput = imageFeature[Tensor[Float]](ImageFeature.predict)
     val total = predictOutput.nElement()
     val start = predictOutput.storageOffset() - 1
@@ -44,7 +45,6 @@ class LabelOutput(labelMap: Map[Int, String], clses : String, probs : String) ex
 
     imageFeature(clses) = classes
     imageFeature(probs) = probilities
-    imageFeature
   }
 }
 
