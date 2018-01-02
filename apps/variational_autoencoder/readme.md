@@ -14,8 +14,8 @@ and BigDL 0.5.0 snapshot.
    dataset as training data, and learned a generative model that we can
    sample human faces from.
 3. Using Variational Autoencoder and Deep Feature Loss to Generate Human Faces
-   This notebook is similar to 2. but use a more sophisticated loss function to generate
-   more vivid images.
+   This notebook is similar to the previous one but use a more sophisticated loss function to generate
+   more vivid images at the cost of more training time.
 
 To run this example, you should first build the BigDL jar or download the pre-built version from [here](https://bigdl-project.github.io/master/#release-download/)
 and set the `SPARK_HOME` and `BIGDL_HOME` variable in the `start_notebook.sh` script. Then use this script to
