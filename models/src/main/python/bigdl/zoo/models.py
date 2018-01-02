@@ -137,3 +137,14 @@ class ScaleDetection(FeatureTransformer):
     """
     def __init__(self, bigdl_type="float"):
         super(ScaleDetection, self).__init__(bigdl_type)
+
+class LabelOutput(FeatureTransformer):
+    """
+    Label Output tensor with corresponding real labels on specific dataset
+    clses is the key in ImgFeature where you want to store all sorted mapped labels
+    probs is the key in ImgFeature where you want to store all the sorted probilities for each class
+    """
+    def __init__(self, label_map, clses, probs, bigdl_type="float"):
+        self.value = callBigDlFunc(
+            bigdl_type, JavaValue.jvm_class_constructor(self), label_map, clses, probs)
+        

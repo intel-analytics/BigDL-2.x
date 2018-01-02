@@ -14,38 +14,24 @@
  * limitations under the License.
  */
 
-package com.intel.analytics.zoo.models.objectdetection.utils
+package com.intel.analytics.zoo.models.imageclassification.util
 
-import com.intel.analytics.zoo.models.objectdetection.utils.Dataset.{Coco, Pascal}
+import com.intel.analytics.zoo.models.imageclassification.util.Dataset.Imagenet
 import com.intel.analytics.zoo.models.util.ModelLabelReader
 
-import scala.io.Source
 
 object LabelReader extends ModelLabelReader {
-
-  /**
-   * load pascal label map
-   */
-  def readPascalLabelMap(): Map[Int, String] = {
-    readLabelMap("/pascal_classname.txt")
-  }
-
-  /**
-   * load coco label map
-   */
-  def readCocoLabelMap(): Map[Int, String] = {
-    readLabelMap("/coco_classname.txt")
+  def readImagenetlLabelMap(): Map[Int, String] = {
+    readLabelMap("/imagenet_classname.txt")
   }
 
   def apply(dataset: String): Map[Int, String] = {
     Dataset(dataset) match {
-      case Pascal =>
-        readPascalLabelMap()
-      case Coco =>
-        readCocoLabelMap()
+      case Imagenet =>
+        readImagenetlLabelMap()
       case _ =>
-        throw new Exception("currently only support Pascal and Coco dataset in" +
-          " BigDL object detection models")
+        throw new Exception("currently only support Imagenet dataset in" +
+          " BigDL Image classification models")
     }
   }
 }
