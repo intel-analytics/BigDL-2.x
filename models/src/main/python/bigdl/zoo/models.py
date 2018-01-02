@@ -147,3 +147,4 @@ class LabelOutput(FeatureTransformer):
     def __init__(self, label_map, clses, probs, bigdl_type="float"):
         self.value = callBigDlFunc(
             bigdl_type, JavaValue.jvm_class_constructor(self), label_map, clses, probs)
+        
