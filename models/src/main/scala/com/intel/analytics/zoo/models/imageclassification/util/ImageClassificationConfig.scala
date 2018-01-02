@@ -45,7 +45,7 @@ object ImageClassificationConfig {
 
 object ImagenetConfig {
 
-  val meanFile = getClass().getClassLoader().getResource("mean.txt")
+  val meanFile = getClass().getResource("/mean.txt")
 
   val mean : Array[Float] = createMean(meanFile)
 

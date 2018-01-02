@@ -23,6 +23,7 @@ import com.intel.analytics.bigdl.transform.vision.image._
 import com.intel.analytics.zoo.models.{Configure, Predictor}
 import java.util.{Map => JMap}
 
+import com.intel.analytics.zoo.models.imageclassification.util.LabelOutput
 import com.intel.analytics.zoo.models.objectdetection.utils._
 
 import scala.collection.JavaConverters._
@@ -94,5 +95,10 @@ class PythonModels[T: ClassTag](implicit ev: TensorNumeric[T]) extends PythonBig
 
   def createScaleDetection(): ScaleDetection = {
     ScaleDetection()
+  }
+
+  def createLabelOutput(labelMap: JMap[Int, String], clses: String,
+                       probs: String): FeatureTransformer = {
+    LabelOutput(labelMap.asScala.toMap, clses, probs)
   }
 }
