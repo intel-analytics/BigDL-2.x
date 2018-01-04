@@ -28,10 +28,10 @@ class MeanAveragePrecision(use07metric: Boolean, normalized: Boolean = true, nCl
     val out = BboxUtil.decodeBatchOutput(output.toTensor, nClass)
     val gt = target.toTensor[Float]
     var i = 0
-    val result = new Array[(Int, Array[(Float, Int, Int)])](classes.length)
+    val result = new Array[(Int, Array[(Float, Int, Int)])](nClass)
     val gtAreas = Tensor[Float](gt.size(1))
     BboxUtil.getAreas(gt, gtAreas, 4, normalized)
-    while (i < classes.length) {
+    while (i < nClass) {
       val cls = classes(i)
       if (cls != "__background__") {
         result(i) = EvalUtil.evaluateBatch(out, gt, gtAreas, i,

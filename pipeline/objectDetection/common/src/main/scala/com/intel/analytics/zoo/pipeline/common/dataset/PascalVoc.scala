@@ -34,11 +34,8 @@ import scala.xml.XML
  * @param devkitPath dataset folder
  */
 class PascalVoc(val year: String = "2007", val imageSet: String,
-  devkitPath: String)
-  extends Imdb {
+  devkitPath: String) extends Imdb {
   val name = "voc_" + year + "_" + imageSet
-
-  override val classes = PascalVoc.classes
 
   assert(new File(devkitPath).exists(),
     "VOCdevkit path does not exist: " + devkitPath)
@@ -52,7 +49,7 @@ class PascalVoc(val year: String = "2007", val imageSet: String,
 
   def annotationPath(index: String): String = "Annotations/" + index + ".xml"
 
-  def loadRoidb: Array[RoiImagePath] = {
+  override def loadRoidb(): Array[RoiImagePath] = {
     val list = if (year == "0712") Array("2007", "2012") else Array(year)
     var imdexToPaths = Map[String, (String, String)]()
     list.foreach(y => {
@@ -67,7 +64,8 @@ class PascalVoc(val year: String = "2007", val imageSet: String,
           dataPath + "/" + annotationPath(index)))
       })
     })
-    roidb = imdexToPaths.map(x => RoiImagePath(x._2._1, PascalVoc.loadAnnotation(x._2._2))).toArray
+    val roidb = imdexToPaths.map(x => RoiImagePath(x._2._1,
+      PascalVoc.loadAnnotation(x._2._2, PascalVoc.classToInd))).toArray
     roidb
   }
 }
@@ -84,7 +82,7 @@ object PascalVoc {
 
   val classToInd = (classes zip (Stream from 1).map(_.toFloat)).toMap
 
-  def loadAnnotation(path: String): RoiLabel = {
+  def loadAnnotation(path: String, labelMap: Map[String, Float]): RoiLabel = {
     val xml = XML.loadFile(path)
     val objs = xml \\ "object"
 
@@ -105,9 +103,8 @@ object PascalVoc {
       difficults(ix) = (obj \ "difficult").text.toFloat
       ix += 1
     }
-    val classes = classNames.map(classToInd)
+    val classes = classNames.map(labelMap)
     val gtClasses = Tensor(Storage(classes ++ difficults)).resize(2, classes.length)
     RoiLabel(gtClasses, boxes)
   }
-
 }

@@ -20,39 +20,29 @@ import java.util.concurrent.atomic.AtomicInteger
 
 import com.intel.analytics.zoo.pipeline.common.dataset.roiimage.RoiImagePath
 
-abstract class Imdb(val cacheFolder: String = "data/cache") {
-  val classes: Array[String]
-  var roidb: Array[RoiImagePath] = _
+import scala.io.Source
 
-  def getRoidb(): Array[RoiImagePath] = {
-    if (roidb != null && roidb.length > 0) return roidb
-    roidb = loadRoidb
-    roidb
-  }
-
-  protected def loadRoidb: Array[RoiImagePath]
-
-  def numClasses: Int = classes.length
-
+trait Imdb {
+  def loadRoidb(): Array[RoiImagePath]
 }
 
 
 object Imdb {
   /**
    * Get an imdb (image database) by name
+   *
    * @param name
    * @param devkitPath
    * @return
    */
   def getImdb(name: String, devkitPath: String): Imdb = {
     val items = name.split("_")
-    if (items.length < 2) throw new Exception("dataset name error")
     if (items(0) == "voc") {
       new PascalVoc(items(1), items(2), devkitPath)
     } else if (items(0) == "coco") {
       new Coco(items(1), devkitPath)
     } else {
-      throw new UnsupportedOperationException("unsupported dataset")
+      new CustomizedDataSet(name, devkitPath)
     }
   }
 
