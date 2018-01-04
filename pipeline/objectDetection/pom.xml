@@ -12,6 +12,7 @@
         <module>common</module>
         <module>ssd</module>
         <module>fasterrcnn</module>
+        <module>maskrcnn</module>
         <module>dist</module>
     </modules>
 

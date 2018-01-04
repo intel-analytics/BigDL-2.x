@@ -46,7 +46,7 @@ class DataAugmentationSpec extends FlatSpec with Matchers with BeforeAndAfter {
     import scala.sys.process._
     val resource = getClass().getClassLoader().getResource("VOCdevkit")
     val voc = Imdb.getImdb("voc_2007_testcode", resource.getPath)
-    val roidb = voc.getRoidb().toIterator
+    val roidb = voc.loadRoidb().toIterator
     val imgAug = LocalByteRoiimageReader() -> RecordToFeature(true) ->
       BytesToMat() ->
       RoiNormalize() ->
