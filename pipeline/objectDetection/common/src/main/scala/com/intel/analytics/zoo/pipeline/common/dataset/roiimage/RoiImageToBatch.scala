@@ -129,7 +129,6 @@ class RoiImageToBatch(totalBatch: Int,
           if (keepImageFeature) {
             batch.imageFeatures = maps
           }
-          println("batch: ", batch.input.size().mkString("x"), batch.target.size().mkString("x"))
           batch
         } else {
           null

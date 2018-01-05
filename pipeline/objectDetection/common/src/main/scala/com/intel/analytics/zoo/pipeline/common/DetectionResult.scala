@@ -20,19 +20,18 @@ import com.intel.analytics.bigdl.nn.abstractnn.Activity
 import com.intel.analytics.bigdl.optim.{ValidationMethod, ValidationResult}
 import com.intel.analytics.zoo.pipeline.common.dataset.PascalVoc._
 import com.intel.analytics.bigdl.tensor.Tensor
-import com.intel.analytics.bigdl.transform.vision.image.util.BboxUtil
 import org.apache.commons.lang3.SerializationUtils
 
 class MeanAveragePrecision(use07metric: Boolean, normalized: Boolean = true, nClass: Int)
   extends ValidationMethod[Float] {
   override def apply(output: Activity, target: Activity): ValidationResult = {
-    val out = BboxUtilZoo.decodeBatchOutput(output.toTensor, nClass)
+    val out = BboxUtil.decodeBatchOutput(output.toTensor, nClass)
     val gt = target.toTensor[Float]
     var i = 0
-    val result = new Array[(Int, Array[(Float, Int, Int)])](nClass)
+    val result = new Array[(Int, Array[(Float, Int, Int)])](classes.length)
     val gtAreas = Tensor[Float](gt.size(1))
     BboxUtil.getAreas(gt, gtAreas, 4, normalized)
-    while (i < nClass) {
+    while (i < classes.length) {
       val cls = classes(i)
       if (cls != "__background__") {
         result(i) = EvalUtil.evaluateBatch(out, gt, gtAreas, i,
@@ -48,7 +47,6 @@ class MeanAveragePrecision(use07metric: Boolean, normalized: Boolean = true, nCl
   override protected def format(): String = "PascalMeanAveragePrecision"
 
   override def clone(): MeanAveragePrecision = SerializationUtils.clone(this)
-
 }
 
 /**
@@ -81,8 +79,8 @@ class DetectionResult(private var results: Array[(Int, Array[(Float, Int, Int)])
     var info = ""
     info += "~~~~~~~~\n"
     info += "Results:\n"
-    output.foreach(res => info += s"AP for ${res._1} = ${"%.4f".format(res._2)}\n")
-    info += s"Mean AP = ${"%.4f".format(meanAveragePrecision)}\n"
+    output.foreach(res => info += s"AP for ${ res._1 } = ${ "%.4f".format(res._2) }\n")
+    info += s"Mean AP = ${ "%.4f".format(meanAveragePrecision) }\n"
     info += "~~~~~~~~\n"
     info
   }

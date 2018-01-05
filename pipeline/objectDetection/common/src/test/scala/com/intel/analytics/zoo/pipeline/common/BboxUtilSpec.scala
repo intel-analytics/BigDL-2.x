@@ -18,7 +18,6 @@ package com.intel.analytics.zoo.pipeline.common
 
 import com.intel.analytics.bigdl.tensor.{Storage, Tensor}
 import com.intel.analytics.bigdl.transform.vision.image.util.BoundingBox
-import com.intel.analytics.zoo.pipeline.common.{BboxUtilZoo => BboxUtil}
 import org.scalatest.{FlatSpec, Matchers}
 
 class BboxUtilSpec extends FlatSpec with Matchers {

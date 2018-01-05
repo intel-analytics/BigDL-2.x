@@ -21,7 +21,7 @@ import breeze.numerics._
 import com.intel.analytics.bigdl.nn.Module
 import com.intel.analytics.bigdl.tensor.{Storage, Tensor}
 import com.intel.analytics.bigdl.utils.T
-import com.intel.analytics.zoo.pipeline.common.{BboxUtilZoo => BboxUtil}
+import com.intel.analytics.zoo.pipeline.common.BboxUtil
 import org.scalatest.{FlatSpec, Matchers}
 
 class ProposalTargetSpec extends FlatSpec with Matchers {

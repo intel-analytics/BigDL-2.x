@@ -19,7 +19,7 @@ package com.intel.analytics.zoo.pipeline.ssd
 import com.intel.analytics.bigdl.Module
 import com.intel.analytics.bigdl.nn.{DetectionOutputSSD, Utils}
 import com.intel.analytics.zoo.pipeline.common.dataset.roiimage._
-import com.intel.analytics.zoo.pipeline.common.{ModuleUtil, Predictor, Transform, BboxUtilZoo => BboxUtil}
+import com.intel.analytics.zoo.pipeline.common.{ModuleUtil, Predictor, Transform, BboxUtil}
 import com.intel.analytics.bigdl.tensor.Tensor
 import com.intel.analytics.zoo.pipeline.ssd.model.PreProcessParam
 import com.intel.analytics.bigdl.transform.vision.image.{BytesToMat, ImageFeature, MatToFloats}

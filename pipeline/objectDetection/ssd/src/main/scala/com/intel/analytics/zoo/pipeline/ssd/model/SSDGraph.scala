@@ -22,7 +22,6 @@ import com.intel.analytics.bigdl.nn._
 import com.intel.analytics.bigdl.nn.abstractnn.{AbstractModule, Activity}
 import com.intel.analytics.bigdl.numeric.NumericFloat
 import com.intel.analytics.bigdl.optim.{L2Regularizer, Regularizer}
-import com.intel.analytics.zoo.pipeline.common.nn._
 import com.intel.analytics.bigdl.tensor.Storage
 import org.apache.log4j.Logger
 

@@ -30,11 +30,12 @@ import scala.io.Source
 import scala.util.parsing.json.JSON
 
 class Coco(val imageSet: String, devkitPath: String) extends Imdb {
+  override val classes: Array[String] = Coco.classes
 
-  override def loadRoidb(): Array[RoiImagePath] = {
+  def loadRoidb: Array[RoiImagePath] = {
     val imageSetFile = Paths.get(devkitPath, "ImageSets", s"$imageSet.txt").toFile
     assert(imageSetFile.exists(), "Path does not exist " + imageSetFile.getAbsolutePath)
-    val roidb = Source.fromFile(imageSetFile).getLines()
+    roidb = Source.fromFile(imageSetFile).getLines()
       .map(line => line.trim.split("\\s")).toArray.map(x => {
       RoiImagePath(devkitPath + "/" + x(0),
         Coco.loadAnnotation(devkitPath + "/" + x(1)))

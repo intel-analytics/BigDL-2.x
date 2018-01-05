@@ -23,9 +23,9 @@ import com.intel.analytics.zoo.pipeline.common.IOUtils
 import com.intel.analytics.zoo.pipeline.common.dataset.{FrcnnMiniBatch, FrcnnToBatch}
 import com.intel.analytics.zoo.pipeline.common.dataset.roiimage.RecordToFeature
 import com.intel.analytics.zoo.pipeline.fasterrcnn.model.PreProcessParam
-import com.intel.analytics.zoo.transform.vision.image.augmentation.{AspectScale, HFlip, RandomAspectScale}
-import com.intel.analytics.zoo.transform.vision.image.{BytesToMat, MatToFloats, RandomTransformer}
-import com.intel.analytics.zoo.transform.vision.label.roi._
+import com.intel.analytics.bigdl.transform.vision.image.augmentation._
+import com.intel.analytics.bigdl.transform.vision.image._
+import com.intel.analytics.bigdl.transform.vision.image.label.roi._
 import org.apache.spark.SparkContext
 import org.apache.spark.rdd.RDD
 
@@ -38,8 +38,8 @@ object Utils {
       BytesToMat() ->
       RandomAspectScale(param.scales, param.scaleMultipleOf) -> RoiResize() ->
       RandomTransformer(HFlip() -> RoiHFlip(false), 0.5) ->
-      MatToFloats(validHeight = 600, validWidth = 600,
-        meanRGB = Some(param.pixelMeanRGB)) ->
+      ChannelNormalize(param.pixelMeanRGB._1, param.pixelMeanRGB._2, param.pixelMeanRGB._3) ->
+      MatToFloats(validHeight = 600, validWidth = 600) ->
       FrcnnToBatch(batchSize, true)
   }
 
@@ -50,7 +50,8 @@ object Utils {
     DataSet.rdd(valRdd) -> RecordToFeature(true) ->
       BytesToMat() ->
       AspectScale(param.scales(0), param.scaleMultipleOf) ->
-      MatToFloats(100, 100, meanRGB = Some(param.pixelMeanRGB)) ->
+      ChannelNormalize(param.pixelMeanRGB._1, param.pixelMeanRGB._2, param.pixelMeanRGB._3) ->
+      MatToFloats(100, 100) ->
       FrcnnToBatch(param.batchSize, true)
   }
 
@@ -60,7 +61,9 @@ object Utils {
     val preProcessor = RecordToFeature(true) ->
       BytesToMat() ->
       AspectScale(preProcessParam.scales(0), preProcessParam.scaleMultipleOf) ->
-      MatToFloats(100, 100, meanRGB = Some(preProcessParam.pixelMeanRGB)) ->
+      ChannelNormalize(preProcessParam.pixelMeanRGB._1,
+        preProcessParam.pixelMeanRGB._2, preProcessParam.pixelMeanRGB._3) ->
+      MatToFloats(100, 100) ->
       FrcnnToBatch(preProcessParam.batchSize, true, Some(preProcessParam.nPartition))
     preProcessor(rdd)
   }

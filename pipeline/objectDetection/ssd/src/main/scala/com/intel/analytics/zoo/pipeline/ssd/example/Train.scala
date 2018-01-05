@@ -222,7 +222,7 @@ object Train {
     val optimizer = Optimizer(
       model = model,
       dataset = trainSet,
-      criterion = new MultiBoxLoss[Float](MultiBoxLossParam(nClasses = param.classNumber))
+      criterion = new MultiBoxLoss[Float](MultiBoxLossParam())
     )
 
     if (param.checkpoint.isDefined) {

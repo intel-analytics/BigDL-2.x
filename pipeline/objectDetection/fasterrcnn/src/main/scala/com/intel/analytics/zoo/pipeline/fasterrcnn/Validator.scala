@@ -22,12 +22,11 @@ import com.intel.analytics.bigdl.models.utils.ModelBroadcast
 import com.intel.analytics.bigdl.nn.{DetectionOutputFrcnn, SpatialShareConvolution, Utils}
 import com.intel.analytics.bigdl.numeric.NumericFloat
 import com.intel.analytics.bigdl.optim.ValidationMethod
-import com.intel.analytics.zoo.transform.vision.image.augmentation.ChannelNormalize
+import com.intel.analytics.bigdl.transform.vision.image.augmentation._
 import com.intel.analytics.zoo.pipeline.common.dataset.{FrcnnMiniBatch, FrcnnToBatch}
 import com.intel.analytics.zoo.pipeline.common.dataset.roiimage.{RecordToFeature, SSDByteRecord}
 import com.intel.analytics.zoo.pipeline.fasterrcnn.model.{PostProcessParam, PreProcessParam}
-import com.intel.analytics.zoo.transform.vision.image.augmentation.AspectScale
-import com.intel.analytics.zoo.transform.vision.image.{BytesToMat, MatToFloats}
+import com.intel.analytics.bigdl.transform.vision.image.{BytesToMat, MatToFloats}
 import org.apache.log4j.Logger
 import org.apache.spark.rdd.RDD
 
@@ -42,10 +41,7 @@ class Validator(model: Module[Float],
     AspectScale(preProcessParam.scales(0), preProcessParam.scaleMultipleOf) ->
     ChannelNormalize(preProcessParam.pixelMeanRGB._1,
       preProcessParam.pixelMeanRGB._2,
-      preProcessParam.pixelMeanRGB._3,
-      preProcessParam.norms._1,
-      preProcessParam.norms._2,
-      preProcessParam.norms._3) ->
+      preProcessParam.pixelMeanRGB._3) ->
     MatToFloats(100, 100) ->
     FrcnnToBatch(preProcessParam.batchSize, true, Some(preProcessParam.nPartition))
 

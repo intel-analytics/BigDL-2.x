@@ -20,7 +20,6 @@ import com.intel.analytics.zoo.pipeline.common.PascalVocEvaluator._
 import com.intel.analytics.zoo.pipeline.common.dataset.PascalVoc._
 import com.intel.analytics.bigdl.tensor.Tensor
 import com.intel.analytics.bigdl.transform.vision.image.label.roi.RoiLabel
-import com.intel.analytics.zoo.pipeline.common.{BboxUtilZoo => BboxUtil}
 import org.apache.commons.lang3.SerializationUtils
 import org.apache.log4j.Logger
 
