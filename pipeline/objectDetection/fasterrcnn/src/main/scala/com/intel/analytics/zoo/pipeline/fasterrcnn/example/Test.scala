@@ -25,6 +25,8 @@ import org.apache.log4j.{Level, Logger}
 import org.apache.spark.SparkContext
 import scopt.OptionParser
 
+import scala.io.Source
+
 object Test {
 
   Logger.getLogger("org").setLevel(Level.ERROR)
@@ -38,7 +40,7 @@ object Test {
     bigdlModel: String = "",
     caffeDefPath: String = "",
     caffeModelPath: String = "",
-    nClass: Int = 21,
+    className: String = "",
     batch: Int = 1,
     nPartition: Int = -1,
     isProtobuf: Boolean = true)
@@ -66,9 +68,9 @@ object Test {
     opt[String]("caffeModelPath")
       .text("caffe model path")
       .action((x, c) => c.copy(caffeModelPath = x))
-    opt[Int]("nclass")
-      .text("class number")
-      .action((x, c) => c.copy(nClass = x))
+    opt[String]("class")
+      .text("class file")
+      .action((x, c) => c.copy(className = x))
       .required()
     opt[Int]('b', "batch")
       .text("batch number")
@@ -88,19 +90,20 @@ object Test {
       val sc = new SparkContext(conf)
       Engine.init
 
+      val classes = Source.fromFile(params.className).getLines().toArray
       val evaluator = new MeanAveragePrecision(true, normalized = false,
-        nClass = params.nClass)
+        classes = classes)
       val rdd = IOUtils.loadSeqFiles(params.nPartition, params.folder, sc)
 
       val model = Module.loadModule[Float](params.bigdlModel)
 
       val (preParam, postParam) = params.modelType.toLowerCase() match {
         case "vgg16" =>
-          val postParam = PostProcessParam(0.3f, params.nClass, false, 100, 0.05)
+          val postParam = PostProcessParam(0.3f, classes.length, false, 100, 0.05)
           val preParam = PreProcessParam(params.batch, nPartition = params.nPartition)
           (preParam, postParam)
         case "pvanet" =>
-          val postParam = PostProcessParam(0.4f, params.nClass, true, 100, 0.05)
+          val postParam = PostProcessParam(0.4f, classes.length, true, 100, 0.05)
           val preParam = PreProcessParam(params.batch, Array(640), 32,
             nPartition = params.nPartition)
           (preParam, postParam)

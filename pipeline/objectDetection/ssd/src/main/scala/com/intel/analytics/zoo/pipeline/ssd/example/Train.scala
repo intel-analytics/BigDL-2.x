@@ -33,6 +33,8 @@ import org.apache.log4j.{Level, Logger}
 import org.apache.spark.SparkContext
 import scopt.OptionParser
 
+import scala.io.Source
+
 object Option {
 
   case class TrainParams(
@@ -45,7 +47,7 @@ object Option {
     checkpoint: Option[String] = None,
     modelSnapshot: Option[String] = None,
     stateSnapshot: Option[String] = None,
-    classNumber: Int = 21,
+    className: String = "",
     batchSize: Int = -1,
     learningRate: Double = 0.001,
     schedule: String = "multistep",
@@ -117,9 +119,10 @@ object Option {
       .text("batch size")
       .action((x, c) => c.copy(batchSize = x))
       .required()
-    opt[Int]("classNum")
-      .text("class number")
-      .action((x, c) => c.copy(classNumber = x))
+    opt[String]("class")
+      .text("class file")
+      .action((x, c) => c.copy(className = x))
+      .required()
     opt[Unit]("overWrite")
       .text("overwrite checkpoint files")
       .action((_, c) => c.copy(overWriteCheckpoint = true))
@@ -153,6 +156,7 @@ object Train {
       val sc = new SparkContext(conf)
       Engine.init
 
+      val classes = Source.fromFile(param.className).getLines().toArray
       val trainSet = IOUtils.loadTrainSet(param.trainFolder, sc, param.resolution, param.batchSize)
 
       val valSet = IOUtils.loadValSet(param.valFolder, sc, param.resolution, param.batchSize)
@@ -162,7 +166,7 @@ object Train {
       } else {
         param.modelType match {
           case "vgg16" =>
-            val model = SSDVgg(param.classNumber, param.resolution)
+            val model = SSDVgg(classes.length, param.resolution)
             if (param.weights.isDefined) {
               model.loadWeights(param.weights.get)
             } else if (param.caffeDefPath.isDefined && param.caffeModelPath.isDefined) {
@@ -180,7 +184,7 @@ object Train {
           learningRateDecay = 0.0005
         )
         optimize(model, trainSet, valSet, param, optimMethod,
-          Trigger.maxScore(param.warmUpMap.get.toFloat))
+          Trigger.maxScore(param.warmUpMap.get.toFloat), classes)
       } else {
         model
       }
@@ -210,7 +214,7 @@ object Train {
       }
 
       optimize(warmUpModel, trainSet, valSet, param, optimMethod,
-        Trigger.maxEpoch(param.maxEpoch.get))
+        Trigger.maxEpoch(param.maxEpoch.get), classes)
 
     })
   }
@@ -218,11 +222,12 @@ object Train {
   private def optimize(model: Module[Float],
     trainSet: DataSet[SSDMiniBatch],
     valSet: DataSet[SSDMiniBatch], param: TrainParams, optimMethod: OptimMethod[Float],
-    endTrigger: Trigger): Module[Float] = {
+    endTrigger: Trigger,
+    classes: Array[String]): Module[Float] = {
     val optimizer = Optimizer(
       model = model,
       dataset = trainSet,
-      criterion = new MultiBoxLoss[Float](MultiBoxLossParam(nClasses = param.classNumber))
+      criterion = new MultiBoxLoss[Float](MultiBoxLossParam(nClasses = classes.length))
     )
 
     if (param.checkpoint.isDefined) {
@@ -245,7 +250,7 @@ object Train {
       .setValidation(Trigger.everyEpoch,
         valSet.asInstanceOf[DataSet[MiniBatch[Float]]],
         Array(new MeanAveragePrecision(true, normalized = true,
-          nClass = param.classNumber)))
+          classes = classes)))
       .setEndWhen(endTrigger)
       .optimize()
   }

@@ -124,7 +124,7 @@
         <dependency>
             <groupId>com.intel.analytics.bigdl</groupId>
             <artifactId>bigdl-SPARK_2.1</artifactId>
-            <version>0.4.0</version>
+            <version>0.4.0-SNAPSHOT</version>
         </dependency>
 
         <dependency>

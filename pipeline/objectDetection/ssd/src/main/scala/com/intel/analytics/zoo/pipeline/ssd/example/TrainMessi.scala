@@ -31,7 +31,8 @@ import com.intel.analytics.bigdl.visualization.{TrainSummary, ValidationSummary}
 import com.intel.analytics.zoo.pipeline.common.dataset.roiimage.SSDMiniBatch
 import org.apache.log4j.{Level, Logger}
 import org.apache.spark.SparkContext
-import scopt.OptionParser
+
+import scala.io.Source
 
 object TrainMessi {
 
@@ -50,6 +51,7 @@ object TrainMessi {
       val sc = new SparkContext(conf)
       Engine.init
 
+      val classes = Source.fromFile(param.className).getLines().toArray
       val trainSet = IOUtils.loadTrainSet(param.trainFolder, sc, param.resolution, param.batchSize)
 
       val valSet = IOUtils.loadValSet(param.valFolder, sc, param.resolution, param.batchSize)
@@ -59,7 +61,7 @@ object TrainMessi {
       } else {
         param.modelType match {
           case "vgg16" =>
-            val model = SSDVgg(param.classNumber, param.resolution)
+            val model = SSDVgg(classes.length, param.resolution)
             if (param.weights.isDefined) {
               val m = Module.loadModule(param.weights.get)
               ModuleUtil.loadModelWeights(m, model, false)
@@ -78,7 +80,7 @@ object TrainMessi {
           learningRateDecay = 0.0005
         )
         optimize(model, trainSet, valSet, param, optimMethod,
-          Trigger.maxScore(param.warmUpMap.get.toFloat))
+          Trigger.maxScore(param.warmUpMap.get.toFloat), classes)
       } else {
         model
       }
@@ -108,7 +110,7 @@ object TrainMessi {
       }
 
       optimize(warmUpModel, trainSet, valSet, param, optimMethod,
-        Trigger.maxEpoch(param.maxEpoch.get))
+        Trigger.maxEpoch(param.maxEpoch.get), classes = classes)
 
     })
   }
@@ -116,11 +118,12 @@ object TrainMessi {
   private def optimize(model: Module[Float],
     trainSet: DataSet[SSDMiniBatch],
     valSet: DataSet[SSDMiniBatch], param: TrainParams, optimMethod: OptimMethod[Float],
-    endTrigger: Trigger): Module[Float] = {
+    endTrigger: Trigger,
+    classes: Array[String]): Module[Float] = {
     val optimizer = Optimizer(
       model = model,
       dataset = trainSet,
-      criterion = new MultiBoxLoss[Float](MultiBoxLossParam(nClasses = param.classNumber))
+      criterion = new MultiBoxLoss[Float](MultiBoxLossParam(nClasses = classes.length))
     )
 
     if (param.checkpoint.isDefined) {
@@ -142,8 +145,7 @@ object TrainMessi {
       .setOptimMethod(optimMethod)
       .setValidation(Trigger.everyEpoch,
         valSet.asInstanceOf[DataSet[MiniBatch[Float]]],
-        Array(new MeanAveragePrecision(true, normalized = true,
-          nClass = param.classNumber)))
+        Array(new MeanAveragePrecision(true, normalized = true, classes = classes)))
       .setEndWhen(endTrigger)
       .optimize()
   }

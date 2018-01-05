@@ -87,7 +87,7 @@ object PascalVocEvaluator {
   val logger = Logger.getLogger(getClass)
 
   def meanAveragePrecision(results: Array[(Int, Array[(Float, Int, Int)])],
-    use07metric: Boolean): ArrayBuffer[(String, Float)] = {
+    use07metric: Boolean, classes: Array[String]): ArrayBuffer[(String, Float)] = {
     logger.info("VOC07 metric ? " + (if (use07metric) "yes" else "No"))
     val output = ArrayBuffer[(String, Float)]()
     var i = 0

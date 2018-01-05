@@ -27,6 +27,8 @@ import org.apache.log4j.{Level, Logger}
 import org.apache.spark.SparkContext
 import scopt.OptionParser
 
+import scala.io.Source
+
 object Test {
 
   Logger.getLogger("org").setLevel(Level.ERROR)
@@ -41,7 +43,7 @@ object Test {
     caffeDefPath: Option[String] = None,
     caffeModelPath: Option[String] = None,
     batch: Int = 8,
-    nClass: Int = 0,
+    className: String = "",
     resolution: Int = 300,
     useNormalized: Boolean = false,
     nPartition: Int = 1)
@@ -72,9 +74,9 @@ object Test {
     opt[Int]('b', "batch")
       .text("batch number")
       .action((x, c) => c.copy(batch = x))
-    opt[Int]("nclass")
-      .text("class number")
-      .action((x, c) => c.copy(nClass = x))
+    opt[String]("class")
+      .text("class file")
+      .action((x, c) => c.copy(className = x))
       .required()
     opt[Int]('r', "resolution")
       .text("input resolution 300 or 512")
@@ -95,8 +97,9 @@ object Test {
       val sc = new SparkContext(conf)
       Engine.init
 
+      val classes = Source.fromFile(params.className).getLines().toArray
       val evaluator = new MeanAveragePrecision(true, normalized = params.useNormalized,
-        nClass = params.nClass)
+        classes = classes)
       val rdd = IOUtils.loadSeqFiles(params.nPartition, params.folder, sc)._1
 
       val model = if (params.model.isDefined) {
