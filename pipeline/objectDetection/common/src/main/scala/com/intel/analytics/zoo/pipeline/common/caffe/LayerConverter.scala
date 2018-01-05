@@ -20,11 +20,9 @@ import com.google.protobuf.GeneratedMessage
 import com.intel.analytics.bigdl.nn.Graph._
 import com.intel.analytics.bigdl.nn._
 import com.intel.analytics.bigdl.nn.abstractnn.{AbstractModule, Activity}
-import com.intel.analytics.zoo.pipeline.common.nn.{DetectionOutput, NormalizeScale, PriorBox}
 import com.intel.analytics.bigdl.tensor.Tensor
 import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric
 import com.intel.analytics.bigdl.utils.Table
-import com.intel.analytics.zoo.pipeline.common.nn.PostProcessParam
 import pipeline.caffe.Caffe
 import pipeline.caffe.Caffe.EltwiseParameter.EltwiseOp
 import pipeline.caffe.Caffe.{BlobProto, PoolingParameter, _}
@@ -153,7 +151,7 @@ class LayerConverter[T: ClassTag](implicit ev: TensorNumeric[T]) extends Convert
     val param = layer.asInstanceOf[LayerParameter].getEluParam
     var alpha = 1.0
     if (param.hasAlpha) alpha = param.getAlpha
-    Seq(ELU[T](alpha).setName(getLayerName(layer)).inputs())
+    Seq(ELU[T, T](alpha).setName(getLayerName(layer)).inputs())
   }
 
   override protected def fromCaffeReshape(layer: GeneratedMessage): Seq[ModuleNode[T]] = {
@@ -805,7 +803,7 @@ val imgSize = param.getImgSize
     val confThresh = param.getConfidenceThreshold
     val varianceEncodedInTarget = param.getVarianceEncodedInTarget
 
-    Seq(DetectionOutput[T](PostProcessParam(nClass, shareLocation, bgLabel, nmsThresh,
+    Seq(DetectionOutputSSD[T](DetectionOutputParam(nClass, shareLocation, bgLabel, nmsThresh,
       nmsTopk, keepTopk, confThresh, varianceEncodedInTarget), false)
       .setName(getLayerName(layer)).inputs())
   }

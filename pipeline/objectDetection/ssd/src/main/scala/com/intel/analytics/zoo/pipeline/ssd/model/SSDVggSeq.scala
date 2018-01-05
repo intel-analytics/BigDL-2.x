@@ -19,7 +19,6 @@ package com.intel.analytics.zoo.pipeline.ssd.model
 import com.intel.analytics.bigdl._
 import com.intel.analytics.bigdl.nn._
 import com.intel.analytics.bigdl.numeric.NumericFloat
-import com.intel.analytics.zoo.pipeline.common.nn.PostProcessParam
 import com.intel.analytics.zoo.pipeline.ssd.model.SSD._
 
 object SSDVggSeq {
@@ -105,7 +104,7 @@ object SSDVggSeq {
         minSizes = Array(priorBoxSizes(5)), maxSizes = Array(priorBoxSizes(6)),
         aspectRatios = Array(2), isFlip, isClip, variances, 300, 300)
       SSD(numClasses, resolution, vgg16Part1(), vgg16Part2(), params, normScale = 20f,
-        isLastPool = false, param = PostProcessParam(numClasses))
+        isLastPool = false, param = DetectionOutputParam(numClasses))
     } else {
       params += "conv4_3_norm" -> ComponetParam(512, 4,
         minSizes = Array(priorBoxSizes(0)), maxSizes = Array(priorBoxSizes(1)),
@@ -129,7 +128,7 @@ object SSDVggSeq {
         minSizes = Array(priorBoxSizes(6)), maxSizes = Array(priorBoxSizes(7)),
         aspectRatios = Array(2), isFlip, isClip, variances, 512, 512)
       SSD(numClasses, resolution, vgg16Part1(), vgg16Part2(), params, normScale = 20f,
-        isLastPool = false, param = PostProcessParam(numClasses))
+        isLastPool = false, param = DetectionOutputParam(numClasses))
     }
   }
 }

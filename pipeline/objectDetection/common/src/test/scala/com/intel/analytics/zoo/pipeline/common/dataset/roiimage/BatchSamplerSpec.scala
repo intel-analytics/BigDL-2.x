@@ -17,8 +17,8 @@
 package com.intel.analytics.zoo.pipeline.common.dataset.roiimage
 
 import com.intel.analytics.bigdl.tensor.{Storage, Tensor}
-import com.intel.analytics.zoo.transform.vision.label.roi.{BatchSampler, RoiLabel}
-import com.intel.analytics.zoo.transform.vision.util.NormalizedBox
+import com.intel.analytics.bigdl.transform.vision.image.label.roi.{BatchSampler, RoiLabel}
+import com.intel.analytics.bigdl.transform.vision.image.util.BoundingBox
 import org.scalatest.{FlatSpec, Matchers}
 
 import scala.collection.mutable.ArrayBuffer
@@ -26,14 +26,14 @@ import scala.collection.mutable.ArrayBuffer
 class BatchSamplerSpec extends FlatSpec with Matchers {
   "batch sampler with no change" should "work properly" in {
     val sampler = new BatchSampler(maxTrials = 1)
-    val unitBox = NormalizedBox(0, 0, 1, 1)
+    val unitBox = BoundingBox(0, 0, 1, 1)
     val boxes = Tensor(Storage(Array(0.582296, 0.334719, 0.673582, 0.52183,
       0.596127, 0.282744, 0.670816, 0.449064,
       0.936376, 0.627859, 0.961272, 0.733888,
       0.896266, 0.640333, 0.923928, 0.740125).map(x => x.toFloat))).resize(4, 4)
     val classes = Tensor[Float](4).randn()
     val target = RoiLabel(classes, boxes)
-    val sampledBoxes = new ArrayBuffer[NormalizedBox]()
+    val sampledBoxes = new ArrayBuffer[BoundingBox]()
     sampler.sample(unitBox, target, sampledBoxes)
 
     sampledBoxes.length should be(1)
@@ -48,7 +48,7 @@ class BatchSamplerSpec extends FlatSpec with Matchers {
     val classes = Tensor[Float](4).randn()
     val target = RoiLabel(classes, boxes)
 
-    val sampledBox = NormalizedBox(0.114741f, 0.248062f, 0.633665f, 0.763736f)
+    val sampledBox = BoundingBox(0.114741f, 0.248062f, 0.633665f, 0.763736f)
     val sampler = new BatchSampler(minScale = 0.3, minAspectRatio = 0.5, maxAspectRatio = 2,
       minOverlap = Some(0.1))
 
@@ -63,7 +63,7 @@ class BatchSamplerSpec extends FlatSpec with Matchers {
     val classes = Tensor[Float](4).randn()
     val target = RoiLabel(classes, boxes)
 
-    val sampledBox = NormalizedBox(0.266885f, 0.416113f, 0.678256f, 0.67208f)
+    val sampledBox = BoundingBox(0.266885f, 0.416113f, 0.678256f, 0.67208f)
     val sampler = new BatchSampler(minScale = 0.3, minAspectRatio = 0.5, maxAspectRatio = 2,
       minOverlap = Some(0.3))
 
@@ -77,7 +77,7 @@ class BatchSamplerSpec extends FlatSpec with Matchers {
       0.872, 0.837838, 0.912, 0.981982).map(x => x.toFloat))).resize(4, 4)
     val classes = Tensor[Float](4).randn()
     val target = RoiLabel(classes, boxes)
-    val sampledBoxes = new ArrayBuffer[NormalizedBox]()
+    val sampledBoxes = new ArrayBuffer[BoundingBox]()
     val batchSamplers = Array(
       new BatchSampler(maxTrials = 1),
       new BatchSampler(minScale = 0.3, minAspectRatio = 0.5, maxAspectRatio = 2,

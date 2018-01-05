@@ -19,16 +19,14 @@ package com.intel.analytics.zoo.pipeline.fasterrcnn
 import com.intel.analytics.bigdl._
 import com.intel.analytics.bigdl.dataset.Transformer
 import com.intel.analytics.bigdl.models.utils.ModelBroadcast
-import com.intel.analytics.bigdl.nn.Utils
+import com.intel.analytics.bigdl.nn.{DetectionOutputFrcnn, SpatialShareConvolution, Utils}
 import com.intel.analytics.bigdl.numeric.NumericFloat
 import com.intel.analytics.bigdl.optim.ValidationMethod
-import com.intel.analytics.zoo.pipeline.common.ModuleUtil
+import com.intel.analytics.bigdl.transform.vision.image.augmentation._
 import com.intel.analytics.zoo.pipeline.common.dataset.{FrcnnMiniBatch, FrcnnToBatch}
 import com.intel.analytics.zoo.pipeline.common.dataset.roiimage.{RecordToFeature, SSDByteRecord}
-import com.intel.analytics.zoo.pipeline.common.nn.FrcnnPostprocessor
 import com.intel.analytics.zoo.pipeline.fasterrcnn.model.{PostProcessParam, PreProcessParam}
-import com.intel.analytics.zoo.transform.vision.image.augmentation.AspectScale
-import com.intel.analytics.zoo.transform.vision.image.{BytesToMat, MatToFloats}
+import com.intel.analytics.bigdl.transform.vision.image.{BytesToMat, MatToFloats}
 import org.apache.log4j.Logger
 import org.apache.spark.rdd.RDD
 
@@ -41,15 +39,18 @@ class Validator(model: Module[Float],
   val preProcessor = RecordToFeature(true) ->
     BytesToMat() ->
     AspectScale(preProcessParam.scales(0), preProcessParam.scaleMultipleOf) ->
-    MatToFloats(100, 100, meanRGB = Some(preProcessParam.pixelMeanRGB)) ->
+    ChannelNormalize(preProcessParam.pixelMeanRGB._1,
+      preProcessParam.pixelMeanRGB._2,
+      preProcessParam.pixelMeanRGB._3) ->
+    MatToFloats(100, 100) ->
     FrcnnToBatch(preProcessParam.batchSize, true, Some(preProcessParam.nPartition))
 
 
-  if (shareMemory) ModuleUtil.shareMemory(model)
+  if (shareMemory) SpatialShareConvolution.shareConvolution[Float](model)
 
 
   val postprocessor = Utils.getNamedModules(model)
-    .find(x => x._2.isInstanceOf[FrcnnPostprocessor]).get._2.asInstanceOf[FrcnnPostprocessor]
+    .find(x => x._2.isInstanceOf[DetectionOutputFrcnn]).get._2.asInstanceOf[DetectionOutputFrcnn]
 
   postprocessor.maxPerImage = postPrecessParam.maxPerImage
   postprocessor.nmsThresh = postPrecessParam.nmsThresh
@@ -87,9 +88,10 @@ object Validator {
     logger.info(s"${evaluator} is ${output}")
 
     val totalTime = (System.nanoTime() - start) / 1e9
-    logger.info(s"[Prediction] ${recordsNum.value} in $totalTime seconds. Throughput is ${
-      recordsNum.value / totalTime
-    } record / sec")
+    logger.info(s"[Prediction] ${recordsNum.value} for ${model.getName()}" +
+      s" in $totalTime seconds. Throughput is ${
+        recordsNum.value / totalTime
+      } record / sec")
     output.result()._1
   }
 }

@@ -119,7 +119,7 @@ object VggFRcnn {
     val rpn_data = AnchorTarget(ratios, scales).setName("rpn-data").setDebug(debug)
       .inputs(rpn_cls_score, gt, imInfo, data)
 
-    val detectionOut = FrcnnPostprocessor(postProcessParam.nmsThresh, postProcessParam.nClasses,
+    val detectionOut = DetectionOutputFrcnn(postProcessParam.nmsThresh, postProcessParam.nClasses,
       postProcessParam.bboxVote, postProcessParam.maxPerImage, postProcessParam.thresh).inputs(
       imInfo, roi_data, bbox_pred, cls_prob,
       rpn_cls_score_reshape, rpn_bbox_pred, rpn_data)

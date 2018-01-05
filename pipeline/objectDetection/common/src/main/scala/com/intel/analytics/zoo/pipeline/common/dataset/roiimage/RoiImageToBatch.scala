@@ -18,8 +18,8 @@ package com.intel.analytics.zoo.pipeline.common.dataset.roiimage
 
 import com.intel.analytics.bigdl.dataset.{Transformer, Utils}
 import com.intel.analytics.bigdl.tensor.{Storage, Tensor}
-import com.intel.analytics.zoo.transform.vision.image.ImageFeature
-import com.intel.analytics.zoo.transform.vision.label.roi.RoiLabel
+import com.intel.analytics.bigdl.transform.vision.image.ImageFeature
+import com.intel.analytics.bigdl.transform.vision.image.label.roi.RoiLabel
 
 import scala.collection.Iterator
 import scala.collection.mutable.ArrayBuffer

@@ -21,7 +21,7 @@ import java.nio.file.Paths
 
 import com.intel.analytics.zoo.pipeline.common.dataset.roiimage.RoiImagePath
 import com.intel.analytics.bigdl.tensor.{Storage, Tensor}
-import com.intel.analytics.zoo.transform.vision.label.roi.RoiLabel
+import com.intel.analytics.bigdl.transform.vision.image.label.roi.RoiLabel
 
 import scala.Array._
 import scala.io.Source

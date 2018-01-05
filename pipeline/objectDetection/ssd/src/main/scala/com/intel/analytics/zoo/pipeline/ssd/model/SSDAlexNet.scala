@@ -20,7 +20,6 @@ import com.intel.analytics.bigdl.Module
 import com.intel.analytics.bigdl.nn._
 import com.intel.analytics.bigdl.numeric.NumericFloat
 import SSD._
-import com.intel.analytics.zoo.pipeline.common.nn.PostProcessParam
 
 object SSDAlexNet {
 
@@ -48,7 +47,7 @@ object SSDAlexNet {
   }
 
   def apply(numClasses: Int, resolution: Int = 300,
-    postProcessParam: Option[PostProcessParam] = None): Module[Float] = {
+    postProcessParam: Option[DetectionOutputParam] = None): Module[Float] = {
     if (resolution == 300) {
       val isClip = true
       val isFlip = true
@@ -69,7 +68,7 @@ object SSDAlexNet {
       params += "pool6" -> ComponetParam(256, 6, minSizes = Array(276f),
         maxSizes = Array(330f), aspectRatios, isFlip, isClip, variances, step)
 
-      val postParam = postProcessParam.getOrElse(PostProcessParam(numClasses))
+      val postParam = postProcessParam.getOrElse(DetectionOutputParam(numClasses))
       val model = SSD(numClasses, resolution = 300, alexnetPart1(), alexnetPart2(),
         params, isLastPool = true, normScale = 19.9096f, postParam)
       val namedModules = Utils.getNamedModules(model)

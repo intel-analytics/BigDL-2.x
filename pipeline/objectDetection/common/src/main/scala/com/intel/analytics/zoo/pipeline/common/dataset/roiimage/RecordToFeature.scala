@@ -20,8 +20,8 @@ import java.nio.ByteBuffer
 
 import com.intel.analytics.bigdl.dataset.Transformer
 import com.intel.analytics.bigdl.tensor.Tensor
-import com.intel.analytics.zoo.transform.vision.image.ImageFeature
-import com.intel.analytics.zoo.transform.vision.label.roi.RoiLabel
+import com.intel.analytics.bigdl.transform.vision.image.ImageFeature
+import com.intel.analytics.bigdl.transform.vision.image.label.roi.RoiLabel
 
 import scala.collection.Iterator
 
@@ -64,7 +64,7 @@ class RecordToFeature(convertLabel: Boolean = false, outKey: String = ImageFeatu
         RoiLabel(gtClasses, gtBoxes)
       } else null
       feature(outKey) = data
-      feature(ImageFeature.path) = record.path
+      feature(ImageFeature.uri) = record.path
       feature(ImageFeature.label) = target
       feature
     })

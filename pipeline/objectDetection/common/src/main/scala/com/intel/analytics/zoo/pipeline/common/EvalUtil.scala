@@ -17,7 +17,7 @@
 package com.intel.analytics.zoo.pipeline.common
 
 import com.intel.analytics.bigdl.tensor.Tensor
-import com.intel.analytics.zoo.transform.vision.label.roi.RoiLabel
+import com.intel.analytics.bigdl.transform.vision.image.label.roi.RoiLabel
 
 import scala.collection.mutable.ArrayBuffer
 

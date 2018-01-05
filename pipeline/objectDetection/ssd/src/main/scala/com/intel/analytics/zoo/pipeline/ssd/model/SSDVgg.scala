@@ -20,7 +20,6 @@ import com.intel.analytics.bigdl._
 import com.intel.analytics.bigdl.nn.Graph.ModuleNode
 import com.intel.analytics.bigdl.nn._
 import com.intel.analytics.bigdl.numeric.NumericFloat
-import com.intel.analytics.zoo.pipeline.common.nn.PostProcessParam
 import com.intel.analytics.zoo.pipeline.ssd.model.SSDGraph._
 
 object SSDVgg {
@@ -58,7 +57,7 @@ object SSDVgg {
 
   def apply(numClasses: Int, resolution: Int = 300, dataset: String = "pascal",
     sizes: Option[Array[Float]] = None,
-    postProcessParam: Option[PostProcessParam] = None): Module[Float] = {
+    postProcessParam: Option[DetectionOutputParam] = None): Module[Float] = {
     require(resolution == 300 || resolution == 512, "only support 300*300 or 512*512 as input")
     val isClip = false
     val isFlip = true
@@ -89,7 +88,7 @@ object SSDVgg {
 
     val (conv1_1, relu4_3, poo5) = vgg16()
 
-    val postParam = postProcessParam.getOrElse(PostProcessParam(numClasses))
+    val postParam = postProcessParam.getOrElse(DetectionOutputParam(numClasses))
     if (resolution == 300) {
       params += "conv4_3_norm" -> ComponetParam(512, 4,
         minSizes = Array(priorBoxSizes(0)), maxSizes = Array(priorBoxSizes(1)),

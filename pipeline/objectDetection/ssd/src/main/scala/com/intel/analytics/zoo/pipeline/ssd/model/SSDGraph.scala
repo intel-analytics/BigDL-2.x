@@ -22,7 +22,6 @@ import com.intel.analytics.bigdl.nn._
 import com.intel.analytics.bigdl.nn.abstractnn.{AbstractModule, Activity}
 import com.intel.analytics.bigdl.numeric.NumericFloat
 import com.intel.analytics.bigdl.optim.{L2Regularizer, Regularizer}
-import com.intel.analytics.zoo.pipeline.common.nn._
 import com.intel.analytics.bigdl.tensor.Storage
 import org.apache.log4j.Logger
 
@@ -30,7 +29,8 @@ import org.apache.log4j.Logger
 case class PreProcessParam(batchSize: Int = 4,
   resolution: Int = 300,
   pixelMeanRGB: (Float, Float, Float),
-  hasLabel: Boolean, nPartition: Int
+  hasLabel: Boolean, nPartition: Int,
+  norms: (Float, Float, Float) = (1f, 1f, 1f)
 )
 
 object SSDGraph {
@@ -38,7 +38,7 @@ object SSDGraph {
   def apply(numClasses: Int, resolution: Int, input: ModuleNode[Float],
     basePart1: ModuleNode[Float], basePart2: ModuleNode[Float],
     params: Map[String, ComponetParam],
-    isLastPool: Boolean, normScale: Float, param: PostProcessParam,
+    isLastPool: Boolean, normScale: Float, param: DetectionOutputParam,
     wRegularizer: Regularizer[Float] = L2Regularizer(0.0005),
     bRegularizer: Regularizer[Float] = null)
   : Module[Float] = {
@@ -126,7 +126,7 @@ object SSDGraph {
     stopGradient(model)
     val ssd = Sequential()
     ssd.add(model)
-    ssd.add(DetectionOutput(param))
+    ssd.add(DetectionOutputSSD(param))
     setRegularizer(model, wRegularizer, bRegularizer)
     ssd
   }

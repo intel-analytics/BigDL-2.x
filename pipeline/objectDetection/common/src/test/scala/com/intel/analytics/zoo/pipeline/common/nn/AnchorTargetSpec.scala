@@ -32,7 +32,7 @@ class AnchorTargetSpec extends FlatSpec with Matchers {
     val input = T(rpnReg, gtBoxes, imInfo)
     val res1 = layer.forward(input)
     val tmpFile = java.io.File.createTempFile("module", ".bigdl")
-    layer.saveModule(tmpFile.getAbsolutePath, true)
+    layer.saveModule(tmpFile.getAbsolutePath, overWrite = true)
     val loadedAdd = Module.loadModule[Float](tmpFile.getAbsolutePath)
     val res2 = loadedAdd.forward(input).toTable
     res1 should be(res2)

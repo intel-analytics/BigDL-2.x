@@ -17,35 +17,35 @@
 package com.intel.analytics.zoo.pipeline.common
 
 import com.intel.analytics.bigdl.tensor.{Storage, Tensor}
-import com.intel.analytics.zoo.transform.vision.util.NormalizedBox
+import com.intel.analytics.bigdl.transform.vision.image.util.BoundingBox
 import org.scalatest.{FlatSpec, Matchers}
 
 class BboxUtilSpec extends FlatSpec with Matchers {
   "jaccardOverlap partial overlap" should "work properly" in {
-    val bbox1 = NormalizedBox(0.2f, 0.3f, 0.3f, 0.5f)
-    val bbox2 = NormalizedBox(0.1f, 0.1f, 0.3f, 0.4f)
+    val bbox1 = BoundingBox(0.2f, 0.3f, 0.3f, 0.5f)
+    val bbox2 = BoundingBox(0.1f, 0.1f, 0.3f, 0.4f)
     val overlap = BboxUtil.jaccardOverlap(bbox1, bbox2)
     assert(Math.abs(overlap - 1.0 / 7) < 1e-6)
   }
 
   "jaccardOverlap fully contain" should "work properly" in {
-    val bbox1 = NormalizedBox(0.2f, 0.3f, 0.3f, 0.5f)
-    val bbox2 = NormalizedBox(0.1f, 0.1f, 0.4f, 0.6f)
+    val bbox1 = BoundingBox(0.2f, 0.3f, 0.3f, 0.5f)
+    val bbox2 = BoundingBox(0.1f, 0.1f, 0.4f, 0.6f)
     val overlap = BboxUtil.jaccardOverlap(bbox1, bbox2)
     assert(Math.abs(overlap - 2.0 / 15) < 1e-6)
   }
 
   "jaccardOverlap outside" should "work properly" in {
-    val bbox1 = NormalizedBox(0.2f, 0.3f, 0.3f, 0.5f)
-    val bbox2 = NormalizedBox(0f, 0f, 0.1f, 0.1f)
+    val bbox1 = BoundingBox(0.2f, 0.3f, 0.3f, 0.5f)
+    val bbox2 = BoundingBox(0f, 0f, 0.1f, 0.1f)
     val overlap = BboxUtil.jaccardOverlap(bbox1, bbox2)
     assert(Math.abs(overlap - 0) < 1e-6)
   }
 
   "projectBbox" should "work properly" in {
-    val box1 = NormalizedBox(0.222159f, 0.427017f, 0.606492f, 0.679355f)
-    val box2 = NormalizedBox(0.418f, 0.396396f, 0.55f, 0.666667f)
-    val projBox = new NormalizedBox()
+    val box1 = BoundingBox(0.222159f, 0.427017f, 0.606492f, 0.679355f)
+    val box2 = BoundingBox(0.418f, 0.396396f, 0.55f, 0.666667f)
+    val projBox = new BoundingBox()
 
     val state = BboxUtil.projectBbox(box1, box2, projBox)
     state should be(true)
@@ -56,8 +56,8 @@ class BboxUtilSpec extends FlatSpec with Matchers {
   }
 
   "meetEmitCenterConstraint true" should "work properly" in {
-    val box1 = NormalizedBox(0.222159f, 0.427017f, 0.606492f, 0.679355f)
-    val box2 = NormalizedBox(0.418f, 0.396396f, 0.55f, 0.666667f)
+    val box1 = BoundingBox(0.222159f, 0.427017f, 0.606492f, 0.679355f)
+    val box2 = BoundingBox(0.418f, 0.396396f, 0.55f, 0.666667f)
 
     val state = BboxUtil.meetEmitCenterConstraint(box1, box2)
 
@@ -65,8 +65,8 @@ class BboxUtilSpec extends FlatSpec with Matchers {
   }
 
   "meetEmitCenterConstraint false" should "work properly" in {
-    val box1 = NormalizedBox(0.0268208f, 0.388175f, 0.394421f, 0.916685f)
-    val box2 = NormalizedBox(0.418f, 0.396396f, 0.55f, 0.666667f)
+    val box1 = BoundingBox(0.0268208f, 0.388175f, 0.394421f, 0.916685f)
+    val box2 = BoundingBox(0.418f, 0.396396f, 0.55f, 0.666667f)
 
     val state = BboxUtil.meetEmitCenterConstraint(box1, box2)
 

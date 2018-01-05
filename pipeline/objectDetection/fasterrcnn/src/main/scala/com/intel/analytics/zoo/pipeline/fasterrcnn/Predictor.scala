@@ -25,8 +25,8 @@ import com.intel.analytics.zoo.pipeline.common.ModuleUtil
 import com.intel.analytics.zoo.pipeline.common.dataset.{FrcnnMiniBatch, FrcnnToBatch}
 import com.intel.analytics.zoo.pipeline.common.dataset.roiimage.{RecordToFeature, SSDByteRecord}
 import com.intel.analytics.zoo.pipeline.fasterrcnn.model.PreProcessParam
-import com.intel.analytics.zoo.transform.vision.image.augmentation.AspectScale
-import com.intel.analytics.zoo.transform.vision.image.{BytesToMat, MatToFloats}
+import com.intel.analytics.bigdl.transform.vision.image.augmentation.{AspectScale, ChannelNormalize}
+import com.intel.analytics.bigdl.transform.vision.image.{BytesToMat, MatToFloats}
 import org.apache.spark.rdd.RDD
 
 class Predictor(
@@ -36,7 +36,9 @@ class Predictor(
   val preProcessor = RecordToFeature(true) ->
     BytesToMat() ->
     AspectScale(preProcessParam.scales(0), preProcessParam.scaleMultipleOf) ->
-    MatToFloats(100, 100, meanRGB = Some(preProcessParam.pixelMeanRGB)) ->
+    ChannelNormalize(preProcessParam.pixelMeanRGB._1,
+      preProcessParam.pixelMeanRGB._2, preProcessParam.pixelMeanRGB._3) ->
+    MatToFloats(100, 100) ->
     FrcnnToBatch(preProcessParam.batchSize, true, Some(preProcessParam.nPartition))
 
   ModuleUtil.shareMemory(model)

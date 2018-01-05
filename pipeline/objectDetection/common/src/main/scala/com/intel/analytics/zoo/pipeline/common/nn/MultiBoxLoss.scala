@@ -22,7 +22,6 @@ import com.intel.analytics.bigdl.tensor.Tensor
 import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric
 import com.intel.analytics.bigdl.utils.Table
 import org.apache.log4j.Logger
-import MultiBoxLoss._
 import com.intel.analytics.bigdl.nn.{ClassNLLCriterion, LogSoftMax, SmoothL1Criterion}
 
 import scala.collection.mutable.ArrayBuffer

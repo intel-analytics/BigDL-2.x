@@ -18,8 +18,8 @@ package com.intel.analytics.zoo.pipeline.common
 
 import com.intel.analytics.bigdl.tensor.{Storage, Tensor}
 import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric
-import com.intel.analytics.zoo.transform.vision.label.roi.RoiLabel
-import com.intel.analytics.zoo.transform.vision.util.NormalizedBox
+import com.intel.analytics.bigdl.transform.vision.image.label.roi.RoiLabel
+import com.intel.analytics.bigdl.transform.vision.image.util.BoundingBox
 import org.apache.log4j.Logger
 
 import scala.reflect.ClassTag
@@ -350,7 +350,7 @@ object BboxUtil {
     val batch = output.size(1)
     val decoded = new Array[Array[RoiLabel]](batch)
     while (i < batch) {
-      decoded(i) = BboxUtil.decodeRois(output(i + 1), nClass)
+      decoded(i) = decodeRois(output(i + 1), nClass)
       i += 1
     }
     decoded
@@ -439,9 +439,9 @@ object BboxUtil {
     val py1 = priorBox.valueAt(2)
     val px2 = priorBox.valueAt(3)
     val py2 = priorBox.valueAt(4)
-    val prior = NormalizedBox(priorBox.valueAt(1), priorBox.valueAt(2),
+    val prior = BoundingBox(priorBox.valueAt(1), priorBox.valueAt(2),
       priorBox.valueAt(3), priorBox.valueAt(4))
-    val bbox = NormalizedBox(gtBox.valueAt(4), gtBox.valueAt(5),
+    val bbox = BoundingBox(gtBox.valueAt(4), gtBox.valueAt(5),
       gtBox.valueAt(6), gtBox.valueAt(7))
     val priorWidth = prior.width()
     val priorHeight = prior.height()
@@ -901,7 +901,7 @@ object BboxUtil {
     (priorBoxes, priorVariances)
   }
 
-  def locateBBox(srcBox: NormalizedBox, box: NormalizedBox, locBox: NormalizedBox)
+  def locateBBox(srcBox: BoundingBox, box: BoundingBox, locBox: BoundingBox)
   : Unit = {
     val srcW = srcBox.width()
     val srcH = srcBox.height()
@@ -912,14 +912,14 @@ object BboxUtil {
   }
 
 
-  def clipBox(box: NormalizedBox, clipedBox: NormalizedBox): Unit = {
+  def clipBox(box: BoundingBox, clipedBox: BoundingBox): Unit = {
     clipedBox.x1 = Math.max(Math.min(box.x1, 1f), 0f)
     clipedBox.y1 = Math.max(Math.min(box.y1, 1f), 0f)
     clipedBox.x2 = Math.max(Math.min(box.x2, 1f), 0f)
     clipedBox.y2 = Math.max(Math.min(box.y2, 1f), 0f)
   }
 
-  def scaleBox(box: NormalizedBox, height: Int, width: Int, scaledBox: NormalizedBox): Unit = {
+  def scaleBox(box: BoundingBox, height: Int, width: Int, scaledBox: BoundingBox): Unit = {
     scaledBox.x1 = box.x1 * width
     scaledBox.y1 = box.y1 * height
     scaledBox.x2 = box.x2 * width
@@ -934,8 +934,8 @@ object BboxUtil {
    * @param projBox
    * @return
    */
-  def projectBbox(srcBox: NormalizedBox, bbox: NormalizedBox,
-    projBox: NormalizedBox): Boolean = {
+  def projectBbox(srcBox: BoundingBox, bbox: BoundingBox,
+    projBox: BoundingBox): Boolean = {
     if (bbox.x1 >= srcBox.x2 || bbox.x2 <= srcBox.x1 ||
       bbox.y1 >= srcBox.y2 || bbox.y2 <= srcBox.y1) {
       return false
@@ -946,12 +946,12 @@ object BboxUtil {
     projBox.y1 = (bbox.y1 - srcBox.y1) / srcHeight
     projBox.x2 = (bbox.x2 - srcBox.x1) / srcWidth
     projBox.y2 = (bbox.y2 - srcBox.y1) / srcHeight
-    BboxUtil.clipBox(projBox, projBox)
+    clipBox(projBox, projBox)
     if (projBox.area() > 0) true
     else false
   }
 
-  def jaccardOverlap(bbox: NormalizedBox, bbox2: NormalizedBox): Float = {
+  def jaccardOverlap(bbox: BoundingBox, bbox2: BoundingBox): Float = {
     val w = math.min(bbox.x2, bbox2.x2) - math.max(bbox.x1, bbox2.x1)
     if (w < 0) return 0
     val h = math.min(bbox.y2, bbox2.y2) - math.max(bbox.y1, bbox2.y1)
@@ -960,7 +960,7 @@ object BboxUtil {
     overlap / ((bbox.area() + bbox2.area()) - overlap)
   }
 
-  def meetEmitCenterConstraint(srcBox: NormalizedBox, bbox: NormalizedBox): Boolean = {
+  def meetEmitCenterConstraint(srcBox: BoundingBox, bbox: BoundingBox): Boolean = {
     val xCenter = bbox.centerX()
     val yCenter = bbox.centerY()
     if (xCenter >= srcBox.x1 && xCenter <= srcBox.x2 &&

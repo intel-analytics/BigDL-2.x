@@ -25,7 +25,6 @@ import com.intel.analytics.bigdl.nn._
 import com.intel.analytics.bigdl.tensor.Tensor
 import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric
 import com.intel.analytics.bigdl.utils.{Table}
-import com.intel.analytics.zoo.pipeline.common.nn.{FrcnnPostprocessor, Proposal}
 import org.apache.hadoop.conf.Configuration
 import org.apache.hadoop.fs.Path
 import org.apache.log4j.Logger
@@ -608,9 +607,9 @@ object FrcnnCaffeLoader {
     val proposal = model("proposal").get.asInstanceOf[Proposal]
     val postprocessor = if (proposal.scales.length == 3) {
       // vgg
-      FrcnnPostprocessor(0.3f, 21, false, 100, 0.05)
+      DetectionOutputFrcnn(0.3f, 21, false, 100, 0.05)
     } else {
-      FrcnnPostprocessor(0.4f, 21, true, 100, 0.05)
+      DetectionOutputFrcnn(0.4f, 21, true, 100, 0.05)
     }
     Sequential[Float]().add(model).add(postprocessor)
   }

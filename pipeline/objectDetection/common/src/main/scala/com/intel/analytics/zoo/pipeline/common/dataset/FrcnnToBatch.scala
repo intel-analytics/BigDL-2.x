@@ -19,9 +19,9 @@ package com.intel.analytics.zoo.pipeline.common.dataset
 import com.intel.analytics.bigdl.dataset.{Transformer, Utils}
 import com.intel.analytics.bigdl.numeric.NumericFloat
 import com.intel.analytics.bigdl.tensor.{Storage, Tensor}
+import com.intel.analytics.bigdl.transform.vision.image.ImageFeature
+import com.intel.analytics.bigdl.transform.vision.image.label.roi.RoiLabel
 import com.intel.analytics.bigdl.utils.{T, Table}
-import com.intel.analytics.zoo.transform.vision.image.ImageFeature
-import com.intel.analytics.zoo.transform.vision.label.roi.RoiLabel
 
 import scala.collection.Iterator
 import scala.collection.mutable.ArrayBuffer
@@ -83,7 +83,7 @@ class FrcnnToBatch(totalBatch: Int,
               }
             }
             require(feature.contains(inputKey), s"there should be ${inputKey} in ImageFeature")
-            val data = feature.getFloats(inputKey)
+            val data = feature.floats(inputKey)
             // hwc to chw
             val featureTensor = Tensor(Storage(data))
               .resize(1, feature.getHeight(), feature.getWidth(), 3).transpose(2, 4).transpose(3, 4)

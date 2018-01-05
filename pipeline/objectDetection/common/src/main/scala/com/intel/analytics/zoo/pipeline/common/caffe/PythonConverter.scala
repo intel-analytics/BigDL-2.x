@@ -18,8 +18,8 @@ package com.intel.analytics.zoo.pipeline.common.caffe
 
 import com.google.protobuf.GeneratedMessage
 import com.intel.analytics.bigdl.nn.Graph._
+import com.intel.analytics.bigdl.nn.Proposal
 import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric
-import com.intel.analytics.zoo.pipeline.common.nn.Proposal
 import pipeline.caffe.Caffe.LayerParameter
 
 import scala.util.parsing.json.JSON

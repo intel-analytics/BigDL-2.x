@@ -18,11 +18,11 @@ package com.intel.analytics.zoo.pipeline.common.dataset.roiimage
 
 import java.io.File
 
+import com.intel.analytics.bigdl.transform.vision.image.{BytesToMat, MatToFloats}
+import com.intel.analytics.bigdl.transform.vision.image.augmentation._
+import com.intel.analytics.bigdl.transform.vision.image.label.roi._
+import com.intel.analytics.bigdl.transform.vision.image.opencv.OpenCVMat
 import com.intel.analytics.zoo.pipeline.common.dataset.{Imdb, LocalByteRoiimageReader}
-import com.intel.analytics.zoo.transform.vision.image.augmentation.{ColorJitter, Expand, HFlip, Resize}
-import com.intel.analytics.zoo.transform.vision.image.opencv.OpenCVMat
-import com.intel.analytics.zoo.transform.vision.image.{BytesToMat, MatToFloats, RandomTransformer}
-import com.intel.analytics.zoo.transform.vision.label.roi._
 import org.opencv.core.{Mat, Point, Scalar}
 import org.opencv.imgcodecs.Imgcodecs
 import org.opencv.imgproc.Imgproc
@@ -51,15 +51,16 @@ class DataAugmentationSpec extends FlatSpec with Matchers with BeforeAndAfter {
       BytesToMat() ->
       RoiNormalize() ->
       ColorJitter() ->
-      RandomTransformer(Expand() -> RoiExpand(), 0.5) ->
+      RandomTransformer(Expand() -> RoiProject(), 0.5) ->
       RandomSampler() ->
       Resize(300, 300, -1) ->
       RandomTransformer(HFlip() -> RoiHFlip(), 0.5) ->
-      MatToFloats(validHeight = 300, validWidth = 300, meanRGB = Some(123f, 117f, 104f))
+      ChannelNormalize(123f, 117f, 104f) ->
+      MatToFloats(validHeight = 300, validWidth = 300)
     val out = imgAug(roidb)
     out.foreach(img => {
       val tmpFile = java.io.File.createTempFile("module", ".jpg")
-      val mat = OpenCVMat.floatToMat(img.getFloats(), img.getHeight(), img.getWidth())
+      val mat = OpenCVMat.fromFloats(img.floats(), img.getHeight(), img.getWidth())
       visulize(img.getLabel[RoiLabel], mat)
       Imgcodecs.imwrite(tmpFile.getAbsolutePath, mat)
       println(s"save to ${tmpFile.getAbsolutePath}, "
