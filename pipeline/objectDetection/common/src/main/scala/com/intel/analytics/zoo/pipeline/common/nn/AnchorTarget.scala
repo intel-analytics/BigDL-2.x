@@ -20,7 +20,7 @@ import com.intel.analytics.bigdl.nn.abstractnn.AbstractModule
 import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric
 import com.intel.analytics.bigdl.tensor.{Storage, Tensor}
 import com.intel.analytics.bigdl.utils.Table
-import com.intel.analytics.zoo.pipeline.common.BboxUtil
+import com.intel.analytics.zoo.pipeline.common.BboxUtilZoo
 import org.apache.log4j.Logger
 
 import scala.collection.mutable.ArrayBuffer
@@ -67,11 +67,11 @@ class AnchorTarget(val ratios: Array[Float], val scales: Array[Float])
    */
   private def computeTargets(exRois: Tensor[Float], gtBoxes: Tensor[Float],
     insideAnchorsGtOverlaps: Tensor[Float]): Tensor[Float] = {
-    val gtRois = BboxUtil.selectTensor(gtBoxes,
-      BboxUtil.argmax2(insideAnchorsGtOverlaps, 2), 1)
+    val gtRois = BboxUtilZoo.selectTensor(gtBoxes,
+      BboxUtilZoo.argmax2(insideAnchorsGtOverlaps, 2), 1)
     require(exRois.size(1) == gtRois.size(1))
     require(exRois.size(2) == 4)
-    BboxUtil.bboxTransform(exRois, gtRois)
+    BboxUtilZoo.bboxTransform(exRois, gtRois)
   }
 
 
@@ -112,7 +112,7 @@ class AnchorTarget(val ratios: Array[Float], val scales: Array[Float])
     val (indsInside, insideAnchors, totalAnchors) = getAnchors(featureW, featureH, imgW, imgH)
 
     // overlaps between the anchors and the gt boxes
-    val insideAnchorsGtOverlaps = BboxUtil.bboxOverlap(insideAnchors, gtBoxes)
+    val insideAnchorsGtOverlaps = BboxUtilZoo.bboxOverlap(insideAnchors, gtBoxes)
 
     // label: 1 is positive, 0 is negative, -1 is don't care
     var labels = getAllLabels(indsInside, insideAnchorsGtOverlaps)
@@ -151,10 +151,10 @@ class AnchorTarget(val ratios: Array[Float], val scales: Array[Float])
   private def getAllLabels(indsInside: Array[Int],
     insideAnchorsGtOverlaps: Tensor[Float]): Tensor[Float] = {
     val labels = Tensor[Float](indsInside.length).fill(-1f)
-    val argmaxOverlaps = BboxUtil.argmax2(insideAnchorsGtOverlaps, 2)
+    val argmaxOverlaps = BboxUtilZoo.argmax2(insideAnchorsGtOverlaps, 2)
     val maxOverlaps = argmaxOverlaps.zip(Stream.from(1)).map(x =>
       insideAnchorsGtOverlaps.valueAt(x._2, x._1))
-    val gtArgmaxOverlaps = BboxUtil.argmax2(insideAnchorsGtOverlaps, 1)
+    val gtArgmaxOverlaps = BboxUtilZoo.argmax2(insideAnchorsGtOverlaps, 1)
 
     val gtMaxOverlaps = gtArgmaxOverlaps.zip(Stream.from(1)).map(x => {
       insideAnchorsGtOverlaps.valueAt(x._1, x._2)

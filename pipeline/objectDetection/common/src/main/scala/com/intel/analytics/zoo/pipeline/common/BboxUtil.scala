@@ -24,7 +24,7 @@ import org.apache.log4j.Logger
 
 import scala.reflect.ClassTag
 
-object BboxUtil {
+object BboxUtilZoo {
 
   def selectTensor(matrix: Tensor[Float], indices: Array[Int], dim: Int, indiceLen: Int = -1,
     out: Tensor[Float] = null): Tensor[Float] = {

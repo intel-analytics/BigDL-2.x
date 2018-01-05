@@ -18,7 +18,7 @@ package com.intel.analytics.zoo.pipeline.ssd.example
 
 import com.intel.analytics.bigdl.nn.Module
 import com.intel.analytics.bigdl.pipeline.ssd.IOUtils
-import com.intel.analytics.zoo.pipeline.common.BboxUtil
+import com.intel.analytics.zoo.pipeline.common.{BboxUtilZoo => BboxUtil}
 import com.intel.analytics.zoo.pipeline.common.caffe.SSDCaffeLoader
 import com.intel.analytics.zoo.pipeline.common.dataset.roiimage.Visualizer
 import com.intel.analytics.zoo.pipeline.ssd._

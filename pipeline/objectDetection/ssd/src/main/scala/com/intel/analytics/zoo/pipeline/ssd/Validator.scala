@@ -22,7 +22,7 @@ import com.intel.analytics.bigdl.models.utils.ModelBroadcast
 import com.intel.analytics.bigdl.nn.SpatialShareConvolution
 import com.intel.analytics.bigdl.numeric.NumericFloat
 import com.intel.analytics.bigdl.optim.ValidationMethod
-import com.intel.analytics.zoo.pipeline.common.BboxUtil
+import com.intel.analytics.zoo.pipeline.common.{BboxUtilZoo => BboxUtil}
 import com.intel.analytics.zoo.pipeline.common.dataset.roiimage.{RecordToFeature, RoiImageToBatch, SSDByteRecord, SSDMiniBatch}
 import com.intel.analytics.zoo.pipeline.ssd.model.PreProcessParam
 import com.intel.analytics.bigdl.transform.vision.image.augmentation.{ChannelNormalize, RandomTransformer, Resize}
