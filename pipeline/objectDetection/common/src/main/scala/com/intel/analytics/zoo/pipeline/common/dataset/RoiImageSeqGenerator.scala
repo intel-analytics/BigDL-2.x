@@ -57,7 +57,7 @@ object RoiImageSeqGenerator {
   def main(args: Array[String]): Unit = {
     parser.parse(args, RoiImageSeqGeneratorParams()).map(param => {
       val roidbs = if (param.imageSet.isDefined) {
-        Imdb.getImdb(param.imageSet.get, param.folder).loadRoidb
+        Imdb.getImdb(param.imageSet.get, param.folder).getRoidb()
       } else {
         val file = new File(param.folder)
         require(file.exists(), s"$file not exists!")

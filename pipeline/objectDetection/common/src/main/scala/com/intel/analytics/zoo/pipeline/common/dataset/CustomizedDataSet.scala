@@ -26,7 +26,7 @@ import scala.io.Source
 
 class CustomizedDataSet(val imageSet: String, devkitPath: String) extends Imdb {
 
-  def loadRoidb(): Array[RoiImagePath] = {
+  def getRoidb(): Array[RoiImagePath] = {
     val classFile = new File(devkitPath + "/" + "classname.txt")
     require(classFile.exists(), s"if labelMap is null," +
       s" there should be a classname.txt in $devkitPath")

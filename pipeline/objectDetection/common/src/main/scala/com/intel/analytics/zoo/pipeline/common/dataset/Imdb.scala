@@ -20,10 +20,8 @@ import java.util.concurrent.atomic.AtomicInteger
 
 import com.intel.analytics.zoo.pipeline.common.dataset.roiimage.RoiImagePath
 
-import scala.io.Source
-
 trait Imdb {
-  def loadRoidb(): Array[RoiImagePath]
+  def getRoidb(): Array[RoiImagePath]
 }
 
 

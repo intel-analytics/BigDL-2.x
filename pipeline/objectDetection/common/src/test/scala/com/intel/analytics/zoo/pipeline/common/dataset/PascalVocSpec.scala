@@ -22,7 +22,7 @@ class PascalVocSpec extends FlatSpec with Matchers {
   val resource = getClass().getClassLoader().getResource("VOCdevkit")
   "pascal voc load images and annotations" should "work properly" in {
     val voc = Imdb.getImdb("voc_2007_testcode", resource.getPath)
-    val roidb = voc.loadRoidb()
+    val roidb = voc.getRoidb()
     roidb.length should be(2)
     roidb(1).imagePath should be(resource.getPath + "/VOC2007/JPEGImages/000055.jpg")
 

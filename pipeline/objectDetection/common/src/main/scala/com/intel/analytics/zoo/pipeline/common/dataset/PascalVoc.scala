@@ -49,7 +49,7 @@ class PascalVoc(val year: String = "2007", val imageSet: String,
 
   def annotationPath(index: String): String = "Annotations/" + index + ".xml"
 
-  override def loadRoidb(): Array[RoiImagePath] = {
+  override def getRoidb(): Array[RoiImagePath] = {
     val list = if (year == "0712") Array("2007", "2012") else Array(year)
     var imdexToPaths = Map[String, (String, String)]()
     list.foreach(y => {

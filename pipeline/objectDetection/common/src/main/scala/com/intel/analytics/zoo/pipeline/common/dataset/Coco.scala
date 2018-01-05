@@ -31,7 +31,7 @@ import scala.util.parsing.json.JSON
 
 class Coco(val imageSet: String, devkitPath: String) extends Imdb {
 
-  override def loadRoidb(): Array[RoiImagePath] = {
+  override def getRoidb(): Array[RoiImagePath] = {
     val imageSetFile = Paths.get(devkitPath, "ImageSets", s"$imageSet.txt").toFile
     assert(imageSetFile.exists(), "Path does not exist " + imageSetFile.getAbsolutePath)
     val roidb = Source.fromFile(imageSetFile).getLines()

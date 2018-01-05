@@ -21,7 +21,7 @@ import com.intel.analytics.bigdl.nn.abstractnn.AbstractModule
 import com.intel.analytics.bigdl.tensor.Tensor
 import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric
 import com.intel.analytics.bigdl.utils.{T, Table}
-import com.intel.analytics.zoo.pipeline.common.BboxUtilZoo
+import com.intel.analytics.zoo.pipeline.common.BboxUtil
 import org.apache.log4j.Logger
 import ProposalTarget._
 import com.intel.analytics.zoo.pipeline.common.dataset.FrcnnMiniBatch
@@ -65,7 +65,7 @@ class ProposalTarget(val roiPerImage: Int, val numClasses: Int)
     gtRois: Tensor[Float],
     labels: Tensor[Float]): Tensor[Float] = {
 
-    val targets = BboxUtilZoo.bboxTransform(sampledRois, gtRois)
+    val targets = BboxUtil.bboxTransform(sampledRois, gtRois)
 
     if (BBOX_NORMALIZE_TARGETS_PRECOMPUTED) {
       // Optionally normalize targets by a precomputed mean and stdev
@@ -74,7 +74,7 @@ class ProposalTarget(val roiPerImage: Int, val numClasses: Int)
         targets(r).cdiv(BBOX_NORMALIZE_STDS)
       }
     }
-    BboxUtilZoo.horzcat(labels.resize(labels.nElement(), 1), targets)
+    BboxUtil.horzcat(labels.resize(labels.nElement(), 1), targets)
   }
 
 
@@ -143,7 +143,7 @@ class ProposalTarget(val roiPerImage: Int, val numClasses: Int)
     gts: Tensor[Float])
   : (Tensor[Float], Tensor[Float], Tensor[Float], Tensor[Float]) = {
     // overlaps: (rois x gt_boxes)
-    val overlaps = BboxUtilZoo.bboxOverlap(roisPlusGts.narrow(2, 2, 4), FrcnnMiniBatch.getBboxes(gts))
+    val overlaps = BboxUtil.bboxOverlap(roisPlusGts.narrow(2, 2, 4), FrcnnMiniBatch.getBboxes(gts))
 
     // for each roi, get the gt with max overlap with it
     val (maxOverlaps, gtIndices) = overlaps.max(2)
@@ -166,21 +166,21 @@ class ProposalTarget(val roiPerImage: Int, val numClasses: Int)
     val keepInds = fgInds ++ bg_inds
 
     // Select sampled values from various arrays:
-    labels = BboxUtilZoo.selectMatrix(labels, keepInds, 1)
+    labels = BboxUtil.selectMatrix(labels, keepInds, 1)
     // Clamp labels for the background RoIs to 1 (1-based)
     (fgRoisPerThisImage + 1 to labels.nElement()).foreach(i => labels(i) = 1)
 
-    val sampledRois = BboxUtilZoo.selectMatrix(roisPlusGts, keepInds, 1)
+    val sampledRois = BboxUtil.selectMatrix(roisPlusGts, keepInds, 1)
     val keepInds2 = keepInds.map(x => gtIndices.valueAt(x, 1).toInt)
 
     val bboxTargetData = computeTargets(
       sampledRois.narrow(2, 2, 4),
-      BboxUtilZoo.selectMatrix(gts, keepInds2, 1)
+      BboxUtil.selectMatrix(gts, keepInds2, 1)
         .narrow(2, FrcnnMiniBatch.x1Index, 4),
       labels)
 
     val (bboxTarget, bboxInsideWeights) =
-      BboxUtilZoo.getBboxRegressionLabels(bboxTargetData, numClasses)
+      BboxUtil.getBboxRegressionLabels(bboxTargetData, numClasses)
     (labels.squeeze(), sampledRois, bboxTarget, bboxInsideWeights)
   }
 
@@ -197,7 +197,7 @@ class ProposalTarget(val roiPerImage: Int, val numClasses: Int)
     val gts = input[Tensor[Float]](2)
 
     // Include ground-truth boxes in the set of candidate rois
-    val roisPlusGts = BboxUtilZoo.vertcat2D(proposalRois, gts.narrow(2, 3, 5))
+    val roisPlusGts = BboxUtil.vertcat2D(proposalRois, gts.narrow(2, 3, 5))
     // in case gts has difficult (1)
     roisPlusGts.select(2, 1).fill(0)
 

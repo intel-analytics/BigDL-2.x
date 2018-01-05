@@ -21,16 +21,12 @@ import com.intel.analytics.bigdl.nn.abstractnn.Activity
 import com.intel.analytics.bigdl.tensor.Tensor
 import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric
 import com.intel.analytics.bigdl.utils.Table
-import com.intel.analytics.zoo.pipeline.common.{BboxUtilZoo}
+import com.intel.analytics.zoo.pipeline.common.BboxUtil
 
 class FrcnnMiniBatch(val input: Table, val target: Tensor[Float])
   extends MiniBatch[Float] {
 
-  private val targetIndices = if (target != null) {
-    BboxUtilZoo.getGroundTruthIndices(target)
-  } else {
-    null
-  }
+  private val targetIndices = if (target != null) BboxUtil.getGroundTruthIndices(target) else null
 
   override def size(): Int = input.length()
 
