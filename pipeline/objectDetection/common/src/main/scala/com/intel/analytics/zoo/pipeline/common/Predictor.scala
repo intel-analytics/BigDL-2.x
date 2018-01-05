@@ -22,7 +22,7 @@ import com.intel.analytics.bigdl.models.utils.ModelBroadcast
 import com.intel.analytics.bigdl.numeric.NumericFloat
 import com.intel.analytics.zoo.pipeline.common.dataset.roiimage.{RoiImageToBatch, SSDMiniBatch}
 import com.intel.analytics.bigdl.tensor.Tensor
-import com.intel.analytics.zoo.transform.vision.image.ImageFeature
+import com.intel.analytics.bigdl.transform.vision.image.ImageFeature
 import org.apache.spark.rdd.RDD
 
 import scala.reflect.ClassTag

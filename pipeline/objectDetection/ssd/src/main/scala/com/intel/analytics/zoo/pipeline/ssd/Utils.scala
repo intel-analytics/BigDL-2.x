@@ -20,12 +20,12 @@ import java.io.File
 
 import com.intel.analytics.bigdl.DataSet
 import com.intel.analytics.bigdl.dataset.DataSet
+import com.intel.analytics.bigdl.transform.vision.image.{BytesToMat, MatToFloats}
+import com.intel.analytics.bigdl.transform.vision.image.augmentation._
+import com.intel.analytics.bigdl.transform.vision.image.label.roi._
 import com.intel.analytics.zoo.pipeline.common.dataset.LocalByteRoiimageReader
 import com.intel.analytics.zoo.pipeline.common.dataset.roiimage._
 import com.intel.analytics.bigdl.utils.Engine
-import com.intel.analytics.zoo.transform.vision.image.{BytesToMat, MatToFloats, RandomTransformer}
-import com.intel.analytics.zoo.transform.vision.image.augmentation._
-import com.intel.analytics.zoo.transform.vision.label.roi.{RandomSampler, RoiExpand, RoiHFlip, RoiNormalize}
 import org.apache.hadoop.io.Text
 import org.apache.spark.SparkContext
 import org.apache.spark.rdd.RDD
@@ -60,12 +60,12 @@ object IOUtils {
       BytesToMat() ->
       RoiNormalize() ->
       ColorJitter() ->
-      RandomTransformer(Expand() -> RoiExpand(), 0.5) ->
+      RandomTransformer(Expand() -> RoiProject(), 0.5) ->
       RandomSampler() ->
       Resize(resolution, resolution, -1) ->
       RandomTransformer(HFlip() -> RoiHFlip(), 0.5) ->
-      MatToFloats(validHeight = resolution, validWidth = resolution,
-        meanRGB = Some(123f, 117f, 104f)) ->
+      ChannelNormalize(123f, 117f, 104f) ->
+      MatToFloats(validHeight = resolution, validWidth = resolution) ->
       RoiImageToBatch(batchSize)
   }
 
@@ -77,8 +77,8 @@ object IOUtils {
       BytesToMat() ->
       RoiNormalize() ->
       Resize(resolution, resolution) ->
-      MatToFloats(validHeight = resolution, validWidth = resolution,
-        meanRGB = Some(123f, 117f, 104f)) ->
+      ChannelNormalize(123f, 117f, 104f) ->
+      MatToFloats(validHeight = resolution, validWidth = resolution) ->
       RoiImageToBatch(batchSize)
   }
 }

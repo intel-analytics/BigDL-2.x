@@ -19,11 +19,11 @@ package com.intel.analytics.zoo.pipeline.ssd
 import com.intel.analytics.bigdl.Module
 import com.intel.analytics.bigdl.nn.{DetectionOutputSSD, Utils}
 import com.intel.analytics.zoo.pipeline.common.dataset.roiimage._
-import com.intel.analytics.zoo.pipeline.common.{BboxUtil, ModuleUtil, Predictor, Transform}
+import com.intel.analytics.zoo.pipeline.common.{ModuleUtil, Predictor, Transform, BboxUtilZoo => BboxUtil}
 import com.intel.analytics.bigdl.tensor.Tensor
 import com.intel.analytics.zoo.pipeline.ssd.model.PreProcessParam
-import com.intel.analytics.zoo.transform.vision.image.{BytesToMat, ImageFeature, MatToFloats}
-import com.intel.analytics.zoo.transform.vision.image.augmentation.Resize
+import com.intel.analytics.bigdl.transform.vision.image.{BytesToMat, ImageFeature, MatToFloats}
+import com.intel.analytics.bigdl.transform.vision.image.augmentation.{ChannelNormalize, Resize}
 import org.apache.spark.rdd.RDD
 
 class SSDPredictor(
@@ -52,11 +52,13 @@ class SSDPredictor(
 
   def predict(rdd: RDD[SSDByteRecord]): RDD[Tensor[Float]] = {
     val preProcessor = RecordToFeature() ->
-        BytesToMat() ->
-        Resize(preProcessParam.resolution, preProcessParam.resolution) ->
-        MatToFloats(validHeight = preProcessParam.resolution,
-          validWidth = preProcessParam.resolution, meanRGB = Some(preProcessParam.pixelMeanRGB)) ->
-        RoiImageToBatch(preProcessParam.batchSize, false, Some(preProcessParam.nPartition))
+      BytesToMat() ->
+      Resize(preProcessParam.resolution, preProcessParam.resolution) ->
+      ChannelNormalize(preProcessParam.pixelMeanRGB._1, preProcessParam.pixelMeanRGB._2,
+        preProcessParam.pixelMeanRGB._3) ->
+      MatToFloats(validHeight = preProcessParam.resolution,
+        validWidth = preProcessParam.resolution) ->
+      RoiImageToBatch(preProcessParam.batchSize, false, Some(preProcessParam.nPartition))
 
     val transformed = Transform(rdd, preProcessor)
     Predictor.predict(transformed, model, postProcess)
@@ -65,10 +67,11 @@ class SSDPredictor(
   def predictWithFeature(rdd: RDD[ImageFeature]): RDD[ImageFeature] = {
     val preProcessor =
       BytesToMat() ->
-      Resize(preProcessParam.resolution, preProcessParam.resolution) ->
+        Resize(preProcessParam.resolution, preProcessParam.resolution) ->
+        ChannelNormalize(preProcessParam.pixelMeanRGB._1, preProcessParam.pixelMeanRGB._2,
+          preProcessParam.pixelMeanRGB._3) ->
         MatToFloats(validHeight = preProcessParam.resolution,
-          validWidth = preProcessParam.resolution,
-          meanRGB = Some(preProcessParam.pixelMeanRGB))
+          validWidth = preProcessParam.resolution)
     val toBatch = RoiImageToBatch(preProcessParam.batchSize, false,
       Some(preProcessParam.nPartition))
     val transformed = Transform(rdd, preProcessor)

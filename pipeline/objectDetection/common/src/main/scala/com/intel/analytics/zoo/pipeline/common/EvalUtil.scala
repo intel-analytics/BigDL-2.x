@@ -17,7 +17,7 @@
 package com.intel.analytics.zoo.pipeline.common
 
 import com.intel.analytics.bigdl.tensor.Tensor
-import com.intel.analytics.zoo.transform.vision.label.roi.RoiLabel
+import com.intel.analytics.bigdl.transform.vision.image.label.roi.RoiLabel
 
 import scala.collection.mutable.ArrayBuffer
 
@@ -163,7 +163,7 @@ object EvalUtil {
       // No ground truth for current image. All detections become false_pos.
       val (ovmax, jmax) = if (gtBoxes == null || labeledGt == null) (-1f, -1)
       else {
-        BboxUtil.getMaxOverlaps(gtBoxes, gtAreas, labeledGt._1.map(_._1),
+        BboxUtilZoo.getMaxOverlaps(gtBoxes, gtAreas, labeledGt._1.map(_._1),
           results(box._1)(clsInd).bboxes(box._2), normalized)
       }
       if (ovmax > ovThresh) {

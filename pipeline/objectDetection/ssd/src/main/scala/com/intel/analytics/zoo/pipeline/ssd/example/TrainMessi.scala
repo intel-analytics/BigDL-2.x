@@ -22,7 +22,7 @@ import com.intel.analytics.bigdl.nn.Module
 import com.intel.analytics.bigdl.optim.{Optimizer, _}
 import com.intel.analytics.bigdl.pipeline.ssd.IOUtils
 import com.intel.analytics.zoo.pipeline.common.nn.{MultiBoxLoss, MultiBoxLossParam}
-import com.intel.analytics.zoo.pipeline.common.MeanAveragePrecision
+import com.intel.analytics.zoo.pipeline.common.{MeanAveragePrecision, ModuleUtil}
 import com.intel.analytics.zoo.pipeline.common.caffe.CaffeLoader
 import com.intel.analytics.zoo.pipeline.ssd.model.SSDVgg
 import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric.NumericFloat
@@ -62,7 +62,7 @@ object TrainMessi {
             val model = SSDVgg(param.classNumber, param.resolution)
             if (param.weights.isDefined) {
               val m = Module.loadModule(param.weights.get)
-              model.loadModelWeights(m)
+              ModuleUtil.loadModelWeights(m, model, false)
             } else if (param.caffeDefPath.isDefined && param.caffeModelPath.isDefined) {
               CaffeLoader.load[Float](model,
                 param.caffeDefPath.get, param.caffeModelPath.get, matchAll = false)
@@ -120,7 +120,7 @@ object TrainMessi {
     val optimizer = Optimizer(
       model = model,
       dataset = trainSet,
-      criterion = new MultiBoxLoss[Float](MultiBoxLossParam())
+      criterion = new MultiBoxLoss[Float](MultiBoxLossParam(nClasses = param.classNumber))
     )
 
     if (param.checkpoint.isDefined) {

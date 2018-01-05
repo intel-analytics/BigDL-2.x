@@ -19,9 +19,9 @@ package com.intel.analytics.zoo.pipeline.common.dataset
 import com.intel.analytics.bigdl.dataset.{Transformer, Utils}
 import com.intel.analytics.bigdl.numeric.NumericFloat
 import com.intel.analytics.bigdl.tensor.{Storage, Tensor}
+import com.intel.analytics.bigdl.transform.vision.image.ImageFeature
+import com.intel.analytics.bigdl.transform.vision.image.label.roi.RoiLabel
 import com.intel.analytics.bigdl.utils.{T, Table}
-import com.intel.analytics.zoo.transform.vision.image.ImageFeature
-import com.intel.analytics.zoo.transform.vision.label.roi.RoiLabel
 
 import scala.collection.Iterator
 import scala.collection.mutable.ArrayBuffer

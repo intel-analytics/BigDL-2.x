@@ -19,6 +19,7 @@ package com.intel.analytics.zoo.pipeline.common
 import com.intel.analytics.bigdl._
 import com.intel.analytics.bigdl.nn.{Module => _, _}
 import com.intel.analytics.bigdl.tensor.Tensor
+import com.intel.analytics.bigdl.utils.Table
 import org.apache.log4j.Logger
 
 object ModuleUtil {
@@ -76,4 +77,43 @@ object ModuleUtil {
       })
     }
   }
+
+
+  def loadModelWeights(srcModel: Module[Float], targetModel: Module[Float],
+    matchAll: Boolean = true): this.type = {
+    val srcParameter = srcModel.getParametersTable()
+    val targetParameter = targetModel.getParametersTable()
+    copyWeights(targetParameter, srcParameter, matchAll)
+    this
+  }
+
+  private def copyWeights(target: Table, src: Table, matchAll: Boolean): Unit = {
+    target.foreach {
+      case (name: String, targetParams: Table) =>
+        if (src.contains(name)) {
+          val srcParams = src[Table](name)
+          if (srcParams.contains("weight")) {
+            val w = srcParams[Tensor[Float]]("weight")
+            val tw = targetParams[Tensor[Float]]("weight")
+            if (tw.size().sameElements(w.size())) {
+              tw.copy(w)
+            } else {
+              logger.warn(s"$name weight size does not match, ignore ...")
+            }
+          }
+          if (srcParams.contains("bias")) {
+            val b = srcParams[Tensor[Float]]("bias")
+            val tb = targetParams[Tensor[Float]]("bias")
+            if (tb.size().sameElements(b.size())) {
+              tb.copy(b)
+            } else {
+              logger.warn(s"$name bias size does not match, ignore ...")
+            }
+          }
+        } else {
+          if (matchAll) new Exception(s"module $name cannot find corresponding weight bias")
+        }
+    }
+  }
+
 }

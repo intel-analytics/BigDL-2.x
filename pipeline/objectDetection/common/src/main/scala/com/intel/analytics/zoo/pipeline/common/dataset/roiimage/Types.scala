@@ -17,11 +17,11 @@
 package com.intel.analytics.zoo.pipeline.common.dataset.roiimage
 
 import com.intel.analytics.bigdl.dataset.{MiniBatch, Sample}
-import com.intel.analytics.zoo.pipeline.common.BboxUtil
 import com.intel.analytics.bigdl.tensor.Tensor
 import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric
-import com.intel.analytics.zoo.transform.vision.image.ImageFeature
-import com.intel.analytics.zoo.transform.vision.label.roi.RoiLabel
+import com.intel.analytics.bigdl.transform.vision.image.ImageFeature
+import com.intel.analytics.bigdl.transform.vision.image.label.roi.RoiLabel
+import com.intel.analytics.bigdl.transform.vision.image.util.BboxUtil
 
 /**
  * Image path and target information
