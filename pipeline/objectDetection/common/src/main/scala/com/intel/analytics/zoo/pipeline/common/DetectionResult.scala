@@ -59,8 +59,7 @@ class DetectionResult(private var results: Array[(Int, Array[(Float, Int, Int)])
   extends ValidationResult {
 
   override def result(): (Float, Int) = {
-    val output = PascalVocEvaluator.meanAveragePrecision(results, use07metric,
-      classes: Array[String])
+    val output = PascalVocEvaluator.meanAveragePrecision(results, use07metric, classes)
     val meanAveragePrecision = output.map(_._2).sum / output.length
     (meanAveragePrecision, 1)
   }
