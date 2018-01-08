@@ -16,12 +16,18 @@
 
 package com.intel.analytics.zoo.pipeline.common.dataset
 
+import java.io.File
 import java.util.concurrent.atomic.AtomicInteger
 
-import com.intel.analytics.zoo.pipeline.common.dataset.roiimage.RoiImagePath
+import com.intel.analytics.bigdl.transform.vision.image.{ImageFeature, LocalImageFrame}
+import org.apache.commons.io.FileUtils
 
 trait Imdb {
-  def getRoidb(): Array[RoiImagePath]
+  def getRoidb(readImage: Boolean = true): LocalImageFrame
+
+  def loadImage(imagePath: String): Array[Byte] = {
+    FileUtils.readFileToByteArray(new File(imagePath))
+  }
 }
 
 
@@ -45,20 +51,20 @@ object Imdb {
   }
 
 
-  def data(roidb: Array[RoiImagePath]): Iterator[RoiImagePath] = {
-    new Iterator[RoiImagePath] {
+  def data(roidb: Array[ImageFeature]): Iterator[ImageFeature] = {
+    new Iterator[ImageFeature] {
       private val index = new AtomicInteger()
 
       override def hasNext: Boolean = {
         index.get() < roidb.length
       }
 
-      override def next(): RoiImagePath = {
+      override def next(): ImageFeature = {
         val curIndex = index.getAndIncrement()
         if (curIndex < roidb.length) {
           roidb(curIndex)
         } else {
-          null.asInstanceOf[RoiImagePath]
+          null.asInstanceOf[ImageFeature]
         }
       }
     }

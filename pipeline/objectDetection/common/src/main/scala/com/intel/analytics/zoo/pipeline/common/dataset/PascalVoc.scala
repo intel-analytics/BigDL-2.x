@@ -19,8 +19,8 @@ package com.intel.analytics.zoo.pipeline.common.dataset
 import java.io.File
 import java.nio.file.Paths
 
-import com.intel.analytics.zoo.pipeline.common.dataset.roiimage.RoiImagePath
 import com.intel.analytics.bigdl.tensor.{Storage, Tensor}
+import com.intel.analytics.bigdl.transform.vision.image.{ImageFeature, ImageFrame, LocalImageFrame}
 import com.intel.analytics.bigdl.transform.vision.image.label.roi.RoiLabel
 
 import scala.Array._
@@ -49,7 +49,7 @@ class PascalVoc(val year: String = "2007", val imageSet: String,
 
   def annotationPath(index: String): String = "Annotations/" + index + ".xml"
 
-  override def getRoidb(): Array[RoiImagePath] = {
+  override def getRoidb(readImage: Boolean = true): LocalImageFrame = {
     val list = if (year == "0712") Array("2007", "2012") else Array(year)
     var imdexToPaths = Map[String, (String, String)]()
     list.foreach(y => {
@@ -64,9 +64,12 @@ class PascalVoc(val year: String = "2007", val imageSet: String,
           dataPath + "/" + annotationPath(index)))
       })
     })
-    val roidb = imdexToPaths.map(x => RoiImagePath(x._2._1,
-      PascalVoc.loadAnnotation(x._2._2, PascalVoc.classToInd))).toArray
-    roidb
+    val array = imdexToPaths.toIterator.map(x => {
+      val image = if (readImage) loadImage(x._2._1) else null
+      ImageFeature(image,
+        PascalVoc.loadAnnotation(x._2._2, PascalVoc.classToInd), x._2._1)
+    }).toArray
+    ImageFrame.array(array)
   }
 }
 

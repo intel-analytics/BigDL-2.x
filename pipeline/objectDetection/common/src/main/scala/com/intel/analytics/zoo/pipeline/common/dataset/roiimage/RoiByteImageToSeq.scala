@@ -27,18 +27,20 @@ import org.apache.hadoop.conf.Configuration
 import org.apache.hadoop.fs.{Path => hPath}
 import org.apache.hadoop.io.{SequenceFile, Text}
 import RoiByteImageToSeq._
+import com.intel.analytics.bigdl.transform.vision.image.ImageFeature
+import com.intel.analytics.bigdl.transform.vision.image.label.roi.RoiLabel
 
 import scala.collection.Iterator
 
 class RoiByteImageToSeq(blockSize: Int, baseFileName: Path) extends
-  Transformer[RoiImagePath, String] {
+  Transformer[ImageFeature, String] {
   private val conf: Configuration = new Configuration
   private var index = 0
   private val preBuffer: ByteBuffer = ByteBuffer.allocate(4 * 2)
   private var classLen: Int = 0
   private var startInd: Int = 0
 
-  override def apply(prev: Iterator[RoiImagePath]): Iterator[String] = {
+  override def apply(prev: Iterator[ImageFeature]): Iterator[String] = {
     new Iterator[String] {
       override def hasNext: Boolean = prev.hasNext
 
@@ -51,8 +53,9 @@ class RoiByteImageToSeq(blockSize: Int, baseFileName: Path) extends
         var i = 0
         while (i < blockSize && prev.hasNext) {
           val roidb = prev.next()
-          val imageInByte = FileUtils.readFileToByteArray(new File(roidb.imagePath))
-          classLen = if (roidb.target != null) roidb.target.classes.size(2) * 4 else 0
+          val imageInByte = FileUtils.readFileToByteArray(new File(roidb.uri()))
+          val target = roidb.getLabel[RoiLabel]
+          classLen = if (target != null) target.classes.size(2) * 4 else 0
           preBuffer.putInt(imageInByte.length)
           preBuffer.putInt(classLen)
           val data: Array[Byte] = new Array[Byte](preBuffer.capacity + imageInByte.length +
@@ -62,16 +65,15 @@ class RoiByteImageToSeq(blockSize: Int, baseFileName: Path) extends
           startInd += preBuffer.capacity
           System.arraycopy(imageInByte, 0, data, startInd, imageInByte.length)
           startInd += imageInByte.length
-          if (roidb.target != null) {
-            val cls = tensorToBytes(roidb.target.classes)
+          if (target != null) {
+            val cls = tensorToBytes(target.classes)
             System.arraycopy(cls, 0, data, startInd, cls.length)
             startInd += cls.length
-            val bbox = tensorToBytes(roidb.target.bboxes)
+            val bbox = tensorToBytes(target.bboxes)
             System.arraycopy(bbox, 0, data, startInd, bbox.length)
           }
           preBuffer.clear
-          val imageKey = roidb.imagePath.substring(roidb.imagePath.lastIndexOf("/") + 1)
-          writer.append(new Text(imageKey), new Text(data))
+          writer.append(new Text(roidb.uri()), new Text(data))
           i += 1
         }
         writer.close()

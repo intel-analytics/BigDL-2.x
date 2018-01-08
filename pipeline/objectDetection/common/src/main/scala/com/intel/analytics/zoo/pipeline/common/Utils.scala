@@ -18,33 +18,28 @@ package com.intel.analytics.zoo.pipeline.common
 
 import java.io.File
 
-import com.intel.analytics.zoo.pipeline.common.dataset.LocalByteRoiimageReader
+import com.intel.analytics.bigdl.transform.vision.image.{ImageFeature, ImageFrame, LocalImageFrame}
 import com.intel.analytics.zoo.pipeline.common.dataset.roiimage._
 import org.apache.hadoop.io.Text
 import org.apache.spark.SparkContext
-import org.apache.spark.rdd.RDD
 
 
 object IOUtils {
-  def loadSeqFiles(nPartition: Int, seqFloder: String, sc: SparkContext)
-  : (RDD[SSDByteRecord], RDD[String]) = {
+
+  def loadSeqFiles(nPartition: Int, seqFloder: String, sc: SparkContext,
+    convertLabel: Boolean): ImageFrame = {
     val data = sc.sequenceFile(seqFloder, classOf[Text], classOf[Text],
-      nPartition).map(x => SSDByteRecord(x._2.copyBytes(), x._1.toString))
-    val paths = data.map(x => x.path)
-    (data, paths)
+      nPartition).map(x => ByteRecord(x._2.copyBytes(), x._1.toString))
+    ImageFrame.rdd(RecordToFeature(convertLabel)(data))
   }
 
-  def loadLocalFolder(nPartition: Int, folder: String, sc: SparkContext)
-  : (RDD[SSDByteRecord], RDD[String]) = {
-    val roiDataset = localImagePaths(folder).map(RoiImagePath(_))
-    val imgReader = LocalByteRoiimageReader()
-    val data = sc.parallelize(roiDataset.map(roidb => imgReader.transform(roidb)),
-      nPartition)
-    (data, data.map(_.path))
-  }
-
-  def localImagePaths(folder: String): Array[String] = {
-    new File(folder).listFiles().map(_.getAbsolutePath)
+  def localImagePaths(folder: String): LocalImageFrame = {
+    val arr = new File(folder).listFiles().map(x => {
+      val imf = ImageFeature()
+      imf(ImageFeature.uri) = x.getAbsolutePath
+      imf
+    })
+    ImageFrame.array(arr)
   }
 }
 

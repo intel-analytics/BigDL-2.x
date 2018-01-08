@@ -22,7 +22,7 @@ import com.intel.analytics.bigdl.transform.vision.image.{BytesToMat, MatToFloats
 import com.intel.analytics.bigdl.transform.vision.image.augmentation._
 import com.intel.analytics.bigdl.transform.vision.image.label.roi._
 import com.intel.analytics.bigdl.transform.vision.image.opencv.OpenCVMat
-import com.intel.analytics.zoo.pipeline.common.dataset.{Imdb, LocalByteRoiimageReader}
+import com.intel.analytics.zoo.pipeline.common.dataset.{Imdb}
 import org.opencv.core.{Mat, Point, Scalar}
 import org.opencv.imgcodecs.Imgcodecs
 import org.opencv.imgproc.Imgproc
@@ -46,9 +46,8 @@ class DataAugmentationSpec extends FlatSpec with Matchers with BeforeAndAfter {
     import scala.sys.process._
     val resource = getClass().getClassLoader().getResource("VOCdevkit")
     val voc = Imdb.getImdb("voc_2007_testcode", resource.getPath)
-    val roidb = voc.getRoidb().toIterator
-    val imgAug = LocalByteRoiimageReader() -> RecordToFeature(true) ->
-      BytesToMat() ->
+    val roidb = voc.getRoidb(true).array.toIterator
+    val imgAug = BytesToMat() ->
       RoiNormalize() ->
       ColorJitter() ->
       RandomTransformer(Expand() -> RoiProject(), 0.5) ->

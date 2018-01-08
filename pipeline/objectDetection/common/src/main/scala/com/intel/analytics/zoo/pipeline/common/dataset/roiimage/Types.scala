@@ -20,18 +20,9 @@ import com.intel.analytics.bigdl.dataset.{MiniBatch, Sample}
 import com.intel.analytics.bigdl.tensor.Tensor
 import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric
 import com.intel.analytics.bigdl.transform.vision.image.ImageFeature
-import com.intel.analytics.bigdl.transform.vision.image.label.roi.RoiLabel
 import com.intel.analytics.bigdl.transform.vision.image.util.BboxUtil
 
-/**
- * Image path and target information
- * @param imagePath image path
- * @param target image target
- */
-case class RoiImagePath(
-  imagePath: String,
-  target: RoiLabel = null) {
-}
+
 
 /**
  * A batch of data feed into the model. The first size is batchsize
@@ -85,4 +76,4 @@ object SSDMiniBatch {
 }
 
 
-case class SSDByteRecord(var data: Array[Byte], path: String)
+case class ByteRecord(var data: Array[Byte], path: String)

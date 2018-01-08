@@ -19,26 +19,30 @@ package com.intel.analytics.zoo.pipeline.common.dataset
 import java.io.File
 import java.nio.file.Paths
 
-import com.intel.analytics.zoo.pipeline.common.dataset.roiimage.RoiImagePath
+import com.intel.analytics.bigdl.transform.vision.image.{ImageFeature, ImageFrame, LocalImageFrame}
 
 import scala.io.Source
 
 
 class CustomizedDataSet(val imageSet: String, devkitPath: String) extends Imdb {
 
-  def getRoidb(): Array[RoiImagePath] = {
+  def getRoidb(readImage: Boolean = true): LocalImageFrame = {
     val classFile = new File(devkitPath + "/" + "classname.txt")
     require(classFile.exists(), s"if labelMap is null," +
       s" there should be a classname.txt in $devkitPath")
     val labelMap = getLabelMap(classFile.getAbsolutePath)
     val imageSetFile = Paths.get(devkitPath, "ImageSets", s"$imageSet.txt").toFile
     assert(imageSetFile.exists(), "Path does not exist " + imageSetFile.getAbsolutePath)
-    val roidb = Source.fromFile(imageSetFile).getLines()
-      .map(line => line.trim.split("\\s")).toArray.map(x => {
-      RoiImagePath(devkitPath + "/" + x(0),
-        PascalVoc.loadAnnotation(devkitPath + "/" + x(1), labelMap))
-    })
-    roidb
+    val array = Source.fromFile(imageSetFile).getLines()
+      .map(line => line.trim.split("\\s")).map(x => {
+      val imagePath = devkitPath + "/" + x(0)
+      val image = if (readImage) loadImage(imagePath) else null
+      ImageFeature(image,
+        PascalVoc.loadAnnotation(devkitPath + "/" + x(1), labelMap),
+        imagePath)
+    }).toArray
+
+    ImageFrame.array(array)
   }
 
   def getLabelMap(labelFile: String): Map[String, Float] = {
