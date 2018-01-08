@@ -23,12 +23,13 @@ import com.intel.analytics.bigdl.nn.SpatialShareConvolution
 import com.intel.analytics.bigdl.numeric.NumericFloat
 import com.intel.analytics.bigdl.optim.ValidationMethod
 import com.intel.analytics.zoo.pipeline.common.BboxUtil
-import com.intel.analytics.zoo.pipeline.common.dataset.roiimage.{RoiImageToBatch, SSDMiniBatch}
+import com.intel.analytics.zoo.pipeline.common.dataset.roiimage.{ByteRecord, RecordToFeature, RoiImageToBatch, SSDMiniBatch}
 import com.intel.analytics.zoo.pipeline.ssd.model.PreProcessParam
 import com.intel.analytics.bigdl.transform.vision.image.augmentation.{ChannelNormalize, RandomTransformer, Resize}
 import com.intel.analytics.bigdl.transform.vision.image.label.roi.RoiNormalize
 import com.intel.analytics.bigdl.transform.vision.image.{BytesToMat, ImageFeature, ImageFrame, MatToFloats}
 import org.apache.log4j.Logger
+import org.apache.spark.rdd.RDD
 
 
 class Validator(model: Module[Float],
@@ -40,7 +41,8 @@ class Validator(model: Module[Float],
   SpatialShareConvolution.shareConvolution[Float](model)
 
   val normalizeRoi = if (useNormalized) RoiNormalize() else RandomTransformer(RoiNormalize(), 0)
-  val preProcessor = BytesToMat() ->
+  val preProcessor = RecordToFeature(true) ->
+    BytesToMat() ->
     normalizeRoi ->
     Resize(preProcessParam.resolution, preProcessParam.resolution) ->
     ChannelNormalize(preProcessParam.pixelMeanRGB._1,
@@ -53,18 +55,17 @@ class Validator(model: Module[Float],
       validWidth = preProcessParam.resolution) ->
     RoiImageToBatch(preProcessParam.batchSize, true, Some(preProcessParam.nPartition))
 
-  def test(imageFrame: ImageFrame): Unit = {
-    Validator.test(imageFrame, model, preProcessor, evaluator, useNormalized)
+  def test(rdd: RDD[ByteRecord]): Unit = {
+    Validator.test(rdd, model, preProcessor, evaluator, useNormalized)
   }
 }
 
 object Validator {
   val logger = Logger.getLogger(this.getClass)
 
-  def test(imageFrame: ImageFrame, model: Module[Float], preProcessor: Transformer[ImageFeature,
+  def test(rdd: RDD[ByteRecord], model: Module[Float], preProcessor: Transformer[ByteRecord,
     SSDMiniBatch], evaluator: ValidationMethod[Float], useNormalized: Boolean = true): Unit = {
     model.evaluate()
-    val rdd = imageFrame.toDistributed().rdd
     val broadcastModel = ModelBroadcast().broadcast(rdd.sparkContext, model)
     val broadcastEvaluator = rdd.sparkContext.broadcast(evaluator)
     val broadcastTransformers = rdd.sparkContext.broadcast(preProcessor)

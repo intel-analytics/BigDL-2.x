@@ -99,7 +99,7 @@ object Test {
       val classes = Source.fromFile(params.className).getLines().toArray
       val evaluator = new MeanAveragePrecision(true, normalized = params.useNormalized,
         classes = classes)
-      val rdd = IOUtils.loadSeqFiles(params.nPartition, params.folder, sc, true)
+      val rdd = IOUtils.loadSeqFiles(params.nPartition, params.folder, sc)
 
       val model = if (params.model.isDefined) {
         // load BigDL model

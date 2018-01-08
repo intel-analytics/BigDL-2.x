@@ -25,14 +25,15 @@ import com.intel.analytics.zoo.pipeline.fasterrcnn.model.PreProcessParam
 import com.intel.analytics.bigdl.transform.vision.image.augmentation._
 import com.intel.analytics.bigdl.transform.vision.image._
 import com.intel.analytics.bigdl.transform.vision.image.label.roi._
+import com.intel.analytics.zoo.pipeline.common.dataset.roiimage.RecordToFeature
 import org.apache.spark.SparkContext
 
 
 object Utils {
   def loadTrainSet(folder: String, sc: SparkContext, param: PreProcessParam, batchSize: Int)
   : DataSet[FrcnnMiniBatch] = {
-    val trainRdd = IOUtils.loadSeqFiles(Engine.nodeNumber, folder, sc, true).toDistributed().rdd
-    DataSet.rdd(trainRdd) ->
+    val trainRdd = IOUtils.loadSeqFiles(Engine.nodeNumber, folder, sc)
+    DataSet.rdd(trainRdd) -> RecordToFeature(true) ->
       BytesToMat() ->
       RandomAspectScale(param.scales, param.scaleMultipleOf) -> RoiResize() ->
       RandomTransformer(HFlip() -> RoiHFlip(false), 0.5) ->
@@ -43,9 +44,9 @@ object Utils {
 
   def loadValSet(folder: String, sc: SparkContext, param: PreProcessParam, batchSize: Int)
   : DataSet[FrcnnMiniBatch] = {
-    val valRdd = IOUtils.loadSeqFiles(Engine.nodeNumber, folder, sc, true).toDistributed().rdd
+    val valRdd = IOUtils.loadSeqFiles(Engine.nodeNumber, folder, sc)
 
-    DataSet.rdd(valRdd) ->
+    DataSet.rdd(valRdd) -> RecordToFeature(true) ->
       BytesToMat() ->
       AspectScale(param.scales(0), param.scaleMultipleOf) ->
       ChannelNormalize(param.pixelMeanRGB._1, param.pixelMeanRGB._2, param.pixelMeanRGB._3) ->

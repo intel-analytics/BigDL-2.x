@@ -32,8 +32,8 @@ object Utils {
 
   def loadTrainSet(folder: String, sc: SparkContext, resolution: Int, batchSize: Int)
   : DataSet[SSDMiniBatch] = {
-    val trainRdd = IOUtils.loadSeqFiles(Engine.nodeNumber, folder, sc, true).toDistributed().rdd
-    DataSet.rdd(trainRdd) ->
+    val trainRdd = IOUtils.loadSeqFiles(Engine.nodeNumber, folder, sc)
+    DataSet.rdd(trainRdd) -> RecordToFeature(true) ->
       BytesToMat() ->
       RoiNormalize() ->
       ColorJitter() ->
@@ -48,9 +48,9 @@ object Utils {
 
   def loadValSet(folder: String, sc: SparkContext, resolution: Int, batchSize: Int)
   : DataSet[SSDMiniBatch] = {
-    val valRdd = IOUtils.loadSeqFiles(Engine.nodeNumber, folder, sc, true).toDistributed().rdd
+    val valRdd = IOUtils.loadSeqFiles(Engine.nodeNumber, folder, sc)
 
-    DataSet.rdd(valRdd) ->
+    DataSet.rdd(valRdd) -> RecordToFeature(true) ->
       BytesToMat() ->
       RoiNormalize() ->
       Resize(resolution, resolution) ->
