@@ -51,6 +51,7 @@ class Visualizer(labelMap: Map[Int, String], thresh: Float = 0.3f,
 
   private def visualizeDetection(image: Array[Byte],
     uri: String, rois: Tensor[Float]): Array[Byte] = {
+    if (rois.dim() != 2) return image
     require(rois.dim() == 2, "output dim should be 2")
     require(rois.size(2) == 6, "output should have 6 cols, class score xmin ymin xmax ymax")
     var mat: OpenCVMat = null
