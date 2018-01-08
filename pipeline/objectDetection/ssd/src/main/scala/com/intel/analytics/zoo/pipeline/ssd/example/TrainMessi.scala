@@ -20,7 +20,7 @@ import com.intel.analytics.bigdl._
 import com.intel.analytics.bigdl.dataset.MiniBatch
 import com.intel.analytics.bigdl.nn.Module
 import com.intel.analytics.bigdl.optim.{Optimizer, _}
-import com.intel.analytics.bigdl.pipeline.ssd.IOUtils
+import com.intel.analytics.bigdl.pipeline.ssd.Utils
 import com.intel.analytics.zoo.pipeline.common.nn.{MultiBoxLoss, MultiBoxLossParam}
 import com.intel.analytics.zoo.pipeline.common.{MeanAveragePrecision, ModuleUtil}
 import com.intel.analytics.zoo.pipeline.common.caffe.CaffeLoader
@@ -52,9 +52,9 @@ object TrainMessi {
       Engine.init
 
       val classes = Source.fromFile(param.className).getLines().toArray
-      val trainSet = IOUtils.loadTrainSet(param.trainFolder, sc, param.resolution, param.batchSize)
+      val trainSet = Utils.loadTrainSet(param.trainFolder, sc, param.resolution, param.batchSize)
 
-      val valSet = IOUtils.loadValSet(param.valFolder, sc, param.resolution, param.batchSize)
+      val valSet = Utils.loadValSet(param.valFolder, sc, param.resolution, param.batchSize)
 
       val model = if (param.modelSnapshot.isDefined) {
         Module.load[Float](param.modelSnapshot.get)

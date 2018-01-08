@@ -21,20 +21,18 @@ import com.intel.analytics.bigdl.dataset.DataSet
 import com.intel.analytics.bigdl.utils.Engine
 import com.intel.analytics.zoo.pipeline.common.IOUtils
 import com.intel.analytics.zoo.pipeline.common.dataset.{FrcnnMiniBatch, FrcnnToBatch}
-import com.intel.analytics.zoo.pipeline.common.dataset.roiimage.RecordToFeature
 import com.intel.analytics.zoo.pipeline.fasterrcnn.model.PreProcessParam
 import com.intel.analytics.bigdl.transform.vision.image.augmentation._
 import com.intel.analytics.bigdl.transform.vision.image._
 import com.intel.analytics.bigdl.transform.vision.image.label.roi._
 import org.apache.spark.SparkContext
-import org.apache.spark.rdd.RDD
 
 
 object Utils {
   def loadTrainSet(folder: String, sc: SparkContext, param: PreProcessParam, batchSize: Int)
   : DataSet[FrcnnMiniBatch] = {
-    val trainRdd = IOUtils.loadSeqFiles(Engine.nodeNumber, folder, sc)._1
-    DataSet.rdd(trainRdd) -> RecordToFeature(true) ->
+    val trainRdd = IOUtils.loadSeqFiles(Engine.nodeNumber, folder, sc, true).toDistributed().rdd
+    DataSet.rdd(trainRdd) ->
       BytesToMat() ->
       RandomAspectScale(param.scales, param.scaleMultipleOf) -> RoiResize() ->
       RandomTransformer(HFlip() -> RoiHFlip(false), 0.5) ->
@@ -45,26 +43,13 @@ object Utils {
 
   def loadValSet(folder: String, sc: SparkContext, param: PreProcessParam, batchSize: Int)
   : DataSet[FrcnnMiniBatch] = {
-    val valRdd = IOUtils.loadSeqFiles(Engine.nodeNumber, folder, sc)._1
+    val valRdd = IOUtils.loadSeqFiles(Engine.nodeNumber, folder, sc, true).toDistributed().rdd
 
-    DataSet.rdd(valRdd) -> RecordToFeature(true) ->
+    DataSet.rdd(valRdd) ->
       BytesToMat() ->
       AspectScale(param.scales(0), param.scaleMultipleOf) ->
       ChannelNormalize(param.pixelMeanRGB._1, param.pixelMeanRGB._2, param.pixelMeanRGB._3) ->
       MatToFloats(100, 100) ->
       FrcnnToBatch(param.batchSize, true)
-  }
-
-  def loadValRdd(folder: String, sc: SparkContext,
-    preProcessParam: PreProcessParam, batchSize: Int): RDD[FrcnnMiniBatch] = {
-    val rdd = IOUtils.loadSeqFiles(preProcessParam.nPartition, folder, sc)._1
-    val preProcessor = RecordToFeature(true) ->
-      BytesToMat() ->
-      AspectScale(preProcessParam.scales(0), preProcessParam.scaleMultipleOf) ->
-      ChannelNormalize(preProcessParam.pixelMeanRGB._1,
-        preProcessParam.pixelMeanRGB._2, preProcessParam.pixelMeanRGB._3) ->
-      MatToFloats(100, 100) ->
-      FrcnnToBatch(preProcessParam.batchSize, true, Some(preProcessParam.nPartition))
-    preProcessor(rdd)
   }
 }

@@ -17,8 +17,7 @@
 package com.intel.analytics.zoo.pipeline.ssd.example
 
 import com.intel.analytics.bigdl.nn.Module
-import com.intel.analytics.bigdl.pipeline.ssd.IOUtils
-import com.intel.analytics.zoo.pipeline.common.MeanAveragePrecision
+import com.intel.analytics.zoo.pipeline.common.{IOUtils, MeanAveragePrecision}
 import com.intel.analytics.zoo.pipeline.ssd._
 import com.intel.analytics.bigdl.utils.Engine
 import com.intel.analytics.zoo.pipeline.common.caffe.SSDCaffeLoader
@@ -100,7 +99,7 @@ object Test {
       val classes = Source.fromFile(params.className).getLines().toArray
       val evaluator = new MeanAveragePrecision(true, normalized = params.useNormalized,
         classes = classes)
-      val rdd = IOUtils.loadSeqFiles(params.nPartition, params.folder, sc)._1
+      val rdd = IOUtils.loadSeqFiles(params.nPartition, params.folder, sc, true)
 
       val model = if (params.model.isDefined) {
         // load BigDL model
