@@ -93,7 +93,7 @@ object Test {
       val classes = Source.fromFile(params.className).getLines().toArray
       val evaluator = new MeanAveragePrecision(true, normalized = false,
         classes = classes)
-      val rdd = IOUtils.loadSeqFiles(params.nPartition, params.folder, sc)
+      val imageFrame = IOUtils.loadSeqFiles(params.nPartition, params.folder, sc, true)
 
       val model = Module.loadModule[Float](params.bigdlModel)
 
@@ -111,7 +111,7 @@ object Test {
           throw new Exception("unsupport network")
       }
       val validator = new Validator(model, preParam, postParam, evaluator)
-      validator.test(rdd._1)
+      validator.test(imageFrame)
       sc.stop()
     }
   }

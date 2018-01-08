@@ -24,11 +24,9 @@ import com.intel.analytics.bigdl.numeric.NumericFloat
 import com.intel.analytics.bigdl.optim.ValidationMethod
 import com.intel.analytics.bigdl.transform.vision.image.augmentation._
 import com.intel.analytics.zoo.pipeline.common.dataset.{FrcnnMiniBatch, FrcnnToBatch}
-import com.intel.analytics.zoo.pipeline.common.dataset.roiimage.{RecordToFeature, ByteRecord}
 import com.intel.analytics.zoo.pipeline.fasterrcnn.model.{PostProcessParam, PreProcessParam}
-import com.intel.analytics.bigdl.transform.vision.image.{BytesToMat, MatToFloats}
+import com.intel.analytics.bigdl.transform.vision.image._
 import org.apache.log4j.Logger
-import org.apache.spark.rdd.RDD
 
 
 class Validator(model: Module[Float],
@@ -36,8 +34,7 @@ class Validator(model: Module[Float],
   postPrecessParam: PostProcessParam,
   evaluator: ValidationMethod[Float],
   shareMemory: Boolean = true) {
-  val preProcessor = RecordToFeature(true) ->
-    BytesToMat() ->
+  val preProcessor = BytesToMat() ->
     AspectScale(preProcessParam.scales(0), preProcessParam.scaleMultipleOf) ->
     ChannelNormalize(preProcessParam.pixelMeanRGB._1,
       preProcessParam.pixelMeanRGB._2,
@@ -61,18 +58,19 @@ class Validator(model: Module[Float],
   postprocessor.thresh = postPrecessParam.thresh
 
 
-  def test(rdd: RDD[ByteRecord]): Float = {
-    Validator.test(rdd, model, preProcessor, evaluator)
+  def test(imageFrame: DistributedImageFrame): Float = {
+    Validator.test(imageFrame, model, preProcessor, evaluator)
   }
 }
 
 object Validator {
   val logger = Logger.getLogger(this.getClass)
 
-  def test(rdd: RDD[ByteRecord], model: Module[Float],
-    preProcessor: Transformer[ByteRecord, FrcnnMiniBatch],
+  def test(imageFrame: DistributedImageFrame, model: Module[Float],
+    preProcessor: Transformer[ImageFeature, FrcnnMiniBatch],
     evaluator: ValidationMethod[Float]): Float = {
     model.evaluate()
+    val rdd = imageFrame.rdd
     val broadcastModel = ModelBroadcast().broadcast(rdd.sparkContext, model)
     val broadcastEvaluator = rdd.sparkContext.broadcast(evaluator)
     val recordsNum = rdd.sparkContext.accumulator(0, "record number")
