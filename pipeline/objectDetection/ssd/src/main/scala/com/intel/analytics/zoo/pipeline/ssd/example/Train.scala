@@ -167,8 +167,8 @@ object Train {
         param.modelType match {
           case "vgg16" =>
             val model = SSDVgg(classes.length, param.resolution)
-            if (param.weights.isDefined) {
-              model.loadWeights(param.weights.get)
+            if (param.pretrain.isDefined) {
+              model.loadWeights(param.pretrain.get)
             } else if (param.caffeDefPath.isDefined && param.caffeModelPath.isDefined) {
               CaffeLoader.load[Float](model,
                 param.caffeDefPath.get, param.caffeModelPath.get, matchAll = false)

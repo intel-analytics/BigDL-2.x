@@ -23,7 +23,6 @@ import com.intel.analytics.bigdl.optim.{Optimizer, _}
 import com.intel.analytics.bigdl.pipeline.ssd.Utils
 import com.intel.analytics.zoo.pipeline.common.nn.{MultiBoxLoss, MultiBoxLossParam}
 import com.intel.analytics.zoo.pipeline.common.{MeanAveragePrecision, ModuleUtil}
-import com.intel.analytics.zoo.pipeline.common.caffe.CaffeLoader
 import com.intel.analytics.zoo.pipeline.ssd.model.SSDVgg
 import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric.NumericFloat
 import com.intel.analytics.bigdl.utils.{Engine, LoggerFilter}
@@ -31,8 +30,78 @@ import com.intel.analytics.bigdl.visualization.{TrainSummary, ValidationSummary}
 import com.intel.analytics.zoo.pipeline.common.dataset.roiimage.SSDMiniBatch
 import org.apache.log4j.{Level, Logger}
 import org.apache.spark.SparkContext
+import scopt.OptionParser
 
 import scala.io.Source
+
+object Option {
+
+  case class TrainParams(
+    trainFolder: String = "./",
+    valFolder: String = "./",
+    resolution: Int = 300,
+    checkpoint: Option[String] = None,
+    modelSnapshot: Option[String] = None,
+    stateSnapshot: Option[String] = None,
+    className: String = "",
+    batchSize: Int = -1,
+    learningRate: Double = 0.001,
+    overWriteCheckpoint: Boolean = false,
+    maxEpoch: Int = 20,
+    pretrain: Option[String] = None,
+    jobName: String = "BigDL SSD Train Example",
+    summaryDir: Option[String] = None
+  )
+
+  val trainParser = new OptionParser[TrainParams]("BigDL SSD Example") {
+    opt[String]('f', "trainFolder")
+      .text("url of hdfs folder store the train hadoop sequence files")
+      .action((x, c) => c.copy(trainFolder = x))
+    opt[String]('v', "valFolder")
+      .text("url of hdfs folder store the validation hadoop sequence files")
+      .action((x, c) => c.copy(valFolder = x))
+    opt[Int]('r', "resolution")
+      .text("input resolution 300 or 512")
+      .action((x, c) => c.copy(resolution = x))
+      .required()
+    opt[String]("model")
+      .text("model snapshot location")
+      .action((x, c) => c.copy(modelSnapshot = Some(x)))
+    opt[String]("weights")
+      .text("pretrained weights")
+      .action((x, c) => c.copy(pretrain = Some(x)))
+    opt[String]("state")
+      .text("state snapshot location")
+      .action((x, c) => c.copy(stateSnapshot = Some(x)))
+    opt[String]("checkpoint")
+      .text("where to cache the model")
+      .action((x, c) => c.copy(checkpoint = Some(x)))
+    opt[Int]('e', "maxEpoch")
+      .text("epoch numbers")
+      .action((x, c) => c.copy(maxEpoch = x))
+    opt[Double]('l', "learningRate")
+      .text("inital learning rate")
+      .action((x, c) => c.copy(learningRate = x))
+      .required()
+    opt[Int]('b', "batchSize")
+      .text("batch size")
+      .action((x, c) => c.copy(batchSize = x))
+      .required()
+    opt[String]("class")
+      .text("class file")
+      .action((x, c) => c.copy(className = x))
+      .required()
+    opt[Unit]("overWrite")
+      .text("overwrite checkpoint files")
+      .action((_, c) => c.copy(overWriteCheckpoint = true))
+    opt[String]("name")
+      .text("job name")
+      .action((x, c) => c.copy(jobName = x))
+    opt[String]("summary")
+      .text("train validate summary")
+      .action((x, c) => c.copy(summaryDir = Some(x)))
+  }
+}
 
 object TrainMessi {
 
@@ -56,61 +125,16 @@ object TrainMessi {
 
       val valSet = Utils.loadValSet(param.valFolder, sc, param.resolution, param.batchSize)
 
-      val model = if (param.modelSnapshot.isDefined) {
-        Module.load[Float](param.modelSnapshot.get)
-      } else {
-        param.modelType match {
-          case "vgg16" =>
-            val model = SSDVgg(classes.length, param.resolution)
-            if (param.weights.isDefined) {
-              val m = Module.loadModule(param.weights.get)
-              ModuleUtil.loadModelWeights(m, model, false)
-            } else if (param.caffeDefPath.isDefined && param.caffeModelPath.isDefined) {
-              CaffeLoader.load[Float](model,
-                param.caffeDefPath.get, param.caffeModelPath.get, matchAll = false)
-            }
-            model
-          case _ => throw new Exception("currently only test over vgg ssd model")
-        }
-      }
+      val model = SSDVgg(classes.length, param.resolution)
+      val m = Module.loadModule(param.pretrain.get)
+      ModuleUtil.loadModelWeights(m, model, false)
 
-      val warmUpModel = if (param.warmUpMap.isDefined) {
-        val optimMethod = new Adam[Float](
-          learningRate = 0.0001,
-          learningRateDecay = 0.0005
-        )
-        optimize(model, trainSet, valSet, param, optimMethod,
-          Trigger.maxScore(param.warmUpMap.get.toFloat), classes)
-      } else {
-        model
-      }
-
-      val optimMethod = if (param.stateSnapshot.isDefined) {
-        OptimMethod.load[Float](param.stateSnapshot.get)
-      } else {
-        val learningRateSchedule = param.schedule match {
-          case "multistep" =>
-            val steps = if (param.learningRateSteps.isDefined) {
-              param.learningRateSteps.get
-            } else {
-              Array[Int](80000 / 32 * param.batchSize, 100000 / 32 * param.batchSize,
-                120000 / 32 * param.batchSize)
-            }
-            SGD.MultiStep(steps, param.learningRateDecay)
-          case "plateau" =>
-            SGD.Plateau(monitor = "score",
-              factor = param.learningRateDecay.toFloat,
-              patience = param.patience, minLr = 1e-5f, mode = "max")
-        }
-        new SGD[Float](
-          learningRate = param.learningRate,
-          momentum = 0.9,
-          dampening = 0.0,
-          learningRateSchedule = learningRateSchedule)
-      }
-
-      optimize(warmUpModel, trainSet, valSet, param, optimMethod,
-        Trigger.maxEpoch(param.maxEpoch.get), classes = classes)
+      val optimMethod = new Adam[Float](
+        learningRate = 0.0001,
+        learningRateDecay = 0.0005
+      )
+      optimize(model, trainSet, valSet, param, optimMethod,
+        Trigger.maxEpoch(param.maxEpoch), classes)
 
     })
   }
