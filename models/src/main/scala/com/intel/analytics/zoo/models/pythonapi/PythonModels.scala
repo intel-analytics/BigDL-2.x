@@ -63,8 +63,7 @@ class PythonModels[T: ClassTag](implicit ev: TensorNumeric[T]) extends PythonBig
     labelMap: JMap[Int, String],
     paddingParam: PaddingParam[T]): Configure[T] = {
     val map = if (labelMap == null) null else labelMap.asScala.toMap
-    val padding = if (paddingParam == null) null else Some(paddingParam)
-    Configure(preProcessor, postProcessor, batchPerPartition, map, padding)
+    Configure(preProcessor, postProcessor, batchPerPartition, map, Option(paddingParam))
   }
 
   def createVisualizer(labelMap: JMap[Int, String], thresh: Float = 0.3f,
