@@ -34,7 +34,11 @@ import scopt.OptionParser
 
 import scala.io.Source
 
-object Option {
+object TrainMessi {
+
+  LoggerFilter.redirectSparkInfoLogs()
+  Logger.getLogger("com.intel.analytics.bigdl.optim").setLevel(Level.INFO)
+  Logger.getLogger("com.intel.analytics.bigdl.pipeline").setLevel(Level.INFO)
 
   case class TrainParams(
     trainFolder: String = "./",
@@ -101,15 +105,6 @@ object Option {
       .text("train validate summary")
       .action((x, c) => c.copy(summaryDir = Some(x)))
   }
-}
-
-object TrainMessi {
-
-  LoggerFilter.redirectSparkInfoLogs()
-  Logger.getLogger("com.intel.analytics.bigdl.optim").setLevel(Level.INFO)
-  Logger.getLogger("com.intel.analytics.bigdl.pipeline").setLevel(Level.INFO)
-
-  import Option._
 
   val logger = Logger.getLogger(getClass.getName)
 
