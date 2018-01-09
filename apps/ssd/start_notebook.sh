@@ -1,14 +1,32 @@
 #!/bin/bash
 
 #setup pathes
+curr=$PWD
+echo $curr
 SPARK_HOME=$HOME/spark-2.1.0-bin-hadoop2.7
-MODELS_HOME=$HOME/code/analytics-zoo/models
+analytics_zoo=$HOME/code/analytics-zoo
+MODELS_HOME=${analytics_zoo}/models
+
+PYTHON_API_ZIP_PATH=$MODELS_HOME/target/bigdl-models-0.1-SNAPSHOT-python-api.zip
+JAR_PATH=${MODELS_HOME}/target/models-0.1-SNAPSHOT-jar-with-dependencies.jar
+
+# build model zoo
+
+if [! -f $PYTHON_API_ZIP_PATH]
+then
+  cd $MODELS_HOME
+  echo $MODELS_HOME
+  bash build.sh
+  cd $curr
+fi
+
+
+
 # when you build models jar, you should have download BigDL
 BigDL_HOME=$MODELS_HOME/dist-spark-2.1.1-scala-2.11.8-all-0.4.0-dist
 MASTER="local[2]"
 
-PYTHON_API_ZIP_PATH=$MODELS_HOME/target/bigdl-models-0.1-SNAPSHOT-python-api.zip
-JAR_PATH=${MODELS_HOME}/target/models-0.1-SNAPSHOT-jar-with-dependencies.jar
+
 
 export PYTHONPATH=${PYTHON_API_ZIP_PATH}:$PYTHONPATH
 export PYSPARK_DRIVER_PYTHON=jupyter
