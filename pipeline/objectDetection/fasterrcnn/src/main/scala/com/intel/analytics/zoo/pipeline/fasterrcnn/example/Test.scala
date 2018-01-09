@@ -93,7 +93,7 @@ object Test {
       val classes = Source.fromFile(params.className).getLines().toArray
       val evaluator = new MeanAveragePrecision(true, normalized = false,
         classes = classes)
-      val imageFrame = IOUtils.loadSeqFiles(params.nPartition, params.folder, sc, true)
+      val imageFrame = IOUtils.loadSeqFiles(params.nPartition, params.folder, sc)
 
       val model = Module.loadModule[Float](params.bigdlModel)
 

@@ -26,7 +26,9 @@ import com.intel.analytics.bigdl.transform.vision.image.augmentation._
 import com.intel.analytics.zoo.pipeline.common.dataset.{FrcnnMiniBatch, FrcnnToBatch}
 import com.intel.analytics.zoo.pipeline.fasterrcnn.model.{PostProcessParam, PreProcessParam}
 import com.intel.analytics.bigdl.transform.vision.image._
+import com.intel.analytics.zoo.pipeline.common.dataset.roiimage.{ByteRecord, RecordToFeature}
 import org.apache.log4j.Logger
+import org.apache.spark.rdd.RDD
 
 
 class Validator(model: Module[Float],
@@ -34,7 +36,7 @@ class Validator(model: Module[Float],
   postPrecessParam: PostProcessParam,
   evaluator: ValidationMethod[Float],
   shareMemory: Boolean = true) {
-  val preProcessor = BytesToMat() ->
+  val preProcessor = RecordToFeature(true) -> BytesToMat() ->
     AspectScale(preProcessParam.scales(0), preProcessParam.scaleMultipleOf) ->
     ChannelNormalize(preProcessParam.pixelMeanRGB._1,
       preProcessParam.pixelMeanRGB._2,
@@ -58,7 +60,7 @@ class Validator(model: Module[Float],
   postprocessor.thresh = postPrecessParam.thresh
 
 
-  def test(imageFrame: DistributedImageFrame): Float = {
+  def test(imageFrame: RDD[ByteRecord]): Float = {
     Validator.test(imageFrame, model, preProcessor, evaluator)
   }
 }
@@ -66,11 +68,10 @@ class Validator(model: Module[Float],
 object Validator {
   val logger = Logger.getLogger(this.getClass)
 
-  def test(imageFrame: DistributedImageFrame, model: Module[Float],
-    preProcessor: Transformer[ImageFeature, FrcnnMiniBatch],
+  def test(rdd: RDD[ByteRecord], model: Module[Float],
+    preProcessor: Transformer[ByteRecord, FrcnnMiniBatch],
     evaluator: ValidationMethod[Float]): Float = {
     model.evaluate()
-    val rdd = imageFrame.rdd
     val broadcastModel = ModelBroadcast().broadcast(rdd.sparkContext, model)
     val broadcastEvaluator = rdd.sparkContext.broadcast(evaluator)
     val recordsNum = rdd.sparkContext.accumulator(0, "record number")
