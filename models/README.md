@@ -21,3 +21,16 @@
 * [SSD 300x300 VGG Quantize](https://s3-ap-southeast-1.amazonaws.com/bigdl-models/object-detection/bigdl_ssd-vgg16-300x300-quantize_COCO_0.4.0.model)
 * [SSD 512x512 VGG](https://s3-ap-southeast-1.amazonaws.com/bigdl-models/object-detection/bigdl_ssd-vgg16-512x512_COCO_0.4.0.model)
 * [SSD 512x512 VGG Quantize](https://s3-ap-southeast-1.amazonaws.com/bigdl-models/object-detection/bigdl_ssd-vgg16-512x512-quantize_COCO_0.4.0.model)
+
+## Image Classification
+
+1. Imagenet models
+
+* [Alexnet](https://s3-ap-southeast-1.amazonaws.com/bigdl-models/imageclassification/imagenet/bigdl_alexnet_imagenet_0.4.0.model)
+* [Inception-V1](https://s3-ap-southeast-1.amazonaws.com/bigdl-models/imageclassification/imagenet/bigdl_inception-v1_imagenet_0.4.0.model)
+* [VGG-16](https://s3-ap-southeast-1.amazonaws.com/bigdl-models/imageclassification/imagenet/bigdl_vgg-16_imagenet_0.4.0.model)
+* [VGG-19](https://s3-ap-southeast-1.amazonaws.com/bigdl-models/imageclassification/imagenet/bigdl_vgg-19_imagenet_0.4.0.model)
+* [Resnet-50](https://s3-ap-southeast-1.amazonaws.com/bigdl-models/imageclassification/imagenet/bigdl_resnet-50_imagenet_0.4.0.model)
+* [Densenet-161](https://s3-ap-southeast-1.amazonaws.com/bigdl-models/imageclassification/imagenet/bigdl_densenet-161_imagenet_0.4.0.model)
+* [Mobilenet](https://s3-ap-southeast-1.amazonaws.com/bigdl-models/imageclassification/imagenet/bigdl_mobilenet_imagenet_0.4.0.model)
+* [Squeezenet](https://s3-ap-southeast-1.amazonaws.com/bigdl-models/imageclassification/imagenet/bigdl_squeezenet_imagenet_0.4.0.model)

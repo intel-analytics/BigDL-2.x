@@ -33,7 +33,7 @@ case class ScaleDetection() extends FeatureTransformer {
     val height = imageFeature.getOriginalHeight
     val width = imageFeature.getOriginalWidth
     val result = BboxUtil.decodeRois(detection)
-    if (result.nElement() > 0) {
+    if (result.dim() == 2 && result.nElement() > 0) {
       // clipBoxes to [0, 1]
       clipBoxes(result.narrow(2, 3, 4))
       // scaleBoxes
