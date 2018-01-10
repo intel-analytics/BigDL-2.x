@@ -67,21 +67,24 @@ class Predictor[T: ClassTag](
     } else {
       imageFrame
     }
-    val result = data match {
+    val predictor = data match {
       case distributedImageFrame: DistributedImageFrame =>
         if (null == distributedPredictor) distributedPredictor =
           new DistributedPredictor[T](model,
             configure.featurePaddingParam,
             configure.batchPerPartition)
-        distributedPredictor.predictImage(
-          distributedImageFrame, outputLayer, shareBuffer, predictKey)
+        distributedPredictor
       case localImageFrame: LocalImageFrame =>
         if (null == localPredictor) localPredictor =
           new LocalPredictor[T](model,
             configure.featurePaddingParam,
             configure.batchPerPartition)
-        localPredictor.predictImage(localImageFrame, outputLayer, shareBuffer, predictKey)
+        localPredictor
     }
+
+
+    val result = predictor.predictImage(
+      data, outputLayer, shareBuffer, predictKey)
 
     // apply post process if defined
     if (null != configure.postProcessor) configure.postProcessor(result) else result
@@ -131,6 +134,13 @@ object Predictor {
   }
 }
 
+trait ImagePredictor extends Serializable {
+  def predictImage(imageFrame: ImageFrame,
+    outputLayer: String = null,
+    shareBuffer: Boolean = false,
+    predictKey: String = ImageFeature.predict): ImageFrame
+}
+
 /**
  * Predictor for distributed data
  *
@@ -142,7 +152,7 @@ class DistributedPredictor[T: ClassTag] private[models](
   model: Module[T],
   featurePaddingParam: Option[PaddingParam[T]] = None,
   batchPerPartition: Int = 4)
-  (implicit ev: TensorNumeric[T]) extends Serializable {
+  (implicit ev: TensorNumeric[T]) extends ImagePredictor {
   /**
    * model predict DistributedImageFrame, return imageFrame with predicted tensor
    *
@@ -152,10 +162,10 @@ class DistributedPredictor[T: ClassTag] private[models](
    * @param shareBuffer whether to share same memory for each batch predict results
    * @param predictKey key to store predicted result
    */
-  def predictImage(imageFrame: DistributedImageFrame,
+  def predictImage(imageFrame: ImageFrame,
     outputLayer: String = null,
     shareBuffer: Boolean = false,
-    predictKey: String = ImageFeature.predict): DistributedImageFrame = {
+    predictKey: String = ImageFeature.predict): ImageFrame = {
     val rdd = imageFrame.asInstanceOf[DistributedImageFrame].rdd
     val modelBroad = ModelBroadcast[T]().broadcast(rdd.sparkContext, model.evaluate())
     val partitionNum = rdd.partitions.length
@@ -186,7 +196,7 @@ class DistributedPredictor[T: ClassTag] private[models](
 class LocalPredictor[T: ClassTag] private[models](model: Module[T],
   featurePaddingParam: Option[PaddingParam[T]] = None,
   batchPerCore: Int = 4)
-  (implicit ev: TensorNumeric[T]) extends Serializable {
+  (implicit ev: TensorNumeric[T]) extends ImagePredictor {
   private val coreNumber = Engine.coreNumber()
 
   private val subModelNumber = Engine.getEngineType match {
@@ -226,12 +236,12 @@ class LocalPredictor[T: ClassTag] private[models](model: Module[T],
    * @param shareBuffer whether to share same memory for each batch predict results
    * @param predictKey key to store predicted result
    */
-  def predictImage(imageFrame: LocalImageFrame,
+  def predictImage(imageFrame: ImageFrame,
     outputLayer: String = null,
     shareBuffer: Boolean = false,
-    predictKey: String = ImageFeature.predict): LocalImageFrame = {
+    predictKey: String = ImageFeature.predict): ImageFrame = {
 
-    val dataIter = imageFrame.array.grouped(batchPerCore * subModelNumber)
+    val dataIter = imageFrame.toLocal().array.grouped(batchPerCore * subModelNumber)
 
     val result = dataIter.map(batch => {
       val groupedImages = batch.grouped(batchPerCore).toArray
