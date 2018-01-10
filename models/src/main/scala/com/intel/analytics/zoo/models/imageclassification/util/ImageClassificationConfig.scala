@@ -27,12 +27,19 @@ import scala.io.Source
 
 object ImageClassificationConfig {
   val models = Set("alexnet",
+    "alexnet-quantize",
     "inception-v1",
+    "inception-v1-quantize",
     "resnet-50",
+    "resnet-50-quantize",
     "vgg-16",
+    "vgg-16-quantize",
     "vgg-19",
+    "vgg-19-quantize",
     "densenet-161",
+    "densenet-161-quantize",
     "squeezenet",
+    "squeezenet-quantize",
     "mobilenet")
 
   def apply(model: String, dataset: String, version: String): Configure = {
@@ -53,19 +60,26 @@ object ImagenetConfig {
 
   def apply(model: String, dataset: String, version: String): Configure = {
     model match {
-      case "alexnet" => Configure(preProcessor = alexnetPreprocessor,
+      case "alexnet" |
+            "alexnet-quantize" => Configure(preProcessor = alexnetPreprocessor,
         labelMap = imagenetLabelMap)
-      case "inception-v1" => Configure(preProcessor = inceptionV1Preprocessor,
+      case "inception-v1" |
+           "inception-v1-quantize" => Configure(preProcessor = inceptionV1Preprocessor,
         labelMap = imagenetLabelMap)
-      case "resnet-50" => Configure(preProcessor = resnetPreprocessor,
+      case "resnet-50" |
+           "resnet-50-quantize" => Configure(preProcessor = resnetPreprocessor,
         labelMap = imagenetLabelMap)
-      case "vgg-16" => Configure(preProcessor = vggPreprocessor,
+      case "vgg-16" |
+           "vgg-16-quantize" => Configure(preProcessor = vggPreprocessor,
         labelMap = imagenetLabelMap)
-      case "vgg-19" => Configure(preProcessor = vggPreprocessor,
+      case "vgg-19" |
+           "vgg-19-quantize" => Configure(preProcessor = vggPreprocessor,
         labelMap = imagenetLabelMap)
-      case "densenet-161" => Configure(preProcessor = densenetPreprocessor,
+      case "densenet-161" |
+           "densenet-161-quantize" => Configure(preProcessor = densenetPreprocessor,
         labelMap = imagenetLabelMap)
-      case "squeezenet" => Configure(preProcessor = squeezenetPreprocessor,
+      case "squeezenet" |
+           "squeezenet-quantize" => Configure(preProcessor = squeezenetPreprocessor,
         labelMap = imagenetLabelMap)
       case "mobilenet" => Configure(preProcessor = mobilenetPreprocessor,
         labelMap = imagenetLabelMap)
@@ -91,7 +105,7 @@ object ImagenetConfig {
   }
 
   def resnetPreprocessor() : FeatureTransformer = {
-    commonPreprocessor(224, 0.485f, 0.456f, 0.406f, 0.229f, 0.224f, 0.225f)
+    commonPreprocessor(224, 123, 117, 104)
   }
 
   def vggPreprocessor(): FeatureTransformer = {
