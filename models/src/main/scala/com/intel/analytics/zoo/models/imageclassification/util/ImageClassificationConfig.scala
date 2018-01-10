@@ -40,8 +40,7 @@ object ImageClassificationConfig {
     "densenet-161-quantize",
     "squeezenet",
     "squeezenet-quantize",
-    "mobilenet",
-    "mobilenet-quantize")
+    "mobilenet")
 
   def apply(model: String, dataset: String, version: String): Configure = {
     dataset match {
@@ -82,8 +81,7 @@ object ImagenetConfig {
       case "squeezenet" |
            "squeezenet-quantize" => Configure(preProcessor = squeezenetPreprocessor,
         labelMap = imagenetLabelMap)
-      case "mobilenet" |
-           "mobilenet-quantize" => Configure(preProcessor = mobilenetPreprocessor,
+      case "mobilenet" => Configure(preProcessor = mobilenetPreprocessor,
         labelMap = imagenetLabelMap)
     }
   }
