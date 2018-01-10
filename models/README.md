@@ -27,10 +27,17 @@
 1. Imagenet models
 
 * [Alexnet](https://s3-ap-southeast-1.amazonaws.com/bigdl-models/imageclassification/imagenet/bigdl_alexnet_imagenet_0.4.0.model)
+* [Alexnet Quantize](https://s3-ap-southeast-1.amazonaws.com/bigdl-models/imageclassification/imagenet/bigdl_alexnet-quantize_imagenet_0.4.0.model)
 * [Inception-V1](https://s3-ap-southeast-1.amazonaws.com/bigdl-models/imageclassification/imagenet/bigdl_inception-v1_imagenet_0.4.0.model)
+* [Inception-V1 Quantize](https://s3-ap-southeast-1.amazonaws.com/bigdl-models/imageclassification/imagenet/bigdl_inception-v1-quantize_imagenet_0.4.0.model)
 * [VGG-16](https://s3-ap-southeast-1.amazonaws.com/bigdl-models/imageclassification/imagenet/bigdl_vgg-16_imagenet_0.4.0.model)
+* [VGG-16 Quantize](https://s3-ap-southeast-1.amazonaws.com/bigdl-models/imageclassification/imagenet/bigdl_vgg-16-quantize_imagenet_0.4.0.model)
 * [VGG-19](https://s3-ap-southeast-1.amazonaws.com/bigdl-models/imageclassification/imagenet/bigdl_vgg-19_imagenet_0.4.0.model)
+* [VGG-19 Quantize](https://s3-ap-southeast-1.amazonaws.com/bigdl-models/imageclassification/imagenet/bigdl_vgg-19-quantize_imagenet_0.4.0.model)
 * [Resnet-50](https://s3-ap-southeast-1.amazonaws.com/bigdl-models/imageclassification/imagenet/bigdl_resnet-50_imagenet_0.4.0.model)
+* [Resnet-50 Quantize](https://s3-ap-southeast-1.amazonaws.com/bigdl-models/imageclassification/imagenet/bigdl_resnet-50-quantize_imagenet_0.4.0.model)
 * [Densenet-161](https://s3-ap-southeast-1.amazonaws.com/bigdl-models/imageclassification/imagenet/bigdl_densenet-161_imagenet_0.4.0.model)
+* [Densenet-161 Quantize](https://s3-ap-southeast-1.amazonaws.com/bigdl-models/imageclassification/imagenet/bigdl_densenet-161-quantize_imagenet_0.4.0.model)
 * [Mobilenet](https://s3-ap-southeast-1.amazonaws.com/bigdl-models/imageclassification/imagenet/bigdl_mobilenet_imagenet_0.4.0.model)
 * [Squeezenet](https://s3-ap-southeast-1.amazonaws.com/bigdl-models/imageclassification/imagenet/bigdl_squeezenet_imagenet_0.4.0.model)
+* [Squeezenet Quantize](https://s3-ap-southeast-1.amazonaws.com/bigdl-models/imageclassification/imagenet/bigdl_squeezenet-quantize_imagenet_0.4.0.model)
