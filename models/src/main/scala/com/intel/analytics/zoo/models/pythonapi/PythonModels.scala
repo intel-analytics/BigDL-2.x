@@ -20,9 +20,11 @@ import com.intel.analytics.bigdl.nn.abstractnn.{AbstractModule, Activity}
 import com.intel.analytics.bigdl.python.api.PythonBigDL
 import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric
 import com.intel.analytics.bigdl.transform.vision.image._
-import com.intel.analytics.zoo.models.{Configure, Predictor}
+import com.intel.analytics.zoo.models.Configure
 import java.util.{Map => JMap}
 
+import com.intel.analytics.bigdl.dataset.PaddingParam
+import com.intel.analytics.bigdl.zoo.models.Predictor
 import com.intel.analytics.zoo.models.imageclassification.util.LabelOutput
 import com.intel.analytics.zoo.models.objectdetection.utils._
 
@@ -51,16 +53,17 @@ class PythonModels[T: ClassTag](implicit ev: TensorNumeric[T]) extends PythonBig
    }
 
   def createPredictor(model: AbstractModule[Activity, Activity, T],
-    configure: Configure): Predictor[T] = {
+    configure: Configure[T]): Predictor[T] = {
     Predictor(model, configure)
   }
 
   def createConfigure(preProcessor: FeatureTransformer,
     postProcessor: FeatureTransformer,
     batchPerPartition: Int,
-    labelMap: JMap[Int, String]): Configure = {
+    labelMap: JMap[Int, String],
+    paddingParam: PaddingParam[T]): Configure[T] = {
     val map = if (labelMap == null) null else labelMap.asScala.toMap
-    Configure(preProcessor, postProcessor, batchPerPartition, map)
+    Configure(preProcessor, postProcessor, batchPerPartition, map, Option(paddingParam))
   }
 
   def createVisualizer(labelMap: JMap[Int, String], thresh: Float = 0.3f,
@@ -69,11 +72,11 @@ class PythonModels[T: ClassTag](implicit ev: TensorNumeric[T]) extends PythonBig
     BytesToMat(Visualizer.visualized) -> MatToFloats(shareBuffer = false)
   }
 
-  def getConfigure(predictor: Predictor[T]): Configure = {
+  def getConfigure(predictor: Predictor[T]): Configure[T] = {
     predictor.configure
   }
 
-  def getLabelMap(configure: Configure): JMap[Int, String] = {
+  def getLabelMap(configure: Configure[T]): JMap[Int, String] = {
     if (configure.labelMap == null) null else configure.labelMap.asJava
   }
 
@@ -100,5 +103,9 @@ class PythonModels[T: ClassTag](implicit ev: TensorNumeric[T]) extends PythonBig
   def createLabelOutput(labelMap: JMap[Int, String], clses: String,
                        probs: String): FeatureTransformer = {
     LabelOutput(labelMap.asScala.toMap, clses, probs)
+  }
+
+  def createPaddingParam(): PaddingParam[T] = {
+    PaddingParam()
   }
 }

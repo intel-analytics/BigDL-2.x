@@ -54,11 +54,12 @@ class Configure(JavaValue):
     :param post_processor postprocessor of ImageFrame after model inference
     :param batch_per_partition batch size per partition
     :param label_map mapping from prediction result indexes to real dataset labels
+    :param feature_padding_param featurePaddingParam if the inputs have variant size
     """
     def __init__(self, pre_processor=None,
                  post_processor=None,
                  batch_per_partition=4,
-                 label_map=None, jvalue=None, bigdl_type="float"):
+                 label_map=None, feature_padding_param=None, jvalue=None, bigdl_type="float"):
         self.bigdl_type=bigdl_type
         if jvalue:
             self.value = jvalue
@@ -74,77 +75,17 @@ class Configure(JavaValue):
                 pre_processor,
                 post_processor,
                 batch_per_partition,
-                label_map)
+                label_map,
+                feature_padding_param)
 
     def label_map(self):
         return callBigDlFunc(self.bigdl_type, "getLabelMap", self.value)
 
-class Visualizer(FeatureTransformer):
-    """
-    Visualizer is a transformer to visualize the detection results
-    (tensors that encodes label, score, boundingbox)
-    You can call image_frame.get_image() to get the visualized results
-    """
-    def __init__(self, label_map, thresh = 0.3, encoding = "png",
-                 bigdl_type="float"):
+class PaddingParam(JavaValue):
+
+    def __init__(self, bigdl_type="float"):
         self.value = callBigDlFunc(
-            bigdl_type, JavaValue.jvm_class_constructor(self), label_map, thresh, encoding)
-        
-def read_pascal_label_map():
-    """
-    load pascal label map
-    """
-    return callBigDlFunc("float", "readPascalLabelMap")
+            bigdl_type, JavaValue.jvm_class_constructor(self))
 
-def read_coco_label_map():
-    """
-    load coco label map
-    """
-    return callBigDlFunc("float", "readCocoLabelMap")
 
-class ImInfo(FeatureTransformer):
-    """
-    Generate imInfo
-    imInfo is a tensor that contains height, width, scaleInHeight, scaleInWidth
-    """
-    def __init__(self, bigdl_type="float"):
-        super(ImInfo, self).__init__(bigdl_type)
-
-class DecodeOutput(FeatureTransformer):
-    """
-    Decode the detection output
-    The output of the model prediction is a 1-dim tensor
-    The first element of tensor is the number(K) of objects detected,
-    followed by [label score x1 y1 x2 y2] X K
-    For example, if there are 2 detected objects, then K = 2, the tensor may
-    looks like
-    ```2, 1, 0.5, 10, 20, 50, 80, 3, 0.3, 20, 10, 40, 70```
-    After decoding, it returns a 2-dim tensor, each row represents a detected object
-    ```
-    1, 0.5, 10, 20, 50, 80
-    3, 0.3, 20, 10, 40, 70
-    ```
-    """
-    def __init__(self, bigdl_type="float"):
-        super(DecodeOutput, self).__init__(bigdl_type)
-
-class ScaleDetection(FeatureTransformer):
-    """
-    If the detection is normalized, for example, ssd detected bounding box is in [0, 1],
-    need to scale the bbox according to the original image size.
-    Note that in this transformer, the tensor from model output will be decoded,
-    just like `DecodeOutput`
-    """
-    def __init__(self, bigdl_type="float"):
-        super(ScaleDetection, self).__init__(bigdl_type)
-
-class LabelOutput(FeatureTransformer):
-    """
-    Label Output tensor with corresponding real labels on specific dataset
-    clses is the key in ImgFeature where you want to store all sorted mapped labels
-    probs is the key in ImgFeature where you want to store all the sorted probilities for each class
-    """
-    def __init__(self, label_map, clses, probs, bigdl_type="float"):
-        self.value = callBigDlFunc(
-            bigdl_type, JavaValue.jvm_class_constructor(self), label_map, clses, probs)
         

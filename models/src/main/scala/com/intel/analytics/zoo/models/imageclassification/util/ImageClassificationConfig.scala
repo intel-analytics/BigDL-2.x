@@ -19,11 +19,13 @@ package com.intel.analytics.zoo.models.imageclassification.util
 import java.net.URL
 
 import com.intel.analytics.bigdl.numeric.NumericFloat
+import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric
 import com.intel.analytics.bigdl.transform.vision.image.{FeatureTransformer, ImageFrameToSample, MatToTensor}
 import com.intel.analytics.bigdl.transform.vision.image.augmentation.{CenterCrop, ChannelNormalize, PixelNormalizer, Resize}
 import com.intel.analytics.zoo.models.Configure
 
 import scala.io.Source
+import scala.reflect.ClassTag
 
 object ImageClassificationConfig {
   val models = Set("alexnet",
@@ -42,9 +44,10 @@ object ImageClassificationConfig {
     "squeezenet-quantize",
     "mobilenet")
 
-  def apply(model: String, dataset: String, version: String): Configure = {
+  def apply[T: ClassTag](model: String, dataset: String, version: String)
+    (implicit ev: TensorNumeric[T]): Configure[T] = {
     dataset match {
-      case "imagenet" => ImagenetConfig(model, dataset, version)
+      case "imagenet" => ImagenetConfig[T](model, dataset, version)
       case _ => throw new RuntimeException(s"dataset $dataset not supported for now")
     }
   }
@@ -58,7 +61,8 @@ object ImagenetConfig {
 
   val imagenetLabelMap = LabelReader("IMAGENET")
 
-  def apply(model: String, dataset: String, version: String): Configure = {
+  def apply[T: ClassTag](model: String, dataset: String, version: String)
+    (implicit ev: TensorNumeric[T]): Configure[T] = {
     model match {
       case "alexnet" |
             "alexnet-quantize" => Configure(preProcessor = alexnetPreprocessor,

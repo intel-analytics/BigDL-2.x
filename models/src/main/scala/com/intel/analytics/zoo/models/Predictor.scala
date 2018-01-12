@@ -14,16 +14,21 @@
  * limitations under the License.
  */
 
-package com.intel.analytics.zoo.models
+package com.intel.analytics.bigdl.zoo.models
 
+import com.intel.analytics.bigdl._
+import com.intel.analytics.bigdl.dataset.{SampleToMiniBatch, _}
+import com.intel.analytics.bigdl.models.utils.ModelBroadcast
 import com.intel.analytics.bigdl.nn.SpatialShareConvolution
 
 import scala.reflect.ClassTag
 import com.intel.analytics.bigdl.nn.abstractnn.{AbstractModule, Activity}
+import com.intel.analytics.bigdl.tensor.Tensor
 import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric
 import com.intel.analytics.bigdl.transform.vision.image._
-import com.intel.analytics.zoo.models.imageclassification.util.ImageClassificationConfig
-import com.intel.analytics.zoo.models.objectdetection.utils.ObjectDetectionConfig
+import com.intel.analytics.bigdl.utils.Util._
+import com.intel.analytics.bigdl.utils.{Engine, MklBlas, Util}
+import com.intel.analytics.zoo.models.Configure
 
 /**
  * Predictor for BigDL models
@@ -35,11 +40,13 @@ import com.intel.analytics.zoo.models.objectdetection.utils.ObjectDetectionConfi
  */
 class Predictor[T: ClassTag](
   model: AbstractModule[Activity, Activity, T],
-  var configure: Configure = null
+  var configure: Configure[T] = null
 )(implicit ev: TensorNumeric[T]) {
   SpatialShareConvolution.shareConvolution[T](model)
   configure = if (null == configure) Configure.parse(model.getName()) else configure
 
+  private var localPredictor: LocalPredictor[T] = null
+  private var distributedPredictor: DistributedPredictor[T] = null
   /**
    * Model prediction for BigDL model zoo.
    *
@@ -60,9 +67,24 @@ class Predictor[T: ClassTag](
     } else {
       imageFrame
     }
+    val predictor = data match {
+      case distributedImageFrame: DistributedImageFrame =>
+        if (null == distributedPredictor) distributedPredictor =
+          new DistributedPredictor[T](model,
+            configure.featurePaddingParam,
+            configure.batchPerPartition)
+        distributedPredictor
+      case localImageFrame: LocalImageFrame =>
+        if (null == localPredictor) localPredictor =
+          new LocalPredictor[T](model,
+            configure.featurePaddingParam,
+            configure.batchPerPartition)
+        localPredictor
+    }
 
-    val result = model.predictImage(data, outputLayer,
-      shareBuffer, configure.batchPerPartition, predictKey)
+
+    val result = predictor.predictImage(
+      data, outputLayer, shareBuffer, predictKey)
 
     // apply post process if defined
     if (null != configure.postProcessor) configure.postProcessor(result) else result
@@ -72,49 +94,170 @@ class Predictor[T: ClassTag](
 object Predictor {
   def apply[T: ClassTag](
     model: AbstractModule[Activity, Activity, T],
-    configure: Configure = null)(implicit ev: TensorNumeric[T]): Predictor[T] =
+    configure: Configure[T] = null)(implicit ev: TensorNumeric[T]): Predictor[T] =
     new Predictor(model, configure)
+
+
+  private[models] def predictImageBatch[T: ClassTag](
+    localModel: Module[T], imageFeatures: Seq[ImageFeature],
+    outputLayer: String, predictKey: String,
+    localToBatch: Transformer[Sample[T], MiniBatch[T]],
+    shareBuffer: Boolean)(implicit ev: TensorNumeric[T]): Seq[ImageFeature] = {
+    val validImageFeatures = imageFeatures.filter(_.isValid)
+    val samples = validImageFeatures.map(x => x[Sample[T]](ImageFeature.sample))
+    val batchOut = predictSamples(localModel, samples, localToBatch, shareBuffer, outputLayer)
+    validImageFeatures.toIterator.zip(batchOut).foreach(tuple => {
+      tuple._1(predictKey) = tuple._2
+    })
+    imageFeatures
+  }
+
+  private[models] def predictSamples[T: ClassTag]
+  (localModel: Module[T], samples: Seq[Sample[T]],
+    localToBatch: Transformer[Sample[T], MiniBatch[T]],
+    shareBuffer: Boolean,
+    outputLayer: String = null)(implicit ev: TensorNumeric[T]): Iterator[Tensor[T]] = {
+    localToBatch(samples.toIterator).flatMap(batch => {
+      localModel.forward(batch.getInput())
+      val output = if (outputLayer == null) {
+        localModel.output.toTensor[T]
+      } else {
+        localModel(outputLayer).get.output.toTensor[T]
+      }
+      val result = if (shareBuffer) output else output.clone()
+      if (result.dim() == 1) {
+        Array(result)
+      } else {
+        result.split(1)
+      }
+    })
+  }
+}
+
+trait ImagePredictor extends Serializable {
+  def predictImage(imageFrame: ImageFrame,
+    outputLayer: String = null,
+    shareBuffer: Boolean = false,
+    predictKey: String = ImageFeature.predict): ImageFrame
 }
 
 /**
- * predictor configure
- * @param preProcessor preprocessor of ImageFrame before model inference
- * @param postProcessor postprocessor of ImageFrame after model inference
- * @param batchPerPartition batch size per partition
- * @param labelMap label mapping
+ * Predictor for distributed data
+ *
+ * @param model BigDL model
+ * @param featurePaddingParam featurePaddingParam if the inputs have variant size
+ * @param batchPerPartition batch size per partition, default is 4
  */
-case class Configure(
-  preProcessor: FeatureTransformer = null,
-  postProcessor: FeatureTransformer = null,
-  batchPerPartition: Int = 4,
-  labelMap: Map[Int, String] = null) {
+class DistributedPredictor[T: ClassTag] private[models](
+  model: Module[T],
+  featurePaddingParam: Option[PaddingParam[T]] = None,
+  batchPerPartition: Int = 4)
+  (implicit ev: TensorNumeric[T]) extends ImagePredictor {
+  /**
+   * model predict DistributedImageFrame, return imageFrame with predicted tensor
+   *
+   * @param imageFrame imageFrame that contains images
+   * @param outputLayer if outputLayer is not null, the output of layer that matches
+   * outputLayer will be used as predicted output
+   * @param shareBuffer whether to share same memory for each batch predict results
+   * @param predictKey key to store predicted result
+   */
+  def predictImage(imageFrame: ImageFrame,
+    outputLayer: String = null,
+    shareBuffer: Boolean = false,
+    predictKey: String = ImageFeature.predict): ImageFrame = {
+    val rdd = imageFrame.asInstanceOf[DistributedImageFrame].rdd
+    val modelBroad = ModelBroadcast[T]().broadcast(rdd.sparkContext, model.evaluate())
+    val partitionNum = rdd.partitions.length
+    val toBatchBroad = rdd.sparkContext.broadcast(SampleToMiniBatch(
+      batchSize = partitionNum * batchPerPartition,
+      partitionNum = Some(partitionNum),
+      featurePaddingParam = featurePaddingParam), shareBuffer)
+    val result = rdd.mapPartitions(partition => {
+      val localModel = modelBroad.value()
+      val localToBatch = toBatchBroad.value._1.cloneTransformer()
+
+      partition.grouped(batchPerPartition).flatMap(imageFeatures => {
+        Predictor.predictImageBatch[T](localModel, imageFeatures, outputLayer, predictKey,
+          localToBatch, shareBuffer)
+      })
+    })
+    ImageFrame.rdd(result)
+  }
 }
 
-object Configure {
+/**
+ * Predictor for local data
+ *
+ * @param model BigDL model
+ * @param featurePaddingParam featurePaddingParam if the inputs have variant size
+ * @param batchPerCore batch size per core, default is 4
+ */
+class LocalPredictor[T: ClassTag] private[models](model: Module[T],
+  featurePaddingParam: Option[PaddingParam[T]] = None,
+  batchPerCore: Int = 4)
+  (implicit ev: TensorNumeric[T]) extends ImagePredictor {
+  private val coreNumber = Engine.coreNumber()
 
-  val splitter = "_"
+  private val subModelNumber = Engine.getEngineType match {
+    case MklBlas => coreNumber
+    case _ => throw new IllegalArgumentException
+  }
+
+  private val workingModels = {
+    val weightsBias = Util.getAndClearWeightBias(model.parameters())
+    val models = (1 to subModelNumber).map(_ => {
+      val submodel = model.cloneModule().evaluate()
+      putWeightBias(weightsBias, submodel)
+      submodel
+    }).toArray
+    Util.putWeightBias(weightsBias, model)
+    Util.initGradWeightBias(weightsBias, model)
+    models
+  }
+
+  val workingToBatch = {
+    val toBatch = SampleToMiniBatch[T](
+      batchSize = batchPerCore * subModelNumber,
+      partitionNum = Some(subModelNumber),
+      featurePaddingParam = featurePaddingParam)
+    (1 to subModelNumber).map(_ => {
+      toBatch.cloneTransformer()
+    }).toArray
+  }
+
 
   /**
-   * Get config for each model
+   * local model predict images, return imageFrame with predicted tensor
    *
-   * @param tag In 'publisher_model_dataset_version' format,
-   * publisher is required to be bigdl in this model zoo
-   * @return
+   * @param imageFrame imageFrame that contains images
+   * @param outputLayer if outputLayer is not null, the output of layer that matches
+   * outputLayer will be used as predicted output
+   * @param shareBuffer whether to share same memory for each batch predict results
+   * @param predictKey key to store predicted result
    */
-  def parse(tag: String): Configure = {
-    val splits = tag.split(splitter)
-    require(splits.length >= 4, s"tag ${tag}" +
-      s" needs at least 4 elements, publisher, model, dataset, version")
-    require(splits(0) == "bigdl", "the model publisher needs to be bigdl")
-    val model = splits(1)
-    val dataset = splits(2)
-    val version = splits(3)
-    model.toLowerCase() match {
-      case obModel if ObjectDetectionConfig.models contains obModel =>
-        ObjectDetectionConfig(obModel, dataset, version)
-      case imcModel if ImageClassificationConfig.models contains imcModel =>
-        ImageClassificationConfig(imcModel, dataset, version)
-      case _ => throw new Exception(s"$model is not defined in BigDL model zoo")
-    }
+  def predictImage(imageFrame: ImageFrame,
+    outputLayer: String = null,
+    shareBuffer: Boolean = false,
+    predictKey: String = ImageFeature.predict): ImageFrame = {
+
+    val dataIter = imageFrame.toLocal().array.grouped(batchPerCore * subModelNumber)
+
+    val result = dataIter.map(batch => {
+      val groupedImages = batch.grouped(batchPerCore).toArray
+      Engine.default.invokeAndWait(
+        groupedImages.indices.map(b =>
+          () => {
+            val imageFeatures = groupedImages(b)
+            val model = workingModels(b)
+            val toBatch = workingToBatch(b)
+            Predictor.predictImageBatch[T](model, imageFeatures, outputLayer, predictKey,
+              toBatch, shareBuffer)
+          }
+        )
+      ).flatten
+    }).flatten
+
+    ImageFrame.array(result.toArray)
   }
 }

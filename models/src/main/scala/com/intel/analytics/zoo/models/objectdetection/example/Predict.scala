@@ -20,8 +20,8 @@ import java.nio.file.Paths
 
 import com.intel.analytics.bigdl.nn.Module
 import com.intel.analytics.bigdl.utils.{Engine, File}
-import com.intel.analytics.bigdl.transform.vision.image.{ImageFrame}
-import com.intel.analytics.zoo.models.Predictor
+import com.intel.analytics.bigdl.transform.vision.image.ImageFrame
+import com.intel.analytics.bigdl.zoo.models.Predictor
 import com.intel.analytics.zoo.models.objectdetection.utils.Visualizer
 import org.apache.log4j.{Level, Logger}
 import org.apache.spark.SparkContext

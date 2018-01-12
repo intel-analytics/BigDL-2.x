@@ -16,11 +16,15 @@
 
 package com.intel.analytics.zoo.models.objectdetection.utils
 
+import com.intel.analytics.bigdl.dataset.PaddingParam
 import com.intel.analytics.bigdl.transform.vision.image.augmentation.{AspectScale, ChannelNormalize, Resize}
 import com.intel.analytics.bigdl.transform.vision.image._
 import com.intel.analytics.zoo.models.objectdetection.utils.Dataset.{Coco, Pascal}
 import com.intel.analytics.bigdl.numeric.NumericFloat
+import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric
 import com.intel.analytics.zoo.models.Configure
+
+import scala.reflect.ClassTag
 
 object ObjectDetectionConfig {
 
@@ -38,7 +42,8 @@ object ObjectDetectionConfig {
     "frcnn-pvanet-compress",
     "frcnn-vgg16-compress-quantize")
 
-  def apply(model: String, dataset: String, version: String): Configure = {
+  def apply[T: ClassTag](model: String, dataset: String, version: String)
+    (implicit ev: TensorNumeric[T]): Configure[T] = {
     val labelMap = LabelReader(dataset)
     model match {
       case "ssd-vgg16-300x300" |
@@ -65,7 +70,8 @@ object ObjectDetectionConfig {
         Configure(ObjectDetectionConfig.preprocessFrcnnVgg(dataset, version),
           DecodeOutput(),
           batchPerPartition = 1,
-          labelMap)
+          labelMap,
+          Some(PaddingParam()))
       case "frcnn-pvanet" |
            "frcnn-pvanet-quantize" |
            "frcnn-pvanet-compress" |
@@ -73,7 +79,8 @@ object ObjectDetectionConfig {
         Configure(ObjectDetectionConfig.preprocessFrcnnPvanet(dataset, version),
           DecodeOutput(),
           batchPerPartition = 1,
-          labelMap)
+          labelMap,
+          Some(PaddingParam()))
     }
   }
 

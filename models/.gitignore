@@ -33,3 +33,5 @@ nohup.out
 *.log
 *.un~
 .ipynb_checkpoints/
+dist*/
+*.zip

@@ -19,7 +19,7 @@ package com.intel.analytics.zoo.models.imageclassification.example
 import com.intel.analytics.bigdl.nn.Module
 import com.intel.analytics.bigdl.transform.vision.image.ImageFrame
 import com.intel.analytics.bigdl.utils.Engine
-import com.intel.analytics.zoo.models.Predictor
+import com.intel.analytics.bigdl.zoo.models.Predictor
 import com.intel.analytics.zoo.models.imageclassification.util.{Consts, LabelOutput}
 import org.apache.log4j.{Level, Logger}
 import org.apache.spark.SparkContext
