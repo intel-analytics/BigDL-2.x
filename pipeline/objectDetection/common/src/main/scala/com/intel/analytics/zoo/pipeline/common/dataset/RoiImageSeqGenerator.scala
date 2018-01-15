@@ -19,7 +19,8 @@ package com.intel.analytics.zoo.pipeline.common.dataset
 import java.io.File
 import java.nio.file.Paths
 
-import com.intel.analytics.zoo.pipeline.common.dataset.roiimage.{RoiByteImageToSeq, RoiImagePath}
+import com.intel.analytics.zoo.pipeline.common.IOUtils
+import com.intel.analytics.zoo.pipeline.common.dataset.roiimage.RoiByteImageToSeq
 import scopt.OptionParser
 
 object RoiImageSeqGenerator {
@@ -56,16 +57,16 @@ object RoiImageSeqGenerator {
 
   def main(args: Array[String]): Unit = {
     parser.parse(args, RoiImageSeqGeneratorParams()).map(param => {
-      val roidbs = if (param.imageSet.isDefined) {
-        Imdb.getImdb(param.imageSet.get, param.folder).getRoidb()
+      val roidbs = if (param.imageSet.isEmpty) {
+        // no label
+        require(new File(param.folder).exists(), s"${param.folder} not exists!")
+        IOUtils.localImagePaths(param.folder)
       } else {
-        val file = new File(param.folder)
-        require(file.exists(), s"$file not exists!")
-        file.listFiles().map(f => RoiImagePath(f.getAbsolutePath))
+        Imdb.getImdb(param.imageSet.get, param.folder).getRoidb(false)
       }
 
-      val total = roidbs.length
-      val iter = Imdb.data(roidbs)
+      val total = roidbs.array
+      val iter = Imdb.data(roidbs.array)
 
       (0 until param.parallel).map(tid => {
         val workingThread = new Thread(new Runnable {

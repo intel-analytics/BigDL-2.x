@@ -25,7 +25,7 @@ import com.intel.analytics.bigdl.pipeline.fasterrcnn.Utils
 import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric.NumericFloat
 import com.intel.analytics.bigdl.utils.{Engine, LoggerFilter}
 import com.intel.analytics.bigdl.visualization.{TrainSummary, ValidationSummary}
-import com.intel.analytics.zoo.pipeline.common.dataset.FrcnnMiniBatch
+import com.intel.analytics.zoo.pipeline.common.dataset.{FrcnnMiniBatch, PascalVoc}
 import com.intel.analytics.zoo.pipeline.common.{IOUtils, MeanAveragePrecision}
 import com.intel.analytics.zoo.pipeline.common.nn.FrcnnCriterion
 import com.intel.analytics.zoo.pipeline.fasterrcnn.model.{VggFRcnn, _}
@@ -225,7 +225,8 @@ object Train {
       .setValidation(Trigger.severalIteration(param.checkIter),
         valSet.asInstanceOf[DataSet[MiniBatch[Float]]],
         Array(new MeanAveragePrecision(use07metric = true, normalized = false,
-          nClass = param.classNumber)))
+          // todo: update it with user-defined
+          classes = PascalVoc.classes)))
       .setEndWhen(endTrigger)
       .optimize()
   }

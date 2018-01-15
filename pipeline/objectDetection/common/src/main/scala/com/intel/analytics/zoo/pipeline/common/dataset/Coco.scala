@@ -19,8 +19,8 @@ package com.intel.analytics.zoo.pipeline.common.dataset
 import java.io.File
 import java.nio.file.Paths
 
-import com.intel.analytics.zoo.pipeline.common.dataset.roiimage.RoiImagePath
 import com.intel.analytics.bigdl.tensor.{Storage, Tensor}
+import com.intel.analytics.bigdl.transform.vision.image.{ImageFeature, ImageFrame, LocalImageFrame}
 import com.intel.analytics.bigdl.transform.vision.image.label.roi.RoiLabel
 import org.apache.commons.io.FileUtils
 import org.apache.log4j.Logger
@@ -30,17 +30,18 @@ import scala.io.Source
 import scala.util.parsing.json.JSON
 
 class Coco(val imageSet: String, devkitPath: String) extends Imdb {
-  override val classes: Array[String] = Coco.classes
 
-  def loadRoidb: Array[RoiImagePath] = {
+  override def getRoidb(readImage: Boolean = true): LocalImageFrame = {
     val imageSetFile = Paths.get(devkitPath, "ImageSets", s"$imageSet.txt").toFile
     assert(imageSetFile.exists(), "Path does not exist " + imageSetFile.getAbsolutePath)
-    roidb = Source.fromFile(imageSetFile).getLines()
-      .map(line => line.trim.split("\\s")).toArray.map(x => {
-      RoiImagePath(devkitPath + "/" + x(0),
-        Coco.loadAnnotation(devkitPath + "/" + x(1)))
-    })
-    roidb
+    val array = Source.fromFile(imageSetFile).getLines()
+      .map(line => line.trim.split("\\s")).map(x => {
+      val imagePath = devkitPath + "/" + x(0)
+      val image = if (readImage) loadImage(imagePath) else null
+      ImageFeature(image, Coco.loadAnnotation(devkitPath + "/" + x(1)), imagePath)
+    }).toArray
+
+    ImageFrame.array(array)
   }
 }
 

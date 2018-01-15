@@ -16,15 +16,16 @@
 
 package com.intel.analytics.zoo.pipeline.common.dataset
 
+import com.intel.analytics.bigdl.transform.vision.image.label.roi.RoiLabel
 import org.scalatest.{FlatSpec, Matchers}
 
 class PascalVocSpec extends FlatSpec with Matchers {
   val resource = getClass().getClassLoader().getResource("VOCdevkit")
   "pascal voc load images and annotations" should "work properly" in {
     val voc = Imdb.getImdb("voc_2007_testcode", resource.getPath)
-    val roidb = voc.getRoidb()
+    val roidb = voc.getRoidb().array
     roidb.length should be(2)
-    roidb(1).imagePath should be(resource.getPath + "/VOC2007/JPEGImages/000055.jpg")
+    roidb(1).uri() should be(resource.getPath + "/VOC2007/JPEGImages/000055.jpg")
 
     val expectedClasses =
       "15.0\t16.0\t16.0\t16.0\t\n0.0\t0.0\t1.0\t0.0".split("\t").map(x => x.trim.toFloat)
@@ -33,8 +34,8 @@ class PascalVocSpec extends FlatSpec with Matchers {
       "465.0\t273.0\t483.0\t324.0\t436.0\t279.0\t456.0\t327.0\t")
         .split("\t").map(x => x.trim.toFloat)
 
-    roidb(1).target.size() should be(4)
-    roidb(1).target.classes.storage().array() should equal(expectedClasses)
-    roidb(1).target.bboxes.storage().array() should equal(expectedBoxes)
+    roidb(1).getLabel[RoiLabel].size() should be(4)
+    roidb(1).getLabel[RoiLabel].classes.storage().array() should equal(expectedClasses)
+    roidb(1).getLabel[RoiLabel].bboxes.storage().array() should equal(expectedBoxes)
   }
 }

@@ -18,20 +18,20 @@ package com.intel.analytics.zoo.pipeline.common
 
 import com.intel.analytics.bigdl.nn.abstractnn.Activity
 import com.intel.analytics.bigdl.optim.{ValidationMethod, ValidationResult}
-import com.intel.analytics.zoo.pipeline.common.dataset.PascalVoc._
 import com.intel.analytics.bigdl.tensor.Tensor
 import org.apache.commons.lang3.SerializationUtils
 
-class MeanAveragePrecision(use07metric: Boolean, normalized: Boolean = true, nClass: Int)
+class MeanAveragePrecision(use07metric: Boolean, normalized: Boolean = true, classes: Array[String])
   extends ValidationMethod[Float] {
   override def apply(output: Activity, target: Activity): ValidationResult = {
+    val nClass = classes.length
     val out = BboxUtil.decodeBatchOutput(output.toTensor, nClass)
     val gt = target.toTensor[Float]
     var i = 0
-    val result = new Array[(Int, Array[(Float, Int, Int)])](classes.length)
+    val result = new Array[(Int, Array[(Float, Int, Int)])](nClass)
     val gtAreas = Tensor[Float](gt.size(1))
     BboxUtil.getAreas(gt, gtAreas, 4, normalized)
-    while (i < classes.length) {
+    while (i < nClass) {
       val cls = classes(i)
       if (cls != "__background__") {
         result(i) = EvalUtil.evaluateBatch(out, gt, gtAreas, i,
@@ -41,7 +41,7 @@ class MeanAveragePrecision(use07metric: Boolean, normalized: Boolean = true, nCl
       }
       i += 1
     }
-    new DetectionResult(result, use07metric)
+    new DetectionResult(result, use07metric, classes)
   }
 
   override protected def format(): String = "PascalMeanAveragePrecision"
@@ -55,11 +55,11 @@ class MeanAveragePrecision(use07metric: Boolean, normalized: Boolean = true, nCl
  * (count, (score, tp, fp))
  */
 class DetectionResult(private var results: Array[(Int, Array[(Float, Int, Int)])],
-  use07metric: Boolean)
+  use07metric: Boolean, classes: Array[String])
   extends ValidationResult {
 
   override def result(): (Float, Int) = {
-    val output = PascalVocEvaluator.meanAveragePrecision(results, use07metric)
+    val output = PascalVocEvaluator.meanAveragePrecision(results, use07metric, classes)
     val meanAveragePrecision = output.map(_._2).sum / output.length
     (meanAveragePrecision, 1)
   }
@@ -74,7 +74,8 @@ class DetectionResult(private var results: Array[(Int, Array[(Float, Int, Int)])
   }
 
   override protected def format(): String = {
-    val output = PascalVocEvaluator.meanAveragePrecision(results, use07metric)
+    val output = PascalVocEvaluator.meanAveragePrecision(results, use07metric,
+      classes: Array[String])
     val meanAveragePrecision = output.map(_._2).sum / output.length
     var info = ""
     info += "~~~~~~~~\n"

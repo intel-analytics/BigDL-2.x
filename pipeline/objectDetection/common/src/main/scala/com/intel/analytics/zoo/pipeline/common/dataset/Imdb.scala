@@ -16,61 +16,55 @@
 
 package com.intel.analytics.zoo.pipeline.common.dataset
 
+import java.io.File
 import java.util.concurrent.atomic.AtomicInteger
 
-import com.intel.analytics.zoo.pipeline.common.dataset.roiimage.RoiImagePath
+import com.intel.analytics.bigdl.transform.vision.image.{ImageFeature, LocalImageFrame}
+import org.apache.commons.io.FileUtils
 
-abstract class Imdb(val cacheFolder: String = "data/cache") {
-  val classes: Array[String]
-  var roidb: Array[RoiImagePath] = _
+trait Imdb {
+  def getRoidb(readImage: Boolean = true): LocalImageFrame
 
-  def getRoidb(): Array[RoiImagePath] = {
-    if (roidb != null && roidb.length > 0) return roidb
-    roidb = loadRoidb
-    roidb
+  def loadImage(imagePath: String): Array[Byte] = {
+    FileUtils.readFileToByteArray(new File(imagePath))
   }
-
-  protected def loadRoidb: Array[RoiImagePath]
-
-  def numClasses: Int = classes.length
-
 }
 
 
 object Imdb {
   /**
    * Get an imdb (image database) by name
+   *
    * @param name
    * @param devkitPath
    * @return
    */
   def getImdb(name: String, devkitPath: String): Imdb = {
     val items = name.split("_")
-    if (items.length < 2) throw new Exception("dataset name error")
     if (items(0) == "voc") {
       new PascalVoc(items(1), items(2), devkitPath)
     } else if (items(0) == "coco") {
       new Coco(items(1), devkitPath)
     } else {
-      throw new UnsupportedOperationException("unsupported dataset")
+      new CustomizedDataSet(name, devkitPath)
     }
   }
 
 
-  def data(roidb: Array[RoiImagePath]): Iterator[RoiImagePath] = {
-    new Iterator[RoiImagePath] {
+  def data(roidb: Array[ImageFeature]): Iterator[ImageFeature] = {
+    new Iterator[ImageFeature] {
       private val index = new AtomicInteger()
 
       override def hasNext: Boolean = {
         index.get() < roidb.length
       }
 
-      override def next(): RoiImagePath = {
+      override def next(): ImageFeature = {
         val curIndex = index.getAndIncrement()
         if (curIndex < roidb.length) {
           roidb(curIndex)
         } else {
-          null.asInstanceOf[RoiImagePath]
+          null.asInstanceOf[ImageFeature]
         }
       }
     }

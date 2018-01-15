@@ -18,11 +18,15 @@ package com.intel.analytics.zoo.pipeline.ssd.model
 
 import java.io.File
 
+import com.intel.analytics.bigdl.dataset.MiniBatch
 import com.intel.analytics.bigdl.nn.Utils
 import com.intel.analytics.bigdl.tensor.Tensor
+import com.intel.analytics.bigdl.utils.Engine
 import com.intel.analytics.bigdl.utils.RandomGenerator._
 import com.intel.analytics.zoo.pipeline.common.ModuleUtil
 import com.intel.analytics.zoo.pipeline.common.caffe.{CaffeLoader, SSDCaffeLoader}
+import com.intel.analytics.bigdl.pipeline.ssd.{Utils => SSDUtils}
+import org.apache.spark.SparkContext
 import org.scalatest.{FlatSpec, Matchers}
 
 class SSDSpec extends FlatSpec with Matchers {
@@ -164,5 +168,20 @@ class SSDSpec extends FlatSpec with Matchers {
     })
     ssdcaffe.output should be(model.output)
   }
+
+  "ssd with class2" should "work properly" in {
+    val conf = Engine.createSparkConf().setAppName("test")
+      .set("spark.task.maxFailures", "1").setMaster("local[2]")
+    val sc = new SparkContext(conf)
+    Engine.init
+    val trainSet = SSDUtils.loadTrainSet("/home/jxy/data/messi/seq/test",
+      sc, 300, 2)
+    val ssd = SSDVgg(2, 300)
+    val input = trainSet.toDistributed()
+      .data(false).first().asInstanceOf[MiniBatch[Float]].getInput().toTensor[Float]
+    println(input.size().mkString("x"))
+    ssd.forward(input)
+  }
+
 
 }

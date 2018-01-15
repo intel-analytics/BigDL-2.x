@@ -24,9 +24,9 @@ import com.intel.analytics.bigdl.numeric.NumericFloat
 import com.intel.analytics.bigdl.optim.ValidationMethod
 import com.intel.analytics.bigdl.transform.vision.image.augmentation._
 import com.intel.analytics.zoo.pipeline.common.dataset.{FrcnnMiniBatch, FrcnnToBatch}
-import com.intel.analytics.zoo.pipeline.common.dataset.roiimage.{RecordToFeature, SSDByteRecord}
 import com.intel.analytics.zoo.pipeline.fasterrcnn.model.{PostProcessParam, PreProcessParam}
-import com.intel.analytics.bigdl.transform.vision.image.{BytesToMat, MatToFloats}
+import com.intel.analytics.bigdl.transform.vision.image._
+import com.intel.analytics.zoo.pipeline.common.dataset.roiimage.{ByteRecord, RecordToFeature}
 import org.apache.log4j.Logger
 import org.apache.spark.rdd.RDD
 
@@ -36,12 +36,14 @@ class Validator(model: Module[Float],
   postPrecessParam: PostProcessParam,
   evaluator: ValidationMethod[Float],
   shareMemory: Boolean = true) {
-  val preProcessor = RecordToFeature(true) ->
-    BytesToMat() ->
+  val preProcessor = RecordToFeature(true) -> BytesToMat() ->
     AspectScale(preProcessParam.scales(0), preProcessParam.scaleMultipleOf) ->
     ChannelNormalize(preProcessParam.pixelMeanRGB._1,
       preProcessParam.pixelMeanRGB._2,
-      preProcessParam.pixelMeanRGB._3) ->
+      preProcessParam.pixelMeanRGB._3,
+      preProcessParam.norms._1,
+      preProcessParam.norms._2,
+      preProcessParam.norms._3) ->
     MatToFloats(100, 100) ->
     FrcnnToBatch(preProcessParam.batchSize, true, Some(preProcessParam.nPartition))
 
@@ -58,16 +60,16 @@ class Validator(model: Module[Float],
   postprocessor.thresh = postPrecessParam.thresh
 
 
-  def test(rdd: RDD[SSDByteRecord]): Float = {
-    Validator.test(rdd, model, preProcessor, evaluator)
+  def test(imageFrame: RDD[ByteRecord]): Float = {
+    Validator.test(imageFrame, model, preProcessor, evaluator)
   }
 }
 
 object Validator {
   val logger = Logger.getLogger(this.getClass)
 
-  def test(rdd: RDD[SSDByteRecord], model: Module[Float],
-    preProcessor: Transformer[SSDByteRecord, FrcnnMiniBatch],
+  def test(rdd: RDD[ByteRecord], model: Module[Float],
+    preProcessor: Transformer[ByteRecord, FrcnnMiniBatch],
     evaluator: ValidationMethod[Float]): Float = {
     model.evaluate()
     val broadcastModel = ModelBroadcast().broadcast(rdd.sparkContext, model)

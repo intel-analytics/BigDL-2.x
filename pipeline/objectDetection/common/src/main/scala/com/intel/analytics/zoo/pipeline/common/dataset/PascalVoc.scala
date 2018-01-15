@@ -19,8 +19,8 @@ package com.intel.analytics.zoo.pipeline.common.dataset
 import java.io.File
 import java.nio.file.Paths
 
-import com.intel.analytics.zoo.pipeline.common.dataset.roiimage.RoiImagePath
 import com.intel.analytics.bigdl.tensor.{Storage, Tensor}
+import com.intel.analytics.bigdl.transform.vision.image.{ImageFeature, ImageFrame, LocalImageFrame}
 import com.intel.analytics.bigdl.transform.vision.image.label.roi.RoiLabel
 
 import scala.Array._
@@ -34,11 +34,8 @@ import scala.xml.XML
  * @param devkitPath dataset folder
  */
 class PascalVoc(val year: String = "2007", val imageSet: String,
-  devkitPath: String)
-  extends Imdb {
+  devkitPath: String) extends Imdb {
   val name = "voc_" + year + "_" + imageSet
-
-  override val classes = PascalVoc.classes
 
   assert(new File(devkitPath).exists(),
     "VOCdevkit path does not exist: " + devkitPath)
@@ -52,7 +49,7 @@ class PascalVoc(val year: String = "2007", val imageSet: String,
 
   def annotationPath(index: String): String = "Annotations/" + index + ".xml"
 
-  def loadRoidb: Array[RoiImagePath] = {
+  override def getRoidb(readImage: Boolean = true): LocalImageFrame = {
     val list = if (year == "0712") Array("2007", "2012") else Array(year)
     var imdexToPaths = Map[String, (String, String)]()
     list.foreach(y => {
@@ -67,8 +64,12 @@ class PascalVoc(val year: String = "2007", val imageSet: String,
           dataPath + "/" + annotationPath(index)))
       })
     })
-    roidb = imdexToPaths.map(x => RoiImagePath(x._2._1, PascalVoc.loadAnnotation(x._2._2))).toArray
-    roidb
+    val array = imdexToPaths.toIterator.map(x => {
+      val image = if (readImage) loadImage(x._2._1) else null
+      ImageFeature(image,
+        PascalVoc.loadAnnotation(x._2._2, PascalVoc.classToInd), x._2._1)
+    }).toArray
+    ImageFrame.array(array)
   }
 }
 
@@ -84,7 +85,7 @@ object PascalVoc {
 
   val classToInd = (classes zip (Stream from 1).map(_.toFloat)).toMap
 
-  def loadAnnotation(path: String): RoiLabel = {
+  def loadAnnotation(path: String, labelMap: Map[String, Float]): RoiLabel = {
     val xml = XML.loadFile(path)
     val objs = xml \\ "object"
 
@@ -105,9 +106,8 @@ object PascalVoc {
       difficults(ix) = (obj \ "difficult").text.toFloat
       ix += 1
     }
-    val classes = classNames.map(classToInd)
+    val classes = classNames.map(labelMap)
     val gtClasses = Tensor(Storage(classes ++ difficults)).resize(2, classes.length)
     RoiLabel(gtClasses, boxes)
   }
-
 }

@@ -25,6 +25,8 @@ import org.apache.log4j.{Level, Logger}
 import org.apache.spark.SparkContext
 import scopt.OptionParser
 
+import scala.io.Source
+
 object Test {
 
   Logger.getLogger("org").setLevel(Level.ERROR)
@@ -38,13 +40,13 @@ object Test {
     bigdlModel: String = "",
     caffeDefPath: String = "",
     caffeModelPath: String = "",
-    nClass: Int = 21,
+    className: String = "",
     batch: Int = 1,
     nPartition: Int = -1,
     isProtobuf: Boolean = true)
 
-  val testParamParser = new OptionParser[TestParam]("Spark-DL Test") {
-    head("Spark-DL Test")
+  val testParamParser = new OptionParser[TestParam]("BigDL Test") {
+    head("BigDL Test")
     opt[String]('f', "folder")
       .text("where you put the PascolVoc data")
       .action((x, c) => c.copy(folder = x))
@@ -66,9 +68,9 @@ object Test {
     opt[String]("caffeModelPath")
       .text("caffe model path")
       .action((x, c) => c.copy(caffeModelPath = x))
-    opt[Int]("nclass")
-      .text("class number")
-      .action((x, c) => c.copy(nClass = x))
+    opt[String]("class")
+      .text("class file")
+      .action((x, c) => c.copy(className = x))
       .required()
     opt[Int]('b', "batch")
       .text("batch number")
@@ -84,26 +86,24 @@ object Test {
 
   def main(args: Array[String]) {
     testParamParser.parse(args, TestParam()).foreach { params =>
-      val conf = Engine.createSparkConf().setAppName("Spark-DL Faster RCNN Test")
+      val conf = Engine.createSparkConf().setAppName(s"BigDL Faster-RCNN Test ${params.bigdlModel}")
       val sc = new SparkContext(conf)
       Engine.init
 
+      val classes = Source.fromFile(params.className).getLines().toArray
       val evaluator = new MeanAveragePrecision(true, normalized = false,
-        nClass = params.nClass)
+        classes = classes)
       val rdd = IOUtils.loadSeqFiles(params.nPartition, params.folder, sc)
 
-      val model = if (params.isProtobuf) Module.loadCaffe(VggFRcnn(params.nClass,
-        PostProcessParam(0.3f, params.nClass, false, 100, 0.05)),
-        params.caffeDefPath, params.caffeModelPath)
-      else Module.load[Float](params.bigdlModel)
+      val model = Module.loadModule[Float](params.bigdlModel)
 
       val (preParam, postParam) = params.modelType.toLowerCase() match {
         case "vgg16" =>
-          val postParam = PostProcessParam(0.3f, params.nClass, false, 100, 0.05)
+          val postParam = PostProcessParam(0.3f, classes.length, false, 100, 0.05)
           val preParam = PreProcessParam(params.batch, nPartition = params.nPartition)
           (preParam, postParam)
         case "pvanet" =>
-          val postParam = PostProcessParam(0.4f, params.nClass, true, 100, 0.05)
+          val postParam = PostProcessParam(0.4f, classes.length, true, 100, 0.05)
           val preParam = PreProcessParam(params.batch, Array(640), 32,
             nPartition = params.nPartition)
           (preParam, postParam)
@@ -111,7 +111,7 @@ object Test {
           throw new Exception("unsupport network")
       }
       val validator = new Validator(model, preParam, postParam, evaluator)
-      validator.test(rdd._1)
+      validator.test(rdd)
       sc.stop()
     }
   }

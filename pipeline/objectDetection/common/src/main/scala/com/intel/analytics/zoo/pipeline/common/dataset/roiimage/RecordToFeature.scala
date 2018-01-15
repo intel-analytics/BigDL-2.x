@@ -26,13 +26,13 @@ import com.intel.analytics.bigdl.transform.vision.image.label.roi.RoiLabel
 import scala.collection.Iterator
 
 class RecordToFeature(convertLabel: Boolean = false, outKey: String = ImageFeature.bytes)
-  extends Transformer[SSDByteRecord, ImageFeature] {
+  extends Transformer[ByteRecord, ImageFeature] {
   @transient var data: Array[Byte] = _
   @transient var gtClasses: Tensor[Float] = _
   @transient var gtBoxes: Tensor[Float] = _
   val feature = new ImageFeature()
 
-  override def apply(prev: Iterator[SSDByteRecord]): Iterator[ImageFeature] = {
+  override def apply(prev: Iterator[ByteRecord]): Iterator[ImageFeature] = {
     prev.map(record => {
       feature.clear()
       val byteArray = record.data

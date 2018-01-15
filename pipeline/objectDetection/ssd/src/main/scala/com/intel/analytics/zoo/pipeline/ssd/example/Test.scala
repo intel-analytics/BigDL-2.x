@@ -17,8 +17,7 @@
 package com.intel.analytics.zoo.pipeline.ssd.example
 
 import com.intel.analytics.bigdl.nn.Module
-import com.intel.analytics.bigdl.pipeline.ssd.IOUtils
-import com.intel.analytics.zoo.pipeline.common.MeanAveragePrecision
+import com.intel.analytics.zoo.pipeline.common.{IOUtils, MeanAveragePrecision}
 import com.intel.analytics.zoo.pipeline.ssd._
 import com.intel.analytics.bigdl.utils.Engine
 import com.intel.analytics.zoo.pipeline.common.caffe.SSDCaffeLoader
@@ -26,6 +25,8 @@ import com.intel.analytics.zoo.pipeline.ssd.model.PreProcessParam
 import org.apache.log4j.{Level, Logger}
 import org.apache.spark.SparkContext
 import scopt.OptionParser
+
+import scala.io.Source
 
 object Test {
 
@@ -41,7 +42,7 @@ object Test {
     caffeDefPath: Option[String] = None,
     caffeModelPath: Option[String] = None,
     batch: Int = 8,
-    nClass: Int = 0,
+    className: String = "",
     resolution: Int = 300,
     useNormalized: Boolean = false,
     nPartition: Int = 1)
@@ -72,9 +73,9 @@ object Test {
     opt[Int]('b', "batch")
       .text("batch number")
       .action((x, c) => c.copy(batch = x))
-    opt[Int]("nclass")
-      .text("class number")
-      .action((x, c) => c.copy(nClass = x))
+    opt[String]("class")
+      .text("class file")
+      .action((x, c) => c.copy(className = x))
       .required()
     opt[Int]('r', "resolution")
       .text("input resolution 300 or 512")
@@ -95,13 +96,14 @@ object Test {
       val sc = new SparkContext(conf)
       Engine.init
 
+      val classes = Source.fromFile(params.className).getLines().toArray
       val evaluator = new MeanAveragePrecision(true, normalized = params.useNormalized,
-        nClass = params.nClass)
-      val rdd = IOUtils.loadSeqFiles(params.nPartition, params.folder, sc)._1
+        classes = classes)
+      val rdd = IOUtils.loadSeqFiles(params.nPartition, params.folder, sc)
 
       val model = if (params.model.isDefined) {
         // load BigDL model
-        Module.load[Float](params.model.get)
+        Module.loadModule[Float](params.model.get)
       } else if (params.caffeDefPath.isDefined && params.caffeModelPath.isDefined) {
         // load caffe dynamically
         SSDCaffeLoader.loadCaffe(params.caffeDefPath.get, params.caffeModelPath.get)
@@ -109,9 +111,17 @@ object Test {
         throw new IllegalArgumentException(
           s"currently only support loading BigDL model or caffe model")
       }
+      println(s"load model done ${model.getName()}")
 
-      val validator = new Validator(model, PreProcessParam(params.batch, params.resolution,
-        (123f, 117f, 104f), true, params.nPartition), evaluator,
+      val preprocess = if (params.modelType == "mobilenet") {
+        PreProcessParam(params.batch, params.resolution,
+          (127.5f, 127.5f, 127.5f), true, params.nPartition,
+          (1 / 0.007843f, 1 / 0.007843f, 1 / 0.007843f))
+      } else {
+        PreProcessParam(params.batch, params.resolution,
+          (123f, 117f, 104f), true, params.nPartition)
+      }
+      val validator = new Validator(model, preprocess, evaluator,
         useNormalized = params.useNormalized)
 
       validator.test(rdd)
