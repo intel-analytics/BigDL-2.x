@@ -8,7 +8,7 @@ fi
 # Merge BigDL python API and models python API
 BigDL_PYTHON=${BigDL}/lib/bigdl-0.4.0-python-api.zip
 cp ${BigDL_PYTHON} .
-if [-d python]; then
+if [ -d python ]; then
     rm -r python
 fi
 unzip ${BigDL_PYTHON} -d python
