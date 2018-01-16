@@ -22,7 +22,7 @@
         <scalatest.version>2.2.4</scalatest.version>
         <spark.version>2.1.0</spark.version>
         <bigdl.artifactId>bigdl-SPARK_2.1</bigdl.artifactId>
-        <bigdl.version>0.4.0</bigdl.version>
+        <bigdl.version>0.4.0-SNAPSHOT</bigdl.version>
     </properties>
 
     <profiles>

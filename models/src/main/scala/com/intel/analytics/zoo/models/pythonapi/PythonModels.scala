@@ -27,6 +27,7 @@ import com.intel.analytics.bigdl.dataset.PaddingParam
 import com.intel.analytics.bigdl.zoo.models.Predictor
 import com.intel.analytics.zoo.models.imageclassification.util.LabelOutput
 import com.intel.analytics.zoo.models.objectdetection.utils._
+import com.intel.analytics.zoo.models.imageclassification.util.{LabelReader => ImagenetLabelReader}
 
 import scala.collection.JavaConverters._
 import org.apache.log4j.Logger
@@ -86,6 +87,10 @@ class PythonModels[T: ClassTag](implicit ev: TensorNumeric[T]) extends PythonBig
 
   def readCocoLabelMap(): JMap[Int, String] = {
     LabelReader.readCocoLabelMap().asJava
+  }
+
+  def readImagenetLabelMap(): JMap[Int, String] = {
+    ImagenetLabelReader.readImagenetlLabelMap().asJava
   }
 
   def createImInfo(): ImInfo = {
