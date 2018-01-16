@@ -22,7 +22,7 @@
         <scalatest.version>2.2.4</scalatest.version>
         <spark.version>2.1.0</spark.version>
         <bigdl.artifactId>bigdl-SPARK_2.1</bigdl.artifactId>
-        <bigdl.version>0.4.0-SNAPSHOT</bigdl.version>
+        <bigdl.version>0.5.0-SNAPSHOT</bigdl.version>
     </properties>
 
     <profiles>
@@ -144,6 +144,16 @@
             <artifactId>spark-core_${scala.major.version}</artifactId>
             <version>${spark.version}</version>
             <scope>${spark-scope}</scope>
+            <exclusions>
+                <exclusion>
+                    <groupId>org.slf4j</groupId>
+                    <artifactId>slf4j-log4j12</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>log4j</groupId>
+                    <artifactId>log4j</artifactId>
+                </exclusion>
+            </exclusions>
         </dependency>
         <dependency>
             <groupId>org.apache.spark</groupId>
@@ -155,6 +165,12 @@
             <groupId>com.intel.analytics.bigdl</groupId>
             <artifactId>${bigdl.artifactId}</artifactId>
             <version>${bigdl.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.storm</groupId>
+            <artifactId>storm-core</artifactId>
+            <version>1.1.1</version>
+            <scope>compile</scope>
         </dependency>
     </dependencies>
 
