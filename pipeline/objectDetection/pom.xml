@@ -139,6 +139,12 @@
             <version>${spark.version}</version>
             <scope>${spark-scope}</scope>
         </dependency>
+
+        <dependency>
+            <groupId>com.intel.analytics</groupId>
+            <artifactId>models</artifactId>
+            <version>0.1-SNAPSHOT</version>
+        </dependency>
     </dependencies>
 
     <build>
