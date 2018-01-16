@@ -11,12 +11,12 @@ mvn clean package -P all-in-one
 
 Add model jar to `BIGDL_CLASSPATH` and python zip file to `PYTHONPATH`
 
-export DL_PYTHON_HOME=${path_to_analytics-zoo}/models/src/main/python/bigdl/
+export DL_PYTHON_HOME=${path_to_analytics-zoo}/models/target/models-0.1-SNAPSHOT-python-api.zip
 
-export PYTHONPATH=${path_to_bigdl}/dist/lib/bigdl-0.4.0-python-api.zip:$PYTHONPATH:${path_to_bigdl}/dist/conf/spark-bigdl.conf:$DL_PYTHON_HOME/
+export PYTHONPATH=$PYTHONPATH:${path_to_bigdl}/dist/conf/spark-bigdl.conf:$DL_PYTHON_HOME
 
 export BIGDL_CLASSPATH=$(find ${path_to_bigdl}/dist/lib -name "*with-dependencies.jar" | head -n 1)
-export BIGDL_CLASSPATH=$BIGDL_CLASSPATH:${path_to_analytics-zoo}/models/target/models-0.1-SNAPSHOT-jar-with-dependencies.jar
+export BIGDL_CLASSPATH=$BIGDL_CLASSPATH:${path_to_analytics-zoo}/models/target/bigdl-models-0.1-SNAPSHOT-python-api.zip
 
 3. Run the example
 

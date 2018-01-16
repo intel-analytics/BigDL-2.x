@@ -1,4 +1,14 @@
-mvn clean package
+argLen=$#
+if [ $argLen -eq 0 ]; then
+    mvn clean package
+else
+    profile=$1
+    if [ $profile == "all-in-one" ]; then
+    mvn clean package -P $profile
+    else
+    mvn clean package
+    fi
+fi
 # Donwload BigDL python api
 BigDL=dist-spark-2.1.1-scala-2.11.8-all-0.4.0-dist
 if [ ! -d $BigDL ]; then

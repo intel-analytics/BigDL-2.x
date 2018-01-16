@@ -14,8 +14,8 @@
 # limitations under the License.
 #
 import argparse
-from zoo.models import *
-from zoo.imageclassification import *
+from bigdl.zoo.models import *
+from bigdl.zoo.imageclassification import *
 from bigdl.nn.layer import *
 from bigdl.transform.vision.image import *
 
