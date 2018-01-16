@@ -19,7 +19,7 @@ package com.intel.analytics.zoo.pipeline.common
 import com.intel.analytics.bigdl._
 import com.intel.analytics.bigdl.nn.{Module => _, _}
 import com.intel.analytics.bigdl.tensor.Tensor
-import com.intel.analytics.bigdl.utils.{File, Table}
+import com.intel.analytics.bigdl.utils.Table
 import org.apache.log4j.Logger
 
 object ModuleUtil {
@@ -116,23 +116,4 @@ object ModuleUtil {
     }
   }
 
-
-  def loadWeights(model: Module[Float], weights: String): Module[Float] = {
-    val weightMap = File.load[Array[(String, Array[(String, Array[Float])])]](weights).toMap
-
-    val table = model.getParametersTable()
-
-    weightMap.keySet.foreach(key => {
-      val weightTable = table[Table](key)
-      val load = weightMap(key.toString).toMap
-      println(s"load weight for $key")
-      load.keySet.foreach(w => {
-        val dest = weightTable[Tensor[Float]](w)
-        val ori = load(w.toString)
-        require(dest.nElement() == ori.length)
-        System.arraycopy(ori, 0, dest.storage().array(), 0, ori.length)
-      })
-    })
-    model
-  }
 }
