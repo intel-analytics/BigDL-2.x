@@ -25,29 +25,26 @@ import com.intel.analytics.bigdl.transform.vision.image.{ImageFrame, LocalImageF
 import com.intel.analytics.bigdl.utils.Engine
 import com.intel.analytics.bigdl.zoo.models.Predictor
 import com.intel.analytics.zoo.models.Configure
-import com.intel.analytics.zoo.models.imageclassification.example.Predict.logger
 import com.intel.analytics.zoo.models.imageclassification.util.LabelOutput
-import org.apache.log4j.{Level, Logger}
-import org.apache.storm.{Config, LocalCluster}
+import org.apache.storm.{Config, LocalCluster, StormSubmitter}
 import org.apache.storm.spout.SpoutOutputCollector
 import org.apache.storm.task.TopologyContext
 import org.apache.storm.topology.{BasicOutputCollector, OutputFieldsDeclarer, TopologyBuilder}
 import org.apache.storm.topology.base.{BaseBasicBolt, BaseRichSpout}
 import org.apache.storm.tuple.{Fields, Tuple, Values}
+import org.slf4j.{Logger, LoggerFactory}
 import scopt.OptionParser
+
+/**
+ * An example to apply BigDL image classification functionality in Storm streaming
+ */
 
 object PredictStreaming {
 
-  Logger.getLogger("org").setLevel(Level.ERROR)
-  Logger.getLogger("akka").setLevel(Level.ERROR)
-  Logger.getLogger("breeze").setLevel(Level.ERROR)
-  Logger.getLogger("com.intel.analytics.zoo").setLevel(Level.INFO)
-
-  val logger = Logger.getLogger(getClass)
-
   case class TopNClassificationParam(imageFolder: String = "",
                                      model: String = "",
-                                     topN: Int = 5)
+                                     topN: Int = 5,
+                                     localMode: Boolean = true)
 
   val parser = new OptionParser[TopNClassificationParam]("ImageClassification demo") {
     head("Image Classification with BigDL and Storm")
@@ -56,12 +53,16 @@ object PredictStreaming {
       .action((x, c) => c.copy(imageFolder = x))
       .required()
     opt[String]("model")
-      .text("BigDL model")
+      .text("BigDL model path")
       .action((x, c) => c.copy(model = x))
       .required()
     opt[Int]("topN")
       .text("top N number")
       .action((x, c) => c.copy(topN = x))
+      .required()
+    opt[Boolean]("localMode")
+      .text("run in local model or not")
+      .action((x, c) => c.copy(localMode = x))
       .required()
   }
 
@@ -70,6 +71,7 @@ object PredictStreaming {
       val imgFolder = param.imageFolder
       val modelPath = param.model
       val topN = param.topN
+      val localMode = param.localMode
 
       val conf = new Config
 
@@ -86,8 +88,13 @@ object PredictStreaming {
         shuffleGrouping("labelOutput")
       conf.setDebug(true)
       conf.setNumWorkers(4)
-      val cluster = new LocalCluster
-      cluster.submitTopology("PredictStreaming", conf, builder.createTopology)
+      if (localMode) {
+        val cluster = new LocalCluster
+        cluster.submitTopology("PredictStreaming", conf, builder.createTopology)
+      } else {
+        StormSubmitter.submitTopologyWithProgressBar("PredictStreaming", conf,
+          builder.createTopology)
+      }
     }
   }
 }
@@ -169,6 +176,8 @@ class LabelResult(val modelPath: String) extends BaseBasicBolt {
 }
 
 class EchoTopN(val topN: Int) extends BaseBasicBolt {
+
+  val logger = LoggerFactory.getLogger(getClass)
 
   override def execute(tuple: Tuple, basicOutputCollector: BasicOutputCollector): Unit = {
     val images = tuple.getValue(0).asInstanceOf[ImageFrame].toLocal().array
