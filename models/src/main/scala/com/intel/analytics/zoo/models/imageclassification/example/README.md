@@ -36,9 +36,10 @@ Run Storm example with below command
 imageFoler=...  #please set image folder you want to predict on
 modelPath =... #Bigdl model, you could find pre-trained models in [Model Zoo](https://github.com/intel-analytics/analytics-zoo/tree/master/models)
 topN = ... #How many top results you want to get
-
+$localMode=... #if run in local model or not
 storm jar   models-0.1-SNAPSHOT-jar-with-dependencies.jar \
             com.intel.analytics.zoo.models.imageclassification.example.PredictStreaming \
             -f  $imageFoler \
             --model $modelPath\
-             --topN $topN
+            --topN $topN
+            --localMode $localMode 
