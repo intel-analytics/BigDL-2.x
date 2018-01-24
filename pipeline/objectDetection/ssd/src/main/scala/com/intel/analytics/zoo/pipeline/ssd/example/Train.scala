@@ -22,7 +22,7 @@ import com.intel.analytics.bigdl.nn.Module
 import com.intel.analytics.bigdl.optim.{Optimizer, _}
 import com.intel.analytics.bigdl.pipeline.ssd.Utils
 import com.intel.analytics.zoo.pipeline.common.nn.{MultiBoxLoss, MultiBoxLossParam}
-import com.intel.analytics.zoo.pipeline.common.{MeanAveragePrecision, ModuleUtil}
+import com.intel.analytics.zoo.pipeline.common.MeanAveragePrecision
 import com.intel.analytics.zoo.pipeline.common.caffe.CaffeLoader
 import com.intel.analytics.zoo.pipeline.ssd.model.SSDVgg
 import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric.NumericFloat
@@ -168,7 +168,7 @@ object Train {
           case "vgg16" =>
             val model = SSDVgg(classes.length, param.resolution)
             if (param.weights.isDefined) {
-              ModuleUtil.loadWeights(model, param.weights.get)
+              model.loadWeights(param.weights.get)
             } else if (param.caffeDefPath.isDefined && param.caffeModelPath.isDefined) {
               CaffeLoader.load[Float](model,
                 param.caffeDefPath.get, param.caffeModelPath.get, matchAll = false)
