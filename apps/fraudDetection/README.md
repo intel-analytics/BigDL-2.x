@@ -16,8 +16,9 @@ pip install https://dist.apache.org/repos/dist/dev/incubator/toree/0.2.0/snapsho
 
 2. Build BigDL jar file or download the pre-built version from https://bigdl-project.github.io/master/#release-download/ 
 
-3. To support the training for imbalanced data set in fraud detection, some Transformers and algorithms are developed in 
-https://github.com/intel-analytics/analytics-zoo/tree/master/pipeline/fraudDetection.
+3. To support the training for imbalanced data set in fraud detection, some Transformers and algorithms are developed in source folder,
+https://github.com/intel-analytics/analytics-zoo/tree/master/pipeline/fraudDetection. We provided a pre-built jar file in this folder. Feel
+free to go to the source folder and run "mvn clean package" to build from source.
 
 4. Start the notebook.
 
