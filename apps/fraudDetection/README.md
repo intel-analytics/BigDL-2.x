@@ -1,7 +1,7 @@
 BigDL has been used in the Fraud Detection system for one of the top payment companies. As a highly simplified
 demo, this notebook uses the public data set to build a fraud detection example on Apache Spark.
 
-The notebook is developed using Scala with Apache Spark 2.1 and BigDL 0.3. Refer to
+The notebook is developed using Scala with Apache Spark 2.1 and BigDL 0.4. Refer to
 https://github.com/intel-analytics/analytics-zoo/tree/master/pipeline/fraudDetection for the extra feature transformers.
 
 How to run the notebook:
