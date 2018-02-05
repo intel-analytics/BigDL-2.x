@@ -47,6 +47,9 @@ class Predictor(JavaValue):
                              image_frame, output_layer, share_buffer, predict_key)
         return ImageFrame(res)
 
+    def label_map(self):
+        return self.configure.label_map()
+
 class Configure(JavaValue):
     """
     predictor configure

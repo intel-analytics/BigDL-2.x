@@ -32,10 +32,10 @@ def predict(modelPath, imgPath, topN):
     print ("Model Path %s" % modelPath)
     print ("Image Path %s" % imgPath)
     print  ("Top N : %d" % topN)
-    labelMap = read_imagenet_label_map()
     model = Model.loadModel(modelPath)
     imageFrame = ImageFrame.read(imgPath)
     predictor = Predictor(model)
+    labelMap = predictor.label_map()
     output = predictor.predict(imageFrame)
     predicts = imageFrame.get_predict()
     for predict in predicts:

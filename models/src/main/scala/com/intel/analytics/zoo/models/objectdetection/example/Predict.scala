@@ -70,7 +70,7 @@ object Predict {
       val predictor = Predictor(model)
       val output = predictor.predict(data)
 
-      val visualizer = Visualizer(predictor.configure.labelMap, encoding = "jpg")
+      val visualizer = Visualizer(predictor.getLabelMap(), encoding = "jpg")
       val visualized = visualizer(output).toDistributed()
       val result = visualized.rdd.map(imageFeature =>
         (imageFeature.uri(), imageFeature[Array[Byte]](Visualizer.visualized))).collect()

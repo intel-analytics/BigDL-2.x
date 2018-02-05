@@ -89,6 +89,13 @@ class Predictor[T: ClassTag](
     // apply post process if defined
     if (null != configure.postProcessor) configure.postProcessor(result) else result
   }
+
+  /**
+   * get label map for predictor
+   */
+  def getLabelMap(): Map[Int, String] = {
+    this.configure.labelMap
+  }
 }
 
 object Predictor {

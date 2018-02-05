@@ -68,7 +68,7 @@ object Predict {
       val model = Module.loadModule[Float](params.model)
       val data = ImageFrame.read(params.imageFolder, sc)
       val predictor = Predictor(model)
-      val labelOutput = LabelOutput(predictor.configure.labelMap, "clses", "probs")
+      val labelOutput = LabelOutput(predictor.getLabelMap(), "clses", "probs")
       val predict = predictor.predict(data)
 
       val result = labelOutput(predict).toDistributed().rdd.collect
