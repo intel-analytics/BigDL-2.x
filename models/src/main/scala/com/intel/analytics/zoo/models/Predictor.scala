@@ -93,7 +93,6 @@ class Predictor[T: ClassTag](
   /**
    * get label map for predictor
    */
-
   def getLabelMap(): Map[Int, String] = {
     this.configure.labelMap
   }
