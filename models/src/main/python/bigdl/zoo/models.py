@@ -47,6 +47,9 @@ class Predictor(JavaValue):
                              image_frame, output_layer, share_buffer, predict_key)
         return ImageFrame(res)
 
+    def label_map(self):
+        return callBigDlFunc(self.bigdl_type, "getLabelMap", self.configure)
+
 class Configure(JavaValue):
     """
     predictor configure

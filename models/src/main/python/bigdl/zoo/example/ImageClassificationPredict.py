@@ -35,7 +35,7 @@ def predict(modelPath, imgPath, topN):
     model = Model.loadModel(modelPath)
     imageFrame = ImageFrame.read(imgPath)
     predictor = Predictor(model)
-    labelMap = predictor.configure.label_map()
+    labelMap = predictor.label_map()
     output = predictor.predict(imageFrame)
     predicts = imageFrame.get_predict()
     for predict in predicts:
