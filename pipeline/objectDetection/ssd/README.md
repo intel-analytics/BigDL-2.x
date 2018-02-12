@@ -19,20 +19,16 @@ git clone https://github.com/intel-analytics/analytics-zoo.git
 ```
 
 2. build project
-cd ${analytics-zoo}/pipeline/objectDetection
 ```bash
+cd ${analytics-zoo}/pipeline/objectDetection
 ./build.sh
 ```
 
 ## Prepare the dataset
 
-### Loacal images
-If you want to have a try in local images, put them in a flat local folder.
-Have tested with jpg or png images.
-
 ### Prepare labeled dataset for validation and training
-1. [Pascal VOC dataset](data/pascal)
-2. [Coco](data/coco)
+1. [Pascal VOC](../data/pascal)
+2. [Coco](../data/coco)
 
 ### Convert unlabeled image folder to sequence file
 ```bash
