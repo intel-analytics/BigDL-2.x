@@ -18,33 +18,17 @@ with 300x300 or 512x512 input resolution.
 git clone https://github.com/intel-analytics/analytics-zoo.git
 ```
 
-2. install image transformer library
-```
-# mvn install image transformer lib
-cd transform/vision
-mvn clean install
-```
-
-3. build ssd project
-cd ${analytics-zoo}/pipeline/ssd
-* Linux
+2. build project
 ```bash
-mvn clean package -DskipTests
-```
-* Mac
-```
-mvn clean package -DskipTests -P mac
+cd ${analytics-zoo}/pipeline/objectDetection
+./build.sh
 ```
 
 ## Prepare the dataset
 
-### Loacal images
-If you want to have a try in local images, put them in a flat local folder.
-Have tested with jpg or png images.
-
 ### Prepare labeled dataset for validation and training
-1. [Pascal VOC dataset](data/pascal)
-2. [Coco](data/coco)
+1. [Pascal VOC](../data/pascal)
+2. [Coco](../data/coco)
 
 ### Convert unlabeled image folder to sequence file
 ```bash
@@ -53,46 +37,10 @@ Have tested with jpg or png images.
 
 where ```image_folder``` is your image folder, ```output``` is the output folder
 
-### Import unlabeled image folder to Hbase
-First put the ```hbase-site.xml``` to the folder ```spark-XXX/conf/```
-
-the execute
-```bash
-./data/tool/create_hbase_hive.sh
-```
 please adjust the arguments if necessary
 
-## Download pretrained model for evaluation
-
-* [SSD 300x300 Vgg Pascal VOC](https://s3-ap-southeast-1.amazonaws.com/bigdl-models/ssd/bigdl_ssd_vgg_300x300_voc.model)
-* [SSD 512x512 Vgg Pascal VOC](https://s3-ap-southeast-1.amazonaws.com/bigdl-models/ssd/bigdl_ssd_vgg_512x512_voc.model)
-* [SSD 300x300 Vgg Coco](https://s3-ap-southeast-1.amazonaws.com/bigdl-models/ssd/bigdl_ssd_vgg_300x300_coco.model)
-* [SSD 512x512 Vgg Coco](https://s3-ap-southeast-1.amazonaws.com/bigdl-models/ssd/bigdl_ssd_vgg_512x512_coco.model)
-* [SSD 300x300 MobileNet Pascal VOC](https://s3-ap-southeast-1.amazonaws.com/bigdl-models/ssd/bigdl_ssd_mobilenet_300x300_voc.model)
-
-## Run the notebook
-
-1. Get BigDL jar
-* Linux
-```bash
-wget https://oss.sonatype.org/content/groups/public/com/intel/analytics/bigdl/dist-spark-2.1.1-scala-2.11.8-linux64/0.3.0-SNAPSHOT/dist-spark-2.1.1-scala-2.11.8-linux64-0.3.0-20171011.104355-69-dist.zip
-unzip dist-spark-2.1.1-scala-2.11.8-linux64-0.3.0-20171011.104355-69-dist.zip -d ~/BigDL
-```
-* Mac
-```
-wget https://oss.sonatype.org/content/groups/public/com/intel/analytics/bigdl/dist-spark-2.1.1-scala-2.11.8-mac/0.3.0-SNAPSHOT/dist-spark-2.1.1-scala-2.11.8-mac-0.3.0-20171012.213708-67-dist.zip
-unzip dist-spark-2.1.1-scala-2.11.8-mac-0.3.0-20171012.213708-67-dist.zip -d ~/BigDL
-```
-2. Get SSD jar
-Download ssd model(vgg+pascal 300x300) from https://drive.google.com/uc?id=0B7vkTZblCs9hM3BmUUJ5Y2dfekk&export=download ,
-then put the model at data/models
-
-3. Start notebook
-
-```bash
-sh data/tool/start_notebook.sh
-```
-Please configure the ```SPARK_HOME``` and ```BigDL_HOME``` as necessary.
+## Run Jupyter Notebook
+To run Jupyter notebook, please refer to https://github.com/intel-analytics/analytics-zoo/tree/master/apps/ssd
 
 
 ## Run the predict example
