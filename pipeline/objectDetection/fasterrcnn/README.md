@@ -11,61 +11,20 @@ It's implementation can be found [here](https://github.com/sanghoon/pva-faster-r
 This example demonstrates how to use BigDL to test a Faster-RCNN framework with either pvanet network or vgg16 network.
 
 ## Prepare the dataset
-Download the test dataset
 
-```
-wget http://host.robots.ox.ac.uk/pascal/VOC/voc2007/VOCtrainval_06-Nov-2007.tar
-wget http://host.robots.ox.ac.uk/pascal/VOC/voc2007/VOCtest_06-Nov-2007.tar
-wget http://host.robots.ox.ac.uk/pascal/VOC/voc2007/VOCdevkit_08-Jun-2007.tar
-```
+### Prepare labeled dataset for validation and training
+1. [Pascal VOC](../data/pascal)
+2. [Coco](../data/coco)
 
-Extract all of these tars into one directory named ```VOCdevkit```
-
-```
-tar xvf VOCtrainval_06-Nov-2007.tar
-tar xvf VOCtest_06-Nov-2007.tar
-tar xvf VOCdevkit_08-Jun-2007.tar
-```
-
-It should have this basic structure
-
-```
-$VOCdevkit/                           # development kit
-$VOCdevkit/VOCcode/                   # VOC utility code
-$VOCdevkit/VOC2007                    # image sets, annotations, etc.
-# ... and several other directories ...
-```
-
-## Generate Sequence Files
-
-Get the bigdl.sh script 
-```
-wget https://raw.githubusercontent.com/intel-analytics/BigDL/master/scripts/bigdl.sh
-source bigdl.sh
-```
-
-### convert labeled pascal voc dataset
-
+### Convert unlabeled image folder to sequence file
+If you want to convert a folder of images to sequence file, run the following command
 ```bash
-dist/bin/bigdl.sh --
-java -cp pipeline-0.1-SNAPSHOT-jar-with-dependencies.jar:spark-assembly-1.5.1-hadoop2.6.0.jar \
-         com.intel.analytics.bigdl.pipeline.common.dataset.RoiImageSeqGenerator \
-     -f $VOCdevkit -o output -i voc_2007_test
+./data/tool/convert_image_folder.sh image_folder output
 ```
 
-where ```-f``` is your devkit folder, ```-o``` is the output folder, and ```-i``` is the imageset name.
+where ```image_folder``` is your image folder, ```output``` is the output folder
 
-note that a spark jar is needed as dependency.
-
-### convert unlabeled image folder
-```bash
-dist/bin/bigdl.sh --
-java -cp pipeline-0.1-SNAPSHOT-jar-with-dependencies.jar:spark-assembly-1.5.1-hadoop2.6.0.jar \
-         com.intel.analytics.bigdl.pipeline.common.dataset.RoiImageSeqGenerator \
-     -f imageFolder -o output
-```
-
-where ```-f``` is your image folder, ```-o``` is the output folder
+please adjust the arguments if necessary
 
 ## Download pretrained model
 
@@ -75,31 +34,6 @@ pretrained Faster-RCNN(VGG) models.
 Faster-RCNN(PVANET) model can be found [here](https://www.dropbox.com/s/87zu4y6cvgeu8vs/test.model?dl=0), 
 its caffe prototxt file can be found [here](https://github.com/sanghoon/pva-faster-rcnn/blob/master/models/pvanet_obsolete/full/test.pt)
 
-## Prepare a file contain list of class name
-Save the follow content to classname.txt
-```
-__background__
-aeroplane
-bicycle
-bird
-boat
-bottle
-bus
-car
-cat
-chair
-cow
-diningtable
-dog
-horse
-motorbike
-person
-pottedplant
-sheep
-sofa
-train
-tvmonitor
-```
 
 ## Run the predict example
 Example command for running in Spark cluster (yarn)

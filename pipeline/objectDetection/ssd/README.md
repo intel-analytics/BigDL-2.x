@@ -1,28 +1,10 @@
 # SSD: Single Shot MultiBox Detector
 
 [SSD](https://research.google.com/pubs/pub44872.html) is one of the state-of-the-art
- object detection pipeline.
+ object detection pipelines.
 
-Currently Bigdl has added support for ssd with vgg and alexnet as base model,
+Currently Bigdl has added support for ssd with vgg as base model,
 with 300x300 or 512x512 input resolution.
-
-## Default Environment
-* JDK 1.7.0_79
-* Spark 2.10
-* Scala 2.11
-
-## Build BigDL analytics jar
-
-1. clone analytics-zoo project
-```bash
-git clone https://github.com/intel-analytics/analytics-zoo.git
-```
-
-2. build project
-```bash
-cd ${analytics-zoo}/pipeline/objectDetection
-./build.sh
-```
 
 ## Prepare the dataset
 
@@ -31,6 +13,7 @@ cd ${analytics-zoo}/pipeline/objectDetection
 2. [Coco](../data/coco)
 
 ### Convert unlabeled image folder to sequence file
+If you want to convert a folder of images to sequence file, run the following command
 ```bash
 ./data/tool/convert_image_folder.sh image_folder output
 ```
@@ -38,10 +21,6 @@ cd ${analytics-zoo}/pipeline/objectDetection
 where ```image_folder``` is your image folder, ```output``` is the output folder
 
 please adjust the arguments if necessary
-
-## Run Jupyter Notebook
-To run Jupyter notebook, please refer to https://github.com/intel-analytics/analytics-zoo/tree/master/apps/ssd
-
 
 ## Run the predict example
 We assume that pretrained caffe models are stored in ```data_root=${ssd_root}/data/models```
