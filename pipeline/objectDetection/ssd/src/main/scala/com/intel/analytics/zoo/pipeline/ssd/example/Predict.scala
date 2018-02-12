@@ -22,15 +22,10 @@ import com.intel.analytics.zoo.pipeline.common.caffe.SSDCaffeLoader
 import com.intel.analytics.zoo.pipeline.common.dataset.roiimage.RecordToFeature
 import com.intel.analytics.bigdl.transform.vision.image.ImageFrame
 import com.intel.analytics.bigdl.utils.Engine
-import com.intel.analytics.bigdl.zoo.models.Predictor
-import com.intel.analytics.zoo.models.objectdetection.utils.{ObjectDetectionConfig, ScaleDetection}
 import com.intel.analytics.bigdl.numeric.NumericFloat
-import com.intel.analytics.zoo.models.Configure
 import org.apache.log4j.{Level, Logger}
 import org.apache.spark.SparkContext
 import scopt.OptionParser
-
-import scala.io.Source
 
 object Predict {
   Logger.getLogger("org").setLevel(Level.ERROR)
@@ -124,18 +119,8 @@ object Predict {
         case _ => throw new IllegalArgumentException(s"invalid folder name ${params.folderType}")
       }
 
-      val labelMap = Source.fromFile(params.classname)
-        .getLines().zipWithIndex.map(x => (x._2, x._1)).toMap
-      val configure = Configure(
-        ObjectDetectionConfig.preprocessSsdVgg(params.resolution, null, null),
-        ScaleDetection(),
-        batchPerPartition = params.batchPerPartition,
-        labelMap)
-
-      val predictor = new Predictor[Float](model, configure)
-
       val start = System.nanoTime()
-      val output = predictor.predict(data)
+      val output = model.predictImage(data, batchPerPartition = params.batchPerPartition)
       val recordsNum = output.toDistributed().rdd.count()
       val totalTime = (System.nanoTime() - start) / 1e9
       logger.info(s"[Prediction] $recordsNum in $totalTime seconds. Throughput is ${
