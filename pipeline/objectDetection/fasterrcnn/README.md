@@ -26,49 +26,6 @@ where ```image_folder``` is your image folder, ```output``` is the output folder
 
 please adjust the arguments if necessary
 
-## Download pretrained model
-
-You can use [this script](https://github.com/rbgirshick/py-faster-rcnn/blob/master/data/scripts/fetch_faster_rcnn_models.sh) to download
-pretrained Faster-RCNN(VGG) models.
-
-Faster-RCNN(PVANET) model can be found [here](https://www.dropbox.com/s/87zu4y6cvgeu8vs/test.model?dl=0), 
-its caffe prototxt file can be found [here](https://github.com/sanghoon/pva-faster-rcnn/blob/master/models/pvanet_obsolete/full/test.pt)
-
-
-## Run the predict example
-Example command for running in Spark cluster (yarn)
-
-```
-spark-submit \
---master yarn \
---deploy-mode client \
---executor-cores 28 \
---num-executors 2 \
---driver-memory 128g \
---executor-memory 128g \
---class com.intel.analytics.bigdl.pipeline.fasterrcnn.example.Predict \
-pipeline-0.1-SNAPSHOT-jar-with-dependencies.jar \
--f $imageDataFolder \
---folderType seq \
--o output \
---caffeDefPath data/pvanet/full/test.pt \
---caffeModelPath data/pvanet/full/test.model \
--t pvanet  \
---classname data/models/VGGNet/VOC0712/classname.txt \
--v false
-```
-
-In the above commands
-
-* -f: where you put your image data
-* --folderType: It can be seq/local
-* -o: where you put your image output data
-* --caffeDefPath: caffe network definition prototxt file path
-* --caffeModelPath: caffe serialized model file path
-* -t: network type, it can be vgg16 or alexnet
-* --classname: file that store detection class names, one line for one class
-* -v: whether to visualize detections
-
 ## Run the test example
 
 ```

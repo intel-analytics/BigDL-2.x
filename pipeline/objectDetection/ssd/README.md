@@ -22,56 +22,8 @@ where ```image_folder``` is your image folder, ```output``` is the output folder
 
 please adjust the arguments if necessary
 
-## Run the predict example
-We assume that pretrained caffe models are stored in ```data_root=${ssd_root}/data/models```
-Example command for running in Spark cluster (yarn)
-
-```bash
-spark-submit \
---master yarn \
---deploy-mode client \
---executor-cores 28 \
---num-executors 2 \
---driver-memory 30g \
---executor-memory 128g \
---class com.intel.analytics.zoo.pipeline.ssd.example.Predict \
-pipeline-0.1-SNAPSHOT-jar-with-dependencies.jar \
--f $imageDataFolder \
---folderType seq \
--o output \
---caffeDefPath data/models/VGGNet/VOC0712/SSD_300x300/test.prototxt \
---caffeModelPath data/models/VGGNet/VOC0712/SSD_300x300/VGG_VOC0712_SSD_300x300_iter_120000.caffemodel \
--t vgg16 \
---classname data/pascal/classname.txt \
--v false \
--s true \
--p 112 \
--b 112 \
--r 300
-```
-
-The output result is save to text file with the following format:
-
-```
-ImageName classId score xmin ymin xmax ymax
-```
-
-In the above commands
-
-* -f: where you put your image data
-* --folderType: It can be seq/local
-* -o: where you put your image output data
-* --caffeDefPath: caffe network definition prototxt file path
-* --caffeModelPath: caffe serialized model file path
-* -t: network type, it can be vgg16 or alexnet
-* --classname: file that store detection class names, one line for one class
-* -s: Whether to save detection results
-* -v: whether to visualize detections
-* -p: partition number
-* -b: batch size, it should be n*(partition number)
-* -r: input resolution, 300 or 512
-
-## Run the test example
+## Validate pre-trained model
+If you want to validate pre-trained model with Spark, you can follow the following command:
 
 ```bash
 spark-submit \
@@ -82,12 +34,11 @@ spark-submit \
 --driver-memory 20g \
 --executor-memory 128g \
 --class com.intel.analytics.zoo.pipeline.ssd.example.Test \
-pipeline-0.1-SNAPSHOT-jar-with-dependencies.jar \
+object-detection-0.1-SNAPSHOT-jar-with-dependencies.jar \
 -f $voc_test_data \
---caffeDefPath data/models/VGGNet/VOC0712/SSD_300x300/test.prototxt \
---caffeModelPath data/models/VGGNet/VOC0712/SSD_300x300/VGG_VOC0712_SSD_300x300_iter_120000.caffemodel \
+--model bigdl_ssd-vgg16-300x300_PASCAL_0.4.0.model \
 -t vgg16 \
---nclass 21 \
+--class data/pascal/classname.txt \
 -i voc_2007_test \
 -p 112 \
 -b 112 \
@@ -97,10 +48,9 @@ pipeline-0.1-SNAPSHOT-jar-with-dependencies.jar \
 In the above commands
 
 * -f: where you put your image data
-* --caffeDefPath: caffe network definition prototxt file path
-* --caffeModelPath: caffe serialized model file path
+* --model: BigDL model path
 * -t: network type, it can be vgg16 or alexnet
-* --nclass: number of detection classes.
+* --class: dataset class name file
 * -i: image set name with the format ```voc_${year}_${imageset}```, e.g. voc_2007_test
 * -p: partition number
 * -b: batch size, it should be n*(partition number)
@@ -122,7 +72,7 @@ spark-submit \
 --driver-memory 20g \
 --executor-memory 128g \
 --class com.intel.analytics.zoo.pipeline.ssd.example.Train \
-pipeline-0.1-SNAPSHOT-jar-with-dependencies.jar \
+object-detection-0.1-SNAPSHOT-jar-with-dependencies.jar \
 -f hdfs://xxxx/your_train_folder \
 -v hdfs://xxxx/your_val_folder \
 -t vgg16 \

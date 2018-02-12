@@ -13,8 +13,12 @@ git clone https://github.com/intel-analytics/analytics-zoo.git
 cd analytics-zoo/pipeline/objectDetection
 ./build.sh
 ```
+
+## Pre-trained model
+A series of pre-trained model can be found [here](https://github.com/intel-analytics/analytics-zoo/tree/master/models)
+
 ## Demo
-If you want to get quick start, you can find Jupyter demos [here].(https://github.com/intel-analytics/analytics-zoo/tree/master/apps/ssd)
+If you want to get quick start, you can find Jupyter demos [here](https://github.com/intel-analytics/analytics-zoo/tree/master/apps/ssd).
 
 ## Blog
 You can also find blogs on application of this library:
