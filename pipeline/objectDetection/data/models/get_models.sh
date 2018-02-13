@@ -1,5 +1,5 @@
 #!/bin/bash
-ssd_root=${HOME}/analytics-zoo/pipeline/ssd
+ssd_root=${HOME}/analytics-zoo/pipeline/objectDetection
 data_root=${ssd_root}/data/models
 
 cd $data_root

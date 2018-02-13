@@ -1,5 +1,5 @@
 1. Download VOC2007 and VOC2012 dataset.
-By default, we assume the ssd project root is ```ssd_root=${HOME}/analytics-zoo/pipeline/ssd```,
+By default, we assume the ssd project root is ```ssd_root=${HOME}/analytics-zoo/pipeline/objectDetection```,
 and data is stored in ```data_root=${ssd_root}/data/pascal```
 
 You may want to modify ssd_root as needed.

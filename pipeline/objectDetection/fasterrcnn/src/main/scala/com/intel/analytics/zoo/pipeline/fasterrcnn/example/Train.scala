@@ -19,33 +19,33 @@ package com.intel.analytics.zoo.pipeline.fasterrcnn.example
 
 import com.intel.analytics.bigdl._
 import com.intel.analytics.bigdl.dataset.MiniBatch
-import com.intel.analytics.bigdl.nn.{Module, SpatialShareConvolution}
+import com.intel.analytics.bigdl.nn.{Module}
 import com.intel.analytics.bigdl.optim.{Optimizer, _}
 import com.intel.analytics.bigdl.pipeline.fasterrcnn.Utils
 import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric.NumericFloat
 import com.intel.analytics.bigdl.utils.{Engine, LoggerFilter}
 import com.intel.analytics.bigdl.visualization.{TrainSummary, ValidationSummary}
-import com.intel.analytics.zoo.pipeline.common.dataset.{FrcnnMiniBatch, PascalVoc}
-import com.intel.analytics.zoo.pipeline.common.{IOUtils, MeanAveragePrecision}
+import com.intel.analytics.zoo.pipeline.common.dataset.{FrcnnMiniBatch}
+import com.intel.analytics.zoo.pipeline.common.{MeanAveragePrecision}
 import com.intel.analytics.zoo.pipeline.common.nn.FrcnnCriterion
 import com.intel.analytics.zoo.pipeline.fasterrcnn.model.{VggFRcnn, _}
 import org.apache.log4j.{Level, Logger}
 import org.apache.spark.SparkContext
 import scopt.OptionParser
 
+import scala.io.Source
+
 object Option {
 
   case class TrainParams(
     trainFolder: String = "./",
     valFolder: String = "./",
-    modelType: String = "vgg16",
     pretrain: String = "",
-    caffeModelPath: Option[String] = None,
     optim: String = "sgd",
     checkpoint: Option[String] = None,
     modelSnapshot: Option[String] = None,
     stateSnapshot: Option[String] = None,
-    classNumber: Int = 21,
+    className: String = "",
     batchSize: Int = -1,
     learningRate: Double = 0.001,
     step: Int = 50000,
@@ -53,8 +53,7 @@ object Option {
     weights: Option[String] = None,
     jobName: String = "BigDL SSD Train Example",
     summaryDir: Option[String] = None,
-    checkIter: Int = 200,
-    share: Boolean = true
+    checkIter: Int = 200
   )
 
   val trainParser = new OptionParser[TrainParams]("BigDL SSD Example") {
@@ -64,10 +63,6 @@ object Option {
     opt[String]('v', "valFolder")
       .text("url of hdfs folder store the validation hadoop sequence files")
       .action((x, c) => c.copy(valFolder = x))
-    opt[String]('t', "modelType")
-      .text("net type : vgg16")
-      .action((x, c) => c.copy(modelType = x))
-      .required()
     opt[String]("pretrain")
       .text("pretrained imagenet model")
       .action((x, c) => c.copy(pretrain = x))
@@ -100,9 +95,9 @@ object Option {
       .text("batch size")
       .action((x, c) => c.copy(batchSize = x))
       .required()
-    opt[Int]("classNum")
-      .text("class number")
-      .action((x, c) => c.copy(classNumber = x))
+    opt[String]("class")
+      .text("class names")
+      .action((x, c) => c.copy(className = x))
     opt[Int]("checkIter")
       .text("checkpoint iteration")
       .action((x, c) => c.copy(checkIter = x))
@@ -112,9 +107,6 @@ object Option {
     opt[String]("summary")
       .text("train validate summary")
       .action((x, c) => c.copy(summaryDir = Some(x)))
-    opt[Boolean]("share")
-      .text("share convolution")
-      .action((x, c) => c.copy(share = x))
   }
 }
 
@@ -123,7 +115,7 @@ object Train {
 
   LoggerFilter.redirectSparkInfoLogs()
   Logger.getLogger("com.intel.analytics.bigdl.optim").setLevel(Level.INFO)
-  Logger.getLogger("com.intel.analytics.bigdl.pipeline").setLevel(Level.INFO)
+  Logger.getLogger("com.intel.analytics.zoo.pipeline").setLevel(Level.INFO)
 
   import Option._
 
@@ -133,39 +125,18 @@ object Train {
     trainParser.parse(args, TrainParams()).map(param => {
       val conf = Engine.createSparkConf().setAppName(param.jobName)
       val sc = new SparkContext(conf)
+      val classNames = Source.fromFile(param.className).getLines().toArray
       Engine.init
-
-      var (model, preParamTrain, preParamVal, postParam) = param.modelType match {
-        case "vgg16" =>
-          val postParam = PostProcessParam(0.3f, param.classNumber, false, 100, 0.05)
-          val preParamTrain = PreProcessParam(param.batchSize, Array(400, 500, 600, 700))
-          val preParamVal = PreProcessParam(param.batchSize, nPartition = param.batchSize)
-          val model = if (param.modelSnapshot.isDefined) {
-            Module.load[Float](param.modelSnapshot.get)
-          } else {
-            val pretrain = Module.loadModule[Float](param.pretrain)
-            val model = VggFRcnn(param.classNumber, postParam)
-            model.loadModelWeights(pretrain, false)
-          }
-          (model, preParamTrain, preParamVal, postParam)
-        case "pvanet" =>
-          val postParam = PostProcessParam(0.4f, param.classNumber, true, 100, 0.05)
-          val preParamTrain = PreProcessParam(param.batchSize, Array(640), 32)
-          val preParamVal = PreProcessParam(param.batchSize, Array(640), 32)
-//          val model = Module.loadCaffe(PvanetFRcnn(param.classNumber, postParam),
-//            param.caffeDefPath.get, param.caffeModelPath.get)
-          val model = if (param.modelSnapshot.isDefined) {
-            Module.load[Float](param.modelSnapshot.get)
-          } else {
-            val pretrain = Module.loadModule[Float](param.pretrain)
-            val model = PvanetFRcnn(param.classNumber, postParam)
-            model.loadModelWeights(pretrain, false)
-          }
-          (model, preParamTrain, preParamVal, postParam)
-        case _ =>
-          throw new Exception("unsupport network")
+      val postParam = PostProcessParam(0.3f, classNames.length, false, 100, 0.05)
+      val preParamTrain = PreProcessParam(param.batchSize, Array(400, 500, 600, 700))
+      val preParamVal = PreProcessParam(param.batchSize, nPartition = param.batchSize)
+      val model = if (param.modelSnapshot.isDefined) {
+        Module.load[Float](param.modelSnapshot.get)
+      } else {
+        val pretrain = Module.loadModule[Float](param.pretrain)
+        val model = VggFRcnn(classNames.length, postParam)
+        model.loadModelWeights(pretrain, false)
       }
-      model = if (param.share) SpatialShareConvolution.shareConvolution(model) else model
 
       val trainSet = Utils.loadTrainSet(param.trainFolder, sc, preParamTrain, param.batchSize)
 
@@ -190,8 +161,10 @@ object Train {
         }
       }
 
+      val meanAveragePrecision = new MeanAveragePrecision(use07metric = true, normalized = false,
+        classes = classNames)
       optimize(model, trainSet, valSet, param, optimMethod,
-        Trigger.maxIteration(param.maxIter), new FrcnnCriterion())
+        Trigger.maxIteration(param.maxIter), new FrcnnCriterion(), meanAveragePrecision)
 
     })
   }
@@ -200,7 +173,8 @@ object Train {
     trainSet: DataSet[FrcnnMiniBatch],
     valSet: DataSet[FrcnnMiniBatch], param: TrainParams, optimMethod: OptimMethod[Float],
     endTrigger: Trigger,
-    criterion: Criterion[Float]): Module[Float] = {
+    criterion: Criterion[Float],
+    validationMethod: ValidationMethod[Float]): Module[Float] = {
     val optimizer = Optimizer(
       model = model,
       dataset = trainSet,
@@ -224,9 +198,7 @@ object Train {
       .setOptimMethod(optimMethod)
       .setValidation(Trigger.severalIteration(param.checkIter),
         valSet.asInstanceOf[DataSet[MiniBatch[Float]]],
-        Array(new MeanAveragePrecision(use07metric = true, normalized = false,
-          // todo: update it with user-defined
-          classes = PascalVoc.classes)))
+        Array(validationMethod))
       .setEndWhen(endTrigger)
       .optimize()
   }

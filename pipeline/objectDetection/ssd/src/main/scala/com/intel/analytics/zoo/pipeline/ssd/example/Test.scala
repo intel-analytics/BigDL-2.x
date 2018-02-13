@@ -20,7 +20,7 @@ import com.intel.analytics.bigdl.nn.Module
 import com.intel.analytics.zoo.pipeline.common.{IOUtils, MeanAveragePrecision}
 import com.intel.analytics.zoo.pipeline.ssd._
 import com.intel.analytics.bigdl.utils.Engine
-import com.intel.analytics.zoo.pipeline.common.caffe.SSDCaffeLoader
+import com.intel.analytics.bigdl.numeric.NumericFloat
 import com.intel.analytics.zoo.pipeline.ssd.model.PreProcessParam
 import org.apache.log4j.{Level, Logger}
 import org.apache.spark.SparkContext
@@ -33,18 +33,15 @@ object Test {
   Logger.getLogger("org").setLevel(Level.ERROR)
   Logger.getLogger("akka").setLevel(Level.ERROR)
   Logger.getLogger("breeze").setLevel(Level.ERROR)
-  Logger.getLogger("com.intel.analytics.bigdl.models.fasterrcnn").setLevel(Level.INFO)
+  Logger.getLogger("com.intel.analytics.bigdl.models.ssd").setLevel(Level.INFO)
 
   case class PascolVocTestParam(folder: String = "",
     modelType: String = "vgg16",
     imageSet: String = "voc_2007_test",
-    model: Option[String] = None,
-    caffeDefPath: Option[String] = None,
-    caffeModelPath: Option[String] = None,
+    model: String = "",
     batch: Int = 8,
     className: String = "",
     resolution: Int = 300,
-    useNormalized: Boolean = false,
     nPartition: Int = 1)
 
   val parser = new OptionParser[PascolVocTestParam]("BigDL SSD Test") {
@@ -63,13 +60,7 @@ object Test {
       .required()
     opt[String]("model")
       .text("BigDL model")
-      .action((x, c) => c.copy(model = Some(x)))
-    opt[String]("caffeDefPath")
-      .text("caffe prototxt")
-      .action((x, c) => c.copy(caffeDefPath = Some(x)))
-    opt[String]("caffeModelPath")
-      .text("caffe model path")
-      .action((x, c) => c.copy(caffeModelPath = Some(x)))
+      .action((x, c) => c.copy(model = x))
     opt[Int]('b', "batch")
       .text("batch number")
       .action((x, c) => c.copy(batch = x))
@@ -81,9 +72,6 @@ object Test {
       .text("input resolution 300 or 512")
       .action((x, c) => c.copy(resolution = x))
       .required()
-    opt[Boolean]("normalize")
-      .text("whether to use normalized detection")
-      .action((x, c) => c.copy(useNormalized = x))
     opt[Int]('p', "partition")
       .text("number of partitions")
       .action((x, c) => c.copy(nPartition = x))
@@ -97,20 +85,10 @@ object Test {
       Engine.init
 
       val classes = Source.fromFile(params.className).getLines().toArray
-      val evaluator = new MeanAveragePrecision(true, normalized = params.useNormalized,
-        classes = classes)
+      val evaluator = new MeanAveragePrecision(true, normalized = true, classes = classes)
       val rdd = IOUtils.loadSeqFiles(params.nPartition, params.folder, sc)
 
-      val model = if (params.model.isDefined) {
-        // load BigDL model
-        Module.loadModule[Float](params.model.get)
-      } else if (params.caffeDefPath.isDefined && params.caffeModelPath.isDefined) {
-        // load caffe dynamically
-        SSDCaffeLoader.loadCaffe(params.caffeDefPath.get, params.caffeModelPath.get)
-      } else {
-        throw new IllegalArgumentException(
-          s"currently only support loading BigDL model or caffe model")
-      }
+      val model = Module.loadModule(params.model)
       println(s"load model done ${model.getName()}")
 
       val preprocess = if (params.modelType == "mobilenet") {
@@ -122,7 +100,7 @@ object Test {
           (123f, 117f, 104f), true, params.nPartition)
       }
       val validator = new Validator(model, preprocess, evaluator,
-        useNormalized = params.useNormalized)
+        useNormalized = true)
 
       validator.test(rdd)
     }
