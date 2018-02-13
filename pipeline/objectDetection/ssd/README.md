@@ -58,12 +58,14 @@ In the above commands
 * -r: input resolution, 300 or 512
 
 ## Run the training example
-1. Get model pretrained in imagenet
+1. Prepare DataSet [Pascal VOC](../data/pascal)
+
+2. Get model pretrained in imagenet
 ```bash
 ./data/models/get_models.sh
 ```
 
-2. Submit spark job
+3. Submit spark job
 ```bash
 spark-submit \
 --master yarn \
