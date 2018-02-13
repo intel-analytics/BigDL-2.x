@@ -1,7 +1,7 @@
 1. Download Images and Annotations from MSCOCO.
 
 By default, we assume the ssd project root is
-```ssd_root=${HOME}/analytics-zoo/pipeline/ssd```,
+```ssd_root=${HOME}/analytics-zoo/pipeline/objectDetection```,
 and data is stored in ```data_root=${ssd_root}/data/coco```
 
 You may want to modify ssd_root as needed.
