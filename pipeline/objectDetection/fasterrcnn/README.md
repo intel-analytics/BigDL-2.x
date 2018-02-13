@@ -59,7 +59,14 @@ In the above commands
 * -b: batch size, it should be n*(partition number)
 * -p: partition number
 
-# Train
+# Run the training example
+
+1. Get the pre-trained model
+
+```
+wget https://s3-ap-southeast-1.amazonaws.com/bigdl-models/object-detection/bigdl_vgg16_imagenet.model
+```
+2. Submit spark job
 
 ```
 spark-submit \
@@ -78,7 +85,7 @@ object-detection-0.1-SNAPSHOT-jar-with-dependencies.jar \
 --optim adam \
 -l 0.0001 \
 -b 28 \
---class ../../classname.txt \
+--class data/pascal/classname.txt \
 --checkIter 200 \
 --summary ../summary \
 --checkpoint hdfs://XXX/checkpoint/
