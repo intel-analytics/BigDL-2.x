@@ -143,7 +143,7 @@ object Train {
 
   LoggerFilter.redirectSparkInfoLogs()
   Logger.getLogger("com.intel.analytics.bigdl.optim").setLevel(Level.INFO)
-  Logger.getLogger("com.intel.analytics.bigdl.pipeline").setLevel(Level.INFO)
+  Logger.getLogger("com.intel.analytics.zoo.pipeline").setLevel(Level.INFO)
 
   import Option._
 
@@ -152,7 +152,6 @@ object Train {
   def main(args: Array[String]): Unit = {
     trainParser.parse(args, TrainParams()).map(param => {
       val conf = Engine.createSparkConf().setAppName(param.jobName)
-        .set("spark.task.maxFailures", "1")
       val sc = new SparkContext(conf)
       Engine.init
 

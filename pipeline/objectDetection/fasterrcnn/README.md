@@ -59,6 +59,44 @@ In the above commands
 * -b: batch size, it should be n*(partition number)
 * -p: partition number
 
+# Train
+
+```
+spark-submit \
+--master yarn \
+--deploy-mode client \
+--executor-cores 14 \
+--num-executors 2 \
+--driver-memory 50g \
+--executor-memory 200g \
+--class com.intel.analytics.zoo.pipeline.fasterrcnn.example.Train \
+object-detection-0.1-SNAPSHOT-jar-with-dependencies.jar \
+-f hdfs://xxxx/your_train_folder \
+-v hdfs://xxxx/your_val_folder \
+--pretrain bigdl_vgg16_imagenet.model \
+-i 6000 \
+--optim adam \
+-l 0.0001 \
+-b 28 \
+--class ../../classname.txt \
+--checkIter 200 \
+--summary ../summary \
+--checkpoint hdfs://XXX/checkpoint/
+```
+In the above commands
+
+* -f: where you put the training data
+* -v: where you put the validation data
+* --pretrain: pretrained model
+* -i: max iteration
+* --optim: optimizer method
+* -l: inital learning rate
+* -b: batch size
+* --class: dataset class name file
+* --checkIter checkpoint iteration interval
+* --summary tensorboard summary log dir
+* --checkpoint: where to save your checkpoint model
+
 
 
 

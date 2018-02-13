@@ -88,7 +88,7 @@ object-detection-0.1-SNAPSHOT-jar-with-dependencies.jar \
 -b 112 \
 -d 0.5 \
 --patience 10 \
---classNum 21 \
+--class data/pascal/classname.txt \
 --checkpoint hdfs://xxx/checkpoint/
 ```
 In the above commands
@@ -106,5 +106,5 @@ In the above commands
 * -b: batch size
 * -d: learning rate decay
 * --patience: epoch to wait when the map does not go up
-* --classNum: class number
+* --class: dataset class name file
 * --checkpoint: where to save your checkpoint model
