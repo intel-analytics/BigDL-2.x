@@ -27,8 +27,7 @@ where ```image_folder``` is your image folder, ```output``` is the output folder
 please adjust the arguments if necessary
 
 ## Validate pre-trained model
-If you want to validate [pre-trained model]
-(https://github.com/intel-analytics/analytics-zoo/tree/master/models) with Spark, you can follow the following command:
+If you want to validate [pre-trained model](https://github.com/intel-analytics/analytics-zoo/tree/master/models) with Spark, you can follow the following command:
 
 ```
 spark-submit \
@@ -61,12 +60,14 @@ In the above commands
 
 # Run the training example
 
-1. Get the pre-trained model
+1. Prepare DataSet [Pascal VOC](../data/pascal)
+
+2. Get the pre-trained model
 
 ```
 wget https://s3-ap-southeast-1.amazonaws.com/bigdl-models/object-detection/bigdl_vgg16_imagenet.model
 ```
-2. Submit spark job
+3. Submit spark job
 
 ```
 spark-submit \
