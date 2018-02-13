@@ -27,8 +27,7 @@ where ```image_folder``` is your image folder, ```output``` is the output folder
 please adjust the arguments if necessary
 
 ## Validate pre-trained model
-If you want to validate [pre-trained model]
-(https://github.com/intel-analytics/analytics-zoo/tree/master/models) with Spark, you can follow the following command:
+If you want to validate [pre-trained model](https://github.com/intel-analytics/analytics-zoo/tree/master/models) with Spark, you can follow the following command:
 
 ```
 spark-submit \
