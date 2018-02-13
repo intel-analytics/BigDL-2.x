@@ -31,7 +31,7 @@ import scala.reflect.ClassTag
  */
 @SerialVersionUID(5600616321943671046L)
 class EvaluateOnly[T: ClassTag](module: Module[T])(implicit ev: TensorNumeric[T])
-  extends DynamicContainer[Activity, Activity, T] {
+  extends Container[Activity, Activity, T] {
 
   add(module)
 

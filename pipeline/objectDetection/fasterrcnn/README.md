@@ -26,7 +26,9 @@ where ```image_folder``` is your image folder, ```output``` is the output folder
 
 please adjust the arguments if necessary
 
-## Run the test example
+## Validate pre-trained model
+If you want to validate [pre-trained model]
+(https://github.com/intel-analytics/analytics-zoo/tree/master/models) with Spark, you can follow the following command:
 
 ```
 spark-submit \
@@ -36,24 +38,26 @@ spark-submit \
 --num-executors 2 \
 --driver-memory 128g \
 --executor-memory 128g \
---class com.intel.analytics.bigdl.pipeline.fasterrcnn.example.Test \
-pipeline-0.1-SNAPSHOT-jar-with-dependencies.jar \
+--class com.intel.analytics.zoo.pipeline.fasterrcnn.example.Test \
+object-detection-0.1-SNAPSHOT-jar-with-dependencies.jar \
 -f $voc_test_data \
---caffeDefPath data/pvanet/full/test.pt \
---caffeModelPath data/pvanet/full/test.model \
--t vgg16 \
---nclass 21 \
--i voc_2007_test
+--model  bigdl_frcnn-pvanet_PASCAL_0.4.0.model \
+-t pvanet \
+--class data/pascal/classname.txt \
+-i voc_2007_test \
+-b 56 \
+-p 56
 ```
 
 In the above commands
 
 * -f: where you put your image data
-* --caffeDefPath: caffe network definition prototxt file path
-* --caffeModelPath: caffe serialized model file path
-* -t: network type, it can be vgg16 or alexnet
-* --nclass: number of detection classes.
+* --model: BigDL model path
+* -t: network type, it can be vgg16 or pvanet
+* --class: dataset class name file
 * -i: image set name with the format ```voc_${year}_${imageset}```, e.g. voc_2007_test
+* -b: batch size, it should be n*(partition number)
+* -p: partition number
 
 
 

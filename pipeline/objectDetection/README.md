@@ -15,7 +15,8 @@ cd analytics-zoo/pipeline/objectDetection
 ```
 
 ## Pre-trained model
-A series of pre-trained model can be found [here](https://github.com/intel-analytics/analytics-zoo/tree/master/models)
+A series of pre-trained model can be found
+[here](https://github.com/intel-analytics/analytics-zoo/tree/master/models).
 
 ## Demo
 If you want to get quick start, you can find Jupyter demos [here](https://github.com/intel-analytics/analytics-zoo/tree/master/apps/ssd).

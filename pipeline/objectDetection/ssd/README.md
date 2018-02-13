@@ -23,7 +23,9 @@ where ```image_folder``` is your image folder, ```output``` is the output folder
 please adjust the arguments if necessary
 
 ## Validate pre-trained model
-If you want to validate pre-trained model with Spark, you can follow the following command:
+If you want to validate [pre-trained model]
+(https://github.com/intel-analytics/analytics-zoo/tree/master/models) with Spark,
+ you can follow the following command:
 
 ```bash
 spark-submit \
@@ -49,7 +51,7 @@ In the above commands
 
 * -f: where you put your image data
 * --model: BigDL model path
-* -t: network type, it can be vgg16 or alexnet
+* -t: network type, it can be vgg16
 * --class: dataset class name file
 * -i: image set name with the format ```voc_${year}_${imageset}```, e.g. voc_2007_test
 * -p: partition number

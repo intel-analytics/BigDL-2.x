@@ -16,7 +16,7 @@
 
 package com.intel.analytics.zoo.pipeline.fasterrcnn.example
 
-import com.intel.analytics.bigdl.nn.{Graph, Module}
+import com.intel.analytics.bigdl.nn.{Module}
 import com.intel.analytics.bigdl.utils.Engine
 import com.intel.analytics.zoo.pipeline.common.{IOUtils, MeanAveragePrecision}
 import com.intel.analytics.zoo.pipeline.fasterrcnn.Validator
@@ -38,12 +38,9 @@ object Test {
     modelType: String = "",
     imageSet: String = "voc_2007_test",
     bigdlModel: String = "",
-    caffeDefPath: String = "",
-    caffeModelPath: String = "",
     className: String = "",
     batch: Int = 1,
-    nPartition: Int = -1,
-    isProtobuf: Boolean = true)
+    nPartition: Int = -1)
 
   val testParamParser = new OptionParser[TestParam]("BigDL Test") {
     head("BigDL Test")
@@ -52,7 +49,7 @@ object Test {
       .action((x, c) => c.copy(folder = x))
       .required()
     opt[String]('t', "modelType")
-      .text("net type : vgg16 | alexnet | pvanet")
+      .text("net type : vgg16 | pvanet")
       .action((x, c) => c.copy(modelType = x))
       .required()
     opt[String]('i', "imageset")
@@ -62,12 +59,6 @@ object Test {
     opt[String]("model")
       .text("bigdl model")
       .action((x, c) => c.copy(bigdlModel = x))
-    opt[String]("caffeDefPath")
-      .text("caffe prototxt")
-      .action((x, c) => c.copy(caffeDefPath = x))
-    opt[String]("caffeModelPath")
-      .text("caffe model path")
-      .action((x, c) => c.copy(caffeModelPath = x))
     opt[String]("class")
       .text("class file")
       .action((x, c) => c.copy(className = x))
@@ -79,9 +70,6 @@ object Test {
       .text("number of partitions")
       .action((x, c) => c.copy(nPartition = x))
       .required()
-    opt[Boolean]("protobuf")
-      .text("is model saved with protobuf")
-      .action((x, c) => c.copy(isProtobuf = x))
   }
 
   def main(args: Array[String]) {
