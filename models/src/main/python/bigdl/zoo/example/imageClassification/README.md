@@ -19,4 +19,4 @@ export BIGDL_CLASSPATH=$BIGDL_CLASSPATH:${path_to_analytics-zoo}/models/target/m
 
 3. Run the example
 
-python ImageClassificationPredict.py [path_to_bigdl_model] [path_to_images] [top N number]
+python Predict.py [path_to_bigdl_model] [path_to_images] [top N number]
