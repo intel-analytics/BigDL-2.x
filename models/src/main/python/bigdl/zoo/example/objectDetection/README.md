@@ -3,20 +3,24 @@ This example illustrates how to detect objects given image and model
 ### Run steps
 1. Build 
 
+```bash
 ./build.sh 
+```
+
 
 2. Setup environment
 
-Add model jar to `BIGDL_CLASSPATH` and python zip file to `PYTHONPATH`
+Add python zip file to `PYTHONPATH`
 
+```bash
 export DL_PYTHON_HOME=${path_to_analytics-zoo}/models/target/bigdl-models-0.1-SNAPSHOT-python-api.zip
 
 export PYTHONPATH=$PYTHONPATH:${path_to_bigdl}/dist/conf/spark-bigdl.conf:$DL_PYTHON_HOME
-
-export BIGDL_CLASSPATH=$BIGDL_CLASSPATH:${path_to_analytics-zoo}/models/target/models-0.1-SNAPSHOT-jar-with-dependencies.jar
+```
 
 3. Run the example
 
+```bash
 master=... // spark master
 
 modelPath=... // model path
@@ -36,3 +40,4 @@ ${SPARK_HOME}/bin/spark-submit \
         --properties-file ${BIGDL_HOME}/dist/conf/spark-bigdl.conf \
         --jars ${path_to_analytics-zoo}/models/target/models-0.1-SNAPSHOT-jar-with-dependencies.jar \
          Predict.py ${modelPath} ${imagePath} ${outputPath}
+```

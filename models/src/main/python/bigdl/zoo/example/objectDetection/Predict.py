@@ -26,21 +26,21 @@ sc = get_spark_context(conf=create_spark_conf())
 init_engine()
 
 parser = argparse.ArgumentParser()
-parser.add_argument('modelPath', help="Path where the model is stored")
-parser.add_argument('imgPath', help="Path where the images are stored")
-parser.add_argument('outputPath',  help="Path to store the detection results")
+parser.add_argument('model_path', help="Path where the model is stored")
+parser.add_argument('img_path', help="Path where the images are stored")
+parser.add_argument('output_path',  help="Path to store the detection results")
 
-def predict(modelPath, imgPath, outputPath):
-    model = Model.loadModel(modelPath)
-    imageFrame = ImageFrame.read(imgPath, sc)
+def predict(model_path, img_path, output_path):
+    model = Model.loadModel(model_path)
+    image_frame = ImageFrame.read(img_path, sc)
     predictor = Predictor(model)
-    output = predictor.predict(imageFrame)
+    output = predictor.predict(image_frame)
     visualizer = Visualizer(predictor.label_map(), encoding = "jpg")
     visualized = visualizer(output).get_image(to_chw=False).collect()
     for img_id in range(len(visualized)):
-        cv2.imwrite(outputPath + str(img_id) + '.jpg', visualized[img_id])
+        cv2.imwrite(output_path + str(img_id) + '.jpg', visualized[img_id])
 
 
 if __name__ == "__main__":
     args = parser.parse_args()
-    predict(args.modelPath, args.imgPath, args.outputPath)
+    predict(args.model_path, args.img_path, args.output_path)
