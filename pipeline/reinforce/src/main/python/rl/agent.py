@@ -14,7 +14,7 @@
 # limitations under the License.
 #
 
-from trajectory import Sampler
+from trajectory import PolicySampler
 from utils import *
 import numpy as np
 import scipy.signal
@@ -23,6 +23,16 @@ import scipy.signal
 class Agent(object):
 
     def sample(self, model, num_steps=None, num_trajs=None):
+        '''
+        Samples trajectories from the environment using the provided model
+        the number of steps or the number of trajectories sampled is specified
+        by num_steps or num_trajs.
+        One of num_steps and num_trajs should be provided.
+        :param model: model representing current policy/value_function/q_function
+        :param num_steps: number of steps sampled
+        :param num_trajs: number of trajectories sampled
+        :return: Sampled Trajectories
+        '''
 
         raise NotImplementedError
 
@@ -31,7 +41,7 @@ class REINFORCEAgent(Agent):
     def __init__(self, env, horizon = 1000):
         self.env = env
         self.horizon = horizon
-        self.sampler = Sampler(env, horizon)
+        self.sampler = PolicySampler(env, horizon)
 
     def sample(self, model, num_steps=None, num_trajs=None):
         if num_steps is None and num_trajs is None:

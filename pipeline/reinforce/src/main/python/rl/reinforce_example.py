@@ -18,6 +18,7 @@ from bigdl.optim.optimizer import *
 from bigdl.util.common import *
 from agent import *
 from utils import *
+from environment import *
 import gym
 from gym import wrappers
 import math
@@ -25,7 +26,7 @@ import math
 GAMMA = 0.95
 
 
-def build_model(state_size):
+def build_model(state_size, action_size):
     model = Sequential()
 
     model.add(Linear(state_size, 10))
@@ -38,6 +39,7 @@ def build_model(state_size):
 
 def create_agent(x):
     env = gym.make('CartPole-v1')
+    env = GymEnvWrapper(env)
     return REINFORCEAgent(env, 498)
 
 
@@ -75,11 +77,12 @@ if __name__ == "__main__":
     # test environment on driver
     env = gym.make('CartPole-v1')
     env = wrappers.Monitor(env, "/tmp/cartpole-experiment", video_callable=lambda x: True, force=True)
+    env = GymEnvWrapper(env)
     test_agent = REINFORCEAgent(env, 1000)
-    state_size = env.observation_space.shape[0]
-    action_size = env.action_space.n
+    state_size = env.gym.observation_space.shape[0]
+    action_size = env.gym.action_space.n
 
-    model = build_model(state_size)
+    model = build_model(state_size, action_size)
     criterion = PGCriterion()
 
     # create and cache several agents on each partition as specified by parallelism
@@ -150,4 +153,4 @@ if __name__ == "__main__":
                     print "*****************sample video generated, %s steps, using %s seconds**********************" % (step, start - end)
                     print "************************************************************************"
 
-    env.close()
+    env.gym.close()

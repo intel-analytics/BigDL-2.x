@@ -1,3 +1,18 @@
+#
+# Copyright 2016 The BigDL Authors.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
 import numpy as np
 
 class Trajectory(object):
@@ -8,15 +23,37 @@ class Trajectory(object):
         self.data = {k: [] for k in self.fields}
         self.last_r = 0.0
 
+
     def add(self, **kwargs):
+        '''
+        add a single step to this trajectory,
+        e.g. traj.add(observations=obs, actions=action, rewards=reward, terminal=terminal)
+        '''
         for k, v in kwargs.items():
             self.data[k] += [v]
 
     def is_terminal(self):
         return self.data["terminal"][-1]
 
-
 class Sampler(object):
+    '''
+    Helper class to sample one trajectory from the environment
+    using the given model (policy or value_func/q_func estimator)
+    '''
+
+    def get_data(self, model, max_steps):
+        '''
+        Sample one trajectory from the environment, using the given model
+        to `max_steps` steps
+        '''
+        raise NotImplementedError
+
+
+class PolicySampler(Sampler):
+    '''
+    Helper class to sample one trajectory from the environment
+    using the given policy
+    '''
 
     def __init__(self, env, horizon=None):
         self.horizon = horizon
