@@ -20,7 +20,7 @@ import com.intel.analytics.bigdl.nn.Module
 import com.intel.analytics.zoo.pipeline.common.IOUtils
 import com.intel.analytics.zoo.pipeline.common.caffe.SSDCaffeLoader
 import com.intel.analytics.zoo.pipeline.common.dataset.roiimage.RecordToFeature
-import com.intel.analytics.bigdl.transform.vision.image.ImageFrame
+import com.intel.analytics.bigdl.transform.vision.image.{ImageFrame, ImageFrameToSample, MatToFloats, MatToTensor}
 import com.intel.analytics.bigdl.utils.Engine
 import com.intel.analytics.bigdl.numeric.NumericFloat
 import org.apache.log4j.{Level, Logger}
@@ -78,7 +78,6 @@ object Predict {
     opt[String]("classname")
       .text("file store class name")
       .action((x, c) => c.copy(classname = x))
-      .required()
     opt[Int]('r', "resolution")
       .text("input resolution 300 or 512")
       .action((x, c) => c.copy(resolution = x))
@@ -115,12 +114,13 @@ object Predict {
         case "local" => ImageFrame.read(params.imageFolder, sc, params.nPartition)
         case "seq" =>
           val rdd = IOUtils.loadSeqFiles(params.nPartition, params.imageFolder, sc)
-          ImageFrame.rdd(RecordToFeature()(rdd))
+          ImageFrame.rdd(RecordToFeature()(rdd)) -> MatToFloats()
         case _ => throw new IllegalArgumentException(s"invalid folder name ${params.folderType}")
       }
 
       val start = System.nanoTime()
-      val output = model.predictImage(data, batchPerPartition = params.batchPerPartition)
+      val output = model.predictImage(data -> MatToTensor() -> ImageFrameToSample(),
+        batchPerPartition = params.batchPerPartition)
       val recordsNum = output.toDistributed().rdd.count()
       val totalTime = (System.nanoTime() - start) / 1e9
       logger.info(s"[Prediction] $recordsNum in $totalTime seconds. Throughput is ${
