@@ -74,14 +74,10 @@ object Train {
         val sample = evenTokens.zip(oddTokens).toSeq
         val tokens = sc.parallelize(sample)
 
-        val padding = "###"
-//        val paddingList = Array(Array(padding)).toSeq
-
-//        val dictionary = DictionaryExtension(tokens.map(_._1) ++
-//          tokens.map(_._2) ++ sc.parallize(paddingList), param.vocabSize)
-//        val padding = "###"
-//        dictionary.addWord(padding)
         val dictionary = Dictionary(tokens.map(_._1) ++ tokens.map(_._2), param.vocabSize)
+        val padding = "###"
+        dictionary.addWord(padding)
+
         dictionary.save(param.saveFolder)
         val vocabSize = dictionary.getVocabSize() + 1
 
