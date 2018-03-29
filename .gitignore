@@ -1,0 +1,37 @@
+# Compile products
+*.pyc
+*.class
+target/
+/dist/
+
+# SBT, Maven specific
+.cache
+.history
+.lib/
+lib_managed/
+src_managed/
+project/boot/
+project/plugins/project/
+dependency-reduced-pom.xml
+
+# IDE specific
+.scala_dependencies
+.worksheet
+*.iml
+.idea/
+
+# macOS specific
+.DS_Store
+
+# data files
+*.csv
+model*.[0-9]*
+state*.[0-9]*
+
+# other
+nohup.out
+*.log
+*.un~
+.ipynb_checkpoints/
+pyspark/dist/
+pyspark/build/
