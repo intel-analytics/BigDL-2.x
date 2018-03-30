@@ -16,11 +16,11 @@
 
 SCRIPT_DIR=$(dirname ${BASH_SOURCE[0]})
 echo "SCRIPT_DIR": $SCRIPT_DIR
-export DL_PYTHON_HOME="$(cd ${SCRIPT_DIR}/../../; pwd)"
+export DL_PYTHON_HOME="$(cd ${SCRIPT_DIR}/../; pwd)"
 
-export BIGDL_HOME="$(cd ${SCRIPT_DIR}/../../..; pwd)"
+export ZOO_HOME="$(cd ${SCRIPT_DIR}/../..; pwd)"
 
-echo "BIGDL_HOME: $BIGDL_HOME"
+echo "ZOO_HOME: $ZOO_HOME"
 echo "SPARK_HOME": $SPARK_HOME
 echo "DL_PYTHON_HOME": $DL_PYTHON_HOME
 
@@ -28,25 +28,10 @@ if [ -z ${SPARK_HOME+x} ]; then echo "SPARK_HOME is unset"; exit 1; else echo "S
 
 export PYSPARK_ZIP=`find $SPARK_HOME/python/lib  -type f -iname '*.zip' | tr "\n" ":"`
 
-export PYTHONPATH=$PYTHONPATH:$PYSPARK_ZIP:$DL_PYTHON_HOME:$DL_PYTHON_HOME/:$DL_PYTHON_HOME/test/dev:$BIGDL_HOME/spark/dl/src/main/resources/spark-bigdl.conf
+export PYTHONPATH=$PYTHONPATH:$PYSPARK_ZIP:$DL_PYTHON_HOME:$DL_PYTHON_HOME/
 
-export BIGDL_CLASSPATH=$(find $BIGDL_HOME/spark/dl/target/ -name "*with-dependencies.jar" | head -n 1)
+export ZOO_CLASSPATH=$(find $ZOO_HOME/zoo/target/ -name "*with-dependencies.jar" | head -n 1)
+echo "ZOO_CLASSPATH": $ZOO_CLASSPATH
+
+export BIGDL_CLASSPATH=$ZOO_CLASSPATH
 echo "BIGDL_CLASSPATH": $BIGDL_CLASSPATH
-
-if [[ ($SPARK_HOME == *"2.2.0"*) || ($SPARK_HOME == *"2.1.1"*) || ($SPARK_HOME == *"1.6.4"*) ]]; then
-    export PYTHON_EXECUTABLES=("python2.7" "python3.5" "python3.6")
-else
-    export PYTHON_EXECUTABLES=("python2.7" "python3.5")
-fi
-
-function run_notebook() {
-    notebook_path=$1
-    target_notebook_path=${DL_PYTHON_HOME}/tmp_${PYTHON_EXECUTABLE}.ipynb
-    echo "Change kernel to $PYTHON_EXECUTABLE"
-    sed "s/\"python.\"/\"$PYTHON_EXECUTABLE\"/g" $notebook_path > ${target_notebook_path}
-    jupyter nbconvert --to notebook --execute \
-      --ExecutePreprocessor.timeout=360 --output ${DL_PYTHON_HOME}/tmp_out.ipynb \
-      $target_notebook_path
-}
-
-export -f run_notebook

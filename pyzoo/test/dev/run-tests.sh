@@ -1,5 +1,7 @@
+#!/usr/bin/env bash
+
 #
-# Copyright 2018 The Zoo Authors.
+# Copyright 2016 The BigDL Authors.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -14,6 +16,18 @@
 # limitations under the License.
 #
 
-from bigdl.util.common import JavaCreator
+SCRIPT_DIR=$(dirname ${BASH_SOURCE[0]})
 
-JavaCreator.add_creator_class("com.intel.analytics.zoo.pipeline.api.keras.python.PythonZooKeras")
+ENV_SCRIPT_DIR="$(cd ${SCRIPT_DIR}/../../dev/; pwd)"
+
+. $ENV_SCRIPT_DIR/prepare_env.sh
+
+cd "`dirname $0`"
+
+python -m pytest -v --doctest-modules ../../../pyzoo/zoo \
+
+exit_status=$?
+if [ $exit_status -ne 0 ];
+then
+    exit $exit_status
+fi
