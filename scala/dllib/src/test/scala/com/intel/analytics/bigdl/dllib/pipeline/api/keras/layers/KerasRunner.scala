@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intel.analytics.zoo.api.keras.layers
+package com.intel.analytics.zoo.pipeline.api.keras.layers
 
 import java.io.{File, PrintWriter}
 
