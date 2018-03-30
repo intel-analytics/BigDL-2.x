@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.intel.analytics.zoo.api.keras.layers
+package com.intel.analytics.zoo.pipeline.api.keras.layers
 
 import com.intel.analytics.bigdl.nn.{InferReshape, InitializationMethod, Linear, Xavier, Zeros, Sequential => TSequential}
 import com.intel.analytics.bigdl.nn.abstractnn._
@@ -23,7 +23,7 @@ import com.intel.analytics.bigdl.optim.Regularizer
 import com.intel.analytics.bigdl.tensor.Tensor
 import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric
 import com.intel.analytics.bigdl.utils.Shape
-import com.intel.analytics.zoo.api.keras.layers.utils.KerasUtils
+import com.intel.analytics.zoo.pipeline.api.keras.layers.utils.KerasUtils
 
 import scala.reflect.ClassTag
 

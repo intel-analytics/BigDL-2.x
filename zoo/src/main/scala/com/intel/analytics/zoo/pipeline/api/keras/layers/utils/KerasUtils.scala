@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.intel.analytics.zoo.api.keras.layers.utils
+package com.intel.analytics.zoo.pipeline.api.keras.layers.utils
 
 import com.intel.analytics.bigdl.Criterion
 import com.intel.analytics.bigdl.nn._

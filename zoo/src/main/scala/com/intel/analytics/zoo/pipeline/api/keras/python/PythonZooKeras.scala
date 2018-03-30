@@ -14,12 +14,12 @@
  * limitations under the License.
  */
 
-package com.intel.analytics.zoo.api.keras.python
+package com.intel.analytics.zoo.pipeline.api.keras.python
 
 import com.intel.analytics.bigdl.optim.Regularizer
 import com.intel.analytics.bigdl.python.api.PythonBigDLKeras
 import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric
-import com.intel.analytics.zoo.api.keras.layers.{Dense => ZDense}
+import com.intel.analytics.zoo.pipeline.api.keras.layers.{Dense => ZDense}
 
 import scala.reflect.ClassTag
 import java.util.{List => JList}

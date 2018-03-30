@@ -104,7 +104,7 @@
                         <inherited>false</inherited>
                         <configuration>
                             <descriptors>
-                                <descriptor>assembly/python-zip.xml</descriptor>
+                                <descriptor>${project.basedir}/assembly/python-zip.xml</descriptor>
                             </descriptors>
                         </configuration>
                         <phase>package</phase>

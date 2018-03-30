@@ -12,7 +12,7 @@
                 <include>**/*.py</include>
             </includes>
             <outputDirectory>/..</outputDirectory>
-            <directory>pyzoo/</directory>
+            <directory>pyzoo</directory>
         </fileSet>
     </fileSets>
 </assembly>

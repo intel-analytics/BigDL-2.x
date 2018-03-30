@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 #
-# Copyright 2016 The BigDL Authors.
+# Copyright 2018 The Zoo Authors.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -66,4 +66,5 @@ else
   mkdir $DIST_DIR
 fi
 
-cp -r $BASEDIR/scala/dist/target/*/* ./dist/
+cp -r $BASEDIR/zoo/target/*.jar ./dist/
+cp -r $BASEDIR/target/*.zip ./dist/
