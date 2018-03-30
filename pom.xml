@@ -99,19 +99,7 @@
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-assembly-plugin</artifactId>
                 <executions>
-                    <execution>
-                        <id>python</id>
-                        <inherited>false</inherited>
-                        <configuration>
-                            <descriptors>
-                                <descriptor>${project.basedir}/assembly/python-zip.xml</descriptor>
-                            </descriptors>
-                        </configuration>
-                        <phase>package</phase>
-                        <goals>
-                            <goal>single</goal>
-                        </goals>
-                    </execution>
+
                 </executions>
             </plugin>
         </plugins>

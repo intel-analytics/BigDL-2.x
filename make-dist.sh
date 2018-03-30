@@ -60,11 +60,10 @@ DIST_DIR=$BASEDIR/dist
 
 if [ ! -d "$DIST_DIR" ]
 then
-  mkdir $DIST_DIR
+  mkdir -p $DIST_DIR/lib
 else
   rm -r $DIST_DIR
-  mkdir $DIST_DIR
+  mkdir -p $DIST_DIR/lib
 fi
 
-cp -r $BASEDIR/zoo/target/*.jar ./dist/
-cp -r $BASEDIR/target/*.zip ./dist/
+cp -r $BASEDIR/zoo/target/*.jar ./dist/lib/

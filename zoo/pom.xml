@@ -250,6 +250,20 @@
                             <goal>single</goal>
                         </goals>
                     </execution>
+
+                    <execution>
+                        <id>python</id>
+                        <inherited>false</inherited>
+                        <configuration>
+                            <descriptors>
+                                <descriptor>${project.basedir}/src/assembly/python-zip.xml</descriptor>
+                            </descriptors>
+                        </configuration>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>single</goal>
+                        </goals>
+                    </execution>
                 </executions>
             </plugin>
             <plugin>
