@@ -13,7 +13,6 @@
     <artifactId>zoo</artifactId>
     <packaging>jar</packaging>
 
-
     <properties>
         <java.version>1.8</java.version>
         <javac.version>1.8</javac.version>
@@ -23,24 +22,56 @@
         <scala.macros.version>2.1.0</scala.macros.version>
         <scalatest.version>2.2.4</scalatest.version>
         <spark.version>2.1.0</spark.version>
-        <bigdl.artifactId>bigdl-SPARK_2.1</bigdl.artifactId>
         <bigdl.version>0.5.0</bigdl.version>
     </properties>
 
     <profiles>
         <profile>
-            <id>spark_2.1</id>
+            <id>spark_1.6</id>
             <activation>
                 <activeByDefault>true</activeByDefault>
             </activation>
             <properties>
+                <spark-version.project>1.5-plus</spark-version.project>
+                <spark.version>1.5.1</spark.version>
+                <scala.major.version>2.10</scala.major.version>
+                <scala.version>2.10.5</scala.version>
+                <scala.macros.version>2.0.1</scala.macros.version>
+                <scalatest.version>2.2.4</scalatest.version>
+                <bigdl.artifactId>bigdl-SPARK_1.6</bigdl.artifactId>
+            </properties>
+        </profile>
+
+        <profile>
+            <id>spark_2.x</id>
+            <properties>
+                <spark-version.project>2.0</spark-version.project>
+                <spark.version>2.0.0</spark.version>
                 <scala.major.version>2.11</scala.major.version>
                 <scala.version>2.11.8</scala.version>
                 <scala.macros.version>2.1.0</scala.macros.version>
-                <spark.version>2.1.0</spark.version>
                 <bigdl.artifactId>bigdl-SPARK_2.1</bigdl.artifactId>
             </properties>
         </profile>
+
+        <profile>
+            <id>scala_2.11</id>
+            <properties>
+                <scala.major.version>2.11</scala.major.version>
+                <scala.version>2.11.8</scala.version>
+                <scala.macros.version>2.1.0</scala.macros.version>
+            </properties>
+        </profile>
+        <!-- put this profile after spark_2.x profile -->
+        <profile>
+            <id>scala_2.10</id>
+            <properties>
+                <scala.major.version>2.10</scala.major.version>
+                <scala.version>2.10.5</scala.version>
+                <scala.macros.version>2.0.1</scala.macros.version>
+            </properties>
+        </profile>
+
         <profile>
             <id>all-in-one</id>
             <properties>
