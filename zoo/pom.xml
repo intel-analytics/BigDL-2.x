@@ -14,8 +14,8 @@
     <packaging>jar</packaging>
 
     <properties>
-        <java.version>1.8</java.version>
-        <javac.version>1.8</javac.version>
+        <java.version>1.7</java.version>
+        <javac.version>1.7</javac.version>
         <spark-scope>provided</spark-scope>
         <scala.major.version>2.11</scala.major.version>
         <scala.version>2.11.8</scala.version>
@@ -45,6 +45,8 @@
         <profile>
             <id>spark_2.x</id>
             <properties>
+                <java.version>1.8</java.version>
+                <javac.version>1.8</javac.version>
                 <spark-version.project>2.0</spark-version.project>
                 <spark.version>2.0.0</spark.version>
                 <scala.major.version>2.11</scala.major.version>
