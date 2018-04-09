@@ -35,3 +35,10 @@ nohup.out
 .ipynb_checkpoints/
 pyspark/dist/
 pyspark/build/
+.project
+.settings/
+*/.cache-main
+*/.cache-tests
+*/.classpath
+*/.project
+*/.settings/
