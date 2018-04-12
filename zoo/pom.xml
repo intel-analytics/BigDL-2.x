@@ -32,8 +32,8 @@
                 <activeByDefault>true</activeByDefault>
             </activation>
             <properties>
-                <spark-version.project>1.5-plus</spark-version.project>
-                <spark.version>1.5.1</spark.version>
+                <spark-version.project>1.6-plus</spark-version.project>
+                <spark.version>1.6.3</spark.version>
                 <scala.major.version>2.10</scala.major.version>
                 <scala.version>2.10.5</scala.version>
                 <scala.macros.version>2.0.1</scala.macros.version>
