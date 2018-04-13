@@ -14,16 +14,16 @@
  * limitations under the License.
  */
 
-package com.intel.analytics.zoo.pipeline.example.nnframes.ImageInference
+package com.intel.analytics.zoo.example.nnframes.ImageInference
 
 import com.intel.analytics.bigdl.nn.Module
 import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric.NumericFloat
 import com.intel.analytics.bigdl.transform.vision.image.augmentation._
 import com.intel.analytics.bigdl.transform.vision.image._
-import com.intel.analytics.bigdl.utils.{Engine, LoggerFilter}
+import com.intel.analytics.bigdl.utils.LoggerFilter
 import com.intel.analytics.zoo.pipeline.nnframes._
-import org.apache.spark.SparkContext
-import org.apache.spark.sql.{Row, SQLContext}
+import com.intel.analytics.zoo.common.NNContext
+import org.apache.spark.sql.Row
 import org.apache.spark.sql.functions._
 import scopt.OptionParser
 
@@ -34,13 +34,10 @@ object ImageInference {
 
     val defaultParams = Utils.LocalParams()
     Utils.parser.parse(args, defaultParams).map { params =>
-      val conf = Engine.createSparkConf().setAppName("nnFramesInference")
-      val sc = SparkContext.getOrCreate(conf)
-      val sqlContext = new SQLContext(sc)
-      Engine.init
+      val sc = NNContext.getNNContext()
 
       val getImageName = udf { row: Row => row.getString(0)}
-      val imageDF = NNImageReader.readImages(params.folder, sqlContext.sparkContext)
+      val imageDF = NNImageReader.readImages(params.folder, sc)
         .withColumn("imageName", getImageName(col("image")))
 
       val transformer = Resize(256, 256) -> CenterCrop(224, 224) ->

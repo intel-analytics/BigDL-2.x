@@ -14,19 +14,19 @@
  * limitations under the License.
  */
 
-package com.intel.analytics.zoo.pipeline.example.nnframes.ImageTransferLearning
+package com.intel.analytics.zoo.example.nnframes.ImageTransferLearning
 
 import com.intel.analytics.bigdl.nn._
 import com.intel.analytics.bigdl.transform.vision.image._
 import com.intel.analytics.bigdl.transform.vision.image.augmentation._
 import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric.NumericFloat
-import com.intel.analytics.bigdl.utils.{Engine, LoggerFilter}
+import com.intel.analytics.bigdl.utils.LoggerFilter
 import com.intel.analytics.zoo.pipeline.nnframes._
+import com.intel.analytics.zoo.common.NNContext
 import org.apache.spark.ml.evaluation.MulticlassClassificationEvaluator
 import org.apache.spark.ml.Pipeline
 import org.apache.spark.sql.functions.{col, udf}
-import org.apache.spark.sql.{DataFrame, Row, SQLContext}
-import org.apache.spark.SparkContext
+import org.apache.spark.sql.{DataFrame, Row}
 import scopt.OptionParser
 
 object ImageTransferLearning {
@@ -38,13 +38,10 @@ object ImageTransferLearning {
 
     Utils.parser.parse(args, defaultParams).map { params =>
 
-      val conf = Engine.createSparkConf().setAppName("TransferLearning")
-      val sc = SparkContext.getOrCreate(conf)
-      val sqlContext = new SQLContext(sc)
-      Engine.init
+      val sc = NNContext.getNNContext()
 
       val createLabel = udf { row: Row => if (row.getString(0).contains("cat")) 1.0 else 2.0 }
-      val imagesDF: DataFrame = NNImageReader.readImages(params.folder, sqlContext.sparkContext)
+      val imagesDF: DataFrame = NNImageReader.readImages(params.folder, sc)
         .withColumn("label", createLabel(col("image")))
 
       val Array(validationDF, trainingDF) = imagesDF.randomSplit(Array(0.20, 0.80), seed = 1L)
