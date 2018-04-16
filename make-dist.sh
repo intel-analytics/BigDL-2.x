@@ -22,6 +22,20 @@
 
 set -e
 
+BASEDIR=$(dirname "$0")
+
+# Check bigdl backend
+if [ ! -d $BASEDIR/backend/bigdl ]; then
+   echo "Backend is not exist. Please try to execute: git submodule update --init --recursive"
+   exit 1
+fi
+
+# Check spark conf
+if [ ! -f $BASEDIR/backend/bigdl/spark/dl/src/main/resources/spark-bigdl.conf ]; then
+   echo "Conf is not exist. Please check: $BASEDIR/backend/bigdl/spark/dl/src/main/resources/spark-bigdl.conf"
+   exit 1
+fi
+
 # Check java
 if type -p java>/dev/null; then
     _java=java
@@ -55,15 +69,15 @@ fi
 
 mvn clean package -DskipTests $*
 
-BASEDIR=$(dirname "$0")
 DIST_DIR=$BASEDIR/dist
 
-if [ ! -d "$DIST_DIR" ]
-then
-  mkdir -p $DIST_DIR/lib
-else
-  rm -r $DIST_DIR
-  mkdir -p $DIST_DIR/lib
-fi
+# Clean dist folder
+rm -rf $DIST_DIR
+mkdir -p $DIST_DIR/lib
+mkdir -p $DIST_DIR/conf
 
-cp -r $BASEDIR/zoo/target/*.jar ./dist/lib/
+cp -r $BASEDIR/zoo/target/*.jar $DIST_DIR/lib/
+cp -r $BASEDIR/zoo/target/*.zip $DIST_DIR/lib/
+cp $BASEDIR/backend/bigdl/spark/dl/src/main/resources/spark-bigdl.conf  $DIST_DIR/conf/
+
+
