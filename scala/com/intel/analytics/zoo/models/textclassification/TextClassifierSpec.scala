@@ -16,20 +16,28 @@
 
 package com.intel.analytics.zoo.models.textclassification
 
-
 import com.intel.analytics.bigdl.tensor.Tensor
 import com.intel.analytics.zoo.pipeline.api.keras.ZooSpecHelper
 
-class TextClassifierSpec extends ZooSpecHelper  {
+class TextClassifierSpec extends ZooSpecHelper {
 
   "TextClassifier model" should "compute the correct output shape" in {
     val model = TextClassifier[Float](classNum = 20, tokenLength = 200).buildModel()
     model.getOutputShape().toSingle().toArray should be (Array(-1, 20))
   }
 
-  "TextClassifier forward and backward" should "work properly" in {
-    val model = TextClassifier[Float](classNum = 5, tokenLength = 10, sequenceLength = 20)
+  "TextClassifier lstm forward and backward" should "work properly" in {
+    val model = TextClassifier[Float](classNum = 15, tokenLength = 10, sequenceLength = 20,
+      encoder = "lstm")
     val input = Tensor[Float](Array(1, 20, 10)).rand()
+    val output = model.forward(input)
+    val gradInput = model.backward(input, output)
+  }
+
+  "TextClassifier gru forward and backward" should "work properly" in {
+    val model = TextClassifier[Float](classNum = 5, tokenLength = 15, sequenceLength = 40,
+      encoder = "gru")
+    val input = Tensor[Float](Array(1, 40, 15)).rand()
     val output = model.forward(input)
     val gradInput = model.backward(input, output)
   }
@@ -37,7 +45,7 @@ class TextClassifierSpec extends ZooSpecHelper  {
   "TextClassifier save and load" should "work properly" in {
     val model = TextClassifier[Float](classNum = 20, tokenLength = 50, sequenceLength = 100)
     val input = Tensor[Float](Array(1, 100, 50)).rand()
-    testZooModelLoadSave(model, input, TextClassifier.load[Float])
+    testZooModelLoadSave(model, input, TextClassifier.loadModel[Float])
   }
 
 }
