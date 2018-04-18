@@ -40,8 +40,6 @@ abstract class ZooModel[A <: Activity: ClassTag, B <: Activity: ClassTag, T: Cla
    */
   protected def buildModel(): AbstractModule[A, B, T]
 
-  modules += buildModel()
-
   /**
    * The defined model, either from buildModel() or loaded from file.
    */
@@ -54,12 +52,27 @@ abstract class ZooModel[A <: Activity: ClassTag, B <: Activity: ClassTag, T: Cla
     modules(0).asInstanceOf[AbstractModule[A, B, T]]
   }
 
-  // scalastyle:off
-  def model_=(value: AbstractModule[A, B, T]): Unit = {
-    modules.clear()
-    modules.append(value)
+  def build(): this.type = {
+    modules += buildModel()
+    this
   }
-  // scalastyle:on
+
+  /**
+   * Save the model to the specified path.
+   *
+   * @param path The path to save the model.
+   *             Local file system, HDFS and Amazon S3 are supported.
+   *             HDFS path should be like "hdfs://[host]:[port]/xxx".
+   *             Amazon S3 path should be like "s3a://bucket/xxx".
+   * @param weightPath The path to save weights. Default is null.
+   * @param overWrite Whether to overwrite the file if it already exists. Default is false.
+   * @return The model itself.
+   */
+  def saveModel(path: String,
+                weightPath: String = null,
+                overWrite: Boolean = false): this.type = {
+    this.saveModule(path, weightPath, overWrite)
+  }
 
   override def updateOutput(input: A): B = {
     output = model.updateOutput(input)
@@ -76,10 +89,7 @@ abstract class ZooModel[A <: Activity: ClassTag, B <: Activity: ClassTag, T: Cla
   }
 }
 
-/**
- * The trait to be extended by model object to define some common static methods.
- */
-trait ZooModelHelper {
+object ZooModel {
   /**
    * Load an existing model definition (with weights).
    *
@@ -91,37 +101,9 @@ trait ZooModelHelper {
    * @tparam T Numeric type of parameter(e.g. weight, bias). Only support float/double now.
    * @return
    */
-  def load[T: ClassTag](path: String,
-                        weightPath: String = null)(implicit ev: TensorNumeric[T]):
-      AbstractModule[Activity, Activity, T] = {
-    ZooModel.load[T](path, weightPath)
-  }
-}
-
-object ZooModel {
-  // Currently need to register ZooModelSerializable for each subclass of ZooModel.
-  // Modify this if BigDL supports registering the parent class only.
-  ModuleSerializer
-    .registerModule("com.intel.analytics.zoo.models.textclassification.TextClassifier",
-      ZooModelSerializable)
-
-  def load[T: ClassTag](path: String,
-                        weightPath: String = null)(implicit ev: TensorNumeric[T]):
-      AbstractModule[Activity, Activity, T] = {
-    Module.loadModule[T](path, weightPath)
-  }
-}
-
-object ZooModelSerializable extends ContainerSerializable {
-  override def loadSubModules[T: ClassTag](context: DeserializeContext,
-                                           module: AbstractModule[Activity, Activity, T])
-      (implicit ev: TensorNumeric[T]): Unit = {
-    val zooModel = module.asInstanceOf[ZooModel[Activity, Activity, T]]
-    val subModules = context.bigdlModule.getSubModulesList.asScala
-    subModules.foreach(module => {
-      val subModuleData = ModuleSerializer.load(DeserializeContext(module,
-        context.storages, context.storageType, _copyWeightAndBias))
-      zooModel.model = subModuleData.module
-    })
+  def loadModel[T: ClassTag](path: String,
+                             weightPath: String = null)(implicit ev: TensorNumeric[T]):
+      ZooModel[Activity, Activity, T] = {
+    Module.loadModule[T](path, weightPath).asInstanceOf[ZooModel[Activity, Activity, T]]
   }
 }
