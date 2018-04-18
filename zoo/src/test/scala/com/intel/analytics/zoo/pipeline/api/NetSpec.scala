@@ -27,6 +27,6 @@ class NetSpec extends ZooSpecHelper{
   }
 
   "invokeByName without params" should "be test" in {
-    assert(Dense[Float](3).callByName("isBuilt") != false)
+    assert(Dense[Float](3).callByName("isBuilt") == false)
   }
 }

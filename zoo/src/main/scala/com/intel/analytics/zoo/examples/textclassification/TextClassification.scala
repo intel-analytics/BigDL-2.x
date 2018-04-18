@@ -26,10 +26,11 @@ import com.intel.analytics.bigdl.nn.ClassNLLCriterion
 import com.intel.analytics.bigdl.optim._
 import com.intel.analytics.bigdl.tensor.Tensor
 import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric.NumericFloat
-import com.intel.analytics.bigdl.utils.{Engine, LoggerFilter}
+import com.intel.analytics.bigdl.utils.LoggerFilter
+import com.intel.analytics.zoo.common.NNContext
 import com.intel.analytics.zoo.models.textclassification.TextClassifier
 import org.apache.log4j.{Level => Level4j, Logger => Logger4j}
-import org.apache.spark.SparkContext
+import org.apache.spark.SparkConf
 import org.apache.spark.rdd.RDD
 import org.slf4j.{Logger, LoggerFactory}
 import scopt.OptionParser
@@ -158,11 +159,10 @@ object TextClassification {
     }
 
     parser.parse(args, TextClassificationParams()).map { param =>
-      val conf = Engine.createSparkConf()
-        .setAppName("Text classification")
+      val conf = new SparkConf()
+        .setAppName("Text Classification Example")
         .set("spark.task.maxFailures", "1")
-      val sc = new SparkContext(conf)
-      Engine.init
+      val sc = NNContext.getNNContext(conf)
 
       val sequenceLength = param.sequenceLength
       val tokenLength = param.tokenLength
@@ -195,7 +195,7 @@ object TextClassification {
         Array(trainingSplit, 1 - trainingSplit))
 
       val model = if (param.model.isDefined) {
-        TextClassifier.load(param.model.get)
+        TextClassifier.loadModel(param.model.get)
       }
       else {
         TextClassifier(classNum, tokenLength, sequenceLength,

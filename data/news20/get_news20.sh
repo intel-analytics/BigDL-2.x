@@ -28,7 +28,7 @@ then
 fi
 
 echo "Downloading news20.tar.gz"
-wget www.cs.cmu.edu/afs/cs.cmu.edu/project/theo-20/www/data/news20.tar.gz
+wget http://qwone.com/~jason/20Newsgroups/20news-18828.tar.gz
 
 echo "Unzipping news20.tar.gz"
 tar zxf news20.tar.gz

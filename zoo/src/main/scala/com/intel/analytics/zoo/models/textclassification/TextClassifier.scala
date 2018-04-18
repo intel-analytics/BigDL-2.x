@@ -17,11 +17,12 @@
 package com.intel.analytics.zoo.models.textclassification
 
 import com.intel.analytics.bigdl.nn.abstractnn.AbstractModule
-import com.intel.analytics.bigdl.nn.keras._
 import com.intel.analytics.bigdl.tensor.Tensor
 import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric
 import com.intel.analytics.bigdl.utils.Shape
-import com.intel.analytics.zoo.models.common.{ZooModel, ZooModelHelper}
+import com.intel.analytics.zoo.models.common.ZooModel
+import com.intel.analytics.zoo.pipeline.api.keras.layers._
+import com.intel.analytics.zoo.pipeline.api.keras.models.Sequential
 
 import scala.reflect.ClassTag
 
@@ -35,7 +36,7 @@ import scala.reflect.ClassTag
  * @param encoderOutputDim The output dimension for the encoder. Positive integer.
  * @tparam T Numeric type of parameter(e.g. weight, bias). Only support float/double now.
  */
-class TextClassifier[T: ClassTag](
+class TextClassifier[T: ClassTag] private (
     val classNum: Int,
     val tokenLength: Int,
     val sequenceLength: Int = 500,
@@ -70,13 +71,19 @@ class TextClassifier[T: ClassTag](
 /**
  * The factory method to create a TextClassifier instance.
  */
-object TextClassifier extends ZooModelHelper {
+object TextClassifier {
   def apply[@specialized(Float, Double) T: ClassTag](
       classNum: Int,
       tokenLength: Int,
       sequenceLength: Int = 500,
       encoder: String = "cnn",
       encoderOutputDim: Int = 256)(implicit ev: TensorNumeric[T]): TextClassifier[T] = {
-    new TextClassifier[T](classNum, tokenLength, sequenceLength, encoder, encoderOutputDim)
+    new TextClassifier[T](classNum, tokenLength, sequenceLength, encoder, encoderOutputDim).build()
+  }
+
+  def loadModel[T: ClassTag](path: String,
+                             weightPath: String = null)(implicit ev: TensorNumeric[T]):
+      TextClassifier[T] = {
+    ZooModel.loadModel(path, weightPath).asInstanceOf[TextClassifier[T]]
   }
 }
