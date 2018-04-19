@@ -167,7 +167,7 @@ object TextClassification {
       val sequenceLength = param.sequenceLength
       val tokenLength = param.tokenLength
       val trainingSplit = param.trainingSplit
-      val textDataDir = s"${param.baseDir}/20_newsgroup/"
+      val textDataDir = s"${param.baseDir}/20news-18828/"
       require(new File(textDataDir).exists(), "Text data directory is not found in baseDir, " +
         "you can run $ZOO_HOME/data/get_news20.sh to download 20 Newsgroup dataset")
       val gloveDir = s"${param.baseDir}/glove.6B/"
