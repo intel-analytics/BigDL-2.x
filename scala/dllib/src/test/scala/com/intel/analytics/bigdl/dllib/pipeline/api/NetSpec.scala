@@ -22,11 +22,16 @@ import com.intel.analytics.zoo.pipeline.api.keras.layers.Dense
 
 class NetSpec extends ZooSpecHelper{
 
-  "invokeByName with params" should "be test" in {
-    assert(Dense[Float](3).callByName("build", Shape(2, 5)) == Shape(2, 3))
+  "invokeMethod with params" should "work properly" in {
+    assert(Dense[Float](3).invokeMethod("build", Shape(2, 5)) == Shape(2, 3))
   }
 
-  "invokeByName without params" should "be test" in {
-    assert(Dense[Float](3).callByName("isBuilt") == false)
+  "invokeMethod without params" should "work properly" in {
+    assert(Dense[Float](3).invokeMethod("isBuilt") == false)
   }
+
+  "invokeMethod for Seq" should "work properly" in {
+    Dense[Float](3).invokeMethodForSeq("excludeInvalidLayers", Seq(Dense[Float](3)))
+  }
+
 }
