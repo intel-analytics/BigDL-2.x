@@ -10,7 +10,7 @@ Test template    Zoo Test
 
 *** Test Cases ***   SuiteName                             VerticalId
 1                    Spark2.1 Test Suite                   ${spark_210_3_vid}
-#2                    Yarn Test Suite                       ${hdfs_264_3_vid}
+2                    Yarn Test Suite                       ${hdfs_264_3_vid}
 
 *** Keywords ***
 Build SparkJar
@@ -63,7 +63,21 @@ Run Spark Test
    Remove Input
 
 Spark2.1 Test Suite
+   Log To Console                   (1/2) Start the Spark2.1 Test Suite
    Build SparkJar                   spark_2.x
    Set Environment Variable         SPARK_HOME               /opt/work/spark-2.1.0-bin-hadoop2.7
    ${submit}=                       Catenate                 SEPARATOR=/    /opt/work/spark-2.1.0-bin-hadoop2.7/bin    spark-submit
    Run Spark Test                   ${submit}                ${spark_210_3_master}
+
+Yarn Test Suite
+   Log To Console                   (2/2) Start the Yarn Test Suite
+   DownLoad Input
+   Build SparkJar                   spark_2.x
+   Set Environment Variable         SPARK_HOME               /opt/work/spark-2.1.0-bin-hadoop2.7
+   Set Environment Variable         http_proxy               ${http_proxy}
+   Set Environment Variable         https_proxy              ${https_proxy}
+   ${submit}=                       Catenate                 SEPARATOR=/    /opt/work/spark-2.1.0-bin-hadoop2.7/bin    spark-submit
+   Log To Console                   begin text classification
+   Run Shell                        ${submit} --master yarn --deploy-mode client --conf "spark.serializer=org.apache.spark.serializer.JavaSerializer" --conf spark.yarn.executor.memoryOverhead=40000 --executor-cores 8 --num-executors 4 --driver-memory 5g --executor-memory 10g --class com.intel.analytics.zoo.examples.textclassification.TextClassification ${jar_path} --batchSize 128 --baseDir /tmp/text_data --partitionNum 8
+   Remove Environment Variable      http_proxy                https_proxy              PYSPARK_DRIVER_PYTHON            PYSPARK_PYTHON
+   Remove Input
