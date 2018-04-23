@@ -1,3 +1,19 @@
+/*
+ * Copyright 2018 Analytics Zoo Authors.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package com.intel.analytics.zoo.models.recommendation
 
 import com.intel.analytics.bigdl.dataset.Sample
@@ -16,23 +32,23 @@ case class UserItemFeature[T: ClassTag](userId: Int, itemId: Int, sample: Sample
 case class UserItemPrediction(userId: Int, itemId: Int, prediction: Int, probability: Double)
 
 /**
-  * The factory for recommender.
-  *
-  * @param userCount The number of users. Positive integer.
-  * @param itemCount The number of items. Positive integer.
-  * @tparam T Numeric type of parameter(e.g. weight, bias). Only support float/double now.
-  */
+ * The factory for recommender.
+ *
+ * @param userCount The number of users. Positive integer.
+ * @param itemCount The number of items. Positive integer.
+ * @tparam T Numeric type of parameter(e.g. weight, bias). Only support float/double now.
+ */
 abstract class Recommender[T: ClassTag](userCount: Int, itemCount: Int
                                        )(implicit ev: TensorNumeric[T])
   extends ZooModel[Tensor[T], Tensor[T], T] {
 
   /**
-    * Recommend a number of items for each user given a rdd of user item pair features
-    *
-    * @param featureRdd RDD of user item pair feature.
-    * @param maxItems   number of items to be recommended to each user. Positive integer.
-    * @return RDD of user item pair prediction.
-    */
+   * Recommend a number of items for each user given a rdd of user item pair features
+   *
+   * @param featureRdd RDD of user item pair feature.
+   * @param maxItems Number of items to be recommended to each user. Positive integer.
+   * @return RDD of user item pair prediction.
+   */
   def recommendForUser(featureRdd: RDD[UserItemFeature[T]],
                        maxItems: Int): RDD[UserItemPrediction] = {
 
@@ -50,12 +66,12 @@ abstract class Recommender[T: ClassTag](userCount: Int, itemCount: Int
   }
 
   /**
-    * Recommend a number of users for each item given a rdd of user item pair features
-    *
-    * @param featureRdd RDD of user item pair feature.
-    * @param maxUsers   number of users to be recommended to each item. Positive integer.
-    * @return RDD of user item pair prediction.
-    */
+   * Recommend a number of users for each item given a rdd of user item pair features
+   *
+   * @param featureRdd RDD of user item pair feature.
+   * @param maxUsers Number of users to be recommended to each item. Positive integer.
+   * @return RDD of user item pair prediction.
+   */
   def recommendForItem(featureRdd: RDD[UserItemFeature[T]],
                        maxUsers: Int): RDD[UserItemPrediction] = {
     val results = predictUserItemPair(featureRdd)
@@ -72,11 +88,11 @@ abstract class Recommender[T: ClassTag](userCount: Int, itemCount: Int
   }
 
   /**
-    * Predict for and user item pair
-    *
-    * @param featureRdd RDD of user item pair feature.
-    * @return RDD of user item pair prediction.
-    */
+   * Predict for and user item pair
+   *
+   * @param featureRdd RDD of user item pair feature.
+   * @return RDD of user item pair prediction.
+   */
   def predictUserItemPair(featureRdd: RDD[UserItemFeature[T]]): RDD[UserItemPrediction]
 
 }
