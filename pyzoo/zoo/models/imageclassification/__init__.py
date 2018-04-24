@@ -13,9 +13,3 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-
-from bigdl.util.common import JavaCreator
-
-JavaCreator.add_creator_class("com.intel.analytics.zoo.pipeline.api.keras.python.PythonZooKeras")
-JavaCreator.add_creator_class("com.intel.analytics.zoo.pipeline.nnframes.python.PythonNNFrames")
-JavaCreator.add_creator_class("com.intel.analytics.zoo.models.python.PythonZooModel")

@@ -16,12 +16,9 @@
 
 package com.intel.analytics.zoo.models.common
 
-import scala.collection.JavaConverters._
-
 import com.intel.analytics.bigdl.nn.{Container, Module}
 import com.intel.analytics.bigdl.nn.abstractnn.{AbstractModule, Activity}
 import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric
-import com.intel.analytics.bigdl.utils.serializer.{ContainerSerializable, DeserializeContext, ModuleSerializer}
 
 import scala.reflect.ClassTag
 
@@ -66,7 +63,6 @@ abstract class ZooModel[A <: Activity: ClassTag, B <: Activity: ClassTag, T: Cla
    *             Amazon S3 path should be like "s3a://bucket/xxx".
    * @param weightPath The path to save weights. Default is null.
    * @param overWrite Whether to overwrite the file if it already exists. Default is false.
-   * @return The model itself.
    */
   def saveModel(path: String,
                 weightPath: String = null,
@@ -91,7 +87,7 @@ abstract class ZooModel[A <: Activity: ClassTag, B <: Activity: ClassTag, T: Cla
 
 object ZooModel {
   /**
-   * Load an existing model definition (with weights).
+   * Load an existing model (with weights).
    *
    * @param path The path for the pre-defined model.
    *             Local file system, HDFS and Amazon S3 are supported.
@@ -99,7 +95,6 @@ object ZooModel {
    *             Amazon S3 path should be like "s3a://bucket/xxx".
    * @param weightPath The path for pre-trained weights if any. Default is null.
    * @tparam T Numeric type of parameter(e.g. weight, bias). Only support float/double now.
-   * @return
    */
   def loadModel[T: ClassTag](path: String,
                              weightPath: String = null)(implicit ev: TensorNumeric[T]):

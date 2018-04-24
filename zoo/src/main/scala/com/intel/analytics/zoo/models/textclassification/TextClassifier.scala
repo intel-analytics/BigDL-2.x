@@ -31,9 +31,10 @@ import scala.reflect.ClassTag
  *
  * @param classNum The number of text categories to be classified. Positive integer.
  * @param tokenLength The size of each word vector. Positive integer.
- * @param sequenceLength The length of a sequence. Positive integer.
- * @param encoder String. The encoder for input sequences. 'cnn' or 'lstm' or 'gru'.
- * @param encoderOutputDim The output dimension for the encoder. Positive integer.
+ * @param sequenceLength The length of a sequence. Positive integer. Default is 500.
+ * @param encoder The encoder for input sequences. String. 'cnn' or 'lstm' or 'gru'.
+ *                Default is 'cnn'.
+ * @param encoderOutputDim The output dimension for the encoder. Positive integer. Default is 256.
  * @tparam T Numeric type of parameter(e.g. weight, bias). Only support float/double now.
  */
 class TextClassifier[T: ClassTag] private (
@@ -68,10 +69,10 @@ class TextClassifier[T: ClassTag] private (
   }
 }
 
-/**
- * The factory method to create a TextClassifier instance.
- */
 object TextClassifier {
+  /**
+   * The factory method to create a TextClassifier instance.
+   */
   def apply[@specialized(Float, Double) T: ClassTag](
       classNum: Int,
       tokenLength: Int,
@@ -81,6 +82,16 @@ object TextClassifier {
     new TextClassifier[T](classNum, tokenLength, sequenceLength, encoder, encoderOutputDim).build()
   }
 
+  /**
+   * Load an existing TextClassifier model (with weights).
+   *
+   * @param path The path for the pre-defined model.
+   *             Local file system, HDFS and Amazon S3 are supported.
+   *             HDFS path should be like "hdfs://[host]:[port]/xxx".
+   *             Amazon S3 path should be like "s3a://bucket/xxx".
+   * @param weightPath The path for pre-trained weights if any. Default is null.
+   * @tparam T Numeric type of parameter(e.g. weight, bias). Only support float/double now.
+   */
   def loadModel[T: ClassTag](path: String,
                              weightPath: String = null)(implicit ev: TensorNumeric[T]):
       TextClassifier[T] = {
