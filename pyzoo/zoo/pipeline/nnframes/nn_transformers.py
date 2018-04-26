@@ -33,3 +33,20 @@ class NNFeatureTransformer(JavaValue):
         self.value = callBigDlFunc(
                 bigdl_type, JavaValue.jvm_class_constructor(self), *args)
 
+class NumToTensor(NNFeatureTransformer):
+    def __init__(self, bigdl_type="float"):
+        super(NumToTensor, self).__init__()
+        self.value = callBigDlFunc(
+            bigdl_type, JavaValue.jvm_class_constructor(self))
+
+class SeqToTensor(NNFeatureTransformer):
+    def __init__(self, size, bigdl_type="float", ):
+        super(SeqToTensor, self).__init__()
+        self.value = callBigDlFunc(
+            bigdl_type, JavaValue.jvm_class_constructor(self), size)
+
+class MLlibVectorToTensor(NNFeatureTransformer):
+    def __init__(self, size, bigdl_type="float"):
+        super(MLlibVectorToTensor, self).__init__()
+        self.value = callBigDlFunc(
+            bigdl_type, JavaValue.jvm_class_constructor(self), size)
