@@ -28,25 +28,18 @@ class NNFeatureTransformer(JavaValue):
     """
     NNFeatureTransformer is a transformer that transform
     """
-
     def __init__(self, bigdl_type="float", *args):
         self.value = callBigDlFunc(
                 bigdl_type, JavaValue.jvm_class_constructor(self), *args)
 
 class NumToTensor(NNFeatureTransformer):
     def __init__(self, bigdl_type="float"):
-        super(NumToTensor, self).__init__()
-        self.value = callBigDlFunc(
-            bigdl_type, JavaValue.jvm_class_constructor(self))
+        super(NumToTensor, self).__init__(bigdl_type)
 
 class SeqToTensor(NNFeatureTransformer):
-    def __init__(self, size, bigdl_type="float", ):
-        super(SeqToTensor, self).__init__()
-        self.value = callBigDlFunc(
-            bigdl_type, JavaValue.jvm_class_constructor(self), size)
+    def __init__(self, size, bigdl_type="float"):
+        super(SeqToTensor, self).__init__(bigdl_type, size)
 
 class MLlibVectorToTensor(NNFeatureTransformer):
     def __init__(self, size, bigdl_type="float"):
-        super(MLlibVectorToTensor, self).__init__()
-        self.value = callBigDlFunc(
-            bigdl_type, JavaValue.jvm_class_constructor(self), size)
+        super(MLlibVectorToTensor, self).__init__(bigdl_type, size)

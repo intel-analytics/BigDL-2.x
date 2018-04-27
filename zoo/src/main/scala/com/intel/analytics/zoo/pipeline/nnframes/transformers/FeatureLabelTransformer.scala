@@ -16,7 +16,7 @@
 
 package com.intel.analytics.zoo.pipeline.nnframes.transformers
 
-import com.intel.analytics.bigdl.dataset.{Sample, Transformer}
+import com.intel.analytics.bigdl.dataset.{Sample, SampleToMiniBatch, Transformer}
 import com.intel.analytics.bigdl.tensor.Tensor
 import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric
 
@@ -28,11 +28,10 @@ private[nnframes] class FeatureLabelTransformer[F, L, T: ClassTag] (
   extends Transformer[(F, L), Sample[T]] {
 
   override def apply(prev: Iterator[(F, L)]): Iterator[Sample[T]] = {
-    val outputFeatures = featureTransfomer.apply(prev.map(_._1))
-    val outputLabels = labelTransformer.apply(prev.map(_._2))
-    val samples = outputFeatures.zip(outputLabels).map { case (featureTensor, labelTensor) =>
+    prev.map { case (feature, label ) =>
+      val featureTensor = featureTransfomer(Iterator(feature)).next()
+      val labelTensor = labelTransformer(Iterator(label)).next()
       Sample[T](featureTensor, labelTensor)
     }
-    samples
   }
 }
