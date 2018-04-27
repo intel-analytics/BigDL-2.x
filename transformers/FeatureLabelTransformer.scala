@@ -35,3 +35,12 @@ private[nnframes] class FeatureLabelTransformer[F, L, T: ClassTag] (
     }
   }
 }
+
+
+object FeatureLabelTransformer {
+  def apply[F, L, T: ClassTag](
+      featureTransfomer: Transformer[F, Tensor[T]],
+      labelTransformer: Transformer[L, Tensor[T]]
+    )(implicit ev: TensorNumeric[T]) =
+    new FeatureLabelTransformer(featureTransfomer, labelTransformer)
+}
