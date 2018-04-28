@@ -27,6 +27,12 @@ then
    cd "$DIR"
 fi
 
+if [ -f "glove.6B.zip" ] || [ -d "glove.6B" ]
+then
+   echo "glove.6B already exists."
+   exit
+fi
+
 echo "Downloading glove.6B.zip"
 wget http://nlp.stanford.edu/data/glove.6B.zip
 

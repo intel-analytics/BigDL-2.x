@@ -27,10 +27,16 @@ then
    cd "$DIR"
 fi
 
+if [ -f "20news-18828.tar.gz" ] || [ -d "20news-18828" ]
+then
+   echo "20 Newsgroup dataset already exists."
+   exit
+fi
+
 echo "Downloading news20.tar.gz"
 wget http://qwone.com/~jason/20Newsgroups/20news-18828.tar.gz
 
 echo "Unzipping news20.tar.gz"
-tar zxf news20.tar.gz
+tar zxf 20news-18828.tar.gz
 
 echo "Finished"
