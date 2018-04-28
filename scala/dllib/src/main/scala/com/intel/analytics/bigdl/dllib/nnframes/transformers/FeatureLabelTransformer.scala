@@ -30,8 +30,12 @@ private[nnframes] class FeatureLabelTransformer[F, L, T: ClassTag] (
   override def apply(prev: Iterator[(F, L)]): Iterator[Sample[T]] = {
     prev.map { case (feature, label ) =>
       val featureTensor = featureTransfomer(Iterator(feature)).next()
-      val labelTensor = labelTransformer(Iterator(label)).next()
-      Sample[T](featureTensor, labelTensor)
+      if (label != null) {
+        val labelTensor = labelTransformer(Iterator(label)).next()
+        Sample[T](featureTensor, labelTensor)
+      } else {
+        Sample[T](featureTensor)
+      }
     }
   }
 }
