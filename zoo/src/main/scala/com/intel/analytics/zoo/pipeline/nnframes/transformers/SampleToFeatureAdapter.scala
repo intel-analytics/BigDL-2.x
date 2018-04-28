@@ -7,14 +7,13 @@ import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric
 import scala.reflect.ClassTag
 
 class SampleToFeatureAdapter[F, T](
-    sampleTransformer: Transformer[(F, Any), Sample[T]])(implicit ev: TensorNumeric[T])
-  extends Transformer[F, Sample[T]] {
+    sampleTransformer: Transformer[(F, Any), Sample[T]]
+  )(implicit ev: TensorNumeric[T]) extends Transformer[F, Sample[T]] {
 
   override def apply(prev: Iterator[F]): Iterator[Sample[T]] = {
-    sampleTransformer.apply(prev.map(f => (f, Array())))
+    sampleTransformer.apply(prev.map(f => (f, null)))
   }
 }
-
 
 object SampleToFeatureAdapter {
   def apply[F, L, T: ClassTag](
