@@ -53,17 +53,19 @@ if __name__ == "__main__":
     (trainingDF, validationDF) = labelDF.randomSplit([0.9, 0.1])
 
     # compose a pipeline that includes feature transform, pretrained model and Logistic Regression
-    transformer = NNImageTransformer(
-        image.Pipeline([Resize(256, 256), CenterCrop(224, 224), ChannelNormalize(123.0, 117.0, 104.0)])
-    ).setInputCol("image").setOutputCol("features")
+    transformer = ChainedTransformer([RowToImageFeature(), Resize(256, 256), CenterCrop(224, 224),
+                                      ChannelNormalize(123.0, 117.0, 104.0),
+                                      MatToTensor(), ImageFeatureToTensor()])
 
-    preTrainedNNModel = NNModel(Model.loadModel(model_path), [3,224,224]).setPredictionCol("embedding")
+    preTrainedNNModel = NNModel.withTensorTransformer(Model.loadModel(model_path), transformer) \
+        .setFeaturesCol("image") \
+        .setPredictionCol("embedding")
 
     lrModel = Sequential().add(Linear(1000, 2)).add(LogSoftMax())
-    classifier = NNClassifier(lrModel, ClassNLLCriterion(), [1000]) \
+    classifier = NNClassifier(lrModel, ClassNLLCriterion(), SeqToTensor([1000])) \
         .setLearningRate(0.003).setBatchSize(40).setMaxEpoch(20).setFeaturesCol("embedding")
 
-    pipeline = Pipeline(stages=[transformer, preTrainedNNModel, classifier])
+    pipeline = Pipeline(stages=[preTrainedNNModel, classifier])
 
     catdogModel = pipeline.fit(trainingDF)
     predictionDF = catdogModel.transform(validationDF).cache()
