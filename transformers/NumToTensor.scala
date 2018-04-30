@@ -40,5 +40,5 @@ class NumToTensor[T: ClassTag]()(implicit ev: TensorNumeric[T])
 }
 
 object NumToTensor {
-  def apply[T: ClassTag]()(implicit ev: TensorNumeric[T]) = new NumToTensor[T]()
+  def apply[T: ClassTag]()(implicit ev: TensorNumeric[T]): NumToTensor[T] = new NumToTensor[T]()
 }
