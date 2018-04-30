@@ -24,22 +24,54 @@ if sys.version >= '3':
     unicode = str
 
 
-class NNFeatureTransformer(JavaValue):
+class NNTransformer(JavaValue):
     """
-    NNFeatureTransformer is a transformer that transform
+    Python wrapper for the scala transformers
     """
     def __init__(self, bigdl_type="float", *args):
         self.value = callBigDlFunc(
                 bigdl_type, JavaValue.jvm_class_constructor(self), *args)
 
-class NumToTensor(NNFeatureTransformer):
+class ChainedTransformer(NNTransformer):
+    """
+    Pipeline of FeatureTransformer
+    """
+
+    def __init__(self, transformers, bigdl_type="float"):
+        for transfomer in transformers:
+            assert transfomer.__class__.__bases__[0].__name__ == "NNTransformer", \
+                str(transfomer) + " should be subclass of NNTransformer"
+        super(ChainedTransformer, self).__init__(bigdl_type, transformers)
+
+class NumToTensor(NNTransformer):
     def __init__(self, bigdl_type="float"):
         super(NumToTensor, self).__init__(bigdl_type)
 
-class SeqToTensor(NNFeatureTransformer):
+class SeqToTensor(NNTransformer):
     def __init__(self, size, bigdl_type="float"):
         super(SeqToTensor, self).__init__(bigdl_type, size)
 
-class MLlibVectorToTensor(NNFeatureTransformer):
+class MLlibVectorToTensor(NNTransformer):
     def __init__(self, size, bigdl_type="float"):
         super(MLlibVectorToTensor, self).__init__(bigdl_type, size)
+
+class ImageFeatureToTensor(NNTransformer):
+    def __init__(self, bigdl_type="float"):
+        super(ImageFeatureToTensor, self).__init__(bigdl_type)
+
+class RowToImageFeature(NNTransformer):
+    def __init__(self, bigdl_type="float"):
+        super(RowToImageFeature, self).__init__(bigdl_type)
+
+class FeatureLabelTransformer(NNTransformer):
+    def __init__(self, feature_transformer, label_transformer, bigdl_type="float"):
+        super(FeatureLabelTransformer, self).__init__(bigdl_type, feature_transformer, label_transformer)
+
+class TensorToSample(NNTransformer):
+    def __init__(self, bigdl_type="float"):
+        super(TensorToSample, self).__init__(bigdl_type)
+        
+class FeatureToTupleAdapter(NNTransformer):
+    def __init__(self, sample_transformer, bigdl_type="float"):
+        super(FeatureToTupleAdapter, self).__init__(bigdl_type, sample_transformer)
+
