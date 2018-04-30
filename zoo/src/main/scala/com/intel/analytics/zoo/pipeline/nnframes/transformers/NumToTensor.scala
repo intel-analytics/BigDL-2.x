@@ -21,6 +21,9 @@ import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric
 
 import scala.reflect.ClassTag
 
+/**
+ * a Transformer that converts a number to a Tensor.
+ */
 class NumToTensor[T: ClassTag]()(implicit ev: TensorNumeric[T])
   extends Transformer[AnyVal, Tensor[T]] {
 

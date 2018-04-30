@@ -21,6 +21,10 @@ import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric
 
 import scala.reflect.ClassTag
 
+/**
+ * a Transformer that converts an Array[_] or Seq[_] to a Tensor.
+ * @param size dimensions of target Tensor.
+ */
 class SeqToTensor[T: ClassTag](size: Array[Int])(implicit ev: TensorNumeric[T])
   extends Transformer[Seq[AnyVal], Tensor[T]] {
 

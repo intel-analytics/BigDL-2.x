@@ -8,7 +8,9 @@ import org.apache.spark.sql.Row
 
 import scala.reflect.ClassTag
 
-
+/**
+ * a Transformer that converts a Spark Row to a BigDL ImageFeature.
+ */
 class RowToImageFeature [T: ClassTag]()(implicit ev: TensorNumeric[T])
   extends Transformer[Row, ImageFeature] {
 
