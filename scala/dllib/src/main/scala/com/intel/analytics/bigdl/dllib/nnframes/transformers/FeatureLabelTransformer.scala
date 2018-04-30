@@ -15,7 +15,7 @@
  */
 package com.intel.analytics.zoo.pipeline.nnframes.transformers
 
-import com.intel.analytics.bigdl.dataset.{Sample, SampleToMiniBatch, Transformer}
+import com.intel.analytics.bigdl.dataset.{Sample, Transformer}
 import com.intel.analytics.bigdl.tensor.Tensor
 import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric
 
@@ -23,7 +23,7 @@ import scala.reflect.ClassTag
 
 /**
  * construct a Transformer that convert (Feature, Label) tuple to a Sample.
- * The returned Transformer is robust for the case label = null, in which the 
+ * The returned Transformer is robust for the case label = null, in which the
  * Sample is derived from Feature only.
  * @param featureTransfomer transformer for feature, transform F to Tensor[T]
  * @param labelTransformer transformer for label, transform L to Tensor[T]
@@ -53,6 +53,6 @@ object FeatureLabelTransformer {
   def apply[F, L, T: ClassTag](
       featureTransfomer: Transformer[F, Tensor[T]],
       labelTransformer: Transformer[L, Tensor[T]]
-    )(implicit ev: TensorNumeric[T]) =
+    )(implicit ev: TensorNumeric[T]): FeatureLabelTransformer[F, L, T] =
     new FeatureLabelTransformer(featureTransfomer, labelTransformer)
 }

@@ -35,6 +35,6 @@ class MLlibVectorToTensor[T: ClassTag](size: Array[Int])(implicit ev: TensorNume
 }
 
 object MLlibVectorToTensor {
-  def apply[T: ClassTag](size: Array[Int])(implicit ev: TensorNumeric[T]) =
+  def apply[T: ClassTag](size: Array[Int])(implicit ev: TensorNumeric[T]): MLlibVectorToTensor[T] =
     new MLlibVectorToTensor[T](size)
 }

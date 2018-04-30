@@ -41,5 +41,6 @@ class SeqToTensor[T: ClassTag](size: Array[Int])(implicit ev: TensorNumeric[T])
 }
 
 object SeqToTensor {
-  def apply[T: ClassTag](size: Array[Int])(implicit ev: TensorNumeric[T]) = new SeqToTensor[T](size)
+  def apply[T: ClassTag](size: Array[Int])(implicit ev: TensorNumeric[T]): SeqToTensor[T] =
+    new SeqToTensor[T](size)
 }
