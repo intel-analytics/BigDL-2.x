@@ -6,7 +6,7 @@ import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric
 
 import scala.reflect.ClassTag
 
-class SampleToFeatureAdapter[F, T](
+class FeatureToTupleAdapter[F, T](
     sampleTransformer: Transformer[(F, Any), Sample[T]]
   )(implicit ev: TensorNumeric[T]) extends Transformer[F, Sample[T]] {
 
@@ -15,8 +15,8 @@ class SampleToFeatureAdapter[F, T](
   }
 }
 
-object SampleToFeatureAdapter {
+object FeatureToTupleAdapter {
   def apply[F, L, T: ClassTag](
       sampleTransformer: Transformer[(F, Any), Sample[T]])(implicit ev: TensorNumeric[T]) =
-    new SampleToFeatureAdapter(sampleTransformer)
+    new FeatureToTupleAdapter(sampleTransformer)
 }
