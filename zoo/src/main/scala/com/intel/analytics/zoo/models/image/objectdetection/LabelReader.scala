@@ -19,7 +19,7 @@ package com.intel.analytics.zoo.models.objectdetection
 import com.intel.analytics.zoo.models.objectdetection.ObjectDetectorDataset.{Coco, Pascal}
 import com.intel.analytics.zoo.models.common.ModelLabelReader
 
-private[objectdetection] object LabelReader extends ModelLabelReader {
+private[models] object LabelReader extends ModelLabelReader {
 
   /**
    * load pascal label map

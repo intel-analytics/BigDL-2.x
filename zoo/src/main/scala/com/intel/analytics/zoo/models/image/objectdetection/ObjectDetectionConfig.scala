@@ -40,6 +40,7 @@ private[models] object ObjectDetectionConfig {
     "frcnn-pvanet",
     "frcnn-pvanet-quantize",
     "frcnn-pvanet-compress",
+    "frcnn-pvanet-compress-quantize",
     "frcnn-vgg16-compress-quantize")
 
   def apply[T: ClassTag](model: String, dataset: String, version: String)

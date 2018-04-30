@@ -26,11 +26,13 @@ import com.intel.analytics.bigdl.nn.ClassNLLCriterion
 import com.intel.analytics.bigdl.optim._
 import com.intel.analytics.bigdl.tensor.Tensor
 import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric.NumericFloat
+
 import com.intel.analytics.bigdl.utils.LoggerFilter
 import com.intel.analytics.zoo.common.NNContext
 import com.intel.analytics.zoo.models.textclassification.TextClassifier
 import org.apache.log4j.{Level => Level4j, Logger => Logger4j}
 import org.apache.spark.SparkConf
+
 import org.apache.spark.rdd.RDD
 import org.slf4j.{Logger, LoggerFactory}
 import scopt.OptionParser

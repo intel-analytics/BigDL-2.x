@@ -31,3 +31,6 @@ spark-submit \
 --class com.intel.analytics.zoo.examples.objectdetection.Predict \
 ./zoo-0.1.0-SNAPSHOT-jar-with-dependencies.jar --image $imagePath --output $outputPath --model $modelPath --partition 4
 ```
+
+## Results
+You can find new generated images stored in output_path, and the objects in the images are with a box around them [labeled "name"]

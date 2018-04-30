@@ -18,10 +18,11 @@ package com.intel.analytics.zoo.examples.objectdetection
 
 import java.nio.file.Paths
 
-import com.intel.analytics.zoo.common.{Utils, NNContext}
+import com.intel.analytics.zoo.common.{NNContext, Utils}
 import com.intel.analytics.zoo.feature.image.ImageSet
 import com.intel.analytics.zoo.models.objectdetection.{ObjectDetector, Visualizer}
 import org.apache.log4j.{Level, Logger}
+import org.apache.spark.SparkConf
 import scopt.OptionParser
 
 object Predict {
@@ -58,7 +59,9 @@ object Predict {
 
   def main(args: Array[String]): Unit = {
     parser.parse(args, PredictParam()).foreach { params =>
-      val sc = NNContext.getNNContext()
+      val conf = new SparkConf()
+        .setAppName("Object Detection Example")
+      val sc = NNContext.getNNContext(conf)
 
       val model = ObjectDetector.loadModel[Float](params.model)
       val data = ImageSet.read(params.image, sc, params.nPartition)

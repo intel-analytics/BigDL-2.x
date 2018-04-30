@@ -16,13 +16,21 @@
 
 package com.intel.analytics.zoo.models.python
 
+import java.util.{Map => JMap}
+
+import com.intel.analytics.bigdl.dataset.PaddingParam
 import com.intel.analytics.bigdl.nn.abstractnn.Activity
 import com.intel.analytics.bigdl.python.api.PythonBigDL
 import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric
+import com.intel.analytics.bigdl.transform.vision.image.{BytesToMat, FeatureTransformer, MatToFloats}
+import com.intel.analytics.zoo.feature.image.ImageSet
 import com.intel.analytics.zoo.models.common.ZooModel
+import com.intel.analytics.zoo.models.image.common.{ImageConfigure, ImageModel}
+import com.intel.analytics.zoo.models.objectdetection._
 import com.intel.analytics.zoo.models.textclassification.TextClassifier
 
 import scala.reflect.ClassTag
+import scala.collection.JavaConverters._
 
 object PythonZooModel {
 
@@ -53,6 +61,67 @@ class PythonZooModel[T: ClassTag](implicit ev: TensorNumeric[T]) extends PythonB
       path: String,
       weightPath: String = null): TextClassifier[T] = {
     TextClassifier.loadModel(path, weightPath)
+  }
+
+  def loadObjectDetector(path: String, weightPath: String = null): ObjectDetector[T] = {
+    ObjectDetector.loadModel(path, weightPath)
+  }
+
+  def loadImageModel(path: String, weightPath: String = null): ImageModel[T] = {
+    ImageModel.loadModel(path, weightPath)
+  }
+
+  def readPascalLabelMap(): JMap[Int, String] = {
+    LabelReader.readPascalLabelMap().asJava
+  }
+
+  def readCocoLabelMap(): JMap[Int, String] = {
+    LabelReader.readCocoLabelMap().asJava
+  }
+
+  def imageModelPredict(model: ImageModel[T],
+    image: ImageSet,
+    config: ImageConfigure[T] = null): ImageSet = {
+    model.predictImageSet(image, config)
+  }
+
+  def getImageConfig(model: ImageModel[T]): ImageConfigure[T] = {
+    model.getConfig
+  }
+
+  def createImageConfigure(preProcessor: FeatureTransformer,
+                           postProcessor: FeatureTransformer,
+                           batchPerPartition: Int,
+                           labelMap: JMap[Int, String],
+                           paddingParam: PaddingParam[T]): ImageConfigure[T] = {
+    val map = if (labelMap == null) null else labelMap.asScala.toMap
+    ImageConfigure(preProcessor, postProcessor, batchPerPartition, map, Option(paddingParam))
+  }
+
+  def createVisualizer(labelMap: JMap[Int, String], thresh: Float = 0.3f,
+                       encoding: String): FeatureTransformer = {
+    Visualizer(labelMap.asScala.toMap, thresh, encoding, Visualizer.visualized) ->
+      BytesToMat(Visualizer.visualized) -> MatToFloats(shareBuffer = false)
+  }
+
+  def getLabelMap(imageConfigure: ImageConfigure[T]): JMap[Int, String] = {
+    if (imageConfigure.labelMap == null) null else imageConfigure.labelMap.asJava
+  }
+
+  def createImInfo(): ImInfo = {
+    ImInfo()
+  }
+
+  def createDecodeOutput(): DecodeOutput = {
+    DecodeOutput()
+  }
+
+  def createScaleDetection(): ScaleDetection = {
+    ScaleDetection()
+  }
+
+  def createPaddingParam(): PaddingParam[T] = {
+    PaddingParam()
   }
 
 }

@@ -89,8 +89,6 @@ if __name__ == "__main__":
     batch_size = int(options.batch_size)
 
     sc = get_nncontext(create_spark_conf().setAppName("Text Classification Example"))
-    redire_spark_logs()
-    show_bigdl_info_logs()
 
     print('Processing text dataset...')
     texts = get_news20(base_dir=data_path)
