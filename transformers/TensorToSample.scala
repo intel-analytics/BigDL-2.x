@@ -6,6 +6,9 @@ import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric
 
 import scala.reflect.ClassTag
 
+/**
+ * a Transformer that converts Tensor to Sample.
+ */
 class TensorToSample[T: ClassTag]()(implicit ev: TensorNumeric[T])
   extends Transformer[Tensor[T], Sample[T]] {
 
@@ -13,7 +16,6 @@ class TensorToSample[T: ClassTag]()(implicit ev: TensorNumeric[T])
     prev.map(Sample(_))
   }
 }
-
 
 object TensorToSample {
   def apply[F, T: ClassTag]()(implicit ev: TensorNumeric[T]) =

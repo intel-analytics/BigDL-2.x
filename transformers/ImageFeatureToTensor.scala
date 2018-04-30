@@ -7,6 +7,9 @@ import com.intel.analytics.bigdl.transform.vision.image.ImageFeature
 
 import scala.reflect.ClassTag
 
+/**
+ * a Transformer that convert ImageFeature to a Tensor.
+ */
 class ImageFeatureToTensor [T: ClassTag]()(implicit ev: TensorNumeric[T])
   extends Transformer[ImageFeature, Tensor[T]] {
 
