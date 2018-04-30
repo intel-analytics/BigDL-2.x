@@ -22,6 +22,10 @@ import org.apache.spark.mllib.linalg.Vector
 
 import scala.reflect.ClassTag
 
+/**
+ * a Transformer that converts MLlib Vector to a Tensor.
+ * @param size dimensions of target Tensor.
+ */
 class MLlibVectorToTensor[T: ClassTag](size: Array[Int])(implicit ev: TensorNumeric[T])
   extends Transformer[Vector, Tensor[T]] {
 

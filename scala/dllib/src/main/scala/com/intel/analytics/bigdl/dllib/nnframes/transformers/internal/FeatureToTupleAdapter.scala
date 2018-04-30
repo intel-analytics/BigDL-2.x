@@ -1,7 +1,6 @@
-package com.intel.analytics.zoo.pipeline.nnframes.transformers
+package com.intel.analytics.zoo.pipeline.nnframes.transformers.internal
 
 import com.intel.analytics.bigdl.dataset.{Sample, Transformer}
-import com.intel.analytics.bigdl.tensor.Tensor
 import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric
 
 import scala.reflect.ClassTag
