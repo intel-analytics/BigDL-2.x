@@ -59,6 +59,13 @@ class SeqToTensor(NNTransformer):
     def __init__(self, size, bigdl_type="float"):
         super(SeqToTensor, self).__init__(bigdl_type, size)
 
+class ArrayToTensor(NNTransformer):
+    """
+    a Transformer that converts an Array[_] to a Tensor.
+    :param size dimensions of target Tensor.
+    """
+    def __init__(self, size, bigdl_type="float"):
+        super(ArrayToTensor, self).__init__(bigdl_type, size)
 
 class MLlibVectorToTensor(NNTransformer):
     """
