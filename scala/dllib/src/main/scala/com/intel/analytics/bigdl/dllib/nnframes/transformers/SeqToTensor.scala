@@ -22,7 +22,7 @@ import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric
 import scala.reflect.ClassTag
 
 /**
- * a Transformer that converts an Array[_] or Seq[_] to a Tensor.
+ * a Transformer that converts an Seq[_] to a Tensor.
  * @param size dimensions of target Tensor.
  */
 class SeqToTensor[T: ClassTag](size: Array[Int])(implicit ev: TensorNumeric[T])
@@ -43,4 +43,16 @@ class SeqToTensor[T: ClassTag](size: Array[Int])(implicit ev: TensorNumeric[T])
 object SeqToTensor {
   def apply[T: ClassTag](size: Array[Int])(implicit ev: TensorNumeric[T]): SeqToTensor[T] =
     new SeqToTensor[T](size)
+}
+
+/**
+ * a Transformer that converts an Array[_] to a Tensor.
+ * @param size dimensions of target Tensor.
+ */
+class ArrayToTensor[T: ClassTag](size: Array[Int])(implicit ev: TensorNumeric[T])
+  extends SeqToTensor(size)
+
+object ArrayToTensor {
+  def apply[T: ClassTag](size: Array[Int])(implicit ev: TensorNumeric[T]): ArrayToTensor[T] =
+    new ArrayToTensor[T](size)
 }
