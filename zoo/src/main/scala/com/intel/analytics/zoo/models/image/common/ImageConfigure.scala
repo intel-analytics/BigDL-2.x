@@ -20,6 +20,7 @@ import com.intel.analytics.bigdl.dataset.PaddingParam
 import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric
 import com.intel.analytics.bigdl.transform.vision.image.FeatureTransformer
 import com.intel.analytics.zoo.models.objectdetection.ObjectDetectionConfig
+import com.intel.analytics.zoo.models.image.imageclassification.ImageClassificationConfig
 
 import org.apache.log4j.Logger
 
@@ -65,8 +66,8 @@ object ImageConfigure {
     model.toLowerCase() match {
       case obModel if ObjectDetectionConfig.models contains obModel =>
         ObjectDetectionConfig(obModel, dataset, version)
-//      case imcModel if ImageClassificationConfig.models contains imcModel =>
-//        ImageClassificationConfig(imcModel, dataset, version)
+      case imcModel if ImageClassificationConfig.models contains imcModel =>
+        ImageClassificationConfig(imcModel, dataset, version)
       case _ => logger.warn(s"$model is not defined in Analytics zoo.")
         null
     }

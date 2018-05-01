@@ -4,7 +4,7 @@ This example illustrates how to detect objects in image with pre-trained model
 ### Run steps
 1. Prepare pre-trained models
 
-Download pre-trained models from https://github.com/intel-analytics/analytics-zoo/tree/master/models
+Download pre-trained models from https://github.com/intel-analytics/zoo/tree/master/docs/models/objectdetection
 
 2. Prepare predict dataset
 
