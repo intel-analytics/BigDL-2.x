@@ -14,17 +14,21 @@
  * limitations under the License.
  */
 
-package com.intel.analytics.zoo.pipeline.api
+package com.intel.analytics.zoo.pipeline.api.keras.models
 
 import com.intel.analytics.bigdl.utils.Shape
+import com.intel.analytics.zoo.pipeline.api.Net
 import com.intel.analytics.zoo.pipeline.api.keras.ZooSpecHelper
-import com.intel.analytics.zoo.pipeline.api.keras.layers.Dense
-import com.intel.analytics.zoo.pipeline.api.keras.layers.utils.KerasUtils
+import com.intel.analytics.zoo.pipeline.api.keras.layers.{Dense, Input}
 
-class NetSpec extends ZooSpecHelper{
+class TopologySpec extends ZooSpecHelper{
 
-  "invokeMethod set inputShape" should "work properly" in {
-    KerasUtils.invokeMethod(Dense[Float](3), "_inputShapeValue_$eq", Shape(2, 3))
+  "model saving and reloading" should "work properly" in {
+    val input = Input[Float](inputShape = Shape(2))
+    val model = Model(input, Dense[Float](3).inputs(input))
+    val tmpFile = createTmpFile()
+    model.saveModule(tmpFile.getAbsolutePath, overWrite = true)
+    val reloadModel = Net.load[Float](tmpFile.getAbsolutePath)
   }
 
 }
