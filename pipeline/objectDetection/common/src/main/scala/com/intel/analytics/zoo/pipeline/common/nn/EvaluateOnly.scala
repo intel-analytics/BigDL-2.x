@@ -18,7 +18,7 @@ package com.intel.analytics.zoo.pipeline.common.nn
 
 import com.intel.analytics.bigdl.Module
 import com.intel.analytics.bigdl.nn._
-import com.intel.analytics.bigdl.nn.abstractnn.Activity
+import com.intel.analytics.bigdl.nn.abstractnn.{AbstractModule, Activity}
 import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric
 
 import scala.reflect.ClassTag
@@ -31,7 +31,7 @@ import scala.reflect.ClassTag
  */
 @SerialVersionUID(5600616321943671046L)
 class EvaluateOnly[T: ClassTag](module: Module[T])(implicit ev: TensorNumeric[T])
-  extends Container[Activity, Activity, T] {
+  extends DynamicContainer[Activity, Activity, T] {
 
   add(module)
 
