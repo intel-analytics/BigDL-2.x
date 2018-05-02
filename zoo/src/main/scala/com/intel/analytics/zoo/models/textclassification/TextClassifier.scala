@@ -92,9 +92,9 @@ object TextClassifier {
    * @param weightPath The path for pre-trained weights if any. Default is null.
    * @tparam T Numeric type of parameter(e.g. weight, bias). Only support float/double now.
    */
-  def loadModel[T: ClassTag](path: String,
-                             weightPath: String = null)(implicit ev: TensorNumeric[T]):
-      TextClassifier[T] = {
+  def loadModel[T: ClassTag](
+      path: String,
+      weightPath: String = null)(implicit ev: TensorNumeric[T]): TextClassifier[T] = {
     ZooModel.loadModel(path, weightPath).asInstanceOf[TextClassifier[T]]
   }
 }

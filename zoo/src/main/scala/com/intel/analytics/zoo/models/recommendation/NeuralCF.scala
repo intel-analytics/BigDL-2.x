@@ -43,7 +43,7 @@ class NeuralCF[T: ClassTag] private(userCount: Int,
                                     numClasses: Int,
                                     userEmbed: Int = 20,
                                     itemEmbed: Int = 20,
-                                    hiddenLayers: Array[Int] = Array(40, 20, 10),
+                                    val hiddenLayers: Array[Int] = Array(40, 20, 10),
                                     includeMF: Boolean = true,
                                     mfEmbed: Int = 20
                                    )(implicit ev: TensorNumeric[T])

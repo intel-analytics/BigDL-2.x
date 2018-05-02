@@ -1,3 +1,5 @@
+#!/usr/bin/env bash
+
 #
 # Copyright 2018 Analytics Zoo Authors.
 #
@@ -14,5 +16,27 @@
 # limitations under the License.
 #
 
-from .neuralcf import *
-from .recommender import *
+
+# Usage: bash get_movielens-1m.sh dir
+# Download and unzip MovieLens-1M dataset to the target 'dir'.
+# If 'dir' is not specified, it will be downloaded to the current working directory.
+
+if [ ! -z "$1" ]
+then
+   DIR=$1
+   cd "$DIR"
+fi
+
+if [ -f "ml-1m.zip" ] || [ -d "ml-1m" ]
+then
+   echo "MovieLens-1M dataset already exists."
+   exit
+fi
+
+echo "Downloading ml-1m.zip"
+wget http://files.grouplens.org/datasets/movielens/ml-1m.zip
+
+echo "Unzipping ml-1m.zip"
+unzip -q ml-1m.zip
+
+echo "Finished"

@@ -16,18 +16,21 @@
 
 package com.intel.analytics.zoo.models.python
 
-import java.util.{Map => JMap}
+import java.util.{List => JList, Map => JMap}
 
 import com.intel.analytics.bigdl.dataset.PaddingParam
 import com.intel.analytics.bigdl.nn.abstractnn.Activity
-import com.intel.analytics.bigdl.python.api.PythonBigDL
+import com.intel.analytics.bigdl.python.api.{PythonBigDL, Sample}
 import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric
 import com.intel.analytics.bigdl.transform.vision.image.{BytesToMat, FeatureTransformer, MatToFloats}
 import com.intel.analytics.zoo.feature.image.ImageSet
 import com.intel.analytics.zoo.models.common.ZooModel
 import com.intel.analytics.zoo.models.image.common.{ImageConfigure, ImageModel}
 import com.intel.analytics.zoo.models.objectdetection._
+import com.intel.analytics.zoo.models.recommendation.{NeuralCF, Recommender, UserItemFeature, UserItemPrediction}
 import com.intel.analytics.zoo.models.textclassification.TextClassifier
+import org.apache.spark.api.java.JavaRDD
+import org.apache.spark.rdd.RDD
 
 import scala.reflect.ClassTag
 import scala.collection.JavaConverters._
@@ -41,10 +44,11 @@ object PythonZooModel {
 
 class PythonZooModel[T: ClassTag](implicit ev: TensorNumeric[T]) extends PythonBigDL[T] {
 
-  def saveZooModel(model: ZooModel[Activity, Activity, T],
-                path: String,
-                weightPath: String = null,
-                overWrite: Boolean = false): ZooModel[Activity, Activity, T] = {
+  def saveZooModel(
+      model: ZooModel[Activity, Activity, T],
+      path: String,
+      weightPath: String = null,
+      overWrite: Boolean = false): ZooModel[Activity, Activity, T] = {
     model.saveModel(path, weightPath, overWrite)
   }
 
@@ -122,6 +126,62 @@ class PythonZooModel[T: ClassTag](implicit ev: TensorNumeric[T]) extends PythonB
 
   def createPaddingParam(): PaddingParam[T] = {
     PaddingParam()
+  }
+
+  def createZooNeuralCF(
+      userCount: Int,
+      itemCount: Int,
+      numClasses: Int,
+      userEmbed: Int = 20,
+      itemEmbed: Int = 20,
+      hiddenLayers: JList[Int],
+      includeMF: Boolean = true,
+      mfEmbed: Int = 20): NeuralCF[T] = {
+    NeuralCF[T](userCount, itemCount, numClasses, userEmbed, itemEmbed,
+      hiddenLayers.asScala.toArray, includeMF, mfEmbed)
+  }
+
+  def loadNeuralCF(
+      path: String,
+      weightPath: String = null): NeuralCF[T] = {
+    NeuralCF.loadModel(path, weightPath)
+  }
+
+  def toUserItemFeatureRdd(featureRdd: JavaRDD[Array[Object]]): RDD[UserItemFeature[T]] = {
+    featureRdd.rdd.foreach(x =>
+      require(x.length == 3, "UserItemFeature should consist of userId, itemId and sample"))
+    featureRdd.rdd.map(x =>
+      UserItemFeature(x(0).asInstanceOf[Int], x(1).asInstanceOf[Int],
+        toJSample(x(2).asInstanceOf[Sample])))
+  }
+
+  def toPredictionJavaRdd(predictionRdd: RDD[UserItemPrediction]): JavaRDD[JList[Double]] = {
+    predictionRdd.map(x =>
+      List(x.userId.toDouble, x.itemId.toDouble, x.prediction.toDouble, x.probability)
+        .asJava).toJavaRDD()
+  }
+
+  def predictUserItemPair(
+      model: Recommender[T],
+      featureRdd: JavaRDD[Array[Object]]): JavaRDD[JList[Double]] = {
+    val predictionRdd = model.predictUserItemPair(toUserItemFeatureRdd(featureRdd))
+    toPredictionJavaRdd(predictionRdd)
+  }
+
+  def recommendForUser(
+      model: Recommender[T],
+      featureRdd: JavaRDD[Array[Object]],
+      maxItems: Int): JavaRDD[JList[Double]] = {
+    val predictionRdd = model.recommendForUser(toUserItemFeatureRdd(featureRdd), maxItems)
+    toPredictionJavaRdd(predictionRdd)
+  }
+
+  def recommendForItem(
+      model: Recommender[T],
+      featureRdd: JavaRDD[Array[Object]],
+      maxUsers: Int): JavaRDD[JList[Double]] = {
+    val predictionRdd = model.recommendForItem(toUserItemFeatureRdd(featureRdd), maxUsers)
+    toPredictionJavaRdd(predictionRdd)
   }
 
 }
