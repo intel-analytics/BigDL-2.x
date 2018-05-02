@@ -16,7 +16,8 @@
 
 from bigdl.util.common import JavaCreator
 
-JavaCreator.add_creator_class("com.intel.analytics.zoo.pipeline.api.keras.python.PythonZooKeras")
 JavaCreator.add_creator_class("com.intel.analytics.zoo.pipeline.nnframes.python.PythonNNFrames")
 JavaCreator.add_creator_class("com.intel.analytics.zoo.feature.image.python.PythonImageSet")
+JavaCreator.add_creator_class("com.intel.analytics.zoo.pipeline.api.keras.python.PythonAutoGrad")
 JavaCreator.add_creator_class("com.intel.analytics.zoo.models.python.PythonZooModel")
+
