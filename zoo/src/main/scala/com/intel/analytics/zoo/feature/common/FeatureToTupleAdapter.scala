@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intel.analytics.zoo.pipeline.nnframes.transformers.internal
+package com.intel.analytics.zoo.feature.common
 
 import com.intel.analytics.bigdl.dataset.{Sample, Transformer}
 import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric
@@ -22,10 +22,10 @@ import scala.reflect.ClassTag
 
 class FeatureToTupleAdapter[F, T](
     sampleTransformer: Transformer[(F, Any), Sample[T]]
-  )(implicit ev: TensorNumeric[T]) extends Transformer[F, Sample[T]] {
+  )(implicit ev: TensorNumeric[T]) extends Preprocessing[F, Sample[T]] {
 
   override def apply(prev: Iterator[F]): Iterator[Sample[T]] = {
-    sampleTransformer.apply(prev.map(f => (f, null)))
+    sampleTransformer.apply(prev.map(f => (f, None)))
   }
 }
 

@@ -13,30 +13,31 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intel.analytics.zoo.pipeline.nnframes.transformers
+package com.intel.analytics.zoo.feature.common
 
-import com.intel.analytics.bigdl.dataset.Transformer
 import com.intel.analytics.bigdl.tensor.Tensor
 import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric
-import com.intel.analytics.bigdl.transform.vision.image.ImageFeature
 
 import scala.reflect.ClassTag
 
 /**
- * a Transformer that convert ImageFeature to a Tensor.
+ * converts numbers to Tensors.
  */
-class ImageFeatureToTensor[T: ClassTag]()(implicit ev: TensorNumeric[T])
-  extends Transformer[ImageFeature, Tensor[T]] {
+class NumToTensor[T: ClassTag]()(implicit ev: TensorNumeric[T])
+  extends Preprocessing[AnyVal, Tensor[T]] {
 
-  override def apply(prev: Iterator[ImageFeature]): Iterator[Tensor[T]] = {
-    prev.map { imf =>
-      imf(ImageFeature.imageTensor).asInstanceOf[Tensor[T]]
+  override def apply(prev: Iterator[AnyVal]): Iterator[Tensor[T]] = {
+    prev.map { f =>
+      val feature = f match {
+        case dd: Double => ev.fromType(f.asInstanceOf[Double])
+        case ff: Float => ev.fromType(f.asInstanceOf[Float])
+        case _ => throw new IllegalArgumentException("NumToTensor only supports Float and Double")
+      }
+      Tensor(Array(feature), Array(1))
     }
   }
 }
 
-object ImageFeatureToTensor {
-  def apply[T: ClassTag]()(implicit ev: TensorNumeric[T]): ImageFeatureToTensor[T] =
-    new ImageFeatureToTensor[T]()
+object NumToTensor {
+  def apply[T: ClassTag]()(implicit ev: TensorNumeric[T]): NumToTensor[T] = new NumToTensor[T]()
 }
-

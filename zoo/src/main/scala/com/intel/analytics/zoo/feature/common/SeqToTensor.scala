@@ -13,20 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intel.analytics.zoo.pipeline.nnframes.transformers
+package com.intel.analytics.zoo.feature.common
 
-import com.intel.analytics.bigdl.dataset.Transformer
 import com.intel.analytics.bigdl.tensor.Tensor
 import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric
 
 import scala.reflect.ClassTag
 
 /**
- * a Transformer that converts an Seq[_] to a Tensor.
+ * a Preprocessing that converts an Seq[_] to a Tensor.
  * @param size dimensions of target Tensor.
  */
 class SeqToTensor[T: ClassTag](size: Array[Int])(implicit ev: TensorNumeric[T])
-  extends Transformer[Seq[AnyVal], Tensor[T]] {
+  extends Preprocessing[Seq[AnyVal], Tensor[T]] {
 
   override def apply(prev: Iterator[Seq[AnyVal]]): Iterator[Tensor[T]] = {
     prev.map { f =>
@@ -46,7 +45,7 @@ object SeqToTensor {
 }
 
 /**
- * a Transformer that converts an Array[_] to a Tensor.
+ * a Preprocessing that converts an Array[_] to a Tensor.
  * @param size dimensions of target Tensor.
  */
 class ArrayToTensor[T: ClassTag](size: Array[Int])(implicit ev: TensorNumeric[T])

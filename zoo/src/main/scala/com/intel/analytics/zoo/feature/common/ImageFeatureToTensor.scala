@@ -13,27 +13,29 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intel.analytics.zoo.pipeline.nnframes.transformers
+package com.intel.analytics.zoo.feature.common
 
-import com.intel.analytics.bigdl.dataset.{Sample, Transformer}
 import com.intel.analytics.bigdl.tensor.Tensor
 import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric
+import com.intel.analytics.bigdl.transform.vision.image.ImageFeature
 
 import scala.reflect.ClassTag
 
 /**
- * a Transformer that converts Tensor to Sample.
+ * a Preprocessing that convert ImageFeature to a Tensor.
  */
-class TensorToSample[T: ClassTag]()(implicit ev: TensorNumeric[T])
-  extends Transformer[Tensor[T], Sample[T]] {
+class ImageFeatureToTensor[T: ClassTag]()(implicit ev: TensorNumeric[T])
+  extends Preprocessing[ImageFeature, Tensor[T]] {
 
-  override def apply(prev: Iterator[Tensor[T]]): Iterator[Sample[T]] = {
-    prev.map(Sample(_))
+  override def apply(prev: Iterator[ImageFeature]): Iterator[Tensor[T]] = {
+    prev.map { imf =>
+      imf(ImageFeature.imageTensor).asInstanceOf[Tensor[T]]
+    }
   }
 }
 
-object TensorToSample {
-  def apply[F, T: ClassTag]()(implicit ev: TensorNumeric[T]): TensorToSample[T] =
-    new TensorToSample()
+object ImageFeatureToTensor {
+  def apply[T: ClassTag]()(implicit ev: TensorNumeric[T]): ImageFeatureToTensor[T] =
+    new ImageFeatureToTensor[T]()
 }
 

@@ -13,9 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intel.analytics.zoo.pipeline.nnframes.transformers
+package com.intel.analytics.zoo.feature.common
 
-import com.intel.analytics.bigdl.dataset.Transformer
 import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric
 import com.intel.analytics.bigdl.transform.vision.image.ImageFeature
 import com.intel.analytics.zoo.pipeline.nnframes.NNImageSchema
@@ -24,10 +23,10 @@ import org.apache.spark.sql.Row
 import scala.reflect.ClassTag
 
 /**
- * a Transformer that converts a Spark Row to a BigDL ImageFeature.
+ * a Preprocessing that converts a Spark Row to a BigDL ImageFeature.
  */
 class RowToImageFeature[T: ClassTag]()(implicit ev: TensorNumeric[T])
-  extends Transformer[Row, ImageFeature] {
+  extends Preprocessing[Row, ImageFeature] {
 
   override def apply(prev: Iterator[Row]): Iterator[ImageFeature] = {
     prev.map { row =>
