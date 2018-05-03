@@ -22,34 +22,32 @@ import com.intel.analytics.bigdl.nn.ClassNLLCriterion
 import com.intel.analytics.bigdl.numeric.NumericFloat
 import com.intel.analytics.bigdl.optim.{Adam, Optimizer, Trigger}
 import com.intel.analytics.bigdl.tensor.Tensor
-import com.intel.analytics.bigdl.utils.{Engine, T}
+import com.intel.analytics.bigdl.utils.T
 import com.intel.analytics.zoo.common.NNContext
 import com.intel.analytics.zoo.models.recommendation.{NeuralCF, UserItemFeature, Utils}
 import org.apache.log4j.{Level, Logger}
-import org.apache.spark.{SparkConf, SparkContext}
-import org.apache.spark.ml.evaluation.MulticlassClassificationEvaluator
+import org.apache.spark.SparkConf
 import org.apache.spark.rdd.RDD
 import org.apache.spark.sql.{DataFrame, SQLContext}
 import org.apache.spark.sql.functions._
-import org.apache.spark.sql.types.{DoubleType, FloatType}
 import scopt.OptionParser
 
-case class NCFParams(val inputDir: String = "./data/ml-1m",
-                     val batchSize: Int = 1000,
-                     val nEpochs: Int = 10,
-                     val learningRate: Double = 1e-3,
-                     val learningRateDecay: Double = 1e-6
+case class NeuralCFParams(val inputDir: String = "./data/ml-1m",
+                          val batchSize: Int = 8000,
+                          val nEpochs: Int = 10,
+                          val learningRate: Double = 1e-3,
+                          val learningRateDecay: Double = 1e-6
                     )
 
-case class Ratings(userId: Int, itemId: Int, label: Int)
+case class Rating(userId: Int, itemId: Int, label: Int)
 
-object NCFExample {
+object NeuralCFexample {
 
   def main(args: Array[String]): Unit = {
 
-    val defaultParams = NCFParams()
+    val defaultParams = NeuralCFParams()
 
-    val parser = new OptionParser[NCFParams]("NCF Example") {
+    val parser = new OptionParser[NeuralCFParams]("NCF Example") {
       opt[String]("inputDir")
         .text(s"inputDir")
         .action((x, c) => c.copy(inputDir = x))
@@ -72,26 +70,26 @@ object NCFExample {
     }
   }
 
-  def run(param: NCFParams): Unit = {
+  def run(param: NeuralCFParams): Unit = {
     Logger.getLogger("org").setLevel(Level.ERROR)
     val conf = new SparkConf()
     conf.setAppName("NCFExample").set("spark.sql.crossJoin.enabled", "true")
     val sc = NNContext.getNNContext(conf)
     val sqlContext = SQLContext.getOrCreate(sc)
 
-    val (data, userCount, itemCount) = loadPublicData(sqlContext, param.inputDir)
+    val (ratings, userCount, itemCount) = loadPublicData(sqlContext, param.inputDir)
 
-    val isImplicit = true
+    val isImplicit = false
     val ncf = NeuralCF[Float](
       userCount = userCount,
       itemCount = itemCount,
-      numClasses = 2,
+      numClasses = 5,
       userEmbed = 20,
       itemEmbed = 20,
       hiddenLayers = Array(40, 20, 10))
 
     val pairFeatureRdds: RDD[UserItemFeature[Float]] =
-      assemblyFeature(isImplicit, data, userCount, itemCount)
+      assemblyFeature(isImplicit, ratings, userCount, itemCount)
 
     val Array(trainpairFeatureRdds, validationpairFeatureRdds) =
       pairFeatureRdds.randomSplit(Array(0.8, 0.2))
@@ -102,15 +100,15 @@ object NCFExample {
       model = ncf,
       sampleRDD = trainRdds,
       criterion = ClassNLLCriterion[Float](),
-      batchSize = 1000)
+      batchSize = param.batchSize)
 
     val optimMethod = new Adam[Float](
-      learningRate = 1e-2,
-      learningRateDecay = 1e-4)
+      learningRate = param.learningRate,
+      learningRateDecay = param.learningRateDecay)
 
     optimizer
       .setOptimMethod(optimMethod)
-      .setEndWhen(Trigger.maxEpoch(3))
+      .setEndWhen(Trigger.maxEpoch(param.nEpochs))
       .optimize()
 
     val results = ncf.predict(validationRdds)
@@ -127,44 +125,20 @@ object NCFExample {
 
     userRecs.take(10).foreach(println)
     itemRecs.take(10).foreach(println)
-
-    val validationDF = sqlContext.createDataFrame(validationpairFeatureRdds
-      .map(x => Ratings(x.userId, x.itemId, x.sample.getData().last.toInt)))
-      .toDF("userId", "itemId", "label")
-
-    val resultsDF = sqlContext.createDataFrame(userItemPairPrediction).toDF()
-
-    val evaluationDF = resultsDF.join(validationDF, Array("userId", "itemId"))
-      .select(col("userId"), col("itemId"),
-        col("label").cast(DoubleType), col("prediction").cast(DoubleType))
-
-    evaluationDF.show(10)
-    evaluationDF.groupBy("prediction").count().show()
-
-    val evaluation = new MulticlassClassificationEvaluator().setPredictionCol("prediction")
-      .setMetricName("accuracy").evaluate(evaluationDF)
-    println("evaluation result on validationDF: " + evaluation)
-
   }
 
   def loadPublicData(sqlContext: SQLContext, dataPath: String): (DataFrame, Int, Int) = {
     import sqlContext.implicits._
-
-    val indexedDF = sqlContext.read.text(dataPath + "/ratings.dat").as[String]
+    val ratings = sqlContext.read.text(dataPath + "/ratings.dat").as[String]
       .map(x => {
-        val data: Array[Int] = x.split("::").map(n => n.toInt)
-        Ratings(data(0), data(1), data(2))
-      })
-      .toDF()
-    //  .filter("userId <=1000 AND itemId <=1000")
+        val line = x.split("::").map(n => n.toInt)
+        Rating(line(0), line(1), line(2))
+      }).toDF()
 
-    val minMaxRow = indexedDF.agg(min("userId"), max("userId"), min("itemId"), max("itemId"))
-      .collect()(0)
+    val minMaxRow = ratings.agg(max("userId"), max("itemId")).collect()(0)
+    val (userCount, itemCount) = (minMaxRow.getInt(0), minMaxRow.getInt(1))
 
-    val userCount = minMaxRow.getInt(1)
-    val itemCount = minMaxRow.getInt(3)
-    indexedDF.show(5)
-    (indexedDF, userCount.toInt, itemCount.toInt)
+    (ratings, userCount, itemCount)
   }
 
   def assemblyFeature(isImplicit: Boolean = false,
@@ -173,13 +147,10 @@ object NCFExample {
                       itemCount: Int): RDD[UserItemFeature[Float]] = {
 
     val unioned = if (isImplicit) {
-      val negativeDF = Utils.getNegativeSamples(indexed, userCount.toInt, itemCount.toInt)
-      negativeDF.groupBy("label").count().show()
+      val negativeDF = Utils.getNegativeSamples(indexed)
       negativeDF.unionAll(indexed.withColumn("label", lit(2)))
     }
-    else {
-      indexed
-    }
+    else indexed
 
     val rddOfSample: RDD[UserItemFeature[Float]] = unioned
       .select("userId", "itemId", "label")

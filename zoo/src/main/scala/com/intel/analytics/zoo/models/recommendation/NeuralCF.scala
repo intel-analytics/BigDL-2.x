@@ -21,33 +21,33 @@ import com.intel.analytics.bigdl.nn._
 import com.intel.analytics.bigdl.nn.abstractnn.AbstractModule
 import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric
 import com.intel.analytics.zoo.models.common.ZooModel
-import org.apache.spark.rdd.RDD
 
 import scala.reflect.ClassTag
 
 /**
- * The model used for neural collaborative filtering.
+ * The model is for neural collaborative filtering.
  *
- * @param numClasses The number of classes. Positive integer.
- * @param userCount The number of users. Positive integer.
- * @param itemCount The number of items. Positive integer.
- * @param userEmbed Units of user embedding. Positive integer.
- * @param itemEmbed Units of item embedding. Positive integer.
+ * @param numClasses   The number of classes. Positive integer.
+ * @param userCount    The number of users. Positive integer.
+ * @param itemCount    The number of items. Positive integer.
+ * @param userEmbed    Units of user embedding. Positive integer.
+ * @param itemEmbed    Units of item embedding. Positive integer.
  * @param hiddenLayers Units hidenLayers of MLP part. Array of positive integer.
- * @param includeMF Include Matrix Factorization or not. Boolean.
- * @param mfEmbed Units of matrix factorization embedding. Positive integer.
+ * @param includeMF    Include Matrix Factorization or not. Boolean.
+ * @param mfEmbed      Units of matrix factorization embedding. Positive integer.
  * @tparam T Numeric type of parameter(e.g. weight, bias). Only support float/double now.
  */
-class NeuralCF[T: ClassTag] private(userCount: Int,
-                                    itemCount: Int,
-                                    numClasses: Int,
-                                    userEmbed: Int = 20,
-                                    itemEmbed: Int = 20,
+
+class NeuralCF[T: ClassTag] private(val userCount: Int,
+                                    val itemCount: Int,
+                                    val numClasses: Int,
+                                    val userEmbed: Int = 20,
+                                    val itemEmbed: Int = 20,
                                     val hiddenLayers: Array[Int] = Array(40, 20, 10),
-                                    includeMF: Boolean = true,
-                                    mfEmbed: Int = 20
+                                    val includeMF: Boolean = true,
+                                    val mfEmbed: Int = 20
                                    )(implicit ev: TensorNumeric[T])
-  extends Recommender[T](userCount, itemCount) {
+  extends Recommender[T] {
 
   override def buildModel(): AbstractModule[Tensor[T], Tensor[T], T] = {
     val model = Sequential[T]()
@@ -89,27 +89,6 @@ class NeuralCF[T: ClassTag] private(userCount: Int,
     model.add(LogSoftMax[T]())
 
     model.asInstanceOf[AbstractModule[Tensor[T], Tensor[T], T]]
-  }
-
-  override def predictUserItemPair(featureRdd: RDD[UserItemFeature[T]]): RDD[UserItemPrediction] = {
-
-    featureRdd.persist()
-    val inputCount = featureRdd.count()
-    val idPairs = featureRdd.map(pair => (pair.userId, pair.itemId))
-    val features = featureRdd.map(pair => pair.sample)
-    val raw = predict(features)
-    val predictProb = raw.map { x =>
-      val _output = x.toTensor[T]
-      val predict: Int = ev.toType[Int](_output.max(1)._2.valueAt(1))
-      val probability = Math.exp(_output.valueAt(predict).asInstanceOf[Float])
-      (predict, probability)
-    }
-    val outRdd: RDD[UserItemPrediction] = idPairs.zip(predictProb)
-      .map(x => UserItemPrediction(x._1._1, x._1._2, x._2._1, x._2._2)).cache()
-    featureRdd.unpersist()
-
-    require(inputCount == outRdd.count(), s"count of features must equal to count of prediction")
-    outRdd
   }
 }
 

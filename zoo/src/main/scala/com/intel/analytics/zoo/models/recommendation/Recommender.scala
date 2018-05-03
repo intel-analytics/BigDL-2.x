@@ -21,9 +21,6 @@ import com.intel.analytics.bigdl.tensor.Tensor
 import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric
 import com.intel.analytics.zoo.models.common.ZooModel
 import org.apache.spark.rdd.RDD
-import org.apache.spark.sql.{DataFrame, SQLContext}
-import org.apache.spark.sql.expressions.Window
-import org.apache.spark.sql.functions.{col, desc, rank}
 
 import scala.reflect.ClassTag
 
@@ -32,59 +29,52 @@ case class UserItemFeature[T: ClassTag](userId: Int, itemId: Int, sample: Sample
 case class UserItemPrediction(userId: Int, itemId: Int, prediction: Int, probability: Double)
 
 /**
- * The factory for recommender.
+ * The factory for recommender models.
  *
- * @param userCount The number of users. Positive integer.
- * @param itemCount The number of items. Positive integer.
  * @tparam T Numeric type of parameter(e.g. weight, bias). Only support float/double now.
  */
-abstract class Recommender[T: ClassTag](userCount: Int, itemCount: Int
-                                       )(implicit ev: TensorNumeric[T])
+abstract class Recommender[T: ClassTag](implicit ev: TensorNumeric[T])
   extends ZooModel[Tensor[T], Tensor[T], T] {
 
   /**
    * Recommend a number of items for each user given a rdd of user item pair features
    *
    * @param featureRdd RDD of user item pair feature.
-   * @param maxItems Number of items to be recommended to each user. Positive integer.
+   * @param maxItems   Number of items to be recommended to each user. Positive integer.
    * @return RDD of user item pair prediction.
    */
   def recommendForUser(featureRdd: RDD[UserItemFeature[T]],
                        maxItems: Int): RDD[UserItemPrediction] = {
 
-    val results = predictUserItemPair(featureRdd)
-    val sqlContext = SQLContext.getOrCreate(results.sparkContext)
-    val resultsDf = sqlContext.createDataFrame(results).toDF()
+    val pairPredictions = predictUserItemPair(featureRdd)
 
-    val window = Window.partitionBy("userId").orderBy(desc("prediction"), desc("probability"))
-    val out = resultsDf.withColumn("rank", rank.over(window))
-      .where(col("rank") <= maxItems)
-      .drop("rank")
-      .rdd.map(row => UserItemPrediction
-    (row.getAs[Int](0), row.getAs[Int](1), row.getAs[Int](2), row.getAs[Double](3)))
-    out
+    pairPredictions
+      .map(x => (x.userId, x))
+      .groupByKey()
+      .flatMap(x => {
+        val ordered = x._2.toArray.sortBy(y => (-y.prediction, -y.probability)).take(maxItems)
+        ordered
+      })
   }
 
   /**
    * Recommend a number of users for each item given a rdd of user item pair features
    *
    * @param featureRdd RDD of user item pair feature.
-   * @param maxUsers Number of users to be recommended to each item. Positive integer.
+   * @param maxUsers   Number of users to be recommended to each item. Positive integer.
    * @return RDD of user item pair prediction.
    */
   def recommendForItem(featureRdd: RDD[UserItemFeature[T]],
                        maxUsers: Int): RDD[UserItemPrediction] = {
-    val results = predictUserItemPair(featureRdd)
-    val sqlContext = SQLContext.getOrCreate(results.sparkContext)
-    val resultsDf = sqlContext.createDataFrame(results).toDF()
+    val pairPredictions = predictUserItemPair(featureRdd)
 
-    val window = Window.partitionBy("itemId").orderBy(desc("prediction"), desc("probability"))
-    val out = resultsDf.withColumn("rank", rank.over(window))
-      .where(col("rank") <= maxUsers)
-      .drop("rank")
-      .rdd.map(row => UserItemPrediction(
-      row.getAs[Int](0), row.getAs[Int](1), row.getAs[Int](2), row.getAs[Double](3)))
-    out
+    pairPredictions
+      .map(x => (x.itemId, x))
+      .groupByKey()
+      .flatMap(x => {
+        val ordered = x._2.toArray.sortBy(y => (-y.prediction, -y.probability)).take(maxUsers)
+        ordered
+      })
   }
 
   /**
@@ -93,6 +83,23 @@ abstract class Recommender[T: ClassTag](userCount: Int, itemCount: Int
    * @param featureRdd RDD of user item pair feature.
    * @return RDD of user item pair prediction.
    */
-  def predictUserItemPair(featureRdd: RDD[UserItemFeature[T]]): RDD[UserItemPrediction]
+  def predictUserItemPair(featureRdd: RDD[UserItemFeature[T]]): RDD[UserItemPrediction] = {
+    featureRdd.persist()
+    val inputCount = featureRdd.count()
+    val idPairs = featureRdd.map(pair => (pair.userId, pair.itemId))
+    val features = featureRdd.map(pair => pair.sample)
+    val raw = predict(features)
+    val predictProb = raw.map { x =>
+      val _output = x.toTensor[T]
+      val predict: Int = ev.toType[Int](_output.max(1)._2.valueAt(1))
+      val probability = Math.exp(_output.valueAt(predict).asInstanceOf[Float])
+      (predict, probability)
+    }
+    val outRdd: RDD[UserItemPrediction] = idPairs.zip(predictProb)
+      .map(x => UserItemPrediction(x._1._1, x._1._2, x._2._1, x._2._2)).cache()
+    featureRdd.unpersist()
 
+    require(inputCount == outRdd.count(), s"count of features must equal to count of prediction")
+    outRdd
+  }
 }
