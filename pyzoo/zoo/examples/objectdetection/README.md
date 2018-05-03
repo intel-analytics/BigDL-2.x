@@ -7,7 +7,7 @@ The example uses OpenCV library to save image. Please install it before run this
 
 2. Prepare pre-trained models
 
-Download pre-trained models from https://github.com/intel-analytics/analytics-zoo/tree/master/models
+Download pre-trained models from https://github.com/intel-analytics/zoo/tree/master/docs/models/objectdetection
 
 3. Prepare predict dataset
 
@@ -30,7 +30,7 @@ spark-submit \
     --master local[4] \
     --driver-memory 10g \
     --executor-memory 10g \
-    --py-files ${PYTHON_API_ZIP_PATH},${ZOO_HOME}/pyzoo/zoo/examples/objectdetection/predict.py \
+    --py-files ${PYTHON_API_ZIP_PATH} \
     --jars ${ZOO_JAR_PATH} \
     --conf spark.driver.extraClassPath=${ZOO_JAR_PATH} \
     --conf spark.executor.extraClassPath=${ZOO_JAR_PATH} \
