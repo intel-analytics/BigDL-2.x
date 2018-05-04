@@ -15,13 +15,13 @@ train a linear model on these features.
 ## Get the dogs-vs-cats datasets
 
 Download the training dataset from https://www.kaggle.com/c/dogs-vs-cats and extract it.
-The following commands copy 1000 images of cats and dogs into demo/cats and demo/dogs separately.
+The following commands copy about 1100 images of cats and dogs into demo/cats and demo/dogs separately.
 
 ```
 mkdir -p demo/dogs
 mkdir -p demo/cats
-find train/ -type f | grep -i cat | head -1000 | xargs -i cp {} demo/cats
-find train/ -type f | grep -i dog | head -1000 | xargs -i cp {} demo/dogs
+cp train/cat.7* demo/cats
+cp train/dog.7* demo/dogs
 ```
 
 ## Get the pre-trained Inception-V1 model
@@ -41,8 +41,8 @@ User may submit ImageInferenceExample.py via spark-submit.
 E.g.
 ```
 zoo/scripts/spark-submit-with-zoo.sh --master local[2] \
-somePath/ImageTransferLearningExample.py.py
-path/to/model/bigdl_inception-v1_imagenet_0.4.0.model path/to/data/demo/*/*
+somePath/ImageTransferLearningExample.py \
+path/to/model/bigdl_inception-v1_imagenet_0.4.0.model path/to/data/demo
 ```
 
 or run the script in Jupyter notebook or Pyspark and manually set parameters
@@ -51,7 +51,7 @@ After training, you should see something like this in the console:
 
 ```
 +-------------------+-------------+-----+-------------------+--------------------+----------+
-|               image|         name|label|            features|           embedding|prediction|
+|              image|         name|label|           features|           embedding|prediction|
 +-------------------+-------------+-----+-------------------+--------------------+----------+
 |[file:/some/path...|cat.10007.jpg|  1.0|[file:/some/path...|[1.44402220030315...|       1.0|
 |[file:/some/path...|cat.10008.jpg|  1.0|[file:/some/path...|[2.78127276942541...|       1.0|
