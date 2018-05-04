@@ -22,6 +22,10 @@ import pytest
 
 from test.zoo.pipeline.utils.test_utils import ZooTestCase
 from zoo.pipeline.api.autograd import *
+from zoo.pipeline.api.keras.engine import *
+from zoo.pipeline.api.keras.models import *
+from zoo.pipeline.api.keras.layers import *
+
 
 np.random.seed(1337)  # for reproducibility
 
@@ -56,7 +60,31 @@ class TestLoss(ZooTestCase):
             result = mean(abs(y_true - y_pred), axis=1)
             return result
         self.compareLossWithKeras(kloss.mean_absolute_error,
-                                  CustomLoss(mean_absolute_error), [2, 3])
+                                  CustomLoss(mean_absolute_error, [3]), [2, 3])
+
+    def test_abs_with_fit(self):
+        def mean_absolute_error(y_true, y_pred):
+            result = mean(abs(y_true - y_pred), axis=1)
+            return result
+        data_len=1000
+        X_ = np.random.uniform(0, 1, (1000, 2))
+        Y_ = ((2 * X_).sum(1) + 0.4).reshape([data_len, 1])
+        model = Sequential()
+        model.add(Dense(1, input_shape=(2, )))
+        model.compile(optimizer=SGD(learningrate=1e-2),
+                      loss=mean_absolute_error,
+                      metrics=None)
+        model.fit(x=X_,
+                  y=Y_,
+                  batch_size=32,
+                  nb_epoch=500,
+                  validation_data=None,
+                  distributed=False)
+        w = model.get_weights()
+        self.assert_allclose(w[0], np.array([2, 2]).reshape([1, 2]), rtol=1e-1)
+        self.assert_allclose(w[1], np.array([0.4]), rtol=1e-1)
+        predict_result = model.predict_local(X_)
+        self.assert_allclose(Y_, predict_result.reshape((data_len, 1)), rtol=1e-1)
 
 if __name__ == "__main__":
    pytest.main([__file__])
