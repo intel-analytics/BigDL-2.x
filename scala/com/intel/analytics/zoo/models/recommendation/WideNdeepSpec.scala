@@ -198,7 +198,7 @@ class WideNdeepSpec extends ZooSpecHelper {
     val correctCounts = out.filter(col("prediction") === col("label")).count()
 
     val accuracy = correctCounts.toDouble / 458
-    // the reference accuracy is 0.721
+    // the reference accuracy in this testcase is 0.856
     assert(accuracy >= 0.40)
   }
 
