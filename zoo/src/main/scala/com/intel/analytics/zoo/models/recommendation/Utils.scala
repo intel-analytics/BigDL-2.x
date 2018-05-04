@@ -116,7 +116,6 @@ object Utils {
 
   // setup deep tensor
   def getDeepTensor(r: Row, columnInfo: ColumnFeatureInfo): Tensor[Float] = {
-    val wideDims = columnInfo.wideBaseDims ++ columnInfo.wideCrossDims
     val deepColumns1 = columnInfo.indicatorCols
     val deepColumns2 = columnInfo.embedCols ++ columnInfo.continuousCols
     val deepLength = columnInfo.indicatorDims.sum + deepColumns2.length
@@ -129,7 +128,7 @@ object Utils {
         val index = r.getAs[Int](columnInfo.indicatorCols(i))
         val accIndex = if (i == 0) index
         else {
-          acc = acc + wideDims(i - 1)
+          acc = acc + columnInfo.indicatorDims(i - 1)
           acc + index
         }
         deepTensor.setValue(accIndex + 1, 1)
