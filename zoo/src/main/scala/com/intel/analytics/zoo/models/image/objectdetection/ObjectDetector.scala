@@ -26,7 +26,7 @@ import scala.reflect.ClassTag
  * An Object detector model.
  *
  */
-class ObjectDetector[T: ClassTag] private ()(implicit ev: TensorNumeric[T])
+private[zoo] class ObjectDetector[T: ClassTag] (implicit ev: TensorNumeric[T])
   extends ImageModel[T] {
 
   override def buildModel(): AbstractModule[Activity, Activity, T] = {
