@@ -65,7 +65,7 @@ class ImageClassificationSpec extends FlatSpec with Matchers {
     val sc = NNContext.getNNContext(conf)
 
     val model = ImageClassifier.loadModel[Float](dirName + "/" + modelFileName)
-    val image = ImageSet.read(resource.getFile)
+    val image = ImageSet.read(resource.getFile, sc)
     val result = model.predictImageSet(image)
     val predicted = result.toDistributed().rdd.map(_(ImageFeature.predict).toString)
     assert(predicted.count() == 3)
@@ -73,13 +73,13 @@ class ImageClassificationSpec extends FlatSpec with Matchers {
     if (tmpFile.exists()) FileUtils.deleteDirectory(tmpFile)
   }
 
-//  "ImageClassifier" should "predict inception-v1-quantize locally" in {
-//    predictLocal("https://s3-ap-southeast-1.amazonaws.com/bigdl-models/imageclassification/" +
-//      "imagenet/bigdl_inception-v1-quantize_imagenet_0.4.0.model")
-//  }
-//
-//  "ImageClassifier" should "predict inception-v1-quantize" in {
-//    predict("https://s3-ap-southeast-1.amazonaws.com/bigdl-models/imageclassification/" +
-//      "imagenet/bigdl_inception-v1-quantize_imagenet_0.4.0.model")
-//  }
+  "ImageClassifier" should "predict inception-v1-quantize locally" in {
+    predictLocal("https://s3-ap-southeast-1.amazonaws.com/analytics-zoo-models/" +
+      "imageclassification/imagenet/analytics-zoo_inception-v1-quantize_imagenet_0.1.0")
+  }
+
+  "ImageClassifier" should "predict inception-v1-quantize" in {
+    predict("https://s3-ap-southeast-1.amazonaws.com/analytics-zoo-models/imageclassification/" +
+      "imagenet/analytics-zoo_inception-v1-quantize_imagenet_0.1.0")
+  }
 }
