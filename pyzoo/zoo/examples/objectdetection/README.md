@@ -16,11 +16,11 @@ Put your image data for prediction in the ./image folder.
 4. Run the example
 
 ```bash
-modelPath=... // model path
+modelPath=... // model path. Local file system/HDFS/Amazon S3 are supported
 
-imagePath=... // image path
+imagePath=... // image path. Local file system/HDFS are supported. With local file system, the files need to be available on all nodes in the cluster.
 
-outputPath=... // output path
+outputPath=... // output path. Currently only support local file system.
 
 PYTHON_API_ZIP_PATH=${ZOO_HOME}/dist/lib/zoo-VERSION-SNAPSHOT-python-api.zip
 ZOO_JAR_PATH=${ZOO_HOME}/dist/lib/zoo-VERSION-SNAPSHOT-jar-with-dependencies.jar

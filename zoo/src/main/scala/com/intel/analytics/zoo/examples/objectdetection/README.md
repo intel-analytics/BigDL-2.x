@@ -15,11 +15,11 @@ Put your image data for prediction in the ./image folder.
 ```bash
 master=... // spark master
 
-modelPath=... // model path
+modelPath=... // model path. Local file system/HDFS/Amazon S3 are supported
 
-imagePath=... // image path
+imagePath=... // image path. Local file system/HDFS are supported. With local file system, the files need to be available on all nodes in the cluster.
 
-outputPath=... // output path
+outputPath=... // output path. Currently only support local file system.
 
 spark-submit \
 --verbose \
