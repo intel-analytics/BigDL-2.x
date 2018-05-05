@@ -13,22 +13,24 @@ Put your image data for prediction in one folder.
 3. Run the example
 
 ```bash
-master=... // spark master
-
 modelPath=... // model path
 
 imagePath=... // image path
 
-ZOO_HOME=...
+topN=... // top n prediction
+
+ZOO_HOME=
+PYTHON_API_ZIP_PATH=${ZOO_HOME}/dist/lib/zoo-VERSION-SNAPSHOT-python-api.zip
 ZOO_JAR_PATH=${ZOO_HOME}/dist/lib/zoo-VERSION-SNAPSHOT-jar-with-dependencies.jar
+PYTHONPATH=${PYTHON_API_ZIP_PATH}:$PYTHONPATH
 
 spark-submit \
---verbose \
---master $master \
---conf spark.executor.cores=1 \
---total-executor-cores 4 \
---driver-memory 200g \
---executor-memory 200g \
---class com.intel.analytics.zoo.examples.imageclassification.Predict \
-${ZOO_JAR_PATH} -f $imagePath --model $modelPath --partition 4 --topN 5
+    --master local[4] \
+    --driver-memory 10g \
+    --executor-memory 10g \
+    --py-files ${PYTHON_API_ZIP_PATH} \
+    --jars ${ZOO_JAR_PATH} \
+    --conf spark.driver.extraClassPath=${ZOO_JAR_PATH} \
+    --conf spark.executor.extraClassPath=${ZOO_JAR_PATH} \
+    ${ZOO_HOME}/pyzoo/zoo/examples/imageclassification/predict.py -f $imagePath --model $modelPath --topN 5
 ```

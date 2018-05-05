@@ -25,7 +25,8 @@ import com.intel.analytics.zoo.models.image.common.ImageModel
  * An Image Classification model.
  *
  */
-class ImageClassifier[T: ClassTag] private ()(implicit ev: TensorNumeric[T]) extends ImageModel[T] {
+private[zoo] class ImageClassifier[T: ClassTag]
+(implicit ev: TensorNumeric[T]) extends ImageModel[T] {
 
   override def buildModel(): AbstractModule[Activity, Activity, T] = {
     throw new UnsupportedOperationException("imageclassifier class only support load from file")

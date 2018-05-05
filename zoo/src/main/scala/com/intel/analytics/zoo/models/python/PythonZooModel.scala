@@ -27,6 +27,8 @@ import com.intel.analytics.zoo.feature.image.ImageSet
 import com.intel.analytics.zoo.models.common.ZooModel
 import com.intel.analytics.zoo.models.image.common.{ImageConfigure, ImageModel}
 import com.intel.analytics.zoo.models.objectdetection._
+
+import com.intel.analytics.zoo.models.image.imageclassification.{ImageClassifier, LabelReader => IMCLabelReader}
 import com.intel.analytics.zoo.models.recommendation.{NeuralCF, Recommender, UserItemFeature, UserItemPrediction}
 import com.intel.analytics.zoo.models.textclassification.TextClassifier
 import org.apache.spark.api.java.JavaRDD
@@ -75,12 +77,20 @@ class PythonZooModel[T: ClassTag](implicit ev: TensorNumeric[T]) extends PythonB
     ImageModel.loadModel(path, weightPath)
   }
 
+  def loadImageClassifier(path: String, weightPath: String = null): ImageClassifier[T] = {
+    ImageClassifier.loadModel(path, weightPath)
+  }
+
   def readPascalLabelMap(): JMap[Int, String] = {
     LabelReader.readPascalLabelMap().asJava
   }
 
   def readCocoLabelMap(): JMap[Int, String] = {
     LabelReader.readCocoLabelMap().asJava
+  }
+
+  def readImagenetLabelMap(): JMap[Int, String] = {
+    IMCLabelReader.readImagenetlLabelMap().asJava
   }
 
   def imageModelPredict(model: ImageModel[T],
