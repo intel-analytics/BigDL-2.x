@@ -92,6 +92,13 @@ class TestWideAndDeep(ZooTestCase):
         recommended_users = model.recommend_for_item(data, max_users=4)
         print(recommended_users.take(1)[0])
 
+    def test_negative_sample(self):
+        negative_df = get_negative_samples(self.data_in)
+
+    def test_get_boundaries(self):
+        index = get_boundaries(42, [18, 25, 30, 35, 40, 45, 50, 55, 60, 65])
+        assert index == 5
+
 
 if __name__ == "__main__":
    pytest.main([__file__])

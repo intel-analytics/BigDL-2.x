@@ -29,7 +29,7 @@ case class UserItemFeature[T: ClassTag](userId: Int, itemId: Int, sample: Sample
 case class UserItemPrediction(userId: Int, itemId: Int, prediction: Int, probability: Double)
 
 /**
- * The factory for recommender models.
+ * The base class for recommendation models in Analytics Zoo.
  *
  * @tparam T Numeric type of parameter(e.g. weight, bias). Only support float/double now.
  */

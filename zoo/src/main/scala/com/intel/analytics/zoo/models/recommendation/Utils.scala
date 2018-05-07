@@ -19,7 +19,7 @@ package com.intel.analytics.zoo.models.recommendation
 import com.intel.analytics.bigdl.dataset.{Sample, TensorSample}
 import com.intel.analytics.bigdl.tensor.Tensor
 import com.intel.analytics.bigdl.utils.T
-import org.apache.spark.sql.functions.{max, udf}
+import org.apache.spark.sql.functions.max
 import org.apache.spark.sql.{DataFrame, Row}
 
 import scala.util.Random
