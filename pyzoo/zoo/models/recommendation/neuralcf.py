@@ -27,7 +27,7 @@ if sys.version >= '3':
 
 class NeuralCF(Recommender):
     """
-    The model used for neural collaborative filtering.
+    The neural collaborative filtering model used for recommendation.
 
     # Arguments
     user_count: The number of users. Positive int.

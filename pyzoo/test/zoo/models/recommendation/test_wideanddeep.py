@@ -95,10 +95,6 @@ class TestWideAndDeep(ZooTestCase):
     def test_negative_sample(self):
         negative_df = get_negative_samples(self.data_in)
 
-    def test_get_boundaries(self):
-        index = get_boundaries(42, [18, 25, 30, 35, 40, 45, 50, 55, 60, 65])
-        assert index == 5
-
 
 if __name__ == "__main__":
    pytest.main([__file__])

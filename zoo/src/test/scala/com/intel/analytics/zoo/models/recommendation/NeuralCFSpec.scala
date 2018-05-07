@@ -30,7 +30,7 @@ import org.apache.spark.sql.{DataFrame, SQLContext}
 
 import scala.util.Random
 
-class NCFSpec extends ZooSpecHelper {
+class NeuralCFSpec extends ZooSpecHelper {
 
   var sqlContext: SQLContext = _
   var sc: SparkContext = _

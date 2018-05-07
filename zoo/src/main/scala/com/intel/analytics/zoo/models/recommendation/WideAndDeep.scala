@@ -25,23 +25,24 @@ import com.intel.analytics.zoo.models.common.ZooModel
 import scala.reflect.ClassTag
 
 /**
- * Wide and deep model and its feature generation part share the same data information
- * @param wideBaseCols   Data of wideBaseCols together with wideCrossCols will be fed into
+ * The same data information shared by the WideAndDeep model and its feature generation part.
+ *
+ * @param wideBaseCols   Data of wideBaseCols together with wideCrossCols will be fed into the
  *                       wide model.
- * @param wideBaseDims   Dimension of wideBaseCols, dimension of data in wideBaseCols should be
- *                       with in the range of wideBaseDims.
- * @param wideCrossCols  Data of wideCrossCols will be fed into wide model.
- * @param wideCrossDims  Dimension of crossed columns, dimension of data in wideCrossCols should
- *                       be with in the range of wideCrossDims.
- * @param indicatorCols  Data of indicatorCols will be fed into deep model as multi-hot vectors.
- * @param indicatorDims  Dimension indicatorCols, dimension of data in indicatorCols should be
- *                       with in the range of indicatorDims.
- * @param embedCols      Data of embedCols will be fed into deep model as embeddings.
- * @param embedInDims    Input dimension of the data in embedCols,
- *                       dimension of data in embedCols should be within the range of embedInDims.
- * @param embedOutDims   Dimension of embeddings
- * @param continuousCols Data of continuousCols is treated as continuous values for deep model.
- * @param label          Name of label column.
+ * @param wideBaseDims   Dimensions of wideBaseCols. The dimensions of the data in wideBaseCols
+ *                       should be within the range of wideBaseDims.
+ * @param wideCrossCols  Data of wideCrossCols will be fed into the wide model.
+ * @param wideCrossDims  Dimensions of wideCrossCols. The dimensions of the data in wideCrossCols
+ *                       should be within the range of wideCrossDims.
+ * @param indicatorCols  Data of indicatorCols will be fed into the deep model as multi-hot vectors.
+ * @param indicatorDims  Dimensions of indicatorCols. The dimensions of the data in indicatorCols
+ *                       should be within the range of indicatorDims.
+ * @param embedCols      Data of embedCols will be fed into the deep model as embeddings.
+ * @param embedInDims    Input dimension of the data in embedCols. The dimensions of the data
+ *                       in embedCols should be within the range of embedInDims.
+ * @param embedOutDims   The dimensions of embeddings.
+ * @param continuousCols Data of continuousCols is treated as continuous values for the deep model.
+ * @param label          The name of the 'label' column.
  */
 case class ColumnFeatureInfo(wideBaseCols: Array[String] = Array[String](),
                              wideBaseDims: Array[Int] = Array[Int](),
@@ -56,20 +57,23 @@ case class ColumnFeatureInfo(wideBaseCols: Array[String] = Array[String](),
                              label: String = "label") extends Serializable
 
 /**
- * The wide and deep model for recommendation.*
+ * The Wide and Deep model used for recommendation.
+ *
  * @param modelType      String, "wide", "deep", "wide_n_deep" are supported.
+ *                       Default is 'wide_n_deep'.
  * @param numClasses     The number of classes. Positive integer.
- * @param wideBaseDims   Dimension of wideBaseCols, dimension of data in wideBaseCols should be
- *                       with in the range of wideBaseDims.
- * @param wideCrossDims  Dimension of crossed columns, dimension of data in wideCrossCols should
- *                       be with in the range of wideCrossDims.
- * @param indicatorDims  Dimension indicatorCols, dimension of data in indicatorCols should be
- *                       with in the range of indicatorDims.
- * @param embedInDims    Input dimension of the data in embedCols,
- *                       dimension of data in embedCols should be within the range of embedInDims.
- * @param embedOutDims   Dimension of embeddings
- * @param continuousCols Data of continuousCols is treated as continuous values for deep model.
- * @param hiddenLayers   Units hiddenLayers of deep model. Array of positive integer.
+ * @param wideBaseDims   Dimensions of wideBaseCols. The dimensions of the data in wideBaseCols
+ *                       should be within the range of wideBaseDims.
+ * @param wideCrossDims  Dimensions of crossed columns. The dimensions of the data in wideCrossCols
+ *                       should be within the range of wideCrossDims.
+ * @param indicatorDims  Dimensions of indicatorCols. The dimensions of the data in indicatorCols
+ *                       should be within the range of indicatorDims.
+ * @param embedInDims    Input dimension of the data in embedCols. The dimensions of the data
+ *                       in embedCols should be within the range of embedInDims.
+ * @param embedOutDims   The dimensions of embeddings.
+ * @param continuousCols Data of continuousCols is treated as continuous values for the deep model.
+ * @param hiddenLayers   Units hiddenLayers for the deep model. Array of positive integers.
+ *                       Default is Array(40, 20, 10).
  * @tparam T Numeric type of parameter(e.g. weight, bias). Only support float/double now.
  */
 class WideAndDeep[T: ClassTag] private(val modelType: String = "wide_n_deep",
