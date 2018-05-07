@@ -32,7 +32,7 @@ import org.apache.spark.sql.functions._
 
 import scala.util.Random
 
-class WideNdeepSpec extends ZooSpecHelper {
+class WideAndDeepSpec extends ZooSpecHelper {
 
   var sqlContext: SQLContext = _
   var sc: SparkContext = _
