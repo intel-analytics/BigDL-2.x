@@ -32,7 +32,7 @@ import scala.reflect.ClassTag
  * @param itemCount    The number of items. Positive integer.
  * @param userEmbed    Units of user embedding. Positive integer.
  * @param itemEmbed    Units of item embedding. Positive integer.
- * @param hiddenLayers Units hidenLayers of MLP part. Array of positive integer.
+ * @param hiddenLayers Units hiddenLayers of MLP part. Array of positive integer.
  * @param includeMF    Include Matrix Factorization or not. Boolean.
  * @param mfEmbed      Units of matrix factorization embedding. Positive integer.
  * @tparam T Numeric type of parameter(e.g. weight, bias). Only support float/double now.

@@ -69,7 +69,7 @@ case class ColumnFeatureInfo(wideBaseCols: Array[String] = Array[String](),
  *                       dimension of data in embedCols should be within the range of embedInDims.
  * @param embedOutDims   Dimension of embeddings
  * @param continuousCols Data of continuousCols is treated as continuous values for deep model.
- * @param hiddenLayers   Units hidenLayers of deep model. Array of positive integer.
+ * @param hiddenLayers   Units hiddenLayers of deep model. Array of positive integer.
  * @tparam T Numeric type of parameter(e.g. weight, bias). Only support float/double now.
  */
 class WideAndDeep[T: ClassTag] private(val modelType: String = "wide_n_deep",
@@ -171,7 +171,7 @@ object WideAndDeep {
             s"size of indicatorColumns should match")
     require(columnInfo.embedCols.length == columnInfo.embedInDims.length &&
             columnInfo.embedCols.length == columnInfo.embedOutDims.length,
-            s"size of embedingColumns should match")
+            s"size of embeddingColumns should match")
 
     new WideAndDeep[T](modelType,
       numClasses,
