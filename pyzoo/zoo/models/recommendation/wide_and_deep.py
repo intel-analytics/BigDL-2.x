@@ -74,9 +74,9 @@ class ColumnFeatureInfo(object):
                                    self.continuous_cols, self.label)
 
     def __str__(self):
-        return "ColumnFeatureInfo [wide_base_cols: %s, wide_base_dims: %s, wide_cross_cols: %s, " \
+        return "ColumnFeatureInfo {wide_base_cols: %s, wide_base_dims: %s, wide_cross_cols: %s, " \
                "wide_cross_dims: %s, indicator_cols: %s, indicator_dims: %s, embed_cols: %s, " \
-               "embed_cols: %s, embed_in_dims: %s, embed_out_dims: %s, continuous_cols: %s, label: %s]"\
+               "embed_cols: %s, embed_in_dims: %s, embed_out_dims: %s, continuous_cols: %s, label: '%s'}"\
                % (self.wide_base_cols, self.wide_base_dims, self.wide_cross_cols, self.wide_cross_dims,
                   self.indicator_cols, self.indicator_dims, self.embed_cols, self.embed_cols,
                   self.embed_in_dims, self.embed_out_dims, self.continuous_cols, self.label)
@@ -88,7 +88,7 @@ class WideAndDeep(Recommender):
 
     # Arguments
     class_num: The number of classes. Positive int.
-    col_info: Instance of ColumnFeatureInfo.
+    col_info: An instance of ColumnFeatureInfo.
     model_type: String, 'wide', 'deep' and 'wide_n_deep' are supported. Default is 'wide_n_deep'.
     hidden_layers: Units of hidden layers for the deep model. Tuple of positive int. Default is (40, 20, 10).
     """

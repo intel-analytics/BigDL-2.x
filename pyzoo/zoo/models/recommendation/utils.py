@@ -102,5 +102,5 @@ def row_to_sample(row, column_info, model_type="wide_n_deep"):
     return Sample.from_jtensor(feature, label)
 
 
-def to_user_item_feature(row, column_info):
-    return UserItemFeature(row["userId"], row["itemId"], row_to_sample(row, column_info, "wide_n_deep"))
+def to_user_item_feature(row, column_info, model_type="wide_n_deep"):
+    return UserItemFeature(row["userId"], row["itemId"], row_to_sample(row, column_info, model_type))

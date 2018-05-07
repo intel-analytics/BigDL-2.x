@@ -80,6 +80,7 @@ class TestWideAndDeep(ZooTestCase):
         model = WideAndDeep(5, column_info, "deep")
         input_data = get_deep_tensor(self.data_in.take(1)[0], column_info)
         self.assert_save_load(model, input_data.reshape((1, input_data.shape[0])))
+        print(self.column_info)
 
     def test_predict_recommend(self):
         column_info = self.column_info
