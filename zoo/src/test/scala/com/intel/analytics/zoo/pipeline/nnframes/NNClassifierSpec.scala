@@ -265,7 +265,7 @@ class NNClassifierSpec extends FlatSpec with Matchers with BeforeAndAfter {
     result2 shouldEqual result
   }
 
-  "An NNClassifier" should "supports deep copy" in {
+  "NNClassifier" should "supports deep copy" in {
     val model = new Sequential().add(Linear[Float](6, 2)).add(LogSoftMax[Float])
     val criterion = ClassNLLCriterion[Float]()
     val data = sc.parallelize(
@@ -306,6 +306,15 @@ class NNClassifierSpec extends FlatSpec with Matchers with BeforeAndAfter {
     val sampleTransformer = SeqToTensor(Array(6)) -> TensorToSample()
 
     val nnModel = new NNClassifierModel(model, sampleTransformer).setBatchSize(nRecords)
+    val data = sc.parallelize(smallData)
+    val df = sqlContext.createDataFrame(data).toDF("features", "label")
+
+    assert(nnModel.transform(df).count() == nRecords)
+  }
+
+  "NNClassifierModel" should "construct with feature size" in {
+    val model = new Sequential().add(Linear[Float](6, 2)).add(LogSoftMax[Float])
+    val nnModel = NNClassifierModel(model, Array(6)).setBatchSize(nRecords)
     val data = sc.parallelize(smallData)
     val df = sqlContext.createDataFrame(data).toDF("features", "label")
 

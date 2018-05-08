@@ -93,7 +93,7 @@ class TestNNClassifer():
         assert classifier.setMaxEpoch(50).getMaxEpoch() == 50
         assert classifier.setLearningRate(1e-5).getLearningRate() == 1e-5
 
-        nn_classifier_model = NNClassifierModel(linear_model, SeqToTensor([2]))
+        nn_classifier_model = NNClassifierModel.create(linear_model, SeqToTensor([2]))
         assert nn_classifier_model.setBatchSize((20)).getBatchSize() == 20
 
     def test_nnEstimator_fit_nnmodel_transform(self):
@@ -200,6 +200,24 @@ class TestNNClassifer():
         df = self.sqlContext.createDataFrame(data, schema)
         nnModel = estimator.fit(df)
         assert nnModel.getBatchSize() == 4
+
+    def test_NNModel_create_with_size(self):
+        model = Sequential().add(Linear(2, 2))
+        nnModel = NNModel.createWithSize(model, [2])
+        data = self.sc.parallelize([
+            ((2.0, 1.0), (1.0, 2.0)),
+            ((1.0, 2.0), (2.0, 1.0)),
+            ((2.0, 1.0), (1.0, 2.0)),
+            ((1.0, 2.0), (2.0, 1.0))])
+
+        schema = StructType([
+            StructField("features", ArrayType(DoubleType(), False), False),
+            StructField("label", ArrayType(DoubleType(), False), False)])
+        df = self.sqlContext.createDataFrame(data, schema)
+        res = nnModel.transform(df)
+        assert type(res).__name__ == 'DataFrame'
+        assert res.count() == 4
+
 
     def test_nnEstimator_fit_with_train_val_summary(self):
         model = Sequential().add(Linear(2, 2))
@@ -310,6 +328,23 @@ class TestNNClassifer():
 
         res = nnClassifierModel.transform(df)
         assert type(res).__name__ == 'DataFrame'
+
+    def test_NNClassifierModel_create_with_size(self):
+        model = Sequential().add(Linear(2, 2))
+        nnModel = NNModel.createWithSize(model, [2])
+        data = self.sc.parallelize([
+            ((2.0, 1.0), 1.0),
+            ((1.0, 2.0), 2.0),
+            ((2.0, 1.0), 1.0),
+            ((1.0, 2.0), 2.0)])
+
+        schema = StructType([
+            StructField("features", ArrayType(DoubleType(), False), False),
+            StructField("label", DoubleType(), False)])
+        df = self.sqlContext.createDataFrame(data, schema)
+        res = nnModel.transform(df)
+        assert type(res).__name__ == 'DataFrame'
+        assert res.count() == 4
 
     def test_nnclassifier_fit_different_optimMethods(self):
         model = Sequential().add(Linear(2, 2))

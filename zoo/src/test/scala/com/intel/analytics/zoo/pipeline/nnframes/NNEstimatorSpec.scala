@@ -64,7 +64,7 @@ class NNEstimatorSpec extends FlatSpec with Matchers with BeforeAndAfter {
     }
   }
 
-  "An NNEstimator" should "has correct default params" in {
+  "NNEstimator" should "has correct default params" in {
     val model = Linear[Float](10, 1)
     val criterion = ClassNLLCriterion[Float]()
     val estimator = new NNEstimator(model, criterion, SeqToTensor(Array(10)), ScalarToTensor())
@@ -77,7 +77,7 @@ class NNEstimatorSpec extends FlatSpec with Matchers with BeforeAndAfter {
 
   }
 
-  "An NNEstimator" should "get reasonable accuracy" in {
+  "NNEstimator" should "get reasonable accuracy" in {
     val model = new Sequential().add(Linear[Float](6, 2)).add(LogSoftMax[Float])
     val criterion = ClassNLLCriterion[Float]()
     val estimator = new NNEstimator(model, criterion, ArrayToTensor(Array(6)), ScalarToTensor())
@@ -100,7 +100,7 @@ class NNEstimatorSpec extends FlatSpec with Matchers with BeforeAndAfter {
     assert(correct > nRecords * 0.8)
   }
 
-  "An NNEstimator" should "construct with sampleTransformer" in {
+  "NNEstimator" should "construct with sampleTransformer" in {
     val model = new Sequential().add(Linear[Float](6, 2)).add(LogSoftMax[Float])
     val criterion = ClassNLLCriterion[Float]()
     val sampleTransformer = FeatureLabelPreprocessing(SeqToTensor(Array(6)), ScalarToTensor())
@@ -121,7 +121,7 @@ class NNEstimatorSpec extends FlatSpec with Matchers with BeforeAndAfter {
     assert(nnModel.transform(df).count() == nRecords)
   }
 
-  "An NNEstimator" should "apply work with Preprocessing[F, Sample[T]]" in {
+  "NNEstimator" should "apply work with Preprocessing[F, Sample[T]]" in {
     val model = new Sequential().add(Linear[Float](6, 2)).add(LogSoftMax[Float])
     val criterion = ClassNLLCriterion[Float]()
     val estimator = NNEstimator(
@@ -166,7 +166,7 @@ class NNEstimatorSpec extends FlatSpec with Matchers with BeforeAndAfter {
     }
   }
 
-  "An NNEstimator" should "support scalar FEATURE types" in {
+  "NNEstimator" should "support scalar FEATURE types" in {
     val model = new Sequential().add(Linear[Float](1, 2)).add(LogSoftMax[Float])
     val criterion = ClassNLLCriterion[Float]()
     val estimator = NNEstimator(model, criterion, Array(1), Array(1))
@@ -186,7 +186,7 @@ class NNEstimatorSpec extends FlatSpec with Matchers with BeforeAndAfter {
     }
   }
 
-  "An NNEstimator" should "support different LABEL types" in {
+  "NNEstimator" should "support different LABEL types" in {
     val model = new Sequential().add(Linear[Float](6, 2)).add(LogSoftMax[Float])
     val criterion = MultiLabelSoftMarginCriterion[Float]()
     val estimator = NNEstimator(model, criterion, Array(6), Array(2))
@@ -205,7 +205,7 @@ class NNEstimatorSpec extends FlatSpec with Matchers with BeforeAndAfter {
     }
   }
 
-  "An NNEstimator" should "support scalar LABEL types" in {
+  "NNEstimator" should "support scalar LABEL types" in {
     val model = new Sequential().add(Linear[Float](6, 2)).add(LogSoftMax[Float])
     val criterion = ClassNLLCriterion[Float]()
     val estimator = new NNEstimator(
@@ -226,7 +226,7 @@ class NNEstimatorSpec extends FlatSpec with Matchers with BeforeAndAfter {
     }
   }
 
-  "An NNEstimator" should "work with tensor data" in {
+  "NNEstimator" should "work with tensor data" in {
 
     val model = Linear[Float](10, 1)
     val criterion = ClassNLLCriterion[Float]()
@@ -247,7 +247,7 @@ class NNEstimatorSpec extends FlatSpec with Matchers with BeforeAndAfter {
     nnModel.transform(trainingDF).collect()
   }
 
-  "An NNEstimator" should "support different batchSize" in {
+  "NNEstimator" should "support different batchSize" in {
     val model = new Sequential().add(Linear[Float](6, 2)).add(LogSoftMax[Float])
     val criterion = ClassNLLCriterion[Float]()
     val estimator = new NNEstimator(
@@ -262,7 +262,7 @@ class NNEstimatorSpec extends FlatSpec with Matchers with BeforeAndAfter {
     assert(nnModel.transform(df).count() == nRecords)
   }
 
-  "An NNModel" should "support transform with different batchSize" in {
+  "NNModel" should "support transform with different batchSize" in {
     val model = new Sequential().add(Linear[Float](6, 2)).add(LogSoftMax[Float])
     val criterion = ClassNLLCriterion[Float]()
     val estimator = new NNEstimator(model, criterion, SeqToTensor(Array(6)), ScalarToTensor())
@@ -274,7 +274,15 @@ class NNEstimatorSpec extends FlatSpec with Matchers with BeforeAndAfter {
     assert(df.count() == nnModel.setBatchSize(51).transform(df).count())
   }
 
-  "An NNEstimator" should "throw exception with incorrect inputs" in {
+  "NNModel" should "supports create with feature size" in {
+    val model = new Sequential().add(Linear[Float](6, 2)).add(LogSoftMax[Float])
+    val nnModel = NNModel(model, Array(6))
+    val data = sc.parallelize(smallData)
+    val df: DataFrame = sqlContext.createDataFrame(data).toDF("features", "label")
+    assert(df.count() == nnModel.transform(df).count())
+  }
+
+  "NNEstimator" should "throw exception with incorrect inputs" in {
     val model = Linear[Float](10, 1)
     val criterion = ClassNLLCriterion[Float]()
     val inputs = Array[String]("Feature data", "Label data")
@@ -294,7 +302,7 @@ class NNEstimatorSpec extends FlatSpec with Matchers with BeforeAndAfter {
     }
   }
 
-  "An NNEstimator" should "supports training summary" in {
+  "NNEstimator" should "supports training summary" in {
     val model = new Sequential().add(Linear[Float](6, 2)).add(LogSoftMax[Float])
     val criterion = ClassNLLCriterion[Float]()
     val logdir = com.google.common.io.Files.createTempDir()
@@ -314,7 +322,7 @@ class NNEstimatorSpec extends FlatSpec with Matchers with BeforeAndAfter {
     logdir.deleteOnExit()
   }
 
-  "An NNEstimator" should "supports validation data and summary" in {
+  "NNEstimator" should "supports validation data and summary" in {
     val model = new Sequential().add(Linear[Float](6, 2)).add(LogSoftMax[Float])
     val criterion = ClassNLLCriterion[Float]()
     val logdir = com.google.common.io.Files.createTempDir()
@@ -335,7 +343,7 @@ class NNEstimatorSpec extends FlatSpec with Matchers with BeforeAndAfter {
     logdir.deleteOnExit()
   }
 
-  "An NNEstimator" should "throw exception when EndWhen and MaxEpoch are set" in {
+  "NNEstimator" should "throw exception when EndWhen and MaxEpoch are set" in {
     val model = new Sequential().add(Linear[Float](6, 2)).add(LogSoftMax[Float])
     val criterion = ClassNLLCriterion[Float]()
     val logdir = com.google.common.io.Files.createTempDir()
@@ -353,7 +361,7 @@ class NNEstimatorSpec extends FlatSpec with Matchers with BeforeAndAfter {
     }
   }
 
-  "An NNEstimator" should "works in ML pipeline" in {
+  "NNEstimator" should "works in ML pipeline" in {
     var appSparkVersion = org.apache.spark.SPARK_VERSION
     if (appSparkVersion.trim.startsWith("1")) {
       val data = sc.parallelize(
@@ -406,7 +414,7 @@ class NNEstimatorSpec extends FlatSpec with Matchers with BeforeAndAfter {
     assert(nnModel.transform(df).count() == nRecords)
   }
 
-  "An NNModel" should "return same results after saving and loading" in {
+  "NNModel" should "return same results after saving and loading" in {
     val data = sqlContext.createDataFrame(smallData).toDF("features", "label")
     val module = new Sequential[Double]().add(Linear[Double](6, 2)).add(LogSoftMax[Double])
     val nnModel = new NNModel(module, SeqToTensor[Double](Array(6)))
@@ -436,7 +444,7 @@ class NNEstimatorSpec extends FlatSpec with Matchers with BeforeAndAfter {
     result2 shouldEqual result
   }
 
-  "An NNEstimator" should "supports deep copy" in {
+  "NNEstimator" should "supports deep copy" in {
     val model = new Sequential().add(Linear[Float](6, 2)).add(LogSoftMax[Float])
     val criterion = ClassNLLCriterion[Float]()
     val data = sc.parallelize(
@@ -475,7 +483,7 @@ class NNEstimatorSpec extends FlatSpec with Matchers with BeforeAndAfter {
     assert(copied.getValidationSummary.isEmpty)
   }
 
-  "An NNModel" should "supports deep copy" in {
+  "NNModel" should "supports deep copy" in {
     val model = new Sequential().add(Linear[Float](6, 2)).add(LogSoftMax[Float])
     val criterion = ClassNLLCriterion[Float]()
     val data = sc.parallelize(

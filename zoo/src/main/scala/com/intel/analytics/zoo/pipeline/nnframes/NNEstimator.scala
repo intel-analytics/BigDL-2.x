@@ -413,7 +413,7 @@ object NNEstimator {
    *                    width * height = 28 * 28, featureSize = Array(28, 28).
    * @param labelSize The size (Tensor dimensions) of the label data.
    */
-  def apply[F, T: ClassTag](
+  def apply[T: ClassTag](
       model: Module[T],
       criterion: Criterion[T],
       featureSize : Array[Int],
@@ -547,6 +547,23 @@ object NNModel extends MLReadable[NNModel[_, _]] {
 
   import scala.language.existentials
   implicit val format: DefaultFormats.type = DefaultFormats
+
+  /**
+   * Construct a [[NNModel]] with BigDL model and feature size. The constructor is useful
+   * when the feature column contains the following data types:
+   * Float, Double, Int, Array[Float], Array[Double], Array[Int] and MLlib Vector. The feature
+   * data are converted to Tensors with the specified sizes before sending to the model.
+   *
+   * @param model BigDL module to be used.
+   * @param featureSize The size (Tensor dimensions) of the feature data. e.g. an image may be with
+   *                    width * height = 28 * 28, featureSize = Array(28, 28).
+   */
+  def apply[F, T: ClassTag](
+      model: Module[T],
+      featureSize : Array[Int]
+    )(implicit ev: TensorNumeric[T]): NNModel[Any, T] = {
+    new NNModel(model, SeqToTensor(featureSize))
+  }
 
   private[nnframes] class NNModelReader() extends MLReader[NNModel[_, _]] {
     override def load(path: String): NNModel[_, _] = {
