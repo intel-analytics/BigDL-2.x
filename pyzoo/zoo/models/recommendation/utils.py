@@ -21,8 +21,8 @@ from bigdl.util.common import JTensor, callBigDlFunc, Sample
 from zoo.models.recommendation import UserItemFeature
 
 
-def hash_bucket(sth, bucket_size=1000, start=0):
-    return (id(sth) % bucket_size + bucket_size) % bucket_size + start
+def hash_bucket(content, bucket_size=1000, start=0):
+    return (hash(str(content)) % bucket_size + bucket_size) % bucket_size + start
 
 
 def categorical_from_vocab_list(sth, vocab_list, default=-1, start=0):

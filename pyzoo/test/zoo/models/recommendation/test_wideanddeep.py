@@ -33,7 +33,7 @@ class TestWideAndDeep(ZooTestCase):
         self.sqlContext = SQLContext(self.sc)
         data_path = os.path.join(os.path.split(__file__)[0], "../../resources/recommender")
         categorical_gender_udf = udf(lambda gender: categorical_from_vocab_list(gender, ["F", "M"], start=1))
-        bucket_udf = udf(lambda feature1, feature2: hash_bucket(str(feature1) + str(feature2), bucket_size=100))
+        bucket_udf = udf(lambda feature1, feature2: hash_bucket(str(feature1) + "_" + str(feature2), bucket_size=100))
         self.data_in = self.sqlContext.read.parquet(data_path) \
             .withColumn("gender", categorical_gender_udf(col("gender")).cast("int")) \
             .withColumn("occupation-gender", bucket_udf(col("occupation"), col("gender")).cast("int"))
