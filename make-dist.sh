@@ -79,7 +79,7 @@ mkdir -p $DIST_DIR/bin
 
 cp -r $BASEDIR/zoo/target/*.jar $DIST_DIR/lib/
 cp -r $BASEDIR/zoo/target/*.zip $DIST_DIR/lib/
-cp -r $BASEDIR/scripts/* $DIST_DIR/bin/
+cp -r $BASEDIR/scripts/* $DIST_DIR/scripts/
 cp $BASEDIR/backend/bigdl/spark/dl/src/main/resources/spark-bigdl.conf  $DIST_DIR/conf/
 
 
