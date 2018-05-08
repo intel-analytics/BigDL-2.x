@@ -104,6 +104,9 @@ class Variable(ZooKerasCreator):
     def __div__(self, other):
         return Variable.from_jvalue(callBigDlFunc("float", "div", self, other))
 
+    def __truediv__(self, other):
+        return Variable.from_jvalue(callBigDlFunc("float", "div", self, other))
+
 
 class Lambda(ZooKerasCreator):
     """Used for evaluating an arbitrary expressions on an input.
