@@ -44,7 +44,6 @@ class TestNeuralCF(ZooTestCase):
         input_data = np.random.randint(1500, size=(300, 2))
         self.assert_save_load(model, input_data)
 
-    @pytest.mark.skip(reason="window function not supported for Spark1.6")
     def test_predict_recommend(self):
 
         def gen_rand_user_item_feature(user_num, item_num, class_num):

@@ -25,28 +25,30 @@ import com.intel.analytics.zoo.models.common.ZooModel
 import scala.reflect.ClassTag
 
 /**
- * The model is for neural collaborative filtering.
+ * The neural collaborative filtering model used for recommendation.
  *
- * @param numClasses   The number of classes. Positive integer.
  * @param userCount    The number of users. Positive integer.
  * @param itemCount    The number of items. Positive integer.
- * @param userEmbed    Units of user embedding. Positive integer.
- * @param itemEmbed    Units of item embedding. Positive integer.
- * @param hiddenLayers Units hidenLayers of MLP part. Array of positive integer.
- * @param includeMF    Include Matrix Factorization or not. Boolean.
+ * @param numClasses   The number of classes. Positive integer.
+ * @param userEmbed    Units of user embedding. Positive integer. Default is 20.
+ * @param itemEmbed    Units of item embedding. Positive integer. Default is 20.
+ * @param hiddenLayers Units hiddenLayers for MLP. Array of positive integers.
+ *                     Default is Array(40, 20, 10).
+ * @param includeMF    Whether to include Matrix Factorization. Boolean. Default is true.
  * @param mfEmbed      Units of matrix factorization embedding. Positive integer.
+ *                     Default is 20.
  * @tparam T Numeric type of parameter(e.g. weight, bias). Only support float/double now.
  */
 
-class NeuralCF[T: ClassTag] private(val userCount: Int,
-                                    val itemCount: Int,
-                                    val numClasses: Int,
-                                    val userEmbed: Int = 20,
-                                    val itemEmbed: Int = 20,
-                                    val hiddenLayers: Array[Int] = Array(40, 20, 10),
-                                    val includeMF: Boolean = true,
-                                    val mfEmbed: Int = 20
-                                   )(implicit ev: TensorNumeric[T])
+class NeuralCF[T: ClassTag] private(
+    val userCount: Int,
+    val itemCount: Int,
+    val numClasses: Int,
+    val userEmbed: Int = 20,
+    val itemEmbed: Int = 20,
+    val hiddenLayers: Array[Int] = Array(40, 20, 10),
+    val includeMF: Boolean = true,
+    val mfEmbed: Int = 20)(implicit ev: TensorNumeric[T])
   extends Recommender[T] {
 
   override def buildModel(): AbstractModule[Tensor[T], Tensor[T], T] = {
@@ -93,26 +95,35 @@ class NeuralCF[T: ClassTag] private(val userCount: Int,
 }
 
 object NeuralCF {
-
-  def apply[@specialized(Float, Double) T: ClassTag]
-  (userCount: Int,
-   itemCount: Int,
-   numClasses: Int,
-   userEmbed: Int,
-   itemEmbed: Int,
-   hiddenLayers: Array[Int],
-   includeMF: Boolean = true,
-   mfEmbed: Int = 20
-  )(implicit ev: TensorNumeric[T]): NeuralCF[T] = {
-    new NeuralCF[T](
-      userCount, itemCount, numClasses, userEmbed, itemEmbed, hiddenLayers, includeMF, mfEmbed)
-      .build()
+  /**
+   * The factory method to create a NeuralCF instance.
+   */
+  def apply[@specialized(Float, Double) T: ClassTag](
+      userCount: Int,
+      itemCount: Int,
+      numClasses: Int,
+      userEmbed: Int = 20,
+      itemEmbed: Int = 20,
+      hiddenLayers: Array[Int] = Array(40, 20, 10),
+      includeMF: Boolean = true,
+      mfEmbed: Int = 20)(implicit ev: TensorNumeric[T]): NeuralCF[T] = {
+    new NeuralCF[T](userCount, itemCount, numClasses, userEmbed,
+      itemEmbed, hiddenLayers, includeMF, mfEmbed).build()
   }
 
-
-  def loadModel[T: ClassTag](path: String,
-                             weightPath: String = null)(implicit ev: TensorNumeric[T]):
-  NeuralCF[T] = {
+  /**
+   * Load an existing NeuralCF model (with weights).
+   *
+   * @param path The path for the pre-defined model.
+   *             Local file system, HDFS and Amazon S3 are supported.
+   *             HDFS path should be like "hdfs://[host]:[port]/xxx".
+   *             Amazon S3 path should be like "s3a://bucket/xxx".
+   * @param weightPath The path for pre-trained weights if any. Default is null.
+   * @tparam T Numeric type of parameter(e.g. weight, bias). Only support float/double now.
+   */
+  def loadModel[T: ClassTag](
+      path: String,
+      weightPath: String = null)(implicit ev: TensorNumeric[T]): NeuralCF[T] = {
     ZooModel.loadModel(path, weightPath).asInstanceOf[NeuralCF[T]]
   }
 }

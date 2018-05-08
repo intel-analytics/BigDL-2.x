@@ -14,5 +14,6 @@
 # limitations under the License.
 #
 
-from .neuralcf import *
 from .recommender import *
+from .neuralcf import *
+from .wide_and_deep import *
