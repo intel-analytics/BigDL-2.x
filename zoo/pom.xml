@@ -10,7 +10,7 @@
         <version>0.1.0-SNAPSHOT</version>
     </parent>
 
-    <artifactId>zoo</artifactId>
+    <artifactId>analytics-zoo</artifactId>
     <packaging>jar</packaging>
 
     <properties>

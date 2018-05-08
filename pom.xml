@@ -11,7 +11,7 @@
 
     <name>zoo-parent</name>
     <description>A distributed analytics library for Apache Spark.</description>
-    <url>https://github.com/intel-analytics/zoo</url>
+    <url>https://github.com/intel-analytics/analytics-zoo</url>
 
     <developers>
         <developer>
@@ -26,8 +26,8 @@
         <module>zoo</module>
     </modules>
     <scm>
-        <connection>scm:git:git@github.com:intel-analytics/zoo.git</connection>
-        <url>https://github.com/intel-analytics/zoo/tree/master</url>
+        <connection>scm:git:git@github.com:intel-analytics/analytics-zoo.git</connection>
+        <url>https://github.com/intel-analytics/analytics-zoo/tree/master</url>
     </scm>
 
     <repositories>
@@ -92,7 +92,13 @@
         <bigdl.artifactId>bigdl-SPARK_2.1</bigdl.artifactId>
     </properties>
 
-
+    <distributionManagement>
+        <snapshotRepository>
+            <id>ossrh</id>
+            <url>https://oss.sonatype.org/content/repositories/snapshots</url>
+        </snapshotRepository>
+    </distributionManagement>
+    
     <build>
         <plugins>
             <plugin>
