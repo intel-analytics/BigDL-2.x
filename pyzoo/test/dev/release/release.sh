@@ -73,7 +73,7 @@ fi
 if [ -d "${ZOO_DIR}/pyzoo/dist" ]; then
    rm -r ${ZOO_DIR}/pyzoo/dist
 fi
-wheel_command="python setup.py bdist_wheel --plat-name ${verbose_pname}"
+wheel_command="python setup.py bdist_wheel --universal --plat-name ${verbose_pname}"
 echo "Packing python distribution:   $wheel_command"
 ${wheel_command}
 
