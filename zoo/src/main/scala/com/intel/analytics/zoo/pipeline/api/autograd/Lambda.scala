@@ -80,7 +80,7 @@ private[zoo] class Lambda[T: ClassTag](val func: (List[Variable[T]]) => Variable
 object Lambda {
 
   def apply[T: ClassTag](func: (List[Variable[T]]) => Variable[T], inputShape: Shape = null)(
-      implicit ev: TensorNumeric[T]) = {
+      implicit ev: TensorNumeric[T]): Lambda[T] = {
     new Lambda(func, inputShape)
   }
 }
@@ -99,7 +99,7 @@ class LambdaLayer[T: ClassTag] private (val graph: Model[T],
     graph.getOutputShape()
   }
 
-  override def doBuild(inputShape: Shape) = {
+  override def doBuild(inputShape: Shape): LambdaTorch[T] = {
     new LambdaTorch[T](graph)
   }
 }
