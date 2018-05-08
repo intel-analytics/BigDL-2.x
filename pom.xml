@@ -92,7 +92,13 @@
         <bigdl.artifactId>bigdl-SPARK_2.1</bigdl.artifactId>
     </properties>
 
-
+    <distributionManagement>
+        <snapshotRepository>
+            <id>ossrh</id>
+            <url>https://oss.sonatype.org/content/repositories/snapshots</url>
+        </snapshotRepository>
+    </distributionManagement>
+    
     <build>
         <plugins>
             <plugin>
