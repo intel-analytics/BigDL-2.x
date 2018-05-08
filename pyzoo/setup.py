@@ -72,7 +72,7 @@ def setup_package():
     metadata = dict(
         name='zoo',
         version=VERSION,
-        description='A distributed analytics library for Apache Spark',
+        description='An analytics + AI platform for Apache Spark and BigDL',
         author='zoo Authors',
         author_email='zoo-user-group@googlegroups.com',
         license='Apache License, Version 2.0',
