@@ -18,6 +18,7 @@ import pytest
 
 from pyspark.sql.functions import col, udf
 from zoo.models.recommendation import *
+from zoo.models.recommendation.utils import *
 from zoo.common.nncontext import *
 from test.zoo.pipeline.utils.test_utils import ZooTestCase
 
@@ -66,7 +67,7 @@ class TestWideAndDeep(ZooTestCase):
         data = self.data_in.rdd.map(lambda r: get_deep_tensor(r, column_info))
         data.map(lambda input_data: self.assert_forward_backward(model, input_data))
 
-    def test_wideanddeep_forward_backward(self):
+    def test_wide_and_deep_forward_backward(self):
         column_info = self.column_info
         model = WideAndDeep(5, column_info, "wide_n_deep")
         data = self.data_in.rdd.map(lambda r: [get_wide_tensor(r, column_info),

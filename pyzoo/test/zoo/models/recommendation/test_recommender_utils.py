@@ -16,7 +16,7 @@
 
 import pytest
 
-from zoo.models.recommendation import *
+from zoo.models.recommendation.utils import *
 from zoo.common.nncontext import *
 from test.zoo.pipeline.utils.test_utils import ZooTestCase
 

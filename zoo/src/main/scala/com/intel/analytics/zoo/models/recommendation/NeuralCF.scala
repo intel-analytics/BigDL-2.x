@@ -25,7 +25,7 @@ import com.intel.analytics.zoo.models.common.ZooModel
 import scala.reflect.ClassTag
 
 /**
- * The model is for neural collaborative filtering.
+ * The neural collaborative filtering model used for recommendation.
  *
  * @param numClasses   The number of classes. Positive integer.
  * @param userCount    The number of users. Positive integer.
@@ -93,7 +93,9 @@ class NeuralCF[T: ClassTag] private(val userCount: Int,
 }
 
 object NeuralCF {
-
+  /**
+   * The factory method to create a NeuralCF instance.
+   */
   def apply[@specialized(Float, Double) T: ClassTag]
   (userCount: Int,
    itemCount: Int,
@@ -109,10 +111,19 @@ object NeuralCF {
       .build()
   }
 
-
-  def loadModel[T: ClassTag](path: String,
-                             weightPath: String = null)(implicit ev: TensorNumeric[T]):
-  NeuralCF[T] = {
+  /**
+   * Load an existing NeuralCF model (with weights).
+   *
+   * @param path The path for the pre-defined model.
+   *             Local file system, HDFS and Amazon S3 are supported.
+   *             HDFS path should be like "hdfs://[host]:[port]/xxx".
+   *             Amazon S3 path should be like "s3a://bucket/xxx".
+   * @param weightPath The path for pre-trained weights if any. Default is null.
+   * @tparam T Numeric type of parameter(e.g. weight, bias). Only support float/double now.
+   */
+  def loadModel[T: ClassTag](
+      path: String,
+      weightPath: String = null)(implicit ev: TensorNumeric[T]): NeuralCF[T] = {
     ZooModel.loadModel(path, weightPath).asInstanceOf[NeuralCF[T]]
   }
 }

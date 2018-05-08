@@ -42,7 +42,7 @@ import scala.reflect.ClassTag
  *                       in embedCols should be within the range of embedInDims.
  * @param embedOutDims   The dimensions of embeddings.
  * @param continuousCols Data of continuousCols is treated as continuous values for the deep model.
- * @param label          The name of the 'label' column.
+ * @param label          The name of the 'label' column. Default is 'label'.
  */
 case class ColumnFeatureInfo(wideBaseCols: Array[String] = Array[String](),
                              wideBaseDims: Array[Int] = Array[Int](),
@@ -161,6 +161,16 @@ class WideAndDeep[T: ClassTag] private(val modelType: String = "wide_n_deep",
 }
 
 object WideAndDeep {
+  /**
+   * The factory method to create a WideAndDeep instance.
+   *
+   * @param modelType String, "wide", "deep", "wide_n_deep" are supported.
+   *                  Default is 'wide_n_deep'.
+   * @param numClasses The number of classes. Positive integer.
+   * @param columnInfo An instance of ColumnFeatureInfo.
+   * @param hiddenLayers Units hiddenLayers for the deep model. Array of positive integers.
+   *                     Default is Array(40, 20, 10).
+   */
   def apply[@specialized(Float, Double) T: ClassTag]
   (modelType: String = "wide_n_deep",
    numClasses: Int,
@@ -188,9 +198,19 @@ object WideAndDeep {
       hiddenLayers).build()
   }
 
-  def loadModel[T: ClassTag](path: String,
-                             weightPath: String = null)(implicit ev: TensorNumeric[T]):
-  WideAndDeep[T] = {
+  /**
+   * Load an existing WideAndDeep model (with weights).
+   *
+   * @param path The path for the pre-defined model.
+   *             Local file system, HDFS and Amazon S3 are supported.
+   *             HDFS path should be like "hdfs://[host]:[port]/xxx".
+   *             Amazon S3 path should be like "s3a://bucket/xxx".
+   * @param weightPath The path for pre-trained weights if any. Default is null.
+   * @tparam T Numeric type of parameter(e.g. weight, bias). Only support float/double now.
+   */
+  def loadModel[T: ClassTag](
+      path: String,
+      weightPath: String = null)(implicit ev: TensorNumeric[T]): WideAndDeep[T] = {
     ZooModel.loadModel(path, weightPath).asInstanceOf[WideAndDeep[T]]
   }
 }
