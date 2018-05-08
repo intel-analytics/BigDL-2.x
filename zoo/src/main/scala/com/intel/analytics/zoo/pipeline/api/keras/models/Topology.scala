@@ -28,7 +28,7 @@ import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric
 import com.intel.analytics.bigdl.utils.{LoggerFilter, Shape}
 import com.intel.analytics.bigdl.utils.serializer.{DeserializeContext, ModuleData, ModuleSerializer, SerializeContext}
 import com.intel.analytics.bigdl.visualization.{TrainSummary, ValidationSummary}
-import com.intel.analytics.zoo.pipeline.api.autograd.{CustomLossWithFunc, LambdaHolder, Variable}
+import com.intel.analytics.zoo.pipeline.api.autograd.{CustomLossWithFunc, Lambda, Variable}
 import com.intel.analytics.zoo.pipeline.api.keras.layers.utils.{AbstractModuleRef, GraphRef, KerasLayerRef}
 import com.intel.analytics.zoo.pipeline.api.keras.layers.utils.KerasUtils
 import org.apache.spark.rdd.RDD
@@ -368,7 +368,7 @@ class Sequential[T: ClassTag] private ()
     }
   }
 
-  private def getLambdaLayer(lambda: LambdaHolder[T]):
+  private def getLambdaLayer(lambda: Lambda[T]):
   AbstractModule[_ <: Activity, _ <: Activity, T] = {
     val inputShape = if (!this.isBuilt()) {
       if (lambda.getInputShape() == null) {
@@ -382,7 +382,7 @@ class Sequential[T: ClassTag] private ()
       KerasUtils.removeBatch(inputShape))
   }
 
-  def add(lambda: LambdaHolder[T]): Sequential[T] = {
+  def add(lambda: Lambda[T]): Sequential[T] = {
     add(getLambdaLayer(lambda))
   }
 

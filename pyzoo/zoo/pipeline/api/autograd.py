@@ -80,7 +80,7 @@ class Variable(ZooKerasCreator):
             if node:
                 super(Variable, self).__init__(jvalue, "float", node)
             else:
-                super(Variable, self).__init__(jvalue, "float", to_list(input_shape))
+                super(Variable, self).__init__(jvalue, "float", toMultiShape(input_shape))
 
     @staticmethod
     def from_jvalue(jvalue):

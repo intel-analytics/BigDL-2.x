@@ -53,8 +53,8 @@ class PythonAutoGrad[T: ClassTag](implicit ev: TensorNumeric[T]) extends PythonZ
   }
 
 
-  def createZooKerasVariable(inputShape: JList[Int]): Variable[T] = {
-    Variable[T](toScalaShape(inputShape))
+  def createZooKerasVariable(inputShape: JList[JList[Int]]): Variable[T] = {
+    Variable[T](toScalaMultiShape(inputShape))
   }
 
   def add(a: Variable[T], b: Variable[T]): Variable[T] = {

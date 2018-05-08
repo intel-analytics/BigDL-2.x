@@ -26,6 +26,8 @@ def toMultiShape(shape):
         return shape
     elif any(isinstance(i, tuple) for i in shape):
         return [list(s) for s in shape]
+    elif isinstance(shape, tuple):
+        return [list(shape)]
     else:
         return [shape]
 

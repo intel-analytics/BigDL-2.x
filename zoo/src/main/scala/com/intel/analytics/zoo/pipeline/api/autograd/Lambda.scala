@@ -46,7 +46,7 @@ private[zoo] class LambdaTorch[T: ClassTag](val graph: Model[T])(
   }
 }
 
-private[zoo] class LambdaHolder[T: ClassTag](val func: (List[Variable[T]]) => Variable[T],
+private[zoo] class Lambda[T: ClassTag](val func: (List[Variable[T]]) => Variable[T],
     inputShape: Shape = null)(
     implicit ev: TensorNumeric[T]) {
 
@@ -81,7 +81,7 @@ object Lambda {
 
   def apply[T: ClassTag](func: (List[Variable[T]]) => Variable[T], inputShape: Shape = null)(
       implicit ev: TensorNumeric[T]) = {
-    new LambdaHolder(func, inputShape)
+    new Lambda(func, inputShape)
   }
 }
 
