@@ -27,9 +27,9 @@ import scala.reflect.ClassTag
 /**
  * The neural collaborative filtering model used for recommendation.
  *
- * @param numClasses   The number of classes. Positive integer.
  * @param userCount    The number of users. Positive integer.
  * @param itemCount    The number of items. Positive integer.
+ * @param numClasses   The number of classes. Positive integer.
  * @param userEmbed    Units of user embedding. Positive integer. Default is 20.
  * @param itemEmbed    Units of item embedding. Positive integer. Default is 20.
  * @param hiddenLayers Units hiddenLayers for MLP. Array of positive integers.
