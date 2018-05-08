@@ -76,16 +76,16 @@ case class ColumnFeatureInfo(wideBaseCols: Array[String] = Array[String](),
  *                       Default is Array(40, 20, 10).
  * @tparam T Numeric type of parameter(e.g. weight, bias). Only support float/double now.
  */
-class WideAndDeep[T: ClassTag] private(val modelType: String = "wide_n_deep",
-                                       val numClasses: Int,
-                                       val wideBaseDims: Array[Int] = Array[Int](),
-                                       val wideCrossDims: Array[Int] = Array[Int](),
-                                       val indicatorDims: Array[Int] = Array[Int](),
-                                       val embedInDims: Array[Int] = Array[Int](),
-                                       val embedOutDims: Array[Int] = Array[Int](),
-                                       val continuousCols: Array[String] = Array[String](),
-                                       val hiddenLayers: Array[Int] = Array(40, 20, 10))
-                                      (implicit ev: TensorNumeric[T])
+class WideAndDeep[T: ClassTag] private(
+    val modelType: String = "wide_n_deep",
+    val numClasses: Int,
+    val wideBaseDims: Array[Int] = Array[Int](),
+    val wideCrossDims: Array[Int] = Array[Int](),
+    val indicatorDims: Array[Int] = Array[Int](),
+    val embedInDims: Array[Int] = Array[Int](),
+    val embedOutDims: Array[Int] = Array[Int](),
+    val continuousCols: Array[String] = Array[String](),
+    val hiddenLayers: Array[Int] = Array(40, 20, 10))(implicit ev: TensorNumeric[T])
   extends Recommender[T] {
 
   override def buildModel(): AbstractModule[Tensor[T], Tensor[T], T] = {
@@ -171,12 +171,12 @@ object WideAndDeep {
    * @param hiddenLayers Units hiddenLayers for the deep model. Array of positive integers.
    *                     Default is Array(40, 20, 10).
    */
-  def apply[@specialized(Float, Double) T: ClassTag]
-  (modelType: String = "wide_n_deep",
-   numClasses: Int,
-   columnInfo: ColumnFeatureInfo,
-   hiddenLayers: Array[Int] = Array(40, 20, 10)
-  )(implicit ev: TensorNumeric[T]): WideAndDeep[T] = {
+  def apply[@specialized(Float, Double) T: ClassTag](
+      modelType: String = "wide_n_deep",
+      numClasses: Int,
+      columnInfo: ColumnFeatureInfo,
+      hiddenLayers: Array[Int] = Array(40, 20, 10))
+      (implicit ev: TensorNumeric[T]): WideAndDeep[T] = {
     require(columnInfo.wideBaseCols.length == columnInfo.wideBaseDims.length,
             s"size of wideBaseColumns should match")
     require(columnInfo.wideCrossCols.length == columnInfo.wideCrossDims.length,
