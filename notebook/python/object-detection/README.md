@@ -1,5 +1,5 @@
 # Object Detection
-This is a simple example of object detection using Zoo API. We use SSD+MobileNet to predict instances of target classes in the given video, which can be regarded as a sequence of images. The video is a scene of training a dog from ([YouTube-8M dataset](https://research.google.com/youtube8m/)) and the people and the dog are among target classes. Proposed areas are labeled with boxes and 
+This is a simple example of object detection using Zoo API. We use SSD+MobileNet to predict instances of target classes in the given video, which can be regarded as a sequence of images. The video is a scene of training a dog from ([YouTube-8M dataset](https://research.google.com/youtube8m/)) and the people and the dog are among target classes. Proposed areas are labeled with boxes and class scores.
 
 ## Environment
 * Python 2.7
@@ -7,7 +7,7 @@ This is a simple example of object detection using Zoo API. We use SSD+MobileNet
 * ZOO 0.1.0
 
 ## Run with Jupyter
-* Download ZOO and build it. (TODO: to add a link to download and build page after our website is set up.)
+* Download ZOO and build it.
 * Run `export ZOO_HOME=the root directory of the Zoo project`
 * Prepare the video to detect. ([YouTube-8M](https://research.google.com/youtube8m/))
 * Run the following bash command to start the jupyter notebook. Change parameter settings as you need, ie MASTER = local\[physcial_core_number\]
