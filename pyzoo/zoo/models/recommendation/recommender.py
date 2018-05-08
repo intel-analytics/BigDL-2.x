@@ -37,8 +37,8 @@ class UserItemFeature(object):
     sample: Sample with consists of feature(s) and label(s).
     """
     def __init__(self, user_id, item_id, sample, bigdl_type="float"):
-        self.user_id = user_id
-        self.item_id = item_id
+        self.user_id = int(user_id)
+        self.item_id = int(item_id)
         self.sample = sample
         self.bigdl_type = bigdl_type
 
