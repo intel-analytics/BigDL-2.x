@@ -29,9 +29,6 @@
     <profiles>
         <profile>
             <id>spark_1.6</id>
-            <activation>
-                <activeByDefault>true</activeByDefault>
-            </activation>
             <properties>
                 <spark-version.project>1.6-plus</spark-version.project>
                 <spark.version>1.6.3</spark.version>
@@ -45,6 +42,9 @@
 
         <profile>
             <id>spark_2.x</id>
+            <activation>
+                <activeByDefault>true</activeByDefault>
+            </activation>
             <properties>
                 <java.version>1.8</java.version>
                 <javac.version>1.8</javac.version>
