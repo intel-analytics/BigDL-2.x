@@ -126,9 +126,8 @@ class Lambda(ZooKerasCreator):
        """
     def __init__(self, function, input_shape=None, bigdl_type="float"):
         self.function = function
-        self.input_shape=input_shape
-        self.bigdl_type=bigdl_type
-
+        self.input_shape = input_shape
+        self.bigdl_type = bigdl_type
 
     def __call__(self, x=None):
         """
@@ -138,7 +137,7 @@ class Lambda(ZooKerasCreator):
         """
         x = to_list(x if x else [])
         layer = self
-        if (isinstance(self, Lambda)):
+        if isinstance(self, Lambda):
             input_shapes = [ZooKerasLayer.of(node.element().value).get_output_shape() for node in x]
             layer = self.create(remove_batch(input_shapes))
         return Node.of(callBigDlFunc(self.bigdl_type,

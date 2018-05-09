@@ -31,6 +31,7 @@ def toMultiShape(shape):
     else:
         return [shape]
 
+
 # TODO: create a shape mapping here.
 def remove_batch(shape):
     if any(isinstance(i, list) or isinstance(i, tuple) for i in shape):  # multi shape
