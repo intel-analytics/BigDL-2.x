@@ -16,17 +16,16 @@
 package com.intel.analytics.zoo.feature.image
 
 import com.intel.analytics.bigdl.transform.vision.image.ImageFeature
-import com.intel.analytics.zoo.feature.common.Preprocessing
+import com.intel.analytics.zoo.feature.common.{ImageProcessing}
 import com.intel.analytics.bigdl.transform.vision.image.augmentation
 
 /**
  * Adjust image saturation
  */
-class Saturation(deltaLow: Double, deltaHigh: Double)
-  extends Preprocessing[ImageFeature, ImageFeature] {
+class Saturation(deltaLow: Double, deltaHigh: Double) extends ImageProcessing {
 
   private val internalCrop = augmentation.Saturation(deltaLow, deltaHigh)
-  def apply(prev: Iterator[ImageFeature]): Iterator[ImageFeature] = {
+  override def apply(prev: Iterator[ImageFeature]): Iterator[ImageFeature] = {
     internalCrop.apply(prev)
   }
 }

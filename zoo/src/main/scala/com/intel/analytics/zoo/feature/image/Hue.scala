@@ -16,7 +16,7 @@
 package com.intel.analytics.zoo.feature.image
 
 import com.intel.analytics.bigdl.transform.vision.image.ImageFeature
-import com.intel.analytics.zoo.feature.common.Preprocessing
+import com.intel.analytics.zoo.feature.common.{ImageProcessing}
 import com.intel.analytics.bigdl.transform.vision.image.augmentation
 
 /**
@@ -24,11 +24,10 @@ import com.intel.analytics.bigdl.transform.vision.image.augmentation
  * @param deltaLow hue parameter: low bound
  * @param deltaHigh hue parameter: high bound
  */
-class Hue(deltaLow: Double, deltaHigh: Double)
-  extends Preprocessing[ImageFeature, ImageFeature] {
+class Hue(deltaLow: Double, deltaHigh: Double) extends ImageProcessing {
 
   private val internalCrop = augmentation.Hue(deltaLow, deltaHigh)
-  def apply(prev: Iterator[ImageFeature]): Iterator[ImageFeature] = {
+  override def apply(prev: Iterator[ImageFeature]): Iterator[ImageFeature] = {
     internalCrop.apply(prev)
   }
 }

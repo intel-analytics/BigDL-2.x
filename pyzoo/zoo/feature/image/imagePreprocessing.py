@@ -16,13 +16,30 @@
 
 from bigdl.util.common import *
 from zoo.feature.common import Preprocessing
+from zoo.feature.image.imageset import ImageSet
 
 if sys.version >= '3':
     long = int
     unicode = str
 
 
-class Resize(Preprocessing):
+class ImagePreprocessing(Preprocessing):
+    """
+    ImagePreprocessing is a transformer that transform ImageFeature
+    """
+    def __init__(self, bigdl_type="float"):
+        super(ImagePreprocessing, self).__init__(bigdl_type)
+
+    def __call__(self, image_set, bigdl_type="float"):
+        """
+        transform ImageSet
+        """
+        jset = callBigDlFunc(bigdl_type,
+                             "transformImageSet", self.value, image_set)
+        return ImageSet(jvalue=jset)
+
+
+class Resize(ImagePreprocessing):
     """
      image resize
     """
@@ -30,7 +47,7 @@ class Resize(Preprocessing):
         super(Resize, self).__init__(bigdl_type, resizeH, resizeW)
 
 
-class Brightness(Preprocessing):
+class Brightness(ImagePreprocessing):
     """
     adjust the image brightness
     :param deltaLow brightness parameter: low bound
@@ -41,7 +58,7 @@ class Brightness(Preprocessing):
             bigdl_type, "createImgBrightness", delta_low, delta_high)
 
 
-class ChannelNormalize(Preprocessing):
+class ChannelNormalize(ImagePreprocessing):
     """
     image channel normalize
     :param mean_r mean value in R channel
@@ -56,7 +73,7 @@ class ChannelNormalize(Preprocessing):
             bigdl_type, "createImgChannelNormalizer", mean_r, mean_g, mean_b, std_r, std_g, std_b)
 
 
-class MatToTensor(Preprocessing):
+class MatToTensor(ImagePreprocessing):
     """
     MatToTensor
     """
@@ -64,7 +81,7 @@ class MatToTensor(Preprocessing):
         super(MatToTensor, self).__init__(bigdl_type)
 
 
-class CenterCrop(Preprocessing):
+class CenterCrop(ImagePreprocessing):
     """
     CenterCrop
     """
@@ -72,7 +89,7 @@ class CenterCrop(Preprocessing):
         super(CenterCrop, self).__init__(bigdl_type, cropWidth, cropHeight)
 
 
-class Hue(Preprocessing):
+class Hue(ImagePreprocessing):
     """
     adjust the image hue
     :param deltaLow hue parameter: low bound
@@ -83,7 +100,7 @@ class Hue(Preprocessing):
             bigdl_type, "createImgHue", delta_low, delta_high)
 
 
-class Saturation(Preprocessing):
+class Saturation(ImagePreprocessing):
     """
     adjust the image Saturation
     :param deltaLow brightness parameter: low bound

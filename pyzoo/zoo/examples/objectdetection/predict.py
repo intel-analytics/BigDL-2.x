@@ -21,6 +21,28 @@ from zoo.common.nncontext import get_nncontext
 from zoo.feature.image.imageset import *
 from zoo.models.image.objectdetection.object_detector import *
 
+
+
+
+from bigdl.util.common import *
+from zoo.feature.image.imagePreprocessing import *
+import cv2
+import numpy as np
+
+init_engine()
+
+path = '/home/ding/Downloads/data/ob/000019.jpg'
+
+
+def transform_display(transformer, image_frame):
+    out = transformer(image_frame)
+    cv2.imwrite('/home/ding/Downloads/tmp.jpg', out.get_image(to_chw=False)[0])
+
+brightness = Brightness(0.0, 32.0)
+image_frame = ImageSet.read(path)
+transform_display(brightness, image_frame)
+
+
 sc = get_nncontext(create_spark_conf().setAppName("Object Detection Example"))
 
 parser = argparse.ArgumentParser()
