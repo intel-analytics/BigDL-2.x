@@ -51,9 +51,12 @@ object NNContext {
       compileTimeVersion.split("\\.").map(_.toInt)
 
     if (runtimeVersion != compileTimeVersion) {
-      val errMessage = s"The compile time $project version is not compatible with" +
+      val warnMessage = s"The compile time $project version is not compatible with" +
         s" the runtime $project version. Compile time version is $compileTimeVersion," +
-        s" runtime version is $runtimeVersion"
+        s" runtime version is $runtimeVersion. "
+      val errorMessage = s"\nIf you want to bypass this check, please set spark.analytics.zoo.versionCheck" +
+        s" to false, and if you want to only report a warning message, please set spark.analytics.zoo" +
+        s".versionCheck.reportWarn to true."
       val diffLevel = if (runtimeMajor != compileMajor) {
         1
       } else if (runtimeFeature != compileFeature) {
@@ -62,11 +65,12 @@ object NNContext {
         3
       }
       if (diffLevel <= level && !reportWarning) {
-        throw new RuntimeException(errMessage)
+        throw new RuntimeException(warnMessage + errorMessage)
       }
-      logger.warn(errMessage)
+      logger.warn(warnMessage)
+    } else {
+      logger.info(s"$project version check pass")
     }
-
   }
 
   private[zoo] object ZooBuildInfo {

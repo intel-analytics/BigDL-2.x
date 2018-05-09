@@ -30,7 +30,6 @@
         <fileSet>
             <includes>
                 <include>**/*.conf</include>
-                <include>${project.build.directory}/extra-resources/zoo-version-info.properties</include>
             </includes>
             <outputDirectory>/..</outputDirectory>
             <directory>${project.parent.basedir}/backend/bigdl/spark/dl/src/main/resources/</directory>
