@@ -29,13 +29,13 @@ class Resize(Preprocessing):
     def __init__(self, resizeH, resizeW, bigdl_type="float"):
         super(Resize, self).__init__(bigdl_type, resizeH, resizeW)
 
+
 class Brightness(Preprocessing):
     """
     adjust the image brightness
     :param deltaLow brightness parameter: low bound
     :param deltaHigh brightness parameter: high bound
     """
-
     def __init__(self, delta_low, delta_high, bigdl_type="float"):
         self.value = callBigDlFunc(
             bigdl_type, "createImgBrightness", delta_low, delta_high)
@@ -71,16 +71,17 @@ class CenterCrop(Preprocessing):
     def __init__(self, cropWidth, cropHeight, bigdl_type="float"):
         super(CenterCrop, self).__init__(bigdl_type, cropWidth, cropHeight)
 
+
 class Hue(Preprocessing):
     """
     adjust the image hue
     :param deltaLow hue parameter: low bound
     :param deltaHigh hue parameter: high bound
     """
-
     def __init__(self, delta_low, delta_high, bigdl_type="float"):
         self.value = callBigDlFunc(
             bigdl_type, "createImgHue", delta_low, delta_high)
+
 
 class Saturation(Preprocessing):
     """
@@ -88,7 +89,6 @@ class Saturation(Preprocessing):
     :param deltaLow brightness parameter: low bound
     :param deltaHigh brightness parameter: high bound
     """
-
     def __init__(self, delta_low, delta_high, bigdl_type="float"):
         self.value = callBigDlFunc(
             bigdl_type, "createImgSaturation", delta_low, delta_high)
