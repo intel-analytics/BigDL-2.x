@@ -3,7 +3,7 @@ This is a simple example of object detection using Analytics Zoo Object Detectio
 
 ## Environment
 * Python 2.7
-* Apache Spark 1.6.0
+* Apache Spark 1.6.0 or 2.1.0 (This version needs to be same with the version you use to build Analytics Zoo)
 * Analytics Zoo 0.1.0
 
 ## Run with Jupyter
