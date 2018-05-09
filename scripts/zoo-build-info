@@ -27,7 +27,7 @@ mkdir -p "$RESOURCE_DIR"
 ZOO_BUILD_INFO="${RESOURCE_DIR}"/zoo-version-info.properties
 
 echo_build_properties() {
-  echo zoo_version=$1
+  echo analytics_zoo_verion=$1
   echo spark_version=$2
   echo scala_version=$3
   echo java_version=$4

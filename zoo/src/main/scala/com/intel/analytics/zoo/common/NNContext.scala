@@ -19,9 +19,9 @@ package com.intel.analytics.zoo.common
 import java.util.Properties
 
 import com.intel.analytics.bigdl.utils.Engine
-import com.intel.analytics.bigdl.utils.Engine.getClass
-import org.apache.spark.{SparkConf, SparkContext, SparkException}
 import org.apache.log4j.Logger
+import org.apache.spark.{SPARK_VERSION, SparkConf, SparkContext, SparkException}
+
 /**
  * [[NNContext]] wraps a spark context in Analytics Zoo.
  *
@@ -29,6 +29,87 @@ import org.apache.log4j.Logger
 object NNContext {
 
   private val logger = Logger.getLogger(getClass)
+
+  private[zoo] def checkSparkVersion(reportWarning: Boolean = false) = {
+    checkVersion(SPARK_VERSION, ZooBuildInfo.spark_version, "Spark", reportWarning)
+  }
+
+  private[zoo] def checkScalaVersion(reportWarning: Boolean = false) = {
+    checkVersion(scala.util.Properties.versionNumberString,
+      ZooBuildInfo.scala_version, "Scala", reportWarning, level = 2)
+  }
+
+  private def checkVersion(
+                            runtimeVersion: String,
+                            compileTimeVersion: String,
+                            project: String,
+                            reportWarning: Boolean = false,
+                            level: Int = 1): Unit = {
+    val Array(runtimeMajor, runtimeFeature, runtimeMaintenance) =
+      runtimeVersion.split("\\.").map(_.toInt)
+    val Array(compileMajor, compileFeature, compileMaintenance) =
+      compileTimeVersion.split("\\.").map(_.toInt)
+
+    if (runtimeVersion != compileTimeVersion) {
+      val errMessage = s"The compile time $project version is not compatible with" +
+        s" the runtime $project version. Compile time version is $compileTimeVersion," +
+        s" runtime version is $runtimeVersion"
+      val diffLevel = if (runtimeMajor != compileMajor) {
+        1
+      } else if (runtimeFeature != compileFeature) {
+        2
+      } else {
+        3
+      }
+      if (diffLevel <= level && !reportWarning) {
+        throw new RuntimeException(errMessage)
+      }
+      logger.warn(errMessage)
+    }
+
+  }
+
+  private[zoo] object ZooBuildInfo {
+
+    val (
+      analytics_zoo_verion: String,
+      spark_version: String,
+      scala_version: String,
+      java_version: String) = {
+
+      val resourceStream = Thread.currentThread().getContextClassLoader.
+        getResourceAsStream("zoo-version-info.properties")
+
+      try {
+        val unknownProp = "<unknown>"
+        val props = new Properties()
+        props.load(resourceStream)
+        (
+          props.getProperty("analytics_zoo_verion", unknownProp),
+          props.getProperty("spark_version", unknownProp),
+          props.getProperty("scala_version", unknownProp),
+          props.getProperty("java_version", unknownProp)
+        )
+      } catch {
+        case npe: NullPointerException =>
+          throw new RuntimeException("Error while locating file zoo-version-info.properties, " +
+            "if you are using an IDE to run your program, please make sure the mvn" +
+            " generate-resources phase is executed and a zoo-version-info.properties file" +
+            " is located in zoo/target/extra-resources", npe)
+        case e: Exception =>
+          throw new RuntimeException("Error loading properties from zoo-version-info.properties", e)
+      } finally {
+        if (resourceStream != null) {
+          try {
+            resourceStream.close()
+          } catch {
+            case e: Exception =>
+              throw new SparkException("Error closing zoo build info resource stream", e)
+          }
+        }
+      }
+    }
+  }
 
   /**
    * Gets a SparkContext with optimized configuration for BigDL performance. The method
@@ -43,83 +124,16 @@ object NNContext {
    */
   def getNNContext(conf: SparkConf = null): SparkContext = {
     val bigdlConf = Engine.createSparkConf(conf)
+    if (bigdlConf.getBoolean("spark.analytics.zoo.versionCheck", true)) {
+      val reportWarning =
+        bigdlConf.getBoolean("spark.analytics.zoo.versionCheck.reportWarn", false)
+      checkSparkVersion(reportWarning)
+      checkScalaVersion(reportWarning)
+    }
     val sc = SparkContext.getOrCreate(bigdlConf)
     Engine.init
-    checkSparkVersion(sc)
-    checkScalaVersion()
     sc
   }
 
-  private def checkVersion(
-                            runtimeVersion: String,
-                            compileTimeVersion: String,
-                            project: String): Unit = {
-    val Array(runtimeMajor, runtimeFeature, runtimeMaintance) =
-      runtimeVersion.split("\\.").map(_.toInt)
-    val Array(compileMajor, compileFeature, compileMaintance) =
-      compileTimeVersion.split("\\.").map(_.toInt)
-    if (!(runtimeMajor == compileMajor && runtimeFeature == compileFeature)) {
-      throw new RuntimeException(s"The compile time $project version is not compatible with" +
-        s" the Spark runtime version. Compile time version is $compileTimeVersion, runtime version" +
-        s" is $runtimeVersion")
-    }
-
-    if (runtimeMaintance != compileMaintance) {
-      logger.warn(s"The compile time $project version may not compatible with" +
-        s" the Spark runtime version. Compile time version is $compileTimeVersion, runtime version" +
-        s" is $runtimeVersion")
-    }
-  }
-
-
-  private def checkSparkVersion(sc: SparkContext) = {
-    checkVersion(sc.version, ZooBuildInfo.spark_version, "Spark")
-  }
-
-  private def checkScalaVersion() = {
-    checkVersion(scala.util.Properties.versionString, ZooBuildInfo.scala_version, "Scala")
-  }
-
-}
-
-private[zoo] object ZooBuildInfo {
-
-  val (
-    zoo_version: String,
-    spark_version: String,
-    scala_version: String,
-    java_version: String) = {
-
-    val resourceStream = Thread.currentThread().getContextClassLoader.
-      getResourceAsStream("zoo-version-info.properties")
-
-    try {
-      val unknownProp = "<unknown>"
-      val props = new Properties()
-      props.load(resourceStream)
-      (
-        props.getProperty("zoo_version", unknownProp),
-        props.getProperty("spark_version", unknownProp),
-        props.getProperty("scala_version", unknownProp),
-        props.getProperty("java_version", unknownProp)
-      )
-    } catch {
-      case npe: NullPointerException =>
-        throw new RuntimeException("Error while locating file zoo-version-info.properties, " +
-          "if you are using an IDE to run your program, please make sure the maven generate-resources" +
-          " phase is executed and a zoo-version-info.properties file is located in zoo/target/extra-resources", npe)
-      case e: Exception =>
-        throw new RuntimeException("Error loading properties from zoo-version-info.properties", e)
-    } finally {
-      if (resourceStream != null) {
-        try {
-          resourceStream.close()
-        } catch {
-          case e: Exception =>
-            throw new SparkException("Error closing zoo build info resource stream", e)
-        }
-      }
-    }
-  }
 }
 

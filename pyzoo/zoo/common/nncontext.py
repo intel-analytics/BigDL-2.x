@@ -15,6 +15,7 @@
 #
 
 from bigdl.util.common import *
+import warnings
 
 
 def get_nncontext(conf=None):
@@ -30,7 +31,58 @@ def get_nncontext(conf=None):
     """
 
     sc = get_spark_context(conf)
+    conf = sc._conf
+    if conf.get("spark.analytics.zoo.versionCheck", "True").lower() == "true":
+        report_warn = conf.get(
+            "spark.analytics.zoo.versionCheck.reportWarn", "False").lower() == "true"
+        _check_spark_version(sc, report_warn)
     redire_spark_logs()
     show_bigdl_info_logs()
     init_engine()
     return sc
+
+def _split_full_version(version):
+    parts = version.split(".")
+    major = parts[0]
+    feature = parts[1]
+    maintenance = parts[2]
+    return (major, feature, maintenance)
+
+def _check_spark_version(sc, report_warn):
+    version_info = _get_bigdl_verion_conf()
+    (c_major, c_feature, c_maintenance) = _split_full_version(version_info['spark_version'])
+    (r_major, r_feature, r_maintenance) = _split_full_version(sc.version)
+    error_message = "The compile time spark version is not compatible with " + \
+                    "the Spark runtime version. Compile time version is %s, " % version_info['spark_version'] + \
+                    "runtime version is %s" % sc.version
+    if c_major != r_major:
+        if not report_warn:
+            raise RuntimeError(error_message)
+        else:
+            warnings.warn(error_message)
+    elif not (c_maintenance == r_maintenance and c_feature == r_feature):
+        warnings.warn("The compile time spark version may not compatible with " +\
+                       "the Spark runtime version. Compile time version is %s, " % version_info['spark_version'] +\
+                       "runtime version is %s" % sc.version)
+
+def _get_bigdl_verion_conf():
+    bigdl_build_file = "zoo-version-info.properties"
+    bigdl_python_wrapper = "python-api.zip"
+
+    def load_conf(conf_str):
+        return dict(line.split("=") for line in conf_str.split("\n") if
+                    "#" not in line and line.strip())
+
+    for p in sys.path:
+        if bigdl_build_file in p and os.path.isfile(p):
+            with open(p) if sys.version_info < (3,) else open(p, encoding='latin-1') as conf_file: # noqa
+                return load_conf(conf_file.read())
+        if bigdl_python_wrapper in p and os.path.isfile(p):
+            import zipfile
+            with zipfile.ZipFile(p, 'r') as zip_conf:
+                if bigdl_build_file  in zip_conf.namelist():
+                    content = zip_conf.read(bigdl_build_file)
+                    if sys.version_info >= (3,):
+                        content = str(content, 'latin-1')
+                    return load_conf(content)
+    return {}
