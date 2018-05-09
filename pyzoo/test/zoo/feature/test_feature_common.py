@@ -18,11 +18,13 @@ import pytest
 from bigdl.transform.vision.image import *
 from zoo.feature.common import *
 
+
 class TestFeatureCommon():
 
     def test_BigDL_adapter(self):
         new_preprocessing = BigDLAdapter(Resize(1, 1))
         assert isinstance(new_preprocessing, Preprocessing)
+
 
 if __name__ == "__main__":
     pytest.main([__file__])
