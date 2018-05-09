@@ -3,57 +3,41 @@
 **Scala:**
 
 ```scala
-val estimator = new NNEstimator(model: Module[T], criterion: Criterion[T], val featureSize: Array[Int], val labelSize: Array[Int])
-```
+val estimator = class NNEstimator(model, criterion, samplePreprocessing)
 
 **Python:**
 
 ```python
-estimator = NNEstimator(model, criterion, feature_size, label_size)
+estimator = NNEstimator(model, criterion, samplePreprocessing)
 ```
 
-`NNEstimator` extends BigDL [DLEsitmator](https://bigdl-project.github.io/master/#APIGuide/DLFrames/DLEstimator_DLClassifier/#dlestimator) API
-(`org.apache.spark.ml.Estimator`) and supports model training on Apache Spark DataFrame/Dataset.
+[[NNEstimator]] extends [[org.apache.spark.ml.Estimator]] and supports training a BigDL
+model with Spark DataFrame data. It can be integrated into a standard Spark ML Pipeline
+to allow users combine the components of BigDL and Spark MLlib.
 
-`NNEstimator` takes the user-specified [Model](https://bigdl-project.github.io/master/#APIGuide/Layers/Containers) and
-[criterion](https://bigdl-project.github.io/master/#APIGuide/Losses/) with specification on feature and label dimension to prepare for the training. Different from Estimators in Spark ML, `DLEstimator` supports more data
-types for the feature/label column. In many deep learning applications, the feature/label data could be a sequence
-or other data collection. DLEstimator supports feature and label data in the format of `Array[Double]`,
-`Array[Float]`, `org.apache.spark.mllib.linalg.Vector`, `org.apache.spark.ml.linalg.Vector` and image schema
-as specified in [ImagePreprocessing](./ImagesProcessing.md) .
+[[NNEstimator]] supports different feature and label data type through [[Preprocessing]]. We
+provide pre-defined [[Preprocessing]] for popular data types like Array or Vector in package
+[[com.intel.analytics.zoo.feature]], while user can also develop customized [[Preprocessing]].
+During fit, NNEstimator will extract feature and label data from input DataFrame and use
+the [[Preprocessing]] to prepare data for the model. Using the [[Preprocessing]] allows
+[[NNEstimator]] to cache only the raw data and decrease the memory consumption during feature
+conversion and training.
+More concrete examples are available in package [[com.intel.analytics.zoo.examples.nnframes]]
 
-User should specify the feature data dimensions and label data dimensions via the constructor parameters
-featureSize and labelSize respectively. Internally the feature and label data are converted to BigDL
-tensors, to further train a BigDL model efficiently. E.g. an image record should have the feature size as
-Array(3, 224, 224), representing the number of channels, width and height.
-
-constructor parameters
-* `model` BigDL module to be optimized in the fit() method
-* `criterion` the criterion used to compute the loss and the gradient
-* `featureSize` The size (Tensor dimensions) of the feature data.
-* `labelSize` The size (Tensor dimensions) of the label data
+Multiple constructors for [NNEstimator] are provided for different sceanarios.
 
 **Scala Example:**
 ```scala
 import com.intel.analytics.bigdl.nn._
-import com.intel.analytics.bigdl.optim.LBFGS
-import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric.NumericDouble
-
+import com.intel.analytics.zoo.feature.common._
 import com.intel.analytics.zoo.pipeline.nnframes.NNEstimator
 
 val model = Sequential().add(Linear(2, 2))
 val criterion = MSECriterion()
-val estimator = new NNEstimator(model, criterion, Array(2), Array(2))
-  .setBatchSize(4)
-  .setMaxEpoch(10)
-val data = sc.parallelize(Seq(
-  (Array(2.0, 1.0), Array(1.0, 2.0)),
-  (Array(1.0, 2.0), Array(2.0, 1.0)),
-  (Array(2.0, 1.0), Array(1.0, 2.0)),
-  (Array(1.0, 2.0), Array(2.0, 1.0))))
-val df = sqlContext.createDataFrame(data).toDF("features", "label")
-val dlModel = estimator.fit(df)
-dlModel.transform(df).show(false)
+val estimator = new NNEstimator(model, criterion, ArrayToTensor(Array(2)), ArrayToTensor(Array(2)))
+
+//alternatively: new NNEstimator(model, criterion, FeatureLabelPreprocessing(ArrayToTensor(Array(2)), ArrayToTensor(Array(2))))
+//alternatively: NNEstimator(model, criterion, Array(2), Array(2))
 ```
 
 **Python Example:**
@@ -61,24 +45,13 @@ dlModel.transform(df).show(false)
 from bigdl.nn.layer import *
 from bigdl.nn.criterion import *
 from bigdl.util.common import *
-from bigdl.dlframes.dl_classifier import *
-from pyspark.sql.types import *
+from zoo.pipeline.nnframes.nn_classifier import *
+from zoo.feature.common import *
 
 model = Sequential().add(Linear(2, 2))
 criterion = MSECriterion()
 estimator = NNEstimator(model, criterion, [2], [2]).setBatchSize(4).setMaxEpoch(10)
-data = sc.parallelize([
-    ((2.0, 1.0), (1.0, 2.0)),
-    ((1.0, 2.0), (2.0, 1.0)),
-    ((2.0, 1.0), (1.0, 2.0)),
-    ((1.0, 2.0), (2.0, 1.0))])
 
-schema = StructType([
-    StructField("features", ArrayType(DoubleType(), False), False),
-    StructField("label", ArrayType(DoubleType(), False), False)])
-df = sqlContext.createDataFrame(data, schema)
-dlModel = estimator.fit(df)
-dlModel.transform(df).show(False)
 ```
 ---
 
