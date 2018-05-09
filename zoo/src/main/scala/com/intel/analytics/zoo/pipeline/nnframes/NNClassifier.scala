@@ -188,6 +188,24 @@ class NNClassifierModel[F, T: ClassTag](
 }
 
 object NNClassifierModel extends MLReadable[NNClassifierModel[_, _]] {
+
+  /**
+   * Construct a [[NNClassifierModel]] with BigDL model and feature size. The constructor is useful
+   * when the feature column contains the following data types:
+   * Float, Double, Int, Array[Float], Array[Double], Array[Int] and MLlib Vector. The feature
+   * data are converted to Tensors with the specified sizes before sending to the model.
+   *
+   * @param model BigDL module to be optimized
+   * @param featureSize The size (Tensor dimensions) of the feature data. e.g. an image may be with
+   *                    width * height = 28 * 28, featureSize = Array(28, 28).
+   */
+  def apply[F, T: ClassTag](
+      model: Module[T],
+      featureSize : Array[Int]
+    )(implicit ev: TensorNumeric[T]): NNClassifierModel[Any, T] = {
+    new NNClassifierModel(model, SeqToTensor(featureSize))
+  }
+
   private[nnframes] class NNClassifierModelReader() extends MLReader[NNClassifierModel[_, _]] {
     import scala.language.existentials
     implicit val format: DefaultFormats.type = DefaultFormats

@@ -337,6 +337,24 @@ class NNModel(JavaTransformer, HasFeaturesCol, HasPredictionCol, HasBatchSize, J
         return NNModel(model, chained_transformer, jvalue, bigdl_type)
 
     @classmethod
+    def createWithSize(cls, model, feature_size, jvalue=None, bigdl_type="float"):
+        """
+        Construct a NNModel with a feature size. The constructor is useful
+        when the feature column contains the following data types:
+        Float, Double, Int, Array[Float], Array[Double], Array[Int] and MLlib Vector. The
+        feature data are converted to Tensors with the specified sizes before sending
+        to the model.
+
+        :param model: BigDL Model to be trained.
+        :param feature_size: The size (Tensor dimensions) of the feature data. e.g. an image
+                            may be with width * height = 28 * 28, featureSize = Array(28, 28).
+        :param jvalue: Java object create by Py4j
+        :param bigdl_type: optional parameter. data type of model, "float"(default) or "double".
+        """
+        chained_transformer = ChainedPreprocessing([SeqToTensor(feature_size), TensorToSample()])
+        return NNModel(model, chained_transformer, jvalue, bigdl_type)
+
+    @classmethod
     def of(self, jvalue, sample_preprocessing=None, bigdl_type="float"):
         model = NNModel(model=None, sample_preprocessing=sample_preprocessing, jvalue=jvalue,
                         bigdl_type=bigdl_type)
@@ -424,15 +442,29 @@ class NNClassifierModel(NNModel):
     NNClassifierModel is a specialized [[NNModel]] for classification tasks. The prediction
     column will have the datatype of Double.
     """
-    def __init__(self,  model, feature_preprocessing, jvalue=None, bigdl_type="float"):
+    def __init__(self, model, sample_preprocessing, jvalue=None, bigdl_type="float"):
         """
+        create a NNClassifierModel with a BigDL model and a Feature-to-Sample Preprocessing
         :param model: trained BigDL model to use in prediction.
-        :param feature_Preprocessing: A Preprocessing that transforms the feature data to a
+        :param sample_preprocessing: A Preprocessing that transforms the feature data to a
+               Sample[T].
+        :param jvalue: Java object create by Py4j
+        :param bigdl_type(optional): Data type of BigDL model, "float"(default) or "double".
+        """
+        super(NNClassifierModel, self).__init__(model, sample_preprocessing, jvalue, bigdl_type)
+
+
+    @classmethod
+    def create(cls, model, feature_preprocessing, jvalue=None, bigdl_type="float"):
+        """
+        Construct NNClassifierModel with a BigDL model and a feature-to-tensor Preprocessing
+        :param model: trainned BigDL models to use in prediction.
+        :param feature_preprocessing: A Preprocessing that transforms the feature data to a
                Tensor[T]. Some pre-defined Preprocessing are provided in package
                zoo.feature. E.g.
                ArrayToTensor is used to transform Array[_] in DataFrame to Tensor. For a feature
                column that contains 576 floats in an Array, Users can set
-               ArrayToTensor(Array(28, 28)) as feature_Preprocessing, which will convert the feature
+               ArrayToTensor(Array(28, 28)) as feature_preprocessing, which will convert the feature
                data into Tensors with dimension 28 * 28 to be processed by a convolution Model.
                For a simple linear model, user may just use ArrayToTensor(Array(576)), which will
                convert the data into Tensors with single dimension (576).
@@ -443,10 +475,28 @@ class NNClassifierModel(NNModel):
         :param jvalue: Java object create by Py4j
         :param bigdl_type(optional): Data type of BigDL model, "float"(default) or "double".
         """
-        super(NNClassifierModel, self).__init__(model, feature_preprocessing, jvalue, bigdl_type)
+        chained_transformer = ChainedPreprocessing([feature_preprocessing, TensorToSample()])
+        return NNClassifierModel(model, chained_transformer, jvalue, bigdl_type)
+
+    @classmethod
+    def createWithSize(cls, model, feature_size, jvalue=None, bigdl_type="float"):
+        """
+        Construct a NNClassifierModel with a feature size. The constructor is useful
+        when the feature column contains the following data types:
+        Float, Double, Int, Array[Float], Array[Double], Array[Int] and MLlib Vector. The
+        feature data are converted to Tensors with the specified sizes before sending
+        to the model.
+        :param model: BigDL Model to be trained.
+        :param feature_size: The size (Tensor dimensions) of the feature data. e.g. an image
+                            may be with width * height = 28 * 28, featureSize = Array(28, 28).
+        :param jvalue: Java object create by Py4j
+        :param bigdl_type: optional parameter. data type of model, "float"(default) or "double".
+        """
+        chained_transformer = ChainedPreprocessing([SeqToTensor(feature_size), TensorToSample()])
+        return NNModel(model, chained_transformer, jvalue, bigdl_type)
 
     @classmethod
     def of(self, jvalue, feaTran=None, bigdl_type="float"):
         model = NNClassifierModel(
-            model=None, feature_preprocessing=feaTran, jvalue=jvalue, bigdl_type=bigdl_type)
+            model=None, sample_preprocessing=feaTran, jvalue=jvalue, bigdl_type=bigdl_type)
         return model
