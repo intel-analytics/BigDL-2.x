@@ -153,7 +153,8 @@ class ZooTestCase(TestCase):
         grad_input2 = model2.backward(input_data, output1)
         self.assert_allclose(grad_input1, grad_input2, rtol, atol)
 
-    def compare_output_and_grad_input_set_weights(self, model1, model2, input_data, rtol=1e-6, atol=1e-6):
+    def compare_output_and_grad_input_set_weights(self, model1, model2, input_data,
+                                                  rtol=1e-6, atol=1e-6):
         if model1.get_weights():
             model2.set_weights(model1.get_weights())
         self.compare_output_and_grad_input(model1, model2, input_data, rtol, atol)
