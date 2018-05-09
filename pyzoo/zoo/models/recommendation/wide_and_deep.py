@@ -30,22 +30,26 @@ class ColumnFeatureInfo(object):
     The same data information shared by the WideAndDeep model and its feature generation part.
 
     Each instance could contain the following fields:
-    wide_base_cols: Data of wide_base_cols together with wide_cross_cols will be fed into the wide model.
-                    List of String. Default is an empty list.
-    wide_base_dims: Dimensions of wide_base_cols. The dimensions of the data in wide_base_cols should be
-                    within the range of wide_base_dims. List of int. Default is an empty list.
+    wide_base_cols: Data of wide_base_cols together with wide_cross_cols will be fed
+                    into the wide model. List of String. Default is an empty list.
+    wide_base_dims: Dimensions of wide_base_cols. The dimensions of the data in
+                    wide_base_cols should be within the range of wide_base_dims.
+                    List of int. Default is an empty list.
     wide_cross_cols: Data of wide_cross_cols will be fed into the wide model.
                      List of String. Default is an empty list.
-    wide_cross_dims: Dimensions of wide_cross_cols. The dimensions of the data in wide_cross_cols
-                     should be within the range of wide_cross_dims. List of int. Default is an empty list.
+    wide_cross_dims: Dimensions of wide_cross_cols. The dimensions of the data in
+                     wide_cross_cols should be within the range of wide_cross_dims.
+                     List of int. Default is an empty list.
     indicator_cols: Data of indicator_cols will be fed into the deep model as multi-hot vectors.
                     List of String. Default is an empty list.
-    indicator_dims: Dimensions of indicator_cols. The dimensions of the data in indicator_cols
-                    should be within the range of indicator_dims. List of int. Default is an empty list.
+    indicator_dims: Dimensions of indicator_cols. The dimensions of the data in
+                    indicator_cols should be within the range of indicator_dims.
+                    List of int. Default is an empty list.
     embed_cols: Data of embed_cols will be fed into the deep model as embeddings.
                 List of String. Default is an empty list.
-    embed_in_dims: Input dimension of the data in embed_cols. The dimensions of the data in embed_cols
-                   should be within the range of embed_in_dims. List of int. Default is an empty list.
+    embed_in_dims: Input dimension of the data in embed_cols. The dimensions of the data in
+                   embed_cols should be within the range of embed_in_dims.
+                   List of int. Default is an empty list.
     embed_out_dims: The dimensions of embeddings. List of int. Default is an empty list.
     continuous_cols: Data of continuous_cols is treated as continuous values for the deep model.
     label: The name of the 'label' column. String. Default is 'label'.
@@ -76,10 +80,12 @@ class ColumnFeatureInfo(object):
     def __str__(self):
         return "ColumnFeatureInfo {wide_base_cols: %s, wide_base_dims: %s, wide_cross_cols: %s, " \
                "wide_cross_dims: %s, indicator_cols: %s, indicator_dims: %s, embed_cols: %s, " \
-               "embed_cols: %s, embed_in_dims: %s, embed_out_dims: %s, continuous_cols: %s, label: '%s'}"\
-               % (self.wide_base_cols, self.wide_base_dims, self.wide_cross_cols, self.wide_cross_dims,
-                  self.indicator_cols, self.indicator_dims, self.embed_cols, self.embed_cols,
-                  self.embed_in_dims, self.embed_out_dims, self.continuous_cols, self.label)
+               "embed_cols: %s, embed_in_dims: %s, embed_out_dims: %s, continuous_cols: %s, " \
+               "label: '%s'}" \
+               % (self.wide_base_cols, self.wide_base_dims, self.wide_cross_cols,
+                  self.wide_cross_dims, self.indicator_cols, self.indicator_dims,
+                  self.embed_cols, self.embed_cols, self.embed_in_dims,
+                  self.embed_out_dims, self.continuous_cols, self.label)
 
 
 class WideAndDeep(Recommender):
@@ -90,7 +96,8 @@ class WideAndDeep(Recommender):
     class_num: The number of classes. Positive int.
     col_info: An instance of ColumnFeatureInfo.
     model_type: String, 'wide', 'deep' and 'wide_n_deep' are supported. Default is 'wide_n_deep'.
-    hidden_layers: Units of hidden layers for the deep model. Tuple of positive int. Default is (40, 20, 10).
+    hidden_layers: Units of hidden layers for the deep model.
+                   Tuple of positive int. Default is (40, 20, 10).
     """
     def __init__(self, class_num, col_info, model_type="wide_n_deep",
                  hidden_layers=(40, 20, 10), bigdl_type="float"):

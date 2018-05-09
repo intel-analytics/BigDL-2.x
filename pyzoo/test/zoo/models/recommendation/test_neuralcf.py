@@ -54,7 +54,8 @@ class TestNeuralCF(ZooTestCase):
             return UserItemFeature(user_id, item_id, sample)
 
         model = NeuralCF(200, 80, 5)
-        data = self.sc.parallelize(range(0, 50)).map(lambda i: gen_rand_user_item_feature(200, 80, 5))
+        data = self.sc.parallelize(range(0, 50))\
+            .map(lambda i: gen_rand_user_item_feature(200, 80, 5))
         predictions = model.predict_user_item_pair(data).collect()
         print(predictions[0])
         recommended_items = model.recommend_for_user(data, max_items=3).collect()
@@ -64,4 +65,4 @@ class TestNeuralCF(ZooTestCase):
 
 
 if __name__ == "__main__":
-   pytest.main([__file__])
+    pytest.main([__file__])

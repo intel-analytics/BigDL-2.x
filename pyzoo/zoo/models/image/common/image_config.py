@@ -24,6 +24,7 @@ if sys.version >= '3':
     long = int
     unicode = str
 
+
 class ImageConfigure(JavaValue):
     """
     predictor configure
@@ -37,7 +38,7 @@ class ImageConfigure(JavaValue):
                  post_processor=None,
                  batch_per_partition=4,
                  label_map=None, feature_padding_param=None, jvalue=None, bigdl_type="float"):
-        self.bigdl_type=bigdl_type
+        self.bigdl_type = bigdl_type
         if jvalue:
             self.value = jvalue
         else:
@@ -57,6 +58,7 @@ class ImageConfigure(JavaValue):
 
     def label_map(self):
         return callBigDlFunc(self.bigdl_type, "getLabelMap", self.value)
+
 
 class PaddingParam(JavaValue):
 

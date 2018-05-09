@@ -28,16 +28,18 @@ parser.add_argument('model_path', help="Path where the model is stored")
 parser.add_argument('img_path', help="Path where the images are stored")
 parser.add_argument('output_path',  help="Path to store the detection results")
 
+
 def predict(model_path, img_path, output_path):
     model = ObjectDetector.load_model(model_path)
     image_set = ImageSet.read(img_path, sc)
     output = model.predict_image_set(image_set)
 
     config = model.get_config()
-    visualizer = Visualizer(config.label_map(), encoding = "jpg")
+    visualizer = Visualizer(config.label_map(), encoding="jpg")
     visualized = visualizer(output).get_image(to_chw=False).collect()
     for img_id in range(len(visualized)):
         cv2.imwrite(output_path + '/' + str(img_id) + '.jpg', visualized[img_id])
+
 
 if __name__ == "__main__":
     args = parser.parse_args()

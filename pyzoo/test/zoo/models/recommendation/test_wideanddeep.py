@@ -28,15 +28,19 @@ np.random.seed(1337)  # for reproducibility
 class TestWideAndDeep(ZooTestCase):
 
     def setup_method(self, method):
-        sparkConf = create_spark_conf().setMaster("local[4]").setAppName("test wide and deep")
+        sparkConf = create_spark_conf().setMaster("local[4]")\
+            .setAppName("test wide and deep")
         self.sc = get_nncontext(sparkConf)
         self.sqlContext = SQLContext(self.sc)
         data_path = os.path.join(os.path.split(__file__)[0], "../../resources/recommender")
-        categorical_gender_udf = udf(lambda gender: categorical_from_vocab_list(gender, ["F", "M"], start=1))
-        bucket_udf = udf(lambda feature1, feature2: hash_bucket(str(feature1) + "_" + str(feature2), bucket_size=100))
+        categorical_gender_udf = udf(lambda gender:
+                                     categorical_from_vocab_list(gender, ["F", "M"], start=1))
+        bucket_udf = udf(lambda feature1, feature2:
+                         hash_bucket(str(feature1) + "_" + str(feature2), bucket_size=100))
         self.data_in = self.sqlContext.read.parquet(data_path) \
             .withColumn("gender", categorical_gender_udf(col("gender")).cast("int")) \
-            .withColumn("occupation-gender", bucket_udf(col("occupation"), col("gender")).cast("int"))
+            .withColumn("occupation-gender",
+                        bucket_udf(col("occupation"), col("gender")).cast("int"))
         self.column_info = ColumnFeatureInfo(
             wide_base_cols=["occupation", "gender"],
             wide_base_dims=[21, 3],
@@ -99,4 +103,4 @@ class TestWideAndDeep(ZooTestCase):
 
 
 if __name__ == "__main__":
-   pytest.main([__file__])
+    pytest.main([__file__])

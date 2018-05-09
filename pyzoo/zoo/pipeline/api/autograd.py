@@ -60,12 +60,9 @@ def maximum(a, b):
     return Variable.from_jvalue(callBigDlFunc("float", "maximum", a, b))
 
 
-def mean(a, axis=0, keepDims=False):
-    return Variable.from_jvalue(callBigDlFunc("float", "mean", a, axis, keepDims))
-
-
 def log(a):
     return Variable.from_jvalue(callBigDlFunc("float", "log", a))
+
 
 def epsilon():
     return Variable.from_jvalue(callBigDlFunc("float", "epsilon"))
@@ -87,7 +84,8 @@ class Variable(ZooKerasCreator):
         return Variable(input_shape=None, node=None, jvalue=jvalue)
 
     def add(self, var):
-        return Variable.from_jvalue(callBigDlFunc("float", "add", self, var)) # self.value.getClass().getSimpleName()
+        return Variable.from_jvalue(callBigDlFunc("float", "add", self, var))
+        # self.value.getClass().getSimpleName()
 
     def sub(self, var):
         return Variable.from_jvalue(callBigDlFunc("float", "sub", self, var))

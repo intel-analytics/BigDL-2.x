@@ -56,6 +56,7 @@ class ImageClassifier(ImageModel):
         model.__class__ = ImageClassifier
         return model
 
+
 class LabelOutput(FeatureTransformer):
     """
     Label Output tensor with corresponding real labels on specific dataset
