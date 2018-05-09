@@ -19,7 +19,7 @@ and Zoo 0.1.0.
 
 To run this example, you should 
 * Download Zoo and build it.
-* Set the environment variable `ZOO_HOME` as `/your_zoo_directory/dist` 
+* Set the environment variable `ZOO_HOME` to `/your_zoo_directory/dist` 
 * Run the bash command to start the notebook.
 ```Bash
 ${ZOO_HOME}/scripts/jupyter-with-zoo.sh \
