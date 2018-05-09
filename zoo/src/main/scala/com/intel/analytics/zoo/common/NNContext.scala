@@ -54,8 +54,9 @@ object NNContext {
       val warnMessage = s"The compile time $project version is not compatible with" +
         s" the runtime $project version. Compile time version is $compileTimeVersion," +
         s" runtime version is $runtimeVersion. "
-      val errorMessage = s"\nIf you want to bypass this check, please set spark.analytics.zoo.versionCheck" +
-        s" to false, and if you want to only report a warning message, please set spark.analytics.zoo" +
+      val errorMessage = s"\nIf you want to bypass this check, please set" +
+        s"spark.analytics.zoo.versionCheck to false, and if you want to only" +
+        s"report a warning message, please set spark.analytics.zoo" +
         s".versionCheck.reportWarn to true."
       val diffLevel = if (runtimeMajor != compileMajor) {
         1

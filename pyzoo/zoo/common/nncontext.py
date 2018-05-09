@@ -85,4 +85,6 @@ def _get_bigdl_verion_conf():
                     if sys.version_info >= (3,):
                         content = str(content, 'latin-1')
                     return load_conf(content)
-    return {}
+    raise RuntimeError("Error while locating file zoo-version-info.properties, please make sure the mvn" +
+                       " generate-resources phase is executed and a zoo-version-info.properties file" +
+                       " is located in zoo/target/extra-resources")
