@@ -21,38 +21,39 @@ import re
 from os.path import isfile, join
 
 scala_layers_dirs = ["./zoo/src/main/scala/com/intel/analytics/zoo/pipeline/api/keras/layers",
+                     "./zoo/src/main/scala/com/intel/analytics/zoo/pipeline/api/keras/models",
                      "./zoo/src/main/scala/com/intel/analytics/zoo/pipeline/api/autograd"]
 python_layers_dirs = ["./pyzoo/zoo/pipeline/api/keras/layers",
                       "./pyzoo/zoo/pipeline/api/keras/engine",
+                      "./pyzoo/zoo/pipeline/api/keras/",
                       "./pyzoo/zoo/pipeline/api/"]
 
 scala_to_python = {"CustomLossWithVariable": "CustomLoss"}
 
 
 def extract_scala_class(class_path):
-    exclude_key_words = {"KerasLayerWrapper", "LambdaTorch", "CustomLossWithFunc"}
-    include_key_words = {"Module", "Container", "TensorNumeric"}
+    exclude_key_words = {"KerasLayerWrapper", "LambdaTorch", "CustomLossWithFunc", "abstract"}
     content = "\n".join([line for line in open(class_path).readlines()
                          if all([key not in line for key in exclude_key_words])])
-    match = re.search(r"class ([\w]+)[^{]+", content)
-    if match and any([key in match.group() for key in include_key_words]):
-        return match.group(1)
-    else:
-        return None
+    match = re.findall(r"class ([\w]+)[^{]+", content)
+    return match
 
 
 def get_all_scala_layers(scala_dirs):
     results = set()
+    raw_result = []
     for scala_dir in scala_dirs:
-        raw_result = [extract_scala_class(join(scala_dir, name)) for name in os.listdir(scala_dir)
-                      if isfile(join(scala_dir, name))]  # noqa
+        for name in os.listdir(scala_dir):
+            if isfile(join(scala_dir, name)):
+                res = extract_scala_class(join(scala_dir, name))
+                raw_result += res
         results.update(set(class_name for class_name in raw_result if class_name is not None))
     return results
 
 
 def get_python_classes(python_dirs):
     exclude_classes = {"Input", "InputLayer", "ZooKerasLayer", "ZooKerasCreator",
-                       "KerasNet", "Net", "LambdaLayer"}
+                       "KerasNet", "Net"}
     raw_classes = []
     results = []
     for python_dir in python_dirs:
