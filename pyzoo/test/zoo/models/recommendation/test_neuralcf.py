@@ -42,7 +42,7 @@ class TestNeuralCF(ZooTestCase):
     def test_save_load(self):
         model = NeuralCF(10000, 2000, 10)
         input_data = np.random.randint(1500, size=(300, 2))
-        self.assert_save_load(model, input_data)
+        self.assert_zoo_model_save_load(model, input_data)
 
     def test_predict_recommend(self):
 

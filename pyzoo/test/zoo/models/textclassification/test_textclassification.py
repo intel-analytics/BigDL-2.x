@@ -33,7 +33,7 @@ class TestTextClassification(ZooTestCase):
     def test_save_load(self):
         model = TextClassifier(20, 200)
         input_data = np.random.random([2, 500, 200])
-        self.assert_save_load(model, input_data)
+        self.assert_zoo_model_save_load(model, input_data)
 
 
 if __name__ == "__main__":
