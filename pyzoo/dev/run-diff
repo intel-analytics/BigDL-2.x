@@ -16,6 +16,8 @@
 # limitations under the License.
 #
 
-BASE="$(cd "`dirname $0`"; pwd)"
+ANALYTICS_ZOO_HOME="$(cd "`dirname $0`"/../../; pwd)"
 
-$BASE/lint-python && $BASE/run-diff && $BASE/run-pytests
+echo $ANALYTICS_ZOO_HOME
+cd $ANALYTICS_ZOO_HOME
+exec $ANALYTICS_ZOO_HOME/pyzoo/dev/diff.py
