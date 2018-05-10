@@ -19,7 +19,7 @@ pip install https://dist.apache.org/repos/dist/dev/incubator/toree/0.2.0/snapsho
 3. To support the training for imbalanced data set in fraud detection, some Transformers and algorithms are developed in 
 https://github.com/intel-analytics/analytics-zoo/tree/legacy/pipeline/fraudDetection.
 
-4. build jar file with maven under the directory
+4. build frauddetection jar file with maven under the directory or use fraud-1.0.1-SNAPSHOT.jar
 
 ```
 mvn package
