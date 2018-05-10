@@ -31,11 +31,6 @@ def get_nncontext(conf=None):
     """
 
     sc = get_spark_context(conf)
-    conf = sc._conf
-    if conf.get("spark.analytics.zoo.versionCheck", "True").lower() == "true":
-        report_warn = conf.get(
-            "spark.analytics.zoo.versionCheck.warning", "False").lower() == "true"
-        _check_spark_version(sc, report_warn)
     redire_spark_logs()
     show_bigdl_info_logs()
     init_engine()

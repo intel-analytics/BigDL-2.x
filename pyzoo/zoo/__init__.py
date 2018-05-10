@@ -15,7 +15,7 @@
 #
 
 from bigdl.util.common import JavaCreator
-from common.nncontext import *
+from zoo.common.nncontext import *
 
 JavaCreator.add_creator_class("com.intel.analytics.zoo.pipeline.nnframes.python.PythonNNFrames")
 JavaCreator.add_creator_class("com.intel.analytics.zoo.feature.image.python.PythonImageSet")
