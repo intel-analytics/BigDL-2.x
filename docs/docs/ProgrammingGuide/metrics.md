@@ -33,15 +33,19 @@ validation = AUC(20)
 ```
 example
 ```
+from bigdl.nn.layer import *
+from zoo.common.nncontext import get_nncontext
+from zoo.pipeline.api.keras.metrics.auc import *
+
 sc = get_nncontext()
 
-data_len = 10
-batch_size = 4
+data_len = 4
+batch_size = 8
 FEATURES_DIM = 2
 
 def gen_rand_sample():
     features = np.random.uniform(0, 1, (FEATURES_DIM))
-    label = 1.0
+    label = np.random.uniform(0, 1, (FEATURES_DIM))
     return Sample.from_ndarray(features, label)
 
 trainingData = sc.parallelize(range(0, data_len)).map(
@@ -50,4 +54,5 @@ trainingData = sc.parallelize(range(0, data_len)).map(
 model = Sequential()
 model.add(Linear(2, 2)).add(LogSoftMax())
 test_results = model.evaluate(trainingData, batch_size, [AUC(20)])
+
 ```
