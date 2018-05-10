@@ -2,8 +2,8 @@
 This is a simple example of unsupervised anomaly detection using Keras API. We use RNN to predict following data values based on previous sequence (in order) and measure the distance between predicted values and actual values. If the distance is above some threshold, we report those values as anomaly.
 
 ## Environment
-* Python 2.7
-* Apache Spark 1.6.0
+* Python 2.7/3.5/3.6 (pandas 0.22.0)
+* Apache Spark 1.6.0/2.1.0 (This version needs to be same with the version you use to build Analytics Zoo)
 * Analytics ZOO 0.1.0
 
 ## Run with Jupyter
