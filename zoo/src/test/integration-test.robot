@@ -45,7 +45,6 @@ DownLoad Input
    Create Directory                 model
    Create Directory                 models
    Run                              wget https://s3-ap-southeast-1.amazonaws.com/analytics-zoo-models/object-detection/analytics-zoo_ssd-mobilenet-300x300_PASCAL_0.1.0.model -P /tmp/objectdetection/
-   Run                              ${hadoop} fs -get ${public_hdfs_master}:9000/kaggle/train_100 /tmp/objectdetection/data
    Log To Console                   got image data!!
    Create Directory                 /tmp/objectdetection/output
    Remove Environment Variable      http_proxy                  https_proxy                     LANG
@@ -66,7 +65,7 @@ Run Spark Test
    Log To Console                   begin text classification
    Run Shell                        ${submit} --master ${spark_master} --driver-memory 5g --executor-memory 5g --total-executor-cores 32 --executor-cores 8 --class com.intel.analytics.zoo.examples.textclassification.TextClassification ${jar_path} --batchSize 128 --baseDir /tmp/text_data --partitionNum 32 --nbEpoch 2
    Log To Console                   begin object detection
-   Run Shell                        ${submit} --master ${spark_master} --driver-memory 1g --executor-memory 1g --total-executor-cores 32 --executor-cores 8 --class com.intel.analytics.zoo.examples.objectdetection.Predict ${jar_path} --image /tmp/objectdetection/data --output /tmp/objectdetection/output --model /tmp/objectdetection/analytics-zoo_ssd-mobilenet-300x300_PASCAL_0.1.0.model --partition 32
+   Run Shell                        ${submit} --master ${spark_master} --driver-memory 1g --executor-memory 1g --total-executor-cores 32 --executor-cores 8 --class com.intel.analytics.zoo.examples.objectdetection.Predict ${jar_path} --image ${public_hdfs_master}:9000/kaggle/train_100 --output /tmp/objectdetection/output --model /tmp/objectdetection/analytics-zoo_ssd-mobilenet-300x300_PASCAL_0.1.0.model --partition 32
    Remove Input
 
 Spark2.1 Test Suite
