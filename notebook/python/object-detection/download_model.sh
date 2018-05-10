@@ -17,8 +17,8 @@
 #
 
 
-# Usage: bash get_ambient_temperature_system_failure.sh dir
-# Download ambient_temperature_system_failure dataset to the target 'dir'.
+# Usage: bash download_model.sh dir
+# Download pretrained model to the target 'dir'.
 # If 'dir' is not specified, it will be downloaded to the same dir with this script.
 
 if [ ! -z "$1" ]
