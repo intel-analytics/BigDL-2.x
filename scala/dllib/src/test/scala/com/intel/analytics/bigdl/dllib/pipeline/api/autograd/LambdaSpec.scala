@@ -21,8 +21,10 @@ import com.intel.analytics.bigdl.tensor.Tensor
 import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric
 import com.intel.analytics.bigdl.utils.{Shape, T, Table}
 import com.intel.analytics.zoo.pipeline.api.Net
+import com.intel.analytics.zoo.pipeline.api.keras.ZooSpecHelper
 import com.intel.analytics.zoo.pipeline.api.keras.layers.{Input, InputLayer, KerasBaseSpec}
 import com.intel.analytics.zoo.pipeline.api.keras.models.{Model, Sequential}
+import com.intel.analytics.zoo.pipeline.api.keras.serializer.ModuleSerializationTest
 
 import scala.reflect.ClassTag
 
@@ -71,10 +73,12 @@ class LambdaSpec extends KerasBaseSpec{
       kerasCode)
   }
 
+}
 
-  "two inputs layer" should "be test" in {
+class LambdaLayerSerialTest extends ModuleSerializationTest {
+  override def test(): Unit = {
     def lambdaFunc[T: ClassTag](inputs: List[Variable[T]])(
-        implicit ev: TensorNumeric[T]): Variable[T] = {
+      implicit ev: TensorNumeric[T]): Variable[T] = {
       inputs(0) + inputs(1)
     }
 
@@ -82,11 +86,11 @@ class LambdaSpec extends KerasBaseSpec{
     val input2 = Input[Float](Shape(3))
     val layer = Lambda[Float](lambdaFunc[Float]).inputs(input1, input2)
     val model = Model[Float](Array(input1, input2), layer)
-    val tmpFile = createTmpFile()
+    val tmpFile = ZooSpecHelper.createTmpFile()
 
     model.saveModule(tmpFile.getAbsolutePath, overWrite = true)
     val reloadModel = Net.load[Float](tmpFile.getAbsolutePath)
-    compareOutputAndGradInputTable2Tensor(
+    ZooSpecHelper.compareOutputAndGradInputTable2Tensor(
       model1 = model.asInstanceOf[AbstractModule[Table, Tensor[Float], Float]],
       model2 = reloadModel.asInstanceOf[AbstractModule[Table, Tensor[Float], Float]],
       input = T(Tensor[Float](2, 3).rand(), Tensor[Float](2, 3).rand()))

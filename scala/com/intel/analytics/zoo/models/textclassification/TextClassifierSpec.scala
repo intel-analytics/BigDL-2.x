@@ -18,6 +18,7 @@ package com.intel.analytics.zoo.models.textclassification
 
 import com.intel.analytics.bigdl.tensor.Tensor
 import com.intel.analytics.zoo.pipeline.api.keras.ZooSpecHelper
+import com.intel.analytics.zoo.pipeline.api.keras.serializer.ModuleSerializationTest
 
 class TextClassifierSpec extends ZooSpecHelper {
 
@@ -42,10 +43,12 @@ class TextClassifierSpec extends ZooSpecHelper {
     val gradInput = model.backward(input, output)
   }
 
-  "TextClassifier save and load" should "work properly" in {
+}
+
+class TextClassifierSerialTest extends ModuleSerializationTest {
+  override def test(): Unit = {
     val model = TextClassifier[Float](classNum = 20, tokenLength = 50, sequenceLength = 100)
     val input = Tensor[Float](Array(1, 100, 50)).rand()
-    testZooModelLoadSave(model, input, TextClassifier.loadModel[Float])
+    ZooSpecHelper.testZooModelLoadSave(model, input, TextClassifier.loadModel[Float])
   }
-
 }

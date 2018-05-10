@@ -19,6 +19,7 @@ package com.intel.analytics.zoo.models.objectdetection
 import com.intel.analytics.bigdl.transform.vision.image.ImageFeature
 import com.intel.analytics.zoo.common.NNContext
 import com.intel.analytics.zoo.feature.image.ImageSet
+import com.intel.analytics.zoo.pipeline.api.keras.serializer.ModuleSerializationTest
 import org.apache.spark.{SparkConf, SparkContext}
 
 import sys.process._
@@ -60,5 +61,11 @@ class ObjectDetectionSpec extends FlatSpec with Matchers with BeforeAndAfter {
       .equals(res2.head.predict(ImageFeature.predict)) == true)
 
     "rm -rf ./ssd2.model" !!
+  }
+}
+
+class ObjectDetectorSerialTest extends ModuleSerializationTest {
+  override def test(): Unit = {
+    // TODO: Extract save and load from the above unit test
   }
 }

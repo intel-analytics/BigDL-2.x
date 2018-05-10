@@ -14,19 +14,18 @@
  * limitations under the License.
  */
 
-package com.intel.analytics.zoo.models.imageclassification
+package com.intel.analytics.zoo.models.image.imageclassification
 
 import java.io.File
 
 import com.google.common.io.Files
-import org.scalatest.{FlatSpec, Matchers}
-import com.intel.analytics.bigdl.transform.vision.image.{ImageFeature, ImageFrame, LocalImageFrame}
-import com.intel.analytics.bigdl.utils.{Engine, MklBlas}
+import com.intel.analytics.bigdl.transform.vision.image.ImageFeature
+import com.intel.analytics.bigdl.utils.Engine
 import com.intel.analytics.zoo.common.NNContext
 import com.intel.analytics.zoo.feature.image.ImageSet
-import com.intel.analytics.zoo.models.image.imageclassification.ImageClassifier
+import com.intel.analytics.zoo.pipeline.api.keras.serializer.ModuleSerializationTest
 import org.apache.commons.io.FileUtils
-import org.apache.spark.{SparkConf, SparkContext}
+import org.scalatest.{FlatSpec, Matchers}
 
 class ImageClassificationSpec extends FlatSpec with Matchers {
   val resource = getClass.getClassLoader.getResource("imagenet/n02110063/")
@@ -81,5 +80,11 @@ class ImageClassificationSpec extends FlatSpec with Matchers {
   "ImageClassifier" should "predict inception-v1-quantize" in {
     predict("https://s3-ap-southeast-1.amazonaws.com/analytics-zoo-models/imageclassification/" +
       "imagenet/analytics-zoo_inception-v1-quantize_imagenet_0.1.0")
+  }
+}
+
+class ImageClassifierSerialTest extends ModuleSerializationTest {
+  override def test(): Unit = {
+    // TODO: Add test for saveModel and extract load from the above unit test
   }
 }
