@@ -21,7 +21,7 @@ Build SparkJar
    Log To Console    make-dist.sh -P ${spark_version} ...
    Run               ${build} -P ${spark_version}
    Remove File       ${jar_path}
-   Move File         zoo/target/zoo-${version}-jar-with-dependencies.jar    ${jar_path}
+   Move File         zoo/target/analytics-zoo-${version}-jar-with-dependencies.jar    ${jar_path}
    Log To Console    build jar finished
 
 DownLoad Input
