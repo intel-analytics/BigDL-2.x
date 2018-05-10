@@ -34,7 +34,7 @@ def get_nncontext(conf=None):
     conf = sc._conf
     if conf.get("spark.analytics.zoo.versionCheck", "True").lower() == "true":
         report_warn = conf.get(
-            "spark.analytics.zoo.versionCheck.reportWarn", "False").lower() == "true"
+            "spark.analytics.zoo.versionCheck.warning", "False").lower() == "true"
         _check_spark_version(sc, report_warn)
     redire_spark_logs()
     show_bigdl_info_logs()
@@ -54,7 +54,9 @@ def _check_spark_version(sc, report_warn):
     (r_major, r_feature, r_maintenance) = _split_full_version(sc.version)
     error_message = "The compile time spark version is not compatible with " + \
                     "the Spark runtime version. Compile time version is %s, " % version_info['spark_version'] + \
-                    "runtime version is %s" % sc.version
+                    "runtime version is %s. If you want to bypass this check, please set " % sc.version + \
+                    "spark.analytics.zoo.versionCheck to false, and if you want to only " + \
+                    "report an warning message, please set spark.analytics.zoo.versionCheck.warning to true."
     if c_major != r_major:
         if not report_warn:
             raise RuntimeError(error_message)

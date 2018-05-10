@@ -57,7 +57,7 @@ object NNContext {
       val errorMessage = s"\nIf you want to bypass this check, please set" +
         s"spark.analytics.zoo.versionCheck to false, and if you want to only" +
         s"report a warning message, please set spark.analytics.zoo" +
-        s".versionCheck.reportWarn to true."
+        s".versionCheck.warning to true."
       val diffLevel = if (runtimeMajor != compileMajor) {
         1
       } else if (runtimeFeature != compileFeature) {
@@ -131,7 +131,7 @@ object NNContext {
     val bigdlConf = Engine.createSparkConf(conf)
     if (bigdlConf.getBoolean("spark.analytics.zoo.versionCheck", true)) {
       val reportWarning =
-        bigdlConf.getBoolean("spark.analytics.zoo.versionCheck.reportWarn", false)
+        bigdlConf.getBoolean("spark.analytics.zoo.versionCheck.warning", false)
       checkSparkVersion(reportWarning)
       checkScalaVersion(reportWarning)
     }
