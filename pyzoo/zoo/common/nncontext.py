@@ -55,10 +55,10 @@ def _check_spark_version(sc, report_warn):
     (c_major, c_feature, c_maintenance) = _split_full_version(version_info['spark_version'])
     (r_major, r_feature, r_maintenance) = _split_full_version(sc.version)
     error_message = "The compile time spark version is not compatible with " + \
-        "the Spark runtime version. Compile time version is %s, " % version_info['spark_version'] + \
-        "runtime version is %s. If you want to bypass this check, please set " % sc.version + \
-        "spark.analytics.zoo.versionCheck to false, and if you want to only " + \
-        "report an warning message, please set spark.analytics.zoo.versionCheck.warning to true."
+      "the Spark runtime version. Compile time version is %s, " % version_info['spark_version'] + \
+      "runtime version is %s. If you want to bypass this check, please set " % sc.version + \
+      "spark.analytics.zoo.versionCheck to false, and if you want to only " + \
+      "report an warning message, please set spark.analytics.zoo.versionCheck.warning to true."
     if c_major != r_major:
         if not report_warn:
             print("***************************Usage Error*****************************")
@@ -67,9 +67,10 @@ def _check_spark_version(sc, report_warn):
         else:
             warnings.warn(error_message)
     elif not (c_maintenance == r_maintenance and c_feature == r_feature):
-        warnings.warn("The compile time spark version may not compatible with " +\
-        "the Spark runtime version. Compile time version is %s, " % version_info['spark_version'] +\
-        "runtime version is %s" % sc.version)
+        warnings.warn("The compile time spark version may not compatible with " +
+          "the Spark runtime version. " +
+          "Compile time version is %s, " % version_info['spark_version'] +
+          "runtime version is %s" % sc.version)
 
 
 def _get_bigdl_verion_conf():
@@ -82,17 +83,17 @@ def _get_bigdl_verion_conf():
 
     for p in sys.path:
         if bigdl_build_file in p and os.path.isfile(p):
-            with open(p) if sys.version_info < (3,) else open(p, encoding='latin-1') as conf_file: # noqa
+            with open(p) if sys.version_info < (3,) else open(p, encoding='latin-1') as conf_file:
                 return load_conf(conf_file.read())
         if bigdl_python_wrapper in p and os.path.isfile(p):
             import zipfile
             with zipfile.ZipFile(p, 'r') as zip_conf:
-                if bigdl_build_file  in zip_conf.namelist():
+                if bigdl_build_file in zip_conf.namelist():
                     content = zip_conf.read(bigdl_build_file)
                     if sys.version_info >= (3,):
                         content = str(content, 'latin-1')
                     return load_conf(content)
-    raise RuntimeError("Error while locating file zoo-version-info.properties, " + \
-            "please make sure the mvn" + \
-            " generate-resources phase is executed and a zoo-version-info.properties file" +\
-            " is located in zoo/target/extra-resources")
+    raise RuntimeError("Error while locating file zoo-version-info.properties, " +
+                       "please make sure the mvn generate-resources phase" +
+                       " is executed and a zoo-version-info.properties file" +
+                       " is located in zoo/target/extra-resources")
