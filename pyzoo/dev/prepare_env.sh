@@ -30,7 +30,7 @@ if [ -z ${SPARK_HOME+x} ]; then echo "SPARK_HOME is unset"; exit 1; else echo "S
 
 export PYSPARK_ZIP=`find $SPARK_HOME/python/lib  -type f -iname '*.zip' | tr "\n" ":"`
 
-export PYTHONPATH=$PYTHONPATH:$PYSPARK_ZIP:$DL_PYTHON_HOME:$ZOO_HOME/backend/bigdl/pyspark:$ZOO_HOME/backend/bigdl/spark/dl/src/main/resources/spark-bigdl.conf
+export PYTHONPATH=$PYTHONPATH:$PYSPARK_ZIP:$DL_PYTHON_HOME:$ZOO_HOME/backend/bigdl/pyspark:$ZOO_HOME/backend/bigdl/spark/dl/src/main/resources/spark-bigdl.conf:$ZOO_HOME/zoo/target/extra-resources/zoo-version-info.properties
 echo "PYTHONPATH": $PYTHONPATH
 export ZOO_CLASSPATH=$(find $ZOO_HOME/zoo/target/ -name "*with-dependencies.jar" | head -n 1)
 echo "ZOO_CLASSPATH": $ZOO_CLASSPATH
