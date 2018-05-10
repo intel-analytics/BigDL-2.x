@@ -23,6 +23,7 @@ import com.intel.analytics.bigdl.tensor.Tensor
 import com.intel.analytics.bigdl.utils.T
 import com.intel.analytics.zoo.common.NNContext
 import com.intel.analytics.zoo.pipeline.api.keras.ZooSpecHelper
+import com.intel.analytics.zoo.pipeline.api.keras.serializer.ModuleSerializationTest
 import org.apache.log4j.{Level, Logger}
 import org.apache.spark.{SparkConf, SparkContext}
 import org.apache.spark.sql.functions.col
@@ -160,10 +161,13 @@ class NeuralCFSpec extends ZooSpecHelper {
     assert(userRecs.count() <= 200)
   }
 
-  "NeuralCF save and load" should "work properly" in {
-    val model = NeuralCF[Float](userCount, itemCount, 5, 5, 5, Array(10, 5), false)
+}
+
+class NeuralCFSerialTest extends ModuleSerializationTest {
+  override def test(): Unit = {
+    val model = NeuralCF[Float](100, 100, 5, 5, 5, Array(10, 5), false)
     val input = Tensor[Float](Array(100, 2))
-      .fill(new Random(System.nanoTime()).nextInt(userCount - 1).toFloat + 1)
-    testZooModelLoadSave(model, input, NeuralCF.loadModel[Float])
+      .fill(new Random(System.nanoTime()).nextInt(100 - 1).toFloat + 1)
+    ZooSpecHelper.testZooModelLoadSave(model, input, NeuralCF.loadModel[Float])
   }
 }
