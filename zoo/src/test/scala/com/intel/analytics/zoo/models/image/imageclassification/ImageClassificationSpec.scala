@@ -85,6 +85,6 @@ class ImageClassificationSpec extends FlatSpec with Matchers {
 
 class ImageClassifierSerialTest extends ModuleSerializationTest {
   override def test(): Unit = {
-
+    // TODO: Add test for saveModel and extract load from the above unit test
   }
 }

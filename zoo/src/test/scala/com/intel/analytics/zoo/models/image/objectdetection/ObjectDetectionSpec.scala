@@ -21,8 +21,6 @@ import com.intel.analytics.zoo.common.NNContext
 import com.intel.analytics.zoo.feature.image.ImageSet
 import com.intel.analytics.zoo.pipeline.api.keras.serializer.ModuleSerializationTest
 import org.apache.spark.{SparkConf, SparkContext}
-
-import sys.process._
 import org.scalatest.{BeforeAndAfter, FlatSpec, Matchers}
 
 class ObjectDetectionSpec extends FlatSpec with Matchers with BeforeAndAfter {
@@ -66,6 +64,6 @@ class ObjectDetectionSpec extends FlatSpec with Matchers with BeforeAndAfter {
 
 class ObjectDetectorSerialTest extends ModuleSerializationTest {
   override def test(): Unit = {
-
+    // TODO: Extract save and load from the above unit test
   }
 }
