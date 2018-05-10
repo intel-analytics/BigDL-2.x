@@ -44,6 +44,12 @@ DownLoad Input
    Log To Console                   got examples data!!
    Create Directory                 model
    Create Directory                 models
+
+   Run                              wget ${object_detection_model} -P /tmp/objectdetection/
+   Run                              ${hadoop} fs -get ${public_hdfs_master}:9000/objectdetection /tmp/objectdetection/data
+   Log To Console                   got image data!!
+   Create Directory                 /tmp/objectdetection/output
+
    Remove Environment Variable      http_proxy                  https_proxy                     LANG
 
 Remove Input
@@ -54,12 +60,15 @@ Remove Input
    Remove Directory                 simple-examples             recursive=True
    Remove File                      simple-examples.tgz
    Remove Directory                 /tmp/text-data              recursive=True
+   Remove Directory                 /tmp/objectdetection        recursive=True
 
 Run Spark Test
    [Arguments]                      ${submit}                   ${spark_master}
    DownLoad Input
    Log To Console                   begin text classification
    Run Shell                        ${submit} --master ${spark_master} --driver-memory 5g --executor-memory 5g --total-executor-cores 32 --executor-cores 8 --class com.intel.analytics.zoo.examples.textclassification.TextClassification ${jar_path} --batchSize 128 --baseDir /tmp/text_data --partitionNum 32 --nbEpoch 2
+   Log To Console                   begin object detection
+   Run Shell                        ${submit} --master ${spark_master} --driver-memory 1g --executor-memory 1g --total-executor-cores 32 --executor-cores 8 --class com.intel.analytics.zoo.examples.objectdetection.Predict ${jar_path} --image /tmp/objectdetection/data --output /tmp/objectdetection/output --model /tmp/objectdetection/analytics-zoo_ssd-mobilenet-300x300_PASCAL_0.1.0.model --partition 32
    Remove Input
 
 Spark2.1 Test Suite
@@ -79,5 +88,7 @@ Yarn Test Suite
    ${submit}=                       Catenate                 SEPARATOR=/    /opt/work/spark-2.1.0-bin-hadoop2.7/bin    spark-submit
    Log To Console                   begin text classification
    Run Shell                        ${submit} --master yarn --deploy-mode client --conf "spark.serializer=org.apache.spark.serializer.JavaSerializer" --conf spark.yarn.executor.memoryOverhead=40000 --executor-cores 8 --num-executors 4 --driver-memory 5g --executor-memory 10g --class com.intel.analytics.zoo.examples.textclassification.TextClassification ${jar_path} --batchSize 128 --baseDir /tmp/text_data --partitionNum 8 --nbEpoch 2
+   Log To Console                   begin object detection
+   Run Shell                        ${submit} --master yarn --deploy-mode client --conf "spark.serializer=org.apache.spark.serializer.JavaSerializer" --conf spark.yarn.executor.memoryOverhead=40000 --executor-cores 8 --num-executors 4 --driver-memory 1g --executor-memory 1g --class com.intel.analytics.zoo.examples.objectdetection.Predict ${jar_path}  --image /tmp/objectdetection/data --output /tmp/objectdetection/output --model /tmp/objectdetection/analytics-zoo_ssd-mobilenet-300x300_PASCAL_0.1.0.model --partition 32
    Remove Environment Variable      http_proxy                https_proxy              PYSPARK_DRIVER_PYTHON            PYSPARK_PYTHON
    Remove Input
