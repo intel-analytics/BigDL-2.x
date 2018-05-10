@@ -42,6 +42,15 @@ def get_nncontext(conf=None):
     return sc
 
 
+def check_version():
+    sc = get_spark_context()
+    conf = sc._conf
+    if conf.get("spark.analytics.zoo.versionCheck", "True").lower() == "true":
+        report_warn = conf.get(
+            "spark.analytics.zoo.versionCheck.warning", "False").lower() == "true"
+        _check_spark_version(sc, report_warn)
+
+
 def _split_full_version(version):
     parts = version.split(".")
     major = parts[0]
@@ -54,11 +63,13 @@ def _check_spark_version(sc, report_warn):
     version_info = _get_bigdl_verion_conf()
     (c_major, c_feature, c_maintenance) = _split_full_version(version_info['spark_version'])
     (r_major, r_feature, r_maintenance) = _split_full_version(sc.version)
-    error_message = "The compile time spark version is not compatible with " + \
-      "the Spark runtime version. Compile time version is %s, " % version_info['spark_version'] + \
-      "runtime version is %s. If you want to bypass this check, please set " % sc.version + \
-      "spark.analytics.zoo.versionCheck to false, and if you want to only " + \
-      "report an warning message, please set spark.analytics.zoo.versionCheck.warning to true."
+    error_message = \
+        """
+        The compile time spark version is not compatible with the spark runtime version.
+        Compile time version is %s, runtime version is %s. If you want bypass this check,
+        please set spark.analytics.zoo.versionCheck to false, and if you want to only report
+        an warning message, please set spark.analytics.zoo.versionCheck.warning to true.
+        """ % (version_info['spark_version'], sc.version)
     if c_major != r_major:
         if not report_warn:
             print("***************************Usage Error*****************************")
@@ -68,9 +79,9 @@ def _check_spark_version(sc, report_warn):
             warnings.warn(error_message)
     elif not (c_maintenance == r_maintenance and c_feature == r_feature):
         warnings.warn("The compile time spark version may not compatible with " +
-          "the Spark runtime version. " +
-          "Compile time version is %s, " % version_info['spark_version'] +
-          "runtime version is %s" % sc.version)
+                      "the Spark runtime version. " +
+                      "Compile time version is %s, " % version_info['spark_version'] +
+                      "runtime version is %s" % sc.version)
 
 
 def _get_bigdl_verion_conf():
