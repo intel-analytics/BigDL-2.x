@@ -60,7 +60,7 @@ def __prepare_spark_env():
         sys.path.insert(0, pyspark)
 
 
-def __prepare_zoo_env():
+def __prepare_analytics_zoo_env():
     jar_dir = os.path.abspath(__file__ + "/../../")
     conf_paths = glob.glob(os.path.join(jar_dir, "share/conf/*.conf"))
     bigdl_classpath = get_bigdl_classpath()
@@ -146,4 +146,4 @@ def compare_version(version1, version2):
 
 def prepare_env():
     __prepare_spark_env()
-    __prepare_zoo_env()
+    __prepare_analytics_zoo_env()

@@ -19,10 +19,10 @@
 set -e
 RUN_SCRIPT_DIR=$(cd $(dirname $0) ; pwd)
 echo $RUN_SCRIPT_DIR
-ZOO_DIR="$(cd ${RUN_SCRIPT_DIR}/../../../; pwd)"
-echo $ZOO_DIR
-ZOO_PYTHON_DIR="$(cd ${RUN_SCRIPT_DIR}/../../../pyzoo; pwd)"
-echo $ZOO_PYTHON_DIR
+ANALYTICS_ZOO_DIR="$(cd ${RUN_SCRIPT_DIR}/../../../; pwd)"
+echo $ANALYTICS_ZOO_DIR
+ANALYTICS_ZOO_PYTHON_DIR="$(cd ${RUN_SCRIPT_DIR}/../../../pyzoo; pwd)"
+echo $ANALYTICS_ZOO_PYTHON_DIR
 
 if (( $# < 2)); then
   echo "Bad parameters. Usage: bash release.sh linux spark_2.x false 0.1.0.dev0"
@@ -33,51 +33,51 @@ platform=$1
 spark_profile=$2
 quick=$3
 input_version=$4
-zoo_version=$(python -c "exec(open('$ZOO_DIR/pyzoo/zoo/version.py').read()); print(__version__)")
+analytics_zoo_version=$(python -c "exec(open('$ANALYTICS_ZOO_DIR/pyzoo/zoo/version.py').read()); print(__version__)")
 
-if [ "$input_version" != "$zoo_version" ]; then
-   echo "Your Zoo version $zoo_version is not the proposed version $input_version!"
+if [ "$input_version" != "$analytics_zoo_version" ]; then
+   echo "Your Analytics Zoo version $analytics_zoo_version is not the proposed version $input_version!"
    exit -1
 fi
 
-cd ${ZOO_DIR}
+cd ${ANALYTICS_ZOO_DIR}
 if [ "$platform" ==  "mac" ]; then
-    echo "Building zoo for mac system"
+    echo "Building analytics zoo for mac system"
     dist_profile="-P mac -P $spark_profile"
     verbose_pname="macosx_10_11_x86_64"
 elif [ "$platform" == "linux" ]; then
-    echo "Building zoo for linux system"
+    echo "Building analytics zoo for linux system"
     dist_profile="-P $spark_profile"
     verbose_pname="manylinux1_x86_64"
 else
     echo "unsupport platform"
 fi
 
-zoo_build_command="${ZOO_DIR}/make-dist.sh ${dist_profile}"
+analytics_zoo_build_command="${ANALYTICS_ZOO_DIR}/make-dist.sh ${dist_profile}"
 if [ "$quick" == "true" ]; then
-    echo "Skip disting ZOO"
+    echo "Skip disting Analytics Zoo"
 else
-    echo "Dist ZOO: $zoo_build_command"
-    $zoo_build_command
+    echo "Dist Analytics Zoo: $analytics_zoo_build_command"
+    $analytics_zoo_build_command
 fi
 
-cd $ZOO_PYTHON_DIR
+cd $ANALYTICS_ZOO_PYTHON_DIR
 sdist_command="python setup.py sdist"
 echo "packing source code: ${sdist_command}"
 $sdist_command
 
-if [ -d "${ZOO_DIR}/pyzoo/build" ]; then
-   rm -r ${ZOO_DIR}/pyzoo/build
+if [ -d "${ANALYTICS_ZOO_DIR}/pyzoo/build" ]; then
+   rm -r ${ANALYTICS_ZOO_DIR}/pyzoo/build
 fi
 
-if [ -d "${ZOO_DIR}/pyzoo/dist" ]; then
-   rm -r ${ZOO_DIR}/pyzoo/dist
+if [ -d "${ANALYTICS_ZOO_DIR}/pyzoo/dist" ]; then
+   rm -r ${ANALYTICS_ZOO_DIR}/pyzoo/dist
 fi
 wheel_command="python setup.py bdist_wheel --universal --plat-name ${verbose_pname}"
 echo "Packing python distribution:   $wheel_command"
 ${wheel_command}
 
-upload_command="twine upload dist/analyticszoo-${zoo_version}-py2.py3-none-${verbose_pname}.whl"
+upload_command="twine upload dist/analyticszoo-${analytics_zoo_version}-py2.py3-none-${verbose_pname}.whl"
 echo "Please manually upload with this command:  $upload_command"
 
 $upload_command

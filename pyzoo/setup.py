@@ -23,20 +23,20 @@ from shutil import copyfile, copytree, rmtree
 from setuptools import setup
 
 TEMP_PATH = "zoo/share"
-zoo_home = os.path.abspath(__file__ + "/../../")
+analytics_zoo_home = os.path.abspath(__file__ + "/../../")
 
 try:
     exec(open('zoo/version.py').read())
 except IOError:
-    print("Failed to load zoo version file for packaging. You must be in zoo's pyzoo dir.")
+    print("Failed to load Analytics Zoo version file for packaging. You must be in Analytics Zoo's pyzoo dir.")
     sys.exit(-1)
 
 VERSION = __version__
 
 building_error_msg = """
-If you are packing python API from zoo source, you must build zoo first
+If you are packing python API from zoo source, you must build Analytics Zoo first
 and run sdist.
-    To build zoo with maven you can run:
+    To build Analytics Zoo with maven you can run:
       cd $ZOO_HOME
       ./make-dist.sh
     Building the source dist is done in the Python directory:
@@ -45,7 +45,7 @@ and run sdist.
       pip install dist/*.tar.gz"""
 
 def build_from_source():
-    code_path = zoo_home + "/pyzoo/zoo/common/nncontext.py"
+    code_path = analytics_zoo_home + "/pyzoo/zoo/common/nncontext.py"
     print("Checking: %s to see if build from source" % code_path)
     if os.path.exists(code_path):
         return True
@@ -55,15 +55,15 @@ def build_from_source():
 def init_env():
     if build_from_source():
         print("Start to build distributed package")
-        print("HOME OF ZOO: " + zoo_home)
-        dist_source = zoo_home + "/dist"
+        print("HOME OF ANALYTICS ZOO: " + analytics_zoo_home)
+        dist_source = analytics_zoo_home + "/dist"
         if not os.path.exists(dist_source):
             print(building_error_msg)
             sys.exit(-1)
         if os.path.exists(TEMP_PATH):
             rmtree(TEMP_PATH)
         copytree(dist_source, TEMP_PATH)
-        copyfile(zoo_home + "/pyzoo/zoo/models/__init__.py", TEMP_PATH + "/__init__.py")
+        copyfile(analytics_zoo_home + "/pyzoo/zoo/models/__init__.py", TEMP_PATH + "/__init__.py")
     else:
         print("Do nothing for release installation")
 
@@ -121,7 +121,7 @@ def setup_package():
         dependency_links=['https://d3kbcqa49mib13.cloudfront.net/spark-2.0.0-bin-hadoop2.7.tgz'],
         include_package_data=True,
         package_dir={"bigdl": '../backend/bigdl/pyspark/bigdl', "zoo.share": TEMP_PATH},
-        package_data={"zoo.share": ['lib/analytics-zoo-0.1.0-SNAPSHOT-jar-with-dependencies.jar', 'conf/*', 'bin/*']},
+        package_data={"zoo.share": ['lib/analytics-zoo*with-dependencies.jar', 'conf/*', 'bin/*']},
         classifiers=[
             'License :: OSI Approved :: Apache Software License',
             'Programming Language :: Python :: 2.7',
