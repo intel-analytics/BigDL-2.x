@@ -44,12 +44,10 @@ DownLoad Input
    Log To Console                   got examples data!!
    Create Directory                 model
    Create Directory                 models
-
-   Run                              wget ${object_detection_model} -P /tmp/objectdetection/
-   Run                              ${hadoop} fs -get ${public_hdfs_master}:9000/objectdetection /tmp/objectdetection/data
+   Run                              wget https://s3-ap-southeast-1.amazonaws.com/analytics-zoo-models/object-detection/analytics-zoo_ssd-mobilenet-300x300_PASCAL_0.1.0.model -P /tmp/objectdetection/
+   Run                              ${hadoop} fs -get ${public_hdfs_master}:9000/kaggle/train_100 /tmp/objectdetection/data
    Log To Console                   got image data!!
    Create Directory                 /tmp/objectdetection/output
-
    Remove Environment Variable      http_proxy                  https_proxy                     LANG
 
 Remove Input
