@@ -4,8 +4,8 @@ This notebook demostrates how to build neural network recommendation system with
 ## Environment
 * Python 2.7
 * JDK 8
-* Apache Spark 2.x and Scala 2.11 
-* Apache Spark 1.6 and Scala 2.10 
+* Scala 2.11 
+* Apache Spark 2.x
 * Jupyter Notebook 4.1
 * Zoo 0.1.0
 
