@@ -66,7 +66,7 @@ object NNContext {
         3
       }
       if (diffLevel <= level && !reportWarning) {
-        throw new RuntimeException(warnMessage + errorMessage)
+        Utils.logUsageErrorAndThrowException(warnMessage + errorMessage)
       }
       logger.warn(warnMessage)
     } else {
