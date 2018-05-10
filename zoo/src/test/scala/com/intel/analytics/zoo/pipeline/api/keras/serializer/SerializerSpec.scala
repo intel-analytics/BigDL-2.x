@@ -28,12 +28,10 @@ import scala.collection.JavaConverters._
 import scala.collection.mutable
 
 class SerializerSpec extends ZooSpecHelper {
-  private val excluded = Set[String]()
+  private val excluded = Set[String](
+    "com.intel.analytics.zoo.pipeline.api.autograd.LambdaTorch")
 
-  private val unRegularNameMapping = Map[String, String](
-    "com.intel.analytics.zoo.pipeline.api.keras.layers.KerasLayerWrapper" ->
-      "com.intel.analytics.zoo.pipeline.api.keras.layers.KerasLayerWrapperSpecSerialTest"
-  )
+  private val unRegularNameMapping = Map[String, String]()
 
   private val suffix = "SerialTest"
 
