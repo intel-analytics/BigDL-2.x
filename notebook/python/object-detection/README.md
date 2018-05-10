@@ -8,13 +8,13 @@ This is a simple example of object detection using Analytics Zoo Object Detectio
 
 ## Run with Jupyter
 * Download Analytics Zoo and build it.
-* Run `export ZOO_HOME=the root directory of the Analytics Zoo project`
+* Run `export ANALYTICS_ZOO_HOME=the root directory of the Analytics Zoo project`
 * Prepare the video to detect. ([YouTube-8M](https://research.google.com/youtube8m/))
-* Run `$ZOO_HOME/notebook/python/object-detection/download_model.sh` to download the pretrained model.
+* Run `$ANALYTICS_ZOO_HOME/notebook/python/object-detection/download_model.sh` to download the pretrained model.
 * Run the following bash command to start the jupyter notebook. Change parameter settings as you need, ie MASTER = local\[physcial_core_number\]
 ```bash
 MASTER=local[*]
-${ZOO_HOME}/scripts/jupyter-with-zoo.sh \
+${ANALYTICS_ZOO_HOME}/scripts/jupyter-with-zoo.sh \
     --master ${MASTER} \
     --driver-cores 2  \
     --driver-memory 8g  \
