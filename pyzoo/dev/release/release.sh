@@ -25,7 +25,7 @@ ZOO_PYTHON_DIR="$(cd ${RUN_SCRIPT_DIR}/../../../pyzoo; pwd)"
 echo $ZOO_PYTHON_DIR
 
 if (( $# < 2)); then
-  echo "Bad parameters. Usage: release.sh mac spark_2.x"
+  echo "Bad parameters. Usage: bash release.sh linux spark_2.x false 0.1.0.dev0"
   exit -1
 fi
 
