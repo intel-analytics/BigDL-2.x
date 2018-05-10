@@ -19,9 +19,9 @@
 set -e
 RUN_SCRIPT_DIR=$(cd $(dirname $0) ; pwd)
 echo $RUN_SCRIPT_DIR
-ZOO_DIR="$(cd ${RUN_SCRIPT_DIR}/../../../../; pwd)"
+ZOO_DIR="$(cd ${RUN_SCRIPT_DIR}/../../../; pwd)"
 echo $ZOO_DIR
-ZOO_PYTHON_DIR="$(cd ${RUN_SCRIPT_DIR}/../../../../pyzoo; pwd)"
+ZOO_PYTHON_DIR="$(cd ${RUN_SCRIPT_DIR}/../../../pyzoo; pwd)"
 echo $ZOO_PYTHON_DIR
 
 if (( $# < 2)); then
@@ -36,7 +36,7 @@ input_version=$4
 zoo_version=$(python -c "exec(open('$ZOO_DIR/pyzoo/zoo/version.py').read()); print(__version__)")
 
 if [ "$input_version" != "$zoo_version" ]; then
-   echo "Not the proposed version"
+   echo "Your Zoo version $zoo_version is not the proposed version $input_version!"
    exit -1
 fi
 
