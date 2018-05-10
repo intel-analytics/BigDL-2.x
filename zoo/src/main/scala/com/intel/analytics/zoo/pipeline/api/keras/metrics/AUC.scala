@@ -23,6 +23,16 @@ import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric
 
 import scala.collection.mutable.ArrayBuffer
 
+/**
+ * Represent an accuracy result. It's equal to the probability that a
+ * classifier will rank a randomly chosen positive instance higher
+ * than a randomly chosen negative one.
+ * Refer: https://en.wikipedia.org/wiki/Receiver_operating_characteristic
+ * @param tp True positive numbers
+ * @param fp False positive numbers
+ * @param po Positive numbers
+ * @param ne Negative numbers
+ */
 class AucScore(private val tp: Tensor[Float], private val fp: Tensor[Float],
                private var po: Tensor[Float], private var ne: Tensor[Float])
   extends ValidationResult {

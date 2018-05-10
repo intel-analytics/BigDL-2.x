@@ -1,0 +1,53 @@
+ValidationMethod is a method to validate the model during model training or evaluation.
+The trait can be extended by user-defined method. Now we have defined AUC to evaluate model.
+
+---
+## AUC ####
+Area under the ROC curve. More information about ROC can be found https://en.wikipedia.org/wiki/Receiver_operating_characteristic
+It's used to evaluate a binary(0/1 only) classification mode. It supports single label and multiple labels.
+
+**Scala:**
+```scala
+val validation = new AUC(20)
+```
+example
+```scala
+val sc = NNContext.getNNContext(conf)
+val data = new Array[Sample[Float]](4)
+var i = 0
+while (i < data.length) {
+val input = Tensor[Float](2).fill(1.0f)
+val label = Tensor[Float](2).fill(1.0f)
+data(i) = Sample(input, label)
+i += 1
+}
+val model = Sequential[Float]().add(Linear(2, 2)).add(LogSoftMax())
+val dataSet = sc.parallelize(data, 4)
+
+val result = model2.evaluate(dataSet, Array(new AUC[Float](20).asInstanceOf[ValidationMethod[Float]]))
+```
+
+**Python:**
+```python
+validation = AUC(20)
+```
+example
+```
+sc = get_nncontext()
+
+data_len = 10
+batch_size = 4
+FEATURES_DIM = 2
+
+def gen_rand_sample():
+    features = np.random.uniform(0, 1, (FEATURES_DIM))
+    label = 1.0
+    return Sample.from_ndarray(features, label)
+
+trainingData = sc.parallelize(range(0, data_len)).map(
+    lambda i: gen_rand_sample())
+
+model = Sequential()
+model.add(Linear(2, 2)).add(LogSoftMax())
+test_results = model.evaluate(trainingData, batch_size, [AUC(20)])
+```
