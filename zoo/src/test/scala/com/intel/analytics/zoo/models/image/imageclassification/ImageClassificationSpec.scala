@@ -14,22 +14,22 @@
  * limitations under the License.
  */
 
-package com.intel.analytics.zoo.models.imageclassification
+package com.intel.analytics.zoo.models.image.imageclassification
 
 import java.io.File
 
 import com.google.common.io.Files
-import org.scalatest.{FlatSpec, Matchers}
-import com.intel.analytics.bigdl.transform.vision.image.{ImageFeature, ImageFrame, LocalImageFrame}
-import com.intel.analytics.bigdl.utils.{Engine, MklBlas}
+import com.intel.analytics.bigdl.transform.vision.image.ImageFeature
+import com.intel.analytics.bigdl.utils.Engine
 import com.intel.analytics.zoo.common.NNContext
 import com.intel.analytics.zoo.feature.image.ImageSet
-import com.intel.analytics.zoo.models.image.imageclassification.ImageClassifier
 import org.apache.commons.io.FileUtils
-import org.apache.spark.{SparkConf, SparkContext}
+import org.scalatest.{FlatSpec, Matchers}
+import sys.process._
+
 
 class ImageClassificationSpec extends FlatSpec with Matchers {
-  val resource = getClass.getClassLoader.getResource("imagenet/n02110063/")
+  val resource = getClass.getClassLoader.getResource("imagenet/n04370456/")
 
   def predictLocal(url: String): Unit = {
     val tmpFile = Files.createTempDir()
@@ -42,14 +42,25 @@ class ImageClassificationSpec extends FlatSpec with Matchers {
 
     System.setProperty("bigdl.localMode", "true")
     Engine.init
-    val model = ImageClassifier.loadModel[Float](dirName + "/" + modelFileName)
+
     val image = ImageSet.read(resource.getFile)
+    val model = ImageClassifier.loadModel[Float](dirName + "/" + modelFileName)
+    model.saveModel("./imc.model", overWrite = true)
     val result = model.predictImageSet(image)
     val predicted = result.toLocal().array.map(_(ImageFeature.predict).toString)
-    assert(predicted.length == 3)
-    println(predicted.mkString(", "))
+
+    val image2 = ImageSet.read(resource.getFile)
+    val model2 = ImageClassifier.loadModel[Float]("./imc.model")
+    val result2 = model2.predictImageSet(image2)
+    val predicted2 = result2.toLocal().array.map(_(ImageFeature.predict).toString)
+
+    assert(predicted.length == predicted2.length)
+    require(predicted.head
+      .equals(predicted2.head) == true)
     if (tmpFile.exists()) FileUtils.deleteDirectory(tmpFile)
     System.clearProperty("bigdl.localMode")
+
+    "rm -rf ./imc.model" !!
   }
 
   def predict(url: String): Unit = {
@@ -65,21 +76,47 @@ class ImageClassificationSpec extends FlatSpec with Matchers {
     val sc = NNContext.getNNContext(conf)
 
     val model = ImageClassifier.loadModel[Float](dirName + "/" + modelFileName)
+    model.saveModel("./imc.model", overWrite = true)
     val image = ImageSet.read(resource.getFile, sc)
     val result = model.predictImageSet(image)
-    val predicted = result.toDistributed().rdd.map(_(ImageFeature.predict).toString)
-    assert(predicted.count() == 3)
-    println(predicted.collect().mkString(", "))
+    val predicted = result.toDistributed().rdd.collect()
+
+    val model2 = ImageClassifier.loadModel[Float]("./imc.model")
+    val image2 = ImageSet.read(resource.getFile, sc)
+    val result2 = model.predictImageSet(image2)
+    val predicted2 = result2.toDistributed().rdd.collect()
+
+    assert(predicted.length == predicted2.length)
+    require(predicted.head.predict(ImageFeature.predict)
+      .equals(predicted2.head.predict(ImageFeature.predict)) == true)
     if (tmpFile.exists()) FileUtils.deleteDirectory(tmpFile)
+
+    if (sc != null) {
+      sc.stop()
+    }
+
+    "rm -rf ./imc.model" !!
   }
 
   "ImageClassifier" should "predict inception-v1-quantize locally" in {
     predictLocal("https://s3-ap-southeast-1.amazonaws.com/analytics-zoo-models/" +
       "imageclassification/imagenet/analytics-zoo_inception-v1-quantize_imagenet_0.1.0")
+
+    "rm -rf ./ssd.model" !!
   }
 
   "ImageClassifier" should "predict inception-v1-quantize" in {
     predict("https://s3-ap-southeast-1.amazonaws.com/analytics-zoo-models/imageclassification/" +
       "imagenet/analytics-zoo_inception-v1-quantize_imagenet_0.1.0")
+  }
+
+  "ImageClassifier" should "predict bigdl inception-v1-quantize locally" in {
+    predictLocal("https://s3-ap-southeast-1.amazonaws.com/bigdl-models/imageclassification/" +
+      "imagenet/bigdl_inception-v1-quantize_imagenet_0.4.0.model")
+  }
+
+  "ImageClassifier" should "predict bigdl inception-v1-quantize" in {
+    predict("https://s3-ap-southeast-1.amazonaws.com/bigdl-models/imageclassification/imagenet/" +
+      "bigdl_inception-v1-quantize_imagenet_0.4.0.model")
   }
 }

@@ -44,7 +44,7 @@ class ImageModel(ZooModel):
         return ImageConfigure(jvalue=config)
 
     @staticmethod
-    def load_model(path, weight_path=None, bigdl_type="float"):
+    def load_model(path, weight_path=None, model_type=None, bigdl_type="float"):
         """
         Load an existing Image model (with weights).
 
@@ -53,7 +53,7 @@ class ImageModel(ZooModel):
               HDFS path should be like 'hdfs://[host]:[port]/xxx'.
               Amazon S3 path should be like 's3a://bucket/xxx'.
         """
-        jmodel = callBigDlFunc(bigdl_type, "loadImageModel", path, weight_path)
+        jmodel = callBigDlFunc(bigdl_type, "loadImageModel", path, weight_path, model_type)
         model = ZooModel._do_load(jmodel, bigdl_type)
         model.__class__ = ImageModel
         return model
