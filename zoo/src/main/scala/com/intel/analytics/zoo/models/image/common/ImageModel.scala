@@ -23,6 +23,7 @@ import com.intel.analytics.zoo.feature.image.ImageSet
 import com.intel.analytics.zoo.models.common.ZooModel
 import com.intel.analytics.zoo.models.image.imageclassification.ImageClassifier
 import com.intel.analytics.zoo.models.objectdetection.ObjectDetector
+import org.apache.log4j.Logger
 
 import scala.reflect.ClassTag
 
@@ -74,6 +75,8 @@ abstract class ImageModel[T: ClassTag]()(implicit ev: TensorNumeric[T])
 }
 
 object ImageModel {
+
+  val logger = Logger.getLogger(getClass)
   /**
    * Load an pre-trained image model (with weights).
    *
@@ -98,12 +101,11 @@ object ImageModel {
         case "imageclassification" => {
           new ImageClassifier[T]()
         }
+        case _ => logger.warn(s"$modelType is not defined in Analytics zoo.")
+            return null
       }
       specificModel.addModel(model)
-      val name = model.getName()
-      val publisher = name.split(ImageConfigure.splitter)(0)
-      val zooName = name.replace(publisher, "analytics-zoo")
-      specificModel.setName(zooName)
+      specificModel.setName(model.getName())
     }
     imageModel.config = ImageConfigure.parse(model.getName())
     imageModel
