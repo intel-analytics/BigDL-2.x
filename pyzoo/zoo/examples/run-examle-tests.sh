@@ -25,7 +25,7 @@ then
     echo "analytics-zoo-data/data/20news-18828.tar.gz already exists" 
 else
     wget $FTP_URI/analytics-zoo-data/data/news20/20news-18828.tar.gz -P analytics-zoo-data/data 
-    tar zxf analytics-zoo-data/data/20news-18828.tar.gz -d analytics-zoo-data/data/20news-18828
+    tar zxf analytics-zoo-data/data/20news-18828.tar.gz -C analytics-zoo-data/data/20news-18828
 fi
 ${SPARK_HOME}/bin/spark-submit \
     --master ${MASTER} \
