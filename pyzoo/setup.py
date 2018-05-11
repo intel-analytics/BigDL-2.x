@@ -28,7 +28,8 @@ analytics_zoo_home = os.path.abspath(__file__ + "/../../")
 try:
     exec(open('zoo/version.py').read())
 except IOError:
-    print("Failed to load Analytics Zoo version file for packaging. You must be in Analytics Zoo's pyzoo dir.")
+    print("Failed to load Analytics Zoo version file for packaging. \
+      You must be in Analytics Zoo's pyzoo dir.")
     sys.exit(-1)
 
 VERSION = __version__
@@ -43,6 +44,7 @@ and run sdist.
       cd pyzoo
       python setup.py sdist
       pip install dist/*.tar.gz"""
+
 
 def build_from_source():
     code_path = analytics_zoo_home + "/pyzoo/zoo/common/nncontext.py"
@@ -102,20 +104,20 @@ def setup_package():
                   'zoo.share',
                   'bigdl',
                   'bigdl.dataset',
-                  'bigdl.nn', 
-                  'bigdl.nn.keras', 
-                  'bigdl.transform',  
-                  'bigdl.transform.vision', 
-                  'bigdl.keras',  
-                  'bigdl.examples', 
-                  'bigdl.examples.keras', 
-                  'bigdl.models', 
-                  'bigdl.models.lenet', 
-                  'bigdl.models.local_lenet', 
-                  'bigdl.models.ml_pipeline', 
-                  'bigdl.models.rnn', 
-                  'bigdl.models.textclassifier',  
-                  'bigdl.optim',  
+                  'bigdl.nn',
+                  'bigdl.nn.keras',
+                  'bigdl.transform',
+                  'bigdl.transform.vision',
+                  'bigdl.keras',
+                  'bigdl.examples',
+                  'bigdl.examples.keras',
+                  'bigdl.models',
+                  'bigdl.models.lenet',
+                  'bigdl.models.local_lenet',
+                  'bigdl.models.ml_pipeline',
+                  'bigdl.models.rnn',
+                  'bigdl.models.textclassifier',
+                  'bigdl.optim',
                   'bigdl.util'],
         install_requires=['numpy>=1.7', 'pyspark>=2.2', 'six>=1.10.0'],
         dependency_links=['https://d3kbcqa49mib13.cloudfront.net/spark-2.0.0-bin-hadoop2.7.tgz'],

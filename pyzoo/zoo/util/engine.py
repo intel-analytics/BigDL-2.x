@@ -34,7 +34,8 @@ def check_spark_source_conflict(spark_home, pyspark_path):
     # trigger a warning if two spark sources don't match
     if spark_home and not pyspark_path.startswith(spark_home):
         warning_msg = "Find both SPARK_HOME and pyspark. You may need to check whether they " + \
-                      "match with each other. SPARK_HOME environment variable is set to: " + spark_home + \
+                      "match with each other. SPARK_HOME environment variable" + \
+                      "is set to: " + spark_home + \
                       ", and pyspark is found in: " + pyspark_path + ". If they are unmatched, " + \
                       "please use one source only to avoid conflict. " + \
                       "For example, you can unset SPARK_HOME and use pyspark only."
@@ -108,12 +109,12 @@ def is_spark_below_2_2():
     Check if spark version is below 2.2
     """
     import pyspark
-    if(hasattr(pyspark,"version")):
+    if(hasattr(pyspark, "version")):
         full_version = pyspark.version.__version__
         # We only need the general spark version (eg, 1.6, 2.2).
         parts = full_version.split(".")
         spark_version = parts[0] + "." + parts[1]
-        if(compare_version(spark_version, "2.2")>=0):
+        if(compare_version(spark_version, "2.2") >= 0):
             return False
     return True
 
@@ -123,7 +124,9 @@ def compare_version(version1, version2):
     Compare version strings.
     :param version1;
     :param version2;
-    :return: 1 if version1 is after version2; -1 if version1 is before version2; 0 if two versions are the same.
+    :return: 1 if version1 is after version2;
+             -1 if version1 is before version2;
+             0 if two versions are the same.
     """
     v1Arr = version1.split(".")
     v2Arr = version2.split(".")
