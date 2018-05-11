@@ -54,6 +54,9 @@ abstract class KerasNet[T: ClassTag](implicit ev: TensorNumeric[T])
   private var tensorBoardAppName: String = null
   private var checkpointPath: String = null
   private var overWriteCheckPoint: Boolean = true
+  private var gradiantClipping: Boolean = true
+  private var constantGradientClippingParams: (Float, Float) = null
+  private var clipNorm: Option[Float] = None
 
   /**
    * Configure the learning process. It MUST be called before fit or evaluate.
@@ -117,6 +120,19 @@ abstract class KerasNet[T: ClassTag](implicit ev: TensorNumeric[T])
     this.overWriteCheckPoint = overWrite
   }
 
+  def disableGradientClipping(): Unit = {
+    this.gradiantClipping = false
+  }
+
+  def setConstantGradientClipping(min: Float, max: Float): Unit = {
+    this.constantGradientClippingParams = (min, max)
+  }
+
+
+  def setGradientClippingByl2Norm(clipNorm: Float): Unit = {
+    this.clipNorm = Some(clipNorm)
+  }
+
   private def toDataSet(x: RDD[Sample[T]], batchSize: Int): DataSet[MiniBatch[T]] = {
     if (x != null) DataSet.rdd(x) -> SampleToMiniBatch[T](batchSize)
     else null
@@ -147,6 +163,16 @@ abstract class KerasNet[T: ClassTag](implicit ev: TensorNumeric[T])
     }
     if (this.tensorBoardLogDir != null && this.tensorBoardAppName != null) {
       optimizer.setTrainSummary(TrainSummary(tensorBoardLogDir, tensorBoardAppName))
+    }
+    if (!this.gradiantClipping) {
+      optimizer.disableGradientClipping()
+    }
+    if (this.constantGradientClippingParams != null) {
+      optimizer.setConstantGradientClipping(this.constantGradientClippingParams._1,
+        this.constantGradientClippingParams._2)
+    }
+    if (this.clipNorm.isDefined) {
+      optimizer.setGradientClippingByl2Norm(this.clipNorm.get)
     }
     if (validationData != null) {
       require(this.vMethods != null, "Validation metrics haven't been set yet")
