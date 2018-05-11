@@ -18,12 +18,10 @@ import pytest
 from bigdl.nn.criterion import *
 from bigdl.nn.layer import *
 from bigdl.optim.optimizer import *
-from bigdl.util.common import *
 from numpy.testing import assert_allclose
 from pyspark.ml import Pipeline
 from pyspark.ml.feature import MinMaxScaler
 from pyspark.sql.types import *
-import tempfile
 
 from zoo.common.nncontext import *
 from zoo.pipeline.nnframes.nn_classifier import *
@@ -50,7 +48,8 @@ class TestNNClassifer():
         linear_model = Sequential().add(Linear(2, 2))
         mse_criterion = MSECriterion()
         estimator = NNEstimator(
-            linear_model, mse_criterion, FeatureLabelPreprocessing(SeqToTensor([2]), SeqToTensor([2]))
+            linear_model, mse_criterion,
+            FeatureLabelPreprocessing(SeqToTensor([2]), SeqToTensor([2]))
         ).setBatchSize(4).setMaxEpoch(1)
         data = self.sc.parallelize([
             ((2.0, 1.0), (1.0, 2.0)),
@@ -88,7 +87,7 @@ class TestNNClassifer():
         classNLL_criterion = ClassNLLCriterion()
         classifier = NNClassifier.create(
             model=linear_model, criterion=classNLL_criterion,
-            feature_preprocessing = SeqToTensor([2])
+            feature_preprocessing=SeqToTensor([2])
         )
         assert classifier.setBatchSize(20).getBatchSize() == 20
         assert classifier.setMaxEpoch(50).getMaxEpoch() == 50
@@ -182,12 +181,12 @@ class TestNNClassifer():
             res = nnModel.transform(df)
             assert type(res).__name__ == 'DataFrame'
             assert res.select("abcd", "xyz", "tt").count() == 4
-            
+
     def test_nnEstimator_create_with_feature_size(self):
         model = Sequential().add(Linear(2, 2))
         criterion = MSECriterion()
-        estimator = NNEstimator.createWithSize(model, criterion, [2], [2]
-        ).setBatchSize(4).setLearningRate(0.2).setMaxEpoch(40)
+        estimator = NNEstimator.createWithSize(model, criterion, [2], [2])\
+            .setBatchSize(4).setLearningRate(0.2).setMaxEpoch(40)
 
         data = self.sc.parallelize([
             ((2.0, 1.0), (1.0, 2.0)),
@@ -260,6 +259,31 @@ class TestNNClassifer():
         assert type(res).__name__ == 'DataFrame'
         assert res.select("abcd", "dcba").count() == 4
 
+    def test_nnModel_set_Preprocessing(self):
+        model = Sequential().add(Linear(2, 2))
+        criterion = MSECriterion()
+        estimator = NNEstimator.createWithSize(model, criterion, [2], [2])\
+            .setBatchSize(4).setLearningRate(0.2).setMaxEpoch(40)
+
+        data = self.sc.parallelize([
+            ((2.0, 1.0), (1.0, 2.0)),
+            ((1.0, 2.0), (2.0, 1.0)),
+            ((2.0, 1.0), (1.0, 2.0)),
+            ((1.0, 2.0), (2.0, 1.0))])
+
+        schema = StructType([
+            StructField("features", ArrayType(DoubleType(), False), False),
+            StructField("label", ArrayType(DoubleType(), False), False)])
+        df = self.sqlContext.createDataFrame(data, schema)
+        nnModel = estimator.fit(df)
+
+        newTransformer = ChainedPreprocessing([SeqToTensor([2]), TensorToSample()])
+        nnModel.setPreprocessing(newTransformer)
+
+        res = nnModel.transform(df)
+        assert type(res).__name__ == 'DataFrame'
+        assert res.count() == 4
+
     def test_nnclassifier_fit_nnclassifiermodel_transform(self):
         model = Sequential().add(Linear(2, 2))
         criterion = ClassNLLCriterion()
@@ -291,6 +315,31 @@ class TestNNClassifer():
             row_prediction = data[i][2]
             assert row_label == row_prediction
 
+    def test_nnclassifierModel_set_Preprocessing(self):
+        model = Sequential().add(Linear(2, 2))
+        criterion = ClassNLLCriterion()
+        classifier = NNClassifier.create(model, criterion, SeqToTensor([2])) \
+            .setBatchSize(4) \
+            .setLearningRate(0.2).setMaxEpoch(40)
+        data = self.sc.parallelize([
+            ((2.0, 1.0), 1.0),
+            ((1.0, 2.0), 2.0),
+            ((2.0, 1.0), 1.0),
+            ((1.0, 2.0), 2.0)])
+
+        schema = StructType([
+            StructField("features", ArrayType(DoubleType(), False), False),
+            StructField("label", DoubleType(), False)])
+        df = self.sqlContext.createDataFrame(data, schema)
+        nnClassifierModel = classifier.fit(df)
+
+        newTransformer = ChainedPreprocessing([SeqToTensor([2]), TensorToSample()])
+        nnClassifierModel.setPreprocessing(newTransformer)
+
+        res = nnClassifierModel.transform(df)
+        assert type(res).__name__ == 'DataFrame'
+        assert res.count() == 4
+
     def test_nnclassifier_create_with_size_fit_transform(self):
         model = Sequential().add(Linear(2, 2))
         criterion = ClassNLLCriterion()
@@ -310,7 +359,7 @@ class TestNNClassifer():
         nnClassifierModel = classifier.fit(df)
 
         res = nnClassifierModel.transform(df)
-        assert type(res).__name__ == 'DataFrame'            
+        assert type(res).__name__ == 'DataFrame'
 
     def test_nnclassifier_fit_different_optimMethods(self):
         model = Sequential().add(Linear(2, 2))
@@ -400,7 +449,7 @@ class TestNNClassifer():
 
             res = pipelineModel.transform(df)
             assert type(res).__name__ == 'DataFrame'
-        #TODO: Add test for ML Vector once infra is ready.
+        # TODO: Add test for ML Vector once infra is ready.
 
 if __name__ == "__main__":
     pytest.main()

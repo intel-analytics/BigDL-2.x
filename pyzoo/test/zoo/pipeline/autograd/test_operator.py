@@ -26,6 +26,7 @@ from zoo.pipeline.api.utils import remove_batch
 
 np.random.seed(1337)  # for reproducibility
 
+
 class TestOperator(ZooTestCase):
 
     def compare_binary_op(self, kk_func, z_layer, shape):
@@ -39,7 +40,7 @@ class TestOperator(ZooTestCase):
         y_value = np.random.uniform(0, 1, shape[1])
 
         k_grad_y_pred = KK.get_session().run(KK.gradients(kkresult, [x, y]),
-                                         feed_dict={x: x_value, y: y_value})
+                                             feed_dict={x: x_value, y: y_value})
         k_output = KK.get_session().run(kkresult,
                                         feed_dict={x: x_value, y: y_value})
         inputs = [Input(s) for s in remove_batch(shape)]
@@ -60,7 +61,7 @@ class TestOperator(ZooTestCase):
         x_value = np.random.uniform(0, 1, shape)
 
         k_grad_y_pred = KK.get_session().run(KK.gradients(kkresult, x),
-                                         feed_dict={x: x_value})
+                                             feed_dict={x: x_value})
         k_output = KK.get_session().run(kkresult,
                                         feed_dict={x: x_value})
         model = Sequential()
@@ -72,7 +73,6 @@ class TestOperator(ZooTestCase):
         z_grad_y_pred = model.backward(x_value, grad_output)
         self.assert_allclose(z_output, k_output)
         self.assert_allclose(z_grad_y_pred, k_grad_y_pred[0])
-
 
     def test_add(self):
         def z_add_func(x, y):
@@ -90,7 +90,7 @@ class TestOperator(ZooTestCase):
         def k_add_func(x):
             return x + 3.0
         self.compare_unary_op(k_add_func,
-                               Lambda(function=z_add_func), [2, 3])
+                              Lambda(function=z_add_func), [2, 3])
 
     def test_sub(self):
         def z_func(x, y):
@@ -108,8 +108,7 @@ class TestOperator(ZooTestCase):
         def k_func(x):
             return x - 3.0
         self.compare_unary_op(k_func,
-                               Lambda(function=z_func), [2, 3])
-
+                              Lambda(function=z_func), [2, 3])
 
     def test_div(self):
         def z_func(x, y):
@@ -127,8 +126,7 @@ class TestOperator(ZooTestCase):
         def k_func(x):
             return x / 3.0
         self.compare_unary_op(k_func,
-                               Lambda(function=z_func), [2, 3])
-
+                              Lambda(function=z_func), [2, 3])
 
     def test_mul(self):
         def z_func(x, y):
@@ -146,7 +144,7 @@ class TestOperator(ZooTestCase):
         def k_func(x):
             return x * 3.0
         self.compare_unary_op(k_func,
-                               Lambda(function=z_func), [2, 3])
+                              Lambda(function=z_func), [2, 3])
 
     def test_clip(self):
         def z_func(x):
@@ -180,7 +178,4 @@ class TestOperator(ZooTestCase):
 
 
 if __name__ == "__main__":
-   pytest.main([__file__])
-
-
-
+    pytest.main([__file__])

@@ -28,17 +28,20 @@ if sys.version >= '3':
     long = int
     unicode = str
 
+
 def read_pascal_label_map():
     """
     load pascal label map
     """
     return callBigDlFunc("float", "readPascalLabelMap")
 
+
 def read_coco_label_map():
     """
     load coco label map
     """
     return callBigDlFunc("float", "readCocoLabelMap")
+
 
 class ObjectDetector(ImageModel):
     """
@@ -65,6 +68,7 @@ class ObjectDetector(ImageModel):
         model.__class__ = ObjectDetector
         return model
 
+
 class ImInfo(FeatureTransformer):
     """
     Generate imInfo
@@ -72,6 +76,7 @@ class ImInfo(FeatureTransformer):
     """
     def __init__(self, bigdl_type="float"):
         super(ImInfo, self).__init__(bigdl_type)
+
 
 class DecodeOutput(FeatureTransformer):
     """
@@ -91,6 +96,7 @@ class DecodeOutput(FeatureTransformer):
     def __init__(self, bigdl_type="float"):
         super(DecodeOutput, self).__init__(bigdl_type)
 
+
 class ScaleDetection(FeatureTransformer):
     """
     If the detection is normalized, for example, ssd detected bounding box is in [0, 1],
@@ -101,13 +107,14 @@ class ScaleDetection(FeatureTransformer):
     def __init__(self, bigdl_type="float"):
         super(ScaleDetection, self).__init__(bigdl_type)
 
+
 class Visualizer(FeatureTransformer):
     """
     Visualizer is a transformer to visualize the detection results
     (tensors that encodes label, score, boundingbox)
     You can call image_frame.get_image() to get the visualized results
     """
-    def __init__(self, label_map, thresh = 0.3, encoding = "png",
+    def __init__(self, label_map, thresh=0.3, encoding="png",
                  bigdl_type="float"):
         self.value = callBigDlFunc(
             bigdl_type, JavaValue.jvm_class_constructor(self), label_map, thresh, encoding)

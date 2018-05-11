@@ -206,6 +206,16 @@
     </dependencies>
 
     <build>
+        <resources>
+            <resource>
+                <directory>${project.basedir}/src/main/resources</directory>
+            </resource>
+            <resource>
+                <!-- Include the properties file to provide the build information. -->
+                <directory>${project.build.directory}/extra-resources</directory>
+                <filtering>true</filtering>
+            </resource>
+        </resources>
         <pluginManagement>
             <plugins>
                 <plugin>
@@ -240,6 +250,31 @@
             </plugins>
         </pluginManagement>
         <plugins>
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>exec-maven-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <phase>generate-resources</phase>
+                        <configuration>
+                            <!-- Execute the shell script to generate the zoo build information. -->
+                            <arguments>
+                                <argument>${project.basedir}/../scripts/zoo-build-info</argument>
+                                <argument>${project.build.directory}/extra-resources</argument>
+                                <argument>${project.version}</argument>
+                                <argument>${spark.version}</argument>
+                                <argument>${scala.version}</argument>
+                                <argument>${java.version}</argument>
+                            </arguments>
+
+                            <executable>bash</executable>
+                        </configuration>
+                        <goals>
+                            <goal>exec</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
             <plugin>
                 <groupId>org.scalatest</groupId>
                 <artifactId>scalatest-maven-plugin</artifactId>

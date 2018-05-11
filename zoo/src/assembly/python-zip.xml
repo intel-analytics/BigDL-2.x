@@ -34,5 +34,13 @@
             <outputDirectory>/..</outputDirectory>
             <directory>${project.parent.basedir}/backend/bigdl/spark/dl/src/main/resources/</directory>
         </fileSet>
+
+        <fileSet>
+            <includes>
+                <include>**/*.properties</include>
+            </includes>
+            <outputDirectory>/..</outputDirectory>
+            <directory>${project.build.directory}/extra-resources/</directory>
+        </fileSet>
     </fileSets>
 </assembly>

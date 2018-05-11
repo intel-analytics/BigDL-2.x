@@ -17,17 +17,16 @@
 import keras.backend as KK
 import keras.layers as klayers
 import keras.objectives as kloss
-import numpy as np
 import pytest
 
 from test.zoo.pipeline.utils.test_utils import ZooTestCase
 from zoo.pipeline.api.autograd import *
-from zoo.pipeline.api.keras.engine import *
 from zoo.pipeline.api.keras.models import *
 from zoo.pipeline.api.keras.layers import *
 
 
 np.random.seed(1337)  # for reproducibility
+
 
 class TestLoss(ZooTestCase):
     # kkloss is a function which accept y_pred and y_true.
@@ -45,10 +44,11 @@ class TestLoss(ZooTestCase):
         y_true_value = np.random.uniform(0, 1, shape)
         y_pred_value = np.random.uniform(0, 1, shape)
 
-        k_grad_y_pred = KK.get_session().run(KK.gradients(kkloss, y_pred),
-                                         feed_dict={y_true: y_true_value, y_pred: y_pred_value})[0]
+        k_grad_y_pred = KK.get_session().run(
+            KK.gradients(kkloss, y_pred),
+            feed_dict={y_true: y_true_value, y_pred: y_pred_value})[0]
         k_output = KK.get_session().run(kkloss,
-                                         feed_dict={y_true: y_true_value, y_pred: y_pred_value})
+                                        feed_dict={y_true: y_true_value, y_pred: y_pred_value})
         z_output = zloss.forward(y_true_value, y_pred_value)
         z_grad_y_pred = zloss.backward(y_true_value, y_pred_value)
 
@@ -66,7 +66,7 @@ class TestLoss(ZooTestCase):
         def mean_absolute_error(y_true, y_pred):
             result = mean(abs(y_true - y_pred), axis=1)
             return result
-        data_len=1000
+        data_len = 1000
         X_ = np.random.uniform(0, 1, (1000, 2))
         Y_ = ((2 * X_).sum(1) + 0.4).reshape([data_len, 1])
         model = Sequential()
@@ -86,5 +86,6 @@ class TestLoss(ZooTestCase):
         predict_result = model.predict_local(X_)
         self.assert_allclose(Y_, predict_result.reshape((data_len, 1)), rtol=1e-1)
 
+
 if __name__ == "__main__":
-   pytest.main([__file__])
+    pytest.main([__file__])
