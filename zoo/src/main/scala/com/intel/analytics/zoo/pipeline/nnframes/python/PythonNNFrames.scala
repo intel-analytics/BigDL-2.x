@@ -138,10 +138,8 @@ class PythonNNFrames[T: ClassTag](implicit ev: TensorNumeric[T]) extends PythonB
     TensorToSample()
   }
 
-  def createFeatureToTupleAdapter(
-      sampleTransformer: Preprocessing[(Any, Any), Sample[T]]
-    ): FeatureToTupleAdapter[Any, Sample[T]] = {
-    FeatureToTupleAdapter(sampleTransformer).asInstanceOf[FeatureToTupleAdapter[Any, Sample[T]]]
+  def createToTuple(): ToTuple = {
+    ToTuple()
   }
 
   def createBigDLAdapter(bt: Transformer[Any, Any]): BigDLAdapter[Any, Any] = {
@@ -160,7 +158,7 @@ class PythonNNFrames[T: ClassTag](implicit ev: TensorNumeric[T]) extends PythonB
       trigger: Trigger,
       validationDF: DataFrame,
       vMethods : JList[ValidationMethod[T]],
-      batchSize: Int): NNEstimator[ T] = {
+      batchSize: Int): NNEstimator[T] = {
     estimator.setValidation(trigger, validationDF, vMethods.asScala.toArray, batchSize)
   }
 

@@ -272,7 +272,8 @@ class NNEstimator(JavaEstimator, HasFeaturesCol, HasLabelCol, HasPredictionCol, 
         return self.validation_config
 
     def _create_model(self, java_model):
-        nnModel = NNModel.of(java_model, FeatureToTupleAdapter(self.getSamplePreprocessing()),
+        nnModel = NNModel.of(java_model,
+                             ChainedPreprocessing([ToTuple(), self.getSamplePreprocessing()]),
                              self.bigdl_type)
         nnModel.setFeaturesCol(self.getFeaturesCol()) \
             .setPredictionCol(self.getPredictionCol()) \
@@ -360,8 +361,8 @@ class NNClassifier(NNEstimator):
         return self
 
     def _create_model(self, java_model):
-        classifierModel = NNClassifierModel.of(java_model, FeatureToTupleAdapter(
-            self.getSamplePreprocessing()), self.bigdl_type)
+        classifierModel = NNClassifierModel.of(java_model, ChainedPreprocessing(
+            [ToTuple(), self.getSamplePreprocessing()]), self.bigdl_type)
         classifierModel.setFeaturesCol(self.getFeaturesCol()) \
             .setPredictionCol(self.getPredictionCol()) \
             .setBatchSize(self.getBatchSize())

@@ -353,7 +353,7 @@ class NNClassifierSpec extends FlatSpec with Matchers with BeforeAndAfter {
 
     val nnModel = classifier.fit(df)
     val copied = nnModel.copy(ParamMap.empty)
-    assert(copied.isInstanceOf[NNClassifierModel[ _]])
+    assert(copied.isInstanceOf[NNClassifierModel[_]])
     assert(nnModel.model ne copied.model)
 
     assert(nnModel.model == copied.model)

@@ -649,7 +649,7 @@ object NNModel extends MLReadable[NNModel[_]] {
     }
   }
 
-  override def read: MLReader[NNModel[ _]] = new NNModelReader
+  override def read: MLReader[NNModel[_]] = new NNModelReader
 
-  override def load(path: String): NNModel[ _] = read.load(path)
+  override def load(path: String): NNModel[_] = read.load(path)
 }

@@ -189,25 +189,15 @@ class TestNNClassifer():
         estimator = NNEstimator(model, criterion, SeqToTensor([2]), SeqToTensor([2]))\
             .setBatchSize(4)\
             .setLearningRate(0.01).setMaxEpoch(1) \
-            .setFeaturesCol("abcd").setLabelCol("xyz").setPredictionCol("tt")
+            .setPredictionCol("tt")
 
-        data = self.sc.parallelize([
-            ((2.0, 1.0), (1.0, 2.0)),
-            ((1.0, 2.0), (2.0, 1.0)),
-            ((2.0, 1.0), (1.0, 2.0)),
-            ((1.0, 2.0), (2.0, 1.0))])
-
-        schema = StructType([
-            StructField("abcd", ArrayType(DoubleType(), False), False),
-            StructField("xyz", ArrayType(DoubleType(), False), False)])
-        df = self.sqlContext.createDataFrame(data, schema)
-
+        df = self.get_estimator_df()
         for opt in [SGD(learningrate=1e-3, learningrate_decay=0.0,),
                     Adam(), LBFGS(), Adagrad(), Adadelta()]:
             nnModel = estimator.setOptimMethod(opt).fit(df)
             res = nnModel.transform(df)
             assert type(res).__name__ == 'DataFrame'
-            assert res.select("abcd", "xyz", "tt").count() == 4
+            assert res.select("features", "label", "tt").count() == 4
 
     def test_nnEstimator_create_with_feature_size(self):
         model = Sequential().add(Linear(2, 2))
@@ -283,18 +273,8 @@ class TestNNClassifer():
         estimator = NNEstimator(model, criterion, [2], [2])\
             .setBatchSize(4).setLearningRate(0.2).setMaxEpoch(1)
 
-        data = self.sc.parallelize([
-            ((2.0, 1.0), (1.0, 2.0)),
-            ((1.0, 2.0), (2.0, 1.0)),
-            ((2.0, 1.0), (1.0, 2.0)),
-            ((1.0, 2.0), (2.0, 1.0))])
-
-        schema = StructType([
-            StructField("features", ArrayType(DoubleType(), False), False),
-            StructField("label", ArrayType(DoubleType(), False), False)])
-        df = self.sqlContext.createDataFrame(data, schema)
+        df = self.get_estimator_df()
         nnModel = estimator.fit(df)
-
         newTransformer = ChainedPreprocessing([SeqToTensor([2]), TensorToSample()])
         nnModel.setSamplePreprocessing(newTransformer)
 
@@ -308,16 +288,8 @@ class TestNNClassifer():
         classifier = NNClassifier(model, criterion, SeqToTensor([2])) \
             .setBatchSize(4) \
             .setLearningRate(0.2).setMaxEpoch(40)
-        data = self.sc.parallelize([
-            ((2.0, 1.0), 1.0),
-            ((1.0, 2.0), 2.0),
-            ((2.0, 1.0), 1.0),
-            ((1.0, 2.0), 2.0)])
 
-        schema = StructType([
-            StructField("features", ArrayType(DoubleType(), False), False),
-            StructField("label", DoubleType(), False)])
-        df = self.sqlContext.createDataFrame(data, schema)
+        df = self.get_classifier_df()
         nnClassifierModel = classifier.fit(df)
         assert(isinstance(nnClassifierModel, NNClassifierModel))
         res = nnClassifierModel.transform(df)
@@ -339,16 +311,8 @@ class TestNNClassifer():
         classifier = NNClassifier(model, criterion, SeqToTensor([2])) \
             .setBatchSize(4) \
             .setLearningRate(0.2).setMaxEpoch(1)
-        data = self.sc.parallelize([
-            ((2.0, 1.0), 1.0),
-            ((1.0, 2.0), 2.0),
-            ((2.0, 1.0), 1.0),
-            ((1.0, 2.0), 2.0)])
 
-        schema = StructType([
-            StructField("features", ArrayType(DoubleType(), False), False),
-            StructField("label", DoubleType(), False)])
-        df = self.sqlContext.createDataFrame(data, schema)
+        df = self.get_classifier_df()
         nnClassifierModel = classifier.fit(df)
 
         newTransformer = ChainedPreprocessing([SeqToTensor([2]), TensorToSample()])
@@ -364,16 +328,8 @@ class TestNNClassifer():
         classifier = NNClassifier(model, criterion, [2]) \
             .setBatchSize(4) \
             .setLearningRate(0.2).setMaxEpoch(40)
-        data = self.sc.parallelize([
-            ((2.0, 1.0), 1.0),
-            ((1.0, 2.0), 2.0),
-            ((2.0, 1.0), 1.0),
-            ((1.0, 2.0), 2.0)])
 
-        schema = StructType([
-            StructField("features", ArrayType(DoubleType(), False), False),
-            StructField("label", DoubleType(), False)])
-        df = self.sqlContext.createDataFrame(data, schema)
+        df = self.get_classifier_df()
         nnClassifierModel = classifier.fit(df)
 
         res = nnClassifierModel.transform(df)
@@ -385,17 +341,8 @@ class TestNNClassifer():
         classifier = NNClassifier(model, criterion, SeqToTensor([2]))\
             .setBatchSize(4) \
             .setLearningRate(0.2).setMaxEpoch(1)
-        data = self.sc.parallelize([
-            ((2.0, 1.0), 1.0),
-            ((1.0, 2.0), 2.0),
-            ((2.0, 1.0), 1.0),
-            ((1.0, 2.0), 2.0)])
 
-        schema = StructType([
-            StructField("features", ArrayType(DoubleType(), False), False),
-            StructField("label", DoubleType(), False)])
-        df = self.sqlContext.createDataFrame(data, schema)
-
+        df = self.get_classifier_df()
         for opt in [Adam(), SGD(learningrate=1e-2, learningrate_decay=1e-6,),
                     LBFGS(), Adagrad(), Adadelta()]:
             nnClassifierModel = classifier.setOptimMethod(opt).fit(df)
