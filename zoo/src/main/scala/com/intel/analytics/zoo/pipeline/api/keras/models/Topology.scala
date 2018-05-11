@@ -55,8 +55,8 @@ abstract class KerasNet[T: ClassTag](implicit ev: TensorNumeric[T])
   private var checkpointPath: String = null
   private var overWriteCheckPoint: Boolean = true
   private var gradiantClipping: Boolean = true
-  private var constantGradientClippingParams: (Float, Float) = null
-  private var clipNorm: Option[Float] = None
+  private var constantGradientClippingParams: (Double, Double) = null
+  private var clipNorm: Option[Double] = None
 
   /**
    * Configure the learning process. It MUST be called before fit or evaluate.
@@ -120,16 +120,32 @@ abstract class KerasNet[T: ClassTag](implicit ev: TensorNumeric[T])
     this.overWriteCheckPoint = overWrite
   }
 
+  /**
+   * Call this if you would like to disable gradient clipping during the training process.
+   * In order to take effect, it needs to be called before fit.
+   */
   def disableGradientClipping(): Unit = {
     this.gradiantClipping = false
   }
 
-  def setConstantGradientClipping(min: Float, max: Float): Unit = {
+  /**
+   * Call this if you would like to set constant gradient clipping during the training process.
+   * In order to take effect, it needs to be called before fit.
+   *
+   * @param min The minimum value to clip by. Double.
+   * @param max The maximum value to clip by. Double.
+   */
+  def setConstantGradientClipping(min: Double, max: Double): Unit = {
     this.constantGradientClippingParams = (min, max)
   }
 
-
-  def setGradientClippingByl2Norm(clipNorm: Float): Unit = {
+  /**
+   * Call this if you would like to clip gradient to a maximum L2-Norm during the training process.
+   * In order to take effect, it needs to be called before fit.
+   *
+   * @param clipNorm Gradient L2-Norm threshold. Double.
+   */
+  def setGradientClippingByL2Norm(clipNorm: Double): Unit = {
     this.clipNorm = Some(clipNorm)
   }
 
@@ -168,11 +184,11 @@ abstract class KerasNet[T: ClassTag](implicit ev: TensorNumeric[T])
       optimizer.disableGradientClipping()
     }
     if (this.constantGradientClippingParams != null) {
-      optimizer.setConstantGradientClipping(this.constantGradientClippingParams._1,
-        this.constantGradientClippingParams._2)
+      optimizer.setConstantGradientClipping(this.constantGradientClippingParams._1.toFloat,
+        this.constantGradientClippingParams._2.toFloat)
     }
     if (this.clipNorm.isDefined) {
-      optimizer.setGradientClippingByl2Norm(this.clipNorm.get)
+      optimizer.setGradientClippingByl2Norm(this.clipNorm.get.toFloat)
     }
     if (validationData != null) {
       require(this.vMethods != null, "Validation metrics haven't been set yet")
