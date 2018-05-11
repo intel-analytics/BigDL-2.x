@@ -121,7 +121,8 @@ class KerasNet(ZooKerasLayer):
 
     def set_gradient_clipping_by_l2_norm(self, clip_norm):
         """
-        Call this if you would like to clip gradient to a maximum L2-Norm during the training process.
+        Call this if you would like to clip gradient to a maximum L2-Norm
+        during the training process.
         In order to take effect, it needs to be called before fit.
 
         # Arguments
