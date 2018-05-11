@@ -1,5 +1,5 @@
 # Demo Setup Guide
-This notebook demostrates how to build neural network recommendation system with explict feedback using BigDL on Spark. 
+These two notebooks demostrate how to build neural network recommendation system with explict feedback using Analytics Zoo and BigDL on Spark. 
 
 ## Environment
 * Python 2.7
