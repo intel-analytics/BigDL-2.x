@@ -23,6 +23,8 @@ import com.intel.analytics.bigdl.transform.vision.image.ImageFeature
 import com.intel.analytics.bigdl.utils.Engine
 import com.intel.analytics.zoo.common.NNContext
 import com.intel.analytics.zoo.feature.image.ImageSet
+
+import com.intel.analytics.zoo.pipeline.api.keras.serializer.ModuleSerializationTest
 import org.apache.commons.io.FileUtils
 import org.scalatest.{FlatSpec, Matchers}
 import sys.process._
@@ -118,5 +120,11 @@ class ImageClassificationSpec extends FlatSpec with Matchers {
   "ImageClassifier" should "predict bigdl inception-v1-quantize" in {
     predict("https://s3-ap-southeast-1.amazonaws.com/bigdl-models/imageclassification/imagenet/" +
       "bigdl_inception-v1-quantize_imagenet_0.4.0.model")
+  }
+}
+
+class ImageClassifierSerialTest extends ModuleSerializationTest {
+  override def test(): Unit = {
+    // TODO: Add test for saveModel and extract load from the above unit test
   }
 }

@@ -23,7 +23,7 @@ from test.zoo.pipeline.utils.test_utils import ZooTestCase
 np.random.seed(1337)  # for reproducibility
 
 
-class TestTextClassification(ZooTestCase):
+class TestTextClassifier(ZooTestCase):
 
     def test_forward_backward(self):
         model = TextClassifier(10, 30, 100)

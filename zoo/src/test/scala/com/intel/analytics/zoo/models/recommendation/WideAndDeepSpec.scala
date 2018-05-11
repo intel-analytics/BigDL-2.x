@@ -23,6 +23,7 @@ import com.intel.analytics.bigdl.tensor.Tensor
 import com.intel.analytics.bigdl.utils.T
 import com.intel.analytics.zoo.common.NNContext
 import com.intel.analytics.zoo.pipeline.api.keras.ZooSpecHelper
+import com.intel.analytics.zoo.pipeline.api.keras.serializer.ModuleSerializationTest
 import org.apache.log4j.{Level, Logger}
 import org.apache.spark.{SparkConf, SparkContext}
 import org.apache.spark.sql.{DataFrame, SQLContext}
@@ -248,14 +249,16 @@ class WideAndDeepSpec extends ZooSpecHelper {
     assert(userRecs.count() <= 200)
   }
 
-  "WideAndDeep save and load" should "work properly" in {
+}
+
+class WideAndDeepSerialTest extends ModuleSerializationTest {
+  override def test(): Unit = {
     val columnInfo = ColumnFeatureInfo(
       indicatorCols = Array("occupation", "gender"),
       indicatorDims = Array(21, 3))
     val model = WideAndDeep[Float]("deep", 5, columnInfo)
-
     val input = Tensor[Float](Array(100, 50))
       .fill(new Random(System.nanoTime()).nextInt(20).toFloat + 1)
-    testZooModelLoadSave(model, input, WideAndDeep.loadModel[Float])
+    ZooSpecHelper.testZooModelLoadSave(model, input, WideAndDeep.loadModel[Float])
   }
 }
