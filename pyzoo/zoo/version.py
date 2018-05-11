@@ -14,13 +14,4 @@
 # limitations under the License.
 #
 
-from bigdl.util.common import JavaCreator
-from zoo.common.nncontext import *
-from zoo.util.engine import prepare_env
-
-JavaCreator.add_creator_class("com.intel.analytics.zoo.pipeline.nnframes.python.PythonNNFrames")
-JavaCreator.add_creator_class("com.intel.analytics.zoo.feature.python.PythonImageFeature")
-JavaCreator.add_creator_class("com.intel.analytics.zoo.pipeline.api.keras.python.PythonAutoGrad")
-JavaCreator.add_creator_class("com.intel.analytics.zoo.models.python.PythonZooModel")
-check_version()
-prepare_env()
+__version__ = "0.1.0.dev0"
