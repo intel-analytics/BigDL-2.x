@@ -315,7 +315,6 @@ class NNModel(JavaTransformer, HasFeaturesCol, HasPredictionCol, HasBatchSize,
         self.samplePreprocessing = sample_preprocessing
         self._java_obj = self.value
         self.bigdl_type = bigdl_type
-        self._setDefault(batchSize=1)
 
     @classmethod
     def of(self, jvalue, sample_preprocessing=None, bigdl_type="float"):

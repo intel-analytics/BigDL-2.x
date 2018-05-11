@@ -20,22 +20,6 @@ import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric
 
 import scala.reflect.ClassTag
 
-class FeatureToTupleAdapter[F, T](
-    sampleTransformer: Transformer[(F, Any), Sample[T]]
-  )(implicit ev: TensorNumeric[T]) extends Preprocessing[F, Sample[T]] {
-
-  override def apply(prev: Iterator[F]): Iterator[Sample[T]] = {
-    sampleTransformer.apply(prev.map(f => (f, None)))
-  }
-}
-
-object FeatureToTupleAdapter {
-  def apply[F, L, T: ClassTag](
-      sampleTransformer: Transformer[(F, Any), Sample[T]]
-    )(implicit ev: TensorNumeric[T]): FeatureToTupleAdapter[F, T] =
-    new FeatureToTupleAdapter(sampleTransformer)
-}
-
 class TupleToFeatureAdapter[F, L, T](
     featureTransformer: Transformer[F, Sample[T]]
   )(implicit ev: TensorNumeric[T]) extends Preprocessing[(F, Option[L]), Sample[T]] {
