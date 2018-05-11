@@ -79,6 +79,19 @@ class NNClassifierSpec extends FlatSpec with Matchers with BeforeAndAfter {
     assert(estimator.getLearningRateDecay == 0)
   }
 
+  "NNClassifier" should "apply with differnt params" in {
+    val model = Linear[Float](6, 2)
+    val criterion = ClassNLLCriterion[Float]()
+    val data = sc.parallelize(smallData)
+    val df = sqlContext.createDataFrame(data).toDF("features", "label")
+
+    Seq(
+      NNClassifier(model, criterion),
+      NNClassifier(model, criterion, Array(6)),
+      NNClassifier(model, criterion, SeqToTensor(Array(6)))
+    ).foreach(c => c.setMaxEpoch(1).fit(df))
+  }
+
   "NNClassifier" should "get reasonable accuracy" in {
     val model = new Sequential().add(Linear[Float](6, 2)).add(LogSoftMax[Float])
     val criterion = ClassNLLCriterion[Float]()
@@ -210,7 +223,7 @@ class NNClassifierSpec extends FlatSpec with Matchers with BeforeAndAfter {
         .setMax(1).setMin(-1)
       val model = new Sequential().add(Linear[Float](6, 2)).add(LogSoftMax[Float])
       val criterion = ClassNLLCriterion[Float]()
-      val estimator = new NNClassifier(model, criterion)
+      val estimator = NNClassifier(model, criterion)
         .setBatchSize(nRecords)
         .setOptimMethod(new LBFGS[Float]())
         .setLearningRate(0.1)
@@ -232,8 +245,7 @@ class NNClassifierSpec extends FlatSpec with Matchers with BeforeAndAfter {
     val transformer = RowToImageFeature() -> Resize(256, 256) -> CenterCrop(224, 224) ->
       ChannelNormalize(123, 117, 104, 1, 1, 1) -> MatToTensor() -> ImageFeatureToTensor()
 
-    val estimator = new NNClassifier(Inception_v1(1000), ClassNLLCriterion[Float]())
-      .setFeaturePreprocessing(transformer)
+    val estimator = NNClassifier(Inception_v1(1000), ClassNLLCriterion[Float](), transformer)
       .setBatchSize(1)
       .setEndWhen(Trigger.maxIteration(1))
       .setFeaturesCol("image")
@@ -243,7 +255,7 @@ class NNClassifierSpec extends FlatSpec with Matchers with BeforeAndAfter {
   "NNClasifierModel" should "return same results after saving and loading" in {
     val data = sqlContext.createDataFrame(smallData).toDF("features", "label")
     val module = new Sequential[Double]().add(Linear[Double](6, 2)).add(LogSoftMax[Double])
-    val nnModel = new NNClassifierModel(module)
+    val nnModel = NNClassifierModel(module)
     val result = nnModel.transform(data).rdd.map(_.getAs[Double](2)).collect().sorted
 
     val tmpFile = File.createTempFile("NNModel", "zoo")
@@ -271,7 +283,7 @@ class NNClassifierSpec extends FlatSpec with Matchers with BeforeAndAfter {
     val data = sc.parallelize(
       smallData.map(p => (org.apache.spark.mllib.linalg.Vectors.dense(p._1), p._2)))
     val df: DataFrame = sqlContext.createDataFrame(data).toDF("features", "label")
-    val classifier = new NNClassifier(model, criterion)
+    val classifier = NNClassifier(model, criterion)
       .setBatchSize(31)
       .setOptimMethod(new LBFGS[Float]())
       .setLearningRate(0.123)
@@ -305,7 +317,7 @@ class NNClassifierSpec extends FlatSpec with Matchers with BeforeAndAfter {
     val model = new Sequential().add(Linear[Float](6, 2)).add(LogSoftMax[Float])
     val sampleTransformer = SeqToTensor(Array(6)) -> TensorToSample()
 
-    val nnModel = new NNClassifierModel(model).setBatchSize(nRecords)
+    val nnModel = NNClassifierModel(model).setBatchSize(nRecords)
     val data = sc.parallelize(smallData)
     val df = sqlContext.createDataFrame(data).toDF("features", "label")
 
@@ -318,7 +330,7 @@ class NNClassifierSpec extends FlatSpec with Matchers with BeforeAndAfter {
     val data = sc.parallelize(
       smallData.map(p => (org.apache.spark.mllib.linalg.Vectors.dense(p._1), p._2)))
     val df: DataFrame = sqlContext.createDataFrame(data).toDF("abc", "la")
-    val classifier = new NNClassifier(model, criterion)
+    val classifier = NNClassifier(model, criterion)
       .setBatchSize(31)
       .setOptimMethod(new LBFGS[Float]())
       .setLearningRate(0.123)
@@ -341,7 +353,7 @@ class NNClassifierSpec extends FlatSpec with Matchers with BeforeAndAfter {
     val criterion = ClassNLLCriterion[Float]()
     val data = sc.parallelize(smallData)
     val df = sqlContext.createDataFrame(data).toDF("features", "label")
-    val classifier = new NNClassifier(model, criterion)
+    val classifier = NNClassifier(model, criterion)
       .setBatchSize(31)
       .setMaxEpoch(1)
 

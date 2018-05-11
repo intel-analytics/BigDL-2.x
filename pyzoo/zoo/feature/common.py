@@ -56,7 +56,7 @@ class SeqToTensor(Preprocessing):
     a Transformer that converts an Array[_] or Seq[_] to a Tensor.
     :param size dimensions of target Tensor.
     """
-    def __init__(self, size, bigdl_type="float"):
+    def __init__(self, size=[], bigdl_type="float"):
         super(SeqToTensor, self).__init__(bigdl_type, size)
 
 

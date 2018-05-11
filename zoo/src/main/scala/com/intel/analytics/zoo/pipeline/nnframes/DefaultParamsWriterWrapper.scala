@@ -15,19 +15,12 @@
  */
 package org.apache.spark.ml
 
-import java.io._
-import java.util.Base64
-
-import com.intel.analytics.bigdl.tensor.Tensor
-import com.intel.analytics.zoo.feature.common.Preprocessing
-import org.apache.commons.lang3.SerializationUtils
 import org.apache.spark.SparkContext
-import org.apache.spark.annotation.DeveloperApi
-import org.apache.spark.ml.param.{Param, ParamPair, ParamValidators, Params}
+import org.apache.spark.ml.param.Params
 import org.apache.spark.ml.util.DefaultParamsReader.Metadata
 import org.apache.spark.ml.util.{DefaultParamsReader, DefaultParamsWriter}
-import org.json4s.jackson.JsonMethods.{compact, parse, render}
-import org.json4s.{DefaultFormats, JInt, JObject, JString, JValue}
+import org.json4s.{JObject, JValue}
+
 
 object DefaultParamsWriterWrapper {
   def saveMetadata(
@@ -45,27 +38,5 @@ object DefaultParamsWriterWrapper {
 
   def getAndSetParams(instance: Params, metadata: Metadata): Unit = {
     DefaultParamsReader.getAndSetParams(instance, metadata)
-  }
-}
-
-
-class PreprocessingParam[IN <: Any, OUT <: Any](parent: Params, name: String, doc: String,
-    isValid: Preprocessing[IN, OUT] => Boolean)
-  extends Param[Preprocessing[IN, OUT]](parent, name, doc, isValid) {
-
-  def this(parent: Params, name: String, doc: String) =
-    this(parent, name, doc, (_: Any) => true)
-
-  override def w(value: Preprocessing[IN, OUT]): ParamPair[Preprocessing[IN, OUT]] =
-    super.w(value)
-
-  override def jsonEncode(value: Preprocessing[IN, OUT]): String = {
-    val bytes = SerializationUtils.serialize(value)
-    bytes.mkString(",")
-  }
-
-  override def jsonDecode(str: String): Preprocessing[IN, OUT] = {
-    val bytes = str.split(",").map(_.toByte)
-    SerializationUtils.deserialize[Preprocessing[IN, OUT]](bytes)
   }
 }

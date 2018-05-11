@@ -43,8 +43,7 @@ object ImageInferenceExample {
         ChannelNormalize(123, 117, 104) -> MatToTensor() -> ImageFeatureToTensor()
 
       val model = Module.loadCaffeModel[Float](params.caffeDefPath, params.modelPath)
-      val dlmodel = new NNClassifierModel(model)
-        .setFeaturePreprocessing(transformer)
+      val dlmodel = NNClassifierModel(model, transformer)
         .setBatchSize(params.batchSize)
         .setFeaturesCol("image")
         .setPredictionCol("prediction")

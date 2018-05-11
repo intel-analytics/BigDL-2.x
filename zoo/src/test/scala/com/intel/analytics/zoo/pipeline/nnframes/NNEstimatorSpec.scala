@@ -27,7 +27,7 @@ import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric.NumericF
 import com.intel.analytics.bigdl.utils.Engine
 import com.intel.analytics.bigdl.utils.RandomGenerator.RNG
 import com.intel.analytics.bigdl.visualization.{TrainSummary, ValidationSummary}
-import com.intel.analytics.zoo.feature.common._
+import com.intel.analytics.zoo.feature.common.{TensorToSample, _}
 import com.intel.analytics.zoo.feature.image._
 import org.apache.spark.SparkContext
 import org.apache.spark.ml.{Pipeline, PipelineModel}
@@ -377,8 +377,7 @@ class NNEstimatorSpec extends FlatSpec with Matchers with BeforeAndAfter {
     assert(imageDF.count() == 1)
     val transformer = RowToImageFeature() -> Resize(256, 256) -> CenterCrop(224, 224) ->
       ChannelNormalize(123, 117, 104) -> MatToTensor() -> ImageFeatureToTensor()
-    val featurizer = new NNModel(Inception_v1(1000))
-      .setFeaturePreprocessing(transformer)
+    val featurizer = NNModel(Inception_v1(1000), transformer)
       .setBatchSize(1)
       .setFeaturesCol("image")
     featurizer.transform(imageDF).show()
@@ -400,7 +399,7 @@ class NNEstimatorSpec extends FlatSpec with Matchers with BeforeAndAfter {
   "An NNModel" should "return same results after saving and loading" in {
     val data = sqlContext.createDataFrame(smallData).toDF("features", "label")
     val module = new Sequential[Double]().add(Linear[Double](6, 2)).add(LogSoftMax[Double])
-    val nnModel = new NNModel[Double](module).setFeaturePreprocessing(SeqToTensor[Double](Array(6)))
+    val nnModel = NNModel(module, SeqToTensor[Double](Array(6)))
 
     val tmpFile = File.createTempFile("DLModel", "bigdl")
     val filePath = tmpFile.getPath + Random.nextLong().toString

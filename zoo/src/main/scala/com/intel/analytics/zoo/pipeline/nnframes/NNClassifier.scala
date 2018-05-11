@@ -39,7 +39,7 @@ import scala.reflect.ClassTag
  * @param model BigDL module to be optimized
  * @param criterion  BigDL criterion method
  */
-class NNClassifier[T: ClassTag](
+class NNClassifier[T: ClassTag] private[zoo]  (
     @transient override val model: Module[T],
     override val criterion : Criterion[T],
     override val uid: String = Identifiable.randomUID("nnClassifier")
@@ -47,9 +47,11 @@ class NNClassifier[T: ClassTag](
   extends NNEstimator[T](model, criterion) {
 
   override protected def wrapBigDLModel(m: Module[T]): NNClassifierModel[T] = {
-    val clonedTransformer = ToTuple() -> $(samplePreprocessing).clonePreprocessing()
-    val dlModel = new NNClassifierModel[T](m)
-    copyValues(dlModel.setParent(this)).asInstanceOf[NNClassifierModel[T]]
+    val classifierModel = new NNClassifierModel[T](m)
+    copyValues(classifierModel.setParent(this))
+    val clonedTransformer = ToTuple() -> $(samplePreprocessing)
+      .asInstanceOf[Preprocessing[(Any, Option[Any]), Sample[T]]].clonePreprocessing()
+    classifierModel.setSamplePreprocessing(clonedTransformer)
   }
 
   override def transformSchema(schema : StructType): StructType = {
@@ -75,6 +77,21 @@ class NNClassifier[T: ClassTag](
 }
 
 object NNClassifier {
+
+  /**
+   * Construct a [[NNClassifier]] with default Preprocessing, SeqToTensor
+   *
+   * @param model BigDL module to be optimized
+   * @param criterion  BigDL criterion method
+   */
+  def apply[F, T: ClassTag](
+      model: Module[T],
+      criterion: Criterion[T]
+    )(implicit ev: TensorNumeric[T]): NNClassifier[T] = {
+    new NNClassifier(model, criterion)
+        .setSamplePreprocessing(FeatureLabelPreprocessing(SeqToTensor(), ScalarToTensor()))
+  }
+
   /**
    * Construct a [[NNClassifier]] with a feature size. The constructor is useful
    * when the feature column contains the following data types:
@@ -89,9 +106,28 @@ object NNClassifier {
   def apply[F, T: ClassTag](
       model: Module[T],
       criterion: Criterion[T],
-      featureSize : Array[Int]
+      featureSize: Array[Int]
     )(implicit ev: TensorNumeric[T]): NNClassifier[T] = {
-    new NNClassifier(model, criterion).setFeaturePreprocessing(SeqToTensor(featureSize))
+    new NNClassifier(model, criterion)
+        .setSamplePreprocessing(
+          FeatureLabelPreprocessing(SeqToTensor(featureSize), ScalarToTensor()))
+  }
+
+  /**
+   * Construct a [[NNClassifier]] with a feature Preprocessing.
+   *
+   * @param model BigDL module to be optimized
+   * @param criterion  BigDL criterion method
+   * @param featurePreprocessing Preprocessing[F, Tensor[T] ].
+   */
+  def apply[F, T: ClassTag](
+      model: Module[T],
+      criterion: Criterion[T],
+      featurePreprocessing: Preprocessing[F, Tensor[T]]
+    )(implicit ev: TensorNumeric[T]): NNClassifier[T] = {
+    new NNClassifier(model, criterion)
+        .setSamplePreprocessing(
+          FeatureLabelPreprocessing(featurePreprocessing, ScalarToTensor()))
   }
 }
 
@@ -101,7 +137,7 @@ object NNClassifier {
  *
  * @param model trained BigDL models to use in prediction.
  */
-class NNClassifierModel[T: ClassTag](
+class NNClassifierModel[T: ClassTag] private[zoo] (
     @transient override val model: Module[T],
     override val uid: String = "DLClassifierModel"
   )(implicit ev: TensorNumeric[T]) extends NNModel[T](model) {
@@ -122,11 +158,47 @@ class NNClassifierModel[T: ClassTag](
 
 object NNClassifierModel extends MLReadable[NNClassifierModel[_]] {
 
+  /**
+   * Construct a [[NNClassifierModel]] with default Preprocessing, SeqToTensor
+   *
+   * @param model BigDL module to be optimized
+   */
+  def apply[F, T: ClassTag](
+      model: Module[T]
+    )(implicit ev: TensorNumeric[T]): NNClassifierModel[T] = {
+    new NNClassifierModel(model)
+      .setSamplePreprocessing(SeqToTensor() -> TensorToSample())
+  }
+
+  /**
+   * Construct a [[NNClassifierModel]] with a feature size. The constructor is useful
+   * when the feature column contains the following data types:
+   * Float, Double, Int, Array[Float], Array[Double], Array[Int] and MLlib Vector. The feature
+   * data are converted to Tensors with the specified sizes before sending to the model.
+   *
+   * @param model BigDL module to be optimized
+   * @param featureSize The size (Tensor dimensions) of the feature data. e.g. an image may be with
+   *                    width * height = 28 * 28, featureSize = Array(28, 28).
+   */
   def apply[F, T: ClassTag](
       model: Module[T],
       featureSize : Array[Int]
     )(implicit ev: TensorNumeric[T]): NNClassifierModel[T] = {
-    new NNClassifierModel(model).setFeaturePreprocessing(SeqToTensor(featureSize))
+    new NNClassifierModel(model)
+      .setSamplePreprocessing(SeqToTensor(featureSize) -> TensorToSample())
+  }
+
+  /**
+   * Construct a [[NNClassifierModel]] with a feature Preprocessing.
+   *
+   * @param model BigDL module to be optimized
+   * @param featurePreprocessing Preprocessing[F, Tensor[T] ].
+   */
+  def apply[F, T: ClassTag](
+      model: Module[T],
+      featurePreprocessing: Preprocessing[F, Tensor[T]]
+    )(implicit ev: TensorNumeric[T]): NNClassifierModel[T] = {
+    new NNClassifierModel(model).setSamplePreprocessing(featurePreprocessing -> TensorToSample())
   }
 
   private[nnframes] class NNClassifierModelReader() extends MLReader[NNClassifierModel[_]] {
@@ -137,8 +209,10 @@ object NNClassifierModel extends MLReadable[NNClassifierModel[_]] {
       val nnModel = typeTag match {
         case "TensorDouble" =>
           new NNClassifierModel[Double](model.asInstanceOf[Module[Double]])
+            .setSamplePreprocessing(feaTran.asInstanceOf[Preprocessing[Any, Sample[Double]]])
         case "TensorFloat" =>
           new NNClassifierModel[Float](model.asInstanceOf[Module[Float]])
+            .setSamplePreprocessing(feaTran.asInstanceOf[Preprocessing[Any, Sample[Float]]])
         case _ =>
           throw new Exception("Only support float and double for now")
       }

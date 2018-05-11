@@ -28,7 +28,6 @@ class SeqToTensor[T: ClassTag](size: Array[Int])(implicit ev: TensorNumeric[T])
   extends Preprocessing[Any, Tensor[T]] {
 
   override def apply(prev: Iterator[Any]): Iterator[Tensor[T]] = {
-
     prev.map { f =>
       val feature = f match {
         case ff: Float => Array(ff).map(ev.fromType(_))

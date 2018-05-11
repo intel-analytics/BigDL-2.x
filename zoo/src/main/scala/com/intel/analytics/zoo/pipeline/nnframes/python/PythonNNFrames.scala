@@ -20,12 +20,12 @@ import java.util.{ArrayList => JArrayList, List => JList}
 
 import com.intel.analytics.bigdl.dataset.{Sample, Transformer}
 import com.intel.analytics.bigdl.optim.{OptimMethod, Trigger, ValidationMethod}
-import com.intel.analytics.bigdl.{Criterion, Module}
 import com.intel.analytics.bigdl.python.api.PythonBigDL
 import com.intel.analytics.bigdl.tensor.Tensor
 import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric
-import com.intel.analytics.zoo.feature.common._
 import com.intel.analytics.bigdl.visualization.{TrainSummary, ValidationSummary}
+import com.intel.analytics.bigdl.{Criterion, Module}
+import com.intel.analytics.zoo.feature.common._
 import com.intel.analytics.zoo.pipeline.nnframes._
 import org.apache.spark.api.java.JavaSparkContext
 import org.apache.spark.sql.DataFrame
@@ -51,7 +51,7 @@ class PythonNNFrames[T: ClassTag](implicit ev: TensorNumeric[T]) extends PythonB
       criterion: Criterion[T],
       sampleTransformer: Preprocessing[(Any, Option[Any]), Sample[T]]
     ): NNEstimator[T] = {
-    new NNEstimator(model, criterion).setSamplePreprocessing(sampleTransformer)
+    NNEstimator(model, criterion).setSamplePreprocessing(sampleTransformer)
   }
 
   def createNNClassifier(
@@ -59,25 +59,37 @@ class PythonNNFrames[T: ClassTag](implicit ev: TensorNumeric[T]) extends PythonB
       criterion: Criterion[T],
       samplePreprocessing: Preprocessing[(Any, Option[AnyVal]), Sample[T]]
     ): NNClassifier[T] = {
-    new NNClassifier(model, criterion).setSamplePreprocessing(samplePreprocessing)
+    NNClassifier(model, criterion).setSamplePreprocessing(samplePreprocessing)
   }
 
   def createNNModel(
       model: Module[T],
-      sampleTransformer: Preprocessing[Any, Sample[T]]): NNModel[T] = {
-    new NNModel(model).setSamplePreprocessing(sampleTransformer)
+      samplePreprocessing: Preprocessing[Any, Sample[T]]): NNModel[T] = {
+    new NNModel(model).setSamplePreprocessing(samplePreprocessing)
   }
 
   def createNNClassifierModel(
       model: Module[T],
-      featureTransformer: Preprocessing[Any, Tensor[T]]): NNClassifierModel[T] = {
-    new NNClassifierModel(model).setFeaturePreprocessing(featureTransformer)
+      samplePreprocessing: Preprocessing[Any, Sample[T]]): NNClassifierModel[T] = {
+    NNClassifierModel(model).setSamplePreprocessing(samplePreprocessing)
   }
 
   def setOptimMethod(
       estimator: NNEstimator[T],
       optimMethod: OptimMethod[T]): NNEstimator[T] = {
     estimator.setOptimMethod(optimMethod)
+  }
+
+  def setSamplePreprocessing(
+      estimator: NNEstimator[T],
+      samplePreprocessing: Preprocessing[(Any, Option[AnyVal]), Sample[T]]): NNEstimator[T] = {
+    estimator.setSamplePreprocessing(samplePreprocessing)
+  }
+
+  def setSamplePreprocessing(
+      model: NNModel[T],
+      samplePreprocessing: Preprocessing[Any, Sample[T]]): NNModel[T] = {
+    model.setSamplePreprocessing(samplePreprocessing)
   }
 
   def withOriginColumn(imageDF: DataFrame, imageColumn: String, originColumn: String): DataFrame = {
