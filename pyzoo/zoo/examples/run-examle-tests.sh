@@ -14,18 +14,18 @@ export FTP_URI=$FTP_URI
 
 echo "#1 start example test for textclassification"
 if [ -f analytics-zoo-data/data/glove.6B.zip ]
-then 
+then
 	echo "analytics-zoo-data/data/glove.6B.zip already exists" 
-else 
-    wget $FTP_URI/analytics-zoo-data/data/glove/glove.6B.zip -P analytics-zoo-data/data 
-    unzip -q analytics-zoo-data/data/glove.6B.zip -d analytics-zoo-data/data/glove.6B
+else
+	wget $FTP_URI/analytics-zoo-data/data/glove/glove.6B.zip -P analytics-zoo-data/data 
+	unzip -q analytics-zoo-data/data/glove.6B.zip -d analytics-zoo-data/data/glove.6B
 fi 
 if [ -f analytics-zoo-data/data/20news-18828.tar.gz ]
 then 
 	echo "analytics-zoo-data/data/20news-18828.tar.gz already exists" 
-else 
-    wget $FTP_URI/analytics-zoo-data/data/news20/20news-18828.tar.gz -P analytics-zoo-data/data 
-    tar zxf analytics-zoo-data/data/20news-18828.tar.gz
+else
+	wget $FTP_URI/analytics-zoo-data/data/news20/20news-18828.tar.gz -P ana lytics-zoo-data/data 
+	tar zxf analytics-zoo-data/data/20news-18828.tar.gz -d analytics-zoo-data/data/20news-18828
 fi
 ${SPARK_HOME}/bin/spark-submit \
     --master ${MASTER} \
