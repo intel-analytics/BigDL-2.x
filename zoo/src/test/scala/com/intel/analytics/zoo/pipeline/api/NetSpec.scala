@@ -16,8 +16,8 @@
 
 package com.intel.analytics.zoo.pipeline.api
 
-import com.intel.analytics.bigdl.NetUtils
-import com.intel.analytics.bigdl.nn.Graph
+import com.intel.analytics.bigdl.{Module, NetUtils}
+import com.intel.analytics.bigdl.nn._
 import com.intel.analytics.bigdl.utils.Shape
 import com.intel.analytics.zoo.pipeline.api.keras.ZooSpecHelper
 import com.intel.analytics.zoo.pipeline.api.keras.layers.Dense
@@ -42,10 +42,9 @@ class NetSpec extends ZooSpecHelper{
   "Load bigdl" should "work" in {
     val resource = getClass().getClassLoader().getResource("models")
     val path = resource.getPath + "/" + "bigdl"
-    val model = Net.loadBigDL[Float](s"$path/bigdl_inception-v1_imagenet_0.4.0.model")
-    val newModel = NetUtils.withGraphUtils(
-      model.asInstanceOf[Graph[Float]]).newGraph("pool5/drop_7x7_s1")
-    NetUtils.getOutputs(newModel).head.element.getName() should be ("pool5/drop_7x7_s1")
+    val model = Net.loadBigDL[Float](s"$path/bigdl_lenet.model")
+    val newModel = model.newGraph("reshape2")
+    NetUtils.getOutputs(newModel).head.element.getName() should be ("reshape2")
   }
 
   "Load tensorflow" should "work" in {

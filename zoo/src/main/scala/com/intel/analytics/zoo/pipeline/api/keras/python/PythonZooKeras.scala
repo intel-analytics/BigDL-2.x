@@ -186,6 +186,12 @@ class PythonZooKeras[T: ClassTag](implicit ev: TensorNumeric[T]) extends PythonB
     Net.loadBigDL[T](modulePath, weightPath)
   }
 
+  def netLoadCaffe(
+                    defPath: String,
+                    modelPath : String): AbstractModule[Activity, Activity, T] = {
+    Net.loadCaffe[T](defPath, modelPath)
+  }
+
   def netLoad(
                modulePath: String,
                weightPath : String): AbstractModule[Activity, Activity, T] = {
