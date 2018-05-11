@@ -49,14 +49,16 @@ object ImageTransferLearning {
         ChannelNormalize(123, 117, 104) -> MatToTensor() -> ImageFeatureToTensor()
       val loadedModel = Module
         .loadCaffeModel[Float](params.caffeDefPath, params.modelPath)
-      val featurizer = new NNModel(loadedModel, transformer)
+      val featurizer = new NNModel(loadedModel)
+        .setFeaturePreprocessing(transformer)
         .setBatchSize(params.batchSize)
         .setFeaturesCol("image")
         .setPredictionCol("embedding")
 
       val lrModel = Sequential().add(Linear(1000, 2)).add(LogSoftMax())
       val classifier = new NNClassifier(
-          lrModel, ClassNLLCriterion[Float](), SeqToTensor(Array(1000)))
+          lrModel, ClassNLLCriterion[Float]())
+        .setFeaturePreprocessing(SeqToTensor(Array(1000)))
         .setFeaturesCol("embedding")
         .setLearningRate(0.003)
         .setBatchSize(params.batchSize)

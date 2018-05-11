@@ -28,6 +28,7 @@ class SeqToTensor[T: ClassTag](size: Array[Int])(implicit ev: TensorNumeric[T])
   extends Preprocessing[Any, Tensor[T]] {
 
   override def apply(prev: Iterator[Any]): Iterator[Tensor[T]] = {
+
     prev.map { f =>
       val feature = f match {
         case ff: Float => Array(ff).map(ev.fromType(_))
@@ -36,9 +37,10 @@ class SeqToTensor[T: ClassTag](size: Array[Int])(implicit ev: TensorNumeric[T])
         case sd: Seq[Any] => matchSeq(sd)
         case mllibVec: org.apache.spark.mllib.linalg.Vector =>
           f.asInstanceOf[org.apache.spark.mllib.linalg.Vector ].toArray.map(ev.fromType(_))
-        case _ => throw new IllegalArgumentException("SeqToTensor only supports Float and Double")
+        case _ => throw new IllegalArgumentException("SeqToTensor only supports Float, Double, " +
+          s"Array[Float], Array[Double] or MLlib Vector but got $f")
       }
-      Tensor(feature, size)
+      Tensor(feature, if (size.isEmpty) Array(feature.length) else size)
     }
   }
 
@@ -53,6 +55,6 @@ class SeqToTensor[T: ClassTag](size: Array[Int])(implicit ev: TensorNumeric[T])
 
 
 object SeqToTensor {
-  def apply[T: ClassTag](size: Array[Int])(implicit ev: TensorNumeric[T]): SeqToTensor[T] =
+  def apply[T: ClassTag](size: Array[Int] = Array())(implicit ev: TensorNumeric[T]): SeqToTensor[T] =
     new SeqToTensor[T](size)
 }

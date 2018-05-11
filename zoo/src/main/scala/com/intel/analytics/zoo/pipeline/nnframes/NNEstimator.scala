@@ -25,19 +25,17 @@ import com.intel.analytics.bigdl.optim._
 import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric
 import org.apache.hadoop.fs.Path
 import org.apache.spark.SparkContext
-import com.intel.analytics.bigdl.tensor.{Tensor, DoubleType => TensorDouble,
-  FloatType => TensorFloat}
+import com.intel.analytics.bigdl.tensor.{Tensor, DoubleType => TensorDouble, FloatType => TensorFloat}
 import com.intel.analytics.bigdl.utils.T
 import com.intel.analytics.bigdl.utils.serializer.ModuleLoader
 import com.intel.analytics.bigdl.visualization.{TrainSummary, ValidationSummary}
-import com.intel.analytics.zoo.feature.common._
+import com.intel.analytics.zoo.feature.common.{Preprocessing, _}
 import org.apache.spark.ml.adapter.{HasFeaturesCol, HasPredictionCol, SchemaUtils}
-import org.apache.spark.ml.{DLEstimatorBase, DLTransformerBase, DefaultParamsWriterWrapper}
+import org.apache.spark.ml.{DLEstimatorBase, DLTransformerBase, DefaultParamsWriterWrapper, PreprocessingParam}
 import org.apache.spark.ml.param._
 import org.apache.spark.sql.types._
 import org.apache.spark.sql.{DataFrame, Row}
 import org.apache.spark.ml.util._
-import org.apache.spark.rdd.RDD
 import org.json4s.{DefaultFormats, JObject}
 import org.json4s.JsonDSL._
 
@@ -100,6 +98,24 @@ private[nnframes] trait TrainingParams[@specialized(Float, Double) T] extends Pa
 private[nnframes] trait NNParams[@specialized(Float, Double) T] extends HasFeaturesCol
   with HasPredictionCol with HasBatchSize {
 
+  final val featurePreprocessing = new Param[Preprocessing[Any, Tensor[T]]](this,
+    "featurePreprocessing", "featurePreprocessing ")
+
+  def getFeaturePreprocessingd: Preprocessing[Any, Tensor[T]] = $(featurePreprocessing)
+
+  final val labelPreprocessing = new Param[Preprocessing[Any, Tensor[T]]](this,
+    "labelPreprocessing", "labelPreprocessing ")
+
+  def getLabelPreprocessingd: Preprocessing[Any, Tensor[T]] = $(labelPreprocessing)
+
+  final val samplePreprocessing = new Param[Preprocessing[Any, Sample[T]]](this,
+    "samplePreprocessing", "samplePreprocessing ")
+
+  set(samplePreprocessing, FeatureLabelPreprocessing(SeqToTensor(), SeqToTensor())
+    .asInstanceOf[Preprocessing[Any, Sample[T]]])
+
+  def getSamplePreprocessing: Preprocessing[Any, Sample[T]] = $(samplePreprocessing)
+
   setDefault(batchSize -> 1)
 }
 
@@ -123,63 +139,25 @@ private[nnframes] trait NNParams[@specialized(Float, Double) T] extends HasFeatu
  * labelPreprocessing when applicable.
  * @param model BigDL module to be optimized
  * @param criterion BigDL criterion
- * @param samplePreprocessing Expert param. A [[Preprocessing]] that transforms the
- *        (feature, Option[label]) tuple to a BigDL Sample[T], where T is decided by the BigDL
- *        model.
- *        Note: [[samplePreprocessing]] should be able to handle the case that label = None.
- *        During fit, [[NNEstimator]] will extract (feature, Option[label]) tuple from input
- *        DataFrame and use [[samplePreprocessing]] to transform the tuple into BigDL Sample to be
- *        ingested by the model. If Label column is not available, (feature, None) will be
- *        sent to [[samplePreprocessing]].
- *
- *        The [[samplePreprocessing]] will also be copied to the generated [[NNModel]] and applied
- *        to feature column during transform, where (feature, None) will be passed to the
- *        [[samplePreprocessing]].
- * @tparam F data type from feature column, E.g. Array[_] or Vector
- * @tparam L data type from label column, E.g. Float, Double, Array[_] or Vector
  * @tparam T data type of BigDL Model
  */
-class NNEstimator[F, L, T: ClassTag](
+class NNEstimator[T: ClassTag](
     @transient val model: Module[T],
     val criterion : Criterion[T],
-    val samplePreprocessing: Preprocessing[(F, Option[L]), Sample[T]],
-    override val uid: String = Identifiable.randomUID("nnEstimator")
+    override val uid: String = Identifiable.randomUID("nnestimator")
   )(implicit ev: TensorNumeric[T])
-  extends DLEstimatorBase[NNEstimator[F, L, T], NNModel[F, T]] with NNParams[T]
+  extends DLEstimatorBase[NNEstimator[T], NNModel[T]] with NNParams[T]
     with TrainingParams[T] {
 
-  /**
-   * Construct a [[NNEstimator]] with a featurePreprocessing and a labelPreprocessing, which
-   * convert the data in feature column and label column to Tensors (Multi-dimension array) for
-   * model.
-   *
-   * The featurePreprocessing will be copied to the fitted NNModel, and apply to feature
-   * column data during transform. This is the the recommended constructor for most users.
-   *
-   * @param model BigDL module to be optimized
-   * @param criterion BigDL criterion
-   * @param featurePreprocessing A [[Preprocessing]] that transforms the feature data to a
-   *        Tensor[T]. Some pre-defined [[Preprocessing]] are provided in package
-   *        [[com.intel.analytics.zoo.feature]]. E.g.
-   *        [[ArrayToTensor]] is used to transform Array[_] in DataFrame to Tensor. For a feature
-   *        column that contains 576 floats in an Array, Users can set ArrayToTensor(Array(28, 28))
-   *        as featurePreprocessing, which will convert the feature data into Tensors with dimension
-   *        28 * 28 to be processed by a convolution Model. For a simple linear model, user may
-   *        just use ArrayToTensor(Array(576)), which will convert the data into Tensors with
-   *        single dimension (576).
-   *        [[MLlibVectorToTensor]] is used to transform [[org.apache.spark.mllib.linalg.Vector]]
-   *        to a Tensor.
-   *        [[ScalarToTensor]] transform a number to a Tensor with single dimension of length 1.
-   *        Multiple [[Preprocessing]] can be combined as a [[ChainedPreprocessing]].
-   * @param labelPreprocessing similar to featurePreprocessing, but applies to Label data.
-   */
-  def this(
-      model: Module[T],
-      criterion: Criterion[T],
-      featurePreprocessing: Preprocessing[F, Tensor[T]],
-      labelPreprocessing: Preprocessing[L, Tensor[T]]
-    )(implicit ev: TensorNumeric[T]) =
-    this(model, criterion, FeatureLabelPreprocessing(featurePreprocessing, labelPreprocessing))
+  def setFeaturePreprocessing[FF <: Any](value: Preprocessing[FF, Tensor[T]]): this.type =
+    set(featurePreprocessing, value.asInstanceOf[Preprocessing[Any, Tensor[T]]])
+
+  def setLabelPreprocessing[LL <: Any](value: Preprocessing[LL, Tensor[T]]): this.type =
+    set(labelPreprocessing, value.asInstanceOf[Preprocessing[Any, Tensor[T]]])
+
+  def setSamplePreprocessing[FF <: Any, LL <: Any](
+      value: Preprocessing[(FF, Option[LL]), Sample[T]]): this.type =
+    set(samplePreprocessing, value.asInstanceOf[Preprocessing[Any, Sample[T]]])
 
   def setFeaturesCol(featuresColName: String): this.type = set(featuresCol, featuresColName)
 
@@ -266,7 +244,7 @@ class NNEstimator[F, L, T: ClassTag](
   /**
    * get the validate configuration during training
    *
-   * @return an Option of Tuple(ValidationTrigger, Validation data, Array[ValidationMethod[T]],
+   * @return an Option of Tuple(ValidationTrigger, Validation data, Array[ValidationMethod[T] ],
    *         batchsize)
    */
   def getValidation: Option[(Trigger, DataFrame, Array[ValidationMethod[T]], Int)] = {
@@ -303,6 +281,12 @@ class NNEstimator[F, L, T: ClassTag](
       dataFrame: DataFrame,
       batchSize: Int): DataSet[MiniBatch[T]] = {
 
+    val sp = if (isDefined(samplePreprocessing)) {
+      $(samplePreprocessing).asInstanceOf[Preprocessing[(Any, Option[Any]), Sample[T]]]
+    } else {
+      FeatureLabelPreprocessing($(featurePreprocessing), $(labelPreprocessing))
+    }
+
     val featureColIndex = dataFrame.schema.fieldIndex($(featuresCol))
     val labelColIndex = if (dataFrame.columns.contains($(labelCol))) {
       Some(dataFrame.schema.fieldIndex($(labelCol)))
@@ -310,18 +294,18 @@ class NNEstimator[F, L, T: ClassTag](
       None
     }
 
-    val featureAndLabel: RDD[(F, Option[L])] = dataFrame.rdd.map { row =>
-      val features = row.getAs[F](featureColIndex)
+    val featureAndLabel = dataFrame.rdd.map { row =>
+      val features = row.get(featureColIndex)
       val labels = labelColIndex match {
-        case Some(i) => Some(row.getAs[L](i))
+        case Some(i) => Some(row.get(i))
         case None => None
       }
       (features, labels)
     }
-    DataSet.rdd(featureAndLabel).transform(samplePreprocessing -> SampleToMiniBatch[T](batchSize))
+    DataSet.rdd(featureAndLabel).transform(sp -> SampleToMiniBatch[T](batchSize))
   }
 
-  protected override def internalFit(dataFrame: DataFrame): NNModel[F, T] = {
+  protected override def internalFit(dataFrame: DataFrame): NNModel[T] = {
     val trainingDataSet = getDataSet(dataFrame, $(batchSize))
     val state = T("learningRate" -> $(learningRate), "learningRateDecay" -> $(learningRateDecay))
     val endTrigger = if (isSet(endWhen)) $(endWhen) else Trigger.maxEpoch($(maxEpoch))
@@ -352,11 +336,15 @@ class NNEstimator[F, L, T: ClassTag](
   /**
    * sub classes can extend the method and return required model for different transform tasks
    */
-  protected def wrapBigDLModel(m: Module[T]): NNModel[F, T] = {
-    val clonedTransformer = FeatureToTupleAdapter(
-      samplePreprocessing.clonePreprocessing().asInstanceOf[Preprocessing[(F, Any), Sample[T]]])
-    val dlModel = new NNModel[F, T](m, clonedTransformer)
+  protected def wrapBigDLModel(m: Module[T]): NNModel[T] = {
+    val dlModel = new NNModel[T](m)
     copyValues(dlModel.setParent(this))
+    if (isDefined(samplePreprocessing)) {
+      val clonedTransformer = ToTuple() -> $(samplePreprocessing)
+        .asInstanceOf[Preprocessing[(Any, Option[Any]), Sample[T]]].clonePreprocessing()
+      dlModel.setSamplePreprocessing(clonedTransformer)
+    }
+    dlModel
   }
 
   /**
@@ -364,15 +352,13 @@ class NNEstimator[F, L, T: ClassTag](
    * Note that trainSummary and validationSummary will not be copied to the new instance since
    * currently they are not thread-safe.
    */
-  override def copy(extra: ParamMap): NNEstimator[F, L, T] = {
+  override def copy(extra: ParamMap): NNEstimator[T] = {
     val copied = copyValues(
-      new NNEstimator[F, L, T](
+      new NNEstimator[T](
         model.cloneModule(),
         criterion.cloneCriterion(),
-        samplePreprocessing.clonePreprocessing(),
         this.uid
-      ),
-      extra)
+      ), extra)
 
     if (this.validationTrigger.isDefined) {
       copied.setValidation(
@@ -383,24 +369,6 @@ class NNEstimator[F, L, T: ClassTag](
 }
 
 object NNEstimator {
-
-  /**
-   * Construct a [[NNEstimator]] with a featurePreprocessing only. The constructor is useful
-   * when both feature and label are derived from the same column of the original DataFrame.
-   *
-   * @param model BigDL module to be optimized
-   * @param criterion  BigDL criterion method
-   * @param featurePreprocessing A [[Preprocessing]] that transforms the feature data to a
-   *        Sample[T].
-   */
-  def apply[F, T: ClassTag](
-      model: Module[T],
-      criterion: Criterion[T],
-      featurePreprocessing: Preprocessing[F, Sample[T]]
-    )(implicit ev: TensorNumeric[T]): NNEstimator[F, Any, T] = {
-    new NNEstimator(model, criterion, TupleToFeatureAdapter(featurePreprocessing))
-  }
-
   /**
    * Construct a [[NNEstimator]] with a feature size and label size. The constructor is useful
    * when the feature column and label column contains the following data types:
@@ -418,8 +386,18 @@ object NNEstimator {
       criterion: Criterion[T],
       featureSize : Array[Int],
       labelSize : Array[Int]
-    )(implicit ev: TensorNumeric[T]): NNEstimator[Any, Any, T] = {
-    new NNEstimator(model, criterion, SeqToTensor(featureSize), SeqToTensor(labelSize))
+    )(implicit ev: TensorNumeric[T]): NNEstimator[T] = {
+    new NNEstimator(model, criterion).setFeaturePreprocessing(SeqToTensor(featureSize))
+      .setLabelPreprocessing(SeqToTensor(labelSize))
+  }
+
+  def apply[F, T: ClassTag](
+      model: Module[T],
+      criterion: Criterion[T]
+    )(implicit ev: TensorNumeric[T]): NNEstimator[T] = {
+    new NNEstimator(model, criterion)
+      .setFeaturePreprocessing(SeqToTensor())
+      .setLabelPreprocessing(SeqToTensor())
   }
 }
 
@@ -437,38 +415,12 @@ object NNEstimator {
  * T (Double or Float) is decided by the model type.
  *
  * @param model trainned BigDL models to use in prediction.
- * @param samplePreprocessing A [[Preprocessing]] that transforms the feature data to a Sample[T].
  */
-class NNModel[F, T: ClassTag](
+class NNModel[T: ClassTag](
     @transient val model: Module[T],
-    @transient var samplePreprocessing: Preprocessing[F, Sample[T]],
     override val uid: String = "DLModel")(implicit ev: TensorNumeric[T])
-  extends DLTransformerBase[NNModel[F, T]] with NNParams[T]
+  extends DLTransformerBase[NNModel[T]] with NNParams[T]
     with HasBatchSize with MLWritable {
-
-  /**
-   * Construct NNModel with a BigDL model and a feature-to-tensor [[Preprocessing]]
-   *
-   * @param model trainned BigDL models to use in prediction.
-   * @param featurePreprocessing A [[Preprocessing]] that transforms the feature data to a
-   *        Tensor[T]. Some pre-defined [[Preprocessing]] are provided in package
-   *        [[com.intel.analytics.zoo.feature]]. E.g.
-   *        [[ArrayToTensor]] is used to transform Array[_] in DataFrame to Tensor. For a feature
-   *        column that contains 576 floats in an Array, Users can set ArrayToTensor(Array(28, 28))
-   *        as featurePreprocessing, which will convert the feature data into Tensors with dimension
-   *        28 * 28 to be processed by a convolution Model. For a simple linear model, user may
-   *        just use ArrayToTensor(Array(576)), which will convert the data into Tensors with
-   *        single dimension (576).
-   *        [[MLlibVectorToTensor]] is used to transform [[org.apache.spark.mllib.linalg.Vector]]
-   *        to a Tensor.
-   *        [[ScalarToTensor]] transform a number to a Tensor with singel dimension of length 1.
-   *        Multiple [[Preprocessing]]  can be combined as a [[ChainedPreprocessing]].
-   */
-  def this(
-      model: Module[T],
-      featurePreprocessing: Preprocessing[F, Tensor[T]]
-    )(implicit ev: TensorNumeric[T]) =
-    this(model, featurePreprocessing -> TensorToSample())
 
   def setFeaturesCol(featuresColName: String): this.type = set(featuresCol, featuresColName)
 
@@ -480,10 +432,12 @@ class NNModel[F, T: ClassTag](
    * set Preprocessing.
    * @param value: A [[Preprocessing]] that transforms the feature data to a Sample[T].
    */
-  def setPreprocessing[FF <: Any](value: Preprocessing[FF, Sample[T]]): this.type = {
-    this.samplePreprocessing = value.asInstanceOf[Preprocessing[F, Sample[T]]]
-    this
-  }
+  def setSamplePreprocessing[FF <: Any](value: Preprocessing[FF, Sample[T]]): this.type =
+    set(samplePreprocessing, value.asInstanceOf[Preprocessing[Any, Sample[T]]])
+
+  def setFeaturePreprocessing[FF <: Any](value: Preprocessing[FF, Tensor[T]]): this.type =
+    set(samplePreprocessing,
+      (value -> TensorToSample()).asInstanceOf[Preprocessing[Any, Sample[T]]])
 
   /**
    * Perform a prediction on featureCol, and write result to the predictionCol.
@@ -495,7 +449,7 @@ class NNModel[F, T: ClassTag](
     val sc = dataFrame.sqlContext.sparkContext
     val modelBroadCast = ModelBroadcast[T]().broadcast(sc, model.evaluate())
     val localBatchSize = $(batchSize)
-    val featureTransformersBC = sc.broadcast(samplePreprocessing)
+    val featureTransformersBC = sc.broadcast($(samplePreprocessing))
     val toBatchBC = sc.broadcast(SampleToMiniBatch[T](localBatchSize))
 
     // concat the prediction and other columns in DF. avoid zip between RDD
@@ -505,7 +459,7 @@ class NNModel[F, T: ClassTag](
       val toBatch = toBatchBC.value.cloneTransformer()
 
       rowIter.grouped(localBatchSize).flatMap { rowBatch =>
-        val featureSeq = rowBatch.map(r => r.getAs[F](featureColIndex))
+        val featureSeq = rowBatch.map(r => r.get(featureColIndex))
         val samples = featureSteps(featureSeq.iterator)
         val predictions = toBatch(samples).flatMap { batch =>
           val batchResult = localModel.forward(batch.getInput()).toTensor.squeeze()
@@ -542,32 +496,28 @@ class NNModel[F, T: ClassTag](
     }
   }
 
-  override def copy(extra: ParamMap): NNModel[F, T] = {
-    val copied = new NNModel[F, T](model.cloneModule(),
-      samplePreprocessing.clonePreprocessing(), uid)
-      .setParent(parent)
+  override def copy(extra: ParamMap): NNModel[T] = {
+    val copied = new NNModel[T](model.cloneModule(), uid).setParent(parent)
     copyValues(copied, extra)
   }
 
   override def write: MLWriter = new NNModel.NNModelWriter[T](this)
 }
 
-object NNModel extends MLReadable[NNModel[_, _]] {
+object NNModel extends MLReadable[NNModel[_]] {
 
   import scala.language.existentials
   implicit val format: DefaultFormats.type = DefaultFormats
 
-  private[nnframes] class NNModelReader() extends MLReader[NNModel[_, _]] {
-    override def load(path: String): NNModel[_, _] = {
+  private[nnframes] class NNModelReader() extends MLReader[NNModel[_]] {
+    override def load(path: String): NNModel[_] = {
       val (meta, model, typeTag, feaTran) = NNModel.getMetaAndModel(path, sc)
       val featureSize = (meta.metadata \ "featureSize").extract[Seq[Int]].toArray
       val nnModel = typeTag match {
         case "TensorDouble" =>
-          new NNModel[Any, Double](model.asInstanceOf[Module[Double]],
-            feaTran.asInstanceOf[Preprocessing[Any, Sample[Double]]])
+          new NNModel[Double](model.asInstanceOf[Module[Double]])
         case "TensorFloat" =>
-          new NNModel[Any, Float](model.asInstanceOf[Module[Float]],
-            feaTran.asInstanceOf[Preprocessing[Any, Sample[Float]]])
+          new NNModel[Float](model.asInstanceOf[Module[Float]])
         case _ =>
           throw new Exception("Only support float and double for now")
       }
@@ -602,8 +552,17 @@ object NNModel extends MLReadable[NNModel[_, _]] {
     (meta, model, typeTag, featurePreprocessing)
   }
 
+  private def loadPreprocessing(path: String): Preprocessing[Any, Any = {
+    val ois = new ObjectInputStream(new FileInputStream(path))
+    val featurePreprocessing = try {
+      ois.readObject.asInstanceOf[Preprocessing[Any, Any]]
+    } finally {
+      ois.close()
+    }
+  }
+
   class NNModelWriter[@specialized(Float, Double) T: ClassTag](
-    instance: NNModel[_, T])(implicit ev: TensorNumeric[T]) extends MLWriter {
+    instance: NNModel[T])(implicit ev: TensorNumeric[T]) extends MLWriter {
     override protected def saveImpl(path: String): Unit = {
       NNModel.saveImpl[T](instance, instance.model,
         path, sc, shouldOverwrite)
@@ -620,7 +579,7 @@ object NNModel extends MLReadable[NNModel[_, _]] {
    * @param extraMetadata  Metadata such as featureSize.
    */
   private[nnframes] def saveImpl[@specialized(Float, Double) T: ClassTag](
-      instance: NNModel[_, T],
+      instance: NNModel[T],
       module: Module[T],
       path: String,
       sc: SparkContext,
@@ -633,21 +592,34 @@ object NNModel extends MLReadable[NNModel[_, _]] {
     }
 
     val extra = extraMetadata.getOrElse(JObject()) ~ ("tensorDataType" -> tensorDataType)
+    savePreprocessing(instance.getSamplePreprocessing,
+      new Path(path, "samplePreprocessing").toString)
+    savePreprocessing(instance.getFeaturePreprocessingd,
+      new Path(path, "featurePreprocessing").toString)
+    savePreprocessing(instance.getLabelPreprocessingd,
+      new Path(path, "featureLabelPreprocessing").toString)
+
+    instance.clear(instance.featurePreprocessing)
+    instance.clear(instance.labelPreprocessing)
+    instance.clear(instance.samplePreprocessing)
     DefaultParamsWriterWrapper.saveMetadata(instance, path, sc, Option(extra))
     val (modulePath, weightPath) =
       new Path(path, "module").toString -> new Path(path, "weight").toString
     module.saveModule(modulePath, weightPath, isOverWrite)
+  }
 
-    val fos = new FileOutputStream(new Path(path, "featurePreprocessing").toString)
+  private def savePreprocessing[IN <: Any, OUT <: Any](
+      p: Preprocessing[IN, OUT], path: String): Unit = {
+    val fos = new FileOutputStream(path)
     val oos = new ObjectOutputStream(fos)
     try {
-      oos.writeObject(instance.samplePreprocessing)
+      oos.writeObject(p)
     } finally {
       oos.close()
     }
   }
 
-  override def read: MLReader[NNModel[_, _]] = new NNModelReader
+  override def read: MLReader[NNModel[ _]] = new NNModelReader
 
-  override def load(path: String): NNModel[_, _] = read.load(path)
+  override def load(path: String): NNModel[ _] = read.load(path)
 }

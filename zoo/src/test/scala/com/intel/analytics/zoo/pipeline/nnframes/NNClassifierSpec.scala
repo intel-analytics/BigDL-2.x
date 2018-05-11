@@ -70,7 +70,7 @@ class NNClassifierSpec extends FlatSpec with Matchers with BeforeAndAfter {
   "NNClassifier" should "has correct default params" in {
     val model = Linear[Float](10, 1)
     val criterion = ClassNLLCriterion[Float]()
-    val estimator = new NNClassifier(model, criterion, SeqToTensor(Array(10)))
+    val estimator = NNClassifier(model, criterion, Array(10))
     assert(estimator.getFeaturesCol == "features")
     assert(estimator.getLabelCol == "label")
     assert(estimator.getMaxEpoch == 50)
@@ -82,7 +82,7 @@ class NNClassifierSpec extends FlatSpec with Matchers with BeforeAndAfter {
   "NNClassifier" should "get reasonable accuracy" in {
     val model = new Sequential().add(Linear[Float](6, 2)).add(LogSoftMax[Float])
     val criterion = ClassNLLCriterion[Float]()
-    val classifier = new NNClassifier(model, criterion, SeqToTensor(Array(6)))
+    val classifier = NNClassifier(model, criterion, Array(6))
       .setOptimMethod(new LBFGS[Float]())
       .setLearningRate(0.1)
       .setBatchSize(nRecords)
@@ -91,7 +91,7 @@ class NNClassifierSpec extends FlatSpec with Matchers with BeforeAndAfter {
     val df = sqlContext.createDataFrame(data).toDF("features", "label")
 
     val nnModel = classifier.fit(df)
-    nnModel.isInstanceOf[NNClassifierModel[_, _]] should be(true)
+    nnModel.isInstanceOf[NNClassifierModel[_]] should be(true)
     assert(nnModel.transform(df).where("prediction=label").count() > nRecords * 0.8)
   }
 
@@ -118,7 +118,7 @@ class NNClassifierSpec extends FlatSpec with Matchers with BeforeAndAfter {
   "NNClassifier" should "support scalar FEATURE" in {
     val model = new Sequential().add(Linear[Float](1, 2)).add(LogSoftMax[Float])
     val criterion = ClassNLLCriterion[Float]()
-    val classifier = new NNClassifier(model, criterion, ScalarToTensor())
+    val classifier = NNClassifier(model, criterion, Array(1))
       .setLearningRate(0.1)
       .setBatchSize(2)
       .setEndWhen(Trigger.maxIteration(2))
@@ -139,7 +139,7 @@ class NNClassifierSpec extends FlatSpec with Matchers with BeforeAndAfter {
     val model = new Sequential().add(Linear[Float](6, 2)).add(LogSoftMax[Float])
     val criterion = ClassNLLCriterion[Float]()
     Seq(new LBFGS[Float], new Adam[Float]).foreach { optimMethod =>
-      val classifier = new NNClassifier(model, criterion, SeqToTensor(Array(6)))
+      val classifier = NNClassifier(model, criterion, Array(6))
         .setBatchSize(nRecords)
         .setMaxEpoch(2)
         .setOptimMethod(optimMethod)
@@ -147,7 +147,7 @@ class NNClassifierSpec extends FlatSpec with Matchers with BeforeAndAfter {
       val data = sc.parallelize(smallData)
       val df = sqlContext.createDataFrame(data).toDF("features", "label")
       val nnModel = classifier.fit(df)
-      nnModel.isInstanceOf[NNClassifierModel[_, _]] should be(true)
+      nnModel.isInstanceOf[NNClassifierModel[_]] should be(true)
     }
   }
 
@@ -158,7 +158,7 @@ class NNClassifierSpec extends FlatSpec with Matchers with BeforeAndAfter {
     val logdir = com.google.common.io.Files.createTempDir()
     val model = new Sequential().add(Linear[Float](6, 2)).add(LogSoftMax[Float])
     val criterion = ClassNLLCriterion[Float]()
-    val classifier = new NNClassifier(model, criterion, SeqToTensor(Array(6)))
+    val classifier = NNClassifier(model, criterion, Array(6))
       .setBatchSize(nRecords)
       .setEndWhen(Trigger.maxIteration(5))
       .setOptimMethod(new Adam[Float])
@@ -180,7 +180,7 @@ class NNClassifierSpec extends FlatSpec with Matchers with BeforeAndAfter {
     val model = LeNet5(10)
 
     // init
-    val valTrans = new NNClassifierModel(model, SeqToTensor(Array(28, 28)))
+    val valTrans = NNClassifierModel(model, Array(28, 28))
       .setBatchSize(4)
 
     val tensorBuffer = new ArrayBuffer[Data]()
@@ -210,7 +210,7 @@ class NNClassifierSpec extends FlatSpec with Matchers with BeforeAndAfter {
         .setMax(1).setMin(-1)
       val model = new Sequential().add(Linear[Float](6, 2)).add(LogSoftMax[Float])
       val criterion = ClassNLLCriterion[Float]()
-      val estimator = new NNClassifier(model, criterion, MLlibVectorToTensor(Array(6)))
+      val estimator = new NNClassifier(model, criterion)
         .setBatchSize(nRecords)
         .setOptimMethod(new LBFGS[Float]())
         .setLearningRate(0.1)
@@ -232,8 +232,8 @@ class NNClassifierSpec extends FlatSpec with Matchers with BeforeAndAfter {
     val transformer = RowToImageFeature() -> Resize(256, 256) -> CenterCrop(224, 224) ->
       ChannelNormalize(123, 117, 104, 1, 1, 1) -> MatToTensor() -> ImageFeatureToTensor()
 
-    val estimator = new NNClassifier(
-      Inception_v1(1000), ClassNLLCriterion[Float](), transformer)
+    val estimator = new NNClassifier(Inception_v1(1000), ClassNLLCriterion[Float]())
+      .setFeaturePreprocessing(transformer)
       .setBatchSize(1)
       .setEndWhen(Trigger.maxIteration(1))
       .setFeaturesCol("image")
@@ -243,7 +243,7 @@ class NNClassifierSpec extends FlatSpec with Matchers with BeforeAndAfter {
   "NNClasifierModel" should "return same results after saving and loading" in {
     val data = sqlContext.createDataFrame(smallData).toDF("features", "label")
     val module = new Sequential[Double]().add(Linear[Double](6, 2)).add(LogSoftMax[Double])
-    val nnModel = new NNClassifierModel(module, SeqToTensor[Double](Array(6)))
+    val nnModel = new NNClassifierModel(module)
     val result = nnModel.transform(data).rdd.map(_.getAs[Double](2)).collect().sorted
 
     val tmpFile = File.createTempFile("NNModel", "zoo")
@@ -271,7 +271,7 @@ class NNClassifierSpec extends FlatSpec with Matchers with BeforeAndAfter {
     val data = sc.parallelize(
       smallData.map(p => (org.apache.spark.mllib.linalg.Vectors.dense(p._1), p._2)))
     val df: DataFrame = sqlContext.createDataFrame(data).toDF("features", "label")
-    val classifier = new NNClassifier(model, criterion, SeqToTensor(Array(6)))
+    val classifier = new NNClassifier(model, criterion)
       .setBatchSize(31)
       .setOptimMethod(new LBFGS[Float]())
       .setLearningRate(0.123)
@@ -305,7 +305,7 @@ class NNClassifierSpec extends FlatSpec with Matchers with BeforeAndAfter {
     val model = new Sequential().add(Linear[Float](6, 2)).add(LogSoftMax[Float])
     val sampleTransformer = SeqToTensor(Array(6)) -> TensorToSample()
 
-    val nnModel = new NNClassifierModel(model, sampleTransformer).setBatchSize(nRecords)
+    val nnModel = new NNClassifierModel(model).setBatchSize(nRecords)
     val data = sc.parallelize(smallData)
     val df = sqlContext.createDataFrame(data).toDF("features", "label")
 
@@ -318,7 +318,7 @@ class NNClassifierSpec extends FlatSpec with Matchers with BeforeAndAfter {
     val data = sc.parallelize(
       smallData.map(p => (org.apache.spark.mllib.linalg.Vectors.dense(p._1), p._2)))
     val df: DataFrame = sqlContext.createDataFrame(data).toDF("abc", "la")
-    val classifier = new NNClassifier(model, criterion, MLlibVectorToTensor(Array(6)))
+    val classifier = new NNClassifier(model, criterion)
       .setBatchSize(31)
       .setOptimMethod(new LBFGS[Float]())
       .setLearningRate(0.123)
@@ -329,7 +329,7 @@ class NNClassifierSpec extends FlatSpec with Matchers with BeforeAndAfter {
 
     val nnModel = classifier.fit(df)
     val copied = nnModel.copy(ParamMap.empty)
-    assert(copied.isInstanceOf[NNClassifierModel[_, _]])
+    assert(copied.isInstanceOf[NNClassifierModel[ _]])
     assert(nnModel.model ne copied.model)
 
     assert(nnModel.model == copied.model)
@@ -341,13 +341,13 @@ class NNClassifierSpec extends FlatSpec with Matchers with BeforeAndAfter {
     val criterion = ClassNLLCriterion[Float]()
     val data = sc.parallelize(smallData)
     val df = sqlContext.createDataFrame(data).toDF("features", "label")
-    val classifier = new NNClassifier(model, criterion, SeqToTensor(Array(6)))
+    val classifier = new NNClassifier(model, criterion)
       .setBatchSize(31)
       .setMaxEpoch(1)
 
     val nnModel = classifier.fit(df)
     val newPreprocessing = ArrayToTensor(Array(6)) -> TensorToSample()
-    nnModel.setPreprocessing(newPreprocessing)
+    nnModel.setSamplePreprocessing(newPreprocessing)
     assert(df.count() == nnModel.transform(df).count())
   }
 }

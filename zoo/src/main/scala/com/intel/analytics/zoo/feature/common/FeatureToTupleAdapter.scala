@@ -51,3 +51,13 @@ object TupleToFeatureAdapter {
     )(implicit ev: TensorNumeric[T]): TupleToFeatureAdapter[F, L, T] =
     new TupleToFeatureAdapter(featureTransformer)
 }
+
+class ToTuple extends Preprocessing[Any, (Any, Option[Any])] {
+  override def apply(prev: Iterator[Any]): Iterator[(Any, Option[Any])] = {
+    prev.map(f => (f, None))
+  }
+}
+
+object ToTuple {
+  def apply(): ToTuple = new ToTuple
+}
