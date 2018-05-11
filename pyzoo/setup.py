@@ -145,4 +145,4 @@ if __name__ == '__main__':
         raise e
     finally:
         if build_from_source() and os.path.exists(TEMP_PATH):
-             rmtree(TEMP_PATH)
+            rmtree(TEMP_PATH)
