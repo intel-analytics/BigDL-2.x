@@ -103,7 +103,7 @@ object ImageModel {
       val name = model.getName()
       val publisher = name.split(ImageConfigure.splitter)(0)
       val zooName = name.replace(publisher, "analytics-zoo")
-      specificModel.setName(model.getName())
+      specificModel.setName(zooName)
     }
     imageModel.config = ImageConfigure.parse(model.getName())
     imageModel
