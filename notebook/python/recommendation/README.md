@@ -10,7 +10,7 @@ This notebook demostrates how to build neural network recommendation system with
 * Zoo 0.1.0
 
 ## Steps to run the notebook
-* Run `export ZOO_HOME=the dist directory of the Analytics Zoo project`
+* Run `export ZOO_HOME=the home directory of the Analytics Zoo project`
 * Run `export SPARK_HOME=the root directory of Spark`
 * Run the following bash command to start the jupyter notebook. Change parameter settings as you need, ie MASTER = local\[physcial_core_number\]
 ```bash
