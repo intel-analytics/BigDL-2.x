@@ -37,8 +37,8 @@ import scopt.OptionParser
 object Utils {
 
   case class TrainParams(
-                          modelPath: String = "/home/yang/sources/model/bigdl_inception-v1_imagenet_0.4.0.model",
-                          dataPath: String = "/home/yang/sources/datasets/cat_dog/train_sampled",
+                          modelPath: String = "/tmp/models/bigdl_inception-v1_imagenet_0.4.0.model",
+                          dataPath: String = "/tmp/datasets/cat_dog/train_sampled",
                           batchSize: Int = 32,
                           nEpochs: Int = 2)
 
@@ -115,7 +115,7 @@ object TransferLearning {
 
     // add a new classifer
     val input = Input[Float](inputShape = Shape(3, 224, 224))
-    val feature = new KerasLayerWrapper[Float](inception).inputs(input)
+    val feature = inception.inputs(input)
     val flattern = Flatten[Float]().inputs(feature)
     val logits = Dense[Float](2).inputs(flattern)
 
