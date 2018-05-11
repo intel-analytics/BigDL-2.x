@@ -277,6 +277,18 @@ class NNClassifierSpec extends FlatSpec with Matchers with BeforeAndAfter {
     result2 shouldEqual result
   }
 
+  "NNClassifierModel" should "apply with differnt params" in {
+    val model = Linear[Float](6, 2)
+    val data = sc.parallelize(smallData)
+    val df = sqlContext.createDataFrame(data).toDF("features", "label")
+
+    Seq(
+      NNClassifierModel(model),
+      NNClassifierModel(model, Array(6)),
+      NNClassifierModel(model, SeqToTensor(Array(6)))
+    ).foreach(e => e.transform(df).count())
+  }
+
   "NNClassifier" should "supports deep copy" in {
     val model = new Sequential().add(Linear[Float](6, 2)).add(LogSoftMax[Float])
     val criterion = ClassNLLCriterion[Float]()

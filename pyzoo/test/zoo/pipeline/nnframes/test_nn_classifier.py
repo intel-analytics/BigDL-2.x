@@ -44,11 +44,7 @@ class TestNNClassifer():
         """
         self.sc.stop()
 
-    def test_nnEstimator_construct_with_sample_transformer(self):
-        linear_model = Sequential().add(Linear(2, 2))
-        mse_criterion = MSECriterion()
-        estimator = NNEstimator(linear_model, mse_criterion)\
-            .setBatchSize(4).setMaxEpoch(1)
+    def get_estimator_df(self):
         data = self.sc.parallelize([
             ((2.0, 1.0), (1.0, 2.0)),
             ((1.0, 2.0), (2.0, 1.0)),
@@ -59,10 +55,60 @@ class TestNNClassifer():
             StructField("features", ArrayType(DoubleType(), False), False),
             StructField("label", ArrayType(DoubleType(), False), False)])
         df = self.sqlContext.createDataFrame(data, schema)
-        nnModel = estimator.fit(df)
+        return df
 
-        res = nnModel.transform(df)
-        assert type(res).__name__ == 'DataFrame'
+    def get_classifier_df(self):
+        data = self.sc.parallelize([
+            ((2.0, 1.0), 1.0),
+            ((1.0, 2.0), 2.0),
+            ((2.0, 1.0), 1.0),
+            ((1.0, 2.0), 2.0)])
+
+        schema = StructType([
+            StructField("features", ArrayType(DoubleType(), False), False),
+            StructField("label", DoubleType(), False)])
+        df = self.sqlContext.createDataFrame(data, schema)
+        return df
+
+    def test_nnEstimator_construct_with_differnt_params(self):
+        linear_model = Sequential().add(Linear(2, 2))
+        mse_criterion = MSECriterion()
+        df = self.get_estimator_df()
+        for e in [NNEstimator(linear_model, mse_criterion),
+                  NNEstimator(linear_model, mse_criterion, [2], [2]),
+                  NNEstimator(linear_model, mse_criterion, SeqToTensor([2]), SeqToTensor([2]))]:
+            nnModel = e.setMaxEpoch(1).fit(df)
+            res = nnModel.transform(df)
+            assert type(res).__name__ == 'DataFrame'
+
+    def test_nnClassifier_construct_with_differnt_params(self):
+        linear_model = Sequential().add(Linear(2, 2))
+        mse_criterion = MSECriterion()
+        df = self.get_classifier_df()
+        for e in [NNClassifier(linear_model, mse_criterion),
+                  NNClassifier(linear_model, mse_criterion, [2]),
+                  NNClassifier(linear_model, mse_criterion, SeqToTensor([2]))]:
+            nnModel = e.setMaxEpoch(1).fit(df)
+            res = nnModel.transform(df)
+            assert type(res).__name__ == 'DataFrame'
+
+    def test_nnModel_construct_with_differnt_params(self):
+        linear_model = Sequential().add(Linear(2, 2))
+        df = self.get_estimator_df()
+        for e in [NNModel(linear_model),
+                  NNModel(linear_model, [2]),
+                  NNModel(linear_model, SeqToTensor([2]))]:
+            res = e.transform(df)
+            assert type(res).__name__ == 'DataFrame'
+
+    def test_nnClassiferModel_construct_with_differnt_params(self):
+        linear_model = Sequential().add(Linear(2, 2))
+        df = self.get_classifier_df()
+        for e in [NNClassifierModel(linear_model),
+                  NNClassifierModel(linear_model, [2]),
+                  NNClassifierModel(linear_model, SeqToTensor([2]))]:
+            res = e.transform(df)
+            assert type(res).__name__ == 'DataFrame'
 
     def test_all_set_get_methods(self):
         linear_model = Sequential().add(Linear(2, 2))
@@ -95,16 +141,7 @@ class TestNNClassifer():
         estimator = NNEstimator(model, criterion, SeqToTensor([2]), ArrayToTensor([2]))\
             .setBatchSize(4).setLearningRate(0.2).setMaxEpoch(40)
 
-        data = self.sc.parallelize([
-            ((2.0, 1.0), (1.0, 2.0)),
-            ((1.0, 2.0), (2.0, 1.0)),
-            ((2.0, 1.0), (1.0, 2.0)),
-            ((1.0, 2.0), (2.0, 1.0))])
-
-        schema = StructType([
-            StructField("features", ArrayType(DoubleType(), False), False),
-            StructField("label", ArrayType(DoubleType(), False), False)])
-        df = self.sqlContext.createDataFrame(data, schema)
+        df = self.get_estimator_df()
         nnModel = estimator.fit(df)
         assert nnModel.getBatchSize() == 4
 
@@ -178,16 +215,7 @@ class TestNNClassifer():
         estimator = NNEstimator(model, criterion, [2], [2])\
             .setBatchSize(4).setLearningRate(0.2).setMaxEpoch(1)
 
-        data = self.sc.parallelize([
-            ((2.0, 1.0), (1.0, 2.0)),
-            ((1.0, 2.0), (2.0, 1.0)),
-            ((2.0, 1.0), (1.0, 2.0)),
-            ((1.0, 2.0), (2.0, 1.0))])
-
-        schema = StructType([
-            StructField("features", ArrayType(DoubleType(), False), False),
-            StructField("label", ArrayType(DoubleType(), False), False)])
-        df = self.sqlContext.createDataFrame(data, schema)
+        df = self.get_estimator_df()
         nnModel = estimator.fit(df)
         assert nnModel.getBatchSize() == 4
 
