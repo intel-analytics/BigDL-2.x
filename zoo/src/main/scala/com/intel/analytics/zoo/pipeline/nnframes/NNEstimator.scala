@@ -111,11 +111,10 @@ private[nnframes] trait NNParams[@specialized(Float, Double) T] extends HasFeatu
   final val samplePreprocessing = new Param[Preprocessing[Any, Sample[T]]](this,
     "samplePreprocessing", "samplePreprocessing ")
 
-  set(samplePreprocessing, FeatureLabelPreprocessing(SeqToTensor(), SeqToTensor())
-    .asInstanceOf[Preprocessing[Any, Sample[T]]])
-
   def getSamplePreprocessing: Preprocessing[Any, Sample[T]] = $(samplePreprocessing)
 
+  set(featurePreprocessing -> SeqToTensor().asInstanceOf[Preprocessing[Any, Tensor[T]]])
+  set(labelPreprocessing -> SeqToTensor().asInstanceOf[Preprocessing[Any, Tensor[T]]])
   setDefault(batchSize -> 1)
 }
 
@@ -436,8 +435,7 @@ class NNModel[T: ClassTag](
     set(samplePreprocessing, value.asInstanceOf[Preprocessing[Any, Sample[T]]])
 
   def setFeaturePreprocessing[FF <: Any](value: Preprocessing[FF, Tensor[T]]): this.type =
-    set(samplePreprocessing,
-      (value -> TensorToSample()).asInstanceOf[Preprocessing[Any, Sample[T]]])
+    set(featurePreprocessing, value.asInstanceOf[Preprocessing[Any, Tensor[T]]])
 
   /**
    * Perform a prediction on featureCol, and write result to the predictionCol.
@@ -449,7 +447,11 @@ class NNModel[T: ClassTag](
     val sc = dataFrame.sqlContext.sparkContext
     val modelBroadCast = ModelBroadcast[T]().broadcast(sc, model.evaluate())
     val localBatchSize = $(batchSize)
-    val featureTransformersBC = sc.broadcast($(samplePreprocessing))
+    val featureTransformersBC = if(isDefined(samplePreprocessing)) {
+      sc.broadcast($(samplePreprocessing))
+    } else {
+      sc.broadcast($(featurePreprocessing) -> TensorToSample())
+    }
     val toBatchBC = sc.broadcast(SampleToMiniBatch[T](localBatchSize))
 
     // concat the prediction and other columns in DF. avoid zip between RDD
