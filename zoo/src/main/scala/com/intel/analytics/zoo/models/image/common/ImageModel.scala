@@ -69,9 +69,6 @@ abstract class ImageModel[T: ClassTag]()(implicit ev: TensorNumeric[T])
 
   def getConfig(): ImageConfigure[T] = config
 
-  def setConfig(imageConfigure: ImageConfigure[T]): Unit = {
-    config = imageConfigure
-  }
 }
 
 object ImageModel {
@@ -101,7 +98,7 @@ object ImageModel {
         case "imageclassification" => {
           new ImageClassifier[T]()
         }
-        case _ => logger.warn(s"$modelType is not defined in Analytics zoo.")
+        case _ => logger.error(s"$modelType is not defined in Analytics zoo.")
             return null
       }
       specificModel.addModel(model)
