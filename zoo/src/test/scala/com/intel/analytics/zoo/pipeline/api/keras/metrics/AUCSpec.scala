@@ -20,9 +20,9 @@ import com.intel.analytics.bigdl.dataset.{DistributedDataSet, MiniBatch, Sample}
 import com.intel.analytics.bigdl.nn._
 import com.intel.analytics.bigdl.optim._
 import com.intel.analytics.bigdl.tensor.Tensor
+import com.intel.analytics.bigdl.utils.Engine
 import com.intel.analytics.bigdl.utils.RandomGenerator._
-import com.intel.analytics.zoo.common.NNContext
-import org.apache.spark.{SparkConf, SparkContext}
+import org.apache.spark.{SparkContext}
 import org.apache.spark.rdd.RDD
 import org.scalatest.{FlatSpec, Matchers}
 
@@ -141,10 +141,11 @@ class AUCSpec extends FlatSpec with Matchers{
   }
 
   "AUC" should "work with optimizer" in {
-    val conf = new SparkConf()
+    val conf = Engine.createSparkConf()
       .setAppName("AUC test")
       .setMaster("local[1]")
-    val sc = NNContext.getNNContext(conf)
+    val sc = new SparkContext(conf)
+    Engine.init(4, 1, onSpark = true)
 
     val prepareData: Int => (MiniBatch[Double]) = index => {
       val input = Tensor[Double](4, 2).rand()
@@ -174,10 +175,11 @@ class AUCSpec extends FlatSpec with Matchers{
   }
 
   "AUC with multilabel" should "work with optimizer" in {
-    val conf = new SparkConf()
+    val conf = Engine.createSparkConf()
       .setAppName("AUC test")
       .setMaster("local[1]")
-    val sc = NNContext.getNNContext(conf)
+    val sc = new SparkContext(conf)
+    Engine.init(4, 1, onSpark = true)
 
     val prepareData: Int => (MiniBatch[Double]) = index => {
       val input = Tensor[Double](4, 2).rand()
@@ -207,10 +209,12 @@ class AUCSpec extends FlatSpec with Matchers{
   }
 
   "AUC" should "work with evaluate" in {
-    val conf = new SparkConf()
+    val conf = Engine.createSparkConf()
       .setAppName("AUC test")
       .setMaster("local[1]")
-    val sc = NNContext.getNNContext(conf)
+    val sc = new SparkContext(conf)
+    Engine.init(4, 1, onSpark = true)
+
     val data = new Array[Sample[Float]](4)
     var i = 0
     while (i < data.length) {
