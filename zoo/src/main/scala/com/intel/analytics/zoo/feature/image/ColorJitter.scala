@@ -43,11 +43,9 @@ class ColorJitter(
                    randomChannelOrderProb: Double, shuffle: Boolean = false) extends ImageProcessing {
 
   private val internalCrop = augmentation.ColorJitter(
-    brightnessProb: Double, brightnessDelta: Double,
-    contrastProb: Double, contrastLower: Double, contrastUpper: Double,
-    hueProb: Double, hueDelta: Double,
-    saturationProb: Double, saturationLower: Double, saturationUpper: Double,
-    randomChannelOrderProb: Double, shuffle: Boolean)
+    brightnessProb, brightnessDelta, contrastProb,
+    contrastLower, contrastUpper, hueProb, hueDelta, saturationProb,
+    saturationLower, saturationUpper, randomChannelOrderProb, shuffle)
 
   override def apply(prev: Iterator[ImageFeature]): Iterator[ImageFeature] = {
     internalCrop.apply(prev)
