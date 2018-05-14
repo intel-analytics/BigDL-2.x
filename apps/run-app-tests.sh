@@ -11,7 +11,7 @@ export ANALYTICS_ZOO_CONF=${ANALYTICS_ZOO_HOME_DIST}/conf/spark-bigdl.conf
 export PYTHONPATH=${ANALYTICS_ZOO_PYZIP}:$PYTHONPATH
 
 chmod +x ./apps/ipynb2py.sh
-./apps/ipynb2py.sh ./anomaly-detection/anomaly-detection-nyc-taxi
+./apps/ipynb2py.sh ./apps/anomaly-detection/anomaly-detection-nyc-taxi
 
 echo "#1 start app test for anomaly-detection-nyc-taxi"
 chmod +x $ANALYTICS_ZOO_HOME/data/NAB/nyc_taxi/get_nyc_taxi.sh
