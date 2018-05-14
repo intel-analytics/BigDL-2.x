@@ -48,7 +48,7 @@ DownLoad Input
    Log To Console                   got image data!!
    Create Directory                 /tmp/objectdetection/output
    Run                              wget http://files.grouplens.org/datasets/movielens/ml-1m.zip -P /tmp/recommemdation
-   Run                              tar -zxvf /tmp/recommemdation/ml-1m.zip -C /tmp/recommemdation/
+   Run                              unzip /tmp/recommemdation/ml-1m.zip -d /tmp/recommemdation
    Log To Console                   got recommendation movie data
    Remove Environment Variable      http_proxy                  https_proxy                     LANG
 
