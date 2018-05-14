@@ -1,15 +1,13 @@
 #!/bin/bash
 
-export ZOO_HOME=$ZOO_HOME
-export ZOO_HOME_DIST=$ZOO_HOME/dist
+export ANALYTICS_ZOO_HOME=$ANALYTICS_ZOO_HOME
+export ANALYTICS_ZOO_HOME_DIST=$ANALYTICS_ZOO_HOME/dist
 export SPARK_HOME=$SPARK_HOME
 export MASTER=local[4]
-export ZOO_JAR=`find ${ZOO_HOME_DIST}/lib -type f -name "analytics-zoo*jar-with-dependencies.jar"`
-export ZOO_PY_ZIP=`find ${ZOO_HOME_DIST}/lib -type f -name "analytics-zoo*python-api.zip"`
-export PYTHON_API_ZIP_PATH=$ZOO_PY_ZIP
-export ZOO_JAR_PATH=$ZOO_JAR
-export ZOO_CONF=${ZOO_HOME_DIST}/conf/spark-bigdl.conf
-export PYTHONPATH=${ZOO_PY_ZIP}:$PYTHONPATH
+export ANALYTICS_ZOO_JAR=`find ${ZOO_HOME_DIST}/lib -type f -name "analytics-zoo*jar-with-dependencies.jar"`
+export ANALYTICS_ZOO_PYZIP=`find ${ZOO_HOME_DIST}/lib -type f -name "analytics-zoo*python-api.zip"`
+export ANALYTICS_ZOO_CONF=${ANALYTICS_ZOO_HOME_DIST}/conf/spark-bigdl.conf
+export PYTHONPATH=${ANALYTICS_ZOO_PYZIP}:$PYTHONPATH
 export FTP_URI=$FTP_URI
 
 echo "#1 start example test for textclassification"
@@ -31,10 +29,10 @@ ${SPARK_HOME}/bin/spark-submit \
     --master ${MASTER} \
     --driver-memory 20g \
     --executor-memory 20g \
-    --py-files ${PYTHON_API_ZIP_PATH},${ZOO_HOME}/pyzoo/zoo/examples/textclassification/text_classification.py \
-    --jars ${ZOO_JAR_PATH} \
-    --conf spark.driver.extraClassPath=${ZOO_JAR_PATH} \
-    --conf spark.executor.extraClassPath=${ZOO_JAR_PATH} \
-    ${ZOO_HOME}/pyzoo/zoo/examples/textclassification/text_classification.py \
+    --py-files ${ANALYTICS_ZOO_PYZIP},${ANALYTICS_ZOO_HOME}/pyzoo/zoo/examples/textclassification/text_classification.py \
+    --jars ${ANALYTICS_ZOO_JAR} \
+    --conf spark.driver.extraClassPath=${ANALYTICS_ZOO_JAR} \
+    --conf spark.executor.extraClassPath=${ANALYTICS_ZOO_JAR} \
+    ${ANALYTICS_ZOO_HOME}/pyzoo/zoo/examples/textclassification/text_classification.py \
     --nb_epoch 2 \
     --data_path analytics-zoo-data/data
