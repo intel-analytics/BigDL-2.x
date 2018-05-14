@@ -320,7 +320,7 @@ class NNEstimator[T: ClassTag] private[zoo] (
       .setOptimMethod($(optimMethod))
       .setEndWhen(endTrigger)
 
-    if ($(disableGradientClippingParams) == true) {
+    if (isSet(disableGradientClippingParams) && $(disableGradientClippingParams) == true) {
       optimizer.disableGradientClipping()
     } else {
       if (isSet(l2GradientClippingParams)) {
