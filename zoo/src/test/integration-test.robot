@@ -47,9 +47,6 @@ DownLoad Input
    Run                              wget https://s3-ap-southeast-1.amazonaws.com/analytics-zoo-models/object-detection/analytics-zoo_ssd-mobilenet-300x300_PASCAL_0.1.0.model -P /tmp/objectdetection/
    Log To Console                   got image data!!
    Create Directory                 /tmp/objectdetection/output
-   Run                              wget http://files.grouplens.org/datasets/movielens/ml-1m.zip -P /tmp/recommendation
-   Run                              unzip /tmp/recommendation/ml-1m.zip -d /tmp/recommendation
-   Log To Console                   got recommendation movie data
    Remove Environment Variable      http_proxy                  https_proxy                     LANG
 
 Remove Input
@@ -72,9 +69,9 @@ Run Spark Test
    Log To Console                   begin object detection
    Run Shell                        ${submit} --master ${spark_master} --driver-memory 1g --executor-memory 1g --total-executor-cores 32 --executor-cores 8 --class com.intel.analytics.zoo.examples.objectdetection.Predict ${jar_path} --image ${public_hdfs_master}:9000/kaggle/train_100 --output /tmp/objectdetection/output --model /tmp/objectdetection/analytics-zoo_ssd-mobilenet-300x300_PASCAL_0.1.0.model --partition 32
    Log To Console                   begin recommendation wideAndDeep
-   Run Shell                        ${submit} --master ${spark_master} --driver-memory 5g --executor-memory 5g --total-executor-cores 32 --executor-cores 8 --class com.intel.analytics.zoo.examples.recommendation.WideAndDeepExample ${jar_path} --inputDir file:/tmp/recommendation/ml-1m
+   Run Shell                        ${submit} --master ${spark_master} --driver-memory 5g --executor-memory 5g --total-executor-cores 32 --executor-cores 8 --class com.intel.analytics.zoo.examples.recommendation.WideAndDeepExample ${jar_path} --inputDir ${public_hdfs_master}:9000/ml-1m
    Log To Console                   begin recommendation NCF
-   Run Shell                        ${submit} --master ${spark_master} --driver-memory 5g --executor-memory 5g --total-executor-cores 32 --executor-cores 8 --class com.intel.analytics.zoo.examples.recommendation.NeuralCFexample ${jar_path} --inputDir file:/tmp/recommendation/ml-1m
+   Run Shell                        ${submit} --master ${spark_master} --driver-memory 5g --executor-memory 5g --total-executor-cores 32 --executor-cores 8 --class com.intel.analytics.zoo.examples.recommendation.NeuralCFexample ${jar_path} --inputDir ${public_hdfs_master}:9000/ml-1m
    Remove Input
 
 Spark2.1 Test Suite
@@ -97,8 +94,8 @@ Yarn Test Suite
    Log To Console                   begin object detection
    Run Shell                        ${submit} --master yarn --deploy-mode client --conf "spark.serializer=org.apache.spark.serializer.JavaSerializer" --conf spark.yarn.executor.memoryOverhead=40000 --executor-cores 8 --num-executors 4 --driver-memory 1g --executor-memory 1g --class com.intel.analytics.zoo.examples.objectdetection.Predict ${jar_path} --image ${public_hdfs_master}:9000/kaggle/train_100 --output /tmp/objectdetection/output --model /tmp/objectdetection/analytics-zoo_ssd-mobilenet-300x300_PASCAL_0.1.0.model --partition 32
    Log To Console                   begin recommendation wideAndDeep
-   Run Shell                        ${submit} --master yarn --deploy-mode client --conf "spark.serializer=org.apache.spark.serializer.JavaSerializer" --conf spark.yarn.executor.memoryOverhead=40000 --executor-cores 8 --num-executors 4 --driver-memory 5g --executor-memory 10g --class com.intel.analytics.zoo.examples.recommendation.WideAndDeepExample ${jar_path} --inputDir file:/tmp/recommendation/ml-1m
+   Run Shell                        ${submit} --master yarn --deploy-mode client --conf "spark.serializer=org.apache.spark.serializer.JavaSerializer" --conf spark.yarn.executor.memoryOverhead=40000 --executor-cores 8 --num-executors 4 --driver-memory 5g --executor-memory 10g --class com.intel.analytics.zoo.examples.recommendation.WideAndDeepExample ${jar_path} --inputDir ${public_hdfs_master}:9000/ml-1m
    Log To Console                   begin recommendation NCF
-   Run Shell                        ${submit} --master yarn --deploy-mode client --conf "spark.serializer=org.apache.spark.serializer.JavaSerializer" --conf spark.yarn.executor.memoryOverhead=40000 --executor-cores 8 --num-executors 4 --driver-memory 5g --executor-memory 10g --class com.intel.analytics.zoo.examples.recommendation.NeuralCFexample ${jar_path} --inputDir file:/tmp/recommendation/ml-1m
+   Run Shell                        ${submit} --master yarn --deploy-mode client --conf "spark.serializer=org.apache.spark.serializer.JavaSerializer" --conf spark.yarn.executor.memoryOverhead=40000 --executor-cores 8 --num-executors 4 --driver-memory 5g --executor-memory 10g --class com.intel.analytics.zoo.examples.recommendation.NeuralCFexample ${jar_path} --inputDir ${public_hdfs_master}:9000/ml-1m
    Remove Environment Variable      http_proxy                https_proxy              PYSPARK_DRIVER_PYTHON            PYSPARK_PYTHON
    Remove Input
