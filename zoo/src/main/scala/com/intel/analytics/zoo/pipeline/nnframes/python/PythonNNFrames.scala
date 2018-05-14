@@ -26,6 +26,7 @@ import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric
 import com.intel.analytics.bigdl.visualization.{TrainSummary, ValidationSummary}
 import com.intel.analytics.bigdl.{Criterion, Module}
 import com.intel.analytics.zoo.feature.common._
+import com.intel.analytics.zoo.pipeline.api.keras.models.KerasNet
 import com.intel.analytics.zoo.pipeline.nnframes._
 import org.apache.spark.api.java.JavaSparkContext
 import org.apache.spark.sql.DataFrame
@@ -172,5 +173,22 @@ class PythonNNFrames[T: ClassTag](implicit ev: TensorNumeric[T]) extends PythonB
       model: NNModel[T],
       sampleTransformer: Preprocessing[Any, Sample[T]]): NNModel[T] = {
     model.setSamplePreprocessing(sampleTransformer)
+  }
+
+  def nnEstimatorDisableGradientClipping(estimator: NNEstimator[T]): Unit = {
+    estimator.disableGradientClipping()
+  }
+
+  def nnEstimatorSetConstantGradientClipping(
+    estimator: NNEstimator[T],
+    min: Float,
+    max: Float): Unit = {
+    estimator.setConstantGradientClipping(min, max)
+  }
+
+  def nnEstimatorSetGradientClippingByL2Norm(
+    estimator: NNEstimator[T],
+    clipNorm: Float): Unit = {
+    estimator.setGradientClippingByL2Norm(clipNorm)
   }
 }
