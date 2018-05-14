@@ -183,10 +183,12 @@ class AUC[T](thresholdNum: Int)(implicit ev: TensorNumeric[T])
     while (j < thresholdNum) {
       output.map(target, (a, b) => {
         val fb = ev.toType[Float](b)
+        if (fb != 1 && fb != 0) {
+          throw new UnsupportedOperationException("Only support binary(0/1) target")
+        }
         if (ev.isGreaterEq(a, ev.fromType[Float](thresholds(j)))) {
           if (fb == 1) tp(j) += 1
-          else if (fb == 0) fp(j) += 1
-          else throw new UnsupportedOperationException("Only support binary(0/1) target")
+          else fp(j) += 1
         }
         a })
       j += 1

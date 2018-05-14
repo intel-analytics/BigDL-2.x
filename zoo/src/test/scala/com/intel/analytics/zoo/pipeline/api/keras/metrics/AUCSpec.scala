@@ -16,13 +16,13 @@
 
 package com.intel.analytics.zoo.pipeline.api.keras.metrics
 
-import com.intel.analytics.bigdl.dataset.{DistributedDataSet, MiniBatch}
+import com.intel.analytics.bigdl.dataset.{DistributedDataSet, MiniBatch, Sample}
 import com.intel.analytics.bigdl.nn._
 import com.intel.analytics.bigdl.optim._
-import com.intel.analytics.bigdl.tensor.{Tensor}
-import com.intel.analytics.bigdl.utils.{Engine}
+import com.intel.analytics.bigdl.tensor.Tensor
 import com.intel.analytics.bigdl.utils.RandomGenerator._
-import org.apache.spark.SparkContext
+import com.intel.analytics.zoo.common.NNContext
+import org.apache.spark.{SparkConf, SparkContext}
 import org.apache.spark.rdd.RDD
 import org.scalatest.{FlatSpec, Matchers}
 
@@ -206,5 +206,26 @@ class AUCSpec extends FlatSpec with Matchers{
         Array(new AUC[Double](20)))
     optimizer.optimize()
     sc.stop()
+  }
+
+  "AUC" should "work with evaluate" in {
+    val conf = new SparkConf()
+      .setAppName("AUC test")
+      .setMaster("local[1]")
+    val sc = NNContext.getNNContext(conf)
+    val data = new Array[Sample[Float]](4)
+    var i = 0
+    while (i < data.length) {
+      val input = Tensor[Float](2).fill(1.0f)
+      val label = Tensor[Float](2).fill(0.5f)
+      data(i) = Sample(input, label)
+      i += 1
+    }
+    val model = Sequential[Float]().add(Linear(2, 2)).add(LogSoftMax())
+    val dataSet = sc.parallelize(data, 4)
+
+    intercept[Exception] {
+      model.evaluate(dataSet, Array(new AUC[Float](20).asInstanceOf[ValidationMethod[Float]]))
+    }
   }
 }
