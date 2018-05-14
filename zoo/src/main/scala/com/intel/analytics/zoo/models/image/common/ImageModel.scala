@@ -91,6 +91,10 @@ object ImageModel {
     val imageModel = if (model.isInstanceOf[ImageModel[T]]){
       model.asInstanceOf[ImageModel[T]]
     }else{
+      if (modelType == null){
+        logger.error(s"model type is not set.")
+        throw new NullPointerException("model type is null, please set model type")
+      }
       val specificModel = modelType.toLowerCase() match {
         case "objectdetection" => {
           new ObjectDetector[T]()
@@ -98,8 +102,9 @@ object ImageModel {
         case "imageclassification" => {
           new ImageClassifier[T]()
         }
-        case _ => logger.error(s"$modelType is not defined in Analytics zoo.")
-            return null
+        case _ => logger.error(s"model type $modelType is not defined in Analytics zoo.")
+          throw new IllegalArgumentException(
+            s"model type $modelType is not defined in Analytics zoo.")
       }
       specificModel.addModel(model)
       specificModel.setName(model.getName())
