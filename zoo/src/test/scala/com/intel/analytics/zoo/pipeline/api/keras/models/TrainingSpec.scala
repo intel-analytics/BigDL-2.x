@@ -34,12 +34,12 @@ class TrainingSpec extends FlatSpec with Matchers with BeforeAndAfter  {
 
   private var sc: SparkContext = _
 
-  def generateData(shape: Array[Int], size: Int): RDD[Sample[Float]] = {
-    sc.range(0, size, 1).map { _ =>
-      val featureTensor = Tensor[Float](shape)
+  def generateData(featureShape: Array[Int], labelSize: Int, dataSize: Int): RDD[Sample[Float]] = {
+    sc.range(0, dataSize, 1).map { _ =>
+      val featureTensor = Tensor[Float](featureShape)
       featureTensor.apply1(_ => scala.util.Random.nextFloat())
-      val labelTensor = Tensor[Float](1)
-      labelTensor(Array(1)) = Math.round(scala.util.Random.nextFloat()) + 1
+      val labelTensor = Tensor[Float](labelSize)
+      labelTensor(Array(labelSize)) = Math.round(scala.util.Random.nextFloat()) + 1
       Sample[Float](featureTensor, labelTensor)
     }
   }
@@ -58,9 +58,9 @@ class TrainingSpec extends FlatSpec with Matchers with BeforeAndAfter  {
   }
 
   "sequential compile and fit with custom loss" should "work properly" in {
-    val trainingData = generateData(Array(10), 40)
+    val trainingData = generateData(Array(10), 5, 40)
     val model = Sequential[Float]()
-    model.add(Dense[Float](1, inputShape = Shape(10)))
+    model.add(Dense[Float](5, inputShape = Shape(10)))
     def loss(yTrue: Variable[Float], yPred: Variable[Float]): Variable[Float] = {
       A.mean(A.abs(yTrue - yPred), axis = 1)
     }
@@ -69,7 +69,7 @@ class TrainingSpec extends FlatSpec with Matchers with BeforeAndAfter  {
   }
 
   "graph compile and fit" should "work properly" in {
-    val trainingData = generateData(Array(10), 40)
+    val trainingData = generateData(Array(10), 8, 40)
     val input = Input[Float](inputShape = Shape(10))
     val output = Dense[Float](8, activation = "relu").inputs(input)
     val model = Model[Float](input, output)
@@ -80,8 +80,8 @@ class TrainingSpec extends FlatSpec with Matchers with BeforeAndAfter  {
 
   "compile, fit with validation, evaluate, predict, setTensorBoard, setCheckPoint" should
     "work properly" in {
-    val trainingData = generateData(Array(12, 12), 100)
-    val testData = generateData(Array(12, 12), 16)
+    val trainingData = generateData(Array(12, 12), 1, 100)
+    val testData = generateData(Array(12, 12), 1, 16)
     val model = Sequential[Float]()
     model.add(Dense[Float](8, activation = "relu", inputShape = Shape(12, 12)))
     model.add(Flatten[Float]())
