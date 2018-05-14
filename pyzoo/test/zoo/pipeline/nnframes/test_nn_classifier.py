@@ -163,7 +163,7 @@ class TestNNClassifer():
         model = Sequential().add(Linear(2, 2))
         criterion = MSECriterion()
         estimator = NNEstimator(model, criterion, SeqToTensor([2]), ArrayToTensor([2])) \
-            .setBatchSize(4).setLearningRate(0.2).setMaxEpoch(40)\
+            .setBatchSize(4).setLearningRate(0.2).setMaxEpoch(2)\
             .set_constant_gradient_clipping(0.1, 0.2)
 
         df = self.get_estimator_df()

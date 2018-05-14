@@ -278,6 +278,7 @@ class NNEstimator(JavaEstimator, HasFeaturesCol, HasLabelCol, HasPredictionCol, 
         """
         callBigDlFunc(self.bigdl_type, "nnEstimatorDisableGradientClipping",
                       self.value)
+        return self
 
     def set_constant_gradient_clipping(self, min, max):
         """
@@ -292,6 +293,7 @@ class NNEstimator(JavaEstimator, HasFeaturesCol, HasLabelCol, HasPredictionCol, 
                       self.value,
                       float(min),
                       float(max))
+        return self
 
     def set_gradient_clipping_by_l2_norm(self, clip_norm):
         """
@@ -305,6 +307,7 @@ class NNEstimator(JavaEstimator, HasFeaturesCol, HasLabelCol, HasPredictionCol, 
         callBigDlFunc(self.bigdl_type, "nnEstimatorSetGradientClippingByL2Norm",
                       self.value,
                       float(clip_norm))
+        return self
 
     def _create_model(self, java_model):
         nnModel = NNModel.of(java_model,
