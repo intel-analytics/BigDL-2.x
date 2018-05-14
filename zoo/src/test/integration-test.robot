@@ -66,6 +66,10 @@ Run Spark Test
    Run Shell                        ${submit} --master ${spark_master} --driver-memory 5g --executor-memory 5g --total-executor-cores 32 --executor-cores 8 --class com.intel.analytics.zoo.examples.textclassification.TextClassification ${jar_path} --batchSize 128 --baseDir /tmp/text_data --partitionNum 32 --nbEpoch 2
    Log To Console                   begin object detection
    Run Shell                        ${submit} --master ${spark_master} --driver-memory 1g --executor-memory 1g --total-executor-cores 32 --executor-cores 8 --class com.intel.analytics.zoo.examples.objectdetection.Predict ${jar_path} --image ${public_hdfs_master}:9000/kaggle/train_100 --output /tmp/objectdetection/output --model /tmp/objectdetection/analytics-zoo_ssd-mobilenet-300x300_PASCAL_0.1.0.model --partition 32
+   Log To Console                   begin recommendation wideAndDeep
+   Run Shell                        ${submit} --master ${spark_master} --driver-memory 5g --executor-memory 5g --total-executor-cores 32 --executor-cores 8 --class com.intel.analytics.zoo.examples.recommendation.WideAndDeepExample ${jar_path} --inputDir ${public_hdfs_master}:9000/ml-1m
+   Log To Console                   begin recommendation NCF
+   Run Shell                        ${submit} --master ${spark_master} --driver-memory 5g --executor-memory 5g --total-executor-cores 32 --executor-cores 8 --class com.intel.analytics.zoo.examples.recommendation.NeuralCFexample ${jar_path} --inputDir ${public_hdfs_master}:9000/ml-1m
    Remove Input
 
 Spark2.1 Test Suite
@@ -87,5 +91,9 @@ Yarn Test Suite
    Run Shell                        ${submit} --master yarn --deploy-mode client --conf "spark.serializer=org.apache.spark.serializer.JavaSerializer" --conf spark.yarn.executor.memoryOverhead=40000 --executor-cores 8 --num-executors 4 --driver-memory 5g --executor-memory 10g --class com.intel.analytics.zoo.examples.textclassification.TextClassification ${jar_path} --batchSize 128 --baseDir /tmp/text_data --partitionNum 8 --nbEpoch 2
    Log To Console                   begin object detection
    Run Shell                        ${submit} --master yarn --deploy-mode client --conf "spark.serializer=org.apache.spark.serializer.JavaSerializer" --conf spark.yarn.executor.memoryOverhead=40000 --executor-cores 8 --num-executors 4 --driver-memory 1g --executor-memory 1g --class com.intel.analytics.zoo.examples.objectdetection.Predict ${jar_path} --image ${public_hdfs_master}:9000/kaggle/train_100 --output /tmp/objectdetection/output --model /tmp/objectdetection/analytics-zoo_ssd-mobilenet-300x300_PASCAL_0.1.0.model --partition 32
+   Log To Console                   begin recommendation wideAndDeep
+   Run Shell                        ${submit} --master yarn --deploy-mode client --conf "spark.serializer=org.apache.spark.serializer.JavaSerializer" --conf spark.yarn.executor.memoryOverhead=40000 --executor-cores 8 --num-executors 4 --driver-memory 5g --executor-memory 10g --class com.intel.analytics.zoo.examples.recommendation.WideAndDeepExample ${jar_path} --inputDir ${public_hdfs_master}:9000/ml-1m
+   Log To Console                   begin recommendation NCF
+   Run Shell                        ${submit} --master yarn --deploy-mode client --conf "spark.serializer=org.apache.spark.serializer.JavaSerializer" --conf spark.yarn.executor.memoryOverhead=40000 --executor-cores 8 --num-executors 4 --driver-memory 5g --executor-memory 10g --class com.intel.analytics.zoo.examples.recommendation.NeuralCFexample ${jar_path} --inputDir ${public_hdfs_master}:9000/ml-1m
    Remove Environment Variable      http_proxy                https_proxy              PYSPARK_DRIVER_PYTHON            PYSPARK_PYTHON
    Remove Input
