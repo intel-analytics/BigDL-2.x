@@ -126,8 +126,7 @@ class KerasNet(ZooKerasLayer):
         In order to take effect, it needs to be called before fit.
 
         # Arguments
-        min: The minimum value to clip by. Float.
-        max: The maximum value to clip by. Float.
+        clip_norm: Gradient L2-Norm threshold. Float.
         """
         callBigDlFunc(self.bigdl_type, "zooSetGradientClippingByL2Norm",
                       self.value,

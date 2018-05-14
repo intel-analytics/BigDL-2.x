@@ -143,14 +143,14 @@ class PythonZooKeras[T: ClassTag](implicit ev: TensorNumeric[T]) extends PythonB
 
   def zooSetConstantGradientClipping(
       module: KerasNet[T],
-      min: Double,
-      max: Double): Unit = {
+      min: Float,
+      max: Float): Unit = {
     module.setConstantGradientClipping(min, max)
   }
 
   def zooSetGradientClippingByL2Norm(
       module: KerasNet[T],
-      clipNorm: Double): Unit = {
+      clipNorm: Float): Unit = {
     module.setGradientClippingByL2Norm(clipNorm)
   }
 

@@ -55,8 +55,8 @@ abstract class KerasNet[T: ClassTag](implicit ev: TensorNumeric[T])
   private var checkpointPath: String = null
   private var overWriteCheckPoint: Boolean = true
   private var gradiantClipping: Boolean = true
-  private var constantGradientClippingParams: (Double, Double) = null
-  private var clipNorm: Option[Double] = None
+  private var constantGradientClippingParams: (Float, Float) = null
+  private var clipNorm: Option[Float] = None
 
   /**
    * Configure the learning process. It MUST be called before fit or evaluate.
@@ -135,7 +135,7 @@ abstract class KerasNet[T: ClassTag](implicit ev: TensorNumeric[T])
    * @param min The minimum value to clip by. Double.
    * @param max The maximum value to clip by. Double.
    */
-  def setConstantGradientClipping(min: Double, max: Double): Unit = {
+  def setConstantGradientClipping(min: Float, max: Float): Unit = {
     this.constantGradientClippingParams = (min, max)
   }
 
@@ -145,7 +145,7 @@ abstract class KerasNet[T: ClassTag](implicit ev: TensorNumeric[T])
    *
    * @param clipNorm Gradient L2-Norm threshold. Double.
    */
-  def setGradientClippingByL2Norm(clipNorm: Double): Unit = {
+  def setGradientClippingByL2Norm(clipNorm: Float): Unit = {
     this.clipNorm = Some(clipNorm)
   }
 
@@ -184,11 +184,11 @@ abstract class KerasNet[T: ClassTag](implicit ev: TensorNumeric[T])
       optimizer.disableGradientClipping()
     }
     if (this.constantGradientClippingParams != null) {
-      optimizer.setConstantGradientClipping(this.constantGradientClippingParams._1.toFloat,
-        this.constantGradientClippingParams._2.toFloat)
+      optimizer.setConstantGradientClipping(this.constantGradientClippingParams._1,
+        this.constantGradientClippingParams._2)
     }
     if (this.clipNorm.isDefined) {
-      optimizer.setGradientClippingByl2Norm(this.clipNorm.get.toFloat)
+      optimizer.setGradientClippingByl2Norm(this.clipNorm.get)
     }
     if (validationData != null) {
       require(this.vMethods != null, "Validation metrics haven't been set yet")
