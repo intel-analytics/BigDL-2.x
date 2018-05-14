@@ -23,6 +23,7 @@ import com.intel.analytics.bigdl.optim.{SGD, Top1Accuracy}
 import com.intel.analytics.bigdl.tensor.{Storage, Tensor}
 import com.intel.analytics.bigdl.utils.Shape
 import com.intel.analytics.zoo.common.NNContext
+import com.intel.analytics.zoo.pipeline.api.autograd.{CustomLoss, Variable, AutoGrad => A}
 import com.intel.analytics.zoo.pipeline.api.keras.layers._
 import org.apache.spark.{SparkConf, SparkContext}
 import org.apache.spark.rdd.RDD
@@ -56,11 +57,14 @@ class TrainingSpec extends FlatSpec with Matchers with BeforeAndAfter  {
     }
   }
 
-  "sequential compile and fit" should "work properly" in {
+  "sequential compile and fit with custom loss" should "work properly" in {
     val trainingData = generateData(Array(10), 40)
     val model = Sequential[Float]()
     model.add(Dense[Float](8, inputShape = Shape(10)))
-    model.compile(optimizer = "sgd", loss = "mse", metrics = null)
+    def loss(yTrue: Variable[Float], yPred: Variable[Float]): Variable[Float] = {
+      A.mean(yPred - yTrue * A.log(yPred + A.epsilon[Float]()), axis = 1)
+    }
+    model.compile(optimizer = new SGD[Float](), loss = loss(_, _), metrics = null)
     model.fit(trainingData, batchSize = 8, nbEpoch = 2)
   }
 
