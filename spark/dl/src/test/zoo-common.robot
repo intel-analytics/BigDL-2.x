@@ -75,5 +75,5 @@ Get Zoo Version
    ${version}=            Get Element Text    ${root}    version
    Log To Console         ${version}
    Set Global Variable    ${version}
-   ${jar_path}=           Set Variable        ${jar_dir}/zoo-${version}-jar-with-dependencies.jar
+   ${jar_path}=           Set Variable        ${jar_dir}/analytics-zoo-${version}-jar-with-dependencies.jar
    Set Global Variable    ${jar_path}
