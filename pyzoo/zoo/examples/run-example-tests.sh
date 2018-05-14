@@ -36,3 +36,17 @@ ${SPARK_HOME}/bin/spark-submit \
     ${ANALYTICS_ZOO_HOME}/pyzoo/zoo/examples/textclassification/text_classification.py \
     --nb_epoch 2 \
     --data_path analytics-zoo-data/data
+
+echo "#2 start example test for customized loss and layer (Funtional API)"
+${SPARK_HOME}/bin/spark-submit \
+    --master ${MASTER} \
+    --driver-memory 20g \
+    --executor-memory 20g \
+    --py-files ${ANALYTICS_ZOO_PYZIP},${ANALYTICS_ZOO_HOME}/pyzoo/zoo/examples/autograd/custom.py \
+    --jars ${ANALYTICS_ZOO_JAR} \
+    --conf spark.driver.extraClassPath=${ANALYTICS_ZOO_JAR} \
+    --conf spark.executor.extraClassPath=${ANALYTICS_ZOO_JAR} \
+    ${ANALYTICS_ZOO_HOME}/pyzoo/zoo/examples/autograd/custom.py
+
+
+
