@@ -30,3 +30,6 @@ type: CV_8UC3, CV_8UC1 in most cases.
       // Bytes in OpenCV-compatible order: row-wise BGR in most cases
       StructField("data", BinaryType, false) :: Nil)
 ```
+
+After loading the image, user can compose the preprocess process with the `Preprocessing` defined
+in `com.intel.analytics.zoo.feature.image`.
