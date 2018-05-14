@@ -141,11 +141,10 @@ class AUCSpec extends FlatSpec with Matchers{
   }
 
   "AUC" should "work with optimizer" in {
-    val conf = Engine.createSparkConf()
+    val conf = new SparkConf()
       .setAppName("AUC test")
       .setMaster("local[1]")
-    val sc = new SparkContext(conf)
-    Engine.init(4, 1, onSpark = true)
+    val sc = NNContext.getNNContext(conf)
 
     val prepareData: Int => (MiniBatch[Double]) = index => {
       val input = Tensor[Double](4, 2).rand()
@@ -175,11 +174,10 @@ class AUCSpec extends FlatSpec with Matchers{
   }
 
   "AUC with multilabel" should "work with optimizer" in {
-    val conf = Engine.createSparkConf()
+    val conf = new SparkConf()
       .setAppName("AUC test")
       .setMaster("local[1]")
-    val sc = new SparkContext(conf)
-    Engine.init(4, 1, onSpark = true)
+    val sc = NNContext.getNNContext(conf)
 
     val prepareData: Int => (MiniBatch[Double]) = index => {
       val input = Tensor[Double](4, 2).rand()
