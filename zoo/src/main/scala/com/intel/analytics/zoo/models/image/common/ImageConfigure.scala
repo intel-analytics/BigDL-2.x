@@ -19,7 +19,7 @@ package com.intel.analytics.zoo.models.image.common
 import com.intel.analytics.bigdl.dataset.PaddingParam
 import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric
 import com.intel.analytics.bigdl.transform.vision.image.FeatureTransformer
-import com.intel.analytics.zoo.models.objectdetection.ObjectDetectionConfig
+import com.intel.analytics.zoo.models.image.objectdetection.ObjectDetectionConfig
 import com.intel.analytics.zoo.models.image.imageclassification.ImageClassificationConfig
 
 import org.apache.log4j.Logger
