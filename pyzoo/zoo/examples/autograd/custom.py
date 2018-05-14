@@ -32,6 +32,8 @@ if __name__ == "__main__":
     parser = OptionParser()
     parser.add_option("--nb_epoch", dest="nb_epoch", default="500")
 
+    (options, args) = parser.parse_args(sys.argv)
+
     data_len = 1000
     X_ = np.random.uniform(0, 1, (1000, 2))
     Y_ = ((2 * X_).sum(1) + 0.4).reshape([data_len, 1])
