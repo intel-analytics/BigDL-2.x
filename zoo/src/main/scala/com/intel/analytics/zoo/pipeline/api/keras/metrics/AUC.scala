@@ -120,6 +120,7 @@ class AucScore(private val tp: Tensor[Float], private val fp: Tensor[Float],
 }
 
 /**
+ * Area under ROC cure.
  * Metric for binary(0/1) classification, support single label and multiple labels.
  * @param thresholdNum The number of thresholds. The quality of approximation
  *                     may vary depending on thresholdNum.
