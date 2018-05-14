@@ -70,6 +70,14 @@ abstract class ZooModel[A <: Activity: ClassTag, B <: Activity: ClassTag, T: Cla
     this.saveModule(path, weightPath, overWrite)
   }
 
+  def modelSummary: String = {
+    super.toString() + " summary: \n" + model.toString()
+  }
+
+  def summary(): Unit = {
+    println(this.modelSummary)
+  }
+
   override def updateOutput(input: A): B = {
     output = model.updateOutput(input)
     output
