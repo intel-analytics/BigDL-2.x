@@ -58,8 +58,6 @@ Remove Input
    Remove File                      simple-examples.tgz
    Remove Directory                 /tmp/text-data              recursive=True
    Remove Directory                 /tmp/objectdetection        recursive=True
-   Remove Directory                 /tmp/recommemdation         recursive=True
-
 
 Run Spark Test
    [Arguments]                      ${submit}                   ${spark_master}
