@@ -27,21 +27,21 @@ The examples are included in the Analytics Zoo source code.
     [Python version](https://github.com/intel-analytics/analytics-zoo/tree/master/pyzoo/zoo/examples/nnframes/imageTransferLearning)
 ## Primary APIs
 
-**NNEstimator**
+**NNEstimator and NNModel**
 
 Analytics Zoo provides `NNEstimator` for model training with Spark DataFrame, which
 provides high level API for training a BigDL Model with the Apache Spark
 [Estimator](https://spark.apache.org/docs/2.1.1/ml-pipeline.html#estimators)/
 [Transfomer](https://spark.apache.org/docs/2.1.1/ml-pipeline.html#transformers)
-pattern, thus users can conveniently fit Analytics Zoo into a ML pipeline.
-
-**NNClassifier and NNClassifierModel**
-`NNClassifier` and `NNClassifierModel`extends `NNEstimator` and `NNModel` and focus on 
-classification
-tasks.
+pattern, thus users can conveniently fit Analytics Zoo into a ML pipeline. The fit result of
+`NNEstimator` is a NNModel, which is a Spark ML Transformer.
 
 please check our
 [NNEstimator API](NNEstimator.md) for detailed usage.
+
+**NNClassifier and NNClassifierModel**
+`NNClassifier` and `NNClassifierModel`extends `NNEstimator` and `NNModel` and focus on 
+classification tasks, where both label column and prediction column are of Double type.
 
 **NNImageReader**
 NNImageReader loads image into Spark DataFrame.
