@@ -47,8 +47,8 @@ DownLoad Input
    Run                              wget https://s3-ap-southeast-1.amazonaws.com/analytics-zoo-models/object-detection/analytics-zoo_ssd-mobilenet-300x300_PASCAL_0.1.0.model -P /tmp/objectdetection/
    Log To Console                   got image data!!
    Create Directory                 /tmp/objectdetection/output
-   Run                              wget http://files.grouplens.org/datasets/movielens/ml-1m.zip  -P /tmp/recommemdation
-   Run                              tar -zxvf /tmp/recommemdation/ml-1m.zip  -C /tmp/recommemdation/
+   Run                              wget http://files.grouplens.org/datasets/movielens/ml-1m.zip -P /tmp/recommemdation
+   Run                              tar -zxvf /tmp/recommemdation/ml-1m.zip -C /tmp/recommemdation/
    Log To Console                   got recommendation movie data
    Remove Environment Variable      http_proxy                  https_proxy                     LANG
 
@@ -75,7 +75,6 @@ Run Spark Test
    Run Shell                        ${submit} --master ${spark_master} --driver-memory 5g --executor-memory 5g --total-executor-cores 32 --executor-cores 8 --class com.intel.analytics.zoo.examples.recommendation.WideAndDeepExample ${jar_path} --inputDir file:/tmp/recommemdation
    Log To Console                   begin recommendation NCF
    Run Shell                        ${submit} --master ${spark_master} --driver-memory 5g --executor-memory 5g --total-executor-cores 32 --executor-cores 8 --class com.intel.analytics.zoo.examples.recommendation.NeuralCFexample ${jar_path} --inputDir file:/tmp/recommendation
-
    Remove Input
 
 Spark2.1 Test Suite
