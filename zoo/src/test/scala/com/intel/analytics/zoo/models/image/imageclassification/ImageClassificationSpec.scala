@@ -32,8 +32,8 @@ import org.apache.commons.io.FileUtils
 import org.apache.spark.{SparkConf, SparkContext}
 import org.scalatest.{FlatSpec, Matchers}
 
+import scala.language.postfixOps
 import sys.process._
-
 
 class ImageClassificationSpec extends ZooSpecHelper {
   val resource = getClass.getClassLoader.getResource("imagenet/n04370456/")
