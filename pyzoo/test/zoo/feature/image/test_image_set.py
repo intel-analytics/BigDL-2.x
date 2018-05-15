@@ -16,6 +16,7 @@
 
 import pytest
 import os
+import cv2
 from bigdl.util.common import *
 from bigdl.transform.vision.image import MatToTensor
 
