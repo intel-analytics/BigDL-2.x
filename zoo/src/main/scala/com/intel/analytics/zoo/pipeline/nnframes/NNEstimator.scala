@@ -102,12 +102,6 @@ private[nnframes] trait TrainingParams[@specialized(Float, Double) T] extends Pa
    */
   final val l2GradientClippingParams = new FloatParam(this,
     "threshold for l2 norm gradient clipping", "l2GradientClippingParams")
-
-  /**
-   * Disable gradient clipping.
-   */
-  final val disableGradientClippingParams = new BooleanParam(this,
-    "disable gradient clipping", "disableGradientClippingParams")
 }
 
 /**
@@ -177,17 +171,17 @@ class NNEstimator[T: ClassTag] private[zoo] (
   set(optimMethod, new SGD[T])
 
   def setConstantGradientClipping(min: Float, max: Float): this.type = {
-    set(disableGradientClippingParams, false)
     set(constantGradientClippingParams, (min, max))
   }
 
   def setGradientClippingByL2Norm(clipNorm: Float): this.type = {
-    set(disableGradientClippingParams, false)
     set(l2GradientClippingParams, clipNorm)
   }
 
-  def disableGradientClipping(): this.type = {
-    set(disableGradientClippingParams, true)
+  /**
+   * Clear clipping params, in this case, clipping will not be applied.
+   */
+  def clearGradientClippingParams(): this.type = {
     clear(l2GradientClippingParams)
     clear(constantGradientClippingParams)
   }
@@ -320,17 +314,13 @@ class NNEstimator[T: ClassTag] private[zoo] (
       .setOptimMethod($(optimMethod))
       .setEndWhen(endTrigger)
 
-    if (isSet(disableGradientClippingParams) && $(disableGradientClippingParams) == true) {
-      optimizer.disableGradientClipping()
-    } else {
-      if (isSet(l2GradientClippingParams)) {
-        optimizer.setGradientClippingByl2Norm($(l2GradientClippingParams))
-      }
+    if (isSet(l2GradientClippingParams)) {
+      optimizer.setGradientClippingByl2Norm($(l2GradientClippingParams))
+    }
 
-      if (isSet(constantGradientClippingParams)) {
-        val constantClippingValues = $(constantGradientClippingParams)
-        optimizer.setConstantGradientClipping(constantClippingValues._1, constantClippingValues._2)
-      }
+    if (isSet(constantGradientClippingParams)) {
+      val constantClippingValues = $(constantGradientClippingParams)
+      optimizer.setConstantGradientClipping(constantClippingValues._1, constantClippingValues._2)
     }
 
     if (validationTrigger.isDefined) {

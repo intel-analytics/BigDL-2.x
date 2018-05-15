@@ -271,12 +271,12 @@ class NNEstimator(JavaEstimator, HasFeaturesCol, HasLabelCol, HasPredictionCol, 
         """
         return self.validation_config
 
-    def disableGradientClipping(self):
+    def clearGradientClippingParams(self):
         """
-        Disable gradient clipping during the training process.
+        Clear clipping params, in this case, clipping will not be applied. 
         In order to take effect, it needs to be called before fit.
         """
-        callBigDlFunc(self.bigdl_type, "nnEstimatorDisableGradientClipping",
+        callBigDlFunc(self.bigdl_type, "nnEstimatorClearGradientClippingParams",
                       self.value)
         return self
 
