@@ -88,19 +88,17 @@ object ImageModel {
   def loadModel[T: ClassTag](path: String, weightPath: String = null, modelType: String = "")
     (implicit ev: TensorNumeric[T]): ImageModel[T] = {
     val model = Module.loadModule[T](path, weightPath)
-    val imageModel = if (model.isInstanceOf[ImageModel[T]]){
+    val imageModel = if (model.isInstanceOf[ImageModel[T]]) {
       model.asInstanceOf[ImageModel[T]]
-    }else{
+    } else {
       val specificModel = modelType.toLowerCase() match {
-        case "objectdetection" => {
-          new ObjectDetector[T]()
-        }
-        case "imageclassification" => {
-          new ImageClassifier[T]()
-        }
-        case _ => logger.error(s"model type $modelType is not defined in Analytics zoo.Only 'imageclassification' and 'objectdetection' are currently supported.")
+        case "objectdetection" => new ObjectDetector[T]()
+        case "imageclassification" => new ImageClassifier[T]()
+        case _ => logger.error(s"model type $modelType is not defined in Analytics zoo." +
+          s"Only 'imageclassification' and 'objectdetection' are currently supported.")
           throw new IllegalArgumentException(
-            s"model type $modelType is not defined in Analytics zoo.Only 'imageclassification' and 'objectdetection' are currently supported.")
+            s"model type $modelType is not defined in Analytics zoo." +
+              s"Only 'imageclassification' and 'objectdetection' are currently supported.")
       }
       specificModel.addModel(model)
       specificModel.setName(model.getName())

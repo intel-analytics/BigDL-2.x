@@ -60,7 +60,9 @@ object ImageConfigure {
     require(splits.length >= 4, s"tag ${tag}" +
       s" needs at least 4 elements, publisher, model, dataset, version")
     if (!splits(0).equalsIgnoreCase("analytics-zoo")) {
-      logger.warn("Only support to create default image configuration for models published by analytics zoo. Third-party models need to pass its own image configuration during prediction")
+      logger.warn("Only support to create default image configuration for models published by " +
+        "analytics zoo. Third-party models need to pass its own image configuration during " +
+        "prediction")
       null
     } else {
       val model = splits(1)

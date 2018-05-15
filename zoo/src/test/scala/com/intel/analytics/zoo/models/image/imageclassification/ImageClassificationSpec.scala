@@ -55,7 +55,7 @@ class ImageClassificationSpec extends ZooSpecHelper {
     model.saveModel("./imc.model", overWrite = true)
     var result = null.asInstanceOf[ImageSet]
     var config = null.asInstanceOf[ImageConfigure[Float]]
-    if (!publisher.equalsIgnoreCase("analytics-zoo")){
+    if (!publisher.equalsIgnoreCase("analytics-zoo")) {
       val name = model.getName()
       val splits = name.split(("_"))
       config = ImageClassificationConfig[Float](splits(1), splits(2), splits(3))
@@ -68,7 +68,7 @@ class ImageClassificationSpec extends ZooSpecHelper {
     val image2 = ImageSet.read(resource.getFile)
     val model2 = ImageClassifier.loadModel[Float]("./imc.model")
     var result2 = null.asInstanceOf[ImageSet]
-    if (!publisher.equalsIgnoreCase("analytics-zoo")){
+    if (!publisher.equalsIgnoreCase("analytics-zoo")) {
       result2 = model.predictImageSet(image2, config)
     } else {
       result2 = model.predictImageSet(image2)
@@ -102,20 +102,21 @@ class ImageClassificationSpec extends ZooSpecHelper {
     val image = ImageSet.read(resource.getFile, sc)
     var result = null.asInstanceOf[ImageSet]
     var config = null.asInstanceOf[ImageConfigure[Float]]
-    if (!publisher.equalsIgnoreCase("analytics-zoo")){
+    if (!publisher.equalsIgnoreCase("analytics-zoo")) {
       val name = model.getName()
       val splits = name.split(("_"))
       config = ImageClassificationConfig[Float](splits(1), splits(2), splits(3))
       result = model.predictImageSet(image, config)
     } else {
-      result = model.predictImageSet(image) 
+      result = model.predictImageSet(image)
     }
     val predicted = result.toDistributed().rdd.collect()
 
     val model2 = ImageClassifier.loadModel[Float]("./imc.model")
     val image2 = ImageSet.read(resource.getFile, sc)
     var result2 = null.asInstanceOf[ImageSet]
-    if (!publisher.equalsIgnoreCase("analytics-zoo")){
+    if (!publisher.equalsIgnoreCase("analytics-zoo"))
+    {
       result2 = model.predictImageSet(image2, config)
     } else {
       result2 = model.predictImageSet(image2)
@@ -136,9 +137,8 @@ class ImageClassificationSpec extends ZooSpecHelper {
 
   "ImageClassifier" should "predict inception-v1-quantize locally" in {
     predictLocal("https://s3-ap-southeast-1.amazonaws.com/analytics-zoo-models/" +
-      "imageclassification/imagenet/analytics-zoo_inception-v1-quantize_imagenet_0.1.0", "analytics-zoo")
-
-    "rm -rf ./ssd.model" !!
+      "imageclassification/imagenet/analytics-zoo_inception-v1-quantize_imagenet_0.1.0",
+      "analytics-zoo")
   }
 
   "ImageClassifier" should "predict inception-v1-quantize" in {
@@ -170,7 +170,7 @@ class ImageClassifierSerialTest extends ModuleSerializationTest {
 //
 //    val model = ImageClassifier.loadModel[Float](dirName + "/" + modelFileName)
 //    val input = Tensor[Float](Array(3, 224, 224)).rand()
-//    ZooSpecHelper.testZooModelLoadSave(model.asInstanceOf[ZooModel[Tensor[Float], Tensor[Float], Float]],
-//      input, ImageClassifier.loadModel[Float])
+//    ZooSpecHelper.testZooModelLoadSave(model.asInstanceOf[ZooModel[Tensor[Float], Tensor[Float],
+    // Float]], input, ImageClassifier.loadModel[Float])
   }
 }
