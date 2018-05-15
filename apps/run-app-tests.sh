@@ -33,7 +33,7 @@ ${SPARK_HOME}/bin/spark-submit \
         --executor-cores 2  \
         --executor-memory 12g \
         --conf spark.akka.frameSize=64 \
-        --py-files ${ANALYTICS_ZOO_PYZIP},${ANALYTICS_ZOO_HOME}/apps/variational_autoencoder/using_variational_autoencoder_and_deep_feature_loss_to_generate_faces.py, ${ANALYTICS_ZOO_HOME}/apps/variational_autoencoder/utils.py \
+        --py-files ${ANALYTICS_ZOO_PYZIP},${ANALYTICS_ZOO_HOME}/apps/variational_autoencoder/using_variational_autoencoder_and_deep_feature_loss_to_generate_faces.py,${ANALYTICS_ZOO_HOME}/apps/variational_autoencoder/utils.py \
         --properties-file ${ANALYTICS_ZOO_CONF} \
         --jars ${ANALYTICS_ZOO_JAR} \
         --conf spark.driver.extraClassPath=${ANALYTICS_ZOO_JAR} \
@@ -67,12 +67,14 @@ ${SPARK_HOME}/bin/spark-submit \
         --executor-cores 2  \
         --executor-memory 12g \
         --conf spark.akka.frameSize=64 \
-        --py-files ${ANALYTICS_ZOO_PYZIP},${ANALYTICS_ZOO_HOME}/apps/variational_autoencoder/using_variational_autoencoder_to_generate_faces.py, ${ANALYTICS_ZOO_HOME}/apps/variational_autoencoder/utils.py \
+        --py-files ${ANALYTICS_ZOO_PYZIP},${ANALYTICS_ZOO_HOME}/apps/variational_autoencoder/using_variational_autoencoder_to_generate_faces.py,${ANALYTICS_ZOO_HOME}/apps/variational_autoencoder/utils.py \
         --properties-file ${ANALYTICS_ZOO_CONF} \
         --jars ${ANALYTICS_ZOO_JAR} \
         --conf spark.driver.extraClassPath=${ANALYTICS_ZOO_JAR} \
         --conf spark.executor.extraClassPath=${ANALYTICS_ZOO_JAR} \
         ${ANALYTICS_ZOO_HOME}/apps/variational_autoencoder/using_variational_autoencoder_to_generate_faces.py
+                          
+        
         
 echo "#5 start app test for using_variational_autoencoder_to_generate_digital_numbers"        
 chmod +x ./apps/ipynb2py.sh
