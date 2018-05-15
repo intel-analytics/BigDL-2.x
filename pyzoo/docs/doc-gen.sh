@@ -46,7 +46,7 @@ sed -i "/^extensions/s/^extensions *=/extensions +=/" conf.py
 sed -i "/^extensions/i extensions = ['sphinx.ext.autodoc', 'sphinx.ext.mathjax', 'bigdl_pytext']" conf.py
 sed -i "/^html_theme/c html_theme = 'sphinxdoc'" conf.py
 
-#remove sidebar 
+#remove sidebar
 #sed -i -e '108d;109d;110d;111d;112d;113d;114d;115d;116d' conf.py
 
 make clean; make html;
