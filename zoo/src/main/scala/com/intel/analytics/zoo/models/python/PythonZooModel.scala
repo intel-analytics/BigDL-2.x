@@ -26,7 +26,7 @@ import com.intel.analytics.bigdl.transform.vision.image.{BytesToMat, FeatureTran
 import com.intel.analytics.zoo.feature.image.ImageSet
 import com.intel.analytics.zoo.models.common.ZooModel
 import com.intel.analytics.zoo.models.image.common.{ImageConfigure, ImageModel}
-import com.intel.analytics.zoo.models.objectdetection._
+import com.intel.analytics.zoo.models.image.objectdetection._
 import com.intel.analytics.zoo.models.image.imageclassification.{ImageClassifier, LabelReader => IMCLabelReader}
 import com.intel.analytics.zoo.models.recommendation.{NeuralCF, Recommender, UserItemFeature, UserItemPrediction}
 import com.intel.analytics.zoo.models.recommendation._

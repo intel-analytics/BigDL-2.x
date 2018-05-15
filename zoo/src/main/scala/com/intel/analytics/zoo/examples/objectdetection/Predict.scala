@@ -20,7 +20,7 @@ import java.nio.file.Paths
 
 import com.intel.analytics.zoo.common.{NNContext, Utils}
 import com.intel.analytics.zoo.feature.image.ImageSet
-import com.intel.analytics.zoo.models.objectdetection.{ObjectDetector, Visualizer}
+import com.intel.analytics.zoo.models.image.objectdetection.{ObjectDetector, Visualizer}
 import org.apache.log4j.{Level, Logger}
 import org.apache.spark.SparkConf
 import scopt.OptionParser
