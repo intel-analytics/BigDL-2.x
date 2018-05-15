@@ -59,16 +59,21 @@ object ImageConfigure {
     val splits = tag.split(splitter)
     require(splits.length >= 4, s"tag ${tag}" +
       s" needs at least 4 elements, publisher, model, dataset, version")
-    val model = splits(1)
-    val dataset = splits(2)
-    val version = splits(3)
-    model.toLowerCase() match {
-      case obModel if ObjectDetectionConfig.models contains obModel =>
-        ObjectDetectionConfig(obModel, dataset, version)
-      case imcModel if ImageClassificationConfig.models contains imcModel =>
-        ImageClassificationConfig(imcModel, dataset, version)
-      case _ => logger.warn(s"$model is not defined in Analytics zoo.")
-        null
+    if (!splits(0).equalsIgnoreCase("analytics-zoo")) {
+      logger.warn("Only support to create default image configuration for models published by analytics zoo. Third-party models need to pass its own image configuration during prediction")
+      null
+    } else {
+      val model = splits(1)
+      val dataset = splits(2)
+      val version = splits(3)
+      model.toLowerCase() match {
+        case obModel if ObjectDetectionConfig.models contains obModel =>
+          ObjectDetectionConfig(obModel, dataset, version)
+        case imcModel if ImageClassificationConfig.models contains imcModel =>
+          ImageClassificationConfig(imcModel, dataset, version)
+        case _ => logger.warn(s"$model is not defined in Analytics zoo.")
+          null
+      }
     }
   }
 }

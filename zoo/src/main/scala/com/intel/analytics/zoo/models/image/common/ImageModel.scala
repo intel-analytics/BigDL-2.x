@@ -85,16 +85,12 @@ object ImageModel {
    * @tparam T Numeric type of parameter(e.g. weight, bias). Only support float/double now.
    * @return
    */
-  def loadModel[T: ClassTag](path: String, weightPath: String = null, modelType: String = null)
+  def loadModel[T: ClassTag](path: String, weightPath: String = null, modelType: String = "")
     (implicit ev: TensorNumeric[T]): ImageModel[T] = {
     val model = Module.loadModule[T](path, weightPath)
     val imageModel = if (model.isInstanceOf[ImageModel[T]]){
       model.asInstanceOf[ImageModel[T]]
     }else{
-      if (modelType == null){
-        logger.error(s"model type is not set.")
-        throw new NullPointerException("model type is null, please set model type")
-      }
       val specificModel = modelType.toLowerCase() match {
         case "objectdetection" => {
           new ObjectDetector[T]()
@@ -102,9 +98,9 @@ object ImageModel {
         case "imageclassification" => {
           new ImageClassifier[T]()
         }
-        case _ => logger.error(s"model type $modelType is not defined in Analytics zoo.")
+        case _ => logger.error(s"model type $modelType is not defined in Analytics zoo.Only 'imageclassification' and 'objectdetection' are currently supported.")
           throw new IllegalArgumentException(
-            s"model type $modelType is not defined in Analytics zoo.")
+            s"model type $modelType is not defined in Analytics zoo.Only 'imageclassification' and 'objectdetection' are currently supported.")
       }
       specificModel.addModel(model)
       specificModel.setName(model.getName())
