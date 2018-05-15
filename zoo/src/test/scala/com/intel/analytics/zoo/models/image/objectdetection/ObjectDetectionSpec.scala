@@ -46,26 +46,26 @@ class ObjectDetectionSpec extends FlatSpec with Matchers with BeforeAndAfter {
     "rm -rf ./bigdl_ssd.model" !!
   }
 
-//  "ObjectDetector model" should "be able to work" in {
-//    val resource = getClass.getClassLoader.getResource("pascal/")
-//    val data = ImageSet.read(resource.getFile, sc, 1)
-//    val model = ObjectDetector.loadModel[Float]("./ssd.model")
-//    val output = model.predictImageSet(data)
-//
-//    model.saveModel("./ssd2.model", overWrite = true)
-//    val loadedModel = ObjectDetector.loadModel[Float]("./ssd2.model")
-//      .asInstanceOf[ObjectDetector[Float]]
-//    require(loadedModel.modules.length == 1)
-//    val data2 = ImageSet.read(resource.getFile, sc, 1)
-//    val output2 = loadedModel.predictImageSet(data2)
-//    val res = output.toDistributed().rdd.collect()
-//    val res2 = output2.toDistributed().rdd.collect()
-//    require(res.length == res2.length)
-//    require(res.head.predict(ImageFeature.predict)
-//      .equals(res2.head.predict(ImageFeature.predict)) == true)
-//
-//    "rm -rf ./ssd2.model" !!
-//  }
+  "ObjectDetector model" should "be able to work" in {
+    val resource = getClass.getClassLoader.getResource("pascal/")
+    val data = ImageSet.read(resource.getFile, sc, 1)
+    val model = ObjectDetector.loadModel[Float]("./ssd.model")
+    val output = model.predictImageSet(data)
+
+    model.saveModel("./ssd2.model", overWrite = true)
+    val loadedModel = ObjectDetector.loadModel[Float]("./ssd2.model")
+      .asInstanceOf[ObjectDetector[Float]]
+    require(loadedModel.modules.length == 1)
+    val data2 = ImageSet.read(resource.getFile, sc, 1)
+    val output2 = loadedModel.predictImageSet(data2)
+    val res = output.toDistributed().rdd.collect()
+    val res2 = output2.toDistributed().rdd.collect()
+    require(res.length == res2.length)
+    require(res.head.predict(ImageFeature.predict)
+      .equals(res2.head.predict(ImageFeature.predict)) == true)
+
+    "rm -rf ./ssd2.model" !!
+  }
 
   "ObjectDetector model" should "be able to work with bigdl model" in {
     val resource = getClass.getClassLoader.getResource("pascal/")
