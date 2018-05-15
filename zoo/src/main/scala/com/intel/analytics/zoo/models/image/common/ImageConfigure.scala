@@ -51,18 +51,25 @@ object ImageConfigure {
   /**
    * Get config for each model
    *
-   * @param tag In 'publisher_model_dataset_version' format,
-   * publisher is required to be bigdl in this model zoo
+   * @param tag If model is published by analytics zoo, tag should be in
+   *            'publisher_model_dataset_version' format,
+   *            and publisher is required to be 'analytics-zoo'.
+   *            If model is not published by analytics zoo, tag does not
+   *            need to start with 'analytics-zoo', and format does not need to
+   *            be in 'publisher_model_dataset_version' format
    * @return
    */
   def parse[T: ClassTag](tag: String)(implicit ev: TensorNumeric[T]): ImageConfigure[T] = {
-    val splits = tag.split(splitter)
-    if (!splits(0).equalsIgnoreCase("analytics-zoo")) {
+    // If tag does not start with "analytics-zoo", it's a third-party model.
+    // Don't create default image configuration
+    if (!tag.startsWith("analytics-zoo")) {
       logger.warn("Only support to create default image configuration for models published by " +
         "analytics zoo. Third-party models need to pass its own image configuration during " +
         "prediction")
       null
     } else {
+      val splits = tag.split(splitter)
+      // It's a analytics zoo model. The tag should be in 'publisher_model_dataset_version' format
       require(splits.length >= 4, s"tag ${tag}" +
         s" needs at least 4 elements, publisher, model, dataset, version")
       val model = splits(1)
