@@ -24,6 +24,17 @@ else
    wget -P ${ANALYTICS_ZOO_HOME}/apps/variational_autoencoder/ ftp://zoo:1234qwer@10.239.47.211/analytics-zoo-data/apps/variational_autoencoder/bigdl_vgg-16_imagenet_0.4.0.model --no-host-directories 
    echo "Finished"
 fi
+
+FILENAME="${ANALYTICS_ZOO_HOME}/apps/variational_autoencoder/img_align_celeba.zip"
+if [ -f "$FILENAME" ]
+then
+   echo "$FILENAME already exists."
+else
+   echo "Downloading celeba images"
+   wget -P ${ANALYTICS_ZOO_HOME}/apps/variational_autoencoder/ ftp://zoo:1234qwer@10.239.47.211/analytics-zoo-data/apps/variational_autoencoder/img_align_celeba.zip --no-host-directories 
+   unzip ${ANALYTICS_ZOO_HOME}/apps/variational_autoencoder/img_align_celeba.zip
+   echo "Finished"
+fi
         
 ${SPARK_HOME}/bin/spark-submit \
         --master ${MASTER} \
@@ -54,7 +65,7 @@ then
    echo "$FILENAME already exists."
 else
    echo "Downloading celeba images"
-   wget ftp://zoo:1234qwer@10.239.47.211/analytics-zoo-data/apps/variational_autoencoder/img_align_celeba.zip --no-host-directories 
+   wget -P ${ANALYTICS_ZOO_HOME}/apps/variational_autoencoder/ ftp://zoo:1234qwer@10.239.47.211/analytics-zoo-data/apps/variational_autoencoder/img_align_celeba.zip --no-host-directories 
    unzip ${ANALYTICS_ZOO_HOME}/apps/variational_autoencoder/img_align_celeba.zip
    echo "Finished"
 fi
