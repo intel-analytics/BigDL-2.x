@@ -32,7 +32,7 @@ then
 else
    echo "Downloading celeba images"
    wget -P ${ANALYTICS_ZOO_HOME}/apps/variational_autoencoder/ ftp://zoo:1234qwer@10.239.47.211/analytics-zoo-data/apps/variational_autoencoder/img_align_celeba.zip --no-host-directories 
-   unzip ${ANALYTICS_ZOO_HOME}/apps/variational_autoencoder/img_align_celeba.zip
+   unzip -d ${ANALYTICS_ZOO_HOME}/apps/variational_autoencoder/ ${ANALYTICS_ZOO_HOME}/apps/variational_autoencoder/img_align_celeba.zip
    echo "Finished"
 fi
         
@@ -66,7 +66,7 @@ then
 else
    echo "Downloading celeba images"
    wget -P ${ANALYTICS_ZOO_HOME}/apps/variational_autoencoder/ ftp://zoo:1234qwer@10.239.47.211/analytics-zoo-data/apps/variational_autoencoder/img_align_celeba.zip --no-host-directories 
-   unzip ${ANALYTICS_ZOO_HOME}/apps/variational_autoencoder/img_align_celeba.zip
+   unzip -d ${ANALYTICS_ZOO_HOME}/apps/variational_autoencoder/ ${ANALYTICS_ZOO_HOME}/apps/variational_autoencoder/img_align_celeba.zip
    echo "Finished"
 fi
 
