@@ -10,9 +10,6 @@ export ANALYTICS_ZOO_PYZIP=`find ${ANALYTICS_ZOO_HOME_DIST}/lib -type f -name "a
 export ANALYTICS_ZOO_CONF=${ANALYTICS_ZOO_HOME_DIST}/conf/spark-bigdl.conf
 export PYTHONPATH=${ANALYTICS_ZOO_PYZIP}:$PYTHONPATH
 
-chmod +x ./apps/ipynb2py.sh
-./apps/ipynb2py.sh ./apps/anomaly-detection/anomaly-detection-nyc-taxi
-
 echo "#3 start app test for using_variational_autoencoder_and_deep_feature_loss_to_generate_faces"
 chmod +x ./apps/ipynb2py.sh
 ./apps/ipynb2py.sh ./apps/variational_autoencoder/using_variational_autoencoder_and_deep_feature_loss_to_generate_faces
@@ -24,7 +21,7 @@ then
    echo "$FILENAME already exists."
 else
    echo "Downloading VGG model"
-   wget ftp://zoo:1234qwer@10.239.47.211/analytics-zoo-data/apps/variational_autoencoder/bigdl_vgg-16_imagenet_0.4.0.model --no-host-directories 
+   wget -P ${ANALYTICS_ZOO_HOME}/apps/variational_autoencoder/ ftp://zoo:1234qwer@10.239.47.211/analytics-zoo-data/apps/variational_autoencoder/bigdl_vgg-16_imagenet_0.4.0.model --no-host-directories 
    echo "Finished"
 fi
                                         
@@ -34,7 +31,7 @@ then
    echo "$FILENAME already exists."
 else
    echo "Downloading celeba images"
-   wget ftp://zoo:1234qwer@10.239.47.211/analytics-zoo-data/apps/variational_autoencoder/img_align_celeba.zip --no-host-directories 
+   wget -P ${ANALYTICS_ZOO_HOME}/apps/variational_autoencoder/ ftp://zoo:1234qwer@10.239.47.211/analytics-zoo-data/apps/variational_autoencoder/img_align_celeba.zip --no-host-directories 
    unzip ${ANALYTICS_ZOO_HOME}/apps/variational_autoencoder/img_align_celeba.zip
    echo "Finished"
 fi
