@@ -170,7 +170,7 @@ class TestNNClassifer():
         estimator.fit(df)
         estimator.disableGradientClipping()
         estimator.fit(df)
-        estimator.setGradientClippingByL2Norm()
+        estimator.setGradientClippingByL2Norm(1.2)
         estimator.fit(df)
 
     def test_nnEstimator_fit_with_non_default_featureCol(self):
