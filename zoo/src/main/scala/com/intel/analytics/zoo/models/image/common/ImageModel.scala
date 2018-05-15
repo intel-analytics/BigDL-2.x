@@ -22,7 +22,7 @@ import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric
 import com.intel.analytics.zoo.feature.image.ImageSet
 import com.intel.analytics.zoo.models.common.ZooModel
 import com.intel.analytics.zoo.models.image.imageclassification.ImageClassifier
-import com.intel.analytics.zoo.models.objectdetection.ObjectDetector
+import com.intel.analytics.zoo.models.image.objectdetection.ObjectDetector
 import org.apache.log4j.Logger
 
 import scala.reflect.ClassTag
