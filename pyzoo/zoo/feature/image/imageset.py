@@ -107,7 +107,7 @@ class LocalImageSet(ImageSet):
         """
         tensors = callBigDlFunc(self.bigdl_type, "localImageSetToImageTensor",
                                 self.value, float_key, to_chw)
-        return map(lambda tensor: tensor.to_ndarray(), tensors)
+        return list(map(lambda tensor: tensor.to_ndarray(), tensors))
 
     def get_label(self):
         """
