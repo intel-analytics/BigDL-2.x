@@ -164,13 +164,13 @@ class TestNNClassifer():
         criterion = MSECriterion()
         estimator = NNEstimator(model, criterion, SeqToTensor([2]), ArrayToTensor([2])) \
             .setBatchSize(4).setLearningRate(0.2).setMaxEpoch(2)\
-            .set_constant_gradient_clipping(0.1, 0.2)
+            .setConstantGradientClipping(0.1, 0.2)
 
         df = self.get_estimator_df()
         estimator.fit(df)
-        estimator.disable_gradient_clipping()
+        estimator.disableGradientClipping()
         estimator.fit(df)
-        estimator.set_gradient_clipping_by_l2_norm()
+        estimator.setGradientClippingByL2Norm()
         estimator.fit(df)
 
     def test_nnEstimator_fit_with_non_default_featureCol(self):

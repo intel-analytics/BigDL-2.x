@@ -271,18 +271,18 @@ class NNEstimator(JavaEstimator, HasFeaturesCol, HasLabelCol, HasPredictionCol, 
         """
         return self.validation_config
 
-    def disable_gradient_clipping(self):
+    def disableGradientClipping(self):
         """
-        Call this if you would like to disable gradient clipping during the training process.
+        Disable gradient clipping during the training process.
         In order to take effect, it needs to be called before fit.
         """
         callBigDlFunc(self.bigdl_type, "nnEstimatorDisableGradientClipping",
                       self.value)
         return self
 
-    def set_constant_gradient_clipping(self, min, max):
+    def setConstantGradientClipping(self, min, max):
         """
-        Call this if you would like to set constant gradient clipping during the training process.
+        Set constant gradient clipping during the training process.
         In order to take effect, it needs to be called before fit.
 
         # Arguments
@@ -295,10 +295,9 @@ class NNEstimator(JavaEstimator, HasFeaturesCol, HasLabelCol, HasPredictionCol, 
                       float(max))
         return self
 
-    def set_gradient_clipping_by_l2_norm(self, clip_norm):
+    def setGradientClippingByL2Norm(self, clip_norm):
         """
-        Call this if you would like to clip gradient to a maximum L2-Norm
-        during the training process.
+        Clip gradient to a maximum L2-Norm during the training process.
         In order to take effect, it needs to be called before fit.
 
         # Arguments
