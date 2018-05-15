@@ -25,7 +25,7 @@ import com.intel.analytics.zoo.pipeline.api.keras.layers._
 import com.intel.analytics.zoo.pipeline.api.keras.models.Model
 import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric.NumericFloat
 import com.intel.analytics.zoo.feature.image.{CenterCrop, ChannelNormalize, MatToTensor, Resize}
-import com.intel.analytics.zoo.pipeline.api.net.Net
+import com.intel.analytics.zoo.pipeline.api.Net
 import com.intel.analytics.zoo.pipeline.nnframes.{NNClassifier, NNClassifierModel, NNImageReader}
 import org.apache.spark.ml.Pipeline
 import org.apache.spark.sql.Row

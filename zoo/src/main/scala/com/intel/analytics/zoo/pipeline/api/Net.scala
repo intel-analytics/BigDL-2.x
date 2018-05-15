@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.intel.analytics.zoo.pipeline.api.net
+package com.intel.analytics.zoo.pipeline.api
 
 import java.nio.ByteOrder
 

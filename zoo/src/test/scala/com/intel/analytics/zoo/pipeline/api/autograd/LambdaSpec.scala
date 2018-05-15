@@ -20,7 +20,7 @@ import com.intel.analytics.bigdl.nn.abstractnn.AbstractModule
 import com.intel.analytics.bigdl.tensor.Tensor
 import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric
 import com.intel.analytics.bigdl.utils.{Shape, T, Table}
-import com.intel.analytics.zoo.pipeline.api.net.Net
+import com.intel.analytics.zoo.pipeline.api.Net
 import com.intel.analytics.zoo.pipeline.api.keras.ZooSpecHelper
 import com.intel.analytics.zoo.pipeline.api.keras.layers.{Input, InputLayer, KerasBaseSpec}
 import com.intel.analytics.zoo.pipeline.api.keras.models.{Model, Sequential}

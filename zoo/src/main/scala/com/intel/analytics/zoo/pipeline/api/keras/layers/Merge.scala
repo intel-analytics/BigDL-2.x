@@ -23,8 +23,8 @@ import com.intel.analytics.bigdl.nn.{CAddTable, CAveTable, CDivTable, CMaxTable,
 import com.intel.analytics.bigdl.tensor.Tensor
 import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric
 import com.intel.analytics.bigdl.utils.{MultiShape, Shape}
+import com.intel.analytics.zoo.pipeline.api.Net
 import com.intel.analytics.zoo.pipeline.api.keras.layers.utils.{KerasLayerRef, KerasUtils}
-import com.intel.analytics.zoo.pipeline.api.net.Net
 
 import scala.reflect.ClassTag
 
