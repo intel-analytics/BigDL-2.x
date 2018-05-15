@@ -24,19 +24,7 @@ else
    wget -P ${ANALYTICS_ZOO_HOME}/apps/variational_autoencoder/ ftp://zoo:1234qwer@10.239.47.211/analytics-zoo-data/apps/variational_autoencoder/bigdl_vgg-16_imagenet_0.4.0.model --no-host-directories 
    echo "Finished"
 fi
-                                        
-FILENAME="${ANALYTICS_ZOO_HOME}/apps/variational_autoencoder/img_align_celeba.zip"
-if [ -f "$FILENAME" ]
-then
-   echo "$FILENAME already exists."
-else
-   echo "Downloading celeba images"
-   wget -P ${ANALYTICS_ZOO_HOME}/apps/variational_autoencoder/ ftp://zoo:1234qwer@10.239.47.211/analytics-zoo-data/apps/variational_autoencoder/img_align_celeba.zip --no-host-directories 
-   unzip ${ANALYTICS_ZOO_HOME}/apps/variational_autoencoder/img_align_celeba.zip
-   echo "Finished"
-fi
-
-
+        
 ${SPARK_HOME}/bin/spark-submit \
         --master ${MASTER} \
         --driver-cores 2  \
@@ -50,8 +38,9 @@ ${SPARK_HOME}/bin/spark-submit \
         --jars ${ANALYTICS_ZOO_JAR} \
         --conf spark.driver.extraClassPath=${ANALYTICS_ZOO_JAR} \
         --conf spark.executor.extraClassPath=${ANALYTICS_ZOO_JAR} \
-        ${ANALYTICS_ZOO_HOME}/apps/variational_autoencoder/using_variational_autoencoder_and_deep_feature_loss_to_generate_faces.py
+        ${ANALYTICS_ZOO_HOME}/apps/variational_autoencoder/using_variational_autoencoder_and_deep_feature_loss_to_generate_faces.py        
         
+                                  
 
 echo "#4 start app test for using_variational_autoencoder_to_generate_faces"
 chmod +x ./apps/ipynb2py.sh
