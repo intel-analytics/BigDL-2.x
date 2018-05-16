@@ -15,11 +15,8 @@
 #
 
 import re
-from bigdl.util.common import *
 from pyspark.sql.functions import col, udf
 from pyspark.sql.types import DoubleType, StringType
-from bigdl.nn.layer import *
-from bigdl.nn.criterion import *
 from pyspark import SparkConf
 from pyspark.ml import Pipeline
 from zoo.pipeline.api.net import *
@@ -27,8 +24,11 @@ from zoo.pipeline.api.net import *
 from zoo.common.nncontext import *
 from zoo.pipeline.nnframes.nn_classifier import *
 from zoo.pipeline.nnframes.nn_image_reader import *
-from zoo.feature.common import *
+from zoo.feature.common import RowToImageFeature
 from zoo.feature.image.imagePreprocessing import *
+from zoo.pipeline.api.keras.layers import Dense, Input, Flatten
+from zoo.pipeline.api.keras.models import *
+from bigdl.nn.criterion import CrossEntropyCriterion
 
 
 if __name__ == "__main__":
@@ -38,7 +38,8 @@ if __name__ == "__main__":
         print("Need parameters: <modelPath> <imagePath>")
         exit(-1)
 
-    sparkConf = SparkConf().setAppName("ImageTransferLearningExample")
+    sparkConf = SparkConf()\
+        .setAppName("ImageTransferLearningExample")
     sc = get_nncontext(sparkConf)
 
     model_path = sys.argv[1]
@@ -62,9 +63,14 @@ if __name__ == "__main__":
     model = full_model.new_graph(["pool5/drop_7x7_s1"])  # create a new model by remove layers after pool5/drop_7x7_s1
     model.freeze_up_to(["pool4/3x3_s2"])  # freeze layers from input to pool4/3x3_s2 inclusive
 
-    lrModel = Sequential().add(model).add(Reshape([1024])).add(Linear(1024, 2)).add(LogSoftMax())
+    inputNode = Input(name="input", shape=(3, 224, 224))
+    inception = model.toKeras()(inputNode)
+    flatten = Flatten()(inception)
+    logits = Dense(2)(flatten)
 
-    classifier = NNClassifier.create(lrModel, ClassNLLCriterion(), transformer) \
+    lrModel = Model(inputNode, logits)
+
+    classifier = NNClassifier(lrModel, CrossEntropyCriterion(), transformer) \
         .setLearningRate(0.003).setBatchSize(40).setMaxEpoch(1).setFeaturesCol("image")
 
     pipeline = Pipeline(stages=[classifier])

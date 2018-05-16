@@ -17,7 +17,7 @@
 package com.intel.analytics.zoo.pipeline.api.keras.models
 
 import com.intel.analytics.bigdl.dataset._
-import com.intel.analytics.bigdl.{Criterion, DataSet, NetUtils}
+import com.intel.analytics.bigdl.{Criterion, DataSet}
 import com.intel.analytics.bigdl.nn.Graph.ModuleNode
 import com.intel.analytics.bigdl.nn.abstractnn.{AbstractModule, Activity}
 import com.intel.analytics.bigdl.nn.keras.{KerasLayer, KerasLayerSerializable}
@@ -31,6 +31,7 @@ import com.intel.analytics.bigdl.visualization.{TrainSummary, ValidationSummary}
 import com.intel.analytics.zoo.pipeline.api.autograd.{CustomLossWithVariable, Lambda, Variable}
 import com.intel.analytics.zoo.pipeline.api.keras.layers.utils.{AbstractModuleRef, GraphRef, KerasLayerRef}
 import com.intel.analytics.zoo.pipeline.api.keras.layers.utils.KerasUtils
+import com.intel.analytics.zoo.pipeline.api.net.NetUtils
 import org.apache.spark.rdd.RDD
 
 import scala.collection.JavaConverters._
@@ -533,7 +534,7 @@ class Sequential[T: ClassTag] private ()
   override def toModel(): Model[T] = {
     val graph = labor.toGraph()
     val inputs = graph.inputs
-    val outputs = NetUtils.getOutputs(graph)
+    val outputs = NetUtils.getGraphOutputs(graph)
     Model(inputs.toArray, outputs.toArray)
   }
 }

@@ -13,91 +13,80 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intel.analytics.bigdl
+package com.intel.analytics.zoo.pipeline.api.net
 
+import com.intel.analytics.bigdl.Module
 import com.intel.analytics.bigdl.nn.Graph.ModuleNode
 import com.intel.analytics.bigdl.nn.abstractnn.Activity
 import com.intel.analytics.bigdl.nn.keras.KerasLayer
-import com.intel.analytics.bigdl.nn.{DynamicGraph, Graph, StaticGraph}
+import com.intel.analytics.bigdl.nn.{Container, Graph, StaticGraph}
 import com.intel.analytics.bigdl.tensor.Tensor
 import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric
 import com.intel.analytics.zoo.pipeline.api.keras.layers.KerasLayerWrapper
+import com.intel.analytics.zoo.pipeline.api.keras.layers.utils.KerasUtils
 
 import scala.collection.mutable
 import scala.reflect.ClassTag
 
 
-object NetUtils {
+class GraphNet[T: ClassTag](graph: Graph[T])(implicit ev: TensorNumeric[T])
+  extends Container[Activity, Activity, T] with NetUtils[T, GraphNet[T]] {
 
-  type GraphWithUtils[T] = Graph[T] with NetUtils[T, _ <: Graph[T] with NetUtils[T, _]]
+  private val labor = graph
 
-  def getOutputs[T](graph: Graph[T]): Seq[ModuleNode[T]] = {
-    graph.outputs
+  val outputNodes = NetUtils.getGraphOutputs(graph)
+
+  val inputNodes = graph.inputs
+
+  override def updateOutput(input: Activity): Activity = {
+    output = labor.updateOutput(input)
+    output
   }
 
-  def withGraphUtils[T: ClassTag](graph: Graph[T])
-        (implicit ev: TensorNumeric[T]):
-  Graph[T] with NetUtils[T, _ <: GraphWithUtils[T]] = {
+  override def updateGradInput(input: Activity, gradOutput: Activity): Activity = {
+    gradInput = labor.updateGradInput(input, gradOutput)
+    gradInput
+  }
+
+  override def accGradParameters(input: Activity, gradOutput: Activity): Unit = {
+    labor.accGradParameters(input, gradOutput)
+  }
+
+  override def node(name: String): ModuleNode[T] = this.graph.node(name)
+
+  override def newGraph(output: String): GraphNet[T] = {
+    newGraph(Seq(output))
+  }
+
+
+  override def newGraph(outputs: Seq[String]): GraphNet[T] = {
     val inputs = graph.inputs
-    val outputs = graph.outputs
-    val variables = graph.variables
+    val variables = NetUtils.getGraphVariables(graph)
+      .asInstanceOf[Option[(Array[Tensor[T]], Array[Tensor[T]])]]
 
     graph match {
-
       case g: StaticGraph[T] =>
-        new StaticNetWithUtils[T](inputs, outputs, variables)
-      case g: DynamicGraph[T] =>
-        new DynamicNetWithUtils[T](inputs, outputs, variables, g.generateBackward)
+        val newGraph = Graph(inputs.toArray, nodes(outputs).toArray, variables)
+        new GraphNet[T](newGraph)
+      case _ =>
+        throw new IllegalArgumentException("Dynamic graph is not supported for now.")
     }
   }
 
-}
-
-class StaticNetWithUtils[T: ClassTag](
-   private val _inputs : Seq[ModuleNode[T]],
-   private val _outputs : Seq[ModuleNode[T]],
-   private val _variables: Option[(Array[Tensor[T]], Array[Tensor[T]])] = None)
-                                     (implicit ev: TensorNumeric[T])
-  extends StaticGraph[T](_inputs, _outputs, _variables)
-    with NetUtils[T, StaticNetWithUtils[T]] {
-
-  override def newGraph(output: String): StaticNetWithUtils[T] = {
-    new StaticNetWithUtils[T](inputs, nodes(Seq(output)), _variables)
-  }
-
-  override def newGraph(outputs: Seq[String]): StaticNetWithUtils[T] = {
-    new StaticNetWithUtils[T](inputs, nodes(outputs))
-  }
-
-  override def toKeras() = {
+  override def toKeras(): KerasLayer[Activity, Activity, T] = {
     new KerasLayerWrapper[T](this)
   }
-
 }
 
-class DynamicNetWithUtils[T: ClassTag](
-  _inputs : Seq[ModuleNode[T]],
-  _outputs : Seq[ModuleNode[T]],
-  _variables: Option[(Array[Tensor[T]], Array[Tensor[T]])] = None,
-  generateBackward: Boolean = true)(implicit ev: TensorNumeric[T])
-  extends DynamicGraph[T](_inputs, _outputs, _variables, generateBackward)
-    with NetUtils[T, DynamicNetWithUtils[T]] {
 
-  override def newGraph(output: String): DynamicNetWithUtils[T] = {
-    new DynamicNetWithUtils[T](
-      inputs,
-      nodes(Seq(output)).map(_.removeNextEdges()),
-      _variables, generateBackward)
+object NetUtils {
+  private[zoo] def getGraphOutputs[T](graph: Graph[T]): Seq[ModuleNode[T]] = {
+    KerasUtils.invokeMethod(graph, "outputs").asInstanceOf[Seq[ModuleNode[T]]]
   }
 
-  override def newGraph(outputs: Seq[String]): DynamicNetWithUtils[T] = {
-    new DynamicNetWithUtils[T](
-      inputs,
-      nodes(outputs).map(_.removeNextEdges()), _variables, generateBackward)
-  }
-
-  override def toKeras() = {
-    new KerasLayerWrapper[T](this)
+  private[zoo] def getGraphVariables[T](graph: Graph[T]) = {
+    KerasUtils.invokeMethod(graph, "variables")
+      .asInstanceOf[Option[(Array[Tensor[T]], Array[Tensor[T]])]]
   }
 }
 

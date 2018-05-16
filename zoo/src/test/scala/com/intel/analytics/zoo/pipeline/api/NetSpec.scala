@@ -16,8 +16,7 @@
 
 package com.intel.analytics.zoo.pipeline.api
 
-import com.intel.analytics.bigdl.{Module, NetUtils}
-import com.intel.analytics.bigdl.nn._
+
 import com.intel.analytics.bigdl.utils.Shape
 import com.intel.analytics.zoo.pipeline.api.keras.ZooSpecHelper
 import com.intel.analytics.zoo.pipeline.api.keras.layers.Dense
@@ -35,7 +34,7 @@ class NetSpec extends ZooSpecHelper{
     val model = Net.loadCaffe[Float](
       s"$path/test_persist.prototxt", s"$path/test_persist.caffemodel")
     val newModel = model.newGraph("ip")
-    NetUtils.getOutputs(newModel).head.element.getName() should be ("ip")
+      newModel.outputNodes.head.element.getName() should be ("ip")
   }
 
   "Load bigdl" should "work" in {
@@ -43,15 +42,15 @@ class NetSpec extends ZooSpecHelper{
     val path = resource.getPath + "/" + "bigdl"
     val model = Net.loadBigDL[Float](s"$path/bigdl_lenet.model")
     val newModel = model.newGraph("reshape2")
-    NetUtils.getOutputs(newModel).head.element.getName() should be ("reshape2")
+    newModel.outputNodes.head.element.getName() should be ("reshape2")
   }
 
-  "Load tensorflow" should "work" in {
-    val resource = getClass().getClassLoader().getResource("models")
-    val path = resource.getPath + "/" + "tensorflow"
-    val model = Net.loadTF[Float](s"$path/lenet.pb", Seq("Placeholder"), Seq("LeNet/fc4/BiasAdd"))
-    val newModel = model.newGraph("LeNet/fc3/Relu")
-    NetUtils.getOutputs(newModel).head.element.getName() should be ("LeNet/fc3/Relu")
-  }
+//  "Load tensorflow" should "work" in {
+//    val resource = getClass().getClassLoader().getResource("models")
+//    val path = resource.getPath + "/" + "tensorflow"
+//    val model = Net.loadTF[Float](s"$path/lenet.pb", Seq("Placeholder"), Seq("LeNet/fc4/BiasAdd"))
+//    val newModel = model.newGraph("LeNet/fc3/Relu")
+//    newModel.outputNodes.head.element.getName() should be ("LeNet/fc3/Relu")
+//  }
 
 }

@@ -40,7 +40,7 @@ object Utils {
                           modelPath: String = "/tmp/models/bigdl_inception-v1_imagenet_0.4.0.model",
                           dataPath: String = "/tmp/datasets/cat_dog/train_sampled",
                           batchSize: Int = 32,
-                          nEpochs: Int = 2)
+                          nEpochs: Int = 1)
 
   val trainParser = new OptionParser[TrainParams]("BigDL ptbModel Train Example") {
     opt[String]('m', "modelPath")
@@ -83,7 +83,7 @@ object TransferLearning {
 
       // val valTransformed = featureTransformer.transform(valDf)
 //      val dlmodel = new NNClassifierModel(model, featureTransformer)
-      val classifier = new NNClassifier(model, CrossEntropyCriterion[Float](), featureTransformer)
+      val classifier = NNClassifier(model, CrossEntropyCriterion[Float](), featureTransformer)
         .setFeaturesCol("image")
         .setLearningRate(0.003)
         .setBatchSize(param.batchSize)
@@ -116,8 +116,8 @@ object TransferLearning {
     // add a new classifer
     val input = Input[Float](inputShape = Shape(3, 224, 224))
     val feature = inception.inputs(input)
-    val flattern = Flatten[Float]().inputs(feature)
-    val logits = Dense[Float](2).inputs(flattern)
+    val flatten = Flatten[Float]().inputs(feature)
+    val logits = Dense[Float](2).inputs(flatten)
 
     Model[Float](input, logits)
   }

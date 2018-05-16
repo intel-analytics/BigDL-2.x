@@ -19,7 +19,7 @@ package com.intel.analytics.zoo.pipeline.api.keras.python
 import java.nio.ByteOrder
 import java.util.{List => JList}
 
-import com.intel.analytics.bigdl.{Criterion, DataSet, NetUtils}
+import com.intel.analytics.bigdl.{Criterion, DataSet}
 import com.intel.analytics.bigdl.dataset.{DataSet, LocalDataSet, MiniBatch}
 
 import scala.collection.JavaConverters._
@@ -37,6 +37,7 @@ import com.intel.analytics.zoo.pipeline.api.keras.layers._
 import com.intel.analytics.zoo.pipeline.api.keras.layers.utils.KerasUtils
 import com.intel.analytics.zoo.pipeline.api.keras.metrics.AUC
 import com.intel.analytics.zoo.pipeline.api.keras.models.{KerasNet, Model, Sequential}
+import com.intel.analytics.zoo.pipeline.api.net.NetUtils
 import org.apache.spark.api.java.JavaRDD
 
 import scala.reflect.ClassTag
@@ -211,6 +212,14 @@ class PythonZooKeras[T: ClassTag](implicit ev: TensorNumeric[T]) extends PythonB
       case _ => throw new IllegalArgumentException(s"No support byte order $byteOrder")
     }
     Net.loadTF[T](path, inputs.asScala, outputs.asScala, order, Option(binFile))
+  }
+
+  def kerasNetToModel(value: KerasNet[T]): Model[T] = {
+    value.toModel()
+  }
+
+  def netToKeras(value: NetUtils[T, _]): KerasLayer[Activity, Activity, T] = {
+    value.toKeras()
   }
 
   def createZooKerasDense(

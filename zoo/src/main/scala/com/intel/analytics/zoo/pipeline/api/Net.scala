@@ -18,7 +18,6 @@ package com.intel.analytics.zoo.pipeline.api
 
 import java.nio.ByteOrder
 
-import com.intel.analytics.bigdl.NetUtils
 import com.intel.analytics.bigdl.nn.Graph
 import com.intel.analytics.bigdl.nn.abstractnn.{AbstractModule, Activity}
 import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric
@@ -27,6 +26,7 @@ import com.intel.analytics.bigdl.utils.caffe.CaffeLoader
 import com.intel.analytics.bigdl.utils.serializer.ModuleLoader
 import com.intel.analytics.bigdl.utils.tf.{Session, TensorflowLoader}
 import com.intel.analytics.zoo.pipeline.api.keras.models.KerasNet
+import com.intel.analytics.zoo.pipeline.api.net.GraphNet
 
 import scala.reflect.ClassTag
 
@@ -71,15 +71,15 @@ object Net {
    */
   def loadBigDL[T: ClassTag](path : String,
       weightPath : String = null)(implicit ev: TensorNumeric[T])
-  : NetUtils.GraphWithUtils[T] = {
+  : GraphNet[T] = {
     val graph = ModuleLoader.loadFromFile(path, weightPath).toGraph()
-    NetUtils.withGraphUtils(graph)
+    new GraphNet(graph)
   }
 
   def loadTorch[T: ClassTag](path : String)(implicit ev: TensorNumeric[T]):
-  NetUtils.GraphWithUtils[T] = {
+  GraphNet[T] = {
     val graph = File.loadTorch[AbstractModule[Activity, Activity, T]](path).toGraph()
-    NetUtils.withGraphUtils(graph)
+    new GraphNet[T](graph)
   }
 
   /**
@@ -88,10 +88,10 @@ object Net {
    * @param modelPath caffe model binary file containing weight and bias
    */
   def loadCaffe[T: ClassTag](defPath: String, modelPath: String)(
-      implicit ev: TensorNumeric[T]): NetUtils.GraphWithUtils[T] = {
+      implicit ev: TensorNumeric[T]): GraphNet[T] = {
     val graph = CaffeLoader.loadCaffe[T](defPath, modelPath)._1
       .asInstanceOf[Graph[T]]
-    NetUtils.withGraphUtils(graph)
+    new GraphNet[T](graph)
   }
 
   /**
@@ -106,11 +106,11 @@ object Net {
   def loadTF[T: ClassTag](graphFile: String, inputs: Seq[String], outputs: Seq[String],
       byteOrder: ByteOrder = ByteOrder.LITTLE_ENDIAN,
       binFile: Option[String] = None)(
-      implicit ev: TensorNumeric[T]): NetUtils.GraphWithUtils[T] = {
+      implicit ev: TensorNumeric[T]): GraphNet[T] = {
 
     val graph = TensorflowLoader.load(graphFile, inputs, outputs, byteOrder, binFile)
       .asInstanceOf[Graph[T]]
-    NetUtils.withGraphUtils(graph)
+    new GraphNet[T](graph)
   }
 
   /**
