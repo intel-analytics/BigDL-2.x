@@ -376,8 +376,8 @@ class NNEstimatorSpec extends FlatSpec with Matchers with BeforeAndAfter {
       val pipelineModel = pipeline.fit(df)
       pipelineModel.isInstanceOf[PipelineModel] should be(true)
       val correct = pipelineModel.transform(df).select("label", "prediction").rdd.filter {
-        case Row(label: Double, prediction: Seq[Float]) =>
-          label == prediction.indexOf(prediction.max) + 1
+        case Row(label: Double, prediction: Seq[_]) =>
+          label == prediction.indexOf(prediction.asInstanceOf[Seq[Float]].max) + 1
       }.count()
       assert(correct > nRecords * 0.8)
     }
@@ -509,6 +509,26 @@ class NNEstimatorSpec extends FlatSpec with Matchers with BeforeAndAfter {
 
     assert(nnModel.model == copied.model)
     NNEstimatorSpec.compareParams(nnModel, copied)
+  }
+
+  "An NNEstimator" should "work with gradient clipping" in {
+    val model = new Sequential().add(Linear[Float](6, 2)).add(LogSoftMax[Float])
+    val criterion = ClassNLLCriterion[Float]()
+    val estimator = NNEstimator(model, criterion, Array(6), Array(1))
+      .setBatchSize(nRecords)
+      .setOptimMethod(new LBFGS[Float]())
+      .setLearningRate(0.1)
+      .setMaxEpoch(maxEpoch)
+      .setConstantGradientClipping(-0.1f, 0.1f)
+    val data = sc.parallelize(smallData)
+    val df = sqlContext.createDataFrame(data).toDF("features", "label")
+
+    val nnModel = estimator.fit(df)
+
+    estimator.clearGradientClippingParams()
+    estimator.fit(df)
+    estimator.setGradientClippingByL2Norm(0.2f)
+    estimator.fit(df)
   }
 }
 

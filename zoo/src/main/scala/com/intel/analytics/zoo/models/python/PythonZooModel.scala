@@ -74,10 +74,6 @@ class PythonZooModel[T: ClassTag](implicit ev: TensorNumeric[T]) extends PythonB
     ObjectDetector.loadModel(path, weightPath)
   }
 
-  def loadImageModel(path: String, weightPath: String = null): ImageModel[T] = {
-    ImageModel.loadModel(path, weightPath)
-  }
-
   def loadImageClassifier(path: String, weightPath: String = null): ImageClassifier[T] = {
     ImageClassifier.loadModel(path, weightPath)
   }
