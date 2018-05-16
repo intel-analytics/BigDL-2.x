@@ -420,16 +420,16 @@ object NNEstimator {
    * @param model BigDL module to be optimized
    * @param criterion BigDL criterion method
    * @param featurePreprocessing Preprocessing[Any, Tensor[T] ]
-   * @param laeblPreprocessing Preprocessing[Any, Tensor[T] ]
+   * @param labelPreprocessing Preprocessing[Any, Tensor[T] ]
    */
   def apply[F, T: ClassTag](
       model: Module[T],
       criterion: Criterion[T],
       featurePreprocessing: Preprocessing[F, Tensor[T]],
-      laeblPreprocessing: Preprocessing[F, Tensor[T]]
+      labelPreprocessing: Preprocessing[F, Tensor[T]]
     )(implicit ev: TensorNumeric[T]): NNEstimator[T] = {
     new NNEstimator(model, criterion)
-      .setSamplePreprocessing(FeatureLabelPreprocessing(featurePreprocessing, laeblPreprocessing))
+      .setSamplePreprocessing(FeatureLabelPreprocessing(featurePreprocessing, labelPreprocessing))
   }
 
   /**
