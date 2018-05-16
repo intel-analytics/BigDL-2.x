@@ -48,14 +48,5 @@ class TestLayer(ZooTestCase):
         model2.freeze_up_to(["conv2"])
         model2.unfreeze()
 
-    def test_load_tf_model(self):
-        resource_path = os.path.join(os.path.split(__file__)[0], "../../../resources")
-        model_path = os.path.join(resource_path, "models/tensorflow/lenet.pb")
-        model = Net.load_tf(model_path)
-        model2 = model.new_graph(["LeNet/fc3/Relu"])
-        model2.freeze_up_to(["LeNet/fc3/Relu"])
-        model2.unfreeze()
-
-
 if __name__ == "__main__":
     pytest.main([__file__])

@@ -17,10 +17,15 @@
 package com.intel.analytics.zoo.pipeline.api
 
 
+import com.intel.analytics.bigdl.nn.abstractnn.AbstractModule
+import com.intel.analytics.bigdl.tensor.Tensor
 import com.intel.analytics.bigdl.utils.Shape
 import com.intel.analytics.zoo.pipeline.api.keras.ZooSpecHelper
 import com.intel.analytics.zoo.pipeline.api.keras.layers.Dense
 import com.intel.analytics.zoo.pipeline.api.keras.layers.utils.KerasUtils
+import com.intel.analytics.zoo.pipeline.api.keras.models.Sequential
+
+import scala.util.Random
 
 class NetSpec extends ZooSpecHelper{
 
@@ -45,6 +50,7 @@ class NetSpec extends ZooSpecHelper{
     newModel.outputNodes.head.element.getName() should be ("reshape2")
   }
 
+//  This test needs dynamic graph support
 //  "Load tensorflow" should "work" in {
 //    val resource = getClass().getClassLoader().getResource("models")
 //    val path = resource.getPath + "/" + "tensorflow"

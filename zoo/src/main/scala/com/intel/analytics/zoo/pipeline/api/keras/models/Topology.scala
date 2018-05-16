@@ -25,10 +25,11 @@ import com.intel.analytics.bigdl.nn.{Container, Graph, StaticGraph, Sequential =
 import com.intel.analytics.bigdl.optim._
 import com.intel.analytics.bigdl.serialization.Bigdl.BigDLModule
 import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric
-import com.intel.analytics.bigdl.utils.{LoggerFilter, Shape}
+import com.intel.analytics.bigdl.utils.{Edge, LoggerFilter, Node, Shape}
 import com.intel.analytics.bigdl.utils.serializer.{DeserializeContext, ModuleData, ModuleSerializer, SerializeContext}
 import com.intel.analytics.bigdl.visualization.{TrainSummary, ValidationSummary}
 import com.intel.analytics.zoo.pipeline.api.autograd.{CustomLossWithVariable, Lambda, Variable}
+import com.intel.analytics.zoo.pipeline.api.keras.layers.Input
 import com.intel.analytics.zoo.pipeline.api.keras.layers.utils.{AbstractModuleRef, GraphRef, KerasLayerRef}
 import com.intel.analytics.zoo.pipeline.api.keras.layers.utils.KerasUtils
 import com.intel.analytics.zoo.pipeline.api.net.NetUtils
@@ -532,10 +533,18 @@ class Sequential[T: ClassTag] private ()
   }
 
   override def toModel(): Model[T] = {
-    val graph = labor.toGraph()
-    val inputs = graph.inputs
-    val outputs = NetUtils.getGraphOutputs(graph)
-    Model(inputs.toArray, outputs.toArray)
+    val input = Input[T](this.getInputShape())
+
+    // the is reason we do not use .inputs here is
+    // layers in modules cannot be rebuilt
+    val output = this.modules(0)
+      .asInstanceOf[TSequential[T]]
+      .modules.foldLeft(input){ (i1, i2) =>
+      val out = Node(i2)
+      i1.add(out, Edge())
+      out
+    }
+    Model(input, output)
   }
 }
 

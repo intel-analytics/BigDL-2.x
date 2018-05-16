@@ -16,7 +16,7 @@
 
 from bigdl.nn.keras.layer import KerasLayer
 from bigdl.nn.layer import Node
-from zoo.pipeline.api.keras.models import *
+# from zoo.pipeline.api.keras.models import Model
 
 from zoo.pipeline.api.keras.utils import *
 
@@ -221,7 +221,8 @@ class KerasNet(ZooKerasLayer):
                 raise TypeError("Unsupported prediction data type: %s" % type(x))
 
     def to_model(self):
-        return Model.from_java(callBigDlFunc(self.bigdl_type, "kerasNetToModel", self.value))
+        from zoo.pipeline.api.keras.models import Model
+        return Model.from_jvalue(callBigDlFunc(self.bigdl_type, "kerasNetToModel", self.value))
 
 
 class Input(ZooKerasCreator, Node):
