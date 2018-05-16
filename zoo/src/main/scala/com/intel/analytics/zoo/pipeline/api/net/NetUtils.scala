@@ -102,7 +102,7 @@ object GraphNet extends ContainerSerializable {
   }
 
   override def doLoadModule[T: ClassTag](context: DeserializeContext)
-                                        (implicit ev: TensorNumeric[T]): AbstractModule[Activity, Activity, T] = {
+      (implicit ev: TensorNumeric[T]): AbstractModule[Activity, Activity, T] = {
     val subProtoModules = context.bigdlModule.getSubModulesList.asScala
     val subModules = subProtoModules.map(module => {
       val subModuleData = ModuleSerializer.load(DeserializeContext(module,
