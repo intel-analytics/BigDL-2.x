@@ -72,13 +72,13 @@ def init_env():
 
 def setup_package():
     metadata = dict(
-        name='analyticszoo',
+        name='analytics-zoo',
         version=VERSION,
-        description='An analytics + AI platform for Apache Spark and BigDL',
-        author='zoo Authors',
+        description='Analytics + AI platform for Apache Spark and BigDL',
+        author='Analytics Zoo Authors',
         author_email='zoo-user-group@googlegroups.com',
         license='Apache License, Version 2.0',
-        url='https://github.com/intel-analytics/zoo',
+        url='https://github.com/intel-analytics/analytics-zoo',
         packages=['zoo',
                   'zoo.common',
                   'zoo.examples',
@@ -123,7 +123,7 @@ def setup_package():
         dependency_links=['https://d3kbcqa49mib13.cloudfront.net/spark-2.0.0-bin-hadoop2.7.tgz'],
         include_package_data=True,
         package_dir={"bigdl": '../backend/bigdl/pyspark/bigdl', "zoo.share": TEMP_PATH},
-        package_data={"zoo.share": ['lib/analytics-zoo*with-dependencies.jar', 'conf/*', 'bin/*']},
+        package_data={"zoo.share": ['lib/analytics-zoo*with-dependencies.jar', 'conf/*', 'bin/*', 'extra-resources/*']},
         classifiers=[
             'License :: OSI Approved :: Apache Software License',
             'Programming Language :: Python :: 2.7',

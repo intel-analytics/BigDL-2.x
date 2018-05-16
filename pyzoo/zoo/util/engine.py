@@ -64,6 +64,7 @@ def __prepare_spark_env():
 def __prepare_analytics_zoo_env():
     jar_dir = os.path.abspath(__file__ + "/../../")
     conf_paths = glob.glob(os.path.join(jar_dir, "share/conf/*.conf"))
+    extra_resources_paths = glob.glob(os.path.join(jar_dir, "share/extra-resources/*.properties"))
     bigdl_classpath = get_bigdl_classpath()
 
     def append_path(env_var_name, path):
@@ -77,9 +78,14 @@ def __prepare_analytics_zoo_env():
         append_path("BIGDL_JARS", bigdl_classpath)
 
     if conf_paths:
-        assert len(conf_paths) == 1, "Expecting one conf: %s" % len(conf_paths)
+        assert len(conf_paths) == 1, "Expecting one conf, but got: %s" % len(conf_paths)
         print("Prepending %s to sys.path" % conf_paths[0])
         sys.path.insert(0, conf_paths[0])
+
+    if extra_resources_paths:
+        for resource in extra_resources_paths:
+            print("Prepending %s to sys.path" % resource)
+            sys.path.insert(0, resource)
 
     if os.environ.get("BIGDL_JARS", None) and is_spark_below_2_2():
         for jar in os.environ["BIGDL_JARS"].split(":"):
@@ -109,12 +115,12 @@ def is_spark_below_2_2():
     Check if spark version is below 2.2
     """
     import pyspark
-    if(hasattr(pyspark, "version")):
+    if hasattr(pyspark, "version"):
         full_version = pyspark.version.__version__
         # We only need the general spark version (eg, 1.6, 2.2).
         parts = full_version.split(".")
         spark_version = parts[0] + "." + parts[1]
-        if(compare_version(spark_version, "2.2") >= 0):
+        if compare_version(spark_version, "2.2") >= 0:
             return False
     return True
 
