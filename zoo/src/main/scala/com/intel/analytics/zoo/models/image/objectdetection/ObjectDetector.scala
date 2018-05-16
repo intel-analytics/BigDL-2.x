@@ -48,6 +48,6 @@ object ObjectDetector {
    */
   def loadModel[T: ClassTag](path: String, weightPath: String = null)
     (implicit ev: TensorNumeric[T]): ObjectDetector[T] = {
-    ImageModel.loadModel(path, weightPath).asInstanceOf[ObjectDetector[T]]
+    ImageModel.loadModel(path, weightPath, "objectdetection").asInstanceOf[ObjectDetector[T]]
   }
 }
