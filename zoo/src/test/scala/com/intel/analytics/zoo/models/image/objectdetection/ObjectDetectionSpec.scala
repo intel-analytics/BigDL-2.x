@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.intel.analytics.zoo.models.objectdetection
+package com.intel.analytics.zoo.models.image.objectdetection
 
 import com.intel.analytics.bigdl.transform.vision.image.ImageFeature
 import com.intel.analytics.zoo.common.NNContext
@@ -33,6 +33,8 @@ class ObjectDetectionSpec extends FlatSpec with Matchers with BeforeAndAfter {
     sc = NNContext.getNNContext(conf)
     val s = s"wget -O ./ssd.model https://s3-ap-southeast-1.amazonaws.com/analytics-zoo-models/" +
       "object-detection/analytics-zoo_ssd-mobilenet-300x300_PASCAL_0.1.0.model" !!
+    val s2 = s"wget -O ./bigdl_ssd.model https://s3-ap-southeast-1.amazonaws.com/bigdl-models/" +
+      s"object-detection/bigdl_ssd-mobilenet-300x300_PASCAL_0.4.0.model" !!
   }
 
   after {
@@ -40,6 +42,8 @@ class ObjectDetectionSpec extends FlatSpec with Matchers with BeforeAndAfter {
       sc.stop()
     }
     "rm -rf ./ssd.model" !!
+
+    "rm -rf ./bigdl_ssd.model" !!
   }
 
   "ObjectDetector model" should "be able to work" in {
@@ -54,6 +58,30 @@ class ObjectDetectionSpec extends FlatSpec with Matchers with BeforeAndAfter {
     require(loadedModel.modules.length == 1)
     val data2 = ImageSet.read(resource.getFile, sc, 1)
     val output2 = loadedModel.predictImageSet(data2)
+    val res = output.toDistributed().rdd.collect()
+    val res2 = output2.toDistributed().rdd.collect()
+    require(res.length == res2.length)
+    require(res.head.predict(ImageFeature.predict)
+      .equals(res2.head.predict(ImageFeature.predict)) == true)
+
+    "rm -rf ./ssd2.model" !!
+  }
+
+  "ObjectDetector model" should "be able to work with bigdl model" in {
+    val resource = getClass.getClassLoader.getResource("pascal/")
+    val data = ImageSet.read(resource.getFile, sc, 1)
+    val model = ObjectDetector.loadModel[Float]("./bigdl_ssd.model")
+    val name = model.getName()
+    val splits = name.split(("_"))
+    val config = ObjectDetectionConfig[Float](splits(1), splits(2), splits(3))
+    val output = model.predictImageSet(data, config)
+
+    model.saveModel("./ssd2.model", overWrite = true)
+    val loadedModel = ObjectDetector.loadModel[Float]("./ssd2.model")
+      .asInstanceOf[ObjectDetector[Float]]
+    require(loadedModel.modules.length == 1)
+    val data2 = ImageSet.read(resource.getFile, sc, 1)
+    val output2 = loadedModel.predictImageSet(data2, config)
     val res = output.toDistributed().rdd.collect()
     val res2 = output2.toDistributed().rdd.collect()
     require(res.length == res2.length)

@@ -54,6 +54,11 @@ abstract class ZooModel[A <: Activity: ClassTag, B <: Activity: ClassTag, T: Cla
     this
   }
 
+  def addModel(model: AbstractModule[A, B, T]): this.type = {
+    modules += model
+    this
+  }
+
   /**
    * Save the model to the specified path.
    *

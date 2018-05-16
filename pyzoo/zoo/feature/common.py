@@ -38,7 +38,7 @@ class ChainedPreprocessing(Preprocessing):
     def __init__(self, transformers, bigdl_type="float"):
         for transfomer in transformers:
             assert transfomer.__class__.__bases__[0].__name__ in [
-                "Preprocessing"], \
+                "Preprocessing", "ImagePreprocessing"], \
                 str(transfomer) + " should be subclass of Preprocessing"
         super(ChainedPreprocessing, self).__init__(bigdl_type, transformers)
 
@@ -56,7 +56,7 @@ class SeqToTensor(Preprocessing):
     a Transformer that converts an Array[_] or Seq[_] to a Tensor.
     :param size dimensions of target Tensor.
     """
-    def __init__(self, size, bigdl_type="float"):
+    def __init__(self, size=[], bigdl_type="float"):
         super(SeqToTensor, self).__init__(bigdl_type, size)
 
 
@@ -123,3 +123,11 @@ class FeatureToTupleAdapter(Preprocessing):
 class BigDLAdapter(Preprocessing):
     def __init__(self, bigdl_transformer, bigdl_type="float"):
         super(BigDLAdapter, self).__init__(bigdl_type, bigdl_transformer)
+
+
+class ToTuple(Preprocessing):
+    """
+     a Transformer that converts Feature to (Feature, None).
+    """
+    def __init__(self, bigdl_type="float"):
+        super(ToTuple, self).__init__(bigdl_type)

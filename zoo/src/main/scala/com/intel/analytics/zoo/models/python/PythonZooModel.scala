@@ -26,7 +26,7 @@ import com.intel.analytics.bigdl.transform.vision.image.{BytesToMat, FeatureTran
 import com.intel.analytics.zoo.feature.image.ImageSet
 import com.intel.analytics.zoo.models.common.ZooModel
 import com.intel.analytics.zoo.models.image.common.{ImageConfigure, ImageModel}
-import com.intel.analytics.zoo.models.objectdetection._
+import com.intel.analytics.zoo.models.image.objectdetection._
 import com.intel.analytics.zoo.models.image.imageclassification.{ImageClassifier, LabelReader => IMCLabelReader}
 import com.intel.analytics.zoo.models.recommendation.{NeuralCF, Recommender, UserItemFeature, UserItemPrediction}
 import com.intel.analytics.zoo.models.recommendation._
@@ -72,10 +72,6 @@ class PythonZooModel[T: ClassTag](implicit ev: TensorNumeric[T]) extends PythonB
 
   def loadObjectDetector(path: String, weightPath: String = null): ObjectDetector[T] = {
     ObjectDetector.loadModel(path, weightPath)
-  }
-
-  def loadImageModel(path: String, weightPath: String = null): ImageModel[T] = {
-    ImageModel.loadModel(path, weightPath)
   }
 
   def loadImageClassifier(path: String, weightPath: String = null): ImageClassifier[T] = {

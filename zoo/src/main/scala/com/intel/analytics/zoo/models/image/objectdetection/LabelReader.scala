@@ -14,9 +14,9 @@
  * limitations under the License.
  */
 
-package com.intel.analytics.zoo.models.objectdetection
+package com.intel.analytics.zoo.models.image.objectdetection
 
-import com.intel.analytics.zoo.models.objectdetection.ObjectDetectorDataset.{Coco, Pascal}
+import com.intel.analytics.zoo.models.image.objectdetection.ObjectDetectorDataset.{Coco, Pascal}
 import com.intel.analytics.zoo.models.common.ModelLabelReader
 
 private[models] object LabelReader extends ModelLabelReader {

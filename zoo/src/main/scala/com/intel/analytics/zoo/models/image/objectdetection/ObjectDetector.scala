@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.intel.analytics.zoo.models.objectdetection
+package com.intel.analytics.zoo.models.image.objectdetection
 
 import com.intel.analytics.bigdl.nn.abstractnn.{AbstractModule, Activity}
 import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric
@@ -48,6 +48,6 @@ object ObjectDetector {
    */
   def loadModel[T: ClassTag](path: String, weightPath: String = null)
     (implicit ev: TensorNumeric[T]): ObjectDetector[T] = {
-    ImageModel.loadModel(path, weightPath).asInstanceOf[ObjectDetector[T]]
+    ImageModel.loadModel(path, weightPath, "objectdetection").asInstanceOf[ObjectDetector[T]]
   }
 }
