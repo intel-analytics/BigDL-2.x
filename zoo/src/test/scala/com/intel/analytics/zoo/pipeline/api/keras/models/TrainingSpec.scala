@@ -77,7 +77,7 @@ class TrainingSpec extends FlatSpec with Matchers with BeforeAndAfter  {
     val input = Input[Float](inputShape = Shape(10))
     val output = Dense[Float](8, activation = "relu").inputs(input)
     val model = Model[Float](input, output)
-    model.compile(optimizer = "adam", loss = "mae", metrics = null)
+    model.compile(optimizer = "adam", loss = "mae")
     model.fit(trainingData, batchSize = 8, nbEpoch = 2)
   }
 
@@ -114,9 +114,9 @@ class TrainingSpec extends FlatSpec with Matchers with BeforeAndAfter  {
     model.compile(optimizer = new SGD[Float](), loss = MSECriterion[Float](),
       metrics = List(new Top1Accuracy[Float]))
     model.setConstantGradientClipping(0.01f, 0.03f)
-    model.fit(localData, nbEpoch = 2, validationData = null)
+    model.fit(localData, nbEpoch = 2)
     model.clearGradientClippingParams()
-    model.fit(localData, nbEpoch = 2, validationData = null)
+    model.fit(localData, nbEpoch = 2)
     val accuracy = model.evaluate(localData)
     val predictResults = model.predict(localData)
   }
