@@ -28,7 +28,7 @@ import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric
 import com.intel.analytics.bigdl.utils.{LoggerFilter, Shape}
 import com.intel.analytics.bigdl.utils.serializer.{DeserializeContext, ModuleData, ModuleSerializer, SerializeContext}
 import com.intel.analytics.bigdl.visualization.{TrainSummary, ValidationSummary}
-import com.intel.analytics.zoo.pipeline.api.autograd.{CustomLossWithFunc, CustomLossWithVariable, Lambda, Variable}
+import com.intel.analytics.zoo.pipeline.api.autograd.{CustomLossWithVariable, Lambda, Variable}
 import com.intel.analytics.zoo.pipeline.api.keras.layers.utils.{AbstractModuleRef, GraphRef, KerasLayerRef}
 import com.intel.analytics.zoo.pipeline.api.keras.layers.utils.KerasUtils
 import org.apache.spark.rdd.RDD
@@ -101,12 +101,11 @@ abstract class KerasNet[T: ClassTag](implicit ev: TensorNumeric[T])
       loss: (Variable[T], Variable[T]) => Variable[T],
       metrics: List[ValidationMethod[T]])(implicit ev: TensorNumeric[T]): Unit = {
     LoggerFilter.redirectSparkInfoLogs()
-    this.optimMethod = optimizer
     val yReal = Variable(KerasUtils.removeBatch(this.getOutputShape()))
     val yPred = Variable(KerasUtils.removeBatch(this.getOutputShape()))
     val lossVar = loss(yReal, yPred)
-    this.criterion = new CustomLossWithVariable(Array(yReal, yPred), lossVar)
-    this.vMethods = if (metrics == null) null else metrics.toArray
+    val customLoss = new CustomLossWithVariable(Array(yReal, yPred), lossVar)
+    this.compile(optimizer, customLoss, metrics)
   }
 
   def compile(
@@ -227,6 +226,12 @@ abstract class KerasNet[T: ClassTag](implicit ev: TensorNumeric[T])
     optimizer.setOptimMethod(this.optimMethod)
       .setEndWhen(Trigger.maxEpoch(nbEpoch))
     optimizer.optimize()
+  }
+
+  def fit[D: ClassTag](
+      x: DataSet[D],
+      nbEpoch: Int)(implicit ev: TensorNumeric[T]): Unit = {
+    this.fit(x, nbEpoch, null)
   }
 
   /**

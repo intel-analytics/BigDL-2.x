@@ -20,6 +20,7 @@ import com.google.common.io.Files
 import com.intel.analytics.bigdl.dataset.{LocalDataSet, MiniBatch, Sample}
 import com.intel.analytics.bigdl.nn.MSECriterion
 import com.intel.analytics.bigdl.optim.{SGD, Top1Accuracy}
+import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric
 import com.intel.analytics.bigdl.tensor.{Storage, Tensor}
 import com.intel.analytics.bigdl.utils.Shape
 import com.intel.analytics.zoo.common.NNContext
@@ -29,6 +30,8 @@ import org.apache.spark.{SparkConf, SparkContext}
 import org.apache.spark.rdd.RDD
 import org.scalatest.{BeforeAndAfter, FlatSpec, Matchers}
 import org.apache.commons.io.FileUtils
+
+import scala.reflect.ClassTag
 
 class TrainingSpec extends FlatSpec with Matchers with BeforeAndAfter  {
 
@@ -61,10 +64,11 @@ class TrainingSpec extends FlatSpec with Matchers with BeforeAndAfter  {
     val trainingData = generateData(Array(10), 5, 40)
     val model = Sequential[Float]()
     model.add(Dense[Float](5, inputShape = Shape(10)))
-    def loss(yTrue: Variable[Float], yPred: Variable[Float]): Variable[Float] = {
+    def cLoss[T: ClassTag](yTrue: Variable[T], yPred: Variable[T])(
+      implicit ev: TensorNumeric[T]): Variable[T] = {
       A.mean(A.abs(yTrue - yPred), axis = 1)
     }
-    model.compile(optimizer = new SGD[Float](), loss = loss(_, _), metrics = null)
+    model.compile(optimizer = new SGD[Float](), loss = cLoss[Float] _)
     model.fit(trainingData, batchSize = 8, nbEpoch = 2)
   }
 
@@ -73,7 +77,7 @@ class TrainingSpec extends FlatSpec with Matchers with BeforeAndAfter  {
     val input = Input[Float](inputShape = Shape(10))
     val output = Dense[Float](8, activation = "relu").inputs(input)
     val model = Model[Float](input, output)
-    model.compile(optimizer = "adam", loss = "mae", metrics = null)
+    model.compile(optimizer = "adam", loss = "mae")
     model.disableGradientClipping()
     model.fit(trainingData, batchSize = 8, nbEpoch = 2)
   }
@@ -107,7 +111,7 @@ class TrainingSpec extends FlatSpec with Matchers with BeforeAndAfter  {
     model.compile(optimizer = new SGD[Float](), loss = MSECriterion[Float](),
       metrics = List(new Top1Accuracy[Float]))
     model.setGradientClippingByL2Norm(0.01f)
-    model.fit(localData, nbEpoch = 2, validationData = null)
+    model.fit(localData, nbEpoch = 2)
     val accuracy = model.evaluate(localData)
     val predictResults = model.predict(localData)
   }
