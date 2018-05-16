@@ -24,6 +24,6 @@ class CommonSpec extends FlatSpec with Matchers with BeforeAndAfter {
 
   "BigDLAdapter" should "adapt BigDL Transformer" in {
     val newResize = BigDLAdapter(Resize(1, 1))
-    assert(newResize.isInstanceOf[Preprocessing[Any, Any]])
+    assert(newResize.isInstanceOf[Preprocessing[_, _]])
   }
 }
