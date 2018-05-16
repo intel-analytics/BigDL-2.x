@@ -366,7 +366,7 @@ class Model[T: ClassTag] private (private val _inputs : Seq[ModuleNode[T]],
 
   override def toModel(): Model[T] = this
 
-  override def toKeras() = this
+  override def toKeras(): Model[T] = this
 }
 
 object Model extends KerasLayerSerializable {
@@ -539,7 +539,7 @@ class Sequential[T: ClassTag] private ()
     // layers in modules cannot be rebuilt
     val output = this.modules(0)
       .asInstanceOf[TSequential[T]]
-      .modules.foldLeft(input){ (i1, i2) =>
+      .modules.foldLeft(input) { (i1, i2) =>
       val out = Node(i2)
       i1.add(out, Edge())
       out

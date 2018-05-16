@@ -17,15 +17,20 @@ package com.intel.analytics.zoo.pipeline.api.net
 
 import com.intel.analytics.bigdl.Module
 import com.intel.analytics.bigdl.nn.Graph.ModuleNode
-import com.intel.analytics.bigdl.nn.abstractnn.Activity
+import com.intel.analytics.bigdl.nn.abstractnn.{AbstractModule, Activity}
 import com.intel.analytics.bigdl.nn.keras.KerasLayer
 import com.intel.analytics.bigdl.nn.{Container, Graph, StaticGraph}
+import com.intel.analytics.bigdl.serialization.Bigdl.BigDLModule
 import com.intel.analytics.bigdl.tensor.Tensor
 import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric
+import com.intel.analytics.bigdl.utils.serializer._
 import com.intel.analytics.zoo.pipeline.api.keras.layers.KerasLayerWrapper
-import com.intel.analytics.zoo.pipeline.api.keras.layers.utils.KerasUtils
+import com.intel.analytics.zoo.pipeline.api.keras.layers.utils.{GraphRef, KerasUtils}
+import com.intel.analytics.zoo.pipeline.api.keras.models.Model
+import scala.collection.JavaConverters._
 
 import scala.collection.mutable
+import scala.collection.mutable.ArrayBuffer
 import scala.reflect.ClassTag
 
 
@@ -75,6 +80,37 @@ class GraphNet[T: ClassTag](graph: Graph[T])(implicit ev: TensorNumeric[T])
 
   override def toKeras(): KerasLayer[Activity, Activity, T] = {
     new KerasLayerWrapper[T](this)
+  }
+}
+
+object GraphNet extends ContainerSerializable {
+
+  ModuleSerializer.registerModule(
+    "com.intel.analytics.zoo.pipeline.api.net.GraphNet",
+    GraphNet)
+
+
+  override def doSerializeModule[T: ClassTag](context: SerializeContext[T],
+                                              builder: BigDLModule.Builder)
+                                             (implicit ev: TensorNumeric[T]): Unit = {
+    val labor = context.moduleData.module.
+      asInstanceOf[KerasLayer[Activity, Activity, T]].labor
+    val subModule = ModuleSerializer.serialize(SerializeContext(ModuleData(labor,
+      new ArrayBuffer[String](), new ArrayBuffer[String]()), context.storages,
+      context.storageType, _copyWeightAndBias))
+    builder.addSubModules(subModule.bigDLModule)
+  }
+
+  override def doLoadModule[T: ClassTag](context: DeserializeContext)
+                                        (implicit ev: TensorNumeric[T]): AbstractModule[Activity, Activity, T] = {
+    val subProtoModules = context.bigdlModule.getSubModulesList.asScala
+    val subModules = subProtoModules.map(module => {
+      val subModuleData = ModuleSerializer.load(DeserializeContext(module,
+        context.storages, context.storageType, _copyWeightAndBias))
+      subModuleData.module
+    })
+    val tGraph = subModules(0).asInstanceOf[StaticGraph[T]]
+    tGraph
   }
 }
 
