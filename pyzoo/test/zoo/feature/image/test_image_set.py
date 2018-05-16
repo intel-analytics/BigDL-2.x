@@ -87,8 +87,8 @@ class Test_Image_Set():
 
     def test_local_image_set(self):
         image = cv2.imread(self.image_path)
-        local_image_frame = LocalImageFrame([image])
-        print(local_image_frame.get_image())
+        local_image_set = LocalImageSet([image])
+        print(local_image_set.get_image())
 
 if __name__ == "__main__":
     pytest.main([__file__])
