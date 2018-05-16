@@ -52,6 +52,7 @@ class ColumnFeatureInfo(object):
                    List of int. Default is an empty list.
     embed_out_dims: The dimensions of embeddings. List of int. Default is an empty list.
     continuous_cols: Data of continuous_cols is treated as continuous values for the deep model.
+                     List of String. Default is an empty list.
     label: The name of the 'label' column. String. Default is 'label'.
     """
     def __init__(self, wide_base_cols=None, wide_base_dims=None, wide_cross_cols=None,
@@ -59,14 +60,14 @@ class ColumnFeatureInfo(object):
                  embed_cols=None, embed_in_dims=None, embed_out_dims=None,
                  continuous_cols=None, label="label", bigdl_type="float"):
         self.wide_base_cols = [] if not wide_base_cols else wide_base_cols
-        self.wide_base_dims = [] if not wide_base_dims else wide_base_dims
+        self.wide_base_dims = [] if not wide_base_dims else [int(d) for d in wide_base_dims]
         self.wide_cross_cols = [] if not wide_cross_cols else wide_cross_cols
-        self.wide_cross_dims = [] if not wide_cross_dims else wide_cross_dims
+        self.wide_cross_dims = [] if not wide_cross_dims else [int(d) for d in wide_cross_dims]
         self.indicator_cols = [] if not indicator_cols else indicator_cols
-        self.indicator_dims = [] if not indicator_dims else indicator_dims
+        self.indicator_dims = [] if not indicator_dims else [int(d) for d in indicator_dims]
         self.embed_cols = [] if not embed_cols else embed_cols
-        self.embed_in_dims = [] if not embed_in_dims else embed_in_dims
-        self.embed_out_dims = [] if not embed_out_dims else embed_out_dims
+        self.embed_in_dims = [] if not embed_in_dims else [int(d) for d in embed_in_dims]
+        self.embed_out_dims = [] if not embed_out_dims else [int(d) for d in embed_out_dims]
         self.continuous_cols = [] if not continuous_cols else continuous_cols
         self.label = label
         self.bigdl_type = bigdl_type
@@ -103,8 +104,8 @@ class WideAndDeep(Recommender):
                  hidden_layers=(40, 20, 10), bigdl_type="float"):
         super(WideAndDeep, self).__init__(None, bigdl_type,
                                           model_type,
-                                          class_num,
-                                          hidden_layers,
+                                          int(class_num),
+                                          [int(unit) for unit in hidden_layers],
                                           col_info.wide_base_cols,
                                           col_info.wide_base_dims,
                                           col_info.wide_cross_cols,
