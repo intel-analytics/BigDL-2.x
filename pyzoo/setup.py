@@ -71,6 +71,9 @@ def init_env():
 
 
 def setup_package():
+    jar_file = 'lib/analytics-zoo-'+VERSION+'.jar'
+    if ".dev0" in jar_file:
+        jar_file = jar_file.replace(".dev0", "-SNAPSHOT")
     metadata = dict(
         name='analytics-zoo',
         version=VERSION,
@@ -101,29 +104,12 @@ def setup_package():
                   'zoo.pipeline.api.keras.metrics',
                   'zoo.pipeline.nnframes',
                   'zoo.util',
-                  'zoo.share',
-                  'bigdl',
-                  'bigdl.dataset',
-                  'bigdl.nn',
-                  'bigdl.nn.keras',
-                  'bigdl.transform',
-                  'bigdl.transform.vision',
-                  'bigdl.keras',
-                  'bigdl.examples',
-                  'bigdl.examples.keras',
-                  'bigdl.models',
-                  'bigdl.models.lenet',
-                  'bigdl.models.local_lenet',
-                  'bigdl.models.ml_pipeline',
-                  'bigdl.models.rnn',
-                  'bigdl.models.textclassifier',
-                  'bigdl.optim',
-                  'bigdl.util'],
-        install_requires=['numpy>=1.7', 'pyspark>=2.2', 'six>=1.10.0'],
+                  'zoo.share'],
+        install_requires=['bigdl==0.5.0'],
         dependency_links=['https://d3kbcqa49mib13.cloudfront.net/spark-2.0.0-bin-hadoop2.7.tgz'],
         include_package_data=True,
         package_dir={"bigdl": '../backend/bigdl/pyspark/bigdl', "zoo.share": TEMP_PATH},
-        package_data={"zoo.share": ['lib/analytics-zoo*with-dependencies.jar', 'conf/*', 'bin/*',
+        package_data={"zoo.share": [jar_file, 'conf/*', 'bin/*',
                                     'extra-resources/*']},
         classifiers=[
             'License :: OSI Approved :: Apache Software License',
