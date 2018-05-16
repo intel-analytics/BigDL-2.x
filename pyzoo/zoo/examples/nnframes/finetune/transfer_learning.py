@@ -60,8 +60,10 @@ if __name__ == "__main__":
          ChannelNormalize(123.0, 117.0, 104.0), MatToTensor(), ImageFeatureToTensor()])
 
     full_model = Net.load_bigdl(model_path)
-    model = full_model.new_graph(["pool5/drop_7x7_s1"])  # create a new model by remove layers after pool5/drop_7x7_s1
-    model.freeze_up_to(["pool4/3x3_s2"])  # freeze layers from input to pool4/3x3_s2 inclusive
+    # create a new model by remove layers after pool5/drop_7x7_s1
+    model = full_model.new_graph(["pool5/drop_7x7_s1"])
+    # freeze layers from input to pool4/3x3_s2 inclusive
+    model.freeze_up_to(["pool4/3x3_s2"])
 
     inputNode = Input(name="input", shape=(3, 224, 224))
     inception = model.toKeras()(inputNode)

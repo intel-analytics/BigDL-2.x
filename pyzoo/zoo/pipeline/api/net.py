@@ -14,13 +14,10 @@
 # limitations under the License.
 #
 
-from __future__ import absolute_import
-
 import sys
 
 from bigdl.nn.layer import Model as BModel
 from bigdl.util.common import callBigDlFunc, to_list
-from zoo.pipeline.api.keras.models import Model
 from zoo.pipeline.api.keras.engine.topology import ZooKerasLayer, KerasNet
 
 if sys.version >= '3':
