@@ -38,10 +38,10 @@ building_error_msg = """
 If you are packing python API from zoo source, you must build Analytics Zoo first
 and run sdist.
     To build Analytics Zoo with maven you can run:
-      cd $ZOO_HOME
+      cd $ANALYTICS_ZOO_HOME
       ./make-dist.sh
     Building the source dist is done in the Python directory:
-      cd pyzoo
+      cd $ANALYTICS_ZOO_HOME/pyzoo
       python setup.py sdist
       pip install dist/*.tar.gz"""
 
