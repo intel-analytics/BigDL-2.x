@@ -33,8 +33,7 @@ zoo
  |---pom.xml      (file)
 ```
 ## Run Scripts
-After setting necessary environment variables, you can run those scripts. 
-One example is shown as following.
+After setting necessary environment variables, you can run those scripts. One example is shown as following.
 ```bash
 ./spark-submit-with-zoo.sh \
     --master your_master_of_spark \
