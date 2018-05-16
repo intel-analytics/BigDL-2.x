@@ -39,11 +39,11 @@ class TextClassifier(ZooModel):
     def __init__(self, class_num, token_length, sequence_length=500,
                  encoder="cnn", encoder_output_dim=256, bigdl_type="float"):
         super(TextClassifier, self).__init__(None, bigdl_type,
-                                             class_num,
-                                             token_length,
-                                             sequence_length,
+                                             int(class_num),
+                                             int(token_length),
+                                             int(sequence_length),
                                              encoder,
-                                             encoder_output_dim)
+                                             int(encoder_output_dim))
 
     @staticmethod
     def load_model(path, weight_path=None, bigdl_type="float"):
