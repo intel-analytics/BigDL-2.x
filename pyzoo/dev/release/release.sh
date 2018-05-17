@@ -77,7 +77,7 @@ wheel_command="python setup.py bdist_wheel --universal --plat-name ${verbose_pna
 echo "Packing python distribution:   $wheel_command"
 ${wheel_command}
 
-upload_command="twine upload dist/analyticszoo-${analytics_zoo_version}-py2.py3-none-${verbose_pname}.whl"
+upload_command="twine upload dist/analytics_zoo-${analytics_zoo_version}-py2.py3-none-${verbose_pname}.whl"
 echo "Please manually upload with this command:  $upload_command"
 
 $upload_command

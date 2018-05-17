@@ -104,7 +104,7 @@ class Recommender(ZooModel):
         result_rdd = callBigDlFunc(self.bigdl_type, "recommendForUser",
                                    self.value,
                                    self._to_tuple_rdd(feature_rdd),
-                                   max_items)
+                                   int(max_items))
         return self._to_prediction_rdd(result_rdd)
 
     def recommend_for_item(self, feature_rdd, max_users):
@@ -119,7 +119,7 @@ class Recommender(ZooModel):
         result_rdd = callBigDlFunc(self.bigdl_type, "recommendForItem",
                                    self.value,
                                    self._to_tuple_rdd(feature_rdd),
-                                   max_users)
+                                   int(max_users))
         return self._to_prediction_rdd(result_rdd)
 
     @staticmethod

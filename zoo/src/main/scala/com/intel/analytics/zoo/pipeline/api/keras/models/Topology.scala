@@ -25,12 +25,14 @@ import com.intel.analytics.bigdl.nn.{Container, Graph, StaticGraph, Sequential =
 import com.intel.analytics.bigdl.optim._
 import com.intel.analytics.bigdl.serialization.Bigdl.BigDLModule
 import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric
-import com.intel.analytics.bigdl.utils.{LoggerFilter, Shape}
+import com.intel.analytics.bigdl.utils.{Edge, LoggerFilter, Node, Shape}
 import com.intel.analytics.bigdl.utils.serializer.{DeserializeContext, ModuleData, ModuleSerializer, SerializeContext}
 import com.intel.analytics.bigdl.visualization.{TrainSummary, ValidationSummary}
-import com.intel.analytics.zoo.pipeline.api.autograd.{CustomLossWithFunc, Lambda, Variable}
+import com.intel.analytics.zoo.pipeline.api.autograd.{CustomLossWithVariable, Lambda, Variable}
+import com.intel.analytics.zoo.pipeline.api.keras.layers.Input
 import com.intel.analytics.zoo.pipeline.api.keras.layers.utils.{AbstractModuleRef, GraphRef, KerasLayerRef}
 import com.intel.analytics.zoo.pipeline.api.keras.layers.utils.KerasUtils
+import com.intel.analytics.zoo.pipeline.api.net.NetUtils
 import org.apache.spark.rdd.RDD
 
 import scala.collection.JavaConverters._
@@ -54,7 +56,6 @@ abstract class KerasNet[T: ClassTag](implicit ev: TensorNumeric[T])
   private var tensorBoardAppName: String = null
   private var checkpointPath: String = null
   private var overWriteCheckPoint: Boolean = true
-  private var gradiantClipping: Boolean = true
   private var constantGradientClippingParams: (Float, Float) = null
   private var clipNorm: Option[Float] = None
 
@@ -90,6 +91,30 @@ abstract class KerasNet[T: ClassTag](implicit ev: TensorNumeric[T])
       KerasUtils.toBigDLMetrics[T](metrics))
   }
 
+  def compile(
+      optimizer: String,
+      loss: String)(implicit ev: TensorNumeric[T]): Unit = {
+    this.compile(optimizer, loss, null)
+  }
+
+  def compile(
+      optimizer: OptimMethod[T],
+      loss: (Variable[T], Variable[T]) => Variable[T],
+      metrics: List[ValidationMethod[T]])(implicit ev: TensorNumeric[T]): Unit = {
+    LoggerFilter.redirectSparkInfoLogs()
+    val yReal = Variable(KerasUtils.removeBatch(this.getOutputShape()))
+    val yPred = Variable(KerasUtils.removeBatch(this.getOutputShape()))
+    val lossVar = loss(yReal, yPred)
+    val customLoss = new CustomLossWithVariable(Array(yReal, yPred), lossVar)
+    this.compile(optimizer, customLoss, metrics)
+  }
+
+  def compile(
+      optimizer: OptimMethod[T],
+      loss: (Variable[T], Variable[T]) => Variable[T])(implicit ev: TensorNumeric[T]): Unit = {
+    this.compile(optimizer, loss, null)
+  }
+
   /**
    * Set summary information during the training process for visualization purposes.
    * Saved summary can be viewed via TensorBoard.
@@ -121,15 +146,16 @@ abstract class KerasNet[T: ClassTag](implicit ev: TensorNumeric[T])
   }
 
   /**
-   * Call this if you would like to disable gradient clipping during the training process.
+   * Clear gradient clipping parameters. In this case, gradient clipping will not be applied.
    * In order to take effect, it needs to be called before fit.
    */
-  def disableGradientClipping(): Unit = {
-    this.gradiantClipping = false
+  def clearGradientClipping(): Unit = {
+    this.constantGradientClippingParams = null
+    this.clipNorm = None
   }
 
   /**
-   * Call this if you would like to set constant gradient clipping during the training process.
+   * Set constant gradient clipping during the training process.
    * In order to take effect, it needs to be called before fit.
    *
    * @param min The minimum value to clip by. Double.
@@ -140,7 +166,7 @@ abstract class KerasNet[T: ClassTag](implicit ev: TensorNumeric[T])
   }
 
   /**
-   * Call this if you would like to clip gradient to a maximum L2-Norm during the training process.
+   * Clip gradient to a maximum L2-Norm during the training process.
    * In order to take effect, it needs to be called before fit.
    *
    * @param clipNorm Gradient L2-Norm threshold. Double.
@@ -180,9 +206,6 @@ abstract class KerasNet[T: ClassTag](implicit ev: TensorNumeric[T])
     if (this.tensorBoardLogDir != null && this.tensorBoardAppName != null) {
       optimizer.setTrainSummary(TrainSummary(tensorBoardLogDir, tensorBoardAppName))
     }
-    if (!this.gradiantClipping) {
-      optimizer.disableGradientClipping()
-    }
     if (this.constantGradientClippingParams != null) {
       optimizer.setConstantGradientClipping(this.constantGradientClippingParams._1,
         this.constantGradientClippingParams._2)
@@ -199,9 +222,15 @@ abstract class KerasNet[T: ClassTag](implicit ev: TensorNumeric[T])
         dataset = validationData,
         vMethods = this.vMethods)
     }
-    optimizer.setOptimMethod(this.optimMethod)
+    optimizer.setOptimMethod(this.optimMethod.clone())
       .setEndWhen(Trigger.maxEpoch(nbEpoch))
     optimizer.optimize()
+  }
+
+  def fit[D: ClassTag](
+      x: DataSet[D],
+      nbEpoch: Int)(implicit ev: TensorNumeric[T]): Unit = {
+    this.fit(x, nbEpoch, null)
   }
 
   /**
@@ -266,11 +295,13 @@ abstract class KerasNet[T: ClassTag](implicit ev: TensorNumeric[T])
     val localPredictor = LocalPredictor(this)
     localPredictor.predict(x)
   }
+
+  def toModel(): Model[T]
 }
 
 class Model[T: ClassTag] private (private val _inputs : Seq[ModuleNode[T]],
     private val _outputs : Seq[ModuleNode[T]])(implicit ev: TensorNumeric[T])
-  extends KerasNet[T] {
+  extends KerasNet[T] with NetUtils[T, Model[T]] {
   this.labor = doBuild(null)
   KerasLayerRef(this).excludeInvalidLayers(this.labor.asInstanceOf[StaticGraph[T]].
     getForwardExecutions().map {_.element})
@@ -306,6 +337,33 @@ class Model[T: ClassTag] private (private val _inputs : Seq[ModuleNode[T]],
     this.labor.asInstanceOf[Graph[T]].saveGraphTopology(logPath, backward)
     this
   }
+
+  override def unFreeze(names: String*): Model.this.type = {
+    labor.unFreeze(names: _*)
+    this
+  }
+
+  private val graph = labor.asInstanceOf[Graph[T]]
+
+  override def nodes(names: Seq[String]): Seq[ModuleNode[T]] = {
+    names.map(graph.node)
+  }
+
+  override def node(name: String): ModuleNode[T] = {
+    graph.node(name)
+  }
+
+  override def newGraph(output: String): Model[T] = {
+    new Model[T](_inputs, nodes(Seq(output)))
+  }
+
+  override def newGraph(outputs: Seq[String]): Model[T] = {
+    new Model[T](_inputs, nodes(outputs))
+  }
+
+  override def toModel(): Model[T] = this
+
+  override def toKeras(): Model[T] = this
 }
 
 object Model extends KerasLayerSerializable {
@@ -470,6 +528,21 @@ class Sequential[T: ClassTag] private ()
     kerasLayerRef.checkWithCurrentInputShape(calcInputShape)
     getOutputShape()
   }
+
+  override def toModel(): Model[T] = {
+    val input = Input[T](this.getInputShape())
+
+    // the is reason we do not use .inputs here is
+    // layers in modules cannot be rebuilt
+    val output = this.modules(0)
+      .asInstanceOf[TSequential[T]]
+      .modules.foldLeft(input) { (i1, i2) =>
+      val out = Node(i2)
+      i1.add(out, Edge())
+      out
+    }
+    Model(input, output)
+  }
 }
 
 object Sequential extends KerasLayerSerializable{
@@ -482,4 +555,3 @@ object Sequential extends KerasLayerSerializable{
     new Sequential[T]()
   }
 }
-
