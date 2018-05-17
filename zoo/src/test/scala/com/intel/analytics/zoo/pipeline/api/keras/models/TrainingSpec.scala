@@ -20,25 +20,29 @@ import com.google.common.io.Files
 import com.intel.analytics.bigdl.dataset.{LocalDataSet, MiniBatch, Sample}
 import com.intel.analytics.bigdl.nn.MSECriterion
 import com.intel.analytics.bigdl.optim.{SGD, Top1Accuracy}
+import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric
 import com.intel.analytics.bigdl.tensor.{Storage, Tensor}
 import com.intel.analytics.bigdl.utils.Shape
 import com.intel.analytics.zoo.common.NNContext
+import com.intel.analytics.zoo.pipeline.api.autograd.{Variable, AutoGrad => A}
 import com.intel.analytics.zoo.pipeline.api.keras.layers._
 import org.apache.spark.{SparkConf, SparkContext}
 import org.apache.spark.rdd.RDD
 import org.scalatest.{BeforeAndAfter, FlatSpec, Matchers}
 import org.apache.commons.io.FileUtils
 
+import scala.reflect.ClassTag
+
 class TrainingSpec extends FlatSpec with Matchers with BeforeAndAfter  {
 
   private var sc: SparkContext = _
 
-  def generateData(shape: Array[Int], size: Int): RDD[Sample[Float]] = {
-    sc.range(0, size, 1).map { _ =>
-      val featureTensor = Tensor[Float](shape)
+  def generateData(featureShape: Array[Int], labelSize: Int, dataSize: Int): RDD[Sample[Float]] = {
+    sc.range(0, dataSize, 1).map { _ =>
+      val featureTensor = Tensor[Float](featureShape)
       featureTensor.apply1(_ => scala.util.Random.nextFloat())
-      val labelTensor = Tensor[Float](1)
-      labelTensor(Array(1)) = Math.round(scala.util.Random.nextFloat()) + 1
+      val labelTensor = Tensor[Float](labelSize)
+      labelTensor(Array(labelSize)) = Math.round(scala.util.Random.nextFloat()) + 1
       Sample[Float](featureTensor, labelTensor)
     }
   }
@@ -56,28 +60,31 @@ class TrainingSpec extends FlatSpec with Matchers with BeforeAndAfter  {
     }
   }
 
-  "sequential compile and fit" should "work properly" in {
-    val trainingData = generateData(Array(10), 40)
+  "sequential compile and fit with custom loss" should "work properly" in {
+    val trainingData = generateData(Array(10), 5, 40)
     val model = Sequential[Float]()
-    model.add(Dense[Float](8, inputShape = Shape(10)))
-    model.compile(optimizer = "sgd", loss = "mse", metrics = null)
+    model.add(Dense[Float](5, inputShape = Shape(10)))
+    def cLoss[T: ClassTag](yTrue: Variable[T], yPred: Variable[T])(
+      implicit ev: TensorNumeric[T]): Variable[T] = {
+      A.mean(A.abs(yTrue - yPred), axis = 1)
+    }
+    model.compile(optimizer = new SGD[Float](), loss = cLoss[Float] _)
     model.fit(trainingData, batchSize = 8, nbEpoch = 2)
   }
 
   "graph compile and fit" should "work properly" in {
-    val trainingData = generateData(Array(10), 40)
+    val trainingData = generateData(Array(10), 8, 40)
     val input = Input[Float](inputShape = Shape(10))
     val output = Dense[Float](8, activation = "relu").inputs(input)
     val model = Model[Float](input, output)
-    model.compile(optimizer = "adam", loss = "mae", metrics = null)
-    model.disableGradientClipping()
+    model.compile(optimizer = "adam", loss = "mae")
     model.fit(trainingData, batchSize = 8, nbEpoch = 2)
   }
 
-  "compile, fit with validation, evaluate, predict, setTensorBoard, setCheckPoint" should
-    "work properly" in {
-    val trainingData = generateData(Array(12, 12), 100)
-    val testData = generateData(Array(12, 12), 16)
+  "compile, fit with validation, evaluate, predict, setTensorBoard, " +
+    "setCheckPoint, gradientClipping" should "work properly" in {
+    val trainingData = generateData(Array(12, 12), 1, 100)
+    val testData = generateData(Array(12, 12), 1, 16)
     val model = Sequential[Float]()
     model.add(Dense[Float](8, activation = "relu", inputShape = Shape(12, 12)))
     model.add(Flatten[Float]())
@@ -86,9 +93,13 @@ class TrainingSpec extends FlatSpec with Matchers with BeforeAndAfter  {
       metrics = List("accuracy"))
     val tmpLogDir = Files.createTempDir()
     val tmpCheckpointDir = Files.createTempDir()
-    model.setConstantGradientClipping(0.01f, 0.03f)
     model.setTensorBoard(tmpLogDir.getAbsolutePath, "TrainingSpec")
     model.setCheckpoint(tmpCheckpointDir.getAbsolutePath)
+    model.setGradientClippingByL2Norm(0.2f)
+    model.fit(trainingData, batchSize = 8, validationData = testData, nbEpoch = 2)
+    model.clearGradientClipping()
+    model.fit(trainingData, batchSize = 8, validationData = testData, nbEpoch = 2)
+    model.setGradientClippingByL2Norm(0.2f)
     model.fit(trainingData, batchSize = 8, validationData = testData, nbEpoch = 2)
     val accuracy = model.evaluate(testData, batchSize = 8)
     val predictResults = model.predict(testData, batchSize = 8)
@@ -102,8 +113,10 @@ class TrainingSpec extends FlatSpec with Matchers with BeforeAndAfter  {
     model.add(Dense[Float](8, activation = "relu", inputShape = Shape(4)))
     model.compile(optimizer = new SGD[Float](), loss = MSECriterion[Float](),
       metrics = List(new Top1Accuracy[Float]))
-    model.setGradientClippingByL2Norm(0.01f)
-    model.fit(localData, nbEpoch = 2, validationData = null)
+    model.setConstantGradientClipping(0.01f, 0.03f)
+    model.fit(localData, nbEpoch = 2)
+    model.clearGradientClipping()
+    model.fit(localData, nbEpoch = 2)
     val accuracy = model.evaluate(localData)
     val predictResults = model.predict(localData)
   }

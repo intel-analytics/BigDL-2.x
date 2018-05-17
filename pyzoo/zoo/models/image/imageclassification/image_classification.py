@@ -14,7 +14,7 @@
 # limitations under the License.
 #
 
-from bigdl.transform.vision.image import *
+from bigdl.transform.vision.image import FeatureTransformer
 from zoo.models.image.common.image_model import ImageModel
 from zoo.feature.image.imageset import *
 

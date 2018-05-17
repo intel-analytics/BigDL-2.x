@@ -90,6 +90,18 @@ private[nnframes] trait TrainingParams[@specialized(Float, Double) T] extends Pa
   final val optimMethod = new Param[OptimMethod[T]](this, "optimMethod", "optimMethod")
 
   def getOptimMethod: OptimMethod[T] = $(optimMethod)
+
+  /**
+   * Constant gradient clipping thresholds.
+   */
+  final val constantGradientClippingParams = new Param[(Float, Float)](this,
+    "threshold for constant clipping", "constantGradientClippingParams")
+
+  /**
+   * L2 norm gradient clipping threshold.
+   */
+  final val l2GradientClippingParams = new FloatParam(this,
+    "threshold for l2 norm gradient clipping", "l2GradientClippingParams")
 }
 
 /**
@@ -157,6 +169,22 @@ class NNEstimator[T: ClassTag] private[zoo] (
 
   def setOptimMethod(value: OptimMethod[T]): this.type = set(optimMethod, value)
   set(optimMethod, new SGD[T])
+
+  def setConstantGradientClipping(min: Float, max: Float): this.type = {
+    set(constantGradientClippingParams, (min, max))
+  }
+
+  def setGradientClippingByL2Norm(clipNorm: Float): this.type = {
+    set(l2GradientClippingParams, clipNorm)
+  }
+
+  /**
+   * Clear clipping params, in this case, clipping will not be applied.
+   */
+  def clearGradientClipping(): this.type = {
+    clear(l2GradientClippingParams)
+    clear(constantGradientClippingParams)
+  }
 
   @transient private var trainSummary: Option[TrainSummary] = None
 
@@ -286,6 +314,15 @@ class NNEstimator[T: ClassTag] private[zoo] (
       .setOptimMethod($(optimMethod))
       .setEndWhen(endTrigger)
 
+    if (isSet(l2GradientClippingParams)) {
+      optimizer.setGradientClippingByl2Norm($(l2GradientClippingParams))
+    }
+
+    if (isSet(constantGradientClippingParams)) {
+      val constantClippingValues = $(constantGradientClippingParams)
+      optimizer.setConstantGradientClipping(constantClippingValues._1, constantClippingValues._2)
+    }
+
     if (validationTrigger.isDefined) {
       val validationSamples = getDataSet(validationDF, validationBatchSize)
       optimizer.setValidation(
@@ -345,7 +382,7 @@ object NNEstimator {
    * @param model BigDL module to be optimized
    * @param criterion  BigDL criterion method
    */
-  def apply[F, T: ClassTag](
+  def apply[T: ClassTag](
       model: Module[T],
       criterion: Criterion[T]
     )(implicit ev: TensorNumeric[T]): NNEstimator[T] = {
@@ -365,7 +402,7 @@ object NNEstimator {
    *                    width * height = 28 * 28, featureSize = Array(28, 28).
    * @param labelSize The size (Tensor dimensions) of the label data.
    */
-  def apply[F, T: ClassTag](
+  def apply[T: ClassTag](
       model: Module[T],
       criterion: Criterion[T],
       featureSize : Array[Int],
@@ -383,16 +420,16 @@ object NNEstimator {
    * @param model BigDL module to be optimized
    * @param criterion BigDL criterion method
    * @param featurePreprocessing Preprocessing[Any, Tensor[T] ]
-   * @param laeblPreprocessing Preprocessing[Any, Tensor[T] ]
+   * @param labelPreprocessing Preprocessing[Any, Tensor[T] ]
    */
   def apply[F, T: ClassTag](
       model: Module[T],
       criterion: Criterion[T],
-      featurePreprocessing: Preprocessing[Any, Tensor[T]],
-      laeblPreprocessing: Preprocessing[Any, Tensor[T]]
+      featurePreprocessing: Preprocessing[F, Tensor[T]],
+      labelPreprocessing: Preprocessing[F, Tensor[T]]
     )(implicit ev: TensorNumeric[T]): NNEstimator[T] = {
     new NNEstimator(model, criterion)
-      .setSamplePreprocessing(FeatureLabelPreprocessing(featurePreprocessing, laeblPreprocessing))
+      .setSamplePreprocessing(FeatureLabelPreprocessing(featurePreprocessing, labelPreprocessing))
   }
 
   /**
@@ -519,7 +556,7 @@ object NNModel extends MLReadable[NNModel[_]] {
    *
    * @param model BigDL module to be optimized
    */
-  def apply[F, T: ClassTag](
+  def apply[T: ClassTag](
       model: Module[T]
     )(implicit ev: TensorNumeric[T]): NNModel[T] = {
     new NNModel(model)
@@ -554,6 +591,9 @@ object NNModel extends MLReadable[NNModel[_]] {
     new NNModel(model).setSamplePreprocessing(featurePreprocessing -> TensorToSample())
   }
 
+  import scala.language.existentials
+  implicit val format: DefaultFormats.type = DefaultFormats
+
   private[nnframes] class NNModelReader() extends MLReader[NNModel[_]] {
     override def load(path: String): NNModel[_] = {
       val (meta, model, typeTag, feaTran) = NNModel.getMetaAndModel(path, sc)
@@ -574,8 +614,6 @@ object NNModel extends MLReadable[NNModel[_]] {
     }
   }
 
-  import scala.language.existentials
-  implicit val format: DefaultFormats.type = DefaultFormats
   private[nnframes] def getMetaAndModel(path: String, sc: SparkContext) = {
     val meta = DefaultParamsWriterWrapper.loadMetadata(path, sc)
     val (modulePath, weightPath) =
