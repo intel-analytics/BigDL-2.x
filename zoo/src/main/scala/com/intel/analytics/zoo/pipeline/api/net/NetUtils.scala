@@ -137,12 +137,11 @@ object NetUtils {
        variables: Option[(Array[Tensor[T]], Array[Tensor[T]])] = None,
        generateBackward: Boolean = true)
        (implicit ev: TensorNumeric[T], ev2: ClassTag[T]): Graph[T] = {
-    import scala.reflect.runtime.{universe=>ru}
-    import scala.reflect.runtime.universe._
+    import scala.reflect.runtime.{universe => ru}
     val m = ru.runtimeMirror(Graph.getClass.getClassLoader)
     val mirror = m.reflect(Graph)
     val dynamic = mirror.symbol.typeSignature
-      .member(newTermName("dynamic"))
+      .member(ru.newTermName("dynamic"))
       .filter(_.asMethod.paramss.flatten.length == 6)
 
     val result = mirror.reflectMethod(dynamic.asMethod)(input, output,
