@@ -50,13 +50,12 @@ class NetSpec extends ZooSpecHelper{
     newModel.outputNodes.head.element.getName() should be ("reshape2")
   }
 
-//  This test needs dynamic graph support
-//  "Load tensorflow" should "work" in {
-//    val resource = getClass().getClassLoader().getResource("models")
-//    val path = resource.getPath + "/" + "tensorflow"
-//    val model = Net.loadTF[Float](s"$path/lenet.pb", Seq("Placeholder"), Seq("LeNet/fc4/BiasAdd"))
-//    val newModel = model.newGraph("LeNet/fc3/Relu")
-//    newModel.outputNodes.head.element.getName() should be ("LeNet/fc3/Relu")
-//  }
+  "Load tensorflow" should "work" in {
+    val resource = getClass().getClassLoader().getResource("models")
+    val path = resource.getPath + "/" + "tensorflow"
+    val model = Net.loadTF[Float](s"$path/lenet.pb", Seq("Placeholder"), Seq("LeNet/fc4/BiasAdd"))
+    val newModel = model.newGraph("LeNet/fc3/Relu")
+    newModel.outputNodes.head.element.getName() should be ("LeNet/fc3/Relu")
+  }
 
 }
