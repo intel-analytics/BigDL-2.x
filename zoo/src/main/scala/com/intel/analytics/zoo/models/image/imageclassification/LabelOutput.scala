@@ -48,10 +48,6 @@ class LabelOutput(labelMap: Map[Int, String], clses : String, probs : String)
     imageFeature(clses) = classes
     imageFeature(probs) = probilities
   }
-
-  override def apply(imageSet: ImageSet): ImageSet = {
-    imageSet.transform(this)
-  }
 }
 
 object LabelOutput {

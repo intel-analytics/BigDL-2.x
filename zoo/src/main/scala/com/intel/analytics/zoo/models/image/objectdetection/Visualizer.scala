@@ -65,10 +65,6 @@ class Visualizer(labelMap: Map[Int, String], thresh: Float = 0.3f,
       if (mat != null) mat.release()
     }
   }
-
-  override def apply(imageSet: ImageSet): ImageSet = {
-    imageSet.transform(this)
-  }
 }
 
 
