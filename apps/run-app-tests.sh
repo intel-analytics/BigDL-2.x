@@ -11,6 +11,22 @@ export ANALYTICS_ZOO_CONF=${ANALYTICS_ZOO_HOME_DIST}/conf/spark-bigdl.conf
 export PYTHONPATH=${ANALYTICS_ZOO_PYZIP}:$PYTHONPATH
 
 chmod +x ./apps/ipynb2py.sh
+
+./apps/ipynb2py.sh ./apps/image-augmentation/image-augmentation
+
+echo "#5 start app test for image-augmentation"
+${SPARK_HOME}/bin/spark-submit \
+        --master ${MASTER} \
+        --driver-memory 1g  \
+        --executor-memory 1g \
+        --conf spark.akka.frameSize=64 \
+        --py-files ${ANALYTICS_ZOO_PYZIP},${ANALYTICS_ZOO_HOME}/apps/image-augmentation/image-augmentation.py  \
+        --properties-file ${ANALYTICS_ZOO_CONF} \
+        --jars ${ANALYTICS_ZOO_JAR} \
+        --conf spark.driver.extraClassPath=${ANALYTICS_ZOO_JAR} \
+        --conf spark.executor.extraClassPath=${ANALYTICS_ZOO_JAR} \
+        ${ANALYTICS_ZOO_HOME}/apps/image-augmentation/image-augmentation.py
+
 ./apps/ipynb2py.sh ./apps/anomaly-detection/anomaly-detection-nyc-taxi
 
 echo "#1 start app test for anomaly-detection-nyc-taxi"
