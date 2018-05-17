@@ -39,14 +39,14 @@ cp train/dog.7* demo/dogs
 Command to run the example in Spark local mode:
 ```
     spark-submit \
-    --master local[physcial_core_number] \
-    --driver-memory 10g --executor-memory 20g \
+    --master local[2] \
+    --driver-memory 2g \
     --class com.intel.analytics.zoo.example.nnframes.ImageTransferLearning.ImageTransferLearning \
     ./dist/lib/zoo-0.1.0-SNAPSHOT-jar-with-dependencies.jar \
     --modelPath ./model/bvlc_googlenet.caffemodel \
     --caffeDefPath ./model/deploy.prototxt \
     --batchSize 40 \
-    --folder ./train/ \
+    --folder ./demo \
     --nEpochs 20
 ```
 
@@ -55,10 +55,10 @@ Command to run the example in Spark yarn mode(TODO):
     spark-submit \
     --master yarn \
     --deploy-mode client \
-    --executor-cores 10 \
+    --executor-cores 1 \
     --num-executors 4 \
-    --driver-memory 10g \
-    --executor-memory 150g \
+    --driver-memory 2g \
+    --executor-memory 2g \
     --class com.intel.analytics.zoo.example.nnframes.ImageTransferLearning.ImageTransferLearning \
     ./dist/lib/zoo-0.1.0-SNAPSHOT-jar-with-dependencies.jar \
     --modelPath ./model/bvlc_googlenet.caffemodel \
