@@ -16,10 +16,14 @@
 
 package com.intel.analytics.zoo.models.image.common
 
+import com.intel.analytics.bigdl.nn.Module
 import com.intel.analytics.bigdl.nn.abstractnn.Activity
 import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric
 import com.intel.analytics.zoo.feature.image.ImageSet
 import com.intel.analytics.zoo.models.common.ZooModel
+import com.intel.analytics.zoo.models.image.imageclassification.ImageClassifier
+import com.intel.analytics.zoo.models.image.objectdetection.ObjectDetector
+import org.apache.log4j.Logger
 
 import scala.reflect.ClassTag
 
@@ -64,9 +68,12 @@ abstract class ImageModel[T: ClassTag]()(implicit ev: TensorNumeric[T])
   }
 
   def getConfig(): ImageConfigure[T] = config
+
 }
 
 object ImageModel {
+
+  val logger = Logger.getLogger(getClass)
   /**
    * Load an pre-trained image model (with weights).
    *
@@ -78,10 +85,25 @@ object ImageModel {
    * @tparam T Numeric type of parameter(e.g. weight, bias). Only support float/double now.
    * @return
    */
-  def loadModel[T: ClassTag](path: String, weightPath: String = null)
+  def loadModel[T: ClassTag](path: String, weightPath: String = null, modelType: String = "")
     (implicit ev: TensorNumeric[T]): ImageModel[T] = {
-    val model = ZooModel.loadModel(path, weightPath).asInstanceOf[ImageModel[T]]
-    model.config = ImageConfigure.parse(model.getName())
-    model
+    val model = Module.loadModule[T](path, weightPath)
+    val imageModel = if (model.isInstanceOf[ImageModel[T]]) {
+      model.asInstanceOf[ImageModel[T]]
+    } else {
+      val specificModel = modelType.toLowerCase() match {
+        case "objectdetection" => new ObjectDetector[T]()
+        case "imageclassification" => new ImageClassifier[T]()
+        case _ => logger.error(s"model type $modelType is not defined in Analytics zoo." +
+          s"Only 'imageclassification' and 'objectdetection' are currently supported.")
+          throw new IllegalArgumentException(
+            s"model type $modelType is not defined in Analytics zoo." +
+              s"Only 'imageclassification' and 'objectdetection' are currently supported.")
+      }
+      specificModel.addModel(model)
+      specificModel.setName(model.getName())
+    }
+    imageModel.config = ImageConfigure.parse(model.getName())
+    imageModel
   }
 }

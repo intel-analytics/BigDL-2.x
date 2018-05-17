@@ -17,8 +17,6 @@
 import sys
 from bigdl.util.common import JavaValue
 from bigdl.util.common import callBigDlFunc
-from bigdl.util.common import *
-from bigdl.transform.vision.image import *
 
 if sys.version >= '3':
     long = int

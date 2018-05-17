@@ -76,8 +76,10 @@ rm -rf $DIST_DIR
 mkdir -p $DIST_DIR/lib
 mkdir -p $DIST_DIR/conf
 mkdir -p $DIST_DIR/bin
+mkdir -p $DIST_DIR/extra-resources
 
 cp -r $BASEDIR/zoo/target/*.jar $DIST_DIR/lib/
 cp -r $BASEDIR/zoo/target/*.zip $DIST_DIR/lib/
 cp $BASEDIR/backend/bigdl/spark/dl/src/main/resources/spark-bigdl.conf  $DIST_DIR/conf/
 cp -r $BASEDIR/scripts/* $DIST_DIR/bin/
+cp $BASEDIR/zoo/target/extra-resources/zoo-version-info.properties $DIST_DIR/extra-resources/

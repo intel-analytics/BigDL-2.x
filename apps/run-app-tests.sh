@@ -109,6 +109,7 @@ ${SPARK_HOME}/bin/spark-submit \
         --jars ${ANALYTICS_ZOO_JAR} \
         --conf spark.driver.extraClassPath=${ANALYTICS_ZOO_JAR} \
         --conf spark.executor.extraClassPath=${ANALYTICS_ZOO_JAR} \
+<<<<<<< HEAD
         ${ANALYTICS_ZOO_HOME}/apps/recommendation/wide_n_deep.py
 
 
@@ -212,3 +213,6 @@ ${SPARK_HOME}/bin/spark-submit \
         ${ANALYTICS_ZOO_HOME}/apps/variational_autoencoder/using_variational_autoencoder_to_generate_digital_numbers.py
         
 
+=======
+        ${ANALYTICS_ZOO_HOME}/apps/recommendation/wide_n_deep.py
+>>>>>>> upstream/master

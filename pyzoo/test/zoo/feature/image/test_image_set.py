@@ -16,6 +16,7 @@
 
 import pytest
 import os
+import cv2
 from bigdl.util.common import *
 from bigdl.transform.vision.image import MatToTensor
 
@@ -84,6 +85,10 @@ class Test_Image_Set():
         image_set = ImageSet.read(self.image_path, self.sc)
         image_set.get_predict()
 
+    def test_local_image_set(self):
+        image = cv2.imread(self.image_path)
+        local_image_set = LocalImageSet([image])
+        print(local_image_set.get_image())
 
 if __name__ == "__main__":
     pytest.main([__file__])
