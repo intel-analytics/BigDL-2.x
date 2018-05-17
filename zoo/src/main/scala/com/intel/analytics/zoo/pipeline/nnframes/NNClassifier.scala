@@ -49,7 +49,7 @@ class NNClassifier[T: ClassTag] private[zoo]  (
   override protected def wrapBigDLModel(m: Module[T]): NNClassifierModel[T] = {
     val classifierModel = new NNClassifierModel[T](m)
     copyValues(classifierModel.setParent(this))
-    val clonedTransformer = ToTuple() --> $(samplePreprocessing)
+    val clonedTransformer = ToTuple() -> $(samplePreprocessing)
       .asInstanceOf[Preprocessing[(Any, Option[Any]), Sample[T]]].clonePreprocessing()
     classifierModel.setSamplePreprocessing(clonedTransformer)
   }
@@ -167,7 +167,7 @@ object NNClassifierModel extends MLReadable[NNClassifierModel[_]] {
       model: Module[T]
     )(implicit ev: TensorNumeric[T]): NNClassifierModel[T] = {
     new NNClassifierModel(model)
-      .setSamplePreprocessing(SeqToTensor() --> TensorToSample())
+      .setSamplePreprocessing(SeqToTensor() -> TensorToSample())
   }
 
   /**
@@ -185,7 +185,7 @@ object NNClassifierModel extends MLReadable[NNClassifierModel[_]] {
       featureSize : Array[Int]
     )(implicit ev: TensorNumeric[T]): NNClassifierModel[T] = {
     new NNClassifierModel(model)
-      .setSamplePreprocessing(SeqToTensor(featureSize) --> TensorToSample())
+      .setSamplePreprocessing(SeqToTensor(featureSize) -> TensorToSample())
   }
 
   /**
@@ -198,7 +198,7 @@ object NNClassifierModel extends MLReadable[NNClassifierModel[_]] {
       model: Module[T],
       featurePreprocessing: Preprocessing[F, Tensor[T]]
     )(implicit ev: TensorNumeric[T]): NNClassifierModel[T] = {
-    new NNClassifierModel(model).setSamplePreprocessing(featurePreprocessing --> TensorToSample())
+    new NNClassifierModel(model).setSamplePreprocessing(featurePreprocessing -> TensorToSample())
   }
 
   private[nnframes] class NNClassifierModelReader() extends MLReader[NNClassifierModel[_]] {

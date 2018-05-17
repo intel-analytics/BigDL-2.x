@@ -130,7 +130,7 @@ class PythonNNFrames[T: ClassTag](implicit ev: TensorNumeric[T]) extends PythonB
 
   def createChainedPreprocessing(list: JList[Preprocessing[Any, Any]]): Preprocessing[Any, Any] = {
     var cur = list.get(0)
-    (1 until list.size()).foreach(t => cur = cur --> list.get(t))
+    (1 until list.size()).foreach(t => cur = cur -> list.get(t))
     cur
   }
 

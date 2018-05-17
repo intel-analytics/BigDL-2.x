@@ -242,8 +242,8 @@ class NNClassifierSpec extends FlatSpec with Matchers with BeforeAndAfter {
     val imageDF = NNImageReader.readImages(pascalResource.getFile, sc)
       .withColumn("label", lit(2.0f))
     assert(imageDF.count() == 1)
-    val transformer = RowToImageFeature() --> Resize(256, 256) --> CenterCrop(224, 224) -->
-      ChannelNormalize(123, 117, 104, 1, 1, 1) --> MatToTensor() --> ImageFeatureToTensor()
+    val transformer = RowToImageFeature() -> Resize(256, 256) -> CenterCrop(224, 224) ->
+      ChannelNormalize(123, 117, 104, 1, 1, 1) -> MatToTensor() -> ImageFeatureToTensor()
 
     val estimator = NNClassifier(Inception_v1(1000), ClassNLLCriterion[Float](), transformer)
       .setBatchSize(1)
@@ -327,7 +327,7 @@ class NNClassifierSpec extends FlatSpec with Matchers with BeforeAndAfter {
 
   "NNClassifierModel" should "construct with sampleTransformer" in {
     val model = new Sequential().add(Linear[Float](6, 2)).add(LogSoftMax[Float])
-    val sampleTransformer = SeqToTensor(Array(6)) --> TensorToSample()
+    val sampleTransformer = SeqToTensor(Array(6)) -> TensorToSample()
 
     val nnModel = NNClassifierModel(model).setBatchSize(nRecords)
     val data = sc.parallelize(smallData)
@@ -370,7 +370,7 @@ class NNClassifierSpec extends FlatSpec with Matchers with BeforeAndAfter {
       .setMaxEpoch(1)
 
     val nnModel = classifier.fit(df)
-    val newPreprocessing = ArrayToTensor(Array(6)) --> TensorToSample()
+    val newPreprocessing = ArrayToTensor(Array(6)) -> TensorToSample()
     nnModel.setSamplePreprocessing(newPreprocessing)
     assert(df.count() == nnModel.transform(df).count())
   }

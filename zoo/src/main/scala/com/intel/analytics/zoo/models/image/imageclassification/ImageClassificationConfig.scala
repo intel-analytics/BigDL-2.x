@@ -92,18 +92,18 @@ object ImagenetConfig {
   }
 
   def alexnetPreprocessor() : Preprocessing[ImageFeature, ImageFeature] = {
-    Resize(Consts.IMAGENET_RESIZE, Consts.IMAGENET_RESIZE) -->
-      PixelNormalizer(mean) --> CenterCrop(227, 227) -->
-      MatToTensor() --> ImageSetToSample()
+    Resize(Consts.IMAGENET_RESIZE, Consts.IMAGENET_RESIZE) ->
+      PixelNormalizer(mean) -> CenterCrop(227, 227) ->
+      MatToTensor() -> ImageSetToSample()
   }
 
   def commonPreprocessor(imageSize : Int, meanR: Float, meanG: Float, meanB: Float,
     stdR: Float = 1, stdG: Float = 1, stdB: Float = 1):
     Preprocessing[ImageFeature, ImageFeature] = {
-    Resize(Consts.IMAGENET_RESIZE, Consts.IMAGENET_RESIZE) -->
-      CenterCrop(imageSize, imageSize) --> ChannelNormalize(meanR, meanG, meanB,
-      stdR, stdG, stdB) -->
-      MatToTensor() --> ImageSetToSample()
+    Resize(Consts.IMAGENET_RESIZE, Consts.IMAGENET_RESIZE) ->
+      CenterCrop(imageSize, imageSize) -> ChannelNormalize(meanR, meanG, meanB,
+      stdR, stdG, stdB) ->
+      MatToTensor() -> ImageSetToSample()
   }
 
   def inceptionV1Preprocessor(): Preprocessing[ImageFeature, ImageFeature] = {

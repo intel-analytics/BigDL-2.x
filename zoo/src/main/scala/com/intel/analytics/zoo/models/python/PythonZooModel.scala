@@ -112,8 +112,8 @@ class PythonZooModel[T: ClassTag](implicit ev: TensorNumeric[T]) extends PythonB
 
   def createVisualizer(labelMap: JMap[Int, String], thresh: Float = 0.3f,
                        encoding: String): Preprocessing[ImageFeature, ImageFeature] = {
-    Visualizer(labelMap.asScala.toMap, thresh, encoding, Visualizer.visualized) -->
-      BytesToMat(Visualizer.visualized) --> MatToFloats(shareBuffer = false)
+    Visualizer(labelMap.asScala.toMap, thresh, encoding, Visualizer.visualized) ->
+      BytesToMat(Visualizer.visualized) -> MatToFloats(shareBuffer = false)
   }
 
   def getLabelMap(imageConfigure: ImageConfigure[T]): JMap[Int, String] = {

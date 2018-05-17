@@ -31,7 +31,7 @@ import org.apache.commons.lang3.SerializationUtils
 trait Preprocessing[A, B] extends Transformer[A, B] {
   // scalastyle:off methodName
   // scalastyle:off noSpaceBeforeLeftBracket
-  def --> [C](other: Preprocessing[B, C]): Preprocessing[A, C] = {
+  def -> [C](other: Preprocessing[B, C]): Preprocessing[A, C] = {
     new ChainedPreprocessing(this, other)
   }
   // scalastyle:on noSpaceBeforeLeftBracket
@@ -69,4 +69,12 @@ abstract class ImageProcessing extends FeatureTransformer with
   def apply(imageSet: ImageSet): ImageSet = {
     imageSet.transform(this)
   }
+
+  // scalastyle:off methodName
+  // scalastyle:off noSpaceBeforeLeftBracket
+  def -> (other: ImageProcessing): Preprocessing[ImageFeature, ImageFeature] = {
+    new ChainedPreprocessing(this, other)
+  }
+  // scalastyle:on noSpaceBeforeLeftBracket
+  // scalastyle:on methodName
 }
