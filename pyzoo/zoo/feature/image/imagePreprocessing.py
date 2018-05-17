@@ -238,7 +238,8 @@ class RandomCrop(ImagePreprocessing):
     """
 
     def __init__(self, crop_width, crop_height, is_clip=True, bigdl_type="float"):
-        self.value = callBigDlFunc(bigdl_type, "createImgRandomCrop", crop_width, crop_height, is_clip)
+        self.value = callBigDlFunc(bigdl_type, "createImgRandomCrop",
+                                   crop_width, crop_height, is_clip)
 
 
 class CenterCrop(ImagePreprocessing):
@@ -251,7 +252,8 @@ class CenterCrop(ImagePreprocessing):
     """
 
     def __init__(self, crop_width, crop_height, is_clip=True, bigdl_type="float"):
-        self.value = callBigDlFunc(bigdl_type, "createImgCenterCrop", crop_width, crop_height, is_clip)
+        self.value = callBigDlFunc(bigdl_type, "createImgCenterCrop",
+                                   crop_width, crop_height, is_clip)
 
 
 class FixedCrop(ImagePreprocessing):
@@ -267,7 +269,8 @@ class FixedCrop(ImagePreprocessing):
     """
 
     def __init__(self, x1, y1, x2, y2, normalized=True, is_clip=True, bigdl_type="float"):
-        self.value = callBigDlFunc(bigdl_type, "createImgFixedCrop", x1, y1, x2, y2, normalized, is_clip)
+        self.value = callBigDlFunc(bigdl_type, "createImgFixedCrop",
+                                   x1, y1, x2, y2, normalized, is_clip)
 
 
 class Expand(ImagePreprocessing):
@@ -314,4 +317,3 @@ class HFlip(ImagePreprocessing):
 
     def __init__(self, bigdl_type="float"):
         self.value = callBigDlFunc(bigdl_type, "createImgHFlip")
-
