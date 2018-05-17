@@ -71,20 +71,20 @@ def init_env():
 
 
 def setup_package():
-    jar_file = 'lib/analytics-zoo-'+VERSION+'.jar'
-    if ".dev0" in jar_file:
-        jar_file = jar_file.replace(".dev0", "-SNAPSHOT")
     metadata = dict(
         name='analytics-zoo',
         version=VERSION,
         description='Analytics + AI platform for Apache Spark and BigDL',
         author='Analytics Zoo Authors',
-        author_email='zoo-user-group@googlegroups.com',
+        author_email='analytics-zoo-user-group@googlegroups.com',
         license='Apache License, Version 2.0',
         url='https://github.com/intel-analytics/analytics-zoo',
         packages=['zoo',
                   'zoo.common',
                   'zoo.examples',
+                  'zoo.examples.autograd',
+                  'zoo.examples.imageclassification',
+                  'zoo.examples.nnframes',
                   'zoo.examples.objectdetection',
                   'zoo.examples.textclassification',
                   'zoo.feature',
@@ -93,6 +93,7 @@ def setup_package():
                   'zoo.models.common',
                   'zoo.models.image',
                   'zoo.models.image.common',
+                  'zoo.models.image.imageclassification',
                   'zoo.models.image.objectdetection',
                   'zoo.models.recommendation',
                   'zoo.models.textclassification',
@@ -108,8 +109,8 @@ def setup_package():
         install_requires=['bigdl==0.5.0'],
         dependency_links=['https://d3kbcqa49mib13.cloudfront.net/spark-2.0.0-bin-hadoop2.7.tgz'],
         include_package_data=True,
-        package_dir={"bigdl": '../backend/bigdl/pyspark/bigdl', "zoo.share": TEMP_PATH},
-        package_data={"zoo.share": [jar_file, 'conf/*', 'bin/*',
+        # package_dir={"bigdl": '../backend/bigdl/pyspark/bigdl', "zoo.share": TEMP_PATH},
+        package_data={"zoo.share": ['lib/analytics-zoo*with-dependencies.jar', 'conf/*', 'bin/*',
                                     'extra-resources/*']},
         classifiers=[
             'License :: OSI Approved :: Apache Software License',

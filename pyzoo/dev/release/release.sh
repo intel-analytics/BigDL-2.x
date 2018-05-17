@@ -25,7 +25,7 @@ ANALYTICS_ZOO_PYTHON_DIR="$(cd ${RUN_SCRIPT_DIR}/../../../pyzoo; pwd)"
 echo $ANALYTICS_ZOO_PYTHON_DIR
 
 if (( $# < 2)); then
-  echo "Bad parameters. Usage: bash release.sh linux spark_2.x false 0.1.0.dev0"
+  echo "Bad parameters. Usage example: bash release.sh linux without_bigdl false 0.1.0.dev0"
   exit -1
 fi
 
@@ -42,11 +42,11 @@ fi
 
 cd ${ANALYTICS_ZOO_DIR}
 if [ "$platform" ==  "mac" ]; then
-    echo "Building analytics zoo for mac system"
+    echo "Building Analytics Zoo for mac system"
     dist_profile="-P mac -P $spark_profile"
     verbose_pname="macosx_10_11_x86_64"
 elif [ "$platform" == "linux" ]; then
-    echo "Building analytics zoo for linux system"
+    echo "Building Analytics Zoo for linux system"
     dist_profile="-P $spark_profile"
     verbose_pname="manylinux1_x86_64"
 else
