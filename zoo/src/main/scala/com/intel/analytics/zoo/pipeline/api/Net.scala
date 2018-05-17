@@ -77,14 +77,14 @@ object Net {
   }
 
   /**
-    * Load Torch model from path.
-    *
-    * @param path path to save module, local file system, HDFS and Amazon S3 is supported.
-    *             HDFS path should be like "hdfs://[host]:[port]/xxx"
-    *             Amazon S3 path should be like "s3a://bucket/xxx"
-    * @tparam T numeric type
-    * @return model loaded from path
-    */
+   * Load Torch model from path.
+   *
+   * @param path path to save module, local file system, HDFS and Amazon S3 is supported.
+   *             HDFS path should be like "hdfs://[host]:[port]/xxx"
+   *             Amazon S3 path should be like "s3a://bucket/xxx"
+   * @tparam T numeric type
+   * @return model loaded from path
+   */
   def loadTorch[T: ClassTag](path : String)(implicit ev: TensorNumeric[T]):
   GraphNet[T] = {
     val graph = File.loadTorch[AbstractModule[Activity, Activity, T]](path).toGraph()
@@ -130,7 +130,8 @@ object Net {
    * @return
    */
   def loadTFCheckpoints[T: ClassTag](graphFile: String, binFile: String,
-                                     byteOrder: ByteOrder = ByteOrder.LITTLE_ENDIAN)(implicit ev: TensorNumeric[T]): Session[T] = {
+      byteOrder: ByteOrder = ByteOrder.LITTLE_ENDIAN)(
+      implicit ev: TensorNumeric[T]): Session[T] = {
     TensorflowLoader.checkpoints(graphFile, binFile, byteOrder)
   }
 }

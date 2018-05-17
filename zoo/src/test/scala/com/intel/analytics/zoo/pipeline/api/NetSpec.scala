@@ -54,7 +54,8 @@ class NetSpec extends ZooSpecHelper{
       .asInstanceOf[KerasNet[Float]]
 
     val inputTensor = Tensor[Float](3, 5).rand()
-    compareOutputAndGradInput(model.asInstanceOf[AbstractModule[Tensor[Float], Tensor[Float], Float]],
+    compareOutputAndGradInput(
+      model.asInstanceOf[AbstractModule[Tensor[Float], Tensor[Float], Float]],
       reloadedModel.asInstanceOf[AbstractModule[Tensor[Float], Tensor[Float], Float]], inputTensor)
   }
 
@@ -76,7 +77,8 @@ class NetSpec extends ZooSpecHelper{
     val reloadedModel = Net.loadTorch[Float](absolutePath)
 
     val inputTensor = Tensor[Float](16, 3, 224, 224).rand()
-    compareOutputAndGradInput(layer.asInstanceOf[AbstractModule[Tensor[Float], Tensor[Float], Float]],
+    compareOutputAndGradInput(
+      layer.asInstanceOf[AbstractModule[Tensor[Float], Tensor[Float], Float]],
       reloadedModel.asInstanceOf[AbstractModule[Tensor[Float], Tensor[Float], Float]], inputTensor)
   }
 

@@ -98,7 +98,8 @@ class Net(BModel):
         """
         Load an existing Keras model (with weights).
 
-        :param model_path: The path to save the model. Local file system, HDFS and Amazon S3 are supported.
+        :param model_path: The path to save the model.
+              Local file system, HDFS and Amazon S3 are supported.
               HDFS path should be like 'hdfs://[host]:[port]/xxx'.
               Amazon S3 path should be like 's3a://bucket/xxx'.
         :param weight_path: The path for pre-trained weights if any. Default is None.
@@ -127,7 +128,8 @@ class Net(BModel):
         :param inputs: The input node of this graph
         :param outputs: The output node of this graph
         :param byte_order: byte_order of the file, `little_endian` or `big_endian`
-        :param bin_file: the optional bin file produced by bigdl dump_model util function to store the weights
+        :param bin_file: the optional bin file
+                produced by bigdl dump_model util function to store the weights
         :return: A pre-trained model.
         """
         jmodel = callBigDlFunc(bigdl_type, "netLoadTF", path, inputs, outputs, byte_order, bin_file)
@@ -146,14 +148,14 @@ class Net(BModel):
         jmodel = callBigDlFunc(bigdl_type, "netLoadCaffe", def_path, model_path)
         return GraphNet.from_jvalue(jmodel, bigdl_type)
 
-
     @staticmethod
     def load_keras(json_path=None, hdf5_path=None, by_name=False):
         """
         Load a pre-trained Keras model.
 
         :param json_path: The json path containing the keras model definition.
-        :param hdf5_path: The HDF5 path containing the pre-trained keras model weights with or without the model architecture.
+        :param hdf5_path: The HDF5 path containing the pre-trained keras model weights
+            with or without the model architecture.
         :return: A bigdl model.
         """
         BModel.load_keras(json_path, hdf5_path, by_name)
