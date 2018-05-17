@@ -1,5 +1,5 @@
 #
-# Copyright 2016 The BigDL Authors.
+# Copyright 2018 Analytics Zoo Authors.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -51,7 +51,7 @@ class Resize(ImagePreprocessing):
     Imgproc.resize(mat, mat, new Size(resizeWH, resizeWH), 0, 0, Imgproc.INTER_LINEAR)
     Imgproc.resize(mat, mat, new Size(resizeWH, resizeWH))
     """
-    def __init__(self, resize_h, resize_w, resize_mode = 1, use_scale_factor=True,
+    def __init__(self, resize_h, resize_w, resize_mode=1, use_scale_factor=True,
                  bigdl_type="float"):
         self.value = callBigDlFunc(
             bigdl_type, "createImgResize", resize_h, resize_w, resize_mode, use_scale_factor)
@@ -146,32 +146,26 @@ class ColorJitter(ImagePreprocessing):
     :param random_order_prob random order for different operation
     :param shuffle  shuffle the transformers
     """
-    def __init__(self, brightness_prob = 0.5,
-                 brightness_delta = 32.0,
-                 contrast_prob = 0.5,
-                 contrast_lower = 0.5,
-                 contrast_upper = 1.5,
-                 hue_prob = 0.5,
-                 hue_delta = 18.0,
-                 saturation_prob = 0.5,
-                 saturation_lower = 0.5,
-                 saturation_upper = 1.5,
-                 random_order_prob = 0.0,
-                 shuffle = False,
+    def __init__(self, brightness_prob=0.5,
+                 brightness_delta=32.0,
+                 contrast_prob=0.5,
+                 contrast_lower=0.5,
+                 contrast_upper=1.5,
+                 hue_prob=0.5,
+                 hue_delta=18.0,
+                 saturation_prob=0.5,
+                 saturation_lower=0.5,
+                 saturation_upper=1.5,
+                 random_order_prob=0.0,
+                 shuffle=False,
                  bigdl_type="float"):
         self.value = callBigDlFunc(
-            bigdl_type, "createImgColorJitter", brightness_prob,
-                                          brightness_delta,
-                                          contrast_prob,
-                                          contrast_lower,
-                                          contrast_upper,
-                                          hue_prob,
-                                          hue_delta,
-                                          saturation_prob,
-                                          saturation_lower,
-                                          saturation_upper,
-                                          random_order_prob,
-                                          shuffle)
+            bigdl_type, "createImgColorJitter",
+            brightness_prob, brightness_delta,
+            contrast_prob, contrast_lower, contrast_upper,
+            hue_prob, hue_delta,
+            saturation_prob, saturation_lower, saturation_upper,
+            random_order_prob, shuffle)
 
 
 class AspectScale(ImagePreprocessing):
@@ -187,11 +181,12 @@ class AspectScale(ImagePreprocessing):
     :aram min_scale control the minimum scale up for image
     """
 
-    def __init__(self, min_size, scale_multiple_of = 1, max_size = 1000,
-                 resize_mode = 1, use_scale_factor=True, min_scale=-1.0,
+    def __init__(self, min_size, scale_multiple_of=1, max_size=1000,
+                 resize_mode=1, use_scale_factor=True, min_scale=-1.0,
                  bigdl_type="float"):
-        self.value = callBigDlFunc(bigdl_type, "createImgAspectScale", min_size, scale_multiple_of, max_size,
-                                          resize_mode, use_scale_factor, min_scale)
+        self.value = callBigDlFunc(bigdl_type, "createImgAspectScale",
+                                   min_size, scale_multiple_of, max_size,
+                                   resize_mode, use_scale_factor, min_scale)
 
 
 class RandomAspectScale(ImagePreprocessing):
@@ -201,8 +196,9 @@ class RandomAspectScale(ImagePreprocessing):
     :param scaleMultipleOf Resize test images so that its width and height are multiples of
     :param maxSize Max pixel size of the longest side of a scaled input image
     """
-    def __init__(self, scales, scale_multiple_of = 1, max_size = 1000, bigdl_type="float"):
-        self.value = callBigDlFunc(bigdl_type, "createImgRandomAspectScale", scales, scale_multiple_of, max_size)
+    def __init__(self, scales, scale_multiple_of=1, max_size=1000, bigdl_type="float"):
+        self.value = callBigDlFunc(bigdl_type, "createImgRandomAspectScale",
+                                   scales, scale_multiple_of, max_size)
 
 
 class ChannelNormalize(ImagePreprocessing):
@@ -216,7 +212,8 @@ class ChannelNormalize(ImagePreprocessing):
     :param std_b std value in B channel
     """
     def __init__(self, mean_r, mean_b, mean_g, std_r=1.0, std_g=1.0, std_b=1.0, bigdl_type="float"):
-        self.value = callBigDlFunc(bigdl_type, "createImgChannelNormalize", mean_r, mean_g, mean_b, std_r, std_g, std_b)
+        self.value = callBigDlFunc(bigdl_type, "createImgChannelNormalize",
+                                   mean_r, mean_g, mean_b, std_r, std_g, std_b)
 
 
 class PixelNormalize(ImagePreprocessing):
@@ -288,7 +285,7 @@ class Expand(ImagePreprocessing):
                  min_expand_ratio=1.0,
                  max_expand_ratio=4.0, bigdl_type="float"):
         self.value = callBigDlFunc(bigdl_type, "createImgExpand", means_r, means_g, means_b,
-                                     min_expand_ratio, max_expand_ratio)
+                                   min_expand_ratio, max_expand_ratio)
 
 
 class Filler(ImagePreprocessing):
@@ -301,13 +298,13 @@ class Filler(ImagePreprocessing):
     :param value filling value
     """
 
-    def __init__(self, start_x, start_y, end_x, end_y, value = 255, bigdl_type="float"):
+    def __init__(self, start_x, start_y, end_x, end_y, value=255, bigdl_type="float"):
         self.value = callBigDlFunc(bigdl_type, "createImgFiller",
-                                     start_x,
-                                     start_y,
-                                     end_x,
-                                     end_y,
-                                     value)
+                                   start_x,
+                                   start_y,
+                                   end_x,
+                                   end_y,
+                                   value)
 
 
 class HFlip(ImagePreprocessing):
