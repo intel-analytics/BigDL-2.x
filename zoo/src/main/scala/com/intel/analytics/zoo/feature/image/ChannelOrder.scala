@@ -20,8 +20,8 @@ import com.intel.analytics.zoo.feature.common.{ImageProcessing}
 import com.intel.analytics.bigdl.transform.vision.image.augmentation
 
 /**
-  * random change the channel of an image
-  */
+ * random change the channel of an image
+ */
 class ChannelOrder() extends ImageProcessing {
 
   private val internalCrop = augmentation.ChannelOrder()

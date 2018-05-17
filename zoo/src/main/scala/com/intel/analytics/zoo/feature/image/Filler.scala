@@ -20,14 +20,14 @@ import com.intel.analytics.zoo.feature.common.{ImageProcessing}
 import com.intel.analytics.bigdl.transform.vision.image.augmentation
 
 /**
-  * Fill part of image with certain pixel value
-  *
-  * @param startX start x ratio
-  * @param startY start y ratio
-  * @param endX end x ratio
-  * @param endY end y ratio
-  * @param value filling value
-  */
+ * Fill part of image with certain pixel value
+ *
+ * @param startX start x ratio
+ * @param startY start y ratio
+ * @param endX end x ratio
+ * @param endY end y ratio
+ * @param value filling value
+ */
 class Filler(startX: Float, startY: Float, endX: Float, endY: Float, value: Int = 255)
   extends ImageProcessing {
 

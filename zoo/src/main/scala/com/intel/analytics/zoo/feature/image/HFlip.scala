@@ -20,8 +20,8 @@ import com.intel.analytics.zoo.feature.common.{ImageProcessing}
 import com.intel.analytics.bigdl.transform.vision.image.augmentation
 
 /**
-  * Flip the image horizontally
-  */
+ * Flip the image horizontally
+ */
 class HFlip() extends ImageProcessing {
 
   private val internalCrop = new augmentation.HFlip()

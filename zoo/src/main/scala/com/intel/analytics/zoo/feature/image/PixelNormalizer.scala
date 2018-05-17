@@ -20,10 +20,10 @@ import com.intel.analytics.zoo.feature.common.{ImageProcessing}
 import com.intel.analytics.bigdl.transform.vision.image.augmentation
 
 /**
-  * Pixel level normalizer, data(i) = data(i) - mean(i)
-  *
-  * @param means pixel level mean, following H * W * C order
-  */
+ * Pixel level normalizer, data(i) = data(i) - mean(i)
+ *
+ * @param means pixel level mean, following H * W * C order
+ */
 class PixelNormalizer(means: Array[Float]) extends ImageProcessing {
 
   private val internalCrop = new augmentation.PixelNormalizer(means)

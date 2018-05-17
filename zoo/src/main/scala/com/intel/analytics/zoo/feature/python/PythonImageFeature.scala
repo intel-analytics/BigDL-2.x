@@ -164,9 +164,11 @@ class PythonImageFeature[T: ClassTag](implicit ev: TensorNumeric[T]) extends Pyt
 
   def createImgColorJitter(
                             brightnessProb: Double = 0.5, brightnessDelta: Double = 32,
-                            contrastProb: Double = 0.5, contrastLower: Double = 0.5, contrastUpper: Double = 1.5,
+                            contrastProb: Double = 0.5,
+                            contrastLower: Double = 0.5, contrastUpper: Double = 1.5,
                             hueProb: Double = 0.5, hueDelta: Double = 18,
-                            saturationProb: Double = 0.5, saturationLower: Double = 0.5, saturationUpper: Double = 1.5,
+                            saturationProb: Double = 0.5,
+                            saturationLower: Double = 0.5, saturationUpper: Double = 1.5,
                             randomOrderProb: Double = 0, shuffle: Boolean = false
                                 ): ColorJitter = {
 
@@ -196,7 +198,8 @@ class PythonImageFeature[T: ClassTag](implicit ev: TensorNumeric[T]) extends Pyt
   }
 
   def createImgChannelNormalize(meanR: Double, meanG: Double, meanB: Double,
-                             stdR: Double = 1, stdG: Double = 1, stdB: Double = 1): ChannelNormalize = {
+                             stdR: Double = 1, stdG: Double = 1,
+                                stdB: Double = 1): ChannelNormalize = {
     ChannelNormalize(meanR.toFloat, meanG.toFloat, meanB.toFloat,
       stdR.toFloat, stdG.toFloat, stdB.toFloat)
   }

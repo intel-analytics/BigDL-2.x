@@ -20,27 +20,28 @@ import com.intel.analytics.zoo.feature.common.{ImageProcessing}
 import com.intel.analytics.bigdl.transform.vision.image.augmentation
 
 /**
-  * Random adjust brightness, contrast, hue, saturation
-  *
-  * @param brightnessProb probability to adjust brightness
-  * @param brightnessDelta brightness parameter
-  * @param contrastProb probability to adjust contrast
-  * @param contrastLower contrast lower parameter
-  * @param contrastUpper contrast upper parameter
-  * @param hueProb probability to adjust hue
-  * @param hueDelta hue parameter
-  * @param saturationProb probability to adjust saturation
-  * @param saturationLower saturation lower parameter
-  * @param saturationUpper saturation upper parameter
-  * @param randomChannelOrderProb random order for different operation
-  * @param shuffle shuffle the transformers
-  */
+ * Random adjust brightness, contrast, hue, saturation
+ *
+ * @param brightnessProb probability to adjust brightness
+ * @param brightnessDelta brightness parameter
+ * @param contrastProb probability to adjust contrast
+ * @param contrastLower contrast lower parameter
+ * @param contrastUpper contrast upper parameter
+ * @param hueProb probability to adjust hue
+ * @param hueDelta hue parameter
+ * @param saturationProb probability to adjust saturation
+ * @param saturationLower saturation lower parameter
+ * @param saturationUpper saturation upper parameter
+ * @param randomChannelOrderProb random order for different operation
+ * @param shuffle shuffle the transformers
+ */
 class ColorJitter(
                    brightnessProb: Double, brightnessDelta: Double,
                    contrastProb: Double, contrastLower: Double, contrastUpper: Double,
                    hueProb: Double, hueDelta: Double,
                    saturationProb: Double, saturationLower: Double, saturationUpper: Double,
-                   randomChannelOrderProb: Double, shuffle: Boolean = false) extends ImageProcessing {
+                   randomChannelOrderProb: Double,
+                   shuffle: Boolean = false) extends ImageProcessing {
 
   private val internalCrop = augmentation.ColorJitter(
     brightnessProb, brightnessDelta, contrastProb,
@@ -61,7 +62,9 @@ object ColorJitter {
              brightnessProb: Double = 0.5, brightnessDelta: Double = 32,
              contrastProb: Double = 0.5, contrastLower: Double = 0.5, contrastUpper: Double = 1.5,
              hueProb: Double = 0.5, hueDelta: Double = 18,
-             saturationProb: Double = 0.5, saturationLower: Double = 0.5, saturationUpper: Double = 1.5,
+             saturationProb: Double = 0.5,
+             saturationLower: Double = 0.5,
+             saturationUpper: Double = 1.5,
              randomOrderProb: Double = 0, shuffle: Boolean = false
            ): ColorJitter =
     new ColorJitter(brightnessProb, brightnessDelta, contrastProb,

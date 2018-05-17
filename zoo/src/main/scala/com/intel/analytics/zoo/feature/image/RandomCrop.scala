@@ -20,13 +20,13 @@ import com.intel.analytics.zoo.feature.common.{ImageProcessing}
 import com.intel.analytics.bigdl.transform.vision.image.augmentation
 
 /**
-  * Random crop a `cropWidth` x `cropHeight` patch from an image.
-  * The patch size should be less than the image size.
-  *
-  * @param cropWidth width after crop
-  * @param cropHeight height after crop
-  * @param isClip whether to clip the roi to image boundaries
-  */
+ * Random crop a `cropWidth` x `cropHeight` patch from an image.
+ * The patch size should be less than the image size.
+ *
+ * @param cropWidth width after crop
+ * @param cropHeight height after crop
+ * @param isClip whether to clip the roi to image boundaries
+ */
 class RandomCrop(cropWidth: Int, cropHeight: Int, isClip: Boolean = true) extends ImageProcessing {
 
   private val internalCrop = new augmentation.RandomCrop(cropWidth, cropHeight, isClip)

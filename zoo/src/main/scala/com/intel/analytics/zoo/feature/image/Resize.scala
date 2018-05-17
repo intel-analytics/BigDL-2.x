@@ -52,7 +52,8 @@ class AspectScale(minSize: Int,
                   minScale: Option[Float] = None)
   extends ImageProcessing {
 
-  private val internalCrop = augmentation.AspectScale(minSize, scaleMultipleOf, maxSize, resizeMode, useScaleFactor, minScale)
+  private val internalCrop = augmentation.AspectScale(minSize, scaleMultipleOf,
+    maxSize, resizeMode, useScaleFactor, minScale)
   override def apply(prev: Iterator[ImageFeature]): Iterator[ImageFeature] = {
     internalCrop.apply(prev)
   }
