@@ -46,13 +46,32 @@ class GraphNet(BModel):
         return model
 
     def new_graph(self, outputs):
+        """
+        Specify a seq of nodes as output and return a new graph using the existing nodes
+        :param outputs: A seq of nodes specified
+        :return: A graph model
+        """
         value = callBigDlFunc(self.bigdl_type, "newGraph", self.value, outputs)
         return self.from_jvalue(value, self.bigdl_type)
 
     def freeze_up_to(self, names):
+        """
+        Freeze the model from the bottom up to the layers specified by names (inclusive).
+        This is useful for finetune a model
+        :param names: array of module names to be Freezed
+        :return: current graph model
+        """
         callBigDlFunc(self.bigdl_type, "freezeUpTo", self.value, names)
 
     def unfreeze(self, names=None):
+        """
+        "unfreeze" module, i.e. make the module parameters(weight/bias, if exists)
+        to be trained(updated) in training process
+        if names is not empty, unfreeze layers that match given names
+        :param names: array of module names to be unFreezed
+        :return: current graph model
+        """
+
         callBigDlFunc(self.bigdl_type, "unFreeze", self.value, names)
 
     def toKeras(self):
@@ -79,11 +98,11 @@ class Net(BModel):
         """
         Load an existing Keras model (with weights).
 
-        # Arguments
-        model_path: The path to save the model. Local file system, HDFS and Amazon S3 are supported.
+        :param model_path: The path to save the model. Local file system, HDFS and Amazon S3 are supported.
               HDFS path should be like 'hdfs://[host]:[port]/xxx'.
               Amazon S3 path should be like 's3a://bucket/xxx'.
-        weight_path: The path for pre-trained weights if any. Default is None.
+        :param weight_path: The path for pre-trained weights if any. Default is None.
+        :return: A Zoo model.
         """
         jmodel = callBigDlFunc(bigdl_type, "netLoad", model_path, weight_path)
         return KerasNet.of(jmodel, bigdl_type)
