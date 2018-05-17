@@ -109,12 +109,7 @@ ${SPARK_HOME}/bin/spark-submit \
         --jars ${ANALYTICS_ZOO_JAR} \
         --conf spark.driver.extraClassPath=${ANALYTICS_ZOO_JAR} \
         --conf spark.executor.extraClassPath=${ANALYTICS_ZOO_JAR} \
-<<<<<<< HEAD
         ${ANALYTICS_ZOO_HOME}/apps/recommendation/wide_n_deep.py
-
-
-
-
 
 echo "#5 start app test for using_variational_autoencoder_and_deep_feature_loss_to_generate_faces"
 chmod +x ./apps/ipynb2py.sh
@@ -157,13 +152,10 @@ ${SPARK_HOME}/bin/spark-submit \
         --conf spark.executor.extraClassPath=${ANALYTICS_ZOO_JAR} \
         ${ANALYTICS_ZOO_HOME}/apps/variational_autoencoder/using_variational_autoencoder_and_deep_feature_loss_to_generate_faces.py        
         
-                                  
-
 echo "#6 start app test for using_variational_autoencoder_to_generate_faces"
 chmod +x ./apps/ipynb2py.sh
 ./apps/ipynb2py.sh ./apps/variational_autoencoder/using_variational_autoencoder_to_generate_faces
 sed -i "s/data_files\[\:100000\]/data_files\[\:5000\]/g" ./apps/variational_autoencoder/using_variational_autoencoder_to_generate_faces.py
-
 
 FILENAME="${ANALYTICS_ZOO_HOME}/apps/variational_autoencoder/img_align_celeba.zip"
 if [ -f "$FILENAME" ]
@@ -192,7 +184,6 @@ ${SPARK_HOME}/bin/spark-submit \
         ${ANALYTICS_ZOO_HOME}/apps/variational_autoencoder/using_variational_autoencoder_to_generate_faces.py
                           
         
-        
 echo "#7 start app test for using_variational_autoencoder_to_generate_digital_numbers"        
 chmod +x ./apps/ipynb2py.sh
 ./apps/ipynb2py.sh ./apps/variational_autoencoder/using_variational_autoencoder_to_generate_digital_numbers
@@ -212,7 +203,3 @@ ${SPARK_HOME}/bin/spark-submit \
         --conf spark.executor.extraClassPath=${ANALYTICS_ZOO_JAR} \
         ${ANALYTICS_ZOO_HOME}/apps/variational_autoencoder/using_variational_autoencoder_to_generate_digital_numbers.py
         
-
-=======
-        ${ANALYTICS_ZOO_HOME}/apps/recommendation/wide_n_deep.py
->>>>>>> upstream/master
