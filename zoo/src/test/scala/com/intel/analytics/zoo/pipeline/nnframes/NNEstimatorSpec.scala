@@ -274,7 +274,7 @@ class NNEstimatorSpec extends FlatSpec with Matchers with BeforeAndAfter {
     val data = sc.parallelize(smallData)
     val df: DataFrame = sqlContext.createDataFrame(data).toDF("features", "label")
     val nnModel = estimator.fit(df)
-    val newPreprocessing = ArrayToTensor(Array(6)) -> TensorToSample()
+    val newPreprocessing = ArrayToTensor(Array(6)) --> TensorToSample()
     nnModel.setSamplePreprocessing(newPreprocessing)
     assert(df.count() == nnModel.transform(df).count())
   }
@@ -387,8 +387,8 @@ class NNEstimatorSpec extends FlatSpec with Matchers with BeforeAndAfter {
     val pascalResource = getClass.getClassLoader.getResource("pascal/")
     val imageDF = NNImageReader.readImages(pascalResource.getFile, sc)
     assert(imageDF.count() == 1)
-    val transformer = RowToImageFeature() -> Resize(256, 256) -> CenterCrop(224, 224) ->
-      ChannelNormalize(123, 117, 104) -> MatToTensor() -> ImageFeatureToTensor()
+    val transformer = RowToImageFeature() --> Resize(256, 256) --> CenterCrop(224, 224) -->
+      ChannelNormalize(123, 117, 104) --> MatToTensor() --> ImageFeatureToTensor()
     val featurizer = NNModel(Inception_v1(1000), transformer)
       .setBatchSize(1)
       .setFeaturesCol("image")
@@ -397,7 +397,7 @@ class NNEstimatorSpec extends FlatSpec with Matchers with BeforeAndAfter {
 
   "NNModel" should "construct with sampleTransformer" in {
     val model = new Sequential().add(Linear[Float](6, 2)).add(LogSoftMax[Float])
-    val sampleTransformer = SeqToTensor(Array(6)) -> TensorToSample()
+    val sampleTransformer = SeqToTensor(Array(6)) --> TensorToSample()
 
     val nnModel = new NNModel(model)
       .setSamplePreprocessing(sampleTransformer)

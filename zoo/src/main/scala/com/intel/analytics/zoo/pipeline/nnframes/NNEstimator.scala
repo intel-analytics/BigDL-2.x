@@ -348,7 +348,7 @@ class NNEstimator[T: ClassTag] private[zoo] (
   protected def wrapBigDLModel(m: Module[T]): NNModel[T] = {
     val dlModel = new NNModel[T](m)
     copyValues(dlModel.setParent(this))
-    val clonedTransformer = ToTuple() -> $(samplePreprocessing)
+    val clonedTransformer = ToTuple() --> $(samplePreprocessing)
       .asInstanceOf[Preprocessing[(Any, Option[Any]), Sample[T]]].clonePreprocessing()
     dlModel.setSamplePreprocessing(clonedTransformer)
   }
@@ -560,7 +560,7 @@ object NNModel extends MLReadable[NNModel[_]] {
       model: Module[T]
     )(implicit ev: TensorNumeric[T]): NNModel[T] = {
     new NNModel(model)
-      .setSamplePreprocessing(SeqToTensor() -> TensorToSample())
+      .setSamplePreprocessing(SeqToTensor() --> TensorToSample())
   }
 
   /**
@@ -575,7 +575,7 @@ object NNModel extends MLReadable[NNModel[_]] {
       featureSize: Array[Int]
     )(implicit ev: TensorNumeric[T]): NNModel[T] = {
     new NNModel(model)
-      .setSamplePreprocessing(SeqToTensor(featureSize) -> TensorToSample())
+      .setSamplePreprocessing(SeqToTensor(featureSize) --> TensorToSample())
   }
 
   /**
@@ -588,7 +588,7 @@ object NNModel extends MLReadable[NNModel[_]] {
       model: Module[T],
       featurePreprocessing: Preprocessing[F, Tensor[T]]
     )(implicit ev: TensorNumeric[T]): NNModel[T] = {
-    new NNModel(model).setSamplePreprocessing(featurePreprocessing -> TensorToSample())
+    new NNModel(model).setSamplePreprocessing(featurePreprocessing --> TensorToSample())
   }
 
   import scala.language.existentials

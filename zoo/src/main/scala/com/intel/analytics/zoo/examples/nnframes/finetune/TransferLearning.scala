@@ -74,10 +74,10 @@ object TransferLearning {
 
       val (trainDf, valDf) = getImageData(param.dataPath, sc)
 
-      val featureTransformer = RowToImageFeature() -> Resize(256, 256) ->
-                                   CenterCrop(224, 224) ->
-                                   ChannelNormalize(123, 117, 104) ->
-                                   MatToTensor() ->
+      val featureTransformer = RowToImageFeature() --> Resize(256, 256) -->
+                                   CenterCrop(224, 224) -->
+                                   ChannelNormalize(123, 117, 104) -->
+                                   MatToTensor() -->
                                    ImageFeatureToTensor()
 
 

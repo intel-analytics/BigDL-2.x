@@ -31,7 +31,7 @@ import org.apache.commons.lang3.SerializationUtils
 trait Preprocessing[A, B] extends Transformer[A, B] {
   // scalastyle:off methodName
   // scalastyle:off noSpaceBeforeLeftBracket
-  def -> [C](other: Preprocessing[B, C]): Preprocessing[A, C] = {
+  def --> [C](other: Preprocessing[B, C]): Preprocessing[A, C] = {
     new ChainedPreprocessing(this, other)
   }
   // scalastyle:on noSpaceBeforeLeftBracket
@@ -58,12 +58,15 @@ class ChainedPreprocessing[A, B, C](first: Preprocessing[A, B], last: Preprocess
   override def apply(prev: Iterator[A]): Iterator[C] = {
     last(first(prev))
   }
+
+  def apply(imageSet: ImageSet): ImageSet = {
+    imageSet.transform(this.asInstanceOf[Preprocessing[ImageFeature, ImageFeature]])
+  }
 }
 
-abstract class ImageProcessing extends FeatureTransformer
-  with Preprocessing[ImageFeature, ImageFeature] {
+abstract class ImageProcessing extends FeatureTransformer with
+   Preprocessing[ImageFeature, ImageFeature] {
   def apply(imageSet: ImageSet): ImageSet = {
     imageSet.transform(this)
   }
 }
-
