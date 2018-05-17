@@ -16,12 +16,14 @@
 
 package com.intel.analytics.zoo.pipeline.api
 
-
 import com.intel.analytics.bigdl.nn.abstractnn.AbstractModule
+import com.intel.analytics.bigdl.nn.SpatialCrossMapLRN
+import com.intel.analytics.bigdl.nn.keras.{Model => BModel}
 import com.intel.analytics.bigdl.tensor.Tensor
 import com.intel.analytics.bigdl.utils.Shape
+import com.intel.analytics.zoo.pipeline.api.keras.models.{KerasNet, Model => ZModel}
 import com.intel.analytics.zoo.pipeline.api.keras.ZooSpecHelper
-import com.intel.analytics.zoo.pipeline.api.keras.layers.Dense
+import com.intel.analytics.zoo.pipeline.api.keras.layers.{Dense, Input}
 import com.intel.analytics.zoo.pipeline.api.keras.layers.utils.KerasUtils
 import com.intel.analytics.zoo.pipeline.api.keras.models.Sequential
 
@@ -33,13 +35,31 @@ class NetSpec extends ZooSpecHelper{
     KerasUtils.invokeMethod(Dense[Float](3), "_inputShapeValue_$eq", Shape(2, 3))
   }
 
-  "Load Caffe" should "work" in {
+  "Load caffe" should "work" in {
     val resource = getClass().getClassLoader().getResource("models")
     val path = resource.getPath + "/" + "caffe"
     val model = Net.loadCaffe[Float](
       s"$path/test_persist.prototxt", s"$path/test_persist.caffemodel")
     val newModel = model.newGraph("ip")
-      newModel.outputNodes.head.element.getName() should be ("ip")
+    newModel.outputNodes.head.element.getName() should be("ip")
+  }
+
+  "load" should "work properly" in {
+    val input = Input[Float](inputShape = Shape(3, 5))
+    val d = Dense[Float](7).setName("dense1").inputs(input)
+    val model = ZModel[Float](input, d)
+
+    val tmpFile = createTmpFile()
+    val absPath = tmpFile.getAbsolutePath
+    tmpFile.delete()
+    model.saveModule(absPath)
+
+    val reloadedModel = Net.load[Float](absPath)
+      .asInstanceOf[KerasNet[Float]]
+
+    val inputTensor = Tensor[Float](3, 5).rand()
+    compareOutputAndGradInput(model.asInstanceOf[AbstractModule[Tensor[Float], Tensor[Float], Float]],
+      reloadedModel.asInstanceOf[AbstractModule[Tensor[Float], Tensor[Float], Float]], inputTensor)
   }
 
   "Load bigdl" should "work" in {
@@ -50,6 +70,20 @@ class NetSpec extends ZooSpecHelper{
     newModel.outputNodes.head.element.getName() should be ("reshape2")
   }
 
+  "load torch" should "work properly" in {
+    val layer = new SpatialCrossMapLRN[Float](5, 1.0, 0.75, 1.0)
+
+    val tmpFile = java.io.File.createTempFile("module", ".t7")
+    val absolutePath = tmpFile.getAbsolutePath
+    layer.saveTorch(absolutePath, true)
+
+    val reloadedModel = Net.loadTorch[Float](absolutePath)
+
+    val inputTensor = Tensor[Float](16, 3, 224, 224).rand()
+    compareOutputAndGradInput(layer.asInstanceOf[AbstractModule[Tensor[Float], Tensor[Float], Float]],
+      reloadedModel.asInstanceOf[AbstractModule[Tensor[Float], Tensor[Float], Float]], inputTensor)
+  }
+
   "Load tensorflow" should "work" in {
     val resource = getClass().getClassLoader().getResource("models")
     val path = resource.getPath + "/" + "tensorflow"
@@ -57,5 +91,4 @@ class NetSpec extends ZooSpecHelper{
     val newModel = model.newGraph("LeNet/fc3/Relu")
     newModel.outputNodes.head.element.getName() should be ("LeNet/fc3/Relu")
   }
-
 }

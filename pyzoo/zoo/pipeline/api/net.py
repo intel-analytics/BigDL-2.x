@@ -25,7 +25,7 @@ if sys.version >= '3':
     unicode = str
 
 
-class Net(BModel):
+class GraphNet(BModel):
 
     def __init__(self, input, output, jvalue=None, bigdl_type="float", **kwargs):
         super(BModel, self).__init__(jvalue,
@@ -41,41 +41,9 @@ class Net(BModel):
         :param jvalue: Java object create by Py4j
         :return: A Python Model
         """
-        model = Net([], [], jvalue=jvalue, bigdl_type=bigdl_type)
+        model = GraphNet([], [], jvalue=jvalue, bigdl_type=bigdl_type)
         model.value = jvalue
         return model
-
-    @staticmethod
-    def load_bigdl(model_path, weight_path=None, bigdl_type="float"):
-        """
-        Load a pre-trained Bigdl model.
-
-        :param path: The path containing the pre-trained model.
-        :return: A pre-trained model.
-        """
-        jmodel = callBigDlFunc(bigdl_type, "netLoadBigDL", model_path, weight_path)
-        return Net.from_jvalue(jmodel)
-
-    @staticmethod
-    def load(model_path, weight_path=None, bigdl_type="float"):
-        jmodel = callBigDlFunc(bigdl_type, "netLoad", model_path, weight_path)
-        return KerasNet.of(jmodel, bigdl_type)
-
-    @staticmethod
-    def load_torch(path, bigdl_type="float"):
-        jmodel = callBigDlFunc(bigdl_type, "netLoadTorch", path)
-        return Net.from_jvalue(jmodel, bigdl_type)
-
-    @staticmethod
-    def load_tf(path, inputs, outputs, byte_order="little_endian",
-                bin_file=None, bigdl_type="float"):
-        jmodel = callBigDlFunc(bigdl_type, "netLoadTF", path, inputs, outputs, byte_order, bin_file)
-        return Net.from_jvalue(jmodel, bigdl_type)
-
-    @staticmethod
-    def load_caffe(def_path, model_path, bigdl_type="float"):
-        jmodel = callBigDlFunc(bigdl_type, "netLoadCaffe", def_path, model_path)
-        return Net.from_jvalue(jmodel, bigdl_type)
 
     def new_graph(self, outputs):
         value = callBigDlFunc(self.bigdl_type, "newGraph", self.value, outputs)
@@ -90,3 +58,83 @@ class Net(BModel):
     def toKeras(self):
         value = callBigDlFunc(self.bigdl_type, "netToKeras", self.value)
         return ZooKerasLayer.of(value, self.bigdl_type)
+
+
+class Net(BModel):
+
+    @staticmethod
+    def load_bigdl(model_path, weight_path=None, bigdl_type="float"):
+        """
+        Load a pre-trained Bigdl model.
+
+        :param model_path: The path to the pre-trained model.
+        :param weight_path: The path to the weights of the pre-trained model.
+        :return: A pre-trained model.
+        """
+        jmodel = callBigDlFunc(bigdl_type, "netLoadBigDL", model_path, weight_path)
+        return GraphNet.from_jvalue(jmodel)
+
+    @staticmethod
+    def load(model_path, weight_path=None, bigdl_type="float"):
+        """
+        Load an existing Keras model (with weights).
+
+        # Arguments
+        model_path: The path to save the model. Local file system, HDFS and Amazon S3 are supported.
+              HDFS path should be like 'hdfs://[host]:[port]/xxx'.
+              Amazon S3 path should be like 's3a://bucket/xxx'.
+        weight_path: The path for pre-trained weights if any. Default is None.
+        """
+        jmodel = callBigDlFunc(bigdl_type, "netLoad", model_path, weight_path)
+        return KerasNet.of(jmodel, bigdl_type)
+
+    @staticmethod
+    def load_torch(path, bigdl_type="float"):
+        """
+        Load a pre-trained Torch model.
+
+        :param path: The path containing the pre-trained model.
+        :return: A pre-trained model.
+        """
+        jmodel = callBigDlFunc(bigdl_type, "netLoadTorch", path)
+        return GraphNet.from_jvalue(jmodel, bigdl_type)
+
+    @staticmethod
+    def load_tf(path, inputs, outputs, byte_order="little_endian",
+                bin_file=None, bigdl_type="float"):
+        """
+        Load a pre-trained Tensorflow model.
+        :param path: The path containing the pre-trained model.
+        :param inputs: The input node of this graph
+        :param outputs: The output node of this graph
+        :param byte_order: byte_order of the file, `little_endian` or `big_endian`
+        :param bin_file: the optional bin file produced by bigdl dump_model util function to store the weights
+        :return: A pre-trained model.
+        """
+        jmodel = callBigDlFunc(bigdl_type, "netLoadTF", path, inputs, outputs, byte_order, bin_file)
+        return GraphNet.from_jvalue(jmodel, bigdl_type)
+
+    @staticmethod
+    def load_caffe(def_path, model_path, bigdl_type="float"):
+        """
+        Load a pre-trained Caffe model.
+
+
+        :param def_path: The path containing the caffe model definition.
+        :param model_path: The path containing the pre-trained caffe model.
+        :return: A pre-trained model.
+        """
+        jmodel = callBigDlFunc(bigdl_type, "netLoadCaffe", def_path, model_path)
+        return GraphNet.from_jvalue(jmodel, bigdl_type)
+
+
+    @staticmethod
+    def load_keras(json_path=None, hdf5_path=None, by_name=False):
+        """
+        Load a pre-trained Keras model.
+
+        :param json_path: The json path containing the keras model definition.
+        :param hdf5_path: The HDF5 path containing the pre-trained keras model weights with or without the model architecture.
+        :return: A bigdl model.
+        """
+        BModel.load_keras(json_path, hdf5_path, by_name)
