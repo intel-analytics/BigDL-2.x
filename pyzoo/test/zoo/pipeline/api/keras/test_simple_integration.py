@@ -71,7 +71,7 @@ class TestSimpleIntegration(ZooTestCase):
         model.set_checkpoint(tmp_checkpoint_path)
         model.set_constant_gradient_clipping(0.01, 0.03)
         model.fit(X_train, y_train, batch_size=112, nb_epoch=2, validation_data=(X_test, y_test))
-        model.clear_gradient_clipping_params()
+        model.clear_gradient_clipping()
         model.fit(X_train, y_train, batch_size=112, nb_epoch=2, validation_data=(X_test, y_test))
         model.set_gradient_clipping_by_l2_norm(0.2)
         model.fit(X_train, y_train, batch_size=112, nb_epoch=2, validation_data=(X_test, y_test))

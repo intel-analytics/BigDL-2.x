@@ -149,7 +149,7 @@ abstract class KerasNet[T: ClassTag](implicit ev: TensorNumeric[T])
    * Clear gradient clipping parameters. In this case, gradient clipping will not be applied.
    * In order to take effect, it needs to be called before fit.
    */
-  def clearGradientClippingParams(): Unit = {
+  def clearGradientClipping(): Unit = {
     this.constantGradientClippingParams = null
     this.clipNorm = None
   }

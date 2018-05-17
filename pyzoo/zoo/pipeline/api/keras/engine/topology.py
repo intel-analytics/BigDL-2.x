@@ -98,12 +98,12 @@ class KerasNet(ZooKerasLayer):
                       path,
                       over_write)
 
-    def clear_gradient_clipping_params(self):
+    def clear_gradient_clipping(self):
         """
         Clear gradient clipping parameters. In this case, gradient clipping will not be applied.
         In order to take effect, it needs to be called before fit.
         """
-        callBigDlFunc(self.bigdl_type, "zooClearGradientClippingParams",
+        callBigDlFunc(self.bigdl_type, "zooClearGradientClipping",
                       self.value)
 
     def set_constant_gradient_clipping(self, min, max):
