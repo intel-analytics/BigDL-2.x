@@ -193,7 +193,7 @@ class TestOperator(ZooTestCase):
         output = Lambda(function=l1)(input)
         model = Model(input, output)
 
-        mock_data  = np.random.uniform(0, 1, [10] + input_shape)
+        mock_data = np.random.uniform(0, 1, [10] + input_shape)
         out_data = model.forward(mock_data)
         assert out_data.shape == (10, 3, 16, 16)
 
