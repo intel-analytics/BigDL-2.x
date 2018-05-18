@@ -23,7 +23,7 @@ import com.intel.analytics.bigdl.transform.vision.image.{BytesToMat => BBytesToM
  * Transform byte array(original image file in byte) to OpenCVMat
  * @param byteKey key that maps byte array
  */
-class BytesToMat(byteKey: String = ImageFeature.bytes) extends ImageProcessing {
+class ImageBytesToMat(byteKey: String = ImageFeature.bytes) extends ImageProcessing {
 
   private val internalCrop = BBytesToMat(byteKey)
   override def apply(prev: Iterator[ImageFeature]): Iterator[ImageFeature] = {
@@ -31,7 +31,7 @@ class BytesToMat(byteKey: String = ImageFeature.bytes) extends ImageProcessing {
   }
 }
 
-object BytesToMat {
-  def apply(byteKey: String = ImageFeature.bytes): BytesToMat =
-    new BytesToMat(byteKey)
+object ImageBytesToMat {
+  def apply(byteKey: String = ImageFeature.bytes): ImageBytesToMat =
+    new ImageBytesToMat(byteKey)
 }

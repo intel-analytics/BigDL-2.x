@@ -135,13 +135,13 @@ object ImageSet {
       val images = sc.binaryFiles(path, minPartitions).map { case (p, stream) =>
         ImageFeature(stream.toArray(), uri = p)
       }
-      ImageSet.rdd(images) -> BytesToMat()
+      ImageSet.rdd(images) -> ImageBytesToMat()
     } else {
       val files = Utils.listLocalFiles(path)
       val images = files.map { p =>
         ImageFeature(FileUtils.readFileToByteArray(p), uri = p.getAbsolutePath)
       }
-      ImageSet.array(images) -> BytesToMat()
+      ImageSet.array(images) -> ImageBytesToMat()
     }
   }
 

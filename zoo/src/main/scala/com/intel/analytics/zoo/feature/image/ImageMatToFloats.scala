@@ -21,8 +21,8 @@ import com.intel.analytics.zoo.feature.common.{ImageProcessing}
 
 import scala.reflect.ClassTag
 
-class MatToFloats(validHeight: Int, validWidth: Int, validChannels: Int,
-                               outKey: String = ImageFeature.floats, shareBuffer: Boolean = true)
+class ImageMatToFloats(validHeight: Int, validWidth: Int, validChannels: Int,
+                       outKey: String = ImageFeature.floats, shareBuffer: Boolean = true)
   extends ImageProcessing {
 
   private val internalResize =
@@ -32,9 +32,9 @@ class MatToFloats(validHeight: Int, validWidth: Int, validChannels: Int,
   }
 }
 
-object MatToFloats {
+object ImageMatToFloats {
 
   def apply[T: ClassTag](validHeight: Int = 300, validWidth: Int = 300, validChannels: Int = 3,
-    outKey: String = ImageFeature.floats, shareBuffer: Boolean = true): MatToFloats =
-    new MatToFloats(validHeight, validWidth, validChannels, outKey, shareBuffer)
+    outKey: String = ImageFeature.floats, shareBuffer: Boolean = true): ImageMatToFloats =
+    new ImageMatToFloats(validHeight, validWidth, validChannels, outKey, shareBuffer)
 }

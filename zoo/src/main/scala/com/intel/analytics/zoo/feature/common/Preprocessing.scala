@@ -60,7 +60,12 @@ class ChainedPreprocessing[A, B, C](first: Preprocessing[A, B], last: Preprocess
   }
 
   def apply(imageSet: ImageSet): ImageSet = {
-    imageSet.transform(this.asInstanceOf[Preprocessing[ImageFeature, ImageFeature]])
+    if (this.isInstanceOf[Preprocessing[ImageFeature, ImageFeature]]) {
+      imageSet.transform(this.asInstanceOf[Preprocessing[ImageFeature, ImageFeature]])
+    } else {
+      throw new UnsupportedOperationException("imageSet only supports transform" +
+        "Preprocessing[ImageFeature, ImageFeature]")
+    }
   }
 }
 
