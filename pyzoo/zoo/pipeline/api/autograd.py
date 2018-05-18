@@ -87,7 +87,7 @@ class Variable(ZooKerasCreator):
     def node(self):
         return Node.of(self.value.node())
 
-    # TODO: we need to Shape mapping here.
+    # TODO: we need to add a mapping for Shape here.
     def __to_batch_shape(cls, shape):
         return tuple([None] + shape[1:])
 
