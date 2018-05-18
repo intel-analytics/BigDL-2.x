@@ -82,7 +82,7 @@ class TestLayer(ZooTestCase):
         linear = Linear(10, 2)()
         sigmoid = Sigmoid()(linear)
         softmax = SoftMax().set_name("output")(sigmoid)
-        model = BModel([linear], [softmax])
+        model = BModel(linear, softmax)
         input = np.random.random((4, 10))
 
         tmp_path = create_tmp_path() + "/model.pb"
@@ -92,7 +92,8 @@ class TestLayer(ZooTestCase):
         model_reloaded = Net.load_tf(tmp_path, ["input"], ["output"])
         expected_output = model.forward(input)
         output = model_reloaded.forward(input)
-        self.assert_allclose(output, expected_output, atol=1e-6, rtol=0)
+        self.assert_allclose(output, expected_output)
+
 
 if __name__ == "__main__":
     pytest.main([__file__])

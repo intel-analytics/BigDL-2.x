@@ -19,7 +19,7 @@ package com.intel.analytics.zoo.pipeline.api.keras.python
 import java.nio.ByteOrder
 import java.util.{List => JList}
 
-import com.intel.analytics.bigdl.{Criterion, DataSet, Module}
+import com.intel.analytics.bigdl.{Criterion, DataSet}
 import com.intel.analytics.bigdl.dataset.{DataSet, LocalDataSet, MiniBatch}
 
 import scala.collection.JavaConverters._
@@ -32,13 +32,6 @@ import com.intel.analytics.bigdl.nn.{Graph, Module}
 import com.intel.analytics.bigdl.nn.abstractnn.{AbstractModule, Activity}
 import com.intel.analytics.bigdl.nn.keras.KerasLayer
 import com.intel.analytics.bigdl.transform.vision.image.{ImageFeature, ImageFeatureToMiniBatch}
-import com.intel.analytics.bigdl.nn.abstractnn.{AbstractModule, Activity}
-import com.intel.analytics.bigdl.nn.keras.KerasLayer
-import com.intel.analytics.bigdl.transform.vision.image.{ImageFeature, ImageFeatureToMiniBatch}
-import com.intel.analytics.bigdl.utils.File
-import com.intel.analytics.bigdl.utils.caffe.CaffeLoader
-import com.intel.analytics.bigdl.utils.serializer.ModuleLoader
-import com.intel.analytics.bigdl.utils.tf.{Session, TensorflowLoader}
 import com.intel.analytics.zoo.pipeline.api.Net
 import com.intel.analytics.zoo.pipeline.api.keras.layers._
 import com.intel.analytics.zoo.pipeline.api.keras.layers.utils.KerasUtils
@@ -62,38 +55,6 @@ class PythonZooKeras[T: ClassTag](implicit ev: TensorNumeric[T]) extends PythonB
       input: JList[ModuleNode[T]],
       output: JList[ModuleNode[T]]): Model[T] = {
     Model[T](input.asScala.toArray, output.asScala.toArray)
-  }
-
-  def zooLoad(path : String) : KerasNet[T] = {
-    Net.load[T](path)
-  }
-
-  def zooLoadBigDLModule(path : String,
-      weightPath : String = null)
-  : AbstractModule[Activity, Activity, T] = {
-    Net.loadBigDL[T](path, weightPath)
-  }
-
-  def zooLoadTorch(path : String) : AbstractModule[Activity, Activity, T] = {
-    Net.loadTorch[T](path)
-  }
-
-  def zooLoadCaffeModel(defPath: String, modelPath: String)(
-    implicit ev: TensorNumeric[T]): AbstractModule[Activity, Activity, T] = {
-    Net.loadCaffe[T](defPath, modelPath)
-  }
-
-  def zooLoadTF(graphFile: String, inputs: Seq[String], outputs: Seq[String],
-      byteOrder: ByteOrder = ByteOrder.LITTLE_ENDIAN,
-      binFile: Option[String] = None)(implicit ev: TensorNumeric[T])
-  : AbstractModule[Activity, Activity, T] = {
-    Net.loadTF[T](graphFile, inputs, outputs, byteOrder, binFile)
-  }
-
-  def zooLoadTFCheckpoints(graphFile: String, binFile: String,
-       byteOrder: ByteOrder = ByteOrder.LITTLE_ENDIAN)(implicit ev: TensorNumeric[T])
-  : Session[T] = {
-    Net.loadTFCheckpoints[T](graphFile, binFile, byteOrder)
   }
 
   def createZooKerasSequential(): Sequential[T] = {

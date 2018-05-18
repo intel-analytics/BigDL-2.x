@@ -38,6 +38,7 @@ class GraphNet(BModel):
     def from_jvalue(jvalue, bigdl_type="float"):
         """
         Create a Python Model base on the given java value
+
         :param jvalue: Java object create by Py4j
         :return: A Python Model
         """
@@ -47,7 +48,8 @@ class GraphNet(BModel):
 
     def new_graph(self, outputs):
         """
-        Specify a seq of nodes as output and return a new graph using the existing nodes
+        Specify a list of nodes as output and return a new graph using the existing nodes
+
         :param outputs: A seq of nodes specified
         :return: A graph model
         """
@@ -57,7 +59,8 @@ class GraphNet(BModel):
     def freeze_up_to(self, names):
         """
         Freeze the model from the bottom up to the layers specified by names (inclusive).
-        This is useful for finetune a model
+        This is useful for finetuning a model
+
         :param names: array of module names to be Freezed
         :return: current graph model
         """
@@ -66,28 +69,28 @@ class GraphNet(BModel):
     def unfreeze(self, names=None):
         """
         "unfreeze" module, i.e. make the module parameters(weight/bias, if exists)
-        to be trained(updated) in training process
-        if names is not empty, unfreeze layers that match given names
-        :param names: array of module names to be unFreezed
+        to be trained(updated) in training process.
+        If names is not empty, unfreeze layers that match given names
+
+        :param names: list of module names to be unFreezed. Default is None.
         :return: current graph model
         """
-
         callBigDlFunc(self.bigdl_type, "unFreeze", self.value, names)
 
-    def toKeras(self):
+    def to_keras(self):
         value = callBigDlFunc(self.bigdl_type, "netToKeras", self.value)
         return ZooKerasLayer.of(value, self.bigdl_type)
 
 
-class Net(BModel):
+class Net:
 
     @staticmethod
     def load_bigdl(model_path, weight_path=None, bigdl_type="float"):
         """
-        Load a pre-trained Bigdl model.
+        Load a pre-trained BigDL model.
 
         :param model_path: The path to the pre-trained model.
-        :param weight_path: The path to the weights of the pre-trained model.
+        :param weight_path: The path to the weights of the pre-trained model. Default is None.
         :return: A pre-trained model.
         """
         jmodel = callBigDlFunc(bigdl_type, "netLoadBigDL", model_path, weight_path)
@@ -96,14 +99,14 @@ class Net(BModel):
     @staticmethod
     def load(model_path, weight_path=None, bigdl_type="float"):
         """
-        Load an existing Keras model (with weights).
+        Load an existing Analytics Zoo model defined in Keras-style(with weights).
 
-        :param model_path: The path to save the model.
-              Local file system, HDFS and Amazon S3 are supported.
-              HDFS path should be like 'hdfs://[host]:[port]/xxx'.
-              Amazon S3 path should be like 's3a://bucket/xxx'.
+        :param model_path: The path to load the saved model.
+                          Local file system, HDFS and Amazon S3 are supported.
+                          HDFS path should be like 'hdfs://[host]:[port]/xxx'.
+                          Amazon S3 path should be like 's3a://bucket/xxx'.
         :param weight_path: The path for pre-trained weights if any. Default is None.
-        :return: A Zoo model.
+        :return: An Analytics Zoo model.
         """
         jmodel = callBigDlFunc(bigdl_type, "netLoad", model_path, weight_path)
         return KerasNet.of(jmodel, bigdl_type)
@@ -125,11 +128,12 @@ class Net(BModel):
         """
         Load a pre-trained Tensorflow model.
         :param path: The path containing the pre-trained model.
-        :param inputs: The input node of this graph
-        :param outputs: The output node of this graph
+        :param inputs: The input nodes of this graph
+        :param outputs: The output nodes of this graph
         :param byte_order: byte_order of the file, `little_endian` or `big_endian`
         :param bin_file: the optional bin file
-                produced by bigdl dump_model util function to store the weights
+                        produced by bigdl dump_model util function to store the weights.
+                        Default is None.
         :return: A pre-trained model.
         """
         jmodel = callBigDlFunc(bigdl_type, "netLoadTF", path, inputs, outputs, byte_order, bin_file)
@@ -139,7 +143,6 @@ class Net(BModel):
     def load_caffe(def_path, model_path, bigdl_type="float"):
         """
         Load a pre-trained Caffe model.
-
 
         :param def_path: The path containing the caffe model definition.
         :param model_path: The path containing the pre-trained caffe model.
@@ -153,9 +156,11 @@ class Net(BModel):
         """
         Load a pre-trained Keras model.
 
-        :param json_path: The json path containing the keras model definition.
+        :param json_path: The json path containing the keras model definition. Default is None.
         :param hdf5_path: The HDF5 path containing the pre-trained keras model weights
-            with or without the model architecture.
-        :return: A bigdl model.
+                        with or without the model architecture. Default is None.
+        :param by_name: by default the architecture should be unchanged.
+                        If set as True, only layers with the same name will be loaded.
+        :return: A BigDL model.
         """
         BModel.load_keras(json_path, hdf5_path, by_name)

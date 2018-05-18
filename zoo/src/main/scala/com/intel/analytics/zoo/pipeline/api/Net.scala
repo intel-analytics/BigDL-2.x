@@ -54,7 +54,7 @@ object Net {
     val model = ModuleLoader.loadFromFile(path, weightPath)
     if (!model.isInstanceOf[KerasNet[T]]) {
       throw new RuntimeException(
-        "Not a Analytics Zoo Keras model. Please use loadBigDL, loadCaffe or loadTF instead")
+        "Not an Analytics Zoo Keras-style model. Please use loadBigDL, loadCaffe or loadTF instead")
     }
     model.asInstanceOf[KerasNet[T]]
   }
@@ -79,7 +79,7 @@ object Net {
   /**
    * Load Torch model from path.
    *
-   * @param path path to save module, local file system, HDFS and Amazon S3 is supported.
+   * @param path path to load module, local file system, HDFS and Amazon S3 is supported.
    *             HDFS path should be like "hdfs://[host]:[port]/xxx"
    *             Amazon S3 path should be like "s3a://bucket/xxx"
    * @tparam T numeric type
