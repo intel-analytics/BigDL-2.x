@@ -17,6 +17,7 @@
 import sys
 
 from bigdl.nn.layer import Model as BModel
+from bigdl.nn.layer import Layer
 from bigdl.util.common import callBigDlFunc, to_list
 from zoo.pipeline.api.keras.engine.topology import ZooKerasLayer, KerasNet
 
@@ -33,6 +34,12 @@ class GraphNet(BModel):
                                      to_list(output),
                                      bigdl_type,
                                      **kwargs)
+
+    @property
+    def layers(self):
+        jlayers = callBigDlFunc(self.bigdl_type, "getSubModules", self)
+        layers = [Layer.of(jlayer) for jlayer in jlayers]
+        return layers
 
     @staticmethod
     def from_jvalue(jvalue, bigdl_type="float"):

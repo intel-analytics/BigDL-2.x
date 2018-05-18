@@ -28,16 +28,16 @@ import com.intel.analytics.bigdl.python.api.{EvaluatedResult, JTensor, PythonBig
 import com.intel.analytics.bigdl.tensor.Tensor
 import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric
 import com.intel.analytics.bigdl.nn.Graph.ModuleNode
-import com.intel.analytics.bigdl.nn.{Graph, Module}
+import com.intel.analytics.bigdl.nn.{Container, Graph, Module}
 import com.intel.analytics.bigdl.nn.abstractnn.{AbstractModule, Activity}
-import com.intel.analytics.bigdl.nn.keras.KerasLayer
+import com.intel.analytics.bigdl.nn.keras.{KerasLayer, KerasModel}
 import com.intel.analytics.bigdl.transform.vision.image.{ImageFeature, ImageFeatureToMiniBatch}
 import com.intel.analytics.zoo.pipeline.api.Net
 import com.intel.analytics.zoo.pipeline.api.keras.layers._
 import com.intel.analytics.zoo.pipeline.api.keras.layers.utils.KerasUtils
 import com.intel.analytics.zoo.pipeline.api.keras.metrics.AUC
 import com.intel.analytics.zoo.pipeline.api.keras.models.{KerasNet, Model, Sequential}
-import com.intel.analytics.zoo.pipeline.api.net.NetUtils
+import com.intel.analytics.zoo.pipeline.api.net.{GraphNet, NetUtils}
 import org.apache.spark.api.java.JavaRDD
 
 import scala.reflect.ClassTag
@@ -942,5 +942,19 @@ class PythonZooKeras[T: ClassTag](implicit ev: TensorNumeric[T]) extends PythonB
       th: Double = 1e-6,
       inputShape: JList[Int] = null): BinaryThreshold[T] = {
     BinaryThreshold(th, toScalaShape(inputShape))
+  }
+
+  def getSubModules(module: AbstractModule[Activity, Activity, T]):
+  JList[AbstractModule[Activity, Activity, T]] = {
+    module match {
+      case m: KerasNet[T] =>
+        m.getSubModules().asJava
+      case m: GraphNet[T] =>
+        m.getSubModules().asJava
+      case m: Container[Activity, Activity, T] =>
+        m.modules.asJava
+      case _ =>
+        throw new IllegalArgumentException(s"module $module does not have submodules")
+    }
   }
 }

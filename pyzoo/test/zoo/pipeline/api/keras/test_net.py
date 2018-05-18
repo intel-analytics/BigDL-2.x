@@ -94,6 +94,12 @@ class TestLayer(ZooTestCase):
         output = model_reloaded.forward(input)
         self.assert_allclose(output, expected_output)
 
+    def test_layers_method(self):
+        resource_path = os.path.join(os.path.split(__file__)[0], "../../../resources")
+        model_path = os.path.join(resource_path, "models/bigdl/bigdl_lenet.model")
+        model = Net.load_bigdl(model_path)
+        assert len(model.layers) == 12
+
 
 if __name__ == "__main__":
     pytest.main([__file__])

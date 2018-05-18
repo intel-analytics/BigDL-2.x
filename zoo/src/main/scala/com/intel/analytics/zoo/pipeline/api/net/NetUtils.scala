@@ -38,6 +38,11 @@ class GraphNet[T: ClassTag](graph: Graph[T])(implicit ev: TensorNumeric[T])
   extends Container[Activity, Activity, T] with NetUtils[T, GraphNet[T]] {
 
   private val labor = graph
+  modules.append(labor)
+
+  def getSubModules(): List[AbstractModule[Activity, Activity, T]] = {
+    this.labor.modules.toList
+  }
 
   val outputNodes = NetUtils.getGraphOutputs(graph)
 
