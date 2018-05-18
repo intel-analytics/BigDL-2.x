@@ -33,7 +33,7 @@ Run the following command for Spark local mode (`MASTER=local[*]`) or cluster mo
 
 ```bash
 SPARK_HOME=the root directory of Spark
-ANALYTICS_ZOO_HOME=the `dist` directory under the Analytics Zoo project
+ANALYTICS_ZOO_HOME=the dist directory under the Analytics Zoo project
 MASTER=...
 ANALYTICS_ZOO_JAR=${ANALYTICS_ZOO_HOME}/lib/analytics-zoo-VERSION-jar-with-dependencies.jar
 BASE_DIR=the base directory containing the training and word2Vec data
