@@ -21,7 +21,7 @@ jupyter notebook --notebook-dir=./ --ip=* --no-browser
 ---
 ## **Example code**
 
-To verify if Analytics Zoo can run successfully:
+To verify if Analytics Zoo can run successfully, run the following simple code:
 
 ```python
 import zoo.version
