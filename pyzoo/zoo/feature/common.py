@@ -30,6 +30,14 @@ class Preprocessing(JavaValue):
     def __init__(self, bigdl_type="float", *args):
         self.value = callBigDlFunc(bigdl_type, JavaValue.jvm_class_constructor(self), *args)
 
+    def __call__(self, input, bigdl_type="float"):
+        """
+        transform ImageSet
+        """
+        if type(input) is ImageSet:
+            jset = callBigDlFunc(bigdl_type, "transformImageSet", self.value, input)
+            return ImageSet(jvalue=jset)
+
 
 class ChainedPreprocessing(Preprocessing):
     """
@@ -43,15 +51,6 @@ class ChainedPreprocessing(Preprocessing):
                 str(transfomer) + " should be subclass of Preprocessing "
 
         super(ChainedPreprocessing, self).__init__(bigdl_type, transformers)
-
-    def __call__(self, input, bigdl_type="float"):
-        """
-        transform ImageSet
-        """
-        if type(input) is ImageSet:
-            jset = callBigDlFunc(bigdl_type, "transformImageSet", self.value, input)
-            return ImageSet(jvalue=jset)
-
 
 class ScalarToTensor(Preprocessing):
     """
