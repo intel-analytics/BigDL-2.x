@@ -79,6 +79,10 @@ class Variable(ZooKerasCreator):
             else:
                 super(Variable, self).__init__(jvalue, "float", toMultiShape(input_shape))
 
+    @property
+    def node(self):
+        return Node.of(self.value.node())
+
     @staticmethod
     def from_jvalue(jvalue):
         return Variable(input_shape=None, node=None, jvalue=jvalue)
