@@ -30,6 +30,7 @@ class ImagePreprocessing(Preprocessing):
     def __init__(self, bigdl_type="float"):
         super(ImagePreprocessing, self).__init__(bigdl_type)
 
+
 class Resize(ImagePreprocessing):
     """
     Resize image

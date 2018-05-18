@@ -52,6 +52,7 @@ class ChainedPreprocessing(Preprocessing):
 
         super(ChainedPreprocessing, self).__init__(bigdl_type, transformers)
 
+
 class ScalarToTensor(Preprocessing):
     """
     a Preprocessing that converts a number to a Tensor.
