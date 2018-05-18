@@ -34,7 +34,6 @@ ${SPARK_HOME}/bin/spark-submit \
         --conf spark.driver.extraClassPath=${ANALYTICS_ZOO_JAR} \
         --conf spark.executor.extraClassPath=${ANALYTICS_ZOO_JAR} \
         ${ANALYTICS_ZOO_HOME}/apps/anomaly-detection/anomaly-detection-nyc-taxi.py
-sleep 2
 now=$(date "+%s")
 time=$((now-start))
 echo "#1 anomaly-detection-nyc-taxi time used:$time seconds"
@@ -83,7 +82,6 @@ ${SPARK_HOME}/bin/spark-submit \
         --conf spark.driver.extraClassPath=${ANALYTICS_ZOO_JAR} \
         --conf spark.executor.extraClassPath=${ANALYTICS_ZOO_JAR} \
         ${ANALYTICS_ZOO_HOME}/apps/object-detection/object-detection.py
-sleep 2
 now=$(date "+%s")
 time=$((now-start))
 echo "#2 object-detection time used:$time seconds"
@@ -106,7 +104,6 @@ ${SPARK_HOME}/bin/spark-submit \
         --conf spark.driver.extraClassPath=${ANALYTICS_ZOO_JAR} \
         --conf spark.executor.extraClassPath=${ANALYTICS_ZOO_JAR} \
         ${ANALYTICS_ZOO_HOME}/apps/recommendation/ncf-explicit-feedback.py
-sleep 2
 now=$(date "+%s")
 time=$((now-start))
 echo "#3 ncf-explicit-feedback time used:$time seconds"
@@ -129,7 +126,6 @@ ${SPARK_HOME}/bin/spark-submit \
         --conf spark.driver.extraClassPath=${ANALYTICS_ZOO_JAR} \
         --conf spark.executor.extraClassPath=${ANALYTICS_ZOO_JAR} \
         ${ANALYTICS_ZOO_HOME}/apps/recommendation/wide_n_deep.py
-sleep 2
 now=$(date "+%s")
 time=$((now-start))
 echo "#4 wide_n_deep time used:$time seconds"
@@ -172,7 +168,6 @@ ${SPARK_HOME}/bin/spark-submit \
         --conf spark.driver.extraClassPath=${ANALYTICS_ZOO_JAR} \
         --conf spark.executor.extraClassPath=${ANALYTICS_ZOO_JAR} \
         ${ANALYTICS_ZOO_HOME}/apps/variational_autoencoder/using_variational_autoencoder_and_deep_feature_loss_to_generate_faces.py        
-sleep 2
 now=$(date "+%s")
 time=$((now-start))
 echo "#5 using_variational_autoencoder_and_deep_feature_loss_to_generate_faces time used:$time seconds"
@@ -206,7 +201,6 @@ ${SPARK_HOME}/bin/spark-submit \
         --conf spark.driver.extraClassPath=${ANALYTICS_ZOO_JAR} \
         --conf spark.executor.extraClassPath=${ANALYTICS_ZOO_JAR} \
         ${ANALYTICS_ZOO_HOME}/apps/variational_autoencoder/using_variational_autoencoder_to_generate_faces.py
-sleep 2
 now=$(date "+%s")
 time=$((now-start))
 echo "#6 using_variational_autoencoder_to_generate_faces time used:$time seconds"                          
@@ -229,7 +223,6 @@ ${SPARK_HOME}/bin/spark-submit \
         --conf spark.driver.extraClassPath=${ANALYTICS_ZOO_JAR} \
         --conf spark.executor.extraClassPath=${ANALYTICS_ZOO_JAR} \
         ${ANALYTICS_ZOO_HOME}/apps/variational_autoencoder/using_variational_autoencoder_to_generate_digital_numbers.py
-sleep 2
 now=$(date "+%s")
 time=$((now-start))
 echo "#7 using_variational_autoencoder_to_generate_digital_numbers time used:$time seconds" 
@@ -252,7 +245,6 @@ ${SPARK_HOME}/bin/spark-submit \
         --conf spark.driver.extraClassPath=${ANALYTICS_ZOO_JAR} \
         --conf spark.executor.extraClassPath=${ANALYTICS_ZOO_JAR} \
         ${ANALYTICS_ZOO_HOME}/apps/sentimentAnalysis/sentiment.py
-sleep 2
 now=$(date "+%s")
 time=$((now-start))
 echo "#8 sentimentAnalysis time used:$time seconds" 
@@ -272,7 +264,6 @@ ${SPARK_HOME}/bin/spark-submit \
         --conf spark.driver.extraClassPath=${ANALYTICS_ZOO_JAR} \
         --conf spark.executor.extraClassPath=${ANALYTICS_ZOO_JAR} \
         ${ANALYTICS_ZOO_HOME}/apps/image-augmentation/image-augmentation.py
-sleep 2
 now=$(date "+%s")
 time=$((now-start))
 echo "#9 image-augmentation time used:$time seconds" 
