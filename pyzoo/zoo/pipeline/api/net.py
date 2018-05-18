@@ -70,7 +70,7 @@ class GraphNet(BModel):
         """
         "unfreeze" module, i.e. make the module parameters(weight/bias, if exists)
         to be trained(updated) in training process.
-        If names is not empty, unfreeze layers that match given names
+        If 'names' is a non-empty list, unfreeze layers that match given names
 
         :param names: list of module names to be unFreezed. Default is None.
         :return: current graph model
