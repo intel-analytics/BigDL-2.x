@@ -18,10 +18,10 @@ Executing this example will automatically download and extract the data for you 
 
 You can also choose to prepare the data by yourself beforehand. The following scripts we prepare will serve to download and extract the data:
 ```bash
-bash ${ZOO_HOME}/data/news20/get_news20.sh dir
-bash ${ZOO_HOME}/data/glove/get_glove.sh dir
+bash ${ANALYTICS_ZOO_HOME}/bin/data/news20/get_news20.sh dir
+bash ${ANALYTICS_ZOO_HOME}/bin/data/glove/get_glove.sh dir
 ```
-where `ZOO_HOME` is the root directory of the Zoo project and `dir` is the directory you wish to locate the downloaded data. If `dir` is not specified, the data will be downloaded to the current working directory. 20 Newsgroup dataset and GloVe word embeddings are supposed to be placed under the same directory.
+where `ANALYTICS_ZOO_HOME` is the `dist` directory under the Analytics Zoo project and `dir` is the directory you wish to locate the downloaded data. If `dir` is not specified, the data will be downloaded to the current working directory. 20 Newsgroup dataset and GloVe word embeddings are supposed to be placed under the same directory.
 
 The data folder structure after extraction should look like the following:
 ```
@@ -37,21 +37,22 @@ Run the following command for Spark local mode (`MASTER=local[*]`) or cluster mo
 
 ```bash
 SPARK_HOME=the root directory of Spark
-ZOO_HOME=the root directory of the Zoo project
+ANALYTICS_ZOO_ROOT=the root directory of the Analytics Zoo project
+ANALYTICS_ZOO_HOME=$ANALYTICS_ZOO_ROOT/dist
 MASTER=...
-PYTHON_API_ZIP_PATH=${ZOO_HOME}/dist/lib/zoo-VERSION-python-api.zip
-ZOO_JAR_PATH=${ZOO_HOME}/dist/lib/zoo-VERSION-jar-with-dependencies.jar
-PYTHONPATH=${PYTHON_API_ZIP_PATH}:$PYTHONPATH
+ANALYTICS_ZOO_PY_ZIP=${ANALYTICS_ZOO_HOME}/lib/analytics-zoo-VERSION-python-api.zip
+ANALYTICS_ZOO_JAR=${ANALYTICS_ZOO_HOME}/lib/analytics-zoo-VERSION-jar-with-dependencies.jar
+PYTHONPATH=${ANALYTICS_ZOO_PY_ZIP}:$PYTHONPATH
 
 ${SPARK_HOME}/bin/spark-submit \
     --master ${MASTER} \
     --driver-memory 20g \
     --executor-memory 20g \
-    --py-files ${PYTHON_API_ZIP_PATH},${ZOO_HOME}/pyzoo/zoo/examples/textclassification/text_classification.py \
-    --jars ${ZOO_JAR_PATH} \
-    --conf spark.driver.extraClassPath=${ZOO_JAR_PATH} \
-    --conf spark.executor.extraClassPath=${ZOO_JAR_PATH} \
-    ${ZOO_HOME}/pyzoo/zoo/examples/textclassification/text_classification.py \
+    --py-files ${ANALYTICS_ZOO_PY_ZIP},${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/textclassification/text_classification.py \
+    --jars ${ANALYTICS_ZOO_JAR} \
+    --conf spark.driver.extraClassPath=${ANALYTICS_ZOO_JAR} \
+    --conf spark.executor.extraClassPath=${ANALYTICS_ZOO_JAR} \
+    ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/textclassification/text_classification.py \
     --data_path /tmp/text_data
 ```
 __Options:__

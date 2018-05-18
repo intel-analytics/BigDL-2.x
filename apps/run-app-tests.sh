@@ -17,9 +17,9 @@ echo "#1 start app test for anomaly-detection-nyc-taxi"
 
 ./apps/ipynb2py.sh ./apps/anomaly-detection/anomaly-detection-nyc-taxi
 
-chmod +x $ANALYTICS_ZOO_HOME/data/NAB/nyc_taxi/get_nyc_taxi.sh
+chmod +x $ANALYTICS_ZOO_HOME/scripts/data/NAB/nyc_taxi/get_nyc_taxi.sh
 
-$ANALYTICS_ZOO_HOME/data/NAB/nyc_taxi/get_nyc_taxi.sh
+$ANALYTICS_ZOO_HOME/scripts/data/NAB/nyc_taxi/get_nyc_taxi.sh
 
 ${SPARK_HOME}/bin/spark-submit \
         --master ${MASTER} \
