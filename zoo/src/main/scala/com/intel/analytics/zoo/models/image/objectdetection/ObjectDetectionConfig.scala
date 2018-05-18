@@ -19,8 +19,7 @@ package com.intel.analytics.zoo.models.image.objectdetection
 import com.intel.analytics.bigdl.dataset.PaddingParam
 import com.intel.analytics.bigdl.numeric.NumericFloat
 import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric
-import com.intel.analytics.bigdl.transform.vision.image.{FeatureTransformer,
-       ImageFeature, ImageFrameToSample, MatToTensor}
+import com.intel.analytics.bigdl.transform.vision.image._
 import com.intel.analytics.bigdl.transform.vision.image.augmentation.{AspectScale,
        Resize, ChannelNormalize}
 

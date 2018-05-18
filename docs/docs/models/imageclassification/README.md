@@ -6,6 +6,10 @@ Analytics Zoo provides a collection of pre-trained models for Image Classificati
 
 Analytics Zoo provides several typical kind of pre-trained Image Classfication models : [Alexnet](http://papers.nips.cc/paper/4824-imagenet-classification-with-deep-convolutional-neural-networksese), [Inception-V1](https://arxiv.org/abs/1409.4842), [VGG](https://arxiv.org/abs/1409.1556), [Resnet](https://arxiv.org/abs/1512.03385), [Densenet](https://arxiv.org/abs/1608.06993), [Mobilenet](https://arxiv.org/abs/1704.04861), [Squeezenet](https://arxiv.org/abs/1602.07360) models. To use these models, please check below examples.
 
+
+**Scala**
+
+
 [Scala example](https://github.com/intel-analytics/zoo/tree/master/zoo/src/main/scala/com/intel/analytics/zoo/examples/imageclassification)
 
 It's very easy to apply the model for inference with below code piece.
@@ -16,15 +20,45 @@ val data = ImageSet.read(params.image, sc, params.nPartition)
 val output = model.predictImageSet(data)
 ```
 
+User can also define his own configuration to do the inference with below code piece.
+
+```scala
+val model = ImageClassifier.loadModel[Float](params.model)
+val data = ImageSet.read(params.image, sc, params.nPartition)
+val featureTransformer = Resize(256, 256)-> CenterCrop(224, 224) ->
+        ChannelNormalize(123, 117, 104) ->
+        MatToTensor[Float]() ->
+        ImageFrameToSample[Float]()
+val config = ImageConfigure[Float](preProcessor=featureTransformer)        
+val output = model.predictImageSet(data, config)
+```
+
+**Python**
 
 [Python example](https://github.com/intel-analytics/zoo/tree/master/pyzoo/zoo/examples/imageclassification)
 
-
+It's very easy to apply the model for inference with below code piece.
 ```
 model = ImageClassifier.load_model(model_path)
 image_set = ImageSet.read(img_path, sc)
 output = imc.predict_image_set(image_set)
 ```
+
+User can also define his own configuration to do the inference with below code piece.
+```
+model = ImageClassifier.load_model(model_path)
+image_set = ImageSet.read(img_path, sc)
+transformer = Pipeline([Resize(256,256),
+                                  CenterCrop(224, 224),
+                                  RandomTransformer(HFlip(), 0.5),
+                                  ChannelNormalize(0.485, 0.456, 0.406, 0.229, 0.224, 0.225),
+                                  MatToTensor(to_rgb=True),
+                                  ImageFrameToSample()
+                                  ])
+config = ImageConfigure(transformer)
+output = imc.predict_image_set(image_set, config)
+```
+    
 For preprocessors for Image Classification models, please check [Image Classification Config](https://github.com/intel-analytics/zoo/blob/master/zoo/src/main/scala/com/intel/analytics/zoo/models/image/imageclassification/ImageClassificationConfig.scala)
 
 ## Download link
