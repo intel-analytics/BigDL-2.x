@@ -183,8 +183,7 @@ class TestOperator(ZooTestCase):
 
         def index_select(x, dim, index):
             t = Select(dim, index)(x.node)
-            st = Squeeze(dim=dim)(t)
-            return Variable(st)
+            return Variable.from_node(t)
 
         def l1(x):
             x1 = index_select(x, 1, 0)  # input is [B, 2, 3, 16, 16]
@@ -193,9 +192,10 @@ class TestOperator(ZooTestCase):
 
         output = Lambda(function=l1)(input)
         model = Model(input, output)
+
         mock_data  = np.random.uniform(0, 1, [10] + input_shape)
         out_data = model.forward(mock_data)
-        print(out_data.shape)
+        assert out_data.shape == (10, 3, 16, 16)
 
 
 if __name__ == "__main__":
