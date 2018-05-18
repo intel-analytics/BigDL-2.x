@@ -18,6 +18,7 @@
         <java.version>1.7</java.version>
         <javac.version>1.7</javac.version>
         <spark-scope>provided</spark-scope>
+        <bigdl-scope>compile</bigdl-scope>
         <scala.major.version>2.11</scala.major.version>
         <scala.version>2.11.8</scala.version>
         <scala.macros.version>2.1.0</scala.macros.version>
@@ -54,6 +55,13 @@
                 <scala.version>2.11.8</scala.version>
                 <scala.macros.version>2.1.0</scala.macros.version>
                 <bigdl.artifactId>bigdl-SPARK_2.1</bigdl.artifactId>
+            </properties>
+        </profile>
+
+        <profile>
+            <id>without_bigdl</id>
+            <properties>
+                <bigdl-scope>provided</bigdl-scope>
             </properties>
         </profile>
 
@@ -196,6 +204,7 @@
             <groupId>com.intel.analytics.bigdl</groupId>
             <artifactId>${bigdl.artifactId}</artifactId>
             <version>${bigdl.version}</version>
+            <scope>${bigdl-scope}</scope>
         </dependency>
         <dependency>
             <groupId>org.spark-project.spark</groupId>
