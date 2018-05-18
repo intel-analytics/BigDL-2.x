@@ -35,6 +35,11 @@ class GraphNet(BModel):
                                      bigdl_type,
                                      **kwargs)
 
+    def flattened_layers(self, include_container=False):
+        jlayers = callBigDlFunc(self.bigdl_type, "getFlattenSubModules", self, include_container)
+        layers = [Layer.of(jlayer) for jlayer in jlayers]
+        return layers
+
     @property
     def layers(self):
         jlayers = callBigDlFunc(self.bigdl_type, "getSubModules", self)

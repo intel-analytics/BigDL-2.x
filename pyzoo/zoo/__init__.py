@@ -21,7 +21,6 @@ from pyspark.files import SparkFiles
 prepare_env()
 if not SparkFiles._is_running_on_worker:
     check_version()
-JavaCreator.add_creator_class("com.intel.analytics.zoo.pipeline.api.keras.python.PythonZooKeras")
 JavaCreator.add_creator_class("com.intel.analytics.zoo.pipeline.nnframes.python.PythonNNFrames")
 JavaCreator.add_creator_class("com.intel.analytics.zoo.feature.python.PythonImageFeature")
 JavaCreator.add_creator_class("com.intel.analytics.zoo.pipeline.api.keras.python.PythonAutoGrad")

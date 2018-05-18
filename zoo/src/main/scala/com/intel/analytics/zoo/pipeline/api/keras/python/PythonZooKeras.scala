@@ -40,6 +40,7 @@ import com.intel.analytics.zoo.pipeline.api.keras.models.{KerasNet, Model, Seque
 import com.intel.analytics.zoo.pipeline.api.net.{GraphNet, NetUtils}
 import org.apache.spark.api.java.JavaRDD
 
+import scala.collection.mutable.ArrayBuffer
 import scala.reflect.ClassTag
 
 object PythonZooKeras {
@@ -955,6 +956,41 @@ class PythonZooKeras[T: ClassTag](implicit ev: TensorNumeric[T]) extends PythonB
         m.modules.asJava
       case _ =>
         throw new IllegalArgumentException(s"module $module does not have submodules")
+    }
+  }
+
+  def getFlattenSubModules(module: AbstractModule[Activity, Activity, T],
+                        includeContainer: Boolean)
+  : JList[AbstractModule[Activity, Activity, T]] = {
+    val result = ArrayBuffer[AbstractModule[Activity, Activity, T]]()
+    doGetFlattenModules(module, includeContainer, result)
+    result.toList.asJava
+  }
+
+  // TODO: refactor Container and KerasLayer to simplify this logic
+  private def hasSubModules(module: AbstractModule[Activity, Activity, T]) = {
+    module match {
+      case km: KerasModel[T] => true
+      case c: Container[_, _, _] => true
+      case k: KerasNet[T] => true
+      case _ => false
+    }
+  }
+
+  private def doGetFlattenModules(module: AbstractModule[Activity, Activity, T],
+       includeContainer: Boolean,
+       result: ArrayBuffer[AbstractModule[Activity, Activity, T]]): Unit = {
+    getSubModules(module).asScala.foreach {m =>
+      if (hasSubModules(m)) {
+        doGetFlattenModules(m.asInstanceOf[Container[Activity, Activity, T]],
+          includeContainer,
+          result)
+      } else {
+        result.append(m)
+      }
+    }
+    if (includeContainer) {
+      result.append(module)
     }
   }
 }

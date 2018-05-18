@@ -43,7 +43,6 @@ class TestSimpleIntegration(ZooTestCase):
         y1 = Dense(10)(x1)
         y2 = Dense(10)(x2)
         model = Model([x1, x2], [y1, y2])
-        assert len(model.layers) == 4
         tmp_log_dir = create_tmp_path()
         model.save_graph_topology(tmp_log_dir)
         input_shapes = model.get_input_shape()
@@ -133,6 +132,14 @@ class TestSimpleIntegration(ZooTestCase):
         y2 = Dense(10)(x2)
         model = Model([x1, x2], [y1, y2])
         assert len(model.layers) == 4
+
+    def test_keras_net_flatten_layers(self):
+        x1 = Input(shape=(8, ))
+        x2 = Input(shape=(6, ))
+        y1 = Dense(10)(x1)
+        y2 = Dense(10)(x2)
+        model = Model([x1, x2], [y1, y2])
+        assert len(model.flattened_layers()) == 4
 
 
 if __name__ == "__main__":
