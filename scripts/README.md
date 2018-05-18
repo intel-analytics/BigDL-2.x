@@ -10,7 +10,7 @@ export ANALYTICS_ZOO_HOME=dist directory of Analytics Zoo
 The ```dist``` directory can be found in following hierarchy after you build Analytics Zoo.
 
 ```
-zoo 
+analytics-zoo 
  |---apps                   (directory)
  |---backend                (directory)
  |---dist                  *(directory)*

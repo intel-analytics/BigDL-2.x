@@ -26,7 +26,7 @@ BASEDIR=$(dirname "$0")
 
 # Check bigdl backend
 if [ ! -d $BASEDIR/backend/bigdl ]; then
-   echo "Backend is not exist. Please try to execute: git submodule update --init --recursive"
+   echo "backend/bigdl does not exist. Please try to execute: git submodule update --init --recursive"
    exit 1
 fi
 
@@ -40,7 +40,7 @@ fi
 if type -p java>/dev/null; then
     _java=java
 else
-    echo "Java is not installed"
+    echo "Java is not installed. Exit"
     exit 1
 fi
 
