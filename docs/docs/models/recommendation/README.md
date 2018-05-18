@@ -13,7 +13,7 @@ It's very easy to build a WND model for recommendation with below code piece.
 val localColumnInfo = ColumnFeatureInfo("...")
 // build a WND model
 val wideAndDeep: WideAndDeep[Float] = WideAndDeep[Float](
-      "wide_n_deep",
+      params.modelType,  // modelType of "wide_n_deep", "wide", and "deep" are supported
       numClasses = params.numClasses,
       columnInfo = localColumnInfo)
 ```
