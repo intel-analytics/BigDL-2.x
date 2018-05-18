@@ -6,13 +6,13 @@ Before using scripts, two environment variables should be set.
 If you download Zoo from the Release Page
 ```bash
 export SPARK_HOME=directory path where you extract the spark package
-export ZOO_HOME=directory path where you extract the zoo package
+export ANALYTICS_ZOO_HOME=directory path where you extract the zoo package
 ```
 
 If you build Zoo by yourself
 ```bash
 export SPARK_HOME=directory path where you extract the spark package
-export ZOO_HOME=dist directory
+export ANALYTICS_ZOO_HOME=dist directory
 ```
 The ```dist``` directory can be found in following hierarchy after you build the zoo.
 ```
