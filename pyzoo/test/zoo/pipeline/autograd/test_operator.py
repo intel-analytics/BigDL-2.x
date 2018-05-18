@@ -16,6 +16,7 @@
 
 import keras.backend as KK
 import keras.layers as klayers
+import numpy as np
 import pytest
 
 from test.zoo.pipeline.utils.test_utils import ZooTestCase

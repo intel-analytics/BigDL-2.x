@@ -157,8 +157,14 @@ object Variable extends {
   }
 }
 
-class Variable[T: ClassTag] private (val node: ModuleNode[T])(
+class Variable[T: ClassTag] private[zoo] (val node: ModuleNode[T], var name: String = null)(
     implicit ev: TensorNumeric[T]) extends Serializable {
+
+  if (name == null) {
+    name = node.element.getName()
+  } else {
+    node.element.setName(name)
+  }
 
   require(node.element.isInstanceOf[KerasLayer[Activity, Activity, T]])
   require(node.element.asInstanceOf[InferShape].getOutputShape() != null)
@@ -247,6 +253,24 @@ class Variable[T: ClassTag] private (val node: ModuleNode[T])(
 
   def /(a: Double): Variable[T] = {
     this * (1/a)
+  }
+
+  def squeeze(dim: Int): Variable[T] = {
+    val layer = Squeeze[T](dim)
+    Variable(layer.inputs(this.node))
+  }
+
+  def narrow(dim: Int, startIndex: Int, length: Int): Variable[T] = {
+    val layer = Narrow[T](dim = dim,
+      offset = startIndex,
+      length = length)
+    Variable(layer.inputs(this.node))
+  }
+
+  def index_select(dim: Int, index: Int): Variable[T] = {
+    val layer = Select[T](dim = dim,
+      index = index)
+    Variable(layer.inputs(this.node))
   }
 
   private[zoo] def broadcast(x: Variable[T], y: Variable[T]): (Variable[T], Variable[T]) = {

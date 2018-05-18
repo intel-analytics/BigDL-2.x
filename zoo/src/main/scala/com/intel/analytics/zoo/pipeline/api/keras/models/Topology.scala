@@ -30,6 +30,7 @@ import com.intel.analytics.bigdl.utils.serializer.{DeserializeContext, ModuleDat
 import com.intel.analytics.bigdl.visualization.{TrainSummary, ValidationSummary}
 import com.intel.analytics.zoo.pipeline.api.Net
 import com.intel.analytics.zoo.pipeline.api.autograd.{CustomLossWithVariable, Lambda, Variable}
+import com.intel.analytics.zoo.pipeline.api.autograd._
 import com.intel.analytics.zoo.pipeline.api.keras.layers.Input
 import com.intel.analytics.zoo.pipeline.api.keras.layers.utils.{AbstractModuleRef, GraphRef, KerasLayerRef}
 import com.intel.analytics.zoo.pipeline.api.keras.layers.utils.KerasUtils
