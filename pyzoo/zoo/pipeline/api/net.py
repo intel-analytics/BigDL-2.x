@@ -50,7 +50,7 @@ class GraphNet(BModel):
         """
         Specify a list of nodes as output and return a new graph using the existing nodes
 
-        :param outputs: A seq of nodes specified
+        :param outputs: A list of nodes specified
         :return: A graph model
         """
         value = callBigDlFunc(self.bigdl_type, "newGraph", self.value, outputs)
@@ -61,7 +61,7 @@ class GraphNet(BModel):
         Freeze the model from the bottom up to the layers specified by names (inclusive).
         This is useful for finetuning a model
 
-        :param names: array of module names to be Freezed
+        :param names: A list of module names to be Freezed
         :return: current graph model
         """
         callBigDlFunc(self.bigdl_type, "freezeUpTo", self.value, names)
