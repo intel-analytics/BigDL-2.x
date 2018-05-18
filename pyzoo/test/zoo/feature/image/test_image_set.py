@@ -23,6 +23,7 @@ from zoo.common.nncontext import *
 from zoo.feature.image.imageset import *
 from zoo.feature.image.imagePreprocessing import *
 
+
 class Test_Image_Set():
 
     def setup_method(self, method):
