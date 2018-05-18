@@ -1,21 +1,28 @@
 ## **Precondition**
 
 * [Install analytics-zoo from pip](install-from-pip.md)
+* Only __Python 2.7__, __Python 3.5__ and __Python 3.6__ are supported for now.
 
 ---
 ## **Use an Interactive Shell**
 * Type `python` in the command line to start a REPL.
-* Only __Python 2.7__, __Python 3.5__ and __Python 3.6__ are supported for now.
+* Try to run the [example code](#example-code) to verify the installation.
 
 ---
 ## **Use Jupyter Notebook**
 * Just start jupyter notebook as you normally do, e.g.
+
 ```bash
 jupyter notebook --notebook-dir=./ --ip=* --no-browser
 ```
 
+* Try to run the [example code](#example-code) to verify the installation.
+
 ---
-## **Example code to verify if Analytics Zoo can run successfully**
+## **Example code**
+
+To verify if Analytics Zoo can run successfully:
+
 ```python
 import zoo.version
 from zoo.common.nncontext import *
@@ -31,7 +38,7 @@ model = Sequential()
 model.add(Dense(8, input_shape=(10, )))
 ```
 
-## **Analytics Zoo Configurations**
+## **Configurations**
 
 * Increase memory
 
