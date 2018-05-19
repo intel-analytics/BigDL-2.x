@@ -20,8 +20,9 @@ import java.net.URL
 
 import com.intel.analytics.bigdl.numeric.NumericFloat
 import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric
-import com.intel.analytics.bigdl.transform.vision.image.{FeatureTransformer, ImageFrameToSample, MatToTensor}
-import com.intel.analytics.bigdl.transform.vision.image.augmentation.{CenterCrop, ChannelNormalize, PixelNormalizer, Resize}
+import com.intel.analytics.bigdl.transform.vision.image.ImageFeature
+import com.intel.analytics.zoo.feature.common.{ImageProcessing, Preprocessing}
+import com.intel.analytics.zoo.feature.image._
 import com.intel.analytics.zoo.models.image.common.ImageConfigure
 
 import scala.io.Source
@@ -90,41 +91,42 @@ object ImagenetConfig {
     }
   }
 
-  def alexnetPreprocessor() : FeatureTransformer = {
+  def alexnetPreprocessor() : Preprocessing[ImageFeature, ImageFeature] = {
     Resize(Consts.IMAGENET_RESIZE, Consts.IMAGENET_RESIZE) ->
       PixelNormalizer(mean) -> CenterCrop(227, 227) ->
-      MatToTensor() -> ImageFrameToSample()
+      MatToTensor() -> ImageSetToSample()
   }
 
   def commonPreprocessor(imageSize : Int, meanR: Float, meanG: Float, meanB: Float,
-                         stdR: Float = 1, stdG: Float = 1, stdB: Float = 1) : FeatureTransformer = {
+    stdR: Float = 1, stdG: Float = 1, stdB: Float = 1):
+    Preprocessing[ImageFeature, ImageFeature] = {
     Resize(Consts.IMAGENET_RESIZE, Consts.IMAGENET_RESIZE) ->
       CenterCrop(imageSize, imageSize) -> ChannelNormalize(meanR, meanG, meanB,
       stdR, stdG, stdB) ->
-      MatToTensor() -> ImageFrameToSample()
+      MatToTensor() -> ImageSetToSample()
   }
 
-  def inceptionV1Preprocessor(): FeatureTransformer = {
+  def inceptionV1Preprocessor(): Preprocessing[ImageFeature, ImageFeature] = {
     commonPreprocessor(224, 123, 117, 104)
   }
 
-  def resnetPreprocessor() : FeatureTransformer = {
+  def resnetPreprocessor() : Preprocessing[ImageFeature, ImageFeature] = {
     commonPreprocessor(224, 123, 117, 104)
   }
 
-  def vggPreprocessor(): FeatureTransformer = {
+  def vggPreprocessor(): Preprocessing[ImageFeature, ImageFeature] = {
     commonPreprocessor(224, 123, 117, 104)
   }
 
-  def densenetPreprocessor() : FeatureTransformer = {
+  def densenetPreprocessor() : Preprocessing[ImageFeature, ImageFeature] = {
     commonPreprocessor(224, 123, 117, 104, 1/0.017f, 1/0.017f, 1/0.017f)
   }
 
-  def mobilenetPreprocessor() : FeatureTransformer = {
+  def mobilenetPreprocessor() : Preprocessing[ImageFeature, ImageFeature] = {
     commonPreprocessor(224, 123.68f, 116.78f, 103.94f, 1/0.017f, 1/0.017f, 1/0.017f )
   }
 
-  def squeezenetPreprocessor(): FeatureTransformer = {
+  def squeezenetPreprocessor(): Preprocessing[ImageFeature, ImageFeature] = {
     commonPreprocessor(227, 123, 117, 104)
   }
 

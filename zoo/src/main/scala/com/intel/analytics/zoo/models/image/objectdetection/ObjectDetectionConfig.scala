@@ -19,11 +19,9 @@ package com.intel.analytics.zoo.models.image.objectdetection
 import com.intel.analytics.bigdl.dataset.PaddingParam
 import com.intel.analytics.bigdl.numeric.NumericFloat
 import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric
-import com.intel.analytics.bigdl.transform.vision.image.{FeatureTransformer,
-       ImageFeature, ImageFrameToSample, MatToTensor}
-import com.intel.analytics.bigdl.transform.vision.image.augmentation.{AspectScale,
-       Resize, ChannelNormalize}
-
+import com.intel.analytics.bigdl.transform.vision.image.ImageFeature
+import com.intel.analytics.zoo.feature.common.{ImageProcessing, Preprocessing}
+import com.intel.analytics.zoo.feature.image._
 import com.intel.analytics.zoo.models.image.common.ImageConfigure
 import com.intel.analytics.zoo.models.image.objectdetection.ObjectDetectorDataset.{Coco, Pascal}
 
@@ -90,19 +88,19 @@ private[models] object ObjectDetectionConfig {
   }
 
   def preprocessSsdVgg(resolution: Int, dataset: String, version: String)
-  : FeatureTransformer = {
+  : Preprocessing[ImageFeature, ImageFeature] = {
     preprocessSsd(resolution, (123f, 117f, 104f), 1f)
   }
 
   def preprocessSsd(resolution: Int, meansRGB: (Float, Float, Float),
-    scale: Float): FeatureTransformer = {
+    scale: Float): Preprocessing[ImageFeature, ImageFeature] = {
     Resize(resolution, resolution) ->
       ChannelNormalize(meansRGB._1, meansRGB._2, meansRGB._3, scale, scale, scale) ->
-      MatToTensor() -> ImageFrameToSample()
+      MatToTensor() -> ImageSetToSample()
   }
 
   def preprocessSsdMobilenet(resolution: Int, dataset: String, version: String)
-  : FeatureTransformer = {
+  : Preprocessing[ImageFeature, ImageFeature] = {
     ObjectDetectorDataset(dataset) match {
       case Pascal =>
         preprocessSsd(resolution, (127.5f, 127.5f, 127.5f), 1 / 0.007843f)
@@ -111,13 +109,15 @@ private[models] object ObjectDetectionConfig {
     }
   }
 
-  def preprocessFrcnn(resolution: Int, scaleMultipleOf: Int): FeatureTransformer = {
+  def preprocessFrcnn(resolution: Int, scaleMultipleOf: Int):
+    Preprocessing[ImageFeature, ImageFeature] = {
     AspectScale(resolution, scaleMultipleOf) ->
       ChannelNormalize(122.7717f, 115.9465f, 102.9801f) ->
-      MatToTensor() -> ImInfo() -> ImageFrameToSample(Array(ImageFeature.imageTensor, "ImInfo"))
+      MatToTensor() -> ImInfo() -> ImageSetToSample(Array(ImageFeature.imageTensor, "ImInfo"))
   }
 
-  def preprocessFrcnnVgg(dataset: String, version: String): FeatureTransformer = {
+  def preprocessFrcnnVgg(dataset: String, version: String):
+    Preprocessing[ImageFeature, ImageFeature] = {
     ObjectDetectorDataset(dataset) match {
       case Pascal =>
         preprocessFrcnn(600, 1)
@@ -126,7 +126,8 @@ private[models] object ObjectDetectionConfig {
     }
   }
 
-  def preprocessFrcnnPvanet(dataset: String, version: String): FeatureTransformer = {
+  def preprocessFrcnnPvanet(dataset: String, version: String):
+    Preprocessing[ImageFeature, ImageFeature] = {
     ObjectDetectorDataset(dataset) match {
       case Pascal =>
         preprocessFrcnn(640, 32)
@@ -161,7 +162,7 @@ object ObjectDetectorDataset {
  * Generate imInfo
  * imInfo is a tensor that contains height, width, scaleInHeight, scaleInWidth
  */
-case class ImInfo() extends FeatureTransformer {
+case class ImInfo() extends ImageProcessing {
   override def transformMat(feature: ImageFeature): Unit = {
     feature("ImInfo") = feature.getImInfo()
   }
