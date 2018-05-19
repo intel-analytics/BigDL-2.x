@@ -18,10 +18,10 @@ import pytest
 import os
 import cv2
 from bigdl.util.common import *
-from bigdl.transform.vision.image import MatToTensor
 
 from zoo.common.nncontext import *
 from zoo.feature.image.imageset import *
+from zoo.feature.image.imagePreprocessing import *
 
 
 class Test_Image_Set():

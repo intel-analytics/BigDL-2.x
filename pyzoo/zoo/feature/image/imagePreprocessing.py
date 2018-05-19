@@ -30,14 +30,6 @@ class ImagePreprocessing(Preprocessing):
     def __init__(self, bigdl_type="float", *args):
         super(ImagePreprocessing, self).__init__(bigdl_type, *args)
 
-    def __call__(self, image_set, bigdl_type="float"):
-        """
-        transform ImageSet
-        """
-        jset = callBigDlFunc(bigdl_type,
-                             "transformImageSet", self.value, image_set)
-        return ImageSet(jvalue=jset)
-
 
 class ImageResize(ImagePreprocessing):
     """
