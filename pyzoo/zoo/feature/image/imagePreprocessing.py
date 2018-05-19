@@ -83,6 +83,18 @@ class ImageMatToTensor(ImagePreprocessing):
         super(ImageMatToTensor, self).__init__(bigdl_type)
 
 
+class ImageSetToSample(ImagePreprocessing):
+    """
+    transform imageframe to samples
+    :param input_keys keys that maps inputs (each input should be a tensor)
+    :param target_keys keys that maps targets (each target should be a tensor)
+    :param sample_key key to store sample
+    """
+    def __init__(self, input_keys=["imageTensor"], target_keys=None,
+                 sample_key="sample", bigdl_type="float"):
+        super(ImageSetToSample, self).__init__(bigdl_type, input_keys, target_keys, sample_key)
+
+
 class ImageHue(ImagePreprocessing):
     """
     adjust the image hue

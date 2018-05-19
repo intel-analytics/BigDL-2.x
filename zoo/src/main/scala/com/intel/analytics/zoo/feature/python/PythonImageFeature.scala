@@ -228,4 +228,10 @@ class PythonImageFeature[T: ClassTag](implicit ev: TensorNumeric[T]) extends Pyt
   def createImageHFlip(): ImageHFlip = {
     ImageHFlip()
   }
+
+  def createImageSetToSample(inputKeys: JList[String],
+                               targetKeys: JList[String], sampleKey: String): ImageSetToSample[T] = {
+    val targets = if (targetKeys == null) null else targetKeys.asScala.toArray
+    ImageSetToSample[T](inputKeys.asScala.toArray, targets, sampleKey)
+  }
 }

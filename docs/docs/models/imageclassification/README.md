@@ -25,11 +25,11 @@ User can also define his own configuration to do the inference with below code p
 ```scala
 val model = ImageClassifier.loadModel[Float](params.model)
 val data = ImageSet.read(params.image, sc, params.nPartition)
-val featureTransformer = Resize(256, 256)-> CenterCrop(224, 224) ->
-        ChannelNormalize(123, 117, 104) ->
-        MatToTensor[Float]() ->
-        ImageFrameToSample[Float]()
-val config = ImageConfigure[Float](preProcessor=featureTransformer)        
+val preprocessing = ImageResize(256, 256)-> ImageCenterCrop(224, 224) ->
+        ImageChannelNormalize(123, 117, 104) ->
+        ImageMatToTensor[Float]() ->
+        ImageSetToSample[Float]()
+val config = ImageConfigure[Float](preprocessing)        
 val output = model.predictImageSet(data, config)
 ```
 
@@ -42,21 +42,6 @@ It's very easy to apply the model for inference with below code piece.
 model = ImageClassifier.load_model(model_path)
 image_set = ImageSet.read(img_path, sc)
 output = imc.predict_image_set(image_set)
-```
-
-User can also define his own configuration to do the inference with below code piece.
-```
-model = ImageClassifier.load_model(model_path)
-image_set = ImageSet.read(img_path, sc)
-transformer = Pipeline([Resize(256,256),
-                                  CenterCrop(224, 224),
-                                  RandomTransformer(HFlip(), 0.5),
-                                  ChannelNormalize(0.485, 0.456, 0.406, 0.229, 0.224, 0.225),
-                                  MatToTensor(to_rgb=True),
-                                  ImageFrameToSample()
-                                  ])
-config = ImageConfigure(transformer)
-output = imc.predict_image_set(image_set, config)
 ```
     
 For preprocessors for Image Classification models, please check [Image Classification Config](https://github.com/intel-analytics/zoo/blob/master/zoo/src/main/scala/com/intel/analytics/zoo/models/image/imageclassification/ImageClassificationConfig.scala)
