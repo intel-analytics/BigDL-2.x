@@ -32,7 +32,7 @@ def inference(image_path, model_path, sc):
     getName = udf(lambda row: row[0], StringType())
     transformer = ChainedPreprocessing(
         [RowToImageFeature(), ImageResize(256, 256), ImageCenterCrop(224, 224),
-         ChannelNormalize(123.0, 117.0, 104.0), ImageMatToTensor(), ImageFeatureToTensor()])
+         ImageChannelNormalize(123.0, 117.0, 104.0), ImageMatToTensor(), ImageFeatureToTensor()])
 
     model = Model.loadModel(model_path)
     classifier_model = NNClassifierModel(model, transformer)\
