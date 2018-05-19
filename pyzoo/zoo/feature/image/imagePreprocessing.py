@@ -280,7 +280,7 @@ class ImageFiller(ImagePreprocessing):
 
     def __init__(self, start_x, start_y, end_x, end_y, value=255, bigdl_type="float"):
         super(ImageFiller, self).__init__(bigdl_type, start_x, start_y,
-                                          end_x, end_y,value)
+                                          end_x, end_y, value)
 
 
 class ImageHFlip(ImagePreprocessing):
