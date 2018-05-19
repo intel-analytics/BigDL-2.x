@@ -20,20 +20,20 @@ SCRIPT_DIR=$(dirname ${BASH_SOURCE[0]})
 echo "SCRIPT_DIR": $SCRIPT_DIR
 export DL_PYTHON_HOME="$(cd ${SCRIPT_DIR}/../; pwd)"
 
-export ZOO_HOME="$(cd ${SCRIPT_DIR}/../..; pwd)"
+export ANALYTICS_ZOO_ROOT="$(cd ${SCRIPT_DIR}/../..; pwd)"
 
-echo "ZOO_HOME: $ZOO_HOME"
-echo "SPARK_HOME": $SPARK_HOME
-echo "DL_PYTHON_HOME": $DL_PYTHON_HOME
+echo "ANALYTICS_ZOO_ROOT:" $ANALYTICS_ZOO_ROOT
+echo "SPARK_HOME:" $SPARK_HOME
+echo "DL_PYTHON_HOME:" $DL_PYTHON_HOME
 
 if [ -z ${SPARK_HOME+x} ]; then echo "SPARK_HOME is unset"; exit 1; else echo "SPARK_HOME is set to '$SPARK_HOME'"; fi
 
 export PYSPARK_ZIP=`find $SPARK_HOME/python/lib  -type f -iname '*.zip' | tr "\n" ":"`
 
-export PYTHONPATH=$PYTHONPATH:$PYSPARK_ZIP:$DL_PYTHON_HOME:$ZOO_HOME/backend/bigdl/pyspark:$ZOO_HOME/backend/bigdl/spark/dl/src/main/resources/spark-bigdl.conf:$ZOO_HOME/zoo/target/extra-resources/zoo-version-info.properties
+export PYTHONPATH=$PYTHONPATH:$PYSPARK_ZIP:$DL_PYTHON_HOME:$ANALYTICS_ZOO_ROOT/backend/bigdl/pyspark:$ANALYTICS_ZOO_ROOT/backend/bigdl/spark/dl/src/main/resources/spark-bigdl.conf:$ANALYTICS_ZOO_ROOT/dist/conf/spark-analytics-zoo.conf:$ANALYTICS_ZOO_ROOT/zoo/target/extra-resources/zoo-version-info.properties
 echo "PYTHONPATH": $PYTHONPATH
-export ZOO_CLASSPATH=$(find $ZOO_HOME/zoo/target/ -name "*with-dependencies.jar" | head -n 1)
-echo "ZOO_CLASSPATH": $ZOO_CLASSPATH
+export ANALYTICS_ZOO_CLASSPATH=$(find $ANALYTICS_ZOO_ROOT/zoo/target/ -name "*with-dependencies.jar" | head -n 1)
+echo "ANALYTICS_ZOO_CLASSPATH": $ANALYTICS_ZOO_CLASSPATH
 
-export BIGDL_CLASSPATH=$ZOO_CLASSPATH
+export BIGDL_CLASSPATH=$ANALYTICS_ZOO_CLASSPATH
 echo "BIGDL_CLASSPATH": $BIGDL_CLASSPATH

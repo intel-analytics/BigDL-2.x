@@ -66,7 +66,7 @@ if __name__ == "__main__":
     model.freeze_up_to(["pool4/3x3_s2"])
 
     inputNode = Input(name="input", shape=(3, 224, 224))
-    inception = model.toKeras()(inputNode)
+    inception = model.to_keras()(inputNode)
     flatten = Flatten()(inception)
     logits = Dense(2)(flatten)
 
