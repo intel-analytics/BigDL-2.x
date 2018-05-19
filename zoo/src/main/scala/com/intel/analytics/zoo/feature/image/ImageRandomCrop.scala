@@ -27,7 +27,8 @@ import com.intel.analytics.bigdl.transform.vision.image.augmentation
  * @param cropHeight height after crop
  * @param isClip whether to clip the roi to image boundaries
  */
-class ImageRandomCrop(cropWidth: Int, cropHeight: Int, isClip: Boolean = true) extends ImageProcessing {
+class ImageRandomCrop(cropWidth: Int, cropHeight: Int, isClip: Boolean = true)
+  extends ImageProcessing {
 
   private val internalCrop = new augmentation.RandomCrop(cropWidth, cropHeight, isClip)
   override def apply(prev: Iterator[ImageFeature]): Iterator[ImageFeature] = {

@@ -53,7 +53,8 @@ class ImageResize(ImagePreprocessing):
     """
     def __init__(self, resize_h, resize_w, resize_mode=1, use_scale_factor=True,
                  bigdl_type="float"):
-        super(ImageResize, self).__init__(bigdl_type, resize_h, resize_w, resize_mode, use_scale_factor)
+        super(ImageResize, self).__init__(bigdl_type, resize_h, resize_w,
+                                          resize_mode, use_scale_factor)
 
 
 class ImageBrightness(ImagePreprocessing):
@@ -76,8 +77,10 @@ class ImageChannelNormalize(ImagePreprocessing):
     :param std_g std value in G channel
     :param std_b std value in B channel
     """
-    def __init__(self, mean_r, mean_g, mean_b, std_r=1.0, std_g=1.0, std_b=1.0, bigdl_type="float"):
-        super(ImageChannelNormalize, self).__init__(bigdl_type, mean_r, mean_g, mean_b, std_r, std_g, std_b)
+    def __init__(self, mean_r, mean_g, mean_b, std_r=1.0,
+                 std_g=1.0, std_b=1.0, bigdl_type="float"):
+        super(ImageChannelNormalize, self).__init__(bigdl_type, mean_r, mean_g,
+                                                    mean_b, std_r, std_g, std_b)
 
 
 class ImageMatToTensor(ImagePreprocessing):
@@ -146,11 +149,11 @@ class ImageColorJitter(ImagePreprocessing):
                  shuffle=False,
                  bigdl_type="float"):
         super(ImageColorJitter, self).__init__(bigdl_type,
-            brightness_prob, brightness_delta,
-            contrast_prob, contrast_lower, contrast_upper,
-            hue_prob, hue_delta,
-            saturation_prob, saturation_lower, saturation_upper,
-            random_order_prob, shuffle)
+                                               brightness_prob, brightness_delta,
+                                               contrast_prob, contrast_lower, contrast_upper,
+                                               hue_prob, hue_delta,
+                                               saturation_prob, saturation_lower, saturation_upper,
+                                               random_order_prob, shuffle)
 
 
 class ImageAspectScale(ImagePreprocessing):
@@ -170,8 +173,8 @@ class ImageAspectScale(ImagePreprocessing):
                  resize_mode=1, use_scale_factor=True, min_scale=-1.0,
                  bigdl_type="float"):
         super(ImageAspectScale, self).__init__(bigdl_type,
-                                   min_size, scale_multiple_of, max_size,
-                                   resize_mode, use_scale_factor, min_scale)
+                                               min_size, scale_multiple_of, max_size,
+                                               resize_mode, use_scale_factor, min_scale)
 
 
 class ImageRandomAspectScale(ImagePreprocessing):
@@ -183,7 +186,7 @@ class ImageRandomAspectScale(ImagePreprocessing):
     """
     def __init__(self, scales, scale_multiple_of=1, max_size=1000, bigdl_type="float"):
         super(ImageRandomAspectScale, self).__init__(bigdl_type,
-                                   scales, scale_multiple_of, max_size)
+                                                     scales, scale_multiple_of, max_size)
 
 
 class ImagePixelNormalize(ImagePreprocessing):
@@ -209,7 +212,7 @@ class ImageRandomCrop(ImagePreprocessing):
 
     def __init__(self, crop_width, crop_height, is_clip=True, bigdl_type="float"):
         super(ImageRandomCrop, self).__init__(bigdl_type,
-                                   crop_width, crop_height, is_clip)
+                                              crop_width, crop_height, is_clip)
 
 
 class ImageCenterCrop(ImagePreprocessing):
@@ -223,7 +226,7 @@ class ImageCenterCrop(ImagePreprocessing):
 
     def __init__(self, crop_width, crop_height, is_clip=True, bigdl_type="float"):
         super(ImageCenterCrop, self).__init__(bigdl_type,
-                                   crop_width, crop_height, is_clip)
+                                              crop_width, crop_height, is_clip)
 
 
 class ImageFixedCrop(ImagePreprocessing):
@@ -240,7 +243,7 @@ class ImageFixedCrop(ImagePreprocessing):
 
     def __init__(self, x1, y1, x2, y2, normalized=True, is_clip=True, bigdl_type="float"):
         super(ImageFixedCrop, self).__init__(bigdl_type,
-                                   x1, y1, x2, y2, normalized, is_clip)
+                                             x1, y1, x2, y2, normalized, is_clip)
 
 
 class ImageExpand(ImagePreprocessing):
@@ -258,7 +261,7 @@ class ImageExpand(ImagePreprocessing):
                  min_expand_ratio=1.0,
                  max_expand_ratio=4.0, bigdl_type="float"):
         super(ImageExpand, self).__init__(bigdl_type, means_r, means_g, means_b,
-                                   min_expand_ratio, max_expand_ratio)
+                                          min_expand_ratio, max_expand_ratio)
 
 
 class ImageFiller(ImagePreprocessing):
@@ -272,12 +275,8 @@ class ImageFiller(ImagePreprocessing):
     """
 
     def __init__(self, start_x, start_y, end_x, end_y, value=255, bigdl_type="float"):
-        super(ImageFiller, self).__init__(bigdl_type,
-                                   start_x,
-                                   start_y,
-                                   end_x,
-                                   end_y,
-                                   value)
+        super(ImageFiller, self).__init__(bigdl_type, start_x, start_y,
+                                          end_x, end_y,value)
 
 
 class ImageHFlip(ImagePreprocessing):
