@@ -94,9 +94,9 @@ private[models] object ObjectDetectionConfig {
 
   def preprocessSsd(resolution: Int, meansRGB: (Float, Float, Float),
     scale: Float): Preprocessing[ImageFeature, ImageFeature] = {
-    Resize(resolution, resolution) ->
-      ChannelNormalize(meansRGB._1, meansRGB._2, meansRGB._3, scale, scale, scale) ->
-      MatToTensor() -> ImageSetToSample()
+    ImageResize(resolution, resolution) ->
+      ImageChannelNormalize(meansRGB._1, meansRGB._2, meansRGB._3, scale, scale, scale) ->
+      ImageMatToTensor() -> ImageSetToSample()
   }
 
   def preprocessSsdMobilenet(resolution: Int, dataset: String, version: String)
@@ -111,9 +111,9 @@ private[models] object ObjectDetectionConfig {
 
   def preprocessFrcnn(resolution: Int, scaleMultipleOf: Int):
     Preprocessing[ImageFeature, ImageFeature] = {
-    AspectScale(resolution, scaleMultipleOf) ->
-      ChannelNormalize(122.7717f, 115.9465f, 102.9801f) ->
-      MatToTensor() -> ImInfo() -> ImageSetToSample(Array(ImageFeature.imageTensor, "ImInfo"))
+    ImageAspectScale(resolution, scaleMultipleOf) ->
+      ImageChannelNormalize(122.7717f, 115.9465f, 102.9801f) ->
+      ImageMatToTensor() -> ImInfo() -> ImageSetToSample(Array(ImageFeature.imageTensor, "ImInfo"))
   }
 
   def preprocessFrcnnVgg(dataset: String, version: String):

@@ -72,7 +72,7 @@ class Test_Image_Set():
         assert image_set.is_distributed() is True
 
     def test_image_set_transform(self):
-        transformer = MatToTensor()
+        transformer = ImageMatToTensor()
         image_set = ImageSet.read(self.image_path)
         transformed = image_set.transform(transformer)
         transformed.get_image()
