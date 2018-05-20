@@ -16,14 +16,14 @@
 package com.intel.analytics.zoo.feature
 
 import com.intel.analytics.zoo.feature.common.{BigDLAdapter, Preprocessing}
-import com.intel.analytics.zoo.feature.image.Resize
+import com.intel.analytics.zoo.feature.image.ImageResize
 import org.scalatest.{BeforeAndAfter, FlatSpec, Matchers}
 
 
 class CommonSpec extends FlatSpec with Matchers with BeforeAndAfter {
 
   "BigDLAdapter" should "adapt BigDL Transformer" in {
-    val newResize = BigDLAdapter(Resize(1, 1))
+    val newResize = BigDLAdapter(ImageResize(1, 1))
     assert(newResize.isInstanceOf[Preprocessing[_, _]])
   }
 }
