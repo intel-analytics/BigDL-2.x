@@ -24,7 +24,7 @@ import com.intel.analytics.zoo.feature.common.{ImageFeatureToTensor, RowToImageF
 import com.intel.analytics.zoo.pipeline.api.keras.layers._
 import com.intel.analytics.zoo.pipeline.api.keras.models.Model
 import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric.NumericFloat
-import com.intel.analytics.zoo.feature.image.{CenterCrop, ChannelNormalize, MatToTensor, Resize}
+import com.intel.analytics.zoo.feature.image.{ImageCenterCrop, ImageChannelNormalize, ImageMatToTensor, ImageResize}
 import com.intel.analytics.zoo.pipeline.api.Net
 import com.intel.analytics.zoo.pipeline.nnframes.{NNClassifier, NNClassifierModel, NNImageReader}
 import org.apache.spark.ml.Pipeline
@@ -74,10 +74,10 @@ object TransferLearning {
 
       val (trainDf, valDf) = getImageData(param.dataPath, sc)
 
-      val featureTransformer = RowToImageFeature() -> Resize(256, 256) ->
-                                   CenterCrop(224, 224) ->
-                                   ChannelNormalize(123, 117, 104) ->
-                                   MatToTensor() ->
+      val featureTransformer = RowToImageFeature() -> ImageResize(256, 256) ->
+                                   ImageCenterCrop(224, 224) ->
+                                   ImageChannelNormalize(123, 117, 104) ->
+                                   ImageMatToTensor() ->
                                    ImageFeatureToTensor()
 
 
