@@ -45,7 +45,8 @@ More concrete examples are available in package `com.intel.analytics.zoo.example
    will extract the data from feature and label columns (only Scalar, Array[_] or Vector data
    type are supported) and convert each feature/label to Tensor according to the specified Tensor
    size.
-3. `NNEstimator(model, criterion, featurePreprocessing: Preprocessing[F, Tensor[T]], laeblPreprocessing: Preprocessing[F, Tensor[T]])`
+3. `NNEstimator(model, criterion, featurePreprocessing: Preprocessing[F, Tensor[T]],
+labelPreprocessing: Preprocessing[F, Tensor[T]])`
 
    Takes model, criterion, featurePreprocessing and labelPreprocessing.  `NNEstimator`
    will extract the data from feature and label columns and convert each feature/label to Tensor
@@ -125,17 +126,17 @@ and use it as a transformer in your Spark ML pipeline to predict the results for
 
 `NNModel` can be created with various parameters for different scenarios.
 
-1. NNModel(model)
+1. `NNModel(model)`
 
    Takes only model and use `SeqToTensor` as feature Preprocessing. `NNModel` will extract the
    data from feature column (only Scalar, Array[_] or Vector data type are supported) and
    convert each feature to 1-dimension Tensor. The tensors will be sent to model for inference.
-2. NNModel(model, featureSize: Array[Int])
+2. `NNModel(model, featureSize: Array[Int])`
 
    Takes model and featureSize(Array of Int). `NNModel` will extract the data from feature
    column (only Scalar, Array[_] or Vector data type are supported) and convert each feature
    to Tensor according to the specified Tensor size.
-3. NNModel(model, featurePreprocessing: Preprocessing[F, Tensor[T]])
+3. `NNModel(model, featurePreprocessing: Preprocessing[F, Tensor[T]])`
 
    Takes model and featurePreprocessing. `NNModel` will extract the data from feature column
    and convert each feature to Tensor with the featurePreprocessing. This constructor provides
@@ -261,12 +262,12 @@ Both label and prediction column will have the datatype of Double.
    Takes only model and use `SeqToTensor` as feature Preprocessing. `NNClassifierModel` will
    extract the data from feature column (only Scalar, Array[_] or Vector data type are supported)
    and convert each feature to 1-dimension Tensor. The tensors will be sent to model for inference.
-2. NNClassifierModel(model, featureSize: Array[Int])
+2. `NNClassifierModel(model, featureSize: Array[Int])`
 
    Takes model and featureSize(Array of Int). `NNClassifierModel` will extract the data from feature
    column (only Scalar, Array[_] or Vector data type are supported) and convert each feature
    to Tensor according to the specified Tensor size.
-3. NNClassifierModel(model, featurePreprocessing: Preprocessing[F, Tensor[T]])
+3. `NNClassifierModel(model, featurePreprocessing: Preprocessing[F, Tensor[T]])`
 
    Takes model and featurePreprocessing. `NNClassifierModel` will extract the data from feature
    column and convert each feature to Tensor with the featurePreprocessing. This constructor provides
@@ -280,8 +281,9 @@ Sample according to user-specified Preprocessing.
 
 ## Hyperparameter setting
 
-Prior to the commencement of the training process, you can modify the batch size, the epoch number of your
-training, and learning rate to meet your goal or NNEstimator/NNClassifier will use the default value.
+Prior to the commencement of the training process, you can modify the optimization algorithm, batch 
+size, the epoch number of your training, and learning rate to meet your goal or
+`NNEstimator`/`NNClassifier` will use the default value.
 
 Continue the codes above, NNEstimator and NNClassifier can be set in the same way.
 
@@ -289,17 +291,17 @@ Continue the codes above, NNEstimator and NNClassifier can be set in the same wa
 
 ```scala
 //for esitmator
-estimator.setBatchSize(4).setMaxEpoch(10).setLearningRate(0.01)
+estimator.setBatchSize(4).setMaxEpoch(10).setLearningRate(0.01).setOptimMethod(new Adam())
 //for classifier
-classifier.setBatchSize(4).setMaxEpoch(10).setLearningRate(0.01)
+classifier.setBatchSize(4).setMaxEpoch(10).setLearningRate(0.01).setOptimMethod(new Adam())
 ```
 **Python:**
 
 ```python
 # for esitmator
-estimator.setBatchSize(4).setMaxEpoch(10).setLearningRate(0.01)
+estimator.setBatchSize(4).setMaxEpoch(10).setLearningRate(0.01).setOptimMethod(Adam())
 # for classifier
-classifier.setBatchSize(4).setMaxEpoch(10).setLearningRate(0.01)
+classifier.setBatchSize(4).setMaxEpoch(10).setLearningRate(0.01).setOptimMethod(Adam())
 
 ```
 
@@ -324,6 +326,11 @@ val nnClassifierModel = classifier.fit(df)
 # get a NNClassifierModel
 nnClassifierModel = classifier.fit(df)
 ```
+User may also set validation DataFrame and validation frequency through `setValidation` method.
+Train summay and validation summary can also be configured to log the training process for
+visualization in Tensorboard.
+
+
 ## Make prediction on chosen data
 
 Since `NNModel`/`NNClassifierModel` inherits from Spark's `Transformer` abstract class, simply call 
