@@ -13,7 +13,7 @@ Analytics Zoo makes it easy to build deep learning application on Spark and BigD
   - [Object dtection API](#object-detection-api): high-level API and pretrained models (e.g., SSD and Faster-RCNN) for *object detection*
   - [Image classification API](#image-classification-api): high-level API and pretrained models (e.g., VGG, Inception, ResNet, MobileNet, etc.) for *image classification*
   - [Text classification API](#text-classification-api): high-level API and pre-defined models (using CNN, LSTM, etc.) for *text classification*
-  - [Recommedation API](#reccomendation-api): high-level API and pre-defined models (e.g., Neural Collaborative Filtering, Wide and Deep Learning, etc.) for *recommedation*
+  - [Recommedation API](#recommendation-api): high-level API and pre-defined models (e.g., Neural Collaborative Filtering, Wide and Deep Learning, etc.) for *recommedation*
   
 - [Reference use cases](#reference-use-cases): a collection of end-to-end *reference use cases* (e.g., anomaly detection, sentiment analysis, fraud detection, image augmentation, object detection, variational autoencoder, etc.)
 
@@ -154,8 +154,8 @@ Using *Analytics Zoo Image Classification API* (including a set of pretrained de
 ### Text classification API
 *Analytics Zoo Text Classification API* provides a set of pre-defined models (using CNN, LSTM, etc.) for text classifications.
 
-### Reccomendation API
-*Analytics Zoo Reccomendation API* provides a set of pre-defined models (such as Neural Collaborative Filtering, Wide and Deep Learning, etc.) for receommendations.
+### Recommendation API
+*Analytics Zoo Recommendation API* provides a set of pre-defined models (such as Neural Collaborative Filtering, Wide and Deep Learning, etc.) for receommendations.
 
 ## Reference use cases
 Analytics Zoo provides a collection of end-to-end reference use cases, including *anomaly detection (for time series data)*, *sentiment analysis*, *fraud detection*, *image augmentation*, *object detection*, *variational autoencoder*, etc.
