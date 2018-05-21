@@ -1,6 +1,6 @@
 # Analytics Zoo Text Classification API
 
-Analytics Zoo provides a convenient API to create a model with different encoders that can be used for classifying texts. This model could be fed into NNFrames and BigDL Optimizer directly for training.
+Analytics Zoo provides a set of pre-defined models that can be used for classifying texts with different encoders. This model could be fed into NNFrames and BigDL Optimizer directly for training.
 
 ### Scala API
 To create a `TextClassifier` model in Scala:

@@ -59,8 +59,8 @@ case class ColumnFeatureInfo(wideBaseCols: Array[String] = Array[String](),
 /**
  * The Wide and Deep model used for recommendation.
  *
- * @param modelType      String, "wide", "deep", "wide_n_deep" are supported.
- *                       Default is 'wide_n_deep'.
+ * @param modelType      String. "wide", "deep", "wide_n_deep" are supported.
+ *                       Default is "wide_n_deep".
  * @param numClasses     The number of classes. Positive integer.
  * @param wideBaseDims   Dimensions of wideBaseCols. The dimensions of the data in wideBaseCols
  *                       should be within the range of wideBaseDims.
@@ -72,7 +72,7 @@ case class ColumnFeatureInfo(wideBaseCols: Array[String] = Array[String](),
  *                       in embedCols should be within the range of embedInDims.
  * @param embedOutDims   The dimensions of embeddings.
  * @param continuousCols Data of continuousCols is treated as continuous values for the deep model.
- * @param hiddenLayers   Units hiddenLayers for the deep model. Array of positive integers.
+ * @param hiddenLayers   Units of hidden layers for the deep model. Array of positive integers.
  *                       Default is Array(40, 20, 10).
  * @tparam T Numeric type of parameter(e.g. weight, bias). Only support float/double now.
  */
@@ -164,11 +164,11 @@ object WideAndDeep {
   /**
    * The factory method to create a WideAndDeep instance.
    *
-   * @param modelType String, "wide", "deep", "wide_n_deep" are supported.
-   *                  Default is 'wide_n_deep'.
+   * @param modelType String. "wide", "deep", "wide_n_deep" are supported.
+   *                  Default is "wide_n_deep".
    * @param numClasses The number of classes. Positive integer.
    * @param columnInfo An instance of ColumnFeatureInfo.
-   * @param hiddenLayers Units hiddenLayers for the deep model. Array of positive integers.
+   * @param hiddenLayers Units of hidden layers for the deep model. Array of positive integers.
    *                     Default is Array(40, 20, 10).
    */
   def apply[@specialized(Float, Double) T: ClassTag](
