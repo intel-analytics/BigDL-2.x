@@ -31,7 +31,7 @@ WideAndDeep(class_num, column_info, model_type="wide_n_deep", hidden_layers=(40,
 ```
 
 * `class_num`: The number of classes. Positive int.
-* `column_info`: An instance of [ColumnFeatureInfo]().
+* `column_info`: An instance of [ColumnFeatureInfo](#columnfeatureinfo).
 * `model_type`: String. 'wide', 'deep' and 'wide_n_deep' are supported. Default is 'wide_n_deep'.
 * `hidden_layers`: Units of hidden layers for the deep model. Tuple of positive int. Default is (40, 20, 10).
 
@@ -39,22 +39,23 @@ See [here](https://github.com/intel-analytics/analytics-zoo/blob/master/apps/rec
 
 
 ### ColumnFeatureInfo
-An instance of ColumnFeatureInfo contains the same data information shared by the WideAndDeep model and its feature generation part.
+An instance of `ColumnFeatureInfo` contains the same data information shared by the `WideAndDeep` model and its feature generation part.
 
-The information for feature engineering and the model include the following:
+You can choose to include the following information for feature engineering and the `WideAndDeep` model:
 
-* `wideBaseCols`: Data of *wideBaseCols* together with *wideCrossCols* will be fed into the wide model. Array(Scala) or List(Python) of String. Default is empty.
-* `wideBaseDims`: Dimensions of *wideBaseCols*. The dimensions of the data in wide_base_cols should be within the range of wide_base_dims. Array(Scala) or List(Python) of integers. Default is empty.
-* `wideCrossCols`: Data of *wideCrossCols* will be fed into the wide model. Array(Scala) or List(Python) of String. Default is empty.
-* `wideCrossDims`: Dimensions of *wideCrossCols*. The dimensions of the data in *wideCrossCols* should be within the range of *wideCrossDims*. Array(Scala) or List(Python) of integers. Default is empty.
-* `indicatorCols`: Data of *indicatorCols* will be fed into the deep model as multi-hot vectors. Array(Scala) or List(Python) of String. Default is empty.
-* `indicatorDims`: Dimensions of *indicatorCols*. The dimensions of the data in *indicatorCols* should be within the range of *indicatorDims*. Array(Scala) or List(Python) of integers. Default is empty.
-* `embedCols`: Data of *embedCols* will be fed into the deep model as embeddings. Array(Scala) or List(Python) of String. Default is empty.
-* `embedInDims`: Input dimension of the data in *embedCols*. The dimensions of the data in *embedCols* should be within the range of *embedInDims*. Array(Scala) or List(Python) of integers. Default is empty.
-* `embedOutDims`: The dimensions of embeddings. Array(Scala) or List(Python) of integers. Default is empty.
-* `continuousCols`: Data of *continuousCols* is treated as continuous values for the deep model. Array(Scala) or List(Python) of String. Default is empty.
+* `wideBaseCols`: Data of *wideBaseCols* together with *wideCrossCols* will be fed into the wide model.
+* `wideBaseDims`: Dimensions of *wideBaseCols*. The dimensions of the data in *wideBaseCols* should be within the range of *wideBaseDims*.
+* `wideCrossCols`: Data of *wideCrossCols* will be fed into the wide model.
+* `wideCrossDims`: Dimensions of *wideCrossCols*. The dimensions of the data in *wideCrossCols* should be within the range of *wideCrossDims*.
+* `indicatorCols`: Data of *indicatorCols* will be fed into the deep model as multi-hot vectors. 
+* `indicatorDims`: Dimensions of *indicatorCols*. The dimensions of the data in *indicatorCols* should be within the range of *indicatorDims*.
+* `embedCols`: Data of *embedCols* will be fed into the deep model as embeddings.
+* `embedInDims`: Input dimension of the data in *embedCols*. The dimensions of the data in *embedCols* should be within the range of *embedInDims*.
+* `embedOutDims`: The dimensions of embeddings.
+* `continuousCols`: Data of *continuousCols* is treated as continuous values for the deep model.
 * `label`: The name of the 'label' column. String. Default is "label".
 
+__Remark:__ Fields that involve `Cols` should be an array of String (Scala) or a list of String (Python). Fields that involve `Dims` should be an array of integers (Scala) or a list of integers (Python). If any field not specified, it will by default to be an empty array or list.
 
 ---
 ## Neural network-based Collaborative Filtering
