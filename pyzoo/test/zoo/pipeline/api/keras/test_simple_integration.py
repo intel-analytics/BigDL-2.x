@@ -155,7 +155,7 @@ class TestSimpleIntegration(ZooTestCase):
         ImageConfigure(
             pre_processor=ImageResize(224, 224))
         ImageConfigure(
-            pre_processor=ChainedPreprocessing([ImageResize(224, 224),ImageResize(224, 224)]))
+            pre_processor=ChainedPreprocessing([ImageResize(224, 224), ImageResize(224, 224)]))
 
 
 if __name__ == "__main__":

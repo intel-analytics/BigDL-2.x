@@ -18,7 +18,6 @@ from bigdl.util.common import *
 import warnings
 
 
-
 def get_nncontext(conf=None):
     """
     Gets a SparkContext with optimized configuration for BigDL performance. The method
@@ -39,6 +38,7 @@ def get_nncontext(conf=None):
     init_engine()
     return sc
 
+
 def getOrCreateSparkContext(conf=None, appName=None):
     """
     Get the current active spark context and create one if no active instance
@@ -53,6 +53,7 @@ def getOrCreateSparkContext(conf=None, appName=None):
             return SparkContext.getOrCreate(spark_conf)
         else:
             return SparkContext.getOrCreate()
+
 
 def check_version():
     sc = get_spark_context()
