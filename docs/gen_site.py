@@ -70,7 +70,7 @@ run_cmd(['mkdocs', '--version'],
 if not (local_doc and os.path.isdir("/tmp/zoo-doc")):
     run_cmd(['rm', '-rf', '/tmp/zoo-doc'],
         'rm doc repo error')
-    run_cmd(['git', 'clone', 'https://github.com/simanw304/analytics-zoo.github.io.git', '/tmp/zoo-doc'],
+    run_cmd(['git', 'clone', 'https://github.com/analytics-zoo/analytics-zoo.github.io.git', '/tmp/zoo-doc'],
         'git clone doc repo error')
 
 # refresh theme folder
@@ -98,8 +98,6 @@ run_cmd(['cp', '/tmp/zoo-doc/img/*', '{}/site/img'.format(dir_name)],
     'mv theme folder error', s=True)
 run_cmd(['cp', '/tmp/zoo-doc/version-list', '{}/site'.format(dir_name)],
     'mv theme folder error', s=True)
-run_cmd(['cp', '-rf', '/tmp/zoo-doc/1.0.0', '{}/site'.format(dir_name)],
-    'mv branch version error', s=True)
 
 if scaladocs:
     print 'build scala doc'

@@ -67,8 +67,6 @@ def log(a):
 def epsilon():
     return Variable.from_jvalue(callBigDlFunc("float", "epsilon"))
 
-def dot(a, b):
-    return Variable.from_jvalue(callBigDlFunc("float", "dot", a, b))
 
 class Variable(ZooKerasCreator):
     def __init__(self, input_shape, node=None, jvalue=None):
