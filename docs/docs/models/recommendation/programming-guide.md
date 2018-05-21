@@ -82,7 +82,7 @@ See [here](https://github.com/intel-analytics/analytics-zoo/blob/master/apps/rec
 ## Prediction and Recommendation
 
 ### Predict for user-item pairs
-Give prediction for each pair of user and item. Return RDD of [UserItemPrediction]().
+Give prediction for each pair of user and item. Return RDD of [UserItemPrediction](#useritemprediction).
 
 **Scala**
 ```scala
@@ -100,7 +100,7 @@ Parameters:
 
 
 ### Recommend for users
-Recommend a number of items for each user. Return RDD of [UserItemPrediction]().
+Recommend a number of items for each user. Return RDD of [UserItemPrediction](#useritemprediction).
 
 **Scala**
 ```scala
@@ -112,9 +112,14 @@ recommendForUser(featureRdd, maxItems)
 recommend_for_user(feature_rdd, max_items)
 ```
 
+Parameters:
+
+* `featureRdd`: RDD of [UserItemFeature](#useritemfeature).
+* `maxItems`: The number of items to be recommended to each user. Positive integer.
+
 
 ### Recommend for items
-Recommend a number of users for each item. Return RDD of [UserItemPrediction]().
+Recommend a number of users for each item. Return RDD of [UserItemPrediction](#useritemprediction).
 
 **Scala**
 ```scala
@@ -126,14 +131,20 @@ recommendForItem(featureRdd, maxUsers)
 recommend_for_item(feature_rdd, max_users)
 ```
 
+Parameters:
+
+* `featureRdd`: RDD of [UserItemFeature](#useritemfeature).
+* `maxUsers`: The number of users to be recommended to each item. Positive integer.
+
+
 ### UserItemFeature
-Represent records of user-item features.
+Represent records of user-item with features.
 
 Each record should contain the following fields:
 
 * `userId`: Positive integer.
 * `item_id`: Positive integer.
-* `sample`: [Sample](https://bigdl-project.github.io/0.5.0/#APIGuide/Data/#sample) which consists of feature(s) and label(s).
+* `sample`: [Sample](https://bigdl-project.github.io/master/#APIGuide/Data/#sample) which consists of feature(s) and label(s).
 
 **Scala**
 ```scala
@@ -145,4 +156,22 @@ UserItemFeature(userId, itemId, sample)
 UserItemFeature(user_id, item_id, sample)
 ```
 
+
 ### UserItemPrediction
+Represent the prediction results of user-item pairs.
+
+Each prediction record will contain the following information:
+* `userId`: Positive integer.
+* `itemId`: Positive integer.
+* `prediction`: The prediction (rating) for the user on the item.
+* `probability`: The probability for the prediction.
+
+**Scala**
+```scala
+UserItemPrediction(userId, itemId, prediction, probability)
+```
+
+**Python**
+```python
+UserItemPrediction(user_id, item_id, prediction, probability)
+```
