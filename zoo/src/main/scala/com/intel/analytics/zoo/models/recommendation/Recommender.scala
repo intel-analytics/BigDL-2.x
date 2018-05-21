@@ -37,7 +37,7 @@ abstract class Recommender[T: ClassTag](implicit ev: TensorNumeric[T])
   extends ZooModel[Tensor[T], Tensor[T], T] {
 
   /**
-   * Recommend a number of items for each user given a rdd of user item pair features
+   * Recommend a number of items for each user given a rdd of user item pair features.
    *
    * @param featureRdd RDD of user item pair feature.
    * @param maxItems   Number of items to be recommended to each user. Positive integer.
@@ -58,7 +58,7 @@ abstract class Recommender[T: ClassTag](implicit ev: TensorNumeric[T])
   }
 
   /**
-   * Recommend a number of users for each item given a rdd of user item pair features
+   * Recommend a number of users for each item given a rdd of user item pair features.
    *
    * @param featureRdd RDD of user item pair feature.
    * @param maxUsers   Number of users to be recommended to each item. Positive integer.
@@ -78,7 +78,7 @@ abstract class Recommender[T: ClassTag](implicit ev: TensorNumeric[T])
   }
 
   /**
-   * Predict for and user item pair
+   * Predict for user-item pairs.
    *
    * @param featureRdd RDD of user item pair feature.
    * @return RDD of user item pair prediction.
