@@ -34,7 +34,7 @@ class UserItemFeature(object):
     Each record should contain the following fields:
     user_id: Positive int.
     item_id: Positive int.
-    sample: Sample with consists of feature(s) and label(s).
+    sample: Sample which consists of feature(s) and label(s).
     """
     def __init__(self, user_id, item_id, sample, bigdl_type="float"):
         self.user_id = int(user_id)

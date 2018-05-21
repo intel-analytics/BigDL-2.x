@@ -6,6 +6,7 @@ Recommenders can handle models with either explict or implicit feedback, given c
 
 We also provide three user-friendly APIs to predict user item pairs, and recommend items (users) for users (items). See [here](#prediction-and-recommendation) for more details.
 
+---
 ## Wide and Deep
 Wide and Deep Learning Model, proposed by [Google, 2016](https://arxiv.org/pdf/1606.07792.pdf), is a DNN-Linear mixed model, which combines the strength of memorization and generalization. It's useful for generic large-scale regression and classification problems with sparse input features (e.g., categorical features with a large number of possible feature values). It has been used for Google App Store for their app recommendation.
 
@@ -37,6 +38,7 @@ WideAndDeep(class_num, column_info, model_type="wide_n_deep", hidden_layers=(40,
 See [here](https://github.com/intel-analytics/analytics-zoo/blob/master/apps/recommendation/wide_n_deep.ipynb) for the Python notebook that trains the `WideAndDeep` model on MovieLens 1M dataset and uses the model to do prediction and recommendation.
 
 
+---
 ## Neural network-based Collaborative Filtering
 NCF ([He, 2015](https://www.comp.nus.edu.sg/~xiangnan/papers/ncf.pdf)) leverages a multi-layer perceptrons to learn the user–item interaction function. At the mean time, NCF can express and generalize matrix factorization under its framework. `includeMF`(Boolean) is provided for users to build a `NeuralCF` model with or without matrix factorization. 
 
@@ -76,6 +78,7 @@ NeuralCF(user_count, item_count, class_num, user_embed=20, item_embed=20, hidden
 See [here](https://github.com/intel-analytics/analytics-zoo/blob/master/apps/recommendation/ncf-explicit-feedback.ipynb) for the Python notebook that trains the `NeuralCF` model on MovieLens 1M dataset and uses the model to do prediction and recommendation.
 
 
+---
 ## Prediction and Recommendation
 
 ### Predict for user-item pairs
@@ -93,7 +96,7 @@ predict_user_item_pair(feature_rdd)
 
 Parameters:
 
-* `featureRdd`: RDD of [UserItemFeature]().
+* `featureRdd`: RDD of [UserItemFeature](#useritemfeature).
 
 
 ### Recommend for users
@@ -123,3 +126,23 @@ recommendForItem(featureRdd, maxUsers)
 recommend_for_item(feature_rdd, max_users)
 ```
 
+### UserItemFeature
+Represent records of user-item features.
+
+Each record should contain the following fields:
+
+* `userId`: Positive integer.
+* `item_id`: Positive integer.
+* `sample`: [Sample](https://bigdl-project.github.io/0.5.0/#APIGuide/Data/#sample) which consists of feature(s) and label(s).
+
+**Scala**
+```scala
+UserItemFeature(userId, itemId, sample)
+```
+
+**Python**
+```python
+UserItemFeature(user_id, item_id, sample)
+```
+
+### UserItemPrediction
