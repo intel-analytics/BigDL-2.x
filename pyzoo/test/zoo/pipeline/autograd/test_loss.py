@@ -73,7 +73,7 @@ class TestLoss(ZooTestCase):
         model.add(Dense(1, input_shape=(2, )))
         model.compile(optimizer=SGD(learningrate=1e-2),
                       loss=mean_absolute_error,
-                      metrics=None)
+                      metrics=["auc"])
         model.fit(x=X_,
                   y=Y_,
                   batch_size=32,
