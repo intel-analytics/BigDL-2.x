@@ -16,23 +16,25 @@
 package com.intel.analytics.zoo.feature.image
 
 import com.intel.analytics.bigdl.transform.vision.image.ImageFeature
+import com.intel.analytics.bigdl.transform.vision.image.{MatToFloats => BMatToFloats}
 import com.intel.analytics.zoo.feature.common.{ImageProcessing}
-import com.intel.analytics.bigdl.transform.vision.image.augmentation
 
-/**
- * Adjust image hue
- * @param deltaLow hue parameter: low bound
- * @param deltaHigh hue parameter: high bound
- */
-class Hue(deltaLow: Double, deltaHigh: Double) extends ImageProcessing {
+import scala.reflect.ClassTag
 
-  private val internalCrop = augmentation.Hue(deltaLow, deltaHigh)
+class ImageMatToFloats(validHeight: Int, validWidth: Int, validChannels: Int,
+                       outKey: String = ImageFeature.floats, shareBuffer: Boolean = true)
+  extends ImageProcessing {
+
+  private val internalResize =
+    BMatToFloats(validHeight, validWidth, validChannels, outKey, shareBuffer)
   override def apply(prev: Iterator[ImageFeature]): Iterator[ImageFeature] = {
-    internalCrop.apply(prev)
+    internalResize.apply(prev)
   }
 }
 
-object Hue {
-  def apply(deltaLow: Double, deltaHigh: Double): Hue =
-    new Hue(deltaLow, deltaHigh)
+object ImageMatToFloats {
+
+  def apply[T: ClassTag](validHeight: Int = 300, validWidth: Int = 300, validChannels: Int = 3,
+    outKey: String = ImageFeature.floats, shareBuffer: Boolean = true): ImageMatToFloats =
+    new ImageMatToFloats(validHeight, validWidth, validChannels, outKey, shareBuffer)
 }

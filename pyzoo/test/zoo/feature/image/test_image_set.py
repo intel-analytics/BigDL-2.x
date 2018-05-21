@@ -18,10 +18,10 @@ import pytest
 import os
 import cv2
 from bigdl.util.common import *
-from bigdl.transform.vision.image import MatToTensor
 
 from zoo.common.nncontext import *
 from zoo.feature.image.imageset import *
+from zoo.feature.image.imagePreprocessing import *
 
 
 class Test_Image_Set():
@@ -72,7 +72,7 @@ class Test_Image_Set():
         assert image_set.is_distributed() is True
 
     def test_image_set_transform(self):
-        transformer = MatToTensor()
+        transformer = ImageMatToTensor()
         image_set = ImageSet.read(self.image_path)
         transformed = image_set.transform(transformer)
         transformed.get_image()

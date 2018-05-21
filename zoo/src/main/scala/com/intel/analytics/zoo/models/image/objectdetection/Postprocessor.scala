@@ -18,7 +18,8 @@ package com.intel.analytics.zoo.models.image.objectdetection
 
 import com.intel.analytics.bigdl.tensor.Tensor
 import com.intel.analytics.bigdl.transform.vision.image.util.BboxUtil
-import com.intel.analytics.bigdl.transform.vision.image.{FeatureTransformer, ImageFeature}
+import com.intel.analytics.bigdl.transform.vision.image.{ImageFeature}
+import com.intel.analytics.zoo.feature.common.ImageProcessing
 
 /**
  * If the detection is normalized, for example, ssd detected bounding box is in [0, 1],
@@ -26,7 +27,7 @@ import com.intel.analytics.bigdl.transform.vision.image.{FeatureTransformer, Ima
  * Note that in this transformer, the tensor from model output will be decoded,
  * just like `DecodeOutput`
  */
-case class ScaleDetection() extends FeatureTransformer {
+case class ScaleDetection() extends ImageProcessing {
   override def transformMat(imageFeature: ImageFeature): Unit = {
     val detection = imageFeature[Tensor[Float]](ImageFeature.predict)
     // Scale the bbox according to the original image size.
@@ -64,7 +65,7 @@ case class ScaleDetection() extends FeatureTransformer {
  * 3, 0.3, 20, 10, 40, 70
  * ```
  */
-case class DecodeOutput() extends FeatureTransformer {
+case class DecodeOutput() extends ImageProcessing {
   override def transformMat(imageFeature: ImageFeature): Unit = {
     val detection = imageFeature[Tensor[Float]](ImageFeature.predict)
     val result = BboxUtil.decodeRois(detection)

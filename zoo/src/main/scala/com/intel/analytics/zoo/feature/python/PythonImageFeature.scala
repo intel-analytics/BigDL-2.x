@@ -21,9 +21,11 @@ import java.util.{List => JList}
 import com.intel.analytics.bigdl.python.api.{JTensor, PythonBigDL}
 import com.intel.analytics.bigdl.tensor.Tensor
 import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric
-import com.intel.analytics.bigdl.transform.vision.image.{FeatureTransformer, ImageFeature}
+import com.intel.analytics.bigdl.transform.vision.image.ImageFeature
+import com.intel.analytics.zoo.feature.common.Preprocessing
 import com.intel.analytics.zoo.feature.image._
 import org.apache.spark.api.java.{JavaRDD, JavaSparkContext}
+import org.opencv.imgproc.Imgproc
 
 import scala.collection.JavaConverters._
 import scala.reflect.ClassTag
@@ -36,8 +38,8 @@ object PythonImageFeature {
 }
 
 class PythonImageFeature[T: ClassTag](implicit ev: TensorNumeric[T]) extends PythonBigDL[T] {
-  def transformImageSet(transformer: FeatureTransformer,
-                          imageSet: ImageSet): ImageSet = {
+  def transformImageSet(transformer: Preprocessing[ImageFeature, ImageFeature],
+                      imageSet: ImageSet): ImageSet = {
     imageSet.transform(transformer)
   }
 
@@ -123,37 +125,114 @@ class PythonImageFeature[T: ClassTag](implicit ev: TensorNumeric[T]) extends Pyt
     new LocalImageSet(features.toArray)
   }
 
-
-  def createResize(resizeH: Int, resizeW: Int): Resize = {
-    Resize(resizeH, resizeW)
+  def createImageBrightness(deltaLow: Double, deltaHigh: Double): ImageBrightness = {
+    ImageBrightness(deltaLow, deltaHigh)
   }
 
-  def createImgBrightness(deltaLow: Double, deltaHigh: Double): Brightness = {
-    Brightness(deltaLow, deltaHigh)
-  }
-
-  def createImgChannelNormalizer(
+  def createImageChannelNormalizer(
                                   meanR: Double, meanG: Double, meanB: Double,
                                   stdR: Double = 1, stdG: Double = 1, stdB: Double = 1
-                                ): ChannelNormalize = {
+                                ): ImageChannelNormalize = {
 
-    ChannelNormalize(meanR.toFloat, meanG.toFloat, meanB.toFloat,
+    ImageChannelNormalize(meanR.toFloat, meanG.toFloat, meanB.toFloat,
       stdR.toFloat, stdG.toFloat, stdB.toFloat)
   }
 
-  def createMatToTensor(): MatToTensor[T] = {
-    MatToTensor()
+  def createImageMatToTensor(): ImageMatToTensor[T] = {
+    ImageMatToTensor()
   }
 
-  def createCenterCrop(cropWidth: Int, cropHeight: Int): CenterCrop = {
-    CenterCrop(cropWidth, cropHeight)
+  def createImageHue(deltaLow: Double, deltaHigh: Double): ImageHue = {
+    ImageHue(deltaLow, deltaHigh)
   }
 
-  def createImgHue(deltaLow: Double, deltaHigh: Double): Hue = {
-    Hue(deltaLow, deltaHigh)
+  def createImageSaturation(deltaLow: Double, deltaHigh: Double): ImageSaturation = {
+    ImageSaturation(deltaLow, deltaHigh)
   }
 
-  def createImgSaturation(deltaLow: Double, deltaHigh: Double): Saturation = {
-    Saturation(deltaLow, deltaHigh)
+  def createImageChannelOrder(): ImageChannelOrder = {
+    ImageChannelOrder()
+  }
+
+  def createImageColorJitter(
+                            brightnessProb: Double = 0.5, brightnessDelta: Double = 32,
+                            contrastProb: Double = 0.5,
+                            contrastLower: Double = 0.5, contrastUpper: Double = 1.5,
+                            hueProb: Double = 0.5, hueDelta: Double = 18,
+                            saturationProb: Double = 0.5,
+                            saturationLower: Double = 0.5, saturationUpper: Double = 1.5,
+                            randomOrderProb: Double = 0, shuffle: Boolean = false
+                                ): ImageColorJitter = {
+
+    ImageColorJitter(brightnessProb, brightnessDelta, contrastProb,
+      contrastLower, contrastUpper, hueProb, hueDelta, saturationProb,
+      saturationLower, saturationUpper, randomOrderProb, shuffle)
+  }
+
+  def createImageResize(resizeH: Int, resizeW: Int, resizeMode: Int = Imgproc.INTER_LINEAR,
+                      useScaleFactor: Boolean): ImageResize = {
+    ImageResize(resizeH, resizeW, resizeMode, useScaleFactor)
+  }
+
+  def createImageAspectScale(scale: Int,
+                        scaleMultipleOf: Int,
+                        maxSize: Int,
+                        resizeMode: Int = 1,
+                        useScaleFactor: Boolean = true,
+                        minScale: Double = -1): ImageAspectScale = {
+    val minS = if (minScale == -1) None else Some(minScale.toFloat)
+    ImageAspectScale(scale, scaleMultipleOf, maxSize, resizeMode, useScaleFactor, minS)
+  }
+
+  def createImageRandomAspectScale(scales: JList[Int], scaleMultipleOf: Int = 1,
+                              maxSize: Int = 1000): ImageRandomAspectScale = {
+    ImageRandomAspectScale(scales.asScala.toArray, scaleMultipleOf, maxSize)
+  }
+
+  def createImageChannelNormalize(meanR: Double, meanG: Double, meanB: Double,
+                             stdR: Double = 1, stdG: Double = 1,
+                                stdB: Double = 1): ImageChannelNormalize = {
+    ImageChannelNormalize(meanR.toFloat, meanG.toFloat, meanB.toFloat,
+      stdR.toFloat, stdG.toFloat, stdB.toFloat)
+  }
+
+  def createImagePixelNormalize(means: JList[Double]): ImagePixelNormalizer = {
+    ImagePixelNormalizer(means.asScala.toArray.map(_.toFloat))
+  }
+
+  def createImageRandomCrop(cropWidth: Int, cropHeight: Int, isClip: Boolean): ImageRandomCrop = {
+    ImageRandomCrop(cropWidth, cropHeight, isClip)
+  }
+
+  def createImageCenterCrop(cropWidth: Int, cropHeight: Int, isClip: Boolean): ImageCenterCrop = {
+    ImageCenterCrop(cropWidth, cropHeight, isClip)
+  }
+
+  def createImageFixedCrop(wStart: Double,
+                      hStart: Double, wEnd: Double, hEnd: Double, normalized: Boolean,
+                      isClip: Boolean): ImageFixedCrop = {
+    ImageFixedCrop(wStart.toFloat, hStart.toFloat, wEnd.toFloat, hEnd.toFloat, normalized, isClip)
+  }
+
+  def createImageExpand(meansR: Int = 123, meansG: Int = 117, meansB: Int = 104,
+                   minExpandRatio: Double = 1.0,
+                   maxExpandRatio: Double = 4.0): ImageExpand = {
+    ImageExpand(meansR, meansG, meansB, minExpandRatio, maxExpandRatio)
+  }
+
+  def createImageFiller(startX: Double, startY: Double, endX: Double, endY: Double,
+                   value: Int = 255): ImageFiller = {
+    ImageFiller(startX.toFloat, startY.toFloat, endX.toFloat, endY.toFloat, value)
+  }
+
+  def createImageHFlip(): ImageHFlip = {
+    ImageHFlip()
+  }
+
+  def createImageSetToSample(inputKeys: JList[String],
+                             targetKeys: JList[String],
+                             sampleKey: String): ImageSetToSample[T] = {
+    val targets = if (targetKeys == null) null else targetKeys.asScala.toArray
+    ImageSetToSample[T](inputKeys.asScala.toArray, targets, sampleKey)
   }
 }

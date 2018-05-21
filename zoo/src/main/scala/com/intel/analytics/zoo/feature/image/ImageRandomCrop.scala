@@ -18,24 +18,29 @@ package com.intel.analytics.zoo.feature.image
 import com.intel.analytics.bigdl.transform.vision.image.ImageFeature
 import com.intel.analytics.zoo.feature.common.{ImageProcessing}
 import com.intel.analytics.bigdl.transform.vision.image.augmentation
-import org.opencv.imgproc.Imgproc
 
-class Resize(
-    resizeH: Int,
-    resizeW: Int,
-    resizeMode: Int = Imgproc.INTER_LINEAR,
-    useScaleFactor: Boolean = true) extends ImageProcessing {
+/**
+ * Random crop a `cropWidth` x `cropHeight` patch from an image.
+ * The patch size should be less than the image size.
+ *
+ * @param cropWidth width after crop
+ * @param cropHeight height after crop
+ * @param isClip whether to clip the roi to image boundaries
+ */
+class ImageRandomCrop(cropWidth: Int, cropHeight: Int, isClip: Boolean = true)
+  extends ImageProcessing {
 
-  private val internalResize = augmentation.Resize(resizeH, resizeW)
+  private val internalCrop = new augmentation.RandomCrop(cropWidth, cropHeight, isClip)
   override def apply(prev: Iterator[ImageFeature]): Iterator[ImageFeature] = {
-    internalResize.apply(prev)
+    internalCrop.apply(prev)
+  }
+
+  override def transformMat(feature: ImageFeature): Unit = {
+    internalCrop.transformMat(feature)
   }
 }
 
-object Resize {
-
-  def apply(resizeH: Int, resizeW: Int,
-            resizeMode: Int = Imgproc.INTER_LINEAR, useScaleFactor: Boolean = true): Resize =
-    new Resize(resizeH, resizeW, resizeMode, useScaleFactor)
-
+object ImageRandomCrop {
+  def apply(cropWidth: Int, cropHeight: Int, isClip: Boolean = true): ImageRandomCrop =
+    new ImageRandomCrop(cropWidth, cropHeight, isClip)
 }

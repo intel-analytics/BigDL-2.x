@@ -171,11 +171,12 @@ object TextClassification {
       val trainingSplit = param.trainingSplit
       val textDataDir = s"${param.baseDir}/20news-18828/"
       require(new File(textDataDir).exists(), "Text data directory is not found in baseDir, " +
-        "you can run $ZOO_HOME/data/get_news20.sh to download 20 Newsgroup dataset")
+        "you can run $ANALYTICS_ZOO_HOME/bin/data/news20/get_news20.sh to " +
+        "download 20 Newsgroup dataset")
       val gloveDir = s"${param.baseDir}/glove.6B/"
       require(new File(gloveDir).exists(),
         "Glove word embeddings directory is not found in baseDir, " +
-        "you can run $ZOO_HOME/data/get_glove.sh to download")
+        "you can run $ANALYTICS_ZOO_HOME/bin/data/glove/get_glove.sh to download")
 
       // For large dataset, you might want to get such RDD[(String, Float)] from HDFS
       val dataRdd = sc.parallelize(loadRawData(textDataDir), param.partitionNum)

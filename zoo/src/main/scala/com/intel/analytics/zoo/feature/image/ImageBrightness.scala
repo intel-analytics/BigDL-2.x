@@ -25,15 +25,19 @@ import com.intel.analytics.bigdl.transform.vision.image.augmentation
  * @param deltaLow brightness parameter: low bound
  * @param deltaHigh brightness parameter: high bound
  */
-class Brightness(deltaLow: Double, deltaHigh: Double) extends ImageProcessing {
+class ImageBrightness(deltaLow: Double, deltaHigh: Double) extends ImageProcessing {
 
   private val internalCrop = augmentation.Brightness(deltaLow, deltaHigh)
   override def apply(prev: Iterator[ImageFeature]): Iterator[ImageFeature] = {
     internalCrop.apply(prev)
   }
+
+  override def transformMat(feature: ImageFeature): Unit = {
+    internalCrop.transformMat(feature)
+  }
 }
 
-object Brightness {
-  def apply(deltaLow: Double, deltaHigh: Double): Brightness =
-    new Brightness(deltaLow, deltaHigh)
+object ImageBrightness {
+  def apply(deltaLow: Double, deltaHigh: Double): ImageBrightness =
+    new ImageBrightness(deltaLow, deltaHigh)
 }
