@@ -1,5 +1,6 @@
 # Analytics Zoo Recommender API
-Analytics Zoo provides two Recommenders, including wide and deep(WND) model and Neural network-based Collaborative Filtering(NCF) model. This model could be fed into NNframes and BigDL Optimizer directly.
+
+Analytics Zoo provides two Recommenders, including wide and deep(WND) model and Neural network-based Collaborative Filtering(NCF) model. This model could be fed into NNFrames and BigDL Optimizer directly for training.
 Recommender can handle models with explict/implicit feedback, given corresponding features. It also provide 3 user-friendly APIs to predict user item pairs, and recommend items(users) for users(items). 
 
 ## Wide and deep
