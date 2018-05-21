@@ -14,9 +14,9 @@ fi
 # setup paths
 export PYSPARK_DRIVER_PYTHON=jupyter
 export PYSPARK_DRIVER_PYTHON_OPTS="notebook --notebook-dir=./ --ip=* --no-browser --allow-root --NotebookApp.token=''"
-export ANALYTICS_ZOO_JAR=`find ${ANALYTICS_ZOO_HOME}/dist/lib -type f -name "analytics-zoo*jar-with-dependencies.jar"`
-export ANALYTICS_ZOO_PY_ZIP=`find ${ANALYTICS_ZOO_HOME}/dist/lib -type f -name "analytics-zoo*python-api.zip"`
-export ANALYTICS_ZOO_CONF=${ANALYTICS_ZOO_HOME}/dist/conf/spark-bigdl.conf
+export ANALYTICS_ZOO_JAR=`find ${ANALYTICS_ZOO_HOME}/lib -type f -name "analytics-zoo*jar-with-dependencies.jar"`
+export ANALYTICS_ZOO_PY_ZIP=`find ${ANALYTICS_ZOO_HOME}/lib -type f -name "analytics-zoo*python-api.zip"`
+export ANALYTICS_ZOO_CONF=${ANALYTICS_ZOO_HOME}/conf/spark-analytics-zoo.conf
 export PYTHONPATH=${ANALYTICS_ZOO_PY_ZIP}:${PYTHONPATH}
 
 # Check files

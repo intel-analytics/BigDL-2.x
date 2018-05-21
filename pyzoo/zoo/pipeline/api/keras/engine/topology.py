@@ -97,17 +97,17 @@ class KerasNet(ZooKerasLayer):
                       path,
                       over_write)
 
-    def disable_gradient_clipping(self):
+    def clear_gradient_clipping(self):
         """
-        Call this if you would like to disable gradient clipping during the training process.
+        Clear gradient clipping parameters. In this case, gradient clipping will not be applied.
         In order to take effect, it needs to be called before fit.
         """
-        callBigDlFunc(self.bigdl_type, "zooDisableGradientClipping",
+        callBigDlFunc(self.bigdl_type, "zooClearGradientClipping",
                       self.value)
 
     def set_constant_gradient_clipping(self, min, max):
         """
-        Call this if you would like to set constant gradient clipping during the training process.
+        Set constant gradient clipping during the training process.
         In order to take effect, it needs to be called before fit.
 
         # Arguments
@@ -121,8 +121,7 @@ class KerasNet(ZooKerasLayer):
 
     def set_gradient_clipping_by_l2_norm(self, clip_norm):
         """
-        Call this if you would like to clip gradient to a maximum L2-Norm
-        during the training process.
+        Clip gradient to a maximum L2-Norm during the training process.
         In order to take effect, it needs to be called before fit.
 
         # Arguments
@@ -218,6 +217,21 @@ class KerasNet(ZooKerasLayer):
                 return self.predict_local(x)
             else:
                 raise TypeError("Unsupported prediction data type: %s" % type(x))
+
+    def to_model(self):
+        from zoo.pipeline.api.keras.models import Model
+        return Model.from_jvalue(callBigDlFunc(self.bigdl_type, "kerasNetToModel", self.value))
+
+    @property
+    def layers(self):
+        jlayers = callBigDlFunc(self.bigdl_type, "getSubModules", self)
+        layers = [Layer.of(jlayer) for jlayer in jlayers]
+        return layers
+
+    def flattened_layers(self, include_container=False):
+        jlayers = callBigDlFunc(self.bigdl_type, "getFlattenSubModules", self, include_container)
+        layers = [Layer.of(jlayer) for jlayer in jlayers]
+        return layers
 
 
 class Input(ZooKerasCreator, Node):

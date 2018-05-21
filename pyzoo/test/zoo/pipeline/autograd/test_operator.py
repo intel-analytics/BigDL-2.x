@@ -176,6 +176,27 @@ class TestOperator(ZooTestCase):
         result = seq.forward(np.ones([2, 3]))
         assert (result == np.ones([2, 3])).all()
 
+    def test_expose_node(self):
+        image_shape = [3, 16, 16]
+        input_shape = [2] + image_shape
+        input = Input(shape=input_shape, name="input1")
+
+        def index_select(x, dim, index):
+            t = Select(dim, index)(x.node)
+            return Variable.from_node(t)
+
+        def l1(x):
+            x1 = index_select(x, 1, 0)  # input is [B, 2, 3, 16, 16]
+            x2 = index_select(x, 1, 0)
+            return abs(x1 - x2)
+
+        output = Lambda(function=l1)(input)
+        model = Model(input, output)
+
+        mock_data = np.random.uniform(0, 1, [10] + input_shape)
+        out_data = model.forward(mock_data)
+        assert out_data.shape == (10, 3, 16, 16)
+
 
 if __name__ == "__main__":
     pytest.main([__file__])

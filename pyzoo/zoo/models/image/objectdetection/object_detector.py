@@ -17,8 +17,7 @@
 import sys
 from bigdl.util.common import JavaValue
 from bigdl.util.common import callBigDlFunc
-from bigdl.util.common import *
-from bigdl.transform.vision.image import *
+from bigdl.transform.vision.image import FeatureTransformer
 
 from zoo.models.image.common.image_model import ImageModel
 from zoo.feature.image.imageset import *

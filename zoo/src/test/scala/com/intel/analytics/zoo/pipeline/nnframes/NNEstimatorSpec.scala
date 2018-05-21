@@ -27,6 +27,7 @@ import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric.NumericF
 import com.intel.analytics.bigdl.utils.Engine
 import com.intel.analytics.bigdl.utils.RandomGenerator.RNG
 import com.intel.analytics.bigdl.visualization.{TrainSummary, ValidationSummary}
+import com.intel.analytics.zoo.common.NNContext
 import com.intel.analytics.zoo.feature.common.{TensorToSample, _}
 import com.intel.analytics.zoo.feature.image._
 import org.apache.spark.SparkContext
@@ -51,11 +52,10 @@ class NNEstimatorSpec extends FlatSpec with Matchers with BeforeAndAfter {
     Random.setSeed(42)
     RNG.setSeed(42)
     val conf = Engine.createSparkConf().setAppName("Test NNEstimator").setMaster("local[1]")
-    sc = SparkContext.getOrCreate(conf)
+    sc = NNContext.getNNContext(conf)
     sqlContext = new SQLContext(sc)
     smallData = NNEstimatorSpec.generateTestInput(
       nRecords, Array(1.0, 2.0, 3.0, 4.0, 5.0, 6.0), -1.0, 42L)
-    Engine.init
   }
 
   after{
@@ -376,8 +376,8 @@ class NNEstimatorSpec extends FlatSpec with Matchers with BeforeAndAfter {
       val pipelineModel = pipeline.fit(df)
       pipelineModel.isInstanceOf[PipelineModel] should be(true)
       val correct = pipelineModel.transform(df).select("label", "prediction").rdd.filter {
-        case Row(label: Double, prediction: Seq[Float]) =>
-          label == prediction.indexOf(prediction.max) + 1
+        case Row(label: Double, prediction: Seq[_]) =>
+          label == prediction.indexOf(prediction.asInstanceOf[Seq[Float]].max) + 1
       }.count()
       assert(correct > nRecords * 0.8)
     }
@@ -387,8 +387,8 @@ class NNEstimatorSpec extends FlatSpec with Matchers with BeforeAndAfter {
     val pascalResource = getClass.getClassLoader.getResource("pascal/")
     val imageDF = NNImageReader.readImages(pascalResource.getFile, sc)
     assert(imageDF.count() == 1)
-    val transformer = RowToImageFeature() -> Resize(256, 256) -> CenterCrop(224, 224) ->
-      ChannelNormalize(123, 117, 104) -> MatToTensor() -> ImageFeatureToTensor()
+    val transformer = RowToImageFeature() -> ImageResize(256, 256) -> ImageCenterCrop(224, 224) ->
+      ImageChannelNormalize(123, 117, 104) -> ImageMatToTensor() -> ImageFeatureToTensor()
     val featurizer = NNModel(Inception_v1(1000), transformer)
       .setBatchSize(1)
       .setFeaturesCol("image")
@@ -525,7 +525,7 @@ class NNEstimatorSpec extends FlatSpec with Matchers with BeforeAndAfter {
 
     val nnModel = estimator.fit(df)
 
-    estimator.clearGradientClippingParams()
+    estimator.clearGradientClipping()
     estimator.fit(df)
     estimator.setGradientClippingByL2Norm(0.2f)
     estimator.fit(df)

@@ -19,6 +19,7 @@ import shutil
 
 from zoo.pipeline.api.keras.layers import *
 from zoo.pipeline.api.keras.models import *
+from bigdl.nn.layer import Layer
 from test.zoo.pipeline.utils.test_utils import ZooTestCase
 
 np.random.seed(1337)  # for reproducibility
@@ -52,7 +53,7 @@ class TestSimpleIntegration(ZooTestCase):
         np.testing.assert_allclose((10, ), output_shapes[1][1:])
         shutil.rmtree(tmp_log_dir)
 
-    def test_training_with_tensorboard_checkpoint(self):
+    def test_training_with_tensorboard_checkpoint_gradientclipping(self):
         model = Sequential()
         model.add(Dense(8, input_shape=(32, 32, )))
         model.add(Flatten())
@@ -67,9 +68,13 @@ class TestSimpleIntegration(ZooTestCase):
         tmp_log_dir = create_tmp_path()
         tmp_checkpoint_path = create_tmp_path()
         os.mkdir(tmp_checkpoint_path)
-        model.set_constant_gradient_clipping(0.01, 0.03)
         model.set_tensorboard(tmp_log_dir, "training_test")
         model.set_checkpoint(tmp_checkpoint_path)
+        model.set_constant_gradient_clipping(0.01, 0.03)
+        model.fit(X_train, y_train, batch_size=112, nb_epoch=2, validation_data=(X_test, y_test))
+        model.clear_gradient_clipping()
+        model.fit(X_train, y_train, batch_size=112, nb_epoch=2, validation_data=(X_test, y_test))
+        model.set_gradient_clipping_by_l2_norm(0.2)
         model.fit(X_train, y_train, batch_size=112, nb_epoch=2, validation_data=(X_test, y_test))
         model.evaluate(X_test, y_test, batch_size=112)
         model.predict(X_test)
@@ -82,7 +87,6 @@ class TestSimpleIntegration(ZooTestCase):
         x = np.random.random([300, 10])
         y = np.random.random([300, ])
         model.compile(optimizer="sgd", loss="mae")
-        model.set_gradient_clipping_by_l2_norm(0.01)
         model.fit(x, y, batch_size=112, nb_epoch=2)
         model.predict(x)
 
@@ -107,13 +111,35 @@ class TestSimpleIntegration(ZooTestCase):
         model.add(Reshape((1*220*220, )))
         model.add(Dense(20, activation="softmax"))
         model.compile(optimizer="sgd", loss="sparse_categorical_crossentropy", metrics=["accuracy"])
-        model.disable_gradient_clipping()
         model.fit(data_set, batch_size=8, nb_epoch=2, validation_data=data_set)
 
     def test_remove_batch(self):
         from zoo.pipeline.api.utils import remove_batch
         assert remove_batch([2, 3, 4]) == [3, 4]
         assert remove_batch([[2, 6, 7], [2, 3, 4]]) == [[6, 7], [3, 4]]
+
+    def test_sequential_to_model(self):
+        seq = Sequential()
+        seq.add(Dense(8, input_shape=(32, 32, )))
+        seq.add(Flatten())
+        seq.add(Dense(4, activation="softmax"))
+        seq.to_model()
+
+    def test_keras_net_layers(self):
+        x1 = Input(shape=(8, ))
+        x2 = Input(shape=(6, ))
+        y1 = Dense(10)(x1)
+        y2 = Dense(10)(x2)
+        model = Model([x1, x2], [y1, y2])
+        assert len(model.layers) == 4
+
+    def test_keras_net_flatten_layers(self):
+        x1 = Input(shape=(8, ))
+        x2 = Input(shape=(6, ))
+        y1 = Dense(10)(x1)
+        y2 = Dense(10)(x2)
+        model = Model([x1, x2], [y1, y2])
+        assert len(model.flattened_layers()) == 4
 
 
 if __name__ == "__main__":

@@ -17,8 +17,6 @@
 import sys
 from bigdl.util.common import JavaValue
 from bigdl.util.common import callBigDlFunc
-from bigdl.util.common import *
-from bigdl.transform.vision.image import *
 
 if sys.version >= '3':
     long = int
@@ -43,11 +41,11 @@ class ImageConfigure(JavaValue):
             self.value = jvalue
         else:
             if pre_processor:
-                assert pre_processor.__class__.__bases__[0].__name__ == "FeatureTransformer", \
-                    "the pre_processor should be subclass of FeatureTransformer"
+                assert pre_processor.__class__.__bases__[0].__name__ == "Preprocessing", \
+                    "the pre_processor should be subclass of Preprocessing"
             if post_processor:
-                assert post_processor.__class__.__bases__[0].__name__ == "FeatureTransformer", \
-                    "the pre_processor should be subclass of FeatureTransformer"
+                assert post_processor.__class__.__bases__[0].__name__ == "Preprocessing", \
+                    "the pre_processor should be subclass of Preprocessing"
             self.value = callBigDlFunc(
                 bigdl_type, JavaValue.jvm_class_constructor(self),
                 pre_processor,

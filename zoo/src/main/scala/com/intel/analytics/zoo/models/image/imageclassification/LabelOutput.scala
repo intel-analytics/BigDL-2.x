@@ -17,11 +17,12 @@
 package com.intel.analytics.zoo.models.image.imageclassification
 
 import com.intel.analytics.bigdl.tensor.Tensor
-import com.intel.analytics.bigdl.transform.vision.image.{FeatureTransformer, ImageFeature}
+import com.intel.analytics.bigdl.transform.vision.image.{ImageFeature}
+import com.intel.analytics.zoo.feature.common.ImageProcessing
 import com.intel.analytics.zoo.feature.image.ImageSet
 
 class LabelOutput(labelMap: Map[Int, String], clses : String, probs : String)
-  extends FeatureTransformer{
+  extends ImageProcessing {
   override def transformMat(imageFeature: ImageFeature): Unit = {
     val predictOutput = imageFeature[Tensor[Float]](ImageFeature.predict)
     val total = predictOutput.nElement()
@@ -46,10 +47,6 @@ class LabelOutput(labelMap: Map[Int, String], clses : String, probs : String)
 
     imageFeature(clses) = classes
     imageFeature(probs) = probilities
-  }
-
-  def apply(imageSet: ImageSet): ImageSet = {
-    imageSet.transform(this)
   }
 }
 

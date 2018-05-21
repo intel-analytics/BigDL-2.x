@@ -1,5 +1,5 @@
 #
-# Copyright 2016 The BigDL Authors.
+# Copyright 2018 Analytics Zoo Authors.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
 #
 
 from bigdl.util.common import *
+from zoo.feature.image.imageset import ImageSet
 
 if sys.version >= '3':
     long = int
@@ -29,6 +30,14 @@ class Preprocessing(JavaValue):
     def __init__(self, bigdl_type="float", *args):
         self.value = callBigDlFunc(bigdl_type, JavaValue.jvm_class_constructor(self), *args)
 
+    def __call__(self, input, bigdl_type="float"):
+        """
+        transform ImageSet
+        """
+        if type(input) is ImageSet:
+            jset = callBigDlFunc(bigdl_type, "transformImageSet", self.value, input)
+            return ImageSet(jvalue=jset)
+
 
 class ChainedPreprocessing(Preprocessing):
     """
@@ -39,7 +48,8 @@ class ChainedPreprocessing(Preprocessing):
         for transfomer in transformers:
             assert transfomer.__class__.__bases__[0].__name__ in [
                 "Preprocessing", "ImagePreprocessing"], \
-                str(transfomer) + " should be subclass of Preprocessing"
+                str(transfomer) + " should be subclass of Preprocessing "
+
         super(ChainedPreprocessing, self).__init__(bigdl_type, transformers)
 
 

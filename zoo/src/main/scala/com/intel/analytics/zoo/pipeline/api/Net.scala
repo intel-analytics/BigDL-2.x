@@ -18,6 +18,7 @@ package com.intel.analytics.zoo.pipeline.api
 
 import java.nio.ByteOrder
 
+import com.intel.analytics.bigdl.nn.Graph
 import com.intel.analytics.bigdl.nn.abstractnn.{AbstractModule, Activity}
 import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric
 import com.intel.analytics.bigdl.utils.File
@@ -25,6 +26,7 @@ import com.intel.analytics.bigdl.utils.caffe.CaffeLoader
 import com.intel.analytics.bigdl.utils.serializer.ModuleLoader
 import com.intel.analytics.bigdl.utils.tf.{Session, TensorflowLoader}
 import com.intel.analytics.zoo.pipeline.api.keras.models.KerasNet
+import com.intel.analytics.zoo.pipeline.api.net.GraphNet
 
 import scala.reflect.ClassTag
 
@@ -52,13 +54,13 @@ object Net {
     val model = ModuleLoader.loadFromFile(path, weightPath)
     if (!model.isInstanceOf[KerasNet[T]]) {
       throw new RuntimeException(
-        "Not a Zoo model. Please use loadBigDL, loadCaffe or loadTF instead")
+        "Not an Analytics Zoo Keras-style model. Please use loadBigDL, loadCaffe or loadTF instead")
     }
     model.asInstanceOf[KerasNet[T]]
   }
 
   /**
-   * Load model from path.
+   * Load BigDL model from path.
    *
    * @param path path to save module, local file system, HDFS and Amazon S3 is supported.
    *             HDFS path should be like "hdfs://[host]:[port]/xxx"
@@ -69,12 +71,24 @@ object Net {
    */
   def loadBigDL[T: ClassTag](path : String,
       weightPath : String = null)(implicit ev: TensorNumeric[T])
-  : AbstractModule[Activity, Activity, T] = {
-    ModuleLoader.loadFromFile(path, weightPath)
+  : GraphNet[T] = {
+    val graph = ModuleLoader.loadFromFile(path, weightPath).toGraph()
+    new GraphNet(graph)
   }
 
-  def loadTorch[T: ClassTag](path : String) : AbstractModule[Activity, Activity, T] = {
-    File.loadTorch[AbstractModule[Activity, Activity, T]](path)
+  /**
+   * Load Torch model from path.
+   *
+   * @param path path to load module, local file system, HDFS and Amazon S3 is supported.
+   *             HDFS path should be like "hdfs://[host]:[port]/xxx"
+   *             Amazon S3 path should be like "s3a://bucket/xxx"
+   * @tparam T numeric type
+   * @return model loaded from path
+   */
+  def loadTorch[T: ClassTag](path : String)(implicit ev: TensorNumeric[T]):
+  GraphNet[T] = {
+    val graph = File.loadTorch[AbstractModule[Activity, Activity, T]](path).toGraph()
+    new GraphNet[T](graph)
   }
 
   /**
@@ -83,9 +97,10 @@ object Net {
    * @param modelPath caffe model binary file containing weight and bias
    */
   def loadCaffe[T: ClassTag](defPath: String, modelPath: String)(
-      implicit ev: TensorNumeric[T]): AbstractModule[Activity, Activity, T] = {
-    CaffeLoader.loadCaffe[T](defPath, modelPath)._1
-      .asInstanceOf[AbstractModule[Activity, Activity, T]]
+      implicit ev: TensorNumeric[T]): GraphNet[T] = {
+    val graph = CaffeLoader.loadCaffe[T](defPath, modelPath)._1
+      .asInstanceOf[Graph[T]]
+    new GraphNet[T](graph)
   }
 
   /**
@@ -100,10 +115,11 @@ object Net {
   def loadTF[T: ClassTag](graphFile: String, inputs: Seq[String], outputs: Seq[String],
       byteOrder: ByteOrder = ByteOrder.LITTLE_ENDIAN,
       binFile: Option[String] = None)(
-      implicit ev: TensorNumeric[T]): AbstractModule[Activity, Activity, T] = {
+      implicit ev: TensorNumeric[T]): GraphNet[T] = {
 
-    TensorflowLoader.load(graphFile, inputs, outputs, byteOrder, binFile)
-      .asInstanceOf[AbstractModule[Activity, Activity, T]]
+    val graph = TensorflowLoader.load(graphFile, inputs, outputs, byteOrder, binFile)
+      .asInstanceOf[Graph[T]]
+    new GraphNet[T](graph)
   }
 
   /**
@@ -114,7 +130,8 @@ object Net {
    * @return
    */
   def loadTFCheckpoints[T: ClassTag](graphFile: String, binFile: String,
-      byteOrder: ByteOrder = ByteOrder.LITTLE_ENDIAN)(implicit ev: TensorNumeric[T]): Session[T] = {
+      byteOrder: ByteOrder = ByteOrder.LITTLE_ENDIAN)(
+      implicit ev: TensorNumeric[T]): Session[T] = {
     TensorflowLoader.checkpoints(graphFile, binFile, byteOrder)
   }
 }

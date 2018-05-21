@@ -1,8 +1,8 @@
 #!/bin/bash
 
 # Check environment variables
-if [ -z "${ZOO_HOME}" ]; then
-    echo "Please set ZOO_HOME environment variable"
+if [ -z "${ANALYTICS_ZOO_HOME}" ]; then
+    echo "Please set ANALYTICS_ZOO_HOME environment variable"
     exit 1
 fi
 
@@ -12,23 +12,23 @@ if [ -z "${SPARK_HOME}" ]; then
 fi
 
 # setup paths
-export ZOO_JAR=`find ${ZOO_HOME}/lib -type f -name "zoo*jar-with-dependencies.jar"`
-export ZOO_CONF=${ZOO_HOME}/conf/spark-bigdl.conf
+export ANALYTICS_ZOO_JAR=`find ${ANALYTICS_ZOO_HOME}/lib -type f -name "analytics-zoo*jar-with-dependencies.jar"`
+export ANALYTICS_ZOO_CONF=${ANALYTICS_ZOO_HOME}/conf/spark-analytics-zoo.conf
 
 # Check files
-if [ ! -f ${ZOO_CONF} ]; then
-    echo "Cannot find ${ZOO_CONF}"
+if [ ! -f ${ANALYTICS_ZOO_CONF} ]; then
+    echo "Cannot find ${ANALYTICS_ZOO_CONF}"
     exit 1
 fi
 
-if [ ! -f ${ZOO_JAR} ]; then
-    echo "Cannot find ${ZOO_JAR}"
+if [ ! -f ${ANALYTICS_ZOO_JAR} ]; then
+    echo "Cannot find ${ANALYTICS_ZOO_JAR}"
     exit 1
 fi
 
 ${SPARK_HOME}/bin/spark-shell \
-	--properties-file ${ZOO_CONF} \
-	--jars ${ZOO_JAR} \
-	--conf spark.driver.extraClassPath=${ZOO_JAR} \
-	--conf spark.executor.extraClassPath=${ZOO_JAR} \
+	--properties-file ${ANALYTICS_ZOO_CONF} \
+	--jars ${ANALYTICS_ZOO_JAR} \
+	--conf spark.driver.extraClassPath=${ANALYTICS_ZOO_JAR} \
+	--conf spark.executor.extraClassPath=${ANALYTICS_ZOO_JAR} \
 	$*
