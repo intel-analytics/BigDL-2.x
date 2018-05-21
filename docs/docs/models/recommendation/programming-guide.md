@@ -55,7 +55,13 @@ You can choose to include the following information for feature engineering and 
 * `continuousCols`: Data of *continuousCols* will be treated as continuous values for the deep model.
 * `label`: The name of the 'label' column. String. Default is "label".
 
-__Remark:__ Fields that involve `Cols` should be an array of String (Scala) or a list of String (Python) indicating the name of the columns in the data. Fields that involve `Dims` should be an array of integers (Scala) or a list of integers (Python) indicating the dimensions of the corresponding columns. If any field not specified, it will by default to be an empty array (Scala) or an empty list (Python).
+__Remark:__
+
+Fields that involve `Cols` should be an array of String (Scala) or a list of String (Python) indicating the name of the columns in the data.
+
+Fields that involve `Dims` should be an array of integers (Scala) or a list of integers (Python) indicating the dimensions of the corresponding columns.
+
+If any field is not specified, it will by default to be an empty array (Scala) or an empty list (Python).
 
 
 **Scala**
