@@ -140,7 +140,6 @@ class TestSimpleIntegration(ZooTestCase):
         y2 = Dense(10)(x2)
         model = Model([x1, x2], [y1, y2])
         assert len(model.flattened_layers()) == 4
-        
 
     def test_create_image_config(self):
         from zoo.models.image.common.image_config import ImageConfigure
