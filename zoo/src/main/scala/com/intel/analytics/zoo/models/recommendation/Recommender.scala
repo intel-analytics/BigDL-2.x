@@ -78,7 +78,7 @@ abstract class Recommender[T: ClassTag](implicit ev: TensorNumeric[T])
   }
 
   /**
-   * Predict for and user item pairs.
+   * Predict for user-item pairs.
    *
    * @param featureRdd RDD of user item pair feature.
    * @return RDD of user item pair prediction.
