@@ -96,7 +96,7 @@ class WideAndDeep(Recommender):
     # Arguments
     class_num: The number of classes. Positive int.
     column_info: An instance of ColumnFeatureInfo.
-    model_type: String, 'wide', 'deep' and 'wide_n_deep' are supported. Default is 'wide_n_deep'.
+    model_type: String. 'wide', 'deep' and 'wide_n_deep' are supported. Default is 'wide_n_deep'.
     hidden_layers: Units of hidden layers for the deep model.
                    Tuple of positive int. Default is (40, 20, 10).
     """

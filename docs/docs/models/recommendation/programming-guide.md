@@ -19,7 +19,7 @@ WideAndDeep(modelType = "wide_n_deep", numClasses, columnInfo, hiddenLayers = Ar
 
 * `modelType`: String. "wide", "deep", "wide_n_deep" are supported. Default is "wide_n_deep".
 * `numClasses`: The number of classes. Positive integer.
-* `columnInfo` An instance of [ColumnFeatureInfo]().
+* `columnInfo` An instance of [ColumnFeatureInfo](#columnfeatureinfo).
 * `hiddenLayers`: Units of hidden layers for the deep model. Array of positive integers. Default is Array(40, 20, 10).
 
 See [here](https://github.com/intel-analytics/zoo/blob/master/zoo/src/main/scala/com/intel/analytics/zoo/examples/recommendation/WideAndDeepExample.scala) for the Scala example that trains the `WideAndDeep` model on MovieLens 1M dataset and uses the model to do prediction and recommendation.
@@ -32,10 +32,28 @@ WideAndDeep(class_num, column_info, model_type="wide_n_deep", hidden_layers=(40,
 
 * `class_num`: The number of classes. Positive int.
 * `column_info`: An instance of [ColumnFeatureInfo]().
-* `model_type`: String, 'wide', 'deep' and 'wide_n_deep' are supported. Default is 'wide_n_deep'.
+* `model_type`: String. 'wide', 'deep' and 'wide_n_deep' are supported. Default is 'wide_n_deep'.
 * `hidden_layers`: Units of hidden layers for the deep model. Tuple of positive int. Default is (40, 20, 10).
 
 See [here](https://github.com/intel-analytics/analytics-zoo/blob/master/apps/recommendation/wide_n_deep.ipynb) for the Python notebook that trains the `WideAndDeep` model on MovieLens 1M dataset and uses the model to do prediction and recommendation.
+
+
+### ColumnFeatureInfo
+An instance of ColumnFeatureInfo contains the same data information shared by the WideAndDeep model and its feature generation part.
+
+The information for feature engineering and the model include the following:
+
+* `wideBaseCols`: Data of *wideBaseCols* together with *wideCrossCols* will be fed into the wide model. Array(Scala) or List(Python) of String. Default is empty.
+* `wideBaseDims`: Dimensions of *wideBaseCols*. The dimensions of the data in wide_base_cols should be within the range of wide_base_dims. Array(Scala) or List(Python) of integers. Default is empty.
+* `wideCrossCols`: Data of *wideCrossCols* will be fed into the wide model. Array(Scala) or List(Python) of String. Default is empty.
+* `wideCrossDims`: Dimensions of *wideCrossCols*. The dimensions of the data in *wideCrossCols* should be within the range of *wideCrossDims*. Array(Scala) or List(Python) of integers. Default is empty.
+* `indicatorCols`: Data of *indicatorCols* will be fed into the deep model as multi-hot vectors. Array(Scala) or List(Python) of String. Default is empty.
+* `indicatorDims`: Dimensions of *indicatorCols*. The dimensions of the data in *indicatorCols* should be within the range of *indicatorDims*. Array(Scala) or List(Python) of integers. Default is empty.
+* `embedCols`: Data of *embedCols* will be fed into the deep model as embeddings. Array(Scala) or List(Python) of String. Default is empty.
+* `embedInDims`: Input dimension of the data in *embedCols*. The dimensions of the data in *embedCols* should be within the range of *embedInDims*. Array(Scala) or List(Python) of integers. Default is empty.
+* `embedOutDims`: The dimensions of embeddings. Array(Scala) or List(Python) of integers. Default is empty.
+* `continuousCols`: Data of *continuousCols* is treated as continuous values for the deep model. Array(Scala) or List(Python) of String. Default is empty.
+* `label`: The name of the 'label' column. String. Default is "label".
 
 
 ---
@@ -161,6 +179,7 @@ UserItemFeature(user_id, item_id, sample)
 Represent the prediction results of user-item pairs.
 
 Each prediction record will contain the following information:
+
 * `userId`: Positive integer.
 * `itemId`: Positive integer.
 * `prediction`: The prediction (rating) for the user on the item.
