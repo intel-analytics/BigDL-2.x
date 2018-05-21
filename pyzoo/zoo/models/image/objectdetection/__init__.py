@@ -14,4 +14,4 @@
 # limitations under the License.
 #
 
-# from .object_detector import *
+from .object_detector import *
