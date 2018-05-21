@@ -9,6 +9,8 @@ We also provide three user-friendly APIs to predict user item pairs, and recomme
 ## Wide and Deep
 Wide and Deep Learning Model, proposed by [Google, 2016](https://arxiv.org/pdf/1606.07792.pdf), is a DNN-Linear mixed model, which combines the strength of memorization and generalization. It's useful for generic large-scale regression and classification problems with sparse input features (e.g., categorical features with a large number of possible feature values). It has been used for Google App Store for their app recommendation.
 
+After training the model, users can use the model to [do prediction and recommendation](#prediction-and-recommendation).
+
 **Scala**
 ```scala
 WideAndDeep(modelType = "wide_n_deep", numClasses, columnInfo, hiddenLayers = Array(40, 20, 10))
@@ -35,11 +37,10 @@ WideAndDeep(class_num, column_info, model_type="wide_n_deep", hidden_layers=(40,
 See [here](https://github.com/intel-analytics/analytics-zoo/blob/master/apps/recommendation/wide_n_deep.ipynb) for the Python notebook that trains the `WideAndDeep` model on MovieLens 1M dataset and uses the model to do prediction and recommendation.
 
 
-After training the model, users can predict user item pairs, and recommend items(users) for users(items) given a RDD of UserItemFeature, which includes user item-pair candidates and corresponding features.
-
-
 ## Neural network-based Collaborative Filtering
 NCF ([He, 2015](https://www.comp.nus.edu.sg/~xiangnan/papers/ncf.pdf)) leverages a multi-layer perceptrons to learn the user–item interaction function. At the mean time, NCF can express and generalize matrix factorization under its framework. `includeMF`(Boolean) is provided for users to build a `NeuralCF` model with or without matrix factorization. 
+
+After training the model, users can use the model to [do prediction and recommendation](#prediction-and-recommendation).
 
 **Scala**
 ```scala
@@ -74,13 +75,11 @@ NeuralCF(user_count, item_count, class_num, user_embed=20, item_embed=20, hidden
 
 See [here](https://github.com/intel-analytics/analytics-zoo/blob/master/apps/recommendation/ncf-explicit-feedback.ipynb) for the Python notebook that trains the `NeuralCF` model on MovieLens 1M dataset and uses the model to do prediction and recommendation.
 
-After training the model, users can predict user item pairs, and recommend items(users) for users(items) given a RDD of UserItemFeature, which includes user item-pair candidates and corresponding features.
-
 
 ## Prediction and Recommendation
 
 ### Predict for user-item pairs
-RDD of [UserItemPrediction]() will be returned.
+Give prediction for each pair of user and item. Return RDD of [UserItemPrediction]().
 
 **Scala**
 ```scala
@@ -98,6 +97,7 @@ Parameters:
 
 
 ### Recommend for users
+Recommend a number of items for each user. Return RDD of [UserItemPrediction]().
 
 **Scala**
 ```scala
@@ -111,6 +111,7 @@ recommend_for_user(feature_rdd, max_items)
 
 
 ### Recommend for items
+Recommend a number of users for each item. Return RDD of [UserItemPrediction]().
 
 **Scala**
 ```scala
@@ -121,3 +122,4 @@ recommendForItem(featureRdd, maxUsers)
 ```python
 recommend_for_item(feature_rdd, max_users)
 ```
+
