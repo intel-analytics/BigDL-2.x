@@ -77,7 +77,7 @@ class TrainingSpec extends FlatSpec with Matchers with BeforeAndAfter  {
     val input = Input[Float](inputShape = Shape(10))
     val output = Dense[Float](1, activation = "relu").inputs(input)
     val model = Model[Float](input, output)
-    model.compile(optimizer = "adam", loss = "mae", metrics=List("auc"))
+    model.compile(optimizer = "adam", loss = "mae", metrics = List("auc"))
     model.fit(trainingData, batchSize = 8, nbEpoch = 2)
   }
 
