@@ -24,8 +24,6 @@ from bigdl.util.common import *
 
 import logging
 
-from zoo import get_nncontext
-
 np.random.seed(1337)  # for reproducibility
 
 
@@ -40,7 +38,7 @@ class ZooTestCase(TestCase):
         """
         K.set_image_dim_ordering("th")
         sparkConf = create_spark_conf().setMaster("local[4]").setAppName("zoo test case")
-        self.sc = get_nncontext(sparkConf)
+        self.sc = get_spark_context(sparkConf)
         self.sc.setLogLevel("ERROR")
 
         self.sqlContext = SQLContext(self.sc)
