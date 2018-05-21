@@ -145,7 +145,7 @@ class TestSimpleIntegration(ZooTestCase):
         sc0 = SparkContext.getOrCreate()
         sc0.stop()
         from zoo import get_nncontext
-        sc = get_nncontext(appName="hello")
+        sc = get_nncontext("hello")
         assert sc.appName == "hello"
 
     def test_create_image_config(self):

@@ -19,7 +19,7 @@ import warnings
 
 
 
-def get_nncontext(conf=None, appName=None):
+def get_nncontext(conf=None):
     """
     Gets a SparkContext with optimized configuration for BigDL performance. The method
     will also initialize the BigDL engine.
@@ -30,8 +30,10 @@ def get_nncontext(conf=None, appName=None):
 
     :param conf: User defined Spark conf
     """
-
-    sc = getOrCreateSparkContext(conf, appName=appName)
+    if isinstance(conf, six.string_types):
+        sc = getOrCreateSparkContext(conf=None, appName=conf)
+    else:
+        sc = getOrCreateSparkContext(conf=conf)
     redire_spark_logs()
     show_bigdl_info_logs()
     init_engine()
