@@ -83,6 +83,5 @@ def to_bigdl_metric(metric):
         raise TypeError("Unsupported metric: %s" % metric)
 
 
-
 def to_bigdl_metrics(metrics):
     return [to_bigdl_metric(m) for m in metrics]
