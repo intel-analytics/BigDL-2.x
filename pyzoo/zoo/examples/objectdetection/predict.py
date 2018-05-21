@@ -18,7 +18,7 @@ import argparse
 import cv2
 
 from zoo.common.nncontext import get_nncontext
-from zoo.models.image.objectdetection.object_detector import *
+from zoo.models.image.objectdetection import *
 
 sc = get_nncontext(create_spark_conf().setAppName("Object Detection Example"))
 
