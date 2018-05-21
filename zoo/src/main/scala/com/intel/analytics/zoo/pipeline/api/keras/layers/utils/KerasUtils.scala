@@ -169,17 +169,19 @@ object KerasUtils {
   def toBigDLMetrics[T: ClassTag](metrics: List[String])
     (implicit ev: TensorNumeric[T]): List[ValidationMethod[T]] = {
     if (metrics == null) {
-      return null
-    }
-    metrics.map { metric =>
-      metric.toLowerCase() match {
-        case "accuracy" => new Top1Accuracy[T]()
-        case "mae" => new MAE[T]()
-        case "auc" => new AUC[T](1000)
-        case "loss" => new Loss[T]()
-        case "treennaccuracy" => new TreeNNAccuracy[T]()
-        case _ => new IllegalArgumentException(s"Unsupported metric: ${metric}")
+      null
+    } else {
+      metrics.map { metric =>
+        metric.toLowerCase() match {
+          case "accuracy" => new Top1Accuracy[T]()
+          case "mae" => new MAE[T]()
+          case "auc" => new AUC[T](1000)
+          case "loss" => new Loss[T]()
+          case "treennaccuracy" => new TreeNNAccuracy[T]()
+          case _ => throw new IllegalArgumentException(s"Unsupported metric: ${metric}")
+        }
       }
+    }
   }
 
   def addBatch(shape: Shape): Shape = {
