@@ -41,7 +41,8 @@ import scala.reflect.ClassTag
  * @param embedInDims    Input dimension of the data in embedCols. The dimensions of the data
  *                       in embedCols should be within the range of embedInDims.
  * @param embedOutDims   The dimensions of embeddings.
- * @param continuousCols Data of continuousCols is treated as continuous values for the deep model.
+ * @param continuousCols Data of continuousCols will be treated as continuous values
+ *                       for the deep model.
  * @param label          The name of the 'label' column. Default is 'label'.
  */
 case class ColumnFeatureInfo(wideBaseCols: Array[String] = Array[String](),

@@ -51,11 +51,45 @@ You can choose to include the following information for feature engineering and 
 * `indicatorDims`: Dimensions of *indicatorCols*. The dimensions of the data in *indicatorCols* should be within the range of *indicatorDims*.
 * `embedCols`: Data of *embedCols* will be fed into the deep model as embeddings.
 * `embedInDims`: Input dimension of the data in *embedCols*. The dimensions of the data in *embedCols* should be within the range of *embedInDims*.
-* `embedOutDims`: The dimensions of embeddings.
-* `continuousCols`: Data of *continuousCols* is treated as continuous values for the deep model.
+* `embedOutDims`: The dimensions of embeddings for *embedCols*.
+* `continuousCols`: Data of *continuousCols* will be treated as continuous values for the deep model.
 * `label`: The name of the 'label' column. String. Default is "label".
 
-__Remark:__ Fields that involve `Cols` should be an array of String (Scala) or a list of String (Python). Fields that involve `Dims` should be an array of integers (Scala) or a list of integers (Python). If any field not specified, it will by default to be an empty array or list.
+__Remark:__ Fields that involve `Cols` should be an array of String (Scala) or a list of String (Python) indicating the name of the columns in the data. Fields that involve `Dims` should be an array of integers (Scala) or a list of integers (Python) indicating the dimensions of the corresponding columns. If any field not specified, it will by default to be an empty array (Scala) or an empty list (Python).
+
+
+**Scala**
+```scala
+ColumnFeatureInfo(
+    wideBaseCols = Array[String](),
+    wideBaseDims = Array[Int](),
+    wideCrossCols = Array[String](),
+    wideCrossDims = Array[Int](),
+    indicatorCols = Array[String](),
+    indicatorDims = Array[Int](),
+    embedCols = Array[String](),
+    embedInDims = Array[Int](),
+    embedOutDims = Array[Int](),
+    continuousCols = Array[String](),
+    label = "label")
+```
+
+**Python**
+```python
+ColumnFeatureInfo(
+    wide_base_cols=None,
+    wide_base_dims=None,
+    wide_cross_cols=None,
+    wide_cross_dims=None,
+    indicator_cols=None,
+    indicator_dims=None,
+    embed_cols=None,
+    embed_in_dims=None,
+    embed_out_dims=None,
+    continuous_cols=None,
+    label="label")
+```
+
 
 ---
 ## Neural network-based Collaborative Filtering

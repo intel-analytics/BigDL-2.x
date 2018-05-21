@@ -51,8 +51,8 @@ class ColumnFeatureInfo(object):
                    embed_cols should be within the range of embed_in_dims.
                    List of int. Default is an empty list.
     embed_out_dims: The dimensions of embeddings. List of int. Default is an empty list.
-    continuous_cols: Data of continuous_cols is treated as continuous values for the deep model.
-                     List of String. Default is an empty list.
+    continuous_cols: Data of continuous_cols will be treated as continuous values for
+                     the deep model. List of String. Default is an empty list.
     label: The name of the 'label' column. String. Default is 'label'.
     """
     def __init__(self, wide_base_cols=None, wide_base_dims=None, wide_cross_cols=None,
