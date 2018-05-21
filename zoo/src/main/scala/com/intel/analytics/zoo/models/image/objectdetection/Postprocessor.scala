@@ -18,8 +18,8 @@ package com.intel.analytics.zoo.models.image.objectdetection
 
 import com.intel.analytics.bigdl.tensor.Tensor
 import com.intel.analytics.bigdl.transform.vision.image.util.BboxUtil
-import com.intel.analytics.bigdl.transform.vision.image.{ImageFeature}
-import com.intel.analytics.zoo.feature.common.ImageProcessing
+import com.intel.analytics.bigdl.transform.vision.image.ImageFeature
+import com.intel.analytics.zoo.feature.image.ImageProcessing
 
 /**
  * If the detection is normalized, for example, ssd detected bounding box is in [0, 1],
