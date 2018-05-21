@@ -890,6 +890,11 @@ class PythonZooKeras[T: ClassTag](implicit ev: TensorNumeric[T]) extends PythonB
     Square(toScalaShape(inputShape))
   }
 
+  def createZooKerasSign(
+      inputShape: JList[Int] = null): Sign[T] = {
+    Sign(toScalaShape(inputShape))
+  }
+
   def createAUC(thresholdNum: Int): ValidationMethod[T] = {
     new AUC[T](thresholdNum)
   }

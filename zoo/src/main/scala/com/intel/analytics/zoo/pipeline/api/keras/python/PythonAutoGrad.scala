@@ -129,6 +129,10 @@ class PythonAutoGrad[T: ClassTag](implicit ev: TensorNumeric[T]) extends PythonZ
     autograd.AutoGrad.square(a)
   }
 
+  def sign(a: Variable[T]): Variable[T] = {
+    autograd.AutoGrad.sign(a)
+  }
+
   def sqrt(a: Variable[T]): Variable[T] = {
     autograd.AutoGrad.sqrt(a)
   }
