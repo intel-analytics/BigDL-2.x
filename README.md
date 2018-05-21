@@ -49,7 +49,7 @@ Analytics Zoo provides a set of easy-to-use, high level pipeline APIs that nativ
    ```
    from zoo.pipeline.api.keras.layers import *
    from zoo.pipeline.api.keras.models import *
-   model = Sequential().add(Convolution2D(32, 3, 3, activation=’leru’, input_shape=(1, 28, 28))) \
+   model = Sequential().add(Convolution2D(32, 3, 3, activation='relu', input_shape=(1, 28, 28))) \
                    .add(MaxPooling2D(pool_size=(2, 2))).add(Flatten()).add(Dense(10, activation='softmax')))
    ```
 
