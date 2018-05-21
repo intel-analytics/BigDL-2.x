@@ -77,11 +77,11 @@ if not (local_doc and os.path.isdir("/tmp/zoo-doc")):
 run_cmd(['rm', '-rf', '{}/mkdocs_windmill'.format(dir_name)],
     'rm theme folder error')
 run_cmd(['cp', '-r', '/tmp/zoo-doc/mkdocs_windmill', dir_name],
-    'mv theme foler error')
+    'mv theme folder error')
 
 # refresh css file
 run_cmd(['cp', '/tmp/zoo-doc/extra.css', '{}/docs'.format(dir_name)],
-    'mv theme foler error')
+    'mv theme folder error')
 
 # mkdocs build
 run_cmd(['mkdocs', 'build'],
