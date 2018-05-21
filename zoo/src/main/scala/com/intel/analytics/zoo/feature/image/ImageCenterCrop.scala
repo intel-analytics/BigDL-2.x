@@ -15,16 +15,13 @@
  */
 package com.intel.analytics.zoo.feature.image
 
-import com.intel.analytics.bigdl.transform.vision.image.ImageFeature
-import com.intel.analytics.zoo.feature.common.{ImageProcessing}
-import com.intel.analytics.bigdl.transform.vision.image.augmentation
+import com.intel.analytics.bigdl.transform.vision.image.{ImageFeature, augmentation}
+class ImageCenterCrop(
+    cropWidth: Int,
+    cropHeight: Int,
+    isClip: Boolean = true) extends ImageProcessing {
 
-/**
- * Adjust image saturation
- */
-class Saturation(deltaLow: Double, deltaHigh: Double) extends ImageProcessing {
-
-  private val internalCrop = augmentation.Saturation(deltaLow, deltaHigh)
+  private val internalCrop = augmentation.CenterCrop(cropWidth, cropHeight)
   override def apply(prev: Iterator[ImageFeature]): Iterator[ImageFeature] = {
     internalCrop.apply(prev)
   }
@@ -34,7 +31,8 @@ class Saturation(deltaLow: Double, deltaHigh: Double) extends ImageProcessing {
   }
 }
 
-object Saturation {
-  def apply(deltaLow: Double, deltaHigh: Double): Saturation =
-    new Saturation(deltaLow, deltaHigh)
+object ImageCenterCrop {
+  def apply(cropWidth: Int, cropHeight: Int, isClip: Boolean = true)
+  : ImageCenterCrop = new ImageCenterCrop(cropWidth, cropHeight, isClip)
 }
+

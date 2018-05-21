@@ -15,14 +15,18 @@
  */
 package com.intel.analytics.zoo.feature.image
 
-import com.intel.analytics.bigdl.transform.vision.image.{ImageFeature, augmentation}
-import com.intel.analytics.zoo.feature.common.{ImageProcessing}
-class CenterCrop(
-    cropWidth: Int,
-    cropHeight: Int,
-    isClip: Boolean = true) extends ImageProcessing {
+import com.intel.analytics.bigdl.transform.vision.image.ImageFeature
+import com.intel.analytics.bigdl.transform.vision.image.augmentation
 
-  private val internalCrop = augmentation.CenterCrop(cropWidth, cropHeight)
+/**
+ * adjust the image brightness
+ *
+ * @param deltaLow brightness parameter: low bound
+ * @param deltaHigh brightness parameter: high bound
+ */
+class ImageBrightness(deltaLow: Double, deltaHigh: Double) extends ImageProcessing {
+
+  private val internalCrop = augmentation.Brightness(deltaLow, deltaHigh)
   override def apply(prev: Iterator[ImageFeature]): Iterator[ImageFeature] = {
     internalCrop.apply(prev)
   }
@@ -32,8 +36,7 @@ class CenterCrop(
   }
 }
 
-object CenterCrop {
-  def apply(cropWidth: Int, cropHeight: Int, isClip: Boolean = true)
-  : CenterCrop = new CenterCrop(cropWidth, cropHeight, isClip)
+object ImageBrightness {
+  def apply(deltaLow: Double, deltaHigh: Double): ImageBrightness =
+    new ImageBrightness(deltaLow, deltaHigh)
 }
-

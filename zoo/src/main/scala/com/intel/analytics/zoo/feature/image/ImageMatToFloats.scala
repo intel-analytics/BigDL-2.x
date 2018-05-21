@@ -15,31 +15,25 @@
  */
 package com.intel.analytics.zoo.feature.image
 
-import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric
 import com.intel.analytics.bigdl.transform.vision.image.ImageFeature
-import com.intel.analytics.bigdl.transform.vision.image
-import com.intel.analytics.zoo.feature.common.{ImageProcessing}
+import com.intel.analytics.bigdl.transform.vision.image.{MatToFloats => BMatToFloats}
 
 import scala.reflect.ClassTag
 
-class MatToTensor[T: ClassTag](
-    toRGB: Boolean = false,
-    tensorKey: String = ImageFeature.imageTensor,
-    shareBuffer: Boolean = true)(implicit ev: TensorNumeric[T])
+class ImageMatToFloats(validHeight: Int, validWidth: Int, validChannels: Int,
+                       outKey: String = ImageFeature.floats, shareBuffer: Boolean = true)
   extends ImageProcessing {
 
-  private val internalResize = new image.MatToTensor[T](toRGB, tensorKey, shareBuffer)
+  private val internalResize =
+    BMatToFloats(validHeight, validWidth, validChannels, outKey, shareBuffer)
   override def apply(prev: Iterator[ImageFeature]): Iterator[ImageFeature] = {
     internalResize.apply(prev)
   }
 }
 
-object MatToTensor {
+object ImageMatToFloats {
 
-  def apply[T: ClassTag](
-      toRGB: Boolean = false,
-      tensorKey: String = ImageFeature.imageTensor,
-      shareBuffer: Boolean = true
-  )(implicit ev: TensorNumeric[T]): MatToTensor[T] =
-    new MatToTensor[T](toRGB, tensorKey, shareBuffer)
+  def apply[T: ClassTag](validHeight: Int = 300, validWidth: Int = 300, validChannels: Int = 3,
+    outKey: String = ImageFeature.floats, shareBuffer: Boolean = true): ImageMatToFloats =
+    new ImageMatToFloats(validHeight, validWidth, validChannels, outKey, shareBuffer)
 }

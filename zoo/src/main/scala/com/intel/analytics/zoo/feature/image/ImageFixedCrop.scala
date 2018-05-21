@@ -16,20 +16,23 @@
 package com.intel.analytics.zoo.feature.image
 
 import com.intel.analytics.bigdl.transform.vision.image.ImageFeature
-import com.intel.analytics.zoo.feature.common.{ImageProcessing}
 import com.intel.analytics.bigdl.transform.vision.image.augmentation
 
 /**
- * Random crop a `cropWidth` x `cropHeight` patch from an image.
- * The patch size should be less than the image size.
+ * Crop a fixed area of image
  *
- * @param cropWidth width after crop
- * @param cropHeight height after crop
+ * @param x1 start in width
+ * @param y1 start in height
+ * @param x2 end in width
+ * @param y2 end in height
+ * @param normalized whether args are normalized, i.e. in range [0, 1]
  * @param isClip whether to clip the roi to image boundaries
  */
-class RandomCrop(cropWidth: Int, cropHeight: Int, isClip: Boolean = true) extends ImageProcessing {
+class ImageFixedCrop(x1: Float, y1: Float, x2: Float, y2: Float, normalized: Boolean,
+                     isClip: Boolean = true)
+  extends ImageProcessing {
 
-  private val internalCrop = new augmentation.RandomCrop(cropWidth, cropHeight, isClip)
+  private val internalCrop = new augmentation.FixedCrop(x1, y1, x2, y2, normalized, isClip)
   override def apply(prev: Iterator[ImageFeature]): Iterator[ImageFeature] = {
     internalCrop.apply(prev)
   }
@@ -39,7 +42,8 @@ class RandomCrop(cropWidth: Int, cropHeight: Int, isClip: Boolean = true) extend
   }
 }
 
-object RandomCrop {
-  def apply(cropWidth: Int, cropHeight: Int, isClip: Boolean = true): RandomCrop =
-    new RandomCrop(cropWidth, cropHeight, isClip)
+object ImageFixedCrop {
+  def apply(x1: Float, y1: Float, x2: Float, y2: Float, normalized: Boolean,
+            isClip: Boolean = true)
+  : ImageFixedCrop = new ImageFixedCrop(x1, y1, x2, y2, normalized, isClip)
 }

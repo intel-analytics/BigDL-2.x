@@ -15,29 +15,28 @@
  */
 package com.intel.analytics.zoo.feature.image
 
-import com.intel.analytics.zoo.feature.common.{ImageProcessing}
-import com.intel.analytics.bigdl.transform.vision.image.augmentation
+import com.intel.analytics.bigdl.tensor.Tensor
+import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric
 import com.intel.analytics.bigdl.transform.vision.image.ImageFeature
+import com.intel.analytics.zoo.feature.common.Preprocessing
 
+import scala.reflect.ClassTag
 
 /**
- * Adjust image hue
- * @param deltaLow hue parameter: low bound
- * @param deltaHigh hue parameter: high bound
+ * a Preprocessing that convert ImageFeature to a Tensor.
  */
-class Hue(deltaLow: Double, deltaHigh: Double) extends ImageProcessing {
+class ImageFeatureToTensor[T: ClassTag]()(implicit ev: TensorNumeric[T])
+  extends Preprocessing[ImageFeature, Tensor[T]] {
 
-  private val internalCrop = augmentation.Hue(deltaLow, deltaHigh)
-  override def apply(prev: Iterator[ImageFeature]): Iterator[ImageFeature] = {
-    internalCrop.apply(prev)
-  }
-
-  override def transformMat(feature: ImageFeature): Unit = {
-    internalCrop.transformMat(feature)
+  override def apply(prev: Iterator[ImageFeature]): Iterator[Tensor[T]] = {
+    prev.map { imf =>
+      imf(ImageFeature.imageTensor).asInstanceOf[Tensor[T]]
+    }
   }
 }
 
-object Hue {
-  def apply(deltaLow: Double, deltaHigh: Double): Hue =
-    new Hue(deltaLow, deltaHigh)
+object ImageFeatureToTensor {
+  def apply[T: ClassTag]()(implicit ev: TensorNumeric[T]): ImageFeatureToTensor[T] =
+    new ImageFeatureToTensor[T]()
 }
+

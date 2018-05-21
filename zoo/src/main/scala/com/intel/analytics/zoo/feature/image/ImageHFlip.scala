@@ -16,16 +16,14 @@
 package com.intel.analytics.zoo.feature.image
 
 import com.intel.analytics.bigdl.transform.vision.image.ImageFeature
-import com.intel.analytics.zoo.feature.common.{ImageProcessing}
 import com.intel.analytics.bigdl.transform.vision.image.augmentation
 
 /**
- * random change the channel of an image
+ * Flip the image horizontally
  */
-class ChannelOrder() extends ImageProcessing {
+class ImageHFlip() extends ImageProcessing {
 
-  private val internalCrop = augmentation.ChannelOrder()
-
+  private val internalCrop = new augmentation.HFlip()
   override def apply(prev: Iterator[ImageFeature]): Iterator[ImageFeature] = {
     internalCrop.apply(prev)
   }
@@ -35,7 +33,6 @@ class ChannelOrder() extends ImageProcessing {
   }
 }
 
-object ChannelOrder {
-  def apply(): ChannelOrder =
-    new ChannelOrder()
+object ImageHFlip {
+  def apply(): ImageHFlip = new ImageHFlip()
 }

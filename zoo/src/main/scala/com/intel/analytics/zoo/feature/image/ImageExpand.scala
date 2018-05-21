@@ -16,17 +16,23 @@
 package com.intel.analytics.zoo.feature.image
 
 import com.intel.analytics.bigdl.transform.vision.image.ImageFeature
-import com.intel.analytics.zoo.feature.common.{ImageProcessing}
 import com.intel.analytics.bigdl.transform.vision.image.augmentation
 
 /**
- * Pixel level normalizer, data(i) = data(i) - mean(i)
+ * expand image, fill the blank part with the meanR, meanG, meanB
  *
- * @param means pixel level mean, following H * W * C order
+ * @param meansR means in R channel
+ * @param meansG means in G channel
+ * @param meansB means in B channel
+ * @param minExpandRatio min expand ratio
+ * @param maxExpandRatio max expand ratio
  */
-class PixelNormalizer(means: Array[Float]) extends ImageProcessing {
+class ImageExpand(meansR: Int = 123, meansG: Int = 117, meansB: Int = 104,
+                  minExpandRatio: Double = 1, maxExpandRatio: Double = 4.0)
+  extends ImageProcessing {
 
-  private val internalCrop = new augmentation.PixelNormalizer(means)
+  private val internalCrop = new augmentation.Expand(meansR, meansG, meansB,
+    minExpandRatio, maxExpandRatio)
   override def apply(prev: Iterator[ImageFeature]): Iterator[ImageFeature] = {
     internalCrop.apply(prev)
   }
@@ -36,6 +42,8 @@ class PixelNormalizer(means: Array[Float]) extends ImageProcessing {
   }
 }
 
-object PixelNormalizer {
-  def apply(means: Array[Float]): PixelNormalizer = new PixelNormalizer(means)
+object ImageExpand {
+  def apply(meansR: Int = 123, meansG: Int = 117, meansB: Int = 104,
+            minExpandRatio: Double = 1.0, maxExpandRatio: Double = 4.0): ImageExpand =
+    new ImageExpand(meansR, meansG, meansB, minExpandRatio, maxExpandRatio)
 }

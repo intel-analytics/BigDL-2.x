@@ -13,29 +13,30 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intel.analytics.zoo.feature.common
+package com.intel.analytics.zoo.feature.image
 
-import com.intel.analytics.bigdl.tensor.Tensor
 import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric
 import com.intel.analytics.bigdl.transform.vision.image.ImageFeature
+import com.intel.analytics.zoo.feature.common.Preprocessing
+import com.intel.analytics.zoo.pipeline.nnframes.NNImageSchema
+import org.apache.spark.sql.Row
 
 import scala.reflect.ClassTag
 
 /**
- * a Preprocessing that convert ImageFeature to a Tensor.
+ * a Preprocessing that converts a Spark Row to a BigDL ImageFeature.
  */
-class ImageFeatureToTensor[T: ClassTag]()(implicit ev: TensorNumeric[T])
-  extends Preprocessing[ImageFeature, Tensor[T]] {
+class RowToImageFeature[T: ClassTag]()(implicit ev: TensorNumeric[T])
+  extends Preprocessing[Row, ImageFeature] {
 
-  override def apply(prev: Iterator[ImageFeature]): Iterator[Tensor[T]] = {
-    prev.map { imf =>
-      imf(ImageFeature.imageTensor).asInstanceOf[Tensor[T]]
+  override def apply(prev: Iterator[Row]): Iterator[ImageFeature] = {
+    prev.map { row =>
+      NNImageSchema.row2IMF(row)
     }
   }
 }
 
-object ImageFeatureToTensor {
-  def apply[T: ClassTag]()(implicit ev: TensorNumeric[T]): ImageFeatureToTensor[T] =
-    new ImageFeatureToTensor[T]()
+object RowToImageFeature {
+  def apply[T: ClassTag]()(implicit ev: TensorNumeric[T]): RowToImageFeature[T] =
+    new RowToImageFeature[T]()
 }
-

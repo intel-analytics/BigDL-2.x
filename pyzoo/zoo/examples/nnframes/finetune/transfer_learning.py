@@ -15,21 +15,20 @@
 #
 
 import re
-from pyspark.sql.functions import col, udf
-from pyspark.sql.types import DoubleType, StringType
+
+from bigdl.nn.criterion import CrossEntropyCriterion
 from pyspark import SparkConf
 from pyspark.ml import Pipeline
-from zoo.pipeline.api.net import *
+from pyspark.sql.functions import col, udf
+from pyspark.sql.types import DoubleType, StringType
 
 from zoo.common.nncontext import *
-from zoo.pipeline.nnframes.nn_classifier import *
-from zoo.pipeline.nnframes.nn_image_reader import *
-from zoo.feature.common import RowToImageFeature
 from zoo.feature.image.imagePreprocessing import *
 from zoo.pipeline.api.keras.layers import Dense, Input, Flatten
 from zoo.pipeline.api.keras.models import *
-from bigdl.nn.criterion import CrossEntropyCriterion
-
+from zoo.pipeline.api.net import *
+from zoo.pipeline.nnframes.nn_classifier import *
+from zoo.pipeline.nnframes.nn_image_reader import *
 
 if __name__ == "__main__":
 
@@ -56,8 +55,8 @@ if __name__ == "__main__":
 
     # compose a pipeline that includes feature transform, pretrained model and Logistic Regression
     transformer = ChainedPreprocessing(
-        [RowToImageFeature(), Resize(256, 256), CenterCrop(224, 224),
-         ChannelNormalize(123.0, 117.0, 104.0), MatToTensor(), ImageFeatureToTensor()])
+        [RowToImageFeature(), ImageResize(256, 256), ImageCenterCrop(224, 224),
+         ImageChannelNormalize(123.0, 117.0, 104.0), ImageMatToTensor(), ImageFeatureToTensor()])
 
     full_model = Net.load_bigdl(model_path)
     # create a new model by remove layers after pool5/drop_7x7_s1
@@ -66,7 +65,7 @@ if __name__ == "__main__":
     model.freeze_up_to(["pool4/3x3_s2"])
 
     inputNode = Input(name="input", shape=(3, 224, 224))
-    inception = model.toKeras()(inputNode)
+    inception = model.to_keras()(inputNode)
     flatten = Flatten()(inception)
     logits = Dense(2)(flatten)
 

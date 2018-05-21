@@ -20,7 +20,6 @@ import com.intel.analytics.bigdl.nn._
 import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric.NumericFloat
 import com.intel.analytics.zoo.pipeline.nnframes._
 import com.intel.analytics.zoo.common.NNContext
-import com.intel.analytics.zoo.feature.common.{ImageFeatureToTensor, RowToImageFeature}
 import com.intel.analytics.zoo.feature.image._
 import org.apache.log4j.{Level, Logger}
 import org.apache.spark.ml.evaluation.MulticlassClassificationEvaluator
@@ -47,8 +46,8 @@ object ImageTransferLearning {
 
       val Array(validationDF, trainingDF) = imagesDF.randomSplit(Array(0.1, 0.9), seed = 42L)
 
-      val transformer = RowToImageFeature() -> Resize(256, 256) -> CenterCrop(224, 224) ->
-        ChannelNormalize(123, 117, 104) -> MatToTensor() -> ImageFeatureToTensor()
+      val transformer = RowToImageFeature() -> ImageResize(256, 256) -> ImageCenterCrop(224, 224) ->
+        ImageChannelNormalize(123, 117, 104) -> ImageMatToTensor() -> ImageFeatureToTensor()
       val loadedModel = Module.loadCaffeModel[Float](params.caffeDefPath, params.modelPath)
       val featurizer = NNModel(loadedModel, transformer)
         .setBatchSize(params.batchSize)

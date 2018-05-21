@@ -18,10 +18,10 @@ package com.intel.analytics.zoo.models.image.common
 
 import com.intel.analytics.bigdl.dataset.PaddingParam
 import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric
-import com.intel.analytics.bigdl.transform.vision.image.FeatureTransformer
+import com.intel.analytics.bigdl.transform.vision.image.{ImageFeature}
+import com.intel.analytics.zoo.feature.common.{Preprocessing}
 import com.intel.analytics.zoo.models.image.objectdetection.ObjectDetectionConfig
 import com.intel.analytics.zoo.models.image.imageclassification.ImageClassificationConfig
-
 import org.apache.log4j.Logger
 
 import scala.reflect.ClassTag
@@ -36,8 +36,8 @@ import scala.reflect.ClassTag
  * @param featurePaddingParam featurePaddingParam if the inputs have variant size
  */
 case class ImageConfigure[T: ClassTag](
-  preProcessor: FeatureTransformer = null,
-  postProcessor: FeatureTransformer = null,
+  preProcessor: Preprocessing[ImageFeature, ImageFeature] = null,
+  postProcessor: Preprocessing[ImageFeature, ImageFeature] = null,
   batchPerPartition: Int = 4,
   labelMap: Map[Int, String] = null,
   featurePaddingParam: Option[PaddingParam[T]] = None)(implicit ev: TensorNumeric[T]) {

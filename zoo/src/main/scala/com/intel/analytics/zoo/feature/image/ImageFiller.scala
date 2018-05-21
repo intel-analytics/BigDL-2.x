@@ -16,18 +16,21 @@
 package com.intel.analytics.zoo.feature.image
 
 import com.intel.analytics.bigdl.transform.vision.image.ImageFeature
-import com.intel.analytics.zoo.feature.common.{ImageProcessing}
 import com.intel.analytics.bigdl.transform.vision.image.augmentation
 
 /**
- * adjust the image brightness
+ * Fill part of image with certain pixel value
  *
- * @param deltaLow brightness parameter: low bound
- * @param deltaHigh brightness parameter: high bound
+ * @param startX start x ratio
+ * @param startY start y ratio
+ * @param endX end x ratio
+ * @param endY end y ratio
+ * @param value filling value
  */
-class Brightness(deltaLow: Double, deltaHigh: Double) extends ImageProcessing {
+class ImageFiller(startX: Float, startY: Float, endX: Float, endY: Float, value: Int = 255)
+  extends ImageProcessing {
 
-  private val internalCrop = augmentation.Brightness(deltaLow, deltaHigh)
+  private val internalCrop = new augmentation.Filler(startX, startY, endX, endY, value)
   override def apply(prev: Iterator[ImageFeature]): Iterator[ImageFeature] = {
     internalCrop.apply(prev)
   }
@@ -37,7 +40,7 @@ class Brightness(deltaLow: Double, deltaHigh: Double) extends ImageProcessing {
   }
 }
 
-object Brightness {
-  def apply(deltaLow: Double, deltaHigh: Double): Brightness =
-    new Brightness(deltaLow, deltaHigh)
+object ImageFiller {
+  def apply(startX: Float, startY: Float, endX: Float, endY: Float, value: Int = 255): ImageFiller
+  = new ImageFiller(startX, startY, endX, endY, value)
 }

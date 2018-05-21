@@ -15,33 +15,30 @@
  */
 package com.intel.analytics.zoo.feature.image
 
+import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric
 import com.intel.analytics.bigdl.transform.vision.image.ImageFeature
-import com.intel.analytics.zoo.feature.common.{ImageProcessing}
-import com.intel.analytics.bigdl.transform.vision.image.augmentation
+import com.intel.analytics.bigdl.transform.vision.image
 
-/**
- * Fill part of image with certain pixel value
- *
- * @param startX start x ratio
- * @param startY start y ratio
- * @param endX end x ratio
- * @param endY end y ratio
- * @param value filling value
- */
-class Filler(startX: Float, startY: Float, endX: Float, endY: Float, value: Int = 255)
+import scala.reflect.ClassTag
+
+class ImageMatToTensor[T: ClassTag](
+    toRGB: Boolean = false,
+    tensorKey: String = ImageFeature.imageTensor,
+    shareBuffer: Boolean = true)(implicit ev: TensorNumeric[T])
   extends ImageProcessing {
 
-  private val internalCrop = new augmentation.Filler(startX, startY, endX, endY, value)
+  private val internalResize = new image.MatToTensor[T](toRGB, tensorKey, shareBuffer)
   override def apply(prev: Iterator[ImageFeature]): Iterator[ImageFeature] = {
-    internalCrop.apply(prev)
-  }
-
-  override def transformMat(feature: ImageFeature): Unit = {
-    internalCrop.transformMat(feature)
+    internalResize.apply(prev)
   }
 }
 
-object Filler {
-  def apply(startX: Float, startY: Float, endX: Float, endY: Float, value: Int = 255): Filler
-  = new Filler(startX, startY, endX, endY, value)
+object ImageMatToTensor {
+
+  def apply[T: ClassTag](
+      toRGB: Boolean = false,
+      tensorKey: String = ImageFeature.imageTensor,
+      shareBuffer: Boolean = true
+  )(implicit ev: TensorNumeric[T]): ImageMatToTensor[T] =
+    new ImageMatToTensor[T](toRGB, tensorKey, shareBuffer)
 }

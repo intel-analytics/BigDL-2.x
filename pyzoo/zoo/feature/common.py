@@ -1,5 +1,5 @@
 #
-# Copyright 2016 The BigDL Authors.
+# Copyright 2018 Analytics Zoo Authors.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -16,6 +16,8 @@
 
 from bigdl.util.common import *
 
+from zoo.feature.image.imageset import ImageSet
+
 if sys.version >= '3':
     long = int
     unicode = str
@@ -28,6 +30,14 @@ class Preprocessing(JavaValue):
     """
     def __init__(self, bigdl_type="float", *args):
         self.value = callBigDlFunc(bigdl_type, JavaValue.jvm_class_constructor(self), *args)
+
+    def __call__(self, input, bigdl_type="float"):
+        """
+        transform ImageSet
+        """
+        if type(input) is ImageSet:
+            jset = callBigDlFunc(bigdl_type, "transformImageSet", self.value, input)
+            return ImageSet(jvalue=jset)
 
 
 class ChainedPreprocessing(Preprocessing):
@@ -77,22 +87,6 @@ class MLlibVectorToTensor(Preprocessing):
     """
     def __init__(self, size, bigdl_type="float"):
         super(MLlibVectorToTensor, self).__init__(bigdl_type, size)
-
-
-class ImageFeatureToTensor(Preprocessing):
-    """
-    a Transformer that convert ImageFeature to a Tensor.
-    """
-    def __init__(self, bigdl_type="float"):
-        super(ImageFeatureToTensor, self).__init__(bigdl_type)
-
-
-class RowToImageFeature(Preprocessing):
-    """
-    a Transformer that converts a Spark Row to a BigDL ImageFeature.
-    """
-    def __init__(self, bigdl_type="float"):
-        super(RowToImageFeature, self).__init__(bigdl_type)
 
 
 class FeatureLabelPreprocessing(Preprocessing):

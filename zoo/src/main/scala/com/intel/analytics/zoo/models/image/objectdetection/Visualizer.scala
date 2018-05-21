@@ -17,17 +17,17 @@
 package com.intel.analytics.zoo.models.image.objectdetection
 
 import com.intel.analytics.bigdl.tensor.Tensor
-import com.intel.analytics.bigdl.transform.vision.image.{FeatureTransformer, ImageFeature}
+import com.intel.analytics.bigdl.transform.vision.image.ImageFeature
 import com.intel.analytics.bigdl.transform.vision.image.opencv.OpenCVMat
 import com.intel.analytics.bigdl.transform.vision.image.util.BoundingBox
-import com.intel.analytics.zoo.feature.image.ImageSet
+import com.intel.analytics.zoo.feature.image.{ImageProcessing, ImageSet}
 
 /**
  * used for image object detection
  * visualize detected bounding boxes and their scores to image
  */
 class Visualizer(labelMap: Map[Int, String], thresh: Float = 0.3f,
-  encoding: String = "png", outKey: String = Visualizer.visualized) extends FeatureTransformer {
+  encoding: String = "png", outKey: String = Visualizer.visualized) extends ImageProcessing {
   override def transformMat(imageFeature: ImageFeature): Unit = {
     val rois = imageFeature.predict().asInstanceOf[Tensor[Float]]
     val uri = imageFeature.uri()
@@ -63,10 +63,6 @@ class Visualizer(labelMap: Map[Int, String], thresh: Float = 0.3f,
     } finally {
       if (mat != null) mat.release()
     }
-  }
-
-  def apply(imageSet: ImageSet): ImageSet = {
-    imageSet.transform(this)
   }
 }
 

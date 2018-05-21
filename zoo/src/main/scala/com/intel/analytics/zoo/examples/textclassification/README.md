@@ -14,10 +14,10 @@ The data used in this example are:
 
 You need to prepare the data by yourself beforehand. The following scripts we prepare will serve to download and extract the data:
 ```bash
-bash ${ZOO_HOME}/data/news20/get_news20.sh dir
-bash ${ZOO_HOME}/data/glove/get_glove.sh dir
+bash ${ANALYTICS_ZOO_HOME}/bin/data/news20/get_news20.sh dir
+bash ${ANALYTICS_ZOO_HOME}/bin/data/glove/get_glove.sh dir
 ```
-where `ZOO_HOME` is the root directory of the Zoo project and `dir` is the directory you wish to locate the downloaded data. If `dir` is not specified, the data will be downloaded to the current working directory. 20 Newsgroup dataset and GloVe word embeddings are supposed to be placed under the same directory.
+where `ANALYTICS_ZOO_HOME` is the `dist` directory under the Analytics Zoo project and `dir` is the directory you wish to locate the downloaded data. If `dir` is not specified, the data will be downloaded to the current working directory. 20 Newsgroup dataset and GloVe word embeddings are supposed to be placed under the same directory.
 
 The data folder structure after extraction should look like the following:
 ```
@@ -33,9 +33,9 @@ Run the following command for Spark local mode (`MASTER=local[*]`) or cluster mo
 
 ```bash
 SPARK_HOME=the root directory of Spark
-ZOO_HOME=the root directory of the Zoo project
+ANALYTICS_ZOO_HOME=the dist directory under the Analytics Zoo project
 MASTER=...
-ZOO_JAR_PATH=${ZOO_HOME}/dist/lib/zoo-VERSION-jar-with-dependencies.jar
+ANALYTICS_ZOO_JAR=${ANALYTICS_ZOO_HOME}/lib/analytics-zoo-VERSION-jar-with-dependencies.jar
 BASE_DIR=the base directory containing the training and word2Vec data
 
 spark-submit \
@@ -43,7 +43,7 @@ spark-submit \
     --driver-memory 20g \
     --executor-memory 20g \
     --class com.intel.analytics.zoo.examples.textclassification.TextClassification \
-    ${ZOO_JAR_PATH} \
+    ${ANALYTICS_ZOO_JAR} \
     --baseDir ${BASE_DIR}
 ```
 __Options:__
