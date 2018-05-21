@@ -18,7 +18,8 @@ from bigdl.util.common import *
 import warnings
 
 
-def get_nncontext(conf=None):
+
+def get_nncontext(conf=None, appName=None):
     """
     Gets a SparkContext with optimized configuration for BigDL performance. The method
     will also initialize the BigDL engine.
@@ -30,12 +31,26 @@ def get_nncontext(conf=None):
     :param conf: User defined Spark conf
     """
 
-    sc = get_spark_context(conf)
+    sc = getOrCreateSparkContext(conf, appName=appName)
     redire_spark_logs()
     show_bigdl_info_logs()
     init_engine()
     return sc
 
+def getOrCreateSparkContext(conf=None, appName=None):
+    """
+    Get the current active spark context and create one if no active instance
+    :param conf: combining bigdl configs into spark conf
+    :return: SparkContext
+    """
+    with SparkContext._lock:
+        if SparkContext._active_spark_context is None:
+            spark_conf = create_spark_conf() if conf is None else conf
+            if appName:
+                spark_conf.setAppName(appName)
+            return SparkContext.getOrCreate(spark_conf)
+        else:
+            return SparkContext.getOrCreate()
 
 def check_version():
     sc = get_spark_context()

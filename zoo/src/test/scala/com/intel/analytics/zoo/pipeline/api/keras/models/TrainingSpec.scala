@@ -49,9 +49,8 @@ class TrainingSpec extends FlatSpec with Matchers with BeforeAndAfter  {
 
   before {
     val conf = new SparkConf()
-      .setAppName("TrainingSpec")
       .setMaster("local[4]")
-    sc = NNContext.getNNContext(conf)
+    sc = NNContext.getNNContext(conf, appName = "TrainingSpec")
   }
 
   after {
@@ -61,6 +60,7 @@ class TrainingSpec extends FlatSpec with Matchers with BeforeAndAfter  {
   }
 
   "sequential compile and fit with custom loss" should "work properly" in {
+    assert(sc.appName == "TrainingSpec")
     val trainingData = generateData(Array(10), 5, 40)
     val model = Sequential[Float]()
     model.add(Dense[Float](5, inputShape = Shape(10)))

@@ -18,6 +18,8 @@ import sys
 from bigdl.util.common import JavaValue
 from bigdl.util.common import callBigDlFunc
 
+from zoo.feature.common import Preprocessing
+
 if sys.version >= '3':
     long = int
     unicode = str
@@ -41,10 +43,10 @@ class ImageConfigure(JavaValue):
             self.value = jvalue
         else:
             if pre_processor:
-                assert pre_processor.__class__.__bases__[0].__name__ == "Preprocessing", \
+                assert issubclass(pre_processor.__class__, Preprocessing), \
                     "the pre_processor should be subclass of Preprocessing"
             if post_processor:
-                assert post_processor.__class__.__bases__[0].__name__ == "Preprocessing", \
+                assert issubclass(post_processor.__class__, Preprocessing), \
                     "the pre_processor should be subclass of Preprocessing"
             self.value = callBigDlFunc(
                 bigdl_type, JavaValue.jvm_class_constructor(self),
