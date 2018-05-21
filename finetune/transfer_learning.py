@@ -15,21 +15,20 @@
 #
 
 import re
-from pyspark.sql.functions import col, udf
-from pyspark.sql.types import DoubleType, StringType
+
+from bigdl.nn.criterion import CrossEntropyCriterion
 from pyspark import SparkConf
 from pyspark.ml import Pipeline
-from zoo.pipeline.api.net import *
+from pyspark.sql.functions import col, udf
+from pyspark.sql.types import DoubleType, StringType
 
 from zoo.common.nncontext import *
-from zoo.pipeline.nnframes.nn_classifier import *
-from zoo.pipeline.nnframes.nn_image_reader import *
-from zoo.feature.common import RowToImageFeature
 from zoo.feature.image.imagePreprocessing import *
 from zoo.pipeline.api.keras.layers import Dense, Input, Flatten
 from zoo.pipeline.api.keras.models import *
-from bigdl.nn.criterion import CrossEntropyCriterion
-
+from zoo.pipeline.api.net import *
+from zoo.pipeline.nnframes.nn_classifier import *
+from zoo.pipeline.nnframes.nn_image_reader import *
 
 if __name__ == "__main__":
 
