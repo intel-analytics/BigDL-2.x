@@ -17,9 +17,8 @@
 package com.intel.analytics.zoo.models.image.imageclassification
 
 import com.intel.analytics.bigdl.tensor.Tensor
-import com.intel.analytics.bigdl.transform.vision.image.{ImageFeature}
-import com.intel.analytics.zoo.feature.common.ImageProcessing
-import com.intel.analytics.zoo.feature.image.ImageSet
+import com.intel.analytics.bigdl.transform.vision.image.ImageFeature
+import com.intel.analytics.zoo.feature.image.{ImageProcessing, ImageSet}
 
 class LabelOutput(labelMap: Map[Int, String], clses : String, probs : String)
   extends ImageProcessing {
