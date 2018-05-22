@@ -40,6 +40,7 @@ class NNImageReader:
         :return DataFrame with a single column "image"; Each record in the column represents
                 one image record: Row (uri, height, width, channels, CvType, bytes).
         """
-        df = callBigDlFunc(bigdl_type, "nnReadImage", path, sc, minPartitions, cachedFeaturePreprocessing)
+        df = callBigDlFunc(bigdl_type, "nnReadImage", path, sc, minPartitions,
+                           cachedFeaturePreprocessing)
         df._sc._jsc = sc._jsc
         return df
