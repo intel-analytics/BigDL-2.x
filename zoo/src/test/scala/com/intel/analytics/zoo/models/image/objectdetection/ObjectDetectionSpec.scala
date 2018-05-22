@@ -65,6 +65,10 @@ class ObjectDetectionSpec extends FlatSpec with Matchers with BeforeAndAfter {
     require(res.head.predict(ImageFeature.predict)
       .equals(res2.head.predict(ImageFeature.predict)) == true)
 
+    val summary = model.summary()
+    summary.foreach { case (name: String, params: Array[Int]) =>
+      println(name + " " + params.mkString("X"))
+    }
     "rm -rf ./ssd2.model" !!
   }
 

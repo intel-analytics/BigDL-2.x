@@ -16,10 +16,13 @@
 
 package com.intel.analytics.zoo.models.common
 
-import com.intel.analytics.bigdl.nn.{Container, Module}
 import com.intel.analytics.bigdl.nn.abstractnn.{AbstractModule, Activity}
+import com.intel.analytics.bigdl.nn.{Container, Module}
+import com.intel.analytics.bigdl.tensor.Tensor
 import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric
+import com.intel.analytics.bigdl.utils.Table
 
+import scala.collection.mutable.HashMap
 import scala.reflect.ClassTag
 
 /**
@@ -87,6 +90,21 @@ abstract class ZooModel[A <: Activity: ClassTag, B <: Activity: ClassTag, T: Cla
 
   override def accGradParameters(input: A, gradOutput: B): Unit = {
     model.accGradParameters(input, gradOutput)
+  }
+
+  /**
+   * Get the model parameters sizes which containing: weight, bias, gradBias, gradWeight
+   *
+   * @return HashMap(layername/parametername -> sizes)
+   */
+  def summary(): HashMap[String, Array[Int]] = {
+    val variables = new HashMap[String, Array[Int]]()
+    model.getParametersTable().foreach { case (name: String, params: Table) =>
+      params.foreach { case (paramName: String, param: Tensor[Float]) =>
+        variables += (name + "/" + paramName -> param.size())
+      }
+    }
+    variables
   }
 }
 

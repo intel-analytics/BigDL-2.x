@@ -233,4 +233,9 @@ class PythonZooModel[T: ClassTag](implicit ev: TensorNumeric[T]) extends PythonB
     Utils.getNegativeSamples(indexed)
   }
 
+  def zooModelSummary(model: ZooModel[Activity, Activity, T]): JMap[String, JList[Int]] = {
+    model.summary().map {
+      case (name: String, sizes: Array[Int]) => (name, sizes.toList.asJava)
+    }.asJava
+  }
 }
