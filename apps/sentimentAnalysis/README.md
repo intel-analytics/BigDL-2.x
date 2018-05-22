@@ -19,7 +19,6 @@ In this example, you learned how to use BigDL to develop deep learning models fo
 * Download Analytics Zoo and build it.
 * Run `export SPARK_HOME=the root directory of Spark`.
 * Run `export ANALYTICS_ZOO_HOME=the dist directory under the Analytics Zoo project`.
-* Run `$ANALYTICS_ZOO_HOME/bin/data/NAB/nyc_taxi/get_nyc_taxi.sh` to download the dataset. (It can also be downloaded from its [github](https://raw.githubusercontent.com/numenta/NAB/master/data/realKnownCause/nyc_taxi.csv)).
 * Run the following bash command to start the jupyter notebook. Change parameter settings as you need, ie `MASTER = local[physcial_core_number]`.
 ```bash
 MASTER=local[*]
@@ -29,5 +28,5 @@ ${ANALYTICS_ZOO_HOME}/bin/jupyter-with-zoo.sh \
     --driver-memory 12g  \
     --total-executor-cores 4  \
     --executor-cores 4  \
-    --executor-memory 22g
+    --executor-memory 12g
 
