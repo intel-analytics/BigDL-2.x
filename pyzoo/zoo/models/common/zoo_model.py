@@ -53,7 +53,7 @@ class ZooModel(ZooModelCreator, Container):
         """
         Get the model parameters sizes which containing: weight, bias, gradBias, gradWeight
         
-        :return: dict(layername/parametername -> ndarray)
+        :return: dict(layername/parametername -> sizes)
         """
         return callBigDlFunc(self.bigdl_type, "zooModelSummary", self.value)
 
