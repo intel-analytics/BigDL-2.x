@@ -57,8 +57,10 @@ def __prepare_spark_env():
         print("Using %s" % spark_home)
         py4j = glob.glob(os.path.join(spark_home, 'python/lib', 'py4j-*.zip'))[0]
         pyspark = glob.glob(os.path.join(spark_home, 'python/lib', 'pyspark*.zip'))[0]
-        sys.path.insert(0, py4j)
-        sys.path.insert(0, pyspark)
+        if py4j not in sys.path:
+            sys.path.insert(0, py4j)
+        if pyspark not in sys.path:
+            sys.path.insert(0, pyspark)
 
 
 def __prepare_analytics_zoo_env():
@@ -86,8 +88,9 @@ def __prepare_analytics_zoo_env():
 
     if extra_resources_paths:
         for resource in extra_resources_paths:
-            print("Prepending %s to sys.path" % resource)
-            sys.path.insert(0, resource)
+            if resource not in extra_resources_paths:
+                print("Prepending %s to sys.path" % resource)
+                sys.path.insert(0, resource)
 
     if os.environ.get("BIGDL_JARS", None) and is_spark_below_2_2():
         for jar in os.environ["BIGDL_JARS"].split(":"):
@@ -95,7 +98,8 @@ def __prepare_analytics_zoo_env():
 
     if os.environ.get("BIGDL_PACKAGES", None):
         for package in os.environ["BIGDL_PACKAGES"].split(":"):
-            sys.path.insert(0, package)
+            if package not in sys.path:
+                sys.path.insert(0, package)
 
 
 def get_analytics_zoo_classpath():
