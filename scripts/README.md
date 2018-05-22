@@ -42,29 +42,33 @@ After setting the necessary environment variables above, you can run those scrip
 ```
 Note that not all the parameters are required. You only need to set the necessary ones.
 
-    * For YARN cluster:
-        - You can run Analytics Zoo programs on YARN clusters without changes to the cluster (e.g., no need to pre-install the Python dependencies). You can first package all the required Python dependencies into a virtual environment on the local node (where you will run the spark-submit command), and then directly use `spark-submit-with-zoo.sh` to run the Zoo Python program on the YARN cluster (using that virtual environment). Please follow the steps below: 
-        * Make sure you already install such libraries(python-setuptools, python-dev, gcc, make, zip, pip) for creating virtual environment. If not, please install them first. For example, on Ubuntu, run these commands to install:
-          ```
+* For YARN cluster:
+
+  You can run Analytics Zoo programs on YARN clusters without changes to the cluster (e.g., no need to pre-install the Python dependencies). You can first package all the required Python dependencies into a virtual environment on the local node (where you will run the spark-submit command), and then directly use `spark-submit-with-zoo.sh` to run the Zoo Python program on the YARN cluster (using that virtual environment). 
+     
+   Please follow the steps below: 
+     
+   1. Make sure you already install such libraries(python-setuptools, python-dev, gcc, make, zip, pip) for creating virtual environment. If not, please install them first. For example, on Ubuntu, run these commands to install:
+    ```
             apt-get update
             apt-get install -y python-setuptools python-dev
             apt-get install -y gcc make
             apt-get install -y zip
             easy_install pip
-          ```	
-        * Create dependency virtualenv package
-            * Run ```python_package.sh``` to create dependency virtual environment according to dependency descriptions in requirements.txt. You can add your own dependencies in requirements.txt. The current requirements.txt only contains dependencies for Analytics Zoo python examples and models.
-            * After running this script, there will be venv.zip and venv directory generated in current directory. Use them to submit your python jobs.            
-        * Submit job with virtualenv package
-            * YARN cluster mode.
+    ```	
+   2. Create dependency virtualenv package
+        - Run ```python_package.sh``` to create dependency virtual environment according to dependency descriptions in requirements.txt. You can add your own dependencies in requirements.txt. The current requirements.txt only contains dependencies for Analytics Zoo python examples and models.
+        - After running this script, there will be venv.zip and venv directory generated in current directory. Use them to submit your python jobs.            
+   3. Submit job with virtualenv package
+        - YARN cluster mode.
             
-                Before submit job, set the environment first:
-                ```
+        Before submit job, set the environment first:
+        ```
                 export PYSPARK_PYTHON=./venv.zip/venv/bin/python
                 export VENV_HOME=your virtual environment directory
-                ```
-                Then run ```spark-submit-with-zoo.sh``` as below:
-                ```
+        ```
+        Then run ```spark-submit-with-zoo.sh``` as below:
+        ```
                 spark-submit-with-zoo.sh \
                 --master yarn-cluster \
                 --conf spark.yarn.appMasterEnv.PYSPARK_PYTHON=./venv.zip/venv/bin/python \
@@ -74,17 +78,17 @@ Note that not all the parameters are required. You only need to set the necessar
                 --executor-cores 8 \
                 --num-executors 2 \
                 your python script and parameters
-                ```
-            * YARN client mode.
+        ```
+        - YARN client mode.
                         
-                Before submit job, set the environment first:
-                ```
+        Before submit job, set the environment first:
+        ```
                 export VENV_HOME=your virtual environment directory
                 export PYSPARK_DRIVER_PYTHON=${VENV_HOME}/venv/bin/python
                 export PYSPARK_PYTHON=./venv.zip/venv/bin/python
-                ```
-                Then run ```spark-submit-with-zoo.sh``` as below:
-                ```
+        ```
+        Then run ```spark-submit-with-zoo.sh``` as below:
+        ```
                 spark-submit-with-zoo.sh \
                 --master yarn \
                 --deploy-mode client \
@@ -94,7 +98,7 @@ Note that not all the parameters are required. You only need to set the necessar
                 --num-executors 2 \
                 --archives ${VENV_HOME}/venv.zip \
                 your python script and parameters
-                ```    
+        ```    
            
         __FAQ__
         
