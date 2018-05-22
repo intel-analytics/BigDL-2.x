@@ -29,15 +29,17 @@ class NNImageReader:
     """
 
     @staticmethod
-    def readImages(path, sc=None, minPartitions=1, featurePreprocessing=None, bigdl_type="float"):
+    def readImages(path, sc=None, minPartitions=1, cachedFeaturePreprocessing=None,
+                   bigdl_type="float"):
         """
         Read the directory of images into DataFrame from the local or remote source.
         :param path Directory to the input data files, the path can be comma separated paths as the
                 list of inputs. Wildcards path are supported similarly to sc.binaryFiles(path).
-        :param min_partitions A suggestion value of the minimal splitting number for input data.
+        :param minPartitions A suggestion value of the minimal splitting number for input data.
+        :param cachedFeaturePreprocessing A [[Preprocessing]] that transforms the feature data
         :return DataFrame with a single column "image"; Each record in the column represents
                 one image record: Row (uri, height, width, channels, CvType, bytes).
         """
-        df = callBigDlFunc(bigdl_type, "nnReadImage", path, sc, minPartitions, featurePreprocessing)
+        df = callBigDlFunc(bigdl_type, "nnReadImage", path, sc, minPartitions, cachedFeaturePreprocessing)
         df._sc._jsc = sc._jsc
         return df

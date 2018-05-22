@@ -71,7 +71,8 @@ class TestNNImageReader():
     def test_get_pascal_image_preprocessing(self):
         image_path = os.path.join(self.resource_path, "pascal/000025.jpg")
         preprocessing = ChainedPreprocessing([ImageResize(256, 256), ImageCenterCrop(200, 200)])
-        image_frame = NNImageReader.readImages(image_path, self.sc, featurePreprocessing=preprocessing)
+        image_frame = NNImageReader.readImages(image_path, self.sc,
+                                               cachedFeaturePreprocessing=preprocessing)
         assert image_frame.count() == 1
 
 if __name__ == "__main__":
