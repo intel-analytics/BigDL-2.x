@@ -49,15 +49,23 @@ class TrainingSpec extends FlatSpec with Matchers with BeforeAndAfter  {
 
   before {
     val conf = new SparkConf()
-      .setAppName("TrainingSpec")
       .setMaster("local[4]")
-    sc = NNContext.getNNContext(conf)
+    sc = NNContext.getNNContext(conf, appName = "TrainingSpec")
   }
 
   after {
     if (sc != null) {
       sc.stop()
     }
+  }
+
+  "getNNContext" should "work properly" in {
+    sc = SparkContext.getOrCreate()
+    sc.stop()
+    val conf = new SparkConf()
+      .setMaster("local[4]")
+    sc = NNContext.getNNContext(conf, "hello")
+    assert(sc.appName == "hello")
   }
 
   "sequential compile and fit with custom loss" should "work properly" in {
@@ -73,11 +81,11 @@ class TrainingSpec extends FlatSpec with Matchers with BeforeAndAfter  {
   }
 
   "graph compile and fit" should "work properly" in {
-    val trainingData = generateData(Array(10), 8, 40)
+    val trainingData = generateData(Array(10), 1, 40)
     val input = Input[Float](inputShape = Shape(10))
-    val output = Dense[Float](8, activation = "relu").inputs(input)
+    val output = Dense[Float](1, activation = "relu").inputs(input)
     val model = Model[Float](input, output)
-    model.compile(optimizer = "adam", loss = "mae")
+    model.compile(optimizer = "adam", loss = "mae", metrics = List("auc"))
     model.fit(trainingData, batchSize = 8, nbEpoch = 2)
   }
 

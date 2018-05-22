@@ -13,7 +13,7 @@ Analytics Zoo makes it easy to build deep learning application on Spark and BigD
   - [Object dtection API](#object-detection-api): high-level API and pretrained models (e.g., SSD and Faster-RCNN) for *object detection*
   - [Image classification API](#image-classification-api): high-level API and pretrained models (e.g., VGG, Inception, ResNet, MobileNet, etc.) for *image classification*
   - [Text classification API](#text-classification-api): high-level API and pre-defined models (using CNN, LSTM, etc.) for *text classification*
-  - [Recommedation API](#reccomendation-api): high-level API and pre-defined models (e.g., Neural Collaborative Filtering, Wide and Deep Learning, etc.) for *recommedation*
+  - [Recommedation API](#recommendation-api): high-level API and pre-defined models (e.g., Neural Collaborative Filtering, Wide and Deep Learning, etc.) for *recommendation*
   
 - [Reference use cases](#reference-use-cases): a collection of end-to-end *reference use cases* (e.g., anomaly detection, sentiment analysis, fraud detection, image augmentation, object detection, variational autoencoder, etc.)
 
@@ -26,7 +26,7 @@ Analytics Zoo provides a set of easy-to-use, high level pipeline APIs that nativ
 1. Load images into DataFrames using `NNImageReader`
    ```
    from zoo.common.nncontext import *
-   from zoo.pipeline.nnframes.nn_image_reader import *
+   from zoo.pipeline.nnframes import *
    sc = get_nncontext()
    imageDF = NNImageReader.readImages(image_path, sc)
    ```
@@ -39,8 +39,7 @@ Analytics Zoo provides a set of easy-to-use, high level pipeline APIs that nativ
 
 3. Processing image using built-in *feature engineering operations*
    ```
-   from zoo.feature.common import RowToImageFeature
-   from zoo.feature.image.imagePreprocessing import *
+   from zoo.feature.image import *
    transformer = RowToImageFeature() -> ImageResize(64, 64) -> ImageChannelNormalize(123.0, 117.0, 104.0) \
                  -> ImageMatToTensor() -> ImageFeatureToTensor())
    ```
@@ -49,7 +48,7 @@ Analytics Zoo provides a set of easy-to-use, high level pipeline APIs that nativ
    ```
    from zoo.pipeline.api.keras.layers import *
    from zoo.pipeline.api.keras.models import *
-   model = Sequential().add(Convolution2D(32, 3, 3, activation=’leru’, input_shape=(1, 28, 28))) \
+   model = Sequential().add(Convolution2D(32, 3, 3, activation='relu', input_shape=(1, 28, 28))) \
                    .add(MaxPooling2D(pool_size=(2, 2))).add(Flatten()).add(Dense(10, activation='softmax')))
    ```
 
@@ -66,13 +65,15 @@ Analytics Zoo provides a set of easy-to-use, high level pipeline APIs that nativ
 1. Define custom functions using `autograd`
    ```
    from zoo.pipeline.api.autograd import *
+   
    def mean_absolute_error(y_true, y_pred):
        return mean(abs(y_true - y_pred), axis=1)
+   
    def add_one_func(x):
        return x + 1.0
    ```
 
-   2. Define model with custom layer
+2. Define model using Keras-style API and *custom `Lambda` layer*
    ```
    from zoo.pipeline.api.keras.layers import *
    from zoo.pipeline.api.keras.models import *
@@ -80,7 +81,7 @@ Analytics Zoo provides a set of easy-to-use, high level pipeline APIs that nativ
                        .add(Lambda(function=add_one_func))
    ```
 
-3. Train model with custom loss
+3. Train model with *custom loss function*
    ```
    model.compile(optimizer = SGD(), loss = mean_absolute_error)
    model.fit(x = ..., y = ...)
@@ -119,7 +120,7 @@ Using the high level transfer learning APIs, you can easily customize pretrained
    ```
 
 ## Built-in deep learning models
-Analytics Zoo provides several built-in deep learning models that you can use for a variety of problem types, such as *object detection*, *image classification*, *text classification*, *recommedation*, etc.
+Analytics Zoo provides several built-in deep learning models that you can use for a variety of problem types, such as *object detection*, *image classification*, *text classification*, *recommendation*, etc.
 
 ### Object detection API
 Using *Analytics Zoo Object Detection API* (including a set of pretrained detection models such as SSD and Faster-RCNN), you can easily build your object detection applications (e.g., localizing and identifying multiple objects in images and videos), as illustrated below.
@@ -130,7 +131,7 @@ Using *Analytics Zoo Object Detection API* (including a set of pretrained detect
 
 2. Use *Zoo Object Detection API* for off-the-shell inference
    ```
-   from zoo.models.image.objectdetection.object_detector import *
+   from zoo.models.image.objectdetection import *
    model = ObjectDetector.load_model(model_path)
    image_set = ImageSet.read(img_path, sc)
    output = model.predict_image_set(image_set)
@@ -145,7 +146,7 @@ Using *Analytics Zoo Image Classification API* (including a set of pretrained de
 
 2. Use *Image classification API* for off-the-shell inference
    ```
-   from zoo.models.image.imageclassification.image_classification import *
+   from zoo.models.image.imageclassification import *
    model = ImageClassifier.load_model(model_path)
    image_set = ImageSet.read(img_path, sc)
    output = model.predict_image_set(image_set)
@@ -154,8 +155,8 @@ Using *Analytics Zoo Image Classification API* (including a set of pretrained de
 ### Text classification API
 *Analytics Zoo Text Classification API* provides a set of pre-defined models (using CNN, LSTM, etc.) for text classifications.
 
-### Reccomendation API
-*Analytics Zoo Reccomendation API* provides a set of pre-defined models (such as Neural Collaborative Filtering, Wide and Deep Learning, etc.) for receommendations.
+### Recommendation API
+*Analytics Zoo Recommendation API* provides a set of pre-defined models (such as Neural Collaborative Filtering, Wide and Deep Learning, etc.) for receommendations.
 
 ## Reference use cases
 Analytics Zoo provides a collection of end-to-end reference use cases, including *anomaly detection (for time series data)*, *sentiment analysis*, *fraud detection*, *image augmentation*, *object detection*, *variational autoencoder*, etc.

@@ -51,8 +51,8 @@ class ColumnFeatureInfo(object):
                    embed_cols should be within the range of embed_in_dims.
                    List of int. Default is an empty list.
     embed_out_dims: The dimensions of embeddings. List of int. Default is an empty list.
-    continuous_cols: Data of continuous_cols is treated as continuous values for the deep model.
-                     List of String. Default is an empty list.
+    continuous_cols: Data of continuous_cols will be treated as continuous values for
+                     the deep model. List of String. Default is an empty list.
     label: The name of the 'label' column. String. Default is 'label'.
     """
     def __init__(self, wide_base_cols=None, wide_base_dims=None, wide_cross_cols=None,
@@ -95,28 +95,28 @@ class WideAndDeep(Recommender):
 
     # Arguments
     class_num: The number of classes. Positive int.
-    col_info: An instance of ColumnFeatureInfo.
-    model_type: String, 'wide', 'deep' and 'wide_n_deep' are supported. Default is 'wide_n_deep'.
+    column_info: An instance of ColumnFeatureInfo.
+    model_type: String. 'wide', 'deep' and 'wide_n_deep' are supported. Default is 'wide_n_deep'.
     hidden_layers: Units of hidden layers for the deep model.
                    Tuple of positive int. Default is (40, 20, 10).
     """
-    def __init__(self, class_num, col_info, model_type="wide_n_deep",
+    def __init__(self, class_num, column_info, model_type="wide_n_deep",
                  hidden_layers=(40, 20, 10), bigdl_type="float"):
         super(WideAndDeep, self).__init__(None, bigdl_type,
                                           model_type,
                                           int(class_num),
                                           [int(unit) for unit in hidden_layers],
-                                          col_info.wide_base_cols,
-                                          col_info.wide_base_dims,
-                                          col_info.wide_cross_cols,
-                                          col_info.wide_cross_dims,
-                                          col_info.indicator_cols,
-                                          col_info.indicator_dims,
-                                          col_info.embed_cols,
-                                          col_info.embed_in_dims,
-                                          col_info.embed_out_dims,
-                                          col_info.continuous_cols,
-                                          col_info.label)
+                                          column_info.wide_base_cols,
+                                          column_info.wide_base_dims,
+                                          column_info.wide_cross_cols,
+                                          column_info.wide_cross_dims,
+                                          column_info.indicator_cols,
+                                          column_info.indicator_dims,
+                                          column_info.embed_cols,
+                                          column_info.embed_in_dims,
+                                          column_info.embed_out_dims,
+                                          column_info.continuous_cols,
+                                          column_info.label)
 
     @staticmethod
     def load_model(path, weight_path=None, bigdl_type="float"):

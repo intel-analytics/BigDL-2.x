@@ -15,15 +15,12 @@
 #
 
 from bigdl.nn.layer import Model
-from bigdl.util.common import *
 from pyspark.sql.functions import col, udf
 from pyspark.sql.types import StringType
 
 from zoo.common.nncontext import *
-from zoo.pipeline.nnframes.nn_classifier import *
-from zoo.pipeline.nnframes.nn_image_reader import *
-from zoo.feature.common import *
-from zoo.feature.image.imagePreprocessing import *
+from zoo.feature.image import *
+from zoo.pipeline.nnframes import *
 
 
 def inference(image_path, model_path, sc):
@@ -47,7 +44,7 @@ if __name__ == "__main__":
         print("Need parameters: <modelPath> <imagePath>")
         exit(-1)
 
-    sc = get_nncontext()
+    sc = get_nncontext("image_inference")
 
     model_path = sys.argv[1]
     image_path = sys.argv[2]

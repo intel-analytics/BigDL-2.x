@@ -17,11 +17,10 @@
 package com.intel.analytics.zoo.models.image.objectdetection
 
 import com.intel.analytics.bigdl.tensor.Tensor
-import com.intel.analytics.bigdl.transform.vision.image.{ImageFeature}
+import com.intel.analytics.bigdl.transform.vision.image.ImageFeature
 import com.intel.analytics.bigdl.transform.vision.image.opencv.OpenCVMat
 import com.intel.analytics.bigdl.transform.vision.image.util.BoundingBox
-import com.intel.analytics.zoo.feature.common.ImageProcessing
-import com.intel.analytics.zoo.feature.image.ImageSet
+import com.intel.analytics.zoo.feature.image.{ImageProcessing, ImageSet}
 
 /**
  * used for image object detection

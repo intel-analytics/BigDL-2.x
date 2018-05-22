@@ -15,7 +15,7 @@
 #
 
 from bigdl.util.common import *
-from zoo.feature.image.imageset import ImageSet
+import sys
 
 if sys.version >= '3':
     long = int
@@ -34,6 +34,9 @@ class Preprocessing(JavaValue):
         """
         transform ImageSet
         """
+        # move the import here to break circular import
+        if "zoo.feature.image.imageset.ImageSet" not in sys.modules:
+            from zoo.feature.image import ImageSet
         if type(input) is ImageSet:
             jset = callBigDlFunc(bigdl_type, "transformImageSet", self.value, input)
             return ImageSet(jvalue=jset)
@@ -86,22 +89,6 @@ class MLlibVectorToTensor(Preprocessing):
     """
     def __init__(self, size, bigdl_type="float"):
         super(MLlibVectorToTensor, self).__init__(bigdl_type, size)
-
-
-class ImageFeatureToTensor(Preprocessing):
-    """
-    a Transformer that convert ImageFeature to a Tensor.
-    """
-    def __init__(self, bigdl_type="float"):
-        super(ImageFeatureToTensor, self).__init__(bigdl_type)
-
-
-class RowToImageFeature(Preprocessing):
-    """
-    a Transformer that converts a Spark Row to a BigDL ImageFeature.
-    """
-    def __init__(self, bigdl_type="float"):
-        super(RowToImageFeature, self).__init__(bigdl_type)
 
 
 class FeatureLabelPreprocessing(Preprocessing):

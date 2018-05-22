@@ -16,7 +16,6 @@
 
 from bigdl.util.common import *
 from zoo.feature.common import Preprocessing
-from zoo.feature.image.imageset import ImageSet
 
 if sys.version >= '3':
     long = int
@@ -290,3 +289,19 @@ class ImageHFlip(ImagePreprocessing):
 
     def __init__(self, bigdl_type="float"):
         super(ImageHFlip, self).__init__(bigdl_type)
+
+
+class ImageFeatureToTensor(Preprocessing):
+    """
+    a Transformer that convert ImageFeature to a Tensor.
+    """
+    def __init__(self, bigdl_type="float"):
+        super(ImageFeatureToTensor, self).__init__(bigdl_type)
+
+
+class RowToImageFeature(Preprocessing):
+    """
+    a Transformer that converts a Spark Row to a BigDL ImageFeature.
+    """
+    def __init__(self, bigdl_type="float"):
+        super(RowToImageFeature, self).__init__(bigdl_type)
