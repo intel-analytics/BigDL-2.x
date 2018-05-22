@@ -66,8 +66,13 @@ Note that not all the parameters are required. You only need to set the necessar
                 Then run ```spark-submit-with-zoo.sh``` as below:
                 ```
                 spark-submit-with-zoo.sh \
+                --master yarn-cluster \
                 --conf spark.yarn.appMasterEnv.PYSPARK_PYTHON=./venv.zip/venv/bin/python \
                 --archives ${VENV_HOME}/venv.zip \
+                --executor-memory 10g \
+                --driver-memory 10g \
+                --executor-cores 8 \
+                --num-executors 2 \
                 your python script and parameters
                 ```
             * YARN client mode.
@@ -81,6 +86,12 @@ Note that not all the parameters are required. You only need to set the necessar
                 Then run ```spark-submit-with-zoo.sh``` as below:
                 ```
                 spark-submit-with-zoo.sh \
+                --master yarn \
+                --deploy-mode client \
+                --executor-memory 10g \
+                --driver-memory 10g \
+                --executor-cores 16 \
+                --num-executors 2 \
                 --archives ${VENV_HOME}/venv.zip \
                 your python script and parameters
                 ```    
