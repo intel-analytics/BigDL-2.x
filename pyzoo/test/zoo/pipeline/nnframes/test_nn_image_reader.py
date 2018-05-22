@@ -16,12 +16,14 @@
 
 import os
 import pytest
-from bigdl.transform.vision.image import *
+
 from bigdl.util.common import *
 from pyspark.sql.types import *
 
 from zoo.common.nncontext import *
 from zoo.pipeline.nnframes import *
+from zoo.feature.image.imagePreprocessing import *
+from zoo.feature.common import *
 
 
 class TestNNImageReader():
@@ -66,6 +68,11 @@ class TestNNImageReader():
 
         assert image_origin == origin
 
+    def test_get_pascal_image_preprocessing(self):
+        image_path = os.path.join(self.resource_path, "pascal/000025.jpg")
+        preprocessing = ChainedPreprocessing([ImageResize(256, 256), ImageCenterCrop(200, 200)])
+        image_frame = NNImageReader.readImages(image_path, self.sc, featurePreprocessing=preprocessing)
+        assert image_frame.count() == 1
 
 if __name__ == "__main__":
     pytest.main([__file__])
