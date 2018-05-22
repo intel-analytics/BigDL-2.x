@@ -139,27 +139,40 @@ time=$((now-start))
 echo "#4 wide_n_deep time used:$time seconds"
 
 echo "#5 start app test for using_variational_autoencoder_and_deep_feature_loss_to_generate_faces"
+<<<<<<< HEAD
 #timer
 start=$(date "+%s")
 ./apps/ipynb2py.sh ./apps/variational_autoencoder/using_variational_autoencoder_and_deep_feature_loss_to_generate_faces
 sed -i "s/data_files\[\:100000\]/data_files\[\:5000\]/g" ./apps/variational_autoencoder/using_variational_autoencoder_and_deep_feature_loss_to_generate_faces.py
 FILENAME="${ANALYTICS_ZOO_HOME}/apps/variational_autoencoder/bigdl_vgg-16_imagenet_0.4.0.model"
+=======
+
+./apps/ipynb2py.sh ./apps/variational-autoencoder/using_variational_autoencoder_and_deep_feature_loss_to_generate_faces
+
+sed -i "s/data_files\[\:100000\]/data_files\[\:5000\]/g" ./apps/variational-autoencoder/using_variational_autoencoder_and_deep_feature_loss_to_generate_faces.py
+FILENAME="${ANALYTICS_ZOO_HOME}/apps/variational-autoencoder/bigdl_vgg-16_imagenet_0.4.0.model"
+>>>>>>> c95021277105cc9df91f8089b3050f48abd29111
 if [ -f "$FILENAME" ]
 then
    echo "$FILENAME already exists."
 else
    echo "Downloading VGG model"
-   wget -P ${ANALYTICS_ZOO_HOME}/apps/variational_autoencoder/ ftp://zoo:1234qwer@10.239.47.211/analytics-zoo-data/apps/variational_autoencoder/bigdl_vgg-16_imagenet_0.4.0.model --no-host-directories 
+   wget -P ${ANALYTICS_ZOO_HOME}/apps/variational-autoencoder/ ftp://zoo:1234qwer@10.239.47.211/analytics-zoo-data/apps/variational-autoencoder/bigdl_vgg-16_imagenet_0.4.0.model --no-host-directories
    echo "Finished"
 fi
+<<<<<<< HEAD
 FILENAME="${ANALYTICS_ZOO_HOME}/apps/variational_autoencoder/img_align_celeba.zip"
+=======
+
+FILENAME="${ANALYTICS_ZOO_HOME}/apps/variational-autoencoder/img_align_celeba.zip"
+>>>>>>> c95021277105cc9df91f8089b3050f48abd29111
 if [ -f "$FILENAME" ]
 then
    echo "$FILENAME already exists."
 else
    echo "Downloading celeba images"
-   wget -P ${ANALYTICS_ZOO_HOME}/apps/variational_autoencoder/ ftp://zoo:1234qwer@10.239.47.211/analytics-zoo-data/apps/variational_autoencoder/img_align_celeba.zip --no-host-directories 
-   unzip -d ${ANALYTICS_ZOO_HOME}/apps/variational_autoencoder/ ${ANALYTICS_ZOO_HOME}/apps/variational_autoencoder/img_align_celeba.zip
+   wget -P ${ANALYTICS_ZOO_HOME}/apps/variational-autoencoder/ ftp://zoo:1234qwer@10.239.47.211/analytics-zoo-data/apps/variational-autoencoder/img_align_celeba.zip --no-host-directories
+   unzip -d ${ANALYTICS_ZOO_HOME}/apps/variational-autoencoder/ ${ANALYTICS_ZOO_HOME}/apps/variational-autoencoder/img_align_celeba.zip
    echo "Finished"
 fi        
 ${SPARK_HOME}/bin/spark-submit \
@@ -170,11 +183,12 @@ ${SPARK_HOME}/bin/spark-submit \
         --executor-cores 2  \
         --executor-memory 12g \
         --conf spark.akka.frameSize=64 \
-        --py-files ${ANALYTICS_ZOO_PYZIP},${ANALYTICS_ZOO_HOME}/apps/variational_autoencoder/using_variational_autoencoder_and_deep_feature_loss_to_generate_faces.py,${ANALYTICS_ZOO_HOME}/apps/variational_autoencoder/utils.py \
+        --py-files ${ANALYTICS_ZOO_PYZIP},${ANALYTICS_ZOO_HOME}/apps/variational-autoencoder/using_variational_autoencoder_and_deep_feature_loss_to_generate_faces.py,${ANALYTICS_ZOO_HOME}/apps/variational_autoencoder/utils.py \
         --properties-file ${ANALYTICS_ZOO_CONF} \
         --jars ${ANALYTICS_ZOO_JAR} \
         --conf spark.driver.extraClassPath=${ANALYTICS_ZOO_JAR} \
         --conf spark.executor.extraClassPath=${ANALYTICS_ZOO_JAR} \
+<<<<<<< HEAD
         ${ANALYTICS_ZOO_HOME}/apps/variational_autoencoder/using_variational_autoencoder_and_deep_feature_loss_to_generate_faces.py        
 now=$(date "+%s")
 time=$((now-start))
@@ -186,13 +200,24 @@ start=$(date "+%s")
 ./apps/ipynb2py.sh ./apps/variational_autoencoder/using_variational_autoencoder_to_generate_faces
 sed -i "s/data_files\[\:100000\]/data_files\[\:5000\]/g" ./apps/variational_autoencoder/using_variational_autoencoder_to_generate_faces.py
 FILENAME="${ANALYTICS_ZOO_HOME}/apps/variational_autoencoder/img_align_celeba.zip"
+=======
+        ${ANALYTICS_ZOO_HOME}/apps/variational-autoencoder/using_variational_autoencoder_and_deep_feature_loss_to_generate_faces.py
+
+
+echo "#6 start app test for using_variational_autoencoder_to_generate_faces"
+
+./apps/ipynb2py.sh ./apps/variational-autoencoder/using_variational_autoencoder_to_generate_faces
+
+sed -i "s/data_files\[\:100000\]/data_files\[\:5000\]/g" ./apps/variational-autoencoder/using_variational_autoencoder_to_generate_faces.py
+FILENAME="${ANALYTICS_ZOO_HOME}/apps/variational-autoencoder/img_align_celeba.zip"
+>>>>>>> c95021277105cc9df91f8089b3050f48abd29111
 if [ -f "$FILENAME" ]
 then
    echo "$FILENAME already exists."
 else
    echo "Downloading celeba images"
-   wget -P ${ANALYTICS_ZOO_HOME}/apps/variational_autoencoder/ ftp://zoo:1234qwer@10.239.47.211/analytics-zoo-data/apps/variational_autoencoder/img_align_celeba.zip --no-host-directories 
-   unzip -d ${ANALYTICS_ZOO_HOME}/apps/variational_autoencoder/ ${ANALYTICS_ZOO_HOME}/apps/variational_autoencoder/img_align_celeba.zip
+   wget -P ${ANALYTICS_ZOO_HOME}/apps/variational-autoencoder/ ftp://zoo:1234qwer@10.239.47.211/analytics-zoo-data/apps/variational-autoencoder/img_align_celeba.zip --no-host-directories
+   unzip -d ${ANALYTICS_ZOO_HOME}/apps/variational-autoencoder/ ${ANALYTICS_ZOO_HOME}/apps/variational-autoencoder/img_align_celeba.zip
    echo "Finished"
 fi
 ${SPARK_HOME}/bin/spark-submit \
@@ -203,11 +228,12 @@ ${SPARK_HOME}/bin/spark-submit \
         --executor-cores 2  \
         --executor-memory 12g \
         --conf spark.akka.frameSize=64 \
-        --py-files ${ANALYTICS_ZOO_PYZIP},${ANALYTICS_ZOO_HOME}/apps/variational_autoencoder/using_variational_autoencoder_to_generate_faces.py,${ANALYTICS_ZOO_HOME}/apps/variational_autoencoder/utils.py \
+        --py-files ${ANALYTICS_ZOO_PYZIP},${ANALYTICS_ZOO_HOME}/apps/variational-autoencoder/using_variational_autoencoder_to_generate_faces.py,${ANALYTICS_ZOO_HOME}/apps/variational_autoencoder/utils.py \
         --properties-file ${ANALYTICS_ZOO_CONF} \
         --jars ${ANALYTICS_ZOO_JAR} \
         --conf spark.driver.extraClassPath=${ANALYTICS_ZOO_JAR} \
         --conf spark.executor.extraClassPath=${ANALYTICS_ZOO_JAR} \
+<<<<<<< HEAD
         ${ANALYTICS_ZOO_HOME}/apps/variational_autoencoder/using_variational_autoencoder_to_generate_faces.py
 now=$(date "+%s")
 time=$((now-start))
@@ -217,6 +243,15 @@ echo "#7 start app test for using_variational_autoencoder_to_generate_digital_nu
 #timer
 start=$(date "+%s")
 ./apps/ipynb2py.sh ./apps/variational_autoencoder/using_variational_autoencoder_to_generate_digital_numbers
+=======
+        ${ANALYTICS_ZOO_HOME}/apps/variational-autoencoder/using_variational_autoencoder_to_generate_faces.py
+                          
+        
+echo "#7 start app test for using_variational_autoencoder_to_generate_digital_numbers"
+
+./apps/ipynb2py.sh ./apps/variational-autoencoder/using_variational_autoencoder_to_generate_digital_numbers
+
+>>>>>>> c95021277105cc9df91f8089b3050f48abd29111
 ${SPARK_HOME}/bin/spark-submit \
         --master ${MASTER} \
         --driver-cores 2  \
@@ -225,11 +260,12 @@ ${SPARK_HOME}/bin/spark-submit \
         --executor-cores 2  \
         --executor-memory 12g \
         --conf spark.akka.frameSize=64 \
-        --py-files ${ANALYTICS_ZOO_PYZIP},${ANALYTICS_ZOO_HOME}/apps/variational_autoencoder/using_variational_autoencoder_to_generate_digital_numbers.py \
+        --py-files ${ANALYTICS_ZOO_PYZIP},${ANALYTICS_ZOO_HOME}/apps/variational-autoencoder/using_variational_autoencoder_to_generate_digital_numbers.py \
         --properties-file ${ANALYTICS_ZOO_CONF} \
         --jars ${ANALYTICS_ZOO_JAR} \
         --conf spark.driver.extraClassPath=${ANALYTICS_ZOO_JAR} \
         --conf spark.executor.extraClassPath=${ANALYTICS_ZOO_JAR} \
+<<<<<<< HEAD
         ${ANALYTICS_ZOO_HOME}/apps/variational_autoencoder/using_variational_autoencoder_to_generate_digital_numbers.py
 now=$(date "+%s")
 time=$((now-start))
@@ -239,6 +275,15 @@ echo "#8 start app test for sentimentAnalysis"
 #timer
 start=$(date "+%s")
 ./apps/ipynb2py.sh ./apps/sentimentAnalysis/sentiment
+=======
+        ${ANALYTICS_ZOO_HOME}/apps/variational-autoencoder/using_variational_autoencoder_to_generate_digital_numbers.py
+
+
+echo "#8 start app test for sentiment-analysis"
+
+./apps/ipynb2py.sh ./apps/sentiment-analysis/sentiment
+
+>>>>>>> c95021277105cc9df91f8089b3050f48abd29111
 ${SPARK_HOME}/bin/spark-submit \
         --master ${MASTER} \
         --driver-cores 2  \
@@ -247,15 +292,19 @@ ${SPARK_HOME}/bin/spark-submit \
         --executor-cores 2  \
         --executor-memory 12g \
         --conf spark.akka.frameSize=64 \
-        --py-files ${ANALYTICS_ZOO_PYZIP},${ANALYTICS_ZOO_HOME}/apps/sentimentAnalysis/sentiment.py  \
+        --py-files ${ANALYTICS_ZOO_PYZIP},${ANALYTICS_ZOO_HOME}/apps/sentiment-analysis/sentiment.py  \
         --properties-file ${ANALYTICS_ZOO_CONF} \
         --jars ${ANALYTICS_ZOO_JAR} \
         --conf spark.driver.extraClassPath=${ANALYTICS_ZOO_JAR} \
         --conf spark.executor.extraClassPath=${ANALYTICS_ZOO_JAR} \
+<<<<<<< HEAD
         ${ANALYTICS_ZOO_HOME}/apps/sentimentAnalysis/sentiment.py
 now=$(date "+%s")
 time=$((now-start))
 echo "#8 sentimentAnalysis time used:$time seconds" 
+=======
+        ${ANALYTICS_ZOO_HOME}/apps/sentiment-analysis/sentiment.py
+>>>>>>> c95021277105cc9df91f8089b3050f48abd29111
 
 echo "#9 start app test for image-augmentation"
 #timer

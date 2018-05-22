@@ -101,11 +101,12 @@ class PythonZooModel[T: ClassTag](implicit ev: TensorNumeric[T]) extends PythonB
     model.getConfig
   }
 
-  def createImageConfigure(preProcessor: ImageProcessing,
-                           postProcessor: ImageProcessing,
-                           batchPerPartition: Int,
-                           labelMap: JMap[Int, String],
-                           paddingParam: PaddingParam[T]): ImageConfigure[T] = {
+  def createImageConfigure(
+      preProcessor: Preprocessing[ImageFeature, ImageFeature],
+      postProcessor: Preprocessing[ImageFeature, ImageFeature],
+      batchPerPartition: Int,
+      labelMap: JMap[Int, String],
+      paddingParam: PaddingParam[T]): ImageConfigure[T] = {
     val map = if (labelMap == null) null else labelMap.asScala.toMap
     ImageConfigure(preProcessor, postProcessor, batchPerPartition, map, Option(paddingParam))
   }

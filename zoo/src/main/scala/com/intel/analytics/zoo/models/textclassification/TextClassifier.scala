@@ -32,8 +32,8 @@ import scala.reflect.ClassTag
  * @param classNum The number of text categories to be classified. Positive integer.
  * @param tokenLength The size of each word vector. Positive integer.
  * @param sequenceLength The length of a sequence. Positive integer. Default is 500.
- * @param encoder The encoder for input sequences. String. 'cnn' or 'lstm' or 'gru'.
- *                Default is 'cnn'.
+ * @param encoder The encoder for input sequences. String. "cnn" or "lstm" or "gru" are supported.
+ *                Default is "cnn".
  * @param encoderOutputDim The output dimension for the encoder. Positive integer. Default is 256.
  * @tparam T Numeric type of parameter(e.g. weight, bias). Only support float/double now.
  */

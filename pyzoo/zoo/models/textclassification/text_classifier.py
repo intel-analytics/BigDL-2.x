@@ -33,7 +33,8 @@ class TextClassifier(ZooModel):
     class_num: The number of text categories to be classified. Positive int.
     token_length: The size of each word vector. Positive int.
     sequence_length: The length of a sequence. Positive int. Default is 500.
-    encoder: The encoder for input sequences. String. 'cnn' or 'lstm' or 'gru'. Default is 'cnn'.
+    encoder: The encoder for input sequences. String. 'cnn' or 'lstm' or 'gru' are supported.
+             Default is 'cnn'.
     encoder_output_dim: The output dimension for the encoder. Positive int. Default is 256.
     """
     def __init__(self, class_num, token_length, sequence_length=500,
