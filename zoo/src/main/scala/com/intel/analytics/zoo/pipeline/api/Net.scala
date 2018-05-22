@@ -21,7 +21,7 @@ import java.nio.ByteOrder
 import com.intel.analytics.bigdl.nn.Graph
 import com.intel.analytics.bigdl.nn.abstractnn.{AbstractModule, Activity}
 import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric
-import com.intel.analytics.bigdl.utils.File
+import com.intel.analytics.bigdl.utils.{File, T, Table}
 import com.intel.analytics.bigdl.utils.caffe.CaffeLoader
 import com.intel.analytics.bigdl.utils.serializer.ModuleLoader
 import com.intel.analytics.bigdl.utils.tf.{Session, TensorflowLoader}
@@ -34,6 +34,27 @@ import scala.reflect.ClassTag
  * A placeholder to add layer's utilities
  */
 trait Net {
+  def getParametersTable[T: ClassTag](): Table = {
+    val module = this.asInstanceOf[AbstractModule[Activity, Activity, T]]
+    val params = module.parameters()
+    if (params == null) return null
+    val (weights, gradients) = params
+    require(gradients.length == weights.length, "weight number is not equal to grad number")
+
+    if (weights.length == 1) {
+      T(module.getName() -> T("weight" -> weights(0), "gradWeight" -> gradients(0)))
+    } else if (weights.length == 2) {
+      T(module.getName() -> T("weight" -> weights(0), "bias" -> weights(1),
+        "gradWeight" -> gradients(0), "gradBias" -> gradients(1)))
+    } else {
+      val result = T()
+      weights.zip(gradients).zipWithIndex.map { case ((w, g), i) =>
+        result(s"weight$i") = w
+        result(s"gradient$i") = g
+      }
+      T(module.getName() -> result)
+    }
+  }
 
 }
 

@@ -25,9 +25,10 @@ import com.intel.analytics.bigdl.nn.{Container, Graph, StaticGraph, Sequential =
 import com.intel.analytics.bigdl.optim._
 import com.intel.analytics.bigdl.serialization.Bigdl.BigDLModule
 import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric
-import com.intel.analytics.bigdl.utils.{Edge, LoggerFilter, Node, Shape}
+import com.intel.analytics.bigdl.utils._
 import com.intel.analytics.bigdl.utils.serializer.{DeserializeContext, ModuleData, ModuleSerializer, SerializeContext}
 import com.intel.analytics.bigdl.visualization.{TrainSummary, ValidationSummary}
+import com.intel.analytics.zoo.pipeline.api.Net
 import com.intel.analytics.zoo.pipeline.api.autograd.{CustomLossWithVariable, Lambda, Variable}
 import com.intel.analytics.zoo.pipeline.api.keras.layers.Input
 import com.intel.analytics.zoo.pipeline.api.keras.layers.utils.{AbstractModuleRef, GraphRef, KerasLayerRef}
@@ -542,6 +543,17 @@ class Sequential[T: ClassTag] private ()
       out
     }
     Model(input, output)
+  }
+
+  override def getParametersTable(): Table = {
+    val pt = T()
+    modules(0).asInstanceOf[com.intel.analytics.bigdl.nn.Sequential[T]].modules.foreach(m => {
+      val params = m.asInstanceOf[Net].getParametersTable()
+      if (params != null) {
+        params.keySet.foreach(key => pt(key) = params(key))
+      }
+    })
+    pt
   }
 }
 
