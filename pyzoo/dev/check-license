@@ -1,3 +1,5 @@
+#!/usr/bin/env bash
+
 #
 # Copyright 2018 Analytics Zoo Authors.
 #
@@ -13,3 +15,19 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
+
+SCRIPT_DIR=$(dirname ${BASH_SOURCE[0]})
+export DL_PYTHON_HOME="$(cd ${SCRIPT_DIR}/../; pwd)"
+
+header="Copyright 2018 Analytics Zoo Authors"
+
+echo "Checking Analytics Zoo license for Python files..."
+
+find $DL_PYTHON_HOME ! -name "pep8-1.7.0.py" -name "*.py" -print0 | while read -d $'\0' file
+do
+    if ! (grep -qF "$header" "$file");
+    then
+        echo "No license or wrong license in $file. Please add the correct license."
+        exit 1
+    fi
+done
