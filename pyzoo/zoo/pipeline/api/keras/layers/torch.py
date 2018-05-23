@@ -697,3 +697,24 @@ class BinaryThreshold(ZooKerasLayer):
                                               float(value),
                                               list(input_shape) if input_shape else None,
                                               **kwargs)
+
+
+class GaussianSampler(ZooKerasLayer):
+    """
+    >>> gaussianSampler = GaussianSampler(input_shape=(2, 3, 5, 7))
+    """
+    def __init__(self, input_shape=None):
+        super(GaussianSampler, self).__init__(None,
+                                              list(input_shape) if input_shape else None)
+
+
+class ResizeBilinear(ZooKerasLayer):
+    """
+    >>> resizeBilinear = ResizeBilinear(10, 20, False, "NCHW")
+    """
+    def __init__(self, output_height, output_width, align_corner=False, data_format="NCHW"):
+        super(ResizeBilinear, self).__init__(None,
+                                             output_height,
+                                             output_width,
+                                             align_corner,
+                                             data_format)
