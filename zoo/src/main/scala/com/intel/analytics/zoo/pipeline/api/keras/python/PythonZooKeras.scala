@@ -1003,7 +1003,7 @@ class PythonZooKeras[T: ClassTag](implicit ev: TensorNumeric[T]) extends PythonB
       outputHeight: Int,
       outputWidth: Int,
       alignCorners: Boolean,
-      dataFormat: DataFormat = DataFormat.NCHW): ResizeBilinear[T] = {
-    ResizeBilinear(outputHeight, outputWidth, alignCorners, dataFormat)
+      dimOrdering: String = "th"): ResizeBilinear[T] = {
+    ResizeBilinear(outputHeight, outputWidth, alignCorners, dimOrdering)
   }
 }

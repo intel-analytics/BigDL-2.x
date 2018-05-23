@@ -30,19 +30,19 @@ class ResizeBilinear[T: ClassTag](
   val outputHeight: Int,
   val outputWidth: Int,
   val alignCorners: Boolean,
-  val dataFormat: DataFormat = DataFormat.NCHW)(implicit ev: TensorNumeric[T])
+  val dimOrdering: DataFormat = DataFormat.NCHW)(implicit ev: TensorNumeric[T])
   extends LayerWrapperByForward[T] {
 
   override def doBuild(inputShape: Shape): AbstractModule[Activity, Activity, T] = {
-    bnn.ResizeBilinear[T](outputHeight, outputWidth, alignCorners, dataFormat)
+    bnn.ResizeBilinear[T](outputHeight, outputWidth, alignCorners, dimOrdering)
   }
 }
 
 object ResizeBilinear {
 
   def apply[T: ClassTag](outputHeight: Int, outputWidth: Int, alignCorners: Boolean = false,
-                         dataFormat: DataFormat = DataFormat.NCHW)
+                         dimOrdering: String = "th")
     (implicit ev: TensorNumeric[T]): ResizeBilinear[T] = {
-    new ResizeBilinear[T](outputHeight, outputWidth, alignCorners, dataFormat)
+    new ResizeBilinear[T](outputHeight, outputWidth, alignCorners, KerasUtils.toBigDLFormat(dimOrdering))
   }
 }
