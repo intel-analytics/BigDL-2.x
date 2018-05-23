@@ -364,6 +364,17 @@ class Model[T: ClassTag] private (private val _inputs : Seq[ModuleNode[T]],
   override def toModel(): Model[T] = this
 
   override def toKeras(): Model[T] = this
+
+  def summary(
+      lineLength: Int = 120,
+      positions: Array[Double] = Array(.33, .55, .67, 1)): Unit = {
+    println("Model Summary:")
+    KerasUtils.printSplitLine('-', lineLength)
+    val toDisplay = Array("Layer (type)", "Output Shape", "Param #", "Connected to")
+    KerasUtils.printRow(toDisplay, splitingChar = '=')
+    val nodes = labor.asInstanceOf[StaticGraph[T]].getSortedForwardExecutions()
+    for (node <- nodes) KerasUtils.printNodeSummary(node, lineLength, positions)
+  }
 }
 
 object Model extends KerasLayerSerializable {
@@ -530,7 +541,7 @@ class Sequential[T: ClassTag] private ()
   }
 
   override def toModel(): Model[T] = {
-    val input = Input[T](this.getInputShape())
+    val input = Input[T](KerasUtils.removeBatch(this.getInputShape()))
 
     // the is reason we do not use .inputs here is
     // layers in modules cannot be rebuilt
@@ -542,6 +553,11 @@ class Sequential[T: ClassTag] private ()
       out
     }
     Model(input, output)
+  }
+
+  def summary(): Unit = {
+    val graph = this.toModel()
+    graph.summary()
   }
 }
 

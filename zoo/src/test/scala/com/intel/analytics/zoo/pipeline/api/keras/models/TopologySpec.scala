@@ -21,7 +21,7 @@ import com.intel.analytics.bigdl.tensor.Tensor
 import com.intel.analytics.bigdl.utils.Shape
 import com.intel.analytics.zoo.pipeline.api.Net
 import com.intel.analytics.zoo.pipeline.api.keras.ZooSpecHelper
-import com.intel.analytics.zoo.pipeline.api.keras.layers.{Dense, Input}
+import com.intel.analytics.zoo.pipeline.api.keras.layers._
 import com.intel.analytics.zoo.pipeline.api.keras.serializer.ModuleSerializationTest
 import org.scalatest.{BeforeAndAfter, FlatSpec, Matchers}
 
@@ -65,5 +65,24 @@ class TopologySpec extends FlatSpec with Matchers with BeforeAndAfter {
     val newModel = model.toModel()
     val output = newModel.forward(Tensor[Float](Array(4, 10)).rand())
     output.toTensor[Float].size() should be (Array(4, 8))
+  }
+
+  "model.summary() for Model" should "work properly" in {
+    val input = Input[Float](inputShape = Shape(10))
+    val model = Model(input, Dense[Float](8).inputs(input))
+    model.summary()
+  }
+
+  "model.summary() for Sequential" should "work properly" in {
+    val model = Sequential[Float]()
+    model.add(Embedding[Float](20000, 128, inputShape = Shape(100)))
+    model.add(Dropout[Float](0.25))
+    model.add(Convolution1D[Float](nbFilter = 64, filterLength = 5, borderMode = "valid",
+      activation = "relu", subsampleLength = 1))
+    model.add(MaxPooling1D[Float](poolLength = 4))
+    model.add(LSTM[Float](70))
+    model.add(Dense[Float](1))
+    model.add(Activation[Float]("sigmoid"))
+    model.summary()
   }
 }
