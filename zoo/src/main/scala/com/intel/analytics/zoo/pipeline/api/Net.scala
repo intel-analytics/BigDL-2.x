@@ -35,13 +35,13 @@ import scala.reflect.ClassTag
  * A placeholder to add layer's utilities
  */
 trait Net {
+
   def getParametersTable[T: ClassTag](): Table = {
     val module = this.asInstanceOf[KerasLayer[Activity, Activity, T]]
     val labor = module.labor
-    val params = labor.getParametersTable()
     if (module.isInstanceOf[KerasNet[T]]) {
       val pt = T()
-      module.modules(0).asInstanceOf[com.intel.analytics.bigdl.nn.Container[Activity, Activity, T]]
+      labor.asInstanceOf[com.intel.analytics.bigdl.nn.Container[Activity, Activity, T]]
         .modules.foreach(m => {
         val params = m.asInstanceOf[Net].getParametersTable[T]()
         if (params != null) {
@@ -51,8 +51,14 @@ trait Net {
       pt
     }
     else {
+      val params = labor.getParametersTable()
       if (params != null) {
-        T(module.getName() -> params.get(labor.getName()).get)
+        if (params.get(labor.getName()).isDefined) {
+          T(module.getName() -> params.get(labor.getName()).get)
+        }
+        else {
+          T(module.getName() -> params)
+        }
       }
       else {
         params

@@ -22,7 +22,7 @@ import com.intel.analytics.bigdl.tensor.Tensor
 import com.intel.analytics.bigdl.utils.Shape
 import com.intel.analytics.zoo.pipeline.api.keras.models.{KerasNet, Sequential, Model => ZModel}
 import com.intel.analytics.zoo.pipeline.api.keras.ZooSpecHelper
-import com.intel.analytics.zoo.pipeline.api.keras.layers.{Dense, Input, InputLayer}
+import com.intel.analytics.zoo.pipeline.api.keras.layers.{Dense, Input, InputLayer, LSTM}
 import com.intel.analytics.zoo.pipeline.api.keras.layers.utils.KerasUtils
 
 class NetSpec extends ZooSpecHelper{
@@ -117,6 +117,23 @@ class NetSpec extends ZooSpecHelper{
     val model = ZModel(input, Dense[Float](8).setName("dense1").inputs(input))
     val params = model.getParametersTable[Float]()
     params.get("dense1").isDefined should be (true)
+  }
+
+  "getParametersTable for a Model nested Sequential" should "work properly" in {
+    val input = Input[Float](inputShape = Shape(16))
+    val seq = Sequential[Float]()
+    seq.add(Dense[Float](8, inputShape = Shape(16)).setName("seq_dense1"))
+    val output = Dense[Float](10).setName("dense2").inputs(seq.inputs(input))
+    val model = ZModel(input, output)
+    val params = model.getParametersTable[Float]()
+    params.get("seq_dense1").isDefined should be (true)
+  }
+
+  "getParametersTable for a Recurrent" should "work properly" in {
+    val model = Sequential[Float]()
+    model.add(LSTM[Float](10, inputShape = Shape(16, 16)).setName("lstm1"))
+    val params = model.getParametersTable[Float]()
+    params.get("lstm1").isDefined should be (true)
   }
 
 }
