@@ -57,7 +57,20 @@ class ResizeBilinearSerialTest extends ModuleSerializationTest {
   override def test(): Unit = {
     val layer = ZResizeBilinear[Float](3, 2, dataFormat = DataFormat.NHWC)
     layer.build(Shape(-1, 3, 5, 6))
-    val input = T(Tensor[Float](Array(2, 3)).rand(), Tensor[Float](Array(2, 3)).rand())
+    val input = Tensor[Float](T(T(
+      T(
+        T(1, 2, 3),
+        T(4, 5, 6)
+      ),
+      T(
+        T(7, 8, 9),
+        T(2, 3, 1)
+      ),
+      T(
+        T(4, 8, 2),
+        T(5, 3, 0)
+      )
+    )))
     runSerializationTest(layer, input)
   }
 }

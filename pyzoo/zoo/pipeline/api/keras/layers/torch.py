@@ -702,6 +702,7 @@ class BinaryThreshold(ZooKerasLayer):
 class GaussianSampler(ZooKerasLayer):
     """
     >>> gaussianSampler = GaussianSampler(input_shape=(2, 3, 5, 7))
+    createZooKerasGaussianSampler
     """
     def __init__(self, input_shape=None, **kwargs):
         super(GaussianSampler, self).__init__(None,
@@ -712,6 +713,7 @@ class GaussianSampler(ZooKerasLayer):
 class ResizeBilinear(ZooKerasLayer):
     """
     >>> resizeBilinear = ResizeBilinear(10, 20, False, "NCHW")
+    createZooKerasResizeBilinear
     """
     def __init__(self, output_height, output_width, align_corner=False,
                  data_format="NCHW", **kwargs):
