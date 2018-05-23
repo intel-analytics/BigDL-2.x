@@ -154,7 +154,7 @@ class NNEstimator[T: ClassTag] private[zoo] (
     with TrainingParams[T] {
 
   def setSamplePreprocessing[FF <: Any, LL <: Any](
-      value: Preprocessing[(FF, LL), Sample[T]]): this.type =
+      value: Preprocessing[(FF, Option[LL]), Sample[T]]): this.type =
     set(samplePreprocessing, value.asInstanceOf[Preprocessing[Any, Sample[T]]])
 
   def setFeaturesCol(featuresColName: String): this.type = set(featuresCol, featuresColName)
