@@ -25,7 +25,7 @@ import com.intel.analytics.bigdl.nn.{Container, Graph, StaticGraph, Sequential =
 import com.intel.analytics.bigdl.optim._
 import com.intel.analytics.bigdl.serialization.Bigdl.BigDLModule
 import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric
-import com.intel.analytics.bigdl.utils._
+import com.intel.analytics.bigdl.utils.{Edge, LoggerFilter, Node, Shape}
 import com.intel.analytics.bigdl.utils.serializer.{DeserializeContext, ModuleData, ModuleSerializer, SerializeContext}
 import com.intel.analytics.bigdl.visualization.{TrainSummary, ValidationSummary}
 import com.intel.analytics.zoo.pipeline.api.Net
@@ -544,10 +544,9 @@ class Sequential[T: ClassTag] private ()
     }
     Model(input, output)
   }
-
 }
 
-object Sequential extends KerasLayerSerializable{
+object Sequential extends KerasLayerSerializable {
   ModuleSerializer.registerModule(
     "com.intel.analytics.zoo.pipeline.api.keras.models.Sequential",
     Sequential)
