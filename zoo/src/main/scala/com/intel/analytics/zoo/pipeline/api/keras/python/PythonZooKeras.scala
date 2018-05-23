@@ -995,7 +995,7 @@ class PythonZooKeras[T: ClassTag](implicit ev: TensorNumeric[T]) extends PythonB
   }
 
   def createZooKerasGaussianSampler(
-      inputShape: JList[Int] = null):GaussianSampler[T] = {
+      inputShape: JList[Int] = null): GaussianSampler[T] = {
     GaussianSampler(toScalaShape(inputShape))
   }
 
@@ -1003,7 +1003,7 @@ class PythonZooKeras[T: ClassTag](implicit ev: TensorNumeric[T]) extends PythonB
       outputHeight: Int,
       outputWidth: Int,
       alignCorners: Boolean,
-      dataFormat: DataFormat = DataFormat.NCHW):ResizeBilinear[T] = {
+      dataFormat: DataFormat = DataFormat.NCHW): ResizeBilinear[T] = {
     ResizeBilinear(outputHeight, outputWidth, alignCorners, dataFormat)
   }
 }

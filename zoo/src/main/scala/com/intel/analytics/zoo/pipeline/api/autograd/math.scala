@@ -80,7 +80,8 @@ object AutoGrad {
   def maximum[T: ClassTag](x: Variable[T], y: Variable[T])(
       implicit ev: TensorNumeric[T]): Variable[T] = {
     val o: KerasLayer[Activity, Activity, T] =
-      new KerasLayerWrapper[T](bnn.CMaxTable[T]().asInstanceOf[AbstractModule[Activity, Activity, T]])
+      new KerasLayerWrapper[T](
+        bnn.CMaxTable[T]().asInstanceOf[AbstractModule[Activity, Activity, T]])
     Variable(o.inputs(x.node, y.node))
   }
 

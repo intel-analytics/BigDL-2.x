@@ -703,18 +703,21 @@ class GaussianSampler(ZooKerasLayer):
     """
     >>> gaussianSampler = GaussianSampler(input_shape=(2, 3, 5, 7))
     """
-    def __init__(self, input_shape=None):
+    def __init__(self, input_shape=None, **kwargs):
         super(GaussianSampler, self).__init__(None,
-                                              list(input_shape) if input_shape else None)
+                                              list(input_shape) if input_shape else None,
+                                              **kwargs)
 
 
 class ResizeBilinear(ZooKerasLayer):
     """
     >>> resizeBilinear = ResizeBilinear(10, 20, False, "NCHW")
     """
-    def __init__(self, output_height, output_width, align_corner=False, data_format="NCHW"):
+    def __init__(self, output_height, output_width, align_corner=False,
+                 data_format="NCHW", **kwargs):
         super(ResizeBilinear, self).__init__(None,
                                              output_height,
                                              output_width,
                                              align_corner,
-                                             data_format)
+                                             data_format,
+                                             **kwargs)
