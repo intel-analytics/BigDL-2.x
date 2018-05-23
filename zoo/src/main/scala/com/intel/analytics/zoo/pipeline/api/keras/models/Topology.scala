@@ -533,8 +533,8 @@ class Sequential[T: ClassTag] private ()
   override def toModel(): Model[T] = {
     val input = Input[T](this.getInputShape())
 
-    // the is reason we do not use .inputs here is
-    // layers in modules cannot be rebuilt
+    // The reason why we do not use .inputs here is
+    // layers in modules cannot be rebuilt.
     val output = this.modules(0)
       .asInstanceOf[TSequential[T]]
       .modules.foldLeft(input) { (i1, i2) =>

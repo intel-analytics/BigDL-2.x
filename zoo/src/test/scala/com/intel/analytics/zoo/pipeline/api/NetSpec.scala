@@ -20,9 +20,9 @@ import com.intel.analytics.bigdl.nn.abstractnn.AbstractModule
 import com.intel.analytics.bigdl.nn.SpatialCrossMapLRN
 import com.intel.analytics.bigdl.tensor.Tensor
 import com.intel.analytics.bigdl.utils.Shape
-import com.intel.analytics.zoo.pipeline.api.keras.models.{KerasNet, Model => ZModel}
+import com.intel.analytics.zoo.pipeline.api.keras.models.{KerasNet, Sequential, Model => ZModel}
 import com.intel.analytics.zoo.pipeline.api.keras.ZooSpecHelper
-import com.intel.analytics.zoo.pipeline.api.keras.layers.{Dense, Input}
+import com.intel.analytics.zoo.pipeline.api.keras.layers.{Dense, Input, InputLayer}
 import com.intel.analytics.zoo.pipeline.api.keras.layers.utils.KerasUtils
 
 class NetSpec extends ZooSpecHelper{
@@ -93,4 +93,30 @@ class NetSpec extends ZooSpecHelper{
     val newModel = model.newGraph("LeNet/fc3/Relu")
     newModel.outputNodes.head.element.getName() should be ("LeNet/fc3/Relu")
   }
+
+  "getParametersTable for a built Keras layer with name" should "work properly" in {
+    val layer = Dense[Float](10, inputShape = Shape(20)).setName("dense1")
+    layer.build(Shape(2, 20))
+    val params = layer.getParametersTable[Float]()
+    params.get("dense1").isDefined should be (true)
+  }
+
+  "getParametersTable for a Sequential" should "work properly" in {
+    val model = Sequential[Float]()
+    val input = InputLayer[Float](inputShape = Shape(8), name = "input1")
+    model.add(input)
+    model.add(Dense[Float](10, activation = "tanh").setName("dense1"))
+    model.add(Dense[Float](6).setName("dense2"))
+    val params = model.getParametersTable[Float]()
+    params.get("dense1").isDefined should be (true)
+    params.get("dense2").isDefined should be (true)
+  }
+
+  "getParametersTable for a Model" should "work properly" in {
+    val input = Input[Float](inputShape = Shape(10))
+    val model = ZModel(input, Dense[Float](8).setName("dense1").inputs(input))
+    val params = model.getParametersTable[Float]()
+    params.get("dense1").isDefined should be (true)
+  }
+
 }
