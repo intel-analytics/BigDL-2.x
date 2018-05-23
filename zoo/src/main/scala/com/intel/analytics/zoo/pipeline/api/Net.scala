@@ -20,12 +20,13 @@ import java.nio.ByteOrder
 
 import com.intel.analytics.bigdl.nn.Graph
 import com.intel.analytics.bigdl.nn.abstractnn.{AbstractModule, Activity}
+import com.intel.analytics.bigdl.nn.keras.KerasLayer
 import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric
 import com.intel.analytics.bigdl.utils.{File, T, Table}
 import com.intel.analytics.bigdl.utils.caffe.CaffeLoader
 import com.intel.analytics.bigdl.utils.serializer.ModuleLoader
 import com.intel.analytics.bigdl.utils.tf.{Session, TensorflowLoader}
-import com.intel.analytics.zoo.pipeline.api.keras.models.KerasNet
+import com.intel.analytics.zoo.pipeline.api.keras.models.{KerasNet, Model, Sequential}
 import com.intel.analytics.zoo.pipeline.api.net.GraphNet
 
 import scala.reflect.ClassTag
@@ -35,24 +36,27 @@ import scala.reflect.ClassTag
  */
 trait Net {
   def getParametersTable[T: ClassTag](): Table = {
-    val module = this.asInstanceOf[AbstractModule[Activity, Activity, T]]
-    val params = module.parameters()
-    if (params == null) return null
-    val (weights, gradients) = params
-    require(gradients.length == weights.length, "weight number is not equal to grad number")
-
-    if (weights.length == 1) {
-      T(module.getName() -> T("weight" -> weights(0), "gradWeight" -> gradients(0)))
-    } else if (weights.length == 2) {
-      T(module.getName() -> T("weight" -> weights(0), "bias" -> weights(1),
-        "gradWeight" -> gradients(0), "gradBias" -> gradients(1)))
-    } else {
-      val result = T()
-      weights.zip(gradients).zipWithIndex.map { case ((w, g), i) =>
-        result(s"weight$i") = w
-        result(s"gradient$i") = g
+    val module = this.asInstanceOf[KerasLayer[Activity, Activity, T]]
+    val labor = module.labor
+    val params = labor.getParametersTable()
+    if (module.isInstanceOf[KerasNet[T]]) {
+      val pt = T()
+      module.modules(0).asInstanceOf[com.intel.analytics.bigdl.nn.Container[Activity, Activity, T]]
+        .modules.foreach(m => {
+        val params = m.asInstanceOf[Net].getParametersTable[T]()
+        if (params != null) {
+          params.keySet.foreach(key => pt(key) = params(key))
+        }
+      })
+      pt
+    }
+    else {
+      if (params != null) {
+        T(module.getName() -> params.get(labor.getName()).get)
       }
-      T(module.getName() -> result)
+      else {
+        params
+      }
     }
   }
 

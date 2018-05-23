@@ -42,7 +42,7 @@ import scala.reflect.ClassTag
 
 
 abstract class KerasNet[T: ClassTag](implicit ev: TensorNumeric[T])
-  extends KerasLayer[Activity, Activity, T] {
+  extends KerasLayer[Activity, Activity, T] with Net {
 
   def getSubModules(): List[AbstractModule[Activity, Activity, T]] = {
     require(this.labor.isInstanceOf[Container[Activity, Activity, T]],
@@ -545,16 +545,6 @@ class Sequential[T: ClassTag] private ()
     Model(input, output)
   }
 
-  override def getParametersTable(): Table = {
-    val pt = T()
-    modules(0).asInstanceOf[com.intel.analytics.bigdl.nn.Sequential[T]].modules.foreach(m => {
-      val params = m.asInstanceOf[Net].getParametersTable()
-      if (params != null) {
-        params.keySet.foreach(key => pt(key) = params(key))
-      }
-    })
-    pt
-  }
 }
 
 object Sequential extends KerasLayerSerializable{
