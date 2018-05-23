@@ -39,7 +39,7 @@ class SeqToTensor[T: ClassTag](size: Array[Int])(implicit ev: TensorNumeric[T])
         case _ => throw new IllegalArgumentException("SeqToTensor only supports Float, Double, " +
           s"Array[Float], Array[Double] or MLlib Vector but got $f")
       }
-      Tensor(feature, if (size.isEmpty) Array(feature.length) else size).contiguous()
+      Tensor(feature, if (size.isEmpty) Array(feature.length) else size)
     }
   }
 

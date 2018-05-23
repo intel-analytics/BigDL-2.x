@@ -36,9 +36,9 @@ object TupleToFeatureAdapter {
     new TupleToFeatureAdapter(featureTransformer)
 }
 
-class ToTuple extends Preprocessing[Any, (Any, Option[Any])] {
-  override def apply(prev: Iterator[Any]): Iterator[(Any, Option[Any])] = {
-    prev.map(f => (f, None))
+class ToTuple extends Preprocessing[Any, (Any, Any)] {
+  override def apply(prev: Iterator[Any]): Iterator[(Any, Any)] = {
+    prev.map(f => (f, null))
   }
 }
 

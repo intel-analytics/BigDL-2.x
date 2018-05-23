@@ -102,6 +102,15 @@ private[nnframes] trait TrainingParams[@specialized(Float, Double) T] extends Pa
    */
   final val l2GradientClippingParams = new FloatParam(this,
     "threshold for l2 norm gradient clipping", "l2GradientClippingParams")
+
+  /**
+   * whether to cache the Sample after preprocessing.
+   * Default: true
+   */
+  final val isSampleCached = new BooleanParam(
+    this, "isSampleCached", "isSampleCached")
+
+  def getIsSampleCached: Boolean = $(isSampleCached)
 }
 
 /**
@@ -145,7 +154,7 @@ class NNEstimator[T: ClassTag] private[zoo] (
     with TrainingParams[T] {
 
   def setSamplePreprocessing[FF <: Any, LL <: Any](
-      value: Preprocessing[(FF, Option[LL]), Sample[T]]): this.type =
+      value: Preprocessing[(FF, LL), Sample[T]]): this.type =
     set(samplePreprocessing, value.asInstanceOf[Preprocessing[Any, Sample[T]]])
 
   def setFeaturesCol(featuresColName: String): this.type = set(featuresCol, featuresColName)
@@ -177,6 +186,12 @@ class NNEstimator[T: ClassTag] private[zoo] (
   def setGradientClippingByL2Norm(clipNorm: Float): this.type = {
     set(l2GradientClippingParams, clipNorm)
   }
+
+  def setIsSampleCached(value: Boolean): this.type = {
+    set(isSampleCached, value)
+  }
+  setDefault(isSampleCached, true)
+
 
   /**
    * Clear clipping params, in this case, clipping will not be applied.
@@ -286,23 +301,30 @@ class NNEstimator[T: ClassTag] private[zoo] (
       dataFrame: DataFrame,
       batchSize: Int): DataSet[MiniBatch[T]] = {
 
-    val sp = $(samplePreprocessing).asInstanceOf[Preprocessing[(Any, Option[Any]), Sample[T]]]
+    val sp = $(samplePreprocessing).asInstanceOf[Preprocessing[(Any, Any), Sample[T]]]
     val featureColIndex = dataFrame.schema.fieldIndex($(featuresCol))
     val labelColIndex = if (dataFrame.columns.contains($(labelCol))) {
-      Some(dataFrame.schema.fieldIndex($(labelCol)))
+      dataFrame.schema.fieldIndex($(labelCol))
     } else {
-      None
+      -1
     }
 
     val featureAndLabel = dataFrame.rdd.map { row =>
       val features = row.get(featureColIndex)
-      val labels = labelColIndex match {
-        case Some(i) => Some(row.get(i))
-        case None => None
+      val labels = if (labelColIndex >= 0) {
+        row.get(labelColIndex)
+      } else {
+        null
       }
       (features, labels)
     }
-    DataSet.rdd(featureAndLabel).transform(sp -> SampleToMiniBatch[T](batchSize))
+    val initialDataSet = if ($(isSampleCached)) {
+      DataSet.rdd(sp.apply(featureAndLabel))
+    } else {
+      DataSet.rdd(featureAndLabel).transform(sp)
+    }
+
+    initialDataSet.transform(SampleToMiniBatch[T](batchSize))
   }
 
   protected override def internalFit(dataFrame: DataFrame): NNModel[T] = {
@@ -349,7 +371,7 @@ class NNEstimator[T: ClassTag] private[zoo] (
     val dlModel = new NNModel[T](m)
     copyValues(dlModel.setParent(this))
     val clonedTransformer = ToTuple() -> $(samplePreprocessing)
-      .asInstanceOf[Preprocessing[(Any, Option[Any]), Sample[T]]].clonePreprocessing()
+      .asInstanceOf[Preprocessing[(Any, Any), Sample[T]]].clonePreprocessing()
     dlModel.setSamplePreprocessing(clonedTransformer)
   }
 
