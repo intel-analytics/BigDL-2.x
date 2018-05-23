@@ -50,7 +50,7 @@ class NNClassifier[T: ClassTag] private[zoo]  (
     val classifierModel = new NNClassifierModel[T](m)
     copyValues(classifierModel.setParent(this))
     val clonedTransformer = ToTuple() -> $(samplePreprocessing)
-      .asInstanceOf[Preprocessing[(Any, Any), Sample[T]]].clonePreprocessing()
+      .asInstanceOf[Preprocessing[(Any, Option[Any]), Sample[T]]].clonePreprocessing()
     classifierModel.setSamplePreprocessing(clonedTransformer)
   }
 

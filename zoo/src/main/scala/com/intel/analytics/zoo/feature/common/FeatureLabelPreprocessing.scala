@@ -33,16 +33,17 @@ import scala.reflect.ClassTag
 class FeatureLabelPreprocessing[F, L, T: ClassTag](
     featureStep: Preprocessing[F, Tensor[T]],
     labelStep: Preprocessing[L, Tensor[T]])(implicit ev: TensorNumeric[T])
-  extends Preprocessing[(F, L), Sample[T]] {
+  extends Preprocessing[(F, Option[L]), Sample[T]] {
 
-  override def apply(prev: Iterator[(F, L)]): Iterator[Sample[T]] = {
+  override def apply(prev: Iterator[(F, Option[L])]): Iterator[Sample[T]] = {
     prev.map { case (feature, label ) =>
       val featureTensor = featureStep(Iterator(feature)).next()
-      if (label != null ) {
-        val labelTensor = labelStep(Iterator(label)).next()
-        Sample[T](featureTensor, labelTensor)
-      } else {
-        Sample[T](featureTensor)
+      label match {
+        case Some(l) =>
+          val labelTensor = labelStep(Iterator(l)).next()
+          Sample[T](featureTensor, labelTensor)
+        case None =>
+          Sample[T](featureTensor)
       }
     }
   }

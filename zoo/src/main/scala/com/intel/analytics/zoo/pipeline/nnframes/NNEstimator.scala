@@ -192,7 +192,6 @@ class NNEstimator[T: ClassTag] private[zoo] (
   }
   setDefault(isSampleCached, true)
 
-
   /**
    * Clear clipping params, in this case, clipping will not be applied.
    */
@@ -301,20 +300,19 @@ class NNEstimator[T: ClassTag] private[zoo] (
       dataFrame: DataFrame,
       batchSize: Int): DataSet[MiniBatch[T]] = {
 
-    val sp = $(samplePreprocessing).asInstanceOf[Preprocessing[(Any, Any), Sample[T]]]
+    val sp = $(samplePreprocessing).asInstanceOf[Preprocessing[(Any, Option[Any]), Sample[T]]]
     val featureColIndex = dataFrame.schema.fieldIndex($(featuresCol))
     val labelColIndex = if (dataFrame.columns.contains($(labelCol))) {
-      dataFrame.schema.fieldIndex($(labelCol))
+      Some(dataFrame.schema.fieldIndex($(labelCol)))
     } else {
-      -1
+      None
     }
 
     val featureAndLabel = dataFrame.rdd.map { row =>
       val features = row.get(featureColIndex)
-      val labels = if (labelColIndex >= 0) {
-        row.get(labelColIndex)
-      } else {
-        null
+      val labels = labelColIndex match {
+        case Some(i) => Some(row.get(i))
+        case None => None
       }
       (features, labels)
     }
@@ -371,7 +369,7 @@ class NNEstimator[T: ClassTag] private[zoo] (
     val dlModel = new NNModel[T](m)
     copyValues(dlModel.setParent(this))
     val clonedTransformer = ToTuple() -> $(samplePreprocessing)
-      .asInstanceOf[Preprocessing[(Any, Any), Sample[T]]].clonePreprocessing()
+      .asInstanceOf[Preprocessing[(Any, Option[Any]), Sample[T]]].clonePreprocessing()
     dlModel.setSamplePreprocessing(clonedTransformer)
   }
 

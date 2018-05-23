@@ -180,15 +180,21 @@ class PythonNNFrames[T: ClassTag](implicit ev: TensorNumeric[T]) extends PythonB
   }
 
   def nnEstimatorSetConstantGradientClipping(
-    estimator: NNEstimator[T],
-    min: Float,
-    max: Float): Unit = {
+      estimator: NNEstimator[T],
+      min: Float,
+      max: Float): Unit = {
     estimator.setConstantGradientClipping(min, max)
   }
 
   def nnEstimatorSetGradientClippingByL2Norm(
-    estimator: NNEstimator[T],
-    clipNorm: Float): Unit = {
+      estimator: NNEstimator[T],
+      clipNorm: Float): Unit = {
     estimator.setGradientClippingByL2Norm(clipNorm)
+  }
+
+  def nnEstimatorSetIsSampleCached(
+      estimator: NNEstimator[T],
+      value: Boolean): Unit = {
+    estimator.setIsSampleCached(value)
   }
 }
