@@ -74,6 +74,7 @@ class TestWideAndDeep(ZooTestCase):
     def test_wide_and_deep_forward_backward(self):
         column_info = self.column_info
         model = WideAndDeep(5, column_info, "wide_n_deep")
+        model.summary()
         data = self.data_in.rdd.map(lambda r: [get_wide_tensor(r, column_info),
                                                get_deep_tensor(r, column_info)])
         data.map(lambda input_data: self.assert_forward_backward(model, input_data))

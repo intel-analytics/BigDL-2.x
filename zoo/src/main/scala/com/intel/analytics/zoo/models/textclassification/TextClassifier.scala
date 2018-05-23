@@ -22,7 +22,7 @@ import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric
 import com.intel.analytics.bigdl.utils.Shape
 import com.intel.analytics.zoo.models.common.ZooModel
 import com.intel.analytics.zoo.pipeline.api.keras.layers._
-import com.intel.analytics.zoo.pipeline.api.keras.models.Sequential
+import com.intel.analytics.zoo.pipeline.api.keras.models.{KerasNet, Sequential}
 
 import scala.reflect.ClassTag
 
@@ -66,6 +66,10 @@ class TextClassifier[T: ClassTag] private (
     model.add(Activation("relu"))
     model.add(Dense(classNum, activation = "softmax"))
     model.asInstanceOf[AbstractModule[Tensor[T], Tensor[T], T]]
+  }
+
+  override def modelSummary: String = {
+    super.toString() + " summary: \n" + model.asInstanceOf[KerasNet[T]].modules(0).toString()
   }
 }
 

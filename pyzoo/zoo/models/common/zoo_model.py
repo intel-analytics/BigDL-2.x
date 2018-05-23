@@ -49,6 +49,10 @@ class ZooModel(ZooModelCreator, Container):
         callBigDlFunc(self.bigdl_type, "saveZooModel",
                       self.value, path, weight_path, over_write)
 
+    def summary(self):
+        print(callBigDlFunc(self.bigdl_type, "zooModelSummary",
+                            self.value))
+
     @staticmethod
     def _do_load(jmodel, bigdl_type="float"):
         model = Layer(jvalue=jmodel, bigdl_type=bigdl_type)

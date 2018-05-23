@@ -56,6 +56,11 @@ class PythonZooModel[T: ClassTag](implicit ev: TensorNumeric[T]) extends PythonB
     model.saveModel(path, weightPath, overWrite)
   }
 
+  def zooModelSummary(
+      model: ZooModel[Activity, Activity, T]): String = {
+    model.modelSummary
+  }
+
   def createZooTextClassifier(
       classNum: Int,
       tokenLength: Int,
