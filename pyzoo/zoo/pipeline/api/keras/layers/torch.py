@@ -734,14 +734,15 @@ class ResizeBilinear(ZooKerasLayer):
                   Default is 'th'.
     input_shape: A shape tuple, not including batch.
 
-    >>> resizeBilinear = ResizeBilinear(10, 20)
+    >>> resizeBilinear = ResizeBilinear(10, 20, input_shape=(2, 3, 5, 7))
     creating: createZooKerasResizeBilinear
     """
     def __init__(self, output_height, output_width, align_corner=False,
-                 dim_ordering="th", **kwargs):
+                 dim_ordering="th", input_shape=(2, 3, 5, 7), **kwargs):
         super(ResizeBilinear, self).__init__(None,
                                              output_height,
                                              output_width,
                                              align_corner,
                                              dim_ordering,
+                                             list(input_shape) if input_shape else None,
                                              **kwargs)

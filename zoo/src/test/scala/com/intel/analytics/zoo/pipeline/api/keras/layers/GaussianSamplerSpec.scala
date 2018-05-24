@@ -28,7 +28,7 @@ import scala.util.Random
 
 class GaussianSamplerSpec extends ZooSpecHelper {
 
-  "GaussianSampler (3, 1) Zoo" should "be the same as BigDL" in {
+  "GaussianSampler Zoo" should "be the same as BigDL" in {
     val blayer = BGaussianSampler[Float]()
     val zlayer = ZGaussianSampler[Float](inputShape = Shape(List(Shape(3), Shape(3))))
     zlayer.build(Shape(List(Shape(-1, 3), Shape(-1, 3))))
