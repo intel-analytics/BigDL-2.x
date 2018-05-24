@@ -34,7 +34,7 @@ spark-submit \
     --jars ${ZOO_JAR_PATH} \
     --conf spark.driver.extraClassPath=${ZOO_JAR_PATH} \
     --conf spark.executor.extraClassPath=${ZOO_JAR_PATH} \
-    ${ANALYTICS_ZOO_HOME}/pyzoo/zoo/examples/objectdetection/predict.py ${model_path} ${image_path} ${output_path}
+    path/to/predict.py ${model_path} ${image_path} ${output_path}
 ```
 
 ## Results
