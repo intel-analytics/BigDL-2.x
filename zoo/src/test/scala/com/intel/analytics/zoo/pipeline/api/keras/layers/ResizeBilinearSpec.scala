@@ -24,28 +24,15 @@ import com.intel.analytics.bigdl.utils.{Shape, T, Table}
 import com.intel.analytics.zoo.pipeline.api.keras.ZooSpecHelper
 import com.intel.analytics.zoo.pipeline.api.keras.serializer.ModuleSerializationTest
 
+import scala.util.Random
+
 class ResizeBilinearSpec extends ZooSpecHelper {
 
-  "ResizeBilinear (3, 1) Zoo" should "be the same as BigDL" in {
-    val input = Tensor[Float](T(T(
-      T(
-        T(1, 2, 3),
-        T(4, 5, 6)
-      ),
-      T(
-        T(7, 8, 9),
-        T(2, 3, 1)
-      ),
-      T(
-        T(4, 8, 2),
-        T(5, 3, 0)
-      )
-    )))
-
-    val blayer = BResizeBilinear[Float](3, 2, dataFormat = DataFormat.NHWC)
+  "ResizeBilinear (3, 2) Zoo" should "be the same as BigDL" in {
+    val input = Tensor[Float](1, 3, 2, 3).rand()
+    val blayer = BResizeBilinear[Float](3, 2, dataFormat = DataFormat.NCHW)
     val zlayer = ZResizeBilinear[Float](3, 2, dimOrdering = "th")
-    zlayer.build(Shape(-1, 3, 5, 6))
-    assert(zlayer.getOutputShape() == Shape(-1, 3, 3, 2))
+    zlayer.build(Shape(-1, 3, 2, 3))
     compareOutputAndGradInput(
       blayer.asInstanceOf[AbstractModule[Tensor[Float], Tensor[Float], Float]],
       zlayer.asInstanceOf[AbstractModule[Tensor[Float], Tensor[Float], Float]],
@@ -55,42 +42,19 @@ class ResizeBilinearSpec extends ZooSpecHelper {
 
 class ResizeBilinearSerialTest extends ModuleSerializationTest {
   override def test(): Unit = {
-    val layer = ZResizeBilinear[Float](3, 2, dimOrdering = "th")
-    layer.build(Shape(-1, 3, 5, 6))
-    val input = Tensor[Float](T(T(
-      T(
-        T(1, 2, 3),
-        T(4, 5, 6)
-      ),
-      T(
-        T(7, 8, 9),
-        T(2, 3, 1)
-      ),
-      T(
-        T(4, 8, 2),
-        T(5, 3, 0)
-      )
-    )))
+    val layer = ZResizeBilinear[Float](3, 2, dimOrdering = "tf")
+    layer.build(Shape(-1, 3, 2, 3))
+    val input = Tensor[Float](1, 3, 2, 3).apply1(_ => Random.nextFloat())
+
     runSerializationTest(layer, input)
   }
 
-  "ResizeBilinear (3, 1) Zoo" should "be the same as BigDL" in {
-    val layer = ZResizeBilinear[Float](3, 2, dimOrdering = "th")
-    layer.build(Shape(-1, 3, 5, 6))
-    val input = Tensor[Float](T(T(
-      T(
-        T(1, 2, 3),
-        T(4, 5, 6)
-      ),
-      T(
-        T(7, 8, 9),
-        T(2, 3, 1)
-      ),
-      T(
-        T(4, 8, 2),
-        T(5, 3, 0)
-      )
-    )))
-    runSerializationTest(layer, input)
-  }
+  // com.intel.analytics.zoo.pipeline.api.autograd.LambdaTorch not included in the test
+//  "ResizeBilinear (3, 1) Zoo" should "be the same as BigDL" in {
+//    val layer = ZResizeBilinear[Float](3, 2, dimOrdering = "tf")
+//    layer.build(Shape(-1, 3, 2, 3))
+//    val input = Tensor[Float](1, 3, 2, 3).apply1(_ => Random.nextFloat())
+//
+//    runSerializationTest(layer, input)
+//  }
 }
