@@ -25,6 +25,7 @@ import com.intel.analytics.bigdl.optim._
 import com.intel.analytics.bigdl.tensor.Tensor
 import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric
 import com.intel.analytics.bigdl.utils.{MultiShape, Shape, SingleShape}
+import com.intel.analytics.zoo.pipeline.api.Net
 import com.intel.analytics.zoo.pipeline.api.keras.metrics.AUC
 
 import scala.collection.mutable.ArrayBuffer
@@ -243,14 +244,20 @@ object KerasUtils {
 
   /**
    * Count the total number of parameters for a Keras layer.
+   * Return a tuple (total params #, trainable params #)
    */
-  def countParams[T: ClassTag](layer: KerasLayer[Activity, Activity, T]): Int = {
+  def countParams[T: ClassTag](layer: KerasLayer[Activity, Activity, T]): (Int, Int) = {
     val (weights, gradWeights) = layer.parameters()
     var count = 0
     for (w <- weights) {
       count += w.nElement()
     }
-    count
+    if (layer.asInstanceOf[Net].isFrozen()) {
+      (count, 0)
+    }
+    else {
+      (count, count)
+    }
   }
 
   /**
@@ -262,7 +269,7 @@ object KerasUtils {
     val name = layer.getName
     val className = layer.getClass.getSimpleName
     Array(name + " (" + className + ")", outputShape.toString,
-      KerasUtils.countParams(layer).toString)
+      KerasUtils.countParams(layer)._1.toString)
   }
 
   /**
@@ -283,8 +290,9 @@ object KerasUtils {
   def printNodeSummary[T: ClassTag](
       node: ModuleNode[T],
       lineLength: Int = 100,
-      positions: Array[Double] = Array(.33, .55, .67, 1)): Unit = {
+      positions: Array[Double] = Array(.33, .55, .67, 1)): (Int, Int) = {
     printRow(getNodeSummary(node), lineLength, positions)
+    countParams(node.element.asInstanceOf[KerasLayer[Activity, Activity, T]])
   }
 
   /**

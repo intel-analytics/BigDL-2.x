@@ -373,7 +373,17 @@ class Model[T: ClassTag] private (private val _inputs : Seq[ModuleNode[T]],
     val toDisplay = Array("Layer (type)", "Output Shape", "Param #", "Connected to")
     KerasUtils.printRow(toDisplay, splitingChar = '=')
     val nodes = labor.asInstanceOf[StaticGraph[T]].getSortedForwardExecutions()
-    for (node <- nodes) KerasUtils.printNodeSummary(node, lineLength, positions)
+    var totalParams = 0
+    var trainableParams = 0
+    for (node <- nodes) {
+      val (total, trainable) = KerasUtils.printNodeSummary(node, lineLength, positions)
+      totalParams += total
+      trainableParams += trainable
+    }
+    println("Total params: " + "%,d".format(totalParams))
+    println("Trainable params: " + "%,d".format(trainableParams))
+    println("Non-trainable params: " + "%,d".format(totalParams - trainableParams))
+    KerasUtils.printSplitLine('-', lineLength)
   }
 }
 
