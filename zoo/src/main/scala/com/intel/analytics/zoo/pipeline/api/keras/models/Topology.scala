@@ -297,6 +297,9 @@ abstract class KerasNet[T: ClassTag](implicit ev: TensorNumeric[T])
   }
 
   def toModel(): Model[T]
+
+  def summary(lineLength: Int = 120,
+              positions: Array[Double] = Array(.33, .55, .67, 1)): Unit
 }
 
 class Model[T: ClassTag] private (private val _inputs : Seq[ModuleNode[T]],
@@ -365,13 +368,13 @@ class Model[T: ClassTag] private (private val _inputs : Seq[ModuleNode[T]],
 
   override def toKeras(): Model[T] = this
 
-  def summary(
+  override def summary(
       lineLength: Int = 120,
       positions: Array[Double] = Array(.33, .55, .67, 1)): Unit = {
     println("Model Summary:")
     KerasUtils.printSplitLine('-', lineLength)
     val toDisplay = Array("Layer (type)", "Output Shape", "Param #", "Connected to")
-    KerasUtils.printRow(toDisplay, splitingChar = '=')
+    KerasUtils.printRow(toDisplay, lineLength, positions, splitingChar = '=')
     val nodes = labor.asInstanceOf[StaticGraph[T]].getSortedForwardExecutions()
     var totalParams = 0
     var trainableParams = 0
@@ -565,9 +568,11 @@ class Sequential[T: ClassTag] private ()
     Model(input, output)
   }
 
-  def summary(): Unit = {
+  override def summary(
+      lineLength: Int = 120,
+      positions: Array[Double] = Array(.33, .55, .67, 1)): Unit = {
     val graph = this.toModel()
-    graph.summary()
+    graph.summary(lineLength, positions)
   }
 }
 

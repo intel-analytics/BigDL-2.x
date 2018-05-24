@@ -218,6 +218,12 @@ class KerasNet(ZooKerasLayer):
             else:
                 raise TypeError("Unsupported prediction data type: %s" % type(x))
 
+    def summary(self, line_length=120, positions=[.33, .55, .67, 1.]):
+        callBigDlFunc(self.bigdl_type, "zooKerasNetSummary",
+                      self.value,
+                      line_length,
+                      [float(p) for p in positions])
+
     def to_model(self):
         from zoo.pipeline.api.keras.models import Model
         return Model.from_jvalue(callBigDlFunc(self.bigdl_type, "kerasNetToModel", self.value))
