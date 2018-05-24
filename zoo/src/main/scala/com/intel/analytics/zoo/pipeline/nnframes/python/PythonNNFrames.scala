@@ -191,10 +191,4 @@ class PythonNNFrames[T: ClassTag](implicit ev: TensorNumeric[T]) extends PythonB
       clipNorm: Float): Unit = {
     estimator.setGradientClippingByL2Norm(clipNorm)
   }
-
-  def nnEstimatorSetIsSampleCached(
-      estimator: NNEstimator[T],
-      value: Boolean): Unit = {
-    estimator.setIsSampleCached(value)
-  }
 }
