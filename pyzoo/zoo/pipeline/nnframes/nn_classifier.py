@@ -226,7 +226,7 @@ class NNEstimator(JavaEstimator, HasFeaturesCol, HasLabelCol, HasPredictionCol, 
 
     def setCachingSample(self, val):
         """
-        whether to cache the Samples after preprocessing.
+        whether to cache the Samples after preprocessing. Default: True
         """
         self._paramMap[self.cachingSample] = val
         return self
