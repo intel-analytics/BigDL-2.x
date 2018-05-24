@@ -26,6 +26,14 @@ import scala.reflect.ClassTag
 
 /**
  * Takes {mean, log_variance} as input and samples from the Gaussian distribution
+ *
+ * When you use this layer as the first layer of a model, you need to provide the argument
+ * inputShape (a Single Shape, does not include the batch dimension).
+ *
+ * Remark: This layer is from Torch and wrapped in Keras style.
+ *
+ * @param inputShape A Single Shape, does not include the batch dimension.
+ * @tparam T Numeric type of parameter(e.g. weight, bias). Only support float/double now
  */
 class GaussianSampler[T: ClassTag]
 (val inputShape: Shape = null)(implicit ev: TensorNumeric[T])

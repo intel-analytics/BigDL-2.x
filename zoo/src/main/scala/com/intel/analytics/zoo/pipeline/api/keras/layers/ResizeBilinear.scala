@@ -24,6 +24,23 @@ import com.intel.analytics.zoo.pipeline.api.keras.layers.utils.KerasUtils
 
 import scala.reflect.ClassTag
 
+/**
+ * Resize the input image with bilinear interpolation. The input image must be a float tensor with
+ * NHWC or NCHW layout.
+ *
+ * When you use this layer as the first layer of a model, you need to provide the argument
+ * inputShape (a Single Shape, does not include the batch dimension).
+ *
+ * Remark: This layer is from Torch and wrapped in Keras style.
+ *
+ * @param outputHeight output height
+ * @param outputWidth output width
+ * @param alignCorners align corner or not
+ * @param dimOrdering Format of input data. Either DataFormat.NCHW (dimOrdering='th') or
+ *                    DataFormat.NHWC (dimOrdering='tf'). Default is NCHW.
+ * @param inputShape A Single Shape, does not include the batch dimension.
+ * @tparam T Numeric type of parameter(e.g. weight, bias). Only support float/double now
+ */
 class ResizeBilinear[T: ClassTag](
   val outputHeight: Int,
   val outputWidth: Int,
