@@ -27,7 +27,7 @@ import com.intel.analytics.zoo.pipeline.api.keras.layers.utils.KerasUtils
 import scala.reflect.ClassTag
 
 abstract class LayerWrapperByForward[T: ClassTag](
-      val batchInputShape: Shape = null)(implicit ev: TensorNumeric[T])
+      val batchInputShape: Shape)(implicit ev: TensorNumeric[T])
   extends KerasLayer[Activity, Activity, T](batchInputShape) with Net {
 
   override def computeOutputShape(calcInputShape: Shape): Shape = {
@@ -66,6 +66,7 @@ private[zoo] object LayerWrapperByForward {
  */
 class KerasLayerWrapper[T: ClassTag]
 (val torchLayer: AbstractModule[Activity, Activity, T],
-    val inputShape: Shape = null)(implicit ev: TensorNumeric[T]) extends LayerWrapperByForward[T] {
+ val inputShape: Shape = null)(implicit ev: TensorNumeric[T])
+  extends LayerWrapperByForward[T](KerasUtils.addBatch(inputShape)) {
   override def doBuild(inputShape: Shape): AbstractModule[Activity, Activity, T] = torchLayer
 }

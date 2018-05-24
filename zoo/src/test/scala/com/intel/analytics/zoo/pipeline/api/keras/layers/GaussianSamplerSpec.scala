@@ -17,10 +17,10 @@
 package com.intel.analytics.zoo.pipeline.api.keras.layers
 
 import com.intel.analytics.bigdl.nn.abstractnn.AbstractModule
-import com.intel.analytics.bigdl.nn.{GaussianSampler => BGaussianSampler}
+import com.intel.analytics.bigdl.nn.{Module, GaussianSampler => BGaussianSampler}
 import com.intel.analytics.zoo.pipeline.api.keras.layers.{GaussianSampler => ZGaussianSampler}
 import com.intel.analytics.bigdl.tensor.Tensor
-import com.intel.analytics.bigdl.utils.{Shape, T, Table}
+import com.intel.analytics.bigdl.utils.{RandomGenerator, Shape, T, Table}
 import com.intel.analytics.zoo.pipeline.api.keras.ZooSpecHelper
 import com.intel.analytics.zoo.pipeline.api.keras.serializer.ModuleSerializationTest
 
@@ -46,15 +46,19 @@ class GaussianSamplerSerialTest extends ModuleSerializationTest {
     val layer = ZGaussianSampler[Float](inputShape = Shape(List(Shape(3), Shape(3))))
     layer.build(Shape(List(Shape(-1, 3), Shape(-1, 3))))
     val input = T(Tensor[Float](Array(2, 3)).apply1(_ => Random.nextFloat()),
-                  Tensor[Float](Array(2, 3)).apply1(_ => Random.nextFloat()))
-    runSerializationTest(layer, input)
-  }
+      Tensor[Float](Array(2, 3)).apply1(_ => Random.nextFloat()))
 
-//  "GaussianSampler (3, 1) Zoo" should "be the same as BigDL" in  {
-//    val layer = ZGaussianSampler[Float](inputShape = Shape(List(Shape(3), Shape(3))))
-//    layer.build(Shape(List(Shape(-1, 3), Shape(-1, 3))))
-//    val input = T(Tensor[Float](Array(2, 3)).apply1(_ => Random.nextFloat()),
-//                  Tensor[Float](Array(2, 3)).apply1(_ => Random.nextFloat()))
-//    runSerializationTest(layer, input)
-//  }
+    RandomGenerator.RNG.setSeed(1234)
+    val originalOutput = layer.forward(input).asInstanceOf[Tensor[Float]].clone()
+    val tmpFile = ZooSpecHelper.createTmpFile()
+    val absPath = tmpFile.getAbsolutePath
+    layer.saveModule(absPath, overWrite = true)
+    val loadedLayer = Module.loadModule[Float](absPath)
+    RandomGenerator.RNG.setSeed(1234)
+    val loadedOutput = loadedLayer.forward(input).asInstanceOf[Tensor[Float]].clone()
+    originalOutput.asInstanceOf[Tensor[Float]].size.sameElements(
+      loadedOutput.asInstanceOf[Tensor[Float]].size) should be (true)
+    originalOutput.asInstanceOf[Tensor[Float]].
+      almostEqual(loadedOutput.asInstanceOf[Tensor[Float]], 1e-6) should be (true)
+  }
 }

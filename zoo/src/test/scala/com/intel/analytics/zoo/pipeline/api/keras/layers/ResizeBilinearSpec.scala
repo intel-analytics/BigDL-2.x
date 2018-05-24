@@ -20,7 +20,7 @@ import com.intel.analytics.bigdl.nn.abstractnn.{AbstractModule, DataFormat}
 import com.intel.analytics.bigdl.nn.{ResizeBilinear => BResizeBilinear}
 import com.intel.analytics.zoo.pipeline.api.keras.layers.{ResizeBilinear => ZResizeBilinear}
 import com.intel.analytics.bigdl.tensor.Tensor
-import com.intel.analytics.bigdl.utils.{Shape, T, Table}
+import com.intel.analytics.bigdl.utils.Shape
 import com.intel.analytics.zoo.pipeline.api.keras.ZooSpecHelper
 import com.intel.analytics.zoo.pipeline.api.keras.serializer.ModuleSerializationTest
 
@@ -48,13 +48,4 @@ class ResizeBilinearSerialTest extends ModuleSerializationTest {
 
     runSerializationTest(layer, input)
   }
-
-  // com.intel.analytics.zoo.pipeline.api.autograd.LambdaTorch not included in the test
-//  "ResizeBilinear (3, 1) Zoo" should "be the same as BigDL" in {
-//    val layer = ZResizeBilinear[Float](3, 2, dimOrdering = "tf")
-//    layer.build(Shape(-1, 3, 2, 3))
-//    val input = Tensor[Float](1, 3, 2, 3).apply1(_ => Random.nextFloat())
-//
-//    runSerializationTest(layer, input)
-//  }
 }
