@@ -169,9 +169,9 @@ class NNEstimator(JavaEstimator, HasFeaturesCol, HasLabelCol, HasPredictionCol, 
         self.maxEpoch = Param(self, "maxEpoch", "number of max Epoch")
         self.learningRate = Param(self, "learningRate", "learning rate")
         self.learningRateDecay = Param(self, "learningRateDecay", "learning rate decay")
-        self.isSampleCached = Param(self, "isSampleCached", "isSampleCached")
+        self.cachingSample = Param(self, "cachingSample", "cachingSample")
         self._setDefault(maxEpoch=50, learningRate=1e-3, batchSize=1, learningRateDecay=0.0,
-                         isSampleCached=True)
+                         cachingSample=True)
 
         self.train_summary = None
         self.validation_config = None
@@ -224,18 +224,18 @@ class NNEstimator(JavaEstimator, HasFeaturesCol, HasLabelCol, HasPredictionCol, 
         """
         return self.getOrDefault(self.learningRateDecay)
 
-    def setIsSampleCached(self, val):
+    def setCachingSample(self, val):
         """
-        whether to cache the Sample after preprocessing.
+        whether to cache the Samples after preprocessing.
         """
-        self._paramMap[self.isSampleCached] = val
+        self._paramMap[self.cachingSample] = val
         return self
 
-    def getIsSampleCached(self):
+    def isCachingSample(self):
         """
-        Gets the value of isSampleCached or its default value.
+        Gets the value of cachingSample or its default value.
         """
-        return self.getOrDefault(self.isSampleCached)
+        return self.getOrDefault(self.cachingSample)
 
     def setTrainSummary(self, val):
         """

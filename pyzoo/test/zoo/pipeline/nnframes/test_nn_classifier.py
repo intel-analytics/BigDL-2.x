@@ -132,7 +132,7 @@ class TestNNClassifer():
         assert classifier.setMaxEpoch(50).getMaxEpoch() == 50
         assert classifier.setLearningRate(1e-5).getLearningRate() == 1e-5
         assert classifier.setLearningRateDecay(1e-9).getLearningRateDecay() == 1e-9
-        assert classifier.setIsSampleCached(False).getIsSampleCached() is False
+        assert classifier.setCachingSample(False).isCachingSample() is False
 
         nn_classifier_model = NNClassifierModel(linear_model, SeqToTensor([2]))
         assert nn_classifier_model.setBatchSize((20)).getBatchSize() == 20
