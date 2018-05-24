@@ -38,8 +38,8 @@ ImageTransferLearningExample.py takes 2 parameters:
 User may submit transfer_learning.py via spark-submit.
 E.g.
 ```
-export ZOO_HOME=~/sources/analytics-zoo/dist
-${ZOO_HOME}/bin/spark-submit-with-zoo.sh --master local[4] --driver-memory 10g \
+export ANALYTICS_ZOO_HOME=~/sources/analytics-zoo/dist
+${ANALYTICS_ZOO_HOME}/bin/spark-submit-with-zoo.sh --master local[4] --driver-memory 10g \
 pyzoo/zoo/examples/nnframes/finetune/transfer_learning.py \
 /tmp/models/bigdl_inception-v1_imagenet_0.4.0.model /tmp/datasets/cat_dog/demo
 ```
