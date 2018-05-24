@@ -20,7 +20,7 @@ import java.nio.FloatBuffer
 
 import com.intel.analytics.bigdl.nn.abstractnn.{AbstractModule, Activity}
 import com.intel.analytics.bigdl.tensor.Tensor
-import com.intel.analytics.bigdl.utils.{Shape, T, Table}
+import com.intel.analytics.bigdl.utils.{MultiShape, Shape, T, Table}
 import org.tensorflow.framework.GraphDef
 import org.tensorflow.{Graph, Session, Tensor => TTensor}
 
@@ -30,6 +30,29 @@ class TFNet(graphDef: GraphDef,
             val inputNames: Seq[String],
             val outputNames: Seq[String])
   extends AbstractModule[Activity, Activity, Float] {
+
+
+
+  output = {
+    if (outputNames.length == 1) {
+      Tensor[Float]()
+    } else {
+      val t = T()
+      var i = 0
+      while (i < outputNames.length) {
+        t.insert(Tensor[Float]())
+        i = i + 1
+      }
+      t
+    }
+  }
+
+  private def getOutput(idx: Int): Tensor[Float] = {
+    output match {
+      case t: Tensor[Float] => t
+      case t: Table => t[Tensor[Float]](idx)
+    }
+  }
 
   @transient
   private lazy val graph = {
@@ -43,6 +66,20 @@ class TFNet(graphDef: GraphDef,
     new Session(graph)
   }
 
+  private def getShape(names: Seq[String]) = {
+    val shapes = names.map { name =>
+      val Array(op, idx) = name.split(":")
+      val shape = graph.operation(op).output(idx.toInt).shape()
+      Shape((0 until shape.numDimensions()).map(shape.size(_).toInt).toArray)
+    }
+
+    if (shapes.length == 1) {
+      shapes.head
+    } else {
+      MultiShape(shapes.toList)
+    }
+  }
+
   override def parameters(): (Array[Tensor[Float]], Array[Tensor[Float]]) = {
     (Array(), Array())
   }
@@ -54,12 +91,14 @@ class TFNet(graphDef: GraphDef,
     TTensor.create(shape, buffer)
   }
 
-  private def tf2bigdl(t: TTensor[Float]) = {
+  private def tf2bigdl(t: TTensor[Float], output: Tensor[Float]) = {
     val shape = t.shape().map(_.toInt)
-    val data = new Array[Float](shape.product)
-    val buffer = FloatBuffer.wrap(data)
+    output.resize(shape)
+    val buffer = FloatBuffer.wrap(
+      output.storage().array(),
+      output.storageOffset() - 1,
+      shape.product)
     t.writeTo(buffer)
-    Tensor(data, shape)
   }
 
   override def updateOutput(input: Activity): Activity = {
@@ -78,12 +117,10 @@ class TFNet(graphDef: GraphDef,
     inputNames.zipWithIndex.foreach { case (name, idx) =>
       runner.feed(name, data(idx))
     }
+
     val outputs = runner.run()
-    val tensors = outputs.asScala.map(t => tf2bigdl(t.asInstanceOf[TTensor[Float]]))
-    output = if (tensors.length == 1) {
-      tensors.head
-    } else {
-      T.seq(tensors)
+    outputs.asScala.zipWithIndex.foreach { case (t, idx) =>
+      tf2bigdl(t.asInstanceOf[TTensor[Float]], getOutput(idx + 1))
     }
     output
   }
