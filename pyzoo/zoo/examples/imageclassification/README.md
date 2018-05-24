@@ -20,8 +20,8 @@ imagePath=... // image path
 topN=... // top n prediction
 
 ANALYTICS_ZOO_HOME=
-PYTHON_API_ZIP_PATH=${ANALYTICS_ZOO_HOME}/dist/lib/zoo-VERSION-SNAPSHOT-python-api.zip
-ZOO_JAR_PATH=${ANALYTICS_ZOO_HOME}/dist/lib/zoo-VERSION-SNAPSHOT-jar-with-dependencies.jar
+PYTHON_API_ZIP_PATH=${ANALYTICS_ZOO_HOME}/lib/zoo-VERSION-SNAPSHOT-python-api.zip
+ZOO_JAR_PATH=${ANALYTICS_ZOO_HOME}/lib/zoo-VERSION-SNAPSHOT-jar-with-dependencies.jar
 PYTHONPATH=${PYTHON_API_ZIP_PATH}:$PYTHONPATH
 
 spark-submit \

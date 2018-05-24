@@ -22,8 +22,8 @@ imagePath=... // image path. Local file system/HDFS are supported. With local fi
 
 outputPath=... // output path. Currently only support local file system.
 
-PYTHON_API_ZIP_PATH=${ANALYTICS_ZOO_HOME}/dist/lib/zoo-VERSION-SNAPSHOT-python-api.zip
-ZOO_JAR_PATH=${ANALYTICS_ZOO_HOME}/dist/lib/zoo-VERSION-SNAPSHOT-jar-with-dependencies.jar
+PYTHON_API_ZIP_PATH=${ANALYTICS_ZOO_HOME}/lib/zoo-VERSION-SNAPSHOT-python-api.zip
+ZOO_JAR_PATH=${ANALYTICS_ZOO_HOME}/lib/zoo-VERSION-SNAPSHOT-jar-with-dependencies.jar
 PYTHONPATH=${PYTHON_API_ZIP_PATH}:$PYTHONPATH
 
 spark-submit \
