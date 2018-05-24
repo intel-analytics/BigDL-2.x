@@ -37,19 +37,15 @@ class FeatureLabelPreprocessing[F, L, T: ClassTag](
 
   override def apply(prev: Iterator[(F, Option[L])]): Iterator[Sample[T]] = {
     prev.map { case (feature, label ) =>
-      try {
-        val featureTensor = featureStep(Iterator(feature)).next()
-        label match {
-          case Some(l) =>
-            val labelTensor = labelStep(Iterator(l)).next()
-            Sample[T](featureTensor, labelTensor)
-          case None =>
-            Sample[T](featureTensor)
-        }
-      } catch {
-        case e: Exception => null
+      val featureTensor = featureStep(Iterator(feature)).next()
+      label match {
+        case Some(l) =>
+          val labelTensor = labelStep(Iterator(l)).next()
+          Sample[T](featureTensor, labelTensor)
+        case None =>
+          Sample[T](featureTensor)
       }
-    }.filterNot(_ == null)
+    }
   }
 }
 
