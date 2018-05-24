@@ -22,8 +22,8 @@ imagePath=... // image path. Local file system/HDFS are supported. With local fi
 
 outputPath=... // output path. Currently only support local file system.
 
-PYTHON_API_ZIP_PATH=${ZOO_HOME}/dist/lib/zoo-VERSION-SNAPSHOT-python-api.zip
-ZOO_JAR_PATH=${ZOO_HOME}/dist/lib/zoo-VERSION-SNAPSHOT-jar-with-dependencies.jar
+PYTHON_API_ZIP_PATH=${ANALYTICS_ZOO_HOME}/lib/zoo-VERSION-SNAPSHOT-python-api.zip
+ZOO_JAR_PATH=${ANALYTICS_ZOO_HOME}/lib/zoo-VERSION-SNAPSHOT-jar-with-dependencies.jar
 PYTHONPATH=${PYTHON_API_ZIP_PATH}:$PYTHONPATH
 
 spark-submit \
@@ -34,7 +34,7 @@ spark-submit \
     --jars ${ZOO_JAR_PATH} \
     --conf spark.driver.extraClassPath=${ZOO_JAR_PATH} \
     --conf spark.executor.extraClassPath=${ZOO_JAR_PATH} \
-    ${ZOO_HOME}/pyzoo/zoo/examples/objectdetection/predict.py ${model_path} ${image_path} ${output_path}
+    path/to/predict.py ${model_path} ${image_path} ${output_path}
 ```
 
 ## Results
