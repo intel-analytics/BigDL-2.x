@@ -323,6 +323,10 @@ class NNEstimator[T: ClassTag] private[zoo] (
     }
 
     initialDataSet.transform(SampleToMiniBatch[T](batchSize))
+
+    DataSet.rdd(featureAndLabel).transform(
+      sp -> FilterNull[Sample[T], T]() -> SampleToMiniBatch[T](batchSize))
+
   }
 
   protected override def internalFit(dataFrame: DataFrame): NNModel[T] = {
@@ -526,8 +530,12 @@ class NNModel[T: ClassTag] private[zoo] (
 
       rowIter.grouped(localBatchSize).flatMap { rowBatch =>
         val featureSeq = rowBatch.map(r => r.get(featureColIndex))
-        val samples = featureSteps(featureSeq.iterator)
-        val predictions = toBatch(samples).flatMap { batch =>
+        val samples = featureSteps(featureSeq.iterator).toArray
+
+        val validRow = rowBatch.zip(samples).filter(_._2 != null)
+        val invalidRows = rowBatch.zip(samples).filter(_._2 == null)
+
+        val predictions = toBatch(validRow.map(_._2).iterator).flatMap { batch =>
           val batchResult = localModel.forward(batch.getInput()).toTensor.squeeze()
           if (batchResult.size().length == 2) {
             batchResult.split(1).map(outputToPrediction)
@@ -538,9 +546,13 @@ class NNModel[T: ClassTag] private[zoo] (
               "unexpected batchResult dimension: " + batchResult.size().mkString(", "))
           }
         }
-        rowBatch.toIterator.zip(predictions).map { case (row, predict) =>
+
+        validRow.map(_._1).iterator.zip(predictions).map { case (row, predict) =>
           Row.fromSeq(row.toSeq ++ Seq(predict))
-        }
+        } ++
+          invalidRows.map(_._1).map { row =>
+            Row.fromSeq(row.toSeq ++ Seq(null))
+          }
       }
     }
 

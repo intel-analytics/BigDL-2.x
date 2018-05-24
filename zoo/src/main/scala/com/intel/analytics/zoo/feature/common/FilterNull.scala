@@ -8,16 +8,16 @@ import scala.reflect.ClassTag
 /**
  * filter null out of the iterator
  */
-class FilterNull[T: ClassTag]()(implicit ev: TensorNumeric[T])
-  extends Preprocessing[Any, Any] {
+class FilterNull[F, T: ClassTag]()(implicit ev: TensorNumeric[T])
+  extends Preprocessing[F, F] {
 
-  override def apply(prev: Iterator[Any]): Iterator[Any] = {
+  override def apply(prev: Iterator[F]): Iterator[F] = {
     prev.filter( _ != null)
   }
 }
 
 object FilterNull {
-  def apply[T: ClassTag]()(implicit ev: TensorNumeric[T]): FilterNull[T] =
-    new FilterNull[T]()
+  def apply[F, T: ClassTag]()(implicit ev: TensorNumeric[T]): FilterNull[F, T] =
+    new FilterNull[F, T]()
 }
 
