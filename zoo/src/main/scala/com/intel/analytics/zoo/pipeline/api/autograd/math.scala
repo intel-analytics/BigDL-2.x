@@ -72,10 +72,6 @@ object AutoGrad {
     Variable(Square[T]().inputs(a.node))
   }
 
-  def sign[T: ClassTag](a: Variable[T])(
-    implicit ev: TensorNumeric[T]): Variable[T] = {
-    Variable(Sign[T]().inputs(a.node))
-  }
 
   def sqrt[T: ClassTag](a: Variable[T])(
       implicit ev: TensorNumeric[T]): Variable[T] = {
