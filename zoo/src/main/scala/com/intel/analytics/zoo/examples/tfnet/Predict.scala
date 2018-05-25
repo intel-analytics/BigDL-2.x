@@ -44,9 +44,9 @@ object Predict {
   case class PredictParam(
     image: String = "/tmp/datasets/cat_dog/train_sampled",
     outputFolder: String = "data/demo",
-    model: String = "/home/yang/applications/ssd_mobilenet_v1_coco_2017_11_17" +
+    model: String = "/tmp/models/ssd_mobilenet_v1_coco_2017_11_17" +
       "/frozen_inference_graph.pb",
-    classNamePath: String = "./coco_classname.txt",
+    classNamePath: String = "/tmp/models/coco_classname.txt",
     nPartition: Int = 4)
 
   val parser = new OptionParser[PredictParam]("Analytics Zoo Object Detection Demo") {
