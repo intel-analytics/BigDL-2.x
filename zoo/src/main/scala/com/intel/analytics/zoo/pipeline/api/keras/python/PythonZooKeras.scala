@@ -37,7 +37,7 @@ import com.intel.analytics.zoo.pipeline.api.keras.layers._
 import com.intel.analytics.zoo.pipeline.api.keras.layers.utils.KerasUtils
 import com.intel.analytics.zoo.pipeline.api.keras.metrics.AUC
 import com.intel.analytics.zoo.pipeline.api.keras.models.{KerasNet, Model, Sequential}
-import com.intel.analytics.zoo.pipeline.api.net.{GraphNet, NetUtils}
+import com.intel.analytics.zoo.pipeline.api.net.{GraphNet, NetUtils, TFNet}
 import org.apache.spark.api.java.JavaRDD
 
 import scala.collection.mutable.ArrayBuffer
@@ -1006,5 +1006,12 @@ class PythonZooKeras[T: ClassTag](implicit ev: TensorNumeric[T]) extends PythonB
       dimOrdering: String = "th",
       inputShape: JList[Int] = null): ResizeBilinear[T] = {
     ResizeBilinear(outputHeight, outputWidth, alignCorners, dimOrdering)
+  }
+
+  def createTFNet(
+      path: String,
+      inputNames: JList[String],
+      outputNames: JList[String]): TFNet = {
+    TFNet(path, inputNames.asScala, outputNames.asScala)
   }
 }
