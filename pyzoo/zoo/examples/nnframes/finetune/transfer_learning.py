@@ -71,7 +71,8 @@ if __name__ == "__main__":
     lrModel = Model(inputNode, logits)
 
     classifier = NNClassifier(lrModel, CrossEntropyCriterion(), transformer) \
-        .setLearningRate(0.003).setBatchSize(40).setMaxEpoch(1).setFeaturesCol("image")
+        .setLearningRate(0.003).setBatchSize(40).setMaxEpoch(1).setFeaturesCol("image") \
+        .setCachingSample(False)
 
     pipeline = Pipeline(stages=[classifier])
 
