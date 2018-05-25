@@ -24,6 +24,7 @@ class ImageFirstDetection extends FeatureTransformer {
 }
 
 object ImageFirstDetection {
-  def apply(): ImageFirstDetection =
+  def apply(): ImageFirstDetection = {
     new ImageFirstDetection()
+  }
 }
