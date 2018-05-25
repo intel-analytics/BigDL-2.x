@@ -1,6 +1,6 @@
 # Analytics Zoo Object Detection API
 
-Analytics Zoo provides a collection of pre-trained models for Object Detection. These models can be used for out-of-the-box inference if you are interested in categories already in the corresponding datasets. According to the business scenarios, users can embed the models locally, distributedly in Spark such as Apache Storm and Apache Flink.
+Analytics Zoo provides a collection of pre-trained models for Object Detection. These models can be used for out-of-the-box inference if you are interested in categories already in the corresponding datasets. According to the business scenarios. User can run the inference as local program without Spark Context, or in a distributed environment such like Apache Spark, Apache Storm or Apache Flink.
 
 ## Model Load
 
