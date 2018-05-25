@@ -18,4 +18,4 @@
 
 BASE="$(cd "`dirname $0`"; pwd)"
 
-$BASE/lint-python && $BASE/run-diff && $BASE/run-pytests
+$BASE/check-license && $BASE/lint-python && $BASE/run-diff && $BASE/run-pytests

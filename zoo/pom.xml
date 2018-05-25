@@ -212,6 +212,13 @@
             <version>1.0.0</version>
             <scope>compile</scope>
         </dependency>
+        <dependency>
+            <groupId>org.tensorflow</groupId>
+            <artifactId>tensorflow</artifactId>
+            <version>1.8.0</version>
+        </dependency>
+
+
     </dependencies>
 
     <build>

@@ -20,11 +20,10 @@ import com.intel.analytics.bigdl.nn.{CrossEntropyCriterion, Graph}
 import com.intel.analytics.bigdl.optim.{Top1Accuracy, Trigger}
 import com.intel.analytics.bigdl.utils.{LoggerFilter, Shape}
 import com.intel.analytics.zoo.common.NNContext
-import com.intel.analytics.zoo.feature.common.{ImageFeatureToTensor, RowToImageFeature}
 import com.intel.analytics.zoo.pipeline.api.keras.layers._
 import com.intel.analytics.zoo.pipeline.api.keras.models.Model
 import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric.NumericFloat
-import com.intel.analytics.zoo.feature.image.{ImageCenterCrop, ImageChannelNormalize, ImageMatToTensor, ImageResize}
+import com.intel.analytics.zoo.feature.image.{RowToImageFeature, _}
 import com.intel.analytics.zoo.pipeline.api.Net
 import com.intel.analytics.zoo.pipeline.nnframes.{NNClassifier, NNClassifierModel, NNImageReader}
 import org.apache.spark.ml.Pipeline

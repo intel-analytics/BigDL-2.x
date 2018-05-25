@@ -58,7 +58,7 @@ object Predict {
 
   def main(args: Array[String]): Unit = {
     parser.parse(args, TopNClassificationParam()).foreach { params =>
-      val sc = NNContext.getNNContext()
+      val sc = NNContext.getNNContext("Image Classification")
       val model = ImageClassifier.loadModel[Float](params.model)
       val data = ImageSet.read(params.imageFolder, sc, params.nPartition)
       val output = model.predictImageSet(data)

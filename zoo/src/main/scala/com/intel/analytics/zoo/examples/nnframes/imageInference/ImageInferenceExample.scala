@@ -20,7 +20,6 @@ import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric.NumericF
 import com.intel.analytics.bigdl.utils.LoggerFilter
 import com.intel.analytics.zoo.pipeline.nnframes._
 import com.intel.analytics.zoo.common.NNContext
-import com.intel.analytics.zoo.feature.common.{ImageFeatureToTensor, RowToImageFeature}
 import com.intel.analytics.zoo.feature.image._
 import org.apache.spark.sql.Row
 import org.apache.spark.sql.functions._
@@ -33,7 +32,7 @@ object ImageInferenceExample {
 
     val defaultParams = Utils.LocalParams()
     Utils.parser.parse(args, defaultParams).foreach { params =>
-      val sc = NNContext.getNNContext()
+      val sc = NNContext.getNNContext("ImageInference")
 
       val getImageName = udf { row: Row => row.getString(0)}
       val imageDF = NNImageReader.readImages(params.folder, sc)

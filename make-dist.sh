@@ -17,7 +17,7 @@
 #
 
 #
-# Create a folder contain all files for dist
+# Create a folder that contains all files for dist
 #
 
 set -e
@@ -77,9 +77,11 @@ mkdir -p $DIST_DIR/lib
 mkdir -p $DIST_DIR/conf
 mkdir -p $DIST_DIR/bin
 mkdir -p $DIST_DIR/extra-resources
+mkdir -p $DIST_DIR/apps
 
 cp -r $BASEDIR/zoo/target/*.jar $DIST_DIR/lib/
 cp -r $BASEDIR/zoo/target/*.zip $DIST_DIR/lib/
 cp $BASEDIR/backend/bigdl/spark/dl/src/main/resources/spark-bigdl.conf  $DIST_DIR/conf/spark-analytics-zoo.conf
 cp -r $BASEDIR/scripts/* $DIST_DIR/bin/
+cp -r $BASEDIR/apps/* $DIST_DIR/apps/
 cp $BASEDIR/zoo/target/extra-resources/zoo-version-info.properties $DIST_DIR/extra-resources/

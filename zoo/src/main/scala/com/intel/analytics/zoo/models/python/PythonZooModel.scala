@@ -23,7 +23,7 @@ import com.intel.analytics.bigdl.nn.abstractnn.Activity
 import com.intel.analytics.bigdl.python.api.{PythonBigDL, Sample}
 import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric
 import com.intel.analytics.bigdl.transform.vision.image.ImageFeature
-import com.intel.analytics.zoo.feature.common.{ImageProcessing, Preprocessing}
+import com.intel.analytics.zoo.feature.common.Preprocessing
 import com.intel.analytics.zoo.feature.image._
 import com.intel.analytics.zoo.models.common.ZooModel
 import com.intel.analytics.zoo.models.image.common.{ImageConfigure, ImageModel}
@@ -101,11 +101,12 @@ class PythonZooModel[T: ClassTag](implicit ev: TensorNumeric[T]) extends PythonB
     model.getConfig
   }
 
-  def createImageConfigure(preProcessor: ImageProcessing,
-                           postProcessor: ImageProcessing,
-                           batchPerPartition: Int,
-                           labelMap: JMap[Int, String],
-                           paddingParam: PaddingParam[T]): ImageConfigure[T] = {
+  def createImageConfigure(
+      preProcessor: Preprocessing[ImageFeature, ImageFeature],
+      postProcessor: Preprocessing[ImageFeature, ImageFeature],
+      batchPerPartition: Int,
+      labelMap: JMap[Int, String],
+      paddingParam: PaddingParam[T]): ImageConfigure[T] = {
     val map = if (labelMap == null) null else labelMap.asScala.toMap
     ImageConfigure(preProcessor, postProcessor, batchPerPartition, map, Option(paddingParam))
   }
