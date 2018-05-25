@@ -30,6 +30,7 @@ import com.intel.analytics.bigdl.{Criterion, DataSet, Module}
 import com.intel.analytics.zoo.feature.common.{Preprocessing, _}
 import org.apache.hadoop.fs.Path
 import org.apache.spark.SparkContext
+import org.apache.spark.annotation.Since
 import org.apache.spark.ml.adapter.{HasFeaturesCol, HasPredictionCol, SchemaUtils}
 import org.apache.spark.ml.param._
 import org.apache.spark.ml.util._
@@ -125,6 +126,21 @@ private[nnframes] trait NNParams[@specialized(Float, Double) T] extends HasFeatu
   def getSamplePreprocessing: Preprocessing[Any, Sample[T]] = $(samplePreprocessing)
 
   setDefault(batchSize -> 1)
+
+  /**
+   * Param for how to handle invalid data during fit() and transform().
+   * Options are:
+   * 'keep': invalid data are ignored during training and prediction result for the invalida
+   * feature data will be empty array.
+   * 'error': throw an error whenever an invalid data is met.
+   * Default: "error"
+   * @group param
+   */
+  val handleInvalid: Param[String] = new Param[String](this, "handleInvalid",
+    "handleInvalid",
+    ParamValidators.inArray(NNEstimator.supportedHandleInvalids))
+
+  setDefault(handleInvalid, NNEstimator.ERROR_INVALID)
 }
 
 /**
@@ -473,6 +489,10 @@ object NNEstimator {
     new NNEstimator(model, criterion)
       .setSamplePreprocessing(TupleToFeatureAdapter(featurePreprocessing))
   }
+
+  private[nnframes] val KEEP_INVALID: String = "keep"
+  private[nnframes] val ERROR_INVALID: String = "error"
+  private[nnframes] val supportedHandleInvalids: Array[String] = Array(KEEP_INVALID, ERROR_INVALID)
 }
 
 /**
@@ -549,10 +569,7 @@ class NNModel[T: ClassTag] private[zoo] (
 
         validRow.map(_._1).iterator.zip(predictions).map { case (row, predict) =>
           Row.fromSeq(row.toSeq ++ Seq(predict))
-        } ++
-          invalidRows.map(_._1).map { row =>
-            Row.fromSeq(row.toSeq ++ Seq(null))
-          }
+        }
       }
     }
 

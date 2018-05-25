@@ -404,10 +404,11 @@ class NNEstimatorSpec extends FlatSpec with Matchers with BeforeAndAfter {
     val transformer = RowToImageFeature() -> ImageResize(256, 256) -> ImageCenterCrop(224, 224) ->
       ImageChannelNormalize(123, 117, 104) -> ImageMatToTensor() -> ImageFeatureToTensor()
     val estimator = NNEstimator(Inception_v1(1000), ClassNLLCriterion(), transformer,
-      ScalarToTensor())
-      .setBatchSize(2)
+        ScalarToTensor())
+      .setMaxEpoch(1)
       .setFeaturesCol("image")
-    featurizer.transform(imageDF).show()
+    val nnModel = estimator.fit(imageDF)
+    nnModel.transform(imageDF).show()
   }
 
   "NNModel" should "construct with sampleTransformer" in {
