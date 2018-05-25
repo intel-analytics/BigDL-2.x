@@ -1,3 +1,5 @@
+#!/usr/bin/env python
+
 #
 # Copyright 2018 The Analytics Zoo Authors.
 #
