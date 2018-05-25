@@ -170,8 +170,9 @@ class NNEstimator(JavaEstimator, HasFeaturesCol, HasLabelCol, HasPredictionCol, 
         self.learningRate = Param(self, "learningRate", "learning rate")
         self.learningRateDecay = Param(self, "learningRateDecay", "learning rate decay")
         self.cachingSample = Param(self, "cachingSample", "cachingSample")
+        self.handleInvalid = Param(self, "handleInvalid", "handleInvalid")
         self._setDefault(maxEpoch=50, learningRate=1e-3, batchSize=1, learningRateDecay=0.0,
-                         cachingSample=True)
+                         cachingSample=True, handleInvalid="error")
 
         self.train_summary = None
         self.validation_config = None
@@ -336,6 +337,23 @@ class NNEstimator(JavaEstimator, HasFeaturesCol, HasLabelCol, HasPredictionCol, 
                       self.value,
                       float(clip_norm))
         return self
+
+    def setHandleInvalid(self, val):
+        """
+        Sets the value of handleInvalid. Param for how to handle invalid data during fit()
+        and transform(). Options are:
+        'keep': invalid data are ignored during training and prediction result for the invalid
+                data will be empty array.
+        'error': throw an error whenever an invalid data is met.
+        """
+        self._paramMap[self.handleInvalid] = val
+        return self
+
+    def getHandleInvalid(self):
+        """
+        Gets the value of handleInvalid or its default value.
+        """
+        return self.getOrDefault(self.handleInvalid)
 
     def _create_model(self, java_model):
         nnModel = NNModel.of(java_model,

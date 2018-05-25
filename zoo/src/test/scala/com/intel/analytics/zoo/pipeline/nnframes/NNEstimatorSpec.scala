@@ -372,7 +372,7 @@ class NNEstimatorSpec extends FlatSpec with Matchers with BeforeAndAfter {
     val nnModel = estimator
       .setHandleInvalid("keep")
       .fit(imageDF)
-    assert(nnModel.transform(imageDF).count() == 1)
+    assert(nnModel.transform(imageDF).count() == 2)
   }
 
   "An NNEstimator" should "works in ML pipeline" in {

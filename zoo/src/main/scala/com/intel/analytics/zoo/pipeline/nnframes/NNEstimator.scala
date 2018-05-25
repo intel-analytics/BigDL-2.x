@@ -343,11 +343,12 @@ class NNEstimator[T: ClassTag] private[zoo] (
       DataSet.rdd(featureAndLabel).transform(sp)
     }
 
-    initialDataSet.transform(SampleToMiniBatch[T](batchSize))
-
-    DataSet.rdd(featureAndLabel).transform(
-      sp -> FilterNull[Sample[T], T]() -> SampleToMiniBatch[T](batchSize))
-
+    $(handleInvalid) match {
+      case NNEstimator.ERROR_INVALID =>
+        initialDataSet.transform(SampleToMiniBatch[T](batchSize))
+      case NNEstimator.KEEP_INVALID =>
+        initialDataSet.transform(FilterNull[Sample[T], T]() -> SampleToMiniBatch[T](batchSize))
+    }
   }
 
   protected override def internalFit(dataFrame: DataFrame): NNModel[T] = {
