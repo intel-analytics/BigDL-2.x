@@ -36,6 +36,7 @@ import org.apache.spark.ml.feature.MinMaxScaler
 import org.apache.spark.ml.param.{ParamMap, Params}
 import org.apache.spark.mllib.linalg.Vectors
 import org.apache.spark.sql.{DataFrame, Row, SQLContext}
+import org.apache.spark.sql.functions._
 import org.scalatest.{BeforeAndAfter, FlatSpec, Matchers}
 
 import scala.reflect.io.Path
@@ -392,6 +393,19 @@ class NNEstimatorSpec extends FlatSpec with Matchers with BeforeAndAfter {
       ImageChannelNormalize(123, 117, 104) -> ImageMatToTensor() -> ImageFeatureToTensor()
     val featurizer = NNModel(Inception_v1(1000), transformer)
       .setBatchSize(1)
+      .setFeaturesCol("image")
+    featurizer.transform(imageDF).show()
+  }
+
+  "NNModel" should "support transform with faulty data" in {
+    val faultyResource = getClass.getClassLoader.getResource("faulty/")
+    val imageDF = NNImageReader.readImages(faultyResource.getFile, sc).withColumn("label", lit(1.0))
+    assert(imageDF.count() == 2)
+    val transformer = RowToImageFeature() -> ImageResize(256, 256) -> ImageCenterCrop(224, 224) ->
+      ImageChannelNormalize(123, 117, 104) -> ImageMatToTensor() -> ImageFeatureToTensor()
+    val estimator = NNEstimator(Inception_v1(1000), ClassNLLCriterion(), transformer,
+      ScalarToTensor())
+      .setBatchSize(2)
       .setFeaturesCol("image")
     featurizer.transform(imageDF).show()
   }
