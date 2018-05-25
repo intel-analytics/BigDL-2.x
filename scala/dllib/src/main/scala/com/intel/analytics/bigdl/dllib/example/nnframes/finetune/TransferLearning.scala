@@ -87,6 +87,7 @@ object TransferLearning {
         .setLearningRate(0.003)
         .setBatchSize(param.batchSize)
         .setMaxEpoch(param.nEpochs)
+        .setCachingSample(false)
         .setValidation(Trigger.everyEpoch, valDf, Array(new Top1Accuracy()), param.batchSize)
 
 
