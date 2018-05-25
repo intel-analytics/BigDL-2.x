@@ -356,6 +356,25 @@ class NNEstimatorSpec extends FlatSpec with Matchers with BeforeAndAfter {
     }
   }
 
+  "NNEstimator" should "support handle invalid data" in {
+    val faultyResource = getClass.getClassLoader.getResource("faulty/")
+    val imageDF = NNImageReader.readImages(faultyResource.getFile, sc).withColumn("label", lit(1.0))
+    assert(imageDF.count() == 2)
+    val transformer = RowToImageFeature() -> ImageResize(256, 256) -> ImageCenterCrop(224, 224) ->
+      ImageChannelNormalize(123, 117, 104) -> ImageMatToTensor() -> ImageFeatureToTensor()
+    val estimator = NNEstimator(Inception_v1(1000), ClassNLLCriterion(), transformer,
+      ScalarToTensor())
+      .setMaxEpoch(1)
+      .setFeaturesCol("image")
+    intercept[Exception] {
+      estimator.fit(imageDF)
+    }
+    val nnModel = estimator
+      .setHandleInvalid("keep")
+      .fit(imageDF)
+    assert(nnModel.transform(imageDF).count() == 1)
+  }
+
   "An NNEstimator" should "works in ML pipeline" in {
     var appSparkVersion = org.apache.spark.SPARK_VERSION
     if (appSparkVersion.trim.startsWith("1")) {
@@ -395,20 +414,6 @@ class NNEstimatorSpec extends FlatSpec with Matchers with BeforeAndAfter {
       .setBatchSize(1)
       .setFeaturesCol("image")
     featurizer.transform(imageDF).show()
-  }
-
-  "NNModel" should "support transform with faulty data" in {
-    val faultyResource = getClass.getClassLoader.getResource("faulty/")
-    val imageDF = NNImageReader.readImages(faultyResource.getFile, sc).withColumn("label", lit(1.0))
-    assert(imageDF.count() == 2)
-    val transformer = RowToImageFeature() -> ImageResize(256, 256) -> ImageCenterCrop(224, 224) ->
-      ImageChannelNormalize(123, 117, 104) -> ImageMatToTensor() -> ImageFeatureToTensor()
-    val estimator = NNEstimator(Inception_v1(1000), ClassNLLCriterion(), transformer,
-        ScalarToTensor())
-      .setMaxEpoch(1)
-      .setFeaturesCol("image")
-    val nnModel = estimator.fit(imageDF)
-    nnModel.transform(imageDF).show()
   }
 
   "NNModel" should "construct with sampleTransformer" in {

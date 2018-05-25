@@ -130,17 +130,17 @@ private[nnframes] trait NNParams[@specialized(Float, Double) T] extends HasFeatu
   /**
    * Param for how to handle invalid data during fit() and transform().
    * Options are:
-   * 'keep': invalid data are ignored during training and prediction result for the invalida
-   * feature data will be empty array.
+   * 'keep': invalid data are ignored during training and prediction result for the invalid
+   *         data will be empty array.
    * 'error': throw an error whenever an invalid data is met.
    * Default: "error"
    * @group param
    */
   val handleInvalid: Param[String] = new Param[String](this, "handleInvalid",
-    "handleInvalid",
-    ParamValidators.inArray(NNEstimator.supportedHandleInvalids))
+    "handleInvalid", ParamValidators.inArray(NNEstimator.supportedHandleInvalids))
 
-  setDefault(handleInvalid, NNEstimator.ERROR_INVALID)
+  def getHandleInvalid: String = $(handleInvalid)
+
 }
 
 /**
@@ -215,6 +215,11 @@ class NNEstimator[T: ClassTag] private[zoo] (
     clear(l2GradientClippingParams)
     clear(constantGradientClippingParams)
   }
+
+  def setHandleInvalid(value: String): this.type = {
+    set(handleInvalid, value)
+  }
+  setDefault(handleInvalid, NNEstimator.ERROR_INVALID)
 
   @transient private var trainSummary: Option[TrainSummary] = None
 
@@ -552,8 +557,13 @@ class NNModel[T: ClassTag] private[zoo] (
         val featureSeq = rowBatch.map(r => r.get(featureColIndex))
         val samples = featureSteps(featureSeq.iterator).toArray
 
+        // assume faulty data will generate null after preprocessing.
         val validRow = rowBatch.zip(samples).filter(_._2 != null)
         val invalidRows = rowBatch.zip(samples).filter(_._2 == null)
+        if (invalidRows.nonEmpty && $(handleInvalid) == NNEstimator.ERROR_INVALID) {
+            throw new IllegalArgumentException(
+              s"invalid data in ${invalidRows.map(_._1).mkString(",")}")
+        }
 
         val predictions = toBatch(validRow.map(_._2).iterator).flatMap { batch =>
           val batchResult = localModel.forward(batch.getInput()).toTensor.squeeze()
@@ -569,6 +579,8 @@ class NNModel[T: ClassTag] private[zoo] (
 
         validRow.map(_._1).iterator.zip(predictions).map { case (row, predict) =>
           Row.fromSeq(row.toSeq ++ Seq(predict))
+        } ++ invalidRows.map(_._1).map { row =>
+          Row.fromSeq(row.toSeq ++ Seq(Array.empty))
         }
       }
     }
