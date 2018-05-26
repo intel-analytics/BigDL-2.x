@@ -195,7 +195,7 @@ trainedModel = classifier.fit(trainDf)
 ```
 ### Train with ImageSet
 
-You can use ImageSet to train Zoo Keras model with ImageSet. Then call `fit` method to let Analytics Zoo train the model.
+You can train Zoo Keras model with ImageSet. Just call `fit` method to let Analytics Zoo train the model.
 
 **Python example:**
 
