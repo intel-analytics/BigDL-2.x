@@ -43,8 +43,8 @@ object Predict {
     classNamePath: String = "/tmp/models/coco_classname.txt",
     nPartition: Int = 4)
 
-  val parser = new OptionParser[PredictParam]("Analytics Zoo Object Detection Demo") {
-    head("Analytics Zoo Object Detection Demo")
+  val parser = new OptionParser[PredictParam]("TFNet Object Detection Example") {
+    head("TFNet Object Detection Example")
     opt[String]('i', "image")
       .text("where you put the demo image data, can be image folder or image path")
       .action((x, c) => c.copy(image = x))
