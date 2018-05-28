@@ -16,8 +16,6 @@
 
 package com.intel.analytics.zoo.examples.tfnet
 
-import java.nio.file.Paths
-
 import com.intel.analytics.bigdl.nn.{Contiguous, Sequential, Transpose}
 import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric.NumericFloat
 import com.intel.analytics.zoo.common.NNContext
@@ -35,30 +33,21 @@ object Predict {
 
   val logger = Logger.getLogger(getClass)
 
-  case class PredictParam(
-    image: String = "/tmp/datasets/cat_dog/train_sampled",
-    outputFolder: String = "data/demo",
-    model: String = "/tmp/models/ssd_mobilenet_v1_coco_2017_11_17" +
-      "/frozen_inference_graph.pb",
-    classNamePath: String = "/tmp/models/coco_classname.txt",
-    nPartition: Int = 4)
+  case class PredictParam(image: String = "/tmp/datasets/cat_dog/train_sampled",
+                          model: String = "/tmp/models/ssd_mobilenet_v1_coco_2017_11_17" +
+                            "/frozen_inference_graph.pb",
+                          nPartition: Int = 4)
 
   val parser = new OptionParser[PredictParam]("TFNet Object Detection Example") {
     head("TFNet Object Detection Example")
     opt[String]('i', "image")
-      .text("where you put the demo image data, can be image folder or image path")
+      .text("The path where the images are stored, can be either a folder or an image path")
       .action((x, c) => c.copy(image = x))
-    opt[String]('o', "output")
-      .text("where you put the output data")
-      .action((x, c) => c.copy(outputFolder = x))
-    opt[String]('c', "classNamePath")
-      .text("where you put the class name file")
-      .action((x, c) => c.copy(outputFolder = x))
     opt[String]("model")
-      .text("BigDL model")
+      .text("The path of the TensorFlow object detection model")
       .action((x, c) => c.copy(model = x))
     opt[Int]('p', "partition")
-      .text("number of partitions")
+      .text("The number of partitions")
       .action((x, c) => c.copy(nPartition = x))
   }
 
@@ -85,11 +74,5 @@ object Predict {
       val result = output.toDistributed().rdd.first().predict()
       println(result)
     }
-  }
-
-  private def getOutPath(outPath: String, uri: String, encoding: String): String = {
-    Paths.get(outPath,
-      s"detection_${ uri.substring(uri.lastIndexOf("/") + 1,
-        uri.lastIndexOf(".")) }.${encoding}").toString
   }
 }

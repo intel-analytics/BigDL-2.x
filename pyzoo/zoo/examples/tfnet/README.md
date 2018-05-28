@@ -39,12 +39,13 @@ ${SPARK_HOME}/bin/spark-submit \
     --image path_to_image_folder \
     --model path_to_tensorflow_graph
 ```
+
 __Options:__
-* `--image` The path where the images are stored.
-* `--model` The path of the TensorFlow object detection model.
+* `--image` The path where the images are stored. It can be either a folder or an image path. Local file system, HDFS and Amazon S3 are supported.
+* `--model` The path of the TensorFlow object detection model. Local file system, HDFS and Amazon S3 are supported.
 * `--partition_num` The number of partitions to cut the dataset into. Default is 4.
 
 ## Results
 The result of this example will be the detection boxes (y_min, x_min, y_max, x_max) of the input images, with the first detection box of an image having the highest prediction score.
 
-We print out the detection box with the highest score of the first prediction result to the console.
+We print the detection box with the highest score of the first prediction result to the console.
