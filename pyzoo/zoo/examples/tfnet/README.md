@@ -6,15 +6,11 @@ This example illustrates how to use a pre-trained TensorFlow object detection mo
 to make inferences using Analytics Zoo on Spark.
 
 ## Model and Data Preparation
-1. Prepare a pre-trained TensorFlow object detection model.
-
-You can download from [tensorflow detection model zoo](https://github.com/tensorflow/models/blob/master/research/object_detection/g3doc/detection_model_zoo.md)
+1. Prepare a pre-trained TensorFlow object detection model. You can download from [tensorflow detection model zoo](https://github.com/tensorflow/models/blob/master/research/object_detection/g3doc/detection_model_zoo.md).
 
 In this example, we use `frozen_inference_graph.pb` of the `ssd_mobilenet_v1_coco` model downloaded from [here](http://download.tensorflow.org/models/object_detection/ssd_mobilenet_v1_coco_2017_11_17.tar.gz).
 
-2. Prepare the dataset for inference.
-
-Put your image data to prediction in the same folder.
+2. Prepare the image dataset for inference. Put the images to do prediction in the same folder.
 
 
 ## Run this example
@@ -51,4 +47,4 @@ __Options:__
 ## Results
 The result of this example will be the detection boxes (y_min, x_min, y_max, x_max) of the input images, with the first detection box of an image having the highest prediction score.
 
-We print out the detection box with the highest score of the first prediction to the console.
+We print out the detection box with the highest score of the first prediction result to the console.
