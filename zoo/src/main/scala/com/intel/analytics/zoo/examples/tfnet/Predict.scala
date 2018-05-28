@@ -19,19 +19,13 @@ package com.intel.analytics.zoo.examples.tfnet
 import java.nio.file.Paths
 
 import com.intel.analytics.bigdl.nn.{Contiguous, Sequential, Transpose}
-import com.intel.analytics.bigdl.tensor.Tensor
 import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric.NumericFloat
-import com.intel.analytics.bigdl.transform.vision.image.{FeatureTransformer, ImageFeature}
-import com.intel.analytics.bigdl.utils.Table
-import com.intel.analytics.zoo.common.{NNContext, Utils}
+import com.intel.analytics.zoo.common.NNContext
 import com.intel.analytics.zoo.feature.image.{ImageMatToTensor, ImageResize, ImageSet, ImageSetToSample}
-import com.intel.analytics.zoo.models.image.objectdetection.{ScaleDetection, Visualizer}
 import com.intel.analytics.zoo.pipeline.api.net.TFNet
 import org.apache.log4j.{Level, Logger}
-import org.apache.spark.SparkConf
 import scopt.OptionParser
 
-import scala.io.Source
 
 object Predict {
   Logger.getLogger("org").setLevel(Level.ERROR)
@@ -70,9 +64,8 @@ object Predict {
 
   def main(args: Array[String]): Unit = {
     parser.parse(args, PredictParam()).foreach { params =>
-      val conf = new SparkConf()
-        .setAppName("Object Detection Example")
-      val sc = NNContext.getNNContext(conf)
+
+      val sc = NNContext.getNNContext("TFNet Object Detection Example")
 
       val inputs = Seq("ToFloat:0")
       val outputs = Seq("num_detections:0", "detection_boxes:0",
@@ -88,34 +81,9 @@ object Predict {
         .transform(ImageResize(256, 256) -> ImageMatToTensor() -> ImageSetToSample())
       val output = model.predictImage(data.toImageFrame(), batchPerPartition = 1)
 
-      val prediction = output.transform(new FeatureTransformer {
-        override protected def transformMat(feature: ImageFeature): Unit = {
-          // only pick the first detection
-          val output = feature.predict().asInstanceOf[Table]
-          val numDetections = output[Tensor[Float]](1).valueAt(1).toInt
-          val boxes = output[Tensor[Float]](2)
-          val (ymin, xmin, ymax, xmax) =
-            (boxes.valueAt(1, 1, 1), boxes.valueAt(1, 1, 2),
-              boxes.valueAt(1, 1, 3), boxes.valueAt(1, 1, 4))
-          val score = output[Tensor[Float]](3).valueAt(1, 1)
-          val clas = output[Tensor[Float]](4).valueAt(1, 1)
-          val pred = Tensor[Float](Array(clas, score, xmin, ymin, xmax, ymax), Array(1, 6))
-          feature.update(ImageFeature.predict, pred)
-        }
-      } -> ScaleDetection())
-
-      val labelMap = Source.fromFile(params.classNamePath)
-        .getLines().zipWithIndex.map(x => (x._2, x._1)).toMap
-
-      val visualizer = Visualizer(labelMap, encoding = "jpg")
-      val visualized = visualizer(prediction).toDistributed()
-      val result = visualized.rdd.map(imageFeature =>
-        (imageFeature.uri(), imageFeature[Array[Byte]](Visualizer.visualized))).collect()
-
-      result.foreach(x => {
-        Utils.saveBytes(x._2, getOutPath(params.outputFolder, x._1, "jpg"), true)
-      })
-      logger.info(s"labeled images are saved to ${params.outputFolder}")
+      // print the first result
+      val result = output.toDistributed().rdd.first().predict()
+      println(result)
     }
   }
 

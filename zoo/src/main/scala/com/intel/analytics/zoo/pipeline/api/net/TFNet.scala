@@ -47,9 +47,10 @@ class TFNet private(graphDef: Array[Byte],
   }
 
   private def getOutput(idx: Int): Tensor[Float] = {
-    output match {
-      case t: Tensor[Float] => t
-      case t: Table => t[Tensor[Float]](idx)
+    if (output.isTable) {
+      output.toTable[Tensor[Float]](idx)
+    } else {
+      output.toTensor[Float]
     }
   }
 
