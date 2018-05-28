@@ -239,5 +239,4 @@ class PythonImageFeature[T: ClassTag](implicit ev: TensorNumeric[T]) extends Pyt
   def imageSetToImageFrame(imageSet: ImageSet): ImageFrame = {
     imageSet.toImageFrame()
   }
-  
 }
