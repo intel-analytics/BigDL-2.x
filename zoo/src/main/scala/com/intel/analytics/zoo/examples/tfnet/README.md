@@ -17,10 +17,8 @@ Run the following command for Spark local mode (`master=local[*]`) or cluster mo
 
 ```bash
 master=... // spark master
-
-modelPath=... // model path. Local file system/HDFS/Amazon S3 are supported.
-
-imagePath=... // image path. Local file system are supported.
+modelPath=... // model path.
+imagePath=... // image path.
 
 spark-submit \
 --verbose \
@@ -30,7 +28,7 @@ spark-submit \
 --driver-memory 200g \
 --executor-memory 200g \
 --class com.intel.analytics.zoo.examples.tfnet.Predict \
-./zoo-VERSION-jar-with-dependencies.jar --image $imagePath --model $modelPath --partition 4
+./analytics-zoo-VERSION-jar-with-dependencies.jar --image $imagePath --model $modelPath --partition 4
 ```
 
 __Options:__
