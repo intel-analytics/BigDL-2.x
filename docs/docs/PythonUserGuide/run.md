@@ -2,7 +2,7 @@
 
 ### **Precondition**
 
-* [Install analytics-zoo from pip](install-from-pip.md)
+* [Install analytics-zoo from pip](install.md/#install-from-pip)
 * Only __Python 2.7__, __Python 3.5__ and __Python 3.6__ are supported for now.
 
 ---
