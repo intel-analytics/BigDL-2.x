@@ -15,6 +15,7 @@
 #
 
 import sys
+import six
 
 from bigdl.nn.layer import Model as BModel
 from bigdl.nn.layer import Layer
@@ -176,3 +177,15 @@ class Net:
         :return: A BigDL model.
         """
         BModel.load_keras(json_path, hdf5_path, by_name)
+
+
+class TFNet(Layer):
+    def __init__(self, path, input_names, output_names, bigdl_type="float"):
+        if isinstance(input_names, six.string_types):
+            input_names = [input_names]
+        if isinstance(output_names, six.string_types):
+            output_names = [output_names]
+        super(TFNet, self).__init__(None, bigdl_type,
+                                    path,
+                                    input_names,
+                                    output_names)

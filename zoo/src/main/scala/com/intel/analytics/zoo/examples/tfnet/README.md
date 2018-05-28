@@ -1,33 +1,24 @@
 ## TFNet Object Detection example
 
-TFNet can encapsulate a tensorflow freezed graph as Analytics-Zoo layer for inference.
+TFNet can encapsulate a frozen TensorFlow graph as an Analytics Zoo layer for inference.
 
-This example illustrates how to use tensorflow pretrained object detection model
-to make inferences on Spark.
+This example illustrates how to use a pre-trained TensorFlow object detection model
+to make inferences using Analytics Zoo on Spark.
 
-### Run steps
-1. Prepare pre-trained models
+## Model and Data Preparation
+1. Prepare a pre-trained TensorFlow object detection model. You can download from [tensorflow detection model zoo](https://github.com/tensorflow/models/blob/master/research/object_detection/g3doc/detection_model_zoo.md).
 
-Download pre-trained models from [tensorflow detection model zoo](https://github.com/tensorflow/models/blob/master/research/object_detection/g3doc/detection_model_zoo.md)
+In this example, we use `frozen_inference_graph.pb` of the `ssd_mobilenet_v1_coco` model downloaded from [here](http://download.tensorflow.org/models/object_detection/ssd_mobilenet_v1_coco_2017_11_17.tar.gz).
 
-In this example, we will use the ssd_mobilenet_v1_coco model.
+2. Prepare the image dataset for inference. Put the images to do prediction in the same folder.
 
-2. Prepare predict dataset
-
-Put your image data for prediction in the ./image folder.
-
-3. Run the example
+## Run this example
+Run the following command for Spark local mode (`master=local[*]`) or cluster mode:
 
 ```bash
 master=... // spark master
-
-modelPath=... // model path. Local file system/HDFS/Amazon S3 are supported
-
-imagePath=... // image path. Local file system are supported.
-
-outputPath=... // output path. Currently only support local file system.
-
-classNamePath=... // the path of coco_classname.txt file
+modelPath=... // model path.
+imagePath=... // image path.
 
 spark-submit \
 --verbose \
@@ -37,8 +28,15 @@ spark-submit \
 --driver-memory 200g \
 --executor-memory 200g \
 --class com.intel.analytics.zoo.examples.tfnet.Predict \
-./zoo-0.1.0-SNAPSHOT-jar-with-dependencies.jar --image $imagePath --output $outputPath --model $modelPath --partition 4
+./analytics-zoo-VERSION-jar-with-dependencies.jar --image $imagePath --model $modelPath --partition 4
 ```
 
+__Options:__
+* `--image` The path where the images are stored. It can be either a folder or an image path. Local file system, HDFS and Amazon S3 are supported.
+* `--model` The path of the TensorFlow object detection model. Local file system, HDFS and Amazon S3 are supported.
+* `--partition` The number of partitions to cut the dataset into. Default is 4.
+
 ## Results
-You can find new generated images stored in output_path, and the objects in the images are with a box around them [labeled "name"]
+The result of this example will be the detection results of the input images, with the first detection box of an image having the highest prediction score.
+
+We print the first prediction result to the console.
