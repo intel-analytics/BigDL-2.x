@@ -48,7 +48,7 @@ def run_cmd(cmds, err_msg, s=False):
         print e.strerror
         sys.exit(1)
 
-parser = argparse.ArgumentParser(description='Process ZOO docs.')
+parser = argparse.ArgumentParser(description='Process Analytics Zoo docs.')
 parser.add_argument('-s', '--scaladocs',
     dest='scaladocsflag', action='store_true',
     help='Add scala doc to site')
