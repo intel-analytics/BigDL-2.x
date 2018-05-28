@@ -37,17 +37,19 @@ Run the following command for Spark local mode (`MASTER=local[*]`) or cluster mo
 
 ```bash
 SPARK_HOME=the root directory of Spark
+MASTER=...
 ANALYTICS_ZOO_ROOT=the root directory of the Analytics Zoo project
 ANALYTICS_ZOO_HOME=$ANALYTICS_ZOO_ROOT/dist
-MASTER=...
 ANALYTICS_ZOO_PY_ZIP=${ANALYTICS_ZOO_HOME}/lib/analytics-zoo-VERSION-python-api.zip
 ANALYTICS_ZOO_JAR=${ANALYTICS_ZOO_HOME}/lib/analytics-zoo-VERSION-jar-with-dependencies.jar
+ANALYTICS_ZOO_CONF=${ANALYTICS_ZOO_ROOT}/dist/conf/spark-analytics-zoo.conf
 PYTHONPATH=${ANALYTICS_ZOO_PY_ZIP}:$PYTHONPATH
 
 ${SPARK_HOME}/bin/spark-submit \
     --master ${MASTER} \
     --driver-memory 20g \
     --executor-memory 20g \
+    --properties-file ${ANALYTICS_ZOO_CONF} \
     --py-files ${ANALYTICS_ZOO_PY_ZIP},${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/textclassification/text_classification.py \
     --jars ${ANALYTICS_ZOO_JAR} \
     --conf spark.driver.extraClassPath=${ANALYTICS_ZOO_JAR} \

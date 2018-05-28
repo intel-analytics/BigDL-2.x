@@ -31,17 +31,17 @@ PYTHONPATH=${ANALYTICS_ZOO_PY_ZIP}:$PYTHONPATH
 
 
 ${SPARK_HOME}/bin/spark-submit \
---master ${MASTER} \
---driver-memory 200g \
---executor-memory 200g \
---properties-file ${ANALYTICS_ZOO_CONF} \
---py-files ${ANALYTICS_ZOO_PY_ZIP},${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/tfnet/predict.py \
---jars ${ANALYTICS_ZOO_JAR} \
---conf spark.driver.extraClassPath=${ANALYTICS_ZOO_JAR} \
---conf spark.executor.extraClassPath=${ANALYTICS_ZOO_JAR} \
-${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/tfnet/predict.py \
---image path_to_image_folder \
---model path_to_tensorflow_graph
+    --master ${MASTER} \
+    --driver-memory 200g \
+    --executor-memory 200g \
+    --properties-file ${ANALYTICS_ZOO_CONF} \
+    --py-files ${ANALYTICS_ZOO_PY_ZIP},${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/tfnet/predict.py \
+    --jars ${ANALYTICS_ZOO_JAR} \
+    --conf spark.driver.extraClassPath=${ANALYTICS_ZOO_JAR} \
+    --conf spark.executor.extraClassPath=${ANALYTICS_ZOO_JAR} \
+    ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/tfnet/predict.py \
+    --image path_to_image_folder \
+    --model path_to_tensorflow_graph
 ```
 __Options:__
 * `--image` The path where the images are stored.
