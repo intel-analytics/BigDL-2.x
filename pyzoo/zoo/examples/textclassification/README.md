@@ -57,7 +57,7 @@ ${SPARK_HOME}/bin/spark-submit \
 ```
 __Options:__
 * `--data_path` The path where the training and word2Vec data locate. Default is `/tmp/text_data`. Make sure that you have write permission to the specified path if you want the program to automatically download the data for you.
-* `--partition_num` The number of partitions to cut the dataset into. Datault is 4.
+* `--partition_num` The number of partitions to cut the dataset into. Default is 4.
 * `--token_length` The size of each word vector. Default is 200.
 * `--sequence_length` The length of a sequence. Default is 500.
 * `--max_words_num` The maximum number of words. Default is 5000.
