@@ -1,6 +1,7 @@
-#!/bin/sh
+#!/bin/bash
+
 #
-# Copyright 2018 The Analytics Zoo Authors.
+# Copyright 2018 Analytics Zoo Authors.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -15,20 +16,10 @@
 # limitations under the License.
 #
 
-#
-# This script is to create python dependency libraries and submit python jobs to spark yarn cluster which need to import these modules. 
-# 
-# After running this script, you will get venv.zip. Use this zip file to submit spark job on yarn clusters.
-# 
+## Usage ###################
+# Run ./doc-web.sh [port] to launch a http server to view python doc after files have been generated
+# Example
+# ./doc-web.sh 8080
+############################
 
-pip install virtualenv
-
-#create package
-VENV="venv"
-virtualenv $VENV
-virtualenv --relocatable $VENV
-. $VENV/bin/activate
-pip install -U -r requirements.txt
-zip -q -r $VENV.zip $VENV
-
-
+python doc-web.py $1

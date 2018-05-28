@@ -1,6 +1,7 @@
-#!/bin/sh
+#!/usr/bin/env python
+
 #
-# Copyright 2018 The Analytics Zoo Authors.
+# Copyright 2018 Analytics Zoo Authors.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -15,20 +16,22 @@
 # limitations under the License.
 #
 
-#
-# This script is to create python dependency libraries and submit python jobs to spark yarn cluster which need to import these modules. 
-# 
-# After running this script, you will get venv.zip. Use this zip file to submit spark job on yarn clusters.
-# 
+import web
 
-pip install virtualenv
+urls = (
+    '/(.*)', 'router'
+)
 
-#create package
-VENV="venv"
-virtualenv $VENV
-virtualenv --relocatable $VENV
-. $VENV/bin/activate
-pip install -U -r requirements.txt
-zip -q -r $VENV.zip $VENV
+app = web.application(urls, globals())
 
 
+class router:
+    def GET(self, path):
+        if path == '':
+            path = 'index.html'
+        f = open('_build/html/'+path)
+        return f.read()
+
+if __name__ == "__main__":
+    app = web.application(urls, globals())
+    app.run()
