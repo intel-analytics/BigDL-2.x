@@ -73,7 +73,7 @@ if __name__ == "__main__":
     parser.add_option("--partition_num", type=int, dest="partition_num", default=4)
     (options, args) = parser.parse_args(sys.argv)
 
-    sc = get_nncontext(create_spark_conf().setAppName("TFNet Object Detection Example"))
+    sc = get_nncontext("TFNet Object Detection Example")
 
     predict(options.model_path, options.label_path,
             options.img_path, options.output_path,
