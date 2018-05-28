@@ -239,17 +239,5 @@ class PythonImageFeature[T: ClassTag](implicit ev: TensorNumeric[T]) extends Pyt
   def imageSetToImageFrame(imageSet: ImageSet): ImageFrame = {
     imageSet.toImageFrame()
   }
-
-
-  def createImageFirstDetection(): ImageFirstDetection = {
-    ImageFirstDetection()
-  }
-
-  def imageFrameToImageSet(frame: DistributedImageFrame): DistributedImageSet = {
-    ImageSet.rdd(frame.rdd)
-  }
-
-  def imageFrameToImageSet(frame: LocalImageFrame): LocalImageSet = {
-    ImageSet.array(frame.array)
-  }
+  
 }
