@@ -16,8 +16,13 @@
 
 package com.intel.analytics.zoo.feature.image
 
-import com.intel.analytics.bigdl.transform.vision.image.{DistributedImageFrame,
-       ImageFeature, ImageFrame, LocalImageFrame}
+import java.awt.image.BufferedImage
+import java.io.{ByteArrayInputStream, ByteArrayOutputStream, FileInputStream}
+import java.nio.channels.Channels
+import java.nio.file.Path
+import javax.imageio.ImageIO
+
+import com.intel.analytics.bigdl.transform.vision.image.{DistributedImageFrame, ImageFeature, ImageFrame, LocalImageFrame}
 import com.intel.analytics.zoo.common.Utils
 import com.intel.analytics.zoo.feature.common.Preprocessing
 import org.apache.commons.io.FileUtils
@@ -130,12 +135,18 @@ object ImageSet {
    * @param minPartitions A suggestion value of the minimal splitting number for input data.
    * @return ImageSet
    */
-  def read(path: String, sc: SparkContext = null, minPartitions: Int = 1): ImageSet = {
+  def read(path: String, sc: SparkContext = null, minPartitions: Int = 1,
+           resizeH: Int = -1, resizeW: Int = -1): ImageSet = {
     if (null != sc) {
       val images = sc.binaryFiles(path, minPartitions).map { case (p, stream) =>
-        ImageFeature(stream.toArray(), uri = p)
+          ImageFeature(stream.toArray(), uri = p)
       }
-      ImageSet.rdd(images) -> ImageBytesToMat()
+
+      if (resizeW == -1 && resizeH == -1) {
+        ImageSet.rdd(images) -> ImageBytesToMat()
+      } else {
+        ImageSet.rdd(images) -> BufferedImageResize(resizeH, resizeW) -> ImageBytesToMat()
+      }
     } else {
       val files = Utils.listLocalFiles(path)
       val images = files.map { p =>

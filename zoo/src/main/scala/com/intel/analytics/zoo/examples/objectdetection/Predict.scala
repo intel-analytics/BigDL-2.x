@@ -64,7 +64,7 @@ object Predict {
       val sc = NNContext.getNNContext(conf)
 
       val model = ObjectDetector.loadModel[Float](params.model)
-      val data = ImageSet.read(params.image, sc, params.nPartition)
+      val data = ImageSet.read(params.image, sc, params.nPartition, resizeW = 255, resizeH = 255)
       val output = model.predictImageSet(data)
 
       val visualizer = Visualizer(model.getConfig.labelMap, encoding = "jpg")
