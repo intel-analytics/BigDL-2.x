@@ -197,6 +197,26 @@ class TestOperator(ZooTestCase):
         out_data = model.forward(mock_data)
         assert out_data.shape == (10, 3, 16, 16)
 
+    def test_softsign(self):
+        def z_func(x):
+            return softsign(x)
+
+        def k_func(x):
+            return KK.softsign(x)
+
+        self.compare_unary_op(k_func,
+                              Lambda(function=z_func, ), [2, 3])
+
+    def test_softplus(self):
+        def z_func(x):
+            return softplus(x)
+
+        def k_func(x):
+            return KK.softplus(x)
+
+        self.compare_unary_op(k_func,
+                              Lambda(function=z_func, ), [2, 3])
+
 
 if __name__ == "__main__":
     pytest.main([__file__])
