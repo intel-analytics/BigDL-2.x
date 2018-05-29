@@ -40,7 +40,7 @@ For instance, to load a pre-trained object detection model, you may try below co
 scala> import com.intel.analytics.zoo.models.image.objectdetection.ObjectDetector
 import com.intel.analytics.zoo.models.image.objectdetection.ObjectDetector
 
-scala> ObjectDetector.loadModel[Float](params.model)
+scala> ObjectDetector.loadModel[Float](params.modelPath)
 ```
 
 ---
@@ -81,8 +81,9 @@ You can run a analytics zoo program, e.g., the [Object Detection](https://github
   --image path_to_your_images --output path_to_output --model path_to_model
 ```
 
-If you are to run your own program, do remember to create SparkContext and initialize before call other Analytics Zoo API's, as shown below.
+If you are to run your own program, do remember to create SparkContext and initialize before calling other Analytics Zoo API's, as shown below.
 ```scala
+ import com.intel.analytics.zoo.common.NNContext
  // Scala code example
  val sc = NNContext.getNNContext(conf)
 ```
