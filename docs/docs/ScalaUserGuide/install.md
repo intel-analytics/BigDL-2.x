@@ -9,15 +9,15 @@ Currently, Analytics Zoo releases are hosted on maven central; here's an example
 ```xml
 <dependency>
     <groupId>com.intel.analytics.zoo</groupId>
-    <artifactId>zoo-[SPARK_1.5|SPARK_1.6|SPARK_2.1|SPARK_2.2]</artifactId>
-    <version>${ANALYTICS_ZOO}</version>
+    <artifactId>analytics-zoo-[SPARK_1.6|SPARK_2.1|SPARK_2.2]</artifactId>
+    <version>${ANALYTICS_ZOO_VERSION}</version>
 </dependency>
 ```
 Please choose the suffix according to your Spark platform.
 
 SBT developers can use
 ```sbt
-libraryDependencies += "com.intel.analytics.zoo" % "zoo-[SPARK_1.5|SPARK_1.6|SPARK_2.1|SPARK_2.2]" % "${ANALYTICS_ZOO_VERSION}"
+libraryDependencies += "com.intel.analytics.zoo" % "analytics-zoo-[SPARK_1.6|SPARK_2.1|SPARK_2.2]" % "${ANALYTICS_ZOO_VERSION}"
 ```
 You can find the optional `${ANALYTICS_ZOO_VERSION}` from the [Release Page](../release-download.md).
 
@@ -44,7 +44,7 @@ To link your application with the latest Analytics Zoo development version, you 
 
 SBT developers can use
 ```sbt
-resolvers += "Sonatype OSS Snapshots" at "https://oss.sonatype.org/content/repositories/snapshots"
+resolvers += "ossrh repository" at "https://oss.sonatype.org/content/repositories/snapshots/"
 ```
 
 ## **Download Analytics Zoo Source**
@@ -95,7 +95,7 @@ $ bash make-dist.sh -P spark_1.6
 
 ## **Build for Scala 2.10 or 2.11**
 
-By default, `make-dist.sh` uses Scala 2.10 for Spark 1.5.x or 1.6.x, and Scala 2.11 for Spark 2.0.x or 2.1.x. To override the default behaviors, you can pass `-P scala_2.10` or `-P scala_2.11` to `make-dist.sh` as appropriate.
+By default, `make-dist.sh` uses Scala 2.11 for Spark 2.1, and Scala 2.10 for Spark 1.6. To override the default behaviors, you can pass `-P scala_2.10` or `-P scala_2.11` to `make-dist.sh` as appropriate.
 
 ---
 ## **Build with Maven**
