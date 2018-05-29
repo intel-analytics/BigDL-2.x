@@ -74,6 +74,7 @@ class NNEstimatorSpec extends FlatSpec with Matchers with BeforeAndAfter {
     assert(estimator.getBatchSize == 1)
     assert(estimator.getLearningRate == 1e-3)
     assert(estimator.getLearningRateDecay == 0)
+    assert(estimator.isCachingSample)
   }
 
   "NNEstimator" should "apply with differnt params" in {
@@ -85,7 +86,7 @@ class NNEstimatorSpec extends FlatSpec with Matchers with BeforeAndAfter {
     Seq(
       NNEstimator(model, criterion),
       NNEstimator(model, criterion, Array(6), Array(1)),
-      NNEstimator(model, criterion, SeqToTensor(Array(6)), SeqToTensor(Array(6)))
+      NNEstimator(model, criterion, SeqToTensor(Array(6)), ScalarToTensor())
     ).foreach(e => e.setEndWhen(Trigger.maxIteration(1)).fit(df))
   }
 
