@@ -94,3 +94,42 @@ local_image_frame2 = ImageSet.read("/tmp/image/")
 # create DistributedImageFrame from an image folder
 distributed_image_frame = ImageSet.read("/tmp/image/", sc, 2)
 ```
+
+## Image Transformer
+Analytics Zoo provides many pre-defined image processing transformers built on top of OpenCV. After create these transformers, call `transform` with ImageSet to get transformed ImageSet. Or pass the transformer to NNEstimator/NNClassifier to preprocess before training. 
+
+**Scala APIs:**
+```
+package com.intel.analytics.zoo.feature.image
+
+object ImageBrightness
+
+def apply(deltaLow: Double, deltaHigh: Double): ImageBrightness
+```
+Adjust the image brightness.
+
+* deltaLow: low bound of brightness parameter
+* deltaHigh: high bound of brightness parameter
+
+Example:
+```
+val transformer = ImageBrightness(0.0, 32.0)
+val transformed = imageSet.transform(transformer)
+```
+
+**Python APIs:**
+```
+class zoo.feature.image.imagePreprocessing.ImageBrightness
+
+def __init__(delta_low, delta_high, bigdl_type="float")
+```
+Adjust the image brightness.
+
+* delta_low: low bound of brightness parameter
+* delta_high: high bound of brightness parameter
+
+Example:
+```
+transformer = ImageBrightness(0.0, 32.0)
+transformed = imageSet.transform(transformer)
+```
