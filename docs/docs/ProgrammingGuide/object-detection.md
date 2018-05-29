@@ -29,10 +29,37 @@ val preprocessor = Resize(300, 300) ->
                          MatToTensor() -> ImageFrameToSample()
 val output = model.predictImageset(data)
 ```
+
+**Python**
+
+[Python example](https://github.com/intel-analytics/zoo/tree/master/pyzoo/zoo/examples/objectdetection)
+
+It's very easy to apply the model for inference with below code piece.
+```
+model = ObjectDetector.load_model(model_path)
+image_set = ImageSet.read(img_path, sc)
+output = model.predict_image_set(image_set)
+```
+
+User can also define his own configuration to do the inference with below code piece.
+```
+model = ObjectDetector.load_model(model_path)
+image_set = ImageSet.read(img_path, sc)
+preprocessing = ChainedPreprocessing(
+                [ImageResize(256, 256), ImageCenterCrop(224, 224),
+                ImageChannelNormalize(123.0, 117.0, 104.0), ImageMatToTensor(),
+                ImageSetToSample()])
+config = ImageConfigure(preprocessing)
+output = model.predict_image_set(image_set)
+```
+
+For preprocessors for Object Detection models, please check [Object Detection Config](https://github.com/intel-analytics/zoo/blob/master/zoo/src/main/scala/com/intel/analytics/zoo/models/image/objectdetection/ObjectDetectionConfig.scala)
+
 ## Download link
 ### Object Detection
 
 1. PASCAL VOC models
+
 * [SSD 300x300 MobileNet](https://s3-ap-southeast-1.amazonaws.com/analytics-zoo-models/object-detection/analytics-zoo_ssd-mobilenet-300x300_PASCAL_0.1.0.model)
 * [SSD 300x300 VGG](https://s3-ap-southeast-1.amazonaws.com/analytics-zoo-models/object-detection/analytics-zoo_ssd-vgg16-300x300_PASCAL_0.1.0.model)
 * [SSD 512x512 VGG](https://s3-ap-southeast-1.amazonaws.com/analytics-zoo-models/object-detection/analytics-zoo_ssd-vgg16-512x512_PASCAL_0.1.0.model)
@@ -41,8 +68,8 @@ val output = model.predictImageset(data)
 * [Faster-RCNN PvaNet](https://s3-ap-southeast-1.amazonaws.com/analytics-zoo-models/object-detection/analytics-zoo_frcnn-pvanet_PASCAL_0.1.0.model)
 * [Faster-RCNN PvaNet Compress](https://s3-ap-southeast-1.amazonaws.com/analytics-zoo-models/object-detection/analytics-zoo_frcnn-pvanet-compress_PASCAL_0.1.0.model)
 
+
 2. COCO models
 
 * [SSD 300x300 VGG](https://s3-ap-southeast-1.amazonaws.com/analytics-zoo-models/object-detection/analytics-zoo_ssd-vgg16-300x300_COCO_0.1.0.model)
 * [SSD 512x512 VGG](https://s3-ap-southeast-1.amazonaws.com/analytics-zoo-models/object-detection/analytics-zoo_ssd-vgg16-512x512_COCO_0.1.0.model)
-
