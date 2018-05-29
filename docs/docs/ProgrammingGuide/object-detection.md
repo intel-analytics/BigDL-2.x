@@ -1,10 +1,12 @@
-# Analytics Zoo Object Detection API
-
 Analytics Zoo provides a collection of pre-trained models for Object Detection. These models can be used for out-of-the-box inference if you are interested in categories already in the corresponding datasets. According to the business scenarios, users can embed the models locally, distributedly in Spark such as Apache Storm and Apache Flink.
 
-***Object Detection models***
+## Object Detection examples
 
 Analytics Zoo provides two typical kind of pre-trained Object Detection models : [SSD](https://arxiv.org/abs/1512.02325) and [Faster-RCNN](https://arxiv.org/abs/1506.01497) on dataset [PASCAL](http://host.robots.ox.ac.uk/pascal/VOC/) and [COCO](http://cocodataset.org/#home). For the usage of these models, please check below examples.
+
+
+**Scala**
+
 
 [Scala example](https://github.com/intel-analytics/zoo/blob/master/zoo/src/main/scala/com/intel/analytics/zoo/examples/objectdetection/Predict.scala)
 
@@ -56,9 +58,8 @@ output = model.predict_image_set(image_set)
 For preprocessors for Object Detection models, please check [Object Detection Config](https://github.com/intel-analytics/zoo/blob/master/zoo/src/main/scala/com/intel/analytics/zoo/models/image/objectdetection/ObjectDetectionConfig.scala)
 
 ## Download link
-### Object Detection
 
-1. PASCAL VOC models
+**PASCAL VOC models**
 
 * [SSD 300x300 MobileNet](https://s3-ap-southeast-1.amazonaws.com/analytics-zoo-models/object-detection/analytics-zoo_ssd-mobilenet-300x300_PASCAL_0.1.0.model)
 * [SSD 300x300 VGG](https://s3-ap-southeast-1.amazonaws.com/analytics-zoo-models/object-detection/analytics-zoo_ssd-vgg16-300x300_PASCAL_0.1.0.model)
@@ -69,7 +70,7 @@ For preprocessors for Object Detection models, please check [Object Detection Co
 * [Faster-RCNN PvaNet Compress](https://s3-ap-southeast-1.amazonaws.com/analytics-zoo-models/object-detection/analytics-zoo_frcnn-pvanet-compress_PASCAL_0.1.0.model)
 
 
-2. COCO models
+**COCO models**
 
 * [SSD 300x300 VGG](https://s3-ap-southeast-1.amazonaws.com/analytics-zoo-models/object-detection/analytics-zoo_ssd-vgg16-300x300_COCO_0.1.0.model)
 * [SSD 512x512 VGG](https://s3-ap-southeast-1.amazonaws.com/analytics-zoo-models/object-detection/analytics-zoo_ssd-vgg16-512x512_COCO_0.1.0.model)
