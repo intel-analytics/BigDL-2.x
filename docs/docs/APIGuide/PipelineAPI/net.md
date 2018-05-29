@@ -2,7 +2,7 @@
 
 ### Load Analytics Zoo Model
 
-Use `Net.load`(in Scala) or `Net.load` (in Python) to load an existing model.  `Zoo` (Scala) or `Zoo`(Python) is a utility class provided in Analytics Zoo. We just need to specify the model path and optionally weight path if exists where we previously saved the model to load it to memory for resume training or prediction purpose.
+Use `Net.load`(in Scala) or `Net.load` (in Python) to load an existing model defined using the Analytics Zoo Keras-style API.  `Net` (Scala) or `Net`(Python) is a utility class provided in Analytics Zoo. We just need to specify the model path and optionally weight path if exists where we previously saved the model to load it to memory for resume training or prediction purpose.
 
 **Scala example**
 ```scala
