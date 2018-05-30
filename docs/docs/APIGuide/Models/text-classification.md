@@ -1,4 +1,3 @@
-# Analytics Zoo Text Classification API
 
 Analytics Zoo provides a set of pre-defined models that can be used for classifying texts with different encoders. This model could be fed into NNFrames and BigDL Optimizer directly for training.
 

@@ -1,4 +1,3 @@
-# Analytics Zoo Recommender API
 
 Analytics Zoo provides two Recommenders, including Wide and Deep (WND) model and Neural network-based Collaborative Filtering (NCF) model. Each model could be fed into NNFrames and BigDL Optimizer directly for training.
 
