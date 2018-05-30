@@ -20,7 +20,7 @@ import com.intel.analytics.bigdl.nn.abstractnn.AbstractModule
 import com.intel.analytics.bigdl.nn.SpatialCrossMapLRN
 import com.intel.analytics.bigdl.tensor.Tensor
 import com.intel.analytics.bigdl.utils.Shape
-import com.intel.analytics.zoo.pipeline.api.keras.models.{KerasNet, Model => ZModel}
+import com.intel.analytics.zoo.pipeline.api.keras.models.{KerasNet, Sequential, Model => ZModel}
 import com.intel.analytics.zoo.pipeline.api.keras.ZooSpecHelper
 import com.intel.analytics.zoo.pipeline.api.keras.layers.{Dense, Input}
 import com.intel.analytics.zoo.pipeline.api.keras.layers.utils.KerasUtils
@@ -92,5 +92,25 @@ class NetSpec extends ZooSpecHelper{
     val model = Net.loadTF[Float](s"$path/lenet.pb", Seq("Placeholder"), Seq("LeNet/fc4/BiasAdd"))
     val newModel = model.newGraph("LeNet/fc3/Relu")
     newModel.outputNodes.head.element.getName() should be ("LeNet/fc3/Relu")
+  }
+
+  "net load model" should "work properly" in {
+    val seq = Sequential[Float]().add(Dense[Float](3, inputShape = Shape(2, 3)))
+
+    val tmpFile1 = createTmpFile()
+    val absPath1 = tmpFile1.getAbsolutePath
+    seq.saveModule(absPath1, overWrite = true)
+
+    Net.load[Float](absPath1)
+
+    val input = Input[Float](inputShape = Shape(3, 5))
+    val d = Dense[Float](7).setName("dense1").inputs(input)
+    val model = ZModel[Float](input, d)
+
+    val tmpFile = createTmpFile()
+    val absPath = tmpFile.getAbsolutePath
+    model.saveModule(absPath, overWrite = true)
+
+    Net.load[Float](absPath)
   }
 }
