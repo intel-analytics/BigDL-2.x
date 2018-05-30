@@ -90,7 +90,7 @@ result_classes = text_classifier.predict_class(rdd)
 
 ---
 ## Examples
-We provide an example to train the `TextClassifier` model on 20 Newsgroup dataset and uses the model to do prediction.
+We provide an example to train the TextClassifier model on 20 Newsgroup dataset and uses the model to do prediction.
 
 See [here](https://github.com/intel-analytics/analytics-zoo/tree/master/zoo/src/main/scala/com/intel/analytics/zoo/examples/textclassification) for the Scala example.
 
