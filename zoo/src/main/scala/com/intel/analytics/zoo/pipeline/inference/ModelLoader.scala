@@ -16,21 +16,28 @@
 
 package com.intel.analytics.zoo.pipeline.inference
 
-import com.intel.analytics.bigdl.optim.LocalPredictor
 import com.intel.analytics.bigdl.nn.Module
+import com.intel.analytics.bigdl.nn.abstractnn.{AbstractModule, Activity}
+import com.intel.analytics.bigdl.utils.Engine
 import org.slf4j.LoggerFactory
 
-object InferenceModelFactory extends InferenceSupportive{
+object ModelLoader extends InferenceSupportive {
   override val logger = LoggerFactory.getLogger(getClass)
 
-  def loadFloatInferenceModel(modelPath: String): FloatInferenceModel = {
-    loadFloatInferenceModel(modelPath, null)
+  timing("bigdl init engine") {
+    System.setProperty("bigdl.localMode", System.getProperty("bigdl.localMode", "true"))
+    System.setProperty("bigdl.coreNumber", System.getProperty("bigdl.coreNumber", "1"))
+    Engine.init
   }
 
-  def loadFloatInferenceModel(modelPath: String, weightPath: String): FloatInferenceModel = {
-    val model = ModelLoader.loadFloatModel(modelPath, weightPath)
-    val predictor = LocalPredictor(model)
-    model.evaluate()
-    FloatInferenceModel(model, predictor)
+  def loadFloatModel(modelPath: String, weightPath: String):
+    AbstractModule[Activity, Activity, Float] = {
+    timing(s"load model") {
+      logger.info(s"load model from $modelPath and $weightPath")
+      val model = Module.loadModule[Float](modelPath, weightPath)
+      logger.info(s"loaded model as $model")
+      model
+    }
   }
 }
+
