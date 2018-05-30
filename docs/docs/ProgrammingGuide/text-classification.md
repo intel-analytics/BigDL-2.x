@@ -1,8 +1,8 @@
-Analytics Zoo provides pre-defined models having different encoders that can be used for classifying texts 
+Analytics Zoo provides pre-defined models having different encoders that can be used for classifying texts.
 
 **Highlights**
 
-1. Easy-to-use models, could be fed into NNFrames and BigDL Optimizer for training.
+1. Easy-to-use models, could be fed into NNFrames or BigDL Optimizer for training.
 2. The encoders we support include CNN, LSTM and GRU.
 
 ---
@@ -30,7 +30,6 @@ text_classifier = TextClassifier(class_num, token_length, sequence_length=500, e
 * `encoder`: The encoder for input sequences. String. 'cnn' or 'lstm' or 'gru' are supported. Default is 'cnn'.
 * `encoder_output_dim`: The output dimension for the encoder. Positive int. Default is 256.
 
-
 ---
 ## Train a TextClassifier model
 After building the model, we can use BigDL Optimizer to train it (with validation) using RDD of [Sample](https://bigdl-project.github.io/master/#APIGuide/Data/#sample).
@@ -42,7 +41,7 @@ Note that raw text data may need to go through tokenization and vectorization be
 val optimizer = Optimizer(
   model = textClassifier,
   sampleRDD = trainRDD,
-  criterion = ClassNLLCriterion(logProbAsInput = false),
+  criterion = ClassNLLCriterion[Float](logProbAsInput = false),
   batchSize = 128)
 
 optimizer
@@ -69,9 +68,8 @@ optimizer.set_validation(
     val_method=[Top1Accuracy()])
 ```
 
-
 ---
-## Use a trained TextClassifier model to do prediction
+## Do prediction
 After training the model, it can be used to predict probabilities or class labels.
 
 **Scala**
@@ -90,6 +88,7 @@ results = text_classifier.predict(rdd)
 result_classes = text_classifier.predict_class(rdd)
 ```
 
+---
 ## Examples
 We provide an example to train the `TextClassifier` model on 20 Newsgroup dataset and uses the model to do prediction.
 

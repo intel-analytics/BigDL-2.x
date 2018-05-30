@@ -2,7 +2,7 @@ Analytics Zoo provides two Recommender models, including Wide and Deep(WND) lear
 
 **Highlights**
 
-1. Easy-to-use models, could be fed into NNFrames and BigDL Optimizer for training.
+1. Easy-to-use models, could be fed into NNFrames or BigDL Optimizer for training.
 2. Recommenders can handle either explict or implicit feedback, given corresponding features.
 3. It provides three user-friendly APIs to predict user item pairs, and recommend items (users) for users (items).
 
@@ -123,4 +123,4 @@ userItemPairPrediction = ncf.predict_user_item_pair(valPairFeatureRdds)
 userRecs = ncf.recommend_for_user(valPairFeatureRdds, 3)
 itemRecs = ncf.recommend_for_item(valPairFeatureRdds, 3)
 ``` 
-See more details in our [Recommender API](../APIGuide/Models/recommendation.md) and [Python notebook](https://github.com/intel-analytics/analytics-zoo/tree/master/apps/recommendation/ncf-explicit-feedback.ipynb)
+See more details in our [Recommender API](../APIGuide/Models/recommendation.md) and [Python notebook](https://github.com/intel-analytics/analytics-zoo/tree/master/apps/recommendation/ncf-explicit-feedback.ipynb).

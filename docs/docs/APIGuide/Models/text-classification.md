@@ -1,4 +1,8 @@
-Analytics Zoo provides a set of pre-defined models that can be used for classifying texts with different encoders. This model could be fed into NNFrames and BigDL Optimizer directly for training.
+Analytics Zoo provides pre-defined models having different encoders that can be used for classifying texts.
+The model could be fed into NNFrames or BigDL Optimizer directly for training.
+
+---
+## Build a TextClassifier Model
 
 **Scala**
 ```scala
@@ -26,3 +30,7 @@ TextClassifier(class_num, token_length, sequence_length=500, encoder="cnn", enco
 * `encoder_output_dim`: The output dimension for the encoder. Positive int. Default is 256.
 
 See [here](https://github.com/intel-analytics/analytics-zoo/tree/master/pyzoo/zoo/examples/textclassification) for the Python example that trains the `TextClassifier` model on 20 Newsgroup dataset and uses the model to do prediction.
+
+---
+## Model Save
+After building and training a TextClassifier model
