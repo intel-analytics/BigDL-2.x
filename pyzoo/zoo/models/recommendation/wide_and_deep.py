@@ -124,7 +124,8 @@ class WideAndDeep(Recommender):
         Load an existing WideAndDeep model (with weights).
 
         # Arguments
-        path: The path to save the model. Local file system, HDFS and Amazon S3 are supported.
+        path: The path for the pre-defined model.
+              Local file system, HDFS and Amazon S3 are supported.
               HDFS path should be like 'hdfs://[host]:[port]/xxx'.
               Amazon S3 path should be like 's3a://bucket/xxx'.
         weight_path: The path for pre-trained weights if any. Default is None.
