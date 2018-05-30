@@ -99,6 +99,7 @@ class NetSpec extends ZooSpecHelper{
     val path = resource.getPath + "/" + "zoo_keras"
 
     val seq = Sequential[Float]().add(Dense[Float](3, inputShape = Shape(2, 3)))
+    seq.forward(Tensor[Float](2, 3, 5).rand())
 
     val model = Net.load[Float](s"$path/small_seq.model")
     model.forward(Tensor[Float](2, 3, 5).rand())
