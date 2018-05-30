@@ -1,9 +1,9 @@
-For Python users, Analytics Zoo can be installed either from pip or without pip.
+For Python users, Analytics Zoo can be installed either [from pip](#install-from-pip) or [without pip](#install-without-pip).
 
 **NOTE**: Only __Python 2.7__, __Python 3.5__ and __Python 3.6__ are supported for now.
 
 ---
-## Install from pip
+## **Install from pip**
 
 Analytics Zoo can be installed via pip easily using the following command.
 
@@ -28,7 +28,7 @@ pip3 install analytics-zoo==0.1.0.dev0    # for Python 3.5 and Python 3.6
 
 
 ---
-## Install without pip
+## **Install without pip**
 
 If you choose to install Analytics Zoo without pip, you need to prepare Spark and the necessary dependencies.
 
