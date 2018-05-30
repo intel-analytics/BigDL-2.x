@@ -6,7 +6,7 @@ The model could be fed into NNFrames or BigDL Optimizer directly for training.
 
 **Scala**
 ```scala
-TextClassifier(classNum, tokenLength, sequenceLength = 500, encoder = "cnn", encoderOutputDim = 256)
+val textClassifier = TextClassifier(classNum, tokenLength, sequenceLength = 500, encoder = "cnn", encoderOutputDim = 256)
 ```
 
 * `classNum`: The number of text categories to be classified. Positive integer.
@@ -20,7 +20,7 @@ See [here](https://github.com/intel-analytics/analytics-zoo/tree/master/zoo/src/
 
 **Python**
 ```python
-TextClassifier(class_num, token_length, sequence_length=500, encoder="cnn", encoder_output_dim=256)
+text_classifier = TextClassifier(class_num, token_length, sequence_length=500, encoder="cnn", encoder_output_dim=256)
 ```
 
 * `class_num`: The number of text categories to be classified. Positive int.
@@ -33,4 +33,42 @@ See [here](https://github.com/intel-analytics/analytics-zoo/tree/master/pyzoo/zo
 
 ---
 ## Model Save
-After building and training a TextClassifier model
+After building and training a TextClassifier model, you can save it for future use.
+
+**Scala**
+```scala
+textClassifier.saveModel(path, weightPath = null, overWrite = false)
+```
+
+* `path`: The path to save the model. Local file system, HDFS and Amazon S3 are supported. HDFS path should be like "hdfs://[host]:[port]/xxx". Amazon S3 path should be like "s3a://bucket/xxx".
+* `weightPath`: The path to save weights. Default is null.
+* `overWrite`: Whether to overwrite the file if it already exists. Default is false.
+
+**Python**
+```python
+text_classifier.save_model(path, weight_path=None, over_write=False)
+```
+
+* `path`: The path to save the model. Local file system, HDFS and Amazon S3 are supported. HDFS path should be like 'hdfs://[host]:[port]/xxx'. Amazon S3 path should be like 's3a://bucket/xxx'.
+* `weight_path`: The path to save weights. Default is None.
+* `over_write`: Whether to overwrite the file if it already exists. Default is False.
+
+---
+## Model Load
+To load a TextClassifier model (with weights) saved [above](#model-save):
+
+**Scala**
+```scala
+TextClassifier.loadModel[Float](path, weightPath = null)
+```
+
+* `path`: The path for the pre-defined model. Local file system, HDFS and Amazon S3 are supported. HDFS path should be like "hdfs://[host]:[port]/xxx". Amazon S3 path should be like "s3a://bucket/xxx".
+* `weightPath`: The path for pre-trained weights if any. Default is null.
+
+**Python**
+```python
+TextClassifier.load_model(path, weight_path=None)
+```
+
+* `path`: The path for the pre-defined model. Local file system, HDFS and Amazon S3 are supported. HDFS path should be like 'hdfs://[host]:[port]/xxx'. Amazon S3 path should be like 's3a://bucket/xxx'.
+* `weight_path`: The path for pre-trained weights if any. Default is None.
