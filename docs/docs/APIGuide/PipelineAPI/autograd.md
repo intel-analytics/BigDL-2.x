@@ -9,10 +9,12 @@
    by 1. If `keep_dims` is `True`,
    the reduced dimensions are retained with length 1.
    
+   
 **Scala example**
 ```scala
 mean(x: Variable[T], axis: Int = 0, keepDims: Boolean = false)
 ```
+
 
 **Python example**
 ```python
