@@ -77,11 +77,11 @@ Try to run the [example code](#example-code) for verification.
 ***Run with spark-submit***
 An Analytics Zoo Python program runs as a standard pyspark program, which requires all Python dependencies
 (e.g., numpy) used by the program to be installed on each node in the Spark cluster. You can try
-running the Analytics Zoo [TextClassification Python example](https://github.com/intel-analytics/analytics-zoo/tree/master/pyzoo/zoo/examples/textclassification)
+running the Analytics Zoo [Object Detection Python example](https://github.com/intel-analytics/analytics-zoo/tree/master/pyzoo/zoo/examples/objectdetection)
 as follows:
 
 ```bash
-${ANALTICS_ZOO_HOME}/bin/spark-submit-with-zoo.sh --master local[*] text_classification.py
+${ANALTICS_ZOO_HOME}/bin/spark-submit-with-zoo.sh --master local[*] predict.py model_path image_path output_path
 ```
 
 ---
@@ -118,58 +118,62 @@ Try to run the [example code](#example-code) for verification.
 
 ---
 ***Run with virtual environment on Yarn***
+
 If you already created Analytics Zoo dependency virtual environment according to Yarn cluster guide [here](install.md/#install-without-pip),
 you can run python programs using Analytics Zoo as following examples.
 
-- Note: please set BigDL_HOME, SPARK_HOME environment. Set VENV_HOME to the parent directory of venv.zip and venv directory. Replace VERSION with your BigDL version, like 0.5.0. If you don't install BigDL from source, replace ${BigDL_HOME}/pyspark/bigdl/examples/lenet/lenet.py with your python program which is using BigDL.
 * Yarn cluster mode
 ```
-    BigDL_HOME=
-    SPARK_HOME=
-    PYTHON_API_PATH=${BigDL_HOME}/dist/lib/bigdl-VERSION-python-api.zip
-    BigDL_JAR_PATH=${BigDL_HOME}/dist/lib/bigdl-VERSION-jar-with-dependencies.jar
-    PYTHONPATH=${PYTHON_API_PATH}:$PYTHONPATH
-    VENV_HOME=
+    SPARK_HOME=the root directory of Spark
+    ANALYTICS_ZOO_ROOT=the root directory of the Analytics Zoo project
+    ANALYTICS_ZOO_HOME=$ANALYTICS_ZOO_ROOT/dist
+    ANALYTICS_ZOO_PY_ZIP=${ANALYTICS_ZOO_HOME}/lib/analytics-zoo-VERSION-python-api.zip
+    ANALYTICS_ZOO_JAR=${ANALYTICS_ZOO_HOME}/lib/analytics-zoo-VERSION-jar-with-dependencies.jar
+    ANALYTICS_ZOO_CONF=${ANALYTICS_ZOO_HOME}/conf/spark-analytics-zoo.conf
+    PYTHONPATH=${ANALYTICS_ZOO_PY_ZIP}:$PYTHONPATH
+    VENV_HOME=the parent directory of venv.zip and venv folder
     
-    PYSPARK_PYTHON=./venv.zip/venv/bin/python ${SPARK_HOME}/bin/spark-submit \
-    --conf spark.yarn.appMasterEnv.PYSPARK_PYTHON=./venv.zip/venv/bin/python \
+    PYSPARK_PYTHON=${VENV_HOME}/venv.zip/venv/bin/python ${SPARK_HOME}/bin/spark-submit \
+    --conf spark.yarn.appMasterEnv.PYSPARK_PYTHON=${VENV_HOME}/venv.zip/venv/bin/python \
     --master yarn-cluster \
     --executor-memory 10g \
     --driver-memory 10g \
     --executor-cores 8 \
     --num-executors 2 \
-    --properties-file ${BigDL_HOME}/dist/conf/spark-bigdl.conf \
-    --jars ${BigDL_JAR_PATH} \
-    --py-files ${PYTHON_API_PATH} \
+    --properties-file ${ANALYTICS_ZOO_CONF} \
+    --jars ${ANALYTICS_ZOO_JAR} \
+    --py-files ${ANALYTICS_ZOO_PY_ZIP} \
     --archives ${VENV_HOME}/venv.zip \
-    --conf spark.driver.extraClassPath=bigdl-VERSION-jar-with-dependencies.jar \
-    --conf spark.executor.extraClassPath=bigdl-VERSION-jar-with-dependencies.jar \
-    ${BigDL_HOME}/pyspark/bigdl/examples/lenet/lenet.py
+    --conf spark.driver.extraClassPath=${ANALYTICS_ZOO_JAR} \
+    --conf spark.executor.extraClassPath=${ANALYTICS_ZOO_JAR} \
+    ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/objectdetection/predict.py model_path image_path output_path
 ```
 
 * Yarn client mode
 ```
-    BigDL_HOME=
-    SPARK_HOME=
-    PYTHON_API_PATH=${BigDL_HOME}/dist/lib/bigdl-VERSION-python-api.zip
-    BigDL_JAR_PATH=${BigDL_HOME}/dist/lib/bigdl-VERSION-jar-with-dependencies.jar
-    PYTHONPATH=${PYTHON_API_PATH}:$PYTHONPATH
-    VENV_HOME=
+    SPARK_HOME=the root directory of Spark
+    ANALYTICS_ZOO_ROOT=the root directory of the Analytics Zoo project
+    ANALYTICS_ZOO_HOME=$ANALYTICS_ZOO_ROOT/dist
+    ANALYTICS_ZOO_PY_ZIP=${ANALYTICS_ZOO_HOME}/lib/analytics-zoo-VERSION-python-api.zip
+    ANALYTICS_ZOO_JAR=${ANALYTICS_ZOO_HOME}/lib/analytics-zoo-VERSION-jar-with-dependencies.jar
+    ANALYTICS_ZOO_CONF=${ANALYTICS_ZOO_HOME}/conf/spark-analytics-zoo.conf
+    PYTHONPATH=${ANALYTICS_ZOO_PY_ZIP}:$PYTHONPATH
+    VENV_HOME=the parent directory of venv.zip and venv folder
     
-    PYSPARK_DRIVER_PYTHON=${VENV_HOME}/venv/bin/python PYSPARK_PYTHON=./venv.zip/venv/bin/python ${SPARK_HOME}/bin/spark-submit \
+    PYSPARK_DRIVER_PYTHON=${VENV_HOME}/venv/bin/python PYSPARK_PYTHON=${VENV_HOME}/venv.zip/venv/bin/python ${SPARK_HOME}/bin/spark-submit \
     --master yarn \
     --deploy-mode client \
     --executor-memory 10g \
     --driver-memory 10g \
     --executor-cores 16 \
     --num-executors 2 \
-    --properties-file ${BigDL_HOME}/dist/conf/spark-bigdl.conf \
-    --jars ${BigDL_JAR_PATH} \
-    --py-files ${PYTHON_API_PATH} \
+    --properties-file ${ANALYTICS_ZOO_CONF} \
+    --jars ${ANALYTICS_ZOO_JAR} \
+    --py-files ${ANALYTICS_ZOO_PY_ZIP} \
     --archives ${VENV_HOME}/venv.zip \
-    --conf spark.driver.extraClassPath=${BigDL_JAR_PATH} \
-    --conf spark.executor.extraClassPath=bigdl-VERSION-jar-with-dependencies.jar \
-    ${BigDL_HOME}/pyspark/bigdl/examples/lenet/lenet.py
+    --conf spark.driver.extraClassPath=${ANALYTICS_ZOO_JAR} \
+    --conf spark.executor.extraClassPath=${ANALYTICS_ZOO_JAR} \
+    ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/objectdetection/predict.py model_path image_path output_path
  ```
 
 ---
