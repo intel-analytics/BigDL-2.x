@@ -29,7 +29,7 @@ case class FloatInferenceModel(
 
   def predict(input: java.util.List[java.util.List[java.lang.Float]]):
     java.util.List[java.lang.Float] = {
-    timing(s"predict for $input") {
+    timing(s"predict for input") {
       val tensor = transferInferenceInputToTensor(input)
       val result = model.forward(tensor).asInstanceOf[Tensor[Float]].storage.array.toList
         .asJava.asInstanceOf[java.util.List[java.lang.Float]]

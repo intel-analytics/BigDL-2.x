@@ -17,9 +17,19 @@
 package com.intel.analytics.zoo.pipeline.inference;
 
 import java.util.List;
+import java.util.concurrent.LinkedBlockingQueue;
 
 public abstract class AbstractInferenceModel {
   private FloatInferenceModel model;
+
+  private int supportedConcurrentNum = 1;
+
+  public AbstractInferenceModel(){
+  }
+
+  public AbstractInferenceModel(int supportedConcurrentNum){
+    this.supportedConcurrentNum = supportedConcurrentNum;
+  }
 
   public void load(String modelPath) {
     load(modelPath, null);
