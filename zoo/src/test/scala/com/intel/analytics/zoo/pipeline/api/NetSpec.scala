@@ -100,11 +100,7 @@ class NetSpec extends ZooSpecHelper{
 
     val seq = Sequential[Float]().add(Dense[Float](3, inputShape = Shape(2, 3)))
 
-    val input = Input[Float](inputShape = Shape(3, 5))
-    val d = Dense[Float](7).setName("dense1").inputs(input)
-    val model = ZModel[Float](input, d)
-
-    Net.load[Float](s"$path/small_seq.model")
-    Net.load[Float](s"$path/small_model.model")
+    val model = Net.load[Float](s"$path/small_seq.model")
+    model.forward(Tensor[Float](2, 3, 5).rand())
   }
 }
