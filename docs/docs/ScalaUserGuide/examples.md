@@ -1,6 +1,4 @@
 
-## **Examples**
-
 Analytics Zoo provides plenty of examples ready for re-use as listed below.
 
    * [Image Classification](https://github.com/intel-analytics/analytics-zoo/tree/master/zoo/src/main/scala/com/intel/analytics/zoo/examples/imageclassification): This example illustrates how to do the image classification with pre-trained model.
