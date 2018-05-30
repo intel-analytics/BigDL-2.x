@@ -143,6 +143,7 @@ After building and training a WideAndDeep or NeuralCF model, you can save it for
 **Scala**
 ```scala
 wideAndDeep.saveModel(path, weightPath = null, overWrite = false)
+
 ncf.saveModel(path, weightPath = null, overWrite = false)
 ```
 
@@ -153,6 +154,7 @@ ncf.saveModel(path, weightPath = null, overWrite = false)
 **Python**
 ```python
 wide_and_deep.save_model(path, weight_path=None, over_write=False)
+
 ncf.save_model(path, weight_path=None, over_write=False)
 ```
 
@@ -167,6 +169,7 @@ To load a WideAndDeep or NeuralCF model (with weights) saved [above](#model-save
 **Scala**
 ```scala
 WideAndDeep.loadModel[Float](path, weightPath = null)
+
 NeuralCF.loadModel[Float](path, weightPath = null)
 ```
 
@@ -176,6 +179,7 @@ NeuralCF.loadModel[Float](path, weightPath = null)
 **Python**
 ```python
 WideAndDeep.load_model(path, weight_path=None)
+
 NeuralCF.load_model(path, weight_path=None)
 ```
 
