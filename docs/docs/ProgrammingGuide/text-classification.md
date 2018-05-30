@@ -1,4 +1,4 @@
-Analytics Zoo provides a set of pre-defined models that can be used for classifying texts with different encoders.
+Analytics Zoo provides pre-defined models having different encoders that can be used for classifying texts 
 
 **Highlights**
 
@@ -33,16 +33,17 @@ text_classifier = TextClassifier(class_num, token_length, sequence_length=500, e
 
 ---
 ## Train a TextClassifier model
-After building the model, we can use BigDL Optimizer to train it:
+After building the model, we can use BigDL Optimizer to train it (with validation) using RDD of [Sample](https://bigdl-project.github.io/master/#APIGuide/Data/#sample).
+
+Note that raw text data may need to go through tokenization and vectorization before being fed into the Optimizer. You can refer to the [examples](#examples) we provide for data pre-processing.
 
 **Scala**
 ```scala
 val optimizer = Optimizer(
   model = textClassifier,
   sampleRDD = trainRDD,
-  criterion = ClassNLLCriterion[Float](logProbAsInput = false),
-  batchSize = 128
-)
+  criterion = ClassNLLCriterion(logProbAsInput = false),
+  batchSize = 128)
 
 optimizer
   .setOptimMethod(new Adagrad(learningRate = 0.01, learningRateDecay = 0.001))
@@ -60,6 +61,7 @@ optimizer = Optimizer(
     end_trigger=MaxEpoch(20),
     batch_size=128,
     optim_method=Adagrad(learningrate=0.01, learningrate_decay=0.001))
+    
 optimizer.set_validation(
     batch_size=128,
     val_rdd=val_rdd,
@@ -70,7 +72,7 @@ optimizer.set_validation(
 
 ---
 ## Use a trained TextClassifier model to do prediction
-After training the model, we can use the model to predict probabilities or text class labels.
+After training the model, it can be used to predict probabilities or class labels.
 
 **Scala**
 ```scala
@@ -89,7 +91,7 @@ result_classes = text_classifier.predict_class(rdd)
 ```
 
 ## Examples
-We provide an example to trains the `TextClassifier` model on 20 Newsgroup dataset and uses the model to do prediction.
+We provide an example to train the `TextClassifier` model on 20 Newsgroup dataset and uses the model to do prediction.
 
 See [here](https://github.com/intel-analytics/analytics-zoo/tree/master/zoo/src/main/scala/com/intel/analytics/zoo/examples/textclassification) for the Scala example.
 
