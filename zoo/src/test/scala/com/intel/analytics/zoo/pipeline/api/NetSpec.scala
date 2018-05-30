@@ -95,22 +95,16 @@ class NetSpec extends ZooSpecHelper{
   }
 
   "net load model" should "work properly" in {
+    val resource = getClass().getClassLoader().getResource("models")
+    val path = resource.getPath + "/" + "zoo_keras"
+
     val seq = Sequential[Float]().add(Dense[Float](3, inputShape = Shape(2, 3)))
-
-    val tmpFile1 = createTmpFile()
-    val absPath1 = tmpFile1.getAbsolutePath
-    seq.saveModule(absPath1, overWrite = true)
-
-    Net.load[Float](absPath1)
 
     val input = Input[Float](inputShape = Shape(3, 5))
     val d = Dense[Float](7).setName("dense1").inputs(input)
     val model = ZModel[Float](input, d)
 
-    val tmpFile = createTmpFile()
-    val absPath = tmpFile.getAbsolutePath
-    model.saveModule(absPath, overWrite = true)
-
-    Net.load[Float](absPath)
+    Net.load[Float](s"$path/small_seq.model")
+    Net.load[Float](s"$path/small_model.model")
   }
 }
