@@ -1,4 +1,4 @@
-You need to first [install](install.md) analytics-zoo, either [from pip](install.md/#install-from-pip) or [without pip](install.md/#install-without-pip).
+You need to first [install](install.md) analytics-zoo, either [from pip](install/#install-from-pip) or [without pip](install/#install-without-pip).
 
 **NOTE**: Only __Python 2.7__, __Python 3.5__ and __Python 3.6__ are supported for now.
 
@@ -6,11 +6,13 @@ You need to first [install](install.md) analytics-zoo, either [from pip](install
 ## **Run after pip install**
 
 ***Use an Interactive Shell***
+
 * Type `python` in the command line to start a REPL.
 * Try to run the [example code](#example-code) to verify the installation.
 
 
 ***Use Jupyter Notebook***
+
 * Start jupyter notebook as you normally do, e.g.
 
 ```bash
@@ -38,10 +40,9 @@ export BIGDL_PACKAGES=...
 
 ---
 ## **Run without pip install**
-- Note that __Python 3.6__ is only compatible with Spark 1.6.4, 2.0.3, 2.1.1, 2.2.0 and onwards. See [this issue](https://issues.apache.org/jira/browse/SPARK-19019) for more discussion.
+- Note that __Python 3.6__ is only compatible with Spark 1.6.4, 2.0.3, 2.1.1 and >=2.2.0. See [this issue](https://issues.apache.org/jira/browse/SPARK-19019) for more discussion.
 
-***Set Environment Variables***
-Set **SPARK_HOME** and **ANALYTICS_ZOO_HOME**:
+***Set SPARK_HOME and ANALYTICS_ZOO_HOME***
 
 * If you download Analytics Zoo from the [Release Page](../release-download.md):
 ```bash
@@ -61,7 +62,7 @@ If you have some customized properties in some files, which will be used with th
 in `spark-submit/pyspark`, you can add these customized properties into ${ANALYTICS_ZOO_HOME}/conf/spark-analytics-zoo.conf.
 
 ---
-***Run with pyspark***
+#### ***Run with pyspark***
 ```bash
 ${ANALYTICS_ZOO_HOME}/bin/pyspark-with-zoo.sh --master local[*]
 ```
@@ -74,7 +75,7 @@ You can also specify other options available for pyspark in the above command if
 Try to run the [example code](#example-code) for verification.
 
 ---
-***Run with spark-submit***
+#### ***Run with spark-submit***
 An Analytics Zoo Python program runs as a standard pyspark program, which requires all Python dependencies
 (e.g., numpy) used by the program to be installed on each node in the Spark cluster. You can try
 running the Analytics Zoo [Object Detection Python example](https://github.com/intel-analytics/analytics-zoo/tree/master/pyzoo/zoo/examples/objectdetection)
@@ -85,11 +86,11 @@ ${ANALTICS_ZOO_HOME}/bin/spark-submit-with-zoo.sh --master local[*] predict.py m
 ```
 
 ---
-***Run with Jupyter Notebook***
+#### ***Run with Jupyter Notebook***
 
 With the full Python API support in Analytics Zoo, users can use our package together with powerful notebooks
 (such as Jupyter Notebook) in a distributed fashion across the cluster, combining Python libraries,
-Spark SQL/dataframes and MLlib, deep learning models in Analytics Zoo, as well as interactive
+Spark SQL/DataFrames and MLlib, deep learning models in Analytics Zoo, as well as interactive
 visualization tools.
 
 __Prerequisites__: Install all the necessary libraries on the local node where you will run Jupyter, e.g., 
@@ -117,10 +118,12 @@ the dashboard URL is http://your_node:8888/
 Try to run the [example code](#example-code) for verification.
 
 ---
-***Run with virtual environment on Yarn***
+#### ***Run with virtual environment on Yarn***
 
-If you already created Analytics Zoo dependency virtual environment according to Yarn cluster guide [here](install.md/#install-without-pip),
-you can run python programs using Analytics Zoo as following examples.
+If you have already created Analytics Zoo dependency virtual environment according to Yarn cluster guide [here](install/#for-yarn-cluster),
+you can run Python programs using Analytics Zoo using the following command.
+
+Here we use Analytics Zoo [Object Detection Python example](https://github.com/intel-analytics/analytics-zoo/tree/master/pyzoo/zoo/examples/objectdetection) for illustration.
 
 * Yarn cluster mode
 ```
@@ -174,7 +177,7 @@ you can run python programs using Analytics Zoo as following examples.
     --conf spark.driver.extraClassPath=${ANALYTICS_ZOO_JAR} \
     --conf spark.executor.extraClassPath=${ANALYTICS_ZOO_JAR} \
     ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/objectdetection/predict.py model_path image_path output_path
- ```
+```
 
 ---
 ## **Example code**
