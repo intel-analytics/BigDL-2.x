@@ -38,6 +38,10 @@ trait Net {
 }
 
 object Net {
+  Model
+  Sequential
+  GraphNet
+  
   /**
    * Load model from path.
    *
