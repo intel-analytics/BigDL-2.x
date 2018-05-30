@@ -27,6 +27,16 @@ import org.tensorflow.{DataType, Graph, Session, Tensor => TTensor}
 
 import scala.collection.JavaConverters._
 
+/**
+ * [[TFNet]] wraps a tensorflow subgraph as a layer, and use tensorflow to
+ * calculate the layer's output.
+ *
+ * This subgraph should not contain any tensorflow Variable and the input/output
+ * must be numeric types
+ * @param graphDef serialized representation of a graph
+ * @param inputNames the input tensor names of this subgraph
+ * @param outputNames the output tensor names of this subgraph
+ */
 class TFNet private(graphDef: Array[Byte],
             val inputNames: Seq[String],
             val outputNames: Seq[String])
@@ -216,11 +226,25 @@ object TFNet {
     result
   }
 
+  /**
+   * Create a TFNet
+   * @param graphDef the tensorflow GraphDef object
+   * @param inputNames the input tensor names of this subgraph
+   * @param outputNames the output tensor names of this subgraph
+   * @return
+   */
   def apply(graphDef: GraphDef, inputNames: Seq[String],
             outputNames: Seq[String]): TFNet = {
     new TFNet(graphDef.toByteArray, inputNames, outputNames)
   }
 
+  /**
+   * Create a TFNet
+   * @param path the file path of a graphDef
+   * @param inputNames the input tensor names of this subgraph
+   * @param outputNames the output tensor names of this subgraph
+   * @return
+   */
   def apply(path: String, inputNames: Seq[String],
             outputNames: Seq[String]): TFNet = {
     val graphDef = parse(path)
