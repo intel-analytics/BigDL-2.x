@@ -41,11 +41,9 @@ If you choose to install Analytics Zoo without pip, you need to prepare Spark an
 2. You can download the Analytics Zoo release and nightly build from the [Release Page](../release-download.md)
   or build the Analytics Zoo package from [source](../ScalaUserGuide/install.md/#build-with-script-recommended).
 
-3. Install Python dependencies:
+3. Install Python dependencies. Analytics Zoo only depends on `numpy` and `six` for now.
 
-Analytics Zoo only depends on `numpy` and `six` for now.
-
-*For __Spark standalone__ cluster*:
+*For Spark __standalone__ cluster*:
 
 * __Remark__: If you're running in cluster mode, you need to install Python dependencies on both client and each worker node.
 * Install numpy: 
@@ -55,7 +53,7 @@ Analytics Zoo only depends on `numpy` and `six` for now.
 
 *For __Yarn__ cluster*:
 
-You can run Analytics Zoo Python programs on Yarn clusters without changes to the cluster (e.g., no need to pre-install the Python dependencies).
+You can run Analytics Zoo Python programs on Yarn clusters without changes to the cluster (i.e., no need to pre-install the Python dependencies).
 
 You can first package all the required Python dependencies into a virtual environment on the local node (where you will run the spark-submit command),
 and then directly use spark-submit to run the Analytics Zoo Python program on the Yarn cluster (using that virtual environment). Please follow the steps below: 
@@ -70,7 +68,6 @@ apt-get install -y zip
 easy_install pip
 ```
 * Create dependency virtualenv package.
+    * Under $ANALYTICS_ZOO_HOME (the dist directory under the Analytics Zoo project), you can find ```bin/python_package.sh```. Run this script to create dependency virtual environment according to dependency descriptions in `requirements.txt`. You can add your own dependencies in `requirements.txt`. The current requirements only contain the dependencies for running Analytics Zoo python examples and models.
 
-* Under Analytics_ZOO_HOME (the dist directory under the Analytics Zoo project), you can find ```bin/python_package.sh```. Run this script to create dependency virtual environment according to dependency descriptions in `requirements.txt`. You can add your own dependencies in `requirements.txt`. The current requirements only contain the dependencies for running Analytics Zoo python examples and models.
-
-* After running this script, there will be `venv.zip` and `venv` directory generated in current directory. You can use them to submit your python jobs. Please refer to [example](run-without-pip.md#yarn.example) script of submitting bigdl python job with virtual environment in Yarn cluster.
+    * After running this script, there will be `venv.zip` and `venv` directory generated in current directory. You can use them to submit your python jobs. Please refer to [example](run-without-pip.md#yarn.example) script of submitting bigdl python job with virtual environment in Yarn cluster.
