@@ -29,7 +29,7 @@ spark-submit \
 --driver-memory 200g \
 --executor-memory 200g \
 --class com.intel.analytics.zoo.examples.objectdetection.Predict \
-./zoo-0.1.0-SNAPSHOT-jar-with-dependencies.jar --image $imagePath --output $outputPath --model $modelPath --partition 4
+./zoo-0.1.0-SNAPSHOT-jar-with-dependencies.jar --image $imagePath --output $outputPath --modelPath $modelPath --partition 4
 ```
 
 ## Results
