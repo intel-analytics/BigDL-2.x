@@ -31,5 +31,5 @@
    model.fit(x = ..., y = ...)
    
    # Evaluation for debug purpose
-      CustomLoss(mean_absolute_error, [2]).forward(np.random.uniform(0, 1, shape[3, 2])) # [2] is the shape without batch, 3 is the batch size.
+   CustomLoss(mean_absolute_error, [2]).forward(np.random.uniform(0, 1, shape[3, 2])) # [2] is the shape without batch, 3 is the batch size.
    ```
