@@ -23,6 +23,7 @@ import com.intel.analytics.bigdl.optim.{OptimMethod, Trigger, ValidationMethod}
 import com.intel.analytics.bigdl.python.api.PythonBigDL
 import com.intel.analytics.bigdl.tensor.Tensor
 import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric
+import com.intel.analytics.bigdl.transform.vision.image.ImageFeature
 import com.intel.analytics.bigdl.visualization.{TrainSummary, ValidationSummary}
 import com.intel.analytics.bigdl.{Criterion, Module}
 import com.intel.analytics.zoo.feature.common._
@@ -43,8 +44,9 @@ object PythonNNFrames {
 
 class PythonNNFrames[T: ClassTag](implicit ev: TensorNumeric[T]) extends PythonBigDL[T] {
 
-  def nnReadImage(path: String, sc: JavaSparkContext, minParitions: Int): DataFrame = {
-    NNImageReader.readImages(path, sc.sc, minParitions)
+  def nnReadImage(path: String, sc: JavaSparkContext, minParitions: Int,
+    cachedFeaturePreprocessing: Preprocessing[ImageFeature, ImageFeature]): DataFrame = {
+    NNImageReader.readImages(path, sc.sc, minParitions, cachedFeaturePreprocessing)
   }
 
   def createNNEstimator(

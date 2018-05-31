@@ -18,6 +18,7 @@ package com.intel.analytics.zoo.pipeline.nnframes
 
 import com.intel.analytics.bigdl.utils.Engine
 import com.intel.analytics.bigdl.utils.RandomGenerator.RNG
+import com.intel.analytics.zoo.feature.image.{ImageCenterCrop, ImageResize}
 import org.apache.spark.SparkContext
 import org.apache.spark.sql.{Row, SQLContext}
 import org.opencv.core.CvType
@@ -124,4 +125,11 @@ class NNImageReaderSpec extends FlatSpec with Matchers with BeforeAndAfter {
     assert(imageOrigin == extractedOrigin)
   }
 
+  "NNImageReader" should "work with preprocessing" in {
+    val imageDirectory = imageNetResource + "n02110063/"
+    val preprocessing = ImageResize(256, 256) -> ImageCenterCrop(200, 200)
+    val imageDF = NNImageReader.readImages(imageDirectory, sc,
+      cachedFeaturePreprocessing = preprocessing)
+    assert(imageDF.count() == 3)
+  }
 }
