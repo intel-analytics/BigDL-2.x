@@ -47,11 +47,11 @@ public abstract class AbstractInferenceModel {
     this.model = InferenceModelFactory.loadFloatInferenceModel(modelPath, weightPath);
   }
 
-  public List<Float> predict2d(List<List<Float>> input) {
+  public List<List<Float>> predict2d(List<List<Float>> input) {
      return model.predict2d(input);
   }
 
-  public List<Float> predict3d(List<List<List<Float>>> input) {
+  public List<List<Float>> predict3d(List<List<List<Float>>> input) {
     return model.predict3d(input);
   }
 }

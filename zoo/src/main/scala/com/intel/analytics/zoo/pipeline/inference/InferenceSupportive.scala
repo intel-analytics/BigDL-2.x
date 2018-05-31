@@ -22,6 +22,7 @@ import org.slf4j.LoggerFactory
 import scala.collection.JavaConverters._
 import com.intel.analytics.bigdl.tensor.Tensor
 import java.util.{List => JList}
+import java.lang.{Float => JFloat}
 
 trait InferenceSupportive {
 
@@ -36,7 +37,7 @@ trait InferenceSupportive {
     result
   }
 
-  def transfer2dInputToSampleArray(input: JList[JList[java.lang.Float]]):
+  def transfer2dInputToSampleArray(input: JList[JList[JFloat]]):
     Array[Sample[Float]] = {
     val arrays = input.asScala.map(_.asScala.toArray.map(_.asInstanceOf[Float]))
     require(arrays.length > 0, "the input size is 0")
@@ -45,7 +46,7 @@ trait InferenceSupportive {
     samples.toArray
   }
 
-  def transfer3dInputToSampleArray(input: JList[JList[JList[java.lang.Float]]]):
+  def transfer3dInputToSampleArray(input: JList[JList[JList[JFloat]]]):
     Array[Sample[Float]] = {
     val arrays = input.asScala.map(_.asScala.toArray.map(
       _.asScala.toArray.map(_.asInstanceOf[Float])))
