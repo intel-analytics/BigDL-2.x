@@ -35,7 +35,7 @@ object Predict {
 
   case class PredictParam(image: String = "",
     outputFolder: String = "data/demo",
-    model: String = "",
+    modelPath: String = "",
     nPartition: Int = 1)
 
   val parser = new OptionParser[PredictParam]("Analytics Zoo Object Detection Demo") {
@@ -48,9 +48,9 @@ object Predict {
       .text("where you put the output data")
       .action((x, c) => c.copy(outputFolder = x))
       .required()
-    opt[String]("model")
-      .text("BigDL model")
-      .action((x, c) => c.copy(model = x))
+    opt[String]("modelPath")
+      .text("Analytics Zoo model path")
+      .action((x, c) => c.copy(modelPath = x))
     opt[Int]('p', "partition")
       .text("number of partitions")
       .action((x, c) => c.copy(nPartition = x))
@@ -63,7 +63,7 @@ object Predict {
         .setAppName("Object Detection Example")
       val sc = NNContext.getNNContext(conf)
 
-      val model = ObjectDetector.loadModel[Float](params.model)
+      val model = ObjectDetector.loadModel[Float](params.modelPath)
       val data = ImageSet.read(params.image, sc, params.nPartition)
       val output = model.predictImageSet(data)
 
