@@ -43,7 +43,8 @@ class ImageSet(JavaValue):
         return callBigDlFunc(self.bigdl_type, "isDistributedImageSet", self.value)
 
     @classmethod
-    def read(cls, path, sc=None, min_partitions=1, bigdl_type="float"):
+    def read(cls, path, sc=None, min_partitions=1, resize_height=-1,
+             resize_width=-1, bigdl_type="float"):
         """
         Read images as Image Set
         if sc is defined, Read image as DistributedImageSet from local file system or HDFS
@@ -55,7 +56,8 @@ class ImageSet(JavaValue):
         :param min_partitions A suggestion value of the minimal splitting number for input data.
         :return ImageSet
         """
-        return ImageSet(jvalue=callBigDlFunc(bigdl_type, "readImageSet", path, sc, min_partitions))
+        return ImageSet(jvalue=callBigDlFunc(bigdl_type, "readImageSet", path,
+                                             sc, min_partitions, resize_height, resize_width))
 
     def transform(self, transformer, bigdl_type="float"):
         """
