@@ -92,6 +92,15 @@ class TestOperator(ZooTestCase):
         self.compare_unary_op(k_add_func,
                               Lambda(function=z_add_func), [2, 3])
 
+    def test_radd_constant(self):
+        def z_add_func(x):
+            return 3.0 + x
+
+        def k_add_func(x):
+            return 3.0 + x
+        self.compare_unary_op(k_add_func,
+                              Lambda(function=z_add_func), [2, 3])
+
     def test_sub(self):
         def z_func(x, y):
             return x - y
@@ -110,6 +119,16 @@ class TestOperator(ZooTestCase):
         self.compare_unary_op(k_func,
                               Lambda(function=z_func), [2, 3])
 
+    def test_rsub_constant(self):
+        def z_func(x):
+            return 3.0 -x
+
+        def k_func(x):
+            return 3.0 - x
+        self.compare_unary_op(k_func,
+                              Lambda(function=z_func), [2, 3])
+
+
     def test_div(self):
         def z_func(x, y):
             return x / y
@@ -125,6 +144,15 @@ class TestOperator(ZooTestCase):
 
         def k_func(x):
             return x / 3.0
+        self.compare_unary_op(k_func,
+                              Lambda(function=z_func), [2, 3])
+
+    def test_rdiv_constant(self):
+        def z_func(x):
+            return 3.0 / x
+
+        def k_func(x):
+            return 3.0 / x
         self.compare_unary_op(k_func,
                               Lambda(function=z_func), [2, 3])
 
@@ -145,6 +173,25 @@ class TestOperator(ZooTestCase):
             return x * 3.0
         self.compare_unary_op(k_func,
                               Lambda(function=z_func), [2, 3])
+
+    def test_rmul_constant(self):
+        def z_func(x):
+            return 3.0 * x
+
+        def k_func(x):
+            return 3.0 * x
+        self.compare_unary_op(k_func,
+                              Lambda(function=z_func), [2, 3])
+
+    def test_neg(self):
+        def z_func(x):
+            return - x
+
+        def k_func(x):
+            return - x
+        self.compare_unary_op(k_func,
+                              Lambda(function=z_func), [2, 3])
+
 
     def test_clip(self):
         def z_func(x):
