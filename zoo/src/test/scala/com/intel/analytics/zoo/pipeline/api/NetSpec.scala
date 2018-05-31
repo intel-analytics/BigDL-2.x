@@ -20,7 +20,7 @@ import com.intel.analytics.bigdl.nn.abstractnn.AbstractModule
 import com.intel.analytics.bigdl.nn.SpatialCrossMapLRN
 import com.intel.analytics.bigdl.tensor.Tensor
 import com.intel.analytics.bigdl.utils.Shape
-import com.intel.analytics.zoo.pipeline.api.keras.models.{KerasNet, Model => ZModel}
+import com.intel.analytics.zoo.pipeline.api.keras.models.{KerasNet, Sequential, Model => ZModel}
 import com.intel.analytics.zoo.pipeline.api.keras.ZooSpecHelper
 import com.intel.analytics.zoo.pipeline.api.keras.layers.{Dense, Input}
 import com.intel.analytics.zoo.pipeline.api.keras.layers.utils.KerasUtils
@@ -92,5 +92,16 @@ class NetSpec extends ZooSpecHelper{
     val model = Net.loadTF[Float](s"$path/lenet.pb", Seq("Placeholder"), Seq("LeNet/fc4/BiasAdd"))
     val newModel = model.newGraph("LeNet/fc3/Relu")
     newModel.outputNodes.head.element.getName() should be ("LeNet/fc3/Relu")
+  }
+
+  "net load model" should "work properly" in {
+    val resource = getClass().getClassLoader().getResource("models")
+    val path = resource.getPath + "/" + "zoo_keras"
+
+    val seq = Net.load[Float](s"$path/small_seq.model")
+    seq.forward(Tensor[Float](2, 3, 5).rand())
+
+    val model = Net.load[Float](s"$path/small_model.model")
+    model.forward(Tensor[Float](2, 3, 5).rand())
   }
 }
