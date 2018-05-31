@@ -10,7 +10,7 @@ This is a simple example of object detection using Analytics Zoo Object Detectio
 * Download Analytics Zoo and build it.
 * Run `export SPARK_HOME=the root directory of Spark`.
 * Run `export ANALYTICS_ZOO_HOME=the dist directory under the Analytics Zoo project`.
-* Prepare the video to detect. ([YouTube-8M](https://research.google.com/youtube8m/) and [The video](https://www.youtube.com/watch?v=akcYAuaP4jw)).
+* Prepare the video in YouTube-8M to detect. ([YouTube-8M](https://research.google.com/youtube8m/) and [The video](https://www.youtube.com/watch?v=akcYAuaP4jw)).
 * Run `$ANALYTICS_ZOO_HOME/apps/object-detection/download_model.sh` to download the pretrained model.
 * Run the following bash command to start the jupyter notebook. Change parameter settings as you need, ie `MASTER = local[physcial_core_number]`.
 ```bash
