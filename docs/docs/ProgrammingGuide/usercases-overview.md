@@ -9,8 +9,8 @@ Analytics Zoo provides a collection of reference user applications and demos, wh
    * [Image Augmentation](https://github.com/intel-analytics/analytics-zoo/tree/branch-0.1/apps/image-augmentation) demostrates how to do image augmentation for vision projects. 
  
    * [Object Detection](https://github.com/intel-analytics/analytics-zoo/tree/branch-0.1/apps/object-detection) demonstrates how to use Analytics Zoo Object Detection API (and pretrained SSD model) on videos. 
-   
-   * [Recommendation](https://github.com/intel-analytics/analytics-zoo/tree/branch-0.1/apps/recommendation): demonstrates how to use Analytics Zoo Recommendation APIs (i.e.Neural Collaborative Filtering, Wide and Deep Learning) to do recommendation on data with explicit feedback. 
+ 
+   * [Recommendation](https://github.com/intel-analytics/analytics-zoo/tree/branch-0.1/apps/recommendation) demonstrates how to use Analytics Zoo Recommendation APIs (i.e.Neural Collaborative Filtering, Wide and Deep Learning) to do recommendation on data with explicit feedback. 
 
    * [Sentiment Analysis](https://github.com/intel-analytics/analytics-zoo/tree/branch-0.1/apps/sentiment-analysis) demostrates how to do sentiment analysis using neural network models (e.g. CNN, LSTM, GRU, Bi-LSTM).
 
