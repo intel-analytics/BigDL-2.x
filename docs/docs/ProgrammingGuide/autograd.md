@@ -20,10 +20,16 @@
    from zoo.pipeline.api.keras.models import *
    model = Sequential().add(Dense(1, input_shape=(2,))) \
                        .add(Lambda(function=add_one_func))
+   # Evaluation for debug purpose.
+   model.forward(np.random.uniform(0, 1, shape[3, 2])) # 3 is the batch size
+  
    ```
 
 3. Train model with *custom loss function*
    ```
    model.compile(optimizer = SGD(), loss = mean_absolute_error)
    model.fit(x = ..., y = ...)
+   
+   # Evaluation for debug purpose
+      CustomLoss(mean_absolute_error, [2]).forward(np.random.uniform(0, 1, shape[3, 2])) # [2] is the shape without batch, 3 is the batch size.
    ```
