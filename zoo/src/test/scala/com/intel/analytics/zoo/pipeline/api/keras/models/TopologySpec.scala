@@ -69,7 +69,10 @@ class TopologySpec extends FlatSpec with Matchers with BeforeAndAfter {
 
   "model.summary() for Model" should "work properly" in {
     val input = Input[Float](inputShape = Shape(10))
-    val model = Model(input, Dense[Float](8).inputs(input))
+    val dense1 = Dense[Float](12).setName("dense1").inputs(input)
+    val dense2 = Dense[Float](10).setName("dense2").inputs(dense1)
+    val output = Activation[Float]("softmax").inputs(dense2)
+    val model = Model(input, output)
     model.summary()
   }
 
@@ -83,6 +86,29 @@ class TopologySpec extends FlatSpec with Matchers with BeforeAndAfter {
     model.add(LSTM[Float](70))
     model.add(Dense[Float](1).setName("dense1"))
     model.add(Activation[Float]("sigmoid"))
+    model.freeze("dense1")
+    model.summary()
+  }
+
+  "model.summary() for nested Sequential" should "work properly" in {
+    val model = Sequential[Float]()
+    model.add(Convolution2D[Float](32, 3, 3, borderMode = "valid",
+      inputShape = Shape(1, 28, 28)))
+    model.add(Activation[Float]("relu"))
+    model.add(Convolution2D[Float](32, 3, 3))
+    model.add(Activation[Float]("relu"))
+    model.add(MaxPooling2D[Float]())
+    model.add(Dropout[Float](0.25))
+    val seq1 = Sequential[Float]()
+    seq1.add(Flatten[Float](inputShape = Shape(32, 12, 12)))
+    seq1.add(Dense[Float](128).setName("dense1"))
+    model.add(seq1)
+    val seq2 = Sequential[Float]()
+    seq2.add(Activation[Float]("relu", inputShape = Shape(128)))
+    seq2.add(Dropout[Float](0.5))
+    seq2.add(Dense[Float](10))
+    model.add(seq2)
+    model.add(Activation[Float]("softmax"))
     model.freeze("dense1")
     model.summary()
   }

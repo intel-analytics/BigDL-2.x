@@ -28,6 +28,7 @@ import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric
 import com.intel.analytics.bigdl.utils.{Edge, LoggerFilter, Node, Shape}
 import com.intel.analytics.bigdl.utils.serializer.{DeserializeContext, ModuleData, ModuleSerializer, SerializeContext}
 import com.intel.analytics.bigdl.visualization.{TrainSummary, ValidationSummary}
+import com.intel.analytics.zoo.pipeline.api.Net
 import com.intel.analytics.zoo.pipeline.api.autograd.{CustomLossWithVariable, Lambda, Variable}
 import com.intel.analytics.zoo.pipeline.api.keras.layers.Input
 import com.intel.analytics.zoo.pipeline.api.keras.layers.utils.{AbstractModuleRef, GraphRef, KerasLayerRef}
@@ -41,7 +42,7 @@ import scala.reflect.ClassTag
 
 
 abstract class KerasNet[T: ClassTag](implicit ev: TensorNumeric[T])
-  extends KerasLayer[Activity, Activity, T] {
+  extends KerasLayer[Activity, Activity, T] with Net {
 
   def getSubModules(): List[AbstractModule[Activity, Activity, T]] = {
     require(this.labor.isInstanceOf[Container[Activity, Activity, T]],

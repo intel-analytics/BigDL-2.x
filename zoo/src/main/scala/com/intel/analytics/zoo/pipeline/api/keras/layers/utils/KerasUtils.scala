@@ -27,6 +27,7 @@ import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric
 import com.intel.analytics.bigdl.utils.{MultiShape, Shape, SingleShape}
 import com.intel.analytics.zoo.pipeline.api.Net
 import com.intel.analytics.zoo.pipeline.api.keras.metrics.AUC
+import com.intel.analytics.zoo.pipeline.api.keras.models.KerasNet
 
 import scala.collection.mutable.ArrayBuffer
 import scala.reflect.ClassTag
@@ -243,7 +244,7 @@ object KerasUtils {
   }
 
   /**
-   * Count the total number of parameters for a Keras layer.
+   * Count the total number of parameters for a KerasLayer or a KerasNet.
    * Return a tuple (total params #, trainable params #)
    */
   def countParams[T: ClassTag](layer: KerasLayer[Activity, Activity, T]): (Int, Int) = {
@@ -252,11 +253,21 @@ object KerasUtils {
     for (w <- weights) {
       count += w.nElement()
     }
-    if (layer.asInstanceOf[Net].isFrozen()) {
-      (count, 0)
+    if (layer.isInstanceOf[KerasNet[T]]) {
+      val modules = layer.labor.asInstanceOf[Container[Activity, Activity, T]].modules
+      var trainable = 0
+      for (module <- modules) {
+        trainable += countParams[T](module.asInstanceOf[KerasLayer[Activity, Activity, T]])._2
+      }
+      (count, trainable)
     }
     else {
-      (count, count)
+      if (layer.asInstanceOf[Net].isFrozen()) {
+        (count, 0)
+      }
+      else {
+        (count, count)
+      }
     }
   }
 
