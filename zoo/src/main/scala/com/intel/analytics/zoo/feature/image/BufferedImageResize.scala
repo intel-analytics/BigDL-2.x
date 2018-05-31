@@ -23,10 +23,10 @@ import javax.imageio.ImageIO
 import com.intel.analytics.bigdl.transform.vision.image.ImageFeature
 
 /**
-  * adjust the image brightness
-  * @param resizeH height after resize
-  * @param resizeW width after resize
-  */
+ * Resize loading image
+ * @param resizeH height after resize
+ * @param resizeW width after resize
+ */
 class BufferedImageResize(resizeH: Int, resizeW: Int) extends ImageProcessing {
 
   override def apply(prev: Iterator[ImageFeature]): Iterator[ImageFeature] = {

@@ -16,13 +16,8 @@
 
 package com.intel.analytics.zoo.feature.image
 
-import java.awt.image.BufferedImage
-import java.io.{ByteArrayInputStream, ByteArrayOutputStream, FileInputStream}
-import java.nio.channels.Channels
-import java.nio.file.Path
-import javax.imageio.ImageIO
-
-import com.intel.analytics.bigdl.transform.vision.image.{DistributedImageFrame, ImageFeature, ImageFrame, LocalImageFrame}
+import com.intel.analytics.bigdl.transform.vision.image.{DistributedImageFrame,
+       ImageFeature, ImageFrame, LocalImageFrame}
 import com.intel.analytics.zoo.common.Utils
 import com.intel.analytics.zoo.feature.common.Preprocessing
 import org.apache.commons.io.FileUtils
@@ -133,26 +128,28 @@ object ImageSet {
    * if sc is null, path is local directory/image file/image file with wildcard character
    * @param sc SparkContext
    * @param minPartitions A suggestion value of the minimal splitting number for input data.
+   * @param resizeH height after resize
+   * @param resizeW width after resize
    * @return ImageSet
    */
   def read(path: String, sc: SparkContext = null, minPartitions: Int = 1,
            resizeH: Int = -1, resizeW: Int = -1): ImageSet = {
-    if (null != sc) {
+    val imageSet = if (null != sc) {
       val images = sc.binaryFiles(path, minPartitions).map { case (p, stream) =>
           ImageFeature(stream.toArray(), uri = p)
       }
-
-      if (resizeW == -1 && resizeH == -1) {
-        ImageSet.rdd(images) -> ImageBytesToMat()
-      } else {
-        ImageSet.rdd(images) -> BufferedImageResize(resizeH, resizeW) -> ImageBytesToMat()
-      }
+      ImageSet.rdd(images)
     } else {
       val files = Utils.listLocalFiles(path)
       val images = files.map { p =>
         ImageFeature(FileUtils.readFileToByteArray(p), uri = p.getAbsolutePath)
       }
-      ImageSet.array(images) -> ImageBytesToMat()
+      ImageSet.array(images)
+    }
+    if (resizeW == -1 && resizeH == -1) {
+      imageSet -> ImageBytesToMat()
+    } else {
+      imageSet -> BufferedImageResize(resizeH, resizeW) -> ImageBytesToMat()
     }
   }
 
