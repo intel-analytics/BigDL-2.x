@@ -44,7 +44,7 @@ object Utils {
   val trainParser = new OptionParser[TrainParams]("BigDL ptbModel Train Example") {
     opt[String]('m', "modelPath")
       .text("pretrained model path")
-      .action((x, c) => c.copy(dataPath = x))
+      .action((x, c) => c.copy(modelPath = x))
     opt[String]('d', "dataPath")
       .text("training data path")
       .action((x, c) => c.copy(dataPath = x))
