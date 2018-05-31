@@ -176,7 +176,7 @@ class Net:
                         If set as True, only layers with the same name will be loaded.
         :return: A BigDL model.
         """
-        BModel.load_keras(json_path, hdf5_path, by_name)
+        return BModel.load_keras(json_path, hdf5_path, by_name)
 
 
 class TFNet(Layer):
