@@ -27,11 +27,21 @@ case class FloatInferenceModel(
   model: AbstractModule[Activity, Activity, Float],
   predictor: LocalPredictor[Float]) extends InferenceSupportive {
 
-  def predict(input: java.util.List[java.util.List[java.lang.Float]]):
+  def predict2d(input: java.util.List[java.util.List[java.lang.Float]]):
     java.util.List[java.lang.Float] = {
     timing(s"predict for input") {
-      val tensor = transferInferenceInputToTensor(input)
-      val result = model.forward(tensor).asInstanceOf[Tensor[Float]].storage.array.toList
+      val samples = transfer2dInputToSampleArray(input)
+      val result = predictor.predict(samples).asInstanceOf[Tensor[Float]].toArray().toList
+        .asJava.asInstanceOf[java.util.List[java.lang.Float]]
+      result
+    }
+  }
+
+  def predict3d(input: java.util.List[java.util.List[java.util.List[java.lang.Float]]]):
+  java.util.List[java.lang.Float] = {
+    timing(s"predict for input") {
+      val samples = transfer3dInputToSampleArray(input)
+      val result = predictor.predict(samples).asInstanceOf[Tensor[Float]].toArray().toList
         .asJava.asInstanceOf[java.util.List[java.lang.Float]]
       result
     }

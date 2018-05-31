@@ -16,9 +16,12 @@
 
 package com.intel.analytics.zoo.pipeline.inference
 
+import com.intel.analytics.bigdl.dataset.Sample
 import org.slf4j.LoggerFactory
+
 import scala.collection.JavaConverters._
 import com.intel.analytics.bigdl.tensor.Tensor
+import java.util.{List => JList}
 
 trait InferenceSupportive {
 
@@ -33,26 +36,25 @@ trait InferenceSupportive {
     result
   }
 
-  def transferInferenceInputToTensor(input: java.util.List[java.util.List[java.lang.Float]]):
-    Tensor[Float] = {
+  def transfer2dInputToSampleArray(input: JList[JList[java.lang.Float]]):
+    Array[Sample[Float]] = {
     val arrays = input.asScala.map(_.asScala.toArray.map(_.asInstanceOf[Float]))
-    val _buffer = Tensor[Float]()
-    arrays.length match {
-      case 0 => ;
-      case 1 => val size = arrays.head.length
-        _buffer.resize(size)
-        System.arraycopy(arrays.head, 0, _buffer.storage().array(), 0, size)
-      case _ =>
-        val size = arrays.head.length
-        arrays.map(arr => require(size == arr.length, "input array have different lengths"))
-        _buffer.resize(Array(arrays.length, size))
-        var d = 0
-        while (d < arrays.length) {
-          System.arraycopy(arrays(d), 0, _buffer.storage().array(), d * size, size)
-          d += 1
-        }
-    }
-    _buffer
+    require(arrays.length > 0, "the input size is 0")
+    val length = arrays(0).length
+    val samples = arrays.map(array => Sample(Tensor(data = array, shape = Array(length))))
+    samples.toArray
   }
 
+  def transfer3dInputToSampleArray(input: JList[JList[JList[java.lang.Float]]]):
+    Array[Sample[Float]] = {
+    val arrays = input.asScala.map(_.asScala.toArray.map(
+      _.asScala.toArray.map(_.asInstanceOf[Float])))
+    require(arrays.length > 0, "the input size is 0")
+    val length1 = arrays(0).length
+    require(arrays(0).length > 0, "the input size is 0")
+    val length2 = arrays(0)(0).length
+    val samples = arrays.map(array => Sample(
+      Tensor(data = array.flatten, shape = Array(length1, length2))))
+    samples.toArray
+  }
 }
