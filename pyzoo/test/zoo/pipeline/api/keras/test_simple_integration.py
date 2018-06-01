@@ -149,7 +149,7 @@ class TestSimpleIntegration(ZooTestCase):
         ImageConfigure(
             pre_processor=ChainedPreprocessing([ImageResize(224, 224), ImageResize(224, 224)]))
 
-    def test_model_summary(self):
+    def test_model_summary_sequential(self):
         model = Sequential()
         model.add(LSTM(input_shape=(16, 32), output_dim=8, return_sequences=True))
         model.add(Dropout(0.2))
@@ -158,6 +158,13 @@ class TestSimpleIntegration(ZooTestCase):
         model.add(LSTM(15, return_sequences=False))
         model.add(Dropout(0.2))
         model.add(Dense(output_dim=1))
+        model.summary()
+
+    def test_model_summary_graph(self):
+        x = Input(shape=(8, ))
+        y = Dense(10)(x)
+        z = Dense(12)(y)
+        model = Model(x, z)
         model.summary()
 
 

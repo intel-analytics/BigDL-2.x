@@ -312,6 +312,7 @@ abstract class KerasNet[T: ClassTag](implicit ev: TensorNumeric[T])
    *
    * @param lineLength The total length of one row. Default is 120.
    * @param positions The maximum absolute length proportion(%) of each field.
+   *                  Array of Double of length 4.
    *                  Usually you don't need to adjust this parameter.
    *                  Default is Array(.33, .55, .67, 1), meaning that
    *                  the first field will occupy up to 33% of lineLength,
