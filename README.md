@@ -25,7 +25,7 @@ Analytics Zoo makes it easy to build deep learning application on Spark and BigD
 
 - For additional questions and discussions, you can join the [Google User Group](https://groups.google.com/forum/#!forum/bigdl-user-group) (or subscribe to the [Mail List](bigdl-user-group+subscribe@googlegroups.com)) 
 
-___
+---
 
 ## High level pipeline APIs
 Analytics Zoo provides a set of easy-to-use, high level pipeline APIs that natively support Spark DataFrames and ML Pipelines, autograd and custom layer/loss, trasnfer learning, etc.
