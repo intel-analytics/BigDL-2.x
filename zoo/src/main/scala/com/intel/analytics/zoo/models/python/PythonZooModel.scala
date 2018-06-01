@@ -233,4 +233,8 @@ class PythonZooModel[T: ClassTag](implicit ev: TensorNumeric[T]) extends PythonB
     Utils.getNegativeSamples(indexed)
   }
 
+  def zooModelSummary(model: ZooModel[Activity, Activity, T]): Unit = {
+    model.summary()
+  }
+
 }
