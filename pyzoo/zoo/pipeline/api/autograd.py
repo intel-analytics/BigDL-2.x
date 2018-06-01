@@ -237,7 +237,7 @@ class Variable(ZooKerasCreator):
     def __rdiv__(self, other):
         return Variable.from_jvalue(callBigDlFunc("float", "div", other, self))
 
-    __rtruediv__ = __div__
+    __rtruediv__ = __rdiv__
 
     def __neg__(self):
         return neg(self)
