@@ -1,4 +1,4 @@
-/*
+ /*
  * Copyright 2018 Analytics Zoo Authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -43,41 +43,78 @@ object AutoGrad {
     }
   }
 
-  def abs[T: ClassTag](a: Variable[T])(
+  /**
+   * Element-wise absolute value.
+   * @param x A variable.
+   * @return A variable.
+   */
+  def abs[T: ClassTag](x: Variable[T])(
       implicit ev: TensorNumeric[T]): Variable[T] = {
     val o: KerasLayer[Activity, Activity, T] =
       new KerasLayerWrapper[T](bnn.Abs[T]().asInstanceOf[AbstractModule[Activity, Activity, T]])
-    Variable(o.inputs(a.node))
+    Variable(o.inputs(x.node))
   }
 
-  def sum[T: ClassTag](a: Variable[T], axis: Int = 0, keepdims: Boolean = false)(
+  /**
+   * Sum of the values in a variable, alongside the specified axis.
+   * @param x A variable.
+   * @param axis axis to compute the mean. 0-based indexed.
+   * @param keepDims A boolean, whether to keep the dimensions or not.
+   * If `keepDims` is `False`, the rank of the variable is reduced
+   * by 1. If `keepDims` is `True`,
+   * the reduced dimensions are retained with length 1.
+   * @return A variable with the mean of elements of `x`.
+   */
+  def sum[T: ClassTag](x: Variable[T], axis: Int = 0, keepDims: Boolean = false)(
       implicit ev: TensorNumeric[T]): Variable[T] = {
     val o: KerasLayer[Activity, Activity, T] =
       new KerasLayerWrapper[T](bnn.Sum[T](dimension = normalizeAxis(axis) + 1,
-        squeeze = !keepdims).asInstanceOf[AbstractModule[Activity, Activity, T]])
-    Variable(o.inputs(a.node))
+        squeeze = !keepDims).asInstanceOf[AbstractModule[Activity, Activity, T]])
+    Variable(o.inputs(x.node))
   }
 
-  def clip[T: ClassTag](a: Variable[T], min: Double, max: Double)(
+  /**
+   * Element-wise value clipping.
+   * @param x A variable.
+   * @param min Double.
+   * @param max Double.
+   * @return A variable.
+   */
+  def clip[T: ClassTag](x: Variable[T], min: Double, max: Double)(
       implicit ev: TensorNumeric[T]): Variable[T] = {
     val o: KerasLayer[Activity, Activity, T] =
       new KerasLayerWrapper[T](
         bnn.HardTanh[T](minValue = min,
           maxValue = max).asInstanceOf[AbstractModule[Activity, Activity, T]])
-    Variable(o.inputs(a.node))
+    Variable(o.inputs(x.node))
   }
 
-  def square[T: ClassTag](a: Variable[T])(
+  /**
+   * Element-wise square.
+   * @param x A variable.
+   * @return A variable.
+   */
+  def square[T: ClassTag](x: Variable[T])(
       implicit ev: TensorNumeric[T]): Variable[T] = {
-    Variable(Square[T]().inputs(a.node))
+    Variable(Square[T]().inputs(x.node))
   }
 
-
-  def sqrt[T: ClassTag](a: Variable[T])(
+  /**
+   * Element-wise square root.
+   * @param x A variable.
+   * @return A variable.
+   */
+  def sqrt[T: ClassTag](x: Variable[T])(
       implicit ev: TensorNumeric[T]): Variable[T] = {
-    Variable(Sqrt[T]().inputs(a.node))
+    Variable(Sqrt[T]().inputs(x.node))
   }
 
+  /**
+   * Element-wise maximum of two variables
+   * @param x A variable.
+   * @param y A variable.
+   * @return A variable.
+   */
   def maximum[T: ClassTag](x: Variable[T], y: Variable[T])(
       implicit ev: TensorNumeric[T]): Variable[T] = {
     val o: KerasLayer[Activity, Activity, T] =
@@ -86,20 +123,26 @@ object AutoGrad {
     Variable(o.inputs(x.node, y.node))
   }
 
+  /**
+   * Element-wise maximum of two variables
+   * @param x A variable.
+   * @param y Double
+   * @return A variable.
+   */
   def maximum[T: ClassTag](x: Variable[T], y: Double)(
       implicit ev: TensorNumeric[T]): Variable[T] = {
     clip(x, min = y, max = Double.MaxValue)
   }
 
   /**
-   * Mean of a tensor, alongside the specified axis.
+   * Mean of a variable, alongside the specified axis.
+   * @param x A variable.
    * @param axis axis to compute the mean. 0-based indexed.
    * @param keepDims A boolean, whether to keep the dimensions or not.
-   *If `keepdims` is `False`, the rank of the tensor is reduced
-   *by 1. If `keep_dims` is `True`,
-   *the reduced dimensions are retained with length 1.
-   * @return
-   *         A tensor with the mean of elements of `x`.
+   * If `keepDims` is `False`, the rank of the variable is reduced
+   * by 1. If `keepDims` is `True`,
+   * the reduced dimensions are retained with length 1.
+   * @return A variable with the mean of elements of `x`.
    */
   def mean[T: ClassTag](x: Variable[T], axis: Int = 0, keepDims: Boolean = false)(
       implicit ev: TensorNumeric[T]): Variable[T] = {
@@ -109,24 +152,69 @@ object AutoGrad {
     Variable(o.inputs(x.node))
   }
 
-  def log[T: ClassTag](a: Variable[T])(
+  /**
+   * Element-wise log.
+   * @param x A variable.
+   * @return A variable.
+   */
+  def log[T: ClassTag](x: Variable[T])(
       implicit ev: TensorNumeric[T]): Variable[T] = {
-    Variable(Log[T]().inputs(a.node))
+    Variable(Log[T]().inputs(x.node))
   }
 
+  /**
+   * Define the value of epsilon.
+   * @return A value of type Double.
+   */
   def epsilon[T: ClassTag]()(
       implicit ev: TensorNumeric[T]): Double = {
     EPSILON
   }
 
+  /**
+   * Element-wise exponential.
+   * @param x A variable.
+   * @return A variable.
+   */
   def exp[T: ClassTag](x: Variable[T])(
       implicit ev: TensorNumeric[T]): Variable[T] = {
     Variable(Exp[T]().inputs(x.node))
   }
 
+  /**
+   * Element-wise exponentiation.
+   * @param x A variable.
+   * @param a Double.
+   * @return A variable.
+   */
   def pow[T: ClassTag](x: Variable[T], a: Double)(
       implicit ev: TensorNumeric[T]): Variable[T] = {
     Variable(Power[T](a).inputs(x.node))
+  }
+
+  /**
+   * Softsign of a variable.
+   * @param x A variable.
+   * @return A variable.
+   */
+  def softplus[T: ClassTag](x: Variable[T])(
+    implicit ev: TensorNumeric[T]): Variable[T] = {
+    val o: KerasLayer[Activity, Activity, T] =
+      new KerasLayerWrapper[T](
+        bnn.SoftPlus[T]().asInstanceOf[AbstractModule[Activity, Activity, T]])
+    Variable(o.inputs(x.node))
+  }
+
+  /**
+   * Softsign of a variable.
+   * @param x A variable.
+   * @return A variable.
+   */
+  def softsign[T: ClassTag](x: Variable[T])(
+    implicit ev: TensorNumeric[T]): Variable[T] = {
+    val o: KerasLayer[Activity, Activity, T] =
+      new KerasLayerWrapper(bnn.SoftSign[T]().asInstanceOf[AbstractModule[Activity, Activity, T]])
+    Variable(o.inputs(x.node))
   }
 }
 
