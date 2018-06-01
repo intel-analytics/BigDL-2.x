@@ -197,6 +197,96 @@ class TestOperator(ZooTestCase):
         out_data = model.forward(mock_data)
         assert out_data.shape == (10, 3, 16, 16)
 
+    def test_softsign(self):
+        def z_func(x):
+            return softsign(x)
+
+        def k_func(x):
+            return KK.softsign(x)
+
+        self.compare_unary_op(k_func,
+                              Lambda(function=z_func, ), [2, 3])
+
+    def test_softplus(self):
+        def z_func(x):
+            return softplus(x)
+
+        def k_func(x):
+            return KK.softplus(x)
+
+        self.compare_unary_op(k_func,
+                              Lambda(function=z_func, ), [2, 3])
+
+    def test_exp(self):
+        def z_func(x):
+            return exp(x)
+
+        def k_func(x):
+            return KK.exp(x)
+
+        self.compare_unary_op(k_func,
+                              Lambda(function=z_func, ), [2, 3])
+
+    def test_abs(self):
+        def z_func(x):
+            return abs(x)
+
+        def k_func(x):
+            return KK.abs(x)
+
+        self.compare_unary_op(k_func,
+                              Lambda(function=z_func, ), [2, 3])
+
+    def test_log(self):
+        def z_func(x):
+            return log(x)
+
+        def k_func(x):
+            return KK.log(x)
+
+        self.compare_unary_op(k_func,
+                              Lambda(function=z_func, ), [2, 3])
+
+    def test_sqrt(self):
+        def z_func(x):
+            return sqrt(x)
+
+        def k_func(x):
+            return KK.sqrt(x)
+
+        self.compare_unary_op(k_func,
+                              Lambda(function=z_func, ), [2, 3])
+
+    def test_mean(self):
+        def z_func(x):
+            return mean(x, 0, False)
+
+        def k_func(x):
+            return KK.mean(x, 0, False)
+
+        self.compare_unary_op(k_func,
+                              Lambda(function=z_func, ), [2, 3])
+
+    def test_sum(self):
+        def z_func(x):
+            return sum(x, 0, False)
+
+        def k_func(x):
+            return KK.sum(x, 0, False)
+
+        self.compare_unary_op(k_func,
+                              Lambda(function=z_func, ), [2, 3])
+
+    def test_maximum(self):
+        def z_func(x, y):
+            return maximum(x, y)
+
+        def k_func(x, y):
+            return KK.maximum(x, y)
+
+        self.compare_binary_op(k_func,
+                               Lambda(function=z_func, ), [[2, 3], [2, 3]])
+
 
 if __name__ == "__main__":
     pytest.main([__file__])
