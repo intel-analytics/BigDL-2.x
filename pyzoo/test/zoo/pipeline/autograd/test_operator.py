@@ -121,13 +121,12 @@ class TestOperator(ZooTestCase):
 
     def test_rsub_constant(self):
         def z_func(x):
-            return 3.0 -x
+            return 3.0 - x
 
         def k_func(x):
             return 3.0 - x
         self.compare_unary_op(k_func,
                               Lambda(function=z_func), [2, 3])
-
 
     def test_div(self):
         def z_func(x, y):
@@ -191,7 +190,6 @@ class TestOperator(ZooTestCase):
             return - x
         self.compare_unary_op(k_func,
                               Lambda(function=z_func), [2, 3])
-
 
     def test_clip(self):
         def z_func(x):
