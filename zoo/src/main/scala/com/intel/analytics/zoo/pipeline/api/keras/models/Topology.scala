@@ -299,8 +299,31 @@ abstract class KerasNet[T: ClassTag](implicit ev: TensorNumeric[T])
 
   def toModel(): Model[T]
 
-  def summary(lineLength: Int = 120,
-              positions: Array[Double] = Array(.33, .55, .67, 1)): Unit
+  /**
+   * Print out the summary information of an Analytics Zoo Keras Model.
+   *
+   * For each layer in the model, there will be a separate row containing four columns:
+   * ________________________________________________________________________________
+   * Layer (type)          Output Shape          Param #     Connected to
+   * ================================================================================
+   *
+   * In addition, total number of parameters of this model, separated into trainable and
+   * non-trainable counts, will be printed out after the table.
+   *
+   * @param lineLength The total length of one row. Default is 120.
+   * @param positions The maximum absolute length proportion(%) of each field.
+   *                  Usually you don't need to adjust this parameter.
+   *                  Default is Array(.33, .55, .67, 1), meaning that
+   *                  the first field will occupy up to 33% of lineLength,
+   *                  the second field will occupy up to (55-33)% of lineLength,
+   *                  the third field will occupy up to (67-55)% of lineLength,
+   *                  the fourth field will occupy the remaining line (100-67)%.
+   *                  If the field has a larger length, the remaining part will be trimmed.
+   *                  If the field has a smaller length, the remaining part will be white spaces.
+   */
+  def summary(
+      lineLength: Int = 120,
+      positions: Array[Double] = Array(.33, .55, .67, 1)): Unit
 }
 
 class Model[T: ClassTag] private (private val _inputs : Seq[ModuleNode[T]],
@@ -375,7 +398,7 @@ class Model[T: ClassTag] private (private val _inputs : Seq[ModuleNode[T]],
     println("Model Summary:")
     KerasUtils.printSplitLine('-', lineLength)
     val toDisplay = Array("Layer (type)", "Output Shape", "Param #", "Connected to")
-    KerasUtils.printRow(toDisplay, lineLength, positions, splitingChar = '=')
+    KerasUtils.printRow(toDisplay, lineLength, positions, splitChar = '=')
     val nodes = labor.asInstanceOf[StaticGraph[T]].getSortedForwardExecutions()
     var totalParams = 0
     var trainableParams = 0

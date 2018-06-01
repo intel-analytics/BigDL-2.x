@@ -244,7 +244,7 @@ object KerasUtils {
   }
 
   /**
-   * Count the total number of parameters for a KerasLayer or a KerasNet.
+   * Count the total number of parameters for a KerasLayer.
    * Return a tuple (total params #, trainable params #)
    */
   def countParams[T: ClassTag](layer: KerasLayer[Activity, Activity, T]): (Int, Int) = {
@@ -286,21 +286,27 @@ object KerasUtils {
   /**
    * Together with the layer summary of a node, also return the name of the node(s)
    * that it is connected to.
+   * If there are multiple connected nodes, they will be combined by ", "
    */
   def getNodeSummary[T: ClassTag](node: ModuleNode[T]): Array[String] = {
     val layer = node.element.asInstanceOf[KerasLayer[Activity, Activity, T]]
     val results = getLayerSummary(layer)
     var connectedTo = ""
-    for (c <- node.prevNodes) connectedTo += c.element.getName
+    val prevNodes = node.prevNodes
+    for (i <- prevNodes.indices) {
+      if (i > 0) connectedTo += ", "
+      connectedTo += prevNodes(i).element.getName
+    }
     results ++ Array(connectedTo)
   }
 
   /**
    * Print the summary of a node in a line.
+   * Return a tuple (total params #, trainable params #) of this node.
    */
   def printNodeSummary[T: ClassTag](
       node: ModuleNode[T],
-      lineLength: Int = 100,
+      lineLength: Int = 120,
       positions: Array[Double] = Array(.33, .55, .67, 1)): (Int, Int) = {
     printRow(getNodeSummary(node), lineLength, positions)
     countParams(node.element.asInstanceOf[KerasLayer[Activity, Activity, T]])
@@ -318,22 +324,37 @@ object KerasUtils {
    *                  the third field will occupy up to (67-55)% of lineLength,
    *                  the fourth field will occupy the remaining line (100-67)%.
    *                  If the field has a larger length, the remaining part will be trimmed.
-   * @param splitingChar The char to compose the split line after printing one row.
+   *                  If the field has a smaller length, the remaining part will be white spaces.
+   * @param includeSplitLine Whether to add a split line after printing one row.
+   * @param splitChar The character to compose the split line.
    */
   def printRow(
       fields: Array[String],
       lineLength: Int = 120,
       positions: Array[Double] = Array(.33, .55, .67, 1),
-      splitingChar: Char = '_'): Unit = {
+      includeSplitLine: Boolean = true,
+      splitChar: Char = '_'): Unit = {
     val fieldLengths = ArrayBuffer[Int]()
     for (i <- positions.indices) {
-      if (i > 0) fieldLengths.append(((positions(i) - positions(i-1)) * lineLength).toInt)
+      if (i > 0) {
+        val len = (positions(i) - positions(i-1)) * lineLength
+        require(len > 0, s"Invalid positions specified: ${positions(i)} < ${positions(i-1)}")
+        fieldLengths.append(len.toInt)
+      }
       else fieldLengths.append((positions(i)*lineLength).toInt)
     }
     var line = ""
+    // If there are multiple connected to nodes, each will be printed in a separate line.
+    var nodes = Array[String]()
     for (i <- fields.indices) {
       if (i > 0) line += " "
-      line += fields(i)
+      if (i == 3) {
+        nodes = fields(i).split(", ")
+        line += nodes(0)
+      }
+      else {
+        line += fields(i)
+      }
       val maxLength = fieldLengths.take(i + 1).sum
       if (line.length > maxLength) {
         line = line.substring(0, maxLength)
@@ -341,9 +362,15 @@ object KerasUtils {
       else {
         line += " " * (maxLength - line.length)
       }
+
     }
     println(line)
-    printSplitLine(splitingChar, lineLength)
+    // If there are multiple connected to nodes, print the remaining each in a separate line
+    // without the split line.
+    for (node <- nodes.slice(1, nodes.length)) {
+      printRow(Array("", "", "", node), lineLength, positions, includeSplitLine = false)
+    }
+    if (includeSplitLine) printSplitLine(splitChar, lineLength)
   }
 
   /**

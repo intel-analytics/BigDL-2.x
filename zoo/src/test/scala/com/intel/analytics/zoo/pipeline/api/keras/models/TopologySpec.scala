@@ -113,4 +113,16 @@ class TopologySpec extends FlatSpec with Matchers with BeforeAndAfter {
     model.freeze("dense1")
     model.summary()
   }
+
+  "model.summary() for Model with merge" should "work properly" in {
+    val input = Input[Float](inputShape = Shape(10))
+    val dense1 = Dense[Float](12).setName("dense1").inputs(input)
+    val dense2 = Dense[Float](10).setName("dense2").inputs(dense1)
+    val branch1 = Activation[Float]("softmax").setName("softmax").inputs(dense2)
+    val relu = Activation[Float]("relu").setName("relu").inputs(input)
+    val branch2 = Dense[Float](10, activation = "softmax").setName("dense3").inputs(relu)
+    val output = Merge.merge(List(branch1, branch2), mode = "concat")
+    val model = Model(input, output)
+    model.summary()
+  }
 }
