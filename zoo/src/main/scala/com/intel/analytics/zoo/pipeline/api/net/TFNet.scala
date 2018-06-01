@@ -33,6 +33,10 @@ import scala.collection.JavaConverters._
  *
  * This subgraph should not contain any tensorflow Variable and the input/output
  * must be numeric types
+ *
+ * When used with other layers for training, there should be no trainable layer
+ * before this one, as the gradInput of this layer is always zero.
+ *
  * @param graphDef serialized representation of a graph
  * @param inputNames the input tensor names of this subgraph
  * @param outputNames the output tensor names of this subgraph
@@ -50,6 +54,20 @@ class TFNet private(graphDef: Array[Byte],
       val t = T()
       var i = 0
       while (i < outputNames.length) {
+        t.insert(Tensor[Float]())
+        i = i + 1
+      }
+      t
+    }
+  }
+
+  gradInput = {
+    if (inputNames.length == 1) {
+      Tensor[Float]()
+    } else {
+      val t = T()
+      var i = 0
+      while (i < inputNames.length) {
         t.insert(Tensor[Float]())
         i = i + 1
       }
@@ -180,7 +198,19 @@ class TFNet private(graphDef: Array[Byte],
   }
 
   override def updateGradInput(input: Activity, gradOutput: Activity): Activity = {
-    throw new Exception("Not Supported Yet")
+    if (gradInput.isTable) {
+      var i = 0
+      while (i < gradInput.toTable.length()) {
+        gradInput.toTable[Tensor[Float]](i + 1)
+          .resizeAs(input.toTable[Tensor[Float]](i + 1))
+        i = i + 1
+      }
+    } else {
+      gradInput.toTensor[Float]
+        .resizeAs(input.toTensor[Float])
+    }
+
+    gradInput
   }
 }
 
