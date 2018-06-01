@@ -27,10 +27,10 @@ Analytics Zoo makes it easy to build deep learning application on Spark and BigD
 
 ---
 
-## High level pipeline APIs
+## _High level pipeline APIs_
 Analytics Zoo provides a set of easy-to-use, high level pipeline APIs that natively support Spark DataFrames and ML Pipelines, autograd and custom layer/loss, trasnfer learning, etc.
 
-### `nnframes`
+### _`nnframes`_
 `nnframes` provides *native deep learning support in Spark DataFrames and ML Pipelines*, so that you can easily build complex deep learning pipelines in just a few lines, as illustracted below. (See more details [here](docs/docs/ProgrammingGuide/nnframes.md))
 
 1. Load images into DataFrames using `NNImageReader`
@@ -70,7 +70,7 @@ Analytics Zoo provides a set of easy-to-use, high level pipeline APIs that nativ
    nnModel = classifier.fit(df)
    ```
    
-### `autograd`
+### _`autograd`_
 `autograd` provides automatic differentiation for math operations, so that you can easily build your own *custom loss and layer* (in both Python and Scala), as illustracted below. (See more details [here](docs/docs/ProgrammingGuide/autograd.md))
 
 1. Define custom functions using `autograd`
@@ -98,7 +98,7 @@ Analytics Zoo provides a set of easy-to-use, high level pipeline APIs that nativ
    model.fit(x = ..., y = ...)
    ```
 
-### Transfer learning
+### _Transfer learning_
 Using the high level transfer learning APIs, you can easily customize pretrained models for *feature extraction or fine-tuning*. (See more details [here](docs/docs/ProgrammingGuide/transferlearning.md))
 
 1. Load an existing model (pretrained in Caffe)
@@ -130,10 +130,10 @@ Using the high level transfer learning APIs, you can easily customize pretrained
    newModel = Model(inputs, logits)
    ```
 
-## Built-in deep learning models
+## _Built-in deep learning models_
 Analytics Zoo provides several built-in deep learning models that you can use for a variety of problem types, such as *object detection*, *image classification*, *text classification*, *recommendation*, etc.
 
-### Object detection API
+### _Object detection API_
 Using *Analytics Zoo Object Detection API* (including a set of pretrained detection models such as SSD and Faster-RCNN), you can easily build your object detection applications (e.g., localizing and identifying multiple objects in images and videos), as illustrated below. (See more details [here](docs/docs/ProgrammingGuide/object-detection.md))
 
 1. Download object detection models in Analytics Zoo
@@ -148,7 +148,7 @@ Using *Analytics Zoo Object Detection API* (including a set of pretrained detect
    output = model.predict_image_set(image_set)
    ```
 
-### Image classification API
+### _Image classification API_
 Using *Analytics Zoo Image Classification API* (including a set of pretrained detection models such as VGG, Inception, ResNet, MobileNet,  etc.), you can easily build your image classification applications, as illustrated below. (See more details [here](docs/docs/ProgrammingGuide/image-classification.md))
 
 1. Download image classification models in Analytics Zoo
@@ -163,11 +163,11 @@ Using *Analytics Zoo Image Classification API* (including a set of pretrained de
    output = model.predict_image_set(image_set)
    ```
 
-### Text classification API
+### _Text classification API_
 *Analytics Zoo Text Classification API* provides a set of pre-defined models (using CNN, LSTM, etc.) for text classifications. (See more details [here](docs/docs/ProgrammingGuide/text-classification.md))
 
-### Recommendation API
+### _Recommendation API_
 *Analytics Zoo Recommendation API* provides a set of pre-defined models (such as Neural Collaborative Filtering, Wide and Deep Learning, etc.) for recommendations. (See more details [here](docs/docs/ProgrammingGuide/recommendation.md))
 
-## Reference use cases
+## _Reference use cases_
 Analytics Zoo provides a collection of end-to-end reference use cases, including *anomaly detection (for time series data)*, *sentiment analysis*, *fraud detection*, *image augmentation*, *object detection*, *variational autoencoder*, etc. (See more details [here](docs/docs/ProgrammingGuide/usercases-overview.md))
