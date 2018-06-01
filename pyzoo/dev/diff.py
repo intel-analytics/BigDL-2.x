@@ -52,7 +52,7 @@ def get_all_scala_layers(scala_dirs):
 
 
 def get_python_classes(python_dirs):
-    exclude_classes = {"Input", "InputLayer", "ZooKerasLayer", "ZooKerasCreator",
+    exclude_classes = {"InputLayer", "ZooKerasLayer", "ZooKerasCreator",
                        "KerasNet", "Net"}
     raw_classes = []
     results = []

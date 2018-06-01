@@ -30,6 +30,7 @@ class TextClassifierSpec extends ZooSpecHelper {
   "TextClassifier lstm forward and backward" should "work properly" in {
     val model = TextClassifier[Float](classNum = 15, tokenLength = 10, sequenceLength = 20,
       encoder = "lstm")
+    model.summary()
     val input = Tensor[Float](Array(1, 20, 10)).rand()
     val output = model.forward(input)
     val gradInput = model.backward(input, output)

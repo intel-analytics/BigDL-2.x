@@ -60,6 +60,7 @@ class NeuralCFSpec extends ZooSpecHelper {
   "NeuralCF without MF forward and backward" should "work properly" in {
 
     val model = NeuralCF[Float](userCount, itemCount, 5, 5, 5, Array(10, 5), false)
+    model.summary()
     val ran = new Random(42L)
     val data: Seq[Tensor[Float]] = (1 to 50).map(i => {
       val uid = Math.abs(ran.nextInt(userCount - 1)).toFloat + 1
