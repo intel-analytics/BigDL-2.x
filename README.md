@@ -1,8 +1,10 @@
 # Analytics Zoo
-#### *Analytics + AI Platform for Apache Spark and [BigDL](https://bigdl-project.github.io/master/#whitepaper/)*
+#### _Analytics + AI Platform for Apache Spark and [BigDL](https://bigdl-project.github.io/master/#whitepaper/)_
 ___
 
-Analytics Zoo makes it easy to build deep learning application on Spark and BigDL, by providing an end-to-end analytics + AI Platform (including *high level pipeline APIs*, *built-in deep learning models*, *reference use cases*, etc.).
+## Overview
+
+Analytics Zoo makes it easy to build deep learning application on Spark and BigDL, by providing an end-to-end analytics + AI Platform (including *high level pipeline APIs*, *built-in deep learning models*, *reference use cases*, etc.). 
 
 - [High level pipeline APIs](#high-level-pipeline-apis)
   - [`nnframes`](#nnframes): native deep learning support in *Spark DataFrames and ML Pipelines*
@@ -16,6 +18,15 @@ Analytics Zoo makes it easy to build deep learning application on Spark and BigD
   - [Recommedation API](#recommendation-api): high-level API and pre-defined models (e.g., Neural Collaborative Filtering, Wide and Deep Learning, etc.) for *recommendation*
   
 - [Reference use cases](#reference-use-cases): a collection of end-to-end *reference use cases* (e.g., anomaly detection, sentiment analysis, fraud detection, image augmentation, object detection, variational autoencoder, etc.)
+
+## How to use Analytics Zoo?
+- To get started, please refer to the [Python install guide](https://analytics-zoo.github.io/master/#PythonUserGuide/install/) or [Scala install guide](https://analytics-zoo.github.io/master/#ScalaUserGuide/install/).
+
+- For more information, You may refer to the [Analytis Zoo document website](https://analytics-zoo.github.io/)
+
+- For additional questions and discussions, you can join the [Google User Group](https://groups.google.com/forum/#!forum/bigdl-user-group) (or subscribe to the [Mail List](bigdl-user-group+subscribe@googlegroups.com)) 
+
+___
 
 ## High level pipeline APIs
 Analytics Zoo provides a set of easy-to-use, high level pipeline APIs that natively support Spark DataFrames and ML Pipelines, autograd and custom layer/loss, trasnfer learning, etc.
