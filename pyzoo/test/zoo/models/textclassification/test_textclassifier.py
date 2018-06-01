@@ -27,6 +27,7 @@ class TestTextClassifier(ZooTestCase):
 
     def test_forward_backward(self):
         model = TextClassifier(10, 30, 100)
+        model.summary()
         input_data = np.random.random([3, 100, 30])
         self.assert_forward_backward(model, input_data)
 
