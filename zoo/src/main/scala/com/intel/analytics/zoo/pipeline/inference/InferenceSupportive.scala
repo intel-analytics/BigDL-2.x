@@ -37,25 +37,10 @@ trait InferenceSupportive {
     result
   }
 
-  def transfer2dInputToSampleArray(input: JList[JList[JFloat]]):
-    Array[Sample[Float]] = {
-    val arrays = input.asScala.map(_.asScala.toArray.map(_.asInstanceOf[Float]))
-    require(arrays.length > 0, "the input size is 0")
-    val length = arrays(0).length
-    val samples = arrays.map(array => Sample(Tensor(data = array, shape = Array(length))))
-    samples.toArray
+  def transferInputToSample(input: JList[JFloat], inputShape: Array[Int]):
+    Sample[Float] = {
+    val inputData = input.asScala.toArray.map(_.asInstanceOf[Float])
+    Sample(Tensor(data = inputData, shape = inputShape))
   }
 
-  def transfer3dInputToSampleArray(input: JList[JList[JList[JFloat]]]):
-    Array[Sample[Float]] = {
-    val arrays = input.asScala.map(_.asScala.toArray.map(
-      _.asScala.toArray.map(_.asInstanceOf[Float])))
-    require(arrays.length > 0, "the input size is 0")
-    val length1 = arrays(0).length
-    require(arrays(0).length > 0, "the input size is 0")
-    val length2 = arrays(0)(0).length
-    val samples = arrays.map(array => Sample(
-      Tensor(data = array.flatten, shape = Array(length1, length2))))
-    samples.toArray
-  }
 }

@@ -24,28 +24,16 @@ import com.intel.analytics.bigdl.tensor.Tensor
 import scala.collection.JavaConverters._
 import java.util.{List => JList}
 import java.lang.{Float => JFloat}
+import java.lang.{Integer => JInt}
 
 case class FloatInferenceModel(
   model: AbstractModule[Activity, Activity, Float],
   predictor: LocalPredictor[Float]) extends InferenceSupportive {
 
-  def predict2d(input: JList[JList[JFloat]]): JList[JList[JFloat]] = {
-    timing(s"predict for input") {
-      val samples = transfer2dInputToSampleArray(input)
-      val result = predictor.predict(samples).toList
-        .map(_.asInstanceOf[Tensor[Float]].toArray().toList)
-        .asJava.asInstanceOf[JList[JList[JFloat]]]
-      result
-    }
-  }
-
-  def predict3d(input: JList[JList[JList[JFloat]]]): JList[JList[JFloat]] = {
-    timing(s"predict for input") {
-      val samples = transfer3dInputToSampleArray(input)
-      val result = predictor.predict(samples).toList
-        .map(_.asInstanceOf[Tensor[Float]].toArray().toList)
-        .asJava.asInstanceOf[JList[JList[JFloat]]]
-      result
-    }
+  def predict(input: JList[JFloat], shape: JList[JInt]): JList[JFloat] = {
+    val sample = transferInputToSample(input, shape.asScala.toArray.map(_.asInstanceOf[Int]))
+    val result = predictor.predict(Array(sample))
+    require(result.length == 1, "only one input, should get only one prediction")
+    result(0).asInstanceOf[Tensor[Float]].toArray().toList.asJava.asInstanceOf[JList[JFloat]]
   }
 }
