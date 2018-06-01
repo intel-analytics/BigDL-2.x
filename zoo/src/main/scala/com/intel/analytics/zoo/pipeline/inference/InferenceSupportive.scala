@@ -40,9 +40,8 @@ trait InferenceSupportive {
   def transferInputToSample(input: JList[JFloat], inputShape: Array[Int]):
     Sample[Float] = {
     require(input.size() == inputShape.reduce(_ * _), "data size not fit shape")
-    val shape = 1 +: inputShape
     val inputData = input.asScala.toArray.map(_.asInstanceOf[Float])
-    Sample(Tensor(data = inputData, shape = shape))
+    Sample(Tensor(data = inputData, shape = inputShape))
   }
 
 }
