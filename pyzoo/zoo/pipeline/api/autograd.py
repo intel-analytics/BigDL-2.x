@@ -124,7 +124,7 @@ def log(x):
 
 def pow(x, a):
     """
-    Element-wise maximum of two variables.
+    Element-wise exponentiation.
     :param x: A variable.
     :param a: Python integer.
     :return: A variable.
@@ -216,31 +216,17 @@ class Variable(ZooKerasCreator):
     def __sub__(self, other):
         return self.sub(other)
 
-    def __rsub__(self, other):
-        return Variable.from_jvalue(callBigDlFunc("float", "sub", other, self))
-
     def __add__(self, other):
         return self.add(other)
-
-    __radd__ = __add__
 
     def __mul__(self, other):
         return Variable.from_jvalue(callBigDlFunc("float", "mul", self, other))
 
-    __rmul__ = __mul__
-
     def __div__(self, other):
         return Variable.from_jvalue(callBigDlFunc("float", "div", self, other))
 
-    __truediv__ = __div__
-
-    def __rdiv__(self, other):
-        return Variable.from_jvalue(callBigDlFunc("float", "div", other, self))
-
-    __rtruediv__ = __rdiv__
-
-    def __neg__(self):
-        return neg(self)
+    def __truediv__(self, other):
+        return Variable.from_jvalue(callBigDlFunc("float", "div", self, other))
 
 
 class Lambda(ZooKerasCreator):

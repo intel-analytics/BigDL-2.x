@@ -173,5 +173,3 @@ class PythonAutoGrad[T: ClassTag](implicit ev: TensorNumeric[T]) extends PythonZ
     autograd.AutoGrad.softplus(a)
   }
 }
-
-
