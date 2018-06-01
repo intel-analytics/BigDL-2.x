@@ -3,7 +3,7 @@
 *Analytics + AI Platform for Apache Spark and [BigDL](https://bigdl-project.github.io/master/#whitepaper/).*
 
 ---
-
+## What is Analytics Zoo?
 Analytics Zoo makes it easy to build deep learning application on Spark and BigDL, by providing an end-to-end analytics + AI Platform (including *high level pipeline APIs*, *built-in deep learning models*, *reference use cases*, etc.).
 
  * [High level pipeline APIs](#high-level-pipeline-apis)
