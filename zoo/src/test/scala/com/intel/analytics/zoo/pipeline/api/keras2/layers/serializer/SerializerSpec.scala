@@ -14,13 +14,16 @@
  * limitations under the License.
  */
 
-package com.intel.analytics.zoo.pipeline.api.keras.serializer
+package com.intel.analytics.zoo.pipeline.api.keras2.layers.serializer
 
+import com.intel.analytics.zoo.pipeline.api.keras.layers.Keras2Test
+import com.intel.analytics.zoo.pipeline.api.keras.serializer.{SerializerSpec, SerializerSpecHelper}
 
-class SerializerSpec extends SerializerSpecHelper {
-  runTests(getExpectedTests())
+class Keras2SerializerSpec extends SerializerSpecHelper {
+
+  override def getPackagesForTest() = {
+    Set("com.intel.analytics.zoo.pipeline.api.keras2")
+  }
+  runTests(getExpectedTests(), Keras2Test)
 }
 
-private[zoo] abstract class ModuleSerializationTest extends SerializerSpecHelper {
-  def test(): Unit
-}

@@ -22,6 +22,7 @@ import com.intel.analytics.bigdl.utils.Shape
 import com.intel.analytics.zoo.pipeline.api.keras.layers.KerasBaseSpec
 import com.intel.analytics.zoo.pipeline.api.keras.models.Sequential
 import com.intel.analytics.zoo.pipeline.api.keras.serializer.ModuleSerializationTest
+import com.intel.analytics.zoo.pipeline.api.keras.layers.Keras2Test
 
 import scala.util.Random
 
@@ -29,7 +30,7 @@ class DenseSpec extends KerasBaseSpec {
 
   def weightConverter(in: Array[Tensor[Float]]): Array[Tensor[Float]] = Array(in(0).t(), in(1))
 
-  "Dense" should "be the same as Keras" in {
+  "Dense" should "be the same as Keras" taggedAs(Keras2Test) in {
     val kerasCode =
       """
         |input_tensor = Input(shape=[3])
@@ -45,7 +46,7 @@ class DenseSpec extends KerasBaseSpec {
       kerasCode, weightConverter)
   }
 
-  "Dense nD input" should "be the same as Keras" in {
+  "Dense nD input" should "be the same as Keras" taggedAs(Keras2Test) in {
     val kerasCode =
       """
         |input_tensor = Input(shape=[10, 5, 7])
