@@ -74,7 +74,7 @@ object NeuralCFexample {
     Logger.getLogger("org").setLevel(Level.ERROR)
     val conf = new SparkConf()
     conf.setAppName("NCFExample").set("spark.sql.crossJoin.enabled", "true")
-    val sc = NNContext.getNNContext(conf)
+    val sc = NNContext.initNNContext(conf)
     val sqlContext = SQLContext.getOrCreate(sc)
 
     val (ratings, userCount, itemCount) = loadPublicData(sqlContext, param.inputDir)

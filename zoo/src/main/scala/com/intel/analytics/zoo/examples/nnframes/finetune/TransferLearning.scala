@@ -67,7 +67,7 @@ object TransferLearning {
       val conf = new SparkConf()
         .setAppName("Transfer Learning Example")
 
-      val sc = NNContext.getNNContext(conf)
+      val sc = NNContext.initNNContext(conf)
 
       val model = getTransferLearningModel(param.modelPath)
 
