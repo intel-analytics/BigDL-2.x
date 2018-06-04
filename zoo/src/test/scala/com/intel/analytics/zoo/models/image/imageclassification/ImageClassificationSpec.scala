@@ -137,13 +137,13 @@ class ImageClassificationSpec extends ZooSpecHelper {
 
   "ImageClassifier" should "predict inception-v1-quantize locally" in {
     predictLocal("https://s3-ap-southeast-1.amazonaws.com/analytics-zoo-models/" +
-      "imageclassification/imagenet/analytics-zoo_inception-v1-quantize_imagenet_0.1.0",
+      "imageclassification/imagenet/analytics-zoo_inception-v1-quantize_imagenet_0.1.0.model",
       "analytics-zoo")
   }
 
   "ImageClassifier" should "predict inception-v1-quantize" in {
     predict("https://s3-ap-southeast-1.amazonaws.com/analytics-zoo-models/imageclassification/" +
-      "imagenet/analytics-zoo_inception-v1-quantize_imagenet_0.1.0", "analytics-zoo")
+      "imagenet/analytics-zoo_inception-v1-quantize_imagenet_0.1.0.model", "analytics-zoo")
   }
 
   "ImageClassifier" should "predict bigdl inception-v1-quantize locally" in {
