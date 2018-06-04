@@ -111,10 +111,11 @@ predict_image_set(image, configure=None)
 
 **Python example**
 ```python
-from zoo.common.nncontext import get_nncontext
+from zoo.common.nncontext import *
 from zoo.models.image.objectdetection import *
 
-imc = ObjectDetector.load_model(model_path)
+sc = init_nncontext()
+model = ObjectDetector.load_model(model_path)
 image_set = ImageSet.read(img_path, sc)
-output = imc.predict_image_set(image_set)
+output = model.predict_image_set(image_set)
 ```

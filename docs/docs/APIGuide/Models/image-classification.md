@@ -107,14 +107,15 @@ val output = model.predictImageSet(data)
 predict_image_set(image, configure=None)
 ```
 * image:  Analytics Zoo ImageSet to be predicted
-* configure: Image Configure for this  predcition
+* configure: Image Configure for this predcition
 
 **Python example**
 ```python
-from zoo.common.nncontext import get_nncontext
+from zoo.common.nncontext import *
 from zoo.models.image.imageclassification import *
 
-imc = ImageClassifier.load_model(model_path)
+sc = init_nncontext()
+model = ImageClassifier.load_model(model_path)
 image_set = ImageSet.read(img_path, sc)
-output = imc.predict_image_set(image_set)
-``` 
+output = model.predict_image_set(image_set)
+```

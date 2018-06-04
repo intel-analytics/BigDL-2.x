@@ -38,11 +38,11 @@ validation = AUC(20)
 ```
 example
 ```
+from zoo.common.nncontext import *
 from bigdl.nn.layer import *
-from zoo.common.nncontext import get_nncontext
 from zoo.pipeline.api.keras.metrics.auc import *
 
-sc = get_nncontext()
+sc = init_nncontext()
 
 data_len = 4
 batch_size = 8

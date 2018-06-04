@@ -193,7 +193,7 @@ from zoo.pipeline.api.keras.layers import *
 # Get the current Analytics Zoo version
 zoo.version.__version__
 # Create or get a SparkContext. This will also init the BigDL engine.
-sc = get_nncontext()
+sc = init_nncontext()
 # Create a Sequential model containing a Dense layer.
 model = Sequential()
 model.add(Dense(8, input_shape=(10, )))

@@ -38,7 +38,7 @@ Analytics Zoo provides a set of easy-to-use, high level pipeline APIs that nativ
 ```
    from zoo.common.nncontext import *
    from zoo.pipeline.nnframes import *
-   sc = get_nncontext()
+   sc = init_nncontext()
    imageDF = NNImageReader.readImages(image_path, sc)
 ```
 
