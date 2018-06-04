@@ -45,7 +45,7 @@ DownLoad Input
    Create Directory                 model
    Create Directory                 models
 
-   Run                              wget https://s3-ap-southeast-1.amazonaws.com/analytics-zoo-models/imageclassification/imagenet/analytics-zoo_squeezenet-quantize_imagenet_0.1.0 -P /tmp/imageclassification/
+   Run                              wget https://s3-ap-southeast-1.amazonaws.com/analytics-zoo-models/imageclassification/imagenet/analytics-zoo_squeezenet-quantize_imagenet_0.1.0.model -P /tmp/imageclassification/
    Log To Console                   got image data!!
    Run                              wget https://s3-ap-southeast-1.amazonaws.com/analytics-zoo-models/object-detection/analytics-zoo_ssd-mobilenet-300x300_PASCAL_0.1.0.model -P /tmp/objectdetection/
    Log To Console                   got image data!!
