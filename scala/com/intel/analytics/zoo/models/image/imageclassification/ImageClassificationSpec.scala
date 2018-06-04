@@ -95,7 +95,7 @@ class ImageClassificationSpec extends ZooSpecHelper {
     val cmd_result = cmd !
 
     val conf = Engine.createSparkConf().setMaster("local[1]").setAppName("predictor")
-    val sc = NNContext.getNNContext(conf)
+    val sc = NNContext.initNNContext(conf)
 
     val model = ImageClassifier.loadModel[Float](dirName + "/" + modelFileName)
     model.saveModel("./imc.model", overWrite = true)

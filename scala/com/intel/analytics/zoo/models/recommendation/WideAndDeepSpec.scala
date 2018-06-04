@@ -46,7 +46,7 @@ class WideAndDeepSpec extends ZooSpecHelper {
   override def doBefore(): Unit = {
     Logger.getLogger("org").setLevel(Level.ERROR)
     val conf = new SparkConf().setMaster("local[1]").setAppName("WideNdeepTest")
-    sc = NNContext.getNNContext(conf)
+    sc = NNContext.initNNContext(conf)
     sqlContext = SQLContext.getOrCreate(sc)
 
     val resource: URL = getClass.getClassLoader.getResource("recommender")
