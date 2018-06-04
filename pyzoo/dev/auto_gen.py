@@ -16,8 +16,9 @@
 # limitations under the License.
 #
 
-#NB: This is just a helper script and might be removed shortly.
+# NB: This is just a helper script and might be removed shortly.
 import re
+
 
 def get_class_name(src_code):
     import re
@@ -65,8 +66,10 @@ def to_py_name(scala_name):
 # print(to_py_name("wRegularizer"))
 
 def to_py_value(scala_value):
-    name_mapping = {"true": "True", "false": "False", "null": "None", "RandomUniform": "\"glorot_uniform\""}
+    name_mapping = {"true": "True", "false": "False", "null": "None",
+                    "RandomUniform": "\"glorot_uniform\""}
     return name_mapping.get(scala_value, scala_value)
+
 
 #       wRegularizer: Regularizer[T] = null,
 def to_py_param(scala_param):
@@ -75,6 +78,7 @@ def to_py_param(scala_param):
         return to_py_name(param_name) + "=" + to_py_value(param_value)
     else:
         return to_py_name(param_name)
+
 
 def to_py_params(scala_params):
     result = []
@@ -92,8 +96,10 @@ def append_semi(result_list):
             result.append(r)
     return "\n".join(result)
 
+
 def format_py_params(py_params):
-    return append_semi([8*" " +  param for param in py_params])
+    return append_semi([8 * " " + param for param in py_params])
+
 
 def format_py_params_for_value(py_params):
     mapping = {"init": "to_bigdl_init(init)",
@@ -102,7 +108,7 @@ def format_py_params_for_value(py_params):
                "b_regularizer": "to_bigdl_reg(b_regularizer)",
                "input_shape": "list(input_shape) if input_shape else None"}
     py_param_names = [p.split("=")[0].strip() for p in py_params]
-    return append_semi([12*" " + mapping.get(name, name) for name in py_param_names])
+    return append_semi([12 * " " + mapping.get(name, name) for name in py_param_names])
 
 
 def to_py_constructor(scala_src):
@@ -117,8 +123,9 @@ def to_py_constructor(scala_src):
     """ % (class_name, format_py_params_for_value(py_params))
     result = []
     result.append("class %s(Layer):" % class_name)
-    result.append(4*" " + "\'''%s\'''" % doc_test)
-    result.append(4*" " + """def __init__(self, \n%s,bigdl_type="float"):""" % format_py_params(py_params))
+    result.append(4 * " " + "\'''%s\'''" % doc_test)
+    result.append(
+        4 * " " + """def __init__(self, \n%s,bigdl_type="float"):""" % format_py_params(py_params))
     result.append(init_content)
     return "\n".join(result)
 
@@ -128,24 +135,24 @@ def to_java_creator(scala_src):
     scala_params = get_parameters(scala_src)
 
     def format_creator_param_list(scala_params):
-        mapping = {"inputShape": 8*" " + "inputShape: JList[Int] = null"}
+        mapping = {"inputShape": 8 * " " + "inputShape: JList[Int] = null"}
         result = []
         for name, value, t in scala_params:
             if name in mapping:
                 result.append(mapping[name])
             else:
-                result.append(8*" " + """%s: %s%s""" % (name, t, " = " + value if value else ""))
+                result.append(8 * " " + """%s: %s%s""" % (name, t, " = " + value if value else ""))
         return append_semi(result)
 
     def format_init_list(scala_params):
-        mapping={"inputShape":"""toScalaShape(inputShape)"""}
+        mapping = {"inputShape": """toScalaShape(inputShape)"""}
         result = []
         for name, value, t in scala_params:
             if name in mapping:
                 result.append(mapping[name])
             else:
                 result.append(name)
-        return append_semi([12*" " + i for i in result])
+        return append_semi([12 * " " + i for i in result])
 
     result = []
     formated_creator_param_list = format_creator_param_list(scala_params)
@@ -154,9 +161,10 @@ def to_java_creator(scala_src):
     def create%s(\n%s): %s[T] = {
     %s(\n%s)
     }
-    """ % (class_name, formated_creator_param_list, class_name, 4*" " + class_name,
+    """ % (class_name, formated_creator_param_list, class_name, 4 * " " + class_name,
            formated_init_list))
     return "\n".join(result)
+
 
 if __name__ == "__main__":
     from optparse import OptionParser
@@ -165,7 +173,9 @@ if __name__ == "__main__":
 
     cur_path = os.path.dirname(os.path.realpath(__file__))
 
-    keras_dir = os.path.join(cur_path, "../../zoo/src/main/scala/com/intel/analytics/zoo/pipeline/api/keras2/layers/")
+    keras_dir = os.path.join(
+        cur_path,
+        "../../zoo/src/main/scala/com/intel/analytics/zoo/pipeline/api/keras2/layers/")
     parser = OptionParser()
     parser.add_option("-l", "--layer", dest="layer", default="Dense")
     (options, args) = parser.parse_args(sys.argv)
@@ -176,5 +186,3 @@ if __name__ == "__main__":
     print(to_py_constructor(src_code))
     print("--------->Java code<-----------------")
     print(to_java_creator(src_code))
-
-
