@@ -17,7 +17,7 @@ example
 val conf = Engine.createSparkConf()
   .setAppName("AUC test")
   .setMaster("local[1]")
-val sc = NNContext.getNNContext(conf)
+val sc = NNContext.initNNContext(conf)
 val data = new Array[Sample[Float]](4)
 var i = 0
 while (i < data.length) {

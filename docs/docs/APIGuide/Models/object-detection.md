@@ -95,7 +95,7 @@ import com.intel.analytics.zoo.common.NNContext
 import com.intel.analytics.zoo.feature.image._
 
 val imagePath="/tmp/image"
-val sc = NNContext.getNNContext()
+val sc = NNContext.initNNContext()
 val model = ObjectDetector.loadModel("/tmp/analytics-zoo_ssd-mobilenet-300x300_PASCAL_0.1.0.model")
 val data = ImageSet.read(image_path, sc)
 val output = model.predictImageSet(data)

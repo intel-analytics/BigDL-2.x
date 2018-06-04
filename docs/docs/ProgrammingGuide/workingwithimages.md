@@ -14,7 +14,7 @@ Scala example:
 import com.intel.analytics.zoo.common.NNContext
 import com.intel.analytics.zoo.pipeline.nnframes.NNImageReader
 
-val sc = NNContext.getNNContext("app")
+val sc = NNContext.initNNContext("app")
 val imageDF1 = NNImageReader.readImages("/tmp", sc)
 val imageDF2 = NNImageReader.readImages("/tmp/*.jpg", sc)
 val imageDF3 = NNImageReader.readImages("/tmp/a.jpg, /tmp/b.jpg", sc)

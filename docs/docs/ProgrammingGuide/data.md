@@ -35,7 +35,7 @@ import org.apache.spark.SparkContext
 import org.apache.spark.sql.SQLContext
 
 val conf = new SparkConf().setAppName("ImageSpec").setMaster("local[2]")
-val sc = NNContext.getNNContext(conf)
+val sc = NNContext.initNNContext(conf)
 val sqlContext = new SQLContext(sc)
 
 // create DistributedImageSet from an image
