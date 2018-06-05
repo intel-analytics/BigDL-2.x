@@ -58,7 +58,7 @@ object WideAndDeepExample {
   def run(params: WNDParams): Unit = {
     Logger.getLogger("org").setLevel(Level.ERROR)
     val conf = new SparkConf().setAppName("WideAndDeepExample")
-    val sc = NNContext.getNNContext(conf)
+    val sc = NNContext.initNNContext(conf)
     val sqlContext = SQLContext.getOrCreate(sc)
 
     val (ratingsDF, userDF, itemDF, userCount, itemCount) =
