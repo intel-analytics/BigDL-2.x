@@ -29,7 +29,7 @@ class TestSimpleIntegration(ZooTestCase):
 
     def test_sequential(self):
         model = Sequential()
-        model.add(Dense(10, input_shape=(8, )))
+        model.add(Dense(10, kernel_initializer="glorot_uniform", input_shape=(8, )))
         model.add(Dense(12))
         input_shape = model.get_input_shape()
         output_shape = model.get_output_shape()
