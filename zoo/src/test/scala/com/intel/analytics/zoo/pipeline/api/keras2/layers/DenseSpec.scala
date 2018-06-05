@@ -53,6 +53,7 @@ class DenseSpec extends KerasBaseSpec {
         |input = np.random.uniform(0, 1, [2, 10, 5, 7])
         |output_tensor = \
         |Dense(2, kernel_initializer='one', input_shape=(10, 5, 7))(input_tensor)
+        |print(keras.__version__)
         |model = Model(input=input_tensor, output=output_tensor)
       """.stripMargin
     val seq = Sequential[Float]()

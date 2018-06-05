@@ -34,7 +34,6 @@ object PythonZooKeras2 {
 
 class PythonZooKeras2[T: ClassTag](implicit ev: TensorNumeric[T]) extends PythonBigDLKeras[T] {
 
-
   def createZooKeras2Dense(
       units: Int,
       kernelInitializer: String = "glorot_uniform",
@@ -43,7 +42,7 @@ class PythonZooKeras2[T: ClassTag](implicit ev: TensorNumeric[T]) extends Python
       kernelRegularizer: Regularizer[T] = null,
       biasRegularizer: Regularizer[T] = null,
       useBias: Boolean = true,
-      inputShape: JList[Int] = null) = {
+      inputShape: JList[Int] = null): Dense[T] = {
      Dense[T](
       units = units,
       kernelInitializer = kernelInitializer,

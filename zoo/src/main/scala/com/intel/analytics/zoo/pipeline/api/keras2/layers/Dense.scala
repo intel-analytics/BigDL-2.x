@@ -60,13 +60,13 @@ class Dense[T: ClassTag](
     val biasRegularizer: Regularizer[T] = null,
     val useBias: Boolean = true,
     override val inputShape: Shape = null)(implicit ev: TensorNumeric[T])
-   extends klayers1.Dense[T](outputDim = units,
-     init = kernelInitializer,
-     activation = activation,
-     wRegularizer = kernelRegularizer,
-     bRegularizer = biasRegularizer,
-     bias = useBias,
-     inputShape = inputShape) with Net {
+  extends klayers1.Dense[T](outputDim = units,
+    init = kernelInitializer,
+    activation = activation,
+    wRegularizer = kernelRegularizer,
+    bRegularizer = biasRegularizer,
+    bias = useBias,
+    inputShape = inputShape) with Net {
 
   override def doBuild(inputShape: Shape): AbstractModule[Tensor[T], Tensor[T], T] = {
     val module = super.doBuild(inputShape)
@@ -78,7 +78,7 @@ class Dense[T: ClassTag](
 
 object Dense {
 
-  def apply[@specialized(Float, Double) T: ClassTag](
+  def apply[@specialized(Float, Double) T: ClassTag] (
       units: Int,
       kernelInitializer: String = "glorot_uniform",
       biasInitializer: String = "zero",
@@ -86,7 +86,7 @@ object Dense {
       kernelRegularizer: Regularizer[T] = null,
       biasRegularizer: Regularizer[T] = null,
       useBias: Boolean = true,
-      inputShape: Shape = null)(implicit ev: TensorNumeric[T]) = {
+      inputShape: Shape = null)(implicit ev: TensorNumeric[T]): Dense[T] = {
     new Dense[T](
       units = units,
       kernelInitializer = KerasUtils.getInitMethod(kernelInitializer),

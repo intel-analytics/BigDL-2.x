@@ -21,7 +21,7 @@ import com.intel.analytics.zoo.pipeline.api.keras.serializer.{SerializerSpec, Se
 
 class Keras2SerializerSpec extends SerializerSpecHelper {
 
-  override def getPackagesForTest() = {
+  override def getPackagesForTest(): Set[String] = {
     Set("com.intel.analytics.zoo.pipeline.api.keras2")
   }
   runTests(getExpectedTests(), Keras2Test)
