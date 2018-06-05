@@ -34,7 +34,7 @@ class TestSimpleIntegration(ZooTestCase):
         input_shape = model.get_input_shape()
         output_shape = model.get_output_shape()
 
-        np.testing.assert_allclose((8,), input_shape[1:])
+        np.testing.assert_allclose((8000,), input_shape[1:])
         np.testing.assert_allclose((12,), output_shape[1:])
 
 
