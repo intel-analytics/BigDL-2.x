@@ -1,5 +1,3 @@
-#!/usr/bin/env bash
-
 #
 # Copyright 2018 Analytics Zoo Authors.
 #
@@ -16,25 +14,17 @@
 # limitations under the License.
 #
 
-. `dirname $0`/prepare_env.sh
+from __future__ import absolute_import
 
-cd "`dirname $0`"
-
-export PYSPARK_PYTHON=python
-export PYSPARK_DRIVER_PYTHON=python
-
-python -m pytest -v --doctest-modules ../zoo \
-    --ignore=../zoo/pyzoo/zoo/pipeline/api/keras2
-exit_status_1=$?
-if [ $exit_status_1 -ne 0 ];
-then
-    exit $exit_status_1
-fi
-
-python -m pytest -v ../test --ignore=../test/zoo/pipeline/utils/test_utils.py \
-   --ignore=../test/zoo/pipeline/pyzoo/test/zoo/pipeline/api/keras2
-exit_status_2=$?
-if [ $exit_status_2 -ne 0 ];
-then
-    exit $exit_status_2
-fi
+from .merge import *
+from .core import *
+from .convolutional import *
+from .pooling import *
+from .local import *
+from .recurrent import *
+from .normalization import *
+from .embeddings import *
+from .noise import *
+from .advanced_activations import *
+from .wrappers import *
+from .convolutional_recurrent import *

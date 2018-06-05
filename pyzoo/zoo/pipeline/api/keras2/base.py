@@ -1,6 +1,3 @@
-#!/usr/bin/env bash
-
-#
 # Copyright 2018 Analytics Zoo Authors.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -15,26 +12,19 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
+import sys
 
-. `dirname $0`/prepare_env.sh
+from bigdl.util.common import JavaValue
 
-cd "`dirname $0`"
+import zoo.pipeline.api.keras.layers as klayers1
 
-export PYSPARK_PYTHON=python
-export PYSPARK_DRIVER_PYTHON=python
 
-python -m pytest -v --doctest-modules ../zoo \
-    --ignore=../zoo/pyzoo/zoo/pipeline/api/keras2
-exit_status_1=$?
-if [ $exit_status_1 -ne 0 ];
-then
-    exit $exit_status_1
-fi
+class ZooKeras2Creator(JavaValue):
+    def jvm_class_constructor(self):
+        name = "createZooKeras2" + self.__class__.__name__
+        print("creating: " + name)
+        return name
 
-python -m pytest -v ../test --ignore=../test/zoo/pipeline/utils/test_utils.py \
-   --ignore=../test/zoo/pipeline/pyzoo/test/zoo/pipeline/api/keras2
-exit_status_2=$?
-if [ $exit_status_2 -ne 0 ];
-then
-    exit $exit_status_2
-fi
+
+class ZooKeras2Layer(ZooKeras2Creator, klayers1.KerasLayer):
+    pass
