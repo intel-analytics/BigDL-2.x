@@ -50,7 +50,7 @@ class Dense(ZooKeras2Layer):
           If not specified, its name will by default to be a generated string.
 
     >>> dense = Dense(10, kernel_initializer="glorot_uniform", input_dim=8, name="dense1")
-    creating: createZooKeras2Dense999
+    creating: createZooKeras2Dense
     """
     def __init__(self, units, kernel_initializer="glorot_uniform",
                  bias_initializer="zero", activation=None,
