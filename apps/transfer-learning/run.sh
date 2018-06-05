@@ -4,8 +4,8 @@ export MASTER=local[1]
 
 ${ANALYTICS_ZOO_HOME}/bin/jupyter-with-zoo.sh \
     --master ${MASTER} \
-    --driver-cores 2  \
+    --driver-cores 1  \
     --driver-memory 8g  \
-    --total-executor-cores 2  \
-    --executor-cores 2  \
+    --total-executor-cores 1  \
+    --executor-cores 1  \
     --executor-memory 8g
