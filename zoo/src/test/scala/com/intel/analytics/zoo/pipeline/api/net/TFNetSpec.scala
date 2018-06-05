@@ -20,6 +20,7 @@ import com.intel.analytics.bigdl.utils.T
 import com.intel.analytics.zoo.common.NNContext
 import org.apache.spark.{SparkConf, SparkContext}
 import org.scalatest.{BeforeAndAfter, FlatSpec, Matchers}
+import org.tensorflow.framework.ConfigProto
 
 class TFNetSpec extends FlatSpec with Matchers with BeforeAndAfter {
 
