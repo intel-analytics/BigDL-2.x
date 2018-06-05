@@ -39,7 +39,7 @@ object Utils {
                           modelPath: String = "/tmp/models/bigdl_inception-v1_imagenet_0.4.0.model",
                           dataPath: String = "/tmp/datasets/cat_dog/train_sampled",
                           batchSize: Int = 32,
-                          nEpochs: Int = 1)
+                          nEpochs: Int = 2)
 
   val trainParser = new OptionParser[TrainParams]("BigDL ptbModel Train Example") {
     opt[String]('m', "modelPath")
@@ -67,7 +67,7 @@ object TransferLearning {
       val conf = new SparkConf()
         .setAppName("Transfer Learning Example")
 
-      val sc = NNContext.getNNContext(conf)
+      val sc = NNContext.initNNContext(conf)
 
       val model = getTransferLearningModel(param.modelPath)
 
@@ -123,7 +123,8 @@ object TransferLearning {
   }
 
   private def getImageData(dataPath: String, sc: SparkContext) = {
-    val createLabel = udf { row: Row => if (row.getString(0).contains("cat")) 1.0 else 2.0 }
+    val createLabel = udf { row: Row =>
+      if (row.getString(0).split("/").last.contains("cat")) 1.0 else 2.0 }
     val imagesDF = NNImageReader.readImages(dataPath, sc)
       .withColumn("label", createLabel(col("image")))
     val Array(validationDF, trainingDF) = imagesDF

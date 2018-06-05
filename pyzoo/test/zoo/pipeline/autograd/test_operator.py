@@ -201,6 +201,16 @@ class TestOperator(ZooTestCase):
         self.compare_unary_op(k_func,
                               Lambda(function=z_func, ), [2, 3])
 
+    def test_pow(self):
+        def z_func(x):
+            return pow(x, 3.0)
+
+        def k_func(x):
+            return KK.pow(x, 3.0)
+
+        self.compare_unary_op(k_func,
+                              Lambda(function=z_func, ), [2, 3])
+
     def test_square(self):
         def z_func(x):
             return square(x)
