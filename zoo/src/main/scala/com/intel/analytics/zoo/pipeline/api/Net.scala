@@ -18,14 +18,15 @@ package com.intel.analytics.zoo.pipeline.api
 
 import java.nio.ByteOrder
 
-import com.intel.analytics.bigdl.nn.Graph
-import com.intel.analytics.bigdl.nn.abstractnn.{AbstractModule, Activity}
+import com.intel.analytics.bigdl.nn.abstractnn.{AbstractModule, Activity, Initializable}
+import com.intel.analytics.bigdl.nn.keras.KerasLayer
+import com.intel.analytics.bigdl.nn.{Container, Graph, InitializationMethod}
 import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric
 import com.intel.analytics.bigdl.utils.File
 import com.intel.analytics.bigdl.utils.caffe.CaffeLoader
 import com.intel.analytics.bigdl.utils.serializer.ModuleLoader
 import com.intel.analytics.bigdl.utils.tf.{Session, TensorflowLoader}
-import com.intel.analytics.zoo.pipeline.api.keras.models.KerasNet
+import com.intel.analytics.zoo.pipeline.api.keras.models.{KerasNet, Model, Sequential}
 import com.intel.analytics.zoo.pipeline.api.net.GraphNet
 
 import scala.reflect.ClassTag
@@ -35,9 +36,36 @@ import scala.reflect.ClassTag
  */
 trait Net {
 
+  def isFrozen[T: ClassTag](): Boolean = {
+    val labor = this.asInstanceOf[KerasLayer[Activity, Activity, T]].labor
+    (labor.getScaleW() == 0) && (labor.getScaleB() == 0)
+  }
+
 }
 
 object Net {
+  Model
+  Sequential
+  GraphNet
+
+  def setInitMethod(module: AbstractModule[_, _, _],
+      weightInitMethod: InitializationMethod = null,
+      biasInitMethod: InitializationMethod = null, throwException: Boolean = true): Unit = {
+    module match {
+      case i: Initializable =>
+        i.setInitMethod(weightInitMethod, biasInitMethod)
+      case k: KerasLayer[_, _, _] =>
+        setInitMethod(k.labor, weightInitMethod, biasInitMethod, throwException)
+      case c: Container[_, _, _] => // Some KerasLayer may be constructed by multiple layers
+        c.modules.map { module =>
+          setInitMethod(module, weightInitMethod, biasInitMethod, false)
+        }
+      case _ =>
+        if (throwException) {
+          throw new RuntimeException(s"$module does not support setInitMethod")
+        }
+    }
+  }
   /**
    * Load model from path.
    *

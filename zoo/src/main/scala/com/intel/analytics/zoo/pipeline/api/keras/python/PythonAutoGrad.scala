@@ -156,4 +156,20 @@ class PythonAutoGrad[T: ClassTag](implicit ev: TensorNumeric[T]) extends PythonZ
   def epsilon(): Double = {
     autograd.AutoGrad.epsilon()
   }
+
+  def neg(a: Variable[T]): Variable[T] = {
+    a.unary_-()
+  }
+
+  def pow(a: Variable[T], b: Double): Variable[T] = {
+    autograd.AutoGrad.pow(a, b)
+  }
+
+  def softsign(a: Variable[T]): Variable[T] = {
+    autograd.AutoGrad.softsign(a)
+  }
+
+  def softplus(a: Variable[T]): Variable[T] = {
+    autograd.AutoGrad.softplus(a)
+  }
 }

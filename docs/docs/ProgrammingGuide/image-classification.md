@@ -1,8 +1,6 @@
-# Analytics Zoo Image Classification
-
 Analytics Zoo provides a collection of pre-trained models for Image Classification. These models can be used for out-of-the-box inference if you are interested in categories already in the corresponding datasets. According to the business scenarios, users can embed the models locally, distributedly in Spark such as Apache Storm and Apache Flink.
 
-***Image Classification models***
+## Image Classification examples
 
 Analytics Zoo provides several typical kind of pre-trained Image Classfication models : [Alexnet](http://papers.nips.cc/paper/4824-imagenet-classification-with-deep-convolutional-neural-networksese), [Inception-V1](https://arxiv.org/abs/1409.4842), [VGG](https://arxiv.org/abs/1409.1556), [Resnet](https://arxiv.org/abs/1512.03385), [Densenet](https://arxiv.org/abs/1608.06993), [Mobilenet](https://arxiv.org/abs/1704.04861), [Squeezenet](https://arxiv.org/abs/1602.07360) models. To use these models, please check below examples.
 
@@ -60,12 +58,12 @@ For preprocessors for Image Classification models, please check [Image Classific
 
 ## Download link
 
-* [Alexnet](https://s3-ap-southeast-1.amazonaws.com/analytics-zoo-models/imageclassification/imagenet/analytics-zoo_alexnet_imagenet_0.1.0)
-* [Inception-V1](https://s3-ap-southeast-1.amazonaws.com/analytics-zoo-models/imageclassification/imagenet/analytics-zoo_inception-v1_imagenet_0.1.0)
-* [VGG-16](https://s3-ap-southeast-1.amazonaws.com/analytics-zoo-models/imageclassification/imagenet/analytics-zoo_vgg-16_imagenet_0.1.0)
-* [VGG-19](https://s3-ap-southeast-1.amazonaws.com/analytics-zoo-models/imageclassification/imagenet/analytics-zoo_vgg-19_imagenet_0.1.0)
-* [Resnet-50](https://s3-ap-southeast-1.amazonaws.com/analytics-zoo-models/imageclassification/imagenet/analytics-zoo_resnet-50_imagenet_0.1.0)
-* [Densenet-161](https://s3-ap-southeast-1.amazonaws.com/analytics-zoo-models/imageclassification/imagenet/analytics-zoo_densenet-161_imagenet_0.1.0)
-* [Mobilenet](https://s3-ap-southeast-1.amazonaws.com/analytics-zoo-models/imageclassification/imagenet/analytics-zoo_mobilenet_imagenet_0.1.0)
-* [Squeezenet](https://s3-ap-southeast-1.amazonaws.com/analytics-zoo-models/imageclassification/imagenet/analytics-zoo_squeezenet_imagenet_0.1.0)
+* [Alexnet](https://s3-ap-southeast-1.amazonaws.com/analytics-zoo-models/imageclassification/imagenet/analytics-zoo_alexnet_imagenet_0.1.0.model)
+* [Inception-V1](https://s3-ap-southeast-1.amazonaws.com/analytics-zoo-models/imageclassification/imagenet/analytics-zoo_inception-v1_imagenet_0.1.0.model)
+* [VGG-16](https://s3-ap-southeast-1.amazonaws.com/analytics-zoo-models/imageclassification/imagenet/analytics-zoo_vgg-16_imagenet_0.1.0.model)
+* [VGG-19](https://s3-ap-southeast-1.amazonaws.com/analytics-zoo-models/imageclassification/imagenet/analytics-zoo_vgg-19_imagenet_0.1.0.model)
+* [Resnet-50](https://s3-ap-southeast-1.amazonaws.com/analytics-zoo-models/imageclassification/imagenet/analytics-zoo_resnet-50_imagenet_0.1.0.model)
+* [Densenet-161](https://s3-ap-southeast-1.amazonaws.com/analytics-zoo-models/imageclassification/imagenet/analytics-zoo_densenet-161_imagenet_0.1.0.model)
+* [Mobilenet](https://s3-ap-southeast-1.amazonaws.com/analytics-zoo-models/imageclassification/imagenet/analytics-zoo_mobilenet_imagenet_0.1.0.model)
+* [Squeezenet](https://s3-ap-southeast-1.amazonaws.com/analytics-zoo-models/imageclassification/imagenet/analytics-zoo_squeezenet_imagenet_0.1.0.model)
 

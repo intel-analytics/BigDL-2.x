@@ -92,6 +92,15 @@ class TestOperator(ZooTestCase):
         self.compare_unary_op(k_add_func,
                               Lambda(function=z_add_func), [2, 3])
 
+    def test_radd_constant(self):
+        def z_add_func(x):
+            return 3.0 + x
+
+        def k_add_func(x):
+            return 3.0 + x
+        self.compare_unary_op(k_add_func,
+                              Lambda(function=z_add_func), [2, 3])
+
     def test_sub(self):
         def z_func(x, y):
             return x - y
@@ -107,6 +116,15 @@ class TestOperator(ZooTestCase):
 
         def k_func(x):
             return x - 3.0
+        self.compare_unary_op(k_func,
+                              Lambda(function=z_func), [2, 3])
+
+    def test_rsub_constant(self):
+        def z_func(x):
+            return 3.0 - x
+
+        def k_func(x):
+            return 3.0 - x
         self.compare_unary_op(k_func,
                               Lambda(function=z_func), [2, 3])
 
@@ -128,6 +146,15 @@ class TestOperator(ZooTestCase):
         self.compare_unary_op(k_func,
                               Lambda(function=z_func), [2, 3])
 
+    def test_rdiv_constant(self):
+        def z_func(x):
+            return 3.0 / x
+
+        def k_func(x):
+            return 3.0 / x
+        self.compare_unary_op(k_func,
+                              Lambda(function=z_func), [2, 3])
+
     def test_mul(self):
         def z_func(x, y):
             return x * y
@@ -146,12 +173,40 @@ class TestOperator(ZooTestCase):
         self.compare_unary_op(k_func,
                               Lambda(function=z_func), [2, 3])
 
+    def test_rmul_constant(self):
+        def z_func(x):
+            return 3.0 * x
+
+        def k_func(x):
+            return 3.0 * x
+        self.compare_unary_op(k_func,
+                              Lambda(function=z_func), [2, 3])
+
+    def test_neg(self):
+        def z_func(x):
+            return - x
+
+        def k_func(x):
+            return - x
+        self.compare_unary_op(k_func,
+                              Lambda(function=z_func), [2, 3])
+
     def test_clip(self):
         def z_func(x):
             return clip(x, 0.5, 0.8)
 
         def k_func(x):
             return KK.clip(x, 0.5, 0.8)
+
+        self.compare_unary_op(k_func,
+                              Lambda(function=z_func, ), [2, 3])
+
+    def test_pow(self):
+        def z_func(x):
+            return pow(x, 3.0)
+
+        def k_func(x):
+            return KK.pow(x, 3.0)
 
         self.compare_unary_op(k_func,
                               Lambda(function=z_func, ), [2, 3])
@@ -196,6 +251,96 @@ class TestOperator(ZooTestCase):
         mock_data = np.random.uniform(0, 1, [10] + input_shape)
         out_data = model.forward(mock_data)
         assert out_data.shape == (10, 3, 16, 16)
+
+    def test_softsign(self):
+        def z_func(x):
+            return softsign(x)
+
+        def k_func(x):
+            return KK.softsign(x)
+
+        self.compare_unary_op(k_func,
+                              Lambda(function=z_func, ), [2, 3])
+
+    def test_softplus(self):
+        def z_func(x):
+            return softplus(x)
+
+        def k_func(x):
+            return KK.softplus(x)
+
+        self.compare_unary_op(k_func,
+                              Lambda(function=z_func, ), [2, 3])
+
+    def test_exp(self):
+        def z_func(x):
+            return exp(x)
+
+        def k_func(x):
+            return KK.exp(x)
+
+        self.compare_unary_op(k_func,
+                              Lambda(function=z_func, ), [2, 3])
+
+    def test_abs(self):
+        def z_func(x):
+            return abs(x)
+
+        def k_func(x):
+            return KK.abs(x)
+
+        self.compare_unary_op(k_func,
+                              Lambda(function=z_func, ), [2, 3])
+
+    def test_log(self):
+        def z_func(x):
+            return log(x)
+
+        def k_func(x):
+            return KK.log(x)
+
+        self.compare_unary_op(k_func,
+                              Lambda(function=z_func, ), [2, 3])
+
+    def test_sqrt(self):
+        def z_func(x):
+            return sqrt(x)
+
+        def k_func(x):
+            return KK.sqrt(x)
+
+        self.compare_unary_op(k_func,
+                              Lambda(function=z_func, ), [2, 3])
+
+    def test_mean(self):
+        def z_func(x):
+            return mean(x, 0, False)
+
+        def k_func(x):
+            return KK.mean(x, 0, False)
+
+        self.compare_unary_op(k_func,
+                              Lambda(function=z_func, ), [2, 3])
+
+    def test_sum(self):
+        def z_func(x):
+            return sum(x, 0, False)
+
+        def k_func(x):
+            return KK.sum(x, 0, False)
+
+        self.compare_unary_op(k_func,
+                              Lambda(function=z_func, ), [2, 3])
+
+    def test_maximum(self):
+        def z_func(x, y):
+            return maximum(x, y)
+
+        def k_func(x, y):
+            return KK.maximum(x, y)
+
+        self.compare_binary_op(k_func,
+                               Lambda(function=z_func, ), [[2, 3], [2, 3]])
 
 
 if __name__ == "__main__":

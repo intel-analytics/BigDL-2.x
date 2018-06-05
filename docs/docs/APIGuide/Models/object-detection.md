@@ -1,5 +1,3 @@
-# Analytics Zoo Object Detection API
-
 Analytics Zoo provides a collection of pre-trained models for Object Detection. These models can be used for out-of-the-box inference if you are interested in categories already in the corresponding datasets. According to the business scenarios. User can run the inference as local program without Spark Context, or in a distributed environment such like Apache Spark, Apache Storm or Apache Flink.
 
 ## Model Load
@@ -97,7 +95,7 @@ import com.intel.analytics.zoo.common.NNContext
 import com.intel.analytics.zoo.feature.image._
 
 val imagePath="/tmp/image"
-val sc = NNContext.getNNContext()
+val sc = NNContext.initNNContext()
 val model = ObjectDetector.loadModel("/tmp/analytics-zoo_ssd-mobilenet-300x300_PASCAL_0.1.0.model")
 val data = ImageSet.read(image_path, sc)
 val output = model.predictImageSet(data)
@@ -113,10 +111,11 @@ predict_image_set(image, configure=None)
 
 **Python example**
 ```python
-from zoo.common.nncontext import get_nncontext
+from zoo.common.nncontext import *
 from zoo.models.image.objectdetection import *
 
-imc = ObjectDetector.load_model(model_path)
+sc = init_nncontext()
+model = ObjectDetector.load_model(model_path)
 image_set = ImageSet.read(img_path, sc)
-output = imc.predict_image_set(image_set)
+output = model.predict_image_set(image_set)
 ```

@@ -1,5 +1,3 @@
-# Analytics Zoo Image Classification API
-
 Analytics Zoo provides a collection of pre-trained models for Image Classification. These models can be used for out-of-the-box inference if you are interested in categories already in the corresponding datasets. According to the business scenarios, users can embed the models locally, distributedly in Spark such as Apache Storm and Apache Flink.
 
 ## Model Load
@@ -97,7 +95,7 @@ import com.intel.analytics.zoo.common.NNContext
 import com.intel.analytics.zoo.feature.image._
 
 val imagePath="/tmp/image"
-val sc = NNContext.getNNContext()
+val sc = NNContext.initNNContext()
 val model = ImageClassifier.loadModel("/tmp/analytics-zoo_inception-v1_imagenet_0.1.0") 
 val data = ImageSet.read(image_path, sc)
 val output = model.predictImageSet(data)
@@ -109,14 +107,15 @@ val output = model.predictImageSet(data)
 predict_image_set(image, configure=None)
 ```
 * image:  Analytics Zoo ImageSet to be predicted
-* configure: Image Configure for this  predcition
+* configure: Image Configure for this predcition
 
 **Python example**
 ```python
-from zoo.common.nncontext import get_nncontext
+from zoo.common.nncontext import *
 from zoo.models.image.imageclassification import *
 
-imc = ImageClassifier.load_model(model_path)
+sc = init_nncontext()
+model = ImageClassifier.load_model(model_path)
 image_set = ImageSet.read(img_path, sc)
-output = imc.predict_image_set(image_set)
-``` 
+output = model.predict_image_set(image_set)
+```

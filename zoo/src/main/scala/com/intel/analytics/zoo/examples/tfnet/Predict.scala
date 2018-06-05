@@ -54,9 +54,9 @@ object Predict {
   def main(args: Array[String]): Unit = {
     parser.parse(args, PredictParam()).foreach { params =>
 
-      val sc = NNContext.getNNContext("TFNet Object Detection Example")
+      val sc = NNContext.initNNContext("TFNet Object Detection Example")
 
-      val inputs = Seq("ToFloat:0")
+      val inputs = Seq("image_tensor:0")
       val outputs = Seq("num_detections:0", "detection_boxes:0",
         "detection_scores:0", "detection_classes:0")
 
