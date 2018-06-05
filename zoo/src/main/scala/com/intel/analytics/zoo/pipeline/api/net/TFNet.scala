@@ -275,8 +275,22 @@ object TFNet {
    * @return
    */
   def apply(graphDef: GraphDef, inputNames: Seq[String],
-            outputNames: Seq[String]): TFNet = {
-    new TFNet(graphDef.toByteArray, inputNames, outputNames, defaultSessionConfig)
+            outputNames: Seq[String], config: Array[Byte] = defaultSessionConfig): TFNet = {
+    new TFNet(graphDef.toByteArray, inputNames, outputNames, config)
+  }
+
+  /**
+   * Create a TFNet
+   * @param path the file path of a graphDef
+   * @param inputNames the input tensor names of this subgraph
+   * @param outputNames the output tensor names of this subgraph
+   * @return
+   */
+  def apply(path: String,
+            inputNames: Seq[String],
+            outputNames: Seq[String], config: Array[Byte]): TFNet = {
+    val graphDef = parse(path)
+    TFNet(graphDef, inputNames, outputNames, config)
   }
 
   /**
@@ -290,7 +304,7 @@ object TFNet {
             inputNames: Seq[String],
             outputNames: Seq[String]): TFNet = {
     val graphDef = parse(path)
-    TFNet(graphDef, inputNames, outputNames)
+    TFNet(graphDef, inputNames, outputNames, defaultSessionConfig)
   }
 
   private def parse(graphProtoTxt: String) : GraphDef = {
