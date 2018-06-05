@@ -34,35 +34,6 @@ import scala.collection.mutable
 
 abstract class SerializerSpecHelper extends FlatSpec with Matchers with BeforeAndAfterAll{
 
-  val postFix = "bigdl"
-
-  protected def runSerializationTest(
-     module: AbstractModule[_, _, Float],
-     input: Activity, cls: Class[_] = null) : Unit = {
-    runSerializationTestWithMultiClass(module, input,
-      if (cls == null) Array(module.getClass) else Array(cls))
-  }
-
-  protected def runSerializationTestWithMultiClass(
-     module: AbstractModule[_, _, Float],
-     input: Activity, classes: Array[Class[_]]) : Unit = {
-    val name = module.getName
-    val serFile = File.createTempFile(name, postFix)
-    val originForward = module.evaluate().forward(input)
-
-    ModulePersister.saveToFile[Float](serFile.getAbsolutePath, null, module.evaluate(), true)
-    RNG.setSeed(1000)
-    val loadedModule = ModuleLoader.loadFromFile[Float](serFile.getAbsolutePath)
-
-    val afterLoadForward = loadedModule.forward(input)
-
-    if (serFile.exists) {
-      serFile.delete
-    }
-
-    afterLoadForward should be (originForward)
-  }
-
   private val excluded = Set[String](
     "com.intel.analytics.zoo.pipeline.api.autograd.LambdaTorch",
     "com.intel.analytics.zoo.pipeline.api.net.TFNet")

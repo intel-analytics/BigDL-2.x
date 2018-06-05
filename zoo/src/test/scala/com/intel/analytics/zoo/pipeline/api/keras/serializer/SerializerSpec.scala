@@ -16,11 +16,50 @@
 
 package com.intel.analytics.zoo.pipeline.api.keras.serializer
 
+import java.io.File
+
+import com.intel.analytics.bigdl.nn.abstractnn.{AbstractModule, Activity}
+import com.intel.analytics.bigdl.utils.RandomGenerator._
+import com.intel.analytics.bigdl.utils.serializer.{ModuleLoader, ModulePersister}
+import org.scalatest.{BeforeAndAfterAll, FlatSpec, Matchers}
+
 
 class SerializerSpec extends SerializerSpecHelper {
   runTests(getExpectedTests())
 }
 
-private[zoo] abstract class ModuleSerializationTest extends SerializerSpecHelper {
+private[zoo] abstract class ModuleSerializationTest
+  extends FlatSpec with Matchers with BeforeAndAfterAll{
+
+  val postFix = "analytics-zoo"
+
   def test(): Unit
+
+  protected def runSerializationTest(
+      module: AbstractModule[_, _, Float],
+      input: Activity, cls: Class[_] = null) : Unit = {
+    runSerializationTestWithMultiClass(module, input,
+      if (cls == null) Array(module.getClass) else Array(cls))
+  }
+
+  protected def runSerializationTestWithMultiClass(
+      module: AbstractModule[_, _, Float],
+      input: Activity, classes: Array[Class[_]]) : Unit = {
+    val name = module.getName
+    val serFile = File.createTempFile(name, postFix)
+    val originForward = module.evaluate().forward(input)
+
+    ModulePersister.saveToFile[Float](serFile.getAbsolutePath, null, module.evaluate(), true)
+    RNG.setSeed(1000)
+    val loadedModule = ModuleLoader.loadFromFile[Float](serFile.getAbsolutePath)
+
+    val afterLoadForward = loadedModule.forward(input)
+
+    if (serFile.exists) {
+      serFile.delete
+    }
+
+    afterLoadForward should be (originForward)
+  }
+
 }
