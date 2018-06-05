@@ -217,11 +217,15 @@ class TFNet private(graphDef: Array[Byte],
 
 object TFNet {
 
-  val defaultSessionConfig = ConfigProto.newBuilder()
-    .setInterOpParallelismThreads(1)
-    .setIntraOpParallelismThreads(1)
-    .setUsePerSessionThreads(true)
-    .build()
+  val defaultSessionConfig = Seq(16, 1, 40, 1, 72, 1).map(_.toByte).toArray
+  // Ideally we should use the following code, however, importing tensorflow proto
+  // will conflict with bigdl.
+
+//  val defaultSessionConfig = ConfigProto.newBuilder()
+//    .setInterOpParallelismThreads(1)
+//    .setIntraOpParallelismThreads(1)
+//    .setUsePerSessionThreads(true)
+//    .build().toByteArray
 
   private def floatToInt(array: Array[Float]): Array[Int] = {
     val result = new Array[Int](array.length)
@@ -271,20 +275,8 @@ object TFNet {
    * @return
    */
   def apply(graphDef: GraphDef, inputNames: Seq[String],
-            outputNames: Seq[String], config: ConfigProto): TFNet = {
-    new TFNet(graphDef.toByteArray, inputNames, outputNames, config.toByteArray)
-  }
-
-  /**
-   * Create a TFNet
-   * @param graphDef the tensorflow GraphDef object
-   * @param inputNames the input tensor names of this subgraph
-   * @param outputNames the output tensor names of this subgraph
-   * @return
-   */
-  def apply(graphDef: GraphDef, inputNames: Seq[String],
             outputNames: Seq[String]): TFNet = {
-    new TFNet(graphDef.toByteArray, inputNames, outputNames, defaultSessionConfig.toByteArray)
+    new TFNet(graphDef.toByteArray, inputNames, outputNames, defaultSessionConfig)
   }
 
   /**
@@ -296,10 +288,9 @@ object TFNet {
    */
   def apply(path: String,
             inputNames: Seq[String],
-            outputNames: Seq[String],
-            config: ConfigProto = defaultSessionConfig): TFNet = {
+            outputNames: Seq[String]): TFNet = {
     val graphDef = parse(path)
-    TFNet(graphDef, inputNames, outputNames, config)
+    TFNet(graphDef, inputNames, outputNames)
   }
 
   private def parse(graphProtoTxt: String) : GraphDef = {
