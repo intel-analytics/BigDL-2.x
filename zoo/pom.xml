@@ -200,12 +200,6 @@
             <version>${spark.version}</version>
             <scope>${spark-scope}</scope>
         </dependency>
-        <!--this must be put before bigdl, to avoid tensorflow protobuf class conflict-->
-        <dependency>
-            <groupId>org.tensorflow</groupId>
-            <artifactId>proto</artifactId>
-            <version>1.8.0</version>
-        </dependency>
         <dependency>
             <groupId>com.intel.analytics.bigdl</groupId>
             <artifactId>${bigdl.artifactId}</artifactId>
