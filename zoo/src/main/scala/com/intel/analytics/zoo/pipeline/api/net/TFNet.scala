@@ -21,7 +21,7 @@ import java.nio._
 import com.intel.analytics.bigdl.nn.abstractnn.{AbstractModule, Activity}
 import com.intel.analytics.bigdl.tensor.Tensor
 import com.intel.analytics.bigdl.utils.{MultiShape, Shape, T}
-import org.tensorflow.framework.GraphDef
+import org.tensorflow.framework.{ConfigProto, GraphDef}
 import org.tensorflow.types.UInt8
 import org.tensorflow.{DataType, Graph, Session, Tensor => TTensor}
 
@@ -43,7 +43,8 @@ import scala.collection.JavaConverters._
  */
 class TFNet private(graphDef: Array[Byte],
             val inputNames: Seq[String],
-            val outputNames: Seq[String])
+            val outputNames: Seq[String],
+                    config: Array[Byte])
   extends AbstractModule[Activity, Activity, Float] {
 
 
@@ -87,7 +88,7 @@ class TFNet private(graphDef: Array[Byte],
   private lazy val (graph, sess) = {
     val graph = new Graph()
     graph.importGraphDef(graphDef)
-    val sess = new Session(graph)
+    val sess = new Session(graph, config)
     (graph, sess)
   }
 
@@ -216,6 +217,12 @@ class TFNet private(graphDef: Array[Byte],
 
 object TFNet {
 
+  val defaultSessionConfig = ConfigProto.newBuilder()
+    .setInterOpParallelismThreads(1)
+    .setIntraOpParallelismThreads(1)
+    .setUsePerSessionThreads(true)
+    .build()
+
   private def floatToInt(array: Array[Float]): Array[Int] = {
     val result = new Array[Int](array.length)
     var i = 0
@@ -264,8 +271,20 @@ object TFNet {
    * @return
    */
   def apply(graphDef: GraphDef, inputNames: Seq[String],
+            outputNames: Seq[String], config: ConfigProto): TFNet = {
+    new TFNet(graphDef.toByteArray, inputNames, outputNames, config.toByteArray)
+  }
+
+  /**
+   * Create a TFNet
+   * @param graphDef the tensorflow GraphDef object
+   * @param inputNames the input tensor names of this subgraph
+   * @param outputNames the output tensor names of this subgraph
+   * @return
+   */
+  def apply(graphDef: GraphDef, inputNames: Seq[String],
             outputNames: Seq[String]): TFNet = {
-    new TFNet(graphDef.toByteArray, inputNames, outputNames)
+    new TFNet(graphDef.toByteArray, inputNames, outputNames, defaultSessionConfig.toByteArray)
   }
 
   /**
@@ -275,10 +294,12 @@ object TFNet {
    * @param outputNames the output tensor names of this subgraph
    * @return
    */
-  def apply(path: String, inputNames: Seq[String],
-            outputNames: Seq[String]): TFNet = {
+  def apply(path: String,
+            inputNames: Seq[String],
+            outputNames: Seq[String],
+            config: ConfigProto = defaultSessionConfig): TFNet = {
     val graphDef = parse(path)
-    TFNet(graphDef, inputNames, outputNames)
+    TFNet(graphDef, inputNames, outputNames, config)
   }
 
   private def parse(graphProtoTxt: String) : GraphDef = {
