@@ -12,6 +12,10 @@ An outline is:
 ```bash
 pip install https://dist.apache.org/repos/dist/dev/incubator/toree/0.2.0/snapshots/dev1/toree-pip/toree-0.2.0.dev1.tar.gz
 ```
+to set up scala kernal, use
+```
+jupyter toree install --spark_opts='--master=local[*]' --user --kernel_name=Spark2.1 --spark_home=$SPARK_HOME
+```
 
 2. Build Analytics Zoo jar file under Spark 2.x.
 
