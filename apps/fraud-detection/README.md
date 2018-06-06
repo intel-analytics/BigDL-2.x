@@ -24,7 +24,7 @@ https://github.com/intel-analytics/analytics-zoo/tree/legacy/pipeline/fraudDetec
 
 
 4. Start the notebook.
-
+recommended driver memory and executor memory is 10g
 ```
-SPARK_OPTS='--master=local[1] --jars /path/to/zoo/jar/file,/.../fraud-1.0.1-SNAPSHOT.jar' TOREE_OPTS='--nosparkcontext' jupyter notebook
+SPARK_OPTS='--master=local[1] --jars /path/to/zoo/jar/file,/.../fraud-1.0.1-SNAPSHOT.jar' TOREE_OPTS='--nosparkcontext' --driver-memory 10g --executor-memory 10g jupyter notebook
 ```
