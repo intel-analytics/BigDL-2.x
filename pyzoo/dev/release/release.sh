@@ -25,7 +25,7 @@ ANALYTICS_ZOO_PYTHON_DIR="$(cd ${RUN_SCRIPT_DIR}/../../../pyzoo; pwd)"
 echo $ANALYTICS_ZOO_PYTHON_DIR
 
 if (( $# < 2)); then
-  echo "Bad parameters. Usage example: bash release.sh linux without_bigdl false 0.1.0.dev0"
+  echo "Bad parameters. Usage example: bash release.sh linux without_bigdl false 0.1.0.dev2"
   exit -1
 fi
 
