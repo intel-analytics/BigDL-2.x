@@ -40,7 +40,6 @@ object ModelLoader extends InferenceSupportive {
   AbstractModule[Activity, Activity, Float] = {
     timing(s"load model") {
       logger.info(s"load model from $modelPath and $weightPath")
-
       val model = ModuleLoader.loadFromFile[Float](modelPath, weightPath)
       logger.info(s"loaded model as $model")
       model
