@@ -31,9 +31,11 @@ case class FloatInferenceModel(
   predictor: LocalPredictor[Float]) extends InferenceSupportive {
 
   def predict(input: JList[JFloat], shape: JList[JInt]): JList[JFloat] = {
-    val sample = transferInputToSample(input, shape.asScala.toArray.map(_.asInstanceOf[Int]))
-    val result = predictor.predict(Array(sample))
-    require(result.length == 1, "only one input, should get only one prediction")
-    result(0).asInstanceOf[Tensor[Float]].toArray().toList.asJava.asInstanceOf[JList[JFloat]]
+    timing("model predict") {
+      val sample = transferInputToSample(input, shape.asScala.toArray.map(_.asInstanceOf[Int]))
+      val result = predictor.predict(Array(sample))
+      require(result.length == 1, "only one input, should get only one prediction")
+      result(0).asInstanceOf[Tensor[Float]].toArray().toList.asJava.asInstanceOf[JList[JFloat]]
+    }
   }
 }
