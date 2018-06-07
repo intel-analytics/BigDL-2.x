@@ -109,18 +109,18 @@ class NetSpec extends ZooSpecHelper{
 
   "connect variable " should "work properly" in {
     def createOldModel() = {
-      val input1 = Input[Float](inputShape = Shape(2))
-      val input2 = Input[Float](inputShape = Shape(2))
+      val input1 = Input[Float](inputShape = Shape(3))
+      val input2 = Input[Float](inputShape = Shape(3))
       val sum = new KerasLayerWrapper[Float](
         CAddTable[Float]().asInstanceOf[AbstractModule[Activity, Activity, Float]])
-        .inputs(Array(input1, input2))
+        .inputs(Array(input1, Dense[Float](3).inputs(input2)))
       ZModel[Float](input = Array(input1, input2), output = sum)
     }
     val input1 = Variable[Float](inputShape = Shape(3))
-    val input2 = Variable[Float](inputShape = Shape(2))
-    val diff = input1 + Dense(3).from(input2)
+    val input2 = Variable[Float](inputShape = Shape(3))
+    val diff = input1 + Dense[Float](3).from(input2)
     val model = ZModel[Float](input = Array(input1, input2), output = diff)
-    val inputValue = Tensor[Float](3).randn()
+    val inputValue = Tensor[Float](1, 3).randn()
     val oldModel = createOldModel()
     val out = model.forward(T(inputValue, inputValue)).toTensor[Float]
     val oldOut = oldModel.forward(T(inputValue, inputValue)).toTensor[Float]
