@@ -4,7 +4,7 @@ This example illustrates how to do the image classification with pre-trained mod
 ### Run steps
 1. Prepare pre-trained models
 
-Download pre-trained models from [imageclassification](https://github.com/intel-analytics/analytics-zoo/blob/master/docs/docs/ProgrammingGuide/image-classification.md)
+Download pre-trained models from [Image Classification](https://github.com/intel-analytics/analytics-zoo/blob/master/docs/docs/ProgrammingGuide/image-classification.md)
 
 2. Prepare predict dataset
 
