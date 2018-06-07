@@ -30,6 +30,12 @@ def export_tf(sess, folder, inputs, outputs):
     Export the frozen tensorflow graph as well as the inputs/outputs information
     to the folder for inference.
     
+    This function will
+    1. freeze the graph (replace all variables with constants)
+    2. strip all unused node as specified by inputs and outputs
+    3. add placeholder nodes as needed
+    4. write the frozen graph and inputs/outputs names to the folder
+    
     Note: There should not be any queuing operation between inputs and outputs
     
     :param sess: tensorflow session holding the variables to be saved
