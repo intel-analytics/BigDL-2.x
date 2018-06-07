@@ -34,8 +34,8 @@ mode to run this example.
     spark-submit \
     --master local[physcial_core_number] \
     --driver-memory 10g --executor-memory 20g \
-    --class com.intel.analytics.zoo.examples.nnframes.finetune.TransferLearning \
-    ./dist/lib/analytics-zoo-VERSION-jar-with-dependencies.jar\
+    --class com.intel.analytics.zoo.example.nnframes.finetune.TransferLearning \
+    ./dist/lib/analytics-zoo-VERSION-jar-with-dependencies.jar \
     --modelPath /tmp/bigdl_inception-v1_imagenet_0.4.0.model \
     --dataPath /tmp/train_sampled \
     --batchSize 32 \
