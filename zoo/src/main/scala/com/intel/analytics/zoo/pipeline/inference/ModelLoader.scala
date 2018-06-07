@@ -16,7 +16,6 @@
 
 package com.intel.analytics.zoo.pipeline.inference
 
-import com.intel.analytics.bigdl.nn.Module
 import com.intel.analytics.bigdl.nn.abstractnn.{AbstractModule, Activity}
 import com.intel.analytics.bigdl.utils.Engine
 import com.intel.analytics.zoo.pipeline.api.Net
@@ -31,11 +30,14 @@ object ModelLoader extends InferenceSupportive {
     Engine.init
   }
 
-  def loadFloatModel(modelPath: String, weightPath: String):
-    AbstractModule[Activity, Activity, Float] = {
+  def loadFloatModel(modelType: ModelType, modelPath: String, weightPath: String):
+  AbstractModule[Activity, Activity, Float] = {
     timing(s"load model") {
-      logger.info(s"load model from $modelPath and $weightPath")
-      val model = Net.load[Float](modelPath, weightPath)
+      logger.info(s"load model for $modelType from $modelPath and $weightPath")
+      val model = modelType match {
+        case ModelType.BIGDL => Net.loadBigDL[Float](modelPath, weightPath)
+        case ModelType.KERAS => Net.load[Float](modelPath, weightPath)
+      }
       logger.info(s"loaded model as $model")
       model
     }

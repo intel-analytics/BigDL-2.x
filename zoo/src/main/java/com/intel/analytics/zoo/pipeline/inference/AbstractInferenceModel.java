@@ -16,46 +16,43 @@
 
 package com.intel.analytics.zoo.pipeline.inference;
 
-import scala.actors.threadpool.Arrays;
-
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.LinkedBlockingQueue;
 
 public abstract class AbstractInferenceModel {
-  private FloatInferenceModel model;
+    private FloatInferenceModel model;
 
-  private int supportedConcurrentNum = 1;
+    private int supportedConcurrentNum = 1;
 
-  public AbstractInferenceModel(){
-  }
-
-  public AbstractInferenceModel(int supportedConcurrentNum){
-    this.supportedConcurrentNum = supportedConcurrentNum;
-  }
-
-  public void load(String modelPath) {
-    load(modelPath, null);
-  }
-
-  public void load(String modelPath, String weightPath) {
-    this.model = InferenceModelFactory.loadFloatInferenceModel(modelPath, weightPath);
-  }
-
-  public void reload(String modelPath) {
-    load(modelPath, null);
-  }
-
-  public void reload(String modelPath, String weightPath) {
-    this.model = InferenceModelFactory.loadFloatInferenceModel(modelPath, weightPath);
-  }
-
-  public List<Float> predict(List<Float> input, int... shape) {
-    List<Integer> inputShape = new ArrayList<Integer>();
-    for(int s: shape) {
-      inputShape.add(s);
+    public AbstractInferenceModel() {
     }
-    return model.predict(input, inputShape);
-  }
+
+    public AbstractInferenceModel(int supportedConcurrentNum) {
+        this.supportedConcurrentNum = supportedConcurrentNum;
+    }
+
+    public void load(ModelType modelType, String modelPath) {
+        load(modelType, modelPath, null);
+    }
+
+    public void load(ModelType modelType, String modelPath, String weightPath) {
+        this.model = InferenceModelFactory.loadFloatInferenceModel(modelType, modelPath, weightPath);
+    }
+
+    public void reload(ModelType modelType, String modelPath) {
+        load(modelType, modelPath, null);
+    }
+
+    public void reload(ModelType modelType, String modelPath, String weightPath) {
+        this.model = InferenceModelFactory.loadFloatInferenceModel(modelType, modelPath, weightPath);
+    }
+
+    public List<Float> predict(List<Float> input, int... shape) {
+        List<Integer> inputShape = new ArrayList<Integer>();
+        for (int s : shape) {
+            inputShape.add(s);
+        }
+        return model.predict(input, inputShape);
+    }
 
 }
