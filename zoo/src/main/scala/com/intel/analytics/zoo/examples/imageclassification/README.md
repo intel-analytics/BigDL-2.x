@@ -20,7 +20,7 @@ modelPath=... // model path
 imagePath=... // image path
 
 ANALYTICS_ZOO_HOME=...
-ZOO_JAR_PATH=${ANALYTICS_ZOO_HOME}/lib/zoo-VERSION-SNAPSHOT-jar-with-dependencies.jar
+ZOO_JAR_PATH=${ANALYTICS_ZOO_HOME}/lib/analytics-zoo-VERSION-jar-with-dependencies.jar
 
 spark-submit \
 --verbose \
