@@ -7,7 +7,7 @@ The example uses OpenCV library to save image. Please install it before run this
 
 2. Prepare pre-trained models
 
-Download pre-trained models from https://github.com/intel-analytics/zoo/tree/master/docs/models/objectdetection
+Download pre-trained models from [Object Detection](https://github.com/intel-analytics/analytics-zoo/blob/master/docs/docs/ProgrammingGuide/object-detection.md)
 
 3. Prepare predict dataset
 
@@ -22,8 +22,8 @@ imagePath=... // image path. Local file system/HDFS are supported. With local fi
 
 outputPath=... // output path. Currently only support local file system.
 
-PYTHON_API_ZIP_PATH=${ANALYTICS_ZOO_HOME}/lib/zoo-VERSION-SNAPSHOT-python-api.zip
-ZOO_JAR_PATH=${ANALYTICS_ZOO_HOME}/lib/zoo-VERSION-SNAPSHOT-jar-with-dependencies.jar
+PYTHON_API_ZIP_PATH=${ANALYTICS_ZOO_HOME}/lib/analytics-zoo-VERSION-python-api.zip
+ZOO_JAR_PATH=${ANALYTICS_ZOO_HOME}/lib/analytics-zoo-VERSION-jar-with-dependencies.jar
 PYTHONPATH=${PYTHON_API_ZIP_PATH}:$PYTHONPATH
 
 spark-submit \
