@@ -1,5 +1,5 @@
 ## Custom Loss example
-This example illustrates how to define a custom loss function.
+This example illustrates how to define a custom loss function and ```Lambda``` layer.
 
 ### Run steps
 1. Install analytics-zoo
