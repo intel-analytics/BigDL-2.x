@@ -12,10 +12,3 @@ Run ```pip install analytics-zoo```
 python custom.py
 python customloss.py
 ```
-
-## Results
-You will see result like this
-```
-[array([[2.007924 , 1.9953456]], dtype=float32), array([-0.60812664], dtype=float32)]
-```
-
