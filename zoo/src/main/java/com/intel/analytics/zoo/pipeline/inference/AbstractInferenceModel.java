@@ -31,20 +31,20 @@ public abstract class AbstractInferenceModel {
     this.supportedConcurrentNum = supportedConcurrentNum;
   }
 
-  public void load(ModelType modelType, String modelPath) {
-    load(modelType, modelPath, null);
+  public void load(String modelPath) {
+    load(modelPath, null);
   }
 
-  public void load(ModelType modelType, String modelPath, String weightPath) {
-    this.model = InferenceModelFactory.loadFloatInferenceModel(modelType, modelPath, weightPath);
+  public void load(String modelPath, String weightPath) {
+    this.model = InferenceModelFactory.loadFloatInferenceModel(modelPath, weightPath);
   }
 
-  public void reload(ModelType modelType, String modelPath) {
-    load(modelType, modelPath, null);
+  public void reload(String modelPath) {
+    load(modelPath, null);
   }
 
-  public void reload(ModelType modelType, String modelPath, String weightPath) {
-    this.model = InferenceModelFactory.loadFloatInferenceModel(modelType, modelPath, weightPath);
+  public void reload(String modelPath, String weightPath) {
+    this.model = InferenceModelFactory.loadFloatInferenceModel(modelPath, weightPath);
   }
 
   public List<Float> predict(List<Float> input, int... shape) {
