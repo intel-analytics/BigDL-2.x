@@ -21,7 +21,7 @@ topN=... // top n prediction
 
 ANALYTICS_ZOO_HOME=
 PYTHON_API_ZIP_PATH=${ANALYTICS_ZOO_HOME}/lib/analytics-zoo-VERSION-python-api.zip
-ZOO_JAR_PATH=${ANALYTICS_ZOO_HOME}/lib/analytics-zoo-VERSION-jar-with-dependencies.jar.jar
+ZOO_JAR_PATH=${ANALYTICS_ZOO_HOME}/lib/analytics-zoo-VERSION-jar-with-dependencies.jar
 PYTHONPATH=${PYTHON_API_ZIP_PATH}:$PYTHONPATH
 
 spark-submit \
