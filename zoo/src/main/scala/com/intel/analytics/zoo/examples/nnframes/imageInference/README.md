@@ -51,7 +51,7 @@ Command to run the example in Spark yarn mode:
     --num-executors 4 \
     --driver-memory 10g \
     --executor-memory 150g \
-    --class com.intel.analytics.zoo.examples.nnframes.ImageInference.ImageInference \
+    --class com.intel.analytics.zoo.examples.nnframes.imageInference.ImageInference \
     ./dist/lib/analytics-zoo-VERSION-jar-with-dependencies.jar \
     --modelPath ./model/bvlc_googlenet.caffemodel \
     --caffeDefPath ./model/deploy.prototxt \
