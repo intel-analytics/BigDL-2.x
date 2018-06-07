@@ -302,7 +302,7 @@ class Variable[T: ClassTag] private[zoo] (val node: ModuleNode[T], var name: Str
    * @param index The index of the dimension to be selected. 0-based index.
    *              -1 means the last dimension of the input.
    */
-  def index_select(dim: Int, index: Int): Variable[T] = {
+  def indexSelect(dim: Int, index: Int): Variable[T] = {
     val layer = Select[T](dim = dim,
       index = index)
     Variable(layer.inputs(this.node))

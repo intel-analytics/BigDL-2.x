@@ -248,7 +248,7 @@ class Variable(kbase.ZooKerasCreator):
         return Variable.from_jvalue(callBigDlFunc("float", "narrow", self, start_index, length))
 
     def index_select(self, dim, index):
-        return Variable.from_jvalue(callBigDlFunc("float", "index_select", self, dim, index))
+        return Variable.from_jvalue(callBigDlFunc("float", "indexSelect", self, dim, index))
 
     # TODO: we need a Shape mapping here.
     def __to_batch_shape(cls, shape):

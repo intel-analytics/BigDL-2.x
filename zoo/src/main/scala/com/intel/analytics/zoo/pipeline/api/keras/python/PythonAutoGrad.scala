@@ -168,8 +168,8 @@ class PythonAutoGrad[T: ClassTag](implicit ev: TensorNumeric[T]) extends PythonZ
     a.narrow(dim, startIndex, length)
   }
 
-  def index_select(a: Variable[T], dim: Int, index: Int): Variable[T] = {
-    a.index_select(dim, index)
+  def indexSelect(a: Variable[T], dim: Int, index: Int): Variable[T] = {
+    a.indexSelect(dim, index)
   }
 
 

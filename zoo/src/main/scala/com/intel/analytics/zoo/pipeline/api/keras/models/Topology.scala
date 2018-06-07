@@ -467,7 +467,7 @@ object Model extends KerasLayerSerializable {
     new Model[T](Seq(input), Seq(output))
   }
 
-   /*------------------------ factory methods for variables---------------------*/
+   /* ------------------------ factory methods for variables--------------------- */
   /**
    * Build a multiple-input, multiple-output graph container.
    * @param input Array of input variables.

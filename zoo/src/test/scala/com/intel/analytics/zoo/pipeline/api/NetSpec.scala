@@ -108,7 +108,7 @@ class NetSpec extends ZooSpecHelper{
   }
 
   "connect variable " should "work properly" in {
-    def createOldModel() = {
+    def createOldModel(): AbstractModule[Activity, Activity, Float] = {
       val input1 = Input[Float](inputShape = Shape(3))
       val input2 = Input[Float](inputShape = Shape(3))
       val sum = new KerasLayerWrapper[Float](
