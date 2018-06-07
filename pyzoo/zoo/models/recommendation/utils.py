@@ -61,7 +61,7 @@ def get_wide_tensor(row, column_info):
             acc += wide_dims[i-1]
             res = acc + index
         indices.append(res)
-    values = np.array(map(lambda x: x + 1, indices))
+    values = np.array([i + 1 for i in indices])
     shape = np.array([sum(wide_dims)])
     return JTensor.sparse(values, np.array(indices), shape)
 
