@@ -20,7 +20,6 @@ import com.intel.analytics.bigdl.optim.LocalPredictor
 
 object InferenceModelFactory {
 
-
   def loadFloatInferenceModel(modelPath: String): FloatInferenceModel = {
     loadFloatInferenceModel(modelPath, null)
   }
