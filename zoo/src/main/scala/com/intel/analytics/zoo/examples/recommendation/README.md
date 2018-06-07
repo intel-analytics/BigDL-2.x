@@ -17,7 +17,7 @@ In these two examples, we demostrate how to use BigDL to build neural network re
     spark-submit \
     --master local[physcial_core_number] \
     --driver-memory 10g --executor-memory 20g \
-    --class com.intel.analytics.zoo.example.recommendation.WideAndDeepExample \
+    --class com.intel.analytics.zoo.examples.recommendation.WideAndDeepExample \
     ./dist/lib/zoo-0.1.0-SNAPSHOT-jar-with-dependencies.jar \
     --inputDir ./data/ml-1m \
 
@@ -32,7 +32,7 @@ In these two examples, we demostrate how to use BigDL to build neural network re
     --num-executors 4 \
     --driver-memory 10g \
     --executor-memory 150g \
-    --class com.intel.analytics.zoo.example.recommendation.WideAndDeepExample \
+    --class com.intel.analytics.zoo.examples.recommendation.WideAndDeepExample \
     ./dist/lib/zoo-0.1.0-SNAPSHOT-jar-with-dependencies.jar \
     --inputDir hdfs://xxx
 
@@ -46,7 +46,7 @@ Command to run the example in Spark local mode:
     spark-submit \
     --master local[physcial_core_number] \
     --driver-memory 10g --executor-memory 20g \
-    --class com.intel.analytics.zoo.example.recommendation.NeuralCFexample \
+    --class com.intel.analytics.zoo.examples.recommendation.NeuralCFexample \
     ./dist/lib/zoo-0.1.0-SNAPSHOT-jar-with-dependencies.jar \
     --inputDir ./data/ml-1m \
 
@@ -61,7 +61,7 @@ Command to run the example in Spark yarn mode:
     --num-executors 4 \
     --driver-memory 10g \
     --executor-memory 150g \
-    --class com.intel.analytics.zoo.example.recommendation.NeuralCFexample \
+    --class com.intel.analytics.zoo.examples.recommendation.NeuralCFexample \
     ./dist/lib/zoo-0.1.0-SNAPSHOT-jar-with-dependencies.jar \
     --inputDir hdfs://xxx
 
