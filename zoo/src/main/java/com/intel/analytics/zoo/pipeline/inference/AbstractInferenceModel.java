@@ -20,39 +20,39 @@ import java.util.ArrayList;
 import java.util.List;
 
 public abstract class AbstractInferenceModel {
-    private FloatInferenceModel model;
+  private FloatInferenceModel model;
 
-    private int supportedConcurrentNum = 1;
+  private int supportedConcurrentNum = 1;
 
-    public AbstractInferenceModel() {
+  public AbstractInferenceModel() {
+  }
+
+  public AbstractInferenceModel(int supportedConcurrentNum) {
+    this.supportedConcurrentNum = supportedConcurrentNum;
+  }
+
+  public void load(ModelType modelType, String modelPath) {
+    load(modelType, modelPath, null);
+  }
+
+  public void load(ModelType modelType, String modelPath, String weightPath) {
+    this.model = InferenceModelFactory.loadFloatInferenceModel(modelType, modelPath, weightPath);
+  }
+
+  public void reload(ModelType modelType, String modelPath) {
+    load(modelType, modelPath, null);
+  }
+
+  public void reload(ModelType modelType, String modelPath, String weightPath) {
+    this.model = InferenceModelFactory.loadFloatInferenceModel(modelType, modelPath, weightPath);
+  }
+
+  public List<Float> predict(List<Float> input, int... shape) {
+    List<Integer> inputShape = new ArrayList<Integer>();
+    for (int s : shape) {
+      inputShape.add(s);
     }
-
-    public AbstractInferenceModel(int supportedConcurrentNum) {
-        this.supportedConcurrentNum = supportedConcurrentNum;
-    }
-
-    public void load(ModelType modelType, String modelPath) {
-        load(modelType, modelPath, null);
-    }
-
-    public void load(ModelType modelType, String modelPath, String weightPath) {
-        this.model = InferenceModelFactory.loadFloatInferenceModel(modelType, modelPath, weightPath);
-    }
-
-    public void reload(ModelType modelType, String modelPath) {
-        load(modelType, modelPath, null);
-    }
-
-    public void reload(ModelType modelType, String modelPath, String weightPath) {
-        this.model = InferenceModelFactory.loadFloatInferenceModel(modelType, modelPath, weightPath);
-    }
-
-    public List<Float> predict(List<Float> input, int... shape) {
-        List<Integer> inputShape = new ArrayList<Integer>();
-        for (int s : shape) {
-            inputShape.add(s);
-        }
-        return model.predict(input, inputShape);
-    }
+    return model.predict(input, inputShape);
+  }
 
 }
