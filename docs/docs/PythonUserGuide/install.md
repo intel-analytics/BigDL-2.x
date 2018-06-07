@@ -19,7 +19,7 @@ pip3 install analytics-zoo==0.1.0.dev2    # for Python 3.5 and Python 3.6
 
 **Important:**
 
-1. Installing analytics-zoo from pip will automatically install `pyspark`. To avoid possible conflicts, you are recommended to __unset `SPARK_HOME`__ if it exists in your environment.
+1. Installing analytics-zoo from pip will automatically install `pyspark`. To avoid possible conflicts, you are highly recommended to __unset `SPARK_HOME`__ if it exists in your environment.
 
 2. Please always first call `init_nncontext()` at the very beginning of your code after pip install. This will create a SparkContext with optimized performance configuration and initialize the BigDL engine.
 ```python
