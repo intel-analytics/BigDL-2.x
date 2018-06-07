@@ -33,12 +33,13 @@ class TestAutoGradModel(ZooTestCase):
         t1 = time.index_select(1, 0)
         t2 = time.index_select(1, 1)
         diff = auto.abs(t1 - t2)
+        assert diff.get_output_shape() == (None, 30)
+        assert diff.get_input_shape() == (None, 30)
         model = Model(input, diff)
         data = np.random.uniform(0, 1, [10, 2, 20])
         output = model.forward(data)
         print(output.shape)
 
-    @pytest.mark.skip(reason="there's still problem here")
     def test_var_model(self):
         input = Input(shape=[2, 3, 16, 16])
 
@@ -46,8 +47,9 @@ class TestAutoGradModel(ZooTestCase):
         vgg_mock.add(Conv2D(2, 4, 4, input_shape=[3, 16, 16]))  # output: 2, 13, 13
         vgg_mock.add(Reshape([2 * 13 * 13]))
         vgg_mock.add(Dense(100))
+        vgg_mock.add(Reshape([100, 1, 1]))
 
-        time = TimeDistributed(layer=vgg_mock)(input)  # there's problem for timedistributed
+        time = TimeDistributed(layer=vgg_mock)(input)
         t1 = time.index_select(1, 0)
         t2 = time.index_select(1, 1)
         diff = t1 - t2
