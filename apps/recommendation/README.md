@@ -2,7 +2,7 @@
 These two notebooks demonstrate how to build neural network recommendation system (Neural Collaborative Filtering, Wide and Deep) with explict feedback using Analytics Zoo and BigDL on Spark. 
 
 ## Environment
-* Python 2.7
+* Python 2.7/3.5/3.6
 * JDK 8
 * Spark 1.6.0/2.1.1/2.1.2/2.2.0(This version needs to be same with the version you use to build Analytics Zoo)
 * Analytics Zoo 0.1.0
