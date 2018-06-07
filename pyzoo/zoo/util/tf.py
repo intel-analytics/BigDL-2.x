@@ -48,9 +48,11 @@ def export_tf(sess, folder, inputs, outputs):
         node.device = ""
 
     non_placeholder_input_names = []
+    type_enums = []
     for input_tensor in inputs:
         if input_tensor.op != "Placeholder":
             non_placeholder_input_names.append(input_tensor.name)
+            type_enums.append(input_tensor.dtype.as_datatype_enum)
 
     output_names = map(lambda o: o.name, outputs)
 
@@ -64,7 +66,7 @@ def export_tf(sess, folder, inputs, outputs):
     optimized_graph_def = strip_unused(frozen_graph_def,
                                        non_placeholder_input_names,
                                        output_names,
-                                       dtypes.float32.as_datatype_enum)
+                                       type_enums)
 
     new_input_names = []
     for node in optimized_graph_def.node:
@@ -122,12 +124,11 @@ def strip_unused(input_graph_def, input_tensor_names, output_tensor_names,
                 if _append_port(node.input[i]) in input_tensor_names:
                     not_found.remove(_append_port(node.input[i]))
                     new_input_name = node.input[i].replace(":", "_")
-                    node.input[i] = new_input_name
                     placeholder_node = node_def_pb2.NodeDef()
                     placeholder_node.op = "Placeholder"
                     placeholder_node.name = new_input_name
                     if isinstance(placeholder_type_enum, list):
-                        input_node_index = input_tensor_names.index(node.input[i])
+                        input_node_index = input_tensor_names.index(_append_port(node.input[i]))
                         placeholder_node.attr["dtype"].CopyFrom(
                             attr_value_pb2.AttrValue(type=placeholder_type_enum[
                                 input_node_index]))
@@ -137,6 +138,7 @@ def strip_unused(input_graph_def, input_tensor_names, output_tensor_names,
                     if "_output_shapes" in node.attr:
                         placeholder_node.attr["_output_shapes"].CopyFrom(
                             node.attr["_output_shapes"])
+                    node.input[i] = new_input_name
                     inputs_replaced_graph_def.node.extend([placeholder_node])
             inputs_replaced_graph_def.node.extend([copy.deepcopy(node)])
 
