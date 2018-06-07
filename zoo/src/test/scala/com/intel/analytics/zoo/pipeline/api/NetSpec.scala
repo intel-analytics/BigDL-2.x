@@ -116,11 +116,11 @@ class NetSpec extends ZooSpecHelper{
         .inputs(Array(input1, input2))
       ZModel[Float](input = Array(input1, input2), output = sum)
     }
-    val input1 = Variable[Float](inputShape = Shape(2))
+    val input1 = Variable[Float](inputShape = Shape(3))
     val input2 = Variable[Float](inputShape = Shape(2))
-    val diff = input1 + input2
+    val diff = input1 + Dense(3).from(input2)
     val model = ZModel[Float](input = Array(input1, input2), output = diff)
-    val inputValue = Tensor[Float](2).randn()
+    val inputValue = Tensor[Float](3).randn()
     val oldModel = createOldModel()
     val out = model.forward(T(inputValue, inputValue)).toTensor[Float]
     val oldOut = oldModel.forward(T(inputValue, inputValue)).toTensor[Float]
