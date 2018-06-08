@@ -16,6 +16,7 @@
 
 import keras.backend as KK
 import keras.layers as klayers
+import numpy as np
 import pytest
 
 from test.zoo.pipeline.utils.test_utils import ZooTestCase
@@ -236,13 +237,9 @@ class TestOperator(ZooTestCase):
         input_shape = [2] + image_shape
         input = Input(shape=input_shape, name="input1")
 
-        def index_select(x, dim, index):
-            t = Select(dim, index)(x.node)
-            return Variable.from_node(t)
-
         def l1(x):
-            x1 = index_select(x, 1, 0)  # input is [B, 2, 3, 16, 16]
-            x2 = index_select(x, 1, 0)
+            x1 = x.index_select(1, 0)  # input is [B, 2, 3, 16, 16]
+            x2 = x.index_select(1, 0)
             return abs(x1 - x2)
 
         output = Lambda(function=l1)(input)

@@ -27,7 +27,7 @@ def get_class_name(src_code):
 
 
 def get_parameters(src_code):
-    match = re.search(r"def apply.*ClassTag\]\((.*)\)\(implicit", src_code, re.DOTALL)
+    match = re.search(r"def apply.*ClassTag\]\s*\((.*)\)\s*\(implicit", src_code, re.DOTALL)
     params = [p.strip() for p in match.group(1).strip().split("\n") if len(p.strip()) > 0]
     names = []
     values = []
