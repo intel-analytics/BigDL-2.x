@@ -45,7 +45,7 @@ def export_tf(sess, folder, inputs, outputs):
     :return: 
     """
 
-    output_node_names = list({t.name.split(":")[0] for t in outputs})
+    output_node_names = list({t.op.name for t in outputs})
 
     graph_def = sess.graph_def
 
@@ -69,15 +69,25 @@ def export_tf(sess, folder, inputs, outputs):
         output_node_names
     )
 
-    optimized_graph_def = strip_unused(frozen_graph_def,
-                                       non_placeholder_input_names,
-                                       output_names,
-                                       type_enums)
+    optimized_graph_def, old_names2new = strip_unused(frozen_graph_def,
+                                                      non_placeholder_input_names,
+                                                      output_names,
+                                                      type_enums)
 
     new_input_names = []
+    for t in inputs:
+        if t.name in old_names2new:
+            new_input_names.append(old_names2new[t.name])
+        else:
+            new_input_names.append(t.name)
+
+    # check all placeholder in the graph are listed in the new_input_names:
+    new_input_nodes = {name.split(":")[0] for name in new_input_names}
     for node in optimized_graph_def.node:
-        if node.op == "Placeholder":
-            new_input_names.append(node.name + ":0")
+        if node.op == "Placeholder" and node.name not in new_input_nodes:
+            raise ValueError(
+                "Node %s is a Placeholder but not listed in inputs, inputs are %s"
+                % (node.name, inputs))
 
     if not os.path.isdir(folder):
         os.mkdir(folder)
@@ -105,7 +115,8 @@ def strip_unused(input_graph_def, input_tensor_names, output_tensor_names,
         a list that specifies one value per input node name.
 
   Returns:
-    A `GraphDef` with all unnecessary ops removed.
+    A `GraphDef` with all unnecessary ops removed. and a map containing the old input
+    names to the new input names
 
   Raises:
     ValueError: If any element in `input_node_names` refers to a tensor instead
@@ -116,6 +127,8 @@ def strip_unused(input_graph_def, input_tensor_names, output_tensor_names,
         if ":" not in name:
             raise ValueError("Name '%s' appears to refer to a Operation, "
                              "not a Tensor." % name)
+
+    old2new = {}
 
     # Here we replace the nodes we're going to override as inputs with
     # placeholders so that any unused nodes that are inputs to them are
@@ -128,13 +141,14 @@ def strip_unused(input_graph_def, input_tensor_names, output_tensor_names,
         if node.name not in input_node_names:
             for i in range(len(node.input)):
                 if _append_port(node.input[i]) in input_tensor_names:
-                    not_found.remove(_append_port(node.input[i]))
+                    old_name = _append_port(node.input[i])
+                    not_found.remove(old_name)
                     new_input_name = node.input[i].replace(":", "_")
                     placeholder_node = node_def_pb2.NodeDef()
                     placeholder_node.op = "Placeholder"
                     placeholder_node.name = new_input_name
                     if isinstance(placeholder_type_enum, list):
-                        input_node_index = input_tensor_names.index(_append_port(node.input[i]))
+                        input_node_index = input_tensor_names.index(old_name)
                         placeholder_node.attr["dtype"].CopyFrom(
                             attr_value_pb2.AttrValue(type=placeholder_type_enum[
                                 input_node_index]))
@@ -145,6 +159,7 @@ def strip_unused(input_graph_def, input_tensor_names, output_tensor_names,
                         placeholder_node.attr["_output_shapes"].CopyFrom(
                             node.attr["_output_shapes"])
                     node.input[i] = new_input_name
+                    old2new[old_name] = new_input_name + ":0"
                     inputs_replaced_graph_def.node.extend([placeholder_node])
             inputs_replaced_graph_def.node.extend([copy.deepcopy(node)])
 
@@ -153,7 +168,7 @@ def strip_unused(input_graph_def, input_tensor_names, output_tensor_names,
 
     output_graph_def = graph_util.extract_sub_graph(inputs_replaced_graph_def,
                                                     output_node_names)
-    return output_graph_def
+    return output_graph_def, old2new
 
 
 def _append_port(input_name):
