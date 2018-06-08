@@ -16,7 +16,7 @@
 
 import sys
 
-from bigdl.nn.layer import Layer
+from bigdl.nn.layer import Layer, Node
 from bigdl.util.common import callBigDlFunc, to_list
 
 import zoo.pipeline.api.keras.base as kbase
