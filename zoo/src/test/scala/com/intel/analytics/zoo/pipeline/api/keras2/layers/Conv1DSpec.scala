@@ -61,7 +61,7 @@ class Conv1DSpec extends KerasBaseSpec {
       """.stripMargin
     val seq = Sequential[Float]()
     val layer = Conv1D[Float](32, 4, activation = "relu", strides = 2,
-      use_bias = false, inputShape = Shape(20, 32))
+      useBias = false, inputShape = Shape(20, 32))
     seq.add(layer)
     seq.getOutputShape().toSingle().toArray should be(Array(-1, 9, 32))
     checkOutputAndGrad(seq.asInstanceOf[AbstractModule[Tensor[Float], Tensor[Float], Float]],
