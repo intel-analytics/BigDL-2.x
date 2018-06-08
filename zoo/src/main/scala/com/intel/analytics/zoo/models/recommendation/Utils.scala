@@ -108,7 +108,7 @@ object Utils {
         acc + index
       }
     }).toArray
-    val values = (0 to wideLength - 1).map(x => 1.0f).toArray
+    val values = indices.map(_ + 1.0f)
     val shape = Array(wideDims.sum)
 
     Tensor.sparse(Array(indices), values, shape)

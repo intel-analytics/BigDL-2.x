@@ -100,7 +100,7 @@ class WideAndDeep[T: ClassTag] private(
       .add(CAdd(Array(numClasses)))
 
     // deep model
-    val deepModel = Sequential[T]()
+    val deepModel = Sequential[T]().setName("deepPart")
     val deepColumn = Concat[T](2)
 
     // add indicator encoded columns
