@@ -16,16 +16,14 @@
 
 package com.intel.analytics.zoo.feature.python
 
-import java.util.{Map, List => JList}
+import java.util.{List => JList}
 
-import com.intel.analytics.bigdl.nn.abstractnn.{AbstractModule, Activity}
-import com.intel.analytics.bigdl.python.api.{BigDLWrapper, JTensor, PythonBigDL}
-import com.intel.analytics.bigdl.tensor.Tensor
+import com.intel.analytics.bigdl.python.api.{JTensor, PythonBigDL}
 import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric
 import com.intel.analytics.bigdl.transform.vision.image._
-import com.intel.analytics.bigdl.utils.Table
 import com.intel.analytics.zoo.feature.common.Preprocessing
 import com.intel.analytics.zoo.feature.image._
+
 import org.apache.spark.api.java.{JavaRDD, JavaSparkContext}
 import org.opencv.imgproc.Imgproc
 
