@@ -17,7 +17,6 @@
 package com.intel.analytics.zoo.models.textclassification
 
 import com.intel.analytics.bigdl.nn.abstractnn.{AbstractModule, Activity}
-import com.intel.analytics.bigdl.tensor.Tensor
 import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric
 import com.intel.analytics.bigdl.utils.Shape
 import com.intel.analytics.zoo.models.common.ZooModel
@@ -82,7 +81,7 @@ object TextClassifier {
     new TextClassifier[T](classNum, tokenLength, sequenceLength, encoder, encoderOutputDim).build()
   }
 
-  def apply[@specialized(Float, Double) T: ClassTag](
+  private[zoo] def apply[@specialized(Float, Double) T: ClassTag](
       model: AbstractModule[Activity, Activity, T])
     (implicit ev: TensorNumeric[T]): TextClassifier[T] = {
     // what values to pass for the constructor?
