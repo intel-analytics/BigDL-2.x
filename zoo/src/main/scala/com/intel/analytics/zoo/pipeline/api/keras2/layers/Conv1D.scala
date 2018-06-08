@@ -52,14 +52,6 @@ import scala.reflect.ClassTag
  *                `"causal"` results in causal (dilated) convolutions, e.g. output[t]
  *                does not depend on input[t+1:]. Useful when modeling temporal data
  *                where the model should not violate the temporal order.
- * @param data_format: A string,
- *                   one of `"channels_last"` (default) or `"channels_first"`.
- *                   The ordering of the dimensions in the inputs.
- *                   `"channels_last"` corresponds to inputs with shape
- *                   `(batch, length, channels)`
- *                   (default format for temporal data in Keras)
- *                   while `"channels_first"` corresponds to inputs
- *                   with shape `(batch, channels, length)`.
  * @param activation Activation function to use. Default is null.
  *                   You can also pass in corresponding string representations such as 'relu'
  *                   or 'sigmoid', etc. for simple activations in the factory method.
@@ -70,26 +62,21 @@ import scala.reflect.ClassTag
  * @param kernel_Regularizer Regularizer function applied to
  *                           the `kernel` weights matrix Default is null.
  * @param bias_Regularizer Regularizer function applied to the bias vector. Default is null.
- * @param activity_Regularizer Regularizer function applied to
- *                             the output of the layer (its "activation").
  * @param inputShape A Single Shape, does not include the batch dimension.
  * @tparam T Numeric type of parameter(e.g. weight, bias). Only support float/double now.
  */
 class Conv1D[T: ClassTag](
-                         val filters: Int,
-                         val kernel_size: Int,
-                         val strides: Int = 1,
-                         val padding: String = "valid",
-                         val data_format: String = "channels_last",
-                         override val activation: KerasLayer[Tensor[T], Tensor[T], T] = null,
-                         val use_bias: Boolean = true,
-                         val kernel_initializer: InitializationMethod = Xavier,
-                         val bias_initializer: InitializationMethod = Zeros,
-                         val kernel_Regularizer: Regularizer[T] = null,
-                         val bias_Regularizer: Regularizer[T] = null,
-                         val activity_Regularizer: Regularizer[T] = null,
-  override val inputShape: Shape = null)
-  (implicit ev: TensorNumeric[T])
+   val filters: Int,
+   val kernel_size: Int,
+   val strides: Int = 1,
+   val padding: String = "valid",
+   override val activation: KerasLayer[Tensor[T], Tensor[T], T] = null,
+   val use_bias: Boolean = true,
+   val kernel_initializer: InitializationMethod = Xavier,
+   val bias_initializer: InitializationMethod = Zeros,
+   val kernel_Regularizer: Regularizer[T] = null,
+   val bias_Regularizer: Regularizer[T] = null,
+   override val inputShape: Shape = null)(implicit ev: TensorNumeric[T])
   extends klayers1.Convolution1D[T](nbFilter = filters, filterLength = kernel_size,
     init = kernel_initializer, activation = activation, borderMode = padding,
     subsampleLength = strides, wRegularizer = kernel_Regularizer,
@@ -109,22 +96,20 @@ object Conv1D {
     kernel_size: Int,
     strides: Int = 1,
     padding: String = "valid",
-    data_format: String = "channels_last",
     activation: String = null,
     use_bias: Boolean = true,
     kernel_Initializer: String = "glorot_uniform",
     bias_Initializer: String = "zero",
     kernel_Regularizer: Regularizer[T] = null,
     bias_Regularizer: Regularizer[T] = null,
-    activity_Regularizer: Regularizer[T] = null,
     inputShape: Shape = null)
     (implicit ev: TensorNumeric[T]): Conv1D[T] = {
     val kernelInitValue = KerasUtils.getInitMethod(kernel_Initializer)
     val biasInitValue = KerasUtils.getInitMethod(bias_Initializer)
     val activationValue = KerasUtils.getKerasActivation(activation)
     new Conv1D[T](
-      filters, kernel_size, strides, padding, data_format,
-      activationValue, use_bias, kernelInitValue, biasInitValue, kernel_Regularizer,
-      bias_Regularizer, activity_Regularizer, inputShape)
+      filters, kernel_size, strides, padding, activationValue,
+      use_bias, kernelInitValue, biasInitValue, kernel_Regularizer,
+      bias_Regularizer, inputShape)
   }
 }
