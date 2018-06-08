@@ -57,7 +57,9 @@ class TimeDistributed[T: ClassTag](
       s"TimeDistributed requires at least 3D input, but got input dim ${input.length}")
     val innerInput = getInnerInput(input)
     val innerOutput = layer.computeOutputShape(Shape(innerInput)).toSingle()
-    val output = innerOutput.take(1) ++ List(input(1)) ++ innerOutput.drop(1)
+    val batch = innerOutput.take(1)
+    val steps = List(input(1))
+    val output = batch ++ steps ++ innerOutput.drop(1)
     Shape(output.toArray)
   }
 
