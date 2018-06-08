@@ -88,16 +88,7 @@ class PythonImageFeature[T: ClassTag](implicit ev: TensorNumeric[T]) extends Pyt
 
   private def imageSetToPredict(imf: ImageFeature, key: String): JList[Any] = {
     if (imf.isValid && imf.contains(key)) {
-      if (imf(key).isInstanceOf[Tensor[T]]) {
-        List[Any](imf.uri(), List(toJTensor(imf[Tensor[T]](key))).asJava).asJava
-      } else {
-        val value = BigDLWrapper.getTableState(imf[Table](key)).map {pair =>
-          if (pair._2.isInstanceOf[Tensor[T]]) {
-            List(pair._1, toJTensor(pair._2.asInstanceOf[Tensor[T]])).asJava
-          } else List(pair._1, pair._2).asJava
-        }.asJava
-        List[Any](imf.uri(), value).asJava
-      }
+        List[Any](imf.uri(), activityToJTensors(imf(key))).asJava
     } else {
       List[Any](imf.uri(), null).asJava
     }
@@ -246,5 +237,9 @@ class PythonImageFeature[T: ClassTag](implicit ev: TensorNumeric[T]) extends Pyt
 
   def imageSetToImageFrame(imageSet: ImageSet): ImageFrame = {
     imageSet.toImageFrame()
+  }
+
+  def imageFrameToImageSet(imageFrame: ImageFrame): ImageSet = {
+    ImageSet.fromImageFrame(imageFrame)
   }
 }

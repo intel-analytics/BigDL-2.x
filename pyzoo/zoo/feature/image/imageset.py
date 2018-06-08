@@ -57,6 +57,10 @@ class ImageSet(JavaValue):
         """
         return ImageSet(jvalue=callBigDlFunc(bigdl_type, "readImageSet", path, sc, min_partitions))
 
+    @classmethod
+    def from_image_frame(cls, image_frame, bigdl_type="float"):
+        return ImageSet(jvalue=callBigDlFunc(bigdl_type, "imageFrameToImageSet", image_frame))
+
     def transform(self, transformer, bigdl_type="float"):
         """
         transformImageSet
@@ -125,11 +129,8 @@ class LocalImageSet(ImageSet):
         """
         predicts = callBigDlFunc(self.bigdl_type, "localImageSetToPredict", self.value, key)
         return list(map(lambda predict:
-                   (predict[0],
-                    list(map(lambda x:
-                             x.to_ndarray() if isinstance(x, JTensor) else x, predict[1])))
-                   if predict[1]
-                   else (predict[0], None), predicts))
+                        (predict[0], list(map(lambda x: x.to_ndarray(), predict[1]))) if predict[1]
+                        else (predict[0], None), predicts))
 
 
 class DistributedImageSet(ImageSet):
@@ -174,8 +175,6 @@ class DistributedImageSet(ImageSet):
         predicts = callBigDlFunc(self.bigdl_type, "distributedImageSetToPredict", self.value, key)
         return predicts.map(lambda predict:
                             (predict[0],
-                             list(map(lambda x:
-                                      x.to_ndarray() if isinstance(x, JTensor) else x, predict[1])))
-                            if predict[1]
+                             list(map(lambda x: x.to_ndarray(), predict[1]))) if predict[1]
                             else (predict[0], None))
 
