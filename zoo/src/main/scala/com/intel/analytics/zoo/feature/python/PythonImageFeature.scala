@@ -16,12 +16,14 @@
 
 package com.intel.analytics.zoo.feature.python
 
-import java.util.{List => JList}
+import java.util.{Map, List => JList}
 
-import com.intel.analytics.bigdl.python.api.{JTensor, PythonBigDL}
+import com.intel.analytics.bigdl.nn.abstractnn.{AbstractModule, Activity}
+import com.intel.analytics.bigdl.python.api.{BigDLWrapper, JTensor, PythonBigDL}
 import com.intel.analytics.bigdl.tensor.Tensor
 import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric
 import com.intel.analytics.bigdl.transform.vision.image._
+import com.intel.analytics.bigdl.utils.Table
 import com.intel.analytics.zoo.feature.common.Preprocessing
 import com.intel.analytics.zoo.feature.image._
 import org.apache.spark.api.java.{JavaRDD, JavaSparkContext}
@@ -67,12 +69,7 @@ class PythonImageFeature[T: ClassTag](implicit ev: TensorNumeric[T]) extends Pyt
 
   def localImageSetToPredict(imageSet: LocalImageSet, key: String)
   : JList[JList[Any]] = {
-    imageSet.array.map(x =>
-      if (x.isValid && x.contains(key)) {
-        List[Any](x.uri(), toJTensor(x[Tensor[T]](key))).asJava
-      } else {
-        List[Any](x.uri(), null).asJava
-      }).toList.asJava
+    imageSet.array.map(x => imageSetToPredict(x, key)).toList.asJava
   }
 
   def distributedImageSetToImageTensorRdd(imageSet: DistributedImageSet,
@@ -86,13 +83,24 @@ class PythonImageFeature[T: ClassTag](implicit ev: TensorNumeric[T]) extends Pyt
 
   def distributedImageSetToPredict(imageSet: DistributedImageSet, key: String)
   : JavaRDD[JList[Any]] = {
-    imageSet.rdd.map(x => {
-      if (x.isValid && x.contains(key)) {
-        List[Any](x.uri(), toJTensor(x[Tensor[T]](key))).asJava
+    imageSet.rdd.map(x => imageSetToPredict(x, key))
+  }
+
+  private def imageSetToPredict(imf: ImageFeature, key: String): JList[Any] = {
+    if (imf.isValid && imf.contains(key)) {
+      if (imf(key).isInstanceOf[Tensor[T]]) {
+        List[Any](imf.uri(), List(toJTensor(imf[Tensor[T]](key))).asJava).asJava
       } else {
-        List[Any](x.uri(), null).asJava
+        val value = BigDLWrapper.getTableState(imf[Table](key)).map {pair =>
+          if (pair._2.isInstanceOf[Tensor[T]]) {
+            List(pair._1, toJTensor(pair._2.asInstanceOf[Tensor[T]])).asJava
+          } else List(pair._1, pair._2).asJava
+        }.asJava
+        List[Any](imf.uri(), value).asJava
       }
-    })
+    } else {
+      List[Any](imf.uri(), null).asJava
+    }
   }
 
   def createDistributedImageSet(imageRdd: JavaRDD[JTensor], labelRdd: JavaRDD[JTensor])

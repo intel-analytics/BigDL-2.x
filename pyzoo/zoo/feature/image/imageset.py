@@ -124,9 +124,12 @@ class LocalImageSet(ImageSet):
         get prediction list from ImageSet
         """
         predicts = callBigDlFunc(self.bigdl_type, "localImageSetToPredict", self.value, key)
-        return map(lambda predict:
-                   (predict[0], predict[1].to_ndarray()) if predict[1]
-                   else (predict[0], None), predicts)
+        return list(map(lambda predict:
+                   (predict[0],
+                    list(map(lambda x:
+                             x.to_ndarray() if isinstance(x, JTensor) else x, predict[1])))
+                   if predict[1]
+                   else (predict[0], None), predicts))
 
 
 class DistributedImageSet(ImageSet):
@@ -170,5 +173,9 @@ class DistributedImageSet(ImageSet):
         """
         predicts = callBigDlFunc(self.bigdl_type, "distributedImageSetToPredict", self.value, key)
         return predicts.map(lambda predict:
-                            (predict[0], predict[1].to_ndarray()) if predict[1]
+                            (predict[0],
+                             list(map(lambda x:
+                                      x.to_ndarray() if isinstance(x, JTensor) else x, predict[1])))
+                            if predict[1]
                             else (predict[0], None))
+
