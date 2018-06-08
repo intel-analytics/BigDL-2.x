@@ -52,7 +52,7 @@ import scala.reflect.ClassTag
  *
  * @param filters Integer, the dimensionality of the output space
  *                (i.e. the number of output filters in the convolution).
- * @param kernel_size: An integer or tuple/list of a single integer,
+ * @param kernelSize: An integer or tuple/list of a single integer,
  *                specifying the length of the 1D convolution window.
  * @param strides: An integer or tuple/list of a single integer,
  *               specifying the stride length of the convolution.
@@ -68,37 +68,37 @@ import scala.reflect.ClassTag
  * @param activation Activation function to use. Default is null.
  *                   You can also pass in corresponding string representations such as 'relu'
  *                   or 'sigmoid', etc. for simple activations in the factory method.
- * @param use_bias Whether to include a bias (i.e. make the layer affine rather than linear).
+ * @param useBias Whether to include a bias (i.e. make the layer affine rather than linear).
  *                 Default is true.
- * @param kernel_initializer Initializer for the `kernel` weights matrix.
- * @param bias_initializer Initializer for the bias vector.
- * @param kernel_Regularizer Regularizer function applied to
+ * @param kernelInitializer Initializer for the `kernel` weights matrix.
+ * @param biasInitializer Initializer for the bias vector.
+ * @param kernelRegularizer Regularizer function applied to
  *                           the `kernel` weights matrix Default is null.
- * @param bias_Regularizer Regularizer function applied to the bias vector. Default is null.
+ * @param biasRegularizer Regularizer function applied to the bias vector. Default is null.
  * @param inputShape A Single Shape, does not include the batch dimension.
  * @tparam T Numeric type of parameter(e.g. weight, bias). Only support float/double now.
  */
 class Conv1D[T: ClassTag](
    val filters: Int,
-   val kernel_size: Int,
+   val kernelSize: Int,
    val strides: Int = 1,
    val padding: String = "valid",
    override val activation: KerasLayer[Tensor[T], Tensor[T], T] = null,
-   val use_bias: Boolean = true,
-   val kernel_initializer: InitializationMethod = Xavier,
-   val bias_initializer: InitializationMethod = Zeros,
-   val kernel_Regularizer: Regularizer[T] = null,
-   val bias_Regularizer: Regularizer[T] = null,
+   val useBias: Boolean = true,
+   val kernelInitializer: InitializationMethod = Xavier,
+   val biasInitializer: InitializationMethod = Zeros,
+   val kernelRegularizer: Regularizer[T] = null,
+   val biasRegularizer: Regularizer[T] = null,
    override val inputShape: Shape = null)(implicit ev: TensorNumeric[T])
-  extends klayers1.Convolution1D[T](nbFilter = filters, filterLength = kernel_size,
-    init = kernel_initializer, activation = activation, borderMode = padding,
-    subsampleLength = strides, wRegularizer = kernel_Regularizer,
-    bRegularizer = bias_Regularizer, bias = use_bias, inputShape = inputShape) with Net {
+  extends klayers1.Convolution1D[T](nbFilter = filters, filterLength = kernelSize,
+    init = kernelInitializer, activation = activation, borderMode = padding,
+    subsampleLength = strides, wRegularizer = kernelRegularizer,
+    bRegularizer = biasRegularizer, bias = useBias, inputShape = inputShape) with Net {
 
   override def doBuild(inputShape: Shape): AbstractModule[Tensor[T], Tensor[T], T] = {
     val module = super.doBuild(inputShape)
     Net.setInitMethod(module,
-      weightInitMethod = kernel_initializer, biasInitMethod = bias_initializer)
+      weightInitMethod = kernelInitializer, biasInitMethod = biasInitializer)
     module.asInstanceOf[AbstractModule[Tensor[T], Tensor[T], T]]
   }
 }
@@ -106,23 +106,23 @@ class Conv1D[T: ClassTag](
 object Conv1D {
   def apply[@specialized(Float, Double) T: ClassTag](
     filters: Int,
-    kernel_size: Int,
+    kernelSize: Int,
     strides: Int = 1,
     padding: String = "valid",
     activation: String = null,
-    use_bias: Boolean = true,
-    kernel_Initializer: String = "glorot_uniform",
-    bias_Initializer: String = "zero",
-    kernel_Regularizer: Regularizer[T] = null,
-    bias_Regularizer: Regularizer[T] = null,
+    useBias: Boolean = true,
+    kernelInitializer: String = "glorot_uniform",
+    biasInitializer: String = "zero",
+    kernelRegularizer: Regularizer[T] = null,
+    biasRegularizer: Regularizer[T] = null,
     inputShape: Shape = null)
     (implicit ev: TensorNumeric[T]): Conv1D[T] = {
-    val kernelInitValue = KerasUtils.getInitMethod(kernel_Initializer)
-    val biasInitValue = KerasUtils.getInitMethod(bias_Initializer)
+    val kernelInitValue = KerasUtils.getInitMethod(kernelInitializer)
+    val biasInitValue = KerasUtils.getInitMethod(biasInitializer)
     val activationValue = KerasUtils.getKerasActivation(activation)
     new Conv1D[T](
-      filters, kernel_size, strides, padding, activationValue,
-      use_bias, kernelInitValue, biasInitValue, kernel_Regularizer,
-      bias_Regularizer, inputShape)
+      filters, kernelSize, strides, padding, activationValue,
+      useBias, kernelInitValue, biasInitValue, kernelRegularizer,
+      biasRegularizer, inputShape)
   }
 }
