@@ -45,10 +45,11 @@ import scala.reflect.ClassTag
  * or `(None, 128)` for variable-length sequences of 128-dimensional vectors.
  *
  * Input shape
- * 3D tensor with shape: (samples, steps, input_dim) or (samples, steps, channels).
+ * 3D tensor with shape: `(batch_size, steps, input_dim)`
  *
  * Output shape
- * 3D tensor with shape: (samples, new_steps, filters). steps value might have changed due to padding.
+ * 3D tensor with shape: `(batch_size, new_steps, filters)`
+ * `steps` value might have changed due to padding or strides.
  *
  * @param filters Integer, the dimensionality of the output space
  *                (i.e. the number of output filters in the convolution).
