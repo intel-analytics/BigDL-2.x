@@ -131,7 +131,7 @@ private[nnframes] trait NNParams[@specialized(Float, Double) T] extends HasFeatu
    * Param for how to handle invalid data during fit() and transform().
    * Options are:
    * 'keep': invalid data are ignored during training and prediction result for the invalid
-   *         data will be empty array.
+   *         data will be empty array or Double.NaN.
    * 'error': throw an error whenever an invalid data is met.
    * Default: "error"
    * @group param
@@ -581,7 +581,7 @@ class NNModel[T: ClassTag] private[zoo] (
         validRow.map(_._1).iterator.zip(predictions).map { case (row, predict) =>
           Row.fromSeq(row.toSeq ++ Seq(predict))
         } ++ invalidRows.map(_._1).map { row =>
-          Row.fromSeq(row.toSeq ++ Seq(Array.empty))
+          Row.fromSeq(row.toSeq ++ Seq(outputToPrediction(Tensor(0))))
         }
       }
     }

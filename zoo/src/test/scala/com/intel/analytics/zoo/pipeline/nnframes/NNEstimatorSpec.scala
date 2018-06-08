@@ -356,7 +356,7 @@ class NNEstimatorSpec extends FlatSpec with Matchers with BeforeAndAfter {
     }
   }
 
-  "NNEstimator" should "support handle invalid data" in {
+  "NNEstimator" should "supports handle invalid data" in {
     val faultyResource = getClass.getClassLoader.getResource("faulty/")
     val imageDF = NNImageReader.readImages(faultyResource.getFile, sc).withColumn("label", lit(1.0))
     assert(imageDF.count() == 2)

@@ -18,10 +18,12 @@ import pytest
 from bigdl.nn.criterion import *
 from bigdl.nn.layer import *
 from bigdl.optim.optimizer import *
+from bigdl.models.inception.inception import inception_v1_no_aux_classifier
 from numpy.testing import assert_allclose
 from pyspark.ml import Pipeline
 from pyspark.ml.feature import MinMaxScaler
 from pyspark.sql.types import *
+from pyspark.sql.functions import lit
 
 from zoo.common.nncontext import *
 from zoo.pipeline.nnframes import *
@@ -320,6 +322,46 @@ class TestNNClassifer():
             row_label = data[i][1]
             row_prediction = data[i][2]
             assert row_label == row_prediction
+
+    def test_nnclassifier_fit_with_image(self):
+        resource_path = os.path.join(os.path.split(__file__)[0], "../../resources")
+        image_path = os.path.join(resource_path, "imagenet/n02110063")
+        image_frame = NNImageReader.readImages(image_path, self.sc).withColumn("label", lit(1.0))
+        transformer = ChainedPreprocessing(
+            [RowToImageFeature(), ImageResize(256, 256), ImageCenterCrop(224, 224),
+             ImageChannelNormalize(123.0, 117.0, 104.0), ImageMatToTensor(),
+             ImageFeatureToTensor()])
+
+        model = inception_v1_no_aux_classifier(1000)
+        criterion = ClassNLLCriterion()
+        classifier = NNClassifier(model, criterion, transformer) \
+            .setLearningRate(0.2).setMaxEpoch(1) \
+            .setFeaturesCol("image")
+
+        nnClassifierModel = classifier.fit(image_frame)
+        assert(isinstance(nnClassifierModel, NNClassifierModel))
+        res = nnClassifierModel.transform(image_frame)
+        assert type(res).__name__ == 'DataFrame'
+
+    def test_nnclassifier_handle_invalid_data(self):
+        resource_path = os.path.join(os.path.split(__file__)[0], "../../resources")
+        image_path = os.path.join(resource_path, "faulty")
+        image_frame = NNImageReader.readImages(image_path, self.sc).withColumn("label", lit(1.0))
+        transformer = ChainedPreprocessing(
+            [RowToImageFeature(), ImageResize(256, 256), ImageCenterCrop(224, 224),
+             ImageChannelNormalize(123.0, 117.0, 104.0), ImageMatToTensor(),
+             ImageFeatureToTensor()])
+
+        model = inception_v1_no_aux_classifier(1000)
+        criterion = ClassNLLCriterion()
+        classifier = NNClassifier(model, criterion, transformer) \
+            .setLearningRate(0.2).setMaxEpoch(1) \
+            .setFeaturesCol("image").setHandleInvalid("keep")
+
+        nnClassifierModel = classifier.fit(image_frame)
+        assert(isinstance(nnClassifierModel, NNClassifierModel))
+        res = nnClassifierModel.transform(image_frame)
+        assert type(res).__name__ == 'DataFrame'
 
     def test_nnclassifierModel_set_Preprocessing(self):
         model = Sequential().add(Linear(2, 2))

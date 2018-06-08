@@ -245,11 +245,31 @@ class NNClassifierSpec extends FlatSpec with Matchers with BeforeAndAfter {
     val transformer = RowToImageFeature() -> ImageResize(256, 256) -> ImageCenterCrop(224, 224) ->
       ImageChannelNormalize(123, 117, 104, 1, 1, 1) -> ImageMatToTensor() -> ImageFeatureToTensor()
 
-    val estimator = NNClassifier(Inception_v1(1000), ClassNLLCriterion[Float](), transformer)
+    val classifier = NNClassifier(Inception_v1(1000), ClassNLLCriterion[Float](), transformer)
       .setBatchSize(1)
       .setEndWhen(Trigger.maxIteration(1))
       .setFeaturesCol("image")
-    estimator.fit(imageDF)
+    classifier.fit(imageDF)
+  }
+
+  "NNClassifier" should "supports handle invalid data" in {
+    val faultyResource = getClass.getClassLoader.getResource("faulty/")
+    val imageDF = NNImageReader.readImages(faultyResource.getFile, sc).withColumn("label", lit(1.0))
+    assert(imageDF.count() == 2)
+    val transformer = RowToImageFeature() -> ImageResize(256, 256) -> ImageCenterCrop(224, 224) ->
+      ImageChannelNormalize(123, 117, 104) -> ImageMatToTensor() -> ImageFeatureToTensor()
+    val classifier = NNClassifier(Inception_v1(1000), ClassNLLCriterion(), transformer)
+      .setMaxEpoch(1)
+      .setFeaturesCol("image")
+    intercept[Exception] {
+      classifier.fit(imageDF)
+    }
+    val classifierModel = classifier
+      .setHandleInvalid("keep")
+      .fit(imageDF)
+    val predictionDF = classifierModel.transform(imageDF)
+    predictionDF.show()
+    assert(predictionDF.count() == 2)
   }
 
   "NNClasifierModel" should "return same results after saving and loading" in {
