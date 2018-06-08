@@ -16,14 +16,16 @@
 
 package com.intel.analytics.zoo.pipeline.api
 
-import com.intel.analytics.bigdl.nn.abstractnn.AbstractModule
-import com.intel.analytics.bigdl.nn.SpatialCrossMapLRN
+import com.intel.analytics.bigdl.nn
+import com.intel.analytics.bigdl.nn.abstractnn.{AbstractModule, Activity}
+import com.intel.analytics.bigdl.nn.{CAddTable, SpatialCrossMapLRN}
 import com.intel.analytics.bigdl.tensor.Tensor
-import com.intel.analytics.bigdl.utils.Shape
-import com.intel.analytics.zoo.pipeline.api.keras.models.{KerasNet, Sequential, Model => ZModel}
+import com.intel.analytics.bigdl.utils.{Shape, T}
+import com.intel.analytics.zoo.pipeline.api.autograd.Variable
 import com.intel.analytics.zoo.pipeline.api.keras.ZooSpecHelper
-import com.intel.analytics.zoo.pipeline.api.keras.layers.{Dense, Input}
 import com.intel.analytics.zoo.pipeline.api.keras.layers.utils.KerasUtils
+import com.intel.analytics.zoo.pipeline.api.keras.layers.{Dense, Input, KerasLayerWrapper}
+import com.intel.analytics.zoo.pipeline.api.keras.models.{KerasNet, Model => ZModel}
 
 class NetSpec extends ZooSpecHelper{
 
@@ -103,5 +105,25 @@ class NetSpec extends ZooSpecHelper{
 
     val model = Net.load[Float](s"$path/small_model.model")
     model.forward(Tensor[Float](2, 3, 5).rand())
+  }
+
+  "connect variable " should "work properly" in {
+    def createOldModel(): AbstractModule[Activity, Activity, Float] = {
+      val input1 = Input[Float](inputShape = Shape(3))
+      val input2 = Input[Float](inputShape = Shape(3))
+      val sum = new KerasLayerWrapper[Float](
+        CAddTable[Float]().asInstanceOf[AbstractModule[Activity, Activity, Float]])
+        .inputs(Array(input1, Dense[Float](3).inputs(input2)))
+      ZModel[Float](input = Array(input1, input2), output = sum)
+    }
+    val input1 = Variable[Float](inputShape = Shape(3))
+    val input2 = Variable[Float](inputShape = Shape(3))
+    val diff = input1 + Dense[Float](3).from(input2)
+    val model = ZModel[Float](input = Array(input1, input2), output = diff)
+    val inputValue = Tensor[Float](1, 3).randn()
+    val oldModel = createOldModel()
+    val out = model.forward(T(inputValue, inputValue)).toTensor[Float]
+    val oldOut = oldModel.forward(T(inputValue, inputValue)).toTensor[Float]
+    out.almostEqual(oldOut, 1e-4)
   }
 }
