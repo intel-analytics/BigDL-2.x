@@ -30,12 +30,25 @@ import com.intel.analytics.zoo.pipeline.api.keras.{layers => klayers1}
 import scala.reflect.ClassTag
 
 /**
- * Applies convolution operator for filtering neighborhoods of 1-D inputs.
- * You can also use Conv1D as an alias of this layer.
- * The input of this layer should be 3D.
+ * 1D convolution layer (e.g. temporal convolution).
+ * This layer creates a convolution kernel that is convolved
+ * with the layer input over a single spatial (or temporal) dimension
+ * to produce a tensor of outputs.
+ * If `use_bias` is True, a bias vector is created and added to the outputs.
+ * Finally, if `activation` is not `None`,
+ * it is applied to the outputs as well.
  *
- * When you use this layer as the first layer of a model, you need to provide the argument
- * inputShape (a Single Shape, does not include the batch dimension).
+ * When using this layer as the first layer in a model,
+ * provide an `input_shape` argument
+ * (tuple of integers or `None`, e.g.
+ * `(10, 128)` for sequences of 10 vectors of 128-dimensional vectors,
+ * or `(None, 128)` for variable-length sequences of 128-dimensional vectors.
+ *
+ * Input shape
+ * 3D tensor with shape: (samples, steps, input_dim) or (samples, steps, channels).
+ *
+ * Output shape
+ * 3D tensor with shape: (samples, new_steps, filters). steps value might have changed due to padding.
  *
  * @param filters Integer, the dimensionality of the output space
  *                (i.e. the number of output filters in the convolution).
