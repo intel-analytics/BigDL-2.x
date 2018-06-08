@@ -125,7 +125,7 @@ def strip_unused(input_graph_def, input_tensor_names, output_tensor_names,
   """
     for name in input_tensor_names:
         if ":" not in name:
-            raise ValueError("Name '%s' appears to refer to a Operation, "
+            raise ValueError("Input '%s' appears to refer to a Operation, "
                              "not a Tensor." % name)
 
     old2new = {}
