@@ -29,20 +29,20 @@ def export_tf(sess, folder, inputs, outputs):
     """
     Export the frozen tensorflow graph as well as the inputs/outputs information
     to the folder for inference.
-    
+
     This function will
     1. freeze the graph (replace all variables with constants)
     2. strip all unused node as specified by inputs and outputs
     3. add placeholder nodes as needed
     4. write the frozen graph and inputs/outputs names to the folder
-    
+
     Note: There should not be any queuing operation between inputs and outputs
-    
+
     :param sess: tensorflow session holding the variables to be saved
     :param folder: the folder where graph file and inputs/outputs information are saved
     :param inputs: a list of tensorflow tensors that will be fed during inference
     :param outputs: a list of tensorflow tensors that will be fetched during inference
-    :return: 
+    :return:
     """
 
     output_node_names = list({t.op.name for t in outputs})
@@ -56,7 +56,7 @@ def export_tf(sess, folder, inputs, outputs):
     non_placeholder_input_names = []
     type_enums = []
     for input_tensor in inputs:
-        if input_tensor.op != "Placeholder":
+        if input_tensor.op.type != "Placeholder":
             non_placeholder_input_names.append(input_tensor.name)
             type_enums.append(input_tensor.dtype.as_datatype_enum)
 
