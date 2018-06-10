@@ -16,7 +16,7 @@ cd $HOME/workspace
 git clone https://github.com/tensorflow/models/
 ```
 
-Then down the InceptionV1 pre-trained checkpoint from [here](https://github.com/tensorflow/models/tree/master/research/slim#pre-trained-models)
+Then download the InceptionV1 pre-trained checkpoint from [here](https://github.com/tensorflow/models/tree/master/research/slim#pre-trained-models)
 
 
 ## Run with Jupyter
