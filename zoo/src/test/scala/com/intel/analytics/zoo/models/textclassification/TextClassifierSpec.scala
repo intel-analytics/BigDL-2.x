@@ -17,11 +17,8 @@
 package com.intel.analytics.zoo.models.textclassification
 
 import com.intel.analytics.bigdl.tensor.Tensor
-import com.intel.analytics.bigdl.utils.Shape
 import com.intel.analytics.zoo.models.common.ZooModel
-import com.intel.analytics.zoo.pipeline.api.keras.models.Sequential
 import com.intel.analytics.zoo.pipeline.api.keras.ZooSpecHelper
-import com.intel.analytics.zoo.pipeline.api.keras.layers.Dense
 import com.intel.analytics.zoo.pipeline.api.keras.serializer.ModuleSerializationTest
 
 class TextClassifierSpec extends ZooSpecHelper {
