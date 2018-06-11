@@ -21,7 +21,7 @@ import java.util.{List => JList}
 import com.intel.analytics.bigdl.optim.Regularizer
 import com.intel.analytics.bigdl.python.api.PythonBigDLKeras
 import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric
-import com.intel.analytics.zoo.pipeline.api.keras2.layers.{Dense, Conv1D}
+import com.intel.analytics.zoo.pipeline.api.keras2.layers.{Dense, Conv1D, MaxPooling1D, Maximum, Minimum}
 
 import scala.reflect.ClassTag
 
@@ -55,7 +55,7 @@ class PythonZooKeras2[T: ClassTag](implicit ev: TensorNumeric[T]) extends Python
   }
 
   def createZooKeras2Conv1D(
-      filters: Int,
+       filters: Int,
       kernelSize: Int,
       strides: Int = 1,
       padding: String = "valid",
@@ -77,6 +77,30 @@ class PythonZooKeras2[T: ClassTag](implicit ev: TensorNumeric[T]) extends Python
       biasInitializer,
       kernelRegularizer,
       biasRegularizer,
+      toScalaShape(inputShape))
+  }
+
+  def createZooKeras2MaxPooling1D(
+      poolSize: Int = 2,
+      strides: Int = -1,
+      padding: String = "valid",
+      inputShape: JList[Int] = null): MaxPooling1D[T] = {
+    MaxPooling1D(
+      poolSize,
+      strides,
+      padding,
+      toScalaShape(inputShape))
+  }
+
+  def createZooKeras2Maximum(
+      inputShape: JList[Int] = null): Maximum[T] = {
+    Maximum(
+      toScalaShape(inputShape))
+  }
+
+  def createZooKeras2Minimum(
+      inputShape: JList[Int] = null): Minimum[T] = {
+    Minimum(
       toScalaShape(inputShape))
   }
 

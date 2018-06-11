@@ -14,7 +14,46 @@
 # limitations under the License.
 #
 import sys
+from zoo.pipeline.api.keras2.base import ZooKeras2Layer
 
 if sys.version >= '3':
     long = int
     unicode = str
+
+
+class MaxPooling1D(ZooKeras2Layer):
+    """
+    Max pooling operation for temporal data.
+
+    # Arguments
+        pool_size: Integer, size of the max pooling windows.
+        strides: Integer, or None. Factor by which to downscale.
+            E.g. 2 will halve the input.
+            If None, it will be set to -1, which will be default to pool_size.
+        padding: One of `"valid"` or `"same"` (case-insensitive).
+
+    # Input shape
+        3D tensor with shape: `(batch_size, steps, features)`.
+
+    # Output shape
+        3D tensor with shape: `(batch_size, downsampled_steps, features)`.
+
+    When you use this layer as the first layer of a model, you need to provide the argument
+    input_shape (a shape tuple, does not include the batch dimension).
+
+    >>> maxpooling1d = MaxPooling1D(3, input_shape=(3, 24))
+    creating: createZooKeras2MaxPooling1D
+    """
+    def __init__(self,
+                 pool_size=2,
+                 strides=None,
+                 padding="valid",
+                 input_shape=None, **kwargs):
+        if not strides:
+            strides = -1
+        super(MaxPooling1D, self).__init__(None,
+                                           pool_size,
+                                           strides,
+                                           padding,
+                                           list(input_shape) if input_shape else None,
+                                           **kwargs)
