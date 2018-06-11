@@ -15,6 +15,7 @@ An outline is:
 ```bash
 pip install https://dist.apache.org/repos/dist/dev/incubator/toree/0.2.0/snapshots/dev1/toree-pip/toree-0.2.0.dev1.tar.gz
 ```
+Run `export SPARK_HOME=the root directory of Spark`.
 to set up scala kernal, use
 ```
 jupyter toree install --spark_opts='--master=local[*]' --user --spark_home=$SPARK_HOME
@@ -22,7 +23,6 @@ jupyter toree install --spark_opts='--master=local[*]' --user --spark_home=$SPAR
 
 2. Build Analytics Zoo jar file under Spark 2.x.
 * Download Analytics Zoo and build it.
-* Run `export SPARK_HOME=the root directory of Spark`.
 * Run `export ANALYTICS_ZOO_HOME=the dist directory under the Analytics Zoo project`.
 
 3. To support the training for imbalanced data set in fraud detection, some Transformers and algorithms are developed in 
