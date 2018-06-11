@@ -25,6 +25,19 @@ from setuptools import setup
 TEMP_PATH = "zoo/share"
 analytics_zoo_home = os.path.abspath(__file__ + "/../../")
 
+
+def get_analytics_zoo_packages():
+    analytics_zoo_python_home = analytics_zoo_home + "/pyzoo/zoo"
+    analytics_zoo_packages = ['zoo.share']
+    for dirpath, dirs, files in os.walk(analytics_zoo_python_home):
+        package = dirpath.split(analytics_zoo_home + "/pyzoo/")[1].replace('/', '.')
+        analytics_zoo_packages.append(package)
+        print(package)
+    return analytics_zoo_packages
+
+
+packages = get_analytics_zoo_packages()
+
 try:
     exec(open('zoo/version.py').read())
 except IOError:
@@ -79,33 +92,7 @@ def setup_package():
         author_email='analytics-zoo-user-group@googlegroups.com',
         license='Apache License, Version 2.0',
         url='https://github.com/intel-analytics/analytics-zoo',
-        packages=['zoo',
-                  'zoo.common',
-                  'zoo.examples',
-                  'zoo.examples.autograd',
-                  'zoo.examples.imageclassification',
-                  'zoo.examples.nnframes',
-                  'zoo.examples.objectdetection',
-                  'zoo.examples.textclassification',
-                  'zoo.feature',
-                  'zoo.feature.image',
-                  'zoo.models',
-                  'zoo.models.common',
-                  'zoo.models.image',
-                  'zoo.models.image.common',
-                  'zoo.models.image.imageclassification',
-                  'zoo.models.image.objectdetection',
-                  'zoo.models.recommendation',
-                  'zoo.models.textclassification',
-                  'zoo.pipeline',
-                  'zoo.pipeline.api',
-                  'zoo.pipeline.api.keras',
-                  'zoo.pipeline.api.keras.engine',
-                  'zoo.pipeline.api.keras.layers',
-                  'zoo.pipeline.api.keras.metrics',
-                  'zoo.pipeline.nnframes',
-                  'zoo.util',
-                  'zoo.share'],
+        packages=packages,
         install_requires=['bigdl==0.5.0'],
         dependency_links=['https://d3kbcqa49mib13.cloudfront.net/spark-2.0.0-bin-hadoop2.7.tgz'],
         include_package_data=True,

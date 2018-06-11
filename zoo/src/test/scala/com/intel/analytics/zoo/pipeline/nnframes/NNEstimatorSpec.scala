@@ -52,7 +52,7 @@ class NNEstimatorSpec extends FlatSpec with Matchers with BeforeAndAfter {
     Random.setSeed(42)
     RNG.setSeed(42)
     val conf = Engine.createSparkConf().setAppName("Test NNEstimator").setMaster("local[1]")
-    sc = NNContext.getNNContext(conf)
+    sc = NNContext.initNNContext(conf)
     sqlContext = new SQLContext(sc)
     smallData = NNEstimatorSpec.generateTestInput(
       nRecords, Array(1.0, 2.0, 3.0, 4.0, 5.0, 6.0), -1.0, 42L)
@@ -74,6 +74,7 @@ class NNEstimatorSpec extends FlatSpec with Matchers with BeforeAndAfter {
     assert(estimator.getBatchSize == 1)
     assert(estimator.getLearningRate == 1e-3)
     assert(estimator.getLearningRateDecay == 0)
+    assert(estimator.isCachingSample)
   }
 
   "NNEstimator" should "apply with differnt params" in {
@@ -85,7 +86,7 @@ class NNEstimatorSpec extends FlatSpec with Matchers with BeforeAndAfter {
     Seq(
       NNEstimator(model, criterion),
       NNEstimator(model, criterion, Array(6), Array(1)),
-      NNEstimator(model, criterion, SeqToTensor(Array(6)), SeqToTensor(Array(6)))
+      NNEstimator(model, criterion, SeqToTensor(Array(6)), ScalarToTensor())
     ).foreach(e => e.setEndWhen(Trigger.maxIteration(1)).fit(df))
   }
 

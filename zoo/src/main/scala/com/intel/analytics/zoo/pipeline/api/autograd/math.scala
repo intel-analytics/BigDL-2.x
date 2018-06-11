@@ -46,14 +46,14 @@ object AutoGrad {
   def abs[T: ClassTag](a: Variable[T])(
       implicit ev: TensorNumeric[T]): Variable[T] = {
     val o: KerasLayer[Activity, Activity, T] =
-      new KerasLayerWrapper(bnn.Abs[T]().asInstanceOf[AbstractModule[Activity, Activity, T]])
+      new KerasLayerWrapper[T](bnn.Abs[T]().asInstanceOf[AbstractModule[Activity, Activity, T]])
     Variable(o.inputs(a.node))
   }
 
   def sum[T: ClassTag](a: Variable[T], axis: Int = 0, keepdims: Boolean = false)(
       implicit ev: TensorNumeric[T]): Variable[T] = {
     val o: KerasLayer[Activity, Activity, T] =
-      new KerasLayerWrapper(bnn.Sum[T](dimension = normalizeAxis(axis) + 1,
+      new KerasLayerWrapper[T](bnn.Sum[T](dimension = normalizeAxis(axis) + 1,
         squeeze = !keepdims).asInstanceOf[AbstractModule[Activity, Activity, T]])
     Variable(o.inputs(a.node))
   }
@@ -61,7 +61,7 @@ object AutoGrad {
   def clip[T: ClassTag](a: Variable[T], min: Double, max: Double)(
       implicit ev: TensorNumeric[T]): Variable[T] = {
     val o: KerasLayer[Activity, Activity, T] =
-      new KerasLayerWrapper(
+      new KerasLayerWrapper[T](
         bnn.HardTanh[T](minValue = min,
           maxValue = max).asInstanceOf[AbstractModule[Activity, Activity, T]])
     Variable(o.inputs(a.node))
@@ -72,6 +72,7 @@ object AutoGrad {
     Variable(Square[T]().inputs(a.node))
   }
 
+
   def sqrt[T: ClassTag](a: Variable[T])(
       implicit ev: TensorNumeric[T]): Variable[T] = {
     Variable(Sqrt[T]().inputs(a.node))
@@ -80,7 +81,8 @@ object AutoGrad {
   def maximum[T: ClassTag](x: Variable[T], y: Variable[T])(
       implicit ev: TensorNumeric[T]): Variable[T] = {
     val o: KerasLayer[Activity, Activity, T] =
-      new KerasLayerWrapper(bnn.CMaxTable[T]().asInstanceOf[AbstractModule[Activity, Activity, T]])
+      new KerasLayerWrapper[T](
+        bnn.CMaxTable[T]().asInstanceOf[AbstractModule[Activity, Activity, T]])
     Variable(o.inputs(x.node, y.node))
   }
 
@@ -102,7 +104,7 @@ object AutoGrad {
   def mean[T: ClassTag](x: Variable[T], axis: Int = 0, keepDims: Boolean = false)(
       implicit ev: TensorNumeric[T]): Variable[T] = {
     val o: KerasLayer[Activity, Activity, T] =
-      new KerasLayerWrapper(bnn.Mean[T](dimension = normalizeAxis(axis) + 1,
+      new KerasLayerWrapper[T](bnn.Mean[T](dimension = normalizeAxis(axis) + 1,
         squeeze = !keepDims).asInstanceOf[AbstractModule[Activity, Activity, T]])
     Variable(o.inputs(x.node))
   }
@@ -126,6 +128,20 @@ object AutoGrad {
       implicit ev: TensorNumeric[T]): Variable[T] = {
     Variable(Power[T](a).inputs(x.node))
   }
+
+  def softsign[T: ClassTag](a: Variable[T])(
+    implicit ev: TensorNumeric[T]): Variable[T] = {
+    val o: KerasLayer[Activity, Activity, T] =
+      new KerasLayerWrapper(bnn.SoftSign[T]().asInstanceOf[AbstractModule[Activity, Activity, T]])
+    Variable(o.inputs(a.node))
+  }
+
+  def softplus[T: ClassTag](a: Variable[T])(
+    implicit ev: TensorNumeric[T]): Variable[T] = {
+    val o: KerasLayer[Activity, Activity, T] =
+      new KerasLayerWrapper(bnn.SoftPlus[T]().asInstanceOf[AbstractModule[Activity, Activity, T]])
+    Variable(o.inputs(a.node))
+  }
 }
 
 object Variable extends {
@@ -141,8 +157,14 @@ object Variable extends {
   }
 }
 
-class Variable[T: ClassTag] private (val node: ModuleNode[T])(
+class Variable[T: ClassTag] private[zoo] (val node: ModuleNode[T], var name: String = null)(
     implicit ev: TensorNumeric[T]) extends Serializable {
+
+  if (name == null) {
+    name = node.element.getName()
+  } else {
+    node.element.setName(name)
+  }
 
   require(node.element.isInstanceOf[KerasLayer[Activity, Activity, T]])
   require(node.element.asInstanceOf[InferShape].getOutputShape() != null)
@@ -184,7 +206,7 @@ class Variable[T: ClassTag] private (val node: ModuleNode[T])(
   // scalastyle:off
   def +(a: Variable[T]): Variable[T] = {
     val o =
-      new KerasLayerWrapper(bnn.CAddTable[T]().asInstanceOf[AbstractModule[Activity, Activity, T]])
+      new KerasLayerWrapper[T](bnn.CAddTable[T]().asInstanceOf[AbstractModule[Activity, Activity, T]])
     val (x, y) = broadcast(this, a)
     Variable(o.inputs(Array(x.node, y.node)))
   }
@@ -195,7 +217,7 @@ class Variable[T: ClassTag] private (val node: ModuleNode[T])(
 
   def -(a: Variable[T]): Variable[T] = {
     val o =
-      new KerasLayerWrapper(bnn.Negative[T]().asInstanceOf[AbstractModule[Activity, Activity, T]])
+      new KerasLayerWrapper[T](bnn.Negative[T]().asInstanceOf[AbstractModule[Activity, Activity, T]])
     val neg = new Variable(o.inputs(a.node))
     val (x, y) = broadcast(this, neg)
     x + y
@@ -207,13 +229,13 @@ class Variable[T: ClassTag] private (val node: ModuleNode[T])(
 
   def unary_-(): Variable[T] = {
     val o =
-      new KerasLayerWrapper(bnn.Negative[T]().asInstanceOf[AbstractModule[Activity, Activity, T]])
+      new KerasLayerWrapper[T](bnn.Negative[T]().asInstanceOf[AbstractModule[Activity, Activity, T]])
     Variable(o.inputs(this.node))
   }
 
   def *(a: Variable[T]): Variable[T] = {
     val o =
-      new KerasLayerWrapper(bnn.CMulTable[T]().asInstanceOf[AbstractModule[Activity, Activity, T]])
+      new KerasLayerWrapper[T](bnn.CMulTable[T]().asInstanceOf[AbstractModule[Activity, Activity, T]])
     val (x, y) = broadcast(this, a)
     Variable(o.inputs(Array(x.node, y.node)))
   }
@@ -224,13 +246,66 @@ class Variable[T: ClassTag] private (val node: ModuleNode[T])(
 
   def /(other: Variable[T]): Variable[T] = {
     val o =
-      new KerasLayerWrapper(bnn.CDivTable[T]().asInstanceOf[AbstractModule[Activity, Activity, T]])
+      new KerasLayerWrapper[T](bnn.CDivTable[T]().asInstanceOf[AbstractModule[Activity, Activity, T]])
     val (x, y) = broadcast(this, other)
     Variable(o.inputs(Array(x.node, y.node)))
   }
 
   def /(a: Double): Variable[T] = {
     this * (1/a)
+  }
+
+  /**
+   * Delete the singleton dimension(s).
+   * The batch dimension needs to be unchanged.
+   * For example, if input has size (2, 1, 3, 4, 1):
+   * Squeeze(dim = 1) will give output size (2, 3, 4, 1)
+   * Squeeze(dims = null) will give output size (2, 3, 4)
+   */
+  def squeeze(dim: Int): Variable[T] = {
+    val layer = Squeeze[T](dim)
+    Variable(layer.inputs(this.node))
+  }
+
+  /**
+   * Narrow the input with the number of dimensions not being reduced.
+   * The batch dimension needs to be unchanged.
+   * For example, if input is:
+   * 1 2 3
+   * 4 5 6
+   * Narrow(1, 1, 2) will give output
+   * 2 3
+   * 5 6
+   * Narrow(1, 2, -1) will give output
+   * 3
+   * 6
+   */
+  def narrow(dim: Int, startIndex: Int, length: Int): Variable[T] = {
+    val layer = Narrow[T](dim = dim,
+      offset = startIndex,
+      length = length)
+    Variable(layer.inputs(this.node))
+  }
+
+  /**
+   * Select an index of the input in the given dim and return the subset part.
+   * The batch dimension needs to be unchanged.
+   * The selected dim would be remove after this operation.
+   * For example, if input is:
+   * 1 2 3
+   * 4 5 6
+   * Select(1, 1) will give output [2 5]
+   * Select(1, -1) will give output [3 6]
+   *
+   * @param dim The dimension to select. 0-based index. Cannot select the batch dimension.
+   *            -1 means the last dimension of the input.
+   * @param index The index of the dimension to be selected. 0-based index.
+   *              -1 means the last dimension of the input.
+   */
+  def indexSelect(dim: Int, index: Int): Variable[T] = {
+    val layer = Select[T](dim = dim,
+      index = index)
+    Variable(layer.inputs(this.node))
   }
 
   private[zoo] def broadcast(x: Variable[T], y: Variable[T]): (Variable[T], Variable[T]) = {
@@ -261,7 +336,7 @@ class Variable[T: ClassTag] private (val node: ModuleNode[T])(
 
   def replicate(axis: Int, times: Int): Variable[T] = {
     val o =
-      new KerasLayerWrapper(
+      new KerasLayerWrapper[T](
         bnn.Replicate[T](dim = axis + 1,
           nFeatures = times).asInstanceOf[AbstractModule[Activity, Activity, T]])
     Variable(o.inputs(this.node))
@@ -279,3 +354,4 @@ class Variable[T: ClassTag] private (val node: ModuleNode[T])(
     Tensor[T](getInputShape().copyAndUpdate(0, batchSize).toSingle().toArray).fill(fillValue)
   }
 }
+

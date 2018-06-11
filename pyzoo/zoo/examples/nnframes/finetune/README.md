@@ -24,7 +24,7 @@ cp train/dog.7* demo/dogs
 
 ## Get the pre-trained Inception-V1 model
 
-Download the pre-trained Inception-V1 model from [Zoo](https://s3-ap-southeast-1.amazonaws.com/bigdl-models/imageclassification/imagenet/bigdl_inception-v1_imagenet_0.4.0.model)
+Download the pre-trained Inception-V1 model from [Analytics Zoo](https://s3-ap-southeast-1.amazonaws.com/bigdl-models/imageclassification/imagenet/bigdl_inception-v1_imagenet_0.4.0.model)
 
 Alternatively, user may also download pre-trained caffe/Tensorflow/keras model. Please refer to
 programming guide in [BigDL](https://bigdl-project.github.io/) 
@@ -38,8 +38,8 @@ ImageTransferLearningExample.py takes 2 parameters:
 User may submit transfer_learning.py via spark-submit.
 E.g.
 ```
-export ZOO_HOME=~/sources/analytics-zoo/dist
-${ZOO_HOME}/bin/spark-submit-with-zoo.sh --master local[4] --driver-memory 10g \
+export ANALYTICS_ZOO_HOME=~/sources/analytics-zoo/dist
+${ANALYTICS_ZOO_HOME}/bin/spark-submit-with-zoo.sh --master local[4] --driver-memory 10g \
 pyzoo/zoo/examples/nnframes/finetune/transfer_learning.py \
 /tmp/models/bigdl_inception-v1_imagenet_0.4.0.model /tmp/datasets/cat_dog/demo
 ```

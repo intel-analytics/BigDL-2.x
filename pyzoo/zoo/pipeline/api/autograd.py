@@ -14,13 +14,12 @@
 # limitations under the License.
 #
 
-from zoo.pipeline.api.keras.engine.topology import ZooKerasCreator, ZooKerasLayer
-from bigdl.util.common import callBigDlFunc, to_list
-from bigdl.nn.criterion import Criterion
-from bigdl.nn.layer import Layer, Node
-
 import sys
 
+from bigdl.nn.layer import Layer, Node
+from bigdl.util.common import callBigDlFunc, to_list
+
+import zoo.pipeline.api.keras.base as kbase
 from zoo.pipeline.api.utils import remove_batch, toMultiShape
 
 if sys.version >= '3':
@@ -28,56 +27,155 @@ if sys.version >= '3':
     unicode = str
 
 
-def mean(a, axis=0, keepDims=False):
-    return Variable.from_jvalue(callBigDlFunc("float", "mean", a, axis, keepDims))
+def mean(x, axis=0, keepDims=False):
+    """
+    Mean of a variable, alongside the specified axis.
+    :param x: A variable.
+    :param axis: A list of integer. Axes to compute the mean.
+    :param keepDims: A boolean, whether to keep the dimensions or not.
+            If `keepDims` is `False`, the rank of the variable is reduced
+            by 1 for each entry in `axis`. If `keepDims` is `True`,
+            the reduced dimensions are retained with length 1.
+    :return: A variable with the mean of elements of `x`.
+    """
+    return Variable.from_jvalue(callBigDlFunc("float", "mean", x, axis, keepDims))
 
 
-def abs(a):
-    return Variable.from_jvalue(callBigDlFunc("float", "abs", a))
+def abs(x):
+    """
+    Element-wise absolute value.
+    :param x: A variable.
+    :return: A variable.
+    """
+    return Variable.from_jvalue(callBigDlFunc("float", "abs", x))
 
 
-def sum(a, axis=0, keepdims=False):
-    return Variable.from_jvalue(callBigDlFunc("float", "sum", a, axis, keepdims))
+def sum(x, axis=0, keepDims=False):
+    """
+    Sum of the values in a a variable, alongside the specified axis.
+    :param x: A variable.
+    :param axis: An integer. Axes to compute the sum over.
+    :param keepDims: A boolean, whether to keep the dimensions or not.
+            If `keepDims` is `False`, the rank of the variable is reduced
+            by 1 for each entry in `axis`. If `keepDims` is `True`,
+            the reduced dimensions are retained with length 1.
+    :return: A variable with sum of `x`.
+    """
+    return Variable.from_jvalue(callBigDlFunc("float", "sum", x, axis, keepDims))
 
 
-def clip(a, min, max):
-    return Variable.from_jvalue(callBigDlFunc("float", "clip", a, float(min), float(max)))
+def clip(x, min, max):
+    """
+    Element-wise value clipping.
+    :param x: A variable.
+    :param min: Python float or integer.
+    :param max: Python float or integer.
+    :return: A variable.
+    """
+    return Variable.from_jvalue(callBigDlFunc("float", "clip", x, float(min), float(max)))
 
 
-def square(a):
-    return Variable.from_jvalue(callBigDlFunc("float", "square", a))
+def square(x):
+    """
+    Element-wise square.
+    :param x: A variable.
+    :return: A variable.
+    """
+    return Variable.from_jvalue(callBigDlFunc("float", "square", x))
 
 
-def sqrt(a):
-    return Variable.from_jvalue(callBigDlFunc("float", "sqrt", a))
+def sqrt(x):
+    """
+    Element-wise square root.
+    :param x: A variable.
+    :return: A variable.
+    """
+    return Variable.from_jvalue(callBigDlFunc("float", "sqrt", x))
 
 
-def exp(a):
-    return Variable.from_jvalue(callBigDlFunc("float", "exp", a))
+def exp(x):
+    """
+    Element-wise exponential.
+    :param x: A variable.
+    :return: A variable.
+    """
+    return Variable.from_jvalue(callBigDlFunc("float", "exp", x))
 
 
-def maximum(a, b):
-    return Variable.from_jvalue(callBigDlFunc("float", "maximum", a, b))
+def maximum(x, y):
+    """
+    Element-wise maximum of two variables.
+    :param x: A variable.
+    :param y: A variable.
+    :return: A variable.
+    """
+    return Variable.from_jvalue(callBigDlFunc("float", "maximum", x, y))
 
 
-def log(a):
-    return Variable.from_jvalue(callBigDlFunc("float", "log", a))
+def log(x):
+    """
+    Element-wise log.
+    :param x: A variable.
+    :return: A variable.
+    """
+    return Variable.from_jvalue(callBigDlFunc("float", "log", x))
+
+
+def pow(x, a):
+    """
+    Element-wise exponentiation.
+    :param x: A variable.
+    :param a: Python integer.
+    :return: A variable.
+    """
+    return Variable.from_jvalue(callBigDlFunc("float", "pow", x, float(a)))
 
 
 def epsilon():
+    """
+    Define the value of epsilon.
+    :return: A value of type Double.
+    """
     return Variable.from_jvalue(callBigDlFunc("float", "epsilon"))
 
 
-class Variable(ZooKerasCreator):
-    def __init__(self, input_shape, node=None, jvalue=None):
+def neg(x):
+    """
+    Computes numerical negative value element-wise.
+    :param x: A variable.
+    :return: A variable.
+    """
+    return Variable.from_jvalue(callBigDlFunc("float", "neg", x))
+
+
+def softsign(x):
+    """
+    Softsign of a variable.
+    :param x: A variable.
+    :return: A variable.
+    """
+    return Variable.from_jvalue(callBigDlFunc("float", "softsign", x))
+
+
+def softplus(x):
+    """
+    Softplus of a variable.
+    :param x: A variable.
+    :return: A variable.
+    """
+    return Variable.from_jvalue(callBigDlFunc("float", "softplus", x))
+
+
+class Variable(kbase.ZooKerasCreator):
+    def __init__(self, input_shape, node=None, jvalue=None, name=None):
         if jvalue:
             self.value = jvalue
             self.bigdl_type = "float"
         else:
             if node:
-                super(Variable, self).__init__(jvalue, "float", node)
+                super(Variable, self).__init__(jvalue, "float", node, name)
             else:
-                super(Variable, self).__init__(jvalue, "float", toMultiShape(input_shape))
+                super(Variable, self).__init__(jvalue, "float", toMultiShape(input_shape), name)
 
     @classmethod
     def from_node(cls, node):
@@ -117,20 +215,59 @@ class Variable(ZooKerasCreator):
     def __sub__(self, other):
         return self.sub(other)
 
+    def __rsub__(self, other):
+        return Variable.from_jvalue(callBigDlFunc("float", "sub", other, self))
+
     def __add__(self, other):
         return self.add(other)
+
+    __radd__ = __add__
 
     def __mul__(self, other):
         return Variable.from_jvalue(callBigDlFunc("float", "mul", self, other))
 
+    __rmul__ = __mul__
+
     def __div__(self, other):
         return Variable.from_jvalue(callBigDlFunc("float", "div", self, other))
 
-    def __truediv__(self, other):
-        return Variable.from_jvalue(callBigDlFunc("float", "div", self, other))
+    __truediv__ = __div__
+
+    def __rdiv__(self, other):
+        return Variable.from_jvalue(callBigDlFunc("float", "div", other, self))
+
+    __rtruediv__ = __rdiv__
+
+    def __neg__(self):
+        return neg(self)
+
+    def squeeze(self, dim=None):
+        return Variable.from_jvalue(callBigDlFunc("float", "squeeze", self, dim))
+
+    def narrow(self, dim, start_index, length):
+        return Variable.from_jvalue(callBigDlFunc("float", "narrow", self, start_index, length))
+
+    def index_select(self, dim, index):
+        return Variable.from_jvalue(callBigDlFunc("float", "indexSelect", self, dim, index))
+
+    # TODO: we need a Shape mapping here.
+    def __to_batch_shape(cls, shape):
+        return tuple([None] + shape[1:])
+
+    def __process_shape(self, shape):
+        if len(shape) == 1:
+            return self.__to_batch_shape(shape[0])
+        else:
+            return [self.__to_batch_shape(s) for s in shape]
+
+    def get_input_shape(self):
+        return self.__process_shape(callBigDlFunc("float", "varGetInputShape", self))
+
+    def get_output_shape(self):
+        return self.__process_shape(callBigDlFunc("float", "varGetOutputShape", self))
 
 
-class Lambda(ZooKerasCreator):
+class Lambda(kbase.ZooKerasCreator):
     """Used for evaluating an arbitrary expressions on an input.
 
        # Examples
@@ -148,6 +285,7 @@ class Lambda(ZooKerasCreator):
            (tuple of integers, does not include the samples axis)
            when using this layer as the first layer in a model.
        """
+
     def __init__(self, function, input_shape=None, bigdl_type="float"):
         self.function = function
         self.input_shape = input_shape
@@ -162,12 +300,12 @@ class Lambda(ZooKerasCreator):
         x = to_list(x if x else [])
         layer = self
         if isinstance(self, Lambda):
-            input_shapes = [ZooKerasLayer.of(node.element().value).get_output_shape() for node in x]
+            input_shapes = [var.get_output_shape() for var in x]
             layer = self.create(remove_batch(input_shapes))
-        return Node.of(callBigDlFunc(self.bigdl_type,
-                                     "createNode",
-                                     layer,
-                                     to_list(x)))
+        return Variable.from_jvalue(callBigDlFunc(self.bigdl_type,
+                                                  "connectInputs",
+                                                  layer,
+                                                  to_list(x)))
 
     # input_shapes should not contain batch dim
     def create(self, input_shapes):
@@ -178,7 +316,7 @@ class Lambda(ZooKerasCreator):
                            input_shape=input_shapes)
 
 
-class LambdaLayer(ZooKerasLayer):
+class LambdaLayer(kbase.ZooKerasLayer):
     def __init__(self, input_vars, out_var, input_shape=None, **kwargs):
         super(LambdaLayer, self).__init__(None,
                                           input_vars,
@@ -187,8 +325,7 @@ class LambdaLayer(ZooKerasLayer):
                                           **kwargs)
 
 
-class CustomLoss(ZooKerasCreator):
-
+class CustomLoss(kbase.ZooKerasCreator):
     def __init__(self, loss_func, input_shape):
         """
         :param loss_func: a function which accept y_true and y_pred

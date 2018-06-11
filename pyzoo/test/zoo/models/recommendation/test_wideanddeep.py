@@ -30,7 +30,7 @@ class TestWideAndDeep(ZooTestCase):
     def setup_method(self, method):
         sparkConf = create_spark_conf().setMaster("local[4]")\
             .setAppName("test wide and deep")
-        self.sc = get_nncontext(sparkConf)
+        self.sc = init_nncontext(sparkConf)
         self.sqlContext = SQLContext(self.sc)
         data_path = os.path.join(os.path.split(__file__)[0], "../../resources/recommender")
         categorical_gender_udf = udf(lambda gender:

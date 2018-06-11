@@ -16,6 +16,8 @@
 
 package com.intel.analytics.zoo.models.recommendation
 
+import java.net.URL
+
 import com.intel.analytics.bigdl.nn.ClassNLLCriterion
 import com.intel.analytics.bigdl.nn.abstractnn.Activity
 import com.intel.analytics.bigdl.optim.{Adam, Optimizer, Trigger}
@@ -44,10 +46,11 @@ class WideAndDeepSpec extends ZooSpecHelper {
   override def doBefore(): Unit = {
     Logger.getLogger("org").setLevel(Level.ERROR)
     val conf = new SparkConf().setMaster("local[1]").setAppName("WideNdeepTest")
-    sc = NNContext.getNNContext(conf)
+    sc = NNContext.initNNContext(conf)
     sqlContext = SQLContext.getOrCreate(sc)
 
-    datain = sqlContext.read.parquet("./src/test/resources/recommender/")
+    val resource: URL = getClass.getClassLoader.getResource("recommender")
+    datain = sqlContext.read.parquet(resource.getFile)
       .withColumn("gender", categoricalUDF(col("gender")))
       .withColumn("occupation-gender", bucketUDF(col("occupation"), col("gender")))
   }

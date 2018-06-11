@@ -21,7 +21,7 @@ from keras.models import Sequential as KSequential
 from test.zoo.pipeline.utils.test_utils import ZooTestCase
 import zoo.pipeline.api.keras.layers as ZLayer
 from zoo.pipeline.api.keras.models import Model as ZModel
-from zoo.pipeline.api.net import Net
+from zoo.pipeline.api.net import Net, TFNet
 from bigdl.nn.layer import Linear, Sigmoid, SoftMax, Model as BModel
 from bigdl.util.common import *
 from bigdl.nn.layer import Sequential
@@ -73,11 +73,13 @@ class TestLayer(ZooTestCase):
         model_json = model.to_json()
         with open(tmp_path_json, "w") as json_file:
             json_file.write(model_json)
-        reloaded_json_model = Net.load_keras(json_path=tmp_path_json)
+        zmodel = Net.load_keras(json_path=tmp_path_json)
+        assert isinstance(zmodel, Sequential)
 
         tmp_path_hdf5 = create_tmp_path() + ".h5"
         model.save(tmp_path_hdf5)
-        reloaded_hdf5_model = Net.load_keras(hdf5_path=tmp_path_hdf5)
+        zmodel2 = Net.load_keras(hdf5_path=tmp_path_hdf5)
+        assert isinstance(zmodel2, Sequential)
 
     def test_load_tf(self):
         linear = Linear(10, 2)()
@@ -107,6 +109,13 @@ class TestLayer(ZooTestCase):
         model = Net.load_bigdl(model_path)
 
         assert len(Sequential().add(model).flattened_layers()) == 12
+
+    def test_tf_net(self):
+        resource_path = os.path.join(os.path.split(__file__)[0], "../../../resources")
+        tfnet_path = os.path.join(resource_path, "tfnet")
+        net = TFNet.from_export_folder(tfnet_path)
+        output = net.forward(np.random.rand(32, 28, 28, 1))
+        assert output.shape == (32, 10)
 
 if __name__ == "__main__":
     pytest.main([__file__])

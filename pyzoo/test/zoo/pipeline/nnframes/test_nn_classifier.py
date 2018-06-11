@@ -35,7 +35,7 @@ class TestNNClassifer():
         class.  setup_method is invoked for every test method of a class.
         """
         sparkConf = create_spark_conf().setMaster("local[1]").setAppName("testNNClassifer")
-        self.sc = get_nncontext(sparkConf)
+        self.sc = init_nncontext(sparkConf)
         self.sqlContext = SQLContext(self.sc)
 
     def teardown_method(self, method):
@@ -131,6 +131,8 @@ class TestNNClassifer():
         assert classifier.setBatchSize(20).getBatchSize() == 20
         assert classifier.setMaxEpoch(50).getMaxEpoch() == 50
         assert classifier.setLearningRate(1e-5).getLearningRate() == 1e-5
+        assert classifier.setLearningRateDecay(1e-9).getLearningRateDecay() == 1e-9
+        assert classifier.setCachingSample(False).isCachingSample() is False
 
         nn_classifier_model = NNClassifierModel(linear_model, SeqToTensor([2]))
         assert nn_classifier_model.setBatchSize((20)).getBatchSize() == 20

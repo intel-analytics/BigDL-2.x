@@ -19,6 +19,8 @@ package com.intel.analytics.zoo.models.common
 import com.intel.analytics.bigdl.nn.{Container, Module}
 import com.intel.analytics.bigdl.nn.abstractnn.{AbstractModule, Activity}
 import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric
+import com.intel.analytics.zoo.pipeline.api.keras.models.{KerasNet, Model, Sequential}
+import com.intel.analytics.zoo.pipeline.api.net.GraphNet
 
 import scala.reflect.ClassTag
 
@@ -75,6 +77,18 @@ abstract class ZooModel[A <: Activity: ClassTag, B <: Activity: ClassTag, T: Cla
     this.saveModule(path, weightPath, overWrite)
   }
 
+  /**
+   * Print out the summary of the model.
+   */
+  def summary(): Unit = {
+    if (this.model.isInstanceOf[KerasNet[T]]) {
+      model.asInstanceOf[KerasNet[T]].summary()
+    }
+    else {
+      println(model.toString())
+    }
+  }
+
   override def updateOutput(input: A): B = {
     output = model.updateOutput(input)
     output
@@ -91,6 +105,9 @@ abstract class ZooModel[A <: Activity: ClassTag, B <: Activity: ClassTag, T: Cla
 }
 
 object ZooModel {
+  Model
+  Sequential
+  GraphNet
   /**
    * Load an existing model (with weights).
    *

@@ -16,6 +16,8 @@
 
 package com.intel.analytics.zoo.models.recommendation
 
+import java.net.URL
+
 import com.intel.analytics.bigdl.dataset.Sample
 import com.intel.analytics.bigdl.nn.ClassNLLCriterion
 import com.intel.analytics.bigdl.optim.{Adam, Optimizer, Trigger}
@@ -42,10 +44,10 @@ class NeuralCFSpec extends ZooSpecHelper {
   override def doBefore(): Unit = {
     Logger.getLogger("org").setLevel(Level.ERROR)
     val conf = new SparkConf().setMaster("local[1]").setAppName("NCFTest")
-    sc = NNContext.getNNContext(conf)
+    sc = NNContext.initNNContext(conf)
     sqlContext = SQLContext.getOrCreate(sc)
-
-    datain = sqlContext.read.parquet("./src/test/resources/recommender/")
+    val resource: URL = getClass.getClassLoader.getResource("recommender")
+    datain = sqlContext.read.parquet(resource.getFile)
       .select("userId", "itemId", "label")
   }
 
@@ -58,6 +60,7 @@ class NeuralCFSpec extends ZooSpecHelper {
   "NeuralCF without MF forward and backward" should "work properly" in {
 
     val model = NeuralCF[Float](userCount, itemCount, 5, 5, 5, Array(10, 5), false)
+    model.summary()
     val ran = new Random(42L)
     val data: Seq[Tensor[Float]] = (1 to 50).map(i => {
       val uid = Math.abs(ran.nextInt(userCount - 1)).toFloat + 1
@@ -65,6 +68,7 @@ class NeuralCFSpec extends ZooSpecHelper {
       val feature: Tensor[Float] = Tensor(T(T(uid, iid)))
       println(feature.size().toList)
       val label = Math.abs(ran.nextInt(4)).toFloat + 1
+      println(feature.size())
       feature
     })
     data.map { input =>

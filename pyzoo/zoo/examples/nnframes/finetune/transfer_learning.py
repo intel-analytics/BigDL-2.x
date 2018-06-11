@@ -38,7 +38,7 @@ if __name__ == "__main__":
 
     sparkConf = SparkConf()\
         .setAppName("ImageTransferLearningExample")
-    sc = get_nncontext(sparkConf)
+    sc = init_nncontext(sparkConf)
 
     model_path = sys.argv[1]
     image_path = sys.argv[2] + '/*/*'
@@ -71,7 +71,8 @@ if __name__ == "__main__":
     lrModel = Model(inputNode, logits)
 
     classifier = NNClassifier(lrModel, CrossEntropyCriterion(), transformer) \
-        .setLearningRate(0.003).setBatchSize(40).setMaxEpoch(1).setFeaturesCol("image")
+        .setLearningRate(0.003).setBatchSize(40).setMaxEpoch(1).setFeaturesCol("image") \
+        .setCachingSample(False)
 
     pipeline = Pipeline(stages=[classifier])
 

@@ -25,3 +25,4 @@ JavaCreator.add_creator_class("com.intel.analytics.zoo.pipeline.nnframes.python.
 JavaCreator.add_creator_class("com.intel.analytics.zoo.feature.python.PythonImageFeature")
 JavaCreator.add_creator_class("com.intel.analytics.zoo.pipeline.api.keras.python.PythonAutoGrad")
 JavaCreator.add_creator_class("com.intel.analytics.zoo.models.python.PythonZooModel")
+JavaCreator.add_creator_class("com.intel.analytics.zoo.pipeline.api.keras.python.PythonZooKeras2")
