@@ -90,11 +90,16 @@ class TFNet private(graphDef: Array[Byte],
   }
 
   @transient
-  private lazy val (graph, sess) = {
+  private lazy val graph = {
     val graph = new Graph()
     graph.importGraphDef(graphDef)
+    graph
+  }
+
+  @transient
+  private lazy val sess = {
     val sess = new Session(graph, config)
-    (graph, sess)
+    sess
   }
 
   @transient
