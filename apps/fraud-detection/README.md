@@ -30,5 +30,5 @@ https://github.com/intel-analytics/analytics-zoo/tree/legacy/pipeline/fraudDetec
 
 
 4. Run the `$ANALYTICS_ZOO_HOME/apps/fraud-detection/run.sh` to start the jupyter notebook. Change parameter settings as you need, ie `MASTER = local[physcial_core_number]`.
-recommended driver memory and executor memory is 10g. 
+Recommended driver memory and executor memory is 10g. 
 
