@@ -10,25 +10,25 @@
   <fileSets>
     <fileSet>
       <outputDirectory>/bin</outputDirectory>
-      <directory>${project.build.directory}/../../../scripts</directory>
+      <directory>${project.build.directory}/../../scripts</directory>
     </fileSet>
     <fileSet>
       <outputDirectory>/lib</outputDirectory>
-      <directory>${project.build.directory}/../../../zoo/target</directory>
+      <directory>${project.build.directory}/../../zoo/target</directory>
       <includes>
           <include>analytics-zoo-*-jar-with-dependencies.jar</include>
       </includes>
     </fileSet>
     <fileSet>
       <outputDirectory>/lib</outputDirectory>
-      <directory>${project.build.directory}/../../../zoo/target</directory>
+      <directory>${project.build.directory}/../../zoo/target</directory>
       <includes>
           <include>analytics-zoo-*-python-api.zip</include>
       </includes>
     </fileSet>
     <fileSet>
       <outputDirectory>/conf</outputDirectory>
-      <directory>${project.build.directory}/../../../backend/bigdl/spark/dl/src/main/resources</directory>
+      <directory>${project.build.directory}/../../backend/bigdl/spark/dl/src/main/resources</directory>
       <includes>
           <include>spark-bigdl.conf</include>
       </includes>
@@ -36,7 +36,7 @@
   </fileSets>
   <files>
     <file>
-      <source>${project.build.directory}/../../../backend/bigdl/spark/dl/src/main/resources/spark-bigdl.conf</source>
+      <source>${project.build.directory}/../../backend/bigdl/spark/dl/src/main/resources/spark-bigdl.conf</source>
       <outputDirectory>/conf</outputDirectory>
       <destName>spark-analytics-zoo.conf</destName>
     </file>
