@@ -39,7 +39,7 @@ class Conv1DSpec extends KerasBaseSpec {
       """
         |input_tensor = Input(shape=[12, 20])
         |input = np.random.random([2, 12, 20])
-        |output_tensor = Convolution1D(64, 3)(input_tensor)
+        |output_tensor = Conv1D(64, 3)(input_tensor)
         |model = Model(input=input_tensor, output=output_tensor)
       """.stripMargin
     val seq = Sequential[Float]()
@@ -55,8 +55,8 @@ class Conv1DSpec extends KerasBaseSpec {
       """
         |input_tensor = Input(shape=[20, 32])
         |input = np.random.random([2, 20, 32])
-        |output_tensor = Convolution1D(32, 4, activation="relu", bias=False,
-        |                              subsample_length=2)(input_tensor)
+        |output_tensor = Conv1D(32, 4, activation="relu", use_bias=False,
+        |                              strides=2)(input_tensor)
         |model = Model(input=input_tensor, output=output_tensor)
       """.stripMargin
     val seq = Sequential[Float]()
