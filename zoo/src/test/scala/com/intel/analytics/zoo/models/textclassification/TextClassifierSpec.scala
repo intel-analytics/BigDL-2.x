@@ -48,12 +48,6 @@ class TextClassifierSpec extends ZooSpecHelper {
     val gradInput = model.backward(input, output)
   }
 
-  "TextClassifier with predefined model" should "work properly" in {
-    val preDefined = Sequential[Float].add(Dense[Float](10, inputShape = Shape(8)))
-    val model = TextClassifier[Float](model = preDefined)
-    model.summary()
-  }
-
 }
 
 class TextClassifierSerialTest extends ModuleSerializationTest {

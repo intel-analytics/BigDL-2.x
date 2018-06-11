@@ -57,8 +57,13 @@ class PythonZooModel[T: ClassTag](implicit ev: TensorNumeric[T]) extends PythonB
   }
 
   def createZooTextClassifier(
+      classNum: Int,
+      tokenLength: Int,
+      sequenceLength: Int = 500,
+      encoder: String = "cnn",
+      encoderOutputDim: Int = 256,
       model: AbstractModule[Activity, Activity, T]): TextClassifier[T] = {
-    TextClassifier[T](model)
+    TextClassifier[T](classNum, tokenLength, sequenceLength, encoder, encoderOutputDim, model)
   }
 
   def loadTextClassifier(

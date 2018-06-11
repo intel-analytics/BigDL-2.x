@@ -81,11 +81,22 @@ object TextClassifier {
     new TextClassifier[T](classNum, tokenLength, sequenceLength, encoder, encoderOutputDim).build()
   }
 
+  /**
+   * This factory method is mainly for Python use.
+   * Pass in a model to build the TextClassifier.
+   * Note that if you use this factory method, arguments such as classNum, tokenLength, etc
+   * should match the model definition to eliminate ambiguity.
+   */
   private[zoo] def apply[@specialized(Float, Double) T: ClassTag](
+      classNum: Int,
+      tokenLength: Int,
+      sequenceLength: Int,
+      encoder: String,
+      encoderOutputDim: Int,
       model: AbstractModule[Activity, Activity, T])
     (implicit ev: TensorNumeric[T]): TextClassifier[T] = {
-    // what values to pass for the constructor?
-    new TextClassifier[T](20, 200).addModel(model)
+    new TextClassifier[T](classNum, tokenLength, sequenceLength, encoder, encoderOutputDim)
+      .addModel(model)
   }
 
   /**

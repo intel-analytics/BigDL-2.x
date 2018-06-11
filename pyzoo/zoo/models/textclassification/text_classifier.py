@@ -47,24 +47,29 @@ class TextClassifier(ZooModel):
         self.bigdl_type = bigdl_type
         self.model = self.build_model()
         super(TextClassifier, self).__init__(None, bigdl_type,
+                                             int(class_num),
+                                             int(token_length),
+                                             int(sequence_length),
+                                             encoder,
+                                             int(encoder_output_dim),
                                              self.model)
 
     def build_model(self):
         model = Sequential()
         model.add(InputLayer(input_shape=(self.sequence_length, self.token_length)))
-        if self.encoder.lower() == "cnn":
-            model.add(Convolution1D(self.encoder_output_dim, 5, activation="relu"))
+        if self.encoder.lower() == 'cnn':
+            model.add(Convolution1D(self.encoder_output_dim, 5, activation='relu'))
             model.add(GlobalMaxPooling1D())
-        elif self.encoder.lower() == "lstm":
+        elif self.encoder.lower() == 'lstm':
             model.add(LSTM(self.encoder_output_dim))
-        elif self.encoder.lower() == "gru":
+        elif self.encoder.lower() == 'gru':
             model.add(GRU(self.encoder_output_dim))
         else:
             raise ValueError('Unsupported encoder: ' + self.encoder)
         model.add(Dense(128))
         model.add(Dropout(0.2))
-        model.add(Activation("relu"))
-        model.add(Dense(self.class_num, activation="softmax"))
+        model.add(Activation('relu'))
+        model.add(Dense(self.class_num, activation='softmax'))
         return model
 
     @staticmethod
