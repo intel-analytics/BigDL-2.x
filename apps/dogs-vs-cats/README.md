@@ -23,12 +23,12 @@ In this notebook, we will use a pre-trained Inception_V1 model. But we will oper
 * Download the pre-trained [Inception-V1 model](https://s3-ap-southeast-1.amazonaws.com/bigdl-models/imageclassification/imagenet/bigdl_inception-v1_imagenet_0.4.0.model). Alternatively, user may also download pre-trained caffe/Tensorflow/keras model.
 * Run the following bash command to start the jupyter notebook. Change parameter settings as you need, ie `MASTER = local[physcial_core_number]`.
 ```bash
-MASTER=local[*]
+MASTER=local[4]
 bash ${ANALYTICS_ZOO_HOME}/bin/jupyter-with-zoo.sh \
         --master ${MASTER} \
         --driver-cores 1  \
-        --driver-memory 32g  \
+        --driver-memory 10g  \
         --total-executor-cores 1  \
         --executor-cores 1  \
-        --executor-memory 32g
+        --executor-memory 10g
 ```
