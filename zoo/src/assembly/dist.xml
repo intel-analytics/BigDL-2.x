@@ -26,13 +26,6 @@
           <include>analytics-zoo-*-python-api.zip</include>
       </includes>
     </fileSet>
-    <fileSet>
-      <outputDirectory>/conf</outputDirectory>
-      <directory>${project.build.directory}/../../backend/bigdl/spark/dl/src/main/resources</directory>
-      <includes>
-          <include>spark-bigdl.conf</include>
-      </includes>
-    </fileSet>
   </fileSets>
   <files>
     <file>
