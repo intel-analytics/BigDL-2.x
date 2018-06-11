@@ -14,31 +14,7 @@ chmod +x ./apps/ipynb2py.sh
 
 set -e
 
-echo "#1 start app test for anomaly-detection-nyc-taxi"
-#timer
-start=$(date "+%s")
-./apps/ipynb2py.sh ./apps/anomaly-detection/anomaly-detection-nyc-taxi
 
-chmod +x $ANALYTICS_ZOO_HOME/scripts/data/NAB/nyc_taxi/get_nyc_taxi.sh
-
-$ANALYTICS_ZOO_HOME/scripts/data/NAB/nyc_taxi/get_nyc_taxi.sh
-
-${SPARK_HOME}/bin/spark-submit \
-        --master ${MASTER} \
-        --driver-cores 2  \
-        --driver-memory 12g  \
-        --total-executor-cores 2  \
-        --executor-cores 2  \
-        --executor-memory 12g \
-        --conf spark.akka.frameSize=64 \
-        --py-files ${ANALYTICS_ZOO_PYZIP},${ANALYTICS_ZOO_HOME}/apps/anomaly-detection/anomaly-detection-nyc-taxi.py  \
-        --properties-file ${ANALYTICS_ZOO_CONF} \
-        --jars ${ANALYTICS_ZOO_JAR} \
-        --conf spark.driver.extraClassPath=${ANALYTICS_ZOO_JAR} \
-        --conf spark.executor.extraClassPath=${ANALYTICS_ZOO_JAR} \
-        ${ANALYTICS_ZOO_HOME}/apps/anomaly-detection/anomaly-detection-nyc-taxi.py
-now=$(date "+%s")
-time1=$((now-start))
 
 echo "#2 start app test for object-detection"
 #timer
@@ -88,6 +64,32 @@ ${SPARK_HOME}/bin/spark-submit \
         ${ANALYTICS_ZOO_HOME}/apps/object-detection/object-detection.py
 now=$(date "+%s")
 time2=$((now-start))
+
+echo "#1 start app test for anomaly-detection-nyc-taxi"
+#timer
+start=$(date "+%s")
+./apps/ipynb2py.sh ./apps/anomaly-detection/anomaly-detection-nyc-taxi
+
+chmod +x $ANALYTICS_ZOO_HOME/scripts/data/NAB/nyc_taxi/get_nyc_taxi.sh
+
+$ANALYTICS_ZOO_HOME/scripts/data/NAB/nyc_taxi/get_nyc_taxi.sh
+
+${SPARK_HOME}/bin/spark-submit \
+        --master ${MASTER} \
+        --driver-cores 2  \
+        --driver-memory 12g  \
+        --total-executor-cores 2  \
+        --executor-cores 2  \
+        --executor-memory 12g \
+        --conf spark.akka.frameSize=64 \
+        --py-files ${ANALYTICS_ZOO_PYZIP},${ANALYTICS_ZOO_HOME}/apps/anomaly-detection/anomaly-detection-nyc-taxi.py  \
+        --properties-file ${ANALYTICS_ZOO_CONF} \
+        --jars ${ANALYTICS_ZOO_JAR} \
+        --conf spark.driver.extraClassPath=${ANALYTICS_ZOO_JAR} \
+        --conf spark.executor.extraClassPath=${ANALYTICS_ZOO_JAR} \
+        ${ANALYTICS_ZOO_HOME}/apps/anomaly-detection/anomaly-detection-nyc-taxi.py
+now=$(date "+%s")
+time1=$((now-start))
 
 echo "#3 start app test for ncf-explicit-feedback"
 #timer
