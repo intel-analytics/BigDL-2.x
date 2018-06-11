@@ -128,14 +128,15 @@ val imgAug = ImageBytesToMat() -> ImageResize(256, 256)-> ImageCenterCrop(224, 2
 In the above example, the transformations will perform sequentially.
 
 Assume you have an ImageFrame containing original bytes array,
-`ImageBytesToMat` will transform the bytes array to `OpenCVMat`.
 
-`ImageColorJitter`, `ImageExpand`, `ImageResize`, `ImageHFlip` and `ImageChannelNormalize` will transform over `OpenCVMat`,
+* `ImageBytesToMat` will transform the bytes array to `OpenCVMat`.
+
+* `ImageColorJitter`, `ImageExpand`, `ImageResize`, `ImageHFlip` and `ImageChannelNormalize` will transform over `OpenCVMat`,
 note that `OpenCVMat` is overwrite by default.
 
-`ImageMatToTensor` transform `OpenCVMat` to `Tensor`, and `OpenCVMat` is released in this step.
+* `ImageMatToTensor` transform `OpenCVMat` to `Tensor`, and `OpenCVMat` is released in this step.
 
-`ImageSetToSample` transform the tensors that map inputKeys and targetKeys to sample,
+* `ImageSetToSample` transform the tensors that map inputKeys and targetKeys to sample,
 which can be used by the following prediction or training tasks.
 
 **Python example:**
@@ -244,11 +245,12 @@ lrModel.fit(x = samples, batch_size=batchsize, nb_epoch=nEpochs)
 
 ## **Image Predict**
 ### Predict with Image DataFrame
-After training with NNEstimator/NNCLassifier, you'll get a trained NNModel/NNClassifierModel. You can call `transform` to predict Image DataFrame with this NNModel/NNClassifierModel.
- Or you can load pre-trained Analytics-Zoo/BigDL/Caffe/Torch/Tensorflow model and create NNModel/NNClassifierModel with this model. Then call to `transform` to predict Image DataFrame.
- After prediction, there is a new column `prediction` in the prediction image dataframe.
+After training with *NNEstimator/NNCLassifier*, you'll get a trained *NNModel/NNClassifierModel* . You can call `transform` to predict Image DataFrame with this * NNModel/NNClassifierModel* . Or you can load pre-trained * Analytics-Zoo/BigDL/Caffe/Torch/Tensorflow*  model and create NNModel/NNClassifierModel with this model. Then call to `transform` to Image DataFrame.
+
+After prediction, there is a new column `prediction` in the prediction image dataframe.
  
  **Scala example:**
+ 
  ```scala
  val batchsize = 128
  val nEpochs = 10
@@ -275,9 +277,11 @@ After training with NNEstimator/NNCLassifier, you'll get a trained NNModel/NNCla
          .setFeaturesCol("image")
          .setPredictionCol("prediction") 
  val resultDF = dlmodel.transform(testDf)
- ```
+```
+ 
  **Python example:**
- ```python
+
+```python
  batchsize = 128
  nEpochs = 10
  featureTransformer = ChainedPreprocessing([RowToImageFeature(), ImageResize(256, 256),
@@ -303,7 +307,7 @@ dlmodel = NNClassifierModel(model, featureTransformer)\
          .setFeaturesCol("image")\
          .setPredictionCol("prediction") 
 resultDF = dlmodel.transform(testDf)
- ```
+```
 ### Predict with ImageSet
 
 After training Zoo Keras model, you can call `predict` to predict ImageSet.
