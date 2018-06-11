@@ -19,15 +19,18 @@ to allow users to combine the components of BigDL and Spark MLlib.
 `NNEstimator` supports different feature and label data types through `Preprocessing`.
 During fit (training), NNEstimator will extract feature and label data from input DataFrame and use
 the `Preprocessing` to convert data for the model, typically converts the feature and label
-to Tensors or converts the (feature, option[Label]) tuple to a BigDL `Sample`. Each
-`Preprocessing` conducts a data conversion step in the preprocessing phase, multiple
+to Tensors or converts the (feature, option[Label]) tuple to a BigDL `Sample`. 
+
+Each`Preprocessing` conducts a data conversion step in the preprocessing phase, multiple
 `Preprocessing` can be combined into a `ChainedPreprocessing`. Some pre-defined 
 `Preprocessing` for popular data types like Image, Array or Vector are provided in package
 `com.intel.analytics.zoo.feature`, while user can also develop customized `Preprocessing`.
+
 By default, `SeqToTensor` is used to convert an array or Vector to a 1-dimension Tensor.
 Using the `Preprocessing` allows `NNEstimator` to cache only the raw data and decrease the 
 memory consumption during feature conversion and training, it also enables the model to digest
 extra data types that DataFrame does not support currently.
+
 More concrete examples are available in package `com.intel.analytics.zoo.examples.nnframes`
 
 `NNEstimator` can be created with various parameters for different scenarios.
