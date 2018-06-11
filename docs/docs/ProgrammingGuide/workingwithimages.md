@@ -245,13 +245,13 @@ lrModel.fit(x = samples, batch_size=batchsize, nb_epoch=nEpochs)
 
 ## **Image Predict**
 ### Predict with Image DataFrame
-After training with *NNEstimator/NNCLassifier*, you'll get a trained *NNModel/NNClassifierModel* . You can call `transform` to predict Image DataFrame with this * NNModel/NNClassifierModel* . Or you can load pre-trained * Analytics-Zoo/BigDL/Caffe/Torch/Tensorflow*  model and create NNModel/NNClassifierModel with this model. Then call to `transform` to Image DataFrame.
+After training with *NNEstimator/NNCLassifier*, you'll get a trained *NNModel/NNClassifierModel* . You can call `transform` to predict Image DataFrame with this *NNModel/NNClassifierModel* . Or you can load pre-trained *Analytics-Zoo/BigDL/Caffe/Torch/Tensorflow*  model and create *NNModel/NNClassifierModel* with this model. Then call to `transform` to Image DataFrame.
 
 After prediction, there is a new column `prediction` in the prediction image dataframe.
  
  **Scala example:**
  
- ```scala
+```scala
  val batchsize = 128
  val nEpochs = 10
  val featureTransformer = RowToImageFeature() -> ImageResize(256, 256) ->
