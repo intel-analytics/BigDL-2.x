@@ -47,8 +47,8 @@ class MaximumSpec extends KerasBaseSpec {
     val input = T(1 -> input1, 2 -> input2)
     val l1 = Input[Float](inputShape = Shape(8))
     val l2 = Input[Float](inputShape = Shape(8))
-    val output = maximum(inputs = List(l1, l2))
-    val model = Model[Float](Array(l1, l2), output)
+    val layer = maximum(inputs = List(l1, l2))
+    val model = Model[Float](Array(l1, l2), layer)
     model.getOutputShape().toSingle().toArray should be (Array(-1, 8))
     model.forward(input) should be (input2)
   }

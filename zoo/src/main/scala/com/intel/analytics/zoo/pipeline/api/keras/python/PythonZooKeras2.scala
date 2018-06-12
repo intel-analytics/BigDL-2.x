@@ -18,10 +18,15 @@ package com.intel.analytics.zoo.pipeline.api.keras.python
 
 import java.util.{List => JList}
 
+import com.intel.analytics.bigdl.nn.abstractnn.{AbstractModule, Activity}
 import com.intel.analytics.bigdl.optim.Regularizer
 import com.intel.analytics.bigdl.python.api.PythonBigDLKeras
 import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric
-import com.intel.analytics.zoo.pipeline.api.keras2.layers.{Dense, Conv1D, MaxPooling1D, Maximum, Minimum}
+import com.intel.analytics.zoo.pipeline.api.Net
+import com.intel.analytics.zoo.pipeline.api.autograd.Variable
+import com.intel.analytics.zoo.pipeline.api.keras2.layers.{Conv1D, Dense, MaxPooling1D, Maximum, Minimum}
+import scala.collection.JavaConverters._
+
 
 import scala.reflect.ClassTag
 

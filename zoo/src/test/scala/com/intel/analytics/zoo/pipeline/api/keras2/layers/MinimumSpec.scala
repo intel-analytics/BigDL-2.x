@@ -22,6 +22,7 @@ import com.intel.analytics.bigdl.utils.{Shape, T}
 import com.intel.analytics.zoo.pipeline.api.keras.layers.{Input, Keras2Test, KerasBaseSpec}
 import com.intel.analytics.zoo.pipeline.api.keras.models.Model
 import com.intel.analytics.zoo.pipeline.api.keras.serializer.ModuleSerializationTest
+import com.intel.analytics.zoo.pipeline.api.keras2.layers.Minimum.minimum
 
 import scala.util.Random
 
@@ -35,6 +36,18 @@ class MinimumSpec extends KerasBaseSpec {
     val l1 = Input[Float](inputShape = Shape(8))
     val l2 = Input[Float](inputShape = Shape(8))
     val layer = Minimum[Float]().inputs(Array(l1, l2))
+    val model = Model[Float](Array(l1, l2), layer)
+    model.getOutputShape().toSingle().toArray should be (Array(-1, 8))
+    model.forward(input) should be (input1)
+  }
+
+  "minimum" should "work properly" taggedAs(Keras2Test) in {
+    val input1 = Tensor[Float](3, 8).rand(0, 1)
+    val input2 = Tensor[Float](3, 8).rand(1, 2)
+    val input = T(1 -> input1, 2 -> input2)
+    val l1 = Input[Float](inputShape = Shape(8))
+    val l2 = Input[Float](inputShape = Shape(8))
+    val layer = minimum(inputs = List(l1, l2))
     val model = Model[Float](Array(l1, l2), layer)
     model.getOutputShape().toSingle().toArray should be (Array(-1, 8))
     model.forward(input) should be (input1)

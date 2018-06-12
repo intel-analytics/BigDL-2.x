@@ -16,6 +16,7 @@
 
 package com.intel.analytics.zoo.pipeline.api.keras2.layers
 
+import com.intel.analytics.bigdl.nn.Graph.ModuleNode
 import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric
 import com.intel.analytics.bigdl.utils.Shape
 import com.intel.analytics.zoo.pipeline.api.Net
@@ -37,9 +38,13 @@ class Minimum[T: ClassTag](
 }
 
 object Minimum {
-  def apply[@specialized(Float, Double) T: ClassTag](
-    inputShape: Shape = null)
+  def apply[@specialized(Float, Double) T: ClassTag](inputShape: Shape = null)
     (implicit ev: TensorNumeric[T]): Minimum[T] = {
     new Minimum[T](inputShape)
+  }
+  def minimum[@specialized(Float, Double) T: ClassTag](inputs: List[ModuleNode[T]])
+    (implicit ev: TensorNumeric[T]): ModuleNode[T] = {
+    val layer = new Minimum[T]()
+    layer.inputs(inputs.toArray)
   }
 }
