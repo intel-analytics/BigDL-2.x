@@ -33,6 +33,13 @@ class Maximum(ZooKeras2Layer):
     creating: createZooKeras2Maximum
     creating: createZooKerasInput
     creating: createZooKerasInput
+    # >>> from zoo.pipeline.api.keras.layers import Input
+    # >>> i1 = Input(shape=(4, 5))
+    # creating: createZooKerasInput
+    # >>> i2 = Input(shape=(4, 5))
+    # creating: createZooKerasInput
+    # >>> max = maximum([i1, i2])
+    # creating: createZooKeras2Maximum
     """
     def __init__(self,
                  input_shape=None, **kwargs):
@@ -41,21 +48,34 @@ class Maximum(ZooKeras2Layer):
                                       **kwargs)
 
 
-class Minimum(ZooKeras2Layer):
-    """
-    Layer that computes the minimum (element-wise) a list of inputs.
+def maximum(inputs, **kwargs):
+    """Functional interface to the `Maximum` layer.
 
-    It takes as input a list of tensors,
-    all of the same shape, and returns
-    a single tensor (also of the same shape).
-    >>> from zoo.pipeline.api.keras.layers import Input
-    >>> max = Minimum()([Input(shape=(4, 5)), Input(shape=(4, 5))])
-    creating: createZooKeras2Minimum
-    creating: createZooKerasInput
-    creating: createZooKerasInput
+    # Arguments
+        inputs: A list of input tensors (at least 2).
+        **kwargs: Standard layer keyword arguments.
+
+    # Returns
+        A tensor, the element-wise maximum of the inputs.
     """
-    def __init__(self,
-                 input_shape=None, **kwargs):
-        super(Minimum, self).__init__(None,
-                                      list(input_shape) if input_shape else None,
-                                      **kwargs)
+    return Maximum(**kwargs)(inputs)
+
+
+# class Minimum(ZooKeras2Layer):
+#     """
+#     Layer that computes the minimum (element-wise) a list of inputs.
+#
+#     It takes as input a list of tensors,
+#     all of the same shape, and returns
+#     a single tensor (also of the same shape).
+#     >>> from zoo.pipeline.api.keras.layers import Input
+#     >>> max = Minimum()([Input(shape=(4, 5)), Input(shape=(4, 5))])
+#     creating: createZooKeras2Minimum
+#     creating: createZooKerasInput
+#     creating: createZooKerasInput
+#     """
+#     def __init__(self,
+#                  input_shape=None, **kwargs):
+#         super(Minimum, self).__init__(None,
+#                                       list(input_shape) if input_shape else None,
+#                                       **kwargs)

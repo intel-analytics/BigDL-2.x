@@ -16,6 +16,7 @@
 
 package com.intel.analytics.zoo.pipeline.api.keras2.layers
 
+import com.intel.analytics.bigdl.nn.Graph.ModuleNode
 import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric
 import com.intel.analytics.bigdl.utils.Shape
 import com.intel.analytics.zoo.pipeline.api.Net
@@ -37,9 +38,14 @@ class Maximum[T: ClassTag](
 }
 
 object Maximum {
-  def apply[@specialized(Float, Double) T: ClassTag](
-    inputShape: Shape = null)
+  def apply[@specialized(Float, Double) T: ClassTag](inputShape: Shape = null)
     (implicit ev: TensorNumeric[T]): Maximum[T] = {
     new Maximum[T](inputShape)
+  }
+
+  def maximum[@specialized(Float, Double) T: ClassTag](inputs: List[ModuleNode[T]])
+    (implicit ev: TensorNumeric[T]): ModuleNode[T] = {
+    val layer = new Maximum[T]()
+    layer.inputs(inputs.toArray)
   }
 }
