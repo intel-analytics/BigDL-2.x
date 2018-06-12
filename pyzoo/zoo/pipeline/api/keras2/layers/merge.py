@@ -51,11 +51,9 @@ def maximum(inputs, **kwargs):
     # Returns
         A tensor, the element-wise maximum of the inputs.
     >>> from zoo.pipeline.api.keras.layers import Input
-    >>> i1 = Input(shape=(4, 5))
+    >>> max = maximum([Input(shape=(4, 5)), Input(shape=(4, 5))])
     creating: createZooKerasInput
-    >>> i2 = Input(shape=(4, 5))
     creating: createZooKerasInput
-    >>> max = maximum([i1, i2])
     creating: createZooKeras2Maximum
     """
     return Maximum(**kwargs)(inputs)
@@ -91,11 +89,9 @@ def minimum(inputs, **kwargs):
     # Returns
         A tensor, the element-wise minimum of the inputs.
     >>> from zoo.pipeline.api.keras.layers import Input
-    >>> i1 = Input(shape=(4, 5))
+    >>> min = minimum([Input(shape=(4, 5)), Input(shape=(4, 5))])
     creating: createZooKerasInput
-    >>> i2 = Input(shape=(4, 5))
     creating: createZooKerasInput
-    >>> min = minimum([i1, i2])
     creating: createZooKeras2Minimum
     """
     return Minimum(**kwargs)(inputs)
