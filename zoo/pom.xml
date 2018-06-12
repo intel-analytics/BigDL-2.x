@@ -376,7 +376,7 @@
                                     <artifact>*:*</artifact>
                                     <excludes>
                                         <exclude>shapeless/$tilde$qmark$greater$λ.class</exclude>
-                                        <exclude>spire/optional/unicode/package$$anonfun*</exclude>
+                                        <exclude>spire/optional/unicode/**</exclude>
                                     </excludes>
                                 </filter>
                             </filters>
