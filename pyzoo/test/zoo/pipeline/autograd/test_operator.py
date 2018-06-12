@@ -30,7 +30,6 @@ np.random.seed(1337)  # for reproducibility
 
 
 class TestOperator(ZooTestCase):
-
     # shape including batch
     def compare_binary_op(self, kk_func, z_layer, shape):
         x = klayers.Input(shape=shape[0][1:])
@@ -84,6 +83,7 @@ class TestOperator(ZooTestCase):
 
         def k_add_func(x, y):
             return x + y
+
         self.compare_binary_op(k_add_func,
                                Lambda(function=z_add_func), [[2, 3], [2, 3]])
 
@@ -93,6 +93,7 @@ class TestOperator(ZooTestCase):
 
         def k_add_func(x):
             return x + 3.0
+
         self.compare_unary_op(k_add_func,
                               Lambda(function=z_add_func), [2, 3])
 
@@ -102,6 +103,7 @@ class TestOperator(ZooTestCase):
 
         def k_add_func(x):
             return 3.0 + x
+
         self.compare_unary_op(k_add_func,
                               Lambda(function=z_add_func), [2, 3])
 
@@ -111,6 +113,7 @@ class TestOperator(ZooTestCase):
 
         def k_func(x, y):
             return x - y
+
         self.compare_binary_op(k_func,
                                Lambda(function=z_func), [[2, 3], [2, 3]])
 
@@ -120,6 +123,7 @@ class TestOperator(ZooTestCase):
 
         def k_func(x):
             return x - 3.0
+
         self.compare_unary_op(k_func,
                               Lambda(function=z_func), [2, 3])
 
@@ -129,6 +133,7 @@ class TestOperator(ZooTestCase):
 
         def k_func(x):
             return 3.0 - x
+
         self.compare_unary_op(k_func,
                               Lambda(function=z_func), [2, 3])
 
@@ -138,6 +143,7 @@ class TestOperator(ZooTestCase):
 
         def k_func(x, y):
             return x / y
+
         self.compare_binary_op(k_func,
                                Lambda(function=z_func), [[2, 3], [2, 3]])
 
@@ -147,6 +153,7 @@ class TestOperator(ZooTestCase):
 
         def k_func(x):
             return x / 3.0
+
         self.compare_unary_op(k_func,
                               Lambda(function=z_func), [2, 3])
 
@@ -156,6 +163,7 @@ class TestOperator(ZooTestCase):
 
         def k_func(x):
             return 3.0 / x
+
         self.compare_unary_op(k_func,
                               Lambda(function=z_func), [2, 3])
 
@@ -165,6 +173,7 @@ class TestOperator(ZooTestCase):
 
         def k_func(x, y):
             return x * y
+
         self.compare_binary_op(k_func,
                                Lambda(function=z_func), [[2, 3], [2, 3]])
 
@@ -174,6 +183,7 @@ class TestOperator(ZooTestCase):
 
         def k_func(x):
             return x * 3.0
+
         self.compare_unary_op(k_func,
                               Lambda(function=z_func), [2, 3])
 
@@ -183,6 +193,7 @@ class TestOperator(ZooTestCase):
 
         def k_func(x):
             return 3.0 * x
+
         self.compare_unary_op(k_func,
                               Lambda(function=z_func), [2, 3])
 
@@ -192,6 +203,7 @@ class TestOperator(ZooTestCase):
 
         def k_func(x):
             return - x
+
         self.compare_unary_op(k_func,
                               Lambda(function=z_func), [2, 3])
 
@@ -350,7 +362,7 @@ class TestOperator(ZooTestCase):
             return KK.expand_dims(x, 1)
 
         self.compare_unary_op(k_func,
-                               Lambda(function=z_func, ), [2, 3, 4])
+                              Lambda(function=z_func, ), [2, 3, 4])
 
     def test_expand_dim2(self):
         def z_func(x):
@@ -360,7 +372,7 @@ class TestOperator(ZooTestCase):
             return KK.expand_dims(x, 2)
 
         self.compare_unary_op(k_func,
-                               Lambda(function=z_func, ), [2, 3, 4, 5])
+                              Lambda(function=z_func, ), [2, 3, 4, 5])
 
     def test_stack(self):
         def z_func(x, y):
@@ -370,8 +382,7 @@ class TestOperator(ZooTestCase):
             return KK.stack([x, y], axis=1)
 
         self.compare_binary_op(k_func,
-                              Lambda(function=z_func, ), [[3, 2, 4], [3, 2, 4]])
-
+                               Lambda(function=z_func, ), [[3, 2, 4], [3, 2, 4]])
 
     def test_stack2(self):
         def z_func(x, y):
@@ -391,7 +402,7 @@ class TestOperator(ZooTestCase):
             return x[:, 1:3, :]
 
         self.compare_unary_op(k_func,
-                               Lambda(function=z_func, ), [3, 5, 4])
+                              Lambda(function=z_func, ), [3, 5, 4])
 
     def test_slice2(self):
         def z_func(x):
@@ -401,7 +412,7 @@ class TestOperator(ZooTestCase):
             return x[:, :, 1:3]
 
         self.compare_unary_op(k_func,
-                               Lambda(function=z_func, ), [3, 2, 4])
+                              Lambda(function=z_func, ), [3, 2, 4])
 
     def test_index_select(self):
         def z_func(x):
@@ -411,7 +422,8 @@ class TestOperator(ZooTestCase):
             return x[:, :, 2]
 
         self.compare_unary_op(k_func,
-                               Lambda(function=z_func, ), [3, 2, 4])
+                              Lambda(function=z_func, ), [3, 2, 4])
+
 
 if __name__ == "__main__":
     pytest.main([__file__])

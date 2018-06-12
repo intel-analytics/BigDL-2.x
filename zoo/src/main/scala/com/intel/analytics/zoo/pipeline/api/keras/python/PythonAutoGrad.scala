@@ -188,11 +188,15 @@ class PythonAutoGrad[T: ClassTag](implicit ev: TensorNumeric[T]) extends PythonZ
     autograd.AutoGrad.softplus(a)
   }
 
-  def expand_dims(a: Variable[T], axis: Int): Variable[T] = {
-    expand_dims(a, axis)
+  def expandDims(a: Variable[T], axis: Int): Variable[T] = {
+    expandDims(a, axis)
   }
 
   def stack(inputs: JList[Variable[T]], axis: Int): Variable[T] = {
     autograd.AutoGrad.stack(inputs.asScala.toList, axis)
+  }
+
+  def contiguous(input: Variable[T]): Variable[T] = {
+    autograd.AutoGrad.contiguous(input)
   }
 }

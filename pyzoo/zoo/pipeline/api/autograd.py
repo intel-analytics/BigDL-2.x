@@ -82,7 +82,7 @@ def expand_dims(x, axis):
     :param axis: axis Position where to add a new axis.
     You should start from 1 as dim 0 is for batch.
     """
-    return Variable.from_jvalue(callBigDlFunc("float", "expand_dims", x, axis))
+    return Variable.from_jvalue(callBigDlFunc("float", "expandDims", x, axis))
 
 
 def clip(x, min, max):
@@ -94,6 +94,14 @@ def clip(x, min, max):
     :return: A variable.
     """
     return Variable.from_jvalue(callBigDlFunc("float", "clip", x, float(min), float(max)))
+
+
+def contiguous(x):
+    """
+    Turn the output and grad to be contiguous for the input Variable
+    :param x: A variable.
+    """
+    return Variable.from_jvalue(callBigDlFunc("float", "softplus", x))
 
 
 def square(x):
@@ -288,7 +296,8 @@ class Variable(kbase.ZooKerasCreator):
         6
         :param  dim The dimension to narrow. 0-based index. Cannot narrow the batch dimension.
                 -1 means the last dimension of the input.
-        :param  startIndex Non-negative integer. The start index on the given dimension. 0-based index.
+        :param  startIndex Non-negative integer.
+                The start index on the given dimension. 0-based index.
         :param length The length to be sliced. Default is 1.
         """
         return Variable.from_jvalue(

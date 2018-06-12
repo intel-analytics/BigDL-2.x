@@ -150,7 +150,7 @@ object AutoGrad {
    */
   def stack[T: ClassTag](inputs: List[Variable[T]], axis: Int = 1)(
       implicit ev: TensorNumeric[T]): Variable[T] = {
-    val stacked = Variable(Merge.merge[T](inputs.map(expand_dims(_, axis).node), mode = "concat",
+    val stacked = Variable(Merge.merge[T](inputs.map(expandDims(_, axis).node), mode = "concat",
       concatAxis = axis))
     contiguous(stacked)
   }
@@ -159,7 +159,7 @@ object AutoGrad {
    * Adds a 1-sized dimension at index "axis".
    * @param axis Position where to add a new axis. You should start from 1 as dim 0 is for batch.
    */
-  def expand_dims[T: ClassTag](x: Variable[T], axis: Int)(
+  def expandDims[T: ClassTag](x: Variable[T], axis: Int)(
       implicit ev: TensorNumeric[T]): Variable[T] = {
     val layer = new KerasLayerWrapper[T](
       bnn.Unsqueeze[T](pos = axis + 1).asInstanceOf[AbstractModule[Activity, Activity, T]])

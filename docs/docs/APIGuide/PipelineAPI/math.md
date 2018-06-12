@@ -238,7 +238,7 @@ def stack(inputs, axis=1)
    
 **Scala example**
 ```scala
-def expand_dims[T: ClassTag](x: Variable[T], axis: Int)
+def expandDims[T: ClassTag](x: Variable[T], axis: Int)
 ```
 
 
@@ -247,4 +247,20 @@ def expand_dims[T: ClassTag](x: Variable[T], axis: Int)
 expand_dims(x, axis)
 ```
 
+
+## contiguous
+
+  Turn the output and grad to be contiguous for the input Variable
+   
+   
+**Scala example**
+```scala
+def contiguous[T: ClassTag](input: Variable[T])
+```
+
+
+**Python example**
+```python
+def contiguous(x)
+```
 
