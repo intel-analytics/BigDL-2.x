@@ -14,40 +14,17 @@ chmod +x ./apps/ipynb2py.sh
 
 set -e
 
-echo "#4 start app test for wide_n_deep"
-#timer
-start=$(date "+%s")
-./apps/ipynb2py.sh ./apps/recommendation/wide_n_deep
-
-${SPARK_HOME}/bin/spark-submit \
-        --master ${MASTER} \
-        --driver-cores 2  \
-        --driver-memory 12g  \
-        --total-executor-cores 2  \
-        --executor-cores 2  \
-        --executor-memory 12g \
-        --conf spark.akka.frameSize=64 \
-        --py-files ${ANALYTICS_ZOO_PYZIP},${ANALYTICS_ZOO_HOME}/apps/recommendation/wide_n_deep.py  \
-        --properties-file ${ANALYTICS_ZOO_CONF} \
-        --jars ${ANALYTICS_ZOO_JAR} \
-        --conf spark.driver.extraClassPath=${ANALYTICS_ZOO_JAR} \
-        --conf spark.executor.extraClassPath=${ANALYTICS_ZOO_JAR} \
-        ${ANALYTICS_ZOO_HOME}/apps/recommendation/wide_n_deep.py
-now=$(date "+%s")
-time4=$((now-start))
-
 echo "#2 start app test for object-detection"
 #timer
 start=$(date "+%s")
 
-
+./apps/ipynb2py.sh ./apps/object-detection/object-detection
 FILENAME="$ANALYTICS_ZOO_HOME/apps/object-detection/analytics-zoo_ssd-mobilenet-300x300_PASCAL_0.1.0.model"
-
 if [ -f "$FILENAME" ]
 then
     echo "$FILENAME already exists" 
 else
-    wget $FTP_URI/analytics-zoo-models-new/analytics-zoo_ssd-mobilenet-300x300_PASCAL_0.1.0.model -P $ANALYTICS_ZOO_HOME/apps/object-detection/
+    wget $FTP_URI/analytics-zoo-models-new/object-detection/analytics-zoo_ssd-mobilenet-300x300_PASCAL_0.1.0.model -P $ANALYTICS_ZOO_HOME/apps/object-detection/
 fi 
 if [ -f "$FILENAME" ]
 then
@@ -68,7 +45,7 @@ then
 else
     wget https://s3.amazonaws.com/analytics-zoo-data/train_dog.mp4 -P $ANALYTICS_ZOO_HOME/apps/object-detection/
 fi
-./apps/ipynb2py.sh ./apps/object-detection/object-detection
+
 
 ${SPARK_HOME}/bin/spark-submit \
         --master ${MASTER} \
@@ -136,7 +113,27 @@ now=$(date "+%s")
 time3=$((now-start))
 
 
+echo "#4 start app test for wide_n_deep"
+#timer
+start=$(date "+%s")
+./apps/ipynb2py.sh ./apps/recommendation/wide_n_deep
 
+${SPARK_HOME}/bin/spark-submit \
+        --master ${MASTER} \
+        --driver-cores 2  \
+        --driver-memory 12g  \
+        --total-executor-cores 2  \
+        --executor-cores 2  \
+        --executor-memory 12g \
+        --conf spark.akka.frameSize=64 \
+        --py-files ${ANALYTICS_ZOO_PYZIP},${ANALYTICS_ZOO_HOME}/apps/recommendation/wide_n_deep.py  \
+        --properties-file ${ANALYTICS_ZOO_CONF} \
+        --jars ${ANALYTICS_ZOO_JAR} \
+        --conf spark.driver.extraClassPath=${ANALYTICS_ZOO_JAR} \
+        --conf spark.executor.extraClassPath=${ANALYTICS_ZOO_JAR} \
+        ${ANALYTICS_ZOO_HOME}/apps/recommendation/wide_n_deep.py
+now=$(date "+%s")
+time4=$((now-start))
 echo "#5 start app test for using_variational_autoencoder_and_deep_feature_loss_to_generate_faces"
 #timer
 start=$(date "+%s")
