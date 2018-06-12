@@ -43,7 +43,7 @@ class ZooCallable(object):
                                                   to_list(x)))
 
 
-class ZooKerasLayer(ZooKerasCreator, KerasLayer, ZooCallable):
+class ZooKerasLayer(ZooKerasCreator, ZooCallable, KerasLayer):
     @classmethod
     def of(cls, jvalue, bigdl_type="float"):
         return KerasLayer(jvalue, bigdl_type)
