@@ -39,7 +39,7 @@ time4=$((now-start))
 echo "#2 start app test for object-detection"
 #timer
 start=$(date "+%s")
-./apps/ipynb2py.sh ./apps/object-detection/object-detection
+
 
 FILENAME="$ANALYTICS_ZOO_HOME/apps/object-detection/analytics-zoo_ssd-mobilenet-300x300_PASCAL_0.1.0.model"
 
@@ -67,7 +67,9 @@ then
     echo "$FILENAME already exists" 
 else
     wget https://s3.amazonaws.com/analytics-zoo-data/train_dog.mp4 -P $ANALYTICS_ZOO_HOME/apps/object-detection/
-fi 
+fi
+./apps/ipynb2py.sh ./apps/object-detection/object-detection
+
 ${SPARK_HOME}/bin/spark-submit \
         --master ${MASTER} \
         --driver-cores 2  \
