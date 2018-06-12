@@ -12,12 +12,18 @@
             <useProjectArtifact>true</useProjectArtifact>
             <unpack>true</unpack>
             <scope>provided</scope>
+            <excludes>
+                <exclude>*:shapeless</exclude>
+            </excludes>
         </dependencySet>
         <dependencySet>
             <outputDirectory>/</outputDirectory>
             <useProjectArtifact>true</useProjectArtifact>
             <unpack>true</unpack>
             <scope>runtime</scope>
+            <excludes>
+                <exclude>*:shapeless</exclude>
+            </excludes>
         </dependencySet>
     </dependencySets>
 </assembly>
