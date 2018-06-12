@@ -20,4 +20,12 @@
             <scope>runtime</scope>
         </dependencySet>
     </dependencySets>
+    <fileSets>
+        <fileSet>
+            <useDefaultExcludes>false</useDefaultExcludes>
+            <excludes>
+                <exclude>shapeless/$tilde$qmark$greater$λ.class</exclude>
+            </excludes>
+        </fileSet>
+    </fileSets>
 </assembly>
