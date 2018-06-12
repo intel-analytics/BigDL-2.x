@@ -25,7 +25,7 @@ import com.intel.analytics.bigdl.dataset.{DataSet, LocalDataSet, MiniBatch}
 import scala.collection.JavaConverters._
 import com.intel.analytics.bigdl.optim.{OptimMethod, Regularizer, ValidationMethod}
 import com.intel.analytics.bigdl.python.api.{EvaluatedResult, JTensor, PythonBigDLKeras, Sample}
-import com.intel.analytics.bigdl.tensor.Tensor
+import com.intel.analytics.bigdl.tensor.{DenseType, SparseType, Tensor}
 import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric
 import com.intel.analytics.bigdl.nn.Graph.ModuleNode
 import com.intel.analytics.bigdl.nn.Container
@@ -52,6 +52,49 @@ object PythonZooKeras {
 }
 
 class PythonZooKeras[T: ClassTag](implicit ev: TensorNumeric[T]) extends PythonBigDLKeras[T] {
+
+  val typeName = {
+    val cls = implicitly[ClassTag[T]].runtimeClass
+    cls.getSimpleName
+  }
+
+  override def toJTensor(tensor: Tensor[T]): JTensor = {
+    // clone here in case the the size of storage larger then the size of tensor.
+    require(tensor != null, "tensor cannot be null")
+    tensor.getTensorType match {
+      case SparseType =>
+        // Note: as SparseTensor's indices is inaccessible here,
+        // so we will transfer it to DenseTensor. Just for testing.
+        if (tensor.nElement() == 0) {
+          JTensor(Array(), Array(0), bigdlType = typeName)
+        } else {
+          val cloneTensor = Tensor.dense(tensor)
+          val result = JTensor(cloneTensor.storage().array().map(i => ev.toType[Float](i)),
+            cloneTensor.size(), bigdlType = typeName)
+          result
+        }
+      case DenseType =>
+        if (tensor.nElement() == 0) {
+          if (tensor.dim() == 0) {
+            JTensor(null, null, bigdlType = typeName)
+          } else {
+            JTensor(Array(), tensor.size(), bigdlType = typeName)
+          }
+        } else {
+          val cloneTensor = if (tensor.isContiguous()) {
+            tensor.clone()
+          } else {
+            tensor.contiguous()
+          }
+          val result = JTensor(cloneTensor.storage().array().map(i => ev.toType[Float](i)),
+            cloneTensor.size(), bigdlType = typeName)
+          result
+        }
+      case _ =>
+        throw new IllegalArgumentException(s"toJTensor: Unsupported tensor type" +
+          s" ${tensor.getTensorType}")
+    }
+  }
 
   def createZooKerasModel(
       input: JList[Variable[T]],
