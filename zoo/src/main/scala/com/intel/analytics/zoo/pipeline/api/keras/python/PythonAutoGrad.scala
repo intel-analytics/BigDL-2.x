@@ -189,7 +189,7 @@ class PythonAutoGrad[T: ClassTag](implicit ev: TensorNumeric[T]) extends PythonZ
   }
 
   def expandDims(a: Variable[T], axis: Int): Variable[T] = {
-    expandDims(a, axis)
+    autograd.AutoGrad.expandDims(a, axis)
   }
 
   def stack(inputs: JList[Variable[T]], axis: Int): Variable[T] = {
