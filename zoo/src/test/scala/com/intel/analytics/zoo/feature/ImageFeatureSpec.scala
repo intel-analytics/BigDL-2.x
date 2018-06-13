@@ -15,15 +15,30 @@
  */
 package com.intel.analytics.zoo.feature
 
+import com.intel.analytics.bigdl.nn.abstractnn.DataFormat
+import com.intel.analytics.bigdl.transform.vision.image.ImageFeature
+import com.intel.analytics.bigdl.tensor.Tensor
 import com.intel.analytics.zoo.feature.common.{BigDLAdapter, Preprocessing}
-import com.intel.analytics.zoo.feature.image.ImageResize
+import com.intel.analytics.zoo.feature.image.{ImageMatToTensor, ImageResize, ImageSet}
 import org.scalatest.{BeforeAndAfter, FlatSpec, Matchers}
 
 
-class CommonSpec extends FlatSpec with Matchers with BeforeAndAfter {
+class ImageFeatureSpec extends FlatSpec with Matchers with BeforeAndAfter {
 
   "BigDLAdapter" should "adapt BigDL Transformer" in {
     val newResize = BigDLAdapter(ImageResize(1, 1))
     assert(newResize.isInstanceOf[Preprocessing[_, _]])
+  }
+
+  "ImageMatToTensor" should "work with both NCHW and NHWC" in {
+    val resource = getClass.getClassLoader.getResource("pascal/")
+    val data = ImageSet.read(resource.getFile)
+    val nchw = (data -> ImageMatToTensor[Float]()).toLocal()
+      .array.head.apply[Tensor[Float]](ImageFeature.imageTensor).clone
+    val nhwc = (data -> ImageMatToTensor[Float](format = DataFormat.NHWC)).toLocal()
+      .array.head.apply[Tensor[Float]](ImageFeature.imageTensor)
+    for (i <- 1 until nchw.size(1)) {
+      nchw.select(1, i).almostEqual(nhwc.select(3, i), 0)
+    }
   }
 }

@@ -15,7 +15,9 @@
  */
 package com.intel.analytics.zoo.feature.image
 
+import com.intel.analytics.bigdl.nn.abstractnn.DataFormat
 import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric
+import com.intel.analytics.bigdl.tensor.Tensor
 import com.intel.analytics.bigdl.transform.vision.image.ImageFeature
 import com.intel.analytics.bigdl.transform.vision.image
 
@@ -24,21 +26,29 @@ import scala.reflect.ClassTag
 class ImageMatToTensor[T: ClassTag](
     toRGB: Boolean = false,
     tensorKey: String = ImageFeature.imageTensor,
-    shareBuffer: Boolean = true)(implicit ev: TensorNumeric[T])
+    shareBuffer: Boolean = true,
+    format: DataFormat = DataFormat.NCHW)(implicit ev: TensorNumeric[T])
   extends ImageProcessing {
 
   private val internalResize = new image.MatToTensor[T](toRGB, tensorKey, shareBuffer)
   override def apply(prev: Iterator[ImageFeature]): Iterator[ImageFeature] = {
-    internalResize.apply(prev)
+    if (format == DataFormat.NHWC) {
+      prev.map {iter =>
+        val imf = transform(iter)
+        val tensor = imf[Tensor[T]](tensorKey)
+        imf(tensorKey) = tensor.transpose(1, 2).transpose(2, 3)
+        imf
+      }
+    } else internalResize.apply(prev)
   }
 }
 
 object ImageMatToTensor {
-
   def apply[T: ClassTag](
       toRGB: Boolean = false,
       tensorKey: String = ImageFeature.imageTensor,
-      shareBuffer: Boolean = true
+      shareBuffer: Boolean = true,
+      format: DataFormat = DataFormat.NCHW
   )(implicit ev: TensorNumeric[T]): ImageMatToTensor[T] =
-    new ImageMatToTensor[T](toRGB, tensorKey, shareBuffer)
+    new ImageMatToTensor[T](toRGB, tensorKey, shareBuffer, format)
 }
