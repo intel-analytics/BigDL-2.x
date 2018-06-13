@@ -4,10 +4,9 @@ export SPARK_HOME=$SPARK_HOME
 export MASTER=local[4]
 export FTP_URI=$FTP_URI
 export ANALYTICS_ZOO_HOME=$ANALYTICS_ZOO_HOME
-export ANALYTICS_ZOO_HOME_DIST=$ANALYTICS_ZOO_HOME/dist
-export ANALYTICS_ZOO_JAR=`find ${ANALYTICS_ZOO_HOME_DIST}/lib -type f -name "analytics-zoo*jar-with-dependencies.jar"`
-export ANALYTICS_ZOO_PYZIP=`find ${ANALYTICS_ZOO_HOME_DIST}/lib -type f -name "analytics-zoo*python-api.zip"`
-export ANALYTICS_ZOO_CONF=${ANALYTICS_ZOO_HOME_DIST}/conf/spark-analytics-zoo.conf
+export ANALYTICS_ZOO_JAR=`find ${ANALYTICS_ZOO_HOME}/lib -type f -name "analytics-zoo*jar-with-dependencies.jar"`
+export ANALYTICS_ZOO_PYZIP=`find ${ANALYTICS_ZOO_HOME}/lib -type f -name "analytics-zoo*python-api.zip"`
+export ANALYTICS_ZOO_CONF=${ANALYTICS_ZOO_HOME}/conf/spark-analytics-zoo.conf
 export PYTHONPATH=${ANALYTICS_ZOO_PYZIP}:$PYTHONPATH
 
 chmod +x ./apps/ipynb2py.sh
@@ -19,9 +18,9 @@ echo "#1 start app test for anomaly-detection-nyc-taxi"
 start=$(date "+%s")
 ./apps/ipynb2py.sh ./apps/anomaly-detection/anomaly-detection-nyc-taxi
 
-chmod +x $ANALYTICS_ZOO_HOME_DIST/bin/data/NAB/nyc_taxi/get_nyc_taxi.sh
+chmod +x $ANALYTICS_ZOO_HOME/bin/data/NAB/nyc_taxi/get_nyc_taxi.sh
 
-$ANALYTICS_ZOO_HOME_DIST/bin/data/NAB/nyc_taxi/get_nyc_taxi.sh
+$ANALYTICS_ZOO_HOME/bin/data/NAB/nyc_taxi/get_nyc_taxi.sh
 
 ${SPARK_HOME}/bin/spark-submit \
         --master ${MASTER} \
