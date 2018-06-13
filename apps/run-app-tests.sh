@@ -19,7 +19,7 @@ echo "#1 start app test for anomaly-detection-nyc-taxi"
 start=$(date "+%s")
 ./apps/ipynb2py.sh ./apps/anomaly-detection/anomaly-detection-nyc-taxi
 
-chmod +x $ANALYTICS_ZOO_HOME/scripts/data/NAB/nyc_taxi/get_nyc_taxi.sh
+chmod +x $ANALYTICS_ZOO_HOME_DIST/bin/data/NAB/nyc_taxi/get_nyc_taxi.sh
 
 $ANALYTICS_ZOO_HOME/scripts/data/NAB/nyc_taxi/get_nyc_taxi.sh
 
@@ -50,7 +50,7 @@ if [ -f "$FILENAME" ]
 then
     echo "$FILENAME already exists"
 else
-    wget $FTP_URI/analytics-zoo-models-new/object-detection/analytics-zoo_ssd-mobilenet-300x300_PASCAL_0.1.0.model -P $ANALYTICS_ZOO_HOME/apps/object-detection/
+    wget $FTP_URI/analytics-zoo-models/object-detection/analytics-zoo_ssd-mobilenet-300x300_PASCAL_0.1.0.model -P $ANALYTICS_ZOO_HOME/apps/object-detection/
 fi
 if [ -f "$FILENAME" ]
 then
