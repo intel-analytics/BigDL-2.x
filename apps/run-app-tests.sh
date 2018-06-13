@@ -9,18 +9,18 @@ export ANALYTICS_ZOO_PYZIP=`find ${ANALYTICS_ZOO_HOME}/lib -type f -name "analyt
 export ANALYTICS_ZOO_CONF=${ANALYTICS_ZOO_HOME}/conf/spark-analytics-zoo.conf
 export PYTHONPATH=${ANALYTICS_ZOO_PYZIP}:$PYTHONPATH
 
-chmod +x ./apps/ipynb2py.sh
+chmod +x ${ANALYTICS_ZOO_HOME}/apps/ipynb2py.sh
 
 set -e
 
 echo "#1 start app test for anomaly-detection-nyc-taxi"
 #timer
 start=$(date "+%s")
-./apps/ipynb2py.sh ./apps/anomaly-detection/anomaly-detection-nyc-taxi
+${ANALYTICS_ZOO_HOME}/apps/ipynb2py.sh ${ANALYTICS_ZOO_HOME}/apps/anomaly-detection/anomaly-detection-nyc-taxi
 
-chmod +x $ANALYTICS_ZOO_HOME/bin/data/NAB/nyc_taxi/get_nyc_taxi.sh
+chmod +x ${ANALYTICS_ZOO_HOME}/bin/data/NAB/nyc_taxi/get_nyc_taxi.sh
 
-$ANALYTICS_ZOO_HOME/bin/data/NAB/nyc_taxi/get_nyc_taxi.sh
+${ANALYTICS_ZOO_HOME}/bin/data/NAB/nyc_taxi/get_nyc_taxi.sh
 
 ${SPARK_HOME}/bin/spark-submit \
         --master ${MASTER} \
@@ -43,32 +43,32 @@ echo "#2 start app test for object-detection"
 #timer
 start=$(date "+%s")
 
-./apps/ipynb2py.sh ./apps/object-detection/object-detection
-FILENAME="$ANALYTICS_ZOO_HOME/apps/object-detection/analytics-zoo_ssd-mobilenet-300x300_PASCAL_0.1.0.model"
+${ANALYTICS_ZOO_HOME}/apps/ipynb2py.sh ${ANALYTICS_ZOO_HOME}/apps/object-detection/object-detection
+FILENAME="${ANALYTICS_ZOO_HOME}/apps/object-detection/analytics-zoo_ssd-mobilenet-300x300_PASCAL_0.1.0.model"
 if [ -f "$FILENAME" ]
 then
     echo "$FILENAME already exists"
 else
-    wget $FTP_URI/analytics-zoo-models/object-detection/analytics-zoo_ssd-mobilenet-300x300_PASCAL_0.1.0.model -P $ANALYTICS_ZOO_HOME/apps/object-detection/
+    wget $FTP_URI/analytics-zoo-models/object-detection/analytics-zoo_ssd-mobilenet-300x300_PASCAL_0.1.0.model -P ${ANALYTICS_ZOO_HOME}/apps/object-detection/
 fi
 if [ -f "$FILENAME" ]
 then
     echo "$FILENAME already exists"
 else
-    wget https://s3-ap-southeast-1.amazonaws.com/analytics-zoo-models/object-detection/analytics-zoo_ssd-mobilenet-300x300_PASCAL_0.1.0.model -P $ANALYTICS_ZOO_HOME/apps/object-detection/
+    wget https://s3-ap-southeast-1.amazonaws.com/analytics-zoo-models/object-detection/analytics-zoo_ssd-mobilenet-300x300_PASCAL_0.1.0.model -P ${ANALYTICS_ZOO_HOME}/apps/object-detection/
 fi
-FILENAME="$ANALYTICS_ZOO_HOME/apps/object-detection/train_dog.mp4"
+FILENAME="${ANALYTICS_ZOO_HOME}/apps/object-detection/train_dog.mp4"
 if [ -f "$FILENAME" ]
 then
     echo "$FILENAME already exists"
 else
-    wget $FTP_URI/analytics-zoo-data/apps/object-detection/train_dog.mp4 -P $ANALYTICS_ZOO_HOME/apps/object-detection/
+    wget $FTP_URI/analytics-zoo-data/apps/object-detection/train_dog.mp4 -P ${ANALYTICS_ZOO_HOME}/apps/object-detection/
 fi
 if [ -f "$FILENAME" ]
 then
     echo "$FILENAME already exists"
 else
-    wget https://s3.amazonaws.com/analytics-zoo-data/train_dog.mp4 -P $ANALYTICS_ZOO_HOME/apps/object-detection/
+    wget https://s3.amazonaws.com/analytics-zoo-data/train_dog.mp4 -P ${ANALYTICS_ZOO_HOME}/apps/object-detection/
 fi
 
 
@@ -92,7 +92,7 @@ time2=$((now-start))
 echo "#3 start app test for ncf-explicit-feedback"
 #timer
 start=$(date "+%s")
-./apps/ipynb2py.sh ./apps/recommendation/ncf-explicit-feedback
+${ANALYTICS_ZOO_HOME}/apps/ipynb2py.sh ${ANALYTICS_ZOO_HOME}/apps/recommendation/ncf-explicit-feedback
 
 ${SPARK_HOME}/bin/spark-submit \
         --master ${MASTER} \
@@ -115,7 +115,7 @@ time3=$((now-start))
 echo "#4 start app test for wide_n_deep"
 #timer
 start=$(date "+%s")
-./apps/ipynb2py.sh ./apps/recommendation/wide_n_deep
+${ANALYTICS_ZOO_HOME}/apps/ipynb2py.sh ${ANALYTICS_ZOO_HOME}/apps/recommendation/wide_n_deep
 
 ${SPARK_HOME}/bin/spark-submit \
         --master ${MASTER} \
@@ -136,9 +136,9 @@ time4=$((now-start))
 echo "#5 start app test for using_variational_autoencoder_and_deep_feature_loss_to_generate_faces"
 #timer
 start=$(date "+%s")
-./apps/ipynb2py.sh ./apps/variational-autoencoder/using_variational_autoencoder_and_deep_feature_loss_to_generate_faces
+${ANALYTICS_ZOO_HOME}/apps/ipynb2py.sh ${ANALYTICS_ZOO_HOME}/apps/variational-autoencoder/using_variational_autoencoder_and_deep_feature_loss_to_generate_faces
 
-sed -i "s/data_files\[\:100000\]/data_files\[\:5000\]/g" ./apps/variational-autoencoder/using_variational_autoencoder_and_deep_feature_loss_to_generate_faces.py
+sed -i "s/data_files\[\:100000\]/data_files\[\:5000\]/g" ${ANALYTICS_ZOO_HOME}/apps/variational-autoencoder/using_variational_autoencoder_and_deep_feature_loss_to_generate_faces.py
 FILENAME="${ANALYTICS_ZOO_HOME}/apps/variational-autoencoder/bigdl_vgg-16_imagenet_0.4.0.model"
 if [ -f "$FILENAME" ]
 then
@@ -180,9 +180,9 @@ time5=$((now-start))
 echo "#6 start app test for using_variational_autoencoder_to_generate_faces"
 #timer
 start=$(date "+%s")
-./apps/ipynb2py.sh ./apps/variational-autoencoder/using_variational_autoencoder_to_generate_faces
+${ANALYTICS_ZOO_HOME}/apps/ipynb2py.sh ${ANALYTICS_ZOO_HOME}/apps/variational-autoencoder/using_variational_autoencoder_to_generate_faces
 
-sed -i "s/data_files\[\:100000\]/data_files\[\:5000\]/g" ./apps/variational-autoencoder/using_variational_autoencoder_to_generate_faces.py
+sed -i "s/data_files\[\:100000\]/data_files\[\:5000\]/g" ${ANALYTICS_ZOO_HOME}/apps/variational-autoencoder/using_variational_autoencoder_to_generate_faces.py
 FILENAME="${ANALYTICS_ZOO_HOME}/apps/variational-autoencoder/img_align_celeba.zip"
 if [ -f "$FILENAME" ]
 then
@@ -214,7 +214,7 @@ time6=$((now-start))
 echo "#7 start app test for using_variational_autoencoder_to_generate_digital_numbers"
 #timer
 start=$(date "+%s")
-./apps/ipynb2py.sh ./apps/variational-autoencoder/using_variational_autoencoder_to_generate_digital_numbers
+${ANALYTICS_ZOO_HOME}/apps/ipynb2py.sh ${ANALYTICS_ZOO_HOME}/apps/variational-autoencoder/using_variational_autoencoder_to_generate_digital_numbers
 
 ${SPARK_HOME}/bin/spark-submit \
         --master ${MASTER} \
@@ -236,7 +236,7 @@ time7=$((now-start))
 echo "#8 start app test for sentiment-analysis"
 #timer
 start=$(date "+%s")
-./apps/ipynb2py.sh ./apps/sentiment-analysis/sentiment
+${ANALYTICS_ZOO_HOME}/apps/ipynb2py.sh ${ANALYTICS_ZOO_HOME}/apps/sentiment-analysis/sentiment
 
 ${SPARK_HOME}/bin/spark-submit \
         --master ${MASTER} \
@@ -258,7 +258,7 @@ time8=$((now-start))
 echo "#9 start app test for image-augmentation"
 #timer
 start=$(date "+%s")
-./apps/ipynb2py.sh ./apps/image-augmentation/image-augmentation
+${ANALYTICS_ZOO_HOME}/apps/ipynb2py.sh ${ANALYTICS_ZOO_HOME}/apps/image-augmentation/image-augmentation
 
 ${SPARK_HOME}/bin/spark-submit \
         --master ${MASTER} \
