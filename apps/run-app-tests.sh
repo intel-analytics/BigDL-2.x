@@ -21,7 +21,7 @@ start=$(date "+%s")
 
 chmod +x $ANALYTICS_ZOO_HOME_DIST/bin/data/NAB/nyc_taxi/get_nyc_taxi.sh
 
-$ANALYTICS_ZOO_HOME/scripts/data/NAB/nyc_taxi/get_nyc_taxi.sh
+$ANALYTICS_ZOO_HOME_DIST/bin/data/NAB/nyc_taxi/get_nyc_taxi.sh
 
 ${SPARK_HOME}/bin/spark-submit \
         --master ${MASTER} \
