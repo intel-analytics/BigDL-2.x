@@ -16,8 +16,7 @@
 
 package com.intel.analytics.zoo.models.textclassification
 
-import com.intel.analytics.bigdl.nn.abstractnn.AbstractModule
-import com.intel.analytics.bigdl.tensor.Tensor
+import com.intel.analytics.bigdl.nn.abstractnn.{AbstractModule, Activity}
 import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric
 import com.intel.analytics.bigdl.utils.Shape
 import com.intel.analytics.zoo.models.common.ZooModel
@@ -43,9 +42,9 @@ class TextClassifier[T: ClassTag] private (
     val sequenceLength: Int = 500,
     val encoder: String = "cnn",
     val encoderOutputDim: Int = 256)(implicit ev: TensorNumeric[T])
-  extends ZooModel[Tensor[T], Tensor[T], T] {
+  extends ZooModel[Activity, Activity, T] {
 
-  override def buildModel(): AbstractModule[Tensor[T], Tensor[T], T] = {
+  override def buildModel(): AbstractModule[Activity, Activity, T] = {
     val model = Sequential[T]()
     model.add(InputLayer(inputShape = Shape(sequenceLength, tokenLength)))
     if (encoder.toLowerCase() == "cnn") {
@@ -65,7 +64,7 @@ class TextClassifier[T: ClassTag] private (
     model.add(Dropout(0.2))
     model.add(Activation("relu"))
     model.add(Dense(classNum, activation = "softmax"))
-    model.asInstanceOf[AbstractModule[Tensor[T], Tensor[T], T]]
+    model
   }
 }
 
@@ -80,6 +79,24 @@ object TextClassifier {
       encoder: String = "cnn",
       encoderOutputDim: Int = 256)(implicit ev: TensorNumeric[T]): TextClassifier[T] = {
     new TextClassifier[T](classNum, tokenLength, sequenceLength, encoder, encoderOutputDim).build()
+  }
+
+  /**
+   * This factory method is mainly for Python use.
+   * Pass in a model to build the TextClassifier.
+   * Note that if you use this factory method, arguments such as classNum, tokenLength, etc
+   * should match the model definition to eliminate ambiguity.
+   */
+  private[zoo] def apply[@specialized(Float, Double) T: ClassTag](
+      classNum: Int,
+      tokenLength: Int,
+      sequenceLength: Int,
+      encoder: String,
+      encoderOutputDim: Int,
+      model: AbstractModule[Activity, Activity, T])
+    (implicit ev: TensorNumeric[T]): TextClassifier[T] = {
+    new TextClassifier[T](classNum, tokenLength, sequenceLength, encoder, encoderOutputDim)
+      .addModel(model)
   }
 
   /**

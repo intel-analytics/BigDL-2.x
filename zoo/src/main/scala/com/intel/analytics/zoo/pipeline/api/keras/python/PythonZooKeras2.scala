@@ -18,10 +18,15 @@ package com.intel.analytics.zoo.pipeline.api.keras.python
 
 import java.util.{List => JList}
 
+import com.intel.analytics.bigdl.nn.abstractnn.{AbstractModule, Activity}
 import com.intel.analytics.bigdl.optim.Regularizer
 import com.intel.analytics.bigdl.python.api.PythonBigDLKeras
 import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric
-import com.intel.analytics.zoo.pipeline.api.keras2.layers.Dense
+import com.intel.analytics.zoo.pipeline.api.Net
+import com.intel.analytics.zoo.pipeline.api.autograd.Variable
+import com.intel.analytics.zoo.pipeline.api.keras2.layers.{Conv1D, Dense, MaxPooling1D, Maximum, Minimum}
+import scala.collection.JavaConverters._
+
 
 import scala.reflect.ClassTag
 
@@ -52,6 +57,56 @@ class PythonZooKeras2[T: ClassTag](implicit ev: TensorNumeric[T]) extends Python
       biasRegularizer = biasRegularizer,
       useBias = useBias,
       inputShape = toScalaShape(inputShape))
+  }
+
+  def createZooKeras2Conv1D(
+       filters: Int,
+      kernelSize: Int,
+      strides: Int = 1,
+      padding: String = "valid",
+      activation: String = null,
+      useBias: Boolean = true,
+      kernelInitializer: String = "glorot_uniform",
+      biasInitializer: String = "zero",
+      kernelRegularizer: Regularizer[T] = null,
+      biasRegularizer: Regularizer[T] = null,
+      inputShape: JList[Int] = null): Conv1D[T] = {
+    Conv1D(
+      filters,
+      kernelSize,
+      strides,
+      padding,
+      activation,
+      useBias,
+      kernelInitializer,
+      biasInitializer,
+      kernelRegularizer,
+      biasRegularizer,
+      toScalaShape(inputShape))
+  }
+
+  def createZooKeras2MaxPooling1D(
+      poolSize: Int = 2,
+      strides: Int = -1,
+      padding: String = "valid",
+      inputShape: JList[Int] = null): MaxPooling1D[T] = {
+    MaxPooling1D(
+      poolSize,
+      strides,
+      padding,
+      toScalaShape(inputShape))
+  }
+
+  def createZooKeras2Maximum(
+      inputShape: JList[Int] = null): Maximum[T] = {
+    Maximum(
+      toScalaShape(inputShape))
+  }
+
+  def createZooKeras2Minimum(
+      inputShape: JList[Int] = null): Minimum[T] = {
+    Minimum(
+      toScalaShape(inputShape))
   }
 
 }

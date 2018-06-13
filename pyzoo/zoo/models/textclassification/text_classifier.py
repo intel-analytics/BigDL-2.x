@@ -14,8 +14,8 @@
 # limitations under the License.
 #
 
-import sys
-
+from zoo.pipeline.api.keras.models import Sequential
+from zoo.pipeline.api.keras.layers import *
 from zoo.models.common.zoo_model import ZooModel
 from bigdl.util.common import callBigDlFunc
 
@@ -39,12 +39,38 @@ class TextClassifier(ZooModel):
     """
     def __init__(self, class_num, token_length, sequence_length=500,
                  encoder="cnn", encoder_output_dim=256, bigdl_type="float"):
+        self.class_num = class_num
+        self.token_length = token_length
+        self.sequence_length = sequence_length
+        self.encoder = encoder
+        self.encoder_output_dim = encoder_output_dim
+        self.bigdl_type = bigdl_type
+        self.model = self.build_model()
         super(TextClassifier, self).__init__(None, bigdl_type,
                                              int(class_num),
                                              int(token_length),
                                              int(sequence_length),
                                              encoder,
-                                             int(encoder_output_dim))
+                                             int(encoder_output_dim),
+                                             self.model)
+
+    def build_model(self):
+        model = Sequential()
+        model.add(InputLayer(input_shape=(self.sequence_length, self.token_length)))
+        if self.encoder.lower() == 'cnn':
+            model.add(Convolution1D(self.encoder_output_dim, 5, activation='relu'))
+            model.add(GlobalMaxPooling1D())
+        elif self.encoder.lower() == 'lstm':
+            model.add(LSTM(self.encoder_output_dim))
+        elif self.encoder.lower() == 'gru':
+            model.add(GRU(self.encoder_output_dim))
+        else:
+            raise ValueError('Unsupported encoder: ' + self.encoder)
+        model.add(Dense(128))
+        model.add(Dropout(0.2))
+        model.add(Activation('relu'))
+        model.add(Dense(self.class_num, activation='softmax'))
+        return model
 
     @staticmethod
     def load_model(path, weight_path=None, bigdl_type="float"):

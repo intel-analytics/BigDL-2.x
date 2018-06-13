@@ -14,9 +14,10 @@
 #
 import sys
 
-from bigdl.util.common import JavaValue
+from bigdl.util.common import JavaValue, callBigDlFunc, to_list
 
 from bigdl.nn.keras.layer import KerasLayer
+from zoo.pipeline.api.keras.base import ZooCallable
 
 
 class ZooKeras2Creator(JavaValue):
@@ -26,5 +27,5 @@ class ZooKeras2Creator(JavaValue):
         return name
 
 
-class ZooKeras2Layer(ZooKeras2Creator, KerasLayer):
+class ZooKeras2Layer(ZooKeras2Creator, ZooCallable, KerasLayer):
     pass
