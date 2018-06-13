@@ -37,6 +37,7 @@ class ImageFeatureSpec extends FlatSpec with Matchers with BeforeAndAfter {
       .array.head.apply[Tensor[Float]](ImageFeature.imageTensor).clone
     val nhwc = (data -> ImageMatToTensor[Float](format = DataFormat.NHWC)).toLocal()
       .array.head.apply[Tensor[Float]](ImageFeature.imageTensor)
+    require(nhwc.isContiguous() == true)
     for (i <- 1 until nchw.size(1)) {
       nchw.select(1, i).almostEqual(nhwc.select(3, i), 0)
     }

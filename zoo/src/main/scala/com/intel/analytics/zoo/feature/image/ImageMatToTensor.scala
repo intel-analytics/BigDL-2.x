@@ -30,17 +30,17 @@ class ImageMatToTensor[T: ClassTag](
     format: DataFormat = DataFormat.NCHW)(implicit ev: TensorNumeric[T])
   extends ImageProcessing {
 
-  private val internalResize = new image.MatToTensor[T](toRGB, tensorKey, shareBuffer)
+  private val internalMatToTensor = new image.MatToTensor[T](toRGB, tensorKey, shareBuffer)
   override def apply(prev: Iterator[ImageFeature]): Iterator[ImageFeature] = {
     format match {
       case DataFormat.NHWC =>
         prev.map { iter =>
           val imf = transform(iter)
           val tensor = imf[Tensor[T]](tensorKey)
-          imf(tensorKey) = tensor.transpose(1, 2).transpose(2, 3)
+          imf(tensorKey) = tensor.transpose(1, 2).transpose(2, 3).contiguous()
           imf
         }
-      case DataFormat.NCHW => internalResize.apply(prev)
+      case DataFormat.NCHW => internalMatToTensor.apply(prev)
       case other => throw new IllegalArgumentException(s"Unsupported format:" +
         s" $format. Only NCHW and NHWC are supported.")
     }
