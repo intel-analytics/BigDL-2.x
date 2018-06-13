@@ -39,7 +39,7 @@ if [ -f analytics-zoo-models/image-classification/analytics-zoo_squeezenet_image
 then
     echo "analytics-zoo-models/image-classification/analytics-zoo_squeezenet_imagenet_0.1.0 already exists"
 else
-    wget $FTP_URI/analytics-zoo-models/image-classification/imagenet/analytics-zoo_squeezenet_imagenet_0.1.0 \
+    wget $FTP_URI/analytics-zoo-models/image-classification/analytics-zoo_squeezenet_imagenet_0.1.0 \
     -P analytics-zoo-models
 fi
 if [ -f analytics-zoo-models/analytics-zoo_ssd-mobilenet-300x300_PASCAL_0.1.0.model ]
