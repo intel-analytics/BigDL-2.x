@@ -1,6 +1,6 @@
-# Object Detection
+# image similarity
 This is a sample example of image similarity calculation. Both semantic and visually similarity are
-introduced. A real estate examples was used to recommend similar houses based on the query image
+introduced. A real estate example was used to recommend similar houses based on the query image
 provided by users.
 
 ## Environment
