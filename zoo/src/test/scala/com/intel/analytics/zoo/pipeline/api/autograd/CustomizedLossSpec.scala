@@ -23,12 +23,14 @@ import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric
 import com.intel.analytics.bigdl.utils.{Shape, T}
 import com.intel.analytics.zoo.pipeline.api.autograd.{AutoGrad => A}
 import com.intel.analytics.zoo.pipeline.api.keras.layers.KerasBaseSpec
+import com.intel.analytics.zoo.pipeline.api.keras.layers.utils.KerasUtils
 
 import scala.reflect.ClassTag
 
 // scalastyle:off
 class CustomizedLossSpec extends KerasBaseSpec {
 
+  // inputShape shape including batch
   private def compareLossesWithTorch(a: AbstractCriterion[Tensor[Float], Tensor[Float], Float],
       b: AbstractCriterion[Tensor[Float], Tensor[Float], Float],
       inputShape: Shape): Unit = {
@@ -49,8 +51,9 @@ class CustomizedLossSpec extends KerasBaseSpec {
         implicit ev: TensorNumeric[T]): Variable[T] = {
       A.mean(A.abs(yTrue - yPred), axis = 1)
     }
-    val loss = CustomLoss[Float](cLoss[Float] _)
-    compareLossesWithTorch(loss, AbsCriterion[Float](), Shape(2, 3))
+    val targetShape = Shape(2, 3)
+    val loss = CustomLoss[Float](cLoss[Float], KerasUtils.removeBatch(targetShape))
+    compareLossesWithTorch(loss, AbsCriterion[Float](), targetShape)
   }
 
   "self defined poisson loss" should "be test" in {
@@ -59,9 +62,10 @@ class CustomizedLossSpec extends KerasBaseSpec {
         implicit ev: TensorNumeric[T]): Variable[T] = {
       A.mean(yPred - yTrue * A.log(yPred + A.epsilon()), axis = 1)
     }
-    val loss = CustomLoss[Float](poisson[Float] _)
+    val targetShape = Shape(6, 7)
+    val loss = CustomLoss[Float](poisson[Float], KerasUtils.removeBatch(targetShape))
     val poissonLoss =
-      compareLossesWithTorch(loss, PoissonCriterion[Float](), Shape(6, 7))
+      compareLossesWithTorch(loss, PoissonCriterion[Float](), targetShape)
   }
 
   "self defined categorical crossentropy" should "be ok" in {
@@ -83,7 +87,7 @@ class CustomizedLossSpec extends KerasBaseSpec {
       output = A.clip(output, AutoGrad.epsilon(), 1.0 - AutoGrad.epsilon())
       -A.sum(A.log(output) * yTrue, axis = 1)
     }
-    val loss = CustomLoss[Float](lossFunc[Float] _)
+    val loss = CustomLoss[Float](lossFunc[Float], Shape(3))
     checkOutputAndGradForLoss(loss, kerasCode)
   }
 
@@ -104,7 +108,7 @@ class CustomizedLossSpec extends KerasBaseSpec {
       val second_log = A.log(A.clip(yTrue, A.epsilon(), Double.MaxValue) + 1.0)
       return A.mean(A.square(first_log - second_log), axis = 1)
     }
-    val loss = CustomLoss[Float](lossFunc[Float] _)
+    val loss = CustomLoss[Float](lossFunc[Float], Shape(3))
     checkOutputAndGradForLoss(loss, kerasCode)
   }
 
@@ -123,7 +127,7 @@ class CustomizedLossSpec extends KerasBaseSpec {
         implicit ev: TensorNumeric[T]): Variable[T] = {
       A.mean(A.square(A.maximum(-yTrue * yPred + 1, 0)), axis = 1)
     }
-    val loss = CustomLoss[Float](lossFunc[Float] _)
+    val loss = CustomLoss[Float](lossFunc[Float], Shape(3))
     checkOutputAndGradForLoss(loss, kerasCode)
   }
 
