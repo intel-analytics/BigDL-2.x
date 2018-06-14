@@ -30,7 +30,8 @@ then
     exit $exit_status_1
 fi
 
-python -m pytest -v ../test/zoo/pipeline/api/keras2
+python -m pytest -v ../test/zoo/pipeline/api/keras2 \
+                    ../test/zoo/pipeline/autograd
 exit_status_2=$?
 if [ $exit_status_2 -ne 0 ];
 then
