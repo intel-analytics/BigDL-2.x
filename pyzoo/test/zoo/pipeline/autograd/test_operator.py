@@ -424,6 +424,16 @@ class TestOperator(ZooTestCase):
         self.compare_unary_op(k_func,
                               Lambda(function=z_func, ), [3, 2, 4])
 
+    def test_dot(self):
+        def z_func(x, y):
+            return A.dot(x, y, True)
+
+        def k_func(x, y):
+            return klayers.Dot(axes=[1, 1], normalize=True)([x, y])
+
+        self.compare_binary_op(k_func,
+                              Lambda(function=z_func, ), [[3, 2], [3, 2]])
+
 
 if __name__ == "__main__":
     pytest.main([__file__])

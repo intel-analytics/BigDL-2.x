@@ -50,6 +50,31 @@ def abs(x):
     return Variable.from_jvalue(callBigDlFunc("float", "abs", x))
 
 
+def dot(x, y, axis=1, normalize=False):
+    """
+    :param x: shape should only be [batch, xx]
+    :param y:
+    :return:
+    """
+
+    if not normalize:
+        return sum(x * y, axis=axis)
+    else:
+        l2_x = l2_normalize(x, axis=axis)
+        l2_y = l2_normalize(x, axis=axis)
+        return dot(l2_x, l2_y)
+
+
+def l2_normalize(x, axis=None):
+    """
+
+    :param x: x: shape should only be [batch, xx]
+    :param axis:
+    :return:
+    """
+    return 1 / sqrt(maximum(dot(x, x), epsilon()))
+
+
 def sum(x, axis=0, keepDims=False):
     """
     Sum of the values in a a variable, alongside the specified axis.
