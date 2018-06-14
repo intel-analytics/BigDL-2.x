@@ -57,3 +57,8 @@ class TestAutoGradModel(ZooTestCase):
         data = np.random.uniform(0, 1, [10, 2, 3, 16, 16])
         output = model.forward(data)
         print(output.shape)
+
+    def test_zoo_keras_layer_of(self):
+        input = Input(shape=[2, 3])
+        dense = Dense(3)
+        ZooKerasLayer.of(dense.value)(input)
