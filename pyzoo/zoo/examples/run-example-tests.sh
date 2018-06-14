@@ -63,8 +63,9 @@ ${SPARK_HOME}/bin/spark-submit \
     --nb_epoch 2 \
     --data_path analytics-zoo-data/data
 
-now= $(date "+%s")
-time1= $((now-start))
+
+now=$(date "+%s")
+time1=$((now-start))
 
 echo "#2 start example test for customized loss and layer (Funtional API)"
 #timer
@@ -79,8 +80,8 @@ ${SPARK_HOME}/bin/spark-submit \
     --conf spark.executor.extraClassPath=${ANALYTICS_ZOO_JAR} \
     ${ANALYTICS_ZOO_HOME}/pyzoo/zoo/examples/autograd/custom.py \
     --nb_epoch 2
-now= $(date "+%s")
-time2= $((now-start))
+now=$(date "+%s")
+time2=$((now-start))
 
 
 
@@ -97,8 +98,8 @@ ${SPARK_HOME}/bin/spark-submit \
     --conf spark.executor.extraClassPath=${ANALYTICS_ZOO_JAR} \
     ${ANALYTICS_ZOO_HOME}/pyzoo/zoo/examples/objectdetection/predict.py \
     analytics-zoo-models/analytics-zoo_ssd-mobilenet-300x300_PASCAL_0.1.0.model hdfs://172.168.2.181:9000/kaggle/train_100 /tmp
-now= $(date "+%s")
-time4= $((now-start))
+now=$(date "+%s")
+time4=$((now-start))
 
 echo "#3 start example test for image-classification"
 #timer
@@ -115,8 +116,8 @@ ${SPARK_HOME}/bin/spark-submit \
     -f hdfs://172.168.2.181:9000/kaggle/train_100 \
     --model analytics-zoo-models/analytics-zoo_squeezenet_imagenet_0.1.0.model \
     --topN 5
-now= $(date "+%s")
-time3= $((now-start))
+now=$(date "+%s")
+time3=$((now-start))
 
 echo "#1 textclassification time used:$time1 seconds"
 echo "#2 customized loss and layer time used:$time2 seconds"
