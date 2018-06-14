@@ -68,7 +68,7 @@ time1= $((now-start))
 
 echo "#2 start example test for customized loss and layer (Funtional API)"
 #timer
-$start=$(date "+%s")
+start=$(date "+%s")
 ${SPARK_HOME}/bin/spark-submit \
     --master ${MASTER} \
     --driver-memory 20g \
