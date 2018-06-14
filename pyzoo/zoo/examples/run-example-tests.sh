@@ -88,7 +88,7 @@ ${SPARK_HOME}/bin/spark-submit \
     --conf spark.executor.extraClassPath=${ANALYTICS_ZOO_JAR} \
     ${ANALYTICS_ZOO_HOME}/pyzoo/zoo/examples/imageclassification/predict.py \
     -f hdfs://172.168.2.181:9000/kaggle/train_100 \
-    --model analytics-zoo-models/analytics-zoo_squeezenet_imagenet_0.1.0.model\
+    --model analytics-zoo-models/analytics-zoo_squeezenet_imagenet_0.1.0 \
     --topN 5
 
 ${SPARK_HOME}/bin/spark-submit \
