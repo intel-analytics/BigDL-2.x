@@ -35,7 +35,8 @@ if [ ! -d analytics-zoo-models ]
 then
     mkdir analytics-zoo-models
 fi
-if [ -f analytics-zoo-models/image-classification/analytics-zoo_squeezenet_imagenet_0.1.0.model]
+
+if [ -f analytics-zoo-models/image-classification/analytics-zoo_squeezenet_imagenet_0.1.0.model ]
 then
     echo "analytics-zoo-models/image-classification/analytics-zoo_squeezenet_imagenet_0.1.0.model already exists"
 else
@@ -61,12 +62,13 @@ ${SPARK_HOME}/bin/spark-submit \
     ${ANALYTICS_ZOO_HOME}/pyzoo/zoo/examples/textclassification/text_classification.py \
     --nb_epoch 2 \
     --data_path analytics-zoo-data/data
+
 now= $(date "+%s")
 time1= $((now-start))
 
 echo "#2 start example test for customized loss and layer (Funtional API)"
 #timer
-start=$(date "+%s")
+$start=$(date "+%s")
 ${SPARK_HOME}/bin/spark-submit \
     --master ${MASTER} \
     --driver-memory 20g \
