@@ -425,6 +425,21 @@
                             </descriptors>
                         </configuration>
                     </execution>
+
+                    <execution>
+                        <id>make-dist-all</id>
+                        <inherited>false</inherited>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>single</goal>
+                        </goals>
+                        <configuration>
+                            <finalName>analytics-zoo-${project.version}-spark-${spark.version}</finalName>
+                            <descriptors>
+                                <descriptor>${project.basedir}/src/assembly/dist-all.xml</descriptor>
+                            </descriptors>
+                        </configuration>
+                    </execution>
                 </executions>
             </plugin>
             <plugin>

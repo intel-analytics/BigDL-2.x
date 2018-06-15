@@ -13,6 +13,10 @@
       <directory>${project.parent.basedir}/scripts</directory>
     </fileSet>
     <fileSet>
+      <outputDirectory>/apps</outputDirectory>
+      <directory>${project.parent.basedir}/apps</directory>
+    </fileSet>
+    <fileSet>
       <outputDirectory>/lib</outputDirectory>
       <directory>${project.parent.basedir}/zoo/target</directory>
       <includes>
