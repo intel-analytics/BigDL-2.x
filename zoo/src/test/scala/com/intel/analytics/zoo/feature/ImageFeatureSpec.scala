@@ -33,13 +33,16 @@ class ImageFeatureSpec extends FlatSpec with Matchers with BeforeAndAfter {
   "ImageMatToTensor" should "work with both NCHW and NHWC" in {
     val resource = getClass.getClassLoader.getResource("pascal/")
     val data = ImageSet.read(resource.getFile)
-    val nchw = (data -> ImageMatToTensor[Float]()).toLocal()
-      .array.head.apply[Tensor[Float]](ImageFeature.imageTensor).clone
     val nhwc = (data -> ImageMatToTensor[Float](format = DataFormat.NHWC)).toLocal()
       .array.head.apply[Tensor[Float]](ImageFeature.imageTensor)
     require(nhwc.isContiguous() == true)
-    for (i <- 1 until nchw.size(1)) {
-      nchw.select(1, i).almostEqual(nhwc.select(3, i), 0)
-    }
+
+    val data2 = ImageSet.read(resource.getFile)
+    require(data2.toLocal().array.head.apply[Tensor[Float]](ImageFeature.imageTensor) == null)
+    val nchw = (data2 -> ImageMatToTensor[Float]()).toLocal()
+      .array.head.apply[Tensor[Float]](ImageFeature.imageTensor)
+
+    require(nchw.transpose(1, 2).transpose(2, 3).contiguous().storage().array().deep
+      == nhwc.storage().array().deep)
   }
 }
