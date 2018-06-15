@@ -17,6 +17,7 @@
 package com.intel.analytics.zoo.models.textclassification
 
 import com.intel.analytics.bigdl.tensor.Tensor
+import com.intel.analytics.zoo.models.common.ZooModel
 import com.intel.analytics.zoo.pipeline.api.keras.ZooSpecHelper
 import com.intel.analytics.zoo.pipeline.api.keras.serializer.ModuleSerializationTest
 
@@ -30,6 +31,7 @@ class TextClassifierSpec extends ZooSpecHelper {
   "TextClassifier lstm forward and backward" should "work properly" in {
     val model = TextClassifier[Float](classNum = 15, tokenLength = 10, sequenceLength = 20,
       encoder = "lstm")
+    model.summary()
     val input = Tensor[Float](Array(1, 20, 10)).rand()
     val output = model.forward(input)
     val gradInput = model.backward(input, output)
@@ -49,6 +51,8 @@ class TextClassifierSerialTest extends ModuleSerializationTest {
   override def test(): Unit = {
     val model = TextClassifier[Float](classNum = 20, tokenLength = 50, sequenceLength = 100)
     val input = Tensor[Float](Array(1, 100, 50)).rand()
-    ZooSpecHelper.testZooModelLoadSave(model, input, TextClassifier.loadModel[Float])
+    ZooSpecHelper.testZooModelLoadSave(
+      model.asInstanceOf[ZooModel[Tensor[Float], Tensor[Float], Float]],
+      input, TextClassifier.loadModel[Float])
   }
 }

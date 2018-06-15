@@ -4,7 +4,7 @@ This example illustrates how to detect objects in image with pre-trained model
 ### Run steps
 1. Prepare pre-trained models
 
-Download pre-trained models from https://github.com/intel-analytics/zoo/tree/master/docs/models/objectdetection
+Download pre-trained models from [Object Detection](https://github.com/intel-analytics/analytics-zoo/blob/master/docs/docs/ProgrammingGuide/object-detection.md)
 
 2. Prepare predict dataset
 
@@ -29,7 +29,7 @@ spark-submit \
 --driver-memory 200g \
 --executor-memory 200g \
 --class com.intel.analytics.zoo.examples.objectdetection.Predict \
-./zoo-0.1.0-SNAPSHOT-jar-with-dependencies.jar --image $imagePath --output $outputPath --modelPath $modelPath --partition 4
+./analytics-zoo-VERSION-jar-with-dependencies.jar --image $imagePath --output $outputPath --modelPath $modelPath --partition 4
 ```
 
 ## Results

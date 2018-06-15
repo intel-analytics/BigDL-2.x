@@ -61,7 +61,7 @@ object Predict {
     parser.parse(args, PredictParam()).foreach { params =>
       val conf = new SparkConf()
         .setAppName("Object Detection Example")
-      val sc = NNContext.getNNContext(conf)
+      val sc = NNContext.initNNContext(conf)
 
       val model = ObjectDetector.loadModel[Float](params.modelPath)
       val data = ImageSet.read(params.image, sc, params.nPartition)

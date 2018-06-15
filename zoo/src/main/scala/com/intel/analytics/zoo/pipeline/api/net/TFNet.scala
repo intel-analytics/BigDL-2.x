@@ -26,6 +26,11 @@ import org.tensorflow.types.UInt8
 import org.tensorflow.{DataType, Graph, Session, Tensor => TTensor}
 
 import scala.collection.JavaConverters._
+import scala.io.Source
+import scala.reflect.io.Path
+
+import org.json4s._
+import org.json4s.jackson.JsonMethods._
 
 /**
  * [[TFNet]] wraps a tensorflow subgraph as a layer, and use tensorflow to
@@ -33,14 +38,24 @@ import scala.collection.JavaConverters._
  *
  * This subgraph should not contain any tensorflow Variable and the input/output
  * must be numeric types
+ *
+ * When used with other layers for training, there should be no trainable layer
+ * before this one, as the gradInput of this layer is always zero.
+ *
  * @param graphDef serialized representation of a graph
  * @param inputNames the input tensor names of this subgraph
  * @param outputNames the output tensor names of this subgraph
  */
 class TFNet private(graphDef: Array[Byte],
             val inputNames: Seq[String],
-            val outputNames: Seq[String])
+            val outputNames: Seq[String],
+                    config: Array[Byte])
   extends AbstractModule[Activity, Activity, Float] {
+
+  // this is a workaround for a bug in scala 2.10
+  // transient lazy vals will null constructor fields
+  // https://issues.scala-lang.org/browse/SI-8453
+  private def size = graphDef.length
 
 
   output = {
@@ -57,6 +72,20 @@ class TFNet private(graphDef: Array[Byte],
     }
   }
 
+  gradInput = {
+    if (inputNames.length == 1) {
+      Tensor[Float]()
+    } else {
+      val t = T()
+      var i = 0
+      while (i < inputNames.length) {
+        t.insert(Tensor[Float]())
+        i = i + 1
+      }
+      t
+    }
+  }
+
   private def getOutput(idx: Int): Tensor[Float] = {
     if (output.isTable) {
       output.toTable[Tensor[Float]](idx)
@@ -66,11 +95,16 @@ class TFNet private(graphDef: Array[Byte],
   }
 
   @transient
-  private lazy val (graph, sess) = {
+  private lazy val graph = {
     val graph = new Graph()
     graph.importGraphDef(graphDef)
-    val sess = new Session(graph)
-    (graph, sess)
+    graph
+  }
+
+  @transient
+  private lazy val sess = {
+    val sess = new Session(graph, config)
+    sess
   }
 
   @transient
@@ -119,22 +153,27 @@ class TFNet private(graphDef: Array[Byte],
   }
 
   private def bigdl2Tf(t: Tensor[Float], dataType: DataType): TTensor[_] = {
+
+    require(t.isContiguous(), "input to tfnet must be contiguous")
     val shape = t.size().map(_.toLong)
     val arr = t.storage().array()
+    val offset: Int = t.storageOffset() - 1
+    val length: Int = shape.product.toInt
+
     if (dataType == DataType.FLOAT) {
-      val buffer = FloatBuffer.wrap(arr)
+      val buffer = FloatBuffer.wrap(arr, offset, length)
       TTensor.create(shape, buffer)
     } else if (dataType == DataType.UINT8) {
-      val buffer = ByteBuffer.wrap(TFNet.floatToUint8(arr))
+      val buffer = ByteBuffer.wrap(TFNet.floatToUint8(arr), offset, length)
       TTensor.create(classOf[UInt8], shape, buffer)
     } else if (dataType == DataType.INT32) {
-      val buffer = IntBuffer.wrap(TFNet.floatToInt(arr))
+      val buffer = IntBuffer.wrap(TFNet.floatToInt(arr), offset, length)
       TTensor.create(shape, buffer)
     } else if (dataType == DataType.INT64) {
-      val buffer = LongBuffer.wrap(TFNet.floatToLong(arr))
+      val buffer = LongBuffer.wrap(TFNet.floatToLong(arr), offset, length)
       TTensor.create(shape, buffer)
     } else if (dataType == DataType.DOUBLE) {
-      val buffer = DoubleBuffer.wrap(TFNet.floatToDouble(arr))
+      val buffer = DoubleBuffer.wrap(TFNet.floatToDouble(arr), offset, length)
       TTensor.create(shape, buffer)
     } else {
       throw new Exception(s"data type ${dataType} are not supported")
@@ -180,11 +219,35 @@ class TFNet private(graphDef: Array[Byte],
   }
 
   override def updateGradInput(input: Activity, gradOutput: Activity): Activity = {
-    throw new Exception("Not Supported Yet")
+    if (gradInput.isTable) {
+      var i = 0
+      while (i < gradInput.toTable.length()) {
+        gradInput.toTable[Tensor[Float]](i + 1)
+          .resizeAs(input.toTable[Tensor[Float]](i + 1))
+        i = i + 1
+      }
+    } else {
+      gradInput.toTensor[Float]
+        .resizeAs(input.toTensor[Float])
+    }
+
+    gradInput
   }
 }
 
 object TFNet {
+
+  implicit val formats = DefaultFormats
+
+  val defaultSessionConfig = Seq(16, 1, 40, 1, 72, 1).map(_.toByte).toArray
+  // Ideally we should use the following code, however, importing tensorflow proto
+  // will conflict with bigdl.
+
+//  val defaultSessionConfig = ConfigProto.newBuilder()
+//    .setInterOpParallelismThreads(1)
+//    .setIntraOpParallelismThreads(1)
+//    .setUsePerSessionThreads(true)
+//    .build().toByteArray
 
   private def floatToInt(array: Array[Float]): Array[Int] = {
     val result = new Array[Int](array.length)
@@ -234,8 +297,8 @@ object TFNet {
    * @return
    */
   def apply(graphDef: GraphDef, inputNames: Seq[String],
-            outputNames: Seq[String]): TFNet = {
-    new TFNet(graphDef.toByteArray, inputNames, outputNames)
+            outputNames: Seq[String], config: Array[Byte] = defaultSessionConfig): TFNet = {
+    new TFNet(graphDef.toByteArray, inputNames, outputNames, config)
   }
 
   /**
@@ -245,13 +308,47 @@ object TFNet {
    * @param outputNames the output tensor names of this subgraph
    * @return
    */
-  def apply(path: String, inputNames: Seq[String],
-            outputNames: Seq[String]): TFNet = {
-    val graphDef = parse(path)
-    TFNet(graphDef, inputNames, outputNames)
+  def apply(path: String,
+            inputNames: Seq[String],
+            outputNames: Seq[String], config: Array[Byte]): TFNet = {
+    val graphDef = parseGraph(path)
+    TFNet(graphDef, inputNames, outputNames, config)
   }
 
-  private def parse(graphProtoTxt: String) : GraphDef = {
+  /**
+   * Create a TFNet
+   * @param path the file path of a graphDef
+   * @param inputNames the input tensor names of this subgraph
+   * @param outputNames the output tensor names of this subgraph
+   * @return
+   */
+  def apply(path: String,
+            inputNames: Seq[String],
+            outputNames: Seq[String]): TFNet = {
+    val graphDef = parseGraph(path)
+    TFNet(graphDef, inputNames, outputNames, defaultSessionConfig)
+  }
+
+
+  def apply(folder: String): TFNet = {
+    val folderPath = Path(folder)
+    if (!folderPath.exists) {
+      throw new IllegalArgumentException(s"$folder does not exists")
+    }
+
+    val modelPath = folderPath / Path("frozen_inference_graph.pb")
+    val metaPath = folderPath / Path("graph_meta.json")
+
+    val jsonStr = Source.fromFile(metaPath.jfile).getLines().mkString
+
+    val meta = parse(jsonStr).camelizeKeys.extract[Meta]
+
+    TFNet(modelPath.toString(), meta.inputNames, meta.outputNames, defaultSessionConfig)
+  }
+
+  private case class Meta(inputNames: Array[String], outputNames: Array[String])
+
+  private def parseGraph(graphProtoTxt: String) : GraphDef = {
     var fr: File = null
     var in: InputStream = null
     try {

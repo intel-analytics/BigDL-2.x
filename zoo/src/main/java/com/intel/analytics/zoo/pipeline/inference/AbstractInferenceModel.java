@@ -16,18 +16,18 @@
 
 package com.intel.analytics.zoo.pipeline.inference;
 
+import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.LinkedBlockingQueue;
 
 public abstract class AbstractInferenceModel {
   private FloatInferenceModel model;
 
   private int supportedConcurrentNum = 1;
 
-  public AbstractInferenceModel(){
+  public AbstractInferenceModel() {
   }
 
-  public AbstractInferenceModel(int supportedConcurrentNum){
+  public AbstractInferenceModel(int supportedConcurrentNum) {
     this.supportedConcurrentNum = supportedConcurrentNum;
   }
 
@@ -47,7 +47,12 @@ public abstract class AbstractInferenceModel {
     this.model = InferenceModelFactory.loadFloatInferenceModel(modelPath, weightPath);
   }
 
-  public List<Float> predict(List<List<Float>> input) {
-     return model.predict(input);
+  public List<Float> predict(List<Float> input, int... shape) {
+    List<Integer> inputShape = new ArrayList<Integer>();
+    for (int s : shape) {
+      inputShape.add(s);
+    }
+    return model.predict(input, inputShape);
   }
+
 }

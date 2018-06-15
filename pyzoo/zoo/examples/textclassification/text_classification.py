@@ -21,7 +21,7 @@ from optparse import OptionParser
 
 from bigdl.nn.criterion import *
 from bigdl.optim.optimizer import *
-from zoo.common.nncontext import get_nncontext
+from zoo.common.nncontext import init_nncontext
 from zoo.examples.textclassification.news20 import *
 from zoo.models.textclassification import TextClassifier
 
@@ -88,7 +88,7 @@ if __name__ == "__main__":
     training_split = float(options.training_split)
     batch_size = int(options.batch_size)
 
-    sc = get_nncontext(create_spark_conf().setAppName("Text Classification Example"))
+    sc = init_nncontext(create_spark_conf().setAppName("Text Classification Example"))
 
     print('Processing text dataset...')
     texts = get_news20(base_dir=data_path)

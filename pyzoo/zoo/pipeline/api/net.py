@@ -16,6 +16,8 @@
 
 import sys
 import six
+import os
+import json
 
 from bigdl.nn.layer import Model as BModel
 from bigdl.nn.layer import Layer
@@ -189,3 +191,16 @@ class TFNet(Layer):
                                     path,
                                     input_names,
                                     output_names)
+
+    @staticmethod
+    def from_export_folder(folder):
+        if not os.path.isdir(folder):
+            raise ValueError(folder + " does not exist")
+        model_path = os.path.join(folder, "frozen_inference_graph.pb")
+        meta_path = os.path.join(folder, "graph_meta.json")
+        with open(meta_path, 'r') as f:
+            meta = json.loads(f.readline())
+            input_names = meta['input_names']
+            output_names = meta['output_names']
+
+        return TFNet(model_path, input_names, output_names)

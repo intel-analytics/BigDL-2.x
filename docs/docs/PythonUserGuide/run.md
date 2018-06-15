@@ -5,6 +5,16 @@ You need to first [install](install.md) analytics-zoo, either [from pip](install
 ---
 ## **Run after pip install**
 
+**Important:**
+
+1. Installing analytics-zoo from pip will automatically install `pyspark`. To avoid possible conflicts, you are highly recommended to __unset `SPARK_HOME`__ if it exists in your environment.
+
+2. Please always first call `init_nncontext()` at the very beginning of your code after pip install. This will create a SparkContext with optimized performance configuration and initialize the BigDL engine.
+```python
+from zoo.common.nncontext import *
+sc = init_nncontext()
+```
+
 ***Use an Interactive Shell***
 
 * Type `python` in the command line to start a REPL.
@@ -192,8 +202,8 @@ from zoo.pipeline.api.keras.layers import *
 
 # Get the current Analytics Zoo version
 zoo.version.__version__
-# Create or get a SparkContext. This will also init the BigDL engine.
-sc = get_nncontext()
+# Create a SparkContext and initialize the BigDL engine.
+sc = init_nncontext()
 # Create a Sequential model containing a Dense layer.
 model = Sequential()
 model.add(Dense(8, input_shape=(10, )))

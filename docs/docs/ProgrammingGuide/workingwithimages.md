@@ -1,5 +1,3 @@
-# Working with images
-
 Analytics Zoo provides supports for end-to-end image processing pipeline, including image loading, pre-processing, inference/training and some utilities on different formats.
 
 ## Load Image
@@ -14,7 +12,7 @@ Scala example:
 import com.intel.analytics.zoo.common.NNContext
 import com.intel.analytics.zoo.pipeline.nnframes.NNImageReader
 
-val sc = NNContext.getNNContext("app")
+val sc = NNContext.initNNContext("app")
 val imageDF1 = NNImageReader.readImages("/tmp", sc)
 val imageDF2 = NNImageReader.readImages("/tmp/*.jpg", sc)
 val imageDF3 = NNImageReader.readImages("/tmp/a.jpg, /tmp/b.jpg", sc)
@@ -26,7 +24,7 @@ Python:
 from zoo.common.nncontext import *
 from zoo.pipeline.nnframes import *
 
-sc = get_nncontext(create_spark_conf().setAppName("app"))
+sc = init_nncontext(create_spark_conf().setAppName("app"))
 imageDF1 = NNImageReader.readImages("/tmp", sc)
 imageDF2 = NNImageReader.readImages("/tmp/*.jpg", sc)
 imageDF3 = NNImageReader.readImages("/tmp/a.jpg, /tmp/b.jpg", sc)
@@ -105,7 +103,7 @@ Analytics Zoo has many pre-defined image processing transformers built on top of
 * `MatToTensor`: Transform opencv mat to tensor, note that in this transformer, the mat is released.
 * `ImageFrameToSample`: Transforms tensors that map inputKeys and targetKeys to sample, note that in this transformer, the mat has been released.
 
-More examples can be found [here](../APIGuide/image.md)
+More examples can be found [here](../APIGuide/FeatureEngineering/image.md)
 
 You can also define your own Transformer by extending `ImageProcessing`,
 and override the function `transformMat` to do the actual transformation to `ImageFeature`.
@@ -128,14 +126,15 @@ val imgAug = ImageBytesToMat() -> ImageResize(256, 256)-> ImageCenterCrop(224, 2
 In the above example, the transformations will perform sequentially.
 
 Assume you have an ImageFrame containing original bytes array,
-`ImageBytesToMat` will transform the bytes array to `OpenCVMat`.
 
-`ImageColorJitter`, `ImageExpand`, `ImageResize`, `ImageHFlip` and `ImageChannelNormalize` will transform over `OpenCVMat`,
+* `ImageBytesToMat` will transform the bytes array to `OpenCVMat`.
+
+* `ImageColorJitter`, `ImageExpand`, `ImageResize`, `ImageHFlip` and `ImageChannelNormalize` will transform over `OpenCVMat`,
 note that `OpenCVMat` is overwrite by default.
 
-`ImageMatToTensor` transform `OpenCVMat` to `Tensor`, and `OpenCVMat` is released in this step.
+* `ImageMatToTensor` transform `OpenCVMat` to `Tensor`, and `OpenCVMat` is released in this step.
 
-`ImageSetToSample` transform the tensors that map inputKeys and targetKeys to sample,
+* `ImageSetToSample` transform the tensors that map inputKeys and targetKeys to sample,
 which can be used by the following prediction or training tasks.
 
 **Python example:**
@@ -200,7 +199,7 @@ You can train Zoo Keras model with ImageSet. Just call `fit` method to let Analy
 **Python example:**
 
 ```python
-from zoo.common.nncontext import get_nncontext
+from zoo.common.nncontext import *
 from zoo.feature.common import *
 from zoo.feature.image.imagePreprocessing import *
 from zoo.pipeline.api.keras.layers import Dense, Input, Flatten
@@ -208,7 +207,7 @@ from zoo.pipeline.api.keras.models import *
 from zoo.pipeline.api.net import *
 from bigdl.optim.optimizer import *
 
-sc = get_nncontext(create_spark_conf().setAppName("train keras"))
+sc = init_nncontext(create_spark_conf().setAppName("train keras"))
 img_path="/tmp/image"
 image_set = ImageSet.read(img_path,sc, min_partitions=1)
 transformer = ChainedPreprocessing(
@@ -244,12 +243,13 @@ lrModel.fit(x = samples, batch_size=batchsize, nb_epoch=nEpochs)
 
 ## **Image Predict**
 ### Predict with Image DataFrame
-After training with NNEstimator/NNCLassifier, you'll get a trained NNModel/NNClassifierModel. You can call `transform` to predict Image DataFrame with this NNModel/NNClassifierModel.
- Or you can load pre-trained Analytics-Zoo/BigDL/Caffe/Torch/Tensorflow model and create NNModel/NNClassifierModel with this model. Then call to `transform` to predict Image DataFrame.
- After prediction, there is a new column `prediction` in the prediction image dataframe.
+After training with *NNEstimator/NNCLassifier*, you'll get a trained *NNModel/NNClassifierModel* . You can call `transform` to predict Image DataFrame with this *NNModel/NNClassifierModel* . Or you can load pre-trained *Analytics-Zoo/BigDL/Caffe/Torch/Tensorflow*  model and create *NNModel/NNClassifierModel* with this model. Then call to `transform` to Image DataFrame.
+
+After prediction, there is a new column `prediction` in the prediction image dataframe.
  
  **Scala example:**
- ```scala
+ 
+```scala
  val batchsize = 128
  val nEpochs = 10
  val featureTransformer = RowToImageFeature() -> ImageResize(256, 256) ->
@@ -275,9 +275,11 @@ After training with NNEstimator/NNCLassifier, you'll get a trained NNModel/NNCla
          .setFeaturesCol("image")
          .setPredictionCol("prediction") 
  val resultDF = dlmodel.transform(testDf)
- ```
+```
+ 
  **Python example:**
- ```python
+
+```python
  batchsize = 128
  nEpochs = 10
  featureTransformer = ChainedPreprocessing([RowToImageFeature(), ImageResize(256, 256),
@@ -303,7 +305,7 @@ dlmodel = NNClassifierModel(model, featureTransformer)\
          .setFeaturesCol("image")\
          .setPredictionCol("prediction") 
 resultDF = dlmodel.transform(testDf)
- ```
+```
 ### Predict with ImageSet
 
 After training Zoo Keras model, you can call `predict` to predict ImageSet.
@@ -314,7 +316,7 @@ Or you can load pre-trained Analytics-Zoo/BigDL model. Then call to `predictImag
 **Python example:**
 
 ```python
-from zoo.common.nncontext import get_nncontext
+from zoo.common.nncontext import *
 from zoo.feature.common import *
 from zoo.feature.image.imagePreprocessing import *
 from zoo.pipeline.api.keras.layers import Dense, Input, Flatten
@@ -322,7 +324,7 @@ from zoo.pipeline.api.keras.models import *
 from zoo.pipeline.api.net import *
 from bigdl.optim.optimizer import *
 
-sc = get_nncontext(create_spark_conf().setAppName("train keras"))
+sc = init_nncontext(create_spark_conf().setAppName("train keras"))
 img_path="/tmp/image"
 image_set = ImageSet.read(img_path,sc, min_partitions=1)
 transformer = ChainedPreprocessing(

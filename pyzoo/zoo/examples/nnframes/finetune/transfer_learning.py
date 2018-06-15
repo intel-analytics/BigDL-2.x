@@ -38,7 +38,7 @@ if __name__ == "__main__":
 
     sparkConf = SparkConf()\
         .setAppName("ImageTransferLearningExample")
-    sc = get_nncontext(sparkConf)
+    sc = init_nncontext(sparkConf)
 
     model_path = sys.argv[1]
     image_path = sys.argv[2] + '/*/*'

@@ -18,7 +18,7 @@ from optparse import OptionParser
 
 from bigdl.nn.layer import Sequential, Transpose, Contiguous, SelectTable
 from zoo.pipeline.api.net import TFNet
-from zoo.common.nncontext import get_nncontext
+from zoo.common.nncontext import init_nncontext
 from zoo.feature.common import *
 from zoo.feature.image.imagePreprocessing import *
 from zoo.models.image.objectdetection import *
@@ -57,6 +57,6 @@ if __name__ == "__main__":
                       help="The number of partitions")
     (options, args) = parser.parse_args(sys.argv)
 
-    sc = get_nncontext("TFNet Object Detection Example")
+    sc = init_nncontext("TFNet Object Detection Example")
 
     predict(options.model_path, options.img_path, options.partition_num)
