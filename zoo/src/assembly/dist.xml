@@ -13,6 +13,10 @@
       <directory>${project.parent.basedir}/scripts</directory>
     </fileSet>
     <fileSet>
+      <outputDirectory>/apps</outputDirectory>
+      <directory>${project.parent.basedir}/apps</directory>
+    </fileSet>
+    <fileSet>
       <outputDirectory>/lib</outputDirectory>
       <directory>${project.parent.basedir}/zoo/target</directory>
       <includes>
@@ -24,6 +28,13 @@
       <directory>${project.parent.basedir}/zoo/target</directory>
       <includes>
           <include>analytics-zoo-*-python-api.zip</include>
+      </includes>
+    </fileSet>
+    <fileSet>
+      <outputDirectory>/extra-resources</outputDirectory>
+      <directory>${project.parent.basedir}/zoo/target</directory>
+      <includes>
+          <include>zoo-version-info.properties</include>
       </includes>
     </fileSet>
   </fileSets>
