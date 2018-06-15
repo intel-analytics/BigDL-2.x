@@ -24,8 +24,6 @@ import org.scalatest.{BeforeAndAfter, FlatSpec, Matchers}
 
 class FeatureSpec extends FlatSpec with Matchers with BeforeAndAfter {
   val resource = getClass.getClassLoader.getResource("imagenet/n04370456/")
-  val conf = new SparkConf().setMaster("local[1]").setAppName("FeatureTest")
-  val sc = NNContext.initNNContext(conf)
 
   "BigDLAdapter" should "adapt BigDL Transformer" in {
     val newResize = BigDLAdapter(ImageResize(1, 1))
@@ -40,9 +38,12 @@ class FeatureSpec extends FlatSpec with Matchers with BeforeAndAfter {
   }
 
   "Distribute ImageSet" should "work with resize" in {
+    val conf = new SparkConf().setAppName("Feature Test").setMaster("local[1]")
+    val sc = NNContext.initNNContext(conf)
     val image = ImageSet.read(resource.getFile, sc, resizeH = 200, resizeW = 200)
     val imf = image.toDistributed().rdd.collect().head
     require(imf.getHeight() == 200)
     require(imf.getWidth() == 200)
+    sc.stop()
   }
 }
