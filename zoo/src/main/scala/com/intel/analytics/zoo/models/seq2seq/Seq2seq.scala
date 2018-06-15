@@ -34,10 +34,11 @@ class Seq2seq[T: ClassTag](val encoderCells: Array[Cell[T]],
   private var decoderInput: Tensor[T] = null
   private var encoderInput: Tensor[T] = null
   private var encoderOutput: Tensor[T] = null
-  private var encoder: Sequential[T] = null
-  private var decoder: Sequential[T] = null
   private var enc: Array[ZooRecurrent[T]] = null
   private var dec: Array[Recurrent[T]] = null
+
+  var encoder: Sequential[T] = null
+  var decoder: Sequential[T] = null
 
   private var loopPreOutput: Boolean = false
   private var seqLen: Int = 0
