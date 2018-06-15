@@ -32,7 +32,7 @@
     </fileSet>
     <fileSet>
       <outputDirectory>/extra-resources</outputDirectory>
-      <directory>${project.parent.basedir}/zoo/target</directory>
+      <directory>${project.parent.basedir}/zoo/target/extra-resources</directory>
       <includes>
           <include>zoo-version-info.properties</include>
       </includes>
@@ -41,7 +41,7 @@
   <files>
     <file>
       <source>${project.parent.basedir}/backend/bigdl/spark/dl/src/main/resources/spark-bigdl.conf</source>
-      <outputDirectory>/extra-resources</outputDirectory>
+      <outputDirectory>/conf</outputDirectory>
       <destName>spark-analytics-zoo.conf</destName>
     </file>
   </files>
