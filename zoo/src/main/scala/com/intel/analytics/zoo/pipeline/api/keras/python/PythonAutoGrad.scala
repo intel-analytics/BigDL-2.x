@@ -199,4 +199,8 @@ class PythonAutoGrad[T: ClassTag](implicit ev: TensorNumeric[T]) extends PythonZ
   def contiguous(input: Variable[T]): Variable[T] = {
     autograd.AutoGrad.contiguous(input)
   }
+
+  def mm(x: Variable[T], y: Variable[T], axes:JList[Int]): Variable[T] = {
+    autograd.AutoGrad.mm(x, y, axes.asScala.toList)
+  }
 }

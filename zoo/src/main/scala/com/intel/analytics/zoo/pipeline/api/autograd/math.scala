@@ -16,14 +16,14 @@
 
 package com.intel.analytics.zoo.pipeline.api.autograd
 
-import com.intel.analytics.bigdl.nn.{Container, Unsqueeze}
+import com.intel.analytics.bigdl.nn.{Container, MM, Unsqueeze}
 import com.intel.analytics.bigdl.nn.Graph.ModuleNode
 import com.intel.analytics.bigdl.nn.abstractnn.{AbstractModule, Activity, InferShape}
 import com.intel.analytics.bigdl.nn.keras.KerasLayer
 import com.intel.analytics.bigdl.tensor.Tensor
 import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric
 import com.intel.analytics.bigdl.utils.serializer.{ModuleSerializable, ModuleSerializer}
-import com.intel.analytics.bigdl.utils.{Engine, Shape}
+import com.intel.analytics.bigdl.utils.{Engine, Shape, SingleShape}
 import com.intel.analytics.bigdl.{nn => bnn}
 import com.intel.analytics.zoo.pipeline.api.keras.layers._
 import com.intel.analytics.zoo.pipeline.api.keras.models._
@@ -174,6 +174,26 @@ object AutoGrad {
     val contiguousNode = new KerasLayerWrapper(
       bnn.Contiguous[T]().asInstanceOf[AbstractModule[Activity, Activity, T]]).inputs(input.node)
     Variable(contiguousNode)
+  }
+
+  def mm[T: ClassTag](
+      x: Variable[T],
+      y: Variable[T],
+      axes: List[Int])(implicit ev: TensorNumeric[T]): Variable[T] = {
+    require(x.getOutputShape().isInstanceOf[SingleShape], "Only accept single shape")
+    require(y.getOutputShape().isInstanceOf[SingleShape], "Only accept single shape")
+    val xShape = x.getOutputShape().toSingle().toArray
+    val yShape = y.getOutputShape().toSingle().toArray
+    require(xShape.length == 3, s"mm only support 3D input, but got: ${xShape}")
+    require(yShape.length == 3, s"mm only support 3D input, but got: ${yShape}")
+    require(axes.length == 2, s"axes.length should be 2, but got: ${axes.length}")
+    require(axes(0) >= 1 && axes(0) <= 2, s"axes should between [1, 2], not ${axes(0)}")
+    require(axes(1) >= 1 && axes(1) <= 2, s"axes should between [1, 2], not ${axes(1)}")
+    val transposeX = if (axes(0) != 2) {true} else {false}
+    val transposeY = if (axes(1) == 2) {true} else {false}
+    val mm = MM[T](transA = transposeX, transB = transposeY)
+    val kmm = new KerasLayerWrapper[T](mm.asInstanceOf[AbstractModule[Activity, Activity, T]])
+    kmm.from(x, y)
   }
 }
 

@@ -50,7 +50,7 @@ def abs(x):
     return Variable.from_jvalue(callBigDlFunc("float", "abs", x))
 
 
-def dot(x, y, axis=1, normalize=False):
+def dot(x, y, axes=1, normalize=False):
     """
     :param x: shape should only be [batch, xx]
     :param y:
@@ -58,21 +58,29 @@ def dot(x, y, axis=1, normalize=False):
     """
 
     if not normalize:
-        return sum(x * y, axis=axis, keepDims=True)
+        if isinstance(axes, int):
+            axes = [axes] * 2
+        if len(x.get_output_shape()) == 2 :  # pure dot product
+            return sum(x * y, axis=1, keepDims=True)
+        elif len(x.get_output_shape()) == 3:
+            return mm(x, y, axes=axes)
+        else:
+            raise Exception("Only support 2D and 3D for now, but got" + x.get_output_shape())
+
     else:
-        l2_x = l2_normalize(x, axis=axis)
-        l2_y = l2_normalize(x, axis=axis)
-        return dot(l2_x, l2_y)
+        l2_x = l2_normalize(x, axis=axes[0])
+        l2_y = l2_normalize(y, axis=axes[1])
+        return dot(l2_x, l2_y, axes=axes)
 
 
-def l2_normalize(x, axis=None):
+def l2_normalize(x, axis):
     """
 
     :param x: x: shape should only be [batch, xx]
-    :param axis:
+    :param axes:
     :return:
     """
-    return x / sqrt(maximum(dot(x, x), epsilon()))
+    return x / sqrt(maximum(sum(x*x, axis, keepDims=True), epsilon()))
 
 
 def sum(x, axis=0, keepDims=False):
@@ -220,6 +228,10 @@ def softplus(x):
     return Variable.from_jvalue(callBigDlFunc("float", "softplus", x))
 
 
+def mm(x, y, axes):
+    return Variable.from_jvalue(callBigDlFunc("float", "mm", x, y, axes))
+
+
 class Variable(kbase.ZooKerasCreator):
     def __init__(self, input_shape, node=None, jvalue=None, name=None):
         if jvalue:
@@ -345,6 +357,7 @@ class Variable(kbase.ZooKerasCreator):
         :return:
         """
         return Variable.from_jvalue(callBigDlFunc("float", "indexSelect", self, dim, index))
+
 
     # TODO: we need a Shape mapping here.
     def __to_batch_shape(cls, shape):
