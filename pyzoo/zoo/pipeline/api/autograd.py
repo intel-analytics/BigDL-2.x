@@ -58,7 +58,7 @@ def dot(x, y, axis=1, normalize=False):
     """
 
     if not normalize:
-        return sum(x * y, axis=axis)
+        return sum(x * y, axis=axis, keepDims=True)
     else:
         l2_x = l2_normalize(x, axis=axis)
         l2_y = l2_normalize(x, axis=axis)
@@ -72,7 +72,7 @@ def l2_normalize(x, axis=None):
     :param axis:
     :return:
     """
-    return 1 / sqrt(maximum(dot(x, x), epsilon()))
+    return x / sqrt(maximum(dot(x, x), epsilon()))
 
 
 def sum(x, axis=0, keepDims=False):
@@ -86,7 +86,7 @@ def sum(x, axis=0, keepDims=False):
             the reduced dimensions are retained with length 1.
     :return: A variable with sum of `x`.
     """
-    return Variable.from_jvalue(callBigDlFunc("float", "sum", x, axis, keepDims))
+    return Variable.from_jvalue(callBigDlFunc("float", "sum", x, int(axis), keepDims))
 
 
 def stack(inputs, axis=1):

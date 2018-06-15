@@ -426,13 +426,33 @@ class TestOperator(ZooTestCase):
 
     def test_dot(self):
         def z_func(x, y):
-            return A.dot(x, y, True)
+            return A.dot(x, y, axis=1, normalize=False)
 
         def k_func(x, y):
-            return klayers.Dot(axes=[1, 1], normalize=True)([x, y])
+            return klayers.Dot(axes=[1, 1], normalize=False)([x, y])
 
         self.compare_binary_op(k_func,
                               Lambda(function=z_func, ), [[3, 2], [3, 2]])
+
+    def test_dot2(self):
+        def z_func(x, y):
+            return A.dot(x, y, axis=2, normalize=False)
+
+        def k_func(x, y):
+            return klayers.Dot(axes=2, normalize=False)([x, y])
+
+        self.compare_binary_op(k_func,
+                              Lambda(function=z_func, ), [[3, 2, 4], [3, 2, 4]])
+
+    def test_l2_normalize(self):
+        def z_func(x):
+            return A.l2_normalize(x)
+
+        def k_func(x):
+            return KK.l2_normalize(x)
+
+        self.compare_unary_op(k_func,
+                              Lambda(function=z_func, ), [3, 2])
 
 
 if __name__ == "__main__":
