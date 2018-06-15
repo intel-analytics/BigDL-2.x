@@ -29,13 +29,13 @@ class Seq2seq[T: ClassTag](val encoderCells: Array[Cell[T]],
                            val preEncoder: AbstractModule[Activity, Activity, T] = null,
                            val preDecoder: AbstractModule[Activity, Activity, T] = null,
                            val bridges: Bridge = new PassThroughBridge())
-  (implicit ev: TensorNumeric[T]) extends ZooModel[Activity, Activity, T] {
-  var preDecoderInput: Tensor[T] = null
-  var decoderInput: Tensor[T] = null
-  var encoderInput: Tensor[T] = null
-  var encoderOutput: Tensor[T] = null
-  var encoder: AbstractModule[Activity, Activity, T] = null
-  var decoder: AbstractModule[Activity, Activity, T] = null
+  (implicit ev: TensorNumeric[T]) extends ZooModel[Activity, Tensor[T], T] {
+  private var preDecoderInput: Tensor[T] = null
+  private var decoderInput: Tensor[T] = null
+  private var encoderInput: Tensor[T] = null
+  private var encoderOutput: Tensor[T] = null
+  private var encoder: Sequential[T] = null
+  private var decoder: Sequential[T] = null
   private var enc: Array[ZooRecurrent[T]] = null
   private var dec: Array[Recurrent[T]] = null
 
@@ -55,7 +55,7 @@ class Seq2seq[T: ClassTag](val encoderCells: Array[Cell[T]],
     modules += buildModel()
   }
 
-  override def buildModel(): AbstractModule[Activity, Activity, T] = {
+  override def buildModel(): AbstractModule[Activity, Tensor[T], T] = {
     encoder = buildEncoder()
     val model = Sequential[T]().add(encoder)
     if (bridges.isInstanceOf[InitialStateBridge[T]]) {
@@ -63,12 +63,13 @@ class Seq2seq[T: ClassTag](val encoderCells: Array[Cell[T]],
         if (activation != null) activation.foreach(module =>
           model.add(module)))
     }
+    if (preDecoder != null) model.add(preDecoder)
     decoder = buildDecoder()
     model.add(decoder)
-    model
+    model.asInstanceOf[AbstractModule[Activity, Tensor[T], T]]
   }
 
-  private def buildEncoder(): AbstractModule[Activity, Activity, T] = {
+  private def buildEncoder(): Sequential[T] = {
     val model = Sequential[T]()
     if (preEncoder != null) model.add(preEncoder)
     enc = encoderCells.map {cell =>
@@ -79,25 +80,25 @@ class Seq2seq[T: ClassTag](val encoderCells: Array[Cell[T]],
     model
   }
 
-  private def buildDecoder(): AbstractModule[Activity, Activity, T] = {
+  private def buildDecoder(): Sequential[T] = {
     val model = Sequential[T]()
-    if (preDecoder != null) model.add(preDecoder)
     dec = if (loopPreOutput) {
       require(seqLen > 0, "Please setLoopPreOutput if you want to use i-1th output as i th input")
-      val dec = new ZooRecurrentDecoder(seqLen).add(MultiRNNCell(decoderCells))
-      model.add(dec)
-      Array(dec)
+      val cells = if (decoderCells.length == 1) decoderCells.head else MultiRNNCell(decoderCells)
+      val recDec = new ZooRecurrentDecoder(seqLen).add(cells)
+      model.add(recDec)
+      Array(recDec)
     } else {
       decoderCells.map {cell =>
-        val dec = new ZooRecurrent().add(cell)
-        model.add(dec)
-        dec
+        val rec = new ZooRecurrent().add(cell)
+        model.add(rec)
+        rec
       }
     }
     model
   }
 
-  override def updateOutput(input: Activity): Activity = {
+  override def updateOutput(input: Activity): Tensor[T] = {
     if (loopPreOutput) {
       encoderInput = input.toTensor
       preDecoderInput = input.toTensor.select(2, input.toTensor.size(2))
@@ -105,22 +106,25 @@ class Seq2seq[T: ClassTag](val encoderCells: Array[Cell[T]],
       encoderInput = input.toTable(1)
       preDecoderInput = input.toTable(2)
     }
+
     encoderOutput = encoder.forward(encoderInput).toTensor
-    bridges.forwardStates(enc, dec)
 
     decoderInput = if (preDecoder != null) preDecoder.forward(preDecoderInput).toTensor
       else preDecoderInput
-    output = decoder.forward(decoderInput)
+
+    bridges.forwardStates(enc, dec)
+    output = decoder.forward(decoderInput).toTensor
     output
   }
 
-  override def backward(input: Activity, gradOutput: Activity): Activity = {
+  override def backward(input: Activity, gradOutput: Tensor[T]): Tensor[T] = {
     val decoderGradInput = decoder.backward(decoderInput, gradOutput).toTensor
     if (preDecoder != null) {
       if (loopPreOutput) {
         preDecoder.backward(preDecoderInput, decoderGradInput.select(2, 1).contiguous())
       } else preDecoder.backward(preDecoderInput, decoderGradInput)
     }
+
     bridges.backwardStates(enc, dec)
     gradInput = encoder.backward(encoderInput, Tensor[T](encoderOutput.size())).toTensor
 
@@ -146,6 +150,6 @@ object Seq2seq {
      preDecoder: AbstractModule[Activity, Activity, T] = null,
      bridges: Bridge = new PassThroughBridge())
     (implicit ev: TensorNumeric[T]): Seq2seq[T] = {
-    new Seq2seq[T](encoderCells, decoderCells, preEncoder, preDecoder, bridges)
+    new Seq2seq[T](encoderCells, decoderCells, preEncoder, preDecoder, bridges).build()
   }
 }

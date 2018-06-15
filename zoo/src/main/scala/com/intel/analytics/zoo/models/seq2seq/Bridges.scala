@@ -41,25 +41,20 @@ class ZeroBridge() extends Bridge {
 
 class PassThroughBridge() extends Bridge {
   override def forwardStates[T: ClassTag](encoder: Array[ZooRecurrent[T]],
-    decoder: Array[Recurrent[T]])(implicit ev: TensorNumeric[T]): Unit = {}
-
-  override def backwardStates[T: ClassTag](encoder: Array[ZooRecurrent[T]],
-    decoder: Array[Recurrent[T]])(implicit ev: TensorNumeric[T]): Unit = {}
-}
-
-class InitialStateBridge[T: ClassTag](val activations: Array[Array[TensorModule[T]]])
-                                     (implicit ev: TensorNumeric[T]) extends Bridge {
-  override def forwardStates[T: ClassTag](encoder: Array[ZooRecurrent[T]],
     decoder: Array[Recurrent[T]])(implicit ev: TensorNumeric[T]): Unit = {
-    if (decoder.head.isInstanceOf[RecurrentDecoder[T]]) {
+    if (decoder.head.isInstanceOf[ZooRecurrentDecoder[T]]) {
+      if (encoder.size == 1) {
+        decoder.head.setHiddenState(encoder.head.getHiddenState())
+      } else {
         val hiddenState = T()
         for((rec, i) <- encoder.view.zipWithIndex) {
-            hiddenState(i + 1) = updateState(rec.getHiddenState(), activations(i))
+          hiddenState(i + 1) = rec.getHiddenState()
         }
         decoder.head.setHiddenState(hiddenState)
+      }
     } else {
       for ((x, i) <- encoder.view.zipWithIndex) {
-          decoder(i).setHiddenState(updateState(x.getHiddenState(), activations(i)))
+        decoder(i).setHiddenState(x.getHiddenState())
       }
     }
   }
@@ -69,22 +64,64 @@ class InitialStateBridge[T: ClassTag](val activations: Array[Array[TensorModule[
     if (decoder.head.isInstanceOf[ZooRecurrentDecoder[T]]) {
       val gradHiddenStates = decoder.head.asInstanceOf[ZooRecurrentDecoder[T]].getGradHiddenState()
       if (encoder.size == 1) {
-        var newGradHiddenStates = gradHiddenStates
-        newGradHiddenStates = updateGradState(encoder.head.getHiddenState(),
-            gradHiddenStates, activations.head)
-        encoder.head.setGradHiddenState(newGradHiddenStates)
+        encoder.head.setGradHiddenState(gradHiddenStates)
       } else {
         for ((x, i) <- encoder.view.zipWithIndex) {
-            val newGradHiddenState = updateGradState(encoder(i).getHiddenState(),
-              gradHiddenStates.toTable(i + 1), activations(i))
-            x.asInstanceOf[ZooRecurrent[T]].setGradHiddenState(newGradHiddenState)
+          x.setGradHiddenState(gradHiddenStates.toTable(i + 1))
         }
       }
     } else {
       for ((x, i) <- decoder.view.zipWithIndex) {
-        var newGradHiddenState = x.asInstanceOf[ZooRecurrent[T]].getGradHiddenState()
-        newGradHiddenState = updateGradState(encoder(i).getHiddenState(),
-            newGradHiddenState, activations(i))
+        encoder(i).setGradHiddenState(x.asInstanceOf[ZooRecurrent[T]].getGradHiddenState())
+      }
+    }
+  }
+}
+
+class InitialStateBridge[T: ClassTag](val activations: Array[Array[TensorModule[T]]])
+                                     (implicit ev: TensorNumeric[T]) extends Bridge {
+  override def forwardStates[T: ClassTag](encoder: Array[ZooRecurrent[T]],
+    decoder: Array[Recurrent[T]])(implicit ev: TensorNumeric[T]): Unit = {
+    if (decoder.head.isInstanceOf[ZooRecurrentDecoder[T]]) {
+      if (encoder.size == 1) {
+        require(activations.head != null, "Please use PassThroughBridge instead")
+        decoder.head.setHiddenState(updateState(encoder.head.getHiddenState(), activations.head))
+      } else {
+        val hiddenState = T()
+        for((rec, i) <- encoder.view.zipWithIndex) {
+          hiddenState(i + 1) = if (activations(i) != null)
+            updateState(rec.getHiddenState(), activations(i)) else rec.getHiddenState()
+        }
+        decoder.head.setHiddenState(hiddenState)
+      }
+    } else {
+      for ((x, i) <- encoder.view.zipWithIndex) {
+        val newState = if (activations(i) != null) updateState(x.getHiddenState(), activations(i))
+        else x.getHiddenState()
+        decoder(i).setHiddenState(newState)
+      }
+    }
+  }
+
+  override def backwardStates[T: ClassTag](encoder: Array[ZooRecurrent[T]],
+    decoder: Array[Recurrent[T]])(implicit ev: TensorNumeric[T]): Unit = {
+    if (decoder.head.isInstanceOf[ZooRecurrentDecoder[T]]) {
+      val gradHiddenStates = decoder.head.asInstanceOf[ZooRecurrentDecoder[T]].getGradHiddenState()
+      if (encoder.size == 1) {
+        encoder.head.setGradHiddenState(updateGradState(encoder.head.getHiddenState(),
+          gradHiddenStates, activations.head))
+      } else {
+        for ((x, i) <- encoder.view.zipWithIndex) {
+          val newGradHiddenState = if (activations(i) != null) updateGradState(x.getHiddenState(),
+              gradHiddenStates.toTable(i + 1), activations(i)) else gradHiddenStates.toTable(i + 1)
+            x.setGradHiddenState(newGradHiddenState)
+        }
+      }
+    } else {
+      for ((x, i) <- decoder.view.zipWithIndex) {
+        val gradHiddenState = x.asInstanceOf[ZooRecurrent[T]].getGradHiddenState()
+        val newGradHiddenState = if (activations(i) != null) updateGradState(encoder(i).getHiddenState(),
+          gradHiddenState, activations(i)) else gradHiddenState
         encoder(i).setGradHiddenState(newGradHiddenState)
       }
     }
@@ -92,7 +129,7 @@ class InitialStateBridge[T: ClassTag](val activations: Array[Array[TensorModule[
 
   private def updateState(state: Activity,
     activation: Array[TensorModule[T]]): Activity = {
-    require(activation != null, "shrinkModule cannot be null")
+    require(activation != null, "activation cannot be null")
     var newState: Activity = null
     if (state.isTensor) {
       require(activation.head != null, "activation cannot be null")
