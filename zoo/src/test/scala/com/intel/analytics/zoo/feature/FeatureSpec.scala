@@ -15,7 +15,6 @@
  */
 package com.intel.analytics.zoo.feature
 
-import com.intel.analytics.bigdl.utils.Engine
 import com.intel.analytics.zoo.common.NNContext
 import com.intel.analytics.zoo.feature.common.{BigDLAdapter, Preprocessing}
 import com.intel.analytics.zoo.feature.image.{ImageResize, ImageSet}
@@ -26,7 +25,7 @@ import org.scalatest.{BeforeAndAfter, FlatSpec, Matchers}
 class FeatureSpec extends FlatSpec with Matchers with BeforeAndAfter {
   val resource = getClass.getClassLoader.getResource("imagenet/n04370456/")
   val conf = new SparkConf().setMaster("local[1]").setAppName("FeatureTest")
-  val sc = NNContext.getNNContext(conf)
+  val sc = NNContext.initNNContext(conf)
 
   "BigDLAdapter" should "adapt BigDL Transformer" in {
     val newResize = BigDLAdapter(ImageResize(1, 1))
