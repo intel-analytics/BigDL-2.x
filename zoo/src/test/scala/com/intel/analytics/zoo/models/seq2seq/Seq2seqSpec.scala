@@ -297,4 +297,65 @@ class Seq2seqSpec extends FlatSpec with BeforeAndAfter with Matchers {
       model.backward(input, gradOutput)
     }
   }
+
+  "A Seq2seq" should "work with getParameters" in {
+    import com.intel.analytics.bigdl.numeric.NumericDouble
+    val inputSize = 2
+    val hiddenSize = 16
+    val outputSize = 1
+    val seed = 100
+
+    RNG.setSeed(seed)
+
+    val encoderCells = Array(ConvLSTMPeephole3D[Double](
+      inputSize, hiddenSize, 3, 3, withPeephole = false)).asInstanceOf[Array[Cell[Double]]]
+
+    val decoderCells = Array(ConvLSTMPeephole3D[Double](
+      outputSize, outputSize, 3, 3, withPeephole = false)).asInstanceOf[Array[Cell[Double]]]
+
+    val activations = Array(
+      Array(VolumetricConvolution[Double](hiddenSize, outputSize, 3, 3, 3, 1, 1, 1, -1, -1, -1)),
+      Array(VolumetricConvolution[Double](hiddenSize, outputSize, 3, 3, 3, 1, 1, 1, -1, -1, -1))
+    ).asInstanceOf[Array[Array[TensorModule[Double]]]]
+
+    val _bridges = new InitialStateBridge[Double](activations)
+    val _preDecoder = Sequential().add(Contiguous())
+    .add(VolumetricConvolution(inputSize, outputSize, 3, 3, 3, 1, 1, 1, -1, -1, -1))
+
+    val model = Seq2seq(encoderCells, decoderCells, bridges = _bridges, preDecoder = _preDecoder)
+
+    require(model.getParametersTable().length() == 19)
+    require(model.parameters()._1.length == 30)
+  }
+
+  "A Seq2seq" should "work with getParameters 2" in {
+    import com.intel.analytics.bigdl.numeric.NumericDouble
+    val inputSize = 2
+    val hiddenSize = 16
+    val outputSize = 1
+    val seed = 100
+
+    RNG.setSeed(seed)
+
+    val encoderCells = Array(ConvLSTMPeephole3D[Double](
+      inputSize, hiddenSize, 3, 3, withPeephole = false)).asInstanceOf[Array[Cell[Double]]]
+
+    val decoderCells = Array(ConvLSTMPeephole3D[Double](
+      outputSize, outputSize, 3, 3, withPeephole = false)).asInstanceOf[Array[Cell[Double]]]
+
+    val model = Seq2seq(encoderCells, decoderCells)
+
+    val encoderCells2 = Array(ConvLSTMPeephole3D[Double](
+      inputSize, hiddenSize, 3, 3, withPeephole = false),
+      ConvLSTMPeephole3D[Double](
+        inputSize, hiddenSize, 3, 3, withPeephole = false)).asInstanceOf[Array[Cell[Double]]]
+
+    val decoderCells2 = Array(ConvLSTMPeephole3D[Double](
+      inputSize, hiddenSize, 3, 3, withPeephole = false),
+      ConvLSTMPeephole3D[Double](
+        inputSize, hiddenSize, 3, 3, withPeephole = false)).asInstanceOf[Array[Cell[Double]]]
+
+    val model2 = Seq2seq(encoderCells2, decoderCells2)
+    require(2 * model.getParametersTable().length() == model2.getParametersTable().length())
+  }
 }

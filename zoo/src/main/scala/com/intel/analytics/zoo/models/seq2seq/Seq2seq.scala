@@ -20,9 +20,12 @@ import com.intel.analytics.bigdl.nn.abstractnn.{AbstractModule, Activity}
 import com.intel.analytics.bigdl.tensor.Tensor
 import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric
 import com.intel.analytics.bigdl.nn._
+import com.intel.analytics.bigdl.utils.{T, Table}
 
 import scala.reflect.ClassTag
 import com.intel.analytics.zoo.models.common.ZooModel
+
+import scala.collection.mutable.ArrayBuffer
 
 class Seq2seq[T: ClassTag](val encoderCells: Array[Cell[T]],
                            val decoderCells: Array[Cell[T]],
@@ -116,6 +119,31 @@ class Seq2seq[T: ClassTag](val encoderCells: Array[Cell[T]],
     bridges.forwardStates(enc, dec)
     output = decoder.forward(decoderInput).toTensor
     output
+  }
+
+  override def getParametersTable(): Table = {
+    val pt = T()
+    (encoderCells ++ decoderCells).foreach(cell => {
+      val params = cell.getParametersTable()
+      if (params != null) {
+        params.keySet.foreach { key =>
+          if (pt.contains(key)) {
+            pt(key + Integer.toHexString(java.util.UUID.randomUUID().hashCode())) =
+              params(key)
+          } else {
+            pt(key) = params(key)
+          }
+        }
+      }
+    })
+    if (preEncoder != null) pt.add(preEncoder.getParametersTable())
+    if (preDecoder != null) pt.add(preDecoder.getParametersTable())
+    if (bridges.isInstanceOf[InitialStateBridge[T]]) {
+      bridges.asInstanceOf[InitialStateBridge[T]].activations.foreach(activation =>
+        if (activation != null) activation.foreach(module =>
+          pt.add(module.getParametersTable())))
+    }
+    pt
   }
 
   override def backward(input: Activity, gradOutput: Tensor[T]): Tensor[T] = {
