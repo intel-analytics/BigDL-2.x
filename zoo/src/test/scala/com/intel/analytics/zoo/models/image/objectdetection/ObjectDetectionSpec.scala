@@ -91,6 +91,16 @@ class ObjectDetectionSpec extends FlatSpec with Matchers with BeforeAndAfter {
 
     "rm -rf ./ssd2.model" !!
   }
+
+  "ObjectDetector model" should "be able to work with png" in {
+    val resource = getClass.getClassLoader.getResource("png/")
+    val data = ImageSet.read(resource.getFile, sc, 1)
+    val model = ObjectDetector.loadModel[Float]("./ssd.model")
+    val output = model.predictImageSet(data)
+    output.toDistributed().rdd.collect()
+
+    "rm -rf ./ssd.model" !!
+  }
 }
 
 class ObjectDetectorSerialTest extends ModuleSerializationTest {

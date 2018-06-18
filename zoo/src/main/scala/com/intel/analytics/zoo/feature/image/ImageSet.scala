@@ -146,7 +146,7 @@ object ImageSet {
       }
       ImageSet.array(images)
     }
-    if (resizeW == -1 && resizeH == -1) {
+    if (resizeW == -1 || resizeH == -1) {
       imageSet -> ImageBytesToMat()
     } else {
       imageSet -> BufferedImageResize(resizeH, resizeW) -> ImageBytesToMat()
