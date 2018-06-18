@@ -18,8 +18,11 @@ package com.intel.analytics.zoo.feature
 import com.intel.analytics.zoo.common.NNContext
 import com.intel.analytics.zoo.feature.common.{BigDLAdapter, Preprocessing}
 import com.intel.analytics.zoo.feature.image.{ImageBytesToMat, ImageResize, ImageSet}
+
 import org.apache.spark.{SparkConf, SparkContext}
+
 import org.opencv.imgcodecs.Imgcodecs
+
 import org.scalatest.{BeforeAndAfter, FlatSpec, Matchers}
 
 

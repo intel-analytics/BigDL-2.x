@@ -18,7 +18,8 @@ package com.intel.analytics.zoo.feature.image
 
 import com.intel.analytics.bigdl.opencv.OpenCV
 import com.intel.analytics.bigdl.transform.vision.image.opencv.OpenCVMat
-import org.opencv.core.{CvType, Mat, MatOfByte}
+
+import org.opencv.core.{Mat, MatOfByte}
 import org.opencv.imgcodecs.Imgcodecs
 
 private[zoo] object ZooOpenCVMat {
@@ -28,7 +29,7 @@ private[zoo] object ZooOpenCVMat {
    * convert image file in bytes to opencv mat with BGR
    *
    * @param fileContent bytes from an image file
-   * @param flags flags specifying the color type of a loaded image, same as in OpenCV.imread.
+   * @param flags specifying the color type of a loaded image, same as in OpenCV.imread.
    *              By default is Imgcodecs.CV_LOAD_IMAGE_COLOR and returns a 3-channel color image
    * @return opencv mat
    */

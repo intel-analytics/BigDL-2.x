@@ -15,15 +15,17 @@
  */
 package com.intel.analytics.zoo.feature.image
 
+import org.apache.log4j.Logger
+
 import com.intel.analytics.bigdl.transform.vision.image.ImageFeature
 import com.intel.analytics.bigdl.transform.vision.image.opencv.OpenCVMat
-import org.apache.log4j.Logger
+
 import org.opencv.imgcodecs.Imgcodecs
 
 /**
  * Transform byte array(original image file in byte) to OpenCVMat
  * @param byteKey key that maps byte array
- * @param flags flags specifying the color type of a loaded image, same as in OpenCV.imread.
+ * @param flags specifying the color type of a loaded image, same as in OpenCV.imread.
  *              By default is Imgcodecs.CV_LOAD_IMAGE_COLOR and returns a 3-channel color image
  */
 class ImageBytesToMat(byteKey: String = ImageFeature.bytes,
