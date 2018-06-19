@@ -40,8 +40,8 @@ object CustomLoss {
       yTrueShape: Shape = null,
       sizeAverage: Boolean = true)(
       implicit ev: TensorNumeric[T]): TensorCriterion[T] = {
-    val yTrue = Variable(yPredShape)
-    val yPred = Variable(if (null == yTrueShape) {yPredShape} else {yTrueShape})
+    val yTrue = Variable(if (null == yTrueShape) {yPredShape} else {yTrueShape})
+    val yPred = Variable(yPredShape)
     val lossVar = lossFunc (yTrue, yPred)
     new CustomLossWithVariable[T](Array(yTrue, yPred), lossVar)
   }

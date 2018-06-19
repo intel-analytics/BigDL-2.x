@@ -406,8 +406,8 @@ class CustomLoss(kbase.ZooKerasCreator):
         i.e input_shape=[3], then the feeding data would be [None, 3]
         """
 
-        y_real = Variable(input_shape=y_pred_shape)
-        y_pred = Variable(input_shape=y_true_shape if y_true_shape else y_pred_shape)
+        y_real = Variable(input_shape=y_true_shape if y_true_shape else y_pred_shape)
+        y_pred = Variable(input_shape=y_pred_shape)
         loss_var = loss_func(y_real, y_pred)
         super(CustomLoss, self).__init__(None, "float", [y_real, y_pred], loss_var)
 
