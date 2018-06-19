@@ -55,6 +55,18 @@ class TestNNImageReader():
         assert first_row[4] == 16
         assert len(first_row[5]) == 95959
 
+    def test_transform_pascal_image(self):
+        image_path = os.path.join(self.resource_path, "pascal/000025.jpg")
+        data = self.sc.parallelize([
+            (1, image_path)
+        ])
+        schema = StructType([
+            StructField("id", IntType()),
+            StructField("path", StringType())])
+        df = self.sqlContext.createDataFrame(data, schema)
+        imageDF = NNImageReader().transform(df)
+        assert (imageDF.count == 3)
+
     def test_read_image_withOriginColumn(self):
         image_path = os.path.join(self.resource_path, "pascal/000025.jpg")
         image_frame = NNImageReader.readImages(image_path, self.sc)

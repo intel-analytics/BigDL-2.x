@@ -16,17 +16,26 @@
 
 import sys
 from bigdl.util.common import callBigDlFunc
+from pyspark.ml.param.shared import *
+from pyspark.ml.wrapper import JavaModel, JavaEstimator, JavaTransformer
 
 if sys.version >= '3':
     long = int
     unicode = str
 
 
-class NNImageReader:
+class NNImageReader(JavaTransformer, HasInputCol, HasOutputCol, JavaValue):
     """
     Primary DataFrame-based image loading interface, defining API to read images from files
     to DataFrame.
     """
+
+    def __init__(self,  jvalue=None, bigdl_type="float"):
+        super(NNImageReader, self).__init__()
+        self.value = jvalue if jvalue else callBigDlFunc(
+            bigdl_type, self.jvm_class_constructor())
+        self._java_obj = self.value
+        self.bigdl_type = bigdl_type
 
     @staticmethod
     def readImages(path, sc=None, minPartitions=1, resizeH=-1, resizeW=-1, bigdl_type="float"):
