@@ -400,7 +400,9 @@ class CustomLoss(kbase.ZooKerasCreator):
     def __init__(self, loss_func, y_pred_shape, y_true_shape=None):
         """
         :param loss_func: a function which accept y_true and y_pred
-        :param y_pred_shape: a shape without batch dim.
+        :param y_pred_shape: The pred shape without batch dim.
+        :param y_true_shape: The target shape without batch dim.
+               It should be the same as y_pred_shape by default.
         i.e input_shape=[3], then the feeding data would be [None, 3]
         """
 

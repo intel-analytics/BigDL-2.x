@@ -30,7 +30,7 @@ object CustomLoss {
    *
    * @param lossFunc function to calculate the loss (yTrue, yPred) => loss
    * @param yPredShape the pred shape without batch
-   * @param yTrueShape the target shape without batch
+   * @param yTrueShape the target shape without batch which is the same as yPredShape by default.
    * @param sizeAverage average the batch result or not
    * @return
    */
