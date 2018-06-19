@@ -29,17 +29,19 @@ object CustomLoss {
   /**
    *
    * @param lossFunc function to calculate the loss (yTrue, yPred) => loss
-   * @param shape the target shape without batch
+   * @param yPredShape the pred shape without batch
+   * @param yTrueShape the target shape without batch
    * @param sizeAverage average the batch result or not
    * @return
    */
   def apply[T: ClassTag](
       lossFunc: (Variable[T], Variable[T]) => Variable[T],
-      shape: Shape,
+      yPredShape: Shape,
+      yTrueShape: Shape = null,
       sizeAverage: Boolean = true)(
       implicit ev: TensorNumeric[T]): TensorCriterion[T] = {
-    val yTrue = Variable(shape)
-    val yPred = Variable(shape)
+    val yTrue = Variable(yPredShape)
+    val yPred = Variable(if (null == yTrueShape) {yPredShape} else {yTrueShape})
     val lossVar = lossFunc (yTrue, yPred)
     new CustomLossWithVariable[T](Array(yTrue, yPred), lossVar)
   }
