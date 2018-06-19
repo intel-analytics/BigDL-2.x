@@ -49,7 +49,7 @@ class Test_Image_Set():
         images.count()
 
     def test_get_image(self):
-        image_set = ImageSet.read(self.image_path)
+        image_set = ImageSet.read(self.image_path, resize_height=128, resize_width=128)
         image_set.get_image()
 
     def test_get_label(self):
