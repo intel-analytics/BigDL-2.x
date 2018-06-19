@@ -33,6 +33,7 @@ class TestNNImageReader():
         """
         sparkConf = create_spark_conf().setMaster("local[1]").setAppName("TestNNImageReader")
         self.sc = init_nncontext(sparkConf)
+        self.sqlContext = SQLContext(self.sc)
         self.resource_path = os.path.join(os.path.split(__file__)[0], "../../resources")
 
     def teardown_method(self, method):
@@ -61,11 +62,20 @@ class TestNNImageReader():
             (1, image_path)
         ])
         schema = StructType([
-            StructField("id", IntType()),
+            StructField("id", IntegerType()),
             StructField("path", StringType())])
         df = self.sqlContext.createDataFrame(data, schema)
-        imageDF = NNImageReader().transform(df)
-        assert (imageDF.count == 3)
+        imageDF = NNImageReader().setInputCol("path").setOutputCol("image").transform(df)
+
+        assert (imageDF.count() == 1)
+
+        first_row = imageDF.select("image").take(1)[0][0]
+        assert first_row[0].endswith("pascal/000025.jpg")
+        assert first_row[1] == 375
+        assert first_row[2] == 500
+        assert first_row[3] == 3
+        assert first_row[4] == 16
+        assert len(first_row[5]) == 95959
 
     def test_read_image_withOriginColumn(self):
         image_path = os.path.join(self.resource_path, "pascal/000025.jpg")

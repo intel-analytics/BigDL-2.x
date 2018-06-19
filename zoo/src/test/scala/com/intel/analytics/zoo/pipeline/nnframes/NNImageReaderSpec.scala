@@ -85,6 +85,7 @@ class NNImageReaderSpec extends FlatSpec with Matchers with BeforeAndAfter {
     )).toDF("id", "path")
     val imageDF = new NNImageReader().setInputCol("path").setOutputCol("image")
       .transform(pathDF)
+    imageDF.show()
     assert(imageDF.count() == 3)
     val expectedRows = Seq(
       (imageDirectory + "n02110063_8651.JPEG", 99, 129, 3, CvType.CV_8UC3),

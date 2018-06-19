@@ -180,6 +180,11 @@ object NNImageReader {
 
 }
 
+/**
+ * A Spark Transformer that read images from path specified in the input column.
+ * Expected input column should be String type, and each record represents the path to the image.
+ *
+ */
 class NNImageReader (override val uid: String) extends UnaryTransformer[String, Row, NNImageReader] {
 
   def this() = this(Identifiable.randomUID("NNImageReader"))

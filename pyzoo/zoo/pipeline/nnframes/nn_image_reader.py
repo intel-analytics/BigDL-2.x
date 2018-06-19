@@ -15,7 +15,7 @@
 #
 
 import sys
-from bigdl.util.common import callBigDlFunc
+from bigdl.util.common import *
 from pyspark.ml.param.shared import *
 from pyspark.ml.wrapper import JavaModel, JavaEstimator, JavaTransformer
 
