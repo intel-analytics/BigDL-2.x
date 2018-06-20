@@ -23,11 +23,12 @@ import com.intel.analytics.bigdl.utils.Shape
 import com.intel.analytics.zoo.pipeline.api.keras.models.Sequential
 import com.intel.analytics.zoo.pipeline.api.keras.serializer.ModuleSerializationTest
 import com.intel.analytics.zoo.pipeline.api.keras.layers.KerasBaseSpec
+import com.intel.analytics.zoo.pipeline.api.keras.layers.Keras2Test
 import scala.util.Random
 
 class GlobalAveragePooling1DSpec extends KerasBaseSpec{
 
-  "GlobalAveragePooling1D" should "be the same as Keras" in {
+  "GlobalAveragePooling1D" should "be the same as Keras" taggedAs(Keras2Test) in {
     val kerasCode =
       """
         |input_tensor = Input(shape=[3, 24])
