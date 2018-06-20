@@ -31,6 +31,7 @@ class TestNeuralCF(ZooTestCase):
 
     def test_forward_backward_without_mf(self):
         model = NeuralCF(30, 12, 2, include_mf=False)
+        model.summary()
         input_data = np.random.randint(10, size=(10, 2))
         self.assert_forward_backward(model, input_data)
 

@@ -18,11 +18,13 @@ package com.intel.analytics.zoo.pipeline.nnframes
 
 import com.intel.analytics.bigdl.tensor.{Storage, Tensor}
 import com.intel.analytics.bigdl.transform.vision.image.{BytesToMat, ImageFeature, ImageFrame}
+import com.intel.analytics.zoo.feature.image.ImageSet
 import org.apache.spark.SparkContext
 import org.apache.spark.sql.functions._
 import org.apache.spark.sql.types._
 import org.apache.spark.sql.{DataFrame, Row, SQLContext}
 import org.opencv.core.CvType
+
 import scala.language.existentials
 
 /**
@@ -156,12 +158,15 @@ object NNImageReader {
    * @param sc SparkContext to be used.
    * @param minPartitions Number of the DataFrame partitions,
    *                      if omitted uses defaultParallelism instead
+   * @param resizeH height after resize, by default is -1 which will not resize the image
+   * @param resizeW width after resize, by default is -1 which will not resize the image
    * @return DataFrame with a single column "image" of images;
    *         see DLImageSchema.byteSchema for the details
    */
-  def readImages(path: String, sc: SparkContext, minPartitions: Int = 1): DataFrame = {
-    val imageFrame = ImageFrame.read(path, sc, minPartitions)
-    val rowRDD = imageFrame.toDistributed().rdd.map { imf =>
+  def readImages(path: String, sc: SparkContext, minPartitions: Int = 1,
+                 resizeH: Int = -1, resizeW: Int = -1): DataFrame = {
+    val imageSet = ImageSet.read(path, sc, minPartitions, resizeH, resizeW)
+    val rowRDD = imageSet.toDistributed().rdd.map { imf =>
       Row(NNImageSchema.imf2Row(imf))
     }
     SQLContext.getOrCreate(sc).createDataFrame(rowRDD, imageColumnSchema)

@@ -164,7 +164,7 @@ object TextClassification {
       val conf = new SparkConf()
         .setAppName("Text Classification Example")
         .set("spark.task.maxFailures", "1")
-      val sc = NNContext.getNNContext(conf)
+      val sc = NNContext.initNNContext(conf)
 
       val sequenceLength = param.sequenceLength
       val tokenLength = param.tokenLength

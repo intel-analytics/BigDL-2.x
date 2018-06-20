@@ -3,10 +3,18 @@
 
 Before using scripts, two environment variables should be set.
 
+* If you download Analytics Zoo from the [Release Page](../docs/docs/release-download.md):
+```bash
+export SPARK_HOME=the root directory of Spark
+export ANALYTICS_ZOO_HOME=the path where you extract the analytics-zoo package
+```
+
+* If you build Analytics Zoo by yourself:
 ```bash
 export SPARK_HOME=the root directory of Spark
 export ANALYTICS_ZOO_HOME=the dist directory of Analytics Zoo
 ```
+
 The ```dist``` directory can be found in following hierarchy after you build Analytics Zoo.
 
 ```

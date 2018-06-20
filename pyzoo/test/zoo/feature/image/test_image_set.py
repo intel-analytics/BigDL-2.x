@@ -27,8 +27,8 @@ class Test_Image_Set():
         """ setup any state tied to the execution of the given method in a
         class.  setup_method is invoked for every test method of a class.
         """
-        self.sc = get_nncontext(create_spark_conf().setMaster("local[4]")
-                                .setAppName("test image set"))
+        self.sc = init_nncontext(create_spark_conf().setMaster("local[4]")
+                                 .setAppName("test image set"))
         resource_path = os.path.join(os.path.split(__file__)[0], "../../resources")
         self.image_path = os.path.join(resource_path, "pascal/000025.jpg")
 
@@ -49,7 +49,7 @@ class Test_Image_Set():
         images.count()
 
     def test_get_image(self):
-        image_set = ImageSet.read(self.image_path)
+        image_set = ImageSet.read(self.image_path, resize_height=128, resize_width=128)
         image_set.get_image()
 
     def test_get_label(self):

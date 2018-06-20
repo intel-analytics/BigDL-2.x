@@ -17,10 +17,10 @@
 import argparse
 import cv2
 
-from zoo.common.nncontext import get_nncontext
+from zoo.common.nncontext import init_nncontext
 from zoo.models.image.objectdetection import *
 
-sc = get_nncontext(create_spark_conf().setAppName("Object Detection Example"))
+sc = init_nncontext(create_spark_conf().setAppName("Object Detection Example"))
 
 parser = argparse.ArgumentParser()
 parser.add_argument('model_path', help="Path where the model is stored")

@@ -43,8 +43,9 @@ object PythonNNFrames {
 
 class PythonNNFrames[T: ClassTag](implicit ev: TensorNumeric[T]) extends PythonBigDL[T] {
 
-  def nnReadImage(path: String, sc: JavaSparkContext, minParitions: Int): DataFrame = {
-    NNImageReader.readImages(path, sc.sc, minParitions)
+  def nnReadImage(path: String, sc: JavaSparkContext, minParitions: Int,
+                  resizeH: Int, resizeW: Int): DataFrame = {
+    NNImageReader.readImages(path, sc.sc, minParitions, resizeH, resizeW)
   }
 
   def createNNEstimator(
@@ -180,15 +181,15 @@ class PythonNNFrames[T: ClassTag](implicit ev: TensorNumeric[T]) extends PythonB
   }
 
   def nnEstimatorSetConstantGradientClipping(
-    estimator: NNEstimator[T],
-    min: Float,
-    max: Float): Unit = {
+      estimator: NNEstimator[T],
+      min: Float,
+      max: Float): Unit = {
     estimator.setConstantGradientClipping(min, max)
   }
 
   def nnEstimatorSetGradientClippingByL2Norm(
-    estimator: NNEstimator[T],
-    clipNorm: Float): Unit = {
+      estimator: NNEstimator[T],
+      clipNorm: Float): Unit = {
     estimator.setGradientClippingByL2Norm(clipNorm)
   }
 }
