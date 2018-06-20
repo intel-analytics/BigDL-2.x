@@ -13,6 +13,55 @@ chmod +x ${ANALYTICS_ZOO_HOME}/apps/ipynb2py.sh
 
 set -e
 
+echo "#10 start app test for dogs-vs-cats"
+#timer
+start=$(date "+%s")
+
+${ANALYTICS_ZOO_HOME}/apps/ipynb2py.sh ${ANALYTICS_ZOO_HOME}/apps/dogs-vs-cats/transfer-learning
+FILENAME="${ANALYTICS_ZOO_HOME}/apps/dogs-vs-cats/bigdl_inception-v1_imagenet_0.4.0.model"
+if [ -f "$FILENAME" ]
+then
+   echo "$FILENAME already exists."
+else
+   echo "Downloading model"
+   wget https://s3-ap-southeast-1.amazonaws.com/bigdl-models/imageclassification/imagenet/bigdl_inception-v1_imagenet_0.4.0.model -P ${ANALYTICS_ZOO_HOME}/apps/dogs-vs-cats
+
+   echo "Finished downloading model"
+fi
+
+FILENAME="${ANALYTICS_ZOO_HOME}/apps/dogs-vs-cats/train.zip"
+if [ -f "$FILENAME" ]
+then
+   echo "$FILENAME already exists."
+else
+   echo "Downloading dogs and cats images"
+   wget  $FTP_URI/analytics-zoo-data/data/dogs-vs-cats/train.zip  -P ${ANALYTICS_ZOO_HOME}/apps/dogs-vs-cats
+   unzip -d ${ANALYTICS_ZOO_HOME}/apps/dogs-vs-cats/ ${ANALYTICS_ZOO_HOME}/apps/dogs-vs-cats/train.zip
+   mkdir -p demo/dogs
+   mkdir -p demo/cats
+   cp ${ANALYTICS_ZOO_HOME}/apps/dogs-vs-cats/train/cat.7* demo/cats
+   cp ${ANALYTICS_ZOO_HOME}/apps/dogs-vs-cats/train/dog.7* demo/dogs
+   echo "Finished downloadi images"
+fi
+${SPARK_HOME}/bin/spark-submit \
+        --master ${MASTER} \
+        --driver-cores 2  \
+        --driver-memory 12g  \
+        --total-executor-cores 2  \
+        --executor-cores 2  \
+        --executor-memory 12g \
+        --conf spark.akka.frameSize=64 \
+        --py-files ${ANALYTICS_ZOO_PYZIP},${ANALYTICS_ZOO_HOME}/apps/dogs-vs-cats/transfer-learning.py  \
+        --properties-file ${ANALYTICS_ZOO_CONF} \
+        --jars ${ANALYTICS_ZOO_JAR} \
+        --conf spark.driver.extraClassPath=${ANALYTICS_ZOO_JAR} \
+        --conf spark.executor.extraClassPath=${ANALYTICS_ZOO_JAR} \
+        ${ANALYTICS_ZOO_HOME}/apps/dogs-vs-cats/transfer-learning.py
+
+now=$(date "+%s")
+time10=$((now-start))
+echo "#10 dogs-vs-cats time used:$time10 seconds"
+
 echo "#1 start app test for anomaly-detection-nyc-taxi"
 #timer
 start=$(date "+%s")
@@ -284,3 +333,4 @@ echo "#6 using_variational_autoencoder_to_generate_faces time used:$time6 second
 echo "#7 using_variational_autoencoder_to_generate_digital_numbers time used:$time7 seconds"
 echo "#8 sentimentAnalysis time used:$time8 seconds"
 echo "#9 image-augmentation time used:$time9 seconds"
+echo "#10 dogs-vs-cats time used:$time10 seconds"
