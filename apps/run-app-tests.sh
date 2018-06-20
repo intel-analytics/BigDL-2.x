@@ -18,6 +18,8 @@ echo "#10 start app test for dogs-vs-cats"
 start=$(date "+%s")
 
 ${ANALYTICS_ZOO_HOME}/apps/ipynb2py.sh ${ANALYTICS_ZOO_HOME}/apps/dogs-vs-cats/transfer-learning
+sed "/s/file://path/to/data/dogs-vs-cats/demo/file:///path/to/data/dogs-vs-cats/demo/g" ${ANALYTICS_ZOO_HOME}/apps/dogs-vs-cats/transfer-learning.py >${ANALYTICS_ZOO_HOME}/apps/dogs-vs-cats/tmp.py
+
 FILENAME="${ANALYTICS_ZOO_HOME}/apps/dogs-vs-cats/bigdl_inception-v1_imagenet_0.4.0.model"
 if [ -f "$FILENAME" ]
 then
@@ -52,15 +54,16 @@ ${SPARK_HOME}/bin/spark-submit \
         --executor-cores 2  \
         --executor-memory 12g \
         --conf spark.akka.frameSize=64 \
-        --py-files ${ANALYTICS_ZOO_PYZIP},${ANALYTICS_ZOO_HOME}/apps/dogs-vs-cats/transfer-learning.py  \
+        --py-files ${ANALYTICS_ZOO_PYZIP},${ANALYTICS_ZOO_HOME}/apps/dogs-vs-cats/tmp.py  \
         --properties-file ${ANALYTICS_ZOO_CONF} \
         --jars ${ANALYTICS_ZOO_JAR} \
         --conf spark.driver.extraClassPath=${ANALYTICS_ZOO_JAR} \
         --conf spark.executor.extraClassPath=${ANALYTICS_ZOO_JAR} \
-        ${ANALYTICS_ZOO_HOME}/apps/dogs-vs-cats/transfer-learning.py
+        ${ANALYTICS_ZOO_HOME}/apps/dogs-vs-cats/tmp.py
 
 now=$(date "+%s")
 time10=$((now-start))
+rm ${ANALYTICS_ZOO_HOME}/apps/dogs-vs-cats/tmp.py
 echo "#10 dogs-vs-cats time used:$time10 seconds"
 
 echo "#1 start app test for anomaly-detection-nyc-taxi"
