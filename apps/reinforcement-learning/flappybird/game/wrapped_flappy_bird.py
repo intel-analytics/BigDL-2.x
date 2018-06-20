@@ -23,7 +23,6 @@ def load():
     PIPE_PATH = work_space+'/assets/sprites/pipe-green.png'
 
     IMAGES, HITMASKS = {}, {}
-
     # numbers sprites for score display
     IMAGES['numbers'] = (
         pygame.image.load(work_space+'/assets/sprites/0.png').convert_alpha(),

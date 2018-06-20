@@ -12,6 +12,7 @@ import os
 work_space = os.path.dirname(os.path.abspath(__file__))
 sys.path.append(work_space+"/game/")
 import wrapped_flappy_bird as game
+from bigdl.nn.layer import Model
 import random
 import numpy as np
 from collections import deque
@@ -90,18 +91,7 @@ def trainNetwork(model, args):
         OBSERVE = 999999999  # We keep observe, never train
         epsilon = FINAL_EPSILON
         print("Now we load weight")
-        print (BASE_PATH +"/model_gpu_1540000.h5")
-        print (BASE_PATH + "/gpu_keras1_2_model.json")
-        # model = Model.load_keras(json_path="/gpu_keras1_2_model.json",hdf5_path="/model_gpu_1540000.h5")
-
-
-        # set weights
-
-        # load_mode
-        model=Net.load_keras("file:///"+BASE_PATH+"/cpu_300000_arda_model.json")
-        # ,"file:///"+BASE_PATH+"/model_gpu_1540000.h5"
-        # model.load_keras(BASE_PATH+ "/gpu_keras1_2_model.json",BASE_PATH +"/model_gpu_1540000.h5")
-        model.compile(loss='mse', optimizer="adam")
+        model = Model.load_keras(json_path=None, hdf5_path="./model/model100000.h5")
         print("Weight load successfully")
     else:  # We go to training mode
         OBSERVE = OBSERVATION
