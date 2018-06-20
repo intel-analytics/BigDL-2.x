@@ -28,7 +28,7 @@ then
 else
    echo "Downloading model"
 
-   wget $FTP_URI/analytics-zoo-models/image-classification/bigdl_inception-v1_imagenet_0.4.0.model -P ${ANALYTICS_ZOO_HOME}/demo
+   wget $FTP_URI/analytics-zoo-models/image-classification/bigdl_inception-v1_imagenet_0.4.0.model -P demo
 
    echo "Finished downloading model"
 fi
