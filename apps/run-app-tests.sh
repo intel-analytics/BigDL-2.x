@@ -18,7 +18,8 @@ echo "#10 start app test for dogs-vs-cats"
 start=$(date "+%s")
 
 ${ANALYTICS_ZOO_HOME}/apps/ipynb2py.sh ${ANALYTICS_ZOO_HOME}/apps/dogs-vs-cats/transfer-learning
-sed "s/file:\/\/path\/to/file:\/\/\/path\/to/g" ${ANALYTICS_ZOO_HOME}/apps/dogs-vs-cats/transfer-learning.py >${ANALYTICS_ZOO_HOME}/apps/dogs-vs-cats/tmp.py
+
+sed "s/file:\/\/path\/to\/data\/dogs-vs-cats\/demo/demo/g;s/path\/to\/model\/bigdl_inception-v1_imagenet_0.4.0.model/demo\/bigdl_inception-v1_imagenet_0.4.0.model/g" ${ANALYTICS_ZOO_HOME}/apps/dogs-vs-cats/transfer-learning.py >${ANALYTICS_ZOO_HOME}/apps/dogs-vs-cats/tmp.py
 
 FILENAME="${ANALYTICS_ZOO_HOME}/apps/dogs-vs-cats/bigdl_inception-v1_imagenet_0.4.0.model"
 if [ -f "$FILENAME" ]
@@ -27,7 +28,7 @@ then
 else
    echo "Downloading model"
 
-   wget $FTP_URI/analytics-zoo-models/image-classification/bigdl_inception-v1_imagenet_0.4.0.model -P ${ANALYTICS_ZOO_HOME}/apps/dogs-vs-cats
+   wget $FTP_URI/analytics-zoo-models/image-classification/bigdl_inception-v1_imagenet_0.4.0.model -P ${ANALYTICS_ZOO_HOME}/demo
 
    echo "Finished downloading model"
 fi
