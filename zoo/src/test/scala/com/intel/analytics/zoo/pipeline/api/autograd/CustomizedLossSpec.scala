@@ -63,8 +63,8 @@ class CustomizedLossSpec extends KerasBaseSpec {
       A.mean(yPred - yTrue * A.log(yPred + A.epsilon()), axis = 1)
     }
     val targetShape = Shape(6, 7)
-    val loss = CustomLoss[Float](poisson[Float], KerasUtils.removeBatch(targetShape))
-    val poissonLoss =
+    val loss = CustomLoss[Float](poisson[Float], yPredShape = KerasUtils.removeBatch(targetShape),
+      yTrueShape = KerasUtils.removeBatch(targetShape))
       compareLossesWithTorch(loss, PoissonCriterion[Float](), targetShape)
   }
 
