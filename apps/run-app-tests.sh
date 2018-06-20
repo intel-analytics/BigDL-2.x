@@ -24,7 +24,8 @@ then
    echo "$FILENAME already exists."
 else
    echo "Downloading model"
-   wget https://s3-ap-southeast-1.amazonaws.com/bigdl-models/imageclassification/imagenet/bigdl_inception-v1_imagenet_0.4.0.model -P ${ANALYTICS_ZOO_HOME}/apps/dogs-vs-cats
+
+   wget $FTP_URI/analytics-zoo-models/image-classification/bigdl_inception-v1_imagenet_0.4.0.model -P ${ANALYTICS_ZOO_HOME}/apps/dogs-vs-cats
 
    echo "Finished downloading model"
 fi
@@ -41,7 +42,7 @@ else
    mkdir -p demo/cats
    cp ${ANALYTICS_ZOO_HOME}/apps/dogs-vs-cats/train/cat.7* demo/cats
    cp ${ANALYTICS_ZOO_HOME}/apps/dogs-vs-cats/train/dog.7* demo/dogs
-   echo "Finished downloadi images"
+   echo "Finished downloading images"
 fi
 ${SPARK_HOME}/bin/spark-submit \
         --master ${MASTER} \
