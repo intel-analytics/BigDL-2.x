@@ -69,7 +69,7 @@ def stack(inputs, axis=1):
     Stacks a list of rank `R` tensors into a rank `R+1` tensor.
     You should start from 1 as dim 0 is for batch.
     :param inputs: List of variables (tensors).
-    :param axis: xis along which to perform stacking.
+    :param axis: axis along which to perform stacking.
     :return:
     """
     return Variable.from_jvalue(callBigDlFunc("float", "stack", inputs, axis))
