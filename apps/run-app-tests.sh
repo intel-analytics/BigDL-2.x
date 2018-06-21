@@ -12,6 +12,7 @@ export PYTHONPATH=${ANALYTICS_ZOO_PYZIP}:$PYTHONPATH
 
 chmod +x ./apps/ipynb2py.sh
 
+set -e
 
 echo "#1 start app test for anomaly-detection-nyc-taxi"
 #timer
@@ -37,8 +38,7 @@ ${SPARK_HOME}/bin/spark-submit \
         --conf spark.executor.extraClassPath=${ANALYTICS_ZOO_JAR} \
         ${ANALYTICS_ZOO_HOME}/apps/anomaly-detection/anomaly-detection-nyc-taxi.py
 now=$(date "+%s")
-time=$((now-start))
-echo "#1 anomaly-detection-nyc-taxi time used:$time seconds"
+time1=$((now-start))
 
 echo "#2 start app test for object-detection"
 #timer
@@ -87,8 +87,7 @@ ${SPARK_HOME}/bin/spark-submit \
         --conf spark.executor.extraClassPath=${ANALYTICS_ZOO_JAR} \
         ${ANALYTICS_ZOO_HOME}/apps/object-detection/object-detection.py
 now=$(date "+%s")
-time=$((now-start))
-echo "#2 object-detection time used:$time seconds"
+time2=$((now-start))
 
 echo "#3 start app test for ncf-explicit-feedback"
 #timer
@@ -110,8 +109,7 @@ ${SPARK_HOME}/bin/spark-submit \
         --conf spark.executor.extraClassPath=${ANALYTICS_ZOO_JAR} \
         ${ANALYTICS_ZOO_HOME}/apps/recommendation/ncf-explicit-feedback.py
 now=$(date "+%s")
-time=$((now-start))
-echo "#3 ncf-explicit-feedback time used:$time seconds"
+time3=$((now-start))
 
 echo "#4 start app test for wide_n_deep"
 #timer
@@ -133,8 +131,7 @@ ${SPARK_HOME}/bin/spark-submit \
         --conf spark.executor.extraClassPath=${ANALYTICS_ZOO_JAR} \
         ${ANALYTICS_ZOO_HOME}/apps/recommendation/wide_n_deep.py
 now=$(date "+%s")
-time=$((now-start))
-echo "#4 wide_n_deep time used:$time seconds"
+time4=$((now-start))
 
 echo "#5 start app test for using_variational_autoencoder_and_deep_feature_loss_to_generate_faces"
 #timer
@@ -178,8 +175,7 @@ ${SPARK_HOME}/bin/spark-submit \
         --conf spark.executor.extraClassPath=${ANALYTICS_ZOO_JAR} \
         ${ANALYTICS_ZOO_HOME}/apps/variational-autoencoder/using_variational_autoencoder_and_deep_feature_loss_to_generate_faces.py
 now=$(date "+%s")
-time=$((now-start))
-echo "#5 using_variational_autoencoder_and_deep_feature_loss_to_generate_faces time used:$time seconds"
+time5=$((now-start))
 
 echo "#6 start app test for using_variational_autoencoder_to_generate_faces"
 #timer
@@ -213,9 +209,8 @@ ${SPARK_HOME}/bin/spark-submit \
         --conf spark.executor.extraClassPath=${ANALYTICS_ZOO_JAR} \
         ${ANALYTICS_ZOO_HOME}/apps/variational-autoencoder/using_variational_autoencoder_to_generate_faces.py
 now=$(date "+%s")
-time=$((now-start))
-echo "#6 using_variational_autoencoder_to_generate_faces time used:$time seconds"                           
-        
+time6=$((now-start))
+
 echo "#7 start app test for using_variational_autoencoder_to_generate_digital_numbers"
 #timer
 start=$(date "+%s")
@@ -236,8 +231,7 @@ ${SPARK_HOME}/bin/spark-submit \
         --conf spark.executor.extraClassPath=${ANALYTICS_ZOO_JAR} \
         ${ANALYTICS_ZOO_HOME}/apps/variational-autoencoder/using_variational_autoencoder_to_generate_digital_numbers.py
 now=$(date "+%s")
-time=$((now-start))
-echo "#7 using_variational_autoencoder_to_generate_digital_numbers time used:$time seconds" 
+time7=$((now-start))
 
 echo "#8 start app test for sentiment-analysis"
 #timer
@@ -259,8 +253,8 @@ ${SPARK_HOME}/bin/spark-submit \
         --conf spark.executor.extraClassPath=${ANALYTICS_ZOO_JAR} \
         ${ANALYTICS_ZOO_HOME}/apps/sentiment-analysis/sentiment.py
 now=$(date "+%s")
-time=$((now-start))
-echo "#8 sentimentAnalysis time used:$time seconds" 
+time8=$((now-start))
+
 echo "#9 start app test for image-augmentation"
 #timer
 start=$(date "+%s")
@@ -278,5 +272,14 @@ ${SPARK_HOME}/bin/spark-submit \
         --conf spark.executor.extraClassPath=${ANALYTICS_ZOO_JAR} \
         ${ANALYTICS_ZOO_HOME}/apps/image-augmentation/image-augmentation.py
 now=$(date "+%s")
-time=$((now-start))
-echo "#9 image-augmentation time used:$time seconds" 
+time9=$((now-start))
+
+echo "#1 anomaly-detection-nyc-taxi time used:$time1 seconds"
+echo "#2 object-detection time used:$time2 seconds"
+echo "#3 ncf-explicit-feedback time used:$time3 seconds"
+echo "#4 wide_n_deep time used:$time4 seconds"
+echo "#5 using_variational_autoencoder_and_deep_feature_loss_to_generate_faces time used:$time5 seconds"
+echo "#6 using_variational_autoencoder_to_generate_faces time used:$time6 seconds"
+echo "#7 using_variational_autoencoder_to_generate_digital_numbers time used:$time7 seconds"
+echo "#8 sentimentAnalysis time used:$time8 seconds"
+echo "#9 image-augmentation time used:$time9 seconds"
