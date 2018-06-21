@@ -31,7 +31,8 @@ def predict(model_path, img_path, topN):
     predicts = output.get_predict().collect()
     for predict in predicts:
         (uri, probs) = predict
-        sortedProbs = [(prob, index) for index, prob in enumerate(probs)]
+        print(probs[0].shape)
+        sortedProbs = [(prob, index) for index, prob in enumerate(probs[0])]
         sortedProbs.sort()
         print("Image : %s, top %d prediction result" % (uri, topN))
         for i in range(topN):
