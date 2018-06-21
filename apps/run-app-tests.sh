@@ -247,13 +247,13 @@ echo "#8 start app test for sentiment-analysis"
 start=$(date "+%s")
 ${ANALYTICS_ZOO_HOME}/apps/ipynb2py.sh ${ANALYTICS_ZOO_HOME}/apps/sentiment-analysis/sentiment
 
-FILENAME="${ANALYTICS_ZOO_HOME}/apps/tmp/.bigdl/dataset/glove.6B.zip"
+FILENAME="/tmp/.bigdl/dataset/glove.6B.zip"
 if [ -f "$FILENAME" ]
 then
    echo "$FILENAME already exists."
 else
    echo "Downloading glove6B"
-   wget -P ${ANALYTICS_ZOO_HOME}/apps/apps/tmp/.bigdl/dataset/ $FTP_URI/analytics-zoo-data/data/glove/glove.6B.zip
+   wget -P /tmp/.bigdl/dataset/ $FTP_URI/analytics-zoo-data/data/glove/glove.6B.zip
    echo "Finished"
 fi
 
