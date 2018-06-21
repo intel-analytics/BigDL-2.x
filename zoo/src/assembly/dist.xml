@@ -34,11 +34,4 @@
       </includes>
     </fileSet>
   </fileSets>
-  <files>
-    <file>
-      <source>${project.parent.basedir}/backend/bigdl/spark/dl/src/main/resources/spark-bigdl.conf</source>
-      <outputDirectory>/conf</outputDirectory>
-      <destName>spark-analytics-zoo.conf</destName>
-    </file>
-  </files>
 </assembly>
