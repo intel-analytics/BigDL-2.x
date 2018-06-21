@@ -25,10 +25,7 @@ set -e
 BASEDIR=$(dirname "$0")
 
 # Check bigdl backend
-if [ ! -d $BASEDIR/backend/bigdl ]; then
-   echo "backend/bigdl does not exist. Please try to execute: git submodule update --init --recursive"
-   exit 1
-fi
+git submodule update --init --recursive
 
 # Check spark conf
 if [ ! -f $BASEDIR/backend/bigdl/spark/dl/src/main/resources/spark-bigdl.conf ]; then
@@ -65,6 +62,16 @@ MVN_INSTALL=$(which mvn 2>/dev/null | grep mvn | wc -l)
 if [ $MVN_INSTALL -eq 0 ]; then
   echo "MVN is not installed. Exit"
   exit 1
+fi
+
+args=`echo $*`
+if [[ $args = *"build_backend"* ]]; then
+      echo "Full build!, Let's install bigdl first"
+      command="mvn install -DskipTests $*"
+      echo "Executing: $command"
+      cd backend/bigdl
+      $command
+      cd ../../
 fi
 
 mvn clean package -DskipTests $*

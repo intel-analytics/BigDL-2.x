@@ -25,6 +25,7 @@
         <scalatest.version>2.2.4</scalatest.version>
         <spark.version>2.1.0</spark.version>
         <bigdl.version>0.5.0</bigdl.version>
+        <backend.version>0.0.0</backend.version>
     </properties>
 
     <distributionManagement>
@@ -35,6 +36,21 @@
     </distributionManagement>
 
     <profiles>
+        <profile>
+            <id>build_backend</id>
+            <properties>
+                <bigdl-scope>provided</bigdl-scope>
+            </properties>
+            <dependencies>
+                <dependency>
+                    <groupId>com.intel.analytics.bigdl</groupId>
+                    <artifactId>bigdl</artifactId>
+                    <version>${backend.version}</version>
+                    <scope>compile</scope>
+                </dependency>
+            </dependencies>
+
+        </profile>
         <profile>
             <id>spark_1.6</id>
             <properties>
@@ -228,12 +244,12 @@
             <version>${spark.version}</version>
             <scope>${spark-scope}</scope>
         </dependency>
-        <dependency>
-            <groupId>com.intel.analytics.bigdl</groupId>
-            <artifactId>${bigdl.artifactId}</artifactId>
-            <version>${bigdl.version}</version>
-            <scope>${bigdl-scope}</scope>
-        </dependency>
+        <!--<dependency>-->
+            <!--<groupId>com.intel.analytics.bigdl</groupId>-->
+            <!--<artifactId>spark_bigdl</artifactId>-->
+            <!--<version>${bigdl.version}</version>-->
+            <!--<scope>${bigdl-scope}</scope>-->
+        <!--</dependency>-->
         <dependency>
             <groupId>org.spark-project.spark</groupId>
             <artifactId>unused</artifactId>
