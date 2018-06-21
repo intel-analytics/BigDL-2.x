@@ -117,5 +117,6 @@ class TestLayer(ZooTestCase):
         output = net.forward(np.random.rand(32, 28, 28, 1))
         assert output.shape == (32, 10)
 
+
 if __name__ == "__main__":
     pytest.main([__file__])

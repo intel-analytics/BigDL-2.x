@@ -29,7 +29,7 @@ import com.intel.analytics.bigdl.utils.serializer.ModuleLoader
 import com.intel.analytics.bigdl.utils.tf.{Session, TensorflowLoader}
 import com.intel.analytics.zoo.pipeline.api.autograd.Variable
 import com.intel.analytics.zoo.pipeline.api.keras.models.{KerasNet, Model, Sequential}
-import com.intel.analytics.zoo.pipeline.api.net.GraphNet
+import com.intel.analytics.zoo.pipeline.api.net.{GraphNet, NetUtils}
 
 import scala.reflect.ClassTag
 
@@ -158,6 +158,12 @@ object Net {
     val graph = TensorflowLoader.load(graphFile, inputs, outputs, byteOrder, binFile)
       .asInstanceOf[Graph[T]]
     new GraphNet[T](graph)
+  }
+
+  def loadTF[T: ClassTag](folder: String)
+      (implicit ev: TensorNumeric[T]): GraphNet[T] = {
+    val (model, inputs, outputs) = NetUtils.processTFFolder(folder)
+    loadTF[T](model, NetUtils.removePort(inputs), NetUtils.removePort(outputs))
   }
 
   /**
