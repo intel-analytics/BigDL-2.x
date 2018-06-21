@@ -12,102 +12,6 @@ export PYTHONPATH=${ANALYTICS_ZOO_PYZIP}:$PYTHONPATH
 chmod +x ${ANALYTICS_ZOO_HOME}/apps/ipynb2py.sh
 
 set -e
-echo "#5 start app test for using_variational_autoencoder_and_deep_feature_loss_to_generate_faces"
-#timer
-start=$(date "+%s")
-${ANALYTICS_ZOO_HOME}/apps/ipynb2py.sh ${ANALYTICS_ZOO_HOME}/apps/variational-autoencoder/using_variational_autoencoder_and_deep_feature_loss_to_generate_faces
-
-sed -i "s/data_files\[\:100000\]/data_files\[\:5000\]/g" ${ANALYTICS_ZOO_HOME}/apps/variational-autoencoder/using_variational_autoencoder_and_deep_feature_loss_to_generate_faces.py
-FILENAME="${ANALYTICS_ZOO_HOME}/apps/variational-autoencoder/analytics-zoo_vgg-16_imagenet_0.1.0.model"
-if [ -f "$FILENAME" ]
-then
-   echo "$FILENAME already exists."
-else
-   echo "Downloading VGG model"
-   wget -P ${ANALYTICS_ZOO_HOME}/apps/variational-autoencoder/ ftp://zoo:1234qwer@10.239.47.211/analytics-zoo-data/apps/variational-autoencoder/analytics-zoo_vgg-16_imagenet_0.1.0.model --no-host-directories
-   echo "Finished"
-fi
-
-FILENAME="${ANALYTICS_ZOO_HOME}/apps/variational-autoencoder/img_align_celeba.zip"
-if [ -f "$FILENAME" ]
-then
-   echo "$FILENAME already exists."
-else
-   echo "Downloading celeba images"
-   wget -P ${ANALYTICS_ZOO_HOME}/apps/variational-autoencoder/ ftp://zoo:1234qwer@10.239.47.211/analytics-zoo-data/apps/variational-autoencoder/img_align_celeba.zip --no-host-directories
-   unzip -d ${ANALYTICS_ZOO_HOME}/apps/variational-autoencoder/ ${ANALYTICS_ZOO_HOME}/apps/variational-autoencoder/img_align_celeba.zip
-   echo "Finished"
-fi
-
-${SPARK_HOME}/bin/spark-submit \
-        --master ${MASTER} \
-        --driver-cores 2  \
-        --driver-memory 12g  \
-        --total-executor-cores 2  \
-        --executor-cores 2  \
-        --executor-memory 12g \
-        --conf spark.akka.frameSize=64 \
-        --py-files ${ANALYTICS_ZOO_PYZIP},${ANALYTICS_ZOO_HOME}/apps/variational-autoencoder/using_variational_autoencoder_and_deep_feature_loss_to_generate_faces.py,${ANALYTICS_ZOO_HOME}/apps/variational-autoencoder/utils.py \
-        --properties-file ${ANALYTICS_ZOO_CONF} \
-        --jars ${ANALYTICS_ZOO_JAR} \
-        --conf spark.driver.extraClassPath=${ANALYTICS_ZOO_JAR} \
-        --conf spark.executor.extraClassPath=${ANALYTICS_ZOO_JAR} \
-        ${ANALYTICS_ZOO_HOME}/apps/variational-autoencoder/using_variational_autoencoder_and_deep_feature_loss_to_generate_faces.py
-now=$(date "+%s")
-time5=$((now-start))
-echo "#10 start app test for dogs-vs-cats"
-#timer
-start=$(date "+%s")
-
-${ANALYTICS_ZOO_HOME}/apps/ipynb2py.sh ${ANALYTICS_ZOO_HOME}/apps/dogs-vs-cats/transfer-learning
-
-sed "s/file:\/\/path\/to\/data\/dogs-vs-cats\/demo/demo/g;s/path\/to\/model\/bigdl_inception-v1_imagenet_0.4.0.model/demo\/bigdl_inception-v1_imagenet_0.4.0.model/g" ${ANALYTICS_ZOO_HOME}/apps/dogs-vs-cats/transfer-learning.py >${ANALYTICS_ZOO_HOME}/apps/dogs-vs-cats/tmp.py
-
-FILENAME="${ANALYTICS_ZOO_HOME}/apps/dogs-vs-cats/bigdl_inception-v1_imagenet_0.4.0.model"
-if [ -f "$FILENAME" ]
-then
-   echo "$FILENAME already exists."
-else
-   echo "Downloading model"
-
-   wget $FTP_URI/analytics-zoo-models/image-classification/bigdl_inception-v1_imagenet_0.4.0.model -P demo
-
-   echo "Finished downloading model"
-fi
-
-FILENAME="${ANALYTICS_ZOO_HOME}/apps/dogs-vs-cats/train.zip"
-if [ -f "$FILENAME" ]
-then
-   echo "$FILENAME already exists."
-else
-   echo "Downloading dogs and cats images"
-   wget  $FTP_URI/analytics-zoo-data/data/dogs-vs-cats/train.zip  -P ${ANALYTICS_ZOO_HOME}/apps/dogs-vs-cats
-   unzip -d ${ANALYTICS_ZOO_HOME}/apps/dogs-vs-cats/ ${ANALYTICS_ZOO_HOME}/apps/dogs-vs-cats/train.zip
-   mkdir -p demo/dogs
-   mkdir -p demo/cats
-   cp ${ANALYTICS_ZOO_HOME}/apps/dogs-vs-cats/train/cat.7* demo/cats
-   cp ${ANALYTICS_ZOO_HOME}/apps/dogs-vs-cats/train/dog.7* demo/dogs
-   echo "Finished downloading images"
-fi
-${SPARK_HOME}/bin/spark-submit \
-        --master ${MASTER} \
-        --driver-cores 2  \
-        --driver-memory 12g  \
-        --total-executor-cores 2  \
-        --executor-cores 2  \
-        --executor-memory 12g \
-        --conf spark.akka.frameSize=64 \
-        --py-files ${ANALYTICS_ZOO_PYZIP},${ANALYTICS_ZOO_HOME}/apps/dogs-vs-cats/tmp.py  \
-        --properties-file ${ANALYTICS_ZOO_CONF} \
-        --jars ${ANALYTICS_ZOO_JAR} \
-        --conf spark.driver.extraClassPath=${ANALYTICS_ZOO_JAR} \
-        --conf spark.executor.extraClassPath=${ANALYTICS_ZOO_JAR} \
-        ${ANALYTICS_ZOO_HOME}/apps/dogs-vs-cats/tmp.py
-
-now=$(date "+%s")
-time10=$((now-start))
-rm ${ANALYTICS_ZOO_HOME}/apps/dogs-vs-cats/tmp.py
-echo "#10 dogs-vs-cats time used:$time10 seconds"
 
 echo "#1 start app test for anomaly-detection-nyc-taxi"
 #timer
@@ -166,6 +70,14 @@ then
     echo "$FILENAME already exists"
 else
     wget https://s3.amazonaws.com/analytics-zoo-data/train_dog.mp4 -P ${ANALYTICS_ZOO_HOME}/apps/object-detection/
+fi
+
+FILENAME="${ANALYTICS_ZOO_HOME}/apps/object-detection/ffmpeg-linux64-v3.3.1"
+if [ -f "$FILENAME" ]
+then
+    echo "$FILENAME already exists"
+else
+    wget $FTP_URI/analytics-zoo-data/apps/object-detection/ffmpeg-linux64-v3.3.1 -P ${ANALYTICS_ZOO_HOME}/apps/object-detection/
 fi
 
 ${SPARK_HOME}/bin/spark-submit \
@@ -231,7 +143,49 @@ now=$(date "+%s")
 time4=$((now-start))
 rm ${ANALYTICS_ZOO_HOME}/apps/recommendation/tmp_test.py
 
+echo "#5 start app test for using_variational_autoencoder_and_deep_feature_loss_to_generate_faces"
+#timer
+start=$(date "+%s")
+${ANALYTICS_ZOO_HOME}/apps/ipynb2py.sh ${ANALYTICS_ZOO_HOME}/apps/variational-autoencoder/using_variational_autoencoder_and_deep_feature_loss_to_generate_faces
 
+sed -i "s/data_files\[\:100000\]/data_files\[\:5000\]/g" ${ANALYTICS_ZOO_HOME}/apps/variational-autoencoder/using_variational_autoencoder_and_deep_feature_loss_to_generate_faces.py
+FILENAME="${ANALYTICS_ZOO_HOME}/apps/variational-autoencoder/analytics-zoo_vgg-16_imagenet_0.1.0.model"
+if [ -f "$FILENAME" ]
+then
+   echo "$FILENAME already exists."
+else
+   echo "Downloading VGG model"
+   wget -P ${ANALYTICS_ZOO_HOME}/apps/variational-autoencoder/ ftp://zoo:1234qwer@10.239.47.211/analytics-zoo-data/apps/variational-autoencoder/analytics-zoo_vgg-16_imagenet_0.1.0.model --no-host-directories
+   echo "Finished"
+fi
+
+FILENAME="${ANALYTICS_ZOO_HOME}/apps/variational-autoencoder/img_align_celeba.zip"
+if [ -f "$FILENAME" ]
+then
+   echo "$FILENAME already exists."
+else
+   echo "Downloading celeba images"
+   wget -P ${ANALYTICS_ZOO_HOME}/apps/variational-autoencoder/ ftp://zoo:1234qwer@10.239.47.211/analytics-zoo-data/apps/variational-autoencoder/img_align_celeba.zip --no-host-directories
+   unzip -d ${ANALYTICS_ZOO_HOME}/apps/variational-autoencoder/ ${ANALYTICS_ZOO_HOME}/apps/variational-autoencoder/img_align_celeba.zip
+   echo "Finished"
+fi
+
+${SPARK_HOME}/bin/spark-submit \
+        --master ${MASTER} \
+        --driver-cores 2  \
+        --driver-memory 12g  \
+        --total-executor-cores 2  \
+        --executor-cores 2  \
+        --executor-memory 12g \
+        --conf spark.akka.frameSize=64 \
+        --py-files ${ANALYTICS_ZOO_PYZIP},${ANALYTICS_ZOO_HOME}/apps/variational-autoencoder/using_variational_autoencoder_and_deep_feature_loss_to_generate_faces.py,${ANALYTICS_ZOO_HOME}/apps/variational-autoencoder/utils.py \
+        --properties-file ${ANALYTICS_ZOO_CONF} \
+        --jars ${ANALYTICS_ZOO_JAR} \
+        --conf spark.driver.extraClassPath=${ANALYTICS_ZOO_JAR} \
+        --conf spark.executor.extraClassPath=${ANALYTICS_ZOO_JAR} \
+        ${ANALYTICS_ZOO_HOME}/apps/variational-autoencoder/using_variational_autoencoder_and_deep_feature_loss_to_generate_faces.py
+now=$(date "+%s")
+time5=$((now-start))
 
 echo "#6 start app test for using_variational_autoencoder_to_generate_faces"
 #timer
@@ -338,6 +292,60 @@ ${SPARK_HOME}/bin/spark-submit \
         ${ANALYTICS_ZOO_HOME}/apps/image-augmentation/image-augmentation.py
 now=$(date "+%s")
 time9=$((now-start))
+
+echo "#10 start app test for dogs-vs-cats"
+#timer
+start=$(date "+%s")
+
+${ANALYTICS_ZOO_HOME}/apps/ipynb2py.sh ${ANALYTICS_ZOO_HOME}/apps/dogs-vs-cats/transfer-learning
+
+sed "s/file:\/\/path\/to\/data\/dogs-vs-cats\/demo/demo/g;s/path\/to\/model\/bigdl_inception-v1_imagenet_0.4.0.model/demo\/bigdl_inception-v1_imagenet_0.4.0.model/g" ${ANALYTICS_ZOO_HOME}/apps/dogs-vs-cats/transfer-learning.py >${ANALYTICS_ZOO_HOME}/apps/dogs-vs-cats/tmp.py
+
+FILENAME="${ANALYTICS_ZOO_HOME}/apps/dogs-vs-cats/bigdl_inception-v1_imagenet_0.4.0.model"
+if [ -f "$FILENAME" ]
+then
+   echo "$FILENAME already exists."
+else
+   echo "Downloading model"
+
+   wget $FTP_URI/analytics-zoo-models/image-classification/bigdl_inception-v1_imagenet_0.4.0.model -P demo
+
+   echo "Finished downloading model"
+fi
+
+FILENAME="${ANALYTICS_ZOO_HOME}/apps/dogs-vs-cats/train.zip"
+if [ -f "$FILENAME" ]
+then
+   echo "$FILENAME already exists."
+else
+   echo "Downloading dogs and cats images"
+   wget  $FTP_URI/analytics-zoo-data/data/dogs-vs-cats/train.zip  -P ${ANALYTICS_ZOO_HOME}/apps/dogs-vs-cats
+   unzip -d ${ANALYTICS_ZOO_HOME}/apps/dogs-vs-cats/ ${ANALYTICS_ZOO_HOME}/apps/dogs-vs-cats/train.zip
+   mkdir -p demo/dogs
+   mkdir -p demo/cats
+   cp ${ANALYTICS_ZOO_HOME}/apps/dogs-vs-cats/train/cat.7* demo/cats
+   cp ${ANALYTICS_ZOO_HOME}/apps/dogs-vs-cats/train/dog.7* demo/dogs
+   echo "Finished downloading images"
+fi
+${SPARK_HOME}/bin/spark-submit \
+        --master ${MASTER} \
+        --driver-cores 2  \
+        --driver-memory 12g  \
+        --total-executor-cores 2  \
+        --executor-cores 2  \
+        --executor-memory 12g \
+        --conf spark.akka.frameSize=64 \
+        --py-files ${ANALYTICS_ZOO_PYZIP},${ANALYTICS_ZOO_HOME}/apps/dogs-vs-cats/tmp.py  \
+        --properties-file ${ANALYTICS_ZOO_CONF} \
+        --jars ${ANALYTICS_ZOO_JAR} \
+        --conf spark.driver.extraClassPath=${ANALYTICS_ZOO_JAR} \
+        --conf spark.executor.extraClassPath=${ANALYTICS_ZOO_JAR} \
+        ${ANALYTICS_ZOO_HOME}/apps/dogs-vs-cats/tmp.py
+
+now=$(date "+%s")
+time10=$((now-start))
+rm ${ANALYTICS_ZOO_HOME}/apps/dogs-vs-cats/tmp.py
+echo "#10 dogs-vs-cats time used:$time10 seconds"
 
 echo "#1 anomaly-detection-nyc-taxi time used:$time1 seconds"
 echo "#2 object-detection time used:$time2 seconds"
