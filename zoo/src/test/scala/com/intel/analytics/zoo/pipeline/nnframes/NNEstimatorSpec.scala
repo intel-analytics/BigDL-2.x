@@ -366,9 +366,11 @@ class NNEstimatorSpec extends FlatSpec with Matchers with BeforeAndAfter {
       ScalarToTensor())
       .setMaxEpoch(1)
       .setFeaturesCol("image")
+    // by default, report error for invalid data.
     intercept[Exception] {
       estimator.fit(imageDF)
     }
+    // keep invalid records
     val nnModel = estimator
       .setHandleInvalid("keep")
       .fit(imageDF)

@@ -130,8 +130,8 @@ private[nnframes] trait NNParams[@specialized(Float, Double) T] extends HasFeatu
   /**
    * Param for how to handle invalid data during fit() and transform().
    * Options are:
-   * 'keep': invalid data are ignored during training and prediction result for the invalid
-   *         data will be empty array or Double.NaN.
+   * 'keep': invalid data are ignored during training and inference (fit and transform).
+   *         Prediction result for invalid data will be empty array or Double.NaN.
    * 'error': throw an error whenever an invalid data is met.
    * Default: "error"
    * @group param
@@ -347,6 +347,7 @@ class NNEstimator[T: ClassTag] private[zoo] (
       case NNEstimator.ERROR_INVALID =>
         initialDataSet.transform(SampleToMiniBatch[T](batchSize))
       case NNEstimator.KEEP_INVALID =>
+        // assume the preprocessing return null for invalid data
         initialDataSet.transform(FilterNull[Sample[T], T]() -> SampleToMiniBatch[T](batchSize))
     }
   }
