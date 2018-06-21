@@ -20,12 +20,13 @@ import com.intel.analytics.bigdl.optim.LocalPredictor
 
 object InferenceModelFactory {
 
-  def loadFloatInferenceModel(modelPath: String): FloatInferenceModel = {
-    loadFloatInferenceModel(modelPath, null)
+  def loadFloatInferenceModel(modelType: ModelTypeEnum, modelPath: String): FloatInferenceModel = {
+    loadFloatInferenceModel(modelType, modelPath, null)
   }
 
-  def loadFloatInferenceModel(modelPath: String, weightPath: String): FloatInferenceModel = {
-    val model = ModelLoader.loadFloatModel(modelPath, weightPath)
+  def loadFloatInferenceModel(modelType: ModelTypeEnum, modelPath: String, weightPath: String)
+    : FloatInferenceModel = {
+    val model = ModelLoader.loadFloatModel(modelType, modelPath, weightPath)
     val predictor = LocalPredictor(model)
     model.evaluate()
     FloatInferenceModel(model, predictor)

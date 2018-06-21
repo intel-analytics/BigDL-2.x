@@ -21,7 +21,6 @@ import java.util.List;
 
 public abstract class AbstractInferenceModel {
   private FloatInferenceModel model;
-
   private int supportedConcurrentNum = 1;
 
   public AbstractInferenceModel() {
@@ -32,19 +31,27 @@ public abstract class AbstractInferenceModel {
   }
 
   public void load(String modelPath) {
-    load(modelPath, null);
+    load(ModelTypeEnum.BIGDL, modelPath, null);
   }
 
   public void load(String modelPath, String weightPath) {
-    this.model = InferenceModelFactory.loadFloatInferenceModel(modelPath, weightPath);
+    this.model = InferenceModelFactory.loadFloatInferenceModel(ModelTypeEnum.BIGDL, modelPath, weightPath);
   }
 
-  public void reload(String modelPath) {
-    load(modelPath, null);
+  public void load(ModelTypeEnum modelType, String modelPath) {
+    load(modelType, modelPath, null);
   }
 
-  public void reload(String modelPath, String weightPath) {
-    this.model = InferenceModelFactory.loadFloatInferenceModel(modelPath, weightPath);
+  public void load(ModelTypeEnum modelType, String modelPath, String weightPath) {
+    this.model = InferenceModelFactory.loadFloatInferenceModel(modelType, modelPath, weightPath);
+  }
+
+  public void reload(ModelTypeEnum modelType, String modelPath) {
+    load(modelType, modelPath, null);
+  }
+
+  public void reload(ModelTypeEnum modelType, String modelPath, String weightPath) {
+    this.model = InferenceModelFactory.loadFloatInferenceModel(modelType, modelPath, weightPath);
   }
 
   public List<Float> predict(List<Float> input, int... shape) {
