@@ -138,8 +138,7 @@ class Net:
         return GraphNet.from_jvalue(jmodel, bigdl_type)
 
     @staticmethod
-    def load_tf(path, inputs, outputs, byte_order="little_endian",
-                bin_file=None, bigdl_type="float"):
+    def load_tf(**kwargs):
         """
         Load a pre-trained Tensorflow model.
         :param path: The path containing the pre-trained model.
@@ -151,7 +150,25 @@ class Net:
                         Default is None.
         :return: A pre-trained model.
         """
-        jmodel = callBigDlFunc(bigdl_type, "netLoadTF", path, inputs, outputs, byte_order, bin_file)
+        bigdl_type = kwargs.get("bigdl_type", "float")
+        if kwargs.get("folder", None):  # load_tf from exported folder
+            if not all(item in {"folder", "bigdl_type"} for item in kwargs.keys()):
+                raise ValueError("load_tf from exported folder only takes argument: folder")
+            folder = kwargs.get("folder")
+            jmodel = callBigDlFunc(bigdl_type, "netLoadTF", folder)
+        else:
+            allowed_kwargs = {"path", "inputs", "outputs", "byte_order", "bin_file", "bigdl_type"}
+            for kwarg in kwargs.keys():
+                if kwarg not in allowed_kwargs:
+                    raise TypeError("Wrong argument for load_tf:", kwarg)
+            path = kwargs.get("path", None)
+            inputs = kwargs.get("inputs", None)
+            outputs = kwargs.get("outputs", None)
+            if not path or not inputs or not outputs:
+                raise ValueError("load_tf need arguments path, inputs and outputs")
+            byte_order = kwargs.get("byte_order", "little_endian")
+            bin_file = kwargs.get("bin_file", None)
+            jmodel = callBigDlFunc(bigdl_type, "netLoadTF", path, inputs, outputs, byte_order, bin_file)
         return GraphNet.from_jvalue(jmodel, bigdl_type)
 
     @staticmethod
