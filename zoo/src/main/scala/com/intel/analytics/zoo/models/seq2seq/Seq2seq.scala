@@ -146,7 +146,8 @@ class Seq2seq[T: ClassTag](val encoderCells: Array[Cell[T]],
     val decoderGradInput = decoder.backward(decoderInput, gradOutput).toTensor
     if (preDecoder != null) {
       if (preDecoderInput.dim < encoderInput.dim) {
-        preDecoder.backward(preDecoderInput, decoderGradInput.select(2, 1).contiguous())
+        preDecoder.backward(preDecoderInput,
+          decoderGradInput.select(Seq2seq.timeDim, 1).contiguous())
       } else preDecoder.backward(preDecoderInput, decoderGradInput)
     }
 
@@ -177,4 +178,6 @@ object Seq2seq {
     (implicit ev: TensorNumeric[T]): Seq2seq[T] = {
     new Seq2seq[T](encoderCells, decoderCells, preEncoder, preDecoder, bridges).build()
   }
+
+  val timeDim = 2
 }

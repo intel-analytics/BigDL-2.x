@@ -118,28 +118,27 @@ class ZooRecurrentDecoder[T : ClassTag](seqLen: Int, stopSign: Tensor[T] = null,
     cloneCells()
 
     var i = 1
-    while (i <= times) {
-      if (i == 1) {
-        // input at t(0) is user input
-        currentInput = if (initHiddenState != null) T(input, initHiddenState)
-        else T(input, hidden)
-        cells(i - 1).updateOutput(currentInput)
-        BigDLWrapper.copy(cells(i - 1).output.toTable[Tensor[T]](inputDim), output, i)
-      } else if (stopSign == null ||
-        !cells(i - 2).output.toTable[Tensor[T]](inputDim).almostEqual(stopSign, 1e-6)) {
-          // input at t(i) is output at t(i-1)
-          val preOutput = cells(i - 2).output.toTable[Tensor[T]](inputDim)
-          if (loopFunc != null) {
-            // TODO: expect cells.output is changed as well
-            preOutput.copy(loopFunc(preOutput))
-          }
-          currentInput = cells(i - 2).output
-          cells(i - 1).updateOutput(currentInput)
-          BigDLWrapper.copy(cells(i - 1).output.toTable[Tensor[T]](inputDim), output, i)
-        }
+    // input at t(0) is user input
+    currentInput = if (initHiddenState != null) T(input, initHiddenState)
+    else T(input, hidden)
+    cells(i - 1).updateOutput(currentInput)
+    BigDLWrapper.copy(cells(i - 1).output.toTable[Tensor[T]](inputDim), output, i)
+    i += 1
+    while (i <= times && (stopSign == null ||
+      !cells(i - 2).output.toTable[Tensor[T]](inputDim).almostEqual(stopSign, 1e-6))) {
+      // input at t(i) is output at t(i-1)
+      if (loopFunc != null) {
+        val preOutput = cells(i - 2).output.toTable[Tensor[T]](inputDim)
+        preOutput.copy(loopFunc(preOutput))
+      }
+      currentInput = cells(i - 2).output
+      cells(i - 1).updateOutput(currentInput)
+      BigDLWrapper.copy(cells(i - 1).output.toTable[Tensor[T]](inputDim), output, i)
       i += 1
     }
-    output.narrow(timeDim, 1, i - 1)
+    times = i - 1
+    output = output.narrow(timeDim, 1, times)
+    output
   }
 
   override def backward(input: Tensor[T], gradOutput: Tensor[T]): Tensor[T] = {
