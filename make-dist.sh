@@ -25,7 +25,10 @@ set -e
 BASEDIR=$(dirname "$0")
 
 # Check bigdl backend
-git submodule update --init --recursive
+if [ ! -d $BASEDIR/backend/bigdl ]; then
+   echo "backend/bigdl does not exist. Please try to execute: git submodule update --init --recursive"
+   exit 1
+fi
 
 # Check spark conf
 if [ ! -f $BASEDIR/backend/bigdl/spark/dl/src/main/resources/spark-bigdl.conf ]; then
@@ -67,12 +70,20 @@ fi
 args=`echo $*`
 if [[ $args = *"build_backend"* ]]; then
       echo "Full build!, Let's install bigdl first"
+      cd ${BASEDIR}
+      mv ${BASEDIR}/backend/bigdl/spark/dl/pom.xml ${BASEDIR}/backend/bigdl/spark/dl/pom.xml.origin
+      cat ${BASEDIR}/backend/bigdl/spark/dl/pom.xml.origin \
+      | sed 's/ <artifactId>bigdl<\/artifactId>/<artifactId>zoo_bigdl<\/artifactId>/' >  ${BASEDIR}/backend/bigdl/spark/dl/pom.xml
       command="mvn install -DskipTests $*"
       echo "Executing: $command"
       cd backend/bigdl
       $command
       cd ../../
 fi
+echo ${BASEDIR}
+cd ${BASEDIR}
+echo "Start to build analytics-zoo"
+echo "Currently dir: `pwd`"
 
 mvn clean package -DskipTests $*
 
