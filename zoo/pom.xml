@@ -18,13 +18,14 @@
         <java.version>1.7</java.version>
         <javac.version>1.7</javac.version>
         <spark-scope>provided</spark-scope>
-        <bigdl-scope>compile</bigdl-scope>
+        <bigdl-scope>provided</bigdl-scope>
         <scala.major.version>2.11</scala.major.version>
         <scala.version>2.11.8</scala.version>
         <scala.macros.version>2.1.0</scala.macros.version>
         <scalatest.version>2.2.4</scalatest.version>
         <spark.version>2.1.0</spark.version>
         <bigdl.version>0.5.0</bigdl.version>
+        <backend.version>0.0.0</backend.version>
     </properties>
 
     <distributionManagement>
@@ -36,6 +37,21 @@
 
     <profiles>
         <profile>
+            <id>build_backend</id>
+            <properties>
+                <bigdl-scope>provided</bigdl-scope>
+            </properties>
+            <dependencies>
+                <dependency>
+                    <groupId>com.intel.analytics.bigdl</groupId>
+                    <artifactId>zoo_bigdl</artifactId>
+                    <version>${backend.version}</version>
+                    <scope>compile</scope>
+                </dependency>
+            </dependencies>
+
+        </profile>
+        <profile>
             <id>spark_1.6</id>
             <properties>
                 <spark-version.project>1.6-plus</spark-version.project>
@@ -45,7 +61,16 @@
                 <scala.macros.version>2.0.1</scala.macros.version>
                 <scalatest.version>2.2.4</scalatest.version>
                 <bigdl.artifactId>bigdl-SPARK_1.6</bigdl.artifactId>
+                <bigdl-scope>compile</bigdl-scope>
             </properties>
+            <dependencies>
+                <dependency>
+                    <groupId>com.intel.analytics.bigdl</groupId>
+                    <artifactId>${bigdl.artifactId}</artifactId>
+                    <version>${bigdl.version}</version>
+                    <scope>${bigdl-scope}</scope>
+                </dependency>
+            </dependencies>
         </profile>
 
         <profile>
@@ -62,7 +87,16 @@
                 <scala.version>2.11.8</scala.version>
                 <scala.macros.version>2.1.0</scala.macros.version>
                 <bigdl.artifactId>bigdl-SPARK_${spark-version.project}</bigdl.artifactId>
+                <bigdl-scope>compile</bigdl-scope>
             </properties>
+            <dependencies>
+                <dependency>
+                    <groupId>com.intel.analytics.bigdl</groupId>
+                    <artifactId>${bigdl.artifactId}</artifactId>
+                    <version>${bigdl.version}</version>
+                    <scope>${bigdl-scope}</scope>
+                </dependency>
+            </dependencies>
         </profile>
 
         <profile>
@@ -227,12 +261,6 @@
             <artifactId>spark-mllib_${scala.major.version}</artifactId>
             <version>${spark.version}</version>
             <scope>${spark-scope}</scope>
-        </dependency>
-        <dependency>
-            <groupId>com.intel.analytics.bigdl</groupId>
-            <artifactId>${bigdl.artifactId}</artifactId>
-            <version>${bigdl.version}</version>
-            <scope>${bigdl-scope}</scope>
         </dependency>
         <dependency>
             <groupId>org.spark-project.spark</groupId>

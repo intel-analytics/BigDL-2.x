@@ -67,6 +67,21 @@ if [ $MVN_INSTALL -eq 0 ]; then
   exit 1
 fi
 
+args=`echo $*`
+if [[ $args = *"build_backend"* ]]; then
+      echo "Full build!, Let's install bigdl first"
+      cd ${BASEDIR}
+      mv ${BASEDIR}/backend/bigdl/spark/dl/pom.xml ${BASEDIR}/backend/bigdl/spark/dl/pom.xml.origin
+      cat ${BASEDIR}/backend/bigdl/spark/dl/pom.xml.origin \
+      | sed 's/ <artifactId>bigdl<\/artifactId>/<artifactId>zoo_bigdl<\/artifactId>/' >  ${BASEDIR}/backend/bigdl/spark/dl/pom.xml
+      command="mvn install -DskipTests $*"
+      cd backend/bigdl
+      echo "Executing: $command"
+      $command
+      cd ../../
+fi
+echo "Start to build analytics-zoo at `pwd`"
+
 mvn clean package -DskipTests $*
 
 DIST_DIR=$BASEDIR/dist
