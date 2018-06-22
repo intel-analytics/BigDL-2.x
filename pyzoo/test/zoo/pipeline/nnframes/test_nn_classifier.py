@@ -103,7 +103,7 @@ class TestNNClassifer():
             res = e.transform(df)
             assert type(res).__name__ == 'DataFrame'
 
-    def test_nnClassiferModel_construct_with_differnt_params(self):
+    def test_nnClassiferModel_construct_with_different_params(self):
         linear_model = Sequential().add(Linear(2, 2))
         df = self.get_classifier_df()
         for e in [NNClassifierModel(linear_model),
@@ -356,12 +356,30 @@ class TestNNClassifer():
         criterion = ClassNLLCriterion()
         classifier = NNClassifier(model, criterion, transformer) \
             .setLearningRate(0.2).setMaxEpoch(1) \
-            .setFeaturesCol("image").setHandleInvalid("keep")
+            .setFeaturesCol("image").setHandleInvalid("drop")
 
         nnClassifierModel = classifier.fit(image_frame)
         assert(isinstance(nnClassifierModel, NNClassifierModel))
         res = nnClassifierModel.transform(image_frame)
+        res.collect()
         assert type(res).__name__ == 'DataFrame'
+
+    def test_nnclassifierModel_handle_invalid_data(self):
+        resource_path = os.path.join(os.path.split(__file__)[0], "../../resources")
+        image_path = os.path.join(resource_path, "faulty")
+        image_frame = NNImageReader.readImages(image_path, self.sc).withColumn("label", lit(1.0))
+        transformer = ChainedPreprocessing(
+            [RowToImageFeature(), ImageResize(256, 256), ImageCenterCrop(224, 224),
+             ImageChannelNormalize(123.0, 117.0, 104.0), ImageMatToTensor(),
+             ImageFeatureToTensor()])
+
+        model = inception_v1_no_aux_classifier(1000)
+        classifier_model = NNClassifierModel(model, transformer) \
+            .setFeaturesCol("image").setHandleInvalid("drop")
+
+        res = classifier_model.transform(image_frame)
+        assert type(res).__name__ == 'DataFrame'
+        assert res.count() == 1
 
     def test_nnclassifierModel_set_Preprocessing(self):
         model = Sequential().add(Linear(2, 2))

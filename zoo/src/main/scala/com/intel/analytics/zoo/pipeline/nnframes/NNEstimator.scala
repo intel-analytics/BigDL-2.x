@@ -117,7 +117,7 @@ private[nnframes] trait TrainingParams[@specialized(Float, Double) T] extends Pa
 /**
  * Common trait for NNEstimator and NNModel
  */
-private[nnframes] trait NNParams[@specialized(Float, Double) T] extends HasFeaturesCol
+private[nnframes] trait NNParams[@specialized(Float, Double) T]  extends HasFeaturesCol
   with HasPredictionCol with HasBatchSize {
 
   final val samplePreprocessing = new Param[Preprocessing[Any, Sample[T]]](this,
@@ -130,14 +130,16 @@ private[nnframes] trait NNParams[@specialized(Float, Double) T] extends HasFeatu
   /**
    * Param for how to handle invalid data during fit() and transform().
    * Options are:
-   * 'keep': invalid data are ignored during training and inference (fit and transform).
-   *         Prediction result for invalid data will be empty array or Double.NaN.
+   * 'drop': invalid data are ignored during training (fit).
+   *         During prediction (transform), rows containing invalid data will be dropped.
    * 'error': throw an error whenever an invalid data is met.
    * Default: "error"
    * @group param
    */
   val handleInvalid: Param[String] = new Param[String](this, "handleInvalid",
     "handleInvalid", ParamValidators.inArray(NNEstimator.supportedHandleInvalids))
+
+  setDefault(handleInvalid, NNEstimator.ERROR_INVALID)
 
   def getHandleInvalid: String = $(handleInvalid)
 
@@ -219,7 +221,6 @@ class NNEstimator[T: ClassTag] private[zoo] (
   def setHandleInvalid(value: String): this.type = {
     set(handleInvalid, value)
   }
-  setDefault(handleInvalid, NNEstimator.ERROR_INVALID)
 
   @transient private var trainSummary: Option[TrainSummary] = None
 
@@ -346,7 +347,7 @@ class NNEstimator[T: ClassTag] private[zoo] (
     $(handleInvalid) match {
       case NNEstimator.ERROR_INVALID =>
         initialDataSet.transform(SampleToMiniBatch[T](batchSize))
-      case NNEstimator.KEEP_INVALID =>
+      case NNEstimator.DROP_INVALID =>
         // assume the preprocessing return null for invalid data
         initialDataSet.transform(FilterNull[Sample[T], T]() -> SampleToMiniBatch[T](batchSize))
     }
@@ -497,9 +498,9 @@ object NNEstimator {
       .setSamplePreprocessing(TupleToFeatureAdapter(featurePreprocessing))
   }
 
-  private[nnframes] val KEEP_INVALID: String = "keep"
+  private[nnframes] val DROP_INVALID: String = "drop"
   private[nnframes] val ERROR_INVALID: String = "error"
-  private[nnframes] val supportedHandleInvalids: Array[String] = Array(KEEP_INVALID, ERROR_INVALID)
+  private[nnframes] val supportedHandleInvalids: Array[String] = Array(DROP_INVALID, ERROR_INVALID)
 }
 
 /**
@@ -536,6 +537,10 @@ class NNModel[T: ClassTag] private[zoo] (
   def setSamplePreprocessing[FF <: Any](value: Preprocessing[FF, Sample[T]]): this.type =
     set(samplePreprocessing, value.asInstanceOf[Preprocessing[Any, Sample[T]]])
 
+  def setHandleInvalid(value: String): this.type = {
+    set(handleInvalid, value)
+  }
+
   /**
    * Perform a prediction on featureCol, and write result to the predictionCol.
    */
@@ -556,18 +561,27 @@ class NNModel[T: ClassTag] private[zoo] (
       val toBatch = toBatchBC.value.cloneTransformer()
 
       rowIter.grouped(localBatchSize).flatMap { rowBatch =>
-        val featureSeq = rowBatch.map(r => r.get(featureColIndex))
-        val samples = featureSteps(featureSeq.iterator).toArray
+        val samples = rowBatch.map { row =>
+          val f = row.get(featureColIndex)
+          val sample = try {
+            featureSteps(Iterator(f)).next()
+          } catch {
+            case e: Exception =>
+              $(handleInvalid) match {
+                case NNEstimator.ERROR_INVALID =>
+                  throw e
+                case NNEstimator.DROP_INVALID =>
+                  logError(e.getMessage)
+                  null
+              }
+            case x =>
+              println(x)
+              null
+          }
+          (row, sample)
+        }.filter(_._2 != null)
 
-        // assume faulty data will generate null after preprocessing.
-        val validRow = rowBatch.zip(samples).filter(_._2 != null)
-        val invalidRows = rowBatch.zip(samples).filter(_._2 == null)
-        if (invalidRows.nonEmpty && $(handleInvalid) == NNEstimator.ERROR_INVALID) {
-            throw new IllegalArgumentException(
-              s"invalid data in ${invalidRows.map(_._1).mkString(",")}")
-        }
-
-        val predictions = toBatch(validRow.map(_._2).iterator).flatMap { batch =>
+        val predictions = toBatch(samples.map(_._2).iterator).flatMap { batch =>
           val batchResult = localModel.forward(batch.getInput()).toTensor.squeeze()
           if (batchResult.size().length == 2) {
             batchResult.split(1).map(outputToPrediction)
@@ -579,10 +593,8 @@ class NNModel[T: ClassTag] private[zoo] (
           }
         }
 
-        validRow.map(_._1).iterator.zip(predictions).map { case (row, predict) =>
+        samples.map(_._1).iterator.zip(predictions).map { case (row, predict) =>
           Row.fromSeq(row.toSeq ++ Seq(predict))
-        } ++ invalidRows.map(_._1).map { row =>
-          Row.fromSeq(row.toSeq ++ Seq(outputToPrediction(Tensor(0))))
         }
       }
     }
@@ -592,7 +604,11 @@ class NNModel[T: ClassTag] private[zoo] (
   }
 
   protected def outputToPrediction(output: Tensor[T]): Any = {
-    output.clone().storage().array()
+    if (output != null) {
+      output.clone().storage().array()
+    } else {
+      null.asInstanceOf[Array[T]]
+    }
   }
 
   override def transformSchema(schema : StructType): StructType = {

@@ -53,6 +53,36 @@ class HasBatchSize(Params):
         return self.getOrDefault(self.batchSize)
 
 
+class HasHandleInvalid(Params):
+    """
+     Param for how to handle invalid data during fit() and transform(). Options are:
+        'drop': invalid data are ignored during training (fit).
+                During prediction (transform), rows containing invalid data will be dropped.
+        'error': throw an error whenever an invalid data is met.
+    """
+
+    # a placeholder to make it appear in the generated doc
+    handleInvalid = Param(Params._dummy(), "handleInvalid", "handleInvalid(keep or error)")
+
+    def __init__(self):
+        super(HasHandleInvalid, self).__init__()
+        self.handleInvalid = Param(self, "handleInvalid", "handleInvalid")
+        self._setDefault(handleInvalid="error")
+
+    def setHandleInvalid(self, val):
+        """
+        Sets the value of handleInvalid.
+        """
+        self._paramMap[self.handleInvalid] = val
+        return self
+
+    def getHandleInvalid(self):
+        """
+        Gets the value of handleInvalid or its default value.
+        """
+        return self.getOrDefault(self.handleInvalid)
+
+
 class HasSamplePreprocessing:
     """
     Mixin for param samplePreprocessing
@@ -100,7 +130,7 @@ class HasOptimMethod:
 
 
 class NNEstimator(JavaEstimator, HasFeaturesCol, HasLabelCol, HasPredictionCol, HasBatchSize,
-                  HasOptimMethod, HasSamplePreprocessing, JavaValue):
+                  HasOptimMethod, HasSamplePreprocessing, HasHandleInvalid, JavaValue):
     """
     NNEstimator extends org.apache.spark.ml.Estimator and supports training a BigDL model with
     Spark DataFrame data. It can be integrated into a standard Spark ML Pipeline to enable
@@ -338,23 +368,6 @@ class NNEstimator(JavaEstimator, HasFeaturesCol, HasLabelCol, HasPredictionCol, 
                       float(clip_norm))
         return self
 
-    def setHandleInvalid(self, val):
-        """
-        Sets the value of handleInvalid. Param for how to handle invalid data during fit()
-        and transform(). Options are:
-        'keep': invalid data are ignored during training and prediction result for the invalid
-                data will be empty array.
-        'error': throw an error whenever an invalid data is met.
-        """
-        self._paramMap[self.handleInvalid] = val
-        return self
-
-    def getHandleInvalid(self):
-        """
-        Gets the value of handleInvalid or its default value.
-        """
-        return self.getOrDefault(self.handleInvalid)
-
     def _create_model(self, java_model):
         nnModel = NNModel.of(java_model,
                              ChainedPreprocessing([ToTuple(), self.getSamplePreprocessing()]),
@@ -366,7 +379,7 @@ class NNEstimator(JavaEstimator, HasFeaturesCol, HasLabelCol, HasPredictionCol, 
 
 
 class NNModel(JavaTransformer, HasFeaturesCol, HasPredictionCol, HasBatchSize,
-              HasSamplePreprocessing, JavaValue):
+              HasSamplePreprocessing, HasHandleInvalid, JavaValue):
     """
     NNModel extends Spark ML Transformer and supports BigDL model with Spark DataFrame.
 
