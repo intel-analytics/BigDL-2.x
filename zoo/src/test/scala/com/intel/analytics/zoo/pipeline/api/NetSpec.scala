@@ -16,7 +16,6 @@
 
 package com.intel.analytics.zoo.pipeline.api
 
-import com.intel.analytics.bigdl.nn
 import com.intel.analytics.bigdl.nn.abstractnn.{AbstractModule, Activity}
 import com.intel.analytics.bigdl.nn.{CAddTable, SpatialCrossMapLRN}
 import com.intel.analytics.bigdl.tensor.Tensor
@@ -125,5 +124,12 @@ class NetSpec extends ZooSpecHelper{
     val out = model.forward(T(inputValue, inputValue)).toTensor[Float]
     val oldOut = oldModel.forward(T(inputValue, inputValue)).toTensor[Float]
     out.almostEqual(oldOut, 1e-4)
+  }
+
+  "Load Tensorflow model from path" should "work properly" in {
+    val resource = getClass().getClassLoader().getResource("tf")
+    val model = Net.loadTF[Float](resource.getPath)
+    val result = model.forward(Tensor[Float](4, 1, 28, 28).rand())
+    result.toTensor[Float].size() should be (Array(4, 10))
   }
 }
