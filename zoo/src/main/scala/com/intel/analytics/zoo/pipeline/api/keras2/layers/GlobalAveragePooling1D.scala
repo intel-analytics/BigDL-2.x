@@ -26,7 +26,7 @@ import com.intel.analytics.zoo.pipeline.api.Net
 import com.intel.analytics.zoo.pipeline.api.keras.{layers => klayers1}
 import scala.reflect.ClassTag
 
-/**
+ /**
   * Applies global average pooling operation for temporal data.
   * The input of this layer should be 3D.
   *
@@ -36,11 +36,10 @@ import scala.reflect.ClassTag
   * @param inputShape A Single Shape, does not include the batch dimension.
   * @tparam T The numeric type of parameter(e.g. weight, bias). Only support float/double now.
   */
-class GlobalAveragePooling1D[T: ClassTag](
-      override val inputShape: Shape = null)(implicit ev: TensorNumeric[T])
-  extends klayers1.GlobalAveragePooling1D[T](inputShape) with Net {
 
-}
+class GlobalAveragePooling1D[T: ClassTag](
+    override val inputShape: Shape = null)(implicit ev: TensorNumeric[T])
+  extends klayers1.GlobalAveragePooling1D[T](inputShape) with Net {}
 
 object GlobalAveragePooling1D {
   def apply[@specialized(Float, Double) T: ClassTag](
