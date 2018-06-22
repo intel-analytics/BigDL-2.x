@@ -158,7 +158,8 @@ class Net:
                 raise ValueError("load_tf from exported folder requires path to be a folder")
             jmodel = callBigDlFunc(bigdl_type, "netLoadTF", path)
         else:
-            jmodel = callBigDlFunc(bigdl_type, "netLoadTF", path, inputs, outputs, byte_order, bin_file)
+            jmodel = callBigDlFunc(bigdl_type, "netLoadTF", path, inputs, outputs,
+                                   byte_order, bin_file)
         return GraphNet.from_jvalue(jmodel, bigdl_type)
 
     @staticmethod
