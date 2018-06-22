@@ -75,15 +75,12 @@ if [[ $args = *"build_backend"* ]]; then
       cat ${BASEDIR}/backend/bigdl/spark/dl/pom.xml.origin \
       | sed 's/ <artifactId>bigdl<\/artifactId>/<artifactId>zoo_bigdl<\/artifactId>/' >  ${BASEDIR}/backend/bigdl/spark/dl/pom.xml
       command="mvn install -DskipTests $*"
-      echo "Executing: $command"
       cd backend/bigdl
+      echo "Executing: $command"
       $command
       cd ../../
 fi
-echo ${BASEDIR}
-cd ${BASEDIR}
-echo "Start to build analytics-zoo"
-echo "Currently dir: `pwd`"
+echo "Start to build analytics-zoo at `pwd`"
 
 mvn clean package -DskipTests $*
 
