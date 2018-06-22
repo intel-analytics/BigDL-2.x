@@ -84,7 +84,7 @@ object Net {
    *             Amazon S3 path should be like "s3a://bucket/xxx"
    * @param weightPath : where weight is stored
    * @tparam T numeric type
-   * @return model loaded from path
+   * @return An Analytics Zoo model.
    */
   def load[T: ClassTag](path : String,
       weightPath : String = null)(implicit ev: TensorNumeric[T])
@@ -148,7 +148,7 @@ object Net {
    * @param outputs output node names, the output tensor order is same with the node order
    * @param byteOrder byte order in the tensorflow file. The default value is little endian
    * @param binFile where is the model variable file
-   * @return BigDL model
+   * @return model loaded from path
    */
   def loadTF[T: ClassTag](graphFile: String, inputs: Seq[String], outputs: Seq[String],
       byteOrder: ByteOrder = ByteOrder.LITTLE_ENDIAN,
@@ -160,6 +160,12 @@ object Net {
     new GraphNet[T](graph)
   }
 
+  /**
+   * Load TensorFlow model from exported folder.
+   * @param folder The folder path which contains 'frozen_inference_graph.pb' and
+   *               'graph_meta.json'.
+   * @return model loaded from path
+   */
   def loadTF[T: ClassTag](folder: String)
       (implicit ev: TensorNumeric[T]): GraphNet[T] = {
     val (model, inputs, outputs) = NetUtils.processTFFolder(folder)

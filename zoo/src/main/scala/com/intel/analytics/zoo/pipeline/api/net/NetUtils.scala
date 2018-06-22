@@ -172,7 +172,15 @@ object NetUtils {
     }
 
     val modelPath = folderPath / Path("frozen_inference_graph.pb")
+    if (!modelPath.exists) {
+      throw new IllegalArgumentException(
+        s"${folder + "/frozen_inference_graph.pb"} does not exist")
+    }
     val metaPath = folderPath / Path("graph_meta.json")
+    if (!metaPath.exists) {
+      throw new IllegalArgumentException(
+        s"${folder + "/graph_meta.json"} does not exist")
+    }
 
     val jsonStr = Source.fromFile(metaPath.jfile).getLines().mkString
 

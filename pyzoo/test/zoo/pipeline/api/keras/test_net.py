@@ -92,7 +92,7 @@ class TestLayer(ZooTestCase):
 
         model.save_tensorflow([("input", [4, 10])], tmp_path)
 
-        model_reloaded = Net.load_tf(path=tmp_path, inputs=["input"], outputs=["output"])
+        model_reloaded = Net.load_tf(tmp_path, ["input"], ["output"])
         expected_output = model.forward(input)
         output = model_reloaded.forward(input)
         self.assert_allclose(output, expected_output)
@@ -120,7 +120,7 @@ class TestLayer(ZooTestCase):
     def test_load_tf_from_folder(self):
         resource_path = os.path.join(os.path.split(__file__)[0], "../../../resources")
         tfnet_path = os.path.join(resource_path, "tfnet")
-        net = Net.load_tf(folder=tfnet_path)
+        net = Net.load_tf(tfnet_path)
         output = net.forward(np.random.rand(32, 28, 28, 1))
         assert output.shape == (32, 10)
 
