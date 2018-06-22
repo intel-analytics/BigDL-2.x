@@ -27,7 +27,11 @@ object BigDLWrapper {
     Recurrent.copy(src, dst)
   }
 
-  def selectCopy[T: ClassTag](src: Tensor[T], srcIndex: Int, dst: Tensor[T]): Tensor[T] = {
+  def copy[T: ClassTag](src: Tensor[T], srcIndex: Int, dst: Tensor[T]): Tensor[T] = {
     Recurrent.selectCopy(src, srcIndex, dst)
+  }
+
+  def copy[T: ClassTag](src: Tensor[T], dst: Tensor[T], index: Int): Unit = {
+    Recurrent.copyToIndex(src, dst, index)
   }
 }

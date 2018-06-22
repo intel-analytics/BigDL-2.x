@@ -46,12 +46,12 @@ class ZooRecurrent[T : ClassTag]()(implicit ev: TensorNumeric[T]) extends Recurr
     while (i >= 1) {
       currentGradOutput(hidDim) = if (i != times) cells(i).gradInput.toTable(hidDim)
       else if (initGradHiddenState == null) gradHidden else initGradHiddenState
-      currentGradOutput(inputDim) = BigDLWrapper.selectCopy(gradOutput, i, stepGradBuffer)
+      currentGradOutput(inputDim) = BigDLWrapper.copy(gradOutput, i, stepGradBuffer)
 
       _input(hidDim) = if (i > 1) cells(i - 2).output.toTable(hidDim)
       else if (initHiddenState == null) hidden else initHiddenState
 
-      _input(inputDim) = BigDLWrapper.selectCopy(input2Cell, i, stepInput2CellBuf)
+      _input(inputDim) = BigDLWrapper.copy(input2Cell, i, stepInput2CellBuf)
 
       if (i == 1) {
         cells(i - 1).regluarized(true)
@@ -86,7 +86,8 @@ class ZooRecurrent[T : ClassTag]()(implicit ev: TensorNumeric[T]) extends Recurr
   }
 }
 
-class ZooRecurrentDecoder[T : ClassTag](seqLen: Int)(implicit ev: TensorNumeric[T])
+class ZooRecurrentDecoder[T : ClassTag](seqLen: Int, stopSign: Tensor[T] = null,
+  loopFunc: (Tensor[T]) => (Tensor[T]) = null)(implicit ev: TensorNumeric[T])
   extends RecurrentDecoder[T](seqLen) {
   // get gradient hidden state at the first time step
   def getGradHiddenState(): Activity = {
@@ -101,6 +102,46 @@ class ZooRecurrentDecoder[T : ClassTag](seqLen: Int)(implicit ev: TensorNumeric[
     initGradHiddenState = gradHiddenState
   }
 
+  override def updateOutput(input: Tensor[T]): Tensor[T] = {
+    require(input.dim == 2 || input.dim == 4 || input.dim == 5,
+      "Recurrent: input should be a 2D/4D/5D Tensor, e.g [batch, nDim], " +
+        s"current input.dim = ${input.dim}")
+    batchSize = input.size(batchDim)
+    val hiddenSize = topology.hiddensShape(0)
+    val outputSize = input.size()
+    require(hiddenSize == input.size()(1), "hiddenSize is " +
+      "not the same with input size!! Please update cell settings or use Recurrent instead!")
+    val featureSizes = outputSize.drop(1)
+    output.resize(Array(batchSize, times) ++ featureSizes)
+    // Clone N modules along the sequence dimension.
+    initHidden(featureSizes)
+    cloneCells()
+
+    var i = 1
+    while (i <= times) {
+      if (i == 1) {
+        // input at t(0) is user input
+        currentInput = if (initHiddenState != null) T(input, initHiddenState)
+        else T(input, hidden)
+        cells(i - 1).updateOutput(currentInput)
+        BigDLWrapper.copy(cells(i - 1).output.toTable[Tensor[T]](inputDim), output, i)
+      } else if (stopSign == null ||
+        !cells(i - 2).output.toTable[Tensor[T]](inputDim).almostEqual(stopSign, 1e-6)) {
+          // input at t(i) is output at t(i-1)
+          val preOutput = cells(i - 2).output.toTable[Tensor[T]](inputDim)
+          if (loopFunc != null) {
+            // TODO: expect cells.output is changed as well
+            preOutput.copy(loopFunc(preOutput))
+          }
+          currentInput = cells(i - 2).output
+          cells(i - 1).updateOutput(currentInput)
+          BigDLWrapper.copy(cells(i - 1).output.toTable[Tensor[T]](inputDim), output, i)
+        }
+      i += 1
+    }
+    output.narrow(timeDim, 1, i - 1)
+  }
+
   override def backward(input: Tensor[T], gradOutput: Tensor[T]): Tensor[T] = {
     val st = System.nanoTime
     gradInput.resizeAs(output)
@@ -108,10 +149,10 @@ class ZooRecurrentDecoder[T : ClassTag](seqLen: Int)(implicit ev: TensorNumeric[
     var i = times
     while (i >= 1) {
       currentGradOutput(inputDim) = if (i == times) {
-        BigDLWrapper.selectCopy(gradOutput, i, stepGradBuffer)
+        BigDLWrapper.copy(gradOutput, i, stepGradBuffer)
       } else {
         val _gradInput = cells(i).gradInput.toTable[Tensor[T]](inputDim)
-        BigDLWrapper.selectCopy(gradOutput, i, stepGradBuffer).add(_gradInput)
+        BigDLWrapper.copy(gradOutput, i, stepGradBuffer).add(_gradInput)
       }
 
       _input = if (i == 1) {

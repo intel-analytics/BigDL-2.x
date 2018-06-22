@@ -72,11 +72,11 @@ class Seq2seqSpec extends FlatSpec with BeforeAndAfter with Matchers {
       model.backward(T(input, input), gradOutput)
     }
 
-    model.setLoopPreOutput(seqLength)
+    model.setLoop(seqLength)
 
     for (i <- 0 until 3) {
-      val output = model.forward(input).toTensor
-      model.backward(input, gradOutput)
+      val output = model.forward(T(input, input.select(2, seqLength))).toTensor
+      model.backward(T(input, input.select(2, seqLength)), gradOutput)
     }
   }
 
@@ -127,11 +127,11 @@ class Seq2seqSpec extends FlatSpec with BeforeAndAfter with Matchers {
       model.backward(T(input, input), gradOutput)
     }
 
-    model.setLoopPreOutput(seqLength)
+    model.setLoop(seqLength)
 
     for (i <- 0 until 3) {
-      val output = model.forward(input).toTensor
-      model.backward(input, gradOutput)
+      val output = model.forward(T(input, input.select(2, seqLength))).toTensor
+      model.backward(T(input, input.select(2, seqLength)), gradOutput)
     }
   }
 
@@ -188,11 +188,11 @@ class Seq2seqSpec extends FlatSpec with BeforeAndAfter with Matchers {
       model.backward(T(input, input), gradOutput)
     }
 
-    model.setLoopPreOutput(seqLength)
+    model.setLoop(seqLength)
 
     for (i <- 0 until 3) {
-      model.forward(input).toTensor
-      model.backward(input, gradOutput)
+      model.forward(T(input, input.select(2, seqLength))).toTensor
+      model.backward(T(input, input.select(2, seqLength)), gradOutput)
     }
   }
 
@@ -249,11 +249,11 @@ class Seq2seqSpec extends FlatSpec with BeforeAndAfter with Matchers {
       .add(VolumetricConvolution[Double](3, 5, 3, 3, 3, 1, 1, 1, 1, 1, 1))
     val model = Seq2seq(encoderCells, decoderCells, preDecoder = preDecoder,
       bridges = new InitialStateBridge[Double](activations))
-    model.setLoopPreOutput(seqLength)
+    model.setLoop(seqLength)
 
     for (i <- 0 until 3) {
-      model.forward(input)
-      model.backward(input, gradOutput)
+      model.forward(T(input, input.select(2, seqLength)))
+      model.backward(T(input, input.select(2, seqLength)), gradOutput)
     }
   }
 
@@ -290,11 +290,11 @@ class Seq2seqSpec extends FlatSpec with BeforeAndAfter with Matchers {
       model.backward(T(input, input), gradOutput)
     }
 
-    model.setLoopPreOutput(seqLength)
+    model.setLoop(seqLength)
 
     for (i <- 0 until 3) {
-      val output = model.forward(input).toTensor
-      model.backward(input, gradOutput)
+      val output = model.forward(T(input, input.select(2, seqLength))).toTensor
+      model.backward(T(input, input.select(2, seqLength)), gradOutput)
     }
   }
 

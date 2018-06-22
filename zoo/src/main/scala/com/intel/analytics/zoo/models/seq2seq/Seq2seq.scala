@@ -25,8 +25,6 @@ import com.intel.analytics.bigdl.utils.{T, Table}
 import scala.reflect.ClassTag
 import com.intel.analytics.zoo.models.common.ZooModel
 
-import scala.collection.mutable.ArrayBuffer
-
 class Seq2seq[T: ClassTag](val encoderCells: Array[Cell[T]],
                            val decoderCells: Array[Cell[T]],
                            val preEncoder: AbstractModule[Activity, Activity, T] = null,
@@ -43,18 +41,21 @@ class Seq2seq[T: ClassTag](val encoderCells: Array[Cell[T]],
   var encoder: Sequential[T] = null
   var decoder: Sequential[T] = null
 
-  private var loopPreOutput: Boolean = false
   private var seqLen: Int = 0
-  def setLoopPreOutput(seqLen: Int) = {
-    loopPreOutput = true
-    this.seqLen = seqLen
+  private var stopSign: Tensor[T] = null
+  private var loopFunc: (Tensor[T]) => (Tensor[T]) = null
+  def setLoop(maxLen: Int, stopSign: Tensor[T] = null, fuc: (Tensor[T]) => (Tensor[T]) = null) = {
+    seqLen = maxLen
+    this.stopSign = stopSign
+    loopFunc = fuc
     //TODO: NEED TO VERIFY IF THE PARAMTERS ARE THE SAME AFTER SET
     modules.clear()
     modules += buildModel()
   }
-  def clearLoopPreOutput() = {
-    loopPreOutput = false
-    this.seqLen = 0
+  def clearLoop() = {
+    seqLen = 0
+    this.stopSign = null
+    loopFunc = null
     modules.clear()
     modules += buildModel()
   }
@@ -86,10 +87,10 @@ class Seq2seq[T: ClassTag](val encoderCells: Array[Cell[T]],
 
   private def buildDecoder(): Sequential[T] = {
     val model = Sequential[T]()
-    dec = if (loopPreOutput) {
+    dec = if (seqLen != 0 || loopFunc != null || stopSign != null) {
       require(seqLen > 0, "Please setLoopPreOutput if you want to use i-1th output as i th input")
       val cells = if (decoderCells.length == 1) decoderCells.head else MultiRNNCell(decoderCells)
-      val recDec = new ZooRecurrentDecoder(seqLen).add(cells)
+      val recDec = new ZooRecurrentDecoder(seqLen, stopSign, loopFunc).add(cells)
       model.add(recDec)
       Array(recDec)
     } else {
@@ -103,13 +104,8 @@ class Seq2seq[T: ClassTag](val encoderCells: Array[Cell[T]],
   }
 
   override def updateOutput(input: Activity): Tensor[T] = {
-    if (loopPreOutput) {
-      encoderInput = input.toTensor
-      preDecoderInput = input.toTensor.select(2, input.toTensor.size(2))
-    } else {
-      encoderInput = input.toTable(1)
-      preDecoderInput = input.toTable(2)
-    }
+    encoderInput = input.toTable(1)
+    preDecoderInput = input.toTable(2)
 
     encoderOutput = encoder.forward(encoderInput).toTensor
 
@@ -149,7 +145,7 @@ class Seq2seq[T: ClassTag](val encoderCells: Array[Cell[T]],
   override def backward(input: Activity, gradOutput: Tensor[T]): Tensor[T] = {
     val decoderGradInput = decoder.backward(decoderInput, gradOutput).toTensor
     if (preDecoder != null) {
-      if (loopPreOutput) {
+      if (preDecoderInput.dim < encoderInput.dim) {
         preDecoder.backward(preDecoderInput, decoderGradInput.select(2, 1).contiguous())
       } else preDecoder.backward(preDecoderInput, decoderGradInput)
     }
