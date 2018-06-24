@@ -62,7 +62,7 @@ class HasHandleInvalid(Params):
     """
 
     # a placeholder to make it appear in the generated doc
-    handleInvalid = Param(Params._dummy(), "handleInvalid", "handleInvalid(keep or error)")
+    handleInvalid = Param(Params._dummy(), "handleInvalid", "handleInvalid(drop or error)")
 
     def __init__(self):
         super(HasHandleInvalid, self).__init__()
@@ -200,9 +200,8 @@ class NNEstimator(JavaEstimator, HasFeaturesCol, HasLabelCol, HasPredictionCol, 
         self.learningRate = Param(self, "learningRate", "learning rate")
         self.learningRateDecay = Param(self, "learningRateDecay", "learning rate decay")
         self.cachingSample = Param(self, "cachingSample", "cachingSample")
-        self.handleInvalid = Param(self, "handleInvalid", "handleInvalid")
         self._setDefault(maxEpoch=50, learningRate=1e-3, batchSize=1, learningRateDecay=0.0,
-                         cachingSample=True, handleInvalid="error")
+                         cachingSample=True)
 
         self.train_summary = None
         self.validation_config = None

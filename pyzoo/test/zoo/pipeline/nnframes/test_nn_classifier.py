@@ -18,17 +18,17 @@ import pytest
 from bigdl.nn.criterion import *
 from bigdl.nn.layer import *
 from bigdl.optim.optimizer import *
-from bigdl.models.inception.inception import inception_v1_no_aux_classifier
 from numpy.testing import assert_allclose
 from pyspark.ml import Pipeline
 from pyspark.ml.feature import MinMaxScaler
-from pyspark.sql.types import *
 from pyspark.sql.functions import lit
-
+from pyspark.sql.types import *
 from zoo.common.nncontext import *
-from zoo.pipeline.nnframes import *
 from zoo.feature.common import *
 from zoo.feature.image import *
+from zoo.pipeline.api.keras.layers import *
+from zoo.pipeline.api.keras.models import Sequential as kseq
+from zoo.pipeline.nnframes import *
 
 
 class TestNNClassifer():
@@ -72,6 +72,14 @@ class TestNNClassifer():
         df = self.sqlContext.createDataFrame(data, schema)
         return df
 
+    def get_CNN_Model(self):
+        model = kseq()
+        model.add(Convolution2D(1, 5, 5, input_shape=(3, 224, 224)))
+        model.add(Reshape((1*220*220, )))
+        model.add(Dense(20, activation="softmax"))
+        model.compile(optimizer="sgd", loss="sparse_categorical_crossentropy", metrics=["accuracy"])
+        return model
+
     def test_nnEstimator_construct_with_differnt_params(self):
         linear_model = Sequential().add(Linear(2, 2))
         mse_criterion = MSECriterion()
@@ -103,7 +111,7 @@ class TestNNClassifer():
             res = e.transform(df)
             assert type(res).__name__ == 'DataFrame'
 
-    def test_nnClassiferModel_construct_with_different_params(self):
+    def test_nnClassifierModel_construct_with_different_params(self):
         linear_model = Sequential().add(Linear(2, 2))
         df = self.get_classifier_df()
         for e in [NNClassifierModel(linear_model),
@@ -332,7 +340,7 @@ class TestNNClassifer():
              ImageChannelNormalize(123.0, 117.0, 104.0), ImageMatToTensor(),
              ImageFeatureToTensor()])
 
-        model = inception_v1_no_aux_classifier(1000)
+        model = self.get_CNN_Model()
         criterion = ClassNLLCriterion()
         classifier = NNClassifier(model, criterion, transformer) \
             .setLearningRate(0.2).setMaxEpoch(1) \
@@ -352,7 +360,7 @@ class TestNNClassifer():
              ImageChannelNormalize(123.0, 117.0, 104.0), ImageMatToTensor(),
              ImageFeatureToTensor()])
 
-        model = inception_v1_no_aux_classifier(1000)
+        model = self.get_CNN_Model()
         criterion = ClassNLLCriterion()
         classifier = NNClassifier(model, criterion, transformer) \
             .setLearningRate(0.2).setMaxEpoch(1) \
@@ -361,7 +369,7 @@ class TestNNClassifer():
         nnClassifierModel = classifier.fit(image_frame)
         assert(isinstance(nnClassifierModel, NNClassifierModel))
         res = nnClassifierModel.transform(image_frame)
-        res.collect()
+        assert res.count() == 1
         assert type(res).__name__ == 'DataFrame'
 
     def test_nnclassifierModel_handle_invalid_data(self):
@@ -373,7 +381,7 @@ class TestNNClassifer():
              ImageChannelNormalize(123.0, 117.0, 104.0), ImageMatToTensor(),
              ImageFeatureToTensor()])
 
-        model = inception_v1_no_aux_classifier(1000)
+        model = self.get_CNN_Model()
         classifier_model = NNClassifierModel(model, transformer) \
             .setFeaturesCol("image").setHandleInvalid("drop")
 

@@ -30,7 +30,6 @@ import com.intel.analytics.bigdl.{Criterion, DataSet, Module}
 import com.intel.analytics.zoo.feature.common.{Preprocessing, _}
 import org.apache.hadoop.fs.Path
 import org.apache.spark.SparkContext
-import org.apache.spark.annotation.Since
 import org.apache.spark.ml.adapter.{HasFeaturesCol, HasPredictionCol, SchemaUtils}
 import org.apache.spark.ml.param._
 import org.apache.spark.ml.util._
@@ -117,7 +116,7 @@ private[nnframes] trait TrainingParams[@specialized(Float, Double) T] extends Pa
 /**
  * Common trait for NNEstimator and NNModel
  */
-private[nnframes] trait NNParams[@specialized(Float, Double) T]  extends HasFeaturesCol
+private[nnframes] trait NNParams[@specialized(Float, Double) T] extends HasFeaturesCol
   with HasPredictionCol with HasBatchSize {
 
   final val samplePreprocessing = new Param[Preprocessing[Any, Sample[T]]](this,
@@ -604,11 +603,7 @@ class NNModel[T: ClassTag] private[zoo] (
   }
 
   protected def outputToPrediction(output: Tensor[T]): Any = {
-    if (output != null) {
-      output.clone().storage().array()
-    } else {
-      null.asInstanceOf[Array[T]]
-    }
+    output.clone().storage().array()
   }
 
   override def transformSchema(schema : StructType): StructType = {

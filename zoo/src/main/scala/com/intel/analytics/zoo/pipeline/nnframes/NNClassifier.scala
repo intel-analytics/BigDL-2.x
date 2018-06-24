@@ -143,11 +143,7 @@ class NNClassifierModel[T: ClassTag] private[zoo] (
   )(implicit ev: TensorNumeric[T]) extends NNModel[T](model) {
 
   protected override def outputToPrediction(output: Tensor[T]): Any = {
-    if (output == null) {
-      null.asInstanceOf[Double]
-    } else {
-      ev.toType[Double](output.max(1)._2.valueAt(1))
-    }
+    ev.toType[Double](output.max(1)._2.valueAt(1))
   }
 
   override def transformSchema(schema : StructType): StructType = {
