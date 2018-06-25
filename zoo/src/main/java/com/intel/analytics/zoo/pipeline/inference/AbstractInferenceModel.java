@@ -54,7 +54,7 @@ public abstract class AbstractInferenceModel {
     this.model = InferenceModelFactory.loadFloatInferenceModel(modelPath, weightPath);
   }
 
-  public List<List<JTensor>> batchPredict(List<JTensor> inputs) {
+  public List<List<JTensor>> predict(List<JTensor> inputs) {
     return model.predict(inputs);
   }
 
