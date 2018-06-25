@@ -30,31 +30,7 @@ case class FloatInferenceModel(
   model: AbstractModule[Activity, Activity, Float],
   predictor: LocalPredictor[Float]) extends InferenceSupportive {
 
-  def predict(input: JTensor): JList[JTensor] = {
-    timing("model predict") {
-      val inputData = input.getData
-      val inputShape = input.getShape
-      val sample = transferInputToSample(inputData,
-        inputShape.asScala.toArray.map(_.asInstanceOf[Int]))
-      val results: Array[Activity] = predictor.predict(Array(sample))
-      require(results.length == 1, "only one input, should get only one prediction")
-      val result = results(0)
-      val outputs: List[JTensor] = result.isTensor match {
-        case true =>
-          val outputTensor = result.asInstanceOf[Tensor[Float]]
-          List(transferTensorToJTensor(outputTensor))
-        case false =>
-          val outputTable = result.toTable
-          outputTable.keySet.map(key => {
-            val outputTensor = outputTable.get(key).get.asInstanceOf[Tensor[Float]]
-            transferTensorToJTensor(outputTensor)
-          }).toList
-      }
-      outputs.asJava.asInstanceOf[JList[JTensor]]
-    }
-  }
-
-  def batchPredict(inputs: JList[JTensor]): JList[JList[JTensor]] = {
+  def predict(inputs: JList[JTensor]): JList[JList[JTensor]] = {
     timing(s"model predict for batch ${inputs.size()}") {
       val samples = inputs.asScala.map(input => {
         val inputData = input.getData
