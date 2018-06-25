@@ -30,12 +30,31 @@ case class FloatInferenceModel(
   model: AbstractModule[Activity, Activity, Float],
   predictor: LocalPredictor[Float]) extends InferenceSupportive {
 
-  def predict(input: JList[JFloat], shape: JList[JInt]): JList[JFloat] = {
-    timing("model predict") {
-      val sample = transferInputToSample(input, shape.asScala.toArray.map(_.asInstanceOf[Int]))
-      val result = predictor.predict(Array(sample))
-      require(result.length == 1, "only one input, should get only one prediction")
-      result(0).asInstanceOf[Tensor[Float]].toArray().toList.asJava.asInstanceOf[JList[JFloat]]
+  def predict(inputs: JList[JTensor]): JList[JList[JTensor]] = {
+    timing(s"model predict for batch ${inputs.size()}") {
+      val samples = inputs.asScala.map(input => {
+        val inputData = input.getData
+        val inputShape = input.getShape
+        val sample = transferInputToSample(inputData,
+          inputShape.asScala.toArray.map(_.asInstanceOf[Int]))
+        sample
+      }).toArray
+      val results: Array[Activity] = predictor.predict(samples)
+      val outputResults: Array[JList[JTensor]] = results.map(result => {
+        val outputs: List[JTensor] = result.isTensor match {
+          case true =>
+            val outputTensor = result.asInstanceOf[Tensor[Float]]
+            List(transferTensorToJTensor(outputTensor))
+          case false =>
+            val outputTable = result.toTable
+            outputTable.keySet.map(key => {
+              val outputTensor = outputTable.get(key).get.asInstanceOf[Tensor[Float]]
+              transferTensorToJTensor(outputTensor)
+            }).toList
+        }
+        outputs.asJava.asInstanceOf[JList[JTensor]]
+      })
+      outputResults.toList.asJava.asInstanceOf[JList[JList[JTensor]]]
     }
   }
 }
