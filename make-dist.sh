@@ -24,18 +24,6 @@ set -e
 
 BASEDIR=$(dirname "$0")
 
-# Check bigdl backend
-if [ ! -d $BASEDIR/backend/bigdl ]; then
-   echo "backend/bigdl does not exist. Please try to execute: git submodule update --init --recursive"
-   exit 1
-fi
-
-# Check spark conf
-if [ ! -f $BASEDIR/backend/bigdl/spark/dl/src/main/resources/spark-bigdl.conf ]; then
-   echo "Conf file does not exist. Please check: $BASEDIR/backend/bigdl/spark/dl/src/main/resources/spark-bigdl.conf"
-   exit 1
-fi
-
 # Check java
 if type -p java>/dev/null; then
     _java=java
@@ -67,36 +55,11 @@ if [ $MVN_INSTALL -eq 0 ]; then
   exit 1
 fi
 
-args=`echo $*`
-if [[ $args = *"build_backend"* ]]; then
-      echo "Full build!, Let's install bigdl first"
-      cd ${BASEDIR}
-      mv ${BASEDIR}/backend/bigdl/spark/dl/pom.xml ${BASEDIR}/backend/bigdl/spark/dl/pom.xml.origin
-      cat ${BASEDIR}/backend/bigdl/spark/dl/pom.xml.origin \
-      | sed 's/ <artifactId>bigdl<\/artifactId>/<artifactId>zoo_bigdl<\/artifactId>/' >  ${BASEDIR}/backend/bigdl/spark/dl/pom.xml
-      command="mvn install -DskipTests $*"
-      cd backend/bigdl
-      echo "Executing: $command"
-      $command
-      cd ../../
-fi
-echo "Start to build analytics-zoo at `pwd`"
-
 mvn clean package -DskipTests $*
 
 DIST_DIR=$BASEDIR/dist
 
 # Clean dist folder
 rm -rf $DIST_DIR
-mkdir -p $DIST_DIR/lib
-mkdir -p $DIST_DIR/conf
-mkdir -p $DIST_DIR/bin
-mkdir -p $DIST_DIR/extra-resources
-mkdir -p $DIST_DIR/apps
+cp -r $BASEDIR/zoo/target/analytics-zoo-*-dist-all $DIST_DIR
 
-cp -r $BASEDIR/zoo/target/*.jar $DIST_DIR/lib/
-cp -r $BASEDIR/zoo/target/*.zip $DIST_DIR/lib/
-cp $BASEDIR/backend/bigdl/spark/dl/src/main/resources/spark-bigdl.conf  $DIST_DIR/conf/spark-analytics-zoo.conf
-cp -r $BASEDIR/scripts/* $DIST_DIR/bin/
-cp -r $BASEDIR/apps/* $DIST_DIR/apps/
-cp $BASEDIR/zoo/target/extra-resources/zoo-version-info.properties $DIST_DIR/extra-resources/
