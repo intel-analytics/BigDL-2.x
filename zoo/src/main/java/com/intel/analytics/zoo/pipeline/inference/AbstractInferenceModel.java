@@ -31,35 +31,35 @@ public abstract class AbstractInferenceModel {
   }
 
   public void load(String modelPath) {
-    load(ModelTypeEnum.BIGDL, modelPath, null);
+    load(modelPath, null);
   }
 
   public void load(String modelPath, String weightPath) {
-    this.model = InferenceModelFactory.loadFloatInferenceModel(ModelTypeEnum.BIGDL, modelPath, weightPath);
+    this.model = InferenceModelFactory.loadFloatInferenceModel(modelPath, weightPath);
   }
 
-  public void load(ModelTypeEnum modelType, String modelPath) {
-    load(modelType, modelPath, null);
+  public void loadCaffe(String modelPath) {
+    loadCaffe(modelPath, null);
   }
 
-  public void load(ModelTypeEnum modelType, String modelPath, String weightPath) {
-    this.model = InferenceModelFactory.loadFloatInferenceModel(modelType, modelPath, weightPath);
+  public void loadCaffe(String modelPath, String weightPath) {
+    this.model = InferenceModelFactory.loadFloatInferenceModelForCaffe(modelPath, weightPath);
   }
 
-  public void reload(ModelTypeEnum modelType, String modelPath) {
-    load(modelType, modelPath, null);
+  public void reload(String modelPath) {
+    load(modelPath, null);
   }
 
-  public void reload(ModelTypeEnum modelType, String modelPath, String weightPath) {
-    this.model = InferenceModelFactory.loadFloatInferenceModel(modelType, modelPath, weightPath);
+  public void reload(String modelPath, String weightPath) {
+    this.model = InferenceModelFactory.loadFloatInferenceModel(modelPath, weightPath);
   }
 
-  public List<Float> predict(List<Float> input, int... shape) {
-    List<Integer> inputShape = new ArrayList<Integer>();
-    for (int s : shape) {
-      inputShape.add(s);
-    }
-    return model.predict(input, inputShape);
+  public List<JTensor> predict(JTensor input) {
+    return model.predict(input);
+  }
+
+  public List<List<JTensor>> batchPredict(List<JTensor> inputs) {
+    return model.batchPredict(inputs);
   }
 
 }
