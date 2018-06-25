@@ -25,6 +25,10 @@ import com.intel.analytics.bigdl.wrapper.BigDLWrapper
 
 import scala.reflect.ClassTag
 
+/**
+ * [[ZooRecurrent]] module is a container of rnn cells
+ * Different types of rnn cells can be added using add() function
+ */
 class ZooRecurrent[T : ClassTag]()(implicit ev: TensorNumeric[T]) extends Recurrent[T] {
   // get gradient hidden state at the first time step
   def getGradHiddenState(): Activity = {
@@ -64,9 +68,9 @@ class ZooRecurrent[T : ClassTag]()(implicit ev: TensorNumeric[T]) extends Recurr
 
     gradInput = if (preTopology != null) {
       /**
-        * if preTopology is Sequential, it has not created gradInput.
-        * Thus, it needs to create a new Tensor.
-        */
+       * if preTopology is Sequential, it has not created gradInput.
+       * Thus, it needs to create a new Tensor.
+       */
       if (preTopology.gradInput == null) {
         preTopology.gradInput = Tensor[T]()
       }
@@ -86,6 +90,20 @@ class ZooRecurrent[T : ClassTag]()(implicit ev: TensorNumeric[T]) extends Recurr
   }
 }
 
+/**
+ * [[ZooRecurrentDecoder]] module is a container of rnn cells that used to make
+ * a prediction of the next timestep based on the prediction we made from
+ * the previous timestep. Input for RecurrentDecoder is dynamically composed
+ * during training. input at t(i) is based on output at t(i-1), input at t(0) is
+ * user input, and user input has to be batch x stepShape(shape of the input
+ * at a single time step).
+
+ * Different types of rnn cells can be added using add() function.
+ * @param seqLen max sequence length of the output
+ * @param stopSign if prediction is the same with stopSign, it will stop predict
+ * @param loopFunc before feeding output at last time step to next time step,
+ *                 pass it through loopFunc
+ */
 class ZooRecurrentDecoder[T : ClassTag](seqLen: Int, stopSign: Tensor[T] = null,
   loopFunc: (Tensor[T]) => (Tensor[T]) = null)(implicit ev: TensorNumeric[T])
   extends RecurrentDecoder[T](seqLen) {

@@ -16,21 +16,46 @@
 
 package com.intel.analytics.zoo.models.seq2seq
 
-import com.intel.analytics.bigdl.nn.abstractnn.{Activity, TensorModule}
-import com.intel.analytics.bigdl.nn.{Recurrent, RecurrentDecoder}
+import com.intel.analytics.bigdl.nn.abstractnn.{AbstractModule, Activity, TensorModule}
+import com.intel.analytics.bigdl.nn.{Recurrent, Sequential}
+import com.intel.analytics.bigdl.tensor.Tensor
 import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric
-import com.intel.analytics.bigdl.utils.T
+import com.intel.analytics.bigdl.utils.{T}
 
 import scala.reflect.ClassTag
 
+/**
+ * [[Bridge]] defines how to pass state between encoder and decoder
+ */
 abstract class Bridge {
+  /**
+   * pass encoder state to decoder in forward
+   * @param encoder array of Recurrent or its subclasses used in encoder
+   * @param decoder array of Recurrent or its subclasses used in decoder
+   * @return
+   */
   def forwardStates[T: ClassTag](encoder: Array[ZooRecurrent[T]],
     decoder: Array[Recurrent[T]])(implicit ev: TensorNumeric[T]): Unit
 
+  /**
+   * pass decoder state to encoder in backward
+   * @param encoder array of Recurrent or its subclasses used in encoder
+   * @param decoder array of Recurrent or its subclasses used in decoder
+   * @return
+   */
   def backwardStates[T: ClassTag](encoder: Array[ZooRecurrent[T]],
     decoder: Array[Recurrent[T]])(implicit ev: TensorNumeric[T]): Unit
+
+  /**
+   * Modules used in the Bridge, usually for get parameters in the Bridge
+   * @return Modules used in the Bridge
+   */
+  def toModel[T: ClassTag](implicit ev: TensorNumeric[T]): Sequential[T] = Sequential[T]()
 }
 
+/**
+ * [[ZeroBridge]] doesn't pass state between encoder and decoder. The init decoder state is 0
+ */
 class ZeroBridge() extends Bridge {
   override def forwardStates[T: ClassTag](encoder: Array[ZooRecurrent[T]],
     decoder: Array[Recurrent[T]])(implicit ev: TensorNumeric[T]): Unit = {}
@@ -39,6 +64,10 @@ class ZeroBridge() extends Bridge {
     decoder: Array[Recurrent[T]])(implicit ev: TensorNumeric[T]): Unit = {}
 }
 
+/**
+ * [[PassThroughBridge]] pass state between encoder and decoder without change.
+ * Requires encoder states are the same size with decoder states
+ */
 class PassThroughBridge() extends Bridge {
   override def forwardStates[T: ClassTag](encoder: Array[ZooRecurrent[T]],
     decoder: Array[Recurrent[T]])(implicit ev: TensorNumeric[T]): Unit = {
@@ -78,8 +107,19 @@ class PassThroughBridge() extends Bridge {
   }
 }
 
+/**
+ * [[InitialStateBridge]] Init decoder state with passing encoder state through
+ * activations. It allows encoder states are in different size with decoder states
+ */
 class InitialStateBridge[T: ClassTag](val activations: Array[Array[TensorModule[T]]])
                                      (implicit ev: TensorNumeric[T]) extends Bridge {
+  override def toModel[T: ClassTag](implicit ev: TensorNumeric[T]): Sequential[T] = {
+    val model = Sequential[T]()
+    activations.filter(_ != null).flatten.foreach(x =>
+      model.add(x.asInstanceOf[AbstractModule[Tensor[T], Tensor[T], T]]))
+    model
+  }
+
   override def forwardStates[T: ClassTag](encoder: Array[ZooRecurrent[T]],
     decoder: Array[Recurrent[T]])(implicit ev: TensorNumeric[T]): Unit = {
     if (decoder.head.isInstanceOf[ZooRecurrentDecoder[T]]) {
@@ -89,8 +129,9 @@ class InitialStateBridge[T: ClassTag](val activations: Array[Array[TensorModule[
       } else {
         val hiddenState = T()
         for((rec, i) <- encoder.view.zipWithIndex) {
-          hiddenState(i + 1) = if (activations(i) != null)
-            updateState(rec.getHiddenState(), activations(i)) else rec.getHiddenState()
+          hiddenState(i + 1) = if (activations(i) != null) {
+            updateState(rec.getHiddenState(), activations(i))
+          } else rec.getHiddenState()
         }
         decoder.head.setHiddenState(hiddenState)
       }
@@ -120,8 +161,9 @@ class InitialStateBridge[T: ClassTag](val activations: Array[Array[TensorModule[
     } else {
       for ((x, i) <- decoder.view.zipWithIndex) {
         val gradHiddenState = x.asInstanceOf[ZooRecurrent[T]].getGradHiddenState()
-        val newGradHiddenState = if (activations(i) != null) updateGradState(encoder(i).getHiddenState(),
-          gradHiddenState, activations(i)) else gradHiddenState
+        val newGradHiddenState = if (activations(i) != null) {
+          updateGradState(encoder(i).getHiddenState(), gradHiddenState, activations(i))
+        } else gradHiddenState
         encoder(i).setGradHiddenState(newGradHiddenState)
       }
     }

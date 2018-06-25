@@ -165,7 +165,8 @@ class Seq2seqTorchSpec extends FlatSpec with BeforeAndAfter with Matchers {
     model.backward(input, gEdec)
     val encRec = seq2seq.encoder.modules.apply(1)
     for (i <- 1 to 3) {
-      luaencGradInput.toTable[Tensor[Double]](i).almostEqual(encRec.gradInput.toTensor.select(2, i), 1e-8)
+      luaencGradInput.toTable[Tensor[Double]](i)
+        .almostEqual(encRec.gradInput.toTensor.select(2, i), 1e-8)
     }
     require(luaenclstmG.almostEqual(enclstmG, 1e-8) == true)
     require(luadeclstmG.almostEqual(declstmG, 1e-8) == true)

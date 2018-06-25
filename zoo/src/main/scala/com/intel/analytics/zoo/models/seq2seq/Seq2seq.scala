@@ -25,6 +25,16 @@ import com.intel.analytics.bigdl.utils.{T, Table}
 import scala.reflect.ClassTag
 import com.intel.analytics.zoo.models.common.ZooModel
 
+/**
+ * [[Seq2seq]] Sequence-to-sequence recurrent neural networks which maps input
+ * sequences to output sequences.
+ * @param encoderCells List of cells for encoder
+ * @param decoderCells List of cells for decoder
+ * @param preEncoder Before feeding input to encoder, pass it through preEncoder
+ * @param preDecoder Before feeding input to decoder, pass it through preDecoder
+ * @param bridges Bridges used to pass states between encoder and decoder.
+ *                Default is PassThroughBridge
+ */
 class Seq2seq[T: ClassTag](val encoderCells: Array[Cell[T]],
                            val decoderCells: Array[Cell[T]],
                            val preEncoder: AbstractModule[Activity, Activity, T] = null,
@@ -44,15 +54,28 @@ class Seq2seq[T: ClassTag](val encoderCells: Array[Cell[T]],
   private var seqLen: Int = 0
   private var stopSign: Tensor[T] = null
   private var loopFunc: (Tensor[T]) => (Tensor[T]) = null
-  def setLoop(maxLen: Int, stopSign: Tensor[T] = null, fuc: (Tensor[T]) => (Tensor[T]) = null) = {
+
+  /**
+   * defines prediction in last time step will be used as input in next time step in decoder
+   * @param maxLen max sequence length of output
+   * @param stopSign if prediction is the same with stopSign, it will stop predict
+   * @param func before feeding output at last time step to next time step,
+   *             pass it through loopFunc
+   * @return this container
+   */
+  def setLoop(maxLen: Int, stopSign: Tensor[T] = null,
+              func: (Tensor[T]) => (Tensor[T]) = null): Unit = {
     seqLen = maxLen
     this.stopSign = stopSign
-    loopFunc = fuc
-    //TODO: NEED TO VERIFY IF THE PARAMTERS ARE THE SAME AFTER SET
+    loopFunc = func
     modules.clear()
     modules += buildModel()
   }
-  def clearLoop() = {
+
+  /**
+   * clear setLoop settings
+   */
+  def clearLoop(): Unit = {
     seqLen = 0
     this.stopSign = null
     loopFunc = null
@@ -63,11 +86,6 @@ class Seq2seq[T: ClassTag](val encoderCells: Array[Cell[T]],
   override def buildModel(): AbstractModule[Activity, Tensor[T], T] = {
     encoder = buildEncoder()
     val model = Sequential[T]().add(encoder)
-    if (bridges.isInstanceOf[InitialStateBridge[T]]) {
-      bridges.asInstanceOf[InitialStateBridge[T]].activations.foreach(activation =>
-        if (activation != null) activation.foreach(module =>
-          model.add(module)))
-    }
     if (preDecoder != null) model.add(preDecoder)
     decoder = buildDecoder()
     model.add(decoder)
@@ -88,7 +106,7 @@ class Seq2seq[T: ClassTag](val encoderCells: Array[Cell[T]],
   private def buildDecoder(): Sequential[T] = {
     val model = Sequential[T]()
     dec = if (seqLen != 0 || loopFunc != null || stopSign != null) {
-      require(seqLen > 0, "Please setLoopPreOutput if you want to use i-1th output as i th input")
+      require(seqLen > 0, "SeqLen needs be great than 0. Please use setLoopPreOutput to set seqLen")
       val cells = if (decoderCells.length == 1) decoderCells.head else MultiRNNCell(decoderCells)
       val recDec = new ZooRecurrentDecoder(seqLen, stopSign, loopFunc).add(cells)
       model.add(recDec)
@@ -112,9 +130,24 @@ class Seq2seq[T: ClassTag](val encoderCells: Array[Cell[T]],
     decoderInput = if (preDecoder != null) preDecoder.forward(preDecoderInput).toTensor
       else preDecoderInput
 
-    bridges.forwardStates(enc, dec)
+    if (bridges != null) bridges.forwardStates(enc, dec)
     output = decoder.forward(decoderInput).toTensor
     output
+  }
+
+  override def backward(input: Activity, gradOutput: Tensor[T]): Tensor[T] = {
+    val decoderGradInput = decoder.backward(decoderInput, gradOutput).toTensor
+    if (preDecoder != null) {
+      if (preDecoderInput.dim < encoderInput.dim) {
+        preDecoder.backward(preDecoderInput,
+          decoderGradInput.select(Seq2seq.timeDim, 1).contiguous())
+      } else preDecoder.backward(preDecoderInput, decoderGradInput)
+    }
+
+    if (bridges != null) bridges.backwardStates(enc, dec)
+    gradInput = encoder.backward(encoderInput, Tensor[T](encoderOutput.size())).toTensor
+
+    gradInput.toTensor
   }
 
   override def getParametersTable(): Table = {
@@ -134,27 +167,15 @@ class Seq2seq[T: ClassTag](val encoderCells: Array[Cell[T]],
     })
     if (preEncoder != null) pt.add(preEncoder.getParametersTable())
     if (preDecoder != null) pt.add(preDecoder.getParametersTable())
-    if (bridges.isInstanceOf[InitialStateBridge[T]]) {
-      bridges.asInstanceOf[InitialStateBridge[T]].activations.foreach(activation =>
-        if (activation != null) activation.foreach(module =>
-          pt.add(module.getParametersTable())))
-    }
+    pt.add(bridges.toModel.getParametersTable())
     pt
   }
 
-  override def backward(input: Activity, gradOutput: Tensor[T]): Tensor[T] = {
-    val decoderGradInput = decoder.backward(decoderInput, gradOutput).toTensor
-    if (preDecoder != null) {
-      if (preDecoderInput.dim < encoderInput.dim) {
-        preDecoder.backward(preDecoderInput,
-          decoderGradInput.select(Seq2seq.timeDim, 1).contiguous())
-      } else preDecoder.backward(preDecoderInput, decoderGradInput)
-    }
+  override def parameters(): (Array[Tensor[T]], Array[Tensor[T]]) = {
+    val params = model.parameters()
 
-    bridges.backwardStates(enc, dec)
-    gradInput = encoder.backward(encoderInput, Tensor[T](encoderOutput.size())).toTensor
-
-    gradInput.toTensor
+    val bridgeParam = bridges.toModel.parameters()
+    (params._1 ++ bridgeParam._1, params._2 ++ bridgeParam._2)
   }
 
   override def clearState() : this.type = {
@@ -164,10 +185,14 @@ class Seq2seq[T: ClassTag](val encoderCells: Array[Cell[T]],
     encoderInput = null
     encoderOutput = null
     model.clearState()
+    bridges.toModel.clearState()
     this
   }
 
-  override def reset(): Unit = model.reset()
+  override def reset(): Unit = {
+    model.reset()
+    bridges.toModel.reset()
+  }
 }
 
 object Seq2seq {
