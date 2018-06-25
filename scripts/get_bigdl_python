@@ -27,13 +27,24 @@ echo "BIGDL_VERSION: $BIGDL_VERSION"
 
 rm -rf $DEST_DIR/*
 
-mvn -X org.apache.maven.plugins:maven-dependency-plugin:2.4:get \
+GET_COMMAND="mvn org.apache.maven.plugins:maven-dependency-plugin:2.4:get \
 -DartifactId=dist-spark-2.2.0-scala-2.11.8-all \
 -DgroupId=com.intel.analytics.bigdl \
--Dversion=${BIGDL_VERSION} \
+-Dversion=${BIGDL_VERSION}0 \
 -Dclassifier=python-api \
 -Dpackaging=zip \
--Ddest="${DEST_DIR}/bigdl-python-api-${BIGDL_VERSION}.zip"
+-Ddest=${DEST_DIR}/bigdl-python-api-${BIGDL_VERSION}.zip"
+
+echo "Running: $GET_COMMAND"
+$GET_COMMAND
+
+exit_status=$?
+if [ $exit_status -ne 0 ];
+then
+    rm -rf ${DEST_DIR}
+    echo "Fail to get the BigDL python api from maven!!!!"
+    exit $exit_status_1
+fi
 
 cd ${DEST_DIR}
 mkdir sources
