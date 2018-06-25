@@ -1,0 +1,3 @@
+[submodule "backend/bigdl"]
+	path = backend/bigdl
+	url = https://github.com/intel-analytics/BigDL.git
