@@ -30,7 +30,7 @@ rm -rf $DEST_DIR/*
 GET_COMMAND="mvn org.apache.maven.plugins:maven-dependency-plugin:2.4:get \
 -DartifactId=dist-spark-2.2.0-scala-2.11.8-all \
 -DgroupId=com.intel.analytics.bigdl \
--Dversion=${BIGDL_VERSION}0 \
+-Dversion=${BIGDL_VERSION} \
 -Dclassifier=python-api \
 -Dpackaging=zip \
 -Ddest=${DEST_DIR}/bigdl-python-api-${BIGDL_VERSION}.zip"
