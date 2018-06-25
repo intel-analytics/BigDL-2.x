@@ -21,4 +21,4 @@ if [ ! -f ${ANALYTICS_ZOO_JAR} ]; then
     exit 1
 fi
 
-SPARK_OPTS='$1' TOREE_OPTS='--nosparkcontext' jupyter notebook
+SPARK_OPTS=''$1' --jars ${ANALYTICS_ZOO_JAR}'$2' '$3'' TOREE_OPTS='--nosparkcontext' jupyter notebook
