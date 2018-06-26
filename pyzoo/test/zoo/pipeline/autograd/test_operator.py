@@ -31,9 +31,7 @@ np.random.seed(1337)  # for reproducibility
 
 class TestOperator(ZooTestCase):
     # shape including batch
-    def compare_binary_op(self, kk_func, z_layer, shape, rtol = 1e-5, atol = 1e-5):
-        rtol = 1e-5
-        atol = 1e-5
+    def compare_binary_op(self, kk_func, z_layer, shape, rtol=1e-5, atol=1e-5):
         x = klayers.Input(shape=shape[0][1:])
         y = klayers.Input(shape=shape[1][1:])
 
