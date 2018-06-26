@@ -37,10 +37,14 @@
           <include>zoo-version-info.properties</include>
       </includes>
     </fileSet>
+    <fileSet>
+      <outputDirectory>/bigdl_python</outputDirectory>
+      <directory>${project.build.directory}/bigdl_python/sources</directory>
+    </fileSet>
   </fileSets>
   <files>
     <file>
-      <source>${project.parent.basedir}/backend/bigdl/spark/dl/src/main/resources/spark-bigdl.conf</source>
+      <source>${project.build.directory}/bigdl_python/sources/spark-bigdl.conf</source>
       <outputDirectory>/conf</outputDirectory>
       <destName>spark-analytics-zoo.conf</destName>
     </file>
