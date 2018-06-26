@@ -31,7 +31,7 @@ np.random.seed(1337)  # for reproducibility
 
 class TestOperator(ZooTestCase):
     # shape including batch
-    def compare_binary_op(self, kk_func, z_layer, shape):
+    def compare_binary_op(self, kk_func, z_layer, shape, rtol = 1e-5, atol = 1e-5):
         rtol = 1e-5
         atol = 1e-5
         x = klayers.Input(shape=shape[0][1:])
@@ -428,7 +428,7 @@ class TestOperator(ZooTestCase):
 
     def test_dot_2D(self):
         def z_func(x, y):
-            return A.dot(x, y, axes=1, normalize=False)
+            return A.batch_dot(x, y, axes=1, normalize=False)
 
         def k_func(x, y):
             return klayers.Dot(axes=[1, 1], normalize=False)([x, y])
@@ -438,7 +438,7 @@ class TestOperator(ZooTestCase):
 
     def test_dot_3D_2(self):
         def z_func(x, y):
-            return A.dot(x, y, axes=2, normalize=False)
+            return A.batch_dot(x, y, axes=2, normalize=False)
 
         def k_func(x, y):
             return klayers.Dot(axes=2, normalize=False)([x, y])
@@ -448,7 +448,7 @@ class TestOperator(ZooTestCase):
 
     def test_dot_3D_1(self):
         def z_func(x, y):
-            return A.dot(x, y, axes=1, normalize=False)
+            return A.batch_dot(x, y, axes=1, normalize=False)
 
         def k_func(x, y):
             return klayers.Dot(axes=1, normalize=False)([x, y])
@@ -458,7 +458,7 @@ class TestOperator(ZooTestCase):
 
     def test_dot_3D_1_2(self):
         def z_func(x, y):
-            return A.dot(x, y, axes=[1, 2], normalize=False)
+            return A.batch_dot(x, y, axes=[1, 2], normalize=False)
 
         def k_func(x, y):
             return klayers.Dot(axes=[1, 2], normalize=False)([x, y])
@@ -468,7 +468,7 @@ class TestOperator(ZooTestCase):
 
     def test_dot_3D_2_2_norm(self):
         def z_func(x, y):
-            return A.dot(x, y, axes=[2, 2], normalize=True)
+            return A.batch_dot(x, y, axes=[2, 2], normalize=True)
 
         def k_func(x, y):
             return klayers.Dot(axes=[2, 2], normalize=True)([x, y])
@@ -478,7 +478,7 @@ class TestOperator(ZooTestCase):
 
     def test_dot_3D_1_2_norm(self):
         def z_func(x, y):
-            return A.dot(x, y, axes=[1, 2], normalize=True)
+            return A.batch_dot(x, y, axes=[1, 2], normalize=True)
 
         def k_func(x, y):
             return klayers.Dot(axes=[1, 2], normalize=True)([x, y])

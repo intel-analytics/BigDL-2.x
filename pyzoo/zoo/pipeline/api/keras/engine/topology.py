@@ -191,7 +191,7 @@ class KerasNet(ZooKerasLayer):
                      Default is True. In local mode, x must be a Numpy array.
         """
         if distributed:
-            if isinstance(x, np.ndarray) or isinstance(x, list):
+            if isinstance(x, np.ndarray):
                 features = to_sample_rdd(x, np.zeros([x.shape[0]]))
             elif isinstance(x, RDD):
                 features = x

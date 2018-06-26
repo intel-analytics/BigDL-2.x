@@ -50,7 +50,7 @@ def abs(x):
     return Variable.from_jvalue(callBigDlFunc("float", "abs", x))
 
 
-def dot(x, y, axes=1, normalize=False):
+def batch_dot(x, y, axes=1, normalize=False):
     """
     Operator that computes a dot product between samples in two tensors.
 
