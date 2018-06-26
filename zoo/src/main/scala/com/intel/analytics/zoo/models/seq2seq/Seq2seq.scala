@@ -35,11 +35,12 @@ import com.intel.analytics.zoo.models.common.ZooModel
  * @param bridges Bridges used to pass states between encoder and decoder.
  *                Default is PassThroughBridge
  */
-class Seq2seq[T: ClassTag](val encoderCells: Array[Cell[T]],
-                           val decoderCells: Array[Cell[T]],
-                           val preEncoder: AbstractModule[Activity, Activity, T] = null,
-                           val preDecoder: AbstractModule[Activity, Activity, T] = null,
-                           val bridges: Bridge = new PassThroughBridge())
+class Seq2seq[T: ClassTag](encoderCells: Array[Cell[T]],
+                           decoderCells: Array[Cell[T]],
+                           preEncoder: AbstractModule[Activity, Activity, T] = null,
+                           preDecoder: AbstractModule[Activity, Activity, T] = null,
+                           bridges: Bridge = new PassThroughBridge(),
+                           maskZero: Boolean = false)
   (implicit ev: TensorNumeric[T]) extends ZooModel[Activity, Tensor[T], T] {
   private var preDecoderInput: Tensor[T] = null
   private var decoderInput: Tensor[T] = null
@@ -96,7 +97,7 @@ class Seq2seq[T: ClassTag](val encoderCells: Array[Cell[T]],
     val model = Sequential[T]()
     if (preEncoder != null) model.add(preEncoder)
     enc = encoderCells.map {cell =>
-      val rec = new ZooRecurrent().add(cell)
+      val rec = new ZooRecurrent(maskZero = maskZero).add(cell)
       model.add(rec)
       rec
     }
@@ -113,7 +114,7 @@ class Seq2seq[T: ClassTag](val encoderCells: Array[Cell[T]],
       Array(recDec)
     } else {
       decoderCells.map {cell =>
-        val rec = new ZooRecurrent().add(cell)
+        val rec = new ZooRecurrent(maskZero = maskZero).add(cell)
         model.add(rec)
         rec
       }
@@ -199,9 +200,10 @@ object Seq2seq {
   def apply[@specialized(Float, Double) T: ClassTag](encoderCells: Array[Cell[T]],
      decoderCells: Array[Cell[T]], preEncoder: AbstractModule[Activity, Activity, T] = null,
      preDecoder: AbstractModule[Activity, Activity, T] = null,
-     bridges: Bridge = new PassThroughBridge())
+     bridges: Bridge = new PassThroughBridge(),
+     maskZero: Boolean = false)
     (implicit ev: TensorNumeric[T]): Seq2seq[T] = {
-    new Seq2seq[T](encoderCells, decoderCells, preEncoder, preDecoder, bridges).build()
+    new Seq2seq[T](encoderCells, decoderCells, preEncoder, preDecoder, bridges, maskZero).build()
   }
 
   val timeDim = 2

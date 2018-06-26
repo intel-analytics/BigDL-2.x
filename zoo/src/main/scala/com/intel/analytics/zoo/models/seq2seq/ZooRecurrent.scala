@@ -83,12 +83,12 @@ class ZooRecurrent[T : ClassTag](batchNormParams: BatchNormParams[T] = null,
     // Clone N modules along the sequence dimension.
     initHidden(outputSize.drop(2))
     cloneCells()
-    if (maskZero) {
-      require(input.dim == 3,
-        "If maskZero set to true, input should be a 3D Tensor, e.g [batch, times, nDim]")
-      inputBuffer.resizeAs(input).abs(input).max(maskBuffer, indexBuffer, 3)
-      minLength = ev.toType[Int](maskBuffer.sign().sum(2).min(1)._1(Array(1, 1, 1)))
-    }
+//    if (maskZero) {
+//      require(input.dim == 3,
+//        "If maskZero set to true, input should be a 3D Tensor, e.g [batch, times, nDim]")
+//      inputBuffer.resizeAs(input).abs(input).max(maskBuffer, indexBuffer, 3)
+//      minLength = ev.toType[Int](maskBuffer.sign().sum(2).min(1)._1(Array(1, 1, 1)))
+//    }
 
     currentInput(hidDim) = if (initHiddenState != null) initHiddenState
     else hidden
@@ -97,24 +97,24 @@ class ZooRecurrent[T : ClassTag](batchNormParams: BatchNormParams[T] = null,
       currentInput(inputDim) = BigDLWrapper.copy(input2Cell, i, stepInput2CellBuf)
       cells(i - 1).forward(currentInput)
       val curOutput = cells(i - 1).output
-      if (maskZero && i > minLength) {
-        val curMask = maskBuffer.select(2, i)
-        val curOut = curOutput[Table](hidDim)[Tensor[T]](1)
-        // Copy output to a new new tensor as output, because for some cells
-        // such as LSTM the hidden h and ouput o refer to the same tensor.
-        // But in this case, we want h and o have difference values.
-        curOutput.update(inputDim, outputBuffers(i - 1).resizeAs(curOut).copy(curOut))
-        for (b <- 1 to curMask.size(1)) {
-          if (curMask(Array(b, 1)) == ev.zero) {
-            val newState = curOutput[Table](hidDim)
-            val originState = currentInput[Table](hidDim)
-            for (j <- 1 to newState.length()) {
-              newState[Tensor[T]](j).select(1, b).copy(originState[Tensor[T]](j).select(1, b))
-            }
-            curOutput[Tensor[T]](inputDim).select(1, b).zero()
-          }
-        }
-      }
+//      if (maskZero && i > minLength) {
+//        val curMask = maskBuffer.select(2, i)
+//        val curOut = curOutput[Table](hidDim)[Tensor[T]](1)
+//        // Copy output to a new new tensor as output, because for some cells
+//        // such as LSTM the hidden h and ouput o refer to the same tensor.
+//        // But in this case, we want h and o have difference values.
+//        curOutput.update(inputDim, outputBuffers(i - 1).resizeAs(curOut).copy(curOut))
+//        for (b <- 1 to curMask.size(1)) {
+//          if (curMask(Array(b, 1)) == ev.zero) {
+//            val newState = curOutput[Table](hidDim)
+//            val originState = currentInput[Table](hidDim)
+//            for (j <- 1 to newState.length()) {
+//              newState[Tensor[T]](j).select(1, b).copy(originState[Tensor[T]](j).select(1, b))
+//            }
+//            curOutput[Tensor[T]](inputDim).select(1, b).zero()
+//          }
+//        }
+//      }
       currentInput(hidDim) = curOutput[Table](hidDim)
       i += 1
     }
@@ -144,35 +144,36 @@ class ZooRecurrent[T : ClassTag](batchNormParams: BatchNormParams[T] = null,
         cells(i - 1).regluarized(false)
       }
 
-      if (maskZero && i > minLength) {
-        val curMask = maskBuffer.select(2, i)
-        if (gradOutputBuff.length() == 0) {
-          Utils.recursiveResizeAs(gradOutputBuff, currentGradOutput)
-        }
-        Utils.recursiveCopy(gradOutputBuff, currentGradOutput)
-        for (b <- 1 to curMask.size(1)) {
-          if (curMask(Array(b, 1)) == ev.zero) {
-            val originState = gradOutputBuff[Table](Recurrent.hidDim)
-            for (j <- 1 to originState.length()) {
-              originState[Tensor[T]](j).select(1, b).zero()
-            }
-          }
-        }
-
-        cells(i - 1).backward(_input, gradOutputBuff).toTable
-
-        for (b <- 1 to curMask.size(1)) {
-          if (curMask(Array(b, 1)) == ev.zero) {
-            val newState = cells(i - 1).gradInput[Table](hidDim)
-            val originState = currentGradOutput[Table](hidDim)
-            for (j <- 1 to newState.length()) {
-              newState[Tensor[T]](j).select(1, b).copy(originState[Tensor[T]](j).select(1, b))
-            }
-          }
-        }
-      } else {
-        cells(i - 1).backward(_input, currentGradOutput)
-      }
+//      if (maskZero && i > minLength) {
+//        val curMask = maskBuffer.select(2, i)
+//        if (gradOutputBuff.length() == 0) {
+//          Utils.recursiveResizeAs(gradOutputBuff, currentGradOutput)
+//        }
+//        Utils.recursiveCopy(gradOutputBuff, currentGradOutput)
+//        for (b <- 1 to curMask.size(1)) {
+//          if (curMask(Array(b, 1)) == ev.zero) {
+//            val originState = gradOutputBuff[Table](Recurrent.hidDim)
+//            for (j <- 1 to originState.length()) {
+//              originState[Tensor[T]](j).select(1, b).zero()
+//            }
+//          }
+//        }
+//
+//        cells(i - 1).backward(_input, gradOutputBuff).toTable
+//
+//        for (b <- 1 to curMask.size(1)) {
+//          if (curMask(Array(b, 1)) == ev.zero) {
+//            val newState = cells(i - 1).gradInput[Table](hidDim)
+//            val originState = currentGradOutput[Table](hidDim)
+//            for (j <- 1 to newState.length()) {
+//              newState[Tensor[T]](j).select(1, b).copy(originState[Tensor[T]](j).select(1, b))
+//            }
+//          }
+//        }
+//      } else {
+//        cells(i - 1).backward(_input, currentGradOutput)
+//      }
+      cells(i - 1).backward(_input, currentGradOutput)
       i -= 1
     }
 
