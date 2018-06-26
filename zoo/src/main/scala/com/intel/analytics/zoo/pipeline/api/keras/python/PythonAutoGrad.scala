@@ -200,7 +200,16 @@ class PythonAutoGrad[T: ClassTag](implicit ev: TensorNumeric[T]) extends PythonZ
     autograd.AutoGrad.contiguous(input)
   }
 
-  def mm(x: Variable[T], y: Variable[T], axes:JList[Int]): Variable[T] = {
+  def mm(x: Variable[T], y: Variable[T], axes: JList[Int]): Variable[T] = {
     autograd.AutoGrad.mm(x, y, axes.asScala.toList)
+  }
+
+  def l2Normalize(x: Variable[T], axis: Int): Variable[T] = {
+    autograd.AutoGrad.l2Normalize(x, axis)
+  }
+
+  def dot(x: Variable[T], y: Variable[T], axes: JList[Int],
+          normalize: Boolean = false): Variable[T] = {
+    autograd.AutoGrad.dot(x, y, axes.asScala.toList, normalize)
   }
 }

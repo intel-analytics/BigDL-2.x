@@ -195,6 +195,30 @@ object AutoGrad {
     val kmm = new KerasLayerWrapper[T](mm.asInstanceOf[AbstractModule[Activity, Activity, T]])
     kmm.from(x, y)
   }
+
+  def l2Normalize[T: ClassTag](x: Variable[T], axis: Int)
+      (implicit ev: TensorNumeric[T]): Variable[T] = {
+    val l2Normalize = x / sqrt(maximum(sum(x * x, axis, keepdims = true), epsilon()))
+    l2Normalize
+  }
+
+  def dot[T: ClassTag](x: Variable[T], y: Variable[T], axes: List[Int], normalize: Boolean = false)
+      (implicit ev: TensorNumeric[T]): Variable[T] = {
+  val xShape = x.getOutputShape().toSingle().toArray
+  if (!normalize) {
+    require(xShape.length == 2 || xShape.length == 3,
+      s"Only support 2D and 3D for now, but got: ${xShape.length}")
+    if (xShape.length == 2) {
+      sum(x*y, axis = 1, keepdims = true)
+    } else {
+      mm(x, y, axes)
+    }
+  } else {
+    val l2_x = l2Normalize(x, axes(0))
+    val l2_y = l2Normalize(y, axes(1))
+    dot(l2_x, l2_y, axes = axes)
+    }
+  }
 }
 
 object Variable extends {

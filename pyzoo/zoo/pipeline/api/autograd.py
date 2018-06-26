@@ -60,17 +60,7 @@ def dot(x, y, axes=1, normalize=False):
     if not normalize:
         if isinstance(axes, int):
             axes = [axes] * 2
-        if len(x.get_output_shape()) == 2 :  # pure dot product
-            return sum(x * y, axis=1, keepDims=True)
-        elif len(x.get_output_shape()) == 3:
-            return mm(x, y, axes=axes)
-        else:
-            raise Exception("Only support 2D and 3D for now, but got" + x.get_output_shape())
-
-    else:
-        l2_x = l2_normalize(x, axis=axes[0])
-        l2_y = l2_normalize(y, axis=axes[1])
-        return dot(l2_x, l2_y, axes=axes)
+    return Variable.from_jvalue(callBigDlFunc("float", "dot", x, y, axes, normalize))
 
 
 def l2_normalize(x, axis):
@@ -80,7 +70,7 @@ def l2_normalize(x, axis):
     :param axes:
     :return:
     """
-    return x / sqrt(maximum(sum(x*x, axis, keepDims=True), epsilon()))
+    return Variable.from_jvalue(callBigDlFunc("float", "l2Normalize", x, int(axis)))
 
 
 def sum(x, axis=0, keepDims=False):
