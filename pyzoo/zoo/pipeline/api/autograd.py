@@ -72,7 +72,7 @@ def batch_dot(x, y, axes=1, normalize=False):
     if not normalize:
         if isinstance(axes, int):
             axes = [axes] * 2
-    return Variable.from_jvalue(callBigDlFunc("float", "dot", x, y, axes, normalize))
+    return Variable.from_jvalue(callBigDlFunc("float", "batchDot", x, y, axes, normalize))
 
 
 def l2_normalize(x, axis):

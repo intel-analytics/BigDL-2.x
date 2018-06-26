@@ -208,8 +208,8 @@ class PythonAutoGrad[T: ClassTag](implicit ev: TensorNumeric[T]) extends PythonZ
     autograd.AutoGrad.l2Normalize(x, axis)
   }
 
-  def dot(x: Variable[T], y: Variable[T], axes: JList[Int],
+  def batchDot(x: Variable[T], y: Variable[T], axes: JList[Int],
           normalize: Boolean = false): Variable[T] = {
-    autograd.AutoGrad.dot(x, y, axes.asScala.toList, normalize)
+    autograd.AutoGrad.batchDot(x, y, axes.asScala.toList, normalize)
   }
 }
