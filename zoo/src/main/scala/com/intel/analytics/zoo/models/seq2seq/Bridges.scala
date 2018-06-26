@@ -27,7 +27,7 @@ import scala.reflect.ClassTag
 /**
  * [[Bridge]] defines how to pass state between encoder and decoder
  */
-abstract class Bridge {
+abstract class Bridge extends Serializable {
   /**
    * pass encoder state to decoder in forward
    * @param encoder array of Recurrent or its subclasses used in encoder
