@@ -299,7 +299,8 @@ object AutoGrad {
    *                  If set to True, then the output of the dot product
    *                  is the cosine proximity between the two samples.
    */
-  def batchDot[T: ClassTag](x: Variable[T], y: Variable[T], axes: List[Int], normalize: Boolean = false)
+  def batchDot[T: ClassTag](x: Variable[T], y: Variable[T],
+                            axes: List[Int], normalize: Boolean = false)
       (implicit ev: TensorNumeric[T]): Variable[T] = {
   val xShape = x.getOutputShape().toSingle().toArray
   if (!normalize) {
