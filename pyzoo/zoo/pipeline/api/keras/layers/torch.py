@@ -702,7 +702,7 @@ class BinaryThreshold(ZooKerasLayer):
 class Threshold(ZooKerasLayer):
     """
     Threshold input Tensor.
-    If values in the Tensor smaller than th, then replace it with v.
+    If values in the Tensor smaller than or equal to th, then replace it with v.
     When you use this layer as the first layer of a model, you need to provide the argument
     input_shape (a shape tuple, does not include the batch dimension).
     # Arguments
