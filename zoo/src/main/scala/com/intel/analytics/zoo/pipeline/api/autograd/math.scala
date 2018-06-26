@@ -146,7 +146,7 @@ object AutoGrad {
   /**
    * Stacks a list of rank `R` tensors into a rank `R+1` tensor.
    * @param inputs: List of variables (tensors).
-   * @param axis xis along which to perform stacking.
+   * @param axis axis along which to perform stacking.
    */
   def stack[T: ClassTag](inputs: List[Variable[T]], axis: Int = 1)(
       implicit ev: TensorNumeric[T]): Variable[T] = {
@@ -176,6 +176,14 @@ object AutoGrad {
     Variable(contiguousNode)
   }
 
+  /**
+   * Module to perform matrix multiplication on two mini-batch inputs,
+   * producing a mini-batch.
+   *
+   * @param x A variable.
+   * @param y A variable.
+   * @param axes Axes along which to perform multiplication.
+   */
   def mm[T: ClassTag](
       x: Variable[T],
       y: Variable[T],
@@ -196,12 +204,29 @@ object AutoGrad {
     kmm.from(x, y)
   }
 
+  /**
+   * Normalizes a tensor wrt the L2 norm alongside the specified axis.
+   *
+   * @param x A variable.
+   * @param axis Axis along which to perform multiplication.
+   */
   def l2Normalize[T: ClassTag](x: Variable[T], axis: Int)
       (implicit ev: TensorNumeric[T]): Variable[T] = {
     val l2Normalize = x / sqrt(maximum(sum(x * x, axis, keepdims = true), epsilon()))
     l2Normalize
   }
 
+  /**
+    * Operator that computes a dot product between samples in two tensors.
+    *
+    * @param x A variable.
+    * @param y A variable.
+    * @param axes Axes along which to perform multiplication.
+    * @param normalize Whether to L2-normalize samples along the
+                dot product axis before taking the dot product.
+                If set to True, then the output of the dot product
+                is the cosine proximity between the two samples.
+    */
   def dot[T: ClassTag](x: Variable[T], y: Variable[T], axes: List[Int], normalize: Boolean = false)
       (implicit ev: TensorNumeric[T]): Variable[T] = {
   val xShape = x.getOutputShape().toSingle().toArray
