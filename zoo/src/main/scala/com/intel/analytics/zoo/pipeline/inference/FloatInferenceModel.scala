@@ -30,6 +30,16 @@ case class FloatInferenceModel(
   model: AbstractModule[Activity, Activity, Float],
   predictor: LocalPredictor[Float]) extends InferenceSupportive {
 
+  @deprecated
+  def predict(input: JList[JFloat], shape: JList[JInt]): JList[JFloat] = {
+    timing("model predict") {
+      val sample = transferInputToSample(input, shape.asScala.toArray.map(_.asInstanceOf[Int]))
+      val result = predictor.predict(Array(sample))
+      require(result.length == 1, "only one input, should get only one prediction")
+      result(0).asInstanceOf[Tensor[Float]].toArray().toList.asJava.asInstanceOf[JList[JFloat]]
+    }
+  }
+
   def predict(inputs: JList[JTensor]): JList[JList[JTensor]] = {
     timing(s"model predict for batch ${inputs.size()}") {
       val samples = inputs.asScala.map(input => {
