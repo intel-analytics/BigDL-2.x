@@ -54,10 +54,10 @@ def dot(x, y, axes=1, normalize=False):
     """
     Operator that computes a dot product between samples in two tensors.
 
-        E.g. if applied to two tensors `a` and `b` of shape `(batch_size, n)`,
-        the output will be a tensor of shape `(batch_size, 1)`
-        where each entry `i` will be the dot product between
-        `a[i]` and `b[i]`.
+    E.g. if applied to two tensors `a` and `b` of shape `(batch_size, n)`,
+    the output will be a tensor of shape `(batch_size, 1)`
+    where each entry `i` will be the dot product between
+    `a[i]` and `b[i]`.
 
     :param x: Shape should only be [batch, xx]
     :param y: Shape should only be [batch, xx]
@@ -367,7 +367,6 @@ class Variable(kbase.ZooKerasCreator):
         :return:
         """
         return Variable.from_jvalue(callBigDlFunc("float", "indexSelect", self, dim, index))
-
 
     # TODO: we need a Shape mapping here.
     def __to_batch_shape(cls, shape):
