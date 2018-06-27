@@ -183,10 +183,16 @@ class TFNet private(graphDef: TFGraphHolder,
 
   override def updateOutput(input: Activity): Activity = {
     val data = if (input.isTensor) {
+      require(inputTypes.size == 1,
+        s"This TFNet requires ${inputTypes.size} inputs, which are $inputNames," +
+          s" but only one input is provided")
       val tfTensor = bigdl2Tf(input.toTensor[Float], inputTypes.head)
       Seq(tfTensor)
     } else {
       val t = input.toTable
+      require(inputTypes.size == t.length(),
+        s"This TFNet requires ${inputTypes.size} inputs, which are $inputNames," +
+          s" but ${t.length()} inputs are provided")
       for (i <- 1 to t.length()) yield {
         bigdl2Tf(t[Tensor[Float]](i), inputTypes(i-1))
       }
