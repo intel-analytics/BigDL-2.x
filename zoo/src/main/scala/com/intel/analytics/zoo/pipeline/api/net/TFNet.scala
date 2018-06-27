@@ -233,6 +233,15 @@ class TFNet private(graphDef: TFGraphHolder,
 
 object TFNet {
 
+  private def timing[T](name: String)(f: => T): T = {
+    val begin = System.currentTimeMillis
+    val result = f
+    val end = System.currentTimeMillis
+    val cost = (end - begin)
+    logger.debug(s"$name time elapsed [${cost / 1000} s, ${cost % 1000} ms].")
+    result
+  }
+
   class TFGraphHolder(@transient var tfGraph: Graph) extends Serializable with KryoSerializable {
 
     private trait CommonOutputStream {
@@ -248,12 +257,16 @@ object TFNet {
 
     private def writeInternal(out: CommonOutputStream): Unit = {
       val (graphDef, _) = getOrCreateGraphDef(id) {
-        tfGraph.toGraphDef
+        timing("export as graph def") {
+          tfGraph.toGraphDef
+        }
       }
       val len = graphDef.length
       out.writeInt(id)
       out.writeInt(len)
-      out.write(graphDef)
+      timing(s"writing ${len / 1024 / 1024}Mb graph def to stream") {
+        out.write(graphDef)
+      }
     }
 
     private def readInternal(in: CommonInputStream): Unit = {
@@ -261,10 +274,12 @@ object TFNet {
       val (graphDef, graphDefIsCreated) = getOrCreateGraphDef(id) {
         val len = in.readInt()
         val graphDef = new Array[Byte](len)
-        var numOfBytes = 0
-        while (numOfBytes < len) {
-          val read = in.read(graphDef, numOfBytes, len - numOfBytes)
-          numOfBytes += read
+        timing("reading graph def from stream") {
+          var numOfBytes = 0
+          while (numOfBytes < len) {
+            val read = in.read(graphDef, numOfBytes, len - numOfBytes)
+            numOfBytes += read
+          }
         }
         graphDef
       }
@@ -275,9 +290,12 @@ object TFNet {
       }
 
       val (graph, _) = getOrCreateGraph(id) {
-        val g = new Graph()
-        g.importGraphDef(graphDef)
-        g
+        timing("creating graph obj from graph def") {
+          val g = new Graph()
+          g.importGraphDef(graphDef)
+          g
+        }
+
       }
       tfGraph = graph
     }
@@ -334,19 +352,19 @@ object TFNet {
   private def getOrCreateGraphDef(id: Integer)
                                  (createGraphDef: => Array[Byte]): (Array[Byte], Boolean) = {
     if (graphDefRegistry.contains(id)) {
-      logger.info(s"graphDef: $id already exist, read from registry. " +
+      logger.debug(s"graphDef: $id already exist, read from registry. " +
         s"Registry size: $getGraphDefRegistrySize")
       (graphDefRegistry(id), false)
     } else {
       this.synchronized {
         if (graphDefRegistry.contains(id)) {
-          logger.info(s"graphDef: $id already exist, read from registry. " +
+          logger.debug(s"graphDef: $id already exist, read from registry. " +
             s"Registry size: $getGraphDefRegistrySize")
           (graphDefRegistry(id), false)
         } else {
           val graphDef = createGraphDef
           graphDefRegistry.put(id, graphDef)
-          logger.info(s"graphDef: $id does not exist, create it. " +
+          logger.debug(s"graphDef: $id does not exist, create it. " +
             s"Registry size: $getGraphDefRegistrySize")
           (graphDef, true)
         }
@@ -357,19 +375,19 @@ object TFNet {
   private def getOrCreateGraph(id: Integer)
                                  (createGraph: => Graph): (Graph, Boolean) = {
     if (graphRegistry.contains(id)) {
-      logger.info(s"graph: $id already exist, read from registry. " +
+      logger.debug(s"graph: $id already exist, read from registry. " +
         s"Registry size: $getGraphRegistrySize")
       (graphRegistry(id), false)
     } else {
       this.synchronized {
         if (graphRegistry.contains(id)) {
-          logger.info(s"graph: $id already exist, read from registry. " +
+          logger.debug(s"graph: $id already exist, read from registry. " +
             s"Registry size: $getGraphRegistrySize")
           (graphRegistry(id), false)
         } else {
           val graph = createGraph
           graphRegistry.put(id, graph)
-          logger.info(s"graph: $id does not exist, create it. " +
+          logger.debug(s"graph: $id does not exist, create it. " +
             s"Registry size: $getGraphRegistrySize")
           (graph, true)
         }
