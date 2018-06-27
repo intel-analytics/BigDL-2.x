@@ -216,6 +216,10 @@ class PythonZooKeras[T: ClassTag](implicit ev: TensorNumeric[T]) extends PythonB
     Net.loadTF[T](path, inputs.asScala, outputs.asScala, order, Option(binFile))
   }
 
+  def netLoadTF(folder: String): AbstractModule[Activity, Activity, T] = {
+    Net.loadTF[T](folder)
+  }
+
   def kerasNetToModel(value: KerasNet[T]): Model[T] = {
     value.toModel()
   }
@@ -951,6 +955,13 @@ class PythonZooKeras[T: ClassTag](implicit ev: TensorNumeric[T]) extends PythonB
       th: Double = 1e-6,
       inputShape: JList[Int] = null): BinaryThreshold[T] = {
     BinaryThreshold(th, toScalaShape(inputShape))
+  }
+
+  def createZooKerasThreshold(
+       th: Double = 1e-6,
+       v: Double = 0.0,
+       inputShape: JList[Int] = null): Threshold[T] = {
+    Threshold(th, v, toScalaShape(inputShape))
   }
 
   def getSubModules(module: AbstractModule[Activity, Activity, T]):

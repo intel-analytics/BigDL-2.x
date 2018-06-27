@@ -297,6 +297,7 @@
                 <artifactId>exec-maven-plugin</artifactId>
                 <executions>
                     <execution>
+                        <id>build_info</id>
                         <phase>generate-resources</phase>
                         <configuration>
                             <!-- Execute the shell script to generate the zoo build information. -->
@@ -307,6 +308,22 @@
                                 <argument>${spark.version}</argument>
                                 <argument>${scala.version}</argument>
                                 <argument>${java.version}</argument>
+                            </arguments>
+
+                            <executable>bash</executable>
+                        </configuration>
+                        <goals>
+                            <goal>exec</goal>
+                        </goals>
+                    </execution>
+                    <execution>
+                        <id>bigdl_python</id>
+                        <phase>package</phase>
+                        <configuration>
+                            <arguments>
+                                <argument>${project.basedir}/../scripts/get_bigdl_python</argument>
+                                <argument>${project.build.directory}/bigdl_python</argument>
+                                <argument>${bigdl.version}</argument>
                             </arguments>
 
                             <executable>bash</executable>
