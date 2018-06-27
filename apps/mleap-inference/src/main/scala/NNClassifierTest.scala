@@ -54,8 +54,10 @@ object NNClassifierTest {
       .setMaxEpoch(100)
 
     val nnModel = classifier.fit(trainingDF)
+    validationDF.cache()
     val resultDF = nnModel.transform(validationDF)
-    println("Spark DataFrame transform benchmark:")
+    println(s"transforming ${validationDF.count()} records in validationDF:")
+    println("Spark DataFrame transform benchmark (seconds):")
     Seq(1, 10, 100).foreach { end =>
       val st = System.nanoTime()
       (1 to end).map { i =>
@@ -91,11 +93,11 @@ object NNClassifierTest {
     println(leapFrameResult.dataset.take(4).mkString("\n"))
     println()
 
-    println("MLeap Frame transform benchmark:")
+    println("MLeap Frame transform benchmark (seconds):")
     Seq(1, 10, 100).foreach { end =>
       val st = System.nanoTime()
       (1 to end).map { i =>
-        mleapPipeline.transform(frame).get.collect()
+        mleapPipeline.transform(frame).get
       }
       println(s" $end time: " + (System.nanoTime() - st) / 1e9)
     }

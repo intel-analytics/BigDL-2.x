@@ -24,20 +24,22 @@ $SPARK_HOME/bin/spark-submit \
 
 expected output:
 ```
-Spark DataFrame transform benchmark:
- 1 time: 0.152900738
- 10 time: 0.634077539
- 100 time: 4.921373392
+transforming 34 records in validationDF:
+Spark DataFrame transform benchmark (seconds):
+ 1 time: 0.09818898
+ 10 time: 0.52166179
+ 100 time: 3.793368982
 
 leap frame transform result:
-Row(WrappedArray(4.7, 3.2, 1.6, 0.2),1.0,1.0)
+Row(WrappedArray(4.4, 2.9, 1.4, 0.2),1.0,1.0)
+Row(WrappedArray(4.7, 3.2, 1.3, 0.2),1.0,1.0)
 Row(WrappedArray(4.8, 3.4, 1.9, 0.2),1.0,1.0)
-Row(WrappedArray(4.9, 2.4, 3.3, 1.0),2.0,2.0)
-Row(WrappedArray(4.9, 3.1, 1.5, 0.1),1.0,1.0)
+Row(WrappedArray(4.9, 3.0, 1.4, 0.2),1.0,1.0)
 
-MLeap Frame transform benchmark:
- 1 time: 0.001134866
- 10 time: 0.00678356
- 100 time: 0.027279505
+MLeap Frame transform benchmark (seconds):
+ 1 time: 0.001234165
+ 10 time: 0.005220096
+ 100 time: 0.027511689
+
  ```
  
