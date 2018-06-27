@@ -24,6 +24,7 @@ import com.intel.analytics.bigdl.nn.abstractnn.{AbstractModule, Activity}
 import com.intel.analytics.bigdl.tensor.Tensor
 import com.intel.analytics.bigdl.utils.{MultiShape, Shape, T}
 import com.intel.analytics.zoo.pipeline.api.net.TFNet.TFGraphHolder
+import org.apache.spark.utils.SparkUtils
 import org.tensorflow.framework.GraphDef
 import org.tensorflow.types.UInt8
 import org.tensorflow.{DataType, Graph, Session, Tensor => TTensor}
@@ -233,6 +234,13 @@ class TFNet private(graphDef: TFGraphHolder,
 
 object TFNet {
 
+  private def isDriver = try {
+    SparkUtils.isDriver
+  } catch {
+    case e: NullPointerException =>
+      true
+  }
+
   private def timing[T](name: String)(f: => T): T = {
     val begin = System.currentTimeMillis
     val result = f
@@ -263,9 +271,13 @@ object TFNet {
       }
       val len = graphDef.length
       out.writeInt(id)
-      out.writeInt(len)
-      timing(s"writing ${len / 1024 / 1024}Mb graph def to stream") {
-        out.write(graphDef)
+      if (isDriver) {
+        out.writeInt(len)
+        timing(s"writing ${len / 1024 / 1024}Mb graph def to stream") {
+          out.write(graphDef)
+        }
+      } else {
+        out.writeInt(0)
       }
     }
 
@@ -273,6 +285,8 @@ object TFNet {
       id = in.readInt()
       val (graphDef, graphDefIsCreated) = getOrCreateGraphDef(id) {
         val len = in.readInt()
+        require(len != 0, "GraphDef length should not be zero," +
+          "please set logging level to debug for more information")
         val graphDef = new Array[Byte](len)
         timing("reading graph def from stream") {
           var numOfBytes = 0

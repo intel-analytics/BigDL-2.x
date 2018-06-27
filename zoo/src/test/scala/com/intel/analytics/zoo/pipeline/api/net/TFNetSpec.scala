@@ -18,25 +18,11 @@ package com.intel.analytics.zoo.pipeline.api.net
 import com.intel.analytics.bigdl.tensor.Tensor
 import com.intel.analytics.bigdl.utils.{LayerException, T}
 import com.intel.analytics.zoo.common.NNContext
+import org.apache.spark.serializer.KryoSerializer
 import org.apache.spark.{SparkConf, SparkContext, SparkEnv}
 import org.scalatest.{BeforeAndAfter, FlatSpec, Matchers}
 
 class TFNetSpec extends FlatSpec with Matchers with BeforeAndAfter {
-
-  var sc: SparkContext = _
-  var conf: SparkConf = _
-
-  before {
-    conf = new SparkConf().setAppName("Test TFNet").setMaster("local[1]")
-    conf.set("spark.serializer", "org.apache.spark.serializer.KryoSerializer")
-    sc = NNContext.initNNContext(conf)
-  }
-
-  after {
-    if (sc != null) {
-      sc.stop()
-    }
-  }
 
   "TFNet " should "work with different data types" in {
 
@@ -75,7 +61,7 @@ class TFNetSpec extends FlatSpec with Matchers with BeforeAndAfter {
   }
 
 
-  "TFNet" should "should be serializable" in {
+  "TFNet" should "should be serializable by java" in {
 
     val resource = getClass().getClassLoader().getResource("tfnet")
     val net = TFNet(resource.getPath)
@@ -103,7 +89,7 @@ class TFNetSpec extends FlatSpec with Matchers with BeforeAndAfter {
     val input = Tensor[Float](4, 28, 28, 1).rand()
     val result = net.forward(input).toTensor[Float].clone()
 
-    val serde = SparkEnv.get.serializer.newInstance()
+    val serde = new  KryoSerializer(new SparkConf()).newInstance()
     val buff = serde.serialize(net)
     val net2 = serde.deserialize[TFNet](buff)
 
