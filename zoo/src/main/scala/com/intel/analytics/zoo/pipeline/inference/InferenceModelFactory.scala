@@ -17,16 +17,24 @@
 package com.intel.analytics.zoo.pipeline.inference
 
 import com.intel.analytics.bigdl.optim.LocalPredictor
-import com.intel.analytics.bigdl.nn.Module
-import org.slf4j.LoggerFactory
 
-object InferenceModelFactory{
+object InferenceModelFactory {
+
   def loadFloatInferenceModel(modelPath: String): FloatInferenceModel = {
     loadFloatInferenceModel(modelPath, null)
   }
 
-  def loadFloatInferenceModel(modelPath: String, weightPath: String): FloatInferenceModel = {
+  def loadFloatInferenceModel(modelPath: String, weightPath: String)
+    : FloatInferenceModel = {
     val model = ModelLoader.loadFloatModel(modelPath, weightPath)
+    val predictor = LocalPredictor(model)
+    model.evaluate()
+    FloatInferenceModel(model, predictor)
+  }
+
+  def loadFloatInferenceModelForCaffe(modelPath: String, weightPath: String)
+    : FloatInferenceModel = {
+    val model = ModelLoader.loadFloatModelForCaffe(modelPath, weightPath)
     val predictor = LocalPredictor(model)
     model.evaluate()
     FloatInferenceModel(model, predictor)

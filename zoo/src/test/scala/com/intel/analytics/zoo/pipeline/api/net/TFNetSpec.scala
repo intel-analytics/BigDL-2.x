@@ -18,15 +18,17 @@ package com.intel.analytics.zoo.pipeline.api.net
 import com.intel.analytics.bigdl.tensor.Tensor
 import com.intel.analytics.bigdl.utils.T
 import com.intel.analytics.zoo.common.NNContext
-import org.apache.spark.{SparkConf, SparkContext}
+import org.apache.spark.{SparkConf, SparkContext, SparkEnv}
 import org.scalatest.{BeforeAndAfter, FlatSpec, Matchers}
 
 class TFNetSpec extends FlatSpec with Matchers with BeforeAndAfter {
 
   var sc : SparkContext = _
+  var conf: SparkConf = _
 
   before {
-    val conf = new SparkConf().setAppName("Test ObjectDetector").setMaster("local[1]")
+    conf = new SparkConf().setAppName("Test TFNet").setMaster("local[1]")
+    conf.set("spark.serializer", "org.apache.spark.serializer.KryoSerializer")
     sc = NNContext.initNNContext(conf)
   }
 
@@ -62,5 +64,50 @@ class TFNetSpec extends FlatSpec with Matchers with BeforeAndAfter {
       i = i + 1
     }
 
+  }
+
+  "TFNet " should "be able to load from a folder" in {
+    val resource = getClass().getClassLoader().getResource("tfnet")
+    val net = TFNet(resource.getPath)
+    val result = net.forward(Tensor[Float](4, 28, 28, 1).rand())
+
+    result.toTensor[Float].size() should be (Array(4, 10))
+  }
+
+
+  "TFNet" should "should be serializable" in  {
+
+    val resource = getClass().getClassLoader().getResource("tfnet")
+    val net = TFNet(resource.getPath)
+    val input = Tensor[Float](4, 28, 28, 1).rand()
+    val result = net.forward(input).toTensor[Float].clone()
+    val net2 = net.cloneModule()
+    val result2 = net2.forward(input).toTensor[Float].clone()
+    result should be (result2)
+  }
+
+  "TFNet" should "should be able to work on shrunk tensor " in  {
+
+    val resource = getClass().getClassLoader().getResource("tfnet")
+    val net = TFNet(resource.getPath)
+    val input = Tensor[Float](4, 28, 28, 1).rand()
+    input.resize(2, 28, 28, 1)
+    val result = net.forward(input).toTensor[Float].clone()
+    result.size() should be (Array(2, 10))
+  }
+
+  "TFNet " should "work for kyro serializer" in  {
+
+    val resource = getClass().getClassLoader().getResource("tfnet")
+    val net = TFNet(resource.getPath)
+    val input = Tensor[Float](4, 28, 28, 1).rand()
+    val result = net.forward(input).toTensor[Float].clone()
+
+    val serde = SparkEnv.get.serializer.newInstance()
+    val buff = serde.serialize(net)
+    val net2 = serde.deserialize[TFNet](buff)
+
+    val result2 = net2.forward(input).toTensor[Float].clone()
+    result should be (result2)
   }
 }

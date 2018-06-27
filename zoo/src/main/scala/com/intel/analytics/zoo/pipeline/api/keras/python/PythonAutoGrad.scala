@@ -23,7 +23,8 @@ import com.intel.analytics.bigdl.nn.keras.KerasLayer
 import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric
 import com.intel.analytics.bigdl.utils.Node
 import com.intel.analytics.zoo.pipeline.api.autograd
-import com.intel.analytics.zoo.pipeline.api.autograd.{CustomLossWithVariable, LambdaLayer, Variable}
+import com.intel.analytics.zoo.pipeline.api.autograd._
+import com.intel.analytics.zoo.pipeline.api.keras.layers.Input
 
 import scala.collection.JavaConverters._
 import scala.reflect.ClassTag
@@ -48,13 +49,15 @@ class PythonAutoGrad[T: ClassTag](implicit ev: TensorNumeric[T]) extends PythonZ
     LambdaLayer[T](inputs.asScala.toArray, outVar, toScalaMultiShape(inputShape))
   }
 
-  def createZooKerasVariable(a: Node[AbstractModule[Activity, Activity, T]]): Variable[T] = {
-    Variable[T](a)
+  def createZooKerasVariable(a: Node[AbstractModule[Activity, Activity, T]],
+      name: String): Variable[T] = {
+    new Variable[T](a, name)
   }
 
 
-  def createZooKerasVariable(inputShape: JList[JList[Int]]): Variable[T] = {
-    Variable[T](toScalaMultiShape(inputShape))
+  def createZooKerasVariable(inputShape: JList[JList[Int]],
+      name: String): Variable[T] = {
+    new Variable[T](Input[T](toScalaMultiShape(inputShape), name), name)
   }
 
   def varGetInputShape(v: Variable[T]): JList[JList[Int]] = {
@@ -157,6 +160,18 @@ class PythonAutoGrad[T: ClassTag](implicit ev: TensorNumeric[T]) extends PythonZ
     autograd.AutoGrad.epsilon()
   }
 
+  def squeeze(a: Variable[T], dim: Int): Variable[T] = {
+    a.squeeze(dim)
+  }
+
+  def slice(a: Variable[T], dim: Int, startIndex: Int, length: Int): Variable[T] = {
+    a.slice(dim, startIndex, length)
+  }
+
+  def indexSelect(a: Variable[T], dim: Int, index: Int): Variable[T] = {
+    a.indexSelect(dim, index)
+  }
+
   def neg(a: Variable[T]): Variable[T] = {
     a.unary_-()
   }
@@ -171,5 +186,17 @@ class PythonAutoGrad[T: ClassTag](implicit ev: TensorNumeric[T]) extends PythonZ
 
   def softplus(a: Variable[T]): Variable[T] = {
     autograd.AutoGrad.softplus(a)
+  }
+
+  def expandDims(a: Variable[T], axis: Int): Variable[T] = {
+    autograd.AutoGrad.expandDims(a, axis)
+  }
+
+  def stack(inputs: JList[Variable[T]], axis: Int): Variable[T] = {
+    autograd.AutoGrad.stack(inputs.asScala.toList, axis)
+  }
+
+  def contiguous(input: Variable[T]): Variable[T] = {
+    autograd.AutoGrad.contiguous(input)
   }
 }

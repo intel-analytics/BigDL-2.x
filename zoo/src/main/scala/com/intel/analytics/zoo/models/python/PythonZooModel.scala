@@ -19,7 +19,7 @@ package com.intel.analytics.zoo.models.python
 import java.util.{List => JList, Map => JMap}
 
 import com.intel.analytics.bigdl.dataset.PaddingParam
-import com.intel.analytics.bigdl.nn.abstractnn.Activity
+import com.intel.analytics.bigdl.nn.abstractnn.{AbstractModule, Activity}
 import com.intel.analytics.bigdl.python.api.{PythonBigDL, Sample}
 import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric
 import com.intel.analytics.bigdl.transform.vision.image.ImageFeature
@@ -61,8 +61,9 @@ class PythonZooModel[T: ClassTag](implicit ev: TensorNumeric[T]) extends PythonB
       tokenLength: Int,
       sequenceLength: Int = 500,
       encoder: String = "cnn",
-      encoderOutputDim: Int = 256): TextClassifier[T] = {
-    TextClassifier[T](classNum, tokenLength, sequenceLength, encoder, encoderOutputDim)
+      encoderOutputDim: Int = 256,
+      model: AbstractModule[Activity, Activity, T]): TextClassifier[T] = {
+    TextClassifier[T](classNum, tokenLength, sequenceLength, encoder, encoderOutputDim, model)
   }
 
   def loadTextClassifier(

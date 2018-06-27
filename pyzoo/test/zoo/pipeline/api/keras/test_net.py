@@ -21,7 +21,7 @@ from keras.models import Sequential as KSequential
 from test.zoo.pipeline.utils.test_utils import ZooTestCase
 import zoo.pipeline.api.keras.layers as ZLayer
 from zoo.pipeline.api.keras.models import Model as ZModel
-from zoo.pipeline.api.net import Net
+from zoo.pipeline.api.net import Net, TFNet
 from bigdl.nn.layer import Linear, Sigmoid, SoftMax, Model as BModel
 from bigdl.util.common import *
 from bigdl.nn.layer import Sequential
@@ -109,6 +109,20 @@ class TestLayer(ZooTestCase):
         model = Net.load_bigdl(model_path)
 
         assert len(Sequential().add(model).flattened_layers()) == 12
+
+    def test_tf_net(self):
+        resource_path = os.path.join(os.path.split(__file__)[0], "../../../resources")
+        tfnet_path = os.path.join(resource_path, "tfnet")
+        net = TFNet.from_export_folder(tfnet_path)
+        output = net.forward(np.random.rand(32, 28, 28, 1))
+        assert output.shape == (32, 10)
+
+    def test_load_tf_from_folder(self):
+        resource_path = os.path.join(os.path.split(__file__)[0], "../../../resources")
+        tfnet_path = os.path.join(resource_path, "tf")
+        net = Net.load_tf(tfnet_path)
+        output = net.forward(np.random.rand(4, 1, 28, 28))
+        assert output.shape == (4, 10)
 
 
 if __name__ == "__main__":

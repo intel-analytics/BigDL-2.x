@@ -7,7 +7,7 @@
     <parent>
         <artifactId>zoo-parent</artifactId>
         <groupId>com.intel.analytics.zoo</groupId>
-        <version>0.1.0-SNAPSHOT</version>
+        <version>0.2.0-SNAPSHOT</version>
     </parent>
 
     <artifactId>analytics-zoo</artifactId>
@@ -26,6 +26,13 @@
         <spark.version>2.1.0</spark.version>
         <bigdl.version>0.5.0</bigdl.version>
     </properties>
+
+    <distributionManagement>
+        <snapshotRepository>
+            <id>ossrh</id>
+            <url>https://oss.sonatype.org/content/repositories/snapshots</url>
+        </snapshotRepository>
+    </distributionManagement>
 
     <profiles>
         <profile>
@@ -88,6 +95,27 @@
             <properties>
                 <spark-scope>compile</spark-scope>
             </properties>
+        </profile>
+
+        <profile>
+            <id>sign</id>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-gpg-plugin</artifactId>
+                        <executions>
+                            <execution>
+                                <id>sign-artifacts</id>
+                                <phase>verify</phase>
+                                <goals>
+                                    <goal>sign</goal>
+                                </goals>
+                            </execution>
+                        </executions>
+                    </plugin>
+                </plugins>
+            </build>
         </profile>
     </profiles>
 
@@ -269,6 +297,7 @@
                 <artifactId>exec-maven-plugin</artifactId>
                 <executions>
                     <execution>
+                        <id>build_info</id>
                         <phase>generate-resources</phase>
                         <configuration>
                             <!-- Execute the shell script to generate the zoo build information. -->
@@ -279,6 +308,22 @@
                                 <argument>${spark.version}</argument>
                                 <argument>${scala.version}</argument>
                                 <argument>${java.version}</argument>
+                            </arguments>
+
+                            <executable>bash</executable>
+                        </configuration>
+                        <goals>
+                            <goal>exec</goal>
+                        </goals>
+                    </execution>
+                    <execution>
+                        <id>bigdl_python</id>
+                        <phase>package</phase>
+                        <configuration>
+                            <arguments>
+                                <argument>${project.basedir}/../scripts/get_bigdl_python</argument>
+                                <argument>${project.build.directory}/bigdl_python</argument>
+                                <argument>${bigdl.version}</argument>
                             </arguments>
 
                             <executable>bash</executable>
@@ -382,6 +427,36 @@
                             <goal>single</goal>
                         </goals>
                     </execution>
+
+                    <execution>
+                        <id>make-dist</id>
+                        <inherited>false</inherited>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>single</goal>
+                        </goals>
+                        <configuration>
+                            <finalName>analytics-zoo-${project.version}-spark-${spark.version}</finalName>
+                            <descriptors>
+                                <descriptor>${project.basedir}/src/assembly/dist.xml</descriptor>
+                            </descriptors>
+                        </configuration>
+                    </execution>
+
+                    <execution>
+                        <id>make-dist-all</id>
+                        <inherited>false</inherited>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>single</goal>
+                        </goals>
+                        <configuration>
+                            <finalName>analytics-zoo-${project.version}-spark-${spark.version}</finalName>
+                            <descriptors>
+                                <descriptor>${project.basedir}/src/assembly/dist-all.xml</descriptor>
+                            </descriptors>
+                        </configuration>
+                    </execution>
                 </executions>
             </plugin>
             <plugin>
@@ -469,6 +544,17 @@
                             <version>${scala.macros.version}</version>
                         </compilerPlugin>
                     </compilerPlugins>
+                </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.sonatype.plugins</groupId>
+                <artifactId>nexus-staging-maven-plugin</artifactId>
+                <version>1.6.7</version>
+                <extensions>true</extensions>
+                <configuration>
+                    <serverId>ossrh</serverId>
+                    <nexusUrl>https://oss.sonatype.org/</nexusUrl>
+                    <autoReleaseAfterClose>false</autoReleaseAfterClose>
                 </configuration>
             </plugin>
         </plugins>

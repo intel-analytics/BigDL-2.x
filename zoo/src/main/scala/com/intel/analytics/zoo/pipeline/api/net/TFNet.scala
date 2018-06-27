@@ -18,14 +18,22 @@ package com.intel.analytics.zoo.pipeline.api.net
 import java.io.{File, FileInputStream, InputStream}
 import java.nio._
 
+import com.esotericsoftware.kryo.io.{Input, Output}
+import com.esotericsoftware.kryo.{Kryo, KryoSerializable}
 import com.intel.analytics.bigdl.nn.abstractnn.{AbstractModule, Activity}
 import com.intel.analytics.bigdl.tensor.Tensor
 import com.intel.analytics.bigdl.utils.{MultiShape, Shape, T}
+import com.intel.analytics.zoo.pipeline.api.net.TFNet.TFGraphHolder
 import org.tensorflow.framework.GraphDef
 import org.tensorflow.types.UInt8
 import org.tensorflow.{DataType, Graph, Session, Tensor => TTensor}
 
 import scala.collection.JavaConverters._
+import org.json4s._
+import org.json4s.jackson.JsonMethods._
+import org.slf4j.LoggerFactory
+
+import scala.collection.mutable
 
 /**
  * [[TFNet]] wraps a tensorflow subgraph as a layer, and use tensorflow to
@@ -41,12 +49,13 @@ import scala.collection.JavaConverters._
  * @param inputNames the input tensor names of this subgraph
  * @param outputNames the output tensor names of this subgraph
  */
-class TFNet private(graphDef: Array[Byte],
+class TFNet private(graphDef: TFGraphHolder,
             val inputNames: Seq[String],
             val outputNames: Seq[String],
                     config: Array[Byte])
   extends AbstractModule[Activity, Activity, Float] {
 
+  private def graph = graphDef.tfGraph
 
   output = {
     if (outputNames.length == 1) {
@@ -85,15 +94,12 @@ class TFNet private(graphDef: Array[Byte],
   }
 
   @transient
-  private lazy val (graph, sess) = {
-    val graph = new Graph()
-    graph.importGraphDef(graphDef)
-    val sess = new Session(graph, config)
-    (graph, sess)
+  private lazy val sess = {
+    val sess = new Session(graphDef.tfGraph, config)
+    sess
   }
 
-  @transient
-  private lazy val inputTypes = inputNames.map { name =>
+  private val inputTypes = inputNames.map { name =>
     val Array(op, idx) = name.split(":")
     val operation = graph.operation(op)
     val output = operation.output(idx.toInt)
@@ -101,8 +107,7 @@ class TFNet private(graphDef: Array[Byte],
   }
 
   // add Cast Operation if the output tensor is not of type Float
-  @transient
-  private lazy val floatOutputNames = outputNames.map { name =>
+  private val floatOutputNames = outputNames.map { name =>
     val Array(op, idx) = name.split(":")
     val operation = graph.operation(op)
     val output = operation.output(idx.toInt)
@@ -138,22 +143,27 @@ class TFNet private(graphDef: Array[Byte],
   }
 
   private def bigdl2Tf(t: Tensor[Float], dataType: DataType): TTensor[_] = {
+
+    require(t.isContiguous(), "input to tfnet must be contiguous")
     val shape = t.size().map(_.toLong)
     val arr = t.storage().array()
+    val offset: Int = t.storageOffset() - 1
+    val length: Int = shape.product.toInt
+
     if (dataType == DataType.FLOAT) {
-      val buffer = FloatBuffer.wrap(arr)
+      val buffer = FloatBuffer.wrap(arr, offset, length)
       TTensor.create(shape, buffer)
     } else if (dataType == DataType.UINT8) {
-      val buffer = ByteBuffer.wrap(TFNet.floatToUint8(arr))
+      val buffer = ByteBuffer.wrap(TFNet.floatToUint8(arr), offset, length)
       TTensor.create(classOf[UInt8], shape, buffer)
     } else if (dataType == DataType.INT32) {
-      val buffer = IntBuffer.wrap(TFNet.floatToInt(arr))
+      val buffer = IntBuffer.wrap(TFNet.floatToInt(arr), offset, length)
       TTensor.create(shape, buffer)
     } else if (dataType == DataType.INT64) {
-      val buffer = LongBuffer.wrap(TFNet.floatToLong(arr))
+      val buffer = LongBuffer.wrap(TFNet.floatToLong(arr), offset, length)
       TTensor.create(shape, buffer)
     } else if (dataType == DataType.DOUBLE) {
-      val buffer = DoubleBuffer.wrap(TFNet.floatToDouble(arr))
+      val buffer = DoubleBuffer.wrap(TFNet.floatToDouble(arr), offset, length)
       TTensor.create(shape, buffer)
     } else {
       throw new Exception(s"data type ${dataType} are not supported")
@@ -217,6 +227,152 @@ class TFNet private(graphDef: Array[Byte],
 
 object TFNet {
 
+  class TFGraphHolder(@transient var tfGraph: Graph) extends Serializable with KryoSerializable {
+
+    private trait CommonOutputStream {
+      def writeInt(value: Int): Unit
+      def write(value: Array[Byte]): Unit
+    }
+
+    private trait CommonInputStream {
+      def readInt(): Int
+      def read(buff: Array[Byte], off: Int, len: Int): Int
+      def skip(len: Int): Unit
+    }
+
+    private def writeInternal(out: CommonOutputStream): Unit = {
+      val (graphDef, _) = getOrCreateGraphDef(id) {
+        tfGraph.toGraphDef
+      }
+      val len = graphDef.length
+      out.writeInt(id)
+      out.writeInt(len)
+      out.write(graphDef)
+    }
+
+    private def readInternal(in: CommonInputStream): Unit = {
+      id = in.readInt()
+      val (graphDef, graphDefIsCreated) = getOrCreateGraphDef(id) {
+        val len = in.readInt()
+        val graphDef = new Array[Byte](len)
+        var numOfBytes = 0
+        while (numOfBytes < len) {
+          val read = in.read(graphDef, numOfBytes, len - numOfBytes)
+          numOfBytes += read
+        }
+        graphDef
+      }
+
+      if (!graphDefIsCreated) {
+        val len = in.readInt()
+        in.skip(len)
+      }
+
+      val (graph, _) = getOrCreateGraph(id) {
+        val g = new Graph()
+        g.importGraphDef(graphDef)
+        g
+      }
+      tfGraph = graph
+    }
+
+    private var id = new Integer(tfGraph.hashCode())
+
+    private def writeObject(out: java.io.ObjectOutputStream): Unit = {
+      writeInternal(new CommonOutputStream {
+        override def writeInt(value: Int): Unit = out.writeInt(value)
+
+        override def write(value: Array[Byte]): Unit = out.write(value)
+      })
+    }
+
+    private def readObject(in: java.io.ObjectInputStream): Unit = {
+      readInternal(new CommonInputStream {
+        override def read(buff: Array[Byte], off: Int, len: Int): Int = in.read(buff, off, len)
+
+        override def skip(len: Int): Unit = in.skip(len)
+
+        override def readInt(): Int = in.readInt()
+      })
+    }
+
+    override def read(kryo: Kryo, in: Input): Unit = {
+      readInternal(new CommonInputStream {
+        override def read(buff: Array[Byte], off: Int, len: Int): Int = in.read(buff, off, len)
+
+        override def skip(len: Int): Unit = in.skip(len)
+
+        override def readInt(): Int = in.readInt()
+      })
+    }
+
+    override def write(kryo: Kryo, out: Output): Unit = {
+      writeInternal(new CommonOutputStream {
+        override def writeInt(value: Int): Unit = out.writeInt(value)
+
+        override def write(value: Array[Byte]): Unit = out.write(value)
+      })
+    }
+  }
+
+  private val logger = LoggerFactory.getLogger(getClass)
+
+  private val graphRegistry = new mutable.WeakHashMap[Integer, Graph]()
+
+  private val graphDefRegistry = new mutable.WeakHashMap[Integer, Array[Byte]]()
+
+  private[zoo] def getGraphRegistrySize = graphDefRegistry.size
+
+  private[zoo] def getGraphDefRegistrySize = graphDefRegistry.size
+
+  private def getOrCreateGraphDef(id: Integer)
+                                 (createGraphDef: => Array[Byte]): (Array[Byte], Boolean) = {
+    if (graphDefRegistry.contains(id)) {
+      logger.info(s"graphDef: $id already exist, read from registry. " +
+        s"Registry size: $getGraphDefRegistrySize")
+      (graphDefRegistry(id), false)
+    } else {
+      this.synchronized {
+        if (graphDefRegistry.contains(id)) {
+          logger.info(s"graphDef: $id already exist, read from registry. " +
+            s"Registry size: $getGraphDefRegistrySize")
+          (graphDefRegistry(id), false)
+        } else {
+          val graphDef = createGraphDef
+          graphDefRegistry.put(id, graphDef)
+          logger.info(s"graphDef: $id does not exist, create it. " +
+            s"Registry size: $getGraphDefRegistrySize")
+          (graphDef, true)
+        }
+      }
+    }
+  }
+
+  private def getOrCreateGraph(id: Integer)
+                                 (createGraph: => Graph): (Graph, Boolean) = {
+    if (graphRegistry.contains(id)) {
+      logger.info(s"graph: $id already exist, read from registry. " +
+        s"Registry size: $getGraphRegistrySize")
+      (graphRegistry(id), false)
+    } else {
+      this.synchronized {
+        if (graphRegistry.contains(id)) {
+          logger.info(s"graph: $id already exist, read from registry. " +
+            s"Registry size: $getGraphRegistrySize")
+          (graphRegistry(id), false)
+        } else {
+          val graph = createGraph
+          graphRegistry.put(id, graph)
+          logger.info(s"graph: $id does not exist, create it. " +
+            s"Registry size: $getGraphRegistrySize")
+          (graph, true)
+        }
+      }
+    }
+  }
+
+  implicit val formats = DefaultFormats
+
   val defaultSessionConfig = Seq(16, 1, 40, 1, 72, 1).map(_.toByte).toArray
   // Ideally we should use the following code, however, importing tensorflow proto
   // will conflict with bigdl.
@@ -276,7 +432,10 @@ object TFNet {
    */
   def apply(graphDef: GraphDef, inputNames: Seq[String],
             outputNames: Seq[String], config: Array[Byte] = defaultSessionConfig): TFNet = {
-    new TFNet(graphDef.toByteArray, inputNames, outputNames, config)
+    val graph = new Graph()
+    graph.importGraphDef(graphDef.toByteArray)
+
+    new TFNet(new TFGraphHolder(graph), inputNames, outputNames, config)
   }
 
   /**
@@ -289,7 +448,7 @@ object TFNet {
   def apply(path: String,
             inputNames: Seq[String],
             outputNames: Seq[String], config: Array[Byte]): TFNet = {
-    val graphDef = parse(path)
+    val graphDef = parseGraph(path)
     TFNet(graphDef, inputNames, outputNames, config)
   }
 
@@ -303,11 +462,17 @@ object TFNet {
   def apply(path: String,
             inputNames: Seq[String],
             outputNames: Seq[String]): TFNet = {
-    val graphDef = parse(path)
+    val graphDef = parseGraph(path)
     TFNet(graphDef, inputNames, outputNames, defaultSessionConfig)
   }
 
-  private def parse(graphProtoTxt: String) : GraphDef = {
+
+  def apply(folder: String): TFNet = {
+    val (model, inputs, outputs) = NetUtils.processTFFolder(folder)
+    TFNet(model, inputs, outputs, defaultSessionConfig)
+  }
+
+  private def parseGraph(graphProtoTxt: String) : GraphDef = {
     var fr: File = null
     var in: InputStream = null
     try {

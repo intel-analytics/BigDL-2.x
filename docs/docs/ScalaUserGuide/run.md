@@ -48,20 +48,20 @@ scala> ObjectDetector.loadModel[Float](params.modelPath)
 ## **Run as a Spark Program**
 You can run a analytics zoo program, e.g., the [Object Detection](https://github.com/intel-analytics/analytics-zoo/tree/master/zoo/src/main/scala/com/intel/analytics/zoo/examples/objectdetection), as a standard Spark program (running in either local mode or cluster mode) as follows:
 
-1. Download the pre-trained model from [here](https://github.com/intel-analytics/zoo/tree/master/docs/models/objectdetection).
+1. Download the pre-trained model from [here](https://github.com/intel-analytics/analytics-zoo/blob/master/docs/docs/ProgrammingGuide/object-detection.md).
 2. Prepare predict images
 3. Run the following command:
 ```bash
   # Spark local mode
   spark-submit --master local[core_number] --class com.intel.analytics.zoo.examples.objectdetection.Predict \
-  dist/lib/analytics-zoo-VERSION-SNAPSHOT-jar-with-dependencies.jar \
+  dist/lib/analytics-zoo-VERSION-jar-with-dependencies.jar \
   --image path_to_your_images --output path_to_output --model path_to_model
 
   # Spark standalone mode
   spark-submit --master spark://... --executor-cores cores_per_executor \
   --total-executor-cores total_cores_for_the_job \
   --class com.intel.analytics.zoo.examples.objectdetection.Predict \
-  dist/lib/analytics-zoo-VERSION-SNAPSHOT-jar-with-dependencies.jar \
+  dist/lib/analytics-zoo-VERSION-jar-with-dependencies.jar \
   --image path_to_your_images --output path_to_output --model path_to_model
 
   # Spark yarn client mode
@@ -69,7 +69,7 @@ You can run a analytics zoo program, e.g., the [Object Detection](https://github
   --executor-cores cores_per_executor \
   --num-executors executors_number \
   --class com.intel.analytics.zoo.examples.objectdetection.Predict \
-  dist/lib/analytics-zoo-VERSION-SNAPSHOT-jar-with-dependencies.jar \
+  dist/lib/analytics-zoo-VERSION-jar-with-dependencies.jar \
   --image path_to_your_images --output path_to_output --model path_to_model
 
   # Spark yarn cluster mode
@@ -77,7 +77,7 @@ You can run a analytics zoo program, e.g., the [Object Detection](https://github
   --executor-cores cores_per_executor \
   --num-executors executors_number \
   --class com.intel.analytics.zoo.examples.objectdetection.Predict \
-  dist/lib/analytics-zoo-VERSION-SNAPSHOT-jar-with-dependencies.jar \
+  dist/lib/analytics-zoo-VERSION-jar-with-dependencies.jar \
   --image path_to_your_images --output path_to_output --model path_to_model
 ```
 
