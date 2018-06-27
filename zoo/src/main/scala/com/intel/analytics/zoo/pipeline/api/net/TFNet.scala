@@ -250,27 +250,31 @@ object TFNet {
     result
   }
 
-  class TFGraphHolder(@transient var tfGraph: Graph) extends Serializable with KryoSerializable {
+  class TFGraphHolder(@transient var tfGraph: Graph, private var id: String)
+    extends Serializable with KryoSerializable {
 
     private trait CommonOutputStream {
       def writeInt(value: Int): Unit
       def write(value: Array[Byte]): Unit
+      def writeString(value: String): Unit
     }
 
     private trait CommonInputStream {
       def readInt(): Int
       def read(buff: Array[Byte], off: Int, len: Int): Int
       def skip(len: Int): Unit
+      def readString(): String
     }
 
     private def writeInternal(out: CommonOutputStream): Unit = {
+
       val (graphDef, _) = getOrCreateGraphDef(id) {
         timing("export as graph def") {
           tfGraph.toGraphDef
         }
       }
       val len = graphDef.length
-      out.writeInt(id)
+      out.writeString(id)
       if (isDriver) {
         out.writeInt(len)
         timing(s"writing ${len / 1024 / 1024}Mb graph def to stream") {
@@ -282,7 +286,7 @@ object TFNet {
     }
 
     private def readInternal(in: CommonInputStream): Unit = {
-      id = in.readInt()
+      id = in.readString()
       val (graphDef, graphDefIsCreated) = getOrCreateGraphDef(id) {
         val len = in.readInt()
         require(len != 0, "GraphDef length should not be zero," +
@@ -314,13 +318,13 @@ object TFNet {
       tfGraph = graph
     }
 
-    private var id = new Integer(tfGraph.hashCode())
-
     private def writeObject(out: java.io.ObjectOutputStream): Unit = {
       writeInternal(new CommonOutputStream {
         override def writeInt(value: Int): Unit = out.writeInt(value)
 
         override def write(value: Array[Byte]): Unit = out.write(value)
+
+        override def writeString(str: String): Unit = out.writeUTF(str)
       })
     }
 
@@ -331,6 +335,8 @@ object TFNet {
         override def skip(len: Int): Unit = in.skip(len)
 
         override def readInt(): Int = in.readInt()
+
+        override def readString(): String = in.readUTF()
       })
     }
 
@@ -341,6 +347,8 @@ object TFNet {
         override def skip(len: Int): Unit = in.skip(len)
 
         override def readInt(): Int = in.readInt()
+
+        override def readString(): String = in.readString()
       })
     }
 
@@ -349,21 +357,23 @@ object TFNet {
         override def writeInt(value: Int): Unit = out.writeInt(value)
 
         override def write(value: Array[Byte]): Unit = out.write(value)
+
+        override def writeString(value: String): Unit = out.writeString(value)
       })
     }
   }
 
   private val logger = LoggerFactory.getLogger(getClass)
 
-  private val graphRegistry = new mutable.WeakHashMap[Integer, Graph]()
+  private val graphRegistry = new mutable.WeakHashMap[String, Graph]()
 
-  private val graphDefRegistry = new mutable.WeakHashMap[Integer, Array[Byte]]()
+  private val graphDefRegistry = new mutable.WeakHashMap[String, Array[Byte]]()
 
   private[zoo] def getGraphRegistrySize = graphDefRegistry.size
 
   private[zoo] def getGraphDefRegistrySize = graphDefRegistry.size
 
-  private def getOrCreateGraphDef(id: Integer)
+  private def getOrCreateGraphDef(id: String)
                                  (createGraphDef: => Array[Byte]): (Array[Byte], Boolean) = {
     if (graphDefRegistry.contains(id)) {
       logger.debug(s"graphDef: $id already exist, read from registry. " +
@@ -386,7 +396,7 @@ object TFNet {
     }
   }
 
-  private def getOrCreateGraph(id: Integer)
+  private def getOrCreateGraph(id: String)
                                  (createGraph: => Graph): (Graph, Boolean) = {
     if (graphRegistry.contains(id)) {
       logger.debug(s"graph: $id already exist, read from registry. " +
@@ -468,12 +478,12 @@ object TFNet {
    * @param outputNames the output tensor names of this subgraph
    * @return
    */
-  def apply(graphDef: GraphDef, inputNames: Seq[String],
+  private def apply(graphDef: GraphDef, graphId: String, inputNames: Seq[String],
             outputNames: Seq[String], config: Array[Byte] = defaultSessionConfig): TFNet = {
     val graph = new Graph()
     graph.importGraphDef(graphDef.toByteArray)
 
-    new TFNet(new TFGraphHolder(graph), inputNames, outputNames, config)
+    new TFNet(new TFGraphHolder(graph, graphId), inputNames, outputNames, config)
   }
 
   /**
@@ -487,7 +497,7 @@ object TFNet {
             inputNames: Seq[String],
             outputNames: Seq[String], config: Array[Byte]): TFNet = {
     val graphDef = parseGraph(path)
-    TFNet(graphDef, inputNames, outputNames, config)
+    TFNet(graphDef, path, inputNames, outputNames, config)
   }
 
   /**
@@ -501,7 +511,7 @@ object TFNet {
             inputNames: Seq[String],
             outputNames: Seq[String]): TFNet = {
     val graphDef = parseGraph(path)
-    TFNet(graphDef, inputNames, outputNames, defaultSessionConfig)
+    TFNet(graphDef, path, inputNames, outputNames, defaultSessionConfig)
   }
 
 
