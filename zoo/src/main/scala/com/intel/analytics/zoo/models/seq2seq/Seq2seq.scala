@@ -20,6 +20,7 @@ import com.intel.analytics.bigdl.nn.abstractnn.{AbstractModule, Activity}
 import com.intel.analytics.bigdl.tensor.Tensor
 import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric
 import com.intel.analytics.bigdl.nn._
+import com.intel.analytics.bigdl.nn.BigDLWrapper
 import com.intel.analytics.bigdl.utils.{T, Table}
 
 import scala.reflect.ClassTag
@@ -53,8 +54,9 @@ class Seq2seq[T: ClassTag](encoderCells: Array[Cell[T]],
   var decoder: Sequential[T] = null
 
   private var seqLen: Int = 0
-  private var stopSign: Tensor[T] = null
+  private var stopSign: (Tensor[T] => Boolean) = null
   private var loopFunc: (Tensor[T]) => (Tensor[T]) = null
+  private var isLoop: Boolean = false
 
   /**
    * defines prediction in last time step will be used as input in next time step in decoder
@@ -64,8 +66,9 @@ class Seq2seq[T: ClassTag](encoderCells: Array[Cell[T]],
    *             pass it through loopFunc
    * @return this container
    */
-  def setLoop(maxLen: Int, stopSign: Tensor[T] = null,
+  def setLoop(maxLen: Int, stopSign: (Tensor[T] => Boolean) = null,
               func: (Tensor[T]) => (Tensor[T]) = null): Unit = {
+    isLoop = true
     seqLen = maxLen
     this.stopSign = stopSign
     loopFunc = func
@@ -77,9 +80,11 @@ class Seq2seq[T: ClassTag](encoderCells: Array[Cell[T]],
    * clear setLoop settings
    */
   def clearLoop(): Unit = {
+    isLoop = false
     seqLen = 0
     this.stopSign = null
     loopFunc = null
+    decoderCells.foreach(BigDLWrapper.clearCell(_))
     modules.clear()
     modules += buildModel()
   }
@@ -106,7 +111,7 @@ class Seq2seq[T: ClassTag](encoderCells: Array[Cell[T]],
 
   private def buildDecoder(): Sequential[T] = {
     val model = Sequential[T]()
-    dec = if (seqLen != 0 || loopFunc != null || stopSign != null) {
+    dec = if (isLoop) {
       require(seqLen > 0, "SeqLen needs be great than 0. Please use setLoopPreOutput to set seqLen")
       val cells = if (decoderCells.length == 1) decoderCells.head else MultiRNNCell(decoderCells)
       val recDec = new ZooRecurrentDecoder(seqLen, stopSign, loopFunc).add(cells)
@@ -128,8 +133,12 @@ class Seq2seq[T: ClassTag](encoderCells: Array[Cell[T]],
 
     encoderOutput = encoder.forward(encoderInput).toTensor
 
-    decoderInput = if (preDecoder != null) preDecoder.forward(preDecoderInput).toTensor
-      else preDecoderInput
+    decoderInput = if (preDecoder != null) {
+      val preDecoderOutput = preDecoder.forward(preDecoderInput).toTensor
+      if (preDecoderOutput.dim() == preDecoderInput.dim + 1 && isLoop) {
+        preDecoderOutput.select(Seq2seq.timeDim, preDecoderOutput.size(Seq2seq.timeDim))
+      } else preDecoderOutput
+    } else preDecoderInput
 
     if (bridges != null) bridges.forwardStates(enc, dec)
     output = decoder.forward(decoderInput).toTensor

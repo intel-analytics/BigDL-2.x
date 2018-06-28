@@ -21,7 +21,7 @@ import com.intel.analytics.bigdl.nn.abstractnn.Activity
 import com.intel.analytics.bigdl.tensor.Tensor
 import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric
 import com.intel.analytics.bigdl.utils.{T, Table}
-import com.intel.analytics.bigdl.wrapper.BigDLWrapper
+import com.intel.analytics.bigdl.nn.BigDLWrapper
 
 import scala.collection.mutable.ArrayBuffer
 import scala.reflect.ClassTag
@@ -215,7 +215,8 @@ class ZooRecurrent[T : ClassTag](batchNormParams: BatchNormParams[T] = null,
  * @param loopFunc before feeding output at last time step to next time step,
  *                 pass it through loopFunc
  */
-class ZooRecurrentDecoder[T : ClassTag](seqLen: Int, stopSign: Tensor[T] = null,
+class ZooRecurrentDecoder[T : ClassTag](seqLen: Int,
+  stopSign: (Tensor[T] => Boolean) = null,
   loopFunc: (Tensor[T]) => (Tensor[T]) = null)(implicit ev: TensorNumeric[T])
   extends RecurrentDecoder[T](seqLen) {
   // get gradient hidden state at the first time step
@@ -253,12 +254,14 @@ class ZooRecurrentDecoder[T : ClassTag](seqLen: Int, stopSign: Tensor[T] = null,
     cells(i - 1).updateOutput(currentInput)
     BigDLWrapper.copy(cells(i - 1).output.toTable[Tensor[T]](inputDim), output, i)
     i += 1
-    while (i <= times && (stopSign == null ||
-      !cells(i - 2).output.toTable[Tensor[T]](inputDim).almostEqual(stopSign, 1e-6))) {
+    while (i <= times &&
+      (stopSign == null || // no stop sign
+      (// prediction is not equal to stopSign
+        !stopSign(cells(i - 2).output.toTable[Tensor[T]](inputDim))))) {
       // input at t(i) is output at t(i-1)
       if (loopFunc != null) {
         val preOutput = cells(i - 2).output.toTable[Tensor[T]](inputDim)
-        preOutput.copy(loopFunc(preOutput))
+        cells(i - 2).output = T(loopFunc(preOutput), cells(i - 2).output.toTable[Tensor[T]](hidDim))
       }
       currentInput = cells(i - 2).output
       cells(i - 1).updateOutput(currentInput)

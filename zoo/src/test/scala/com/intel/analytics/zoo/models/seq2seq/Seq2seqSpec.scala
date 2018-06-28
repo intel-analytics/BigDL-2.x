@@ -390,7 +390,10 @@ class Seq2seqSpec extends FlatSpec with BeforeAndAfter with Matchers {
       1)).asInstanceOf[Array[Cell[Double]]]
 
     val model = Seq2seq(encoderCells, decoderCells)
-    model.setLoop(seqLength, stopSign = Tensor[Double](batchSize, hiddenSize, 5, 5))
+    def stop(x: Tensor[Double]): Boolean = {
+      x.almostEqual(Tensor[Double](batchSize, hiddenSize, 5, 5), 1e-6)
+    }
+    model.setLoop(seqLength, stopSign = stop)
     var output = model.forward(T(input, input.select(2, seqLength))).toTensor
     require(output.size(2) == seqLength)
 
