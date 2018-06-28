@@ -31,7 +31,7 @@ np.random.seed(1337)  # for reproducibility
 
 class TestOperator(ZooTestCase):
     # shape including batch
-    def compare_binary_op(self, kk_func, z_layer, shape):
+    def compare_binary_op(self, kk_func, z_layer, shape, rtol=1e-5, atol=1e-5):
         x = klayers.Input(shape=shape[0][1:])
         y = klayers.Input(shape=shape[1][1:])
 
@@ -51,8 +51,8 @@ class TestOperator(ZooTestCase):
         grad_output = np.array(z_output)
         grad_output.fill(1.0)
         z_grad_y_pred = model.backward(x_value, grad_output)
-        self.assert_allclose(z_output, k_output, rtol=1e-5, atol=1e-5)
-        [self.assert_allclose(z, k) for (z, k) in zip(z_grad_y_pred, k_grad_y_pred)]
+        self.assert_allclose(z_output, k_output, rtol, atol)
+        [self.assert_allclose(z, k, rtol, atol) for (z, k) in zip(z_grad_y_pred, k_grad_y_pred)]
 
     # shape including batch
     def compare_unary_op(self, kk_func, z_layer, shape):
@@ -424,6 +424,105 @@ class TestOperator(ZooTestCase):
         self.compare_unary_op(k_func,
                               Lambda(function=z_func, ), [3, 2, 4])
 
+    def test_dot_2D(self):
+        def z_func(x, y):
+            return A.batch_dot(x, y, axes=1, normalize=False)
+
+        def k_func(x, y):
+            return klayers.Dot(axes=[1, 1], normalize=False)([x, y])
+
+        self.compare_binary_op(k_func,
+                               Lambda(function=z_func, ), [[3, 2], [3, 2]])
+
+    def test_dot_3D_2(self):
+        def z_func(x, y):
+            return A.batch_dot(x, y, axes=2, normalize=False)
+
+        def k_func(x, y):
+            return klayers.Dot(axes=2, normalize=False)([x, y])
+
+        self.compare_binary_op(k_func,
+                               Lambda(function=z_func, ), [[3, 2, 4], [3, 2, 4]])
+
+    def test_dot_3D_1(self):
+        def z_func(x, y):
+            return A.batch_dot(x, y, axes=1, normalize=False)
+
+        def k_func(x, y):
+            return klayers.Dot(axes=1, normalize=False)([x, y])
+
+        self.compare_binary_op(k_func,
+                               Lambda(function=z_func, ), [[3, 2, 4], [3, 2, 4]])
+
+    def test_dot_3D_1_2(self):
+        def z_func(x, y):
+            return A.batch_dot(x, y, axes=[1, 2], normalize=False)
+
+        def k_func(x, y):
+            return klayers.Dot(axes=[1, 2], normalize=False)([x, y])
+
+        self.compare_binary_op(k_func,
+                               Lambda(function=z_func, ), [[3, 2, 4], [3, 4, 2]])
+
+    def test_dot_3D_2_2_norm(self):
+        def z_func(x, y):
+            return A.batch_dot(x, y, axes=[2, 2], normalize=True)
+
+        def k_func(x, y):
+            return klayers.Dot(axes=[2, 2], normalize=True)([x, y])
+
+        self.compare_binary_op(k_func,
+                               Lambda(function=z_func, ), [[3, 2, 4], [3, 2, 4]])
+
+    def test_dot_3D_1_2_norm(self):
+        def z_func(x, y):
+            return A.batch_dot(x, y, axes=[1, 2], normalize=True)
+
+        def k_func(x, y):
+            return klayers.Dot(axes=[1, 2], normalize=True)([x, y])
+
+        self.compare_binary_op(k_func,
+                               Lambda(function=z_func, ), [[3, 2, 4], [3, 4, 2]])
+
+    def test_l2_normalize(self):
+        def z_func(x):
+            return A.l2_normalize(x, axis=1)
+
+        def k_func(x):
+            return KK.l2_normalize(x, axis=1)
+
+        self.compare_unary_op(k_func,
+                              Lambda(function=z_func, ), [3, 2])
+
+    def test_l2_normalize_2(self):
+        def z_func(x):
+            return A.l2_normalize(x, axis=2)
+
+        def k_func(x):
+            return KK.l2_normalize(x, axis=2)
+
+        self.compare_unary_op(k_func,
+                              Lambda(function=z_func, ), [3, 2, 4])
+
+    def test_mm(self):
+        def z_func(x, y):
+            return A.mm(x, y, axes=[2, 2])
+
+        def k_func(x, y):
+            return klayers.Dot(axes=[2, 2], normalize=False)([x, y])
+
+        self.compare_binary_op(k_func,
+                               Lambda(function=z_func, ), [[2, 3, 4], [2, 3, 4]])
+
+    def test_mm2(self):
+        def z_func(x, y):
+            return A.mm(x, y, axes=[1, 1])
+
+        def k_func(x, y):
+            return klayers.Dot(axes=[1, 1], normalize=False)([x, y])
+
+        self.compare_binary_op(k_func,
+                               Lambda(function=z_func, ), [[2, 3, 4], [2, 3, 4]])
 
 if __name__ == "__main__":
     pytest.main([__file__])
