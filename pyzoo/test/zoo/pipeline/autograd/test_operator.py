@@ -42,7 +42,7 @@ class TestOperator(ZooTestCase):
         y_value = np.random.uniform(0, 1, shape[1])
 
         k_grads = KK.get_session().run(KK.gradients(kkresult, [x, y]),
-                                             feed_dict={x: x_value, y: y_value})
+                                       feed_dict={x: x_value, y: y_value})
         k_output = KK.get_session().run(kkresult,
                                         feed_dict={x: x_value, y: y_value})
         inputs = [Input(s) for s in remove_batch(shape)]
@@ -71,7 +71,7 @@ class TestOperator(ZooTestCase):
         x_value = np.random.uniform(0, 1, shape)
 
         k_grads = KK.get_session().run(KK.gradients(kkresult, x),
-                                             feed_dict={x: x_value})
+                                       feed_dict={x: x_value})
         k_output = KK.get_session().run(kkresult,
                                         feed_dict={x: x_value})
         model = Sequential()
@@ -536,6 +536,7 @@ class TestOperator(ZooTestCase):
 
         self.compare_binary_op(k_func,
                                Lambda(function=z_func, ), [[2, 3, 4], [2, 3, 4]])
+
 
 if __name__ == "__main__":
     pytest.main([__file__])
