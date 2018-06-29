@@ -55,7 +55,7 @@ class MM[T: ClassTag](
 
   override def updateOutput(input: Table): Tensor[T] = {
     var (ma, mb) = checkInputFormat(input)
-    output.zero()
+    output.set()
 
     if (ma.dim() == 2) {
       require(mb.dim() == 2, "second input tensor must be 2D" +
@@ -95,8 +95,8 @@ class MM[T: ClassTag](
   }
 
   override def updateGradInput(input: Table, gradOutput: Tensor[T]): Table = {
-    gradInput[Tensor[T]](1).zero()
-    gradInput[Tensor[T]](2).zero()
+    gradInput[Tensor[T]](1).set()
+    gradInput[Tensor[T]](2).set()
 
     var (ma, mb) = checkInputFormat(input)
 

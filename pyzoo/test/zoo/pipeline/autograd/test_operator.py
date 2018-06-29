@@ -41,7 +41,7 @@ class TestOperator(ZooTestCase):
         x_value = np.random.uniform(0, 1, shape[0])
         y_value = np.random.uniform(0, 1, shape[1])
 
-        k_grad_y_pred = KK.get_session().run(KK.gradients(kkresult, [x, y]),
+        k_grads = KK.get_session().run(KK.gradients(kkresult, [x, y]),
                                              feed_dict={x: x_value, y: y_value})
         k_output = KK.get_session().run(kkresult,
                                         feed_dict={x: x_value, y: y_value})
@@ -50,12 +50,18 @@ class TestOperator(ZooTestCase):
         z_output = model.forward([x_value, y_value])
         grad_output = np.array(z_output)
         grad_output.fill(1.0)
-        z_grad_y_pred = model.backward(x_value, grad_output)
+        z_grads = model.backward([x_value, y_value], grad_output)
+
+        z_output2 = model.forward([x_value, y_value])
+        z_grads2 = model.backward([x_value, y_value], grad_output)
+        self.assert_allclose(z_output, z_output2, rtol, atol)
+        [self.assert_allclose(z, k, rtol, atol) for (z, k) in zip(z_grads, z_grads2)]
+
         self.assert_allclose(z_output, k_output, rtol, atol)
-        [self.assert_allclose(z, k, rtol, atol) for (z, k) in zip(z_grad_y_pred, k_grad_y_pred)]
+        [self.assert_allclose(z, k, rtol, atol) for (z, k) in zip(z_grads, k_grads)]
 
     # shape including batch
-    def compare_unary_op(self, kk_func, z_layer, shape):
+    def compare_unary_op(self, kk_func, z_layer, shape, rtol=1e-5, atol=1e-5):
         x = klayers.Input(shape=shape[1:])
 
         batch = shape[0]
@@ -63,7 +69,7 @@ class TestOperator(ZooTestCase):
         kkresult = kk_func(x)
         x_value = np.random.uniform(0, 1, shape)
 
-        k_grad_y_pred = KK.get_session().run(KK.gradients(kkresult, x),
+        k_grads = KK.get_session().run(KK.gradients(kkresult, x),
                                              feed_dict={x: x_value})
         k_output = KK.get_session().run(kkresult,
                                         feed_dict={x: x_value})
@@ -73,9 +79,15 @@ class TestOperator(ZooTestCase):
         z_output = model.forward(x_value)
         grad_output = np.array(z_output)
         grad_output.fill(1.0)
-        z_grad_y_pred = model.backward(x_value, grad_output)
-        self.assert_allclose(z_output, k_output)
-        self.assert_allclose(z_grad_y_pred, k_grad_y_pred[0])
+        z_grad = model.backward(x_value, grad_output)
+
+        z_output2 = model.forward(x_value)
+        z_grad2 = model.backward(x_value, grad_output)
+        self.assert_allclose(z_output, z_output2, rtol, atol)
+        self.assert_allclose(z_grad, z_grad2, rtol, atol)
+
+        self.assert_allclose(z_output, k_output, rtol, atol)
+        self.assert_allclose(z_grad, k_grads[0], rtol, atol)
 
     def test_add(self):
         def z_add_func(x, y):
