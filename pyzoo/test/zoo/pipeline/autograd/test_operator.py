@@ -52,6 +52,7 @@ class TestOperator(ZooTestCase):
         grad_output.fill(1.0)
         z_grads = model.backward([x_value, y_value], grad_output)
 
+        # Check if the model can be forward/backward multiple times or not
         z_output2 = model.forward([x_value, y_value])
         z_grads2 = model.backward([x_value, y_value], grad_output)
         self.assert_allclose(z_output, z_output2, rtol, atol)
