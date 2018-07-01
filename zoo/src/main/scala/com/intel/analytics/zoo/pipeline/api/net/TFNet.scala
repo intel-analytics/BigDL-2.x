@@ -47,16 +47,85 @@ import scala.collection.mutable
  * before this one, as the gradInput of this layer is always zero.
  *
  * @param graphDef serialized representation of a graph
- * @param inputNames the input tensor names of this subgraph
- * @param outputNames the output tensor names of this subgraph
  */
 class TFNet private(graphDef: TFGraphHolder,
-            val inputNames: Seq[String],
-            val outputNames: Seq[String],
+                    graphMeta: Meta,
                     config: Array[Byte])
   extends AbstractModule[Activity, Activity, Float] {
 
   private def graph = graphDef.tfGraph
+
+  val inputNames: Array[String] = graphMeta.inputNames
+  private val inputTypes = inputNames.map(name2type)
+  if (graphMeta.variables.isDefined) {
+    // Sanity check. If variables is defined, it means the backward graph
+    // is generated. We cannot compute the gradInput if input is not a float
+    require(inputTypes.map(_ == DataType.FLOAT).reduce(_ && _),
+      "all input types are required to be float if backward are allowed")
+  }
+
+  val outputNames: Array[String] = graphMeta.outputNames
+  private val outputTypes = outputNames.map(name2type)
+  if (graphMeta.variables.isDefined) {
+    // Sanity check. If variables is defined, it means the backward graph
+    // is generated. We cannot compute the gradInput/gradWeight if output is not a float
+    require(outputTypes.map(_ == DataType.FLOAT).reduce(_ && _),
+      "all input types are required to be float if backward are allowed")
+  }
+
+  // add Cast Operation if the output tensor is not of type Float
+  private val floatOutputNames = outputNames.map { name =>
+    val Array(op, idx) = name.split(":")
+    val operation = graph.operation(op)
+    val output = operation.output(idx.toInt)
+    if (output.dataType() != DataType.FLOAT) {
+      val name = graph.opBuilder("Cast", s"${op}_to_float")
+        .addInput(output)
+        .setAttr("DstT", DataType.FLOAT)
+        .setAttr("SrcT", output.dataType())
+        .build()
+        .name()
+      s"$name:0"
+    } else {
+      name
+    }
+  }
+
+  private val weights = {
+    if (graphMeta.variables.isDefined) {
+      val runner = sess.runner()
+      val variables = graphMeta.variables.get
+      variables.foreach(runner.fetch)
+      runner.run().asScala.map { output =>
+        val t = Tensor[Float]()
+        tf2bigdl(output.asInstanceOf[TTensor[Float]], t)
+        t
+      }.toArray
+    } else {
+      Array[Tensor[Float]]()
+    }
+  }
+
+  private val gradWeights = {
+    if (graphMeta.variables.isDefined) {
+      graphMeta.variables.get.map(_ => Tensor[Float]())
+    } else {
+      Array[Tensor[Float]]()
+    }
+  }
+
+  private val gradWeightsBuffer = {
+    if (graphMeta.variables.isDefined) {
+      graphMeta.variables.get.map(_ => Tensor[Float]())
+    } else {
+      Array[Tensor[Float]]()
+    }
+  }
+
+  private var gradWeightsTTensors = new Array[TTensor[Float]](gradWeights.length)
+
+  private val tempTensors: Array[TTensor[_]] =
+    new Array[TTensor[_]](graphMeta.tempTensors.map(_.length).getOrElse(0))
 
   output = {
     if (outputNames.length == 1) {
@@ -86,6 +155,148 @@ class TFNet private(graphDef: TFGraphHolder,
     }
   }
 
+  @transient
+  private lazy val sess = {
+    val sess = new Session(graphDef.tfGraph, config)
+    sess
+  }
+
+  override def updateOutput(input: Activity): Activity = {
+    val runner = sess.runner()
+
+    require(activityLength(input) == inputTypes.length,
+      s"require ${inputTypes.length} inputs, but ${activityLength(input)} given. " +
+        s"The inputs are ${inputNames.toSeq}")
+
+    val inputTFTensors = activity2TFTensors(input, inputTypes)
+
+    // feed inputs
+    inputNames.zipWithIndex.foreach { case (name, idx) =>
+      runner.feed(name, inputTFTensors(idx))
+    }
+
+    // feed new weights
+    graphMeta.variables.map { vs =>
+      vs.zipWithIndex.map { case (v, idx) =>
+        runner.feed(v, bigdl2Tf(weights(idx), DataType.FLOAT))
+      }
+    }
+
+    // fetch outputs
+    floatOutputNames.foreach(runner.fetch)
+    // fetch temp tensors used by backward
+    graphMeta.tempTensors.map(_.map(runner.fetch))
+
+    val outputs = runner.run()
+
+
+    outputs.asScala.zipWithIndex.foreach { case (t, idx) =>
+      if (idx < outputNames.length) {
+        // model outputs
+        tf2bigdl(t.asInstanceOf[TTensor[Float]], getOutput(idx + 1))
+      } else {
+        // temp tensors used by backward
+        tempTensors(idx - outputNames.length) = t
+      }
+    }
+    // clean up input tensorflow tensors
+    inputTFTensors.foreach(_.close())
+
+    // clean up model output tensorflow tensors
+    outputs.asScala.slice(0, outputNames.length).foreach(_.close())
+    output
+  }
+
+  override def updateGradInput(input: Activity, gradOutput: Activity): Activity = {
+
+    if (graphMeta.variables.isEmpty) {
+      generateZeroGrad(input)
+    } else {
+
+      val runner = sess.runner()
+
+      require(activityLength(input) == inputTypes.length,
+        s"require ${inputTypes.length} inputs, but ${activityLength(input)} given. " +
+          s"The inputs are ${inputNames.toSeq}")
+
+      val inputTFTensors = activity2TFTensors(input, inputTypes)
+      val gradOuputTFTensors = activity2TFTensors(gradOutput, outputTypes)
+
+      // feed inputs
+      inputNames.zipWithIndex.foreach { case (name, idx) =>
+        runner.feed(name, inputTFTensors(idx))
+      }
+
+      // feed gradOutputs
+      outputNames.map(addGrad).zipWithIndex.foreach { case (name, idx) =>
+        runner.feed(name, gradOuputTFTensors(idx))
+      }
+
+      // feed temp tensors fetched during forward
+      val tempTensorNames = graphMeta.tempTensors.get
+      tempTensorNames.zipWithIndex.foreach{ case (name, idx) =>
+        runner.feed(name, tempTensors(idx))
+      }
+
+      // fetch grad inputs
+      val gradInputNames = graphMeta.gradInputs.get
+      gradInputNames.foreach(runner.fetch)
+
+      // fetch grad weights
+      val gradVariableNames = graphMeta.gradVariables.get
+      gradVariableNames.foreach(runner.fetch)
+
+      val fetches = runner.run().asScala
+      val (i, v) = fetches.splitAt(gradInputNames.length)
+
+      gradWeightsTTensors = v.map(_.asInstanceOf[TTensor[Float]]).toArray
+
+      i.zipWithIndex.foreach { case (t, idx) =>
+        tf2bigdl(t.asInstanceOf[TTensor[Float]], getGradInput(idx + 1))
+      }
+
+      this.tempTensors.foreach(_.close())
+    }
+    gradInput
+  }
+
+  override def accGradParameters(input: Activity, gradOutput: Activity): Unit = {
+    this.gradWeights.zipWithIndex.map { case (gradWeight, idx) =>
+      val gradWeightBuffer = this.gradWeightsBuffer(idx)
+      val tfTensor = this.gradWeightsTTensors(idx)
+      tf2bigdl(tfTensor, gradWeightBuffer)
+      if (gradWeight.isEmpty) {
+        gradWeight.resizeAs(weights(idx))
+      }
+      gradWeight.add(gradWeightBuffer)
+    }
+    this.gradWeightsTTensors.foreach(_.close())
+  }
+
+  override def reset(): Unit = {
+    if (graphMeta.variables.isDefined) {
+      val runner = sess.runner()
+      val variables = graphMeta.variables.get
+      variables.foreach(runner.fetch)
+      runner.run().asScala.zipWithIndex.map { case (fetch, idx) =>
+        val t = weights(idx)
+        tf2bigdl(fetch.asInstanceOf[TTensor[Float]], t)
+        t
+      }.toArray
+    }
+    zeroGradParameters()
+  }
+
+  override def clearState(): this.type = {
+    super.clearState()
+    gradWeightsBuffer.foreach(_.set())
+    this
+  }
+
+  override def parameters(): (Array[Tensor[Float]], Array[Tensor[Float]]) = {
+    (weights, gradWeights)
+  }
+
   private def getOutput(idx: Int): Tensor[Float] = {
     if (output.isTable) {
       output.toTable[Tensor[Float]](idx)
@@ -94,35 +305,19 @@ class TFNet private(graphDef: TFGraphHolder,
     }
   }
 
-  @transient
-  private lazy val sess = {
-    val sess = new Session(graphDef.tfGraph, config)
-    sess
+  private def getGradInput(idx: Int): Tensor[Float] = {
+    if (gradInput.isTable) {
+      gradInput.toTable[Tensor[Float]](idx)
+    } else {
+      gradInput.toTensor[Float]
+    }
   }
 
-  private val inputTypes = inputNames.map { name =>
+  private def name2type(name: String): DataType = {
     val Array(op, idx) = name.split(":")
     val operation = graph.operation(op)
     val output = operation.output(idx.toInt)
     output.dataType()
-  }
-
-  // add Cast Operation if the output tensor is not of type Float
-  private val floatOutputNames = outputNames.map { name =>
-    val Array(op, idx) = name.split(":")
-    val operation = graph.operation(op)
-    val output = operation.output(idx.toInt)
-    if (output.dataType() != DataType.FLOAT) {
-      val name = graph.opBuilder("Cast", s"${op}_to_float")
-        .addInput(output)
-        .setAttr("DstT", DataType.FLOAT)
-        .setAttr("SrcT", output.dataType())
-        .build()
-        .name()
-      s"$name:0"
-    } else {
-      name
-    }
   }
 
   private def getShape(names: Seq[String]) = {
@@ -137,10 +332,6 @@ class TFNet private(graphDef: TFGraphHolder,
     } else {
       MultiShape(shapes.toList)
     }
-  }
-
-  override def parameters(): (Array[Tensor[Float]], Array[Tensor[Float]]) = {
-    (Array(), Array())
   }
 
   private def bigdl2Tf(t: Tensor[Float], dataType: DataType): TTensor[_] = {
@@ -182,40 +373,24 @@ class TFNet private(graphDef: TFGraphHolder,
     t.writeTo(buffer)
   }
 
-  override def updateOutput(input: Activity): Activity = {
-    val data = if (input.isTensor) {
-      require(inputTypes.size == 1,
-        s"This TFNet requires ${inputTypes.size} inputs, which are $inputNames," +
-          s" but only one input is provided")
-      val tfTensor = bigdl2Tf(input.toTensor[Float], inputTypes.head)
+  private def activityLength(a: Activity): Int = {
+    if (a.isTensor) 1 else a.toTable.length()
+  }
+
+
+  private def activity2TFTensors(input: Activity, types: Seq[DataType]) = {
+    if (input.isTensor) {
+      val tfTensor = bigdl2Tf(input.toTensor[Float], types.head)
       Seq(tfTensor)
     } else {
       val t = input.toTable
-      require(inputTypes.size == t.length(),
-        s"This TFNet requires ${inputTypes.size} inputs, which are $inputNames," +
-          s" but ${t.length()} inputs are provided")
       for (i <- 1 to t.length()) yield {
-        bigdl2Tf(t[Tensor[Float]](i), inputTypes(i-1))
+        bigdl2Tf(t[Tensor[Float]](i), types(i-1))
       }
     }
-
-    val runner = sess.runner()
-    floatOutputNames.foreach(runner.fetch)
-    inputNames.zipWithIndex.foreach { case (name, idx) =>
-      runner.feed(name, data(idx))
-    }
-
-    val outputs = runner.run()
-    outputs.asScala.zipWithIndex.foreach { case (t, idx) =>
-      tf2bigdl(t.asInstanceOf[TTensor[Float]], getOutput(idx + 1))
-    }
-    // clean up resources
-    data.foreach(_.close())
-    outputs.asScala.foreach(_.close())
-    output
   }
 
-  override def updateGradInput(input: Activity, gradOutput: Activity): Activity = {
+  private def generateZeroGrad(input: Activity) = {
     if (gradInput.isTable) {
       var i = 0
       while (i < gradInput.toTable.length()) {
@@ -227,8 +402,11 @@ class TFNet private(graphDef: TFGraphHolder,
       gradInput.toTensor[Float]
         .resizeAs(input.toTensor[Float])
     }
+  }
 
-    gradInput
+  private def addGrad(name: String) = {
+    val parts = name.split(":")
+    parts(0) + "_grad:" + parts(1)
   }
 }
 
@@ -504,16 +682,15 @@ object TFNet {
   /**
    * Create a TFNet
    * @param graphDef the tensorflow GraphDef object
-   * @param inputNames the input tensor names of this subgraph
-   * @param outputNames the output tensor names of this subgraph
    * @return
    */
-  private def apply(graphDef: GraphDef, graphId: String, inputNames: Seq[String],
-            outputNames: Seq[String], config: Array[Byte]): TFNet = {
+  private def apply(graphDef: GraphDef, graphId: String,
+                    graphMeta: Meta,
+                    config: Array[Byte]): TFNet = {
     val graph = new Graph()
     graph.importGraphDef(graphDef.toByteArray)
 
-    new TFNet(new TFGraphHolder(graph, graphId), inputNames, outputNames, config)
+    new TFNet(new TFGraphHolder(graph, graphId), graphMeta, config)
   }
 
   /**
@@ -524,10 +701,12 @@ object TFNet {
    * @return
    */
   def apply(path: String,
-            inputNames: Seq[String],
-            outputNames: Seq[String], config: SessionConfig): TFNet = {
+            inputNames: Array[String],
+            outputNames: Array[String],
+            config: SessionConfig): TFNet = {
     val graphDef = parseGraph(path)
-    TFNet(graphDef, path, inputNames, outputNames, config.toByteArray())
+    val graphMeta = Meta(inputNames = inputNames, outputNames = outputNames)
+    TFNet(graphDef, path, graphMeta, config.toByteArray())
   }
 
   /**
@@ -538,17 +717,16 @@ object TFNet {
    * @return
    */
   def apply(path: String,
-            inputNames: Seq[String],
-            outputNames: Seq[String]): TFNet = {
-    val graphDef = parseGraph(path)
-    val config = defaultSessionConfig
-    TFNet(graphDef, path, inputNames, outputNames, config = config.toByteArray())
+            inputNames: Array[String],
+            outputNames: Array[String]): TFNet = {
+    TFNet(path, inputNames, outputNames, defaultSessionConfig)
   }
 
 
-  def apply(folder: String, config: SessionConfig = defaultSessionConfig): TFNet = {
-    val (model, inputs, outputs) = NetUtils.processTFFolder(folder)
-    TFNet(model, inputs, outputs, config)
+  def apply(folder: String, config: SessionConfig = TFNet.SessionConfig()): TFNet = {
+    val (model, meta) = NetUtils.processTFFolder(folder)
+    val graphDef = parseGraph(model)
+    TFNet(graphDef, model, meta, defaultSessionConfig.toByteArray())
   }
 
   private def parseGraph(graphProtoTxt: String) : GraphDef = {

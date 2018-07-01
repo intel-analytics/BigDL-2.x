@@ -57,8 +57,8 @@ object Predict {
 
       val sc = NNContext.initNNContext("TFNet Object Detection Example")
 
-      val inputs = Seq("image_tensor:0")
-      val outputs = Seq("num_detections:0", "detection_boxes:0",
+      val inputs = Array("image_tensor:0")
+      val outputs = Array("num_detections:0", "detection_boxes:0",
         "detection_scores:0", "detection_classes:0")
 
       val model = TFNet(params.model, inputs, outputs)

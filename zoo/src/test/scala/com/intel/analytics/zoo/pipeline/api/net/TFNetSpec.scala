@@ -15,12 +15,16 @@
  */
 package com.intel.analytics.zoo.pipeline.api.net
 
+import java.nio.FloatBuffer
+
 import com.intel.analytics.bigdl.tensor.Tensor
 import com.intel.analytics.bigdl.utils.{LayerException, T}
 import com.intel.analytics.zoo.common.NNContext
 import org.apache.spark.serializer.KryoSerializer
 import org.apache.spark.{SparkConf, SparkContext, SparkEnv}
 import org.scalatest.{BeforeAndAfter, FlatSpec, Matchers}
+import org.tensorflow.{DataType, Graph, Session, Tensor => TTensor}
+
 
 class TFNetSpec extends FlatSpec with Matchers with BeforeAndAfter {
 
@@ -29,9 +33,9 @@ class TFNetSpec extends FlatSpec with Matchers with BeforeAndAfter {
     val resource = getClass().getClassLoader().getResource("tf")
     val path = resource.getPath + "/" + "multi_type_inputs_outputs.pb"
 
-    val inputs = Seq("float_input:0", "double_input:0",
+    val inputs = Array("float_input:0", "double_input:0",
       "int_input:0", "long_input:0", "uint8_input:0")
-    val outputs = Seq("float_output:0", "double_output:0",
+    val outputs = Array("float_output:0", "double_output:0",
       "int_output:0", "long_output:0", "uint8_output:0")
     val net = TFNet(path, inputs, outputs)
     val data = T(Tensor[Float](Array[Float](1.0f), Array(1, 1)),
@@ -101,9 +105,9 @@ class TFNetSpec extends FlatSpec with Matchers with BeforeAndAfter {
     val resource = getClass().getClassLoader().getResource("tf")
     val path = resource.getPath + "/" + "multi_type_inputs_outputs.pb"
 
-    val inputs = Seq("float_input:0", "double_input:0",
+    val inputs = Array("float_input:0", "double_input:0",
       "int_input:0", "long_input:0", "uint8_input:0")
-    val outputs = Seq("float_output:0", "double_output:0",
+    val outputs = Array("float_output:0", "double_output:0",
       "int_output:0", "long_output:0", "uint8_output:0")
     val net = TFNet(path, inputs, outputs)
     val data1 = T(Tensor[Float](Array[Float](1.0f), Array(1, 1)),
@@ -120,5 +124,53 @@ class TFNetSpec extends FlatSpec with Matchers with BeforeAndAfter {
     intercept[LayerException] {
       net.forward(data2) // this is not allowed
     }
+  }
+
+  "TFNet " should "work" in {
+    val net = TFNet("/home/yang/sources/zoo/pyzoo/zoo/tensorflow_bigdl")
+    val input = Tensor[Float](2, 28, 28, 1).rand()
+    val output = net.forward(input).toTensor[Float].clone()
+    val gradInput = net.backward(input, output).toTensor[Float].clone()
+
+    println(output)
+  }
+
+
+
+
+  "Session run" should "work" in {
+
+    val outputNum = 10
+
+    val graph = new Graph()
+    val input = graph.opBuilder("Placeholder", "input").setAttr("dtype", DataType.FLOAT).build()
+    for (i <- 0 until outputNum) {
+      graph.opBuilder("Identity", s"output$i").addInput(input.output(0)).build()
+    }
+
+
+    val sess = new Session(graph)
+
+    val buffer = FloatBuffer.wrap(new Array[Float](Integer.MAX_VALUE / 1000))
+
+    var data: TTensor[_] =
+      TTensor.create(Array((Integer.MAX_VALUE / 1000).toLong), buffer)
+
+    for (i <- 0 to 10) {
+      val runner = sess.runner()
+      runner.feed("input:0", data)
+      for (i <- 0 until outputNum) {
+        runner.fetch(s"output$i:0")
+      }
+
+
+      val start = System.nanoTime()
+      val outputs = runner.run()
+      val end = System.nanoTime()
+
+      println((end - start) / 1.0e6)
+      data = outputs.get(0)
+    }
+
   }
 }

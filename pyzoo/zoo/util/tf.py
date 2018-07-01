@@ -19,12 +19,14 @@ from tensorflow.core.framework import graph_pb2
 from tensorflow.core.framework import node_def_pb2
 from tensorflow.python.framework import graph_util
 from tensorflow.python.platform import gfile
+import tensorflow as tf
 import os
 import json
 import copy
+import Queue
 
 
-def export_tf(sess, folder, inputs, outputs):
+def export_tf(sess, folder, inputs, outputs, generate_backward=False):
     """
     Export the frozen tensorflow graph as well as the inputs/outputs information
     to the folder for inference.
@@ -47,6 +49,7 @@ def export_tf(sess, folder, inputs, outputs):
     output_node_names = list({t.op.name for t in outputs})
 
     graph_def = sess.graph_def
+    graph = sess.graph
 
     # clear device specifications
     for node in graph_def.node:
@@ -60,6 +63,8 @@ def export_tf(sess, folder, inputs, outputs):
             type_enums.append(input_tensor.dtype.as_datatype_enum)
 
     output_names = list(map(lambda o: o.name, outputs))
+
+    all_variables = graph.get_collection(tf.GraphKeys.TRAINABLE_VARIABLES)
 
     # freeze graph
     frozen_graph_def = graph_util.convert_variables_to_constants(
@@ -88,6 +93,35 @@ def export_tf(sess, folder, inputs, outputs):
                 "Node %s is a Placeholder but not listed in inputs, inputs are %s"
                 % (node.name, inputs))
 
+    temp_tensors = None
+    used_variables = []
+    grad_variables = []
+    grad_inputs = []
+    if generate_backward:
+        ops = set(map(lambda n: n.name, optimized_graph_def.node))
+        for v in all_variables:
+            if v.op.name in ops:
+                used_variables.append(v.name)
+
+        with tf.Graph().as_default() as g:
+            tf.import_graph_def(optimized_graph_def, name='')
+            output_tensors = map(lambda x: g.get_tensor_by_name(x), output_names)
+            grad_output_placeholders = map(lambda x: tf.placeholder(dtype=x.dtype,
+                                                                    name=x.name.split(":")[0] + "_grad",
+                                                                    shape=x.shape),
+                                           output_tensors)
+
+            variables = map(lambda x: g.get_tensor_by_name(x), used_variables)
+            inputs = map(lambda x: g.get_tensor_by_name(x), new_input_names)
+            grads = tf.gradients(output_tensors, variables + inputs, grad_ys=grad_output_placeholders)
+
+            temp_tensors = _find_temp_tensors(grads, ops)
+
+            grad_variables = list(map(lambda x: x.name, grads[0:len(variables)]))
+            grad_inputs = list(map(lambda x:x.name, grads[len(variables):]))
+
+            optimized_graph_def = g.as_graph_def()
+
     if not os.path.isdir(folder):
         os.makedirs(folder)
 
@@ -98,9 +132,62 @@ def export_tf(sess, folder, inputs, outputs):
         "input_names": new_input_names,
         "output_names": output_names
     }
+
+    if generate_backward:
+        meta["temp_tensors"] = list(temp_tensors)
+        meta["variables"] = used_variables
+        meta["grad_variables"] = grad_variables
+        meta["grad_inputs"] = grad_inputs
+
     with open(os.path.join(folder, "graph_meta.json"), "w") as f:
         f.write(json.dumps(meta))
 
+def _insert_identity_nodes(graph_def, temp_tensors):
+    new_temp_tensors = []
+    new_graph_def = graph_pb2.GraphDef()
+    added_nodes = set()
+    name2node = {}
+    for node in graph_def.node:
+        name2node[node.name] = node
+
+    for node in graph_def.node:
+        for i in range(len(node.input)):
+            input_name = _append_port(node.input[i])
+            if input_name in temp_tensors:
+                new_node_name = input_name.replace(":", "_") + "_identity"
+                input_node_name = input_name.split(":")[0]
+                input_node_port = int(input_name.split(":")[1])
+                input_node = name2node[input_node_name]
+                if new_node_name not in added_nodes:
+                    added_nodes.add(new_node_name)
+                    identity_node = node_def_pb2.NodeDef()
+                    identity_node.op = "Identity"
+                    identity_node.name = new_node_name
+                    identity_node.attr['T'].type = input_node.attr['T'].type
+                    identity_node.input.append(node.input[i])
+                    node.input[i] = identity_node.name + ":0"
+                    new_temp_tensors.append(node.input[i])
+                    new_graph_def.node.extend([identity_node])
+        new_graph_def.node.extend([copy.deepcopy(node)])
+    return new_graph_def, new_temp_tensors
+
+
+def _find_temp_tensors(grads, forward_ops):
+    queue = Queue.Queue()
+    for grad in grads:
+        queue.put(grad)
+
+    temp_tensors = set()
+    while not queue.empty():
+        tensor = queue.get()
+        if tensor.op.type == "Placeholder":
+            continue
+        if tensor.op.name in forward_ops:
+            temp_tensors.add(tensor.name)
+            continue
+        for input_tensor in tensor.op.inputs:
+            queue.put(input_tensor)
+    return temp_tensors
 
 def strip_unused(input_graph_def, input_tensor_names, output_tensor_names,
                  placeholder_type_enum):
