@@ -64,8 +64,8 @@ class FeatureSpec extends FlatSpec with Matchers with BeforeAndAfter {
     val path = getClass.getClassLoader.getResource("png").getFile
     val image = ImageSet.read(path, sc)
     val image2 = ImageSet.read(path, sc)
-    val jpg = image -> ImageBytesToMat()
-    val png = image2 -> ImageBytesToMat(flags = Imgcodecs.CV_LOAD_IMAGE_UNCHANGED)
+    val jpg = image -> ImageBytesToMat(flags = Imgcodecs.CV_LOAD_IMAGE_COLOR)
+    val png = image2 -> ImageBytesToMat()
     val imfJpg = jpg.toDistributed().rdd.collect().head
     val imfPng = png.toDistributed().rdd.collect().head
     val (height, width, channel) = imfJpg.opencvMat().shape()
