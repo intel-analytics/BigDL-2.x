@@ -159,8 +159,8 @@ object NNImageReader {
    * @param sc SparkContext to be used.
    * @param minPartitions Number of the DataFrame partitions,
    *                      if omitted uses defaultParallelism instead
-   * @param resizeH height after resize
-   * @param resizeW width after resize
+   * @param resizeH height after resize, by default is -1 which will not resize the image
+   * @param resizeW width after resize, by default is -1 which will not resize the image
    * @param flags specifying the color type of a loaded image, same as in OpenCV.imread.
    *              By default is Imgcodecs.CV_LOAD_IMAGE_UNCHANGED
    * @return DataFrame with a single column "image" of images;

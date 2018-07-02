@@ -57,3 +57,41 @@ class MaxPooling1D(ZooKeras2Layer):
                                            padding,
                                            list(input_shape) if input_shape else None,
                                            **kwargs)
+
+
+class AveragePooling1D(ZooKeras2Layer):
+    """
+    Average pooling operation for temporal data.
+
+    # Arguments
+        pool_size: Integer, size of the average pooling windows.
+        strides: Integer, or None. Factor by which to downscale.
+            E.g. 2 will halve the input.
+            If None, it will be set to -1, which will be default to pool_size.
+        padding: One of `"valid"` or `"same"` (case-insensitive).
+
+    # Input shape
+        3D tensor with shape: `(batch_size, steps, features)`.
+
+    # Output shape
+        3D tensor with shape: `(batch_size, downsampled_steps, features)`.
+
+    When you use this layer as the first layer of a model, you need to provide the argument
+    input_shape (a shape tuple, does not include the batch dimension).
+
+    >>> averagepooling1d = AveragePooling1D(input_shape=(3, 24))
+    creating: createZooKeras2AveragePooling1D
+    """
+    def __init__(self,
+                 pool_size=2,
+                 strides=None,
+                 padding="valid",
+                 input_shape=None, **kwargs):
+        if not strides:
+            strides = -1
+        super(AveragePooling1D, self).__init__(None,
+                                               pool_size,
+                                               strides,
+                                               padding,
+                                               list(input_shape) if input_shape else None,
+                                               **kwargs)

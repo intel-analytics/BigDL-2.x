@@ -54,8 +54,8 @@ class ImageSet(JavaValue):
         if sc is null, path is local directory/image file/image file with wildcard character
         :param sc SparkContext
         :param min_partitions A suggestion value of the minimal splitting number for input data.
-        :param resize_height height after resize
-        :param resize_width width after resize
+        :param resize_height height after resize, by default is -1 which will not resize the image
+        :param resize_width width after resize, by default is -1 which will not resize the image
         :param flags specifying the color type of a loaded image, same as in OpenCV.imread.
                By default is Imgcodecs.CV_LOAD_IMAGE_UNCHANGED(-1)
         :return ImageSet
