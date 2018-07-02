@@ -23,6 +23,12 @@ import com.intel.analytics.bigdl.transform.vision.image
 
 import scala.reflect.ClassTag
 
+/**
+ * transform opencv mat to tensor
+ * @param toRGB BGR to RGB (default is BGR)
+ * @param tensorKey key to store transformed tensor
+ * @param format DataFormat.NCHW or DataFormat.NHWC
+ */
 class ImageMatToTensor[T: ClassTag](
     toRGB: Boolean = false,
     tensorKey: String = ImageFeature.imageTensor,
