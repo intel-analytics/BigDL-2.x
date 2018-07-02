@@ -31,7 +31,6 @@ import org.tensorflow.{DataType, Graph, Session, Tensor => TTensor}
 
 import scala.collection.JavaConverters._
 import org.json4s._
-import org.json4s.jackson.JsonMethods._
 import org.slf4j.LoggerFactory
 
 import scala.collection.mutable
@@ -122,7 +121,7 @@ class TFNet private(graphDef: TFGraphHolder,
     }
   }
 
-  private var gradWeightsTTensors = new Array[TTensor[Float]](gradWeights.length)
+  private val gradWeightsTTensors = new Array[TTensor[Float]](gradWeights.length)
 
   private val tempTensors: Array[TTensor[_]] =
     new Array[TTensor[_]](graphMeta.tempTensors.map(_.length).getOrElse(0))
@@ -175,35 +174,43 @@ class TFNet private(graphDef: TFGraphHolder,
       runner.feed(name, inputTFTensors(idx))
     }
 
-    // feed new weights
-    graphMeta.variables.map { vs =>
-      vs.zipWithIndex.map { case (v, idx) =>
-        runner.feed(v, bigdl2Tf(weights(idx), DataType.FLOAT))
+    // feed new weights if possible
+    val weightsTensor = graphMeta.variables.map { variableNames =>
+      variableNames.zipWithIndex.map { case (v, idx) =>
+        val tensor = bigdl2Tf(weights(idx), DataType.FLOAT)
+        runner.feed(v, tensor)
+        tensor
       }
     }
 
     // fetch outputs
     floatOutputNames.foreach(runner.fetch)
-    // fetch temp tensors used by backward
-    graphMeta.tempTensors.map(_.map(runner.fetch))
+
+    // fetch temp tensors used by backward if possible
+    if (this.isTraining()) {
+      graphMeta.tempTensors.map(_.map(runner.fetch))
+    }
 
     val outputs = runner.run()
-
 
     outputs.asScala.zipWithIndex.foreach { case (t, idx) =>
       if (idx < outputNames.length) {
         // model outputs
         tf2bigdl(t.asInstanceOf[TTensor[Float]], getOutput(idx + 1))
       } else {
-        // temp tensors used by backward
+        // temp tensors used by backward if any
         tempTensors(idx - outputNames.length) = t
       }
     }
     // clean up input tensorflow tensors
     inputTFTensors.foreach(_.close())
+    // clean up variable tensorflow tensors
+    weightsTensor.foreach(_.foreach(_.close()))
 
     // clean up model output tensorflow tensors
     outputs.asScala.slice(0, outputNames.length).foreach(_.close())
+    // tempTensors will be cleaned up after backward
+
     output
   }
 
@@ -249,13 +256,24 @@ class TFNet private(graphDef: TFGraphHolder,
       val fetches = runner.run().asScala
       val (i, v) = fetches.splitAt(gradInputNames.length)
 
-      gradWeightsTTensors = v.map(_.asInstanceOf[TTensor[Float]]).toArray
+      v.map(_.asInstanceOf[TTensor[Float]])
+        .zipWithIndex.foreach(x => gradWeightsTTensors(x._2) = x._1)
 
       i.zipWithIndex.foreach { case (t, idx) =>
         tf2bigdl(t.asInstanceOf[TTensor[Float]], getGradInput(idx + 1))
       }
 
+      // clean up two feeds
+      inputTFTensors.foreach(_.close())
+      gradOuputTFTensors.foreach(_.close())
+
+      // clean up temp tensors
       this.tempTensors.foreach(_.close())
+
+      // clean up fetched grad inputs
+      i.foreach(_.close())
+
+      // grad weights will be cleaned up after acc
     }
     gradInput
   }
@@ -270,6 +288,8 @@ class TFNet private(graphDef: TFGraphHolder,
       }
       gradWeight.add(gradWeightBuffer)
     }
+
+    // clean up grad weights tf tensors
     this.gradWeightsTTensors.foreach(_.close())
   }
 
