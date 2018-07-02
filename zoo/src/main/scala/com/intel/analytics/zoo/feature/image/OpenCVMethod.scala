@@ -22,7 +22,7 @@ import com.intel.analytics.bigdl.transform.vision.image.opencv.OpenCVMat
 import org.opencv.core.{Mat, MatOfByte}
 import org.opencv.imgcodecs.Imgcodecs
 
-private[zoo] object ZooOpenCVMat {
+private[zoo] object OpenCVMethod {
   OpenCV.isOpenCVLoaded
 
   /**

@@ -53,7 +53,7 @@ object ImageBytesToMat {
     var mat: OpenCVMat = null
     try {
       require(null != bytes && bytes.length > 0, "image file bytes should not be empty")
-      mat = ZooOpenCVMat.fromImageBytes(bytes, flags)
+      mat = OpenCVMethod.fromImageBytes(bytes, flags)
       feature(ImageFeature.mat) = mat
       feature(ImageFeature.originalSize) = mat.shape()
     } catch {
