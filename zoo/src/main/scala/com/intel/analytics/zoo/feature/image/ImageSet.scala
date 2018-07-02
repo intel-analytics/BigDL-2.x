@@ -130,13 +130,13 @@ object ImageSet {
    * @param minPartitions A suggestion value of the minimal splitting number for input data.
    * @param resizeH height after resize, by default is -1 which will not resize the image
    * @param resizeW width after resize, by default is -1 which will not resize the image
-   * @param flags specifying the color type of a loaded image, same as in OpenCV.imread.
+   * @param imageCodec specifying the color type of a loaded image, same as in OpenCV.imread.
    *              By default is Imgcodecs.CV_LOAD_IMAGE_UNCHANGED
    * @return ImageSet
    */
   def read(path: String, sc: SparkContext = null, minPartitions: Int = 1,
-           resizeH: Int = -1, resizeW: Int = -1, flags: Int = Imgcodecs.CV_LOAD_IMAGE_UNCHANGED):
-  ImageSet = {
+           resizeH: Int = -1, resizeW: Int = -1,
+           imageCodec: Int = Imgcodecs.CV_LOAD_IMAGE_UNCHANGED): ImageSet = {
     val imageSet = if (null != sc) {
       val images = sc.binaryFiles(path, minPartitions).map { case (p, stream) =>
           ImageFeature(stream.toArray(), uri = p)
@@ -150,9 +150,9 @@ object ImageSet {
       ImageSet.array(images)
     }
     if (resizeW == -1 || resizeH == -1) {
-      imageSet -> ImageBytesToMat(flags = flags)
+      imageSet -> ImageBytesToMat(imageCodec = imageCodec)
     } else {
-      imageSet -> BufferedImageResize(resizeH, resizeW) -> ImageBytesToMat(flags = flags)
+      imageSet -> BufferedImageResize(resizeH, resizeW) -> ImageBytesToMat(imageCodec = imageCodec)
     }
   }
 

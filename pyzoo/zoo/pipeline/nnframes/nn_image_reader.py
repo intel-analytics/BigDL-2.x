@@ -30,7 +30,7 @@ class NNImageReader:
 
     @staticmethod
     def readImages(path, sc=None, minPartitions=1, resizeH=-1, resizeW=-1,
-                   flags=-1, bigdl_type="float"):
+                   image_codec=-1, bigdl_type="float"):
         """
         Read the directory of images into DataFrame from the local or remote source.
         :param path Directory to the input data files, the path can be comma separated paths as the
@@ -38,12 +38,12 @@ class NNImageReader:
         :param min_partitions A suggestion value of the minimal splitting number for input data.
         :param resizeH height after resize, by default is -1 which will not resize the image
         :param resizeW width after resize, by default is -1 which will not resize the image
-        :param flags specifying the color type of a loaded image, same as in OpenCV.imread.
+        :param image_codec specifying the color type of a loaded image, same as in OpenCV.imread.
                By default is Imgcodecs.CV_LOAD_IMAGE_UNCHANGED(-1)
         :return DataFrame with a single column "image"; Each record in the column represents
                 one image record: Row (uri, height, width, channels, CvType, bytes).
         """
         df = callBigDlFunc(bigdl_type, "nnReadImage", path, sc, minPartitions, resizeH,
-                           resizeW, flags)
+                           resizeW, image_codec)
         df._sc._jsc = sc._jsc
         return df

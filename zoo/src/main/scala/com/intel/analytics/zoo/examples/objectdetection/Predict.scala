@@ -66,7 +66,7 @@ object Predict {
 
       val model = ObjectDetector.loadModel[Float](params.modelPath)
       val data = ImageSet.read(params.image, sc, params.nPartition,
-        flags = Imgcodecs.CV_LOAD_IMAGE_COLOR)
+        imageCodec = Imgcodecs.CV_LOAD_IMAGE_COLOR)
       val output = model.predictImageSet(data)
 
       val visualizer = Visualizer(model.getConfig.labelMap, encoding = "jpg")

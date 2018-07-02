@@ -25,18 +25,18 @@ import org.opencv.imgcodecs.Imgcodecs
 /**
  * Transform byte array(original image file in byte) to OpenCVMat
  * @param byteKey key that maps byte array
- * @param flags specifying the color type of a loaded image, same as in OpenCV.imread.
- *              By default is Imgcodecs.CV_LOAD_IMAGE_COLOR and returns a 3-channel color image
+ * @param imageCodec specifying the color type of a loaded image, same as in OpenCV.imread.
+ *              By default is Imgcodecs.CV_LOAD_IMAGE_UNCHANGED
  */
 class ImageBytesToMat(byteKey: String = ImageFeature.bytes,
-   flags: Int = Imgcodecs.CV_LOAD_IMAGE_COLOR) extends ImageProcessing {
+                      imageCodec: Int = Imgcodecs.CV_LOAD_IMAGE_UNCHANGED) extends ImageProcessing {
 
   override def apply(prev: Iterator[ImageFeature]): Iterator[ImageFeature] = {
     prev.map(transform(_))
   }
 
   override def transform(feature: ImageFeature): ImageFeature = {
-    ImageBytesToMat.transform(feature, byteKey, flags)
+    ImageBytesToMat.transform(feature, byteKey, imageCodec)
   }
 }
 
@@ -44,16 +44,16 @@ object ImageBytesToMat {
   val logger = Logger.getLogger(getClass)
 
   def apply(byteKey: String = ImageFeature.bytes,
-            flags: Int = Imgcodecs.CV_LOAD_IMAGE_UNCHANGED): ImageBytesToMat =
-    new ImageBytesToMat(byteKey, flags)
+            imageCodec: Int = Imgcodecs.CV_LOAD_IMAGE_UNCHANGED): ImageBytesToMat =
+    new ImageBytesToMat(byteKey, imageCodec)
 
-  def transform(feature: ImageFeature, byteKey: String, flags: Int): ImageFeature = {
+  def transform(feature: ImageFeature, byteKey: String, imageCodec: Int): ImageFeature = {
     if (!feature.isValid) return feature
     val bytes = feature[Array[Byte]](byteKey)
     var mat: OpenCVMat = null
     try {
       require(null != bytes && bytes.length > 0, "image file bytes should not be empty")
-      mat = OpenCVMethod.fromImageBytes(bytes, flags)
+      mat = OpenCVMethod.fromImageBytes(bytes, imageCodec)
       feature(ImageFeature.mat) = mat
       feature(ImageFeature.originalSize) = mat.shape()
     } catch {

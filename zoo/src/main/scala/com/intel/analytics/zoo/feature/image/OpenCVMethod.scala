@@ -29,18 +29,18 @@ private[zoo] object OpenCVMethod {
    * convert image file in bytes to opencv mat with BGR
    *
    * @param fileContent bytes from an image file
-   * @param flags specifying the color type of a loaded image, same as in OpenCV.imread.
-   *              By default is Imgcodecs.CV_LOAD_IMAGE_COLOR and returns a 3-channel color image
+   * @param imageCodec specifying the color type of a loaded image, same as in OpenCV.imread.
+   *              By default is Imgcodecs.CV_LOAD_IMAGE_UNCHANGED
    * @return opencv mat
    */
   def fromImageBytes(fileContent: Array[Byte],
-                     flags: Int = Imgcodecs.CV_LOAD_IMAGE_COLOR): OpenCVMat = {
+                     imageCodec: Int = Imgcodecs.CV_LOAD_IMAGE_UNCHANGED): OpenCVMat = {
     var mat: Mat = null
     var matOfByte: MatOfByte = null
     var result: OpenCVMat = null
     try {
       matOfByte = new MatOfByte(fileContent: _*)
-      mat = Imgcodecs.imdecode(matOfByte, flags)
+      mat = Imgcodecs.imdecode(matOfByte, imageCodec)
       result = new OpenCVMat(mat)
     } catch {
       case e: Exception =>
