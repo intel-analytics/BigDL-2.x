@@ -44,7 +44,7 @@ object ImageBytesToMat {
   val logger = Logger.getLogger(getClass)
 
   def apply(byteKey: String = ImageFeature.bytes,
-            flags: Int = Imgcodecs.CV_LOAD_IMAGE_COLOR): ImageBytesToMat =
+            flags: Int = Imgcodecs.CV_LOAD_IMAGE_UNCHANGED): ImageBytesToMat =
     new ImageBytesToMat(byteKey, flags)
 
   def transform(feature: ImageFeature, byteKey: String, flags: Int): ImageFeature = {
