@@ -32,7 +32,8 @@ then
 fi
 
 python -m pytest -v ../test --ignore=../test/zoo/pipeline/utils/test_utils.py \
-   --ignore=../test/zoo/pipeline/pyzoo/test/zoo/pipeline/api/keras2
+   --ignore=../test/zoo/pipeline/api/keras2/ \
+   --ignore=../test/zoo/pipeline/autograd
 exit_status_2=$?
 if [ $exit_status_2 -ne 0 ];
 then

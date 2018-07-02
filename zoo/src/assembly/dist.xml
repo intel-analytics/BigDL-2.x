@@ -26,10 +26,17 @@
           <include>analytics-zoo-*-python-api.zip</include>
       </includes>
     </fileSet>
+    <fileSet>
+      <outputDirectory>/extra-resources</outputDirectory>
+      <directory>${project.parent.basedir}/zoo/target/extra-resources</directory>
+      <includes>
+          <include>zoo-version-info.properties</include>
+      </includes>
+    </fileSet>
   </fileSets>
   <files>
     <file>
-      <source>${project.parent.basedir}/backend/bigdl/spark/dl/src/main/resources/spark-bigdl.conf</source>
+      <source>${project.build.directory}/bigdl_python/sources/spark-bigdl.conf</source>
       <outputDirectory>/conf</outputDirectory>
       <destName>spark-analytics-zoo.conf</destName>
     </file>
