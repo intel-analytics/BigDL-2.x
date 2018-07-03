@@ -262,9 +262,11 @@ class ZooRecurrentDecoder[T : ClassTag](seqLen: Int,
       if (loopFunc != null) {
         val preOutput = cells(i - 2).output.toTable[Tensor[T]](inputDim)
         cells(i - 2).output = T(loopFunc(preOutput), cells(i - 2).output.toTable[Tensor[T]](hidDim))
+        println("zoodecoder input: " + cells(i - 2).output.toTable[Tensor[T]](inputDim).toString)
       }
       currentInput = cells(i - 2).output
       cells(i - 1).updateOutput(currentInput)
+      println("zoodecoder output: " + cells(i - 1).output.toTable[Tensor[T]](inputDim).toString)
       BigDLWrapper.copy(cells(i - 1).output.toTable[Tensor[T]](inputDim), output, i)
       i += 1
     }
