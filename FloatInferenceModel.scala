@@ -28,7 +28,7 @@ import java.lang.{Integer => JInt}
 
 case class FloatInferenceModel(
   model: AbstractModule[Activity, Activity, Float],
-  predictor: LocalPredictor[Float]) extends InferenceSupportive {
+  predictor: LocalPredictor[Float]) extends InferenceSupportive with Serializable {
 
   @deprecated
   def predict(input: JList[JFloat], shape: JList[JInt]): JList[JFloat] = {
