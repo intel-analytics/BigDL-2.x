@@ -27,7 +27,7 @@ class MAE[@specialized(Float, Double) T: ClassTag](
       sizeAverage: Boolean = true)(implicit ev: TensorNumeric[T])
   extends NetTensorCriterion[T] {
 
-  override def loss: AbstractCriterion[Tensor[T], Tensor[T], T] =
+  override val loss: AbstractCriterion[Tensor[T], Tensor[T], T] =
     AbsCriterion[T](sizeAverage)
 }
 
