@@ -23,6 +23,7 @@ import com.intel.analytics.zoo.feature.image.ImageSet
 import com.intel.analytics.zoo.models.image.objectdetection.{ObjectDetector, Visualizer}
 import org.apache.log4j.{Level, Logger}
 import org.apache.spark.SparkConf
+import org.opencv.imgcodecs.Imgcodecs
 import scopt.OptionParser
 
 object Predict {
@@ -64,7 +65,8 @@ object Predict {
       val sc = NNContext.initNNContext(conf)
 
       val model = ObjectDetector.loadModel[Float](params.modelPath)
-      val data = ImageSet.read(params.image, sc, params.nPartition)
+      val data = ImageSet.read(params.image, sc, params.nPartition,
+        imageCodec = Imgcodecs.CV_LOAD_IMAGE_COLOR)
       val output = model.predictImageSet(data)
 
       val visualizer = Visualizer(model.getConfig.labelMap, encoding = "jpg")
