@@ -28,16 +28,13 @@ def predict(model_path, img_path, partition_num=4):
     inputs = "ToFloat:0"
     outputs = ["num_detections:0", "detection_boxes:0",
                "detection_scores:0", "detection_classes:0"]
-    detector = TFNet(model_path, inputs, outputs)
     model = Sequential()
-    # Transpose TensorFlow NHWC format to Analytics Zoo NCHW format.
-    model.add(Transpose([(2, 4), (2, 3)]))
-    model.add(Contiguous())
+    detector = TFNet(model_path, inputs, outputs)
     model.add(detector)
     # Select the detection_boxes from the output.
     model.add(SelectTable(2))
     image_set = ImageSet.read(img_path, sc, partition_num)
-    transformer = ChainedPreprocessing([ImageResize(256, 256), ImageMatToTensor(),
+    transformer = ChainedPreprocessing([ImageResize(256, 256), ImageMatToTensor(format="NHWC"),
                                         ImageSetToSample()])
     transformed_image_set = image_set.transform(transformer)
     output = model.predict_image(transformed_image_set.to_image_frame(), batch_per_partition=1)
