@@ -21,6 +21,7 @@ import com.intel.analytics.zoo.common.NNContext
 import com.intel.analytics.zoo.feature.image.ImageSet
 import com.intel.analytics.zoo.pipeline.api.keras.serializer.ModuleSerializationTest
 import org.apache.spark.{SparkConf, SparkContext}
+import org.opencv.imgcodecs.Imgcodecs
 
 import scala.language.postfixOps
 import sys.process._
@@ -90,6 +91,16 @@ class ObjectDetectionSpec extends FlatSpec with Matchers with BeforeAndAfter {
       .equals(res2.head.predict(ImageFeature.predict)) == true)
 
     "rm -rf ./ssd2.model" !!
+  }
+
+  "ObjectDetector model" should "be able to work with png" in {
+    val resource = getClass.getClassLoader.getResource("png/")
+    val data = ImageSet.read(resource.getFile, sc, 1, imageCodec = Imgcodecs.CV_LOAD_IMAGE_COLOR)
+    val model = ObjectDetector.loadModel[Float]("./ssd.model")
+    val output = model.predictImageSet(data)
+    output.toDistributed().rdd.collect()
+
+    "rm -rf ./ssd.model" !!
   }
 }
 
