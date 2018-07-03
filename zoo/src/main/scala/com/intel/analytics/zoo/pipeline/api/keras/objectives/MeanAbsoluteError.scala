@@ -23,7 +23,7 @@ import com.intel.analytics.bigdl.nn.AbsCriterion
 
 import scala.reflect.ClassTag
 
-class MAE[@specialized(Float, Double) T: ClassTag](
+class MeanAbsoluteError[@specialized(Float, Double) T: ClassTag](
       sizeAverage: Boolean = true)(implicit ev: TensorNumeric[T])
   extends NetTensorCriterion[T] {
 
@@ -31,10 +31,10 @@ class MAE[@specialized(Float, Double) T: ClassTag](
     AbsCriterion[T](sizeAverage)
 }
 
-object MAE {
+object MeanAbsoluteError {
   def apply[@specialized(Float, Double) T: ClassTag](
       sizeAverage: Boolean = true)
-      (implicit ev: TensorNumeric[T]): MAE[T] = {
-    new MAE[T](sizeAverage)
+      (implicit ev: TensorNumeric[T]): MeanAbsoluteError[T] = {
+    new MeanAbsoluteError[T](sizeAverage)
   }
 }

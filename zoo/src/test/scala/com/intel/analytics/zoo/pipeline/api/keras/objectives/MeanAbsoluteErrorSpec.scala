@@ -18,7 +18,7 @@ package com.intel.analytics.zoo.pipeline.api.keras.objectives
 
 import com.intel.analytics.zoo.pipeline.api.keras.layers.KerasBaseSpec
 
-class MAESpec extends KerasBaseSpec {
+class MeanAbsoluteErrorSpec extends KerasBaseSpec {
 
   "AbsCriterion" should "be the same as Keras mae" in {
     val kerasCode =
@@ -29,7 +29,7 @@ class MAESpec extends KerasBaseSpec {
         |input = np.random.random([2, 3, 4])
         |Y = np.random.random([2, 3, 4])
       """.stripMargin
-    val loss = MAE[Float]()
+    val loss = mae[Float]()
     checkOutputAndGradForLoss(loss, kerasCode)
   }
 
