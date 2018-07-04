@@ -74,13 +74,13 @@ class ClassNLLCriterion[T: ClassTag](
   override val loss: TensorCriterion[T] =
     BigDLClassNLLCriterion[T](weights, sizeAverage, logProbAsInput, paddingValue)
 
-  private val buffer: Tensor[T] = Tensor[T]()
+  private val targetBuffer: Tensor[T] = Tensor[T]()
 
   override def updateOutput(input: Tensor[T], target: Tensor[T]): T = {
     if (zeroBasedLabel) {
-      buffer.resizeAs(target)
-      buffer.fill(ev.one).add(target)
-      output = loss.updateOutput(input, buffer)
+      targetBuffer.resizeAs(target)
+      targetBuffer.fill(ev.one).add(target)
+      output = loss.updateOutput(input, targetBuffer)
       output
     }
     else {
@@ -91,9 +91,9 @@ class ClassNLLCriterion[T: ClassTag](
 
   override def updateGradInput(input: Tensor[T], target: Tensor[T]): Tensor[T] = {
     if (zeroBasedLabel) {
-      buffer.resizeAs(target)
-      buffer.fill(ev.one).add(target)
-      gradInput = loss.updateGradInput(input, buffer)
+      targetBuffer.resizeAs(target)
+      targetBuffer.fill(ev.one).add(target)
+      gradInput = loss.updateGradInput(input, targetBuffer)
       gradInput
     }
     else {
