@@ -26,7 +26,7 @@ import copy
 import Queue
 
 
-def export_tf(sess, folder, inputs, outputs, generate_backward=False):
+def export_tf(sess, folder, inputs, outputs, generate_backward=False, allow_non_differentiable_input=True):
     """
     Export the frozen tensorflow graph as well as the inputs/outputs information
     to the folder for inference.
@@ -112,13 +112,27 @@ def export_tf(sess, folder, inputs, outputs, generate_backward=False):
                                            output_tensors)
 
             variables = map(lambda x: g.get_tensor_by_name(x), used_variables)
+
             inputs = map(lambda x: g.get_tensor_by_name(x), new_input_names)
             grads = tf.gradients(output_tensors, variables + inputs, grad_ys=grad_output_placeholders)
 
             temp_tensors = _find_temp_tensors(grads, ops)
 
             grad_variables = list(map(lambda x: x.name, grads[0:len(variables)]))
-            grad_inputs = list(map(lambda x:x.name, grads[len(variables):]))
+
+            grad_inputs = []
+            for i in range(len(variables), len(grads)):
+                grad = grads[i]
+                if grad is not None:
+                    grad_inputs.append(grad.name)
+                else:
+                    # if input is not differentiable, we just return zero
+                    input_tensor = inputs[i - len(variables)]
+                    if allow_non_differentiable_input:
+                        zero_grad = tf.zeros(shape=tf.shape(input_tensor))
+                        grad_inputs.append(zero_grad.name)
+                    else:
+                        raise ValueError("input tensor: %s is not differentiable" % input_tensor.name)
 
             optimized_graph_def = g.as_graph_def()
 
@@ -178,15 +192,23 @@ def _find_temp_tensors(grads, forward_ops):
         queue.put(grad)
 
     temp_tensors = set()
+    visited = set()
     while not queue.empty():
         tensor = queue.get()
-        if tensor.op.type == "Placeholder":
+        # this is necessary, because input may not be differentiable
+        if tensor is None:
             continue
-        if tensor.op.name in forward_ops:
-            temp_tensors.add(tensor.name)
-            continue
-        for input_tensor in tensor.op.inputs:
-            queue.put(input_tensor)
+        else:
+            visited.add(tensor.name)
+            if tensor.op.type == "Placeholder":
+                continue
+            if tensor.op.name in forward_ops:
+                temp_tensors.add(tensor.name)
+                continue
+            for input_tensor in tensor.op.inputs:
+                # this is necessary because there may be a cycle in the graph such as tf.while_loop
+                if input_tensor.name not in visited:
+                    queue.put(input_tensor)
     return temp_tensors
 
 def strip_unused(input_graph_def, input_tensor_names, output_tensor_names,
