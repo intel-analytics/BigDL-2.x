@@ -23,7 +23,7 @@ import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric
 import scala.reflect.ClassTag
 
 /**
- * The base class for objectives in Analytics Zoo Keras-style API.
+ * The base class for Keras-style API objectives in Analytics Zoo.
  *
  * @tparam A Input data type.
  * @tparam B Target data type.

@@ -19,11 +19,12 @@ import re
 import datetime as dt
 from optparse import OptionParser
 
-from bigdl.nn.criterion import *
 from bigdl.optim.optimizer import *
 from zoo.common.nncontext import init_nncontext
 from zoo.examples.textclassification.news20 import *
 from zoo.models.textclassification import TextClassifier
+from zoo.pipeline.api.keras.objectives import SparseCategoricalCrossEntropy
+from zoo.pipeline.api.keras.metrics import Accuracy
 
 
 def text_to_words(review_text):
@@ -126,7 +127,7 @@ if __name__ == "__main__":
     optimizer = Optimizer(
         model=model,
         training_rdd=train_rdd,
-        criterion=ClassNLLCriterion(logProbAsInput=False),
+        criterion=SparseCategoricalCrossEntropy(),
         end_trigger=MaxEpoch(int(options.nb_epoch)),
         batch_size=batch_size,
         optim_method=Adagrad(learningrate=float(options.learning_rate), learningrate_decay=0.001))
@@ -134,7 +135,7 @@ if __name__ == "__main__":
         batch_size=batch_size,
         val_rdd=val_rdd,
         trigger=EveryEpoch(),
-        val_method=[Top1Accuracy()])
+        val_method=[Accuracy()])
 
     log_dir = options.log_dir
     app_name = 'adam-' + dt.datetime.now().strftime("%Y%m%d-%H%M%S")

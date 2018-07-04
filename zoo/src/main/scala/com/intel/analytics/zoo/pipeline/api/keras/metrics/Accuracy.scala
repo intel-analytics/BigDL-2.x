@@ -21,8 +21,15 @@ import com.intel.analytics.bigdl.optim.{AccuracyResult, Top1Accuracy, Validation
 import com.intel.analytics.bigdl.tensor.Tensor
 import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric
 
-class Accuracy[T](val zeroBasedLabel: Boolean = true)
-   (implicit ev: TensorNumeric[T]) extends Top1Accuracy[T] {
+/**
+ * Measures top1 accuracy for classification problems.
+ *
+ * @param zeroBasedLabel Boolean. Whether target labels start from 0. Default is true.
+ *                       If false, labels start from 1.
+ */
+class Accuracy[T](
+    val zeroBasedLabel: Boolean = true)(implicit ev: TensorNumeric[T])
+  extends Top1Accuracy[T] {
 
   override def apply(output: Activity, target: Activity):
   ValidationResult = {
@@ -35,8 +42,15 @@ class Accuracy[T](val zeroBasedLabel: Boolean = true)
   }
 }
 
-class Top5Accuracy[T](val zeroBasedLabel: Boolean = true)
-   (implicit ev: TensorNumeric[T]) extends BigDLTop5Accuracy[T] {
+/**
+ * Measures top5 accuracy for classification problems.
+ *
+ * @param zeroBasedLabel Boolean. Whether target labels start from 0. Default is true.
+ *                       If false, labels start from 1.
+ */
+class Top5Accuracy[T](
+    val zeroBasedLabel: Boolean = true)(implicit ev: TensorNumeric[T])
+  extends BigDLTop5Accuracy[T] {
 
   override def apply(output: Activity, target: Activity):
   AccuracyResult = {

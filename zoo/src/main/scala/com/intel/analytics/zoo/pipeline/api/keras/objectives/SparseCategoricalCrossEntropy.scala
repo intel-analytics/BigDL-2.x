@@ -35,13 +35,13 @@ import scala.reflect.ClassTag
  * @param zeroBasedLabel Boolean. Whether target labels start from 0. Default is true.
  *                       If false, labels start from 1.
  * @param weights Weights of each class if you have an unbalanced training set.
- * @param sizeAverage Boolean. Whether losses are averaged over observations
- *                    for each minibatch. Default is true.
- *                    If false, the losses are instead summed for each minibatch.
+ * @param sizeAverage Boolean. Whether losses are averaged over observations for each
+ *                    minibatch. Default is true. If false, the losses are instead
+ *                    summed for each minibatch.
  * @param paddingValue Integer. If the target is set to this value, the training process
  *                     will skip this sample. In other words, the forward process will
  *                     return zero output and the backward process will also return
- *                     zero gradInput.
+ *                     zero gradInput. Default is 1.
  */
 class SparseCategoricalCrossEntropy[T: ClassTag](
     val logProbAsInput: Boolean = false,
