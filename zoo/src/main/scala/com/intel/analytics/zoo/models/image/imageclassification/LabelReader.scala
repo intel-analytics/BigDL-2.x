@@ -23,8 +23,8 @@ import com.intel.analytics.zoo.models.common.ModelLabelReader
 object LabelReader extends ModelLabelReader {
   def readImagenetlLabelMap(modelName: String = null): Map[Int, String] = {
     modelName match {
-      case "inception-v3" => readLabelMap("/imagenet_classname.txt")
-      case _ => readLabelMap("/imagenet_2015_classname.txt")
+      case "inception-v3" => readLabelMap("/imagenet_2015_classname.txt")
+      case _ => readLabelMap("/imagenet_classname.txt")
     }
   }
 
