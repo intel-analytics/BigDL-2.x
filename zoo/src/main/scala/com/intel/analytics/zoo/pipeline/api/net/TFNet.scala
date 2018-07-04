@@ -31,9 +31,9 @@ import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric
 import com.intel.analytics.bigdl.tensor.{Tensor, TensorNumericMath}
 import com.intel.analytics.bigdl.utils.serializer.{DeserializeContext, SerializeContext}
 import com.intel.analytics.bigdl.utils.serializer.converters.DataConverter
-import com.intel.analytics.bigdl.utils.{MultiShape, Shape, T}
+import com.intel.analytics.bigdl.utils.{MultiShape, Shape, T, Util}
 import com.intel.analytics.zoo.pipeline.api.net.TFNet.TFGraphHolder
-import org.apache.commons.lang.SerializationUtils
+import org.apache.commons.lang3.SerializationUtils
 import org.apache.spark.utils.SparkUtils
 import org.tensorflow.framework.GraphDef
 import org.tensorflow.types.UInt8
@@ -439,7 +439,7 @@ class TFNet(graphDef: TFGraphHolder,
 object TFNet {
 
   DataConverter.registerConverter(
-    "com.intel.analytics.zoo.pipeline.api.net.TFNet.TFGraphHolder", TFGraphHolder)
+    "com.intel.analytics.zoo.pipeline.api.net.TFNet.TFGraphHolder", TFGraphHolderConverter)
   DataConverter.registerConverter(
     "com.intel.analytics.zoo.pipeline.api.net.Meta", MetaConverter)
 
@@ -576,103 +576,60 @@ object TFNet {
   }
 
   object MetaConverter extends DataConverter {
-    override def getAttributeValue[T: ClassTag](context: DeserializeContext, attribute: AttrValue)
-                                     (implicit ev: TensorNumeric[T]): AnyRef = {
-      val map = attribute.getNameAttrListValue.getAttrMap
-      def getStr(key: String) = {
-        map.get(key).getArrayValue
-          .getStrList.asByteStringList().asScala.map(_.toString).toArray
-      }
-
-      def getStrOption(key: String) = {
-        if (map.containsKey(key)) {
-          Some(getStr(key))
-        } else {
-          None
-        }
-      }
-      val inputNames = getStr("inputNames")
-      val outputNames = getStr("outputNames")
-
-      val variables = getStrOption("variables")
-      val tempTensors = getStrOption("tempTensors")
-      val gradVariables = getStrOption("gradVariables")
-      val gradInputs = getStrOption("gradInputs")
-      Meta(inputNames, outputNames, tempTensors, variables, gradVariables, gradInputs)
+    override def getAttributeValue[T: ClassTag](
+                                                 context: DeserializeContext,
+                                                 attribute: Bigdl.AttrValue
+                                               )(implicit ev: TensorNumeric[T]): AnyRef = {
+      val any = attribute.getCustomValue
+      val bytes = any.getValue.toByteArray
+      val net: Meta = SerializationUtils.deserialize(bytes)
+      net
     }
 
     override def setAttributeValue[T: ClassTag](
-       context: SerializeContext[T], attributeBuilder: AttrValue.Builder,
-       value: Any, valueType: universe.Type = null)(implicit ev: TensorNumeric[T]): Unit = {
-      import scala.collection.JavaConverters._
-      attributeBuilder.setSubType("com.intel.analytics.zoo.pipeline.api.net.Meta")
-      val meta = value.asInstanceOf[Meta]
-      def arrayValue(arr: Array[String]) = {
-        AttrValue.newBuilder()
-          .setDataType(BDataType.ARRAY_VALUE)
-          .setArrayValue(ArrayValue.newBuilder().addAllStr(arr.toSeq.asJava))
-          .build()
-      }
+                                                 context: SerializeContext[T],
+                                                 attributeBuilder: AttrValue.Builder,
+                                                 value: scala.Any,
+                                                 valueType: universe.Type
+                                               )(implicit ev: TensorNumeric[T]): Unit = {
+      attributeBuilder.setDataType(BDataType.CUSTOM)
 
-      val inputNames = arrayValue(meta.inputNames)
-      val outputNames = arrayValue(meta.outputNames)
-
-      val attrList = NameAttrList.newBuilder()
-        .putAttr("inputNames", inputNames)
-        .putAttr("outputNames", outputNames)
-
-      if (meta.variables.isDefined) {
-        attrList.putAttr("variables", arrayValue(meta.variables.get))
-      }
-
-      if (meta.tempTensors.isDefined) {
-        attrList.putAttr("tempTensors", arrayValue(meta.tempTensors.get))
-      }
-
-      if (meta.gradVariables.isDefined) {
-        attrList.putAttr("gradVariables", arrayValue(meta.gradVariables.get))
-      }
-
-      if (meta.gradInputs.isDefined) {
-        attrList.putAttr("gradInputs", arrayValue(meta.gradInputs.get))
-      }
+      val bytes = SerializationUtils.serialize(value.asInstanceOf[Serializable])
+      val anyBuilder = BAny.newBuilder()
+      anyBuilder.setValue(ByteString.copyFrom(bytes))
+      attributeBuilder.setCustomValue(anyBuilder.build())
     }
+
   }
 
-  object TFGraphHolder extends DataConverter {
-    override def getAttributeValue[T: ClassTag](context: DeserializeContext, attribute: AttrValue)
-                                               (implicit ev: TensorNumeric[T]): AnyRef = {
-      val map = attribute.getNameAttrListValue.getAttrMap
-      val id = map.get("id").getStringValue
-      val graphDef = map.get("graph").getArrayValue.getI32List.asScala.map(_.toByte).toArray
-      val graph = new Graph()
-      graph.importGraphDef(graphDef)
-
-      new TFGraphHolder(graph, id)
+  object TFGraphHolderConverter extends DataConverter {
+    override def getAttributeValue[T: ClassTag](
+                                                 context: DeserializeContext,
+                                                 attribute: Bigdl.AttrValue
+                                               )(implicit ev: TensorNumeric[T]): AnyRef = {
+      val any = attribute.getCustomValue
+      val bytes = any.getValue.toByteArray
+      val net: TFGraphHolder = SerializationUtils.deserialize(bytes)
+      net
     }
 
     override def setAttributeValue[T: ClassTag](
-       context: SerializeContext[T], attributeBuilder: AttrValue.Builder,
-       value: Any, valueType: universe.Type = null)(implicit ev: TensorNumeric[T]): Unit = {
-      attributeBuilder.setSubType("com.intel.analytics.zoo.pipeline.api.net.TFNet.TFGraphHolder")
-      val graphHolder = value.asInstanceOf[TFNet.TFGraphHolder]
-      val idValue = AttrValue.newBuilder()
-        .setDataType(BDataType.STRING)
-        .setStringValue(graphHolder.id).build()
+                                                 context: SerializeContext[T],
+                                                 attributeBuilder: AttrValue.Builder,
+                                                 value: scala.Any,
+                                                 valueType: universe.Type
+                                               )(implicit ev: TensorNumeric[T]): Unit = {
+      attributeBuilder.setDataType(BDataType.CUSTOM)
 
-      val graphValue = AttrValue.newBuilder()
-        .setDataType(BDataType.ARRAY_VALUE)
-        .setArrayValue(ArrayValue.newBuilder()
-          .addAllI32(graphHolder.tfGraph.toGraphDef.map(new Integer(_)).toSeq.asJava).build())
-        .build()
-
-      val attrList = NameAttrList.newBuilder()
-        .putAttr("id", idValue).putAttr("graph", graphValue)
-
-      attributeBuilder.setNameAttrListValue(attrList)
-
+      val bytes = SerializationUtils.serialize(value.asInstanceOf[Serializable])
+      val anyBuilder = BAny.newBuilder()
+      anyBuilder.setValue(ByteString.copyFrom(bytes))
+      attributeBuilder.setCustomValue(anyBuilder.build())
     }
+
   }
+
+
 
   private val logger = LoggerFactory.getLogger(getClass)
 
