@@ -22,7 +22,7 @@ import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric
 
 import scala.reflect.ClassTag
 
-abstract class NetCriterion[A <: Activity: ClassTag, B <: Activity: ClassTag, T: ClassTag]
+abstract class LossFunction[A <: Activity: ClassTag, B <: Activity: ClassTag, T: ClassTag]
 (implicit ev: TensorNumeric[T]) extends AbstractCriterion[A, B, T] {
 
   val loss: AbstractCriterion[A, B, T]
@@ -41,5 +41,5 @@ abstract class NetCriterion[A <: Activity: ClassTag, B <: Activity: ClassTag, T:
 
 }
 
-abstract class NetTensorCriterion[T: ClassTag]
-(implicit ev: TensorNumeric[T]) extends NetCriterion[Tensor[T], Tensor[T], T]
+abstract class TensorLossFunction[T: ClassTag]
+(implicit ev: TensorNumeric[T]) extends LossFunction[Tensor[T], Tensor[T], T]

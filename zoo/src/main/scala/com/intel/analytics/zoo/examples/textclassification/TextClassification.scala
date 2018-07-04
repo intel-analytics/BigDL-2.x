@@ -29,7 +29,7 @@ import com.intel.analytics.bigdl.utils.LoggerFilter
 import com.intel.analytics.zoo.common.NNContext
 import com.intel.analytics.zoo.models.textclassification.TextClassifier
 import com.intel.analytics.zoo.pipeline.api.keras.metrics.Accuracy
-import com.intel.analytics.zoo.pipeline.api.keras.objectives.ClassNLLCriterion
+import com.intel.analytics.zoo.pipeline.api.keras.objectives.SparseCategoricalCrossEntropy
 import org.apache.log4j.{Level => Level4j, Logger => Logger4j}
 import org.apache.spark.SparkConf
 import org.apache.spark.rdd.RDD
@@ -207,7 +207,7 @@ object TextClassification {
       val optimizer = Optimizer(
         model = model,
         sampleRDD = trainingRDD,
-        criterion = ClassNLLCriterion[Float](logProbAsInput = false),
+        criterion = SparseCategoricalCrossEntropy[Float](),
         batchSize = param.batchSize
       )
 

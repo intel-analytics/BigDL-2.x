@@ -24,7 +24,7 @@ import com.intel.analytics.zoo.pipeline.api.keras.layers.KerasBaseSpec
 import scala.math.abs
 
 
-class ClassNLLCriterionSpec extends KerasBaseSpec {
+class SparseCategoricalCrossEntropySpec extends KerasBaseSpec {
 
   "ClassNLLCriterion log" should "be the same as Keras sparse_categorical_crossentropy" in {
     val kerasCode =
@@ -35,7 +35,7 @@ class ClassNLLCriterionSpec extends KerasBaseSpec {
         |input = input = np.array([[0.6, 0.3, 0.1], [0.2, 0.5, 0.3], [0.1, 0.1, 0.8]])
         |Y = np.array([0.0, 1.0, 2.0])
       """.stripMargin
-    val loss = ClassNLLCriterion[Float](logProbAsInput = false)
+    val loss = SparseCategoricalCrossEntropy[Float](logProbAsInput = false)
     val (gradInput, gradWeight, weights, input, target, output) =
       KerasRunner.run(kerasCode, Loss)
     val boutput = loss.forward(input, target)
@@ -44,7 +44,7 @@ class ClassNLLCriterionSpec extends KerasBaseSpec {
   }
 
   "ClassNLLCriterion 0-based label" should "generate correct output and grad" in {
-    val criterion = ClassNLLCriterion[Double](zeroBasedLabel = true)
+    val criterion = SparseCategoricalCrossEntropy[Double](zeroBasedLabel = true)
     val input = Tensor[Double](3, 3)
     input(Array(1, 1)) = -1.0262627674932
     input(Array(1, 2)) = -1.2412600935171
@@ -84,7 +84,7 @@ class ClassNLLCriterionSpec extends KerasBaseSpec {
     weight(Array(1)) = 0.539598016534
     weight(Array(2)) = 0.20644677849486
     weight(Array(3)) = 0.67927200254053
-    val criterion = new ClassNLLCriterion[Double](weight)
+    val criterion = new SparseCategoricalCrossEntropy[Double](weights = weight)
     val input = Tensor[Double](3, 3)
     input(Array(1, 1)) = -1.2412808758149
     input(Array(1, 2)) = -1.4300331461186

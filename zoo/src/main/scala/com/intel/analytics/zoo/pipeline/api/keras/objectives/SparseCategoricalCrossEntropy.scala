@@ -63,13 +63,13 @@ import scala.reflect.ClassTag
  * @param ev numeric operator
  * @tparam T numeric type
  */
-class ClassNLLCriterion[T: ClassTag](
+class SparseCategoricalCrossEntropy[T: ClassTag](
+    val logProbAsInput: Boolean = false,
+    val zeroBasedLabel: Boolean = true,
     val weights: Tensor[T] = null,
     val sizeAverage: Boolean = true,
-    val logProbAsInput: Boolean = true,
-    val paddingValue: Int = -1,
-    val zeroBasedLabel: Boolean = true)(implicit ev: TensorNumeric[T])
-  extends NetTensorCriterion[T] {
+    val paddingValue: Int = -1)(implicit ev: TensorNumeric[T])
+  extends TensorLossFunction[T] {
 
   override val loss: TensorCriterion[T] =
     BigDLClassNLLCriterion[T](weights, sizeAverage, logProbAsInput, paddingValue)
@@ -103,15 +103,15 @@ class ClassNLLCriterion[T: ClassTag](
   }
 }
 
-object ClassNLLCriterion {
+object SparseCategoricalCrossEntropy {
   def apply[@specialized(Float, Double) T: ClassTag](
+      logProbAsInput: Boolean = false,
+      zeroBasedLabel: Boolean = true,
       weights: Tensor[T] = null,
       sizeAverage: Boolean = true,
-      logProbAsInput: Boolean = true,
-      paddingValue: Int = -1,
-      zeroBasedLabel: Boolean = true)
-    (implicit ev: TensorNumeric[T]): ClassNLLCriterion[T] = {
-    new ClassNLLCriterion[T](weights, sizeAverage, logProbAsInput,
-      paddingValue, zeroBasedLabel)
+      paddingValue: Int = -1)
+    (implicit ev: TensorNumeric[T]): SparseCategoricalCrossEntropy[T] = {
+    new SparseCategoricalCrossEntropy[T](logProbAsInput, zeroBasedLabel,
+      weights, sizeAverage, paddingValue)
   }
 }

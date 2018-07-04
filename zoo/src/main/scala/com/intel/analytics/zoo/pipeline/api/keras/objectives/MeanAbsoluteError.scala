@@ -25,7 +25,7 @@ import scala.reflect.ClassTag
 
 class MeanAbsoluteError[@specialized(Float, Double) T: ClassTag](
       sizeAverage: Boolean = true)(implicit ev: TensorNumeric[T])
-  extends NetTensorCriterion[T] {
+  extends TensorLossFunction[T] {
 
   override val loss: AbstractCriterion[Tensor[T], Tensor[T], T] =
     AbsCriterion[T](sizeAverage)
