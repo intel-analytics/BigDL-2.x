@@ -52,7 +52,9 @@ class AveragePooling1D(ZooKeras2Layer):
                                                list(input_shape) if input_shape else None,
                                                **kwargs)
 
+
 class MaxPooling1D(ZooKeras2Layer):
+
     """
     Max pooling operation for temporal data.
 
@@ -110,4 +112,3 @@ class GlobalMaxPooling1D(ZooKeras2Layer):
         super(GlobalMaxPooling1D, self).__init__(None,
                                                  list(input_shape) if input_shape else None,
                                                  **kwargs)
-
