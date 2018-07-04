@@ -60,36 +60,22 @@ class MaxPooling1D(ZooKeras2Layer):
 
 
 class GlobalAveragePooling1D(ZooKeras2Layer):
+    """
+    Applies global average pooling operation for temporal data.
+    The input of this layer should be 3D.
 
-    """Global average pooling operation for spatial data.
+    When you use this layer as the first layer of a model, you need to provide the argument
+    input_shape (a shape tuple, does not include the batch dimension).
 
     # Arguments
-        data_format: A string,
-            one of `channels_last` (default) or `channels_first`.
-            The ordering of the dimensions in the inputs.
-            `channels_last` corresponds to inputs with shape
-            `(batch, height, width, channels)` while `channels_first`
-            corresponds to inputs with shape
-            `(batch, channels, height, width)`.
-            It defaults to the `image_data_format` value found in your
-            Keras config file at `~/.keras/keras.json`.
-            If you never set it, then it will be "channels_last".
-
-    # Input shape
-        - If `data_format='channels_last'`:
-            4D tensor with shape:
-            `(batch_size, rows, cols, channels)`
-        - If `data_format='channels_first'`:
-            4D tensor with shape:
-            `(batch_size, channels, rows, cols)`
-
-    # Output shape
-        2D tensor with shape:
-        `(batch_size, channels)`
+    input_shape: A shape tuple, not including batch.
+    name: String to set the name of the layer.
+        If not specified, its name will by default to be a generated string.
 
     >>> globalaveragepooling1d = GlobalAveragePooling1D(input_shape=(12, 12))
     creating: createZooKeras2GlobalAveragePooling1D
     """
+
     def __init__(self,
                  input_shape=None,
                  **kwargs):
