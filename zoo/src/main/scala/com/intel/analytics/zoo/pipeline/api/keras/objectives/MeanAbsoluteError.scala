@@ -23,6 +23,14 @@ import com.intel.analytics.bigdl.nn.AbsCriterion
 
 import scala.reflect.ClassTag
 
+/**
+ * A loss that measures the mean absolute value of the element-wise difference
+ * between the input and the target.
+ *
+ * @param sizeAverage Boolean. Whether losses are averaged over observations
+ *                    for each minibatch. Default is true.
+ *                    If false, the losses are instead summed for each minibatch.
+ */
 class MeanAbsoluteError[@specialized(Float, Double) T: ClassTag](
       sizeAverage: Boolean = true)(implicit ev: TensorNumeric[T])
   extends TensorLossFunction[T] {

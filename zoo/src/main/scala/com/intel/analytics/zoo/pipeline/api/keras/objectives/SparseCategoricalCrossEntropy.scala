@@ -24,8 +24,8 @@ import com.intel.analytics.bigdl.nn.{ClassNLLCriterion => BigDLClassNLLCriterion
 import scala.reflect.ClassTag
 
 /**
- * Loss often used in multiclass classification problems with SoftMax as the last layer
- * of the neural network.
+ * A loss often used in multi-class classification problems with SoftMax
+ * as the last layer of the neural network.
  *
  * By default, same as Keras, input(y_pred) is supposed to be probabilities of each class,
  * and target(y_true) is supposed to be the class label starting from 0.
