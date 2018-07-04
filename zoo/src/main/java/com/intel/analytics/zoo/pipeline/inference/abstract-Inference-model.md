@@ -21,12 +21,13 @@ developing your java applications.
 **load**
 
 AbstractInferenceModel provides `load` API for loading a pre-trained model,
-thus users can conveniently load various kinds of pre-trained models in java applications. The load result of
-`AbstractInferenceModel` is a FloatInferenceModel.
+thus we can conveniently load various kinds of pre-trained models in java applications. The load result of
+`AbstractInferenceModel` is a FloatInferenceModel. 
+We just need to specify the model path and optionally weight path if exists where we previously saved the model.
 
 **predict**
 
-AbstractInferenceModel provides `predct` API for model prediction with the loaded model.
+AbstractInferenceModel provides `predct` API for prediction with loaded model.
 The predict result of`AbstractInferenceModel` is a List<List<JTensor>> by default.
 
 ## Examples
