@@ -16,6 +16,7 @@
 
 from bigdl.optim.optimizer import *
 from bigdl.nn.criterion import *
+from zoo.pipeline.api.keras.metrics import *
 
 
 def to_bigdl_optim_method(optimizer):
@@ -67,10 +68,9 @@ def to_bigdl_criterion(criterion):
 
 
 def to_bigdl_metric(metric):
-    from zoo.pipeline.api.keras.metrics.auc import AUC
     metric = metric.lower()
     if metric == "accuracy":
-        return Top1Accuracy()
+        return Accuracy()
     elif metric == "mae":
         return MAE()
     elif metric == "auc":
