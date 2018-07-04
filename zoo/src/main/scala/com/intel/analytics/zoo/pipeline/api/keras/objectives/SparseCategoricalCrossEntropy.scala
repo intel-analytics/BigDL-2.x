@@ -24,44 +24,24 @@ import com.intel.analytics.bigdl.nn.{ClassNLLCriterion => BigDLClassNLLCriterion
 import scala.reflect.ClassTag
 
 /**
- * The negative log likelihood criterion.
- * It is useful to train a classification problem with n classes.
- * If provided, the optional argument weights should be a 1D Tensor assigning weight to
- * each of the classes. This is particularly useful when you have an unbalanced training set.
+ * Loss often used in multiclass classification problems with SoftMax as the last layer
+ * of the neural network.
  *
- * The input given through a forward() is expected to contain log-probabilities/probabilities of
- * each class: input has to be a 1D Tensor of size n.
- * Obtaining log-probabilities/probabilities in a neural network is easily achieved by
- * adding a LogSoftMax/SoftMax layer in the last layer of your neural network.
- * You may use CrossEntropyCriterion instead, if you prefer not to add an extra layer
- * to your network.
+ * By default, same as Keras, input(y_pred) is supposed to be probabilities of each class,
+ * and target(y_true) is supposed to be the class label starting from 0.
  *
- * In the log-probabilities case,
- * The loss can be described as:
- *     loss(x, class) = -x[class]
- * or in the case of the weights argument it is specified as follows:
- *     loss(x, class) = -weights[class] * x[class]
- *
- * Due to the behaviour of the backend code, it is necessary to set sizeAverage to false when
- * calculating losses in non-batch mode.
- *
- * Note that if the target is `paddingValue`, the training process will skip this sample.
- * In other words, the forward process will return zero output and the backward process
- * will also return zero `gradInput`.
- *
- * By default, the losses are averaged over observations for each minibatch.
- * However, if the field sizeAverage is set to false, the losses are instead
- * summed for each minibatch.
- *
- * In particular, when weights=null, size_average=true and logProbAsInput=false, this is same as
- * `sparse_categorical_crossentropy` loss in keras.
- *
- * @param weights weights of each element of the input
- * @param sizeAverage size average of batch
- * @param logProbAsInput indicating whether to accept log-probabilities or probabilities as input.
- *                   True means accepting log-probabilities as input.
- * @param ev numeric operator
- * @tparam T numeric type
+ * @param logProbAsInput Boolean. Whether to accept log-probabilities or probabilities
+ *                       as input. Default is false and inputs should be probabilities.
+ * @param zeroBasedLabel Boolean. Whether target labels start from 0. Default is true.
+ *                       If false, labels start from 1.
+ * @param weights Weights of each class if you have an unbalanced training set.
+ * @param sizeAverage Boolean. Whether losses are averaged over observations
+ *                    for each minibatch. Default is true.
+ *                    If false, the losses are instead summed for each minibatch.
+ * @param paddingValue Integer. If the target is set to this value, the training process
+ *                     will skip this sample. In other words, the forward process will
+ *                     return zero output and the backward process will also return
+ *                     zero gradInput.
  */
 class SparseCategoricalCrossEntropy[T: ClassTag](
     val logProbAsInput: Boolean = false,
