@@ -7,7 +7,7 @@ java implementation in loading a collection of pre-trained models(including Caff
 Tensorflow models, etc.) and for model prediction.
 AbstractInferenceModel contains a mix of methods declared with implementation for loading models and prediction.
 You will need to create a subclass which extends the AbstractInferenceModel to 
-developing your java applications.
+develop your java applications.
 
 ### Highlights
 
@@ -22,12 +22,12 @@ developing your java applications.
 
 AbstractInferenceModel provides `load` API for loading a pre-trained model,
 thus we can conveniently load various kinds of pre-trained models in java applications. The load result of
-`AbstractInferenceModel` is a FloatInferenceModel. 
+`AbstractInferenceModel` is a [`FloatInferenceModel`](https://github.com/xuex2017/analytics-zoo/blob/88afc2d921bb50341d8d7e02d380fa28f49d246b/zoo/src/main/scala/com/intel/analytics/zoo/pipeline/inference/FloatInferenceModel.scala). 
 We just need to specify the model path and optionally weight path if exists where we previously saved the model.
 
 **predict**
 
-AbstractInferenceModel provides `predct` API for prediction with loaded model.
+AbstractInferenceModel provides `predict` API for prediction with loaded model.
 The predict result of`AbstractInferenceModel` is a List<List<JTensor>> by default.
 
 ## Examples
