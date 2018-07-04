@@ -20,10 +20,20 @@ import java.nio._
 
 import com.esotericsoftware.kryo.io.{Input, Output}
 import com.esotericsoftware.kryo.{Kryo, KryoSerializable}
+import com.intel.analytics.bigdl.nn._
 import com.intel.analytics.bigdl.nn.abstractnn.{AbstractModule, Activity}
-import com.intel.analytics.bigdl.tensor.Tensor
+import com.intel.analytics.bigdl.serialization.Bigdl
+import com.intel.analytics.bigdl.serialization.Bigdl.AttrValue.ArrayValue
+import com.intel.analytics.bigdl.serialization.Bigdl.{AttrValue, InitMethod, InitMethodType, NameAttrList, DataType => BDataType}
+import com.intel.analytics.bigdl.shaded.protobuf.Descriptors.FileDescriptor
+import com.intel.analytics.bigdl.shaded.protobuf.{ByteString, StringValue, Any => BAny}
+import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric
+import com.intel.analytics.bigdl.tensor.{Tensor, TensorNumericMath}
+import com.intel.analytics.bigdl.utils.serializer.{DeserializeContext, SerializeContext}
+import com.intel.analytics.bigdl.utils.serializer.converters.DataConverter
 import com.intel.analytics.bigdl.utils.{MultiShape, Shape, T}
 import com.intel.analytics.zoo.pipeline.api.net.TFNet.TFGraphHolder
+import org.apache.commons.lang.SerializationUtils
 import org.apache.spark.utils.SparkUtils
 import org.tensorflow.framework.GraphDef
 import org.tensorflow.types.UInt8
@@ -34,6 +44,8 @@ import org.json4s._
 import org.slf4j.LoggerFactory
 
 import scala.collection.mutable
+import scala.reflect.ClassTag
+import scala.reflect.runtime.universe
 
 /**
  * [[TFNet]] wraps a tensorflow subgraph as a layer, and use tensorflow to
@@ -47,9 +59,9 @@ import scala.collection.mutable
  *
  * @param graphDef serialized representation of a graph
  */
-class TFNet private(graphDef: TFGraphHolder,
+class TFNet(graphDef: TFGraphHolder,
                     graphMeta: Meta,
-                    config: Array[Byte])
+                    config: Array[Int])
   extends AbstractModule[Activity, Activity, Float] {
 
   private def graph = graphDef.tfGraph
@@ -150,7 +162,7 @@ class TFNet private(graphDef: TFGraphHolder,
 
   @transient
   private lazy val sess = {
-    val sess = new Session(graphDef.tfGraph, config)
+    val sess = new Session(graphDef.tfGraph, config.map(_.toByte))
     sess
   }
 
@@ -426,6 +438,11 @@ class TFNet private(graphDef: TFGraphHolder,
 
 object TFNet {
 
+  DataConverter.registerConverter(
+    "com.intel.analytics.zoo.pipeline.api.net.TFNet.TFGraphHolder", TFGraphHolder)
+  DataConverter.registerConverter(
+    "com.intel.analytics.zoo.pipeline.api.net.Meta", MetaConverter)
+
   private def isDriver = try {
     SparkUtils.isDriver
   } catch {
@@ -555,6 +572,105 @@ object TFNet {
 
         override def writeString(value: String): Unit = out.writeString(value)
       })
+    }
+  }
+
+  object MetaConverter extends DataConverter {
+    override def getAttributeValue[T: ClassTag](context: DeserializeContext, attribute: AttrValue)
+                                     (implicit ev: TensorNumeric[T]): AnyRef = {
+      val map = attribute.getNameAttrListValue.getAttrMap
+      def getStr(key: String) = {
+        map.get(key).getArrayValue
+          .getStrList.asByteStringList().asScala.map(_.toString).toArray
+      }
+
+      def getStrOption(key: String) = {
+        if (map.containsKey(key)) {
+          Some(getStr(key))
+        } else {
+          None
+        }
+      }
+      val inputNames = getStr("inputNames")
+      val outputNames = getStr("outputNames")
+
+      val variables = getStrOption("variables")
+      val tempTensors = getStrOption("tempTensors")
+      val gradVariables = getStrOption("gradVariables")
+      val gradInputs = getStrOption("gradInputs")
+      Meta(inputNames, outputNames, tempTensors, variables, gradVariables, gradInputs)
+    }
+
+    override def setAttributeValue[T: ClassTag](
+       context: SerializeContext[T], attributeBuilder: AttrValue.Builder,
+       value: Any, valueType: universe.Type = null)(implicit ev: TensorNumeric[T]): Unit = {
+      import scala.collection.JavaConverters._
+      attributeBuilder.setSubType("com.intel.analytics.zoo.pipeline.api.net.Meta")
+      val meta = value.asInstanceOf[Meta]
+      def arrayValue(arr: Array[String]) = {
+        AttrValue.newBuilder()
+          .setDataType(BDataType.ARRAY_VALUE)
+          .setArrayValue(ArrayValue.newBuilder().addAllStr(arr.toSeq.asJava))
+          .build()
+      }
+
+      val inputNames = arrayValue(meta.inputNames)
+      val outputNames = arrayValue(meta.outputNames)
+
+      val attrList = NameAttrList.newBuilder()
+        .putAttr("inputNames", inputNames)
+        .putAttr("outputNames", outputNames)
+
+      if (meta.variables.isDefined) {
+        attrList.putAttr("variables", arrayValue(meta.variables.get))
+      }
+
+      if (meta.tempTensors.isDefined) {
+        attrList.putAttr("tempTensors", arrayValue(meta.tempTensors.get))
+      }
+
+      if (meta.gradVariables.isDefined) {
+        attrList.putAttr("gradVariables", arrayValue(meta.gradVariables.get))
+      }
+
+      if (meta.gradInputs.isDefined) {
+        attrList.putAttr("gradInputs", arrayValue(meta.gradInputs.get))
+      }
+    }
+  }
+
+  object TFGraphHolder extends DataConverter {
+    override def getAttributeValue[T: ClassTag](context: DeserializeContext, attribute: AttrValue)
+                                               (implicit ev: TensorNumeric[T]): AnyRef = {
+      val map = attribute.getNameAttrListValue.getAttrMap
+      val id = map.get("id").getStringValue
+      val graphDef = map.get("graph").getArrayValue.getI32List.asScala.map(_.toByte).toArray
+      val graph = new Graph()
+      graph.importGraphDef(graphDef)
+
+      new TFGraphHolder(graph, id)
+    }
+
+    override def setAttributeValue[T: ClassTag](
+       context: SerializeContext[T], attributeBuilder: AttrValue.Builder,
+       value: Any, valueType: universe.Type = null)(implicit ev: TensorNumeric[T]): Unit = {
+      attributeBuilder.setSubType("com.intel.analytics.zoo.pipeline.api.net.TFNet.TFGraphHolder")
+      val graphHolder = value.asInstanceOf[TFNet.TFGraphHolder]
+      val idValue = AttrValue.newBuilder()
+        .setDataType(BDataType.STRING)
+        .setStringValue(graphHolder.id).build()
+
+      val graphValue = AttrValue.newBuilder()
+        .setDataType(BDataType.ARRAY_VALUE)
+        .setArrayValue(ArrayValue.newBuilder()
+          .addAllI32(graphHolder.tfGraph.toGraphDef.map(new Integer(_)).toSeq.asJava).build())
+        .build()
+
+      val attrList = NameAttrList.newBuilder()
+        .putAttr("id", idValue).putAttr("graph", graphValue)
+
+      attributeBuilder.setNameAttrListValue(attrList)
+
     }
   }
 
@@ -704,7 +820,7 @@ object TFNet {
     val graph = new Graph()
     graph.importGraphDef(graphDef.toByteArray)
 
-    new TFNet(new TFGraphHolder(graph, graphId), graphMeta, config)
+    new TFNet(new TFGraphHolder(graph, graphId), graphMeta, config.map(_.toInt))
   }
 
   /**

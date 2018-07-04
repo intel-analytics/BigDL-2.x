@@ -35,8 +35,7 @@ import scala.collection.mutable
 abstract class SerializerSpecHelper extends FlatSpec with Matchers with BeforeAndAfterAll{
 
   private val excluded = Set[String](
-    "com.intel.analytics.zoo.pipeline.api.autograd.LambdaTorch",
-    "com.intel.analytics.zoo.pipeline.api.net.TFNet")
+    "com.intel.analytics.zoo.pipeline.api.autograd.LambdaTorch")
 
   private val unRegularNameMapping = Map[String, String]()
 

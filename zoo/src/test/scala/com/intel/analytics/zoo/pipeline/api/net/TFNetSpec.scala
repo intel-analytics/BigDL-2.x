@@ -16,11 +16,17 @@
 package com.intel.analytics.zoo.pipeline.api.net
 
 
+import com.intel.analytics.bigdl.nn.abstractnn.AbstractModule
 import com.intel.analytics.bigdl.tensor.Tensor
 import com.intel.analytics.bigdl.utils.{LayerException, T}
+import com.intel.analytics.zoo.pipeline.api.Net
+import com.intel.analytics.zoo.pipeline.api.keras.ZooSpecHelper
+import com.intel.analytics.zoo.pipeline.api.keras.serializer.ModuleSerializationTest
 import org.apache.spark.serializer.KryoSerializer
 import org.apache.spark.SparkConf
 import org.scalatest.{BeforeAndAfter, FlatSpec, Matchers}
+
+import scala.util.Random
 
 class TFNetSpec extends FlatSpec with Matchers with BeforeAndAfter {
 
@@ -130,5 +136,29 @@ class TFNetSpec extends FlatSpec with Matchers with BeforeAndAfter {
     val gradInput = net.backward(input, output).toTensor[Float].clone()
 
     gradInput.size() should be (input.size())
+  }
+
+  "TFNet" should "work" in {
+    val net = TFNet("/tmp/analytics-zoo/tf_model")
+    val input = Tensor[Float](2, 40).rand()
+    val output = net.forward(input).toTensor[Float].clone()
+    val gradInput = net.backward(input, output)
+    println(gradInput)
+  }
+}
+
+class TFNetSerialTest extends ModuleSerializationTest {
+  override def test(): Unit = {
+    val resource = getClass().getClassLoader().getResource("tfnet-training")
+    val model = TFNet(resource.getPath)
+
+    val tmpFile = ZooSpecHelper.createTmpFile()
+    model.saveModule(tmpFile.getAbsolutePath, overWrite = true)
+    val reloadModel = Net.loadBigDL[Float](tmpFile.getAbsolutePath)
+    val inputData = Tensor[Float](2, 28, 28, 1).apply1(_ => Random.nextFloat())
+    ZooSpecHelper.compareOutputAndGradInput(
+      model.asInstanceOf[AbstractModule[Tensor[Float], Tensor[Float], Float]],
+      reloadModel.asInstanceOf[AbstractModule[Tensor[Float], Tensor[Float], Float]],
+      inputData)
   }
 }
