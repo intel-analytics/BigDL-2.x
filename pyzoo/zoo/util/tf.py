@@ -18,6 +18,7 @@ from tensorflow.core.framework import attr_value_pb2
 from tensorflow.core.framework import graph_pb2
 from tensorflow.core.framework import node_def_pb2
 from tensorflow.python.framework import graph_util
+from tensorflow.python.framework import ops
 from tensorflow.python.platform import gfile
 import tensorflow as tf
 import os
@@ -98,9 +99,9 @@ def export_tf(sess, folder, inputs, outputs, generate_backward=False, allow_non_
     grad_variables = []
     grad_inputs = []
     if generate_backward:
-        ops = set(map(lambda n: n.name, optimized_graph_def.node))
+        nodes = set(map(lambda n: n.name, optimized_graph_def.node))
         for v in all_variables:
-            if v.op.name in ops:
+            if v.op.name in nodes:
                 used_variables.append(v.name)
 
         with tf.Graph().as_default() as g:
@@ -116,7 +117,19 @@ def export_tf(sess, folder, inputs, outputs, generate_backward=False, allow_non_
             inputs = map(lambda x: g.get_tensor_by_name(x), new_input_names)
             grads = tf.gradients(output_tensors, variables + inputs, grad_ys=grad_output_placeholders)
 
-            temp_tensors = _find_temp_tensors(grads, ops)
+            def process_grad(g):
+                if g is not None:
+                    g = ops.convert_to_tensor_or_indexed_slices(g)
+                    if isinstance(g, ops.IndexedSlices):
+                        # In IndexedSlices is not supported in java api, we have to convert it to
+                        # a dense tensor. This operation is potentially expensive, but there seems
+                        # no work around
+                        g = tf.unsorted_segment_sum(g.values, g.indices, g.dense_shape[0])
+                return g
+
+            grads = list(map(lambda g: process_grad(g), grads))
+
+            temp_tensors = _find_temp_tensors(grads, nodes)
 
             grad_variables = list(map(lambda x: x.name, grads[0:len(variables)]))
 

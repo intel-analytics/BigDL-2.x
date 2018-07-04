@@ -56,12 +56,6 @@ class TFNet private(graphDef: TFGraphHolder,
 
   val inputNames: Array[String] = graphMeta.inputNames
   private val inputTypes = inputNames.map(name2type)
-  if (graphMeta.variables.isDefined) {
-    // Sanity check. If variables is defined, it means the backward graph
-    // is generated. We cannot compute the gradInput if input is not a float
-    require(inputTypes.map(_ == DataType.FLOAT).reduce(_ && _),
-      "all input types are required to be float if backward are allowed")
-  }
 
   val outputNames: Array[String] = graphMeta.outputNames
   private val outputTypes = outputNames.map(name2type)
