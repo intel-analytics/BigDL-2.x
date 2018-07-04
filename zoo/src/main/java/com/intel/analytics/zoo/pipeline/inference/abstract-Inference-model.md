@@ -1,9 +1,14 @@
-#Abstract Inference Model
-##Overview
+# Abstract Inference Model
+
+## Overview
+
 Abstract inference model is an abstract class in Analytics Zoo aiming to provide support for loading a collection of 
 pre-trained models(including Caffe models, Tensorflow models, etc.) and for model prediction.
-###Highlights
-##Examples
+
+### Highlights
+
+## Examples
+
 It's very easy to apply abstract inference model for inference with below code piece.
 You will need to write a subclass and extends AbstractinferenceModel.
 ```java
@@ -19,5 +24,7 @@ TextClassificationModel model = new TextClassificationModel();
 model.load(modelPath);
 List<List<JTensor>> result = model.predict(inputList);
 ```
-##Primary APIs
+
+## Primary APIs
+
 
