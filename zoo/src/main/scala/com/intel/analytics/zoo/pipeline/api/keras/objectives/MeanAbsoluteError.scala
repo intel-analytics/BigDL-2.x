@@ -28,8 +28,8 @@ import scala.reflect.ClassTag
  * between the input and the target.
  *
  * @param sizeAverage Boolean. Whether losses are averaged over observations for each
- *                    minibatch. Default is true. If false, the losses are instead
- *                    summed for each minibatch.
+ *                    mini-batch. Default is true. If false, the losses are instead
+ *                    summed for each mini-batch.
  */
 class MeanAbsoluteError[@specialized(Float, Double) T: ClassTag](
       sizeAverage: Boolean = true)(implicit ev: TensorNumeric[T])

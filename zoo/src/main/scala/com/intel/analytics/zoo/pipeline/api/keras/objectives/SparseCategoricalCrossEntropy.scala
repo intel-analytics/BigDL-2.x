@@ -36,8 +36,8 @@ import scala.reflect.ClassTag
  *                       If false, labels start from 1.
  * @param weights Weights of each class if you have an unbalanced training set.
  * @param sizeAverage Boolean. Whether losses are averaged over observations for each
- *                    minibatch. Default is true. If false, the losses are instead
- *                    summed for each minibatch.
+ *                    mini-batch. Default is true. If false, the losses are instead
+ *                    summed for each mini-batch.
  * @param paddingValue Integer. If the target is set to this value, the training process
  *                     will skip this sample. In other words, the forward process will
  *                     return zero output and the backward process will also return

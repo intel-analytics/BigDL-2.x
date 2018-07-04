@@ -61,8 +61,8 @@ class SparseCategoricalCrossEntropy(LossFunction):
                       If False, labels start from 1.
     weights: Weights of each class if you have an unbalanced training set.
     size_average: Boolean. Whether losses are averaged over observations for each
-                  minibatch. Default is True. If False, the losses are instead
-                  summed for each minibatch.
+                  mini-batch. Default is True. If False, the losses are instead
+                  summed for each mini-batch.
     padding_value: Int. If the target is set to this value, the training process
                    will skip this sample. In other words, the forward process will
                    return zero output and the backward process will also return
@@ -88,8 +88,8 @@ class MeanAbsoluteError(LossFunction):
 
     # Arguments
     size_average: Boolean. Whether losses are averaged over observations for each
-              minibatch. Default is True. If False, the losses are instead
-              summed for each minibatch.
+              mini-batch. Default is True. If False, the losses are instead
+              summed for each mini-batch.
     """
     def __init__(self, size_average=True, bigdl_type="float"):
         super(MeanAbsoluteError, self).__init__(None, bigdl_type,
