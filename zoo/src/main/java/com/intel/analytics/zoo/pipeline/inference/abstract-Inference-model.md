@@ -28,7 +28,7 @@ We just need to specify the model path and optionally weight path if exists wher
 **predict**
 
 AbstractInferenceModel provides `predict` API for prediction with loaded model.
-The predict result of`AbstractInferenceModel` is a List<List<JTensor>> by default.
+The predict result of`AbstractInferenceModel` is a `List<List<JTensor>>` by default.
 
 ## Examples
 
