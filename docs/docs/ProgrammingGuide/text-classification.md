@@ -76,7 +76,7 @@ After training the model, it can be used to predict probabilities or class label
 ```scala
 // Predict for probability distributions.
 val results = textClassifier.predict(rdd)
-// Predict for class labels. Label starts from 0.
+// Predict for class labels. By default, label starts from 0.
 val resultClasses = textClassifier.predictClasses(rdd)
 ```
 
@@ -84,7 +84,7 @@ val resultClasses = textClassifier.predictClasses(rdd)
 ```python
 # Predict for probability distributions.
 results = text_classifier.predict(rdd)
-# Predict for class labels. Label starts from 0.
+# Predict for class labels. By default, label starts from 0.
 result_classes = text_classifier.predict_classes(rdd)
 ```
 
