@@ -61,22 +61,24 @@ class FloatInferenceModel(
         i += 1
       }
 
-      val results: Array[Activity] = predictor.predict(samples)
+      val results: Array[Activity] = timing("predictor predict time") {
+        predictor.predict(samples)
+      }
       val outputResults: Array[JList[JTensor]] = results.map(result => {
-        val outputs: Seq[JTensor] = result.isTensor match {
+        val outputs: List[JTensor] = result.isTensor match {
           case true =>
             val outputTensor = result.asInstanceOf[Tensor[Float]]
-            Seq(transferTensorToJTensor(outputTensor))
+            List(transferTensorToJTensor(outputTensor))
           case false =>
             val outputTable = result.toTable
-
-            outputTable.toSeq[Tensor[Float]].map(t =>
-              transferTensorToJTensor(t)
-            )
+            outputTable.keySet.map(key => {
+              val outputTensor = outputTable.get(key).get.asInstanceOf[Tensor[Float]]
+              transferTensorToJTensor(outputTensor)
+            }).toList
         }
-        outputs.asJava
+        outputs.asJava.asInstanceOf[JList[JTensor]]
       })
-      outputResults.toList.asJava
+      outputResults.toList.asJava.asInstanceOf[JList[JList[JTensor]]]
     }
   }
 
