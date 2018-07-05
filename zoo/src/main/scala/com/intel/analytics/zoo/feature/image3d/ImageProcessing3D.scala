@@ -1,3 +1,19 @@
+/*
+ * Copyright 2018 The Analytics Zoo Authors.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package com.intel.analytics.zoo.feature.image3d
 
 import com.intel.analytics.bigdl.tensor.Tensor
@@ -6,20 +22,17 @@ import com.intel.analytics.bigdl.transform.vision.image.ImageFeature
 import com.intel.analytics.zoo.feature.image.{ImageProcessing, ImageSet}
 import org.apache.log4j.Logger
 
-/**
-  * Created by jwang on 6/25/18.
-  */
-abstract class ImageProcessing3D extends ImageProcessing {
+private[zoo] abstract class ImageProcessing3D extends ImageProcessing {
 
   /**
-    * if true, catch the exception of the transformer to avoid crashing.
-    * if false, interrupt the transformer when error happens
-    */
+   * if true, catch the exception of the transformer to avoid crashing.
+   * if false, interrupt the transformer when error happens
+   */
   private var ignoreImageException: Boolean = false
 
   /**
-    * catch the exception of the transformer to avoid crashing.
-    */
+   * catch the exception of the transformer to avoid crashing.
+   */
   override def enableIgnoreException(): this.type = {
     ignoreImageException = true
     this
@@ -31,11 +44,11 @@ abstract class ImageProcessing3D extends ImageProcessing {
   }
 
   /**
-    * transform feature
-    *
-    * @param feature ImageFeature3D
-    * @return ImageFeature3D
-    */
+   * transform image feature
+   *
+   * @param feature ImageFeature
+   * @return ImageFeature
+   */
   override def transform(feature: ImageFeature): ImageFeature = {
     if (!feature.isInstanceOf[ImageFeature3D]) return feature
     else {
@@ -44,11 +57,11 @@ abstract class ImageProcessing3D extends ImageProcessing {
   }
 
   /**
-    * transform feature
-    *
-    * @param feature ImageFeature3D
-    * @return ImageFeature3D
-    */
+   * transform 3D image feature
+   *
+   * @param feature ImageFeature3D
+   * @return ImageFeature3D
+   */
   def transform(feature: ImageFeature3D): ImageFeature3D = {
     try {
       if (!feature.isValid) return feature

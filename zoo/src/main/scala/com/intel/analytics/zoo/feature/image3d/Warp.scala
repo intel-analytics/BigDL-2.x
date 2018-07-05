@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 The BigDL Authors.
+ * Copyright 2018 The Analytics Zoo Authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,17 +22,17 @@ import scala.reflect.ClassTag
 
 
 object WarpTransformer {
-  def apply(flow_field: Tensor[Double],
+  def apply(flowField: Tensor[Double],
             offset: Boolean = true,
-            clamp_mode: String = "clamp", pad_val: Double = 0): WarpTransformer = {
-    new WarpTransformer(flow_field, offset, clamp_mode, pad_val)
+            clampMode: String = "clamp", padVal: Double = 0): WarpTransformer = {
+    new WarpTransformer(flowField, offset, clampMode, padVal)
   }
 }
 
-class WarpTransformer(flow_field: Tensor[Double],
-   offset: Boolean, clamp_mode: String, pad_val: Double)
+private[zoo] class WarpTransformer(flowField: Tensor[Double],
+   offset: Boolean, clampMode: String, padVal: Double)
 extends Serializable {
-  private val _clamp_mode = clamp_mode match {
+  private val _clampMode = clampMode match {
     case "clamp" => 1
     case "padding" => 2
   }
@@ -51,9 +51,9 @@ extends Serializable {
     }
 
     for(z <- 1 to depth; y <- 1 to height; x <- 1 to width){
-      val flow_z = flow_field.valueAt(1,z,y,x)
-      val flow_y = flow_field.valueAt(2,z,y,x)
-      val flow_x = flow_field.valueAt(3,z,y,x)
+      val flow_z = flowField.valueAt(1,z,y,x)
+      val flow_y = flowField.valueAt(2,z,y,x)
+      val flow_x = flowField.valueAt(3,z,y,x)
       var iz = offset_mode * z + flow_z
       var iy = offset_mode * y + flow_y
       var ix = offset_mode * x + flow_x
@@ -65,8 +65,8 @@ extends Serializable {
         ix < 1 || ix > src_width){
           off_image = 1
         }
-        if(off_image == 1 && _clamp_mode == 2){
-          dst.setValue(z,y,x,ev.fromType[Double](pad_val))
+        if(off_image == 1 && clampMode == 2){
+          dst.setValue(z,y,x,ev.fromType[Double](padVal))
         }else {
           iz = math.max(iz,1);iz = math.min(iz, src_depth)
           iy = math.max(iy,1);iy = math.min(iy, src_height)
@@ -91,7 +91,7 @@ extends Serializable {
           wy * wx * wz * ev.toType[Double](src.valueAt(iz_1, iy_1, ix_1))
           dst.setValue(z,y,x,ev.fromType[Double](value))
         }
-    }//end for
-  } //end apply
+    }
+  }
 }
 

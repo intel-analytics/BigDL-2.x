@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 The BigDL Authors.
+ * Copyright 2018 The Analytics Zoo Authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,18 +24,17 @@ import java.util.Calendar
 
 import com.intel.analytics.bigdl.utils.RandomGenerator._
 
-
 object Crop3D {
   /**
-   * Crop a patch from an tensor from 'start' of patch size. The patch size should be less than
+   * Crop a patch from a 3D image from 'start' of patch size. The patch size should be less than
    * the image size.
-   * @param start
-   * @param patchSize
+   * @param start start point array(depth, height, width) for cropping
+   * @param patchSize patch size array(depth, height, width)
    */
   def apply(start: Array[Int], patchSize: Array[Int]): Crop3D =
     new Crop3D(start, patchSize)
 
-  def crop(tensor: Tensor[Float], start: Array[Int], patchSize: Array[Int]): Tensor[Float] = {
+  private[zoo] def crop(tensor: Tensor[Float], start: Array[Int], patchSize: Array[Int]): Tensor[Float] = {
     require(start(0) <= tensor.size(1) && start(1) <= tensor.size(2) && start(2) <= tensor.size(3),
       "Cropping indices out of bounds.")
     require(start(0) + patchSize(0) - 1  <= tensor.size(1)
@@ -53,7 +52,6 @@ class Crop3D(start: Array[Int], patchSize: Array[Int])
     "'start' array and 'patchSize' array should have dim 3.")
   require(patchSize(0) >= 0 && patchSize(1) >= 0 && patchSize(2) >= 0,
     "'patchSize' values should be nonnegative.")
-
   require(start.map(t => t >= 0).reduce((a, b) => a && b),
     "'start' values should be nonnegative.")
 
@@ -63,6 +61,13 @@ class Crop3D(start: Array[Int], patchSize: Array[Int])
 }
 
 object RandomCrop3D {
+  /**
+   * Crop a random patch from an 3D image with specified patch size. The patch size should be less than
+   * the image size.
+   * @param cropDepth depth after crop
+   * @param cropHeight height after crop
+   * @param cropWidth width after crop
+   */
   def apply(cropDepth: Int, cropHeight: Int, cropWidth: Int): RandomCrop3D =
     new RandomCrop3D(cropDepth, cropHeight, cropWidth)
 }
@@ -89,6 +94,13 @@ class RandomCrop3D(cropDepth: Int, cropHeight: Int, cropWidth: Int)
 }
 
 object CenterCrop3D {
+  /**
+   * Crop a `cropDepth` x `cropWidth` x `cropHeight` patch from center of image.
+   * The patch size should be less than the image size.
+   * @param cropDepth depth after crop
+   * @param cropHeight height after crop
+   * @param cropWidth width after crop
+   */
   def apply(cropDepth: Int, cropHeight: Int, cropWidth: Int): CenterCrop3D =
     new CenterCrop3D(cropDepth, cropHeight, cropWidth)
 }

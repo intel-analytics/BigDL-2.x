@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 The BigDL Authors.
+ * Copyright 2018 The Analytics Zoo Authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,6 +22,14 @@ import com.intel.analytics.bigdl.tensor.{DoubleType, FloatType, Tensor, Storage}
 import scala.reflect.ClassTag
 
 object Rotate3D {
+  /**
+   * Rotate a 3D image with specified angles.
+   *
+   * @param rotationAngles the angles for rotation.
+   *                       which are the yaw(a counterclockwise rotation angle about the z-axis),
+   *                       pitch(a counterclockwise rotation angle about the y-axis),
+   *                       and roll(a counterclockwise rotation angle about the x-axis).
+   */
   def apply(rotationAngles: Array[Double]): Rotate3D =
     new Rotate3D(rotationAngles)
 }
@@ -29,7 +37,6 @@ object Rotate3D {
 class Rotate3D(rotationAngles: Array[Double])
   extends ImageProcessing3D {
   private val List(yaw, pitch, roll) = rotationAngles.toList
-  //  private val List(roll, pitch, yaw) = rotationAngles.toList
   private val rollDataArray = Array[Double](1, 0, 0,
     0, math.cos(roll), -math.sin(roll),
     0, math.sin(roll), math.cos(roll))
