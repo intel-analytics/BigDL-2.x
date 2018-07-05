@@ -206,12 +206,12 @@ class KerasNet(ZooKerasLayer):
 
     def predict_classes(self, x, batch_size=32, zero_based_label=True):
         """
-        Use a model to predict for class labels. By default, label predictions start from 0.
+        Use a model to predict for classes. By default, label predictions start from 0.
 
         # Arguments
         x: Prediction data. A Numpy array or RDD of Sample.
         batch_size: Number of samples per batch. Default is 32.
-        zero_based_label: Boolean. Whether result class labels start from 0.
+        zero_based_label: Boolean. Whether result labels start from 0.
                           Default is True. If False, result labels start from 1.
         """
         if isinstance(x, np.ndarray):
