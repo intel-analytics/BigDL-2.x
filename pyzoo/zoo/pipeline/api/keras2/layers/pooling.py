@@ -21,7 +21,6 @@ if sys.version >= '3':
     unicode = str
 
 
-
 class MaxPooling1D(ZooKeras2Layer):
     """
     Max pooling operation for temporal data.
@@ -62,32 +61,38 @@ class MaxPooling1D(ZooKeras2Layer):
 
 class AveragePooling1D(ZooKeras2Layer):
     """
-    Applies average pooling operation for temporal data.
-    The input of this layer should be 3D.
+    Average pooling operation for temporal data.
+
+    # Arguments
+        pool_size: Integer, size of the average pooling windows.
+        strides: Integer, or None. Factor by which to downscale.
+            E.g. 2 will halve the input.
+            If None, it will be set to -1, which will be default to pool_size.
+        padding: One of `"valid"` or `"same"` (case-insensitive).
+
+    # Input shape
+        3D tensor with shape: `(batch_size, steps, features)`.
+
+    # Output shape
+        3D tensor with shape: `(batch_size, downsampled_steps, features)`.
 
     When you use this layer as the first layer of a model, you need to provide the argument
     input_shape (a shape tuple, does not include the batch dimension).
 
-    # Arguments
-    pool_length: Size of the region to which max pooling is applied.
-    strides: Factor by which to downscale. 2 will halve the input.
-             Default is None, and in this case it will be equal to pool_length..
-    border_mode: Either 'valid' or 'same'. Default is 'valid'.
-    input_shape: A shape tuple, not including batch.
-    name: String to set the name of the layer.
-          If not specified, its name will by default to be a generated string.
-
     >>> averagepooling1d = AveragePooling1D(input_shape=(3, 24))
     creating: createZooKeras2AveragePooling1D
     """
-    def __init__(self, pool_length=2, stride=None, border_mode="valid",
+    def __init__(self,
+                 pool_size=2,
+                 strides=None,
+                 padding="valid",
                  input_shape=None, **kwargs):
-        if not stride:
-            stride = -1
+        if not strides:
+            strides = -1
         super(AveragePooling1D, self).__init__(None,
-                                               pool_length,
-                                               stride,
-                                               border_mode,
+                                               pool_size,
+                                               strides,
+                                               padding,
                                                list(input_shape) if input_shape else None,
                                                **kwargs)
 
