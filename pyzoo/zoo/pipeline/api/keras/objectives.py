@@ -25,7 +25,7 @@ if sys.version >= '3':
     unicode = str
 
 
-class LossFunction(Criterion, ZooKerasCreator):
+class LossFunction(ZooKerasCreator, Criterion):
     """
     The base class for Keras-style API objectives in Analytics Zoo.
     """
