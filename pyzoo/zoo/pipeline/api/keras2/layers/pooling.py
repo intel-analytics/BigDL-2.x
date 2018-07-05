@@ -95,3 +95,29 @@ class AveragePooling1D(ZooKeras2Layer):
                                                padding,
                                                list(input_shape) if input_shape else None,
                                                **kwargs)
+
+
+class GlobalAveragePooling1D(ZooKeras2Layer):
+
+    """
+    Applies global average pooling operation for temporal data.
+    The input of this layer should be 3D.
+
+    When you use this layer as the first layer of a model, you need to provide the argument
+    input_shape (a shape tuple, does not include the batch dimension).
+
+    # Arguments
+    input_shape: A shape tuple, not including batch.
+    name: String to set the name of the layer.
+          If not specified, its name will by default to be a generated string.
+
+    >>> globalaveragepooling1d = GlobalAveragePooling1D(input_shape=(12, 12))
+    creating: createZooKeras2GlobalAveragePooling1D
+    """
+    def __init__(self,
+                 input_shape=None,
+                 **kwargs):
+
+        super(GlobalAveragePooling1D, self).__init__(None,
+                                                     list(input_shape) if input_shape else None,
+                                                     **kwargs)
