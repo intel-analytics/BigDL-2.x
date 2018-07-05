@@ -23,64 +23,23 @@ import scala.collection.JavaConverters._
 import com.intel.analytics.bigdl.tensor.Tensor
 import java.util.{List => JList}
 import java.lang.{Float => JFloat}
-import java.lang.{Integer => JInt}
-
 
 trait InferenceSupportive {
-
-  val logger = LoggerFactory.getLogger(getClass)
 
   def timing[T](name: String)(f: => T): T = {
     val begin = System.currentTimeMillis
     val result = f
     val end = System.currentTimeMillis
     val cost = (end - begin)
-    logger.info(s"$name time elapsed [${cost / 1000} s, ${cost % 1000} ms].")
+    InferenceSupportive.logger.info(s"$name time elapsed [${cost / 1000} s, ${cost % 1000} ms].")
     result
   }
 
-  @inline
-  private def product(input: JList[JInt]): Int = {
-    var i = 0
-    val length = input.size()
-    var product = 1
-    while (i < length) {
-      product = product * input.get(i)
-      i += 1
-    }
-    product
-  }
-
-  @inline
-  private def toFloatArray(data: JList[JFloat]): Array[Float] = {
-    val length = data.size()
-    val result = new Array[Float](length)
-    var i = 0
-    while (i < length) {
-      result(i) = data.get(i)
-      i += 1
-    }
-    result
-  }
-
-  @inline
-  private def toIntArray(data: JList[JInt]): Array[Int] = {
-    val length = data.size()
-    val result = new Array[Int](length)
-    var i = 0
-    while (i < length) {
-      result(i) = data.get(i)
-      i += 1
-    }
-    result
-  }
-
-  @inline
-  def transferInputToSample(input: JList[JFloat], inputShape: JList[JInt])
+  def transferInputToSample(input: JList[JFloat], inputShape: Array[Int])
     : Sample[Float] = {
-    require(input.size() == product(inputShape), "data size not fit shape")
-    val inputData = toFloatArray(input)
-    Sample(Tensor(data = inputData, shape = toIntArray(inputShape)))
+    require(input.size() == inputShape.reduce(_ * _), "data size not fit shape")
+    val inputData = input.asScala.toArray.map(_.asInstanceOf[Float])
+    Sample(Tensor(data = inputData, shape = inputShape))
   }
 
   def transferTensorToJTensor(input: Tensor[Float]): JTensor = {
@@ -92,4 +51,8 @@ trait InferenceSupportive {
     new JTensor(outputData, outputShape)
   }
 
+}
+
+object InferenceSupportive {
+  val logger = LoggerFactory.getLogger(getClass)
 }
