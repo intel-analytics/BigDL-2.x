@@ -71,10 +71,10 @@ class FloatInferenceModel(
             List(transferTensorToJTensor(outputTensor))
           case false =>
             val outputTable = result.toTable
-            outputTable.keySet.map(key => {
-              val outputTensor = outputTable.get(key).get.asInstanceOf[Tensor[Float]]
-              transferTensorToJTensor(outputTensor)
-            }).toList
+
+            outputTable.toSeq[Tensor[Float]].map(t =>
+              transferTensorToJTensor(t)
+            ).toList
         }
         outputs.asJava.asInstanceOf[JList[JTensor]]
       })
