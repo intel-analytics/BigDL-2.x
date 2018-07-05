@@ -38,7 +38,6 @@ import scala.reflect.ClassTag
   * @param inputShape A Single Shape, does not include the batch dimension.
   * @tparam T The numeric type of parameter(e.g. weight, bias). Only support float/double now.
   */
-
 class GlobalMaxPooling1D[T: ClassTag](
       override val inputShape: Shape = null)(implicit ev: TensorNumeric[T])
   extends klayers1.GlobalMaxPooling1D[T](inputShape) with Net {}
