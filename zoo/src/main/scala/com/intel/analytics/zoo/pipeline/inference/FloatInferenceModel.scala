@@ -28,6 +28,8 @@ import java.util.{List => JList}
 import java.lang.{Float => JFloat}
 import java.lang.{Integer => JInt}
 
+import com.intel.analytics.bigdl.utils.Engine
+
 class FloatInferenceModel(
   var model: AbstractModule[Activity, Activity, Float],
   @transient var predictor: LocalPredictor[Float]) extends InferenceSupportive with Serializable {
@@ -77,6 +79,9 @@ class FloatInferenceModel(
 
   @throws(classOf[IOException])
   private def readObject(in: ObjectInputStream): Unit = {
+    System.setProperty("bigdl.localMode", System.getProperty("bigdl.localMode", "true"))
+    System.setProperty("bigdl.coreNumber", System.getProperty("bigdl.coreNumber", "1"))
+    Engine.init
     model = (in.readObject().asInstanceOf[AbstractModule[Activity, Activity, Float]])
     predictor = LocalPredictor(model = model, batchPerCore = 1)
   }
