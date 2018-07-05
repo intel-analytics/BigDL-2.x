@@ -33,7 +33,7 @@ class AveragePooling1D(ZooKeras2Layer):
     pool_length: Size of the region to which max pooling is applied.
     strides: Factor by which to downscale. 2 will halve the input.
              Default is None, and in this case it will be equal to pool_length..
-    border_mode: Either 'valid' or 'same'. Default is 'valid'.
+    padding: Either 'valid' or 'same'. Default is 'valid'.
     input_shape: A shape tuple, not including batch.
     name: String to set the name of the layer.
           If not specified, its name will by default to be a generated string.
@@ -41,14 +41,14 @@ class AveragePooling1D(ZooKeras2Layer):
     >>> averagepooling1d = AveragePooling1D(input_shape=(3, 24))
     creating: createZooKeras2AveragePooling1D
     """
-    def __init__(self, pool_length=2, stride=None, border_mode="valid",
+    def __init__(self, pool_length=2, stride=None, padding="valid",
                  input_shape=None, **kwargs):
         if not stride:
             stride = -1
         super(AveragePooling1D, self).__init__(None,
                                                pool_length,
                                                stride,
-                                               border_mode,
+                                               padding,
                                                list(input_shape) if input_shape else None,
                                                **kwargs)
 
