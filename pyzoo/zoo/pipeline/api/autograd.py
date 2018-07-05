@@ -444,7 +444,7 @@ class LambdaLayer(kbase.ZooKerasLayer):
                                           **kwargs)
 
 
-class CustomLoss(kbase.ZooKerasCreator, LossFunction):
+class CustomLoss(LossFunction):
     def __init__(self, loss_func, y_pred_shape, y_true_shape=None):
         """
         :param loss_func: a function which accept y_true and y_pred

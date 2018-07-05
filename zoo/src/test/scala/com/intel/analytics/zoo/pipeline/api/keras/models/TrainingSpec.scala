@@ -22,6 +22,7 @@ import com.intel.analytics.bigdl.nn.MSECriterion
 import com.intel.analytics.bigdl.optim.{SGD, Top1Accuracy}
 import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric
 import com.intel.analytics.bigdl.tensor.{Storage, Tensor}
+import com.intel.analytics.bigdl.utils.RandomGenerator.RNG
 import com.intel.analytics.bigdl.utils.Shape
 import com.intel.analytics.zoo.common.NNContext
 import com.intel.analytics.zoo.pipeline.api.autograd.{Variable, AutoGrad => A}
@@ -33,7 +34,7 @@ import org.apache.commons.io.FileUtils
 
 import scala.reflect.ClassTag
 
-class TrainingSpec extends FlatSpec with Matchers with BeforeAndAfter  {
+class TrainingSpec extends FlatSpec with Matchers with BeforeAndAfter {
 
   private var sc: SparkContext = _
 
@@ -127,6 +128,29 @@ class TrainingSpec extends FlatSpec with Matchers with BeforeAndAfter  {
     model.fit(localData, nbEpoch = 2)
     val accuracy = model.evaluate(localData)
     val predictResults = model.predict(localData)
+  }
+
+  "model predictClass giving zero-based label" should "work properly" in {
+    val data = new Array[Sample[Float]](100)
+    var i = 0
+    while (i < data.length) {
+      val input = Tensor[Float](28, 28, 1).rand()
+      val label = Tensor[Float](1).fill(0.0f)
+      data(i) = Sample(input, label)
+      i += 1
+    }
+    val model = Sequential[Float]()
+    model.add(Flatten[Float](inputShape = Shape(28, 28, 1)))
+    model.add(Dense[Float](10, activation = "softmax"))
+    val dataSet = sc.parallelize(data, 2)
+    val result = model.predictClasses(dataSet)
+
+    val prob = result.collect()
+    prob.zip(data).foreach(item => {
+      val res = model.forward(item._2.feature.reshape(Array(1, 28, 28, 1)))
+        .toTensor[Float].squeeze().max(1)._2.valueAt(1).toInt
+      (res-1) should be (item._1)
+    })
   }
 
 }

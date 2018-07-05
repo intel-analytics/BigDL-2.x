@@ -28,6 +28,7 @@ import com.intel.analytics.bigdl.utils.{MultiShape, Shape, SingleShape}
 import com.intel.analytics.zoo.pipeline.api.Net
 import com.intel.analytics.zoo.pipeline.api.keras.metrics.AUC
 import com.intel.analytics.zoo.pipeline.api.keras.models.KerasNet
+import org.apache.spark.rdd.RDD
 
 import scala.collection.mutable.ArrayBuffer
 import scala.reflect.ClassTag
@@ -400,6 +401,24 @@ object KerasUtils {
         var res = ""
         for (shape <- shapes) res = res + strShape(shape) + " "
         res
+    }
+  }
+
+  /**
+   * classes: RDD of 1-based label.
+   * If zeroBasedLabel is true, convert to RDD of 0-based label.
+   * Otherwise, just return classes itself.
+   */
+  def toZeroBasedLabel(
+      zeroBasedLabel: Boolean = true,
+      classes: RDD[Int]): RDD[Int] = {
+    if (zeroBasedLabel) {
+      classes.mapPartitions { partition =>
+        partition.map(output => output - 1)
+      }
+    }
+    else {
+      classes
     }
   }
 }
