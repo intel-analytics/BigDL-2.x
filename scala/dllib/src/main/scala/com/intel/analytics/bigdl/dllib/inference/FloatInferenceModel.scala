@@ -27,6 +27,8 @@ import scala.collection.JavaConverters._
 import java.util.{List => JList}
 import java.lang.{Float => JFloat}
 import java.lang.{Integer => JInt}
+import com.intel.analytics.bigdl.dataset.Sample
+
 
 class FloatInferenceModel(
   var model: AbstractModule[Activity, Activity, Float],
@@ -35,7 +37,7 @@ class FloatInferenceModel(
   @deprecated
   def predict(input: JList[JFloat], shape: JList[JInt]): JList[JFloat] = {
     timing("model predict") {
-      val sample = transferInputToSample(input, shape.asScala.toArray.map(_.asInstanceOf[Int]))
+      val sample = transferInputToSample(input, shape)
       val result = predictor.predict(Array(sample))
       require(result.length == 1, "only one input, should get only one prediction")
       result(0).asInstanceOf[Tensor[Float]].toArray().toList.asJava.asInstanceOf[JList[JFloat]]
@@ -44,14 +46,22 @@ class FloatInferenceModel(
 
   def predict(inputs: JList[JTensor]): JList[JList[JTensor]] = {
     timing(s"model predict for batch ${inputs.size()}") {
-      val samples = inputs.asScala.map(input => {
+
+      var i = 0
+      val length = inputs.size()
+      val samples = new Array[Sample[Float]](length)
+      while (i < length) {
+        val input = inputs.get(i)
         val inputData = input.getData
         val inputShape = input.getShape
-        val sample = transferInputToSample(inputData,
-          inputShape.asScala.toArray.map(_.asInstanceOf[Int]))
-        sample
-      }).toArray
-      val results: Array[Activity] = predictor.predict(samples)
+        val sample = transferInputToSample(inputData, inputShape)
+        samples(i) = sample
+        i += 1
+      }
+
+      val results: Array[Activity] = timing("predictor predict time") {
+        predictor.predict(samples)
+      }
       val outputResults: Array[JList[JTensor]] = results.map(result => {
         val outputs: List[JTensor] = result.isTensor match {
           case true =>
