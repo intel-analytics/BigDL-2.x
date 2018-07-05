@@ -296,9 +296,17 @@ abstract class KerasNet[T: ClassTag](implicit ev: TensorNumeric[T])
     localPredictor.predict(x)
   }
 
+  /**
+   * Use a model to predict for class labels. By default, label predictions start from 0.
+   *
+   * @param x Prediction data, RDD of Sample.
+   * @param batchSize Number of samples per batch. Default is 32.
+   * @param zeroBasedLabel Boolean. Whether result class labels start from 0.
+   *                       Default is true. If false, result labels start from 1.
+   */
   def predictClasses(
       x: RDD[Sample[T]],
-      batchSize: Int = -1,
+      batchSize: Int = 32,
       zeroBasedLabel: Boolean = true): RDD[Int] = {
     KerasUtils.toZeroBasedLabel(zeroBasedLabel, super.predictClass(x, batchSize))
   }

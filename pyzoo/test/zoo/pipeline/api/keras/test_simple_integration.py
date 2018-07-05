@@ -77,6 +77,7 @@ class TestSimpleIntegration(ZooTestCase):
         model.fit(X_train, y_train, batch_size=112, nb_epoch=2, validation_data=(X_test, y_test))
         model.evaluate(X_test, y_test, batch_size=112)
         model.predict(X_test)
+        model.predict_classes(X_test)
         shutil.rmtree(tmp_log_dir)
         shutil.rmtree(tmp_checkpoint_path)
 

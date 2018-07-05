@@ -40,6 +40,7 @@ import com.intel.analytics.zoo.pipeline.api.keras.models.{KerasNet, Model, Seque
 import com.intel.analytics.zoo.pipeline.api.keras.objectives.{MeanAbsoluteError, SparseCategoricalCrossEntropy}
 import com.intel.analytics.zoo.pipeline.api.net.{GraphNet, NetUtils, TFNet}
 import org.apache.spark.api.java.JavaRDD
+import org.apache.spark.rdd.RDD
 
 import scala.collection.mutable.ArrayBuffer
 import scala.reflect.ClassTag
@@ -172,6 +173,14 @@ class PythonZooKeras[T: ClassTag](implicit ev: TensorNumeric[T]) extends PythonB
       logPath: String,
       backward: Boolean = false): Model[T] = {
     module.saveGraphTopology(logPath, backward)
+  }
+
+  def zooPredictClasses(
+      module: KerasNet[T],
+      x: JavaRDD[Sample],
+      batchSize: Int = 32,
+      zeroBasedLabel: Boolean = true): JavaRDD[Int] = {
+    module.predictClasses(toJSample(x), batchSize, zeroBasedLabel).toJavaRDD()
   }
 
   def newGraph(model: NetUtils[T, _],

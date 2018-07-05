@@ -220,11 +220,10 @@ object TextClassification {
 
       // Predict for probability distributions
       val results = model.predict(valRDD)
-      println("First five probability predictions:")
-      results.take(5).foreach(println)
+      results.take(5)
       // Predict for labels
       val resultClasses = model.predictClasses(valRDD)
-      println("First five class predictions:")
+      println("First five class predictions (label starts from 0):")
       resultClasses.take(5).foreach(println)
 
       sc.stop()
