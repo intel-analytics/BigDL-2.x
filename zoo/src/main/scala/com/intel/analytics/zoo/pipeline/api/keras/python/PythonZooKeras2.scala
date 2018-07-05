@@ -80,7 +80,7 @@ class PythonZooKeras2[T: ClassTag](implicit ev: TensorNumeric[T]) extends Python
       toScalaShape(inputShape))
   }
 
-  def createAveragePooling1D(
+  def createKeras2AveragePooling1D(
       poolSize: Int = 2,
       strides: Int = -1,
       padding: String = "valid",
