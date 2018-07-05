@@ -44,6 +44,6 @@ public class TextClassificationModel extends AbstractInferenceModel {
     }
  }
 TextClassificationModel model = new TextClassificationModel();
-model.load(modelPath);
+model.load(modelPath, weightPath);
 List<List<JTensor>> result = model.predict(inputList);
 ```
