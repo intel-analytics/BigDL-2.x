@@ -121,6 +121,7 @@ class GlobalAveragePooling1D(ZooKeras2Layer):
         super(GlobalAveragePooling1D, self).__init__(None,
                                                      list(input_shape) if input_shape else None,
                                                      **kwargs)
+<<<<<<< HEAD
 
 
 class GlobalAveragePooling2D(ZooKeras2Layer):
@@ -149,3 +150,5 @@ class GlobalAveragePooling2D(ZooKeras2Layer):
                                                      padding,
                                                      list(input_shape) if input_shape else None,
                                                      **kwargs)
+=======
+>>>>>>> 3128d25cab3751f19e010573bf2b8fa9d0eaedb2
