@@ -16,6 +16,8 @@
 
 package com.intel.analytics.zoo.pipeline.inference
 
+import java.io.{IOException, ObjectInputStream, ObjectOutputStream}
+
 import com.intel.analytics.bigdl.optim.LocalPredictor
 import com.intel.analytics.bigdl.nn.abstractnn.AbstractModule
 import com.intel.analytics.bigdl.nn.abstractnn.Activity
@@ -26,9 +28,9 @@ import java.util.{List => JList}
 import java.lang.{Float => JFloat}
 import java.lang.{Integer => JInt}
 
-case class FloatInferenceModel(
-  model: AbstractModule[Activity, Activity, Float],
-  predictor: LocalPredictor[Float]) extends InferenceSupportive with Serializable {
+class FloatInferenceModel(
+  var model: AbstractModule[Activity, Activity, Float],
+  @transient var predictor: LocalPredictor[Float]) extends InferenceSupportive with Serializable {
 
   @deprecated
   def predict(input: JList[JFloat], shape: JList[JInt]): JList[JFloat] = {
@@ -67,4 +69,17 @@ case class FloatInferenceModel(
       outputResults.toList.asJava.asInstanceOf[JList[JList[JTensor]]]
     }
   }
+
+  @throws(classOf[IOException])
+  private def writeObject(out: ObjectOutputStream): Unit = {
+    out.writeObject(model)
+  }
+
+  @throws(classOf[IOException])
+  private def readObject(in: ObjectInputStream): Unit = {
+    model = (in.readObject().asInstanceOf[AbstractModule[Activity, Activity, Float]])
+    predictor = LocalPredictor(model = model, batchPerCore = 1)
+  }
+
+  override def toString : String = s"FloatInferenceModel($model, $predictor)"
 }
