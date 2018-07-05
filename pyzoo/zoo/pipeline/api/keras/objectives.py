@@ -30,7 +30,7 @@ class LossFunction(ZooKerasCreator, Criterion):
     The base class for Keras-style API objectives in Analytics Zoo.
     """
     def __init__(self, jvalue, bigdl_type, *args):
-        super(ZooKerasCreator, self).__init__(jvalue, bigdl_type, *args)
+        super(Criterion, self).__init__(jvalue, bigdl_type, *args)
 
     @classmethod
     def of(cls, jloss, bigdl_type="float"):
