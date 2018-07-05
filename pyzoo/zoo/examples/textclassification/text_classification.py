@@ -145,7 +145,7 @@ if __name__ == "__main__":
     optimizer.set_train_summary(train_summary)
     optimizer.set_val_summary(val_summary)
 
-    # optimizer.optimize()
+    optimizer.optimize()
 
     # Predict for probability distributions
     results = model.predict(val_rdd)

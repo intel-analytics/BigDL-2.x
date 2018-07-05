@@ -16,6 +16,7 @@
 
 from bigdl.optim.optimizer import *
 from bigdl.nn.criterion import *
+from zoo.pipeline.api.keras.objectives import *
 from zoo.pipeline.api.keras.metrics import *
 
 
@@ -46,7 +47,7 @@ def to_bigdl_criterion(criterion):
     elif criterion == "binary_crossentropy":
         return BCECriterion()
     elif criterion == "mae" or criterion == "mean_absolute_error":
-        return AbsCriterion()
+        return mae()
     elif criterion == "hinge":
         return MarginCriterion()
     elif criterion == "mean_absolute_percentage_error" or criterion == "mape":
@@ -56,7 +57,7 @@ def to_bigdl_criterion(criterion):
     elif criterion == "squared_hinge":
         return MarginCriterion(squared=True)
     elif criterion == "sparse_categorical_crossentropy":
-        return ClassNLLCriterion(logProbAsInput=False)
+        return SparseCategoricalCrossEntropy()
     elif criterion == "kullback_leibler_divergence" or criterion == "kld":
         return KullbackLeiblerDivergenceCriterion()
     elif criterion == "poisson":

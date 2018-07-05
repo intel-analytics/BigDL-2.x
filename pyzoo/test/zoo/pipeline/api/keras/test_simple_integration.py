@@ -58,9 +58,9 @@ class TestSimpleIntegration(ZooTestCase):
         model.add(Flatten())
         model.add(Dense(4, activation="softmax"))
         X_train = np.random.random([200, 32, 32])
-        y_train = np.random.randint(4, size=(200, )) + 1
+        y_train = np.random.randint(4, size=(200, ))
         X_test = np.random.random([40, 32, 32])
-        y_test = np.random.randint(4, size=(40, )) + 1
+        y_test = np.random.randint(4, size=(40, ))
         model.compile(optimizer="adam",
                       loss="sparse_categorical_crossentropy",
                       metrics=['accuracy'])

@@ -44,14 +44,14 @@ class ZooModel(ZooModelCreator, Container):
                           Default is True. If False, result labels start from 1.
         """
         if isinstance(x, np.ndarray):
-            features = to_sample_rdd(x, np.zeros([x.shape[0]]))
+            data_rdd = to_sample_rdd(x, np.zeros([x.shape[0]]))
         elif isinstance(x, RDD):
-            features = x
+            data_rdd = x
         else:
             raise TypeError("Unsupported prediction data type: %s" % type(x))
         return callBigDlFunc(self.bigdl_type, "zooModelPredictClasses",
                              self.value,
-                             features,
+                             data_rdd,
                              batch_size,
                              zero_based_label)
 

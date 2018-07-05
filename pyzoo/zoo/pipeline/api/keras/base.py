@@ -14,10 +14,8 @@
 # limitations under the License.
 #
 
-import sys
-
 from bigdl.nn.keras.layer import KerasLayer
-from bigdl.util.common import JavaValue, callBigDlFunc, to_list
+from bigdl.util.common import *
 
 if sys.version >= '3':
     long = int
