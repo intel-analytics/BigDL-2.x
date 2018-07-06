@@ -129,7 +129,7 @@ class GlobalMaxPooling1D(ZooKeras2Layer):
     The input of this layer should be 3D.
 
     When you use this layer as the first layer of a model, you need to provide the argument
-    input_shape (a shape tuple, does not include the batch dimension).
+    input_shape (a shape tuple, does not include the batch dimension) .
 
     # Arguments
     input_shape: A shape tuple, not including batch.
