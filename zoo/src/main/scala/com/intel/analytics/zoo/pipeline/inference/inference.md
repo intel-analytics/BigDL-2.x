@@ -10,38 +10,37 @@ Inference provides multiple Scala interfaces.
 
 **Highlights**
 
-1. Easy-to-use DataFrame(DataSet)-based API for training, prediction and evaluation with deep learning models.
+1. Easy-to-use API for loading and prediction with deep learning models of Analytics-Zoo, Caffe, Tensorflow.
 
-2. Effortless integration with Spark ML pipeline and compatibility with other feature transformers and algorithms in Spark ML.
-
-3. In a few lines, run large scale inference or transfer learning from pre-trained models of Caffe, Keras, Tensorflow or BigDL.
-
-4. Training of customized model or BigDL built-in neural models (e.g. Inception, ResNet, Wide And Deep).
-
-5. Rich toolset for feature extraction and processing, including image, audio and texts.
-
-
+2. Support transformation of various input data type.
 
 ## Primary APIs
 
+
+**InferenceSupportive**
+
+`InferenceSupportive` is a trait containing several methods for type transformation, which transfer a model input 
+to a valid data type, thus supporting future inference model prediction tasks.
+For example, method `transferTensorToJTensor` convert a model input of data type `Tensor` 
+to [`JTensor`](https://github.com/intel-analytics/analytics-zoo/blob/88afc2d921bb50341d8d7e02d380fa28f49d246b/zoo/src/main/java/com/intel/analytics/zoo/pipeline/inference/JTensor.java)
+, which will be the input for InferenceModel.
+
 **FloatInferenceModel**
 
-`FloatInferenceModel` is a class whiich extends `InferenceSupportive` and provides `predict` API for prediction tasks.
+`FloatInferenceModel` is an extending class of `InferenceSupportive` and additionally provides `predict` API for prediction tasks.
 
 **InferenceModelFactory**
 
-`InferenceModelFactory` provides high level API for for loading pre-trained Analytics Zoo models, Caffe models and Tensorflow models.
+`InferenceModelFactory` is an object with APIs for loading pre-trained Analytics Zoo models, Caffe models and Tensorflow models.
 We just need to specify the model path and optionally weight path if exists where we previously saved the model.
+The load result of is a `FloatInferenceModel`.
 
-
-**Inference Supportive**
-
-`NNClassifier` and `NNClassifierModel`extends `NNEstimator` and `NNModel` and focus on 
-classification tasks, where both label column and prediction column are of Double type.
 
 **ModelLoader**
-`ModelLoader` extends inference Supportive and focus on model loading tasks.
+
+`ModelLoader` is an extending object of  `InferenceSupportive` and focus on the implementation of loading pre-trained models.
 
 
-please check our
-[ImageProcessing](../APIGuide/PipelineAPI/nnframes.md#NNImageReader) for detailed usage.
+
+
+

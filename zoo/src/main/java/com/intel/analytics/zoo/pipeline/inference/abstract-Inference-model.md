@@ -11,9 +11,9 @@ develop your java applications.
 
 ### Highlights
 
-1. Easy-to-use API for prediction with deep learning models.
+1. Easy-to-use java API for loading and prediction with deep learning models.
 
-2. In a few lines, run large scale inference from pre-trained models of Caffe, Tensorflow.
+2. In a few lines, run large scale inference from pre-trained models of Analytics-Zoo, Caffe, Tensorflow.
 
 
 ## Primary APIs
