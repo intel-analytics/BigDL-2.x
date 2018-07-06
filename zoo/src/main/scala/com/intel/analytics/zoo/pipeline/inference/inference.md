@@ -4,15 +4,15 @@
 ## Overview
 
 Inference is a package in Analytics Zoo aiming to provide high level APIs to speed-up development. It 
-allows user to combine the power of Analytics Zoo, Tensorflow and Caffe.
+allows user to conveniently use pre-trained models from Analytics Zoo, Tensorflow and Caffe.
 Inference provides multiple Scala interfaces.
 
 
-###Highlights
+### Highlights
 
 1. Easy-to-use APIs for loading and prediction with deep learning models of Analytics Zoo, Caffe, Tensorflow.
 
-2. Support transformation of various input data type.
+2. Support transformation of various input data type, thus supporting future prediction tasks.
 
 ## Primary APIs
 
