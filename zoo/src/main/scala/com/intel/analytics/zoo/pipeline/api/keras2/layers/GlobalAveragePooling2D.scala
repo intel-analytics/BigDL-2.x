@@ -24,7 +24,7 @@ import com.intel.analytics.bigdl.nn.keras.GlobalPooling2D
 import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric
 import com.intel.analytics.bigdl.utils.Shape
 import com.intel.analytics.zoo.pipeline.api.Net
-import com.intel.analytics.zoo.pipeline.api.keras.layers.utils.KerasUtils
+import com.intel.analytics.zoo.pipeline.api.keras2.layers.utils.KerasUtils
 import com.intel.analytics.zoo.pipeline.api.keras.{layers => klayers1}
 import scala.reflect.ClassTag
 
@@ -35,7 +35,7 @@ import scala.reflect.ClassTag
  * When you use this layer as the first layer of a model, you need to provide the argument
  * inputShape (a Single Shape, does not include the batch dimension).
  *
- * @param dataFormat Format of input data. Please use DataFormat.NCHW (dataFormat='th')
+ * @param dataFormat Format of input data. Please use DataFormat.NCHW (dataFormat='channel_first')
  *                    .
  *
  * @tparam T The numeric type of parameter(e.g. weight, bias). Only support float/double now.
@@ -49,7 +49,7 @@ class GlobalAveragePooling2D[T: ClassTag](
 
 object GlobalAveragePooling2D {
   def apply[@specialized(Float, Double) T: ClassTag](
-      dataFormat: String = "th",
+      dataFormat: String = "channels_first",
        inputShape: Shape = null)(implicit ev: TensorNumeric[T]): GlobalAveragePooling2D[T] = {
     new GlobalAveragePooling2D[T](KerasUtils.toBigDLFormat(dataFormat), inputShape)
   }

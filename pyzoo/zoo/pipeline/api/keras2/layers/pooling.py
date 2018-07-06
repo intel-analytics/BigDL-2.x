@@ -142,7 +142,7 @@ class GlobalAveragePooling2D(ZooKeras2Layer):
     creating: createZooKeras2GlobalAveragePooling2D
     """
     def __init__(self,
-                 data_format="th",
+                 data_format="channels_first",
                  input_shape=None,
                  **kwargs):
         super(GlobalAveragePooling2D, self).__init__(None,
