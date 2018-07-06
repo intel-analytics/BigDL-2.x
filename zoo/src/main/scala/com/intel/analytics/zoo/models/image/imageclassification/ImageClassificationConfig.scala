@@ -45,7 +45,9 @@ object ImageClassificationConfig {
     "densenet-161-quantize",
     "squeezenet",
     "squeezenet-quantize",
-    "mobilenet")
+    "mobilenet",
+    "mobilenet-v2",
+    "mobilenet-v2-quantize")
 
   def apply[T: ClassTag](model: String, dataset: String, version: String)
     (implicit ev: TensorNumeric[T]): ImageConfigure[T] = {
@@ -90,7 +92,9 @@ object ImagenetConfig {
       case "squeezenet" |
            "squeezenet-quantize" => ImageConfigure(preProcessor = squeezenetPreprocessor,
         labelMap = imagenetLabelMap)
-      case "mobilenet" => ImageConfigure(preProcessor = mobilenetPreprocessor,
+      case "mobilenet" |
+           "mobilenet-v2" |
+           "mobilenet-v2-quantize" => ImageConfigure(preProcessor = mobilenetPreprocessor,
         labelMap = imagenetLabelMap)
       case "inception-v3" |
            "inception-v3-quantize" => ImageConfigure(preProcessor = inceptionV3Preprocessor,
