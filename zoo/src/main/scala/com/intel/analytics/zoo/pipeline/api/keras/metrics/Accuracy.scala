@@ -34,7 +34,7 @@ class Accuracy[T](
   override def apply(output: Activity, target: Activity):
   ValidationResult = {
     if (zeroBasedLabel) {
-      super.apply(output, target.asInstanceOf[Tensor[T]].clone().apply1(x => ev.plus(x, ev.one)))
+      super.apply(output, target.toTensor[T].clone().add(ev.fromType(1.0f)))
     }
     else {
       super.apply(output, target)
@@ -55,7 +55,7 @@ class Top5Accuracy[T](
   override def apply(output: Activity, target: Activity):
   AccuracyResult = {
     if (zeroBasedLabel) {
-      super.apply(output, target.asInstanceOf[Tensor[T]].clone().apply1(x => ev.plus(x, ev.one)))
+      super.apply(output, target.toTensor[T].clone().add(ev.fromType(1.0f)))
     }
     else {
       super.apply(output, target)

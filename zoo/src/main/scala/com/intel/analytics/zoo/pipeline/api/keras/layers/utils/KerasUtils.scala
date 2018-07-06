@@ -417,9 +417,7 @@ object KerasUtils {
       zeroBasedLabel: Boolean = true,
       classes: RDD[Int]): RDD[Int] = {
     if (zeroBasedLabel) {
-      classes.mapPartitions { partition =>
-        partition.map(output => output - 1)
-      }
+      classes.map(_ - 1)
     }
     else {
       classes
