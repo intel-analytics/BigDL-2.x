@@ -42,6 +42,23 @@ class GlobalAveragePooling2DSpec extends KerasBaseSpec {
     checkOutputAndGrad(seq.asInstanceOf[AbstractModule[Tensor[Float], Tensor[Float], Float]],
       kerasCode)
   }
+
+  "GlobalAveragePooling2D NHWC" should "be the same as Keras" taggedAs(Keras2Test) in {
+    val kerasCode =
+      """
+        |input_tensor = Input(shape=[32, 28, 6])
+        |input = np.random.random([3, 32, 28, 6])
+        |output_tensor = GlobalAveragePooling2D(dataFormat="channels_last")(input_tensor)
+        |model = Model(input=input_tensor, output=output_tensor)
+      """.stripMargin
+    val seq = Sequential[Float]()
+    val layer = GlobalAveragePooling2D[Float](dataFormat = "channels_last",
+      inputShape = Shape(32, 28, 6))
+    seq.add(layer)
+    seq.getOutputShape().toSingle().toArray should be (Array(-1, 6))
+    checkOutputAndGrad(seq.asInstanceOf[AbstractModule[Tensor[Float], Tensor[Float], Float]],
+      kerasCode)
+  }
 }
 
 class GlobalAveragePooling2DSerialTest extends ModuleSerializationTest {

@@ -23,17 +23,23 @@ import com.intel.analytics.bigdl.nn.abstractnn.DataFormat
 object KerasUtils {
 
   def toBigDLFormat(dataFormat: String): DataFormat = {
-    require(dataFormat.toLowerCase() == "channels_first",
-      s"dataFormat must be channels_first, but got ${dataFormat.toLowerCase()}")
+    require(dataFormat.toLowerCase() == "channels_" +
+      "first" || dataFormat.toLowerCase() == "channels_last",
+      s"Dim ordering must be either channels_first or " +
+      s"channels_last, but got ${dataFormat.toLowerCase()}")
     dataFormat.toLowerCase() match {
+      case "channels_last" => DataFormat.NHWC
       case "channels_first" => DataFormat.NCHW
     }
   }
 
   def toBigDLFormat5D(dataFormat: String): String = {
-    require(dataFormat.toLowerCase() == "channels_first",
-      s"dataFormat must be channel_first but got ${dataFormat.toLowerCase()}")
+    require(dataFormat.toLowerCase() == "channels_fir" +
+      "st" || dataFormat.toLowerCase() == "channels_last",
+      s"Dim ordering must be either channels_first or" +
+        s" channels_last, but got ${dataFormat.toLowerCase()}")
     dataFormat.toLowerCase() match {
+      case "channels_last" => "CHANNEL_LAST"
       case "channels_first" => "CHANNEL_FIRST"
     }
   }
