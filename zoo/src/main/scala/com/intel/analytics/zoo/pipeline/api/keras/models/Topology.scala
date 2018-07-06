@@ -177,13 +177,19 @@ abstract class KerasNet[T: ClassTag](implicit ev: TensorNumeric[T])
     this.clipNorm = Some(clipNorm)
   }
 
+  /**
+   * Convert RDD of Sample to DataSet of MiniBatch.
+   */
   private def toDataSet(x: RDD[Sample[T]], batchSize: Int): DataSet[MiniBatch[T]] = {
     if (x != null) DataSet.rdd(x) -> SampleToMiniBatch[T](batchSize)
     else null
   }
 
+  /**
+   * Convert ImageSet to DataSet of MiniBatch.
+   */
   private def toDataSet(x: ImageSet, batchSize: Int): DataSet[MiniBatch[T]] = {
-    if (x != null) DataSet.imageFrame(x.toImageFrame()) -> ImageFeatureToMiniBatch[T](batchSize)
+    if (x != null) x.toDataSet() -> ImageFeatureToMiniBatch[T](batchSize)
     else null
   }
 

@@ -166,7 +166,7 @@ class TrainingSpec extends FlatSpec with Matchers with BeforeAndAfter {
       feature(ImageFeature.mat) = mat
       feature(ImageFeature.originalSize) = mat.shape()
       val labelTensor = Tensor[Float](1)
-      labelTensor(Array(1)) = Math.round(scala.util.Random.nextInt(20)) + 1
+      labelTensor(Array(1)) = Math.round(scala.util.Random.nextInt(20))
       feature(ImageFeature.label) = labelTensor
       feature
     }
