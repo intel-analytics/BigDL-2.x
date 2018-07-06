@@ -127,8 +127,8 @@ class KerasNet(ZooKerasLayer):
         y: Labels. A Numpy array. Default is None if x is already RDD of Sample or Image DataSet.
         batch_size: Number of samples per gradient update. Default is 32.
         nb_epoch: Number of iterations to train.
-        validation_data: Tuple (x_val, y_val) where x_val and y_val are both Numpy arrays.
-                         Or RDD of Sample. Or ImageSet. Default is None if no validation is involved.
+        validation_data: Tuple (x_val, y_val) where x_val and y_val are both Numpy arrays. Or
+                         RDD of Sample. Or ImageSet. Default is None if no validation is involved.
         distributed: Boolean. Whether to train the model in distributed mode or local mode.
                      Default is True. In local mode, x and y must both be Numpy arrays.
         """
