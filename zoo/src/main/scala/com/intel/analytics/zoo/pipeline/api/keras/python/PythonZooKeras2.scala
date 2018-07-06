@@ -127,5 +127,11 @@ class PythonZooKeras2[T: ClassTag](implicit ev: TensorNumeric[T]) extends Python
       toScalaShape(inputShape))
   }
 
+  def createZooKeras2GlobalMaxPooling1D(
+      inputShape: JList[Int] = null): GlobalMaxPooling1D[T] = {
+    GlobalMaxPooling1D(
+      toScalaShape(inputShape))
+  }
+
 }
 
