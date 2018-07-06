@@ -18,14 +18,13 @@
         <java.version>1.7</java.version>
         <javac.version>1.7</javac.version>
         <spark-scope>provided</spark-scope>
-        <bigdl-scope>provided</bigdl-scope>
+        <bigdl-scope>compile</bigdl-scope>
         <scala.major.version>2.11</scala.major.version>
         <scala.version>2.11.8</scala.version>
         <scala.macros.version>2.1.0</scala.macros.version>
         <scalatest.version>2.2.4</scalatest.version>
         <spark.version>2.1.0</spark.version>
         <bigdl.version>0.5.0</bigdl.version>
-        <backend.version>0.0.0</backend.version>
     </properties>
 
     <distributionManagement>
@@ -37,21 +36,6 @@
 
     <profiles>
         <profile>
-            <id>build_backend</id>
-            <properties>
-                <bigdl-scope>provided</bigdl-scope>
-            </properties>
-            <dependencies>
-                <dependency>
-                    <groupId>com.intel.analytics.bigdl</groupId>
-                    <artifactId>zoo_bigdl</artifactId>
-                    <version>${backend.version}</version>
-                    <scope>compile</scope>
-                </dependency>
-            </dependencies>
-
-        </profile>
-        <profile>
             <id>spark_1.6</id>
             <properties>
                 <spark-version.project>1.6-plus</spark-version.project>
@@ -61,16 +45,7 @@
                 <scala.macros.version>2.0.1</scala.macros.version>
                 <scalatest.version>2.2.4</scalatest.version>
                 <bigdl.artifactId>bigdl-SPARK_1.6</bigdl.artifactId>
-                <bigdl-scope>compile</bigdl-scope>
             </properties>
-            <dependencies>
-                <dependency>
-                    <groupId>com.intel.analytics.bigdl</groupId>
-                    <artifactId>${bigdl.artifactId}</artifactId>
-                    <version>${bigdl.version}</version>
-                    <scope>${bigdl-scope}</scope>
-                </dependency>
-            </dependencies>
         </profile>
 
         <profile>
@@ -87,16 +62,7 @@
                 <scala.version>2.11.8</scala.version>
                 <scala.macros.version>2.1.0</scala.macros.version>
                 <bigdl.artifactId>bigdl-SPARK_${spark-version.project}</bigdl.artifactId>
-                <bigdl-scope>compile</bigdl-scope>
             </properties>
-            <dependencies>
-                <dependency>
-                    <groupId>com.intel.analytics.bigdl</groupId>
-                    <artifactId>${bigdl.artifactId}</artifactId>
-                    <version>${bigdl.version}</version>
-                    <scope>${bigdl-scope}</scope>
-                </dependency>
-            </dependencies>
         </profile>
 
         <profile>
@@ -263,6 +229,12 @@
             <scope>${spark-scope}</scope>
         </dependency>
         <dependency>
+            <groupId>com.intel.analytics.bigdl</groupId>
+            <artifactId>${bigdl.artifactId}</artifactId>
+            <version>${bigdl.version}</version>
+            <scope>${bigdl-scope}</scope>
+        </dependency>
+        <dependency>
             <groupId>org.spark-project.spark</groupId>
             <artifactId>unused</artifactId>
             <version>1.0.0</version>
@@ -325,6 +297,7 @@
                 <artifactId>exec-maven-plugin</artifactId>
                 <executions>
                     <execution>
+                        <id>build_info</id>
                         <phase>generate-resources</phase>
                         <configuration>
                             <!-- Execute the shell script to generate the zoo build information. -->
@@ -335,6 +308,22 @@
                                 <argument>${spark.version}</argument>
                                 <argument>${scala.version}</argument>
                                 <argument>${java.version}</argument>
+                            </arguments>
+
+                            <executable>bash</executable>
+                        </configuration>
+                        <goals>
+                            <goal>exec</goal>
+                        </goals>
+                    </execution>
+                    <execution>
+                        <id>bigdl_python</id>
+                        <phase>package</phase>
+                        <configuration>
+                            <arguments>
+                                <argument>${project.basedir}/../scripts/get_bigdl_python</argument>
+                                <argument>${project.build.directory}/bigdl_python</argument>
+                                <argument>${bigdl.version}</argument>
                             </arguments>
 
                             <executable>bash</executable>

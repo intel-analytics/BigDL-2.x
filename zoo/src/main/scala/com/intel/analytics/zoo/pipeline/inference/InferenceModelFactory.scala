@@ -17,6 +17,7 @@
 package com.intel.analytics.zoo.pipeline.inference
 
 import com.intel.analytics.bigdl.optim.LocalPredictor
+import com.intel.analytics.zoo.pipeline.api.net.TFNet
 
 object InferenceModelFactory {
 
@@ -24,10 +25,31 @@ object InferenceModelFactory {
     loadFloatInferenceModel(modelPath, null)
   }
 
-  def loadFloatInferenceModel(modelPath: String, weightPath: String): FloatInferenceModel = {
+  def loadFloatInferenceModel(modelPath: String, weightPath: String)
+    : FloatInferenceModel = {
     val model = ModelLoader.loadFloatModel(modelPath, weightPath)
-    val predictor = LocalPredictor(model)
+    val predictor = LocalPredictor(model = model, batchPerCore = 1)
     model.evaluate()
-    FloatInferenceModel(model, predictor)
+    new FloatInferenceModel(model, predictor)
+  }
+
+  def loadFloatInferenceModelForCaffe(modelPath: String, weightPath: String)
+    : FloatInferenceModel = {
+    val model = ModelLoader.loadFloatModelForCaffe(modelPath, weightPath)
+    val predictor = LocalPredictor(model = model, batchPerCore = 1)
+    model.evaluate()
+    new FloatInferenceModel(model, predictor)
+  }
+
+  def loadFloatInferenceModelForTF(modelPath: String,
+                                   intraOpParallelismThreads: Int = 1,
+                                   interOpParallelismThreads: Int = 1,
+                                   usePerSessionThreads: Boolean = true): FloatInferenceModel = {
+    val sessionConfig = TFNet.SessionConfig(intraOpParallelismThreads,
+      interOpParallelismThreads, usePerSessionThreads)
+    val model = ModelLoader.loadFloatModelForTF(modelPath, sessionConfig)
+    val predictor = LocalPredictor(model = model, batchPerCore = 1)
+    model.evaluate()
+    new FloatInferenceModel(model, predictor)
   }
 }

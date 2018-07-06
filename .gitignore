@@ -3,6 +3,7 @@
 *.class
 target/
 /dist/
+pyzoo/.pytest_cache/
 
 # SBT, Maven specific
 .cache

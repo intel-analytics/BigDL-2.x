@@ -21,14 +21,16 @@ import com.intel.analytics.zoo.models.common.ModelLabelReader
 
 
 object LabelReader extends ModelLabelReader {
-  def readImagenetlLabelMap(): Map[Int, String] = {
-    readLabelMap("/imagenet_classname.txt")
+  def readImagenetlLabelMap(modelName: String = null): Map[Int, String] = {
+    modelName match {
+      case "inception-v3" => readLabelMap("/imagenet_2015_classname.txt")
+      case _ => readLabelMap("/imagenet_classname.txt")
+    }
   }
 
-  def apply(dataset: String): Map[Int, String] = {
+  def apply(dataset: String, modelName: String = null): Map[Int, String] = {
     Dataset(dataset) match {
-      case Imagenet =>
-        readImagenetlLabelMap()
+      case Imagenet => readImagenetlLabelMap(modelName)
       case _ =>
         throw new Exception("currently only support Imagenet dataset in" +
           " Analytics zoo Image classification models")
