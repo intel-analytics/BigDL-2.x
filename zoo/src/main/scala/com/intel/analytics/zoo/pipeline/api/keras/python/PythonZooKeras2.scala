@@ -128,10 +128,12 @@ class PythonZooKeras2[T: ClassTag](implicit ev: TensorNumeric[T]) extends Python
   }
 
   def createZooKeras2GlobalAveragePooling2D(
-      dimOrdering: String = "th",
+      dataFormat: String = "th",
       inputShape: JList[Int] = null): GlobalAveragePooling2D[T] = {
     GlobalAveragePooling2D(
-      dimOrdering,
+      dataFormat,
       toScalaShape(inputShape))
   }
-}
+
+
+  }

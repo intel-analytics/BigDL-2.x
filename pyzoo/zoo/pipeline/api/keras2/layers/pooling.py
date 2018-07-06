@@ -132,8 +132,8 @@ class GlobalAveragePooling2D(ZooKeras2Layer):
     input_shape (a shape tuple, does not include the batch dimension).
 
     # Arguments
-    padding: Format of input data. Either 'th' (Channel First) or 'tf' (Channel Last).
-                  Default is 'th'.
+    data_format: Format of input data. Channel First .
+
     input_shape: A shape tuple, not including batch.
     name: String to set the name of the layer.
           If not specified, its name will by default to be a generated string.
@@ -142,10 +142,10 @@ class GlobalAveragePooling2D(ZooKeras2Layer):
     creating: createZooKeras2GlobalAveragePooling2D
     """
     def __init__(self,
-                 padding="th",
+                 data_format="th",
                  input_shape=None,
                  **kwargs):
         super(GlobalAveragePooling2D, self).__init__(None,
-                                                     padding,
+                                                     data_format,
                                                      list(input_shape) if input_shape else None,
                                                      **kwargs)

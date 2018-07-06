@@ -48,11 +48,11 @@ class GlobalAveragePooling2DSpec extends KerasBaseSpec {
       """
         |input_tensor = Input(shape=[32, 28, 6])
         |input = np.random.random([3, 32, 28, 6])
-        |output_tensor = GlobalAveragePooling2D(dim_ordering="tf")(input_tensor)
+        |output_tensor = GlobalAveragePooling2D(dataFormat="th")(input_tensor)
         |model = Model(input=input_tensor, output=output_tensor)
       """.stripMargin
     val seq = Sequential[Float]()
-    val layer = GlobalAveragePooling2D[Float](dimOrdering = "tf",
+    val layer = GlobalAveragePooling2D[Float](dataFormat = "th",
       inputShape = Shape(32, 28, 6))
     seq.add(layer)
     seq.getOutputShape().toSingle().toArray should be (Array(-1, 6))
@@ -70,4 +70,3 @@ class GlobalAveragePooling2DSerialTest extends ModuleSerializationTest {
     runSerializationTest(layer, input)
   }
 }
-

@@ -35,21 +35,22 @@ import scala.reflect.ClassTag
  * When you use this layer as the first layer of a model, you need to provide the argument
  * inputShape (a Single Shape, does not include the batch dimension).
  *
- * @param dimOrdering Format of input data. Please use DataFormat.NCHW (dimOrdering='th')
- *                    or DataFormat.NHWC (dimOrdering='tf'). Default is NCHW.
- * @param inputShape A Single Shape, does not include the batch dimension.
+ * @param dataFormat Format of input data. Please use DataFormat.NCHW (dataFormat='th')
+ *                    .
+ *
  * @tparam T The numeric type of parameter(e.g. weight, bias). Only support float/double now.
  */
 class GlobalAveragePooling2D[T: ClassTag](
-      override val dimOrdering: DataFormat = DataFormat.NCHW,
+      val dataFormat: DataFormat = DataFormat.NCHW,
       override val inputShape: Shape = null)(implicit ev: TensorNumeric[T])
-  extends klayers1.GlobalAveragePooling2D[T](
-    dimOrdering, inputShape) with Net {}
+  extends klayers1.GlobalAveragePooling2D[T](dataFormat, inputShape) with Net {
+
+}
 
 object GlobalAveragePooling2D {
   def apply[@specialized(Float, Double) T: ClassTag](
-      dimOrdering: String = "th",
-      inputShape: Shape = null)(implicit ev: TensorNumeric[T]): GlobalAveragePooling2D[T] = {
-    new GlobalAveragePooling2D[T](KerasUtils.toBigDLFormat(dimOrdering), inputShape)
+      dataFormat: String = "th",
+       inputShape: Shape = null)(implicit ev: TensorNumeric[T]): GlobalAveragePooling2D[T] = {
+    new GlobalAveragePooling2D[T](KerasUtils.toBigDLFormat(dataFormat), inputShape)
   }
 }
