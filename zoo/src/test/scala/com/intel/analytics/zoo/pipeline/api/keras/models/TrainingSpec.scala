@@ -43,7 +43,7 @@ class TrainingSpec extends FlatSpec with Matchers with BeforeAndAfter {
       val featureTensor = Tensor[Float](featureShape)
       featureTensor.apply1(_ => scala.util.Random.nextFloat())
       val labelTensor = Tensor[Float](labelSize)
-      labelTensor(Array(labelSize)) = Math.round(scala.util.Random.nextFloat()) + 1
+      labelTensor(Array(labelSize)) = Math.round(scala.util.Random.nextFloat())
       Sample[Float](featureTensor, labelTensor)
     }
   }
