@@ -19,11 +19,12 @@ package com.intel.analytics.zoo.feature.python
 import java.util.{List => JList}
 
 import com.intel.analytics.bigdl.python.api.{JTensor, PythonBigDL}
+import com.intel.analytics.bigdl.tensor.{Storage, Tensor}
 import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric
 import com.intel.analytics.bigdl.transform.vision.image._
 import com.intel.analytics.zoo.feature.common.Preprocessing
 import com.intel.analytics.zoo.feature.image._
-
+import com.intel.analytics.zoo.feature.image3d._
 import org.apache.spark.api.java.{JavaRDD, JavaSparkContext}
 import org.opencv.imgproc.Imgproc
 
@@ -240,5 +241,35 @@ class PythonImageFeature[T: ClassTag](implicit ev: TensorNumeric[T]) extends Pyt
 
   def imageFrameToImageSet(imageFrame: ImageFrame): ImageSet = {
     ImageSet.fromImageFrame(imageFrame)
+  }
+
+  def createCrop3D(start: JList[Int], patchSize: JList[Int]): Crop3D = {
+    Crop3D(start.asScala.toArray, patchSize.asScala.toArray)
+  }
+
+  def createRandomCrop3D(cropDepth: Int, cropHeight: Int, cropWidth: Int): RandomCrop3D = {
+    RandomCrop3D(cropDepth, cropHeight, cropWidth)
+  }
+
+  def createCenterCrop3D(cropDepth: Int, cropHeight: Int, cropWidth: Int): CenterCrop3D = {
+    CenterCrop3D(cropDepth, cropHeight, cropWidth)
+  }
+
+  def createRotate3D(rotationAngles: JList[Double]): Rotate3D = {
+    Rotate3D(rotationAngles.asScala.toArray)
+  }
+
+  def createAffineTransform3D(mat: JTensor, translation: JTensor,
+                            clamp_mode: String, pad_val: Double): AffineTransform3D = {
+    AffineTransform3D(toDoubleTensor(mat), toDoubleTensor(translation), clamp_mode, pad_val)
+  }
+
+  def toDoubleTensor(jTensor: JTensor): Tensor[Double] = {
+    val tensor = if (jTensor == null) null else {
+      Tensor(storage = Storage[Double](jTensor.storage.map(_.asInstanceOf[Double])),
+        storageOffset = 1,
+        size = jTensor.shape)
+    }
+    tensor
   }
 }
