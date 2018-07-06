@@ -48,10 +48,10 @@ object preprocessor {
     val tempArray = ArrayBuffer[JList[JFloat]]()
     for (tempList <- result) {
       val javaList = new Array[JFloat](tempList.size)
-      //      for(tempFloat <- tempList) {
-      //        javaList.add(tempFloat.asInstanceOf[JFloat])
-      //      }
-      System.arraycopy(tempList, 0 , javaList , 0 , tempList.size)
+      for(tempFloat <- tempList) {
+        javaList.add(tempFloat.asInstanceOf[JFloat])
+      }
+      //System.arraycopy(tempList, 0 , javaList , 0 , tempList.size)
 
       tempArray.add(javaList.toList.asJava)
     }
