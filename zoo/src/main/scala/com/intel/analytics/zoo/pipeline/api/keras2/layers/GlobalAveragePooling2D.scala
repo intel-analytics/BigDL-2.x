@@ -28,6 +28,7 @@ import com.intel.analytics.zoo.pipeline.api.keras2.layers.utils.KerasUtils
 import com.intel.analytics.zoo.pipeline.api.keras.{layers => klayers1}
 import scala.reflect.ClassTag
 
+
 /**
  * Applies global average pooling operation for spatial data.
  * The input of this layer should be 4D.
@@ -35,9 +36,9 @@ import scala.reflect.ClassTag
  * When you use this layer as the first layer of a model, you need to provide the argument
  * inputShape (a Single Shape, does not include the batch dimension).
  *
- * @param dataFormat Format of input data. Please use DataFormat.NCHW (dataFormat='channel_first')
- *                    .
- *
+ * @param dataFormat Format of input data. Please use DataFormat.NCHW (dataFormat='channels_first')
+ *                    or DataFormat.NHWC (dataFormat='channels_last'). Default is NCHW.
+ * @param inputShape A Single Shape, does not include the batch dimension.
  * @tparam T The numeric type of parameter(e.g. weight, bias). Only support float/double now.
  */
 class GlobalAveragePooling2D[T: ClassTag](
