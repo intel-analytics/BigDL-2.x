@@ -125,6 +125,14 @@ class PythonZooKeras[T: ClassTag](implicit ev: TensorNumeric[T]) extends PythonB
     module.fit(trainData, epochs, valData)
   }
 
+  def zooPredict(
+      module: KerasNet[T],
+      x: JavaRDD[Sample],
+      batchSize: Int): JavaRDD[JList[JTensor]] = {
+    val resRDD = module.predict(x.rdd.map(toJSample), batchSize)
+    resRDD.map(activityToJTensors).toJavaRDD()
+  }
+
   def zooEvaluate(
       module: KerasNet[T],
       x: JavaRDD[Sample],
