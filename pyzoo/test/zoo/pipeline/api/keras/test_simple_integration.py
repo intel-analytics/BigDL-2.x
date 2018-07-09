@@ -93,6 +93,9 @@ class TestSimpleIntegration(ZooTestCase):
         result = model.predict(data).collect()
         for res in result:
             assert isinstance(res, list) and len(res) == 2
+        result2 = model.predict(data, distributed=False)
+        for res in result2:
+            assert isinstance(res, list) and len(res) == 2
 
     def test_training_without_validation(self):
         model = Sequential()
