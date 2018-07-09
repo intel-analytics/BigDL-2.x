@@ -33,7 +33,7 @@ class TestLoss(ZooTestCase):
     # y_pred and y_true are all keras_tensor
     # zloss is a AbstractCriterion
     # The first dim of shape is batch
-    def compareLossWithKeras(self, kkloss_func, zloss, shape, sizeAverage):
+    def compareLossWithKeras(self, kkloss_func, zloss, shape, sizeAverageKerasLoss):
 
         y_pred = klayers.Input(shape=shape[1:])
         y_true = klayers.Input(shape=shape[1:])
@@ -53,7 +53,7 @@ class TestLoss(ZooTestCase):
         z_grad_y_pred = zloss.backward(y_true_value, y_pred_value)
 
         assert(z_output == pytest.approx(np.mean(k_output), 1e-5, 1e-5))
-        if sizeAverage:
+        if sizeAverageKerasLoss:
             self.assert_allclose(k_grad_y_pred / batch, z_grad_y_pred)
         else:
             self.assert_allclose(k_grad_y_pred, z_grad_y_pred)
@@ -63,29 +63,24 @@ class TestLoss(ZooTestCase):
             result = mean(abs(y_true - y_pred), axis=1)
             return result
         self.compareLossWithKeras(kloss.mean_absolute_error,
-                                  CustomLoss(mean_absolute_error, [3]), [2, 3], sizeAverage=True)
+                                  CustomLoss(mean_absolute_error, [3]), [2, 3],
+                                  sizeAverageKerasLoss=True)
 
     def test_zloss(self):
-        def zloss(**kwargs):
+        def rank_hinge_loss(**kwargs):
             if isinstance(kwargs, dict) and 'batch' in kwargs:
                 batch = kwargs['batch']
 
-            def _zloss(y_true, y_pred):
-                y_pred = y_pred * (y_true / y_true)
+            def _rank_hinge_loss(y_true, y_pred):
+                y_pred = y_pred + y_true - y_true
                 margin = 1.0
-                t1 = []
-                for y in range(0, batch, 2):
-                    x = y_pred.slice(0, y, 1)
-                    t1.append(x)
-                pos = merge(t1, mode="concat", concat_axis=0)
-                t2 = []
-                for y in range(1, batch, 2):
-                    x = y_pred.slice(0, y, 1)
-                    t2.append(x)
-                neg = merge(t2, mode="concat", concat_axis=0)
+                pos = merge([y_pred.slice(0, i, 1) for i in range(0, batch, 2)],
+                            mode="concat", concat_axis=0)
+                neg = merge([y_pred.slice(0, i, 1) for i in range(1, batch, 2)],
+                            mode="concat", concat_axis=0)
                 loss = maximum(margin + neg - pos, 0.)
                 return loss
-            return _zloss
+            return _rank_hinge_loss
 
         def kloss(y_true, y_pred):
             margin = 1.0
@@ -95,8 +90,8 @@ class TestLoss(ZooTestCase):
             return KK.mean(loss)
 
         batch = 32
-        self.compareLossWithKeras(kloss, CustomLoss(zloss(batch=batch), [1]),
-                                  [batch, 1], sizeAverage=False)
+        self.compareLossWithKeras(kloss, CustomLoss(rank_hinge_loss(batch=batch), [1]),
+                                  [batch, 1], sizeAverageKerasLoss=False)
 
     def test_abs_with_fit(self):
         def mean_absolute_error(y_true, y_pred):
