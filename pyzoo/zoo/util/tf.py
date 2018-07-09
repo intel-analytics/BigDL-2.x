@@ -24,7 +24,7 @@ import tensorflow as tf
 import os
 import json
 import copy
-import Queue
+import queue
 
 
 def export_tf(sess, folder, inputs, outputs,
@@ -206,7 +206,7 @@ def _insert_identity_nodes(graph_def, temp_tensors):
 
 
 def _find_temp_tensors(grads, forward_ops):
-    queue = Queue.Queue()
+    queue = queue.Queue()
     for grad in grads:
         queue.put(grad)
 
