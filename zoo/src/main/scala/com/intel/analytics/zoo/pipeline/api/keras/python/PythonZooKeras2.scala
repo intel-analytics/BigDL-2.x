@@ -141,5 +141,34 @@ class PythonZooKeras2[T: ClassTag](implicit ev: TensorNumeric[T]) extends Python
       toScalaShape(inputShape))
   }
 
-
+  def createZooKeras2MaxPooling2D(
+      poolSize: (Int, Int) = (2, 2),
+      strides: (Int, Int) = null,
+      padding: String = "valid",
+      dataFormat: String = "channels_first",
+      inputShape: JList[Int] = null): MaxPooling2D[T] = {
+    MaxPooling2D(
+      poolSize,
+      strides,
+      padding,
+      dataFormat,
+      toScalaShape(inputShape))
   }
+
+  def createZooKeras2MaxPooling3D(
+      poolSize: (Int, Int, Int) = (2, 2, 2),
+      strides: (Int, Int, Int) = null,
+      dataFormat: String = "channels_first",
+      inputShape: JList[Int] = null): MaxPooling3D[T] = {
+    MaxPooling3D(
+      poolSize,
+      strides,
+      dataFormat,
+      toScalaShape(inputShape))
+  }
+
+
+
+
+
+}
