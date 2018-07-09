@@ -14,10 +14,8 @@
 # limitations under the License.
 #
 
-import sys
-
 from bigdl.nn.layer import Container, Layer
-from bigdl.util.common import JavaValue, callBigDlFunc
+from bigdl.util.common import *
 
 if sys.version >= '3':
     long = int
@@ -35,6 +33,28 @@ class ZooModel(ZooModelCreator, Container):
     """
     The base class for models in Analytics Zoo.
     """
+    def predict_classes(self, x, batch_size=32, zero_based_label=True):
+        """
+        Predict for classes. By default, label predictions start from 0.
+
+        # Arguments
+        x: Prediction data. A Numpy array or RDD of Sample.
+        batch_size: Number of samples per batch. Default is 32.
+        zero_based_label: Boolean. Whether result labels start from 0.
+                          Default is True. If False, result labels start from 1.
+        """
+        if isinstance(x, np.ndarray):
+            data_rdd = to_sample_rdd(x, np.zeros([x.shape[0]]))
+        elif isinstance(x, RDD):
+            data_rdd = x
+        else:
+            raise TypeError("Unsupported prediction data type: %s" % type(x))
+        return callBigDlFunc(self.bigdl_type, "zooModelPredictClasses",
+                             self.value,
+                             data_rdd,
+                             batch_size,
+                             zero_based_label)
+
     def save_model(self, path, weight_path=None, over_write=False):
         """
         Save the model to the specified path.
