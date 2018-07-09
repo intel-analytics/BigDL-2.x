@@ -66,7 +66,7 @@ class TestLoss(ZooTestCase):
                                   CustomLoss(mean_absolute_error, [3]), [2, 3],
                                   sizeAverageKerasLoss=True)
 
-    def test_zloss(self):
+    def test_rank_hinge_loss(self):
         def rank_hinge_loss(**kwargs):
             if isinstance(kwargs, dict) and 'batch' in kwargs:
                 batch = kwargs['batch']
@@ -82,7 +82,7 @@ class TestLoss(ZooTestCase):
                 return loss
             return _rank_hinge_loss
 
-        def kloss(y_true, y_pred):
+        def keras_rank_hinge_loss(y_true, y_pred):
             margin = 1.0
             y_pos = klayers.Lambda(lambda a: a[::2, :], output_shape=(1,))(y_pred)
             y_neg = klayers.Lambda(lambda a: a[1::2, :], output_shape=(1,))(y_pred)
@@ -90,7 +90,8 @@ class TestLoss(ZooTestCase):
             return KK.mean(loss)
 
         batch = 32
-        self.compareLossWithKeras(kloss, CustomLoss(rank_hinge_loss(batch=batch), [1]),
+        self.compareLossWithKeras(keras_rank_hinge_loss,
+                                  CustomLoss(rank_hinge_loss(batch=batch), [1]),
                                   [batch, 1], sizeAverageKerasLoss=False)
 
     def test_abs_with_fit(self):
