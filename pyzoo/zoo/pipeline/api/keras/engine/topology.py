@@ -207,7 +207,8 @@ class KerasNet(ZooKerasLayer):
             if isinstance(x, np.ndarray) or isinstance(x, list):
                 results = callBigDlFunc(self.bigdl_type, "zooPredict",
                                         self.value,
-                                        self._to_jtensors(x))
+                                        self._to_jtensors(x),
+                                        batch_size)
                 return [Layer.convert_output(result) for result in results]
             else:
                 raise TypeError("Unsupported prediction data type: %s" % type(x))

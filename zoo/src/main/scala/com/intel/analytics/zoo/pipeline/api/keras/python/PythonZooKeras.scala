@@ -134,9 +134,11 @@ class PythonZooKeras[T: ClassTag](implicit ev: TensorNumeric[T]) extends PythonB
 
   def zooPredict(
       module: KerasNet[T],
-      x: JList[JTensor]): JList[JList[JTensor]] = {
+      x: JList[JTensor],
+      batchSize: Int): JList[JList[JTensor]] = {
     val sampleArray = toSampleArray(x.asScala.toList.map{f => toTensor(f)})
-    val localPredictor = LocalPredictor(module)
+    val localPredictor = LocalPredictor(module,
+      batchPerCore = KerasUtils.calBatchPerCore(batchSize))
     val result = localPredictor.predict(sampleArray)
     result.map(activityToJTensors).toList.asJava
   }
