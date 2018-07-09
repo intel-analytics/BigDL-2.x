@@ -29,19 +29,19 @@ import scala.reflect.ClassTag
 
 /**
  * Applies global max pooling operation for 3D data.
- * Data format currently supported for this layer is 'CHANNELS_FIRST' (.
+ * Data format currently supported for this layer is 'channels_first' (.
  * padding currently supported for this layer is 'valid'.
  * The input of this layer should be 5D.
  *
  * When you use this layer as the first layer of a model, you need to provide the argument
  * inputShape (a Single Shape, does not include the batch dimension).
  *
- * @param dataFormat Format of input data. Please use 'CHANNELS_FIRST' .
+ * @param dataFormat Format of input data. Please use 'channels_first' .
  * @param inputShape A Single Shape, does not include the batch dimension.
  * @tparam T The numeric type of parameter(e.g. weight, bias). Only support float/double now.
  */
 class GlobalMaxPooling3D[T: ClassTag](
-      val dataFormat: String = "CHANNELS_FIRST",
+      val dataFormat: String = "channels_first",
        override val inputShape: Shape = null)(implicit ev: TensorNumeric[T])
   extends klayers1.GlobalMaxPooling3D[T](dimOrdering = dataFormat, inputShape) with Net {
 
@@ -49,7 +49,7 @@ class GlobalMaxPooling3D[T: ClassTag](
 
 object GlobalMaxPooling3D {
   def apply[@specialized(Float, Double) T: ClassTag](
-      dataFormat: String = "CHANNELS_FIRST",
+      dataFormat: String = "channels_first",
       inputShape: Shape = null)(implicit ev: TensorNumeric[T]) : GlobalMaxPooling3D[T] = {
     new GlobalMaxPooling3D[T](KerasUtils.toBigDLFormat5D(dataFormat), inputShape)
   }
