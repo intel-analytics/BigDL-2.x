@@ -1,15 +1,12 @@
 package com.intel.analytics.zoo.inference.examples.TextClassification;
 
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import com.intel.analytics.zoo.pipeline.inference.JTensor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.web.bind.annotation.*;
 
-import org.springframework.web.bind.annotation.RequestBody;
-
-import org.springframework.web.bind.annotation.RequestMethod;
-
-
-
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.atomic.AtomicLong;
 
 @RestController
@@ -17,6 +14,10 @@ public class GreetingController {
 
     private static final String template = "Hello, %s!";
     private final AtomicLong counter = new AtomicLong();
+    private String baseDir = System.getProperty("baseDir", "/home/yidiyang/workspace");
+    private String modelPath = System.getProperty("modelPath", baseDir + "/model/textClassification/textClassificationModel");
+    private TextClassificationModel model = new TextClassificationModel(1, 500);
+    private Logger logger = LoggerFactory.getLogger(this.getClass());
 
     @RequestMapping(value = "/greeting")
     public Greeting greeting(@RequestParam(value = "name", defaultValue = "World") String name) {
@@ -30,15 +31,35 @@ public class GreetingController {
                 String.format(template, name));
     }
 
-    @RequestMapping(value = "/predict", method = {RequestMethod.POST, RequestMethod.GET})
+    @RequestMapping(value = "/predict", method = {RequestMethod.POST})
     public String webPredict(@RequestBody String text) {
-        long begin = System.currentTimeMillis();
+
         if (!text.isEmpty()) {
-            TextClassificationSample tc = new TextClassificationSample();
-            tc.setText(text);
-            String result = tc.getResult();
+            long begin = System.currentTimeMillis();
+            JTensor input = model.preProcess(text);
             long end = System.currentTimeMillis();
-            return result+"#Total time elapsed " + (end - begin) + " ms.";
+            long processTime = end - begin;
+            model.load(modelPath);
+            begin = System.currentTimeMillis();
+            List<JTensor> inputList = new ArrayList<>();
+            inputList.add(input);
+            List<List<JTensor>> result = model.predict(inputList);
+            end = System.currentTimeMillis();
+            long predictTime = end - begin;
+            JTensor resultTensor = result.get(0).get(0);
+            List<Float> resultDis = resultTensor.getData();
+            int resultClass = 0;
+            float maxProb = 0;
+            for (int i = 0; i < resultDis.size(); i++) {
+                if (resultDis.get(i) >= maxProb) {
+                    resultClass = i;
+                    maxProb = resultDis.get(i);
+                }
+            }
+            String time = String.format("Total time elapsed: %d ms. Process Time elapsed : %d, Predict Time elapsed: %d", end - begin, processTime, predictTime);
+            logger.info(time);
+            String answer = String.format("The predict class is:%s\nThe probability distribution is:%s \n", Integer.toString(resultClass), resultDis.toString());
+            return answer;
         } else {
             return "error,no text found";
         }

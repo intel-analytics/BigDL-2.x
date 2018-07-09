@@ -1,66 +1,42 @@
 package com.intel.analytics.zoo.preprocess
 
-import com.intel.analytics.zoo.pipeline.inference.JTensor
-
-import scala.collection.mutable.{ArrayBuffer, Map => MMap}
-import scala.io.Source
-
+import java.lang.{Float => JFloat, Integer => JInt}
 import java.util.{List => JList}
-import java.lang.{Float => JFloat}
-import java.lang.{Integer => JInt}
 
+import scala.collection.JavaConversions._
 import scala.collection.JavaConverters._
-import collection.JavaConversions._
+import scala.collection.mutable.ArrayBuffer
 
-case class GloveTextProcessor(gloveFilePath: String) extends TextProcessing {
+case class GloveTextProcessor(gloveFilePath: String, stopWordsCount: Int, sequenceLength: Int) extends TextProcessing {
+  val embMap = doLoadEmbedding(gloveFilePath)
 
-
-  //for glove.6B only
-  override def doLoadEmbedding(embDir: String):Map[String, List[Float]] = {
-    val filename = s"$embDir/glove.6B.200d.txt"
-    val tokensMapCoefs =  MMap[String, List[Float]]()
-
-    for (line <- Source.fromFile(filename, "ISO-8859-1").getLines) {
-      val values = line.split(" ")
-      val word = values(0)
-      val coefs = values.slice(1, values.length).map(_.toFloat)
-      tokensMapCoefs.put(word, coefs.toList)
-    }
-    tokensMapCoefs.toMap
-  }
-
-  override def doPreprocess(text: String): List[List[Float]] = {
+  override def doPreprocess(text: String, stopWordsCount: Int, sequenceLength: Int): List[List[Float]] = {
     val tokens = doTokenize(text)
-    val shapedTokens = doShaping(doStopWords(tokens,1),500)
-    val embMap = doLoadEmbedding(sys.env("EMBEDDING_PATH"))
+    val shapedTokens = doShaping(doStopWords(tokens, stopWordsCount), sequenceLength)
     val vectorizedTokens = doVectorize(shapedTokens, embMap)
     vectorizedTokens
   }
 }
 
-
+//fot test
 object preprocessor {
-
   def main(args: Array[String]): Unit = {
-    val textPreprocessor = GloveTextProcessor(sys.env("EMBEDDING_PATH"))
+    val textPreprocessor = GloveTextProcessor(sys.env("EMBEDDING_PATH"), 1, 500)
     val text = "It is for for for for test test exwqwq"
-    val result = textPreprocessor.doPreprocess(text)
+    val result = textPreprocessor.doPreprocess(text, textPreprocessor.stopWordsCount, textPreprocessor.sequenceLength)
     val tempArray = ArrayBuffer[JList[JFloat]]()
     for (tempList <- result) {
-      val javaList = new Array[JFloat](tempList.size)
-      for(tempFloat <- tempList) {
+      val javaList = new ArrayBuffer[JFloat](tempList.size)
+      for (tempFloat <- tempList) {
         javaList.add(tempFloat.asInstanceOf[JFloat])
       }
       //System.arraycopy(tempList, 0 , javaList , 0 , tempList.size)
-
       tempArray.add(javaList.toList.asJava)
     }
-
     val input = tempArray.toArray.toList.asJava
     val data = input.flatten
-    val shape = List(input.size().asInstanceOf[JInt],input.get(0).length.asInstanceOf[JInt])
+    val shape = List(input.size().asInstanceOf[JInt], input.get(0).length.asInstanceOf[JInt])
     val tensorInput = new JTensor(data.asJava, shape.asJava)
-
     print(tensorInput)
   }
 }

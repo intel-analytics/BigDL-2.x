@@ -4,18 +4,12 @@ import java.util.{List => JList}
 import java.lang.{Float => JFloat}
 import java.lang.{Integer => JInt}
 import java.util.{Map => JMap}
-
-
 import scala.collection.mutable.{Map => MMap}
 import com.intel.analytics.zoo.pipeline.inference.JTensor
-
 import scala.collection.mutable.ArrayBuffer
-
 
 import scala.collection.JavaConverters._
 import collection.JavaConversions._
-
-
 
 abstract class ITextProcessing extends TextProcessing {
   def tokenize(text: String): JList[String] = {
@@ -30,10 +24,9 @@ abstract class ITextProcessing extends TextProcessing {
   def shaping(tokens: JList[String], sequenceLength: JInt): JList[String] = {
     doShaping(tokens.asScala.toList,sequenceLength.asInstanceOf[Int]).asJava
   }
-  def loadEmbedding(embDir: String): JMap[String, JList[JFloat]] = {
-    val tempMap = doLoadEmbedding(embDir)
+  def loadEmbedding(embFilePath: String): JMap[String, JList[JFloat]] = {
+    val tempMap = doLoadEmbedding(embFilePath)
     val JavaMap = MMap[String, JList[JFloat]]()
-
     tempMap.keys.foreach( ( key ) => {
       val tempArray = ArrayBuffer[JFloat]()
       for(tempFloat <- tempMap(key)){
@@ -42,7 +35,6 @@ abstract class ITextProcessing extends TextProcessing {
       JavaMap.put(key, tempArray.toArray.toList.asJava)
     })
     JavaMap.toMap.asInstanceOf[JMap[String, JList[JFloat]]]
-
   }
 
   def vectorize(tokens: JList[String], embeddingMap: JMap[String, JList[JFloat]]): JList[JList[JFloat]] = {
@@ -56,7 +48,6 @@ abstract class ITextProcessing extends TextProcessing {
       }
       scalaMap.put(key, tempArray.toArray.toList)
     })
-
     val tempOutput = doVectorize(tokens.asScala.toList, scalaMap.toMap)
 
     //scala map to java map
@@ -71,8 +62,8 @@ abstract class ITextProcessing extends TextProcessing {
     output.toArray.toList.asJava
   }
 
-  def preprocess(text: String): JTensor={
-    val inputList = doPreprocess(text)
+  def preprocess(text: String, stopWordsCount: Int, sequenceLength: Int): JTensor={
+    val inputList = doPreprocess(text, stopWordsCount, sequenceLength)
     val tempArray = ArrayBuffer[JList[JFloat]]()
     for (tempList <- inputList) {
       val javaList = ArrayBuffer[JFloat]()
@@ -81,12 +72,10 @@ abstract class ITextProcessing extends TextProcessing {
       }
       tempArray.add(javaList.toArray.toList.asJava)
     }
-
     val input = tempArray.toArray.toList.asJava
     val data = input.flatten
     val shape = List(input.size().asInstanceOf[JInt],input.get(0).length.asInstanceOf[JInt])
     val tensorInput = new JTensor(data.asJava, shape.asJava)
     tensorInput
   }
-
 }

@@ -1,6 +1,5 @@
 package com.intel.analytics.zoo.preprocess
 
-
 import scala.collection.mutable.ArrayBuffer
 import scala.collection.immutable.ListMap
 import scala.collection.mutable.{Map => MMap}
@@ -32,11 +31,10 @@ trait TextProcessing {
     paddedTokens
   }
 
-  def doLoadEmbedding(embDir: String):Map[String, List[Float]] = {
-    //defult use glove
-    val filename = s"$embDir/glove.6B.200d.txt"
+  def doLoadEmbedding(embFilePath: String):Map[String, List[Float]] = {
+    //defult use as glove
     val tokensMapCoefs =  MMap[String, List[Float]]()
-    for (line <- Source.fromFile(filename, "ISO-8859-1").getLines) {
+    for (line <- Source.fromFile(embFilePath, "ISO-8859-1").getLines) {
       val values = line.split(" ")
       val word = values(0)
       val coefs = values.slice(1, values.length).map(_.toFloat)
@@ -46,21 +44,22 @@ trait TextProcessing {
   }
 
   def doVectorize(tokens: List[String], embMap:Map[String, List[Float]]): List[List[Float]] = {
-    val tokensToCoefs =  ArrayBuffer[List[Float]]()
-    for (token <- tokens if token!=""&&embMap.contains(token))
+    val tokensToCoefs = ArrayBuffer[List[Float]]()
+    for (token <- tokens if token != "" && embMap.contains(token)){
       tokensToCoefs.append(embMap(token))
-
+    }
+    val coefSize = tokensToCoefs(0).length
     if(tokensToCoefs.size < tokens.size){
-      val coefZero = List.fill[Float](200)(0)
+      val coefZero = List.fill[Float](coefSize)(0)
       val newArray = Array.fill(tokens.size - tokensToCoefs.size)(coefZero)
       tokensToCoefs ++= newArray
     }
     tokensToCoefs.toList
   }
 
-  def doPreprocess(text: String): List[List[Float]] = {
+  def doPreprocess(text: String, stopWordsCount: Int, sequenceLength: Int): List[List[Float]] = {
     val tokens = doTokenize(text)
-    val shapedTokens = doShaping(doStopWords(tokens,1),500)
+    val shapedTokens = doShaping(doStopWords(tokens, stopWordsCount), sequenceLength)
     val embMap = doLoadEmbedding(sys.env("EMBEDDING_PATH"))
     val vectorizedTokens = doVectorize(shapedTokens, embMap)
     vectorizedTokens

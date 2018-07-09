@@ -12,17 +12,13 @@
 
     <repositories>
         <repository>
-            <id>nexus</id>
-            <name>nexus repository</name>
-            <url>http://10.239.45.10:8081/repository/maven-public/</url>
-            <releases>
-                <enabled>true</enabled>
-            </releases>
+            <id>ossrh</id>
+            <name>ossrh repository</name>
+            <url>https://oss.sonatype.org/content/repositories/snapshots</url>
             <snapshots>
                 <enabled>true</enabled>
             </snapshots>
         </repository>
-
         <repository>
             <id>spring-releases</id>
             <url>https://repo.spring.io/libs-release</url>
