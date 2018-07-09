@@ -64,6 +64,9 @@ class TFNet(graphDef: TFGraphHolder,
                     config: Array[Int])
   extends AbstractModule[Activity, Activity, Float] {
 
+  // todo if an exception is thrown during forward or backward, there will be memory leak
+  // maybe create a resource manager to handle tensor creation and destruction
+
   private def graph = graphDef.tfGraph
 
   val inputNames: Array[String] = graphMeta.inputNames
