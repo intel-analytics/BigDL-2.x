@@ -25,7 +25,7 @@ object KerasUtils {
   def toBigDLFormat(dataFormat: String): DataFormat = {
     require(dataFormat.toLowerCase() == "channels_" +
       "first" || dataFormat.toLowerCase() == "channels_last",
-      s"Dim ordering must be either channels_first or " +
+      s"Data Format must be either channels_first or " +
       s"channels_last, but got ${dataFormat.toLowerCase()}")
     dataFormat.toLowerCase() match {
       case "channels_last" => DataFormat.NHWC
@@ -36,7 +36,7 @@ object KerasUtils {
   def toBigDLFormat5D(dataFormat: String): String = {
     require(dataFormat.toLowerCase() == "channels_fir" +
       "st" || dataFormat.toLowerCase() == "channels_last",
-      s"Dim ordering must be either channels_first or" +
+      s"Data Format must be either channels_first or" +
         s" channels_last, but got ${dataFormat.toLowerCase()}")
     dataFormat.toLowerCase() match {
       case "channels_last" => "CHANNEL_LAST"

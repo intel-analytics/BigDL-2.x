@@ -155,7 +155,7 @@ class GlobalAveragePooling2D(ZooKeras2Layer):
     input_shape (a shape tuple, does not include the batch dimension).
 
     # Arguments
-    data_format: Format of input data. Channel First .
+    data_format: Format of input data. Either channel_first  or channel_last.
 
     input_shape: A shape tuple, not including batch.
     name: String to set the name of the layer.

@@ -32,7 +32,7 @@ class GlobalAveragePooling2DSpec extends KerasBaseSpec {
       """
         |input_tensor = Input(shape=[3, 16, 20])
         |input = np.random.random([2, 3, 16, 20])
-        |output_tensor = GlobalAveragePooling2D(dim_ordering="channels_first")(input_tensor)
+        |output_tensor = GlobalAveragePooling2D(data_format="channels_first")(input_tensor)
         |model = Model(input=input_tensor, output=output_tensor)
       """.stripMargin
     val seq = Sequential[Float]()
@@ -48,7 +48,7 @@ class GlobalAveragePooling2DSpec extends KerasBaseSpec {
       """
         |input_tensor = Input(shape=[32, 28, 6])
         |input = np.random.random([3, 32, 28, 6])
-        |output_tensor = GlobalAveragePooling2D(dataFormat="channels_last")(input_tensor)
+        |output_tensor = GlobalAveragePooling2D(data_format="channels_last")(input_tensor)
         |model = Model(input=input_tensor, output=output_tensor)
       """.stripMargin
     val seq = Sequential[Float]()
