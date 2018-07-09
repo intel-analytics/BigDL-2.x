@@ -27,7 +27,8 @@ import copy
 import Queue
 
 
-def export_tf(sess, folder, inputs, outputs, generate_backward=False, allow_non_differentiable_input=True):
+def export_tf(sess, folder, inputs, outputs,
+              generate_backward=False, allow_non_differentiable_input=True):
     """
     Export the frozen tensorflow graph as well as the inputs/outputs information
     to the folder for inference.
@@ -107,15 +108,18 @@ def export_tf(sess, folder, inputs, outputs, generate_backward=False, allow_non_
         with tf.Graph().as_default() as g:
             tf.import_graph_def(optimized_graph_def, name='')
             output_tensors = map(lambda x: g.get_tensor_by_name(x), output_names)
-            grad_output_placeholders = map(lambda x: tf.placeholder(dtype=x.dtype,
-                                                                    name=x.name.split(":")[0] + "_grad",
-                                                                    shape=x.shape),
-                                           output_tensors)
+            grad_output_placeholders =\
+                map(lambda x:
+                    tf.placeholder(dtype=x.dtype,
+                                   name=x.name.split(":")[0] + "_grad",
+                                   shape=x.shape),
+                    output_tensors)
 
             variables = map(lambda x: g.get_tensor_by_name(x), used_variables)
 
             inputs = map(lambda x: g.get_tensor_by_name(x), new_input_names)
-            grads = tf.gradients(output_tensors, variables + inputs, grad_ys=grad_output_placeholders)
+            grads = tf.gradients(output_tensors, variables + inputs,
+                                 grad_ys=grad_output_placeholders)
 
             def process_grad(g):
                 if g is not None:
@@ -145,7 +149,8 @@ def export_tf(sess, folder, inputs, outputs, generate_backward=False, allow_non_
                         zero_grad = tf.zeros(shape=tf.shape(input_tensor))
                         grad_inputs.append(zero_grad.name)
                     else:
-                        raise ValueError("input tensor: %s is not differentiable" % input_tensor.name)
+                        raise ValueError(
+                            "input tensor: %s is not differentiable" % input_tensor.name)
 
             optimized_graph_def = g.as_graph_def()
 
@@ -168,6 +173,7 @@ def export_tf(sess, folder, inputs, outputs, generate_backward=False, allow_non_
 
     with open(os.path.join(folder, "graph_meta.json"), "w") as f:
         f.write(json.dumps(meta))
+
 
 def _insert_identity_nodes(graph_def, temp_tensors):
     new_temp_tensors = []
@@ -223,6 +229,7 @@ def _find_temp_tensors(grads, forward_ops):
                 if input_tensor.name not in visited:
                     queue.put(input_tensor)
     return temp_tensors
+
 
 def strip_unused(input_graph_def, input_tensor_names, output_tensor_names,
                  placeholder_type_enum):
