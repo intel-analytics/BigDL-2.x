@@ -5,7 +5,7 @@ import com.intel.analytics.zoo.preprocess.ITextProcessing;
 import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
-
+import java.util.*;
 
 public class GloveTextProcessing extends ITextProcessing {
 
