@@ -18,7 +18,7 @@ To run this sample, please follow the steps below.
 In the IDE(eg:IDEA), new a project from existing source, and choose the pom.xml in analytics-zoo-inference-example, using maven to build up the project.
 
 ### Prepare Data 
-Download the word vectorized embedding map, for example 
+Download the word vectorized embedding map, for example:
    - [GloVe word embeddings(glove.6B.zip)](http://nlp.stanford.edu/data/glove.6B.zip): embeddings of 400k words pre-trained on a 2014 dump of English Wikipedia.
    
    You need to prepare the data by yourself beforehand. The following scripts we prepare will serve to download and extract the data:
@@ -26,7 +26,7 @@ Download the word vectorized embedding map, for example
    bash ${ANALYTICS_ZOO_HOME}/bin/data/glove/get_glove.sh dir
    ```
    where `ANALYTICS_ZOO_HOME` is the `dist` directory under the Analytics Zoo project and `dir` is the directory you wish to locate the downloaded data. If `dir` is not specified, the data will be downloaded to the current working directory. 
-   Set the environment variable as follow, can either by editing the configuratons or exporting into system:
+   Set the environment variable as follow, this can be done either by editing the run/debug configurations or exporting into system:
    ```
    EMBEDDING_PATH="the file path of the embedding map"
    ```
