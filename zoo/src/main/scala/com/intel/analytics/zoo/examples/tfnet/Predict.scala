@@ -35,7 +35,7 @@ object Predict {
   val logger = Logger.getLogger(getClass)
 
   case class PredictParam(image: String = "/tmp/datasets/cat_dog/train_sampled",
-                          model: String = "/tmp/models/ssd_mobilenet_v1_coco_2017_11_17" +
+                          model: String = "/tmp/models/ssd_mobilenet_v1_coco_2018_01_28" +
                             "/frozen_inference_graph.pb",
                           nPartition: Int = 4)
 

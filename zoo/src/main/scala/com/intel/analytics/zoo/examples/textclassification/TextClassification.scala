@@ -22,17 +22,16 @@ import java.util
 import com.intel.analytics.bigdl.dataset.Sample
 import com.intel.analytics.bigdl.example.utils.SimpleTokenizer._
 import com.intel.analytics.bigdl.example.utils.{SimpleTokenizer, WordMeta}
-import com.intel.analytics.bigdl.nn.ClassNLLCriterion
 import com.intel.analytics.bigdl.optim._
 import com.intel.analytics.bigdl.tensor.Tensor
 import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric.NumericFloat
-
 import com.intel.analytics.bigdl.utils.LoggerFilter
 import com.intel.analytics.zoo.common.NNContext
 import com.intel.analytics.zoo.models.textclassification.TextClassifier
+import com.intel.analytics.zoo.pipeline.api.keras.metrics.Accuracy
+import com.intel.analytics.zoo.pipeline.api.keras.objectives.SparseCategoricalCrossEntropy
 import org.apache.log4j.{Level => Level4j, Logger => Logger4j}
 import org.apache.spark.SparkConf
-
 import org.apache.spark.rdd.RDD
 import org.slf4j.{Logger, LoggerFactory}
 import scopt.OptionParser
@@ -69,7 +68,7 @@ object TextClassification {
     val categoryPathList = new File(dir).listFiles().filter(_.isDirectory).toList.sorted
 
     categoryPathList.foreach { categoryPath =>
-      val label_id = categoryToLabel.size() + 1
+      val label_id = categoryToLabel.size()
       categoryToLabel.put(categoryPath.getName(), label_id)
       val textFiles = categoryPath.listFiles()
         .filter(_.isFile).filter(_.getName.forall(Character.isDigit(_))).sorted
@@ -208,21 +207,24 @@ object TextClassification {
       val optimizer = Optimizer(
         model = model,
         sampleRDD = trainingRDD,
-        criterion = ClassNLLCriterion[Float](logProbAsInput = false),
+        criterion = SparseCategoricalCrossEntropy[Float](),
         batchSize = param.batchSize
       )
 
       optimizer
         .setOptimMethod(new Adagrad(learningRate = param.learningRate,
           learningRateDecay = 0.001))
-        .setValidation(Trigger.everyEpoch, valRDD, Array(new Top1Accuracy), param.batchSize)
+        .setValidation(Trigger.everyEpoch, valRDD, Array(new Accuracy), param.batchSize)
         .setEndWhen(Trigger.maxEpoch(param.nbEpoch))
         .optimize()
 
       // Predict for probability distributions
       val results = model.predict(valRDD)
+      results.take(5)
       // Predict for labels
-      val resultClasses = model.predictClass(valRDD)
+      val resultClasses = model.predictClasses(valRDD)
+      println("First five class predictions (label starts from 0):")
+      resultClasses.take(5).foreach(println)
 
       sc.stop()
     }
