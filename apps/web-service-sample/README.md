@@ -26,15 +26,16 @@ Download the word vectorized embedding map, for example
    bash ${ANALYTICS_ZOO_HOME}/bin/data/glove/get_glove.sh dir
    ```
    where `ANALYTICS_ZOO_HOME` is the `dist` directory under the Analytics Zoo project and `dir` is the directory you wish to locate the downloaded data. If `dir` is not specified, the data will be downloaded to the current working directory. 
-   Set the environment variables of the system as follow, can either by editing the configuratons or exporting into system:
+   Set the environment variable as follow, can either by editing the configuratons or exporting into system:
    ```
    EMBEDDING_PATH="the file path of the embedding map"
    ```
    
-### Prepare Model(Optional)
-This sample will use the pre-trained model in resources as default.
-Otherwise, you can prepare the text classification model by yourself: [Text Classification Model Trainning Example](https://github.com/intel-analytics/analytics-zoo/tree/master/zoo/src/main/scala/com/intel/analytics/zoo/examples/textclassification).
-And don't forget to set the model path as the environment variables as below:
+### Prepare Model (Optional)
+* This sample will use the pre-trained model in resources as default, therefore, preparing the model is not a must.
+
+Otherwise, you can prepare the text classification model by yourself, see [Text Classification Model Trainning Example](https://github.com/intel-analytics/analytics-zoo/tree/master/zoo/src/main/scala/com/intel/analytics/zoo/examples/textclassification).
+And don't forget to set the model path as the environment variable as below:
 ```
 modelPath="the file path of text classification model"
 ```
