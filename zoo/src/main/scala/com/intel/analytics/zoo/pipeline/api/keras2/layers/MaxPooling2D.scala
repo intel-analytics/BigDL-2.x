@@ -11,7 +11,7 @@
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
- * limitations under the License.
+ * limitations under the Licenses.
  */
 package com.intel.analytics.zoo.pipeline.api.keras2.layers
 
@@ -39,7 +39,7 @@ import scala.reflect.ClassTag
  * @param dataFormat Format of input data. Either DataFormat.NCHW (dataFormat='channels_first') or
  *                    DataFormat.NHWC (dataFormat='channels_last'). Default is NCHW.
  * @param inputShape A Single Shape, does not include the batch dimension.
- * @tparam T Numeric type of parameter(e.g. weight, bias). Only support float/double now.
+ * @tparam T Numeric type of parameter(e.g. weight, bias). Only support float/double now
  */
 class MaxPooling2D[T: ClassTag](
       override val poolSize: Array[Int] = Array(2, 2),

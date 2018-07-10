@@ -192,7 +192,7 @@ class MaxPooling2D(ZooKeras2Layer):
                   Default is channels_first.
     input_shape: A shape tuple, not including batch.
     name: String to set the name of the layer.
-          If not specified, its name will by default to be a generated string.
+          If not specified, its name will by default to be a generated string .
 
     >>> maxpooling2d = MaxPooling2D((2, 2), input_shape=(3, 32, 32))
     creating: createZooKeras2MaxPooling2D
@@ -232,7 +232,7 @@ class MaxPooling3D(ZooKeras2Layer):
     data_format: Format of input data. Only channels_first is supported for now.
     input_shape: A shape tuple, not including batch.
     name: String to set the name of the layer.
-          If not specified, its name will by default to be a generated string.
+          If not specified, its name will by default to be a generated string .
 
     >>> maxpooling3d = MaxPooling3D((2, 1, 3), input_shape=(3, 32, 32, 32))
     creating: createZooKeras2MaxPooling3D
