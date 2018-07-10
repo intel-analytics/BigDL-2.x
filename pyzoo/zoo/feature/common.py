@@ -37,7 +37,8 @@ class Preprocessing(JavaValue):
         # move the import here to break circular import
         if "zoo.feature.image.imageset.ImageSet" not in sys.modules:
             from zoo.feature.image import ImageSet
-        if type(input) is ImageSet:
+        # if type(input) is ImageSet:
+        if isinstance(input, ImageSet):
             jset = callBigDlFunc(bigdl_type, "transformImageSet", self.value, input)
             return ImageSet(jvalue=jset)
 
