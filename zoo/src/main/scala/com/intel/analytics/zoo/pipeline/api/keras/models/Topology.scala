@@ -44,7 +44,6 @@ import scala.collection.mutable.ArrayBuffer
 import scala.reflect.ClassTag
 import scala.language.implicitConversions
 
-
 abstract class KerasNet[T: ClassTag](implicit ev: TensorNumeric[T])
   extends KerasLayer[Activity, Activity, T] with Net {
 
@@ -356,6 +355,14 @@ abstract class KerasNet[T: ClassTag](implicit ev: TensorNumeric[T])
     this.evaluate(x, this.vMethods)
   }
 
+  def evaluate(
+      x: ImageSet,
+      batchSize: Int)
+      (implicit ev: TensorNumeric[T]): Array[(ValidationResult, ValidationMethod[T])] = {
+    require(this.vMethods != null, "Evaluation metrics haven't been set yet")
+    evaluateImage(x.toImageFrame(), this.vMethods, Some(batchSize))
+  }
+
   /**
    * Use a model to do prediction.
    *
@@ -378,6 +385,10 @@ abstract class KerasNet[T: ClassTag](implicit ev: TensorNumeric[T])
       batchSize: Int)(implicit ev: TensorNumeric[T]): Array[Activity] = {
     val localPredictor = LocalPredictor(this, batchPerCore = KerasUtils.calBatchPerCore(batchSize))
     localPredictor.predict(x)
+  }
+
+  def predict(x: ImageSet): ImageSet = {
+    ImageSet.fromImageFrame(predictImage(x.toImageFrame()))
   }
 
   /**
