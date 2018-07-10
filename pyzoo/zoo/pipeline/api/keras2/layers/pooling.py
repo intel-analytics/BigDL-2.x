@@ -194,7 +194,7 @@ class MaxPooling2D(ZooKeras2Layer):
     name: String to set the name of the layer.
           If not specified, its name will by default to be a generated string.
 
-    >>> maxpooling2d = MaxPooling2D((2, 2), input_shape=(3, 32, 32), name="maxpooling2d_1")
+    >>> maxpooling2d = MaxPooling2D((2, 2), input_shape=(3, 32, 32))
     creating: createZooKeras2MaxPooling2D
     """
     def __init__(self,
@@ -216,7 +216,7 @@ class MaxPooling2D(ZooKeras2Layer):
 class MaxPooling3D(ZooKeras2Layer):
     """
     Applies max pooling operation for 3D data (spatial or spatio-temporal).
-    Data format currently supported for this layer is dim_ordering='th' (Channel First).
+    Data format currently supported for this layer is data_format = channels_first).
     Padding currently supported for this layer is 'valid'.
     The input of this layer should be 5D.
 

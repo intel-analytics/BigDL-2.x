@@ -25,7 +25,7 @@ import scala.reflect.ClassTag
 
 /**
  * Applies max pooling operation for 3D data (spatial or spatio-temporal).
- * Data format currently supported for this layer is 'CHANNEL_FIRST' (dimOrdering='th').
+ * Data format currently supported for this layer is 'channels_first'.
  * Padding currently supported for this layer is 'valid'.
  * The input of this layer should be 5D.
  *

@@ -24,7 +24,10 @@ import com.intel.analytics.bigdl.python.api.PythonBigDLKeras
 import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric
 import com.intel.analytics.zoo.pipeline.api.Net
 import com.intel.analytics.zoo.pipeline.api.autograd.Variable
-import com.intel.analytics.zoo.pipeline.api.keras2.layers.{Conv1D, Dense, MaxPooling1D, AveragePooling1D, Maximum, Minimum}
+import com.intel.analytics.zoo.pipeline.api.keras.layers.MaxPooling2D
+import com.intel.analytics.zoo.pipeline.api.keras.layers.utils.KerasUtils
+import com.intel.analytics.zoo.pipeline.api.keras2.layers.{AveragePooling1D, Conv1D, Dense, MaxPooling1D, Maximum, Minimum}
+import com.intel.analytics.zoo.pipeline.api.keras2.layers.utils.{KerasUtils=>Keras2Utils}
 import scala.collection.JavaConverters._
 import com.intel.analytics.zoo.pipeline.api.keras2.layers._
 
@@ -142,29 +145,23 @@ class PythonZooKeras2[T: ClassTag](implicit ev: TensorNumeric[T]) extends Python
   }
 
   def createZooKeras2MaxPooling2D(
-      poolSize: (Int, Int) = (2, 2),
-      strides: (Int, Int) = null,
+      poolSize: JList[Int],
+      strides: JList[Int],
       padding: String = "valid",
       dataFormat: String = "channels_first",
       inputShape: JList[Int] = null): MaxPooling2D[T] = {
-    MaxPooling2D(
-      poolSize,
-      strides,
-      padding,
-      dataFormat,
-      toScalaShape(inputShape))
+    new MaxPooling2D[T](toScalaArray(poolSize), toScalaArray(strides),
+      padding, Keras2Utils.toBigDLFormat(dataFormat), toScalaShape(inputShape))
   }
 
   def createZooKeras2MaxPooling3D(
-      poolSize: (Int, Int, Int) = (2, 2, 2),
-      strides: (Int, Int, Int) = null,
+      poolSize: JList[Int],
+      strides: JList[Int],
+      padding: String = "valid",
       dataFormat: String = "channels_first",
-      inputShape: JList[Int] = null): MaxPooling3D[T] = {
-    MaxPooling3D(
-      poolSize,
-      strides,
-      dataFormat,
-      toScalaShape(inputShape))
+      inputShape: JList[Int] = null): MaxPooling2D[T] = {
+    new MaxPooling2D[T](toScalaArray(poolSize), toScalaArray(strides),
+      padding, Keras2Utils.toBigDLFormat(dataFormat), toScalaShape(inputShape))
   }
 
 
