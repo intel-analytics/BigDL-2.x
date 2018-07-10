@@ -25,9 +25,11 @@ import com.intel.analytics.bigdl.nn.{Container, Graph, StaticGraph, Sequential =
 import com.intel.analytics.bigdl.optim._
 import com.intel.analytics.bigdl.serialization.Bigdl.BigDLModule
 import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric
+import com.intel.analytics.bigdl.transform.vision.image.ImageFeatureToMiniBatch
 import com.intel.analytics.bigdl.utils.{Edge, LoggerFilter, Node, Shape}
 import com.intel.analytics.bigdl.utils.serializer.{DeserializeContext, ModuleData, ModuleSerializer, SerializeContext}
 import com.intel.analytics.bigdl.visualization.{TrainSummary, ValidationSummary}
+import com.intel.analytics.zoo.feature.image.ImageSet
 import com.intel.analytics.zoo.pipeline.api.Net
 import com.intel.analytics.zoo.pipeline.api.autograd.{Lambda, Variable}
 import com.intel.analytics.zoo.pipeline.api.autograd._
@@ -175,8 +177,19 @@ abstract class KerasNet[T: ClassTag](implicit ev: TensorNumeric[T])
     this.clipNorm = Some(clipNorm)
   }
 
+  /**
+   * Convert RDD of Sample to DataSet of MiniBatch.
+   */
   private def toDataSet(x: RDD[Sample[T]], batchSize: Int): DataSet[MiniBatch[T]] = {
     if (x != null) DataSet.rdd(x) -> SampleToMiniBatch[T](batchSize)
+    else null
+  }
+
+  /**
+   * Convert ImageSet to DataSet of MiniBatch.
+   */
+  private def toDataSet(x: ImageSet, batchSize: Int): DataSet[MiniBatch[T]] = {
+    if (x != null) x.toDataSet() -> ImageFeatureToMiniBatch[T](batchSize)
     else null
   }
 
@@ -249,6 +262,21 @@ abstract class KerasNet[T: ClassTag](implicit ev: TensorNumeric[T])
     this.fit(toDataSet(x, batchSize), nbEpoch, toDataSet(validationData, batchSize))
   }
 
+  def fit(
+      x: ImageSet,
+      batchSize: Int,
+      nbEpoch: Int,
+      validationData: ImageSet)(implicit ev: TensorNumeric[T]): Unit = {
+    this.fit(toDataSet(x, batchSize), nbEpoch, toDataSet(validationData, batchSize))
+  }
+
+  def fit(
+      x: ImageSet,
+      batchSize: Int,
+      nbEpoch: Int)(implicit ev: TensorNumeric[T]): Unit = {
+    this.fit(toDataSet(x, batchSize), nbEpoch, null)
+  }
+
   /**
    * Evaluate a model on a given dataset.
    *
@@ -291,8 +319,10 @@ abstract class KerasNet[T: ClassTag](implicit ev: TensorNumeric[T])
    *
    * @param x Prediction data, LocalDataSet.
    */
-  def predict(x: LocalDataSet[MiniBatch[T]])(implicit ev: TensorNumeric[T]): Array[Activity] = {
-    val localPredictor = LocalPredictor(this)
+  def predict(
+      x: LocalDataSet[MiniBatch[T]],
+      batchSize: Int)(implicit ev: TensorNumeric[T]): Array[Activity] = {
+    val localPredictor = LocalPredictor(this, batchPerCore = KerasUtils.calBatchPerCore(batchSize))
     localPredictor.predict(x)
   }
 
