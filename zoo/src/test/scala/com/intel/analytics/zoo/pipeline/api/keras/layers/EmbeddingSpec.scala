@@ -42,6 +42,19 @@ class EmbeddingSpec extends KerasBaseSpec {
     val gradInput = seq.backward(input, output)
   }
 
+  "Glove Embedding" should "work properly" in {
+    val wordIndex = Map("the" -> 1, "will" -> 2)
+    val seq = Sequential[Float]()
+    val layer = EmbeddingGloVe[Float]("glove.6B.50d", "/home/kai/glove.6B",
+      wordIndex, true, inputShape = Shape(1))
+    seq.add(layer)
+    val input = Tensor[Float](2, 1)
+    input(Array(1, 1)) = 1
+    input(Array(2, 1)) = 2
+    val output = seq.forward(input)
+    println("111")
+  }
+
 }
 
 class EmbeddingSerialTest extends ModuleSerializationTest {
