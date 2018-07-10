@@ -14,10 +14,18 @@ public class GreetingController {
 
     private static final String template = "Hello, %s!";
     private final AtomicLong counter = new AtomicLong();
-    private String baseDir = System.getProperty("baseDir", "/home/yidiyang/workspace");
-    private String modelPath = System.getProperty("modelPath", baseDir + "/model/textClassification/textClassificationModel");
-    private TextClassificationModel model = new TextClassificationModel(1, 500);
+    private String current = System.getProperty("user.dir");
+    private String modelPath = System.getProperty("modelPath", current + "/resources/textClassificationModel");
+    private int stopWordsCount = 1;
+    private int sequenceLength = 500;
+    private TextClassificationModel model;
     private Logger logger = LoggerFactory.getLogger(this.getClass());
+
+    public GreetingController(){
+        this.model = new TextClassificationModel(this.stopWordsCount, this.sequenceLength);
+        //default to use the model in resuources
+        this.model.load(this.modelPath);
+    }
 
     @RequestMapping(value = "/greeting")
     public Greeting greeting(@RequestParam(value = "name", defaultValue = "World") String name) {

@@ -8,7 +8,9 @@ public class TextClassificationSample {
     public void main(String[] args) {
         String baseDir = System.getProperty("baseDir", "/home/yidiyang/workspace");
         String modelPath = System.getProperty("modelPath", baseDir + "/model/textClassification/textClassificationModel");
-        TextClassificationModel model = new TextClassificationModel(1, 500);
+        int stopWordsCount = 1;
+        int sequenceLength = 500;
+        TextClassificationModel model = new TextClassificationModel(stopWordsCount, sequenceLength);
         long begin = System.currentTimeMillis();
         String sampleText = "it is for test";
         JTensor input = model.preProcess(sampleText);

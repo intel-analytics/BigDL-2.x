@@ -83,8 +83,8 @@
 
     <distributionManagement>
         <snapshotRepository>
-            <id>nexus</id>
-            <url>http://10.239.45.10:8081/repository/maven-snapshots</url>
+            <id>ossrh</id>
+            <url>https://oss.sonatype.org/content/repositories/snapshots</url>
         </snapshotRepository>
     </distributionManagement>
 
