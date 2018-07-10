@@ -33,7 +33,7 @@ class TestLoss(ZooTestCase):
     # y_pred and y_true are all keras_tensor
     # zloss is a AbstractCriterion
     # The first dim of shape is batch
-    def compareLossWithKeras(self, kkloss_func, zloss, shape, sizeAverageKerasLoss):
+    def compareLossWithKeras(self, kkloss_func, zloss, shape, sizeAverageKerasLoss=True):
 
         y_pred = klayers.Input(shape=shape[1:])
         y_true = klayers.Input(shape=shape[1:])
