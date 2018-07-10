@@ -26,7 +26,6 @@ import json
 import copy
 
 
-
 def export_tf(sess, folder, inputs, outputs,
               generate_backward=False, allow_non_differentiable_input=True):
     """
