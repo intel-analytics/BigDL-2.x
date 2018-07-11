@@ -268,7 +268,7 @@ class MaxPooling2D(ZooKeras2Layer):
     strides: Int tuple of length 2. Stride values.
              Default is None, and in this case it will be equal to pool_size.
     padding: Either 'valid' or 'same'. Default is 'valid'.
-    data_format: Format of input data. Either channels_first or channels_last.
+    data_format: Format of input data. Either 'channels_first' or 'channels_last'.
                   Default is channels_first.
     input_shape: A shape tuple, not including batch.
     name: String to set the name of the layer.
@@ -296,7 +296,7 @@ class MaxPooling2D(ZooKeras2Layer):
 class MaxPooling3D(ZooKeras2Layer):
     """
     Applies max pooling operation for 3D data (spatial or spatio-temporal).
-    Data format currently supported for this layer is data_format = channels_first).
+    Data format currently supported for this layer is data_format = 'channels_first'.
     Padding currently supported for this layer is 'valid'.
     The input of this layer should be 5D.
 
