@@ -166,7 +166,7 @@ class AveragePooling3D(ZooKeras2Layer):
                  padding="valid",
                  data_format="channels_first",
                  input_shape=None,
-                  **kwargs):
+                 **kwargs):
         if padding != "valid":
             raise ValueError("For AveragePooling3D, only padding='valid' is supported for now")
         super(AveragePooling3D, self).__init__(None,
