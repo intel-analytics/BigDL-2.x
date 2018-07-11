@@ -108,8 +108,8 @@ object ImagenetConfig {
       ImageMatToTensor() -> ImageSetToSample()
   }
 
-  def commonPreprocessor(imageResizeSize: Int, imageCropSize : Int, meanR: Float, meanG: Float, meanB: Float,
-    stdR: Float = 1, stdG: Float = 1, stdB: Float = 1):
+  def commonPreprocessor(imageResizeSize: Int, imageCropSize : Int, meanR: Float, meanG: Float, 
+    meanB: Float, stdR: Float = 1, stdG: Float = 1, stdB: Float = 1):
     Preprocessing[ImageFeature, ImageFeature] = {
     ImageResize(imageResizeSize, imageResizeSize) ->
       ImageCenterCrop(imageCropSize, imageCropSize) -> ImageChannelNormalize(meanR, meanG, meanB,
@@ -130,19 +130,20 @@ object ImagenetConfig {
   }
 
   def vggPreprocessor(): Preprocessing[ImageFeature, ImageFeature] = {
-    commonPreprocessor(Consts.IMAGENET_RESIZE,224, 123, 117, 104)
+    commonPreprocessor(Consts.IMAGENET_RESIZE, 224, 123, 117, 104)
   }
 
   def densenetPreprocessor() : Preprocessing[ImageFeature, ImageFeature] = {
-    commonPreprocessor(Consts.IMAGENET_RESIZE,224, 123, 117, 104, 1/0.017f, 1/0.017f, 1/0.017f)
+    commonPreprocessor(Consts.IMAGENET_RESIZE, 224, 123, 117, 104, 1/0.017f, 1/0.017f, 1/0.017f)
   }
 
   def mobilenetPreprocessor() : Preprocessing[ImageFeature, ImageFeature] = {
-    commonPreprocessor(Consts.IMAGENET_RESIZE,224, 123.68f, 116.78f, 103.94f, 1/0.017f, 1/0.017f, 1/0.017f )
+    commonPreprocessor(Consts.IMAGENET_RESIZE, 224, 123.68f, 116.78f, 103.94f, 1/0.017f, 
+      1/0.017f, 1/0.017f )
   }
 
   def squeezenetPreprocessor(): Preprocessing[ImageFeature, ImageFeature] = {
-    commonPreprocessor(Consts.IMAGENET_RESIZE,227, 123, 117, 104)
+    commonPreprocessor(Consts.IMAGENET_RESIZE, 227, 123, 117, 104)
   }
 
   private def createMean(meanFile : URL) : Array[Float] = {
