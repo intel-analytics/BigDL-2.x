@@ -15,7 +15,7 @@ public class GreetingController {
     private static final String template = "Hello, %s!";
     private final AtomicLong counter = new AtomicLong();
     private String current = System.getProperty("user.dir");
-    private String modelPath = System.getProperty("modelPath",  current + "/resources/textClassificationModel");
+    private String modelPath = System.getProperty("modelPath",  current + "/src/main/resources/textClassificationModel");
     private int stopWordsCount = 1;
     private int sequenceLength = 500;
     private TextClassificationModel model;
