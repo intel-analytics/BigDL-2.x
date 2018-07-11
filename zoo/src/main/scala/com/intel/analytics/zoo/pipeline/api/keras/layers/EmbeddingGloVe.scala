@@ -46,6 +46,11 @@ class EmbeddingGloVe[T: ClassTag] private(
   extends Embedding[T](EmbeddingGloVe.calcInputDimFromTokenIndex(wordIndex),
     EmbeddingGloVe.getOutputDimFromGlove(embeddingType), null, null, inputShape) with Net {
 
+  if (wordIndex != null) {
+    require(! wordIndex.values.exists(_ == 0),
+      "In wordIndex, index should start from 1 with 0 reserved for unknown words.")
+  }
+
   private val embeddingFile: String = gloveDir + "/" + embeddingType + ".txt"
 
   def prepareGlove(): Map[Int, Array[T]] = {
@@ -68,7 +73,7 @@ class EmbeddingGloVe[T: ClassTag] private(
   def buildEmbeddingMatrix(): Tensor[T] = {
     val indexVec = prepareGlove()
     val weights = Tensor[T](inputDim, outputDim).zero()
-    for (i <- 0 until (inputDim -1)) {
+    for (i <- 1 until inputDim) {
       if (indexVec.get(i).isDefined) {
         weights.narrow(1, i + 1, 1).copy(Tensor[T](indexVec(i), Array(outputDim)))
       }

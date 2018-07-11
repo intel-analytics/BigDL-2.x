@@ -37,7 +37,7 @@ import org.apache.spark.rdd.RDD
 import org.slf4j.{Logger, LoggerFactory}
 import scopt.OptionParser
 
-import scala.collection.mutable.{ArrayBuffer, Map => MMap}
+import scala.collection.mutable.ArrayBuffer
 import scala.io.Source
 
 case class TextClassificationParams(baseDir: String = "./",
