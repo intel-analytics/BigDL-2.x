@@ -108,7 +108,7 @@ object ImagenetConfig {
       ImageMatToTensor() -> ImageSetToSample()
   }
 
-  def commonPreprocessor(imageResizeSize: Int, imageCropSize : Int, meanR: Float, meanG: Float, 
+  def commonPreprocessor(imageResizeSize: Int, imageCropSize : Int, meanR: Float, meanG: Float,
     meanB: Float, stdR: Float = 1, stdG: Float = 1, stdB: Float = 1):
     Preprocessing[ImageFeature, ImageFeature] = {
     ImageResize(imageResizeSize, imageResizeSize) ->
@@ -138,7 +138,7 @@ object ImagenetConfig {
   }
 
   def mobilenetPreprocessor() : Preprocessing[ImageFeature, ImageFeature] = {
-    commonPreprocessor(Consts.IMAGENET_RESIZE, 224, 123.68f, 116.78f, 103.94f, 1/0.017f, 
+    commonPreprocessor(Consts.IMAGENET_RESIZE, 224, 123.68f, 116.78f, 103.94f, 1/0.017f,
       1/0.017f, 1/0.017f )
   }
 
