@@ -97,6 +97,86 @@ class AveragePooling1D(ZooKeras2Layer):
                                                **kwargs)
 
 
+class AveragePooling2D(ZooKeras2Layer):
+    """
+    Applies average pooling operation for spatial data.
+    The input of this layer should be 4D.
+
+    When you use this layer as the first layer of a model, you need to provide the argument
+    input_shape (a shape tuple, does not include the batch dimension).
+
+    # Arguments
+    pool_size: Int tuple of length 2 corresponding to the downscale vertically and horizontally.
+               Default is (2, 2), which will halve the image in each dimension.
+    strides: Int tuple of length 2. Stride values.
+             Default is None, and in this case it will be equal to pool_size.
+    padding: Either 'valid' or 'same'. Default is 'valid'.
+    data_format: Format of input data. Either 'channels_first' or 'channels_last'.
+                  Default is 'channels_first'.
+    input_shape: A shape tuple, not including batch.
+    name: String to set the name of the layer.
+          If not specified, its name will by default to be a generated string.
+
+    >>> averagepooling2d = AveragePooling2D((1, 2), input_shape=(2, 28, 32))
+    creating: createZooKeras2AveragePooling2D
+    """
+    def __init__(self,
+                 pool_size=(2, 2),
+                 strides=None,
+                 padding="valid",
+                 data_format="channels_first",
+                 input_shape=None,
+                 **kwargs):
+        super(AveragePooling2D, self).__init__(None,
+                                               pool_size,
+                                               strides,
+                                               padding,
+                                               data_format,
+                                               list(input_shape) if input_shape else None,
+                                               **kwargs)
+
+
+class AveragePooling3D(ZooKeras2Layer):
+    """
+    Applies average pooling operation for 3D data (spatial or spatio-temporal).
+    Data format currently supported for this layer is data_format='channel_first'.
+    Padding currently supported for this layer is 'valid'.
+    The input of this layer should be 5D.
+
+    When you use this layer as the first layer of a model, you need to provide the argument
+    input_shape (a shape tuple, does not include the batch dimension).
+
+    # Arguments
+    pool_size: Int tuple of length 3. Factors by which to downscale (dim1, dim2, dim3).
+               Default is (2, 2, 2), which will halve the image in each dimension.
+    strides: Int tuple of length 3. Stride values.
+             Default is None, and in this case it will be equal to pool_size.
+    padding: Only 'valid' is supported for now.
+    data_format: Format of input data. Only 'channels_first' is supported for now.
+    input_shape: A shape tuple, not including batch.
+    name: String to set the name of the layer.
+          If not specified, its name will by default to be a generated string.
+
+    >>> averagepooling3d = AveragePooling3D((1, 1, 2), input_shape=(3, 28, 32, 36))
+    creating: createZooKeras2AveragePooling3D
+    """
+    def __init__(self,
+                 pool_size=(2, 2, 2),
+                 strides=None,
+                 padding="valid",
+                 data_format="channels_first",
+                 input_shape=None,
+                  **kwargs):
+        if padding != "valid":
+            raise ValueError("For AveragePooling3D, only padding='valid' is supported for now")
+        super(AveragePooling3D, self).__init__(None,
+                                               pool_size,
+                                               strides,
+                                               data_format,
+                                               list(input_shape) if input_shape else None,
+                                               **kwargs)
+
+
 class GlobalAveragePooling1D(ZooKeras2Layer):
 
     """

@@ -137,6 +137,25 @@ class PythonZooKeras2[T: ClassTag](implicit ev: TensorNumeric[T]) extends Python
       toScalaShape(inputShape))
   }
 
+  def createZooKeras2AveragePooling2D(
+      poolSize: JList[Int],
+      strides: JList[Int],
+      padding: String = "valid",
+      dataFormat: String = "channels_first",
+      inputShape: JList[Int] = null): AveragePooling2D[T] = {
+    new AveragePooling2D(toScalaArray(poolSize), toScalaArray(strides),
+      padding, KerasUtils.toBigDLFormat(dataFormat), toScalaShape(inputShape))
+  }
+
+  def createZooKeras2AveragePooling3D(
+      poolSize: JList[Int],
+      strides: JList[Int],
+      dataFormat: String = "channels_first",
+      inputShape: JList[Int] = null): AveragePooling3D[T] = {
+    new AveragePooling3D(toScalaArray(poolSize), toScalaArray(strides),
+      KerasUtils.toBigDLFormat5D(dataFormat), toScalaShape(inputShape))
+  }
+
   def createZooKeras2MaxPooling2D(
       poolSize: JList[Int],
       strides: JList[Int],
