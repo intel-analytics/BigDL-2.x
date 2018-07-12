@@ -36,7 +36,7 @@ import scala.reflect.ClassTag
  *                 Default is (2, 2, 2), which will halve the image in each dimension.
  * @param strides Int array of length 3. Stride values. Default is null, and in this case it will
  *                be equal to poolSize.
- * @param padding Either 'valid' or 'same'. Default is 'valid'.
+ * @param padding  Only 'valid' is supported new .
  * @param dataFormat Format of input data. Please use "channels_first".
  * @param inputShape A Single Shape, does not include the batch dimension.
  * @tparam T Numeric type of parameter(e.g. weight, bias). Only support float/double now
