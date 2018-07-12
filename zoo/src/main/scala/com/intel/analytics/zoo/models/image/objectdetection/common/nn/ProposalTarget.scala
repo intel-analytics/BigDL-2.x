@@ -61,7 +61,7 @@ class ProposalTarget(val roiPerImage: Int, val numClasses: Int)
    * Compute bounding-box regression targets for an image.
    *
    */
-  private[nn] def computeTargets(sampledRois: Tensor[Float],
+  private[objectdetection] def computeTargets(sampledRois: Tensor[Float],
     gtRois: Tensor[Float],
     labels: Tensor[Float]): Tensor[Float] = {
 

@@ -155,7 +155,7 @@ class MultiBoxLoss[T: ClassTag](param: MultiBoxLossParam)
     }
   }
 
-  private[nn] def matchBbox(gtBoxes: Tensor[Float], predBoxes: Tensor[Float])
+  private[objectdetection] def matchBbox(gtBoxes: Tensor[Float], predBoxes: Tensor[Float])
   : (Array[Int], Array[Float]) = {
     val numGt = gtBoxes.size(1)
     if (numGt == 0) return (new Array[Int](0), new Array[Float](0))
