@@ -15,13 +15,13 @@ public class GreetingController {
     private static final String template = "Hello, %s!";
     private final AtomicLong counter = new AtomicLong();
     private String current = System.getProperty("user.dir");
-    private String modelPath = System.getProperty("modelPath",  current + "/src/main/resources/textClassificationModel");
+    private String modelPath = System.getProperty("modelPath", current + "/src/main/resources/textClassificationModel");
     private int stopWordsCount = 1;
     private int sequenceLength = 500;
     private TextClassificationModel model;
     private Logger logger = LoggerFactory.getLogger(this.getClass());
 
-    public GreetingController(){
+    public GreetingController() {
         this.model = new TextClassificationModel(this.stopWordsCount, this.sequenceLength);
         //default to use the model in resuources
         this.model.load(this.modelPath);
@@ -41,7 +41,6 @@ public class GreetingController {
 
     @RequestMapping(value = "/predict", method = {RequestMethod.POST})
     public String webPredict(@RequestBody String text) {
-
         if (!text.isEmpty()) {
             long begin = System.currentTimeMillis();
             JTensor input = model.preProcess(text);
