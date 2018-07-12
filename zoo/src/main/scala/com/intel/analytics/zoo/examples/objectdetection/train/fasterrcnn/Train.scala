@@ -21,13 +21,12 @@ import com.intel.analytics.bigdl.dataset.MiniBatch
 import com.intel.analytics.bigdl.nn.Module
 import com.intel.analytics.bigdl.optim.{Optimizer, _}
 import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric.NumericFloat
-import com.intel.analytics.bigdl.utils.{Engine, LoggerFilter}
+import com.intel.analytics.bigdl.utils.LoggerFilter
 import com.intel.analytics.bigdl.visualization.{TrainSummary, ValidationSummary}
 import com.intel.analytics.zoo.common.NNContext
 import com.intel.analytics.zoo.models.image.common.ImageModel
 import com.intel.analytics.zoo.models.image.objectdetection.common.MeanAveragePrecision
 import com.intel.analytics.zoo.models.image.objectdetection.common.dataset.FrcnnMiniBatch
-//import com.intel.analytics.zoo.models.image.objectdetection.common.dataset.roiimage.FrcnnMiniBatch
 import com.intel.analytics.zoo.models.image.objectdetection.common.nn.FrcnnCriterion
 import com.intel.analytics.zoo.models.image.objectdetection.fasterrcnn.{PostProcessParam,
         PreProcessParam, Utils, VggFRcnn}

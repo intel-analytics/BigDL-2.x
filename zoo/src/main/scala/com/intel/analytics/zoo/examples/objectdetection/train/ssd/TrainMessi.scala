@@ -16,7 +16,6 @@
 
 package com.intel.analytics.zoo.examples.objectdetection.train.ssd
 
-
 import com.intel.analytics.bigdl._
 import com.intel.analytics.bigdl.dataset.MiniBatch
 import com.intel.analytics.bigdl.nn.Module
@@ -41,7 +40,7 @@ object TrainMessi {
 
   LoggerFilter.redirectSparkInfoLogs()
   Logger.getLogger("com.intel.analytics.bigdl.optim").setLevel(Level.INFO)
-  Logger.getLogger("com.intel.analytics.zoo.pipeline.api.objectDetection").setLevel(Level.INFO)
+  Logger.getLogger("com.intel.analytics.zoo").setLevel(Level.INFO)
 
   case class TrainParams(
     trainFolder: String = "./",

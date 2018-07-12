@@ -17,13 +17,12 @@
 package com.intel.analytics.zoo.examples.objectdetection.train.fasterrcnn
 
 import com.intel.analytics.bigdl.nn.Module
-import com.intel.analytics.bigdl.utils.Engine
+import com.intel.analytics.zoo.common.NNContext
 import com.intel.analytics.zoo.models.image.objectdetection.common.{IOUtils, MeanAveragePrecision}
-import com.intel.analytics.zoo.models.image.objectdetection.fasterrcnn.{PostProcessParam,
-        PreProcessParam}
+import com.intel.analytics.zoo.models.image.objectdetection.fasterrcnn.{PostProcessParam, PreProcessParam}
 import com.intel.analytics.zoo.pipeline.api.objectDetection.fasterrcnn.Validator
 import org.apache.log4j.{Level, Logger}
-import org.apache.spark.SparkContext
+import org.apache.spark.{SparkConf}
 import scopt.OptionParser
 
 import scala.io.Source
@@ -33,18 +32,18 @@ object Test {
   Logger.getLogger("org").setLevel(Level.ERROR)
   Logger.getLogger("akka").setLevel(Level.ERROR)
   Logger.getLogger("breeze").setLevel(Level.ERROR)
-  Logger.getLogger("com.intel.analytics.bigdl.pipeline.fasterrcnn").setLevel(Level.INFO)
+  Logger.getLogger("com.intel.analytics.zoo").setLevel(Level.INFO)
 
   case class TestParam(folder: String = "",
     modelType: String = "",
     imageSet: String = "voc_2007_test",
-    bigdlModel: String = "",
+    model: String = "",
     className: String = "",
     batch: Int = 1,
     nPartition: Int = -1)
 
-  val testParamParser = new OptionParser[TestParam]("BigDL Test") {
-    head("BigDL Test")
+  val testParamParser = new OptionParser[TestParam]("Analyics Zoo fasterrcnn Test") {
+    head("Analyics Zoo fasterrcnn Test")
     opt[String]('f', "folder")
       .text("where you put the PascolVoc data")
       .action((x, c) => c.copy(folder = x))
@@ -58,8 +57,8 @@ object Test {
       .action((x, c) => c.copy(imageSet = x))
       .required()
     opt[String]("model")
-      .text("bigdl model")
-      .action((x, c) => c.copy(bigdlModel = x))
+      .text("zoo model")
+      .action((x, c) => c.copy(                   model = x))
     opt[String]("class")
       .text("class file")
       .action((x, c) => c.copy(className = x))
@@ -75,16 +74,15 @@ object Test {
 
   def main(args: Array[String]) {
     testParamParser.parse(args, TestParam()).foreach { params =>
-      val conf = Engine.createSparkConf().setAppName(s"BigDL Faster-RCNN Test ${params.bigdlModel}")
-      val sc = new SparkContext(conf)
-      Engine.init
+      val conf = new SparkConf().setAppName(s"Analytics Zoo Faster-RCNN Test ${params.model}")
+      val sc = NNContext.initNNContext(conf)
 
       val classes = Source.fromFile(params.className).getLines().toArray
       val evaluator = new MeanAveragePrecision(true, normalized = false,
         classes = classes)
       val rdd = IOUtils.loadSeqFiles(params.nPartition, params.folder, sc)
 
-      val model = Module.loadModule[Float](params.bigdlModel)
+      val model = Module.loadModule[Float](params.model)
 
       val (preParam, postParam) = params.modelType.toLowerCase() match {
         case "vgg16" =>

@@ -18,7 +18,6 @@ package com.intel.analytics.zoo.examples.objectdetection.train.ssd
 
 import com.intel.analytics.bigdl._
 import com.intel.analytics.bigdl.dataset.MiniBatch
-import com.intel.analytics.bigdl.nn.Module
 import com.intel.analytics.bigdl.optim.SGD._
 import com.intel.analytics.bigdl.optim.{Optimizer, _}
 import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric.NumericFloat
