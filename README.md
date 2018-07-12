@@ -24,7 +24,7 @@ Analytics Zoo makes it easy to build deep learning application on Spark and BigD
 
 - For more information, You may refer to the [Analytis Zoo document website](https://analytics-zoo.github.io/)
 
-- For additional questions and discussions, you can join the [Google User Group](https://groups.google.com/forum/#!forum/bigdl-user-group) (or subscribe to the [Mail List](bigdl-user-group+subscribe@googlegroups.com)) 
+- For additional questions and discussions, you can join the [Google User Group](https://groups.google.com/forum/#!forum/bigdl-user-group) (or subscribe to the [Mail List](mailto:bigdl-user-group+subscribe@googlegroups.com)) 
 
 ---
 
