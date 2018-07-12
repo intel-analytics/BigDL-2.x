@@ -64,8 +64,8 @@ class Validator(model: Module[Float],
   postprocessor.thresh = postPrecessParam.thresh
 
 
-  def test(imageFrame: RDD[ByteRecord]): Float = {
-    Validator.test(imageFrame, model, preProcessor, evaluator)
+  def test(imageSet: RDD[ByteRecord]): Float = {
+    Validator.test(imageSet, model, preProcessor, evaluator)
   }
 }
 

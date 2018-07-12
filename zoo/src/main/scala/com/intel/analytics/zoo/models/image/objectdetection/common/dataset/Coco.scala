@@ -21,7 +21,8 @@ import java.nio.file.Paths
 
 import com.intel.analytics.bigdl.tensor.{Storage, Tensor}
 import com.intel.analytics.bigdl.transform.vision.image.label.roi.RoiLabel
-import com.intel.analytics.bigdl.transform.vision.image.{ImageFeature, ImageFrame, LocalImageFrame}
+import com.intel.analytics.bigdl.transform.vision.image.ImageFeature
+import com.intel.analytics.zoo.feature.image.{ImageSet, LocalImageSet}
 import org.apache.commons.io.FileUtils
 import org.apache.log4j.Logger
 
@@ -31,7 +32,7 @@ import scala.util.parsing.json.JSON
 
 class Coco(val imageSet: String, devkitPath: String) extends Imdb {
 
-  override def getRoidb(readImage: Boolean = true): LocalImageFrame = {
+  override def getRoidb(readImage: Boolean = true): LocalImageSet = {
     val imageSetFile = Paths.get(devkitPath, "ImageSets", s"$imageSet.txt").toFile
     assert(imageSetFile.exists(), "Path does not exist " + imageSetFile.getAbsolutePath)
     val array = Source.fromFile(imageSetFile).getLines()
@@ -41,7 +42,7 @@ class Coco(val imageSet: String, devkitPath: String) extends Imdb {
       ImageFeature(image, Coco.loadAnnotation(devkitPath + "/" + x(1)), imagePath)
     }).toArray
 
-    ImageFrame.array(array)
+    ImageSet.array(array)
   }
 }
 

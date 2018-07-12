@@ -19,14 +19,15 @@ package com.intel.analytics.zoo.models.image.objectdetection.common.dataset
 import java.io.File
 import java.nio.file.Paths
 
-import com.intel.analytics.bigdl.transform.vision.image.{ImageFeature, ImageFrame, LocalImageFrame}
+import com.intel.analytics.bigdl.transform.vision.image.ImageFeature
+import com.intel.analytics.zoo.feature.image.{ImageSet, LocalImageSet}
 
 import scala.io.Source
 
 
 class CustomizedDataSet(val imageSet: String, devkitPath: String) extends Imdb {
 
-  def getRoidb(readImage: Boolean = true): LocalImageFrame = {
+  def getRoidb(readImage: Boolean = true): LocalImageSet = {
     val classFile = new File(devkitPath + "/" + "classname.txt")
     require(classFile.exists(), s"if labelMap is null," +
       s" there should be a classname.txt in $devkitPath")
@@ -42,7 +43,7 @@ class CustomizedDataSet(val imageSet: String, devkitPath: String) extends Imdb {
         imagePath)
     }).toArray
 
-    ImageFrame.array(array)
+    ImageSet.array(array)
   }
 
   def getLabelMap(labelFile: String): Map[String, Float] = {

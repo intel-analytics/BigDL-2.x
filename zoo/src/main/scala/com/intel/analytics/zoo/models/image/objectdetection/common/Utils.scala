@@ -21,7 +21,8 @@ import java.io.File
 import com.intel.analytics.bigdl.nn.Graph._
 import com.intel.analytics.bigdl.nn.{ReLU, SpatialConvolution, Xavier, Zeros}
 import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric
-import com.intel.analytics.bigdl.transform.vision.image.{ImageFeature, ImageFrame, LocalImageFrame}
+import com.intel.analytics.bigdl.transform.vision.image.ImageFeature
+import com.intel.analytics.zoo.feature.image.{ImageSet, LocalImageSet}
 import com.intel.analytics.zoo.models.image.objectdetection.common.dataset.roiimage.ByteRecord
 import org.apache.hadoop.io.Text
 import org.apache.spark.SparkContext
@@ -36,13 +37,13 @@ object IOUtils {
       nPartition).map(x => ByteRecord(x._2.copyBytes(), x._1.toString))
   }
 
-  def localImagePaths(folder: String): LocalImageFrame = {
+  def localImagePaths(folder: String): LocalImageSet = {
     val arr = new File(folder).listFiles().map(x => {
       val imf = ImageFeature()
       imf(ImageFeature.uri) = x.getAbsolutePath
       imf
     })
-    ImageFrame.array(arr)
+    ImageSet.array(arr)
   }
 }
 

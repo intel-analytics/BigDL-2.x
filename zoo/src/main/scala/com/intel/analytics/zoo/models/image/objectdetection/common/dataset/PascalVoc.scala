@@ -21,7 +21,8 @@ import java.nio.file.Paths
 
 import com.intel.analytics.bigdl.tensor.{Storage, Tensor}
 import com.intel.analytics.bigdl.transform.vision.image.label.roi.RoiLabel
-import com.intel.analytics.bigdl.transform.vision.image.{ImageFeature, ImageFrame, LocalImageFrame}
+import com.intel.analytics.bigdl.transform.vision.image.ImageFeature
+import com.intel.analytics.zoo.feature.image.{ImageSet, LocalImageSet}
 
 import scala.Array._
 import scala.io.Source
@@ -49,7 +50,7 @@ class PascalVoc(val year: String = "2007", val imageSet: String,
 
   def annotationPath(index: String): String = "Annotations/" + index + ".xml"
 
-  override def getRoidb(readImage: Boolean = true): LocalImageFrame = {
+  override def getRoidb(readImage: Boolean = true): LocalImageSet = {
     val list = if (year == "0712") Array("2007", "2012") else Array(year)
     var imdexToPaths = Map[String, (String, String)]()
     list.foreach(y => {
@@ -69,7 +70,7 @@ class PascalVoc(val year: String = "2007", val imageSet: String,
       ImageFeature(image,
         PascalVoc.loadAnnotation(x._2._2, PascalVoc.classToInd), x._2._1)
     }).toArray
-    ImageFrame.array(array)
+    ImageSet.array(array)
   }
 }
 

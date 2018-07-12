@@ -19,11 +19,12 @@ package com.intel.analytics.zoo.models.image.objectdetection.common.dataset
 import java.io.File
 import java.util.concurrent.atomic.AtomicInteger
 
-import com.intel.analytics.bigdl.transform.vision.image.{ImageFeature, LocalImageFrame}
+import com.intel.analytics.bigdl.transform.vision.image.ImageFeature
+import com.intel.analytics.zoo.feature.image.LocalImageSet
 import org.apache.commons.io.FileUtils
 
 trait Imdb {
-  def getRoidb(readImage: Boolean = true): LocalImageFrame
+  def getRoidb(readImage: Boolean = true): LocalImageSet
 
   def loadImage(imagePath: String): Array[Byte] = {
     FileUtils.readFileToByteArray(new File(imagePath))
