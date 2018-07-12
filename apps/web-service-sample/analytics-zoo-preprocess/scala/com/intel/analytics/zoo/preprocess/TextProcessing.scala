@@ -3,6 +3,9 @@ package com.intel.analytics.zoo.preprocess
 import scala.collection.mutable.ArrayBuffer
 import scala.collection.immutable.ListMap
 import scala.collection.mutable.{Map => MMap}
+import java.util.{Map => JMap}
+import java.lang.{Float => JFloat}
+import java.util.{List => JList}
 import scala.io.Source
 
 trait TextProcessing {
@@ -62,6 +65,27 @@ trait TextProcessing {
     val shapedTokens = doShaping(doStopWords(tokens, stopWordsCount), sequenceLength)
     val embMap = doLoadEmbedding(sys.env("EMBEDDING_PATH"))
     val vectorizedTokens = doVectorize(shapedTokens, embMap)
+    vectorizedTokens
+  }
+
+  def doVectorizeWithJMap(tokens: List[String], embMap:JMap[String, JList[JFloat]]): List[JList[JFloat]] = {
+    val tokensToCoefs = ArrayBuffer[JList[JFloat]]()
+    for (token <- tokens if token != "" && embMap.containsKey(token)){
+      tokensToCoefs.append(embMap(token))
+    }
+    val coefSize = tokensToCoefs(0).size()
+    if(tokensToCoefs.size < tokens.size){
+      val coefZero = List.fill[JFloat](coefSize)(float2Float(0)).asInstanceOf[JList[JFloat]]
+      val newArray = Array.fill(tokens.size - tokensToCoefs.size)(coefZero)
+      tokensToCoefs ++= newArray
+    }
+    tokensToCoefs.toList
+  }
+
+  def doPreprocessWithEmbMap(text: String, stopWordsCount: Int, sequenceLength: Int,  embMap:JMap[String, JList[JFloat]]): List[JList[JFloat]] = {
+    val tokens = doTokenize(text)
+    val shapedTokens = doShaping(doStopWords(tokens, stopWordsCount), sequenceLength)
+    val vectorizedTokens = doVectorizeWithJMap(shapedTokens, embMap)
     vectorizedTokens
   }
 }

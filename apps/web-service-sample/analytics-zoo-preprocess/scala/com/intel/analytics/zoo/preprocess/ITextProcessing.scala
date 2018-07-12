@@ -79,26 +79,9 @@ abstract class ITextProcessing extends TextProcessing {
   }
 
   def preprocessWithEmbMap(text: String, stopWordsCount: Int, sequenceLength: Int, embeddingMap: JMap[String, JList[JFloat]]): JTensor={
-    val scalaMap = MMap[String, List[Float]]()
-    embeddingMap.keys.foreach( key => {
-      val tempArray = ArrayBuffer[Float]()
-      for (tmpFloat <- embeddingMap(key)) {
-        tempArray.add(tmpFloat.asInstanceOf[Float])
-      }
-      scalaMap.put(key, tempArray.toArray.toList)
-    })
-    val inputList = doPreprocessWithEmbMap(text, stopWordsCount, sequenceLength, scalaMap.toMap)
-    val tempArray = ArrayBuffer[JList[JFloat]]()
-    for (tempList <- inputList) {
-      val javaList = ArrayBuffer[JFloat]()
-      for(tempFloat <- tempList) {
-        javaList.add(tempFloat.asInstanceOf[JFloat])
-      }
-      tempArray.add(javaList.toArray.toList.asJava)
-    }
-    val input = tempArray.toArray.toList.asJava
-    val data = input.flatten
-    val shape = List(input.size().asInstanceOf[JInt],input.get(0).length.asInstanceOf[JInt])
+    val inputList = doPreprocessWithEmbMap(text, stopWordsCount, sequenceLength, embeddingMap)
+    val data = inputList.asJava.flatten
+    val shape = List(inputList.size().asInstanceOf[JInt],inputList.get(0).length.asInstanceOf[JInt])
     val tensorInput = new JTensor(data.asJava, shape.asJava)
     tensorInput
   }
