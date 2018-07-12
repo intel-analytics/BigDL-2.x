@@ -43,7 +43,7 @@ class AveragePooling2DSpec extends KerasBaseSpec {
       kerasCode)
   }
 
-  "AveragePooling2D NHWC" should "be the same as Keras" in {
+  "AveragePooling2D NHWC" should "be the same as Keras" taggedAs(Keras2Test) in {
     val kerasCode =
       """
         |input_tensor = Input(shape=[20, 32, 4])

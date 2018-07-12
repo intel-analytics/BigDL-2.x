@@ -36,6 +36,7 @@ import scala.reflect.ClassTag
  *                 Default is (2, 2, 2), which will halve the image in each dimension.
  * @param strides Int array of length 3. Stride values. Default is null, and in this case it will
  *                be equal to poolSize.
+ * @param padding Either 'valid' or 'same'. Default is 'valid'.
  * @param dataFormat Format of input data. Please use "channels_first".
  * @param inputShape A Single Shape, does not include the batch dimension.
  * @tparam T Numeric type of parameter(e.g. weight, bias). Only support float/double now
@@ -43,16 +44,19 @@ import scala.reflect.ClassTag
 class MaxPooling3D[T: ClassTag](
       override val poolSize: Array[Int] = Array(2, 2, 2),
       override val strides: Array[Int] = null,
+      val padding: String = "valid",
       val dataFormat: String = "channels_first",
       override val inputShape: Shape = null)(implicit ev: TensorNumeric[T])
   extends klayers1.MaxPooling3D[T](
-    poolSize, strides, dimOrdering = dataFormat, inputShape) with Net {
+    poolSize = poolSize, strides = strides, dimOrdering = dataFormat,
+    inputShape = inputShape) with Net {
 }
 
 object MaxPooling3D {
   def apply[@specialized(Float, Double) T: ClassTag](
       poolSize: (Int, Int, Int) = (2, 2, 2),
       strides: (Int, Int, Int) = null,
+      padding: String = "valid",
       dataFormat: String = "channels_first",
       inputShape: Shape = null)(implicit ev: TensorNumeric[T]): MaxPooling3D[T] = {
     val poolSizeArray = poolSize match {
@@ -64,7 +68,7 @@ object MaxPooling3D {
       case null => null
       case _ => Array(strides._1, strides._2, strides._3)
     }
-    new MaxPooling3D[T](poolSizeArray, strideArray,
+    new MaxPooling3D[T](poolSizeArray, strideArray, padding,
       KerasUtils.toBigDLFormat5D(dataFormat), inputShape)
   }
 }

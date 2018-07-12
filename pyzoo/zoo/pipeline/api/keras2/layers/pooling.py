@@ -320,12 +320,14 @@ class MaxPooling3D(ZooKeras2Layer):
     def __init__(self,
                  pool_size=(2, 2, 2),
                  strides=None,
+                 padding="valid",
                  data_format="channels_first",
                  input_shape=None,
                  **kwargs):
         super(MaxPooling3D, self).__init__(None,
                                            pool_size,
                                            strides,
+                                           padding,
                                            data_format,
                                            list(input_shape) if input_shape else None,
                                            **kwargs)

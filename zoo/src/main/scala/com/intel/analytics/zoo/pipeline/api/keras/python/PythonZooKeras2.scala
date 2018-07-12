@@ -21,6 +21,8 @@ import java.util.{List => JList}
 import com.intel.analytics.bigdl.optim.Regularizer
 import com.intel.analytics.bigdl.python.api.PythonBigDLKeras
 import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric
+import com.intel.analytics.zoo.pipeline.api.Net
+import com.intel.analytics.zoo.pipeline.api.autograd.Variable
 import com.intel.analytics.zoo.pipeline.api.keras2.layers.utils.KerasUtils
 import com.intel.analytics.zoo.pipeline.api.keras2.layers._
 
@@ -169,10 +171,11 @@ class PythonZooKeras2[T: ClassTag](implicit ev: TensorNumeric[T]) extends Python
   def createZooKeras2MaxPooling3D(
       poolSize: JList[Int],
       strides: JList[Int],
+      padding: String = "valid",
       dataFormat: String = "channels_first",
       inputShape: JList[Int] = null): MaxPooling3D[T] = {
     new MaxPooling3D(toScalaArray(poolSize), toScalaArray(strides),
-      KerasUtils.toBigDLFormat5D(dataFormat), toScalaShape(inputShape))
+      padding, KerasUtils.toBigDLFormat5D(dataFormat), toScalaShape(inputShape))
   }
 
   }
