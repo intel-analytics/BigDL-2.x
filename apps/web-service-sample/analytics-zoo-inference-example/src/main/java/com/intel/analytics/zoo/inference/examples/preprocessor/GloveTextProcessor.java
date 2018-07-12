@@ -7,7 +7,12 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.util.*;
 
-public class GloveTextProcessing extends ITextProcessing {
+public class GloveTextProcessor extends ITextProcessing {
+    public Map<String, List<Float>> embMap;
+
+    public GloveTextProcessor(String embFilePath){
+        embMap = loadEmbedding(embFilePath);
+    }
 
     @Override
     public Map<String, List<Float>> loadEmbedding(String embFilePath) {

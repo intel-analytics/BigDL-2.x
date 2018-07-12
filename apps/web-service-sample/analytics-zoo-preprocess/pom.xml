@@ -12,7 +12,7 @@
 
     <repositories>
         <repository>
-            <id>sonatype</id>
+            <id>ossrh</id>
             <name>sonatype repository</name>
             <url>https://oss.sonatype.org/content/groups/public/</url>
             <releases>

@@ -47,7 +47,6 @@ public class GreetingController {
             JTensor input = model.preProcess(text);
             long end = System.currentTimeMillis();
             long processTime = end - begin;
-            model.load(modelPath);
             begin = System.currentTimeMillis();
             List<JTensor> inputList = new ArrayList<>();
             inputList.add(input);
@@ -64,7 +63,7 @@ public class GreetingController {
                     maxProb = resultDis.get(i);
                 }
             }
-            String time = String.format("Total time elapsed: %d ms. Process Time elapsed : %d, Predict Time elapsed: %d", end - begin, processTime, predictTime);
+            String time = String.format("Process Time elapsed : %d, Predict Time elapsed: %d", processTime, predictTime);
             logger.info(time);
             String answer = String.format("The predict class is:%s\nThe probability distribution is:%s \n", Integer.toString(resultClass), resultDis.toString());
             return answer;

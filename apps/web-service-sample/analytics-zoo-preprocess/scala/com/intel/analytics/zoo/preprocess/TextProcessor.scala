@@ -6,6 +6,7 @@ import java.util.{List => JList}
 import scala.collection.JavaConversions._
 import scala.collection.JavaConverters._
 import scala.collection.mutable.ArrayBuffer
+import com.intel.analytics.zoo.pipeline.inference.JTensor
 
 case class GloveTextProcessor(gloveFilePath: String, stopWordsCount: Int, sequenceLength: Int) extends TextProcessing {
   val embMap = doLoadEmbedding(gloveFilePath)
