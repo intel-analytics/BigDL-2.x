@@ -436,7 +436,6 @@
                             <goal>single</goal>
                         </goals>
                         <configuration>
-                            <finalName>analytics-zoo-${project.version}-spark-${spark.version}</finalName>
                             <descriptors>
                                 <descriptor>${project.basedir}/src/assembly/dist.xml</descriptor>
                             </descriptors>
@@ -451,7 +450,6 @@
                             <goal>single</goal>
                         </goals>
                         <configuration>
-                            <finalName>analytics-zoo-${project.version}-spark-${spark.version}</finalName>
                             <descriptors>
                                 <descriptor>${project.basedir}/src/assembly/dist-all.xml</descriptor>
                             </descriptors>
