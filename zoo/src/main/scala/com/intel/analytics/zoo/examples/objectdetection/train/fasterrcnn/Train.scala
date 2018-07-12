@@ -23,14 +23,16 @@ import com.intel.analytics.bigdl.optim.{Optimizer, _}
 import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric.NumericFloat
 import com.intel.analytics.bigdl.utils.{Engine, LoggerFilter}
 import com.intel.analytics.bigdl.visualization.{TrainSummary, ValidationSummary}
-import com.intel.analytics.zoo.pipeline.api.objectDetection.fasterrcnn.{PostProcessParam,
-        PreProcessParam, VggFRcnn}
-import com.intel.analytics.zoo.pipeline.api.objectDetection.fasterrcnn.Utils
-import com.intel.analytics.zoo.pipeline.api.objectDetection.common.MeanAveragePrecision
-import com.intel.analytics.zoo.pipeline.api.objectDetection.common.dataset.FrcnnMiniBatch
-import com.intel.analytics.zoo.pipeline.api.objectDetection.common.nn.FrcnnCriterion
+import com.intel.analytics.zoo.common.NNContext
+import com.intel.analytics.zoo.models.image.common.ImageModel
+import com.intel.analytics.zoo.models.image.objectdetection.common.MeanAveragePrecision
+import com.intel.analytics.zoo.models.image.objectdetection.common.dataset.FrcnnMiniBatch
+//import com.intel.analytics.zoo.models.image.objectdetection.common.dataset.roiimage.FrcnnMiniBatch
+import com.intel.analytics.zoo.models.image.objectdetection.common.nn.FrcnnCriterion
+import com.intel.analytics.zoo.models.image.objectdetection.fasterrcnn.{PostProcessParam,
+        PreProcessParam, Utils, VggFRcnn}
 import org.apache.log4j.{Level, Logger}
-import org.apache.spark.SparkContext
+import org.apache.spark.SparkConf
 import scopt.OptionParser
 
 import scala.io.Source
@@ -51,13 +53,13 @@ object Option {
     step: Int = 50000,
     maxIter: Int = 50,
     weights: Option[String] = None,
-    jobName: String = "BigDL SSD Train Example",
+    jobName: String = "Analytics Zoo Fasterrcnn Train Example",
     summaryDir: Option[String] = None,
     checkIter: Int = 200,
     nPartition: Int = 1
   )
 
-  val trainParser = new OptionParser[TrainParams]("BigDL SSD Example") {
+  val trainParser = new OptionParser[TrainParams]("Analytics Zoo Fasterrcnn Example") {
     opt[String]('f', "trainFolder")
       .text("url of hdfs folder store the train hadoop sequence files")
       .action((x, c) => c.copy(trainFolder = x))
@@ -120,7 +122,7 @@ object Train {
 
   LoggerFilter.redirectSparkInfoLogs()
   Logger.getLogger("com.intel.analytics.bigdl.optim").setLevel(Level.INFO)
-  Logger.getLogger("com.intel.analytics.zoo.pipeline").setLevel(Level.INFO)
+  Logger.getLogger("com.intel.analytics.zoo").setLevel(Level.INFO)
 
   import Option._
 
@@ -128,15 +130,15 @@ object Train {
 
   def main(args: Array[String]): Unit = {
     trainParser.parse(args, TrainParams()).map(param => {
-      val conf = Engine.createSparkConf().setAppName(param.jobName)
-      val sc = new SparkContext(conf)
+      val conf = new SparkConf().setAppName(param.jobName)
+      val sc = NNContext.initNNContext(conf)
       val classNames = Source.fromFile(param.className).getLines().toArray
-      Engine.init
+
       val postParam = PostProcessParam(0.3f, classNames.length, false, 100, 0.05)
       val preParamTrain = PreProcessParam(param.batchSize, Array(400, 500, 600, 700))
       val preParamVal = PreProcessParam(param.batchSize, nPartition = param.batchSize)
       val model = if (param.modelSnapshot.isDefined) {
-        Module.load[Float](param.modelSnapshot.get)
+        ImageModel.loadModel[Float](param.modelSnapshot.get)
       } else {
         val pretrain = Module.loadModule[Float](param.pretrain)
         val model = VggFRcnn(classNames.length, postParam)
@@ -172,7 +174,6 @@ object Train {
         classes = classNames)
       optimize(model, trainSet, valSet, param, optimMethod,
         Trigger.maxIteration(param.maxIter), new FrcnnCriterion(), meanAveragePrecision)
-
     })
   }
 

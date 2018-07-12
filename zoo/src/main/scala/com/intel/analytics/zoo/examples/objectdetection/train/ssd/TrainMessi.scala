@@ -24,12 +24,13 @@ import com.intel.analytics.bigdl.optim.{Optimizer, _}
 import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric.NumericFloat
 import com.intel.analytics.bigdl.utils.{Engine, LoggerFilter}
 import com.intel.analytics.bigdl.visualization.{TrainSummary, ValidationSummary}
-import com.intel.analytics.zoo.pipeline.api.objectDetection.common.ModuleUtil
-import com.intel.analytics.zoo.pipeline.api.objectDetection.ssd.{SSDVgg, Utils}
-import com.intel.analytics.zoo.pipeline.api.objectDetection.common.dataset.roiimage.SSDMiniBatch
-import com.intel.analytics.zoo.pipeline.api.objectDetection.common.nn.{MultiBoxLoss,
-        MultiBoxLossParam}
-import com.intel.analytics.zoo.pipeline.api.objectDetection.common.MeanAveragePrecision
+import com.intel.analytics.zoo.models.image.objectdetection.common.ModuleUtil
+import com.intel.analytics.zoo.models.image.objectdetection.common.nn.MultiBoxLoss
+import com.intel.analytics.zoo.models.image.objectdetection.ssd.{SSDVgg, Utils}
+import com.intel.analytics.zoo.models.image.objectdetection.common.dataset.roiimage.SSDMiniBatch
+import com.intel.analytics.zoo.models.image.objectdetection.common.nn.MultiBoxLossParam
+import com.intel.analytics.zoo.models.image.objectdetection.common.MeanAveragePrecision
+
 import org.apache.log4j.{Level, Logger}
 import org.apache.spark.SparkContext
 import scopt.OptionParser

@@ -26,12 +26,14 @@ import com.intel.analytics.bigdl.utils.caffe.CaffeLoader
 import com.intel.analytics.bigdl.utils.LoggerFilter
 import com.intel.analytics.bigdl.visualization.{TrainSummary, ValidationSummary}
 import com.intel.analytics.zoo.common.NNContext
-import com.intel.analytics.zoo.pipeline.api.objectDetection.ssd.{SSDVgg, Utils}
-import com.intel.analytics.zoo.pipeline.api.objectDetection.common.MeanAveragePrecision
-import org.apache.spark.SparkConf
-import com.intel.analytics.zoo.pipeline.api.objectDetection.common.dataset.roiimage.SSDMiniBatch
-import com.intel.analytics.zoo.pipeline.api.objectDetection.common.nn.{MultiBoxLoss,
+import com.intel.analytics.zoo.models.image.common.ImageModel
+import com.intel.analytics.zoo.models.image.objectdetection.common.nn.{MultiBoxLoss,
         MultiBoxLossParam}
+import com.intel.analytics.zoo.models.image.objectdetection.ssd.{SSDVgg, Utils}
+import com.intel.analytics.zoo.models.image.objectdetection.common.MeanAveragePrecision
+import com.intel.analytics.zoo.models.image.objectdetection.common.dataset.roiimage.SSDMiniBatch
+
+import org.apache.spark.SparkConf
 import org.apache.log4j.{Level, Logger}
 import scopt.OptionParser
 
@@ -60,12 +62,12 @@ object Option {
     overWriteCheckpoint: Boolean = false,
     maxEpoch: Option[Int] = None,
     weights: Option[String] = None,
-    jobName: String = "BigDL SSD Train Example",
+    jobName: String = "Analytics Zoo SSD Train Example",
     summaryDir: Option[String] = None,
     nPartition: Int = 1
   )
 
-  val trainParser = new OptionParser[TrainParams]("BigDL SSD Example") {
+  val trainParser = new OptionParser[TrainParams]("Analytics Zoo SSD Example") {
     opt[String]('f', "trainFolder")
       .text("url of hdfs folder store the train hadoop sequence files")
       .action((x, c) => c.copy(trainFolder = x))
@@ -150,7 +152,7 @@ object Train {
 
   LoggerFilter.redirectSparkInfoLogs()
   Logger.getLogger("com.intel.analytics.bigdl.optim").setLevel(Level.INFO)
-  Logger.getLogger("com.intel.analytics.zoo.pipeline").setLevel(Level.INFO)
+  Logger.getLogger("com.intel.analytics.zoo").setLevel(Level.INFO)
 
   import Option._
 
@@ -158,8 +160,7 @@ object Train {
 
   def main(args: Array[String]): Unit = {
     trainParser.parse(args, TrainParams()).map(param => {
-      val conf = new SparkConf()
-        .setAppName("Object Detection Train Example")
+      val conf = new SparkConf().setAppName(param.jobName)
       val sc = NNContext.initNNContext(conf)
 
       val classes = Source.fromFile(param.className).getLines().toArray
@@ -170,7 +171,7 @@ object Train {
         param.nPartition)
 
       val model = if (param.modelSnapshot.isDefined) {
-        Module.load[Float](param.modelSnapshot.get)
+        ImageModel.loadModel[Float](param.modelSnapshot.get)
       } else {
         param.modelType match {
           case "vgg16" =>
@@ -222,8 +223,7 @@ object Train {
             lrSchedules
         }
         new SGD[Float](
-//          learningRate = param.learningRate,
-          learningRate = 0.001,
+          learningRate = param.learningRate,
           momentum = 0.9,
           dampening = 0.0,
           learningRateSchedule = learningRateSchedule)

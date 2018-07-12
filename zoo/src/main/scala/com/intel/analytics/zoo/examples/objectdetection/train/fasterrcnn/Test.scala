@@ -18,9 +18,9 @@ package com.intel.analytics.zoo.examples.objectdetection.train.fasterrcnn
 
 import com.intel.analytics.bigdl.nn.Module
 import com.intel.analytics.bigdl.utils.Engine
-import com.intel.analytics.zoo.pipeline.api.objectDetection.fasterrcnn.{PostProcessParam,
+import com.intel.analytics.zoo.models.image.objectdetection.common.{IOUtils, MeanAveragePrecision}
+import com.intel.analytics.zoo.models.image.objectdetection.fasterrcnn.{PostProcessParam,
         PreProcessParam}
-import com.intel.analytics.zoo.pipeline.api.objectDetection.common.{IOUtils, MeanAveragePrecision}
 import com.intel.analytics.zoo.pipeline.api.objectDetection.fasterrcnn.Validator
 import org.apache.log4j.{Level, Logger}
 import org.apache.spark.SparkContext
