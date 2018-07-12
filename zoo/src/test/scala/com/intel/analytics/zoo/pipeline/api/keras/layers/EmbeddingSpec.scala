@@ -44,7 +44,7 @@ class EmbeddingSpec extends KerasBaseSpec {
 
   "Glove Embedding" should "work properly" in {
     // TODO: remove
-    val wordIndex = Map("the" -> 0, "with" -> 2)
+    val wordIndex = Map("the" -> 1, "with" -> 2)
     val seq = Sequential[Float]()
     val layer = EmbeddingGloVe[Float]("glove.6B.50d", "/home/kai/glove.6B",
       wordIndex, true, inputShape = Shape(1))

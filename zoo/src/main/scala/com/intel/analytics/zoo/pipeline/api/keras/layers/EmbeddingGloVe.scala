@@ -16,13 +16,20 @@
 
 package com.intel.analytics.zoo.pipeline.api.keras.layers
 
+import com.esotericsoftware.kryo.{Kryo, KryoSerializable}
+import com.esotericsoftware.kryo.io.{Output, Input => KyroInput}
 import com.intel.analytics.bigdl.nn.abstractnn.AbstractModule
 import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric
 import com.intel.analytics.bigdl.utils.Shape
 import com.intel.analytics.bigdl.nn.{LookupTable, AddConstant => TAddConstant, Sequential => TSequential}
 import com.intel.analytics.bigdl.tensor.Tensor
 import com.intel.analytics.zoo.pipeline.api.Net
+import com.intel.analytics.zoo.pipeline.api.keras.layers.EmbeddingGloVe.WeightHolder
+import org.apache.commons.lang.SerializationUtils
+import org.apache.spark.utils.SparkUtils
+import org.slf4j.LoggerFactory
 
+import scala.collection.mutable
 import scala.collection.mutable.{Map => MMap}
 import scala.io.Source
 import scala.reflect.ClassTag
@@ -52,6 +59,13 @@ class EmbeddingGloVe[T: ClassTag] private(
   }
 
   private val embeddingFile: String = gloveDir + "/" + embeddingType + ".txt"
+
+  private val embeddingMatrix: WeightHolder[T] =
+    new WeightHolder[T](buildEmbeddingMatrix(), embeddingType + getName())
+
+  override def parameters(): (Array[Tensor[T]], Array[Tensor[T]]) = {
+    (Array(), Array())
+  }
 
   def prepareGlove(): Map[Int, Array[T]] = {
     // TODO: refactor when embeddingType == null
@@ -93,7 +107,7 @@ class EmbeddingGloVe[T: ClassTag] private(
       nIndex = inputDim,
       nOutput = outputDim,
       wRegularizer = wRegularizer)
-    layer.setWeightsBias(Array(buildEmbeddingMatrix()))
+    layer.setWeightsBias(Array(embeddingMatrix.weight))
     model.add(layer)
     if (!trainable) model.freeze(layer.getName)
     model.asInstanceOf[AbstractModule[Tensor[T], Tensor[T], T]]
@@ -126,6 +140,143 @@ object EmbeddingGloVe {
       case "glove.6B.300d" => 300
       case _ => throw new IllegalArgumentException(s"Unsupported embedding type: " +
         s"$embeddingType")
+    }
+  }
+
+  private def isDriver = try {
+    SparkUtils.isDriver
+  } catch {
+    case e: NullPointerException =>
+      true
+  }
+
+  private val logger = LoggerFactory.getLogger(getClass)
+
+  private val weightRegistry = new mutable.WeakHashMap[String, Array[Byte]]()
+
+  private[zoo] def getWeightRegistrySize = weightRegistry.size
+
+  class WeightHolder[T: ClassTag](
+      @transient var weight: Tensor[T],
+      private var id: String)(implicit ev: TensorNumeric[T])
+    extends Serializable with KryoSerializable {
+
+    private trait CommonOutputStream {
+      def writeInt(value: Int): Unit
+      def write(value: Array[Byte]): Unit
+      def writeString(value: String): Unit
+    }
+
+    private trait CommonInputStream {
+      def readInt(): Int
+      def read(buff: Array[Byte], off: Int, len: Int): Int
+      def skip(len: Int): Unit
+      def readString(): String
+    }
+
+    private def writeInternal(out: CommonOutputStream): Unit = {
+      val (w, _) = getOrCreateWeight(id) {
+        SerializationUtils.serialize(weight)
+      }
+      val len = w.length
+      out.writeString(id)
+      if (isDriver) {
+        out.writeInt(len)
+        out.write(w)
+      } else {
+        out.writeInt(0)
+      }
+    }
+
+    private def readInternal(in: CommonInputStream): Unit = {
+      id = in.readString()
+      val (w, isCreated) = getOrCreateWeight(id) {
+        val len = in.readInt()
+        require(len != 0, "Weight length should not be zero, " +
+          "please set logging level to debug for more information")
+        val weight = new Array[Byte](len)
+        var numOfBytes = 0
+        while (numOfBytes < len) {
+          val read = in.read(weight, numOfBytes, len - numOfBytes)
+          numOfBytes += read
+        }
+        weight
+      }
+
+      if (!isCreated) {
+        val len = in.readInt()
+        in.skip(len)
+      }
+
+      weight = SerializationUtils.deserialize(w).asInstanceOf[Tensor[T]]
+    }
+
+    private def writeObject(out: java.io.ObjectOutputStream): Unit = {
+      writeInternal(new CommonOutputStream {
+        override def writeInt(value: Int): Unit = out.writeInt(value)
+
+        override def write(value: Array[Byte]): Unit = out.write(value)
+
+        override def writeString(str: String): Unit = out.writeUTF(str)
+      })
+    }
+
+    private def readObject(in: java.io.ObjectInputStream): Unit = {
+      readInternal(new CommonInputStream {
+        override def read(buff: Array[Byte], off: Int, len: Int): Int = in.read(buff, off, len)
+
+        override def skip(len: Int): Unit = in.skip(len)
+
+        override def readInt(): Int = in.readInt()
+
+        override def readString(): String = in.readUTF()
+      })
+    }
+
+    override def read(kryo: Kryo, in: KyroInput): Unit = {
+      readInternal(new CommonInputStream {
+        override def read(buff: Array[Byte], off: Int, len: Int): Int = in.read(buff, off, len)
+
+        override def skip(len: Int): Unit = in.skip(len)
+
+        override def readInt(): Int = in.readInt()
+
+        override def readString(): String = in.readString()
+      })
+    }
+
+    override def write(kryo: Kryo, out: Output): Unit = {
+      writeInternal(new CommonOutputStream {
+        override def writeInt(value: Int): Unit = out.writeInt(value)
+
+        override def write(value: Array[Byte]): Unit = out.write(value)
+
+        override def writeString(value: String): Unit = out.writeString(value)
+      })
+    }
+  }
+
+  // return (weight, isCreated)
+  private def getOrCreateWeight(id: String)
+     (createWeight: => Array[Byte]): (Array[Byte], Boolean) = {
+    if (weightRegistry.contains(id)) {
+      logger.debug(s"weight for embedding: $id already exists, read from registry. " +
+        s"Registry size: $getWeightRegistrySize")
+      (weightRegistry(id), false)
+    } else {
+      this.synchronized {
+        if (weightRegistry.contains(id)) {
+          logger.debug(s"weightM for embedding: $id already exists, read from registry. " +
+            s"Registry size: $getWeightRegistrySize")
+          (weightRegistry(id), false)
+        } else {
+          logger.debug(s"weight for embedding: $id does not exist, created it. " +
+            s"Registry size: $getWeightRegistrySize")
+          val weight = createWeight
+          weightRegistry.put(id, weight)
+          (weight, true)
+        }
+      }
     }
   }
 }
