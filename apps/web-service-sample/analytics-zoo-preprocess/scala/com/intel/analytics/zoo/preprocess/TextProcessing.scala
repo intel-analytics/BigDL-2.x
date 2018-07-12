@@ -72,7 +72,7 @@ trait TextProcessing {
   def doVectorizeWithJMap(tokens: List[String], embMap: JMap[String, JList[JFloat]]): List[JList[JFloat]] = {
     val tokensToCoefs = ArrayBuffer[JList[JFloat]]()
     for (token <- tokens if token != "" && embMap.containsKey(token)) {
-      tokensToCoefs.append(embMap(token))
+      tokensToCoefs.append(embMap.get(token))
     }
     val coefSize = tokensToCoefs(0).size()
     if (tokensToCoefs.size < tokens.size) {
