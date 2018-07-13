@@ -28,7 +28,7 @@ spark-submit \
 --driver-memory 200g \
 --executor-memory 200g \
 --class com.intel.analytics.zoo.examples.tfnet.Predict \
-$ANALYTICS_ZOO_HOME/lib/analytics-zoo-bigdl_BIGDLVERSION-spark_2.1.0-ZOOVERSION-jar-with-dependencies.jar --image $imagePath --model $modelPath --partition 4
+$ANALYTICS_ZOO_HOME/lib/analytics-zoo-bigdl_BIGDLVERSION-spark_SPARKVERSION-ZOOVERSION-jar-with-dependencies.jar --image $imagePath --model $modelPath --partition 4
 ```
 
 __Options:__

@@ -22,8 +22,8 @@ imagePath=... // image path. Local file system/HDFS are supported. With local fi
 
 outputPath=... // output path. Currently only support local file system.
 
-PYTHON_API_ZIP_PATH=${ANALYTICS_ZOO_HOME}/lib/analytics-zoo-VERSION-python-api.zip
-ZOO_JAR_PATH=${ANALYTICS_ZOO_HOME}/lib/analytics-zoo-VERSION-jar-with-dependencies.jar
+PYTHON_API_ZIP_PATH=${ANALYTICS_ZOO_HOME}/lib/analytics-zoo-bigdl_BIGDL_VERSION-spark_SPARK_VERSION-ZOO_VERSION-python-api.zip
+ZOO_JAR_PATH=${ANALYTICS_ZOO_HOME}/lib/analytics-zoo-bigdl_BIGDL_VERSION-spark_SPARK_VERSION-ZOO_VERSION-jar-with-dependencies.jar 
 PYTHONPATH=${PYTHON_API_ZIP_PATH}:$PYTHONPATH
 
 spark-submit \
