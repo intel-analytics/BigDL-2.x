@@ -14,13 +14,12 @@
  * limitations under the License.
  */
 
-package com.intel.analytics.zoo.pipeline.api.torch
+package com.intel.analytics.zoo.pipeline.api.keras.layers.b
 
-import com.intel.analytics.bigdl.nn.{BatchNormalization, Linear, LogSoftMax, Sequential}
 import com.intel.analytics.bigdl.nn.abstractnn.{AbstractModule, Activity}
+import com.intel.analytics.bigdl.nn.{BatchNormalization, Linear, LogSoftMax, Sequential}
 import com.intel.analytics.bigdl.tensor.Tensor
 import com.intel.analytics.bigdl.utils.RandomGenerator._
-import com.intel.analytics.zoo.pipeline.api.keras.layers.TorchTimeDistributed
 import com.intel.analytics.zoo.pipeline.api.keras.serializer.ModuleSerializationTest
 import org.scalatest.{FlatSpec, Matchers}
 
@@ -51,8 +50,8 @@ class TorchTimeDistributedSpec extends FlatSpec with Matchers {
     model1.setExtraParameter(
       model2.asInstanceOf[AbstractModule[Activity, Activity, Float]].getExtraParameter())
 
-    bnorm1.runningMean should be (bnorm2.runningMean)
-    bnorm1.runningVar should be (bnorm2.runningVar)
+    bnorm1.runningMean should be(bnorm2.runningMean)
+    bnorm1.runningVar should be(bnorm2.runningVar)
   }
 
   "A TorchTimeDistributed Module" should "reset correctly" in {
@@ -113,10 +112,11 @@ class TorchTimeDistributedSpec extends FlatSpec with Matchers {
     val linear = Linear[Float](inputDim, outputDim)
     val model = TorchTimeDistributed[Float](linear)
 
-    model.getParametersTable() should be (linear.getParametersTable())
+    model.getParametersTable() should be(linear.getParametersTable())
   }
 
-  "A TorchTimeDistributed Module " should "generate correct output and grad for Linear in 3D input " +
+  "A TorchTimeDistributed Module " should
+    "generate correct output and grad for Linear in 3D input " +
     "along first dimension" in {
     RNG.setSeed(100)
 
@@ -129,8 +129,12 @@ class TorchTimeDistributedSpec extends FlatSpec with Matchers {
     val input = Tensor[Float](Array(batchSize, times, inputDim)).randn()
     val linear1 = Linear[Float](inputDim, outputDim)
     val linear2 = Linear[Float](inputDim, outputDim)
-    linear2.weight.map(linear1.weight, (a, b) => {b})
-    linear2.bias.map(linear1.bias, (a, b) => {b})
+    linear2.weight.map(linear1.weight, (a, b) => {
+      b
+    })
+    linear2.bias.map(linear1.bias, (a, b) => {
+      b
+    })
     val model = Sequential[Float]()
       .add(TorchTimeDistributed[Float](linear1))
 
@@ -138,7 +142,7 @@ class TorchTimeDistributedSpec extends FlatSpec with Matchers {
     var i = 1
     while (i <= times) {
       val expectedOut = linear2.forward(input.select(timeDim, i))
-      output.select(timeDim, i) should be (expectedOut)
+      output.select(timeDim, i) should be(expectedOut)
       i += 1
     }
 
@@ -147,12 +151,13 @@ class TorchTimeDistributedSpec extends FlatSpec with Matchers {
     i = 1
     while (i <= times) {
       val expectedOut = linear2.backward(input.select(timeDim, i), gradOutput.select(timeDim, i))
-      gradInput.select(timeDim, i) should be (expectedOut)
+      gradInput.select(timeDim, i) should be(expectedOut)
       i += 1
     }
   }
 
-  "A TorchTimeDistributed Module " should "generate correct output and grad for Linear in 3D input " +
+  "A TorchTimeDistributed Module " should
+    "generate correct output and grad for Linear in 3D input " +
     "along second dimension" in {
     RNG.setSeed(100)
 
@@ -165,8 +170,12 @@ class TorchTimeDistributedSpec extends FlatSpec with Matchers {
     val input = Tensor[Float](Array(batchSize, times, inputDim)).randn()
     val linear1 = Linear[Float](inputDim, outputDim)
     val linear2 = Linear[Float](inputDim, outputDim)
-    linear2.weight.map(linear1.weight, (a, b) => {b})
-    linear2.bias.map(linear1.bias, (a, b) => {b})
+    linear2.weight.map(linear1.weight, (a, b) => {
+      b
+    })
+    linear2.bias.map(linear1.bias, (a, b) => {
+      b
+    })
     val model = Sequential[Float]()
       .add(TorchTimeDistributed[Float](linear1))
 
@@ -174,7 +183,7 @@ class TorchTimeDistributedSpec extends FlatSpec with Matchers {
     var i = 1
     while (i <= times) {
       val expectedOut = linear2.forward(input.select(timeDim, i))
-      output.select(timeDim, i) should be (expectedOut)
+      output.select(timeDim, i) should be(expectedOut)
       i += 1
     }
 
@@ -183,12 +192,13 @@ class TorchTimeDistributedSpec extends FlatSpec with Matchers {
     i = 1
     while (i <= times) {
       val expectedOut = linear2.backward(input.select(timeDim, i), gradOutput.select(timeDim, i))
-      gradInput.select(timeDim, i) should be (expectedOut)
+      gradInput.select(timeDim, i) should be(expectedOut)
       i += 1
     }
   }
 
-  "A TorchTimeDistributed Module " should "generate correct output and grad for logSoftMax " +
+  "A TorchTimeDistributed Module " should
+    "generate correct output and grad for logSoftMax " +
     "when time dimension is 2" in {
     RNG.setSeed(100)
 
@@ -210,10 +220,10 @@ class TorchTimeDistributedSpec extends FlatSpec with Matchers {
     var i = 1
     while (i <= times) {
       val expectedOut = logSoftMax2.forward(input.select(timeDim, i))
-      output.select(timeDim, i) should be (expectedOut)
+      output.select(timeDim, i) should be(expectedOut)
       val expectedGradInput = logSoftMax2.backward(
         input.select(timeDim, i), gradOutput.select(timeDim, i))
-      gradInput.select(timeDim, i) should be (expectedGradInput)
+      gradInput.select(timeDim, i) should be(expectedGradInput)
       i += 1
     }
   }
@@ -246,13 +256,13 @@ class TorchTimeDistributedSpec extends FlatSpec with Matchers {
   }
 }
 
-class TorchTorchTimeDistributedSerialTest extends ModuleSerializationTest {
+class TorchTimeDistributedSerialTest extends ModuleSerializationTest {
   override def test(): Unit = {
     val torchTimeDistributed = TorchTimeDistributed[Float](Linear[Float](5, 5)).
       setName("TorchTimeDistributed")
     val input = Tensor[Float](2, 5, 5).apply1(_ => Random.nextFloat())
     runSerializationTest(
-      TorchTimeDistributed.asInstanceOf[AbstractModule[_, _, Float]], input)
+      torchTimeDistributed, input)
   }
 }
 

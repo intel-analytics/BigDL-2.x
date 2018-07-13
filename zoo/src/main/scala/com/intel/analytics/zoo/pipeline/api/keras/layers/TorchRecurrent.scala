@@ -48,7 +48,7 @@ import scala.reflect.runtime.universe
 // There are fields like outputBuffers is private, so we cannot simply override
 // the cloneCell method just like: BigDL/pull/2585/
 
-private[zoo] class Recurrent[T : ClassTag](
+private[zoo] class Recurrent[T: ClassTag](
     var batchNormParams: BatchNormParams[T] = null,
     var maskZero: Boolean = false
 )
@@ -316,6 +316,7 @@ private[zoo] class Recurrent[T : ClassTag](
 
   // set hidden state at the first time step
   protected var initHiddenState: Activity = null
+
   def setHiddenState(hiddenState: Activity): Unit = {
     initHiddenState = hiddenState
   }
@@ -550,7 +551,7 @@ private[zoo] class Recurrent[T : ClassTag](
     cells.foreach(_.resetTimes())
   }
 
-  override def clearState() : this.type = {
+  override def clearState(): this.type = {
     super.clearState()
     hidden = null
     gradHidden = null
@@ -616,7 +617,7 @@ private[zoo] object Recurrent extends ContainerSerializable {
       batchNormParams: BatchNormParams[T] = null,
       maskZero: Boolean = false
   )
-    (implicit ev: TensorNumeric[T]) : Recurrent[T] = {
+    (implicit ev: TensorNumeric[T]): Recurrent[T] = {
     new Recurrent[T](batchNormParams, maskZero = maskZero)
   }
 
@@ -632,7 +633,7 @@ private[zoo] object Recurrent extends ContainerSerializable {
     val timeSize = dst.size(timeDim)
     var t = 1
     while (t <= timeSize) {
-      copyToIndex(src(t -1), dst, t)
+      copyToIndex(src(t - 1), dst, t)
       t += 1
     }
   }
@@ -660,7 +661,7 @@ private[zoo] object Recurrent extends ContainerSerializable {
       var dstOffset = dst.storageOffset() - 1
 
       val recordSize = timeSize * stepSize
-      val indexSize = (srcIndex-1) * stepSize
+      val indexSize = (srcIndex - 1) * stepSize
 
       var b = 0
       while (b < batchSize) {
@@ -710,8 +711,8 @@ private[zoo] object Recurrent extends ContainerSerializable {
     dst
   }
 
-  override def doLoadModule[T: ClassTag](context : DeserializeContext)
-    (implicit ev: TensorNumeric[T]) : AbstractModule[Activity, Activity, T] = {
+  override def doLoadModule[T: ClassTag](context: DeserializeContext)
+    (implicit ev: TensorNumeric[T]): AbstractModule[Activity, Activity, T] = {
 
     val attrMap = context.bigdlModule.getAttrMap
 
@@ -778,8 +779,8 @@ private[zoo] object Recurrent extends ContainerSerializable {
   }
 
   override def doSerializeModule[T: ClassTag](context: SerializeContext[T],
-      recurrentBuilder : BigDLModule.Builder)
-    (implicit ev: TensorNumeric[T]) : Unit = {
+      recurrentBuilder: BigDLModule.Builder)
+    (implicit ev: TensorNumeric[T]): Unit = {
 
     val recurrent = context.moduleData.module.asInstanceOf[Recurrent[T]]
 
@@ -843,7 +844,7 @@ private[zoo] object Recurrent extends ContainerSerializable {
   }
 }
 
-class TorchRecurrent[T : ClassTag](
+class TorchRecurrent[T: ClassTag](
     batchNormParams: BatchNormParams[T] = null,
     maskZero: Boolean = false
 )(implicit ev: TensorNumeric[T]) extends Recurrent[T](batchNormParams, maskZero)
