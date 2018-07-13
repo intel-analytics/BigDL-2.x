@@ -16,15 +16,18 @@
 
 package com.intel.analytics.zoo.models.seq2seq
 
+import com.intel.analytics.bigdl.dataset.Sample
 import com.intel.analytics.bigdl.nn.abstractnn.{AbstractModule, Activity}
 import com.intel.analytics.bigdl.tensor.Tensor
 import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric
 import com.intel.analytics.bigdl.nn._
 import com.intel.analytics.bigdl.nn.BigDLWrapper
+import com.intel.analytics.bigdl.optim.Predictor
 import com.intel.analytics.bigdl.utils.{T, Table}
 
 import scala.reflect.ClassTag
 import com.intel.analytics.zoo.models.common.ZooModel
+import org.apache.spark.rdd.RDD
 
 /**
  * [[Seq2seq]] Sequence-to-sequence recurrent neural networks which maps input
@@ -54,24 +57,15 @@ class Seq2seq[T: ClassTag](encoderCells: Array[Cell[T]],
   var decoder: Sequential[T] = null
 
   private var seqLen: Int = 0
-  private var stopSign: (Tensor[T] => Boolean) = null
-  private var loopFunc: (Tensor[T]) => (Tensor[T]) = null
-  private var isLoop: Boolean = false
 
   /**
-   * defines prediction in last time step will be used as input in next time step in decoder
+   * defines prediction in last time step will be used as input in next time step
+   * in decoder during training
    * @param maxLen max sequence length of output
-   * @param stopSign if prediction is the same with stopSign, it will stop predict
-   * @param func before feeding output at last time step to next time step,
-   *             pass it through loopFunc
    * @return this container
    */
-  def setLoop(maxLen: Int, stopSign: (Tensor[T] => Boolean) = null,
-              func: (Tensor[T]) => (Tensor[T]) = null): Unit = {
-    isLoop = true
+  def setLoop(maxLen: Int): Unit = {
     seqLen = maxLen
-    this.stopSign = stopSign
-    loopFunc = func
     modules.clear()
     modules += buildModel()
   }
@@ -80,10 +74,7 @@ class Seq2seq[T: ClassTag](encoderCells: Array[Cell[T]],
    * clear setLoop settings
    */
   def clearLoop(): Unit = {
-    isLoop = false
     seqLen = 0
-    this.stopSign = null
-    loopFunc = null
     decoderCells.foreach(BigDLWrapper.clearCell(_))
     modules.clear()
     modules += buildModel()
@@ -111,10 +102,9 @@ class Seq2seq[T: ClassTag](encoderCells: Array[Cell[T]],
 
   private def buildDecoder(): Sequential[T] = {
     val model = Sequential[T]()
-    dec = if (isLoop) {
-      require(seqLen > 0, "SeqLen needs be great than 0. Please use setLoopPreOutput to set seqLen")
+    dec = if (seqLen > 0) {
       val cells = if (decoderCells.length == 1) decoderCells.head else MultiRNNCell(decoderCells)
-      val recDec = new ZooRecurrentDecoder(seqLen, stopSign, loopFunc).add(cells)
+      val recDec = new ZooRecurrentDecoder(seqLen).add(cells)
       model.add(recDec)
       Array(recDec)
     } else {
@@ -135,9 +125,10 @@ class Seq2seq[T: ClassTag](encoderCells: Array[Cell[T]],
 
     decoderInput = if (preDecoder != null) {
       val preDecoderOutput = preDecoder.forward(preDecoderInput).toTensor
-      if (preDecoderOutput.dim() == preDecoderInput.dim + 1 && isLoop) {
-        preDecoderOutput.select(Seq2seq.timeDim, preDecoderOutput.size(Seq2seq.timeDim))
-      } else preDecoderOutput
+//      if (preDecoderOutput.dim() == preDecoderInput.dim + 1 && seqLen > 0) {
+//        preDecoderOutput.select(Seq2seq.timeDim, preDecoderOutput.size(Seq2seq.timeDim))
+//      } else preDecoderOutput
+      preDecoderOutput
     } else preDecoderInput
 
     if (bridges != null) bridges.forwardStates(enc, dec)
@@ -158,6 +149,43 @@ class Seq2seq[T: ClassTag](encoderCells: Array[Cell[T]],
     gradInput = encoder.backward(encoderInput, Tensor[T](encoderOutput.size())).toTensor
 
     gradInput.toTensor
+  }
+
+  /**
+   * @param stopSign if prediction is the same with stopSign, it will stop predict
+   */
+  def inference(input: Table, maxSeqLen: Int = 30, stopSign: Tensor[T] = null,
+              layer: AbstractModule[Tensor[T], Tensor[T], T] = null): Tensor[T] = {
+    var break = false
+    val sent1 = input.toTable[Tensor[T]](1)
+    val sent2 = input.toTable[Tensor[T]](2)
+    var predict: Tensor[T] = null
+    var pOutput = sent2
+
+    encoder.forward(sent1).toTensor[Float]
+    if (bridges != null) bridges.forwardStates(enc, dec)
+    var i = 1
+    // Iteratively output predicted words
+    while (i < maxSeqLen && !break) {
+      val nextInput = if (preDecoder != null) {
+        preDecoder.forward(pOutput).toTensor
+      } else pOutput
+      val curOutput = if (layer != null)
+        layer.forward(decoder.forward(nextInput).toTensor[T]).toTensor[T]
+      else decoder.forward(nextInput).toTensor[T]
+
+      if (curOutput.almostEqual(stopSign, 1e-8)) break = true
+      if (!break) {
+        if (predict == null) {
+          val sizes = curOutput.size()
+          predict = Tensor[T](Array(sizes(0), maxSeqLen) ++ sizes.drop(1))
+        }
+        predict.narrow(Seq2seq.timeDim, i, 1).copy(curOutput)
+      }
+      pOutput = curOutput
+      i += 1
+    }
+    if (predict != null) predict.narrow(Seq2seq.timeDim, 1, i) else sent2
   }
 
   override def getParametersTable(): Table = {
