@@ -251,7 +251,8 @@ class TorchTorchTimeDistributedSerialTest extends ModuleSerializationTest {
     val torchTimeDistributed = TorchTimeDistributed[Float](Linear[Float](5, 5)).
       setName("TorchTimeDistributed")
     val input = Tensor[Float](2, 5, 5).apply1(_ => Random.nextFloat())
-    runSerializationTest(TorchTimeDistributed, input)
+    runSerializationTest(
+      TorchTimeDistributed.asInstanceOf[AbstractModule[_, _, Float]], input)
   }
 }
 

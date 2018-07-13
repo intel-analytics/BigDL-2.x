@@ -71,7 +71,7 @@ class TimeDistributed[T: ClassTag](
     val innerInput = getInnerInput(input)
     layer.build(Shape(innerInput))
     layer.asInstanceOf[AbstractModule[Tensor[T], Tensor[T], T]]
-    val timedistributed = com.intel.analytics.zoo.pipeline.api.TorchTimeDistributed[T](layer)
+    val timedistributed = TorchTimeDistributed[T](layer)
     timedistributed.asInstanceOf[AbstractModule[Tensor[T], Tensor[T], T]]
   }
 }
@@ -246,7 +246,7 @@ private[zoo] class TorchTimeDistributed[T : ClassTag] (
 
   override def reset(): Unit = layer.reset()
 
-  override def training(): TimeDistributed.this.type = {
+  override def training(): TorchTimeDistributed.this.type = {
     layer.training()
     super.training()
   }
@@ -272,7 +272,7 @@ private[zoo] class TorchTimeDistributed[T : ClassTag] (
     timeBuffer.toArray
   }
 
-  override def evaluate(): TimeDistributed.this.type = {
+  override def evaluate(): TorchTimeDistributed.this.type = {
     layer.evaluate()
     super.evaluate()
   }
@@ -295,7 +295,7 @@ private[zoo] class TorchTimeDistributed[T : ClassTag] (
     layer.getExtraParameter()
   }
 
-  override def clearState(): TimeDistributed.this.type = {
+  override def clearState(): TorchTimeDistributed.this.type = {
     super.clearState()
     layer.clearState()
     inputSize = null
@@ -308,10 +308,10 @@ private[zoo] class TorchTimeDistributed[T : ClassTag] (
     this
   }
 
-  override def canEqual(other: Any): Boolean = other.isInstanceOf[TimeDistributed[T]]
+  override def canEqual(other: Any): Boolean = other.isInstanceOf[TorchTimeDistributed[T]]
 
   override def equals(other: Any): Boolean = other match {
-    case that: TimeDistributed[T] =>
+    case that: TorchTimeDistributed[T] =>
       super.equals(that) &&
         (that canEqual this) &&
         layer.equals(layer) &&
@@ -334,7 +334,7 @@ object TorchTimeDistributed extends ModuleSerializable {
   def apply[@specialized(Float, Double) T: ClassTag](
       layer: AbstractModule[Tensor[T], Tensor[T], T],
       maskZero: Boolean = false
-  )(implicit ev: TensorNumeric[T]): TimeDistributed[T] = {
+  )(implicit ev: TensorNumeric[T]): TorchTimeDistributed[T] = {
     new TorchTimeDistributed[T](layer, maskZero)
   }
   // To make ti compatible with release 0.4
