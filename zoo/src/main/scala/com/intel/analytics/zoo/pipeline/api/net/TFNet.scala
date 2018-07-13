@@ -254,7 +254,7 @@ object TFNet {
     extends Serializable with KryoSerializable {
 
     @transient
-    lazy val isDr = isDriver
+    lazy val theDriver = isDriver
 
     private trait CommonOutputStream {
       def writeInt(value: Int): Unit
@@ -278,7 +278,7 @@ object TFNet {
       }
       val len = graphDef.length
       out.writeString(id)
-      if (isDr) {
+      if (theDriver) {
         out.writeInt(len)
         timing(s"writing ${len / 1024 / 1024}Mb graph def to stream") {
           out.write(graphDef)
