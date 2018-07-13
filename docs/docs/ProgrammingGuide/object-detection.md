@@ -20,6 +20,8 @@ val output = model.predictImageSet(data)
 
 For preprocessors for Object Detection models, please check [Object Detection Config](https://github.com/intel-analytics/analytics-zoo/blob/master/zoo/src/main/scala/com/intel/analytics/zoo/models/image/objectdetection/ObjectDetectionConfig.scala)
 
+Note: We expect the loaded images has 3 channels. If the channel is not 3(eg, gray/png images), please set `imageCodec` when loading images `ImageSet.read`. See https://analytics-zoo.github.io/0.1.0/#ProgrammingGuide/object-detection/#object-detection-examples
+
 Users can also do the inference directly using Analytics zoo.
 Sample code for SSD VGG on PASCAL as below:
 
@@ -63,14 +65,20 @@ For preprocessors for Object Detection models, please check [Object Detection Co
 
 * [SSD 300x300 MobileNet](https://s3-ap-southeast-1.amazonaws.com/analytics-zoo-models/object-detection/analytics-zoo_ssd-mobilenet-300x300_PASCAL_0.1.0.model)
 * [SSD 300x300 VGG](https://s3-ap-southeast-1.amazonaws.com/analytics-zoo-models/object-detection/analytics-zoo_ssd-vgg16-300x300_PASCAL_0.1.0.model)
+* [SSD 300x300 VGG Quantize](https://s3-ap-southeast-1.amazonaws.com/analytics-zoo-models/object-detection/analytics-zoo_ssd-vgg16-300x300-quantize_PASCAL_0.1.0.model)
 * [SSD 512x512 VGG](https://s3-ap-southeast-1.amazonaws.com/analytics-zoo-models/object-detection/analytics-zoo_ssd-vgg16-512x512_PASCAL_0.1.0.model)
+* [SSD 512x512 VGG Quantize](https://s3-ap-southeast-1.amazonaws.com/analytics-zoo-models/object-detection/analytics-zoo_ssd-vgg16-512x512-quantize_PASCAL_0.1.0.model)
 * [Faster-RCNN VGG](https://s3-ap-southeast-1.amazonaws.com/analytics-zoo-models/object-detection/analytics-zoo_frcnn-vgg16_PASCAL_0.1.0.model)
 * [Faster-RCNN VGG Compress](https://s3-ap-southeast-1.amazonaws.com/analytics-zoo-models/object-detection/analytics-zoo_frcnn-vgg16-compress_PASCAL_0.1.0.model)
+* [Faster-RCNN VGG Compress Quantize](https://s3-ap-southeast-1.amazonaws.com/analytics-zoo-models/object-detection/analytics-zoo_frcnn-vgg16-compress-quantize_PASCAL_0.1.0.model)
 * [Faster-RCNN PvaNet](https://s3-ap-southeast-1.amazonaws.com/analytics-zoo-models/object-detection/analytics-zoo_frcnn-pvanet_PASCAL_0.1.0.model)
 * [Faster-RCNN PvaNet Compress](https://s3-ap-southeast-1.amazonaws.com/analytics-zoo-models/object-detection/analytics-zoo_frcnn-pvanet-compress_PASCAL_0.1.0.model)
+* [Faster-RCNN PvaNet Compress Quantize](https://s3-ap-southeast-1.amazonaws.com/analytics-zoo-models/object-detection/analytics-zoo_frcnn-pvanet-compress-quantize_PASCAL_0.1.0.model)
 
 
 **COCO models**
 
 * [SSD 300x300 VGG](https://s3-ap-southeast-1.amazonaws.com/analytics-zoo-models/object-detection/analytics-zoo_ssd-vgg16-300x300_COCO_0.1.0.model)
+* [SSD 300x300 VGG Quantize](https://s3-ap-southeast-1.amazonaws.com/analytics-zoo-models/object-detection/analytics-zoo_ssd-vgg16-300x300-quantize_COCO_0.1.0.model)
 * [SSD 512x512 VGG](https://s3-ap-southeast-1.amazonaws.com/analytics-zoo-models/object-detection/analytics-zoo_ssd-vgg16-512x512_COCO_0.1.0.model)
+* [SSD 512x512 VGG Quantize](https://s3-ap-southeast-1.amazonaws.com/analytics-zoo-models/object-detection/analytics-zoo_ssd-vgg16-512x512-quantize_COCO_0.1.0.model)

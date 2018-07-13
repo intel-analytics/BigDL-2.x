@@ -30,6 +30,17 @@ class ImagePreprocessing(Preprocessing):
         super(ImagePreprocessing, self).__init__(bigdl_type, *args)
 
 
+class ImageBytesToMat(ImagePreprocessing):
+    """
+    Transform byte array(original image file in byte) to OpenCVMat
+    :param byte_key key that maps byte array
+    :param image_codec specifying the color type of a loaded image, same as in OpenCV.imread.
+     By default is Imgcodecs.CV_LOAD_IMAGE_UNCHANGED
+    """
+    def __init__(self, byte_key="bytes", image_codec=-1, bigdl_type="float"):
+        super(ImageBytesToMat, self).__init__(bigdl_type, byte_key, image_codec)
+
+
 class ImageResize(ImagePreprocessing):
     """
     Resize image
@@ -77,9 +88,14 @@ class ImageChannelNormalize(ImagePreprocessing):
 class ImageMatToTensor(ImagePreprocessing):
     """
     MatToTensor
+    :param toRGB BGR to RGB (default is BGR)
+    :param tensorKey key to store transformed tensor
+    :param format DataFormat.NCHW or DataFormat.NHWC
     """
-    def __init__(self, bigdl_type="float"):
-        super(ImageMatToTensor, self).__init__(bigdl_type)
+    def __init__(self, to_RGB=False, tensor_key="imageTensor",
+                 share_buffer=True, format="NCHW", bigdl_type="float"):
+        super(ImageMatToTensor, self).__init__(bigdl_type, to_RGB, tensor_key,
+                                               share_buffer, format)
 
 
 class ImageSetToSample(ImagePreprocessing):

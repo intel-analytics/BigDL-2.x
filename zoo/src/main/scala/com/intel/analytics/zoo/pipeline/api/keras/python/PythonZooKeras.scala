@@ -23,21 +23,22 @@ import com.intel.analytics.bigdl.{Criterion, DataSet}
 import com.intel.analytics.bigdl.dataset.{DataSet, LocalDataSet, MiniBatch}
 
 import scala.collection.JavaConverters._
-import com.intel.analytics.bigdl.optim.{OptimMethod, Regularizer, ValidationMethod}
+import com.intel.analytics.bigdl.optim.{LocalPredictor, OptimMethod, Regularizer, ValidationMethod}
 import com.intel.analytics.bigdl.python.api.{EvaluatedResult, JTensor, PythonBigDLKeras, Sample}
 import com.intel.analytics.bigdl.tensor.Tensor
 import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric
-import com.intel.analytics.bigdl.nn.Graph.ModuleNode
 import com.intel.analytics.bigdl.nn.Container
 import com.intel.analytics.bigdl.nn.abstractnn.{AbstractModule, Activity}
 import com.intel.analytics.bigdl.nn.keras.{KerasLayer, KerasModel}
 import com.intel.analytics.bigdl.transform.vision.image.{ImageFeature, ImageFeatureToMiniBatch}
+import com.intel.analytics.zoo.feature.image.ImageSet
 import com.intel.analytics.zoo.pipeline.api.Net
 import com.intel.analytics.zoo.pipeline.api.autograd._
 import com.intel.analytics.zoo.pipeline.api.keras.layers._
 import com.intel.analytics.zoo.pipeline.api.keras.layers.utils.KerasUtils
-import com.intel.analytics.zoo.pipeline.api.keras.metrics.AUC
+import com.intel.analytics.zoo.pipeline.api.keras.metrics.{AUC, Accuracy, Top5Accuracy}
 import com.intel.analytics.zoo.pipeline.api.keras.models.{KerasNet, Model, Sequential}
+import com.intel.analytics.zoo.pipeline.api.keras.objectives.{MeanAbsoluteError, SparseCategoricalCrossEntropy}
 import com.intel.analytics.zoo.pipeline.api.net.{GraphNet, NetUtils, TFNet}
 import org.apache.spark.api.java.JavaRDD
 
@@ -87,23 +88,19 @@ class PythonZooKeras[T: ClassTag](implicit ev: TensorNumeric[T]) extends PythonB
       module: KerasNet[T],
       x: JavaRDD[Sample],
       batchSize: Int = 32,
-      epochs: Int = 10,
+      nbEpoch: Int = 10,
       validationData: JavaRDD[Sample] = null): Unit = {
-    module.fit(toJSample(x), batchSize, epochs,
+    module.fit(toJSample(x), batchSize, nbEpoch,
       if (validationData == null) null else toJSample(validationData))
   }
 
   def zooFit(
       module: KerasNet[T],
-      x: DataSet[ImageFeature],
+      x: ImageSet,
       batchSize: Int,
-      epochs: Int,
-      validationData: DataSet[ImageFeature]): Unit = {
-    val trainData = x -> ImageFeatureToMiniBatch[T](batchSize)
-    val valData =
-      if (validationData != null) validationData -> ImageFeatureToMiniBatch[T](batchSize)
-      else null
-    module.fit(trainData, epochs, valData)
+      nbEpoch: Int,
+      validationData: ImageSet): Unit = {
+    module.fit(x, batchSize, nbEpoch, validationData)
   }
 
   def zooFit(
@@ -111,7 +108,7 @@ class PythonZooKeras[T: ClassTag](implicit ev: TensorNumeric[T]) extends PythonB
       xTrain: JList[JTensor],
       yTrain: JTensor,
       batchSize: Int,
-      epochs: Int,
+      nbEpoch: Int,
       xVal: JList[JTensor],
       yVal: JTensor): Unit = {
     val trainArray = toSampleArray(xTrain.asScala.toList.map{f => toTensor(f)}, toTensor(yTrain))
@@ -121,7 +118,26 @@ class PythonZooKeras[T: ClassTag](implicit ev: TensorNumeric[T]) extends PythonB
       val valArray = toSampleArray(xVal.asScala.toList.map{f => toTensor(f)}, toTensor(yVal))
       batching(DataSet.array(valArray), batchSize)
     } else null
-    module.fit(trainData, epochs, valData)
+    module.fit(trainData, nbEpoch, valData)
+  }
+
+  def zooPredict(
+      module: KerasNet[T],
+      x: JavaRDD[Sample],
+      batchSize: Int = 32): JavaRDD[JList[JTensor]] = {
+    val resRDD = module.predict(x.rdd.map(toJSample), batchSize)
+    resRDD.map(activityToJTensors).toJavaRDD()
+  }
+
+  def zooPredict(
+      module: KerasNet[T],
+      x: JList[JTensor],
+      batchSize: Int): JList[JList[JTensor]] = {
+    val sampleArray = toSampleArray(x.asScala.toList.map{f => toTensor(f)})
+    val localPredictor = LocalPredictor(module,
+      batchPerCore = KerasUtils.calBatchPerCore(batchSize))
+    val result = localPredictor.predict(sampleArray)
+    result.map(activityToJTensors).toList.asJava
   }
 
   def zooEvaluate(
@@ -172,6 +188,14 @@ class PythonZooKeras[T: ClassTag](implicit ev: TensorNumeric[T]) extends PythonB
       logPath: String,
       backward: Boolean = false): Model[T] = {
     module.saveGraphTopology(logPath, backward)
+  }
+
+  def zooPredictClasses(
+      module: KerasNet[T],
+      x: JavaRDD[Sample],
+      batchSize: Int = 32,
+      zeroBasedLabel: Boolean = true): JavaRDD[Int] = {
+    module.predictClasses(toJSample(x), batchSize, zeroBasedLabel).toJavaRDD()
   }
 
   def newGraph(model: NetUtils[T, _],
@@ -1038,5 +1062,30 @@ class PythonZooKeras[T: ClassTag](implicit ev: TensorNumeric[T]) extends PythonB
       x: JList[Variable[T]]): Variable[T] = {
     require(!x.isEmpty, "We don't accept empty inputs")
     Variable(module.inputs(x.asScala.map(_.node): _*))
+  }
+
+  def createZooKerasSparseCategoricalCrossEntropy(
+      logProbAsInput: Boolean = false,
+      zeroBasedLabel: Boolean = true,
+      weights: Tensor[T] = null,
+      sizeAverage: Boolean = true,
+      paddingValue: Int = -1): SparseCategoricalCrossEntropy[T] = {
+    SparseCategoricalCrossEntropy(logProbAsInput, zeroBasedLabel, weights,
+      sizeAverage, paddingValue)
+  }
+
+  def createZooKerasMeanAbsoluteError(
+      sizeAverage: Boolean = true): MeanAbsoluteError[T] = {
+    MeanAbsoluteError[T](sizeAverage)
+  }
+
+  def createZooKerasAccuracy(
+      zeroBasedLabel: Boolean = true): ValidationMethod[T] = {
+    new Accuracy[T](zeroBasedLabel)
+  }
+
+  def createZooKerasTop5Accuracy(
+      zeroBasedLabel: Boolean = true): ValidationMethod[T] = {
+    new Top5Accuracy[T](zeroBasedLabel)
   }
 }

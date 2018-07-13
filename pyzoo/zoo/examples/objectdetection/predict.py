@@ -30,7 +30,7 @@ parser.add_argument('output_path',  help="Path to store the detection results")
 
 def predict(model_path, img_path, output_path):
     model = ObjectDetector.load_model(model_path)
-    image_set = ImageSet.read(img_path, sc)
+    image_set = ImageSet.read(img_path, sc, image_codec=1)
     output = model.predict_image_set(image_set)
 
     config = model.get_config()

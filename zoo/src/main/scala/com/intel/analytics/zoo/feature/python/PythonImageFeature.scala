@@ -18,13 +18,14 @@ package com.intel.analytics.zoo.feature.python
 
 import java.util.{List => JList}
 
+import com.intel.analytics.bigdl.nn.abstractnn.DataFormat
 import com.intel.analytics.bigdl.python.api.{JTensor, PythonBigDL}
 import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric
 import com.intel.analytics.bigdl.transform.vision.image._
 import com.intel.analytics.zoo.feature.common.Preprocessing
 import com.intel.analytics.zoo.feature.image._
-
 import org.apache.spark.api.java.{JavaRDD, JavaSparkContext}
+import org.opencv.imgcodecs.Imgcodecs
 import org.opencv.imgproc.Imgproc
 
 import scala.collection.JavaConverters._
@@ -44,11 +45,11 @@ class PythonImageFeature[T: ClassTag](implicit ev: TensorNumeric[T]) extends Pyt
   }
 
   def readImageSet(path: String, sc: JavaSparkContext, minPartitions: Int,
-                   resizeH: Int, resizeW: Int): ImageSet = {
+                   resizeH: Int, resizeW: Int, imageCodec: Int): ImageSet = {
     if (sc == null) {
-      ImageSet.read(path, null, minPartitions, resizeH, resizeW)
+      ImageSet.read(path, null, minPartitions, resizeH, resizeW, imageCodec)
     } else {
-      ImageSet.read(path, sc.sc, minPartitions, resizeH, resizeW)
+      ImageSet.read(path, sc.sc, minPartitions, resizeH, resizeW, imageCodec)
     }
   }
 
@@ -123,6 +124,12 @@ class PythonImageFeature[T: ClassTag](implicit ev: TensorNumeric[T]) extends Pyt
     new LocalImageSet(features.toArray)
   }
 
+  def createImageBytesToMat(
+      byteKey: String = ImageFeature.bytes,
+      imageCodec: Int = Imgcodecs.CV_LOAD_IMAGE_UNCHANGED): ImageBytesToMat = {
+    ImageBytesToMat(byteKey, imageCodec)
+  }
+
   def createImageBrightness(deltaLow: Double, deltaHigh: Double): ImageBrightness = {
     ImageBrightness(deltaLow, deltaHigh)
   }
@@ -136,8 +143,16 @@ class PythonImageFeature[T: ClassTag](implicit ev: TensorNumeric[T]) extends Pyt
       stdR.toFloat, stdG.toFloat, stdB.toFloat)
   }
 
-  def createImageMatToTensor(): ImageMatToTensor[T] = {
-    ImageMatToTensor()
+  def createImageMatToTensor(toRGB: Boolean = false,
+                             tensorKey: String = ImageFeature.imageTensor,
+                             shareBuffer: Boolean = true,
+                             format: String = "NCHW"): ImageMatToTensor[T] = {
+    format match {
+      case "NCHW" => ImageMatToTensor(toRGB, tensorKey, shareBuffer, DataFormat.NCHW)
+      case "NHWC" => ImageMatToTensor(toRGB, tensorKey, shareBuffer, DataFormat.NHWC)
+      case other => throw new IllegalArgumentException(s"Unsupported format:" +
+        s" $format. Only NCHW and NHWC are supported.")
+    }
   }
 
   def createImageHue(deltaLow: Double, deltaHigh: Double): ImageHue = {
