@@ -20,13 +20,14 @@ import com.intel.analytics.bigdl.nn.{BatchNormalization, Linear, LogSoftMax, Seq
 import com.intel.analytics.bigdl.nn.abstractnn.{AbstractModule, Activity}
 import com.intel.analytics.bigdl.tensor.Tensor
 import com.intel.analytics.bigdl.utils.RandomGenerator._
+import com.intel.analytics.zoo.pipeline.api.keras.layers.TorchTimeDistributed
 import com.intel.analytics.zoo.pipeline.api.keras.serializer.ModuleSerializationTest
 import org.scalatest.{FlatSpec, Matchers}
 
 import scala.util.Random
 
-class TimeDistributedSpec extends FlatSpec with Matchers {
-  "A TimeDistributed Module" should "setExtraParam works correctly" in {
+class TorchTimeDistributedSpec extends FlatSpec with Matchers {
+  "A TorchTimeDistributed Module" should "setExtraParam works correctly" in {
     RNG.setSeed(100)
     val batchSize = 5
     val times = 5
@@ -38,8 +39,8 @@ class TimeDistributedSpec extends FlatSpec with Matchers {
     val gradOutput2 = Tensor[Float](Array(batchSize, times, channels)).randn()
     val bnorm1 = BatchNormalization[Float](channels)
     val bnorm2 = BatchNormalization[Float](channels)
-    val model1 = TimeDistributed[Float](bnorm1)
-    val model2 = TimeDistributed[Float](bnorm2)
+    val model1 = TorchTimeDistributed[Float](bnorm1)
+    val model2 = TorchTimeDistributed[Float](bnorm2)
 
     model1.forward(input1)
     model1.backward(input1, gradOutput1)
@@ -54,7 +55,7 @@ class TimeDistributedSpec extends FlatSpec with Matchers {
     bnorm1.runningVar should be (bnorm2.runningVar)
   }
 
-  "A TimeDistributed Module" should "reset correctly" in {
+  "A TorchTimeDistributed Module" should "reset correctly" in {
     RNG.setSeed(100)
     val batchSize = 5
     val times = 5
@@ -64,7 +65,7 @@ class TimeDistributedSpec extends FlatSpec with Matchers {
     val input = Tensor[Float](Array(batchSize, times, inputDim)).randn()
     val gradOutput = Tensor[Float](Array(batchSize, times, outputDim)).randn()
     val linear = Linear[Float](inputDim, outputDim)
-    val model = TimeDistributed[Float](linear)
+    val model = TorchTimeDistributed[Float](linear)
 
     val output = model.forward(input)
     val gradInput = model.backward(input, gradOutput)
@@ -75,7 +76,7 @@ class TimeDistributedSpec extends FlatSpec with Matchers {
     gradInput should not be (null)
   }
 
-  "A TimeDistributed Module" should "hash code correctly" in {
+  "A TorchTimeDistributed Module" should "hash code correctly" in {
     RNG.setSeed(100)
     val batchSize = 5
     val times = 5
@@ -92,14 +93,14 @@ class TimeDistributedSpec extends FlatSpec with Matchers {
       b
     })
     val model1 = Sequential[Float]()
-      .add(TimeDistributed[Float](linear1))
+      .add(TorchTimeDistributed[Float](linear1))
     val model2 = Sequential[Float]()
-      .add(TimeDistributed[Float](linear2))
+      .add(TorchTimeDistributed[Float](linear2))
     val hashCode1 = model1.hashCode()
     val hashCode2 = model2.hashCode()
     hashCode1 should be(hashCode2)
   }
-  "A TimeDistributed Module" should "getParaemtersTable correctly" in {
+  "A TorchTimeDistributed Module" should "getParaemtersTable correctly" in {
     RNG.setSeed(100)
 
     val batchSize = 5
@@ -110,12 +111,12 @@ class TimeDistributedSpec extends FlatSpec with Matchers {
 
     val input = Tensor[Float](Array(batchSize, times, inputDim)).randn()
     val linear = Linear[Float](inputDim, outputDim)
-    val model = TimeDistributed[Float](linear)
+    val model = TorchTimeDistributed[Float](linear)
 
     model.getParametersTable() should be (linear.getParametersTable())
   }
 
-  "A TimeDistributed Module " should "generate correct output and grad for Linear in 3D input " +
+  "A TorchTimeDistributed Module " should "generate correct output and grad for Linear in 3D input " +
     "along first dimension" in {
     RNG.setSeed(100)
 
@@ -131,7 +132,7 @@ class TimeDistributedSpec extends FlatSpec with Matchers {
     linear2.weight.map(linear1.weight, (a, b) => {b})
     linear2.bias.map(linear1.bias, (a, b) => {b})
     val model = Sequential[Float]()
-      .add(TimeDistributed[Float](linear1))
+      .add(TorchTimeDistributed[Float](linear1))
 
     val output = model.forward(input).toTensor[Float].clone
     var i = 1
@@ -151,7 +152,7 @@ class TimeDistributedSpec extends FlatSpec with Matchers {
     }
   }
 
-  "A TimeDistributed Module " should "generate correct output and grad for Linear in 3D input " +
+  "A TorchTimeDistributed Module " should "generate correct output and grad for Linear in 3D input " +
     "along second dimension" in {
     RNG.setSeed(100)
 
@@ -167,7 +168,7 @@ class TimeDistributedSpec extends FlatSpec with Matchers {
     linear2.weight.map(linear1.weight, (a, b) => {b})
     linear2.bias.map(linear1.bias, (a, b) => {b})
     val model = Sequential[Float]()
-      .add(TimeDistributed[Float](linear1))
+      .add(TorchTimeDistributed[Float](linear1))
 
     val output = model.forward(input).toTensor[Float].clone
     var i = 1
@@ -187,7 +188,7 @@ class TimeDistributedSpec extends FlatSpec with Matchers {
     }
   }
 
-  "A TimeDistributed Module " should "generate correct output and grad for logSoftMax " +
+  "A TorchTimeDistributed Module " should "generate correct output and grad for logSoftMax " +
     "when time dimension is 2" in {
     RNG.setSeed(100)
 
@@ -202,7 +203,7 @@ class TimeDistributedSpec extends FlatSpec with Matchers {
     val logSoftMax1 = LogSoftMax[Float]()
     val logSoftMax2 = LogSoftMax[Float]()
     val model = Sequential[Float]()
-      .add(TimeDistributed[Float](logSoftMax1))
+      .add(TorchTimeDistributed[Float](logSoftMax1))
 
     val output = model.forward(input).toTensor[Float].clone
     val gradInput = model.backward(input, gradOutput).toTensor[Float].clone
@@ -217,7 +218,7 @@ class TimeDistributedSpec extends FlatSpec with Matchers {
     }
   }
 
-  "A TimeDistributed Module " should "getParameters correct for linear " in {
+  "A TorchTimeDistributed Module " should "getParameters correct for linear " in {
     RNG.setSeed(100)
 
     val batchSize = 5
@@ -236,7 +237,7 @@ class TimeDistributedSpec extends FlatSpec with Matchers {
       b
     })
     val model = Sequential[Float]()
-      .add(TimeDistributed[Float](linear1))
+      .add(TorchTimeDistributed[Float](linear1))
 
     val (weight, grad) = model.parameters()
     val (weight2, grad2) = linear2.parameters()
@@ -245,12 +246,12 @@ class TimeDistributedSpec extends FlatSpec with Matchers {
   }
 }
 
-class TimeDistributedSerialTest extends ModuleSerializationTest {
+class TorchTorchTimeDistributedSerialTest extends ModuleSerializationTest {
   override def test(): Unit = {
-    val timeDistributed = TimeDistributed[Float](Linear[Float](5, 5)).
-      setName("timeDistributed")
+    val torchTimeDistributed = TorchTimeDistributed[Float](Linear[Float](5, 5)).
+      setName("TorchTimeDistributed")
     val input = Tensor[Float](2, 5, 5).apply1(_ => Random.nextFloat())
-    runSerializationTest(timeDistributed, input)
+    runSerializationTest(TorchTimeDistributed, input)
   }
 }
 
