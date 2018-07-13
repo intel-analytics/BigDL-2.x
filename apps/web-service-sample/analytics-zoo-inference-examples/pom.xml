@@ -9,16 +9,16 @@
 
     <name>ad-insertion-native</name>
     <description>Native library for ad-insertion</description>
-
     <repositories>
-        <repository>
-            <id>ossrh</id>
-            <name>ossrh repository</name>
-            <url>https://oss.sonatype.org/content/repositories/snapshots</url>
-            <snapshots>
-                <enabled>true</enabled>
-            </snapshots>
-        </repository>
+    <repository>
+        <id>ossrh</id>
+        <name>ossrh repository</name>
+        <url>https://oss.sonatype.org/content/repositories/snapshots</url>
+        <snapshots>
+            <enabled>true</enabled>
+        </snapshots>
+    </repository>
+
         <repository>
             <id>spring-releases</id>
             <url>https://repo.spring.io/libs-release</url>
