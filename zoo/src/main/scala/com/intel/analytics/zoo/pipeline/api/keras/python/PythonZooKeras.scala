@@ -131,6 +131,14 @@ class PythonZooKeras[T: ClassTag](implicit ev: TensorNumeric[T]) extends PythonB
     resRDD.map(activityToList).toJavaRDD()
   }
 
+  def zooForward(model: AbstractModule[Activity, Activity, T],
+                   input: JList[JTensor],
+                   inputIsTable: Boolean): JList[Object] = {
+    val inputActivity = jTensorsToActivity(input, inputIsTable)
+    val outputActivity = model.forward(inputActivity)
+    activityToList(outputActivity)
+  }
+
   def activityToList(outputActivity: Activity): JList[Object] = {
     if (outputActivity.isInstanceOf[Tensor[T]]) {
       val list = new util.ArrayList[Object]()
@@ -142,14 +150,14 @@ class PythonZooKeras[T: ClassTag](implicit ev: TensorNumeric[T]) extends PythonB
   }
 
   private def table2JList(t: Table): JList[Object] = {
-    var i = 0
+    var i = 1
     val list = new util.ArrayList[Object]()
-    while (i < t.length()) {
-      val item = t(i)
+    while (i <= t.length()) {
+      val item = t[Object](i)
       if (item.isInstanceOf[Tensor[T]]) {
-        list.add(toJTensor(item))
+        list.add(toJTensor(item.asInstanceOf[Tensor[T]]))
       } else if (item.isInstanceOf[Table]) {
-        list.add(table2JList(item))
+        list.add(table2JList(item.asInstanceOf[Table]))
       } else {
         throw new IllegalArgumentException(s"Table contains unrecognizable objects $item")
       }
