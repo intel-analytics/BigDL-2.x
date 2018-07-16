@@ -11,7 +11,7 @@
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
- * limitations under the License.
+ * limitations under the Licenses.
  */
 
 package com.intel.analytics.zoo.pipeline.api.keras.python
@@ -139,6 +139,31 @@ class PythonZooKeras2[T: ClassTag](implicit ev: TensorNumeric[T]) extends Python
     GlobalAveragePooling2D(
       dataFormat,
       toScalaShape(inputShape))
+  }
+
+  def createZooKeras2BatchNormalization(
+      epsilon: Double = 0.001,
+      momentum: Double = 0.99,
+      betaInitializer: String = "zero",
+      gammaInitializer: String = "one",
+      dataFormat: String = "channels_first",
+      inputShape: JList[Int] = null): BatchNormalization[T] = {
+    BatchNormalization[T](epsilon, momentum, betaInitializer,
+      gammaInitializer, dataFormat, toScalaShape(inputShape))
+  }
+
+  def createZooKeras2LocallyConnected1D(
+      filters: Int,
+      kernelSize: Int,
+      strides: Int = 1,
+      padding: String = "valid",
+      activation: String = null,
+      kernelRegularizer: Regularizer[T] = null,
+      biasRegularizer: Regularizer[T] = null,
+      useBias: Boolean = true,
+      inputShape: JList[Int] = null): LocallyConnected1D[T] = {
+    LocallyConnected1D(filters, kernelSize, strides, padding, activation,
+      kernelRegularizer, biasRegularizer, useBias, toScalaShape(inputShape))
   }
 
 
