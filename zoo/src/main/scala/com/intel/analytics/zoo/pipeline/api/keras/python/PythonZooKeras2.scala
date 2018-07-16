@@ -141,5 +141,29 @@ class PythonZooKeras2[T: ClassTag](implicit ev: TensorNumeric[T]) extends Python
       toScalaShape(inputShape))
   }
 
+  def createZooKeras2BatchNormalization(
+      epsilon: Double = 0.001,
+      momentum: Double = 0.99,
+      betaInitializer: String = "zero",
+      gammaInitializer: String = "one",
+      dataFormat: String = "channels_first",
+      inputShape: JList[Int] = null): BatchNormalization[T] = {
+    BatchNormalization[T](epsilon, momentum, betaInitializer,
+      gammaInitializer, dataFormat, toScalaShape(inputShape))
+  }
+
+  def createZooKeras2LocallyConnected1D(
+      filters: Int,
+      kernelSize: Int,
+      strides: Int = 1,
+      padding: String = "valid",
+      activation: String = null,
+      kernelRegularizer: Regularizer[T] = null,
+      biasRegularizer: Regularizer[T] = null,
+      useBias: Boolean = true,
+      inputShape: JList[Int] = null): LocallyConnected1D[T] = {
+    LocallyConnected1D(filters, kernelSize, strides, padding, activation,
+      kernelRegularizer, biasRegularizer, useBias, toScalaShape(inputShape))
+  }
 
   }
