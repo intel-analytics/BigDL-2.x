@@ -166,4 +166,10 @@ class PythonZooKeras2[T: ClassTag](implicit ev: TensorNumeric[T]) extends Python
       kernelRegularizer, biasRegularizer, useBias, toScalaShape(inputShape))
   }
 
+  def createZooKeras2Cropping1D(
+      cropping: JList[Int],
+      inputShape: JList[Int] = null): Cropping1D[T] = {
+    new Cropping1D(toScalaArray(cropping), toScalaShape(inputShape))
+  }
+
   }
