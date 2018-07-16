@@ -15,16 +15,16 @@
  */
 
 
-package com.intel.analytics.zoo.pipeline.api.keras.layers
+package com.intel.analytics.zoo.pipeline.api.keras2.layers
 
-import com.intel.analytics.bigdl.nn.keras.{KerasLayer, LocallyConnected1D => BigDLLocallyConnected1D}
+import com.intel.analytics.bigdl.nn.keras.KerasLayer
 import com.intel.analytics.bigdl.optim.Regularizer
 import com.intel.analytics.bigdl.tensor.Tensor
 import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric
 import com.intel.analytics.bigdl.utils.Shape
 import com.intel.analytics.zoo.pipeline.api.Net
 import com.intel.analytics.zoo.pipeline.api.keras.layers.utils.KerasUtils
-
+import com.intel.analytics.zoo.pipeline.api.keras.{layers => klayers1}
 import scala.reflect.ClassTag
 
 /**
@@ -37,44 +37,49 @@ import scala.reflect.ClassTag
  * When using this layer as the first layer in a model, you need to provide the argument
  * inputShape (a Single Shape, does not include the batch dimension).
  *
- * @param nbFilter Dimensionality of the output.
- * @param filterLength The extension (spatial or temporal) of each filter.
+ * @param filters Dimensionality of the output.
+ * @param kernelSize The extension (spatial or temporal) of each filter.
+ * @param strides Integer. Factor by which to subsample output.
+ * @param padding Only 'valid is supported for now.
  * @param activation Activation function to use. Default is null.
  *                   You can also pass in corresponding string representations such as 'relu'
  *                   or 'sigmoid', etc. for simple activations in the factory method.
- * @param subsampleLength Integer. Factor by which to subsample output.
- * @param wRegularizer An instance of [[Regularizer]], (eg. L1 or L2 regularization),
+ * @param kernelRegularizer An instance of [[Regularizer]], (eg. L1 or L2 regularization),
  *                     applied to the input weights matrices. Default is null.
- * @param bRegularizer An instance of [[Regularizer]], applied to the bias. Default is null.
- * @param bias Whether to include a bias (i.e. make the layer affine rather than linear).
+ * @param biasRegularizer An instance of [[Regularizer]], applied to the bias. Default is null.
+ * @param useBias Whether to include a bias (i.e. make the layer affine rather than linear).
  *             Default is true.
  * @param inputShape A Single Shape, does not include the batch dimension.
  * @tparam T The numeric type of parameter(e.g. weight, bias). Only support float/double now.
  */
 class LocallyConnected1D[T: ClassTag](
-   override val nbFilter: Int,
-   override val filterLength: Int,
-   override val activation: KerasLayer[Tensor[T], Tensor[T], T] = null,
-   override val subsampleLength: Int = 1,
-   wRegularizer: Regularizer[T] = null,
-   bRegularizer: Regularizer[T] = null,
-   override val bias: Boolean = true,
-   override val inputShape: Shape = null)(implicit ev: TensorNumeric[T])
-  extends BigDLLocallyConnected1D[T](nbFilter, filterLength, activation, subsampleLength,
-          wRegularizer, bRegularizer, bias, inputShape) with Net {}
+      val filters: Int,
+      val kernelSize: Int,
+      val strides: Int = 1,
+      val padding: String = "valid",
+      override val activation: KerasLayer[Tensor[T], Tensor[T], T] = null,
+      val kernelRegularizer: Regularizer[T] = null,
+      val biasRegularizer: Regularizer[T] = null,
+      val useBias: Boolean = true,
+      override val inputShape: Shape = null)(implicit ev: TensorNumeric[T])
+  extends klayers1.LocallyConnected1D[T](nbFilter = filters, filterLength = kernelSize,
+    activation, subsampleLength = strides, wRegularizer = kernelRegularizer,
+    bRegularizer = biasRegularizer, bias = useBias, inputShape) with Net {}
 
 object LocallyConnected1D {
   def apply[@specialized(Float, Double) T: ClassTag](
-    nbFilter: Int,
-    filterLength: Int,
-    activation: String = null,
-    subsampleLength: Int = 1,
-    wRegularizer: Regularizer[T] = null,
-    bRegularizer: Regularizer[T] = null,
-    bias: Boolean = true,
-    inputShape: Shape = null)(implicit ev: TensorNumeric[T]): LocallyConnected1D[T] = {
-    new LocallyConnected1D[T](nbFilter, filterLength,
-      KerasUtils.getKerasActivation(activation), subsampleLength,
-      wRegularizer, bRegularizer, bias, inputShape)
+      filters: Int,
+      kernelSize: Int,
+      strides: Int = 1,
+      padding: String = "valid",
+      activation: String = null,
+      kernelRegularizer: Regularizer[T] = null,
+      biasRegularizer: Regularizer[T] = null,
+      useBias: Boolean = true,
+      inputShape: Shape = null)(implicit ev: TensorNumeric[T]): LocallyConnected1D[T] = {
+    new LocallyConnected1D[T](filters, kernelSize, strides, padding,
+      KerasUtils.getKerasActivation(activation),
+      kernelRegularizer, biasRegularizer, useBias, inputShape)
   }
 }
+
