@@ -57,27 +57,25 @@ class Seq2seq[T: ClassTag](encoderCells: Array[Cell[T]],
   var decoder: Sequential[T] = null
 
   private var seqLen: Int = 0
+  private var stopSign: Tensor[T] = null
+  private var generator =
+    Identity[T]().asInstanceOf[AbstractModule[Tensor[T], Tensor[T], T]]
+  private var inferenceModel: Boolean = false
 
   /**
-   * defines prediction in last time step will be used as input in next time step
-   * in decoder during training
    * @param maxLen max sequence length of output
    * @return this container
    */
-  def setLoop(maxLen: Int): Unit = {
+  def setInferenceMode(maxLen: Int = 30, stopSign: Tensor[T] = null,
+              generator: AbstractModule[Tensor[T], Tensor[T], T] = null): Unit = {
     seqLen = maxLen
-    modules.clear()
-    modules += buildModel()
+    inferenceModel = true
+    this.stopSign = stopSign
+    this.generator = generator
   }
 
-  /**
-   * clear setLoop settings
-   */
-  def clearLoop(): Unit = {
-    seqLen = 0
-    decoderCells.foreach(BigDLWrapper.clearCell(_))
-    modules.clear()
-    modules += buildModel()
+  def setTrain(): Unit = {
+    inferenceModel = false
   }
 
   override def buildModel(): AbstractModule[Activity, Tensor[T], T] = {
@@ -102,18 +100,11 @@ class Seq2seq[T: ClassTag](encoderCells: Array[Cell[T]],
 
   private def buildDecoder(): Sequential[T] = {
     val model = Sequential[T]()
-    dec = if (seqLen > 0) {
-      val cells = if (decoderCells.length == 1) decoderCells.head else MultiRNNCell(decoderCells)
-      val recDec = new ZooRecurrentDecoder(seqLen).add(cells)
-      model.add(recDec)
-      Array(recDec)
-    } else {
-      decoderCells.map {cell =>
+    dec = decoderCells.map {cell =>
         val rec = new ZooRecurrent(maskZero = maskZero).add(cell)
         model.add(rec)
         rec
       }
-    }
     model
   }
 
@@ -121,18 +112,22 @@ class Seq2seq[T: ClassTag](encoderCells: Array[Cell[T]],
     encoderInput = input.toTable(1)
     preDecoderInput = input.toTable(2)
 
-    encoderOutput = encoder.forward(encoderInput).toTensor
+    output = if (!inferenceModel) {
+      encoderOutput = encoder.forward(encoderInput).toTensor
+      decoderInput = if (preDecoder != null) {
+        val preDecoderOutput = preDecoder.forward(preDecoderInput).toTensor
+        //      if (preDecoderOutput.dim() == preDecoderInput.dim + 1 && seqLen > 0) {
+        //        preDecoderOutput.select(Seq2seq.timeDim, preDecoderOutput.size(Seq2seq.timeDim))
+        //      } else preDecoderOutput
+        preDecoderOutput
+      } else preDecoderInput
 
-    decoderInput = if (preDecoder != null) {
-      val preDecoderOutput = preDecoder.forward(preDecoderInput).toTensor
-//      if (preDecoderOutput.dim() == preDecoderInput.dim + 1 && seqLen > 0) {
-//        preDecoderOutput.select(Seq2seq.timeDim, preDecoderOutput.size(Seq2seq.timeDim))
-//      } else preDecoderOutput
-      preDecoderOutput
-    } else preDecoderInput
+      if (bridges != null) bridges.forwardStates(enc, dec)
+      decoder.forward(decoderInput).toTensor
+    } else {
+      inference(input.toTable, seqLen, stopSign, generator)
+    }
 
-    if (bridges != null) bridges.forwardStates(enc, dec)
-    output = decoder.forward(decoderInput).toTensor
     output
   }
 
@@ -160,21 +155,29 @@ class Seq2seq[T: ClassTag](encoderCells: Array[Cell[T]],
     val sent1 = input.toTable[Tensor[T]](1)
     val sent2 = input.toTable[Tensor[T]](2)
     var predict: Tensor[T] = null
+    // expect sent2 with time dim
     var pOutput = sent2
 
-    encoder.forward(sent1).toTensor[Float]
+    encoder.forward(sent1).toTensor[T]
     if (bridges != null) bridges.forwardStates(enc, dec)
     var i = 1
     // Iteratively output predicted words
     while (i < maxSeqLen && !break) {
       val nextInput = if (preDecoder != null) {
+        // expect pOutput with time dim
         preDecoder.forward(pOutput).toTensor
       } else pOutput
-      val curOutput = if (layer != null)
-        layer.forward(decoder.forward(nextInput).toTensor[T]).toTensor[T]
-      else decoder.forward(nextInput).toTensor[T]
+      // add time dim
+//      val inputSize = nextInput.size()
+//      nextInput.resize(Array(inputSize(0), 1) ++ inputSize.drop(1))
 
-      if (curOutput.almostEqual(stopSign, 1e-8)) break = true
+      // decoder0 without time dim
+      val decoderO = decoder.forward(nextInput).toTensor[T].select(Seq2seq.timeDim, nextInput.size(2))
+      val curOutput = if (layer != null)
+        layer.forward(decoderO).toTensor[T]
+      else decoderO
+
+      if (stopSign != null && curOutput.almostEqual(stopSign, 1e-8)) break = true
       if (!break) {
         if (predict == null) {
           val sizes = curOutput.size()
@@ -182,10 +185,16 @@ class Seq2seq[T: ClassTag](encoderCells: Array[Cell[T]],
         }
         predict.narrow(Seq2seq.timeDim, i, 1).copy(curOutput)
       }
-      pOutput = curOutput
+      pOutput = predict.narrow(Seq2seq.timeDim, i, 1)
       i += 1
     }
     if (predict != null) predict.narrow(Seq2seq.timeDim, 1, i) else sent2
+  }
+
+  private def insertTimeDim(tensor: Tensor[T], len: Int): Tensor[T] = {
+    val sizes = tensor.size()
+    tensor.resize(Array(sizes(0), len) ++ sizes.drop(1))
+    tensor
   }
 
   override def getParametersTable(): Table = {

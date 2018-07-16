@@ -75,12 +75,9 @@ class Seq2seqSpec extends FlatSpec with BeforeAndAfter with Matchers {
       model.backward(T(input, input), gradOutput)
     }
 
-    model.setLoop(seqLength)
-
-    for (i <- 0 until 3) {
-      val output = model.forward(T(input, input.select(2, seqLength))).toTensor
-      model.backward(T(input, input.select(2, seqLength)), gradOutput)
-    }
+    model.setInferenceMode(maxLen = 9)
+    val output = model.forward(T(input, input)).toTensor
+    assert(output.size(2) == 9)
   }
 
   "A Seq2seq" should "work with ZeroBridge" in {
@@ -132,12 +129,9 @@ class Seq2seqSpec extends FlatSpec with BeforeAndAfter with Matchers {
       model.backward(T(input, input), gradOutput)
     }
 
-    model.setLoop(seqLength)
-
-    for (i <- 0 until 3) {
-      val output = model.forward(T(input, input.select(2, seqLength))).toTensor
-      model.backward(T(input, input.select(2, seqLength)), gradOutput)
-    }
+    model.setInferenceMode(maxLen = 7)
+    val output = model.forward(T(input, input)).toTensor
+    assert(output.size(2) == 7)
   }
 
   "A Seq2seq" should "work with InitialStateBridge" in {
@@ -193,12 +187,9 @@ class Seq2seqSpec extends FlatSpec with BeforeAndAfter with Matchers {
       model.backward(T(input, input), gradOutput)
     }
 
-    model.setLoop(seqLength)
-
-    for (i <- 0 until 3) {
-      model.forward(T(input, input.select(2, seqLength))).toTensor
-      model.backward(T(input, input.select(2, seqLength)), gradOutput)
-    }
+    model.setInferenceMode(maxLen = 10)
+    val output = model.forward(T(input, input)).toTensor
+    assert(output.size(2) == 10)
   }
 
   "A Seq2seq" should "work with InitialStateBridge2" in {
@@ -251,15 +242,17 @@ class Seq2seqSpec extends FlatSpec with BeforeAndAfter with Matchers {
     ).asInstanceOf[Array[Array[TensorModule[Double]]]]
 
     val preDecoder = Sequential().add(Contiguous())
-      .add(VolumetricConvolution[Double](3, 5, 3, 3, 3, 1, 1, 1, 1, 1, 1))
+      .add(TimeDistributed(VolumetricConvolution[Double](3, 5, 3, 3, 3, 1, 1, 1, 1, 1, 1)))
     val model = Seq2seq(encoderCells, decoderCells, preDecoder = preDecoder,
       bridges = new InitialStateBridge[Double](activations))
-    model.setLoop(seqLength)
 
     for (i <- 0 until 3) {
-      model.forward(T(input, input.select(2, seqLength)))
-      model.backward(T(input, input.select(2, seqLength)), gradOutput)
+      model.forward(T(input, input))
+      model.backward(T(input, input), gradOutput)
     }
+    model.setInferenceMode(maxLen = 15)
+    val output = model.forward(T(input, input))
+    assert(output.size(2) == 15)
   }
 
   "A Seq2seq" should "work with single cell" in {
@@ -295,12 +288,9 @@ class Seq2seqSpec extends FlatSpec with BeforeAndAfter with Matchers {
       model.backward(T(input, input), gradOutput)
     }
 
-    model.setLoop(seqLength)
-
-    for (i <- 0 until 3) {
-      val output = model.forward(T(input, input.select(2, seqLength))).toTensor
-      model.backward(T(input, input.select(2, seqLength)), gradOutput)
-    }
+    model.setInferenceMode(maxLen = 12)
+    val output = model.forward(T(input, input)).toTensor
+    assert(output.size(2) == 12)
   }
 
   "A Seq2seq" should "work with getParameters" in {

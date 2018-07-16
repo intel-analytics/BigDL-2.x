@@ -229,10 +229,11 @@ val seeds = Array("happy birthday have a nice day")
 
       var i = 1
       while (i <= param.nEpochs) {
+        seq2seq.setTrain()
         optimizer
 //          .setEndWhen(Trigger.maxEpoch(i))
           .setEndWhen(Trigger.maxIteration(i))
-        seq2seq.clearLoop()
+//        seq2seq.clearLoop()
         model = optimizer.optimize()
 
 //        def func(x: Tensor[Float]): Tensor[Float] = {
@@ -257,55 +258,53 @@ val seeds = Array("happy birthday have a nice day")
 
 
 
-          val concat = Tensor[Float]()
-          var curInput = sent2
-          var break = false
-          var j = 0
-          // Iteratively output predicted words
-          while (j < 3 && !break) {
-            val output = model.forward(T(sent1, curInput)).toTensor[Float]
-            val predict = output.max(featDim)._2
-              .select(timeDim, output.size(timeDim)).valueAt(1, 1).toInt
-            if (predict == end) break = true
-            if (!break) {
-              concat.resize(1, curInput.size(timeDim) + 1)
-              concat.narrow(timeDim, 1, curInput.size(timeDim)).copy(curInput)
-              concat.setValue(1, concat.size(timeDim), predict)
-              curInput.resizeAs(concat).copy(concat)
-            }
-            println("output: " + output.toString)
-            println("curInput: " + curInput.toString)
-            j += 1
-          }
-
-//          val endSign = Tensor(Array(end.toFloat), Array(1))
-//          def stop(x: Tensor[Float]): Boolean = {
-//            x.max(2)._2.almostEqual(endSign, 1e-6)
+//          val concat = Tensor[Float]()
+//          var curInput = sent2
+//          var break = false
+//          var j = 0
+//          // Iteratively output predicted words
+//          while (j < 3 && !break) {
+//            val output = model.forward(T(sent1, curInput)).toTensor[Float]
+//            val predict = output.max(featDim)._2
+//              .select(timeDim, output.size(timeDim)).valueAt(1, 1).toInt
+//            if (predict == end) break = true
+//            if (!break) {
+//              concat.resize(1, curInput.size(timeDim) + 1)
+//              concat.narrow(timeDim, 1, curInput.size(timeDim)).copy(curInput)
+//              concat.setValue(1, concat.size(timeDim), predict)
+//              curInput.resizeAs(concat).copy(concat)
+//            }
+//            println("output: " + output.toString)
+//            println("curInput: " + curInput.toString)
+//            j += 1
 //          }
-//          seq2seq.setLoop(3, stop, func)
+
+          val endSign = Tensor(Array(end.toFloat), Array(1))
+          def stop(x: Tensor[Float]): Boolean = {
+            x.max(2)._2.almostEqual(endSign, 1e-6)
+          }
 
           val layers = Sequential[Float]()
               .add(Max(dim = featDim))
             .asInstanceOf[AbstractModule[Tensor[Float], Tensor[Float], Float]]
           val sign = Tensor[Float](1)
           sign.setValue(1, end)
-          val output2 = seq2seq.inference(T(sent1, sent2), stopSign = sign, layer = layers).toTensor[Float]
-          val output3 = test1.forward(output2)
-          val output4 = test2.forward(output3)
+          seq2seq.setInferenceMode(maxLen = 30, stopSign = sign, generator = layers)
+          val output2 = model.forward(T(sent1, sent2)).toTensor[Float]
 
 
-          val predArray2 = new Array[Float](curInput.nElement())
-          Array.copy(curInput.storage().array(), curInput.storageOffset() - 1,
-            predArray2, 0, curInput.nElement())
-          val result2 = predArray2.grouped(curInput.size(timeDim)).toArray[Array[Float]]
-            .map(x => x.map(t => dictionary.getWord(t - 1)))
-          println(result2.map(x => x.mkString(" ")).mkString("\n"))
+//          val predArray2 = new Array[Float](curInput.nElement())
+//          Array.copy(curInput.storage().array(), curInput.storageOffset() - 1,
+//            predArray2, 0, curInput.nElement())
+//          val result2 = predArray2.grouped(curInput.size(timeDim)).toArray[Array[Float]]
+//            .map(x => x.map(t => dictionary.getWord(t - 1)))
+//          println(result2.map(x => x.mkString(" ")).mkString("\n"))
 
 
-          val predArray = new Array[Float](output4.nElement())
-          Array.copy(output4.storage().array(), output4.storageOffset() - 1,
-            predArray, 0, output4.nElement())
-          val result = predArray.grouped(output4.size(timeDim)).toArray[Array[Float]]
+          val predArray = new Array[Float](output2.nElement())
+          Array.copy(output2.storage().array(), output2.storageOffset() - 1,
+            predArray, 0, output2.nElement())
+          val result = predArray.grouped(output2.size(timeDim)).toArray[Array[Float]]
             .map(x => x.map(t => dictionary.getWord(t - 1)))
           println(result.map(x => x.mkString(" ")).mkString("\n"))
         }
