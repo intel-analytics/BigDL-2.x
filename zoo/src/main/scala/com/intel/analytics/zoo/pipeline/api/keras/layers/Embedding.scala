@@ -44,22 +44,22 @@ import scala.reflect.ClassTag
  * @tparam T Numeric type of parameter(e.g. weight, bias). Only support float/double now.
  */
 class Embedding[T: ClassTag](
-   override val inputDim: Int,
-   override val outputDim: Int,
-   override val init: InitializationMethod = RandomUniform,
-   wRegularizer: Regularizer[T] = null,
-   inputShape: Shape = null)(implicit ev: TensorNumeric[T])
+    override val inputDim: Int,
+    override val outputDim: Int,
+    override val init: InitializationMethod = RandomUniform,
+    wRegularizer: Regularizer[T] = null,
+    inputShape: Shape = null)(implicit ev: TensorNumeric[T])
   extends BEmbedding[T] (
     inputDim, outputDim, init, wRegularizer, inputShape) with Net {
 }
 
 object Embedding {
   def apply[@specialized(Float, Double) T: ClassTag](
-    inputDim: Int,
-    outputDim: Int,
-    init: String = "uniform",
-    wRegularizer: Regularizer[T] = null,
-    inputShape: Shape = null)(implicit ev: TensorNumeric[T]): Embedding[T] = {
+      inputDim: Int,
+      outputDim: Int,
+      init: String = "uniform",
+      wRegularizer: Regularizer[T] = null,
+      inputShape: Shape = null)(implicit ev: TensorNumeric[T]): Embedding[T] = {
     new Embedding[T](inputDim, outputDim, KerasUtils.getInitMethod(init),
       wRegularizer, inputShape)
   }

@@ -36,17 +36,24 @@ import scala.reflect.ClassTag
  * @param encoderOutputDim The output dimension for the encoder. Positive integer. Default is 256.
  * @tparam T Numeric type of parameter(e.g. weight, bias). Only support float/double now.
  */
-class TextClassifier[T: ClassTag] private (
+class TextClassifier[T: ClassTag] private(
     val classNum: Int,
     val tokenLength: Int,
     val sequenceLength: Int = 500,
     val encoder: String = "cnn",
-    val encoderOutputDim: Int = 256)(implicit ev: TensorNumeric[T])
+    val encoderOutputDim: Int = 256,
+    val embeddingLayer: Embedding[T] = null)(implicit ev: TensorNumeric[T])
   extends ZooModel[Activity, Activity, T] {
 
   override def buildModel(): AbstractModule[Activity, Activity, T] = {
     val model = Sequential[T]()
-    model.add(InputLayer(inputShape = Shape(sequenceLength, tokenLength)))
+    if (embeddingLayer != null) {
+      model.add(InputLayer(inputShape = Shape(sequenceLength)))
+      model.add(embeddingLayer)
+    }
+    else {
+      model.add(InputLayer(inputShape = Shape(sequenceLength, tokenLength)))
+    }
     if (encoder.toLowerCase() == "cnn") {
       model.add(Convolution1D(encoderOutputDim, 5, activation = "relu"))
       model.add(GlobalMaxPooling1D())
@@ -97,6 +104,18 @@ object TextClassifier {
     (implicit ev: TensorNumeric[T]): TextClassifier[T] = {
     new TextClassifier[T](classNum, tokenLength, sequenceLength, encoder, encoderOutputDim)
       .addModel(model)
+  }
+
+  // multiple overloaded alternatives of method apply define default arguments.
+  def apply[@specialized(Float, Double) T: ClassTag](
+      classNum: Int,
+      embeddingLayer: Embedding[T],
+      sequenceLength: Int,
+      encoder: String,
+      encoderOutputDim: Int)(implicit ev: TensorNumeric[T]): TextClassifier[T] = {
+    // Use -1 to represent that tokenLength is not necessary here.
+    new TextClassifier[T](classNum, -1, sequenceLength, encoder,
+      encoderOutputDim, embeddingLayer).build()
   }
 
   /**
