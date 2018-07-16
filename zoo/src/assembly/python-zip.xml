@@ -24,7 +24,7 @@
                 <exclude>docs/**/*</exclude>
             </excludes>
             <outputDirectory>/..</outputDirectory>
-            <directory>${project.parent.basedir}/backend/bigdl/pyspark</directory>
+            <directory>${project.build.directory}/bigdl_python/sources</directory>
         </fileSet>
 
         <fileSet>
@@ -32,7 +32,7 @@
                 <include>**/*.conf</include>
             </includes>
             <outputDirectory>/..</outputDirectory>
-            <directory>${project.parent.basedir}/backend/bigdl/spark/dl/src/main/resources/</directory>
+            <directory>${project.build.directory}/bigdl_python/sources</directory>
         </fileSet>
 
         <fileSet>

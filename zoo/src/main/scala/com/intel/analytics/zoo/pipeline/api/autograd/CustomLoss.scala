@@ -22,53 +22,37 @@ import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric
 import com.intel.analytics.bigdl.utils.{Shape, T}
 import com.intel.analytics.zoo.pipeline.api.autograd.{AutoGrad => AG}
 import com.intel.analytics.zoo.pipeline.api.keras.models.Model
+import com.intel.analytics.zoo.pipeline.api.keras.objectives.TensorLossFunction
 
 import scala.reflect.ClassTag
 
 object CustomLoss {
+  /**
+   *
+   * @param lossFunc function to calculate the loss (yTrue, yPred) => loss
+   * @param yPredShape the pred shape without batch
+   * @param yTrueShape the target shape without batch which is the same as yPredShape by default.
+   * @param sizeAverage average the batch result or not
+   * @return
+   */
   def apply[T: ClassTag](
-      func: (Variable[T], Variable[T]) => Variable[T],
+      lossFunc: (Variable[T], Variable[T]) => Variable[T],
+      yPredShape: Shape,
+      yTrueShape: Shape = null,
       sizeAverage: Boolean = true)(
-      implicit ev: TensorNumeric[T]): TensorCriterion[T] = {
-      new CustomLossWithFunc[T](func, sizeAverage)
-  }
-}
-
-private[zoo] class CustomLossWithFunc[T: ClassTag](
-    func: (Variable[T], Variable[T]) => Variable[T],
-    sizeAverage: Boolean = true)(
-    implicit ev: TensorNumeric[T]) extends CustomLoss[T](sizeAverage = sizeAverage) {
-  @volatile var lossInstance: AbstractModule[Activity, Activity, T] = null
-  @volatile var inputVars: Array[Variable[T]] = null
-
-  override def doGetLoss(inputs: Array[Variable[T]]): AbstractModule[Activity, Activity, T] = {
-    if (lossInstance == null) {
-      synchronized {
-        if (lossInstance == null) {
-          val yTrue = inputs(0)
-          val yPred = inputs(1)
-          lossInstance = generateLossFromVars(inputs, func(yTrue, yPred))
-        }
-      }
-    }
-    lossInstance
-  }
-
-  override def getInputVars(inputShapes: Array[Shape]): Array[Variable[T]] = {
-    if (inputVars == null) {
-      synchronized {
-        if (inputVars == null) {
-          inputVars = inputShapes.map(Variable(_))
-        }
-      }
-    }
-    inputVars
+      implicit ev: TensorNumeric[T]): TensorLossFunction[T] = {
+    val yTrue = Variable(if (null == yTrueShape) {yPredShape} else {yTrueShape})
+    val yPred = Variable(yPredShape)
+    val lossVar = lossFunc (yTrue, yPred)
+    new CustomLossWithVariable[T](Array(yTrue, yPred), lossVar)
   }
 }
 
 class CustomLossWithVariable[T: ClassTag](inputs: Array[Variable[T]], lossVar: Variable[T],
     sizeAverage: Boolean = true)(
     implicit ev: TensorNumeric[T]) extends CustomLoss[T](sizeAverage = sizeAverage) {
+  override val loss = this
+
   private val lossInstance = generateLossFromVars(this.inputs, this.lossVar)
 
   override protected def doGetLoss(
@@ -80,7 +64,7 @@ class CustomLossWithVariable[T: ClassTag](inputs: Array[Variable[T]], lossVar: V
 }
 
 abstract class CustomLoss[T: ClassTag](sizeAverage: Boolean)(
-    implicit ev: TensorNumeric[T]) extends TensorCriterion[T] {
+    implicit ev: TensorNumeric[T]) extends TensorLossFunction[T] {
 
   protected def doGetLoss(inputs: Array[Variable[T]]): AbstractModule[Activity, Activity, T]
 

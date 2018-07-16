@@ -18,13 +18,14 @@ package com.intel.analytics.zoo.feature.python
 
 import java.util.{List => JList}
 
+import com.intel.analytics.bigdl.nn.abstractnn.DataFormat
 import com.intel.analytics.bigdl.python.api.{JTensor, PythonBigDL}
-import com.intel.analytics.bigdl.tensor.Tensor
 import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric
 import com.intel.analytics.bigdl.transform.vision.image._
 import com.intel.analytics.zoo.feature.common.Preprocessing
 import com.intel.analytics.zoo.feature.image._
 import org.apache.spark.api.java.{JavaRDD, JavaSparkContext}
+import org.opencv.imgcodecs.Imgcodecs
 import org.opencv.imgproc.Imgproc
 
 import scala.collection.JavaConverters._
@@ -43,11 +44,12 @@ class PythonImageFeature[T: ClassTag](implicit ev: TensorNumeric[T]) extends Pyt
     imageSet.transform(transformer)
   }
 
-  def readImageSet(path: String, sc: JavaSparkContext, minPartitions: Int): ImageSet = {
+  def readImageSet(path: String, sc: JavaSparkContext, minPartitions: Int,
+                   resizeH: Int, resizeW: Int, imageCodec: Int): ImageSet = {
     if (sc == null) {
-      ImageSet.read(path, null, minPartitions)
+      ImageSet.read(path, null, minPartitions, resizeH, resizeW, imageCodec)
     } else {
-      ImageSet.read(path, sc.sc, minPartitions)
+      ImageSet.read(path, sc.sc, minPartitions, resizeH, resizeW, imageCodec)
     }
   }
 
@@ -67,12 +69,7 @@ class PythonImageFeature[T: ClassTag](implicit ev: TensorNumeric[T]) extends Pyt
 
   def localImageSetToPredict(imageSet: LocalImageSet, key: String)
   : JList[JList[Any]] = {
-    imageSet.array.map(x =>
-      if (x.isValid && x.contains(key)) {
-        List[Any](x.uri(), toJTensor(x[Tensor[T]](key))).asJava
-      } else {
-        List[Any](x.uri(), null).asJava
-      }).toList.asJava
+    imageSet.array.map(x => imageSetToPredict(x, key)).toList.asJava
   }
 
   def distributedImageSetToImageTensorRdd(imageSet: DistributedImageSet,
@@ -86,13 +83,15 @@ class PythonImageFeature[T: ClassTag](implicit ev: TensorNumeric[T]) extends Pyt
 
   def distributedImageSetToPredict(imageSet: DistributedImageSet, key: String)
   : JavaRDD[JList[Any]] = {
-    imageSet.rdd.map(x => {
-      if (x.isValid && x.contains(key)) {
-        List[Any](x.uri(), toJTensor(x[Tensor[T]](key))).asJava
-      } else {
-        List[Any](x.uri(), null).asJava
-      }
-    })
+    imageSet.rdd.map(x => imageSetToPredict(x, key))
+  }
+
+  private def imageSetToPredict(imf: ImageFeature, key: String): JList[Any] = {
+    if (imf.isValid && imf.contains(key)) {
+        List[Any](imf.uri(), activityToJTensors(imf(key))).asJava
+    } else {
+      List[Any](imf.uri(), null).asJava
+    }
   }
 
   def createDistributedImageSet(imageRdd: JavaRDD[JTensor], labelRdd: JavaRDD[JTensor])
@@ -125,6 +124,12 @@ class PythonImageFeature[T: ClassTag](implicit ev: TensorNumeric[T]) extends Pyt
     new LocalImageSet(features.toArray)
   }
 
+  def createImageBytesToMat(
+      byteKey: String = ImageFeature.bytes,
+      imageCodec: Int = Imgcodecs.CV_LOAD_IMAGE_UNCHANGED): ImageBytesToMat = {
+    ImageBytesToMat(byteKey, imageCodec)
+  }
+
   def createImageBrightness(deltaLow: Double, deltaHigh: Double): ImageBrightness = {
     ImageBrightness(deltaLow, deltaHigh)
   }
@@ -138,8 +143,16 @@ class PythonImageFeature[T: ClassTag](implicit ev: TensorNumeric[T]) extends Pyt
       stdR.toFloat, stdG.toFloat, stdB.toFloat)
   }
 
-  def createImageMatToTensor(): ImageMatToTensor[T] = {
-    ImageMatToTensor()
+  def createImageMatToTensor(toRGB: Boolean = false,
+                             tensorKey: String = ImageFeature.imageTensor,
+                             shareBuffer: Boolean = true,
+                             format: String = "NCHW"): ImageMatToTensor[T] = {
+    format match {
+      case "NCHW" => ImageMatToTensor(toRGB, tensorKey, shareBuffer, DataFormat.NCHW)
+      case "NHWC" => ImageMatToTensor(toRGB, tensorKey, shareBuffer, DataFormat.NHWC)
+      case other => throw new IllegalArgumentException(s"Unsupported format:" +
+        s" $format. Only NCHW and NHWC are supported.")
+    }
   }
 
   def createImageHue(deltaLow: Double, deltaHigh: Double): ImageHue = {
@@ -238,5 +251,9 @@ class PythonImageFeature[T: ClassTag](implicit ev: TensorNumeric[T]) extends Pyt
 
   def imageSetToImageFrame(imageSet: ImageSet): ImageFrame = {
     imageSet.toImageFrame()
+  }
+
+  def imageFrameToImageSet(imageFrame: ImageFrame): ImageSet = {
+    ImageSet.fromImageFrame(imageFrame)
   }
 }

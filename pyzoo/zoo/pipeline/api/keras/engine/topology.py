@@ -15,6 +15,7 @@
 #
 
 import zoo.pipeline.api.autograd as autograd
+from zoo.feature.image import ImageSet
 from zoo.pipeline.api.keras.base import ZooKerasLayer
 from zoo.pipeline.api.keras.utils import *
 
@@ -122,12 +123,12 @@ class KerasNet(ZooKerasLayer):
         Train a model for a fixed number of epochs on a dataset.
 
         # Arguments
-        x: Input data. A Numpy array or RDD of Sample or Image DataSet.
+        x: Input data. A Numpy array or RDD of Sample or ImageSet.
         y: Labels. A Numpy array. Default is None if x is already RDD of Sample or Image DataSet.
-        batch_size: Number of samples per gradient update.
+        batch_size: Number of samples per gradient update. Default is 32.
         nb_epoch: Number of iterations to train.
-        validation_data: Tuple (x_val, y_val) where x_val and y_val are both Numpy arrays.
-                         Or RDD of Sample. Default is None if no validation is involved.
+        validation_data: Tuple (x_val, y_val) where x_val and y_val are both Numpy arrays. Or
+                         RDD of Sample. Or ImageSet. Default is None if no validation is involved.
         distributed: Boolean. Whether to train the model in distributed mode or local mode.
                      Default is True. In local mode, x and y must both be Numpy arrays.
         """
@@ -136,7 +137,7 @@ class KerasNet(ZooKerasLayer):
                 training_data = to_sample_rdd(x, y)
                 if validation_data:
                     validation_data = to_sample_rdd(*validation_data)
-            elif (isinstance(x, RDD) or isinstance(x, DataSet)) and not y:
+            elif (isinstance(x, RDD) or isinstance(x, ImageSet)) and not y:
                 training_data = x
             else:
                 raise TypeError("Unsupported training data type: %s" % type(x))
@@ -166,43 +167,108 @@ class KerasNet(ZooKerasLayer):
         Evaluate a model on a given dataset in distributed mode.
 
         # Arguments
-        x: Input data. A Numpy array or RDD of Sample.
+        x: Evaluation data. A Numpy array or RDD of Sample.
         y: Labels. A Numpy array. Default is None if x is already RDD of Sample.
-        batch_size: Number of samples per gradient update.
+        batch_size: Number of samples per batch. Default is 32.
         """
         if isinstance(x, np.ndarray) and isinstance(y, np.ndarray):
-            evaluation_data = to_sample_rdd(x, y)
+            data_rdd = to_sample_rdd(x, y)
         elif isinstance(x, RDD) and not y:
-            evaluation_data = x
+            data_rdd = x
         else:
             raise TypeError("Unsupported evaluation data type: %s" % type(x))
         return callBigDlFunc(self.bigdl_type, "zooEvaluate",
                              self.value,
-                             evaluation_data,
+                             data_rdd,
                              batch_size)
 
-    def predict(self, x, distributed=True):
+    def forward(self, input):
+        """
+        NB: It's for debug only, please use optimizer.optimize() in production.
+        Takes an input object, and computes the corresponding output of the module
+        :param input: ndarray or list of ndarray
+        :param input: ndarray or list of ndarray or JTensor or list of JTensor.
+        :return: ndarray or list of ndarray
+        """
+        jinput, input_is_table = self.check_input(input)
+        output = callBigDlFunc(self.bigdl_type,
+                               "zooForward",
+                               self.value,
+                               jinput,
+                               input_is_table)
+        return self.convert_output(output)
+
+    @staticmethod
+    def convert_output(output):
+        if type(output) is JTensor:
+            return output.to_ndarray()
+        elif(len(output) == 1):
+            return KerasNet.convert_output(output[0])
+        else:
+            return [KerasNet.convert_output(x) for x in output]
+
+    def predict(self, x, batch_size=32, distributed=True):
         """
         Use a model to do prediction.
 
         # Arguments
-        x: Input data. A Numpy array or RDD of Sample.
+        x: Prediction data. A Numpy array or RDD of Sample.
+        batch_size: Number of samples per batch. Default is 32.
         distributed: Boolean. Whether to do prediction in distributed mode or local mode.
                      Default is True. In local mode, x must be a Numpy array.
         """
         if distributed:
             if isinstance(x, np.ndarray):
-                features = to_sample_rdd(x, np.zeros([x.shape[0]]))
+                data_rdd = to_sample_rdd(x, np.zeros([x.shape[0]]))
             elif isinstance(x, RDD):
-                features = x
+                data_rdd = x
             else:
                 raise TypeError("Unsupported prediction data type: %s" % type(x))
-            return self.predict_distributed(features)
+            results = callBigDlFunc(self.bigdl_type, "zooPredict",
+                                    self.value,
+                                    data_rdd,
+                                    batch_size)
+            return results.map(lambda result: Layer.convert_output(result))
         else:
-            if isinstance(x, np.ndarray):
-                return self.predict_local(x)
+            if isinstance(x, np.ndarray) or isinstance(x, list):
+                results = callBigDlFunc(self.bigdl_type, "zooPredict",
+                                        self.value,
+                                        self._to_jtensors(x),
+                                        batch_size)
+                return [Layer.convert_output(result) for result in results]
             else:
                 raise TypeError("Unsupported prediction data type: %s" % type(x))
+
+    def predict_classes(self, x, batch_size=32, zero_based_label=True):
+        """
+        Use a model to predict for classes. By default, label predictions start from 0.
+
+        # Arguments
+        x: Prediction data. A Numpy array or RDD of Sample.
+        batch_size: Number of samples per batch. Default is 32.
+        zero_based_label: Boolean. Whether result labels start from 0.
+                          Default is True. If False, result labels start from 1.
+        """
+        if isinstance(x, np.ndarray):
+            data_rdd = to_sample_rdd(x, np.zeros([x.shape[0]]))
+        elif isinstance(x, RDD):
+            data_rdd = x
+        else:
+            raise TypeError("Unsupported prediction data type: %s" % type(x))
+        return callBigDlFunc(self.bigdl_type, "zooPredictClasses",
+                             self.value,
+                             data_rdd,
+                             batch_size,
+                             zero_based_label)
+
+    def get_layer(self, name):
+        layer = [l for l in self.layers if l.name() == name]
+        if (len(layer) == 0):
+            raise Exception("Could not find a layer named: %s" + name)
+        elif (len(layer) > 1):
+            raise Exception("There are multiple layers named: %s" + name)
+        else:
+            return layer[0]
 
     def summary(self, line_length=120, positions=[.33, .55, .67, 1.]):
         """

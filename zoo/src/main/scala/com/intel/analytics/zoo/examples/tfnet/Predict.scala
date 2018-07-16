@@ -16,6 +16,7 @@
 
 package com.intel.analytics.zoo.examples.tfnet
 
+import com.intel.analytics.bigdl.nn.abstractnn.DataFormat
 import com.intel.analytics.bigdl.nn.{Contiguous, Sequential, Transpose}
 import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric.NumericFloat
 import com.intel.analytics.zoo.common.NNContext
@@ -34,7 +35,7 @@ object Predict {
   val logger = Logger.getLogger(getClass)
 
   case class PredictParam(image: String = "/tmp/datasets/cat_dog/train_sampled",
-                          model: String = "/tmp/models/ssd_mobilenet_v1_coco_2017_11_17" +
+                          model: String = "/tmp/models/ssd_mobilenet_v1_coco_2018_01_28" +
                             "/frozen_inference_graph.pb",
                           nPartition: Int = 4)
 
@@ -60,14 +61,13 @@ object Predict {
       val outputs = Seq("num_detections:0", "detection_boxes:0",
         "detection_scores:0", "detection_classes:0")
 
-      val detector = TFNet(params.model, inputs, outputs)
-      val model = Sequential()
-      model.add(Transpose(Array((2, 4), (2, 3))))
-      model.add(Contiguous())
-      model.add(detector)
+      val model = TFNet(params.model, inputs, outputs)
 
       val data = ImageSet.read(params.image, sc, minPartitions = params.nPartition)
-        .transform(ImageResize(256, 256) -> ImageMatToTensor() -> ImageSetToSample())
+        .transform(
+          ImageResize(256, 256) ->
+            ImageMatToTensor(format = DataFormat.NHWC) ->
+            ImageSetToSample())
       val output = model.predictImage(data.toImageFrame(), batchPerPartition = 1)
 
       // print the first result

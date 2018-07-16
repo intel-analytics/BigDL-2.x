@@ -36,7 +36,6 @@ def get_news20(base_dir="./data/news20"):
     label_id = 0
     for category in sorted(os.listdir(news20_dir)):
         category_dir = os.path.join(news20_dir, category)
-        label_id += 1
         if os.path.isdir(category_dir):
             for text_file in sorted(os.listdir(category_dir)):
                 if text_file.isdigit():
@@ -48,6 +47,7 @@ def get_news20(base_dir="./data/news20"):
                     content = f.read()
                     texts.append((content, label_id))
                     f.close()
+        label_id += 1
     print('Found %s texts.' % len(texts))
     return texts
 

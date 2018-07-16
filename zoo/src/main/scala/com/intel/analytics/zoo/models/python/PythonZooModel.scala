@@ -238,4 +238,12 @@ class PythonZooModel[T: ClassTag](implicit ev: TensorNumeric[T]) extends PythonB
     model.summary()
   }
 
+  def zooModelPredictClasses(
+      module: ZooModel[Activity, Activity, T],
+      x: JavaRDD[Sample],
+      batchSize: Int = 32,
+      zeroBasedLabel: Boolean = true): JavaRDD[Int] = {
+    module.predictClasses(toJSample(x), batchSize, zeroBasedLabel).toJavaRDD()
+  }
+
 }

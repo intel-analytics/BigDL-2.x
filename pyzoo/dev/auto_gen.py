@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+#!/usr/bin/python
 
 #
 # Copyright 2018 Analytics Zoo Authors.
@@ -22,7 +22,7 @@ import re
 
 def get_class_name(src_code):
     import re
-    match = re.search(r"object(.*)\{", src_code)
+    match = re.search(r"object(.*)\s*\{", src_code)
     return match.group(1).strip()
 
 
