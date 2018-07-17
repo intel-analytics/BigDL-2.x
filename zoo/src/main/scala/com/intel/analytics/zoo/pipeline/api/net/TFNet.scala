@@ -89,15 +89,15 @@ class TFNet(graphDef: TFGraphHolder,
   }
 
   private val weights = {
+
     if (graphMeta.variables.isDefined) {
-      val runner = sess.runner()
-      val variables = graphMeta.variables.get
-      variables.foreach(runner.fetch)
-      runner.run().asScala.map { output =>
-        val t = Tensor[Float]()
-        tf2bigdl(output.asInstanceOf[TTensor[Float]], t)
-        t
-      }.toArray
+      val ws = new Array[Tensor[Float]](graphMeta.variables.get.length)
+        var i = 0
+        while (i < ws.length) {
+          ws(i) = Tensor[Float]()
+          i += 1
+        }
+      setWeights(ws)
     } else {
       Array[Tensor[Float]]()
     }
@@ -330,16 +330,21 @@ class TFNet(graphDef: TFGraphHolder,
     emptyTFTensorArray(gradWeightsTTensors)
   }
 
+  private def setWeights(weights: Array[Tensor[Float]]) = {
+    val runner = sess.runner()
+    val variables = graphMeta.variables.get
+    variables.foreach(runner.fetch)
+    runner.run().asScala.zipWithIndex.map { case (fetch, idx) =>
+      val t = weights(idx)
+      tf2bigdl(fetch.asInstanceOf[TTensor[Float]], t)
+      t
+    }
+    weights
+  }
+
   override def reset(): Unit = {
     if (graphMeta.variables.isDefined) {
-      val runner = sess.runner()
-      val variables = graphMeta.variables.get
-      variables.foreach(runner.fetch)
-      runner.run().asScala.zipWithIndex.map { case (fetch, idx) =>
-        val t = weights(idx)
-        tf2bigdl(fetch.asInstanceOf[TTensor[Float]], t)
-        t
-      }
+      setWeights(weights)
     }
     zeroGradParameters()
   }
