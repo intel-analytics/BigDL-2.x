@@ -57,7 +57,7 @@ class MaxPooling2DSpec extends KerasBaseSpec {
       kerasCode)
   }
 
-  "MaxPooling2D same Data Format" should "be the same as Keras" in {
+  "MaxPooling2D same padding" should "be the same as Keras" in {
     val kerasCode =
       """
         |input_tensor = Input(shape=[3, 24, 24])
