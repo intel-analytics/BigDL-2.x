@@ -20,20 +20,10 @@ import java.nio._
 
 import com.esotericsoftware.kryo.io.{Input, Output}
 import com.esotericsoftware.kryo.{Kryo, KryoSerializable}
-import com.intel.analytics.bigdl.nn._
 import com.intel.analytics.bigdl.nn.abstractnn.{AbstractModule, Activity}
-import com.intel.analytics.bigdl.serialization.Bigdl
-import com.intel.analytics.bigdl.serialization.Bigdl.AttrValue.ArrayValue
-import com.intel.analytics.bigdl.serialization.Bigdl.{AttrValue, InitMethod, InitMethodType, NameAttrList, DataType => BDataType}
-import com.intel.analytics.bigdl.shaded.protobuf.Descriptors.FileDescriptor
-import com.intel.analytics.bigdl.shaded.protobuf.{ByteString, StringValue, Any => BAny}
-import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric
-import com.intel.analytics.bigdl.tensor.{Tensor, TensorNumericMath}
-import com.intel.analytics.bigdl.utils.serializer.{DeserializeContext, SerializeContext}
-import com.intel.analytics.bigdl.utils.serializer.converters.DataConverter
-import com.intel.analytics.bigdl.utils.{MultiShape, Shape, T, Util}
+import com.intel.analytics.bigdl.tensor.Tensor
+import com.intel.analytics.bigdl.utils.{MultiShape, Shape, T}
 import com.intel.analytics.zoo.pipeline.api.net.TFNet.TFGraphHolder
-import org.apache.commons.lang3.SerializationUtils
 import org.apache.spark.utils.SparkUtils
 import org.tensorflow.framework.GraphDef
 import org.tensorflow.types.UInt8
@@ -44,8 +34,6 @@ import org.json4s._
 import org.slf4j.LoggerFactory
 
 import scala.collection.mutable
-import scala.reflect.ClassTag
-import scala.reflect.runtime.universe
 
 /**
  * [[TFNet]] wraps a tensorflow subgraph as a layer, and use tensorflow to
@@ -71,6 +59,7 @@ class TFNet(graphDef: TFGraphHolder,
 
   val inputNames: Array[String] = graphMeta.inputNames
   private val inputTypes = inputNames.map(name2type)
+  private val inputTFTensors = new Array[TTensor[_]](inputNames.length)
 
   val outputNames: Array[String] = graphMeta.outputNames
   private val outputTypes = outputNames.map(name2type)
@@ -113,6 +102,8 @@ class TFNet(graphDef: TFGraphHolder,
       Array[Tensor[Float]]()
     }
   }
+
+  private val weightsTFTensors = new Array[TTensor[_]](weights.length)
 
   private val gradWeights = {
     if (graphMeta.variables.isDefined) {
@@ -176,7 +167,7 @@ class TFNet(graphDef: TFGraphHolder,
       s"require ${inputTypes.length} inputs, but ${activityLength(input)} given. " +
         s"The inputs are ${inputNames.toSeq}")
 
-    val inputTFTensors = activity2TFTensors(input, inputTypes)
+    activity2TFTensors(input, inputTypes, inputTFTensors)
 
     // feed inputs
     inputNames.zipWithIndex.foreach { case (name, idx) =>
@@ -184,10 +175,25 @@ class TFNet(graphDef: TFGraphHolder,
     }
 
     // feed new weights if possible
-    val weightsTensor = graphMeta.variables.map { variableNames =>
-      variableNames.zipWithIndex.map { case (v, idx) =>
-        val tensor = bigdl2Tf(weights(idx), DataType.FLOAT)
-        runner.feed(v, tensor)
+    graphMeta.variables.map { variableNames =>
+      var i = 0
+      while (i < variableNames.length) {
+        if (!this.isTraining()) {
+          if (weightsTFTensors(i) == null) {
+            val tensor = bigdl2Tf(weights(i), DataType.FLOAT)
+            weightsTFTensors(i) = tensor
+          }
+        } else {
+          if (weightsTFTensors(i) != null) {
+            weightsTFTensors(i).close()
+          }
+          val tensor = bigdl2Tf(weights(i), DataType.FLOAT)
+          weightsTFTensors(i) = tensor
+        }
+        i += 1
+      }
+      variableNames.zip(weightsTFTensors).map { case (name, tensor) =>
+        runner.feed(name, tensor)
         tensor
       }
     }
@@ -211,16 +217,29 @@ class TFNet(graphDef: TFGraphHolder,
         tempTensors(idx - outputNames.length) = t
       }
     }
-    // clean up input tensorflow tensors
-    inputTFTensors.foreach(_.close())
-    // clean up variable tensorflow tensors
-    weightsTensor.foreach(_.foreach(_.close()))
+
+    if (!this.isTraining()) {
+      // clean up input tensorflow tensors
+      emptyTFTensorArray(inputTFTensors)
+
+      // clean up variable tensorflow tensors
+      emptyTFTensorArray(weightsTFTensors)
+    }
 
     // clean up model output tensorflow tensors
-    outputs.asScala.slice(0, outputNames.length).foreach(_.close())
+    emptyTFTensorArray(outputs.asScala.slice(0, outputNames.length))
     // tempTensors will be cleaned up after backward
 
     output
+  }
+
+  private def emptyTFTensorArray(arr: Seq[TTensor[_]]): Unit = {
+    var i = 0
+    while (i < arr.length) {
+      arr(i).close()
+      arr(i) = null
+      i += 1
+    }
   }
 
   override def updateGradInput(input: Activity, gradOutput: Activity): Activity = {
@@ -235,8 +254,8 @@ class TFNet(graphDef: TFGraphHolder,
         s"require ${inputTypes.length} inputs, but ${activityLength(input)} given. " +
           s"The inputs are ${inputNames.toSeq}")
 
-      val inputTFTensors = activity2TFTensors(input, inputTypes)
-      val gradOuputTFTensors = activity2TFTensors(gradOutput, outputTypes)
+      val gradOuputTFTensors = new Array[TTensor[_]](outputNames.length)
+      activity2TFTensors(gradOutput, outputTypes, gradOuputTFTensors)
 
       // feed inputs
       inputNames.zipWithIndex.foreach { case (name, idx) =>
@@ -273,14 +292,14 @@ class TFNet(graphDef: TFGraphHolder,
       }
 
       // clean up two feeds
-      inputTFTensors.foreach(_.close())
-      gradOuputTFTensors.foreach(_.close())
+      emptyTFTensorArray(inputTFTensors)
+      emptyTFTensorArray(gradOuputTFTensors)
 
       // clean up temp tensors
-      this.tempTensors.foreach(_.close())
+      emptyTFTensorArray(tempTensors)
 
       // clean up fetched grad inputs
-      i.foreach(_.close())
+      emptyTFTensorArray(i)
 
       // grad weights will be cleaned up after acc
     }
@@ -311,7 +330,7 @@ class TFNet(graphDef: TFGraphHolder,
         val t = weights(idx)
         tf2bigdl(fetch.asInstanceOf[TTensor[Float]], t)
         t
-      }.toArray
+      }
     }
     zeroGradParameters()
   }
@@ -407,12 +426,29 @@ class TFNet(graphDef: TFGraphHolder,
   }
 
 
-  private def activity2TFTensors(input: Activity, types: Seq[DataType]) = {
+  private def activity2TFTensors(input: Activity, types: Seq[DataType],
+                                 tfTensors: Array[TTensor[_]]) = {
     if (input.isTensor) {
+      require(tfTensors.length == 1, "activity and tfTensors size does not equal," +
+        s" activity length is 1 tfTensors length is ${tfTensors.length}")
       val tfTensor = bigdl2Tf(input.toTensor[Float], types.head)
-      Seq(tfTensor)
+      if (tfTensors(0) != null) {
+        tfTensors(0).close()
+      }
+      tfTensors(0) = tfTensor
     } else {
       val t = input.toTable
+      require(tfTensors.length == t.length(), "activity and tfTensors size does not equal," +
+        s" activity length is ${t.length()} tfTensors length is ${tfTensors.length}")
+      var i = 0
+      while (i < t.length()) {
+        val tfTensor = bigdl2Tf(t[Tensor[Float]](i), types(i-1))
+        if (tfTensors(i) != null) {
+          tfTensors(i).close()
+        }
+        tfTensors(i) = tfTensor
+        i += 1
+      }
       for (i <- 1 to t.length()) yield {
         bigdl2Tf(t[Tensor[Float]](i), types(i-1))
       }
@@ -440,11 +476,6 @@ class TFNet(graphDef: TFGraphHolder,
 }
 
 object TFNet {
-
-  DataConverter.registerConverter(
-    "com.intel.analytics.zoo.pipeline.api.net.TFNet.TFGraphHolder", TFGraphHolderConverter)
-  DataConverter.registerConverter(
-    "com.intel.analytics.zoo.pipeline.api.net.Meta", MetaConverter)
 
   private def isDriver = try {
     SparkUtils.isDriver
@@ -577,61 +608,6 @@ object TFNet {
       })
     }
   }
-
-  object MetaConverter extends DataConverter {
-    override def getAttributeValue[T: ClassTag](
-                                                 context: DeserializeContext,
-                                                 attribute: Bigdl.AttrValue
-                                               )(implicit ev: TensorNumeric[T]): AnyRef = {
-      val any = attribute.getCustomValue
-      val bytes = any.getValue.toByteArray
-      val net: Meta = SerializationUtils.deserialize(bytes)
-      net
-    }
-
-    override def setAttributeValue[T: ClassTag](
-                                                 context: SerializeContext[T],
-                                                 attributeBuilder: AttrValue.Builder,
-                                                 value: scala.Any,
-                                                 valueType: universe.Type
-                                               )(implicit ev: TensorNumeric[T]): Unit = {
-      attributeBuilder.setDataType(BDataType.CUSTOM)
-
-      val bytes = SerializationUtils.serialize(value.asInstanceOf[Serializable])
-      val anyBuilder = BAny.newBuilder()
-      anyBuilder.setValue(ByteString.copyFrom(bytes))
-      attributeBuilder.setCustomValue(anyBuilder.build())
-    }
-
-  }
-
-  object TFGraphHolderConverter extends DataConverter {
-    override def getAttributeValue[T: ClassTag](
-                                                 context: DeserializeContext,
-                                                 attribute: Bigdl.AttrValue
-                                               )(implicit ev: TensorNumeric[T]): AnyRef = {
-      val any = attribute.getCustomValue
-      val bytes = any.getValue.toByteArray
-      val net: TFGraphHolder = SerializationUtils.deserialize(bytes)
-      net
-    }
-
-    override def setAttributeValue[T: ClassTag](
-                                                 context: SerializeContext[T],
-                                                 attributeBuilder: AttrValue.Builder,
-                                                 value: scala.Any,
-                                                 valueType: universe.Type
-                                               )(implicit ev: TensorNumeric[T]): Unit = {
-      attributeBuilder.setDataType(BDataType.CUSTOM)
-
-      val bytes = SerializationUtils.serialize(value.asInstanceOf[Serializable])
-      val anyBuilder = BAny.newBuilder()
-      anyBuilder.setValue(ByteString.copyFrom(bytes))
-      attributeBuilder.setCustomValue(anyBuilder.build())
-    }
-
-  }
-
 
 
   private val logger = LoggerFactory.getLogger(getClass)
