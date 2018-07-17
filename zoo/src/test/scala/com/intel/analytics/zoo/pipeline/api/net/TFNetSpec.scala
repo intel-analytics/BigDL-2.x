@@ -139,19 +139,3 @@ class TFNetSpec extends FlatSpec with Matchers with BeforeAndAfter {
   }
 
 }
-
-class TFNetSerialTest extends ModuleSerializationTest {
-  override def test(): Unit = {
-    val resource = getClass().getClassLoader().getResource("tfnet-training")
-    val model = TFNet(resource.getPath)
-
-    val tmpFile = ZooSpecHelper.createTmpFile()
-    model.saveModule(tmpFile.getAbsolutePath, overWrite = true)
-    val reloadModel = Net.loadBigDL[Float](tmpFile.getAbsolutePath)
-    val inputData = Tensor[Float](2, 28, 28, 1).apply1(_ => Random.nextFloat())
-    ZooSpecHelper.compareOutputAndGradInput(
-      model.asInstanceOf[AbstractModule[Tensor[Float], Tensor[Float], Float]],
-      reloadModel.asInstanceOf[AbstractModule[Tensor[Float], Tensor[Float], Float]],
-      inputData)
-  }
-}
