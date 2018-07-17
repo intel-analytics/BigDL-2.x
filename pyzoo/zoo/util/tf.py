@@ -173,38 +173,14 @@ def export_tf(sess, folder, inputs, outputs,
     with open(os.path.join(folder, "graph_meta.json"), "w") as f:
         f.write(json.dumps(meta))
 
-
-def _insert_identity_nodes(graph_def, temp_tensors):
-    new_temp_tensors = []
-    new_graph_def = graph_pb2.GraphDef()
-    added_nodes = set()
-    name2node = {}
-    for node in graph_def.node:
-        name2node[node.name] = node
-
-    for node in graph_def.node:
-        for i in range(len(node.input)):
-            input_name = _append_port(node.input[i])
-            if input_name in temp_tensors:
-                new_node_name = input_name.replace(":", "_") + "_identity"
-                input_node_name = input_name.split(":")[0]
-                input_node_port = int(input_name.split(":")[1])
-                input_node = name2node[input_node_name]
-                if new_node_name not in added_nodes:
-                    added_nodes.add(new_node_name)
-                    identity_node = node_def_pb2.NodeDef()
-                    identity_node.op = "Identity"
-                    identity_node.name = new_node_name
-                    identity_node.attr['T'].type = input_node.attr['T'].type
-                    identity_node.input.append(node.input[i])
-                    node.input[i] = identity_node.name + ":0"
-                    new_temp_tensors.append(node.input[i])
-                    new_graph_def.node.extend([identity_node])
-        new_graph_def.node.extend([copy.deepcopy(node)])
-    return new_graph_def, new_temp_tensors
-
-
 def _find_temp_tensors(grads, forward_ops):
+    '''
+    find all the tensors that are used for computing grads and has been
+    computed during forward
+    :param grads: 
+    :param forward_ops: 
+    :return: 
+    '''
     import sys
     is_py2 = sys.version[0] == '2'
     if is_py2:
