@@ -121,7 +121,7 @@ class TFNet(graphDef: TFGraphHolder,
     }
   }
 
-  private val gradWeightsTTensors = new Array[TTensor[Float]](gradWeights.length)
+  private val gradWeightsTTensors = new Array[TTensor[_]](gradWeights.length)
 
   private val tempTensors: Array[TTensor[_]] =
     new Array[TTensor[_]](graphMeta.tempTensors.map(_.length).getOrElse(0))
@@ -221,7 +221,7 @@ class TFNet(graphDef: TFGraphHolder,
     if (!this.isTraining()) {
       // clean up input tensorflow tensors
       emptyTFTensorArray(inputTFTensors)
-
+    } else {
       // clean up variable tensorflow tensors
       emptyTFTensorArray(weightsTFTensors)
     }
@@ -233,7 +233,16 @@ class TFNet(graphDef: TFGraphHolder,
     output
   }
 
-  private def emptyTFTensorArray(arr: Seq[TTensor[_]]): Unit = {
+  private def emptyTFTensorArray(arr: Array[TTensor[_]]): Unit = {
+    var i = 0
+    while (i < arr.length) {
+      arr(i).close()
+      arr(i) = null
+      i += 1
+    }
+  }
+
+  private def emptyTFTensorArray(arr: mutable.Buffer[TTensor[_]]): Unit = {
     var i = 0
     while (i < arr.length) {
       arr(i).close()
@@ -318,7 +327,7 @@ class TFNet(graphDef: TFGraphHolder,
     }
 
     // clean up grad weights tf tensors
-    this.gradWeightsTTensors.foreach(_.close())
+    emptyTFTensorArray(gradWeightsTTensors)
   }
 
   override def reset(): Unit = {
@@ -411,7 +420,7 @@ class TFNet(graphDef: TFGraphHolder,
 
   }
 
-  private def tf2bigdl(t: TTensor[Float], output: Tensor[Float]) = {
+  private def tf2bigdl(t: TTensor[_], output: Tensor[Float]) = {
     val shape = t.shape().map(_.toInt)
     output.resize(shape)
     val buffer = FloatBuffer.wrap(
