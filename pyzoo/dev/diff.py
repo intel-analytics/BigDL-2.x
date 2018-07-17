@@ -33,7 +33,7 @@ scala_to_python = {"CustomLossWithVariable": "CustomLoss"}
 
 def extract_scala_class(class_path):
     exclude_key_words = {"KerasLayerWrapper", "LambdaTorch", "CustomLossWithFunc", "abstract",
-                         "TorchRecurrent", "TorchTimeDistributed", "Recurrent"}
+                         "InternalRecurrent", "InternalTimeDistributed", "Recurrent"}
     content = "\n".join([line for line in open(class_path).readlines()
                          if all([key not in line for key in exclude_key_words])])
     match = re.findall(r"class ([\w]+)[^{]+", content)
