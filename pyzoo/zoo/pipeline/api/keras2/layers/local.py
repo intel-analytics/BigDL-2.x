@@ -25,7 +25,7 @@ class LocallyConnected1D(ZooKeras2Layer):
     Locally-connected layer for 1D inputs which works similarly to the TemporalConvolution
     layer, except that weights are unshared, that is, a different set of filters is applied
     at each different patch of the input..
-    Border mode currently supported for this layer is 'valid'.
+    Padding currently supported for this layer is 'valid'.
     The input of this layer should be 3D.
 
     When you use this layer as the first layer of a model, you need to provide the argument
