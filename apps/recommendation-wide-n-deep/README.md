@@ -1,5 +1,5 @@
 # Recommendation
-These two notebooks demonstrate how to build neural network recommendation system (Neural Collaborative Filtering, Wide and Deep) with explict feedback using Analytics Zoo and BigDL on Spark. 
+This notebook demonstrates how to build a neural network recommendation system (Wide and Deep) with explict feedback using Analytics Zoo and BigDL on Spark. 
 
 ## Environment
 * Python 2.7/3.5/3.6
@@ -14,7 +14,7 @@ These two notebooks demonstrate how to build neural network recommendation syste
 * Run `export ANALYTICS_ZOO_HOME=the dist directory under the Analytics Zoo project`.
 * Run the following bash command to start the jupyter notebook. Change parameter settings as you need, ie `MASTER = local[physcial_core_number]`.
 ```bash
-MASTER=local[*]
+MASTER=local[4]
 bash ${ANALYTICS_ZOO_HOME}/bin/jupyter-with-zoo.sh \
     --master ${MASTER} \
     --driver-cores 4  \
