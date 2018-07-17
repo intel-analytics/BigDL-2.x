@@ -99,3 +99,28 @@ class Conv1D(ZooKeras2Layer):
                                      bias_regularizer,
                                      list(input_shape) if input_shape else None,
                                      **kwargs)
+
+
+class Cropping1D(ZooKeras2Layer):
+    """
+    Cropping layer for 1D input (e.g. temporal sequence).
+    The input of this layer should be 3D.
+
+    When you use this layer as the first layer of a model, you need to provide the argument
+    input_shape (a shape tuple, does not include the batch dimension).
+
+    # Arguments
+    cropping: Int tuple of length 2. How many units should be trimmed off at the beginning and
+              end of the cropping dimension. Default is (1, 1).
+    input_shape: A shape tuple, not including batch.
+    name: String to set the name of the layer.
+          If not specified, its name will by default to be a generated string.
+
+    >>> cropping1d = Cropping1D(cropping=(1, 2), input_shape=(8, 8))
+    creating: createZooKeras2Cropping1D
+    """
+    def __init__(self, cropping=(1, 1), input_shape=None, **kwargs):
+        super(Cropping1D, self).__init__(None,
+                                         cropping,
+                                         list(input_shape) if input_shape else None,
+                                         **kwargs)
