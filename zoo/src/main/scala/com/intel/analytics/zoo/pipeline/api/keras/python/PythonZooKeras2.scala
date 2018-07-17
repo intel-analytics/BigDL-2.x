@@ -18,14 +18,12 @@ package com.intel.analytics.zoo.pipeline.api.keras.python
 
 import java.util.{List => JList}
 
-import com.intel.analytics.bigdl.nn.abstractnn.{AbstractModule, Activity}
 import com.intel.analytics.bigdl.optim.Regularizer
 import com.intel.analytics.bigdl.python.api.PythonBigDLKeras
 import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric
 import com.intel.analytics.zoo.pipeline.api.Net
 import com.intel.analytics.zoo.pipeline.api.autograd.Variable
-import com.intel.analytics.zoo.pipeline.api.keras2.layers.{Conv1D, Dense, MaxPooling1D, AveragePooling1D, Maximum, Minimum}
-import scala.collection.JavaConverters._
+import com.intel.analytics.zoo.pipeline.api.keras2.layers.utils.KerasUtils
 import com.intel.analytics.zoo.pipeline.api.keras2.layers._
 
 import scala.reflect.ClassTag
@@ -141,5 +139,33 @@ class PythonZooKeras2[T: ClassTag](implicit ev: TensorNumeric[T]) extends Python
       toScalaShape(inputShape))
   }
 
+  def createZooKeras2AveragePooling2D(
+      poolSize: JList[Int],
+      strides: JList[Int],
+      padding: String = "valid",
+      dataFormat: String = "channels_first",
+      inputShape: JList[Int] = null): AveragePooling2D[T] = {
+    new AveragePooling2D(toScalaArray(poolSize), toScalaArray(strides),
+      padding, KerasUtils.toBigDLFormat(dataFormat), toScalaShape(inputShape))
+  }
+
+  def createZooKeras2AveragePooling3D(
+      poolSize: JList[Int],
+      strides: JList[Int],
+      dataFormat: String = "channels_first",
+      inputShape: JList[Int] = null): AveragePooling3D[T] = {
+    new AveragePooling3D(toScalaArray(poolSize), toScalaArray(strides),
+      KerasUtils.toBigDLFormat5D(dataFormat), toScalaShape(inputShape))
+  }
+
+  def createZooKeras2MaxPooling3D(
+      poolSize: JList[Int],
+      strides: JList[Int],
+      padding: String = "valid",
+      dataFormat: String = "channels_first",
+      inputShape: JList[Int] = null): MaxPooling3D[T] = {
+    new MaxPooling3D(toScalaArray(poolSize), toScalaArray(strides),
+      padding, KerasUtils.toBigDLFormat5D(dataFormat), toScalaShape(inputShape))
+  }
 
   }
