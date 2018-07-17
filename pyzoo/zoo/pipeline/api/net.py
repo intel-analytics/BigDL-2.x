@@ -15,6 +15,8 @@
 #
 
 import sys
+import tempfile
+
 import six
 import os
 import json
@@ -23,6 +25,7 @@ from bigdl.nn.layer import Model as BModel
 from bigdl.nn.layer import Layer
 from bigdl.util.common import callBigDlFunc, to_list
 from zoo.pipeline.api.keras.engine.topology import ZooKerasLayer, KerasNet
+from zoo.util.tf import export_tf
 
 if sys.version >= '3':
     long = int
@@ -212,3 +215,15 @@ class TFNet(Layer):
             output_names = meta['output_names']
 
         return TFNet(model_path, input_names, output_names)
+
+    @staticmethod
+    def from_session(sess, inputs, outputs):
+        temp = tempfile.mkdtemp()
+        try:
+            export_tf(sess, temp, inputs, outputs)
+            net = TFNet.from_export_folder(temp)
+        finally:
+            import shutil
+            shutil.rmtree(temp)
+
+        return net
