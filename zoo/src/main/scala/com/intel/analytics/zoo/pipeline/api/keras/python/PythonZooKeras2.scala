@@ -158,16 +158,6 @@ class PythonZooKeras2[T: ClassTag](implicit ev: TensorNumeric[T]) extends Python
       KerasUtils.toBigDLFormat5D(dataFormat), toScalaShape(inputShape))
   }
 
-  def createZooKeras2MaxPooling2D(
-      poolSize: JList[Int],
-      strides: JList[Int],
-      padding: String = "valid",
-      dataFormat: String = "channels_first",
-      inputShape: JList[Int] = null): MaxPooling2D[T] = {
-    new MaxPooling2D[T](toScalaArray(poolSize), toScalaArray(strides),
-      padding, KerasUtils.toBigDLFormat(dataFormat), toScalaShape(inputShape))
-  }
-
   def createZooKeras2MaxPooling3D(
       poolSize: JList[Int],
       strides: JList[Int],
