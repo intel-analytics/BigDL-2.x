@@ -1,5 +1,5 @@
 # Recommendation
-These two notebooks demonstrate how to build a neural network recommendation system (Wide and Deep) with explict feedback using Analytics Zoo and BigDL on Spark. 
+This notebook demonstrates how to build a neural network recommendation system (Wide and Deep) with explict feedback using Analytics Zoo and BigDL on Spark. 
 
 ## Environment
 * Python 2.7/3.5/3.6
