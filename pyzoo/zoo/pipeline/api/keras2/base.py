@@ -14,9 +14,10 @@
 # limitations under the License.
 #
 
+from bigdl.nn.layer import Layer
 from bigdl.util.common import JavaValue
 
-from zoo.pipeline.api.keras.base import ZooCallable, ZooKerasLayer
+from zoo.pipeline.api.keras.base import ZooCallable, InferShape
 
 
 class ZooKeras2Creator(JavaValue):
@@ -26,5 +27,5 @@ class ZooKeras2Creator(JavaValue):
         return name
 
 
-class ZooKeras2Layer(ZooKeras2Creator, ZooCallable, ZooKerasLayer):
+class ZooKeras2Layer(ZooKeras2Creator, ZooCallable, Layer, InferShape):
     pass
