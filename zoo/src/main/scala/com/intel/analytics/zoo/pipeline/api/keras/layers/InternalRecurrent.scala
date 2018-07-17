@@ -27,7 +27,6 @@ private[zoo]class InternalRecurrent[T: ClassTag](
     maskZero: Boolean = false
 )(implicit ev: TensorNumeric[T]) extends Recurrent[T](batchNormParams, maskZero) {
 
-
   override def add(module: AbstractModule[_ <: Activity, _ <: Activity, T]): this.type = {
     super.add(module)
     if (this.preTopology != null) {

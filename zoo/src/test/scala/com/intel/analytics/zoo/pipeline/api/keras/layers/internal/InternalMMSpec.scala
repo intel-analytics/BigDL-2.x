@@ -19,7 +19,7 @@ package com.intel.analytics.zoo.pipeline.api.keras.layers.internal
 import com.intel.analytics.bigdl.nn.{Input, Log}
 import com.intel.analytics.bigdl.tensor.Tensor
 import com.intel.analytics.bigdl.utils.{Shape, T}
-import com.intel.analytics.zoo.pipeline.api.autograd.{AutoGrad, TorchMM, Variable}
+import com.intel.analytics.zoo.pipeline.api.autograd.{AutoGrad, InternalMM, Variable}
 import com.intel.analytics.zoo.pipeline.api.keras.models.Model
 import com.intel.analytics.zoo.pipeline.api.keras.serializer.ModuleSerializationTest
 import org.scalatest.{FlatSpec, Matchers}
@@ -47,7 +47,7 @@ class InternalMMSpec extends FlatSpec with Matchers {
 
     val input1 = Input[Float]()
     val input2 = Input[Float]()
-    val model = TorchMM[Float](transA = true)
+    val model = InternalMM[Float](transA = true)
     val recordNum = 2
     val i1 = Tensor[Float](recordNum, 3, 4).rand()
     val i2 = Tensor[Float](recordNum, 3, 4).rand()
@@ -58,10 +58,10 @@ class InternalMMSpec extends FlatSpec with Matchers {
   }
 
   "equals()" should "behave correctly" in {
-    val m1 = new TorchMM[Double]()
-    val m2 = new TorchMM[Double]()
-    val m3 = new TorchMM[Double](true, true)
-    val m4 = new TorchMM[Double]()
+    val m1 = new InternalMM[Double]()
+    val m2 = new InternalMM[Double]()
+    val m3 = new InternalMM[Double](true, true)
+    val m4 = new InternalMM[Double]()
     val log = new Log[Double]()
     com.intel.analytics.bigdl.tensor.Tensor
     val input1 = Tensor[Double](3, 3).randn()
@@ -79,7 +79,7 @@ class InternalMMSpec extends FlatSpec with Matchers {
 
 class InternalMMSerialTest extends ModuleSerializationTest {
   override def test(): Unit = {
-    val mm = TorchMM[Float]().setName("mm_layer")
+    val mm = InternalMM[Float]().setName("mm_layer")
     val input1 = Tensor[Float](2, 3).apply1(e => Random.nextFloat())
     val input2 = Tensor[Float](3, 4).apply1(e => Random.nextFloat())
     runSerializationTest(mm, T(input1, input2))

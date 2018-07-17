@@ -269,7 +269,7 @@ object AutoGrad {
     require(axes(1) >= 1 && axes(1) <= 2, s"axes should between [1, 2], not ${axes(1)}")
     val transposeX = if (axes(0) != 2) {true} else {false}
     val transposeY = if (axes(1) == 2) {true} else {false}
-    val mm = TorchMM[T](transA = transposeX,
+    val mm = InternalMM[T](transA = transposeX,
       transB = transposeY)
     val kmm = new KerasLayerWrapper[T](mm.asInstanceOf[AbstractModule[Activity, Activity, T]])
     kmm.from(x, y)
@@ -543,7 +543,7 @@ class Variable[T: ClassTag] private[zoo] (val node: ModuleNode[T], var name: Str
  */
 
 @SerialVersionUID(8315388141765786231L)
-private[zoo] class TorchMM[T: ClassTag](
+private[zoo] class InternalMM[T: ClassTag](
     val transA: Boolean = false,
     val transB: Boolean = false)
   (implicit ev: TensorNumeric[T]) extends AbstractModule[Table, Tensor[T], T] {
@@ -657,10 +657,10 @@ private[zoo] class TorchMM[T: ClassTag](
 
   override def toString: String = s"MM()"
 
-  override def canEqual(other: Any): Boolean = other.isInstanceOf[TorchMM[T]]
+  override def canEqual(other: Any): Boolean = other.isInstanceOf[InternalMM[T]]
 
   override def equals(other: Any): Boolean = other match {
-    case that: TorchMM[T] =>
+    case that: InternalMM[T] =>
       super.equals(that) &&
         (that canEqual this) &&
         transA == that.transA &&
@@ -673,7 +673,7 @@ private[zoo] class TorchMM[T: ClassTag](
     state.map(_.hashCode()).foldLeft(0)((a, b) => 31 * a + b)
   }
 
-  override def clearState(): TorchMM.this.type = {
+  override def clearState(): InternalMM.this.type = {
     super.clearState()
 
     gradInput[Tensor[T]](1).set()
@@ -683,10 +683,10 @@ private[zoo] class TorchMM[T: ClassTag](
   }
 }
 
-private[zoo] object TorchMM {
+private[zoo] object InternalMM {
   def apply[@specialized(Float, Double) T: ClassTag](
       transA: Boolean = false,
-      transB: Boolean = false)(implicit ev: TensorNumeric[T]) : TorchMM[T] = {
-    new TorchMM[T](transA, transB)
+      transB: Boolean = false)(implicit ev: TensorNumeric[T]) : InternalMM[T] = {
+    new InternalMM[T](transA, transB)
   }
 }
