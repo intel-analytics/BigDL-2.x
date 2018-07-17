@@ -3,7 +3,7 @@
 
 ## **Release 0.2.0**
 
-| | BigDL 0.6。0 | BigDL 0.5.0 |
+| | BigDL 0.6.0 | BigDL 0.5.0 |
 | ------------- | --------- | --------- |
 | Spark 1.6.2   | [download](https://oss.sonatype.org/content/groups/public/com/intel/analytics/zoo/analytics-zoo-bigdl_0.6.0-spark_1.6.2/0.2.0/analytics-zoo-bigdl_0.6.0-spark_1.6.2-0.2.0-dist-all.zip) | [download](https://oss.sonatype.org/content/groups/public/com/intel/analytics/zoo/analytics-zoo-bigdl_0.5.0-spark_1.6.2/0.2.0/analytics-zoo-bigdl_0.5.0-spark_1.6.2-0.2.0-dist-all.zip) | 
 | Spark 2.1.1   | [download](https://oss.sonatype.org/content/groups/public/com/intel/analytics/zoo/analytics-zoo-bigdl_0.6.0-spark_2.1.1/0.2.0/analytics-zoo-bigdl_0.6.0-spark_2.1.1-0.2.0-dist-all.zip) |[download](https://oss.sonatype.org/content/groups/public/com/intel/analytics/zoo/analytics-zoo-bigdl_0.5.0-spark_2.1.1/0.2.0/analytics-zoo-bigdl_0.5.0-spark_2.1.1-0.2.0-dist-all.zip)|
