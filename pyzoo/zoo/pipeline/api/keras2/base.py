@@ -17,7 +17,7 @@
 from bigdl.nn.layer import Layer
 from bigdl.util.common import JavaValue
 
-from zoo.pipeline.api.keras.base import ZooCallable, InferShape
+from zoo.pipeline.api.keras.base import ZooKerasLayer
 
 
 class ZooKeras2Creator(JavaValue):
@@ -27,5 +27,5 @@ class ZooKeras2Creator(JavaValue):
         return name
 
 
-class ZooKeras2Layer(ZooKeras2Creator, ZooCallable, Layer, InferShape):
+class ZooKeras2Layer(ZooKeras2Creator, ZooKerasLayer):
     pass
