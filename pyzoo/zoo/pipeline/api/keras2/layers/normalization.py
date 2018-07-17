@@ -49,7 +49,8 @@ class BatchNormalization(ZooKeras2Layer):
     """
     def __init__(self,
                  epsilon=0.001,
-                 mode=0, axis=1,
+                 mode=0,
+                 axis=1,
                  momentum=0.99,
                  beta_initializer="zero",
                  gamma_initializer="one",
