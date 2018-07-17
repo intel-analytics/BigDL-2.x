@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.intel.analytics.zoo.pipeline.api.keras.layers.b
+package com.intel.analytics.zoo.pipeline.api.keras.layers.internal
 
 import com.intel.analytics.bigdl.nn.abstractnn.{AbstractModule, Activity}
 import com.intel.analytics.bigdl.nn.{BatchNormalization, Linear, LogSoftMax, Sequential}
@@ -25,8 +25,8 @@ import org.scalatest.{FlatSpec, Matchers}
 
 import scala.util.Random
 
-class TorchTimeDistributedSpec extends FlatSpec with Matchers {
-  "A TorchTimeDistributed Module" should "setExtraParam works correctly" in {
+class InternalTimeDistributedSpec extends FlatSpec with Matchers {
+  "A InternalTimeDistributed Module" should "setExtraParam works correctly" in {
     RNG.setSeed(100)
     val batchSize = 5
     val times = 5
@@ -38,8 +38,8 @@ class TorchTimeDistributedSpec extends FlatSpec with Matchers {
     val gradOutput2 = Tensor[Float](Array(batchSize, times, channels)).randn()
     val bnorm1 = BatchNormalization[Float](channels)
     val bnorm2 = BatchNormalization[Float](channels)
-    val model1 = TorchTimeDistributed[Float](bnorm1)
-    val model2 = TorchTimeDistributed[Float](bnorm2)
+    val model1 = InternalTimeDistributed[Float](bnorm1)
+    val model2 = InternalTimeDistributed[Float](bnorm2)
 
     model1.forward(input1)
     model1.backward(input1, gradOutput1)
@@ -54,7 +54,7 @@ class TorchTimeDistributedSpec extends FlatSpec with Matchers {
     bnorm1.runningVar should be(bnorm2.runningVar)
   }
 
-  "A TorchTimeDistributed Module" should "reset correctly" in {
+  "A InternalTimeDistributed Module" should "reset correctly" in {
     RNG.setSeed(100)
     val batchSize = 5
     val times = 5
@@ -64,7 +64,7 @@ class TorchTimeDistributedSpec extends FlatSpec with Matchers {
     val input = Tensor[Float](Array(batchSize, times, inputDim)).randn()
     val gradOutput = Tensor[Float](Array(batchSize, times, outputDim)).randn()
     val linear = Linear[Float](inputDim, outputDim)
-    val model = TorchTimeDistributed[Float](linear)
+    val model = InternalTimeDistributed[Float](linear)
 
     val output = model.forward(input)
     val gradInput = model.backward(input, gradOutput)
@@ -75,7 +75,7 @@ class TorchTimeDistributedSpec extends FlatSpec with Matchers {
     gradInput should not be (null)
   }
 
-  "A TorchTimeDistributed Module" should "hash code correctly" in {
+  "A InternalTimeDistributed Module" should "hash code correctly" in {
     RNG.setSeed(100)
     val batchSize = 5
     val times = 5
@@ -92,14 +92,14 @@ class TorchTimeDistributedSpec extends FlatSpec with Matchers {
       b
     })
     val model1 = Sequential[Float]()
-      .add(TorchTimeDistributed[Float](linear1))
+      .add(InternalTimeDistributed[Float](linear1))
     val model2 = Sequential[Float]()
-      .add(TorchTimeDistributed[Float](linear2))
+      .add(InternalTimeDistributed[Float](linear2))
     val hashCode1 = model1.hashCode()
     val hashCode2 = model2.hashCode()
     hashCode1 should be(hashCode2)
   }
-  "A TorchTimeDistributed Module" should "getParaemtersTable correctly" in {
+  "A InternalTimeDistributed Module" should "getParaemtersTable correctly" in {
     RNG.setSeed(100)
 
     val batchSize = 5
@@ -110,12 +110,12 @@ class TorchTimeDistributedSpec extends FlatSpec with Matchers {
 
     val input = Tensor[Float](Array(batchSize, times, inputDim)).randn()
     val linear = Linear[Float](inputDim, outputDim)
-    val model = TorchTimeDistributed[Float](linear)
+    val model = InternalTimeDistributed[Float](linear)
 
     model.getParametersTable() should be(linear.getParametersTable())
   }
 
-  "A TorchTimeDistributed Module " should
+  "A InternalTimeDistributed Module " should
     "generate correct output and grad for Linear in 3D input " +
     "along first dimension" in {
     RNG.setSeed(100)
@@ -136,7 +136,7 @@ class TorchTimeDistributedSpec extends FlatSpec with Matchers {
       b
     })
     val model = Sequential[Float]()
-      .add(TorchTimeDistributed[Float](linear1))
+      .add(InternalTimeDistributed[Float](linear1))
 
     val output = model.forward(input).toTensor[Float].clone
     var i = 1
@@ -156,7 +156,7 @@ class TorchTimeDistributedSpec extends FlatSpec with Matchers {
     }
   }
 
-  "A TorchTimeDistributed Module " should
+  "A InternalTimeDistributed Module " should
     "generate correct output and grad for Linear in 3D input " +
     "along second dimension" in {
     RNG.setSeed(100)
@@ -177,7 +177,7 @@ class TorchTimeDistributedSpec extends FlatSpec with Matchers {
       b
     })
     val model = Sequential[Float]()
-      .add(TorchTimeDistributed[Float](linear1))
+      .add(InternalTimeDistributed[Float](linear1))
 
     val output = model.forward(input).toTensor[Float].clone
     var i = 1
@@ -197,7 +197,7 @@ class TorchTimeDistributedSpec extends FlatSpec with Matchers {
     }
   }
 
-  "A TorchTimeDistributed Module " should
+  "A InternalTimeDistributed Module " should
     "generate correct output and grad for logSoftMax " +
     "when time dimension is 2" in {
     RNG.setSeed(100)
@@ -213,7 +213,7 @@ class TorchTimeDistributedSpec extends FlatSpec with Matchers {
     val logSoftMax1 = LogSoftMax[Float]()
     val logSoftMax2 = LogSoftMax[Float]()
     val model = Sequential[Float]()
-      .add(TorchTimeDistributed[Float](logSoftMax1))
+      .add(InternalTimeDistributed[Float](logSoftMax1))
 
     val output = model.forward(input).toTensor[Float].clone
     val gradInput = model.backward(input, gradOutput).toTensor[Float].clone
@@ -228,7 +228,7 @@ class TorchTimeDistributedSpec extends FlatSpec with Matchers {
     }
   }
 
-  "A TorchTimeDistributed Module " should "getParameters correct for linear " in {
+  "A InternalTimeDistributed Module " should "getParameters correct for linear " in {
     RNG.setSeed(100)
 
     val batchSize = 5
@@ -247,7 +247,7 @@ class TorchTimeDistributedSpec extends FlatSpec with Matchers {
       b
     })
     val model = Sequential[Float]()
-      .add(TorchTimeDistributed[Float](linear1))
+      .add(InternalTimeDistributed[Float](linear1))
 
     val (weight, grad) = model.parameters()
     val (weight2, grad2) = linear2.parameters()
@@ -256,13 +256,13 @@ class TorchTimeDistributedSpec extends FlatSpec with Matchers {
   }
 }
 
-class TorchTimeDistributedSerialTest extends ModuleSerializationTest {
+class InternalTimeDistributedSerialTest extends ModuleSerializationTest {
   override def test(): Unit = {
-    val torchTimeDistributed = TorchTimeDistributed[Float](Linear[Float](5, 5)).
-      setName("TorchTimeDistributed")
+    val InternalTimeDistributed = new InternalTimeDistributed[Float](Linear[Float](5, 5)).
+      setName("InternalTimeDistributed")
     val input = Tensor[Float](2, 5, 5).apply1(_ => Random.nextFloat())
     runSerializationTest(
-      torchTimeDistributed, input)
+      InternalTimeDistributed, input)
   }
 }
 

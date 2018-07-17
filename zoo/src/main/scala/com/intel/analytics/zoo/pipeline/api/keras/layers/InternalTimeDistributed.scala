@@ -1,4 +1,4 @@
-package com.intel.analytics.zoo.pipeline.api.keras.layers.b
+package com.intel.analytics.zoo.pipeline.api.keras.layers.internal
 
 import com.intel.analytics.bigdl.nn.abstractnn.{AbstractModule, Activity, TensorModule}
 import com.intel.analytics.bigdl.tensor.Tensor
@@ -29,7 +29,7 @@ import scala.reflect.ClassTag
  * @tparam T data type, which can be [[Double]] or [[Float]]
  */
 
-private[zoo] class TorchTimeDistributed[T: ClassTag](
+private[zoo] class InternalTimeDistributed[T: ClassTag](
     val layer: AbstractModule[Tensor[T], Tensor[T], T],
     maskZero: Boolean = false)
   (implicit ev: TensorNumeric[T]) extends TensorModule[T] {
@@ -171,7 +171,7 @@ private[zoo] class TorchTimeDistributed[T: ClassTag](
 
   override def reset(): Unit = layer.reset()
 
-  override def training(): TorchTimeDistributed.this.type = {
+  override def training(): InternalTimeDistributed.this.type = {
     layer.training()
     super.training()
   }
@@ -197,7 +197,7 @@ private[zoo] class TorchTimeDistributed[T: ClassTag](
     timeBuffer.toArray
   }
 
-  override def evaluate(): TorchTimeDistributed.this.type = {
+  override def evaluate(): InternalTimeDistributed.this.type = {
     layer.evaluate()
     super.evaluate()
   }
@@ -220,7 +220,7 @@ private[zoo] class TorchTimeDistributed[T: ClassTag](
     layer.getExtraParameter()
   }
 
-  override def clearState(): TorchTimeDistributed.this.type = {
+  override def clearState(): InternalTimeDistributed.this.type = {
     super.clearState()
     layer.clearState()
     inputSize = null
@@ -233,10 +233,10 @@ private[zoo] class TorchTimeDistributed[T: ClassTag](
     this
   }
 
-  override def canEqual(other: Any): Boolean = other.isInstanceOf[TorchTimeDistributed[T]]
+  override def canEqual(other: Any): Boolean = other.isInstanceOf[InternalTimeDistributed[T]]
 
   override def equals(other: Any): Boolean = other match {
-    case that: TorchTimeDistributed[T] =>
+    case that: InternalTimeDistributed[T] =>
       super.equals(that) &&
         (that canEqual this) &&
         layer.equals(layer) &&
@@ -255,12 +255,12 @@ private[zoo] class TorchTimeDistributed[T: ClassTag](
   override def toString(): String = s"${getPrintName}${layer}"
 }
 
-object TorchTimeDistributed extends ModuleSerializable {
+object InternalTimeDistributed extends ModuleSerializable {
   def apply[@specialized(Float, Double) T: ClassTag](
       layer: AbstractModule[Tensor[T], Tensor[T], T],
       maskZero: Boolean = false
-  )(implicit ev: TensorNumeric[T]): TorchTimeDistributed[T] = {
-    new TorchTimeDistributed[T](layer, maskZero)
+  )(implicit ev: TensorNumeric[T]): InternalTimeDistributed[T] = {
+    new InternalTimeDistributed[T](layer, maskZero)
   }
 
   // To make ti compatible with release 0.4
@@ -275,6 +275,6 @@ object TorchTimeDistributed extends ModuleSerializable {
       maskZero = DataConverter.getAttributeValue(context, attrMap.get("maskZero")).
         asInstanceOf[Boolean]
     }
-    TorchTimeDistributed(layer, maskZero)
+    InternalTimeDistributed(layer, maskZero)
   }
 }

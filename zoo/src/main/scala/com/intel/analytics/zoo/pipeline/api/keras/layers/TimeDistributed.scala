@@ -22,7 +22,7 @@ import com.intel.analytics.bigdl.tensor.Tensor
 import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric
 import com.intel.analytics.bigdl.utils.Shape
 import com.intel.analytics.zoo.pipeline.api.Net
-import com.intel.analytics.zoo.pipeline.api.keras.layers.b.TorchTimeDistributed
+import com.intel.analytics.zoo.pipeline.api.keras.layers.internal.InternalTimeDistributed
 import com.intel.analytics.zoo.pipeline.api.keras.layers.utils.KerasUtils
 
 import scala.reflect.ClassTag
@@ -69,7 +69,7 @@ class TimeDistributed[T: ClassTag](
     val innerInput = getInnerInput(input)
     layer.build(Shape(innerInput))
     layer.asInstanceOf[AbstractModule[Tensor[T], Tensor[T], T]]
-    val timedistributed = TorchTimeDistributed[T](layer)
+    val timedistributed = InternalTimeDistributed[T](layer)
     timedistributed.asInstanceOf[AbstractModule[Tensor[T], Tensor[T], T]]
   }
 }

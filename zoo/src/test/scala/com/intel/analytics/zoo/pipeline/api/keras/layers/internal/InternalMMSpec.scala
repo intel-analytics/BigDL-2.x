@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.intel.analytics.zoo.pipeline.api.keras.layers.b
+package com.intel.analytics.zoo.pipeline.api.keras.layers.internal
 
 import com.intel.analytics.bigdl.nn.{Input, Log}
 import com.intel.analytics.bigdl.tensor.Tensor
@@ -28,7 +28,7 @@ import scala.util.Random
 
 
 
-class TorchMMSpec extends FlatSpec with Matchers {
+class InternalMMSpec extends FlatSpec with Matchers {
 
   "mm forward multiple times" should "be ok" in {
     val input1 = Variable[Float](inputShape = Shape(4, 2))
@@ -77,7 +77,7 @@ class TorchMMSpec extends FlatSpec with Matchers {
   }
 }
 
-class TorchMMSerialTest extends ModuleSerializationTest {
+class InternalMMSerialTest extends ModuleSerializationTest {
   override def test(): Unit = {
     val mm = TorchMM[Float]().setName("mm_layer")
     val input1 = Tensor[Float](2, 3).apply1(e => Random.nextFloat())
