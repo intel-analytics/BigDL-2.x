@@ -173,13 +173,14 @@ def export_tf(sess, folder, inputs, outputs,
     with open(os.path.join(folder, "graph_meta.json"), "w") as f:
         f.write(json.dumps(meta))
 
+
 def _find_temp_tensors(grads, forward_ops):
     '''
     find all the tensors that are used for computing grads and has been
     computed during forward
-    :param grads: 
-    :param forward_ops: 
-    :return: 
+    :param grads:
+    :param forward_ops:
+    :return:
     '''
     import sys
     is_py2 = sys.version[0] == '2'

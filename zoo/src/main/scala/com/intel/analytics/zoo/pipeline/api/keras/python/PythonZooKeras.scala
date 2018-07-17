@@ -1095,6 +1095,10 @@ class PythonZooKeras[T: ClassTag](implicit ev: TensorNumeric[T]) extends PythonB
     TFNet(path, inputNames.asScala.toArray, outputNames.asScala.toArray)
   }
 
+  def createTFNet(path: String): TFNet = {
+    TFNet(path)
+  }
+
   def connectInputs(module: AbstractModule[Activity, Activity, T],
       x: JList[Variable[T]]): Variable[T] = {
     require(!x.isEmpty, "We don't accept empty inputs")
