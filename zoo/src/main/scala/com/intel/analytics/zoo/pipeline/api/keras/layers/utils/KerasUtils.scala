@@ -233,10 +233,6 @@ object KerasUtils {
     }
   }
 
-//  private[zoo] def getField(obj: Object): Object = {
-//    val clazz = obj.getClass
-//  }
-
   private[zoo] def invokeMethod(obj: Object, methodName: String, args: Object*): Object = {
     val clazz = obj.getClass()
     val method =

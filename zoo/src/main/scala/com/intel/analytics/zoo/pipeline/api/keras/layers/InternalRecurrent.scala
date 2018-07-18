@@ -30,8 +30,6 @@ private[zoo]class InternalRecurrent[T: ClassTag](
   override def add(module: AbstractModule[_ <: Activity, _ <: Activity, T]): this.type = {
     super.add(module)
     if (this.preTopology != null) {
-      this.preTopology = this.preTopology.cloneModule()
-      modules(0) = preTopology
       module.asInstanceOf[Cell[T]].preTopology = null
     }
     this
