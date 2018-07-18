@@ -114,9 +114,9 @@ def export_tf(sess, folder, inputs, outputs,
                                    shape=x.shape),
                     output_tensors)
 
-            variables = map(lambda x: g.get_tensor_by_name(x), used_variables)
+            variables = list(map(lambda x: g.get_tensor_by_name(x), used_variables))
 
-            inputs = map(lambda x: g.get_tensor_by_name(x), new_input_names)
+            inputs = list(map(lambda x: g.get_tensor_by_name(x), new_input_names))
             grads = tf.gradients(output_tensors, variables + inputs,
                                  grad_ys=grad_output_placeholders)
 
