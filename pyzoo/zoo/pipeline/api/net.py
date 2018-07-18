@@ -221,7 +221,6 @@ class TFNet(Layer):
             export_tf(sess, temp, inputs, outputs,
                       generate_backward, allow_non_differentiable_input)
             net = TFNet.from_export_folder(temp)
-            print temp
         finally:
             import shutil
             shutil.rmtree(temp)
