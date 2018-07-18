@@ -14,9 +14,8 @@
  * limitations under the License.
  */
 
-package com.intel.analytics.zoo.pipeline.api.torch
+package com.intel.analytics.zoo.pipeline.api.keras.layers.internal
 
-import com.intel.analytics.bigdl.Module
 import com.intel.analytics.bigdl.nn.abstractnn.{AbstractModule, Activity, TensorModule}
 import com.intel.analytics.bigdl.tensor.Tensor
 import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric
@@ -26,6 +25,7 @@ import com.intel.analytics.bigdl.utils.serializer.converters.DataConverter
 
 import scala.collection.mutable.ArrayBuffer
 import scala.reflect.ClassTag
+
 
 /**
  * NB: This implementation is almost the same as "com.intel.analytics.bigdl.nn.Timedistributed"
@@ -45,7 +45,7 @@ import scala.reflect.ClassTag
  * @tparam T data type, which can be [[Double]] or [[Float]]
  */
 
-class TimeDistributed[T : ClassTag] (
+private[zoo] class InternalTimeDistributed[T: ClassTag](
     val layer: AbstractModule[Tensor[T], Tensor[T], T],
     maskZero: Boolean = false)
   (implicit ev: TensorNumeric[T]) extends TensorModule[T] {
@@ -187,7 +187,7 @@ class TimeDistributed[T : ClassTag] (
 
   override def reset(): Unit = layer.reset()
 
-  override def training(): TimeDistributed.this.type = {
+  override def training(): InternalTimeDistributed.this.type = {
     layer.training()
     super.training()
   }
@@ -213,7 +213,7 @@ class TimeDistributed[T : ClassTag] (
     timeBuffer.toArray
   }
 
-  override def evaluate(): TimeDistributed.this.type = {
+  override def evaluate(): InternalTimeDistributed.this.type = {
     layer.evaluate()
     super.evaluate()
   }
@@ -236,7 +236,7 @@ class TimeDistributed[T : ClassTag] (
     layer.getExtraParameter()
   }
 
-  override def clearState(): TimeDistributed.this.type = {
+  override def clearState(): InternalTimeDistributed.this.type = {
     super.clearState()
     layer.clearState()
     inputSize = null
@@ -249,10 +249,10 @@ class TimeDistributed[T : ClassTag] (
     this
   }
 
-  override def canEqual(other: Any): Boolean = other.isInstanceOf[TimeDistributed[T]]
+  override def canEqual(other: Any): Boolean = other.isInstanceOf[InternalTimeDistributed[T]]
 
   override def equals(other: Any): Boolean = other match {
-    case that: TimeDistributed[T] =>
+    case that: InternalTimeDistributed[T] =>
       super.equals(that) &&
         (that canEqual this) &&
         layer.equals(layer) &&
@@ -271,16 +271,17 @@ class TimeDistributed[T : ClassTag] (
   override def toString(): String = s"${getPrintName}${layer}"
 }
 
-object TimeDistributed extends ModuleSerializable {
+object InternalTimeDistributed extends ModuleSerializable {
   def apply[@specialized(Float, Double) T: ClassTag](
       layer: AbstractModule[Tensor[T], Tensor[T], T],
       maskZero: Boolean = false
-  )(implicit ev: TensorNumeric[T]): TimeDistributed[T] = {
-    new TimeDistributed[T](layer, maskZero)
+  )(implicit ev: TensorNumeric[T]): InternalTimeDistributed[T] = {
+    new InternalTimeDistributed[T](layer, maskZero)
   }
+
   // To make ti compatible with release 0.4
   override def doLoadModule[T: ClassTag](context: DeserializeContext)
-    (implicit ev: TensorNumeric[T]) : AbstractModule[Activity, Activity, T] = {
+    (implicit ev: TensorNumeric[T]): AbstractModule[Activity, Activity, T] = {
     val attrMap = context.bigdlModule.getAttrMap
     val layerAttr = attrMap.get("layer")
     val layer = DataConverter.getAttributeValue(context, layerAttr).
@@ -290,6 +291,6 @@ object TimeDistributed extends ModuleSerializable {
       maskZero = DataConverter.getAttributeValue(context, attrMap.get("maskZero")).
         asInstanceOf[Boolean]
     }
-    TimeDistributed(layer, maskZero)
+    InternalTimeDistributed(layer, maskZero)
   }
 }

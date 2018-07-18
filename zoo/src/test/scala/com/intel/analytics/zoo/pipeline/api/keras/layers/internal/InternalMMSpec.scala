@@ -14,11 +14,11 @@
  * limitations under the License.
  */
 
-package com.intel.analytics.zoo.pipeline.api.torch
+package com.intel.analytics.zoo.pipeline.api.keras.layers.internal
 
-import com.intel.analytics.bigdl.nn.{Input, Log, MM}
+import com.intel.analytics.bigdl.nn.{Input, Log}
 import com.intel.analytics.bigdl.tensor.Tensor
-import com.intel.analytics.bigdl.utils.{Shape, T, Table}
+import com.intel.analytics.bigdl.utils.{Shape, T}
 import com.intel.analytics.zoo.pipeline.api.autograd.{AutoGrad, Variable}
 import com.intel.analytics.zoo.pipeline.api.keras.models.Model
 import com.intel.analytics.zoo.pipeline.api.keras.serializer.ModuleSerializationTest
@@ -28,7 +28,7 @@ import scala.util.Random
 
 
 
-class MMSpec extends FlatSpec with Matchers {
+class InternalMMSpec extends FlatSpec with Matchers {
 
   "mm forward multiple times" should "be ok" in {
     val input1 = Variable[Float](inputShape = Shape(4, 2))
@@ -47,7 +47,7 @@ class MMSpec extends FlatSpec with Matchers {
 
     val input1 = Input[Float]()
     val input2 = Input[Float]()
-    val model = MM[Float](transA = true)
+    val model = InternalMM[Float](transA = true)
     val recordNum = 2
     val i1 = Tensor[Float](recordNum, 3, 4).rand()
     val i2 = Tensor[Float](recordNum, 3, 4).rand()
@@ -58,10 +58,10 @@ class MMSpec extends FlatSpec with Matchers {
   }
 
   "equals()" should "behave correctly" in {
-    val m1 = new MM[Double]()
-    val m2 = new MM[Double]()
-    val m3 = new MM[Double](true, true)
-    val m4 = new MM[Double]()
+    val m1 = new InternalMM[Double]()
+    val m2 = new InternalMM[Double]()
+    val m3 = new InternalMM[Double](true, true)
+    val m4 = new InternalMM[Double]()
     val log = new Log[Double]()
     com.intel.analytics.bigdl.tensor.Tensor
     val input1 = Tensor[Double](3, 3).randn()
@@ -77,9 +77,9 @@ class MMSpec extends FlatSpec with Matchers {
   }
 }
 
-class MMSerialTest extends ModuleSerializationTest {
+class InternalMMSerialTest extends ModuleSerializationTest {
   override def test(): Unit = {
-    val mm = MM[Float]().setName("mm_layer")
+    val mm = InternalMM[Float]().setName("mm_layer")
     val input1 = Tensor[Float](2, 3).apply1(e => Random.nextFloat())
     val input2 = Tensor[Float](3, 4).apply1(e => Random.nextFloat())
     runSerializationTest(mm, T(input1, input2))
