@@ -50,7 +50,7 @@ object Utils {
     tokenFile: Option[String] = None,
     overWriteCheckpoint: Boolean = false)
 
-  val trainParser = new OptionParser[TrainParams]("BigDL chatbot Train Example") {
+  val trainParser = new OptionParser[TrainParams]("Analytics Zoo chatbot Train Example") {
     opt[String]('f', "dataFolder")
       .text("where you put the text data")
       .action((x, c) => c.copy(dataFolder = x))

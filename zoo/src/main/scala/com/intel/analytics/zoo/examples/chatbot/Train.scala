@@ -21,14 +21,13 @@ import com.intel.analytics.bigdl.dataset._
 import com.intel.analytics.bigdl.dataset.text.utils.SentenceToken
 import com.intel.analytics.bigdl.dataset.text.{SentenceTokenizer, _}
 import com.intel.analytics.bigdl.nn._
-import com.intel.analytics.bigdl.nn.abstractnn.AbstractModule
 import com.intel.analytics.bigdl.numeric.NumericFloat
 import com.intel.analytics.bigdl.optim._
 import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric
 import com.intel.analytics.bigdl.tensor.{Storage, Tensor}
 import com.intel.analytics.bigdl.utils.T
 import com.intel.analytics.zoo.common.{NNContext, ZooDictionary}
-import com.intel.analytics.zoo.models.seq2seq.Seq2seq
+import com.intel.analytics.zoo.models.seq2seq.{Seq2seq, ZooMax}
 import org.apache.log4j.{Level, Logger}
 
 import scala.collection.Iterator
@@ -146,17 +145,15 @@ object Train {
       val padFeature = Tensor[Float](T(padId))
       val padLabel = Tensor[Float](T(padId))
 
+      val encoder =
+        Array(LSTM(param.embedDim, param.embedDim),
+          LSTM(param.embedDim, param.embedDim),
+          LSTM(param.embedDim, param.embedDim)).asInstanceOf[Array[Cell[Float]]]
 
-
-        val encoder =
-          Array(LSTM(param.embedDim, param.embedDim),
-            LSTM(param.embedDim, param.embedDim),
-            LSTM(param.embedDim, param.embedDim)).asInstanceOf[Array[Cell[Float]]]
-
-        val decoder =
-          Array(LSTM(param.embedDim, param.embedDim),
-            LSTM(param.embedDim, param.embedDim),
-            LSTM(param.embedDim, param.embedDim)).asInstanceOf[Array[Cell[Float]]]
+      val decoder =
+        Array(LSTM(param.embedDim, param.embedDim),
+          LSTM(param.embedDim, param.embedDim),
+          LSTM(param.embedDim, param.embedDim)).asInstanceOf[Array[Cell[Float]]]
 
       val stdv = 1.0 / math.sqrt(param.embedDim)
       val wInit: InitializationMethod = RandomUniform(-stdv, stdv)
@@ -182,13 +179,11 @@ object Train {
       val preEncoder = enclookuptable
       val preDecoder = declookuptable
 
-      val seq2seq = Seq2seq(encoder, decoder, preEncoder, preDecoder, maskZero = false)
-      val test1 = TimeDistributed(Linear(param.embedDim, vocabSize), maskZero = false)
-      val test2 = TimeDistributed(LogSoftMax())
-        var model: Module[Float] = Sequential()
-          .add(seq2seq)
-          .add(test1)
-          .add(test2)
+      val layers = Sequential()
+        .add(TimeDistributed(Linear(param.embedDim, vocabSize), maskZero = false))
+        .add(TimeDistributed(LogSoftMax()))
+      val model = Seq2seq(encoder, decoder, preEncoder, preDecoder, maskZero = false,
+        generator = layers)
 
       val optimMethod = if (param.stateSnapshot.isDefined) {
         OptimMethod.load[Float](param.stateSnapshot.get)
@@ -223,23 +218,16 @@ object Train {
         .setOptimMethod(optimMethod)
         .setCheckpoint(param.checkpoint.get, Trigger.everyEpoch)
 
-//      val seeds = Array("happy birthday have a nice day",
-//        "donald trump won last nights presidential debate according to snap online polls")
-val seeds = Array("happy birthday have a nice day")
+      val seeds = Array("happy birthday have a nice day",
+        "donald trump won last nights presidential debate according to snap online polls")
+//val seeds = Array("happy birthday have a nice day")
 
       var i = 1
       while (i <= param.nEpochs) {
-        seq2seq.setTrain()
         optimizer
-//          .setEndWhen(Trigger.maxEpoch(i))
-          .setEndWhen(Trigger.maxIteration(i))
-//        seq2seq.clearLoop()
-        model = optimizer.optimize()
-
-//        def func(x: Tensor[Float]): Tensor[Float] = {
-//          val predict = x.max(2)._2.select(1, x.size(1))
-//          preDecoder.forward(predict)
-//        }
+          .setEndWhen(Trigger.maxEpoch(i))
+//          .setEndWhen(Trigger.maxIteration(i))
+        optimizer.optimize()
 
         for (seed <- seeds) {
           println("Query> " + seed)
@@ -251,19 +239,17 @@ val seeds = Array("happy birthday have a nice day")
 
           val sent1 = Tensor(Storage(labeledChat._1), 1, Array(1, labeledChat._1.length))
           val sent2 = Tensor(Storage(labeledChat._2), 1, Array(1, labeledChat._2.length))
+          val sent3 = Tensor(Storage(labeledChat._2), 1, Array(1, labeledChat._2.length))
           val timeDim = 2
           val featDim = 3
           val end = dictionary.getIndex(SentenceToken.end) + 1
-
-
-
 
 //          val concat = Tensor[Float]()
 //          var curInput = sent2
 //          var break = false
 //          var j = 0
 //          // Iteratively output predicted words
-//          while (j < 3 && !break) {
+//          while (j < 30 && !break) {
 //            val output = model.forward(T(sent1, curInput)).toTensor[Float]
 //            val predict = output.max(featDim)._2
 //              .select(timeDim, output.size(timeDim)).valueAt(1, 1).toInt
@@ -274,24 +260,8 @@ val seeds = Array("happy birthday have a nice day")
 //              concat.setValue(1, concat.size(timeDim), predict)
 //              curInput.resizeAs(concat).copy(concat)
 //            }
-//            println("output: " + output.toString)
-//            println("curInput: " + curInput.toString)
 //            j += 1
 //          }
-
-          val endSign = Tensor(Array(end.toFloat), Array(1))
-          def stop(x: Tensor[Float]): Boolean = {
-            x.max(2)._2.almostEqual(endSign, 1e-6)
-          }
-
-          val layers = Sequential[Float]()
-              .add(Max(dim = featDim))
-            .asInstanceOf[AbstractModule[Tensor[Float], Tensor[Float], Float]]
-          val sign = Tensor[Float](1)
-          sign.setValue(1, end)
-          seq2seq.setInferenceMode(maxLen = 30, stopSign = sign, generator = layers)
-          val output2 = model.forward(T(sent1, sent2)).toTensor[Float]
-
 
 //          val predArray2 = new Array[Float](curInput.nElement())
 //          Array.copy(curInput.storage().array(), curInput.storageOffset() - 1,
@@ -300,6 +270,11 @@ val seeds = Array("happy birthday have a nice day")
 //            .map(x => x.map(t => dictionary.getWord(t - 1)))
 //          println(result2.map(x => x.mkString(" ")).mkString("\n"))
 
+          val endSign = Tensor(Array(end.toFloat), Array(1))
+
+          val layers = ZooMax(dim = featDim, returnValue = false)
+          val output2 = model.inference(T(sent1, sent3), maxSeqLen = 30,
+            stopSign = endSign, infer = layers).toTensor[Float]
 
           val predArray = new Array[Float](output2.nElement())
           Array.copy(output2.storage().array(), output2.storageOffset() - 1,
