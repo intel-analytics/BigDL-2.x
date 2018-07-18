@@ -127,7 +127,7 @@ class TrainingSpec extends FlatSpec with Matchers with BeforeAndAfter {
       metrics = List(new Top1Accuracy[Float]))
     model.setConstantGradientClipping(0.01f, 0.03f)
     model.fit(localData, nbEpoch = 2)
-//    model.clearGradientClipping()
+    model.clearGradientClipping()
     model.fit(localData, nbEpoch = 2)
     val accuracy = model.evaluate(localData)
     val predictResults = model.predict(localData, 32)
