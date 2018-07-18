@@ -60,7 +60,7 @@ import scala.reflect.ClassTag
  *
  * @param filters Integer, the dimensionality of the output space
  *                (i.e. the number of output filters in the convolution).
- *                * @param kernelSize: An integer or tuple/list of a single integer,
+ * @param kernelSize: An integer or tuple/list of a single integer,
  *                specifying the length of the 1D convolution window.
  * @param strides: An integer or tuple/list of a single integer,
  *               specifying the stride length of the convolution.
