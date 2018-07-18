@@ -118,7 +118,7 @@ def export_tf(sess, folder, inputs, outputs,
 
             inputs = list(map(lambda x: g.get_tensor_by_name(x), new_input_names))
             grads = tf.gradients(output_tensors, variables + inputs,
-                                 grad_ys=grad_output_placeholders)
+                                 grad_ys=list(grad_output_placeholders))
 
             def process_grad(g):
                 if g is not None:
