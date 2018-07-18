@@ -146,8 +146,6 @@ class TestLayer(ZooTestCase):
         grad_input_value = net.backward(data, np.ones(shape=(2, 1)))
 
         self.assert_allclose(output_value, output_value_ref)
-        print grad_input_value
-        print grad_input_value_ref
         self.assert_allclose(grad_input_value, grad_input_value_ref)
 
 if __name__ == "__main__":
