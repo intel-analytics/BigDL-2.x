@@ -14,9 +14,7 @@
  * limitations under the License.
  */
 
-
-package com.intel.analytics.zoo.pipeline.api.torch
-
+package com.intel.analytics.zoo.pipeline.api.keras.layers.internal
 
 import com.intel.analytics.bigdl.nn.abstractnn.AbstractModule
 import com.intel.analytics.bigdl.tensor.Tensor
@@ -34,7 +32,7 @@ import scala.reflect.ClassTag
  */
 
 @SerialVersionUID(8315388141765786231L)
-class MM[T: ClassTag](
+private[zoo] class InternalMM[T: ClassTag](
     val transA: Boolean = false,
     val transB: Boolean = false)
   (implicit ev: TensorNumeric[T]) extends AbstractModule[Table, Tensor[T], T] {
@@ -148,10 +146,10 @@ class MM[T: ClassTag](
 
   override def toString: String = s"MM()"
 
-  override def canEqual(other: Any): Boolean = other.isInstanceOf[MM[T]]
+  override def canEqual(other: Any): Boolean = other.isInstanceOf[InternalMM[T]]
 
   override def equals(other: Any): Boolean = other match {
-    case that: MM[T] =>
+    case that: InternalMM[T] =>
       super.equals(that) &&
         (that canEqual this) &&
         transA == that.transA &&
@@ -164,7 +162,7 @@ class MM[T: ClassTag](
     state.map(_.hashCode()).foldLeft(0)((a, b) => 31 * a + b)
   }
 
-  override def clearState(): MM.this.type = {
+  override def clearState(): InternalMM.this.type = {
     super.clearState()
 
     gradInput[Tensor[T]](1).set()
@@ -174,10 +172,10 @@ class MM[T: ClassTag](
   }
 }
 
-object MM {
+private[zoo] object InternalMM {
   def apply[@specialized(Float, Double) T: ClassTag](
       transA: Boolean = false,
-      transB: Boolean = false)(implicit ev: TensorNumeric[T]) : MM[T] = {
-    new MM[T](transA, transB)
+      transB: Boolean = false)(implicit ev: TensorNumeric[T]) : InternalMM[T] = {
+    new InternalMM[T](transA, transB)
   }
 }
