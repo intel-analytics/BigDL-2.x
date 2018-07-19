@@ -117,17 +117,17 @@ def export_tf(sess, folder, inputs, outputs,
             grads = tf.gradients(output_tensors, variables + inputs,
                                  grad_ys=grad_output_placeholders)
 
-            def process_grad(g):
-                if g is not None:
-                    g = ops.convert_to_tensor_or_indexed_slices(g)
-                    if isinstance(g, ops.IndexedSlices):
+            def process_grad(grad):
+                if grad is not None:
+                    grad = ops.convert_to_tensor_or_indexed_slices(grad)
+                    if isinstance(grad, ops.IndexedSlices):
                         # In IndexedSlices is not supported in java api, we have to convert it to
                         # a dense tensor. This operation is potentially expensive, but there seems
                         # no work around
-                        g = tf.unsorted_segment_sum(g.values, g.indices, g.dense_shape[0])
-                return g
+                        grad = tf.unsorted_segment_sum(grad.values, grad.indices, grad.dense_shape[0])
+                return grad
 
-            grads = [process_grad(g) for g in grads]
+            grads = [process_grad(grad) for grad in grads]
 
             temp_tensors = _find_temp_tensors(grads, nodes)
 
