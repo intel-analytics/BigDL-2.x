@@ -181,14 +181,17 @@ class PythonZooKeras2[T: ClassTag](implicit ev: TensorNumeric[T]) extends Python
       kernelRegularizer, biasRegularizer, useBias, toScalaShape(inputShape))
   }
 
-  def createZooKeras2MaxPooling2D(
-      poolSize: JList[Int],
-      strides: JList[Int],
-      padding: String = "valid",
-      dataFormat: String = "th",
-      inputShape: JList[Int] = null): MaxPooling2D[T] = {
-    new MaxPooling2D[T](toScalaArray(poolSize), toScalaArray(strides),
-      padding, KerasUtils.toBigDLFormat(dataFormat), toScalaShape(inputShape))
+  def createZooKeras2ZeroPadding1D(
+      padding: JList[Int],
+     inputShape: JList[Int] = null): ZeroPadding1D[T] = {
+    new ZeroPadding1D(toScalaArray(padding), toScalaShape(inputShape))
   }
 
+  def createZooKeras2ZeroPadding2D(
+      padding: JList[Int],
+      dataFormat: String = "channels_first",
+      inputShape: JList[Int] = null): ZeroPadding2D[T] = {
+    new ZeroPadding2D(toScalaArray(padding),
+      KerasUtils.toBigDLFormat(dataFormat), toScalaShape(inputShape))
+  }
 }
