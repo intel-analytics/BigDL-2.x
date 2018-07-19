@@ -64,7 +64,6 @@ public abstract class AbstractInferenceModel implements Serializable {
 	                   int intraOpParallelismThreads,
 	                   int interOpParallelismThreads,
 	                   boolean usePerSessionThreads) {
-
 		for (int i = 0; i < supportedConcurrentNum; i++) {
 			FloatInferenceModel model = InferenceModelFactory.loadFloatInferenceModelForTF(modelPath,
 					intraOpParallelismThreads, interOpParallelismThreads, usePerSessionThreads);
