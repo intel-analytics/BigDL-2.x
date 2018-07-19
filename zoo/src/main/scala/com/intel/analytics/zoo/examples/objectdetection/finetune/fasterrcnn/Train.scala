@@ -14,22 +14,19 @@
  * limitations under the License.
  */
 
-package com.intel.analytics.zoo.examples.objectdetection.train.fasterrcnn
+package com.intel.analytics.zoo.examples.objectdetection.finetune.fasterrcnn
 
 import com.intel.analytics.bigdl._
 import com.intel.analytics.bigdl.dataset.MiniBatch
-import com.intel.analytics.bigdl.nn.Module
 import com.intel.analytics.bigdl.optim.{Optimizer, _}
 import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric.NumericFloat
 import com.intel.analytics.bigdl.utils.LoggerFilter
 import com.intel.analytics.bigdl.visualization.{TrainSummary, ValidationSummary}
 import com.intel.analytics.zoo.common.NNContext
 import com.intel.analytics.zoo.models.image.common.ImageModel
-import com.intel.analytics.zoo.models.image.objectdetection.common.MeanAveragePrecision
-import com.intel.analytics.zoo.models.image.objectdetection.common.dataset.FrcnnMiniBatch
+import com.intel.analytics.zoo.models.image.objectdetection.common.{IOUtils, MeanAveragePrecision}
+import com.intel.analytics.zoo.models.image.objectdetection.common.dataset.{FrcnnMiniBatch, PostProcessParam, PreProcessParam}
 import com.intel.analytics.zoo.models.image.objectdetection.common.nn.FrcnnCriterion
-import com.intel.analytics.zoo.models.image.objectdetection.fasterrcnn.{PostProcessParam,
-        PreProcessParam, Utils, VggFRcnn}
 import org.apache.log4j.{Level, Logger}
 import org.apache.spark.SparkConf
 import scopt.OptionParser
@@ -41,7 +38,6 @@ object Option {
   case class TrainParams(
     trainFolder: String = "./",
     valFolder: String = "./",
-    pretrain: String = "",
     optim: String = "sgd",
     checkpoint: Option[String] = None,
     modelSnapshot: Option[String] = None,
@@ -51,8 +47,7 @@ object Option {
     learningRate: Double = 0.001,
     step: Int = 50000,
     maxIter: Int = 50,
-    weights: Option[String] = None,
-    jobName: String = "Analytics Zoo Fasterrcnn Train Example",
+    jobName: String = "Analytics Zoo Fasterrcnn Fine Tune Example",
     summaryDir: Option[String] = None,
     checkIter: Int = 200,
     nPartition: Int = 1
@@ -65,15 +60,9 @@ object Option {
     opt[String]('v', "valFolder")
       .text("url of hdfs folder store the validation hadoop sequence files")
       .action((x, c) => c.copy(valFolder = x))
-    opt[String]("pretrain")
-      .text("pretrained imagenet model")
-      .action((x, c) => c.copy(pretrain = x))
     opt[String]("model")
       .text("model snapshot location")
       .action((x, c) => c.copy(modelSnapshot = Some(x)))
-    opt[String]("weights")
-      .text("pretrained weights")
-      .action((x, c) => c.copy(weights = Some(x)))
     opt[String]("state")
       .text("state snapshot location")
       .action((x, c) => c.copy(stateSnapshot = Some(x)))
@@ -136,18 +125,12 @@ object Train {
       val postParam = PostProcessParam(0.3f, classNames.length, false, 100, 0.05)
       val preParamTrain = PreProcessParam(param.batchSize, Array(400, 500, 600, 700))
       val preParamVal = PreProcessParam(param.batchSize, nPartition = param.batchSize)
-      val model = if (param.modelSnapshot.isDefined) {
-        ImageModel.loadModel[Float](param.modelSnapshot.get)
-      } else {
-        val pretrain = Module.loadModule[Float](param.pretrain)
-        val model = VggFRcnn(classNames.length, postParam)
-        model.loadModelWeights(pretrain, false)
-      }
+      val model = ImageModel.loadModel[Float](param.modelSnapshot.get)
 
-      val trainSet = Utils.loadTrainSet(param.trainFolder, sc, preParamTrain, param.batchSize,
+      val trainSet = IOUtils.loadFasterrcnnTrainSet(param.trainFolder, sc, preParamTrain, param.batchSize,
         param.nPartition)
 
-      val valSet = Utils.loadValSet(param.valFolder, sc, preParamVal, param.batchSize,
+      val valSet = IOUtils.loadFasterrcnnValSet(param.valFolder, sc, preParamVal, param.batchSize,
         param.nPartition)
 
       val optimMethod = if (param.stateSnapshot.isDefined) {

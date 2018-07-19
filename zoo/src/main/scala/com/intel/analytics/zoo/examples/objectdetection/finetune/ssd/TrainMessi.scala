@@ -14,22 +14,20 @@
  * limitations under the License.
  */
 
-package com.intel.analytics.zoo.examples.objectdetection.train.ssd
+package com.intel.analytics.zoo.examples.objectdetection.finetune.ssd
 
 import com.intel.analytics.bigdl._
 import com.intel.analytics.bigdl.dataset.MiniBatch
-import com.intel.analytics.bigdl.nn.Module
 import com.intel.analytics.bigdl.optim.{Optimizer, _}
 import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric.NumericFloat
 import com.intel.analytics.bigdl.utils.LoggerFilter
 import com.intel.analytics.bigdl.visualization.{TrainSummary, ValidationSummary}
 import com.intel.analytics.zoo.common.NNContext
-import com.intel.analytics.zoo.models.image.objectdetection.common.ModuleUtil
+import com.intel.analytics.zoo.models.image.common.ImageModel
+import com.intel.analytics.zoo.models.image.objectdetection.common.{IOUtils, MeanAveragePrecision, ModuleUtil}
 import com.intel.analytics.zoo.models.image.objectdetection.common.nn.MultiBoxLoss
-import com.intel.analytics.zoo.models.image.objectdetection.ssd.{SSDVgg, Utils}
 import com.intel.analytics.zoo.models.image.objectdetection.common.dataset.roiimage.SSDMiniBatch
 import com.intel.analytics.zoo.models.image.objectdetection.common.nn.MultiBoxLossParam
-import com.intel.analytics.zoo.models.image.objectdetection.common.MeanAveragePrecision
 import org.apache.log4j.{Level, Logger}
 import org.apache.spark.SparkConf
 import scopt.OptionParser
@@ -54,8 +52,7 @@ object TrainMessi {
     learningRate: Double = 0.001,
     overWriteCheckpoint: Boolean = false,
     maxEpoch: Int = 20,
-    pretrain: Option[String] = None,
-    jobName: String = "Analytics Zoo SSD Train Example",
+    jobName: String = "Analytics Zoo SSD Train Messi Example",
     summaryDir: Option[String] = None,
     nPartition: Int = 1
   )
@@ -74,9 +71,7 @@ object TrainMessi {
     opt[String]("model")
       .text("model snapshot location")
       .action((x, c) => c.copy(modelSnapshot = Some(x)))
-    opt[String]("weights")
-      .text("pretrained weights")
-      .action((x, c) => c.copy(pretrain = Some(x)))
+      .required()
     opt[String]("state")
       .text("state snapshot location")
       .action((x, c) => c.copy(stateSnapshot = Some(x)))
@@ -121,23 +116,22 @@ object TrainMessi {
       val sc = NNContext.initNNContext(conf)
 
       val classes = Source.fromFile(param.className).getLines().toArray
-      val trainSet = Utils.loadTrainSet(param.trainFolder, sc, param.resolution, param.batchSize,
+      val trainSet = IOUtils.loadSSDTrainSet(param.trainFolder, sc, param.resolution, param.batchSize,
         param.nPartition)
 
-      val valSet = Utils.loadValSet(param.valFolder, sc, param.resolution, param.batchSize,
+      val valSet = IOUtils.loadSSDValSet(param.valFolder, sc, param.resolution, param.batchSize,
         param.nPartition)
 
-      val model = SSDVgg(classes.length, param.resolution)
-      val m = Module.loadModule(param.pretrain.get)
-      ModuleUtil.loadModelWeights(m, model, false)
+      val model = ImageModel.loadModel[Float](param.modelSnapshot.get)
 
-      val optimMethod = new Adam[Float](
-        learningRate = 0.0001,
-        learningRateDecay = 0.0005
-      )
+      val optimMethod = if (param.stateSnapshot.isDefined) {
+        OptimMethod.load[Float](param.stateSnapshot.get)
+      } else {
+        new Adam[Float](learningRate = 0.0001,
+          learningRateDecay = 0.0005)
+      }
       optimize(model, trainSet, valSet, param, optimMethod,
         Trigger.maxEpoch(param.maxEpoch), classes)
-
     })
   }
 

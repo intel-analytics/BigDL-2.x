@@ -14,24 +14,21 @@
  * limitations under the License.
  */
 
-package com.intel.analytics.zoo.examples.objectdetection.train.ssd
+package com.intel.analytics.zoo.examples.objectdetection.finetune.ssd
 
 import com.intel.analytics.bigdl._
 import com.intel.analytics.bigdl.dataset.MiniBatch
 import com.intel.analytics.bigdl.optim.SGD._
 import com.intel.analytics.bigdl.optim.{Optimizer, _}
 import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric.NumericFloat
-import com.intel.analytics.bigdl.utils.caffe.CaffeLoader
 import com.intel.analytics.bigdl.utils.LoggerFilter
 import com.intel.analytics.bigdl.visualization.{TrainSummary, ValidationSummary}
 import com.intel.analytics.zoo.common.NNContext
 import com.intel.analytics.zoo.models.image.common.ImageModel
-import com.intel.analytics.zoo.models.image.objectdetection.common.nn.{MultiBoxLoss,
-        MultiBoxLossParam}
-import com.intel.analytics.zoo.models.image.objectdetection.ssd.{SSDVgg, Utils}
+import com.intel.analytics.zoo.models.image.objectdetection.common.nn.{MultiBoxLoss, MultiBoxLossParam}
 import com.intel.analytics.zoo.models.image.objectdetection.common.MeanAveragePrecision
 import com.intel.analytics.zoo.models.image.objectdetection.common.dataset.roiimage.SSDMiniBatch
-
+import com.intel.analytics.zoo.models.image.objectdetection.common.IOUtils
 import org.apache.spark.SparkConf
 import org.apache.log4j.{Level, Logger}
 import scopt.OptionParser
@@ -43,9 +40,6 @@ object Option {
   case class TrainParams(
     trainFolder: String = "./",
     valFolder: String = "./",
-    modelType: String = "vgg16",
-    caffeDefPath: Option[String] = None,
-    caffeModelPath: Option[String] = None,
     resolution: Int = 300,
     checkpoint: Option[String] = None,
     modelSnapshot: Option[String] = None,
@@ -57,10 +51,8 @@ object Option {
     learningRateDecay: Double = 0.1,
     learningRateSteps: Option[Array[Int]] = None,
     patience: Int = 10,
-    warmUpMap: Option[Double] = None,
     overWriteCheckpoint: Boolean = false,
     maxEpoch: Option[Int] = None,
-    weights: Option[String] = None,
     jobName: String = "Analytics Zoo SSD Train Example",
     summaryDir: Option[String] = None,
     nPartition: Int = 1
@@ -73,16 +65,6 @@ object Option {
     opt[String]('v', "valFolder")
       .text("url of hdfs folder store the validation hadoop sequence files")
       .action((x, c) => c.copy(valFolder = x))
-    opt[String]('t', "modelType")
-      .text("net type : vgg16")
-      .action((x, c) => c.copy(modelType = x))
-      .required()
-    opt[String]("caffeDefPath")
-      .text("caffe prototxt")
-      .action((x, c) => c.copy(caffeDefPath = Some(x)))
-    opt[String]("caffeModelPath")
-      .text("caffe model path")
-      .action((x, c) => c.copy(caffeModelPath = Some(x)))
     opt[Int]('r', "resolution")
       .text("input resolution 300 or 512")
       .action((x, c) => c.copy(resolution = x))
@@ -90,9 +72,7 @@ object Option {
     opt[String]("model")
       .text("model snapshot location")
       .action((x, c) => c.copy(modelSnapshot = Some(x)))
-    opt[String]("weights")
-      .text("pretrained weights")
-      .action((x, c) => c.copy(weights = Some(x)))
+      .required()
     opt[String]("state")
       .text("state snapshot location")
       .action((x, c) => c.copy(stateSnapshot = Some(x)))
@@ -130,9 +110,6 @@ object Option {
     opt[Unit]("overWrite")
       .text("overwrite checkpoint files")
       .action((_, c) => c.copy(overWriteCheckpoint = true))
-    opt[Double]("warm")
-      .text("warm up map")
-      .action((x, c) => c.copy(warmUpMap = Some(x)))
     opt[String]("name")
       .text("job name")
       .action((x, c) => c.copy(jobName = x))
@@ -146,9 +123,7 @@ object Option {
   }
 }
 
-
 object Train {
-
   LoggerFilter.redirectSparkInfoLogs()
   Logger.getLogger("com.intel.analytics.bigdl.optim").setLevel(Level.INFO)
   Logger.getLogger("com.intel.analytics.zoo").setLevel(Level.INFO)
@@ -163,39 +138,13 @@ object Train {
       val sc = NNContext.initNNContext(conf)
 
       val classes = Source.fromFile(param.className).getLines().toArray
-      val trainSet = Utils.loadTrainSet(param.trainFolder, sc, param.resolution, param.batchSize,
+      val trainSet = IOUtils.loadSSDTrainSet(param.trainFolder, sc, param.resolution, param.batchSize,
         param.nPartition)
 
-      val valSet = Utils.loadValSet(param.valFolder, sc, param.resolution, param.batchSize,
+      val valSet = IOUtils.loadSSDValSet(param.valFolder, sc, param.resolution, param.batchSize,
         param.nPartition)
 
-      val model = if (param.modelSnapshot.isDefined) {
-        ImageModel.loadModel[Float](param.modelSnapshot.get)
-      } else {
-        param.modelType match {
-          case "vgg16" =>
-            val model = SSDVgg(classes.length, param.resolution)
-            if (param.weights.isDefined) {
-              model.loadWeights(param.weights.get)
-            } else if (param.caffeDefPath.isDefined && param.caffeModelPath.isDefined) {
-              CaffeLoader.load[Float](model,
-                param.caffeDefPath.get, param.caffeModelPath.get, matchAll = false)
-            }
-            model
-          case _ => throw new Exception("currently only test over vgg ssd model")
-        }
-      }
-
-      val warmUpModel = if (param.warmUpMap.isDefined) {
-        val optimMethod = new Adam[Float](
-          learningRate = 0.0001,
-          learningRateDecay = 0.0005
-        )
-        optimize(model, trainSet, valSet, param, optimMethod,
-          Trigger.maxScore(param.warmUpMap.get.toFloat), classes)
-      } else {
-        model
-      }
+      val model = ImageModel.loadModel[Float](param.modelSnapshot.get)
 
       val optimMethod = if (param.stateSnapshot.isDefined) {
         OptimMethod.load[Float](param.stateSnapshot.get)
@@ -228,9 +177,8 @@ object Train {
           learningRateSchedule = learningRateSchedule)
       }
 
-      optimize(warmUpModel, trainSet, valSet, param, optimMethod,
+      optimize(model, trainSet, valSet, param, optimMethod,
         Trigger.maxEpoch(param.maxEpoch.get), classes)
-
     })
   }
 

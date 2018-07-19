@@ -18,12 +18,17 @@ package com.intel.analytics.zoo.models.image.objectdetection.common
 
 import java.io.File
 
+import com.intel.analytics.bigdl._
+import com.intel.analytics.bigdl.dataset.DataSet
 import com.intel.analytics.bigdl.nn.Graph._
 import com.intel.analytics.bigdl.nn.{ReLU, SpatialConvolution, Xavier, Zeros}
 import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric
-import com.intel.analytics.bigdl.transform.vision.image.ImageFeature
+import com.intel.analytics.bigdl.transform.vision.image.augmentation._
+import com.intel.analytics.bigdl.transform.vision.image.label.roi._
+import com.intel.analytics.bigdl.transform.vision.image.{BytesToMat, ImageFeature, MatToFloats}
 import com.intel.analytics.zoo.feature.image.{ImageSet, LocalImageSet}
-import com.intel.analytics.zoo.models.image.objectdetection.common.dataset.roiimage.ByteRecord
+import com.intel.analytics.zoo.models.image.objectdetection.common.dataset.{FrcnnMiniBatch, FrcnnToBatch, PreProcessParam}
+import com.intel.analytics.zoo.models.image.objectdetection.common.dataset.roiimage.{ByteRecord, RecordToFeature, RoiImageToBatch, SSDMiniBatch}
 import org.apache.hadoop.io.Text
 import org.apache.spark.SparkContext
 import org.apache.spark.rdd.RDD
@@ -44,6 +49,59 @@ object IOUtils {
       imf
     })
     ImageSet.array(arr)
+  }
+
+  def loadSSDTrainSet(folder: String, sc: SparkContext, resolution: Int, batchSize: Int, parNum: Int)
+  : DataSet[SSDMiniBatch] = {
+    val trainRdd = loadSeqFiles(parNum, folder, sc)
+    DataSet.rdd(trainRdd) -> RecordToFeature(true) ->
+      BytesToMat() ->
+      RoiNormalize() ->
+      ColorJitter() ->
+      RandomTransformer(Expand() -> RoiProject(), 0.5) ->
+      RandomSampler() ->
+      Resize(resolution, resolution, -1) ->
+      RandomTransformer(HFlip() -> RoiHFlip(), 0.5) ->
+      ChannelNormalize(123f, 117f, 104f) ->
+      MatToFloats(validHeight = resolution, validWidth = resolution) ->
+      RoiImageToBatch(batchSize)
+  }
+
+  def loadSSDValSet(folder: String, sc: SparkContext, resolution: Int, batchSize: Int, parNum: Int)
+  : DataSet[SSDMiniBatch] = {
+    val valRdd = loadSeqFiles(parNum, folder, sc)
+
+    DataSet.rdd(valRdd) -> RecordToFeature(true) ->
+      BytesToMat() ->
+      RoiNormalize() ->
+      Resize(resolution, resolution) ->
+      ChannelNormalize(123f, 117f, 104f) ->
+      MatToFloats(validHeight = resolution, validWidth = resolution) ->
+      RoiImageToBatch(batchSize)
+  }
+
+  def loadFasterrcnnTrainSet(folder: String, sc: SparkContext, param: PreProcessParam, batchSize: Int, parNum: Int)
+  : DataSet[FrcnnMiniBatch] = {
+    val trainRdd = loadSeqFiles(parNum, folder, sc)
+    DataSet.rdd(trainRdd) -> RecordToFeature(true) ->
+      BytesToMat() ->
+      RandomAspectScale(param.scales, param.scaleMultipleOf) -> RoiResize() ->
+      RandomTransformer(HFlip() -> RoiHFlip(false), 0.5) ->
+      ChannelNormalize(param.pixelMeanRGB._1, param.pixelMeanRGB._2, param.pixelMeanRGB._3) ->
+      MatToFloats(validHeight = 600, validWidth = 600) ->
+      FrcnnToBatch(batchSize, true)
+  }
+
+  def loadFasterrcnnValSet(folder: String, sc: SparkContext, param: PreProcessParam, batchSize: Int, parNum: Int)
+  : DataSet[FrcnnMiniBatch] = {
+    val valRdd = loadSeqFiles(parNum, folder, sc)
+
+    DataSet.rdd(valRdd) -> RecordToFeature(true) ->
+      BytesToMat() ->
+      AspectScale(param.scales(0), param.scaleMultipleOf) ->
+      ChannelNormalize(param.pixelMeanRGB._1, param.pixelMeanRGB._2, param.pixelMeanRGB._3) ->
+      MatToFloats(100, 100) ->
+      FrcnnToBatch(param.batchSize, true)
   }
 }
 
