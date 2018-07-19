@@ -27,6 +27,7 @@ import com.intel.analytics.zoo.pipeline.api.autograd.Variable
 import com.intel.analytics.zoo.pipeline.api.keras2.layers.{Conv1D, Dense, MaxPooling1D, AveragePooling1D, Maximum, Minimum}
 import scala.collection.JavaConverters._
 import com.intel.analytics.zoo.pipeline.api.keras2.layers._
+import com.intel.analytics.zoo.pipeline.api.keras2.layers.utils.KerasUtils
 
 import scala.reflect.ClassTag
 
@@ -180,6 +181,14 @@ class PythonZooKeras2[T: ClassTag](implicit ev: TensorNumeric[T]) extends Python
       kernelRegularizer, biasRegularizer, useBias, toScalaShape(inputShape))
   }
 
-
+  def createZooKeras2MaxPooling2D(
+      poolSize: JList[Int],
+      strides: JList[Int],
+      padding: String = "valid",
+      dataFormat: String = "th",
+      inputShape: JList[Int] = null): MaxPooling2D[T] = {
+    new MaxPooling2D[T](toScalaArray(poolSize), toScalaArray(strides),
+      padding, KerasUtils.toBigDLFormat(dataFormat), toScalaShape(inputShape))
+  }
 
 }

@@ -172,3 +172,41 @@ class GlobalAveragePooling2D(ZooKeras2Layer):
                                                      data_format,
                                                      list(input_shape) if input_shape else None,
                                                      **kwargs)
+
+
+class MaxPooling2D(ZooKeras2Layer):
+    """
+    Applies max pooling operation for spatial data.
+    The input of this layer should be 4D.
+
+    When you use this layer as the first layer of a model, you need to provide the argument
+    input_shape (a shape tuple, does not include the batch dimension).
+
+    # Arguments
+    pool_size: Int tuple of length 2 corresponding to the downscale vertically and horizontally.
+               Default is (2, 2), which will halve the image in each dimension.
+    strides: Int tuple of length 2. Stride values.
+             Default is None, and in this case it will be equal to pool_size.
+    padding: Either 'valid' or 'same'. Default is 'valid'.
+    data_format: Format of input data. Either 'channel_first' or 'channel_last'.
+                  Default is 'th'.
+    input_shape: A shape tuple, not including batch.
+    name: String to set the name of the layer.
+          If not specified, its name will by default to be a generated string.
+
+    >>> maxpooling2d = MaxPooling2D((2, 2), input_shape=(3, 32, 32))
+    creating: createZooKeras2MaxPooling2D
+    """
+    def __init__(self,
+                 pool_size=(2, 2),
+                 strides=None,
+                 padding="valid",
+                 data_format="channels_first",
+                 input_shape=None, **kwargs):
+        super(MaxPooling2D, self).__init__(None,
+                                           pool_size,
+                                           strides,
+                                           padding,
+                                           data_format,
+                                           list(input_shape) if input_shape else None,
+                                           **kwargs)
