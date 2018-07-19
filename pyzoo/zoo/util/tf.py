@@ -124,7 +124,8 @@ def export_tf(sess, folder, inputs, outputs,
                         # In IndexedSlices is not supported in java api, we have to convert it to
                         # a dense tensor. This operation is potentially expensive, but there seems
                         # no work around
-                        grad = tf.unsorted_segment_sum(grad.values, grad.indices, grad.dense_shape[0])
+                        grad = tf.unsorted_segment_sum(grad.values, grad.indices,
+                                                       grad.dense_shape[0])
                 return grad
 
             grads = [process_grad(grad) for grad in grads]
