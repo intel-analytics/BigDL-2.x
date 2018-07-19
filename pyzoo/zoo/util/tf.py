@@ -63,7 +63,7 @@ def export_tf(sess, folder, inputs, outputs,
             non_placeholder_input_names.append(input_tensor.name)
             type_enums.append(input_tensor.dtype.as_datatype_enum)
 
-    output_names = list(map(lambda o: o.name, outputs))
+    output_names = [o.name for o in outputs]
 
     all_variables = graph.get_collection(tf.GraphKeys.TRAINABLE_VARIABLES)
 
@@ -99,26 +99,23 @@ def export_tf(sess, folder, inputs, outputs,
     grad_variables = []
     grad_inputs = []
     if generate_backward:
-        nodes = set(map(lambda n: n.name, optimized_graph_def.node))
+        nodes = set([n.name for n in optimized_graph_def.node])
         for v in all_variables:
             if v.op.name in nodes:
                 used_variables.append(v.name)
 
         with tf.Graph().as_default() as g:
             tf.import_graph_def(optimized_graph_def, name='')
-            output_tensors = map(lambda x: g.get_tensor_by_name(x), output_names)
-            grad_output_placeholders =\
-                map(lambda x:
-                    tf.placeholder(dtype=x.dtype,
-                                   name=x.name.split(":")[0] + "_grad",
-                                   shape=x.shape),
-                    output_tensors)
+            output_tensors = [g.get_tensor_by_name(x) for x in output_names]
+            grad_output_placeholders = [tf.placeholder(dtype=x.dtype,
+                                                       name=x.name.split(":")[0] + "_grad",
+                                                       shape=x.shape) for x in output_tensors]
 
-            variables = list(map(lambda x: g.get_tensor_by_name(x), used_variables))
+            variables = [g.get_tensor_by_name(x) for x in used_variables]
 
-            inputs = list(map(lambda x: g.get_tensor_by_name(x), new_input_names))
+            inputs = [g.get_tensor_by_name(x) for x in new_input_names]
             grads = tf.gradients(output_tensors, variables + inputs,
-                                 grad_ys=list(grad_output_placeholders))
+                                 grad_ys=grad_output_placeholders)
 
             def process_grad(g):
                 if g is not None:
@@ -130,11 +127,11 @@ def export_tf(sess, folder, inputs, outputs,
                         g = tf.unsorted_segment_sum(g.values, g.indices, g.dense_shape[0])
                 return g
 
-            grads = list(map(lambda g: process_grad(g), grads))
+            grads = [process_grad(g) for g in grads]
 
             temp_tensors = _find_temp_tensors(grads, nodes)
 
-            grad_variables = list(map(lambda x: x.name, grads[0:len(variables)]))
+            grad_variables = [x.name for x in grads[0:len(variables)]]
 
             grad_inputs = []
             for i in range(len(variables), len(grads)):
