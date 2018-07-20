@@ -27,6 +27,7 @@ import com.intel.analytics.zoo.pipeline.api.autograd.Variable
 import com.intel.analytics.zoo.pipeline.api.keras2.layers.{Conv1D, Dense, MaxPooling1D, AveragePooling1D, Maximum, Minimum}
 import scala.collection.JavaConverters._
 import com.intel.analytics.zoo.pipeline.api.keras2.layers._
+import com.intel.analytics.zoo.pipeline.api.keras2.layers.utils.KerasUtils
 
 import scala.reflect.ClassTag
 
@@ -208,6 +209,17 @@ class PythonZooKeras2[T: ClassTag](implicit ev: TensorNumeric[T]) extends Python
       kernelRegularizer, biasRegularizer, useBias, toScalaShape(inputShape))
   }
 
+  def createZooKeras2ZeroPadding1D(
+      padding: JList[Int],
+     inputShape: JList[Int] = null): ZeroPadding1D[T] = {
+    new ZeroPadding1D(toScalaArray(padding), toScalaShape(inputShape))
+  }
 
-
+  def createZooKeras2ZeroPadding2D(
+      padding: JList[Int],
+      dataFormat: String = "channels_first",
+      inputShape: JList[Int] = null): ZeroPadding2D[T] = {
+    new ZeroPadding2D(toScalaArray(padding),
+      KerasUtils.toBigDLFormat(dataFormat), toScalaShape(inputShape))
+  }
 }

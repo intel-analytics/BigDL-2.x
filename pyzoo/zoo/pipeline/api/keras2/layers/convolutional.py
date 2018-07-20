@@ -220,3 +220,73 @@ class Cropping1D(ZooKeras2Layer):
                                          cropping,
                                          list(input_shape) if input_shape else None,
                                          **kwargs)
+
+
+class ZeroPadding1D(ZooKeras2Layer):
+    """
+    Zero-padding layer for 1D input (e.g. temporal sequence).
+    The input of this layer should be 3D.
+
+    When you use this layer as the first layer of a model, you need to provide the argument
+    input_shape (a shape tuple, does not include the batch dimension).
+
+    # Arguments
+    padding: Int or int tuple of length 2.
+             If int, how many zeros to add both at the beginning and at the end of
+             the padding dimension.
+             If tuple of length 2, how many zeros to add in the order '(left_pad, right_pad)'.
+             Default is 1.
+    input_shape: A shape tuple, not including batch.
+    name: String to set the name of the layer.
+          If not specified, its name will by default to be a generated string.
+
+    >>> zeropadding1d = ZeroPadding1D(padding=2, input_shape=(3, 6))
+    creating: createZooKeras2ZeroPadding1D
+    """
+    def __init__(self,
+                 padding=1,
+                 input_shape=None,
+                 **kwargs):
+        if isinstance(padding, int):
+            padding = (padding, padding)
+        super(ZeroPadding1D, self).__init__(None,
+                                            padding,
+                                            list(input_shape) if input_shape else None,
+                                            **kwargs)
+
+
+class ZeroPadding2D(ZooKeras2Layer):
+    """
+    Zero-padding layer for 2D input (e.g. picture).
+    The input of this layer should be 4D.
+
+    When you use this layer as the first layer of a model, you need to provide the argument
+    input_shape (a shape tuple, does not include the batch dimension).
+
+    # Arguments
+    padding: Int tuple of length 2 or length 4.
+             If tuple of length 2, how many zeros to add both at the beginning and
+             at the end of rows and cols.
+             If tuple of length 4, how many zeros to add in the order
+             '(top_pad, bottom_pad, left_pad, right_pad)'.
+             Default is (1, 1).
+    data_format: Format of input data. Either 'channels_first' or 'channels_last'.
+                  Default is 'channels_first'.
+    input_shape: A shape tuple, not including batch.
+    name: String to set the name of the layer.
+          If not specified, its name will by default to be a generated string.
+
+    >>> zeropadding2d = ZeroPadding2D(padding=(2, 1), input_shape=(2, 8, 8))
+    creating: createZooKeras2ZeroPadding2D
+    """
+    def __init__(self,
+                 padding=(1, 1),
+                 data_format="channels_first",
+                 input_shape=None, **kwargs):
+        if len(padding) == 2:
+            padding = (padding[0], padding[0], padding[1], padding[1])
+        super(ZeroPadding2D, self).__init__(None,
+                                            padding,
+                                            data_format,
+                                            list(input_shape) if input_shape else None,
+                                            **kwargs)
