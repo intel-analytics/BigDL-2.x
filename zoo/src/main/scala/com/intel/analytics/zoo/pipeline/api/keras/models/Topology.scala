@@ -65,7 +65,7 @@ abstract class KerasNet[T: ClassTag](implicit ev: TensorNumeric[T])
   private var constantGradientClippingParams: (Float, Float) = null
   private var clipNorm: Option[Float] = None
 
-  private def getOrCreateOptimizer(x: DataSet[MiniBatch[T]]): Optimizer[T, MiniBatch[T]]  = {
+  private def getOrCreateOptimizer(x: DataSet[MiniBatch[T]]): Optimizer[T, MiniBatch[T]] = {
     if (null != this.internalOptimizer) {
       return internalOptimizer
     }
@@ -260,7 +260,8 @@ abstract class KerasNet[T: ClassTag](implicit ev: TensorNumeric[T])
     if (validationData != null) {
       require(this.vMethods != null, "Validation metrics haven't been set yet")
       if (this.tensorBoardLogDir != null && this.tensorBoardAppName != null) {
-        internalOptimizer.setValidationSummary(ValidationSummary(tensorBoardLogDir, tensorBoardAppName))
+        internalOptimizer.setValidationSummary(
+          ValidationSummary(tensorBoardLogDir, tensorBoardAppName))
       }
       internalOptimizer.setValidation(trigger = Trigger.everyEpoch,
         dataset = validationData,
