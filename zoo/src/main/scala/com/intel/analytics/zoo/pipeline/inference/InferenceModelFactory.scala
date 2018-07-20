@@ -16,8 +16,13 @@
 
 package com.intel.analytics.zoo.pipeline.inference
 
+import com.intel.analytics.bigdl.Module
 import com.intel.analytics.bigdl.optim.LocalPredictor
+import com.intel.analytics.bigdl.tensor.Tensor
+import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric
 import com.intel.analytics.zoo.pipeline.api.net.TFNet
+
+import scala.reflect.ClassTag
 
 object InferenceModelFactory {
 
@@ -26,7 +31,7 @@ object InferenceModelFactory {
   }
 
   def loadFloatInferenceModel(modelPath: String, weightPath: String)
-    : FloatInferenceModel = {
+  : FloatInferenceModel = {
     val model = ModelLoader.loadFloatModel(modelPath, weightPath)
     val predictor = LocalPredictor(model = model, batchPerCore = 1)
     model.evaluate()
@@ -34,7 +39,7 @@ object InferenceModelFactory {
   }
 
   def loadFloatInferenceModelForCaffe(modelPath: String, weightPath: String)
-    : FloatInferenceModel = {
+  : FloatInferenceModel = {
     val model = ModelLoader.loadFloatModelForCaffe(modelPath, weightPath)
     val predictor = LocalPredictor(model = model, batchPerCore = 1)
     model.evaluate()
@@ -52,4 +57,47 @@ object InferenceModelFactory {
     model.evaluate()
     new FloatInferenceModel(model, predictor)
   }
+
+
+  def clearTensor[T: ClassTag](tensors: Array[Tensor[T]])
+                              (implicit ev: TensorNumeric[T]): Unit = {
+    var i = 0
+    while (i < tensors.length) {
+      if (tensors(i) != null) {
+        //        if (tensors(i).getTensorType == QuantizedType) {
+        //          tensors(i).toQuantizedTensor.release()
+        //        }
+        tensors(i).set()
+      }
+      i += 1
+    }
+  }
+
+  def clearWeightsBias(model: Module[Float]): Unit = {
+    // clear parameters
+    clearTensor(model.parameters()._1)
+    clearTensor(model.parameters()._2)
+  }
+
+  def putWeightsBias(weightBias: Array[Tensor[Float]],
+                     localModel: Module[Float]): Module[Float] = {
+    val localWeightBias = localModel.parameters()._1
+    var i = 0
+    while (i < localWeightBias.length) {
+      if (localWeightBias(i) != null) {
+        localWeightBias(i).set(weightBias(i))
+      }
+      i += 1
+    }
+    localModel
+  }
+
+  def makeUpModel(model: Module[Float], weightBias: Array[Tensor[Float]]): FloatInferenceModel = {
+    val newModel = model.cloneModule()
+    putWeightsBias(weightBias, newModel)
+    val predictor = LocalPredictor(model = newModel, batchPerCore = 1)
+    newModel.evaluate()
+    new FloatInferenceModel(newModel, predictor)
+  }
+
 }
