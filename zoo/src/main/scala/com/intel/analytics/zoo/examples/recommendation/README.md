@@ -18,7 +18,7 @@ In these two examples, we demostrate how to use BigDL to build neural network re
     --master local[physcial_core_number] \
     --driver-memory 10g --executor-memory 20g \
     --class com.intel.analytics.zoo.examples.recommendation.WideAndDeepExample \
-    ./dist/lib/analytics-zoo-VERSION-jar-with-dependencies.jar \
+    ./dist/lib/analytics-zoo-bigdl_BIGDL_VERSION-spark_SPARK_VERSION-ZOO_VERSION-jar-with-dependencies.jar \
     --inputDir ./data/ml-1m \
 
 ```
@@ -33,7 +33,7 @@ In these two examples, we demostrate how to use BigDL to build neural network re
     --driver-memory 10g \
     --executor-memory 150g \
     --class com.intel.analytics.zoo.examples.recommendation.WideAndDeepExample \
-    ./dist/lib/analytics-zoo-VERSION-jar-with-dependencies.jar \
+    ./dist/lib/analytics-zoo-bigdl_BIGDL_VERSION-spark_SPARK_VERSION-ZOO_VERSION-jar-with-dependencies.jar \
     --inputDir hdfs://xxx
 
 ```
