@@ -71,11 +71,11 @@ abstract class KerasNet[T: ClassTag](implicit ev: TensorNumeric[T])
     }
     this.internalOptimizer = x match {
       case local: LocalDataSet[MiniBatch[T]] =>
-        new ZooLocalOptimizer(model = this,
+        new InternalLocalOptimizer(model = this,
           ds = local,
           criterion = this.criterion)
       case distriDataSet: DistributedDataSet[MiniBatch[T]] =>
-        new ZooDistriOptimizer(_model = this,
+        new InternalDistriOptimizer(_model = this,
           _dataset = distriDataSet,
           _criterion = this.criterion)
     }
@@ -268,15 +268,43 @@ abstract class KerasNet[T: ClassTag](implicit ev: TensorNumeric[T])
         vMethods = this.vMethods)
     }
     internalOptimizer.setOptimMethod(this.optimMethod)
-      .setEndWhen(Trigger.maxEpoch(nbEpoch))
+    .setEndWhen(Trigger.maxEpoch(getFinishedEpoch() + nbEpoch))
 
     internalOptimizer match {
-      case local: ZooLocalOptimizer[T] =>
+      case local: InternalLocalOptimizer[T] =>
         local.setTrainData(x)
-      case dis: ZooDistriOptimizer[T] =>
+      case dis: InternalDistriOptimizer[T] =>
         dis.setTrainData(x)
     }
     internalOptimizer.optimize()
+  }
+
+  private def getFinishedEpoch() = {
+    internalOptimizer match {
+      // epoch# from optimizer and optimMethod is not consistent in BigDL.
+      case local: LocalOptimizer[T] =>
+        if (getStateFromOptimizer().get[Int]("epoch").isDefined) {
+          getStateFromOptimizer().get[Int]("epoch").get - 1
+        } else {
+          0
+        }
+      case dis: DistriOptimizer[T] =>
+        getStateFromOptiMethod().get[Int]("epoch").get - 1
+    }
+  }
+
+  private def getStateFromOptimizer() = {
+    val method = classOf[Optimizer[T, MiniBatch[T]]].getDeclaredMethod("state")
+    method.setAccessible(true)
+    val state = method.invoke(this.internalOptimizer).asInstanceOf[Table]
+    state
+  }
+
+  private def getStateFromOptiMethod() = {
+    val method = classOf[OptimMethod[T]].getDeclaredMethod("state")
+    method.setAccessible(true)
+    val state = method.invoke(this.optimMethod).asInstanceOf[Table]
+    state
   }
 
 
@@ -741,7 +769,7 @@ object Sequential extends KerasLayerSerializable {
   }
 }
 
-private[zoo] class ZooLocalOptimizer[T: ClassTag] (
+private[zoo] class InternalLocalOptimizer[T: ClassTag] (
     model: Module[T],
     ds: LocalDataSet[MiniBatch[T]],
     criterion: Criterion[T]
@@ -753,7 +781,7 @@ private[zoo] class ZooLocalOptimizer[T: ClassTag] (
   }
 }
 
-private[zoo] class ZooDistriOptimizer[T: ClassTag] (
+private[zoo] class InternalDistriOptimizer[T: ClassTag] (
     _model: Module[T],
     _dataset: DistributedDataSet[MiniBatch[T]],
     _criterion: Criterion[T]
