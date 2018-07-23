@@ -44,7 +44,6 @@ public abstract class AbstractInferenceModel implements Serializable {
     public void load(String modelPath, String weightPath) {
         FloatInferenceModel originModel = InferenceModelFactory.loadFloatInferenceModel(modelPath, weightPath, supportedConcurrentNum);
         AbstractModule<Activity, Activity, Object> emptyModel = originModel.model().cloneModule();
-
         InferenceModelFactory.clearWeightsBias(emptyModel);
         for (int i = 0; i < supportedConcurrentNum; i++) {
             AbstractModule<Activity, Activity, Object> clonedModel = emptyModel.cloneModule();
@@ -60,14 +59,12 @@ public abstract class AbstractInferenceModel implements Serializable {
     public void loadCaffe(String modelPath, String weightPath) {
         FloatInferenceModel originModel = InferenceModelFactory.loadFloatInferenceModelForCaffe(modelPath, weightPath, supportedConcurrentNum);
         AbstractModule<Activity, Activity, Object> emptyModel = originModel.model().cloneModule();
-
         InferenceModelFactory.clearWeightsBias(emptyModel);
         for (int i = 0; i < supportedConcurrentNum; i++) {
             AbstractModule<Activity, Activity, Object> clonedModel = emptyModel.cloneModule();
             FloatInferenceModel newModel = InferenceModelFactory.makeUpModel(clonedModel, originModel.model().getWeightsBias());
             modelQueue.offer(newModel);
         }
-
     }
 
     public void loadTF(String modelPath) {
@@ -87,7 +84,6 @@ public abstract class AbstractInferenceModel implements Serializable {
             FloatInferenceModel newModel = InferenceModelFactory.makeUpModel(clonedModel, originModel.model().getWeightsBias());
             modelQueue.offer(newModel);
         }
-
     }
 
     public void reload(String modelPath) {
@@ -97,7 +93,6 @@ public abstract class AbstractInferenceModel implements Serializable {
     public void reload(String modelPath, String weightPath) {
         FloatInferenceModel originModel = InferenceModelFactory.loadFloatInferenceModel(modelPath, weightPath, supportedConcurrentNum);
         AbstractModule<Activity, Activity, Object> emptyModel = originModel.model().cloneModule();
-
         InferenceModelFactory.clearWeightsBias(emptyModel);
         for (int i = 0; i < supportedConcurrentNum; i++) {
             AbstractModule<Activity, Activity, Object> clonedModel = emptyModel.cloneModule();
