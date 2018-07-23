@@ -17,6 +17,7 @@
 package com.intel.analytics.zoo.pipeline.inference;
 
 import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.LinkedBlockingQueue;
 
