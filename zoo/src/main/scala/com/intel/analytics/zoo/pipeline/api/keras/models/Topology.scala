@@ -757,21 +757,21 @@ object Sequential extends KerasLayerSerializable {
 
 private[zoo] object InternalOptimizerUtil {
 
-  def getStateFromOptiMethod[T: ClassTag](optimMethod: OptimMethod[T]) = {
+  def getStateFromOptiMethod[T: ClassTag](optimMethod: OptimMethod[T]): Table = {
     val method = classOf[OptimMethod[T]].getDeclaredMethod("state")
     method.setAccessible(true)
     val state = method.invoke(optimMethod).asInstanceOf[Table]
     state
   }
 
-  def getStateFromOptimizer[T: ClassTag](optimizer: Optimizer[T, MiniBatch[T]]) = {
+  def getStateFromOptimizer[T: ClassTag](optimizer: Optimizer[T, MiniBatch[T]]): Table = {
     val method = classOf[Optimizer[T, MiniBatch[T]]].getDeclaredMethod("state")
     method.setAccessible(true)
     val state = method.invoke(optimizer).asInstanceOf[Table]
     state
   }
 
-  def endEpoch[T: ClassTag](optimizer: DistriOptimizer[T]):Unit = {
+  def endEpoch[T: ClassTag](optimizer: DistriOptimizer[T]): Unit = {
     val method = classOf[DistriOptimizer[T]].getDeclaredMethod("endEpoch")
     method.setAccessible(true)
     method.invoke(optimizer)
