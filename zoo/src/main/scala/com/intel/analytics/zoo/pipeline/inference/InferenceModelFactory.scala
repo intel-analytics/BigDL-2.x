@@ -26,8 +26,8 @@ import scala.reflect.ClassTag
 
 object InferenceModelFactory {
 
-  def loadFloatInferenceModel(modelPath: String): FloatInferenceModel = {
-    loadFloatInferenceModel(modelPath, null, 1)
+  def loadFloatInferenceModel(modelPath: String, supportedConcurrentNum: Int = 1): FloatInferenceModel = {
+    loadFloatInferenceModel(modelPath, null, supportedConcurrentNum)
   }
 
   def loadFloatInferenceModel(modelPath: String, weightPath: String, supportedConcurrentNum: Int = 1)
