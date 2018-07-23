@@ -38,7 +38,7 @@ public abstract class AbstractInferenceModel implements Serializable {
   }
 
   public void load(String modelPath, String weightPath) {
-    this.model = InferenceModelFactory.loadFloatInferenceModel(modelPath, weightPath);
+    this.model = InferenceModelFactory.loadFloatInferenceModel(modelPath, weightPath, supportedConcurrentNum);
   }
 
   public void loadCaffe(String modelPath) {
@@ -46,12 +46,12 @@ public abstract class AbstractInferenceModel implements Serializable {
   }
 
   public void loadCaffe(String modelPath, String weightPath) {
-    this.model = InferenceModelFactory.loadFloatInferenceModelForCaffe(modelPath, weightPath);
+    this.model = InferenceModelFactory.loadFloatInferenceModelForCaffe(modelPath, weightPath, supportedConcurrentNum);
   }
 
   public void loadTF(String modelPath) {
     this.model = InferenceModelFactory.loadFloatInferenceModelForTF(modelPath,
-            1, 1, true);
+            1, 1, true, supportedConcurrentNum);
   }
 
   public void loadTF(String modelPath,
@@ -59,7 +59,7 @@ public abstract class AbstractInferenceModel implements Serializable {
                      int interOpParallelismThreads,
                      boolean usePerSessionThreads) {
     this.model = InferenceModelFactory.loadFloatInferenceModelForTF(modelPath,
-            intraOpParallelismThreads, interOpParallelismThreads, usePerSessionThreads);
+            intraOpParallelismThreads, interOpParallelismThreads, usePerSessionThreads, supportedConcurrentNum);
   }
 
   public void reload(String modelPath) {
@@ -67,7 +67,7 @@ public abstract class AbstractInferenceModel implements Serializable {
   }
 
   public void reload(String modelPath, String weightPath) {
-    this.model = InferenceModelFactory.loadFloatInferenceModel(modelPath, weightPath);
+    this.model = InferenceModelFactory.loadFloatInferenceModel(modelPath, weightPath, supportedConcurrentNum);
   }
 
   @Deprecated

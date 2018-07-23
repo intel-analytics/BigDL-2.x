@@ -27,10 +27,10 @@ import scala.reflect.ClassTag
 object InferenceModelFactory {
 
   def loadFloatInferenceModel(modelPath: String): FloatInferenceModel = {
-    loadFloatInferenceModel(modelPath, null)
+    loadFloatInferenceModel(modelPath, null, 1)
   }
 
-  def loadFloatInferenceModel(modelPath: String, weightPath: String)
+  def loadFloatInferenceModel(modelPath: String, weightPath: String, supportedConcurrentNum: Int = 1)
   : FloatInferenceModel = {
     val model = ModelLoader.loadFloatModel(modelPath, weightPath)
     val predictor = LocalPredictor(model = model, batchPerCore = 1)
@@ -38,7 +38,7 @@ object InferenceModelFactory {
     new FloatInferenceModel(model, predictor)
   }
 
-  def loadFloatInferenceModelForCaffe(modelPath: String, weightPath: String)
+  def loadFloatInferenceModelForCaffe(modelPath: String, weightPath: String, supportedConcurrentNum: Int = 1)
   : FloatInferenceModel = {
     val model = ModelLoader.loadFloatModelForCaffe(modelPath, weightPath)
     val predictor = LocalPredictor(model = model, batchPerCore = 1)
@@ -49,7 +49,7 @@ object InferenceModelFactory {
   def loadFloatInferenceModelForTF(modelPath: String,
                                    intraOpParallelismThreads: Int = 1,
                                    interOpParallelismThreads: Int = 1,
-                                   usePerSessionThreads: Boolean = true): FloatInferenceModel = {
+                                   usePerSessionThreads: Boolean = true, supportedConcurrentNum: Int = 1): FloatInferenceModel = {
     val sessionConfig = TFNet.SessionConfig(intraOpParallelismThreads,
       interOpParallelismThreads, usePerSessionThreads)
     val model = ModelLoader.loadFloatModelForTF(modelPath, sessionConfig)
@@ -64,9 +64,6 @@ object InferenceModelFactory {
     var i = 0
     while (i < tensors.length) {
       if (tensors(i) != null) {
-        //        if (tensors(i).getTensorType == QuantizedType) {
-        //          tensors(i).toQuantizedTensor.release()
-        //        }
         tensors(i).set()
       }
       i += 1
