@@ -33,13 +33,21 @@ import com.intel.analytics.bigdl.dataset.Sample
 import com.intel.analytics.bigdl.utils.Engine
 
 class FloatInferenceModel(
-  var model: AbstractModule[Activity, Activity, Float],
-  @transient var predictor: LocalPredictor[Float]) extends InferenceSupportive with Serializable {
+                           var model: AbstractModule[Activity, Activity, Float],
+                           @transient var predictor: LocalPredictor[Float]) extends InferenceSupportive with Serializable {
 
   @deprecated
   def predict(input: JList[JFloat], shape: JList[JInt]): JList[JFloat] = {
     timing("model predict") {
-      val sample = transferInputToSample(input, shape)
+      val input_arr = new Array[Float](input.size())
+      for (i <- 0 until input.size()){
+        input_arr(i) = input.get(i)
+      }
+      val shape_arr = new Array[Int](shape.size())
+      for (i <- 0 until shape.size()){
+        shape_arr(i) = shape.get(i)
+      }
+      val sample = transferInputToSample(input_arr, shape_arr)
       val result = predictor.predict(Array(sample))
       require(result.length == 1, "only one input, should get only one prediction")
       result(0).asInstanceOf[Tensor[Float]].toArray().toList.asJava.asInstanceOf[JList[JFloat]]
