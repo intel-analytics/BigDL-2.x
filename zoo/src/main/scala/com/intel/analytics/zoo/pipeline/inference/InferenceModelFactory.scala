@@ -30,7 +30,7 @@ object InferenceModelFactory {
     loadFloatInferenceModel(modelPath, null, supportedConcurrentNum)
   }
 
-  def loadFloatInferenceModel(modelPath: String, weightPath: String, supportedConcurrentNum: Int = 1)
+  def loadFloatInferenceModel(modelPath: String, weightPath: String, supportedConcurrentNum : Int)
   : FloatInferenceModel = {
     val model = ModelLoader.loadFloatModel(modelPath, weightPath)
     val predictor = LocalPredictor(model = model, batchPerCore = 1)

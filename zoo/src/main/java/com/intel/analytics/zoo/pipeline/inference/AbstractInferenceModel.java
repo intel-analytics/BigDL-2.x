@@ -25,11 +25,12 @@ import java.util.List;
 import java.util.concurrent.LinkedBlockingQueue;
 
 public abstract class AbstractInferenceModel implements Serializable {
-    protected LinkedBlockingQueue<FloatInferenceModel> modelQueue;
+
     private int supportedConcurrentNum = 1;
+    protected LinkedBlockingQueue<FloatInferenceModel> modelQueue;
 
     public AbstractInferenceModel() {
-        modelQueue = new LinkedBlockingQueue<>(1);
+        modelQueue = new LinkedBlockingQueue<>(supportedConcurrentNum);
     }
 
     public AbstractInferenceModel(int supportedConcurrentNum) {
