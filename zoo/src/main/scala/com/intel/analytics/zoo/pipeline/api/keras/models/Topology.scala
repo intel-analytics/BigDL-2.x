@@ -283,30 +283,16 @@ abstract class KerasNet[T: ClassTag](implicit ev: TensorNumeric[T])
     internalOptimizer match {
       // epoch# from optimizer and optimMethod is not consistent in BigDL.
       case local: LocalOptimizer[T] =>
-        if (getStateFromOptimizer().get[Int]("epoch").isDefined) {
-          getStateFromOptimizer().get[Int]("epoch").get - 1
+        val state = InternalOptimizerUtil.getStateFromOptimizer(this.internalOptimizer)
+        if (state.get[Int]("epoch").isDefined) {
+          state.get[Int]("epoch").get - 1
         } else {
           0
         }
       case dis: DistriOptimizer[T] =>
-        getStateFromOptiMethod().get[Int]("epoch").get - 1
+        InternalOptimizerUtil.getStateFromOptiMethod(this.optimMethod).get[Int]("epoch").get - 1
     }
   }
-
-  private def getStateFromOptimizer() = {
-    val method = classOf[Optimizer[T, MiniBatch[T]]].getDeclaredMethod("state")
-    method.setAccessible(true)
-    val state = method.invoke(this.internalOptimizer).asInstanceOf[Table]
-    state
-  }
-
-  private def getStateFromOptiMethod() = {
-    val method = classOf[OptimMethod[T]].getDeclaredMethod("state")
-    method.setAccessible(true)
-    val state = method.invoke(this.optimMethod).asInstanceOf[Table]
-    state
-  }
-
 
   def fit(
       x: DataSet[MiniBatch[T]],
@@ -769,6 +755,29 @@ object Sequential extends KerasLayerSerializable {
   }
 }
 
+private[zoo] object InternalOptimizerUtil {
+
+  def getStateFromOptiMethod[T: ClassTag](optimMethod: OptimMethod[T]) = {
+    val method = classOf[OptimMethod[T]].getDeclaredMethod("state")
+    method.setAccessible(true)
+    val state = method.invoke(optimMethod).asInstanceOf[Table]
+    state
+  }
+
+  def getStateFromOptimizer[T: ClassTag](optimizer: Optimizer[T, MiniBatch[T]]) = {
+    val method = classOf[Optimizer[T, MiniBatch[T]]].getDeclaredMethod("state")
+    method.setAccessible(true)
+    val state = method.invoke(optimizer).asInstanceOf[Table]
+    state
+  }
+
+  def endEpoch[T: ClassTag](optimizer: DistriOptimizer[T]):Unit = {
+    val method = classOf[DistriOptimizer[T]].getDeclaredMethod("endEpoch")
+    method.setAccessible(true)
+    method.invoke(optimizer)
+  }
+}
+
 private[zoo] class InternalLocalOptimizer[T: ClassTag] (
     model: Module[T],
     ds: LocalDataSet[MiniBatch[T]],
@@ -777,7 +786,15 @@ private[zoo] class InternalLocalOptimizer[T: ClassTag] (
 
   def setTrainData(trainingDataSet: DataSet[MiniBatch[T]]): this.type = {
      this.dataset = trainingDataSet
+    this.endEpoch()
     this
+  }
+
+  // LocalOptimizer use this `optimizer.state` to control the training
+  // But there's no logic to update the "recordsProcessedThisEpoch"
+  // neither in optimizer.state nor optimMethod.state.
+  // So we can only simply suppose the `epoch` has been correctly updated.
+  def endEpoch[T: ClassTag](): Unit = {
   }
 }
 
@@ -789,6 +806,7 @@ private[zoo] class InternalDistriOptimizer[T: ClassTag] (
 
   def setTrainData(trainingDataSet: DataSet[MiniBatch[T]]): this.type = {
     this.dataset = trainingDataSet
+    InternalOptimizerUtil.endEpoch(this)
     this
   }
 }
