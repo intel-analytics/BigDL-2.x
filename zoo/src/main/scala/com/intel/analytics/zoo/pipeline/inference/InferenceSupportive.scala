@@ -73,11 +73,6 @@ trait InferenceSupportive {
     result
   }
 
-  @inline
-  def transferInputToSample(input: Array[Float], inputShape: Array[Int])
-  : Sample[Float] = {
-    Sample(Tensor(data = input, shape = inputShape))
-  }
 
   def transferTensorToJTensor(input: Tensor[Float]): JTensor = {
     val storageOffset = input.storageOffset - 1
