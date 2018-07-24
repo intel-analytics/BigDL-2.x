@@ -225,8 +225,8 @@ object Train {
       var i = 1
       while (i <= param.nEpochs) {
         optimizer
-//          .setEndWhen(Trigger.maxEpoch(i))
-          .setEndWhen(Trigger.maxIteration(i))
+          .setEndWhen(Trigger.maxEpoch(i))
+//          .setEndWhen(Trigger.maxIteration(i))
         optimizer.optimize()
 
         for (seed <- seeds) {

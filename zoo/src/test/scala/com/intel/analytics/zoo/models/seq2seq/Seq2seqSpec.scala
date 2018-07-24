@@ -17,12 +17,13 @@
 package com.intel.analytics.zoo.models.seq2seq
 
 import com.intel.analytics.bigdl.nn.ConvLSTMPeephole
-import com.intel.analytics.bigdl.nn.abstractnn.{TensorModule}
-import com.intel.analytics.bigdl.tensor.{Tensor}
+import com.intel.analytics.bigdl.nn.abstractnn.TensorModule
+import com.intel.analytics.bigdl.tensor.Tensor
 import com.intel.analytics.bigdl.utils.RandomGenerator._
-import com.intel.analytics.bigdl.utils.{T}
+import com.intel.analytics.bigdl.utils.T
 import org.scalatest.{BeforeAndAfter, FlatSpec, Matchers}
 import com.intel.analytics.bigdl.nn._
+import com.intel.analytics.zoo.models.common.ZooModel
 
 class Seq2seqSpec extends FlatSpec with BeforeAndAfter with Matchers {
   "A Seq2seq" should "work with PassThroughBridge" in {
@@ -66,6 +67,11 @@ class Seq2seqSpec extends FlatSpec with BeforeAndAfter with Matchers {
       1)).asInstanceOf[Array[Cell[Double]]]
 
     val model = Seq2seq(encoderCells, decoderCells)
+
+//    model.saveModel("/home/ding/proj/analytics-zoo/test", overWrite = true)
+//    val t = ZooModel.loadModel("/home/ding/proj/analytics-zoo/test")
+//    t.forward(T(input, input)).toTensor
+//    t.backward(T(input, input), gradOutput)
 
     model.parameters()
     model.getParametersTable()
