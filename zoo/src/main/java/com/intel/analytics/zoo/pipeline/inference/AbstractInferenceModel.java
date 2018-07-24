@@ -31,7 +31,7 @@ public abstract class AbstractInferenceModel implements Serializable {
 
 	public AbstractInferenceModel(int supportedConcurrentNum) {
 		this.supportedConcurrentNum = supportedConcurrentNum;
-		modelQueue = new LinkedBlockingQueue<FloatInferenceModel>(supportedConcurrentNum);
+		modelQueue = new LinkedBlockingQueue<>(supportedConcurrentNum);
 	}
 
 	public void load(String modelPath) {
@@ -86,7 +86,7 @@ public abstract class AbstractInferenceModel implements Serializable {
 	public List<Float> predict(List<Float> input, int... shape) {
 		FloatInferenceModel model = null;
 		List<Float> result;
-		List<Integer> inputShape = new ArrayList<Integer>();
+		List<Integer> inputShape = new ArrayList<>();
 		for (int s : shape) {
 			inputShape.add(s);
 		}
