@@ -30,12 +30,12 @@ public abstract class AbstractInferenceModel implements Serializable {
     protected LinkedBlockingQueue<FloatInferenceModel> modelQueue;
 
     public AbstractInferenceModel() {
-        modelQueue = new LinkedBlockingQueue<FloatInferenceModel>(supportedConcurrentNum);
+        modelQueue = new LinkedBlockingQueue<>(supportedConcurrentNum);
     }
 
     public AbstractInferenceModel(int supportedConcurrentNum) {
         this.supportedConcurrentNum = supportedConcurrentNum;
-        modelQueue = new LinkedBlockingQueue<FloatInferenceModel>(supportedConcurrentNum);
+        modelQueue = new LinkedBlockingQueue<>(supportedConcurrentNum);
     }
 
     public void load(String modelPath) {
