@@ -38,11 +38,17 @@ public class JTensor {
     for (int i = 0; i < data.size(); i++){
       this.data[i] = data.get(i);
     }
-    this.shape = shape;
+    this.shape = new int[shape.length];
+    for (int i = 0; i < shape.length; i++){
+      this.shape[i] = shape[i];
+    }
   }
 
   public JTensor(float[] data, List<Integer> shape) {
-    this.data = data;
+    this.data = new float[data.length];
+    for (int i = 0; i < data.length; i++){
+      this.data[i] = data[i];
+    }
     this.shape = new int[shape.size()];
     for (int i = 0; i < shape.size(); i++){
       this.shape[i] = shape.get(i);
@@ -50,7 +56,10 @@ public class JTensor {
   }
 
   public JTensor(float[] data, Integer[] shape) {
-    this.data = data;
+    this.data = new float[data.length];
+    for (int i = 0; i < data.length; i++){
+      this.data[i] = data[i];
+    }
     this.shape = new int[shape.length];
     for (int i = 0; i < shape.length; i++){
       this.shape[i] = shape[i];
@@ -58,8 +67,31 @@ public class JTensor {
   }
 
   public JTensor(float[] data, int[] shape) {
-    this.data = data;
-    this.shape = shape;
+    this.data = new float[data.length];
+    for (int i = 0; i < data.length; i++){
+      this.data[i] = data[i];
+    }
+    this.shape = new int[shape.length];
+    for (int i = 0; i < shape.length; i++){
+      this.shape[i] = shape[i];
+    }
+  }
+
+  public JTensor(float[] data, int[] shape, boolean copy){
+    if (copy) {
+      this.data = new float[data.length];
+      for (int i = 0; i < data.length; i++){
+        this.data[i] = data[i];
+      }
+      this.shape = new int[shape.length];
+      for (int i = 0; i < shape.length; i++){
+        this.shape[i] = shape[i];
+      }
+    }
+    else {
+      this.data = data;
+      this.shape = shape;
+    }
   }
 
   public float[] getData() {
