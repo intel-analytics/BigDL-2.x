@@ -26,7 +26,7 @@ public abstract class AbstractInferenceModel implements Serializable {
 	private int supportedConcurrentNum = 1;
 
 	public AbstractInferenceModel() {
-		modelQueue = new LinkedBlockingQueue<FloatInferenceModel>(1);
+		modelQueue = new LinkedBlockingQueue<>(1);
 	}
 
 	public AbstractInferenceModel(int supportedConcurrentNum) {
