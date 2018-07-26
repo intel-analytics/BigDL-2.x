@@ -28,6 +28,7 @@ import com.intel.analytics.bigdl.utils.{T, Table}
 
 import scala.reflect.ClassTag
 import com.intel.analytics.zoo.models.common.ZooModel
+import com.intel.analytics.zoo.pipeline.api.keras.layers.internal.InternalRecurrent
 
 import scala.collection.mutable.ArrayBuffer
 import scala.reflect.runtime._
@@ -55,8 +56,8 @@ class Seq2seq[T: ClassTag](val encoderCells: Array[Cell[T]],
   private var encoderInput: Tensor[T] = null
   private var encoderOutput: Tensor[T] = null
   private var decoderOutput: Tensor[T] = null
-  private var enc: Array[ZooRecurrent[T]] = null
-  private var dec: Array[ZooRecurrent[T]] = null
+  private var enc: Array[InternalRecurrent[T]] = null
+  private var dec: Array[InternalRecurrent[T]] = null
 
   var encoder: Sequential[T] = null
   var decoder: Sequential[T] = null
@@ -75,7 +76,7 @@ class Seq2seq[T: ClassTag](val encoderCells: Array[Cell[T]],
     val model = Sequential[T]()
     if (preEncoder != null) model.add(preEncoder)
     enc = encoderCells.map {cell =>
-      val rec = new ZooRecurrent(maskZero = maskZero).add(cell)
+      val rec = new InternalRecurrent(maskZero = maskZero).add(cell)
       model.add(rec)
       rec
     }
@@ -85,7 +86,7 @@ class Seq2seq[T: ClassTag](val encoderCells: Array[Cell[T]],
   private def buildDecoder(): Sequential[T] = {
     val model = Sequential[T]()
     dec = decoderCells.map {cell =>
-        val rec = new ZooRecurrent(maskZero = maskZero).add(cell)
+        val rec = new InternalRecurrent[T](maskZero = maskZero).add(cell)
         model.add(rec)
         rec
       }

@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.intel.analytics.zoo.models.seq2seq
+package com.intel.analytics.zoo.pipeline.api.keras.layers.internal
 
 import com.intel.analytics.bigdl.nn.abstractnn.TensorModule
 import com.intel.analytics.bigdl.tensor.Tensor
@@ -23,13 +23,12 @@ import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric
 import scala.reflect.ClassTag
 
 /**
-  * Applies a max operation over dimension `dim`
-  *
-  * @param dim max along this dimension
-  * @param numInputDims Optional. If in a batch model, set to the inputDims.
-  */
-@SerialVersionUID(- 3491572553329730774L)
-class ZooMax[T: ClassTag](
+ * Applies a max operation over dimension `dim`
+ *
+ * @param dim max along this dimension
+ * @param numInputDims Optional. If in a batch model, set to the inputDims.
+ */
+class InternalMax[T: ClassTag](
                         var dim : Int = 1,
                         var numInputDims: Int = Int.MinValue,
                         returnValue: Boolean = true
@@ -88,10 +87,10 @@ class ZooMax[T: ClassTag](
     s"${getPrintName}($dim${if (numInputDims != Int.MinValue) ", " + numInputDims else ""})"
   }
 
-  override def canEqual(other: Any): Boolean = other.isInstanceOf[ZooMax[T]]
+  override def canEqual(other: Any): Boolean = other.isInstanceOf[InternalMax[T]]
 
   override def equals(other: Any): Boolean = other match {
-    case that: ZooMax[T] =>
+    case that: InternalMax[T] =>
       super.equals(that) &&
         (that canEqual this) &&
         dim == that.dim &&
@@ -112,11 +111,11 @@ class ZooMax[T: ClassTag](
   }
 }
 
-object ZooMax {
+object InternalMax {
   def apply[T: ClassTag](
-                          dim : Int = 1,
-                          numInputDims: Int = Int.MinValue,
-                          returnValue: Boolean = true)(implicit ev: TensorNumeric[T]) : ZooMax[T] = {
-    new ZooMax[T](dim, numInputDims, returnValue)
+    dim : Int = 1,
+    numInputDims: Int = Int.MinValue,
+    returnValue: Boolean = true)(implicit ev: TensorNumeric[T]) : InternalMax[T] = {
+    new InternalMax[T](dim, numInputDims, returnValue)
   }
 }
