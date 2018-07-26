@@ -22,15 +22,16 @@ import com.intel.analytics.bigdl.tensor.Tensor
 import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric
 import com.intel.analytics.zoo.pipeline.api.net.TFNet
 
+import scala.collection.mutable.ArrayBuffer
 import scala.reflect.ClassTag
 
 object InferenceModelFactory {
 
-  def loadFloatInferenceModel(modelPath: String, supportedConcurrentNum: Int = 1): FloatInferenceModel = {
-    loadFloatInferenceModel(modelPath, null, supportedConcurrentNum)
+  def loadFloatInferenceModel(modelPath: String): FloatInferenceModel = {
+    loadFloatInferenceModel(modelPath, null)
   }
 
-  def loadFloatInferenceModel(modelPath: String, weightPath: String, supportedConcurrentNum : Int)
+  def loadFloatInferenceModel(modelPath: String, weightPath: String)
   : FloatInferenceModel = {
     val model = ModelLoader.loadFloatModel(modelPath, weightPath)
     val predictor = LocalPredictor(model = model, batchPerCore = 1)
@@ -38,7 +39,7 @@ object InferenceModelFactory {
     new FloatInferenceModel(model, predictor)
   }
 
-  def loadFloatInferenceModelForCaffe(modelPath: String, weightPath: String, supportedConcurrentNum: Int = 1)
+  def loadFloatInferenceModelForCaffe(modelPath: String, weightPath: String)
   : FloatInferenceModel = {
     val model = ModelLoader.loadFloatModelForCaffe(modelPath, weightPath)
     val predictor = LocalPredictor(model = model, batchPerCore = 1)
@@ -49,7 +50,7 @@ object InferenceModelFactory {
   def loadFloatInferenceModelForTF(modelPath: String,
                                    intraOpParallelismThreads: Int = 1,
                                    interOpParallelismThreads: Int = 1,
-                                   usePerSessionThreads: Boolean = true, supportedConcurrentNum: Int = 1): FloatInferenceModel = {
+                                   usePerSessionThreads: Boolean = true): FloatInferenceModel = {
     val sessionConfig = TFNet.SessionConfig(intraOpParallelismThreads,
       interOpParallelismThreads, usePerSessionThreads)
     val model = ModelLoader.loadFloatModelForTF(modelPath, sessionConfig)
@@ -59,8 +60,8 @@ object InferenceModelFactory {
   }
 
 
-  def clearTensor[T: ClassTag](tensors: Array[Tensor[T]])
-                              (implicit ev: TensorNumeric[T]): Unit = {
+  private def clearTensor[T: ClassTag](tensors: Array[Tensor[T]])
+                                      (implicit ev: TensorNumeric[T]): Unit = {
     var i = 0
     while (i < tensors.length) {
       if (tensors(i) != null) {
@@ -97,4 +98,43 @@ object InferenceModelFactory {
     new FloatInferenceModel(newModel, predictor)
   }
 
+  def cloneSharedWeightsModelsIntoArray(originalModel: FloatInferenceModel,
+                                       num: Int): Array[FloatInferenceModel] = {
+    var modelList = ArrayBuffer[FloatInferenceModel]()
+    val emptyModel = originalModel.model.cloneModule()
+    clearWeightsBias(emptyModel)
+    modelList.append(originalModel)
+    var i = 1
+    while (i < num) {
+      val clonedModel = emptyModel.cloneModule
+      val newModel = makeUpModel(clonedModel, originalModel.model.getWeightsBias)
+      modelList.append(newModel)
+      i += 1
+    }
+    modelList.toArray
+  }
+
+  def loadFloatInferenceModelArrayWithSharedWeights(modelPath: String,
+                                                   weightPath: String,
+                                                   num: Int = 1): Array[FloatInferenceModel] = {
+    val originModel = loadFloatInferenceModel(modelPath, weightPath)
+    cloneSharedWeightsModelsIntoArray(originModel, num)
+  }
+
+  def loadFloatInferenceModelArrayWithSharedWeightsForCaffe(modelPath: String,
+                            weightPath: String,
+                            num: Int = 1): Array[FloatInferenceModel] = {
+    val originModel = loadFloatInferenceModelForCaffe(modelPath, weightPath)
+    cloneSharedWeightsModelsIntoArray(originModel, num)
+  }
+
+  def loadFloatInferenceModelArrayWithSharedWeightsForTF(modelPath: String,
+                         intraOpParallelismThreads: Int = 1,
+                         interOpParallelismThreads: Int = 1,
+                         usePerSessionThreads: Boolean = true,
+                         num: Int = 1): Array[FloatInferenceModel] = {
+    val originalModel = loadFloatInferenceModelForTF(modelPath,
+      intraOpParallelismThreads, interOpParallelismThreads, usePerSessionThreads)
+    cloneSharedWeightsModelsIntoArray(originalModel, num)
+  }
 }

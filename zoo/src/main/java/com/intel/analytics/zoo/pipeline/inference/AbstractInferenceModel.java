@@ -16,9 +16,6 @@
 
 package com.intel.analytics.zoo.pipeline.inference;
 
-import com.intel.analytics.bigdl.nn.abstractnn.AbstractModule;
-import com.intel.analytics.bigdl.nn.abstractnn.Activity;
-
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
@@ -43,13 +40,9 @@ public abstract class AbstractInferenceModel implements Serializable {
     }
 
     public void load(String modelPath, String weightPath) {
-        FloatInferenceModel originModel = InferenceModelFactory.loadFloatInferenceModel(modelPath, weightPath, supportedConcurrentNum);
-        AbstractModule<Activity, Activity, Object> emptyModel = originModel.model().cloneModule();
-        InferenceModelFactory.clearWeightsBias(emptyModel);
+        FloatInferenceModel[] modelList = InferenceModelFactory.loadFloatInferenceModelArrayWithSharedWeights(modelPath, weightPath, supportedConcurrentNum);
         for (int i = 0; i < supportedConcurrentNum; i++) {
-            AbstractModule<Activity, Activity, Object> clonedModel = emptyModel.cloneModule();
-            FloatInferenceModel newModel = InferenceModelFactory.makeUpModel(clonedModel, originModel.model().getWeightsBias());
-            modelQueue.offer(newModel);
+            modelQueue.offer(modelList[i]);
         }
     }
 
@@ -58,13 +51,9 @@ public abstract class AbstractInferenceModel implements Serializable {
     }
 
     public void loadCaffe(String modelPath, String weightPath) {
-        FloatInferenceModel originModel = InferenceModelFactory.loadFloatInferenceModelForCaffe(modelPath, weightPath, supportedConcurrentNum);
-        AbstractModule<Activity, Activity, Object> emptyModel = originModel.model().cloneModule();
-        InferenceModelFactory.clearWeightsBias(emptyModel);
+        FloatInferenceModel[] modelList = InferenceModelFactory.loadFloatInferenceModelArrayWithSharedWeightsForCaffe(modelPath, weightPath, supportedConcurrentNum);
         for (int i = 0; i < supportedConcurrentNum; i++) {
-            AbstractModule<Activity, Activity, Object> clonedModel = emptyModel.cloneModule();
-            FloatInferenceModel newModel = InferenceModelFactory.makeUpModel(clonedModel, originModel.model().getWeightsBias());
-            modelQueue.offer(newModel);
+            modelQueue.offer(modelList[i]);
         }
     }
 
@@ -76,14 +65,9 @@ public abstract class AbstractInferenceModel implements Serializable {
                        int intraOpParallelismThreads,
                        int interOpParallelismThreads,
                        boolean usePerSessionThreads) {
-        FloatInferenceModel originModel = InferenceModelFactory.loadFloatInferenceModelForTF(modelPath,
-                intraOpParallelismThreads, interOpParallelismThreads, usePerSessionThreads, supportedConcurrentNum);
-        AbstractModule<Activity, Activity, Object> emptyModel = originModel.model().cloneModule();
-        InferenceModelFactory.clearWeightsBias(emptyModel);
+        FloatInferenceModel[] modelList = InferenceModelFactory.loadFloatInferenceModelArrayWithSharedWeightsForTF(modelPath, intraOpParallelismThreads, interOpParallelismThreads, usePerSessionThreads, supportedConcurrentNum);
         for (int i = 0; i < supportedConcurrentNum; i++) {
-            AbstractModule<Activity, Activity, Object> clonedModel = emptyModel.cloneModule();
-            FloatInferenceModel newModel = InferenceModelFactory.makeUpModel(clonedModel, originModel.model().getWeightsBias());
-            modelQueue.offer(newModel);
+            modelQueue.offer(modelList[i]);
         }
     }
 
@@ -92,13 +76,9 @@ public abstract class AbstractInferenceModel implements Serializable {
     }
 
     public void reload(String modelPath, String weightPath) {
-        FloatInferenceModel originModel = InferenceModelFactory.loadFloatInferenceModel(modelPath, weightPath, supportedConcurrentNum);
-        AbstractModule<Activity, Activity, Object> emptyModel = originModel.model().cloneModule();
-        InferenceModelFactory.clearWeightsBias(emptyModel);
+        FloatInferenceModel[] modelList = InferenceModelFactory.loadFloatInferenceModelArrayWithSharedWeights(modelPath, weightPath, supportedConcurrentNum);
         for (int i = 0; i < supportedConcurrentNum; i++) {
-            AbstractModule<Activity, Activity, Object> clonedModel = emptyModel.cloneModule();
-            FloatInferenceModel newModel = InferenceModelFactory.makeUpModel(clonedModel, originModel.model().getWeightsBias());
-            modelQueue.offer(newModel);
+            modelQueue.offer(modelList[i]);
         }
     }
 
