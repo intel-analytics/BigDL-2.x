@@ -253,7 +253,7 @@ object Seq2seq extends ModuleSerializable {
     val bridge = bridgeType match {
       case "zero" => new ZeroBridge()
       case "passthrough" => new PassThroughBridge()
-      case "initialstatebridge" => {
+      case "initialstatebridge" =>
         val activitationsAttr = attrMap.get("activations")
         val activitationsFlat = DataConverter.getAttributeValue(context, activitationsAttr)
           .asInstanceOf[Array[AbstractModule[_, _, T]]].map(_.asInstanceOf[TensorModule[T]])
@@ -264,7 +264,6 @@ object Seq2seq extends ModuleSerializable {
           i += 2
         }
         new InitialStateBridge[T](activitations.toArray)
-      }
     }
 
     Seq2seq(encoderCells, decoderCells, preEncoder, preDecoder,

@@ -34,51 +34,44 @@ class ZooDictionary() extends Dictionary {
   private val logger = Logger.getLogger(getClass)
 
   /**
-    * The length of the vocabulary
-    */
+   * The length of the vocabulary
+   */
   override def getVocabSize(): Int = _vocabSize
 
   /**
-    * Selected words with top-k frequencies and discarded the remaining words.
-    * Return the length of the discarded words.
-    */
+   * Selected words with top-k frequencies and discarded the remaining words.
+   * Return the length of the discarded words.
+   */
   override def getDiscardSize(): Int = _discardSize
-//
-//  /**
-//    * Word encoding by its index in the dictionary
-//    */
-//  override def word2Index() = _word2index
-//
-//  override def index2Word() = _index2word
 
   /**
-    * Return the array of all selected words.
-    */
+   * Return the array of all selected words.
+   */
   override def vocabulary(): Array[String] = _vocabulary.toArray
 
   /**
-    * Return the array of all discarded words.
-    */
+   * Return the array of all discarded words.
+   */
   override def discardVocab(): Array[String] = _discardVocab.toArray
 
   /**
-    * return the encoding number of a word,
-    * if word does not existed in the dictionary,
-    * it will return the dictionary length as the default index.
-    * @param word
-    */
+   * return the encoding number of a word,
+   * if word does not existed in the dictionary,
+   * it will return the dictionary length as the default index.
+   * @param word
+   */
   override def getIndex(word: String): Int = {
     _word2index.getOrElse(word, _vocabSize)
   }
 
   /**
-    * return the word with regard to the index,
-    * if index is out of boundary, it will randomly
-    * return a word in the discarded word list.
-    * If discard word list is Empty, it will randomly
-    * return a word in the existed dictionary.
-    * @param index
-    */
+   * return the word with regard to the index,
+   * if index is out of boundary, it will randomly
+   * return a word in the discarded word list.
+   * If discard word list is Empty, it will randomly
+   * return a word in the existed dictionary.
+   * @param index
+   */
   override def getWord(index: Int): String = {
     _index2word.getOrElse(index,
       if (_discardSize > 0) _discardVocab(Random.nextInt(_discardSize))
@@ -86,16 +79,16 @@ class ZooDictionary() extends Dictionary {
   }
 
   /**
-    * print word-to-index dictionary
-    */
+   * print word-to-index dictionary
+   */
   override def print(): Unit = {
     _word2index.foreach(x =>
       logger.info(x._1 + " -> " + x._2))
   }
 
   /**
-    * print discard dictionary
-    */
+   * print discard dictionary
+   */
   override def printDiscard(): Unit = {
     _discardVocab.foreach(x =>
       logger.info(x))

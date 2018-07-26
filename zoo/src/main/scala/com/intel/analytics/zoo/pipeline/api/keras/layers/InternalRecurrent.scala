@@ -109,9 +109,9 @@ private[zoo] class InternalRecurrent[T: ClassTag](
 
     gradInput = if (preTopology != null) {
       /**
-        * if preTopology is Sequential, it has not created gradInput.
-        * Thus, it needs to create a new Tensor.
-        */
+       * if preTopology is Sequential, it has not created gradInput.
+       * Thus, it needs to create a new Tensor.
+       */
       if (preTopology.gradInput == null) {
         preTopology.gradInput = Tensor[T]()
       }
