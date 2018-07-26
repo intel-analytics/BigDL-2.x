@@ -39,7 +39,15 @@ class FloatInferenceModel(
   @deprecated
   def predict(input: JList[JFloat], shape: JList[JInt]): JList[JFloat] = {
     timing("model predict") {
-      val sample = transferInputToSample(input, shape)
+      val input_arr = new Array[Float](input.size())
+      for (i <- 0 until input.size()){
+        input_arr(i) = input.get(i)
+      }
+      val shape_arr = new Array[Int](shape.size())
+      for (i <- 0 until shape.size()){
+        shape_arr(i) = shape.get(i)
+      }
+      val sample = Sample(Tensor[Float](input_arr, shape_arr))
       val result = predictor.predict(Array(sample))
       require(result.length == 1, "only one input, should get only one prediction")
       result(0).asInstanceOf[Tensor[Float]].toArray().toList.asJava.asInstanceOf[JList[JFloat]]
@@ -56,7 +64,7 @@ class FloatInferenceModel(
         val input = inputs.get(i)
         val inputData = input.getData
         val inputShape = input.getShape
-        val sample = transferInputToSample(inputData, inputShape)
+        val sample = Sample(Tensor[Float](inputData, inputShape))
         samples(i) = sample
         i += 1
       }
