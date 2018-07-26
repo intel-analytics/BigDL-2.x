@@ -34,7 +34,8 @@ import com.intel.analytics.bigdl.utils.Engine
 
 class FloatInferenceModel(
                            var model: AbstractModule[Activity, Activity, Float],
-                           @transient var predictor: LocalPredictor[Float]) extends InferenceSupportive with Serializable {
+                           @transient var predictor: LocalPredictor[Float])
+  extends InferenceSupportive with Serializable {
 
   @deprecated
   def predict(input: JList[JFloat], shape: JList[JInt]): JList[JFloat] = {
