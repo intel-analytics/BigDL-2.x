@@ -17,12 +17,15 @@
 package com.intel.analytics.zoo.models.seq2seq
 
 import com.intel.analytics.bigdl.nn.ConvLSTMPeephole
-import com.intel.analytics.bigdl.nn.abstractnn.{TensorModule}
-import com.intel.analytics.bigdl.tensor.{Tensor}
+import com.intel.analytics.bigdl.nn.abstractnn.TensorModule
+import com.intel.analytics.bigdl.tensor.Tensor
 import com.intel.analytics.bigdl.utils.RandomGenerator._
-import com.intel.analytics.bigdl.utils.{T}
+import com.intel.analytics.bigdl.utils.T
 import org.scalatest.{BeforeAndAfter, FlatSpec, Matchers}
 import com.intel.analytics.bigdl.nn._
+import com.intel.analytics.zoo.models.common.ZooModel
+import com.intel.analytics.zoo.models.textclassification.TextClassifier
+import com.intel.analytics.zoo.pipeline.api.keras.ZooSpecHelper
 
 class Seq2seqSpec extends FlatSpec with BeforeAndAfter with Matchers {
   "A Seq2seq" should "work with PassThroughBridge" in {
@@ -67,20 +70,14 @@ class Seq2seqSpec extends FlatSpec with BeforeAndAfter with Matchers {
 
     val model = Seq2seq(encoderCells, decoderCells)
 
-    model.parameters()
-    model.getParametersTable()
-
     for (i <- 0 until 3) {
       model.forward(T(input, input)).toTensor
       model.backward(T(input, input), gradOutput)
     }
 
-    model.setLoop(seqLength)
-
-    for (i <- 0 until 3) {
-      val output = model.forward(T(input, input.select(2, seqLength))).toTensor
-      model.backward(T(input, input.select(2, seqLength)), gradOutput)
-    }
+    val output = model.inference(T(input, input.narrow(2, input.size(2), 1)),
+      maxSeqLen = 9).toTensor
+    assert(output.size(2) == 10)
   }
 
   "A Seq2seq" should "work with ZeroBridge" in {
@@ -132,12 +129,9 @@ class Seq2seqSpec extends FlatSpec with BeforeAndAfter with Matchers {
       model.backward(T(input, input), gradOutput)
     }
 
-    model.setLoop(seqLength)
-
-    for (i <- 0 until 3) {
-      val output = model.forward(T(input, input.select(2, seqLength))).toTensor
-      model.backward(T(input, input.select(2, seqLength)), gradOutput)
-    }
+    val output = model.inference(T(input, input.narrow(2, input.size(2), 1)),
+      maxSeqLen = 7).toTensor
+    assert(output.size(2) == 8)
   }
 
   "A Seq2seq" should "work with InitialStateBridge" in {
@@ -193,12 +187,9 @@ class Seq2seqSpec extends FlatSpec with BeforeAndAfter with Matchers {
       model.backward(T(input, input), gradOutput)
     }
 
-    model.setLoop(seqLength)
-
-    for (i <- 0 until 3) {
-      model.forward(T(input, input.select(2, seqLength))).toTensor
-      model.backward(T(input, input.select(2, seqLength)), gradOutput)
-    }
+    val output = model.inference(T(input, input.narrow(2, input.size(2), 1)),
+      maxSeqLen = 10).toTensor
+    assert(output.size(2) == 11)
   }
 
   "A Seq2seq" should "work with InitialStateBridge2" in {
@@ -211,6 +202,7 @@ class Seq2seqSpec extends FlatSpec with BeforeAndAfter with Matchers {
 
     RNG.setSeed(seed)
     val input = Tensor[Double](batchSize, seqLength, 3, 5, 5, 5).rand
+    val decoderInput = Tensor[Double](batchSize, 1, 5, 5, 5, 5).rand
     val gradOutput = Tensor[Double](batchSize, seqLength, 5, 5, 5, 5).rand
 
     val encoderCells = Array(ConvLSTMPeephole3D[Double](
@@ -251,15 +243,18 @@ class Seq2seqSpec extends FlatSpec with BeforeAndAfter with Matchers {
     ).asInstanceOf[Array[Array[TensorModule[Double]]]]
 
     val preDecoder = Sequential().add(Contiguous())
-      .add(VolumetricConvolution[Double](3, 5, 3, 3, 3, 1, 1, 1, 1, 1, 1))
+      .add(TimeDistributed(VolumetricConvolution[Double](3, 5, 3, 3, 3, 1, 1, 1, 1, 1, 1)))
     val model = Seq2seq(encoderCells, decoderCells, preDecoder = preDecoder,
       bridges = new InitialStateBridge[Double](activations))
-    model.setLoop(seqLength)
 
     for (i <- 0 until 3) {
-      model.forward(T(input, input.select(2, seqLength)))
-      model.backward(T(input, input.select(2, seqLength)), gradOutput)
+      model.forward(T(input, input))
+      model.backward(T(input, input), gradOutput)
     }
+
+    val output = model.inference(T(input, decoderInput),
+      maxSeqLen = 15)
+    assert(output.size(2) == 16)
   }
 
   "A Seq2seq" should "work with single cell" in {
@@ -295,12 +290,9 @@ class Seq2seqSpec extends FlatSpec with BeforeAndAfter with Matchers {
       model.backward(T(input, input), gradOutput)
     }
 
-    model.setLoop(seqLength)
-
-    for (i <- 0 until 3) {
-      val output = model.forward(T(input, input.select(2, seqLength))).toTensor
-      model.backward(T(input, input.select(2, seqLength)), gradOutput)
-    }
+    val output = model.inference(T(input, input.narrow(2, input.size(2), 1)),
+      maxSeqLen = 12).toTensor
+    assert(output.size(2) == 13)
   }
 
   "A Seq2seq" should "work with getParameters" in {
@@ -390,19 +382,54 @@ class Seq2seqSpec extends FlatSpec with BeforeAndAfter with Matchers {
       1)).asInstanceOf[Array[Cell[Double]]]
 
     val model = Seq2seq(encoderCells, decoderCells)
-    model.setLoop(seqLength, stopSign = Tensor[Double](batchSize, hiddenSize, 5, 5))
-    var output = model.forward(T(input, input.select(2, seqLength))).toTensor
-    require(output.size(2) == seqLength)
+
+    var output = model.inference(T(input, input.narrow(2, seqLength, 1)),
+      maxSeqLen = seqLength).toTensor
+    require(output.size(2) == seqLength + 1)
 
     model.parameters()._1.foreach(_.fill(0.0))
-    output = model.forward(T(input, input.select(2, seqLength))).toTensor
-    require(output.size(2) == 1)
+    output = model.inference(T(input, input.narrow(2, seqLength, 1)),
+      stopSign = Tensor[Double](batchSize, hiddenSize, 5, 5)).toTensor
+    require(output.size(2) == 2)
   }
 
-  "A Seq2seq" should "work with loop func" in {
+  "A Seq2seq" should "work with generator" in {
     import com.intel.analytics.bigdl.numeric.NumericDouble
     val hiddenSize = 7
     val inputSize = 7
+    val seqLength = 5
+    val seed = 100
+    val batchSize = 4
+
+    RNG.setSeed(seed)
+    val input = Tensor[Double](batchSize, seqLength, inputSize)
+    val decoderInput = Tensor[Double](batchSize, 1, 5)
+    val gradOutput = Tensor[Double](batchSize, seqLength, hiddenSize)
+
+    val encoderCells = Array(LSTM[Double](
+      inputSize,
+      hiddenSize)).asInstanceOf[Array[Cell[Double]]]
+
+    val decoderCells = Array(LSTM[Double](
+      5,
+      hiddenSize)).asInstanceOf[Array[Cell[Double]]]
+
+    val model = Seq2seq(encoderCells, decoderCells)
+
+    for (i <- 0 until 3) {
+      model.forward(T(input, decoderInput)).toTensor
+      model.backward(T(input, decoderInput), gradOutput)
+    }
+
+    val output = model.inference(T(input, decoderInput),
+      maxSeqLen = seqLength,
+      infer = TimeDistributed[Double](Linear[Double](7, 5))
+      ).toTensor
+    require(output.size(2) == seqLength + 1)
+  }
+
+  "A Seq2seq serialize" should "work" in {
+    import com.intel.analytics.bigdl.numeric.NumericDouble
     val kernalW = 3
     val kernalH = 3
     val seqLength = 5
@@ -410,23 +437,47 @@ class Seq2seqSpec extends FlatSpec with BeforeAndAfter with Matchers {
     val batchSize = 4
 
     RNG.setSeed(seed)
-    val input = Tensor[Double](batchSize, seqLength, inputSize, 5, 5)
+    val input = Tensor[Double](batchSize, seqLength, 3, 5, 5).rand
 
     val encoderCells = Array(ConvLSTMPeephole[Double](
-      inputSize,
-      hiddenSize,
+      3,
+      7,
+      kernalW, kernalH,
+      1), ConvLSTMPeephole[Double](
+      7,
+      12,
+      kernalW, kernalH,
+      1), ConvLSTMPeephole[Double](
+      12,
+      3,
       kernalW, kernalH,
       1)).asInstanceOf[Array[Cell[Double]]]
 
     val decoderCells = Array(ConvLSTMPeephole[Double](
-      inputSize,
-      hiddenSize,
+      3,
+      7,
+      kernalW, kernalH,
+      1), ConvLSTMPeephole[Double](
+      7,
+      12,
+      kernalW, kernalH,
+      1), ConvLSTMPeephole[Double](
+      12,
+      3,
       kernalW, kernalH,
       1)).asInstanceOf[Array[Cell[Double]]]
 
     val model = Seq2seq(encoderCells, decoderCells)
-    model.setLoop(seqLength, null, input => input.add(1))
-    val output = model.forward(T(input, input.select(2, seqLength))).toTensor
-    require(output.size(2) == seqLength)
+    val output = model.forward(T(input, input)).toTensor
+
+    val input2 = input.clone()
+    val expect = output.clone()
+    val serFile = java.io.File.createTempFile("UnitTest", "AnalyticsZooSpecBase")
+    model.saveModel(serFile.getAbsolutePath, overWrite = true)
+    val loadModel = ZooModel.loadModel(serFile.getAbsolutePath)
+    val output2 = loadModel.forward(T(input2, input2)).toTensor
+    expect.almostEqual(output2, 1e-6)
   }
 }
+
+

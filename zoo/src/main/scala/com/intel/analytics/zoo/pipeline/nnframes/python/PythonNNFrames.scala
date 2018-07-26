@@ -43,8 +43,9 @@ object PythonNNFrames {
 
 class PythonNNFrames[T: ClassTag](implicit ev: TensorNumeric[T]) extends PythonBigDL[T] {
 
-  def nnReadImage(path: String, sc: JavaSparkContext, minParitions: Int): DataFrame = {
-    NNImageReader.readImages(path, sc.sc, minParitions)
+  def nnReadImage(path: String, sc: JavaSparkContext, minParitions: Int,
+                  resizeH: Int, resizeW: Int, imageCodec: Int): DataFrame = {
+    NNImageReader.readImages(path, sc.sc, minParitions, resizeH, resizeW, imageCodec)
   }
 
   def createNNEstimator(
@@ -190,5 +191,19 @@ class PythonNNFrames[T: ClassTag](implicit ev: TensorNumeric[T]) extends PythonB
       estimator: NNEstimator[T],
       clipNorm: Float): Unit = {
     estimator.setGradientClippingByL2Norm(clipNorm)
+  }
+
+  def saveNNModel(model: NNModel[T], path: String): Unit = {
+    model.save(path)
+  }
+
+  def loadNNModel(path: String): NNModel[_] = {
+    val loaded = NNModel.load(path)
+    println(loaded)
+    loaded
+  }
+
+  def loadNNClassifierModel(path: String): NNClassifierModel[_] = {
+    NNClassifierModel.load(path)
   }
 }

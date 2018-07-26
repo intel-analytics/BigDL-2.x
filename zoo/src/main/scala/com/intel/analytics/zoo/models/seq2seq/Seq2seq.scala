@@ -16,14 +16,21 @@
 
 package com.intel.analytics.zoo.models.seq2seq
 
-import com.intel.analytics.bigdl.nn.abstractnn.{AbstractModule, Activity}
+import com.intel.analytics.bigdl.nn.abstractnn.{AbstractModule, Activity, TensorModule}
 import com.intel.analytics.bigdl.tensor.Tensor
 import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric
 import com.intel.analytics.bigdl.nn._
+import com.intel.analytics.bigdl.serialization.Bigdl.{AttrValue, BigDLModule}
+import com.intel.analytics.bigdl.utils.serializer.converters.DataConverter
+import com.intel.analytics.bigdl.utils.serializer.converters.DataConverter.ArrayConverter
+import com.intel.analytics.bigdl.utils.serializer.{DeserializeContext, ModuleSerializable, ModuleSerializer, SerializeContext}
 import com.intel.analytics.bigdl.utils.{T, Table}
 
 import scala.reflect.ClassTag
 import com.intel.analytics.zoo.models.common.ZooModel
+
+import scala.collection.mutable.ArrayBuffer
+import scala.reflect.runtime._
 
 /**
  * [[Seq2seq]] Sequence-to-sequence recurrent neural networks which maps input
@@ -39,49 +46,20 @@ class Seq2seq[T: ClassTag](val encoderCells: Array[Cell[T]],
                            val decoderCells: Array[Cell[T]],
                            val preEncoder: AbstractModule[Activity, Activity, T] = null,
                            val preDecoder: AbstractModule[Activity, Activity, T] = null,
-                           val bridges: Bridge = new PassThroughBridge())
+                           val bridges: Bridge = new PassThroughBridge(),
+                           val maskZero: Boolean = false,
+                           val generator: AbstractModule[Activity, Activity, T] = null)
   (implicit ev: TensorNumeric[T]) extends ZooModel[Activity, Tensor[T], T] {
   private var preDecoderInput: Tensor[T] = null
   private var decoderInput: Tensor[T] = null
   private var encoderInput: Tensor[T] = null
   private var encoderOutput: Tensor[T] = null
+  private var decoderOutput: Tensor[T] = null
   private var enc: Array[ZooRecurrent[T]] = null
-  private var dec: Array[Recurrent[T]] = null
+  private var dec: Array[ZooRecurrent[T]] = null
 
   var encoder: Sequential[T] = null
   var decoder: Sequential[T] = null
-
-  private var seqLen: Int = 0
-  private var stopSign: Tensor[T] = null
-  private var loopFunc: (Tensor[T]) => (Tensor[T]) = null
-
-  /**
-   * defines prediction in last time step will be used as input in next time step in decoder
-   * @param maxLen max sequence length of output
-   * @param stopSign if prediction is the same with stopSign, it will stop predict
-   * @param func before feeding output at last time step to next time step,
-   *             pass it through loopFunc
-   * @return this container
-   */
-  def setLoop(maxLen: Int, stopSign: Tensor[T] = null,
-              func: (Tensor[T]) => (Tensor[T]) = null): Unit = {
-    seqLen = maxLen
-    this.stopSign = stopSign
-    loopFunc = func
-    modules.clear()
-    modules += buildModel()
-  }
-
-  /**
-   * clear setLoop settings
-   */
-  def clearLoop(): Unit = {
-    seqLen = 0
-    this.stopSign = null
-    loopFunc = null
-    modules.clear()
-    modules += buildModel()
-  }
 
   override def buildModel(): AbstractModule[Activity, Tensor[T], T] = {
     encoder = buildEncoder()
@@ -89,6 +67,7 @@ class Seq2seq[T: ClassTag](val encoderCells: Array[Cell[T]],
     if (preDecoder != null) model.add(preDecoder)
     decoder = buildDecoder()
     model.add(decoder)
+    if (generator != null) model.add(generator)
     model.asInstanceOf[AbstractModule[Activity, Tensor[T], T]]
   }
 
@@ -96,7 +75,7 @@ class Seq2seq[T: ClassTag](val encoderCells: Array[Cell[T]],
     val model = Sequential[T]()
     if (preEncoder != null) model.add(preEncoder)
     enc = encoderCells.map {cell =>
-      val rec = new ZooRecurrent().add(cell)
+      val rec = new ZooRecurrent(maskZero = maskZero).add(cell)
       model.add(rec)
       rec
     }
@@ -105,19 +84,11 @@ class Seq2seq[T: ClassTag](val encoderCells: Array[Cell[T]],
 
   private def buildDecoder(): Sequential[T] = {
     val model = Sequential[T]()
-    dec = if (seqLen != 0 || loopFunc != null || stopSign != null) {
-      require(seqLen > 0, "SeqLen needs be great than 0. Please use setLoopPreOutput to set seqLen")
-      val cells = if (decoderCells.length == 1) decoderCells.head else MultiRNNCell(decoderCells)
-      val recDec = new ZooRecurrentDecoder(seqLen, stopSign, loopFunc).add(cells)
-      model.add(recDec)
-      Array(recDec)
-    } else {
-      decoderCells.map {cell =>
-        val rec = new ZooRecurrent().add(cell)
+    dec = decoderCells.map {cell =>
+        val rec = new ZooRecurrent(maskZero = maskZero).add(cell)
         model.add(rec)
         rec
       }
-    }
     model
   }
 
@@ -126,17 +97,22 @@ class Seq2seq[T: ClassTag](val encoderCells: Array[Cell[T]],
     preDecoderInput = input.toTable(2)
 
     encoderOutput = encoder.forward(encoderInput).toTensor
-
-    decoderInput = if (preDecoder != null) preDecoder.forward(preDecoderInput).toTensor
-      else preDecoderInput
+    decoderInput = if (preDecoder != null) {
+      preDecoder.forward(preDecoderInput).toTensor
+    } else preDecoderInput
 
     if (bridges != null) bridges.forwardStates(enc, dec)
-    output = decoder.forward(decoderInput).toTensor
+    decoderOutput = decoder.forward(decoderInput).toTensor
+
+    output = if (generator != null) generator.forward(decoderOutput).toTensor
+    else decoderOutput
     output
   }
 
   override def backward(input: Activity, gradOutput: Tensor[T]): Tensor[T] = {
-    val decoderGradInput = decoder.backward(decoderInput, gradOutput).toTensor
+    val decoderGradoutput = if (generator != null) generator.backward(decoderOutput, gradOutput)
+    else gradOutput
+    val decoderGradInput = decoder.backward(decoderInput, decoderGradoutput).toTensor
     if (preDecoder != null) {
       if (preDecoderInput.dim < encoderInput.dim) {
         preDecoder.backward(preDecoderInput,
@@ -148,6 +124,32 @@ class Seq2seq[T: ClassTag](val encoderCells: Array[Cell[T]],
     gradInput = encoder.backward(encoderInput, Tensor[T](encoderOutput.size())).toTensor
 
     gradInput.toTensor
+  }
+
+  def inference(input: Table, maxSeqLen: Int = 30, stopSign: Tensor[T] = null,
+                infer: TensorModule[T] = null): Tensor[T] = {
+    val sent1 = input.toTable[Tensor[T]](1)
+    val sent2 = input.toTable[Tensor[T]](2)
+    require(sent2.size(Seq2seq.timeDim) == 1, "expect decoder input is batch x time(1) x feature")
+
+    var curInput = sent2
+    val sizes = curInput.size()
+    val concat = Tensor[T](Array(sizes(0), maxSeqLen + 1) ++ sizes.drop(2))
+    concat.narrow(Seq2seq.timeDim, 1, 1).copy(sent2)
+    var break = false
+    var j = 1
+    // Iteratively output predicted words
+    while (j <= maxSeqLen && !break) {
+      val modelOutput = updateOutput(T(sent1, curInput)).toTensor[T]
+      val generateOutput = if (infer != null) infer.forward(modelOutput) else modelOutput
+      val predict = generateOutput.select(2, generateOutput.size(2))
+
+      if (stopSign != null && predict.almostEqual(stopSign, 1e-8)) break = true
+      j += 1
+      concat.narrow(Seq2seq.timeDim, j, 1).copy(predict)
+      curInput = concat.narrow(Seq2seq.timeDim, 1, j)
+    }
+    curInput
   }
 
   override def getParametersTable(): Table = {
@@ -168,6 +170,7 @@ class Seq2seq[T: ClassTag](val encoderCells: Array[Cell[T]],
     if (preEncoder != null) pt.add(preEncoder.getParametersTable())
     if (preDecoder != null) pt.add(preDecoder.getParametersTable())
     pt.add(bridges.toModel.getParametersTable())
+    if (preEncoder != null) pt.add(generator.getParametersTable())
     pt
   }
 
@@ -184,6 +187,7 @@ class Seq2seq[T: ClassTag](val encoderCells: Array[Cell[T]],
     decoderInput = null
     encoderInput = null
     encoderOutput = null
+    decoderOutput = null
     model.clearState()
     bridges.toModel.clearState()
     this
@@ -195,14 +199,141 @@ class Seq2seq[T: ClassTag](val encoderCells: Array[Cell[T]],
   }
 }
 
-object Seq2seq {
+object Seq2seq extends ModuleSerializable {
+  val timeDim = 2
+  ModuleSerializer.registerModule(
+    "com.intel.analytics.zoo.models.seq2seq.Seq2seq",
+    Seq2seq)
+
   def apply[@specialized(Float, Double) T: ClassTag](encoderCells: Array[Cell[T]],
      decoderCells: Array[Cell[T]], preEncoder: AbstractModule[Activity, Activity, T] = null,
      preDecoder: AbstractModule[Activity, Activity, T] = null,
-     bridges: Bridge = new PassThroughBridge())
+     bridges: Bridge = new PassThroughBridge(),
+     maskZero: Boolean = false,
+     generator: AbstractModule[Activity, Activity, T] = null)
     (implicit ev: TensorNumeric[T]): Seq2seq[T] = {
-    new Seq2seq[T](encoderCells, decoderCells, preEncoder, preDecoder, bridges).build()
+    new Seq2seq[T](encoderCells, decoderCells, preEncoder, preDecoder, bridges,
+      maskZero, generator).build()
   }
 
-  val timeDim = 2
+  override def doLoadModule[T: ClassTag](context: DeserializeContext)
+    (implicit ev: TensorNumeric[T]) : AbstractModule[Activity, Activity, T] = {
+    val attrMap = context.bigdlModule.getAttrMap
+    val encoderCells = DataConverter.getAttributeValue(context, attrMap.get("encoderCells")).
+      asInstanceOf[Array[AbstractModule[_, _, T]]].map(_.asInstanceOf[Cell[T]])
+
+    val decoderCells = DataConverter.getAttributeValue(context, attrMap.get("decoderCells")).
+      asInstanceOf[Array[AbstractModule[_, _, T]]].map(_.asInstanceOf[Cell[T]])
+
+    val preEncoderAttr = attrMap.get("preEncoder")
+    val preEncoder = DataConverter.
+      getAttributeValue(context, preEncoderAttr).
+      asInstanceOf[AbstractModule[Activity, Activity, T]]
+
+    val preDecoderAttr = attrMap.get("preDecoder")
+    val preDecoder = DataConverter.
+      getAttributeValue(context, preDecoderAttr).
+      asInstanceOf[AbstractModule[Activity, Activity, T]]
+
+    val generatorAttr = attrMap.get("generator")
+    val generator = DataConverter.
+      getAttributeValue(context, generatorAttr).
+      asInstanceOf[AbstractModule[Activity, Activity, T]]
+
+    val maskZeroAttr = attrMap.get("maskZero")
+    val maskZero = DataConverter.
+      getAttributeValue(context, maskZeroAttr).
+      asInstanceOf[Boolean]
+
+    // Bridge deserailize
+    val bridgesAttr = attrMap.get("bridgesType")
+    val bridgeType = DataConverter.getAttributeValue(context, bridgesAttr)
+      .asInstanceOf[String]
+    val bridge = bridgeType match {
+      case "zero" => new ZeroBridge()
+      case "passthrough" => new PassThroughBridge()
+      case "initialstatebridge" => {
+        val activitationsAttr = attrMap.get("activations")
+        val activitationsFlat = DataConverter.getAttributeValue(context, activitationsAttr)
+          .asInstanceOf[Array[AbstractModule[_, _, T]]].map(_.asInstanceOf[TensorModule[T]])
+        val activitations = new ArrayBuffer[Array[TensorModule[T]]]()
+        var i = 0
+        while (i < activitationsFlat.size) {
+          activitations += activitationsFlat.slice(i, i + 2)
+          i += 2
+        }
+        new InitialStateBridge[T](activitations.toArray)
+      }
+    }
+
+    Seq2seq(encoderCells, decoderCells, preEncoder, preDecoder,
+      bridge, maskZero, generator).asInstanceOf[AbstractModule[Activity, Activity, T]]
+  }
+
+  override def doSerializeModule[T: ClassTag](context: SerializeContext[T],
+                                              seq2seqBuilder : BigDLModule.Builder)
+    (implicit ev: TensorNumeric[T]) : Unit = {
+    val seq2seq = context.moduleData.module.asInstanceOf[Seq2seq[T]]
+
+    val encoderCellsBuilder = AttrValue.newBuilder
+    DataConverter.setAttributeValue(context,
+      encoderCellsBuilder, seq2seq.encoderCells,
+      universe.typeOf[Array[_ <:
+        AbstractModule[_ <: Activity, _ <:  Activity, _ <: Any]]]
+    )
+    seq2seqBuilder.putAttr("encoderCells", encoderCellsBuilder.build)
+
+    val decoderRecsBuilder = AttrValue.newBuilder
+    DataConverter.setAttributeValue(context,
+      decoderRecsBuilder, seq2seq.decoderCells,
+      universe.typeOf[Array[_ <:
+        AbstractModule[_ <: Activity, _ <:  Activity, _ <: Any]]])
+    seq2seqBuilder.putAttr("decoderCells", decoderRecsBuilder.build)
+
+    val preEncoderBuilder = AttrValue.newBuilder
+    DataConverter.setAttributeValue(context,
+      preEncoderBuilder, seq2seq.preEncoder,
+      ModuleSerializer.abstractModuleType)
+    seq2seqBuilder.putAttr("preEncoder", preEncoderBuilder.build)
+
+    val preDecoderBuilder = AttrValue.newBuilder
+    DataConverter.setAttributeValue(context,
+      preDecoderBuilder, seq2seq.preDecoder,
+      ModuleSerializer.abstractModuleType)
+    seq2seqBuilder.putAttr("preDecoder", preDecoderBuilder.build)
+
+    val generatorBuilder = AttrValue.newBuilder
+    DataConverter.setAttributeValue(context,
+      generatorBuilder, seq2seq.generator,
+      ModuleSerializer.abstractModuleType)
+    seq2seqBuilder.putAttr("generator", generatorBuilder.build)
+
+    val maskZeroBuilder = AttrValue.newBuilder
+    DataConverter.setAttributeValue(context,
+      maskZeroBuilder, seq2seq.maskZero,
+      scala.reflect.runtime.universe.typeOf[Boolean])
+    seq2seqBuilder.putAttr("maskZero", maskZeroBuilder.build)
+
+    // Bridge serailize
+    val bridgeTypeBuilder = AttrValue.newBuilder
+    if (seq2seq.bridges.isInstanceOf[ZeroBridge]) {
+      DataConverter.setAttributeValue(context,
+        bridgeTypeBuilder, "zero", scala.reflect.runtime.universe.typeOf[String])
+      seq2seqBuilder.putAttr("bridgesType", bridgeTypeBuilder.build)
+    } else if (seq2seq.bridges.isInstanceOf[PassThroughBridge]) {
+      DataConverter.setAttributeValue(context,
+        bridgeTypeBuilder, "passthrough", scala.reflect.runtime.universe.typeOf[String])
+      seq2seqBuilder.putAttr("bridgesType", bridgeTypeBuilder.build)
+    } else if (seq2seq.bridges.isInstanceOf[InitialStateBridge[T]]) {
+      DataConverter.setAttributeValue(context,
+        bridgeTypeBuilder, "initialstatebridge", scala.reflect.runtime.universe.typeOf[String])
+      seq2seqBuilder.putAttr("bridgesType", bridgeTypeBuilder.build)
+      val activationsBuilder = AttrValue.newBuilder
+      ArrayConverter.setAttributeValue(context, activationsBuilder,
+        seq2seq.bridges.asInstanceOf[InitialStateBridge[T]].activations.flatten,
+        scala.reflect.runtime.universe.typeOf[Array[_ <:
+          AbstractModule[_ <: Activity, _ <:  Activity, _ <: Any]]])
+      seq2seqBuilder.putAttr("activations", activationsBuilder.build)
+    }
+  }
 }

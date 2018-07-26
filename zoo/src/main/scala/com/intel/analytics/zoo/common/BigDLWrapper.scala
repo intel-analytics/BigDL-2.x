@@ -14,9 +14,8 @@
  * limitations under the License.
  */
 
-package com.intel.analytics.bigdl.wrapper
+package com.intel.analytics.bigdl.nn
 
-import com.intel.analytics.bigdl.nn.Recurrent
 import com.intel.analytics.bigdl.tensor.Tensor
 
 import scala.collection.mutable.ArrayBuffer
@@ -33,5 +32,9 @@ object BigDLWrapper {
 
   def copy[T: ClassTag](src: Tensor[T], dst: Tensor[T], index: Int): Unit = {
     Recurrent.copyToIndex(src, dst, index)
+  }
+
+  def clearCell[T: ClassTag](cell: Cell[T]): Unit = {
+    cell.includePreTopology = false
   }
 }

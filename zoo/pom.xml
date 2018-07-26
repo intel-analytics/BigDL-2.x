@@ -7,10 +7,10 @@
     <parent>
         <artifactId>zoo-parent</artifactId>
         <groupId>com.intel.analytics.zoo</groupId>
-        <version>0.1.0-SNAPSHOT</version>
+        <version>0.2.0-SNAPSHOT</version>
     </parent>
 
-    <artifactId>analytics-zoo</artifactId>
+    <artifactId>analytics-zoo-bigdl_${bigdl.version}-spark_${spark.version}</artifactId>
     <packaging>jar</packaging>
 
     <properties>
@@ -24,7 +24,7 @@
         <scala.macros.version>2.1.0</scala.macros.version>
         <scalatest.version>2.2.4</scalatest.version>
         <spark.version>2.1.0</spark.version>
-        <bigdl.version>0.5.0</bigdl.version>
+        <bigdl.version>0.6.0</bigdl.version>
     </properties>
 
     <distributionManagement>
@@ -297,6 +297,7 @@
                 <artifactId>exec-maven-plugin</artifactId>
                 <executions>
                     <execution>
+                        <id>build_info</id>
                         <phase>generate-resources</phase>
                         <configuration>
                             <!-- Execute the shell script to generate the zoo build information. -->
@@ -307,6 +308,22 @@
                                 <argument>${spark.version}</argument>
                                 <argument>${scala.version}</argument>
                                 <argument>${java.version}</argument>
+                            </arguments>
+
+                            <executable>bash</executable>
+                        </configuration>
+                        <goals>
+                            <goal>exec</goal>
+                        </goals>
+                    </execution>
+                    <execution>
+                        <id>bigdl_python</id>
+                        <phase>package</phase>
+                        <configuration>
+                            <arguments>
+                                <argument>${project.basedir}/../scripts/get_bigdl_python</argument>
+                                <argument>${project.build.directory}/bigdl_python</argument>
+                                <argument>${bigdl.version}</argument>
                             </arguments>
 
                             <executable>bash</executable>
@@ -419,9 +436,22 @@
                             <goal>single</goal>
                         </goals>
                         <configuration>
-                            <finalName>analytics-zoo-${project.version}-spark-${spark.version}</finalName>
                             <descriptors>
                                 <descriptor>${project.basedir}/src/assembly/dist.xml</descriptor>
+                            </descriptors>
+                        </configuration>
+                    </execution>
+
+                    <execution>
+                        <id>make-dist-all</id>
+                        <inherited>false</inherited>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>single</goal>
+                        </goals>
+                        <configuration>
+                            <descriptors>
+                                <descriptor>${project.basedir}/src/assembly/dist-all.xml</descriptor>
                             </descriptors>
                         </configuration>
                     </execution>

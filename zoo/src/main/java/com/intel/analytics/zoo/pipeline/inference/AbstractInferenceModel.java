@@ -16,12 +16,14 @@
 
 package com.intel.analytics.zoo.pipeline.inference;
 
+import com.intel.analytics.zoo.pipeline.api.net.TFNet;
+
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 
-public abstract class AbstractInferenceModel {
+public abstract class AbstractInferenceModel implements Serializable {
   private FloatInferenceModel model;
-
   private int supportedConcurrentNum = 1;
 
   public AbstractInferenceModel() {
@@ -39,6 +41,27 @@ public abstract class AbstractInferenceModel {
     this.model = InferenceModelFactory.loadFloatInferenceModel(modelPath, weightPath);
   }
 
+  public void loadCaffe(String modelPath) {
+    loadCaffe(modelPath, null);
+  }
+
+  public void loadCaffe(String modelPath, String weightPath) {
+    this.model = InferenceModelFactory.loadFloatInferenceModelForCaffe(modelPath, weightPath);
+  }
+
+  public void loadTF(String modelPath) {
+    this.model = InferenceModelFactory.loadFloatInferenceModelForTF(modelPath,
+            1, 1, true);
+  }
+
+  public void loadTF(String modelPath,
+                     int intraOpParallelismThreads,
+                     int interOpParallelismThreads,
+                     boolean usePerSessionThreads) {
+    this.model = InferenceModelFactory.loadFloatInferenceModelForTF(modelPath,
+            intraOpParallelismThreads, interOpParallelismThreads, usePerSessionThreads);
+  }
+
   public void reload(String modelPath) {
     load(modelPath, null);
   }
@@ -47,12 +70,17 @@ public abstract class AbstractInferenceModel {
     this.model = InferenceModelFactory.loadFloatInferenceModel(modelPath, weightPath);
   }
 
+  @Deprecated
   public List<Float> predict(List<Float> input, int... shape) {
     List<Integer> inputShape = new ArrayList<Integer>();
     for (int s : shape) {
       inputShape.add(s);
     }
     return model.predict(input, inputShape);
+  }
+
+  public List<List<JTensor>> predict(List<JTensor> inputs) {
+    return model.predict(inputs);
   }
 
 }

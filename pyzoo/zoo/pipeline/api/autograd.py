@@ -20,6 +20,7 @@ from bigdl.nn.layer import Layer, Node
 from bigdl.util.common import callBigDlFunc, to_list
 
 import zoo.pipeline.api.keras.base as kbase
+from zoo.pipeline.api.keras.objectives import LossFunction
 from zoo.pipeline.api.utils import remove_batch, toMultiShape
 
 if sys.version >= '3':
@@ -50,6 +51,41 @@ def abs(x):
     return Variable.from_jvalue(callBigDlFunc("float", "abs", x))
 
 
+def batch_dot(x, y, axes=1, normalize=False):
+    """
+    Operator that computes a dot product between samples in two tensors.
+
+    E.g. if applied to two tensors `a` and `b` of shape `(batch_size, n)`,
+    the output will be a tensor of shape `(batch_size, 1)`
+    where each entry `i` will be the dot product between
+    `a[i]` and `b[i]`.
+
+    :param x: Shape should only be [batch, xx]
+    :param y: Shape should only be [batch, xx]
+    :param axes: Integer or tuple of integers,
+                axis or axes along which to take the dot product.
+    :param normalize: Whether to L2-normalize samples along the
+                dot product axis before taking the dot product.
+                If set to True, then the output of the dot product
+                is the cosine proximity between the two samples.
+    :return: A variable.
+    """
+    if not normalize:
+        if isinstance(axes, int):
+            axes = [axes] * 2
+    return Variable.from_jvalue(callBigDlFunc("float", "batchDot", x, y, axes, normalize))
+
+
+def l2_normalize(x, axis):
+    """
+    Normalizes a tensor wrt the L2 norm alongside the specified axis.
+    :param x: A variable. Shape should only be [batch, xx]
+    :param axis: axis along which to perform normalization.
+    :return: A variable.
+    """
+    return Variable.from_jvalue(callBigDlFunc("float", "l2Normalize", x, int(axis)))
+
+
 def sum(x, axis=0, keepDims=False):
     """
     Sum of the values in a a variable, alongside the specified axis.
@@ -64,6 +100,27 @@ def sum(x, axis=0, keepDims=False):
     return Variable.from_jvalue(callBigDlFunc("float", "sum", x, axis, keepDims))
 
 
+def stack(inputs, axis=1):
+    """
+    Stacks a list of rank `R` tensors into a rank `R+1` tensor.
+    You should start from 1 as dim 0 is for batch.
+    :param inputs: List of variables (tensors).
+    :param axis: axis along which to perform stacking.
+    :return:
+    """
+    return Variable.from_jvalue(callBigDlFunc("float", "stack", inputs, axis))
+
+
+def expand_dims(x, axis):
+    """
+   Adds a 1-sized dimension at index "axis".
+    :param x: a Variable to be expanded
+    :param axis: axis Position where to add a new axis.
+    You should start from 1 as dim 0 is for batch.
+    """
+    return Variable.from_jvalue(callBigDlFunc("float", "expandDims", x, axis))
+
+
 def clip(x, min, max):
     """
     Element-wise value clipping.
@@ -73,6 +130,14 @@ def clip(x, min, max):
     :return: A variable.
     """
     return Variable.from_jvalue(callBigDlFunc("float", "clip", x, float(min), float(max)))
+
+
+def contiguous(x):
+    """
+    Turn the output and grad to be contiguous for the input Variable
+    :param x: A variable.
+    """
+    return Variable.from_jvalue(callBigDlFunc("float", "contiguous", x))
 
 
 def square(x):
@@ -166,6 +231,18 @@ def softplus(x):
     return Variable.from_jvalue(callBigDlFunc("float", "softplus", x))
 
 
+def mm(x, y, axes):
+    """
+    Module to perform matrix multiplication on two mini-batch inputs,
+    producing a mini-batch.
+    :param x: A variable.
+    :param y: A variable.
+    :param axes: Axes along which to perform multiplication.
+    :return: A variable.
+    """
+    return Variable.from_jvalue(callBigDlFunc("float", "mm", x, y, axes))
+
+
 class Variable(kbase.ZooKerasCreator):
     def __init__(self, input_shape, node=None, jvalue=None, name=None):
         if jvalue:
@@ -242,12 +319,54 @@ class Variable(kbase.ZooKerasCreator):
         return neg(self)
 
     def squeeze(self, dim=None):
+        """
+        Delete the singleton dimension(s).
+        The batch dimension needs to be unchanged.
+        For example, if input has size (2, 1, 3, 4, 1):
+        Squeeze(dim = 1) will give output size (2, 3, 4, 1)
+        Squeeze(dims = null) will give output size (2, 3, 4)
+        """
         return Variable.from_jvalue(callBigDlFunc("float", "squeeze", self, dim))
 
-    def narrow(self, dim, start_index, length):
-        return Variable.from_jvalue(callBigDlFunc("float", "narrow", self, start_index, length))
+    def slice(self, dim, start_index, length):
+        """
+        Same as narrow in Torch.
+        Slice the input with the number of dimensions not being reduced.
+        The batch dimension needs to be unchanged.
+        For example, if input is:
+        1 2 3
+        4 5 6
+        slice(1, 1, 2) will give output
+        2 3
+        5 6
+        slice(1, 2, -1) will give output
+        3
+        6
+        :param  dim The dimension to narrow. 0-based index. Cannot narrow the batch dimension.
+                -1 means the last dimension of the input.
+        :param  startIndex Non-negative integer.
+                The start index on the given dimension. 0-based index.
+        :param length The length to be sliced. Default is 1.
+        """
+        return Variable.from_jvalue(
+            callBigDlFunc("float", "slice", self, dim, start_index, length))
 
     def index_select(self, dim, index):
+        """
+           Select an index of the input in the given dim and return the subset part.
+           The batch dimension needs to be unchanged.
+           The selected dim would be remove after this operation.
+           For example, if input is:
+           1 2 3
+           4 5 6
+           Select(1, 1) will give output [2 5]
+           Select(1, -1) will give output [3 6]
+        :param dim: The dimension to select. 0-based index. Cannot select the batch dimension.
+                -1 means the last dimension of the input.
+        :param index: The index of the dimension to be selected. 0-based index.
+               -1 means the last dimension of the input.
+        :return:
+        """
         return Variable.from_jvalue(callBigDlFunc("float", "indexSelect", self, dim, index))
 
     # TODO: we need a Shape mapping here.
@@ -325,15 +444,18 @@ class LambdaLayer(kbase.ZooKerasLayer):
                                           **kwargs)
 
 
-class CustomLoss(kbase.ZooKerasCreator):
-    def __init__(self, loss_func, input_shape):
+class CustomLoss(LossFunction):
+    def __init__(self, loss_func, y_pred_shape, y_true_shape=None):
         """
         :param loss_func: a function which accept y_true and y_pred
-        :param input_shape: a shape without batch dim.
+        :param y_pred_shape: The pred shape without batch dim.
+        :param y_true_shape: The target shape without batch dim.
+               It should be the same as y_pred_shape by default.
         i.e input_shape=[3], then the feeding data would be [None, 3]
         """
-        y_real = Variable(input_shape=input_shape)
-        y_pred = Variable(input_shape=input_shape)
+
+        y_real = Variable(input_shape=y_true_shape if y_true_shape else y_pred_shape)
+        y_pred = Variable(input_shape=y_pred_shape)
         loss_var = loss_func(y_real, y_pred)
         super(CustomLoss, self).__init__(None, "float", [y_real, y_pred], loss_var)
 
