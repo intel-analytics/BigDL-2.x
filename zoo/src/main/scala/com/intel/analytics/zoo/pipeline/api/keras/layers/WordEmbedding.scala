@@ -16,7 +16,7 @@
 
 package com.intel.analytics.zoo.pipeline.api.keras.layers
 
-import java.io.File
+import java.io._
 import java.util.concurrent.atomic.AtomicInteger
 
 import com.intel.analytics.bigdl.nn.Identity
@@ -269,34 +269,14 @@ object WordEmbedding {
       }
       out.writeString(id)
       if (inDriver) {
-        val w = SerializationUtils.serialize(cachedWeight)
-        val len = w.length
-        out.writeInt(len)
-        timing(s"writing ${len / 1024 / 1024}Mb weight to stream") {
-          out.write(w)
-        }
+        out.writeObject(cachedWeight)
       }
     }
 
     override def readInternal(in: CommonInputStream): Unit = {
       id = in.readString()
-      val (cachedWeight, isCreated) = weightRegistry.getOrCreate(id) {
-        val len = in.readInt()
-        require(len != 0, "weight length should not be zero," +
-          "please set logging level to debug for more information")
-        val w = new Array[Byte](len)
-        timing("reading weight from stream") {
-          var numOfBytes = 0
-          while (numOfBytes < len) {
-            val read = in.read(w, numOfBytes, len - numOfBytes)
-            numOfBytes += read
-          }
-        }
-        SerializationUtils.deserialize(w).asInstanceOf[Tensor[T]]
-      }
-      if (!isCreated) {
-        val len = in.readInt()
-        in.skip(len)
+      val (cachedWeight, _) = weightRegistry.getOrCreate(id) {
+        in.readObject().asInstanceOf[Tensor[T]]
       }
       weight = cachedWeight.asInstanceOf[Tensor[T]]
     }
