@@ -33,18 +33,18 @@ import com.intel.analytics.bigdl.dataset.Sample
 import com.intel.analytics.bigdl.utils.Engine
 
 class FloatInferenceModel(
-  var model: AbstractModule[Activity, Activity, Float],
-  @transient var predictor: LocalPredictor[Float]) extends InferenceSupportive with Serializable {
+                           var model: AbstractModule[Activity, Activity, Float],
+                           @transient var predictor: LocalPredictor[Float]) extends InferenceSupportive with Serializable {
 
   @deprecated
   def predict(input: JList[JFloat], shape: JList[JInt]): JList[JFloat] = {
     timing("model predict") {
       val input_arr = new Array[Float](input.size())
-      for (i <- 0 until input.size()){
+      for (i <- 0 until input.size()) {
         input_arr(i) = input.get(i)
       }
       val shape_arr = new Array[Int](shape.size())
-      for (i <- 0 until shape.size()){
+      for (i <- 0 until shape.size()) {
         shape_arr(i) = shape.get(i)
       }
       val sample = Sample(Tensor[Float](input_arr, shape_arr))
@@ -102,5 +102,5 @@ class FloatInferenceModel(
     predictor = LocalPredictor(model = model, batchPerCore = 1)
   }
 
-  override def toString : String = s"FloatInferenceModel($model, $predictor)"
+  override def toString: String = s"FloatInferenceModel($model, $predictor)"
 }
