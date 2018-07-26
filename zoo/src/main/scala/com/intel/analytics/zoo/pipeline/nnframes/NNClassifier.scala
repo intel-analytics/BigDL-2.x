@@ -143,17 +143,17 @@ class NNClassifierModel[T: ClassTag] private[zoo] (
   )(implicit ev: TensorNumeric[T]) extends NNModel[T](model) {
 
   /**
-    * Param for threshold in binary classification prediction.
-    *
-    * The threshold applies to the raw output of the model. If the output is greater than
-    * threshold, then predict 1, else 0. A high threshold encourages the model to predict 0
-    * more often; a low threshold encourages the model to predict 1 more often.
-    *
-    * Note: the param is different from the one in Spark ProbabilisticClassifier which is compared
-    * against estimated probability.
-    *
-    * Default is 0.5.
-    */
+   * Param for threshold in binary classification prediction.
+   *
+   * The threshold applies to the raw output of the model. If the output is greater than
+   * threshold, then predict 1, else 0. A high threshold encourages the model to predict 0
+   * more often; a low threshold encourages the model to predict 1 more often.
+   *
+   * Note: the param is different from the one in Spark ProbabilisticClassifier which is compared
+   * against estimated probability.
+   *
+   * Default is 0.5.
+   */
   final val threshold = new DoubleParam(this, "threshold", "threshold in binary" +
     " classification prediction")
 
