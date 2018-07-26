@@ -15,6 +15,8 @@
 #
 
 import sys
+import tempfile
+
 import six
 import os
 import json
@@ -23,6 +25,7 @@ from bigdl.nn.layer import Model as BModel
 from bigdl.nn.layer import Layer
 from bigdl.util.common import callBigDlFunc, to_list
 from zoo.pipeline.api.keras.engine.topology import ZooKerasLayer, KerasNet
+from zoo.util.tf import export_tf
 
 if sys.version >= '3':
     long = int
@@ -190,25 +193,36 @@ class Net:
 
 
 class TFNet(Layer):
-    def __init__(self, path, input_names, output_names, bigdl_type="float"):
-        if isinstance(input_names, six.string_types):
-            input_names = [input_names]
-        if isinstance(output_names, six.string_types):
-            output_names = [output_names]
-        super(TFNet, self).__init__(None, bigdl_type,
-                                    path,
-                                    input_names,
-                                    output_names)
+    def __init__(self, path, input_names=None, output_names=None, bigdl_type="float"):
+        if input_names is None and output_names is None:
+            super(TFNet, self).__init__(None, bigdl_type,
+                                        path)
+        else:
+            if isinstance(input_names, six.string_types):
+                input_names = [input_names]
+            if isinstance(output_names, six.string_types):
+                output_names = [output_names]
+            super(TFNet, self).__init__(None, bigdl_type,
+                                        path,
+                                        input_names,
+                                        output_names)
 
     @staticmethod
     def from_export_folder(folder):
         if not os.path.isdir(folder):
             raise ValueError(folder + " does not exist")
-        model_path = os.path.join(folder, "frozen_inference_graph.pb")
-        meta_path = os.path.join(folder, "graph_meta.json")
-        with open(meta_path, 'r') as f:
-            meta = json.loads(f.readline())
-            input_names = meta['input_names']
-            output_names = meta['output_names']
+        return TFNet(folder)
 
-        return TFNet(model_path, input_names, output_names)
+    @staticmethod
+    def from_session(sess, inputs, outputs,
+                     generate_backward=False, allow_non_differentiable_input=True):
+        temp = tempfile.mkdtemp()
+        try:
+            export_tf(sess, temp, inputs, outputs,
+                      generate_backward, allow_non_differentiable_input)
+            net = TFNet.from_export_folder(temp)
+        finally:
+            import shutil
+            shutil.rmtree(temp)
+
+        return net

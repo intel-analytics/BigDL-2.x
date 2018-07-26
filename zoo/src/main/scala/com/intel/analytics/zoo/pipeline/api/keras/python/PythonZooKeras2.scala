@@ -60,7 +60,7 @@ class PythonZooKeras2[T: ClassTag](implicit ev: TensorNumeric[T]) extends Python
   }
 
   def createZooKeras2Conv1D(
-       filters: Int,
+      filters: Int,
       kernelSize: Int,
       strides: Int = 1,
       padding: String = "valid",
@@ -76,6 +76,34 @@ class PythonZooKeras2[T: ClassTag](implicit ev: TensorNumeric[T]) extends Python
       kernelSize,
       strides,
       padding,
+      activation,
+      useBias,
+      kernelInitializer,
+      biasInitializer,
+      kernelRegularizer,
+      biasRegularizer,
+      toScalaShape(inputShape))
+  }
+
+  def createZooKeras2Conv2D(
+      filters: Int,
+      kernelSize: JList[Int],
+      strides: JList[Int],
+      padding: String = "valid",
+      dataFormat: String = "channels_first",
+      activation: String = null,
+      useBias: Boolean = true,
+      kernelInitializer: String = "glorot_uniform",
+      biasInitializer: String = "zero",
+      kernelRegularizer: Regularizer[T] = null,
+      biasRegularizer: Regularizer[T] = null,
+      inputShape: JList[Int] = null): Conv2D[T] = {
+    Conv2D(
+      filters,
+      kernelSize.asScala.toArray,
+      strides.asScala.toArray,
+      padding,
+      dataFormat,
       activation,
       useBias,
       kernelInitializer,
@@ -141,5 +169,45 @@ class PythonZooKeras2[T: ClassTag](implicit ev: TensorNumeric[T]) extends Python
       toScalaShape(inputShape))
   }
 
-
+  def createZooKeras2Activation(
+      activation: String,
+      inputShape: JList[Int] = null): Activation[T] = {
+    Activation(
+      activation,
+      toScalaShape(inputShape))
   }
+
+  def createZooKeras2Dropout(
+      rate: Double,
+      inputShape: JList[Int] = null): Dropout[T] = {
+    Dropout(rate, toScalaShape(inputShape))
+  }
+
+  def createZooKeras2Flatten(
+      inputShape: JList[Int] = null): Flatten[T] = {
+    Flatten(toScalaShape(inputShape))
+  }
+
+  def createZooKeras2Cropping1D(
+      cropping: JList[Int],
+      inputShape: JList[Int] = null): Cropping1D[T] = {
+    new Cropping1D(toScalaArray(cropping), toScalaShape(inputShape))
+  }
+
+  def createZooKeras2LocallyConnected1D(
+      filters: Int,
+      kernelSize: Int,
+      strides: Int = 1,
+      padding: String = "valid",
+      activation: String = null,
+      kernelRegularizer: Regularizer[T] = null,
+      biasRegularizer: Regularizer[T] = null,
+      useBias: Boolean = true,
+      inputShape: JList[Int] = null): LocallyConnected1D[T] = {
+    LocallyConnected1D(filters, kernelSize, strides, padding, activation,
+      kernelRegularizer, biasRegularizer, useBias, toScalaShape(inputShape))
+  }
+
+
+
+}

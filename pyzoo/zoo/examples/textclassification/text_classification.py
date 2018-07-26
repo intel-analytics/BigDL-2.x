@@ -89,7 +89,7 @@ if __name__ == "__main__":
     training_split = float(options.training_split)
     batch_size = int(options.batch_size)
 
-    sc = init_nncontext(create_spark_conf().setAppName("Text Classification Example"))
+    sc = init_nncontext("Text Classification Example")
 
     print('Processing text dataset...')
     texts = get_news20(base_dir=data_path)
