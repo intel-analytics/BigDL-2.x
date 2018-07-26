@@ -24,8 +24,6 @@ import com.intel.analytics.bigdl.utils.T
 import org.scalatest.{BeforeAndAfter, FlatSpec, Matchers}
 import com.intel.analytics.bigdl.nn._
 import com.intel.analytics.zoo.models.common.ZooModel
-import com.intel.analytics.zoo.models.textclassification.TextClassifier
-import com.intel.analytics.zoo.pipeline.api.keras.ZooSpecHelper
 
 class Seq2seqSpec extends FlatSpec with BeforeAndAfter with Matchers {
   "A Seq2seq" should "work with PassThroughBridge" in {
