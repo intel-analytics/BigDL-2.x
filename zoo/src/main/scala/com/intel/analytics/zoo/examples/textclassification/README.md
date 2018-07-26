@@ -49,7 +49,7 @@ spark-submit \
 __Options:__
 * `--baseDir` This option is __required__. The path where the training and word2Vec data locate.
 * `--partitionNum` The number of partitions to cut the dataset into. Datault is 4.
-* `--tokenLength` The size of each word vector. Default is 200.
+* `--tokenLength` The size of each word vector. GloVe supports tokenLength 50, 100, 200 and 300. Default is 200.
 * `--sequenceLength` The length of a sequence. Default is 500.
 * `--maxWordsNum` The maximum number of words. Default is 5000.
 * `--encoder` The encoder for the input sequence. String, 'cnn' or 'lstm' or 'gru'. Default is 'cnn'.
