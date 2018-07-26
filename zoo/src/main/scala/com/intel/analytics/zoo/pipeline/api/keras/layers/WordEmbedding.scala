@@ -16,7 +16,7 @@
 
 package com.intel.analytics.zoo.pipeline.api.keras.layers
 
-import java.io._
+import java.io.File
 import java.util.concurrent.atomic.AtomicInteger
 
 import com.intel.analytics.bigdl.nn.Identity
@@ -26,7 +26,6 @@ import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric
 import com.intel.analytics.bigdl.utils.Shape
 import com.intel.analytics.zoo.pipeline.api.keras.layers.WordEmbedding.EmbeddingMatrixHolder
 import com.intel.analytics.zoo.pipeline.api.net.{NetUtils, RegistryMap, SerializationHolder}
-import org.apache.commons.lang.SerializationUtils
 import org.slf4j.LoggerFactory
 
 import scala.collection.mutable.{Map => MMap}
