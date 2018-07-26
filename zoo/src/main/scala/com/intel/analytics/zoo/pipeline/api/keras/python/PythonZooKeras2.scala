@@ -149,6 +149,12 @@ class PythonZooKeras2[T: ClassTag](implicit ev: TensorNumeric[T]) extends Python
       toScalaShape(inputShape))
   }
 
+  def createZooKeras2Average(
+      inputShape: JList[Int] = null): Average[T] = {
+    Average(
+      toScalaShape(inputShape))
+  }
+
   def createZooKeras2GlobalAveragePooling1D(
       inputShape: JList[Int] = null): GlobalAveragePooling1D[T] = {
     GlobalAveragePooling1D(
