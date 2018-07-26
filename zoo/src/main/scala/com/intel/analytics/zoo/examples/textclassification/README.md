@@ -40,8 +40,8 @@ BASE_DIR=the base directory containing the training and word2Vec data
 
 spark-submit \
     --master ${MASTER} \
-    --driver-memory 20g \
-    --executor-memory 20g \
+    --driver-memory 2g \
+    --executor-memory 2g \
     --class com.intel.analytics.zoo.examples.textclassification.TextClassification \
     ${ANALYTICS_ZOO_JAR} \
     --baseDir ${BASE_DIR}
