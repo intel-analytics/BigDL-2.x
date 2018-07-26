@@ -71,10 +71,8 @@ object Train {
         val tokens = sc.parallelize(sample)
         val words = sc.parallelize((evenTokens ++ oddTokens ++ Iterator(Array(padding))).toSeq)
 
-        //        val dictionary = Dictionary(tokens.map(_._1) ++ tokens.map(_._2), param.vocabSize + 1)
         val dictionary = Dictionary(words, param.vocabSize + 1)
 
-        //        dictionary.addWord(padding)
         dictionary.save(param.saveFolder)
         val vocabSize = dictionary.getVocabSize() + 1
 
@@ -220,13 +218,11 @@ object Train {
 
       val seeds = Array("happy birthday have a nice day",
         "donald trump won last nights presidential debate according to snap online polls")
-//val seeds = Array("happy birthday have a nice day")
 
       var i = 1
       while (i <= param.nEpochs) {
         optimizer
           .setEndWhen(Trigger.maxEpoch(i))
-//          .setEndWhen(Trigger.maxIteration(i))
         optimizer.optimize()
 
         for (seed <- seeds) {
@@ -243,33 +239,6 @@ object Train {
           val timeDim = 2
           val featDim = 3
           val end = dictionary.getIndex(SentenceToken.end) + 1
-
-//          val concat = Tensor[Float]()
-//          var curInput = sent2
-//          var break = false
-//          var j = 0
-//          // Iteratively output predicted words
-//          while (j < 30 && !break) {
-//            val output = model.forward(T(sent1, curInput)).toTensor[Float]
-//            val predict = output.max(featDim)._2
-//              .select(timeDim, output.size(timeDim)).valueAt(1, 1).toInt
-//            if (predict == end) break = true
-//            if (!break) {
-//              concat.resize(1, curInput.size(timeDim) + 1)
-//              concat.narrow(timeDim, 1, curInput.size(timeDim)).copy(curInput)
-//              concat.setValue(1, concat.size(timeDim), predict)
-//              curInput.resizeAs(concat).copy(concat)
-//            }
-//            j += 1
-//          }
-
-//          val predArray2 = new Array[Float](curInput.nElement())
-//          Array.copy(curInput.storage().array(), curInput.storageOffset() - 1,
-//            predArray2, 0, curInput.nElement())
-//          val result2 = predArray2.grouped(curInput.size(timeDim)).toArray[Array[Float]]
-//            .map(x => x.map(t => dictionary.getWord(t - 1)))
-//          println(result2.map(x => x.mkString(" ")).mkString("\n"))
-
           val endSign = Tensor(Array(end.toFloat), Array(1))
 
           val layers = ZooMax(dim = featDim, returnValue = false)

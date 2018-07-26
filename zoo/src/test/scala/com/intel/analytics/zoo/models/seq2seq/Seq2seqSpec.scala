@@ -24,6 +24,8 @@ import com.intel.analytics.bigdl.utils.T
 import org.scalatest.{BeforeAndAfter, FlatSpec, Matchers}
 import com.intel.analytics.bigdl.nn._
 import com.intel.analytics.zoo.models.common.ZooModel
+import com.intel.analytics.zoo.models.textclassification.TextClassifier
+import com.intel.analytics.zoo.pipeline.api.keras.ZooSpecHelper
 
 class Seq2seqSpec extends FlatSpec with BeforeAndAfter with Matchers {
   "A Seq2seq" should "work with PassThroughBridge" in {
@@ -67,14 +69,6 @@ class Seq2seqSpec extends FlatSpec with BeforeAndAfter with Matchers {
       1)).asInstanceOf[Array[Cell[Double]]]
 
     val model = Seq2seq(encoderCells, decoderCells)
-
-//    model.saveModel("/home/ding/proj/analytics-zoo/test", overWrite = true)
-//    val t = ZooModel.loadModel("/home/ding/proj/analytics-zoo/test")
-//    t.forward(T(input, input)).toTensor
-//    t.backward(T(input, input), gradOutput)
-
-    model.parameters()
-    model.getParametersTable()
 
     for (i <- 0 until 3) {
       model.forward(T(input, input)).toTensor
@@ -433,4 +427,57 @@ class Seq2seqSpec extends FlatSpec with BeforeAndAfter with Matchers {
       ).toTensor
     require(output.size(2) == seqLength + 1)
   }
+
+  "A Seq2seq serialize" should "work" in {
+    import com.intel.analytics.bigdl.numeric.NumericDouble
+    val kernalW = 3
+    val kernalH = 3
+    val seqLength = 5
+    val seed = 100
+    val batchSize = 4
+
+    RNG.setSeed(seed)
+    val input = Tensor[Double](batchSize, seqLength, 3, 5, 5).rand
+
+    val encoderCells = Array(ConvLSTMPeephole[Double](
+      3,
+      7,
+      kernalW, kernalH,
+      1), ConvLSTMPeephole[Double](
+      7,
+      12,
+      kernalW, kernalH,
+      1), ConvLSTMPeephole[Double](
+      12,
+      3,
+      kernalW, kernalH,
+      1)).asInstanceOf[Array[Cell[Double]]]
+
+    val decoderCells = Array(ConvLSTMPeephole[Double](
+      3,
+      7,
+      kernalW, kernalH,
+      1), ConvLSTMPeephole[Double](
+      7,
+      12,
+      kernalW, kernalH,
+      1), ConvLSTMPeephole[Double](
+      12,
+      3,
+      kernalW, kernalH,
+      1)).asInstanceOf[Array[Cell[Double]]]
+
+    val model = Seq2seq(encoderCells, decoderCells)
+    val output = model.forward(T(input, input)).toTensor
+
+    val input2 = input.clone()
+    val expect = output.clone()
+    val serFile = java.io.File.createTempFile("UnitTest", "AnalyticsZooSpecBase")
+    model.saveModel(serFile.getAbsolutePath, overWrite = true)
+    val loadModel = ZooModel.loadModel(serFile.getAbsolutePath)
+    val output2 = loadModel.forward(T(input2, input2)).toTensor
+    expect.almostEqual(output2, 1e-6)
+  }
 }
+
+
