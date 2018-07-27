@@ -291,7 +291,7 @@ object WordEmbedding {
         require(len != 0, "weight length should not be zero," +
           "please set logging level to debug for more information")
         val w = new Array[Byte](len)
-        timing("reading graph def from stream") {
+        timing("reading weight from stream") {
           var numOfBytes = 0
           while (numOfBytes < len) {
             val read = in.read(w, numOfBytes, len - numOfBytes)
