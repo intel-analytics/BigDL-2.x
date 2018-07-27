@@ -5,7 +5,6 @@ This example demonstrates how to do image classification inference using a pre-t
 ## Environment
 * Tensorflow 1.8.0
 * Apache Spark 1.6.0/2.1.0 (This version needs to be same with the version you use to build Analytics Zoo)
-* Analytics Zoo 0.1.0
 
 ## Install Tensorflow-Slim image classification model library and down the checkpoint
 
@@ -23,6 +22,7 @@ Then download the InceptionV1 pre-trained checkpoint from [here](https://github.
 * Download Analytics Zoo and build it.
 * Run `export SPARK_HOME=the root directory of Spark`.
 * Run `export ANALYTICS_ZOO_HOME=the dist directory under the Analytics Zoo project`.
+* Prepare the training dataset from https://www.kaggle.com/c/dogs-vs-cats and extract it.
 * Run the following bash command to start the jupyter notebook. Change parameter settings as you need, ie `MASTER = local[physcial_core_number]`.
 ```bash
 MASTER=local[*]
