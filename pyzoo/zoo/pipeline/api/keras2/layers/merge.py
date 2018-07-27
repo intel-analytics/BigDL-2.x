@@ -135,9 +135,3 @@ def average(inputs, **kwargs):
     creating: createZooKeras2Average
     """
     return Average(**kwargs)(inputs)
-
-
-
-
-
-
