@@ -414,14 +414,14 @@ abstract class KerasNet[T: ClassTag](implicit ev: TensorNumeric[T])
   def predict(
       x: ImageSet,
       batchSize: Int): ImageSet = {
-    val batchPartition = if (x.isDistributed()) {
+    val batchPerPartition = if (x.isDistributed()) {
       batchSize / x.toDistributed().rdd.partitions.length
     }
     else {
       KerasUtils.calBatchPerCore(batchSize)
     }
     ImageSet.fromImageFrame(predictImage(x.toImageFrame(),
-      batchPerPartition = batchPartition))
+      batchPerPartition = batchPerPartition))
   }
 
   /**
