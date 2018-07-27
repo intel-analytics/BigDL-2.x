@@ -220,7 +220,8 @@ class KerasNet(ZooKerasLayer):
         if isinstance(x, ImageSet):
             results = callBigDlFunc(self.bigdl_type, "zooPredict",
                                     self.value,
-                                    x)
+                                    x,
+                                    batch_size)
             return ImageSet(results)
         if distributed:
             if isinstance(x, np.ndarray):
