@@ -59,61 +59,6 @@ object InferenceModelFactory {
     new FloatInferenceModel(model, predictor)
   }
 
-
-  private def clearTensor[T: ClassTag](tensors: Array[Tensor[T]])
-                                      (implicit ev: TensorNumeric[T]): Unit = {
-    var i = 0
-    while (i < tensors.length) {
-      if (tensors(i) != null) {
-        tensors(i).set()
-      }
-      i += 1
-    }
-  }
-
-  def clearWeightsBias(model: Module[Float]): Unit = {
-    // clear parameters
-    clearTensor(model.parameters()._1)
-    clearTensor(model.parameters()._2)
-  }
-
-  def putWeightsBias(weightBias: Array[Tensor[Float]],
-                     localModel: Module[Float]): Module[Float] = {
-    val localWeightBias = localModel.parameters()._1
-    var i = 0
-    while (i < localWeightBias.length) {
-      if (localWeightBias(i) != null) {
-        localWeightBias(i).set(weightBias(i))
-      }
-      i += 1
-    }
-    localModel
-  }
-
-  def makeUpModel(model: Module[Float], weightBias: Array[Tensor[Float]]): FloatInferenceModel = {
-    val newModel = model.cloneModule()
-    putWeightsBias(weightBias, newModel)
-    val predictor = LocalPredictor(model = newModel, batchPerCore = 1)
-    newModel.evaluate()
-    new FloatInferenceModel(newModel, predictor)
-  }
-
-  def cloneSharedWeightsModelsIntoArray(originalModel: FloatInferenceModel,
-                                        num: Int): Array[FloatInferenceModel] = {
-    var modelList = ArrayBuffer[FloatInferenceModel]()
-    val emptyModel = originalModel.model.cloneModule()
-    clearWeightsBias(emptyModel)
-    modelList.append(originalModel)
-    var i = 1
-    while (i < num) {
-      val clonedModel = emptyModel.cloneModule
-      val newModel = makeUpModel(clonedModel, originalModel.model.getWeightsBias)
-      modelList.append(newModel)
-      i += 1
-    }
-    modelList.toArray
-  }
-
   def loadFloatInferenceModelArrayWithSharedWeights(modelPath: String,
                                                     weightPath: String,
                                                     num: Int = 1): Array[FloatInferenceModel] = {
@@ -138,5 +83,60 @@ object InferenceModelFactory {
     val originalModel = loadFloatInferenceModelForTF(modelPath,
       intraOpParallelismThreads, interOpParallelismThreads, usePerSessionThreads)
     cloneSharedWeightsModelsIntoArray(originalModel, num)
+  }
+
+  private def clearTensor[T: ClassTag](tensors: Array[Tensor[T]])
+                                      (implicit ev: TensorNumeric[T]): Unit = {
+    var i = 0
+    while (i < tensors.length) {
+      if (tensors(i) != null) {
+        tensors(i).set()
+      }
+      i += 1
+    }
+  }
+
+  private def clearWeightsBias(model: Module[Float]): Unit = {
+    // clear parameters
+    clearTensor(model.parameters()._1)
+    clearTensor(model.parameters()._2)
+  }
+
+  private def putWeightsBias(weightBias: Array[Tensor[Float]],
+                             localModel: Module[Float]): Module[Float] = {
+    val localWeightBias = localModel.parameters()._1
+    var i = 0
+    while (i < localWeightBias.length) {
+      if (localWeightBias(i) != null) {
+        localWeightBias(i).set(weightBias(i))
+      }
+      i += 1
+    }
+    localModel
+  }
+
+  private def makeUpModel(model: Module[Float], weightBias: Array[Tensor[Float]]):
+  FloatInferenceModel = {
+    val newModel = model.cloneModule()
+    putWeightsBias(weightBias, newModel)
+    val predictor = LocalPredictor(model = newModel, batchPerCore = 1)
+    newModel.evaluate()
+    new FloatInferenceModel(newModel, predictor)
+  }
+
+  private def cloneSharedWeightsModelsIntoArray(originalModel: FloatInferenceModel,
+                                                num: Int): Array[FloatInferenceModel] = {
+    var modelList = ArrayBuffer[FloatInferenceModel]()
+    val emptyModel = originalModel.model.cloneModule()
+    clearWeightsBias(emptyModel)
+    modelList.append(originalModel)
+    var i = 1
+    while (i < num) {
+      val clonedModel = emptyModel.cloneModule
+      val newModel = makeUpModel(clonedModel, originalModel.model.getWeightsBias)
+      modelList.append(newModel)
+      i += 1
+    }
+    modelList.toArray
   }
 }
