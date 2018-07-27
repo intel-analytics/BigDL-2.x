@@ -23,7 +23,13 @@ import com.intel.analytics.zoo.pipeline.api.keras.layers.Merge
 
 import scala.reflect.ClassTag
 
-
+/**
+ * Layer that computes the average (element-wise) a list of inputs.
+ *
+ * It takes as input a list of nodes,
+ * all of the same shape, and returns
+ * a single node (also of the same shape).
+ */
 class Average[T: ClassTag](override val inputShape: Shape = null)(implicit ev: TensorNumeric[T])
   extends Merge[T](layers = null, mode = "ave", inputShape = inputShape)
     with Net {
