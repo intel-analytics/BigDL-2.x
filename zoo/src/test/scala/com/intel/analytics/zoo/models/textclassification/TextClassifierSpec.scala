@@ -41,13 +41,13 @@ class TextClassifierSpec extends ZooSpecHelper {
   }
 
   "TextClassifier model" should "compute the correct output shape" in {
-    val model = TextClassifier[Float](classNum = 20, tokenLength = 200).buildModel()
+    val model = TextClassifier[Float](20, 200, 500, "cnn", 256).buildModel()
     model.getOutputShape().toSingle().toArray should be (Array(-1, 20))
   }
 
   "TextClassifier lstm forward and backward" should "work properly" in {
     val model = TextClassifier[Float](classNum = 15, tokenLength = 10, sequenceLength = 20,
-      encoder = "lstm")
+      encoder = "lstm", encoderOutputDim = 128)
     model.summary()
     val input = Tensor[Float](Array(1, 20, 10)).rand()
     val output = model.forward(input)
@@ -56,14 +56,14 @@ class TextClassifierSpec extends ZooSpecHelper {
 
   "TextClassifier gru forward and backward" should "work properly" in {
     val model = TextClassifier[Float](classNum = 5, tokenLength = 15, sequenceLength = 40,
-      encoder = "gru")
+      encoder = "gru", encoderOutputDim = 256)
     val input = Tensor[Float](Array(1, 40, 15)).rand()
     val output = model.forward(input)
     val gradInput = model.backward(input, output)
   }
 
   "TextClassifier predictClasses giving zero-based label" should "work properly" in {
-    val model = TextClassifier[Float](classNum = 10, tokenLength = 20)
+    val model = TextClassifier[Float](10, 20, 500, "cnn", 256)
     val data = new Array[Sample[Float]](10)
     var i = 0
     while (i < data.length) {
@@ -83,11 +83,25 @@ class TextClassifierSpec extends ZooSpecHelper {
     })
   }
 
+  "TextClassifier with Embedding forward and backward" should "work properly" in {
+    val gloveDir = getClass().getClassLoader().getResource("glove.6B").getPath
+    val embeddingFile = gloveDir + "/glove.6B.50d.txt"
+    val model = TextClassifier[Float](5, embeddingFile)
+    val input = Tensor[Float](2, 500).zero()
+    input(Array(1, 10)) = 1
+    input(Array(1, 128)) = 18
+    input(Array(2, 30)) = 4
+    input(Array(2, 1)) = 4
+    val output = model.forward(input)
+    val gradInput = model.backward(input, output)
+  }
+
 }
 
 class TextClassifierSerialTest extends ModuleSerializationTest {
   override def test(): Unit = {
-    val model = TextClassifier[Float](classNum = 20, tokenLength = 50, sequenceLength = 100)
+    val model = TextClassifier[Float](classNum = 20, tokenLength = 50, sequenceLength = 100,
+      encoder = "cnn", encoderOutputDim = 256)
     val input = Tensor[Float](Array(1, 100, 50)).rand()
     ZooSpecHelper.testZooModelLoadSave(
       model.asInstanceOf[ZooModel[Tensor[Float], Tensor[Float], Float]],
