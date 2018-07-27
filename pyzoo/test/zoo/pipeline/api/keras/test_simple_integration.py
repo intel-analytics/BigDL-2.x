@@ -131,8 +131,8 @@ class TestSimpleIntegration(ZooTestCase):
         model.add(Dense(20, activation="softmax"))
         model.compile(optimizer="sgd", loss="sparse_categorical_crossentropy", metrics=["accuracy"])
         model.fit(data, batch_size=8, nb_epoch=2, validation_data=data)
-        result = model.predict(data)
-        accuracy = model.evaluate(data)
+        result = model.predict(data, batch_size=8)
+        accuracy = model.evaluate(data, batch_size=8)
 
     def test_remove_batch(self):
         from zoo.pipeline.api.utils import remove_batch
