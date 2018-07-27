@@ -193,7 +193,7 @@ class TrainingSpec extends FlatSpec with Matchers with BeforeAndAfter {
     model.compile(optimizer = "sgd", loss = "sparse_categorical_crossentropy",
       metrics = List("accuracy"))
     model.fit(trainingData, nbEpoch = 2, batchSize = 8, validationData = testData)
-    model.predict(testData)
+    model.predict(testData, batchSize = 8)
     val accuracy = model.evaluate(testData, batchSize = 8)
   }
 

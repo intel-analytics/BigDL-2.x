@@ -178,8 +178,9 @@ class PythonZooKeras[T: ClassTag](implicit ev: TensorNumeric[T]) extends PythonB
 
   def zooPredict(
       module: KerasNet[T],
-      x: ImageSet): ImageSet = {
-    module.predict(x)
+      x: ImageSet,
+      batchSize: Int): ImageSet = {
+    module.predict(x, batchSize)
   }
 
   def zooEvaluate(
