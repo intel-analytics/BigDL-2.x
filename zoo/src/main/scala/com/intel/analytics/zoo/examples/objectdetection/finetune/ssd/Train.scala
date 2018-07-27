@@ -17,6 +17,7 @@
 package com.intel.analytics.zoo.examples.objectdetection.finetune.ssd
 
 import com.intel.analytics.bigdl._
+import com.intel.analytics.bigdl.tensor.Tensor
 import com.intel.analytics.bigdl.dataset.MiniBatch
 import com.intel.analytics.bigdl.optim.SGD._
 import com.intel.analytics.bigdl.optim.{Optimizer, _}
@@ -25,6 +26,7 @@ import com.intel.analytics.bigdl.utils.LoggerFilter
 import com.intel.analytics.bigdl.visualization.{TrainSummary, ValidationSummary}
 import com.intel.analytics.zoo.common.NNContext
 import com.intel.analytics.zoo.models.image.common.ImageModel
+import com.intel.analytics.bigdl.nn.Module
 import com.intel.analytics.zoo.models.image.objectdetection.common.nn.{MultiBoxLoss, MultiBoxLossParam}
 import com.intel.analytics.zoo.models.image.objectdetection.common.MeanAveragePrecision
 import com.intel.analytics.zoo.models.image.objectdetection.common.dataset.roiimage.SSDMiniBatch
@@ -45,14 +47,14 @@ object Option {
     modelSnapshot: Option[String] = None,
     stateSnapshot: Option[String] = None,
     className: String = "",
-    batchSize: Int = -1,
+    batchSize: Int = 4,
     learningRate: Double = 0.001,
     schedule: String = "multistep",
     learningRateDecay: Double = 0.1,
     learningRateSteps: Option[Array[Int]] = None,
     patience: Int = 10,
     overWriteCheckpoint: Boolean = false,
-    maxEpoch: Option[Int] = None,
+    maxEpoch: Int = 5,
     jobName: String = "Analytics Zoo SSD Train Example",
     summaryDir: Option[String] = None,
     nPartition: Int = 1
@@ -84,15 +86,14 @@ object Option {
       .action((x, c) => c.copy(patience = x))
     opt[Int]('e', "maxEpoch")
       .text("epoch numbers")
-      .action((x, c) => c.copy(maxEpoch = Some(x)))
+      .action((x, c) => c.copy(maxEpoch = x))
+      .required()
     opt[Double]('l', "learningRate")
       .text("inital learning rate")
       .action((x, c) => c.copy(learningRate = x))
-      .required()
     opt[String]("schedule")
       .text("learning rate schedule")
       .action((x, c) => c.copy(schedule = x))
-      .required()
     opt[Double]('d', "learningRateDecay")
       .text("learning rate decay")
       .action((x, c) => c.copy(learningRateDecay = x))
@@ -102,7 +103,6 @@ object Option {
     opt[Int]('b', "batchSize")
       .text("batch size")
       .action((x, c) => c.copy(batchSize = x))
-      .required()
     opt[String]("class")
       .text("class file")
       .action((x, c) => c.copy(className = x))
@@ -119,7 +119,6 @@ object Option {
     opt[Int]('p', "partition")
       .text("number of partitions")
       .action((x, c) => c.copy(nPartition = x))
-      .required()
   }
 }
 
@@ -144,7 +143,12 @@ object Train {
       val valSet = IOUtils.loadSSDValSet(param.valFolder, sc, param.resolution, param.batchSize,
         param.nPartition)
 
-      val model = ImageModel.loadModel[Float](param.modelSnapshot.get)
+//      val model = ImageModel.loadModel[Float](param.modelSnapshot.get)
+      val model = Module.loadModule[Float]("/home/ding/proj/analytics-zoo-debug/bigdl_ssd-mobilenet-300x300_PASCAL_0.4.0.model")
+//val test1 = Tensor[Float](4, 3, 300, 300).rand
+//      val test2 = Tensor[Float](1, 2, 7668)
+//      model.forward(test1)
+//      model.backward(test1, test2)
 
       val optimMethod = if (param.stateSnapshot.isDefined) {
         OptimMethod.load[Float](param.stateSnapshot.get)
@@ -160,14 +164,14 @@ object Train {
             val lrSchedules = new SequentialSchedule(74)
             val delta = (param.learningRate - 0.001) / 370
             lrSchedules.add(Warmup(delta), 370).add(SGD.MultiStep(steps, param.learningRateDecay),
-              param.maxEpoch.get * 74)
+              param.maxEpoch * 74)
             lrSchedules
           case "plateau" =>
             val lrSchedules = new SequentialSchedule(74)
             val delta = (param.learningRate - 0.001) / 370
             lrSchedules.add(Warmup(delta), 370).add(SGD.Plateau(monitor = "score",
               factor = param.learningRateDecay.toFloat,
-              patience = param.patience, minLr = 1e-5f, mode = "max"), param.maxEpoch.get * 74)
+              patience = param.patience, minLr = 1e-5f, mode = "max"), param.maxEpoch * 74)
             lrSchedules
         }
         new SGD[Float](
@@ -178,7 +182,7 @@ object Train {
       }
 
       optimize(model, trainSet, valSet, param, optimMethod,
-        Trigger.maxEpoch(param.maxEpoch.get), classes)
+        Trigger.maxEpoch(param.maxEpoch), classes)
     })
   }
 
