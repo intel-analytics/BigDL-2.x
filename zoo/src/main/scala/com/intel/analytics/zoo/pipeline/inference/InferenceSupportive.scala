@@ -79,7 +79,7 @@ trait InferenceSupportive {
     val res = new Array[Float](input.nElement())
     System.arraycopy(input.storage().array(), storageOffset, res, 0, res.length)
     val outputShape = input.size()
-    new JTensor(res, outputShape)
+    new JTensor(res, outputShape, false)
   }
 
 }
