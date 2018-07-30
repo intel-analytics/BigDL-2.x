@@ -74,7 +74,10 @@ if __name__ == "__main__":
     training_split = float(options.training_split)
     batch_size = int(options.batch_size)
 
-    sc = init_nncontext("Text Classification Example")
+    conf = SparkConf()\
+        .set("spark.serializer", "org.apache.spark.serializer.JavaSerializer")\
+        .setAppName("Text Classification Example")
+    sc = init_nncontext(conf)
 
     print('Processing text dataset...')
     texts, class_num = get_news20(base_dir=data_path)

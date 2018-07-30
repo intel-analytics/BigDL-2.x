@@ -145,6 +145,7 @@ object TextClassification {
       val conf = new SparkConf()
         .setAppName("Text Classification Example")
         .set("spark.task.maxFailures", "1")
+        .set("spark.serializer", "org.apache.spark.serializer.JavaSerializer")
       val sc = NNContext.initNNContext(conf)
 
       val sequenceLength = param.sequenceLength
