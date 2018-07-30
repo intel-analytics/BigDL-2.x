@@ -25,7 +25,7 @@ Parameters:
             E.g. 2 will halve the input.
             If None, it will be set to -1, which will be default to pool_size.
 * `padding`: One of `"valid"` or `"same"` (case-insensitive).
-* `input_shape`: Only need to specify this argument when you use this layer as the first layer of a model. For Scala API, it should be a [`Shape`](../keras-api-scala/#shape) object. For Python API, it should be a shape tuple. Batch dimension should be excluded.
+* `input_shape`: Only need to specify this argument when you use this layer as the first layer of a model. For Scala API, it should be a shape object. For Python API, it should be a shape tuple. Batch dimension should be excluded.
 
 **Scala example:**
 ```scala
@@ -143,7 +143,7 @@ Parameters:
             E.g. 2 will halve the input.
             If None, it will be set to -1, which will be default to pool_size.
 * `padding`: One of `"valid"` or `"same"` (case-insensitive).
-* `input_shape`: Only need to specify this argument when you use this layer as the first layer of a model. For Scala API, it should be a [`Shape`](../keras-api-scala/#shape) object. For Python API, it should be a shape tuple. Batch dimension should be excluded.
+* `input_shape`: Only need to specify this argument when you use this layer as the first layer of a model. For Scala API, it should be a shape object. For Python API, it should be a shape tuple. Batch dimension should be excluded.
 
 **Scala example:**
 ```scala

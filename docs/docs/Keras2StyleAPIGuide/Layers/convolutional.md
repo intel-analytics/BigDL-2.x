@@ -40,21 +40,19 @@ Conv1D(filters, kernel_size, strides=1, padding="valid", activation=None, use_bi
             specifying the length of the 1D convolution window.
 * `strides`: An integer or tuple/list of a single integer,
             specifying the stride length of the convolution.
-* `padding`: One of `"valid"`, `"causal"` or `"same"` (case-insensitive).
+* `padding`: One of `"valid"` or `"same"` (case-insensitive).
             `"valid"` means "no padding".
             `"same"` results in padding the input such that
             the output has the same length as the original input.
-            `"causal"` results in causal (dilated) convolutions, e.g. output[t]
-            does not depend on input[t+1:]. Useful when modeling temporal data
-            where the model should not violate the temporal order.
-* `activation`: Activation function to use. See [here](activation/#available-activations) for available activation strings. If you don't specify anything, no activation is applied
+* `activation`: Activation function to use. If you don't specify anything, no activation is applied
             (ie. "linear" activation: `a(x) = x`).
 * `use_bias`: Boolean, whether the layer uses a bias vector.
-* `kernel_initializer`: String representation of the initialization method for the weights of the layer. See [here](initialization/#available-initialization-methods) for available initialization strings. Default is 'glorot_uniform'.
+* `kernel_initializer`: Initializer for the `kernel` weights matrix. Default is 'glorot_uniform'.
 * `bias_initializer`: Initializer for the bias vector.
-* `kernel_regularizer`: An instance of [Regularizer](../../APIGuide/Regularizers/), (eg. L1 or L2 regularization), applied to the input weights matrices. Default is null.
-* `bias_regularizer`: An instance of [Regularizer](../../APIGuide/Regularizers/), applied to the bias. Default is null.
-* `input_shape`: Only need to specify this argument when you use this layer as the first layer of a model. For Scala API, it should be a [`Shape`](../keras-api-scala/#shape) object. For Python API, it should be a shape tuple. Batch dimension should be excluded.
+* `kernel_regularizer`: Regularizer function applied to
+            the `kernel` weights matrix. Default is null.
+* `bias_regularizer`: Regularizer function applied to the bias vector. Default is null.
+* `input_shape`: Only need to specify this argument when you use this layer as the first layer of a model. For Scala API, it should be a shape object. For Python API, it should be a shape tuple. Batch dimension should be excluded.
 
 **Scala example:**
 ```scala
@@ -185,16 +183,16 @@ Conv2D(filters, kernel_size, strides=(1, 1), padding="valid", data_format="chann
             Note that `"same"` is slightly inconsistent across backends with
             `strides` != 1.
 * `data_format`: Number of columns in the convolution kernel.
-* `activation`: Activation function to use. See [here](activation/#available-activations) for available activation strings.
+* `activation`: Activation function to use. 
             If you don't specify anything, no activation is applied
             (ie. "linear" activation: `a(x) = x`).
 * `use_bias`: Boolean, whether the layer uses a bias vector. Default is true.
-* `kernel_initializer`: Initializer for the `kernel` weights matrix. See [here](initialization/#available-initialization-methods) for available initialization strings. Default is 'glorot_uniform'.
+* `kernel_initializer`: Initializer for the `kernel` weights matrix. Default is 'glorot_uniform'.
 * `bias_initializer`: Initializer for the bias vector.
 * `kernel_regularizer`: Regularizer function applied to
-            the `kernel` weights matrix. An instance of [Regularizer](../../APIGuide/Regularizers/), (eg. L1 or L2 regularization). Default is null.
-* `bias_regularizer`: Regularizer function applied to the bias vector. An instance of [Regularizer](../../APIGuide/Regularizers/). Default is null.
-* `input_shape`: Only need to specify this argument when you use this layer as the first layer of a model. For Scala API, it should be a [`Shape`](../keras-api-scala/#shape) object. For Python API, it should be a shape tuple. Batch dimension should be excluded.
+            the `kernel` weights matrix. Default is null.
+* `bias_regularizer`: Regularizer function applied to the bias vector. Default is null.
+* `input_shape`: Only need to specify this argument when you use this layer as the first layer of a model. For Scala API, it should be a shape object. For Python API, it should be a shape tuple. Batch dimension should be excluded.
 
 **Scala example:**
 ```scala
