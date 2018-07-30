@@ -37,7 +37,7 @@ class ZooTestCase(TestCase):
         It is invoked for every test method of a class.
         """
         K.set_image_dim_ordering("th")
-        sparkConf = create_spark_conf().setMaster("local[4]").setAppName("zoo test case")
+        sparkConf = init_spark_conf().setMaster("local[4]").setAppName("zoo test case")
         self.sc = init_nncontext(sparkConf)
         self.sc.setLogLevel("ERROR")
 

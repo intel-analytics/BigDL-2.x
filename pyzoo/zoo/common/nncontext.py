@@ -48,7 +48,7 @@ def getOrCreateSparkContext(conf=None, appName=None):
     """
     with SparkContext._lock:
         if SparkContext._active_spark_context is None:
-            spark_conf = create_spark_conf() if conf is None else conf
+            spark_conf = init_spark_conf() if conf is None else conf
             if appName:
                 spark_conf.setAppName(appName)
             return SparkContext.getOrCreate(spark_conf)
@@ -62,7 +62,7 @@ def get_analytics_zoo_conf():
 
     for p in sys.path:
         if zoo_conf_file in p and os.path.isfile(p):
-            with open(p) if sys.version_info < (3,) else open(p, encoding='latin-1') as conf_file: # noqa
+            with open(p) if sys.version_info < (3,) else open(p, encoding='latin-1') as conf_file:
                 return load_conf(conf_file.read())
         if zoo_python_wrapper in p and os.path.isfile(p):
             import zipfile
@@ -75,7 +75,7 @@ def get_analytics_zoo_conf():
     return {}
 
 
-def create_spark_conf():
+def init_spark_conf():
     zoo_conf = get_analytics_zoo_conf()
     sparkConf = SparkConf()
     sparkConf.setAll(zoo_conf.items())
@@ -89,7 +89,8 @@ def create_spark_conf():
     if python_lib:
         existing_py_files = sparkConf.get("spark.submit.pyFiles")
         if existing_py_files:
-            sparkConf.set(key="spark.submit.pyFiles", value="%s,%s" % (python_lib, existing_py_files))
+            sparkConf.set(key="spark.submit.pyFiles",
+                          value="%s,%s" % (python_lib, existing_py_files))
         else:
             sparkConf.set(key="spark.submit.pyFiles", value=python_lib)
 
@@ -160,6 +161,6 @@ def _get_bigdl_verion_conf():
                        " is located in zoo/target/extra-resources")
 
 
-def load_conf(conf_str, split=None):
-    return dict(line.split(split) for line in conf_str.split("\n") if
+def load_conf(conf_str, split_char=None):
+    return dict(line.split(split_char) for line in conf_str.split("\n") if
                 "#" not in line and line.strip())

@@ -36,7 +36,7 @@ class TestNNClassifer():
         """ setup any state tied to the execution of the given method in a
         class.  setup_method is invoked for every test method of a class.
         """
-        sparkConf = create_spark_conf().setMaster("local[1]").setAppName("testNNClassifer")
+        sparkConf = init_spark_conf().setMaster("local[1]").setAppName("testNNClassifer")
         self.sc = init_nncontext(sparkConf)
         self.sqlContext = SQLContext(self.sc)
         assert(self.sc.appName == "testNNClassifer")
