@@ -70,7 +70,8 @@ class InferenceModelSpec extends FlatSpec with Matchers with BeforeAndAfter {
     val bis = new ByteArrayInputStream(bytes)
     val in = new ObjectInputStream(bis)
     val abstractInferenceModel2 = in.readObject.asInstanceOf[TestModel]
-    assert(abstractInferenceModel.modelQueue.take().model == abstractInferenceModel2.modelQueue.take().model)
+    assert(abstractInferenceModel.modelQueue.take().model
+      == abstractInferenceModel2.modelQueue.take().model)
     in.close()
   }
 }
