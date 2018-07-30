@@ -861,6 +861,12 @@ class PythonZooKeras[T: ClassTag](implicit ev: TensorNumeric[T]) extends PythonB
     Bidirectional(layer, mergeMode, toScalaShape(inputShape))
   }
 
+  def createZooKerasLayerWrapper(
+       torchLayer: AbstractModule[Tensor[T], Tensor[T], T],
+       inputShape: JList[Int] = null): KerasLayerWrapper[T] = {
+    new KerasLayerWrapper(torchLayer, toScalaShape(inputShape))
+  }
+
 
   // ================================= Torch layers in Keras style =================================
 

@@ -81,3 +81,20 @@ class Bidirectional(ZooKerasLayer):
                                             merge_mode,
                                             list(input_shape) if input_shape else None,
                                             **kwargs)
+
+
+class KerasLayerWrapper(ZooKerasLayer):
+    """
+
+    >>> from zoo.pipeline.api.keras.layers import KerasLayerWrapper
+    >>> from bigdl.nn.layer import Linear
+    >>> linear = Linear(100, 10, with_bias=True)
+    creating: createLinear
+    >>> kerasLayer = KerasLayerWrapper(linear, input_shape=(100))
+    creating: createZooKerasLayerWrapper
+    """
+    def __init__(self, layer, input_shape=None, **kwargs):
+        super(KerasLayerWrapper, self).__init__(None,
+                                            layer,
+                                            list(input_shape) if input_shape else None,
+                                            **kwargs)
