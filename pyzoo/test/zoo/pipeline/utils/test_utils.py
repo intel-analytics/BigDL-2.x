@@ -20,7 +20,7 @@ from unittest import TestCase
 
 import keras.backend as K
 from bigdl.keras.converter import WeightLoader
-from bigdl.util.common import *
+from zoo.common.nncontext import *
 
 import logging
 
@@ -38,7 +38,7 @@ class ZooTestCase(TestCase):
         """
         K.set_image_dim_ordering("th")
         sparkConf = create_spark_conf().setMaster("local[4]").setAppName("zoo test case")
-        self.sc = get_spark_context(sparkConf)
+        self.sc = init_nncontext(sparkConf)
         self.sc.setLogLevel("ERROR")
 
         self.sqlContext = SQLContext(self.sc)
