@@ -179,9 +179,7 @@ Conv2D(filters, kernel_size, strides=(1, 1), padding="valid", data_format="chann
             It defaults to the `image_data_format` value found in your
             Keras config file at `~/.keras/keras.json`.
             If you never set it, then it will be "channels_last".            
-* `borderMode`: one of `"valid"` or `"same"` (case-insensitive).
-            Note that `"same"` is slightly inconsistent across backends with
-            `strides` != 1.
+* `padding`: one of `"valid"` or `"same"` (case-insensitive).
 * `data_format`: Number of columns in the convolution kernel.
 * `activation`: Activation function to use. 
             If you don't specify anything, no activation is applied
