@@ -20,4 +20,7 @@ package object objectives {
   // Alias
   val mae = MeanAbsoluteError
   val MAE = MeanAbsoluteError
+  val mse = MeanSquaredError
+  val mape = MeanAbsolutePercentageError
+  val msle = MeanSquaredLogarithmicError
 }
