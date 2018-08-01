@@ -45,7 +45,7 @@ else
    echo "Finished downloading checkpoint"
 fi
 
-FILENAME="${ANALYTICS_ZOO_HOME}/apps/tfnet/data/train.zip"
+FILENAME="${ANALYTICS_ZOO_HOME}/apps/tfnet/data/minitrain.zip"
 if [ -f "$FILENAME" ]
 then
    echo "$FILENAME already exists."
