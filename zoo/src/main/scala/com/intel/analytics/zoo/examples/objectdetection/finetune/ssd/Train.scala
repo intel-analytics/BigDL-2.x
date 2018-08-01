@@ -17,7 +17,6 @@
 package com.intel.analytics.zoo.examples.objectdetection.finetune.ssd
 
 import com.intel.analytics.bigdl._
-import com.intel.analytics.bigdl.tensor.Tensor
 import com.intel.analytics.bigdl.dataset.MiniBatch
 import com.intel.analytics.bigdl.optim.SGD._
 import com.intel.analytics.bigdl.optim.{Optimizer, _}
@@ -25,12 +24,12 @@ import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric.NumericF
 import com.intel.analytics.bigdl.utils.LoggerFilter
 import com.intel.analytics.bigdl.visualization.{TrainSummary, ValidationSummary}
 import com.intel.analytics.zoo.common.NNContext
-import com.intel.analytics.zoo.models.image.common.ImageModel
-import com.intel.analytics.bigdl.nn.Module
-import com.intel.analytics.zoo.models.image.objectdetection.common.nn.{MultiBoxLoss, MultiBoxLossParam}
-import com.intel.analytics.zoo.models.image.objectdetection.common.MeanAveragePrecision
+import com.intel.analytics.bigdl.nn.{Graph, Module}
+import com.intel.analytics.zoo.models.image.objectdetection.common.nn.{MultiBoxLoss,
+  MultiBoxLossParam}
+import com.intel.analytics.zoo.models.image.objectdetection.common.{IOUtils, MeanAveragePrecision,
+  OBUtils}
 import com.intel.analytics.zoo.models.image.objectdetection.common.dataset.roiimage.SSDMiniBatch
-import com.intel.analytics.zoo.models.image.objectdetection.common.IOUtils
 import org.apache.spark.SparkConf
 import org.apache.log4j.{Level, Logger}
 import scopt.OptionParser
@@ -44,7 +43,7 @@ object Option {
     valFolder: String = "./",
     resolution: Int = 300,
     checkpoint: Option[String] = None,
-    modelSnapshot: Option[String] = None,
+    pretrain: String = "",
     stateSnapshot: Option[String] = None,
     className: String = "",
     batchSize: Int = 4,
@@ -71,9 +70,9 @@ object Option {
       .text("input resolution 300 or 512")
       .action((x, c) => c.copy(resolution = x))
       .required()
-    opt[String]("model")
-      .text("model snapshot location")
-      .action((x, c) => c.copy(modelSnapshot = Some(x)))
+    opt[String]("preTrainModel")
+      .text("pretrain model location, required to be a Graph")
+      .action((x, c) => c.copy(pretrain = (x)))
       .required()
     opt[String]("state")
       .text("state snapshot location")
@@ -137,18 +136,14 @@ object Train {
       val sc = NNContext.initNNContext(conf)
 
       val classes = Source.fromFile(param.className).getLines().toArray
-      val trainSet = IOUtils.loadSSDTrainSet(param.trainFolder, sc, param.resolution, param.batchSize,
-        param.nPartition)
+      val trainSet = IOUtils.loadSSDTrainSet(param.trainFolder, sc, param.resolution,
+        param.batchSize, param.nPartition)
 
-      val valSet = IOUtils.loadSSDValSet(param.valFolder, sc, param.resolution, param.batchSize,
-        param.nPartition)
+      val valSet = IOUtils.loadSSDValSet(param.valFolder, sc, param.resolution,
+        param.batchSize, param.nPartition)
 
-//      val model = ImageModel.loadModel[Float](param.modelSnapshot.get)
-      val model = Module.loadModule[Float]("/home/ding/proj/analytics-zoo-debug/bigdl_ssd-mobilenet-300x300_PASCAL_0.4.0.model")
-//val test1 = Tensor[Float](4, 3, 300, 300).rand
-//      val test2 = Tensor[Float](1, 2, 7668)
-//      model.forward(test1)
-//      model.backward(test1, test2)
+      val model = Module.loadModule(param.pretrain)
+      OBUtils.stopGradient(model.asInstanceOf[Graph[Float]])
 
       val optimMethod = if (param.stateSnapshot.isDefined) {
         OptimMethod.load[Float](param.stateSnapshot.get)

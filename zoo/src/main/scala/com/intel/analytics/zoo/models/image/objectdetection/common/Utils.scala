@@ -21,14 +21,16 @@ import java.io.File
 import com.intel.analytics.bigdl._
 import com.intel.analytics.bigdl.dataset.DataSet
 import com.intel.analytics.bigdl.nn.Graph._
-import com.intel.analytics.bigdl.nn.{ReLU, SpatialConvolution, Xavier, Zeros}
+import com.intel.analytics.bigdl.nn._
 import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric
 import com.intel.analytics.bigdl.transform.vision.image.augmentation._
 import com.intel.analytics.bigdl.transform.vision.image.label.roi._
 import com.intel.analytics.bigdl.transform.vision.image.{BytesToMat, ImageFeature, MatToFloats}
 import com.intel.analytics.zoo.feature.image.{ImageSet, LocalImageSet}
-import com.intel.analytics.zoo.models.image.objectdetection.common.dataset.{FrcnnMiniBatch, FrcnnToBatch, PreProcessParam}
-import com.intel.analytics.zoo.models.image.objectdetection.common.dataset.roiimage.{ByteRecord, RecordToFeature, RoiImageToBatch, SSDMiniBatch}
+import com.intel.analytics.zoo.models.image.objectdetection.common.dataset.{FrcnnMiniBatch,
+  FrcnnToBatch, PreProcessParam}
+import com.intel.analytics.zoo.models.image.objectdetection.common.dataset.roiimage.{ByteRecord,
+  RecordToFeature, RoiImageToBatch, SSDMiniBatch}
 import org.apache.hadoop.io.Text
 import org.apache.spark.SparkContext
 import org.apache.spark.rdd.RDD
@@ -51,7 +53,8 @@ object IOUtils {
     ImageSet.array(arr)
   }
 
-  def loadSSDTrainSet(folder: String, sc: SparkContext, resolution: Int, batchSize: Int, parNum: Int)
+  def loadSSDTrainSet(folder: String, sc: SparkContext, resolution: Int, batchSize: Int,
+                      parNum: Int)
   : DataSet[SSDMiniBatch] = {
     val trainRdd = loadSeqFiles(parNum, folder, sc)
     DataSet.rdd(trainRdd) -> RecordToFeature(true) ->
@@ -80,7 +83,8 @@ object IOUtils {
       RoiImageToBatch(batchSize)
   }
 
-  def loadFasterrcnnTrainSet(folder: String, sc: SparkContext, param: PreProcessParam, batchSize: Int, parNum: Int)
+  def loadFasterrcnnTrainSet(folder: String, sc: SparkContext, param: PreProcessParam,
+                             batchSize: Int, parNum: Int)
   : DataSet[FrcnnMiniBatch] = {
     val trainRdd = loadSeqFiles(parNum, folder, sc)
     DataSet.rdd(trainRdd) -> RecordToFeature(true) ->
@@ -92,7 +96,8 @@ object IOUtils {
       FrcnnToBatch(batchSize, true)
   }
 
-  def loadFasterrcnnValSet(folder: String, sc: SparkContext, param: PreProcessParam, batchSize: Int, parNum: Int)
+  def loadFasterrcnnValSet(folder: String, sc: SparkContext, param: PreProcessParam,
+                           batchSize: Int, parNum: Int)
   : DataSet[FrcnnMiniBatch] = {
     val valRdd = loadSeqFiles(parNum, folder, sc)
 
@@ -114,5 +119,12 @@ object OBUtils {
       .setInitMethod(weightInitMethod = Xavier, biasInitMethod = Zeros)
       .setName(s"$prefix$name").inputs(prevNodes)
     ReLU[T](true).setName(s"relu$name").inputs(conv)
+  }
+
+  def stopGradient[@specialized(Float, Double) T: ClassTag](model: Graph[T]): Unit = {
+    val priorboxNames = model.modules
+      .filter(_.getClass.getName.toLowerCase().endsWith("priorbox"))
+      .map(_.getName()).toArray
+    model.stopGradient(priorboxNames)
   }
 }

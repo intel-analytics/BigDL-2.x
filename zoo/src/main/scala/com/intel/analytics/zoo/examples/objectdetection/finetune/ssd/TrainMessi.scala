@@ -23,7 +23,8 @@ import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric.NumericF
 import com.intel.analytics.bigdl.utils.LoggerFilter
 import com.intel.analytics.bigdl.visualization.{TrainSummary, ValidationSummary}
 import com.intel.analytics.zoo.common.NNContext
-import com.intel.analytics.zoo.models.image.common.ImageModel
+import com.intel.analytics.bigdl.nn.Module
+import com.intel.analytics.zoo.models.image.objectdetection.SSDVgg
 import com.intel.analytics.zoo.models.image.objectdetection.common.{IOUtils, MeanAveragePrecision, ModuleUtil}
 import com.intel.analytics.zoo.models.image.objectdetection.common.nn.MultiBoxLoss
 import com.intel.analytics.zoo.models.image.objectdetection.common.dataset.roiimage.SSDMiniBatch
@@ -48,7 +49,7 @@ object TrainMessi {
     modelSnapshot: Option[String] = None,
     stateSnapshot: Option[String] = None,
     className: String = "",
-    batchSize: Int = -1,
+    batchSize: Int = 4,
     learningRate: Double = 0.001,
     overWriteCheckpoint: Boolean = false,
     maxEpoch: Int = 20,
@@ -81,14 +82,13 @@ object TrainMessi {
     opt[Int]('e', "maxEpoch")
       .text("epoch numbers")
       .action((x, c) => c.copy(maxEpoch = x))
+      .required()
     opt[Double]('l', "learningRate")
       .text("inital learning rate")
       .action((x, c) => c.copy(learningRate = x))
-      .required()
     opt[Int]('b', "batchSize")
       .text("batch size")
       .action((x, c) => c.copy(batchSize = x))
-      .required()
     opt[String]("class")
       .text("class file")
       .action((x, c) => c.copy(className = x))
@@ -105,7 +105,6 @@ object TrainMessi {
     opt[Int]('p', "partition")
       .text("number of partitions")
       .action((x, c) => c.copy(nPartition = x))
-      .required()
   }
 
   val logger = Logger.getLogger(getClass.getName)
@@ -116,13 +115,15 @@ object TrainMessi {
       val sc = NNContext.initNNContext(conf)
 
       val classes = Source.fromFile(param.className).getLines().toArray
-      val trainSet = IOUtils.loadSSDTrainSet(param.trainFolder, sc, param.resolution, param.batchSize,
-        param.nPartition)
+      val trainSet = IOUtils.loadSSDTrainSet(param.trainFolder, sc, param.resolution,
+        param.batchSize, param.nPartition)
 
       val valSet = IOUtils.loadSSDValSet(param.valFolder, sc, param.resolution, param.batchSize,
         param.nPartition)
 
-      val model = ImageModel.loadModel[Float](param.modelSnapshot.get)
+      val model = SSDVgg(classes.length, param.resolution)
+      val m = Module.loadModule(param.modelSnapshot.get)
+      ModuleUtil.loadModelWeights(m, model, false)
 
       val optimMethod = if (param.stateSnapshot.isDefined) {
         OptimMethod.load[Float](param.stateSnapshot.get)

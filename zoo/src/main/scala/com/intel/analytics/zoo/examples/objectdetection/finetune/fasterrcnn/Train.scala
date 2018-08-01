@@ -18,13 +18,14 @@ package com.intel.analytics.zoo.examples.objectdetection.finetune.fasterrcnn
 
 import com.intel.analytics.bigdl._
 import com.intel.analytics.bigdl.dataset.MiniBatch
+import com.intel.analytics.bigdl.nn.{Graph, Module}
 import com.intel.analytics.bigdl.optim.{Optimizer, _}
 import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric.NumericFloat
 import com.intel.analytics.bigdl.utils.LoggerFilter
 import com.intel.analytics.bigdl.visualization.{TrainSummary, ValidationSummary}
 import com.intel.analytics.zoo.common.NNContext
 import com.intel.analytics.zoo.models.image.common.ImageModel
-import com.intel.analytics.zoo.models.image.objectdetection.common.{IOUtils, MeanAveragePrecision}
+import com.intel.analytics.zoo.models.image.objectdetection.common.{IOUtils, MeanAveragePrecision, OBUtils}
 import com.intel.analytics.zoo.models.image.objectdetection.common.dataset.{FrcnnMiniBatch, PostProcessParam, PreProcessParam}
 import com.intel.analytics.zoo.models.image.objectdetection.common.nn.FrcnnCriterion
 import org.apache.log4j.{Level, Logger}
@@ -40,13 +41,12 @@ object Option {
     valFolder: String = "./",
     optim: String = "sgd",
     checkpoint: Option[String] = None,
-    modelSnapshot: Option[String] = None,
+    preTrainModel: String = "./",
     stateSnapshot: Option[String] = None,
     className: String = "",
-    batchSize: Int = -1,
     learningRate: Double = 0.001,
     step: Int = 50000,
-    maxIter: Int = 50,
+    maxEpoch: Int = 50,
     jobName: String = "Analytics Zoo Fasterrcnn Fine Tune Example",
     summaryDir: Option[String] = None,
     checkIter: Int = 200,
@@ -60,9 +60,9 @@ object Option {
     opt[String]('v', "valFolder")
       .text("url of hdfs folder store the validation hadoop sequence files")
       .action((x, c) => c.copy(valFolder = x))
-    opt[String]("model")
-      .text("model snapshot location")
-      .action((x, c) => c.copy(modelSnapshot = Some(x)))
+    opt[String]("preTrainModel")
+      .text("pretrain model location")
+      .action((x, c) => c.copy(preTrainModel = x))
     opt[String]("state")
       .text("state snapshot location")
       .action((x, c) => c.copy(stateSnapshot = Some(x)))
@@ -72,20 +72,15 @@ object Option {
     opt[Int]("step")
       .text("step to decay learning rate")
       .action((x, c) => c.copy(step = x))
-    opt[Int]('i', "maxIter")
+    opt[Int]('e', "maxEpoch")
       .text("iteration numbers")
-      .action((x, c) => c.copy(maxIter = x))
+      .action((x, c) => c.copy(maxEpoch = x))
     opt[Double]('l', "learningRate")
       .text("inital learning rate")
       .action((x, c) => c.copy(learningRate = x))
-      .required()
     opt[String]("optim")
       .text("optim method")
       .action((x, c) => c.copy(optim = x))
-    opt[Int]('b', "batchSize")
-      .text("batch size")
-      .action((x, c) => c.copy(batchSize = x))
-      .required()
     opt[String]("class")
       .text("class names")
       .action((x, c) => c.copy(className = x))
@@ -101,7 +96,6 @@ object Option {
     opt[Int]('p', "partition")
       .text("number of partitions")
       .action((x, c) => c.copy(nPartition = x))
-      .required()
   }
 }
 
@@ -122,15 +116,18 @@ object Train {
       val sc = NNContext.initNNContext(conf)
       val classNames = Source.fromFile(param.className).getLines().toArray
 
+      val batchSize = 1
       val postParam = PostProcessParam(0.3f, classNames.length, false, 100, 0.05)
-      val preParamTrain = PreProcessParam(param.batchSize, Array(400, 500, 600, 700))
-      val preParamVal = PreProcessParam(param.batchSize, nPartition = param.batchSize)
-      val model = ImageModel.loadModel[Float](param.modelSnapshot.get)
+      val preParamTrain = PreProcessParam(batchSize, Array(400, 500, 600, 700))
+      val preParamVal = PreProcessParam(batchSize, nPartition = batchSize)
 
-      val trainSet = IOUtils.loadFasterrcnnTrainSet(param.trainFolder, sc, preParamTrain, param.batchSize,
-        param.nPartition)
+      val model = Module.loadModule(param.preTrainModel)
+//      OBUtils.stopGradient(model.asInstanceOf[Graph[Float]])
 
-      val valSet = IOUtils.loadFasterrcnnValSet(param.valFolder, sc, preParamVal, param.batchSize,
+      val trainSet = IOUtils.loadFasterrcnnTrainSet(param.trainFolder, sc, preParamTrain,
+        batchSize, param.nPartition)
+
+      val valSet = IOUtils.loadFasterrcnnValSet(param.valFolder, sc, preParamVal, batchSize,
         param.nPartition)
 
       val optimMethod = if (param.stateSnapshot.isDefined) {
@@ -155,7 +152,7 @@ object Train {
       val meanAveragePrecision = new MeanAveragePrecision(use07metric = true, normalized = false,
         classes = classNames)
       optimize(model, trainSet, valSet, param, optimMethod,
-        Trigger.maxIteration(param.maxIter), new FrcnnCriterion(), meanAveragePrecision)
+        Trigger.maxEpoch(param.maxEpoch), new FrcnnCriterion(), meanAveragePrecision)
     })
   }
 
