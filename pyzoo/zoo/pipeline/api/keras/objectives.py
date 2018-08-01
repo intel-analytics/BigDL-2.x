@@ -166,7 +166,8 @@ class Hinge(LossFunction):
     """
     Creates a criterion that optimizes a two-class classification (squared)
     hinge loss (margin-based loss) between input x (a Tensor of dimension 1) and output y.
-    When margin = 1, sizeAverage = True and squared = False, this is the same as hinge loss in keras;
+    When margin = 1, sizeAverage = True and squared = False,
+    this is the same as hinge loss in keras;
 
     # Arguments:
     margin: if unspecified, is by default 1.
@@ -277,7 +278,8 @@ class SquaredHinge(LossFunction):
     """
     Creates a criterion that optimizes a two-class classification (squared) hinge loss (margin-based loss)
     between input x (a Tensor of dimension 1) and output y.
-    When margin = 1, sizeAverage = False and squared = True, this is the same as squared_hinge loss in keras.
+    When margin = 1, sizeAverage = False and squared = True,
+    this is the same as squared_hinge loss in keras.
 
     # Arguments:
     margin: if unspecified, is by default 1.
