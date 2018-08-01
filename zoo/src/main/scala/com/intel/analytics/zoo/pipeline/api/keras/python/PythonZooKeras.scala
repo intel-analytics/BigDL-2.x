@@ -1207,13 +1207,13 @@ class PythonZooKeras[T: ClassTag](implicit ev: TensorNumeric[T]) extends PythonB
   }
 
   def createZooKerasSquaredHinge(
-    margin : Double = 1.0, sizeAverage : Boolean = true, squared : Boolean = false):
-      SquaredHinge[T] = {SquaredHinge[T](margin, sizeAverage, squared)
+    margin : Double = 1.0, sizeAverage : Boolean = true):
+      SquaredHinge[T] = {SquaredHinge[T](margin, sizeAverage)
   }
 
   def createZooKerasHinge(
-    margin : Double = 1.0, sizeAverage : Boolean = true, squared : Boolean = false):
-      Hinge[T] = {Hinge[T](margin, sizeAverage, squared)
+    margin : Double = 1.0, sizeAverage : Boolean = true):
+      Hinge[T] = {Hinge[T](margin, sizeAverage)
   }
 
   def createZooKerasBinaryCrossentropy(

@@ -16,7 +16,6 @@
 
 package com.intel.analytics.zoo.pipeline.api.keras.objectives
 
-import com.intel.analytics.bigdl.nn.MarginCriterion
 import com.intel.analytics.zoo.pipeline.api.keras.layers.KerasBaseSpec
 
 class HingeSpec extends KerasBaseSpec{
@@ -30,7 +29,7 @@ class HingeSpec extends KerasBaseSpec{
         |input = np.random.random([2, 3, 4])
         |Y = np.random.random([2, 3, 4])
       """.stripMargin
-    val loss = MarginCriterion[Float]()
+    val loss = Hinge[Float]()
     checkOutputAndGradForLoss(loss, kerasCode)
   }
 }

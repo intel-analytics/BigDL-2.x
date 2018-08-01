@@ -17,7 +17,6 @@
 package com.intel.analytics.zoo.pipeline.api.keras.objectives
 
 import com.intel.analytics.zoo.pipeline.api.keras.layers.KerasBaseSpec
-import com.intel.analytics.bigdl.nn.PoissonCriterion
 
 class PoissonSpec extends KerasBaseSpec{
   "PoissonCriterion" should "be ok" in {
@@ -29,7 +28,7 @@ class PoissonSpec extends KerasBaseSpec{
         |input = np.random.uniform(0, 1, [2, 3])
         |Y = np.random.uniform(0, 1, [2, 3])
       """.stripMargin
-    val kld = new PoissonCriterion[Float]()
+    val kld = Poisson[Float]()
     checkOutputAndGradForLoss(kld, kerasCode)
   }
 }

@@ -163,12 +163,10 @@ class Hinge(LossFunction):
     """
         Creates a criterion that optimizes a two-class classification (squared) hinge loss (margin-based loss) between input x (a Tensor of dimension 1) and output y.
          When margin = 1, sizeAverage = True and squared = False, this is the same as hinge loss in keras;
-         When margin = 1, sizeAverage = False and squared = True, this is the same as squared_hinge loss in keras.
 
         # Arguments:
         margin: if unspecified, is by default 1.
         size_average: whether to average the loss
-        squared: whether to calculate the squared hinge loss
 
         >>> metrics = Hinge()
         creating: createZooKerasHinge
@@ -228,3 +226,57 @@ class MeanSquaredError(LossFunction):
     def __init__(self, size_average=True, bigdl_type="float"):
         super(MeanAbsoluteError, self).__init__(None, bigdl_type,
                                                 size_average)
+class MeanSquaredLogarithmicError(LossFunction):
+    """
+        This method is same as `mean_squared_logarithmic_error` loss in keras.
+        It calculates:
+        first_log = K.log(K.clip(y, K.epsilon(), Double.MaxValue) + 1.)
+        second_log = K.log(K.clip(x, K.epsilon(), Double.MaxValue) + 1.)
+        and output K.mean(K.square(first_log - second_log))
+        Here, the x and y can have or not have a batch.
+
+        # Arguments
+        T: The numeric type in the criterion, usually which are [[Float]] or [[Double]]
+
+
+        >>> metrics = MeanSquaredLogarithmicError()
+        creating: createZooKerasMeanSquaredLogarithmicError
+        """
+
+    def __init__(self, bigdl_type="float"):
+        super(MeanSquaredLogarithmicError, self).__init__(None, bigdl_type)
+
+class Poisson(LossFunction):
+    """
+        This class is same as `Poisson` loss in keras.
+        Loss calculated as: K.mean(y_pred - y_true * K.log(y_pred + K.epsilon()), axis=-1)
+
+        # Arguments
+        T: The numeric type in the criterion, usually which are [[Float]] or [[Double]]
+
+
+        >>> metrics = Poisson()
+        creating: createZooKerasPoisson
+        """
+
+    def __init__(self, bigdl_type="float"):
+        super(Poisson, self).__init__(None, bigdl_type)
+
+class SquaredHinge(LossFunction):
+    """
+        Creates a criterion that optimizes a two-class classification (squared) hinge loss (margin-based loss) between input x (a Tensor of dimension 1) and output y.
+         When margin = 1, sizeAverage = False and squared = True, this is the same as squared_hinge loss in keras.
+
+        # Arguments:
+        margin: if unspecified, is by default 1.
+        size_average: whether to average the loss
+
+        >>> metrics = SquaredHinge()
+        creating: createZooKerasSquaredHinge
+        """
+
+    def __init__(self, margin=1.0, size_average=False, bigdl_type="float"):
+        super(SquaredHinge, self).__init__(None, margin, size_average, bigdl_type)
+
+
+

@@ -17,13 +17,6 @@
 package com.intel.analytics.zoo.pipeline.api.keras.objectives
 
 import com.intel.analytics.zoo.pipeline.api.keras.layers.KerasBaseSpec
-import com.intel.analytics.bigdl.nn.MarginCriterion
-import com.intel.analytics.bigdl.tensor.Tensor
-
-import scala.util.Random
-import com.intel.analytics.bigdl.utils
-import org.apache.hadoop.yarn.webapp.hamlet.HamletSpec.TH
-
 
 class SquaredHingeSpec extends KerasBaseSpec{
 
@@ -36,7 +29,7 @@ class SquaredHingeSpec extends KerasBaseSpec{
         |input = np.random.random([2, 3, 4])
         |Y = np.random.random([2, 3, 4])
       """.stripMargin
-    val loss = MarginCriterion[Float](squared = true)
+    val loss = SquaredHinge[Float]()
     checkOutputAndGradForLoss(loss, kerasCode)
   }
 }

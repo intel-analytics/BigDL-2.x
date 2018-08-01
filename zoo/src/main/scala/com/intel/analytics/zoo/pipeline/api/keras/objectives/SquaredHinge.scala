@@ -24,21 +24,18 @@ import scala.reflect.ClassTag
 /**
  * Creates a criterion that optimizes a two-class classification (squared)
  * hinge loss (margin-based loss) between input x (a Tensor of dimension 1) and output y.
- *
- * When margin = 1, sizeAverage = True and squared = False, this is the same as hinge loss in keras;
  * When margin = 1, sizeAverage = False and squared = True, this is the same as squared_hinge loss
  * in keras.
  *
  * @param margin if unspecified, is by default 1.
  * @param sizeAverage whether to average the loss
- * @param squared whether to calculate the squared hinge loss
  */
 class SquaredHinge[@specialized(Float, Double) T: ClassTag]
-  (val margin: Double = 1.0, val sizeAverage: Boolean = true, squared: Boolean = false)
+  (val margin: Double = 1.0, val sizeAverage: Boolean = true)
    (implicit ev: TensorNumeric[T]) extends TensorLossFunction[T] {
 
  override val loss: AbstractCriterion[Tensor[T], Tensor[T], T] =
-   MarginCriterion(margin, sizeAverage, squared)
+   MarginCriterion(margin, sizeAverage, true)
 
 }
 
@@ -46,8 +43,7 @@ class SquaredHinge[@specialized(Float, Double) T: ClassTag]
 object SquaredHinge {
   def apply[@specialized(Float, Double) T: ClassTag](
       margin: Double = 1.0,
-      sizeAverage: Boolean = true,
-      squared: Boolean = false)(implicit ev: TensorNumeric[T]) : SquaredHinge[T] = {
-    new SquaredHinge[T](margin, sizeAverage, squared)
+      sizeAverage: Boolean = true)(implicit ev: TensorNumeric[T]) : SquaredHinge[T] = {
+    new SquaredHinge[T](margin, sizeAverage)
   }
 }

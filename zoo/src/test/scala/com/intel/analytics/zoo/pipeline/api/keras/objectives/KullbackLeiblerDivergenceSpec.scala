@@ -16,7 +16,6 @@
 
 package com.intel.analytics.zoo.pipeline.api.keras.objectives
 
-import com.intel.analytics.bigdl.nn.KullbackLeiblerDivergenceCriterion
 import com.intel.analytics.zoo.pipeline.api.keras.layers.KerasBaseSpec
 
 class KullbackLeiblerDivergenceSpec extends KerasBaseSpec{
@@ -30,7 +29,7 @@ class KullbackLeiblerDivergenceSpec extends KerasBaseSpec{
         |input = np.random.uniform(0, 1, [2, 3])
         |Y = np.random.uniform(0, 1, [2, 3])
       """.stripMargin
-    val kld = new KullbackLeiblerDivergenceCriterion[Float]()
+    val kld = new KullbackLeiblerDivergence[Float]()
     checkOutputAndGradForLoss(kld, kerasCode)
   }
 
@@ -43,7 +42,7 @@ class KullbackLeiblerDivergenceSpec extends KerasBaseSpec{
         |input = np.random.uniform(-1, 2, [2, 3])
         |Y = np.random.uniform(-1, 2, [2, 3])
       """.stripMargin
-    val kld = new KullbackLeiblerDivergenceCriterion[Float]()
+    val kld = KullbackLeiblerDivergence[Float]()
     checkOutputAndGradForLoss(kld, kerasCode)
   }
 
@@ -56,7 +55,7 @@ class KullbackLeiblerDivergenceSpec extends KerasBaseSpec{
         |input = np.array([[1e-8, 1e-7, 1e-6]])
         |Y = np.array([[1.0, 1.0, 1.0]])
       """.stripMargin
-    val criterion = KullbackLeiblerDivergenceCriterion[Float]()
+    val criterion = KullbackLeiblerDivergence[Float]()
     checkOutputAndGradForLoss(criterion, kerasCode)
   }
 }
