@@ -276,7 +276,8 @@ class Poisson(LossFunction):
 
 class SquaredHinge(LossFunction):
     """
-    Creates a criterion that optimizes a two-class classification (squared) hinge loss (margin-based loss)
+    Creates a criterion that optimizes a two-class classification
+    (squared) hinge loss (margin-based loss)
     between input x (a Tensor of dimension 1) and output y.
     When margin = 1, sizeAverage = False and squared = True,
     this is the same as squared_hinge loss in keras.
