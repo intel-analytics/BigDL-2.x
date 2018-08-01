@@ -16,7 +16,7 @@
 
 package com.intel.analytics.zoo.pipeline.api.keras.objectives
 
-import com.intel.analytics.bigdl.nn.CategoricalCrossEntropy
+import com.intel.analytics.bigdl.nn.CrossEntropyCriterion
 import com.intel.analytics.bigdl.nn.abstractnn.AbstractCriterion
 import com.intel.analytics.bigdl.tensor.Tensor
 import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric
@@ -32,12 +32,38 @@ import scala.reflect.ClassTag
 class CategoricalCrossentropy[@specialized(Float, Double) T: ClassTag]()
   (implicit ev: TensorNumeric[T]) extends TensorLossFunction[T] {
   override val loss: AbstractCriterion[Tensor[T], Tensor[T], T] =
-    CategoricalCrossEntropy[T]()
+    CrossEntropyCriterion[T]()
+
+  import CategoricalCrossentropy._
+
+  private val buffer = Tensor[T]()
+
+  override def updateOutput(input: Tensor[T], target: Tensor[T]): T = {
+    buffer.resizeAs(input)
+    output = loss.forward(buffer.log(input), convertTensor(target))
+    output
+  }
+
+  override def backward(input: Tensor[T], target: Tensor[T]): Tensor[T] = {
+    gradInput = loss.backward(buffer, convertTensor(target))
+    gradInput.div(input)
+    gradInput
+  }
+
+  override def updateGradInput(input: Tensor[T], target: Tensor[T]): Tensor[T] = {
+    gradInput = loss.updateGradInput(buffer, convertTensor(target))
+    gradInput.div(input)
+    gradInput
+  }
 }
 
 object CategoricalCrossentropy {
   def apply[@specialized(Float, Double) T: ClassTag]()
   (implicit ev: TensorNumeric[T]): CategoricalCrossentropy[T] = {
     new CategoricalCrossentropy[T]()
+  }
+
+  private def convertTensor[T](tensor: Tensor[T]): Tensor[T] = {
+    tensor.max(2)._2
   }
 }

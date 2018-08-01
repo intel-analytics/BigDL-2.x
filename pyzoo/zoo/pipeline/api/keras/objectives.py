@@ -106,6 +106,7 @@ class MeanAbsoluteError(LossFunction):
 
 mae = MAE = MeanAbsoluteError
 
+
 class BinaryCrossentropy(LossFunction):
     """
     A loss that measures the Binary Cross Entropy between the target and the output
@@ -122,8 +123,9 @@ class BinaryCrossentropy(LossFunction):
     creating: createZooKerasBinaryCrossentropy
     """
     def __init__(self, weights, size_average=True, bigdl_type="float"):
-        super(BinaryCrossentropy, self).__init__(None, weights, bigdl_type,
-                                                size_average)
+        super(BinaryCrossentropy, self).__init__(None, bigdl_type,
+                                                 size_average,
+                                                 weights,)
 
 
 class CategoricalCrossentropy(LossFunction):
@@ -162,7 +164,8 @@ class CosineProximity(LossFunction):
 
 class Hinge(LossFunction):
     """
-    Creates a criterion that optimizes a two-class classification (squared) hinge loss (margin-based loss) between input x (a Tensor of dimension 1) and output y.
+    Creates a criterion that optimizes a two-class classification (squared)
+    hinge loss (margin-based loss) between input x (a Tensor of dimension 1) and output y.
     When margin = 1, sizeAverage = True and squared = False, this is the same as hinge loss in keras;
 
     # Arguments:
@@ -199,7 +202,8 @@ class KullbackLeiblerDivergence(LossFunction):
 class MeanAbsolutePercentageError(LossFunction):
     """
     This method is same as `mean_absolute_percentage_error` loss in keras.
-    It caculates diff = K.abs((y - x) / K.clip(K.abs(y), K.epsilon(), Double.MaxValue))and return 100 * K.mean(diff) as outpout
+    It caculates diff = K.abs((y - x) / K.clip(K.abs(y), K.epsilon(), Double.MaxValue))
+    and return 100 * K.mean(diff) as outpout
     Here, the x and y can have or not have a batch.
 
     # Arguments
@@ -230,6 +234,8 @@ class MeanSquaredError(LossFunction):
     def __init__(self, size_average=True, bigdl_type="float"):
         super(MeanAbsoluteError, self).__init__(None, bigdl_type,
                                                 size_average)
+
+
 class MeanSquaredLogarithmicError(LossFunction):
     """
     This method is same as `mean_squared_logarithmic_error` loss in keras.
@@ -269,7 +275,8 @@ class Poisson(LossFunction):
 
 class SquaredHinge(LossFunction):
     """
-    Creates a criterion that optimizes a two-class classification (squared) hinge loss (margin-based loss) between input x (a Tensor of dimension 1) and output y.
+    Creates a criterion that optimizes a two-class classification (squared) hinge loss (margin-based loss)
+    between input x (a Tensor of dimension 1) and output y.
     When margin = 1, sizeAverage = False and squared = True, this is the same as squared_hinge loss in keras.
 
     # Arguments:
