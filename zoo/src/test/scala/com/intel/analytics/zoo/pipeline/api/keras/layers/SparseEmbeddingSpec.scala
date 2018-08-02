@@ -74,7 +74,7 @@ class SparseEmbeddingSpec extends ZooSpecHelper {
 class SparseEmbeddingSerialTest extends ModuleSerializationTest {
   override def test(): Unit = {
     val layer = SparseEmbedding[Float](inputDim = 10, outputDim = 4, inputShape = Shape(10))
-    layer.build(Shape(-1, 4, 10))
+    layer.build(Shape(-1, 10))
     val indices1 = Array(0, 0, 1, 2)
     val indices2 = Array(0, 1, 0, 3)
     val values = Array(2f, 4, 1, 2)
