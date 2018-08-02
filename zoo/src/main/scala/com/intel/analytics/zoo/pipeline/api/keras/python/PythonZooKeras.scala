@@ -861,8 +861,8 @@ class PythonZooKeras[T: ClassTag](implicit ev: TensorNumeric[T]) extends PythonB
     Bidirectional(layer, mergeMode, toScalaShape(inputShape))
   }
 
-  def createZooKerasLayerWrapper(
-       torchLayer: AbstractModule[Tensor[T], Tensor[T], T],
+  def createZooKerasKerasLayerWrapper(
+       torchLayer: AbstractModule[Activity, Activity, T],
        inputShape: JList[Int] = null): KerasLayerWrapper[T] = {
     new KerasLayerWrapper(torchLayer, toScalaShape(inputShape))
   }
@@ -875,6 +875,37 @@ class PythonZooKeras[T: ClassTag](implicit ev: TensorNumeric[T]) extends PythonB
       index: Int,
       inputShape: JList[Int] = null): Select[T] = {
     Select(dim, index, toScalaShape(inputShape))
+  }
+
+  def createZooKerasSparseDense(
+      outputDim: Int,
+      init: String = "glorot_uniform",
+      activation: String = null,
+      wRegularizer: Regularizer[T] = null,
+      bRegularizer: Regularizer[T] = null,
+      backwardStart: Int = -1,
+      backwardLength: Int = -1,
+      initWeight: Tensor[T] = null,
+      initBias: Tensor[T] = null,
+      initGradWeight: Tensor[T] = null,
+      initGradBias: Tensor[T] = null,
+      bias: Boolean = true,
+      inputShape: JList[Int] = null): SparseDense[T] = {
+    SparseDense(outputDim, init, activation, wRegularizer,
+      bRegularizer, backwardStart, backwardLength, initWeight,
+      initBias, initGradWeight, initGradBias, bias, toScalaShape(inputShape))
+  }
+
+  def createZooKerasSparseEmbedding(
+       inputDim: Int,
+       outputDim: Int,
+       combiner: String = "sum",
+       maxNorm: Double = -1,
+       init: String = "uniform",
+       wRegularizer: Regularizer[T] = null,
+       inputShape: JList[Int] = null): SparseEmbedding[T] = {
+    SparseEmbedding(inputDim, outputDim, combiner.toLowerCase,
+      maxNorm, init, wRegularizer, toScalaShape(inputShape))
   }
 
   def createZooKerasNarrow(

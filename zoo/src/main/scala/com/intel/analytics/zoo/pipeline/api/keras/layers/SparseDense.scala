@@ -29,7 +29,14 @@ import com.intel.analytics.zoo.pipeline.api.keras.layers.utils.KerasUtils
 import scala.reflect.ClassTag
 
 /**
- * SparseDense is the sparse version of layer Dense.
+ * SparseDense is the sparse version of layer Dense. SparseDense has two different from Dense:
+ * firstly, SparseDense's input Tensor is a SparseTensor. Secondly, SparseDense doesn't backward
+ * gradient to next layer in the backpropagation by default, as the gradInput of SparseDense is
+ * useless and very big in most cases.
+ *
+ * But, considering model like Wide&Deep, we provide backwardStart and backwardLength to backward
+ * part of the gradient to next layer.
+ *
  * The most common input is 2D.
  *
  * When you use this layer as the first layer of a model, you need to provide the argument
@@ -45,6 +52,8 @@ import scala.reflect.ClassTag
  * @param wRegularizer An instance of [[Regularizer]], (eg. L1 or L2 regularization),
  *                     applied to the input weights matrices. Default is null.
  * @param bRegularizer An instance of [[Regularizer]], applied to the bias. Default is null.
+ * @param backwardStart backwardStart index, counting from 1.
+ * @param backwardLength backward length.
  * @param bias Whether to include a bias (i.e. make the layer affine rather than linear).
  *             Default is true.
  * @param inputShape A Single Shape, does not include the batch dimension.
@@ -56,6 +65,12 @@ class SparseDense[T: ClassTag](
     val activation: KerasLayer[Tensor[T], Tensor[T], T] = null,
     wRegularizer: Regularizer[T] = null,
     bRegularizer: Regularizer[T] = null,
+    val backwardStart: Int = -1,
+    val backwardLength: Int = -1,
+    initWeight: Tensor[T] = null,
+    initBias: Tensor[T] = null,
+    initGradWeight: Tensor[T] = null,
+    initGradBias: Tensor[T] = null,
     val bias: Boolean = true,
     val inputShape: Shape = null)(implicit ev: TensorNumeric[T])
   extends KerasLayer[Tensor[T], Tensor[T], T](KerasUtils.addBatch(inputShape))
@@ -72,20 +87,13 @@ class SparseDense[T: ClassTag](
     val inputShapeList = inputShape.toSingle()
     val layer = SparseLinear[T](inputSize = inputShape.toSingle().last,
       outputSize = outputDim, withBias = bias, wRegularizer = wRegularizer,
-      bRegularizer = bRegularizer)
+      bRegularizer = bRegularizer, backwardStart = backwardStart,
+      backwardLength = backwardLength, initWeight = initWeight,
+      initBias = initBias, initGradWeight = initGradWeight, initGradBias = initGradBias)
     layer.setInitMethod(weightInitMethod = init, biasInitMethod = Zeros)
 
     var torchLayer: AbstractModule[Tensor[T], Tensor[T], T] = layer
 
-//    if (inputShape.toSingle().size > 2) {
-//      val seq = new TSequential[T]()
-//      val inDim = inputShapeList.last
-//      seq.add(InferReshape(Array(-1, inDim), false))
-//      seq.add(layer)
-//      seq.add(InferReshape(Array(-1) ++
-//        inputShapeList.slice(1, inputShapeList.size - 1) ++ Array(outputDim), false))
-//      torchLayer = seq.asInstanceOf[AbstractModule[Tensor[T], Tensor[T], T]]
-//    }
   KerasUtils.fuse(torchLayer, activation,
       inputShape).asInstanceOf[AbstractModule[Tensor[T], Tensor[T], T]]
   }
@@ -98,11 +106,18 @@ object SparseDense {
       activation: String = null,
       wRegularizer: Regularizer[T] = null,
       bRegularizer: Regularizer[T] = null,
+      backwardStart: Int = -1,
+      backwardLength: Int = -1,
+      initWeight: Tensor[T] = null,
+      initBias: Tensor[T] = null,
+      initGradWeight: Tensor[T] = null,
+      initGradBias: Tensor[T] = null,
       bias: Boolean = true,
       inputShape: Shape = null)(implicit ev: TensorNumeric[T]): SparseDense[T] = {
     new SparseDense[T](outputDim, KerasUtils.getInitMethod(init),
       KerasUtils.getKerasActivation(activation),
-      wRegularizer, bRegularizer, bias, inputShape)
+      wRegularizer, bRegularizer, backwardStart, backwardLength,
+      initWeight, initBias, initGradWeight, initGradBias, bias, inputShape)
   }
 }
 

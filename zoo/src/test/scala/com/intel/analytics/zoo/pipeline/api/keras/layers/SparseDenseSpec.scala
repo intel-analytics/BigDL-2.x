@@ -28,12 +28,9 @@ class SparseDenseSpec extends ZooSpecHelper {
 
   "SparseDense" should "be the same as BigDL" in {
 
-    val seed = 100
-
-    RNG.setSeed(seed)
     val blayer = SparseLinear[Float](4, 2, backwardStart = 1, backwardLength = 4)
-    RNG.setSeed(seed)
-    val zlayer = SparseDense[Float](outputDim = 2, inputShape = Shape(2, 4))
+    val zlayer = SparseDense[Float](outputDim = 2, inputShape = Shape(2, 4),
+        backwardStart = 1, backwardLength = 4)
     zlayer.build(Shape(-1, 2, 4))
 
     val weight = zlayer.getWeightsBias()(0)
@@ -45,12 +42,6 @@ class SparseDenseSpec extends ZooSpecHelper {
     input.setValue(1, 1, 1f)
     input.setValue(2, 3, 3f)
     val sparseInput = Tensor.sparse(input)
-    val gradOutput = Tensor.range(1, 4, 1).resize(2, 2)
-    val bout = blayer.forward(sparseInput)
-    blayer.backward(sparseInput, gradOutput)
-    val zout = zlayer.forward(sparseInput)
-    zlayer.backward(sparseInput, gradOutput)
-    bout should be (zout)
 
     compareOutputAndGradInput(blayer, zlayer, sparseInput)
   }
