@@ -885,15 +885,16 @@ class PythonZooKeras[T: ClassTag](implicit ev: TensorNumeric[T]) extends PythonB
       bRegularizer: Regularizer[T] = null,
       backwardStart: Int = -1,
       backwardLength: Int = -1,
-      initWeight: Tensor[T] = null,
-      initBias: Tensor[T] = null,
-      initGradWeight: Tensor[T] = null,
-      initGradBias: Tensor[T] = null,
+      initWeight: JTensor = null,
+      initBias: JTensor = null,
+      initGradWeight: JTensor = null,
+      initGradBias: JTensor = null,
       bias: Boolean = true,
       inputShape: JList[Int] = null): SparseDense[T] = {
     SparseDense(outputDim, init, activation, wRegularizer,
-      bRegularizer, backwardStart, backwardLength, initWeight,
-      initBias, initGradWeight, initGradBias, bias, toScalaShape(inputShape))
+      bRegularizer, backwardStart, backwardLength, toTensor(initWeight),
+      toTensor(initBias), toTensor(initGradWeight), toTensor(initGradBias),
+      bias, toScalaShape(inputShape))
   }
 
   def createZooKerasSparseEmbedding(
