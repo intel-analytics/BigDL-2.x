@@ -28,9 +28,10 @@ import com.intel.analytics.bigdl.transform.vision.image.label.roi._
 import com.intel.analytics.bigdl.transform.vision.image.{BytesToMat, ImageFeature, MatToFloats}
 import com.intel.analytics.zoo.feature.image.{ImageSet, LocalImageSet}
 import com.intel.analytics.zoo.models.image.objectdetection.common.dataset.{FrcnnMiniBatch,
-  FrcnnToBatch, PreProcessParam}
+  FrcnnToBatch}
 import com.intel.analytics.zoo.models.image.objectdetection.common.dataset.roiimage.{ByteRecord,
   RecordToFeature, RoiImageToBatch, SSDMiniBatch}
+import com.intel.analytics.zoo.models.image.objectdetection.fasterrcnn
 import org.apache.hadoop.io.Text
 import org.apache.spark.SparkContext
 import org.apache.spark.rdd.RDD
@@ -83,7 +84,7 @@ object IOUtils {
       RoiImageToBatch(batchSize)
   }
 
-  def loadFasterrcnnTrainSet(folder: String, sc: SparkContext, param: PreProcessParam,
+  def loadFasterrcnnTrainSet(folder: String, sc: SparkContext, param: fasterrcnn.PreProcessParam,
                              batchSize: Int, parNum: Int)
   : DataSet[FrcnnMiniBatch] = {
     val trainRdd = loadSeqFiles(parNum, folder, sc)
@@ -96,7 +97,7 @@ object IOUtils {
       FrcnnToBatch(batchSize, true)
   }
 
-  def loadFasterrcnnValSet(folder: String, sc: SparkContext, param: PreProcessParam,
+  def loadFasterrcnnValSet(folder: String, sc: SparkContext, param: fasterrcnn.PreProcessParam,
                            batchSize: Int, parNum: Int)
   : DataSet[FrcnnMiniBatch] = {
     val valRdd = loadSeqFiles(parNum, folder, sc)

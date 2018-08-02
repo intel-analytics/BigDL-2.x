@@ -24,10 +24,10 @@ import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric.NumericF
 import com.intel.analytics.bigdl.utils.LoggerFilter
 import com.intel.analytics.bigdl.visualization.{TrainSummary, ValidationSummary}
 import com.intel.analytics.zoo.common.NNContext
-import com.intel.analytics.zoo.models.image.common.ImageModel
 import com.intel.analytics.zoo.models.image.objectdetection.common.{IOUtils, MeanAveragePrecision, OBUtils}
-import com.intel.analytics.zoo.models.image.objectdetection.common.dataset.{FrcnnMiniBatch, PostProcessParam, PreProcessParam}
+import com.intel.analytics.zoo.models.image.objectdetection.common.dataset.FrcnnMiniBatch
 import com.intel.analytics.zoo.models.image.objectdetection.common.nn.FrcnnCriterion
+import com.intel.analytics.zoo.models.image.objectdetection.fasterrcnn.{PostProcessParam, PreProcessParam, VggFRcnn}
 import org.apache.log4j.{Level, Logger}
 import org.apache.spark.SparkConf
 import scopt.OptionParser
@@ -50,7 +50,8 @@ object Option {
     jobName: String = "Analytics Zoo Fasterrcnn Fine Tune Example",
     summaryDir: Option[String] = None,
     checkIter: Int = 200,
-    nPartition: Int = 1
+    nPartition: Int = 1,
+    batchSize: Int = 4
   )
 
   val trainParser = new OptionParser[TrainParams]("Analytics Zoo Fasterrcnn Example") {
@@ -96,6 +97,10 @@ object Option {
     opt[Int]('p', "partition")
       .text("number of partitions")
       .action((x, c) => c.copy(nPartition = x))
+    opt[Int]('b', "batchSize")
+      .text("batch size, has to be same with total cores")
+      .action((x, c) => c.copy(batchSize = x))
+      .required()
   }
 }
 
@@ -116,19 +121,19 @@ object Train {
       val sc = NNContext.initNNContext(conf)
       val classNames = Source.fromFile(param.className).getLines().toArray
 
-      val batchSize = 1
       val postParam = PostProcessParam(0.3f, classNames.length, false, 100, 0.05)
-      val preParamTrain = PreProcessParam(batchSize, Array(400, 500, 600, 700))
-      val preParamVal = PreProcessParam(batchSize, nPartition = batchSize)
+      val preParamTrain = PreProcessParam(param.batchSize, Array(400, 500, 600, 700))
+      val preParamVal = PreProcessParam(param.batchSize, nPartition = param.batchSize)
 
-      val model = Module.loadModule(param.preTrainModel)
-//      OBUtils.stopGradient(model.asInstanceOf[Graph[Float]])
+      val pretrain = Module.loadModule(param.preTrainModel)
+      val model = VggFRcnn(classNames.length, postParam)
+      model.loadModelWeights(pretrain, false)
 
       val trainSet = IOUtils.loadFasterrcnnTrainSet(param.trainFolder, sc, preParamTrain,
-        batchSize, param.nPartition)
+        param.batchSize, param.nPartition)
 
-      val valSet = IOUtils.loadFasterrcnnValSet(param.valFolder, sc, preParamVal, batchSize,
-        param.nPartition)
+      val valSet = IOUtils.loadFasterrcnnValSet(param.valFolder, sc, preParamVal,
+        param.batchSize, param.nPartition)
 
       val optimMethod = if (param.stateSnapshot.isDefined) {
         OptimMethod.load[Float](param.stateSnapshot.get)

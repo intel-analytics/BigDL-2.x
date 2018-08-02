@@ -77,29 +77,3 @@ object FrcnnMiniBatch {
   val y2Index = 7
 }
 
-/**
- * Preprocess parameters
- * @param batchSize should be 1
- * @param scales Each scale is the pixel size of an image"s shortest side, can contain multiple
- * @param scaleMultipleOf Resize test images so that its width and height are multiples of ...
- * @param pixelMeanRGB mean value to be sub from
- * @param hasLabel whether data contains label, default is false
- */
-case class PreProcessParam(batchSize: Int = 1,
-                           scales: Array[Int] = Array(600), scaleMultipleOf: Int = 1,
-                           pixelMeanRGB: (Float, Float, Float) = (122.7717f, 115.9465f, 102.9801f),
-                           hasLabel: Boolean = false, nPartition: Int = -1,
-                           norms: (Float, Float, Float) = (1f, 1f, 1f)
-                          )
-
-/**
- * post process parameters
- * @param nmsThresh Overlap threshold used for non-maximum suppression (suppress boxes with
- * IoU >= this threshold)
- * @param nClasses number of classes
- * @param bboxVote whether apply bounding box voting
- * @param maxPerImage
- * @param thresh
- */
-case class PostProcessParam(nmsThresh: Float = 0.3f, nClasses: Int,
-                            bboxVote: Boolean, maxPerImage: Int = 100, thresh: Double = 0.05)

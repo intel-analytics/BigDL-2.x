@@ -14,13 +14,12 @@
  * limitations under the License.
  */
 
-package com.intel.analytics.zoo.models.image.objectdetection
+package com.intel.analytics.zoo.models.image.objectdetection.ssd
 
 import com.intel.analytics.bigdl._
 import com.intel.analytics.bigdl.nn.Graph._
-import com.intel.analytics.bigdl.nn.{Utils => BUtils}
-import com.intel.analytics.bigdl.nn._
 import com.intel.analytics.bigdl.nn.abstractnn.{AbstractModule, Activity}
+import com.intel.analytics.bigdl.nn.{Utils => BUtils, _}
 import com.intel.analytics.bigdl.numeric.NumericFloat
 import com.intel.analytics.bigdl.optim.{L2Regularizer, Regularizer}
 import com.intel.analytics.bigdl.tensor.Storage
