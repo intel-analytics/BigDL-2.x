@@ -17,6 +17,8 @@ package com.intel.analytics.zoo.feature.common
 
 import com.intel.analytics.bigdl.tensor.Tensor
 import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric
+import org.apache.spark.ml.adapter.VectorToSeq
+
 import scala.reflect.ClassTag
 
 /**
@@ -25,20 +27,27 @@ import scala.reflect.ClassTag
  * @param size dimensions of target Tensor.
  */
 class SeqToTensor[T: ClassTag](size: Array[Int])(implicit ev: TensorNumeric[T])
-  extends Preprocessing[Any, Tensor[T]] {
+  extends Preprocessing[Any, Tensor[T]] with VectorToSeq {
 
   override def apply(prev: Iterator[Any]): Iterator[Tensor[T]] = {
+    val vectorNames = Seq("org.apache.spark.mllib.linalg.DenseVector",
+      "org.apache.spark.mllib.linalg.SparseVector",
+      "org.apache.spark.ml.linalg.DenseVector",
+      "org.apache.spark.ml.linalg.SparseVector")
     prev.map { f =>
-      val feature = f match {
-        case ff: Float => Array(ff).map(ev.fromType(_))
-        case dd: Double => Array(dd).map(ev.fromType(_))
-        case ii: Int => Array(ii).map(ev.fromType(_))
-        case sd: Seq[Any] => matchSeq(sd)
-        case mllibVec: org.apache.spark.mllib.linalg.Vector =>
-          f.asInstanceOf[org.apache.spark.mllib.linalg.Vector ].toArray.map(ev.fromType(_))
-        case _ => throw new IllegalArgumentException("SeqToTensor only supports Float, Double, " +
-          s"Array[Float], Array[Double] or MLlib Vector but got $f")
+      val feature = if (vectorNames.contains(f.getClass.getTypeName)) {
+        convert(f).map(ev.fromType(_))
+      } else {
+        f match {
+          case ff: Float => Array(ff).map(ev.fromType(_))
+          case dd: Double => Array(dd).map(ev.fromType(_))
+          case ii: Int => Array(ii).map(ev.fromType(_))
+          case sd: Seq[Any] => matchSeq(sd)
+          case _ => throw new IllegalArgumentException("SeqToTensor only supports Float, Double, " +
+            s"Array[Float], Array[Double] or MLlib Vector but got $f")
+        }
       }
+
       Tensor(feature, if (size.isEmpty) Array(feature.length) else size).contiguous()
     }
   }

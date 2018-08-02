@@ -17,21 +17,16 @@ package com.intel.analytics.zoo.feature
 
 import com.intel.analytics.bigdl.nn.abstractnn.DataFormat
 import com.intel.analytics.bigdl.tensor.Tensor
-import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric
-import com.intel.analytics.bigdl.transform.vision.image
-import com.intel.analytics.bigdl.transform.vision.image.MatToFloats._
-import com.intel.analytics.bigdl.transform.vision.image.opencv.OpenCVMat
 import com.intel.analytics.bigdl.transform.vision.image._
+import com.intel.analytics.bigdl.transform.vision.image.opencv.OpenCVMat
 import com.intel.analytics.zoo.common.{NNContext, Utils}
-import com.intel.analytics.zoo.feature.common.{BigDLAdapter, Preprocessing}
+import com.intel.analytics.zoo.feature.common.{BigDLAdapter, Preprocessing, SeqToTensor}
 import com.intel.analytics.zoo.feature.image._
 import org.apache.commons.io.FileUtils
-import org.apache.log4j.Logger
+import org.apache.spark.mllib.linalg.Vectors
 import org.apache.spark.{SparkConf, SparkContext}
 import org.opencv.imgcodecs.Imgcodecs
 import org.scalatest.{BeforeAndAfter, FlatSpec, Matchers}
-
-import scala.reflect.ClassTag
 
 
 class FeatureSpec extends FlatSpec with Matchers with BeforeAndAfter {
@@ -53,6 +48,12 @@ class FeatureSpec extends FlatSpec with Matchers with BeforeAndAfter {
   "BigDLAdapter" should "adapt BigDL Transformer" in {
     val newResize = BigDLAdapter(ImageResize(1, 1))
     assert(newResize.isInstanceOf[Preprocessing[_, _]])
+  }
+
+  "SeqToTensor" should "convert MLlib Vector" in {
+    val v = Vectors.dense(1, 2)
+    val t = SeqToTensor[Double]().apply(Iterator(v))
+    assert(t.next().toArray().deep == Array(1.0, 2.0).deep)
   }
 
   "Local ImageSet" should "work with resize" in {
