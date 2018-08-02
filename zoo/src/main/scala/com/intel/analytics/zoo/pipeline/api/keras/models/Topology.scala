@@ -387,10 +387,8 @@ abstract class KerasNet[T: ClassTag](implicit ev: TensorNumeric[T])
    * Use a model to do prediction for RDD.
    *
    * @param x Prediction data, RDD of Sample.
-   * @param batchSize The default value is 4 * rdd.getNumPartitions.
-   *                  If you want to tune the batch_size,
-   *                  you should make sure its value can be divisible by
-   *                  rdd.getNumPartitions(distributed mode)
+   * @param batchSize The batchSize should be divisible by
+   *                  rdd.getNumPartitions
    */
   def predict(
       x: RDD[Sample[T]],
