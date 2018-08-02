@@ -384,11 +384,14 @@ abstract class KerasNet[T: ClassTag](implicit ev: TensorNumeric[T])
    * Use a model to do prediction for RDD.
    *
    * @param x Prediction data, RDD of Sample.
-   * @param batchSize Number of samples per batch.
+   * @param batchSize The default value is 4 * rdd.getNumPartitions.
+   *                  If you want to tune the batch_size,
+   *                  you should make sure its value can be divided by
+   *                  rdd.getNumPartitions(distributed mode)
    */
   def predict(
       x: RDD[Sample[T]],
-      batchSize: Int)(implicit ev: TensorNumeric[T]): RDD[Activity] = {
+      batchSize: Int = -1)(implicit ev: TensorNumeric[T]): RDD[Activity] = {
     this.predict(x, batchSize, false)
   }
 
@@ -396,11 +399,13 @@ abstract class KerasNet[T: ClassTag](implicit ev: TensorNumeric[T])
    * Use a model to do prediction in local mode.
    *
    * @param x Prediction data, LocalDataSet.
-   * @param batchSize Number of samples per batch.
+   * @param batchSize The default value is 4 * numOfCores.
+   *                  If you want to tune the batch_size,
+   *                  you should make sure its value can be divided by number of cores
    */
   def predict(
       x: LocalDataSet[MiniBatch[T]],
-      batchSize: Int)(implicit ev: TensorNumeric[T]): Array[Activity] = {
+      batchSize: Int = -1)(implicit ev: TensorNumeric[T]): Array[Activity] = {
     val localPredictor = LocalPredictor(this, batchPerCore = KerasUtils.calBatchPerCore(batchSize))
     localPredictor.predict(x)
   }
@@ -409,15 +414,18 @@ abstract class KerasNet[T: ClassTag](implicit ev: TensorNumeric[T])
    * Use a model to do prediction on ImageSet.
    *
    * @param x Prediction data, ImageSet.
-   * @param batchSize Number of samples per batch.
+   * @param batchSize For distributed ImageSet, the default value is 4 * rdd.getNumPartitions.
+   *                  For local ImageSet, the default value is 4 * numOfCores.
+   *                  If you want to tune the batch_size,
+   *                  you should make sure its value can be divided by
+   *                  rdd.getNumPartitions(distributed mode) or numOfCores(local mode)
    */
   def predict(
       x: ImageSet,
-      batchSize: Int): ImageSet = {
+      batchSize: Int = -1): ImageSet = {
     val batchPerPartition = if (x.isDistributed()) {
-      batchSize / x.toDistributed().rdd.partitions.length
-    }
-    else {
+      KerasUtils.calBatchPerPartition(batchSize, x.toDistributed().rdd.getNumPartitions)
+    } else {
       KerasUtils.calBatchPerCore(batchSize)
     }
     ImageSet.fromImageFrame(predictImage(x.toImageFrame(),
@@ -428,13 +436,15 @@ abstract class KerasNet[T: ClassTag](implicit ev: TensorNumeric[T])
    * Use a model to predict for classes. By default, label predictions start from 0.
    *
    * @param x Prediction data, RDD of Sample.
-   * @param batchSize Number of samples per batch. Default is 32.
+   * @param batchSize The default value is 4 * rdd.getNumPartitions.
+   *                  If you want to tune the batch_size,
+   *                  you should make sure its value can be divided by rdd.getNumPartitions
    * @param zeroBasedLabel Boolean. Whether result labels start from 0.
    *                       Default is true. If false, result labels start from 1.
    */
   def predictClasses(
       x: RDD[Sample[T]],
-      batchSize: Int = 32,
+      batchSize: Int = -1,
       zeroBasedLabel: Boolean = true): RDD[Int] = {
     KerasUtils.toZeroBasedLabel(zeroBasedLabel, super.predictClass(x, batchSize))
   }
