@@ -70,6 +70,7 @@ class SparseCategoricalCrossEntropy(LossFunction):
 
     >>> loss = SparseCategoricalCrossEntropy()
     creating: createZooKerasSparseCategoricalCrossEntropy
+    >>> import numpy as np
     >>> np.random.seed(1128)
     >>> weights = np.random.uniform(0, 1, (2,)).astype("float32")
     >>> loss = SparseCategoricalCrossEntropy(weights=weights)
