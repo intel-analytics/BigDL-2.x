@@ -39,7 +39,7 @@ import com.intel.analytics.zoo.pipeline.api.keras.layers._
 import com.intel.analytics.zoo.pipeline.api.keras.layers.utils.KerasUtils
 import com.intel.analytics.zoo.pipeline.api.keras.metrics.{AUC, Accuracy, Top5Accuracy}
 import com.intel.analytics.zoo.pipeline.api.keras.models.{KerasNet, Model, Sequential}
-import com.intel.analytics.zoo.pipeline.api.keras.objectives.{MeanAbsoluteError, SparseCategoricalCrossEntropy, BinaryCrossentropy, MeanSquaredError, CategoricalCrossentropy, MeanAbsolutePercentageError, MeanSquaredLogarithmicError, SquaredHinge, CosineProximity, Poisson, KullbackLeiblerDivergence, Hinge}
+import com.intel.analytics.zoo.pipeline.api.keras.objectives.{MeanAbsoluteError, SparseCategoricalCrossEntropy, BinaryCrossentropy, MeanSquaredError, CategoricalCrossEntropy, MeanAbsolutePercentageError, MeanSquaredLogarithmicError, SquaredHinge, CosineProximity, Poisson, KullbackLeiblerDivergence, Hinge}
 import com.intel.analytics.zoo.pipeline.api.net.{GraphNet, NetUtils, TFNet}
 import org.apache.spark.api.java.JavaRDD
 
@@ -1182,8 +1182,8 @@ class PythonZooKeras[T: ClassTag](implicit ev: TensorNumeric[T]) extends PythonB
     MeanSquaredError[T](sizeAverage)
   }
 
-  def createZooKerasCategoricalCrossentropy(): CategoricalCrossentropy[T] = {
-    CategoricalCrossentropy[T]()
+  def createZooKerasCategoricalCrossentropy(): CategoricalCrossEntropy[T] = {
+    CategoricalCrossEntropy[T]()
   }
 
   def createZooKerasKullbackLeiblerDivergence(): KullbackLeiblerDivergence[T] = {

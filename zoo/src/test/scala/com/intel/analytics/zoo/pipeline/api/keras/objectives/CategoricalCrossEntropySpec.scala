@@ -16,10 +16,9 @@
 
 package com.intel.analytics.zoo.pipeline.api.keras.objectives
 
-import com.intel.analytics.bigdl.nn.CategoricalCrossEntropy
 import com.intel.analytics.zoo.pipeline.api.keras.layers.KerasBaseSpec
 
-class CategoricalCrossentropySpec extends KerasBaseSpec {
+class CategoricalCrossEntropySpec extends KerasBaseSpec {
 
   "CategoricalCrossEntropy loss" should "be ok" in {
     ifskipTest()
@@ -33,7 +32,7 @@ class CategoricalCrossentropySpec extends KerasBaseSpec {
         |index = np.array([1, 2])
         |Y[np.arange(2), index] = 1
       """.stripMargin
-    val c = CategoricalCrossentropy[Float]()
+    val c = CategoricalCrossEntropy[Float]()
     checkOutputAndGradForLoss(c, kerasCode)
   }
 }

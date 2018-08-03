@@ -171,7 +171,7 @@ class Hinge(LossFunction):
     """
 
     def __init__(self, margin=1.0, size_average=True, squared=False, bigdl_type="float"):
-        super(Hinge, self).__init__(None, margin, size_average, squared, bigdl_type)
+        super(Hinge, self).__init__(None, float(margin), size_average, squared, bigdl_type)
 
 
 class KullbackLeiblerDivergence(LossFunction):
@@ -270,4 +270,4 @@ class SquaredHinge(LossFunction):
     """
 
     def __init__(self, margin=1.0, size_average=False, bigdl_type="float"):
-        super(SquaredHinge, self).__init__(None, margin, size_average, bigdl_type)
+        super(SquaredHinge, self).__init__(None, float(margin), size_average, bigdl_type)
