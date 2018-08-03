@@ -183,7 +183,7 @@ class NNEstimator(JavaEstimator, HasFeaturesCol, HasLabelCol, HasPredictionCol, 
         """
         super(NNEstimator, self).__init__()
 
-        ## avoid initialization during import.
+        # avoid initialization during import.
         if not feature_preprocessing:
             feature_preprocessing = SeqToTensor()
         if not label_preprocessing:
