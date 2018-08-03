@@ -35,7 +35,8 @@ class SeqToTensor[T: ClassTag](size: Array[Int])(implicit ev: TensorNumeric[T])
       "org.apache.spark.ml.linalg.DenseVector",
       "org.apache.spark.ml.linalg.SparseVector")
     prev.map { f =>
-      val feature = if (vectorNames.contains(f.getClass.getTypeName)) {
+      val className = f.getClass().getName()
+      val feature = if (vectorNames.contains(className)) {
         convert(f).map(ev.fromType(_))
       } else {
         f match {
