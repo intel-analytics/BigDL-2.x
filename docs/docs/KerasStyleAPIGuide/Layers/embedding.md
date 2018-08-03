@@ -1,4 +1,4 @@
-## **Embedding**
+## **SparseEmbedding**
 SparseEmbedding is the sparse version of layer Embedding.
 
 The input of SparseEmbedding should be a 2D SparseTensor or two 2D sparseTensors.
