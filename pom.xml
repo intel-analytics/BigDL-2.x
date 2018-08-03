@@ -94,6 +94,16 @@
         <scala.macros.version>2.1.0</scala.macros.version>
         <scalatest.version>2.2.4</scalatest.version>
         <bigdl.version>0.6.0</bigdl.version>
+
+        <!--following are switched in profiles-->
+        <java.version>1.8</java.version>
+        <javac.version>1.8</javac.version>
+        <spark-version.project>2.1</spark-version.project>
+        <spark.version>2.1.0</spark.version>
+        <scala.major.version>2.11</scala.major.version>
+        <scala.version>2.11.8</scala.version>
+        <scala.macros.version>2.1.0</scala.macros.version>
+        <bigdl.artifactId>bigdl-SPARK_${spark-version.project}</bigdl.artifactId>
     </properties>
 
     <distributionManagement>
@@ -285,7 +295,6 @@
                 <scala.major.version>2.10</scala.major.version>
                 <scala.version>2.10.5</scala.version>
                 <scala.macros.version>2.0.1</scala.macros.version>
-                <scalatest.version>2.2.4</scalatest.version>
                 <bigdl.artifactId>bigdl-SPARK_1.6</bigdl.artifactId>
             </properties>
         </profile>
