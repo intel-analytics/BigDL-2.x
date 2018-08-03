@@ -32,7 +32,7 @@ class CosineProximitySpec extends KerasBaseSpec{
         |input = np.random.uniform(0, 1, [2, 3])
         |Y = np.random.uniform(0, 1, [2, 3])
       """.stripMargin
-    val cosineProximity = CosineProximityCriterion[Float]()
+    val cosineProximity = CosineProximity[Float]()
     checkOutputAndGradForLoss(cosineProximity, kerasCode)
   }
 }

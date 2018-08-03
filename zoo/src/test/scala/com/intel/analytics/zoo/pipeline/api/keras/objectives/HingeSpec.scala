@@ -30,7 +30,7 @@ class HingeSpec extends KerasBaseSpec{
         |input = np.random.random([2, 3, 4])
         |Y = np.random.random([2, 3, 4])
       """.stripMargin
-    val loss = MarginCriterion[Float]()
+    val loss = Hinge[Float]()
     checkOutputAndGradForLoss(loss, kerasCode)
   }
 }
