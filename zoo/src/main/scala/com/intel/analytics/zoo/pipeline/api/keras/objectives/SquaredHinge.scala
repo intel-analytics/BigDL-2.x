@@ -16,9 +16,9 @@
 
 package com.intel.analytics.zoo.pipeline.api.keras.objectives
 import com.intel.analytics.bigdl.nn.MarginCriterion
-import com.intel.analytics.bigdl.nn.abstractnn.{AbstractCriterion, TensorCriterion}
+import com.intel.analytics.bigdl.nn.abstractnn.AbstractCriterion
 import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric
-import com.intel.analytics.bigdl.tensor.{DenseTensorApply, Tensor, TensorFunc4, TensorFunc6}
+import com.intel.analytics.bigdl.tensor.Tensor
 
 import scala.reflect.ClassTag
 /**

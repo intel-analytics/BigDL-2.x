@@ -17,7 +17,6 @@
 
 package com.intel.analytics.zoo.pipeline.api.keras.objectives
 
-import com.intel.analytics.bigdl.nn.AbsCriterion
 import com.intel.analytics.bigdl.nn.abstractnn.AbstractCriterion
 import com.intel.analytics.bigdl.nn.BCECriterion
 import scala.reflect.ClassTag
@@ -35,8 +34,6 @@ import com.intel.analytics.bigdl.tensor.{DenseTensorApply, Tensor, TensorFunc4, 
  *
  * @param weights weights over the input dimension
  * @param sizeAverage avgerage or not in each mini-batch
- * @param ev numeric operator
- * @tparam T numeric type
  */
 class BinaryCrossentropy[@specialized(Float, Double) T: ClassTag](
   val weights: Tensor[T] = null, sizeAverage: Boolean = true)

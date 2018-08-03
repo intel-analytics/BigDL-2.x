@@ -16,8 +16,8 @@
 
 package com.intel.analytics.zoo.pipeline.api.keras.objectives
 
-import com.intel.analytics.bigdl.nn.{CosineProximityCriterion, PoissonCriterion}
-import com.intel.analytics.bigdl.nn.abstractnn.{AbstractCriterion, TensorCriterion}
+import com.intel.analytics.bigdl.nn. PoissonCriterion
+import com.intel.analytics.bigdl.nn.abstractnn.AbstractCriterion
 import com.intel.analytics.bigdl.tensor.Tensor
 import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric
 
@@ -26,7 +26,6 @@ import scala.reflect.ClassTag
  * This class is same as `Poisson` loss in keras.
  * Loss calculated as:
  * K.mean(y_pred - y_true * K.log(y_pred + K.epsilon()), axis=-1)
- * @tparam T The numeric type in the criterion, usually which are [[Float]] or [[Double]]
  */
 
 class Poisson[@specialized(Float, Double) T: ClassTag]()

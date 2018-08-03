@@ -27,9 +27,6 @@ import scala.reflect.ClassTag
  * It caculates diff = K.abs((y - x) / K.clip(K.abs(y), K.epsilon(), Double.MaxValue))
  * and return 100 * K.mean(diff) as outpout
  * Here, the x and y can have or not have a batch.
- * @param ev$1
- * @param ev
- * @tparam T The numeric type in the criterion, usually which are [[Float]] or [[Double]]
  */
 
 

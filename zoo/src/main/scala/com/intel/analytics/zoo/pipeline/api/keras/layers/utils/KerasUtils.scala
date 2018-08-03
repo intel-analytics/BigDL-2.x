@@ -151,12 +151,12 @@ object KerasUtils {
       case "mean_absolute_percentage_error" => MeanAbsolutePercentageError[T]()
       case "msle" => MeanSquaredLogarithmicError[T]()
       case "mean_squared_logarithmic_error" => MeanSquaredLogarithmicError[T]()
-      case "squared_hinge" => [T](squared = true)
+      case "squared_hinge" => SquaredHinge[T]()
       case "sparse_categorical_crossentropy" => SparseCategoricalCrossEntropy[T]()
-      case "kld" => KullbackLeiblerDivergenceCriterion[T]()
-      case "kullback_leibler_divergence" => KullbackLeiblerDivergenceCriterion[T]()
-      case "cosine_proximity" => CosineProximityCriterion[T]()
-      case "poisson" => PoissonCriterion[T]()
+      case "kld" => KullbackLeiblerDivergence[T]()
+      case "kullback_leibler_divergence" => KullbackLeiblerDivergence[T]()
+      case "cosine_proximity" => CosineProximity[T]()
+      case "poisson" => Poisson[T]()
       case _ => throw new IllegalArgumentException(s"Unsupported loss: $loss")
     }
   }
