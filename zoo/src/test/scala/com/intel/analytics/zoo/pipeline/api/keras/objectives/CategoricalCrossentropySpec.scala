@@ -33,7 +33,7 @@ class CategoricalCrossentropySpec extends KerasBaseSpec {
         |index = np.array([1, 2])
         |Y[np.arange(2), index] = 1
       """.stripMargin
-    val c = CategoricalCrossentropy[Float]()
+    val c = CategoricalCrossEntropy[Float]()
     checkOutputAndGradForLoss(c, kerasCode)
   }
 }

@@ -17,6 +17,7 @@
 package com.intel.analytics.zoo.pipeline.api.keras.objectives
 
 
+import com.intel.analytics.bigdl.nn.CosineProximityCriterion
 import com.intel.analytics.zoo.pipeline.api.keras.layers.KerasBaseSpec
 
 class CosineProximitySpec extends KerasBaseSpec{
@@ -31,7 +32,7 @@ class CosineProximitySpec extends KerasBaseSpec{
         |input = np.random.uniform(0, 1, [2, 3])
         |Y = np.random.uniform(0, 1, [2, 3])
       """.stripMargin
-    val cosineProximity = CosineProximity[Float]()
+    val cosineProximity = CosineProximityCriterion[Float]()
     checkOutputAndGradForLoss(cosineProximity, kerasCode)
   }
 }
