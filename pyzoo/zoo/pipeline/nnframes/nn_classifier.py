@@ -508,9 +508,6 @@ class NNClassifierModel(NNModel, HasThreshold):
         :param jvalue: Java object create by Py4j
         :param bigdl_type(optional): Data type of BigDL model, "float"(default) or "double".
         """
-
-        if not feature_preprocessing:
-            feature_preprocessing = SeqToTensor()
         super(NNClassifierModel, self).__init__(model, feature_preprocessing, jvalue, bigdl_type)
 
     @staticmethod
