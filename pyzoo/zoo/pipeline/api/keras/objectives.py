@@ -196,7 +196,6 @@ class MeanAbsolutePercentageError(LossFunction):
     and return 100 * K.mean(diff) as outpout
     Here, the x and y can have or not have a batch.
 
-
     >>> metrics = MeanAbsolutePercentageError()
     creating: createZooKerasMeanAbsolutePercentageError
     """
