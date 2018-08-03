@@ -116,8 +116,6 @@ class BinaryCrossentropy(LossFunction):
                 mini-batch. Default is True. If False, the losses are instead
                 summed for each mini-batch.
     weights: weights over the input dimension
-    ev: numeric operator
-    T numeric type
 
     >>> metrics = BinaryCrossentropy()
     creating: createZooKerasBinaryCrossentropy
@@ -131,9 +129,6 @@ class BinaryCrossentropy(LossFunction):
 class CategoricalCrossentropy(LossFunction):
     """
     This is same with cross entropy criterion, except the target tensor is a one-hot tensor
-
-    # Arguments
-    T: numeric type
 
     >>> metrics = CategoricalCrossentropy()
     creating: createZooKerasCategoricalCrossentropy
@@ -151,8 +146,6 @@ class CosineProximity(LossFunction):
         y'(i) = y(i) / sqrt(max(sum(x(i)^2), 1e-12))
         cosine_proximity(x, y) = mean(-1 * x'(i) * y'(i))
         Both batch and un-batched inputs are supported
-
-    # Arguments
 
     >>> metrics = CosineProximity()
     creating: createZooKerasCosineProximity
@@ -188,10 +181,6 @@ class KullbackLeiblerDivergence(LossFunction):
     y_pred = K.clip(y_pred, K.epsilon(), 1)
     and output K.sum(y_true * K.log(y_true / y_pred), axis=-1)
 
-    # Arguments
-    T: The numeric type in the criterion, usually which are [[Float]] or [[Double]]
-
-
     >>> metrics = KullbackLeiblerDivergence()
     creating: createZooKerasKullbackLeiblerDivergence
     """
@@ -206,9 +195,6 @@ class MeanAbsolutePercentageError(LossFunction):
     It caculates diff = K.abs((y - x) / K.clip(K.abs(y), K.epsilon(), Double.MaxValue))
     and return 100 * K.mean(diff) as outpout
     Here, the x and y can have or not have a batch.
-
-    # Arguments
-    T: The numeric type in the criterion, usually which are [[Float]] or [[Double]]
 
 
     >>> metrics = MeanAbsolutePercentageError()
@@ -246,10 +232,6 @@ class MeanSquaredLogarithmicError(LossFunction):
     and output K.mean(K.square(first_log - second_log))
     Here, the x and y can have or not have a batch.
 
-    # Arguments
-    T: The numeric type in the criterion, usually which are [[Float]] or [[Double]]
-
-
     >>> metrics = MeanSquaredLogarithmicError()
     creating: createZooKerasMeanSquaredLogarithmicError
     """
@@ -262,9 +244,6 @@ class Poisson(LossFunction):
     """
     This class is same as `Poisson` loss in keras.
     Loss calculated as: K.mean(y_pred - y_true * K.log(y_pred + K.epsilon()), axis=-1)
-
-    # Arguments
-    T: The numeric type in the criterion, usually which are [[Float]] or [[Double]]
 
     >>> metrics = Poisson()
     creating: createZooKerasPoisson
