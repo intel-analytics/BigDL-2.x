@@ -1,0 +1,36 @@
+total number of dimensions = 20
+total number of outliers   = 25
+
+generated subspaces:
+subspace    0     dimensions = 3     [0, 1, 2]
+subspace    1     dimensions = 5     [3, 4, 5, 6, 7]
+subspace    2     dimensions = 5     [8, 9, 10, 11, 12]
+subspace    3     dimensions = 5     [13, 14, 15, 16, 17]
+subspace    4     dimensions = 2     [18, 19]
+
+outlier overview:
+pattern     43             1    00001
+pattern     47             4    00100
+pattern     55             4    00100
+pattern     70             2    00010
+pattern     86            16    10000
+pattern    104             8    01000
+pattern    157             1    00001
+pattern    288             1    00001
+pattern    329             4    00100
+pattern    335             2    00010
+pattern    383             2    00010
+pattern    451            16    10000
+pattern    525             2    00010
+pattern    665             1    00001
+pattern    705            16    10000
+pattern    706             4    00100
+pattern    747             4    00100
+pattern    790             8    01000
+pattern    795             8    01000
+pattern    864             8    01000
+pattern    873            16    10000
+pattern    878             1    00001
+pattern    936             2    00010
+pattern    942            16    10000
+pattern    959             8    01000

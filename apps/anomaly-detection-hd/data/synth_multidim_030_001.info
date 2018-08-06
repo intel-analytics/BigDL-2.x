@@ -1,0 +1,50 @@
+total number of dimensions = 30
+total number of outliers   = 36
+
+generated subspaces:
+subspace    0     dimensions = 3     [0, 1, 2]
+subspace    1     dimensions = 3     [3, 4, 5]
+subspace    2     dimensions = 4     [6, 7, 8, 9]
+subspace    3     dimensions = 5     [10, 11, 12, 13, 14]
+subspace    4     dimensions = 5     [15, 16, 17, 18, 19]
+subspace    5     dimensions = 2     [20, 21]
+subspace    6     dimensions = 4     [22, 23, 24, 25]
+subspace    7     dimensions = 4     [26, 27, 28, 29]
+
+outlier overview:
+pattern     33             1    00000001
+pattern     35             8    00001000
+pattern     46            64    01000000
+pattern     73            32    00100000
+pattern     88             1    00000001
+pattern    137            16    00010000
+pattern    226            32    00100000
+pattern    267             4    00000100
+pattern    281            64    01000000
+pattern    292            64    01000000
+pattern    308             2    00000010
+pattern    309             1    00000001
+pattern    323           128    10000000
+pattern    333           128    10000000
+pattern    389             8    00001000
+pattern    422             8    00001000
+pattern    508             2    00000010
+pattern    528             8    00001000
+pattern    538            16    00010000
+pattern    547           128    10000000
+pattern    572             2    00000010
+pattern    573            16    00010000
+pattern    581           128    10000000
+pattern    597             2    00000010
+pattern    600            68    01000100
+pattern    609            16    00010000
+pattern    622             4    00000100
+pattern    771             8    00001000
+pattern    776            32    00100000
+pattern    781            33    00100001
+pattern    831             4    00000100
+pattern    847             4    00000100
+pattern    883            19    00010011
+pattern    927           128    10000000
+pattern    948            64    01000000
+pattern    988            32    00100000
