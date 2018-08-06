@@ -207,17 +207,14 @@ class KerasNet(ZooKerasLayer):
         else:
             return [KerasNet.convert_output(x) for x in output]
 
-    def predict(self, x, batch_size=-1, distributed=True):
+    def predict(self, x, batch_per_partition=4, distributed=True):
         """
         Use a model to do prediction.
 
         # Arguments
         x: Prediction data. A Numpy array or RDD of Sample or ImageSet.
-        batch_size: When distributed is True, the default value is 4 * rdd.getNumPartitions.
-                    When distributed is False the default value is 4 * numOfCores.
-                    If you want to tune the batch_size,
-                    you should make sure its value can be divisible by
-                    rdd.getNumPartitions(distributed=True) or numOfCores(distributed=False)
+        batch_per_partition: When distributed is True, the default total batch size is 4 * rdd.getNumPartitions.
+                    When distributed is False the default total batch size is 4 * numOfCores.
         distributed: Boolean. Whether to do prediction in distributed mode or local mode.
                      Default is True. In local mode, x must be a Numpy array.
         """
@@ -225,7 +222,7 @@ class KerasNet(ZooKerasLayer):
             results = callBigDlFunc(self.bigdl_type, "zooPredict",
                                     self.value,
                                     x,
-                                    batch_size)
+                                    batch_per_partition)
             return ImageSet(results)
         if distributed:
             if isinstance(x, np.ndarray):
@@ -237,29 +234,26 @@ class KerasNet(ZooKerasLayer):
             results = callBigDlFunc(self.bigdl_type, "zooPredict",
                                     self.value,
                                     data_rdd,
-                                    batch_size)
+                                    batch_per_partition)
             return results.map(lambda result: Layer.convert_output(result))
         else:
             if isinstance(x, np.ndarray) or isinstance(x, list):
                 results = callBigDlFunc(self.bigdl_type, "zooPredict",
                                         self.value,
                                         self._to_jtensors(x),
-                                        batch_size)
+                                        batch_per_partition)
                 return [Layer.convert_output(result) for result in results]
             else:
                 raise TypeError("Unsupported prediction data type: %s" % type(x))
 
-    def predict_classes(self, x, batch_size=-1, zero_based_label=True):
+    def predict_classes(self, x, batch_per_partition=4, zero_based_label=True):
         """
         Use a model to predict for classes. By default, label predictions start from 0.
 
         # Arguments
         x: Prediction data. A Numpy array or RDD of Sample.
-        batch_size: When distributed is True, the default value is 4 * rdd.getNumPartitions.
-                    When distributed is False the default value is 4 * numOfCores.
-                    If you want to tune the batch_size,
-                    you should make sure its value can be divisible by
-                    rdd.getNumPartitions(distributed=True) or numOfCores(distributed=False)
+        batch_per_partition: When distributed is True, the default total batch size is 4 * rdd.getNumPartitions.
+                    When distributed is False the default total batch size is 4 * numOfCores.
         zero_based_label: Boolean. Whether result labels start from 0.
                           Default is True. If False, result labels start from 1.
         """
@@ -272,7 +266,7 @@ class KerasNet(ZooKerasLayer):
         return callBigDlFunc(self.bigdl_type, "zooPredictClasses",
                              self.value,
                              data_rdd,
-                             batch_size,
+                             batch_per_partition,
                              zero_based_label)
 
     def get_layer(self, name):

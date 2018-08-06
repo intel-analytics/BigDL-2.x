@@ -125,8 +125,8 @@ class PythonZooKeras[T: ClassTag](implicit ev: TensorNumeric[T]) extends PythonB
   def zooPredict(
       module: KerasNet[T],
       x: JavaRDD[Sample],
-      batchSize: Int = 32): JavaRDD[JList[Object]] = {
-    val resRDD = module.predict(x.rdd.map(toJSample), batchSize)
+      batchPerPartition: Int): JavaRDD[JList[Object]] = {
+    val resRDD = module.predict(x.rdd.map(toJSample), batchPerPartition)
     resRDD.map(activityToList).toJavaRDD()
   }
 
@@ -168,10 +168,10 @@ class PythonZooKeras[T: ClassTag](implicit ev: TensorNumeric[T]) extends PythonB
   def zooPredict(
       module: KerasNet[T],
       x: JList[JTensor],
-      batchSize: Int): JList[JList[Object]] = {
+      batchPerPartition: Int): JList[JList[Object]] = {
     val sampleArray = toSampleArray(x.asScala.toList.map{f => toTensor(f)})
     val localPredictor = LocalPredictor(module,
-      batchPerCore = KerasUtils.calBatchPerCore(batchSize))
+      batchPerCore = KerasUtils.calBatchPerCore(batchPerPartition))
     val result = localPredictor.predict(sampleArray)
     result.map(activityToList).toList.asJava
   }
@@ -179,8 +179,8 @@ class PythonZooKeras[T: ClassTag](implicit ev: TensorNumeric[T]) extends PythonB
   def zooPredict(
       module: KerasNet[T],
       x: ImageSet,
-      batchSize: Int): ImageSet = {
-    module.predict(x, batchSize)
+      batchPerPartition: Int): ImageSet = {
+    module.predict(x, batchPerPartition)
   }
 
   def zooEvaluate(
@@ -248,9 +248,9 @@ class PythonZooKeras[T: ClassTag](implicit ev: TensorNumeric[T]) extends PythonB
   def zooPredictClasses(
       module: KerasNet[T],
       x: JavaRDD[Sample],
-      batchSize: Int = 32,
+      batchPerPartition: Int,
       zeroBasedLabel: Boolean = true): JavaRDD[Int] = {
-    module.predictClasses(toJSample(x), batchSize, zeroBasedLabel).toJavaRDD()
+    module.predictClasses(toJSample(x), batchPerPartition, zeroBasedLabel).toJavaRDD()
   }
 
   def newGraph(model: NetUtils[T, _],
