@@ -1212,13 +1212,17 @@ class PythonZooKeras[T: ClassTag](implicit ev: TensorNumeric[T]) extends PythonB
   }
 
   def createZooKerasHinge(
-    margin : Double = 1.0, sizeAverage : Boolean = true):
+    margin: Double = 1.0, sizeAverage: Boolean = true):
       Hinge[T] = {Hinge[T](margin, sizeAverage)
   }
 
   def createZooKerasBinaryCrossentropy(
-      sizeAverage: Boolean = true, weights: Tensor[T] = null): BinaryCrossentropy[T] = {
-    BinaryCrossentropy[T](null, sizeAverage)
+      weights: JTensor = null,
+      sizeAverage: Boolean = true
+      ): BinaryCrossentropy[T] = {
+    BinaryCrossentropy[T](
+      if (weights == null) null else toTensor(weights),
+      sizeAverage)
   }
 
   def createZooKerasAccuracy(

@@ -44,7 +44,7 @@ class Hinge[@specialized(Float, Double) T: ClassTag]
 object Hinge {
   def apply[@specialized(Float, Double) T: ClassTag](
     margin: Double = 1.0,
-    sizeAverage: Boolean = true, squared: Boolean = false)
+    sizeAverage: Boolean = true)
     (implicit ev: TensorNumeric[T]) : Hinge[T] = {
     new Hinge[T](margin, sizeAverage)
   }

@@ -120,10 +120,10 @@ class BinaryCrossentropy(LossFunction):
     >>> metrics = BinaryCrossentropy()
     creating: createZooKerasBinaryCrossentropy
     """
-    def __init__(self, weights, size_average=True, bigdl_type="float"):
+    def __init__(self, weights=None, size_average=True, bigdl_type="float"):
         super(BinaryCrossentropy, self).__init__(None, bigdl_type,
-                                                 size_average,
-                                                 weights,)
+                                                 JTensor.from_ndarray(weights),
+                                                 size_average)
 
 
 class CategoricalCrossentropy(LossFunction):
@@ -170,8 +170,8 @@ class Hinge(LossFunction):
     creating: createZooKerasHinge
     """
 
-    def __init__(self, margin=1.0, size_average=True, squared=False, bigdl_type="float"):
-        super(Hinge, self).__init__(None, float(margin), size_average, squared, bigdl_type)
+    def __init__(self, margin=1.0, size_average=True, bigdl_type="float"):
+        super(Hinge, self).__init__(None, bigdl_type, float(margin), size_average)
 
 
 class KullbackLeiblerDivergence(LossFunction):
@@ -269,4 +269,4 @@ class SquaredHinge(LossFunction):
     """
 
     def __init__(self, margin=1.0, size_average=False, bigdl_type="float"):
-        super(SquaredHinge, self).__init__(None, float(margin), size_average, bigdl_type)
+        super(SquaredHinge, self).__init__(None, bigdl_type, float(margin), size_average)
