@@ -32,9 +32,6 @@ class AverageSpec extends KerasBaseSpec{
     val input2 = Tensor[Float](3, 10).rand(1, 2)
     val input3 = Tensor[Float](3, 10).rand(2, 3)
     val input = T(1 -> input1, 2 -> input2, 3 -> input3)
-    print(input1)
-    print(input2)
-    print(input3)
     val l1 = Input[Float](inputShape = Shape(10))
     val l2 = Input[Float](inputShape = Shape(10))
     val l3 = Input[Float](inputShape = Shape(10))
@@ -42,7 +39,6 @@ class AverageSpec extends KerasBaseSpec{
     val model = Model[Float](Array(l1, l2, l3), layer)
     model.getOutputShape().toSingle().toArray should be (Array(-1, 10))
     model.forward(input) should be ((input1 + input2 + input3)/3)
-    print("output" + model.forward(input))
   }
 
   "average" should "work properly" taggedAs(Keras2Test) in {
@@ -50,9 +46,6 @@ class AverageSpec extends KerasBaseSpec{
     val input2 = Tensor[Float](3, 10).rand(1, 2)
     val input3 = Tensor[Float](3, 10).rand(2, 3)
     val input = T(1 -> input1, 2 -> input2, 3 -> input3)
-    print(input1)
-    print(input2)
-    print(input3)
     val l1 = Input[Float](inputShape = Shape(10))
     val l2 = Input[Float](inputShape = Shape(10))
     val l3 = Input[Float](inputShape = Shape(10))
@@ -60,7 +53,6 @@ class AverageSpec extends KerasBaseSpec{
     val model = Model[Float](Array(l1, l2, l3), layer)
     model.getOutputShape().toSingle().toArray should be (Array(-1, 10))
     model.forward(input) should be ((input1 + input2 + input3)/3)
-    print(model.forward(input))
   }
 }
 
