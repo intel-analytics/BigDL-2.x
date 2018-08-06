@@ -23,13 +23,13 @@ import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric
 import scala.reflect.ClassTag
 
 /**
- * This is same with cross entropy criterion, except the target tensor is a one-hot tensor
+ * This is same with cross entropy criterion
+ * except the target tensor is a one-hot tensor
  */
 class CategoricalCrossEntropy[@specialized(Float, Double) T: ClassTag]()
   (implicit ev: TensorNumeric[T]) extends TensorLossFunction[T] {
   override val loss: AbstractCriterion[Tensor[T], Tensor[T], T] =
     com.intel.analytics.bigdl.nn.CategoricalCrossEntropy[T]()
-
 }
 
 object CategoricalCrossEntropy {
