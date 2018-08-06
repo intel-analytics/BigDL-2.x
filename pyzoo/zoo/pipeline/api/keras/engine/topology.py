@@ -213,8 +213,9 @@ class KerasNet(ZooKerasLayer):
 
         # Arguments
         x: Prediction data. A Numpy array or RDD of Sample or ImageSet.
-        batch_per_partition: When distributed is True, the default total batch size is 4 * rdd.getNumPartitions.
-                    When distributed is False the default total batch size is 4 * numOfCores.
+        batch_per_partition:
+          When distributed is True,the default total batch size is 4 * rdd.getNumPartitions.
+          When distributed is False the default total batch size is 4 * numOfCores.
         distributed: Boolean. Whether to do prediction in distributed mode or local mode.
                      Default is True. In local mode, x must be a Numpy array.
         """
@@ -252,8 +253,9 @@ class KerasNet(ZooKerasLayer):
 
         # Arguments
         x: Prediction data. A Numpy array or RDD of Sample.
-        batch_per_partition: When distributed is True, the default total batch size is 4 * rdd.getNumPartitions.
-                    When distributed is False the default total batch size is 4 * numOfCores.
+        batch_per_partition:
+          When distributed is True, the default total batch size is 4 * rdd.getNumPartitions.
+          When distributed is False the default total batch size is 4 * numOfCores.
         zero_based_label: Boolean. Whether result labels start from 0.
                           Default is True. If False, result labels start from 1.
         """
