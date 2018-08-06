@@ -387,7 +387,8 @@ abstract class KerasNet[T: ClassTag](implicit ev: TensorNumeric[T])
    * Use a model to do prediction for RDD.
    *
    * @param x Prediction data, RDD of Sample.
-   * @param batchPerPartition The total batchSize is batchPerPartition * rdd.getNumPartitions
+   * @param batchPerPartition
+   *       The total batchSize is batchPerPartition * rdd.getNumPartitions
    */
   def predict(
       x: RDD[Sample[T]],

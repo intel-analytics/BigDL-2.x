@@ -171,7 +171,7 @@ class PythonZooKeras[T: ClassTag](implicit ev: TensorNumeric[T]) extends PythonB
       batchPerPartition: Int): JList[JList[Object]] = {
     val sampleArray = toSampleArray(x.asScala.toList.map{f => toTensor(f)})
     val localPredictor = LocalPredictor(module,
-      batchPerCore = KerasUtils.calBatchPerCore(batchPerPartition))
+      batchPerCore = batchPerPartition)
     val result = localPredictor.predict(sampleArray)
     result.map(activityToList).toList.asJava
   }
