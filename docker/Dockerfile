@@ -23,13 +23,23 @@ WORKDIR /opt/work
 ARG ANALYTICS_ZOO_VERSION=0.3.0-SNAPSHOT
 ARG BIGDL_VERSION=0.6.0
 ARG SPARK_VERSION=2.2.0
-ENV ANALYTICS_ZOO_VERSION_ENV   ${ANALYTICS_ZOO_VERSION}
-ENV SPARK_VERSION_ENV           ${SPARK_VERSION}
-ENV BIGDL_VERSION_ENV           ${BIGDL_VERSION}
-ENV SPARK_HOME                  /opt/work/spark-${SPARK_VERSION}
-ENV ANALYTICS_ZOO_HOME          /opt/work/analytics-zoo-${ANALYTICS_ZOO_VERSION}
-ENV JAVA_HOME                   /opt/jdk
-ENV PATH                        ${JAVA_HOME}/bin:${PATH}
+ARG RUNTIME_DRIVER_CORES=4
+ARG RUNTIME_DRIVER_MEMORY=20g
+ARG RUNTIME_EXECUTOR_CORES=4
+ARG RUNTIME_EXECUTOR_MEMORY=20g
+ARG RUNTIME_TOTAL_EXECUTOR_CORES=4
+ENV ANALYTICS_ZOO_VERSION_ENV   	${ANALYTICS_ZOO_VERSION}
+ENV SPARK_VERSION_ENV           	${SPARK_VERSION}
+ENV BIGDL_VERSION_ENV           	${BIGDL_VERSION}
+ENV RUNTIME_DRIVER_CORES_ENV		${RUNTIME_DRIVER_CORES}
+ARG RUNTIME_DRIVER_MEMORY_ENV		${RUNTIME_DRIVER_MEMORY}
+ARG RUNTIME_EXECUTOR_CORES_ENV		${RUNTIME_EXECUTOR_CORES}
+ARG RUNTIME_EXECUTOR_MEMORY_ENV		${RUNTIME_EXECUTOR_MEMORY}
+ARG RUNTIME_TOTAL_EXECUTOR_CORES_ENV	${RUNTIME_TOTAL_EXECUTOR_CORES}
+ENV SPARK_HOME                  	/opt/work/spark-${SPARK_VERSION}
+ENV ANALYTICS_ZOO_HOME          	/opt/work/analytics-zoo-${ANALYTICS_ZOO_VERSION}
+ENV JAVA_HOME                   	/opt/jdk
+ENV PATH                        	${JAVA_HOME}/bin:${PATH}
 
 RUN apt-get update && \
     apt-get install -y vim curl nano wget unzip maven git
@@ -59,7 +69,7 @@ RUN wget https://d3kbcqa49mib13.cloudfront.net/spark-${SPARK_VERSION}-bin-hadoop
 ADD ./download-analytics-zoo.sh /opt/work
 ADD ./start-notebook.sh /opt/work
 RUN chmod a+x download-analytics-zoo.sh && \
-    chmod a+x start-notebook.sh && \
-    ./download-analytics-zoo.sh
+    chmod a+x start-notebook.sh
+RUN ./download-analytics-zoo.sh
 
 CMD ["/opt/work/start-notebook.sh"]
