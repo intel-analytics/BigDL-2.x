@@ -52,7 +52,7 @@ class TFNet(graphDef: TFGraphHolder,
   // todo if an exception is thrown during forward or backward, there will be memory leak
   // maybe create a resource manager to handle tensor creation and destruction
 
-  class ResourceManager(){
+  class ResourceManager() extends java.io.Serializable {
     private var tensorList: List[TTensor[_]] = List()
 
     def createTFTensor(): TTensor[_] = {
