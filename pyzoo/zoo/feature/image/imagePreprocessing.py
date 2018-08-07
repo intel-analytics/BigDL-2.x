@@ -85,6 +85,17 @@ class ImageChannelNormalize(ImagePreprocessing):
                                                     mean_b, std_r, std_g, std_b)
 
 
+class ImageScalePixelValue(ImagePreprocessing):
+    """
+    Pixel level scale value, data(i) = data(i) / scale
+    :param scale_r std value in R channel
+    :param scale_g std value in G channel
+    :param scale_b std value in B channel
+    """
+    def __init__(self, scale_r=255.0, scale_g=255.0, scale_b=255.0, bigdl_type="float"):
+        super(ImageScalePixelValue, self).__init__(bigdl_type, scale_r, scale_g, scale_b)
+
+
 class ImageMatToTensor(ImagePreprocessing):
     """
     MatToTensor

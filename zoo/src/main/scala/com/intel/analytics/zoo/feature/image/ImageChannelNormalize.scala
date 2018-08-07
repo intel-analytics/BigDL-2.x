@@ -54,3 +54,37 @@ object ImageChannelNormalize {
     new ImageChannelNormalize(Array(mean), Array(std))
   }
 }
+
+/**
+ * Pixel level scale value, data(i) = data(i) / scale
+ *
+ * @param scale pixel level scale, following H * W * C order
+ */
+class ImageScalePixelValue(scale: Array[Float]) extends ImageProcessing {
+  val means = Array.fill[Float](scale.length)(0)
+  private val internalCrop = new augmentation.ChannelNormalize(means, scale)
+  override def apply(prev: Iterator[ImageFeature]): Iterator[ImageFeature] = {
+    internalCrop.apply(prev)
+  }
+
+  override def transformMat(feature: ImageFeature): Unit = {
+    internalCrop.transformMat(feature)
+  }
+}
+
+object ImageScalePixelValue {
+  /**
+   * image pixel level scale value, data(i) = data(i) / scale
+   *
+   * @param scaleR  scale value in R channel
+   * @param scaleG  scale value in G channel
+   * @param scaleB  scale value in B channel
+   */
+  def apply(scaleR: Float = 255, scaleG: Float = 255, scaleB: Float = 255): ImageScalePixelValue = {
+    new ImageScalePixelValue(Array(scaleR, scaleG, scaleB))
+  }
+
+  def apply(scaled: Float): ImageScalePixelValue = {
+    new ImageScalePixelValue(Array(scaled))
+  }
+}

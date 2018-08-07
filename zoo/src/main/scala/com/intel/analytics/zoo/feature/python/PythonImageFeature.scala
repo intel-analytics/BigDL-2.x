@@ -143,6 +143,11 @@ class PythonImageFeature[T: ClassTag](implicit ev: TensorNumeric[T]) extends Pyt
       stdR.toFloat, stdG.toFloat, stdB.toFloat)
   }
 
+  def createImageScalePixelValue(scaleR: Double = 1, scaleG: Double = 1,
+                            scaleB: Double = 1): ImageScalePixelValue = {
+    ImageScalePixelValue(scaleR.toFloat, scaleG.toFloat, scaleB.toFloat)
+  }
+
   def createImageMatToTensor(toRGB: Boolean = false,
                              tensorKey: String = ImageFeature.imageTensor,
                              shareBuffer: Boolean = true,
