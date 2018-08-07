@@ -39,7 +39,8 @@ class ZooTestCase(TestCase):
         K.set_image_dim_ordering("th")
         sparkConf = init_spark_conf().setMaster("local[4]").setAppName("zoo test case")
         assert str(sparkConf.get("spark.shuffle.reduceLocality.enabled")) == "false"
-        assert str(sparkConf.get("spark.serializer")) == "org.apache.spark.serializer.JavaSerializer"
+        assert str(sparkConf.get("spark.serializer")) \
+            == "org.apache.spark.serializer.JavaSerializer"
         assert SparkContext._active_spark_context is None
         self.sc = init_nncontext(sparkConf)
         self.sc.setLogLevel("ERROR")
