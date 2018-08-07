@@ -40,31 +40,31 @@ def to_bigdl_optim_method(optimizer):
 def to_bigdl_criterion(criterion):
     criterion = criterion.lower()
     if criterion == "categorical_crossentropy":
-        return CategoricalCrossEntropy()
+        return objectives.CategoricalCrossEntropy()
     elif criterion == "mse" or criterion == "mean_squared_error":
-        return MSECriterion()
+        return objectives.MSECriterion()
     elif criterion == "binary_crossentropy":
-        return BCECriterion()
+        return objectives.BCECriterion()
     elif criterion == "mae" or criterion == "mean_absolute_error":
         return objectives.mae()
     elif criterion == "hinge":
-        return MarginCriterion()
+        return objectives.MarginCriterion()
     elif criterion == "mean_absolute_percentage_error" or criterion == "mape":
-        return MeanAbsolutePercentageCriterion()
+        return objectives.MeanAbsolutePercentageCriterion()
     elif criterion == "mean_squared_logarithmic_error" or criterion == "msle":
-        return MeanSquaredLogarithmicCriterion()
+        return objectives.MeanSquaredLogarithmicCriterion()
     elif criterion == "squared_hinge":
-        return MarginCriterion(squared=True)
+        return objectives.MarginCriterion(squared=True)
     elif criterion == "sparse_categorical_crossentropy":
         return objectives.SparseCategoricalCrossEntropy()
     elif criterion == "kullback_leibler_divergence" or criterion == "kld":
-        return KullbackLeiblerDivergenceCriterion()
+        return objectives.KullbackLeiblerDivergenceCriterion()
     elif criterion == "poisson":
-        return PoissonCriterion()
+        return objectives.PoissonCriterion()
     elif criterion == "cosine_proximity" or criterion == "cosine":
-        return CosineProximityCriterion()
+        return objectives.CosineProximityCriterion()
     else:
-        raise TypeError("Unsupported loss: %s" % criterion)
+        raise objectives.TypeError("Unsupported loss: %s" % criterion)
 
 
 def to_bigdl_metric(metric):
