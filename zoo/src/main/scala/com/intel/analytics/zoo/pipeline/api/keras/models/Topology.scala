@@ -387,88 +387,91 @@ abstract class KerasNet[T: ClassTag](implicit ev: TensorNumeric[T])
    * Use a model to do prediction for RDD.
    *
    * @param x Prediction data, RDD of Sample.
-   * @param batchPerPartition
-   *       The total batchSize is batchPerPartition * rdd.getNumPartitions
+   * @param batchPerThread
+   *       The total batchSize is batchPerThread * rdd.getNumPartitions
    */
   def predict(
       x: RDD[Sample[T]],
-      batchPerPartition: Int)(implicit ev: TensorNumeric[T]): RDD[Activity] = {
-    this.predict(x, batchPerPartition * x.getNumPartitions, false)
+      batchPerThread: Int)(implicit ev: TensorNumeric[T]): RDD[Activity] = {
+    this.predict(x, batchPerThread * x.getNumPartitions, false)
   }
 
   /**
    * Use a model to do prediction for RDD.
-   * The default total batchSize is 4 * rdd.getNumPartitions.
+   * The default batchPerThread is 4,
+   * and the total batchSize is batchPerThread * rdd.getNumPartitions.
    * @param x Prediction data, RDD of Sample.
    */
   def predict(
       x: RDD[Sample[T]])(implicit ev: TensorNumeric[T]): RDD[Activity] = {
-    this.predict(x, batchPerPartition = 4)
+    this.predict(x, batchPerThread = 4)
   }
 
   /**
    * Use a model to do prediction in local mode.
    *
    * @param x Prediction data, LocalDataSet.
-   * @param batchSizePerCore The total batch size is batchSizePerCore * numOfCores
+   * @param batchPerThread The total batch size is batchPerThread * numOfCores
    */
   def predict(
       x: LocalDataSet[MiniBatch[T]],
-      batchSizePerCore: Int)(implicit ev: TensorNumeric[T]): Array[Activity] = {
-    val localPredictor = LocalPredictor(this, batchPerCore = batchSizePerCore)
+      batchPerThread: Int)(implicit ev: TensorNumeric[T]): Array[Activity] = {
+    val localPredictor = LocalPredictor(this, batchPerCore = batchPerThread)
     localPredictor.predict(x)
   }
 
   /**
    * Use a model to do prediction in local mode.
-   * The total batch size is 4 * numOfCores
+   * The total batch size is batchPerThread * numOfCores, and batchPerThread is 4 by default.
    * @param x Prediction data, LocalDataSet.
    */
   def predict(
       x: LocalDataSet[MiniBatch[T]])(implicit ev: TensorNumeric[T]): Array[Activity] = {
-    predict(x, batchSizePerCore = 4)
+    predict(x, batchPerThread = 4)
   }
 
   /**
    * Use a model to do prediction on ImageSet.
    *
    * @param x Prediction data, ImageSet.
-   * @param batchPerPartition The total batch size is
-   *        batchSizePerCore * rdd.getNumPartitions(distributed mode)
-   *        or batchSizePerCore * numOfCores(local mode)
+   * @param batchPerThread The total batch size is
+   *        batchPerThread * rdd.getNumPartitions(distributed mode)
+   *        or batchPerThread * numOfCores(local mode)
    */
   def predict(
       x: ImageSet,
-      batchPerPartition: Int): ImageSet = {
+      batchPerThread: Int): ImageSet = {
     ImageSet.fromImageFrame(predictImage(x.toImageFrame(),
-      batchPerPartition = batchPerPartition))
+      batchPerPartition = batchPerThread))
   }
 
   /**
-   * For distributed ImageSet, the total batchSize is 4 * rdd.getNumPartitions.
-   * For local ImageSet, the total batchSize is 4 * numOfCores.
+   * The default batchPerThread is 4.
+   * For distributed ImageSet, the total batchSize is batchPerThread * rdd.getNumPartitions.
+   * For local ImageSet, the total batchSize is batchPerThread * numOfCores.
    * @param x
    * @return
    */
   def predict(
       x: ImageSet): ImageSet = {
-    predict(x, batchPerPartition = 4)
+    predict(x, batchPerThread = 4)
   }
 
   /**
    * Use a model to predict for classes. By default, label predictions start from 0.
    *
    * @param x Prediction data, RDD of Sample.
-   * @param batchPerPartition The default total batchSize is 4 * rdd.getNumPartitions.
+   * @param batchPerThread The default batchPerThread is 4,
+   *       and the total batchSize is batchPerThread * rdd.getNumPartitions.
    * @param zeroBasedLabel Boolean. Whether result labels start from 0.
    *                       Default is true. If false, result labels start from 1.
    */
   def predictClasses(
       x: RDD[Sample[T]],
-      batchPerPartition: Int = 4,
+      batchPerThread: Int = 4,
       zeroBasedLabel: Boolean = true): RDD[Int] = {
     KerasUtils.toZeroBasedLabel(zeroBasedLabel,
-      super.predictClass(x, batchPerPartition * x.getNumPartitions))
+      super.predictClass(x, batchPerThread * x.getNumPartitions))
   }
 
 
