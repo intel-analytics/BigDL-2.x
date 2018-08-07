@@ -17,7 +17,7 @@
 import argparse
 import cv2
 
-from zoo.common.nncontext import *
+from zoo.common.nncontext import init_nncontext
 from zoo.models.image.objectdetection import *
 
 sc = init_nncontext("Object Detection Example")

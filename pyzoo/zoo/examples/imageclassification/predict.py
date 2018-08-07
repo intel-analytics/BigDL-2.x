@@ -15,7 +15,7 @@
 #
 
 from optparse import OptionParser
-from zoo.common.nncontext import *
+from zoo.common.nncontext import init_nncontext
 from zoo.models.image.imageclassification import *
 
 
