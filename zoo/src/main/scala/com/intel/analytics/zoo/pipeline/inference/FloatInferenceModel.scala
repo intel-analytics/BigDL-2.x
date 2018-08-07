@@ -101,10 +101,5 @@ class FloatInferenceModel(var model: AbstractModule[Activity, Activity, Float],
     predictor = LocalPredictor(model = model, batchPerCore = 1)
   }
 
-<<<<<<< HEAD
   override def toString : String = s"FloatInferenceModel($model, $predictor)"
 }
-=======
-  override def toString: String = s"FloatInferenceModel($model, $predictor)"
-}
->>>>>>> 5fc059887a985007e87a91d59bcbd72fb73267fa

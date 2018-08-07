@@ -53,48 +53,17 @@ class TFNet(graphDef: TFGraphHolder,
   // maybe create a resource manager to handle tensor creation and destruction
 
   class ResourceManager(){
-    var inputTFTensors: Array[TTensor[_]] = null
-    var weightTFTensors: Array[TTensor[_]] = null
-    var gradWeightTFTensors: Array[TTensor[_]] = null
-    var tempTFTensors: Array[TTensor[_]] = null
-    var gradOutputTFTensors: Array[TTensor[_]] = null
+    private var tensorList: List[TTensor[_]] = List()
 
-    def createInputTFTensors(): Unit = {
-      inputTFTensors = new Array[TTensor[_]](inputNames.length)
+    def createTFTensor(): TTensor[_] = {
+      val TFTensor = new TTensor[_]
+      tensorList = TFTensor :: tensorList
+      return TFTensor
     }
 
-    def createWeightTFTensors(): Unit = {
-      weightTFTensors = new Array[TTensor[_]](weights.length)
-    }
-
-    def createGradWeightTFTensors(): Unit = {
-      gradWeightTFTensors = new Array[TTensor[_]](gradWeights.length)
-    }
-
-    def createTempTFTensors(): Unit = {
-      tempTFTensors = new Array[TTensor[_]](graphMeta.tempTensors.map(_.length).getOrElse(0))
-    }
-
-    def createGradOutputTFTensors(): Unit = {
-      gradOutputTFTensors = new Array[TTensor[_]](outputNames.length)
-    }
-
-
-    def emptyTFTensorArray(arr: Array[TTensor[_]]): Unit = {
-      var i = 0
-      while (i < arr.length) {
-        arr(i).close()
-        arr(i) = null
-        i += 1
-      }
-    }
-
-    def emptyTFTensorArray(arr: mutable.Buffer[TTensor[_]]): Unit = {
-      var i = 0
-      while (i < arr.length) {
-        arr(i).close()
-        arr(i) = null
-        i += 1
+    def destructTFTensors() = {
+      for (tensor <- tensorList) {
+        tensor.close()
       }
     }
   }
@@ -200,165 +169,219 @@ class TFNet(graphDef: TFGraphHolder,
     sess
   }
 
-  tensorManager.createInputTFTensors()
-  tensorManager.createWeightTFTensors()
-  tensorManager.createTempTFTensors()
-  override def updateOutput(input: Activity): Activity = {
-    val runner = sess.runner()
-
-    require(activityLength(input) == inputTypes.length,
-      s"require ${inputTypes.length} inputs, but ${activityLength(input)} given. " +
-        s"The inputs are ${inputNames.toSeq}")
-
-    activity2TFTensors(input, inputTypes, tensorManager.inputTFTensors)
-
-    // feed inputs
-    inputNames.zipWithIndex.foreach { case (name, idx) =>
-      runner.feed(name, tensorManager.inputTFTensors(idx))
-    }
-
-    // feed new weights if possible
-    graphMeta.variables.map { variableNames =>
-      if (! this.isTraining()) {
-        var i = 0
-        while (i < variableNames.length) {
-          if (tensorManager.weightTFTensors(i) == null) {
-            val tensor = bigdl2Tf(weights(i), DataType.FLOAT)
-            tensorManager.weightTFTensors(i) = tensor
-          }
-          i += 1
-        }
-      } else {
-        var i = 0
-        while (i < variableNames.length) {
-          if (tensorManager.weightTFTensors(i) != null) {
-            tensorManager.weightTFTensors(i).close()
-          }
-          val tensor = bigdl2Tf(weights(i), DataType.FLOAT)
-          tensorManager.weightTFTensors(i) = tensor
-          i += 1
-        }
-      }
-      variableNames.zip(tensorManager.weightTFTensors).map { case (name, tensor) =>
-        runner.feed(name, tensor)
-        tensor
-      }
-    }
-
-    // fetch outputs
-    floatOutputNames.foreach(runner.fetch)
-
-    // fetch temp tensors used by backward if possible
-    if (this.isTraining()) {
-      graphMeta.tempTensors.map(_.map(runner.fetch))
-    }
-
-    val outputs = runner.run()
-
-    outputs.asScala.zipWithIndex.foreach { case (t, idx) =>
-      if (idx < outputNames.length) {
-        // model outputs
-        tf2bigdl(t.asInstanceOf[TTensor[Float]], getOutput(idx + 1))
-      } else {
-        // temp tensors used by backward if any
-        tensorManager.tempTFTensors(idx - outputNames.length) = t
-      }
-    }
-
-    if (!this.isTraining()) {
-      // clean up input tensorflow tensors
-      tensorManager.emptyTFTensorArray(tensorManager.tempTFTensors)
-    } else {
-      // clean up variable tensorflow tensors
-      tensorManager.emptyTFTensorArray(tensorManager.weightTFTensors)
-    }
-
-    // clean up model output tensorflow tensors
-    tensorManager.emptyTFTensorArray(outputs.asScala.slice(0, outputNames.length))
-    // tempTensors will be cleaned up after backward
-
-    output
+  private val inputTFTensors = new Array[TTensor[_]](inputNames.length)
+  for (i <- inputTFTensors.indices) {
+    inputTFTensors(i) = tensorManager.createTFTensor()
   }
 
+  private val weightTFTensors = new Array[TTensor[_]](weights.length)
+  for (i <- weightTFTensors.indices) {
+    weightTFTensors(i) = tensorManager.createTFTensor()
+  }
 
-  tensorManager.createGradWeightTFTensors()
-  tensorManager.createGradOutputTFTensors()
-  override def updateGradInput(input: Activity, gradOutput: Activity): Activity = {
+  private val tempTFTensors = new Array[TTensor[_]](graphMeta.tempTensors.map(_.length).getOrElse(0))
+  for (i <- tempTFTensors.indices) {
+    tempTFTensors(i) = tensorManager.createTFTensor()
+  }
 
-    if (graphMeta.variables.isEmpty) {
-      generateZeroGrad(input)
-    } else {
-
+  private val gradWeightTFTensors = new Array[TTensor[_]](gradWeights.length)
+  for (i <- gradWeightTFTensors.indices) {
+    gradWeightTFTensors(i) = tensorManager.createTFTensor()
+  }
+  override def updateOutput(input: Activity): Activity = {
+    try {
       val runner = sess.runner()
 
       require(activityLength(input) == inputTypes.length,
         s"require ${inputTypes.length} inputs, but ${activityLength(input)} given. " +
           s"The inputs are ${inputNames.toSeq}")
 
-      activity2TFTensors(gradOutput, outputTypes, tensorManager.gradOutputTFTensors)
+      activity2TFTensors(input, inputTypes, inputTFTensors)
 
       // feed inputs
       inputNames.zipWithIndex.foreach { case (name, idx) =>
-        runner.feed(name, tensorManager.inputTFTensors(idx))
+        runner.feed(name, inputTFTensors(idx))
       }
 
-      // feed gradOutputs
-      outputNames.map(addGrad).zipWithIndex.foreach { case (name, idx) =>
-        runner.feed(name, tensorManager.gradOutputTFTensors(idx))
+      // feed new weights if possible
+      graphMeta.variables.map { variableNames =>
+        if (! this.isTraining()) {
+          var i = 0
+          while (i < variableNames.length) {
+            if (weightTFTensors(i) == null) {
+              val tensor = bigdl2Tf(weights(i), DataType.FLOAT)
+              weightTFTensors(i) = tensor
+            }
+            i += 1
+          }
+        } else {
+          var i = 0
+          while (i < variableNames.length) {
+            if (weightTFTensors(i) != null) {
+              weightTFTensors(i).close()
+            }
+            val tensor = bigdl2Tf(weights(i), DataType.FLOAT)
+            weightTFTensors(i) = tensor
+            i += 1
+          }
+        }
+        variableNames.zip(weightTFTensors).map { case (name, tensor) =>
+          runner.feed(name, tensor)
+          tensor
+        }
       }
 
-      // feed temp tensors fetched during forward
-      val tempTensorNames = graphMeta.tempTensors.get
-      tempTensorNames.zipWithIndex.foreach{ case (name, idx) =>
-        runner.feed(name, tensorManager.tempTFTensors(idx))
+      // fetch outputs
+      floatOutputNames.foreach(runner.fetch)
+
+      // fetch temp tensors used by backward if possible
+      if (this.isTraining()) {
+        graphMeta.tempTensors.map(_.map(runner.fetch))
       }
 
-      // fetch grad inputs
-      val gradInputNames = graphMeta.gradInputs.get
-      gradInputNames.foreach(runner.fetch)
+      val outputs = runner.run()
 
-      // fetch grad weights
-      val gradVariableNames = graphMeta.gradVariables.get
-      gradVariableNames.foreach(runner.fetch)
-
-      val fetches = runner.run().asScala
-      val (i, v) = fetches.splitAt(gradInputNames.length)
-
-      v.map(_.asInstanceOf[TTensor[Float]])
-        .zipWithIndex.foreach(x => tensorManager.gradWeightTFTensors(x._2) = x._1)
-
-      i.zipWithIndex.foreach { case (t, idx) =>
-        tf2bigdl(t.asInstanceOf[TTensor[Float]], getGradInput(idx + 1))
+      outputs.asScala.zipWithIndex.foreach { case (t, idx) =>
+        if (idx < outputNames.length) {
+          // model outputs
+          tf2bigdl(t.asInstanceOf[TTensor[Float]], getOutput(idx + 1))
+        } else {
+          // temp tensors used by backward if any
+          tempTFTensors(idx - outputNames.length) = t
+        }
+      }
+      if (!this.isTraining()) {
+        // clean up input tensorflow tensors
+        emptyTFTensorArray(tempTFTensors)
+      } else {
+        // clean up variable tensorflow tensors
+        emptyTFTensorArray(weightTFTensors)
       }
 
-      // clean up two feeds
-      tensorManager.emptyTFTensorArray(tensorManager.inputTFTensors)
-      tensorManager.emptyTFTensorArray(tensorManager.gradOutputTFTensors)
+      // clean up model output tensorflow tensors
+      emptyTFTensorArray(outputs.asScala.slice(0, outputNames.length))
+      // tempTensors will be cleaned up after backward
 
-      // clean up temp tensors
-      tensorManager.emptyTFTensorArray(tensorManager.tempTFTensors)
-
-      // clean up fetched grad inputs
-      tensorManager.emptyTFTensorArray(i)
-
-      // grad weights will be cleaned up after acc
+      output
+    } catch {
+      case ex: _ => {
+        tensorManager.destructTFTensors()
+        output
+      }
     }
-    gradInput
+
+  }
+
+  private def emptyTFTensorArray(arr: Array[TTensor[_]]): Unit = {
+    var i = 0
+    while (i < arr.length) {
+      arr(i).close()
+      arr(i) = null
+      i += 1
+    }
+  }
+
+  private def emptyTFTensorArray(arr: mutable.Buffer[TTensor[_]]): Unit = {
+    var i = 0
+    while (i < arr.length) {
+      arr(i).close()
+      arr(i) = null
+      i += 1
+    }
+  }
+
+  override def updateGradInput(input: Activity, gradOutput: Activity): Activity = {
+    try{
+      if (graphMeta.variables.isEmpty) {
+        generateZeroGrad(input)
+      } else {
+
+        val runner = sess.runner()
+
+        require(activityLength(input) == inputTypes.length,
+          s"require ${inputTypes.length} inputs, but ${activityLength(input)} given. " +
+            s"The inputs are ${inputNames.toSeq}")
+
+        val gradOutputTFTensors = new Array[TTensor[_]](outputNames.length)
+        for (i <- gradOutputTFTensors.indices) {
+          gradOutputTFTensors(i) = tensorManager.createTFTensor()
+        }
+        activity2TFTensors(gradOutput, outputTypes, gradOutputTFTensors)
+
+        // feed inputs
+        inputNames.zipWithIndex.foreach { case (name, idx) =>
+          runner.feed(name, inputTFTensors(idx))
+        }
+
+        // feed gradOutputs
+        outputNames.map(addGrad).zipWithIndex.foreach { case (name, idx) =>
+          runner.feed(name, gradOutputTFTensors(idx))
+        }
+
+        // feed temp tensors fetched during forward
+        val tempTensorNames = graphMeta.tempTensors.get
+        tempTensorNames.zipWithIndex.foreach{ case (name, idx) =>
+          runner.feed(name, tempTFTensors(idx))
+        }
+
+        // fetch grad inputs
+        val gradInputNames = graphMeta.gradInputs.get
+        gradInputNames.foreach(runner.fetch)
+
+        // fetch grad weights
+        val gradVariableNames = graphMeta.gradVariables.get
+        gradVariableNames.foreach(runner.fetch)
+
+        val fetches = runner.run().asScala
+        val (i, v) = fetches.splitAt(gradInputNames.length)
+
+        v.map(_.asInstanceOf[TTensor[Float]])
+          .zipWithIndex.foreach(x => gradWeightTFTensors(x._2) = x._1)
+
+        i.zipWithIndex.foreach { case (t, idx) =>
+          tf2bigdl(t.asInstanceOf[TTensor[Float]], getGradInput(idx + 1))
+        }
+
+        // clean up two feeds
+        emptyTFTensorArray(inputTFTensors)
+        emptyTFTensorArray(gradOutputTFTensors)
+
+        // clean up temp tensors
+        emptyTFTensorArray(tempTFTensors)
+
+        // clean up fetched grad inputs
+        emptyTFTensorArray(i)
+
+        // grad weights will be cleaned up after acc
+      }
+      gradInput
+    } catch {
+      case ex: _ => {
+        tensorManager.destructTFTensors()
+        gradInput
+      }
+    }
   }
 
   override def accGradParameters(input: Activity, gradOutput: Activity): Unit = {
-    this.gradWeights.zipWithIndex.map { case (gradWeight, idx) =>
-      val gradWeightBuffer = this.gradWeightsBuffer(idx)
-      val tfTensor = tensorManager.gradWeightTFTensors(idx)
-      tf2bigdl(tfTensor, gradWeightBuffer)
-      if (gradWeight.isEmpty) {
-        gradWeight.resizeAs(weights(idx))
+    try {
+      this.gradWeights.zipWithIndex.map { case (gradWeight, idx) =>
+        val gradWeightBuffer = this.gradWeightsBuffer(idx)
+        val tfTensor = gradWeightTFTensors(idx)
+        tf2bigdl(tfTensor, gradWeightBuffer)
+        if (gradWeight.isEmpty) {
+          gradWeight.resizeAs(weights(idx))
+        }
+        gradWeight.add(gradWeightBuffer)
       }
-      gradWeight.add(gradWeightBuffer)
-    }
 
-    // clean up grad weights tf tensors
-    tensorManager.emptyTFTensorArray(tensorManager.gradWeightTFTensors)
+      // clean up grad weights tf tensors
+      emptyTFTensorArray(gradWeightTFTensors)
+    } catch {
+      case ex: _ => {
+        tensorManager.destructTFTensors()
+      }
+    }
   }
 
   private def setWeights(weights: Array[Tensor[Float]]) = {
