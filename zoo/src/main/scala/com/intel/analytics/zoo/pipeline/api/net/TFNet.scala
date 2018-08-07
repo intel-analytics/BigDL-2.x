@@ -56,7 +56,7 @@ class TFNet(graphDef: TFGraphHolder,
     private var tensorList: List[TTensor[_]] = List()
 
     def createTFTensor(): TTensor[_] = {
-      val TFTensor = new TTensor[_]
+      var TFTensor : TTensor[_] = null
       tensorList = TFTensor :: tensorList
       return TFTensor
     }
@@ -264,7 +264,7 @@ class TFNet(graphDef: TFGraphHolder,
 
       output
     } catch {
-      case ex: _ => {
+      case _: Throwable => {
         tensorManager.destructTFTensors()
         output
       }
@@ -356,7 +356,7 @@ class TFNet(graphDef: TFGraphHolder,
       }
       gradInput
     } catch {
-      case ex: _ => {
+      case _: Throwable => {
         tensorManager.destructTFTensors()
         gradInput
       }
@@ -378,7 +378,7 @@ class TFNet(graphDef: TFGraphHolder,
       // clean up grad weights tf tensors
       emptyTFTensorArray(gradWeightTFTensors)
     } catch {
-      case ex: _ => {
+      case _: Throwable => {
         tensorManager.destructTFTensors()
       }
     }
