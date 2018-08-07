@@ -16,24 +16,11 @@
 
 import pytest
 from bigdl.transform.vision.image import *
-from zoo.common.nncontext import *
+from test.zoo.pipeline.utils.test_utils import ZooTestCase
 from zoo.feature.common import *
 
 
-class TestFeatureCommon():
-
-    def setup_method(self, method):
-        """ setup any state tied to the execution of the given method in a
-        class.  setup_method is invoked for every test method of a class.
-        """
-        self.sc = init_nncontext(init_spark_conf().setMaster("local[4]")
-                                 .setAppName("test feature common"))
-
-    def teardown_method(self, method):
-        """ teardown any state that was previously setup with a setup_method
-        call.
-        """
-        self.sc.stop()
+class TestFeatureCommon(ZooTestCase):
 
     def test_BigDL_adapter(self):
         new_preprocessing = BigDLAdapter(Resize(1, 1))
