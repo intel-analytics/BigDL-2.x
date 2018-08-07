@@ -532,6 +532,13 @@ average(inputs)
 
 **Scala example:**
 ```scala
+
+import com.intel.analytics.bigdl.tensor.Tensor
+import com.intel.analytics.bigdl.utils.{Shape, T}
+import com.intel.analytics.zoo.pipeline.api.keras.layers.{Input, InputLayer, Keras2Test, KerasBaseSpec}
+import com.intel.analytics.zoo.pipeline.api.keras.models.Model
+import com.intel.analytics.zoo.pipeline.api.keras.serializer.ModuleSerializationTest
+import com.intel.analytics.zoo.pipeline.api.keras2.layers.Average.average
 val input1 = Tensor[Float](3, 10).rand(0, 1)
 val input2 = Tensor[Float](3, 10).rand(1, 2)
 val input3 = Tensor[Float](3, 10).rand(2, 3)
