@@ -550,5 +550,6 @@ class TestNNClassifer():
                 if exc.errno != errno.ENOENT:  # ENOENT - no such file or directory
                     raise  # re-raise exception
 
+
 if __name__ == "__main__":
     pytest.main()

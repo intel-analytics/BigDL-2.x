@@ -40,9 +40,7 @@ class ZooTestCase(TestCase):
         sparkConf = init_spark_conf().setMaster("local[4]").setAppName("zoo test case")
         self.sc = init_nncontext(sparkConf)
         self.sc.setLogLevel("ERROR")
-
         self.sqlContext = SQLContext(self.sc)
-        init_engine()
 
     def teardown_method(self, method):
         """
