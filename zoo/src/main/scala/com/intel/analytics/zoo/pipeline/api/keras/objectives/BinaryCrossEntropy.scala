@@ -35,7 +35,7 @@ import com.intel.analytics.bigdl.tensor.{DenseTensorApply, Tensor, TensorFunc4, 
  * @param weights weights over the input dimension
  * @param sizeAverage avgerage or not in each mini-batch
  */
-class BinaryCrossentropy[@specialized(Float, Double) T: ClassTag](
+class BinaryCrossEntropy[@specialized(Float, Double) T: ClassTag](
   val weights: Tensor[T] = null, sizeAverage: Boolean = true)
 (implicit ev: TensorNumeric[T]) extends TensorLossFunction[T]{
 
@@ -43,10 +43,10 @@ class BinaryCrossentropy[@specialized(Float, Double) T: ClassTag](
     BCECriterion[T](weights, sizeAverage)
 }
 
-object BinaryCrossentropy {
+object BinaryCrossEntropy {
   def apply[@specialized(Float, Double) T: ClassTag](
       weights: Tensor[T] = null,
-      sizeAverage: Boolean = true)(implicit ev: TensorNumeric[T]): BinaryCrossentropy[T] = {
-    new BinaryCrossentropy[T](weights, sizeAverage)
+      sizeAverage: Boolean = true)(implicit ev: TensorNumeric[T]): BinaryCrossEntropy[T] = {
+    new BinaryCrossEntropy[T](weights, sizeAverage)
   }
 }

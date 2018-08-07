@@ -18,7 +18,7 @@ package com.intel.analytics.zoo.pipeline.api.keras.objectives
 
 import com.intel.analytics.zoo.pipeline.api.keras.layers.KerasBaseSpec
 
-class BinaryCrossentropySpec extends KerasBaseSpec{
+class BinaryCrossEntropySpec extends KerasBaseSpec{
 
   "BinaryCrossentropy loss" should "be the same as Keras binary_crossentropy" in {
     val kerasCode =
@@ -29,7 +29,7 @@ class BinaryCrossentropySpec extends KerasBaseSpec{
         |input = np.random.random([2, 3, 4])
         |Y = np.random.random([2, 3, 4])
       """.stripMargin
-    val loss = BinaryCrossentropy[Float]()
+    val loss = BinaryCrossEntropy[Float]()
     checkOutputAndGradForLoss(loss, kerasCode)
   }
 }

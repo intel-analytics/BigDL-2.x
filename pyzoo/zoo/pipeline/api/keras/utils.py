@@ -15,9 +15,8 @@
 #
 
 from bigdl.optim.optimizer import *
-from bigdl.nn.criterion import *
-from zoo.pipeline.api.keras import objectives, metrics
-
+from zoo.pipeline.api.keras.objectives import *
+from zoo.pipeline.api.keras import metrics
 
 def to_bigdl_optim_method(optimizer):
     optimizer = optimizer.lower()
@@ -40,31 +39,31 @@ def to_bigdl_optim_method(optimizer):
 def to_bigdl_criterion(criterion):
     criterion = criterion.lower()
     if criterion == "categorical_crossentropy":
-        return objectives.CategoricalCrossEntropy()
+        return CategoricalCrossEntropy()
     elif criterion == "mse" or criterion == "mean_squared_error":
-        return objectives.MSECriterion()
+        return MeanSquaredError()
     elif criterion == "binary_crossentropy":
-        return objectives.BCECriterion()
+        return BinaryCrossEntropy()
     elif criterion == "mae" or criterion == "mean_absolute_error":
-        return objectives.mae()
+        return mae()
     elif criterion == "hinge":
-        return objectives.MarginCriterion()
+        return Hinge()
     elif criterion == "mean_absolute_percentage_error" or criterion == "mape":
-        return objectives.MeanAbsolutePercentageCriterion()
+        return MeanAbsolutePercentage()
     elif criterion == "mean_squared_logarithmic_error" or criterion == "msle":
-        return objectives.MeanSquaredLogarithmicCriterion()
+        return MeanSquaredLogarithmic()
     elif criterion == "squared_hinge":
-        return objectives.MarginCriterion(squared=True)
+        return SquaredHinge(squared=True)
     elif criterion == "sparse_categorical_crossentropy":
-        return objectives.SparseCategoricalCrossEntropy()
+        return SparseCategoricalCrossEntropy()
     elif criterion == "kullback_leibler_divergence" or criterion == "kld":
-        return objectives.KullbackLeiblerDivergenceCriterion()
+        return KullbackLeiblerDivergence()
     elif criterion == "poisson":
-        return objectives.PoissonCriterion()
+        return Poisson()
     elif criterion == "cosine_proximity" or criterion == "cosine":
-        return objectives.CosineProximityCriterion()
+        return CosineProximity()
     else:
-        raise objectives.TypeError("Unsupported loss: %s" % criterion)
+        raise TypeError("Unsupported loss: %s" % criterion)
 
 
 def to_bigdl_metric(metric):

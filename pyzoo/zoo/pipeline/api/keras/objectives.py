@@ -107,7 +107,7 @@ class MeanAbsoluteError(LossFunction):
 mae = MAE = MeanAbsoluteError
 
 
-class BinaryCrossentropy(LossFunction):
+class BinaryCrossEntropy(LossFunction):
     """
     A loss that measures the Binary Cross Entropy between the target and the output
 
@@ -117,25 +117,25 @@ class BinaryCrossentropy(LossFunction):
                 summed for each mini-batch.
     weights: weights over the input dimension
 
-    >>> metrics = BinaryCrossentropy()
-    creating: createZooKerasBinaryCrossentropy
+    >>> metrics = BinaryCrossEntropy()
+    creating: createZooKerasBinaryCrossEntropy
     """
     def __init__(self, weights=None, size_average=True, bigdl_type="float"):
-        super(BinaryCrossentropy, self).__init__(None, bigdl_type,
+        super(BinaryCrossEntropy, self).__init__(None, bigdl_type,
                                                  JTensor.from_ndarray(weights),
                                                  size_average)
 
 
-class CategoricalCrossentropy(LossFunction):
+class CategoricalCrossEntropy(LossFunction):
     """
     This is same with cross entropy criterion, except the target tensor is a one-hot tensor
 
-    >>> metrics = CategoricalCrossentropy()
-    creating: createZooKerasCategoricalCrossentropy
+    >>> metrics = CategoricalCrossEntropy()
+    creating: createZooKerasCategoricalCrossEntropy
     """
 
     def __init__(self, bigdl_type="float"):
-        super(CategoricalCrossentropy, self).__init__(None, bigdl_type)
+        super(CategoricalCrossEntropy, self).__init__(None, bigdl_type)
 
 
 class CosineProximity(LossFunction):
