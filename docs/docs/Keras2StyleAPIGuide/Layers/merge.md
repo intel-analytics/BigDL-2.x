@@ -539,6 +539,7 @@ import com.intel.analytics.zoo.pipeline.api.keras.layers.{Input, InputLayer, Ker
 import com.intel.analytics.zoo.pipeline.api.keras.models.Model
 import com.intel.analytics.zoo.pipeline.api.keras.serializer.ModuleSerializationTest
 import com.intel.analytics.zoo.pipeline.api.keras2.layers.Average.average
+
 val input1 = Tensor[Float](3, 10).rand(0, 1)
 val input2 = Tensor[Float](3, 10).rand(1, 2)
 val input3 = Tensor[Float](3, 10).rand(2, 3)
