@@ -30,7 +30,7 @@ import com.intel.analytics.bigdl.transform.vision.image.ImageFeature
  */
 class ImageFeature3D extends ImageFeature {
 
-  def this(tensor: Tensor[Float], label: Any, uri: String = null) {
+  def this(tensor: Tensor[Float], label: Any = null, uri: String = null) {
     this
     update(ImageFeature.imageTensor, tensor)
     update(ImageFeature.size, tensor.size)

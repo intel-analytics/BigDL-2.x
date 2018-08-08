@@ -20,7 +20,7 @@ class Crop3DSpec extends FlatSpec with Matchers{
     val cropper = Crop3D(start, patchSize)
     val output = cropper.transform(image)
     val result = input.narrow(1, 10, 21).narrow(2, 20, 31).narrow(3, 20, 41)
-      .clone().storage().array()
+      .storage().array()
     output[Tensor[Float]](ImageFeature.imageTensor).storage().array() should be(result)
   }
 
@@ -32,6 +32,8 @@ class Crop3DSpec extends FlatSpec with Matchers{
     val image = ImageFeature3D(input)
     val cropper = RandomCrop3D(20, 30, 40)
     val output = cropper.transform(image)
-    assert(output[Tensor[Float]](ImageFeature.imageTensor).storage().array().length == 20 *30*40)
+    assert(output[Tensor[Float]](ImageFeature.imageTensor).size(1) == 20 )
+    assert(output[Tensor[Float]](ImageFeature.imageTensor).size(2) == 30)
+    assert(output[Tensor[Float]](ImageFeature.imageTensor).size(3) == 40)
   }
 }

@@ -67,7 +67,7 @@ private[zoo] abstract class ImageProcessing3D extends ImageProcessing {
       if (!feature.isValid) return feature
       // change image to tensor
       val tensor = feature.asInstanceOf[ImageFeature3D][Tensor[Float]](ImageFeature.imageTensor)
-      val out = transformTensor(tensor).clone()
+      val out = transformTensor(tensor)
       feature.update(ImageFeature.imageTensor, out)
       feature.update(ImageFeature.size, out.size())
     } catch {
