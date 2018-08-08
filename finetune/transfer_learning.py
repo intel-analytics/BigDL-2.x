@@ -17,7 +17,6 @@
 import re
 
 from bigdl.nn.criterion import CrossEntropyCriterion
-from pyspark import SparkConf
 from pyspark.ml import Pipeline
 from pyspark.sql.functions import col, udf
 from pyspark.sql.types import DoubleType, StringType
@@ -36,9 +35,7 @@ if __name__ == "__main__":
         print("Need parameters: <modelPath> <imagePath>")
         exit(-1)
 
-    sparkConf = SparkConf()\
-        .setAppName("ImageTransferLearningExample")
-    sc = init_nncontext(sparkConf)
+    sc = init_nncontext("ImageTransferLearningExample")
 
     model_path = sys.argv[1]
     image_path = sys.argv[2] + '/*/*'
