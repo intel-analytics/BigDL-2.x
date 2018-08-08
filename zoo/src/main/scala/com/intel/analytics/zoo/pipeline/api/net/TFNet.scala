@@ -54,9 +54,21 @@ class TFNet(graphDef: TFGraphHolder,
 
   class ResourceManager() extends java.io.Serializable {
     private var tensorList: List[TTensor[_]] = List()
-
-    def createTFTensor(t : TTensor[_]) = {
-      tensorList = t :: tensorList
+    var TFTensor : TTensor[_] = null
+    def createTFTensor(shape: Array[Long], buffer: Any): TTensor[_] = {
+      if (buffer.isInstanceOf[FloatBuffer]) {
+        TFTensor = TTensor.create(shape, buffer.asInstanceOf[FloatBuffer])
+      } else if (buffer.isInstanceOf[ByteBuffer]) {
+        TFTensor = TTensor.create(classOf[UInt8], shape, buffer.asInstanceOf[ByteBuffer])
+      } else if (buffer.isInstanceOf[IntBuffer]) {
+        TFTensor = TTensor.create(shape, buffer.asInstanceOf[IntBuffer])
+      } else if (buffer.isInstanceOf[LongBuffer]) {
+        TFTensor = TTensor.create(shape, buffer.asInstanceOf[LongBuffer])
+      } else if (buffer.isInstanceOf[DoubleBuffer]) {
+        TFTensor = TTensor.create(shape, buffer.asInstanceOf[DoubleBuffer])
+      }
+      tensorList = TFTensor :: tensorList
+      return TFTensor
     }
 
     def destructTFTensors() = {
@@ -197,7 +209,6 @@ class TFNet(graphDef: TFGraphHolder,
           while (i < variableNames.length) {
             if (weightTFTensors(i) == null) {
               val tensor = bigdl2Tf(weights(i), DataType.FLOAT)
-              tensorManager.createTFTensor(tensor)
               weightTFTensors(i) = tensor
             }
             i += 1
@@ -209,7 +220,6 @@ class TFNet(graphDef: TFGraphHolder,
               weightTFTensors(i).close()
             }
             val tensor = bigdl2Tf(weights(i), DataType.FLOAT)
-            tensorManager.createTFTensor(tensor)
             weightTFTensors(i) = tensor
             i += 1
           }
@@ -237,7 +247,6 @@ class TFNet(graphDef: TFGraphHolder,
         } else {
           // temp tensors used by backward if any
           tempTFTensors(idx - outputNames.length) = t
-          tensorManager.createTFTensor(tempTFTensors(idx - outputNames.length))
         }
       }
       if (!this.isTraining()) {
@@ -448,22 +457,23 @@ class TFNet(graphDef: TFGraphHolder,
 
     if (dataType == DataType.FLOAT) {
       val buffer = FloatBuffer.wrap(arr, offset, length)
-      TTensor.create(shape, buffer)
+      tensorManager.createTFTensor(shape, buffer)
     } else if (dataType == DataType.UINT8) {
       val buffer = ByteBuffer.wrap(TFNet.floatToUint8(arr), offset, length)
-      TTensor.create(classOf[UInt8], shape, buffer)
+      tensorManager.createTFTensor(shape, buffer)
     } else if (dataType == DataType.INT32) {
       val buffer = IntBuffer.wrap(TFNet.floatToInt(arr), offset, length)
-      TTensor.create(shape, buffer)
+      tensorManager.createTFTensor(shape, buffer)
     } else if (dataType == DataType.INT64) {
       val buffer = LongBuffer.wrap(TFNet.floatToLong(arr), offset, length)
-      TTensor.create(shape, buffer)
+      tensorManager.createTFTensor(shape, buffer)
     } else if (dataType == DataType.DOUBLE) {
       val buffer = DoubleBuffer.wrap(TFNet.floatToDouble(arr), offset, length)
-      TTensor.create(shape, buffer)
+      tensorManager.createTFTensor(shape, buffer)
     } else {
       throw new Exception(s"data type ${dataType} are not supported")
     }
+
 
   }
 
@@ -488,7 +498,6 @@ class TFNet(graphDef: TFGraphHolder,
       require(tfTensors.length == 1, "activity and tfTensors size does not equal," +
         s" activity length is 1 tfTensors length is ${tfTensors.length}")
       val tfTensor = bigdl2Tf(input.toTensor[Float], types.head)
-      tensorManager.createTFTensor(tfTensor)
       if (tfTensors(0) != null) {
         tfTensors(0).close()
       }
@@ -500,7 +509,6 @@ class TFNet(graphDef: TFGraphHolder,
       var i = 1
       while (i <= t.length()) {
         val tfTensor = bigdl2Tf(t[Tensor[Float]](i), types(i-1))
-        tensorManager.createTFTensor(tfTensor)
         if (tfTensors(i -1) != null) {
           tfTensors(i - 1).close()
         }
