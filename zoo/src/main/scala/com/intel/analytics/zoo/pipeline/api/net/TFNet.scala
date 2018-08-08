@@ -55,10 +55,8 @@ class TFNet(graphDef: TFGraphHolder,
   class ResourceManager() extends java.io.Serializable {
     private var tensorList: List[TTensor[_]] = List()
 
-    def createTFTensor(): TTensor[_] = {
-      var TFTensor : TTensor[_] = null
-      tensorList = TFTensor :: tensorList
-      return TFTensor
+    def createTFTensor(t : TTensor[_]) = {
+      tensorList = t :: tensorList
     }
 
     def destructTFTensors() = {
@@ -168,26 +166,15 @@ class TFNet(graphDef: TFGraphHolder,
     val sess = new Session(graphDef.tfGraph, config.map(_.toByte))
     sess
   }
+  @transient
+  private lazy val inputTFTensors = new Array[TTensor[_]](inputNames.length)
+  @transient
+  private lazy val weightTFTensors = new Array[TTensor[_]](weights.length)
+  @transient
+  private lazy val tempTFTensors = new Array[TTensor[_]](graphMeta.tempTensors.map(_.length).getOrElse(0))
+  @transient
+  private lazy val gradWeightTFTensors = new Array[TTensor[_]](gradWeights.length)
 
-  private val inputTFTensors = new Array[TTensor[_]](inputNames.length)
-  for (i <- inputTFTensors.indices) {
-    inputTFTensors(i) = tensorManager.createTFTensor()
-  }
-
-  private val weightTFTensors = new Array[TTensor[_]](weights.length)
-  for (i <- weightTFTensors.indices) {
-    weightTFTensors(i) = tensorManager.createTFTensor()
-  }
-
-  private val tempTFTensors = new Array[TTensor[_]](graphMeta.tempTensors.map(_.length).getOrElse(0))
-  for (i <- tempTFTensors.indices) {
-    tempTFTensors(i) = tensorManager.createTFTensor()
-  }
-
-  private val gradWeightTFTensors = new Array[TTensor[_]](gradWeights.length)
-  for (i <- gradWeightTFTensors.indices) {
-    gradWeightTFTensors(i) = tensorManager.createTFTensor()
-  }
   override def updateOutput(input: Activity): Activity = {
     try {
       val runner = sess.runner()
@@ -210,6 +197,7 @@ class TFNet(graphDef: TFGraphHolder,
           while (i < variableNames.length) {
             if (weightTFTensors(i) == null) {
               val tensor = bigdl2Tf(weights(i), DataType.FLOAT)
+              tensorManager.createTFTensor(tensor)
               weightTFTensors(i) = tensor
             }
             i += 1
@@ -221,6 +209,7 @@ class TFNet(graphDef: TFGraphHolder,
               weightTFTensors(i).close()
             }
             val tensor = bigdl2Tf(weights(i), DataType.FLOAT)
+            tensorManager.createTFTensor(tensor)
             weightTFTensors(i) = tensor
             i += 1
           }
@@ -248,6 +237,7 @@ class TFNet(graphDef: TFGraphHolder,
         } else {
           // temp tensors used by backward if any
           tempTFTensors(idx - outputNames.length) = t
+          tensorManager.createTFTensor(tempTFTensors(idx - outputNames.length))
         }
       }
       if (!this.isTraining()) {
@@ -303,9 +293,7 @@ class TFNet(graphDef: TFGraphHolder,
             s"The inputs are ${inputNames.toSeq}")
 
         val gradOutputTFTensors = new Array[TTensor[_]](outputNames.length)
-        for (i <- gradOutputTFTensors.indices) {
-          gradOutputTFTensors(i) = tensorManager.createTFTensor()
-        }
+
         activity2TFTensors(gradOutput, outputTypes, gradOutputTFTensors)
 
         // feed inputs
@@ -500,6 +488,7 @@ class TFNet(graphDef: TFGraphHolder,
       require(tfTensors.length == 1, "activity and tfTensors size does not equal," +
         s" activity length is 1 tfTensors length is ${tfTensors.length}")
       val tfTensor = bigdl2Tf(input.toTensor[Float], types.head)
+      tensorManager.createTFTensor(tfTensor)
       if (tfTensors(0) != null) {
         tfTensors(0).close()
       }
@@ -511,6 +500,7 @@ class TFNet(graphDef: TFGraphHolder,
       var i = 1
       while (i <= t.length()) {
         val tfTensor = bigdl2Tf(t[Tensor[Float]](i), types(i-1))
+        tensorManager.createTFTensor(tfTensor)
         if (tfTensors(i -1) != null) {
           tfTensors(i - 1).close()
         }
