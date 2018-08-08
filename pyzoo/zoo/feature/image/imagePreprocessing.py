@@ -85,15 +85,20 @@ class ImageChannelNormalize(ImagePreprocessing):
                                                     mean_b, std_r, std_g, std_b)
 
 
-class ImageScalePixelValue(ImagePreprocessing):
+class ImageNormalize(ImagePreprocessing):
     """
-    Pixel level scale value, data(i) = data(i) / scale
-    :param scale_r std value in R channel
-    :param scale_g std value in G channel
-    :param scale_b std value in B channel
+    Normalizes the norm or value range, similar to opencv::normalize
+    https://docs.opencv.org/ref/master/d2/de8/group__core__array.html#ga87eef7ee3970f86906d69a92cbf064bd
+    :param min lower range boundary in case of the range normalization or
+    norm value to normalize
+    :param max upper range boundary in case of the range normalization.
+    It is not used for the norm normalization.
+    :param norm_type normalization type, see opencv:NormTypes.
+    https://docs.opencv.org/ref/master/d2/de8/group__core__array.html#gad12cefbcb5291cf958a85b4b67b6149f
+    Default Core.NORM_MINMAX
     """
-    def __init__(self, scale_r=255.0, scale_g=255.0, scale_b=255.0, bigdl_type="float"):
-        super(ImageScalePixelValue, self).__init__(bigdl_type, scale_r, scale_g, scale_b)
+    def __init__(self, min, max, norm_type=32, bigdl_type="float"):
+        super(ImageNormalize, self).__init__(bigdl_type, min, max, norm_type)
 
 
 class ImageMatToTensor(ImagePreprocessing):

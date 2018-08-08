@@ -15,14 +15,14 @@
  */
 package com.intel.analytics.zoo.feature
 
+import com.intel.analytics.bigdl.nn.abstractnn.DataFormat
+import com.intel.analytics.bigdl.tensor.Tensor
+import com.intel.analytics.bigdl.transform.vision.image.ImageFeature
 import com.intel.analytics.zoo.common.NNContext
 import com.intel.analytics.zoo.feature.common.{BigDLAdapter, Preprocessing}
-import com.intel.analytics.zoo.feature.image.{ImageBytesToMat, ImageResize, ImageSet}
-
+import com.intel.analytics.zoo.feature.image._
 import org.apache.spark.{SparkConf, SparkContext}
-
 import org.opencv.imgcodecs.Imgcodecs
-
 import org.scalatest.{BeforeAndAfter, FlatSpec, Matchers}
 
 
@@ -60,6 +60,22 @@ class FeatureSpec extends FlatSpec with Matchers with BeforeAndAfter {
     require(imf.getWidth() == 200)
   }
 
+  "ImageMatToTensor" should "work with both NCHW and NHWC" in {
+    val resource = getClass.getClassLoader.getResource("pascal/")
+    val data = ImageSet.read(resource.getFile)
+    val nhwc = (data -> ImageMatToTensor[Float](format = DataFormat.NHWC)).toLocal()
+      .array.head.apply[Tensor[Float]](ImageFeature.imageTensor)
+    require(nhwc.isContiguous() == true)
+
+    val data2 = ImageSet.read(resource.getFile)
+    require(data2.toLocal().array.head.apply[Tensor[Float]](ImageFeature.imageTensor) == null)
+    val nchw = (data2 -> ImageMatToTensor[Float]()).toLocal()
+      .array.head.apply[Tensor[Float]](ImageFeature.imageTensor)
+
+    require(nchw.transpose(1, 2).transpose(2, 3).contiguous().storage().array().deep
+      == nhwc.storage().array().deep)
+  }
+
   "ImageBytesToMat" should "work with png and jpg" in {
     val path = getClass.getClassLoader.getResource("png").getFile
     val image = ImageSet.read(path, sc)
@@ -72,5 +88,13 @@ class FeatureSpec extends FlatSpec with Matchers with BeforeAndAfter {
     val (height2, width2, channel2) = imfPng.opencvMat().shape()
     require(height == height2 && width == width2)
     require(channel == 3 && channel2 == 4)
+  }
+
+  "ImageNormalize" should "work with min max normType" in {
+    val image = ImageSet.read(resource.getFile, sc)
+    val jpg = image -> ImageNormalize(0, 1) -> ImageMatToFloats()
+
+    val imfJpg = jpg.toDistributed().rdd.collect().head
+    imfJpg.floats().foreach{ t => assert(t>=0 && t<=1.0)}
   }
 }

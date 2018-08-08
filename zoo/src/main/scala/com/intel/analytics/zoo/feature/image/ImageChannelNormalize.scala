@@ -15,7 +15,9 @@
  */
 package com.intel.analytics.zoo.feature.image
 
+import com.intel.analytics.bigdl.transform.vision.image.opencv.OpenCVMat
 import com.intel.analytics.bigdl.transform.vision.image.{ImageFeature, augmentation}
+import org.opencv.core.Core
 
 /**
  * image channel normalize
@@ -56,35 +58,33 @@ object ImageChannelNormalize {
 }
 
 /**
- * Pixel level scale value, data(i) = data(i) / scale
+ * Normalizes the norm or value range, similar to opencv::normalize
+ * https://docs.opencv.org/ref/master/d2/de8/group__core__array.html
+ * #ga87eef7ee3970f86906d69a92cbf064bd
  *
- * @param scale pixel level scale, following H * W * C order
+ * @param min lower range boundary in case of the range normalization or
+ *            norm value to normalize
+ * @param max upper range boundary in case of the range normalization;
+ *            it is not used for the norm normalization.
+ * @param normType normalization type, see opencv:NormTypes.
+ *           https://docs.opencv.org/ref/master/d2/de8/group__core__array.html
+ *           #gad12cefbcb5291cf958a85b4b67b6149f
+ *           Default Core.NORM_MINMAX
  */
-class ImageScalePixelValue(scale: Array[Float]) extends ImageProcessing {
-  val means = Array.fill[Float](scale.length)(0)
-  private val internalCrop = new augmentation.ChannelNormalize(means, scale)
-  override def apply(prev: Iterator[ImageFeature]): Iterator[ImageFeature] = {
-    internalCrop.apply(prev)
-  }
-
+class ImageNormalize(min: Double, max: Double, normType: Int = Core.NORM_MINMAX)
+  extends ImageProcessing {
   override def transformMat(feature: ImageFeature): Unit = {
-    internalCrop.transformMat(feature)
+    ImageNormalize.transform(feature.opencvMat(), feature.opencvMat(), min, max, normType)
   }
 }
 
-object ImageScalePixelValue {
-  /**
-   * image pixel level scale value, data(i) = data(i) / scale
-   *
-   * @param scaleR  scale value in R channel
-   * @param scaleG  scale value in G channel
-   * @param scaleB  scale value in B channel
-   */
-  def apply(scaleR: Float = 255, scaleG: Float = 255, scaleB: Float = 255): ImageScalePixelValue = {
-    new ImageScalePixelValue(Array(scaleR, scaleG, scaleB))
+object ImageNormalize {
+  def apply(min: Double, max: Double, normType: Int = Core.NORM_MINMAX): ImageNormalize = {
+    new ImageNormalize(min, max, normType)
   }
 
-  def apply(scaled: Float): ImageScalePixelValue = {
-    new ImageScalePixelValue(Array(scaled))
+  def transform(input: OpenCVMat, output: OpenCVMat, min: Double, max: Double, normType: Int)
+  : Unit = {
+    Core.normalize(input, output, min, max, normType)
   }
 }
