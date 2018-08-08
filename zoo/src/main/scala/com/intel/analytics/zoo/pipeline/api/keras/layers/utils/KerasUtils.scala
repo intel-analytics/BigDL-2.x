@@ -139,7 +139,7 @@ object KerasUtils {
   def toBigDLCriterion[T : ClassTag](loss: String)
     (implicit ev: TensorNumeric[T]): Criterion[T] = {
     loss.toLowerCase() match {
-      case "binary_crossentropy" => BinaryCrossentropy[T]()
+      case "binary_crossentropy" => BinaryCrossEntropy[T]()
       case "categorical_crossentropy" =>
         com.intel.analytics.zoo.pipeline.api.keras.objectives.CategoricalCrossEntropy[T]()
       case "mse" => MeanSquaredError[T]()
@@ -147,7 +147,7 @@ object KerasUtils {
       case "mae" => MeanAbsoluteError[T]()
       case "mean_absolute_error" => MeanAbsoluteError[T]()
       case "hinge" => Hinge[T]()
-      case "mape" => MeanAbsolutePercentageCriterion[T]()
+      case "mape" => MeanAbsolutePercentageError[T]()
       case "mean_absolute_percentage_error" => MeanAbsolutePercentageError[T]()
       case "msle" => MeanSquaredLogarithmicError[T]()
       case "mean_squared_logarithmic_error" => MeanSquaredLogarithmicError[T]()

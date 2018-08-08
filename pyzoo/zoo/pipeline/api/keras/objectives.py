@@ -106,11 +106,6 @@ class MeanAbsoluteError(LossFunction):
 
 mae = MAE = MeanAbsoluteError
 
-
-mse = MeanSquaredError
-mape = MeanAbsolutePercentageError
-msle = MeanSquaredLogarithmicError
-
 class BinaryCrossEntropy(LossFunction):
     """
     A loss that measures the Binary Cross Entropy between the target and the output
@@ -204,6 +199,7 @@ class MeanAbsolutePercentageError(LossFunction):
         super(MeanAbsolutePercentageError, self).__init__(None, bigdl_type)
 
 mape = MeanAbsolutePercentageError
+MAPE = MeanAbsolutePercentageError
 
 
 class MeanSquaredError(LossFunction):
@@ -224,6 +220,7 @@ class MeanSquaredError(LossFunction):
                                                 size_average)
 
 mse = MeanSquaredError
+MSE = MeanSquaredError
 
 
 class MeanSquaredLogarithmicError(LossFunction):
@@ -240,6 +237,7 @@ class MeanSquaredLogarithmicError(LossFunction):
         super(MeanSquaredLogarithmicError, self).__init__(None, bigdl_type)
 
 msle = MeanSquaredLogarithmicError
+MSLE = MeanSquaredLogarithmicError
 
 
 class Poisson(LossFunction):
