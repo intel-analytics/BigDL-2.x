@@ -107,6 +107,10 @@ class MeanAbsoluteError(LossFunction):
 mae = MAE = MeanAbsoluteError
 
 
+mse = MeanSquaredError
+mape = MeanAbsolutePercentageError
+msle = MeanSquaredLogarithmicError
+
 class BinaryCrossEntropy(LossFunction):
     """
     A loss that measures the Binary Cross Entropy between the target and the output
@@ -145,7 +149,6 @@ class CosineProximity(LossFunction):
         x'(i) = x(i) / sqrt(max(sum(x(i)^2), 1e-12))
         y'(i) = y(i) / sqrt(max(sum(x(i)^2), 1e-12))
         cosine_proximity(x, y) = mean(-1 * x'(i) * y'(i))
-        Both batch and un-batched inputs are supported
 
     >>> metrics = CosineProximity()
     creating: createZooKerasCosineProximity
@@ -157,14 +160,14 @@ class CosineProximity(LossFunction):
 
 class Hinge(LossFunction):
     """
-    Creates a criterion that optimizes a two-class classification (squared)
+    Creates a criterion that optimizes a two-class classification
     hinge loss (margin-based loss) between input x (a Tensor of dimension 1) and output y.
-    When margin = 1, sizeAverage = True and squared = False,
-    this is the same as hinge loss in keras;
 
     # Arguments:
     margin: if unspecified, is by default 1.
-    size_average: whether to average the loss
+    size_average: Boolean. Whether losses are averaged over observations for each
+                  mini-batch. Default is True. If False, the losses are instead
+                  summed for each mini-batch.
 
     >>> metrics = Hinge()
     creating: createZooKerasHinge
@@ -176,7 +179,6 @@ class Hinge(LossFunction):
 
 class KullbackLeiblerDivergence(LossFunction):
     """
-    This method is same as `kullback_leibler_divergence` loss in keras.
     Loss calculated as:y_true = K.clip(y_true, K.epsilon(), 1)
     y_pred = K.clip(y_pred, K.epsilon(), 1)
     and output K.sum(y_true * K.log(y_true / y_pred), axis=-1)
@@ -191,10 +193,8 @@ class KullbackLeiblerDivergence(LossFunction):
 
 class MeanAbsolutePercentageError(LossFunction):
     """
-    This method is same as `mean_absolute_percentage_error` loss in keras.
     It caculates diff = K.abs((y - x) / K.clip(K.abs(y), K.epsilon(), Double.MaxValue))
     and return 100 * K.mean(diff) as outpout
-    Here, the x and y can have or not have a batch.
 
     >>> metrics = MeanAbsolutePercentageError()
     creating: createZooKerasMeanAbsolutePercentageError
@@ -202,6 +202,8 @@ class MeanAbsolutePercentageError(LossFunction):
 
     def __init__(self, bigdl_type="float"):
         super(MeanAbsolutePercentageError, self).__init__(None, bigdl_type)
+
+mape = MeanAbsolutePercentageError
 
 
 class MeanSquaredError(LossFunction):
@@ -221,22 +223,23 @@ class MeanSquaredError(LossFunction):
         super(MeanAbsoluteError, self).__init__(None, bigdl_type,
                                                 size_average)
 
+mse = MeanSquaredError
+
 
 class MeanSquaredLogarithmicError(LossFunction):
     """
-    This method is same as `mean_squared_logarithmic_error` loss in keras.
     It calculates:
     first_log = K.log(K.clip(y, K.epsilon(), Double.MaxValue) + 1.)
     second_log = K.log(K.clip(x, K.epsilon(), Double.MaxValue) + 1.)
     and output K.mean(K.square(first_log - second_log))
-    Here, the x and y can have or not have a batch.
 
     >>> metrics = MeanSquaredLogarithmicError()
     creating: createZooKerasMeanSquaredLogarithmicError
     """
-
     def __init__(self, bigdl_type="float"):
         super(MeanSquaredLogarithmicError, self).__init__(None, bigdl_type)
+
+msle = MeanSquaredLogarithmicError
 
 
 class Poisson(LossFunction):
@@ -255,14 +258,14 @@ class Poisson(LossFunction):
 class SquaredHinge(LossFunction):
     """
     Creates a criterion that optimizes a two-class classification
-    (squared) hinge loss (margin-based loss)
+    squared hinge loss (margin-based loss)
     between input x (a Tensor of dimension 1) and output y.
-    When margin = 1, sizeAverage = False and squared = True,
-    this is the same as squared_hinge loss in keras.
 
     # Arguments:
     margin: if unspecified, is by default 1.
-    size_average: whether to average the loss
+    size_average: Boolean. Whether losses are averaged over observations for each
+                  mini-batch. Default is True. If False, the losses are instead
+                  summed for each mini-batch.
 
     >>> metrics = SquaredHinge()
     creating: createZooKerasSquaredHinge

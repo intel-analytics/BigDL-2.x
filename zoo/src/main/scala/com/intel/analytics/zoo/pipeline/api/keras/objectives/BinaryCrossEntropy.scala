@@ -33,7 +33,9 @@ import com.intel.analytics.bigdl.tensor.{DenseTensorApply, Tensor, TensorFunc4, 
  * dimensions. However, if the field sizeAverage is set to false, the losses are instead summed.
  *
  * @param weights weights over the input dimension
- * @param sizeAverage avgerage or not in each mini-batch
+ * @param sizeAverage Boolean. Whether losses are averaged over observations for each
+                  mini-batch. Default is True. If False, the losses are instead
+                  summed for each mini-batch.
  */
 class BinaryCrossEntropy[@specialized(Float, Double) T: ClassTag](
   val weights: Tensor[T] = null, sizeAverage: Boolean = true)

@@ -23,7 +23,6 @@ import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric
 
 import scala.reflect.ClassTag
 /**
- * This class is same as `Poisson` loss in keras.
  * Loss calculated as:
  * K.mean(y_pred - y_true * K.log(y_pred + K.epsilon()), axis=-1)
  */

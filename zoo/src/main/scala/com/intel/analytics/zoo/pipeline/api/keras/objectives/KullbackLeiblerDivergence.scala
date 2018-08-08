@@ -24,7 +24,6 @@ import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric
 import scala.reflect.ClassTag
 
 /**
- * This method is same as `kullback_leibler_divergence` loss in keras.
  * Loss calculated as:
  * y_true = K.clip(y_true, K.epsilon(), 1)
  * y_pred = K.clip(y_pred, K.epsilon(), 1)

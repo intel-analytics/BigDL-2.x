@@ -51,9 +51,9 @@ def to_bigdl_criterion(criterion):
     elif criterion == "mean_absolute_percentage_error" or criterion == "mape":
         return MeanAbsolutePercentage()
     elif criterion == "mean_squared_logarithmic_error" or criterion == "msle":
-        return MeanSquaredLogarithmic()
+        return MeanSquaredLogarithmicError()
     elif criterion == "squared_hinge":
-        return SquaredHinge(squared=True)
+        return SquaredHinge()
     elif criterion == "sparse_categorical_crossentropy":
         return SparseCategoricalCrossEntropy()
     elif criterion == "kullback_leibler_divergence" or criterion == "kld":

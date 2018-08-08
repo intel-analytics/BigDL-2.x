@@ -22,11 +22,10 @@ import com.intel.analytics.bigdl.tensor.{DenseTensorApply, Tensor, TensorFunc6}
 import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric
 
 import scala.reflect.ClassTag
+
 /**
- * This method is same as `mean_absolute_percentage_error` loss in keras.
  * It caculates diff = K.abs((y - x) / K.clip(K.abs(y), K.epsilon(), Double.MaxValue))
  * and return 100 * K.mean(diff) as outpout
- * Here, the x and y can have or not have a batch.
  */
 
 

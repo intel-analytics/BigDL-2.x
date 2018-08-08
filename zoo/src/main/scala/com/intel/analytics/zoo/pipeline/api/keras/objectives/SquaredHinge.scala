@@ -22,13 +22,13 @@ import com.intel.analytics.bigdl.tensor.Tensor
 
 import scala.reflect.ClassTag
 /**
- * Creates a criterion that optimizes a two-class classification (squared)
- * hinge loss (margin-based loss) between input x (a Tensor of dimension 1) and output y.
- * When margin = 1, sizeAverage = False and squared = True, this is the same as squared_hinge loss
- * in keras.
+ * Creates a criterion that optimizes a  two-class classification
+ * squared hinge loss (margin-based loss) between input x (a Tensor of dimension 1) and output y.
  *
  * @param margin if unspecified, is by default 1.
- * @param sizeAverage whether to average the loss
+ * @param sizeAverage Boolean. Whether losses are averaged over observations for each
+  *                   mini-batch. Default is true. If false, the losses are instead
+  *                   summed for each mini-batch.
  */
 class SquaredHinge[@specialized(Float, Double) T: ClassTag]
   (val margin: Double = 1.0, val sizeAverage: Boolean = true)

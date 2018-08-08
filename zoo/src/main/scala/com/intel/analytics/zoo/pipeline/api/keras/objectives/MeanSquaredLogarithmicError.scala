@@ -24,12 +24,10 @@ import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric
 import scala.reflect.ClassTag
 
 /**
- * This method is same as `mean_squared_logarithmic_error` loss in keras.
  * It calculates:
  * first_log = K.log(K.clip(y, K.epsilon(), Double.MaxValue) + 1.)
  * second_log = K.log(K.clip(x, K.epsilon(), Double.MaxValue) + 1.)
  * and output K.mean(K.square(first_log - second_log))
- * Here, the x and y can have or not have a batch.
  */
 
 class MeanSquaredLogarithmicError[@specialized(Float, Double) T: ClassTag]()
