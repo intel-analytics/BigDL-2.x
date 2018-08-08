@@ -97,32 +97,8 @@ def init_spark_conf():
     return sparkConf
 
 
-def get_spark_context(conf=None):
-    """
-    Get the current active spark context and create one if no active instance
-    :param conf: combining bigdl configs into spark conf
-    :return: SparkContext
-    """
-    if hasattr(SparkContext, "getOrCreate"):
-        with SparkContext._lock:
-            if SparkContext._active_spark_context is None:
-                spark_conf = init_spark_conf() if conf is None else conf
-                return SparkContext.getOrCreate(spark_conf)
-            else:
-                return SparkContext.getOrCreate()
-
-    else:
-        # Might have threading issue but we can't add _lock here
-        # as it's not RLock in spark1.5;
-        if SparkContext._active_spark_context is None:
-            spark_conf = init_spark_conf() if conf is None else conf
-            return SparkContext(conf=spark_conf)
-        else:
-            return SparkContext._active_spark_context
-
-
 def check_version():
-    sc = get_spark_context()
+    sc = getOrCreateSparkContext()
     conf = sc._conf
     if conf.get("spark.analytics.zoo.versionCheck", "False").lower() == "true":
         report_warn = conf.get(
