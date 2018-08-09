@@ -18,6 +18,7 @@ from bigdl.optim.optimizer import *
 from zoo.pipeline.api.keras.objectives import *
 from zoo.pipeline.api.keras import metrics
 
+
 def to_bigdl_optim_method(optimizer):
     optimizer = optimizer.lower()
     if optimizer == "adagrad":
