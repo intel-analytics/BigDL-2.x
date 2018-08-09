@@ -34,7 +34,6 @@ class TextSetToSample extends TextTransformer {
 }
 
 object TextSetToSample {
-
   def apply(): TextSetToSample = {
     new TextSetToSample()
   }
