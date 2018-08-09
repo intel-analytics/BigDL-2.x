@@ -15,8 +15,10 @@
 #
 
 from bigdl.optim.optimizer import *
-from zoo.pipeline.api.keras.objectives import *
-from zoo.pipeline.api.keras import metrics
+from zoo.pipeline.api.keras.objectives import *
+from zoo.pipeline.api.keras import metrics
+
+
 
 def to_bigdl_optim_method(optimizer):
     optimizer = optimizer.lower()
@@ -49,7 +51,7 @@ def to_bigdl_criterion(criterion):
     elif criterion == "hinge":
         return Hinge()
     elif criterion == "mean_absolute_percentage_error" or criterion == "mape":
-        return MeanAbsolutePercentage()
+        return MeanAbsolutePercentageError()
     elif criterion == "mean_squared_logarithmic_error" or criterion == "msle":
         return MeanSquaredLogarithmicError()
     elif criterion == "squared_hinge":

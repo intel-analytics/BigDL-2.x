@@ -106,6 +106,7 @@ class MeanAbsoluteError(LossFunction):
 
 mae = MAE = MeanAbsoluteError
 
+
 class BinaryCrossEntropy(LossFunction):
     """
     A loss that measures the Binary Cross Entropy between the target and the output
