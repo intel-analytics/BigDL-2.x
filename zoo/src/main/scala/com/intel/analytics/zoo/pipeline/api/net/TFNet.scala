@@ -265,10 +265,9 @@ class TFNet(graphDef: TFGraphHolder,
     } catch {
       case _: Throwable => {
         tensorManager.destructTFTensors()
-        output
+        throw new Exception
       }
     }
-
   }
 
   private def emptyTFTensorArray(arr: Array[TTensor[_]]): Unit = {
@@ -355,7 +354,7 @@ class TFNet(graphDef: TFGraphHolder,
     } catch {
       case _: Throwable => {
         tensorManager.destructTFTensors()
-        gradInput
+        throw new Exception
       }
     }
   }
@@ -377,6 +376,7 @@ class TFNet(graphDef: TFGraphHolder,
     } catch {
       case _: Throwable => {
         tensorManager.destructTFTensors()
+        throw new Exception
       }
     }
   }
