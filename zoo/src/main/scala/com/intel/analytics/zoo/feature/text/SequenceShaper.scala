@@ -40,7 +40,6 @@ class SequenceShaper(
 }
 
 object SequenceShaper {
-
   def apply(
      len: Int,
      trunc: String = "pre",
