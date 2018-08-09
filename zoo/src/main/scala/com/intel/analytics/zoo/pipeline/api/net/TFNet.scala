@@ -54,29 +54,28 @@ class TFNet(graphDef: TFGraphHolder,
 
   class ResourceManager() extends java.io.Serializable {
     private var tensorList: List[TTensor[_]] = List()
-    var TFTensor : TTensor[_] = null
     def createTFTensor(shape: Array[Long], buffer: FloatBuffer): TTensor[_] = {
-      TFTensor = TTensor.create(shape, buffer)
+      val TFTensor : TTensor[_] = TTensor.create(shape, buffer)
       tensorList = TFTensor :: tensorList
       return TFTensor
     }
     def createTFTensor(shape: Array[Long], buffer: ByteBuffer): TTensor[_] = {
-      TFTensor = TTensor.create(classOf[UInt8], shape, buffer)
+      val TFTensor : TTensor[_] = TTensor.create(classOf[UInt8], shape, buffer)
       tensorList = TFTensor :: tensorList
       return TFTensor
     }
     def createTFTensor(shape: Array[Long], buffer: IntBuffer): TTensor[_] = {
-      TFTensor = TTensor.create(shape, buffer)
+      val TFTensor : TTensor[_] = TTensor.create(shape, buffer)
       tensorList = TFTensor :: tensorList
       return TFTensor
     }
     def createTFTensor(shape: Array[Long], buffer: LongBuffer): TTensor[_] = {
-      TFTensor = TTensor.create(shape, buffer)
+      val TFTensor : TTensor[_] = TTensor.create(shape, buffer)
       tensorList = TFTensor :: tensorList
       return TFTensor
     }
     def createTFTensor(shape: Array[Long], buffer: DoubleBuffer): TTensor[_] = {
-      TFTensor = TTensor.create(shape, buffer)
+      val TFTensor : TTensor[_] = TTensor.create(shape, buffer)
       tensorList = TFTensor :: tensorList
       return TFTensor
     }
