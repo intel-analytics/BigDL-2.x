@@ -24,13 +24,13 @@ import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric
 import scala.reflect.ClassTag
 
 /**
-  * The mean squared error criterion
-  * e.g. input: a, target: b, total elements: n
-  * loss(a, b) = 1/n \sum |a_i - b_i|^2
-  * @param sizeAverage Boolean. Whether losses are averaged over observations for each
-  *                    mini-batch. Default is true. If false, the losses are instead
-  *                    summed for each mini-batch.
-  */
+ * The mean squared error criterion
+ * e.g. input: a, target: b, total elements: n
+ * loss(a, b) = 1/n \sum |a_i - b_i|^2
+ * @param sizeAverage Boolean. Whether losses are averaged over observations for each
+ *                    mini-batch. Default is true. If false, the losses are instead
+ *                    summed for each mini-batch.
+ */
 class MeanSquaredError[@specialized(Float, Double) T: ClassTag](
    sizeAverage: Boolean = true)(implicit ev: TensorNumeric[T])
   extends TensorLossFunction[T] {
