@@ -55,18 +55,28 @@ class TFNet(graphDef: TFGraphHolder,
   class ResourceManager() extends java.io.Serializable {
     private var tensorList: List[TTensor[_]] = List()
     var TFTensor : TTensor[_] = null
-    def createTFTensor(shape: Array[Long], buffer: Any): TTensor[_] = {
-      if (buffer.isInstanceOf[FloatBuffer]) {
-        TFTensor = TTensor.create(shape, buffer.asInstanceOf[FloatBuffer])
-      } else if (buffer.isInstanceOf[ByteBuffer]) {
-        TFTensor = TTensor.create(classOf[UInt8], shape, buffer.asInstanceOf[ByteBuffer])
-      } else if (buffer.isInstanceOf[IntBuffer]) {
-        TFTensor = TTensor.create(shape, buffer.asInstanceOf[IntBuffer])
-      } else if (buffer.isInstanceOf[LongBuffer]) {
-        TFTensor = TTensor.create(shape, buffer.asInstanceOf[LongBuffer])
-      } else if (buffer.isInstanceOf[DoubleBuffer]) {
-        TFTensor = TTensor.create(shape, buffer.asInstanceOf[DoubleBuffer])
-      }
+    def createTFTensor(shape: Array[Long], buffer: FloatBuffer): TTensor[_] = {
+      TFTensor = TTensor.create(shape, buffer)
+      tensorList = TFTensor :: tensorList
+      return TFTensor
+    }
+    def createTFTensor(shape: Array[Long], buffer: ByteBuffer): TTensor[_] = {
+      TFTensor = TTensor.create(classOf[UInt8], shape, buffer)
+      tensorList = TFTensor :: tensorList
+      return TFTensor
+    }
+    def createTFTensor(shape: Array[Long], buffer: IntBuffer): TTensor[_] = {
+      TFTensor = TTensor.create(shape, buffer)
+      tensorList = TFTensor :: tensorList
+      return TFTensor
+    }
+    def createTFTensor(shape: Array[Long], buffer: LongBuffer): TTensor[_] = {
+      TFTensor = TTensor.create(shape, buffer)
+      tensorList = TFTensor :: tensorList
+      return TFTensor
+    }
+    def createTFTensor(shape: Array[Long], buffer: DoubleBuffer): TTensor[_] = {
+      TFTensor = TTensor.create(shape, buffer)
       tensorList = TFTensor :: tensorList
       return TFTensor
     }
@@ -263,9 +273,9 @@ class TFNet(graphDef: TFGraphHolder,
 
       output
     } catch {
-      case _: Throwable => {
+      case ex: Throwable => {
         tensorManager.destructTFTensors()
-        throw new Exception
+        throw ex
       }
     }
   }
@@ -352,9 +362,9 @@ class TFNet(graphDef: TFGraphHolder,
       }
       gradInput
     } catch {
-      case _: Throwable => {
+      case ex: Throwable => {
         tensorManager.destructTFTensors()
-        throw new Exception
+        throw ex
       }
     }
   }
@@ -374,9 +384,9 @@ class TFNet(graphDef: TFGraphHolder,
       // clean up grad weights tf tensors
       emptyTFTensorArray(gradWeightTFTensors)
     } catch {
-      case _: Throwable => {
+      case ex: Throwable => {
         tensorManager.destructTFTensors()
-        throw new Exception
+        throw ex
       }
     }
   }
