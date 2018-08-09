@@ -32,7 +32,13 @@ class Tokenizer extends TextTransformer {
       Array(documentAssembler.asInstanceOf[Transformer],
       regexTokenizer.asInstanceOf[Transformer]))
     val tokens = lightPipeline.annotate(feature.apply[String]("text"))("token").toArray
-    feature.update("tokens", tokens)
+    feature.update(TextFeature.tokens, tokens.filter(_.size > 2))
     feature
+  }
+}
+
+object Tokenizer {
+  def apply(): Tokenizer = {
+    new Tokenizer()
   }
 }
