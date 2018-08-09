@@ -26,9 +26,9 @@ import scala.reflect.ClassTag
  * Loss calculated as:
  * K.mean(y_pred - y_true * K.log(y_pred + K.epsilon()), axis=-1)
  */
-
 class Poisson[@specialized(Float, Double) T: ClassTag]()
   (implicit ev: TensorNumeric[T]) extends TensorLossFunction[T]{
+
   override val loss: AbstractCriterion[Tensor[T], Tensor[T], T] =
     PoissonCriterion[T]()
 }

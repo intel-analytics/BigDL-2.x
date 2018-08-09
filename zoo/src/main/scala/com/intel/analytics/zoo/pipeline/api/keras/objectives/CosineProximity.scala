@@ -23,7 +23,6 @@ import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric
 
 import scala.reflect.ClassTag
 
-
 /**
  * The negative of the mean cosine proximity between predictions and targets.
  * The cosine proximity is defined as below:
@@ -31,7 +30,6 @@ import scala.reflect.ClassTag
  * y'(i) = y(i) / sqrt(max(sum(x(i)^2), 1e-12))
  * cosine_proximity(x, y) = mean(-1 * x'(i) * y'(i))
  */
-
 class CosineProximity[@specialized(Float, Double) T: ClassTag]()
    (implicit ev: TensorNumeric[T]) extends TensorLossFunction[T]{
 

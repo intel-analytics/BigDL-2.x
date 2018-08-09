@@ -29,12 +29,11 @@ import scala.reflect.ClassTag
  * y_pred = K.clip(y_pred, K.epsilon(), 1)
  * and output K.sum(y_true * K.log(y_true / y_pred), axis=-1)
  */
-
 class KullbackLeiblerDivergence[@specialized(Float, Double) T: ClassTag]()
   (implicit ev: TensorNumeric[T]) extends TensorLossFunction[T]{
+
   override val loss: AbstractCriterion[Tensor[T], Tensor[T], T] =
     KullbackLeiblerDivergenceCriterion[T]()
-
 }
 
 object KullbackLeiblerDivergence {

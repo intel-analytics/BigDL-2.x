@@ -18,7 +18,6 @@ package com.intel.analytics.zoo.pipeline.api.keras.objectives
 
 import com.intel.analytics.zoo.pipeline.api.keras.layers.KerasBaseSpec
 
-
 class MeanAbsolutePercentageErrorSpec extends KerasBaseSpec{
 
   "MeanAbsolutePercentageCriterion" should "be ok" in {

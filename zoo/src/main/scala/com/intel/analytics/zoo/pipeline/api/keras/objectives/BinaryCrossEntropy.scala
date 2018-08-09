@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 
-
 package com.intel.analytics.zoo.pipeline.api.keras.objectives
 
 import com.intel.analytics.bigdl.nn.abstractnn.AbstractCriterion
@@ -34,8 +33,8 @@ import com.intel.analytics.bigdl.tensor.{DenseTensorApply, Tensor, TensorFunc4, 
  *
  * @param weights weights over the input dimension
  * @param sizeAverage Boolean. Whether losses are averaged over observations for each
-                  mini-batch. Default is True. If False, the losses are instead
-                  summed for each mini-batch.
+                      mini-batch. Default is True. If False, the losses are instead
+                      summed for each mini-batch.
  */
 class BinaryCrossEntropy[@specialized(Float, Double) T: ClassTag](
   val weights: Tensor[T] = null, sizeAverage: Boolean = true)

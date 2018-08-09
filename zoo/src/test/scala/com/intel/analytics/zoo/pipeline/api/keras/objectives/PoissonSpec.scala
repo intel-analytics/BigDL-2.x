@@ -19,6 +19,7 @@ package com.intel.analytics.zoo.pipeline.api.keras.objectives
 import com.intel.analytics.zoo.pipeline.api.keras.layers.KerasBaseSpec
 
 class PoissonSpec extends KerasBaseSpec{
+
   "PoissonCriterion" should "be ok" in {
     val kerasCode =
       """

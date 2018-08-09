@@ -37,7 +37,6 @@ class Hinge[@specialized(Float, Double) T: ClassTag]
 
   override val loss: AbstractCriterion[Tensor[T], Tensor[T], T] =
     MarginCriterion(margin, sizeAverage)
-
 }
 
 object Hinge {

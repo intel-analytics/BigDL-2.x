@@ -27,8 +27,6 @@ import scala.reflect.ClassTag
  * It caculates diff = K.abs((y - x) / K.clip(K.abs(y), K.epsilon(), Double.MaxValue))
  * and return 100 * K.mean(diff) as outpout
  */
-
-
 class MeanAbsolutePercentageError[@specialized(Float, Double) T: ClassTag]()
   (implicit ev: TensorNumeric[T])
   extends TensorLossFunction[T] {

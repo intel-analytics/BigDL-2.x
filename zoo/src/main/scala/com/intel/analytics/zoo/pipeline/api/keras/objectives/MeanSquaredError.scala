@@ -31,7 +31,6 @@ import scala.reflect.ClassTag
   *                    mini-batch. Default is true. If false, the losses are instead
   *                    summed for each mini-batch.
   */
-
 class MeanSquaredError[@specialized(Float, Double) T: ClassTag](
    sizeAverage: Boolean = true)(implicit ev: TensorNumeric[T])
   extends TensorLossFunction[T] {

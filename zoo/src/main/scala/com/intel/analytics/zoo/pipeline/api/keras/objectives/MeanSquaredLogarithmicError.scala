@@ -29,7 +29,6 @@ import scala.reflect.ClassTag
  * second_log = K.log(K.clip(x, K.epsilon(), Double.MaxValue) + 1.)
  * and output K.mean(K.square(first_log - second_log))
  */
-
 class MeanSquaredLogarithmicError[@specialized(Float, Double) T: ClassTag]()
    (implicit ev: TensorNumeric[T]) extends TensorLossFunction[T] {
 

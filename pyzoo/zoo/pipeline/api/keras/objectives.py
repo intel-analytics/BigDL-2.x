@@ -132,7 +132,6 @@ class CategoricalCrossEntropy(LossFunction):
     >>> metrics = CategoricalCrossEntropy()
     creating: createZooKerasCategoricalCrossEntropy
     """
-
     def __init__(self, bigdl_type="float"):
         super(CategoricalCrossEntropy, self).__init__(None, bigdl_type)
 
@@ -148,7 +147,6 @@ class CosineProximity(LossFunction):
     >>> metrics = CosineProximity()
     creating: createZooKerasCosineProximity
     """
-
     def __init__(self, bigdl_type="float"):
         super(CosineProximity, self).__init__(None, bigdl_type)
 
@@ -167,7 +165,6 @@ class Hinge(LossFunction):
     >>> metrics = Hinge()
     creating: createZooKerasHinge
     """
-
     def __init__(self, margin=1.0, size_average=True, bigdl_type="float"):
         super(Hinge, self).__init__(None, bigdl_type, float(margin), size_average)
 
@@ -181,7 +178,6 @@ class KullbackLeiblerDivergence(LossFunction):
     >>> metrics = KullbackLeiblerDivergence()
     creating: createZooKerasKullbackLeiblerDivergence
     """
-
     def __init__(self, bigdl_type="float"):
         super(KullbackLeiblerDivergence, self).__init__(None, bigdl_type)
 
@@ -194,12 +190,10 @@ class MeanAbsolutePercentageError(LossFunction):
     >>> metrics = MeanAbsolutePercentageError()
     creating: createZooKerasMeanAbsolutePercentageError
     """
-
     def __init__(self, bigdl_type="float"):
         super(MeanAbsolutePercentageError, self).__init__(None, bigdl_type)
 
-mape = MeanAbsolutePercentageError
-MAPE = MeanAbsolutePercentageError
+mape = MAPE = MeanAbsolutePercentageError
 
 
 class MeanSquaredError(LossFunction):
@@ -219,8 +213,7 @@ class MeanSquaredError(LossFunction):
         super(MeanAbsoluteError, self).__init__(None, bigdl_type,
                                                 size_average)
 
-mse = MeanSquaredError
-MSE = MeanSquaredError
+mse = MSE = MeanSquaredError
 
 
 class MeanSquaredLogarithmicError(LossFunction):
@@ -236,19 +229,16 @@ class MeanSquaredLogarithmicError(LossFunction):
     def __init__(self, bigdl_type="float"):
         super(MeanSquaredLogarithmicError, self).__init__(None, bigdl_type)
 
-msle = MeanSquaredLogarithmicError
-MSLE = MeanSquaredLogarithmicError
+msle = MSLE = MeanSquaredLogarithmicError
 
 
 class Poisson(LossFunction):
     """
-    This class is same as `Poisson` loss in keras.
     Loss calculated as: K.mean(y_pred - y_true * K.log(y_pred + K.epsilon()), axis=-1)
 
     >>> metrics = Poisson()
     creating: createZooKerasPoisson
     """
-
     def __init__(self, bigdl_type="float"):
         super(Poisson, self).__init__(None, bigdl_type)
 
@@ -268,6 +258,5 @@ class SquaredHinge(LossFunction):
     >>> metrics = SquaredHinge()
     creating: createZooKerasSquaredHinge
     """
-
     def __init__(self, margin=1.0, size_average=False, bigdl_type="float"):
         super(SquaredHinge, self).__init__(None, bigdl_type, float(margin), size_average)

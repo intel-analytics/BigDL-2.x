@@ -16,8 +16,6 @@
 
 package com.intel.analytics.zoo.pipeline.api.keras.objectives
 
-
-import com.intel.analytics.bigdl.nn.CosineProximityCriterion
 import com.intel.analytics.zoo.pipeline.api.keras.layers.KerasBaseSpec
 
 class CosineProximitySpec extends KerasBaseSpec{
