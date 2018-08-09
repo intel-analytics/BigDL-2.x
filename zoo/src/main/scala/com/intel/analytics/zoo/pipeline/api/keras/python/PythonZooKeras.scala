@@ -1182,7 +1182,7 @@ class PythonZooKeras[T: ClassTag](implicit ev: TensorNumeric[T]) extends PythonB
     MeanSquaredError[T](sizeAverage)
   }
 
-  def createZooKerasCategoricalCrossentropy(): CategoricalCrossEntropy[T] = {
+  def createZooKerasCategoricalCrossEntropy(): CategoricalCrossEntropy[T] = {
     CategoricalCrossEntropy[T]()
   }
 
