@@ -20,20 +20,16 @@ import java.io.File
 import java.util
 
 import com.intel.analytics.bigdl.dataset.Sample
-import com.intel.analytics.bigdl.example.utils.SimpleTokenizer._
-import com.intel.analytics.bigdl.example.utils.{SimpleTokenizer, WordMeta}
 import com.intel.analytics.bigdl.optim._
-import com.intel.analytics.bigdl.tensor.Tensor
 import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric.NumericFloat
 import com.intel.analytics.bigdl.utils.LoggerFilter
 import com.intel.analytics.zoo.common.NNContext
+import com.intel.analytics.zoo.feature.text.{TextFeature, TextSet}
 import com.intel.analytics.zoo.models.textclassification.TextClassifier
 import com.intel.analytics.zoo.pipeline.api.keras.metrics.Accuracy
 import com.intel.analytics.zoo.pipeline.api.keras.objectives.SparseCategoricalCrossEntropy
-import com.intel.analytics.zoo.pipeline.api.keras.layers.WordEmbedding
 import org.apache.log4j.{Level => Level4j, Logger => Logger4j}
 import org.apache.spark.SparkConf
-import org.apache.spark.rdd.RDD
 import org.slf4j.{Logger, LoggerFactory}
 import scopt.OptionParser
 
@@ -84,20 +80,6 @@ object TextClassification {
     log.info(s"Found ${texts.length} texts.")
     log.info(s"Found $classNum classes")
     texts.zip(labels)
-  }
-
-  // Turn texts into tokens
-  def analyzeTexts(dataRdd: RDD[(String, Float)], maxWordsNum: Int)
-  : Map[String, WordMeta] = {
-    // Remove the top 10 words roughly. You might want to fine tune this.
-    val frequencies = dataRdd.flatMap{case (text: String, label: Float) =>
-      SimpleTokenizer.toTokens(text)
-    }.map(word => (word, 1)).reduceByKey(_ + _)
-      .sortBy(- _._2).collect().slice(10, maxWordsNum)
-
-    val indexes = Range(1, frequencies.length)
-    frequencies.zip(indexes).map{item =>
-      (item._1._1, WordMeta(item._1._2, item._2))}.toMap
   }
 
   def main(args: Array[String]): Unit = {
@@ -158,19 +140,15 @@ object TextClassification {
         "GloVe word embeddings directory is not found in baseDir, " +
         "you can run $ANALYTICS_ZOO_HOME/bin/data/glove/get_glove.sh to download")
 
-      // For large dataset, you might want to get such RDD[(String, Float)] from HDFS
-      val dataRdd = sc.parallelize(loadRawData(textDataDir), param.partitionNum)
-      val word2Meta = analyzeTexts(dataRdd, param.maxWordsNum)
-      val word2MetaBC = sc.broadcast(word2Meta)
+      val data = loadRawData(textDataDir)
+      val textset = TextSet.rdd(sc.parallelize(data.map(textLabel =>
+        // Filter non-letters as Normalizer has not been implemented yet.
+        new TextFeature(textLabel._1.replaceAll("[^a-zA-Z]", " ").toLowerCase(),
+          Some(textLabel._2)))))
+      textset.tokenize().indexize().shapeSequence(500).genSample()
 
-      val indexedRdd = dataRdd
-        .map {case (text, label) => (toTokens(text, word2MetaBC.value), label)}
-        .map {case (tokens, label) => (shaping(tokens, sequenceLength), label)}
-      val sampleRDD = indexedRdd.map {case (input: Array[Float], label: Float) =>
-        Sample(
-          featureTensor = Tensor(input, Array(sequenceLength)),
-          label = label)
-      }
+      // Replace this by converting TextSet to DataSet directly.
+      val sampleRDD = textset.rdd.map(x => x.apply[Sample[Float]]("sample"))
 
       val Array(trainingRDD, valRDD) = sampleRDD.randomSplit(
         Array(trainingSplit, 1 - trainingSplit))
@@ -182,7 +160,7 @@ object TextClassification {
         val tokenLength = param.tokenLength
         require(tokenLength == 50 || tokenLength == 100 || tokenLength == 200 || tokenLength == 300,
         s"tokenLength for GloVe can only be 50, 100, 200, 300, but got $tokenLength")
-        val wordIndex = word2Meta.map(x => x._1 -> x._2.index)
+        val wordIndex = textset.getWordIndex()
         val gloveFile = gloveDir + "glove.6B." + tokenLength.toString + "d.txt"
         TextClassifier(classNum, gloveFile, wordIndex, sequenceLength,
           param.encoder, param.encoderOutputDim)

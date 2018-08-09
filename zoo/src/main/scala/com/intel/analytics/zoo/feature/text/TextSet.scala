@@ -37,6 +37,37 @@ abstract class TextSet {
 
   def toDistributed(): DistributedTextSet = this.asInstanceOf[DistributedTextSet]
 
+  def tokenize(): TextSet = {
+    this.transform(Tokenizer())
+  }
+
+  def indexize(removeTopN: Int = 10, maxWordsNum: Int = 5000): TextSet = {
+    setWordIndex(getWordIndexByFrequencies(removeTopN, maxWordsNum))
+    this.transform(WordIndexer(wordIndex))
+  }
+
+  def shapeSequence(
+    len: Int,
+    trunc: String = "pre",
+    key: String = "indexedTokens"): TextSet = {
+    this.transform(SequenceShaper(len, trunc, key))
+  }
+
+  def genSample(): TextSet = {
+    this.transform(TextSetToSample())
+  }
+
+  def getWordIndexByFrequencies(
+     removeTopN: Int = 10, maxWordsNum: Int = 5000): Map[String, Int]
+
+  private var wordIndex: Map[String, Int] = null
+
+  def getWordIndex(): Map[String, Int] = wordIndex
+
+  protected def setWordIndex(map: Map[String, Int]): Unit = {
+    wordIndex = map
+  }
+
 }
 
 
@@ -53,6 +84,7 @@ object TextSet {
 
 
 class LocalTextSet(var array: Array[TextFeature]) extends TextSet {
+
   override def transform(transformer: Preprocessing[TextFeature, TextFeature]): TextSet = {
     array = transformer.apply(array.toIterator).toArray
     this
@@ -61,10 +93,19 @@ class LocalTextSet(var array: Array[TextFeature]) extends TextSet {
   override def isLocal(): Boolean = true
 
   override def isDistributed(): Boolean = false
+
+  override def getWordIndexByFrequencies(
+    removeTopN: Int = 10, maxWordsNum: Int = 5000): Map[String, Int] = {
+    val frequencies = array.flatMap(feature => feature.apply[Array[String]]("tokens"))
+      .map(word => (word, 1))
+    // TODO: finish this part
+    null
+  }
 }
 
 
 class DistributedTextSet(var rdd: RDD[TextFeature]) extends TextSet {
+
   override def transform(transformer: Preprocessing[TextFeature, TextFeature]): TextSet = {
     rdd = transformer(rdd)
     this
@@ -73,5 +114,17 @@ class DistributedTextSet(var rdd: RDD[TextFeature]) extends TextSet {
   override def isLocal(): Boolean = false
 
   override def isDistributed(): Boolean = true
+
+  override def getWordIndexByFrequencies(
+    removeTopN: Int = 10, maxWordsNum: Int = 5000): Map[String, Int] = {
+    val frequencies = rdd.flatMap(text => text.apply[Array[String]]("tokens"))
+      .map(word => (word, 1)).reduceByKey(_ + _)
+      .sortBy(- _._2).collect().slice(removeTopN, maxWordsNum)
+    val indexes = Range(1, frequencies.length + 1)
+    val res = frequencies.zip(indexes).map{item =>
+      (item._1._1, item._2)}.toMap
+    setWordIndex(res)
+    res
+  }
 
 }
