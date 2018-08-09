@@ -81,7 +81,7 @@ class TFNet(graphDef: TFGraphHolder,
       return TFTensor
     }
 
-    def destructTFTensors() = {
+    def destructTFTensors(): Unit = {
       for (tensor <- tensorList) {
         tensor.close()
       }
@@ -193,7 +193,8 @@ class TFNet(graphDef: TFGraphHolder,
   @transient
   private lazy val weightTFTensors = new Array[TTensor[_]](weights.length)
   @transient
-  private lazy val tempTFTensors = new Array[TTensor[_]](graphMeta.tempTensors.map(_.length).getOrElse(0))
+  private lazy val tempTFTensors =
+    new Array[TTensor[_]](graphMeta.tempTensors.map(_.length).getOrElse(0))
   @transient
   private lazy val gradWeightTFTensors = new Array[TTensor[_]](gradWeights.length)
 
@@ -273,10 +274,9 @@ class TFNet(graphDef: TFGraphHolder,
 
       output
     } catch {
-      case ex: Throwable => {
+      case ex: Throwable =>
         tensorManager.destructTFTensors()
         throw ex
-      }
     }
   }
 
@@ -299,7 +299,7 @@ class TFNet(graphDef: TFGraphHolder,
   }
 
   override def updateGradInput(input: Activity, gradOutput: Activity): Activity = {
-    try{
+    try {
       if (graphMeta.variables.isEmpty) {
         generateZeroGrad(input)
       } else {
@@ -362,10 +362,9 @@ class TFNet(graphDef: TFGraphHolder,
       }
       gradInput
     } catch {
-      case ex: Throwable => {
+      case ex: Throwable =>
         tensorManager.destructTFTensors()
         throw ex
-      }
     }
   }
 
@@ -384,10 +383,9 @@ class TFNet(graphDef: TFGraphHolder,
       // clean up grad weights tf tensors
       emptyTFTensorArray(gradWeightTFTensors)
     } catch {
-      case ex: Throwable => {
+      case ex: Throwable =>
         tensorManager.destructTFTensors()
         throw ex
-      }
     }
   }
 
