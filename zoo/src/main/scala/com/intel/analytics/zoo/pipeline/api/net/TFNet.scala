@@ -87,7 +87,8 @@ class TFNet(graphDef: TFGraphHolder,
     }
   }
 
-  val tensorManager = new ResourceManager()
+  @transient
+  private lazy val tensorManager = new ResourceManager()
 
   private def graph = graphDef.tfGraph
 
