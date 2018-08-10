@@ -71,7 +71,7 @@ class FeatureSpec extends FlatSpec with Matchers with BeforeAndAfter {
       stream.toArray()
     }
     val images = ImageSet.rddBytes(data)
-    images.rdd.collect()
+    images.toDistributed().rdd.collect()
   }
 
   "ImageBytesToMat" should "work with png and jpg" in {
