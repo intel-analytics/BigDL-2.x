@@ -20,7 +20,7 @@ import com.intel.analytics.bigdl.nn.abstractnn.AbstractCriterion
 import com.intel.analytics.bigdl.nn.BCECriterion
 import scala.reflect.ClassTag
 import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric
-import com.intel.analytics.bigdl.tensor.{DenseTensorApply, Tensor, TensorFunc4, TensorFunc6}
+import com.intel.analytics.bigdl.tensor.Tensor
 
 /**
  * This loss function measures the Binary Cross Entropy between the target and the output
@@ -33,7 +33,7 @@ import com.intel.analytics.bigdl.tensor.{DenseTensorApply, Tensor, TensorFunc4, 
  *
  * @param weights weights over the input dimension
  * @param sizeAverage Boolean. Whether losses are averaged over observations for each
-                      mini-batch. Default is True. If False, the losses are instead
+                      mini-batch. Default is true. If False, the losses are instead
                       summed for each mini-batch.
  */
 class BinaryCrossEntropy[@specialized(Float, Double) T: ClassTag](

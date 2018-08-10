@@ -28,7 +28,7 @@ import scala.reflect.ClassTag
  * hinge loss (margin-based loss) between input x (a Tensor of dimension 1) and output y.
  * @param margin if unspecified, is by default 1.
  * @param sizeAverage Boolean. Whether losses are averaged over observations for each
-                  mini-batch. Default is True. If False, the losses are instead
+                  mini-batch. Default is true. If False, the losses are instead
                   summed for each mini-batch.
  */
 class Hinge[@specialized(Float, Double) T: ClassTag]
