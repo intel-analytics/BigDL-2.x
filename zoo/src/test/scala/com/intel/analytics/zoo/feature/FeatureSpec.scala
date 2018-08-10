@@ -15,12 +15,10 @@
  */
 package com.intel.analytics.zoo.feature
 
-import com.intel.analytics.bigdl.nn.abstractnn.DataFormat
-import com.intel.analytics.bigdl.tensor.Tensor
-import com.intel.analytics.bigdl.transform.vision.image.ImageFeature
-import com.intel.analytics.zoo.common.NNContext
+import com.intel.analytics.zoo.common.{NNContext, Utils}
 import com.intel.analytics.zoo.feature.common.{BigDLAdapter, Preprocessing}
 import com.intel.analytics.zoo.feature.image._
+import org.apache.commons.io.FileUtils
 import org.apache.spark.{SparkConf, SparkContext}
 import org.opencv.imgcodecs.Imgcodecs
 import org.scalatest.{BeforeAndAfter, FlatSpec, Matchers}
@@ -60,20 +58,20 @@ class FeatureSpec extends FlatSpec with Matchers with BeforeAndAfter {
     require(imf.getWidth() == 200)
   }
 
-  "ImageMatToTensor" should "work with both NCHW and NHWC" in {
-    val resource = getClass.getClassLoader.getResource("pascal/")
-    val data = ImageSet.read(resource.getFile)
-    val nhwc = (data -> ImageMatToTensor[Float](format = DataFormat.NHWC)).toLocal()
-      .array.head.apply[Tensor[Float]](ImageFeature.imageTensor)
-    require(nhwc.isContiguous() == true)
+  "Local ImageSet" should "work with bytes" in {
+    val files = Utils.listLocalFiles(resource.getFile)
+    val bytes = files.map { p =>
+      FileUtils.readFileToByteArray(p)
+    }
+    ImageSet.array(bytes)
+  }
 
-    val data2 = ImageSet.read(resource.getFile)
-    require(data2.toLocal().array.head.apply[Tensor[Float]](ImageFeature.imageTensor) == null)
-    val nchw = (data2 -> ImageMatToTensor[Float]()).toLocal()
-      .array.head.apply[Tensor[Float]](ImageFeature.imageTensor)
-
-    require(nchw.transpose(1, 2).transpose(2, 3).contiguous().storage().array().deep
-      == nhwc.storage().array().deep)
+  "Distribute ImageSet" should "work with bytes" in {
+    val data = sc.binaryFiles(resource.getFile).map { case (p, stream) =>
+      stream.toArray()
+    }
+    val images = ImageSet.rddBytes(data)
+    images.rdd.collect()
   }
 
   "ImageBytesToMat" should "work with png and jpg" in {
