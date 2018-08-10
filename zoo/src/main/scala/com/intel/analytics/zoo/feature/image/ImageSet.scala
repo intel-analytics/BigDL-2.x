@@ -121,7 +121,7 @@ object ImageSet {
    * create LocalImageSet
    * @param data array of ImageFeature
    */
-  def array(data: Array[ImageFeature]): LocalImageSet = {
+  private[zoo] def array(data: Array[ImageFeature]): LocalImageSet = {
     new LocalImageSet(data)
   }
 
@@ -129,7 +129,7 @@ object ImageSet {
    * create DistributedImageSet
    * @param data rdd of ImageFeature
    */
-  def rdd(data: RDD[ImageFeature]): DistributedImageSet = {
+  private[zoo] def rdd(data: RDD[ImageFeature]): DistributedImageSet = {
     new DistributedImageSet(data)
   }
 
