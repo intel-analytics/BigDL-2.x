@@ -28,12 +28,9 @@ import com.intel.analytics.bigdl.tensor.Tensor
  * or in the case of the weights argument being specified:
  *         loss(o, t) = - 1/n sum_i weights[i] * (t[i] * log(o[i]) + (1 - t[i]) * log(1 - o[i]))
  *
- * By default, the losses are averaged for each mini-batch over observations as well as over
- * dimensions. However, if the field sizeAverage is set to false, the losses are instead summed.
- *
  * @param weights weights over the input dimension
  * @param sizeAverage Boolean. Whether losses are averaged over observations for each
-                      mini-batch. Default is true. If False, the losses are instead
+                      mini-batch. Default is true. If false, the losses are instead
                       summed for each mini-batch.
  */
 class BinaryCrossEntropy[@specialized(Float, Double) T: ClassTag](
