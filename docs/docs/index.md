@@ -29,7 +29,7 @@ Analytics Zoo makes it easy to build deep learning application on Spark and BigD
 
 ---
 ## High level pipeline APIs
-Analytics Zoo provides a set of easy-to-use, high level pipeline APIs that natively support Spark DataFrames and ML Pipelines, autograd and custom layer/loss, trasnfer learning, etc.
+Analytics Zoo provides a set of easy-to-use, high level pipeline APIs that natively support Spark DataFrames and ML Pipelines, autograd and custom layer/loss, transfer learning, etc.
 
 ### nnframes
 `nnframes` provides *native deep learning support in Spark DataFrames and ML Pipelines*, so that you can easily build complex deep learning pipelines in just a few lines, as illustracted below. (See more details [here](ProgrammingGuide/nnframes.md))
