@@ -14,16 +14,22 @@
  * limitations under the License.
  */
 
-package com.intel.analytics.zoo.pipeline.api.keras
+package com.intel.analytics.zoo.pipeline.api.keras.objectives
 
-package object objectives {
-  // Alias
-  val mae = MeanAbsoluteError
-  val MAE = MeanAbsoluteError
-  val mse = MeanSquaredError
-  val MSE = MeanSquaredError
-  val mape = MeanAbsolutePercentageError
-  val msle = MeanSquaredLogarithmicError
-  val MAPE = MeanAbsolutePercentageError
-  val MSLE = MeanSquaredLogarithmicError
+import com.intel.analytics.zoo.pipeline.api.keras.layers.KerasBaseSpec
+
+class PoissonSpec extends KerasBaseSpec{
+
+  "PoissonCriterion" should "be ok" in {
+    val kerasCode =
+      """
+        |input_tensor = Input(shape=[3])
+        |target_tensor = Input(shape=[3])
+        |loss = poisson(target_tensor, input_tensor)
+        |input = np.random.uniform(0, 1, [2, 3])
+        |Y = np.random.uniform(0, 1, [2, 3])
+      """.stripMargin
+    val kld = Poisson[Float]()
+    checkOutputAndGradForLoss(kld, kerasCode)
+  }
 }

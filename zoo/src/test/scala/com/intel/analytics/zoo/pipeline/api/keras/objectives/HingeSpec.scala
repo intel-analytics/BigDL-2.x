@@ -14,16 +14,22 @@
  * limitations under the License.
  */
 
-package com.intel.analytics.zoo.pipeline.api.keras
+package com.intel.analytics.zoo.pipeline.api.keras.objectives
 
-package object objectives {
-  // Alias
-  val mae = MeanAbsoluteError
-  val MAE = MeanAbsoluteError
-  val mse = MeanSquaredError
-  val MSE = MeanSquaredError
-  val mape = MeanAbsolutePercentageError
-  val msle = MeanSquaredLogarithmicError
-  val MAPE = MeanAbsolutePercentageError
-  val MSLE = MeanSquaredLogarithmicError
+import com.intel.analytics.zoo.pipeline.api.keras.layers.KerasBaseSpec
+
+class HingeSpec extends KerasBaseSpec{
+
+  "Hinge" should "be the same as Keras" in {
+    val kerasCode =
+      """
+        |input_tensor = Input(shape=[3, 4])
+        |target_tensor = Input(shape=[3, 4])
+        |loss = hinge(target_tensor, input_tensor)
+        |input = np.random.random([2, 3, 4])
+        |Y = np.random.random([2, 3, 4])
+      """.stripMargin
+    val loss = Hinge[Float]()
+    checkOutputAndGradForLoss(loss, kerasCode)
+  }
 }
