@@ -16,10 +16,10 @@
 
 package com.intel.analytics.zoo.feature.text
 
-import scala.collection.mutable
+import scala.collection.{Set, mutable}
 
 class TextFeature extends Serializable {
-  def this(text: String, label: Option[Float] = None) {
+  def this(text: String, label: Option[Int] = None) {
     this
     state(TextFeature.text) = text
     if (label.nonEmpty) {
@@ -37,6 +37,7 @@ class TextFeature extends Serializable {
 
   def update(key: String, value: Any): Unit = state(key) = value
 
+  def keys(): Set[String] = state.keySet
 }
 
 object TextFeature {

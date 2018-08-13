@@ -36,9 +36,20 @@ class TextSetSpec extends FlatSpec with Matchers with BeforeAndAfter {
   }
 
   "DistributedTextSet Transformation" should "work properly" in {
-    val text = new TextFeature("Hello world, please annotate my text world my my my", Some(1.0f))
-    val textset = TextSet.rdd(sc.parallelize(Seq(text)))
-    val transformed = textset.tokenize().normalize().indexize().shapeSequence(len = 5).genSample()
-    transformed.getWordIndex
+    val text1 = new TextFeature("Hello my friend, please annotate my text", Some(0))
+    val text2 = new TextFeature("Listen to my heart Heart. Show me love, baby.", Some(1))
+    val textSet = TextSet.rdd(sc.parallelize(Seq(text1, text2)))
+    val transformedTextSet =
+      textSet.tokenize().normalize().indexize().shapeSequence(len = 6).genSample()
+    val transformedTextFeatures = transformedTextSet.asInstanceOf[DistributedTextSet].rdd.collect()
+    val wordIndex = transformedTextSet.getWordIndex
+    wordIndex.toArray.length should be (13)
+    wordIndex.keySet.contains("heart") should be (true)
+    wordIndex.keySet.contains("Heart") should be (false)
+    wordIndex("my") should be (1)
+    val transformed1 = transformedTextFeatures(0)
+    transformed1.keys().toArray.length should be (5)
+    transformed1.keys().contains("sample") should be (true)
+    transformed1.apply[Array[Int]]("indexedTokens").length should be (6)
   }
 }
