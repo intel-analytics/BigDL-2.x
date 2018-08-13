@@ -16,19 +16,22 @@
 
 package com.intel.analytics.zoo.feature.text
 
+import com.johnsnowlabs.nlp.annotator.NormalizerModel
 import org.apache.spark.ml.Transformer
 
-class Tokenizer extends SparkNLPTransformer {
+class Normalizer extends SparkNLPTransformer {
 
   override def transformer: Transformer = {
-    new com.johnsnowlabs.nlp.annotator.Tokenizer()
-      .setInputCols(Array("document"))
-      .setOutputCol("tokens")
+    new NormalizerModel().setLowercase(true)
+      .setInputCols(Array("tokens"))
+      .setOutputCol("normalized")
+      .setPatterns(Array("[^\\pL+]"))
+      .setSlangDict(Map.empty[String, String])
   }
 }
 
-object Tokenizer {
-  def apply(): Tokenizer = {
-    new Tokenizer()
+object Normalizer {
+  def apply(): Normalizer = {
+    new Normalizer()
   }
 }
