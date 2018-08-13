@@ -113,8 +113,24 @@ public class JTensor {
   @Override
   public String toString() {
     return "JTensor{" +
-            "data=" + data +
-            ", shape=" + shape +
+            "data=" + toString(data) +
+            ", shape=" + toString(shape) +
             '}';
+  }
+  private String toString(float[] d) {
+    if (d.length > 100) {
+      return "[" + d[0] + "  ...  " + d[d.length - 1] + "]";
+    } else {
+      String str = "";
+      for (int i = 0; i < d.length - 1; i++)
+        str = str + d[i] + ' ';
+      return "[" + str + d[d.length - 1] + "]";
+    }
+  }
+  private String toString(int[] s) {
+    String str = "";
+    for (int i = 0; i < s.length - 1; i++)
+      str = str + s[i] + ',';
+    return "[" + str + s[s.length - 1] + "]";
   }
 }
