@@ -24,7 +24,7 @@ import com.intel.analytics.bigdl.optim._
 import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric.NumericFloat
 import com.intel.analytics.bigdl.utils.LoggerFilter
 import com.intel.analytics.zoo.common.NNContext
-import com.intel.analytics.zoo.feature.text.{TextFeature, TextSet}
+import com.intel.analytics.zoo.feature.text.{DistributedTextSet, TextFeature, TextSet}
 import com.intel.analytics.zoo.models.textclassification.TextClassifier
 import com.intel.analytics.zoo.pipeline.api.keras.metrics.Accuracy
 import com.intel.analytics.zoo.pipeline.api.keras.objectives.SparseCategoricalCrossEntropy
@@ -142,13 +142,13 @@ object TextClassification {
 
       val data = loadRawData(textDataDir)
       val textset = TextSet.rdd(sc.parallelize(data.map(textLabel =>
-        // Filter non-letters as Normalizer has not been implemented yet.
-        new TextFeature(textLabel._1.replaceAll("[^a-zA-Z]", " ").toLowerCase(),
-          Some(textLabel._2)))))
-      textset.tokenize().indexize().shapeSequence(500).genSample()
+        new TextFeature(textLabel._1, Some(textLabel._2)))))
+      val transformed =
+        textset.tokenize().normalize().indexize(removeTopN = 10).shapeSequence(500).genSample()
 
-      // Replace this by converting TextSet to DataSet directly.
-      val sampleRDD = textset.rdd.map(x => x.apply[Sample[Float]]("sample"))
+      // TODO: Replace this by converting TextSet to DataSet directly.
+      val sampleRDD = transformed.asInstanceOf[DistributedTextSet]
+        .rdd.map(x => x.apply[Sample[Float]]("sample"))
 
       val Array(trainingRDD, valRDD) = sampleRDD.randomSplit(
         Array(trainingSplit, 1 - trainingSplit))
@@ -160,7 +160,7 @@ object TextClassification {
         val tokenLength = param.tokenLength
         require(tokenLength == 50 || tokenLength == 100 || tokenLength == 200 || tokenLength == 300,
         s"tokenLength for GloVe can only be 50, 100, 200, 300, but got $tokenLength")
-        val wordIndex = textset.getWordIndex()
+        val wordIndex = transformed.getWordIndex
         val gloveFile = gloveDir + "glove.6B." + tokenLength.toString + "d.txt"
         TextClassifier(classNum, gloveFile, wordIndex, sequenceLength,
           param.encoder, param.encoderOutputDim)

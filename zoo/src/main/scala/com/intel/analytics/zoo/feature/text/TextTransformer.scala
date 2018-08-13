@@ -16,11 +16,9 @@
 
 package com.intel.analytics.zoo.feature.text
 
-import com.intel.analytics.bigdl.dataset.Transformer
 import com.intel.analytics.zoo.feature.common.Preprocessing
 
-abstract class TextTransformer extends Transformer[TextFeature, TextFeature]
-  with Preprocessing[TextFeature, TextFeature]{
+abstract class TextTransformer extends Preprocessing[TextFeature, TextFeature] {
 
   def transform(feature: TextFeature): TextFeature
 

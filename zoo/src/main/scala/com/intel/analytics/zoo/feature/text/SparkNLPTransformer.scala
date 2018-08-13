@@ -18,17 +18,12 @@ package com.intel.analytics.zoo.feature.text
 
 import org.apache.spark.ml.Transformer
 
-class Tokenizer extends SparkNLPTransformer {
+abstract class SparkNLPTransformer extends TextTransformer {
 
-  override def transformer: Transformer = {
-    new com.johnsnowlabs.nlp.annotator.Tokenizer()
-      .setInputCols(Array("document"))
-      .setOutputCol("tokens")
+  override def transform(feature: TextFeature): TextFeature = {
+    throw new Exception("shouldn't call transform on a single SparkNLPTransformer explicitly. " +
+      "Instead, you should use PipelinedSparkNLPTransformer")
   }
-}
 
-object Tokenizer {
-  def apply(): Tokenizer = {
-    new Tokenizer()
-  }
+  def transformer: Transformer
 }
