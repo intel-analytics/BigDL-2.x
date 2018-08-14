@@ -469,7 +469,7 @@ abstract class KerasNet[T: ClassTag](implicit ev: TensorNumeric[T])
       positions: Array[Double] = Array(.33, .55, .67, 1)): Unit
 }
 
-class Model[T: ClassTag] private (private val _inputs : Seq[ModuleNode[T]],
+class Model[T: ClassTag] private[zoo] (private val _inputs : Seq[ModuleNode[T]],
     private val _outputs : Seq[ModuleNode[T]])(implicit ev: TensorNumeric[T])
   extends KerasNet[T] with NetUtils[T, Model[T]] {
   this.labor = doBuild(null)
