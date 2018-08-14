@@ -43,13 +43,13 @@ abstract class TextSet {
     this.transform(transformer)
   }
 
-  def isLocal(): Boolean
+  def isLocal: Boolean
 
-  def isDistributed(): Boolean
+  def isDistributed: Boolean
 
-  def toLocal(): LocalTextSet = this.asInstanceOf[LocalTextSet]
+  def toLocal: LocalTextSet = this.asInstanceOf[LocalTextSet]
 
-  def toDistributed(): DistributedTextSet = this.asInstanceOf[DistributedTextSet]
+  def toDistributed: DistributedTextSet = this.asInstanceOf[DistributedTextSet]
 
   def tokenize(): TextSet = {
     transform(Tokenizer())
@@ -142,9 +142,9 @@ class LocalTextSet(var array: Array[TextFeature]) extends TextSet {
     }.setWordIndex(getWordIndex)
   }
 
-  override def isLocal(): Boolean = true
+  override def isLocal: Boolean = true
 
-  override def isDistributed(): Boolean = false
+  override def isDistributed: Boolean = false
 
   override def word2idx(removeTopN: Int = 0, maxWordsNum: Int = 5000): TextSet = {
     if (array == null) {
@@ -189,9 +189,9 @@ class DistributedTextSet(var rdd: RDD[TextFeature]) extends TextSet {
     }.setWordIndex(getWordIndex)
   }
 
-  override def isLocal(): Boolean = false
+  override def isLocal: Boolean = false
 
-  override def isDistributed(): Boolean = true
+  override def isDistributed: Boolean = true
 
   override def word2idx(removeTopN: Int = 0, maxWordsNum: Int = 5000): TextSet = {
     if (rdd == null) {
