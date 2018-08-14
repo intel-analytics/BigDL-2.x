@@ -20,7 +20,7 @@ import org.apache.spark.ml.Transformer
 
 class Tokenizer extends SparkNLPTransformer {
 
-  override def transformer: Transformer = {
+  override def labor: Transformer = {
     new com.johnsnowlabs.nlp.annotator.Tokenizer()
       .setInputCols(Array("document"))
       .setOutputCol("tokens")

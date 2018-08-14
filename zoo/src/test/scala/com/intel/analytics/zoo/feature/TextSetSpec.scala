@@ -21,7 +21,11 @@ import com.intel.analytics.zoo.feature.text._
 import org.apache.spark.{SparkConf, SparkContext}
 import org.scalatest.{BeforeAndAfter, FlatSpec, Matchers}
 
+import scala.collection.immutable.HashSet
+
 class TextSetSpec extends FlatSpec with Matchers with BeforeAndAfter {
+  val text1 = new TextFeature("Hello my friend, please annotate my text", Some(0))
+  val text2 = new TextFeature("Listen to my heart Heart. Show me love, baby.", Some(1))
   var sc : SparkContext = _
 
   before {
@@ -36,20 +40,50 @@ class TextSetSpec extends FlatSpec with Matchers with BeforeAndAfter {
   }
 
   "DistributedTextSet Transformation" should "work properly" in {
-    val text1 = new TextFeature("Hello my friend, please annotate my text", Some(0))
-    val text2 = new TextFeature("Listen to my heart Heart. Show me love, baby.", Some(1))
-    val textSet = TextSet.rdd(sc.parallelize(Seq(text1, text2)))
-    val transformedTextSet =
-      textSet.tokenize().normalize().indexize().shapeSequence(len = 6).genSample()
-    val transformedTextFeatures = transformedTextSet.asInstanceOf[DistributedTextSet].rdd.collect()
-    val wordIndex = transformedTextSet.getWordIndex
-    wordIndex.toArray.length should be (13)
-    wordIndex.keySet.contains("heart") should be (true)
-    wordIndex.keySet.contains("Heart") should be (false)
-    wordIndex("my") should be (1)
-    val transformed1 = transformedTextFeatures(0)
-    transformed1.keys().toArray.length should be (5)
-    transformed1.keys().contains("sample") should be (true)
-    transformed1.apply[Array[Int]]("indexedTokens").length should be (6)
+    val distributed = TextSet.rdd(sc.parallelize(Seq(text1, text2)))
+    require(distributed.preTextSet == null)
+    require(distributed.stages == null)
+    val t1 = distributed.tokenize()
+    require(t1.preTextSet == distributed)
+    require(t1.stages.length == 1 &&
+      t1.stages.head.isInstanceOf[com.johnsnowlabs.nlp.annotators.Tokenizer])
+    val t2 = t1.normalize()
+    require(t2.preTextSet == distributed)
+    require(t2.stages.length == 2)
+    require(t2.stages(0).isInstanceOf[com.johnsnowlabs.nlp.annotators.Tokenizer])
+    require(t2.stages(1).isInstanceOf[com.johnsnowlabs.nlp.annotators.NormalizerModel])
+    val t3 = t2.indexize(maxWordsNum = 10)
+    require(t3.preTextSet == null)
+    require(t3.stages == null)
+    val t4 = t3.shapeSequence(len = 5).genSample()
+    require(t4.preTextSet == null)
+    require(t4.stages == null)
+    val wordIndex1 = t3.getWordIndex
+    val wordIndex2 = t4.getWordIndex
+    require(wordIndex1 == wordIndex2 && wordIndex2.toArray.length == 10)
+    require(wordIndex1("my") == 1)
+    val arr = t4.asInstanceOf[DistributedTextSet].rdd.collect()
+    require(arr.length == 2)
+    require(arr(0).keys() == HashSet("label", "text", "tokens", "indexedTokens", "sample"))
+    require(arr(0).apply[Array[Int]]("indexedTokens").length == 5)
+  }
+
+  "LocalTextSet Transformation" should "work properly" in {
+    val local = TextSet.array(Array(text1, text2))
+    require(local.preTextSet == null)
+    require(local.stages == null)
+    val transformed =
+      local.tokenize().normalize().indexize().shapeSequence(len = 6).genSample()
+    require(transformed.preTextSet == null)
+    require(transformed.stages == null)
+    val wordIndex = transformed.getWordIndex
+    require(wordIndex.toArray.length == 13)
+    require(wordIndex.keySet.contains("heart"))
+    require(!wordIndex.keySet.contains("Heart"))
+    require(wordIndex("my") == 1)
+    val arr = transformed.asInstanceOf[LocalTextSet].array
+    require(arr.length == 2)
+    require(arr(0).keys() == HashSet("label", "text", "tokens", "indexedTokens", "sample"))
+    require(arr(0).apply[Array[Int]]("indexedTokens").length == 6)
   }
 }

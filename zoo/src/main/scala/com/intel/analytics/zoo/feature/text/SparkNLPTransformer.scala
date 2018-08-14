@@ -25,5 +25,5 @@ abstract class SparkNLPTransformer extends TextTransformer {
       "Instead, you should use PipelinedSparkNLPTransformer")
   }
 
-  def transformer: Transformer
+  def labor: Transformer
 }
