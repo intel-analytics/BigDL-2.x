@@ -1,3 +1,4 @@
+#
 # Copyright 2018 Analytics Zoo Authors.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,12 +13,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-import sys
 
-from bigdl.util.common import JavaValue, callBigDlFunc, to_list
+from bigdl.nn.layer import Layer
+from bigdl.util.common import JavaValue
 
-from bigdl.nn.keras.layer import KerasLayer
-from zoo.pipeline.api.keras.base import ZooCallable
+from zoo.pipeline.api.keras.base import ZooKerasLayer
 
 
 class ZooKeras2Creator(JavaValue):
@@ -27,5 +27,5 @@ class ZooKeras2Creator(JavaValue):
         return name
 
 
-class ZooKeras2Layer(ZooKeras2Creator, ZooCallable, KerasLayer):
+class ZooKeras2Layer(ZooKeras2Creator, ZooKerasLayer):
     pass

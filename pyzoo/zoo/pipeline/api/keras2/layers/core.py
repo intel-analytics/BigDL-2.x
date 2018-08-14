@@ -68,3 +68,82 @@ class Dense(ZooKeras2Layer):
                                     use_bias,
                                     list(input_shape) if input_shape else None,
                                     **kwargs)
+
+
+class Activation(ZooKeras2Layer):
+    """
+    Simple activation function to be applied to the output.
+    Available activations: 'tanh', 'relu', 'sigmoid', 'softmax', 'softplus', 'softsign',
+                           'hard_sigmoid', 'linear', 'relu6', 'tanh_shrink', 'softmin',
+                           'log_sigmoid' and 'log_softmax'.
+
+    When you use this layer as the first layer of a model, you need to provide the argument
+    input_shape (a shape tuple, does not include the batch dimension).
+
+    # Arguments
+    activation: Name of the activation function as string.
+    input_shape: A shape tuple, not including batch.
+    name: String to set the name of the layer.
+          If not specified, its name will by default to be a generated string.
+
+    >>> activation = Activation("relu", input_shape=(3, 4))
+    creating: createZooKeras2Activation
+    """
+    def __init__(self,
+                 activation,
+                 input_shape=None,
+                 **kwargs):
+        super(Activation, self).__init__(None,
+                                         activation,
+                                         list(input_shape) if input_shape else None,
+                                         **kwargs)
+
+
+class Dropout(ZooKeras2Layer):
+    """
+    Applies Dropout to the input by randomly setting a fraction 'rate' of input units to 0 at each
+    update during training time in order to prevent overfitting.
+
+    When you use this layer as the first layer of a model, you need to provide the argument
+    input_shape (a shape tuple, does not include the batch dimension).
+
+    # Arguments
+    rate: Fraction of the input units to drop. Float between 0 and 1.
+    input_shape: A shape tuple, not including batch.
+    name: String to set the name of the layer.
+          If not specified, its name will by default to be a generated string.
+
+    >>> dropout = Dropout(0.25, input_shape=(2, 3))
+    creating: createZooKeras2Dropout
+    """
+    def __init__(self,
+                 rate,
+                 input_shape=None,
+                 **kwargs):
+        super(Dropout, self).__init__(None,
+                                      float(rate),
+                                      list(input_shape) if input_shape else None,
+                                      **kwargs)
+
+
+class Flatten(ZooKeras2Layer):
+    """
+    Flattens the input without affecting the batch size.
+
+    When you use this layer as the first layer of a model, you need to provide the argument
+    input_shape (a shape tuple, does not include the batch dimension).
+
+    # Arguments
+    input_shape: A shape tuple, not including batch.
+    name: String to set the name of the layer.
+          If not specified, its name will by default to be a generated string.
+
+    >>> flatten = Flatten(input_shape=(3, 10, 2))
+    creating: createZooKeras2Flatten
+    """
+    def __init__(self,
+                 input_shape=None,
+                 **kwargs):
+        super(Flatten, self).__init__(None,
+                                      list(input_shape) if input_shape else None,
+                                      **kwargs)

@@ -20,12 +20,12 @@ import cv2
 from zoo.common.nncontext import init_nncontext
 from zoo.models.image.objectdetection import *
 
-sc = init_nncontext(create_spark_conf().setAppName("Object Detection Example"))
+sc = init_nncontext("Object Detection Example")
 
 parser = argparse.ArgumentParser()
 parser.add_argument('model_path', help="Path where the model is stored")
 parser.add_argument('img_path', help="Path where the images are stored")
-parser.add_argument('output_path',  help="Path to store the detection results")
+parser.add_argument('output_path', help="Path to store the detection results")
 
 
 def predict(model_path, img_path, output_path):

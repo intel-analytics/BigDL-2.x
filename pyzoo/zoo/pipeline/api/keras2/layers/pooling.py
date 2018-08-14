@@ -121,3 +121,54 @@ class GlobalAveragePooling1D(ZooKeras2Layer):
         super(GlobalAveragePooling1D, self).__init__(None,
                                                      list(input_shape) if input_shape else None,
                                                      **kwargs)
+
+
+class GlobalMaxPooling1D(ZooKeras2Layer):
+    """
+    Applies global max pooling operation for temporal data.
+    The input of this layer should be 3D.
+
+    When you use this layer as the first layer of a model, you need to provide the argument
+    input_shape (a shape tuple, does not include the batch dimension) .
+
+    # Arguments
+    input_shape: A shape tuple, not including batch.
+    name: String to set the name of the layer.
+          If not specified, its name will by default to be a generated string.
+
+    >>> globalmaxpooling1d = GlobalMaxPooling1D(input_shape=(4, 8))
+    creating: createZooKeras2GlobalMaxPooling1D
+    """
+
+    def __init__(self, input_shape=None, **kwargs):
+        super(GlobalMaxPooling1D, self).__init__(None,
+                                                 list(input_shape) if input_shape else None,
+                                                 **kwargs)
+
+
+class GlobalAveragePooling2D(ZooKeras2Layer):
+    """
+    Applies global average pooling operation for spatial data.
+    The input of this layer should be 4D.
+
+    When you use this layer as the first layer of a model, you need to provide the argument
+    input_shape (a shape tuple, does not include the batch dimension).
+
+    # Arguments
+    data_format: Format of input data. Either channels_first  or channels_last.
+
+    input_shape: A shape tuple, not including batch.
+    name: String to set the name of the layer.
+          If not specified, its name will by default to be a generated string.
+
+    >>> globalaveragepooling2d = GlobalAveragePooling2D(input_shape=(4, 32, 32))
+    creating: createZooKeras2GlobalAveragePooling2D
+    """
+    def __init__(self,
+                 data_format="channels_first",
+                 input_shape=None,
+                 **kwargs):
+        super(GlobalAveragePooling2D, self).__init__(None,
+                                                     data_format,
+                                                     list(input_shape) if input_shape else None,
+                                                     **kwargs)

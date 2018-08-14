@@ -16,6 +16,8 @@
 
 package com.intel.analytics.zoo.feature.image
 
+import com.intel.analytics.bigdl.DataSet
+import com.intel.analytics.bigdl.dataset.DataSet
 import com.intel.analytics.bigdl.transform.vision.image.{DistributedImageFrame, ImageFeature, ImageFrame, LocalImageFrame}
 import com.intel.analytics.zoo.common.Utils
 import com.intel.analytics.zoo.feature.common.Preprocessing
@@ -68,6 +70,11 @@ abstract class ImageSet {
    * @return ImageSet
    */
   def toImageFrame(): ImageFrame
+
+  /**
+   * Convert ImageSet to DataSet of ImageFeature.
+   */
+  def toDataSet(): DataSet[ImageFeature]
 }
 
 class LocalImageSet(var array: Array[ImageFeature]) extends ImageSet {
@@ -82,6 +89,10 @@ class LocalImageSet(var array: Array[ImageFeature]) extends ImageSet {
 
   override def toImageFrame(): ImageFrame = {
     ImageFrame.array(array)
+  }
+
+  override def toDataSet(): DataSet[ImageFeature] = {
+    DataSet.array(array)
   }
 }
 
@@ -98,6 +109,10 @@ class DistributedImageSet(var rdd: RDD[ImageFeature]) extends ImageSet {
   override def toImageFrame(): ImageFrame = {
     ImageFrame.rdd(rdd)
   }
+
+  override def toDataSet(): DataSet[ImageFeature] = {
+    DataSet.rdd[ImageFeature](rdd)
+  }
 }
 
 object ImageSet {
@@ -111,11 +126,29 @@ object ImageSet {
   }
 
   /**
+   * create LocalImageSet from array of bytes
+   * @param data nested array of bytes, expect inner array is a image
+   */
+  def array(data: Array[Array[Byte]]): LocalImageSet = {
+    val images = data.map(ImageFeature(_))
+    ImageSet.array(images)
+  }
+
+  /**
    * create DistributedImageSet
    * @param data rdd of ImageFeature
    */
   def rdd(data: RDD[ImageFeature]): DistributedImageSet = {
     new DistributedImageSet(data)
+  }
+
+  /**
+   * create DistributedImageSet for a RDD of array bytes
+   * @param data rdd of array of bytes
+   */
+  def rddBytes(data: RDD[Array[Byte]]): DistributedImageSet = {
+    val images = data.map(ImageFeature(_))
+    ImageSet.rdd(images)
   }
 
   /**

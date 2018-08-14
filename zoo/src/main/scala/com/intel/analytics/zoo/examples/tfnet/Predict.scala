@@ -35,7 +35,7 @@ object Predict {
   val logger = Logger.getLogger(getClass)
 
   case class PredictParam(image: String = "/tmp/datasets/cat_dog/train_sampled",
-                          model: String = "/tmp/models/ssd_mobilenet_v1_coco_2017_11_17" +
+                          model: String = "/tmp/models/ssd_mobilenet_v1_coco_2018_01_28" +
                             "/frozen_inference_graph.pb",
                           nPartition: Int = 4)
 
@@ -57,8 +57,8 @@ object Predict {
 
       val sc = NNContext.initNNContext("TFNet Object Detection Example")
 
-      val inputs = Seq("image_tensor:0")
-      val outputs = Seq("num_detections:0", "detection_boxes:0",
+      val inputs = Array("image_tensor:0")
+      val outputs = Array("num_detections:0", "detection_boxes:0",
         "detection_scores:0", "detection_classes:0")
 
       val model = TFNet(params.model, inputs, outputs)

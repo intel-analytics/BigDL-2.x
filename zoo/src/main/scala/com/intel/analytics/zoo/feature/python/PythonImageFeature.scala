@@ -28,6 +28,7 @@ import com.intel.analytics.zoo.feature.image._
 import com.intel.analytics.zoo.feature.image3d._
 
 import org.apache.spark.api.java.{JavaRDD, JavaSparkContext}
+import org.opencv.imgcodecs.Imgcodecs
 import org.opencv.imgproc.Imgproc
 
 import scala.collection.JavaConverters._
@@ -184,21 +185,6 @@ class PythonImageFeature[T: ClassTag](implicit ev: TensorNumeric[T]) extends Pyt
     new LocalImageSet(features.toArray)
   }
 
-//  def createLocalImageSet3D(images: JList[JTensor], labels: JList[JTensor])
-//  : LocalImageSet = {
-//    require(null != images, "images cannot be null")
-//    val features = if (null != labels) {
-//      (0 until images.size()).map(i => {
-//        createImageFeature3D(images.get(i), labels.get(i))
-//      })
-//    } else {
-//      (0 until images.size()).map(i => {
-//        createImageFeature3D(images.get(i), null)
-//      })
-//    }
-//    new LocalImageSet(features.toArray)
-//  }
-
   def createImageFeature3D(data: JTensor = null, label: JTensor = null, uri: String = null)
   : ImageFeature = {
     val feature = new ImageFeature3D()
@@ -214,6 +200,12 @@ class PythonImageFeature[T: ClassTag](implicit ev: TensorNumeric[T]) extends Pyt
       feature(ImageFeature.uri) = uri
     }
     feature
+  }
+
+  def createImageBytesToMat(
+      byteKey: String = ImageFeature.bytes,
+      imageCodec: Int = Imgcodecs.CV_LOAD_IMAGE_UNCHANGED): ImageBytesToMat = {
+    ImageBytesToMat(byteKey, imageCodec)
   }
 
   def createImageBrightness(deltaLow: Double, deltaHigh: Double): ImageBrightness = {

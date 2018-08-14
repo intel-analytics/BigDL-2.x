@@ -77,10 +77,9 @@ class HasSamplePreprocessing:
 
 class HasOptimMethod:
 
-    optimMethod = SGD()
-
     def __init__(self):
         super(HasOptimMethod, self).__init__()
+        self.optimMethod = SGD()
 
     def setOptimMethod(self, val):
         """
@@ -97,6 +96,39 @@ class HasOptimMethod:
         Gets the optimization method
         """
         return self.optimMethod
+
+
+class HasThreshold(Params):
+    """
+    Mixin for param Threshold in binary classification.
+
+    The threshold applies to the raw output of the model. If the output is greater than
+    threshold, then predict 1, else 0. A high threshold encourages the model to predict 0
+    more often; a low threshold encourages the model to predict 1 more often.
+
+    Note: the param is different from the one in Spark ProbabilisticClassifier which is compared
+    against estimated probability.
+
+    Default is 0.5.
+    """
+
+    def __init__(self):
+        super(HasThreshold, self).__init__()
+        self.threshold = Param(self, "threshold", "threshold")
+        self._setDefault(threshold=0.5)
+
+    def setThreshold(self, val):
+        """
+        Sets the value of :py:attr:`threshold`.
+        """
+        self._paramMap[self.threshold] = val
+        return self
+
+    def getThreshold(self):
+        """
+        Gets the value of threshold or its default value.
+        """
+        return self.getOrDefault(self.threshold)
 
 
 class NNEstimator(JavaEstimator, HasFeaturesCol, HasLabelCol, HasPredictionCol, HasBatchSize,
@@ -119,8 +151,8 @@ class NNEstimator(JavaEstimator, HasFeaturesCol, HasLabelCol, HasPredictionCol, 
     """
 
     def __init__(self, model, criterion,
-                 feature_preprocessing=SeqToTensor(),
-                 label_preprocessing=SeqToTensor(),
+                 feature_preprocessing=None,
+                 label_preprocessing=None,
                  jvalue=None, bigdl_type="float"):
         """
         Construct a NNEstimator with BigDL model, criterion and Preprocessing for feature and label
@@ -150,6 +182,13 @@ class NNEstimator(JavaEstimator, HasFeaturesCol, HasLabelCol, HasPredictionCol, 
         :param bigdl_type: optional parameter. data type of model, "float"(default) or "double".
         """
         super(NNEstimator, self).__init__()
+
+        # avoid initialization during import.
+        if not feature_preprocessing:
+            feature_preprocessing = SeqToTensor()
+        if not label_preprocessing:
+            label_preprocessing = SeqToTensor()
+
         if type(feature_preprocessing) is list:
             assert(all(isinstance(x, int) for x in feature_preprocessing))
             feature_preprocessing = SeqToTensor(feature_preprocessing)
@@ -363,7 +402,7 @@ class NNModel(JavaTransformer, HasFeaturesCol, HasPredictionCol, HasBatchSize,
     After transform, the prediction column contains the output of the model as Array[T], where
     T (Double or Float) is decided by the model type.
     """
-    def __init__(self, model, feature_preprocessing=SeqToTensor(), jvalue=None, bigdl_type="float"):
+    def __init__(self, model, feature_preprocessing=None, jvalue=None, bigdl_type="float"):
         """
         create a NNModel with a BigDL model
         :param model: trained BigDL model to use in prediction.
@@ -381,6 +420,9 @@ class NNModel(JavaTransformer, HasFeaturesCol, HasPredictionCol, HasBatchSize,
             self.value = jvalue
         # initialize with Python Model and preprocessing
         else:
+            if not feature_preprocessing:
+                feature_preprocessing = SeqToTensor()
+
             if type(feature_preprocessing) is list:
                 assert(all(isinstance(x, int) for x in feature_preprocessing))
                 feature_preprocessing = SeqToTensor(feature_preprocessing)
@@ -411,7 +453,7 @@ class NNClassifier(NNEstimator):
     classification tasks. It only supports label column of DoubleType, and the fitted
     NNClassifierModel will have the prediction column of DoubleType.
     """
-    def __init__(self, model, criterion, feature_preprocessing=SeqToTensor(),
+    def __init__(self, model, criterion, feature_preprocessing=None,
                  jvalue=None, bigdl_type="float"):
         """
         :param model: BigDL module to be optimized
@@ -422,6 +464,9 @@ class NNClassifier(NNEstimator):
                                       Preprocessing[F, Tensor[T]]
         :param bigdl_type(optional): Data type of BigDL model, "float"(default) or "double".
         """
+        if not feature_preprocessing:
+            feature_preprocessing = SeqToTensor()
+
         super(NNClassifier, self).__init__(
             model, criterion, feature_preprocessing, ScalarToTensor(), jvalue, bigdl_type)
 
@@ -447,12 +492,12 @@ class NNClassifier(NNEstimator):
         return classifierModel
 
 
-class NNClassifierModel(NNModel):
+class NNClassifierModel(NNModel, HasThreshold):
     """
     NNClassifierModel is a specialized [[NNModel]] for classification tasks. The prediction
     column will have the datatype of Double.
     """
-    def __init__(self,  model, feature_preprocessing=SeqToTensor(), jvalue=None,
+    def __init__(self,  model, feature_preprocessing=None, jvalue=None,
                  bigdl_type="float"):
         """
         :param model: trained BigDL model to use in prediction.

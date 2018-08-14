@@ -22,22 +22,22 @@ import java.util
 import com.intel.analytics.bigdl.dataset.Sample
 import com.intel.analytics.bigdl.example.utils.SimpleTokenizer._
 import com.intel.analytics.bigdl.example.utils.{SimpleTokenizer, WordMeta}
-import com.intel.analytics.bigdl.nn.ClassNLLCriterion
 import com.intel.analytics.bigdl.optim._
 import com.intel.analytics.bigdl.tensor.Tensor
 import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric.NumericFloat
-
 import com.intel.analytics.bigdl.utils.LoggerFilter
 import com.intel.analytics.zoo.common.NNContext
 import com.intel.analytics.zoo.models.textclassification.TextClassifier
+import com.intel.analytics.zoo.pipeline.api.keras.metrics.Accuracy
+import com.intel.analytics.zoo.pipeline.api.keras.objectives.SparseCategoricalCrossEntropy
+import com.intel.analytics.zoo.pipeline.api.keras.layers.WordEmbedding
 import org.apache.log4j.{Level => Level4j, Logger => Logger4j}
 import org.apache.spark.SparkConf
-
 import org.apache.spark.rdd.RDD
 import org.slf4j.{Logger, LoggerFactory}
 import scopt.OptionParser
 
-import scala.collection.mutable.{ArrayBuffer, Map => MMap}
+import scala.collection.mutable.ArrayBuffer
 import scala.io.Source
 
 case class TextClassificationParams(baseDir: String = "./",
@@ -69,8 +69,8 @@ object TextClassification {
     val categoryPathList = new File(dir).listFiles().filter(_.isDirectory).toList.sorted
 
     categoryPathList.foreach { categoryPath =>
-      val label_id = categoryToLabel.size() + 1
-      categoryToLabel.put(categoryPath.getName(), label_id)
+      val label_id = categoryToLabel.size()
+      categoryToLabel.put(categoryPath.getName, label_id)
       val textFiles = categoryPath.listFiles()
         .filter(_.isFile).filter(_.getName.forall(Character.isDigit(_))).sorted
       textFiles.foreach { file =>
@@ -87,8 +87,8 @@ object TextClassification {
   }
 
   // Turn texts into tokens
-  def analyzeTexts(dataRdd: RDD[(String, Float)], maxWordsNum: Int, gloveDir: String)
-  : (Map[String, WordMeta], Map[Float, Array[Float]]) = {
+  def analyzeTexts(dataRdd: RDD[(String, Float)], maxWordsNum: Int)
+  : Map[String, WordMeta] = {
     // Remove the top 10 words roughly. You might want to fine tune this.
     val frequencies = dataRdd.flatMap{case (text: String, label: Float) =>
       SimpleTokenizer.toTokens(text)
@@ -96,27 +96,8 @@ object TextClassification {
       .sortBy(- _._2).collect().slice(10, maxWordsNum)
 
     val indexes = Range(1, frequencies.length)
-    val word2Meta = frequencies.zip(indexes).map{item =>
+    frequencies.zip(indexes).map{item =>
       (item._1._1, WordMeta(item._1._2, item._2))}.toMap
-    (word2Meta, buildWord2Vec(word2Meta, gloveDir))
-  }
-
-  // Turn tokens into vectors
-  def buildWord2Vec(word2Meta: Map[String, WordMeta], gloveDir: String):
-      Map[Float, Array[Float]] = {
-    log.info("Indexing word vectors.")
-    val preWord2Vec = MMap[Float, Array[Float]]()
-    val filename = s"$gloveDir/glove.6B.200d.txt"
-    for (line <- Source.fromFile(filename, "ISO-8859-1").getLines) {
-      val values = line.split(" ")
-      val word = values(0)
-      if (word2Meta.contains(word)) {
-        val coefs = values.slice(1, values.length).map(_.toFloat)
-        preWord2Vec.put(word2Meta(word).index.toFloat, coefs)
-      }
-    }
-    log.info(s"Found ${preWord2Vec.size} word vectors.")
-    preWord2Vec.toMap
   }
 
   def main(args: Array[String]): Unit = {
@@ -129,7 +110,7 @@ object TextClassification {
         .text("The number of partitions to cut the dataset into")
         .action((x, c) => c.copy(partitionNum = x))
       opt[Int]("tokenLength")
-        .text("The size of each word vector")
+        .text("The size of each word vector, 50 or 100 or 200 or 300 for GloVe")
         .action((x, c) => c.copy(tokenLength = x))
       opt[Int]("sequenceLength")
         .text("The length of a sequence")
@@ -167,7 +148,6 @@ object TextClassification {
       val sc = NNContext.initNNContext(conf)
 
       val sequenceLength = param.sequenceLength
-      val tokenLength = param.tokenLength
       val trainingSplit = param.trainingSplit
       val textDataDir = s"${param.baseDir}/20news-18828/"
       require(new File(textDataDir).exists(), "Text data directory is not found in baseDir, " +
@@ -175,22 +155,20 @@ object TextClassification {
         "download 20 Newsgroup dataset")
       val gloveDir = s"${param.baseDir}/glove.6B/"
       require(new File(gloveDir).exists(),
-        "Glove word embeddings directory is not found in baseDir, " +
+        "GloVe word embeddings directory is not found in baseDir, " +
         "you can run $ANALYTICS_ZOO_HOME/bin/data/glove/get_glove.sh to download")
 
       // For large dataset, you might want to get such RDD[(String, Float)] from HDFS
       val dataRdd = sc.parallelize(loadRawData(textDataDir), param.partitionNum)
-      val (word2Meta, word2Vec) = analyzeTexts(dataRdd, param.maxWordsNum, gloveDir)
+      val word2Meta = analyzeTexts(dataRdd, param.maxWordsNum)
       val word2MetaBC = sc.broadcast(word2Meta)
-      val word2VecBC = sc.broadcast(word2Vec)
-      val vectorizedRdd = dataRdd
+
+      val indexedRdd = dataRdd
         .map {case (text, label) => (toTokens(text, word2MetaBC.value), label)}
         .map {case (tokens, label) => (shaping(tokens, sequenceLength), label)}
-        .map {case (tokens, label) => (vectorization(
-          tokens, tokenLength, word2VecBC.value), label)}
-      val sampleRDD = vectorizedRdd.map {case (input: Array[Array[Float]], label: Float) =>
+      val sampleRDD = indexedRdd.map {case (input: Array[Float], label: Float) =>
         Sample(
-          featureTensor = Tensor(input.flatten, Array(sequenceLength, tokenLength)),
+          featureTensor = Tensor(input, Array(sequenceLength)),
           label = label)
       }
 
@@ -201,28 +179,36 @@ object TextClassification {
         TextClassifier.loadModel(param.model.get)
       }
       else {
-        TextClassifier(classNum, tokenLength, sequenceLength,
+        val tokenLength = param.tokenLength
+        require(tokenLength == 50 || tokenLength == 100 || tokenLength == 200 || tokenLength == 300,
+        s"tokenLength for GloVe can only be 50, 100, 200, 300, but got $tokenLength")
+        val wordIndex = word2Meta.map(x => x._1 -> x._2.index)
+        val gloveFile = gloveDir + "glove.6B." + tokenLength.toString + "d.txt"
+        TextClassifier(classNum, gloveFile, wordIndex, sequenceLength,
           param.encoder, param.encoderOutputDim)
       }
 
       val optimizer = Optimizer(
         model = model,
         sampleRDD = trainingRDD,
-        criterion = ClassNLLCriterion[Float](logProbAsInput = false),
+        criterion = SparseCategoricalCrossEntropy[Float](),
         batchSize = param.batchSize
       )
 
       optimizer
         .setOptimMethod(new Adagrad(learningRate = param.learningRate,
           learningRateDecay = 0.001))
-        .setValidation(Trigger.everyEpoch, valRDD, Array(new Top1Accuracy), param.batchSize)
+        .setValidation(Trigger.everyEpoch, valRDD, Array(new Accuracy), param.batchSize)
         .setEndWhen(Trigger.maxEpoch(param.nbEpoch))
         .optimize()
 
       // Predict for probability distributions
       val results = model.predict(valRDD)
+      results.take(5)
       // Predict for labels
-      val resultClasses = model.predictClass(valRDD)
+      val resultClasses = model.predictClasses(valRDD)
+      println("First five class predictions (label starts from 0):")
+      resultClasses.take(5).foreach(println)
 
       sc.stop()
     }

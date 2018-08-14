@@ -15,7 +15,8 @@
 #
 
 from bigdl.optim.optimizer import *
-from bigdl.nn.criterion import *
+from zoo.pipeline.api.keras.objectives import *
+from zoo.pipeline.api.keras import metrics
 
 
 def to_bigdl_optim_method(optimizer):
@@ -41,40 +42,41 @@ def to_bigdl_criterion(criterion):
     if criterion == "categorical_crossentropy":
         return CategoricalCrossEntropy()
     elif criterion == "mse" or criterion == "mean_squared_error":
-        return MSECriterion()
+        return MeanSquaredError()
     elif criterion == "binary_crossentropy":
-        return BCECriterion()
+        return BinaryCrossEntropy()
     elif criterion == "mae" or criterion == "mean_absolute_error":
-        return AbsCriterion()
+        return mae()
     elif criterion == "hinge":
-        return MarginCriterion()
+        return Hinge()
     elif criterion == "mean_absolute_percentage_error" or criterion == "mape":
-        return MeanAbsolutePercentageCriterion()
+        return MeanAbsolutePercentageError()
     elif criterion == "mean_squared_logarithmic_error" or criterion == "msle":
-        return MeanSquaredLogarithmicCriterion()
+        return MeanSquaredLogarithmicError()
     elif criterion == "squared_hinge":
-        return MarginCriterion(squared=True)
+        return SquaredHinge()
     elif criterion == "sparse_categorical_crossentropy":
-        return ClassNLLCriterion(logProbAsInput=False)
+        return SparseCategoricalCrossEntropy()
     elif criterion == "kullback_leibler_divergence" or criterion == "kld":
-        return KullbackLeiblerDivergenceCriterion()
+        return KullbackLeiblerDivergence()
     elif criterion == "poisson":
-        return PoissonCriterion()
+        return Poisson()
     elif criterion == "cosine_proximity" or criterion == "cosine":
-        return CosineProximityCriterion()
+        return CosineProximity()
     else:
         raise TypeError("Unsupported loss: %s" % criterion)
 
 
 def to_bigdl_metric(metric):
-    from zoo.pipeline.api.keras.metrics.auc import AUC
     metric = metric.lower()
-    if metric == "accuracy":
-        return Top1Accuracy()
+    if metric == "accuracy" or metric == "acc":
+        return metrics.Accuracy()
+    elif metric == "top5accuracy" or metric == "top5acc":
+        return metrics.Top5Accuracy()
     elif metric == "mae":
         return MAE()
     elif metric == "auc":
-        return AUC()
+        return metrics.AUC()
     elif metric == "loss":
         return Loss()
     elif metric == "treennaccuracy":

@@ -17,6 +17,8 @@
 import pytest
 import shutil
 
+from zoo.feature.common import ChainedPreprocessing
+from zoo.feature.image import *
 from zoo.pipeline.api.keras.layers import *
 from zoo.pipeline.api.keras.models import *
 from test.zoo.pipeline.utils.test_utils import ZooTestCase
@@ -58,9 +60,9 @@ class TestSimpleIntegration(ZooTestCase):
         model.add(Flatten())
         model.add(Dense(4, activation="softmax"))
         X_train = np.random.random([200, 32, 32])
-        y_train = np.random.randint(4, size=(200, )) + 1
+        y_train = np.random.randint(4, size=(200, ))
         X_test = np.random.random([40, 32, 32])
-        y_test = np.random.randint(4, size=(40, )) + 1
+        y_test = np.random.randint(4, size=(40, ))
         model.compile(optimizer="adam",
                       loss="sparse_categorical_crossentropy",
                       metrics=['accuracy'])
@@ -76,9 +78,26 @@ class TestSimpleIntegration(ZooTestCase):
         model.set_gradient_clipping_by_l2_norm(0.2)
         model.fit(X_train, y_train, batch_size=112, nb_epoch=2, validation_data=(X_test, y_test))
         model.evaluate(X_test, y_test, batch_size=112)
-        model.predict(X_test)
+        result = model.predict(X_test).collect()
+        for res in result:
+            assert isinstance(res, np.ndarray)
+        result2 = model.predict(X_test, distributed=False)
+        result_classes = model.predict_classes(X_test)
         shutil.rmtree(tmp_log_dir)
         shutil.rmtree(tmp_checkpoint_path)
+
+    def test_multiple_outputs_predict(self):
+        input = Input(shape=(32, ))
+        dense1 = Dense(10)(input)
+        dense2 = Dense(12)(input)
+        model = Model(input, [dense1, dense2])
+        data = np.random.random([10, 32])
+        result = model.predict(data).collect()
+        for res in result:
+            assert isinstance(res, list) and len(res) == 2
+        result2 = model.predict(data, distributed=False)
+        for res in result2:
+            assert isinstance(res, list) and len(res) == 2
 
     def test_training_without_validation(self):
         model = Sequential()
@@ -89,28 +108,31 @@ class TestSimpleIntegration(ZooTestCase):
         model.fit(x, y, batch_size=112, nb_epoch=2)
         model.predict(x)
 
-    def test_training_imagefeature_dataset(self):
+    def test_training_imageset(self):
         images = []
         labels = []
-        for i in range(0, 8):
+        for i in range(0, 32):
             features = np.random.uniform(0, 1, (200, 200, 3))
             label = np.array([2])
             images.append(features)
             labels.append(label)
-        image_frame = DistributedImageFrame(self.sc.parallelize(images),
-                                            self.sc.parallelize(labels))
+        image_set = DistributedImageSet(self.sc.parallelize(images),
+                                        self.sc.parallelize(labels))
 
-        transformer = Pipeline([BytesToMat(), Resize(256, 256), CenterCrop(224, 224),
-                                ChannelNormalize(0.485, 0.456, 0.406, 0.229, 0.224, 0.225),
-                                MatToTensor(), ImageFrameToSample(target_keys=['label'])])
-        data_set = DataSet.image_frame(image_frame).transform(transformer)
+        transformer = ChainedPreprocessing(
+            [ImageBytesToMat(), ImageResize(256, 256), ImageCenterCrop(224, 224),
+             ImageChannelNormalize(0.485, 0.456, 0.406, 0.229, 0.224, 0.225),
+             ImageMatToTensor(), ImageSetToSample(target_keys=['label'])])
+        data = image_set.transform(transformer)
 
         model = Sequential()
         model.add(Convolution2D(1, 5, 5, input_shape=(3, 224, 224)))
         model.add(Reshape((1*220*220, )))
         model.add(Dense(20, activation="softmax"))
         model.compile(optimizer="sgd", loss="sparse_categorical_crossentropy", metrics=["accuracy"])
-        model.fit(data_set, batch_size=8, nb_epoch=2, validation_data=data_set)
+        model.fit(data, batch_size=8, nb_epoch=2, validation_data=data)
+        result = model.predict(data, batch_per_thread=8)
+        accuracy = model.evaluate(data, batch_size=8)
 
     def test_remove_batch(self):
         from zoo.pipeline.api.utils import remove_batch
@@ -173,6 +195,33 @@ class TestSimpleIntegration(ZooTestCase):
         z = Dense(12)(y)
         model = Model(x, z)
         model.summary()
+
+    def test_word_embedding_without_word_index(self):
+        model = Sequential()
+        resource_path = os.path.join(os.path.split(__file__)[0], "../../../resources")
+        glove_path = os.path.join(resource_path, "glove.6B/glove.6B.50d.txt")
+        embedding = WordEmbedding(glove_path, input_length=10)
+        model.add(embedding)
+        input_data = np.random.randint(20, size=(32, 10))
+        self.assert_forward_backward(model, input_data)
+
+    def test_word_embedding_with_word_index(self):
+        model = Sequential()
+        resource_path = os.path.join(os.path.split(__file__)[0], "../../../resources")
+        glove_path = os.path.join(resource_path, "glove.6B/glove.6B.50d.txt")
+        word_index = {"with": 1, "is": 2, "him": 3, "have": 4}
+        embedding = WordEmbedding(glove_path, word_index, input_length=30)
+        model.add(embedding)
+        input_data = np.random.randint(5, size=(4, 30))
+        self.assert_forward_backward(model, input_data)
+
+    def test_get_word_index(self):
+        resource_path = os.path.join(os.path.split(__file__)[0], "../../../resources")
+        glove_path = os.path.join(resource_path, "glove.6B/glove.6B.50d.txt")
+        word_index = WordEmbedding.get_word_index(glove_path)
+        assert word_index["the"] == 1
+        assert word_index["for"] == 11
+        assert word_index["as"] == 20
 
 
 if __name__ == "__main__":

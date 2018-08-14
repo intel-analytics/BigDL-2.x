@@ -35,13 +35,13 @@ Run the following command for Spark local mode (`MASTER=local[*]`) or cluster mo
 SPARK_HOME=the root directory of Spark
 ANALYTICS_ZOO_HOME=the dist directory under the Analytics Zoo project
 MASTER=...
-ANALYTICS_ZOO_JAR=${ANALYTICS_ZOO_HOME}/lib/analytics-zoo-VERSION-jar-with-dependencies.jar
+ANALYTICS_ZOO_JAR=${ANALYTICS_ZOO_HOME}/lib/analytics-zoo-bigdl_BIGDL_VERSION-spark_SPARK_VERSION-ZOO_VERSION-jar-with-dependencies.jar
 BASE_DIR=the base directory containing the training and word2Vec data
 
 spark-submit \
     --master ${MASTER} \
-    --driver-memory 20g \
-    --executor-memory 20g \
+    --driver-memory 2g \
+    --executor-memory 2g \
     --class com.intel.analytics.zoo.examples.textclassification.TextClassification \
     ${ANALYTICS_ZOO_JAR} \
     --baseDir ${BASE_DIR}
@@ -49,7 +49,7 @@ spark-submit \
 __Options:__
 * `--baseDir` This option is __required__. The path where the training and word2Vec data locate.
 * `--partitionNum` The number of partitions to cut the dataset into. Datault is 4.
-* `--tokenLength` The size of each word vector. Default is 200.
+* `--tokenLength` The size of each word vector. GloVe supports tokenLength 50, 100, 200 and 300. Default is 200.
 * `--sequenceLength` The length of a sequence. Default is 500.
 * `--maxWordsNum` The maximum number of words. Default is 5000.
 * `--encoder` The encoder for the input sequence. String, 'cnn' or 'lstm' or 'gru'. Default is 'cnn'.

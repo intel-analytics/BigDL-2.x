@@ -45,7 +45,9 @@ object ImageClassificationConfig {
     "densenet-161-quantize",
     "squeezenet",
     "squeezenet-quantize",
-    "mobilenet")
+    "mobilenet",
+    "mobilenet-v2",
+    "mobilenet-v2-quantize")
 
   def apply[T: ClassTag](model: String, dataset: String, version: String)
     (implicit ev: TensorNumeric[T]): ImageConfigure[T] = {
@@ -90,7 +92,9 @@ object ImagenetConfig {
       case "squeezenet" |
            "squeezenet-quantize" => ImageConfigure(preProcessor = squeezenetPreprocessor,
         labelMap = imagenetLabelMap)
-      case "mobilenet" => ImageConfigure(preProcessor = mobilenetPreprocessor,
+      case "mobilenet" |
+           "mobilenet-v2" |
+           "mobilenet-v2-quantize" => ImageConfigure(preProcessor = mobilenetPreprocessor,
         labelMap = imagenetLabelMap)
       case "inception-v3" |
            "inception-v3-quantize" => ImageConfigure(preProcessor = inceptionV3Preprocessor,
@@ -104,8 +108,8 @@ object ImagenetConfig {
       ImageMatToTensor() -> ImageSetToSample()
   }
 
-  def commonPreprocessor(imageResizeSize: Int, imageCropSize : Int, meanR: Float, meanG: Float, meanB: Float,
-    stdR: Float = 1, stdG: Float = 1, stdB: Float = 1):
+  def commonPreprocessor(imageResizeSize: Int, imageCropSize : Int, meanR: Float, meanG: Float,
+    meanB: Float, stdR: Float = 1, stdG: Float = 1, stdB: Float = 1):
     Preprocessing[ImageFeature, ImageFeature] = {
     ImageResize(imageResizeSize, imageResizeSize) ->
       ImageCenterCrop(imageCropSize, imageCropSize) -> ImageChannelNormalize(meanR, meanG, meanB,
@@ -126,19 +130,20 @@ object ImagenetConfig {
   }
 
   def vggPreprocessor(): Preprocessing[ImageFeature, ImageFeature] = {
-    commonPreprocessor(Consts.IMAGENET_RESIZE,224, 123, 117, 104)
+    commonPreprocessor(Consts.IMAGENET_RESIZE, 224, 123, 117, 104)
   }
 
   def densenetPreprocessor() : Preprocessing[ImageFeature, ImageFeature] = {
-    commonPreprocessor(Consts.IMAGENET_RESIZE,224, 123, 117, 104, 1/0.017f, 1/0.017f, 1/0.017f)
+    commonPreprocessor(Consts.IMAGENET_RESIZE, 224, 123, 117, 104, 1/0.017f, 1/0.017f, 1/0.017f)
   }
 
   def mobilenetPreprocessor() : Preprocessing[ImageFeature, ImageFeature] = {
-    commonPreprocessor(Consts.IMAGENET_RESIZE,224, 123.68f, 116.78f, 103.94f, 1/0.017f, 1/0.017f, 1/0.017f )
+    commonPreprocessor(Consts.IMAGENET_RESIZE, 224, 123.68f, 116.78f, 103.94f, 1/0.017f,
+      1/0.017f, 1/0.017f )
   }
 
   def squeezenetPreprocessor(): Preprocessing[ImageFeature, ImageFeature] = {
-    commonPreprocessor(Consts.IMAGENET_RESIZE,227, 123, 117, 104)
+    commonPreprocessor(Consts.IMAGENET_RESIZE, 227, 123, 117, 104)
   }
 
   private def createMean(meanFile : URL) : Array[Float] = {
