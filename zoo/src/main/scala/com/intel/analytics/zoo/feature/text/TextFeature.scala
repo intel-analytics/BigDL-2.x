@@ -45,6 +45,5 @@ object TextFeature {
   val label = "label" // Float
   val tokens = "tokens" // Array of String after tokenization
   val indexedTokens = "indexedTokens" // Array of int after word to index
-  val tensor = "tensor" // vector representation if any
   val sample = "sample"
 }

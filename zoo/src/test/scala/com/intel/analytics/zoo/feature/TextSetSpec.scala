@@ -52,7 +52,7 @@ class TextSetSpec extends FlatSpec with Matchers with BeforeAndAfter {
     require(t2.stages.length == 2)
     require(t2.stages(0).isInstanceOf[com.johnsnowlabs.nlp.annotators.Tokenizer])
     require(t2.stages(1).isInstanceOf[com.johnsnowlabs.nlp.annotators.NormalizerModel])
-    val t3 = t2.indexize(maxWordsNum = 10)
+    val t3 = t2.token2idx(maxWordsNum = 10)
     require(t3.preTextSet == null)
     require(t3.stages == null)
     val t4 = t3.shapeSequence(len = 5).genSample()
@@ -73,7 +73,7 @@ class TextSetSpec extends FlatSpec with Matchers with BeforeAndAfter {
     require(local.preTextSet == null)
     require(local.stages == null)
     val transformed =
-      local.tokenize().normalize().indexize().shapeSequence(len = 6).genSample()
+      local.tokenize().normalize().token2idx().shapeSequence(len = 6).genSample()
     require(transformed.preTextSet == null)
     require(transformed.stages == null)
     val wordIndex = transformed.getWordIndex

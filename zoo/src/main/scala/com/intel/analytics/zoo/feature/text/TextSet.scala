@@ -59,7 +59,7 @@ abstract class TextSet {
     transform(Normalizer())
   }
 
-  def indexize(removeTopN: Int = 0, maxWordsNum: Int = 5000): TextSet = {
+  def token2idx(removeTopN: Int = 0, maxWordsNum: Int = 5000): TextSet = {
     val map = generateWordIndexMap(removeTopN, maxWordsNum)
     transform(WordIndexer(map)).setWordIndex(map)
   }
@@ -101,7 +101,6 @@ abstract class TextSet {
       (preTextSet, stages ++ Array(transformer.labor))
     }
   }
-
 }
 
 
@@ -147,11 +146,11 @@ class LocalTextSet(var array: Array[TextFeature]) extends TextSet {
 
   override def isDistributed(): Boolean = false
 
-  override def indexize(removeTopN: Int = 0, maxWordsNum: Int = 5000): TextSet = {
+  override def token2idx(removeTopN: Int = 0, maxWordsNum: Int = 5000): TextSet = {
     if (array == null) {
       array = sparkNLPTransformArray
     }
-    super.indexize(removeTopN, maxWordsNum)
+    super.token2idx(removeTopN, maxWordsNum)
   }
 
   override def generateWordIndexMap(
@@ -194,11 +193,11 @@ class DistributedTextSet(var rdd: RDD[TextFeature]) extends TextSet {
 
   override def isDistributed(): Boolean = true
 
-  override def indexize(removeTopN: Int = 0, maxWordsNum: Int = 5000): TextSet = {
+  override def token2idx(removeTopN: Int = 0, maxWordsNum: Int = 5000): TextSet = {
     if (rdd == null) {
       rdd = sparkNLPTransformRDD
     }
-    super.indexize(removeTopN, maxWordsNum)
+    super.token2idx(removeTopN, maxWordsNum)
   }
 
   override def generateWordIndexMap(
