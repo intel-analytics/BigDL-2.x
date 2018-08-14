@@ -20,12 +20,14 @@ import tempfile
 import six
 import os
 import json
+import tensorflow as tf
 
 from bigdl.nn.layer import Model as BModel
 from bigdl.nn.layer import Layer
 from bigdl.util.common import callBigDlFunc, to_list
 from zoo.pipeline.api.keras.engine.topology import ZooKerasLayer, KerasNet
 from zoo.util.tf import export_tf
+from bigdl.optim.optimizer import *
 
 if sys.version >= '3':
     long = int
@@ -226,3 +228,46 @@ class TFNet(Layer):
             shutil.rmtree(temp)
 
         return net
+
+class TFOptimizer:
+    def __init__(self, loss, inputs, sess, optim_method):
+        self.optim_method = optim_method
+        self.sess = sess
+        grads_vars = tf.train.GradientDescentOptimizer(0).compute_gradients(loss)
+        variables = []
+        grads = []
+        for (grad, var) in grads_vars:
+            variables.append(var)
+            grads.append(grad)
+        self.export_dir = tempfile.mkdtemp()
+        export_tf(sess, self.export_dir, inputs=inputs, outputs=grads + [loss])
+
+        variable_names = [v.name for v in variables]
+        grad_names = [g.name for g in grads]
+
+        meta = {
+            "input_names": [i.name for i in inputs],
+            "output_names": [loss.name],
+            "variables": variable_names,
+            "grad_variables": grad_names
+        }
+
+        with open(os.path.join(self.export_dir, "training_meta.json"), "w") as f:
+            f.write(json.dumps(meta))
+
+        self.placeholders = []
+        assigns = []
+        for v in variables:
+            p = tf.placeholder(dtype=tf.float32, shape=v.shape)
+            a = tf.assign(v, p)
+            self.placeholders.append(p)
+            assigns.append(a)
+        self.assign = tf.group(assigns)
+
+    def fit(self, data, end_trigger = MaxEpoch(1), batch_size=32):
+        variables = Layer.convert_output(callBigDlFunc("float", "trainTFNet",
+                      self.export_dir, self.optim_method,
+                      data, batch_size, end_trigger))
+
+        feed_dict = dict(zip(self.placeholders, variables))
+        self.sess.run(self.assign, feed_dict=feed_dict)
