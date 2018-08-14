@@ -207,7 +207,7 @@ class MeanSquaredError(LossFunction):
               mini-batch. Default is True. If False, the losses are instead
               summed for each mini-batch.
 
-    >>> metrics = MeanSquaredError)
+    >>> metrics = MeanSquaredError
     creating: createZooKerasMeanSquaredError
     """
     def __init__(self, size_average=True, bigdl_type="float"):
