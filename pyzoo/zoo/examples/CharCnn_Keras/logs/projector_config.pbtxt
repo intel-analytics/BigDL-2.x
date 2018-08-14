@@ -1,3 +1,0 @@
-embeddings {
-  tensor_name: "embedding_1/embeddings:0"
-}
