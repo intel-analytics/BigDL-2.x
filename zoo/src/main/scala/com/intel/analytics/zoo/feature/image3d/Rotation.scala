@@ -60,17 +60,20 @@ class Rotate3D(rotationAngles: Array[Double])
   private val rotationTensor = yawDataTensor * pitchDataTensor * rollDataTensor
 
   override def transformTensor(tensor: Tensor[Float]): Tensor[Float] = {
-    val depth = tensor.size(1)
-    val height = tensor.size(2)
-    val width = tensor.size(3)
+    require(tensor.dim >=3 && tensor.size(4) == 1,
+      "Currently 3D rotation only supports 1 channel 3D image.")
+    val src = tensor.clone.squeeze(4)
+    val depth = src.size(1)
+    val height = src.size(2)
+    val width = src.size(3)
     val dstData = Array.fill[Float](depth * height * width)(0f)
-    val xc = (tensor.size(1) + 1) / 2.0
-    val zc = (tensor.size(2) + 1) / 2.0
-    val yc = (tensor.size(3) + 1) / 2.0
+    val xc = (src.size(1) + 1) / 2.0
+    val zc = (src.size(2) + 1) / 2.0
+    val yc = (src.size(3) + 1) / 2.0
     var id, jd, kd: Double = 0
     var ii_0, ii_1, jj_0, jj_1, kk_0, kk_1: Int = 0
 
-    val data = tensor.storage().array()
+    val data = src.storage().array()
     for (i <- 1 to depth) {
       id = i
       for (k <- 1 to height) {

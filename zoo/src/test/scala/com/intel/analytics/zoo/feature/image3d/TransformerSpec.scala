@@ -28,6 +28,7 @@ class TransformerSpec extends FlatSpec with Matchers{
     RNG.setSeed(seed)
     val input = Tensor[Float](10, 20, 30)
     input.apply1(e => RNG.uniform(0, 1).toFloat)
+    input.resize(10, 20, 30, 1)
     val image = ImageFeature3D(input)
     val imageClone = image.clone()
     val imageSet = ImageSet.array(Array[ImageFeature3D](image).map(_.asInstanceOf[ImageFeature]))
@@ -46,7 +47,7 @@ class TransformerSpec extends FlatSpec with Matchers{
     val code = "require 'image'\n" +
       "dst = image.rotate(src,math.pi/3.7,'bilinear')"
     val (luaTime, torchResult) = TH.run(code,
-      Map("src" -> cropped_image[Tensor[Float]](ImageFeature.imageTensor).view(10, 10)),
+      Map("src" -> cropped_image[Tensor[Float]](ImageFeature.imageTensor).clone.view(10, 10)),
       Array("dst"))
     val dstTorch = torchResult("dst").asInstanceOf[Tensor[Float]]
     output(0).asInstanceOf[ImageFeature3D][Tensor[Float]](ImageFeature.imageTensor).view(10, 10).map(dstTorch, (v1, v2) => {

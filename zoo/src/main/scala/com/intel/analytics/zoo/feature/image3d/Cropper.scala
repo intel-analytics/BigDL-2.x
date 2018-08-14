@@ -80,9 +80,9 @@ class RandomCrop3D(cropDepth: Int, cropHeight: Int, cropWidth: Int)
       "the transformed image array should have dim 3.")
     require(tensor.size(1) >= cropDepth,
       "the transformed image depth should be larger than cropped depth.")
-    require(tensor.size(2) >= cropHeight,
+    require(tensor.size(2) >= cropWidth,
       "the transformed image width should be larger than cropped width.")
-    require(tensor.size(3) >= cropWidth,
+    require(tensor.size(3) >= cropHeight,
       "the transformed image height should be larger than cropped height.")
     val startD = math.ceil(RNG.uniform(1e-2, tensor.size(1) - cropDepth)).toInt
     val startH = math.ceil(RNG.uniform(1e-2, tensor.size(2) - cropHeight)).toInt

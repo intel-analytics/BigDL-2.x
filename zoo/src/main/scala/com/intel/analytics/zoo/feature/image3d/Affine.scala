@@ -46,6 +46,9 @@ class AffineTransform3D(mat: Tensor[Double],
 extends ImageProcessing3D {
 
   override def transformTensor(tensor: Tensor[Float]): Tensor[Float] = {
+    require(tensor.dim >=3 && tensor.size(4) == 1,
+      "Currently 3D affine transformation only supports 1 channel 3D image.")
+    tensor.squeeze(4)
     val dst = Tensor[Float](tensor.size())
     val depth = dst.size(1)
     val height = dst.size(2)
@@ -72,6 +75,6 @@ extends ImageProcessing3D {
     val offset_mode = true
     val warp_transformer = WarpTransformer(grid_xyz, offset_mode, clampMode, padVal)
     warp_transformer(tensor, dst)
-    dst
+    dst.resize(dst.size(1), dst.size(2), dst.size(3), 1)
   }
 }

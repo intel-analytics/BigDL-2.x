@@ -53,7 +53,7 @@ class AffineTransformerSpec extends TorchSpec {
     val tensor = Tensor[Float](
       storage = Storage[Float](input.storage().array().map(_.toFloat)),
       storageOffset = 1,
-      size = Array(1, 10, 10))
+      size = Array(1, 10, 10, 1))
     val image = ImageFeature3D(tensor)
     val dst = aff.transform(image)
     val code = "require 'image'\n" +
@@ -97,11 +97,10 @@ class AffineTransformerSpec extends TorchSpec {
     val mat2Array = Array[Double](a, b, c, d)
     val mat2Tensor = Tensor[Double](mat2Array, Array[Int](2, 2))
     val aff = AffineTransform3D(matTensor, translation = translation)
-    val dims = Array[Int](10, 1, 10)
     val tensor = Tensor[Float](
       storage = Storage[Float](input.storage().array().map(_.toFloat)),
       storageOffset = 1,
-      size = Array(10, 1, 10))
+      size = Array(10, 1, 10, 1))
     val image = ImageFeature3D(tensor)
     val dst = aff.transform(image)
     val code = "require 'image'\n" +
@@ -145,11 +144,10 @@ class AffineTransformerSpec extends TorchSpec {
     val mat2Array = Array[Double](a, b, c, d)
     val mat2Tensor = Tensor[Double](mat2Array, Array[Int](2, 2))
     val aff = AffineTransform3D(matTensor, translation = translation)
-    val dims = Array[Int](10, 10, 1)
     val tensor = Tensor[Float](
       storage = Storage[Float](input.storage().array().map(_.toFloat)),
       storageOffset = 1,
-      size = Array(10, 10, 1))
+      size = Array(10, 10, 1, 1))
     val image = ImageFeature3D(tensor)
     val dst = aff.transform(image)
     val code = "require 'image'\n" +

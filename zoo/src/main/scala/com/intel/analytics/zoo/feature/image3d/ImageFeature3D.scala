@@ -19,6 +19,8 @@ package com.intel.analytics.zoo.feature.image3d
 
 import com.intel.analytics.bigdl.tensor.Tensor
 import com.intel.analytics.bigdl.transform.vision.image.ImageFeature
+import com.intel.analytics.bigdl.transform.vision.image.ImageFeature.getClass
+import org.apache.log4j.Logger
 
 
 /**
@@ -29,6 +31,8 @@ import com.intel.analytics.bigdl.transform.vision.image.ImageFeature
  * the key is string that identify the corresponding value
  */
 class ImageFeature3D extends ImageFeature {
+
+  import ImageFeature3D.logger
 
   def this(tensor: Tensor[Float], label: Any = null, uri: String = null) {
     this
@@ -51,6 +55,11 @@ class ImageFeature3D extends ImageFeature {
     apply[Array[Int]](ImageFeature.size)
   }
 
+  override def getSize: (Int, Int, Int) = {
+    logger.warn("this function is deprecated in ImageFeature3D")
+    (0, 0, 0)
+  }
+
   /**
    * get current height
    */
@@ -69,7 +78,10 @@ class ImageFeature3D extends ImageFeature {
   /**
    * get current channel
    */
-  override def getChannel(): Int = getImageSize()(3)
+  override def getChannel(): Int = {
+    logger.warn("Currrently 3D image only suport 1 channel")
+    1
+  }
 
 
   override def clone(): ImageFeature3D = {
@@ -89,5 +101,7 @@ object ImageFeature3D {
   : ImageFeature3D = new ImageFeature3D(tensor, label, uri)
 
   def apply(): ImageFeature3D = new ImageFeature3D()
+
+  val logger = Logger.getLogger(getClass)
 }
 
