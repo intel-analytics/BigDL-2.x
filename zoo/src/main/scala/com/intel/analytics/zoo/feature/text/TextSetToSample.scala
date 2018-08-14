@@ -26,7 +26,7 @@ class TextSetToSample extends TextTransformer {
     // TODO: T instead of Float
     val tensor = Tensor[Float](data = tokens.map(_.toFloat), shape = Array(tokens.length))
     // TODO: handle no label case
-    val label = feature.apply[Option[Int]](TextFeature.label).get.toFloat
+    val label = feature.getLabel.toFloat
     val sample = Sample(tensor, label)
     feature.update(TextFeature.sample, sample)
     feature

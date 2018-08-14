@@ -16,14 +16,19 @@
 
 package com.intel.analytics.zoo.feature.text
 
+import org.apache.log4j.Logger
 import scala.collection.{Set, mutable}
 
 class TextFeature extends Serializable {
-  def this(text: String, label: Option[Int] = None) {
+
+  import TextFeature.logger
+
+  private def this(text: String, label: Option[Int] = None) {
     this
+    require(text != null, "text for a TextFeature can't be null")
     state(TextFeature.text) = text
     if (label.nonEmpty) {
-      state(TextFeature.label) = label
+      state(TextFeature.label) = label.get
     }
   }
 
@@ -38,12 +43,73 @@ class TextFeature extends Serializable {
   def update(key: String, value: Any): Unit = state(key) = value
 
   def keys(): Set[String] = state.keySet
+
+  /**
+   * Whether the TextFeature contains label.
+   */
+  def hasLabel: Boolean = state.contains(TextFeature.label)
+
+  /**
+   * Get the label of the TextFeature.
+   * If no label is stored, -1 will be returned.
+   */
+  def getLabel: Int = {
+    if (hasLabel) {
+      apply[Int](TextFeature.label)
+    }
+    else {
+      logger.warn("No label is stored in the TextFeature")
+      -1
+    }
+  }
+
+  /**
+   * Get the text content of the TextFeature.
+   */
+  def getText: String = apply[String](TextFeature.text)
 }
 
 object TextFeature {
-  val text = "text" // String
-  val label = "label" // Float
-  val tokens = "tokens" // Array of String after tokenization
+  /**
+   * Key for the original text content which should not be modified.
+   * Value should be a String.
+   */
+  val text = "text"
+  /**
+   * Key for the label for the original text content.
+   * Value should be an integer.
+   */
+  val label = "label"
+  /**
+   * Key for the tokens after doing tokenization (or other token-based transformation such as
+   * normalization) on the original text.
+   * Value should be an array of String.
+   */
+  val tokens = "tokens"
+  /**
+   * Key for the indices corresponding to the tokens after performing word2idx.
+   * Value should be an array of integers.
+   */
   val indexedTokens = "indexedTokens" // Array of int after word to index
+  /**
+   * Key for the sample (feature and label if any).
+   * Value should be a BigDL Sample.
+   */
   val sample = "sample"
+
+  val logger: Logger = Logger.getLogger(getClass)
+
+  /**
+   * Create a TextFeature without label.
+   */
+  def apply(text: String): TextFeature = {
+    new TextFeature(text, None)
+  }
+
+  /**
+   * Create a TextFeature with label.
+   */
+  def apply(text: String, label: Int): TextFeature = {
+    new TextFeature(text, Some(label))
+  }
 }

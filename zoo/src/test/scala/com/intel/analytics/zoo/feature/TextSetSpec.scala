@@ -24,8 +24,15 @@ import org.scalatest.{FlatSpec, Matchers}
 import scala.collection.immutable.HashSet
 
 class TextSetSpec extends FlatSpec with Matchers {
-  val text1 = new TextFeature("Hello my friend, please annotate my text", Some(0))
-  val text2 = new TextFeature("Listen to my heart Heart. Show me love, baby.", Some(1))
+  val text1 = TextFeature("Hello my friend, please annotate my text", label = 0)
+  val text2 = TextFeature("Listen to my heart Heart. Show me love, baby.", label = 1)
+
+  "TextFeature properties" should "work properly" in {
+    require(text1.getText == "Hello my friend, please annotate my text")
+    require(text1.hasLabel)
+    require(text1.getLabel == 0)
+    require(text1.keys() == HashSet("label", "text"))
+  }
 
   "DistributedTextSet Transformation" should "work properly" in {
     val conf = new SparkConf().setAppName("Test TextSet").setMaster("local[*]")

@@ -142,7 +142,7 @@ object TextClassification {
 
       val data = loadRawData(textDataDir)
       val textset = TextSet.rdd(sc.parallelize(data.map(textLabel =>
-        new TextFeature(textLabel._1, Some(textLabel._2)))))
+        TextFeature(textLabel._1, textLabel._2))))
       val transformed = textset.tokenize().normalize()
         .word2idx(removeTopN = 10, maxWordsNum = param.maxWordsNum)
         .shapeSequence(sequenceLength).genSample()
