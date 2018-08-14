@@ -101,7 +101,7 @@ class Test_Image3D():
         image_set = DistributedImageSet(image_rdd=data_rdd)
         crop = CenterCrop3D(5, 40, 40)
         cropped = image_set.transform(crop)
-        affine = AffineTransform3D(JTensor.from_ndarray(np.random.rand(3, 3)))
+        affine = AffineTransform3D(np.random.rand(3, 3))
         transformed = cropped.transform(affine)
         image = transformed.get_image(key="imageTensor").first()
         assert image.shape == (5, 40, 40, 1)

@@ -114,5 +114,7 @@ class Rotate3D(ImagePreprocessing3D):
 
 class AffineTransform3D(ImagePreprocessing3D):
 
-    def __init__(self, affine_mat, translation=JTensor.from_ndarray(np.zeros(3)), clamp_mode="clamp", pad_val=0.0, bigdl_type="float"):
-        super(AffineTransform3D, self).__init__(bigdl_type, affine_mat, translation, clamp_mode, pad_val)
+    def __init__(self, affine_mat, translation=np.zeros(3), clamp_mode="clamp", pad_val=0.0, bigdl_type="float"):
+        affine_mat_tensor = JTensor.from_ndarray(affine_mat)
+        translation_tensor = JTensor.from_ndarray(translation)
+        super(AffineTransform3D, self).__init__(bigdl_type, affine_mat_tensor, translation_tensor, clamp_mode, pad_val)
