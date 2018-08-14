@@ -57,10 +57,10 @@ object TextClassification {
   var classNum: Int = -1
 
   // Load text, label pairs from file
-  def loadRawData(dir: String): ArrayBuffer[(String, Float)] = {
+  def loadRawData(dir: String): ArrayBuffer[(String, Int)] = {
     val texts = ArrayBuffer[String]()
-    val labels = ArrayBuffer[Float]()
-    // Category is a string name and label is it's one-based index
+    val labels = ArrayBuffer[Int]()
+    // Category is a string name and label is it's zero-based index
     val categoryToLabel = new util.HashMap[String, Int]()
     val categoryPathList = new File(dir).listFiles().filter(_.isDirectory).toList.sorted
 
@@ -143,8 +143,9 @@ object TextClassification {
       val data = loadRawData(textDataDir)
       val textset = TextSet.rdd(sc.parallelize(data.map(textLabel =>
         new TextFeature(textLabel._1, Some(textLabel._2)))))
-      val transformed =
-        textset.tokenize().normalize().indexize(removeTopN = 10).shapeSequence(500).genSample()
+      val transformed = textset.tokenize().normalize()
+        .indexize(removeTopN = 10, maxWordsNum = param.maxWordsNum)
+        .shapeSequence(sequenceLength).genSample()
 
       // TODO: Replace this by converting TextSet to DataSet directly.
       val sampleRDD = transformed.asInstanceOf[DistributedTextSet]

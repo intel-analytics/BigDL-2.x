@@ -21,7 +21,7 @@ import org.apache.spark.ml.Transformer
 
 class Normalizer extends SparkNLPTransformer {
 
-  override def transformer: Transformer = {
+  override def labor: Transformer = {
     new NormalizerModel().setLowercase(true)
       .setInputCols(Array("tokens"))
       .setOutputCol("normalized")
