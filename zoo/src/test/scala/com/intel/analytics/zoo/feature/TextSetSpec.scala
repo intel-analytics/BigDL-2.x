@@ -18,29 +18,20 @@ package com.intel.analytics.zoo.feature
 
 import com.intel.analytics.zoo.common.NNContext
 import com.intel.analytics.zoo.feature.text._
-import org.apache.spark.{SparkConf, SparkContext}
-import org.scalatest.{BeforeAndAfter, FlatSpec, Matchers}
+import org.apache.spark.SparkConf
+import org.scalatest.{FlatSpec, Matchers}
 
 import scala.collection.immutable.HashSet
 
-class TextSetSpec extends FlatSpec with Matchers with BeforeAndAfter {
+class TextSetSpec extends FlatSpec with Matchers {
   val text1 = new TextFeature("Hello my friend, please annotate my text", Some(0))
   val text2 = new TextFeature("Listen to my heart Heart. Show me love, baby.", Some(1))
-  var sc : SparkContext = _
-
-  before {
-    val conf = new SparkConf().setAppName("Test TextFeature").setMaster("local[*]")
-    sc = NNContext.initNNContext(conf)
-  }
-
-  after {
-    if (sc != null) {
-      sc.stop()
-    }
-  }
 
   "DistributedTextSet Transformation" should "work properly" in {
+    val conf = new SparkConf().setAppName("Test TextSet").setMaster("local[*]")
+    val sc = NNContext.initNNContext(conf)
     val distributed = TextSet.rdd(sc.parallelize(Seq(text1, text2)))
+    require(distributed.isDistributed)
     require(distributed.preTextSet == null)
     require(distributed.stages == null)
     val t1 = distributed.tokenize()
@@ -56,13 +47,14 @@ class TextSetSpec extends FlatSpec with Matchers with BeforeAndAfter {
     require(t3.preTextSet == null)
     require(t3.stages == null)
     val t4 = t3.shapeSequence(len = 5).genSample()
+    require(t4.isDistributed)
     require(t4.preTextSet == null)
     require(t4.stages == null)
     val wordIndex1 = t3.getWordIndex
     val wordIndex2 = t4.getWordIndex
     require(wordIndex1 == wordIndex2 && wordIndex2.toArray.length == 10)
     require(wordIndex1("my") == 1)
-    val arr = t4.asInstanceOf[DistributedTextSet].rdd.collect()
+    val arr = t4.toDistributed.rdd.collect()
     require(arr.length == 2)
     require(arr(0).keys() == HashSet("label", "text", "tokens", "indexedTokens", "sample"))
     require(arr(0).apply[Array[Int]]("indexedTokens").length == 5)
@@ -70,10 +62,12 @@ class TextSetSpec extends FlatSpec with Matchers with BeforeAndAfter {
 
   "LocalTextSet Transformation" should "work properly" in {
     val local = TextSet.array(Array(text1, text2))
+    require(local.isLocal)
     require(local.preTextSet == null)
     require(local.stages == null)
     val transformed =
       local.tokenize().normalize().word2idx().shapeSequence(len = 6).genSample()
+    require(transformed.isLocal)
     require(transformed.preTextSet == null)
     require(transformed.stages == null)
     val wordIndex = transformed.getWordIndex
@@ -81,7 +75,7 @@ class TextSetSpec extends FlatSpec with Matchers with BeforeAndAfter {
     require(wordIndex.keySet.contains("heart"))
     require(!wordIndex.keySet.contains("Heart"))
     require(wordIndex("my") == 1)
-    val arr = transformed.asInstanceOf[LocalTextSet].array
+    val arr = transformed.toLocal.array
     require(arr.length == 2)
     require(arr(0).keys() == HashSet("label", "text", "tokens", "indexedTokens", "sample"))
     require(arr(0).apply[Array[Int]]("indexedTokens").length == 6)
