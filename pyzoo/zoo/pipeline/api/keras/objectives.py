@@ -212,7 +212,7 @@ class MeanSquaredError(LossFunction):
     """
     def __init__(self, size_average=True, bigdl_type="float"):
         super(MeanSquaredError, self).__init__(None, bigdl_type,
-                                                size_average)
+                                               size_average)
 
 mse = MSE = MeanSquaredError
 
