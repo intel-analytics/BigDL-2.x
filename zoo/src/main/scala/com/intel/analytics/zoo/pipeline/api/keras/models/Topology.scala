@@ -676,7 +676,7 @@ object Model extends KerasLayerSerializable {
 
 }
 
-class Sequential[T: ClassTag] private ()
+class Sequential[T: ClassTag] private[zoo] ()
   (implicit ev: TensorNumeric[T]) extends KerasNet[T] {
 
   private[zoo] var frozen: Boolean = false
