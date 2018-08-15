@@ -27,7 +27,7 @@ import scala.reflect.ClassTag
  * Input key: TextFeature.indexedTokens and TextFeature.label (if any)
  * Output key: TextFeature.sample
  */
-class TextSetToSample[T: ClassTag](implicit ev: TensorNumeric[T])
+class TextFeatureToSample[T: ClassTag](implicit ev: TensorNumeric[T])
   extends TextTransformer {
 
   override def transform(feature: TextFeature): TextFeature = {
@@ -47,8 +47,8 @@ class TextSetToSample[T: ClassTag](implicit ev: TensorNumeric[T])
   }
 }
 
-object TextSetToSample {
-  def apply[T: ClassTag]()(implicit ev: TensorNumeric[T]): TextSetToSample[T] = {
-    new TextSetToSample[T]()
+object TextFeatureToSample {
+  def apply[T: ClassTag]()(implicit ev: TensorNumeric[T]): TextFeatureToSample[T] = {
+    new TextFeatureToSample[T]()
   }
 }
