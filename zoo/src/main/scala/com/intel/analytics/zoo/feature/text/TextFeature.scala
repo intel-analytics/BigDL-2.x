@@ -21,9 +21,7 @@ import scala.collection.{Set, mutable}
 
 class TextFeature extends Serializable {
 
-  import TextFeature.logger
-
-  private def this(text: String, label: Option[Int] = None) {
+  private def this(text: String, label: Option[Int]) {
     this
     require(text != null, "text for a TextFeature can't be null")
     state(TextFeature.text) = text
@@ -58,7 +56,7 @@ class TextFeature extends Serializable {
       apply[Int](TextFeature.label)
     }
     else {
-      logger.warn("No label is stored in the TextFeature")
+      TextFeature.logger.warn("No label is stored in the TextFeature")
       -1
     }
   }

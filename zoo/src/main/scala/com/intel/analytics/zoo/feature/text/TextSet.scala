@@ -16,9 +16,12 @@
 
 package com.intel.analytics.zoo.feature.text
 
+import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric
 import com.intel.analytics.zoo.feature.common.Preprocessing
 import org.apache.spark.ml.Transformer
 import org.apache.spark.rdd.RDD
+
+import scala.reflect.ClassTag
 
 /**
  * TextSet wraps a set of TextFeature.
@@ -71,8 +74,8 @@ abstract class TextSet {
     transform(SequenceShaper(len, trunc, key))
   }
 
-  def genSample(): TextSet = {
-    transform(TextSetToSample())
+  def genSample[T: ClassTag]()(implicit ev: TensorNumeric[T]): TextSet = {
+    transform(TextSetToSample[T]())
   }
 
   def generateWordIndexMap(

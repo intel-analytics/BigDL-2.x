@@ -18,23 +18,37 @@ package com.intel.analytics.zoo.feature.text
 
 import com.intel.analytics.bigdl.dataset.Sample
 import com.intel.analytics.bigdl.tensor.Tensor
+import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric
 
-class TextSetToSample extends TextTransformer {
+import scala.reflect.ClassTag
+
+/**
+ * Transform indexedTokens and label (if any) of a TextFeature to Sample.
+ * Input key: TextFeature.indexedTokens and TextFeature.label (if any)
+ * Output key: TextFeature.sample
+ */
+class TextSetToSample[T: ClassTag](implicit ev: TensorNumeric[T])
+  extends TextTransformer {
 
   override def transform(feature: TextFeature): TextFeature = {
-    val tokens = feature.apply[Array[Int]](TextFeature.indexedTokens)
-    // TODO: T instead of Float
-    val tensor = Tensor[Float](data = tokens.map(_.toFloat), shape = Array(tokens.length))
-    // TODO: handle no label case
-    val label = feature.getLabel.toFloat
-    val sample = Sample(tensor, label)
-    feature.update(TextFeature.sample, sample)
+    require(feature.contains(TextFeature.indexedTokens), "TextFeature doesn't have indexTokens" +
+      "yet. Please use WordIndexer to transform tokens to indexedTokens first")
+    val indexedTokens = feature[Array[Int]](TextFeature.indexedTokens)
+    val input = Tensor[T](data = indexedTokens.map(ev.fromType[Int]),
+      shape = Array(indexedTokens.length))
+    val sample = if (feature.hasLabel) {
+      Sample[T](input, ev.fromType[Int](feature.getLabel))
+    }
+    else {
+      Sample[T](input)
+    }
+    feature(TextFeature.sample) = sample
     feature
   }
 }
 
 object TextSetToSample {
-  def apply(): TextSetToSample = {
-    new TextSetToSample()
+  def apply[T: ClassTag]()(implicit ev: TensorNumeric[T]): TextSetToSample[T] = {
+    new TextSetToSample[T]()
   }
 }
