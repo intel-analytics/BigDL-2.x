@@ -19,12 +19,12 @@ package com.intel.analytics.zoo.examples.textclassification
 import java.io.File
 import java.util
 
-import com.intel.analytics.bigdl.dataset.Sample
+import com.intel.analytics.bigdl.dataset.DataSet
 import com.intel.analytics.bigdl.optim._
 import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric.NumericFloat
 import com.intel.analytics.bigdl.utils.LoggerFilter
 import com.intel.analytics.zoo.common.NNContext
-import com.intel.analytics.zoo.feature.text.{DistributedTextSet, TextFeature, TextSet}
+import com.intel.analytics.zoo.feature.text.{TextFeature, TextFeatureToMiniBatch, TextSet}
 import com.intel.analytics.zoo.models.textclassification.TextClassifier
 import com.intel.analytics.zoo.pipeline.api.keras.metrics.Accuracy
 import com.intel.analytics.zoo.pipeline.api.keras.objectives.SparseCategoricalCrossEntropy
@@ -147,12 +147,11 @@ object TextClassification {
         .word2idx(removeTopN = 10, maxWordsNum = param.maxWordsNum)
         .shapeSequence(sequenceLength).genSample()
 
-      // TODO: Replace this by converting TextSet to DataSet directly.
-      val sampleRDD = transformed.asInstanceOf[DistributedTextSet]
-        .rdd.map(x => x.apply[Sample[Float]]("sample"))
-
-      val Array(trainingRDD, valRDD) = sampleRDD.randomSplit(
+      val Array(trainingRDD, valRDD) = transformed.toDistributed.rdd.randomSplit(
         Array(trainingSplit, 1 - trainingSplit))
+
+      val trainTextSet = DataSet.rdd(trainingRDD) -> TextFeatureToMiniBatch(param.batchSize)
+      val valTextSet = DataSet.rdd(valRDD) -> TextFeatureToMiniBatch(param.batchSize)
 
       val model = if (param.model.isDefined) {
         TextClassifier.loadModel(param.model.get)
@@ -169,25 +168,25 @@ object TextClassification {
 
       val optimizer = Optimizer(
         model = model,
-        sampleRDD = trainingRDD,
-        criterion = SparseCategoricalCrossEntropy[Float](),
-        batchSize = param.batchSize
+        dataset = trainTextSet,
+        criterion = SparseCategoricalCrossEntropy[Float]()
       )
 
       optimizer
         .setOptimMethod(new Adagrad(learningRate = param.learningRate,
           learningRateDecay = 0.001))
-        .setValidation(Trigger.everyEpoch, valRDD, Array(new Accuracy), param.batchSize)
+        .setValidation(Trigger.everyEpoch, valTextSet, Array(new Accuracy))
         .setEndWhen(Trigger.maxEpoch(param.nbEpoch))
         .optimize()
 
+      // TODO: predict on TextSet directly
       // Predict for probability distributions
-      val results = model.predict(valRDD)
-      results.take(5)
+//      val results = model.predict(valRDD)
+//      results.take(5)
       // Predict for labels
-      val resultClasses = model.predictClasses(valRDD)
-      println("First five class predictions (label starts from 0):")
-      resultClasses.take(5).foreach(println)
+//      val resultClasses = model.predictClasses(valRDD)
+//      println("First five class predictions (label starts from 0):")
+//      resultClasses.take(5).foreach(println)
 
       sc.stop()
     }

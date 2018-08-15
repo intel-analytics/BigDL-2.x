@@ -16,8 +16,11 @@
 
 package com.intel.analytics.zoo.feature.text
 
+import com.intel.analytics.bigdl.DataSet
+import com.intel.analytics.bigdl.dataset.DataSet
 import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric
 import com.intel.analytics.zoo.feature.common.Preprocessing
+import org.apache.log4j.Logger
 import org.apache.spark.ml.Transformer
 import org.apache.spark.rdd.RDD
 
@@ -54,6 +57,11 @@ abstract class TextSet {
 
   def toDistributed: DistributedTextSet = this.asInstanceOf[DistributedTextSet]
 
+  /**
+   * Convert TextSet to DataSet of TextFeature.
+   */
+  def toDataSet: DataSet[TextFeature]
+
   def tokenize(): TextSet = {
     transform(Tokenizer())
   }
@@ -63,7 +71,12 @@ abstract class TextSet {
   }
 
   def word2idx(removeTopN: Int = 0, maxWordsNum: Int = 5000): TextSet = {
-    val map = generateWordIndexMap(removeTopN, maxWordsNum)
+    val map = if (wordIndex != null) {
+      TextSet.logger.warn("wordIndex already exists. Using the existing wordIndex")
+      wordIndex
+    } else {
+      generateWordIndexMap(removeTopN, maxWordsNum)
+    }
     transform(WordIndexer(map)).setWordIndex(map)
   }
 
@@ -75,7 +88,7 @@ abstract class TextSet {
   }
 
   def genSample[T: ClassTag]()(implicit ev: TensorNumeric[T]): TextSet = {
-    transform(TextSetToSample[T]())
+    transform(TextFeatureToSample[T]())
   }
 
   def generateWordIndexMap(
@@ -83,8 +96,13 @@ abstract class TextSet {
 
   private var wordIndex: Map[String, Int] = _
 
-  // TODO: throw exception for null
-  def getWordIndex: Map[String, Int] = wordIndex
+  def getWordIndex: Map[String, Int] = {
+    if (wordIndex == null) {
+      TextSet.logger.warn("No wordIndex map is stored in the TextSet. Please call " +
+        "generateWordIndexMap explicitly after tokenizing the text")
+    }
+    wordIndex
+  }
 
   def setWordIndex(map: Map[String, Int]): this.type = {
     wordIndex = map
@@ -108,6 +126,8 @@ abstract class TextSet {
 
 
 object TextSet {
+
+  val logger: Logger = Logger.getLogger(getClass)
 
   def array(data: Array[TextFeature]): LocalTextSet = {
     new LocalTextSet(data)
@@ -148,6 +168,10 @@ class LocalTextSet(var array: Array[TextFeature]) extends TextSet {
   override def isLocal: Boolean = true
 
   override def isDistributed: Boolean = false
+
+  override def toDataSet: DataSet[TextFeature] = {
+    DataSet.array(array)
+  }
 
   override def word2idx(removeTopN: Int = 0, maxWordsNum: Int = 5000): TextSet = {
     if (array == null) {
@@ -195,6 +219,10 @@ class DistributedTextSet(var rdd: RDD[TextFeature]) extends TextSet {
   override def isLocal: Boolean = false
 
   override def isDistributed: Boolean = true
+
+  override def toDataSet: DataSet[TextFeature] = {
+    DataSet.rdd[TextFeature](rdd)
+  }
 
   override def word2idx(removeTopN: Int = 0, maxWordsNum: Int = 5000): TextSet = {
     if (rdd == null) {
