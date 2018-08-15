@@ -21,6 +21,7 @@ import six
 import os
 import json
 import tensorflow as tf
+import numpy as np
 
 from bigdl.nn.layer import Model as BModel
 from bigdl.nn.layer import Layer
@@ -265,6 +266,7 @@ class TFOptimizer:
         self.assign = tf.group(assigns)
 
     def fit(self, data, end_trigger = MaxEpoch(1), batch_size=32):
+        data = data.map(lambda t: Sample.from_ndarray(t, [np.array([0.0])]))
         variables = Layer.convert_output(callBigDlFunc("float", "trainTFNet",
                       self.export_dir, self.optim_method,
                       data, batch_size, end_trigger))
