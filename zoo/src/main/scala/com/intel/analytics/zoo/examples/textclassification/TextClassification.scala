@@ -17,14 +17,13 @@
 package com.intel.analytics.zoo.examples.textclassification
 
 import java.io.File
-import java.util
 
 import com.intel.analytics.bigdl.dataset.DataSet
 import com.intel.analytics.bigdl.optim._
 import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric.NumericFloat
 import com.intel.analytics.bigdl.utils.LoggerFilter
 import com.intel.analytics.zoo.common.NNContext
-import com.intel.analytics.zoo.feature.text.{TextFeature, TextFeatureToMiniBatch, TextSet}
+import com.intel.analytics.zoo.feature.text.{TextFeatureToMiniBatch, TextSet}
 import com.intel.analytics.zoo.models.textclassification.TextClassifier
 import com.intel.analytics.zoo.pipeline.api.keras.metrics.Accuracy
 import com.intel.analytics.zoo.pipeline.api.keras.objectives.SparseCategoricalCrossEntropy
@@ -33,8 +32,6 @@ import org.apache.spark.SparkConf
 import org.slf4j.{Logger, LoggerFactory}
 import scopt.OptionParser
 
-import scala.collection.mutable.ArrayBuffer
-import scala.io.Source
 
 case class TextClassificationParams(baseDir: String = "./",
                                     tokenLength: Int = 200,
@@ -49,38 +46,11 @@ case class TextClassificationParams(baseDir: String = "./",
                                     partitionNum: Int = 4,
                                     model: Option[String] = None)
 
+
 object TextClassification {
   val log: Logger = LoggerFactory.getLogger(this.getClass)
   LoggerFilter.redirectSparkInfoLogs()
   Logger4j.getLogger("com.intel.analytics.bigdl.optim").setLevel(Level4j.INFO)
-
-  var classNum: Int = -1
-
-  // Load text, label pairs from file
-  def loadRawData(dir: String): ArrayBuffer[(String, Int)] = {
-    val texts = ArrayBuffer[String]()
-    val labels = ArrayBuffer[Int]()
-    // Category is a string name and label is it's zero-based index
-    val categoryToLabel = new util.HashMap[String, Int]()
-    val categoryPathList = new File(dir).listFiles().filter(_.isDirectory).toList.sorted
-
-    categoryPathList.foreach { categoryPath =>
-      val label_id = categoryToLabel.size()
-      categoryToLabel.put(categoryPath.getName, label_id)
-      val textFiles = categoryPath.listFiles()
-        .filter(_.isFile).filter(_.getName.forall(Character.isDigit(_))).sorted
-      textFiles.foreach { file =>
-        val source = Source.fromFile(file, "ISO-8859-1")
-        val text = try source.getLines().toList.mkString("\n") finally source.close()
-        texts.append(text)
-        labels.append(label_id)
-      }
-    }
-    this.classNum = labels.toSet.size
-    log.info(s"Found ${texts.length} texts.")
-    log.info(s"Found $classNum classes")
-    texts.zip(labels)
-  }
 
   def main(args: Array[String]): Unit = {
     val parser = new OptionParser[TextClassificationParams]("TextClassification Example") {
@@ -140,10 +110,8 @@ object TextClassification {
         "GloVe word embeddings directory is not found in baseDir, " +
         "you can run $ANALYTICS_ZOO_HOME/bin/data/glove/get_glove.sh to download")
 
-      val data = loadRawData(textDataDir)
-      val textset = TextSet.rdd(sc.parallelize(data.map(textLabel =>
-        TextFeature(textLabel._1, textLabel._2))))
-      val transformed = textset.tokenize().normalize()
+      val textSet = TextSet.read(textDataDir, sc)
+      val transformed = textSet.tokenize().normalize()
         .word2idx(removeTopN = 10, maxWordsNum = param.maxWordsNum)
         .shapeSequence(sequenceLength).genSample()
 
@@ -162,7 +130,7 @@ object TextClassification {
         s"tokenLength for GloVe can only be 50, 100, 200, 300, but got $tokenLength")
         val wordIndex = transformed.getWordIndex
         val gloveFile = gloveDir + "glove.6B." + tokenLength.toString + "d.txt"
-        TextClassifier(classNum, gloveFile, wordIndex, sequenceLength,
+        TextClassifier(20, gloveFile, wordIndex, sequenceLength,
           param.encoder, param.encoderOutputDim)
       }
 
