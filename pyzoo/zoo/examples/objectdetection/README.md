@@ -21,7 +21,7 @@ modelPath=... // model path. Local file system/HDFS/Amazon S3 are supported
 imagePath=... // image path. Local file system/HDFS are supported. With local file system, the files need to be available on all nodes in the cluster.
 
 outputPath=... // output path. Currently only support local file system.
-partitionNum=... // A suggestion value of the minimal splitting number for input data
+partitionNum=... // A suggestion value of the minimal partition number
 
 PYTHON_API_ZIP_PATH=${ANALYTICS_ZOO_HOME}/lib/analytics-zoo-bigdl_BIGDL_VERSION-spark_SPARK_VERSION-ZOO_VERSION-python-api.zip
 ZOO_JAR_PATH=${ANALYTICS_ZOO_HOME}/lib/analytics-zoo-bigdl_BIGDL_VERSION-spark_SPARK_VERSION-ZOO_VERSION-jar-with-dependencies.jar 

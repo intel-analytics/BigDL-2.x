@@ -19,7 +19,7 @@ imagePath=... // image path
 
 topN=... // top n prediction
 
-partitionNum=... // A suggestion value of the minimal splitting number for input data
+partitionNum=... // A suggestion value of the minimal partition number
 
 ANALYTICS_ZOO_HOME=
 PYTHON_API_ZIP_PATH=${ANALYTICS_ZOO_HOME}/lib/analytics-zoo-bigdl_BIGDL_VERSION-spark_SPARK_VERSION-ZOO_VERSION-python-api.zip
@@ -34,5 +34,5 @@ spark-submit \
     --jars ${ZOO_JAR_PATH} \
     --conf spark.driver.extraClassPath=${ZOO_JAR_PATH} \
     --conf spark.executor.extraClassPath=${ZOO_JAR_PATH} \
-    path/to/predict.py -f $imagePath --model $modelPath --topN 5 ${partitionNum}
+    path/to/predict.py -f $imagePath --model $modelPath --topN 5 --partition_num ${partitionNum}
 ```
