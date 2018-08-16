@@ -145,6 +145,27 @@ object TextSet {
     new DistributedTextSet(data)
   }
 
+  /**
+   * Read text files as TextSet.
+   * If sc is defined, read texts as DistributedTextSet from local file system or HDFS.
+   * If sc is null, read texts as LocalTextSet from local file system.
+   *
+   * @param path String. Folder path to texts. The folder structure is expected to be the following:
+   *             path
+   *                ├── dir1 - text1, text2, ...
+   *                ├── dir2 - text1, text2, ...
+   *                └── dir3 - text1, text2, ...
+   *             Under the target path, there ought to be N subdirectories. Each subdirectory
+   *             represents a category and contains all available texts of such category.
+   *             Each category will be a given a label according to its position in the
+   *             ascending order sort among all subdirectories.
+   *             All texts will be given a label according to the subdirectory it is located.
+   *             Labels start from 0.
+   * @param sc An instance of SparkContext if any.
+   * @param minPartitions A suggestion value of the minimal splitting number for input data.
+   *                      Integer. Default is 1.
+   * @return A TextSet.
+   */
   def read(path: String, sc: SparkContext = null, minPartitions: Int = 1): TextSet = {
     val textSet = if (sc != null) {
       val fs = FileSystem.get(new Configuration())
