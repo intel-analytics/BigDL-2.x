@@ -251,7 +251,7 @@ class LocalTextSet(var array: Array[TextFeature]) extends TextSet {
 
   override def generateWordIndexMap(
     removeTopN: Int = 0, maxWordsNum: Int = 5000): Map[String, Int] = {
-    val frequencies = array.flatMap(feature => feature.apply[Array[String]]("tokens"))
+    val frequencies = array.flatMap(feature => feature[Array[String]](TextFeature.tokens))
       .groupBy(identity).mapValues(_.length)
       .toArray.sortBy(- _._2).slice(removeTopN, maxWordsNum + removeTopN)
     val res = TextSet.wordIndexFromFrequencies(frequencies)
@@ -302,9 +302,10 @@ class DistributedTextSet(var rdd: RDD[TextFeature]) extends TextSet {
 
   override def generateWordIndexMap(
     removeTopN: Int = 0, maxWordsNum: Int = 5000): Map[String, Int] = {
-    val frequencies = rdd.flatMap(text => text.apply[Array[String]]("tokens"))
+    val frequencies = rdd.flatMap(text => text[Array[String]](TextFeature.tokens))
       .map(word => (word, 1)).reduceByKey(_ + _)
       .sortBy(- _._2).collect().slice(removeTopN, maxWordsNum + removeTopN)
+    rdd.cache()
     val res = TextSet.wordIndexFromFrequencies(frequencies)
     setWordIndex(res)
     res
