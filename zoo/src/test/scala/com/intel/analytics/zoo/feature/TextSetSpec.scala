@@ -26,6 +26,7 @@ import scala.collection.immutable.HashSet
 class TextSetSpec extends FlatSpec with Matchers {
   val text1 = TextFeature("Hello my friend, please annotate my text", label = 0)
   val text2 = TextFeature("hello world, this is some sentence for my test", label = 1)
+  val path: String = getClass.getClassLoader.getResource("news20").getPath
 
   "TextFeature properties" should "work properly" in {
     require(text1.getText == "Hello my friend, please annotate my text")
@@ -35,7 +36,7 @@ class TextSetSpec extends FlatSpec with Matchers {
   }
 
   "DistributedTextSet Transformation" should "work properly" in {
-    val conf = new SparkConf().setAppName("Test TextSet").setMaster("local[*]")
+    val conf = new SparkConf().setAppName("Test DistributedTextSet").setMaster("local[*]")
     val sc = NNContext.initNNContext(conf)
     val distributed = TextSet.rdd(sc.parallelize(Seq(text1, text2)))
     require(distributed.isDistributed)
@@ -73,10 +74,10 @@ class TextSetSpec extends FlatSpec with Matchers {
     require(wordIndex1 == wordIndex2 && wordIndex2.toArray.length == 10)
     require(wordIndex1("my") == 1)
 
-    val arr = t4.toDistributed.rdd.collect()
-    require(arr.length == 2)
-    require(arr(0).keys() == HashSet("label", "text", "tokens", "indexedTokens", "sample"))
-    require(arr(0).apply[Array[Int]]("indexedTokens").length == 5)
+    val rdd = t4.toDistributed.rdd.collect()
+    require(rdd.length == 2)
+    require(rdd(0).keys() == HashSet("label", "text", "tokens", "indexedTokens", "sample"))
+    require(rdd(0).apply[Array[Int]]("indexedTokens").length == 5)
   }
 
   "LocalTextSet Transformation" should "work properly" in {
@@ -101,5 +102,21 @@ class TextSetSpec extends FlatSpec with Matchers {
     require(arr.length == 2)
     require(arr(0).keys() == HashSet("label", "text", "tokens", "indexedTokens", "sample"))
     require(arr(0).apply[Array[Int]]("indexedTokens").length == 6)
+  }
+
+  "TextSet read with sc" should "work properly" in {
+    val conf = new SparkConf().setAppName("Test read TextSet").setMaster("local[*]")
+    val sc = NNContext.initNNContext(conf)
+    val textSet = TextSet.read(path, sc)
+    require(textSet.isDistributed)
+    require(textSet.toDistributed.rdd.count() == 5)
+    require(textSet.toDistributed.rdd.collect().head.keys() == HashSet("label", "text"))
+  }
+
+  "TextSet read without sc" should "work properly" in {
+    val textSet = TextSet.read(path)
+    require(textSet.isLocal)
+    require(textSet.toLocal.array.length == 5)
+    require(textSet.toLocal.array.head.keys() == HashSet("label", "text"))
   }
 }

@@ -16,14 +16,22 @@
 
 package com.intel.analytics.zoo.feature.text
 
+import java.io.File
+import java.util
+
 import com.intel.analytics.bigdl.DataSet
 import com.intel.analytics.bigdl.dataset.DataSet
 import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric
 import com.intel.analytics.zoo.feature.common.Preprocessing
+import org.apache.hadoop.conf.Configuration
+import org.apache.hadoop.fs.{FileSystem, Path}
 import org.apache.log4j.Logger
+import org.apache.spark.SparkContext
 import org.apache.spark.ml.Transformer
 import org.apache.spark.rdd.RDD
 
+import scala.collection.mutable.ArrayBuffer
+import scala.io.Source
 import scala.reflect.ClassTag
 
 /**
@@ -96,13 +104,7 @@ abstract class TextSet {
 
   private var wordIndex: Map[String, Int] = _
 
-  def getWordIndex: Map[String, Int] = {
-    if (wordIndex == null) {
-      TextSet.logger.warn("No wordIndex map is stored in the TextSet. Please call " +
-        "generateWordIndexMap explicitly after tokenizing the text")
-    }
-    wordIndex
-  }
+  def getWordIndex: Map[String, Int] = wordIndex
 
   def setWordIndex(map: Map[String, Int]): this.type = {
     wordIndex = map
@@ -129,12 +131,58 @@ object TextSet {
 
   val logger: Logger = Logger.getLogger(getClass)
 
+  /**
+   * Create a LocalTextSet from TextFeature array.
+   */
   def array(data: Array[TextFeature]): LocalTextSet = {
     new LocalTextSet(data)
   }
 
+  /**
+   * Create a DistributedTextSet from TextFeature RDD.
+   */
   def rdd(data: RDD[TextFeature]): DistributedTextSet = {
     new DistributedTextSet(data)
+  }
+
+  def read(path: String, sc: SparkContext = null, minPartitions: Int = 1): TextSet = {
+    val textSet = if (sc != null) {
+      val fs = FileSystem.get(new Configuration())
+      val categories = fs.listStatus(new Path(path)).map(_.getPath.getName).sorted
+      logger.info(s"Found ${categories.length} classes.")
+      // Labels of categories start from 0.
+      val indices = categories.indices
+      val categoryToLabel = categories.zip(indices).toMap
+      val textRDD = sc.wholeTextFiles(path + "/*", minPartitions).map{case (p, text) =>
+        val parts = p.split("/")
+        val category = parts(parts.length - 2)
+        TextFeature(text, label = categoryToLabel(category))
+      }
+      TextSet.rdd(textRDD)
+    }
+    else {
+      val texts = ArrayBuffer[String]()
+      val labels = ArrayBuffer[Int]()
+      val categoryToLabel = new util.HashMap[String, Int]()
+      val categoryPathList = new File(path).listFiles().filter(_.isDirectory).toList.sorted
+      categoryPathList.foreach { categoryPath =>
+        val label = categoryToLabel.size()
+        categoryToLabel.put(categoryPath.getName, label)
+        val textFiles = categoryPath.listFiles()
+          .filter(_.isFile).filter(_.getName.forall(Character.isDigit(_))).sorted
+        textFiles.foreach { file =>
+          val source = Source.fromFile(file, "ISO-8859-1")
+          val text = try source.getLines().toList.mkString("\n") finally source.close()
+          texts.append(text)
+          labels.append(label)
+        }
+      }
+      val textArr = texts.zip(labels).map{case (text, label) =>
+          TextFeature(text, label)
+      }.toArray
+      TextSet.array(textArr)
+    }
+    textSet
   }
 
   // Given an array of words, each with its frequency, sorted descending by frequency,
