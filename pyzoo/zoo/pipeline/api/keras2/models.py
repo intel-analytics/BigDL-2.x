@@ -16,7 +16,9 @@
 
 import sys
 
-from zoo.pipeline.api.keras.engine import KerasNet
+
+from zoo.pipeline.api.keras.models import Model
+from zoo.pipeline.api.keras.models import Sequential
 from zoo.pipeline.api.utils import remove_batch
 from bigdl.util.common import to_list, callBigDlFunc
 
@@ -25,7 +27,7 @@ if sys.version >= '3':
     unicode = str
 
 
-class Sequential(KerasNet):
+class Sequential(Sequential):
     """
     Container for a sequential model.
 
@@ -71,7 +73,7 @@ class Sequential(KerasNet):
         return model
 
 
-class Model(KerasNet):
+class Model(Model):
     """
     Container for a graph model.
 
