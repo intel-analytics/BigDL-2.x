@@ -99,8 +99,6 @@ object TextClassification {
         .set("spark.task.maxFailures", "1")
       val sc = NNContext.initNNContext(conf)
 
-      val sequenceLength = param.sequenceLength
-      val trainingSplit = param.trainingSplit
       val textDataDir = s"${param.baseDir}/20news-18828/"
       require(new File(textDataDir).exists(), "Text data directory is not found in baseDir, " +
         "you can run $ANALYTICS_ZOO_HOME/bin/data/news20/get_news20.sh to " +
@@ -108,15 +106,15 @@ object TextClassification {
       val gloveDir = s"${param.baseDir}/glove.6B/"
       require(new File(gloveDir).exists(),
         "GloVe word embeddings directory is not found in baseDir, " +
-        "you can run $ANALYTICS_ZOO_HOME/bin/data/glove/get_glove.sh to download")
+        "you can run $ANALYTICS_ZOO_HOME/bin/data/glove/get_glove.sh to download GloVe")
 
-      val textSet = TextSet.read(textDataDir, sc)
+      val textSet = TextSet.read(textDataDir, sc, param.partitionNum)
       val transformed = textSet.tokenize().normalize()
         .word2idx(removeTopN = 10, maxWordsNum = param.maxWordsNum)
-        .shapeSequence(sequenceLength).genSample()
+        .shapeSequence(param.sequenceLength).genSample()
 
       val Array(trainingRDD, valRDD) = transformed.toDistributed.rdd.randomSplit(
-        Array(trainingSplit, 1 - trainingSplit))
+        Array(param.trainingSplit, 1 - param.trainingSplit))
 
       val trainTextSet = DataSet.rdd(trainingRDD) -> TextFeatureToMiniBatch(param.batchSize)
       val valTextSet = DataSet.rdd(valRDD) -> TextFeatureToMiniBatch(param.batchSize)
@@ -130,7 +128,7 @@ object TextClassification {
         s"tokenLength for GloVe can only be 50, 100, 200, 300, but got $tokenLength")
         val wordIndex = transformed.getWordIndex
         val gloveFile = gloveDir + "glove.6B." + tokenLength.toString + "d.txt"
-        TextClassifier(20, gloveFile, wordIndex, sequenceLength,
+        TextClassifier(20, gloveFile, wordIndex, param.sequenceLength,
           param.encoder, param.encoderOutputDim)
       }
 
