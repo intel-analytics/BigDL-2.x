@@ -21,6 +21,7 @@ modelPath=... // model path. Local file system/HDFS/Amazon S3 are supported
 imagePath=... // image path. Local file system/HDFS are supported. With local file system, the files need to be available on all nodes in the cluster.
 
 outputPath=... // output path. Currently only support local file system.
+partitionNum=... // Optional, a suggestion value of the minimal partition number
 
 PYTHON_API_ZIP_PATH=${ANALYTICS_ZOO_HOME}/lib/analytics-zoo-bigdl_BIGDL_VERSION-spark_SPARK_VERSION-ZOO_VERSION-python-api.zip
 ZOO_JAR_PATH=${ANALYTICS_ZOO_HOME}/lib/analytics-zoo-bigdl_BIGDL_VERSION-spark_SPARK_VERSION-ZOO_VERSION-jar-with-dependencies.jar 
@@ -34,7 +35,7 @@ spark-submit \
     --jars ${ZOO_JAR_PATH} \
     --conf spark.driver.extraClassPath=${ZOO_JAR_PATH} \
     --conf spark.executor.extraClassPath=${ZOO_JAR_PATH} \
-    path/to/predict.py ${model_path} ${image_path} ${output_path}
+    path/to/predict.py ${model_path} ${image_path} ${output_path} ${partitionNum}
 ```
 
 ## Results
