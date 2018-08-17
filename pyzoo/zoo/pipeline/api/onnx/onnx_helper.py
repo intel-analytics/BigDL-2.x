@@ -50,7 +50,7 @@ class OnnxHelper:
 
     @staticmethod
     def get_shape_from_node(valueInfoProto):
-        return [dim.dim_value for dim in valueInfoProto.type.tensor_type.shape.dim]
+        return [int(dim.dim_value) for dim in valueInfoProto.type.tensor_type.shape.dim]
 
     @staticmethod
     def get_padds(onnx_attr):
