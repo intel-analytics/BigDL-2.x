@@ -162,9 +162,9 @@ object TextSet {
    *             All texts will be given a label according to the subdirectory it is located.
    *             Labels start from 0.
    * @param sc An instance of SparkContext if any.
-   * @param minPartitions A suggestion value of the minimal splitting number for input data.
+   * @param minPartitions A suggestion value of the minimal partition number.
    *                      Integer. Default is 1.
-   * @return A TextSet.
+   * @return TextSet.
    */
   def read(path: String, sc: SparkContext = null, minPartitions: Int = 1): TextSet = {
     val textSet = if (sc != null) {
