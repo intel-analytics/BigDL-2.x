@@ -30,6 +30,7 @@ import com.intel.analytics.bigdl.utils._
 import com.intel.analytics.bigdl.utils.serializer.{DeserializeContext, ModuleData, ModuleSerializer, SerializeContext}
 import com.intel.analytics.bigdl.visualization.{TrainSummary, ValidationSummary}
 import com.intel.analytics.zoo.feature.image.ImageSet
+import com.intel.analytics.zoo.feature.text.{TextFeatureToMiniBatch, TextSet}
 import com.intel.analytics.zoo.pipeline.api.Net
 import com.intel.analytics.zoo.pipeline.api.autograd.{Lambda, Variable}
 import com.intel.analytics.zoo.pipeline.api.autograd._
@@ -246,7 +247,15 @@ abstract class KerasNet[T: ClassTag](implicit ev: TensorNumeric[T])
   }
 
   /**
-   * Train a model for a fixed number of epochs on a dataset.
+   * Convert TextSet to DataSet of MiniBatch.
+   */
+  private def toDataSet(x: TextSet, batchSize: Int): DataSet[MiniBatch[T]] = {
+    if (x != null) x.toDataSet -> TextFeatureToMiniBatch[T](batchSize)
+    else null
+  }
+
+  /**
+   * Train a model for a fixed number of epochs on a DataSet.
    *
    * @param x Training dataset. If x is an instance of LocalDataSet, train in local mode.
    * @param nbEpoch Number of iterations to train.
@@ -325,7 +334,7 @@ abstract class KerasNet[T: ClassTag](implicit ev: TensorNumeric[T])
    * @param x Training dataset, ImageSet.
    * @param batchSize Number of samples per gradient update.
    * @param nbEpoch Number of iterations to train.
-   * @param validationData ImageSet, or null if validation is not configured. Default is null.
+   * @param validationData ImageSet, or null if validation is not configured.
    */
   def fit(
       x: ImageSet,
@@ -338,6 +347,31 @@ abstract class KerasNet[T: ClassTag](implicit ev: TensorNumeric[T])
 
   def fit(
       x: ImageSet,
+      batchSize: Int,
+      nbEpoch: Int)(implicit ev: TensorNumeric[T]): Unit = {
+    KerasUtils.validateBatchSize(batchSize)
+    this.fit(toDataSet(x, batchSize), nbEpoch, null)
+  }
+
+  /**
+   * Train a model for a fixed number of epochs on ImageSet.
+   *
+   * @param x Training dataset, TextSet.
+   * @param batchSize Number of samples per gradient update.
+   * @param nbEpoch Number of iterations to train.
+   * @param validationData TextSet, or null if validation is not configured.
+   */
+  def fit(
+       x: TextSet,
+       batchSize: Int,
+       nbEpoch: Int,
+       validationData: TextSet)(implicit ev: TensorNumeric[T]): Unit = {
+    KerasUtils.validateBatchSize(batchSize)
+    this.fit(toDataSet(x, batchSize), nbEpoch, toDataSet(validationData, batchSize))
+  }
+
+  def fit(
+      x: TextSet,
       batchSize: Int,
       nbEpoch: Int)(implicit ev: TensorNumeric[T]): Unit = {
     KerasUtils.validateBatchSize(batchSize)
