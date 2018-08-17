@@ -26,7 +26,7 @@ parser = argparse.ArgumentParser()
 parser.add_argument('model_path', help="Path where the model is stored")
 parser.add_argument('img_path', help="Path where the images are stored")
 parser.add_argument('output_path', help="Path to store the detection results")
-parser.add_argument("partition_num", type=int, default=1, help="The number of partitions")
+parser.add_argument("--partition_num", type=int, default=1, help="The number of partitions")
 
 
 def predict(model_path, img_path, output_path, partition_num):
