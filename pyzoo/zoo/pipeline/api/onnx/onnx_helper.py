@@ -64,7 +64,7 @@ class OnnxHelper:
                 raise NotImplementedError('same_lower auto_pad is not implemented')
 
         if "pads" in onnx_attr.keys():
-            pads4 = onnx_attr["pads"]
+            pads4 = [int(i) for i in onnx_attr["pads"]]
             assert len(pads4) == 4
             assert pads4[0] == pads4[1]
             assert pads4[2] == pads4[3]

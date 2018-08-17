@@ -28,9 +28,9 @@ class ConvMapper(OperatorMapper):
         W_weights = self.params[0]
         if (rank == 4):  # NCHW
             nb_filter = W_weights.shape[0]
-            nb_row = self.onnx_attr['kernel_shape'][0]
-            nb_col = self.onnx_attr['kernel_shape'][1]
-            subSample = self.onnx_attr['strides']
+            nb_row = int(self.onnx_attr['kernel_shape'][0])
+            nb_col = int(self.onnx_attr['kernel_shape'][1])
+            subSample = [int(i) for i in self.onnx_attr['strides']]
             dim_ordering = "th"
             assert self.onnx_attr['dilations'] == (1, 1), "we only support dilations == (1, 1)"
             assert self.onnx_attr['group'] == 1, "we only support group == 1"
