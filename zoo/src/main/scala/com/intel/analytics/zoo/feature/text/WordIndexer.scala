@@ -16,6 +16,14 @@
 
 package com.intel.analytics.zoo.feature.text
 
+/**
+ * Given a wordIndex map, transform tokens and corresponding indices.
+ * Those words not in the map will be aborted.
+ * Input key: TextFeature.tokens
+ * Output key: TextFeature.indexedTokens
+ *
+ * @param wordIndex Map of each word (String) and its index (integer).
+ */
 class WordIndexer(wordIndex: Map[String, Int]) extends TextTransformer {
 
   override def transform(feature: TextFeature): TextFeature = {
@@ -28,7 +36,7 @@ class WordIndexer(wordIndex: Map[String, Int]) extends TextTransformer {
         None
       }
     })
-    feature.update(TextFeature.indexedTokens, indices)
+    feature(TextFeature.indexedTokens) = indices
     feature
   }
 }

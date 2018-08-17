@@ -18,6 +18,9 @@ package com.intel.analytics.zoo.feature.text
 
 import com.intel.analytics.zoo.feature.common.Preprocessing
 
+/**
+ * Super class of Transformers that transform TextFeature.
+ */
 abstract class TextTransformer extends Preprocessing[TextFeature, TextFeature] {
 
   def transform(feature: TextFeature): TextFeature
