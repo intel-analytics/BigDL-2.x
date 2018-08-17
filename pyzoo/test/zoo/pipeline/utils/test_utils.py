@@ -47,6 +47,7 @@ class ZooTestCase(TestCase):
         self.sc = init_nncontext(sparkConf)
         self.sc.setLogLevel("ERROR")
         self.sqlContext = SQLContext(self.sc)
+        self.tmp_dirs = []
 
     def teardown_method(self, method):
         """
