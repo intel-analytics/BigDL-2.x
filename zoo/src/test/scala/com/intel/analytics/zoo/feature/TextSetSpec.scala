@@ -18,6 +18,10 @@ package com.intel.analytics.zoo.feature
 
 import com.intel.analytics.zoo.common.NNContext
 import com.intel.analytics.zoo.feature.text._
+import com.intel.analytics.zoo.pipeline.api.keras.layers.{Convolution1D, Dense, Embedding, Flatten}
+import com.intel.analytics.zoo.pipeline.api.keras.models.Sequential
+import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric.NumericFloat
+import com.intel.analytics.bigdl.utils.Engine
 import org.apache.spark.SparkConf
 import org.scalatest.{FlatSpec, Matchers}
 
@@ -27,6 +31,15 @@ class TextSetSpec extends FlatSpec with Matchers {
   val text1 = TextFeature("Hello my friend, please annotate my text", label = 0)
   val text2 = TextFeature("hello world, this is some sentence for my test", label = 1)
   val path: String = getClass.getClassLoader.getResource("news20").getPath
+
+  def buildModel(): Sequential[Float] = {
+    val model = Sequential()
+    model.add(Embedding(300, 20, inputLength = 30))
+    model.add(Convolution1D(8, 4))
+    model.add(Flatten())
+    model.add(Dense(3, activation = "softmax"))
+    model
+  }
 
   "TextFeature properties" should "work properly" in {
     require(text1.getText == "Hello my friend, please annotate my text")
@@ -104,19 +117,34 @@ class TextSetSpec extends FlatSpec with Matchers {
     require(arr(0).apply[Array[Int]]("indexedTokens").length == 6)
   }
 
-  "TextSet read with sc" should "work properly" in {
-    val conf = new SparkConf().setAppName("Test read TextSet").setMaster("local[*]")
+  "TextSet read with sc, fit, predict and evaluate" should "work properly" in {
+    val conf = new SparkConf().setAppName("Test DistributedTextSet").setMaster("local[4]")
     val sc = NNContext.initNNContext(conf)
     val textSet = TextSet.read(path, sc)
     require(textSet.isDistributed)
     require(textSet.toDistributed.rdd.count() == 5)
     require(textSet.toDistributed.rdd.collect().head.keys() == HashSet("label", "text"))
+    val transformed = textSet.tokenize().normalize()
+      .word2idx(removeTopN = 5, maxWordsNum = 299).shapeSequence(len = 30).genSample()
+    val model = buildModel()
+    model.compile("sgd", "sparse_categorical_crossentropy", List("accuracy"))
+    model.fit(transformed, batchSize = 4, nbEpoch = 2, validationData = transformed)
+    val accuracy = model.evaluate(transformed, batchSize = 4)
   }
 
   "TextSet read without sc" should "work properly" in {
+    // initNNContext is used for init BigDL Engine so that coreNum can be obtained during fit.
+    val conf = new SparkConf().setAppName("Test LocalTextSet").setMaster("local[4]")
+    val sc = NNContext.initNNContext(conf)
     val textSet = TextSet.read(path)
     require(textSet.isLocal)
     require(textSet.toLocal.array.length == 5)
     require(textSet.toLocal.array.head.keys() == HashSet("label", "text"))
+    val transformed = textSet.tokenize().normalize()
+      .word2idx(removeTopN = 5, maxWordsNum = 299).shapeSequence(len = 30).genSample()
+    val model = buildModel()
+    model.compile("sgd", "sparse_categorical_crossentropy", List("accuracy"))
+    model.fit(transformed, batchSize = 4, nbEpoch = 2, validationData = transformed)
+    val accuracy = model.evaluate(transformed, batchSize = 4)
   }
 }

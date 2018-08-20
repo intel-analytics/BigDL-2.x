@@ -29,15 +29,14 @@ class TextFeatureToMiniBatch[T: ClassTag](
     batchSize: Int,
     featurePaddingParam: Option[PaddingParam[T]] = None,
     labelPaddingParam: Option[PaddingParam[T]] = None,
-    partitionNum: Option[Int] = None,
-    sampleKey: String = TextFeature.sample)(implicit ev: TensorNumeric[T])
+    partitionNum: Option[Int] = None)(implicit ev: TensorNumeric[T])
   extends Transformer[TextFeature, MiniBatch[T]] {
 
   val toBatch: SampleToMiniBatch[T] = SampleToMiniBatch[T](
     batchSize, featurePaddingParam, labelPaddingParam, partitionNum)
 
   override def apply(prev: Iterator[TextFeature]): Iterator[MiniBatch[T]] = {
-    toBatch(prev.map(_[Sample[T]](sampleKey)))
+    toBatch(prev.map(_[Sample[T]](TextFeature.sample)))
   }
 }
 
@@ -46,9 +45,8 @@ object TextFeatureToMiniBatch {
       batchSize: Int,
       featurePaddingParam: Option[PaddingParam[T]] = None,
       labelPaddingParam: Option[PaddingParam[T]] = None,
-      partitionNum: Option[Int] = None,
-      sampleKey: String = TextFeature.sample)
+      partitionNum: Option[Int] = None)
       (implicit ev: TensorNumeric[T]): TextFeatureToMiniBatch[T] =
     new TextFeatureToMiniBatch[T](batchSize, featurePaddingParam,
-      labelPaddingParam, partitionNum, sampleKey)
+      labelPaddingParam, partitionNum)
 }

@@ -30,7 +30,7 @@ import com.intel.analytics.bigdl.utils._
 import com.intel.analytics.bigdl.utils.serializer.{DeserializeContext, ModuleData, ModuleSerializer, SerializeContext}
 import com.intel.analytics.bigdl.visualization.{TrainSummary, ValidationSummary}
 import com.intel.analytics.zoo.feature.image.ImageSet
-import com.intel.analytics.zoo.feature.text.{TextFeatureToMiniBatch, TextSet}
+import com.intel.analytics.zoo.feature.text._
 import com.intel.analytics.zoo.pipeline.api.Net
 import com.intel.analytics.zoo.pipeline.api.autograd.{Lambda, Variable}
 import com.intel.analytics.zoo.pipeline.api.autograd._
@@ -362,10 +362,10 @@ abstract class KerasNet[T: ClassTag](implicit ev: TensorNumeric[T])
    * @param validationData TextSet, or null if validation is not configured.
    */
   def fit(
-       x: TextSet,
-       batchSize: Int,
-       nbEpoch: Int,
-       validationData: TextSet)(implicit ev: TensorNumeric[T]): Unit = {
+      x: TextSet,
+      batchSize: Int,
+      nbEpoch: Int,
+      validationData: TextSet)(implicit ev: TensorNumeric[T]): Unit = {
     KerasUtils.validateBatchSize(batchSize)
     this.fit(toDataSet(x, batchSize), nbEpoch, toDataSet(validationData, batchSize))
   }
@@ -415,6 +415,27 @@ abstract class KerasNet[T: ClassTag](implicit ev: TensorNumeric[T])
       (implicit ev: TensorNumeric[T]): Array[(ValidationResult, ValidationMethod[T])] = {
     require(this.vMethods != null, "Evaluation metrics haven't been set yet")
     evaluateImage(x.toImageFrame(), this.vMethods, Some(batchSize))
+  }
+
+  /**
+   * Evaluate a model on TextSet.
+   *
+   * @param x Evaluation dataset, TextSet.
+   * @param batchSize Number of samples per batch.
+   */
+  def evaluate(
+      x: TextSet,
+      batchSize: Int)
+    (implicit ev: TensorNumeric[T]): Array[(ValidationResult, ValidationMethod[T])] = {
+    require(this.vMethods != null, "Evaluation metrics haven't been set yet")
+    x match {
+      case distributed: DistributedTextSet =>
+        val rdd = distributed.rdd.map(_[Sample[T]](TextFeature.sample)).filter(_ != null)
+        evaluate(rdd, batchSize)
+      case local: LocalTextSet =>
+        val localSet = toDataSet(local, batchSize).asInstanceOf[LocalDataSet[MiniBatch[T]]]
+        evaluate(localSet, this.vMethods)
+    }
   }
 
   /**
