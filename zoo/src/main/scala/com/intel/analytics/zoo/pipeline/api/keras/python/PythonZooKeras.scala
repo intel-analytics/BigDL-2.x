@@ -332,7 +332,7 @@ class PythonZooKeras[T: ClassTag](implicit ev: TensorNumeric[T]) extends PythonB
       init: String = "uniform",
       wRegularizer: Regularizer[T] = null,
       inputShape: JList[Int] = null): Embedding[T] = {
-    Embedding[T](inputDim, outputDim, init, wRegularizer, toScalaShape(inputShape))
+    Embedding[T](inputDim, outputDim, init, wRegularizer, inputShape.get(0))
   }
 
   def createZooKerasBatchNormalization(

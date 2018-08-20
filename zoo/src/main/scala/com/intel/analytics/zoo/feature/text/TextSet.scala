@@ -275,7 +275,7 @@ class DistributedTextSet(var rdd: RDD[TextFeature]) extends TextSet {
         (t, s, null)
       case nonSparkNLP =>
         // Two cases when rdd != null:
-        // either prevTextSet == null or transformed by calling indexize
+        // either prevTextSet == null or transformed by calling word2idx
         if (rdd != null) (null, null, nonSparkNLP(rdd))
         else (null, null, nonSparkNLP(sparkNLPTransformRDD))
     }
