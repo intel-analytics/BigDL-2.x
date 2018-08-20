@@ -9,6 +9,17 @@ LSTM and GRU models are a little bit difficult to train, and more epochs are nee
 __Remark__: Due to some permission issue, this example cannot be run on Windows platform.
 
 
+## Download or install Analytics Zoo:
+You can choose either to install analytics-zoo via __pip__ or __download the prebuilt package__.
+
+- Install from pip. You can follow the installation steps [here](https://analytics-zoo.github.io/master/#PythonUserGuide/install/#install-from-pip) 
+and the running instructions [here](https://analytics-zoo.github.io/master/#PythonUserGuide/run/#run-after-pip-install).
+This example can only be run in __local__ mode after pip install. Note that in this case you don't need to care about the Spark environment as `pyspark` will automatically be installed.
+
+- Follow the steps [here](https://analytics-zoo.github.io/master/#PythonUserGuide/install/#install-without-pip) to download the prebuilt package directly.
+Note that in this case you need to download and prepare the Spark environment by yourself.
+
+
 ## Data Preparation
 The data used in this example are:
 - [20 Newsgroup dataset](http://qwone.com/~jason/20Newsgroups/20news-18828.tar.gz) which contains 20 categories and with 19997 texts in total.
@@ -32,14 +43,22 @@ The data folder structure after extraction should look like the following:
 ```
 
 
-## Run this example
+## Run after pip install
+You can easily use the following commands to run this example:
+```bash
+export SPARK_DRIVER_MEMORY=2g
+python text_classification.py --data_path /tmp/data
+```
+See [here](#options) for more configurable options for this example.
+
+
+## Run with the prebuilt package
 Run the following command for Spark local mode (`MASTER=local[*]`) or cluster mode:
 
 ```bash
 SPARK_HOME=the root directory of Spark
 MASTER=...
-ANALYTICS_ZOO_ROOT=the root directory of the Analytics Zoo project
-ANALYTICS_ZOO_HOME=${ANALYTICS_ZOO_ROOT}/dist
+ANALYTICS_ZOO_HOME=the folder where you uncompress the downloaded package
 ANALYTICS_ZOO_PY_ZIP=${ANALYTICS_ZOO_HOME}/lib/analytics-zoo-bigdl_BIGDL_VERSION-spark_SPARK_VERSION-ZOO_VERSION-python-api.zip
 ANALYTICS_ZOO_JAR=${ANALYTICS_ZOO_HOME}/lib/analytics-zoo-bigdl_BIGDL_VERSION-spark_SPARK_VERSION-ZOO_VERSION-jar-with-dependencies.jar 
 ANALYTICS_ZOO_CONF=${ANALYTICS_ZOO_HOME}/conf/spark-analytics-zoo.conf
@@ -54,10 +73,12 @@ ${SPARK_HOME}/bin/spark-submit \
     --jars ${ANALYTICS_ZOO_JAR} \
     --conf spark.driver.extraClassPath=${ANALYTICS_ZOO_JAR} \
     --conf spark.executor.extraClassPath=${ANALYTICS_ZOO_JAR} \
-    ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/textclassification/text_classification.py \
-    --data_path /tmp/text_data
+    text_classification.py --data_path /tmp/text_data
 ```
-__Options:__
+See [here](#options) for more configurable options for this example.
+
+
+## Options:
 * `--data_path` The path where the training and word2Vec data locate. Default is `/tmp/text_data`. Make sure that you have write permission to the specified path if you want the program to automatically download the data for you.
 * `--partition_num` The number of partitions to cut the dataset into. Default is 4.
 * `--token_length` The size of each word vector. GloVe supports token_length 50, 100, 200 and 300. Default is 200.
