@@ -96,12 +96,18 @@ object TextFeature {
    * Key for the indices corresponding to the tokens after performing word2idx.
    * Value should be an array of integers.
    */
-  val indexedTokens = "indexedTokens" // Array of int after word to index
+  val indexedTokens = "indexedTokens"
   /**
    * Key for the sample (feature and label if any).
    * Value should be a BigDL Sample.
    */
   val sample = "sample"
+
+  /**
+   * Key for the text prediction result.
+   * Value should be a BigDL Activity.
+   */
+  val predict = "predict"
 
   val logger: Logger = Logger.getLogger(getClass)
 
