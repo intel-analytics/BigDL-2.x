@@ -9,14 +9,12 @@ LSTM and GRU models are a little bit difficult to train, and more epochs are nee
 __Remark__: Due to some permission issue, this example cannot be run on Windows platform.
 
 
-## Download or install Analytics Zoo:
+## Install or download Analytics Zoo:
 You can choose either to install analytics-zoo via __pip__ or __download the prebuilt package__.
 
 - Follow the installation instructions and steps [here](https://analytics-zoo.github.io/master/#PythonUserGuide/install/#install-from-pip) to install from pip. .
-Note that in this case This example can only be run in __local__ mode and you don't need to care about the Spark environment as `pyspark` will automatically be installed.
 
 - Follow the steps [here](https://analytics-zoo.github.io/master/#PythonUserGuide/install/#install-without-pip) to download the prebuilt package and configure cluster dependencies if necessary.
-Note that in this case you need to download and prepare the Spark environment by yourself.
 
 
 ## Data Preparation
@@ -31,7 +29,7 @@ You can also choose to prepare the data by yourself beforehand. The following sc
 bash ${ANALYTICS_ZOO_HOME}/bin/data/news20/get_news20.sh dir
 bash ${ANALYTICS_ZOO_HOME}/bin/data/glove/get_glove.sh dir
 ```
-where `ANALYTICS_ZOO_HOME` is the `dist` directory under the Analytics Zoo project (or if you download the prebuilt package, it would be the folder where you uncompress the downloaded package) and `dir` is the directory you wish to locate the downloaded data. If `dir` is not specified, the data will be downloaded to the current working directory. 20 Newsgroup dataset and GloVe word embeddings are supposed to be placed under the same directory.
+where `ANALYTICS_ZOO_HOME` is the `dist` directory under the Analytics Zoo project (or if you download the prebuilt package, it would be the folder where you extract the downloaded package) and `dir` is the directory you wish to locate the downloaded data. If `dir` is not specified, the data will be downloaded to the current working directory. 20 Newsgroup dataset and GloVe word embeddings are supposed to be placed under the same directory.
 
 The data folder structure after extraction should look like the following:
 ```
@@ -53,13 +51,13 @@ See [here](#options) for more configurable options for this example.
 See [here](https://analytics-zoo.github.io/master/#PythonUserGuide/run/#run-after-pip-install) for more running guidance after pip install.
 
 
-## Run with the prebuilt package
+## Run with prebuilt package
 Run the following command for Spark local mode (`MASTER=local[*]`) or cluster mode:
 
 ```bash
 SPARK_HOME=the root directory of Spark
 MASTER=...
-ANALYTICS_ZOO_HOME=the folder where you uncompress the downloaded Analytics Zoo zip package
+ANALYTICS_ZOO_HOME=the folder where you extract the downloaded Analytics Zoo zip package
 ANALYTICS_ZOO_PY_ZIP=${ANALYTICS_ZOO_HOME}/lib/analytics-zoo-bigdl_BIGDL_VERSION-spark_SPARK_VERSION-ZOO_VERSION-python-api.zip
 ANALYTICS_ZOO_JAR=${ANALYTICS_ZOO_HOME}/lib/analytics-zoo-bigdl_BIGDL_VERSION-spark_SPARK_VERSION-ZOO_VERSION-jar-with-dependencies.jar 
 ANALYTICS_ZOO_CONF=${ANALYTICS_ZOO_HOME}/conf/spark-analytics-zoo.conf
@@ -81,7 +79,7 @@ See [here](#options) for more configurable options for this example.
 See [here](https://analytics-zoo.github.io/master/#PythonUserGuide/run/#run-without-pip-install) for more running guidance without pip install.
 
 
-## Options:
+## Options
 * `--data_path` The path where the training and word2Vec data locate. Default is `/tmp/text_data`. Make sure that you have write permission to the specified path if you want the program to automatically download the data for you.
 * `--partition_num` The number of partitions to cut the dataset into. Default is 4.
 * `--token_length` The size of each word vector. GloVe supports token_length 50, 100, 200 and 300. Default is 200.
