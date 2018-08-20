@@ -12,11 +12,10 @@ __Remark__: Due to some permission issue, this example cannot be run on Windows 
 ## Download or install Analytics Zoo:
 You can choose either to install analytics-zoo via __pip__ or __download the prebuilt package__.
 
-- Install from pip. You can follow the installation steps [here](https://analytics-zoo.github.io/master/#PythonUserGuide/install/#install-from-pip) 
-and the running instructions [here](https://analytics-zoo.github.io/master/#PythonUserGuide/run/#run-after-pip-install).
-This example can only be run in __local__ mode after pip install. Note that in this case you don't need to care about the Spark environment as `pyspark` will automatically be installed.
+- Follow the installation instructions and steps [here](https://analytics-zoo.github.io/master/#PythonUserGuide/install/#install-from-pip) to install from pip. .
+Note that in this case This example can only be run in __local__ mode and you don't need to care about the Spark environment as `pyspark` will automatically be installed.
 
-- Follow the steps [here](https://analytics-zoo.github.io/master/#PythonUserGuide/install/#install-without-pip) to download the prebuilt package directly.
+- Follow the steps [here](https://analytics-zoo.github.io/master/#PythonUserGuide/install/#install-without-pip) to download the prebuilt package and configure cluster dependencies if necessary.
 Note that in this case you need to download and prepare the Spark environment by yourself.
 
 
@@ -50,6 +49,7 @@ export SPARK_DRIVER_MEMORY=2g
 python text_classification.py --data_path /tmp/data
 ```
 See [here](#options) for more configurable options for this example.
+See [here](https://analytics-zoo.github.io/master/#PythonUserGuide/run/#run-after-pip-install) for more running guidance.
 
 
 ## Run with the prebuilt package
@@ -58,7 +58,7 @@ Run the following command for Spark local mode (`MASTER=local[*]`) or cluster mo
 ```bash
 SPARK_HOME=the root directory of Spark
 MASTER=...
-ANALYTICS_ZOO_HOME=the folder where you uncompress the downloaded package
+ANALYTICS_ZOO_HOME=the folder where you uncompress the downloaded Analytics Zoo zip package
 ANALYTICS_ZOO_PY_ZIP=${ANALYTICS_ZOO_HOME}/lib/analytics-zoo-bigdl_BIGDL_VERSION-spark_SPARK_VERSION-ZOO_VERSION-python-api.zip
 ANALYTICS_ZOO_JAR=${ANALYTICS_ZOO_HOME}/lib/analytics-zoo-bigdl_BIGDL_VERSION-spark_SPARK_VERSION-ZOO_VERSION-jar-with-dependencies.jar 
 ANALYTICS_ZOO_CONF=${ANALYTICS_ZOO_HOME}/conf/spark-analytics-zoo.conf
@@ -76,6 +76,7 @@ ${SPARK_HOME}/bin/spark-submit \
     text_classification.py --data_path /tmp/text_data
 ```
 See [here](#options) for more configurable options for this example.
+See [here](https://analytics-zoo.github.io/master/#PythonUserGuide/run/#run-without-pip-install) for more running guidance.
 
 
 ## Options:
