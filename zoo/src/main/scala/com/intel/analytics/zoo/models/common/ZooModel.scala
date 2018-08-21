@@ -20,6 +20,7 @@ import com.intel.analytics.bigdl.dataset.Sample
 import com.intel.analytics.bigdl.nn.{Container, Module}
 import com.intel.analytics.bigdl.nn.abstractnn.{AbstractModule, Activity}
 import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric
+import com.intel.analytics.zoo.pipeline.api.keras.layers.WordEmbedding
 import com.intel.analytics.zoo.pipeline.api.keras.layers.utils.KerasUtils
 import com.intel.analytics.zoo.pipeline.api.keras.models.{KerasNet, Model, Sequential}
 import com.intel.analytics.zoo.pipeline.api.net.GraphNet
@@ -126,6 +127,7 @@ object ZooModel {
   Model
   Sequential
   GraphNet
+  WordEmbedding
   /**
    * Load an existing model (with weights).
    *
