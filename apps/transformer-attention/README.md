@@ -19,9 +19,7 @@ Multi-head Attention layer and apply it to a sentiment analysis example.
 * Run `export ANALYTICS_ZOO_HOME=the dist directory under the Analytics Zoo project`.
 * Run the following bash command to start the jupyter notebook. Change parameter settings as you need, ie `MASTER = local[physcial_core_number]`.
 ```bash
-MASTER=local[*]
 ${ANALYTICS_ZOO_HOME}/bin/jupyter-with-zoo.sh \
-    --master ${MASTER} \
-    --driver-cores 4  \
+    --master local[4] \
     --driver-memory 12g
 ```
