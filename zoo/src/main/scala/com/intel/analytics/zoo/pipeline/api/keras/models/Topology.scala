@@ -35,8 +35,7 @@ import com.intel.analytics.zoo.pipeline.api.Net
 import com.intel.analytics.zoo.pipeline.api.autograd.{Lambda, Variable}
 import com.intel.analytics.zoo.pipeline.api.autograd._
 import com.intel.analytics.zoo.pipeline.api.keras.layers.Input
-import com.intel.analytics.zoo.pipeline.api.keras.layers.utils.{AbstractModuleRef, GraphRef, KerasLayerRef}
-import com.intel.analytics.zoo.pipeline.api.keras.layers.utils.KerasUtils
+import com.intel.analytics.zoo.pipeline.api.keras.layers.utils._
 import com.intel.analytics.zoo.pipeline.api.net.NetUtils
 import org.apache.spark.rdd.RDD
 
@@ -502,13 +501,57 @@ abstract class KerasNet[T: ClassTag](implicit ev: TensorNumeric[T])
 
   /**
    * The default batchPerThread is 4.
-   * For distributed ImageSet, the total batchSize is batchPerThread * rdd.getNumPartitions.
-   * For local ImageSet, the total batchSize is batchPerThread * numOfCores.
-   * @param x
-   * @return
+   * For DistributedImageSet, the total batchSize is batchPerThread * rdd.getNumPartitions.
+   * For LocalImageSet, the total batchSize is batchPerThread * numOfCores.
+   *
+   * @param x Prediction data, ImageSet.
    */
   def predict(
       x: ImageSet): ImageSet = {
+    predict(x, batchPerThread = 4)
+  }
+
+  /**
+   * Use a model to do prediction on TextSet.
+   *
+   * @param x Prediction data, TextSet.
+   * @param batchPerThread The total batch size is
+   *        batchPerThread * rdd.getNumPartitions(distributed mode)
+   *        or batchPerThread * numOfCores(local mode)
+   */
+  def predict(
+      x: TextSet,
+      batchPerThread: Int): TextSet = {
+    x match {
+      case distributed: DistributedTextSet =>
+        val rdd = distributed.rdd
+        val predictRDD = predict(rdd.map(_[Sample[T]](TextFeature.sample)), batchPerThread)
+        val resRDD = rdd.zip(predictRDD).map{case (feature, predict) =>
+          feature(TextFeature.predict) = predict
+          feature
+        }
+        TextSet.rdd(resRDD).setWordIndex(x.getWordIndex)
+      case local: LocalTextSet =>
+        val localSet = toDataSet(local, batchPerThread * EngineRef.getCoreNumber())
+          .asInstanceOf[LocalDataSet[MiniBatch[T]]]
+        val predictArr = predict(localSet, batchPerThread)
+        val resArr = local.array.zip(predictArr).map{case (feature, predict) =>
+          feature(TextFeature.predict) = predict
+          feature
+        }
+        TextSet.array(resArr).setWordIndex(x.getWordIndex)
+    }
+  }
+
+  /**
+   * The default batchPerThread is 4.
+   * For DistributedTextSet, the total batchSize is batchPerThread * rdd.getNumPartitions.
+   * For LocalTextSet, the total batchSize is batchPerThread * numOfCores.
+   *
+   * @param x Prediction data, TextSet.
+   */
+  def predict(
+      x: TextSet): TextSet = {
     predict(x, batchPerThread = 4)
   }
 

@@ -21,7 +21,6 @@ import com.intel.analytics.zoo.feature.text._
 import com.intel.analytics.zoo.pipeline.api.keras.layers.{Convolution1D, Dense, Embedding, Flatten}
 import com.intel.analytics.zoo.pipeline.api.keras.models.Sequential
 import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric.NumericFloat
-import com.intel.analytics.bigdl.utils.Engine
 import org.apache.spark.SparkConf
 import org.scalatest.{FlatSpec, Matchers}
 
@@ -129,6 +128,9 @@ class TextSetSpec extends FlatSpec with Matchers {
     val model = buildModel()
     model.compile("sgd", "sparse_categorical_crossentropy", List("accuracy"))
     model.fit(transformed, batchSize = 4, nbEpoch = 2, validationData = transformed)
+    require(! transformed.toDistributed.rdd.first().contains("predict"))
+    val predictSet = model.predict(transformed, batchPerThread = 1)
+    require(predictSet.toDistributed.rdd.first().contains("predict"))
     val accuracy = model.evaluate(transformed, batchSize = 4)
   }
 
@@ -145,6 +147,9 @@ class TextSetSpec extends FlatSpec with Matchers {
     val model = buildModel()
     model.compile("sgd", "sparse_categorical_crossentropy", List("accuracy"))
     model.fit(transformed, batchSize = 4, nbEpoch = 2, validationData = transformed)
+    require(! transformed.toLocal.array.head.contains("predict"))
+    val predictSet = model.predict(transformed, batchPerThread = 1)
+    require(predictSet.toLocal.array.head.contains("predict"))
     val accuracy = model.evaluate(transformed, batchSize = 4)
   }
 }
