@@ -8,8 +8,7 @@ LSTM and GRU models are a little bit difficult to train, and more epochs are nee
 
 
 ## Download Analytics Zoo:
-You can download Analytics Zoo prebuilt release and nightly build package from [here](https://analytics-zoo.github.io/master/#release-download/) and uncompress it.
-You also need to download and prepare the [Spark](https://spark.apache.org/downloads.html) environment by yourself.
+You can download Analytics Zoo prebuilt release and nightly build package from [here](https://analytics-zoo.github.io/master/#release-download/) and extract it.
 
 
 ## Data Preparation
@@ -22,7 +21,7 @@ You need to prepare the data by yourself beforehand. The following scripts we pr
 bash ${ANALYTICS_ZOO_HOME}/bin/data/news20/get_news20.sh dir
 bash ${ANALYTICS_ZOO_HOME}/bin/data/glove/get_glove.sh dir
 ```
-where `ANALYTICS_ZOO_HOME` is the folder where you uncompress the downloaded package and `dir` is the directory you wish to locate the downloaded data. If `dir` is not specified, the data will be downloaded to the current working directory. 20 Newsgroup dataset and GloVe word embeddings are supposed to be placed under the same directory.
+where `ANALYTICS_ZOO_HOME` is the folder where you extract the downloaded package and `dir` is the directory you wish to locate the downloaded data. If `dir` is not specified, the data will be downloaded to the current working directory. 20 Newsgroup dataset and GloVe word embeddings are supposed to be placed under the same directory.
 
 The data folder structure after extraction should look like the following:
 ```
