@@ -1,0 +1,56 @@
+#
+# Copyright 2018 Analytics Zoo Authors.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+
+import pytest
+from test.zoo.pipeline.utils.test_utils import ZooTestCase
+from zoo.feature.text import *
+
+text1 = "Hello my friend, please annotate my text"
+text2 = "hello world, this is some sentence for my test"
+texts = [text1, text2]
+labels = [0., 1]
+
+
+class TestTextSet(ZooTestCase):
+    def test_text_feature_with_label(self):
+        feature1 = TextFeature(text1, 0.)
+        feature2 = TextFeature(text2, 1)
+        assert feature1.get_text() == text1
+        assert feature1.get_label() == 0
+        assert feature1.has_label()
+        assert feature2.get_text() == text2
+        assert feature2.get_label() == 1
+        assert feature2.has_label()
+        assert feature1.keys() == ['text', 'label']
+
+    def test_text_feature_without_label(self):
+        feature = TextFeature(text1)
+        assert feature.get_text() == text1
+        assert feature.get_label() == -1
+        assert not feature.has_label()
+        assert feature.keys() == ['text']
+
+    def test_local_textset(self):
+        local_set = LocalTextSet(texts, labels)
+
+    def test_distributed_textset(self):
+        texts_rdd = self.sc.parallelize(texts)
+        labels_rdd = self.sc.parallelize(labels)
+        distributed_set = DistributedTextSet(texts_rdd, labels_rdd)
+
+
+if __name__ == "__main__":
+    pytest.main([__file__])
