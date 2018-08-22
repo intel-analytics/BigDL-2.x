@@ -7,7 +7,7 @@ A CNN `TextClassifier` model can achieve around 85% accuracy after 20 epochs of 
 LSTM and GRU models are a little bit difficult to train, and more epochs are needed to achieve compatible results.
 
 
-## Download Analytics Zoo:
+## Download Analytics Zoo
 You can download Analytics Zoo prebuilt release and nightly build package from [here](https://analytics-zoo.github.io/master/#release-download/) and extract it.
 
 
@@ -50,6 +50,7 @@ spark-submit \
     ${ANALYTICS_ZOO_JAR} \
     --baseDir ${BASE_DIR}
 ```
+See [here](#options) for more configurable options for this example.
 
 
 ## Options

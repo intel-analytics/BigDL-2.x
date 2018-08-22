@@ -9,7 +9,7 @@ LSTM and GRU models are a little bit difficult to train, and more epochs are nee
 __Remark__: Due to some permission issue, this example cannot be run on Windows platform.
 
 
-## Install or download Analytics Zoo:
+## Install or download Analytics Zoo
 Follow the instructions [here](https://analytics-zoo.github.io/master/#PythonUserGuide/install/) to install analytics-zoo via __pip__ or __download the prebuilt package__.
 
 
