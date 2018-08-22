@@ -340,28 +340,15 @@ object EmbeddingMatrixHolderConverter extends DataConverter {
       context: SerializeContext[T],
       attributeBuilder: AttrValue.Builder,
       value: Any,
-      valueType : universe.Type = null)(implicit ev: TensorNumeric[T]): Unit = {
+      valueType: universe.Type = null)(implicit ev: TensorNumeric[T]): Unit = {
     val matrixHolder = value.asInstanceOf[WordEmbedding.EmbeddingMatrixHolder[T]]
-
-    val idValue = AttrValue.newBuilder()
+    val idAttr = AttrValue.newBuilder()
       .setDataType(DataType.STRING)
       .setStringValue(matrixHolder.getId).build()
-
-    val tensor = matrixHolder.weight
-    TensorConverter.setAttributeValue(context,
-      attributeBuilder.clone(), tensor, ModuleSerializer.tensorType)
-    val map = context.storages
-    val tensorBuilder = BigDLTensor.newBuilder(map(System.
-      identityHashCode(tensor)).asInstanceOf[BigDLTensor])
-    tensorBuilder.setStorage(map(System.
-      identityHashCode(tensor.storage.array())).asInstanceOf[TensorStorage])
-    val weightValue = AttrValue.newBuilder()
-      .setDataType(DataType.TENSOR)
-      .setTensorValue(tensorBuilder.build)
-      .build()
-
+    val weightAttr = AttrValue.newBuilder
+    TensorConverter.setAttributeValue(context, weightAttr, matrixHolder.weight)
     val attrList = NameAttrList.newBuilder()
-      .putAttr("id", idValue).putAttr("weight", weightValue)
+      .putAttr("id", idAttr).putAttr("weight", weightAttr.build())
     attributeBuilder.setNameAttrListValue(attrList)
   }
 }
