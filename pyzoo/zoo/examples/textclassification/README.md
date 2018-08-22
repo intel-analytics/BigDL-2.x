@@ -10,11 +10,7 @@ __Remark__: Due to some permission issue, this example cannot be run on Windows 
 
 
 ## Install or download Analytics Zoo:
-You can choose either to install analytics-zoo via __pip__ or __download the prebuilt package__.
-
-- Follow the installation instructions and steps [here](https://analytics-zoo.github.io/master/#PythonUserGuide/install/#install-from-pip) to install from pip. .
-
-- Follow the steps [here](https://analytics-zoo.github.io/master/#PythonUserGuide/install/#install-without-pip) to download the prebuilt package and configure cluster dependencies if necessary.
+Follow the instructions [here](https://analytics-zoo.github.io/master/#PythonUserGuide/install/) to install analytics-zoo via __pip__ or __download the prebuilt package__.
 
 
 ## Data Preparation
