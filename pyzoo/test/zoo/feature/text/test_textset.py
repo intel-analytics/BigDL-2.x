@@ -15,6 +15,7 @@
 #
 
 import pytest
+import os
 from test.zoo.pipeline.utils.test_utils import ZooTestCase
 from zoo.feature.text import *
 
@@ -22,6 +23,8 @@ text1 = "Hello my friend, please annotate my text"
 text2 = "hello world, this is some sentence for my test"
 texts = [text1, text2]
 labels = [0., 1]
+resource_path = os.path.join(os.path.split(__file__)[0], "../../resources")
+news20_path = os.path.join(resource_path, "news20")
 
 
 class TestTextSet(ZooTestCase):
@@ -45,11 +48,23 @@ class TestTextSet(ZooTestCase):
 
     def test_local_textset(self):
         local_set = LocalTextSet(texts, labels)
+        assert local_set.is_local()
+        assert not local_set.is_distributed()
 
     def test_distributed_textset(self):
         texts_rdd = self.sc.parallelize(texts)
         labels_rdd = self.sc.parallelize(labels)
         distributed_set = DistributedTextSet(texts_rdd, labels_rdd)
+        assert distributed_set.is_distributed()
+        assert not distributed_set.is_local()
+
+    def test_read_local(self):
+        local_set = TextSet.read(news20_path)
+        assert local_set.is_local()
+
+    def test_read_distributed(self):
+        distributed_set = TextSet.read(news20_path, self.sc, 4)
+        assert distributed_set.is_distributed()
 
 
 if __name__ == "__main__":

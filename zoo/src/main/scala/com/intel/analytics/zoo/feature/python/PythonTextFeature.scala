@@ -107,4 +107,12 @@ class PythonTextFeature[T: ClassTag](implicit ev: TensorNumeric[T]) extends Pyth
     }
   }
 
+  def textSetIsDistributed(textSet: TextSet): Boolean = {
+    textSet.isDistributed
+  }
+
+  def textSetIsLocal(textSet: TextSet): Boolean = {
+    textSet.isLocal
+  }
+
 }

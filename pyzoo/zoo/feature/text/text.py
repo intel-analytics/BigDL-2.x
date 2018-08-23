@@ -22,6 +22,7 @@ from pyspark import RDD
 class TextFeature(JavaValue):
 
     def __init__(self, text, label=None, bigdl_type="float"):
+        assert isinstance(text, six.string_types), "text of a TextFeature should be a string"
         self.text = text
         self.bigdl_type = bigdl_type
         if label != None:
@@ -50,6 +51,20 @@ class TextSet(JavaValue):
     def __init__(self, jvalue, bigdl_type="float"):
         self.value = jvalue
         self.bigdl_type = bigdl_type
+        if self.is_local():
+            self.text_set = LocalTextSet(jvalue=self.value)
+        else:
+            self.text_set = DistributedTextSet(jvalue=self.value)
+
+    def is_local(self):
+        return callBigDlFunc(self.bigdl_type, "textSetIsLocal", self.value)
+
+    def is_distributed(self):
+        return callBigDlFunc(self.bigdl_type, "textSetIsDistributed", self.value)
+
+    @classmethod
+    def read(cls, path, sc=None, min_partitions=1, bigdl_type="float"):
+        return TextSet(jvalue=callBigDlFunc(bigdl_type, "readTextSet", path, sc, min_partitions))
 
 
 class LocalTextSet(TextSet):
