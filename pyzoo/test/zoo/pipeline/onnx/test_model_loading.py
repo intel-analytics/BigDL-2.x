@@ -48,12 +48,3 @@ class TestModelLoading(OnnxTestCase):
         )
         input_shape_with_batch = (1, 3)
         self.compare_with_pytorch(pytorch_model, input_shape_with_batch)
-
-    def test_onnx_gemm(self):
-        node_def = helper.make_node(
-            "Gemm", ["A", "B", "C"], ["Y"],
-            transA=0,
-            transB=0,
-            broadcast=1,
-            alpha=1.0,
-            beta=1.0)
