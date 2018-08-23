@@ -39,6 +39,7 @@ class OnnxTestCase(ZooTestCase):
         return onnx_path
 
     def compare_with_pytorch(self, pytorch_model, input_shape_with_batch):
+        torch.manual_seed(1234)
         onnx_path = self.dump_pytorch_to_onnx(pytorch_model, input_shape_with_batch)
         onnx_model = onnx.load(onnx_path)
         # TODO: we only consider single input and output for now.

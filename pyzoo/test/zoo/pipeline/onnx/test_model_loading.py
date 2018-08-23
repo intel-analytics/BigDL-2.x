@@ -17,9 +17,11 @@
 
 from test.zoo.pipeline.utils.test_utils_onnx import OnnxTestCase
 from zoo.pipeline.api.keras.layers import *
-
+import numpy as np
 np.random.seed(1337)  # for reproducibility
 import torch
+from onnx import helper
+
 
 
 class TestModelLoading(OnnxTestCase):
@@ -38,3 +40,20 @@ class TestModelLoading(OnnxTestCase):
         )
         input_shape_with_batch = (1, 3, 224, 224)
         self.compare_with_pytorch(pytorch_model, input_shape_with_batch)
+
+    def test_onnx_gemm(self):
+        # TODO: Linear(bias = Flase) is mapped to Transpose + MatMul, not GEMM
+        pytorch_model = torch.nn.Sequential(
+            torch.nn.Linear(in_features=3, out_features=4, bias=True)
+        )
+        input_shape_with_batch = (1, 3)
+        self.compare_with_pytorch(pytorch_model, input_shape_with_batch)
+
+    def test_onnx_gemm(self):
+        node_def = helper.make_node(
+            "Gemm", ["A", "B", "C"], ["Y"],
+            transA=0,
+            transB=0,
+            broadcast=1,
+            alpha=1.0,
+            beta=1.0)
