@@ -19,14 +19,14 @@ package com.intel.analytics.zoo.feature.text
 class SequenceShaper(
     len: Int,
     truncMode: String = "pre",
-    key: String = TextFeature.indexedTokens) extends TextTransformer {
+    inputKey: String = TextFeature.indexedTokens) extends TextTransformer {
 
   require(truncMode == "pre" || truncMode == "post", "truncMode can only be pre or 'post")
 
   override def transform(feature: TextFeature): TextFeature = {
     // TODO: support key=tokens?
-    require(key == TextFeature.indexedTokens)
-    val tokens = feature.apply[Array[Int]](key)
+    require(inputKey == TextFeature.indexedTokens)
+    val tokens = feature.apply[Array[Int]](inputKey)
     val paddedTokens = if (tokens.length > len) {
       if (truncMode == "pre") {
         tokens.slice(tokens.length - len, tokens.length)
@@ -36,7 +36,7 @@ class SequenceShaper(
     } else {
         tokens ++ Array.fill[Int](len - tokens.length)(0)
     }
-    feature.update(key, paddedTokens)
+    feature.update(inputKey, paddedTokens)
     feature
   }
 }

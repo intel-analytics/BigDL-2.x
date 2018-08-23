@@ -17,7 +17,7 @@
 package com.intel.analytics.zoo.feature.text
 
 /**
- * Given a wordIndex map, transform tokens and corresponding indices.
+ * Given a wordIndex map, transform tokens to corresponding indices.
  * Those words not in the map will be aborted.
  * Input key: TextFeature.tokens
  * Output key: TextFeature.indexedTokens

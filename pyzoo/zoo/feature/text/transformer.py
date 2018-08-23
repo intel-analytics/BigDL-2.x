@@ -22,38 +22,53 @@ if sys.version >= '3':
     unicode = str
 
 
-class TextPreprocessing(Preprocessing):
+class TextTransformer(Preprocessing):
 
     def __init__(self, bigdl_type="float", *args):
-        super(TextPreprocessing, self).__init__(bigdl_type, *args)
+        super(TextTransformer, self).__init__(bigdl_type, *args)
 
 
-class Tokenizer(TextPreprocessing):
-
-    def __init__(self, bigdl_type="float"):
-        super(Tokenizer, self).__init__(bigdl_type)
-
-
-class Normalizer(TextPreprocessing):
-
-    def __init__(self, bigdl_type="float"):
-        super(Normalizer, self).__init__(bigdl_type)
+class Tokenizer(TextTransformer):
+    """
+    >>> tokenizer = Tokenizer()
+    creating: createTokenizer
+    """
+    def __init__(self, out_key="tokens", bigdl_type="float"):
+        super(Tokenizer, self).__init__(bigdl_type, out_key)
 
 
-class WordIndexer(TextPreprocessing):
+class Normalizer(TextTransformer):
+    """
+    >>> normalizer = Normalizer()
+    creating: createNormalizer
+    """
+    def __init__(self, out_key="tokens", bigdl_type="float"):
+        super(Normalizer, self).__init__(bigdl_type, out_key)
 
+
+class WordIndexer(TextTransformer):
+    """
+    >>> word_indexer = WordIndexer(map={"it": 1, "me": 2})
+    creating: createWordIndexer
+    """
     def __init__(self, map, bigdl_type="float"):
         super(WordIndexer, self).__init__(bigdl_type, map)
 
 
-class SequenceShaper(TextPreprocessing):
+class SequenceShaper(TextTransformer):
+    """
+    >>> sequence_shaper = SequenceShaper(len=6, trunc_mode="post")
+    creating: createSequenceShaper
+    """
+    def __init__(self, len, trunc_mode="pre", input_key="indexedTokens", bigdl_type="float"):
+        super(SequenceShaper, self).__init__(bigdl_type, len, trunc_mode, input_key)
 
-    def __init__(self, len, trunc_mode="pre", key="indexedTokens", bigdl_type="float"):
-        super(SequenceShaper, self).__init__(bigdl_type, len, trunc_mode, key)
 
-
-class TextFeatureToSample(TextPreprocessing):
-
+class TextFeatureToSample(TextTransformer):
+    """
+    >>> to_sample = TextFeatureToSample
+    creating: createTextFeatureToSample
+    """
     def __init__(self, bigdl_type="float"):
         super(TextFeatureToSample, self).__init__(bigdl_type)
 
