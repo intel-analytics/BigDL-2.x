@@ -20,6 +20,7 @@ import java.util.{List => JList, Map => JMap}
 
 import com.intel.analytics.bigdl.python.api.PythonBigDL
 import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric
+import com.intel.analytics.zoo.feature.common.Preprocessing
 import com.intel.analytics.zoo.feature.text._
 import org.apache.spark.api.java.{JavaRDD, JavaSparkContext}
 
@@ -113,6 +114,48 @@ class PythonTextFeature[T: ClassTag](implicit ev: TensorNumeric[T]) extends Pyth
 
   def textSetIsLocal(textSet: TextSet): Boolean = {
     textSet.isLocal
+  }
+
+  def transformTextSet(
+      transformer: Preprocessing[TextFeature, TextFeature],
+      imageSet: TextSet): TextSet = {
+    imageSet.transform(transformer)
+  }
+
+  def localTextSetGetTexts(textSet: LocalTextSet): JList[String] = {
+    textSet.array.map(_.getText).toList.asJava
+  }
+
+  def localTextSetGetLabels(textSet: LocalTextSet): JList[Int] = {
+    textSet.array.map(_.getLabel).toList.asJava
+  }
+
+  def distributedTextSetGetTexts(textSet: DistributedTextSet): JavaRDD[String] = {
+    textSet.rdd.map(_.getText).toJavaRDD()
+  }
+
+  def distributedTextSetGetLabels(textSet: DistributedTextSet): JavaRDD[Int] = {
+    textSet.rdd.map(_.getLabel).toJavaRDD()
+  }
+
+  def createTokenizer(): Tokenizer = {
+    Tokenizer()
+  }
+
+  def createNormalizer(): Normalizer = {
+    Normalizer()
+  }
+
+  def createWordIndexer(map: JMap[String, Int]): WordIndexer = {
+    WordIndexer(map.asScala.toMap)
+  }
+
+  def createSequenceShaper(len: Int, truncMode: String, key: String): SequenceShaper = {
+    SequenceShaper(len, truncMode, key)
+  }
+
+  def createTextFeatureToSample(): TextFeatureToSample[T] = {
+    TextFeatureToSample[T]()
   }
 
 }

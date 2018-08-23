@@ -14,9 +14,14 @@
 # limitations under the License.
 #
 
+import sys
 import six
 from bigdl.util.common import JavaValue, callBigDlFunc
 from pyspark import RDD
+
+if sys.version >= '3':
+    long = int
+    unicode = str
 
 
 class TextFeature(JavaValue):
@@ -62,6 +67,19 @@ class TextSet(JavaValue):
     def is_distributed(self):
         return callBigDlFunc(self.bigdl_type, "textSetIsDistributed", self.value)
 
+    def get_word_index(self):
+        return callBigDlFunc(self.bigdl_type, "textSetGetWordIndex", self.value)
+
+    def get_texts(self):
+        return self.text_set.get_texts()
+
+    def get_labels(self):
+        return self.text_set.get_labels()
+
+    def transform(self, transformer, bigdl_type="float"):
+        self.value = callBigDlFunc(bigdl_type, "transformTextSet", transformer, self.value)
+        return self
+
     @classmethod
     def read(cls, path, sc=None, min_partitions=1, bigdl_type="float"):
         return TextSet(jvalue=callBigDlFunc(bigdl_type, "readTextSet", path, sc, min_partitions))
@@ -84,6 +102,12 @@ class LocalTextSet(TextSet):
                                        texts, labels)
         self.bigdl_type = bigdl_type
 
+    def get_texts(self):
+        return callBigDlFunc(self.bigdl_type, "localTextSetGetTexts", self.value)
+
+    def get_labels(self):
+        return callBigDlFunc(self.bigdl_type, "localTextSetGetLabels", self.value)
+
 
 class DistributedTextSet(TextSet):
 
@@ -95,5 +119,11 @@ class DistributedTextSet(TextSet):
             if labels != None:
                 assert isinstance(labels, RDD), "labels for DistributedText should be RDD of int"
             self.value = callBigDlFunc(bigdl_type, JavaValue.jvm_class_constructor(self),
-                                       texts, labels)
+                                       texts, labels.map(lambda x: int(x)))
         self.bigdl_type = bigdl_type
+
+    def get_texts(self):
+        return callBigDlFunc(self.bigdl_type, "distributedTextSetGetTexts", self.value)
+
+    def get_labels(self):
+        return callBigDlFunc(self.bigdl_type, "distributedTextSetGetLabels", self.value)

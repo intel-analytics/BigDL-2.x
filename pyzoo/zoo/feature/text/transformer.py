@@ -13,3 +13,47 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
+
+import sys
+from zoo.feature.common import Preprocessing
+
+if sys.version >= '3':
+    long = int
+    unicode = str
+
+
+class TextPreprocessing(Preprocessing):
+
+    def __init__(self, bigdl_type="float", *args):
+        super(TextPreprocessing, self).__init__(bigdl_type, *args)
+
+
+class Tokenizer(TextPreprocessing):
+
+    def __init__(self, bigdl_type="float"):
+        super(Tokenizer, self).__init__(bigdl_type)
+
+
+class Normalizer(TextPreprocessing):
+
+    def __init__(self, bigdl_type="float"):
+        super(Normalizer, self).__init__(bigdl_type)
+
+
+class WordIndexer(TextPreprocessing):
+
+    def __init__(self, map, bigdl_type="float"):
+        super(WordIndexer, self).__init__(bigdl_type, map)
+
+
+class SequenceShaper(TextPreprocessing):
+
+    def __init__(self, len, trunc_mode="pre", key="indexedTokens", bigdl_type="float"):
+        super(SequenceShaper, self).__init__(bigdl_type, len, trunc_mode, key)
+
+
+class TextFeatureToSample(TextPreprocessing):
+
+    def __init__(self, bigdl_type="float"):
+        super(TextFeatureToSample, self).__init__(bigdl_type)
+
