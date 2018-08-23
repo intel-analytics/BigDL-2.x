@@ -192,7 +192,7 @@ class TestLayer(ZooTestCase):
         a = np.random.random((2, 2, 3, 4))
         i1 = ZLayer.Input(shape=(2, 3, 4))
         s = ZLayer.Reshape((-1, 2, 12))(i1)
-        m = ZModel.Model(i1, s)
+        m = ZModel(i1, s)
         # predict should not generate exception
         y = m.predict(a, distributed=False)
 
