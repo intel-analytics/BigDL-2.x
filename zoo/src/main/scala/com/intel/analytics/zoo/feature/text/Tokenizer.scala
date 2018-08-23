@@ -19,11 +19,11 @@ package com.intel.analytics.zoo.feature.text
 import org.apache.spark.ml.Transformer
 
 /**
- * Transform text to tokens.
+ * Transform text to array of tokens.
  * Input key: TextFeature.text
- * Output key: TextFeature.tokens
+ * Output key: Can be specified by outKey. Default is TextFeature.tokens.
  */
-class Tokenizer extends SparkNLPTransformer {
+class Tokenizer(val outKey: String = TextFeature.tokens) extends SparkNLPTransformer {
 
   override def labor: Transformer = {
     new com.johnsnowlabs.nlp.annotator.Tokenizer()
@@ -33,7 +33,7 @@ class Tokenizer extends SparkNLPTransformer {
 }
 
 object Tokenizer {
-  def apply(): Tokenizer = {
-    new Tokenizer()
+  def apply(outKey: String): Tokenizer = {
+    new Tokenizer(outKey)
   }
 }
