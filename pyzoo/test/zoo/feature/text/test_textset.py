@@ -50,6 +50,8 @@ class TestTextSet(ZooTestCase):
         local_set = LocalTextSet(texts, labels)
         assert local_set.is_local()
         assert not local_set.is_distributed()
+        assert local_set.get_texts() == texts
+        assert local_set.get_labels() == labels
 
     def test_distributed_textset(self):
         texts_rdd = self.sc.parallelize(texts)
@@ -57,14 +59,18 @@ class TestTextSet(ZooTestCase):
         distributed_set = DistributedTextSet(texts_rdd, labels_rdd)
         assert distributed_set.is_distributed()
         assert not distributed_set.is_local()
+        assert distributed_set.get_texts().collect() == texts
+        assert distributed_set.get_labels().collect() == labels
 
     def test_read_local(self):
         local_set = TextSet.read(news20_path)
         assert local_set.is_local()
+        assert not local_set.get_word_index()  # should be None
 
     def test_read_distributed(self):
         distributed_set = TextSet.read(news20_path, self.sc, 4)
         assert distributed_set.is_distributed()
+        assert not distributed_set.get_word_index()
 
 
 if __name__ == "__main__":

@@ -20,6 +20,14 @@ import com.johnsnowlabs.nlp.AnnotatorModel
 import com.johnsnowlabs.nlp.base.{DocumentAssembler, LightPipeline}
 import org.apache.spark.ml.Transformer
 
+/**
+ * Pipelined transformer that goes through several SparkNLP stages with
+ * LightPipeline behind.
+ * Input key: TextFeature.text
+ * Output key: Specified by the last transformer.
+ *
+ * @param stages Array of SparkNLPTransformer.
+ */
 class PipelinedSparkNLPTransformer(val stages: Array[Transformer])
   extends TextTransformer {
 
@@ -32,7 +40,7 @@ class PipelinedSparkNLPTransformer(val stages: Array[Transformer])
       feature.apply[String](TextFeature.text))(
       stages.last.asInstanceOf[AnnotatorModel[_]].getOutputCol).toArray
     // TODO: add key support
-    feature.update(TextFeature.tokens, tokens)
+    feature(TextFeature.tokens) = tokens
     feature
   }
 }

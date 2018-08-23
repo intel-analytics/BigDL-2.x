@@ -18,6 +18,9 @@ package com.intel.analytics.zoo.feature.text
 
 import org.apache.spark.ml.Transformer
 
+/**
+ * Abstract class for Transforms that leverage SparkNLP.
+ */
 abstract class SparkNLPTransformer extends TextTransformer {
 
   override def transform(feature: TextFeature): TextFeature = {

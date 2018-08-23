@@ -22,15 +22,15 @@ package com.intel.analytics.zoo.feature.text
  * Input key: TextFeature.tokens
  * Output key: TextFeature.indexedTokens
  *
- * @param wordIndex Map of each word (String) and its index (integer).
+ * @param map Map of each word (String) and its index (integer).
  */
-class WordIndexer(wordIndex: Map[String, Int]) extends TextTransformer {
+class WordIndexer(map: Map[String, Int]) extends TextTransformer {
 
   override def transform(feature: TextFeature): TextFeature = {
     val tokens = feature.apply[Array[String]](TextFeature.tokens)
     val indices = tokens.flatMap(word => {
-      if (wordIndex.contains(word)) {
-        Some(wordIndex(word))
+      if (map.contains(word)) {
+        Some(map(word))
       }
       else {
         None
