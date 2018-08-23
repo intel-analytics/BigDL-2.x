@@ -30,7 +30,7 @@ class TextFeature(JavaValue):
         assert isinstance(text, six.string_types), "text of a TextFeature should be a string"
         self.text = text
         self.bigdl_type = bigdl_type
-        if label != None:
+        if label is not None:
             self.label = int(label)
             self.value = callBigDlFunc(bigdl_type, JavaValue.jvm_class_constructor(self),
                                        text, self.label)
@@ -94,7 +94,7 @@ class LocalTextSet(TextSet):
             assert texts, "texts for LocalText can't be None"
             assert all(isinstance(text, six.string_types) for text in texts),\
                 "texts should be a list of string"
-            if labels != None:
+            if labels is not None:
                 labels = map(lambda label: int(label), labels)
                 assert all(isinstance(label, int) for label in labels),\
                     "labels should be a list of int"
@@ -116,7 +116,7 @@ class DistributedTextSet(TextSet):
             self.value = jvalue
         else:
             assert isinstance(texts, RDD), "texts for DistributedText should be RDD of string"
-            if labels != None:
+            if labels is not None:
                 assert isinstance(labels, RDD), "labels for DistributedText should be RDD of int"
             self.value = callBigDlFunc(bigdl_type, JavaValue.jvm_class_constructor(self),
                                        texts, labels.map(lambda x: int(x)))

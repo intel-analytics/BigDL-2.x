@@ -150,8 +150,20 @@ class PythonTextFeature[T: ClassTag](implicit ev: TensorNumeric[T]) extends Pyth
     WordIndexer(map.asScala.toMap)
   }
 
-  def createSequenceShaper(len: Int, truncMode: String, inputKey: String): SequenceShaper = {
-    SequenceShaper(len, truncMode, inputKey)
+  def createSequenceShaper(
+      len: Int,
+      mode: String,
+      inputKey: String,
+      padElement: Int): SequenceShaper = {
+    SequenceShaper(len, mode, inputKey, padElement)
+  }
+
+  def createSequenceShaper(
+      len: Int,
+      mode: String,
+      inputKey: String,
+      padElement: String): SequenceShaper = {
+    SequenceShaper(len, mode, inputKey, padElement)
   }
 
   def createTextFeatureToSample(): TextFeatureToSample[T] = {

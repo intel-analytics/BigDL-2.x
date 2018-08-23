@@ -74,7 +74,7 @@ abstract class TextSet {
    * Convert to LocalTextSet.
    */
   def toLocal: LocalTextSet = {
-    require(isLocal, "Ought to be a DistributedTextSet, can't be converted a LocalText")
+    require(isLocal, "Should be a DistributedTextSet, can't be converted a LocalText")
     this.asInstanceOf[LocalTextSet]
   }
 
@@ -82,7 +82,7 @@ abstract class TextSet {
    * Convert to a DistributedTextSet.
    */
   def toDistributed: DistributedTextSet = {
-    require(isDistributed, "Ought to be a LocalTextSet, can't be converted to a DistributedTextSet")
+    require(isDistributed, "Should be a LocalTextSet, can't be converted to a DistributedTextSet")
     this.asInstanceOf[DistributedTextSet]
   }
 

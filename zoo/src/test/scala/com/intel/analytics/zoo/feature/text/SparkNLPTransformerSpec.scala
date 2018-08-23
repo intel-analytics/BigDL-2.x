@@ -24,8 +24,8 @@ class SparkNLPTransformerSpec extends FlatSpec with Matchers {
 
   "Tokenizer" should "work properly" in {
     val tokenizer = Tokenizer()
-    val nlpTransformer = PipelinedSparkNLPTransformer(Array(tokenizer))
-    val transformed = nlpTransformer.transform(feature)
+    val transformer = PipelinedSparkNLPTransformer(Array(tokenizer))
+    val transformed = transformer.transform(feature)
     require(transformed.keys().contains("tokens"))
     require(transformed[Array[String]](TextFeature.tokens).sameElements(Array("Hello", "my",
     "friend", ",", "please", "annotate", "my", "text")))
@@ -34,8 +34,8 @@ class SparkNLPTransformerSpec extends FlatSpec with Matchers {
   "Tokenizer and Normalizer" should "work properly" in {
     val tokenizer = Tokenizer()
     val normalizer = Normalizer()
-    val nlpTransformer = PipelinedSparkNLPTransformer(Array(tokenizer, normalizer))
-    val transformed = nlpTransformer.transform(feature)
+    val transformer = PipelinedSparkNLPTransformer(Array(tokenizer, normalizer))
+    val transformed = transformer.transform(feature)
     require(transformed.keys().contains("tokens"))
     require(transformed[Array[String]](TextFeature.tokens).sameElements(Array("hello", "my",
       "friend", "please", "annotate", "my", "text")))
