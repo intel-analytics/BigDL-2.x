@@ -16,7 +16,7 @@
 
 package com.intel.analytics.zoo.feature.text
 
-import com.intel.analytics.zoo.feature.common.Preprocessing
+import com.intel.analytics.zoo.feature.common.{ChainedPreprocessing, Preprocessing}
 
 /**
  * Super class of Transformers that transform TextFeature.
@@ -28,4 +28,12 @@ abstract class TextTransformer extends Preprocessing[TextFeature, TextFeature] {
   override def apply(prev: Iterator[TextFeature]): Iterator[TextFeature] = {
     prev.map(transform)
   }
+
+  // scalastyle:off methodName
+  // scalastyle:off noSpaceBeforeLeftBracket
+  def -> (other: TextTransformer): Preprocessing[TextFeature, TextFeature] = {
+    new ChainedPreprocessing(this, other)
+  }
+  // scalastyle:on noSpaceBeforeLeftBracket
+  // scalastyle:on methodName
 }
