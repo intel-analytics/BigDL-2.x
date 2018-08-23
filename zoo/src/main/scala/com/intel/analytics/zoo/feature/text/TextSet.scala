@@ -49,6 +49,9 @@ abstract class TextSet {
   // The idea is similar to _prev_jrdd and func in pyspark PipelinedRDD implementation.
   val stages: Array[Transformer] = null
 
+  /**
+   * Transform from one TextSet to another.
+   */
   def transform(transformer: Preprocessing[TextFeature, TextFeature]): TextSet
 
   // scalastyle:off methodName
@@ -57,13 +60,31 @@ abstract class TextSet {
     this.transform(transformer)
   }
 
+  /**
+   * Whether it is a LocalTextSet.
+   */
   def isLocal: Boolean
 
+  /**
+   * Whether it is a DistributedTextSet.
+   */
   def isDistributed: Boolean
 
-  def toLocal: LocalTextSet = this.asInstanceOf[LocalTextSet]
+  /**
+   * Convert to LocalTextSet.
+   */
+  def toLocal: LocalTextSet = {
+    require(isLocal, "Ought to be a DistributedTextSet, can't be converted a LocalText")
+    this.asInstanceOf[LocalTextSet]
+  }
 
-  def toDistributed: DistributedTextSet = this.asInstanceOf[DistributedTextSet]
+  /**
+   * Convert to a DistributedTextSet.
+   */
+  def toDistributed: DistributedTextSet = {
+    require(isDistributed, "Ought to be a LocalTextSet, can't be converted to a DistributedTextSet")
+    this.asInstanceOf[DistributedTextSet]
+  }
 
   /**
    * Convert TextSet to DataSet of TextFeature.
@@ -132,14 +153,14 @@ object TextSet {
   val logger: Logger = Logger.getLogger(getClass)
 
   /**
-   * Create a LocalTextSet from TextFeature array.
+   * Create a LocalTextSet from array of TextFeature.
    */
   def array(data: Array[TextFeature]): LocalTextSet = {
     new LocalTextSet(data)
   }
 
   /**
-   * Create a DistributedTextSet from TextFeature RDD.
+   * Create a DistributedTextSet from RDD of TextFeature.
    */
   def rdd(data: RDD[TextFeature]): DistributedTextSet = {
     new DistributedTextSet(data)
@@ -155,15 +176,15 @@ object TextSet {
    *                ├── dir1 - text1, text2, ...
    *                ├── dir2 - text1, text2, ...
    *                └── dir3 - text1, text2, ...
-   *             Under the target path, there ought to be N subdirectories. Each subdirectory
-   *             represents a category and contains all available texts of such category.
-   *             Each category will be a given a label according to its position in the
-   *             ascending order sort among all subdirectories.
-   *             All texts will be given a label according to the subdirectory it is located.
+   *             Under the target path, there ought to be N subdirectories (dir1 to dirN). Each
+   *             subdirectory represents a category and contains all texts that belong to such
+   *             category. Each category will be a given a label according to its position in the
+   *             ascending order sorted among all subdirectories.
+   *             All texts will be given a label according to the subdirectory where it is located.
    *             Labels start from 0.
-   * @param sc An instance of SparkContext if any.
+   * @param sc An instance of SparkContext if any. Default is null.
    * @param minPartitions A suggestion value of the minimal partition number.
-   *                      Integer. Default is 1.
+   *                      Integer. Default is 1. Only need to specify this when sc is not null.
    * @return TextSet.
    */
   def read(path: String, sc: SparkContext = null, minPartitions: Int = 1): TextSet = {
