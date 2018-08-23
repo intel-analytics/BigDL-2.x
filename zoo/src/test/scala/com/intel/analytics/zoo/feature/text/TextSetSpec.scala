@@ -14,13 +14,12 @@
  * limitations under the License.
  */
 
-package com.intel.analytics.zoo.feature
+package com.intel.analytics.zoo.feature.text
 
+import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric.NumericFloat
 import com.intel.analytics.zoo.common.NNContext
-import com.intel.analytics.zoo.feature.text._
 import com.intel.analytics.zoo.pipeline.api.keras.layers.{Convolution1D, Dense, Embedding, Flatten}
 import com.intel.analytics.zoo.pipeline.api.keras.models.Sequential
-import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric.NumericFloat
 import org.apache.spark.SparkConf
 import org.scalatest.{FlatSpec, Matchers}
 
@@ -68,16 +67,15 @@ class TextSetSpec extends FlatSpec with Matchers {
     // After tokenization
     val t1 = distributed.tokenize()
     require(t1.preTextSet == distributed)
-    require(t1.stages.length == 1 &&
-      t1.stages.head.isInstanceOf[com.johnsnowlabs.nlp.annotators.Tokenizer])
+    require(t1.stages.length == 1 && t1.stages.head.isInstanceOf[Tokenizer])
     require(t1.toDistributed.rdd == null)
 
     // After normalization
     val t2 = t1.normalize()
     require(t2.preTextSet == distributed)
     require(t2.stages.length == 2)
-    require(t2.stages.head.isInstanceOf[com.johnsnowlabs.nlp.annotators.Tokenizer])
-    require(t2.stages.last.isInstanceOf[com.johnsnowlabs.nlp.annotators.NormalizerModel])
+    require(t2.stages.head.isInstanceOf[Tokenizer])
+    require(t2.stages.last.isInstanceOf[Normalizer])
     require(t2.toDistributed.rdd == null)
 
     // After wordToIndex

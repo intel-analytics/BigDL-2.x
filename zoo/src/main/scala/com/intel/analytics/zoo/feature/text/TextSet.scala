@@ -27,7 +27,6 @@ import org.apache.hadoop.conf.Configuration
 import org.apache.hadoop.fs.{FileSystem, Path}
 import org.apache.log4j.Logger
 import org.apache.spark.SparkContext
-import org.apache.spark.ml.Transformer
 import org.apache.spark.rdd.RDD
 
 import scala.collection.mutable.ArrayBuffer
@@ -41,13 +40,14 @@ abstract class TextSet {
 
   // The very first TextSet instance that haven't been but should be transformed by
   // a PipelinedSparkNLPTransformer specified by stages.
+  // If it is null, then it means the current TextSet has already been transformed.
   val preTextSet: TextSet = null
 
   // The stages that can construct a PipelinedSparkNLPTransformer, which can transform preTextSet
   // to the target TextSet in the current status.
   // With preTextSet and stages, we can get the current TextSet.
   // The idea is similar to _prev_jrdd and func in pyspark PipelinedRDD implementation.
-  val stages: Array[Transformer] = null
+  val stages: Array[SparkNLPTransformer] = null
 
   /**
    * Transform from one TextSet to another.
@@ -134,15 +134,15 @@ abstract class TextSet {
 
   // Return preTextSet and stages for the new TextSet after applying a SparkNLPTransformer.
   // In this case, the corresponding RDD/Array should be null as PipelinedSparkNLPTransformer
-  // has been applied yet.
+  // hasn't been applied yet.
   protected def processSparkNLPTransformer(
-    transformer: SparkNLPTransformer): (TextSet, Array[Transformer]) = {
+    transformer: SparkNLPTransformer): (TextSet, Array[SparkNLPTransformer]) = {
     if (preTextSet == null) {
-      (this, Array(transformer.labor))
+      (this, Array(transformer))
     }
     else {
       require(stages != null)
-      (preTextSet, stages ++ Array(transformer.labor))
+      (preTextSet, stages ++ Array(transformer))
     }
   }
 }
@@ -251,7 +251,7 @@ class LocalTextSet(var array: Array[TextFeature]) extends TextSet {
     }
     new LocalTextSet(curArr) {
       override val preTextSet: TextSet = preT
-      override val stages: Array[Transformer] = pipelineStages
+      override val stages: Array[SparkNLPTransformer] = pipelineStages
     }.setWordIndex(getWordIndex)
   }
 
@@ -302,7 +302,7 @@ class DistributedTextSet(var rdd: RDD[TextFeature]) extends TextSet {
     }
     new DistributedTextSet(curRDD) {
       override val preTextSet: TextSet = preT
-      override val stages: Array[Transformer] = pipelineStages
+      override val stages: Array[SparkNLPTransformer] = pipelineStages
     }.setWordIndex(getWordIndex)
   }
 

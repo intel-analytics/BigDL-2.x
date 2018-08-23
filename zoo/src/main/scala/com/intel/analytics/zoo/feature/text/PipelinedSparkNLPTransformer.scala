@@ -16,7 +16,6 @@
 
 package com.intel.analytics.zoo.feature.text
 
-import com.johnsnowlabs.nlp.AnnotatorModel
 import com.johnsnowlabs.nlp.base.{DocumentAssembler, LightPipeline}
 import org.apache.spark.ml.Transformer
 
@@ -28,25 +27,36 @@ import org.apache.spark.ml.Transformer
  *
  * @param stages Array of SparkNLPTransformer.
  */
-class PipelinedSparkNLPTransformer(val stages: Array[Transformer])
+class PipelinedSparkNLPTransformer(val stages: Array[SparkNLPTransformer])
   extends TextTransformer {
 
+  require(stages != null, "stages can't be null")
+
   override def transform(feature: TextFeature): TextFeature = {
-    val documentAssembler = new DocumentAssembler().
-      setInputCol(TextFeature.text).
-      setOutputCol("document")
-    val lightPipeline = new LightPipeline(stages = Array(documentAssembler) ++ stages)
-    val tokens = lightPipeline.annotate(
-      feature.apply[String](TextFeature.text))(
-      stages.last.asInstanceOf[AnnotatorModel[_]].getOutputCol).toArray
-    // TODO: add key support
-    feature(TextFeature.tokens) = tokens
+    // DocumentAssembler is the entry point to a SparkNLP pipeline. It creates the first
+    // annotation of type Document which may be used by annotators down the road.
+    val documentAssembler = new DocumentAssembler()
+      .setInputCol(TextFeature.text)
+      .setOutputCol("document")
+    val NLPstages = stages.map(_.labor)
+    NLPstages(0).setInputCols("document")
+    var i = 1
+    while (i < NLPstages.length) {
+      NLPstages(i).setInputCols(NLPstages(i-1).getOutputCol)
+      i += 1
+    }
+    val outputCol = NLPstages.last.getOutputCol
+    val outKey = stages.last.outKey
+    val lightPipeline = new LightPipeline(stages =
+      Array(documentAssembler) ++ NLPstages.map(_.asInstanceOf[Transformer]))
+    val res = lightPipeline.annotate(feature[String](TextFeature.text))(outputCol).toArray
+    feature(outKey) = res
     feature
   }
 }
 
 object PipelinedSparkNLPTransformer {
-  def apply(stages: Array[Transformer]): PipelinedSparkNLPTransformer = {
+  def apply(stages: Array[SparkNLPTransformer]): PipelinedSparkNLPTransformer = {
     new PipelinedSparkNLPTransformer(stages)
   }
 }

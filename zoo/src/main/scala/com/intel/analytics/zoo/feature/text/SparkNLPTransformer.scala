@@ -16,17 +16,17 @@
 
 package com.intel.analytics.zoo.feature.text
 
-import org.apache.spark.ml.Transformer
+import com.johnsnowlabs.nlp.AnnotatorModel
 
 /**
  * Abstract class for Transforms that leverage SparkNLP.
  */
-abstract class SparkNLPTransformer extends TextTransformer {
+abstract class SparkNLPTransformer(val outKey: String) extends TextTransformer {
 
   override def transform(feature: TextFeature): TextFeature = {
     throw new Exception("shouldn't call transform on a single SparkNLPTransformer explicitly. " +
       "Instead, you should use PipelinedSparkNLPTransformer")
   }
 
-  def labor: Transformer
+  def labor: AnnotatorModel[_]
 }
