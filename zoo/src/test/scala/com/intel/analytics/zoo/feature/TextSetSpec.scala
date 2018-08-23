@@ -27,8 +27,12 @@ import org.scalatest.{FlatSpec, Matchers}
 import scala.collection.immutable.HashSet
 
 class TextSetSpec extends FlatSpec with Matchers {
-  val text1 = TextFeature("Hello my friend, please annotate my text", label = 0)
-  val text2 = TextFeature("hello world, this is some sentence for my test", label = 1)
+  val text1 = "Hello my friend, please annotate my text"
+  val text2 = "hello world, this is some sentence for my test"
+  val text3 = "dummy text for test"
+  val feature1 = TextFeature(text1, label = 0)
+  val feature2 = TextFeature(text2, label = 1)
+  val feature3 = TextFeature(text3)
   val path: String = getClass.getClassLoader.getResource("news20").getPath
 
   def buildModel(): Sequential[Float] = {
@@ -40,17 +44,23 @@ class TextSetSpec extends FlatSpec with Matchers {
     model
   }
 
-  "TextFeature properties" should "work properly" in {
-    require(text1.getText == "Hello my friend, please annotate my text")
-    require(text1.hasLabel)
-    require(text1.getLabel == 0)
-    require(text1.keys() == HashSet("label", "text"))
+  "TextFeature with label" should "work properly" in {
+    require(feature1.getText == "Hello my friend, please annotate my text")
+    require(feature1.hasLabel)
+    require(feature1.getLabel == 0)
+    require(feature1.keys() == HashSet("label", "text"))
+  }
+
+  "TextFeature without label" should "work properly" in {
+    require(!feature3.hasLabel)
+    require(feature3.getLabel == -1)
+    require(feature3.keys() == HashSet("text"))
   }
 
   "DistributedTextSet Transformation" should "work properly" in {
     val conf = new SparkConf().setAppName("Test DistributedTextSet").setMaster("local[*]")
     val sc = NNContext.initNNContext(conf)
-    val distributed = TextSet.rdd(sc.parallelize(Seq(text1, text2)))
+    val distributed = TextSet.rdd(sc.parallelize(Seq(feature1, feature2)))
     require(distributed.isDistributed)
     require(distributed.preTextSet == null)
     require(distributed.stages == null)
@@ -93,7 +103,7 @@ class TextSetSpec extends FlatSpec with Matchers {
   }
 
   "LocalTextSet Transformation" should "work properly" in {
-    val local = TextSet.array(Array(text1, text2))
+    val local = TextSet.array(Array(feature1, feature2))
     require(local.isLocal)
     require(local.preTextSet == null)
     require(local.stages == null)
