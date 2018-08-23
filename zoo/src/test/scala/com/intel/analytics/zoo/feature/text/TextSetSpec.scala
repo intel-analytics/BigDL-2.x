@@ -20,12 +20,12 @@ import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric.NumericF
 import com.intel.analytics.zoo.common.NNContext
 import com.intel.analytics.zoo.pipeline.api.keras.layers.{Convolution1D, Dense, Embedding, Flatten}
 import com.intel.analytics.zoo.pipeline.api.keras.models.Sequential
-import org.apache.spark.SparkConf
-import org.scalatest.{FlatSpec, Matchers}
+import org.apache.spark.{SparkConf, SparkContext}
+import org.scalatest.{BeforeAndAfter, FlatSpec, Matchers}
 
 import scala.collection.immutable.HashSet
 
-class TextSetSpec extends FlatSpec with Matchers {
+class TextSetSpec extends FlatSpec with Matchers with BeforeAndAfter {
   val text1 = "Hello my friend, please annotate my text"
   val text2 = "hello world, this is some sentence for my test"
   val text3 = "dummy text for test"
@@ -33,6 +33,18 @@ class TextSetSpec extends FlatSpec with Matchers {
   val feature2 = TextFeature(text2, label = 1)
   val feature3 = TextFeature(text3)
   val path: String = getClass.getClassLoader.getResource("news20").getPath
+  var sc : SparkContext = _
+
+  before {
+    val conf = new SparkConf().setAppName("Test TextFeature and TextSet").setMaster("local[4]")
+    sc = NNContext.initNNContext(conf)
+  }
+
+  after {
+    if (sc != null) {
+      sc.stop()
+    }
+  }
 
   def buildModel(): Sequential[Float] = {
     val model = Sequential()
@@ -57,8 +69,8 @@ class TextSetSpec extends FlatSpec with Matchers {
   }
 
   "DistributedTextSet Transformation" should "work properly" in {
-    val conf = new SparkConf().setAppName("Test DistributedTextSet").setMaster("local[*]")
-    val sc = NNContext.initNNContext(conf)
+//    val conf = new SparkConf().setAppName("Test DistributedTextSet").setMaster("local[*]")
+//    val sc = NNContext.initNNContext(conf)
     val distributed = TextSet.rdd(sc.parallelize(Seq(feature1, feature2)))
     require(distributed.isDistributed)
     require(distributed.preTextSet == null)
@@ -125,8 +137,8 @@ class TextSetSpec extends FlatSpec with Matchers {
   }
 
   "TextSet read with sc, fit, predict and evaluate" should "work properly" in {
-    val conf = new SparkConf().setAppName("Test DistributedTextSet").setMaster("local[4]")
-    val sc = NNContext.initNNContext(conf)
+//    val conf = new SparkConf().setAppName("Test DistributedTextSet").setMaster("local[4]")
+//    val sc = NNContext.initNNContext(conf)
     val textSet = TextSet.read(path, sc)
     require(textSet.isDistributed)
     require(textSet.toDistributed.rdd.count() == 5)
@@ -144,8 +156,8 @@ class TextSetSpec extends FlatSpec with Matchers {
 
   "TextSet read without sc" should "work properly" in {
     // initNNContext is used for init BigDL Engine so that coreNum can be obtained during fit.
-    val conf = new SparkConf().setAppName("Test LocalTextSet").setMaster("local[4]")
-    val sc = NNContext.initNNContext(conf)
+//    val conf = new SparkConf().setAppName("Test LocalTextSet").setMaster("local[4]")
+//    val sc = NNContext.initNNContext(conf)
     val textSet = TextSet.read(path)
     require(textSet.isLocal)
     require(textSet.toLocal.array.length == 5)
