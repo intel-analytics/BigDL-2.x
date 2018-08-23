@@ -24,7 +24,7 @@ package com.intel.analytics.zoo.feature.text
  *
  * @param map Map of each word (String) and its index (integer).
  */
-class WordIndexer(map: Map[String, Int]) extends TextTransformer {
+class WordIndexer(val map: Map[String, Int]) extends TextTransformer {
 
   override def transform(feature: TextFeature): TextFeature = {
     val tokens = feature.apply[Array[String]](TextFeature.tokens)

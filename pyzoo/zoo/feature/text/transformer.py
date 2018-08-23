@@ -15,6 +15,7 @@
 #
 
 import sys
+import six
 from zoo.feature.common import Preprocessing
 
 if sys.version >= '3':
@@ -59,9 +60,16 @@ class SequenceShaper(TextTransformer):
     """
     >>> sequence_shaper = SequenceShaper(len=6, trunc_mode="post")
     creating: createSequenceShaper
+
+    >>> sequence_shaper2 = SequenceShaper(len=6, trunc_mode="pre", input_key="tokens", pad_element="dummy")
+    creating: createSequenceShaper
     """
-    def __init__(self, len, trunc_mode="pre", input_key="indexedTokens", bigdl_type="float"):
-        super(SequenceShaper, self).__init__(bigdl_type, len, trunc_mode, input_key)
+    def __init__(self, len, trunc_mode="pre", input_key="indexedTokens",
+                 pad_element=0, bigdl_type="float"):
+        assert isinstance(pad_element, int) or isinstance(pad_element, six.string_types), \
+            "pad_element should be int or string"
+        super(SequenceShaper, self).__init__(bigdl_type, len, trunc_mode,
+                                             input_key, pad_element)
 
 
 class TextFeatureToSample(TextTransformer):
@@ -71,4 +79,3 @@ class TextFeatureToSample(TextTransformer):
     """
     def __init__(self, bigdl_type="float"):
         super(TextFeatureToSample, self).__init__(bigdl_type)
-
