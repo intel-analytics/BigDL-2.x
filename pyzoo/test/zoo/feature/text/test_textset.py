@@ -85,6 +85,11 @@ class TestTextSet:
         assert word_index.has_key("hello")
         assert not word_index.has_key("Hello")
         assert len(word_index) == 14
+        samples = transformed.get_samples().collect()
+        assert len(samples) == 3
+        for sample in samples:
+            assert sample.feature.shape[0] == 5
+        predicts = transformed.get_predicts()
 
     def test_read_local(self):
         local_set = TextSet.read(self.path)
