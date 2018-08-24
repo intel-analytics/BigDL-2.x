@@ -76,6 +76,12 @@ class TextSet(JavaValue):
     def get_labels(self):
         return self.text_set.get_labels()
 
+    def get_predicts(self):
+        return self.text_set.get_predicts()
+
+    def get_samples(self):
+        return self.text_set.get_samples()
+
     def random_split(self, weights):
         jvalues = callBigDlFunc(self.bigdl_type, "textSetRandomSplit", self.value, weights)
         return [TextSet(jvalue=jvalue) for jvalue in list(jvalues)]
@@ -135,6 +141,15 @@ class LocalTextSet(TextSet):
     def get_labels(self):
         return callBigDlFunc(self.bigdl_type, "localTextSetGetLabels", self.value)
 
+    def get_predicts(self):
+        predicts = callBigDlFunc(self.bigdl_type, "localTextSetGetPredicts", self.value)
+        return list(map(lambda predict:
+                        (predict[0], list(map(lambda x: x.to_ndarray(), predict[1]))) if predict[1]
+                        else (predict[0], None), predicts))
+
+    def get_samples(self):
+        return callBigDlFunc(self.bigdl_type, "localTextSetGetSamples", self.value)
+
 
 class DistributedTextSet(TextSet):
 
@@ -154,3 +169,13 @@ class DistributedTextSet(TextSet):
 
     def get_labels(self):
         return callBigDlFunc(self.bigdl_type, "distributedTextSetGetLabels", self.value)
+
+    def get_predicts(self):
+        predicts = callBigDlFunc(self.bigdl_type, "distributedTextSetGetPredicts", self.value)
+        return predicts.map(lambda predict:
+                            (predict[0],
+                             list(map(lambda x: x.to_ndarray(), predict[1]))) if predict[1]
+                            else (predict[0], None))
+
+    def get_samples(self):
+        return callBigDlFunc(self.bigdl_type, "distributedTextSetGetSamples", self.value)

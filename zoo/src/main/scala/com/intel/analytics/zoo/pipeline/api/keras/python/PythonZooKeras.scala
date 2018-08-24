@@ -24,7 +24,7 @@ import com.intel.analytics.bigdl.Criterion
 import com.intel.analytics.bigdl.dataset.{DataSet, LocalDataSet, MiniBatch}
 
 import scala.collection.JavaConverters._
-import com.intel.analytics.bigdl.optim.{LocalPredictor, OptimMethod, Regularizer, ValidationMethod}
+import com.intel.analytics.bigdl.optim._
 import com.intel.analytics.bigdl.python.api.{EvaluatedResult, JTensor, PythonBigDLKeras, Sample}
 import com.intel.analytics.bigdl.tensor.Tensor
 import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric
@@ -33,6 +33,7 @@ import com.intel.analytics.bigdl.nn.abstractnn.{AbstractModule, Activity}
 import com.intel.analytics.bigdl.nn.keras.{KerasLayer, KerasModel}
 import com.intel.analytics.bigdl.utils.Table
 import com.intel.analytics.zoo.feature.image.ImageSet
+import com.intel.analytics.zoo.feature.text.TextSet
 import com.intel.analytics.zoo.pipeline.api.Net
 import com.intel.analytics.zoo.pipeline.api.autograd._
 import com.intel.analytics.zoo.pipeline.api.keras.layers._
@@ -101,6 +102,15 @@ class PythonZooKeras[T: ClassTag](implicit ev: TensorNumeric[T]) extends PythonB
       batchSize: Int,
       nbEpoch: Int,
       validationData: ImageSet): Unit = {
+    module.fit(x, batchSize, nbEpoch, validationData)
+  }
+
+  def zooFit(
+      module: KerasNet[T],
+      x: TextSet,
+      batchSize: Int,
+      nbEpoch: Int,
+      validationData: TextSet): Unit = {
     module.fit(x, batchSize, nbEpoch, validationData)
   }
 
@@ -183,11 +193,15 @@ class PythonZooKeras[T: ClassTag](implicit ev: TensorNumeric[T]) extends PythonB
     module.predict(x, batchPerThread)
   }
 
-  def zooEvaluate(
+  def zooPredict(
       module: KerasNet[T],
-      x: JavaRDD[Sample],
-      batchSize: Int = 32): JList[EvaluatedResult] = {
-    val resultArray = module.evaluate(toJSample(x), batchSize)
+      x: TextSet,
+      batchPerThread: Int): TextSet = {
+    module.predict(x, batchPerThread)
+  }
+
+  private def processEvaluateResult(
+     resultArray: Array[(ValidationResult, ValidationMethod[T])]): JList[EvaluatedResult] = {
     val testResultArray = resultArray.map { result =>
       EvaluatedResult(result._1.result()._1, result._1.result()._2,
         result._2.toString())
@@ -197,14 +211,26 @@ class PythonZooKeras[T: ClassTag](implicit ev: TensorNumeric[T]) extends PythonB
 
   def zooEvaluate(
       module: KerasNet[T],
+      x: JavaRDD[Sample],
+      batchSize: Int = 32): JList[EvaluatedResult] = {
+    val resultArray = module.evaluate(toJSample(x), batchSize)
+    processEvaluateResult(resultArray)
+  }
+
+  def zooEvaluate(
+      module: KerasNet[T],
       x: ImageSet,
       batchSize: Int): JList[EvaluatedResult] = {
     val resultArray = module.evaluate(x, batchSize)
-    val testResultArray = resultArray.map { result =>
-      EvaluatedResult(result._1.result()._1, result._1.result()._2,
-        result._2.toString())
-    }
-    testResultArray.toList.asJava
+    processEvaluateResult(resultArray)
+  }
+
+  def zooEvaluate(
+      module: KerasNet[T],
+      x: TextSet,
+      batchSize: Int): JList[EvaluatedResult] = {
+    val resultArray = module.evaluate(x, batchSize)
+    processEvaluateResult(resultArray)
   }
 
   def zooSetTensorBoard(
