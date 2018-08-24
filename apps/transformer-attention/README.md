@@ -11,9 +11,9 @@ Multi-head Attention layer and apply it to a sentiment analysis example.
 
 ## Run with Jupyter
 * Analytics-Zoo supports 1) pip install and 2) run with pySpark without pip. Setup would be easy
- following the doc: https://analytics-zoo.github.io/0.2.0/#PythonUserGuide/install/, and here's 
+ following the doc: https://analytics-zoo.github.io/master/#PythonUserGuide/install/, and here's 
  info about how to start jupyter notebook after setup:
- https://analytics-zoo.github.io/0.2.0/#PythonUserGuide/run/
+ https://analytics-zoo.github.io/master/#PythonUserGuide/run/
 
 * Open the notebook in Jupyter and start your exploration.
 
