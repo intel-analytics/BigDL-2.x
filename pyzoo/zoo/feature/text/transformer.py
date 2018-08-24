@@ -61,7 +61,7 @@ class SequenceShaper(TextTransformer):
     >>> sequence_shaper = SequenceShaper(len=6, trunc_mode="post")
     creating: createSequenceShaper
 
-    >>> sequence_shaper2 = SequenceShaper(len=6, trunc_mode="pre", input_key="tokens", pad_element="dummy")
+    >>> sequence_shaper2 = SequenceShaper(6, "pre", "tokens", "dummy")
     creating: createSequenceShaper
     """
     def __init__(self, len, trunc_mode="pre", input_key="indexedTokens",
