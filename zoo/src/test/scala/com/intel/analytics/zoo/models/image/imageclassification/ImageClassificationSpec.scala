@@ -21,16 +21,13 @@ import java.io.File
 import com.google.common.io.Files
 import com.intel.analytics.bigdl.transform.vision.image.ImageFeature
 import com.intel.analytics.bigdl.utils.Engine
-import com.intel.analytics.bigdl.tensor.Tensor
 import com.intel.analytics.zoo.common.NNContext
 import com.intel.analytics.zoo.feature.image.ImageSet
-import com.intel.analytics.zoo.models.common.ZooModel
 import com.intel.analytics.zoo.models.image.common.ImageConfigure
 import com.intel.analytics.zoo.pipeline.api.keras.ZooSpecHelper
 import com.intel.analytics.zoo.pipeline.api.keras.serializer.ModuleSerializationTest
 import org.apache.commons.io.FileUtils
-import org.apache.spark.{SparkConf, SparkContext}
-import org.scalatest.{FlatSpec, Matchers}
+import org.apache.spark.SparkConf
 
 import scala.language.postfixOps
 import sys.process._
@@ -94,7 +91,7 @@ class ImageClassificationSpec extends ZooSpecHelper {
     val cmd = s"wget -P $dirName $url"
     val cmd_result = cmd !
 
-    val conf = Engine.createSparkConf().setMaster("local[1]").setAppName("predictor")
+    val conf = new SparkConf().setMaster("local[1]").setAppName("predictor")
     val sc = NNContext.initNNContext(conf)
 
     val model = ImageClassifier.loadModel[Float](dirName + "/" + modelFileName)
