@@ -91,6 +91,11 @@ abstract class TextSet {
    */
   def toDataSet: DataSet[TextFeature]
 
+  /**
+   * Randomly split into array of TextSet with provided weights.
+   */
+  def randomSplit(weights: Array[Double]): Array[TextSet]
+
   def tokenize(): TextSet = {
     transform(Tokenizer())
   }
@@ -111,9 +116,10 @@ abstract class TextSet {
 
   def shapeSequence(
     len: Int,
-    trunc: String = "pre",
-    key: String = "indexedTokens"): TextSet = {
-    transform(SequenceShaper(len, trunc, key))
+    mode: String = "pre",
+    key: String = TextFeature.indexedTokens,
+    padElement: Any = 0): TextSet = {
+    transform(SequenceShaper(len, mode, key, padElement))
   }
 
   def genSample[T: ClassTag]()(implicit ev: TensorNumeric[T]): TextSet = {
@@ -227,8 +233,8 @@ object TextSet {
     textSet
   }
 
-  // Given an array of words, each with its frequency, sorted descending by frequency,
-  // return a Map of word and its index.
+  // Given an array of words, each with its frequency sorted by its descending order,
+  // return a Map of word and its corresponding index.
   // Index starts from 1.
   def wordIndexFromFrequencies(frequencies: Array[(String, Int)]): Map[String, Int] = {
     val indexes = Range(1, frequencies.length + 1)
@@ -261,6 +267,10 @@ class LocalTextSet(var array: Array[TextFeature]) extends TextSet {
 
   override def toDataSet: DataSet[TextFeature] = {
     DataSet.array(array)
+  }
+
+  override def randomSplit(weights: Array[Double]): Array[TextSet] = {
+    throw new UnsupportedOperationException("LocalTextSet doesn't support randomSplit for now")
   }
 
   override def word2idx(removeTopN: Int = 0, maxWordsNum: Int = 5000): TextSet = {
@@ -312,6 +322,10 @@ class DistributedTextSet(var rdd: RDD[TextFeature]) extends TextSet {
 
   override def toDataSet: DataSet[TextFeature] = {
     DataSet.rdd[TextFeature](rdd)
+  }
+
+  override def randomSplit(weights: Array[Double]): Array[TextSet] = {
+    rdd.randomSplit(weights).map(TextSet.rdd)
   }
 
   override def word2idx(removeTopN: Int = 0, maxWordsNum: Int = 5000): TextSet = {

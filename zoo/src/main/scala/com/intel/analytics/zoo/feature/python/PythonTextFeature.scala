@@ -170,4 +170,47 @@ class PythonTextFeature[T: ClassTag](implicit ev: TensorNumeric[T]) extends Pyth
     TextFeatureToSample[T]()
   }
 
+  def textSetRandomSplit(
+      textSet: TextSet,
+      weights: JList[Double]): JList[TextSet] = {
+    textSet.randomSplit(weights.asScala.toArray).toList.asJava
+  }
+
+  def textSetTokenize(textSet: TextSet): TextSet = {
+    textSet.tokenize()
+  }
+
+  def textSetNormalize(textSet: TextSet): TextSet = {
+    textSet.normalize()
+  }
+
+  def textSetWord2idx(
+      textSet: TextSet,
+      removeTopN: Int,
+      maxWordsNum: Int): TextSet = {
+    textSet.word2idx(removeTopN, maxWordsNum)
+  }
+
+  def textSetShapeSequence(
+      textSet: TextSet,
+      len: Int,
+      mode: String,
+      key: String,
+      padElement: Int): TextSet = {
+    textSet.shapeSequence(len, mode, key, padElement)
+  }
+
+  def textSetShapeSequence(
+      textSet: TextSet,
+      len: Int,
+      mode: String,
+      key: String,
+      padElement: String): TextSet = {
+    textSet.shapeSequence(len, mode, key, padElement)
+  }
+
+  def textSetGenSample(textSet: TextSet): TextSet = {
+    textSet.genSample[T]()
+  }
+
 }
