@@ -74,7 +74,7 @@ class SequenceShaper(TextTransformer):
 
 class TextFeatureToSample(TextTransformer):
     """
-    >>> to_sample = TextFeatureToSample
+    >>> to_sample = TextFeatureToSample()
     creating: createTextFeatureToSample
     """
     def __init__(self, bigdl_type="float"):
