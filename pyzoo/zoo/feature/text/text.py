@@ -99,7 +99,7 @@ class LocalTextSet(TextSet):
             assert all(isinstance(text, six.string_types) for text in texts),\
                 "texts should be a list of string"
             if labels is not None:
-                labels = map(lambda label: int(label), labels)
+                labels = [int(label) for label in labels]
                 assert all(isinstance(label, int) for label in labels),\
                     "labels should be a list of int"
             self.value = callBigDlFunc(bigdl_type, JavaValue.jvm_class_constructor(self),
