@@ -117,9 +117,9 @@ abstract class TextSet {
   def shapeSequence(
     len: Int,
     mode: String = "pre",
-    key: String = TextFeature.indexedTokens,
+    inputKey: String = TextFeature.indexedTokens,
     padElement: Any = 0): TextSet = {
-    transform(SequenceShaper(len, mode, key, padElement))
+    transform(SequenceShaper(len, mode, inputKey, padElement))
   }
 
   def genSample[T: ClassTag]()(implicit ev: TensorNumeric[T]): TextSet = {
