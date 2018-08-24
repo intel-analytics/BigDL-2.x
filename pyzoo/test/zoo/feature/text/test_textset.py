@@ -29,7 +29,7 @@ class TestTextSet:
         self.sc = init_nncontext("test textset")
         self.text1 = "Hello my friend, please annotate my text"
         self.text2 = "hello world, this is some sentence for my test"
-        self.text3 = "dummy text for text"
+        self.text3 = "dummy text for test"
         self.texts = [self.text1, self.text2, self.text3]
         self.labels = [0., 1, 1]
         resource_path = os.path.join(os.path.split(__file__)[0], "../../resources")
@@ -46,7 +46,7 @@ class TestTextSet:
         assert feature1.get_text() == self.text1
         assert feature1.get_label() == 1
         assert feature1.has_label()
-        assert feature1.keys() == ['text', 'label']
+        assert set(feature1.keys()) == {'text', 'label'}
 
     def test_text_feature_without_label(self):
         feature = TextFeature(self.text1)
@@ -62,7 +62,7 @@ class TestTextSet:
         assert local_set.get_texts() == self.texts
         assert local_set.get_labels() == self.labels
 
-    def test_distributed_textset(self):
+    def test_distributed_textset_integration(self):
         texts_rdd = self.sc.parallelize(self.texts)
         labels_rdd = self.sc.parallelize(self.labels)
         distributed_set = DistributedTextSet(texts_rdd, labels_rdd)
@@ -70,6 +70,7 @@ class TestTextSet:
         assert not distributed_set.is_local()
         assert distributed_set.get_texts().collect() == self.texts
         assert distributed_set.get_labels().collect() == self.labels
+
         sets = distributed_set.random_split([0.5, 0.5])
         train_texts = sets[0].get_texts().collect()
         test_texts = sets[1].get_texts().collect()
@@ -77,6 +78,13 @@ class TestTextSet:
         train_labels = sets[0].get_labels().collect()
         test_labels = sets[1].get_labels().collect()
         assert set(train_labels + test_labels) == set(self.labels)
+
+        transformed = distributed_set.tokenize().normalize().word2idx().shape_sequence(5).gen_sample()
+        word_index = transformed.get_word_index()
+        assert word_index["my"] == 1
+        assert word_index.has_key("hello")
+        assert not word_index.has_key("Hello")
+        assert len(word_index) == 14
 
     def test_read_local(self):
         local_set = TextSet.read(self.path)

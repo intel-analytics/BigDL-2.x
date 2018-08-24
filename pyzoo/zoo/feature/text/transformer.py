@@ -64,11 +64,11 @@ class SequenceShaper(TextTransformer):
     >>> sequence_shaper2 = SequenceShaper(6, "pre", "tokens", "dummy")
     creating: createSequenceShaper
     """
-    def __init__(self, len, trunc_mode="pre", input_key="indexedTokens",
+    def __init__(self, len, mode="pre", input_key="indexedTokens",
                  pad_element=0, bigdl_type="float"):
         assert isinstance(pad_element, int) or isinstance(pad_element, six.string_types), \
             "pad_element should be int or string"
-        super(SequenceShaper, self).__init__(bigdl_type, len, trunc_mode,
+        super(SequenceShaper, self).__init__(bigdl_type, len, mode,
                                              input_key, pad_element)
 
 

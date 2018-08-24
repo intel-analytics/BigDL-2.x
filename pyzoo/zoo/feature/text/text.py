@@ -80,6 +80,29 @@ class TextSet(JavaValue):
         jvalues = callBigDlFunc(self.bigdl_type, "textSetRandomSplit", self.value, weights)
         return [TextSet(jvalue=jvalue) for jvalue in list(jvalues)]
 
+    def tokenize(self):
+        jvalue = callBigDlFunc(self.bigdl_type, "textSetTokenize", self.value)
+        return TextSet(jvalue=jvalue)
+
+    def normalize(self):
+        jvalue = callBigDlFunc(self.bigdl_type, "textSetNormalize", self.value)
+        return TextSet(jvalue=jvalue)
+
+    def word2idx(self, remove_topN=0, max_words_num=5000):
+        jvalue = callBigDlFunc(self.bigdl_type, "textSetWord2idx", self.value, remove_topN, max_words_num)
+        return TextSet(jvalue=jvalue)
+
+    def shape_sequence(self, len, mode="pre", input_key="indexedTokens", pad_element=0):
+        assert isinstance(pad_element, int) or isinstance(pad_element, six.string_types), \
+            "pad_element should be int or string"
+        jvalue = callBigDlFunc(self.bigdl_type, "textSetShapeSequence", self.value, len, mode,
+                               input_key, pad_element)
+        return TextSet(jvalue=jvalue)
+
+    def gen_sample(self):
+        jvalue = callBigDlFunc(self.bigdl_type, "textSetGenSample", self.value)
+        return TextSet(jvalue=jvalue)
+
     def transform(self, transformer, bigdl_type="float"):
         self.value = callBigDlFunc(bigdl_type, "transformTextSet", transformer, self.value)
         return self
