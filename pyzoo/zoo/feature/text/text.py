@@ -76,6 +76,10 @@ class TextSet(JavaValue):
     def get_labels(self):
         return self.text_set.get_labels()
 
+    def random_split(self, weights):
+        jvalues = callBigDlFunc(self.bigdl_type, "textSetRandomSplit", self.value, weights)
+        return [TextSet(jvalue=jvalue) for jvalue in list(jvalues)]
+
     def transform(self, transformer, bigdl_type="float"):
         self.value = callBigDlFunc(bigdl_type, "transformTextSet", transformer, self.value)
         return self
