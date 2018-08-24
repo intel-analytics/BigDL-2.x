@@ -9,17 +9,12 @@ In Multi-head Attention Sentiment Analyisi notebook, we use keras API build the 
 Multi-head Attention layer and apply it to a sentiment analysis example.
 
 
-## Environment
-* Python 2.7/3.5/3.6
-* Apache Spark 1.6.0/2.1.0 (This version needs to be same with the version you use to build Analytics Zoo)
-
 ## Run with Jupyter
-* Install Zoo following the doc: https://analytics-zoo.github.io/0.2.0/#PythonUserGuide/install/#install-without-pip
-* Run `export SPARK_HOME=the root directory of Spark`.
-* Run `export ANALYTICS_ZOO_HOME=the dist directory under the Analytics Zoo project`.
-* Run the following bash command to start the jupyter notebook. Change parameter settings as you need, ie `MASTER = local[physcial_core_number]`.
-```bash
-${ANALYTICS_ZOO_HOME}/bin/jupyter-with-zoo.sh \
-    --master local[4] \
-    --driver-memory 12g
+* Analytics-Zoo supports 1) pip install and 2) run with pySpark without pip. Setup would be easy
+ following the doc: https://analytics-zoo.github.io/0.2.0/#PythonUserGuide/install/, and here's 
+ info about how to start jupyter notebook after setup:
+ https://analytics-zoo.github.io/0.2.0/#PythonUserGuide/run/
+
+* Open the notebook in Jupyter and start your exploration.
+
 ```
