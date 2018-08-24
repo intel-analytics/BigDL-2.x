@@ -89,7 +89,6 @@ class TestTextSet:
         assert len(samples) == 3
         for sample in samples:
             assert sample.feature.shape[0] == 5
-        predicts = transformed.get_predicts()
 
     def test_read_local(self):
         local_set = TextSet.read(self.path)
