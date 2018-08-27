@@ -20,15 +20,11 @@ import java.io.File
 
 import com.intel.analytics.bigdl.optim._
 import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric.NumericFloat
-import com.intel.analytics.bigdl.utils.LoggerFilter
 import com.intel.analytics.zoo.common.NNContext
 import com.intel.analytics.zoo.feature.text.TextSet
 import com.intel.analytics.zoo.models.textclassification.TextClassifier
 import com.intel.analytics.zoo.pipeline.api.keras.metrics.Accuracy
 import com.intel.analytics.zoo.pipeline.api.keras.objectives.SparseCategoricalCrossEntropy
-import org.apache.log4j.{Level => Level4j, Logger => Logger4j}
-import org.apache.spark.SparkConf
-import org.slf4j.{Logger, LoggerFactory}
 import scopt.OptionParser
 
 
@@ -47,9 +43,6 @@ case class TextClassificationParams(baseDir: String = "./",
 
 
 object TextClassification {
-  val log: Logger = LoggerFactory.getLogger(this.getClass)
-  LoggerFilter.redirectSparkInfoLogs()
-  Logger4j.getLogger("com.intel.analytics.bigdl.optim").setLevel(Level4j.INFO)
 
   def main(args: Array[String]): Unit = {
     val parser = new OptionParser[TextClassificationParams]("TextClassification Example") {
@@ -93,10 +86,7 @@ object TextClassification {
     }
 
     parser.parse(args, TextClassificationParams()).map { param =>
-      val conf = new SparkConf()
-        .setAppName("Text Classification Example")
-        .set("spark.task.maxFailures", "1")
-      val sc = NNContext.initNNContext(conf)
+      val sc = NNContext.initNNContext("Text Classification Example")
 
       val textDataDir = s"${param.baseDir}/20news-18828/"
       require(new File(textDataDir).exists(), "Text data directory is not found in baseDir, " +
@@ -135,7 +125,7 @@ object TextClassification {
       model.fit(trainTextSet, batchSize = param.batchSize,
         nbEpoch = param.nbEpoch, validationData = valTextSet)
 
-      val predictTextSet = model.predict(valTextSet, batchPerThread = param.partitionNum)
+      val resTextSet = model.predict(valTextSet, batchPerThread = param.partitionNum)
 
       sc.stop()
     }
