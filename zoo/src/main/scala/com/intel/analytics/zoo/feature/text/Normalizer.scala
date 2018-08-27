@@ -18,6 +18,7 @@ package com.intel.analytics.zoo.feature.text
 
 import com.johnsnowlabs.nlp.AnnotatorModel
 import com.johnsnowlabs.nlp.annotator.NormalizerModel
+import com.johnsnowlabs.util.ConfigLoader
 
 /**
  * Removes all dirty characters from tokens following a regex pattern.
@@ -25,7 +26,7 @@ import com.johnsnowlabs.nlp.annotator.NormalizerModel
  * Output key: Can be specified by outKey. Default is TextFeature.tokens.
  *             By default original tokens will be replaced by normalized tokens.
  */
-class Normalizer(override val outKey: String = TextFeature.tokens)
+class Normalizer private (override val outKey: String = TextFeature.tokens)
   extends SparkNLPTransformer(outKey) {
 
   override def labor: AnnotatorModel[_] = {
@@ -37,6 +38,8 @@ class Normalizer(override val outKey: String = TextFeature.tokens)
 }
 
 object Normalizer {
+  ConfigLoader.setConfigPath(getClass.getResource("/spark-nlp.conf").getPath)
+
   def apply(outKey: String = TextFeature.tokens): Normalizer = {
     new Normalizer()
   }
