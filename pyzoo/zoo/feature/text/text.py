@@ -95,7 +95,8 @@ class TextSet(JavaValue):
         return TextSet(jvalue=jvalue)
 
     def word2idx(self, remove_topN=0, max_words_num=5000):
-        jvalue = callBigDlFunc(self.bigdl_type, "textSetWord2idx", self.value, remove_topN, max_words_num)
+        jvalue = callBigDlFunc(self.bigdl_type, "textSetWord2idx", self.value,
+                               remove_topN, max_words_num)
         return TextSet(jvalue=jvalue)
 
     def shape_sequence(self, len, mode="pre", input_key="indexedTokens", pad_element=0):
