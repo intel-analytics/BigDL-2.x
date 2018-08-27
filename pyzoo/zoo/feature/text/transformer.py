@@ -58,7 +58,7 @@ class WordIndexer(TextTransformer):
 
 class SequenceShaper(TextTransformer):
     """
-    >>> sequence_shaper = SequenceShaper(len=6, trunc_mode="post")
+    >>> sequence_shaper = SequenceShaper(len=6, mode="post")
     creating: createSequenceShaper
 
     >>> sequence_shaper2 = SequenceShaper(6, "pre", "tokens", "dummy")
