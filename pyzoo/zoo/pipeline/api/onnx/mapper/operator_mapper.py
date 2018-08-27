@@ -16,6 +16,7 @@
 
 
 import zoo.pipeline.api.keras.layers as zlayers
+import zoo.pipeline.api.autograd as zautograd
 from zoo.pipeline.api.onnx.onnx_helper import OnnxHelper
 import zoo.pipeline.api.onnx.mapper
 import importlib
@@ -48,8 +49,13 @@ class OperatorMapper(object):
         """
         operator = self.create_operator()
         operator.set_name(self.node_name)
-        z_tensor = operator(self.inputs)
-        operator.set_weights(self.format_params(self.params))
+        if not isinstance(operator, zautograd.Variable):
+            z_tensor = operator(self.inputs)
+            operator.set_weights(self.format_params(self.params))
+        else:
+            z_tensor = operator
+            operator.node.element().set_weights(self.format_params(self.params))
+
         self.all_tensors[self.output] = z_tensor  # update the all_tensors
         return z_tensor
 
