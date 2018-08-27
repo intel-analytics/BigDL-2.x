@@ -69,4 +69,6 @@ class OnnxHelper:
             assert pads4[0] == pads4[1]
             assert pads4[2] == pads4[3]
             pads = [pads4[0], pads4[1]]
+            border_mode = "valid"
+
         return border_mode, pads

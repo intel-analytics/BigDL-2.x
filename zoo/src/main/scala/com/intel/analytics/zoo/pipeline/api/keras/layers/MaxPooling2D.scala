@@ -48,18 +48,19 @@ class MaxPooling2D[T: ClassTag](
   override val strides: Array[Int] = null,
   override val borderMode: String = "valid",
   val dimOrdering: DataFormat = DataFormat.NCHW,
+  val pads: Array[Int] = null,
   override val inputShape: Shape = null)(implicit ev: TensorNumeric[T])
-  extends Pooling2D[T](poolSize, strides, borderMode, inputShape) with Net {
+  extends Pooling2D[T](poolSize, strides, borderMode,inputShape) with Net {
 
   override def doBuild(inputShape: Shape): AbstractModule[Activity, Activity, T] = {
-    val pads = KerasUtils.getPadsFromBorderMode(borderMode)
+    val shortPads = KerasUtils.getPadsFromBorderMode(borderMode, pads)
     val layer = SpatialMaxPooling(
       kW = poolSize(1),
       kH = poolSize(0),
       dW = strideValues(1),
       dH = strideValues(0),
-      padW = pads._2,
-      padH = pads._1,
+      padW = shortPads._2,
+      padH = shortPads._1,
       format = dimOrdering)
     layer.asInstanceOf[AbstractModule[Activity, Activity, T]]
   }
