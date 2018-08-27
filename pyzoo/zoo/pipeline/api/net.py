@@ -282,7 +282,15 @@ class TFOptimizer:
             variables.append(var)
             grads.append(grad)
         self.export_dir = tempfile.mkdtemp()
-        self.inputs = sorted(_find_placeholders([loss]), key=lambda x: x.name)
+        all_required_inputs = _find_placeholders([loss])
+        self.dataset = tf.get_collection(all_required_inputs[0].name)[0]
+        self.inputs = self.dataset.inputs
+
+        inputs_not_in_dataset = [i for i in all_required_inputs if i not in self.inputs]
+        if inputs_not_in_dataset:
+            raise ValueError("You should not use any placeholder that are not defined in dataset, "
+                             "found %s" % inputs_not_in_dataset)
+
         export_tf(self.sess, self.export_dir, inputs=self.inputs, outputs=grads + [loss])
 
         variable_names = [v.name for v in variables]
@@ -307,23 +315,13 @@ class TFOptimizer:
             assigns.append(a)
         self.assign = tf.group(assigns)
 
-    # def fit(self, data, end_trigger = MaxEpoch(1), batch_size=32):
-    #     data = data.map(lambda t: Sample.from_ndarray(t, [np.array([0.0])]))
-    #     variables = Layer.convert_output(callBigDlFunc("float", "trainTFNet",
-    #                   self.export_dir, self.optim_method,
-    #                   data, batch_size, end_trigger))
-    #
-    #     feed_dict = dict(zip(self.variable_placeholders, variables))
-    #     self.sess.run(self.assign, feed_dict=feed_dict)
-
     def optimize(self, end_trigger = MaxEpoch(1), batch_size=32):
-        data = tf.get_collection(self.inputs[0].name)[0][0]
+        data = self.dataset.rdd
 
-        indices = [tf.get_collection(i.name)[0][1] for i in self.inputs]
-        data = data.map(lambda t: Sample.from_ndarray([t[indices[i]] for i in range(len(indices))], [np.array([0.0])]))
+        sample_rdd = data.map(lambda t: Sample.from_ndarray(t, [np.array([0.0])]))
         variables = Layer.convert_output(callBigDlFunc("float", "trainTFNet",
                       self.export_dir, self.optim_method,
-                      data, batch_size, end_trigger))
+                      sample_rdd, batch_size, end_trigger))
 
         feed_dict = dict(zip(self.variable_placeholders, variables))
         self.sess.run(self.assign, feed_dict=feed_dict)
@@ -337,7 +335,7 @@ class TFDataset:
                                       dtype=types[i],
                                       shape=shapes[i]) for i in range(len(names))]
         for i in range(len(self.inputs)):
-            tf.add_to_collection(self.inputs[i].name, (self.rdd, i))
+            tf.add_to_collection(self.inputs[i].name, self)
 
     @staticmethod
     def from_dataframe(dataframe):
