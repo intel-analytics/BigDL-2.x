@@ -1,0 +1,87 @@
+total number of dimensions = 50
+total number of outliers   = 67
+
+generated subspaces:
+subspace    0     dimensions = 4     [0, 1, 2, 3]
+subspace    1     dimensions = 2     [4, 5]
+subspace    2     dimensions = 4     [6, 7, 8, 9]
+subspace    3     dimensions = 5     [10, 11, 12, 13, 14]
+subspace    4     dimensions = 4     [15, 16, 17, 18]
+subspace    5     dimensions = 2     [19, 20]
+subspace    6     dimensions = 4     [21, 22, 23, 24]
+subspace    7     dimensions = 4     [25, 26, 27, 28]
+subspace    8     dimensions = 5     [29, 30, 31, 32, 33]
+subspace    9     dimensions = 3     [34, 35, 36]
+subspace   10     dimensions = 5     [37, 38, 39, 40, 41]
+subspace   11     dimensions = 2     [42, 43]
+subspace   12     dimensions = 3     [44, 45, 46]
+subspace   13     dimensions = 3     [47, 48, 49]
+
+outlier overview:
+pattern     15          8192    10000000000000
+pattern     34            32    00000000100000
+pattern     45          1024    00010000000000
+pattern     67             2    00000000000010
+pattern     86          2048    00100000000000
+pattern     87             8    00000000001000
+pattern    117          2048    00100000000000
+pattern    119          1032    00010000001000
+pattern    123          1024    00010000000000
+pattern    137            32    00000000100000
+pattern    148           512    00001000000000
+pattern    160           256    00000100000000
+pattern    169             4    00000000000100
+pattern    190          8192    10000000000000
+pattern    193          8192    10000000000000
+pattern    195           128    00000010000000
+pattern    204          8192    10000000000000
+pattern    245           256    00000100000000
+pattern    269           512    00001000000000
+pattern    274             1    00000000000001
+pattern    301           256    00000100000000
+pattern    310             2    00000000000010
+pattern    324             4    00000000000100
+pattern    334             8    00000000001000
+pattern    335          4096    01000000000000
+pattern    358             1    00000000000001
+pattern    377          4096    01000000000000
+pattern    385          4096    01000000000000
+pattern    400             4    00000000000100
+pattern    457           128    00000010000000
+pattern    465            64    00000001000000
+pattern    466            64    00000001000000
+pattern    502            16    00000000010000
+pattern    503           512    00001000000000
+pattern    509          1024    00010000000000
+pattern    519           512    00001000000000
+pattern    546            64    00000001000000
+pattern    560             2    00000000000010
+pattern    568            80    00000001010000
+pattern    581             2    00000000000010
+pattern    582            64    00000001000000
+pattern    587            24    00000000011000
+pattern    601             4    00000000000100
+pattern    631             8    00000000001000
+pattern    662            16    00000000010000
+pattern    692           128    00000010000000
+pattern    723             1    00000000000001
+pattern    750           256    00000100000000
+pattern    761          4096    01000000000000
+pattern    776             1    00000000000001
+pattern    787           128    00000010000000
+pattern    793          2048    00100000000000
+pattern    805          8192    10000000000000
+pattern    821             4    00000000000100
+pattern    831            16    00000000010000
+pattern    838           256    00000100000000
+pattern    845          1024    00010000000000
+pattern    848           128    00000010000000
+pattern    885          2048    00100000000000
+pattern    886            32    00000000100000
+pattern    926          2048    00100000000000
+pattern    928            32    00000000100000
+pattern    936            32    00000000100000
+pattern    952          4096    01000000000000
+pattern    971             2    00000000000010
+pattern    987             1    00000000000001
+pattern    997           512    00001000000000

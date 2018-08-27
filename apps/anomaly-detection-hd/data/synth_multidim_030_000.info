@@ -1,0 +1,59 @@
+total number of dimensions = 30
+total number of outliers   = 44
+
+generated subspaces:
+subspace    0     dimensions = 4     [0, 1, 2, 3]
+subspace    1     dimensions = 2     [4, 5]
+subspace    2     dimensions = 2     [6, 7]
+subspace    3     dimensions = 4     [8, 9, 10, 11]
+subspace    4     dimensions = 3     [12, 13, 14]
+subspace    5     dimensions = 5     [15, 16, 17, 18, 19]
+subspace    6     dimensions = 4     [20, 21, 22, 23]
+subspace    7     dimensions = 2     [24, 25]
+subspace    8     dimensions = 4     [26, 27, 28, 29]
+
+outlier overview:
+pattern      9            64    001000000
+pattern     32             4    000000100
+pattern     56           128    010000000
+pattern     68             2    000000010
+pattern     69            16    000010000
+pattern    129           256    100000000
+pattern    135           128    010000000
+pattern    136           256    100000000
+pattern    145            16    000010000
+pattern    150            16    000010000
+pattern    176             8    000001000
+pattern    206             4    000000100
+pattern    213            64    001000000
+pattern    238            32    000100000
+pattern    265            16    000010000
+pattern    266             1    000000001
+pattern    282             5    000000101
+pattern    305           128    010000000
+pattern    331            32    000100000
+pattern    382           256    100000000
+pattern    397            32    000100000
+pattern    424            64    001000000
+pattern    433             4    000000100
+pattern    459             2    000000010
+pattern    479           256    100000000
+pattern    481             8    000001000
+pattern    527           256    100000000
+pattern    529            64    001000000
+pattern    567             2    000000010
+pattern    635             8    000001000
+pattern    727             1    000000001
+pattern    744             8    000001000
+pattern    752             2    000000010
+pattern    783            64    001000000
+pattern    810            32    000100000
+pattern    827           128    010000000
+pattern    846            16    000010000
+pattern    868             2    000000010
+pattern    877            32    000100000
+pattern    928             1    000000001
+pattern    940             4    000000100
+pattern    948           128    010000000
+pattern    955             8    000001000
+pattern    994             1    000000001
