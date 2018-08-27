@@ -93,6 +93,8 @@ class FrcnnToBatch(totalBatch: Int,
             input(1) = featureTensor
             input(2) = imInfoTensor
             input(3) = labelTensor
+
+            maps(i) = feature
             if (convertLabel) {
               require(feature.hasLabel(), "if convert label, there should be label")
               val target = feature.getLabel[RoiLabel]
@@ -110,17 +112,19 @@ class FrcnnToBatch(totalBatch: Int,
                   r += 1
                 }
               } else {
-                labelData.append(i)
-                labelData.append(-1)
-                // difficult
-                labelData.append(-1)
-                labelData.append(-1)
-                labelData.append(-1)
-                labelData.append(-1)
-                labelData.append(-1)
+//                labelData.append(i)
+//                labelData.append(-1)
+//                // difficult
+//                labelData.append(-1)
+//                labelData.append(-1)
+//                labelData.append(-1)
+//                labelData.append(-1)
+//                labelData.append(-1)
+                // ignore image that doesn't have label
+                inputBatch.remove()
+                i -= 1
               }
             }
-            maps(i) = feature
             i += 1
           }
           val batch = if (convertLabel) {

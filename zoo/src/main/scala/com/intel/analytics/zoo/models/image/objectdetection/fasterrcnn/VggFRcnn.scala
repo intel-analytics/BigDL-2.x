@@ -4,13 +4,21 @@ import com.intel.analytics.bigdl.Module
 import com.intel.analytics.bigdl.nn.Graph.ModuleNode
 import com.intel.analytics.bigdl.nn._
 import com.intel.analytics.bigdl.nn.abstractnn.{AbstractModule, Activity}
+import com.intel.analytics.bigdl.serialization.Bigdl.{AttrValue, BigDLModule}
 import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric
+import com.intel.analytics.bigdl.utils.serializer.converters.DataConverter
+import com.intel.analytics.bigdl.utils.serializer.{DeserializeContext, ModuleSerializable, ModuleSerializer, SerializeContext}
 import com.intel.analytics.zoo.models.image.common.ImageModel
 import com.intel.analytics.zoo.models.image.objectdetection.common.OBUtils
 import com.intel.analytics.zoo.models.image.objectdetection.common.nn.{AnchorTarget, BboxPred, EvaluateOnly, ProposalTarget}
-import com.intel.analytics.zoo.models.image.objectdetection.fasterrcnn.VggFRcnn._
 
-object VggFRcnn {
+import scala.reflect.ClassTag
+import scala.reflect.runtime._
+
+object VggFRcnn extends ModuleSerializable {
+  ModuleSerializer.registerModule(
+    "com.intel.analytics.zoo.models.image.objectdetection.fasterrcnn.VggFRcnn", VggFRcnn)
+
   def vgg16(data: ModuleNode[Float])(implicit ev: TensorNumeric[Float]): ModuleNode[Float] = {
     val conv1_1 = SpatialConvolution(3, 64, 3, 3, 1, 1, 1, 1, propagateBack = false)
       .setInitMethod(weightInitMethod = Xavier, biasInitMethod = Zeros)
@@ -49,9 +57,71 @@ object VggFRcnn {
   def apply(classNum: Int, postProcessParam: PostProcessParam): VggFRcnn = {
     new VggFRcnn(classNum, postProcessParam).build()
   }
+
+  override def doSerializeModule[T: ClassTag](context: SerializeContext[T],
+    builder : BigDLModule.Builder)
+   (implicit ev: TensorNumeric[T]) : Unit = {
+    val model = context.moduleData.module.asInstanceOf[VggFRcnn]
+    val classNumBuilder = AttrValue.newBuilder
+    DataConverter.setAttributeValue(context,
+      classNumBuilder, model.classNum, universe.typeOf[Int])
+    builder.putAttr("classNum", classNumBuilder.build)
+
+    val nClassesBuilder = AttrValue.newBuilder
+    DataConverter.setAttributeValue(context, nClassesBuilder,
+      model.postProcessParam.nClasses, universe.typeOf[Int])
+    builder.putAttr("nClasses", nClassesBuilder.build)
+
+    val bboxVoteBuilder = AttrValue.newBuilder
+    DataConverter.setAttributeValue(context, bboxVoteBuilder,
+      model.postProcessParam.bboxVote, universe.typeOf[Boolean])
+    builder.putAttr("bboxVote", bboxVoteBuilder.build)
+
+    val maxPerImageBuilder = AttrValue.newBuilder
+    DataConverter.setAttributeValue(context, maxPerImageBuilder,
+      model.postProcessParam.maxPerImage, universe.typeOf[Int])
+    builder.putAttr("maxPerImage", maxPerImageBuilder.build)
+
+    val nmsThreshBuilder = AttrValue.newBuilder
+    DataConverter.setAttributeValue(context, nmsThreshBuilder,
+      model.postProcessParam.nmsThresh, universe.typeOf[Float])
+    builder.putAttr("nmsThresh", nmsThreshBuilder.build)
+
+    val threshBuilder = AttrValue.newBuilder
+    DataConverter.setAttributeValue(context, threshBuilder,
+      model.postProcessParam.thresh, universe.typeOf[Double])
+    builder.putAttr("thresh", threshBuilder.build)
+  }
+
+  override def doLoadModule[T: ClassTag](context: DeserializeContext)
+    (implicit ev: TensorNumeric[T]): AbstractModule[Activity, Activity, T] = {
+    val attrMap = context.bigdlModule.getAttrMap
+
+    val classNum = DataConverter
+      .getAttributeValue(context, attrMap.get("classNum"))
+      .asInstanceOf[Int]
+    val nClasses = DataConverter
+      .getAttributeValue(context, attrMap.get("nClasses"))
+      .asInstanceOf[Int]
+    val bboxVote = DataConverter
+      .getAttributeValue(context, attrMap.get("bboxVote"))
+      .asInstanceOf[Boolean]
+    val maxPerImage = DataConverter
+      .getAttributeValue(context, attrMap.get("maxPerImage"))
+      .asInstanceOf[Int]
+    val nmsThresh = DataConverter
+      .getAttributeValue(context, attrMap.get("nmsThresh"))
+      .asInstanceOf[Float]
+    val thresh = DataConverter
+      .getAttributeValue(context, attrMap.get("thresh"))
+      .asInstanceOf[Double]
+    VggFRcnn(classNum, PostProcessParam(nmsThresh, nClasses,
+      bboxVote, maxPerImage, thresh)).asInstanceOf[AbstractModule[Activity, Activity, T]]
+  }
 }
 
-class VggFRcnn private (classNum: Int, postProcessParam: PostProcessParam)
+// Cannot use T here as some layer defined in BigDL hard coded Float
+class VggFRcnn private (val classNum: Int, val postProcessParam: PostProcessParam)
   (implicit ev: TensorNumeric[Float]) extends ImageModel[Float] {
 
   override def buildModel(): AbstractModule[Activity, Activity, Float] = {
@@ -59,7 +129,7 @@ class VggFRcnn private (classNum: Int, postProcessParam: PostProcessParam)
     val imInfo = Input()
     // for training only
     val gt = Input()
-    val vgg = vgg16(data)
+    val vgg = VggFRcnn.vgg16(data)
     // val rpnNet = rpn(vgg, imInfo)
     val rpn_conv_3x3 = SpatialConvolution(512, 512, 3, 3, 1, 1, 1, 1)
       .setName("rpn_conv/3x3").inputs(vgg)
@@ -69,16 +139,16 @@ class VggFRcnn private (classNum: Int, postProcessParam: PostProcessParam)
     val rpn_cls_score_reshape = InferReshape(Array(0, 2, -1, 0))
       .setName("rpn_cls_score_reshape").inputs(rpn_cls_score)
     val rpn_cls_prob = SoftMax().setName("rpn_cls_prob").inputs(rpn_cls_score_reshape)
-    val rpn_cls_prob_reshape = InferReshape(Array(1, 2 * anchorNum, -1, 0))
+    val rpn_cls_prob_reshape = InferReshape(Array(1, 2 * VggFRcnn.anchorNum, -1, 0))
       .setName("rpn_cls_prob_reshape").inputs(rpn_cls_prob)
     val rpn_bbox_pred = SpatialConvolution(512, 36, 1, 1, 1, 1).setName("rpn_bbox_pred")
       .inputs(relu3x3)
-    val proposal = Proposal(rpnPreNmsTopNTest, rpnPostNmsTopNTest,
-      ratios, scales).setName("proposal")
+    val proposal = Proposal(VggFRcnn.rpnPreNmsTopNTest, VggFRcnn.rpnPostNmsTopNTest,
+      VggFRcnn.ratios, VggFRcnn.scales).setName("proposal")
       .inputs(rpn_cls_prob_reshape, rpn_bbox_pred, imInfo)
 
 
-    val roi_data = ProposalTarget(128, classNum).setName("roi-data").setDebug(debug)
+    val roi_data = ProposalTarget(128, classNum).setName("roi-data").setDebug(VggFRcnn.debug)
       .inputs(proposal, gt)
     val roi = SelectTable(1).setName("roi").inputs(roi_data)
     // val (clsProb, bboxPred) = fastRcnn(vgg, rpnNet)
@@ -89,20 +159,20 @@ class VggFRcnn private (classNum: Int, postProcessParam: PostProcessParam)
     val fc6 = Linear(512 * pool * pool, 4096).setName("fc6").inputs(reshape)
     val reLU6 = ReLU().inputs(fc6)
     val dropout6 = Dropout().setName("drop6").inputs(reLU6)
-    val fc7 = if (!debug) Linear(4096, 4096).setName("fc7").inputs(dropout6)
+    val fc7 = if (!VggFRcnn.debug) Linear(4096, 4096).setName("fc7").inputs(dropout6)
     else Linear(4096, 4096).setName("fc7").inputs(reLU6)
     val reLU7 = ReLU().inputs(fc7)
     val dropout7 = Dropout().setName("drop7").inputs(reLU7)
-    val cls_score = if (!debug) Linear(4096, 21).setName("cls_score").inputs(dropout7)
-    else Linear(4096, 21).setName("cls_score").inputs(reLU7)
+    val cls_score = if (!VggFRcnn.debug) Linear(4096, classNum).setName("cls_score").inputs(dropout7)
+    else Linear(4096, classNum).setName("cls_score").inputs(reLU7)
     val cls_prob = EvaluateOnly(SoftMax().setName("cls_prob")
       .asInstanceOf[Module[Float]]).inputs(cls_score)
-    val bbox_pred = if (!debug) BboxPred(4096, 84, nClass = 21)
+    val bbox_pred = if (!VggFRcnn.debug) BboxPred(4096, classNum * 4, nClass = classNum)
       .setName("bbox_pred").inputs(dropout7)
-    else BboxPred(4096, 84, nClass = 21).setName("bbox_pred").inputs(reLU7)
+    else BboxPred(4096, classNum * 4, nClass = classNum).setName("bbox_pred").inputs(reLU7)
 
     // Training part
-    val rpn_data = AnchorTarget(ratios, scales).setName("rpn-data").setDebug(debug)
+    val rpn_data = AnchorTarget(VggFRcnn.ratios, VggFRcnn.scales).setName("rpn-data").setDebug(VggFRcnn.debug)
       .inputs(rpn_cls_score, gt, imInfo, data)
 
     val detectionOut = DetectionOutputFrcnn(postProcessParam.nmsThresh, postProcessParam.nClasses,

@@ -19,16 +19,24 @@ package com.intel.analytics.zoo.models.image.objectdetection.ssd
 import com.intel.analytics.bigdl.nn.Graph.ModuleNode
 import com.intel.analytics.bigdl.nn._
 import com.intel.analytics.bigdl.nn.abstractnn.{AbstractModule, Activity}
+import com.intel.analytics.bigdl.serialization.Bigdl.{AttrValue, BigDLModule}
 import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric
+import com.intel.analytics.bigdl.utils.serializer._
+import com.intel.analytics.bigdl.utils.serializer.converters.DataConverter
 import com.intel.analytics.zoo.models.image.common.ImageModel
 import com.intel.analytics.zoo.models.image.objectdetection.common.OBUtils
 
 import scala.reflect.ClassTag
+import scala.reflect.runtime._
 
-object SSDVgg {
+object SSDVgg extends ModuleSerializable {
+  ModuleSerializer.registerModule(
+    "com.intel.analytics.zoo.models.image.objectdetection.ssd.SSDVgg",
+    SSDVgg)
+
   def apply[@specialized(Float, Double) T: ClassTag](classNum: Int, resolution: Int = 300,
-    dataset: String = "pascal", sizes: Option[Array[Float]] = None,
-    postProcessParam: Option[DetectionOutputParam] = None)
+    dataset: String = "pascal", sizes: Array[Float] = null,
+    postProcessParam: DetectionOutputParam = null)
     (implicit ev: TensorNumeric[T]): SSDVgg[T] = {
     new SSDVgg[T](classNum, resolution, dataset, sizes, postProcessParam).build()
   }
@@ -63,12 +71,148 @@ object SSDVgg {
     val poo5 = SpatialMaxPooling[T](3, 3, 1, 1, 1, 1).ceil().setName("pool5").inputs(relu5_3)
     (conv1_1, relu4_3, poo5)
   }
+
+  override def doSerializeModule[T: ClassTag](context: SerializeContext[T],
+    builder : BigDLModule.Builder)
+    (implicit ev: TensorNumeric[T]) : Unit = {
+    val model = context.moduleData.module.asInstanceOf[SSDVgg[T]]
+    val classNumBuilder = AttrValue.newBuilder
+    DataConverter.setAttributeValue(context,
+      classNumBuilder, model.classNum, universe.typeOf[Int])
+    builder.putAttr("classNum", classNumBuilder.build)
+
+    val resolutionBuilder = AttrValue.newBuilder
+    DataConverter.setAttributeValue(context,
+      resolutionBuilder, model.resolution, universe.typeOf[Int])
+    builder.putAttr("resolution", resolutionBuilder.build)
+
+    val datasetBuilder = AttrValue.newBuilder
+    DataConverter.setAttributeValue(context,
+      datasetBuilder, model.dataset, universe.typeOf[String])
+    builder.putAttr("dataset", datasetBuilder.build)
+
+    val hasSizes = if (model.sizes != null) {
+      val sizesBuilder = AttrValue.newBuilder
+      DataConverter.setAttributeValue(context,
+        sizesBuilder, model.sizes, universe.typeOf[Array[Float]])
+      builder.putAttr("sizes", sizesBuilder.build)
+      true
+    } else false
+    val hasSizesBuilder = AttrValue.newBuilder
+    DataConverter.setAttributeValue(context, hasSizesBuilder,
+      hasSizes, universe.typeOf[Boolean])
+    builder.putAttr("hasSizes", hasSizesBuilder.build)
+
+    val hasPostProcessParam = if (model.postProcessParam != null) {
+      val nClassesBuilder = AttrValue.newBuilder
+      DataConverter.setAttributeValue(context, nClassesBuilder,
+        model.postProcessParam.nClasses, universe.typeOf[Int])
+      builder.putAttr("nClasses", nClassesBuilder.build)
+
+      val shareLocationBuilder = AttrValue.newBuilder
+      DataConverter.setAttributeValue(context, shareLocationBuilder,
+        model.postProcessParam.shareLocation, universe.typeOf[Boolean])
+      builder.putAttr("shareLocation", shareLocationBuilder.build)
+
+      val bgLabelBuilder = AttrValue.newBuilder
+      DataConverter.setAttributeValue(context, bgLabelBuilder,
+        model.postProcessParam.bgLabel, universe.typeOf[Int])
+      builder.putAttr("bgLabel", bgLabelBuilder.build)
+
+      val nmsThreshBuilder = AttrValue.newBuilder
+      DataConverter.setAttributeValue(context, nmsThreshBuilder,
+        model.postProcessParam.nmsThresh, universe.typeOf[Float])
+      builder.putAttr("nmsThresh", nmsThreshBuilder.build)
+
+      val nmsTopkBuilder = AttrValue.newBuilder
+      DataConverter.setAttributeValue(context, nmsTopkBuilder,
+        model.postProcessParam.nmsTopk, universe.typeOf[Int])
+      builder.putAttr("nmsTopk", nmsTopkBuilder.build)
+
+      val keepTopKBuilder = AttrValue.newBuilder
+      DataConverter.setAttributeValue(context, keepTopKBuilder,
+        model.postProcessParam.keepTopK, universe.typeOf[Int])
+      builder.putAttr("keepTopK", keepTopKBuilder.build)
+
+      val confThreshBuilder = AttrValue.newBuilder
+      DataConverter.setAttributeValue(context, confThreshBuilder,
+        model.postProcessParam.confThresh, universe.typeOf[Float])
+      builder.putAttr("confThresh", confThreshBuilder.build)
+
+      val varianceEncodedInTargetBuilder = AttrValue.newBuilder
+      DataConverter.setAttributeValue(context, varianceEncodedInTargetBuilder,
+        model.postProcessParam.varianceEncodedInTarget, universe.typeOf[Boolean])
+      builder.putAttr("varianceEncodedInTarget", varianceEncodedInTargetBuilder.build)
+      true
+    } else false
+
+    val hasPostProcessParamBuilder = AttrValue.newBuilder
+    DataConverter.setAttributeValue(context, hasPostProcessParamBuilder,
+      hasPostProcessParam, universe.typeOf[Boolean])
+    builder.putAttr("hasPostProcessParam", hasPostProcessParamBuilder.build)
+  }
+
+  override def doLoadModule[T: ClassTag](context: DeserializeContext)
+    (implicit ev: TensorNumeric[T]) : AbstractModule[Activity, Activity, T] = {
+    val attrMap = context.bigdlModule.getAttrMap
+
+    val classNum = DataConverter
+      .getAttributeValue(context, attrMap.get("classNum"))
+      .asInstanceOf[Int]
+    val resolution = DataConverter
+      .getAttributeValue(context, attrMap.get("resolution"))
+      .asInstanceOf[Int]
+    val dataset = DataConverter
+      .getAttributeValue(context, attrMap.get("dataset"))
+      .asInstanceOf[String]
+    val hasSizes = DataConverter
+      .getAttributeValue(context, attrMap.get("hasSizes"))
+      .asInstanceOf[Boolean]
+    val sizes = if (hasSizes) {
+      DataConverter
+        .getAttributeValue(context, attrMap.get("sizes"))
+        .asInstanceOf[Array[Float]]
+    } else null
+
+    val hasPostProcessParam = DataConverter
+      .getAttributeValue(context, attrMap.get("hasPostProcessParam"))
+      .asInstanceOf[Boolean]
+    val postProcessParam = if (hasPostProcessParam) {
+      val nClasses = DataConverter
+        .getAttributeValue(context, attrMap.get("nClasses"))
+        .asInstanceOf[Int]
+      val shareLocation = DataConverter
+        .getAttributeValue(context, attrMap.get("shareLocation"))
+        .asInstanceOf[Boolean]
+      val bgLabel = DataConverter
+        .getAttributeValue(context, attrMap.get("bgLabel"))
+        .asInstanceOf[Int]
+      val nmsThresh = DataConverter
+        .getAttributeValue(context, attrMap.get("nmsThresh"))
+        .asInstanceOf[Float]
+      val nmsTopk = DataConverter
+        .getAttributeValue(context, attrMap.get("nmsTopk"))
+        .asInstanceOf[Int]
+      val keepTopK = DataConverter
+        .getAttributeValue(context, attrMap.get("keepTopK"))
+        .asInstanceOf[Int]
+      val confThresh = DataConverter
+        .getAttributeValue(context, attrMap.get("confThresh"))
+        .asInstanceOf[Float]
+      val varianceEncodedInTarget = DataConverter
+        .getAttributeValue(context, attrMap.get("varianceEncodedInTarget"))
+        .asInstanceOf[Boolean]
+      DetectionOutputParam(nClasses, shareLocation, bgLabel, nmsThresh, nmsTopk,
+        keepTopK, confThresh, varianceEncodedInTarget)
+    } else null
+    SSDVgg(classNum, resolution, dataset, sizes, postProcessParam)
+  }
 }
 
-class SSDVgg[T: ClassTag] private (classNum: Int, resolution: Int = 300,
-                                   dataset: String = "pascal",
-                                   sizes: Option[Array[Float]] = None,
-                                   postProcessParam: Option[DetectionOutputParam] = None)
+class SSDVgg[T: ClassTag] private (val classNum: Int, val resolution: Int = 300,
+                                   val dataset: String = "pascal",
+                                   var sizes: Array[Float] = null,
+                                   var postProcessParam: DetectionOutputParam = null)
                                   (implicit ev: TensorNumeric[T])
   extends ImageModel[T] {
 
@@ -79,13 +223,13 @@ class SSDVgg[T: ClassTag] private (classNum: Int, resolution: Int = 300,
     val isFlip = true
     val variances = Array(0.1f, 0.1f, 0.2f, 0.2f)
     var params = Map[String, ComponetParam]()
-    val priorBoxSizes = if (sizes.isDefined) {
+    val priorBoxSizes = if (sizes != null) {
       if (resolution == 300) {
-        require(sizes.get.length == 7, "the min and max division boundary length should be 7")
+        require(sizes.length == 7, "the min and max division boundary length should be 7")
       } else {
-        require(sizes.get.length == 8, "the min and max division boundary length should be 8")
+        require(sizes.length == 8, "the min and max division boundary length should be 8")
       }
-      sizes.get
+      sizes
     } else {
       if (dataset == "pascal") {
         if (resolution == 300) Array[Float](30, 60, 111, 162, 213, 264, 315)
@@ -101,7 +245,8 @@ class SSDVgg[T: ClassTag] private (classNum: Int, resolution: Int = 300,
 
     val (conv1_1, relu4_3, poo5) = SSDVgg.vgg16[T]
 
-    val postParam = postProcessParam.getOrElse(DetectionOutputParam(classNum))
+    val postParam = if (postProcessParam == null) DetectionOutputParam(classNum)
+    else postProcessParam
     if (resolution == 300) {
       params += "conv4_3_norm" -> ComponetParam(512, 4,
         minSizes = Array(priorBoxSizes(0)), maxSizes = Array(priorBoxSizes(1)),

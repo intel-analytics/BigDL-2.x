@@ -24,7 +24,7 @@ import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric.NumericF
 import com.intel.analytics.bigdl.utils.LoggerFilter
 import com.intel.analytics.bigdl.visualization.{TrainSummary, ValidationSummary}
 import com.intel.analytics.zoo.common.NNContext
-import com.intel.analytics.zoo.models.image.objectdetection.common.{IOUtils, MeanAveragePrecision, OBUtils}
+import com.intel.analytics.zoo.models.image.objectdetection.common.{IOUtils, MeanAveragePrecision, ModuleUtil, OBUtils}
 import com.intel.analytics.zoo.models.image.objectdetection.common.dataset.FrcnnMiniBatch
 import com.intel.analytics.zoo.models.image.objectdetection.common.nn.FrcnnCriterion
 import com.intel.analytics.zoo.models.image.objectdetection.fasterrcnn.{PostProcessParam, PreProcessParam, VggFRcnn}
@@ -127,7 +127,7 @@ object Train {
 
       val pretrain = Module.loadModule(param.preTrainModel)
       val model = VggFRcnn(classNames.length, postParam)
-      model.loadModelWeights(pretrain, false)
+      ModuleUtil.loadModelWeights(pretrain, model, false)
 
       val trainSet = IOUtils.loadFasterrcnnTrainSet(param.trainFolder, sc, preParamTrain,
         param.batchSize, param.nPartition)
@@ -148,9 +148,11 @@ object Train {
               learningRateSchedule = learningRateSchedule,
               weightDecay = 0.0005)
           case "adam" =>
-            new Adam[Float](
-              learningRate = param.learningRate
-            )
+//            new Adam[Float](
+//              learningRate = param.learningRate
+//            )
+            new Adam[Float](learningRate = 0.0001,
+              learningRateDecay = 0.0005)
         }
       }
 
