@@ -68,13 +68,15 @@ if __name__ == "__main__":
         model = TextClassifier(20, embedding_file, word_index, sequence_len,
                                options.encoder, int(options.encoder_output_dim)).model
 
-    model.compile(optimizer=Adagrad(learningrate=float(options.learning_rate), learningrate_decay=0.001),
-                  loss="sparse_categorical_crossentropy",
-                  metrics=['accuracy'])
-    log_dir = options.log_dir
-    app_name = 'adam-' + dt.datetime.now().strftime("%Y%m%d-%H%M%S")
-    model.set_tensorboard(log_dir, app_name)
-    model.fit(train_set, batch_size=batch_size, nb_epoch=int(options.nb_epoch), validation_data=val_set)
-    predict_set = model.predict(val_set, batch_size)
+    # model.compile(optimizer=Adagrad(learningrate=float(options.learning_rate), learningrate_decay=0.001),
+    #               loss="sparse_categorical_crossentropy",
+    #               metrics=['accuracy'])
+    # log_dir = options.log_dir
+    # app_name = 'adam-' + dt.datetime.now().strftime("%Y%m%d-%H%M%S")
+    # model.set_tensorboard(log_dir, app_name)
+    # model.fit(train_set, batch_size=batch_size, nb_epoch=int(options.nb_epoch), validation_data=val_set)
+    predict_set = model.predict(val_set)
+    # Get the first five prediction probability distributions
+    res = predict_set.get_predicts()
 
     sc.stop()

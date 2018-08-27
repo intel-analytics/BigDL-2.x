@@ -143,9 +143,7 @@ class LocalTextSet(TextSet):
 
     def get_predicts(self):
         predicts = callBigDlFunc(self.bigdl_type, "localTextSetGetPredicts", self.value)
-        return list(map(lambda predict:
-                        (predict[0], list(map(lambda x: x.to_ndarray(), predict[1]))) if predict[1]
-                        else (predict[0], None), predicts))
+        return predicts.map(lambda predict: _process_predict_result(predict))
 
     def get_samples(self):
         return callBigDlFunc(self.bigdl_type, "localTextSetGetSamples", self.value)
@@ -172,10 +170,16 @@ class DistributedTextSet(TextSet):
 
     def get_predicts(self):
         predicts = callBigDlFunc(self.bigdl_type, "distributedTextSetGetPredicts", self.value)
-        return predicts.map(lambda predict:
-                            (predict[0],
-                             list(map(lambda x: x.to_ndarray(), predict[1]))) if predict[1]
-                            else (predict[0], None))
+        return predicts.map(lambda predict: _process_predict_result(predict))
 
     def get_samples(self):
         return callBigDlFunc(self.bigdl_type, "distributedTextSetGetSamples", self.value)
+
+
+def _process_predict_result(predict):
+    # predict is a list of JTensors or None
+    # Convert to list of ndarray
+    if predict is not None:
+        return [res.to_ndarray() for res in predict]
+    else:
+        return None
