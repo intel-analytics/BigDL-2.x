@@ -93,7 +93,8 @@ class TestTextSet:
         assert set(train_labels + test_labels) == set(self.labels)
 
         # Test for transformation
-        transformed = distributed_set.tokenize().normalize().word2idx().shape_sequence(5).gen_sample()
+        transformed = distributed_set.tokenize().normalize().word2idx()\
+            .shape_sequence(5).gen_sample()
         word_index = transformed.get_word_index()
         assert word_index["my"] == 1
         assert "hello" in word_index
