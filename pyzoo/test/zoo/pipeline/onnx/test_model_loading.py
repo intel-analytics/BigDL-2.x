@@ -58,3 +58,24 @@ class TestModelLoading(OnnxTestCase):
         pytorch_model = Add()
         input_shape_with_batch = [(1, 3), (1, 3)]
         self.compare_with_pytorch(pytorch_model, input_shape_with_batch)
+
+    def test_onnx_relu(self):
+        pytorch_model = torch.nn.Sequential(
+            torch.nn.ReLU()
+        )
+        input_shape_with_batch = (1, 3)
+        self.compare_with_pytorch(pytorch_model, input_shape_with_batch)
+
+    def test_onnx_softmax(self):
+        pytorch_model = torch.nn.Sequential(
+            torch.nn.Softmax()
+        )
+        input_shape_with_batch = (1, 3)
+        self.compare_with_pytorch(pytorch_model, input_shape_with_batch)
+
+    def test_onnx_maxpool(self):
+        pytorch_model = torch.nn.Sequential(
+            torch.nn.MaxPool2d(kernel_size=3)
+        )
+        input_shape_with_batch = (1, 3, 224, 224)
+        self.compare_with_pytorch(pytorch_model, input_shape_with_batch)
