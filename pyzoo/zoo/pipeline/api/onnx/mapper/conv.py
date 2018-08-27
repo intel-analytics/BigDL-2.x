@@ -16,11 +16,19 @@
 from zoo.pipeline.api.onnx.mapper.operator_mapper import OperatorMapper
 from zoo.pipeline.api.onnx.onnx_helper import OnnxHelper
 import zoo.pipeline.api.keras.layers as zlayers
+import numpy as np
 
 
 class ConvMapper(OperatorMapper):
     def __init__(self, node, _params, _all_tensors):
         super(ConvMapper, self).__init__(node, _params, _all_tensors)
+
+    def format_params(self, params):
+        """
+        Convert ONNX params to Zoo format
+        :return: list of ndarray
+        """
+        return [np.expand_dims(params[0], 0), params[1]]
 
     def create_operator(self):
         assert len(self.inputs) == 1, "Conv accept single input only"
