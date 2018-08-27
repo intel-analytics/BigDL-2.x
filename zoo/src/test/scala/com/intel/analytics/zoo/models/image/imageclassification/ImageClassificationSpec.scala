@@ -20,31 +20,23 @@ import java.io.File
 
 import com.google.common.io.Files
 import com.intel.analytics.bigdl.transform.vision.image.ImageFeature
+import com.intel.analytics.bigdl.utils.Engine
+import com.intel.analytics.bigdl.tensor.Tensor
 import com.intel.analytics.zoo.common.NNContext
 import com.intel.analytics.zoo.feature.image.ImageSet
+import com.intel.analytics.zoo.models.common.ZooModel
 import com.intel.analytics.zoo.models.image.common.ImageConfigure
+import com.intel.analytics.zoo.pipeline.api.keras.ZooSpecHelper
 import com.intel.analytics.zoo.pipeline.api.keras.serializer.ModuleSerializationTest
 import org.apache.commons.io.FileUtils
 import org.apache.spark.{SparkConf, SparkContext}
-import org.scalatest.{BeforeAndAfter, FlatSpec, Matchers}
+import org.scalatest.{FlatSpec, Matchers}
 
 import scala.language.postfixOps
 import sys.process._
 
-class ImageClassificationSpec extends FlatSpec with Matchers with BeforeAndAfter {
+class ImageClassificationSpec extends ZooSpecHelper {
   val resource = getClass.getClassLoader.getResource("imagenet/n04370456/")
-  var sc : SparkContext = _
-
-  before {
-    val conf = new SparkConf().setAppName("Test Image Classification").setMaster("local[1]")
-    sc = NNContext.initNNContext(conf)
-  }
-
-  after {
-    if (sc != null) {
-      sc.stop()
-    }
-  }
 
   def predictLocal(url: String, publisher: String): Unit = {
     val tmpFile = Files.createTempDir()
@@ -56,6 +48,7 @@ class ImageClassificationSpec extends FlatSpec with Matchers with BeforeAndAfter
     val cmd_result = cmd !
 
     System.setProperty("bigdl.localMode", "true")
+    Engine.init
 
     val image = ImageSet.read(resource.getFile)
     val model = ImageClassifier.loadModel[Float](dirName + "/" + modelFileName)
@@ -101,6 +94,9 @@ class ImageClassificationSpec extends FlatSpec with Matchers with BeforeAndAfter
     val cmd = s"wget -P $dirName $url"
     val cmd_result = cmd !
 
+    val conf = Engine.createSparkConf().setMaster("local[1]").setAppName("predictor")
+    val sc = NNContext.initNNContext(conf)
+
     val model = ImageClassifier.loadModel[Float](dirName + "/" + modelFileName)
     model.saveModel("./imc.model", overWrite = true)
     val image = ImageSet.read(resource.getFile, sc)
@@ -131,6 +127,10 @@ class ImageClassificationSpec extends FlatSpec with Matchers with BeforeAndAfter
     require(predicted.head.predict(ImageFeature.predict)
       .equals(predicted2.head.predict(ImageFeature.predict)) == true)
     if (tmpFile.exists()) FileUtils.deleteDirectory(tmpFile)
+
+    if (sc != null) {
+      sc.stop()
+    }
 
     "rm -rf ./imc.model" !!
   }
