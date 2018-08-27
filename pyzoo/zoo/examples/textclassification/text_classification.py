@@ -40,33 +40,29 @@ if __name__ == "__main__":
     parser.add_option("--model", dest="model")
 
     (options, args) = parser.parse_args(sys.argv)
-    data_path = options.data_path
-    token_length = int(options.token_length)
-    sequence_len = int(options.sequence_length)
-    max_words_num = int(options.max_words_num)
-    training_split = float(options.training_split)
-    batch_size = int(options.batch_size)
-
     sc = init_nncontext("Text Classification Example")
 
-    text_set = TextSet.read(path=data_path+"/20news-18828/", sc=sc, min_partitions=4)
+    text_set = TextSet.read(path=options.data_path+"/20news-18828/",
+                            sc=sc, min_partitions=int(options.partition_num))
     print('Processing text dataset...')
     transformed = text_set.tokenize().normalize()\
-        .word2idx(remove_topN=10, max_words_num=max_words_num)\
-        .shape_sequence(len=sequence_len).gen_sample()
-    train_set, val_set = transformed.random_split([training_split, 1 - training_split])
+        .word2idx(remove_topN=10, max_words_num=int(options.max_words_num))\
+        .shape_sequence(len=int(options.sequence_length)).gen_sample()
+    train_set, val_set = transformed.random_split(
+        [float(options.training_split), 1 - float(options.training_split)])
 
     if options.model:
         model = TextClassifier.load_model(options.model)
     else:
+        token_length = int(options.token_length)
         if not (token_length == 50 or token_length == 100
                 or token_length == 200 or token_length == 300):
             raise ValueError('token_length for GloVe can only be 50, 100, 200, 300, but got '
                              + str(token_length))
-        embedding_file = data_path + "/glove.6B/glove.6B." + str(token_length) + "d.txt"
+        embedding_file = options.data_path + "/glove.6B/glove.6B." + str(token_length) + "d.txt"
         word_index = transformed.get_word_index()
-        model = TextClassifier(20, embedding_file, word_index, sequence_len,
-                               options.encoder, int(options.encoder_output_dim)).model
+        model = TextClassifier(20, embedding_file, word_index, int(options.sequence_length),
+                               options.encoder, int(options.encoder_output_dim))
 
     model.compile(optimizer=Adagrad(learningrate=float(options.learning_rate),
                                     learningrate_decay=0.001),
@@ -74,9 +70,9 @@ if __name__ == "__main__":
                   metrics=['accuracy'])
     app_name = 'textclassification-' + dt.datetime.now().strftime("%Y%m%d-%H%M%S")
     model.set_tensorboard(options.log_dir, app_name)
-    model.fit(train_set, batch_size=batch_size,
+    model.fit(train_set, batch_size=int(options.batch_size),
               nb_epoch=int(options.nb_epoch), validation_data=val_set)
-    predict_set = model.predict(val_set)
+    predict_set = model.predict(val_set, batch_per_thread=int(options.partition_num))
     # Get the first five prediction probability distributions
     res = predict_set.get_predicts().take(5)
 

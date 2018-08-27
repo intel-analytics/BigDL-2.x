@@ -16,12 +16,15 @@
 
 package com.intel.analytics.zoo.models.textclassification
 
+import com.intel.analytics.bigdl.Criterion
 import com.intel.analytics.bigdl.nn.abstractnn.{AbstractModule, Activity}
+import com.intel.analytics.bigdl.optim.{OptimMethod, ValidationMethod, ValidationResult}
 import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric
 import com.intel.analytics.bigdl.utils.Shape
+import com.intel.analytics.zoo.feature.text.TextSet
 import com.intel.analytics.zoo.models.common.ZooModel
 import com.intel.analytics.zoo.pipeline.api.keras.layers._
-import com.intel.analytics.zoo.pipeline.api.keras.models.Sequential
+import com.intel.analytics.zoo.pipeline.api.keras.models.{KerasNet, Sequential}
 
 import scala.reflect.ClassTag
 
@@ -63,6 +66,34 @@ class TextClassifier[T: ClassTag] private(
     model.add(Activation("relu"))
     model.add(Dense(classNum, activation = "softmax"))
     model
+  }
+
+  def compile(
+      optimizer: OptimMethod[T],
+      loss: Criterion[T],
+      metrics: List[ValidationMethod[T]] = null)(implicit ev: TensorNumeric[T]): Unit = {
+    model.asInstanceOf[KerasNet[T]].compile(optimizer, loss, metrics)
+  }
+
+  def fit(
+      x: TextSet,
+      batchSize: Int,
+      nbEpoch: Int,
+      validationData: TextSet = null)(implicit ev: TensorNumeric[T]): Unit = {
+    model.asInstanceOf[KerasNet[T]].fit(x, batchSize, nbEpoch, validationData)
+  }
+
+  def evaluate(
+      x: TextSet,
+      batchSize: Int)
+    (implicit ev: TensorNumeric[T]): Array[(ValidationResult, ValidationMethod[T])] = {
+    model.asInstanceOf[KerasNet[T]].evaluate(x, batchSize)
+  }
+
+  def predict(
+      x: TextSet,
+      batchPerThread: Int): TextSet = {
+    model.asInstanceOf[KerasNet[T]].predict(x, batchPerThread)
   }
 }
 

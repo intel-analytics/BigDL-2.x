@@ -113,3 +113,21 @@ class TextClassifier(ZooModel):
         model = ZooModel._do_load(jmodel, bigdl_type)
         model.__class__ = TextClassifier
         return model
+
+    def compile(self, optimizer, loss, metrics=None):
+        self.model.compile(optimizer, loss, metrics)
+
+    def set_tensorboard(self, log_dir, app_name):
+        self.model.set_tensorboard(log_dir, app_name)
+
+    def set_checkpoint(self, path, over_write=True):
+        self.model.set_checkpoint(path, over_write)
+
+    def fit(self, x, y=None, batch_size=32, nb_epoch=10, validation_data=None, distributed=True):
+        self.model.fit(x, y, batch_size, nb_epoch, validation_data, distributed)
+
+    def evaluate(self, x, y=None, batch_size=32):
+        return self.model.evaluate(x, y, batch_size)
+
+    def predict(self, x, batch_per_thread=4, distributed=True):
+        return self.model.predict(x, batch_per_thread, distributed)
