@@ -96,8 +96,8 @@ class TestTextSet:
         transformed = distributed_set.tokenize().normalize().word2idx().shape_sequence(5).gen_sample()
         word_index = transformed.get_word_index()
         assert word_index["my"] == 1
-        assert word_index.has_key("hello")
-        assert not word_index.has_key("Hello")
+        assert "hello" in word_index
+        assert "Hello" not in word_index
         assert len(word_index) == 14
         samples = transformed.get_samples().collect()
         assert len(samples) == 3

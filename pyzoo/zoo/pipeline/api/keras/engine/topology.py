@@ -139,7 +139,8 @@ class KerasNet(ZooKerasLayer):
                 training_data = to_sample_rdd(x, y)
                 if validation_data:
                     validation_data = to_sample_rdd(*validation_data)
-            elif (isinstance(x, RDD) or isinstance(x, ImageSet) or isinstance(x, TextSet)) and not y:
+            elif (isinstance(x, RDD) or isinstance(x, ImageSet) or isinstance(x, TextSet)) \
+                    and not y:
                 training_data = x
             else:
                 raise TypeError("Unsupported training data type: %s" % type(x))
