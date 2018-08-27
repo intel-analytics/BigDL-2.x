@@ -136,40 +136,35 @@ class TextSetSpec extends FlatSpec with Matchers with BeforeAndAfter {
     require(arr(0).apply[Array[Int]]("indexedTokens").length == 6)
   }
 
-  "TextSet read with sc, fit, predict and evaluate" should "work properly" in {
-//    val conf = new SparkConf().setAppName("Test DistributedTextSet").setMaster("local[4]")
-//    val sc = NNContext.initNNContext(conf)
-    val textSet = TextSet.read(path, sc)
-    require(textSet.isDistributed)
-    require(textSet.toDistributed.rdd.count() == 5)
-    require(textSet.toDistributed.rdd.collect().head.keys() == HashSet("label", "text"))
-    val transformed = textSet.tokenize().normalize()
-      .word2idx(removeTopN = 5, maxWordsNum = 299).shapeSequence(len = 30).genSample()
-    val model = buildModel()
-    model.compile("sgd", "sparse_categorical_crossentropy", List("accuracy"))
-    model.fit(transformed, batchSize = 4, nbEpoch = 2, validationData = transformed)
-    require(! transformed.toDistributed.rdd.first().contains("predict"))
-    val predictSet = model.predict(transformed, batchPerThread = 1)
-    require(predictSet.toDistributed.rdd.first().contains("predict"))
-    val accuracy = model.evaluate(transformed, batchSize = 4)
-  }
-
-  "TextSet read without sc" should "work properly" in {
-    // initNNContext is used for init BigDL Engine so that coreNum can be obtained during fit.
-//    val conf = new SparkConf().setAppName("Test LocalTextSet").setMaster("local[4]")
-//    val sc = NNContext.initNNContext(conf)
-    val textSet = TextSet.read(path)
-    require(textSet.isLocal)
-    require(textSet.toLocal.array.length == 5)
-    require(textSet.toLocal.array.head.keys() == HashSet("label", "text"))
-    val transformed = textSet.tokenize().normalize()
-      .word2idx(removeTopN = 5, maxWordsNum = 299).shapeSequence(len = 30).genSample()
-    val model = buildModel()
-    model.compile("sgd", "sparse_categorical_crossentropy", List("accuracy"))
-    model.fit(transformed, batchSize = 4, nbEpoch = 2, validationData = transformed)
-    require(! transformed.toLocal.array.head.contains("predict"))
-    val predictSet = model.predict(transformed, batchPerThread = 1)
-    require(predictSet.toLocal.array.head.contains("predict"))
-    val accuracy = model.evaluate(transformed, batchSize = 4)
-  }
+//  "TextSet read with sc, fit, predict and evaluate" should "work properly" in {
+//    val textSet = TextSet.read(path, sc)
+//    require(textSet.isDistributed)
+//    require(textSet.toDistributed.rdd.count() == 5)
+//    require(textSet.toDistributed.rdd.collect().head.keys() == HashSet("label", "text"))
+//    val transformed = textSet.tokenize().normalize()
+//      .word2idx(removeTopN = 5, maxWordsNum = 299).shapeSequence(len = 30).genSample()
+//    val model = buildModel()
+//    model.compile("sgd", "sparse_categorical_crossentropy", List("accuracy"))
+//    model.fit(transformed, batchSize = 4, nbEpoch = 2, validationData = transformed)
+//    require(! transformed.toDistributed.rdd.first().contains("predict"))
+//    val predictSet = model.predict(transformed, batchPerThread = 1)
+//    require(predictSet.toDistributed.rdd.first().contains("predict"))
+//    val accuracy = model.evaluate(transformed, batchSize = 4)
+//  }
+//
+//  "TextSet read without sc" should "work properly" in {
+//    val textSet = TextSet.read(path)
+//    require(textSet.isLocal)
+//    require(textSet.toLocal.array.length == 5)
+//    require(textSet.toLocal.array.head.keys() == HashSet("label", "text"))
+//    val transformed = textSet.tokenize().normalize()
+//      .word2idx(removeTopN = 5, maxWordsNum = 299).shapeSequence(len = 30).genSample()
+//    val model = buildModel()
+//    model.compile("sgd", "sparse_categorical_crossentropy", List("accuracy"))
+//    model.fit(transformed, batchSize = 4, nbEpoch = 2, validationData = transformed)
+//    require(! transformed.toLocal.array.head.contains("predict"))
+//    val predictSet = model.predict(transformed, batchPerThread = 1)
+//    require(predictSet.toLocal.array.head.contains("predict"))
+//    val accuracy = model.evaluate(transformed, batchSize = 4)
+//  }
 }
