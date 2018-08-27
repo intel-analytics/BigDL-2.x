@@ -18,6 +18,8 @@ import pytest
 
 from zoo.feature.text import *
 from zoo.common.nncontext import *
+from zoo.pipeline.api.keras.models import Sequential
+from zoo.pipeline.api.keras.layers import Embedding, Convolution1D, Flatten, Dense
 
 
 class TestTextSet:
@@ -26,7 +28,8 @@ class TestTextSet:
         """ setup any state tied to the execution of the given method in a
         class.  setup_method is invoked for every test method of a class.
         """
-        self.sc = init_nncontext("test textset")
+        self.sc = init_nncontext(init_spark_conf().setMaster("local[1]")
+                                 .setAppName("test text set"))
         self.text1 = "Hello my friend, please annotate my text"
         self.text2 = "hello world, this is some sentence for my test"
         self.text3 = "dummy text for test"
@@ -40,6 +43,15 @@ class TestTextSet:
         call.
         """
         self.sc.stop()
+
+    @staticmethod
+    def _build_model(len):
+        model = Sequential()
+        model.add(Embedding(20, 10, input_length=len))
+        model.add(Convolution1D(4, 3))
+        model.add(Flatten())
+        model.add(Dense(5, activation="softmax"))
+        return model
 
     def test_text_feature_with_label(self):
         feature1 = TextFeature(self.text1, 1)
@@ -71,6 +83,7 @@ class TestTextSet:
         assert distributed_set.get_texts().collect() == self.texts
         assert distributed_set.get_labels().collect() == self.labels
 
+        # Test for random split
         sets = distributed_set.random_split([0.5, 0.5])
         train_texts = sets[0].get_texts().collect()
         test_texts = sets[1].get_texts().collect()
@@ -79,6 +92,7 @@ class TestTextSet:
         test_labels = sets[1].get_labels().collect()
         assert set(train_labels + test_labels) == set(self.labels)
 
+        # Test for transformation
         transformed = distributed_set.tokenize().normalize().word2idx().shape_sequence(5).gen_sample()
         word_index = transformed.get_word_index()
         assert word_index["my"] == 1
@@ -89,6 +103,17 @@ class TestTextSet:
         assert len(samples) == 3
         for sample in samples:
             assert sample.feature.shape[0] == 5
+
+        # Test for training, evaluation and prediction
+        model = TestTextSet._build_model(5)
+        model.compile("sgd", "sparse_categorical_crossentropy", ['accuracy'])
+        model.fit(transformed, batch_size=2, nb_epoch=2, validation_data=transformed)
+        res_set = model.predict(transformed, batch_per_thread=2)
+        predicts = res_set.get_predicts().collect()
+        for predict in predicts:
+            assert len(predict) == 1
+            assert predict[0].shape == (5, )
+        acc = model.evaluate(transformed, batch_size=2)
 
     def test_read_local(self):
         local_set = TextSet.read(self.path)
