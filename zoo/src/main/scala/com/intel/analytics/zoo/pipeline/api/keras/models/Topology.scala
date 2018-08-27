@@ -38,6 +38,7 @@ import com.intel.analytics.zoo.pipeline.api.keras.layers.Input
 import com.intel.analytics.zoo.pipeline.api.keras.layers.utils._
 import com.intel.analytics.zoo.pipeline.api.net.NetUtils
 import org.apache.spark.rdd.RDD
+import org.apache.log4j.{Level => Level4j, Logger => Logger4j}
 
 import scala.collection.JavaConverters._
 import scala.collection.mutable.ArrayBuffer
@@ -109,6 +110,7 @@ abstract class KerasNet[T: ClassTag](implicit ev: TensorNumeric[T])
       loss: Criterion[T],
       metrics: List[ValidationMethod[T]] = null)(implicit ev: TensorNumeric[T]): Unit = {
     LoggerFilter.redirectSparkInfoLogs()
+    Logger4j.getLogger("com.intel.analytics.bigdl.optim").setLevel(Level4j.INFO)
     this.optimMethod = optimizer
     this.criterion = loss
     this.vMethods = if (metrics == null) null else metrics.toArray
@@ -143,6 +145,7 @@ abstract class KerasNet[T: ClassTag](implicit ev: TensorNumeric[T])
       loss: (Variable[T], Variable[T]) => Variable[T],
       metrics: List[ValidationMethod[T]])(implicit ev: TensorNumeric[T]): Unit = {
     LoggerFilter.redirectSparkInfoLogs()
+    Logger4j.getLogger("com.intel.analytics.bigdl.optim").setLevel(Level4j.INFO)
     val customLoss = CustomLoss[T](loss, KerasUtils.removeBatch(this.getOutputShape()))
     this.compile(optimizer, customLoss, metrics)
   }
