@@ -16,11 +16,25 @@
 
 package com.intel.analytics.zoo.feature.text
 
-import org.scalatest.{FlatSpec, Matchers}
+import com.intel.analytics.zoo.common.NNContext
+import org.apache.spark.{SparkConf, SparkContext}
+import org.scalatest.{BeforeAndAfter, FlatSpec, Matchers}
 
-class SparkNLPTransformerSpec extends FlatSpec with Matchers {
+class SparkNLPTransformerSpec extends FlatSpec with Matchers with BeforeAndAfter {
   val text = "Hello my friend, please annotate my text"
   val feature = TextFeature(text, label = 0)
+  var sc : SparkContext = _
+
+  before {
+    val conf = new SparkConf().setAppName("Test SparkNLPTransformer").setMaster("local[1]")
+    sc = NNContext.initNNContext(conf)
+  }
+
+  after {
+    if (sc != null) {
+      sc.stop()
+    }
+  }
 
   "Tokenizer" should "work properly" in {
     val tokenizer = Tokenizer()
@@ -29,15 +43,17 @@ class SparkNLPTransformerSpec extends FlatSpec with Matchers {
     require(transformed.keys().contains("tokens"))
     require(transformed[Array[String]](TextFeature.tokens).sameElements(Array("Hello", "my",
     "friend", ",", "please", "annotate", "my", "text")))
+    val sc = SparkContext.getOrCreate(new SparkConf().setMaster("local[*]").setAppName("dummy"))
   }
 
-//  "Tokenizer and Normalizer" should "work properly" in {
-//    val tokenizer = Tokenizer()
-//    val normalizer = Normalizer()
-//    val transformer = PipelinedSparkNLPTransformer(Array(tokenizer, normalizer))
-//    val transformed = transformer.transform(feature)
-//    require(transformed.keys().contains("tokens"))
-//    require(transformed[Array[String]](TextFeature.tokens).sameElements(Array("hello", "my",
-//      "friend", "please", "annotate", "my", "text")))
-//  }
+  "Tokenizer and Normalizer" should "work properly" in {
+    val tokenizer = Tokenizer()
+    val normalizer = Normalizer()
+    val transformer = PipelinedSparkNLPTransformer(Array(tokenizer, normalizer))
+    val transformed = transformer.transform(feature)
+    require(transformed.keys().contains("tokens"))
+    require(transformed[Array[String]](TextFeature.tokens).sameElements(Array("hello", "my",
+      "friend", "please", "annotate", "my", "text")))
+    val sc = SparkContext.getOrCreate(new SparkConf().setMaster("local[*]").setAppName("dummy"))
+  }
 }
