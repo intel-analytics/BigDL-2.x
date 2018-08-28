@@ -329,7 +329,7 @@ class TFOptimizer:
 class TFDataset:
 
     def __init__(self, rdd, names, shapes, types):
-        self.rdd = rdd
+        self.rdd = rdd.map(lambda arr: arr[:len(names)])
         self.input_names = names
         self.inputs = [tf.placeholder(name=names[i],
                                       dtype=types[i],
