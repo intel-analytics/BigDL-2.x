@@ -28,15 +28,11 @@ import scala.collection.immutable.HashSet
 class TextSetSpec extends FlatSpec with Matchers with BeforeAndAfter {
   val text1 = "Hello my friend, please annotate my text"
   val text2 = "hello world, this is some sentence for my test"
-  val text3 = "dummy text for test"
-  val feature1 = TextFeature(text1, label = 0)
-  val feature2 = TextFeature(text2, label = 1)
-  val feature3 = TextFeature(text3)
   val path: String = getClass.getClassLoader.getResource("news20").getPath
   var sc : SparkContext = _
 
   before {
-    val conf = new SparkConf().setAppName("Test TextFeature and TextSet").setMaster("local[4]")
+    val conf = new SparkConf().setAppName("Test TextFeature and TextSet").setMaster("local[1]")
     sc = NNContext.initNNContext(conf)
   }
 
@@ -44,6 +40,12 @@ class TextSetSpec extends FlatSpec with Matchers with BeforeAndAfter {
     if (sc != null) {
       sc.stop()
     }
+  }
+
+  private def genFeatures(): Array[TextFeature] = {
+    val feature1 = TextFeature(text1, label = 0)
+    val feature2 = TextFeature(text2, label = 1)
+    Array(feature1, feature2)
   }
 
   def buildModel(): Sequential[Float] = {
@@ -56,20 +58,23 @@ class TextSetSpec extends FlatSpec with Matchers with BeforeAndAfter {
   }
 
   "TextFeature with label" should "work properly" in {
-    require(feature1.getText == "Hello my friend, please annotate my text")
-    require(feature1.hasLabel)
-    require(feature1.getLabel == 0)
-    require(feature1.keys() == HashSet("label", "text"))
+    val feature = genFeatures().head
+    require(feature.getText == "Hello my friend, please annotate my text")
+    require(feature.hasLabel)
+    require(feature.getLabel == 0)
+    require(feature.keys() == HashSet("label", "text"))
   }
 
   "TextFeature without label" should "work properly" in {
-    require(!feature3.hasLabel)
-    require(feature3.getLabel == -1)
-    require(feature3.keys() == HashSet("text"))
+    val text = "dummy text for test"
+    val feature = TextFeature(text)
+    require(!feature.hasLabel)
+    require(feature.getLabel == -1)
+    require(feature.keys() == HashSet("text"))
   }
 
   "DistributedTextSet Transformation" should "work properly" in {
-    val distributed = TextSet.rdd(sc.parallelize(Seq(feature1, feature2)))
+    val distributed = TextSet.rdd(sc.parallelize(genFeatures()))
     require(distributed.isDistributed)
     require(distributed.preTextSet == null)
     require(distributed.stages == null)
@@ -111,7 +116,7 @@ class TextSetSpec extends FlatSpec with Matchers with BeforeAndAfter {
   }
 
   "LocalTextSet Transformation" should "work properly" in {
-    val local = TextSet.array(Array(feature1, feature2))
+    val local = TextSet.array(genFeatures())
     require(local.isLocal)
     require(local.preTextSet == null)
     require(local.stages == null)
