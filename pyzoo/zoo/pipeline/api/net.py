@@ -20,12 +20,15 @@ import tempfile
 import six
 import os
 import json
+import tensorflow as tf
+import numpy as np
 
 from bigdl.nn.layer import Model as BModel
 from bigdl.nn.layer import Layer
 from bigdl.util.common import callBigDlFunc, to_list
 from zoo.pipeline.api.keras.engine.topology import ZooKerasLayer, KerasNet
 from zoo.util.tf import export_tf
+from bigdl.optim.optimizer import *
 
 if sys.version >= '3':
     long = int
@@ -226,3 +229,134 @@ class TFNet(Layer):
             shutil.rmtree(temp)
 
         return net
+
+def _find_placeholders(grads):
+    '''
+    find all the tensors that are used for computing grads and has been
+    computed during forward
+    :param grads:
+    :param forward_ops:
+    :return:
+    '''
+    import sys
+    is_py2 = sys.version[0] == '2'
+    if is_py2:
+        import Queue as queue
+    else:
+        import queue as queue
+    queue = queue.Queue()
+    for grad in grads:
+        queue.put(grad)
+
+    placeholders = set()
+    visited = set()
+    while not queue.empty():
+        tensor = queue.get()
+        # this is necessary, because input may not be differentiable
+        if tensor is None:
+            continue
+        else:
+            visited.add(tensor.name)
+            if tensor.op.type.startswith("Placeholder"):
+                placeholders.add(tensor)
+                continue
+            for input_tensor in tensor.op.inputs:
+                # this is necessary because there may be a cycle in the graph such as tf.while_loop
+                if input_tensor.name not in visited:
+                    queue.put(input_tensor)
+    return list(placeholders)
+
+
+class TFOptimizer:
+    def __init__(self, loss, optim_method, sess = None):
+        self.optim_method = optim_method
+        if sess is None:
+            self.sess = tf.Session()
+            self.sess.run(tf.global_variables_initializer())
+        else:
+            self.sess = sess
+        grads_vars = tf.train.GradientDescentOptimizer(0).compute_gradients(loss)
+        variables = []
+        grads = []
+        for (grad, var) in grads_vars:
+            variables.append(var)
+            grads.append(grad)
+        self.export_dir = tempfile.mkdtemp()
+        all_required_inputs = _find_placeholders([loss])
+        self.dataset = tf.get_collection(all_required_inputs[0].name)[0]
+        self.inputs = self.dataset.inputs
+
+        inputs_not_in_dataset = [i for i in all_required_inputs if i not in self.inputs]
+        if inputs_not_in_dataset:
+            raise ValueError("You should not use any placeholder that are not defined in dataset, "
+                             "found %s" % inputs_not_in_dataset)
+
+        export_tf(self.sess, self.export_dir, inputs=self.inputs, outputs=grads + [loss])
+
+        variable_names = [v.name for v in variables]
+        grad_names = [g.name for g in grads]
+
+        meta = {
+            "input_names": [i.name for i in self.inputs],
+            "output_names": [loss.name],
+            "variables": variable_names,
+            "grad_variables": grad_names
+        }
+
+        with open(os.path.join(self.export_dir, "training_meta.json"), "w") as f:
+            f.write(json.dumps(meta))
+
+        self.variable_placeholders = []
+        assigns = []
+        for v in variables:
+            p = tf.placeholder(dtype=tf.float32, shape=v.shape)
+            a = tf.assign(v, p)
+            self.variable_placeholders.append(p)
+            assigns.append(a)
+        self.assign = tf.group(assigns)
+
+    def optimize(self, end_trigger = MaxEpoch(1), batch_size=32):
+        data = self.dataset.rdd
+
+        sample_rdd = data.map(lambda t: Sample.from_ndarray(t, [np.array([0.0])]))
+        variables = Layer.convert_output(callBigDlFunc("float", "trainTFNet",
+                      self.export_dir, self.optim_method,
+                      sample_rdd, batch_size, end_trigger))
+
+        feed_dict = dict(zip(self.variable_placeholders, variables))
+        self.sess.run(self.assign, feed_dict=feed_dict)
+
+class TFDataset:
+
+    def __init__(self, rdd, names, shapes, types):
+        self.rdd = rdd
+        self.input_names = names
+        self.inputs = [tf.placeholder(name=names[i],
+                                      dtype=types[i],
+                                      shape=shapes[i]) for i in range(len(names))]
+        for i in range(len(self.inputs)):
+            tf.add_to_collection(self.inputs[i].name, self)
+
+    @staticmethod
+    def from_dataframe(dataframe):
+        input_names = dataframe.schema.names
+
+        def _get_data(row, tensor_names):
+            _names = [n.split(":")[0] for n in tensor_names]
+            _data = [np.array(row[n]) for n in _names]
+            return _data
+        data = dataframe.rdd\
+            .map(lambda r: _get_data(r, input_names))\
+            .map(lambda t: Sample.from_ndarray(t, [np.array([0.0])]))
+        return TFDataset(data, input_names, [None]*len(input_names), [tf.float32]*len(input_names))
+
+    @staticmethod
+    def from_rdd(rdd, names = None, shapes=None, types=None):
+        if not names:
+            names = ["features", "labels"]
+        if not shapes:
+            shapes = [None] * len(names)
+
+        if not types:
+            types = [tf.float32] * len(names)
+        return TFDataset(rdd, names, shapes, types)
