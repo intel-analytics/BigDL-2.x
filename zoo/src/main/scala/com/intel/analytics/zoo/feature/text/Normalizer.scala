@@ -38,7 +38,7 @@ class Normalizer private (override val outKey: String = TextFeature.tokens)
 }
 
 object Normalizer {
-  ConfigLoader.setConfigPath(getClass.getResource("/spark-nlp.conf").getPath)
+//  ConfigLoader.setConfigPath(getClass.getResource("/spark-nlp.conf").getPath)
 
   def apply(outKey: String = TextFeature.tokens): Normalizer = {
     new Normalizer()
