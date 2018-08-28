@@ -11,17 +11,17 @@ __Remark__: Due to some permission issue, this example cannot be run on Windows 
 
 ## Data Preparation
 The data used in this example are:
-- [20 Newsgroup dataset](http://qwone.com/~jason/20Newsgroups/20news-18828.tar.gz) which contains 20 categories and with 19997 texts in total.
+- [20 Newsgroup dataset](http://qwone.com/~jason/20Newsgroups/20news-18828.tar.gz) which contains 20 categories and with 18828 texts in total.
 - [GloVe word embeddings](http://nlp.stanford.edu/data/glove.6B.zip): embeddings of 400k words pre-trained on a 2014 dump of English Wikipedia.
 
 Executing this example will automatically download and extract the data for you during the first run if no data has been detected in the target path.
 
-You can also choose to prepare the data by yourself beforehand. The following scripts we prepare will serve to download and extract the data:
+You can also choose to prepare the data by yourself beforehand. The following scripts we prepare will serve to download and extract the data for you:
 ```bash
 bash ${ANALYTICS_ZOO_HOME}/bin/data/news20/get_news20.sh dir
 bash ${ANALYTICS_ZOO_HOME}/bin/data/glove/get_glove.sh dir
 ```
-where `ANALYTICS_ZOO_HOME` is the `dist` directory under the Analytics Zoo project and `dir` is the directory you wish to locate the downloaded data. If `dir` is not specified, the data will be downloaded to the current working directory. 20 Newsgroup dataset and GloVe word embeddings are supposed to be placed under the same directory.
+where `ANALYTICS_ZOO_HOME` is the `dist` directory under the Analytics Zoo project and `dir` is the directory you wish to locate the downloaded data. If `dir` is not specified, the data will be downloaded to the current working directory. 20 Newsgroup dataset and GloVe word embeddings are supposed to be placed under the same directory specified in `--data_path`.
 
 The data folder structure after extraction should look like the following:
 ```
@@ -58,7 +58,7 @@ ${SPARK_HOME}/bin/spark-submit \
     --data_path /tmp/text_data
 ```
 __Options:__
-* `--data_path` The path where the training and word2Vec data locate. Default is `/tmp/text_data`. Make sure that you have write permission to the specified path if you want the program to automatically download the data for you.
+* `--data_path` The path where the News20 and GloVe data locate. Default is `/tmp/text_data`. Make sure that you have write permission to the specified path if you want the program to automatically download the data for you.
 * `--partition_num` The number of partitions to cut the dataset into. Default is 4.
 * `--token_length` The size of each word vector. GloVe supports token_length 50, 100, 200 and 300. Default is 200.
 * `--sequence_length` The length of a sequence. Default is 500.

@@ -245,6 +245,11 @@
             <artifactId>tensorflow</artifactId>
             <version>1.8.0</version>
         </dependency>
+        <dependency>
+            <groupId>com.johnsnowlabs.nlp</groupId>
+            <artifactId>spark-nlp_2.11</artifactId>
+            <version>1.6.0</version>
+        </dependency>
     </dependencies>
 
     <build>

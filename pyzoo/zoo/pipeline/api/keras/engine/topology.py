@@ -16,6 +16,7 @@
 
 import zoo.pipeline.api.autograd as autograd
 from zoo.feature.image import ImageSet
+from zoo.feature.text import TextSet
 from zoo.pipeline.api.keras.base import ZooKerasLayer
 from zoo.pipeline.api.keras.utils import *
 from bigdl.nn.layer import Layer
@@ -138,7 +139,8 @@ class KerasNet(ZooKerasLayer):
                 training_data = to_sample_rdd(x, y)
                 if validation_data:
                     validation_data = to_sample_rdd(*validation_data)
-            elif (isinstance(x, RDD) or isinstance(x, ImageSet)) and not y:
+            elif (isinstance(x, RDD) or isinstance(x, ImageSet) or isinstance(x, TextSet)) \
+                    and not y:
                 training_data = x
             else:
                 raise TypeError("Unsupported training data type: %s" % type(x))
@@ -174,7 +176,7 @@ class KerasNet(ZooKerasLayer):
         """
         if isinstance(x, np.ndarray) and isinstance(y, np.ndarray):
             data = to_sample_rdd(x, y)
-        elif (isinstance(x, RDD) or isinstance(x, ImageSet)) and not y:
+        elif (isinstance(x, RDD) or isinstance(x, ImageSet) or isinstance(x, TextSet)) and not y:
             data = x
         else:
             raise TypeError("Unsupported evaluation data type: %s" % type(x))
@@ -221,12 +223,12 @@ class KerasNet(ZooKerasLayer):
         distributed: Boolean. Whether to do prediction in distributed mode or local mode.
                      Default is True. In local mode, x must be a Numpy array.
         """
-        if isinstance(x, ImageSet):
+        if isinstance(x, ImageSet) or isinstance(x, TextSet):
             results = callBigDlFunc(self.bigdl_type, "zooPredict",
                                     self.value,
                                     x,
                                     batch_per_thread)
-            return ImageSet(results)
+            return ImageSet(results) if isinstance(x, ImageSet) else TextSet(results)
         if distributed:
             if isinstance(x, np.ndarray):
                 data_rdd = to_sample_rdd(x, np.zeros([x.shape[0]]))
