@@ -160,6 +160,7 @@ object Train {
         classes = classNames)
       optimize(model, trainSet, valSet, param, optimMethod,
         Trigger.maxEpoch(param.maxEpoch), new FrcnnCriterion(), meanAveragePrecision)
+      model.saveModule("./pretrain.model")
     })
   }
 

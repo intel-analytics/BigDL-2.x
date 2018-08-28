@@ -133,6 +133,7 @@ object TrainMessi {
       }
       optimize(model, trainSet, valSet, param, optimMethod,
         Trigger.maxEpoch(param.maxEpoch), classes)
+      model.saveModule("./final.model")
     })
   }
 
