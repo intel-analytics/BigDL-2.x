@@ -38,7 +38,8 @@ spark = SQLContext(sc)
 image_rdd = sc.parallelize(images_data)
 labels_rdd = sc.parallelize(labels_data)
 rdd = image_rdd.zip(labels_rdd)\
-    .map(lambda rec_tuple: [normalizer(rec_tuple[0], mnist.TRAIN_MEAN, mnist.TRAIN_STD), np.array(rec_tuple[1])])
+    .map(lambda rec_tuple: [normalizer(rec_tuple[0], mnist.TRAIN_MEAN, mnist.TRAIN_STD),
+                            np.array(rec_tuple[1])])
 
 dataset = TFDataset.from_rdd(rdd,
                              names=["features", "labels"],
@@ -66,7 +67,8 @@ optimizer.optimize(end_trigger=MaxEpoch(5), batch_size=256)
 (images_data, labels_data) = mnist.read_data_sets("/tmp/mnist", "test")
 images_data = normalizer(images_data, mnist.TRAIN_MEAN, mnist.TRAIN_STD)
 predictions = tf.argmax(logits, axis=1)
-predictions_data, loss_value = optimizer.sess.run([predictions, loss], feed_dict={images: images_data, labels: labels_data})
-print np.mean(np.equal(predictions_data, labels_data))
-print loss_value
-
+predictions_data, loss_value = optimizer.sess.run([predictions, loss],
+                                                  feed_dict={images: images_data,
+                                                             labels: labels_data})
+print(np.mean(np.equal(predictions_data, labels_data)))
+print(loss_value)
