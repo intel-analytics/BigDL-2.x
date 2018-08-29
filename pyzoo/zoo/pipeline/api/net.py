@@ -290,6 +290,11 @@ class TFOptimizer:
         if inputs_not_in_dataset:
             raise ValueError("You should not use any placeholder that are not defined in dataset, "
                              "found %s" % inputs_not_in_dataset)
+        if len(self.inputs) != len(all_required_inputs):
+            inputs_not_require_by_loss = [i for i in self.inputs if i not in all_required_inputs]
+            raise ValueError("You should use all the placeholders that are defined in dataset, "
+                             "%s are not used" % inputs_not_require_by_loss)
+
 
         export_tf(self.sess, self.export_dir, inputs=self.inputs, outputs=grads + [loss])
 
