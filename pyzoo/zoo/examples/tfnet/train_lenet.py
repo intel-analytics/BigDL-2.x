@@ -70,5 +70,5 @@ predictions = tf.argmax(logits, axis=1)
 predictions_data, loss_value = optimizer.sess.run([predictions, loss],
                                                   feed_dict={images: images_data,
                                                              labels: labels_data})
-print np.mean(np.equal(predictions_data, labels_data))
-print loss_value
+print(np.mean(np.equal(predictions_data, labels_data)))
+print(loss_value)
