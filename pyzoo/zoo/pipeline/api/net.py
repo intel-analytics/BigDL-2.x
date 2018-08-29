@@ -230,6 +230,7 @@ class TFNet(Layer):
 
         return net
 
+
 def _find_placeholders(grads):
     '''
     find all the tensors that are used for computing grads and has been
@@ -268,7 +269,7 @@ def _find_placeholders(grads):
 
 
 class TFOptimizer:
-    def __init__(self, loss, optim_method, sess = None):
+    def __init__(self, loss, optim_method, sess=None):
         self.optim_method = optim_method
         if sess is None:
             self.sess = tf.Session()
@@ -295,7 +296,6 @@ class TFOptimizer:
             raise ValueError("You should use all the placeholders that are defined in dataset, "
                              "%s are not used" % inputs_not_require_by_loss)
 
-
         export_tf(self.sess, self.export_dir, inputs=self.inputs, outputs=grads + [loss])
 
         variable_names = [v.name for v in variables]
@@ -320,16 +320,17 @@ class TFOptimizer:
             assigns.append(a)
         self.assign = tf.group(assigns)
 
-    def optimize(self, end_trigger = MaxEpoch(1), batch_size=32):
+    def optimize(self, end_trigger=MaxEpoch(1), batch_size=32):
         data = self.dataset.rdd
 
         sample_rdd = data.map(lambda t: Sample.from_ndarray(t, [np.array([0.0])]))
         variables = Layer.convert_output(callBigDlFunc("float", "trainTFNet",
-                      self.export_dir, self.optim_method,
-                      sample_rdd, batch_size, end_trigger))
+                                                       self.export_dir, self.optim_method,
+                                                       sample_rdd, batch_size, end_trigger))
 
         feed_dict = dict(zip(self.variable_placeholders, variables))
         self.sess.run(self.assign, feed_dict=feed_dict)
+
 
 class TFDataset:
 
@@ -356,7 +357,7 @@ class TFDataset:
         return TFDataset(data, input_names, [None]*len(input_names), [tf.float32]*len(input_names))
 
     @staticmethod
-    def from_rdd(rdd, names = None, shapes=None, types=None):
+    def from_rdd(rdd, names=None, shapes=None, types=None):
         if not names:
             names = ["features", "labels"]
         if not shapes:
