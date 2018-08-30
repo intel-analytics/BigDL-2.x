@@ -16,9 +16,9 @@ import scala.reflect.ClassTag
 import scala.reflect.runtime._
 import com.intel.analytics.bigdl.numeric.NumericFloat
 
-object VggFRcnn extends ModuleSerializable {
-  ModuleSerializer.registerModule(
-    "com.intel.analytics.zoo.models.image.objectdetection.fasterrcnn.VggFRcnn", VggFRcnn)
+object VggFRcnn {
+//  ModuleSerializer.registerModule(
+//    "com.intel.analytics.zoo.models.image.objectdetection.fasterrcnn.VggFRcnn", VggFRcnn)
 
   def vgg16(data: ModuleNode[Float])(implicit ev: TensorNumeric[Float]): ModuleNode[Float] = {
     val conv1_1 = SpatialConvolution(3, 64, 3, 3, 1, 1, 1, 1, propagateBack = false)
@@ -78,7 +78,6 @@ val data = Input()
     val proposal = Proposal(VggFRcnn.rpnPreNmsTopNTest, VggFRcnn.rpnPostNmsTopNTest,
       VggFRcnn.ratios, VggFRcnn.scales).setName("proposal")
       .inputs(rpn_cls_prob_reshape, rpn_bbox_pred, imInfo)
-
 
     val roi_data = ProposalTarget(128, classNum).setName("roi-data").setDebug(VggFRcnn.debug)
       .inputs(proposal, gt)

@@ -44,7 +44,13 @@ abstract class ImageModel[T: ClassTag]()(implicit ev: TensorNumeric[T])
    */
   def predictImageSet(image: ImageSet, configure: ImageConfigure[T] = null):
   ImageSet = {
-    val predictConfig = if (null == configure) config else configure
+    val predictConfig = if (null == configure) {
+      println("default config")
+      config
+    } else {
+      println("set config")
+      configure
+    }
 
     val result = if (predictConfig == null) {
       ImageSet.fromImageFrame(predictImage(image.toImageFrame()))

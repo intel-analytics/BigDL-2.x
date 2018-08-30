@@ -159,8 +159,10 @@ object Train {
       val meanAveragePrecision = new MeanAveragePrecision(use07metric = true, normalized = false,
         classes = classNames)
       optimize(model, trainSet, valSet, param, optimMethod,
-        Trigger.maxEpoch(param.maxEpoch), new FrcnnCriterion(), meanAveragePrecision)
-      model.saveModule("./pretrain.model")
+//        Trigger.maxEpoch(param.maxEpoch), new FrcnnCriterion(), meanAveragePrecision)
+        Trigger.maxIteration(2), new FrcnnCriterion(), meanAveragePrecision)
+      model.saveModule("./pretrain2.model")
+      model.quantize().saveModule("./pretrain2-quantize.model")
     })
   }
 
