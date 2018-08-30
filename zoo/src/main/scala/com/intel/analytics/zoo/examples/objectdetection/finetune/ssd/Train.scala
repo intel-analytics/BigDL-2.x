@@ -35,7 +35,7 @@ import scopt.OptionParser
 
 import scala.io.Source
 
-object TrainMessi {
+object Train {
 
   LoggerFilter.redirectSparkInfoLogs()
   Logger.getLogger("com.intel.analytics.bigdl.optim").setLevel(Level.INFO)
@@ -120,9 +120,6 @@ object TrainMessi {
 
       val valSet = IOUtils.loadSSDValSet(param.valFolder, sc, param.resolution, param.batchSize,
         param.nPartition)
-      val m2 = Module.loadModule("/home/ding/proj/analytics-zoo/apps/object-detection/final.model")
-      val m3 = m2.quantize()
-      m3.saveModule("/home/ding/proj/analytics-zoo/apps/object-detection/final-quantize.model")
 
       val model = SSDVgg(classes.length, param.resolution)
       val m = Module.loadModule(param.modelSnapshot.get)

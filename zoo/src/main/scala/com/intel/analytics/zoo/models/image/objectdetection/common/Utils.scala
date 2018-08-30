@@ -31,7 +31,6 @@ import com.intel.analytics.zoo.models.image.objectdetection.common.dataset.{Frcn
   FrcnnToBatch}
 import com.intel.analytics.zoo.models.image.objectdetection.common.dataset.roiimage.{ByteRecord,
   RecordToFeature, RoiImageToBatch, SSDMiniBatch}
-import com.intel.analytics.zoo.models.image.objectdetection.fasterrcnn
 import org.apache.hadoop.io.Text
 import org.apache.spark.SparkContext
 import org.apache.spark.rdd.RDD
@@ -82,32 +81,6 @@ object IOUtils {
       ChannelNormalize(123f, 117f, 104f) ->
       MatToFloats(validHeight = resolution, validWidth = resolution) ->
       RoiImageToBatch(batchSize)
-  }
-
-  def loadFasterrcnnTrainSet(folder: String, sc: SparkContext, param: fasterrcnn.PreProcessParam,
-                             batchSize: Int, parNum: Int)
-  : DataSet[FrcnnMiniBatch] = {
-    val trainRdd = loadSeqFiles(parNum, folder, sc)
-    DataSet.rdd(trainRdd) -> RecordToFeature(true) ->
-      BytesToMat() ->
-      RandomAspectScale(param.scales, param.scaleMultipleOf) -> RoiResize() ->
-      RandomTransformer(HFlip() -> RoiHFlip(false), 0.5) ->
-      ChannelNormalize(param.pixelMeanRGB._1, param.pixelMeanRGB._2, param.pixelMeanRGB._3) ->
-      MatToFloats(validHeight = 600, validWidth = 600) ->
-      FrcnnToBatch(batchSize, true)
-  }
-
-  def loadFasterrcnnValSet(folder: String, sc: SparkContext, param: fasterrcnn.PreProcessParam,
-                           batchSize: Int, parNum: Int)
-  : DataSet[FrcnnMiniBatch] = {
-    val valRdd = loadSeqFiles(parNum, folder, sc)
-
-    DataSet.rdd(valRdd) -> RecordToFeature(true) ->
-      BytesToMat() ->
-      AspectScale(param.scales(0), param.scaleMultipleOf) ->
-      ChannelNormalize(param.pixelMeanRGB._1, param.pixelMeanRGB._2, param.pixelMeanRGB._3) ->
-      MatToFloats(100, 100) ->
-      FrcnnToBatch(param.batchSize, true)
   }
 }
 
