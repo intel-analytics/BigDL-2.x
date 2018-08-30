@@ -23,7 +23,7 @@ import org.apache.spark.ml.linalg.{DenseVector, SparseVector}
  */
 trait VectorToSeq {
 
-  def convert(v: Any): Array[Double] = {
+  def vectorToArray(v: Any): Array[Double] = {
     v match {
       case mldv: DenseVector => mldv.toArray
       case mlsv: SparseVector => mlsv.toArray

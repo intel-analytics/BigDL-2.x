@@ -37,7 +37,7 @@ class SeqToTensor[T: ClassTag](size: Array[Int])(implicit ev: TensorNumeric[T])
     prev.map { f =>
       val className = f.getClass().getName()
       val feature = if (vectorNames.contains(className)) {
-        convert(f).map(ev.fromType(_))
+        vectorToArray(f).map(ev.fromType(_))
       } else {
         f match {
           case ff: Float => Array(ff).map(ev.fromType(_))

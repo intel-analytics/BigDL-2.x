@@ -20,7 +20,7 @@ package org.apache.spark.ml.adapter
  */
 trait VectorToSeq {
 
-  def convert(v: Any): Array[Double] = {
+  def vectorToArray(v: Any): Array[Double] = {
     v match {
       case mllibdv: org.apache.spark.mllib.linalg.DenseVector => mllibdv.toArray
       case mllibsv: org.apache.spark.mllib.linalg.SparseVector => mllibsv.toArray

@@ -56,6 +56,15 @@ class FeatureSpec extends FlatSpec with Matchers with BeforeAndAfter {
     assert(t.next().toArray().deep == Array(1.0, 2.0).deep)
   }
 
+  "SeqToTensor" should "convert ML Vector" in {
+    var appSparkVersion = org.apache.spark.SPARK_VERSION
+    if (appSparkVersion.trim.startsWith("2")) {
+      val v = org.apache.spark.ml.linalg.Vectors.dense(1, 2)
+      val t = SeqToTensor[Double]().apply(Iterator(v))
+      assert(t.next().toArray().deep == Array(1.0, 2.0).deep)
+    }
+  }
+
   "Local ImageSet" should "work with resize" in {
     val image = ImageSet.read(resource.getFile, resizeH = 200, resizeW = 200)
     val imf = image.toLocal().array.head
