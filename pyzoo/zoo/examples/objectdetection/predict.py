@@ -22,7 +22,6 @@ from zoo.models.image.objectdetection import *
 
 sc = init_nncontext("Object Detection Example")
 
-
 parser = argparse.ArgumentParser()
 parser.add_argument('model_path', help="Path where the model is stored")
 parser.add_argument('img_path', help="Path where the images are stored")
