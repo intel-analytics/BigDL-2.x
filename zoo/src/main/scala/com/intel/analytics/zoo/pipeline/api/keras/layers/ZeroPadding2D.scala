@@ -16,12 +16,16 @@
 
 package com.intel.analytics.zoo.pipeline.api.keras.layers
 
-import com.intel.analytics.bigdl.nn.keras.{ZeroPadding2D => BigDLZeroPadding2D}
-import com.intel.analytics.bigdl.nn.abstractnn.DataFormat
+import com.intel.analytics.bigdl.nn.SpatialAveragePooling
+import com.intel.analytics.bigdl.nn.keras.{KerasLayer, ZeroPadding2D => BigDLZeroPadding2D}
+import com.intel.analytics.zoo.pipeline.api.keras.layers.utils.KerasUtils
+import com.intel.analytics.bigdl.nn.Padding
+import com.intel.analytics.bigdl.nn.{Sequential => TSequential}
+import com.intel.analytics.bigdl.nn.abstractnn.{AbstractModule, DataFormat}
+import com.intel.analytics.bigdl.tensor.Tensor
 import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric
 import com.intel.analytics.bigdl.utils.Shape
 import com.intel.analytics.zoo.pipeline.api.Net
-import com.intel.analytics.zoo.pipeline.api.keras.layers.utils.KerasUtils
 
 import scala.reflect.ClassTag
 
@@ -45,7 +49,7 @@ class ZeroPadding2D[T: ClassTag](
    override val padding: Array[Int] = Array(1, 1, 1, 1),
    override val dimOrdering: DataFormat = DataFormat.NCHW,
    override val inputShape: Shape = null)(implicit ev: TensorNumeric[T])
-  extends BigDLZeroPadding2D[T](padding, dimOrdering, inputShape) with Net {}
+  extends BigDLZeroPadding2D(padding, dimOrdering, inputShape) with Net {}
 
 object ZeroPadding2D {
   def apply[@specialized(Float, Double) T: ClassTag](
@@ -57,6 +61,7 @@ object ZeroPadding2D {
         "padding can not be null, please input int tuple of length 2")
       case _ => Array(padding._1, padding._1, padding._2, padding._2)
     }
-    new ZeroPadding2D[T](paddingArray, KerasUtils.toBigDLFormat(dimOrdering), inputShape)
+    new ZeroPadding2D[T](
+      paddingArray, KerasUtils.toBigDLFormat(dimOrdering), inputShape)
   }
 }
