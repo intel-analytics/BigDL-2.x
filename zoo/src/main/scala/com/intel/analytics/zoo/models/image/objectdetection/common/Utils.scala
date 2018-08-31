@@ -27,8 +27,6 @@ import com.intel.analytics.bigdl.transform.vision.image.augmentation._
 import com.intel.analytics.bigdl.transform.vision.image.label.roi._
 import com.intel.analytics.bigdl.transform.vision.image.{BytesToMat, ImageFeature, MatToFloats}
 import com.intel.analytics.zoo.feature.image.{ImageSet, LocalImageSet}
-import com.intel.analytics.zoo.models.image.objectdetection.common.dataset.{FrcnnMiniBatch,
-  FrcnnToBatch}
 import com.intel.analytics.zoo.models.image.objectdetection.common.dataset.roiimage.{ByteRecord,
   RecordToFeature, RoiImageToBatch, SSDMiniBatch}
 import org.apache.hadoop.io.Text

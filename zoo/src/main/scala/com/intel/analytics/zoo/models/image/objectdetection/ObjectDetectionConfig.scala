@@ -70,7 +70,6 @@ private[models] object ObjectDetectionConfig {
            "frcnn-vgg16-quantize" |
            "frcnn-vgg16-compress" |
            "frcnn-vgg16-compress-quantize" =>
-        val messi = Map(1 -> "__background__", 2 -> "messi")
         ImageConfigure(ObjectDetectionConfig.preprocessFrcnnVgg(dataset, version),
           DecodeOutput(),
           batchPerPartition = 1,
