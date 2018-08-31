@@ -21,10 +21,9 @@ from bigdl.util.common import *
 
 NEWS20_URL = 'http://qwone.com/~jason/20Newsgroups/20news-18828.tar.gz'
 GLOVE_URL = 'http://nlp.stanford.edu/data/glove.6B.zip'
-CLASS_NUM = 20
 
 
-def get_news20(base_dir="./data/news20"):
+def get_news20(base_dir="./data/20news-18828"):
     """
     Parse 20 Newsgroup dataset and return a list of (tokens, label).
     The dataset will be downloaded automatically if not found in the target base_dir.
@@ -48,11 +47,12 @@ def get_news20(base_dir="./data/news20"):
                     texts.append((content, label_id))
                     f.close()
         label_id += 1
+    class_num = label_id
     print('Found %s texts.' % len(texts))
-    return texts
+    return texts, class_num
 
 
-def get_glove(base_dir="./data/news20", dim=100):
+def get_glove(base_dir="./data/glove.6B", dim=100):
     """
     Parse the pre-trained glove6B word2vec and return a dict mapping from word to vector,
     given the dim of a vector.

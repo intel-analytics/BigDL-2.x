@@ -39,7 +39,7 @@ Run the following command for Spark local mode (`MASTER=local[*]`) or cluster mo
 SPARK_HOME=the root directory of Spark
 MASTER=...
 ANALYTICS_ZOO_ROOT=the root directory of the Analytics Zoo project
-ANALYTICS_ZOO_HOME=$ANALYTICS_ZOO_ROOT/dist
+ANALYTICS_ZOO_HOME=${ANALYTICS_ZOO_ROOT}/dist
 ANALYTICS_ZOO_PY_ZIP=${ANALYTICS_ZOO_HOME}/lib/analytics-zoo-bigdl_BIGDL_VERSION-spark_SPARK_VERSION-ZOO_VERSION-python-api.zip
 ANALYTICS_ZOO_JAR=${ANALYTICS_ZOO_HOME}/lib/analytics-zoo-bigdl_BIGDL_VERSION-spark_SPARK_VERSION-ZOO_VERSION-jar-with-dependencies.jar 
 ANALYTICS_ZOO_CONF=${ANALYTICS_ZOO_HOME}/conf/spark-analytics-zoo.conf
@@ -47,10 +47,10 @@ PYTHONPATH=${ANALYTICS_ZOO_PY_ZIP}:$PYTHONPATH
 
 ${SPARK_HOME}/bin/spark-submit \
     --master ${MASTER} \
-    --driver-memory 20g \
-    --executor-memory 20g \
+    --driver-memory 2g \
+    --executor-memory 2g \
     --properties-file ${ANALYTICS_ZOO_CONF} \
-    --py-files ${ANALYTICS_ZOO_PY_ZIP},${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/textclassification/text_classification.py \
+    --py-files ${ANALYTICS_ZOO_PY_ZIP} \
     --jars ${ANALYTICS_ZOO_JAR} \
     --conf spark.driver.extraClassPath=${ANALYTICS_ZOO_JAR} \
     --conf spark.executor.extraClassPath=${ANALYTICS_ZOO_JAR} \
@@ -60,7 +60,7 @@ ${SPARK_HOME}/bin/spark-submit \
 __Options:__
 * `--data_path` The path where the training and word2Vec data locate. Default is `/tmp/text_data`. Make sure that you have write permission to the specified path if you want the program to automatically download the data for you.
 * `--partition_num` The number of partitions to cut the dataset into. Default is 4.
-* `--token_length` The size of each word vector. Default is 200.
+* `--token_length` The size of each word vector. GloVe supports token_length 50, 100, 200 and 300. Default is 200.
 * `--sequence_length` The length of a sequence. Default is 500.
 * `--max_words_num` The maximum number of words. Default is 5000.
 * `--encoder` The encoder for the input sequence. String, 'cnn' or 'lstm' or 'gru'. Default is 'cnn'.

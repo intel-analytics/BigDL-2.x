@@ -77,7 +77,7 @@ case class ColumnFeatureInfo(wideBaseCols: Array[String] = Array[String](),
  *                       Default is Array(40, 20, 10).
  * @tparam T Numeric type of parameter(e.g. weight, bias). Only support float/double now.
  */
-class WideAndDeep[T: ClassTag] private(
+class WideAndDeep[T: ClassTag] (
     val modelType: String = "wide_n_deep",
     val numClasses: Int,
     val wideBaseDims: Array[Int] = Array[Int](),

@@ -16,13 +16,15 @@
 
 from __future__ import print_function
 
+import logging
+import shutil
 from unittest import TestCase
 
 import keras.backend as K
+import numpy as np
 from bigdl.keras.converter import WeightLoader
-from bigdl.util.common import *
 
-import logging
+from zoo.common.nncontext import *
 
 np.random.seed(1337)  # for reproducibility
 
@@ -37,12 +39,15 @@ class ZooTestCase(TestCase):
         It is invoked for every test method of a class.
         """
         K.set_image_dim_ordering("th")
-        sparkConf = create_spark_conf().setMaster("local[4]").setAppName("zoo test case")
-        self.sc = get_spark_context(sparkConf)
+        sparkConf = init_spark_conf().setMaster("local[4]").setAppName("zoo test case")
+        assert str(sparkConf.get("spark.shuffle.reduceLocality.enabled")) == "false"
+        assert str(sparkConf.get("spark.serializer")) \
+            == "org.apache.spark.serializer.JavaSerializer"
+        assert SparkContext._active_spark_context is None
+        self.sc = init_nncontext(sparkConf)
         self.sc.setLogLevel("ERROR")
-
         self.sqlContext = SQLContext(self.sc)
-        init_engine()
+        self.tmp_dirs = []
 
     def teardown_method(self, method):
         """
@@ -50,6 +55,14 @@ class ZooTestCase(TestCase):
         """
         K.set_image_dim_ordering("th")
         self.sc.stop()
+        if hasattr(self, "tmp_dirs"):
+            for d in self.tmp_dirs:
+                shutil.rmtree(d)
+
+    def create_temp_dir(self):
+        tmp_dir = tempfile.mkdtemp()
+        self.tmp_dirs.append(tmp_dir)
+        return tmp_dir
 
     def assert_allclose(self, a, b, rtol=1e-6, atol=1e-6, msg=None):
         # from tensorflow
