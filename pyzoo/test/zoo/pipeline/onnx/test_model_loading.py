@@ -15,11 +15,9 @@
 #
 
 
-import numpy as np
-
 from test.zoo.pipeline.utils.test_utils_onnx import OnnxTestCase
 from zoo.pipeline.api.keras.layers import *
-
+import numpy as np
 np.random.seed(1337)  # for reproducibility
 import torch
 
@@ -36,7 +34,6 @@ class TestModelLoading(OnnxTestCase):
         pytorch_model = torch.nn.Sequential(
             torch.nn.Conv2d(in_channels=3, out_channels=64, kernel_size=3),
             torch.nn.Conv2d(in_channels=64, out_channels=4, kernel_size=3)
-
         )
         input_shape_with_batch = (1, 3, 224, 224)
         self.compare_with_pytorch(pytorch_model, input_shape_with_batch)
@@ -57,4 +54,11 @@ class TestModelLoading(OnnxTestCase):
 
         pytorch_model = Add()
         input_shape_with_batch = [(1, 3), (1, 3)]
+        self.compare_with_pytorch(pytorch_model, input_shape_with_batch)
+
+    def test_onnx_averagepool2d(self):
+        pytorch_model = torch.nn.Sequential(
+            torch.nn.AvgPool2d(kernel_size=3, count_include_pad=False)
+        )
+        input_shape_with_batch = (1, 3, 224, 224)
         self.compare_with_pytorch(pytorch_model, input_shape_with_batch)

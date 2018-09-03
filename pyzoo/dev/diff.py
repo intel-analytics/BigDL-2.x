@@ -35,7 +35,7 @@ def extract_scala_class(class_path):
     exclude_key_words = {"KerasLayerWrapper", "LambdaTorch", "CustomLossWithFunc", "abstract",
                          "InternalRecurrent", "InternalTimeDistributed", "InternalMM", "Recurrent",
                          "InternalLocalOptimizer", "InternalDistriOptimizer",
-                         "EmbeddingMatrixHolder"}
+                         "EmbeddingMatrixHolder", "Pooling2D"}
     content = "\n".join([line for line in open(class_path).readlines()
                          if all([key not in line for key in exclude_key_words])])
     match = re.findall(r"class ([\w]+)[^{]+", content)
@@ -74,9 +74,9 @@ def get_python_classes(python_dirs):
 scala_layers = get_all_scala_layers(scala_layers_dirs)
 python_layers = get_python_classes(python_layers_dirs)
 
-print("Layers in Scala: {0}, {1}".format(len(scala_layers), scala_layers))
-print("")
-print("Layers in Python: {0}, {1}".format(len(python_layers), python_layers))
+# print("Layers in Scala: {0}, {1}".format(len(scala_layers), scala_layers))
+# print("")
+# print("Layers in Python: {0}, {1}".format(len(python_layers), python_layers))
 
 print("Layers in Scala but not in Python: "),
 diff_count = 0
