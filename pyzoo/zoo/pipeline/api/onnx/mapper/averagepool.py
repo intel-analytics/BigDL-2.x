@@ -17,6 +17,7 @@ from zoo.pipeline.api.onnx.mapper.operator_mapper import OperatorMapper
 from zoo.pipeline.api.onnx.onnx_helper import OnnxHelper
 import zoo.pipeline.api.keras.layers as zlayers
 
+
 class AveragePoolMapper (OperatorMapper):
     def __init__(self, node, _params, _all_tensors):
         super(AveragePoolMapper, self).__init__(node, _params, _all_tensors)
@@ -28,10 +29,10 @@ class AveragePoolMapper (OperatorMapper):
         if (rank == 4):  # NCHW
             poolSize = [int(i) for i in self.onnx_attr['kernel_shape']]
             strides = [int(i) for i in self.onnx_attr['strides']]
-            count_include_pad = bool(self.onnx_attr['count_include_pad']) if "count_include_pad" in self.onnx_attr else False
+            count_include_pad = bool(self.onnx_attr['count_include_pad'])\
+                if "count_include_pad" in self.onnx_attr else False
             dim_ordering = "th"
             border_mode, pads = OnnxHelper.get_padds(self.onnx_attr)
-            #border_mode = "valid"
             averagepool2d = zlayers.AveragePooling2D(pool_size=poolSize,
                                                      strides=strides,
                                                      dim_ordering=dim_ordering,

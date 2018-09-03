@@ -17,6 +17,7 @@ from zoo.pipeline.api.onnx.mapper.operator_mapper import OperatorMapper
 from zoo.pipeline.api.onnx.onnx_helper import OnnxHelper
 import zoo.pipeline.api.keras.layers as zlayers
 
+
 class PadMapper(OperatorMapper):
     def __init__(self, node, _params, _all_tensors):
         super(PadMapper, self).__init__(node, _params, _all_tensors)
@@ -30,17 +31,11 @@ class PadMapper(OperatorMapper):
             assert mode == "constant", "Pad only accept constant mode for now"
             assert value == 0, "Pad only accept Zero value for now"
             dim_ordering = "th"
-            #assert self.onnx_attr['pads'] == (0, 0, 0, 0, 0, 0, 0, 0)
-            #pads = [int(i) for i in self.onnx_attr["pads"]]
-            #pads == (0, 0, 0, 0, 0, 0, 0, 0)
-            border_mode, pads = OnnxHelper.get_padds(self.onnx_attr)
             for i in self.onnx_attr["pads"]:
                 assert int(i) == 0, "Pad only accept Zero pads for now"
-            padding = (0, 0)
             pad = zlayers.ZeroPadding2D(padding=(0, 0),
                                         dim_ordering=dim_ordering)
             return pad
         else:
             raise Exception("not supported.")
-
 
