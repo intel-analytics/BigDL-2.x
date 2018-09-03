@@ -15,8 +15,7 @@
  */
 
 package com.intel.analytics.zoo.pipeline.api.keras.layers
-import com.intel.analytics.bigdl.nn.abstractnn.DataFormat
-import com.intel.analytics.bigdl.tensor.Tensor
+
 import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric
 import com.intel.analytics.bigdl.utils.Shape
 import com.intel.analytics.zoo.pipeline.api.keras.layers.utils.KerasUtils
@@ -24,10 +23,10 @@ import com.intel.analytics.zoo.pipeline.api.keras.layers.utils.KerasUtils
 import scala.reflect.ClassTag
 
 /**
-  * Abstract class for different pooling 2D layers.
-  * Do not create a new instance of it or use it in a model.
-  * Please use its child classes, 'AveragePooling2D' and 'MaxPooling2D' instead.
-  */
+ * Abstract class for different pooling 2D layers.
+ * Do not create a new instance of it or use it in a model.
+ * Please use its child classes, 'AveragePooling2D' and 'MaxPooling2D' instead.
+ */
 abstract class Pooling2D[T: ClassTag](
     val poolSize: Array[Int] = Array(2, 2),
     val strides: Array[Int] = null,

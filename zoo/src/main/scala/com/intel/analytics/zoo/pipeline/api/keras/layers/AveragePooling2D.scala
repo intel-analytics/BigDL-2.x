@@ -52,7 +52,7 @@ class AveragePooling2D[T: ClassTag](
     override val inputShape: Shape = null,
     val pads: Array[Int] = null,
     val countIncludePad: Boolean = false)(implicit ev: TensorNumeric[T])
-  extends Pooling2D[T](poolSize, strides, borderMode, inputShape){
+  extends Pooling2D[T](poolSize, strides, borderMode, inputShape) {
 
   override def doBuild(inputShape: Shape): AbstractModule[Activity, Activity, T] = {
     val pads = KerasUtils.getPadsFromBorderMode(borderMode)
