@@ -15,61 +15,63 @@
 #
 
 import tensorflow as tf
-from bigdl.dataset import mnist
-from bigdl.dataset.transformer import *
-
-
 from zoo import init_nncontext
 from zoo.pipeline.api.net import TFOptimizer, TFDataset
-from bigdl.optim.optimizer import *
+from bigdl.optim.optimizer import MaxIteration, Adam
 import numpy as np
 import sys
+
+from bigdl.dataset import mnist
+from bigdl.dataset.transformer import *
 
 sys.path.append("/tmp/models/slim")  # add the slim library
 from nets import lenet
 
 slim = tf.contrib.slim
 
-sc = init_nncontext()
-spark = SQLContext(sc)
 
-# get data, pre-process and create TFDataset
-(images_data, labels_data) = mnist.read_data_sets("/tmp/mnist", "train")
-image_rdd = sc.parallelize(images_data)
-labels_rdd = sc.parallelize(labels_data)
-rdd = image_rdd.zip(labels_rdd)\
-    .map(lambda rec_tuple: [normalizer(rec_tuple[0], mnist.TRAIN_MEAN, mnist.TRAIN_STD),
-                            np.array(rec_tuple[1])])
+def main():
+    sc = init_nncontext()
 
-dataset = TFDataset.from_rdd(rdd,
-                             names=["features", "labels"],
-                             shapes=[(None, 28, 28, 1), (None, 1)],
-                             types=[tf.float32, tf.int32]
-                             )
+    # get data, pre-process and create TFDataset
+    (images_data, labels_data) = mnist.read_data_sets("/tmp/mnist", "train")
+    image_rdd = sc.parallelize(images_data)
+    labels_rdd = sc.parallelize(labels_data)
+    rdd = image_rdd.zip(labels_rdd) \
+        .map(lambda rec_tuple: [normalizer(rec_tuple[0], mnist.TRAIN_MEAN, mnist.TRAIN_STD),
+                                np.array(rec_tuple[1])])
 
-# construct the model from TFDataset
-images, labels = dataset.inputs
+    dataset = TFDataset.from_rdd(rdd,
+                                 names=["features", "labels"],
+                                 shapes=[(None, 28, 28, 1), (None, 1)],
+                                 types=[tf.float32, tf.int32]
+                                 )
 
-labels = tf.squeeze(labels)
+    # construct the model from TFDataset
+    images, labels = dataset.inputs
 
-with slim.arg_scope(lenet.lenet_arg_scope()):
-    logits, end_points = lenet.lenet(images, num_classes=10, is_training=True)
+    labels = tf.squeeze(labels)
 
-loss = tf.reduce_mean(tf.losses.sparse_softmax_cross_entropy(logits=logits, labels=labels))
+    with slim.arg_scope(lenet.lenet_arg_scope()):
+        logits, end_points = lenet.lenet(images, num_classes=10, is_training=True)
 
-# create a optimizer
-optimizer = TFOptimizer(loss, Adam(1e-3))
+    loss = tf.reduce_mean(tf.losses.sparse_softmax_cross_entropy(logits=logits, labels=labels))
 
-# kick off training
-# you may change the MaxIteration to MaxEpoch(5) to make it converge
-optimizer.optimize(end_trigger=MaxIteration(20), batch_size=280)
+    # create a optimizer
+    optimizer = TFOptimizer(loss, Adam(1e-3))
+    # kick off training
+    # you may change the MaxIteration to MaxEpoch(5) to make it converge
+    optimizer.optimize(end_trigger=MaxIteration(20), batch_size=280)
 
-# evaluate
-(images_data, labels_data) = mnist.read_data_sets("/tmp/mnist", "test")
-images_data = normalizer(images_data, mnist.TRAIN_MEAN, mnist.TRAIN_STD)
-predictions = tf.argmax(logits, axis=1)
-predictions_data, loss_value = optimizer.sess.run([predictions, loss],
-                                                  feed_dict={images: images_data,
-                                                             labels: labels_data})
-print(np.mean(np.equal(predictions_data, labels_data)))
-print(loss_value)
+    # evaluate
+    (images_data, labels_data) = mnist.read_data_sets("/tmp/mnist", "test")
+    images_data = normalizer(images_data, mnist.TRAIN_MEAN, mnist.TRAIN_STD)
+    predictions = tf.argmax(logits, axis=1)
+    predictions_data, loss_value = optimizer.sess.run([predictions, loss],
+                                                      feed_dict={images: images_data,
+                                                                 labels: labels_data})
+    print(np.mean(np.equal(predictions_data, labels_data)))
+    print(loss_value)
+
+if __name__ == '__main__':
+    main()
