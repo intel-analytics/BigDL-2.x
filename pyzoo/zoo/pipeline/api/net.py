@@ -351,6 +351,7 @@ class TFDataset:
     @staticmethod
     def from_dataframe(dataframe):
         input_names = dataframe.schema.names
+
         def _get_data(row, tensor_names):
             _names = [n.split(":")[0] for n in tensor_names]
             _data = [np.array(row[n]) for n in _names]
