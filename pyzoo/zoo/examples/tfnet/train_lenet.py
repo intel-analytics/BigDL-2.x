@@ -61,7 +61,8 @@ loss = tf.reduce_mean(tf.losses.sparse_softmax_cross_entropy(logits=logits, labe
 optimizer = TFOptimizer(loss, Adam(1e-3))
 
 # kick off training
-optimizer.optimize(end_trigger=MaxEpoch(5), batch_size=256)
+# you may change the MaxIteration to MaxEpoch(5) to make it converge
+optimizer.optimize(end_trigger=MaxIteration(20), batch_size=256)
 
 # evaluate
 (images_data, labels_data) = mnist.read_data_sets("/tmp/mnist", "test")
