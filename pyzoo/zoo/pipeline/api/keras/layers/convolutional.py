@@ -565,7 +565,7 @@ class ZeroPadding2D(ZooKerasLayer):
     >>> zeropadding2d = ZeroPadding2D(padding=(2, 1), input_shape=(2, 8, 8))
     creating: createZooKerasZeroPadding2D
     """
-    def __init__(self, padding, dim_ordering="th", input_shape=None, **kwargs):
+    def __init__(self, padding=(1,1), dim_ordering="th", input_shape=None, **kwargs):
         if len(padding) == 2:
             padding = (padding[0], padding[0], padding[1], padding[1])
         super(ZeroPadding2D, self).__init__(None,
