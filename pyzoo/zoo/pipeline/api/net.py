@@ -28,6 +28,8 @@ from bigdl.nn.layer import Layer
 from bigdl.util.common import callBigDlFunc, to_list
 from zoo.pipeline.api.keras.engine.topology import ZooKerasLayer, KerasNet
 from zoo.util.tf import export_tf
+from bigdl.optim.optimizer import Sample
+from bigdl.optim.optimizer import MaxEpoch
 
 
 if sys.version >= '3':
@@ -319,12 +321,9 @@ class TFOptimizer:
             a = tf.assign(v, p)
             self.variable_placeholders.append(p)
             assigns.append(a)
-        self.assign = tf.group(assigns)
+        self.assign = tf.group(*assigns)
 
     def optimize(self, end_trigger=None, batch_size=32):
-
-        from bigdl.optim.optimizer import Sample
-        from bigdl.optim.optimizer import MaxEpoch
         if end_trigger is None:
             end_trigger = MaxEpoch(1)
         data = self.dataset.rdd
@@ -352,7 +351,6 @@ class TFDataset:
     @staticmethod
     def from_dataframe(dataframe):
         input_names = dataframe.schema.names
-        from bigdl.optim.optimizer import Sample
 
         def _get_data(row, tensor_names):
             _names = [n.split(":")[0] for n in tensor_names]
