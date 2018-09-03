@@ -30,6 +30,14 @@ class TestModelLoading(OnnxTestCase):
         input_shape_with_batch = (1, 3, 224, 224)
         self.compare_with_pytorch(pytorch_model, input_shape_with_batch)
 
+    def test_onnx_conv2d_2(self):
+        pytorch_model = torch.nn.Sequential(
+            torch.nn.Conv2d(in_channels=3, out_channels=64, kernel_size=3),
+            torch.nn.Conv2d(in_channels=64, out_channels=4, kernel_size=3)
+        )
+        input_shape_with_batch = (1, 3, 224, 224)
+        self.compare_with_pytorch(pytorch_model, input_shape_with_batch)
+
     def test_onnx_gemm(self):
         # TODO: Linear(bias = Flase) is mapped to Transpose + MatMul, not GEMM
         pytorch_model = torch.nn.Sequential(
@@ -46,14 +54,6 @@ class TestModelLoading(OnnxTestCase):
 
         pytorch_model = Add()
         input_shape_with_batch = [(1, 3), (1, 3)]
-        self.compare_with_pytorch(pytorch_model, input_shape_with_batch)
-
-    def test_onnx_conv2d_2(self):
-        pytorch_model = torch.nn.Sequential(
-            torch.nn.Conv2d(in_channels=3, out_channels=64, kernel_size=3),
-            torch.nn.Conv2d(in_channels=64, out_channels=4, kernel_size=3)
-        )
-        input_shape_with_batch = (1, 3, 224, 224)
         self.compare_with_pytorch(pytorch_model, input_shape_with_batch)
 
     def test_onnx_averagepool2d(self):
