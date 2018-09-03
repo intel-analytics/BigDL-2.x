@@ -23,7 +23,6 @@ import com.intel.analytics.zoo.pipeline.api.keras.layers.utils.KerasUtils
 import scala.reflect.ClassTag
 
 /**
- * Abstract class for different pooling 2D layers.
  * Do not create a new instance of it or use it in a model.
  * Please use its child classes, 'AveragePooling2D' and 'MaxPooling2D' instead.
  */
