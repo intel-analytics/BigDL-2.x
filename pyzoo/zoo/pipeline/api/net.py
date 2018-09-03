@@ -267,9 +267,6 @@ def _find_placeholders(grads):
                     queue.put(input_tensor)
     return list(placeholders)
 
-from bigdl.optim.optimizer import Sample
-from bigdl.optim.optimizer import MaxEpoch
-
 
 class TFOptimizer:
 
@@ -324,7 +321,12 @@ class TFOptimizer:
             assigns.append(a)
         self.assign = tf.group(assigns)
 
-    def optimize(self, end_trigger=MaxEpoch(1), batch_size=32):
+    def optimize(self, end_trigger=None, batch_size=32):
+
+        from bigdl.optim.optimizer import Sample
+        from bigdl.optim.optimizer import MaxEpoch
+        if end_trigger is None:
+            end_trigger = MaxEpoch(1)
         data = self.dataset.rdd
 
         sample_rdd = data.map(lambda t: Sample.from_ndarray(t, [np.array([0.0])]))
@@ -350,6 +352,7 @@ class TFDataset:
     @staticmethod
     def from_dataframe(dataframe):
         input_names = dataframe.schema.names
+        from bigdl.optim.optimizer import Sample
 
         def _get_data(row, tensor_names):
             _names = [n.split(":")[0] for n in tensor_names]
