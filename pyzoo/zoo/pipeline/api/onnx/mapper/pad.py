@@ -38,4 +38,3 @@ class PadMapper(OperatorMapper):
             return pad
         else:
             raise Exception("not supported.")
-

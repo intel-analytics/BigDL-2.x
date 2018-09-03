@@ -49,7 +49,7 @@ class ZeroPadding2D[T: ClassTag](
    override val padding: Array[Int] = Array(1, 1, 1, 1),
    override val dimOrdering: DataFormat = DataFormat.NCHW,
    override val inputShape: Shape = null)(implicit ev: TensorNumeric[T])
-  extends BigDLZeroPadding2D(padding, dimOrdering, inputShape) with Net {}
+  extends BigDLZeroPadding2D[T](padding, dimOrdering, inputShape) with Net {}
 
 object ZeroPadding2D {
   def apply[@specialized(Float, Double) T: ClassTag](
