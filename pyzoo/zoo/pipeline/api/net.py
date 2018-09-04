@@ -22,10 +22,12 @@ import os
 import json
 import tensorflow as tf
 import numpy as np
+from pyspark import RDD
 
 from bigdl.nn.layer import Model as BModel
 from bigdl.nn.layer import Layer
-from bigdl.util.common import callBigDlFunc, to_list
+from bigdl.util.common import callBigDlFunc, to_list, to_sample_rdd
+from zoo.feature.image import ImageSet
 from zoo.pipeline.api.keras.engine.topology import ZooKerasLayer, KerasNet
 from zoo.util.tf import export_tf
 from bigdl.optim.optimizer import Sample
@@ -212,6 +214,47 @@ class TFNet(Layer):
                                         input_names,
                                         output_names)
 
+    def predict(self, x, batch_size=-1, distributed=True):
+        """
+        Use a model to do prediction.
+
+        # Arguments
+        x: Prediction data. A Numpy array or RDD of Sample or ImageSet.
+        batch_per_thread:
+          The default value is 4.
+          When distributed is True,the total batch size is batch_per_thread * rdd.getNumPartitions.
+          When distributed is False the total batch size is batch_per_thread * numOfCores.
+        distributed: Boolean. Whether to do prediction in distributed mode or local mode.
+                     Default is True. In local mode, x must be a Numpy array.
+        """
+        if isinstance(x, ImageSet):
+            results = callBigDlFunc(self.bigdl_type, "zooPredict",
+                                    self.value,
+                                    x,
+                                    batch_size)
+            return ImageSet(results)
+        if distributed:
+            if isinstance(x, np.ndarray):
+                data_rdd = to_sample_rdd(x, np.zeros([x.shape[0]]))
+            elif isinstance(x, RDD):
+                data_rdd = x
+            else:
+                raise TypeError("Unsupported prediction data type: %s" % type(x))
+            results = callBigDlFunc(self.bigdl_type, "zooPredict",
+                                    self.value,
+                                    data_rdd,
+                                    batch_size)
+            return results.map(lambda result: Layer.convert_output(result))
+        else:
+            if isinstance(x, np.ndarray) or isinstance(x, list):
+                results = callBigDlFunc(self.bigdl_type, "zooPredict",
+                                        self.value,
+                                        self._to_jtensors(x),
+                                        batch_size)
+                return [Layer.convert_output(result) for result in results]
+            else:
+                raise TypeError("Unsupported prediction data type: %s" % type(x))
+
     @staticmethod
     def from_export_folder(folder):
         if not os.path.isdir(folder):
@@ -290,14 +333,7 @@ class TFOptimizer:
         self.dataset = tf.get_collection(all_required_inputs[0].name)[0]
         self.inputs = self.dataset.inputs
 
-        inputs_not_in_dataset = [i for i in all_required_inputs if i not in self.inputs]
-        if inputs_not_in_dataset:
-            raise ValueError("You should not use any placeholder that are not defined in dataset, "
-                             "found %s" % inputs_not_in_dataset)
-        if len(self.inputs) != len(all_required_inputs):
-            inputs_not_require_by_loss = [i for i in self.inputs if i not in all_required_inputs]
-            raise ValueError("You should use all the placeholders that are defined in dataset, "
-                             "%s are not used" % inputs_not_require_by_loss)
+        _check_the_same(all_required_inputs, self.inputs)
 
         export_tf(self.sess, self.export_dir, inputs=self.inputs, outputs=grads + [loss])
 
@@ -348,6 +384,14 @@ class TFDataset:
         for i in range(len(self.inputs)):
             tf.add_to_collection(self.inputs[i].name, self)
 
+    def set_rdd(self, rdd):
+        length = len(self.input_names)
+        self.rdd = rdd.map(lambda arr: arr[:length])
+        graph = tf.get_default_graph()
+        for i in range(len(self.inputs)):
+            graph.clear_collection(self.inputs[i].name)
+            tf.add_to_collection(self.inputs[i].name, self)
+
     @staticmethod
     def from_dataframe(dataframe):
         input_names = dataframe.schema.names
@@ -371,3 +415,31 @@ class TFDataset:
         if not types:
             types = [tf.float32] * len(names)
         return TFDataset(rdd, names, shapes, types)
+
+
+def _check_the_same(all_required_inputs, inputs_in_datasets):
+    inputs_not_in_dataset = [i for i in all_required_inputs if i not in inputs_in_datasets]
+    if inputs_not_in_dataset:
+        raise ValueError("You should not use any placeholder that are not defined in dataset, "
+                         "found %s" % inputs_not_in_dataset)
+    if len(inputs_in_datasets) != len(all_required_inputs):
+        inputs_not_require_by_loss = [i for i in inputs_in_datasets if i not in all_required_inputs]
+        raise ValueError("You should use all the placeholders that are defined in dataset, "
+                         "%s are not used" % inputs_not_require_by_loss)
+
+
+class TFPredictor:
+
+    def __init__(self, sess, outputs):
+        self.sess = sess
+        all_required_inputs = _find_placeholders(outputs)
+        self.dataset = tf.get_collection(all_required_inputs[0].name)[0]
+        self.inputs = self.dataset.inputs
+        _check_the_same(all_required_inputs, self.inputs)
+        self.tfnet = TFNet.from_session(sess, self.inputs, outputs)
+
+    def predict(self):
+        rdd = self.dataset.rdd
+        sample_rdd = rdd.map(lambda x: Sample.from_ndarray(x, np.array([0.0])))
+        return self.tfnet.predict(sample_rdd)
+
