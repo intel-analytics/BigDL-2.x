@@ -62,3 +62,18 @@ class TestModelLoading(OnnxTestCase):
         )
         input_shape_with_batch = (1, 3, 224, 224)
         self.compare_with_pytorch(pytorch_model, input_shape_with_batch)
+
+    def test_onnx_reshape(self):
+        class View(torch.nn.Module):
+            def __init__(self, *shape):
+                super(View, self).__init__()
+                # self.shape = shape
+
+            def forward(self, input):
+                return input.view(5, 4)
+
+        #pytorch_model = Reshape((5, 4))
+        pytorch_model = torch.nn.Sequential(
+            View(5, 4))
+        input_shape_with_batch = (2, 10)
+        self.compare_with_pytorch(pytorch_model, input_shape_with_batch)
