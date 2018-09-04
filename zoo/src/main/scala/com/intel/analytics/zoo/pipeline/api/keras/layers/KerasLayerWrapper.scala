@@ -39,8 +39,13 @@ private[zoo] object LayerWrapperByForward {
 
   private def singleShapeDummyValue[T: ClassTag](
      singleShape: Shape)(implicit ev: TensorNumeric[T]): Tensor[T] = {
-    Tensor[T](
-      (List(2) ++ KerasUtils.removeBatch(singleShape).toSingle()).toArray).fill(ev.one)
+    // There's no batch dimension in `Parameter`
+    val enrichShape = if (singleShape.toSingle()(0) < 0) {
+      List(2) ++ KerasUtils.removeBatch(singleShape).toSingle()
+    } else {
+      singleShape.toSingle()
+    }
+    Tensor[T](enrichShape.toArray).fill(ev.one)
   }
 
   def computeOutputShape[T: ClassTag](torchLayer: AbstractModule[Activity, Activity, T],
