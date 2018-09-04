@@ -50,7 +50,7 @@ class Merge[T: ClassTag](
     val concatAxis: Int = -1,
     // MultiShape isn't directly supported for serialization. Use Shape instead.
     val inputShape: Shape = null)(implicit ev: TensorNumeric[T])
-  extends LayerWrapperByForward[T](Merge.calcBatchInputShape(inputShape, layers))
+  extends KerasLayer[Tensor[T], Tensor[T], T](Merge.calcBatchInputShape(inputShape, layers))
   with Net {
 
   private val mergeMode = mode.toLowerCase()
@@ -126,7 +126,7 @@ class Merge[T: ClassTag](
     }
   }
 
-  override def doBuild(inputShape: Shape): AbstractModule[Activity, Activity, T] = {
+  override def doBuild(inputShape: Shape): AbstractModule[Tensor[T], Tensor[T], T] = {
     val input = inputShape.toMulti()
     val mergeLayer = mergeMode match {
       case "sum" => CAddTable()
@@ -150,8 +150,7 @@ class Merge[T: ClassTag](
         seq.add(com.intel.analytics.bigdl.nn.Reshape(Array(1, 1), Some(true)))
         seq
     }
-    val result = if (layers != null) {
-      // In the case `layers != null`, return a ParallelTable to merge layers.
+    if (layers != null) { // In the case `layers != null`, return a ParallelTable to merge layers.
       val model = TSequential[T]()
       val parallel = ParallelTable()
       var i = 0
@@ -161,12 +160,11 @@ class Merge[T: ClassTag](
       }
       model.add(parallel)
       model.add(mergeLayer)
-      model
+      model.asInstanceOf[AbstractModule[Tensor[T], Tensor[T], T]]
     }
     else { // In the case `layers == null`, only return a merge layer to merge nodes not layers.
-      mergeLayer
+      mergeLayer.asInstanceOf[AbstractModule[Tensor[T], Tensor[T], T]]
     }
-    result.asInstanceOf[AbstractModule[Activity, Activity, T]]
   }
 }
 
