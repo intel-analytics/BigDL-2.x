@@ -9,7 +9,7 @@ Currently, Analytics Zoo releases are hosted on maven central; here's an example
 ```xml
 <dependency>
     <groupId>com.intel.analytics.zoo</groupId>
-    <artifactId>analytics-zoo-[SPARK_1.6|SPARK_2.1|SPARK_2.2]</artifactId>
+    <artifactId>analytics-zoo-bigdl_0.6.0-[SPARK_1.6|SPARK_2.1|SPARK_2.2]</artifactId>
     <version>${ANALYTICS_ZOO_VERSION}</version>
 </dependency>
 ```
