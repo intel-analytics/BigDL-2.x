@@ -48,8 +48,9 @@ class MaxPooling2D[T: ClassTag](
   override val strides: Array[Int] = null,
   override val borderMode: String = "valid",
   val dimOrdering: DataFormat = DataFormat.NCHW,
-  val pads: Array[Int] = null,
-  override val inputShape: Shape = null)(implicit ev: TensorNumeric[T])
+  override val inputShape: Shape = null,
+  val pads: Array[Int] = null)
+                               (implicit ev: TensorNumeric[T])
   extends Pooling2D[T](poolSize, strides, borderMode,inputShape) with Net {
 
   override def doBuild(inputShape: Shape): AbstractModule[Activity, Activity, T] = {
