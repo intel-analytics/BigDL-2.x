@@ -41,6 +41,15 @@ class ParameterSpec extends KerasBaseSpec {
     val c = x + w
   }
 
+  "sub" should "be test" in {
+    val x = Variable[Float](Shape(1))
+    val y = Variable[Float](Shape(1))
+    val c = x + 1 - y
+    val model = Model[Float](input = Array(x, y), output = c)
+    model.forward(T(Tensor[Float](Array(4, 1)).rand(0, 1), Tensor[Float](Array(4, 1)).rand(0, 1)))
+
+  }
+
   "Parameter matMul axes" should "be test" in {
     val w = Parameter[Float](Shape(3, 2))
     val x = Variable[Float](Shape(3))
