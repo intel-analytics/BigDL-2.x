@@ -79,11 +79,19 @@ def export_tf(sess, folder, inputs, outputs,
                                                       output_names,
                                                       type_enums)
 
+    nodes_of_graph = []
+    for node in optimized_graph_def.node:
+        nodes_of_graph.append(node.name + ":0")
+
     new_input_names = []
     for t in inputs:
         if t.name in old_names2new:
+            if old_names2new[t.name] not in nodes_of_graph:
+                raise ValueError("Node %s doesn't exist in the graph" % old_names2new[t.name])
             new_input_names.append(old_names2new[t.name])
         else:
+            if t.name not in nodes_of_graph:
+                raise ValueError("Node %s doesn't exist in the graph" % t.name)
             new_input_names.append(t.name)
 
     # check all placeholder in the graph are listed in the new_input_names:
