@@ -26,7 +26,7 @@ from pyspark import RDD
 
 from bigdl.nn.layer import Model as BModel
 from bigdl.nn.layer import Layer
-from bigdl.util.common import callBigDlFunc, to_list, to_sample_rdd
+from bigdl.util.common import callBigDlFunc, to_list, to_sample_rdd, get_node_and_core_number, Sample
 from zoo.feature.image import ImageSet
 from zoo.pipeline.api.keras.engine.topology import ZooKerasLayer, KerasNet
 from zoo.util.tf import export_tf
@@ -363,6 +363,7 @@ class TFOptimizer:
         if end_trigger is None:
             end_trigger = MaxEpoch(1)
         data = self.dataset.rdd
+        batch_size = self.dataset.batch_size
 
         sample_rdd = data.map(lambda t: Sample.from_ndarray(t, [np.array([0.0])]))
         variables = Layer.convert_output(callBigDlFunc("float", "trainTFNet",
@@ -375,12 +376,25 @@ class TFOptimizer:
 
 class TFDataset:
 
-    def __init__(self, rdd, names, shapes, types):
+    def __init__(self, rdd, names, shapes, types, batch_size=None):
+        _, core_num = get_node_and_core_number()
+        if batch_size is None:
+            self.batch_size = core_num * 1
+        else:
+            if batch_size % core_num != 0:
+                raise ValueError("batch_size should be a multiple "
+                                 "of core_num, but got batch_size: "
+                                 "%s where core_num is %s" % (batch_size, core_num))
+            self.batch_size = batch_size
+        if batch_size is None:
+            batch_pre_core = None
+        else:
+            batch_pre_core = batch_size / core_num
         self.rdd = rdd.map(lambda arr: arr[:len(names)])
         self.input_names = names
         self.inputs = [tf.placeholder(name=names[i],
                                       dtype=types[i],
-                                      shape=shapes[i]) for i in range(len(names))]
+                                      shape=[batch_pre_core] + shapes[i]) for i in range(len(names))]
         for i in range(len(self.inputs)):
             tf.add_to_collection(self.inputs[i].name, self)
 
@@ -393,7 +407,7 @@ class TFDataset:
             tf.add_to_collection(self.inputs[i].name, self)
 
     @staticmethod
-    def from_dataframe(dataframe):
+    def from_dataframe(dataframe, batch_size=None):
         input_names = dataframe.schema.names
 
         def _get_data(row, tensor_names):
@@ -403,10 +417,11 @@ class TFDataset:
         data = dataframe.rdd\
             .map(lambda r: _get_data(r, input_names))\
             .map(lambda t: Sample.from_ndarray(t, [np.array([0.0])]))
-        return TFDataset(data, input_names, [None]*len(input_names), [tf.float32]*len(input_names))
+        return TFDataset(data, input_names, [None]*len(input_names),
+                         [tf.float32]*len(input_names), batch_size)
 
     @staticmethod
-    def from_rdd(rdd, names=None, shapes=None, types=None):
+    def from_rdd(rdd, names=None, shapes=None, types=None, batch_size=None):
         if not names:
             names = ["features", "labels"]
         if not shapes:
@@ -414,7 +429,7 @@ class TFDataset:
 
         if not types:
             types = [tf.float32] * len(names)
-        return TFDataset(rdd, names, shapes, types)
+        return TFDataset(rdd, names, shapes, types, batch_size)
 
 
 def _check_the_same(all_required_inputs, inputs_in_datasets):
