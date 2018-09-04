@@ -14,11 +14,7 @@
 # limitations under the License.
 #
 
-import numpy as np
-import pytest
-
 from test.zoo.pipeline.utils.test_utils import ZooTestCase
-from zoo.pipeline.api.keras.engine.topology import Input
 from zoo.pipeline.api.keras.layers import *
 from zoo.pipeline.api.keras.models import *
 import zoo.pipeline.api.autograd as auto
@@ -62,3 +58,14 @@ class TestAutoGradModel(ZooTestCase):
         input = Input(shape=[2, 3])
         dense = Dense(3)
         ZooKerasLayer.of(dense.value)(input)
+
+    def test_parameter_create(self):
+        w = auto.Parameter(input_shape=(3, 2))
+        value = w.get_weight()
+        w.set_weight(value)
+        x = auto.Variable(input_shape=(3,))
+        b = auto.Parameter(input_shape=(2,))
+        out = auto.mm(x, w, axes=(1, 0)) + b
+        model = Model(input=x, output=out)
+        input_data = np.random.uniform(0, 1, (4, 3))
+        model.forward(input_data)
