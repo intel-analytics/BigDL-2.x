@@ -51,11 +51,11 @@ class OperatorMapper(object):
         operator.set_name(self.node_name)
         if not isinstance(operator, zautograd.Variable):
             z_tensor = operator(self.inputs)
-            if self.params is None:
+            if self.params:
                 operator.set_weights(self.format_params(self.params))
         else:
             z_tensor = operator
-            if self.params is None:
+            if self.params:
                 operator.node.element().set_weights(self.format_params(self.params))
 
         self.all_tensors[self.output] = z_tensor  # update the all_tensors
