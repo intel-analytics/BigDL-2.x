@@ -16,7 +16,7 @@
 
 import tensorflow as tf
 from zoo import init_nncontext
-from zoo.pipeline.api.net import TFOptimizer, TFDataset
+from zoo.pipeline.api.net import TFOptimizer, TFDataset, TFPredictor
 from bigdl.optim.optimizer import MaxIteration, Adam, MaxEpoch
 import numpy as np
 import sys
@@ -34,7 +34,7 @@ def main():
     sc = init_nncontext()
 
     # get data, pre-process and create TFDataset
-    (images_data, labels_data) = mnist.read_data_sets("/tmp/mnist", "train")
+    (images_data, labels_data) = mnist.read_data_sets("/tmp/mnist", "test")
     image_rdd = sc.parallelize(images_data)
     labels_rdd = sc.parallelize(labels_data)
     rdd = image_rdd.zip(labels_rdd) \
@@ -54,17 +54,23 @@ def main():
     labels = tf.squeeze(labels)
 
     with slim.arg_scope(lenet.lenet_arg_scope()):
-        logits, end_points = lenet.lenet(images, num_classes=10, is_training=True)
+        logits, end_points = lenet.lenet(images, num_classes=10, is_training=False)
 
-    loss = tf.reduce_mean(tf.losses.sparse_softmax_cross_entropy(logits=logits, labels=labels))
-
-    # create a optimizer
-    optimizer = TFOptimizer(loss, Adam(1e-3))
-    # kick off training
-    optimizer.optimize(end_trigger=MaxEpoch(1))
+    predictions = tf.argmax(logits, axis=1, output_type=tf.int32)
+    correct = tf.expand_dims(tf.to_int32(tf.equal(predictions, labels)), axis=1)
 
     saver = tf.train.Saver()
-    saver.save(optimizer.sess, "/tmp/lenet/")
+
+    with tf.Session() as sess:
+        sess.run(tf.global_variables_initializer())
+        saver.restore(sess, "/tmp/lenet/")
+
+        predictor = TFPredictor(sess, [correct])
+
+        accuracy = predictor.predict().mean()
+
+        print("predict accuracy is %s" % accuracy)
+
 
 if __name__ == '__main__':
     main()
