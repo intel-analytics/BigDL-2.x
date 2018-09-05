@@ -63,7 +63,8 @@ class OnnxHelper:
             elif onnx_attr['auto_pad'] == 'VALID':
                 border_mode = 'valid'
             else:
-                raise NotImplementedError('Unknown auto_pad mode ${onnx_attr[\'auto_pad\'] }')
+                raise NotImplementedError('Unknown auto_pad mode "%s", only SAME_UPPER and VALID are supported.'
+                                          % onnx_attr['auto_pad'])
 
         if "pads" in onnx_attr.keys():
             pads4 = [int(i) for i in onnx_attr["pads"]]
