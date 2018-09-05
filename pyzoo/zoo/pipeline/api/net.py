@@ -26,7 +26,7 @@ from pyspark import RDD
 
 from bigdl.nn.layer import Model as BModel
 from bigdl.nn.layer import Layer
-from bigdl.util.common import callBigDlFunc, to_list, to_sample_rdd, get_node_and_core_number, Sample
+from bigdl.util.common import callBigDlFunc, to_list, to_sample_rdd, get_node_and_core_number, Sample, JavaValue
 from zoo.feature.image import ImageSet
 from zoo.pipeline.api.keras.engine.topology import ZooKerasLayer, KerasNet
 from zoo.util.tf import export_tf
@@ -217,15 +217,6 @@ class TFNet(Layer):
     def predict(self, x, batch_size=-1, distributed=True):
         """
         Use a model to do prediction.
-
-        # Arguments
-        x: Prediction data. A Numpy array or RDD of Sample or ImageSet.
-        batch_per_thread:
-          The default value is 4.
-          When distributed is True,the total batch size is batch_per_thread * rdd.getNumPartitions.
-          When distributed is False the total batch size is batch_per_thread * numOfCores.
-        distributed: Boolean. Whether to do prediction in distributed mode or local mode.
-                     Default is True. In local mode, x must be a Numpy array.
         """
         if isinstance(x, ImageSet):
             results = callBigDlFunc(self.bigdl_type, "zooPredict",
@@ -274,6 +265,7 @@ class TFNet(Layer):
             shutil.rmtree(temp)
 
         return net
+
 
 
 def _find_placeholders(grads):
@@ -359,7 +351,7 @@ class TFOptimizer:
             assigns.append(a)
         self.assign = tf.group(*assigns)
 
-    def optimize(self, end_trigger=None, batch_size=32):
+    def optimize(self, end_trigger=None):
         if end_trigger is None:
             end_trigger = MaxEpoch(1)
         data = self.dataset.rdd
@@ -376,7 +368,7 @@ class TFOptimizer:
 
 class TFDataset:
 
-    def __init__(self, rdd, names, shapes, types, batch_size=None):
+    def __init__(self, rdd, names, shapes, types, batch_size=None, hard_code_batch_size=False):
         _, core_num = get_node_and_core_number()
         if batch_size is None:
             self.batch_size = core_num * 1
@@ -386,25 +378,25 @@ class TFDataset:
                                  "of core_num, but got batch_size: "
                                  "%s where core_num is %s" % (batch_size, core_num))
             self.batch_size = batch_size
-        if batch_size is None:
+        if batch_size is None or not hard_code_batch_size:
             batch_pre_core = None
         else:
             batch_pre_core = batch_size / core_num
         self.rdd = rdd.map(lambda arr: arr[:len(names)])
         self.input_names = names
-        self.inputs = [tf.placeholder(name=names[i],
-                                      dtype=types[i],
-                                      shape=[batch_pre_core] + shapes[i]) for i in range(len(names))]
-        for i in range(len(self.inputs)):
-            tf.add_to_collection(self.inputs[i].name, self)
+        self.tensors = [tf.placeholder(name=names[i],
+                                       dtype=types[i],
+                                       shape=[batch_pre_core] + shapes[i]) for i in range(len(names))]
+        for i in range(len(self.tensors)):
+            tf.add_to_collection(self.tensors[i].name, self)
 
     def set_rdd(self, rdd):
         length = len(self.input_names)
         self.rdd = rdd.map(lambda arr: arr[:length])
         graph = tf.get_default_graph()
-        for i in range(len(self.inputs)):
-            graph.clear_collection(self.inputs[i].name)
-            tf.add_to_collection(self.inputs[i].name, self)
+        for i in range(len(self.tensors)):
+            graph.clear_collection(self.tensors[i].name)
+            tf.add_to_collection(self.tensors[i].name, self)
 
     @staticmethod
     def from_dataframe(dataframe, batch_size=None):

@@ -17,7 +17,7 @@
 import tensorflow as tf
 from zoo import init_nncontext
 from zoo.pipeline.api.net import TFOptimizer, TFDataset
-from bigdl.optim.optimizer import MaxIteration, Adam
+from bigdl.optim.optimizer import MaxIteration, Adam, MaxEpoch
 import numpy as np
 import sys
 
@@ -43,12 +43,13 @@ def main():
 
     dataset = TFDataset.from_rdd(rdd,
                                  names=["features", "labels"],
-                                 shapes=[(None, 28, 28, 1), (None, 1)],
-                                 types=[tf.float32, tf.int32]
+                                 shapes=[[28, 28, 1], [1]],
+                                 types=[tf.float32, tf.int32],
+                                 batch_size=280
                                  )
 
     # construct the model from TFDataset
-    images, labels = dataset.inputs
+    images, labels = dataset.tensors
 
     labels = tf.squeeze(labels)
 
@@ -60,8 +61,7 @@ def main():
     # create a optimizer
     optimizer = TFOptimizer(loss, Adam(1e-3))
     # kick off training
-    # you may change the MaxIteration to MaxEpoch(5) to make it converge
-    optimizer.optimize(end_trigger=MaxIteration(20), batch_size=280)
+    optimizer.optimize(end_trigger=MaxEpoch(1))
 
     # evaluate
     (images_data, labels_data) = mnist.read_data_sets("/tmp/mnist", "test")
