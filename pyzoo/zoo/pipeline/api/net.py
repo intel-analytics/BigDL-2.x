@@ -399,7 +399,7 @@ class TFDataset:
             tf.add_to_collection(self.tensors[i].name, self)
 
     @staticmethod
-    def from_dataframe(dataframe, batch_size=None):
+    def from_dataframe(dataframe, batch_size=None, hard_code_batch_size=False):
         input_names = dataframe.schema.names
 
         def _get_data(row, tensor_names):
@@ -410,10 +410,11 @@ class TFDataset:
             .map(lambda r: _get_data(r, input_names))\
             .map(lambda t: Sample.from_ndarray(t, [np.array([0.0])]))
         return TFDataset(data, input_names, [None]*len(input_names),
-                         [tf.float32]*len(input_names), batch_size)
+                         [tf.float32]*len(input_names), batch_size, hard_code_batch_size)
 
     @staticmethod
-    def from_rdd(rdd, names=None, shapes=None, types=None, batch_size=None):
+    def from_rdd(rdd, names=None, shapes=None, types=None, batch_size=None,
+                 hard_code_batch_size=False):
         if not names:
             names = ["features", "labels"]
         if not shapes:
@@ -421,7 +422,7 @@ class TFDataset:
 
         if not types:
             types = [tf.float32] * len(names)
-        return TFDataset(rdd, names, shapes, types, batch_size)
+        return TFDataset(rdd, names, shapes, types, batch_size, hard_code_batch_size)
 
 
 def _check_the_same(all_required_inputs, inputs_in_datasets):
