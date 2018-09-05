@@ -591,3 +591,17 @@ class TestModelLoading(OnnxTestCase):
                 y = np.concatenate(values, i)
                 output = OnnxLoader.run_node(node, [v for v in values])
                 np.testing.assert_almost_equal(output["output"], y, decimal=5)
+
+    def test_onnx_transpose(self):
+        class Permute(torch.nn.Module):
+            def __init__(self, *dim):
+                super(Permute, self).__init__()
+                # self.shape = shape
+
+            def forward(self, input):
+                return input.permute((0, 2, 1))
+
+        pytorch_model = torch.nn.Sequential(
+            Permute((0, 2, 1)))
+        input_shape_with_batch = (2, 3, 5)
+        self.compare_with_pytorch(pytorch_model, input_shape_with_batch)
