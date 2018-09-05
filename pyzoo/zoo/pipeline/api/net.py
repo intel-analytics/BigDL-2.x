@@ -323,7 +323,7 @@ class TFOptimizer:
         self.export_dir = tempfile.mkdtemp()
         all_required_inputs = _find_placeholders([loss])
         self.dataset = tf.get_collection(all_required_inputs[0].name)[0]
-        self.inputs = self.dataset.inputs
+        self.inputs = self.dataset.tensors
 
         _check_the_same(all_required_inputs, self.inputs)
 
@@ -441,7 +441,7 @@ class TFPredictor:
         self.sess = sess
         all_required_inputs = _find_placeholders(outputs)
         self.dataset = tf.get_collection(all_required_inputs[0].name)[0]
-        self.inputs = self.dataset.inputs
+        self.inputs = self.dataset.tensors
         _check_the_same(all_required_inputs, self.inputs)
         self.tfnet = TFNet.from_session(sess, self.inputs, outputs)
 
