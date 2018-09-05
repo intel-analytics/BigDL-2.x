@@ -267,7 +267,6 @@ class TFNet(Layer):
         return net
 
 
-
 def _find_placeholders(grads):
     '''
     find all the tensors that are used for computing grads and has been
@@ -386,7 +385,8 @@ class TFDataset:
         self.input_names = names
         self.tensors = [tf.placeholder(name=names[i],
                                        dtype=types[i],
-                                       shape=[batch_pre_core] + shapes[i]) for i in range(len(names))]
+                                       shape=[batch_pre_core] + shapes[i])
+                        for i in range(len(names))]
         for i in range(len(self.tensors)):
             tf.add_to_collection(self.tensors[i].name, self)
 
@@ -450,4 +450,3 @@ class TFPredictor:
         rdd = self.dataset.rdd
         sample_rdd = rdd.map(lambda x: Sample.from_ndarray(x, np.array([0.0])))
         return self.tfnet.predict(sample_rdd)
-
