@@ -51,7 +51,7 @@ class MaxPooling2D[T: ClassTag](
   override val inputShape: Shape = null,
   val pads: Array[Int] = null)
                                (implicit ev: TensorNumeric[T])
-  extends Pooling2D[T](poolSize, strides, borderMode,inputShape) with Net {
+  extends Pooling2D[T](poolSize, strides, borderMode, inputShape) with Net {
 
   override def doBuild(inputShape: Shape): AbstractModule[Activity, Activity, T] = {
     val shortPads = KerasUtils.getPadsFromBorderMode(borderMode, pads)
