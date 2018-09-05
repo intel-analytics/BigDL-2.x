@@ -26,7 +26,7 @@ from pyspark import RDD
 
 from bigdl.nn.layer import Model as BModel
 from bigdl.nn.layer import Layer
-from bigdl.util.common import callBigDlFunc, to_list, to_sample_rdd, get_node_and_core_number, Sample, JavaValue
+from bigdl.util.common import callBigDlFunc, to_list, to_sample_rdd, get_node_and_core_number
 from zoo.feature.image import ImageSet
 from zoo.pipeline.api.keras.engine.topology import ZooKerasLayer, KerasNet
 from zoo.util.tf import export_tf
