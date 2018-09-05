@@ -25,6 +25,9 @@ if [ ! -z "$1" ]
 then
    DIR=$1
    cd "$DIR"
+else
+   DIR=$(dirname "$0")
+   cd "$DIR"
 fi
 
 if [ -f "realworld.zip" ] || [ -d "realworld" ]
