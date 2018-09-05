@@ -60,8 +60,12 @@ class OnnxHelper:
         if "auto_pad" in onnx_attr.keys():
             if onnx_attr['auto_pad'] == 'SAME_UPPER':
                 border_mode = 'same'
-            elif onnx_attr['auto_pad'] == 'SAME_LOWER':
-                raise NotImplementedError('same_lower auto_pad is not implemented')
+            elif onnx_attr['auto_pad'] == 'VALID':
+                border_mode = 'valid'
+            else:
+                raise NotImplementedError('Unknown auto_pad mode "%s", '
+                                          'only SAME_UPPER and VALID are supported.'
+                                          % onnx_attr['auto_pad'])
 
         if "pads" in onnx_attr.keys():
             pads4 = [int(i) for i in onnx_attr["pads"]]
@@ -69,4 +73,6 @@ class OnnxHelper:
             assert pads4[0] == pads4[1]
             assert pads4[2] == pads4[3]
             pads = [pads4[0], pads4[1]]
+            border_mode = 'valid'
+
         return border_mode, pads
