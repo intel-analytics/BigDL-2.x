@@ -40,7 +40,7 @@ class OnnxHelper:
 
     @staticmethod
     def to_numpy(tensor_proto):
-        """Grab data in TensorProto and action to numpy array."""
+        """Grab data in TensorProto and to_tensor to numpy array."""
         try:
             from onnx.numpy_helper import to_array
         except ImportError as e:

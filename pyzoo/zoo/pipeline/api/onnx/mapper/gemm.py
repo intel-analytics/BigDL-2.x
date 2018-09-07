@@ -20,35 +20,40 @@ from zoo.pipeline.api.onnx.mapper.operator_mapper import OperatorMapper
 
 
 class GemmMapper(OperatorMapper):
-    def __init__(self, node, _params, _all_tensors):
-        super(GemmMapper, self).__init__(node, _params, _all_tensors)
+    def __init__(self, node, initializer, _all_tensors):
+        super(GemmMapper, self).__init__(node, initializer, _all_tensors)
 
-    def format_params(self, params):
-        """
-        Convert ONNX params to Zoo format
-        :return: list of ndarray
-        """
-        assert len(self.params) == 2
-        y = self.params[0]
-        z = self.params[1]
+    def _extract_model_inputs(self):
+        return [self._to_zoo_input(self._input_list[0])]
+
+    def _extract_trainable_values(self):
+        y = self._input_list[1]
+        z = self._input_list[2]
+
         if "transB" in self.onnx_attr and self.onnx_attr['transB']:
-            y = np.transpose(y)
+            y.zvalue = np.transpose(y.zvalue)
         alpha = self.onnx_attr["alpha"] if "alpha" in self.onnx_attr else 1.0
         beta = self.onnx_attr["beta"] if "beta" in self.onnx_attr else 1.0
+        return [alpha * y.zvalue, beta * z.zvalue]
+
+    def to_zoo_format(self, trainable_values):
+        """
+        Convert ONNX _initializer to Zoo format
+        :return: list of ndarray
+        """
+
         # The format of weight in BigDL is : input * output, so we need to transpose the y here.
         # There's no exception if you don't transpose it
         # as the `set_weights` method doesn't check the shape and respect the total items only.
-        weights = [np.transpose(alpha * y), beta * z]
-        return weights
+        return [np.transpose(trainable_values[0]), trainable_values[1]]
 
-    def create_operator(self):
-        assert len(self.inputs) == 1, "Gemm accept single input only"
-        input_shape = self.inputs[0].get_input_shape()
-        assert len(input_shape) == 2, "we only accept 2D input"
-        x = self.inputs[0]
-        z = self.params[1]
+    def _to_tensor(self):
+        x = self.model_inputs[0]
+        z = self.model_trainable_values[1]
+        assert len(x.zvalue.get_input_shape()) == 2, "we only accept 2D input"
+
         if "transA" in self.onnx_attr and self.onnx_attr['transA']:
             # TODO: add transpose operator for this x = x.transpose()
             raise Exception("we don't support this for now")
         layer = zlayers.Dense(len(z))
-        return layer
+        return layer(x.zvalue)
