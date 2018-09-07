@@ -26,7 +26,6 @@ import numpy as np
 class OperatorMapper(object):
     # converting NodeProto message
     # we don't differentiate the data input and weights here, they are all included into inputs.
-    # inputs is a OrderDict.
     def __init__(self, node, initializer, inputs):
         self.node = node
         self.op_name = node.op_type
@@ -38,7 +37,6 @@ class OperatorMapper(object):
         self._input_list = inputs
         self.model_inputs = self._extract_model_inputs()
         self.model_trainable_values = self._extract_trainable_values()
-        # self._input_list = list(self._input_list.values())
 
         assert len(node.output) == 1, "we only support single output for now"
         self.output = node.output[0]
