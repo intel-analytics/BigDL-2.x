@@ -13,11 +13,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
+import heapq
 
 import tensorflow as tf
 from zoo import init_nncontext
 from zoo.pipeline.api.net import TFOptimizer, TFDataset
-from bigdl.optim.optimizer import MaxIteration, Adam, MaxEpoch
+from bigdl.optim.optimizer import MaxIteration, Adam, MaxEpoch, TrainSummary
 import numpy as np
 import sys
 
@@ -60,8 +61,10 @@ def main():
 
     # create a optimizer
     optimizer = TFOptimizer(loss, Adam(1e-3))
+    optimizer.set_train_summary(TrainSummary("/tmp/az_lenet", "lenet"))
     # kick off training
-    optimizer.optimize(end_trigger=MaxEpoch(1))
+    for i in range(5):
+        optimizer.optimize(end_trigger=MaxEpoch(i + 1))
 
     saver = tf.train.Saver()
     saver.save(optimizer.sess, "/tmp/lenet/")
