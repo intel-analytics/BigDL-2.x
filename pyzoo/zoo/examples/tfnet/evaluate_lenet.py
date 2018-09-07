@@ -16,8 +16,7 @@
 
 import tensorflow as tf
 from zoo import init_nncontext
-from zoo.pipeline.api.net import TFOptimizer, TFDataset, TFPredictor
-from bigdl.optim.optimizer import MaxIteration, Adam, MaxEpoch
+from zoo.pipeline.api.net import TFDataset, TFPredictor
 import numpy as np
 import sys
 
@@ -45,7 +44,7 @@ def main():
                                  names=["features", "labels"],
                                  shapes=[[28, 28, 1], [1]],
                                  types=[tf.float32, tf.int32],
-                                 batch_size=280
+                                 batch_pre_core=20
                                  )
 
     # construct the model from TFDataset
