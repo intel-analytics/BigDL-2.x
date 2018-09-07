@@ -22,6 +22,6 @@ class ReluMapper(OperatorMapper):
     def __init__(self, node, _params, _all_tensors):
         super(ReluMapper, self).__init__(node, _params, _all_tensors)
 
-    def create_operator(self):
+    def _to_tensor(self):
         relu = zlayers.Activation("relu")
-        return relu
+        return relu(self.model_inputs[0].zvalue)

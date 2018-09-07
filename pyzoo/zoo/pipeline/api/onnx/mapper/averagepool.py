@@ -22,10 +22,9 @@ class AveragePoolMapper (OperatorMapper):
     def __init__(self, node, _params, _all_tensors):
         super(AveragePoolMapper, self).__init__(node, _params, _all_tensors)
 
-    def create_operator(self):
-        assert len(self.inputs) == 1, "AveragePool accept single input only"
-        rank = len(self.inputs[0].get_input_shape())
-        print(rank)
+    def _to_tensor(self):
+        assert len(self.model_inputs) == 1, "AveragePool accept single input only"
+        rank = len(self.model_inputs[0].zvalue.get_input_shape())
         if (rank == 4):  # NCHW
             poolSize = [int(i) for i in self.onnx_attr['kernel_shape']]
             strides = [int(i) for i in self.onnx_attr['strides']]
@@ -38,6 +37,6 @@ class AveragePoolMapper (OperatorMapper):
                                                      dim_ordering=dim_ordering,
                                                      pads=pads,
                                                      count_include_pad=count_include_pad)
-            return averagepool2d
+            return averagepool2d(self.model_inputs[0].zvalue)
         else:
             raise Exception("not supported.")

@@ -49,13 +49,18 @@ class OperatorMapper(object):
         cls = getattr(m, node.op_type + "Mapper")
         return cls(node, _params, inputs)
 
-    def _to_zoo_input(self, input, trainable=False):
+    def _to_zoo_input(self, input):
+        trainable = True if input.name in self._initializer else False
         if isinstance(input.zvalue, np.ndarray):
             input.data = input.zvalue
-            input.zvalue = zlayers.Input(shape=input.zvalue.shape[1:], name=input.name)
+            input.zvalue = zautograd.Parameter(shape=input.zvalue.shape,
+                                               name=input.name) if trainable else zlayers.Input(
+                shape=input.zvalue.shape[1:], name=input.name)
             return input
         elif isinstance(input.zvalue, list):
-            input.zvalue = zlayers.Input(shape=input.zvalue[1:], name=input.name)
+            input.zvalue = zautograd.Parameter(shape=input.zvalue,
+                                               name=input.name) if trainable else zlayers.Input(
+                shape=input.zvalue[1:], name=input.name)
             return input
         else:
             return input
@@ -79,8 +84,7 @@ class OperatorMapper(object):
         """
         :return: list of OnnxInput
         """
-        onnx_input = self._input_list[0]
-        return [self._to_zoo_input(onnx_input)]
+        return [self._to_zoo_input(i) for i in self._input_list]
 
     def _extract_trainable_values(self):
         """

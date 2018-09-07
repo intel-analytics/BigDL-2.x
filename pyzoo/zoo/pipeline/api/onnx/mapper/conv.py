@@ -23,6 +23,12 @@ class ConvMapper(OperatorMapper):
     def __init__(self, node, initializer, inputs):
         super(ConvMapper, self).__init__(node, initializer, inputs)
 
+    def _extract_model_inputs(self):
+        """
+        :return: list of OnnxInput
+        """
+        return [self._to_zoo_input(self._input_list[0])]
+
     def _extract_trainable_values(self):
         if len(self._input_list) > 2:
             return [self._input_list[1].zvalue, self._input_list[2].zvalue]
