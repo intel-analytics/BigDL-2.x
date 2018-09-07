@@ -129,6 +129,10 @@ class PythonZooModel[T: ClassTag](implicit ev: TensorNumeric[T]) extends PythonB
     ImInfo()
   }
 
+  def createDummyGT(): DummyGT = {
+    DummyGT()
+  }
+
   def createDecodeOutput(): DecodeOutput = {
     DecodeOutput()
   }

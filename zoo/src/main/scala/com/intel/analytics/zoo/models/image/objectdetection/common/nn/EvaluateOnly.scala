@@ -29,10 +29,9 @@ import scala.reflect.ClassTag
  * in evaluation mode, the modules will process the input tensors.
  * @return this
  */
+@SerialVersionUID(5600616321943671046L)
 class EvaluateOnly[T: ClassTag](module: Module[T])(implicit ev: TensorNumeric[T])
   extends DynamicContainer[Activity, Activity, T] {
-
-  add(module)
 
   override def updateOutput(input: Activity): Activity = {
     output = if (!isTraining()) {

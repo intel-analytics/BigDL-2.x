@@ -18,7 +18,7 @@ package com.intel.analytics.zoo.examples.objectdetection.finetune.fasterrcnn
 
 import com.intel.analytics.bigdl._
 import com.intel.analytics.bigdl.dataset.MiniBatch
-import com.intel.analytics.bigdl.nn.{Graph, Module}
+import com.intel.analytics.bigdl.nn.{Graph, Module, Sequential}
 import com.intel.analytics.bigdl.optim.{Optimizer, _}
 import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric.NumericFloat
 import com.intel.analytics.bigdl.utils.LoggerFilter
@@ -44,7 +44,8 @@ object Option {
     preTrainModel: String = "./",
     stateSnapshot: Option[String] = None,
     className: String = "",
-    learningRate: Double = 0.001,
+    learningRate: Double = 0.0001,
+    learningRateDecay: Double = 0.0005,
     step: Int = 50000,
     maxEpoch: Int = 50,
     jobName: String = "Analytics Zoo Fasterrcnn Fine Tune Example",
@@ -79,6 +80,9 @@ object Option {
     opt[Double]('l', "learningRate")
       .text("inital learning rate")
       .action((x, c) => c.copy(learningRate = x))
+    opt[Double]("learningRateDecay")
+      .text("learning rate decay")
+      .action((x, c) => c.copy(learningRateDecay = x))
     opt[String]("optim")
       .text("optim method")
       .action((x, c) => c.copy(optim = x))
@@ -148,21 +152,17 @@ object Train {
               learningRateSchedule = learningRateSchedule,
               weightDecay = 0.0005)
           case "adam" =>
-//            new Adam[Float](
-//              learningRate = param.learningRate
-//            )
-            new Adam[Float](learningRate = 0.0001,
-              learningRateDecay = 0.0005)
+            new Adam[Float](learningRate = param.learningRate,
+              learningRateDecay = param.learningRateDecay)
         }
       }
 
       val meanAveragePrecision = new MeanAveragePrecision(use07metric = true, normalized = false,
         classes = classNames)
       optimize(model, trainSet, valSet, param, optimMethod,
-//        Trigger.maxEpoch(param.maxEpoch), new FrcnnCriterion(), meanAveragePrecision)
-        Trigger.maxIteration(2), new FrcnnCriterion(), meanAveragePrecision)
-      model.saveModule("./pretrain2.model")
-      model.quantize().saveModule("./pretrain2-quantize.model")
+        Trigger.maxEpoch(param.maxEpoch), new FrcnnCriterion(), meanAveragePrecision)
+
+      model.saveModule("./pretrain.model")
     })
   }
 

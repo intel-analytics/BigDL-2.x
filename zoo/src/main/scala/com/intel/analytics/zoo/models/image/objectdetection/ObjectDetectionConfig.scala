@@ -26,6 +26,7 @@ import com.intel.analytics.zoo.models.image.common.ImageConfigure
 import com.intel.analytics.zoo.models.image.objectdetection.ObjectDetectorDataset.{Coco, Pascal}
 
 import scala.reflect.ClassTag
+import com.intel.analytics.bigdl.tensor.Tensor
 
 private[models] object ObjectDetectionConfig {
 
@@ -70,7 +71,6 @@ private[models] object ObjectDetectionConfig {
            "frcnn-vgg16-quantize" |
            "frcnn-vgg16-compress" |
            "frcnn-vgg16-compress-quantize" =>
-        val messi = Map(1 -> "__background__", 2 -> "messi")
         ImageConfigure(ObjectDetectionConfig.preprocessFrcnnVgg(dataset, version),
           DecodeOutput(),
           batchPerPartition = 1,
@@ -114,7 +114,8 @@ private[models] object ObjectDetectionConfig {
     Preprocessing[ImageFeature, ImageFeature] = {
     ImageAspectScale(resolution, scaleMultipleOf) ->
       ImageChannelNormalize(122.7717f, 115.9465f, 102.9801f) ->
-      ImageMatToTensor() -> ImInfo() -> ImageSetToSample(Array(ImageFeature.imageTensor, "ImInfo"))
+      ImageMatToTensor() -> ImInfo() -> DummyGT() ->
+      ImageSetToSample(Array(ImageFeature.imageTensor, "ImInfo", "GT"))
   }
 
   def preprocessFrcnnVgg(dataset: String, version: String):
@@ -166,5 +167,11 @@ object ObjectDetectorDataset {
 case class ImInfo() extends ImageProcessing {
   override def transformMat(feature: ImageFeature): Unit = {
     feature("ImInfo") = feature.getImInfo()
+  }
+}
+
+case class DummyGT() extends ImageProcessing {
+  override def transformMat(feature: ImageFeature): Unit = {
+    feature("DummyGT") = Tensor[Float](1)
   }
 }
