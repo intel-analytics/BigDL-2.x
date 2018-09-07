@@ -35,7 +35,7 @@ import scopt.OptionParser
 
 import scala.io.Source
 
-object TrainMessi {
+object Train {
 
   LoggerFilter.redirectSparkInfoLogs()
   Logger.getLogger("com.intel.analytics.bigdl.optim").setLevel(Level.INFO)
