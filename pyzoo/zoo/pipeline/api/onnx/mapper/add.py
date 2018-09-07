@@ -18,11 +18,17 @@ from zoo.pipeline.api.onnx.mapper.operator_mapper import OperatorMapper
 
 
 class AddMapper(OperatorMapper):
-    def __init__(self, node, _params, _all_tensors):
-        super(AddMapper, self).__init__(node, _params, _all_tensors)
+    def __init__(self, node, initializer, _all_tensors):
+        super(AddMapper, self).__init__(node, initializer, _all_tensors)
 
-    def create_operator(self):
-        assert len(self.inputs) == 2, "Add should have 2 inputs"
-        x = self.inputs[0]
-        y = self.inputs[1]
+    def _extract_model_inputs(self):
+        """
+        :return: list of inputs
+        """
+        assert len(self._input_list) == 2, "Add should have 2 inputs"
+        return [self._to_zoo_input(oi) for oi in self._input_list]
+
+    def _to_tensor(self):
+        x = self.model_inputs[0].zvalue
+        y = self.model_inputs[1].zvalue
         return x + y
