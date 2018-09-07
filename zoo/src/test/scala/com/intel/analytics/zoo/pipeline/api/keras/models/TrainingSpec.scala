@@ -63,13 +63,16 @@ class TrainingSpec extends FlatSpec with Matchers with BeforeAndAfter {
     }
   }
 
-  "initNNContext" should "work properly" in {
+  "initNNContext" should "contain spark-analytics-zoo.conf properties" in {
     sc = SparkContext.getOrCreate()
     sc.stop()
     val conf = new SparkConf()
       .setMaster("local[4]")
     sc = NNContext.initNNContext(conf, "hello")
     assert(sc.appName == "hello")
+    sc.getConf.get("spark.serializer") should be
+    ("org.apache.spark.serializer.JavaSerializer")
+    sc.getConf.get("spark.scheduler.minRegisteredResourcesRatio") should be ("1.0")
   }
 
   "sequential compile and fit with custom loss" should "work properly" in {
@@ -114,7 +117,7 @@ class TrainingSpec extends FlatSpec with Matchers with BeforeAndAfter {
     model.setGradientClippingByL2Norm(0.2f)
     model.fit(trainingData, batchSize = 8, validationData = testData, nbEpoch = 2)
     val accuracy = model.evaluate(testData, batchSize = 8)
-    val predictResults = model.predict(testData, batchSize = 8)
+    val predictResults = model.predict(testData, batchPerThread = 8)
     FileUtils.deleteDirectory(tmpLogDir)
     FileUtils.deleteDirectory(tmpCheckpointDir)
   }
@@ -156,7 +159,7 @@ class TrainingSpec extends FlatSpec with Matchers with BeforeAndAfter {
     })
   }
 
-  "fit on ImageSet" should "work properly" in {
+  "fit, predict and evaluate on ImageSet" should "work properly" in {
 
     def createImageFeature(): ImageFeature = {
       val feature = new ImageFeature()
@@ -193,6 +196,8 @@ class TrainingSpec extends FlatSpec with Matchers with BeforeAndAfter {
     model.compile(optimizer = "sgd", loss = "sparse_categorical_crossentropy",
       metrics = List("accuracy"))
     model.fit(trainingData, nbEpoch = 2, batchSize = 8, validationData = testData)
+    model.predict(testData, batchPerThread = 8)
+    val accuracy = model.evaluate(testData, batchSize = 8)
   }
 
 }

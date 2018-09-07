@@ -36,9 +36,10 @@ class TestNNClassifer():
         """ setup any state tied to the execution of the given method in a
         class.  setup_method is invoked for every test method of a class.
         """
-        sparkConf = create_spark_conf().setMaster("local[1]").setAppName("testNNClassifer")
+        sparkConf = init_spark_conf().setMaster("local[1]").setAppName("testNNClassifer")
         self.sc = init_nncontext(sparkConf)
         self.sqlContext = SQLContext(self.sc)
+        assert(self.sc.appName == "testNNClassifer")
 
     def teardown_method(self, method):
         """ teardown any state that was previously setup with a setup_method
@@ -364,6 +365,37 @@ class TestNNClassifer():
             row_prediction = data[i][2]
             assert row_label == row_prediction
 
+    def test_nnclassifier_fit_with_Sigmoid(self):
+        model = Sequential().add(Linear(2, 1)).add(Sigmoid())
+        criterion = BCECriterion()
+        classifier = NNClassifier(model, criterion, SeqToTensor([2])) \
+            .setBatchSize(4) \
+            .setLearningRate(0.2).setMaxEpoch(40)
+
+        data = self.sc.parallelize([
+            ((2.0, 1.0), 0.0),
+            ((1.0, 2.0), 1.0),
+            ((2.0, 1.0), 0.0),
+            ((1.0, 2.0), 1.0)])
+
+        schema = StructType([
+            StructField("features", ArrayType(DoubleType(), False), False),
+            StructField("label", DoubleType(), False)])
+        df = self.sqlContext.createDataFrame(data, schema)
+        nnClassifierModel = classifier.fit(df)
+        assert(isinstance(nnClassifierModel, NNClassifierModel))
+        res = nnClassifierModel.transform(df)
+        res.registerTempTable("nnClassifierModelDF")
+        results = self.sqlContext.table("nnClassifierModelDF")
+
+        count = results.rdd.count()
+        data = results.rdd.collect()
+
+        for i in range(count):
+            row_label = data[i][1]
+            row_prediction = data[i][2]
+            assert row_label == row_prediction
+
     def test_nnclassifierModel_set_Preprocessing(self):
         model = Sequential().add(Linear(2, 2))
         criterion = ClassNLLCriterion()
@@ -517,6 +549,7 @@ class TestNNClassifer():
             except OSError as exc:
                 if exc.errno != errno.ENOENT:  # ENOENT - no such file or directory
                     raise  # re-raise exception
+
 
 if __name__ == "__main__":
     pytest.main()

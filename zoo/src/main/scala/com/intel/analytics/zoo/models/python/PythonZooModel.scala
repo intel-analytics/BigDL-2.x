@@ -32,6 +32,7 @@ import com.intel.analytics.zoo.models.image.imageclassification.{ImageClassifier
 import com.intel.analytics.zoo.models.recommendation.{NeuralCF, Recommender, UserItemFeature, UserItemPrediction}
 import com.intel.analytics.zoo.models.recommendation._
 import com.intel.analytics.zoo.models.textclassification.TextClassifier
+import com.intel.analytics.zoo.pipeline.api.keras.layers.Embedding
 import org.apache.spark.api.java.JavaRDD
 import org.apache.spark.rdd.RDD
 import org.apache.spark.sql.DataFrame
@@ -58,12 +59,12 @@ class PythonZooModel[T: ClassTag](implicit ev: TensorNumeric[T]) extends PythonB
 
   def createZooTextClassifier(
       classNum: Int,
-      tokenLength: Int,
+      embedding: Embedding[T],
       sequenceLength: Int = 500,
       encoder: String = "cnn",
       encoderOutputDim: Int = 256,
       model: AbstractModule[Activity, Activity, T]): TextClassifier[T] = {
-    TextClassifier[T](classNum, tokenLength, sequenceLength, encoder, encoderOutputDim, model)
+    TextClassifier[T](classNum, embedding, sequenceLength, encoder, encoderOutputDim, model)
   }
 
   def loadTextClassifier(

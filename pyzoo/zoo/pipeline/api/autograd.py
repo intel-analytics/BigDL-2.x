@@ -245,6 +245,7 @@ def mm(x, y, axes):
 
 class Variable(kbase.ZooKerasCreator):
     def __init__(self, input_shape, node=None, jvalue=None, name=None):
+        self.name = name
         if jvalue:
             self.value = jvalue
             self.bigdl_type = "float"
@@ -253,6 +254,9 @@ class Variable(kbase.ZooKerasCreator):
                 super(Variable, self).__init__(jvalue, "float", node, name)
             else:
                 super(Variable, self).__init__(jvalue, "float", toMultiShape(input_shape), name)
+
+    def set_name(self, name):
+        self.node.element().set_name(name)
 
     @classmethod
     def from_node(cls, node):
@@ -442,6 +446,43 @@ class LambdaLayer(kbase.ZooKerasLayer):
                                           out_var,
                                           list(input_shape) if input_shape else None,
                                           **kwargs)
+
+
+class Parameter(kbase.ZooKerasLayer):
+    """
+    A trainable Variable. The default init_method is RandomUniform(-0.05, 0.05).
+    You can also specify the init_weight by passing a ndarray.
+    """
+    def __init__(self, shape, init_method=None,
+                 init_weight=None, trainable=True, **kwargs):
+        if not init_method:
+            from bigdl.nn.initialization_method import RandomUniform
+            init_method = RandomUniform(-0.05, 0.05)
+        super(Parameter, self).__init__(None,
+                                        list(shape),
+                                        init_method,
+                                        init_weight,
+                                        trainable,
+                                        ** kwargs)
+
+    def get_weight(self):
+        """
+        :return: the ndarray for the current weight
+        """
+        jtensor = callBigDlFunc(self.bigdl_type,
+                                "getParameterWeight",
+                                self)
+        return jtensor.to_ndarray()
+
+    def set_weight(self, value):
+        """
+        :param value: value is a ndarray
+        :return:
+        """
+        callBigDlFunc(self.bigdl_type,
+                      "setParameterWeight",
+                      self,
+                      kbase.JTensor.from_ndarray(value))
 
 
 class CustomLoss(LossFunction):

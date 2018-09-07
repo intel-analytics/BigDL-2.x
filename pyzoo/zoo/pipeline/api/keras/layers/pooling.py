@@ -112,13 +112,14 @@ class MaxPooling2D(ZooKerasLayer):
     """
     def __init__(self, pool_size=(2, 2), strides=None,
                  border_mode="valid", dim_ordering="th",
-                 input_shape=None, **kwargs):
+                 input_shape=None, pads=None, **kwargs):
         super(MaxPooling2D, self).__init__(None,
                                            pool_size,
                                            strides,
                                            border_mode,
                                            dim_ordering,
                                            list(input_shape) if input_shape else None,
+                                           pads,
                                            **kwargs)
 
 
@@ -146,13 +147,15 @@ class AveragePooling2D(ZooKerasLayer):
     creating: createZooKerasAveragePooling2D
     """
     def __init__(self, pool_size=(2, 2), strides=None, border_mode="valid",
-                 dim_ordering="th", input_shape=None, **kwargs):
+                 dim_ordering="th", input_shape=None, pads=None, count_include_pad=False, **kwargs):
         super(AveragePooling2D, self).__init__(None,
                                                pool_size,
                                                strides,
                                                border_mode,
                                                dim_ordering,
                                                list(input_shape) if input_shape else None,
+                                               pads,
+                                               count_include_pad,
                                                **kwargs)
 
 

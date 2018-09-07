@@ -14,14 +14,13 @@
 # limitations under the License.
 #
 
-import itertools
 import re
 import datetime as dt
 from optparse import OptionParser
 
 from bigdl.optim.optimizer import *
 from zoo.common.nncontext import init_nncontext
-from zoo.examples.textclassification.news20 import *
+from zoo.examples.textclassification.news20 import get_news20
 from zoo.models.textclassification import TextClassifier
 from zoo.pipeline.api.keras.objectives import SparseCategoricalCrossEntropy
 from zoo.pipeline.api.keras.metrics import Accuracy
@@ -51,20 +50,6 @@ def pad(l, fill_value, width):
         return l
 
 
-def to_vec(token, w2v_bc, embedding_dim):
-    if token in w2v_bc:
-        return w2v_bc[token]
-    else:
-        return pad([], 0, embedding_dim)
-
-
-def to_sample(vectors, label, embedding_dim):
-    flatten_features = list(itertools.chain(*vectors))
-    features = np.array(flatten_features, dtype='float').reshape(
-        [sequence_len, embedding_dim])
-    return Sample.from_ndarray(features, np.array(label))
-
-
 if __name__ == "__main__":
     parser = OptionParser()
     parser.add_option("--data_path", dest="data_path", default="/tmp/text_data")
@@ -78,7 +63,7 @@ if __name__ == "__main__":
     parser.add_option("-b", "--batch_size", dest="batch_size", default="128")
     parser.add_option("--nb_epoch", dest="nb_epoch", default="20")
     parser.add_option("-l", "--learning_rate", dest="learning_rate", default="0.01")
-    parser.add_option("--log_dir", dest="log_dir", default="/tmp/.bigdl")
+    parser.add_option("--log_dir", dest="log_dir", default="/tmp/.zoo")
     parser.add_option("--model", dest="model")
 
     (options, args) = parser.parse_args(sys.argv)
@@ -92,7 +77,7 @@ if __name__ == "__main__":
     sc = init_nncontext("Text Classification Example")
 
     print('Processing text dataset...')
-    texts = get_news20(base_dir=data_path)
+    texts, class_num = get_news20(base_dir=data_path)
     text_data_rdd = sc.parallelize(texts, options.partition_num)
 
     word_meta = analyze_texts(text_data_rdd)
@@ -100,28 +85,27 @@ if __name__ == "__main__":
     word_meta = dict(word_meta[10: max_words_num])
     word_mata_broadcast = sc.broadcast(word_meta)
 
-    word2vec = get_glove(base_dir=data_path, dim=token_length)
-    # Ignore those unknown words.
-    filtered_word2vec = dict((w, v) for w, v in word2vec.items() if w in word_meta)
-    filtered_word2vec_broadcast = sc.broadcast(filtered_word2vec)
-
-    tokens_rdd = text_data_rdd.map(lambda text_label:
-                                   ([w for w in text_to_words(text_label[0]) if
-                                     w in word_mata_broadcast.value], text_label[1]))
-    padded_tokens_rdd = tokens_rdd.map(lambda tokens_label:
-                                       (pad(tokens_label[0], "##", sequence_len), tokens_label[1]))
-    vector_rdd = padded_tokens_rdd.map(lambda tokens_label:
-                                       ([to_vec(w, filtered_word2vec_broadcast.value, token_length)
-                                         for w in tokens_label[0]], tokens_label[1]))
-    sample_rdd = vector_rdd.map(
-        lambda vectors_label: to_sample(vectors_label[0], vectors_label[1], token_length))
-
-    train_rdd, val_rdd = sample_rdd.randomSplit([training_split, 1-training_split])
+    indexed_rdd = text_data_rdd\
+        .map(lambda text_label:
+             ([word_mata_broadcast.value[w][0] for w in text_to_words(text_label[0]) if
+               w in word_mata_broadcast.value], text_label[1]))\
+        .map(lambda tokens_label:
+             (pad(tokens_label[0], 0, sequence_len), tokens_label[1]))
+    sample_rdd = indexed_rdd.map(
+        lambda features_label:
+            Sample.from_ndarray(np.array(features_label[0]), features_label[1]))
+    train_rdd, val_rdd = sample_rdd.randomSplit([training_split, 1 - training_split])
 
     if options.model:
         model = TextClassifier.load_model(options.model)
     else:
-        model = TextClassifier(CLASS_NUM, token_length, sequence_len,
+        if not (token_length == 50 or token_length == 100
+                or token_length == 200 or token_length == 300):
+            raise ValueError('token_length for GloVe can only be 50, 100, 200, 300, but got '
+                             + str(token_length))
+        embedding_file = data_path + "/glove.6B/glove.6B." + str(token_length) + "d.txt"
+        word_index = {w: i_f[0] for w, i_f in word_meta.items()}
+        model = TextClassifier(class_num, embedding_file, word_index, sequence_len,
                                options.encoder, int(options.encoder_output_dim))
 
     optimizer = Optimizer(
