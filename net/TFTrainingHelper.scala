@@ -18,14 +18,20 @@ package com.intel.analytics.zoo.pipeline.api.net
 
 import java.nio.FloatBuffer
 
-import com.intel.analytics.bigdl.dataset.{Sample, Transformer}
+import com.intel.analytics.bigdl.dataset.{MiniBatch, Sample, Transformer}
 import com.intel.analytics.bigdl.nn.abstractnn.{AbstractCriterion, AbstractModule, Activity}
+import com.intel.analytics.bigdl.optim.{OptimMethod, Optimizer, Trigger}
+import com.intel.analytics.bigdl.python.api.{PythonBigDLKeras, Sample => JSample}
 import com.intel.analytics.bigdl.tensor.{Storage, Tensor}
 import com.intel.analytics.bigdl.utils.T
+import org.apache.spark.api.java.JavaRDD
+import org.apache.spark.rdd.RDD
 import org.tensorflow.{Session, Tensor => TTensor}
 
 import scala.collection.Iterator
 import scala.collection.JavaConverters._
+import scala.io.Source
+import scala.reflect.io.Path
 
 private[zoo] class TFTrainingHelper(tfnet: TFNet,
                                     inputs: Array[String],
@@ -118,6 +124,36 @@ private[zoo] class TFTrainingHelper(tfnet: TFNet,
   }
 }
 
+object TFTrainingHelper {
+
+  def apply(modelPath: String): TFTrainingHelper = {
+    val (model, meta) = NetUtils.processTFFolder(modelPath)
+
+    val folderPath = Path(modelPath)
+    val trainingMetaPath = folderPath / Path("training_meta.json")
+
+    val jsonStr = Source.fromFile(trainingMetaPath.jfile).getLines().mkString
+    import org.json4s._
+    import org.json4s.jackson.JsonMethods._
+    implicit val formats = DefaultFormats
+
+    val trainingMeta = parse(jsonStr).camelizeKeys.extract[TrainMeta]
+
+    val newMeta = Meta(
+      (meta.inputNames.toSeq ++: trainingMeta.variables.toSeq).toArray,
+      meta.outputNames)
+    val graphDef = TFNet.parseGraph(model)
+    val tfnet = TFNet(graphDef, model, newMeta, TFNet.defaultSessionConfig.toByteArray())
+
+
+    new TFTrainingHelper(tfnet,
+      trainingMeta.inputNames,
+      trainingMeta.outputNames,
+      trainingMeta.variables,
+      trainingMeta.gradVariables)
+  }
+}
+
 
 class IdentityCriterion extends AbstractCriterion[Activity, Activity, Float]() {
 
@@ -151,5 +187,25 @@ class MergeFeatureLabel() extends Transformer[Sample[Float], Sample[Float]] {
 
 case class TrainMeta(inputNames: Array[String], outputNames: Array[String],
                      variables: Array[String], gradVariables: Array[String])
+
+
+class TFOptimizer(modelPath: String,
+                  optimMethod: OptimMethod[Float],
+                  x: RDD[Sample[Float]],
+                  batchSize: Int = 32) {
+  private val trainer: TFTrainingHelper = TFTrainingHelper(modelPath)
+  private val optimizer: Optimizer[Float, MiniBatch[Float]] = {
+    val optimizer = Optimizer[Float](trainer, x, new IdentityCriterion(), batchSize)
+
+    optimizer.setOptimMethod(optimMethod)
+    optimizer
+  }
+
+  def optimize(endTrigger: Trigger = Trigger.maxEpoch(1)): Array[Tensor[Float]] = {
+    optimizer.setEndWhen(endTrigger)
+    optimizer.optimize()
+    trainer.parameters()._1
+  }
+}
 
 
