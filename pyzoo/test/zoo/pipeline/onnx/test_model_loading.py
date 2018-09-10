@@ -161,7 +161,6 @@ class TestModelLoading(OnnxTestCase):
         input_shape_with_batch = (1, 3, 224, 224)
         self.compare_with_pytorch(pytorch_model, input_shape_with_batch)
 
-<<<<<<< HEAD
     def test_reshape(self):
         original_shape = [2, 3, 4]
         test_cases = {
@@ -214,7 +213,7 @@ class TestModelLoading(OnnxTestCase):
         )
         output = OnnxLoader.run_node(node, [])
         np.testing.assert_almost_equal(output["values"], values, decimal=5)
-=======
+
     def test_maxpool2d_pads(self):
         node = helper.make_node(
             'MaxPool',
@@ -281,4 +280,3 @@ class TestModelLoading(OnnxTestCase):
                         [17, 19]]]]).astype(np.float32)
         output = OnnxLoader.run_node(node, [x])
         np.testing.assert_almost_equal(output["y"], y, decimal=5)
->>>>>>> new unitest added and helper modified
