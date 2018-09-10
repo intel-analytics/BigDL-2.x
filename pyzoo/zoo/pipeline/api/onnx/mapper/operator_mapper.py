@@ -68,14 +68,13 @@ class OperatorMapper(object):
         input.data = input.zvalue
         if is_constant:
             input.zvalue = zautograd.Parameter(shape=shape, init_weight=input.zvalue,
-                                                trainable=False)
+                                               trainable=False)
         elif is_parameter:
-            input.zvalue = zautograd.Parameter(shape=shape, init_weight=input.zvalue,)
+            input.zvalue = zautograd.Parameter(shape=shape, init_weight=input.zvalue, )
         else:
             input.zvalue = zlayers.Input(
                 shape=shape, name=input.name)
         return input
-
 
     def to_tensor(self):
         """

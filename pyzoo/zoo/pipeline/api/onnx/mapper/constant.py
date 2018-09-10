@@ -35,5 +35,3 @@ class ConstantMapper(OperatorMapper):
 
     def _to_tensor(self):
         return self.model_inputs[0].zvalue
-
-
