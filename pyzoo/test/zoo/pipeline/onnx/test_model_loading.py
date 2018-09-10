@@ -246,7 +246,7 @@ class TestModelLoading(OnnxTestCase):
             outputs=['y'],
             kernel_shape=[3, 3],
             strides=[2, 2],
-            auto_pad='SAME_UPPER'
+            auto_pad='SAME_UPPER'.decode('utf-8')
         )
         x = np.array([[[
             [1, 2, 3, 4, 5],
