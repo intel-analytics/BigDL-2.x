@@ -54,15 +54,13 @@ class OnnxHelper:
 
     @staticmethod
     def get_padds(onnx_attr):
-        border_mode = None
+        border_mode = 'valid'
         pads = None
 
         if "auto_pad" in onnx_attr.keys():
             if onnx_attr['auto_pad'] == 'SAME_UPPER':
                 border_mode = 'same'
-            elif onnx_attr['auto_pad'] == 'VALID':
-                border_mode = 'valid'
-            else:
+            elif onnx_attr['auto_pad'] != 'VALID':
                 raise NotImplementedError('Unknown auto_pad mode "%s", '
                                           'only SAME_UPPER and VALID are supported.'
                                           % onnx_attr['auto_pad'])
@@ -73,6 +71,5 @@ class OnnxHelper:
             assert pads4[0] == pads4[1]
             assert pads4[2] == pads4[3]
             pads = [pads4[0], pads4[1]]
-            border_mode = 'valid'
 
         return border_mode, pads
