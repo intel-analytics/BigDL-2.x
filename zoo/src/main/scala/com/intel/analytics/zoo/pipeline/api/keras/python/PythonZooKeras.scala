@@ -1194,6 +1194,11 @@ class PythonZooKeras[T: ClassTag](implicit ev: TensorNumeric[T]) extends PythonB
     new IdentityCriterion()
   }
 
+  def createTFValidationMethod(validationMethod: ValidationMethod[Float],
+                               outputLength: Int, targetLength: Int): TFValidationMethod = {
+    new TFValidationMethod(validationMethod, outputLength, targetLength)
+  }
+
   def connectInputs(module: AbstractModule[Activity, Activity, T],
       x: JList[Variable[T]]): Variable[T] = {
     require(!x.isEmpty, "We don't accept empty inputs")
