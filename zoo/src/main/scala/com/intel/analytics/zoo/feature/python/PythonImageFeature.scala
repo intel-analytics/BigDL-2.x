@@ -16,7 +16,7 @@
 
 package com.intel.analytics.zoo.feature.python
 
-import java.util.{List => JList}
+import java.util.{List => JList, Map => JMap}
 
 import com.intel.analytics.bigdl.nn.abstractnn.DataFormat
 import com.intel.analytics.bigdl.python.api.{JTensor, PythonBigDL}
@@ -72,6 +72,12 @@ class PythonImageFeature[T: ClassTag](implicit ev: TensorNumeric[T]) extends Pyt
     imageSet.array.map(x => imageSetToPredict(x, key)).toList.asJava
   }
 
+  def localImageSetToUri(imageSet: LocalImageSet): JList[String] = {
+    imageSet.array.map { imf =>
+      imf.uri()
+    }.toList.asJava
+  }
+
   def distributedImageSetToImageTensorRdd(imageSet: DistributedImageSet,
     floatKey: String = ImageFeature.floats, toChw: Boolean = true): JavaRDD[JTensor] = {
     imageSet.rdd.map(imageFeatureToImageTensor(_, floatKey, toChw)).toJavaRDD()
@@ -84,6 +90,12 @@ class PythonImageFeature[T: ClassTag](implicit ev: TensorNumeric[T]) extends Pyt
   def distributedImageSetToPredict(imageSet: DistributedImageSet, key: String)
   : JavaRDD[JList[Any]] = {
     imageSet.rdd.map(x => imageSetToPredict(x, key))
+  }
+
+  def distributedImageSetToUri(imageSet: DistributedImageSet): JavaRDD[String] = {
+    imageSet.rdd.map { imf =>
+      imf.uri()
+    }.toJavaRDD()
   }
 
   private def imageSetToPredict(imf: ImageFeature, key: String): JList[Any] = {
