@@ -16,7 +16,7 @@
 
 package com.intel.analytics.zoo.feature.python
 
-import java.util.{List => JList, Map => JMap}
+import java.util.{List => JList}
 
 import com.intel.analytics.bigdl.nn.abstractnn.DataFormat
 import com.intel.analytics.bigdl.python.api.{JTensor, PythonBigDL}
