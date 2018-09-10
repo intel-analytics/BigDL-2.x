@@ -137,3 +137,56 @@ class TestModelLoading(OnnxTestCase):
         )
         input_shape_with_batch = (1, 3, 224, 224)
         self.compare_with_pytorch(pytorch_model, input_shape_with_batch)
+
+    def test_reshape(self):
+        original_shape = [2, 3, 4]
+        test_cases = {
+            'reordered_dims': np.array([4, 2, 3], dtype=np.int64),
+            'reduced_dims': np.array([3, 8], dtype=np.int64),
+            'extended_dims': np.array([3, 2, 2, 2], dtype=np.int64),
+            'one_dim': np.array([24], dtype=np.int64)
+            # 'negative_dim': np.array([6, -1, 2], dtype=np.int64),
+        }
+        data = np.random.random_sample(original_shape).astype(np.float32)
+
+        for test_name, shape in test_cases.items():
+            node = onnx.helper.make_node(
+                'Reshape',
+                inputs=['data', 'shape'],
+                outputs=['reshaped'],
+            )
+
+            output = OnnxLoader.run_node(node, [data, shape])
+            reshaped = np.reshape(data, shape)
+            np.testing.assert_almost_equal(output["reshaped"], reshaped, decimal=5)
+
+    def test_reshape_pytorch(self):
+        class View(torch.nn.Module):
+            def __init__(self, *shape):
+                super(View, self).__init__()
+                self.shape = shape
+
+            def forward(self, input):
+                return input.view(self.shape)
+
+        pytorch_model = torch.nn.Sequential(
+            torch.nn.Linear(20, 20),
+            View(2, 5, 4))
+        input_shape_with_batch = (2, 20)
+        self.compare_with_pytorch(pytorch_model, input_shape_with_batch)
+
+    def test_constant(self):
+        values = np.random.randn(5, 5).astype(np.float32)
+        node = onnx.helper.make_node(
+            'Constant',
+            inputs=[],
+            outputs=['values'],
+            value=onnx.helper.make_tensor(
+                name='const_tensor',
+                data_type=onnx.TensorProto.FLOAT,
+                dims=values.shape,
+                vals=values.flatten().astype(float),
+            ),
+        )
+        output = OnnxLoader.run_node(node, [])
+        np.testing.assert_almost_equal(output["values"], values, decimal=5)

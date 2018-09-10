@@ -47,29 +47,44 @@ class OperatorMapper(object):
         cls = getattr(m, node.op_type + "Mapper")
         return cls(node, _params, inputs)
 
-    def _to_zoo_input(self, input):
-        trainable = True if input.name in self._initializer else False
+    def _to_zoo_input(self, input, is_constant=None):
+        is_parameter = True if input.name in self._initializer else False
+        if isinstance(input.zvalue, zautograd.Variable) or isinstance(input.zvalue,
+                                                                      zautograd.Parameter):
+            return input
         if isinstance(input.zvalue, np.ndarray):
-            input.data = input.zvalue
-            input.zvalue = zautograd.Parameter(shape=input.zvalue.shape,
-                                               name=input.name) if trainable else zlayers.Input(
-                shape=input.zvalue.shape[1:], name=input.name)
-            return input
+            if is_parameter or is_constant:
+                shape = input.zvalue.shape
+            else:
+                shape = input.zvalue.shape[1:]
         elif isinstance(input.zvalue, list):
-            input.zvalue = zautograd.Parameter(shape=input.zvalue,
-                                               name=input.name) if trainable else zlayers.Input(
-                shape=input.zvalue[1:], name=input.name)
-            return input
+            if is_parameter or is_constant:
+                shape = input.zvalue
+            else:
+                shape = input.zvalue[1:]
         else:
-            return input
+            raise Exception("not supported type " + str(type(input.zvalue)))
+
+        input.data = input.zvalue
+        if is_constant:
+            input.zvalue = zautograd.Parameter(shape=shape, init_weight=input.zvalue,
+                                               trainable=False)
+        elif is_parameter:
+            input.zvalue = zautograd.Parameter(shape=shape, init_weight=input.zvalue, )
+        else:
+            input.zvalue = zlayers.Input(
+                shape=shape, name=input.name)
+        return input
 
     def to_tensor(self):
         """
         Convert a node to tensor
         """
         out_tensor = self._to_tensor()
-        out_tensor.set_name(self.node_name)
-        assert isinstance(out_tensor, zautograd.Variable)
+        if self.node_name:
+            out_tensor.set_name(self.node_name)
+        assert isinstance(out_tensor, zautograd.Variable) or isinstance(out_tensor,
+                                                                        zautograd.Parameter)
         if self.model_trainable_values:
             out_tensor.node.element().set_weights(
                 self.to_zoo_format(self.model_trainable_values))
