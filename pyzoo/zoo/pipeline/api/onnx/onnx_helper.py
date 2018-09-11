@@ -58,9 +58,9 @@ class OnnxHelper:
         pads = None
 
         if "auto_pad" in onnx_attr.keys():
-            if onnx_attr['auto_pad'] == 'SAME_UPPER':
+            if onnx_attr['auto_pad'].decode() == 'SAME_UPPER':
                 border_mode = 'same'
-            elif onnx_attr['auto_pad'] == 'VALID':
+            elif onnx_attr['auto_pad'].decode() == 'VALID':
                 border_mode = 'valid'
             else:
                 raise NotImplementedError('Unknown auto_pad mode "%s", '
