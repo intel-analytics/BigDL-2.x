@@ -35,10 +35,6 @@ private[zoo] class KerasParameter[T: ClassTag] private[zoo](val inputShape: Shap
   extends KerasLayer[Activity, Activity, T](inputShape)
     with InternalWithoutInput with Net {
 
-  if (this.modules.isEmpty) {
-    build(inputShape)
-  }
-
   def setWeight(tensor: Tensor[T]): Unit = {
     this.labor.asInstanceOf[InternalParameter[T]].setWeight(tensor)
   }
