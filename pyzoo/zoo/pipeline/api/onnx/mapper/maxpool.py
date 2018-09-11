@@ -29,7 +29,10 @@ class MaxPoolMapper(OperatorMapper):
 
         if (rank == 4):  # NCHW
             pool_size = [int(i) for i in self.onnx_attr['kernel_shape']]
-            strides = [int(i) for i in self.onnx_attr['strides']]
+            if "strides" in self.onnx_attr.keys():
+                strides = [int(i) for i in self.onnx_attr['strides']]
+            else:
+                strides = [1 for i in self.onnx_attr['kernel_shape']]
 
             border_mode, pads = OnnxHelper.get_padds(self.onnx_attr)
 
