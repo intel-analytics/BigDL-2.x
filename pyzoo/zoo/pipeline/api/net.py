@@ -421,22 +421,22 @@ class TFOptimizer:
 class TFDataset:
 
     def __init__(self, rdd, names, shapes, types, batch_size=-1,
-                 batch_pre_core=-1, hard_code_batch_size=False, val_rdd=None):
-        if batch_size > 0 and batch_pre_core > 0:
+                 batch_pre_thread=-1, hard_code_batch_size=False, val_rdd=None):
+        if batch_size > 0 and batch_pre_thread > 0:
             raise ValueError("bath_size and batch_per_core should not be set simultaneously")
 
         node_num, core_num = get_node_and_core_number()
         self.total_core_num = node_num * core_num
         if batch_size > 0:
             if batch_size % self.total_core_num != 0:
-                raise ValueError("batch_size should be a multiple "
-                                 "of core_num, but got batch_size: "
-                                 "%s where core_num is %s" % (batch_size, self.total_core_num))
-        if batch_size <= 0 and batch_pre_core <= 0:
-            batch_pre_core = 1
+                raise ValueError("batch_size should be a multiple " +
+                                 "of total core number, but got batch_size: " +
+                                 "%s where total core number is %s" % (batch_size, self.total_core_num))
+        if batch_size <= 0 and batch_pre_thread <= 0:
+            batch_pre_thread = 1
             batch_size = self.total_core_num
         self.batch_size = batch_size
-        self.batch_pre_core = batch_pre_core
+        self.batch_pre_thread = batch_pre_thread
 
         if not hard_code_batch_size:
             self.tensors = [tf.placeholder(name=names[i],
@@ -444,10 +444,10 @@ class TFDataset:
                                            shape=[None] + shapes[i])
                             for i in range(len(names))]
         else:
-            if batch_pre_core is not None:
+            if batch_pre_thread > 0:
                 self.tensors = [tf.placeholder(name=names[i],
                                                dtype=types[i],
-                                               shape=[batch_pre_core] + shapes[i])
+                                               shape=[batch_pre_thread] + shapes[i])
                                 for i in range(len(names))]
             else:
                 self.tensors = [tf.placeholder(name=names[i],
@@ -463,7 +463,7 @@ class TFDataset:
             tf.add_to_collection(self.tensors[i].name, self)
 
     @staticmethod
-    def from_dataframe(dataframe, batch_size=None, batch_pre_core=None,
+    def from_dataframe(dataframe, batch_size=None, batch_pre_thread=None,
                        hard_code_batch_size=False, val_df=None):
         input_names = dataframe.schema.names
 
@@ -481,11 +481,11 @@ class TFDataset:
                 .map(lambda t: Sample.from_ndarray(t, [np.array([0.0])]))
         return TFDataset(data, input_names, [None]*len(input_names),
                          [tf.float32]*len(input_names), batch_size,
-                         batch_pre_core, hard_code_batch_size, val_data)
+                         batch_pre_thread, hard_code_batch_size, val_data)
 
     @staticmethod
     def from_rdd(rdd, names=None, shapes=None, types=None,
-                 batch_size=None, batch_pre_core=None,
+                 batch_size=None, batch_pre_thread=None,
                  hard_code_batch_size=False, val_rdd=None):
         if not names:
             names = ["features", "labels"]
@@ -495,18 +495,18 @@ class TFDataset:
         if not types:
             types = [tf.float32] * len(names)
         return TFDataset(rdd, names, shapes, types,
-                         batch_size, batch_pre_core,
+                         batch_size, batch_pre_thread,
                          hard_code_batch_size, val_rdd)
 
 
 def _check_the_same(all_required_inputs, inputs_in_datasets):
     inputs_not_in_dataset = [i for i in all_required_inputs if i not in inputs_in_datasets]
     if inputs_not_in_dataset:
-        raise ValueError("You should not use any placeholder that are not defined in dataset, "
+        raise ValueError("You should not use any placeholder that are not defined in dataset, " +
                          "found %s" % inputs_not_in_dataset)
     if len(inputs_in_datasets) != len(all_required_inputs):
         inputs_not_require_by_loss = [i for i in inputs_in_datasets if i not in all_required_inputs]
-        raise ValueError("You should use all the placeholders that are defined in dataset, "
+        raise ValueError("You should use all the placeholders that are defined in dataset, " +
                          "%s are not used" % inputs_not_require_by_loss)
 
 
@@ -519,11 +519,11 @@ class TFPredictor:
         self.inputs = self.dataset.tensors
         _check_the_same(all_required_inputs, self.inputs)
         self.tfnet = TFNet.from_session(sess, self.inputs, outputs)
-        if self.dataset.batch_pre_core <= 0:
-            raise ValueError("You should set batch_pre_core on TFDataset instead of batch_size")
+        if self.dataset.batch_pre_thread <= 0:
+            raise ValueError("You should set batch_pre_thread on TFDataset instead of batch_size for prediction")
 
     def predict(self):
         rdd = self.dataset.rdd
         sample_rdd = rdd.map(lambda x: Sample.from_ndarray(x, np.array([0.0])))
 
-        return self.tfnet.predict(sample_rdd, self.dataset.batch_pre_core)
+        return self.tfnet.predict(sample_rdd, self.dataset.batch_pre_thread)

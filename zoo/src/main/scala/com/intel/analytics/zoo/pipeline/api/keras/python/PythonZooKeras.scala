@@ -1315,11 +1315,6 @@ class PythonZooKeras[T: ClassTag](implicit ev: TensorNumeric[T]) extends PythonB
       toJSample(x).asInstanceOf[RDD[JSample[Float]]], batchSize)
   }
 
-  def tfOptimize(optimizer: TFOptimizer, endTrigger: Trigger): JList[JTensor] = {
-    val result = optimizer.optimize(endTrigger)
-    result.map(t => toJTensor(t.asInstanceOf[Tensor[T]])).toVector.asJava
-  }
-
   def trainTFNet(modelPath: String,
                  optimMethod: OptimMethod[Float],
                  x: JavaRDD[Sample],
