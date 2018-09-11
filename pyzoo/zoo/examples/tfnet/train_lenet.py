@@ -18,7 +18,7 @@ import heapq
 import tensorflow as tf
 from zoo import init_nncontext
 from zoo.pipeline.api.net import TFOptimizer, TFDataset
-from bigdl.optim.optimizer import MaxIteration, Adam, MaxEpoch, TrainSummary, Top1Accuracy, ValidationSummary
+from bigdl.optim.optimizer import *
 import numpy as np
 import sys
 
@@ -29,6 +29,7 @@ sys.path.append("/tmp/models/slim")  # add the slim library
 from nets import lenet
 
 slim = tf.contrib.slim
+
 
 def main():
     sc = init_nncontext()
@@ -64,7 +65,10 @@ def main():
     loss = tf.reduce_mean(tf.losses.sparse_softmax_cross_entropy(logits=logits, labels=labels_sq))
 
     # create a optimizer
-    optimizer = TFOptimizer(loss, Adam(1e-3), val_outputs=[logits], val_labels=[labels], val_method=Top1Accuracy())
+    optimizer = TFOptimizer(loss, Adam(1e-3),
+                            val_outputs=[logits],
+                            val_labels=[labels],
+                            val_method=Top1Accuracy())
     optimizer.set_train_summary(TrainSummary("/tmp/az_lenet", "lenet"))
     optimizer.set_val_summary(ValidationSummary("/tmp/az_lenet", "lenet"))
     # kick off training

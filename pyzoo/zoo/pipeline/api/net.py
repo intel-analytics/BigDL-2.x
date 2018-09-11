@@ -27,7 +27,7 @@ from pyspark import RDD
 from bigdl.nn.criterion import Criterion
 from bigdl.nn.layer import Model as BModel
 from bigdl.nn.layer import Layer
-from bigdl.util.common import callBigDlFunc, to_list, to_sample_rdd, get_node_and_core_number, JavaValue
+from bigdl.util.common import *
 from zoo.feature.image import ImageSet
 from zoo.pipeline.api.keras.engine.topology import ZooKerasLayer, KerasNet
 from zoo.util.tf import export_tf
@@ -395,9 +395,11 @@ class TFOptimizer:
         if val_outputs is not None and val_labels is not None:
             val_sample_rdd = self.dataset.val_rdd\
                 .map(lambda t: Sample.from_ndarray(t, [np.array([0.0])]))
+            val_method = TFValidationMethod(val_method, len(val_outputs), len(val_labels))
             self.optimizer.set_validation(self.dataset.batch_size,
                                           val_sample_rdd,
-                                          EveryEpoch(), TFValidationMethod(val_method, len(val_outputs), len(val_labels)))
+                                          EveryEpoch(),
+                                          val_method)
 
     def set_train_summary(self, summary):
         self.optimizer.set_train_summary(summary)
