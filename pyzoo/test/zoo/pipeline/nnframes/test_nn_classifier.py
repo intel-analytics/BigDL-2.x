@@ -568,8 +568,8 @@ class TestNNClassifer():
             tmp_dir = tempfile.mkdtemp()
             modelPath = os.path.join(tmp_dir, "model")
             saver = tf.train.Saver()
-            saver.restore(sess,tf.train.latest_checkpoint(modelPath))
-            export_tf(sess,modelPath,inputs=[input1,input2],outputs=[output])
+            saver.restore(sess, tf.train.latest_checkpoint(modelPath))
+            export_tf(sess, modelPath, inputs=[input1, input2], outputs=[output])
         except ValueError as v:
             assert(string.find(v.message, 'input2'))
         except:
