@@ -571,6 +571,7 @@ class TestNNClassifer():
             saver.restore(sess, tf.train.latest_checkpoint(modelPath))
             export_tf(sess, modelPath, inputs=[input1, input2], outputs=[output])
         except ValueError as v:
+            raise ValueError("we got there")
             assert(string.find(v.message, 'input2'))
         except:
             raise ValueError("we do not find this error, test failed")
