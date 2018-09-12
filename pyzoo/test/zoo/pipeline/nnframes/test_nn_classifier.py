@@ -17,6 +17,7 @@
 import pytest
 import shutil
 import errno
+import string
 from bigdl.nn.criterion import *
 from bigdl.nn.layer import *
 from bigdl.optim.optimizer import *
@@ -565,11 +566,10 @@ class TestNNClassifer():
             saver = tf.train.Saver()
             saver.restore(sess, tf.train.latest_checkpoint(modelPath))
             export_tf(sess, modelPath, inputs=[input1, input2], outputs=[output])
-        except ValueError:
-            print(" input test passed ")
+        except ValueError as v:
+            assert (string.find(v.message, 'input2'))
         except:
-            print("we do not find this error, test failed")
-
+            raise ValueError("we do not find this error, test failed")
         finally:
             try:
                 shutil.rmtree(tmp_dir)  # delete directory
