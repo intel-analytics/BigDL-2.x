@@ -101,11 +101,9 @@ model prediction for the corresponding input elements.
    slim = tf.contrib.slim
 
    images, labels = dataset.tensors
-   labels = tf.squeeze(labels)
    with slim.arg_scope(lenet.lenet_arg_scope()):
-        logits, end_points = lenet.lenet(images, num_classes=10, is_training=True)
+        logits, end_points = lenet.lenet(images, num_classes=10, is_training=False)
 
-   loss = tf.reduce_mean(tf.losses.sparse_softmax_cross_entropy(logits=logits, labels=labels))
    sess = tf.Session()
    saver = tf.train.Saver()
    saver.restore(sess, "/tmp/lenet")
@@ -113,31 +111,9 @@ model prediction for the corresponding input elements.
 
 3. Run predictions
    ```python
-   predictor = TFPredictor(sess, [correct])
+   predictor = TFPredictor(sess, [logits])
    predictions_rdd = predictor.predict()
    ```
-   
-### Validation
-we can make a few modifications to our previous training code to make it run validation periodically.
-
-1. Add a testing rdd to TFDataset, the testing_rdd should have the same format as the trainging_rdd
-```python
-    dataset = TFDataset.from_rdd(training_rdd,
-                                  names=["features", "labels"],
-                                  shapes=[[28, 28, 1], [1]],
-                                  types=[tf.float32, tf.int32],
-                                  batch_size=280,
-                                  val_rdd=testing_rdd
-```
-2. Set `val_outputs`, `val_labels` and `val_method` to `TFOptimizer`.
-```python
-    from bigdl.optim.optimizer import Top1Accuracy
-    optimizer = TFOptimizer(loss, Adam(1e-3),
-                            val_outputs=[logits],
-                            val_labels=[labels],
-                            val_method=Top1Accuracy())
-    optimizer.set_val_summary(ValidationSummary("/tmp/az_lenet", "lenet"))
-```
 
 ### Relation to TFNet
 
