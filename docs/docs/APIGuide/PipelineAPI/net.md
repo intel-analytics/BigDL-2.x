@@ -188,5 +188,5 @@ val m = TFNet("/tmp/models/tfnet")
 m = TFNet.from_export_folder("/tmp/models/tfnet")
 ```
 
-Please refer to [TFNet Object Detection Example](https://github.com/intel-analytics/analytics-zoo/tree/master/zoo/src/main/scala/com/intel/analytics/zoo/examples/tfnet) and
+Please refer to [TFNet Object Detection Example](https://github.com/intel-analytics/analytics-zoo/tree/master/zoo/src/main/scala/com/intel/analytics/zoo/examples/tensorflow/tfnet) and
 the [Image Classification Using TFNet Notebook](https://github.com/intel-analytics/analytics-zoo/tree/master/apps/tfnet) for more information.
