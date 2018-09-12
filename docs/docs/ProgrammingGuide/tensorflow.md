@@ -1,7 +1,6 @@
-# Tensorflow Support
+# Distributed Tensoflow on Spark/BigDL
 
 Analytics-Zoo provides a set APIs to for running tensorflow model in a distributed fashion.
-
 
 ## Concepts
 - **TFDatasets** represents a distributed collection of elements to be feed into Tensorflow graph.
@@ -17,11 +16,6 @@ to this loss.
 - **TFPredictor** takes a list of tensorflow tensors as the model outputs and feed all the elements in
 TFDatasets to produce those outputs and returns a Spark RDD with each of its elements representing the
 model prediction for the corresponding input elements.
-
-- **TFNet** is a layer representing a tensorflow sub-graph (specified by the inputs and outputs tensor).
-It implements the standard BigDL AbstractModule API, it can be used with other Analytics-Zoo/BigDL layers
-to construct more complex models for training or inference using the standard Analytics-Zoo/BigDL API. 
- 
 
 ## Training
 
@@ -54,11 +48,11 @@ to construct more complex models for training or inference using the standard An
    slim = tf.contrib.slim
 
    images, labels = dataset.tensors
-   labels = tf.squeeze(labels)
+   squeezed_labels = tf.squeeze(labels)
    with slim.arg_scope(lenet.lenet_arg_scope()):
         logits, end_points = lenet.lenet(images, num_classes=10, is_training=True)
 
-   loss = tf.reduce_mean(tf.losses.sparse_softmax_cross_entropy(logits=logits, labels=labels))
+   loss = tf.reduce_mean(tf.losses.sparse_softmax_cross_entropy(logits=logits, labels=squeezed_labels))
    ```
    
 3. Distributed training on Spark and BigDL
@@ -123,9 +117,8 @@ to construct more complex models for training or inference using the standard An
    predictions_rdd = predictor.predict()
    ```
    
-## Validation
-If a validation rdd is provided to the TFDatasets, Analytics-Zoo will run validation periodically, defined by
-the validation trigger.
+### Validation
+we can make a few modifications to our previous training code to make it run validation periodically.
 
 1. Add a testing rdd to TFDataset, the testing_rdd should have the same format as the trainging_rdd
 ```python
@@ -136,6 +129,24 @@ the validation trigger.
                                   batch_size=280,
                                   val_rdd=testing_rdd
 ```
+2. Set `val_outputs`, `val_labels` and `val_method` to `TFOptimizer`.
+```python
+    from bigdl.optim.optimizer import Top1Accuracy
+    optimizer = TFOptimizer(loss, Adam(1e-3),
+                            val_outputs=[logits],
+                            val_labels=[labels],
+                            val_method=Top1Accuracy())
+    optimizer.set_val_summary(ValidationSummary("/tmp/az_lenet", "lenet"))
+```
 
+### Relation to TFNet
 
+**TFNet** is a layer representing a tensorflow sub-graph (specified by the inputs and outputs tensor).
+It implements the standard BigDL AbstractModule API, it can be used with other Analytics-Zoo/BigDL layers
+to construct more complex models for training or inference using the standard Analytics-Zoo/BigDL API. 
+
+You can think of `TFDatasets`, `TFOptimizer`, `TFPredictor` as a set api for training/testing tensorflow models
+on Spark/BigDL and resulting a tensorlfow model; while `TFNet` as an Analytics-Zoo layer initialized using tensorflow graph.
+
+For more information on TFNet, please refer to [this](https://github.com/intel-analytics/analytics-zoo/blob/master/docs/docs/APIGuide/PipelineAPI/net.md#tfnet)
 
