@@ -566,8 +566,8 @@ class TestNNClassifer():
         try:
             export_tf(sess, modelPath, inputs=[input1, input2], outputs=[output])
         except ValueError as v:
-            assert ((string.find(v.message, input1.name)) != -1)
-            assert ((string.find(v.message, input2.name)) == -1)
+            assert ((string.find(v.message, (input1.name)[0:-2])) != -1)
+            assert ((string.find(v.message, (input2.name)[0:-2])) == -1)
             raised_error = True
         finally:
             try:
