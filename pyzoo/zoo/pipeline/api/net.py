@@ -446,7 +446,7 @@ class TFDataset:
         :param types: the types of the result tensors, should be a list of tf.dtype
         :param batch_size: the batch size, used for training, should be a multiple of
         total core num
-        :param batch_pre_thread: the batch size for each thread, used for inference 
+        :param batch_pre_thread: the batch size for each thread, used for inference
         :param hard_code_batch_size: whether to hard code the batch_size into tensorflow graph,
         if True, the static size of the first dimension of the resulting tensors is
         batch_size/total_core_num (training) or batch_pre_thread for inference; if False,
@@ -528,7 +528,7 @@ class TFPredictor:
         feed all the elements in TFDatasets to produce those outputs and returns
         a Spark RDD with each of its elements representing the model prediction
         for the corresponding input elements.
-        
+
         :param sess: the current tensorflow Session, you should first use this session
         to load the trained variables then pass into TFPredictor
         :param outputs: the output tensors of the tensorflow model
