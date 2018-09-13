@@ -1,7 +1,7 @@
 # Distributed Tensorflow on Spark/BigDL
 
-This is an example to demonstrate how to use Analytics-Zoo API to run tensorflow
-model on Spark/BigDL.
+This is an example to demonstrate how to use Analytics-Zoo API to run distributed
+Tensorflow on Spark/BigDL.
 
 ## Model Preparation
 
