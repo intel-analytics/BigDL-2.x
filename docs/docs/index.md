@@ -23,7 +23,7 @@ In addition, Analytics Zoo also provides a rich set of analytics and AI support 
 
 - For running distributed TensorFlow on Spark and BigDL, please refer to the quick start [here](#distributed-tensorflow-and-keras-on-sparkbigdl) and more examples [here](https://github.com/intel-analytics/analytics-zoo/tree/master/pyzoo/zoo/examples/tfnet).
 
-- For more information, You may refer to the [Analytis Zoo document website](https://analytics-zoo.github.io/).
+- For more information, You may refer to the [Analytics Zoo document website](https://analytics-zoo.github.io/).
 
 - For additional questions and discussions, you can join the [Google User Group](https://groups.google.com/forum/#!forum/bigdl-user-group) (or subscribe to the [Mail List](mailto:bigdl-user-group+subscribe@googlegroups.com)).
 
