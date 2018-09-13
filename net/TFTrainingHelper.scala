@@ -20,7 +20,7 @@ import java.nio.FloatBuffer
 
 import com.intel.analytics.bigdl.dataset.{MiniBatch, Sample, Transformer}
 import com.intel.analytics.bigdl.nn.abstractnn.{AbstractCriterion, AbstractModule, Activity}
-import com.intel.analytics.bigdl.optim.{OptimMethod, Optimizer, Trigger}
+import com.intel.analytics.bigdl.optim._
 import com.intel.analytics.bigdl.python.api.{PythonBigDLKeras, Sample => JSample}
 import com.intel.analytics.bigdl.tensor.{Storage, Tensor}
 import com.intel.analytics.bigdl.utils.T
@@ -167,6 +167,52 @@ class IdentityCriterion extends AbstractCriterion[Activity, Activity, Float]() {
   }
   override def updateGradInput(input: Activity, target: Activity): Activity = {
     gradInput
+  }
+}
+
+class TFValidationMethod(val valMethod: ValidationMethod[Float],
+                         outputLength: Int,
+                         targetLength: Int) extends ValidationMethod[Float] {
+  override def apply(output: Activity, target: Activity): ValidationResult = {
+    // the output layout [grads..., outputs..., labels..., loss]
+    val outputT = output.toTable
+    val outputActivity: Activity = if (outputLength == 1) {
+      outputT[Tensor[Float]](outputT.length() - outputLength - targetLength)
+    } else {
+      var i = outputT.length() - outputLength - targetLength
+      val outputs = T()
+      while (i < outputLength - targetLength) {
+        outputs.insert(outputT(i))
+          i += 1
+      }
+      outputs
+    }
+
+    val to1basedLabel =
+      valMethod.isInstanceOf[Top1Accuracy[Float]] ||
+        valMethod.isInstanceOf[Top5Accuracy[Float]] ||
+        valMethod.isInstanceOf[TreeNNAccuracy[Float]]
+    val targetActivity = if (targetLength == 1) {
+      val t = outputT[Tensor[Float]](outputT.length() - targetLength)
+      if (to1basedLabel) t.add(1.0f)
+      t
+    } else {
+      var i = outputT.length() - targetLength
+      val targets = T()
+      while (i < outputLength) {
+        val t = outputT[Tensor[Float]](i)
+        if (to1basedLabel) t.add(1.0f)
+        targets.insert(t)
+        i += 1
+      }
+      targets
+    }
+
+    valMethod.apply(outputActivity, targetActivity)
+  }
+
+  override protected def format(): String = {
+    valMethod.toString()
   }
 }
 
