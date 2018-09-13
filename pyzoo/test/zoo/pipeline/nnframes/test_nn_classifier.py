@@ -553,13 +553,13 @@ class TestNNClassifer():
                     raise  # re-raise exception
 
     def test_input_node_of_tfnet_from_session(self):
-        import tensorflow as tf
-        input1 = tf.placeholder(dtype=tf.float32, shape=(None, 2))
-        input2 = tf.placeholder(dtype=tf.float32, shape=(None, 2))
-        hidden = tf.layers.dense(input1, 4)
-        output = tf.layers.dense(hidden, 1)
-        sess = tf.Session()
-        sess.run(tf.global_variables_initializer())
+        import tensorflow as tff
+        input1 = tff.placeholder(dtype=tff.float32, shape=(None, 2))
+        input2 = tff.placeholder(dtype=tff.float32, shape=(None, 2))
+        hidden = tff.layers.dense(input1, 4)
+        output = tff.layers.dense(hidden, 1)
+        sess = tff.Session()
+        sess.run(tff.global_variables_initializer())
         tmp_dir = tempfile.mkdtemp()
         modelPath = os.path.join(tmp_dir, "model")
         raised_error = False
