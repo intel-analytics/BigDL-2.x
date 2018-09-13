@@ -556,29 +556,48 @@ class TestNNClassifer():
         import tensorflow as tf
         input1 = tf.placeholder(dtype=tf.float32, shape=(None, 2))
         input2 = tf.placeholder(dtype=tf.float32, shape=(None, 2))
+
+        label1 = tf.placeholder(dtype=tf.float32, shape=(None, 1))
+
         hidden = tf.layers.dense(input1, 4)
         output = tf.layers.dense(hidden, 1)
+
+        loss = tf.reduce_mean(tf.square(output - label1))
+        grad_inputs = tf.gradients(loss, input1)
 
         sess = tf.Session()
         sess.run(tf.global_variables_initializer())
 
         data = np.random.rand(2, 2)
+        data2 = np.random.rand(2, 2)
+
+        output_value_ref = sess.run(output, feed_dict={input1: data})
+
+        label_value = output_value_ref - 1.0
+        grad_input_value_ref = sess.run(grad_inputs[0],
+                                        feed_dict={input1: data,
+                                                   input2: data2,
+                                                   label1: label_value})
+
+        tmp_dir = tempfile.mkdtemp()
+        # add or create a new dir path to this dir path
+        modelPath = os.path.join(tmp_dir, "model")
+        # modelPath = "/home/ludviq/testmodel/model.ckpt"
+        saver = tf.train.Saver()
+        saver.save(sess, modelPath)
 
         try:
-            tmp_dir = tempfile.mkdtemp()
-            modelPath = os.path.join(tmp_dir, "model")
-            saver = tf.train.Saver()
-            saver.restore(sess, tf.train.latest_checkpoint(modelPath))
             export_tf(sess, modelPath, inputs=[input1, input2], outputs=[output])
         except ValueError as v:
-            raise ValueError("we got there")
-            assert(string.find(v.message, 'input2'))
+            assert (string.find(v.message, 'Placeholder_1'))
+            # print(" input test passed ")
         except:
             raise ValueError("we do not find this error, test failed")
+            # print("we do not find this error, test failed")
 
         finally:
             try:
-                shutil.rmtree(tmp_dir)  # delete directory
+                shutil.rmtree(modelPath)  # delete directory
             except OSError as exc:
                 if exc.errno != errno.ENOENT:  # ENOENT - no such file or directory
                     raise  # re-raise exception
