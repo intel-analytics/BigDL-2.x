@@ -18,7 +18,7 @@ import heapq
 import tensorflow as tf
 from zoo import init_nncontext
 from zoo.pipeline.api.net import TFOptimizer, TFDataset
-from bigdl.optim.optimizer import MaxIteration, Adam, MaxEpoch, TrainSummary
+from bigdl.optim.optimizer import *
 import numpy as np
 import sys
 
@@ -35,36 +35,44 @@ def main():
     sc = init_nncontext()
 
     # get data, pre-process and create TFDataset
-    (images_data, labels_data) = mnist.read_data_sets("/tmp/mnist", "train")
-    image_rdd = sc.parallelize(images_data)
-    labels_rdd = sc.parallelize(labels_data)
-    rdd = image_rdd.zip(labels_rdd) \
-        .map(lambda rec_tuple: [normalizer(rec_tuple[0], mnist.TRAIN_MEAN, mnist.TRAIN_STD),
-                                np.array(rec_tuple[1])])
+    def get_data_rdd(dataset):
+        (images_data, labels_data) = mnist.read_data_sets("/tmp/mnist", dataset)
+        image_rdd = sc.parallelize(images_data)
+        labels_rdd = sc.parallelize(labels_data)
+        rdd = image_rdd.zip(labels_rdd) \
+            .map(lambda rec_tuple: [normalizer(rec_tuple[0], mnist.TRAIN_MEAN, mnist.TRAIN_STD),
+                                    np.array(rec_tuple[1])])
+        return rdd
 
-    dataset = TFDataset.from_rdd(rdd,
+    training_rdd = get_data_rdd("train")
+    testing_rdd = get_data_rdd("test")
+    dataset = TFDataset.from_rdd(training_rdd,
                                  names=["features", "labels"],
                                  shapes=[[28, 28, 1], [1]],
                                  types=[tf.float32, tf.int32],
-                                 batch_size=280
+                                 batch_size=280,
+                                 val_rdd=testing_rdd
                                  )
 
     # construct the model from TFDataset
     images, labels = dataset.tensors
 
-    labels = tf.squeeze(labels)
+    labels_sq = tf.squeeze(labels)
 
     with slim.arg_scope(lenet.lenet_arg_scope()):
         logits, end_points = lenet.lenet(images, num_classes=10, is_training=True)
 
-    loss = tf.reduce_mean(tf.losses.sparse_softmax_cross_entropy(logits=logits, labels=labels))
+    loss = tf.reduce_mean(tf.losses.sparse_softmax_cross_entropy(logits=logits, labels=labels_sq))
 
     # create a optimizer
-    optimizer = TFOptimizer(loss, Adam(1e-3))
+    optimizer = TFOptimizer(loss, Adam(1e-3),
+                            val_outputs=[logits],
+                            val_labels=[labels],
+                            val_method=Top1Accuracy())
     optimizer.set_train_summary(TrainSummary("/tmp/az_lenet", "lenet"))
+    optimizer.set_val_summary(ValidationSummary("/tmp/az_lenet", "lenet"))
     # kick off training
-    for i in range(5):
-        optimizer.optimize(end_trigger=MaxEpoch(i + 1))
+    optimizer.optimize(end_trigger=MaxEpoch(5))
 
     saver = tf.train.Saver()
     saver.save(optimizer.sess, "/tmp/lenet/")

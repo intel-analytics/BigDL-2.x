@@ -27,11 +27,11 @@ from pyspark import RDD
 from bigdl.nn.criterion import Criterion
 from bigdl.nn.layer import Model as BModel
 from bigdl.nn.layer import Layer
-from bigdl.util.common import callBigDlFunc, to_list, to_sample_rdd, get_node_and_core_number
+from bigdl.util.common import *
 from zoo.feature.image import ImageSet
 from zoo.pipeline.api.keras.engine.topology import ZooKerasLayer, KerasNet
 from zoo.util.tf import export_tf
-from bigdl.optim.optimizer import Sample, Optimizer
+from bigdl.optim.optimizer import Sample, Optimizer, EveryEpoch
 from bigdl.optim.optimizer import MaxEpoch
 
 
@@ -316,9 +316,17 @@ class TFTrainingHelper(Layer):
         super(TFTrainingHelper, self).__init__(None, "float", path)
 
 
+class TFValidationMethod(JavaValue):
+
+    def __init__(self, val_method, output_length, target_length):
+        JavaValue.__init__(self, None, "float",
+                           val_method, output_length, target_length)
+
+
 class TFOptimizer:
 
-    def __init__(self, loss, optim_method, sess=None):
+    def __init__(self, loss, optim_method, sess=None,
+                 val_outputs=None, val_labels=None, val_method=None):
         self.optim_method = optim_method
         if sess is None:
             self.sess = tf.Session()
@@ -340,14 +348,22 @@ class TFOptimizer:
 
         _check_the_same(all_required_inputs, self.inputs)
 
-        export_tf(self.sess, self.export_dir, inputs=self.inputs, outputs=grads + [loss])
+        if val_outputs is not None and val_labels is not None:
+            outputs = val_outputs + val_labels + [loss]
+        else:
+            outputs = [loss]
+
+        export_tf(self.sess, self.export_dir,
+                  inputs=self.inputs,
+                  outputs=grads + outputs)
 
         variable_names = [v.name for v in variables]
         grad_names = [g.name for g in grads]
+        output_names = [o.name for o in outputs]
 
         meta = {
             "input_names": [i.name for i in self.inputs],
-            "output_names": [loss.name],
+            "output_names": output_names,
             "variables": variable_names,
             "grad_variables": grad_names
         }
@@ -376,8 +392,20 @@ class TFOptimizer:
                                           batch_size=batch_size,
                                           optim_method=self.optim_method)
 
+        if val_outputs is not None and val_labels is not None:
+            val_sample_rdd = self.dataset.val_rdd\
+                .map(lambda t: Sample.from_ndarray(t, [np.array([0.0])]))
+            val_method = TFValidationMethod(val_method, len(val_outputs), len(val_labels))
+            self.optimizer.set_validation(self.dataset.batch_size,
+                                          val_sample_rdd,
+                                          EveryEpoch(),
+                                          val_method)
+
     def set_train_summary(self, summary):
         self.optimizer.set_train_summary(summary)
+
+    def set_val_summary(self, summary):
+        self.optimizer.set_val_summary(summary)
 
     def optimize(self, end_trigger=None):
         if end_trigger is None:
@@ -395,22 +423,23 @@ class TFOptimizer:
 class TFDataset:
 
     def __init__(self, rdd, names, shapes, types, batch_size=-1,
-                 batch_pre_core=-1, hard_code_batch_size=False):
-        if batch_size > 0 and batch_pre_core > 0:
+                 batch_pre_thread=-1, hard_code_batch_size=False, val_rdd=None):
+        if batch_size > 0 and batch_pre_thread > 0:
             raise ValueError("bath_size and batch_per_core should not be set simultaneously")
 
         node_num, core_num = get_node_and_core_number()
         self.total_core_num = node_num * core_num
         if batch_size > 0:
             if batch_size % self.total_core_num != 0:
-                raise ValueError("batch_size should be a multiple "
-                                 "of core_num, but got batch_size: "
-                                 "%s where core_num is %s" % (batch_size, self.total_core_num))
-        if batch_size <= 0 and batch_pre_core <= 0:
-            batch_pre_core = 1
+                raise ValueError("batch_size should be a multiple " +
+                                 "of total core number, but got batch_size: " +
+                                 "%s where total core number is %s" % (batch_size,
+                                                                       self.total_core_num))
+        if batch_size <= 0 and batch_pre_thread <= 0:
+            batch_pre_thread = 1
             batch_size = self.total_core_num
         self.batch_size = batch_size
-        self.batch_pre_core = batch_pre_core
+        self.batch_pre_thread = batch_pre_thread
 
         if not hard_code_batch_size:
             self.tensors = [tf.placeholder(name=names[i],
@@ -418,10 +447,10 @@ class TFDataset:
                                            shape=[None] + shapes[i])
                             for i in range(len(names))]
         else:
-            if batch_pre_core is not None:
+            if batch_pre_thread > 0:
                 self.tensors = [tf.placeholder(name=names[i],
                                                dtype=types[i],
-                                               shape=[batch_pre_core] + shapes[i])
+                                               shape=[batch_pre_thread] + shapes[i])
                                 for i in range(len(names))]
             else:
                 self.tensors = [tf.placeholder(name=names[i],
@@ -429,22 +458,16 @@ class TFDataset:
                                                shape=[batch_size / self.total_core_num] + shapes[i])
                                 for i in range(len(names))]
 
+        self.val_rdd = val_rdd
+
         self.rdd = rdd.map(lambda arr: arr[:len(names)])
         self.input_names = names
         for i in range(len(self.tensors)):
             tf.add_to_collection(self.tensors[i].name, self)
 
-    def set_rdd(self, rdd):
-        length = len(self.input_names)
-        self.rdd = rdd.map(lambda arr: arr[:length])
-        graph = tf.get_default_graph()
-        for i in range(len(self.tensors)):
-            graph.clear_collection(self.tensors[i].name)
-            tf.add_to_collection(self.tensors[i].name, self)
-
     @staticmethod
-    def from_dataframe(dataframe, batch_size=None, batch_pre_core=None,
-                       hard_code_batch_size=False):
+    def from_dataframe(dataframe, batch_size=None, batch_pre_thread=None,
+                       hard_code_batch_size=False, val_df=None):
         input_names = dataframe.schema.names
 
         def _get_data(row, tensor_names):
@@ -454,14 +477,19 @@ class TFDataset:
         data = dataframe.rdd\
             .map(lambda r: _get_data(r, input_names))\
             .map(lambda t: Sample.from_ndarray(t, [np.array([0.0])]))
+
+        if val_df is not None:
+            val_data = val_df.rdd \
+                .map(lambda r: _get_data(r, input_names)) \
+                .map(lambda t: Sample.from_ndarray(t, [np.array([0.0])]))
         return TFDataset(data, input_names, [None]*len(input_names),
                          [tf.float32]*len(input_names), batch_size,
-                         batch_pre_core, hard_code_batch_size)
+                         batch_pre_thread, hard_code_batch_size, val_data)
 
     @staticmethod
     def from_rdd(rdd, names=None, shapes=None, types=None,
-                 batch_size=None, batch_pre_core=None,
-                 hard_code_batch_size=False):
+                 batch_size=None, batch_pre_thread=None,
+                 hard_code_batch_size=False, val_rdd=None):
         if not names:
             names = ["features", "labels"]
         if not shapes:
@@ -470,18 +498,18 @@ class TFDataset:
         if not types:
             types = [tf.float32] * len(names)
         return TFDataset(rdd, names, shapes, types,
-                         batch_size, batch_pre_core,
-                         hard_code_batch_size)
+                         batch_size, batch_pre_thread,
+                         hard_code_batch_size, val_rdd)
 
 
 def _check_the_same(all_required_inputs, inputs_in_datasets):
     inputs_not_in_dataset = [i for i in all_required_inputs if i not in inputs_in_datasets]
     if inputs_not_in_dataset:
-        raise ValueError("You should not use any placeholder that are not defined in dataset, "
+        raise ValueError("You should not use any placeholder that are not defined in dataset, " +
                          "found %s" % inputs_not_in_dataset)
     if len(inputs_in_datasets) != len(all_required_inputs):
         inputs_not_require_by_loss = [i for i in inputs_in_datasets if i not in all_required_inputs]
-        raise ValueError("You should use all the placeholders that are defined in dataset, "
+        raise ValueError("You should use all the placeholders that are defined in dataset, " +
                          "%s are not used" % inputs_not_require_by_loss)
 
 
@@ -494,11 +522,12 @@ class TFPredictor:
         self.inputs = self.dataset.tensors
         _check_the_same(all_required_inputs, self.inputs)
         self.tfnet = TFNet.from_session(sess, self.inputs, outputs)
-        if self.dataset.batch_pre_core <= 0:
-            raise ValueError("You should set batch_pre_core on TFDataset instead of batch_size")
+        if self.dataset.batch_pre_thread <= 0:
+            raise ValueError("You should set batch_pre_thread on TFDataset" +
+                             "instead of batch_size for prediction")
 
     def predict(self):
         rdd = self.dataset.rdd
         sample_rdd = rdd.map(lambda x: Sample.from_ndarray(x, np.array([0.0])))
 
-        return self.tfnet.predict(sample_rdd, self.dataset.batch_pre_core)
+        return self.tfnet.predict(sample_rdd, self.dataset.batch_pre_thread)
