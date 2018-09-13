@@ -590,6 +590,7 @@ class TestNNClassifer():
             export_tf(sess, modelPath, inputs=[input1, input2], outputs=[output])
         except ValueError as v:
             assert ((string.find(v.message, 'Placeholder_5')) != -1)
+            assert ((string.find(v.message, 'Placeholder_6')) == -1)
         except:
             raise ValueError("we do not find this error, test failed")
             # print("we do not find this error, test failed")
