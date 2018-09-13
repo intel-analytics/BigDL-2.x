@@ -327,6 +327,15 @@ class TFOptimizer:
 
     def __init__(self, loss, optim_method, sess=None,
                  val_outputs=None, val_labels=None, val_method=None):
+        '''
+        TFOptimizer is used for distributed training of tensorflow
+        on Spark/BigDL.
+
+        :param loss: The loss tensor of the tensorflow model, should be a scalar
+        :param optim_method: the optimization method to be used, such as bigdl.optim.optimizer.Adam
+        :param sess: the current tensorflow Session, if you want to used a pre-trained model, you
+        should use the Session to load the pre-trained variables and pass it to TFOptimizer.
+        '''
         self.optim_method = optim_method
         if sess is None:
             self.sess = tf.Session()
@@ -422,8 +431,27 @@ class TFOptimizer:
 
 class TFDataset:
 
-    def __init__(self, rdd, names, shapes, types, batch_size=-1,
-                 batch_pre_thread=-1, hard_code_batch_size=False, val_rdd=None):
+    def __init__(self, rdd, names, shapes, types, batch_size,
+                 batch_pre_thread, hard_code_batch_size=False, val_rdd=None):
+        '''
+        TFDatasets represents a distributed collection of elements to be feed into
+        Tensorflow graph. TFDatasets can be created using a RDD and each of its records
+        is a list of numpy.ndarray representing the tensors to be feed into tensorflow
+        graph on each iteration. TFDatasets must be used with TFOptimizer or TFPredictor.
+
+        :param rdd: a rdd of list of numpy.ndarray each representing a tensor to feed into
+         tensorflow graph on each iteration
+        :param names: the names of the resulting tensors, should be a list of str
+        :param shapes: the shapes of the resulting tensors, should be a list of list of int
+        :param types: the types of the result tensors, should be a list of tf.dtype
+        :param batch_size: the batch size, used for training, should be a multiple of
+        total core num
+        :param batch_pre_thread: the batch size for each thread, used for inference
+        :param hard_code_batch_size: whether to hard code the batch_size into tensorflow graph,
+        if True, the static size of the first dimension of the resulting tensors is
+        batch_size/total_core_num (training) or batch_pre_thread for inference; if False,
+        it is None.
+        '''
         if batch_size > 0 and batch_pre_thread > 0:
             raise ValueError("bath_size and batch_per_core should not be set simultaneously")
 
@@ -466,29 +494,8 @@ class TFDataset:
             tf.add_to_collection(self.tensors[i].name, self)
 
     @staticmethod
-    def from_dataframe(dataframe, batch_size=None, batch_pre_thread=None,
-                       hard_code_batch_size=False, val_df=None):
-        input_names = dataframe.schema.names
-
-        def _get_data(row, tensor_names):
-            _names = [n.split(":")[0] for n in tensor_names]
-            _data = [np.array(row[n]) for n in _names]
-            return _data
-        data = dataframe.rdd\
-            .map(lambda r: _get_data(r, input_names))\
-            .map(lambda t: Sample.from_ndarray(t, [np.array([0.0])]))
-
-        if val_df is not None:
-            val_data = val_df.rdd \
-                .map(lambda r: _get_data(r, input_names)) \
-                .map(lambda t: Sample.from_ndarray(t, [np.array([0.0])]))
-        return TFDataset(data, input_names, [None]*len(input_names),
-                         [tf.float32]*len(input_names), batch_size,
-                         batch_pre_thread, hard_code_batch_size, val_data)
-
-    @staticmethod
     def from_rdd(rdd, names=None, shapes=None, types=None,
-                 batch_size=None, batch_pre_thread=None,
+                 batch_size=-1, batch_pre_thread=-1,
                  hard_code_batch_size=False, val_rdd=None):
         if not names:
             names = ["features", "labels"]
@@ -516,6 +523,16 @@ def _check_the_same(all_required_inputs, inputs_in_datasets):
 class TFPredictor:
 
     def __init__(self, sess, outputs):
+        '''
+        TFPredictor takes a list of tensorflow tensors as the model outputs and
+        feed all the elements in TFDatasets to produce those outputs and returns
+        a Spark RDD with each of its elements representing the model prediction
+        for the corresponding input elements.
+
+        :param sess: the current tensorflow Session, you should first use this session
+        to load the trained variables then pass into TFPredictor
+        :param outputs: the output tensors of the tensorflow model
+        '''
         self.sess = sess
         all_required_inputs = _find_placeholders(outputs)
         self.dataset = tf.get_collection(all_required_inputs[0].name)[0]
