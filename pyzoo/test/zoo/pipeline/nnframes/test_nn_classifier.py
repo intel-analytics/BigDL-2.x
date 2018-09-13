@@ -556,17 +556,13 @@ class TestNNClassifer():
         import tensorflow as tf
         input1 = tf.placeholder(dtype=tf.float32, shape=(None, 2))
         input2 = tf.placeholder(dtype=tf.float32, shape=(None, 2))
-
         hidden = tf.layers.dense(input1, 4)
         output = tf.layers.dense(hidden, 1)
-
         sess = tf.Session()
         sess.run(tf.global_variables_initializer())
-
         tmp_dir = tempfile.mkdtemp()
         modelPath = os.path.join(tmp_dir, "model")
         raised_error = False
-
         try:
             export_tf(sess, modelPath, inputs=[input1, input2], outputs=[output])
         except ValueError as v:
@@ -582,8 +578,6 @@ class TestNNClassifer():
 
         if not raised_error:
             raise ValueError("we do not find this error, test failed")
-            # print("we do not find this error, test failed")
-
 
 
 if __name__ == "__main__":
