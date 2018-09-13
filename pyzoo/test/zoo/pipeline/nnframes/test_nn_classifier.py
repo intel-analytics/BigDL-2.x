@@ -557,50 +557,34 @@ class TestNNClassifer():
         input1 = tf.placeholder(dtype=tf.float32, shape=(None, 2))
         input2 = tf.placeholder(dtype=tf.float32, shape=(None, 2))
 
-        label1 = tf.placeholder(dtype=tf.float32, shape=(None, 1))
-
         hidden = tf.layers.dense(input1, 4)
         output = tf.layers.dense(hidden, 1)
-
-        loss = tf.reduce_mean(tf.square(output - label1))
-        grad_inputs = tf.gradients(loss, input1)
 
         sess = tf.Session()
         sess.run(tf.global_variables_initializer())
 
-        data = np.random.rand(2, 2)
-        data2 = np.random.rand(2, 2)
-
-        output_value_ref = sess.run(output, feed_dict={input1: data})
-
-        label_value = output_value_ref - 1.0
-        grad_input_value_ref = sess.run(grad_inputs[0],
-                                        feed_dict={input1: data,
-                                                   input2: data2,
-                                                   label1: label_value})
-
         tmp_dir = tempfile.mkdtemp()
-        # add or create a new dir path to this dir path
         modelPath = os.path.join(tmp_dir, "model")
-        # modelPath = "/home/ludviq/testmodel/model.ckpt"
-        saver = tf.train.Saver()
-        saver.save(sess, modelPath)
+        raised_error = False
 
         try:
             export_tf(sess, modelPath, inputs=[input1, input2], outputs=[output])
         except ValueError as v:
-            assert ((string.find(v.message, 'Placeholder_5')) != -1)
-            assert ((string.find(v.message, 'Placeholder_6')) == -1)
-        except:
-            raise ValueError("we do not find this error, test failed")
-            # print("we do not find this error, test failed")
-
+            assert ((string.find(v.message, input1.name)) != -1)
+            assert ((string.find(v.message, input2.name)) == -1)
+            raised_error = True
         finally:
             try:
                 shutil.rmtree(modelPath)  # delete directory
             except OSError as exc:
                 if exc.errno != errno.ENOENT:  # ENOENT - no such file or directory
                     raise  # re-raise exception
+
+        if not raised_error:
+            raise ValueError("we do not find this error, test failed")
+            # print("we do not find this error, test failed")
+
+
 
 if __name__ == "__main__":
     pytest.main()
