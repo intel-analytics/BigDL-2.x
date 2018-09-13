@@ -128,14 +128,14 @@ class TFNetSpec extends FlatSpec with Matchers with BeforeAndAfter {
     }
   }
 
-//  "TFNet " should "work with backward" in {
-//    val resource = getClass().getClassLoader().getResource("tfnet-training")
-//    val net = TFNet(resource.getPath)
-//    val input = Tensor[Float](2, 28, 28, 1).rand()
-//    val output = net.forward(input).toTensor[Float].clone()
-//    val gradInput = net.backward(input, output).toTensor[Float].clone()
-//
-//    gradInput.size() should be (input.size())
-//  }
+  "TFNet " should "work with backward" in {
+    val resource = getClass().getClassLoader().getResource("tfnet_training")
+    val net = TFNet(resource.getPath)
+    val input = Tensor[Float](2, 4).rand()
+    val output = net.forward(input).toTensor[Float].clone()
+    val gradInput = net.backward(input, output).toTensor[Float].clone()
+
+    gradInput.size() should be (input.size())
+  }
 
 }
