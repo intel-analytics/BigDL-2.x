@@ -433,7 +433,8 @@ class TFDataset:
             if batch_size % self.total_core_num != 0:
                 raise ValueError("batch_size should be a multiple " +
                                  "of total core number, but got batch_size: " +
-                                 "%s where total core number is %s" % (batch_size, self.total_core_num))
+                                 "%s where total core number is %s" % (batch_size,
+                                                                       self.total_core_num))
         if batch_size <= 0 and batch_pre_thread <= 0:
             batch_pre_thread = 1
             batch_size = self.total_core_num
@@ -522,7 +523,8 @@ class TFPredictor:
         _check_the_same(all_required_inputs, self.inputs)
         self.tfnet = TFNet.from_session(sess, self.inputs, outputs)
         if self.dataset.batch_pre_thread <= 0:
-            raise ValueError("You should set batch_pre_thread on TFDataset instead of batch_size for prediction")
+            raise ValueError("You should set batch_pre_thread on TFDataset" +
+                             "instead of batch_size for prediction")
 
     def predict(self):
         rdd = self.dataset.rdd
