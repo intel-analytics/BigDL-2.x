@@ -10,13 +10,15 @@ public class SimpleDriver {
     public static void main(String[] args) {
         String embeddingFilePath = System.getProperty("EMBEDDING_FILE_PATH", "./glove.6B.300d.txt");
         String modelPath = System.getProperty("MODEL_PATH", "./models/text-classification.bigdl");
-        TextClassificationModel textClassificationModel = new TextClassificationModel(10,10, 500, embeddingFilePath);
+        TextClassificationModel textClassificationModel = new TextClassificationModel(10, 10, 500, embeddingFilePath);
         textClassificationModel.load(modelPath);
-        String[] texts = new String[]{"hello world", "o brother where art thou"};
-        List< List<JTensor>> inputs = new ArrayList<List<JTensor>>();
-        for(String text : texts) {
+        String[] texts = new String[]{"hello world, faq, fine thank, you, i want some coffe", "o brother where art thou, the sun also rises, godfather, the wild bunch"};
+        List<List<JTensor>> inputs = new ArrayList<List<JTensor>>();
+        for (String text : texts) {
             List<JTensor> input = new ArrayList<JTensor>();
-            input.add(textClassificationModel.preprocess(text));
+            JTensor inputTensor = textClassificationModel.preprocess(text);
+            input.add(inputTensor);
+            System.out.println(inputTensor);
             inputs.add(input);
         }
         List<List<JTensor>> results = textClassificationModel.predict(inputs);
