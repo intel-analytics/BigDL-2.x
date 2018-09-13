@@ -62,7 +62,8 @@ class Rotate3D(rotationAngles: Array[Double])
   override def transformTensor(tensor: Tensor[Float]): Tensor[Float] = {
     require(tensor.dim >=3 && tensor.size(4) == 1,
       "Currently 3D rotation only supports 1 channel 3D image.")
-    val src = tensor.clone.squeeze(4)
+    val originSize = tensor.size
+    val src = tensor.squeeze(4)
     val depth = src.size(1)
     val height = src.size(2)
     val width = src.size(3)
@@ -73,7 +74,6 @@ class Rotate3D(rotationAngles: Array[Double])
     var id, jd, kd: Double = 0
     var ii_0, ii_1, jj_0, jj_1, kk_0, kk_1: Int = 0
 
-    val data = src.storage().array()
     for (i <- 1 to depth) {
       id = i
       for (k <- 1 to height) {
@@ -116,27 +116,19 @@ class Rotate3D(rotationAngles: Array[Double])
           else if (kk_0 < 1) value = 0.0
 
           if (value == -1.0) {
-            value = (1 - wk) * (1 - wj) * (1 - wi) *
-              (data((ii_0 - 1) * height * width + (kk_0 - 1) * width + jj_0 - 1).toDouble) +
-              (1 - wk) * (1 - wj) * wi *
-                (data((ii_1 - 1) * height * width + (kk_0 - 1) * width + jj_0 - 1).toDouble) +
-              (1 - wk) * wj * (1 - wi) *
-                (data((ii_0 - 1) * height * width + (kk_0 - 1) * width + jj_1 - 1).toDouble) +
-              (1 - wk) * wj * wi *
-                (data((ii_1 - 1) * height * width + (kk_0 - 1) * width + jj_1 -1).toDouble) +
-              wk * (1 - wj) * (1 - wi) *
-                (data((ii_0 - 1) * height * width + (kk_1 - 1) * width + jj_0 - 1).toDouble) +
-              wk * (1 - wj) * wi *
-                (data((ii_1 - 1) * height * width + (kk_1 - 1) * width + jj_0 - 1).toDouble) +
-              wk * wj * (1 - wi) *
-                (data((ii_0 - 1) * height * width + (kk_1 - 1) * width + jj_1 - 1).toDouble) +
-              wk * wj * wi *
-                (data((ii_1 - 1) * height * width + (kk_1 - 1) * width + jj_1 - 1).toDouble)
+            value = (1 - wk) * (1 - wj) * (1 - wi) * src.valueAt(ii_0, kk_0, jj_0).toDouble +
+              (1 - wk) * (1 - wj) * wi * src.valueAt(ii_1, kk_0, jj_0).toDouble +
+              (1 - wk) * wj * (1 - wi) * src.valueAt(ii_0, kk_0, jj_1).toDouble +
+              (1 - wk) * wj * wi * src.valueAt(ii_1, kk_0, jj_1).toDouble +
+              wk * (1 - wj) * (1 - wi) * src.valueAt(ii_0, kk_1, jj_0).toDouble +
+              wk * (1 - wj) * wi * src.valueAt(ii_1, kk_1, jj_0).toDouble +
+              wk * wj * (1 - wi) * src.valueAt(ii_0, kk_1, jj_1).toDouble +
+              wk * wj * wi * src.valueAt(ii_1, kk_1, jj_1).toDouble
           }
           dstData((i - 1) * height * width + (k - 1) * width + j - 1) = value.toFloat
         }
       }
     }
-    Tensor(storage = Storage[Float](dstData), storageOffset = 1, size = tensor.size())
+    Tensor(storage = Storage[Float](dstData), storageOffset = 1, size = originSize)
   }
 }

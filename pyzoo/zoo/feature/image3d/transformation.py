@@ -24,62 +24,6 @@ if sys.version >= '3':
     long = int
     unicode = str
 
-# class LocalImageSet3D(LocalImageSet):
-#     """
-#     LocalImageSet wraps a list of ImageFeature
-#     """
-#     def __init__(self, image_list=None, label_list=None, jvalue=None, bigdl_type="float"):
-#         assert jvalue or image_list, "jvalue and image_list cannot be None in the same time"
-#         if jvalue:
-#             self.value = jvalue
-#         else:
-#             # init from image ndarray list and label rdd(optional)
-#             image_tensor_list = list(map(lambda image: JTensor.from_ndarray(image), image_list))
-#             label_tensor_list = list(map(lambda label: JTensor.from_ndarray(label), label_list))\
-#                 if label_list else None
-#             self.value = callBigDlFunc(bigdl_type, JavaValue.jvm_class_constructor(self),
-#                                        image_tensor_list, label_tensor_list)
-#
-#         self.bigdl_type = bigdl_type
-#
-#     def get_image(self, tensor_key="imageTensor", to_chw=True):
-#         """
-#         get image list from ImageSet
-#         """
-#         tensors = callBigDlFunc(self.bigdl_type, "localImageSet3DToImageTensor",
-#                                 self.value, tensor_key, to_chw)
-#         return list(map(lambda tensor: tensor.to_ndarray(), tensors))
-#
-#
-#
-# class DistributedImageSet3D(DistributedImageSet):
-#     """
-#     DistributedImageSet wraps an RDD of ImageFeature
-#     """
-#
-#     def __init__(self, image_rdd=None, label_rdd=None, jvalue=None, bigdl_type="float"):
-#         assert jvalue or image_rdd, "jvalue and image_rdd cannot be None in the same time"
-#         if jvalue:
-#             self.value = jvalue
-#         else:
-#             # init from image ndarray rdd and label rdd(optional)
-#             image_tensor_rdd = image_rdd.map(lambda image: JTensor.from_ndarray(image))
-#             label_tensor_rdd = label_rdd.map(lambda label: JTensor.from_ndarray(label))\
-#                 if label_rdd else None
-#             self.value = callBigDlFunc(bigdl_type, JavaValue.jvm_class_constructor(self),
-#                                        image_tensor_rdd, label_tensor_rdd)
-#
-#         self.bigdl_type = bigdl_type
-#
-#     def get_image(self, tensor_key="imageTensor", to_chw=True):
-#         """
-#         get image rdd from ImageSet
-#         """
-#         tensor_rdd = callBigDlFunc(self.bigdl_type, "distributedImageSet3DToImageTensorRdd",
-#                                    self.value, tensor_key, to_chw)
-#         return tensor_rdd.map(lambda tensor: tensor.to_ndarray())
-
-
 class ImagePreprocessing3D(ImagePreprocessing):
     """
     ImagePreprocessing3D is a transformer that transform ImageFeature for 3D image
@@ -89,30 +33,66 @@ class ImagePreprocessing3D(ImagePreprocessing):
 
 
 class Crop3D(ImagePreprocessing3D):
+    """
+    Crop a patch from a 3D image from 'start' of patch size.
+    The patch size should be less than the image size.
 
+    :param start start point list[depth, height, width] for cropping
+    :param patchSize patch size list[depth, height, width]
+    """
     def __init__(self, start, patch_size, bigdl_type="float"):
         super(Crop3D, self).__init__(bigdl_type, start, patch_size)
 
 
 class RandomCrop3D(ImagePreprocessing3D):
+    """
+    Random crop a `cropDepth` x `cropHeight` x `cropWidth` patch from an image.
+    The patch size should be less than the image size.
 
+    :param crop_depth depth after crop
+    :param crop_height height after crop
+    :param crop_width width after crop
+    """
     def __init__(self, crop_depth, crop_height, crop_width, bigdl_type="float"):
         super(RandomCrop3D, self).__init__(bigdl_type, crop_depth, crop_height, crop_width)
 
 
 class CenterCrop3D(ImagePreprocessing3D):
+    """
+    Center crop a `cropDepth` x `cropHeight` x `cropWidth` patch from an image.
+    The patch size should be less than the image size.
 
+    :param crop_depth depth after crop
+    :param crop_height height after crop
+    :param crop_width width after crop
+    """
     def __init__(self, crop_depth, crop_height, crop_width, bigdl_type="float"):
         super(CenterCrop3D, self).__init__(bigdl_type, crop_depth, crop_height, crop_width)
 
 
 class Rotate3D(ImagePreprocessing3D):
+    """
+    Rotate a 3D image with specified angles.
 
-    def __init__(self, rotationAngles, bigdl_type="float"):
-        super(Rotate3D, self).__init__(bigdl_type, rotationAngles)
+    :param rotation_angles the angles for rotation.
+    Which are the yaw(a counterclockwise rotation angle about the z-axis),
+    pitch(a counterclockwise rotation angle about the y-axis),
+    and roll(a counterclockwise rotation angle about the x-axis).
+    """
+    def __init__(self, rotation_angles, bigdl_type="float"):
+        super(Rotate3D, self).__init__(bigdl_type, rotation_angles)
 
 
 class AffineTransform3D(ImagePreprocessing3D):
+    """
+    Affine transformer implements affine transformation on a given tensor.
+    To avoid defects in resampling, the mapping is from destination to source.
+    dst(z,y,x) = src(f(z),f(y),f(x)) where f: dst -> src
+    :param affine_mat: numpy array in 3x3 shape.Define affine transformation from dst to src.
+    :param translation: numpy array in 3 dimension.Default value is np.zero(3). Define translation in each axis.
+    :param clampMode: str, default value is "clamp". Define how to handle interpolation off the input image.
+    :param padVal: float, default is 0.0. Define padding value when clampMode="padding". Setting this value when clampMode="clamp" will cause an error.
+    """
 
     def __init__(self, affine_mat, translation=np.zeros(3), clamp_mode="clamp", pad_val=0.0, bigdl_type="float"):
         affine_mat_tensor = JTensor.from_ndarray(affine_mat)

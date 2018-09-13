@@ -39,6 +39,7 @@ class TransformerSpec extends FlatSpec with Matchers{
     val chainTransformer = Crop3D(start, patchSize) -> Rotate3D(rotAngles)
     val output = chainTransformer(imageSet).toLocal().array
 
+
     // get cropped image for torch rotation
     val cropper = Crop3D(start, patchSize)
     val cropped_image = cropper.transform(imageClone)

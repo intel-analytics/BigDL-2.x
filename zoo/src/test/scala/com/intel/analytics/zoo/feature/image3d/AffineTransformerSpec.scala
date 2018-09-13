@@ -19,6 +19,9 @@ import com.intel.analytics.bigdl.tensor.{Storage, Tensor}
 import com.intel.analytics.bigdl.utils.RandomGenerator._
 import com.intel.analytics.zoo.feature.{TH, TorchSpec}
 import com.intel.analytics.bigdl.transform.vision.image._
+import com.intel.analytics.bigdl.utils.Engine
+import com.intel.analytics.zoo.feature.image.ImageSet
+import org.apache.spark.SparkContext
 
 
 
@@ -55,6 +58,10 @@ class AffineTransformerSpec extends TorchSpec {
       storageOffset = 1,
       size = Array(1, 10, 10, 1))
     val image = ImageFeature3D(tensor)
+    val conf = Engine.createSparkConf().setAppName("Test NNClassifier").setMaster("local[1]")
+    val sc = SparkContext.getOrCreate(conf)
+    val rdd =sc.parallelize(Seq[ImageFeature](image))
+    val imageSet = ImageSet.rdd(rdd)
     val dst = aff.transform(image)
     val code = "require 'image'\n" +
     "dst = image.affinetransform(src,mat,'bilinear',translation)"

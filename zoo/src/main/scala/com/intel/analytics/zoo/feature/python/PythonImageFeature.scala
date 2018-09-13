@@ -70,7 +70,7 @@ class PythonImageFeature[T: ClassTag](implicit ev: TensorNumeric[T]) extends Pyt
                                  toChw: Boolean = true): JList[JTensor] = {
     imageSet.array.map(imf => {
       // 3D image
-      if(imf.getSize == (0,0,0)){
+      if(imf.getSize == null){
         imageFeature3DToImageTensor(imf, floatKey)
       } else {
         imageFeatureToImageTensor(imf, floatKey, toChw)
@@ -97,7 +97,7 @@ class PythonImageFeature[T: ClassTag](implicit ev: TensorNumeric[T]) extends Pyt
 
       imageSet.rdd.map( imf => {
         // 3D image
-        if(imf.getSize == (0,0,0)){
+        if(imf.getSize == null){
           imageFeature3DToImageTensor(imf, floatKey)
         } else {
           imageFeatureToImageTensor(imf, floatKey, toChw)
@@ -144,21 +144,6 @@ class PythonImageFeature[T: ClassTag](implicit ev: TensorNumeric[T]) extends Pyt
     }
     new DistributedImageSet(featureRdd)
   }
-
-//  def createDistributedImageSet3D(imageRdd: JavaRDD[JTensor], labelRdd: JavaRDD[JTensor])
-//  : DistributedImageSet = {
-//    require(null != imageRdd, "imageRdd cannot be null")
-//    val featureRdd = if (null != labelRdd) {
-//      imageRdd.rdd.zip(labelRdd.rdd).map(data => {
-//        createImageFeature3D(data._1, data._2)
-//      })
-//    } else {
-//      imageRdd.rdd.map(image => {
-//        createImageFeature3D(image, null)
-//      })
-//    }
-//    new DistributedImageSet(featureRdd)
-//  }
 
   def createLocalImageSet(images: JList[JTensor], labels: JList[JTensor])
   : LocalImageSet = {

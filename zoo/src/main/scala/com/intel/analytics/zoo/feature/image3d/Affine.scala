@@ -48,7 +48,7 @@ extends ImageProcessing3D {
   override def transformTensor(tensor: Tensor[Float]): Tensor[Float] = {
     require(tensor.dim >=3 && tensor.size(4) == 1,
       "Currently 3D affine transformation only supports 1 channel 3D image.")
-    val src = tensor.clone.squeeze(4)
+    val src = tensor.squeeze(4)
     val dst = Tensor[Float](src.size())
     val depth = dst.size(1)
     val height = dst.size(2)

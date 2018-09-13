@@ -50,8 +50,7 @@ class ChainedPreprocessing(Preprocessing):
     """
     def __init__(self, transformers, bigdl_type="float"):
         for transfomer in transformers:
-            assert transfomer.__class__.__bases__[0].__name__ in [
-                "Preprocessing", "ImagePreprocessing", "ImagePreprocessing3D"], \
+            assert isinstance(transfomer, Preprocessing), \
                 str(transfomer) + " should be subclass of Preprocessing "
 
         super(ChainedPreprocessing, self).__init__(bigdl_type, transformers)

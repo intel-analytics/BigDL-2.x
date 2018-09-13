@@ -57,7 +57,7 @@ class ImageFeature3D extends ImageFeature {
 
   override def getSize: (Int, Int, Int) = {
     logger.warn("this function is deprecated in ImageFeature3D")
-    (0, 0, 0)
+    null
   }
 
   /**
