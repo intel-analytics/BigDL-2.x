@@ -40,7 +40,7 @@ class OnnxHelper:
 
     @staticmethod
     def to_numpy(tensor_proto):
-        """Grab data in TensorProto and action to numpy array."""
+        """Grab data in TensorProto and to_tensor to numpy array."""
         try:
             from onnx.numpy_helper import to_array
         except ImportError as e:
@@ -58,9 +58,9 @@ class OnnxHelper:
         pads = None
 
         if "auto_pad" in onnx_attr.keys():
-            if onnx_attr['auto_pad'] == 'SAME_UPPER':
+            if onnx_attr['auto_pad'].decode() == 'SAME_UPPER':
                 border_mode = 'same'
-            elif onnx_attr['auto_pad'] == 'VALID':
+            elif onnx_attr['auto_pad'].decode() == 'VALID':
                 border_mode = 'valid'
             else:
                 raise NotImplementedError('Unknown auto_pad mode "%s", '
@@ -73,6 +73,5 @@ class OnnxHelper:
             assert pads4[0] == pads4[1]
             assert pads4[2] == pads4[3]
             pads = [pads4[0], pads4[1]]
-            border_mode = 'valid'
 
         return border_mode, pads

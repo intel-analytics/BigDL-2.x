@@ -13,22 +13,25 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
+import bigdl.nn.layer as blayer
+import numpy as np
 
+import zoo.pipeline.api.keras.layers as zlayers
 from zoo.pipeline.api.onnx.mapper.operator_mapper import OperatorMapper
+from zoo.pipeline.api.onnx.onnx_helper import OnnxHelper
+from zoo.pipeline.api.onnx.onnx_loader import OnnxInput
 
 
-class AddMapper(OperatorMapper):
-    def __init__(self, node, initializer, _all_tensors):
-        super(AddMapper, self).__init__(node, initializer, _all_tensors)
+class ConstantMapper(OperatorMapper):
+    def __init__(self, node, _params, _all_tensors):
+        super(ConstantMapper, self).__init__(node, _params, _all_tensors)
 
     def _extract_model_inputs(self):
         """
-        :return: list of inputs
+        :return: list of OnnxInput
         """
-        assert len(self._input_list) == 2, "Add should have 2 inputs"
-        return [self._to_zoo_input(oi) for oi in self._input_list]
+        input = OnnxInput(name=self.op_name, zvalue=OnnxHelper.to_numpy(self.onnx_attr['value']))
+        return [self._to_zoo_input(input, is_constant=True)]
 
     def _to_tensor(self):
-        x = self.model_inputs[0].zvalue
-        y = self.model_inputs[1].zvalue
-        return x + y
+        return self.model_inputs[0].zvalue

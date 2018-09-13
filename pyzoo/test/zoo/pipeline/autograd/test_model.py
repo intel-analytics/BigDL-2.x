@@ -60,11 +60,11 @@ class TestAutoGradModel(ZooTestCase):
         ZooKerasLayer.of(dense.value)(input)
 
     def test_parameter_create(self):
-        w = auto.Parameter(input_shape=(3, 2))
+        w = auto.Parameter(shape=(3, 2))
         value = w.get_weight()
         w.set_weight(value)
         x = auto.Variable(input_shape=(3,))
-        b = auto.Parameter(input_shape=(2,))
+        b = auto.Parameter(shape=(2,))
         out = auto.mm(x, w, axes=(1, 0)) + b
         model = Model(input=x, output=out)
         input_data = np.random.uniform(0, 1, (4, 3))

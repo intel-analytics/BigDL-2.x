@@ -20,31 +20,49 @@ import numpy as np
 
 
 class ConvMapper(OperatorMapper):
-    def __init__(self, node, _params, _all_tensors):
-        super(ConvMapper, self).__init__(node, _params, _all_tensors)
+    def __init__(self, node, initializer, inputs):
+        super(ConvMapper, self).__init__(node, initializer, inputs)
 
-    def format_params(self, params):
+    def _extract_model_inputs(self):
         """
-        Convert ONNX params to Zoo format
+        :return: list of OnnxInput
+        """
+        return [self._to_zoo_input(self._input_list[0])]
+
+    def _extract_trainable_values(self):
+        if len(self._input_list) > 2:
+            return [self._input_list[1].zvalue, self._input_list[2].zvalue]
+        else:
+            return [self._input_list[1].zvalue]  # without bias
+
+    def to_zoo_format(self, trainable_values):
+        """
+        Convert ONNX _initializer to Zoo format
         :return: list of ndarray
         """
-        return [np.expand_dims(params[0], 0), params[1]]
+        if len(trainable_values) > 1:
+            return [np.expand_dims(trainable_values[0], 0), trainable_values[1]]
+        else:
+            return np.expand_dims(trainable_values[0], 0)
 
-    def create_operator(self):
-        assert len(self.inputs) == 1, "Conv accept single input only"
-        rank = len(self.inputs[0].get_input_shape())
-        W_weights = self.params[0]
+    def _to_tensor(self):
+        input = self.model_inputs[0]
+        W_weights = self.model_trainable_values[0]
+        rank = len(input.zvalue.get_input_shape())
+
         if (rank == 4):  # NCHW
             nb_filter = W_weights.shape[0]
             nb_row = int(self.onnx_attr['kernel_shape'][0])
             nb_col = int(self.onnx_attr['kernel_shape'][1])
-            subSample = [int(i) for i in self.onnx_attr['strides']]
+            subSample = [int(i) for i in
+                         self.onnx_attr['strides']] if "strides" in self.onnx_attr else (1, 1)
             dim_ordering = "th"
-            assert self.onnx_attr['dilations'] == (1, 1), "we only support dilations == (1, 1)"
-            assert self.onnx_attr['group'] == 1, "we only support group == 1"
-            bias = True if (len(self.params) > 1) else False
+            assert 'dilations' not in self.onnx_attr or self.onnx_attr['dilations'] == (
+                1, 1), "we only support dilations == (1, 1)"
+            assert 'group' not in self.onnx_attr or self.onnx_attr[
+                'group'] == 1, "we only support group == 1"
+            bias = True if (len(self._input_list) > 2) else False
 
-            # TODO: activation?? init?? W_regularizer??
             border_mode, pads = OnnxHelper.get_padds(self.onnx_attr)
 
             conv = zlayers.Convolution2D(nb_filter=nb_filter,
@@ -55,6 +73,6 @@ class ConvMapper(OperatorMapper):
                                          bias=bias,
                                          border_mode=border_mode,
                                          pads=pads)
-            return conv
+            return conv(input.zvalue)
         else:
             raise Exception("not supported.")

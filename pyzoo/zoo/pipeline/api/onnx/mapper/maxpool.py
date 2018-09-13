@@ -23,13 +23,16 @@ class MaxPoolMapper(OperatorMapper):
     def __init__(self, node, _params, _all_tensors):
         super(MaxPoolMapper, self).__init__(node, _params, _all_tensors)
 
-    def create_operator(self):
-        assert len(self.inputs) == 1, "Conv accept single input only"
-        rank = len(self.inputs[0].get_input_shape())
+    def _to_tensor(self):
+        assert len(self.model_inputs) == 1, "Conv accept single input only"
+        rank = len(self.model_inputs[0].zvalue.get_input_shape())
 
-        if (rank == 4):  # NCHWinputs
+        if (rank == 4):  # NCHW
             pool_size = [int(i) for i in self.onnx_attr['kernel_shape']]
-            strides = [int(i) for i in self.onnx_attr['strides']]
+            if "strides" in self.onnx_attr.keys():
+                strides = [int(i) for i in self.onnx_attr['strides']]
+            else:
+                strides = [1 for i in self.onnx_attr['kernel_shape']]
 
             border_mode, pads = OnnxHelper.get_padds(self.onnx_attr)
 
@@ -37,6 +40,6 @@ class MaxPoolMapper(OperatorMapper):
                                            strides=strides,
                                            border_mode=border_mode,
                                            pads=pads)
-            return maxpool
+            return maxpool(self.model_inputs[0].zvalue)
         else:
             raise Exception("not supported.")

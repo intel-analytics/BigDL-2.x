@@ -116,7 +116,7 @@ def expand_dims(x, axis):
    Adds a 1-sized dimension at index "axis".
     :param x: a Variable to be expanded
     :param axis: axis Position where to add a new axis.
-    You should start from 1 as dim 0 is for batch.
+    The axis is 0 based and if you set the axis to 0, you would change the batch dim.
     """
     return Variable.from_jvalue(callBigDlFunc("float", "expandDims", x, axis))
 
@@ -245,7 +245,7 @@ def mm(x, y, axes):
 
 class Variable(kbase.ZooKerasCreator):
     def __init__(self, input_shape, node=None, jvalue=None, name=None):
-
+        self.name = name
         if jvalue:
             self.value = jvalue
             self.bigdl_type = "float"
@@ -325,7 +325,7 @@ class Variable(kbase.ZooKerasCreator):
     def squeeze(self, dim=None):
         """
         Delete the singleton dimension(s).
-        The batch dimension needs to be unchanged.
+        The dim can be zero, and if so you would change the batch dim.
         For example, if input has size (2, 1, 3, 4, 1):
         Squeeze(dim = 1) will give output size (2, 3, 4, 1)
         Squeeze(dims = null) will give output size (2, 3, 4)
@@ -453,15 +453,16 @@ class Parameter(kbase.ZooKerasLayer):
     A trainable Variable. The default init_method is RandomUniform(-0.05, 0.05).
     You can also specify the init_weight by passing a ndarray.
     """
-    def __init__(self, input_shape, init_method=None,
-                 init_weight=None, **kwargs):
+    def __init__(self, shape, init_method=None,
+                 init_weight=None, trainable=True, **kwargs):
         if not init_method:
             from bigdl.nn.initialization_method import RandomUniform
             init_method = RandomUniform(-0.05, 0.05)
         super(Parameter, self).__init__(None,
-                                        list(input_shape),
+                                        list(shape),
                                         init_method,
-                                        init_weight,
+                                        kbase.JTensor.from_ndarray(init_weight),
+                                        trainable,
                                         ** kwargs)
 
     def get_weight(self):

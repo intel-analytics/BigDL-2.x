@@ -22,6 +22,6 @@ class SoftmaxMapper(OperatorMapper):
     def __init__(self, node, _params, _all_tensors):
         super(SoftmaxMapper, self).__init__(node, _params, _all_tensors)
 
-    def create_operator(self):
+    def _to_tensor(self):
         softmax = zlayers.Activation("softmax")
-        return softmax
+        return softmax(self.model_inputs[0].zvalue)

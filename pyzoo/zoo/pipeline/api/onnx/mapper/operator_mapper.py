@@ -20,53 +20,94 @@ import zoo.pipeline.api.autograd as zautograd
 from zoo.pipeline.api.onnx.onnx_helper import OnnxHelper
 import zoo.pipeline.api.onnx.mapper
 import importlib
+import numpy as np
 
 
 class OperatorMapper(object):
     # converting NodeProto message
-    def __init__(self, node, _params, _all_tensors):
+    # we don't differentiate the data input and weights here, they are all included into inputs.
+    def __init__(self, node, initializer, inputs):
         self.node = node
         self.op_name = node.op_type
         node_name = node.name.strip()
         # it would be None if user doesn't set it manually
         self.node_name = node_name if node_name else None
         self.onnx_attr = OnnxHelper.parse_attr(node.attribute)  # dict(name: value)
-        self.params = [_params[i] for i in node.input if i in _params]
-        self.inputs = [_all_tensors[i] for i in node.input if i in _all_tensors]
-        self.all_tensors = _all_tensors
+        self._initializer = initializer
+        self._input_list = inputs
+        self.model_inputs = self._extract_model_inputs()
+        self.model_trainable_values = self._extract_trainable_values()
+
         assert len(node.output) == 1, "we only support single output for now"
         self.output = node.output[0]
 
     @staticmethod
-    def of(node, _params, _all_tensors):
+    def of(node, _params, inputs):
         m = importlib.import_module("zoo.pipeline.api.onnx.mapper." + node.op_type.lower())
         cls = getattr(m, node.op_type + "Mapper")
-        return cls(node, _params, _all_tensors)
+        return cls(node, _params, inputs)
 
-    def action(self):
-        """
-        Convert a node to KerasLayer
-        """
-        operator = self.create_operator()
-        operator.set_name(self.node_name)
-        if not isinstance(operator, zautograd.Variable):
-            z_tensor = operator(self.inputs)
-            if self.params:
-                operator.set_weights(self.format_params(self.params))
+    def _to_zoo_input(self, input, is_constant=None):
+        is_parameter = True if input.name in self._initializer else False
+        if isinstance(input.zvalue, zautograd.Variable) or isinstance(input.zvalue,
+                                                                      zautograd.Parameter):
+            return input
+        if isinstance(input.zvalue, np.ndarray):
+            if is_parameter or is_constant:
+                shape = input.zvalue.shape
+            else:
+                shape = input.zvalue.shape[1:]
+        elif isinstance(input.zvalue, list):
+            if is_parameter or is_constant:
+                shape = input.zvalue
+            else:
+                shape = input.zvalue[1:]
         else:
-            z_tensor = operator
-            if self.params:
-                operator.node.element().set_weights(self.format_params(self.params))
+            raise Exception("not supported type " + str(type(input.zvalue)))
 
-        self.all_tensors[self.output] = z_tensor  # update the all_tensors
-        return z_tensor
+        input.data = input.zvalue
+        if is_constant:
+            input.zvalue = zautograd.Parameter(shape=shape, init_weight=input.zvalue,
+                                               trainable=False)
+        elif is_parameter:
+            input.zvalue = zautograd.Parameter(shape=shape, init_weight=input.zvalue, )
+        else:
+            input.zvalue = zlayers.Input(
+                shape=shape, name=input.name)
+        return input
 
-    def create_operator(self):
+    def to_tensor(self):
+        """
+        Convert a node to tensor
+        """
+        out_tensor = self._to_tensor()
+        if self.node_name:
+            out_tensor.set_name(self.node_name)
+        assert isinstance(out_tensor, zautograd.Variable) or isinstance(out_tensor,
+                                                                        zautograd.Parameter)
+        if self.model_trainable_values:
+            out_tensor.node.element().set_weights(
+                self.to_zoo_format(self.model_trainable_values))
+        return out_tensor
+
+    def _to_tensor(self):
         raise Exception("Please define the content")
 
-    def format_params(self, params):
+    def _extract_model_inputs(self):
         """
-        Convert ONNX params to Zoo format
+        :return: list of OnnxInput
+        """
+        return [self._to_zoo_input(i) for i in self._input_list]
+
+    def _extract_trainable_values(self):
+        """
+        :return: list of ndarray for weights
+        """
+        return None
+
+    def to_zoo_format(self, trainable_values):
+        """
+        Convert ONNX _initializer to Zoo format
         :return: list of ndarray
         """
-        return params
+        return trainable_values
