@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.intel.analytics.zoo.feature.image3d
 
 import com.intel.analytics.bigdl.tensor.Tensor

@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.intel.analytics.zoo.feature.image3d
 
 
@@ -87,7 +86,7 @@ class ImageFeature3D extends ImageFeature {
   override def clone(): ImageFeature3D = {
     val imageFeature = new ImageFeature3D()
     keys().foreach(key => {
-      imageFeature.update(key,this.apply(key))
+      imageFeature.update(key, this.apply(key))
     })
     imageFeature.isValid = isValid
     imageFeature

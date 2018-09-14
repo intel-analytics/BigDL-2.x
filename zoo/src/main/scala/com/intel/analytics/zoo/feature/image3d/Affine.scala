@@ -1,5 +1,5 @@
 /*
- * Copyright 201 The Analytics Zoo Authors.
+ * Copyright 2018 Analytics Zoo Authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.intel.analytics.zoo.feature.image3d
 
 import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric
@@ -28,9 +27,12 @@ object AffineTransform3D{
    * dst(z,y,x) = src(f(z),f(y),f(x)) where f: dst -> src
    *
    * @param mat [Tensor[Double], dim: DxHxW] defines affine transformation from dst to src.
-   * @param translation [Tensor[Double], dim: 3, default: (0,0,0)] defines translation in each axis.
-   * @param clampMode [String, (default: "clamp",'padding')] defines how to handle interpolation off the input image.
-   * @param padVal [Double, default: 0] defines padding value when clampMode="padding". Setting this value when clampMode="clamp" will cause an error.
+   * @param translation [Tensor[Double], dim: 3, default: (0,0,0)]
+    *                    defines translation in each axis.
+   * @param clampMode [String, (default: "clamp",'padding')] defines how to handle interpolation
+    *                  off the input image.
+   * @param padVal [Double, default: 0] defines padding value when clampMode="padding".
+   *               Setting this value when clampMode="clamp" will cause an error.
    */
   def apply(mat: Tensor[Double],
             translation: Tensor[Double] = Tensor[Double](3).fill(0),

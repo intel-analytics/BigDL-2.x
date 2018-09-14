@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 The BigDL Authors.
+ * Copyright 2018 The Analytics Zoo Authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -60,18 +60,18 @@ class AffineTransformerSpec extends TorchSpec {
     val image = ImageFeature3D(tensor)
     val conf = Engine.createSparkConf().setAppName("Test NNClassifier").setMaster("local[1]")
     val sc = SparkContext.getOrCreate(conf)
-    val rdd =sc.parallelize(Seq[ImageFeature](image))
+    val rdd = sc.parallelize(Seq[ImageFeature](image))
     val imageSet = ImageSet.rdd(rdd)
     val dst = aff.transform(image)
     val code = "require 'image'\n" +
-    "dst = image.affinetransform(src,mat,'bilinear',translation)"
+    "dst = image.affinetransform(src, mat, 'bilinear', translation)"
     val (luaTime, torchResult) = TH.run(code,
       Map("src" -> input.view(10, 10), "mat" -> mat2Tensor, "translation" -> translation2),
       Array("dst"))
     val dstTorch = torchResult("dst").asInstanceOf[Tensor[Double]]
     val dstTensor = Tensor[Double](
-      storage = Storage[Double](dst[Tensor[Float]](ImageFeature.imageTensor).storage().array().map(_.toDouble)),
-      storageOffset = 1, size = Array(1, 10, 10))
+      storage = Storage[Double](dst[Tensor[Float]](ImageFeature.imageTensor).storage().array()
+        .map(_.toDouble)), storageOffset = 1, size = Array(1, 10, 10))
     dstTensor.view(10, 10).map(dstTorch, (v1, v2) => {
       assert(math.abs(v1-v2)<1e-6)
       v1
@@ -117,13 +117,13 @@ class AffineTransformerSpec extends TorchSpec {
       Array("dst"))
     val dstTorch = torchResult("dst").asInstanceOf[Tensor[Double]]
     val dstTensor = Tensor[Double](
-      storage = Storage[Double](dst[Tensor[Float]](ImageFeature.imageTensor).storage().array().map(_.toDouble)),
-      storageOffset = 1, size = Array(10, 1, 10))
+      storage = Storage[Double](dst[Tensor[Float]](ImageFeature.imageTensor).storage().array()
+        .map(_.toDouble)), storageOffset = 1, size = Array(10, 1, 10))
     dstTensor.view(10, 10).map(dstTorch, (v1, v2) => {
       assert(math.abs(v1-v2)<1e-6)
       v1
     })
-  }//end test
+  }
 
   "An AffineTransformer" should "generate correct output when dimension of width is 1" in {
     torchCheck()
@@ -164,8 +164,8 @@ class AffineTransformerSpec extends TorchSpec {
       Array("dst"))
     val dstTorch = torchResult("dst").asInstanceOf[Tensor[Double]]
     val dstTensor = Tensor[Double](
-      storage = Storage[Double](dst[Tensor[Float]](ImageFeature.imageTensor).storage().array().map(_.toDouble)),
-      storageOffset = 1, size = Array(10, 10, 1))
+      storage = Storage[Double](dst[Tensor[Float]](ImageFeature.imageTensor).storage().array()
+        .map(_.toDouble)), storageOffset = 1, size = Array(10, 10, 1))
     dstTensor.view(10, 10).map(dstTorch, (v1, v2) => {
       assert(math.abs(v1-v2)<1e-6)
       v1

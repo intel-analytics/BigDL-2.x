@@ -19,9 +19,6 @@ import org.opencv.core.CvType
 
 import scala.reflect.ClassTag
 
-/**
-  * Created by jwang on 6/25/18.
-  */
 class TransformerSpec extends FlatSpec with Matchers{
   "A pipleline transformer with ImageSet" should "generate correct output." in{
     val seed = 100
@@ -51,7 +48,8 @@ class TransformerSpec extends FlatSpec with Matchers{
       Map("src" -> cropped_image[Tensor[Float]](ImageFeature.imageTensor).clone.view(10, 10)),
       Array("dst"))
     val dstTorch = torchResult("dst").asInstanceOf[Tensor[Float]]
-    output(0).asInstanceOf[ImageFeature3D][Tensor[Float]](ImageFeature.imageTensor).view(10, 10).map(dstTorch, (v1, v2) => {
+    output(0).asInstanceOf[ImageFeature3D][Tensor[Float]](ImageFeature.imageTensor)
+      .view(10, 10).map(dstTorch, (v1, v2) => {
       assert(math.abs(v1-v2)<1e-6)
       v1
     })
@@ -133,7 +131,8 @@ class TransformerSpec extends FlatSpec with Matchers{
       StructField("data", new ArrayType(FloatType, false), false) :: Nil)
 
   private def row2IMF(row: Row): ImageFeature = {
-    val (origin, d, h, w, c) = (row.getString(0), row.getInt(1), row.getInt(2), row.getInt(3), row.getInt(4))
+    val (origin, d, h, w, c) = (row.getString(0), row.getInt(1), row.getInt(2),
+      row.getInt(3), row.getInt(4))
     val imf = ImageFeature3D()
     imf.update(ImageFeature.uri, origin)
     imf.update(ImageFeature.size, Array(d, h, w, c))

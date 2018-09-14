@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 The Analytics Zoo Authors.
+ * Copyright 2018 Analytics Zoo Authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.intel.analytics.zoo.feature.image3d
 
 import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric
@@ -50,46 +49,46 @@ extends Serializable {
       case false => 0
     }
 
-    for(z <- 1 to depth; y <- 1 to height; x <- 1 to width){
-      val flow_z = flowField.valueAt(1,z,y,x)
-      val flow_y = flowField.valueAt(2,z,y,x)
-      val flow_x = flowField.valueAt(3,z,y,x)
+    for(z <- 1 to depth; y <- 1 to height; x <- 1 to width) {
+      val flow_z = flowField.valueAt(1, z ,y, x)
+      val flow_y = flowField.valueAt(2, z, y, x)
+      val flow_x = flowField.valueAt(3, z, y, x)
       var iz = offset_mode * z + flow_z
       var iy = offset_mode * y + flow_y
       var ix = offset_mode * x + flow_x
 
-      //borders
+      // borders
       var off_image = 0
-      if(iz < 1 || iz > src_depth || 
-        iy < 1 || iy > src_height || 
-        ix < 1 || ix > src_width){
+      if(iz < 1 || iz > src_depth ||
+        iy < 1 || iy > src_height ||
+        ix < 1 || ix > src_width) {
           off_image = 1
         }
-        if(off_image == 1 && clampMode == 2){
-          dst.setValue(z,y,x,ev.fromType[Double](padVal))
-        }else {
-          iz = math.max(iz,1);iz = math.min(iz, src_depth)
-          iy = math.max(iy,1);iy = math.min(iy, src_height)
-          ix = math.max(ix,1);ix = math.min(ix, src_width)
+        if(off_image == 1 && clampMode == 2) {
+          dst.setValue(z, y, x, ev.fromType[Double](padVal))
+        } else {
+          iz = math.max(iz, 1);iz = math.min(iz, src_depth)
+          iy = math.max(iy, 1);iy = math.min(iy, src_height)
+          ix = math.max(ix, 1);ix = math.min(ix, src_width)
 
           val iz_0 = math.floor(iz).toInt
           val iy_0 = math.floor(iy).toInt
           val ix_0 = math.floor(ix).toInt
-          val iz_1 = math.min(iz_0+1, src_depth)
-          val iy_1 = math.min(iy_0+1, src_height)
-          val ix_1 = math.min(ix_0+1, src_width)
+          val iz_1 = math.min(iz_0 + 1, src_depth)
+          val iy_1 = math.min(iy_0 + 1, src_height)
+          val ix_1 = math.min(ix_0 + 1, src_width)
           val wz = iz - iz_0
           val wy = iy - iy_0
           val wx = ix - ix_0
-          val value = (1-wy) * (1-wx) * (1-wz) * ev.toType[Double](src.valueAt(iz_0, iy_0, ix_0)) +
-          (1-wy) * (1-wx) * wz * ev.toType[Double](src.valueAt(iz_1, iy_0, ix_0)) +
-          (1-wy) * wx * (1-wz) * ev.toType[Double](src.valueAt(iz_0, iy_0, ix_1)) +
-          (1-wy) * wx * wz * ev.toType[Double](src.valueAt(iz_1, iy_0, ix_1)) +
-          wy * (1-wx) * (1-wz) * ev.toType[Double](src.valueAt(iz_0, iy_1, ix_0)) +
-          wy * (1-wx) * wz * ev.toType[Double](src.valueAt(iz_1,iy_1,ix_0)) + 
+          val value = (1 - wy) * (1 - wx) * (1 - wz) * ev.toType[Double](src.valueAt(iz_0, iy_0, ix_0)) +
+          (1 - wy) * (1 - wx) * wz * ev.toType[Double](src.valueAt(iz_1, iy_0, ix_0)) +
+          (1 - wy) * wx * (1 - wz) * ev.toType[Double](src.valueAt(iz_0, iy_0, ix_1)) +
+          (1 - wy) * wx * wz * ev.toType[Double](src.valueAt(iz_1, iy_0, ix_1)) +
+          wy * (1 - wx) * (1 - wz) * ev.toType[Double](src.valueAt(iz_0, iy_1, ix_0)) +
+          wy * (1 - wx) * wz * ev.toType[Double](src.valueAt(iz_1, iy_1, ix_0)) +
           wy * wx * (1-wz) * ev.toType[Double](src.valueAt(iz_0, iy_1, ix_1)) +
           wy * wx * wz * ev.toType[Double](src.valueAt(iz_1, iy_1, ix_1))
-          dst.setValue(z,y,x,ev.fromType[Double](value))
+          dst.setValue(z, y, x, ev.fromType[Double](value))
         }
     }
   }

@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.intel.analytics.zoo.feature.image3d
 
 import com.intel.analytics.bigdl.tensor.Tensor
@@ -34,9 +33,10 @@ object Crop3D {
   def apply(start: Array[Int], patchSize: Array[Int]): Crop3D =
     new Crop3D(start, patchSize)
 
-  private[zoo] def crop(tensor: Tensor[Float], start: Array[Int], patchSize: Array[Int]): Tensor[Float] = {
-    require(start(0) <= tensor.size(1) && start(1) <= tensor.size(2) && start(2) <= tensor.size(3),
-      "Cropping indices out of bounds.")
+  private[zoo] def crop(tensor: Tensor[Float], start: Array[Int],
+                        patchSize: Array[Int]): Tensor[Float] = {
+    require(start(0) <= tensor.size(1) && start(1) <= tensor.size(2) &&
+      start(2) <= tensor.size(3), "Cropping indices out of bounds.")
     require(start(0) + patchSize(0) - 1  <= tensor.size(1)
       && start(1) + patchSize(1) - 1 <= tensor.size(2)
       && start(2) + patchSize(2) - 1 <= tensor.size(3), "Cropping indices out of bounds.")
