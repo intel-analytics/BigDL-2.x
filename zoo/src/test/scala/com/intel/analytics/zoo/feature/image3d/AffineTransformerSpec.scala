@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 The Analytics Zoo Authors.
+ * Copyright 2018 Analytics Zoo Authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,8 +22,6 @@ import com.intel.analytics.bigdl.transform.vision.image._
 import com.intel.analytics.bigdl.utils.Engine
 import com.intel.analytics.zoo.feature.image.ImageSet
 import org.apache.spark.SparkContext
-
-
 
 class AffineTransformerSpec extends TorchSpec {
   "An AffineTransformer" should "generate correct output when dimension of depth is 1" in {

@@ -70,7 +70,7 @@ class PythonImageFeature[T: ClassTag](implicit ev: TensorNumeric[T]) extends Pyt
                                  toChw: Boolean = true): JList[JTensor] = {
     imageSet.array.map(imf => {
       // 3D image
-      if(imf.getSize == null) {
+      if (imf.getSize == null) {
         imageFeature3DToImageTensor(imf, floatKey)
       } else {
         imageFeatureToImageTensor(imf, floatKey, toChw)

@@ -50,7 +50,7 @@ extends Serializable {
     }
 
     for(z <- 1 to depth; y <- 1 to height; x <- 1 to width) {
-      val flow_z = flowField.valueAt(1, z ,y, x)
+      val flow_z = flowField.valueAt(1, z, y, x)
       val flow_y = flowField.valueAt(2, z, y, x)
       val flow_x = flowField.valueAt(3, z, y, x)
       var iz = offset_mode * z + flow_z
@@ -80,14 +80,15 @@ extends Serializable {
           val wz = iz - iz_0
           val wy = iy - iy_0
           val wx = ix - ix_0
-          val value = (1 - wy) * (1 - wx) * (1 - wz) * ev.toType[Double](src.valueAt(iz_0, iy_0, ix_0)) +
-          (1 - wy) * (1 - wx) * wz * ev.toType[Double](src.valueAt(iz_1, iy_0, ix_0)) +
-          (1 - wy) * wx * (1 - wz) * ev.toType[Double](src.valueAt(iz_0, iy_0, ix_1)) +
-          (1 - wy) * wx * wz * ev.toType[Double](src.valueAt(iz_1, iy_0, ix_1)) +
-          wy * (1 - wx) * (1 - wz) * ev.toType[Double](src.valueAt(iz_0, iy_1, ix_0)) +
-          wy * (1 - wx) * wz * ev.toType[Double](src.valueAt(iz_1, iy_1, ix_0)) +
-          wy * wx * (1-wz) * ev.toType[Double](src.valueAt(iz_0, iy_1, ix_1)) +
-          wy * wx * wz * ev.toType[Double](src.valueAt(iz_1, iy_1, ix_1))
+          val value =
+              (1 - wy) * (1 - wx) * (1 - wz) * ev.toType[Double](src.valueAt(iz_0, iy_0, ix_0)) +
+              (1 - wy) * (1 - wx) * wz * ev.toType[Double](src.valueAt(iz_1, iy_0, ix_0)) +
+              (1 - wy) * wx * (1 - wz) * ev.toType[Double](src.valueAt(iz_0, iy_0, ix_1)) +
+              (1 - wy) * wx * wz * ev.toType[Double](src.valueAt(iz_1, iy_0, ix_1)) +
+              wy * (1 - wx) * (1 - wz) * ev.toType[Double](src.valueAt(iz_0, iy_1, ix_0)) +
+              wy * (1 - wx) * wz * ev.toType[Double](src.valueAt(iz_1, iy_1, ix_0)) +
+              wy * wx * (1-wz) * ev.toType[Double](src.valueAt(iz_0, iy_1, ix_1)) +
+              wy * wx * wz * ev.toType[Double](src.valueAt(iz_1, iy_1, ix_1))
           dst.setValue(z, y, x, ev.fromType[Double](value))
         }
     }

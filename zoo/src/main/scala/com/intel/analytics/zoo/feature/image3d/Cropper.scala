@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 The Analytics Zoo Authors.
+ * Copyright 2018 Analytics Zoo Authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -62,8 +62,8 @@ class Crop3D(start: Array[Int], patchSize: Array[Int])
 
 object RandomCrop3D {
   /**
-   * Crop a random patch from an 3D image with specified patch size. The patch size should be less than
-   * the image size.
+   * Crop a random patch from an 3D image with specified patch size.
+   * The patch size should be less tha the image size.
    * @param cropDepth depth after crop
    * @param cropHeight height after crop
    * @param cropWidth width after crop
