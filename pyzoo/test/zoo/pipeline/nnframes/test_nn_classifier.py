@@ -280,7 +280,7 @@ class TestNNClassifer():
             checkpoint_config = estimator.getCheckpoint()
             assert checkpoint_config[0] == tmp_dir
             assert "EveryEpoch" in str(checkpoint_config)
-            assert checkpoint_config[2] == False
+            assert checkpoint_config[2] is False
 
             estimator.fit(df)
             assert len(os.listdir(tmp_dir)) > 0

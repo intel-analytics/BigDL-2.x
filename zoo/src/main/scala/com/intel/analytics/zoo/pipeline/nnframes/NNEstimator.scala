@@ -123,8 +123,8 @@ private[nnframes] trait TrainingParams[@specialized(Float, Double) T] extends Pa
     "checkpointOverwrite")
 
   /**
-    * Get check point path.
-    */
+   * Get check point path.
+   */
   def getCheckpointPath: String = $(checkpointPath)
 }
 
