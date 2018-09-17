@@ -16,30 +16,18 @@
 from zoo.pipeline.api.onnx.mapper.operator_mapper import OperatorMapper
 from zoo.pipeline.api.onnx.onnx_helper import OnnxHelper
 import zoo.pipeline.api.keras.layers as zlayers
-import numpy as np
 
 
-class MaxPoolMapper(OperatorMapper):
+class LogSoftmaxMapper(OperatorMapper):
     def __init__(self, node, _params, _all_tensors):
-        super(MaxPoolMapper, self).__init__(node, _params, _all_tensors)
+        super(LogSoftmaxMapper, self).__init__(node, _params, _all_tensors)
 
     def _to_tensor(self):
-        assert len(self.model_inputs) == 1, "MaxPool accept single input only"
+        assert len(self.model_inputs) == 1, "LogSoftmax accept single input only"
+        assert int(self.onnx_attr['axis']) == 1, "LofSoftware only accept the default axis"
         rank = len(self.model_inputs[0].zvalue.get_input_shape())
-
-        if (rank == 4):  # NCHW
-            pool_size = [int(i) for i in self.onnx_attr['kernel_shape']]
-            if "strides" in self.onnx_attr.keys():
-                strides = [int(i) for i in self.onnx_attr['strides']]
-            else:
-                strides = [1 for i in self.onnx_attr['kernel_shape']]
-
-            border_mode, pads = OnnxHelper.get_padds(self.onnx_attr)
-
-            maxpool = zlayers.MaxPooling2D(pool_size=pool_size,
-                                           strides=strides,
-                                           border_mode=border_mode,
-                                           pads=pads)
-            return maxpool(self.model_inputs[0].zvalue)
+        if (rank == 2):
+            logsoftmax = zlayers.Activation("log_softmax")
+            return logsoftmax(self.model_inputs[0].zvalue)
         else:
             raise Exception("not supported.")
