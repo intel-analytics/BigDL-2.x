@@ -274,7 +274,14 @@ class TestNNClassifer():
         try:
             tmp_dir = tempfile.mkdtemp()
             estimator = NNEstimator(model, criterion).setMaxEpoch(5)\
-                .setCheckpoint(tmp_dir, EveryEpoch())
+                .setBatchSize(4)\
+                .setCheckpoint(tmp_dir, EveryEpoch(), False)
+
+            checkpoint_config = estimator.getCheckpoint()
+            assert checkpoint_config[0] == tmp_dir
+            assert "EveryEpoch" in str(checkpoint_config)
+            assert checkpoint_config[2] == False
+
             estimator.fit(df)
             assert len(os.listdir(tmp_dir)) > 0
         finally:

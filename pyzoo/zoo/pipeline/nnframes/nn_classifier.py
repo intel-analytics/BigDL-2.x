@@ -378,22 +378,23 @@ class NNEstimator(JavaEstimator, HasFeaturesCol, HasLabelCol, HasPredictionCol, 
                       float(clip_norm))
         return self
 
-    def setCheckpoint(self, path, trigger):
+    def setCheckpoint(self, path, trigger, isOverWrite=True):
         """
         Set check points during training. Not enabled by default
         :param path: the directory to save the model
         :param trigger: how often to save the check point
+        :param isOverWrite: whether to overwrite existing snapshots in path. Default is True
         :return: self
         """
         pythonBigDL_method_name = "setCheckpoint"
         callBigDlFunc(self.bigdl_type, pythonBigDL_method_name, self.value,
-                      path, trigger)
-        self.checkpoint_config = [path, trigger]
+                      path, trigger, isOverWrite)
+        self.checkpoint_config = [path, trigger, isOverWrite]
         return self
 
     def getCheckpoint(self):
         """
-        :return: a tuple containing (checkpointPath, checkpointTrigger)
+        :return: a tuple containing (checkpointPath, checkpointTrigger, checkpointOverwrite)
         """
         return self.checkpoint_config
 

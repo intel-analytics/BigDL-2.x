@@ -119,8 +119,11 @@ private[nnframes] trait TrainingParams[@specialized(Float, Double) T] extends Pa
   final val checkpointPath = new Param[String](this, "checkpointPath", "path for check points")
   final val checkpointTrigger = new Param[Trigger](this, "checkpointTrigger",
     "Trigger for check points")
+  final val checkpointOverwrite = new BooleanParam(this, "checkpointOverwrite",
+    "checkpointOverwrite")
 
-  def getCheckpoint: (String, Trigger) = ($(checkpointPath), $(checkpointTrigger))
+  def getCheckpoint: (String, Trigger, Boolean) =
+    ($(checkpointPath), $(checkpointTrigger), $(checkpointOverwrite))
 }
 
 /**
@@ -290,12 +293,14 @@ class NNEstimator[T: ClassTag] private[zoo] (
    *
    * @param path the directory to save
    * @param trigger how often to save the check point
+   * @param isOverWrite: whether to overwrite existing snapshots in path. Default is True
    * @return this estimator
    */
-  def setCheckpoint(path: String, trigger: Trigger): this.type = {
+  def setCheckpoint(path: String, trigger: Trigger, isOverWrite: Boolean = true): this.type = {
     require(path != null && trigger != null, "checkpoint path and trigger cannot be null")
     set(checkpointPath, path)
     set(checkpointTrigger, trigger)
+    set(checkpointOverwrite, isOverWrite)
     this
   }
 
@@ -384,6 +389,9 @@ class NNEstimator[T: ClassTag] private[zoo] (
 
     if (isSet(this.checkpointPath)) {
       optimizer.setCheckpoint($(checkpointPath), $(checkpointTrigger))
+      if ($(checkpointOverwrite)) {
+        optimizer.overWriteCheckpoint()
+      }
     }
 
     val optimizedModel = optimizer.optimize()

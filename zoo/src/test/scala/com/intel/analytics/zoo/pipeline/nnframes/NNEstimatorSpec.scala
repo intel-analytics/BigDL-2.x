@@ -541,6 +541,7 @@ class NNEstimatorSpec extends FlatSpec with Matchers with BeforeAndAfter {
       .setBatchSize(nRecords)
       .setMaxEpoch(5)
       .setCheckpoint(tmpFile, Trigger.everyEpoch)
+    println(estimator.getCheckpoint)
 
     val data = sc.parallelize(smallData)
     val df = sqlContext.createDataFrame(data).toDF("features", "label")
@@ -548,6 +549,12 @@ class NNEstimatorSpec extends FlatSpec with Matchers with BeforeAndAfter {
       estimator.fit(df)
       val f = new File(tmpFile)
       assert(new File(tmpFile).listFiles().length > 0)
+
+      // fit again to test overwrite works without error
+      NNEstimator(model, criterion, Array(6), Array(1))
+        .setBatchSize(nRecords)
+        .setMaxEpoch(5)
+        .setCheckpoint(tmpFile, Trigger.everyEpoch, isOverWrite = true).fit(df)
     } finally {
       Path(tmpFile).deleteRecursively()
     }
