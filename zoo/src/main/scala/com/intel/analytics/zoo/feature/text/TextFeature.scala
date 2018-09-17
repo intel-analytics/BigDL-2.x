@@ -47,7 +47,7 @@ class TextFeature extends Serializable {
     if (contains(key)) {
       state(key).asInstanceOf[T]
     } else {
-      logger.warn(s"TextFeature doesn't have contain $key")
+      logger.warn(s"TextFeature doesn't contain $key")
       null.asInstanceOf[T]
     }
   }

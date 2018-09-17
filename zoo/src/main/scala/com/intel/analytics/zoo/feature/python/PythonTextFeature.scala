@@ -184,12 +184,12 @@ class PythonTextFeature[T: ClassTag](implicit ev: TensorNumeric[T]) extends Pyth
     }.toJavaRDD()
   }
 
-  def createTokenizer(outKey: String): Tokenizer = {
-    Tokenizer(outKey)
+  def createTokenizer(): Tokenizer = {
+    Tokenizer()
   }
 
-  def createNormalizer(outKey: String): Normalizer = {
-    Normalizer(outKey)
+  def createNormalizer(): Normalizer = {
+    Normalizer()
   }
 
   def createWordIndexer(map: JMap[String, Int]): WordIndexer = {
@@ -198,18 +198,18 @@ class PythonTextFeature[T: ClassTag](implicit ev: TensorNumeric[T]) extends Pyth
 
   def createSequenceShaper(
       len: Int,
-      mode: String,
+      truncMode: String,
       inputKey: String,
       padElement: Int): SequenceShaper = {
-    SequenceShaper(len, mode, inputKey, padElement)
+    SequenceShaper(len, truncMode, inputKey, padElement)
   }
 
   def createSequenceShaper(
       len: Int,
-      mode: String,
+      truncMode: String,
       inputKey: String,
       padElement: String): SequenceShaper = {
-    SequenceShaper(len, mode, inputKey, padElement)
+    SequenceShaper(len, truncMode, inputKey, padElement)
   }
 
   def createTextFeatureToSample(): TextFeatureToSample[T] = {

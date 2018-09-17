@@ -81,6 +81,7 @@ abstract class TextSet {
 
   /**
    * Randomly split into array of TextSet with provided weights.
+   * Only available for DistributedTextSet for now.
    */
   def randomSplit(weights: Array[Double]): Array[TextSet]
 
@@ -117,6 +118,10 @@ abstract class TextSet {
     transform(WordIndexer(wordIndex))
   }
 
+  /**
+   * Shape the sequence of indexedTokens or tokens to a fixed length.
+   * See SequenceShaper for more details.
+   */
   def shapeSequence(
     len: Int,
     truncMode: String = "pre",
@@ -132,6 +137,10 @@ abstract class TextSet {
     transform(TextFeatureToSample[T]())
   }
 
+  /**
+   * Generate wordIndex map based on sorted word frequencies in descending order.
+   * Result map stored in 'wordIndex'.
+   */
   protected def generateWordIndexMap(
      removeTopN: Int = 0, maxWordsNum: Int = 5000): Unit
 
@@ -300,7 +309,7 @@ class DistributedTextSet(var rdd: RDD[TextFeature]) extends TextSet {
     if (maxWordsNum > 0) {
       frequencies = frequencies.take(maxWordsNum)
     }
-//    rdd.cache()
+    rdd.persist()
     val wordIndex = TextSet.wordIndexFromFrequencies(frequencies)
     val wordIndexBC = rdd.sparkContext.broadcast(wordIndex)
     setWordIndex(wordIndexBC.value)

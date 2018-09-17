@@ -17,7 +17,7 @@
 package com.intel.analytics.zoo.feature.text
 
 /**
- * Shape the sequence of tokens or indexedTokens to a fixed length.
+ * Shape the sequence of indexedTokens or tokens to a fixed length.
  * If the original sequence is longer than the target length, it will be truncated from
  * the beginning or the end.
  * If the original sequence is shorter than the target length, it will be padded to the end.
