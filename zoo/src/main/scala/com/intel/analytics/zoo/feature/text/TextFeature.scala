@@ -28,6 +28,7 @@ import scala.collection.{Set, mutable}
  * Each key is a string that can be used to identify the corresponding value.
  */
 class TextFeature extends Serializable {
+  import TextFeature.logger
 
   private def this(text: String, label: Option[Int]) {
     this
@@ -43,7 +44,12 @@ class TextFeature extends Serializable {
   def contains(key: String): Boolean = state.contains(key)
 
   def apply[T](key: String): T = {
-    if (contains(key)) state(key).asInstanceOf[T] else null.asInstanceOf[T]
+    if (contains(key)) {
+      state(key).asInstanceOf[T]
+    } else {
+      logger.warn(s"TextFeature doesn't have contain $key")
+      null.asInstanceOf[T]
+    }
   }
 
   def update(key: String, value: Any): Unit = state(key) = value
@@ -64,7 +70,7 @@ class TextFeature extends Serializable {
       apply[Int](TextFeature.label)
     }
     else {
-      TextFeature.logger.warn("No label is stored in the TextFeature")
+      logger.warn("No label is stored in the TextFeature")
       -1
     }
   }
@@ -102,7 +108,6 @@ object TextFeature {
    * Value should be a BigDL Sample.
    */
   val sample = "sample"
-
   /**
    * Key for the text prediction result.
    * Value should be a BigDL Activity.

@@ -27,7 +27,9 @@ package com.intel.analytics.zoo.feature.text
 class WordIndexer(val map: Map[String, Int]) extends TextTransformer {
 
   override def transform(feature: TextFeature): TextFeature = {
-    val tokens = feature.apply[Array[String]](TextFeature.tokens)
+    require(feature.contains(TextFeature.tokens), "TextFeature doesn't contain tokens yet, " +
+      "please tokenize first")
+    val tokens = feature[Array[String]](TextFeature.tokens)
     val indices = tokens.flatMap(word => {
       if (map.contains(word)) {
         Some(map(word))

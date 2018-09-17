@@ -59,15 +59,15 @@ class TextSetSpec extends FlatSpec with Matchers with BeforeAndAfter {
 
   "TextFeature with label" should "work properly" in {
     val feature = genFeatures().head
-    require(feature.getText == "Hello my friend, please annotate my text")
+    require(feature.getText == text1)
     require(feature.hasLabel)
     require(feature.getLabel == 0)
     require(feature.keys() == HashSet("label", "text"))
   }
 
   "TextFeature without label" should "work properly" in {
-    val text = "dummy text for test"
-    val feature = TextFeature(text)
+    val text3 = "dummy text for test"
+    val feature = TextFeature(text3)
     require(!feature.hasLabel)
     require(feature.getLabel == -1)
     require(feature.keys() == HashSet("text"))
@@ -76,33 +76,11 @@ class TextSetSpec extends FlatSpec with Matchers with BeforeAndAfter {
   "DistributedTextSet Transformation" should "work properly" in {
     val distributed = TextSet.rdd(sc.parallelize(genFeatures()))
     require(distributed.isDistributed)
-    require(distributed.preTextSet == null)
-    require(distributed.stages == null)
-
-    // After tokenization
     val t1 = distributed.tokenize()
-    require(t1.preTextSet == distributed)
-    require(t1.stages.length == 1 && t1.stages.head.isInstanceOf[Tokenizer])
-    require(t1.toDistributed.rdd == null)
-
-    // After normalization
     val t2 = t1.normalize()
-    require(t2.preTextSet == distributed)
-    require(t2.stages.length == 2)
-    require(t2.stages.head.isInstanceOf[Tokenizer])
-    require(t2.stages.last.isInstanceOf[Normalizer])
-    require(t2.toDistributed.rdd == null)
-
-    // After wordToIndex
     val t3 = t2.word2idx(maxWordsNum = 10)
-    require(t3.preTextSet == null)
-    require(t3.stages == null)
-
-    // After shaping and generating sample
     val t4 = t3.shapeSequence(len = 5).genSample[Float]()
     require(t4.isDistributed)
-    require(t4.preTextSet == null)
-    require(t4.stages == null)
 
     val wordIndex1 = t3.getWordIndex
     val wordIndex2 = t4.getWordIndex
@@ -112,20 +90,16 @@ class TextSetSpec extends FlatSpec with Matchers with BeforeAndAfter {
     val features = t4.toDistributed.rdd.collect()
     require(features.length == 2)
     require(features(0).keys() == HashSet("label", "text", "tokens", "indexedTokens", "sample"))
-    require(features(0).apply[Array[Int]]("indexedTokens").length == 5)
+    require(features(0)[Array[Int]]("indexedTokens").length == 5)
   }
 
   "LocalTextSet Transformation" should "work properly" in {
     val local = TextSet.array(genFeatures())
     require(local.isLocal)
-    require(local.preTextSet == null)
-    require(local.stages == null)
 
     val transformed =
       local.tokenize().normalize().word2idx().shapeSequence(len = 6).genSample[Float]()
     require(transformed.isLocal)
-    require(transformed.preTextSet == null)
-    require(transformed.stages == null)
 
     val wordIndex = transformed.getWordIndex
     require(wordIndex.toArray.length == 13)
@@ -136,7 +110,7 @@ class TextSetSpec extends FlatSpec with Matchers with BeforeAndAfter {
     val features = transformed.toLocal.array
     require(features.length == 2)
     require(features(0).keys() == HashSet("label", "text", "tokens", "indexedTokens", "sample"))
-    require(features(0).apply[Array[Int]]("indexedTokens").length == 6)
+    require(features(0)[Array[Int]]("indexedTokens").length == 6)
   }
 
   "TextSet read with sc, fit, predict and evaluate" should "work properly" in {
@@ -155,7 +129,7 @@ class TextSetSpec extends FlatSpec with Matchers with BeforeAndAfter {
     val accuracy = model.evaluate(transformed, batchSize = 4)
   }
 
-  "TextSet read without sc" should "work properly" in {
+  "TextSet read without sc, fit, predict and evaluate" should "work properly" in {
     val textSet = TextSet.read(path)
     require(textSet.isLocal)
     require(textSet.toLocal.array.length == 5)

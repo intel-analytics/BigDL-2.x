@@ -37,18 +37,6 @@ import scala.reflect.ClassTag
  * TextSet wraps a set of TextFeature.
  */
 abstract class TextSet {
-
-  // The very first TextSet instance that haven't been but should be transformed by
-  // a PipelinedSparkNLPTransformer specified by stages.
-  // If it is null, then it means the current TextSet has already been transformed.
-  val preTextSet: TextSet = null
-
-  // The stages that can construct a PipelinedSparkNLPTransformer, which can transform preTextSet
-  // to the target TextSet in the current status.
-  // With preTextSet and stages, we can get the current TextSet.
-  // The idea is similar to _prev_jrdd and func in pyspark PipelinedRDD implementation.
-  val stages: Array[SparkNLPTransformer] = null
-
   /**
    * Transform from one TextSet to another.
    */
@@ -96,38 +84,56 @@ abstract class TextSet {
    */
   def randomSplit(weights: Array[Double]): Array[TextSet]
 
+  /**
+   * Tokenization on original text.
+   */
   def tokenize(): TextSet = {
     transform(Tokenizer())
   }
 
+  /**
+   * Normalization on tokens.
+   */
   def normalize(): TextSet = {
     transform(Normalizer())
   }
 
-  def word2idx(removeTopN: Int = 0, maxWordsNum: Int = 5000): TextSet = {
-    val map = if (wordIndex != null) {
+  /**
+   * Map word tokens to index tokens.
+   * By default, index will start from 1 and correspond to the frequency of each word
+   * in descending order.
+   *
+   * @param removeTopN Integer. Remove the topN words with highest frequencies in the case
+   *                   where those are treated as stopwords. Default is 0, namely remove nothing.
+   * @param maxWordsNum Integer. The maximum number of words to be taken into consideration.
+   *                    Default is -1, namely all words with occurrences will be considered.
+   */
+  def word2idx(removeTopN: Int = 0, maxWordsNum: Int = -1): TextSet = {
+    if (wordIndex != null) {
       TextSet.logger.warn("wordIndex already exists. Using the existing wordIndex")
-      wordIndex
     } else {
       generateWordIndexMap(removeTopN, maxWordsNum)
     }
-    transform(WordIndexer(map)).setWordIndex(map)
+    transform(WordIndexer(wordIndex))
   }
 
   def shapeSequence(
     len: Int,
-    mode: String = "pre",
+    truncMode: String = "pre",
     inputKey: String = TextFeature.indexedTokens,
     padElement: Any = 0): TextSet = {
-    transform(SequenceShaper(len, mode, inputKey, padElement))
+    transform(SequenceShaper(len, truncMode, inputKey, padElement))
   }
 
+  /**
+   * Generate BigDL Sample.
+   */
   def genSample[T: ClassTag]()(implicit ev: TensorNumeric[T]): TextSet = {
     transform(TextFeatureToSample[T]())
   }
 
-  def generateWordIndexMap(
-     removeTopN: Int = 0, maxWordsNum: Int = 5000): Map[String, Int]
+  protected def generateWordIndexMap(
+     removeTopN: Int = 0, maxWordsNum: Int = 5000): Unit
 
   private var wordIndex: Map[String, Int] = _
 
@@ -136,20 +142,6 @@ abstract class TextSet {
   def setWordIndex(map: Map[String, Int]): this.type = {
     wordIndex = map
     this
-  }
-
-  // Return preTextSet and stages for the new TextSet after applying a SparkNLPTransformer.
-  // In this case, the corresponding RDD/Array should be null as PipelinedSparkNLPTransformer
-  // hasn't been applied yet.
-  protected def processSparkNLPTransformer(
-    transformer: SparkNLPTransformer): (TextSet, Array[SparkNLPTransformer]) = {
-    if (preTextSet == null) {
-      (this, Array(transformer))
-    }
-    else {
-      require(stages != null)
-      (preTextSet, stages ++ Array(transformer))
-    }
   }
 }
 
@@ -247,23 +239,17 @@ object TextSet {
 class LocalTextSet(var array: Array[TextFeature]) extends TextSet {
 
   override def transform(transformer: Preprocessing[TextFeature, TextFeature]): TextSet = {
-    val (preT, pipelineStages, curArr) = transformer match {
-      case sparkNLP: SparkNLPTransformer =>
-        val (t, s) = processSparkNLPTransformer(sparkNLP)
-        (t, s, null)
-      case nonSparkNLP =>
-        if (array != null) (null, null, nonSparkNLP.apply(array.toIterator).toArray)
-        else (null, null, nonSparkNLP.apply(sparkNLPTransformArray.toIterator).toArray)
-    }
-    new LocalTextSet(curArr) {
-      override val preTextSet: TextSet = preT
-      override val stages: Array[SparkNLPTransformer] = pipelineStages
-    }.setWordIndex(getWordIndex)
+    array = transformer.apply(array.toIterator).toArray
+    this
   }
 
   override def isLocal: Boolean = true
 
   override def isDistributed: Boolean = false
+
+  def toDistributed(sc: SparkContext): DistributedTextSet = {
+    new DistributedTextSet(sc.parallelize(array))
+  }
 
   override def toDataSet: DataSet[TextFeature] = {
     DataSet.array(array)
@@ -273,26 +259,16 @@ class LocalTextSet(var array: Array[TextFeature]) extends TextSet {
     throw new UnsupportedOperationException("LocalTextSet doesn't support randomSplit for now")
   }
 
-  override def word2idx(removeTopN: Int = 0, maxWordsNum: Int = 5000): TextSet = {
-    if (array == null) {
-      array = sparkNLPTransformArray
-    }
-    super.word2idx(removeTopN, maxWordsNum)
-  }
-
   override def generateWordIndexMap(
-    removeTopN: Int = 0, maxWordsNum: Int = 5000): Map[String, Int] = {
-    val frequencies = array.flatMap(feature => feature[Array[String]](TextFeature.tokens))
+    removeTopN: Int = 0, maxWordsNum: Int = -1): Unit = {
+    var frequencies = array.flatMap(feature => feature[Array[String]](TextFeature.tokens))
       .groupBy(identity).mapValues(_.length)
-      .toArray.sortBy(- _._2).slice(removeTopN, maxWordsNum + removeTopN)
-    val res = TextSet.wordIndexFromFrequencies(frequencies)
-    setWordIndex(res)
-    res
-  }
-
-  private def sparkNLPTransformArray: Array[TextFeature] = {
-    preTextSet.transform(PipelinedSparkNLPTransformer(stages))
-      .asInstanceOf[LocalTextSet].array
+      .toArray.sortBy(- _._2).drop(removeTopN)
+    if (maxWordsNum > 0) {
+      frequencies = frequencies.take(maxWordsNum)
+    }
+    val wordIndex = TextSet.wordIndexFromFrequencies(frequencies)
+    setWordIndex(wordIndex)
   }
 }
 
@@ -300,20 +276,8 @@ class LocalTextSet(var array: Array[TextFeature]) extends TextSet {
 class DistributedTextSet(var rdd: RDD[TextFeature]) extends TextSet {
 
   override def transform(transformer: Preprocessing[TextFeature, TextFeature]): TextSet = {
-    val (preT, pipelineStages, curRDD) = transformer match {
-      case sparkNLP: SparkNLPTransformer =>
-        val (t, s) = processSparkNLPTransformer(sparkNLP)
-        (t, s, null)
-      case nonSparkNLP =>
-        // Two cases when rdd != null:
-        // either prevTextSet == null or transformed by calling word2idx
-        if (rdd != null) (null, null, nonSparkNLP(rdd))
-        else (null, null, nonSparkNLP(sparkNLPTransformRDD))
-    }
-    new DistributedTextSet(curRDD) {
-      override val preTextSet: TextSet = preT
-      override val stages: Array[SparkNLPTransformer] = pipelineStages
-    }.setWordIndex(getWordIndex)
+    rdd = transformer(rdd)
+    this
   }
 
   override def isLocal: Boolean = false
@@ -328,26 +292,17 @@ class DistributedTextSet(var rdd: RDD[TextFeature]) extends TextSet {
     rdd.randomSplit(weights).map(TextSet.rdd)
   }
 
-  override def word2idx(removeTopN: Int = 0, maxWordsNum: Int = 5000): TextSet = {
-    if (rdd == null) {
-      rdd = sparkNLPTransformRDD
-    }
-    super.word2idx(removeTopN, maxWordsNum)
-  }
-
   override def generateWordIndexMap(
-    removeTopN: Int = 0, maxWordsNum: Int = 5000): Map[String, Int] = {
-    val frequencies = rdd.flatMap(text => text[Array[String]](TextFeature.tokens))
+    removeTopN: Int = 0, maxWordsNum: Int = -1): Unit = {
+    var frequencies = rdd.flatMap(text => text[Array[String]](TextFeature.tokens))
       .map(word => (word, 1)).reduceByKey(_ + _)
-      .sortBy(- _._2).collect().slice(removeTopN, maxWordsNum + removeTopN)
-    rdd.cache()
-    val res = TextSet.wordIndexFromFrequencies(frequencies)
-    setWordIndex(res)
-    res
-  }
-
-  private def sparkNLPTransformRDD: RDD[TextFeature] = {
-    preTextSet.transform(PipelinedSparkNLPTransformer(stages))
-      .asInstanceOf[DistributedTextSet].rdd
+      .sortBy(- _._2).collect().drop(removeTopN)
+    if (maxWordsNum > 0) {
+      frequencies = frequencies.take(maxWordsNum)
+    }
+//    rdd.cache()
+    val wordIndex = TextSet.wordIndexFromFrequencies(frequencies)
+    val wordIndexBC = rdd.sparkContext.broadcast(wordIndex)
+    setWordIndex(wordIndexBC.value)
   }
 }

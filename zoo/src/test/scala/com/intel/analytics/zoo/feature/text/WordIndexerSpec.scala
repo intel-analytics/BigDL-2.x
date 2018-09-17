@@ -16,17 +16,19 @@
 
 package com.intel.analytics.zoo.feature.text
 
-import com.johnsnowlabs.nlp.AnnotatorModel
+import org.scalatest.{BeforeAndAfter, FlatSpec, Matchers}
 
-/**
- * Abstract class for Transforms that leverage SparkNLP.
- */
-abstract class SparkNLPTransformer(val outKey: String) extends TextTransformer {
+class WordIndexerSpec extends FlatSpec with Matchers with BeforeAndAfter {
+  val text = "hello my friend, please annotate my text"
+  val feature = TextFeature(text)
+  feature(TextFeature.tokens) = Array("hello", "my", "friend", "please",
+    "annotate", "my", "text")
 
-  override def transform(feature: TextFeature): TextFeature = {
-    throw new Exception("shouldn't call transform on a single SparkNLPTransformer explicitly. " +
-      "Instead, you should use PipelinedSparkNLPTransformer")
+  "WordIndexer" should "work properly" in {
+    val wordIndex = Map("friend" -> 1, "my" -> 2, "annotate" -> 3, "text" -> 4)
+    val wordIndexer = WordIndexer(wordIndex)
+    val transformed = wordIndexer.transform(feature)
+    require(transformed[Array[Int]](TextFeature.indexedTokens)
+      .sameElements(Array(2, 1, 3, 2, 4)))
   }
-
-  def labor: AnnotatorModel[_]
 }

@@ -17,73 +17,61 @@
 package com.intel.analytics.zoo.feature.text
 
 /**
- * Shape sequence of tokens or indexedTokens to fixed length.
+ * Shape the sequence of tokens or indexedTokens to a fixed length.
  * If the original sequence is longer than the target length, it will be truncated from
  * the beginning or the end.
- * If the original sequence is shorter than the target length, it will be padded from the
- * beginning or the end.
+ * If the original sequence is shorter than the target length, it will be padded to the end.
  *
  * @param len The target length.
- * @param mode Truncation or padding mode. Either 'pre' or 'post'. Default is 'pre'.
- *             If 'pre', the sequence will be truncated from or padded to the beginning.
- *             If 'post', the sequence will be truncated from or padded to the end.
+ * @param truncMode Truncation mode. Either 'pre' or 'post'. Default is 'pre'.
+ *                  If 'pre', the sequence will be truncated from the beginning.
+ *                  If 'post', the sequence will be truncated from the end.
  * @param inputKey The key for the sequence. Either 'tokens' or 'indexedTokens'.
  *                 The output key would be the same. Namely the original sequence will be
  *                 replaced by the shaped sequence.
  *                 Default is 'indexedTokens'.
- * @param padElement The element to be padded to the sequence if its length is smaller than
- *                   the original length.
+ * @param padElement The element to be padded to the sequence if the original length is
+ *                   smaller than the target length.
  *                   It should be a string if inputKey is 'tokens'.
  *                   It should be an integer if inputKey is 'indexedTokens'.
- *                   Default is 0 for 'indexedTokens'.
+ *                   Default is 0 for 'indexedTokens' with the convention that we reserve index
+ *                   0 for unknown words.
  */
 class SequenceShaper(
     val len: Int,
-    val mode: String = "pre",
+    val truncMode: String = "pre",
     val inputKey: String = TextFeature.indexedTokens,
     val padElement: Any = 0) extends TextTransformer {
 
   require(len > 0, "len should be positive")
-  require(mode == "pre" || mode == "post", "truncMode can only be pre or 'post")
+  require(truncMode == "pre" || truncMode == "post", "truncMode can only be pre or post")
   require(inputKey == TextFeature.indexedTokens || inputKey == TextFeature.tokens,
-  "inputKey should be tokens or indexedTokens")
+  "inputKey should be either tokens or indexedTokens")
 
   override def transform(feature: TextFeature): TextFeature = {
-    require(feature.contains(inputKey), s"TextFeature doesn't have key: $inputKey")
-    val tokens = feature.apply[Array[_]](inputKey)
-    val paddedTokens = if (tokens.length > len) {
-      if (mode == "pre") {
+    require(feature.contains(inputKey), s"TextFeature doesn't contain $inputKey")
+    val tokens = feature[Array[_]](inputKey)
+    val shapedTokens = if (tokens.length > len) {
+      if (truncMode == "pre") {
         tokens.slice(tokens.length - len, tokens.length)
       } else {
         tokens.slice(0, len)
       }
     } else {
-      if (mode == "pre") {
-        if (inputKey == TextFeature.indexedTokens) {
-          require(padElement.isInstanceOf[Int], "padElement should be an int for indexedTokens")
-          Array.fill[Int](len - tokens.length)(padElement.asInstanceOf[Int]) ++ tokens
-        }
-        else {
-          require(padElement.isInstanceOf[String], "padElement should be a string for tokens")
-          Array.fill[String](len - tokens.length)(padElement.asInstanceOf[String]) ++ tokens
-        }
+      if (inputKey == TextFeature.indexedTokens) {
+        require(padElement.isInstanceOf[Int], "padElement should be an int for indexedTokens")
+        tokens ++ Array.fill[Int](len - tokens.length)(padElement.asInstanceOf[Int])
       }
       else {
-        if (inputKey == TextFeature.indexedTokens) {
-          require(padElement.isInstanceOf[Int], "padElement should be an int for indexedTokens")
-          tokens ++ Array.fill[Int](len - tokens.length)(padElement.asInstanceOf[Int])
-        }
-        else {
-          require(padElement.isInstanceOf[String], "padElement should be a string for tokens")
-          tokens ++ Array.fill[String](len - tokens.length)(padElement.asInstanceOf[String])
-        }
+        require(padElement.isInstanceOf[String], "padElement should be a string for tokens")
+        tokens ++ Array.fill[String](len - tokens.length)(padElement.asInstanceOf[String])
       }
     }
     if (inputKey == TextFeature.indexedTokens) {
-      feature(inputKey) = paddedTokens.map(_.asInstanceOf[Int])
+      feature(inputKey) = shapedTokens.map(_.asInstanceOf[Int])
     }
     else {
-      feature(inputKey) = paddedTokens.map(_.asInstanceOf[String])
+      feature(inputKey) = shapedTokens.map(_.asInstanceOf[String])
     }
     feature
   }
@@ -92,9 +80,9 @@ class SequenceShaper(
 object SequenceShaper {
   def apply(
       len: Int,
-      mode: String = "pre",
+      truncMode: String = "pre",
       inputKey: String = TextFeature.indexedTokens,
       padElement: Any = 0): SequenceShaper = {
-    new SequenceShaper(len, mode, inputKey, padElement)
+    new SequenceShaper(len, truncMode, inputKey, padElement)
   }
 }

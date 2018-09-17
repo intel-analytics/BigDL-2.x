@@ -16,31 +16,25 @@
 
 package com.intel.analytics.zoo.feature.text
 
-import com.johnsnowlabs.nlp.AnnotatorModel
-import com.johnsnowlabs.nlp.annotator.NormalizerModel
-import com.johnsnowlabs.util.ConfigLoader
-
 /**
- * Removes all dirty characters from tokens following a regex pattern.
+ * Removes all dirty characters from tokens and convert to lower case.
  * Input key: TextFeature.tokens
- * Output key: Can be specified by outKey. Default is TextFeature.tokens.
- *             By default original tokens will be replaced by normalized tokens.
+ * Output key: TextFeature.tokens
+ *             In this case, original tokens will be replaced by normalized tokens.
  */
-class Normalizer private (override val outKey: String = TextFeature.tokens)
-  extends SparkNLPTransformer(outKey) {
+class Normalizer extends TextTransformer {
 
-  override def labor: AnnotatorModel[_] = {
-    new NormalizerModel().setLowercase(true)
-      .setOutputCol("normalized")
-      .setPatterns(Array("[^\\pL+]"))
-      .setSlangDict(Map.empty[String, String])
+  override def transform(feature: TextFeature): TextFeature = {
+    require(feature.contains(TextFeature.tokens), "TextFeature doesn't contain tokens yet, " +
+      "please tokenize first")
+    val tokens = feature[Array[String]](TextFeature.tokens)
+    feature(TextFeature.tokens) = tokens.map(_.toLowerCase().replaceAll("[^a-zA-Z]", ""))
+    feature
   }
 }
 
 object Normalizer {
-  ConfigLoader.setConfigPath(getClass.getResource("/spark-nlp.conf").getPath)
-
-  def apply(outKey: String = TextFeature.tokens): Normalizer = {
+  def apply(): Normalizer = {
     new Normalizer()
   }
 }
