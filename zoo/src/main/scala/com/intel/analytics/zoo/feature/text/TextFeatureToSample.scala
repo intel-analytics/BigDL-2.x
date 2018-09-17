@@ -23,7 +23,7 @@ import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric
 import scala.reflect.ClassTag
 
 /**
- * Transform indexedTokens and label (if any) of a TextFeature to Sample.
+ * Transform indexedTokens and label (if any) of a TextFeature to a BigDL Sample.
  * Input key: TextFeature.indexedTokens and TextFeature.label (if any)
  * Output key: TextFeature.sample
  */

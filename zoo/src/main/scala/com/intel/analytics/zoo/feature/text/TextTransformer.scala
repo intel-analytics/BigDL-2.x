@@ -19,7 +19,7 @@ package com.intel.analytics.zoo.feature.text
 import com.intel.analytics.zoo.feature.common.{ChainedPreprocessing, Preprocessing}
 
 /**
- * Super class of Transformers that transform TextFeature.
+ * Base class of Transformers that transform TextFeature.
  */
 abstract class TextTransformer extends Preprocessing[TextFeature, TextFeature] {
 

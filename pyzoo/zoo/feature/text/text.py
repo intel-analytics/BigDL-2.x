@@ -178,8 +178,8 @@ class DistributedTextSet(TextSet):
 
 
 def _process_predict_result(predict):
-    # predict is a list of JTensors or None
-    # Convert to list of ndarray
+    # 'predict' is a list of JTensors or None
+    # convert to a list of ndarray
     if predict is not None:
         return [res.to_ndarray() for res in predict]
     else:

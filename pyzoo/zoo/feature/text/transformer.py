@@ -24,31 +24,44 @@ if sys.version >= '3':
 
 
 class TextTransformer(Preprocessing):
-
+    """
+    Base class of Transformers that transform TextFeature.
+    """
     def __init__(self, bigdl_type="float", *args):
         super(TextTransformer, self).__init__(bigdl_type, *args)
 
 
 class Tokenizer(TextTransformer):
     """
+    Transform text to array of string tokens.
+
     >>> tokenizer = Tokenizer()
     creating: createTokenizer
     """
-    def __init__(self, out_key="tokens", bigdl_type="float"):
-        super(Tokenizer, self).__init__(bigdl_type, out_key)
+    def __init__(self, bigdl_type="float"):
+        super(Tokenizer, self).__init__(bigdl_type)
 
 
 class Normalizer(TextTransformer):
     """
+    Removes all dirty characters from tokens and convert to lower case.
+    Original tokens will be replaced by normalized tokens.
+
     >>> normalizer = Normalizer()
     creating: createNormalizer
     """
-    def __init__(self, out_key="tokens", bigdl_type="float"):
-        super(Normalizer, self).__init__(bigdl_type, out_key)
+    def __init__(self, bigdl_type="float"):
+        super(Normalizer, self).__init__(bigdl_type)
 
 
 class WordIndexer(TextTransformer):
     """
+    Given a wordIndex map, transform tokens to corresponding indices.
+    Those words not in the map will be aborted.
+
+    # Arguments
+    map: Dict with word as its key and index as its value.
+
     >>> word_indexer = WordIndexer(map={"it": 1, "me": 2})
     creating: createWordIndexer
     """
@@ -58,22 +71,43 @@ class WordIndexer(TextTransformer):
 
 class SequenceShaper(TextTransformer):
     """
-    >>> sequence_shaper = SequenceShaper(len=6, mode="post")
+    Shape the sequence of indexedTokens or tokens to a fixed length.
+    If the original sequence is longer than the target length, it will be truncated from
+    the beginning or the end.
+    If the original sequence is shorter than the target length, it will be padded to the end.
+
+    # Arguments
+    len: The target length.
+    trunc_mode: Truncation mode. Either 'pre' or 'post'. Default is 'pre'.
+                If 'pre', the sequence will be truncated from the beginning.
+                If 'post', the sequence will be truncated from the end.
+    input_key: The key for the sequence. Either 'tokens' or 'indexedTokens'.
+               The original sequence will be replaced by the shaped sequence.
+               Default is 'indexedTokens'.
+    pad_element: The element to be padded to the sequence if the original length is
+                 smaller than the target length.
+                 It should be a string if input_key is 'tokens'.
+                 It should be an integer if input_key is 'indexedTokens'.
+                 Default is 0 for 'indexedTokens' with the convention that we reserve index
+                 0 for unknown words.
+    >>> sequence_shaper = SequenceShaper(len=6, trunc_mode="post")
     creating: createSequenceShaper
 
     >>> sequence_shaper2 = SequenceShaper(6, "pre", "tokens", "dummy")
     creating: createSequenceShaper
     """
-    def __init__(self, len, mode="pre", input_key="indexedTokens",
+    def __init__(self, len, trunc_mode="pre", input_key="indexedTokens",
                  pad_element=0, bigdl_type="float"):
         assert isinstance(pad_element, int) or isinstance(pad_element, six.string_types), \
             "pad_element should be int or string"
-        super(SequenceShaper, self).__init__(bigdl_type, len, mode,
+        super(SequenceShaper, self).__init__(bigdl_type, len, trunc_mode,
                                              input_key, pad_element)
 
 
 class TextFeatureToSample(TextTransformer):
     """
+    Transform indexedTokens and label (if any) of a TextFeature to a BigDL Sample.
+
     >>> to_sample = TextFeatureToSample()
     creating: createTextFeatureToSample
     """
