@@ -278,5 +278,80 @@ class TestModelLoading(OnnxTestCase):
         ]]]).astype(np.float32)
         y = np.array([[[[7, 9],
                         [17, 19]]]]).astype(np.float32)
+
+    def test_onnx_logsoftmax(self):
+        pytorch_model = torch.nn.Sequential(
+            torch.nn.LogSoftmax()
+        )
+        input_shape_with_batch = (1, 3)
+        self.compare_with_pytorch(pytorch_model, input_shape_with_batch)
+
+    def test_onnx_tanh(self):
+        node = onnx.helper.make_node(
+            'Tanh',
+            inputs=['x'],
+            outputs=['y'],
+        )
+        x = np.random.randn(3, 4, 5).astype(np.float32)
+        y = np.tanh(x)
+        output = OnnxLoader.run_node(node, [x])
+        np.testing.assert_almost_equal(output["y"], y)
+
+    def test_onnx_exp(self):
+        node = onnx.helper.make_node(
+            'Exp',
+            inputs=['x'],
+            outputs=['y'],
+        )
+        x = np.random.randn(3, 4, 5).astype(np.float32)
+        y = np.exp(x)
+        output = OnnxLoader.run_node(node, [x])
+        np.testing.assert_almost_equal(output["y"], y, decimal=5)
+
+    def test_onnx_flatten(self):
+        node = onnx.helper.make_node(
+            'Flatten',
+            inputs=['a'],
+            outputs=['b'],
+        )
+        shape = (5, 4, 3, 2)
+        a = np.random.random_sample(shape).astype(np.float32)
+        new_shape = (5, 24)
+        b = np.reshape(a, new_shape)
+        output = OnnxLoader.run_node(node, [a])
+        np.testing.assert_almost_equal(output["b"], b, decimal=5)
+
+    def test_onnx_sqrt(self):
+        node = onnx.helper.make_node(
+            'Sqrt',
+            inputs=['x'],
+            outputs=['y'],
+        )
+        x = np.abs(np.random.randn(3, 4, 5).astype(np.float32))
+        y = np.sqrt(x)
+        output = OnnxLoader.run_node(node, [x])
+        np.testing.assert_almost_equal(output["y"], y, decimal=5)
+
+    def test_onnx_log(self):
+        node = onnx.helper.make_node(
+            'Log',
+            inputs=['x'],
+            outputs=['y'],
+        )
+        x = np.exp(np.random.randn(3, 4, 5).astype(np.float32))
+        y = np.log(x)
+        output = OnnxLoader.run_node(node, [x])
+        np.testing.assert_almost_equal(output["y"], y, decimal=5)
+
+    def test_onnx_hardsigmoid(self):
+        default_alpha = 0.2
+        default_beta = 0.5
+        node = onnx.helper.make_node(
+            'HardSigmoid',
+            inputs=['x'],
+            outputs=['y'],
+        )
+        x = np.random.randn(3, 4, 5).astype(np.float32)
+        y = np.clip(x * default_alpha + default_beta, 0, 1)
         output = OnnxLoader.run_node(node, [x])
         np.testing.assert_almost_equal(output["y"], y, decimal=5)
