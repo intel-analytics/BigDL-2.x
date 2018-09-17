@@ -276,8 +276,7 @@ class TestNNClassifer():
             estimator = NNEstimator(model, criterion).setMaxEpoch(5)\
                 .setCheckpoint(tmp_dir, EveryEpoch())
             estimator.fit(df)
-            assert len([name for name in os.listdir(tmp_dir)
-                        if os.path.isfile(os.path.join(tmp_dir, name))]) > 0
+            assert len(os.listdir(tmp_dir)) > 0
         finally:
             try:
                 shutil.rmtree(tmp_dir)  # delete directory
