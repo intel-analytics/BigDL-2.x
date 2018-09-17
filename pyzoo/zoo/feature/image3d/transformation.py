@@ -25,6 +25,7 @@ if sys.version >= '3':
     long = int
     unicode = str
 
+
 class ImagePreprocessing3D(ImagePreprocessing):
     """
     ImagePreprocessing3D is a transformer that transform ImageFeature for 3D image
@@ -90,12 +91,17 @@ class AffineTransform3D(ImagePreprocessing3D):
     To avoid defects in resampling, the mapping is from destination to source.
     dst(z,y,x) = src(f(z),f(y),f(x)) where f: dst -> src
     :param affine_mat: numpy array in 3x3 shape.Define affine transformation from dst to src.
-    :param translation: numpy array in 3 dimension.Default value is np.zero(3). Define translation in each axis.
-    :param clampMode: str, default value is "clamp". Define how to handle interpolation off the input image.
-    :param padVal: float, default is 0.0. Define padding value when clampMode="padding". Setting this value when clampMode="clamp" will cause an error.
+    :param translation: numpy array in 3 dimension.Default value is np.zero(3).
+            Define translation in each axis.
+    :param clampMode: str, default value is "clamp".
+            Define how to handle interpolation off the input image.
+    :param padVal: float, default is 0.0. Define padding value when clampMode="padding".
+            Setting this value when clampMode="clamp" will cause an error.
     """
 
-    def __init__(self, affine_mat, translation=np.zeros(3), clamp_mode="clamp", pad_val=0.0, bigdl_type="float"):
+    def __init__(self, affine_mat, translation=np.zeros(3), clamp_mode="clamp",
+                 pad_val=0.0, bigdl_type="float"):
         affine_mat_tensor = JTensor.from_ndarray(affine_mat)
         translation_tensor = JTensor.from_ndarray(translation)
-        super(AffineTransform3D, self).__init__(bigdl_type, affine_mat_tensor, translation_tensor, clamp_mode, pad_val)
+        super(AffineTransform3D, self).__init__(bigdl_type, affine_mat_tensor, translation_tensor,
+                                                clamp_mode, pad_val)
