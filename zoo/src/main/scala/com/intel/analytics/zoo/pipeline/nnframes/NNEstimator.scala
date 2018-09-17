@@ -122,8 +122,10 @@ private[nnframes] trait TrainingParams[@specialized(Float, Double) T] extends Pa
   final val checkpointOverwrite = new BooleanParam(this, "checkpointOverwrite",
     "checkpointOverwrite")
 
-  def getCheckpoint: (String, Trigger, Boolean) =
-    ($(checkpointPath), $(checkpointTrigger), $(checkpointOverwrite))
+  /**
+    * Get check point path.
+    */
+  def getCheckpointPath: String = $(checkpointPath)
 }
 
 /**

@@ -541,7 +541,7 @@ class NNEstimatorSpec extends FlatSpec with Matchers with BeforeAndAfter {
       .setBatchSize(nRecords)
       .setMaxEpoch(5)
       .setCheckpoint(tmpFile, Trigger.everyEpoch)
-    println(estimator.getCheckpoint)
+    assert(estimator.getCheckpointPath == tmpFile)
 
     val data = sc.parallelize(smallData)
     val df = sqlContext.createDataFrame(data).toDF("features", "label")
