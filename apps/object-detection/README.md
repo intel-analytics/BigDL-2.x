@@ -12,8 +12,8 @@ In messi.ipynb we use a pretrained detect messi model to detect messi in a video
 * Run `export SPARK_HOME=the root directory of Spark`.
 * Run `export ANALYTICS_ZOO_HOME=the dist directory under the Analytics Zoo project`.
 * Run `pip install moviepy`.
-* Prepare the video to detect. For object-detection.ipynb video can be found in YouTube-8M ([YouTube-8M](https://research.google.com/youtube8m/) and [The video](https://www.youtube.com/watch?v=akcYAuaP4jw)).
-* Run `$ANALYTICS_ZOO_HOME/apps/object-detection/download_model.sh` to download the pretrained model.
+For object-detection.ipynb video can be found from YouTube-8M ([YouTube-8M](https://research.google.com/youtube8m/) and [The video](https://www.youtube.com/watch?v=akcYAuaP4jw)).
+Run `$ANALYTICS_ZOO_HOME/apps/object-detection/download_model.sh` to download the pretrained model.
 * Run the following bash command to start the jupyter notebook. Change parameter settings as you need, ie `MASTER = local[physcial_core_number]`.
 ```bash
 MASTER=local[*]
