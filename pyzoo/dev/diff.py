@@ -29,6 +29,7 @@ python_layers_dirs = ["./pyzoo/zoo/pipeline/api/keras/layers",
                       "./pyzoo/zoo/pipeline/api/"]
 
 scala_to_python = {"CustomLossWithVariable": "CustomLoss"}
+scala_class_to_path = {}
 
 
 def extract_scala_class(class_path):
@@ -52,6 +53,8 @@ def get_all_scala_layers(scala_dirs):
             if isfile(join(scala_dir, name)):
                 res = extract_scala_class(join(scala_dir, name))
                 raw_result += res
+                for item in res:
+                    scala_class_to_path[item] = join(scala_dir, name)
         results.update(set(class_name for class_name in raw_result if class_name is not None))
     return results
 
@@ -86,7 +89,7 @@ for name in scala_layers:
     if name not in python_layers:
         if name not in scala_to_python or \
                 (name in scala_to_python and scala_to_python[name] not in python_layers):
-            print(name)
+            print("{} : {}".format(name, scala_class_to_path[name]))
             diff_count += 1
 
 if diff_count > 0:
