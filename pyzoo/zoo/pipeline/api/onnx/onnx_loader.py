@@ -30,6 +30,9 @@ class OnnxInput(object):
 
 
 class OnnxLoader(object):
+
+    training = False
+
     def __init__(self, onnx_graph):
         self.graph = onnx_graph
         self._all_tensors = {}  # including the original input tensor or the immediate tensor.
@@ -103,7 +106,8 @@ class OnnxLoader(object):
                 self._all_tensors[input.name] = input.zvalue
             tensor = mapper.to_tensor()
             output_ids = list(node.output)
-            assert len(output_ids) == 1, "Only support single output for now"
+            assert len(output_ids) == 1 or node.op_type == "Dropout",\
+                "Only support single output for now"
             self._all_tensors[output_ids[0]] = OnnxInput(name=tensor.name, zvalue=tensor)
 
         output_tensors = []

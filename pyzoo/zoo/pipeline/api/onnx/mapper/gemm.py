@@ -50,7 +50,7 @@ class GemmMapper(OperatorMapper):
     def _to_tensor(self):
         x = self.model_inputs[0]
         z = self.model_trainable_values[1]
-        assert len(x.zvalue.get_input_shape()) == 2, "we only accept 2D input"
+        assert len(x.zvalue.shape) == 2, "we only accept 2D input"
 
         if "transA" in self.onnx_attr and self.onnx_attr['transA']:
             # TODO: add transpose operator for this x = x.transpose()
