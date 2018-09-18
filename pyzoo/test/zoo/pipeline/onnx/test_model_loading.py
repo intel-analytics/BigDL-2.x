@@ -396,7 +396,6 @@ class TestModelLoading(OnnxTestCase):
         output = OnnxLoader.run_node(node, [a, b])
         np.testing.assert_almost_equal(output["c"], c, decimal=5)
 
-
     def test_matmul_3d(self):
         node = onnx.helper.make_node(
             'MatMul',
@@ -409,7 +408,6 @@ class TestModelLoading(OnnxTestCase):
         c = np.matmul(a, b)
         output = OnnxLoader.run_node(node, [a, b])
         np.testing.assert_almost_equal(output["c"], c, decimal=5)
-
 
     def test_minit(self):
         import torch.nn as nn
@@ -432,6 +430,7 @@ class TestModelLoading(OnnxTestCase):
                 x = F.dropout(x, training=self.training)
                 x = self.fc2(x)
                 return F.log_softmax(x, dim=1)
+
         pytorch_model = MnistNet()
         pytorch_model.train(mode=False)
         self.compare_with_pytorch(pytorch_model, [(1, 1, 28, 28)])

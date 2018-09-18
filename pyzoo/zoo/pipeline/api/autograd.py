@@ -468,6 +468,7 @@ class Parameter(kbase.ZooKerasLayer):
                                         kbase.JTensor.from_ndarray(init_weight),
                                         trainable,
                                         ** kwargs)
+
     @property
     def shape(self):
         return self.get_weight().shape
