@@ -25,7 +25,7 @@ class LogSoftmaxMapper(OperatorMapper):
     def _to_tensor(self):
         assert len(self.model_inputs) == 1, "LogSoftmax accept single input only"
         assert int(self.onnx_attr['axis']) == 1, "LofSoftware only accept the default axis"
-        rank = len(self.model_inputs[0].zvalue.get_input_shape())
+        rank = len(self.model_inputs[0].zvalue.shape)
         if (rank == 2):
             logsoftmax = zlayers.Activation("log_softmax")
             return logsoftmax(self.model_inputs[0].zvalue)

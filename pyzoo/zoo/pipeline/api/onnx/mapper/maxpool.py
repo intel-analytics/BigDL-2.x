@@ -25,7 +25,7 @@ class MaxPoolMapper(OperatorMapper):
 
     def _to_tensor(self):
         assert len(self.model_inputs) == 1, "MaxPool accept single input only"
-        rank = len(self.model_inputs[0].zvalue.get_input_shape())
+        rank = len(self.model_inputs[0].zvalue.shape)
 
         if (rank == 4):  # NCHW
             pool_size = [int(i) for i in self.onnx_attr['kernel_shape']]
