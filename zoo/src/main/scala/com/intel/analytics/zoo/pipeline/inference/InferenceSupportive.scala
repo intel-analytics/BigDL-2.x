@@ -150,7 +150,7 @@ trait InferenceSupportive {
         transferTensorsToTensorOfBatch(tensors.toArray)
       case x =>
         val inputTable = T()
-        val tensorsArray = Array.range(0, x).map(i => ArrayBuffer[JTensor]())
+        val tensorsArray = (1 to x).map(i => ArrayBuffer[JTensor]())
         var i = 0
         while (i < batchSize) {
           val inputList = inputs.get(i)
