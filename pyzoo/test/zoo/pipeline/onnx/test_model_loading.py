@@ -126,7 +126,7 @@ class TestModelLoading(OnnxTestCase):
             outputs=['y'],
         )
 
-        x = np.array([-4, 2]).astype(np.float32).reshape([2,1])
+        x = np.array([-4, 2]).astype(np.float32).reshape([2, 1])
         y = np.negative(x)
         output = OnnxLoader.run_node(node, [x])
         np.testing.assert_almost_equal(output["y"], y, decimal=5)
@@ -135,7 +135,6 @@ class TestModelLoading(OnnxTestCase):
         y = np.negative(x)
         output = OnnxLoader.run_node(node, [x])
         np.testing.assert_almost_equal(output["y"], y, decimal=5)
-
 
     def test_onnx_averagepool2d(self):
         pytorch_model = torch.nn.Sequential(

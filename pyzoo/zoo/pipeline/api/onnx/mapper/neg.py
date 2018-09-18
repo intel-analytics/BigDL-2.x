@@ -22,7 +22,6 @@ class NegMapper(OperatorMapper):
     def __init__(self, node, _params, _all_tensors):
         super(NegMapper, self).__init__(node, _params, _all_tensors)
 
-
     def _to_tensor(self):
         neg = zlayers.Negative()
         return neg(self.model_inputs[0].zvalue)
