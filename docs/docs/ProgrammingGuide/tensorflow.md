@@ -19,7 +19,7 @@ model prediction for the corresponding input elements.
 
 ## Training
 
-1. Data wrangling and analysis using PySpark
+1.Data wrangling and analysis using PySpark
 
 ```python
 from zoo import init_nncontext
@@ -42,7 +42,7 @@ dataset = TFDataset.from_rdd(train_rdd,
                              batch_size=BATCH_SIZE)
 ```
 
-2. Deep learning model development using TensorFlow
+2.Deep learning model development using TensorFlow
 
 ```python
 import tensorflow as tf
@@ -57,7 +57,7 @@ with slim.arg_scope(lenet.lenet_arg_scope()):
 loss = tf.reduce_mean(tf.losses.sparse_softmax_cross_entropy(logits=logits, labels=squeezed_labels))
 ```
    
-3. Distributed training on Spark and BigDL
+3.Distributed training on Spark and BigDL
 
 ```python
 from zoo.pipeline.api.net import TFOptimizer
@@ -68,7 +68,7 @@ optimizer.set_train_summary(TrainSummary("/tmp/az_lenet", "lenet"))
 optimizer.optimize(end_trigger=MaxEpoch(5))
 ```
 
-4. Save the variable to checkpoint
+4.Save the variable to checkpoint
    
 ```python
 saver = tf.train.Saver()
@@ -76,7 +76,8 @@ saver.save(optimizer.sess, "/tmp/lenet/")
 ```
 
 ### Inference
-1. Data wrangling and analysis using PySpark
+
+1.Data wrangling and analysis using PySpark
 
 ```python
 from zoo import init_nncontext
@@ -98,7 +99,7 @@ dataset = TFDataset.from_rdd(testing_rdd,
                              types=[tf.float32])
 ```
    
-2. Reconstruct the model for inference and load the checkpoint
+2.Reconstruct the model for inference and load the checkpoint
 
 ```python
 import tensorflow as tf
@@ -114,7 +115,7 @@ saver = tf.train.Saver()
 saver.restore(sess, "/tmp/lenet")
 ```
 
-3. Run predictions
+3.Run predictions
 
 ```python
 predictor = TFPredictor(sess, [logits])
