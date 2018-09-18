@@ -63,7 +63,10 @@ class PythonImageFeature[T: ClassTag](implicit ev: TensorNumeric[T]) extends Pyt
   def localImageSetToImageTensor(imageSet: LocalImageSet,
                                  floatKey: String = ImageFeature.floats,
                                  toChw: Boolean = true): JList[JTensor] = {
-    imageSet.array.map(imageFeatureToImageTensor(_, floatKey, toChw)).toList.asJava
+    val transform = if (toChw) ImageMatToTensor() else ImageMatToTensor(format = DataFormat.NHWC)
+    transform(imageSet).toLocal().array.map { x =>
+      toJTensor(x.apply(ImageFeature.imageTensor))
+    }.toList.asJava
   }
 
   def localImageSetToLabelTensor(imageSet: LocalImageSet): JList[JTensor] = {
@@ -77,35 +80,10 @@ class PythonImageFeature[T: ClassTag](implicit ev: TensorNumeric[T]) extends Pyt
 
   def distributedImageSetToImageTensorRdd(imageSet: DistributedImageSet,
     floatKey: String = ImageFeature.floats, toChw: Boolean = true): JavaRDD[JTensor] = {
-    imageSet.rdd.map(imageFeatureToImageTensor(_, floatKey, toChw)).toJavaRDD()
-  }
-
-  override def imageFeatureToImageTensor(imageFeature: ImageFeature,
-    floatKey: String = ImageFeature.floats, toChw: Boolean = true): JTensor = {
-    toJTensor(imageFeaturetoTensor(imageFeature, floatKey, toChw).asInstanceOf[Tensor[T]])
-  }
-
-  // It may be better to fix it in ImageFeature.scala, toTensor() api to avoid copy the code here.
-  def imageFeaturetoTensor(imageFeature: ImageFeature, floatKey: String, toChw: Boolean = true):
-    Tensor[Float] = {
-    val (data, size) = if (imageFeature.contains(floatKey)) {
-      (imageFeature.floats(floatKey),
-        Array(imageFeature.getHeight(), imageFeature.getWidth(), imageFeature.getChannel()))
-    } else {
-      val channel = imageFeature.getChannel()
-      logger.warn(s"please add MatToFloats(out_key = $floatKey) in the end of pipeline if you" +
-        s" are transforming an rdd")
-      val mat = imageFeature.opencvMat()
-      val floats = new Array[Float](mat.height() * mat.width() * channel)
-      OpenCVMat.toFloatPixels(mat, floats)
-      (floats, Array(mat.height(), mat.width(), channel))
-    }
-    var image = Tensor(Storage(data)).resize(size)
-    if (toChw) {
-      // transpose the shape of image from (h, w, c) to (c, h, w)
-      image = image.transpose(1, 3).transpose(2, 3).contiguous()
-    }
-    image
+    val transform = if (toChw) ImageMatToTensor() else ImageMatToTensor(format = DataFormat.NHWC)
+    transform(imageSet).toDistributed().rdd.map { x =>
+      toJTensor(x.apply(ImageFeature.imageTensor))
+    }.toJavaRDD()
   }
 
   def distributedImageSetToLabelTensorRdd(imageSet: DistributedImageSet): JavaRDD[JTensor] = {
