@@ -46,17 +46,6 @@ class IdentitySerialTest extends ModuleSerializationTest {
     val layer = ZIdentity[Float](inputShape = Shape(Array(3)))
     layer.build(Shape(List(Shape(-1, 3))))
     val input = Tensor[Float](Array(2, 3)).apply1(_ => Random.nextFloat())
-    RandomGenerator.RNG.setSeed(1234)
-    val originalOutput = layer.forward(input).asInstanceOf[Tensor[Float]].clone()
-    val tmpFile = ZooSpecHelper.createTmpFile()
-    val absPath = tmpFile.getAbsolutePath
-    layer.saveModule(absPath, overWrite = true)
-    val loadedLayer = Module.loadModule[Float](absPath)
-    RandomGenerator.RNG.setSeed(1234)
-    val loadedOutput = loadedLayer.forward(input).asInstanceOf[Tensor[Float]].clone()
-    originalOutput.asInstanceOf[Tensor[Float]].size.sameElements(
-      loadedOutput.asInstanceOf[Tensor[Float]].size) should be (true)
-    originalOutput.asInstanceOf[Tensor[Float]].
-      almostEqual(loadedOutput.asInstanceOf[Tensor[Float]], 1e-6) should be (true)
+    runSerializationTest(layer, input)
   }
 }
