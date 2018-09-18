@@ -362,7 +362,7 @@ class Identity(ZooKerasLayer):
     name: String to set the name of the layer.
           If not specified, its name will by default to be a generated string.
 
-    >>> identity = Identity(input_shape=(2))
+    >>> identity = Identity(input_shape=(3, ))
     creating: createZooKerasIdentity
     """
     def __init__(self, input_shape=None, **kwargs):
