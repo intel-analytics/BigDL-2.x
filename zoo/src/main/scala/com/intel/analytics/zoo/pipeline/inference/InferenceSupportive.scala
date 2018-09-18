@@ -82,10 +82,7 @@ trait InferenceSupportive {
   def transferBatchTensorToJListOfJListOfJTensor(batchTensor: Tensor[Float], batchSize: Int)
   : JList[JList[JTensor]] = {
     val batchTensorSize: Array[Int] = batchTensor.size()
-    val batchShape: Array[Int] = batchTensorSize.length match {
-      case 1 => 1 +: batchTensorSize
-      case _ => batchTensorSize
-    }
+    val batchShape: Array[Int] = batchTensorSize
     val outputLength = batchTensor.nElement() / batchSize
     val outputShape = batchShape.tail
     require(batchSize == batchShape.head, "batchSize should be same")
