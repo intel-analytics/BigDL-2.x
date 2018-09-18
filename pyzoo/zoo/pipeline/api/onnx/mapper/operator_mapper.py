@@ -55,13 +55,17 @@ class OperatorMapper(object):
         if isinstance(input.zvalue, np.ndarray):
             if is_parameter or is_constant:
                 shape = input.zvalue.shape
+                print (shape)
             else:
                 shape = input.zvalue.shape[1:]
+                print(shape)
         elif isinstance(input.zvalue, list):
             if is_parameter or is_constant:
                 shape = input.zvalue
+                print(shape)
             else:
                 shape = input.zvalue[1:]
+                print(shape)
         else:
             raise Exception("not supported type " + str(type(input.zvalue)))
 
@@ -74,6 +78,7 @@ class OperatorMapper(object):
         else:
             input.zvalue = zlayers.Input(
                 shape=shape, name=input.name)
+            print (shape)
         return input
 
     def to_tensor(self):
