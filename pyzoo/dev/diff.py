@@ -31,6 +31,7 @@ python_layers_dirs = ["./pyzoo/zoo/pipeline/api/keras/layers",
 scala_to_python = {"CustomLossWithVariable": "CustomLoss"}
 scala_class_to_path = {}
 
+
 def extract_scala_class(class_path):
     exclude_key_words = {"KerasLayerWrapper", "LambdaTorch", "CustomLossWithFunc", "abstract",
                          "InternalRecurrent", "InternalTimeDistributed", "InternalMM", "Recurrent",
@@ -42,6 +43,7 @@ def extract_scala_class(class_path):
                          if all([key not in line for key in exclude_key_words])])
     match = re.findall(r"class ([\w]+)[^{]+", content)
     return match
+
 
 def get_all_scala_layers(scala_dirs):
     results = set()
