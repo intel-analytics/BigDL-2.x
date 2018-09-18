@@ -59,18 +59,20 @@ abstract class TextSet {
   def isDistributed: Boolean
 
   /**
-   * Convert to LocalTextSet.
+   * Convert to a LocalTextSet.
    */
-  def toLocal: LocalTextSet = {
-    require(isLocal, "Should be a DistributedTextSet, can't be converted a LocalText")
+  def toLocal(): LocalTextSet = {
     this.asInstanceOf[LocalTextSet]
   }
 
   /**
    * Convert to a DistributedTextSet.
    */
-  def toDistributed: DistributedTextSet = {
-    require(isDistributed, "Should be a LocalTextSet, can't be converted to a DistributedTextSet")
+  def toDistributed(sc: SparkContext = null): DistributedTextSet = {
+    this.asInstanceOf[DistributedTextSet]
+  }
+
+  def toDistributed(sc: SparkContext, partitionNum: Int): DistributedTextSet = {
     this.asInstanceOf[DistributedTextSet]
   }
 
@@ -111,7 +113,7 @@ abstract class TextSet {
    */
   def word2idx(removeTopN: Int = 0, maxWordsNum: Int = -1): TextSet = {
     if (wordIndex != null) {
-      TextSet.logger.warn("wordIndex already exists. Using the existing wordIndex")
+      TextSet.logger.info("wordIndex already exists. Using the existing wordIndex")
     } else {
       generateWordIndexMap(removeTopN, maxWordsNum)
     }
@@ -256,8 +258,12 @@ class LocalTextSet(var array: Array[TextFeature]) extends TextSet {
 
   override def isDistributed: Boolean = false
 
-  def toDistributed(sc: SparkContext): DistributedTextSet = {
+  override def toDistributed(sc: SparkContext): DistributedTextSet = {
     new DistributedTextSet(sc.parallelize(array))
+  }
+
+  override def toDistributed(sc: SparkContext, partitionNum: Int): DistributedTextSet = {
+    new DistributedTextSet(sc.parallelize(array, partitionNum))
   }
 
   override def toDataSet: DataSet[TextFeature] = {
@@ -292,6 +298,10 @@ class DistributedTextSet(var rdd: RDD[TextFeature]) extends TextSet {
   override def isLocal: Boolean = false
 
   override def isDistributed: Boolean = true
+
+  override def toLocal(): LocalTextSet = {
+    new LocalTextSet(rdd.collect())
+  }
 
   override def toDataSet: DataSet[TextFeature] = {
     DataSet.rdd[TextFeature](rdd)

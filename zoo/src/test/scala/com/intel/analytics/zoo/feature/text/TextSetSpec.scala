@@ -87,7 +87,7 @@ class TextSetSpec extends FlatSpec with Matchers with BeforeAndAfter {
     require(wordIndex1 == wordIndex2 && wordIndex2.toArray.length == 10)
     require(wordIndex1("my") == 1)
 
-    val features = t4.toDistributed.rdd.collect()
+    val features = t4.toDistributed().rdd.collect()
     require(features.length == 2)
     require(features(0).keys() == HashSet("label", "text", "tokens", "indexedTokens", "sample"))
     require(features(0)[Array[Int]]("indexedTokens").length == 5)
@@ -107,7 +107,7 @@ class TextSetSpec extends FlatSpec with Matchers with BeforeAndAfter {
     require(!wordIndex.keySet.contains("Hello"))
     require(wordIndex("my") == 1)
 
-    val features = transformed.toLocal.array
+    val features = transformed.toLocal().array
     require(features.length == 2)
     require(features(0).keys() == HashSet("label", "text", "tokens", "indexedTokens", "sample"))
     require(features(0)[Array[Int]]("indexedTokens").length == 6)
@@ -116,32 +116,32 @@ class TextSetSpec extends FlatSpec with Matchers with BeforeAndAfter {
   "TextSet read with sc, fit, predict and evaluate" should "work properly" in {
     val textSet = TextSet.read(path, sc)
     require(textSet.isDistributed)
-    require(textSet.toDistributed.rdd.count() == 5)
-    require(textSet.toDistributed.rdd.collect().head.keys() == HashSet("label", "text"))
+    require(textSet.toDistributed().rdd.count() == 5)
+    require(textSet.toDistributed().rdd.collect().head.keys() == HashSet("label", "text"))
     val transformed = textSet.tokenize().normalize()
       .word2idx(removeTopN = 5, maxWordsNum = 299).shapeSequence(len = 30).genSample()
     val model = buildModel()
     model.compile("sgd", "sparse_categorical_crossentropy", List("accuracy"))
     model.fit(transformed, batchSize = 4, nbEpoch = 2, validationData = transformed)
-    require(! transformed.toDistributed.rdd.first().contains("predict"))
+    require(! transformed.toDistributed().rdd.first().contains("predict"))
     val predictSet = model.predict(transformed, batchPerThread = 1)
-    require(predictSet.toDistributed.rdd.first().contains("predict"))
+    require(predictSet.toDistributed().rdd.first().contains("predict"))
     val accuracy = model.evaluate(transformed, batchSize = 4)
   }
 
   "TextSet read without sc, fit, predict and evaluate" should "work properly" in {
     val textSet = TextSet.read(path)
     require(textSet.isLocal)
-    require(textSet.toLocal.array.length == 5)
-    require(textSet.toLocal.array.head.keys() == HashSet("label", "text"))
+    require(textSet.toLocal().array.length == 5)
+    require(textSet.toLocal().array.head.keys() == HashSet("label", "text"))
     val transformed = textSet.tokenize().normalize()
       .word2idx(removeTopN = 5, maxWordsNum = 299).shapeSequence(len = 30).genSample()
     val model = buildModel()
     model.compile("sgd", "sparse_categorical_crossentropy", List("accuracy"))
     model.fit(transformed, batchSize = 4, nbEpoch = 2, validationData = transformed)
-    require(! transformed.toLocal.array.head.contains("predict"))
+    require(! transformed.toLocal().array.head.contains("predict"))
     val predictSet = model.predict(transformed, batchPerThread = 1)
-    require(predictSet.toLocal.array.head.contains("predict"))
+    require(predictSet.toLocal().array.head.contains("predict"))
     val accuracy = model.evaluate(transformed, batchSize = 4)
   }
 }

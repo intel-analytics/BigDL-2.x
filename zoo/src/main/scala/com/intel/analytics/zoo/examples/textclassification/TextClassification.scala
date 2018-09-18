@@ -28,18 +28,13 @@ import com.intel.analytics.zoo.pipeline.api.keras.objectives.SparseCategoricalCr
 import scopt.OptionParser
 
 
-case class TextClassificationParams(baseDir: String = "./",
-                                    tokenLength: Int = 200,
-                                    sequenceLength: Int = 500,
-                                    encoder: String = "cnn",
-                                    encoderOutputDim: Int = 256,
-                                    maxWordsNum: Int = 5000,
-                                    trainingSplit: Double = 0.8,
-                                    batchSize: Int = 128,
-                                    nbEpoch: Int = 20,
-                                    learningRate: Double = 0.01,
-                                    partitionNum: Int = 4,
-                                    model: Option[String] = None)
+case class TextClassificationParams(
+    baseDir: String = "./", tokenLength: Int = 200,
+    sequenceLength: Int = 500, encoder: String = "cnn",
+    encoderOutputDim: Int = 256, maxWordsNum: Int = 5000,
+    trainingSplit: Double = 0.8, batchSize: Int = 128,
+    nbEpoch: Int = 20, learningRate: Double = 0.01,
+    partitionNum: Int = 4, model: Option[String] = None)
 
 
 object TextClassification {
@@ -97,7 +92,7 @@ object TextClassification {
         "GloVe word embeddings directory is not found in baseDir, " +
         "you can run $ANALYTICS_ZOO_HOME/bin/data/glove/get_glove.sh to download GloVe")
 
-      val textSet = TextSet.read(textDataDir, sc, param.partitionNum)
+      val textSet = TextSet.read(textDataDir).toDistributed(sc, param.partitionNum)
       val transformed = textSet.tokenize().normalize()
         .word2idx(removeTopN = 10, maxWordsNum = param.maxWordsNum)
         .shapeSequence(param.sequenceLength).genSample()
@@ -125,7 +120,7 @@ object TextClassification {
       model.fit(trainTextSet, batchSize = param.batchSize,
         nbEpoch = param.nbEpoch, validationData = valTextSet)
 
-      val resTextSet = model.predict(valTextSet, batchPerThread = param.partitionNum)
+      val predictSet = model.predict(valTextSet, batchPerThread = param.partitionNum)
 
       sc.stop()
     }
