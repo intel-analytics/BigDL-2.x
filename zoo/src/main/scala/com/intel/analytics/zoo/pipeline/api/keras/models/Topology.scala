@@ -252,7 +252,7 @@ abstract class KerasNet[T: ClassTag](implicit ev: TensorNumeric[T])
    * Convert TextSet to DataSet of MiniBatch.
    */
   private def toDataSet(x: TextSet, batchSize: Int): DataSet[MiniBatch[T]] = {
-    if (x != null) x.toDataSet -> TextFeatureToMiniBatch[T](batchSize)
+    if (x != null) x.toDataSet[T] -> SampleToMiniBatch[T](batchSize)
     else null
   }
 
@@ -352,7 +352,7 @@ abstract class KerasNet[T: ClassTag](implicit ev: TensorNumeric[T])
       batchSize: Int,
       nbEpoch: Int)(implicit ev: TensorNumeric[T]): Unit = {
     KerasUtils.validateBatchSize(batchSize)
-    this.fit(toDataSet(x, batchSize), nbEpoch, null)
+    this.fit(x, batchSize, nbEpoch, null)
   }
 
   /**
@@ -377,7 +377,7 @@ abstract class KerasNet[T: ClassTag](implicit ev: TensorNumeric[T])
       batchSize: Int,
       nbEpoch: Int)(implicit ev: TensorNumeric[T]): Unit = {
     KerasUtils.validateBatchSize(batchSize)
-    this.fit(toDataSet(x, batchSize), nbEpoch, null)
+    this.fit(x, batchSize, nbEpoch, null)
   }
 
   /**

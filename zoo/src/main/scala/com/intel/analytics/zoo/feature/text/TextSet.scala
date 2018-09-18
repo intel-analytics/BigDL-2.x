@@ -20,7 +20,7 @@ import java.io.File
 import java.util
 
 import com.intel.analytics.bigdl.DataSet
-import com.intel.analytics.bigdl.dataset.DataSet
+import com.intel.analytics.bigdl.dataset.{DataSet, Sample}
 import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric
 import com.intel.analytics.zoo.feature.common.Preprocessing
 import org.apache.hadoop.conf.Configuration
@@ -77,9 +77,9 @@ abstract class TextSet {
   }
 
   /**
-   * Convert TextSet to DataSet of TextFeature.
+   * Convert TextSet to DataSet of Sample.
    */
-  def toDataSet: DataSet[TextFeature]
+  def toDataSet[T: ClassTag]: DataSet[Sample[T]]
 
   /**
    * Randomly split into array of TextSet with provided weights.
@@ -266,8 +266,8 @@ class LocalTextSet(var array: Array[TextFeature]) extends TextSet {
     new DistributedTextSet(sc.parallelize(array, partitionNum))
   }
 
-  override def toDataSet: DataSet[TextFeature] = {
-    DataSet.array(array)
+  override def toDataSet[T: ClassTag]: DataSet[Sample[T]] = {
+    DataSet.array(array.map(_[Sample[T]](TextFeature.sample)))
   }
 
   override def randomSplit(weights: Array[Double]): Array[TextSet] = {
@@ -303,8 +303,8 @@ class DistributedTextSet(var rdd: RDD[TextFeature]) extends TextSet {
     new LocalTextSet(rdd.collect())
   }
 
-  override def toDataSet: DataSet[TextFeature] = {
-    DataSet.rdd[TextFeature](rdd)
+  override def toDataSet[T: ClassTag]: DataSet[Sample[T]] = {
+    DataSet.rdd(rdd.map(_[Sample[T]](TextFeature.sample)))
   }
 
   override def randomSplit(weights: Array[Double]): Array[TextSet] = {

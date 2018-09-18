@@ -31,8 +31,8 @@ class TextFeatureToSample[T: ClassTag](implicit ev: TensorNumeric[T])
   extends TextTransformer {
 
   override def transform(feature: TextFeature): TextFeature = {
-    require(feature.contains(TextFeature.indexedTokens), "TextFeature doesn't have indexTokens" +
-      "yet. Please use WordIndexer to transform tokens to indexedTokens first")
+    require(feature.contains(TextFeature.indexedTokens), "TextFeature doesn't contain indexTokens" +
+      " yet. Please use WordIndexer to transform tokens to indexedTokens first")
     val indexedTokens = feature[Array[Int]](TextFeature.indexedTokens)
     val input = Tensor[T](data = indexedTokens.map(ev.fromType[Int]),
       shape = Array(indexedTokens.length))
