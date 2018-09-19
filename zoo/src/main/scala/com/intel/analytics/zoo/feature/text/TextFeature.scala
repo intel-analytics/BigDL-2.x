@@ -61,6 +61,14 @@ class TextFeature extends Serializable {
    */
   def hasLabel: Boolean = state.contains(TextFeature.label)
 
+  def setLabel(label: Int): this.type = {
+    if (hasLabel) {
+      logger.warn(s"Label exists, overwriting the original label $label")
+    }
+    state(TextFeature.label) = label
+    this
+  }
+
   /**
    * Get the label of the TextFeature.
    * If no label is stored, -1 will be returned.

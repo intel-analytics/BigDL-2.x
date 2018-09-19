@@ -24,14 +24,8 @@ class TextSetSpec extends FlatSpec with Matchers {
   val text1 = "Hello my friend, please annotate my text"
   val text2 = "hello world, this is some sentence for my test"
 
-  private def genFeatures(): Array[TextFeature] = {
-    val feature1 = TextFeature(text1, label = 0)
-    val feature2 = TextFeature(text2, label = 1)
-    Array(feature1, feature2)
-  }
-
   "TextFeature with label" should "work properly" in {
-    val feature = genFeatures().head
+    val feature = TextFeature(text1, label = 0)
     require(feature.getText == text1)
     require(feature.hasLabel)
     require(feature.getLabel == 0)
@@ -39,8 +33,7 @@ class TextSetSpec extends FlatSpec with Matchers {
   }
 
   "TextFeature without label" should "work properly" in {
-    val text3 = "dummy text for test"
-    val feature = TextFeature(text3)
+    val feature = TextFeature(text1)
     require(!feature.hasLabel)
     require(feature.getLabel == -1)
     require(feature.keys() == HashSet("text"))

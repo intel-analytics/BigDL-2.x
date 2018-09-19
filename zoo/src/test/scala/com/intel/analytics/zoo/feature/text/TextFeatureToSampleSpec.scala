@@ -19,16 +19,28 @@ package com.intel.analytics.zoo.feature.text
 import com.intel.analytics.bigdl.dataset.Sample
 import org.scalatest.{FlatSpec, Matchers}
 
-class TextFeatureToSampleSpec extends FlatSpec with Matchers  {
-  val text = "hello my friend, please annotate my text"
-  val feature = TextFeature(text, label = 1)
-  feature(TextFeature.indexedTokens) = Array(1, 2, 3, 4, 5, 2, 6)
+class TextFeatureToSampleSpec extends FlatSpec with Matchers {
 
-  "TextFeatureToSample" should "work properly" in {
+  private def genFeature(): TextFeature = {
+    val text = "hello my friend, please annotate my text"
+    val feature = TextFeature(text)
+    feature(TextFeature.indexedTokens) = Array(1, 2, 3, 4, 5, 2, 6)
+    feature
+  }
+
+  "TextFeatureToSample with label" should "work properly" in {
     val toSample = TextFeatureToSample[Float]()
-    val transformed = toSample.transform(feature)
+    val transformed = toSample.transform(genFeature().setLabel(1))
     val sample = transformed[Sample[Float]](TextFeature.sample)
     require(sample.getData().sameElements(Array(1.0f, 2.0f,
       3.0f, 4.0f, 5.0f, 2.0f, 6.0f, 1.0f)))
+  }
+
+  "TextFeatureToSample without label" should "work properly" in {
+    val toSample = TextFeatureToSample[Float]()
+    val transformed = toSample.transform(genFeature())
+    val sample = transformed[Sample[Float]](TextFeature.sample)
+    require(sample.getData().sameElements(Array(1.0f, 2.0f,
+      3.0f, 4.0f, 5.0f, 2.0f, 6.0f)))
   }
 }
