@@ -57,7 +57,7 @@ class FloatInferenceModel(var model: AbstractModule[Activity, Activity, Float])
         case true =>
           val outputTensor = result.toTensor[Float]
           transferBatchTensorToJListOfJListOfJTensor(outputTensor, batchSize)
-        case flase =>
+        case false =>
           val outputTable: Table = result.toTable
           transferBatchTableToJListOfJListOfJTensor(outputTable, batchSize)
       }
