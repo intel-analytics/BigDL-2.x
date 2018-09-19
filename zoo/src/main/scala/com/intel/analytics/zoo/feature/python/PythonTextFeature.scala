@@ -20,7 +20,6 @@ import java.util.{List => JList, Map => JMap}
 
 import com.intel.analytics.bigdl.python.api.{PythonBigDL, Sample}
 import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric
-import com.intel.analytics.zoo.feature.common.Preprocessing
 import com.intel.analytics.zoo.feature.text._
 
 import scala.collection.JavaConverters._
@@ -84,7 +83,7 @@ class PythonTextFeature[T: ClassTag](implicit ev: TensorNumeric[T]) extends Pyth
   }
 
   def transformTextFeature(
-      transformer: Preprocessing[TextFeature, TextFeature],
+      transformer: TextTransformer,
       feature: TextFeature): TextFeature = {
     transformer.transform(feature)
   }
