@@ -17,8 +17,6 @@
 from bigdl.util.common import *
 import sys
 
-from zoo.feature.text import TextFeature
-
 if sys.version >= '3':
     long = int
     unicode = str
