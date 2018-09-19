@@ -22,20 +22,16 @@ class TokenizerSpec extends FlatSpec with Matchers with BeforeAndAfter {
   val text = "Hello my friend, please annotate my text"
   val feature = TextFeature(text)
 
-  private def genFeature(): TextFeature = {
-    TextFeature(text, label = 0)
-  }
-
   "Tokenizer and Normalizer" should "work properly" in {
     val tokenizer = Tokenizer()
     val tokenized = tokenizer.transform(feature)
     require(tokenized.keys().contains("tokens"))
-    require(tokenized[Array[String]](TextFeature.tokens).sameElements(Array("Hello", "my",
+    require(tokenized.getTokens.sameElements(Array("Hello", "my",
     "friend,", "please", "annotate", "my", "text")))
     val normalizer = Normalizer()
     val normalized = normalizer.transform(tokenized)
     require(normalized.keys().contains("tokens"))
-    require(normalized[Array[String]](TextFeature.tokens).sameElements(Array("hello", "my",
+    require(normalized.getTokens.sameElements(Array("hello", "my",
       "friend", "please", "annotate", "my", "text")))
   }
 }

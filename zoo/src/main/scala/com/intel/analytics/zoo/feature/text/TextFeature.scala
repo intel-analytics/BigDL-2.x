@@ -16,8 +16,11 @@
 
 package com.intel.analytics.zoo.feature.text
 
+import com.intel.analytics.bigdl.dataset.Sample
 import org.apache.log4j.Logger
+
 import scala.collection.{Set, mutable}
+import scala.reflect.ClassTag
 
 /**
  * Each TextFeature keeps information of a single text record.
@@ -61,6 +64,11 @@ class TextFeature extends Serializable {
    */
   def hasLabel: Boolean = state.contains(TextFeature.label)
 
+  /**
+   * Set the label for the TextFeature.
+   * @param label Integer.
+   * @return The TextFeature with label.
+   */
   def setLabel(label: Int): this.type = {
     if (hasLabel) {
       logger.warn(s"Label exists, overwriting the original label $label")
@@ -87,6 +95,18 @@ class TextFeature extends Serializable {
    * Get the text content of the TextFeature.
    */
   def getText: String = apply[String](TextFeature.text)
+
+  /**
+   * Get the tokens of the TextFeature.
+   * If text hasn't been segmented, null will be returned.
+   */
+  def getTokens: Array[String] = apply[Array[String]](TextFeature.tokens)
+
+  /**
+   * Get the Sample representation of the TextFeature.
+   * If the TextFeature hasn't been transformed to Sample, null will be returned.
+   */
+  def getSample[T: ClassTag]: Sample[T] = apply[Sample[T]](TextFeature.sample)
 }
 
 object TextFeature {
@@ -133,6 +153,7 @@ object TextFeature {
 
   /**
    * Create a TextFeature with label.
+   * It is recommended that label starts from 0.
    */
   def apply(text: String, label: Int): TextFeature = {
     new TextFeature(text, Some(label))

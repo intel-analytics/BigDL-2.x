@@ -30,7 +30,7 @@ class SequenceShaperSpec extends FlatSpec with Matchers {
   "SequenceShaper trun pre for tokens" should "work properly" in {
     val transformer = SequenceShaper(len = 2, inputKey = TextFeature.tokens)
     val transformed = transformer.transform(genFeature())
-    require(transformed[Array[String]](TextFeature.tokens).sameElements(Array("my", "text")))
+    require(transformed.getTokens.sameElements(Array("my", "text")))
   }
 
   "SequenceShaper trun post for indexedTokens" should "work properly" in {
@@ -50,7 +50,7 @@ class SequenceShaperSpec extends FlatSpec with Matchers {
     val transformer = SequenceShaper(len = 7, inputKey = TextFeature.tokens,
       padElement = "##")
     val transformed = transformer.transform(genFeature())
-    require(transformed[Array[String]](TextFeature.tokens).sameElements(
+    require(transformed.getTokens.sameElements(
       Array("please", "annotate", "my", "text", "##", "##", "##")))
   }
 }

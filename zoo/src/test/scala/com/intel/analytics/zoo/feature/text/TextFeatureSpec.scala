@@ -20,7 +20,7 @@ import org.scalatest.{FlatSpec, Matchers}
 
 import scala.collection.immutable.HashSet
 
-class TextSetSpec extends FlatSpec with Matchers {
+class TextFeatureSpec extends FlatSpec with Matchers {
   val text1 = "Hello my friend, please annotate my text"
   val text2 = "hello world, this is some sentence for my test"
 
@@ -30,6 +30,8 @@ class TextSetSpec extends FlatSpec with Matchers {
     require(feature.hasLabel)
     require(feature.getLabel == 0)
     require(feature.keys() == HashSet("label", "text"))
+    require(feature.getTokens == null)
+    require(feature.getSample[Float] == null)
   }
 
   "TextFeature without label" should "work properly" in {
