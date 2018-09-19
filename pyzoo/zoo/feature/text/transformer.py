@@ -31,7 +31,7 @@ class TextTransformer(Preprocessing):
     """
     def __init__(self, bigdl_type="float", *args):
         super(TextTransformer, self).__init__(bigdl_type, *args)
-    
+
     def transform(self, text_feature):
         """
         Transform a TextFeature.
