@@ -17,6 +17,8 @@
 import sys
 import six
 from zoo.feature.common import Preprocessing
+from zoo.feature.text import TextFeature
+from bigdl.util.common import callBigDlFunc
 
 if sys.version >= '3':
     long = int
@@ -29,6 +31,13 @@ class TextTransformer(Preprocessing):
     """
     def __init__(self, bigdl_type="float", *args):
         super(TextTransformer, self).__init__(bigdl_type, *args)
+    
+    def transform(self, text_feature):
+        """
+        Transform a TextFeature.
+        """
+        res = callBigDlFunc(self.bigdl_type, "transformTextFeature", self.value, text_feature.value)
+        return TextFeature(jvalue=res)
 
 
 class Tokenizer(TextTransformer):

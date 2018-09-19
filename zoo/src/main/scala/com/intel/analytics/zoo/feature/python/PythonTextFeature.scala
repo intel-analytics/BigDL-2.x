@@ -20,6 +20,7 @@ import java.util.{List => JList, Map => JMap}
 
 import com.intel.analytics.bigdl.python.api.{PythonBigDL, Sample}
 import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric
+import com.intel.analytics.zoo.feature.common.Preprocessing
 import com.intel.analytics.zoo.feature.text._
 
 import scala.collection.JavaConverters._
@@ -53,7 +54,7 @@ class PythonTextFeature[T: ClassTag](implicit ev: TensorNumeric[T]) extends Pyth
   def textFeatureHasLabel(feature: TextFeature): Boolean = {
     feature.hasLabel
   }
-  
+
   def textFeatureSetLabel(feature: TextFeature, label: Int): TextFeature = {
     feature.setLabel(label)
   }
@@ -63,11 +64,29 @@ class PythonTextFeature[T: ClassTag](implicit ev: TensorNumeric[T]) extends Pyth
   }
 
   def textFeatureGetTokens(feature: TextFeature): JList[String] = {
-    feature.getTokens.toList.asJava
+    val tokens = feature.getTokens
+    if (tokens != null ) {
+      tokens.toList.asJava
+    }
+    else {
+      null
+    }
   }
 
   def textFeatureGetSample(feature: TextFeature): Sample = {
-    toPySample(feature.getSample[T])
+    val sample = feature.getSample[T]
+    if (sample != null) {
+      toPySample(sample)
+    }
+    else {
+      null
+    }
+  }
+
+  def transformTextFeature(
+      transformer: Preprocessing[TextFeature, TextFeature],
+      feature: TextFeature): TextFeature = {
+    transformer.transform(feature)
   }
 
   def createTokenizer(): Tokenizer = {
