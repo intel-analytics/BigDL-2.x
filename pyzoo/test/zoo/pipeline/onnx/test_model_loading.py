@@ -110,6 +110,32 @@ class TestModelLoading(OnnxTestCase):
         input_shape_with_batch = [(1, 3), (1, 3)]
         self.compare_with_pytorch(pytorch_model, input_shape_with_batch)
 
+    def test_onnx_neg(self):
+        class Neg(torch.nn.Module):
+            def forward(self, x):
+                return -x
+
+        pytorch_model = Neg()
+        input_shape_with_batch = (1, 3)
+        self.compare_with_pytorch(pytorch_model, input_shape_with_batch)
+
+    def test_neg(self):
+        node = onnx.helper.make_node(
+            'Neg',
+            inputs=['x'],
+            outputs=['y'],
+        )
+
+        x = np.array([-4, 2]).astype(np.float32).reshape([2, 1])
+        y = np.negative(x)
+        output = OnnxLoader.run_node(node, [x])
+        np.testing.assert_almost_equal(output["y"], y, decimal=5)
+
+        x = np.random.randn(3, 4, 5).astype(np.float32)
+        y = np.negative(x)
+        output = OnnxLoader.run_node(node, [x])
+        np.testing.assert_almost_equal(output["y"], y, decimal=5)
+
     def test_onnx_averagepool2d(self):
         pytorch_model = torch.nn.Sequential(
             torch.nn.AvgPool2d(kernel_size=3, count_include_pad=False)
