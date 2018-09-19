@@ -60,9 +60,7 @@ class FloatInferenceModelSpec extends FlatSpec with Matchers with BeforeAndAfter
     val tableOfBatch = transferListOfActivityToActivityOfBatch(inputTableList,
       inputTableList.size()).toTable
     val tensors = tableOfBatch.toSeq[Tensor[Float]]
-    println(tensors)
     tensors.length should be (3)
-    println(tensors(0).size().mkString(" "))
     val data3 = Array(inputJTensor1, inputJTensor3).map(_.getData).flatten
     val data4 = tensors(0).storage().array()
     data3 should be (data4)
@@ -72,5 +70,38 @@ class FloatInferenceModelSpec extends FlatSpec with Matchers with BeforeAndAfter
     val data7 = Array(inputJTensor3, inputJTensor1).map(_.getData).flatten
     val data8 = tensors(2).storage().array()
     data7 should be (data8)
+  }
+
+  "transferBatchTensorToJListOfJListOfJTensor" should "work" in {
+    val tensorOfBatch = transferTensorsToTensorOfBatch(inputTensorsArray)
+    val listofListOfJTensor: util.List[util.List[JTensor]] =
+      transferBatchTensorToJListOfJListOfJTensor(tensorOfBatch, 3)
+    listofListOfJTensor.size should be (3)
+    listofListOfJTensor.get(0).get(0).getData should be (inputJTensor1.getData)
+    listofListOfJTensor.get(1).get(0).getData should be (inputJTensor2.getData)
+    listofListOfJTensor.get(2).get(0).getData should be (inputJTensor3.getData)
+    listofListOfJTensor.get(0).get(0).getShape should be (inputJTensor1.getShape)
+    listofListOfJTensor.get(1).get(0).getShape should be (inputJTensor2.getShape)
+    listofListOfJTensor.get(2).get(0).getShape should be (inputJTensor3.getShape)
+  }
+
+  "transferBatchTableToJListOfJListOfJTensor" should "work" in {
+    val tableOfBatch = transferListOfActivityToActivityOfBatch(inputTableList,
+      inputTableList.size()).toTable
+    val listofListOfJTensor: util.List[util.List[JTensor]] =
+      transferBatchTableToJListOfJListOfJTensor(tableOfBatch, 2)
+    listofListOfJTensor.size should be (2)
+    listofListOfJTensor.get(0).get(0).getData should be (inputJTensor1.getData)
+    listofListOfJTensor.get(0).get(1).getData should be (inputJTensor2.getData)
+    listofListOfJTensor.get(0).get(2).getData should be (inputJTensor3.getData)
+    listofListOfJTensor.get(1).get(0).getData should be (inputJTensor3.getData)
+    listofListOfJTensor.get(1).get(1).getData should be (inputJTensor2.getData)
+    listofListOfJTensor.get(1).get(2).getData should be (inputJTensor1.getData)
+    listofListOfJTensor.get(0).get(0).getShape should be (inputJTensor1.getShape)
+    listofListOfJTensor.get(0).get(1).getShape should be (inputJTensor2.getShape)
+    listofListOfJTensor.get(0).get(2).getShape should be (inputJTensor3.getShape)
+    listofListOfJTensor.get(1).get(0).getShape should be (inputJTensor3.getShape)
+    listofListOfJTensor.get(1).get(1).getShape should be (inputJTensor2.getShape)
+    listofListOfJTensor.get(1).get(2).getShape should be (inputJTensor1.getShape)
   }
 }
