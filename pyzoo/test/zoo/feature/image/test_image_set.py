@@ -63,11 +63,11 @@ class Test_Image_Set():
 
         image_set = ImageSet.read(self.grayimage_path)
         image = image_set.get_image()
-        assert len(image[0].shape) is 2
+        assert image[0].shape[0] is 1
 
         image_set = ImageSet.read(self.grayimage_path, self.sc)
         image = image_set.get_image().collect()
-        assert len(image[0].shape) is 2
+        assert image[0].shape[0] is 1
 
 
     def test_get_label(self):

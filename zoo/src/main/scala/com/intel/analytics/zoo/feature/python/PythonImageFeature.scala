@@ -63,9 +63,9 @@ class PythonImageFeature[T: ClassTag](implicit ev: TensorNumeric[T]) extends Pyt
   def localImageSetToImageTensor(imageSet: LocalImageSet,
                                  floatKey: String = ImageFeature.floats,
                                  toChw: Boolean = true): JList[JTensor] = {
-    val transform = if (toChw) ImageMatToTensor() else ImageMatToTensor(format = DataFormat.NHWC)
-    transform(imageSet).toLocal().array.map { x =>
-      toJTensor(x.apply(ImageFeature.imageTensor))
+    val transform = ImageFeatureToTensor(toChw)
+    imageSet.array.map { x =>
+        toJTensor(transform(Iterator(x)).next())
     }.toList.asJava
   }
 
@@ -80,9 +80,9 @@ class PythonImageFeature[T: ClassTag](implicit ev: TensorNumeric[T]) extends Pyt
 
   def distributedImageSetToImageTensorRdd(imageSet: DistributedImageSet,
     floatKey: String = ImageFeature.floats, toChw: Boolean = true): JavaRDD[JTensor] = {
-    val transform = if (toChw) ImageMatToTensor() else ImageMatToTensor(format = DataFormat.NHWC)
-    transform(imageSet).toDistributed().rdd.map { x =>
-      toJTensor(x.apply(ImageFeature.imageTensor))
+    val transform = ImageFeatureToTensor(toChw)
+    imageSet.rdd.map { x =>
+      toJTensor(transform(Iterator(x)).next())
     }.toJavaRDD()
   }
 
@@ -141,6 +141,10 @@ class PythonImageFeature[T: ClassTag](implicit ev: TensorNumeric[T]) extends Pyt
 
   def createImageBrightness(deltaLow: Double, deltaHigh: Double): ImageBrightness = {
     ImageBrightness(deltaLow, deltaHigh)
+  }
+
+  def createImageFeatureToTensor(toChw: Boolean = true): ImageFeatureToTensor[T] = {
+    ImageFeatureToTensor(toChw)
   }
 
   def createImageChannelNormalizer(
