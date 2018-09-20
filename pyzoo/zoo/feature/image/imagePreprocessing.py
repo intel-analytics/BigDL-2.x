@@ -321,3 +321,15 @@ class RowToImageFeature(Preprocessing):
     """
     def __init__(self, bigdl_type="float"):
         super(RowToImageFeature, self).__init__(bigdl_type)
+
+class ImageRandomPreprocessing(Preprocessing):
+    """
+    It is a wrapper for transformers to control the transform probability
+    :param transformer transformer to apply randomness
+    :param prob max prob
+    """
+
+    def __init__(self, preprocessing, prob, bigdl_type="float"):
+        super(ImageRandomPreprocessing, self).__init__(bigdl_type, preprocessing, prob)
+
+
