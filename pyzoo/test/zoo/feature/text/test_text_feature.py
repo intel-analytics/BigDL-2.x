@@ -50,11 +50,11 @@ class TestTextFeature:
         tokenizer = Tokenizer()
         tokenized = tokenizer.transform(feature)
         assert tokenized.get_tokens() == \
-               ['Hello', 'my', 'friend,', 'please', 'annotate', 'my', 'text']
+            ['Hello', 'my', 'friend,', 'please', 'annotate', 'my', 'text']
         normalizer = Normalizer()
         normalized = normalizer.transform(tokenized)
         assert normalized.get_tokens() == \
-               ['hello', 'my', 'friend', 'please', 'annotate', 'my', 'text']
+            ['hello', 'my', 'friend', 'please', 'annotate', 'my', 'text']
         word_index = {"my": 1, "hello": 2, "friend": 3}
         indexed = WordIndexer(word_index).transform(normalized)
         shaped = SequenceShaper(5).transform(indexed)
