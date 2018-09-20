@@ -13,21 +13,20 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-from zoo.pipeline.api.onnx.mapper.operator_mapper import OperatorMapper
-from zoo.pipeline.api.onnx.onnx_helper import OnnxHelper
 import zoo.pipeline.api.keras.layers as zlayers
+from zoo.pipeline.api.onnx.mapper.operator_mapper import OperatorMapper
+from zoo.pipeline.api.onnx.onnx_loader import OnnxLoader
 
 
-class LogSoftmaxMapper(OperatorMapper):
+class DropoutMapper(OperatorMapper):
     def __init__(self, node, _params, _all_tensors):
-        super(LogSoftmaxMapper, self).__init__(node, _params, _all_tensors)
+        super(DropoutMapper, self).__init__(node, _params, _all_tensors)
 
     def _to_tensor(self):
-        assert len(self.model_inputs) == 1, "LogSoftmax accept single input only"
-        assert int(self.onnx_attr['axis']) == 1, "LofSoftware only accept the default axis"
-        rank = len(self.model_inputs[0].zvalue.shape)
-        if (rank == 2):
-            logsoftmax = zlayers.Activation("log_softmax")
-            return logsoftmax(self.model_inputs[0].zvalue)
-        else:
-            raise Exception("not supported.")
+        if "mask" in self.onnx_attr:
+            raise Exception("We don't support mask for now")
+        ratio = float(self.onnx_attr["ratio"])
+        if (not OnnxLoader.training) and "is_test" in self.onnx_attr and self.onnx_attr['is_test']:
+            return self.model_inputs[0].zvalue
+        dropout = zlayers.Dropout(p=ratio)
+        return dropout(self.model_inputs[0].zvalue)

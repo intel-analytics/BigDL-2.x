@@ -16,18 +16,26 @@
 from zoo.pipeline.api.onnx.mapper.operator_mapper import OperatorMapper
 from zoo.pipeline.api.onnx.onnx_helper import OnnxHelper
 import zoo.pipeline.api.keras.layers as zlayers
+import zoo.pipeline.api.autograd as zautograd
+import numpy as np
 
 
-class LogSoftmaxMapper(OperatorMapper):
-    def __init__(self, node, _params, _all_tensors):
-        super(LogSoftmaxMapper, self).__init__(node, _params, _all_tensors)
+class MatMulMapper(OperatorMapper):
+    def __init__(self, node, initializer, inputs):
+        super(MatMulMapper, self).__init__(node, initializer, inputs)
+
+    def _extract_model_inputs(self):
+        """
+        :return: list of OnnxInput
+        """
+        def gen_input(input):
+            if isinstance(input.zvalue, np.ndarray):
+                return self._to_zoo_input(input, is_constant=True)
+            else:
+                return self._to_zoo_input(input)
+        return [gen_input(i) for i in self._input_list]
 
     def _to_tensor(self):
-        assert len(self.model_inputs) == 1, "LogSoftmax accept single input only"
-        assert int(self.onnx_attr['axis']) == 1, "LofSoftware only accept the default axis"
-        rank = len(self.model_inputs[0].zvalue.shape)
-        if (rank == 2):
-            logsoftmax = zlayers.Activation("log_softmax")
-            return logsoftmax(self.model_inputs[0].zvalue)
-        else:
-            raise Exception("not supported.")
+        x = self.model_inputs[0]
+        y = self.model_inputs[1]
+        return zautograd.mm(x.zvalue, y.zvalue)

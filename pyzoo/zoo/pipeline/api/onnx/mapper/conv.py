@@ -48,7 +48,7 @@ class ConvMapper(OperatorMapper):
     def _to_tensor(self):
         input = self.model_inputs[0]
         W_weights = self.model_trainable_values[0]
-        rank = len(input.zvalue.get_input_shape())
+        rank = len(input.zvalue.shape)
 
         if (rank == 4):  # NCHW
             nb_filter = W_weights.shape[0]

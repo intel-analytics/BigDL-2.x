@@ -37,8 +37,6 @@ class OperatorMapper(object):
         self._input_list = inputs
         self.model_inputs = self._extract_model_inputs()
         self.model_trainable_values = self._extract_trainable_values()
-
-        assert len(node.output) == 1, "we only support single output for now"
         self.output = node.output[0]
 
     @staticmethod

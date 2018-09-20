@@ -24,7 +24,7 @@ class AveragePoolMapper (OperatorMapper):
 
     def _to_tensor(self):
         assert len(self.model_inputs) == 1, "AveragePool accept single input only"
-        rank = len(self.model_inputs[0].zvalue.get_input_shape())
+        rank = len(self.model_inputs[0].zvalue.shape)
         if (rank == 4):  # NCHW
             poolSize = [int(i) for i in self.onnx_attr['kernel_shape']]
             strides = [int(i) for i in self.onnx_attr['strides']]
