@@ -69,7 +69,6 @@ class Test_Image_Set():
         image = image_set.get_image().collect()
         assert image[0].shape[0] is 1
 
-
     def test_get_label(self):
         image_set = ImageSet.read(self.image_path)
         image_set.get_label()
