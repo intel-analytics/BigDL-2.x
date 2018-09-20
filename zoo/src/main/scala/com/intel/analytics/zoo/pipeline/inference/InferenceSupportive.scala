@@ -85,9 +85,9 @@ trait InferenceSupportive {
     val batchShape: Array[Int] = batchTensorSize
     val outputLength = batchTensor.nElement() / batchSize
     val outputShape = batchShape.tail
-    require(batchSize == batchShape.head, "batchSize should be same")
+    require(batchSize == batchShape.head, "batchSize should be the same")
     require(outputLength == outputShape.reduce(_ * _),
-      "data length should equal to product of shape")
+      "data length should be equal to the product of shape")
     val outputs = new util.ArrayList[JList[JTensor]]()
     var i = 0
     while(i < batchSize) {
@@ -133,7 +133,7 @@ trait InferenceSupportive {
 
   def transferListOfActivityToActivityOfBatch(inputs: JList[JList[JTensor]], batchSize: Int)
   : Activity = {
-    require(batchSize == inputs.size, "batchSize should be same")
+    require(batchSize == inputs.size, "batchSize should be the same")
     val head = inputs.get(0)
     val headLength = head.size()
     headLength match {
@@ -184,7 +184,7 @@ trait InferenceSupportive {
       i += 1
     }
     require(data.length == shape.reduce(_ * _),
-      "data length should equal to product of shape")
+      "data length should be equal to the product of shape")
     Tensor[Float](data.toArray, shape.toArray)
   }
 
