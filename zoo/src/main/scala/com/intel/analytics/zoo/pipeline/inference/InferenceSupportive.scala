@@ -85,7 +85,8 @@ trait InferenceSupportive {
     val batchShape: Array[Int] = batchTensorSize
     val outputLength = batchTensor.nElement() / batchSize
     val outputShape = batchShape.tail
-    require(batchSize == batchShape.head, "batchSize should be the same")
+    require(batchSize == batchShape.head, "batchSize should be the same, " +
+      "please check if the batchSize is changed by the model")
     require(outputLength == outputShape.reduce(_ * _),
       "data length should be equal to the product of shape")
     val outputs = new util.ArrayList[JList[JTensor]]()
