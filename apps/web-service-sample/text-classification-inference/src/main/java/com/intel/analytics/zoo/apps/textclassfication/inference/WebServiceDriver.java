@@ -1,11 +1,11 @@
-package com.intel.analytics.zoo.inference.examples.TextClassification;
+package com.intel.analytics.zoo.apps.textclassfication.inference;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 
 @SpringBootApplication
-public class Application {
+public class WebServiceDriver {
     public static void main(String[] args) {
-        SpringApplication.run(Application.class, args);
+        SpringApplication.run(WebServiceDriver.class, args);
     }
 }

@@ -97,7 +97,7 @@ object TextClassificationTrainer extends TextProcessing {
       val embeddingFile = new File(params.embeddingFile)
       require(embeddingFile.exists(), "glove data file dose not exist")
       val stopWordsCount = 10
-      val sequenceLength = 500
+      val sequenceLength = 200
       val partitionNum = params.partitionNum
       val batchSize = params.batchSize
       val nbEpoch = params.nbEpoch
