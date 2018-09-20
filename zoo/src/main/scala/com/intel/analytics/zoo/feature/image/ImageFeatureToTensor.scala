@@ -34,8 +34,8 @@ class ImageFeatureToTensor[T: ClassTag](toChw: Boolean = true)(implicit ev: Tens
     prev.map { imf =>
       if (imf.contains(ImageFeature.imageTensor)) {
         val tensor = imf(ImageFeature.imageTensor).asInstanceOf[Tensor[T]]
-        val img = if (toChw && tensor.size(1) > tensor.size(3)
-          || !toChw && tensor.size(1) < tensor.size(3)) {
+        val img = if (tensor.dim() !=2 && (toChw && tensor.size(1) > tensor.size(3)
+          || !toChw && tensor.size(1) < tensor.size(3))) {
           tensor.transpose(1, 3).transpose(1, 2).contiguous()
         } else tensor
         img
