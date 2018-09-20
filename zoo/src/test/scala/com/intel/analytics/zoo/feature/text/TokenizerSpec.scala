@@ -19,7 +19,7 @@ package com.intel.analytics.zoo.feature.text
 import org.scalatest.{BeforeAndAfter, FlatSpec, Matchers}
 
 class TokenizerSpec extends FlatSpec with Matchers with BeforeAndAfter {
-  val text = "Hello my friend, please annotate my text"
+  val text = "Hello my friend, please annotate my text2"
   val feature = TextFeature(text)
 
   "Tokenizer and Normalizer" should "work properly" in {
@@ -27,7 +27,7 @@ class TokenizerSpec extends FlatSpec with Matchers with BeforeAndAfter {
     val tokenized = tokenizer.transform(feature)
     require(tokenized.keys().contains("tokens"))
     require(tokenized.getTokens.sameElements(Array("Hello", "my",
-    "friend,", "please", "annotate", "my", "text")))
+    "friend,", "please", "annotate", "my", "text2")))
     val normalizer = Normalizer()
     val normalized = normalizer.transform(tokenized)
     require(normalized.keys().contains("tokens"))

@@ -17,7 +17,7 @@
 package com.intel.analytics.zoo.feature.text
 
 /**
- * Removes all dirty characters from tokens and convert to lower case.
+ * Removes all dirty (non English alphabet) characters from tokens and convert to lower case.
  * Input key: TextFeature.tokens
  * Output key: TextFeature.tokens
  *             In this case, original tokens will be replaced by normalized tokens.
@@ -28,7 +28,7 @@ class Normalizer extends TextTransformer {
     require(feature.contains(TextFeature.tokens), "TextFeature doesn't contain tokens yet, " +
       "please tokenize first")
     val tokens = feature[Array[String]](TextFeature.tokens)
-    feature(TextFeature.tokens) = tokens.map(_.toLowerCase().replaceAll("[^a-zA-Z]", ""))
+    feature(TextFeature.tokens) = tokens.map(_.toLowerCase().replaceAll("[^a-z]", ""))
     feature
   }
 }

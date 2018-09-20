@@ -20,6 +20,7 @@ import java.util.{List => JList, Map => JMap}
 
 import com.intel.analytics.bigdl.python.api.{PythonBigDL, Sample}
 import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric
+import com.intel.analytics.zoo.feature.text.TruncMode.TruncMode
 import com.intel.analytics.zoo.feature.text._
 
 import scala.collection.JavaConverters._
@@ -105,7 +106,7 @@ class PythonTextFeature[T: ClassTag](implicit ev: TensorNumeric[T]) extends Pyth
       truncMode: String,
       inputKey: String,
       padElement: Int): SequenceShaper = {
-    SequenceShaper(len, truncMode, inputKey, padElement)
+    SequenceShaper(len, toScalaTruncMode(truncMode), inputKey, padElement)
   }
 
   def createSequenceShaper(
@@ -113,7 +114,14 @@ class PythonTextFeature[T: ClassTag](implicit ev: TensorNumeric[T]) extends Pyth
       truncMode: String,
       inputKey: String,
       padElement: String): SequenceShaper = {
-    SequenceShaper(len, truncMode, inputKey, padElement)
+    SequenceShaper(len, toScalaTruncMode(truncMode), inputKey, padElement)
+  }
+
+  private def toScalaTruncMode(str: String): TruncMode = {
+    str.toLowerCase() match {
+      case "pre" => TruncMode.pre
+      case "post" => TruncMode.post
+    }
   }
 
   def createTextFeatureToSample(): TextFeatureToSample[T] = {

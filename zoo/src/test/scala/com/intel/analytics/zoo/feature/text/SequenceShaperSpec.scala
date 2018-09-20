@@ -34,7 +34,7 @@ class SequenceShaperSpec extends FlatSpec with Matchers {
   }
 
   "SequenceShaper trun post for indexedTokens" should "work properly" in {
-    val transformer = SequenceShaper(len = 3, truncMode = "post")
+    val transformer = SequenceShaper(len = 3, truncMode = TruncMode.post)
     val transformed = transformer.transform(genFeature())
     require(transformed[Array[Int]](TextFeature.indexedTokens).sameElements(Array(1, 2, 3)))
   }
