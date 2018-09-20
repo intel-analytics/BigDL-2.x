@@ -133,6 +133,7 @@ trait InferenceSupportive {
 
   def transferListOfActivityToActivityOfBatch(inputs: JList[JList[JTensor]], batchSize: Int)
   : Activity = {
+    require(batchSize == inputs.size, "batchSize should be same")
     val head = inputs.get(0)
     val headLength = head.size()
     headLength match {
