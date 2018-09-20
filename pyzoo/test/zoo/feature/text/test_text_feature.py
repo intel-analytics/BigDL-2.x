@@ -17,11 +17,12 @@
 import pytest
 
 from zoo.feature.text import *
+from test.zoo.pipeline.utils.test_utils import ZooTestCase
 
 text = "Hello my friend, please annotate my text"
 
 
-class TestTextFeature:
+class TestTextFeature(ZooTestCase):
 
     def test_text_feature_with_label(self):
         feature = TextFeature(text, 1)
