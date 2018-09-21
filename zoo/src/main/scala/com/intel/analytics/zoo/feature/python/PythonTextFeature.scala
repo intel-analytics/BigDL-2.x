@@ -115,7 +115,7 @@ class PythonTextFeature[T: ClassTag](implicit ev: TensorNumeric[T]) extends Pyth
     }
   }
 
-  def createTextFeatureToSample(): TextFeatureToSample[T] = {
-    TextFeatureToSample[T]()
+  def createTextFeatureToSample(): TextFeatureToSample = {
+    TextFeatureToSample()
   }
 }

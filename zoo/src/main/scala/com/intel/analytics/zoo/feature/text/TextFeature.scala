@@ -128,12 +128,12 @@ object TextFeature {
   val tokens = "tokens"
   /**
    * Key for the indices corresponding to the tokens after performing word2idx.
-   * Value should be an array of float.
+   * Value should be an array of Float.
    */
   val indexedTokens = "indexedTokens"
   /**
    * Key for the sample (feature and label if any).
-   * Value should be a BigDL Sample.
+   * Value should be a BigDL Sample[Float].
    */
   val sample = "sample"
   /**

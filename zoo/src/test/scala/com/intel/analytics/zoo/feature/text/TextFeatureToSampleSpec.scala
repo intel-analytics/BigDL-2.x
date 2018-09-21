@@ -24,12 +24,12 @@ class TextFeatureToSampleSpec extends FlatSpec with Matchers {
   private def genFeature(): TextFeature = {
     val text = "hello my friend, please annotate my text"
     val feature = TextFeature(text)
-    feature(TextFeature.indexedTokens) = Array(1, 2, 3, 4, 5, 2, 6)
+    feature(TextFeature.indexedTokens) = Array(1.0f, 2.0f, 3.0f, 4.0f, 5.0f, 2.0f, 6.0f)
     feature
   }
 
   "TextFeatureToSample with label" should "work properly" in {
-    val toSample = TextFeatureToSample[Float]()
+    val toSample = TextFeatureToSample()
     val transformed = toSample.transform(genFeature().setLabel(1))
     val sample = transformed[Sample[Float]](TextFeature.sample)
     require(sample.getData().sameElements(Array(1.0f, 2.0f,
@@ -37,7 +37,7 @@ class TextFeatureToSampleSpec extends FlatSpec with Matchers {
   }
 
   "TextFeatureToSample without label" should "work properly" in {
-    val toSample = TextFeatureToSample[Float]()
+    val toSample = TextFeatureToSample()
     val transformed = toSample.transform(genFeature())
     val sample = transformed[Sample[Float]](TextFeature.sample)
     require(sample.getData().sameElements(Array(1.0f, 2.0f,

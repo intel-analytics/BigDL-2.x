@@ -27,20 +27,19 @@ import scala.reflect.ClassTag
  * Input key: TextFeature.indexedTokens and TextFeature.label (if any)
  * Output key: TextFeature.sample
  */
-class TextFeatureToSample[T: ClassTag](implicit ev: TensorNumeric[T])
-  extends TextTransformer {
+class TextFeatureToSample extends TextTransformer {
 
   override def transform(feature: TextFeature): TextFeature = {
     require(feature.contains(TextFeature.indexedTokens), "TextFeature doesn't contain indexTokens" +
       " yet. Please use WordIndexer to transform tokens to indexedTokens first")
-    val indexedTokens = feature[Array[Int]](TextFeature.indexedTokens)
-    val input = Tensor[T](data = indexedTokens.map(ev.fromType[Int]),
+    val indexedTokens = feature[Array[Float]](TextFeature.indexedTokens)
+    val input = Tensor[Float](data = indexedTokens,
       shape = Array(indexedTokens.length))
     val sample = if (feature.hasLabel) {
-      Sample[T](input, ev.fromType[Int](feature.getLabel))
+      Sample[Float](input, feature.getLabel.toFloat)
     }
     else {
-      Sample[T](input)
+      Sample[Float](input)
     }
     feature(TextFeature.sample) = sample
     feature
@@ -48,7 +47,7 @@ class TextFeatureToSample[T: ClassTag](implicit ev: TensorNumeric[T])
 }
 
 object TextFeatureToSample {
-  def apply[T: ClassTag]()(implicit ev: TensorNumeric[T]): TextFeatureToSample[T] = {
-    new TextFeatureToSample[T]()
+  def apply(): TextFeatureToSample = {
+    new TextFeatureToSample()
   }
 }
