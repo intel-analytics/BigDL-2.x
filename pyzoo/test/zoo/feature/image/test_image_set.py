@@ -104,6 +104,13 @@ class Test_Image_Set():
         local_image_set = LocalImageSet([image])
         print(local_image_set.get_image())
 
+    def test_image_set_random_preprocess(self):
+        transformer = ImageRandomPreprocessing(ImageResize(10, 10), 1.0)
+        image_set = ImageSet.read(self.image_path)
+        transformed = image_set.transform(transformer)
+        img = transformed.get_image()[0]
+        assert img.shape == (3, 10, 10)
+
 
 if __name__ == "__main__":
     pytest.main([__file__])
