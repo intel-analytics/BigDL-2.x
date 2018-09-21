@@ -324,9 +324,10 @@ class RowToImageFeature(Preprocessing):
 
 class ImageRandomPreprocessing(Preprocessing):
     """
-    It is a wrapper for transformers to control the transform probability
-    :param transformer transformer to apply randomness
-    :param prob max prob
+    Randomly apply the preprocessing to some of the input ImageFeatures, with probability specified.
+    E.g. if prob = 0.5, the preprocessing will apply to half of the input ImageFeatures.
+    :param preprocessing transformer to apply.
+    :param prob probability to apply the preprocessing action.
     """
 
     def __init__(self, preprocessing, prob, bigdl_type="float"):
