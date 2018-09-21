@@ -31,6 +31,7 @@ class Test_Image_Set():
                                  .setAppName("test image set"))
         resource_path = os.path.join(os.path.split(__file__)[0], "../../resources")
         self.image_path = os.path.join(resource_path, "pascal/000025.jpg")
+        self.grayimage_path = os.path.join(resource_path, "gray/gray.bmp")
 
     def teardown_method(self, method):
         """ teardown any state that was previously setup with a setup_method
@@ -50,7 +51,23 @@ class Test_Image_Set():
 
     def test_get_image(self):
         image_set = ImageSet.read(self.image_path, resize_height=128, resize_width=128)
-        image_set.get_image()
+        image = image_set.get_image()
+
+        image_set = ImageSet.read(self.image_path)
+        image = image_set.get_image()
+        assert image[0].shape[0] is 3
+
+        image_set = ImageSet.read(self.image_path, self.sc)
+        image = image_set.get_image().collect()
+        assert image[0].shape[0] is 3
+
+        image_set = ImageSet.read(self.grayimage_path)
+        image = image_set.get_image()
+        assert image[0].shape[0] is 1
+
+        image_set = ImageSet.read(self.grayimage_path, self.sc)
+        image = image_set.get_image().collect()
+        assert image[0].shape[0] is 1
 
     def test_get_label(self):
         image_set = ImageSet.read(self.image_path)
@@ -86,6 +103,7 @@ class Test_Image_Set():
         image = cv2.imread(self.image_path)
         local_image_set = LocalImageSet([image])
         print(local_image_set.get_image())
+
 
 if __name__ == "__main__":
     pytest.main([__file__])
