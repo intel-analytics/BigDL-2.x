@@ -18,24 +18,29 @@ package com.intel.analytics.zoo.feature.text
 
 /**
  * Given a wordIndex map, transform tokens to corresponding indices.
- * Those words not in the map will be aborted.
  * Input key: TextFeature.tokens
  * Output key: TextFeature.indexedTokens
  *
  * @param map Map of each word (String) and its index (integer).
+ *            It is recommended that the map contains all the words in your corpus.
+ * @param replaceElement Integer. The element to fill if the word is not in
+ *                       the given map. Default is 0 with the convention that
+ *                       0 is reserved for unknown words.
  */
-class WordIndexer(val map: Map[String, Int]) extends TextTransformer {
+class WordIndexer(
+   val map: Map[String, Int],
+   val replaceElement: Int = 0) extends TextTransformer {
 
   override def transform(feature: TextFeature): TextFeature = {
     require(feature.contains(TextFeature.tokens), "TextFeature doesn't contain tokens yet, " +
       "please tokenize first")
     val tokens = feature[Array[String]](TextFeature.tokens)
-    val indices = tokens.flatMap(word => {
+    val indices = tokens.map(word => {
       if (map.contains(word)) {
-        Some(map(word))
+        map(word).toFloat
       }
       else {
-        None
+        replaceElement.toFloat
       }
     })
     feature(TextFeature.indexedTokens) = indices
@@ -44,7 +49,9 @@ class WordIndexer(val map: Map[String, Int]) extends TextTransformer {
 }
 
 object WordIndexer {
-  def apply(wordIndex: Map[String, Int]): WordIndexer = {
+  def apply(
+     wordIndex: Map[String, Int],
+     replaceElement: Int = 0): WordIndexer = {
     new WordIndexer(wordIndex)
   }
 }

@@ -23,34 +23,19 @@ class SequenceShaperSpec extends FlatSpec with Matchers {
     val text = "please annotate my text"
     val feature = TextFeature(text, label = 0)
     feature(TextFeature.tokens) = Array("please", "annotate", "my", "text")
-    feature(TextFeature.indexedTokens) = Array(1, 2, 3, 4)
     feature
   }
 
   "SequenceShaper trun pre for tokens" should "work properly" in {
-    val transformer = SequenceShaper(len = 2, inputKey = TextFeature.tokens)
+    val transformer = SequenceShaper(len = 2)
     val transformed = transformer.transform(genFeature())
     require(transformed.getTokens.sameElements(Array("my", "text")))
   }
 
-  "SequenceShaper trun post for indexedTokens" should "work properly" in {
-    val transformer = SequenceShaper(len = 3, truncMode = TruncMode.post)
-    val transformed = transformer.transform(genFeature())
-    require(transformed[Array[Int]](TextFeature.indexedTokens).sameElements(Array(1, 2, 3)))
-  }
-
-  "SequenceShaper pad for indexedTokens" should "work properly" in {
-    val transformer = SequenceShaper(len = 6)
-    val transformed = transformer.transform(genFeature())
-    require(transformed[Array[Int]](TextFeature.indexedTokens).sameElements(
-      Array(1, 2, 3, 4, 0, 0)))
-  }
-
   "SequenceShaper pad for tokens" should "work properly" in {
-    val transformer = SequenceShaper(len = 7, inputKey = TextFeature.tokens,
-      padElement = "##")
+    val transformer = SequenceShaper(len = 7, padElement = "xxxx")
     val transformed = transformer.transform(genFeature())
     require(transformed.getTokens.sameElements(
-      Array("please", "annotate", "my", "text", "##", "##", "##")))
+      Array("please", "annotate", "my", "text", "xxxx", "xxxx", "xxxx")))
   }
 }

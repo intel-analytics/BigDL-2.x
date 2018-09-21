@@ -128,7 +128,7 @@ object TextFeature {
   val tokens = "tokens"
   /**
    * Key for the indices corresponding to the tokens after performing word2idx.
-   * Value should be an array of integers.
+   * Value should be an array of float.
    */
   val indexedTokens = "indexedTokens"
   /**
