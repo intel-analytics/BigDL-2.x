@@ -322,6 +322,7 @@ class RowToImageFeature(Preprocessing):
     def __init__(self, bigdl_type="float"):
         super(RowToImageFeature, self).__init__(bigdl_type)
 
+
 class ImageRandomPreprocessing(Preprocessing):
     """
     Randomly apply the preprocessing to some of the input ImageFeatures, with probability specified.
@@ -332,5 +333,3 @@ class ImageRandomPreprocessing(Preprocessing):
 
     def __init__(self, preprocessing, prob, bigdl_type="float"):
         super(ImageRandomPreprocessing, self).__init__(bigdl_type, preprocessing, prob)
-
-
