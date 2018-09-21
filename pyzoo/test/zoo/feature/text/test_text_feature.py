@@ -56,13 +56,15 @@ class TestTextFeature(ZooTestCase):
         normalized = normalizer.transform(tokenized)
         assert normalized.get_tokens() == \
             ['hello', 'my', 'friend', 'please', 'annotate', 'my', 'text']
-        word_index = {"my": 1, "hello": 2, "friend": 3}
-        indexed = WordIndexer(word_index).transform(normalized)
-        shaped = SequenceShaper(5).transform(indexed)
-        transformed = TextFeatureToSample().transform(shaped)
+        shaped = SequenceShaper(5).transform(normalized)
+        assert shaped.get_tokens() == \
+            ['friend', 'please', 'annotate', 'my', 'text']
+        word_index = {"my": 1, "please": 2, "friend": 3}
+        indexed = WordIndexer(word_index).transform(shaped)
+        transformed = TextFeatureToSample().transform(indexed)
         assert set(transformed.keys()) == {'text', 'label', 'tokens', 'indexedTokens', 'sample'}
         sample = transformed.get_sample()
-        assert list(sample.feature.storage) == [2., 1., 3., 1., 0.]
+        assert list(sample.feature.storage) == [3., 2., 0., 1., 0.]
         assert list(sample.label.storage) == [0.]
 
 
