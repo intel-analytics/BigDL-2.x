@@ -327,9 +327,9 @@ class ImageRandomPreprocessing(Preprocessing):
     """
     Randomly apply the preprocessing to some of the input ImageFeatures, with probability specified.
     E.g. if prob = 0.5, the preprocessing will apply to half of the input ImageFeatures.
-    :param preprocessing transformer to apply.
+    :param preprocessing preprocessing to apply.
     :param prob probability to apply the preprocessing action.
     """
 
     def __init__(self, preprocessing, prob, bigdl_type="float"):
-        super(ImageRandomPreprocessing, self).__init__(bigdl_type, preprocessing, prob)
+        super(ImageRandomPreprocessing, self).__init__(bigdl_type, preprocessing, float(prob))
