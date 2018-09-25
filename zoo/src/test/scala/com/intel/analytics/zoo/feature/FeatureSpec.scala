@@ -15,6 +15,9 @@
  */
 package com.intel.analytics.zoo.feature
 
+import com.intel.analytics.bigdl.nn.abstractnn.DataFormat
+import com.intel.analytics.bigdl.tensor.Tensor
+import com.intel.analytics.bigdl.transform.vision.image.ImageFeature
 import com.intel.analytics.zoo.common.{NNContext, Utils}
 import com.intel.analytics.zoo.feature.common.{BigDLAdapter, Preprocessing}
 import com.intel.analytics.zoo.feature.image._
@@ -94,5 +97,21 @@ class FeatureSpec extends FlatSpec with Matchers with BeforeAndAfter {
 
     val imfJpg = jpg.toDistributed().rdd.collect().head
     imfJpg.floats().foreach{ t => assert(t>=0 && t<=1.0)}
+  }
+
+  "ImageMatToTensor" should "work with both NCHW and NHWC" in {
+    val resource = getClass.getClassLoader.getResource("pascal/")
+    val data = ImageSet.read(resource.getFile)
+    val nhwc = (data -> ImageMatToTensor[Float](format = DataFormat.NHWC)).toLocal()
+      .array.head.apply[Tensor[Float]](ImageFeature.imageTensor)
+    require(nhwc.isContiguous() == true)
+
+    val data2 = ImageSet.read(resource.getFile)
+    require(data2.toLocal().array.head.apply[Tensor[Float]](ImageFeature.imageTensor) == null)
+    val nchw = (data2 -> ImageMatToTensor[Float]()).toLocal()
+      .array.head.apply[Tensor[Float]](ImageFeature.imageTensor)
+
+    require(nchw.transpose(1, 2).transpose(2, 3).contiguous().storage().array().deep
+      == nhwc.storage().array().deep)
   }
 }

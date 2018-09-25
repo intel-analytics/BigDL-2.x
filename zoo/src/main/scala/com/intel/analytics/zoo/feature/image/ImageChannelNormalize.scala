@@ -61,7 +61,9 @@ object ImageChannelNormalize {
  * Normalizes the norm or value range, similar to opencv::normalize
  * https://docs.opencv.org/ref/master/d2/de8/group__core__array.html
  * #ga87eef7ee3970f86906d69a92cbf064bd
- *
+ * ImageNormalize normalizes scale and shift the input features.
+ * Various normalize methods are supported. Eg. NORM_INF, NORM_L1,
+ * NORM_L2 or NORM_MINMAX
  * @param min lower range boundary in case of the range normalization or
  *            norm value to normalize
  * @param max upper range boundary in case of the range normalization;
