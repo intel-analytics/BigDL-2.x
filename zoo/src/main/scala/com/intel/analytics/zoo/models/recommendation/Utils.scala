@@ -124,22 +124,38 @@ object Utils {
     // setup indicators
     var acc = 0
     (0 to deepColumns1.length - 1).map {
-      i =>
-        val index = r.getAs[Int](columnInfo.indicatorCols(i))
-        val accIndex = if (i == 0) index
-        else {
+      i => {
+        val indexArray = r.getAs[Seq[Int]](columnInfo.indicatorCols(i))
+        if (i == 0) {
+          indexArray.foreach(index => deepTensor.setValue(index + 1, 1))
+        } else {
           acc = acc + columnInfo.indicatorDims(i - 1)
-          acc + index
+          indexArray.foreach(index => deepTensor.setValue(acc + index + 1, 1))
         }
-        deepTensor.setValue(accIndex + 1, 1)
+      }
     }
 
     // setup embedding and continuous
     (0 to deepColumns2.length - 1).map {
       i =>
         deepTensor.setValue(i + 1 + columnInfo.indicatorDims.sum,
-          r.getAs[Int](deepColumns2(i)).toFloat)
+          r.getAs[AnyVal](deepColumns2(i)))
     }
     deepTensor
+  }
+
+  /**
+    * define an implicit function so that we can use all kinds of value in continuousCols.
+    * @param x the input value ,maybe an integer or a long value.
+    * @return the float represent of input value
+    */
+  implicit def AnyValToFloat(x:AnyVal):Float = {
+    x match {
+      case i: Int => i.toFloat
+      case l: Long => l.toFloat
+      case f: Float => f
+      case d: Double => d.toFloat
+      case _ => 0.0f
+    }
   }
 }
