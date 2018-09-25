@@ -26,11 +26,12 @@ parser = argparse.ArgumentParser()
 parser.add_argument('model_path', help="Path where the model is stored")
 parser.add_argument('img_path', help="Path where the images are stored")
 parser.add_argument('output_path', help="Path to store the detection results")
+parser.add_argument("--partition_num", type=int, default=1, help="The number of partitions")
 
 
-def predict(model_path, img_path, output_path):
+def predict(model_path, img_path, output_path, partition_num):
     model = ObjectDetector.load_model(model_path)
-    image_set = ImageSet.read(img_path, sc, image_codec=1)
+    image_set = ImageSet.read(img_path, sc, image_codec=1, min_partitions=partition_num)
     output = model.predict_image_set(image_set)
 
     config = model.get_config()
@@ -42,4 +43,4 @@ def predict(model_path, img_path, output_path):
 
 if __name__ == "__main__":
     args = parser.parse_args()
-    predict(args.model_path, args.img_path, args.output_path)
+    predict(args.model_path, args.img_path, args.output_path, args.partition_num)

@@ -114,10 +114,6 @@ class PythonNNFrames[T: ClassTag](implicit ev: TensorNumeric[T]) extends PythonB
     MLlibVectorToTensor(size.asScala.toArray)
   }
 
-  def createImageFeatureToTensor(): ImageFeatureToTensor[T] = {
-    ImageFeatureToTensor()
-  }
-
   def createRowToImageFeature(): RowToImageFeature[T] = {
     RowToImageFeature()
   }
@@ -162,6 +158,18 @@ class PythonNNFrames[T: ClassTag](implicit ev: TensorNumeric[T]) extends PythonB
       vMethods : JList[ValidationMethod[T]],
       batchSize: Int): NNEstimator[T] = {
     estimator.setValidation(trigger, validationDF, vMethods.asScala.toArray, batchSize)
+  }
+
+  def setEndWhen(estimator: NNEstimator[T], trigger: Trigger): NNEstimator[T] = {
+    estimator.setEndWhen(trigger)
+  }
+
+  def setCheckpoint(
+      estimator: NNEstimator[T],
+      path: String,
+      trigger: Trigger,
+      isOverWrite: Boolean): NNEstimator[T] = {
+    estimator.setCheckpoint(path, trigger, isOverWrite)
   }
 
   def setValidationSummary(

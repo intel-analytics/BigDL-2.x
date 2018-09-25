@@ -98,10 +98,15 @@ class InferenceModelSpec extends FlatSpec with Matchers with BeforeAndAfter
 
     val inputTensor = Tensor[Float](3, 5, 5).rand()
     val input = new util.ArrayList[JTensor]()
-    input.add(transferTensorToJTensor(inputTensor))
+    val inputJTensor = transferTensorToJTensor(inputTensor)
+    input.add(inputJTensor)
     val inputs = new util.ArrayList[util.List[JTensor]]()
     inputs.add(input)
-    val result = fModels(0).predict(inputs).get(0).get(0)
+    inputs.add(input)
+    inputs.add(input)
+    val results = fModels(0).predict(inputs)
+    println(results)
+    val result = results.get(0).get(0)
     val data = result.getData.mkString(",")
     val shape = result.getShape.mkString(",")
 
@@ -154,5 +159,12 @@ class InferenceModelSpec extends FlatSpec with Matchers with BeforeAndAfter
     // println(floatInferenceModel2.predictor)
     assert(floatInferenceModel.model == floatInferenceModel2.model)
     in.close()
+  }
+
+  "JTensor toString" should "return element" in {
+    val data = Array(1.0f, 2.0f, 3.0f, 4.0f)
+    val shape = Array(1, 4)
+    val jTensor = new JTensor(data, shape)
+    jTensor.toString should be ("JTensor{data=[1.0, 2.0, 3.0, 4.0], shape=[1, 4]}")
   }
 }

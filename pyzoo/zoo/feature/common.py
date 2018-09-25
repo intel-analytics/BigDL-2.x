@@ -28,17 +28,19 @@ class Preprocessing(JavaValue):
     the scala Preprocessing
     """
     def __init__(self, bigdl_type="float", *args):
+        self.bigdl_type = bigdl_type
         self.value = callBigDlFunc(bigdl_type, JavaValue.jvm_class_constructor(self), *args)
 
-    def __call__(self, input, bigdl_type="float"):
+    def __call__(self, input):
         """
         transform ImageSet
         """
         # move the import here to break circular import
         if "zoo.feature.image.imageset.ImageSet" not in sys.modules:
             from zoo.feature.image import ImageSet
-        if type(input) is ImageSet:
-            jset = callBigDlFunc(bigdl_type, "transformImageSet", self.value, input)
+        # if type(input) is ImageSet:
+        if isinstance(input, ImageSet):
+            jset = callBigDlFunc(self.bigdl_type, "transformImageSet", self.value, input)
             return ImageSet(jvalue=jset)
 
 
@@ -49,8 +51,7 @@ class ChainedPreprocessing(Preprocessing):
     """
     def __init__(self, transformers, bigdl_type="float"):
         for transfomer in transformers:
-            assert transfomer.__class__.__bases__[0].__name__ in [
-                "Preprocessing", "ImagePreprocessing"], \
+            assert isinstance(transfomer, Preprocessing), \
                 str(transfomer) + " should be subclass of Preprocessing "
 
         super(ChainedPreprocessing, self).__init__(bigdl_type, transformers)

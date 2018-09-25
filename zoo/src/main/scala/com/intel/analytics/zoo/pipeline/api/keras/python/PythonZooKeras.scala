@@ -24,27 +24,33 @@ import com.intel.analytics.bigdl.Criterion
 import com.intel.analytics.bigdl.dataset.{DataSet, LocalDataSet, MiniBatch}
 
 import scala.collection.JavaConverters._
-import com.intel.analytics.bigdl.optim.{LocalPredictor, OptimMethod, Regularizer, ValidationMethod}
+import com.intel.analytics.bigdl.optim._
 import com.intel.analytics.bigdl.python.api.{EvaluatedResult, JTensor, PythonBigDLKeras, Sample}
 import com.intel.analytics.bigdl.tensor.Tensor
 import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric
-import com.intel.analytics.bigdl.nn.Container
+import com.intel.analytics.bigdl.nn.{Container, InitializationMethod}
 import com.intel.analytics.bigdl.nn.abstractnn.{AbstractModule, Activity}
+import com.intel.analytics.bigdl.nn.Container
+import com.intel.analytics.bigdl.nn.abstractnn.{AbstractCriterion, AbstractModule, Activity}
 import com.intel.analytics.bigdl.nn.keras.{KerasLayer, KerasModel}
-import com.intel.analytics.bigdl.utils.Table
+import com.intel.analytics.bigdl.utils.{Engine, Table}
 import com.intel.analytics.zoo.feature.image.ImageSet
 import com.intel.analytics.zoo.pipeline.api.Net
 import com.intel.analytics.zoo.pipeline.api.autograd._
-import com.intel.analytics.zoo.pipeline.api.keras.layers._
+import com.intel.analytics.zoo.pipeline.api.keras.layers.{KerasLayerWrapper, _}
 import com.intel.analytics.zoo.pipeline.api.keras.layers.utils.KerasUtils
 import com.intel.analytics.zoo.pipeline.api.keras.metrics.{AUC, Accuracy, Top5Accuracy}
 import com.intel.analytics.zoo.pipeline.api.keras.models.{KerasNet, Model, Sequential}
 import com.intel.analytics.zoo.pipeline.api.keras.objectives._
-import com.intel.analytics.zoo.pipeline.api.net.{GraphNet, NetUtils, TFNet}
+import com.intel.analytics.zoo.pipeline.api.net._
 import org.apache.spark.api.java.JavaRDD
+import org.apache.spark.rdd.RDD
+import com.intel.analytics.bigdl.dataset.{Sample => JSample}
 
 import scala.collection.mutable.ArrayBuffer
+import scala.io.Source
 import scala.reflect.ClassTag
+import scala.reflect.io.Path
 
 object PythonZooKeras {
 
@@ -63,6 +69,11 @@ class PythonZooKeras[T: ClassTag](implicit ev: TensorNumeric[T]) extends PythonB
 
   def createZooKerasSequential(): Sequential[T] = {
     Sequential[T]()
+  }
+
+  def createZooKerasIdentity(
+    inputShape: JList[Int] = null): Identity[T] = {
+    Identity[T](toScalaShape(inputShape))
   }
 
   def createZooKerasInput(
@@ -123,10 +134,16 @@ class PythonZooKeras[T: ClassTag](implicit ev: TensorNumeric[T]) extends PythonB
   }
 
   def zooPredict(
-      module: KerasNet[T],
+      module: AbstractModule[Activity, Activity, T],
       x: JavaRDD[Sample],
       batchPerThread: Int): JavaRDD[JList[Object]] = {
-    val resRDD = module.predict(x.rdd.map(toJSample), batchPerThread)
+    val resRDD = module match {
+      case net: KerasNet[T] =>
+        net.predict(x.rdd.map(toJSample), batchPerThread)
+      case _ =>
+        module.predict(x.rdd.map(toJSample), batchPerThread * x.getNumPartitions)
+    }
+
     resRDD.map(activityToList).toJavaRDD()
   }
 
@@ -358,11 +375,17 @@ class PythonZooKeras[T: ClassTag](implicit ev: TensorNumeric[T]) extends PythonB
       wRegularizer: Regularizer[T] = null,
       bRegularizer: Regularizer[T] = null,
       bias: Boolean = true,
-      inputShape: JList[Int] = null): Convolution2D[T] = {
+      inputShape: JList[Int] = null,
+      pads: JList[Int]): Convolution2D[T] = {
     new Convolution2D(nbFilter, nbRow, nbCol, KerasUtils.getInitMethod(init),
       KerasUtils.getKerasActivation(activation), borderMode,
       toScalaArray(subsample), KerasUtils.toBigDLFormat(dimOrdering),
-      wRegularizer, bRegularizer, bias, toScalaShape(inputShape))
+      wRegularizer, bRegularizer, bias, toScalaShape(inputShape),
+      if (pads != null) {
+        pads.asScala.toArray
+      } else {
+        null
+      })
   }
 
   def createZooKerasMaxPooling2D(
@@ -370,9 +393,15 @@ class PythonZooKeras[T: ClassTag](implicit ev: TensorNumeric[T]) extends PythonB
       strides: JList[Int],
       borderMode: String = "valid",
       dimOrdering: String = "th",
-      inputShape: JList[Int] = null): MaxPooling2D[T] = {
+      inputShape: JList[Int] = null,
+      pads: JList[Int]): MaxPooling2D[T] = {
     new MaxPooling2D[T](toScalaArray(poolSize), toScalaArray(strides),
-      borderMode, KerasUtils.toBigDLFormat(dimOrdering), toScalaShape(inputShape))
+      borderMode, KerasUtils.toBigDLFormat(dimOrdering), toScalaShape(inputShape),
+      if (pads != null) {
+        pads.asScala.toArray
+      } else {
+        null
+      })
   }
 
   def createZooKerasActivation(
@@ -569,9 +598,16 @@ class PythonZooKeras[T: ClassTag](implicit ev: TensorNumeric[T]) extends PythonB
       strides: JList[Int],
       borderMode: String = "valid",
       dimOrdering: String = "th",
-      inputShape: JList[Int] = null): AveragePooling2D[T] = {
+      inputShape: JList[Int] = null,
+      pads: JList[Int],
+      count_include_pad: Boolean = false): AveragePooling2D[T] = {
     new AveragePooling2D(toScalaArray(poolSize), toScalaArray(strides),
-      borderMode, KerasUtils.toBigDLFormat(dimOrdering), toScalaShape(inputShape))
+      borderMode, KerasUtils.toBigDLFormat(dimOrdering), toScalaShape(inputShape),
+      if (pads != null) {
+        pads.asScala.toArray
+      } else {
+        null
+      }, count_include_pad)
   }
 
   def createZooKerasAveragePooling3D(
@@ -1155,6 +1191,19 @@ class PythonZooKeras[T: ClassTag](implicit ev: TensorNumeric[T]) extends PythonB
     TFNet(path)
   }
 
+  def createTFTrainingHelper(modelPath: String): TFTrainingHelper = {
+    TFTrainingHelper(modelPath)
+  }
+
+  def createIdentityCriterion(): IdentityCriterion = {
+    new IdentityCriterion()
+  }
+
+  def createTFValidationMethod(validationMethod: ValidationMethod[Float],
+                               outputLength: Int, targetLength: Int): TFValidationMethod = {
+    new TFValidationMethod(validationMethod, outputLength, targetLength)
+  }
+
   def connectInputs(module: AbstractModule[Activity, Activity, T],
       x: JList[Variable[T]]): Variable[T] = {
     require(!x.isEmpty, "We don't accept empty inputs")
@@ -1247,5 +1296,85 @@ class PythonZooKeras[T: ClassTag](implicit ev: TensorNumeric[T]) extends PythonB
   def wordEmbeddingGetWordIndex(
       embeddingFile: String): JMap[String, Int] = {
     WordEmbedding.getWordIndex(embeddingFile).asJava
+  }
+
+  def zooGetWeightsShape(model: AbstractModule[Activity, Activity, T]): JList[JList[Int]] = {
+    val weights = model.getWeightsBias()
+    if (weights != null) {
+      weights.map{w => w.size().toList.asJava}.toList.asJava
+    } else {
+      null
+    }
+  }
+
+  def zooSetWeights(model: AbstractModule[Activity, Activity, T],
+      weights: JList[JTensor]): Unit = {
+    super.setWeights(model, weights)
+  }
+
+  def createTFOptimizer(modelPath: String,
+                        optimMethod: OptimMethod[Float],
+                        x: JavaRDD[Sample],
+                        batchSize: Int = 32): TFOptimizer = {
+    new TFOptimizer(modelPath, optimMethod,
+      toJSample(x).asInstanceOf[RDD[JSample[Float]]], batchSize)
+  }
+
+  def trainTFNet(modelPath: String,
+                 optimMethod: OptimMethod[Float],
+                 x: JavaRDD[Sample],
+                 batchSize: Int = 32,
+                 endTrigger: Trigger = Trigger.maxEpoch(1)): JList[JTensor] = {
+    val (model, meta) = NetUtils.processTFFolder(modelPath)
+
+    val folderPath = Path(modelPath)
+    val trainingMetaPath = folderPath / Path("training_meta.json")
+
+    val jsonStr = Source.fromFile(trainingMetaPath.jfile).getLines().mkString
+    import org.json4s._
+    import org.json4s.jackson.JsonMethods._
+    implicit val formats = DefaultFormats
+
+    val trainingMeta = parse(jsonStr).camelizeKeys.extract[TrainMeta]
+
+    val newMeta = Meta(
+      (meta.inputNames.toSeq ++: trainingMeta.variables.toSeq).toArray,
+      meta.outputNames)
+    val graphDef = TFNet.parseGraph(model)
+    val tfnet = TFNet(graphDef, model, newMeta, TFNet.defaultSessionConfig.toByteArray())
+
+
+    val trainer = new TFTrainingHelper(tfnet,
+      trainingMeta.inputNames,
+      trainingMeta.outputNames,
+      trainingMeta.variables,
+      trainingMeta.gradVariables)
+
+
+
+    import scala.collection.JavaConverters._
+    val optimizer = Optimizer(trainer,
+      toJSample(x).asInstanceOf[RDD[JSample[Float]]], new IdentityCriterion(), batchSize)
+
+    optimizer.setOptimMethod(optimMethod)
+    optimizer.setEndWhen(endTrigger)
+    optimizer.optimize()
+
+    trainer.parameters()._1
+      .map(t => toJTensor(t.asInstanceOf[Tensor[T]])).toVector.asJava
+  }
+
+
+  def createZooKerasParameter(inputShape: JList[Int],
+      initMethod: InitializationMethod, initWeight: JTensor, trainable: Boolean): Parameter[T] = {
+    Parameter[T](toScalaShape(inputShape), initMethod, toTensor(initWeight), trainable)
+  }
+
+  def getParameterWeight(parameter: Parameter[T]): JTensor = {
+    toJTensor(parameter.getWeight())
+  }
+
+  def setParameterWeight(parameter: Parameter[T], value: JTensor): Unit = {
+    parameter.setWeight(toTensor(value))
   }
 }

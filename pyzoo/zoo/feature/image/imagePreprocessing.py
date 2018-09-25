@@ -327,8 +327,8 @@ class ImageFeatureToTensor(Preprocessing):
     """
     a Transformer that convert ImageFeature to a Tensor.
     """
-    def __init__(self, bigdl_type="float"):
-        super(ImageFeatureToTensor, self).__init__(bigdl_type)
+    def __init__(self, to_chw=True, bigdl_type="float"):
+        super(ImageFeatureToTensor, self).__init__(bigdl_type, to_chw)
 
 
 class RowToImageFeature(Preprocessing):
@@ -337,3 +337,15 @@ class RowToImageFeature(Preprocessing):
     """
     def __init__(self, bigdl_type="float"):
         super(RowToImageFeature, self).__init__(bigdl_type)
+
+
+class ImageRandomPreprocessing(Preprocessing):
+    """
+    Randomly apply the preprocessing to some of the input ImageFeatures, with probability specified.
+    E.g. if prob = 0.5, the preprocessing will apply to half of the input ImageFeatures.
+    :param preprocessing preprocessing to apply.
+    :param prob probability to apply the preprocessing action.
+    """
+
+    def __init__(self, preprocessing, prob, bigdl_type="float"):
+        super(ImageRandomPreprocessing, self).__init__(bigdl_type, preprocessing, float(prob))

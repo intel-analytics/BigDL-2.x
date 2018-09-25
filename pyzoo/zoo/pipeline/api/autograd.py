@@ -116,7 +116,7 @@ def expand_dims(x, axis):
    Adds a 1-sized dimension at index "axis".
     :param x: a Variable to be expanded
     :param axis: axis Position where to add a new axis.
-    You should start from 1 as dim 0 is for batch.
+    The axis is 0 based and if you set the axis to 0, you would change the batch dim.
     """
     return Variable.from_jvalue(callBigDlFunc("float", "expandDims", x, axis))
 
@@ -231,7 +231,7 @@ def softplus(x):
     return Variable.from_jvalue(callBigDlFunc("float", "softplus", x))
 
 
-def mm(x, y, axes):
+def mm(x, y, axes=None):
     """
     Module to perform matrix multiplication on two mini-batch inputs,
     producing a mini-batch.
@@ -245,6 +245,7 @@ def mm(x, y, axes):
 
 class Variable(kbase.ZooKerasCreator):
     def __init__(self, input_shape, node=None, jvalue=None, name=None):
+        self.name = name
         if jvalue:
             self.value = jvalue
             self.bigdl_type = "float"
@@ -254,9 +255,16 @@ class Variable(kbase.ZooKerasCreator):
             else:
                 super(Variable, self).__init__(jvalue, "float", toMultiShape(input_shape), name)
 
+    def set_name(self, name):
+        self.node.element().set_name(name)
+
     @classmethod
     def from_node(cls, node):
         return cls(input_shape=None, node=node)
+
+    @property
+    def shape(self):
+        return self.get_output_shape()
 
     @property
     def node(self):
@@ -321,7 +329,7 @@ class Variable(kbase.ZooKerasCreator):
     def squeeze(self, dim=None):
         """
         Delete the singleton dimension(s).
-        The batch dimension needs to be unchanged.
+        The dim can be zero, and if so you would change the batch dim.
         For example, if input has size (2, 1, 3, 4, 1):
         Squeeze(dim = 1) will give output size (2, 3, 4, 1)
         Squeeze(dims = null) will give output size (2, 3, 4)
@@ -442,6 +450,52 @@ class LambdaLayer(kbase.ZooKerasLayer):
                                           out_var,
                                           list(input_shape) if input_shape else None,
                                           **kwargs)
+
+
+class Parameter(kbase.ZooKerasLayer):
+    """
+    A trainable Variable. The default init_method is RandomUniform(-0.05, 0.05).
+    You can also specify the init_weight by passing a ndarray.
+    :param shape: Shape of this Parameter
+    :param init_method: A method used to initialize the Parameter.
+                        The default value is RandomUniform(-0.05, 0.05)
+    :param init_weight: A ndarray as the init value.
+    :param trainable It's true by default, meaning the value would be updated by gradient.
+    """
+    def __init__(self, shape, init_method=None,
+                 init_weight=None, trainable=True, **kwargs):
+        if not init_method:
+            from bigdl.nn.initialization_method import RandomUniform
+            init_method = RandomUniform(-0.05, 0.05)
+        super(Parameter, self).__init__(None,
+                                        list(shape),
+                                        init_method,
+                                        kbase.JTensor.from_ndarray(init_weight),
+                                        trainable,
+                                        ** kwargs)
+
+    @property
+    def shape(self):
+        return self.get_weight().shape
+
+    def get_weight(self):
+        """
+        :return: the ndarray for the current weight
+        """
+        jtensor = callBigDlFunc(self.bigdl_type,
+                                "getParameterWeight",
+                                self)
+        return jtensor.to_ndarray()
+
+    def set_weight(self, value):
+        """
+        :param value: value is a ndarray
+        :return:
+        """
+        callBigDlFunc(self.bigdl_type,
+                      "setParameterWeight",
+                      self,
+                      kbase.JTensor.from_ndarray(value))
 
 
 class CustomLoss(LossFunction):
