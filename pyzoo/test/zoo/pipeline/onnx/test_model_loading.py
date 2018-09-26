@@ -128,6 +128,34 @@ class TestModelLoading(OnnxTestCase):
         x = np.random.randn(3, 4, 5).astype(np.float32)
         y = np.abs(x)
 
+    def test_onnx_sub(self):
+        class Sub(torch.nn.Module):
+            def forward(self, x):
+                return x[0] - x[1]
+
+        pytorch_model = Sub()
+        input_shape_with_batch = [(1, 3), (1, 3)]
+        self.compare_with_pytorch(pytorch_model, input_shape_with_batch)
+
+    def test_sub(self):
+        node = onnx.helper.make_node(
+            'Sub',
+            inputs=['x', 'y'],
+            outputs=['z'],
+        )
+
+        x = np.array([1, 2, 3]).astype(np.float32).reshape([3, 1])
+        y = np.array([3, 2, 1]).astype(np.float32).reshape([3, 1])
+        z = x - y
+        output = OnnxLoader.run_node(node, [x, y])
+        np.testing.assert_almost_equal(output["z"], z, decimal=5)
+
+        x = np.random.randn(3, 4, 5).astype(np.float32)
+        y = np.random.randn(3, 4, 5).astype(np.float32)
+        z = x - y
+        output = OnnxLoader.run_node(node, [x, y])
+        np.testing.assert_almost_equal(output["z"], z, decimal=5)
+
     def test_onnx_neg(self):
         class Neg(torch.nn.Module):
             def forward(self, x):
