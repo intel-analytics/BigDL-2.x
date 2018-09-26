@@ -110,6 +110,24 @@ class TestModelLoading(OnnxTestCase):
         input_shape_with_batch = [(1, 3), (1, 3)]
         self.compare_with_pytorch(pytorch_model, input_shape_with_batch)
 
+    def test_onnx_abs(self):
+        class Abs(torch.nn.Module):
+            def forward(self, x):
+                return abs(x)
+
+        pytorch_model = Abs()
+        input_shape_with_batch = (1, 3)
+        self.compare_with_pytorch(pytorch_model, input_shape_with_batch)
+
+    def test_abs(self):
+        node = onnx.helper.make_node(
+            'Abs',
+            inputs=['x'],
+            outputs=['y'],
+        )
+        x = np.random.randn(3, 4, 5).astype(np.float32)
+        y = np.abs(x)
+
     def test_onnx_neg(self):
         class Neg(torch.nn.Module):
             def forward(self, x):
