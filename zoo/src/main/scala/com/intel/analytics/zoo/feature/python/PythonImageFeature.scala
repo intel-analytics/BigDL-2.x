@@ -89,9 +89,6 @@ class PythonImageFeature[T: ClassTag](implicit ev: TensorNumeric[T]) extends Pyt
       (imf.floats(),
         Array(imf.getHeight(), imf.getWidth(), imf.getChannel()))
     } else {
-      logger.warn(s"please add MatToFloats(out_key =" +
-        s"imf(ImageFeature.imageTensor).asInstanceOf[Tensor[T]])" +
-        s"in the end of pipeline if you are transforming an rdd")
       val mat = imf.opencvMat()
       val floats = new Array[Float](mat.height() * mat.width() * imf.getChannel())
       OpenCVMat.toFloatPixels(mat, floats)
