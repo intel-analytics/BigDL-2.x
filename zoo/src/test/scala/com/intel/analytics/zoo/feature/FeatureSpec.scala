@@ -29,6 +29,7 @@ import org.scalatest.{BeforeAndAfter, FlatSpec, Matchers}
 
 class FeatureSpec extends FlatSpec with Matchers with BeforeAndAfter {
   val resource = getClass.getClassLoader.getResource("imagenet/n04370456/")
+  val gray = getClass.getClassLoader.getResource("gray")
   var sc : SparkContext = _
 
   before {
@@ -52,6 +53,13 @@ class FeatureSpec extends FlatSpec with Matchers with BeforeAndAfter {
     val imf = image.toLocal().array.head
     require(imf.getHeight() == 200)
     require(imf.getWidth() == 200)
+    require(imf.getChannel() == 3)
+
+    val imageGray = ImageSet.read(gray.getFile, resizeH = 200, resizeW = 200)
+    val imfGray = imageGray.toLocal().array.head
+    require(imfGray.getHeight() == 200)
+    require(imfGray.getWidth() == 200)
+    require(imfGray.getChannel() == 1)
   }
 
   "Distribute ImageSet" should "work with resize" in {
@@ -59,6 +67,13 @@ class FeatureSpec extends FlatSpec with Matchers with BeforeAndAfter {
     val imf = image.toDistributed().rdd.collect().head
     require(imf.getHeight() == 200)
     require(imf.getWidth() == 200)
+    require(imf.getChannel() == 3)
+
+    val imageGray = ImageSet.read(gray.getFile, sc, resizeH = 200, resizeW = 200)
+    val imfGray = imageGray.toDistributed().rdd.collect().head
+    require(imfGray.getHeight() == 200)
+    require(imfGray.getWidth() == 200)
+    require(imfGray.getChannel() == 1)
   }
 
   "Local ImageSet" should "work with bytes" in {
