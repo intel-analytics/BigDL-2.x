@@ -58,12 +58,13 @@ object ImageChannelNormalize {
 }
 
 /**
- * Normalizes the norm or value range, similar to opencv::normalize
+ * Normalizes the norm or value range Per image, similar to opencv::normalize
  * https://docs.opencv.org/ref/master/d2/de8/group__core__array.html
  * #ga87eef7ee3970f86906d69a92cbf064bd
  * ImageNormalize normalizes scale and shift the input features.
  * Various normalize methods are supported. Eg. NORM_INF, NORM_L1,
- * NORM_L2 or NORM_MINMAX
+ * NORM_L2 or NORM_MINMAX.
+ * Pleas notice it's a per image normalization.
  * @param min lower range boundary in case of the range normalization or
  *            norm value to normalize
  * @param max upper range boundary in case of the range normalization;
@@ -73,16 +74,16 @@ object ImageChannelNormalize {
  *           #gad12cefbcb5291cf958a85b4b67b6149f
  *           Default Core.NORM_MINMAX
  */
-class ImageNormalize(min: Double, max: Double, normType: Int = Core.NORM_MINMAX)
+class PerImageNormalize(min: Double, max: Double, normType: Int = Core.NORM_MINMAX)
   extends ImageProcessing {
   override def transformMat(feature: ImageFeature): Unit = {
-    ImageNormalize.transform(feature.opencvMat(), feature.opencvMat(), min, max, normType)
+    PerImageNormalize.transform(feature.opencvMat(), feature.opencvMat(), min, max, normType)
   }
 }
 
-object ImageNormalize {
-  def apply(min: Double, max: Double, normType: Int = Core.NORM_MINMAX): ImageNormalize = {
-    new ImageNormalize(min, max, normType)
+object PerImageNormalize {
+  def apply(min: Double, max: Double, normType: Int = Core.NORM_MINMAX): PerImageNormalize = {
+    new PerImageNormalize(min, max, normType)
   }
 
   def transform(input: OpenCVMat, output: OpenCVMat, min: Double, max: Double, normType: Int)

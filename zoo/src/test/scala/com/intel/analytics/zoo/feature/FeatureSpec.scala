@@ -93,7 +93,7 @@ class FeatureSpec extends FlatSpec with Matchers with BeforeAndAfter {
 
   "ImageNormalize" should "work with min max normType" in {
     val image = ImageSet.read(resource.getFile, sc)
-    val jpg = image -> ImageNormalize(0, 1) -> ImageMatToFloats()
+    val jpg = image -> PerImageNormalize(0, 1) -> ImageMatToFloats()
 
     val imfJpg = jpg.toDistributed().rdd.collect().head
     imfJpg.floats().foreach{ t => assert(t>=0 && t<=1.0)}
