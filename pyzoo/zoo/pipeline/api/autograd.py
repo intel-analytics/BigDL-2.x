@@ -260,6 +260,10 @@ class VariableOperator(object):
     def get_output_shape(self):
         return self.__process_shape(callBigDlFunc("float", "varGetOutputShape", self))
 
+    @property
+    def shape(self):
+        return self.get_output_shape()
+
     @staticmethod
     def from_jvalue(jvalue):
         return Variable(input_shape=None, node=None, jvalue=jvalue)
