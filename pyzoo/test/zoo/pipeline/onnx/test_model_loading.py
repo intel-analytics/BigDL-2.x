@@ -502,3 +502,59 @@ class TestModelLoading(OnnxTestCase):
 
         output = OnnxLoader.run_node(node, [x])
         np.testing.assert_almost_equal(output["y"], y, decimal=5)
+
+    def test_squeeze_none(self):
+        node = onnx.helper.make_node(
+            'Squeeze',
+            inputs=['x'],
+            outputs=['y'],
+        )
+        x = np.random.randn(1, 1, 4, 5).astype(np.float32)
+        y = np.squeeze(x)
+
+        output = OnnxLoader.run_node(node, [x])
+        np.testing.assert_almost_equal(output["y"], y, decimal=5)
+
+    def test_squeeze_list(self):
+        node = onnx.helper.make_node(
+            'Squeeze',
+            inputs=['x'],
+            outputs=['y'],
+            axes=[0, 1],
+        )
+        x = np.random.randn(1, 1, 4, 5).astype(np.float32)
+        y = np.squeeze(x)
+
+        output = OnnxLoader.run_node(node, [x])
+        np.testing.assert_almost_equal(output["y"], y, decimal=5)
+
+    def test_squeeze_axis(self):
+        node = onnx.helper.make_node(
+            'Squeeze',
+            inputs=['x'],
+            outputs=['y'],
+            axes=[1],
+        )
+        x = np.random.randn(3, 1, 4, 5).astype(np.float32)
+        y = np.squeeze(x, axis=1)
+
+        output = OnnxLoader.run_node(node, [x])
+        np.testing.assert_almost_equal(output["y"], y, decimal=5)
+
+    def test_onnx_sigmoid(self):
+        pytorch_model = torch.nn.Sequential(
+            torch.nn.Sigmoid()
+        )
+        input_shape_with_batch = (1, 3)
+        self.compare_with_pytorch(pytorch_model, input_shape_with_batch)
+
+    def test_sigmoid(self):
+        node = helper.make_node(
+            'Sigmoid',
+            inputs=['x'],
+            outputs=['y'],
+        )
+        x = np.array([[-1, 0, 1]]).astype(np.float32)
+        y = 1.0 / (1.0 + np.exp(np.negative(x)))  # expected output [0.26894143, 0.5, 0.7310586]
+        output = OnnxLoader.run_node(node, [x])
+        np.testing.assert_almost_equal(output["y"], y, decimal=5)

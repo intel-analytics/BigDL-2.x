@@ -466,16 +466,13 @@ class Variable[T: ClassTag] private[zoo] (private[zoo] var node: ModuleNode[T],
   }
 
   def squeeze(dims: Array[Int]): Variable[T] = {
-    if (dims == null){
-      val blayer = com.intel.analytics.bigdl.nn.Squeeze[T](null, batchMode = false)
-      val klayer = new KerasLayerWrapper[T](blayer)
-      Variable(klayer.inputs(this.node))
+    val blayer = if (dims == null){
+       com.intel.analytics.bigdl.nn.Squeeze[T](null, batchMode = false)
+    } else {
+      com.intel.analytics.bigdl.nn.Squeeze[T](dims.map(x => x + 1), batchMode = false)
     }
-    else {
-      val blayer = com.intel.analytics.bigdl.nn.Squeeze[T](dims.map(x => x + 1), batchMode = false)
-      val klayer = new KerasLayerWrapper[T](blayer)
-      Variable(klayer.inputs(this.node))
-    }
+    val klayer = new KerasLayerWrapper[T](blayer)
+    Variable(klayer.inputs(this.node))
   }
 
   /**
