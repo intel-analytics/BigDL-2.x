@@ -14,11 +14,12 @@ trait TextProcessing {
   val logger = LoggerFactory.getLogger(getClass)
 
   def doTokenize(text: String, toLowerCase: Boolean = true): List[String] = {
-    val replaceed = text.replaceAll("[^a-zA-Z]", " ")
-    toLowerCase match {
-      case true => replaceed.toLowerCase().split("\\s+").filter(_.size > 2).toList
-      case false => replaceed.split("\\s+").filter(_.size > 2).toList
+    val replaced = text.replaceAll("[^a-zA-Z]", " ")
+    val lowerCased = toLowerCase match {
+      case true => replaced.toLowerCase()
+      case false => replaced
     }
+    lowerCased.split("\\s+").filter(_.size > 2).toList
   }
 
   def doStopWords(tokens: List[String], stopWords: List[String]): List[String] = {
