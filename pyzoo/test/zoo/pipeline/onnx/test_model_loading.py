@@ -24,6 +24,10 @@ import torch
 import onnx.helper as helper
 import onnx
 from zoo.pipeline.api.onnx.onnx_loader import OnnxLoader
+from onnx import backend
+from onnx.backend import test
+from onnx.backend.test.case import node
+from onnx.backend.test.case.node import pool_op_common
 
 
 class TestModelLoading(OnnxTestCase):
@@ -434,3 +438,20 @@ class TestModelLoading(OnnxTestCase):
         pytorch_model = MnistNet()
         pytorch_model.train(mode=False)
         self.compare_with_pytorch(pytorch_model, [(1, 1, 28, 28)])
+
+    def test_maxpool1d(self):
+        node = onnx.helper.make_node(
+            'MaxPool',
+            inputs=['x'],
+            outputs=['y'],
+            kernel_shape=[2],
+        )
+        x = np.random.randn(1, 3, 32).astype(np.float32)
+        x_shape = np.array(np.shape(x))
+        kernel_shape = np.array([2])
+        strides = [1]
+        out_shape = pool_op_common.get_output_shape('VALID', x_shape[2:], kernel_shape, strides)
+        padded = x
+        y = pool_op_common.pool(padded, x_shape, kernel_shape, strides, out_shape, [0], 'MAX')
+        output = OnnxLoader.run_node(node, [x])
+        np.testing.assert_almost_equal(output["y"], y, decimal=5)

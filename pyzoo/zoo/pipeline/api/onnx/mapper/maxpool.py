@@ -35,9 +35,23 @@ class MaxPoolMapper(OperatorMapper):
                 strides = [1 for i in self.onnx_attr['kernel_shape']]
 
             border_mode, pads = OnnxHelper.get_padds(self.onnx_attr)
-
             maxpool = zlayers.MaxPooling2D(pool_size=pool_size,
                                            strides=strides,
+                                           border_mode=border_mode,
+                                           pads=pads)
+            return maxpool(self.model_inputs[0].zvalue)
+        elif (rank == 3):
+            pool_length = int(self.onnx_attr['kernel_shape'][0])
+            if "strides" in self.onnx_attr.keys():
+                stride = int(self.onnx_attr['strides'][0])
+            else:
+                stride = int(self.onnx_attr['kernel_shape'][0])
+
+            border_mode, pads = OnnxHelper.get_padds(self.onnx_attr)
+            if border_mode == None and pads == None:
+                border_mode = 'valid'
+            maxpool = zlayers.MaxPooling1D(pool_length=pool_length,
+                                           stride=stride,
                                            border_mode=border_mode,
                                            pads=pads)
             return maxpool(self.model_inputs[0].zvalue)
