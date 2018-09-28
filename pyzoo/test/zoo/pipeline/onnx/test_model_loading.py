@@ -18,7 +18,10 @@
 from test.zoo.pipeline.utils.test_utils_onnx import OnnxTestCase
 from zoo.pipeline.api.keras.layers import *
 import numpy as np
-
+from onnx import backend
+from onnx.backend import test
+from onnx.backend.test.case import node
+from onnx.backend.test.case.node import pool_op_common
 np.random.seed(1337)  # for reproducibility
 import torch
 import onnx.helper as helper
@@ -556,5 +559,40 @@ class TestModelLoading(OnnxTestCase):
         )
         x = np.array([[-1, 0, 1]]).astype(np.float32)
         y = 1.0 / (1.0 + np.exp(np.negative(x)))  # expected output [0.26894143, 0.5, 0.7310586]
+        output = OnnxLoader.run_node(node, [x])
+        np.testing.assert_almost_equal(output["y"], y, decimal=5)
+
+    def test_maxpool1d(self):
+        node = onnx.helper.make_node(
+            'MaxPool',
+            inputs=['x'],
+            outputs=['y'],
+            kernel_shape=[2],
+        )
+        x = np.random.randn(1, 3, 32).astype(np.float32)
+        x_shape = np.array(np.shape(x))
+        kernel_shape = np.array([2])
+        strides = [1]
+        out_shape = pool_op_common.get_output_shape('VALID', x_shape[2:], kernel_shape, strides)
+        padded = x
+        y = pool_op_common.pool(padded, x_shape, kernel_shape, strides, out_shape, [0], 'MAX')
+        output = OnnxLoader.run_node(node, [x])
+        np.testing.assert_almost_equal(output["y"], y, decimal=5)
+
+    def test_maxpool1d_strides(self):
+        node = onnx.helper.make_node(
+            'MaxPool',
+            inputs=['x'],
+            outputs=['y'],
+            kernel_shape=[2],
+            strides=[2]
+        )
+        x = np.random.randn(1, 3, 32).astype(np.float32)
+        x_shape = np.array(np.shape(x))
+        kernel_shape = np.array([2])
+        strides = [2]
+        out_shape = pool_op_common.get_output_shape('VALID', x_shape[2:], kernel_shape, strides)
+        padded = x
+        y = pool_op_common.pool(padded, x_shape, kernel_shape, strides, out_shape, [0], 'MAX')
         output = OnnxLoader.run_node(node, [x])
         np.testing.assert_almost_equal(output["y"], y, decimal=5)
