@@ -30,10 +30,10 @@ trait TextProcessing {
     tokens.filter(!topK.keySet.contains(_))
   }
 
-  def doShaping(tokens: List[String], sequenceLength: Int, truncateFromLeft: Boolean = true): List[String] = {
+  def doShaping(tokens: List[String], sequenceLength: Int, truncateFromRigtht: Boolean = true): List[String] = {
     tokens.length > sequenceLength match {
       case true => {
-        truncateFromLeft match {
+        truncateFromRigtht match {
           case true => tokens.take(sequenceLength)
           case false => tokens.takeRight(sequenceLength)
         }
@@ -71,12 +71,8 @@ trait TextProcessing {
   }
 
   def doPreprocess(text: String, stopWordsCount: Int, sequenceLength: Int, embeddingFile: File): Tensor[Float] = {
-    val tokens = doTokenize(text)
-    val stoppedTokens = doStopWords(tokens, stopWordsCount)
-    val shapedTokens = doShaping(stoppedTokens, sequenceLength)
     val wordToIndexdMap = doLoadWordToIndexMap(embeddingFile)
-    val indexes = doIndex(shapedTokens, wordToIndexdMap)
-    Tensor(indexes.map(_.asInstanceOf[Float]).toArray, Array(sequenceLength))
+    doPreprocess(text, stopWordsCount, sequenceLength, wordToIndexdMap)
   }
 
 }

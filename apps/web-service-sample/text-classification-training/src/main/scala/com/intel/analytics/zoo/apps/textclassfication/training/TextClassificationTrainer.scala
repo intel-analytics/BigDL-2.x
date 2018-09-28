@@ -25,7 +25,7 @@ case class TextClassificationTrainerParams(trainDataDir: String = "./20news-1882
                                            partitionNum: Int = 8,
                                            batchSize: Int = 256,
                                            nbEpoch: Int = 20,
-                                           modelSeveDirPath: String = "./"
+                                           modelSaveDirPath: String = "./"
                                           )
 
 object TextClassificationTrainer extends TextProcessing {
@@ -84,10 +84,10 @@ object TextClassificationTrainer extends TextProcessing {
       opt[Int]("nbEpoch")
         .text("the number of iterations to train the model")
         .action((x, c) => c.copy(nbEpoch = x))
-      opt[String]("modelSeveDirPath")
+      opt[String]("modelSaveDirPath")
         .required()
         .text("the base directory to save model")
-        .action((x, params) => params.copy(modelSeveDirPath = x))
+        .action((x, params) => params.copy(modelSaveDirPath = x))
     }
 
     parser.parse(args, TextClassificationTrainerParams()).map(params => {
@@ -101,7 +101,7 @@ object TextClassificationTrainer extends TextProcessing {
       val partitionNum = params.partitionNum
       val batchSize = params.batchSize
       val nbEpoch = params.nbEpoch
-      val modelSeveDirPath = params.modelSeveDirPath
+      val modelSaveDirPath = params.modelSaveDirPath
 
       val wordToIndexMap = doLoadWordToIndexMap(embeddingFile)
       log.info("wordToIndexMap size " + wordToIndexMap.size)
@@ -142,7 +142,7 @@ object TextClassificationTrainer extends TextProcessing {
       println("First five class predictions (label starts from 0):")
       resultClasses.take(5).foreach(println)
 
-      model.saveModule(modelSeveDirPath, overWrite = true)
+      model.saveModule(modelSaveDirPath, overWrite = true)
 
       sc.stop()
     })
