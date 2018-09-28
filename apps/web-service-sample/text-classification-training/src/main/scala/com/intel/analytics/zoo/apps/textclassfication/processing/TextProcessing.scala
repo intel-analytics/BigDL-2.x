@@ -31,10 +31,10 @@ trait TextProcessing {
     tokens.filter(!topK.keySet.contains(_))
   }
 
-  def doShaping(tokens: List[String], sequenceLength: Int, truncateFromRigtht: Boolean = true): List[String] = {
+  def doShaping(tokens: List[String], sequenceLength: Int, truncateFromRight: Boolean = true): List[String] = {
     tokens.length > sequenceLength match {
       case true => {
-        truncateFromRigtht match {
+        truncateFromRight match {
           case true => tokens.take(sequenceLength)
           case false => tokens.takeRight(sequenceLength)
         }
