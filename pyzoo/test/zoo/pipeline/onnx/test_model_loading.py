@@ -51,14 +51,14 @@ class TestModelLoading(OnnxTestCase):
         var = var.reshape(-1, *dim_ones)
         return s * (x - mean) / np.sqrt(var + epsilon) + bias
 
-    def test_onnx_batchnormalization(self):
+    def test_onnx_batch_norm(self):
         pytorch_model = torch.nn.Sequential(
             torch.nn.BatchNorm2d(num_features=3)
         )
         input_shape_with_batch = (1, 3, 224, 224)
         self.compare_with_pytorch(pytorch_model, input_shape_with_batch)
 
-    def test_batchnormalization(self):
+    def test_batch_norm(self):
         x = np.array([[[[-1, 0, 1]], [[2, 3, 4]]]]).astype(np.float32).reshape([2, 1])
         s = np.array([1.0, 1.5]).astype(np.float32).reshape([2, 1])
         bias = np.array([0, 0]).astype(np.float32).reshape([2, 1])
