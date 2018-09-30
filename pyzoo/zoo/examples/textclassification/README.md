@@ -51,23 +51,14 @@ See [here](https://analytics-zoo.github.io/master/#PythonUserGuide/run/#run-afte
 Run the following command for Spark local mode (`MASTER=local[*]`) or cluster mode:
 
 ```bash
-SPARK_HOME=the root directory of Spark
+export SPARK_HOME=the root directory of Spark
+export ANALYTICS_ZOO_HOME=the folder where you extract the downloaded Analytics Zoo zip package
 MASTER=...
-ANALYTICS_ZOO_HOME=the folder where you extract the downloaded Analytics Zoo zip package
-ANALYTICS_ZOO_PY_ZIP=${ANALYTICS_ZOO_HOME}/lib/analytics-zoo-bigdl_BIGDL_VERSION-spark_SPARK_VERSION-ZOO_VERSION-python-api.zip
-ANALYTICS_ZOO_JAR=${ANALYTICS_ZOO_HOME}/lib/analytics-zoo-bigdl_BIGDL_VERSION-spark_SPARK_VERSION-ZOO_VERSION-jar-with-dependencies.jar 
-ANALYTICS_ZOO_CONF=${ANALYTICS_ZOO_HOME}/conf/spark-analytics-zoo.conf
-PYTHONPATH=${ANALYTICS_ZOO_PY_ZIP}:$PYTHONPATH
 
-${SPARK_HOME}/bin/spark-submit \
+${ANALYTICS_ZOO_HOME}/bin/spark-submit-with-zoo.sh \
     --master ${MASTER} \
     --driver-memory 2g \
     --executor-memory 2g \
-    --properties-file ${ANALYTICS_ZOO_CONF} \
-    --py-files ${ANALYTICS_ZOO_PY_ZIP} \
-    --jars ${ANALYTICS_ZOO_JAR} \
-    --conf spark.driver.extraClassPath=${ANALYTICS_ZOO_JAR} \
-    --conf spark.executor.extraClassPath=${ANALYTICS_ZOO_JAR} \
     text_classification.py --data_path /tmp/text_data
 ```
 See [here](#options) for more configurable options for this example.

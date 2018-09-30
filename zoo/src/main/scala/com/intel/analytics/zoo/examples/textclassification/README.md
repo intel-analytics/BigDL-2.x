@@ -36,18 +36,16 @@ baseDir$ tree .
 Run the following command for Spark local mode (`MASTER=local[*]`) or cluster mode:
 
 ```bash
-SPARK_HOME=the root directory of Spark
-ANALYTICS_ZOO_HOME=the folder where you extract the downloaded Analytics Zoo zip package
+export SPARK_HOME=the root directory of Spark
+export ANALYTICS_ZOO_HOME=the folder where you extract the downloaded Analytics Zoo zip package
 MASTER=...
-ANALYTICS_ZOO_JAR=${ANALYTICS_ZOO_HOME}/lib/analytics-zoo-bigdl_BIGDL_VERSION-spark_SPARK_VERSION-ZOO_VERSION-jar-with-dependencies.jar
 BASE_DIR=the base directory containing the training and word2Vec data
 
-spark-submit \
+${ANALYTICS_ZOO_HOME}/bin/spark-shell-with-zoo.sh \
     --master ${MASTER} \
     --driver-memory 2g \
     --executor-memory 2g \
     --class com.intel.analytics.zoo.examples.textclassification.TextClassification \
-    ${ANALYTICS_ZOO_JAR} \
     --baseDir ${BASE_DIR}
 ```
 See [here](#options) for more configurable options for this example.
