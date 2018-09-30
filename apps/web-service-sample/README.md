@@ -20,7 +20,7 @@ In the IDE(eg: IDEA), Select New - Project from Existing Source, look through th
 ### Prepare Data
 The data used in this example are:
 
-* [20 Newsgroup dataset(0news-18828.tar.gz)](http://qwone.com/~jason/20Newsgroups/20news-18828.tar.gz) which contains 20 categories and with 19997 texts in total.
+* [20 Newsgroup dataset(news-18828.tar.gz)](http://qwone.com/~jason/20Newsgroups/20news-18828.tar.gz) which contains 20 categories and with 19997 texts in total.
 * [GloVe word embeddings(glove.6B.zip)](http://nlp.stanford.edu/data/glove.6B.zip): embeddings of 400k words pre-trained on a 2014 dump of English Wikipedia.
 
 You need to prepare the data by yourself beforehand. The following scripts we prepare will serve to download and extract the data:
@@ -28,7 +28,7 @@ You need to prepare the data by yourself beforehand. The following scripts we pr
     bash ${ANALYTICS_ZOO_HOME}/bin/data/news20/get_news20.sh dir
     bash ${ANALYTICS_ZOO_HOME}/bin/data/glove/get_glove.sh dir
 
-where `ANALYTICS_ZOO_HOME` is the `dist` directory under the Analytics Zoo project and `dir` is the directory you wish to locate the downloaded data. If `dir` is not specified, the data will be downloaded to the current working directory. 20 Newsgroup dataset and GloVe word embeddings are supposed to be placed under the same directory.
+where `ANALYTICS_ZOO_HOME` is the folder where you extract the downloaded package and `dir` is the directory you wish to locate the downloaded data. If `dir` is not specified, the data will be downloaded to the current working directory. 20 Newsgroup dataset and GloVe word embeddings are supposed to be placed under the same directory.
 
 The data folder structure after extraction should look like the following:
 
