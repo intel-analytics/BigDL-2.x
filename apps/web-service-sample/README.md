@@ -20,7 +20,7 @@ In the IDE(eg: IDEA), Select New - Project from Existing Source, look through th
 ### Prepare Data
 The data used in this example are:
 
-* [20 Newsgroup dataset(news-18828.tar.gz)](http://qwone.com/~jason/20Newsgroups/20news-18828.tar.gz) which contains 20 categories and with 19997 texts in total.
+* [20 Newsgroup dataset(news-18828.tar.gz)](http://qwone.com/~jason/20Newsgroups/20news-18828.tar.gz) which contains 20 categories and with 18828 texts in total.
 * [GloVe word embeddings(glove.6B.zip)](http://nlp.stanford.edu/data/glove.6B.zip): embeddings of 400k words pre-trained on a 2014 dump of English Wikipedia.
 
 You need to prepare the data by yourself beforehand. The following scripts we prepare will serve to download and extract the data:
