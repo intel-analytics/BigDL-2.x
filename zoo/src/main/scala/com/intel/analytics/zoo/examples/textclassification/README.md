@@ -7,6 +7,10 @@ A CNN `TextClassifier` model can achieve around 85% accuracy after 20 epochs of 
 LSTM and GRU models are a little bit difficult to train, and more epochs are needed to achieve compatible results.
 
 
+## Download Analytics Zoo
+You can download Analytics Zoo prebuilt release and nightly build package from [here](https://analytics-zoo.github.io/master/#release-download/) and extract it.
+
+
 ## Data Preparation
 The data used in this example are:
 - [20 Newsgroup dataset](http://qwone.com/~jason/20Newsgroups/20news-18828.tar.gz) which contains 20 categories and with 19997 texts in total.
@@ -17,7 +21,7 @@ You need to prepare the data by yourself beforehand. The following scripts we pr
 bash ${ANALYTICS_ZOO_HOME}/bin/data/news20/get_news20.sh dir
 bash ${ANALYTICS_ZOO_HOME}/bin/data/glove/get_glove.sh dir
 ```
-where `ANALYTICS_ZOO_HOME` is the `dist` directory under the Analytics Zoo project and `dir` is the directory you wish to locate the downloaded data. If `dir` is not specified, the data will be downloaded to the current working directory. 20 Newsgroup dataset and GloVe word embeddings are supposed to be placed under the same directory.
+where `ANALYTICS_ZOO_HOME` is the folder where you extract the downloaded package and `dir` is the directory you wish to locate the downloaded data. If `dir` is not specified, the data will be downloaded to the current working directory. 20 Newsgroup dataset and GloVe word embeddings are supposed to be placed under the same directory.
 
 The data folder structure after extraction should look like the following:
 ```
@@ -32,21 +36,22 @@ baseDir$ tree .
 Run the following command for Spark local mode (`MASTER=local[*]`) or cluster mode:
 
 ```bash
-SPARK_HOME=the root directory of Spark
-ANALYTICS_ZOO_HOME=the dist directory under the Analytics Zoo project
+export SPARK_HOME=the root directory of Spark
+export ANALYTICS_ZOO_HOME=the folder where you extract the downloaded Analytics Zoo zip package
 MASTER=...
-ANALYTICS_ZOO_JAR=${ANALYTICS_ZOO_HOME}/lib/analytics-zoo-bigdl_BIGDL_VERSION-spark_SPARK_VERSION-ZOO_VERSION-jar-with-dependencies.jar
 BASE_DIR=the base directory containing the training and word2Vec data
 
-spark-submit \
+${ANALYTICS_ZOO_HOME}/bin/spark-shell-with-zoo.sh \
     --master ${MASTER} \
     --driver-memory 2g \
     --executor-memory 2g \
     --class com.intel.analytics.zoo.examples.textclassification.TextClassification \
-    ${ANALYTICS_ZOO_JAR} \
     --baseDir ${BASE_DIR}
 ```
-__Options:__
+See [here](#options) for more configurable options for this example.
+
+
+## Options
 * `--baseDir` This option is __required__. The path where the training and word2Vec data locate.
 * `--partitionNum` The number of partitions to cut the dataset into. Datault is 4.
 * `--tokenLength` The size of each word vector. GloVe supports tokenLength 50, 100, 200 and 300. Default is 200.
