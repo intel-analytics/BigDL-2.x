@@ -25,7 +25,7 @@ You can also choose to prepare the data by yourself beforehand. The following sc
 bash ${ANALYTICS_ZOO_HOME}/bin/data/news20/get_news20.sh dir
 bash ${ANALYTICS_ZOO_HOME}/bin/data/glove/get_glove.sh dir
 ```
-where `ANALYTICS_ZOO_HOME` is the `dist` directory under the Analytics Zoo project (or if you download the prebuilt package, it would be the folder where you extract the downloaded package) and `dir` is the directory you wish to locate the downloaded data. If `dir` is not specified, the data will be downloaded to the current working directory. 20 Newsgroup dataset and GloVe word embeddings are supposed to be placed under the same directory.
+where `ANALYTICS_ZOO_HOME` is the folder where you extract the downloaded package and `dir` is the directory you wish to locate the downloaded data. If `dir` is not specified, the data will be downloaded to the current working directory. 20 Newsgroup dataset and GloVe word embeddings are supposed to be placed under the same directory.
 
 The data folder structure after extraction should look like the following:
 ```
