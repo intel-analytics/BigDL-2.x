@@ -175,6 +175,11 @@
 
     <dependencies>
         <dependency>
+            <groupId>joda-time</groupId>
+            <artifactId>joda-time</artifactId>
+            <version>2.9.9</version>
+        </dependency>
+        <dependency>
             <groupId>org.scalatest</groupId>
             <artifactId>scalatest_${scala.major.version}</artifactId>
             <version>${scalatest.version}</version>
@@ -182,7 +187,8 @@
         </dependency>
         <dependency>
             <groupId>org.reflections</groupId>
-            <artifactId>reflections</artifactId> <version>0.9.9-RC1</version>
+            <artifactId>reflections</artifactId>
+            <version>0.9.9-RC1</version>
             <scope>test</scope>
         </dependency>
         <dependency>
@@ -404,7 +410,8 @@
                         <id>with-spark</id>
                         <configuration>
                             <descriptors>
-                                <descriptor>${project.basedir}/src/assembly/all-in-one.xml</descriptor>
+                                <descriptor>${project.basedir}/src/assembly/all-in-one.xml
+                                </descriptor>
                             </descriptors>
                         </configuration>
                         <phase>package</phase>
@@ -418,7 +425,8 @@
                         <inherited>false</inherited>
                         <configuration>
                             <descriptors>
-                                <descriptor>${project.basedir}/src/assembly/python-zip.xml</descriptor>
+                                <descriptor>${project.basedir}/src/assembly/python-zip.xml
+                                </descriptor>
                             </descriptors>
                         </configuration>
                         <phase>package</phase>
@@ -450,7 +458,8 @@
                         </goals>
                         <configuration>
                             <descriptors>
-                                <descriptor>${project.basedir}/src/assembly/dist-all.xml</descriptor>
+                                <descriptor>${project.basedir}/src/assembly/dist-all.xml
+                                </descriptor>
                             </descriptors>
                         </configuration>
                     </execution>
@@ -468,7 +477,8 @@
                     <sourceDirectory>${basedir}/src/main/scala</sourceDirectory>
                     <testSourceDirectory>${basedir}/src/test/scala</testSourceDirectory>
                     <configLocation>${project.basedir}/scalastyle_config.xml</configLocation>
-                    <outputFile>${project.build.directory}/stylecheck/scalastyle-output.xml</outputFile>
+                    <outputFile>${project.build.directory}/stylecheck/scalastyle-output.xml
+                    </outputFile>
                     <outputEncoding>UTF-8</outputEncoding>
                 </configuration>
                 <executions>
@@ -515,7 +525,9 @@
                                 <!-- Do not change the arg orders. It is a weird way to pass in
                                 this arg. Maybe it is a bug of the plugin. -->
                                 <arg>-skip-packages</arg>
-                                <arg>caffe:org.tensorflow:netty:org.apache.spark.sparkExtension:org.apache.spark.rdd:org.apache.spark.storage:org.apache.spark.bigdl</arg>
+                                <arg>
+                                    caffe:org.tensorflow:netty:org.apache.spark.sparkExtension:org.apache.spark.rdd:org.apache.spark.storage:org.apache.spark.bigdl
+                                </arg>
                             </args>
                         </configuration>
                     </execution>
