@@ -9,62 +9,63 @@ import com.intel.analytics.zoo.models.common.ZooModel
 import com.intel.analytics.zoo.pipeline.api.keras.layers.{Dense, Dropout, LSTM}
 import com.intel.analytics.zoo.pipeline.api.keras.models.Sequential
 import org.apache.spark.rdd.RDD
-import org.apache.spark.sql.DataFrame
-import org.apache.spark.sql.functions.{avg, col, udf}
+
 
 import scala.reflect.ClassTag
 
-/**
-  * The anomaly detector for single time series
-  *
-  * @param inputShape   The input shape of features.
-  * @param hiddenLayers Units of hidden layers of LSTM.
-  * @param dropouts     Fraction of the input units to drop following each hidden LSTM layer. Float between 0 and 1.
-  */
-class AnomalyDetector[T: ClassTag](
-                                    val inputShape: Shape,
-                                    val hiddenLayers: Array[Int] = Array(8, 32, 15),
-                                    val dropouts: Array[Float] = Array(0.2f, 0.2f, 0.2f)
-                                  )
-                                  (implicit ev: TensorNumeric[T])
+class AnomalyDetector[T: ClassTag] private(
+                                            val featureShape: Shape,
+                                            val hiddenLayers: Array[Int] = Array(8, 32, 15),
+                                            val dropouts: Array[Float] = Array(0.2f, 0.2f, 0.2f)
+                                          )
+                                          (implicit ev: TensorNumeric[T])
   extends ZooModel[Tensor[T], Tensor[T], T] {
 
   override def buildModel(): AbstractModule[Tensor[T], Tensor[T], T] = {
 
-    val model = Sequential[Float]()
+    val model = Sequential()
 
-    model.add(LSTM[Float](hiddenLayers(0), returnSequences = true, inputShape = inputShape))
-      .add(Dropout[Float](dropouts(0)))
+    model.add(LSTM(hiddenLayers(0), returnSequences = true, inputShape = featureShape))
+      .add(Dropout(dropouts(0)))
 
     for (i <- 1 to hiddenLayers.length - 1) {
-      model.add(LSTM[Float](hiddenLayers(i), returnSequences = true))
-        .add(Dropout[Float](dropouts(i)))
+      model.add(LSTM(hiddenLayers(i), returnSequences = true))
+        .add(Dropout(dropouts(i)))
     }
 
-    model.add(LSTM[Float](hiddenLayers.last, returnSequences = false))
-      .add(Dropout[Float](dropouts.last))
-      .add(Dense[Float](outputDim = 1))
+    model.add(LSTM(hiddenLayers.last, returnSequences = false))
+      .add(Dropout(dropouts.last))
+      .add(Dense(outputDim = 1))
 
     model.asInstanceOf[AbstractModule[Tensor[T], Tensor[T], T]]
   }
 
 }
 
-case class FeatureLabelIndex(feature: Array[Array[Float]], label: Float, index: Long) {
+case class FeatureLabelIndex[T: ClassTag] private(
+                                                   feature: Array[Array[T]],
+                                                   label: T, index: Long) {
   override def toString =
-    "value: " + feature.map(x => x.mkString("|")).mkString(",") + " label:" + label + " index:" + index
+    "value: " + feature
+      .map(x => x.mkString("|")).mkString(",") + " label:" + label + " index:" + index
 }
+
 
 object AnomalyDetector {
   /**
-    * The factory method to create a NeuralCF instance.
+    * The factory method to create an anomaly detector for single time series
+    *
+    * @param featureShape The input shape of features.
+    * @param hiddenLayers Units of hidden layers of LSTM.
+    * @param dropouts     Fraction of the input units to drop out. Float between 0 and 1.
+    * @tparam T Numeric type of parameter(e.g. weight, bias). Only support float/double now.
     */
   def apply[@specialized(Float, Double) T: ClassTag](
-                                                      inputShape: Shape,
+                                                      featureShape: Shape,
                                                       hiddenLayers: Array[Int] = Array(8, 32, 15),
                                                       dropouts: Array[Float] = Array(0.2f, 0.2f, 0.2f)
                                                     )(implicit ev: TensorNumeric[T]): AnomalyDetector[T] = {
-    new AnomalyDetector[T](inputShape, hiddenLayers, dropouts).build()
+    new AnomalyDetector[T](featureShape, hiddenLayers, dropouts).build()
   }
 
   /**
@@ -83,7 +84,19 @@ object AnomalyDetector {
     ZooModel.loadModel(path, weightPath).asInstanceOf[AnomalyDetector[T]]
   }
 
-  def detectAnomalies[T: ClassTag](yTruth: RDD[T], yPredict: RDD[T], anomalyFraction: Int = 5): RDD[(T, T, Any)] = {
+  /**
+    * Compare predictions and truth to detect anomalies by ranking the absolute differences。
+    * Most distant values are considered as anomalies.
+    *
+    * @param yTruth          Truth to be compared
+    * @param yPredict        Predictions
+    * @param anomalyFraction Int. What percentage of the number of total values compared to be
+    *                        considered as anomalies.
+    */
+  def detectAnomalies[T: ClassTag](yTruth: RDD[T],
+                                   yPredict: RDD[T],
+                                   anomalyFraction: Int = 5): RDD[(T, T, Any)] = {
+    require(yTruth.count() == yPredict.count(), s"length of predictions and truth should match")
     val totalCount = yTruth.count()
 
     val threshold: Float = yTruth.zip(yPredict)
@@ -92,10 +105,22 @@ object AnomalyDetector {
       .take((totalCount * anomalyFraction.toFloat / 100).toInt)
       .min
 
-    detectAnomalies[T](yTruth, yPredict, threshold)
+    detectAnomalies(yTruth, yPredict, threshold)
   }
 
-  def detectAnomalies[T: ClassTag](yTruth: RDD[T], yPredict: RDD[T], threshold: Float): RDD[(T, T, Any)] = {
+  /**
+    * Compare predictions and truth to detect anomalies by ranking the absolute differences.
+    * Most distant values are considered as anomalies.
+    *
+    * @param yTruth    Truth to be compared
+    * @param yPredict  Predictions
+    * @param threshold Float. The threshold of absolute difference, data points with a difference
+    *                  above the threshold is considered as anomalies.
+    */
+  def detectAnomalies[T: ClassTag](yTruth: RDD[T],
+                                   yPredict: RDD[T],
+                                   threshold: Float): RDD[(T, T, Any)] = {
+    require(yTruth.count() == yPredict.count(), s"length of predictions and truth should match")
     val anomalies = yTruth.zip(yPredict).map { x =>
       val d = diff(x._1, x._2)
       val anomaly = if (d > threshold) x._1 else null
@@ -112,15 +137,39 @@ object AnomalyDetector {
     }
   }
 
-  def distributeUnrollAll(dataRdd: RDD[Array[Float]], unrollLength: Int, predictStep: Int = 1): RDD[FeatureLabelIndex] = {
+  /** Unroll a rdd of arrays to prepare features and labels.
+    *
+    * @param dataRdd      data to be unrolled with a length.
+    * @param unrollLength the length of precious values to predict future value.
+    * @param predictStep  use precious values to predict future value, default is 1.
+    *
+    *                     a simple example
+    *                     data: (1,2,3,4,5,6); unrollLength: 2, predictStep: 1
+    *                     features, label, index
+    *                     (1,2), 3, 0
+    *                     (2,3), 4, 1
+    *                     (3,4), 5, 2
+    *                     (4,5), 6, 3
+    **/
+  def unroll[T: ClassTag](dataRdd: RDD[Array[T]],
+                          unrollLength: Int,
+                          predictStep: Int = 1
+                         ): RDD[FeatureLabelIndex[T]] = {
 
     val n = dataRdd.count()
-    val indexRdd: RDD[(Array[Float], Long)] = dataRdd.zipWithIndex()
+    val indexRdd: RDD[(Array[T], Long)] = dataRdd.zipWithIndex()
+
+    val offset: Int = unrollLength - 1 + predictStep
+
+    //RDD[index of record, label]
+    val labelRdd: RDD[(Long, T)] = indexRdd
+      .filter(x => (x._2 >= offset))
+      .map(x => (x._2 - offset, x._1(0)))
 
     //RDD[index of record, feature]
-    val featureRdd: RDD[(Long, Array[Array[Float]])] = indexRdd
+    val featureRdd: RDD[(Long, Array[Array[T]])] = indexRdd
       .flatMap(x => {
-        val pairs: Seq[(Long, List[(Array[Float], Long)])] = if (x._2 < unrollLength) {
+        val pairs: Seq[(Long, List[(Array[T], Long)])] = if (x._2 < unrollLength) {
           (0L to x._2).map(index => (index, List(x)))
         } else {
           (x._2 - unrollLength + 1 to x._2).map(index => (index, List(x)))
@@ -129,59 +178,26 @@ object AnomalyDetector {
       }).reduceByKey(_ ++ _)
       .filter(x => x._2.size == unrollLength && x._1 <= n - unrollLength - predictStep)
       .map(x => {
-        val data: Array[Array[Float]] = x._2.sortBy(y => y._2).map(x => x._1).toArray
+        val data: Array[Array[T]] = x._2.sortBy(y => y._2).map(x => x._1).toArray
         (x._1, data)
-      }).sortBy(x => x._1)
+      })
+      .sortBy(x => x._1)
 
-    val skipIndex: Int = unrollLength - 1 + predictStep
-    val labelRdd: RDD[(Long, Float)] = indexRdd.filter(x => x._2 >= skipIndex).map(x => (x._2 - skipIndex, x._1(0)))
-
-    val featureData: RDD[FeatureLabelIndex] = featureRdd.join(labelRdd)
+    val featureLabelIndex = featureRdd.join(labelRdd)
       .sortBy(x => x._1)
       .map(x => FeatureLabelIndex(x._2._1, x._2._2, x._1))
 
-    featureData.take(1).foreach(println)
-
-    featureData
+    featureLabelIndex
   }
 
-  def toSampleRdd(train_data: RDD[FeatureLabelIndex]) = {
-
-    train_data.map(x => {
-
+  def toSampleRdd[T: ClassTag](rdd: RDD[FeatureLabelIndex[T]])(implicit ev: TensorNumeric[T]) = {
+    rdd.map(x => {
       val shape: Array[Int] = Array(x.feature.length, x.feature(0).length)
-      val data: Array[Float] = x.feature.flatten
-      val feature: Tensor[Float] = Tensor(data, shape)
-      val label = Tensor[Float](T(x.label))
-      Sample(feature, label)
+      val data = x.feature.flatten
+      val feature = Tensor[T](data, shape)
+      Sample[T](feature, x.label)
     })
-
   }
 
-  def standardScaleHelper(df: DataFrame, colName: String) = {
-
-    val mean = df.select(colName).agg(avg(col(colName))).collect()(0).getDouble(0)
-
-    val stddevUdf = udf((num: Float) => (num - mean) * (num - mean))
-
-    val stddev = Math.sqrt(df.withColumn("stddev", stddevUdf(col(colName)))
-      .agg(avg(col("stddev"))).collect()(0).getDouble(0))
-
-    println(colName + ",mean:" + mean + ",stddev:" + stddev)
-
-    val scaledUdf = udf((num: Float) => ((num - mean) / stddev).toFloat)
-
-    df.withColumn(colName, scaledUdf(col(colName)))
-  }
-
-  def standardScale(df: DataFrame, fields: Seq[String], index: Int = 0): DataFrame = {
-
-    if (index == fields.length) {
-      df
-    } else {
-      val colDf = standardScaleHelper(df, fields(index))
-      standardScale(colDf, fields, index + 1)
-    }
-  }
 }
 

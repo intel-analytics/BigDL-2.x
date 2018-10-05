@@ -20,12 +20,12 @@ import com.intel.analytics.bigdl.dataset.Sample
 import com.intel.analytics.bigdl.numeric.NumericFloat
 import com.intel.analytics.bigdl.utils.{Shape, T}
 import com.intel.analytics.zoo.common.NNContext
-import com.intel.analytics.zoo.models.anomalydetection.AnomalyDetector
+import com.intel.analytics.zoo.models.anomalydetection.{AnomalyDetector, FeatureLabelIndex}
 import com.intel.analytics.zoo.models.anomalydetection.AnomalyDetector._
 import com.intel.analytics.zoo.pipeline.api.keras.models.Sequential
 import org.apache.log4j.{Level, Logger}
 import org.apache.spark.SparkConf
-import org.apache.spark.mllib.linalg.Vectors
+import org.apache.spark.ml.linalg.Vectors
 import org.apache.spark.rdd.RDD
 import org.apache.spark.sql.{DataFrame, SQLContext}
 import org.apache.spark.sql.functions._
@@ -36,9 +36,7 @@ case class Taxi(ts: String, value: Float)
 
 case class LocalParams(val inputDir: String = "./data/NAB/nyc_taxi/",
                        val batchSize: Int = 1024,
-                       val nEpochs: Int = 20,
-                       val learningRate: Double = 1e-3,
-                       val learningRateDecay: Double = 1e-6
+                       val nEpochs: Int = 20
                       )
 
 object AnomalyDetectorExample {
@@ -57,9 +55,6 @@ object AnomalyDetectorExample {
       opt[Int]('e', "nEpochs")
         .text("epoch numbers")
         .action((x, c) => c.copy(nEpochs = x))
-      opt[Double]('l', "lRate")
-        .text("learning rate")
-        .action((x, c) => c.copy(learningRate = x.toDouble))
     }
 
     parser.parse(args, defaultParams).map {
@@ -73,70 +68,54 @@ object AnomalyDetectorExample {
   def run(param: LocalParams): Unit = {
     Logger.getLogger("org").setLevel(Level.ERROR)
     val conf = new SparkConf()
-    conf.setAppName("AnomalyDetectionExample").set("spark.sql.crossJoin.enabled", "true")
+    conf.setAppName("AnomalyDetectionExample")
     val sc = NNContext.initNNContext(conf)
     val sqlContext = SQLContext.getOrCreate(sc)
 
     val featureDF = loadData(sqlContext, param.inputDir)
-    val unrollLength = 50
-    val (trainRdd, testRdd) = assemblyFeature(featureDF.select("value", "hour", "awake"), scale = true, unrollLength, testdataSize = 1000)
+    val featureShape = Shape(50, 3)
+    val (trainRdd, testRdd) = assemblyFeature(featureDF, ifScale = true, 50, testdataSize = 1000)
 
-    val model = AnomalyDetector[Float](inputShape = Shape(50, 3)).buildModel().asInstanceOf[Sequential[Float]]
-
+    val model = AnomalyDetector[Double](featureShape).buildModel().asInstanceOf[Sequential[Float]]
     model.compile(loss = "mse", optimizer = "rmsprop")
-
-    val batchSize = Math.min(param.batchSize, trainRdd.count().toInt / 8 * 8)
-
-    model.fit(trainRdd, batchSize = batchSize, nbEpoch = param.nEpochs)
-    val predictions = model.predict(testRdd, batchSize = batchSize)
+    model.fit(trainRdd, batchSize = param.batchSize, nbEpoch = param.nEpochs)
+    val predictions = model.predict(testRdd)
 
     val yPredict: RDD[Float] = predictions.map(x => x.toTensor.toArray()(0))
     val yTruth: RDD[Float] = testRdd.map(x => x.label.toArray()(0))
-    val anomolies = detectAnomalies[Float](yPredict, yTruth, 5)
-    anomolies.map(x => x._1 + "," + x._2 + "," + x._3).coalesce(1).saveAsTextFile("/Users/guoqiong/intelWork/projects/BaoSight/result/nyc/test")
+    val anomolies = detectAnomalies(yPredict, yTruth, 5)
+    anomolies.take(5).foreach(println)
   }
-
 
   def loadData(sqlContext: SQLContext, dataPath: String) = {
 
     @transient lazy val formatter = DateTimeFormat.forPattern("yyyy-MM-dd HH:mm:ss")
-
     import sqlContext.implicits._
-    val df = sqlContext.read.text(dataPath + "/nyc_taxi.csv").as[String]
-      .rdd.mapPartitionsWithIndex {
-      (idx, iter) => if (idx == 0) iter.drop(1) else iter
-    }
+
+    val df = sqlContext.sparkContext.textFile(dataPath + "/nyc_taxi.csv")
+      .mapPartitionsWithIndex((idx, iter) => if (idx == 0) iter.drop(1) else iter)
       .map(x => {
         val line = x.split(",")
         Taxi(line(0), line(1).toFloat)
       }).toDF()
-    // hour, awake (hour>=6 <=23)
-    val hourUdf = udf((time: String) => {
-      val dt = formatter.parseDateTime(time)
-      dt.hourOfDay().get()
-    })
 
-    val awakeUdf = udf((hour: Int) => if (hour >= 6 && hour <= 23) 1 else 0)
+    val hourUDF = udf((time: String) => (formatter.parseDateTime(time).hourOfDay().get()))
+    val awakeUDF = udf((hour: Int) => if (hour >= 6 && hour <= 23) 1 else 0)
+    val vectorUDF = udf((col1: Double, col2: Double, col3: Double) =>
+      Vectors.dense(Array(col1, col2, col3)))
 
-    val featureDF = df.withColumn("hour", hourUdf(col("ts")))
-      .withColumn("awake", awakeUdf(col("hour")))
-      .drop("ts")
+    val featureDF = df.withColumn("hour", hourUDF(col("ts")))
+      .withColumn("awake", awakeUDF(col("hour")))
       .select("value", "hour", "awake")
 
-    featureDF.show(5, false)
-    println("tatal count: " + featureDF.count())
-
-    featureDF
+    featureDF.withColumn("features", vectorUDF(col("value"), col("hour"), col("awake")))
   }
 
-  def assemblyFeature(df: DataFrame, scale: Boolean = true, unrollLength: Int, testdataSize: Int = 1000): (RDD[Sample[Float]], RDD[Sample[Float]]) = {
-
-//    val scaledDF = if (scale) standardScale(df, Seq("value", "hour", "awake")) else df
-//    val dataRdd: RDD[Array[Float]] = scaledDF.rdd.map(row => Array
-//    (row.getAs[Float](0), row.getAs[Float](1), row.getAs[Float](2)))
-
-    val vectorizeUdf = udf((value:Double,hour:Double,awake:Double) => Vectors.dense(Array(value,hour,awake)))
-    val featureDF = df.withColumn("features",vectorizeUdf(col("value"), col("hour"),col("awake")))
+  def assemblyFeature(featureDF: DataFrame,
+                      ifScale: Boolean = true,
+                      unrollLength: Int,
+                      testdataSize: Int = 1000
+                     ): (RDD[Sample[Float]], RDD[Sample[Float]]) = {
 
     val scaler = new org.apache.spark.ml.feature.StandardScaler()
       .setInputCol("features")
@@ -144,30 +123,35 @@ object AnomalyDetectorExample {
       .setWithStd(true)
       .setWithMean(true)
 
-    // Compute summary statistics by fitting the StandardScaler.
-    val scalerModel = scaler.fit(df)
+    val scaledDF = if (ifScale) {
+      val scalerModel = scaler.fit(featureDF)
+      scalerModel.transform(featureDF).select("scaledFeatures")
+    } else {
+      featureDF.select("feature")
+    }
 
-    // Normalize each feature to have unit standard deviation.
-    val scaledDF = scalerModel.transform(df)
+    val dataRdd: RDD[Array[Float]] = scaledDF.rdd
+      .map(row => row.getAs[org.apache.spark.ml.linalg.DenseVector](0).toArray.map(x => x.toFloat))
 
-    val dataRdd: RDD[Array[Float]] = scaledDF.select("scaledFeatures").
-      rdd.map(row => row.getAs[org.apache.spark.mllib.linalg.Vector](0).toArray.map(x=> x.toFloat))
+    val unrolled: RDD[FeatureLabelIndex[Float]] = unroll(dataRdd, unrollLength)
 
-    val unrollData = distributeUnrollAll(dataRdd, unrollLength)
+    val cutPoint = unrolled.count() - testdataSize
 
-    val cutPoint = unrollData.count() - testdataSize
-
-    val train: RDD[Sample[Float]] = toSampleRdd(unrollData.filter(x => x.index < cutPoint))
-    val test = toSampleRdd(unrollData.filter(x => x.index >= cutPoint))
+    val train: RDD[Sample[Float]] = toSampleRdd(unrolled.filter(x => x.index < cutPoint))
+    val test = toSampleRdd(unrolled.filter(x => x.index >= cutPoint))
 
     (train, test)
   }
 
-  def assemblyFeature(df: DataFrame, scale: Boolean, unrollLength: Int, testdataSize: Float): (RDD[Sample[Float]], RDD[Sample[Float]]) = {
-    val totalCount = df.count()
+  def assemblyFeature(featureDF: DataFrame,
+                      ifScale: Boolean,
+                      unrollLength: Int,
+                      testdataSize: Float
+                     ): (RDD[Sample[Float]], RDD[Sample[Float]]) = {
+    val totalCount = featureDF.count()
     val testSizeInt = (totalCount * testdataSize).toInt
 
-    val (train, test) = assemblyFeature(df, scale, unrollLength: Int, testSizeInt)
+    val (train, test) = assemblyFeature(featureDF, ifScale, unrollLength: Int, testSizeInt)
     (train, test)
   }
 }
