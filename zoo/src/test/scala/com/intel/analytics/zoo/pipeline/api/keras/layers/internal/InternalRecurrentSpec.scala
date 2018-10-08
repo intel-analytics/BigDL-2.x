@@ -22,7 +22,6 @@ import com.intel.analytics.bigdl.tensor.{Storage, Tensor}
 import com.intel.analytics.bigdl.utils.RandomGenerator.RNG
 import com.intel.analytics.bigdl.utils.{Engine, T, Table}
 import org.scalatest.{FlatSpec, Matchers}
-import com.intel.analytics.zoo.pipeline.api.keras.layers.internal.InternalRecurrent
 import com.intel.analytics.zoo.pipeline.api.keras.layers.utils.KerasUtils
 import com.intel.analytics.zoo.pipeline.api.keras.serializer.ModuleSerializationTest
 
@@ -539,6 +538,29 @@ class InternalRecurrentSpec extends FlatSpec with Matchers {
     model.forward(input)
   }
 
+  "A InternalRecurrent with LSTM cell backward" should "give correct result" in {
+    val hiddenSize = 4
+    val inputSize = 5
+    val batchSize = 4
+    val time = 1
+    val seed = 100
+    RNG.setSeed(seed)
+
+    val model = new InternalRecurrent[Double]()
+        .add(LSTM[Double](inputSize, hiddenSize))
+
+    val input = Tensor[Double](batchSize, time, inputSize).rand()
+    val gradOutput = Tensor[Double](batchSize, time, hiddenSize).rand()
+    val state = T(Tensor[Double](batchSize, hiddenSize).rand,
+      Tensor[Double](batchSize, hiddenSize).rand)
+    val gradState = T(Tensor[Double](batchSize, hiddenSize).rand,
+      Tensor[Double](batchSize, hiddenSize).rand)
+
+    model.setHiddenState(state)
+    val output = model.forward(input)
+    model.setGradHiddenState(gradState)
+    val gradInput = model.backward(input, gradOutput)
+  }
 }
 
 class InternalRecurrentSerialTest extends ModuleSerializationTest {

@@ -40,15 +40,15 @@ import scala.reflect.runtime._
  * @param decoderCells List of cells for decoder
  * @param preEncoder Before feeding input to encoder, pass it through preEncoder
  * @param preDecoder Before feeding input to decoder, pass it through preDecoder
- * @param bridges Bridges used to pass states between encoder and decoder.
+ * @param bridge Bridge used to pass states between encoder and decoder.
  *                Default is PassThroughBridge
+ * @param generator Feeding decoder output to generator to generate final result
  */
 class Seq2seq[T: ClassTag](val encoderCells: Array[Cell[T]],
                            val decoderCells: Array[Cell[T]],
                            val preEncoder: AbstractModule[Activity, Activity, T] = null,
                            val preDecoder: AbstractModule[Activity, Activity, T] = null,
-                           val bridges: Bridge = new PassThroughBridge(),
-                           val maskZero: Boolean = false,
+                           val bridge: Bridge = new PassThroughBridge(),
                            val generator: AbstractModule[Activity, Activity, T] = null)
   (implicit ev: TensorNumeric[T]) extends ZooModel[Activity, Tensor[T], T] {
   private var preDecoderInput: Tensor[T] = null
@@ -76,7 +76,7 @@ class Seq2seq[T: ClassTag](val encoderCells: Array[Cell[T]],
     val model = Sequential[T]()
     if (preEncoder != null) model.add(preEncoder)
     enc = encoderCells.map {cell =>
-      val rec = new InternalRecurrent(maskZero = maskZero).add(cell)
+      val rec = new InternalRecurrent().add(cell)
       model.add(rec)
       rec
     }
@@ -86,7 +86,7 @@ class Seq2seq[T: ClassTag](val encoderCells: Array[Cell[T]],
   private def buildDecoder(): Sequential[T] = {
     val model = Sequential[T]()
     dec = decoderCells.map {cell =>
-        val rec = new InternalRecurrent[T](maskZero = maskZero).add(cell)
+        val rec = new InternalRecurrent[T]().add(cell)
         model.add(rec)
         rec
       }
@@ -102,7 +102,7 @@ class Seq2seq[T: ClassTag](val encoderCells: Array[Cell[T]],
       preDecoder.forward(preDecoderInput).toTensor
     } else preDecoderInput
 
-    if (bridges != null) bridges.forwardStates(enc, dec)
+    if (bridge != null) bridge.forwardStates(enc, dec)
     decoderOutput = decoder.forward(decoderInput).toTensor
 
     output = if (generator != null) generator.forward(decoderOutput).toTensor
@@ -121,7 +121,7 @@ class Seq2seq[T: ClassTag](val encoderCells: Array[Cell[T]],
       } else preDecoder.backward(preDecoderInput, decoderGradInput)
     }
 
-    if (bridges != null) bridges.backwardStates(enc, dec)
+    if (bridge != null) bridge.backwardStates(enc, dec)
     gradInput = encoder.backward(encoderInput, Tensor[T](encoderOutput.size())).toTensor
 
     gradInput.toTensor
@@ -170,7 +170,7 @@ class Seq2seq[T: ClassTag](val encoderCells: Array[Cell[T]],
     })
     if (preEncoder != null) pt.add(preEncoder.getParametersTable())
     if (preDecoder != null) pt.add(preDecoder.getParametersTable())
-    pt.add(bridges.toModel.getParametersTable())
+    pt.add(bridge.toModel.getParametersTable())
     if (preEncoder != null) pt.add(generator.getParametersTable())
     pt
   }
@@ -178,7 +178,7 @@ class Seq2seq[T: ClassTag](val encoderCells: Array[Cell[T]],
   override def parameters(): (Array[Tensor[T]], Array[Tensor[T]]) = {
     val params = model.parameters()
 
-    val bridgeParam = bridges.toModel.parameters()
+    val bridgeParam = bridge.toModel.parameters()
     (params._1 ++ bridgeParam._1, params._2 ++ bridgeParam._2)
   }
 
@@ -190,13 +190,13 @@ class Seq2seq[T: ClassTag](val encoderCells: Array[Cell[T]],
     encoderOutput = null
     decoderOutput = null
     model.clearState()
-    bridges.toModel.clearState()
+    bridge.toModel.clearState()
     this
   }
 
   override def reset(): Unit = {
     model.reset()
-    bridges.toModel.reset()
+    bridge.toModel.reset()
   }
 }
 
@@ -210,11 +210,10 @@ object Seq2seq extends ModuleSerializable {
      decoderCells: Array[Cell[T]], preEncoder: AbstractModule[Activity, Activity, T] = null,
      preDecoder: AbstractModule[Activity, Activity, T] = null,
      bridges: Bridge = new PassThroughBridge(),
-     maskZero: Boolean = false,
      generator: AbstractModule[Activity, Activity, T] = null)
     (implicit ev: TensorNumeric[T]): Seq2seq[T] = {
     new Seq2seq[T](encoderCells, decoderCells, preEncoder, preDecoder, bridges,
-      maskZero, generator).build()
+      generator).build()
   }
 
   override def doLoadModule[T: ClassTag](context: DeserializeContext)
@@ -241,11 +240,6 @@ object Seq2seq extends ModuleSerializable {
       getAttributeValue(context, generatorAttr).
       asInstanceOf[AbstractModule[Activity, Activity, T]]
 
-    val maskZeroAttr = attrMap.get("maskZero")
-    val maskZero = DataConverter.
-      getAttributeValue(context, maskZeroAttr).
-      asInstanceOf[Boolean]
-
     // Bridge deserailize
     val bridgesAttr = attrMap.get("bridgesType")
     val bridgeType = DataConverter.getAttributeValue(context, bridgesAttr)
@@ -267,7 +261,7 @@ object Seq2seq extends ModuleSerializable {
     }
 
     Seq2seq(encoderCells, decoderCells, preEncoder, preDecoder,
-      bridge, maskZero, generator).asInstanceOf[AbstractModule[Activity, Activity, T]]
+      bridge, generator).asInstanceOf[AbstractModule[Activity, Activity, T]]
   }
 
   override def doSerializeModule[T: ClassTag](context: SerializeContext[T],
@@ -308,29 +302,23 @@ object Seq2seq extends ModuleSerializable {
       ModuleSerializer.abstractModuleType)
     seq2seqBuilder.putAttr("generator", generatorBuilder.build)
 
-    val maskZeroBuilder = AttrValue.newBuilder
-    DataConverter.setAttributeValue(context,
-      maskZeroBuilder, seq2seq.maskZero,
-      scala.reflect.runtime.universe.typeOf[Boolean])
-    seq2seqBuilder.putAttr("maskZero", maskZeroBuilder.build)
-
     // Bridge serailize
     val bridgeTypeBuilder = AttrValue.newBuilder
-    if (seq2seq.bridges.isInstanceOf[ZeroBridge]) {
+    if (seq2seq.bridge.isInstanceOf[ZeroBridge]) {
       DataConverter.setAttributeValue(context,
         bridgeTypeBuilder, "zero", scala.reflect.runtime.universe.typeOf[String])
       seq2seqBuilder.putAttr("bridgesType", bridgeTypeBuilder.build)
-    } else if (seq2seq.bridges.isInstanceOf[PassThroughBridge]) {
+    } else if (seq2seq.bridge.isInstanceOf[PassThroughBridge]) {
       DataConverter.setAttributeValue(context,
         bridgeTypeBuilder, "passthrough", scala.reflect.runtime.universe.typeOf[String])
       seq2seqBuilder.putAttr("bridgesType", bridgeTypeBuilder.build)
-    } else if (seq2seq.bridges.isInstanceOf[InitialStateBridge[T]]) {
+    } else if (seq2seq.bridge.isInstanceOf[InitialStateBridge[T]]) {
       DataConverter.setAttributeValue(context,
         bridgeTypeBuilder, "initialstatebridge", scala.reflect.runtime.universe.typeOf[String])
       seq2seqBuilder.putAttr("bridgesType", bridgeTypeBuilder.build)
       val activationsBuilder = AttrValue.newBuilder
       ArrayConverter.setAttributeValue(context, activationsBuilder,
-        seq2seq.bridges.asInstanceOf[InitialStateBridge[T]].activations.flatten,
+        seq2seq.bridge.asInstanceOf[InitialStateBridge[T]].activations.flatten,
         scala.reflect.runtime.universe.typeOf[Array[_ <:
           AbstractModule[_ <: Activity, _ <:  Activity, _ <: Any]]])
       seq2seqBuilder.putAttr("activations", activationsBuilder.build)

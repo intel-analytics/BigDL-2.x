@@ -72,6 +72,7 @@ class ZeroBridge() extends Bridge {
 class PassThroughBridge() extends Bridge {
   override def forwardStates[T: ClassTag](encoder: Array[InternalRecurrent[T]],
     decoder: Array[InternalRecurrent[T]])(implicit ev: TensorNumeric[T]): Unit = {
+    require(encoder.size == decoder.size, "encoder should be the same size with decoder")
     for ((x, i) <- encoder.view.zipWithIndex) {
       decoder(i).setHiddenState(x.getHiddenState())
     }
@@ -110,7 +111,7 @@ class InitialStateBridge[T: ClassTag](val activations: Array[Array[TensorModule[
   override def backwardStates[T: ClassTag](encoder: Array[InternalRecurrent[T]],
     decoder: Array[InternalRecurrent[T]])(implicit ev: TensorNumeric[T]): Unit = {
     for ((x, i) <- decoder.view.zipWithIndex) {
-      val gradHiddenState = x.asInstanceOf[InternalRecurrent[T]].getGradHiddenState()
+      val gradHiddenState = x.getGradHiddenState()
       val newGradHiddenState = if (activations(i) != null) {
         updateGradState(encoder(i).getHiddenState(), gradHiddenState, activations(i))
       } else gradHiddenState
@@ -121,6 +122,7 @@ class InitialStateBridge[T: ClassTag](val activations: Array[Array[TensorModule[
   private def updateState(state: Activity,
     activation: Array[TensorModule[T]]): Activity = {
     require(activation != null, "activation cannot be null")
+    require(activation.size == 1 || activation.size == 2, "state size of rnn must be 1|2")
     var newState: Activity = null
     if (state.isTensor) {
       require(activation.head != null, "activation cannot be null")
