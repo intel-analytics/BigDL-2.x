@@ -72,7 +72,7 @@ class TestModelLoading(OnnxTestCase):
             outputs=['y'],
         )
         output = OnnxLoader.run_node(node, [x, s, bias, mean, var])
-        np.testing.assert_almost_equal(output["y"], y, decimal=5)
+        np.testing.assert_almost_equal(output["y"], y, decimal=3)
 
     def test_conv_with_padding(self):
         x = np.array([[[[0., 1., 2., 3., 4.],  # (1, 1, 5, 5) input tensor

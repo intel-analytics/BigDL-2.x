@@ -46,7 +46,7 @@ class OnnxLoader(object):
 
     @staticmethod
     # inputs_dict is a list of batch data
-    def run_node(node, inputs):
+    def run_node(node, inputs,is_training=False):
         inputs_list = []
         assert len(inputs) == len(list(node.input))
         for node_input, input_data in zip(node.input, inputs):
@@ -56,6 +56,8 @@ class OnnxLoader(object):
 
         model = zmodels.Model(input=[i.zvalue for i in mapper.model_inputs], output=out_tensor)
         data = [i.data for i in mapper.model_inputs]
+       # output = model.predict(data if len(data) > 1 else data[0], distributed=False)
+        model.training = is_training
         output = model.forward(data if len(data) > 1 else data[0])
         result = {}
         if isinstance(output, list):
