@@ -30,28 +30,37 @@ class BatchNormalizationMapper(OperatorMapper):
         """
         return [self._to_zoo_input(self._input_list[0])]
 
+    def _extract_trainable_values(self):
+        return [self._input_list[3].zvalue, self._input_list[4].zvalue]
+
+    def to_zoo_format(self, trainable_values):
+        """
+        Convert ONNX _initializer to Zoo format
+        :return: list of ndarray
+        """
+        return [np.expand_dims(trainable_values[0], 0), (trainable_values[1],0)]
+
     def _to_tensor(self):
         input = self.model_inputs[0]
+        mean = self.model_trainable_values[0]
+        var = self.model_trainable_values[1]
         rank = len(input.zvalue.shape)
 
         if (rank == 4):
-            epsilon = float(self.onnx_attr['epsilon'])
+            epsilon = float(self.onnx_attr['epsilon']) if "epsilon" in self.onnx_attr else 0.001
             mode = self.onnx_attr['mode'] if "mode" in self.onnx_attr else 0
             axis = self.onnx_attr['axis'] if "axis" in self.onnx_attr else 1
             momentum = float(self.onnx_attr['momentum'] if "momentum" in self.onnx_attr else 0.99)
-            beta_init = self.onnx_attr['beta_init'] if "beta_init" in self.onnx_attr else 'zero'
-            gamma_init = self.onnx_attr['gamma_init'] if "gamma_init" in self.onnx_attr else 'one'
             dim_ordering = "th"
 
             batch_norm= zlayers.BatchNormalization(epsilon=epsilon,
                                                    mode=mode,
                                                    axis=axis,
                                                    momentum=momentum,
-                                                   beta_init=beta_init,
-                                                   gamma_init=gamma_init,
                                                    dim_ordering=dim_ordering)
-            batch_norm.set_running_mean(zlayers.BatchNormalization.get_running_mean(self))
-            batch_norm.set_running_std(zlayers.BatchNormalization.get_running_std(self))
-            return batch_norm(input.zvalue)
+            norm_tensor = batch_norm(input.zvalue)
+            norm_tensor.node.element().set_running_mean(mean)
+            norm_tensor.node.element().set_running_std(var)
+            return norm_tensor
         else:
             raise Exception("not supported.")
