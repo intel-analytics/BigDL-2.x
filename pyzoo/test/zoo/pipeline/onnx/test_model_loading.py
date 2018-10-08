@@ -596,3 +596,10 @@ class TestModelLoading(OnnxTestCase):
         y = pool_op_common.pool(padded, x_shape, kernel_shape, strides, out_shape, [0], 'MAX')
         output = OnnxLoader.run_node(node, [x])
         np.testing.assert_almost_equal(output["y"], y, decimal=5)
+
+    def test_onnx_maxpool1d(self):
+        pytorch_model = torch.nn.Sequential(
+            torch.nn.MaxPool1d(2)
+        )
+        input_shape_with_batch = (1, 3, 32)
+        self.compare_with_pytorch(pytorch_model, input_shape_with_batch)
