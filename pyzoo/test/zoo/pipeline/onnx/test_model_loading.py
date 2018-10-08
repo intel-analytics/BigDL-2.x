@@ -605,3 +605,17 @@ class TestModelLoading(OnnxTestCase):
             Permute((0, 2, 1)))
         input_shape_with_batch = (2, 3, 5)
         self.compare_with_pytorch(pytorch_model, input_shape_with_batch)
+
+    def test_transpose(self):
+        shape = (2, 3, 4)
+        data = np.random.random_sample(shape).astype(np.float32)
+
+        node = onnx.helper.make_node(
+            'Transpose',
+            inputs=['data'],
+            outputs=['transposed']
+        )
+
+        transposed = np.transpose(data)
+        output = OnnxLoader.run_node(node, [data])
+        np.testing.assert_almost_equal(output["transposed"], transposed, decimal=5)
