@@ -28,5 +28,6 @@ class TransposeMapper(OperatorMapper):
     def create_operator(self):
         assert len(self.inputs) == 1, "Transpose accept single input only"
         dims = [int(i) for i in self.onnx_attr['perm']]
+        assert dims != 0
         transpose = zlayers.Permute(dims[1:])
         return transpose
