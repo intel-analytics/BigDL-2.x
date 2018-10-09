@@ -114,15 +114,15 @@ class TestLayer(ZooTestCase):
         resource_path = os.path.join(os.path.split(__file__)[0], "../../../resources")
         tfnet_path = os.path.join(resource_path, "tfnet")
         net = TFNet.from_export_folder(tfnet_path)
-        output = net.forward(np.random.rand(2,4))
-        assert output.shape == (2,2)
+        output = net.forward(np.random.rand(2, 4))
+        assert output.shape == (2, 2)
 
     def test_load_tf_from_folder(self):
         resource_path = os.path.join(os.path.split(__file__)[0], "../../../resources")
         tfnet_path = os.path.join(resource_path, "tfnet")
         net = Net.load_tf(tfnet_path)
-        output = net.forward(np.random.rand(2,4))
-        assert output.shape == (2,2)
+        output = net.forward(np.random.rand(2, 4))
+        assert output.shape == (2, 2)
 
 
 if __name__ == "__main__":
