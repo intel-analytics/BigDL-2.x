@@ -71,9 +71,12 @@ class OnnxHelper:
 
         if "pads" in onnx_attr.keys():
             pads4 = [int(i) for i in onnx_attr["pads"]]
-            assert len(pads4) == 4
-            assert pads4[0] == pads4[1]
-            assert pads4[2] == pads4[3]
-            pads = [pads4[0], pads4[1]]
+            if len(pads4) == 4:
+                assert pads4[0] == pads4[1]
+                assert pads4[2] == pads4[3]
+                pads = [pads4[0], pads4[1]]
+            elif len(pads4) == 2:
+                assert pads4[0] == pads4[1]
+                pads = [pads4[0]]
 
         return border_mode, pads
