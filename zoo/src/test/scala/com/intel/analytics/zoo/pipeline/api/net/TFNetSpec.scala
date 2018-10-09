@@ -77,7 +77,7 @@ class TFNetSpec extends FlatSpec with Matchers with BeforeAndAfter {
 
     val resource = getClass().getClassLoader().getResource("tfnet")
     val net = TFNet(resource.getPath)
-    val input = Tensor[Float](4, 28, 28, 1).rand()
+    val input = Tensor[Float](4, 4).rand()
     val result = net.forward(input).toTensor[Float].clone()
     val net2 = net.cloneModule()
     val result2 = net2.forward(input).toTensor[Float].clone()
