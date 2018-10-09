@@ -114,8 +114,8 @@ class TestLayer(ZooTestCase):
         resource_path = os.path.join(os.path.split(__file__)[0], "../../../resources")
         tfnet_path = os.path.join(resource_path, "tfnet")
         net = TFNet.from_export_folder(tfnet_path)
-        output = net.forward(np.random.rand(32, 28, 28, 1))
-        assert output.shape == (32, 10)
+        output = net.forward(np.random.rand(2, 4))
+        assert output.shape == (2, 2)
 
 if __name__ == "__main__":
     pytest.main([__file__])

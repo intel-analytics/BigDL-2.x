@@ -89,9 +89,10 @@ class NetSpec extends ZooSpecHelper{
   "Load Tensorflow model" should "work properly" in {
     val resource = getClass().getClassLoader().getResource("models")
     val path = resource.getPath + "/" + "tensorflow"
-    val model = Net.loadTF[Float](s"$path/lenet.pb", Seq("Placeholder"), Seq("LeNet/fc4/BiasAdd"))
-    val newModel = model.newGraph("LeNet/fc3/Relu")
-    newModel.outputNodes.head.element.getName() should be ("LeNet/fc3/Relu")
+    val model = Net.loadTF[Float](s"$path/frozen_inference_graph.pb",
+      Seq("Placeholder"), Seq("dense_1/Sigmoid"))
+    val newModel = model.newGraph("dense/Relu")
+    newModel.outputNodes.head.element.getName() should be ("dense/Relu")
   }
 
   "net load model" should "work properly" in {
