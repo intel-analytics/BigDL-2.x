@@ -85,6 +85,14 @@ class FloatInferenceModelSpec extends FlatSpec with Matchers with BeforeAndAfter
     listofListOfJTensor.get(2).get(0).getShape should be (inputJTensor3.getShape)
   }
 
+  "transferBatchTensorToJListOfJListOfJTensor" should "work with scalar" in {
+    val listofListOfJTensor: util.List[util.List[JTensor]] =
+      transferBatchTensorToJListOfJListOfJTensor(Tensor(Array(1.0f), Array(1)), 1)
+    listofListOfJTensor.size should be (1)
+    listofListOfJTensor.get(0).get(0).getData should be (Array(1))
+    listofListOfJTensor.get(0).get(0).getShape should be (Array())
+  }
+
   "transferBatchTableToJListOfJListOfJTensor" should "work" in {
     val tableOfBatch = transferListOfActivityToActivityOfBatch(inputTableList,
       inputTableList.size()).toTable
