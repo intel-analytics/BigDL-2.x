@@ -40,8 +40,12 @@ class BatchNormalizationMapper(OperatorMapper):
             axis = self.onnx_attr['axis'] if "axis" in self.onnx_attr else 1
             momentum = float(self.onnx_attr['momentum'] if "momentum" in self.onnx_attr else 0.99)
             dim_ordering = "th"
-            mean = self._input_list[3].zvalue
-            variance  = self._input_list[4].zvalue #* self._input_list[4].zvalue
+            if len(self._input_list) == 5:
+                mean = self._input_list[3].zvalue
+                variance = self._input_list[4].zvalue
+            else:
+                mean = self._input_list[1].zvalue
+                variance = self._input_list[2].zvalue
             batch_norm= zlayers.BatchNormalization(epsilon=epsilon,
                                                    mode=mode,
                                                    axis=axis,

@@ -52,7 +52,7 @@ class OnnxTestCase(ZooTestCase):
         else:
             return tensors
 
-    def compare_with_pytorch(self, pytorch_model, input_shape_with_batch, compare_result=True):
+    def compare_with_pytorch(self, pytorch_model, input_shape_with_batch, compare_result=True, rtol=1e-6, atol=1e-6):
         input_shape_with_batch = to_list(input_shape_with_batch)
         onnx_path = self.dump_pytorch_to_onnx(pytorch_model, input_shape_with_batch)
         onnx_model = onnx.load(onnx_path)
@@ -66,7 +66,7 @@ class OnnxTestCase(ZooTestCase):
         zoutput = zmodel.forward(
             input_data_with_batch[0] if len(input_data_with_batch) == 1 else input_data_with_batch)
         if compare_result:
-            self.assert_allclose(pytorch_out.detach().numpy(), zoutput)
+            self.assert_allclose(pytorch_out.detach().numpy(), zoutput, rtol, atol)
 
     def gen_rnd(self, shape, low=-1.0, high=1.0):
         return np.random.uniform(low, high, np.prod(shape)) \
