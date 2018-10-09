@@ -41,5 +41,21 @@ class MaxPoolMapper(OperatorMapper):
                                            border_mode=border_mode,
                                            pads=pads)
             return maxpool(self.model_inputs[0].zvalue)
+        elif (rank == 3):
+            pool_length = int(self.onnx_attr['kernel_shape'][0])
+            if "strides" in self.onnx_attr.keys():
+                stride = int(self.onnx_attr['strides'][0])
+            else:
+                stride = 1
+
+            border_mode, pads = OnnxHelper.get_padds(self.onnx_attr)
+            if border_mode == None and pads == None:
+                border_mode = 'valid'
+            permute = zlayers.Permute(dims=(2, 1))(self.model_inputs[0].zvalue)
+            maxpool = zlayers.MaxPooling1D(pool_length=pool_length,
+                                           stride=stride,
+                                           border_mode=border_mode,
+                                           pads=pads)(permute)
+            return zlayers.Permute(dims=(2, 1))(maxpool)
         else:
             raise Exception("not supported.")
