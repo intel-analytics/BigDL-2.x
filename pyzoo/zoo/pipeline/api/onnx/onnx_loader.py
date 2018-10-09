@@ -57,7 +57,6 @@ class OnnxLoader(object):
         model = zmodels.Model(input=[i.zvalue for i in mapper.model_inputs], output=out_tensor)
         data = [i.data for i in mapper.model_inputs]
         model.training = is_training
-        #output = model.predict(data if len(data) > 1 else data[0], distributed=False)
         output = model.forward(data if len(data) > 1 else data[0])
         result = {}
         if isinstance(output, list):

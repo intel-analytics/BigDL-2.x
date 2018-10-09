@@ -21,6 +21,7 @@ import numpy as np
 
 class BatchNormalizationMapper(OperatorMapper):
     bigdl_type = "float"
+
     def __init__(self, node, _params, _all_tensors):
         super(BatchNormalizationMapper, self).__init__(node, _params, _all_tensors)
 
@@ -46,11 +47,8 @@ class BatchNormalizationMapper(OperatorMapper):
             else:
                 mean = self._input_list[1].zvalue
                 variance = self._input_list[2].zvalue
-            batch_norm= zlayers.BatchNormalization(epsilon=epsilon,
-                                                   mode=mode,
-                                                   axis=axis,
-                                                   momentum=momentum,
-                                                   dim_ordering=dim_ordering)
+            batch_norm = zlayers.BatchNormalization(epsilon=epsilon,
+                                                    momentum=momentum, dim_ordering=dim_ordering)
             norm_tensor = batch_norm(input.zvalue)
             norm_tensor.node.element().set_running_mean(mean)
             norm_tensor.node.element().set_running_std(variance)

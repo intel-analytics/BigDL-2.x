@@ -53,7 +53,7 @@ class TestModelLoading(OnnxTestCase):
 
     def test_onnx_batch_norm(self):
         pytorch_model = torch.nn.Sequential(
-             torch.nn.BatchNorm2d(num_features=3, momentum=1, affine=False)
+            torch.nn.BatchNorm2d(num_features=3, momentum=1, affine=False)
         )
         input_shape_with_batch = (1, 3, 224, 224)
         self.compare_with_pytorch(pytorch_model, input_shape_with_batch, rtol=1e-3, atol=1e-3)

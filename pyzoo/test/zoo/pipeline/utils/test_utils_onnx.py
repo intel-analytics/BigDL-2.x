@@ -52,7 +52,8 @@ class OnnxTestCase(ZooTestCase):
         else:
             return tensors
 
-    def compare_with_pytorch(self, pytorch_model, input_shape_with_batch, compare_result=True, rtol=1e-6, atol=1e-6):
+    def compare_with_pytorch(self, pytorch_model, input_shape_with_batch,
+                             compare_result=True, rtol=1e-6, atol=1e-6):
         input_shape_with_batch = to_list(input_shape_with_batch)
         onnx_path = self.dump_pytorch_to_onnx(pytorch_model, input_shape_with_batch)
         onnx_model = onnx.load(onnx_path)
