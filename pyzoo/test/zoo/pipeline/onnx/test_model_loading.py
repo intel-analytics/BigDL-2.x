@@ -562,7 +562,7 @@ class TestModelLoading(OnnxTestCase):
     def test_onnx_concat(self):
         class Concat(torch.nn.Module):
             def forward(self, x):
-                return torch.cat([v for v in x])
+                return torch.cat([v for v in x], 1)
 
         pytorch_model = Concat()
         input_shape_with_batch = [(1, 3), (1, 3)]
@@ -580,7 +580,7 @@ class TestModelLoading(OnnxTestCase):
 
         for test_case, values_ in test_cases.items():
             values = [np.asarray(v, dtype=np.float32) for v in values_]
-            for i in range(len(values[0].shape)):
+            for i in range(1, len(values[0].shape)):
                 in_args = ['value' + str(k) for k in range(len(values))]
                 node = onnx.helper.make_node(
                     'Concat',
@@ -590,4 +590,4 @@ class TestModelLoading(OnnxTestCase):
                 )
                 y = np.concatenate(values, i)
                 output = OnnxLoader.run_node(node, [v for v in values])
-                np.testing.assert_almost_equal(output["y"], y, decimal=5)
+                np.testing.assert_almost_equal(output["output"], y, decimal=5)
