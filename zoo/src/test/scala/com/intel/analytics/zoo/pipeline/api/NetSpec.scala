@@ -130,7 +130,7 @@ class NetSpec extends ZooSpecHelper{
   "Load Tensorflow model from path" should "work properly" in {
     val resource = getClass().getClassLoader().getResource("tfnet")
     val model = Net.loadTF[Float](resource.getPath)
-    val result = model.forward(Tensor[Float](2,4).rand())
-    result.toTensor[Float].size() should be (Array(2,2))
+    val result = model.forward(Tensor[Float](2, 4).rand())
+    result.toTensor[Float].size() should be (Array(2, 2))
   }
 }
