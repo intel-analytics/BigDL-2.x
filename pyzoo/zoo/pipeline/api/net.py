@@ -416,6 +416,12 @@ class TFOptimizer:
     def set_val_summary(self, summary):
         self.optimizer.set_val_summary(summary)
 
+    def set_checkpoint(self,checkpoint_trigger, checkpoint_path, isOverWrite=True):
+        self.optimizer.set_checkpoint(checkpoint_trigger, checkpoint_path, isOverWrite)
+
+    def set_end_when(self, end_when):
+        self.optimizer.set_end_when(end_when)
+
     def optimize(self, end_trigger=None):
         if end_trigger is None:
             end_trigger = MaxEpoch(1)
