@@ -101,7 +101,7 @@ object NNImageSchema {
       case CvType.CV_8UC3 | CvType.CV_8UC1 | CvType.CV_8UC4 =>
         val bytesData = row.getAs[Array[Byte]](5)
         val mat = new Mat(h, w, storageType)
-        mat.put(0,0, bytesData)
+        mat.put(0, 0, bytesData)
         val opencvMat = new OpenCVMat(mat)
         imf(ImageFeature.mat) = opencvMat
         imf(ImageFeature.originalSize) = opencvMat.shape()
