@@ -29,6 +29,19 @@ class BatchNormalizationMapper(OperatorMapper):
         """
         return [self._to_zoo_input(self._input_list[0])]
 
+    def _extract_trainable_values(self):
+        if len(self._input_list) == 5:
+            return [self._input_list[1].zvalue, self._input_list[2].zvalue]
+        else:
+            return None
+
+    def to_zoo_format(self, trainable_values):
+        """
+        Convert ONNX _initializer to Zoo format
+        :return: list of ndarray
+        """
+        return trainable_values
+
     def _to_tensor(self):
         input = self.model_inputs[0]
         rank = len(input.zvalue.shape)
