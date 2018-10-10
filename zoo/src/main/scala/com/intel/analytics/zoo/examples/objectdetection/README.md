@@ -2,17 +2,22 @@
 This example illustrates how to detect objects in image with pre-trained model
 
 ### Run steps
-1. Prepare pre-trained models
+1. Download Analytics Zoo
+You can download Analytics Zoo prebuilt release and nightly build package from [here](https://analytics-zoo.github.io/master/#release-download/) and extract it.
+
+2. Prepare pre-trained models
 
 Download pre-trained models from [Object Detection](https://github.com/intel-analytics/analytics-zoo/blob/master/docs/docs/ProgrammingGuide/object-detection.md)
 
-2. Prepare predict dataset
+3. Prepare predict dataset
 
 Put your image data for prediction in the ./image folder.
 
-3. Run the example
+4. Run the example
 
 ```bash
+ANALYTICS_ZOO_HOME=the folder where you extract the downloaded Analytics Zoo zip package
+
 master=... // spark master
 
 modelPath=... // model path. Local file system/HDFS/Amazon S3 are supported
@@ -21,15 +26,13 @@ imagePath=... // image path. Local file system/HDFS are supported. With local fi
 
 outputPath=... // output path. Currently only support local file system.
 
-spark-submit \
+${ANALYTICS_ZOO_HOME}/bin/spark-shell-with-zoo.sh \
 --verbose \
 --master $master \
---conf spark.executor.cores=1 \
---total-executor-cores 4 \
 --driver-memory 200g \
 --executor-memory 200g \
 --class com.intel.analytics.zoo.examples.objectdetection.Predict \
-${ANALYTICS_ZOO_HOME}/lib/analytics-zoo-bigdl_BIGDL_VERSION-spark_SPARK_VERSION-ZOO_VERSION-jar-with-dependencies.jar --image $imagePath --output $outputPath --modelPath $modelPath --partition 4
+--image $imagePath --output $outputPath --modelPath $modelPath --partition 4
 ```
 
 ## Results
