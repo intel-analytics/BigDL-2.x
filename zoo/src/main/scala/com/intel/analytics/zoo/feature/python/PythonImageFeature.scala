@@ -20,10 +20,15 @@ import java.util.{List => JList}
 
 import com.intel.analytics.bigdl.nn.abstractnn.DataFormat
 import com.intel.analytics.bigdl.python.api.{JTensor, PythonBigDL}
+import com.intel.analytics.bigdl.tensor.{Storage, Tensor}
 import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric
+import com.intel.analytics.bigdl.transform.vision.image.ImageFeature._
 import com.intel.analytics.bigdl.transform.vision.image._
+import com.intel.analytics.bigdl.transform.vision.image.opencv.OpenCVMat
 import com.intel.analytics.zoo.feature.common.Preprocessing
 import com.intel.analytics.zoo.feature.image._
+import com.intel.analytics.zoo.feature.image3d._
+
 import org.apache.spark.api.java.{JavaRDD, JavaSparkContext}
 import org.opencv.imgcodecs.Imgcodecs
 import org.opencv.imgproc.Imgproc
@@ -44,6 +49,11 @@ class PythonImageFeature[T: ClassTag](implicit ev: TensorNumeric[T]) extends Pyt
     imageSet.transform(transformer)
   }
 
+  def transformImageSet(transformer: ImageProcessing3D,
+                        imageSet: ImageSet): ImageSet = {
+    imageSet.transform(transformer)
+  }
+
   def readImageSet(path: String, sc: JavaSparkContext, minPartitions: Int,
                    resizeH: Int, resizeW: Int, imageCodec: Int): ImageSet = {
     if (sc == null) {
@@ -60,7 +70,36 @@ class PythonImageFeature[T: ClassTag](implicit ev: TensorNumeric[T]) extends Pyt
   def localImageSetToImageTensor(imageSet: LocalImageSet,
                                  floatKey: String = ImageFeature.floats,
                                  toChw: Boolean = true): JList[JTensor] = {
-    imageSet.array.map(imageFeatureToImageTensor(_, floatKey, toChw)).toList.asJava
+    imageSet.array.map(imf => {
+      if (imf.getSize == null) {
+        imageFeature3DToImageTensor(imf, floatKey)
+      } else {
+        toTensor(imf, toChw)
+      }
+    }).toList.asJava
+  }
+
+  def imageFeature3DToImageTensor(imageFeature: ImageFeature,
+                                  tensorKey: String = ImageFeature.imageTensor): JTensor = {
+    toJTensor(imageFeature(tensorKey).asInstanceOf[Tensor[T]])
+  }
+
+  def toTensor(imf: ImageFeature, toChw: Boolean = true): JTensor = {
+    val (data, size) = if (imf.contains(ImageFeature.floats)) {
+      (imf.floats(),
+        Array(imf.getHeight(), imf.getWidth(), imf.getChannel()))
+    } else {
+      val mat = imf.opencvMat()
+      val floats = new Array[Float](mat.height() * mat.width() * imf.getChannel())
+      OpenCVMat.toFloatPixels(mat, floats)
+      (floats, Array(mat.height(), mat.width(), imf.getChannel()))
+    }
+    var image = Tensor(Storage(data)).resize(size)
+    if (toChw) {
+      // transpose the shape of image from (h, w, c) to (c, h, w)
+      image = image.transpose(1, 3).transpose(2, 3).contiguous()
+    }
+    toJTensor(image.asInstanceOf[Tensor[T]])
   }
 
   def localImageSetToLabelTensor(imageSet: LocalImageSet): JList[JTensor] = {
@@ -74,7 +113,12 @@ class PythonImageFeature[T: ClassTag](implicit ev: TensorNumeric[T]) extends Pyt
 
   def distributedImageSetToImageTensorRdd(imageSet: DistributedImageSet,
     floatKey: String = ImageFeature.floats, toChw: Boolean = true): JavaRDD[JTensor] = {
-    imageSet.rdd.map(imageFeatureToImageTensor(_, floatKey, toChw)).toJavaRDD()
+    imageSet.rdd.map(imf => {
+      // 3D image
+      if (imf.getSize == null) {
+        imageFeature3DToImageTensor(imf, floatKey)
+      } else toTensor(imf, toChw)
+    }).toJavaRDD()
   }
 
   def distributedImageSetToLabelTensorRdd(imageSet: DistributedImageSet): JavaRDD[JTensor] = {
@@ -99,11 +143,19 @@ class PythonImageFeature[T: ClassTag](implicit ev: TensorNumeric[T]) extends Pyt
     require(null != imageRdd, "imageRdd cannot be null")
     val featureRdd = if (null != labelRdd) {
       imageRdd.rdd.zip(labelRdd.rdd).map(data => {
-        createImageFeature(data._1, data._2)
+        if (data._1.shape.length == 4) {
+          createImageFeature3D(data._1, data._2)
+        } else {
+          createImageFeature(data._1, data._2)
+        }
       })
     } else {
       imageRdd.rdd.map(image => {
-        createImageFeature(image, null)
+        if (image.shape.length == 4) {
+          createImageFeature3D(image, null)
+        } else {
+          createImageFeature(image, null)
+        }
       })
     }
     new DistributedImageSet(featureRdd)
@@ -114,14 +166,41 @@ class PythonImageFeature[T: ClassTag](implicit ev: TensorNumeric[T]) extends Pyt
     require(null != images, "images cannot be null")
     val features = if (null != labels) {
       (0 until images.size()).map(i => {
-        createImageFeature(images.get(i), labels.get(i))
+        val img = images.get(i)
+        if (img.shape.length == 3) {
+          createImageFeature(img, labels.get(i))
+        } else {
+          createImageFeature3D(img, labels.get(i))
+        }
       })
     } else {
       (0 until images.size()).map(i => {
-        createImageFeature(images.get(i), null)
+        val img = images.get(i)
+        if (img.shape.length == 3) {
+          createImageFeature(img, null)
+        } else {
+          createImageFeature3D(img, null)
+        }
       })
     }
     new LocalImageSet(features.toArray)
+  }
+
+  def createImageFeature3D(data: JTensor = null, label: JTensor = null, uri: String = null)
+  : ImageFeature = {
+    val feature = new ImageFeature3D()
+    if (null != data) {
+      feature(ImageFeature.imageTensor) = toTensor(data)
+      feature(ImageFeature.size) = data.shape
+    }
+    if (null != label) {
+      // todo: may need a method to change label format if needed
+      feature(ImageFeature.label) = toTensor(label)
+    }
+    if (null != uri) {
+      feature(ImageFeature.uri) = uri
+    }
+    feature
   }
 
   def createImageBytesToMat(
@@ -134,6 +213,10 @@ class PythonImageFeature[T: ClassTag](implicit ev: TensorNumeric[T]) extends Pyt
     ImageBrightness(deltaLow, deltaHigh)
   }
 
+  def createImageFeatureToTensor(): ImageFeatureToTensor[T] = {
+    ImageFeatureToTensor()
+  }
+
   def createImageChannelNormalizer(
                                   meanR: Double, meanG: Double, meanB: Double,
                                   stdR: Double = 1, stdG: Double = 1, stdB: Double = 1
@@ -141,6 +224,10 @@ class PythonImageFeature[T: ClassTag](implicit ev: TensorNumeric[T]) extends Pyt
 
     ImageChannelNormalize(meanR.toFloat, meanG.toFloat, meanB.toFloat,
       stdR.toFloat, stdG.toFloat, stdB.toFloat)
+  }
+
+  def createPerImageNormalize(min: Double, max: Double, normType: Int = 32): PerImageNormalize = {
+    PerImageNormalize(min, max, normType)
   }
 
   def createImageMatToTensor(toRGB: Boolean = false,
@@ -213,6 +300,13 @@ class PythonImageFeature[T: ClassTag](implicit ev: TensorNumeric[T]) extends Pyt
     ImagePixelNormalizer(means.asScala.toArray.map(_.toFloat))
   }
 
+  def createImageRandomPreprocessing(
+      preprocessing: ImageProcessing,
+      prob: Double
+    ): ImageRandomPreprocessing = {
+    ImageRandomPreprocessing(preprocessing, prob)
+  }
+
   def createImageRandomCrop(cropWidth: Int, cropHeight: Int, isClip: Boolean): ImageRandomCrop = {
     ImageRandomCrop(cropWidth, cropHeight, isClip)
   }
@@ -255,5 +349,35 @@ class PythonImageFeature[T: ClassTag](implicit ev: TensorNumeric[T]) extends Pyt
 
   def imageFrameToImageSet(imageFrame: ImageFrame): ImageSet = {
     ImageSet.fromImageFrame(imageFrame)
+  }
+
+  def createCrop3D(start: JList[Int], patchSize: JList[Int]): Crop3D = {
+    Crop3D(start.asScala.toArray, patchSize.asScala.toArray)
+  }
+
+  def createRandomCrop3D(cropDepth: Int, cropHeight: Int, cropWidth: Int): RandomCrop3D = {
+    RandomCrop3D(cropDepth, cropHeight, cropWidth)
+  }
+
+  def createCenterCrop3D(cropDepth: Int, cropHeight: Int, cropWidth: Int): CenterCrop3D = {
+    CenterCrop3D(cropDepth, cropHeight, cropWidth)
+  }
+
+  def createRotate3D(rotationAngles: JList[Double]): Rotate3D = {
+    Rotate3D(rotationAngles.asScala.toArray)
+  }
+
+  def createAffineTransform3D(mat: JTensor, translation: JTensor,
+                            clamp_mode: String, pad_val: Double): AffineTransform3D = {
+    AffineTransform3D(toDoubleTensor(mat), toDoubleTensor(translation), clamp_mode, pad_val)
+  }
+
+  def toDoubleTensor(jTensor: JTensor): Tensor[Double] = {
+    val tensor = if (jTensor == null) null else {
+      Tensor(storage = Storage[Double](jTensor.storage.map(_.asInstanceOf[Double])),
+        storageOffset = 1,
+        size = jTensor.shape)
+    }
+    tensor
   }
 }

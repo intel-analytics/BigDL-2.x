@@ -20,12 +20,20 @@ import tempfile
 import six
 import os
 import json
+import tensorflow as tf
+import numpy as np
+from pyspark import RDD
 
+from bigdl.nn.criterion import Criterion
 from bigdl.nn.layer import Model as BModel
 from bigdl.nn.layer import Layer
-from bigdl.util.common import callBigDlFunc, to_list
+from bigdl.util.common import *
+from zoo.feature.image import ImageSet
 from zoo.pipeline.api.keras.engine.topology import ZooKerasLayer, KerasNet
 from zoo.util.tf import export_tf
+from bigdl.optim.optimizer import Sample, Optimizer, EveryEpoch
+from bigdl.optim.optimizer import MaxEpoch
+
 
 if sys.version >= '3':
     long = int
@@ -207,6 +215,38 @@ class TFNet(Layer):
                                         input_names,
                                         output_names)
 
+    def predict(self, x, batch_pre_core=-1, distributed=True):
+        """
+        Use a model to do prediction.
+        """
+        if isinstance(x, ImageSet):
+            results = callBigDlFunc(self.bigdl_type, "zooPredict",
+                                    self.value,
+                                    x,
+                                    batch_pre_core)
+            return ImageSet(results)
+        if distributed:
+            if isinstance(x, np.ndarray):
+                data_rdd = to_sample_rdd(x, np.zeros([x.shape[0]]))
+            elif isinstance(x, RDD):
+                data_rdd = x
+            else:
+                raise TypeError("Unsupported prediction data type: %s" % type(x))
+            results = callBigDlFunc(self.bigdl_type, "zooPredict",
+                                    self.value,
+                                    data_rdd,
+                                    batch_pre_core)
+            return results.map(lambda result: Layer.convert_output(result))
+        else:
+            if isinstance(x, np.ndarray) or isinstance(x, list):
+                results = callBigDlFunc(self.bigdl_type, "zooPredict",
+                                        self.value,
+                                        self._to_jtensors(x),
+                                        batch_pre_core)
+                return [Layer.convert_output(result) for result in results]
+            else:
+                raise TypeError("Unsupported prediction data type: %s" % type(x))
+
     @staticmethod
     def from_export_folder(folder):
         if not os.path.isdir(folder):
@@ -226,3 +266,285 @@ class TFNet(Layer):
             shutil.rmtree(temp)
 
         return net
+
+
+def _find_placeholders(grads):
+    '''
+    find all the tensors that are used for computing grads and has been
+    computed during forward
+    :param grads:
+    :param forward_ops:
+    :return:
+    '''
+    import sys
+    is_py2 = sys.version[0] == '2'
+    if is_py2:
+        import Queue as queue
+    else:
+        import queue as queue
+    queue = queue.Queue()
+    for grad in grads:
+        queue.put(grad)
+
+    placeholders = set()
+    visited = set()
+    while not queue.empty():
+        tensor = queue.get()
+        # this is necessary, because input may not be differentiable
+        if tensor is None:
+            continue
+        else:
+            visited.add(tensor.name)
+            if tensor.op.type.startswith("Placeholder"):
+                placeholders.add(tensor)
+                continue
+            for input_tensor in tensor.op.inputs:
+                # this is necessary because there may be a cycle in the graph such as tf.while_loop
+                if input_tensor.name not in visited:
+                    queue.put(input_tensor)
+    return list(placeholders)
+
+
+class IdentityCriterion(Criterion):
+
+    def __init__(self):
+        super(IdentityCriterion, self).__init__(None, "float")
+
+
+class TFTrainingHelper(Layer):
+    def __init__(self, path):
+        super(TFTrainingHelper, self).__init__(None, "float", path)
+
+
+class TFValidationMethod(JavaValue):
+
+    def __init__(self, val_method, output_length, target_length):
+        JavaValue.__init__(self, None, "float",
+                           val_method, output_length, target_length)
+
+
+class TFOptimizer:
+
+    def __init__(self, loss, optim_method, sess=None,
+                 val_outputs=None, val_labels=None, val_method=None):
+        '''
+        TFOptimizer is used for distributed training of tensorflow
+        on Spark/BigDL.
+
+        :param loss: The loss tensor of the tensorflow model, should be a scalar
+        :param optim_method: the optimization method to be used, such as bigdl.optim.optimizer.Adam
+        :param sess: the current tensorflow Session, if you want to used a pre-trained model, you
+        should use the Session to load the pre-trained variables and pass it to TFOptimizer.
+        '''
+        self.optim_method = optim_method
+        if sess is None:
+            self.sess = tf.Session()
+            self.sess.run(tf.global_variables_initializer())
+        else:
+            self.sess = sess
+        grads_vars = tf.train.GradientDescentOptimizer(0).compute_gradients(loss)
+        variables = []
+        grads = []
+        for (grad, var) in grads_vars:
+            variables.append(var)
+            grads.append(grad)
+        self.export_dir = tempfile.mkdtemp()
+        all_required_inputs = _find_placeholders([loss])
+        self.dataset = tf.get_collection(all_required_inputs[0].name)[0]
+        if self.dataset.batch_size <= 0:
+            raise ValueError("You should set batch_size instead of batch_per_core for training")
+        self.inputs = self.dataset.tensors
+
+        _check_the_same(all_required_inputs, self.inputs)
+
+        if val_outputs is not None and val_labels is not None:
+            outputs = val_outputs + val_labels + [loss]
+        else:
+            outputs = [loss]
+
+        export_tf(self.sess, self.export_dir,
+                  inputs=self.inputs,
+                  outputs=grads + outputs)
+
+        variable_names = [v.name for v in variables]
+        grad_names = [g.name for g in grads]
+        output_names = [o.name for o in outputs]
+
+        meta = {
+            "input_names": [i.name for i in self.inputs],
+            "output_names": output_names,
+            "variables": variable_names,
+            "grad_variables": grad_names
+        }
+
+        with open(os.path.join(self.export_dir, "training_meta.json"), "w") as f:
+            f.write(json.dumps(meta))
+
+        self.training_helper_layer = TFTrainingHelper(self.export_dir)
+
+        self.variable_placeholders = []
+        assigns = []
+        for v in variables:
+            p = tf.placeholder(dtype=tf.float32, shape=v.shape)
+            a = tf.assign(v, p)
+            self.variable_placeholders.append(p)
+            assigns.append(a)
+        self.assign = tf.group(*assigns)
+
+        data = self.dataset.rdd
+        batch_size = self.dataset.batch_size
+        sample_rdd = data.map(lambda t: Sample.from_ndarray(t, [np.array([0.0])]))
+
+        self.optimizer = Optimizer.create(self.training_helper_layer,
+                                          sample_rdd,
+                                          IdentityCriterion(),
+                                          batch_size=batch_size,
+                                          optim_method=self.optim_method)
+
+        if val_outputs is not None and val_labels is not None:
+            val_sample_rdd = self.dataset.val_rdd\
+                .map(lambda t: Sample.from_ndarray(t, [np.array([0.0])]))
+            val_method = TFValidationMethod(val_method, len(val_outputs), len(val_labels))
+            self.optimizer.set_validation(self.dataset.batch_size,
+                                          val_sample_rdd,
+                                          EveryEpoch(),
+                                          val_method)
+
+    def set_train_summary(self, summary):
+        self.optimizer.set_train_summary(summary)
+
+    def set_val_summary(self, summary):
+        self.optimizer.set_val_summary(summary)
+
+    def optimize(self, end_trigger=None):
+        if end_trigger is None:
+            end_trigger = MaxEpoch(1)
+
+        self.optimizer.set_end_when(end_trigger)
+        self.optimizer.optimize()
+
+        variables = self.training_helper_layer.get_weights()
+
+        feed_dict = dict(zip(self.variable_placeholders, variables))
+        self.sess.run(self.assign, feed_dict=feed_dict)
+
+
+class TFDataset:
+
+    def __init__(self, rdd, names, shapes, types, batch_size,
+                 batch_pre_thread, hard_code_batch_size=False, val_rdd=None):
+        '''
+        TFDatasets represents a distributed collection of elements to be feed into
+        Tensorflow graph. TFDatasets can be created using a RDD and each of its records
+        is a list of numpy.ndarray representing the tensors to be feed into tensorflow
+        graph on each iteration. TFDatasets must be used with TFOptimizer or TFPredictor.
+
+        :param rdd: a rdd of list of numpy.ndarray each representing a tensor to feed into
+         tensorflow graph on each iteration
+        :param names: the names of the resulting tensors, should be a list of str
+        :param shapes: the shapes of the resulting tensors, should be a list of list of int
+        :param types: the types of the result tensors, should be a list of tf.dtype
+        :param batch_size: the batch size, used for training, should be a multiple of
+        total core num
+        :param batch_pre_thread: the batch size for each thread, used for inference
+        :param hard_code_batch_size: whether to hard code the batch_size into tensorflow graph,
+        if True, the static size of the first dimension of the resulting tensors is
+        batch_size/total_core_num (training) or batch_pre_thread for inference; if False,
+        it is None.
+        '''
+        if batch_size > 0 and batch_pre_thread > 0:
+            raise ValueError("bath_size and batch_per_core should not be set simultaneously")
+
+        node_num, core_num = get_node_and_core_number()
+        self.total_core_num = node_num * core_num
+        if batch_size > 0:
+            if batch_size % self.total_core_num != 0:
+                raise ValueError("batch_size should be a multiple " +
+                                 "of total core number, but got batch_size: " +
+                                 "%s where total core number is %s" % (batch_size,
+                                                                       self.total_core_num))
+        if batch_size <= 0 and batch_pre_thread <= 0:
+            batch_pre_thread = 1
+            batch_size = self.total_core_num
+        self.batch_size = batch_size
+        self.batch_pre_thread = batch_pre_thread
+
+        if not hard_code_batch_size:
+            self.tensors = [tf.placeholder(name=names[i],
+                                           dtype=types[i],
+                                           shape=[None] + shapes[i])
+                            for i in range(len(names))]
+        else:
+            if batch_pre_thread > 0:
+                self.tensors = [tf.placeholder(name=names[i],
+                                               dtype=types[i],
+                                               shape=[batch_pre_thread] + shapes[i])
+                                for i in range(len(names))]
+            else:
+                self.tensors = [tf.placeholder(name=names[i],
+                                               dtype=types[i],
+                                               shape=[batch_size / self.total_core_num] + shapes[i])
+                                for i in range(len(names))]
+
+        self.val_rdd = val_rdd
+
+        self.rdd = rdd.map(lambda arr: arr[:len(names)])
+        self.input_names = names
+        for i in range(len(self.tensors)):
+            tf.add_to_collection(self.tensors[i].name, self)
+
+    @staticmethod
+    def from_rdd(rdd, names=None, shapes=None, types=None,
+                 batch_size=-1, batch_pre_thread=-1,
+                 hard_code_batch_size=False, val_rdd=None):
+        if not names:
+            names = ["features", "labels"]
+        if not shapes:
+            shapes = [None] * len(names)
+
+        if not types:
+            types = [tf.float32] * len(names)
+        return TFDataset(rdd, names, shapes, types,
+                         batch_size, batch_pre_thread,
+                         hard_code_batch_size, val_rdd)
+
+
+def _check_the_same(all_required_inputs, inputs_in_datasets):
+    inputs_not_in_dataset = [i for i in all_required_inputs if i not in inputs_in_datasets]
+    if inputs_not_in_dataset:
+        raise ValueError("You should not use any placeholder that are not defined in dataset, " +
+                         "found %s" % inputs_not_in_dataset)
+    if len(inputs_in_datasets) != len(all_required_inputs):
+        inputs_not_require_by_loss = [i for i in inputs_in_datasets if i not in all_required_inputs]
+        raise ValueError("You should use all the placeholders that are defined in dataset, " +
+                         "%s are not used" % inputs_not_require_by_loss)
+
+
+class TFPredictor:
+
+    def __init__(self, sess, outputs):
+        '''
+        TFPredictor takes a list of tensorflow tensors as the model outputs and
+        feed all the elements in TFDatasets to produce those outputs and returns
+        a Spark RDD with each of its elements representing the model prediction
+        for the corresponding input elements.
+
+        :param sess: the current tensorflow Session, you should first use this session
+        to load the trained variables then pass into TFPredictor
+        :param outputs: the output tensors of the tensorflow model
+        '''
+        self.sess = sess
+        all_required_inputs = _find_placeholders(outputs)
+        self.dataset = tf.get_collection(all_required_inputs[0].name)[0]
+        self.inputs = self.dataset.tensors
+        _check_the_same(all_required_inputs, self.inputs)
+        self.tfnet = TFNet.from_session(sess, self.inputs, outputs)
+        if self.dataset.batch_pre_thread <= 0:
+            raise ValueError("You should set batch_pre_thread on TFDataset" +
+                             "instead of batch_size for prediction")
+
+    def predict(self):
+        rdd = self.dataset.rdd
+        sample_rdd = rdd.map(lambda x: Sample.from_ndarray(x, np.array([0.0])))
+
+        return self.tfnet.predict(sample_rdd, self.dataset.batch_pre_thread)

@@ -17,6 +17,7 @@
 import pytest
 import shutil
 import errno
+import string
 from bigdl.nn.criterion import *
 from bigdl.nn.layer import *
 from bigdl.optim.optimizer import *
@@ -29,6 +30,7 @@ from zoo.common.nncontext import *
 from zoo.pipeline.nnframes import *
 from zoo.feature.common import *
 from zoo.feature.image import *
+from zoo.util.tf import *
 
 
 class TestNNClassifer():
@@ -36,9 +38,10 @@ class TestNNClassifer():
         """ setup any state tied to the execution of the given method in a
         class.  setup_method is invoked for every test method of a class.
         """
-        sparkConf = create_spark_conf().setMaster("local[1]").setAppName("testNNClassifer")
+        sparkConf = init_spark_conf().setMaster("local[1]").setAppName("testNNClassifer")
         self.sc = init_nncontext(sparkConf)
         self.sqlContext = SQLContext(self.sc)
+        assert(self.sc.appName == "testNNClassifer")
 
     def teardown_method(self, method):
         """ teardown any state that was previously setup with a setup_method
@@ -266,6 +269,30 @@ class TestNNClassifer():
         assert len(lr_result) == 5
         assert len(mae_result) == 4
 
+    def test_NNEstimator_checkpoint(self):
+        model = Sequential().add(Linear(2, 2))
+        criterion = MSECriterion()
+        df = self.get_estimator_df()
+        try:
+            tmp_dir = tempfile.mkdtemp()
+            estimator = NNEstimator(model, criterion).setMaxEpoch(5)\
+                .setBatchSize(4)\
+                .setCheckpoint(tmp_dir, EveryEpoch(), False)
+
+            checkpoint_config = estimator.getCheckpoint()
+            assert checkpoint_config[0] == tmp_dir
+            assert "EveryEpoch" in str(checkpoint_config)
+            assert checkpoint_config[2] is False
+
+            estimator.fit(df)
+            assert len(os.listdir(tmp_dir)) > 0
+        finally:
+            try:
+                shutil.rmtree(tmp_dir)  # delete directory
+            except OSError as exc:
+                if exc.errno != errno.ENOENT:  # ENOENT - no such file or directory
+                    raise  # re-raise exception
+
     def test_NNModel_transform_with_nonDefault_featureCol(self):
         model = Sequential().add(Linear(2, 2))
         nnModel = NNModel(model, SeqToTensor([2]))\
@@ -353,6 +380,37 @@ class TestNNClassifer():
         assert(isinstance(nnClassifierModel, NNClassifierModel))
         res = nnClassifierModel.transform(df)
         assert type(res).__name__ == 'DataFrame'
+        res.registerTempTable("nnClassifierModelDF")
+        results = self.sqlContext.table("nnClassifierModelDF")
+
+        count = results.rdd.count()
+        data = results.rdd.collect()
+
+        for i in range(count):
+            row_label = data[i][1]
+            row_prediction = data[i][2]
+            assert row_label == row_prediction
+
+    def test_nnclassifier_fit_with_Sigmoid(self):
+        model = Sequential().add(Linear(2, 1)).add(Sigmoid())
+        criterion = BCECriterion()
+        classifier = NNClassifier(model, criterion, SeqToTensor([2])) \
+            .setBatchSize(4) \
+            .setLearningRate(0.2).setMaxEpoch(40)
+
+        data = self.sc.parallelize([
+            ((2.0, 1.0), 0.0),
+            ((1.0, 2.0), 1.0),
+            ((2.0, 1.0), 0.0),
+            ((1.0, 2.0), 1.0)])
+
+        schema = StructType([
+            StructField("features", ArrayType(DoubleType(), False), False),
+            StructField("label", DoubleType(), False)])
+        df = self.sqlContext.createDataFrame(data, schema)
+        nnClassifierModel = classifier.fit(df)
+        assert(isinstance(nnClassifierModel, NNClassifierModel))
+        res = nnClassifierModel.transform(df)
         res.registerTempTable("nnClassifierModelDF")
         results = self.sqlContext.table("nnClassifierModelDF")
 
@@ -517,6 +575,33 @@ class TestNNClassifer():
             except OSError as exc:
                 if exc.errno != errno.ENOENT:  # ENOENT - no such file or directory
                     raise  # re-raise exception
+
+    def test_input_node_of_tfnet_from_session(self):
+        import tensorflow as tff
+        input1 = tff.placeholder(dtype=tff.float32, shape=(None, 2))
+        input2 = tff.placeholder(dtype=tff.float32, shape=(None, 2))
+        hidden = tff.layers.dense(input1, 4)
+        output = tff.layers.dense(hidden, 1)
+        sess = tff.Session()
+        sess.run(tff.global_variables_initializer())
+        tmp_dir = tempfile.mkdtemp()
+        modelPath = os.path.join(tmp_dir, "model")
+        raised_error = False
+        try:
+            export_tf(sess, modelPath, inputs=[input1, input2], outputs=[output])
+        except ValueError as v:
+            assert (((str(v)).find((input2.name)[0:-2])) != -1)
+            raised_error = True
+        finally:
+            try:
+                shutil.rmtree(modelPath)  # delete directory
+            except OSError as exc:
+                if exc.errno != errno.ENOENT:  # ENOENT - no such file or directory
+                    raise  # re-raise exception
+
+        if not raised_error:
+            raise ValueError("we do not find this error, test failed")
+
 
 if __name__ == "__main__":
     pytest.main()

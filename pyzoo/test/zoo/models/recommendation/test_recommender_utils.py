@@ -23,7 +23,7 @@ from test.zoo.pipeline.utils.test_utils import ZooTestCase
 np.random.seed(1337)  # for reproducibility
 
 
-class TestRecommenderUtils(ZooTestCase):
+class TestRecommenderUtils:
 
     def test_get_boundaries(self):
         index = get_boundaries(42, [18, 25, 30, 35, 40, 45, 50, 55, 60, 65])
