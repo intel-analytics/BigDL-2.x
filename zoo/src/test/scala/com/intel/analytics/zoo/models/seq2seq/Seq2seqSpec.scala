@@ -18,6 +18,7 @@ package com.intel.analytics.zoo.models.seq2seq
 
 import com.intel.analytics.bigdl.nn.ConvLSTMPeephole
 import com.intel.analytics.bigdl.nn.abstractnn.TensorModule
+import com.intel.analytics.bigdl.numeric.NumericDouble
 import com.intel.analytics.bigdl.tensor.Tensor
 import com.intel.analytics.bigdl.utils.RandomGenerator._
 import com.intel.analytics.bigdl.utils.T
@@ -27,7 +28,6 @@ import com.intel.analytics.zoo.models.common.ZooModel
 
 class Seq2seqSpec extends FlatSpec with BeforeAndAfter with Matchers {
   "A Seq2seq" should "work with PassThroughBridge" in {
-    import com.intel.analytics.bigdl.numeric.NumericDouble
     val kernalW = 3
     val kernalH = 3
     val seqLength = 5
@@ -79,7 +79,6 @@ class Seq2seqSpec extends FlatSpec with BeforeAndAfter with Matchers {
   }
 
   "A Seq2seq" should "work with ZeroBridge" in {
-    import com.intel.analytics.bigdl.numeric.NumericDouble
     val kernalW = 3
     val kernalH = 3
     val seqLength = 5
@@ -133,7 +132,6 @@ class Seq2seqSpec extends FlatSpec with BeforeAndAfter with Matchers {
   }
 
   "A Seq2seq" should "work with InitialStateBridge" in {
-    import com.intel.analytics.bigdl.numeric.NumericDouble
     val kernalW = 3
     val kernalH = 3
     val seqLength = 5
@@ -191,7 +189,6 @@ class Seq2seqSpec extends FlatSpec with BeforeAndAfter with Matchers {
   }
 
   "A Seq2seq" should "work with InitialStateBridge2" in {
-    import com.intel.analytics.bigdl.numeric.NumericDouble
     val kernalW = 3
     val kernalH = 3
     val seqLength = 5
@@ -256,7 +253,6 @@ class Seq2seqSpec extends FlatSpec with BeforeAndAfter with Matchers {
   }
 
   "A Seq2seq" should "work with single cell" in {
-    import com.intel.analytics.bigdl.numeric.NumericDouble
     val hiddenSize = 7
     val inputSize = 7
     val kernalW = 3
@@ -294,7 +290,6 @@ class Seq2seqSpec extends FlatSpec with BeforeAndAfter with Matchers {
   }
 
   "A Seq2seq" should "work with getParameters" in {
-    import com.intel.analytics.bigdl.numeric.NumericDouble
     val inputSize = 2
     val hiddenSize = 16
     val outputSize = 1
@@ -324,7 +319,6 @@ class Seq2seqSpec extends FlatSpec with BeforeAndAfter with Matchers {
   }
 
   "A Seq2seq" should "work with getParameters 2" in {
-    import com.intel.analytics.bigdl.numeric.NumericDouble
     val inputSize = 2
     val hiddenSize = 16
     val outputSize = 1
@@ -355,7 +349,6 @@ class Seq2seqSpec extends FlatSpec with BeforeAndAfter with Matchers {
   }
 
   "A Seq2seq" should "work with stop sign" in {
-    import com.intel.analytics.bigdl.numeric.NumericDouble
     val hiddenSize = 7
     val inputSize = 7
     val kernalW = 3
@@ -392,7 +385,6 @@ class Seq2seqSpec extends FlatSpec with BeforeAndAfter with Matchers {
   }
 
   "A Seq2seq" should "work with generator" in {
-    import com.intel.analytics.bigdl.numeric.NumericDouble
     val hiddenSize = 7
     val inputSize = 7
     val seqLength = 5
@@ -427,7 +419,6 @@ class Seq2seqSpec extends FlatSpec with BeforeAndAfter with Matchers {
   }
 
   "A Seq2seq serialize" should "work" in {
-    import com.intel.analytics.bigdl.numeric.NumericDouble
     val kernalW = 3
     val kernalH = 3
     val seqLength = 5

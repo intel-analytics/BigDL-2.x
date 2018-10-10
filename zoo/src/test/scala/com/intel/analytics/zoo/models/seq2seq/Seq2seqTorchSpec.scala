@@ -17,9 +17,9 @@
 package com.intel.analytics.bigdl.nn
 
 import com.intel.analytics.bigdl.tensor.Tensor
-import com.intel.analytics.bigdl.torch.TH
 import com.intel.analytics.bigdl.utils.RandomGenerator._
 import com.intel.analytics.bigdl.utils.{T, Table}
+import com.intel.analytics.zoo.models.common.TH
 import com.intel.analytics.zoo.models.seq2seq.Seq2seq
 import org.scalatest.{BeforeAndAfter, FlatSpec, Matchers}
 
