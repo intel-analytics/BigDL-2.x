@@ -26,6 +26,8 @@ class MaxPoolMapper(OperatorMapper):
     def _to_tensor(self):
         assert len(self.model_inputs) == 1, "MaxPool accept single input only"
         rank = len(self.model_inputs[0].zvalue.shape)
+        if "storage_order" in self.onnx_attr.keys():
+            assert self.onnx_attr['storage_order'] == 0
 
         if (rank == 4):  # NCHW
             pool_size = [int(i) for i in self.onnx_attr['kernel_shape']]

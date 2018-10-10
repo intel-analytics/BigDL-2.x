@@ -637,3 +637,39 @@ class TestModelLoading(OnnxTestCase):
         )
         input_shape_with_batch = (1, 3, 32)
         self.compare_with_pytorch(pytorch_model, input_shape_with_batch)
+
+    def test_maxpool1d_pads(self):
+        node = onnx.helper.make_node(
+            'MaxPool',
+            inputs=['x'],
+            outputs=['y'],
+            kernel_shape=[2],
+            pads=[2, 2]
+        )
+        x = np.random.randn(1, 3, 32).astype(np.float32)
+        x_shape = np.array(np.shape(x))
+        kernel_shape = np.array([2])
+        strides = [1]
+        out_shape = pool_op_common.get_output_shape('VALID', x_shape[2:], kernel_shape, strides)
+        padded = x
+        y = pool_op_common.pool(padded, x_shape, kernel_shape, strides, out_shape, [0], 'MAX')
+        output = OnnxLoader.run_node(node, [x])
+        np.testing.assert_almost_equal(output["y"], y, decimal=5)
+
+    def test_maxpool1d_autopad(self):
+        node = onnx.helper.make_node(
+            'MaxPool',
+            inputs=['x'],
+            outputs=['y'],
+            kernel_shape=[2],
+            auto_pad='SAME_UPPER'
+        )
+        x = np.random.randn(1, 3, 32).astype(np.float32)
+        x_shape = np.array(np.shape(x))
+        kernel_shape = np.array([2])
+        strides = [1]
+        out_shape = pool_op_common.get_output_shape('SAME_UPPER', x_shape[2:], kernel_shape, strides)
+        padded = x
+        y = pool_op_common.pool(padded, x_shape, kernel_shape, strides, out_shape, [0], 'MAX')
+        output = OnnxLoader.run_node(node, [x])
+        np.testing.assert_almost_equal(output["y"], y, decimal=5)
