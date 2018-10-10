@@ -71,7 +71,7 @@ def main():
                             val_method=Top1Accuracy())
     optimizer.set_train_summary(TrainSummary("/tmp/az_lenet", "lenet"))
     optimizer.set_val_summary(ValidationSummary("/tmp/az_lenet", "lenet"))
-    optimizer.set_checkpoint(1000,"/tep/checkpoints")
+    optimizer.set_checkpoint(1000, "/tep/checkpoints")
     end_when = optimizer.MaxIteration(5000)
     optimizer.set_end_when(end_when)
 

@@ -416,7 +416,7 @@ class TFOptimizer:
     def set_val_summary(self, summary):
         self.optimizer.set_val_summary(summary)
 
-    def set_checkpoint(self,checkpoint_trigger, checkpoint_path, isOverWrite=True):
+    def set_checkpoint(self, checkpoint_trigger, checkpoint_path, isOverWrite=True):
         self.optimizer.set_checkpoint(checkpoint_trigger, checkpoint_path, isOverWrite)
 
     def set_end_when(self, end_when):
