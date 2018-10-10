@@ -35,8 +35,6 @@ class BatchNormalizationMapper(OperatorMapper):
 
         if (rank == 4):
             epsilon = float(self.onnx_attr['epsilon']) if "epsilon" in self.onnx_attr else 0.001
-            mode = self.onnx_attr['mode'] if "mode" in self.onnx_attr else 0
-            axis = self.onnx_attr['axis'] if "axis" in self.onnx_attr else 1
             momentum = float(self.onnx_attr['momentum'] if "momentum" in self.onnx_attr else 0.99)
             dim_ordering = "th"
             if len(self._input_list) == 5:
