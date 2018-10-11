@@ -142,10 +142,9 @@ abstract class TextSet {
   /**
    * Generate wordIndex map based on sorted word frequencies in descending order.
    * Return the result map, which will also be stored in 'wordIndex'.
+   * Make sure you call this after tokenize. Otherwise you will get an exception.
    * See word2idx for more details.
    */
-  // If the TextSet hasn't been tokenized, this will do nothing and return null.
-  // If map=null is further passed to WordIndexer, then an exception will be thrown there.
   def generateWordIndexMap(removeTopN: Int = 0, maxWordsNum: Int = 5000): Map[String, Int]
 
   private var wordIndex: Map[String, Int] = _
@@ -290,22 +289,14 @@ class LocalTextSet(var array: Array[TextFeature]) extends TextSet {
 
   override def generateWordIndexMap(
     removeTopN: Int = 0, maxWordsNum: Int = -1): Map[String, Int] = {
-    try {
-      var frequencies = array.flatMap(_.getTokens).filter(_ != "##")  // "##" is the padElement.
-        .groupBy(identity).mapValues(_.length).toArray.sortBy(- _._2).drop(removeTopN)
-      if (maxWordsNum > 0) {
-        frequencies = frequencies.take(maxWordsNum)
-      }
-      val wordIndex = TextSet.wordIndexFromFrequencies(frequencies)
-      setWordIndex(wordIndex)
-      wordIndex
-    } catch {
-      case npe: NullPointerException =>
-        npe.printStackTrace()
-        TextSet.logger.warn("TextSet hasn't been tokenized yet, please call tokenize() first")
-        null
-      case e: Exception => throw e
+    var frequencies = array.flatMap(_.getTokens).filter(_ != "##")  // "##" is the padElement.
+      .groupBy(identity).mapValues(_.length).toArray.sortBy(- _._2).drop(removeTopN)
+    if (maxWordsNum > 0) {
+      frequencies = frequencies.take(maxWordsNum)
     }
+    val wordIndex = TextSet.wordIndexFromFrequencies(frequencies)
+    setWordIndex(wordIndex)
+    wordIndex
   }
 }
 
@@ -339,21 +330,13 @@ class DistributedTextSet(var rdd: RDD[TextFeature]) extends TextSet {
 
   override def generateWordIndexMap(
     removeTopN: Int = 0, maxWordsNum: Int = -1): Map[String, Int] = {
-    try {
-      var frequencies = rdd.flatMap(_.getTokens).filter(_ != "##")  // "##" is the padElement.
-        .map(word => (word, 1)).reduceByKey(_ + _).sortBy(- _._2).collect().drop(removeTopN)
-      if (maxWordsNum > 0) {
-        frequencies = frequencies.take(maxWordsNum)
-      }
-      val wordIndex = TextSet.wordIndexFromFrequencies(frequencies)
-      setWordIndex(wordIndex)
-      wordIndex
-    } catch {
-      // Most likely that the reason is the TextSet hasn't been tokenized yet.
-      case s: SparkException =>
-        s.printStackTrace()
-        null
-      case e: Exception => throw e
+    var frequencies = rdd.flatMap(_.getTokens).filter(_ != "##")  // "##" is the padElement.
+      .map(word => (word, 1)).reduceByKey(_ + _).sortBy(- _._2).collect().drop(removeTopN)
+    if (maxWordsNum > 0) {
+      frequencies = frequencies.take(maxWordsNum)
     }
+    val wordIndex = TextSet.wordIndexFromFrequencies(frequencies)
+    setWordIndex(wordIndex)
+    wordIndex
   }
 }
