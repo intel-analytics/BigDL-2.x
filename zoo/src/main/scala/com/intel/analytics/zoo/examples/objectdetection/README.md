@@ -2,18 +2,18 @@
 This example illustrates how to detect objects in image with pre-trained model
 
 ### Run steps
-#### Download Analytics Zoo
+#### 1. Download Analytics Zoo
 You can download Analytics Zoo prebuilt release and nightly build package from [here](https://analytics-zoo.github.io/master/#release-download/) and extract it.
 
-#### Prepare pre-trained models
+#### 2. Prepare pre-trained models
 
 Download pre-trained models from [Object Detection](https://github.com/intel-analytics/analytics-zoo/blob/master/docs/docs/ProgrammingGuide/object-detection.md)
 
-#### Prepare predict dataset
+#### 3. Prepare predict dataset
 
 Put your image data for prediction in the ./image folder.
 
-#### Run the example
+#### 4. Run the example
 
 ```bash
 export ANALYTICS_ZOO_HOME=the folder where you extract the downloaded Analytics Zoo zip package

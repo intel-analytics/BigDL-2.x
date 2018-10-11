@@ -2,21 +2,21 @@
 This example illustrates how to detect objects in image with pre-trained model.
 
 ### Run steps
-#### Install or download Analytics Zoo
+#### 1. Install or download Analytics Zoo
 Follow the instructions [here](https://analytics-zoo.github.io/master/#PythonUserGuide/install/) to install analytics-zoo via __pip__ or __download the prebuilt package__.
 
-#### Install OpenCV
+#### 2. Install OpenCV
 The example uses OpenCV library to save image. Please install it before run this example.
 
-#### Prepare pre-trained models
+#### 3. Prepare pre-trained models
 
 Download pre-trained models from [Object Detection](https://github.com/intel-analytics/analytics-zoo/blob/master/docs/docs/ProgrammingGuide/object-detection.md)
 
-#### Prepare predict dataset
+#### 4. Prepare predict dataset
 
 Put your image data for prediction in the ./image folder.
 
-#### Run the example
+#### 5. Run the example
 
 modelPath=... // model path. Local file system/HDFS/Amazon S3 are supported
 
@@ -25,7 +25,7 @@ imagePath=... // image path. Local file system/HDFS are supported. With local fi
 outputPath=... // output path. Currently only support local file system.
 partitionNum=... // Optional, a suggestion value of the minimal partition number
 
-##### Run after pip install
+##### * Run after pip install
 
 You can easily use the following commands to run this example:
 
@@ -34,7 +34,7 @@ python path/to/predict.py ${model_path} ${image_path} ${output_path} ${partition
 ```
 See [here](https://analytics-zoo.github.io/master/#PythonUserGuide/run/#run-after-pip-install) for more running guidance after pip install.
 
-##### Run with prebuilt package
+##### * Run with prebuilt package
 
 ```bash
 export ANALYTICS_ZOO_HOME=the folder where you extract the downloaded Analytics Zoo zip package
