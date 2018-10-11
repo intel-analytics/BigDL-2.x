@@ -51,6 +51,7 @@ class TestModelLoading(OnnxTestCase):
         var = var.reshape(-1, *dim_ones)
         return s * (x - mean) / np.sqrt(var + epsilon) + bias
 
+    # Momentum is always equal to 1 no matter what value we set
     def test_onnx_batch_norm1(self):
         pytorch_model = torch.nn.Sequential(
             torch.nn.BatchNorm2d(num_features=3, momentum=1, affine=False)
@@ -58,6 +59,7 @@ class TestModelLoading(OnnxTestCase):
         input_shape_with_batch = (1, 3, 224, 224)
         self.compare_with_pytorch(pytorch_model, input_shape_with_batch, rtol=1e-3, atol=1e-3)
 
+    # Momentum is always equal to 1 no matter what value we set
     def test_onnx_batch_norm2(self):
         pytorch_model = torch.nn.Sequential(
             torch.nn.BatchNorm2d(num_features=3, momentum=1, affine=True)
