@@ -50,8 +50,8 @@ See [here](#options) for more configurable options for this example.
 
 
 ## Options
-* `--dataPath` This option is __required__. The path where the News20 dataset locate.
-* `--embeddingPath` This option is __required__. The path where the GloVe embeddings locate.
+* `--dataPath` This option is __required__. The path where News20 dataset locate.
+* `--embeddingPath` This option is __required__. The path where GloVe embeddings locate.
 * `--classNum` The number of classes to do classification. Default is 20 for News20 dataset.
 * `--partitionNum` The number of partitions to cut the dataset into. Datault is 4.
 * `--tokenLength` The size of each word vector. GloVe supports tokenLength 50, 100, 200 and 300. Default is 200.

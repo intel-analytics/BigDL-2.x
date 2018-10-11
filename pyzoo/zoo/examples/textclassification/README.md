@@ -66,8 +66,8 @@ See [here](https://analytics-zoo.github.io/master/#PythonUserGuide/run/#run-with
 
 
 ## Options
-* `--data_path` This option is __required__. The path where the News20 dataset locate.
-* `--embedding_path` This option is __required__. The path where the GloVe embeddings locate.
+* `--data_path` This option is __required__. The path where News20 dataset locate.
+* `--embedding_path` This option is __required__. The path where GloVe embeddings locate.
 * `--class_num` The number of classes to do classification. Default is 20 for News20 dataset.
 * `--partition_num` The number of partitions to cut the dataset into. Default is 4.
 * `--token_length` The size of each word vector. GloVe supports token_length 50, 100, 200 and 300. Default is 200.
