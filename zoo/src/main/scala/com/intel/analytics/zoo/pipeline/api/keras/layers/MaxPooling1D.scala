@@ -48,13 +48,20 @@ class MaxPooling1D[T: ClassTag](
     override val stride: Int = -1,
     override val borderMode: String = "valid",
     override val inputShape: Shape = null,
-    val pads: Array[Int] = null)(implicit ev: TensorNumeric[T])
+    val pads: Int = 0)(implicit ev: TensorNumeric[T])
   extends Pooling1D[T](
     poolLength, stride, borderMode, inputShape) with Net {
 
+  var pad: Array[Int] = if (pads == 0) {
+    null
+  } else {
+    Array(pads, 0)
+  }
+
   override def doBuild(inputShape: Shape): AbstractModule[Activity, Activity, T] = {
     val input = inputShape.toSingle().toArray
-    val pads = KerasUtils.getPadsFromBorderMode(borderMode)
+
+    val pads = KerasUtils.getPadsFromBorderMode(borderMode, pad)
     val model = TSequential[T]()
     model.add(com.intel.analytics.bigdl.nn.Reshape(Array(input(1), 1, input(2)), Some(true)))
     val layer = SpatialMaxPooling(
@@ -77,7 +84,7 @@ object MaxPooling1D {
     stride: Int = -1,
     borderMode: String = "valid",
     inputShape: Shape = null,
-    pads: Array[Int] = null)(implicit ev: TensorNumeric[T]): MaxPooling1D[T] = {
+    pads: Int = 0)(implicit ev: TensorNumeric[T]): MaxPooling1D[T] = {
     new MaxPooling1D[T](poolLength, stride, borderMode, inputShape, pads)
   }
 }
