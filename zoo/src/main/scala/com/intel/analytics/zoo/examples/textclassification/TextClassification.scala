@@ -51,7 +51,7 @@ object TextClassification {
         .text("The directory for GloVe embeddings")
         .action((x, c) => c.copy(embeddingPath = x))
       opt[Int]("classNum")
-        .text("The number of classes to be do classification")
+        .text("The number of classes to do classification")
         .action((x, c) => c.copy(classNum = x))
       opt[Int]("partitionNum")
         .text("The number of partitions to cut the dataset into")
