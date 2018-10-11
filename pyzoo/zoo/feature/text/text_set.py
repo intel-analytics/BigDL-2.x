@@ -84,7 +84,7 @@ class TextSet(JavaValue):
         """
         Generate word_index map based on sorted word frequencies in descending order.
         Return the result dictionary, which can also be retrieved by 'get_word_index()'.
-        If the TextSet hasn't been tokenized, None will be returned.
+        Make sure you call this after tokenize. Otherwise you will get an error.
         See word2idx for more details.
 
         :return: Dictionary {word: id}
