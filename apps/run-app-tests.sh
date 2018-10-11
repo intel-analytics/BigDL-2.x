@@ -13,6 +13,7 @@ chmod +x ${ANALYTICS_ZOO_HOME}/apps/ipynb2py.sh
 
 set -e
 
+if [ $1 = 1 ]; then
 echo "#1 start app test for anomaly-detection-nyc-taxi"
 #timer
 start=$(date "+%s")
@@ -120,6 +121,7 @@ now=$(date "+%s")
 time3=$((now-start))
 rm ${ANALYTICS_ZOO_HOME}/apps/recommendation-ncf/tmp.py
 
+elif [ $1 = 2 ]; then
 echo "#4 start app test for wide_n_deep"
 #timer
 start=$(date "+%s")
@@ -221,6 +223,7 @@ ${SPARK_HOME}/bin/spark-submit \
 now=$(date "+%s")
 time6=$((now-start))
 
+else
 echo "#7 start app test for using_variational_autoencoder_to_generate_digital_numbers"
 #timer
 start=$(date "+%s")
@@ -346,6 +349,7 @@ now=$(date "+%s")
 time10=$((now-start))
 rm ${ANALYTICS_ZOO_HOME}/apps/dogs-vs-cats/tmp.py
 echo "#10 dogs-vs-cats time used:$time10 seconds"
+fi
 
 echo "#1 anomaly-detection-nyc-taxi time used:$time1 seconds"
 echo "#2 object-detection time used:$time2 seconds"
