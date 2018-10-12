@@ -21,6 +21,7 @@ import com.intel.analytics.bigdl.dataset.{MiniBatch, Sample, SampleToMiniBatch, 
 import com.intel.analytics.bigdl.models.utils.ModelBroadcast
 import com.intel.analytics.bigdl.tensor.Tensor
 import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric
+import com.intel.analytics.zoo.pipeline.api.keras.layers.utils.EngineRef
 import com.intel.analytics.zoo.pipeline.api.keras.models.KerasNet
 
 import scala.reflect.ClassTag
@@ -33,6 +34,34 @@ class TextPredictor[T: ClassTag](
     textSet: DistributedTextSet,
     shareBuffer: Boolean = false): DistributedTextSet = {
     TextPredictor.predict[T](textSet, model, batchPerThread, shareBuffer)
+  }
+
+  def predict(
+      textSet: LocalTextSet,
+      shareBuffer: Boolean): LocalTextSet = {
+    val coreNumber = EngineRef.getCoreNumber()
+//    val inferenceModel = new InferenceModel(coreNumber, model)
+    val toBatch = SampleToMiniBatch[T](batchSize = batchPerThread * coreNumber,
+      partitionNum = Some(coreNumber))
+
+    val dataIter = textSet.array.grouped(batchPerThread * coreNumber)
+
+    val res = dataIter.map(batch => {
+      val grouped = batch.grouped(batchPerThread).toArray
+      grouped.flatMap(textFeatures => {
+        val x = textFeatures.map(_.getSample).asInstanceOf[Array[Sample[T]]].toIterator
+        toBatch(x).flatMap(minibatch => {
+          val output = model.forward(minibatch.getInput()).toTensor[T]
+          val batchOutput = TextPredictor.splitTensor[T](output, shareBuffer, minibatch.size())
+          textFeatures.zip(batchOutput).foreach(zipped => {
+            zipped._1(TextFeature.predict) = zipped._2
+          })
+          textFeatures
+        })
+      }
+      )
+    }).flatten.toArray
+    TextSet.array(res)
   }
 }
 
