@@ -16,12 +16,13 @@
 
 package com.intel.analytics.zoo.models.seq2seq
 
-import com.intel.analytics.bigdl.nn.abstractnn.{AbstractModule, Activity, TensorModule}
-import com.intel.analytics.bigdl.nn.{Recurrent, Sequential}
+import com.intel.analytics.bigdl.nn.abstractnn.{AbstractModule, Activity}
+import com.intel.analytics.bigdl.nn.keras.KerasLayer
 import com.intel.analytics.bigdl.tensor.Tensor
 import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric
 import com.intel.analytics.bigdl.utils.T
-import com.intel.analytics.zoo.pipeline.api.keras.layers.internal.InternalRecurrent
+import com.intel.analytics.zoo.pipeline.api.keras.layers.Recurrent
+import com.intel.analytics.zoo.pipeline.api.keras.models.Sequential
 
 import scala.reflect.ClassTag
 
@@ -35,8 +36,8 @@ abstract class Bridge extends Serializable {
    * @param decoder array of Recurrent or its subclasses used in decoder
    * @return
    */
-  def forwardStates[T: ClassTag](encoder: Array[InternalRecurrent[T]],
-    decoder: Array[InternalRecurrent[T]])(implicit ev: TensorNumeric[T]): Unit
+  def forwardStates[T: ClassTag](encoder: Array[Recurrent[T]],
+    decoder: Array[Recurrent[T]])(implicit ev: TensorNumeric[T]): Unit
 
   /**
    * pass decoder state to encoder in backward
@@ -44,8 +45,8 @@ abstract class Bridge extends Serializable {
    * @param decoder array of Recurrent or its subclasses used in decoder
    * @return
    */
-  def backwardStates[T: ClassTag](encoder: Array[InternalRecurrent[T]],
-    decoder: Array[InternalRecurrent[T]])(implicit ev: TensorNumeric[T]): Unit
+  def backwardStates[T: ClassTag](encoder: Array[Recurrent[T]],
+    decoder: Array[Recurrent[T]])(implicit ev: TensorNumeric[T]): Unit
 
   /**
    * Modules used in the Bridge, usually for get parameters in the Bridge
@@ -58,11 +59,11 @@ abstract class Bridge extends Serializable {
  * [[ZeroBridge]] doesn't pass state between encoder and decoder. The init decoder state is 0
  */
 class ZeroBridge() extends Bridge {
-  override def forwardStates[T: ClassTag](encoder: Array[InternalRecurrent[T]],
-    decoder: Array[InternalRecurrent[T]])(implicit ev: TensorNumeric[T]): Unit = {}
+  override def forwardStates[T: ClassTag](encoder: Array[Recurrent[T]],
+    decoder: Array[Recurrent[T]])(implicit ev: TensorNumeric[T]): Unit = {}
 
-  override def backwardStates[T: ClassTag](encoder: Array[InternalRecurrent[T]],
-    decoder: Array[InternalRecurrent[T]])(implicit ev: TensorNumeric[T]): Unit = {}
+  override def backwardStates[T: ClassTag](encoder: Array[Recurrent[T]],
+    decoder: Array[Recurrent[T]])(implicit ev: TensorNumeric[T]): Unit = {}
 }
 
 /**
@@ -70,18 +71,18 @@ class ZeroBridge() extends Bridge {
  * Requires encoder states are the same size with decoder states
  */
 class PassThroughBridge() extends Bridge {
-  override def forwardStates[T: ClassTag](encoder: Array[InternalRecurrent[T]],
-    decoder: Array[InternalRecurrent[T]])(implicit ev: TensorNumeric[T]): Unit = {
+  override def forwardStates[T: ClassTag](encoder: Array[Recurrent[T]],
+    decoder: Array[Recurrent[T]])(implicit ev: TensorNumeric[T]): Unit = {
     require(encoder.size == decoder.size, "encoder should be the same size with decoder")
-    for ((x, i) <- encoder.view.zipWithIndex) {
-      decoder(i).setHiddenState(x.getHiddenState())
+    for ((eCell, dCell) <- encoder zip decoder) {
+      dCell.setHiddenState(eCell.getHiddenState())
     }
   }
 
-  override def backwardStates[T: ClassTag](encoder: Array[InternalRecurrent[T]],
-    decoder: Array[InternalRecurrent[T]])(implicit ev: TensorNumeric[T]): Unit = {
-    for ((x, i) <- decoder.view.zipWithIndex) {
-      encoder(i).setGradHiddenState(x.asInstanceOf[InternalRecurrent[T]].getGradHiddenState())
+  override def backwardStates[T: ClassTag](encoder: Array[Recurrent[T]],
+    decoder: Array[Recurrent[T]])(implicit ev: TensorNumeric[T]): Unit = {
+    for ((eCell, dCell) <- encoder zip decoder) {
+      eCell.setGradHiddenState(dCell.getGradHiddenState())
     }
   }
 }
@@ -90,7 +91,7 @@ class PassThroughBridge() extends Bridge {
  * [[InitialStateBridge]] Init decoder state with passing encoder state through
  * activations. It allows encoder states are in different size with decoder states
  */
-class InitialStateBridge[T: ClassTag](val activations: Array[Array[TensorModule[T]]])
+class InitialStateBridge[T: ClassTag](val activations: Array[Array[KerasLayer[Tensor[T], Tensor[T], T]]])
                                      (implicit ev: TensorNumeric[T]) extends Bridge {
   override def toModel[T: ClassTag](implicit ev: TensorNumeric[T]): Sequential[T] = {
     val model = Sequential[T]()
@@ -99,8 +100,8 @@ class InitialStateBridge[T: ClassTag](val activations: Array[Array[TensorModule[
     model
   }
 
-  override def forwardStates[T: ClassTag](encoder: Array[InternalRecurrent[T]],
-    decoder: Array[InternalRecurrent[T]])(implicit ev: TensorNumeric[T]): Unit = {
+  override def forwardStates[T: ClassTag](encoder: Array[Recurrent[T]],
+    decoder: Array[Recurrent[T]])(implicit ev: TensorNumeric[T]): Unit = {
     for ((x, i) <- encoder.view.zipWithIndex) {
       val newState = if (activations(i) != null) updateState(x.getHiddenState(), activations(i))
       else x.getHiddenState()
@@ -108,8 +109,8 @@ class InitialStateBridge[T: ClassTag](val activations: Array[Array[TensorModule[
     }
   }
 
-  override def backwardStates[T: ClassTag](encoder: Array[InternalRecurrent[T]],
-    decoder: Array[InternalRecurrent[T]])(implicit ev: TensorNumeric[T]): Unit = {
+  override def backwardStates[T: ClassTag](encoder: Array[Recurrent[T]],
+    decoder: Array[Recurrent[T]])(implicit ev: TensorNumeric[T]): Unit = {
     for ((x, i) <- decoder.view.zipWithIndex) {
       val gradHiddenState = x.getGradHiddenState()
       val newGradHiddenState = if (activations(i) != null) {
@@ -120,7 +121,7 @@ class InitialStateBridge[T: ClassTag](val activations: Array[Array[TensorModule[
   }
 
   private def updateState(state: Activity,
-    activation: Array[TensorModule[T]]): Activity = {
+    activation: Array[KerasLayer[Tensor[T], Tensor[T], T]]): Activity = {
     require(activation != null, "activation cannot be null")
     require(activation.size == 1 || activation.size == 2, "state size of rnn must be 1|2")
     var newState: Activity = null
@@ -137,7 +138,7 @@ class InitialStateBridge[T: ClassTag](val activations: Array[Array[TensorModule[
   }
 
   private def updateGradState(state: Activity, gradState: Activity,
-    activation: Array[TensorModule[T]]): Activity = {
+    activation: Array[KerasLayer[Tensor[T], Tensor[T], T]]): Activity = {
     require(activation != null, "activation cannot be null")
     var newGradState: Activity = null
     if (gradState.isTensor) {

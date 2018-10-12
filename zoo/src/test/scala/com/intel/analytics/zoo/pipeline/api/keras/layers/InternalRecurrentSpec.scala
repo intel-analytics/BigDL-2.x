@@ -21,6 +21,7 @@ import com.intel.analytics.bigdl.optim.SGD
 import com.intel.analytics.bigdl.tensor.{Storage, Tensor}
 import com.intel.analytics.bigdl.utils.RandomGenerator.RNG
 import com.intel.analytics.bigdl.utils.{Engine, T, Table}
+import com.intel.analytics.zoo.pipeline.api.keras.layers.InternalRecurrent
 import org.scalatest.{FlatSpec, Matchers}
 import com.intel.analytics.zoo.pipeline.api.keras.layers.utils.KerasUtils
 import com.intel.analytics.zoo.pipeline.api.keras.serializer.ModuleSerializationTest

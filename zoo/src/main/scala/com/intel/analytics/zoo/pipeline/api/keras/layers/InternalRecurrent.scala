@@ -14,24 +14,19 @@
  * limitations under the License.
  */
 
-package com.intel.analytics.zoo.pipeline.api.keras.layers.internal
+package com.intel.analytics.zoo.pipeline.api.keras.layers
 
 import com.intel.analytics.bigdl.nn._
-import com.intel.analytics.bigdl.nn.abstractnn.{AbstractModule, Activity, TensorModule}
+import com.intel.analytics.bigdl.nn.abstractnn.{AbstractModule, Activity}
 import com.intel.analytics.bigdl.tensor.Tensor
 import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric
-import com.intel.analytics.bigdl.utils.{T, Table}
 
 import scala.reflect.ClassTag
 
 private[zoo] class InternalRecurrent[T: ClassTag](
     batchNormParams: BatchNormParams[T] = null,
     maskZero: Boolean = false
-)(implicit ev: TensorNumeric[T]) extends Recurrent[T](batchNormParams, maskZero) {
-
-  protected var maskBuffer: Tensor[T] = Tensor()
-  protected var gradOutputBuff: Table = T()
-  protected var minLength: Int = 0
+)(implicit ev: TensorNumeric[T]) extends com.intel.analytics.bigdl.nn.Recurrent[T](batchNormParams, maskZero) {
 
   override def add(module: AbstractModule[_ <: Activity, _ <: Activity, T]): this.type = {
     super.add(module)

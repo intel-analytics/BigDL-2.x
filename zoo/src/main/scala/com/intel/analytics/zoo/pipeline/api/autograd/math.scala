@@ -24,7 +24,6 @@ import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric
 import com.intel.analytics.bigdl.utils._
 import com.intel.analytics.bigdl.{nn => bnn}
 import com.intel.analytics.zoo.pipeline.api.keras.layers._
-import com.intel.analytics.zoo.pipeline.api.keras.layers.internal.{InternalCAddTable, InternalMM}
 import com.intel.analytics.zoo.pipeline.api.keras.models._
 
 import scala.reflect.ClassTag
