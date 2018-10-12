@@ -17,11 +17,11 @@
 package com.intel.analytics.zoo.pipeline.inference
 
 import java.io.{IOException, ObjectInputStream, ObjectOutputStream}
-import java.util.concurrent.LinkedBlockingQueue
 import java.lang.{Float => JFloat, Integer => JInt}
+import java.util.concurrent.LinkedBlockingQueue
 import java.util.{List => JList}
 
-import com.intel.analytics.bigdl.nn.abstractnn.{AbstractModule, Activity}
+import com.intel.analytics.bigdl.nn.abstractnn.Activity
 import com.intel.analytics.bigdl.tensor.Tensor
 import com.intel.analytics.bigdl.utils.{Engine, Table}
 
@@ -66,6 +66,8 @@ class InferenceModel(private var supportedConcurrentNum: Int = 1,
     var model: FloatInferenceModel = null
     try {
       model = modelQueue.take
+    } catch {
+      case e: InterruptedException => throw new InferenceRuntimeException("no model available", e);
     }
     try {
       val result = model.predict(inputActivity)
