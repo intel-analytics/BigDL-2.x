@@ -29,8 +29,8 @@ outputPath=... // output path. Currently only support local file system.
 ${ANALYTICS_ZOO_HOME}/bin/spark-shell-with-zoo.sh \
 --verbose \
 --master $master \
---driver-memory 200g \
---executor-memory 200g \
+--driver-memory 10g \
+--executor-memory 10g \
 --class com.intel.analytics.zoo.examples.objectdetection.Predict \
 --image $imagePath --output $outputPath --modelPath $modelPath --partition 4
 ```

@@ -23,6 +23,7 @@ modelPath=... // model path. Local file system/HDFS/Amazon S3 are supported
 imagePath=... // image path. Local file system/HDFS are supported. With local file system, the files need to be available on all nodes in the cluster.
 
 outputPath=... // output path. Currently only support local file system.
+
 partitionNum=... // Optional, a suggestion value of the minimal partition number
 
 ##### * Run after pip install
@@ -30,6 +31,7 @@ partitionNum=... // Optional, a suggestion value of the minimal partition number
 You can easily use the following commands to run this example:
 
 ```bash
+export SPARK_DRIVER_MEMORY=10g
 python path/to/predict.py ${model_path} ${image_path} ${output_path} ${partitionNum}
 ```
 See [here](https://analytics-zoo.github.io/master/#PythonUserGuide/run/#run-after-pip-install) for more running guidance after pip install.
