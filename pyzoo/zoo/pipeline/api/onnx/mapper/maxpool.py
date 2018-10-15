@@ -52,7 +52,7 @@ class MaxPoolMapper(OperatorMapper):
             border_mode, pads = OnnxHelper.get_padds(self.onnx_attr)
             if border_mode is None and pads is None:
                 border_mode = 'valid'
-            if pads == None:
+            if pads is None:
                 pads = 0
             permute = zlayers.Permute(dims=(2, 1))(self.model_inputs[0].zvalue)
             maxpool = zlayers.MaxPooling1D(pool_length=pool_length,
