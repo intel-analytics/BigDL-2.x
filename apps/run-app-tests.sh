@@ -350,6 +350,25 @@ time10=$((now-start))
 rm ${ANALYTICS_ZOO_HOME}/apps/dogs-vs-cats/tmp.py
 echo "#10 dogs-vs-cats time used:$time10 seconds"
 
+elif [ $1=4 ]; then
+echo"#11 start app test for image-augementation-3d"
+#timer
+start=$(date "+%s")
+${ANALYTICS_ZOO_HOME}/apps/ipynb2py.sh ${ANALYTICS_ZOO_HOME}/apps/image-augmentation-3d/image-augementation-3d
+${SPARK_HOME}/bin/spark-submit \
+        --master ${MASTER} \
+        --driver-memory 1g  \
+        --executor-memory 1g \
+        --conf spark.akka.frameSize=64 \
+        --py-files ${ANALYTICS_ZOO_PYZIP},${ANALYTICS_ZOO_HOME}/apps/image-augmentation-3d/image-augementation-3d.py \
+        --properties-file ${ANALYTICS_ZOO_CONF} \
+        --jars ${ANALYTICS_ZOO_JAR} \
+        --conf spark.driver.extraClassPath=${ANALYTICS_ZOO_JAR} \
+        --conf spark.executor.extraClassPath=${ANALYTICS_ZOO_JAR} \
+        ${ANALYTICS_ZOO_HOME}/apps/image-augmentation-3d/image-augementation-3d.py
+now=$(date "+%s")
+time11=$((now-start))
+
 else
 echo "#1 start app test for anomaly-detection-nyc-taxi"
 #timer
