@@ -546,7 +546,14 @@ abstract class KerasNet[T: ClassTag](implicit ev: TensorNumeric[T])
       case distributed: DistributedTextSet =>
         TextPredictor[T](this, batchPerThread).predict(distributed)
       case local: LocalTextSet =>
-        TextPredictor[T](this, batchPerThread).predict(local, shareBuffer = false)
+        val features = local.array
+        val samples = features.map(_.getSample).asInstanceOf[Array[Sample[T]]]
+        val predictions = predict(samples, batchPerThread)
+        val results = features.zip(predictions).map{case (feature, predict) =>
+          feature(TextFeature.predict) = predict
+          feature
+        }
+        TextSet.array(results).setWordIndex(x.getWordIndex)
     }
   }
 
