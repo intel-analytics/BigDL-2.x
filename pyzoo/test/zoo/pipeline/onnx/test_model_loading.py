@@ -565,7 +565,7 @@ class TestModelLoading(OnnxTestCase):
                 return torch.cat([v for v in x], 1)
 
         pytorch_model = Concat()
-        input_shape_with_batch = [(1, 3), (3, 1)]
+        input_shape_with_batch = [(1, 3), (1, 3)]
         self.compare_with_pytorch(pytorch_model, input_shape_with_batch)
 
     def test_concat(self):
