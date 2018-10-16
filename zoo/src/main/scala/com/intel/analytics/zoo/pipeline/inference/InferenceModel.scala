@@ -33,14 +33,20 @@ class InferenceModel(private var supportedConcurrentNum: Int = 1,
                      LinkedBlockingQueue[FloatInferenceModel] = null)
   extends InferenceSupportive with Serializable {
   this.modelQueue = new LinkedBlockingQueue[FloatInferenceModel](supportedConcurrentNum)
+  this.originalModel match {
+    case null =>
+    case _ => offerModelQueue()
+  }
 
   def doLoad(modelPath: String, weightPath: String): Unit = {
+    clearModelQueue()
     this.originalModel =
       InferenceModelFactory.loadFloatInferenceModel(modelPath, weightPath)
     offerModelQueue()
   }
 
   def doLoadCaffe(modelPath: String, weightPath: String): Unit = {
+    clearModelQueue()
     this.originalModel =
       InferenceModelFactory.loadFloatInferenceModelForCaffe(modelPath, weightPath)
     offerModelQueue()
@@ -50,6 +56,7 @@ class InferenceModel(private var supportedConcurrentNum: Int = 1,
                intraOpParallelismThreads: Int,
                interOpParallelismThreads: Int,
                usePerSessionThreads: Boolean): Unit = {
+    clearModelQueue()
     this.originalModel =
       InferenceModelFactory.loadFloatInferenceModelForTF(modelPath,
         intraOpParallelismThreads, interOpParallelismThreads, usePerSessionThreads)
@@ -57,8 +64,7 @@ class InferenceModel(private var supportedConcurrentNum: Int = 1,
   }
 
   def doReload(modelPath: String, weightPath: String): Unit = {
-    this.originalModel = null
-    this.modelQueue.clear()
+    clearModelQueue()
     doLoad(modelPath, weightPath)
   }
 
@@ -114,7 +120,14 @@ class InferenceModel(private var supportedConcurrentNum: Int = 1,
     }
   }
 
+  private def clearModelQueue(): Unit = {
+    this.originalModel = null
+    this.modelQueue.clear()
+  }
+
   private def offerModelQueue(): Unit = {
+    require(this.originalModel != null, "original model can not be null")
+    require(this.supportedConcurrentNum > 0, "supported concurrent number should > 0")
     val models = InferenceModelFactory.
       cloneSharedWeightsModelsIntoArray(this.originalModel, this.supportedConcurrentNum)
     models.map(this.modelQueue.offer(_))
@@ -134,9 +147,7 @@ class InferenceModel(private var supportedConcurrentNum: Int = 1,
     this.supportedConcurrentNum = in.readInt
     this.originalModel = in.readObject.asInstanceOf[FloatInferenceModel]
     this.modelQueue = new LinkedBlockingQueue[FloatInferenceModel](supportedConcurrentNum)
-    val models = InferenceModelFactory.
-      cloneSharedWeightsModelsIntoArray(this.originalModel, this.supportedConcurrentNum)
-    models.map(this.modelQueue.offer(_))
+    offerModelQueue()
   }
 
   override def toString: String =
