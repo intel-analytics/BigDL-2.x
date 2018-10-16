@@ -87,7 +87,7 @@ def setup_package():
     metadata = dict(
         name='analytics-zoo',
         version=VERSION,
-        description='Analytics + AI platform for Apache Spark and BigDL',
+        description='Distributed Tensorflow, Keras and BigDL on Apache Spark',
         author='Analytics Zoo Authors',
         author_email='bigdl-user-group@googlegroups.com',
         license='Apache License, Version 2.0',
