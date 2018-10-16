@@ -18,7 +18,7 @@
 from test.zoo.pipeline.utils.test_utils_onnx import OnnxTestCase
 from zoo.pipeline.api.keras.layers import *
 import numpy as np
-
+from onnx.backend.test.case.node import pool_op_common
 np.random.seed(1337)  # for reproducibility
 import torch
 import onnx.helper as helper
@@ -609,15 +609,18 @@ class TestModelLoading(OnnxTestCase):
     def test_transpose(self):
         shape = (2, 3, 4)
         data = np.random.random_sample(shape).astype(np.float32)
+        permutations = list(pool_op_common.itertools.permutations(np.arange(len(shape))))
 
-        node = onnx.helper.make_node(
-            'Transpose',
-            inputs=['data'],
-            outputs=['transposed']
-        )
-        transposed = np.transpose(data)
-        output = OnnxLoader.run_node(node, [data])
-        np.testing.assert_almost_equal(output["transposed"], transposed, decimal=5)
+        for i in range(len(permutations)):
+            node = onnx.helper.make_node(
+                'Transpose',
+                inputs=['data'],
+                outputs=['transposed'],
+                perm=permutations[i]
+            )
+            transposed = np.transpose(data, permutations[i])
+            output = OnnxLoader.run_node(node, [data])
+            np.testing.assert_almost_equal(output["transposed"], transposed, decimal=5)
 
     def test_torch_transpose(self):
         input_shape_with_batch = (2, 3, 5)
