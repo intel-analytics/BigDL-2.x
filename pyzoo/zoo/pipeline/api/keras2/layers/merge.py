@@ -95,3 +95,43 @@ def minimum(inputs, **kwargs):
     creating: createZooKeras2Minimum
     """
     return Minimum(**kwargs)(inputs)
+
+
+class Average(ZooKeras2Layer):
+    """
+    Layer that computes the average (element-wise) a list of inputs.
+
+    It takes as input a list of tensors,
+    all of the same shape, and returns
+    a single tensor (also of the same shape).
+    >>> from zoo.pipeline.api.keras.layers import Input
+    >>> ave = Average()([Input(shape=(4, 5)), Input(shape=(4, 5)), Input(shape=(4, 5))])
+    creating: createZooKeras2Average
+    creating: createZooKerasInput
+    creating: createZooKerasInput
+    creating: createZooKerasInput
+    """
+    def __init__(self,
+                 input_shape=None, **kwargs):
+        super(Average, self).__init__(None,
+                                      list(input_shape) if input_shape else None,
+                                      **kwargs)
+
+
+def average(inputs, **kwargs):
+    """Functional interface to the `Average` layer.
+
+    # Arguments
+        inputs: A list of input tensors (at least 2).
+        **kwargs: Standard layer keyword arguments.
+
+    # Returns
+        A tensor, the element-wise minimum of the inputs.
+    >>> from zoo.pipeline.api.keras.layers import Input
+    >>> ave = average([Input(shape=(4, 5)), Input(shape=(4, 5)), Input(shape=(4, 5))])
+    creating: createZooKerasInput
+    creating: createZooKerasInput
+    creating: createZooKerasInput
+    creating: createZooKeras2Average
+    """
+    return Average(**kwargs)(inputs)

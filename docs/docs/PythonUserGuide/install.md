@@ -4,18 +4,14 @@ For Python users, Analytics Zoo can be installed either [from pip](#install-from
 
 ---
 ## **Install from pip**
-
-Analytics Zoo can be installed via pip easily using the following command.
-
-***Install analytics-zoo-0.2.0.dev1***
-
-* Note that you might need to add `sudo` if you don't have the permission for installation.
+You can use the following command to install the latest release version of __analytics-zoo__ via pip easily:
 
 ```bash
-pip install --upgrade pip
-pip install analytics-zoo==0.2.0.dev1     # for Python 2.7
-pip3 install analytics-zoo==0.2.0.dev1    # for Python 3.5 and Python 3.6
+pip install analytics-zoo     # for Python 2.7
+pip3 install analytics-zoo    # for Python 3.5 and Python 3.6
 ```
+
+* Note that you might need to add `sudo` if you don't have the permission for installation.
 
 **Important:**
 
@@ -29,11 +25,11 @@ sc = init_nncontext()
 
 **Remarks:**
 
-1. We've tested this package with pip 9.0.1.
+1. We've tested this package with pip 9.0.1. `pip install --upgrade pip` if necessary.
 2. Pip install supports __Mac__ and __Linux__ platforms.
 3. Pip install only supports __local__ mode. Cluster mode might be supported in the future. For those who want to use Analytics Zoo in cluster mode, please try to [install without pip](#install-without-pip).
 4. You need to install Java __>= JDK8__ before running Analytics Zoo, which is required by `pyspark`.
-5. `pyspark`(2.2), `bigdl==0.6.0` and its dependencies will be automatically installed if they haven't been detected in the current Python environment.
+5. `pyspark`, `bigdl==0.7.0` and their dependencies will automatically be installed if they haven't been detected in the current Python environment.
 
 
 ---
@@ -48,8 +44,8 @@ If you choose to install Analytics Zoo without pip, you need to prepare Spark an
     - Note that __Python 3.6__ is only compatible with Spark 1.6.4, 2.0.3, 2.1.1 and >=2.2.0. See [this issue](https://issues.apache.org/jira/browse/SPARK-19019) for more discussion.
 
 
-2. You can download the Analytics Zoo release and nightly build from the [Release Page](../release-download.md)
-  or build the Analytics Zoo package from [source](../ScalaUserGuide/install/#build-with-script-recommended).
+2. You are recommended to download Analytics Zoo prebuilt release and nightly build package from the [Release Page](https://analytics-zoo.github.io/master/#release-download/) and extract it.
+Alternatively, you can also build the Analytics Zoo from [source](../ScalaUserGuide/install/#build-with-script-recommended).
 
 3. Install Python dependencies. Analytics Zoo only depends on `numpy` and `six` for now.
 

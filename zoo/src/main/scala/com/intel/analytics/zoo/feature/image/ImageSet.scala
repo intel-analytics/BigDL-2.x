@@ -17,7 +17,7 @@
 package com.intel.analytics.zoo.feature.image
 
 import com.intel.analytics.bigdl.DataSet
-import com.intel.analytics.bigdl.dataset.DataSet
+import com.intel.analytics.bigdl.dataset.{DataSet, Sample}
 import com.intel.analytics.bigdl.transform.vision.image.{DistributedImageFrame, ImageFeature, ImageFrame, LocalImageFrame}
 import com.intel.analytics.zoo.common.Utils
 import com.intel.analytics.zoo.feature.common.Preprocessing
@@ -25,6 +25,8 @@ import org.apache.commons.io.FileUtils
 import org.apache.spark.SparkContext
 import org.apache.spark.rdd.RDD
 import org.opencv.imgcodecs.Imgcodecs
+
+import scala.reflect.ClassTag
 
 /**
  * ImageSet wraps a set of ImageFeature
@@ -72,9 +74,9 @@ abstract class ImageSet {
   def toImageFrame(): ImageFrame
 
   /**
-   * Convert ImageSet to DataSet of ImageFeature.
+   * Convert ImageSet to DataSet of Sample.
    */
-  def toDataSet(): DataSet[ImageFeature]
+  def toDataSet[T: ClassTag]: DataSet[Sample[T]]
 }
 
 class LocalImageSet(var array: Array[ImageFeature]) extends ImageSet {
@@ -91,8 +93,8 @@ class LocalImageSet(var array: Array[ImageFeature]) extends ImageSet {
     ImageFrame.array(array)
   }
 
-  override def toDataSet(): DataSet[ImageFeature] = {
-    DataSet.array(array)
+  override def toDataSet[T: ClassTag]: DataSet[Sample[T]] = {
+    DataSet.array(array.map(_[Sample[T]](ImageFeature.sample)))
   }
 }
 
@@ -110,8 +112,8 @@ class DistributedImageSet(var rdd: RDD[ImageFeature]) extends ImageSet {
     ImageFrame.rdd(rdd)
   }
 
-  override def toDataSet(): DataSet[ImageFeature] = {
-    DataSet.rdd[ImageFeature](rdd)
+  override def toDataSet[T: ClassTag]: DataSet[Sample[T]] = {
+    DataSet.rdd(rdd.map(_[Sample[T]](ImageFeature.sample)))
   }
 }
 
@@ -125,12 +127,52 @@ object ImageSet {
     new LocalImageSet(data)
   }
 
+  private def transform(imageSet: ImageSet,
+                        resizeH: Int, resizeW: Int, imageCodec: Int): ImageSet = {
+    if (resizeW == -1 || resizeH == -1) {
+      imageSet -> ImageBytesToMat(imageCodec = imageCodec)
+    } else {
+      imageSet -> BufferedImageResize(resizeH, resizeW) ->
+        ImageBytesToMat(imageCodec = imageCodec)
+    }
+  }
+
+  /**
+   * create LocalImageSet from array of bytes
+   * @param data nested array of bytes, expect inner array is a image
+   * @param resizeH height after resize, by default is -1 which will not resize the image
+   * @param resizeW width after resize, by default is -1 which will not resize the image
+   * @param imageCodec specifying the color type of a loaded image, same as in OpenCV.imread.
+   *              By default is Imgcodecs.CV_LOAD_IMAGE_UNCHANGED
+   */
+  def array(data: Array[Array[Byte]], resizeH: Int = -1, resizeW: Int = -1,
+            imageCodec: Int = Imgcodecs.CV_LOAD_IMAGE_UNCHANGED): ImageSet = {
+    val images = data.map(ImageFeature(_))
+    val imageSet = ImageSet.array(images)
+    transform(imageSet, resizeH, resizeW, imageCodec)
+  }
+
   /**
    * create DistributedImageSet
    * @param data rdd of ImageFeature
    */
   def rdd(data: RDD[ImageFeature]): DistributedImageSet = {
     new DistributedImageSet(data)
+  }
+
+  /**
+   * create DistributedImageSet for a RDD of array bytes
+   * @param data rdd of array of bytes
+   * @param resizeH height after resize, by default is -1 which will not resize the image
+   * @param resizeW width after resize, by default is -1 which will not resize the image
+   * @param imageCodec specifying the color type of a loaded image, same as in OpenCV.imread.
+   *              By default is Imgcodecs.CV_LOAD_IMAGE_UNCHANGED
+   */
+  def rddBytes(data: RDD[Array[Byte]], resizeH: Int = -1, resizeW: Int = -1,
+               imageCodec: Int = Imgcodecs.CV_LOAD_IMAGE_UNCHANGED): ImageSet = {
+    val images = data.map(ImageFeature(_))
+    val imageSet = ImageSet.rdd(images)
+    transform(imageSet, resizeH, resizeW, imageCodec)
   }
 
   /**
@@ -142,7 +184,7 @@ object ImageSet {
    * if sc is defined, path can be local or HDFS. Wildcard character are supported.
    * if sc is null, path is local directory/image file/image file with wildcard character
    * @param sc SparkContext
-   * @param minPartitions A suggestion value of the minimal splitting number for input data.
+   * @param minPartitions A suggestion value of the minimal partition number
    * @param resizeH height after resize, by default is -1 which will not resize the image
    * @param resizeW width after resize, by default is -1 which will not resize the image
    * @param imageCodec specifying the color type of a loaded image, same as in OpenCV.imread.
@@ -164,11 +206,7 @@ object ImageSet {
       }
       ImageSet.array(images)
     }
-    if (resizeW == -1 || resizeH == -1) {
-      imageSet -> ImageBytesToMat(imageCodec = imageCodec)
-    } else {
-      imageSet -> BufferedImageResize(resizeH, resizeW) -> ImageBytesToMat(imageCodec = imageCodec)
-    }
+    transform(imageSet, resizeH, resizeW, imageCodec)
   }
 
   /**

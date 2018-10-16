@@ -28,7 +28,7 @@ np.random.seed(1337)  # for reproducibility
 class TestWideAndDeep(ZooTestCase):
 
     def setup_method(self, method):
-        sparkConf = create_spark_conf().setMaster("local[4]")\
+        sparkConf = init_spark_conf().setMaster("local[4]")\
             .setAppName("test wide and deep")
         self.sc = init_nncontext(sparkConf)
         self.sqlContext = SQLContext(self.sc)

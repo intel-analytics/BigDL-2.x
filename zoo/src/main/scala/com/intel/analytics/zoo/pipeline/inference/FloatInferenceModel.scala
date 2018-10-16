@@ -17,66 +17,51 @@
 package com.intel.analytics.zoo.pipeline.inference
 
 import java.io.{IOException, ObjectInputStream, ObjectOutputStream}
+import java.lang.{Float => JFloat, Integer => JInt}
+import java.util.{List => JList}
 
-import com.intel.analytics.bigdl.optim.LocalPredictor
-import com.intel.analytics.bigdl.nn.abstractnn.AbstractModule
-import com.intel.analytics.bigdl.nn.abstractnn.Activity
+import com.intel.analytics.bigdl.nn.abstractnn.{AbstractModule, Activity}
 import com.intel.analytics.bigdl.tensor.Tensor
+import com.intel.analytics.bigdl.utils.{Engine, Table}
 
 import scala.collection.JavaConverters._
-import java.util.{List => JList}
-import java.lang.{Float => JFloat}
-import java.lang.{Integer => JInt}
-import com.intel.analytics.bigdl.dataset.Sample
 
-
-import com.intel.analytics.bigdl.utils.Engine
-
-class FloatInferenceModel(
-  var model: AbstractModule[Activity, Activity, Float],
-  @transient var predictor: LocalPredictor[Float]) extends InferenceSupportive with Serializable {
+class FloatInferenceModel(var model: AbstractModule[Activity, Activity, Float])
+  extends InferenceSupportive with Serializable {
 
   @deprecated
   def predict(input: JList[JFloat], shape: JList[JInt]): JList[JFloat] = {
     timing("model predict") {
-      val sample = transferInputToSample(input, shape)
-      val result = predictor.predict(Array(sample))
-      require(result.length == 1, "only one input, should get only one prediction")
-      result(0).asInstanceOf[Tensor[Float]].toArray().toList.asJava.asInstanceOf[JList[JFloat]]
+      val input_arr = new Array[Float](input.size())
+      for (i <- 0 until input.size()) {
+        input_arr(i) = input.get(i)
+      }
+      val shape_arr = new Array[Int](shape.size())
+      for (i <- 0 until shape.size()) {
+        shape_arr(i) = shape.get(i)
+      }
+      val result = model.forward(Tensor[Float](input_arr, shape_arr))
+      result.asInstanceOf[Tensor[Float]].toArray().toList.asJava.asInstanceOf[JList[JFloat]]
     }
   }
 
-  def predict(inputs: JList[JTensor]): JList[JList[JTensor]] = {
+  def predict(inputs: JList[JList[JTensor]]): JList[JList[JTensor]] = {
     timing(s"model predict for batch ${inputs.size()}") {
+      val batchSize = inputs.size()
+      require(batchSize > 0, "inputs size should > 0")
 
-      var i = 0
-      val length = inputs.size()
-      val samples = new Array[Sample[Float]](length)
-      while (i < length) {
-        val input = inputs.get(i)
-        val inputData = input.getData
-        val inputShape = input.getShape
-        val sample = transferInputToSample(inputData, inputShape)
-        samples(i) = sample
-        i += 1
+      val inputActivity = transferListOfActivityToActivityOfBatch(inputs, batchSize)
+      val result: Activity = model.forward(inputActivity)
+
+      val outputs = result.isTensor match {
+        case true =>
+          val outputTensor = result.toTensor[Float]
+          transferBatchTensorToJListOfJListOfJTensor(outputTensor, batchSize)
+        case false =>
+          val outputTable: Table = result.toTable
+          transferBatchTableToJListOfJListOfJTensor(outputTable, batchSize)
       }
-
-      val results: Array[Activity] = predictor.predict(samples)
-      val outputResults: Array[JList[JTensor]] = results.map(result => {
-        val outputs: Seq[JTensor] = result.isTensor match {
-          case true =>
-            val outputTensor = result.asInstanceOf[Tensor[Float]]
-            Seq(transferTensorToJTensor(outputTensor))
-          case false =>
-            val outputTable = result.toTable
-
-            outputTable.toSeq[Tensor[Float]].map(t =>
-              transferTensorToJTensor(t)
-            )
-        }
-        outputs.asJava
-      })
-      outputResults.toList.asJava
+      outputs
     }
   }
 
@@ -91,8 +76,8 @@ class FloatInferenceModel(
     System.setProperty("bigdl.coreNumber", System.getProperty("bigdl.coreNumber", "1"))
     Engine.init
     model = (in.readObject().asInstanceOf[AbstractModule[Activity, Activity, Float]])
-    predictor = LocalPredictor(model = model, batchPerCore = 1)
+    model.evaluate()
   }
 
-  override def toString : String = s"FloatInferenceModel($model, $predictor)"
+  override def toString: String = s"FloatInferenceModel($model)"
 }

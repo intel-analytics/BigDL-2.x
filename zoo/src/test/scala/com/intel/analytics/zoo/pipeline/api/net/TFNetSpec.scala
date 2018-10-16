@@ -15,12 +15,18 @@
  */
 package com.intel.analytics.zoo.pipeline.api.net
 
+
+import com.intel.analytics.bigdl.nn.abstractnn.AbstractModule
 import com.intel.analytics.bigdl.tensor.Tensor
 import com.intel.analytics.bigdl.utils.{LayerException, T}
-import com.intel.analytics.zoo.common.NNContext
+import com.intel.analytics.zoo.pipeline.api.Net
+import com.intel.analytics.zoo.pipeline.api.keras.ZooSpecHelper
+import com.intel.analytics.zoo.pipeline.api.keras.serializer.ModuleSerializationTest
 import org.apache.spark.serializer.KryoSerializer
-import org.apache.spark.{SparkConf, SparkContext, SparkEnv}
+import org.apache.spark.SparkConf
 import org.scalatest.{BeforeAndAfter, FlatSpec, Matchers}
+
+import scala.util.Random
 
 class TFNetSpec extends FlatSpec with Matchers with BeforeAndAfter {
 
@@ -29,9 +35,9 @@ class TFNetSpec extends FlatSpec with Matchers with BeforeAndAfter {
     val resource = getClass().getClassLoader().getResource("tf")
     val path = resource.getPath + "/" + "multi_type_inputs_outputs.pb"
 
-    val inputs = Seq("float_input:0", "double_input:0",
+    val inputs = Array("float_input:0", "double_input:0",
       "int_input:0", "long_input:0", "uint8_input:0")
-    val outputs = Seq("float_output:0", "double_output:0",
+    val outputs = Array("float_output:0", "double_output:0",
       "int_output:0", "long_output:0", "uint8_output:0")
     val net = TFNet(path, inputs, outputs)
     val data = T(Tensor[Float](Array[Float](1.0f), Array(1, 1)),
@@ -55,9 +61,9 @@ class TFNetSpec extends FlatSpec with Matchers with BeforeAndAfter {
   "TFNet " should "be able to load from a folder" in {
     val resource = getClass().getClassLoader().getResource("tfnet")
     val net = TFNet(resource.getPath)
-    val result = net.forward(Tensor[Float](4, 28, 28, 1).rand())
+    val result = net.forward(Tensor[Float](2, 4).rand())
 
-    result.toTensor[Float].size() should be(Array(4, 10))
+    result.toTensor[Float].size() should be(Array(2, 2))
   }
 
 
@@ -65,7 +71,7 @@ class TFNetSpec extends FlatSpec with Matchers with BeforeAndAfter {
 
     val resource = getClass().getClassLoader().getResource("tfnet")
     val net = TFNet(resource.getPath)
-    val input = Tensor[Float](4, 28, 28, 1).rand()
+    val input = Tensor[Float](2, 4).rand()
     val result = net.forward(input).toTensor[Float].clone()
     val net2 = net.cloneModule()
     val result2 = net2.forward(input).toTensor[Float].clone()
@@ -76,17 +82,17 @@ class TFNetSpec extends FlatSpec with Matchers with BeforeAndAfter {
 
     val resource = getClass().getClassLoader().getResource("tfnet")
     val net = TFNet(resource.getPath)
-    val input = Tensor[Float](4, 28, 28, 1).rand()
-    input.resize(2, 28, 28, 1)
+    val input = Tensor[Float](4, 4).rand()
+    input.resize(2, 4)
     val result = net.forward(input).toTensor[Float].clone()
-    result.size() should be(Array(2, 10))
+    result.size() should be(Array(2, 2))
   }
 
-  "TFNet " should "work for kyro serializer" in {
+  "TFNet " should "work for kryo serializer" in {
 
     val resource = getClass().getClassLoader().getResource("tfnet")
     val net = TFNet(resource.getPath)
-    val input = Tensor[Float](4, 28, 28, 1).rand()
+    val input = Tensor[Float](2, 4).rand()
     val result = net.forward(input).toTensor[Float].clone()
 
     val serde = new  KryoSerializer(new SparkConf()).newInstance()
@@ -101,9 +107,9 @@ class TFNetSpec extends FlatSpec with Matchers with BeforeAndAfter {
     val resource = getClass().getClassLoader().getResource("tf")
     val path = resource.getPath + "/" + "multi_type_inputs_outputs.pb"
 
-    val inputs = Seq("float_input:0", "double_input:0",
+    val inputs = Array("float_input:0", "double_input:0",
       "int_input:0", "long_input:0", "uint8_input:0")
-    val outputs = Seq("float_output:0", "double_output:0",
+    val outputs = Array("float_output:0", "double_output:0",
       "int_output:0", "long_output:0", "uint8_output:0")
     val net = TFNet(path, inputs, outputs)
     val data1 = T(Tensor[Float](Array[Float](1.0f), Array(1, 1)),
@@ -121,4 +127,15 @@ class TFNetSpec extends FlatSpec with Matchers with BeforeAndAfter {
       net.forward(data2) // this is not allowed
     }
   }
+
+  "TFNet " should "work with backward" in {
+    val resource = getClass().getClassLoader().getResource("tfnet_training")
+    val net = TFNet(resource.getPath)
+    val input = Tensor[Float](2, 4).rand()
+    val output = net.forward(input).toTensor[Float].clone()
+    val gradInput = net.backward(input, output).toTensor[Float].clone()
+
+    gradInput.size() should be (input.size())
+  }
+
 }

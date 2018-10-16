@@ -4,6 +4,7 @@ extra_css: [extra.css]
 theme_dir: mkdocs_windmill 
 repo_name: 'Fork on GitHub '
 repo_url: 'https://github.com/intel-analytics/analytics-zoo'
+google_analytics: ['UA-125166209-1', 'analytics-zoo.github.io']
 extra:
     version: latest
     article_nav_top: false
@@ -29,7 +30,8 @@ pages:
     - DataFrame and ML Pipeline: ProgrammingGuide/nnframes.md
     - Autograd: ProgrammingGuide/autograd.md
     - Transfer Learning: ProgrammingGuide/transferlearning.md
-    - Inference: ProgrammingGuide/inference.md
+    - Model Serving: ProgrammingGuide/inference.md
+    - Distributed Tensoflow on Spark/BigDL: ProgrammingGuide/tensorflow.md
   - Feature Engineering:
     - Working with Images: ProgrammingGuide/workingwithimages.md
   - Built-in Models:
@@ -40,6 +42,8 @@ pages:
   - Reference Use Cases:
     - Use Cases: ProgrammingGuide/usercases-overview.md
     - Anomaly Detection: ProgrammingGuide/anomaly-detection.md
+- White Paper:
+  - BigDL: wp-bigdl.md
 - API Guide:
   - Pipeline APIs:
     - NNFrames: APIGuide/PipelineAPI/nnframes.md

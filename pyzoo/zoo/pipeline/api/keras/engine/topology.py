@@ -16,8 +16,10 @@
 
 import zoo.pipeline.api.autograd as autograd
 from zoo.feature.image import ImageSet
+from zoo.feature.text import TextSet
 from zoo.pipeline.api.keras.base import ZooKerasLayer
 from zoo.pipeline.api.keras.utils import *
+from bigdl.nn.layer import Layer
 
 if sys.version >= '3':
     long = int
@@ -120,15 +122,16 @@ class KerasNet(ZooKerasLayer):
 
     def fit(self, x, y=None, batch_size=32, nb_epoch=10, validation_data=None, distributed=True):
         """
-        Train a model for a fixed number of epochs on a dataset.
+        Train a model for a fixed number of epochs on a DataSet.
 
         # Arguments
-        x: Input data. A Numpy array or RDD of Sample or ImageSet.
-        y: Labels. A Numpy array. Default is None if x is already RDD of Sample or Image DataSet.
+        x: Input data. A Numpy array or RDD of Sample, ImageSet or TextSet.
+        y: Labels. A Numpy array. Default is None if x is already Sample RDD or ImageSet or TextSet.
         batch_size: Number of samples per gradient update. Default is 32.
-        nb_epoch: Number of iterations to train.
-        validation_data: Tuple (x_val, y_val) where x_val and y_val are both Numpy arrays. Or
-                         RDD of Sample. Or ImageSet. Default is None if no validation is involved.
+        nb_epoch: Number of epochs to train.
+        validation_data: Tuple (x_val, y_val) where x_val and y_val are both Numpy arrays.
+                         Can also be RDD of Sample or ImageSet or TextSet.
+                         Default is None if no validation is involved.
         distributed: Boolean. Whether to train the model in distributed mode or local mode.
                      Default is True. In local mode, x and y must both be Numpy arrays.
         """
@@ -137,7 +140,8 @@ class KerasNet(ZooKerasLayer):
                 training_data = to_sample_rdd(x, y)
                 if validation_data:
                     validation_data = to_sample_rdd(*validation_data)
-            elif (isinstance(x, RDD) or isinstance(x, ImageSet)) and not y:
+            elif (isinstance(x, RDD) or isinstance(x, ImageSet) or isinstance(x, TextSet))\
+                    and not y:
                 training_data = x
             else:
                 raise TypeError("Unsupported training data type: %s" % type(x))
@@ -167,19 +171,20 @@ class KerasNet(ZooKerasLayer):
         Evaluate a model on a given dataset in distributed mode.
 
         # Arguments
-        x: Evaluation data. A Numpy array or RDD of Sample.
-        y: Labels. A Numpy array. Default is None if x is already RDD of Sample.
+        x: Evaluation data. A Numpy array or RDD of Sample or ImageSet or TextSet.
+        y: Labels. A Numpy array.
+           Default is None if x is already Sample RDD or ImageSet or TextSet.
         batch_size: Number of samples per batch. Default is 32.
         """
         if isinstance(x, np.ndarray) and isinstance(y, np.ndarray):
-            data_rdd = to_sample_rdd(x, y)
-        elif isinstance(x, RDD) and not y:
-            data_rdd = x
+            data = to_sample_rdd(x, y)
+        elif (isinstance(x, RDD) or isinstance(x, ImageSet) or isinstance(x, TextSet)) and not y:
+            data = x
         else:
             raise TypeError("Unsupported evaluation data type: %s" % type(x))
         return callBigDlFunc(self.bigdl_type, "zooEvaluate",
                              self.value,
-                             data_rdd,
+                             data,
                              batch_size)
 
     def forward(self, input):
@@ -202,21 +207,30 @@ class KerasNet(ZooKerasLayer):
     def convert_output(output):
         if type(output) is JTensor:
             return output.to_ndarray()
-        elif(len(output) == 1):
+        elif len(output) == 1:
             return KerasNet.convert_output(output[0])
         else:
             return [KerasNet.convert_output(x) for x in output]
 
-    def predict(self, x, batch_size=32, distributed=True):
+    def predict(self, x, batch_per_thread=4, distributed=True):
         """
         Use a model to do prediction.
 
         # Arguments
-        x: Prediction data. A Numpy array or RDD of Sample.
-        batch_size: Number of samples per batch. Default is 32.
+        x: Prediction data. A Numpy array or RDD of Sample or ImageSet.
+        batch_per_thread:
+          The default value is 4.
+          When distributed is True,the total batch size is batch_per_thread * rdd.getNumPartitions.
+          When distributed is False the total batch size is batch_per_thread * numOfCores.
         distributed: Boolean. Whether to do prediction in distributed mode or local mode.
                      Default is True. In local mode, x must be a Numpy array.
         """
+        if isinstance(x, ImageSet) or isinstance(x, TextSet):
+            results = callBigDlFunc(self.bigdl_type, "zooPredict",
+                                    self.value,
+                                    x,
+                                    batch_per_thread)
+            return ImageSet(results) if isinstance(x, ImageSet) else TextSet(results)
         if distributed:
             if isinstance(x, np.ndarray):
                 data_rdd = to_sample_rdd(x, np.zeros([x.shape[0]]))
@@ -227,25 +241,28 @@ class KerasNet(ZooKerasLayer):
             results = callBigDlFunc(self.bigdl_type, "zooPredict",
                                     self.value,
                                     data_rdd,
-                                    batch_size)
+                                    batch_per_thread)
             return results.map(lambda result: Layer.convert_output(result))
         else:
             if isinstance(x, np.ndarray) or isinstance(x, list):
                 results = callBigDlFunc(self.bigdl_type, "zooPredict",
                                         self.value,
                                         self._to_jtensors(x),
-                                        batch_size)
+                                        batch_per_thread)
                 return [Layer.convert_output(result) for result in results]
             else:
                 raise TypeError("Unsupported prediction data type: %s" % type(x))
 
-    def predict_classes(self, x, batch_size=32, zero_based_label=True):
+    def predict_classes(self, x, batch_per_thread=4, zero_based_label=True):
         """
         Use a model to predict for classes. By default, label predictions start from 0.
 
         # Arguments
         x: Prediction data. A Numpy array or RDD of Sample.
-        batch_size: Number of samples per batch. Default is 32.
+        batch_per_partition:
+          The default value is 4.
+          When distributed is True, the total batch size is batch_per_thread * rdd.getNumPartitions.
+          When distributed is False the total batch size is batch_per_thread * numOfCores.
         zero_based_label: Boolean. Whether result labels start from 0.
                           Default is True. If False, result labels start from 1.
         """
@@ -258,7 +275,7 @@ class KerasNet(ZooKerasLayer):
         return callBigDlFunc(self.bigdl_type, "zooPredictClasses",
                              self.value,
                              data_rdd,
-                             batch_size,
+                             batch_per_thread,
                              zero_based_label)
 
     def get_layer(self, name):
