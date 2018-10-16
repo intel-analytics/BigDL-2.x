@@ -18,7 +18,9 @@ else
     tar zxf analytics-zoo-data/data/20news-18828.tar.gz -C analytics-zoo-data/data/
 fi
 
+export SPARK_DRIVER_MEMORY=2g
 python ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/textclassification/text_classification.py \
     --nb_epoch 2 \
     --data_path analytics-zoo-data/data/20news-18828 \
     --embedding_path analytics-zoo-data/data/glove.6B
+unset SPARK_DRIVER_MEMORY
