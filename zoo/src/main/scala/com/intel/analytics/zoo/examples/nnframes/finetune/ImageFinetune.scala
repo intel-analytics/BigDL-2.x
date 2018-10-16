@@ -16,7 +16,7 @@
 package com.intel.analytics.zoo.examples.nnframes.finetune
 
 import com.intel.analytics.bigdl.Module
-import com.intel.analytics.bigdl.nn.{CrossEntropyCriterion, Graph}
+import com.intel.analytics.bigdl.nn.CrossEntropyCriterion
 import com.intel.analytics.bigdl.optim.{Top1Accuracy, Trigger}
 import com.intel.analytics.bigdl.utils.{LoggerFilter, Shape}
 import com.intel.analytics.zoo.common.NNContext
@@ -25,82 +25,53 @@ import com.intel.analytics.zoo.pipeline.api.keras.models.Model
 import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric.NumericFloat
 import com.intel.analytics.zoo.feature.image.{RowToImageFeature, _}
 import com.intel.analytics.zoo.pipeline.api.Net
-import com.intel.analytics.zoo.pipeline.nnframes.{NNClassifier, NNClassifierModel, NNImageReader}
+import com.intel.analytics.zoo.pipeline.nnframes.{NNClassifier, NNImageReader}
+import org.apache.hadoop.fs.Path
 import org.apache.spark.ml.Pipeline
 import org.apache.spark.sql.Row
 import org.apache.spark.sql.functions.{col, udf}
-import org.apache.spark.{SparkConf, SparkContext}
+import org.apache.spark.SparkConf
 import scopt.OptionParser
 
-
-object Utils {
-
-  case class TrainParams(
-                          modelPath: String = "/tmp/models/bigdl_inception-v1_imagenet_0.4.0.model",
-                          dataPath: String = "/tmp/datasets/cat_dog/train_sampled",
-                          batchSize: Int = 32,
-                          nEpochs: Int = 2)
-
-  val trainParser = new OptionParser[TrainParams]("BigDL ptbModel Train Example") {
-    opt[String]('m', "modelPath")
-      .text("pretrained model path")
-      .action((x, c) => c.copy(modelPath = x))
-    opt[String]('d', "dataPath")
-      .text("training data path")
-      .action((x, c) => c.copy(dataPath = x))
-    opt[Int]('b', "batchSize")
-      .text("batchSize")
-      .action((x, c) => c.copy(batchSize = x))
-    opt[Int]('e', "nEpochs")
-      .text("epoch numbers")
-      .action((x, c) => c.copy(nEpochs = x))
-  }
-}
-
-object TransferLearning {
+/**
+ * Scala example for image fine tuning with Inception model on Spark DataFrame.
+ * Please refer to the readme.md in the same folder for more details.
+ */
+object ImageFinetune {
 
   LoggerFilter.redirectSparkInfoLogs()
 
   def main(args: Array[String]): Unit = {
-    Utils.trainParser.parse(args, Utils.TrainParams()).map(param => {
-
-      val conf = new SparkConf()
-        .setAppName("Transfer Learning Example")
-
+    Utils.trainParser.parse(args, Utils.TrainParams()).foreach(param => {
+      val conf = new SparkConf().setAppName("Fine tuning Example")
       val sc = NNContext.initNNContext(conf)
 
-      val model = getTransferLearningModel(param.modelPath)
-
-      val (trainDf, valDf) = getImageData(param.dataPath, sc)
+      val createLabel = udf { row: Row =>
+        if (new Path(row.getString(0)).getName.contains("cat")) 1.0 else 2.0
+      }
+      val imagesDF = NNImageReader.readImages(param.imagePath, sc,
+          resizeH = 300, resizeW = 300, imageCodec = 1)
+        .withColumn("label", createLabel(col("image")))
+      val Array(validationDF, trainingDF) = imagesDF.randomSplit(Array(0.20, 0.80), seed = 1L)
 
       val featureTransformer = RowToImageFeature() -> ImageResize(256, 256) ->
-                                   ImageCenterCrop(224, 224) ->
-                                   ImageChannelNormalize(123, 117, 104) ->
-                                   ImageMatToTensor() ->
-                                   ImageFeatureToTensor()
+        ImageCenterCrop(224, 224) -> ImageChannelNormalize(123, 117, 104) ->
+        ImageMatToTensor() -> ImageFeatureToTensor()
+      val model = getTransferLearningModel(param.modelPath)
 
-
-      // val valTransformed = featureTransformer.transform(valDf)
-//      val dlmodel = new NNClassifierModel(model, featureTransformer)
       val classifier = NNClassifier(model, CrossEntropyCriterion[Float](), featureTransformer)
         .setFeaturesCol("image")
         .setLearningRate(0.003)
         .setBatchSize(param.batchSize)
         .setMaxEpoch(param.nEpochs)
         .setCachingSample(false)
-        .setValidation(Trigger.everyEpoch, valDf, Array(new Top1Accuracy()), param.batchSize)
-
+        .setValidation(Trigger.everyEpoch, validationDF, Array(new Top1Accuracy()), param.batchSize)
 
       val pipeline = new Pipeline().setStages(Array(classifier))
+      val pipelineModel = pipeline.fit(trainingDF)
+      val predictions = pipelineModel.transform(validationDF)
 
-      val pipelineModel = pipeline.fit(trainDf)
-
-      val predictions = pipelineModel.transform(valDf)
-
-      predictions.select(col("image"), col("label"), col("prediction"))
-        .sample(withReplacement = true, 0.1)
-        .show(false)
-
+      predictions.select("image", "label", "prediction").sample(false, 0.05).show(false)
       sc.stop()
     })
   }
@@ -121,14 +92,29 @@ object TransferLearning {
 
     Model[Float](input, logits)
   }
+}
 
-  private def getImageData(dataPath: String, sc: SparkContext) = {
-    val createLabel = udf { row: Row =>
-      if (row.getString(0).split("/").last.contains("cat")) 1.0 else 2.0 }
-    val imagesDF = NNImageReader.readImages(dataPath, sc)
-      .withColumn("label", createLabel(col("image")))
-    val Array(validationDF, trainingDF) = imagesDF
-      .randomSplit(Array(0.20, 0.80), seed = 1L)
-    (trainingDF, validationDF)
+
+private object Utils {
+
+  case class TrainParams(
+      modelPath: String = "/tmp/zoo/bigdl_inception-v1_imagenet_0.4.0.model",
+      imagePath: String = "/tmp/zoo/dogs_cats/samples",
+      batchSize: Int = 32,
+      nEpochs: Int = 2)
+
+  val trainParser = new OptionParser[TrainParams]("BigDL ptbModel Train Example") {
+    opt[String]('m', "modelPath")
+      .text("pretrained model path")
+      .action((x, c) => c.copy(modelPath = x))
+    opt[String]('d', "imagePath")
+      .text("training data path")
+      .action((x, c) => c.copy(imagePath = x))
+    opt[Int]('b', "batchSize")
+      .text("batchSize")
+      .action((x, c) => c.copy(batchSize = x))
+    opt[Int]('e', "nEpochs")
+      .text("epoch numbers")
+      .action((x, c) => c.copy(nEpochs = x))
   }
 }

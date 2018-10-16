@@ -1,50 +1,58 @@
-# Overview
+## Overview
 
 In the image transfer learning example, we use a pre-trained Inception_V1 model as
 image feature transformer and train another linear classifier to solve the dogs-vs-cats
 classification problem.
 
-In this example we are going to take a slightly different approach. We will still use a pre-trained
-caffe Inception_V1 model, but this time we will operate on the pre-trained model to freeze first of
-a few layers, replace the classifier on the top, then fine tune the whole model
+In this example we are going to take a different approach. We will use a pre-trained
+Inception_V1 model, but this time we will operate on the pre-trained model to freeze first of
+a few layers, replace the classifier on the top, then fine tune the whole model.
 
-# Preparation
+## Download Analytics Zoo
+You can download Analytics Zoo prebuilt release and nightly build package from [here](https://analytics-zoo.github.io/master/#release-download/) and extract it.
+
+## Run the example
 
 1. Download the pre-trained model
 
-You can download the pre-trained BigDL model [here](https://github.com/intel-analytics/analytics-zoo/tree/legacy/models).
+You can download the pre-trained BigDL model
+[here](https://github.com/intel-analytics/analytics-zoo/tree/legacy/models), and put it
+in `/tmp/zoo` or other path.
 
-In this example, we are going to use the Inception-V1 model. Please feel free to use other models.
+2. Prepare dataset
+For this example we use kaggle [Dogs vs. Cats](https://www.kaggle.com/c/dogs-vs-cats/data) train
+dataset. Download the data and run the following commands to copy about 1100 images of cats
+and dogs into `samples` folder.
 
-2. Prepare the dataset
-
-For this example we use kaggle [Dogs vs. Cats](https://www.kaggle.com/c/dogs-vs-cats/data) train dataset.
-After you download the file (train.zip), run the follow commands to extract the data.
-
-This dataset contains 25000 labeled images. In our experimentation, however, only a few thousands images
-could train a pretty good classifier. So you could use the `sample_training_data.py` script to sample a
-smaller dataset, and this will greatly speed up your experimentation.
-
-
-# Finetuning the model
-
-If you use the script mentioned above to downsize the dataset, it is suffice to use spark-local
-mode to run this example.
+```bash
+unzip train.zip -d /tmp/zoo/dogs_cats
+cd /tmp/zoo/dogs_cats
+mkdir samples
+cp train/cat.7* samples
+cp train/dog.7* samples
 ```
-    spark-submit \
-    --master local[physcial_core_number] \
-    --driver-memory 10g --executor-memory 20g \
-    --class com.intel.analytics.zoo.examples.nnframes.finetune.TransferLearning \
-    ./dist/lib/analytics-zoo-bigdl_BIGDL_VERSION-spark_SPARK_VERSION-ZOO_VERSION-jar-with-dependencies.jar \
-    --modelPath /tmp/bigdl_inception-v1_imagenet_0.4.0.model \
-    --dataPath /tmp/train_sampled \
+`7` is randomly chosen and can be replaced with other digit.
+
+3. Finetuning the model
+
+Run the following command for Spark local mode (`MASTER=local[*]`) or cluster mode, adjust
+ the memory size according to your image:
+
+```bash
+export SPARK_HOME=the root directory of Spark
+export ANALYTICS_ZOO_HOME=the folder where you extract the downloaded Analytics Zoo zip package
+
+${ANALYTICS_ZOO_HOME}/bin/spark-shell-with-zoo.sh \
+    --master local[2] \
+    --driver-memory 10g \
+    --class com.intel.analytics.zoo.examples.nnframes.finetune.ImageFinetune \
+    --modelPath /tmp/zoo/bigdl_inception-v1_imagenet_0.4.0.model \
     --batchSize 32 \
+    --imagePath /tmp/zoo/dogs_cats/samples \
     --nEpochs 2
 ```
 
 After training, you should see something like this.
-
-As you can see, we can get 98.3% accuracy only after the 2nd epoch. 
 
 ```
 2018-05-04 17:00:07 INFO  DistriOptimizer$:436 - [Epoch 2 1968/1964][Iteration 246][Wall Clock 213.599345954s] Epoch finished. Wall clock time is 270805.62788 ms
@@ -75,3 +83,8 @@ As you can see, we can get 98.3% accuracy only after the 2nd epoch.
 |[file:/home/yang/sources/model/train_sampled/cat.2741.jpg,385,352,3,16,[B@1e9cb0b6] |1.0  |1.0       |
 +------------------------------------------------------------------------------------+-----+----------+
 ```
+
+The model from fine tuning can achieve high accuracy on the validation set.
+
+In this example, we use the Inception-V1 model. Please feel free to explore other models from
+Caffe, Keras and Tensorflow.

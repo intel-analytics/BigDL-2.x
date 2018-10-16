@@ -1,4 +1,4 @@
-# Overview
+## Overview
 
 This is a Scala example for image inference with a pre-trained caffe Inception_V1 model based
 on Spark DataFrame (Dataset).
@@ -7,57 +7,41 @@ Analytics Zoo provides the DataFrame-based API for image reading, pre-processing
 The related classes followed the typical estimator/transformer pattern of Spark ML and can be used in
 a standard Spark ML pipeline.
 
-# Image Model Inference
+## Download Analytics Zoo
+You can download Analytics Zoo prebuilt release and nightly build package from [here](https://analytics-zoo.github.io/master/#release-download/) and extract it.
 
-You can run the full ModelInference example by following steps.
+## Image Model Inference
+
+You can run ModelInference example by the following steps.
 
 1. Prepare pre-trained model and definition file.
-
 Download caffe inception v1 [weights](http://dl.caffe.berkeleyvision.org/bvlc_googlenet.caffemodel)
-and [deploy.prototxt](https://github.com/BVLC/caffe/blob/master/models/bvlc_googlenet/deploy.prototxt)
-Use the path of the weights file as `$modelPath`, and the path of the prototxt as `$caffeDefPath`
-when submitting spark jobs.
+and [deploy.prototxt](https://github.com/BVLC/caffe/blob/master/models/bvlc_googlenet/deploy.prototxt).
+Put the files in `/tmp/zoo` or other path.
 
 2. Prepare predict dataset
+You can use your own image data (JPG or PNG), or some images from imagenet-2012 validation
+ dataset <http://image-net.org/download-images> to run the example.
 
-Put your image data for prediction in the ./predict folder. Alternatively, you may also use imagenet-2012
-validation dataset to run the example, which can be found from <http://image-net.org/download-images>. After
-you download the file (ILSVRC2012_img_val.tar), run the follow commands to extract the data.
-```bash
-    mkdir predict
-    tar -xvf ILSVRC2012_img_val.tar -C ./predict/
-```
 3. Run this example
 
-Command to run the example in Spark local mode:
-```
-    spark-submit \
-    --master local[physcial_core_number] \
-    --driver-memory 10g --executor-memory 20g \
+Run the following command for Spark local mode (`MASTER=local[*]`) or cluster mode, adjust
+ the memory size according to your image:
+
+```bash
+export SPARK_HOME=the root directory of Spark
+export ANALYTICS_ZOO_HOME=the folder where you extract the downloaded Analytics Zoo zip package
+
+${ANALYTICS_ZOO_HOME}/bin/spark-shell-with-zoo.sh \
+    --master local[1] \
+    --driver-memory 5g \
     --class com.intel.analytics.zoo.examples.nnframes.imageInference.ImageInferenceExample \
-    ./dist/lib/analytics-zoo-bigdl_BIGDL_VERSION-spark_SPARK_VERSION-ZOO_VERSION-jar-with-dependencies.jar \
-    --modelPath ./model/bvlc_googlenet.caffemodel \
-    --caffeDefPath ./model/deploy.prototxt \
+    --caffeDefPath /tmp/zoo/deploy.prototxt \
+    --caffeWeightsPath /tmp/zoo/bvlc_googlenet.caffemodel \
     --batchSize 32 \
-    --folder ./predict
+    --imagePath ...path to image folder or file
 ```
 
-Command to run the example in Spark yarn mode:
-```
-    spark-submit \
-    --master yarn \
-    --deploy-mode client \
-    --executor-cores 8 \
-    --num-executors 4 \
-    --driver-memory 10g \
-    --executor-memory 150g \
-    --class com.intel.analytics.zoo.examples.nnframes.imageInference.ImageInference \
-    ./dist/lib/analytics-zoo-bigdl_BIGDL_VERSION-spark_SPARK_VERSION-ZOO_VERSION-jar-with-dependencies.jar \
-    --modelPath ./model/bvlc_googlenet.caffemodel \
-    --caffeDefPath ./model/deploy.prototxt \
-    --batchSize 32 \
-    --folder hdfs://xxx
-```
 
 After inference, you should see something like this in the console:
 ```
