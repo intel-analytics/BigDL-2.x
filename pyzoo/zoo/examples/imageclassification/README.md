@@ -1,48 +1,37 @@
-## Image Classification example
+# Image Classification example
 This example illustrates how to do the image classification with pre-trained model
 
 ## Install or download Analytics Zoo
 Follow the instructions [here](https://analytics-zoo.github.io/master/#PythonUserGuide/install/) to install analytics-zoo via __pip__ or __download the prebuilt package__.
 
 ## Prepare pre-trained models
-
 Download pre-trained models from [Image Classification](https://github.com/intel-analytics/analytics-zoo/blob/master/docs/docs/ProgrammingGuide/image-classification.md)
 
 ## Prepare predict dataset
-
 Put your image data for prediction in one folder.
 
 ## Run after pip install
 You can easily use the following commands to run this example:
-
 ```bash
 export SPARK_DRIVER_MEMORY=10g
 
 modelPath=... // model path
-
 imagePath=... // image path
-
 topN=... // top n prediction
-
 partitionNum=... // A suggestion value of the minimal partition number
 
 path/to/predict.py -f $imagePath --model $modelPath --topN 5 --partition_num ${partitionNum}
 ```
-
 See [here](https://analytics-zoo.github.io/master/#PythonUserGuide/run/#run-after-pip-install) for more running guidance after pip install.
 
 
 ## Run with prebuilt package
-
 ```bash
 export ANALYTICS_ZOO_HOME=the folder where you extract the downloaded Analytics Zoo zip package
 
 modelPath=... // model path
-
 imagePath=... // image path
-
 topN=... // top n prediction
-
 partitionNum=... // A suggestion value of the minimal partition number
 
 ${ANALYTICS_ZOO_HOME}/bin/spark-submit-with-zoo.sh \
@@ -51,5 +40,4 @@ ${ANALYTICS_ZOO_HOME}/bin/spark-submit-with-zoo.sh \
     --executor-memory 10g \
     path/to/predict.py -f $imagePath --model $modelPath --topN 5 --partition_num ${partitionNum}
 ```
-
 See [here](https://analytics-zoo.github.io/master/#PythonUserGuide/run/#run-without-pip-install) for more running guidance without pip install.
