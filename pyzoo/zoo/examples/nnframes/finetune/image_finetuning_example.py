@@ -14,7 +14,7 @@
 # limitations under the License.
 #
 
-import re
+import os
 
 from bigdl.nn.criterion import CrossEntropyCriterion
 from pyspark.ml import Pipeline
@@ -35,15 +35,13 @@ if __name__ == "__main__":
         print("Need parameters: <modelPath> <imagePath>")
         exit(-1)
 
-    sc = init_nncontext("ImageTransferLearningExample")
+    sc = init_nncontext("ImageFineTuningExample")
 
     model_path = sys.argv[1]
-    image_path = sys.argv[2] + '/*/*'
+    image_path = sys.argv[2]
     imageDF = NNImageReader.readImages(image_path, sc, resizeH=300, resizeW=300, image_codec=1)
 
-    getName = udf(lambda row:
-                  re.search(r'(cat|dog)\.([\d]*)\.jpg', row[0], re.IGNORECASE).group(0),
-                  StringType())
+    getName = udf(lambda row: os.path.basename(row[0]), StringType())
     getLabel = udf(lambda name: 1.0 if name.startswith('cat') else 2.0, DoubleType())
     labelDF = imageDF.withColumn("name", getName(col("image"))) \
         .withColumn("label", getLabel(col('name')))
@@ -68,7 +66,10 @@ if __name__ == "__main__":
     lrModel = Model(inputNode, logits)
 
     classifier = NNClassifier(lrModel, CrossEntropyCriterion(), transformer) \
-        .setLearningRate(0.003).setBatchSize(40).setMaxEpoch(1).setFeaturesCol("image") \
+        .setLearningRate(0.003) \
+        .setBatchSize(40) \
+        .setMaxEpoch(1) \
+        .setFeaturesCol("image") \
         .setCachingSample(False)
 
     pipeline = Pipeline(stages=[classifier])

@@ -18,6 +18,7 @@ import os
 
 from bigdl.nn.criterion import *
 from bigdl.nn.layer import *
+from bigdl.optim.optimizer import Adam
 from pyspark import SparkConf
 from pyspark.ml import Pipeline
 from pyspark.ml.evaluation import MulticlassClassificationEvaluator
@@ -59,7 +60,12 @@ if __name__ == "__main__":
 
     lrModel = Sequential().add(Linear(1000, 2)).add(LogSoftMax())
     classifier = NNClassifier(lrModel, ClassNLLCriterion(), SeqToTensor([1000])) \
-        .setLearningRate(0.003).setBatchSize(40).setMaxEpoch(20).setFeaturesCol("embedding")
+        .setLearningRate(0.002) \
+        .setOptimMethod(Adam()) \
+        .setBatchSize(40) \
+        .setMaxEpoch(20) \
+        .setFeaturesCol("embedding") \
+        .setCachingSample(False) \
 
     pipeline = Pipeline(stages=[preTrainedNNModel, classifier])
 

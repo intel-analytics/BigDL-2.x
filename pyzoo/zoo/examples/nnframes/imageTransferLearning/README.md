@@ -52,8 +52,8 @@ Run the following command for Spark local mode (`MASTER=local[*]`) or cluster mo
     export ANALYTICS_ZOO_HOME=the folder where you extract the downloaded Analytics Zoo zip package
 
     ${ANALYTICS_ZOO_HOME}/bin/spark-submit-with-zoo.sh \
-    --master local[2] \
-    --driver-memory 10g \
+    --master local[1] \
+    --driver-memory 5g \
     ImageTransferLearningExample.py \
     /tmp/zoo/bigdl_inception-v1_imagenet_0.4.0.model /tmp/zoo/dogs_cats/samples
     ```
@@ -63,33 +63,33 @@ Run the following command for Spark local mode (`MASTER=local[*]`) or cluster mo
 After training, you should see something like this in the console:
     
     ```
-    +-------------------+-------------+-----+-------------------+--------------------+----------+
-    |              image|         name|label|           features|           embedding|prediction|
-    +-------------------+-------------+-----+-------------------+--------------------+----------+
-    |[file:/some/path...|cat.10007.jpg|  1.0|[file:/some/path...|[1.44402220030315...|       1.0|
-    |[file:/some/path...|cat.10008.jpg|  1.0|[file:/some/path...|[2.78127276942541...|       1.0|
-    |[file:/some/path...|cat.10013.jpg|  1.0|[file:/some/path...|[1.72082152971597...|       1.0|
-    |[file:/some/path...|cat.10017.jpg|  1.0|[file:/some/path...|[1.07376172309159...|       1.0|
-    |[file:/some/path...|cat.10020.jpg|  1.0|[file:/some/path...|[6.77592743159038...|       1.0|
-    |[file:/some/path...|cat.10021.jpg|  1.0|[file:/some/path...|[1.57088209107314...|       1.0|
-    |[file:/some/path...|cat.10024.jpg|  1.0|[file:/some/path...|[2.72918850896530...|       2.0|
-    |[file:/some/path...|cat.10048.jpg|  1.0|[file:/some/path...|[6.11712948739295...|       1.0|
-    |[file:/some/path...|cat.10068.jpg|  1.0|[file:/some/path...|[8.66246239183965...|       1.0|
-    |[file:/some/path...|cat.10069.jpg|  1.0|[file:/some/path...|[3.47972563758958...|       1.0|
-    |[file:/some/path...|cat.10076.jpg|  1.0|[file:/some/path...|[1.33044534322834...|       1.0|
-    |[file:/some/path...|cat.10081.jpg|  1.0|[file:/some/path...|[6.24413246441690...|       1.0|
-    |[file:/some/path...|cat.10103.jpg|  1.0|[file:/some/path...|[4.13055857961808...|       1.0|
-    |[file:/some/path...| cat.1011.jpg|  1.0|[file:/some/path...|[1.52658026308927...|       2.0|
-    |[file:/some/path...|cat.10111.jpg|  1.0|[file:/some/path...|[9.06654804566642...|       1.0|
-    |[file:/some/path...|cat.10113.jpg|  1.0|[file:/some/path...|[6.60018413327634...|       1.0|
-    |[file:/some/path...|cat.10125.jpg|  1.0|[file:/some/path...|[1.46317620419722...|       1.0|
-    |[file:/some/path...|cat.10131.jpg|  1.0|[file:/some/path...|[6.65911130681706...|       1.0|
-    |[file:/some/path...|cat.10154.jpg|  1.0|[file:/some/path...|[3.50153422914445...|       1.0|
-    |[file:/some/path...|cat.10155.jpg|  1.0|[file:/some/path...|[1.32401575683616...|       1.0|
-    +--------------------+-------------+-----+--------------------+--------------------+----------+
+    +--------------------+------------+-----+--------------------+----------+
+    |               image|        name|label|           embedding|prediction|
+    +--------------------+------------+-----+--------------------+----------+
+    |[file:/tmp/zoo/do...|   cat.7.jpg|  1.0|[1.4909998E-6, 2....|       1.0|
+    |[file:/tmp/zoo/do...|cat.7007.jpg|  1.0|[7.552656E-6, 1.6...|       1.0|
+    |[file:/tmp/zoo/do...|cat.7040.jpg|  1.0|[2.0968411E-5, 1....|       1.0|
+    |[file:/tmp/zoo/do...|cat.7116.jpg|  1.0|[4.3927703E-6, 1....|       1.0|
+    |[file:/tmp/zoo/do...|cat.7225.jpg|  1.0|[3.3697938E-7, 1....|       1.0|
+    |[file:/tmp/zoo/do...| cat.733.jpg|  1.0|[5.439134E-5, 1.9...|       1.0|
+    |[file:/tmp/zoo/do...|cat.7368.jpg|  1.0|[7.5563776E-7, 6....|       1.0|
+    |[file:/tmp/zoo/do...|cat.7373.jpg|  1.0|[7.449715E-6, 1.7...|       1.0|
+    |[file:/tmp/zoo/do...|cat.7542.jpg|  1.0|[6.415686E-5, 5.7...|       1.0|
+    |[file:/tmp/zoo/do...|cat.7580.jpg|  1.0|[4.4665518E-5, 1....|       1.0|
+    |[file:/tmp/zoo/do...|cat.7583.jpg|  1.0|[4.3137575E-6, 2....|       1.0|
+    |[file:/tmp/zoo/do...|cat.7646.jpg|  1.0|[7.990455E-6, 1.0...|       1.0|
+    |[file:/tmp/zoo/do...|cat.7693.jpg|  1.0|[6.299197E-6, 1.4...|       1.0|
+    |[file:/tmp/zoo/do...|cat.7727.jpg|  1.0|[1.1037457E-5, 7....|       1.0|
+    |[file:/tmp/zoo/do...|cat.7764.jpg|  1.0|[5.5489426E-9, 8....|       1.0|
+    |[file:/tmp/zoo/do...|cat.7775.jpg|  1.0|[5.389813E-5, 7.4...|       1.0|
+    |[file:/tmp/zoo/do...|cat.7816.jpg|  1.0|[1.247128E-5, 1.8...|       1.0|
+    |[file:/tmp/zoo/do...| cat.783.jpg|  1.0|[1.4708958E-5, 1....|       1.0|
+    |[file:/tmp/zoo/do...|cat.7960.jpg|  1.0|[8.348782E-7, 3.2...|       1.0|
+    |[file:/tmp/zoo/do...|dog.7202.jpg|  2.0|[3.695763E-5, 1.5...|       2.0|
+    +--------------------+------------+-----+--------------------+----------+
     only showing top 20 rows
     
-    Test Error = 0.0754258 
+    Test Error = 0.0298507 
     ```
-    With master = local[2]. The transfer learning can finish in 8 minutes. As we can see,
-    the model from transfer learning can achieve over 90% accuracy on the validation set.
+    With master = local[1]. The transfer learning can finish in 8 minutes. As we can see,
+    the model from transfer learning can achieve high accuracy on the validation set.
