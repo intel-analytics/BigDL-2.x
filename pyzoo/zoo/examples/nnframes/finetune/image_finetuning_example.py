@@ -39,7 +39,7 @@ if __name__ == "__main__":
 
     model_path = sys.argv[1]
     image_path = sys.argv[2] + '/*/*'
-    imageDF = NNImageReader.readImages(image_path, sc)
+    imageDF = NNImageReader.readImages(image_path, sc, resizeH=300, resizeW=300, image_codec=1)
 
     getName = udf(lambda row:
                   re.search(r'(cat|dog)\.([\d]*)\.jpg', row[0], re.IGNORECASE).group(0),
@@ -75,7 +75,7 @@ if __name__ == "__main__":
 
     catdogModel = pipeline.fit(trainingDF)
     predictionDF = catdogModel.transform(validationDF).cache()
-    predictionDF.show()
+    predictionDF.sample(False, 0.1).show()
 
     correct = predictionDF.filter("label=prediction").count()
     overall = predictionDF.count()
