@@ -67,8 +67,8 @@ if __name__ == "__main__":
 
     classifier = NNClassifier(lrModel, CrossEntropyCriterion(), transformer) \
         .setLearningRate(0.003) \
-        .setBatchSize(40) \
-        .setMaxEpoch(1) \
+        .setBatchSize(32) \
+        .setMaxEpoch(2) \
         .setFeaturesCol("image") \
         .setCachingSample(False)
 

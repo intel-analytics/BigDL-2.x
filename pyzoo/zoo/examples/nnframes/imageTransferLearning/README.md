@@ -61,35 +61,31 @@ Run the following command for Spark local mode (`MASTER=local[*]`) or cluster mo
 
 4. see the result
 After training, you should see something like this in the console:
-    
     ```
     +--------------------+------------+-----+--------------------+----------+
     |               image|        name|label|           embedding|prediction|
     +--------------------+------------+-----+--------------------+----------+
-    |[file:/tmp/zoo/do...|   cat.7.jpg|  1.0|[1.4909998E-6, 2....|       1.0|
-    |[file:/tmp/zoo/do...|cat.7007.jpg|  1.0|[7.552656E-6, 1.6...|       1.0|
-    |[file:/tmp/zoo/do...|cat.7040.jpg|  1.0|[2.0968411E-5, 1....|       1.0|
-    |[file:/tmp/zoo/do...|cat.7116.jpg|  1.0|[4.3927703E-6, 1....|       1.0|
-    |[file:/tmp/zoo/do...|cat.7225.jpg|  1.0|[3.3697938E-7, 1....|       1.0|
-    |[file:/tmp/zoo/do...| cat.733.jpg|  1.0|[5.439134E-5, 1.9...|       1.0|
-    |[file:/tmp/zoo/do...|cat.7368.jpg|  1.0|[7.5563776E-7, 6....|       1.0|
-    |[file:/tmp/zoo/do...|cat.7373.jpg|  1.0|[7.449715E-6, 1.7...|       1.0|
-    |[file:/tmp/zoo/do...|cat.7542.jpg|  1.0|[6.415686E-5, 5.7...|       1.0|
-    |[file:/tmp/zoo/do...|cat.7580.jpg|  1.0|[4.4665518E-5, 1....|       1.0|
-    |[file:/tmp/zoo/do...|cat.7583.jpg|  1.0|[4.3137575E-6, 2....|       1.0|
-    |[file:/tmp/zoo/do...|cat.7646.jpg|  1.0|[7.990455E-6, 1.0...|       1.0|
-    |[file:/tmp/zoo/do...|cat.7693.jpg|  1.0|[6.299197E-6, 1.4...|       1.0|
-    |[file:/tmp/zoo/do...|cat.7727.jpg|  1.0|[1.1037457E-5, 7....|       1.0|
-    |[file:/tmp/zoo/do...|cat.7764.jpg|  1.0|[5.5489426E-9, 8....|       1.0|
-    |[file:/tmp/zoo/do...|cat.7775.jpg|  1.0|[5.389813E-5, 7.4...|       1.0|
-    |[file:/tmp/zoo/do...|cat.7816.jpg|  1.0|[1.247128E-5, 1.8...|       1.0|
-    |[file:/tmp/zoo/do...| cat.783.jpg|  1.0|[1.4708958E-5, 1....|       1.0|
-    |[file:/tmp/zoo/do...|cat.7960.jpg|  1.0|[8.348782E-7, 3.2...|       1.0|
-    |[file:/tmp/zoo/do...|dog.7202.jpg|  2.0|[3.695763E-5, 1.5...|       2.0|
+    |[file:/tmp/zoo/do...|cat.7294.jpg|  1.0|[6.7788767E-7, 4....|       1.0|
+    |[file:/tmp/zoo/do...|cat.7353.jpg|  1.0|[4.956814E-6, 2.9...|       1.0|
+    |[file:/tmp/zoo/do...|cat.7363.jpg|  1.0|[3.5506052E-6, 1....|       1.0|
+    |[file:/tmp/zoo/do...|cat.7464.jpg|  1.0|[3.1471086E-6, 1....|       1.0|
+    |[file:/tmp/zoo/do...|cat.7741.jpg|  1.0|[4.4906E-5, 5.736...|       1.0|
+    |[file:/tmp/zoo/do...|cat.7798.jpg|  1.0|[5.948801E-6, 8.0...|       1.0|
+    |[file:/tmp/zoo/do...|cat.7806.jpg|  1.0|[1.0959853E-6, 5....|       1.0|
+    |[file:/tmp/zoo/do...|cat.7909.jpg|  1.0|[4.113644E-5, 1.8...|       1.0|
+    |[file:/tmp/zoo/do...|dog.7051.jpg|  2.0|[2.739595E-7, 2.4...|       2.0|
+    |[file:/tmp/zoo/do...|dog.7070.jpg|  2.0|[4.9666202E-8, 2....|       2.0|
+    |[file:/tmp/zoo/do...|dog.7200.jpg|  2.0|[1.8055023E-4, 3....|       2.0|
+    |[file:/tmp/zoo/do...|dog.7320.jpg|  2.0|[0.0010374242, 2....|       2.0|
+    |[file:/tmp/zoo/do...|dog.7329.jpg|  2.0|[9.2436676E-5, 1....|       2.0|
+    |[file:/tmp/zoo/do...|dog.7494.jpg|  2.0|[2.0494679E-6, 6....|       2.0|
+    |[file:/tmp/zoo/do...|dog.7825.jpg|  2.0|[1.9400559E-6, 6....|       2.0|
+    |[file:/tmp/zoo/do...|dog.7833.jpg|  2.0|[1.7606219E-5, 9....|       2.0|
+    |[file:/tmp/zoo/do...| dog.784.jpg|  2.0|[4.171166E-4, 5.3...|       2.0|
+    |[file:/tmp/zoo/do...|dog.7991.jpg|  2.0|[4.5410037E-8, 3....|       2.0|
     +--------------------+------------+-----+--------------------+----------+
-    only showing top 20 rows
     
-    Test Error = 0.0298507 
+    Test Error = 0.0333333
     ```
     With master = local[1]. The transfer learning can finish in 8 minutes. As we can see,
     the model from transfer learning can achieve high accuracy on the validation set.

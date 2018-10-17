@@ -62,7 +62,7 @@ if __name__ == "__main__":
     classifier = NNClassifier(lrModel, ClassNLLCriterion(), SeqToTensor([1000])) \
         .setLearningRate(0.002) \
         .setOptimMethod(Adam()) \
-        .setBatchSize(40) \
+        .setBatchSize(32) \
         .setMaxEpoch(20) \
         .setFeaturesCol("embedding") \
         .setCachingSample(False) \

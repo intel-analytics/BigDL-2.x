@@ -49,7 +49,7 @@ Run the following command for Spark local mode (`MASTER=local[*]`) or cluster mo
     export ANALYTICS_ZOO_HOME=the folder where you extract the downloaded Analytics Zoo zip package
 
     ${ANALYTICS_ZOO_HOME}/bin/spark-submit-with-zoo.sh \
-    --master local[1] \
+    --master local[2] \
     --driver-memory 10g \
     image_finetuning_example.py \
     /tmp/zoo/bigdl_inception-v1_imagenet_0.4.0.model /tmp/zoo/dogs_cats/samples
@@ -63,28 +63,28 @@ After training, you should see something like this in the console:
 +--------------------+------------+-----+----------+
 |               image|        name|label|prediction|
 +--------------------+------------+-----+----------+
-|[file:/tmp/zoo/do...|cat.7022.jpg|  1.0|       1.0|
-|[file:/tmp/zoo/do...|cat.7111.jpg|  1.0|       2.0|
-|[file:/tmp/zoo/do...|cat.7200.jpg|  1.0|       1.0|
-|[file:/tmp/zoo/do...|cat.7313.jpg|  1.0|       1.0|
-|[file:/tmp/zoo/do...|cat.7346.jpg|  1.0|       1.0|
-|[file:/tmp/zoo/do...|cat.7383.jpg|  1.0|       1.0|
-|[file:/tmp/zoo/do...|cat.7549.jpg|  1.0|       1.0|
-|[file:/tmp/zoo/do...|cat.7575.jpg|  1.0|       1.0|
-|[file:/tmp/zoo/do...|cat.7584.jpg|  1.0|       1.0|
-|[file:/tmp/zoo/do...|cat.7611.jpg|  1.0|       1.0|
-|[file:/tmp/zoo/do...|cat.7646.jpg|  1.0|       2.0|
-|[file:/tmp/zoo/do...|cat.7654.jpg|  1.0|       1.0|
-|[file:/tmp/zoo/do...|cat.7703.jpg|  1.0|       2.0|
-|[file:/tmp/zoo/do...|cat.7755.jpg|  1.0|       1.0|
-|[file:/tmp/zoo/do...|cat.7756.jpg|  1.0|       1.0|
-|[file:/tmp/zoo/do...|cat.7767.jpg|  1.0|       1.0|
-|[file:/tmp/zoo/do...|cat.7924.jpg|  1.0|       1.0|
+|[file:/tmp/zoo/do...|cat.7028.jpg|  1.0|       1.0|
+|[file:/tmp/zoo/do...|cat.7208.jpg|  1.0|       1.0|
+|[file:/tmp/zoo/do...|cat.7244.jpg|  1.0|       1.0|
+|[file:/tmp/zoo/do...|cat.7329.jpg|  1.0|       1.0|
+|[file:/tmp/zoo/do...|cat.7434.jpg|  1.0|       1.0|
+|[file:/tmp/zoo/do...| cat.744.jpg|  1.0|       1.0|
+|[file:/tmp/zoo/do...|cat.7489.jpg|  1.0|       1.0|
+|[file:/tmp/zoo/do...|cat.7511.jpg|  1.0|       1.0|
+|[file:/tmp/zoo/do...|cat.7653.jpg|  1.0|       1.0|
+|[file:/tmp/zoo/do...|cat.7770.jpg|  1.0|       1.0|
 |[file:/tmp/zoo/do...|cat.7946.jpg|  1.0|       1.0|
-|[file:/tmp/zoo/do...|dog.7163.jpg|  2.0|       2.0|
-|[file:/tmp/zoo/do...|dog.7250.jpg|  2.0|       2.0|
+|[file:/tmp/zoo/do...| dog.706.jpg|  2.0|       2.0|
+|[file:/tmp/zoo/do...|dog.7239.jpg|  2.0|       2.0|
+|[file:/tmp/zoo/do...|dog.7318.jpg|  2.0|       2.0|
+|[file:/tmp/zoo/do...|dog.7386.jpg|  2.0|       2.0|
+|[file:/tmp/zoo/do...|dog.7412.jpg|  2.0|       2.0|
+|[file:/tmp/zoo/do...|dog.7742.jpg|  2.0|       2.0|
+|[file:/tmp/zoo/do...|dog.7761.jpg|  2.0|       2.0|
+|[file:/tmp/zoo/do...|dog.7842.jpg|  2.0|       2.0|
+|[file:/tmp/zoo/do...|dog.7866.jpg|  2.0|       2.0|
 +--------------------+------------+-----+----------+
 only showing top 20 rows
 
-Test Error = 0.0336134
+Test Error = 0.00873362
 ```
