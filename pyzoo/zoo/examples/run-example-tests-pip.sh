@@ -1,6 +1,23 @@
 #!/usr/bin/env bash
 
-set -e
+clear_up () {
+    echo "Test failure. Uninstalling analytics-zoo"
+    source activate py27
+    pip uninstall -y analytics-zoo
+    pip uninstall -y bigdl
+    pip uninstall -y pyspark
+    source deactivate py27
+    source activate py35
+    pip uninstall -y analytics-zoo
+    pip uninstall -y bigdl
+    pip uninstall -y pyspark
+    source deactivate py35
+    source activate py36
+    pip uninstall -y analytics-zoo
+    pip uninstall -y bigdl
+    pip uninstall -y pyspark
+    source deactivate py36
+}
 
 echo "start example test for textclassification"
 start=$(date "+%s")
@@ -28,8 +45,14 @@ python ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/textclassification/text_classifi
     --batch_size 112 \
     --data_path analytics-zoo-data/data/20news-18828 \
     --embedding_path analytics-zoo-data/data/glove.6B
-unset SPARK_DRIVER_MEMORY
+exit_status=$?
+if [ $exit_status -ne 0 ];
+then
+    clear_up
+    exit $exit_status
+fi
 
+unset SPARK_DRIVER_MEMORY
 now=$(date "+%s")
 time1=$((now-start))
 echo "textclassification time used:$time1 seconds"
