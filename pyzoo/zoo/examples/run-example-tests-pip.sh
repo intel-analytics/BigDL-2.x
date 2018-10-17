@@ -1,6 +1,8 @@
 #!/usr/bin/env bash
 
-echo "#1 start example test for textclassification"
+set -e
+
+echo "start example test for textclassification"
 start=$(date "+%s")
 
 # Data preparation
@@ -30,4 +32,4 @@ unset SPARK_DRIVER_MEMORY
 
 now=$(date "+%s")
 time1=$((now-start))
-echo "#1 textclassification time used:$time1 seconds"
+echo "textclassification time used:$time1 seconds"
