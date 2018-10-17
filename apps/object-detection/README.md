@@ -18,7 +18,7 @@ jupyter notebook --notebook-dir=./ --ip=* --no-browser
 
 ## Run Jupyter with prebuilt package
 * Run `export SPARK_HOME=the root directory of Spark`.
-* Run `export ANALYTICS_ZOO_HOME=the dist directory under the Analytics Zoo project`.
+* Run `export ANALYTICS_ZOO_HOME=the folder where you extract the downloaded Analytics Zoo zip package`.
 * Run `pip install moviepy`.
 For object-detection.ipynb video can be found from YouTube-8M ([YouTube-8M](https://research.google.com/youtube8m/) and [The video](https://www.youtube.com/watch?v=akcYAuaP4jw)).
 Run `$ANALYTICS_ZOO_HOME/apps/object-detection/download_model.sh` to download the pretrained model.
