@@ -124,7 +124,7 @@ class TestLayer(ZooTestCase):
         output = net.forward(np.random.rand(2, 4))
         assert output.shape == (2, 2)
 
-    def test_sample_with_scalar(self):
+    def test_for_scalar(self):
         import tensorflow as tf
         input1 = tf.placeholder(dtype=tf.float32, shape=())
         output = input1 + 1
