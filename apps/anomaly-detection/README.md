@@ -24,5 +24,8 @@ MASTER=local[4]
 ${ANALYTICS_ZOO_HOME}/bin/jupyter-with-zoo.sh \
     --master ${MASTER} \
     --driver-cores 4  \
-    --driver-memory 2g
+    --driver-memory 2g  \
+    --total-executor-cores 4  \
+    --executor-cores 4  \
+    --executor-memory 2g
 ```
