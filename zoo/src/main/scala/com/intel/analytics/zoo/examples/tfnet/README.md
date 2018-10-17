@@ -24,12 +24,11 @@ master=... // spark master
 modelPath=... // model path.
 imagePath=... // image path.
 
-sh ${ANALYTICS_ZOO_HOME}/bin/spark-submit-with-zoo.sh \
+sh ${ANALYTICS_ZOO_HOME}/bin/spark-shell-with-zoo.sh \
 --master $master \
 --conf spark.executor.cores=1 \
 --total-executor-cores 4 \
-com.intel.analytics.zoo.examples.tfnet.Predict \
---image $imagePath --model $modelPath --partition 4
+--class com.intel.analytics.zoo.examples.tfnet.Predict \
 ```
 
 __Options:__

@@ -30,7 +30,7 @@ __Options:__
 ```bash
 SPARK_HOME=the root directory of Spark
 MASTER=...
-sh $ANALYTICS_ZOO_HOME/bin/spark-submit-with-zoo.sh
+sh $ANALYTICS_ZOO_HOME/bin/spark-submit-with-zoo.sh \
     --master $MASTER \
     predict.py \
     --image path_to_image_folder \
