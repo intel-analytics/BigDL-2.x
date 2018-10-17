@@ -46,4 +46,5 @@ now=$(date "+%s")
 time1=$((now-start))
 echo "textclassification time used:$time1 seconds"
 
+# This should be done at the very end after all tests finish.
 clear_up
