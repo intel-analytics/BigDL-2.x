@@ -23,7 +23,7 @@ jupyter toree install --spark_opts='--master=local[*]' --user --spark_home=$SPAR
 ```
 
 2. Build Analytics Zoo jar file under Spark 2.x.
-* Download Analytics Zoo and build it.
+* You can download Analytics Zoo prebuilt release and nightly build package from [here](https://analytics-zoo.github.io/master/#release-download/) and extract it.
 * Run `export ANALYTICS_ZOO_HOME=the dist directory under the Analytics Zoo project`.
 
 3. To support the training for imbalanced data set in fraud detection, some Transformers and algorithms are developed in 
