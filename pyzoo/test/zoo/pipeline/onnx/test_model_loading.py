@@ -434,7 +434,7 @@ class TestModelLoading(OnnxTestCase):
         class MnistNet(nn.Module):
             def __init__(self):
                 super(MnistNet, self).__init__()
-                self.conv1 = nn.Conv2d(1, 10, kernel_size=5)
+                self.conv1 = torch.nn.Conv2d(1, 10, kernel_size=5)
                 self.conv2 = nn.Conv2d(10, 20, kernel_size=5)
                 self.conv2_drop = nn.Dropout2d()
                 self.fc1 = nn.Linear(320, 50)
@@ -591,3 +591,13 @@ class TestModelLoading(OnnxTestCase):
                 y = np.concatenate(values, i)
                 output = OnnxLoader.run_node(node, [v for v in values])
                 np.testing.assert_almost_equal(output["output"], y, decimal=5)
+
+    def test_pow(self):
+        class Power(torch.nn.Module):
+            def forward(self, x):
+                exp = torch.arange(1., 2.)
+                return torch.pow(x, exp)
+
+        pytorch_model = Power()
+        input_shape_with_batch = (1, 2, 2)
+        self.compare_with_pytorch(pytorch_model, input_shape_with_batch)
