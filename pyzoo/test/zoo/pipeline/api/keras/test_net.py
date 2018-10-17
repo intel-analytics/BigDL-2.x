@@ -128,9 +128,9 @@ class TestLayer(ZooTestCase):
         import tensorflow as tf
         input1 = tf.placeholder(dtype=tf.float32, shape=())
         output = input1 + 1
-        with tf.Session() as sess:
-            net = TFNet.from_session(sess, [input1], [output])
-
+        sess = tf.Session()
+        net = TFNet.from_session(sess, [input1], [output])
+        sess.close()
         out_value = net.forward(np.array(1.0))
         assert len(out_value.shape) == 0
 
