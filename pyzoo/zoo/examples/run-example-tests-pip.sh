@@ -1,22 +1,10 @@
 #!/usr/bin/env bash
 
 clear_up () {
-    echo "Test failure. Uninstalling analytics-zoo"
-    source activate py27
+    echo "Clearing up environment. Uninstalling analytics-zoo"
     pip uninstall -y analytics-zoo
     pip uninstall -y bigdl
     pip uninstall -y pyspark
-    source deactivate py27
-    source activate py35
-    pip uninstall -y analytics-zoo
-    pip uninstall -y bigdl
-    pip uninstall -y pyspark
-    source deactivate py35
-    source activate py36
-    pip uninstall -y analytics-zoo
-    pip uninstall -y bigdl
-    pip uninstall -y pyspark
-    source deactivate py36
 }
 
 echo "start example test for textclassification"
@@ -49,6 +37,7 @@ exit_status=$?
 if [ $exit_status -ne 0 ];
 then
     clear_up
+    echo "textclassification failed"
     exit $exit_status
 fi
 
@@ -56,3 +45,5 @@ unset SPARK_DRIVER_MEMORY
 now=$(date "+%s")
 time1=$((now-start))
 echo "textclassification time used:$time1 seconds"
+
+clear_up
