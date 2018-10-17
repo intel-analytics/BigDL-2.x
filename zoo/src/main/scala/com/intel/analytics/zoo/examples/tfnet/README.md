@@ -5,6 +5,10 @@ TFNet can encapsulate a frozen TensorFlow graph as an Analytics Zoo layer for in
 This example illustrates how to use a pre-trained TensorFlow object detection model
 to make inferences using Analytics Zoo on Spark.
 
+## Install or download Analytics Zoo
+Follow the instructions [here](https://analytics-zoo.github.io/master/#ScalaUserGuide/install/) to install analytics-zoo.
+
+
 ## Model and Data Preparation
 1. Prepare a pre-trained TensorFlow object detection model. You can download from [tensorflow detection model zoo](https://github.com/tensorflow/models/blob/master/research/object_detection/g3doc/detection_model_zoo.md).
 
@@ -20,15 +24,11 @@ master=... // spark master
 modelPath=... // model path.
 imagePath=... // image path.
 
-spark-submit \
---verbose \
+sh ${ANALYTICS_ZOO_HOME}/bin/spark-shell-with-zoo.sh \
 --master $master \
 --conf spark.executor.cores=1 \
 --total-executor-cores 4 \
---driver-memory 200g \
---executor-memory 200g \
 --class com.intel.analytics.zoo.examples.tfnet.Predict \
-$ANALYTICS_ZOO_HOME/lib/analytics-zoo-bigdl_BIGDLVERSION-spark_SPARKVERSION-ZOOVERSION-jar-with-dependencies.jar --image $imagePath --model $modelPath --partition 4
 ```
 
 __Options:__
