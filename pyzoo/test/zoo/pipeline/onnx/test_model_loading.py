@@ -632,3 +632,57 @@ class TestModelLoading(OnnxTestCase):
                 y = np.concatenate(values, i)
                 output = OnnxLoader.run_node(node, [v for v in values])
                 np.testing.assert_almost_equal(output["output"], y, decimal=5)
+
+    def test_torch_add(self):
+        class Add(torch.nn.Module):
+            def forward(self, x):
+                return torch.add(x[0], 1, x[1])
+
+        pytorch_model = Add()
+        input_shape_with_batch = [(1, 3), (1, 3)]
+        self.compare_with_pytorch(pytorch_model, input_shape_with_batch)
+
+    def test_onnx_leakyrelu(self):
+        pytorch_model = torch.nn.Sequential(
+            torch.nn.LeakyReLU()
+        )
+        input_shape_with_batch = (1, 3)
+        self.compare_with_pytorch(pytorch_model, input_shape_with_batch)
+
+    def test_leakyrelu(self):
+        node = helper.make_node(
+            'LeakyRelu',
+            inputs=['x'],
+            outputs=['y'],
+            alpha=0.1
+        )
+
+        x = np.array([-1, 0, 1]).astype(np.float32)
+        # expected output [-0.1, 0., 1.]
+        y = np.clip(x, 0, np.inf) + np.clip(x, -np.inf, 0) * 0.1
+
+        output = OnnxLoader.run_node(node, [x])
+        np.testing.assert_almost_equal(output["y"], y, decimal=5)
+
+    def test_onnx_gt(self):
+        class gt(torch.nn.Module):
+            def forward(self, x):
+                return torch.gt(x[0], x[1])
+
+        pytorch_model = gt()
+        input_shape_with_batch = [(1, 3), (1, 3)]
+        self.compare_with_pytorch(pytorch_model, input_shape_with_batch)
+
+    def test_gt(self):
+        node = helper.make_node(
+            'Greater',
+            inputs=['x', 'y'],
+            outputs=['greater'],
+        )
+
+        x = np.random.randn(3, 4, 5).astype(np.float32)
+        y = np.random.randn(3, 4, 5).astype(np.float32)
+        z = np.greater(x, y)
+
+        output = OnnxLoader.run_node(node, [x, y])
+        np.testing.assert_almost_equal(output['greater'], z, decimal=5)
