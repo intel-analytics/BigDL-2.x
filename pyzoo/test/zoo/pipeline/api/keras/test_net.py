@@ -81,7 +81,7 @@ class TestLayer(ZooTestCase):
         zmodel2 = Net.load_keras(hdf5_path=tmp_path_hdf5)
         assert isinstance(zmodel2, Sequential)
 
-    def test_load_tf(self):
+    def test_tf_load(self):
         linear = Linear(10, 2)()
         sigmoid = Sigmoid()(linear)
         softmax = SoftMax().set_name("output")(sigmoid)
