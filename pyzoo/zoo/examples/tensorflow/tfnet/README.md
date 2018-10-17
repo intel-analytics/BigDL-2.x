@@ -28,8 +28,9 @@ __Options:__
 
 ## Run this example with prebuilt package
 ```bash
-SPARK_HOME=the root directory of Spark
-MASTER=...
+ANALYTICS_ZOO_HOME=... # the directory where you extract the downloaded Analytics Zoo zip package
+SPARK_HOME=... #the root directory of Spark
+MASTER=... # Spark Master
 sh $ANALYTICS_ZOO_HOME/bin/spark-submit-with-zoo.sh \
     --master $MASTER \
     predict.py \

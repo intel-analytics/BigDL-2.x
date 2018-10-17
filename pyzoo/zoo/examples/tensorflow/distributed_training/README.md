@@ -21,8 +21,8 @@ python train_lenet.py
 ## Run the Training Example with prebuilt package
 
 ```shell
-export ANALYTICS_ZOO_HOME=... # Please edit this accordingly
-export SPARK_HOME=... # Please edit this accordingly
+export ANALYTICS_ZOO_HOME=... # the directory where you extract the downloaded Analytics Zoo zip package
+export SPARK_HOME=... # the root directory of Spark
 
 sh $ANALYTICS_ZOO_HOME/bin/spark-submit-with-zoo.sh --master local[4] train_lenet.py
 ```
@@ -36,8 +36,8 @@ python evaluate_lenet.py
 ## Run the Evaluation Example with prebuilt package
 
 ```shell
-export ANALYTICS_ZOO_HOME=... # Please edit this accordingly
-export SPARK_HOME=... # Please edit this accordingly
+export ANALYTICS_ZOO_HOME=... # the directory where you extract the downloaded Analytics Zoo zip package
+export SPARK_HOME=... # the root directory of Spark
 
 sh $ANALYTICS_ZOO_HOME/bin/spark-submit-with-zoo.sh --master local[4] evaluate_lenet.py
 ```
