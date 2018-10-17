@@ -124,6 +124,19 @@ class TestLayer(ZooTestCase):
         output = net.forward(np.random.rand(2, 4))
         assert output.shape == (2, 2)
 
+    def test_sample_with_scalar(self):
+        import tensorflow as tf
+        input1 = tf.placeholder(dtype=tf.float32, shape=())
+        output = input1 + 1
+        with tf.Session() as sess:
+            net = TFNet.from_session(sess, [input1], [output])
+
+        out_value = net.forward(np.array(1.0))
+        assert len(out_value.shape) == 0
+
+        out_value = net.predict(np.array([1.0])).first()
+        assert len(out_value.shape) == 0
+
     def test_init_tfnet_from_session(self):
         import tensorflow as tf
         input1 = tf.placeholder(dtype=tf.float32, shape=(None, 2))
@@ -132,15 +145,15 @@ class TestLayer(ZooTestCase):
         output = tf.layers.dense(hidden, 1)
         loss = tf.reduce_mean(tf.square(output - label1))
         grad_inputs = tf.gradients(loss, input1)
-        sess = tf.Session()
-        sess.run(tf.global_variables_initializer())
-        data = np.random.rand(2, 2)
-        output_value_ref = sess.run(output, feed_dict={input1: data})
-        label_value = output_value_ref - 1.0
-        grad_input_value_ref = sess.run(grad_inputs[0],
-                                        feed_dict={input1: data,
-                                                   label1: label_value})
-        net = TFNet.from_session(sess, [input1], [output], generate_backward=True)
+        with tf.Session() as sess:
+            sess.run(tf.global_variables_initializer())
+            data = np.random.rand(2, 2)
+            output_value_ref = sess.run(output, feed_dict={input1: data})
+            label_value = output_value_ref - 1.0
+            grad_input_value_ref = sess.run(grad_inputs[0],
+                                            feed_dict={input1: data,
+                                                       label1: label_value})
+            net = TFNet.from_session(sess, [input1], [output], generate_backward=True)
         output_value = net.forward(data)
 
         grad_input_value = net.backward(data, np.ones(shape=(2, 1)))
