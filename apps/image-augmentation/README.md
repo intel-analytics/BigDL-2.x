@@ -5,7 +5,18 @@ This is a simple example of image augmentation using Analytics ZOO API. We use v
 * Python 2.7/3.5/3.6 (numpy 1.11.1)
 * Apache Spark 1.6.0/2.1.0 (This version needs to be same with the version you use to build Analytics Zoo)
 
-## Run with Jupyter
+## Install or download Analytics Zoo
+* Follow the instructions [here](https://analytics-zoo.github.io/master/#PythonUserGuide/install/) to install analytics-zoo via __pip__ or __download the prebuilt package__.  
+
+## Run after pip install
+* You can easily use the following commands to run this example:
+     export SPARK_DRIVER_MEMORY=1g
+     jupyter notebook --notebook-dir=./ --ip=* --no-browser 
+
+* See [here](https://analytics-zoo.github.io/master/#PythonUserGuide/run/#run-after-pip-install) for more running guidance after pip install. 
+
+
+## Run with prebuild package
 * Download Analytics Zoo and build it.
 * Run `export SPARK_HOME=the root directory of Spark`.
 * Run `export ANALYTICS_ZOO_HOME=the dist directory under the Analytics Zoo project`.
@@ -17,3 +28,4 @@ ${ANALYTICS_ZOO_HOME}/bin/jupyter-with-zoo.sh \
     --driver-memory 1g  \
     --executor-memory 1g
 ```
+* See [here](https://analytics-zoo.github.io/master/#PythonUserGuide/run/#run-without-pip-install) for more running guidance without pip install.
