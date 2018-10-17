@@ -46,7 +46,7 @@ export ANALYTICS_ZOO_HOME=the folder where you extract the downloaded Analytics 
 
 ${ANALYTICS_ZOO_HOME}/bin/spark-shell-with-zoo.sh \
     --master local[2] \
-    --driver-memory 10g \
+    --driver-memory 5g \
     --class com.intel.analytics.zoo.examples.nnframes.imageTransferLearning.ImageTransferLearning \
     --caffeDefPath /tmp/zoo/deploy.prototxt \
     --caffeWeightsPath /tmp/zoo/bvlc_googlenet.caffemodel \

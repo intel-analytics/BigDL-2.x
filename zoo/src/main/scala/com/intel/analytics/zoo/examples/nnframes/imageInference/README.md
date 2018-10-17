@@ -21,7 +21,8 @@ Put the files in `/tmp/zoo` or other path.
 
 2. Prepare predict dataset
 You can use your own image data (JPG or PNG), or some images from imagenet-2012 validation
- dataset <http://image-net.org/download-images> to run the example.
+dataset <http://image-net.org/download-images> to run the example. we use `/tmp/zoo/infer_images`
+for this example.
 
 3. Run this example
 
@@ -34,31 +35,33 @@ export ANALYTICS_ZOO_HOME=the folder where you extract the downloaded Analytics 
 
 ${ANALYTICS_ZOO_HOME}/bin/spark-shell-with-zoo.sh \
     --master local[1] \
-    --driver-memory 5g \
+    --driver-memory 3g \
     --class com.intel.analytics.zoo.examples.nnframes.imageInference.ImageInferenceExample \
     --caffeDefPath /tmp/zoo/deploy.prototxt \
     --caffeWeightsPath /tmp/zoo/bvlc_googlenet.caffemodel \
     --batchSize 32 \
-    --imagePath ...path to image folder or file
+    --imagePath /tmp/zoo/infer_images
 ```
 
 
 After inference, you should see something like this in the console:
 ```
-+-----------------------------------------------------------------+----------+
-|imageName                                                        |prediction|
-+-----------------------------------------------------------------+----------+
-|hdfs://Almaren-Node-069:9000/predict/ILSVRC2012_val_00000001.JPEG|59.0      |
-|hdfs://Almaren-Node-069:9000/predict/ILSVRC2012_val_00000002.JPEG|796.0     |
-|hdfs://Almaren-Node-069:9000/predict/ILSVRC2012_val_00000003.JPEG|231.0     |
-|hdfs://Almaren-Node-069:9000/predict/ILSVRC2012_val_00000005.JPEG|432.0     |
-|hdfs://Almaren-Node-069:9000/predict/ILSVRC2012_val_00000007.JPEG|335.0     |
-|hdfs://Almaren-Node-069:9000/predict/ILSVRC2012_val_00000009.JPEG|675.0     |
-|hdfs://Almaren-Node-069:9000/predict/ILSVRC2012_val_00000011.JPEG|110.0     |
-|hdfs://Almaren-Node-069:9000/predict/ILSVRC2012_val_00000012.JPEG|287.0     |
-|hdfs://Almaren-Node-069:9000/predict/ILSVRC2012_val_00000013.JPEG|371.0     |
-|hdfs://Almaren-Node-069:9000/predict/ILSVRC2012_val_00000014.JPEG|758.0     |
-+-----------------------------------------------------------------+----------+
++-------------------------------------------------------+----------+
+|imageName                                              |prediction|
++-------------------------------------------------------+----------+
+|file:/tmp/zoo/infer_images/ILSVRC2012_val_00000001.JPEG|59.0      |
+|file:/tmp/zoo/infer_images/ILSVRC2012_val_00000002.JPEG|796.0     |
+|file:/tmp/zoo/infer_images/ILSVRC2012_val_00000003.JPEG|231.0     |
+|file:/tmp/zoo/infer_images/ILSVRC2012_val_00000004.JPEG|970.0     |
+|file:/tmp/zoo/infer_images/ILSVRC2012_val_00000005.JPEG|432.0     |
+|file:/tmp/zoo/infer_images/ILSVRC2012_val_00000006.JPEG|59.0      |
+|file:/tmp/zoo/infer_images/ILSVRC2012_val_00000007.JPEG|378.0     |
+|file:/tmp/zoo/infer_images/ILSVRC2012_val_00000008.JPEG|713.0     |
+|file:/tmp/zoo/infer_images/ILSVRC2012_val_00000009.JPEG|107.0     |
+|file:/tmp/zoo/infer_images/ILSVRC2012_val_00000010.JPEG|284.0     |
++-------------------------------------------------------+----------+
+only showing top 10 rows
+
 ```
 
 To map the class to human readable text, please refer to https://github.com/Lasagne/Recipes/blob/master/examples/resnet50/imagenet_classes.txt

@@ -50,11 +50,11 @@ object ImageFinetune {
         if (new Path(row.getString(0)).getName.contains("cat")) 1.0 else 2.0
       }
       val imagesDF = NNImageReader.readImages(param.imagePath, sc,
-          resizeH = 300, resizeW = 300, imageCodec = 1)
+          resizeH = 256, resizeW = 256, imageCodec = 1)
         .withColumn("label", createLabel(col("image")))
       val Array(validationDF, trainingDF) = imagesDF.randomSplit(Array(0.20, 0.80), seed = 1L)
 
-      val featureTransformer = RowToImageFeature() -> ImageResize(256, 256) ->
+      val featureTransformer = RowToImageFeature() ->
         ImageCenterCrop(224, 224) -> ImageChannelNormalize(123, 117, 104) ->
         ImageMatToTensor() -> ImageFeatureToTensor()
       val model = getTransferLearningModel(param.modelPath)

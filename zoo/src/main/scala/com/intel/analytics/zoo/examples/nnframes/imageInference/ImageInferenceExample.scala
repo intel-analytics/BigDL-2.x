@@ -40,10 +40,10 @@ object ImageInferenceExample {
 
       val getImageName = udf { row: Row => row.getString(0)}
       val imageDF = NNImageReader.readImages(params.imagePath, sc,
-          resizeH = 300, resizeW = 300, imageCodec = 1)
+          resizeH = 256, resizeW = 256, imageCodec = 1)
         .withColumn("imageName", getImageName(col("image")))
 
-      val transformer = RowToImageFeature() -> ImageResize(256, 256) -> ImageCenterCrop(224, 224) ->
+      val transformer = RowToImageFeature() -> ImageCenterCrop(224, 224) ->
         ImageChannelNormalize(123, 117, 104) -> ImageMatToTensor() -> ImageFeatureToTensor()
 
       val model = Module.loadCaffeModel[Float](params.caffeDefPath, params.caffeWeightsPath)

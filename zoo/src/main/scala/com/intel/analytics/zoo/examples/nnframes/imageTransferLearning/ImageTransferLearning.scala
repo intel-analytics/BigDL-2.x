@@ -48,12 +48,12 @@ object ImageTransferLearning {
         if (new Path(row.getString(0)).getName.contains("cat")) 1.0 else 2.0
       }
       val imagesDF: DataFrame = NNImageReader.readImages(params.imagePath, sc,
-          resizeH = 300, resizeW = 300, imageCodec = 1)
+          resizeH = 256, resizeW = 256, imageCodec = 1)
         .withColumn("label", createLabel(col("image")))
 
       val Array(validationDF, trainingDF) = imagesDF.randomSplit(Array(0.1, 0.9), seed = 42L)
 
-      val transformer = RowToImageFeature() -> ImageResize(256, 256) -> ImageCenterCrop(224, 224) ->
+      val transformer = RowToImageFeature() -> ImageCenterCrop(224, 224) ->
         ImageChannelNormalize(123, 117, 104) -> ImageMatToTensor() -> ImageFeatureToTensor()
       val loadedModel = Module.loadCaffeModel[Float](params.caffeDefPath, params.caffeWeightsPath)
       val featurizer = NNModel(loadedModel, transformer)
