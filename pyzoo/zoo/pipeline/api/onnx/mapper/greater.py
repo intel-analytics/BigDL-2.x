@@ -15,21 +15,17 @@
 #
 
 from zoo.pipeline.api.onnx.mapper.operator_mapper import OperatorMapper
+import zoo.pipeline.api.keras.layers as zlayers
+import bigdl.nn.layer as blayer
 
 
 class GreaterMapper(OperatorMapper):
     def __init__(self, node, initializer, _all_tensors):
         super(GreaterMapper, self).__init__(node, initializer, _all_tensors)
-    '''
-    def _extract_model_inputs(self):
-        """
-        :return: list of inputs
-        """
-        assert len(self._input_list) == 2, "Sub should have 2 inputs"
-        return [self._to_zoo_input(oi) for oi in self._input_list]
-    '''
+
     def _to_tensor(self):
         x = self.model_inputs[0].zvalue
         y = self.model_inputs[1].zvalue
-        # TODO zoo operator "greater"
-        return None
+        truemap = zlayers.KerasLayerWrapper(blayer.Threshold(th=0.0, v=0.0))(x - y)
+        falsemap = zlayers.KerasLayerWrapper(blayer.Threshold(th=-1e-6, v=1.0))(-truemap)
+        return falsemap
