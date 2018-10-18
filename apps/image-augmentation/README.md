@@ -8,6 +8,9 @@ This is a simple example of image augmentation using Analytics ZOO API. We use v
 ## Install or download Analytics Zoo
 * Follow the instructions [here](https://analytics-zoo.github.io/master/#PythonUserGuide/install/) to install analytics-zoo via __pip__ or __download the prebuilt package__.  
 
+## Install OpenCV
+* The example uses OpenCV library to save image. Please install it before run this example.
+
 ## Run after pip install
 * You can easily use the following commands to run this example:
 ```
