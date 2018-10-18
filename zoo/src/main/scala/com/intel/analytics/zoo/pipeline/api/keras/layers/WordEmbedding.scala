@@ -49,7 +49,7 @@ class WordEmbedding[T: ClassTag] private(
     override val inputDim: Int,
     override val outputDim: Int,
     embeddingMatrix: EmbeddingMatrixHolder[T],
-    val trainable: Boolean = false,
+    override val trainable: Boolean = false,
     override val inputShape: Shape = null)(implicit ev: TensorNumeric[T])
   extends Embedding[T](inputDim, outputDim, inputShape = inputShape) {
 
