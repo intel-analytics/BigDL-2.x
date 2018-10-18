@@ -10,16 +10,21 @@ This is a simple example of image augmentation using Analytics ZOO API. We use v
 
 ## Run after pip install
 * You can easily use the following commands to run this example:
+```
      export SPARK_DRIVER_MEMORY=1g
      jupyter notebook --notebook-dir=./ --ip=* --no-browser 
+```
 
 * See [here](https://analytics-zoo.github.io/master/#PythonUserGuide/run/#run-after-pip-install) for more running guidance after pip install. 
 
 
 ## Run with prebuild package
-* Download Analytics Zoo and build it.
-* Run `export SPARK_HOME=the root directory of Spark`.
-* Run `export ANALYTICS_ZOO_HOME=the dist directory under the Analytics Zoo project`.
+* Run the following command for Spark local mode (MASTER=local[*]) or cluster mode:
+```
+export SPARK_HOME=the root directory of Spark
+export ANALYTICS_ZOO_HOME=the folder where you extract the downloaded Analytics Zoo zip package
+
+```
 * Run the following bash command to start the jupyter notebook. Change parameter settings as you need, ie `MASTER = local[physcial_core_number]`.
 ```bash
 MASTER=local[*]
