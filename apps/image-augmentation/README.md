@@ -10,6 +10,10 @@ This is a simple example of image augmentation using Analytics ZOO API. We use v
 
 ## Install OpenCV
 * The example uses OpenCV library to save image. Please install it before run this example.
+* You can use the following command:
+```
+     apt-get install python-opencv
+```
 
 ## Run after pip install
 * You can easily use the following commands to run this example:
