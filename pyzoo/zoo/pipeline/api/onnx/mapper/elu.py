@@ -16,31 +16,16 @@
 from zoo.pipeline.api.onnx.mapper.operator_mapper import OperatorMapper
 from zoo.pipeline.api.onnx.onnx_helper import OnnxHelper
 import zoo.pipeline.api.keras.layers as zlayers
-import numpy as np
 
 
-class PowMapper(OperatorMapper):
+class EluMapper(OperatorMapper):
     def __init__(self, node, _params, _all_tensors):
-        super(PowMapper, self).__init__(node, _params, _all_tensors)
-
-    def _extract_model_inputs(self):
-        """
-        :return: list of OnnxInput
-        """
-        return [self._to_zoo_input(self._input_list[0])]
-
-    def to_zoo_format(self, trainable_values):
-        """
-        Convert ONNX _initializer to Zoo format
-        :return: list of ndarray
-        """
-        if len(trainable_values) > 1:
-            return [np.expand_dims(trainable_values[0], 0), trainable_values[1]]
-        else:
-            return np.expand_dims(trainable_values[0], 0)
+        super(EluMapper, self).__init__(node, _params, _all_tensors)
 
     def _to_tensor(self):
-        exponent = self._input_list[1].zvalue.get_weight()[0]
-        pow = zlayers.Power(exponent)
-        return pow(self.model_inputs[0].zvalue)
-
+        if "alpha" in self.onnx_attr:
+            alpha = float(self.onnx_attr['alpha'])
+        else:
+            alpha = 1.0
+        elu = zlayers.ELU(alpha=alpha)
+        return elu(self.model_inputs[0].zvalue)

@@ -595,9 +595,47 @@ class TestModelLoading(OnnxTestCase):
     def test_pow(self):
         class Power(torch.nn.Module):
             def forward(self, x):
-                exp = torch.arange(1., 2.)
-                return torch.pow(x, exp)
+                return torch.pow(x, 2)
 
         pytorch_model = Power()
         input_shape_with_batch = (1, 2, 2)
+        self.compare_with_pytorch(pytorch_model, input_shape_with_batch)
+
+    def test_onnx_elu(self):
+        node = onnx.helper.make_node(
+            'Elu',
+            inputs=['x'],
+            outputs=['y'],
+            alpha=2.0
+        )
+
+        x = np.random.randn(3, 4, 5).astype(np.float32)
+        y = np.clip(x, 0, np.inf) + (np.exp(np.clip(x, -np.inf, 0)) - 1) * 2.0
+        output = OnnxLoader.run_node(node, [x])
+        np.testing.assert_almost_equal(output["y"], y, decimal=5)
+
+    def test_onnx_elu_default(self):
+        node = onnx.helper.make_node(
+            'Elu',
+            inputs=['x'],
+            outputs=['y']
+        )
+
+        x = np.random.randn(3, 4, 5).astype(np.float32)
+        y = np.clip(x, 0, np.inf) + (np.exp(np.clip(x, -np.inf, 0)) - 1) * 1.0
+        output = OnnxLoader.run_node(node, [x])
+        np.testing.assert_almost_equal(output["y"], y, decimal=5)
+
+    def test_elu_default(self):
+        pytorch_model = torch.nn.Sequential(
+            torch.nn.ELU()
+        )
+        input_shape_with_batch = (1, 3)
+        self.compare_with_pytorch(pytorch_model, input_shape_with_batch)
+
+    def test_elu(self):
+        pytorch_model = torch.nn.Sequential(
+            torch.nn.ELU(alpha=2)
+        )
+        input_shape_with_batch = (1, 3)
         self.compare_with_pytorch(pytorch_model, input_shape_with_batch)
