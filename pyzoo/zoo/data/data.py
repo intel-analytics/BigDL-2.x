@@ -1,5 +1,14 @@
 import tensorflow as tf
 
+
+class Iterator(object):
+
+    def __init__(self, next_tensors):
+        self.next_tensors = next_tensors
+
+    def get_next(self):
+        return self.next_tensors
+
 class Dataset(object):
 
     """
@@ -11,6 +20,8 @@ class Dataset(object):
     create_dataset = None
     rdd = None
     driver_tf_dataset = None
+    next_tensors = None
+    batch_size = None
 
     def __init__(self):
         pass
@@ -18,6 +29,24 @@ class Dataset(object):
     @staticmethod
     def from_tensor_slices(sc, tensors):
         return TensorSliceDataset(sc, tensors)
+
+    @staticmethod
+    def from_rdd(rdd, output_types, output_shapes=None):
+        dataset = Dataset()
+        dataset.rdd = rdd
+
+        def create_dataset_fn(ts):
+            def gen():
+                for t in ts:
+                    yield t
+            return tf.data.Dataset.from_generator(gen, output_types, output_shapes=output_shapes)
+
+        def driver_gen():
+            for t in [rdd.collect()]:
+                yield t
+        dataset.create_dataset = create_dataset_fn
+        dataset.driver_tf_dataset = tf.data.Dataset.from_generator(driver_gen, output_types, output_shapes)
+        return dataset
 
     @property
     def output_classes(self):
@@ -39,6 +68,12 @@ class Dataset(object):
             raise ValueError("subclass must set driver_tf_dataset")
 
         return self.driver_tf_dataset
+
+    def make_one_shot_iterator(self):
+        return Iterator(self.get_next_tensors())
+
+    def batch(self, batch_size):
+        return BatchDataset(self, batch_size)
 
     def map(self, map_func):
 
@@ -67,6 +102,11 @@ class Dataset(object):
                         return result
 
         return self.rdd.mapPartitions(lambda iter: map_partitions_func(iter, create_dataset_func))
+
+    def get_next_tensors(self):
+        if self.next_tensors is None:
+            self.next_tensors = self.driver_tf_dataset.make_one_shot_iterator().get_next()
+        return self.next_tensors
 
 
 class TensorSliceDataset(Dataset):
@@ -108,6 +148,7 @@ class MapDataset(Dataset):
         super(MapDataset, self).__init__()
 
         self.rdd = input_dataset.rdd
+        self.batch_size = input_dataset.batch_size
 
         create_pre_datset = input_dataset.create_dataset
 
@@ -126,12 +167,29 @@ class FilterDataset(Dataset):
         super(FilterDataset, self).__init__()
 
         self.rdd = input_dataset.rdd
+        self.batch_size = input_dataset.batch_size
 
-        create_pre_datset = input_dataset.create_dataset
+        create_pre_dataset = input_dataset.create_dataset
 
         def create_dataset_fn(ts):
-            dataset = create_pre_datset(ts)
+            dataset = create_pre_dataset(ts)
             return dataset.filter(predicate)
 
         self.create_dataset = create_dataset_fn
         self.driver_tf_dataset = input_dataset.driver_tf_dataset.map(predicate)
+
+
+class BatchDataset(Dataset):
+
+    def __init__(self, input_dataset, batch_size):
+        super(BatchDataset, self).__init__()
+        self.rdd = input_dataset.rdd
+        self.batch_size = batch_size
+        create_pre_dataset = input_dataset.create_dataset
+
+        def create_dataset_fn(ts):
+            dataset = create_pre_dataset(ts)
+            return dataset.batch(1)
+        self.create_dataset = create_dataset_fn
+        self.driver_tf_dataset = input_dataset.driver_tf_dataset.batch(batch_size)
+

@@ -32,6 +32,7 @@ from zoo.common import Sample, JTensor
 from zoo.pipeline.api.keras.engine.topology import ZooKerasLayer, KerasNet
 from bigdl.optim.optimizer import Optimizer, EveryEpoch
 from bigdl.optim.optimizer import MaxEpoch
+from tensorflow.python.data.util import nest
 
 
 if sys.version >= '3':
@@ -292,10 +293,51 @@ class TFValidationMethod(JavaValue):
         JavaValue.__init__(self, None, "float",
                            val_method, output_length, target_length)
 
+def to_list_of_numpy(elements):
+
+    if isinstance(elements, np.ndarray):
+        return [elements]
+    elif np.isscalar(elements):
+        return [np.array(elements)]
+    elif not isinstance(elements, list):
+        raise ValueError("Wrong type: %s" % type(elements))
+
+    results = []
+    for element in elements:
+        if np.isscalar(element):
+            results.append(np.array(element))
+        elif isinstance(element, np.ndarray):
+            results.append(element)
+        else:
+            raise ValueError("Wrong type: %s" % type(element))
+
+    return results
+
+
+def create_sample_from_ndarray(features, labels, bigdl_type="float"):
+
+    features = to_list_of_numpy(features)
+    labels = to_list_of_numpy(labels)
+    return Sample(
+        features=[JTensor(feature, feature.shape) for feature in features],
+        labels=[JTensor(label, label.shape) for label in labels],
+        bigdl_type=bigdl_type)
+
+def remove_dumpy_batch(tensors):
+    return [np.squeeze(t, axis=0) for t in tensors]
+
 
 class TFOptimizer:
 
-    def __init__(self, loss, optim_method, sess=None,
+    @staticmethod
+    def create(create_loss_fn, create_input_fn, optim_method, sess=None,
+                         val_outputs=None, val_labels=None, val_method=None):
+
+        dataset = create_input_fn()
+        loss = create_loss_fn(dataset.get_next_tensors())
+        return TFOptimizer(loss, dataset, optim_method, sess, val_outputs, val_labels, val_method)
+
+    def __init__(self, loss, dataset, optim_method, sess=None,
                  val_outputs=None, val_labels=None, val_method=None):
         import tensorflow as tf
         from zoo.util.tf import export_tf
@@ -321,13 +363,10 @@ class TFOptimizer:
             variables.append(var)
             grads.append(grad)
         self.export_dir = tempfile.mkdtemp()
-        all_required_inputs = _find_placeholders([loss])
-        self.dataset = tf.get_collection(all_required_inputs[0].name)[0]
+        self.dataset = dataset
         if self.dataset.batch_size <= 0:
-            raise ValueError("You should set batch_size instead of batch_per_thread for training")
-        self.inputs = self.dataset.tensors
-
-        _check_the_same(all_required_inputs, self.inputs)
+            raise ValueError("You should set batch_size instead of batch_per_core for training")
+        self.inputs = nest.flatten(self.dataset.get_next_tensors())
 
         if val_outputs is not None and val_labels is not None:
             outputs = val_outputs + val_labels + [loss]
@@ -363,9 +402,9 @@ class TFOptimizer:
             assigns.append(a)
         self.assign = tf.group(*assigns)
 
-        data = self.dataset.rdd
+        data = self.dataset.as_rdd()
         batch_size = self.dataset.batch_size
-        sample_rdd = data.map(lambda t: Sample.from_ndarray(t, [np.array([0.0])]))
+        sample_rdd = data.map(lambda t: create_sample_from_ndarray(remove_dumpy_batch(nest.flatten(t)), [np.array([0.0])]))
 
         self.optimizer = Optimizer.create(self.training_helper_layer,
                                           sample_rdd,

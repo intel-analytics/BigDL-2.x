@@ -262,7 +262,7 @@ def strip_unused(input_graph_def, input_tensor_names, output_tensor_names,
     for node in input_graph_def.node:
         if node.name not in input_node_names:
             for i in range(len(node.input)):
-                if _append_port(node.input[i]) in input_tensor_names:
+                if _append_port(node.input[i]) in not_found:
                     old_name = _append_port(node.input[i])
                     not_found.remove(old_name)
                     new_input_name = node.input[i].replace(":", "_")
