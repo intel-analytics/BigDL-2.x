@@ -8,7 +8,11 @@ Follow the instructions [here](https://analytics-zoo.github.io/master/#PythonUse
 You can easily use the following commands to run this example:
 ```
 export SPARK_DRIVER_MEMORY=2g
+python custom.py
+python customloss.py
+
 ```
+
 See [here](https://analytics-zoo.github.io/master/#PythonUserGuide/run/#run-after-pip-install) for more running guidance after pip install.
 
 ## Run with prebuilt package
@@ -17,14 +21,11 @@ Run the following command for Spark local mode (MASTER=local[*]) or cluster mode
 export SPARK_HOME=the root directory of Spark
 export ANALYTICS_ZOO_HOME=the folder where you extract the downloaded Analytics Zoo zip package
 ${ANALYTICS_ZOO_HOME}/bin/spark-submit-with-zoo.sh \
- master local[4] \
+ --master ${MASTER}\
     --driver-memory 2g \
     --executor-memory 2g \
+    custom.py 
+    customloss.py 
+```
 See [here](https://analytics-zoo.github.io/master/#PythonUserGuide/run/#run-without-pip-install) for more running guidance without pip install.
-```
 
-## Run the example
-```
-python custom.py
-python customloss.py
-```
