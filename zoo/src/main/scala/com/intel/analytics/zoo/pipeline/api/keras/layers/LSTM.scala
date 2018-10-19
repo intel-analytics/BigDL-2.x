@@ -60,13 +60,13 @@ class LSTM[T: ClassTag](
    val activation: KerasLayer[Tensor[T], Tensor[T], T] = null,
    val innerActivation: KerasLayer[Tensor[T], Tensor[T], T] = null,
    var returnSeq: Boolean = false,
-   override val goBackwards: Boolean = false,
+   var goBackward: Boolean = false,
    var wRegularizer: Regularizer[T] = null,
    var uRegularizer: Regularizer[T] = null,
    var bRegularizer: Regularizer[T] = null,
    override val inputShape: Shape = null)(implicit ev: TensorNumeric[T])
   extends Recurrent[T] (
-    outputDimension, returnSeq, goBackwards, inputShape) with Net {
+    outputDimension, returnSeq, goBackward, inputShape) with Net {
 
   override def buildCell(input: Array[Int]): Cell[T] = {
     com.intel.analytics.bigdl.nn.LSTM[T](
