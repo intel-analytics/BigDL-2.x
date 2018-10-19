@@ -65,3 +65,6 @@ only showing top 10 rows
 ```
 
 To map the class to human readable text, please refer to https://github.com/Lasagne/Recipes/blob/master/examples/resnet50/imagenet_classes.txt
+
+In this example, we use the Inception-V1 model. Please feel free to explore other models from
+Caffe, Keras and Tensorflow. Analytics Zoo provides popular pre-trained model in https://analytics-zoo.github.io/master/#ProgrammingGuide/image-classification/#download-link

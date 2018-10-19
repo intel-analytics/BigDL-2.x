@@ -87,4 +87,4 @@ evaluation result on validationDF: 0.9833821330950844
 The model from transfer learning can achieve high accuracy on the validation set.
 
 In this example, we use the Inception-V1 model. Please feel free to explore other models from
-Caffe, Keras and Tensorflow.
+Caffe, Keras and Tensorflow. Analytics Zoo provides popular pre-trained model in https://analytics-zoo.github.io/master/#ProgrammingGuide/image-classification/#download-link.

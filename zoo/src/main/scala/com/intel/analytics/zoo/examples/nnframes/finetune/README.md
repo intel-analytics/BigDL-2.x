@@ -85,4 +85,4 @@ After training, you should see something like this.
 The model from fine tuning can achieve high accuracy on the validation set.
 
 In this example, we use the Inception-V1 model. Please feel free to explore other models from
-Caffe, Keras and Tensorflow.
+Caffe, Keras and Tensorflow. Analytics Zoo provides popular pre-trained model in https://analytics-zoo.github.io/master/#ProgrammingGuide/image-classification/#download-link
