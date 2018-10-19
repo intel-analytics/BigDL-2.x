@@ -24,8 +24,8 @@ ${ANALYTICS_ZOO_HOME}/bin/spark-submit-with-zoo.sh \
  --master ${MASTER}\
     --driver-memory 2g \
     --executor-memory 2g \
-    custom.py 
-    customloss.py 
+    path/to/custom.py 
+    path/to/customloss.py 
 ```
 See [here](https://analytics-zoo.github.io/master/#PythonUserGuide/run/#run-without-pip-install) for more running guidance without pip install.
 
