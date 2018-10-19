@@ -56,7 +56,7 @@ import scala.reflect.ClassTag
  * @tparam T Numeric type of parameter(e.g. weight, bias). Only support float/double now.
  */
 class GRU[T: ClassTag](
-   val outputDimension: Int,
+   var outputDimension: Int,
    val activation: KerasLayer[Tensor[T], Tensor[T], T] = null,
    val innerActivation: KerasLayer[Tensor[T], Tensor[T], T] = null,
    override val returnSequences: Boolean = false,
