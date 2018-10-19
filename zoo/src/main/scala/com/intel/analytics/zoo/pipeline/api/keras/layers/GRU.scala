@@ -56,7 +56,7 @@ import scala.reflect.ClassTag
  * @tparam T Numeric type of parameter(e.g. weight, bias). Only support float/double now.
  */
 class GRU[T: ClassTag](
-   override val outputDim: Int,
+   val _outputDim: Int,
    val activation: KerasLayer[Tensor[T], Tensor[T], T] = null,
    val innerActivation: KerasLayer[Tensor[T], Tensor[T], T] = null,
    override val returnSequences: Boolean = false,
@@ -66,7 +66,7 @@ class GRU[T: ClassTag](
    var bRegularizer: Regularizer[T] = null,
    override val inputShape: Shape = null)(implicit ev: TensorNumeric[T])
   extends Recurrent[T] (
-    outputDim, returnSequences, goBackwards, inputShape) with Net {
+    _outputDim, returnSequences, goBackwards, inputShape) with Net {
 
   override def buildCell(input: Array[Int]): Cell[T] = {
     com.intel.analytics.bigdl.nn.GRU[T](

@@ -37,7 +37,7 @@ abstract class Recurrent[T: ClassTag](
     val input = inputShape.toSingle().toArray
     val model = TSequential[T]()
     if (goBackwards) model.add(Reverse(2))
-    val rec = new com.intel.analytics.zoo.pipeline.api.keras.layers.internal.InternalRecurrent[T]()
+    val rec = new com.intel.analytics.bigdl.nn.Recurrent[T]()
     rec.add(buildCell(input))
     model.add(rec)
     if (!returnSequences) model.add(TSelect(2, -1))
