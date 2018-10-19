@@ -16,7 +16,7 @@
 
 import sys
 
-from bigdl.util.common import callBigDlFunc
+from bigdl.util.common import callBigDlFunc, JTensor
 from ..engine.topology import ZooKerasLayer
 
 if sys.version >= '3':
@@ -45,15 +45,21 @@ class Embedding(ZooKerasLayer):
 
     >>> embedding = Embedding(1000, 32, input_length=10, name="embedding1")
     creating: createZooKerasEmbedding
+
+    >>> import numpy as np
+    >>> embedding = Embedding(10, 200, weights=np.random.random([10, 200]), input_length=10)
+    creating: createZooKerasEmbedding
     """
-    def __init__(self, input_dim, output_dim, init="uniform", input_length=None,
-                 W_regularizer=None, input_shape=None, **kwargs):
+    def __init__(self, input_dim, output_dim, init="uniform", weights=None, trainable=True,
+                 input_length=None, W_regularizer=None, input_shape=None, **kwargs):
         if input_length:
             input_shape = (input_length,)
         super(Embedding, self).__init__(None,
                                         input_dim,
                                         output_dim,
                                         init,
+                                        JTensor.from_ndarray(weights, self.bigdl_type),
+                                        trainable,
                                         W_regularizer,
                                         list(input_shape) if input_shape else None,
                                         **kwargs)

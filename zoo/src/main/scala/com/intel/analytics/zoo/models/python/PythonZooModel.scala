@@ -20,7 +20,7 @@ import java.util.{List => JList, Map => JMap}
 
 import com.intel.analytics.bigdl.dataset.PaddingParam
 import com.intel.analytics.bigdl.nn.abstractnn.{AbstractModule, Activity}
-import com.intel.analytics.bigdl.python.api.Sample
+import com.intel.analytics.bigdl.python.api.{JTensor, Sample}
 import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric
 import com.intel.analytics.bigdl.transform.vision.image.ImageFeature
 import com.intel.analytics.zoo.common.PythonZoo
@@ -33,6 +33,7 @@ import com.intel.analytics.zoo.models.image.imageclassification.{ImageClassifier
 import com.intel.analytics.zoo.models.recommendation.{NeuralCF, Recommender, UserItemFeature, UserItemPrediction}
 import com.intel.analytics.zoo.models.recommendation._
 import com.intel.analytics.zoo.models.textclassification.TextClassifier
+import com.intel.analytics.zoo.models.textranker.KNRM
 import com.intel.analytics.zoo.pipeline.api.keras.layers.Embedding
 import org.apache.spark.api.java.JavaRDD
 import org.apache.spark.rdd.RDD
@@ -246,6 +247,19 @@ class PythonZooModel[T: ClassTag](implicit ev: TensorNumeric[T]) extends PythonZ
       batchSize: Int = 32,
       zeroBasedLabel: Boolean = true): JavaRDD[Int] = {
     module.predictClasses(toJSample(x), batchSize, zeroBasedLabel).toJavaRDD()
+  }
+
+  def createZooKNRM(
+      text1Length: Int,
+      text2Length: Int,
+      vocabSize: Int,
+      embedSize: Int,
+      embedWeights: JTensor = null,
+      kernelNum: Int = 21,
+      sigma: Double = 0.1,
+      exactSigma: Double = 0.001): KNRM[T] = {
+    KNRM[T](text1Length, text2Length, vocabSize, embedSize, toTensor(embedWeights),
+      kernelNum, sigma, exactSigma)
   }
 
 }
