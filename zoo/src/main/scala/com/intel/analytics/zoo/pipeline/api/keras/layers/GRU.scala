@@ -59,14 +59,14 @@ class GRU[T: ClassTag](
    var outputDimension: Int,
    val activation: KerasLayer[Tensor[T], Tensor[T], T] = null,
    val innerActivation: KerasLayer[Tensor[T], Tensor[T], T] = null,
-   override val returnSequences: Boolean = false,
+   var returnSeq: Boolean = false,
    override val goBackwards: Boolean = false,
    var wRegularizer: Regularizer[T] = null,
    var uRegularizer: Regularizer[T] = null,
    var bRegularizer: Regularizer[T] = null,
    override val inputShape: Shape = null)(implicit ev: TensorNumeric[T])
   extends Recurrent[T] (
-    outputDimension, returnSequences, goBackwards, inputShape) with Net {
+    outputDimension, returnSeq, goBackwards, inputShape) with Net {
 
   override def buildCell(input: Array[Int]): Cell[T] = {
     com.intel.analytics.bigdl.nn.GRU[T](
