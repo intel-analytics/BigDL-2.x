@@ -95,8 +95,9 @@ object Embedding {
       weights: Tensor[T] = null,
       trainable: Boolean = true,
       wRegularizer: Regularizer[T] = null,
-      inputLength: Int)(implicit ev: TensorNumeric[T]): Embedding[T] = {
+      inputLength: Int = -1)(implicit ev: TensorNumeric[T]): Embedding[T] = {
+    val shape = if (inputLength > 0) Shape(inputLength) else null
     new Embedding[T](inputDim, outputDim, KerasUtils.getInitMethod(init),
-      weights, trainable, wRegularizer, Shape(inputLength))
+      weights, trainable, wRegularizer, shape)
   }
 }

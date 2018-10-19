@@ -19,13 +19,13 @@ package com.intel.analytics.zoo.pipeline.api.keras.layers
 import java.io._
 import java.util.concurrent.atomic.AtomicInteger
 
-import com.intel.analytics.bigdl.nn.Identity
+import com.intel.analytics.bigdl.nn.{Identity => BIdentity}
 import com.intel.analytics.bigdl.nn.abstractnn.AbstractModule
 import com.intel.analytics.bigdl.serialization.Bigdl._
 import com.intel.analytics.bigdl.tensor.Tensor
 import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric
 import com.intel.analytics.bigdl.utils.Shape
-import com.intel.analytics.bigdl.utils.serializer.{DeserializeContext, ModuleSerializer, SerializeContext}
+import com.intel.analytics.bigdl.utils.serializer.{DeserializeContext, SerializeContext}
 import com.intel.analytics.bigdl.utils.serializer.converters.{DataConverter, TensorConverter}
 import com.intel.analytics.zoo.pipeline.api.keras.layers.WordEmbedding.EmbeddingMatrixHolder
 import com.intel.analytics.zoo.pipeline.api.net.{NetUtils, RegistryMap, SerializationHolder}
@@ -56,7 +56,7 @@ class WordEmbedding[T: ClassTag] private(
   require(!trainable, "WordEmbedding is not trainable for now.")
 
   override def doBuild(inputShape: Shape): AbstractModule[Tensor[T], Tensor[T], T] = {
-    Identity().asInstanceOf[AbstractModule[Tensor[T], Tensor[T], T]]
+    BIdentity().asInstanceOf[AbstractModule[Tensor[T], Tensor[T], T]]
   }
 
   private def weight: Tensor[T] = embeddingMatrix.weight
