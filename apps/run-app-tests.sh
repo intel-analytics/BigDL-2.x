@@ -350,6 +350,29 @@ time10=$((now-start))
 rm ${ANALYTICS_ZOO_HOME}/apps/dogs-vs-cats/tmp.py
 echo "#10 dogs-vs-cats time used:$time10 seconds"
 
+elif [ $1=4 ]; then
+echo "#12 start app test for image-similarity"
+#timer
+start=$(date "+%s")
+${ANALYTICS_ZOO_HOME}/apps/ipynb2py.sh ${ANALYTICS_ZOO_HOME}/apps/image-similarity/image-similarity
+${SPARK_HOME}/bin/spark-submit \
+        --master ${MASTER} \
+        --driver-cores 2  \
+        --total-executor-cores 2  \
+        --executor-cores 2  \
+        --driver-memory 8g  \
+        --executor-memory 8g \
+        --conf spark.akka.frameSize=64 \
+        --py-files ${ANALYTICS_ZOO_PYZIP},${ANALYTICS_ZOO_HOME}/apps/image-similarity/image-similarity.py \
+        --properties-file ${ANALYTICS_ZOO_CONF} \
+        --jars ${ANALYTICS_ZOO_JAR} \
+        --conf spark.driver.extraClassPath=${ANALYTICS_ZOO_JAR} \
+        --conf spark.executor.extraClassPath=${ANALYTICS_ZOO_JAR} \
+        ${ANALYTICS_ZOO_HOME}/apps/image-similarity/image-similarity.py
+now=$(date "+%s")
+time12=$((now-start))
+echo "#12 image-similarity time used:$time12 seconds"
+
 else
 echo "#1 start app test for anomaly-detection-nyc-taxi"
 #timer
@@ -696,3 +719,4 @@ echo "#7 using_variational_autoencoder_and_deep_feature_loss_to_generate_faces t
 echo "#8 sentimentAnalysis time used:$time8 seconds"
 echo "#9 image-augmentation time used:$time9 seconds"
 echo "#10 dogs-vs-cats time used:$time10 seconds"
+echo "#12 image-similarity time used:$time12 seconds"
