@@ -23,13 +23,20 @@ jupyter toree install --spark_opts='--master=local[*]' --user --spark_home=$SPAR
 ```
 
 2. Build Analytics Zoo jar file under Spark 2.x.
-* Download Analytics Zoo and build it.
+* You can download Analytics Zoo prebuilt release and nightly build package from [here](https://analytics-zoo.github.io/master/#release-download/) and extract it.
 * Run `export ANALYTICS_ZOO_HOME=the dist directory under the Analytics Zoo project`.
 
 3. To support the training for imbalanced data set in fraud detection, some Transformers and algorithms are developed in 
 https://github.com/intel-analytics/analytics-zoo/tree/legacy/pipeline/fraudDetection. We provided a pre-built jar file in this folder. Feel free to go to the source folder and run "mvn clean package" to build from source.
 
+4. Run the following command for Spark local mode (`MASTER=local[*]`) or cluster mode. Change parameter settings as you need, ie `MASTER = local[physcial_core_number]`. Recommended driver memory and executor memory is 10g. 
 
-4. Run the `$ANALYTICS_ZOO_HOME/apps/fraud-detection/run.sh` to start the jupyter notebook. Change parameter settings as you need, ie `MASTER = local[physcial_core_number]`.
-Recommended driver memory and executor memory is 10g. 
-
+```bash
+export SPARK_HOME=the root directory of Spark
+export ANALYTICS_ZOO_HOME=the dist directory under the Analytics Zoo project
+MASTER=...
+${ANALYTICS_ZOO_HOME}/bin/spark-shell-with-zoo.sh \
+    --master ${MASTER} \
+    --driver-memory 10g \
+    --executor-memory 10g \
+```
