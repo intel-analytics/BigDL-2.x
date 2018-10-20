@@ -18,10 +18,10 @@ jupyter notebook --notebook-dir=./ --ip=* --no-browser
 
 ## Run Jupyter with prebuilt package
 * Run `export SPARK_HOME=the root directory of Spark`.
-* Run `export ANALYTICS_ZOO_HOME=the dist directory under the Analytics Zoo project`.
+* Run `export ANALYTICS_ZOO_HOME=the folder where you extract the downloaded Analytics Zoo zip package`.
 * Run the following bash command to start the jupyter notebook. Change parameter settings as you need, e.g. `MASTER = local[1]`.
 ```bash
 ${ANALYTICS_ZOO_HOME}/bin/jupyter-with-zoo.sh \
     --master local[1] \
-    --driver-memory 8g
+    --driver-memory 10g
 ```
