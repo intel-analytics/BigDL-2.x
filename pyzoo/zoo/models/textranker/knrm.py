@@ -20,6 +20,7 @@ from zoo.models.common.zoo_model import ZooModel
 import zoo.pipeline.api.autograd as A
 from zoo.pipeline.api.keras.layers import Input, Embedding, Dense, Squeeze
 from zoo.pipeline.api.keras.models import Model
+from bigdl.util.common import callBigDlFunc
 
 if sys.version >= '3':
     long = int
@@ -30,7 +31,7 @@ class KNRM(ZooModel):
     """
 
     """
-    def __init__(self, text1_length, text2_length, vocab_size, embed_size, embed_weights=None,
+    def __init__(self, text1_length, text2_length, vocab_size, embed_size=300, embed_weights=None,
                  kernel_num=21, sigma=0.1, exact_sigma=0.001, bigdl_type="float"):
         self.text1_length = text1_length
         self.text2_length = text2_length
@@ -77,4 +78,21 @@ class KNRM(ZooModel):
         Phi = Squeeze(2)(A.stack(KM, 1))
         output = Dense(1, init="uniform", activation="sigmoid")(Phi)
         model = Model(input=input, output=output)
+        return model
+
+    @staticmethod
+    def load_model(path, weight_path=None, bigdl_type="float"):
+        """
+        Load an existing KNRM model (with weights).
+
+        # Arguments
+        path: The path for the pre-defined model.
+              Local file system, HDFS and Amazon S3 are supported.
+              HDFS path should be like 'hdfs://[host]:[port]/xxx'.
+              Amazon S3 path should be like 's3a://bucket/xxx'.
+        weight_path: The path for pre-trained weights if any. Default is None.
+        """
+        jmodel = callBigDlFunc(bigdl_type, "loadKNRM", path, weight_path)
+        model = ZooModel._do_load(jmodel, bigdl_type)
+        model.__class__ = KNRM
         return model

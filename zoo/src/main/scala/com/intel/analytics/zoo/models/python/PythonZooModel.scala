@@ -263,4 +263,10 @@ class PythonZooModel[T: ClassTag](implicit ev: TensorNumeric[T]) extends PythonZ
       kernelNum, sigma, exactSigma, model)
   }
 
+  def loadKNRM(
+      path: String,
+      weightPath: String = null): KNRM[T] = {
+    KNRM.loadModel(path, weightPath)
+  }
+
 }

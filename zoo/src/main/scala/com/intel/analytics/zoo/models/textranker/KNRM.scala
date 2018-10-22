@@ -35,18 +35,22 @@ import scala.reflect.ClassTag
  *
  * @param text1Length Sequence length of text1 (query).
  * @param text2Length Sequence length of text2 (doc).
- * @param vocabSize
- * @param embedSize
- * @param embedWeights
- * @param kernelNum
- * @param sigma
- * @param exactSigma
+ * @param vocabSize Integer. The inputDim of the embedding layer. Ought to be the total number
+ *                  of words in the corpus +1, with index 0 reserved for unknown words.
+ * @param embedSize Integer. The outputDim of the embedding layer. Default is 300.
+ * @param embedWeights Tensor. Pre-trained word embedding weights if any. Default is null and in
+ *                     this case, initial weights will be randomized.
+ * @param kernelNum Integer. The number of kernels to use.
+ * @param sigma Double. Defines the kernel width, or the range of its softTF count.
+ *              Default is 0.1.
+ * @param exactSigma Double. The sigma used for the kernel that harvests exact matches
+ *                   in the case where mu=1.0. Default is 0.001.
  */
 class KNRM[T: ClassTag] private(
     val text1Length: Int,
     val text2Length: Int,
     val vocabSize: Int,
-    val embedSize: Int,
+    val embedSize: Int = 300,
     val embedWeights: Tensor[T] = null,
     val kernelNum: Int = 21,
     val sigma: Double = 0.1,
@@ -88,7 +92,7 @@ object KNRM {
       text1Length: Int,
       text2Length: Int,
       vocabSize: Int,
-      embedSize: Int,
+      embedSize: Int = 300,
       embedWeights: Tensor[T] = null,
       kernelNum: Int = 21,
       sigma: Double = 0.1,
@@ -116,5 +120,21 @@ object KNRM {
     (implicit ev: TensorNumeric[T]): KNRM[T] = {
     new KNRM[T](text1Length, text2Length, vocabSize, embedSize, embedWeights,
       kernelNum, sigma, exactSigma).addModel(model)
+  }
+
+  /**
+   * Load an existing KNRM model (with weights).
+   *
+   * @param path The path for the pre-defined model.
+   *             Local file system, HDFS and Amazon S3 are supported.
+   *             HDFS path should be like "hdfs://[host]:[port]/xxx".
+   *             Amazon S3 path should be like "s3a://bucket/xxx".
+   * @param weightPath The path for pre-trained weights if any. Default is null.
+   * @tparam T Numeric type of parameter(e.g. weight, bias). Only support float/double now.
+   */
+  def loadModel[T: ClassTag](
+      path: String,
+      weightPath: String = null)(implicit ev: TensorNumeric[T]): KNRM[T] = {
+    ZooModel.loadModel(path, weightPath).asInstanceOf[KNRM[T]]
   }
 }
