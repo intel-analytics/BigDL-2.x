@@ -46,5 +46,27 @@ now=$(date "+%s")
 time1=$((now-start))
 echo "textclassification time used:$time1 seconds"
 
+echo "start example test for image-classification"
+#timer
+start=$(date "+%s")
+export SPARK_DRIVER_MEMORY=20g
+python ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/imageclassification/predict.py \
+    --nb_epoch 2 \
+    --batch_size 112 \
+    -f hdfs://172.168.2.181:9000/kaggle/train_100 \
+    --model analytics-zoo-models/analytics-zoo_squeezenet_imagenet_0.1.0.model \
+    --topN 5
+exit_status=$?
+if [ $exit_status -ne 0 ];
+then
+    clear_up
+    echo "imageclassification failed"
+    exit $exit_status
+fi
+
+unset SPARK_DRIVER_MEMORY
+now=$(date "+%s")
+time2=$((now-start))
+
 # This should be done at the very end after all tests finish.
 clear_up
