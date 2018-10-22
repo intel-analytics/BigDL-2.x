@@ -40,15 +40,17 @@ class KNRM(ZooModel):
         self.kernel_num = kernel_num
         self.sigma = float(sigma)
         self.exact_sigma = float(exact_sigma)
+        self.model = self.build_model()
         super(KNRM, self).__init__(None, bigdl_type,
-                                   text1_length,
-                                   text2_length,
-                                   vocab_size,
-                                   embed_size,
-                                   embed_weights,
-                                   kernel_num,
-                                   sigma,
-                                   exact_sigma)
+                                   self.text1_length,
+                                   self.text2_length,
+                                   self.vocab_size,
+                                   self.embed_size,
+                                   self.embed_weights,
+                                   self.kernel_num,
+                                   self.sigma,
+                                   self.exact_sigma,
+                                   self.model)
 
     def build_model(self):
         # Remark: Share weights for embedding is not supported.

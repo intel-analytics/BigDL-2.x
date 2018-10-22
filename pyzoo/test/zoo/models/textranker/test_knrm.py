@@ -60,20 +60,16 @@ class TestKNRM(ZooTestCase):
         model = Model([query, doc], out_)
         return model
 
-    def test_forward_backward(self):
+    def test_with_keras(self):
         kmodel = self.keras_knrm(5, 10, 20, 100)
         input_data = np.random.randint(20, size=(4, 15))
         koutput = kmodel.predict([input_data[:, :5], input_data[:, 5:]])
         kweights = kmodel.get_weights()
         bweights = [kweights[0], np.transpose(kweights[1]), kweights[2]]
-        model1 = KNRM(5, 10, 20, 100)  # Model definition on Scala side
-        model1.set_weights(bweights)
-        output1 = model1.forward(input_data)
-        self.assert_allclose(output1, koutput)
-        model2 = KNRM(5, 10, 20, 100).build_model()  # Model definition on Python side
-        model2.set_weights(bweights)
-        output2 = model2.forward(input_data)
-        self.assert_allclose(output2, koutput)
+        model = KNRM(5, 10, 20, 100)  # Model definition on Scala side
+        model.set_weights(bweights)
+        output = model.forward(input_data)
+        self.assert_allclose(output, koutput)
 
     def test_save_load(self):
         pass

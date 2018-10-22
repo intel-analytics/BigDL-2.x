@@ -30,9 +30,11 @@ import scala.reflect.ClassTag
 
 /**
  * Kernel-pooling Neural Ranking Model with RBF kernel.
+ * https://arxiv.org/abs/1706.06613
+ * Referred to MatchZoo implementation: https://github.com/NTMC-Community/MatchZoo
  *
- * @param text1Length
- * @param text2Length
+ * @param text1Length Sequence length of text1 (query).
+ * @param text2Length Sequence length of text2 (doc).
  * @param vocabSize
  * @param embedSize
  * @param embedWeights
@@ -93,5 +95,26 @@ object KNRM {
       exactSigma: Double = 0.001)(implicit ev: TensorNumeric[T]): KNRM[T] = {
     new KNRM[T](text1Length, text2Length, vocabSize, embedSize, embedWeights,
       kernelNum, sigma, exactSigma).build()
+  }
+
+  /**
+   * This factory method is mainly for Python use.
+   * Pass in a model to build the KNRM model.
+   * Note that if you use this factory method, arguments should match the model definition
+   * to eliminate ambiguity.
+   */
+  private[zoo] def apply[@specialized(Float, Double) T: ClassTag](
+      text1Length: Int,
+      text2Length: Int,
+      vocabSize: Int,
+      embedSize: Int,
+      embedWeights: Tensor[T],
+      kernelNum: Int,
+      sigma: Double,
+      exactSigma: Double,
+      model: AbstractModule[Activity, Activity, T])
+    (implicit ev: TensorNumeric[T]): KNRM[T] = {
+    new KNRM[T](text1Length, text2Length, vocabSize, embedSize, embedWeights,
+      kernelNum, sigma, exactSigma).addModel(model)
   }
 }

@@ -257,9 +257,10 @@ class PythonZooModel[T: ClassTag](implicit ev: TensorNumeric[T]) extends PythonZ
       embedWeights: JTensor = null,
       kernelNum: Int = 21,
       sigma: Double = 0.1,
-      exactSigma: Double = 0.001): KNRM[T] = {
+      exactSigma: Double = 0.001,
+      model: AbstractModule[Activity, Activity, T]): KNRM[T] = {
     KNRM[T](text1Length, text2Length, vocabSize, embedSize, toTensor(embedWeights),
-      kernelNum, sigma, exactSigma)
+      kernelNum, sigma, exactSigma, model)
   }
 
 }
