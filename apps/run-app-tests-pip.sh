@@ -37,7 +37,6 @@ now=$(date "+%s")
 time1=$((now-start))
 echo "anomaly-detection-nyc-taxi time used:$time1 seconds"
 
-
 echo "#2 start app test for object-detection"
 start=$(date "+%s")
 
@@ -91,7 +90,6 @@ unset SPARK_DRIVER_MEMORY
 now=$(date "+%s")
 time2=$((now-start))
 echo "object-detection time used:$time2 seconds"
-
 
 # This should be done at the very end after all tests finish.
 clear_up
