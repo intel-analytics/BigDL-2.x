@@ -57,5 +57,27 @@ now=$(date "+%s")
 time9=$((now-start))
 echo "#9 image-augmentation time used:$time9 seconds"
 
+echo "#11 start app test for image-augementation-3d"
+#timer
+start=$(date "+%s")
+${ANALYTICS_ZOO_HOME}/apps/ipynb2py.sh ${ANALYTICS_ZOO_HOME}/apps/image-augmentation-3d/image-augementation-3d
+${SPARK_HOME}/bin/spark-submit \
+        --master ${MASTER} \
+        --driver-cores 2  \
+        --total-executor-cores 2  \
+        --executor-cores 2  \
+        --driver-memory 1g  \
+        --executor-memory 1g \
+        --conf spark.akka.frameSize=64 \
+        --py-files ${ANALYTICS_ZOO_PYZIP},${ANALYTICS_ZOO_HOME}/apps/image-augmentation-3d/image-augementation-3d.py \
+        --properties-file ${ANALYTICS_ZOO_CONF} \
+        --jars ${ANALYTICS_ZOO_JAR} \
+        --conf spark.driver.extraClassPath=${ANALYTICS_ZOO_JAR} \
+        --conf spark.executor.extraClassPath=${ANALYTICS_ZOO_JAR} \
+        ${ANALYTICS_ZOO_HOME}/apps/image-augmentation-3d/image-augementation-3d.py
+now=$(date "+%s")
+time11=$((now-start))
+echo "#11 image-augementation-3d time used:$time11 seconds"
+
 # This should be done at the very end after all tests finish.
 clear_up
