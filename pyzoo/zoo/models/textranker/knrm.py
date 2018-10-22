@@ -18,7 +18,7 @@ import sys
 
 from zoo.models.common.zoo_model import ZooModel
 import zoo.pipeline.api.autograd as A
-from zoo.pipeline.api.keras.layers import Input, Embedding, Flatten, Dense
+from zoo.pipeline.api.keras.layers import Input, Embedding, Dense, Squeeze
 from zoo.pipeline.api.keras.models import Model
 
 if sys.version >= '3':
@@ -51,17 +51,13 @@ class KNRM(ZooModel):
                                    exact_sigma)
 
     def build_model(self):
-        def RBF(mu, sigma):
-            def kernel(x):
-                return A.exp(-0.5 * (x - mu) * (x - mu) / sigma / sigma)
-            return A.Lambda(lambda x: kernel(x))
-
+        # Remark: Share weights for embedding is not supported.
+        # Thus here the model takes concatenated input and slice to split the input.
         input = Input(name='input', shape=(self.text1_length + self.text2_length, ))
         embedding = Embedding(self.vocab_size, self.embed_size, weights=self.embed_weights)(input)
         query_embed = embedding.slice(1, 0, self.text1_length)
         doc_embed = embedding.slice(1, self.text1_length, self.text2_length)
         mm = A.batch_dot(query_embed, doc_embed, axes=[2, 2])
-
         KM = []
         for i in range(self.kernel_num):
             mu = 1. / (self.kernel_num - 1) + (2. * i) / (self.kernel_num - 1) - 1.0
@@ -69,17 +65,14 @@ class KNRM(ZooModel):
             if mu > 1.0:
                 sigma = self.exact_sigma
                 mu = 1.0
-            mm_exp = RBF(mu, sigma)(mm)
-            mm_doc_sum = A.Lambda(lambda x: A.sum(x, 2))(mm_exp)
-            mm_log = A.Lambda(lambda x: A.log(x + 1.0))(mm_doc_sum)
-            # Keep the reduced dimension for the last sum.
-            # Otherwise, when batch=1, the output will become a Scalar not compatible for the stack operation.
-            mm_sum = A.Lambda(lambda x: A.sum(x, 1, keepDims=True))(mm_log)
+            mm_exp = A.exp(-0.5 * (mm - mu) * (mm - mu) / sigma / sigma)
+            mm_doc_sum = A.sum(mm_exp, 2)
+            mm_log = A.log(mm_doc_sum + 1.0)
+            # Remark: Keep the reduced dimension for the last sum and squeeze after stack.
+            # Otherwise, when batch=1, the output will become a Scalar not compatible for stack.
+            mm_sum = A.sum(mm_log, 1, keepDims=True)
             KM.append(mm_sum)
-
-        KMStack = A.stack(KM, 1)
-        flatten = Flatten()(KMStack)  # Remove the extra dimension from keepDims of the last sum.
-        output = Dense(1, init="uniform", activation="sigmoid")(flatten)
-
+        Phi = Squeeze(2)(A.stack(KM, 1))
+        output = Dense(1, init="uniform", activation="sigmoid")(Phi)
         model = Model(input=input, output=output)
         return model

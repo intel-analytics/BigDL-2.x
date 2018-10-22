@@ -26,7 +26,7 @@ np.random.seed(1337)  # for reproducibility
 
 class TestKNRM(ZooTestCase):
 
-    # Model definition in Keras
+    # Model definition from MatchZoo rewritten in Keras 1.2.2
     def keras_knrm(self, text1_length, text2_length, vocab_size, embed_size,
                    kernel_num=21, sigma=0.1, exact_sigma=0.001):
         def Kernel_layer(mu,sigma):

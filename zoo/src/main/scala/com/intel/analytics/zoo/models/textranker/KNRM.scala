@@ -52,15 +52,14 @@ class KNRM[T: ClassTag] private(
   extends ZooModel[Activity, Activity, T] {
 
   override def buildModel(): AbstractModule[Activity, Activity, T] = {
+    // Remark: Share weights for embedding is not supported.
+    // Thus here the model takes concatenated input and slice to split the input.
     val input = Input(inputShape = Shape(text1Length + text2Length))
     val embedding = Variable(Embedding(vocabSize, embedSize, weights = embedWeights)
       .inputs(input))
-    // Remark: Share weights for embedding is not supported.
-    // Thus here the model takes concatenated input and slice to split the input.
     val text1Embed = embedding.slice(1, 0, text1Length)
     val text2Embed = embedding.slice(1, text1Length, text2Length)
-    // Translation Matrix.
-    val mm = A.batchDot(text1Embed, text2Embed, axes = List(2, 2))
+    val mm = A.batchDot(text1Embed, text2Embed, axes = List(2, 2)) // Translation Matrix.
     val KM = new ArrayBuffer[Variable[T]]()
     for (i <- 0 until kernelNum) {
       var mu = 1.0 / (kernelNum - 1) + (2.0 * i) / (kernelNum - 1) - 1.0
@@ -68,8 +67,8 @@ class KNRM[T: ClassTag] private(
         mu = 1.0
         exactSigma
       } else sigma
-      val kernelLayer = A.exp[T]((mm - mu) * (mm - mu) / _sigma / _sigma * (-0.5))
-      val mmDocSum = A.sum(kernelLayer, axis = 2)
+      val mmExp = A.exp[T]((mm - mu) * (mm - mu) / _sigma / _sigma * (-0.5))
+      val mmDocSum = A.sum(mmExp, axis = 2)
       val mmLog = A.log(mmDocSum + 1.0)
       // Remark: Keep the reduced dimension for the last sum and squeeze after stack.
       // Otherwise, when batch=1, the output will become a Scalar not compatible stack.
