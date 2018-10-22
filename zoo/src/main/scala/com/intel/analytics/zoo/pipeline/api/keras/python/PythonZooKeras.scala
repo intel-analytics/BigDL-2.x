@@ -1238,7 +1238,7 @@ class PythonZooKeras[T: ClassTag](implicit ev: TensorNumeric[T]) extends PythonZ
       trainable: Boolean = false,
       inputShape: JList[Int] = null): WordEmbedding[T] = {
     WordEmbedding[T](embeddingFile, if (wordIndex!= null) wordIndex.asScala.toMap else null,
-      trainable, inputShape.get(0))
+      trainable, if (inputShape != null) inputShape.get(0) else -1)
   }
 
   def wordEmbeddingGetWordIndex(

@@ -134,7 +134,8 @@ object WordEmbedding {
       embeddingFile: String,
       wordIndex: Map[String, Int] = null,
       trainable: Boolean = false,
-      inputLength: Int)(implicit ev: TensorNumeric[T]): WordEmbedding[T] = {
+      inputLength: Int = -1)(implicit ev: TensorNumeric[T]): WordEmbedding[T] = {
+    val shape = if (inputLength > 0) Shape(inputLength) else null
 
     require(new File(embeddingFile).exists(),
       s"embeddingFile $embeddingFile doesn't exist. Please check your file path.")
@@ -153,7 +154,7 @@ object WordEmbedding {
     val embeddingMatrix = buildEmbeddingMatrix[T](indexVec, inputDim, outputDim)
     new WordEmbedding[T](inputDim, outputDim,
       new EmbeddingMatrixHolder[T](embeddingMatrix, "WordEmbedding" + id.toString),
-      trainable, Shape(inputLength))
+      trainable, shape)
   }
 
   def calcInputDimFromWordIndex(wordIndex: Map[String, Int]): Int = {

@@ -96,6 +96,7 @@ object Embedding {
       trainable: Boolean = true,
       wRegularizer: Regularizer[T] = null,
       inputLength: Int = -1)(implicit ev: TensorNumeric[T]): Embedding[T] = {
+    // Remark: It is possible that inputShape is specified in Input node or layer.
     val shape = if (inputLength > 0) Shape(inputLength) else null
     new Embedding[T](inputDim, outputDim, KerasUtils.getInitMethod(init),
       weights, trainable, wRegularizer, shape)
