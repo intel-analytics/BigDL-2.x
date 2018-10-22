@@ -43,4 +43,3 @@ class PowMapper(OperatorMapper):
         exponent = self._input_list[1].zvalue.get_weight()[0]
         pow = zlayers.Power(exponent)
         return pow(self.model_inputs[0].zvalue)
-
