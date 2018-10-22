@@ -60,7 +60,7 @@ class KNRM[T: ClassTag] private(
     val text1Embed = embedding.slice(1, 0, text1Length)
     val text2Embed = embedding.slice(1, text1Length, text2Length)
     // Translation Matrix.
-    val mm = A.batchDot(text1Embed, text2Embed, axes = List(2, 2), normalize = true)
+    val mm = A.batchDot(text1Embed, text2Embed, axes = List(2, 2))
     val KM = new ArrayBuffer[Variable[T]]()
     for (i <- 0 until kernelNum) {
       var mu = 1.0 / (kernelNum - 1) + (2.0 * i) / (kernelNum - 1) - 1.0

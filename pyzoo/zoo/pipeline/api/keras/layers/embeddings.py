@@ -58,7 +58,7 @@ class Embedding(ZooKerasLayer):
                                         input_dim,
                                         output_dim,
                                         init,
-                                        JTensor.from_ndarray(weights, self.bigdl_type),
+                                        JTensor.from_ndarray(weights),
                                         trainable,
                                         W_regularizer,
                                         list(input_shape) if input_shape else None,
