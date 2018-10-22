@@ -23,6 +23,7 @@ import com.intel.analytics.bigdl.nn.{Sequential => TSequential}
 import com.intel.analytics.bigdl.tensor.Tensor
 import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric
 import com.intel.analytics.bigdl.utils.Shape
+import com.intel.analytics.zoo.pipeline.api.keras.layers.internal.InternalRecurrent
 
 import scala.reflect.ClassTag
 
@@ -37,7 +38,7 @@ abstract class Recurrent[T: ClassTag](
     val input = inputShape.toSingle().toArray
     val model = TSequential[T]()
     if (goBackwards) model.add(Reverse(2))
-    val rec = new com.intel.analytics.bigdl.nn.Recurrent[T]()
+    val rec = new InternalRecurrent[T]()
     rec.add(buildCell(input))
     model.add(rec)
     if (!returnSequences) model.add(TSelect(2, -1))
