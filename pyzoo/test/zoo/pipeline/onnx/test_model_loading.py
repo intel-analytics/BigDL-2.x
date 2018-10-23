@@ -165,16 +165,9 @@ class TestModelLoading(OnnxTestCase):
         input_shape_with_batch = (1, 3, 224, 224)
         self.compare_with_pytorch(pytorch_model, input_shape_with_batch)
 
-    def test_onnx_averagepool2d_count_include_pad(self):
+    def test_onnx_averagepool2d_padding(self):
         pytorch_model = torch.nn.Sequential(
-            torch.nn.AvgPool2d(kernel_size=3, count_include_pad=True)
-        )
-        input_shape_with_batch = (1, 3, 224, 224)
-        self.compare_with_pytorch(pytorch_model, input_shape_with_batch)
-
-    def test_onnx_averagepool2d_paading(self):
-        pytorch_model = torch.nn.Sequential(
-            torch.nn.AvgPool2d(kernel_size=3, padding=1, count_include_pad=False)
+            torch.nn.AvgPool2d(kernel_size=10, padding=4, count_include_pad=False)
         )
         input_shape_with_batch = (1, 3, 224, 224)
         self.compare_with_pytorch(pytorch_model, input_shape_with_batch)
