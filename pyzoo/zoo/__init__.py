@@ -18,8 +18,14 @@ from zoo.common.nncontext import *
 from zoo.util.engine import prepare_env
 
 prepare_env()
+creator_classes = JavaCreator.get_creator_class()[:]
+JavaCreator.set_creator_class([])
 JavaCreator.add_creator_class("com.intel.analytics.zoo.pipeline.nnframes.python.PythonNNFrames")
 JavaCreator.add_creator_class("com.intel.analytics.zoo.feature.python.PythonImageFeature")
 JavaCreator.add_creator_class("com.intel.analytics.zoo.pipeline.api.keras.python.PythonAutoGrad")
 JavaCreator.add_creator_class("com.intel.analytics.zoo.models.python.PythonZooModel")
 JavaCreator.add_creator_class("com.intel.analytics.zoo.pipeline.api.keras.python.PythonZooKeras2")
+JavaCreator.add_creator_class("com.intel.analytics.zoo.feature.python.PythonTextFeature")
+JavaCreator.add_creator_class("com.intel.analytics.zoo.pipeline.api.net.python.PythonZooNet")
+for clz in creator_classes:
+    JavaCreator.add_creator_class(clz)

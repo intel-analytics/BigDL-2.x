@@ -15,9 +15,11 @@
  */
 package com.intel.analytics.zoo.feature.image
 
-import com.intel.analytics.bigdl.tensor.Tensor
+import com.intel.analytics.bigdl.tensor.{Storage, Tensor}
 import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric
 import com.intel.analytics.bigdl.transform.vision.image.ImageFeature
+import com.intel.analytics.bigdl.transform.vision.image.ImageFeature._
+import com.intel.analytics.bigdl.transform.vision.image.opencv.OpenCVMat
 import com.intel.analytics.zoo.feature.common.Preprocessing
 
 import scala.reflect.ClassTag
@@ -36,7 +38,7 @@ class ImageFeatureToTensor[T: ClassTag]()(implicit ev: TensorNumeric[T])
 }
 
 object ImageFeatureToTensor {
-  def apply[T: ClassTag]()(implicit ev: TensorNumeric[T]): ImageFeatureToTensor[T] =
+  def apply[T: ClassTag]()
+    (implicit ev: TensorNumeric[T]): ImageFeatureToTensor[T] =
     new ImageFeatureToTensor[T]()
 }
-

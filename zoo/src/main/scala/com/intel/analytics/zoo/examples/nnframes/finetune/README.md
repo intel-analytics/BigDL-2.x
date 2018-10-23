@@ -1,77 +1,88 @@
-# Overview
+## Overview
 
 In the image transfer learning example, we use a pre-trained Inception_V1 model as
 image feature transformer and train another linear classifier to solve the dogs-vs-cats
 classification problem.
 
-In this example we are going to take a slightly different approach. We will still use a pre-trained
-caffe Inception_V1 model, but this time we will operate on the pre-trained model to freeze first of
-a few layers, replace the classifier on the top, then fine tune the whole model
+In this example we are going to take a different approach. We will use a pre-trained
+Inception_V1 model, but this time we will operate on the pre-trained model to freeze first of
+a few layers, replace the classifier on the top, then fine tune the whole model.
 
-# Preparation
+## Download Analytics Zoo
+You can download Analytics Zoo prebuilt release and nightly build package from [here](https://analytics-zoo.github.io/master/#release-download/) and extract it.
+
+## Run the example
 
 1. Download the pre-trained model
 
-You can download the pre-trained BigDL model [here](https://github.com/intel-analytics/analytics-zoo/tree/legacy/models).
+You can download the pre-trained model from
+[Analytics Zoo](https://s3-ap-southeast-1.amazonaws.com/bigdl-models/imageclassification/imagenet/bigdl_inception-v1_imagenet_0.4.0.model), and put it in `/tmp/zoo` or other path.
 
-In this example, we are going to use the Inception-V1 model. Please feel free to use other models.
+2. Prepare dataset
+For this example we use kaggle [Dogs vs. Cats](https://www.kaggle.com/c/dogs-vs-cats/data) train
+dataset. Download the data and run the following commands to copy about 1100 images of cats
+and dogs into `samples` folder.
 
-2. Prepare the dataset
-
-For this example we use kaggle [Dogs vs. Cats](https://www.kaggle.com/c/dogs-vs-cats/data) train dataset.
-After you download the file (train.zip), run the follow commands to extract the data.
-
-This dataset contains 25000 labeled images. In our experimentation, however, only a few thousands images
-could train a pretty good classifier. So you could use the `sample_training_data.py` script to sample a
-smaller dataset, and this will greatly speed up your experimentation.
-
-
-# Finetuning the model
-
-If you use the script mentioned above to downsize the dataset, it is suffice to use spark-local
-mode to run this example.
+```bash
+unzip train.zip -d /tmp/zoo/dogs_cats
+cd /tmp/zoo/dogs_cats
+mkdir samples
+cp train/cat.7* samples
+cp train/dog.7* samples
 ```
-    spark-submit \
-    --master local[physcial_core_number] \
-    --driver-memory 10g --executor-memory 20g \
-    --class com.intel.analytics.zoo.examples.nnframes.finetune.TransferLearning \
-    ./dist/lib/analytics-zoo-bigdl_BIGDL_VERSION-spark_SPARK_VERSION-ZOO_VERSION-jar-with-dependencies.jar \
-    --modelPath /tmp/bigdl_inception-v1_imagenet_0.4.0.model \
-    --dataPath /tmp/train_sampled \
+`7` is randomly chosen and can be replaced with other digit.
+
+3. Finetuning the model
+
+Run the following command for Spark local mode (`MASTER=local[*]`) or cluster mode, adjust
+ the memory size according to your image:
+
+```bash
+export SPARK_HOME=the root directory of Spark
+export ANALYTICS_ZOO_HOME=the folder where you extract the downloaded Analytics Zoo zip package
+
+${ANALYTICS_ZOO_HOME}/bin/spark-shell-with-zoo.sh \
+    --master local[2] \
+    --driver-memory 10g \
+    --class com.intel.analytics.zoo.examples.nnframes.finetune.ImageFinetune \
+    --modelPath /tmp/zoo/bigdl_inception-v1_imagenet_0.4.0.model \
     --batchSize 32 \
+    --imagePath /tmp/zoo/dogs_cats/samples \
     --nEpochs 2
 ```
 
 After training, you should see something like this.
 
-As you can see, we can get 98.3% accuracy only after the 2nd epoch. 
+```
+2018-10-17 14:41:20 INFO  DistriOptimizer$:439 - [Epoch 2 1760/1745][Iteration 110][Wall Clock 285.732906186s] Epoch finished. Wall clock time is 306493.17224 ms
+2018-10-17 14:41:20 INFO  DistriOptimizer$:109 - [Epoch 2 1760/1745][Iteration 110][Wall Clock 285.732906186s] Validate model...
+2018-10-17 14:41:42 INFO  DistriOptimizer$:152 - [Epoch 2 1760/1745][Iteration 110][Wall Clock 285.732906186s] Top1Accuracy is Accuracy(correct: 471, count: 477, accuracy: 0.9874213836477987)
++-----------------------------------------------------------------------+-----+----------+
+|image                                                                  |label|prediction|
++-----------------------------------------------------------------------+-----+----------+
+|[file:/tmp/zoo/dogs_cats/samples/cat.7164.jpg,300,300,3,16,[B@207d4b53]|1.0  |1.0       |
+|[file:/tmp/zoo/dogs_cats/samples/cat.7200.jpg,300,300,3,16,[B@56f422e9]|1.0  |1.0       |
+|[file:/tmp/zoo/dogs_cats/samples/cat.7337.jpg,300,300,3,16,[B@76d40e8e]|1.0  |1.0       |
+|[file:/tmp/zoo/dogs_cats/samples/cat.7354.jpg,300,300,3,16,[B@70fbe3dd]|1.0  |1.0       |
+|[file:/tmp/zoo/dogs_cats/samples/cat.7436.jpg,300,300,3,16,[B@3a161942]|1.0  |1.0       |
+|[file:/tmp/zoo/dogs_cats/samples/cat.7591.jpg,300,300,3,16,[B@4d828783]|1.0  |1.0       |
+|[file:/tmp/zoo/dogs_cats/samples/cat.7789.jpg,300,300,3,16,[B@1b7440c3]|1.0  |1.0       |
+|[file:/tmp/zoo/dogs_cats/samples/cat.7796.jpg,300,300,3,16,[B@343ebd7b]|1.0  |1.0       |
+|[file:/tmp/zoo/dogs_cats/samples/cat.786.jpg,300,300,3,16,[B@3ee86eb7] |1.0  |1.0       |
+|[file:/tmp/zoo/dogs_cats/samples/dog.7036.jpg,300,300,3,16,[B@678f4876]|2.0  |2.0       |
+|[file:/tmp/zoo/dogs_cats/samples/dog.7218.jpg,300,300,3,16,[B@5ec47e1c]|2.0  |2.0       |
+|[file:/tmp/zoo/dogs_cats/samples/dog.7412.jpg,300,300,3,16,[B@1fd0d5da]|2.0  |2.0       |
+|[file:/tmp/zoo/dogs_cats/samples/dog.7428.jpg,300,300,3,16,[B@62309d41]|2.0  |2.0       |
+|[file:/tmp/zoo/dogs_cats/samples/dog.7522.jpg,300,300,3,16,[B@7f61a589]|2.0  |2.0       |
+|[file:/tmp/zoo/dogs_cats/samples/dog.7607.jpg,300,300,3,16,[B@2a810e7] |2.0  |2.0       |
+|[file:/tmp/zoo/dogs_cats/samples/dog.7727.jpg,300,300,3,16,[B@1b4f6b6d]|2.0  |2.0       |
+|[file:/tmp/zoo/dogs_cats/samples/dog.7915.jpg,300,300,3,16,[B@7d7337d0]|2.0  |2.0       |
+|[file:/tmp/zoo/dogs_cats/samples/dog.7962.jpg,300,300,3,16,[B@fcc981a] |2.0  |2.0       |
+|[file:/tmp/zoo/dogs_cats/samples/dog.7993.jpg,300,300,3,16,[B@4da18e2c]|2.0  |2.0       |
++-----------------------------------------------------------------------+-----+----------+
+```
 
-```
-2018-05-04 17:00:07 INFO  DistriOptimizer$:436 - [Epoch 2 1968/1964][Iteration 246][Wall Clock 213.599345954s] Epoch finished. Wall clock time is 270805.62788 ms
-2018-05-04 17:00:07 INFO  DistriOptimizer$:702 - [Epoch 2 1968/1964][Iteration 246][Wall Clock 213.599345954s] Validate model...
-2018-05-04 17:00:21 INFO  DistriOptimizer$:744 - [Epoch 2 1968/1964][Iteration 246][Wall Clock 213.599345954s] Top1Accuracy is Accuracy(correct: 529, count: 538, accuracy: 0.983271375464684)
-+------------------------------------------------------------------------------------+-----+----------+
-|image                                                                               |label|prediction|
-+------------------------------------------------------------------------------------+-----+----------+
-|[file:/home/yang/sources/model/train_sampled/cat.10025.jpg,251,153,3,16,[B@6135bdd3]|1.0  |1.0       |
-|[file:/home/yang/sources/model/train_sampled/cat.10025.jpg,251,153,3,16,[B@23b93a55]|1.0  |1.0       |
-|[file:/home/yang/sources/model/train_sampled/cat.10151.jpg,375,499,3,16,[B@7da766e1]|1.0  |1.0       |
-|[file:/home/yang/sources/model/train_sampled/cat.10194.jpg,464,499,3,16,[B@443b1e8c]|1.0  |1.0       |
-|[file:/home/yang/sources/model/train_sampled/cat.10194.jpg,464,499,3,16,[B@82cf8fd] |1.0  |1.0       |
-|[file:/home/yang/sources/model/train_sampled/cat.10206.jpg,499,258,3,16,[B@62ad003f]|1.0  |1.0       |
-|[file:/home/yang/sources/model/train_sampled/cat.10206.jpg,499,258,3,16,[B@247be2e5]|1.0  |1.0       |
-|[file:/home/yang/sources/model/train_sampled/cat.10412.jpg,381,360,3,16,[B@38a84798]|1.0  |1.0       |
-|[file:/home/yang/sources/model/train_sampled/cat.1049.jpg,374,500,3,16,[B@572cab60] |1.0  |1.0       |
-|[file:/home/yang/sources/model/train_sampled/cat.11777.jpg,375,499,3,16,[B@5d0ae542]|1.0  |1.0       |
-|[file:/home/yang/sources/model/train_sampled/cat.11853.jpg,305,500,3,16,[B@261d48cc]|1.0  |1.0       |
-|[file:/home/yang/sources/model/train_sampled/cat.12282.jpg,228,320,3,16,[B@5c735f10]|1.0  |1.0       |
-|[file:/home/yang/sources/model/train_sampled/cat.1303.jpg,374,500,3,16,[B@6eb69855] |1.0  |1.0       |
-|[file:/home/yang/sources/model/train_sampled/cat.1422.jpg,494,427,3,16,[B@649c4034] |1.0  |1.0       |
-|[file:/home/yang/sources/model/train_sampled/cat.1637.jpg,374,500,3,16,[B@280b3f43] |1.0  |1.0       |
-|[file:/home/yang/sources/model/train_sampled/cat.1637.jpg,374,500,3,16,[B@6ec67e8d] |1.0  |1.0       |
-|[file:/home/yang/sources/model/train_sampled/cat.1644.jpg,299,400,3,16,[B@34682730] |1.0  |1.0       |
-|[file:/home/yang/sources/model/train_sampled/cat.2436.jpg,375,499,3,16,[B@32735c69] |1.0  |1.0       |
-|[file:/home/yang/sources/model/train_sampled/cat.2576.jpg,179,186,3,16,[B@43739c43] |1.0  |1.0       |
-|[file:/home/yang/sources/model/train_sampled/cat.2741.jpg,385,352,3,16,[B@1e9cb0b6] |1.0  |1.0       |
-+------------------------------------------------------------------------------------+-----+----------+
-```
+The model from fine tuning can achieve high accuracy on the validation set.
+
+In this example, we use the Inception-V1 model. Please feel free to explore other models from
+Caffe, Keras and Tensorflow. Analytics Zoo provides popular pre-trained model in https://analytics-zoo.github.io/master/#ProgrammingGuide/image-classification/#download-link

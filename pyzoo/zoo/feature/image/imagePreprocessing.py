@@ -66,7 +66,7 @@ class ImageBrightness(ImagePreprocessing):
     :param deltaHigh brightness parameter: high bound
     """
     def __init__(self, delta_low, delta_high, bigdl_type="float"):
-        super(ImageBrightness, self).__init__(bigdl_type, delta_low, delta_high)
+        super(ImageBrightness, self).__init__(bigdl_type, float(delta_low), float(delta_high))
 
 
 class ImageChannelNormalize(ImagePreprocessing):
@@ -81,8 +81,31 @@ class ImageChannelNormalize(ImagePreprocessing):
     """
     def __init__(self, mean_r, mean_g, mean_b, std_r=1.0,
                  std_g=1.0, std_b=1.0, bigdl_type="float"):
-        super(ImageChannelNormalize, self).__init__(bigdl_type, mean_r, mean_g,
-                                                    mean_b, std_r, std_g, std_b)
+        super(ImageChannelNormalize, self).__init__(bigdl_type, float(mean_r), float(mean_g),
+                                                    float(mean_b), float(std_r), float(std_g),
+                                                    float(std_b))
+
+
+class PerImageNormalize(ImagePreprocessing):
+    """
+    Normalizes the norm or value range per image, similar to opencv::normalize
+    https://docs.opencv.org/ref/master/d2/de8/group__core__array.html
+    #ga87eef7ee3970f86906d69a92cbf064bd
+    ImageNormalize normalizes scale and shift the input features. Various normalize
+    methods are supported,
+    Eg. NORM_INF, NORM_L1, NORM_L2 or NORM_MINMAX
+    Pleas notice it's a per image normalization.
+    :param min lower range boundary in case of the range normalization or
+    norm value to normalize
+    :param max upper range boundary in case of the range normalization.
+    It is not used for the norm normalization.
+    :param norm_type normalization type, see opencv:NormTypes.
+    https://docs.opencv.org/ref/master/d2/de8/group__core__array.html
+    #gad12cefbcb5291cf958a85b4b67b6149f
+    Default Core.NORM_MINMAX
+    """
+    def __init__(self, min, max, norm_type=32, bigdl_type="float"):
+        super(PerImageNormalize, self).__init__(bigdl_type, float(min), float(max), norm_type)
 
 
 class ImageMatToTensor(ImagePreprocessing):
@@ -117,7 +140,7 @@ class ImageHue(ImagePreprocessing):
     :param deltaHigh hue parameter: high bound
     """
     def __init__(self, delta_low, delta_high, bigdl_type="float"):
-        super(ImageHue, self).__init__(bigdl_type, delta_low, delta_high)
+        super(ImageHue, self).__init__(bigdl_type, float(delta_low), float(delta_high))
 
 
 class ImageSaturation(ImagePreprocessing):
@@ -127,7 +150,7 @@ class ImageSaturation(ImagePreprocessing):
     :param deltaHigh brightness parameter: high bound
     """
     def __init__(self, delta_low, delta_high, bigdl_type="float"):
-        super(ImageSaturation, self).__init__(bigdl_type, delta_low, delta_high)
+        super(ImageSaturation, self).__init__(bigdl_type, float(delta_low), float(delta_high))
 
 
 class ImageChannelOrder(ImagePreprocessing):
@@ -168,11 +191,12 @@ class ImageColorJitter(ImagePreprocessing):
                  shuffle=False,
                  bigdl_type="float"):
         super(ImageColorJitter, self).__init__(bigdl_type,
-                                               brightness_prob, brightness_delta,
-                                               contrast_prob, contrast_lower, contrast_upper,
-                                               hue_prob, hue_delta,
-                                               saturation_prob, saturation_lower, saturation_upper,
-                                               random_order_prob, shuffle)
+                                               float(brightness_prob), float(brightness_delta),
+                                               float(contrast_prob), float(contrast_lower),
+                                               float(contrast_upper), float(hue_prob),
+                                               float(hue_delta), float(saturation_prob),
+                                               float(saturation_lower), float(saturation_upper),
+                                               float(random_order_prob), shuffle)
 
 
 class ImageAspectScale(ImagePreprocessing):
@@ -321,3 +345,15 @@ class RowToImageFeature(Preprocessing):
     """
     def __init__(self, bigdl_type="float"):
         super(RowToImageFeature, self).__init__(bigdl_type)
+
+
+class ImageRandomPreprocessing(Preprocessing):
+    """
+    Randomly apply the preprocessing to some of the input ImageFeatures, with probability specified.
+    E.g. if prob = 0.5, the preprocessing will apply to half of the input ImageFeatures.
+    :param preprocessing preprocessing to apply.
+    :param prob probability to apply the preprocessing action.
+    """
+
+    def __init__(self, preprocessing, prob, bigdl_type="float"):
+        super(ImageRandomPreprocessing, self).__init__(bigdl_type, preprocessing, float(prob))
