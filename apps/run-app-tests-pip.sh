@@ -52,7 +52,7 @@ fi
  ###################################################################################################
 # Run the example
 export SPARK_DRIVER_MEMORY=12g
-python ${ANALYTICS_ZOO_HOME}/apps/gods-vs-cats/tmp_test.py
+python ${ANALYTICS_ZOO_HOME}/apps/dogs-vs-cats/tmp_test.py
 
 exit_status=$?
 if [ $exit_status -ne 0 ];
