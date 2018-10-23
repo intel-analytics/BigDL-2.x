@@ -29,7 +29,7 @@ class TestKNRM(ZooTestCase):
     # Model definition from MatchZoo rewritten in Keras 1.2.2
     def keras_knrm(self, text1_length, text2_length, vocab_size, embed_size,
                    kernel_num=21, sigma=0.1, exact_sigma=0.001):
-        def Kernel_layer(mu,sigma):
+        def Kernel_layer(mu, sigma):
             def kernel(x):
                 return K.tf.exp(-0.5 * (x - mu) * (x - mu) / sigma / sigma)
             return Activation(kernel)
