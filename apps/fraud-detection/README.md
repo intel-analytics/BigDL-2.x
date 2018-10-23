@@ -32,8 +32,6 @@ https://github.com/intel-analytics/analytics-zoo/tree/legacy/pipeline/fraudDetec
 4. Run the following command for Spark local mode (`MASTER=local[*]`) or cluster mode. Change parameter settings as you need, ie `MASTER = local[physcial_core_number]`. Recommended driver memory and executor memory is 10g. 
 
 ```bash
-export SPARK_HOME=the root directory of Spark
-export ANALYTICS_ZOO_HOME=the dist directory under the Analytics Zoo project
 MASTER=...
 ${ANALYTICS_ZOO_HOME}/bin/spark-shell-with-zoo.sh \
     --master ${MASTER} \
