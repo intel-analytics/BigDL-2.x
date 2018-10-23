@@ -20,7 +20,7 @@ from zoo.models.common.zoo_model import ZooModel
 import zoo.pipeline.api.autograd as A
 from zoo.pipeline.api.keras.layers import Input, Embedding, Dense, Squeeze
 from zoo.pipeline.api.keras.models import Model
-from bigdl.util.common import callBigDlFunc
+from bigdl.util.common import callBigDlFunc, JTensor
 
 if sys.version >= '3':
     long = int
@@ -47,7 +47,7 @@ class KNRM(ZooModel):
                                    self.text2_length,
                                    self.vocab_size,
                                    self.embed_size,
-                                   self.embed_weights,
+                                   JTensor.from_ndarray(embed_weights),
                                    self.kernel_num,
                                    self.sigma,
                                    self.exact_sigma,

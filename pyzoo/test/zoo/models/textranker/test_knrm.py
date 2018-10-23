@@ -71,8 +71,17 @@ class TestKNRM(ZooTestCase):
         output = model.forward(input_data)
         self.assert_allclose(output, koutput)
 
+    def test_forward_backward(self):
+        weights = np.random.random([40, 20])
+        model = KNRM(15, 60, 40, 20, embed_weights=weights,
+                     kernel_num=10, sigma=0.15, exact_sigma=1e-4)
+        input_data = np.random.randint(40, size=(1, 75))
+        self.assert_forward_backward(model, input_data)
+
     def test_save_load(self):
-        pass
+        model = KNRM(5, 10, 100)
+        input_data = np.random.randint(100, size=(3, 15))
+        self.assert_zoo_model_save_load(model, input_data)
 
 
 if __name__ == "__main__":

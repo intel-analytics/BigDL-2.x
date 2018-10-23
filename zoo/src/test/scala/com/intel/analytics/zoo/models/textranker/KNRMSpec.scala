@@ -35,8 +35,9 @@ class KNRMSpec extends ZooSpecHelper {
     val gradInput = model.backward(input, output)
   }
 
-  "KNRM batch=1 forward and backward" should "work properly" in {
+  "KNRM with embedding weights batch=1 forward and backward" should "work properly" in {
     val model = KNRM[Float](15, 60, 30, 100)
+    val weights = Tensor[Float](30, 100).rand()
     val input = Tensor[Float](Array(1, 75)).rand(0.0, 1.0).apply1(x => (x*20).toInt)
     val output = model.forward(input)
     val gradInput = model.backward(input, output)
@@ -44,7 +45,7 @@ class KNRMSpec extends ZooSpecHelper {
 
 }
 
-class TextClassifierSerialTest extends ModuleSerializationTest {
+class KNRMSerialTest extends ModuleSerializationTest {
   override def test(): Unit = {
     val model = KNRM[Float](10, 20, 15, 10)
     val input = Tensor[Float](Array(2, 30)).rand(0.0, 0.95).apply1(x => (x*15).toInt)
