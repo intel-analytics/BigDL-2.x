@@ -40,7 +40,7 @@ class AUC(JavaValue):
 class Accuracy(ZooKerasCreator, JavaValue):
     """
     Measures top1 accuracy for multi-class classification
-    or accuracy for binary classification..
+    or accuracy for binary classification.
 
     # Arguments
     zero_based_label: Boolean. Whether target labels start from 0. Default is True.
