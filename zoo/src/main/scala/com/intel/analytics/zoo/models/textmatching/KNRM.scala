@@ -31,7 +31,6 @@ import scala.reflect.ClassTag
 /**
  * Kernel-pooling Neural Ranking Model with RBF kernel.
  * https://arxiv.org/abs/1706.06613
- * Referred to MatchZoo implementation: https://github.com/NTMC-Community/MatchZoo
  *
  * @param text1Length Sequence length of text1 (query).
  * @param text2Length Sequence length of text2 (doc).
@@ -40,6 +39,7 @@ import scala.reflect.ClassTag
  * @param embedSize Integer. The outputDim of the embedding layer. Default is 300.
  * @param embedWeights Tensor. Pre-trained word embedding weights if any. Default is null and in
  *                     this case, initial weights will be randomized.
+ * @param trainEmbed Boolean. Whether to train the embedding layer or not. Default is true.
  * @param kernelNum Integer. The number of kernels to use.
  * @param sigma Double. Defines the kernel width, or the range of its softTF count.
  *              Default is 0.1.
@@ -115,7 +115,7 @@ object KNRM {
       vocabSize: Int,
       embedSize: Int,
       embedWeights: Tensor[T],
-      trainEmbed: Boolean = true,
+      trainEmbed: Boolean,
       kernelNum: Int,
       sigma: Double,
       exactSigma: Double,

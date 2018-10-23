@@ -18,6 +18,7 @@ import sys
 
 from zoo.models.common.zoo_model import ZooModel
 import zoo.pipeline.api.autograd as A
+from zoo.models.textmatching.text_matcher import TextMatcher
 from zoo.pipeline.api.keras.layers import Input, Embedding, Dense, Squeeze
 from zoo.pipeline.api.keras.models import Model
 from bigdl.util.common import callBigDlFunc, JTensor
@@ -27,31 +28,45 @@ if sys.version >= '3':
     unicode = str
 
 
-class KNRM(ZooModel):
+class KNRM(TextMatcher):
     """
+    Kernel-pooling Neural Ranking Model with RBF kernel.
+    https://arxiv.org/abs/1706.06613
 
+    # Arguments:
+    text1_length: Sequence length of text1 (query).
+    text2_length: Sequence length of text2 (doc).
+    vocab_size: Int. The input_dim of the embedding layer. Ought to be the total number
+                of words in the corpus +1, with index 0 reserved for unknown words.
+    embed_size: Int. The output_dim of the embedding layer. Default is 300.
+    embed_weights: Numpy array. Pre-trained word embedding weights if any. Default is None
+                   and in this case, initial weights will be randomized.
+    train_embed: Boolean. Whether to train the embedding layer or not. Default is True.
+    kernel_num: Int. The number of kernels to use.
+    sigma: Float. Defines the kernel width, or the range of its softTF count. Default is 0.1.
+    exact_sigma: Float. The sigma used for the kernel that harvests exact matches
+                 in the case where mu=1.0. Default is 0.001.
     """
     def __init__(self, text1_length, text2_length, vocab_size, embed_size=300, embed_weights=None,
-                 kernel_num=21, sigma=0.1, exact_sigma=0.001, bigdl_type="float"):
-        self.text1_length = text1_length
+                 train_embed=True, kernel_num=21, sigma=0.1, exact_sigma=0.001, bigdl_type="float"):
+        super(KNRM, self).__init__(text1_length, vocab_size, embed_size,
+                                   embed_weights, train_embed, bigdl_type)
         self.text2_length = text2_length
-        self.vocab_size = vocab_size
-        self.embed_size = embed_size
-        self.embed_weights = embed_weights
         self.kernel_num = kernel_num
         self.sigma = float(sigma)
         self.exact_sigma = float(exact_sigma)
         self.model = self.build_model()
-        super(KNRM, self).__init__(None, bigdl_type,
-                                   self.text1_length,
-                                   self.text2_length,
-                                   self.vocab_size,
-                                   self.embed_size,
-                                   JTensor.from_ndarray(embed_weights),
-                                   self.kernel_num,
-                                   self.sigma,
-                                   self.exact_sigma,
-                                   self.model)
+        super(TextMatcher, self).__init__(None, self.bigdl_type,
+                                          self.text1_length,
+                                          self.text2_length,
+                                          self.vocab_size,
+                                          self.embed_size,
+                                          JTensor.from_ndarray(embed_weights),
+                                          self.train_embed,
+                                          self.kernel_num,
+                                          self.sigma,
+                                          self.exact_sigma,
+                                          self.model)
 
     def build_model(self):
         # Remark: Share weights for embedding is not supported.

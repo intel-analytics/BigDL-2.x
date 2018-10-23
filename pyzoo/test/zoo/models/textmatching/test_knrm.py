@@ -18,7 +18,7 @@ import pytest
 
 from keras.layers import *
 from keras.models import Model
-from zoo.models.textranker import KNRM
+from zoo.models.textmatching import KNRM
 from test.zoo.pipeline.utils.test_utils import ZooTestCase
 
 np.random.seed(1337)  # for reproducibility
