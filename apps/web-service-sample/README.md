@@ -13,6 +13,9 @@ In this directory, there are two projects
 
 To run this sample, please follow the steps below.
 
+## Download Analytics Zoo
+You can download Analytics Zoo prebuilt release and nightly build package from [here](https://analytics-zoo.github.io/master/#release-download/) and extract it.
+
 ## Start up the applications
 ### Import Project
 In the IDE(eg: IDEA), Select New - Project from Existing Source, look through the directory to find pom.xml file of the project(eg: text-classification-training) and click OK, then select open as project in the window pop out next, using maven to build up the project.
@@ -57,3 +60,5 @@ In the first place, you need to edit the run/debug configurations as below:
 For `SimpleDriver.java`, simply running it can get the prediction result in the terminal.
 
 For `WebServiceDriver.java`, running it will start the web service application. To see the output, you can use tools such as `Postman` to send a POST request whose body contains an article text to the server's url followed with directory "/predict", (eg: localhost:8080/predict). Then the application will respond with the prediction result.
+
+
