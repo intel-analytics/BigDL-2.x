@@ -25,7 +25,7 @@ import sys
 from bigdl.dataset import mnist
 from bigdl.dataset.transformer import *
 
-sys.path.append("/tmp/models/slim")  # add the slim library
+sys.path.append("/home/ludviq/workspace/models/research/slim/")  # add the slim library
 from nets import lenet
 
 slim = tf.contrib.slim
@@ -50,8 +50,8 @@ def main():
                                  names=["features", "labels"],
                                  shapes=[[28, 28, 1], [1]],
                                  types=[tf.float32, tf.int32],
-                                 batch_size=280,
-                                 val_rdd=testing_rdd
+                                 # batch_size=280,
+                                 # val_rdd=testing_rdd
                                  )
 
     # construct the model from TFDataset
