@@ -50,7 +50,7 @@ class Accuracy[T: ClassTag](
 }
 
 /**
- * Measures top5 accuracy for classification problems.
+ * Measures top5 accuracy for multi-class classification.
  *
  * @param zeroBasedLabel Boolean. Whether target labels start from 0. Default is true.
  *                       If false, labels start from 1.
