@@ -165,6 +165,20 @@ class TestModelLoading(OnnxTestCase):
         input_shape_with_batch = (1, 3, 224, 224)
         self.compare_with_pytorch(pytorch_model, input_shape_with_batch)
 
+    def test_onnx_averagepool2d_count_include_pad(self):
+        pytorch_model = torch.nn.Sequential(
+            torch.nn.AvgPool2d(kernel_size=3, count_include_pad=True)
+        )
+        input_shape_with_batch = (1, 3, 224, 224)
+        self.compare_with_pytorch(pytorch_model, input_shape_with_batch)
+
+    def test_onnx_averagepool2d_paading(self):
+        pytorch_model = torch.nn.Sequential(
+            torch.nn.AvgPool2d(kernel_size=3, padding=1, count_include_pad=False)
+        )
+        input_shape_with_batch = (1, 3, 224, 224)
+        self.compare_with_pytorch(pytorch_model, input_shape_with_batch)
+
     def test_onnx_relu(self):
         pytorch_model = torch.nn.Sequential(
             torch.nn.ReLU()
@@ -326,6 +340,8 @@ class TestModelLoading(OnnxTestCase):
         ]]]).astype(np.float32)
         y = np.array([[[[7, 9],
                         [17, 19]]]]).astype(np.float32)
+        output = OnnxLoader.run_node(node, [x])
+        np.testing.assert_almost_equal(output["y"], y, decimal=5)
 
     def test_onnx_logsoftmax(self):
         pytorch_model = torch.nn.Sequential(

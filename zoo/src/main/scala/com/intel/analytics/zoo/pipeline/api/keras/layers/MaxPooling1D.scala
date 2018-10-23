@@ -48,14 +48,14 @@ class MaxPooling1D[T: ClassTag](
     override val stride: Int = -1,
     override val borderMode: String = "valid",
     override val inputShape: Shape = null,
-    val pads: Int = 0)(implicit ev: TensorNumeric[T])
+    val padding: Int = 0)(implicit ev: TensorNumeric[T])
   extends Pooling1D[T](
     poolLength, stride, borderMode, inputShape) with Net {
 
-  var pad: Array[Int] = if (pads == 0) {
+  var pad: Array[Int] = if (padding == 0) {
     null
   } else {
-    Array(pads, 0)
+    Array(padding, 0)
   }
 
   override def doBuild(inputShape: Shape): AbstractModule[Activity, Activity, T] = {
