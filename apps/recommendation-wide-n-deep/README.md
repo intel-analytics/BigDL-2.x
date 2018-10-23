@@ -15,7 +15,7 @@ This notebook demonstrates how to build a neural network recommendation system (
 * Run the following bash command to start the jupyter notebook. Change parameter settings as you need, ie `MASTER = local[physcial_core_number]`.
 ```bash
 MASTER=local[4]
-bash ${ANALYTICS_ZOO_HOME}/bin/jupyter-with-zoo.sh 
+bash ${ANALYTICS_ZOO_HOME}/bin/jupyter-with-zoo.sh \
     --master ${MASTER} \
     --driver-cores 4  \
     --driver-memory 22g  \
