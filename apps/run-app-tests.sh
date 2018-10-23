@@ -350,6 +350,96 @@ time10=$((now-start))
 rm ${ANALYTICS_ZOO_HOME}/apps/dogs-vs-cats/tmp.py
 echo "#10 dogs-vs-cats time used:$time10 seconds"
 
+elif [ $1=4 ]; then
+echo "#11 start app test for image-similarity"
+#timer
+start=$(date "+%s")
+
+${ANALYTICS_ZOO_HOME}/apps/ipynb2py.sh ${ANALYTICS_ZOO_HOME}/apps/image-similarity/image-similarity
+
+sed "s%/tmp/images%${ANALYTICS_ZOO_HOME}/apps/image-similarity%g;s%/googlenet_places365/deploy.prototxt%/googlenet_places365/deploy_googlenet_places365.prototxt%g;s%/vgg_16_places365/deploy.prototxt%/vgg_16_places365/deploy_vgg16_places365.prototxt%g;s%/vgg_16_places365/vgg16_places365.caffemodel%/vgg_16_places365/vgg16_hybrid1365.caffemodel%g" ${ANALYTICS_ZOO_HOME}/apps/image-similarity/image-similarity.py >${ANALYTICS_ZOO_HOME}/apps/image-similarity/tmp.py
+
+FILENAME="${ANALYTICS_ZOO_HOME}/apps/image-similarity/imageClassification.tar.gz"
+if [ -f "$FILENAME" ]
+then
+   echo "$FILENAME already exists."
+else
+   echo "Downloading images"
+   
+   wget $FTP_URI/analytics-zoo-data/imageClassification.tar.gz -P ${ANALYTICS_ZOO_HOME}/apps/image-similarity
+   tar -zxvf ${ANALYTICS_ZOO_HOME}/apps/image-similarity/imageClassification.tar.gz -C ${ANALYTICS_ZOO_HOME}/apps/image-similarity
+   
+   echo "Finished downloading images"
+fi
+
+FILENAME="${ANALYTICS_ZOO_HOME}/apps/image-similarity/alexnet_places365/deploy_alexnet_places365.prototxt"
+if [ -f "$FILENAME" ]
+then
+   echo "$FILENAME already exists."
+else
+   echo "Downloading places365 deploy model"
+   
+   wget https://github.com/CSAILVision/places365/blob/master/deploy_alexnet_places365.prototxt -P ${ANALYTICS_ZOO_HOME}/apps/image-similarity/alexnet_places365
+   
+   echo "Finished downloading model"
+fi
+
+FILENAME="${ANALYTICS_ZOO_HOME}/apps/image-similarity/alexnet_places365/alexnet_places365.caffemodel"gaile
+if [ -f "$FILENAME" ]
+then
+   echo "$FILENAME already exists."
+else
+   echo "Downloading places365 weight model"
+   
+   wget http://places2.csail.mit.edu/models_places365/alexnet_places365.caffemodel -P ${ANALYTICS_ZOO_HOME}/apps/image-similarity/alexnet_places365
+   
+   echo "Finished downloading model"
+fi
+
+FILENAME=" ${ANALYTICS_ZOO_HOME}/apps/image-similarity/vgg_16_places365/deploy_vgg16_places365.prototxt"
+if [ -f "$FILENAME" ]
+then
+   echo "$FILENAME already exists."
+else
+   echo "Downloading VGG deploy model"
+   
+   wget https://github.com/CSAILVision/places365/blob/master/deploy_vgg16_places365.prototxt -P ${ANALYTICS_ZOO_HOME}/apps/image-similarity/vgg_16_places365
+   
+   echo "Finished downloading model"
+fi
+
+FILENAME="${ANALYTICS_ZOO_HOME}/apps/image-similarity/vgg_16_places365/vgg16_hybrid1365.caffemodel"
+if [ -f "$FILENAME" ]
+then
+   echo "$FILENAME already exists."
+else
+   echo "Downloading VGG weight model"
+   
+   wget http://places2.csail.mit.edu/models_places365/vgg16_hybrid1365.caffemodel -P ${ANALYTICS_ZOO_HOME}/apps/image-similarity/vgg_16_places365
+   
+   echo "Finished downloading model"
+fi
+
+${SPARK_HOME}/bin/spark-submit \
+        --master ${MASTER} \
+        --driver-cores 2  \
+        --driver-memory 12g  \
+        --total-executor-cores 2  \
+        --executor-cores 2  \
+        --executor-memory 12g \
+        --conf spark.akka.frameSize=64 \
+        --py-files ${ANALYTICS_ZOO_PYZIP},${ANALYTICS_ZOO_HOME}/apps/image-similarity/tmp.py  \
+        --properties-file ${ANALYTICS_ZOO_CONF} \
+        --jars ${ANALYTICS_ZOO_JAR} \
+        --conf spark.driver.extraClassPath=${ANALYTICS_ZOO_JAR} \
+        --conf spark.executor.extraClassPath=${ANALYTICS_ZOO_JAR} \
+        ${ANALYTICS_ZOO_HOME}/apps/image-similarity/tmp.py
+
+now=$(date "+%s")
+time11=$((now-start))
+rm ${ANALYTICS_ZOO_HOME}/apps/image-similarity/tmp.py
+echo "#11 image-similarity time used:$time11 seconds"
+
 else
 echo "#1 start app test for anomaly-detection-nyc-taxi"
 #timer
@@ -696,3 +786,4 @@ echo "#7 using_variational_autoencoder_and_deep_feature_loss_to_generate_faces t
 echo "#8 sentimentAnalysis time used:$time8 seconds"
 echo "#9 image-augmentation time used:$time9 seconds"
 echo "#10 dogs-vs-cats time used:$time10 seconds"
+echo "#11 image-similarity time used:$time11 seconds"
