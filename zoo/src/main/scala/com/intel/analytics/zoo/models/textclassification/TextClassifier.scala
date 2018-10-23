@@ -103,11 +103,11 @@ object TextClassifier {
    * its first layer.
    *
    * @param classNum The number of text categories to be classified. Positive integer.
-   * @param embeddingFile The path to the embedding file.
+   * @param embeddingFile The path to the word embedding file.
    *                      Currently only the following GloVe files are supported:
-   *                      "glove.6B.50d.txt", "glove.6B.100d.txt", "glove.6B.200d.txt"
+   *                      "glove.6B.50d.txt", "glove.6B.100d.txt", "glove.6B.200d.txt",
    *                      "glove.6B.300d.txt", "glove.42B.300d.txt", "glove.840B.300d.txt".
-   *                      You can download them from: https://nlp.stanford.edu/projects/glove/.
+   *                      You can download from: https://nlp.stanford.edu/projects/glove/.
    * @param wordIndex Map of word (String) and its corresponding index (integer).
    *                  The index is supposed to start from 1 with 0 reserved for unknown words.
    *                  During the prediction, if you have words that are not in the wordIndex
