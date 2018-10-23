@@ -115,7 +115,7 @@ then
 else
    echo "Downloading places365 deploy model"
    
-   wget https://github.com/CSAILVision/places365/blob/master/deploy_googlenet_places365.prototxt -P ${ANALYTICS_ZOO_HOME}/apps/image-similarity/googlenet_places365
+   wget https://raw.githubusercontent.com/CSAILVision/places365/master/deploy_googlenet_places365.prototxt -P ${ANALYTICS_ZOO_HOME}/apps/image-similarity/googlenet_places365
    
    echo "Finished downloading model"
 fi
@@ -137,8 +137,8 @@ then
 else
    echo "Downloading VGG deploy model"
    
-   wget https://github.com/CSAILVision/places365/blob/master/deploy_vgg16_places365.prototxt -P ${ANALYTICS_ZOO_HOME}/apps/image-similarity/vgg_16_places365
-   
+   wget https://raw.githubusercontent.com/CSAILVision/places365/master/deploy_vgg16_places365.prototxt -P ${ANALYTICS_ZOO_HOME}/apps/image-similarity/vgg_16_places365
+       
    echo "Finished downloading model"
 fi
 FILENAME="${ANALYTICS_ZOO_HOME}/apps/image-similarity/vgg_16_places365/vgg16_hybrid1365.caffemodel"
