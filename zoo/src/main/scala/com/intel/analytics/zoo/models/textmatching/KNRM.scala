@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.intel.analytics.zoo.models.textranker
+package com.intel.analytics.zoo.models.textmatching
 
 import com.intel.analytics.bigdl.nn.abstractnn.{AbstractModule, Activity}
 import com.intel.analytics.bigdl.tensor.Tensor
@@ -47,22 +47,23 @@ import scala.reflect.ClassTag
  *                   in the case where mu=1.0. Default is 0.001.
  */
 class KNRM[T: ClassTag] private(
-    val text1Length: Int,
+    override val text1Length: Int,
     val text2Length: Int,
-    val vocabSize: Int,
-    val embedSize: Int = 300,
-    val embedWeights: Tensor[T] = null,
+    override val vocabSize: Int,
+    override val embedSize: Int = 300,
+    override val embedWeights: Tensor[T] = null,
+    override val trainEmbed: Boolean = true,
     val kernelNum: Int = 21,
     val sigma: Double = 0.1,
     val exactSigma: Double = 0.001)(implicit ev: TensorNumeric[T])
-  extends ZooModel[Activity, Activity, T] {
+  extends TextMatcher[T](text1Length, vocabSize, embedSize, embedWeights, trainEmbed) {
 
   override def buildModel(): AbstractModule[Activity, Activity, T] = {
     // Remark: Share weights for embedding is not supported.
     // Thus here the model takes concatenated input and slice to split the input.
     val input = Input(inputShape = Shape(text1Length + text2Length))
-    val embedding = Variable(Embedding(vocabSize, embedSize, weights = embedWeights)
-      .inputs(input))
+    val embedding = Variable(Embedding(vocabSize, embedSize, weights = embedWeights,
+      trainable = trainEmbed).inputs(input))
     val text1Embed = embedding.slice(1, 0, text1Length)
     val text2Embed = embedding.slice(1, text1Length, text2Length)
     val mm = A.batchDot(text1Embed, text2Embed, axes = List(2, 2)) // Translation Matrix.
@@ -94,11 +95,12 @@ object KNRM {
       vocabSize: Int,
       embedSize: Int = 300,
       embedWeights: Tensor[T] = null,
+      trainEmbed: Boolean = true,
       kernelNum: Int = 21,
       sigma: Double = 0.1,
       exactSigma: Double = 0.001)(implicit ev: TensorNumeric[T]): KNRM[T] = {
     new KNRM[T](text1Length, text2Length, vocabSize, embedSize, embedWeights,
-      kernelNum, sigma, exactSigma).build()
+      trainEmbed, kernelNum, sigma, exactSigma).build()
   }
 
   /**
@@ -113,13 +115,14 @@ object KNRM {
       vocabSize: Int,
       embedSize: Int,
       embedWeights: Tensor[T],
+      trainEmbed: Boolean = true,
       kernelNum: Int,
       sigma: Double,
       exactSigma: Double,
       model: AbstractModule[Activity, Activity, T])
     (implicit ev: TensorNumeric[T]): KNRM[T] = {
     new KNRM[T](text1Length, text2Length, vocabSize, embedSize, embedWeights,
-      kernelNum, sigma, exactSigma).addModel(model)
+      trainEmbed, kernelNum, sigma, exactSigma).addModel(model)
   }
 
   /**

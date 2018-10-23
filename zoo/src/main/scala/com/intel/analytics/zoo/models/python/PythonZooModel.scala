@@ -33,7 +33,7 @@ import com.intel.analytics.zoo.models.image.imageclassification.{ImageClassifier
 import com.intel.analytics.zoo.models.recommendation.{NeuralCF, Recommender, UserItemFeature, UserItemPrediction}
 import com.intel.analytics.zoo.models.recommendation._
 import com.intel.analytics.zoo.models.textclassification.TextClassifier
-import com.intel.analytics.zoo.models.textranker.KNRM
+import com.intel.analytics.zoo.models.textmatching.KNRM
 import com.intel.analytics.zoo.pipeline.api.keras.layers.Embedding
 import org.apache.spark.api.java.JavaRDD
 import org.apache.spark.rdd.RDD
@@ -255,12 +255,13 @@ class PythonZooModel[T: ClassTag](implicit ev: TensorNumeric[T]) extends PythonZ
       vocabSize: Int,
       embedSize: Int,
       embedWeights: JTensor = null,
+      trainEmbed: Boolean = true,
       kernelNum: Int = 21,
       sigma: Double = 0.1,
       exactSigma: Double = 0.001,
       model: AbstractModule[Activity, Activity, T]): KNRM[T] = {
     KNRM[T](text1Length, text2Length, vocabSize, embedSize, toTensor(embedWeights),
-      kernelNum, sigma, exactSigma, model)
+      trainEmbed, kernelNum, sigma, exactSigma, model)
   }
 
   def loadKNRM(

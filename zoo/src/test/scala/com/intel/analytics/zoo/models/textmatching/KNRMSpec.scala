@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.intel.analytics.zoo.models.textranker
+package com.intel.analytics.zoo.models.textmatching
 
 import com.intel.analytics.bigdl.tensor.Tensor
 import com.intel.analytics.zoo.models.common.ZooModel
