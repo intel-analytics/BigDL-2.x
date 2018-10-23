@@ -51,8 +51,6 @@ echo "start example test for image-classification"
 start=$(date "+%s")
 export SPARK_DRIVER_MEMORY=20g
 python ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/imageclassification/predict.py \
-    --nb_epoch 2 \
-    --batch_size 112 \
     -f hdfs://172.168.2.181:9000/kaggle/train_100 \
     --model analytics-zoo-models/analytics-zoo_squeezenet_imagenet_0.1.0.model \
     --topN 5
