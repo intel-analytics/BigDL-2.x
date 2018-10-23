@@ -24,7 +24,7 @@ sed "s/end_trigger=MaxEpoch(10)/end_trigger=MaxEpoch(5)/g" ${ANALYTICS_ZOO_HOME}
  ###################################################################################################
 # Run the example
 export SPARK_DRIVER_MEMORY=12g
-python ${ANALYTICS_ZOO_HOME}/apps/recommendation-ncf/tmp_test.py
+python ${ANALYTICS_ZOO_HOME}/apps/recommendation-ncf/tmp.py
 
 exit_status=$?
 if [ $exit_status -ne 0 ];
