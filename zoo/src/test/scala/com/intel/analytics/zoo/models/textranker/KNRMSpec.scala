@@ -17,7 +17,9 @@
 package com.intel.analytics.zoo.models.textranker
 
 import com.intel.analytics.bigdl.tensor.Tensor
+import com.intel.analytics.zoo.models.common.ZooModel
 import com.intel.analytics.zoo.pipeline.api.keras.ZooSpecHelper
+import com.intel.analytics.zoo.pipeline.api.keras.serializer.ModuleSerializationTest
 
 class KNRMSpec extends ZooSpecHelper {
 
@@ -34,10 +36,20 @@ class KNRMSpec extends ZooSpecHelper {
   }
 
   "KNRM batch=1 forward and backward" should "work properly" in {
-    val model = KNRM[Float](10, 20, 15, 10)
-    val input = Tensor[Float](Array(1, 30)).rand(0.0, 0.95).apply1(x => (x*15).toInt)
+    val model = KNRM[Float](15, 60, 30, 100)
+    val input = Tensor[Float](Array(1, 75)).rand(0.0, 1.0).apply1(x => (x*20).toInt)
     val output = model.forward(input)
     val gradInput = model.backward(input, output)
   }
 
+}
+
+class TextClassifierSerialTest extends ModuleSerializationTest {
+  override def test(): Unit = {
+    val model = KNRM[Float](10, 20, 15, 10)
+    val input = Tensor[Float](Array(2, 30)).rand(0.0, 0.95).apply1(x => (x*15).toInt)
+    ZooSpecHelper.testZooModelLoadSave(
+      model.asInstanceOf[ZooModel[Tensor[Float], Tensor[Float], Float]],
+      input, KNRM.loadModel[Float])
+  }
 }
