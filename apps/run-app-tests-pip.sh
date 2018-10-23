@@ -187,5 +187,26 @@ echo "#7 using_variational_autoencoder_and_deep_feature_loss_to_generate_faces t
 
 >>>>>>> variational autoencoder added
 
+echo "#11 start app test for tfnet"
+#timer
+start=$(date "+%s")
+
+${ANALYTICS_ZOO_HOME}/apps/ipynb2py.sh ${ANALYTICS_ZOO_HOME}/apps/tfnet/image_classification_inference
+export SPARK_DRIVER_MEMORY=8g
+python ${ANALYTICS_ZOO_HOME}/apps/tfnet/image_classification_inference.py
+
+exit_status=$?
+if [ $exit_status -ne 0 ];
+then
+    clear_up
+    echo "tfnet failed"
+    exit $exit_status
+fi
+
+unset SPARK_DRIVER_MEMORY
+now=$(date "+%s")
+time11=$((now-start))
+echo "#11 tfnet time used:$time11 seconds"
+
 # This should be done at the very end after all tests finish.
 clear_up
