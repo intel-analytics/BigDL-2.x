@@ -187,26 +187,57 @@ echo "#7 using_variational_autoencoder_and_deep_feature_loss_to_generate_faces t
 
 >>>>>>> variational autoencoder added
 
-echo "#11 start app test for tfnet"
+echo "#12 start app test for image_classification_inference"
 #timer
 start=$(date "+%s")
-
 ${ANALYTICS_ZOO_HOME}/apps/ipynb2py.sh ${ANALYTICS_ZOO_HOME}/apps/tfnet/image_classification_inference
-export SPARK_DRIVER_MEMORY=8g
-python ${ANALYTICS_ZOO_HOME}/apps/tfnet/image_classification_inference.py
 
-exit_status=$?
-if [ $exit_status -ne 0 ];
+sed "s%/path/to/yourdownload%${ANALYTICS_ZOO_HOME}/apps/tfnet%g;s%file:///path/toyourdownload/dogs-vs-cats/train%${ANALYTICS_ZOO_HOME}/apps/tfnet/data/minitrain%g;s%test.jpg%${ANALYTICS_ZOO_HOME}/apps/tfnet/test.jpg%g;s%imagenet_class_index.json%${ANALYTICS_ZOO_HOME}/apps/tfnet/imagenet_class_index.json%g" ${ANALYTICS_ZOO_HOME}/apps/tfnet/image_classification_inference.py > ${ANALYTICS_ZOO_HOME}/apps/tfnet/tmp.py
+FILENAME="${ANALYTICS_ZOO_HOME}/apps/tfnet/models/*"
+if [ -f "$FILENAME" ]
 then
-    clear_up
-    echo "tfnet failed"
-    exit $exit_status
+   echo "$FILENAME already exists."
+else
+   echo "Downloading model"
+   
+   git clone https://github.com/tensorflow/models/ ${ANALYTICS_ZOO_HOME}/apps/tfnet/models
+   
+   echo "Finished downloading model"
 fi
+FILENAME="${ANALYTICS_ZOO_HOME}/apps/tfnet/checkpoint/inception_v1.ckpt"
+if [ -f "$FILENAME" ]
+then
+   echo "$FILENAME already exists."
+else
+   echo "Downloading inception_v1 checkpoint"
+   
+   wget http://download.tensorflow.org/models/inception_v1_2016_08_28.tar.gz -P ${ANALYTICS_ZOO_HOME}/apps/tfnet/checkpoint
+   tar -zxvf ${ANALYTICS_ZOO_HOME}/apps/tfnet/checkpoint/inception_v1_2016_08_28.tar.gz -C ${ANALYTICS_ZOO_HOME}/apps/tfnet/checkpoint
+   
+   echo "Finished downloading checkpoint"
+fi
+FILENAME="${ANALYTICS_ZOO_HOME}/apps/tfnet/data/minitrain.zip"
+if [ -f "$FILENAME" ]
+then
+   echo "$FILENAME already exists."
+else
+   echo "Downloading dogs and cats images"
+   
+   wget $FTP_URI/analytics-zoo-data/data/dogs-vs-cats/minitrain.zip -P ${ANALYTICS_ZOO_HOME}/apps/tfnet/data
+   unzip -d ${ANALYTICS_ZOO_HOME}/apps/tfnet/data/minitrain ${ANALYTICS_ZOO_HOME}/apps/tfnet/data/minitrain.zip
+   #wget $FTP_URI/analytics-zoo-data/data/dogs-vs-cats/train.zip -P ${ANALYTICS_ZOO_HOME}/apps/tfnet/data
+   #unzip -d ${ANALYTICS_ZOO_HOME}/apps/tfnet/data ${ANALYTICS_ZOO_HOME}/apps/tfnet/data/train.zip
+    echo "Finished downloading images"
+fi
+
+export SPARK_DRIVER_MEMORY=12g
+python${ANALYTICS_ZOO_HOME}/apps/tfnet/tmp.py
 
 unset SPARK_DRIVER_MEMORY
 now=$(date "+%s")
-time11=$((now-start))
-echo "#11 tfnet time used:$time11 seconds"
+time12=$((now-start))
+rm ${ANALYTICS_ZOO_HOME}/apps/tfnet/tmp.py
+echo "#12 image_classification_inference time used:$time12 seconds"
 
 # This should be done at the very end after all tests finish.
 clear_up
