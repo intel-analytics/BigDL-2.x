@@ -85,12 +85,20 @@ start=$(date "+%s")
 
 export SPARK_DRIVER_MEMORY=2g
 python ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/autograd/custom.py 
+exit_status=$?
+if [ $exit_status -ne 0 ];
+then
+    clear_up
+    echo "autograd-custom failed"
+    exit $exit_status
+fi
+
 python ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/autograd/customloss.py
 exit_status=$?
 if [ $exit_status -ne 0 ];
 then
     clear_up
-    echo "autograd failed"
+    echo "autograd_customloss failed"
     exit $exit_status
 fi
 
