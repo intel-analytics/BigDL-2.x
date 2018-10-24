@@ -139,23 +139,14 @@ object Utils {
     (0 to deepColumns2.length - 1).map {
       i =>
         deepTensor.setValue(i + 1 + columnInfo.indicatorDims.sum,
-          r.getAs[AnyVal](deepColumns2(i)))
+          r.getAs[AnyVal](deepColumns2(i)) match {
+            case i: Int => i.toFloat
+            case l: Long => l.toFloat
+            case f: Float => f
+            case d: Double => d.toFloat
+            case _ => throw new IllegalArgumentException("Please check the input data type of embedding and continuous cols.")
+          })
     }
     deepTensor
-  }
-
-  /**
-    * define an implicit function so that we can use all kinds of value in continuousCols.
-    * @param x the input value ,maybe an integer or a long value.
-    * @return the float represent of input value
-    */
-  implicit def AnyValToFloat(x:AnyVal):Float = {
-    x match {
-      case i: Int => i.toFloat
-      case l: Long => l.toFloat
-      case f: Float => f
-      case d: Double => d.toFloat
-      case _ => 0.0f
-    }
   }
 }
