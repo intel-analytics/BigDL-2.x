@@ -137,7 +137,7 @@ now=$(date "+%s")
 time4=$((now-start))
 echo "objectdetection time used:$time4 seconds"
 
-echo "start example test for nnframes_finetune"
+echo "start example test for nnframes"
 #timer
 start=$(date "+%s")
 
@@ -163,9 +163,32 @@ else
    # echo "Finished downloading images"
 fi
 
-sed "s/setBatchSize(32)/setBatchSize(56)/g" ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/nnframes/finetune/image_finetuning_example.py > ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/nnframes/finetune/tmp.py
+sed "s/setBatchSize(32)/setBatchSize(56)/g" \
+    ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/nnframes/finetune/image_finetuning_example.py \
+    > ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/nnframes/finetune/tmp.py
+sed "s/setBatchSize(32)/setBatchSize(56)/g" \
+    ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/nnframes/imageTransferLearning/ImageTransferLearningExample.py \
+    > ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/nnframes/imageTransferLearning/tmp.py
+sed "s/setBatchSize(4)/setBatchSize(56)/g" \
+    ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/nnframes/imageInference/ImageInferenceExample.py \
+    > ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/nnframes/imageInference/tmp.py
 
-export SPARK_DRIVER_MEMORY=10g
+export SPARK_DRIVER_MEMORY=20g
+
+echo "start example test for nnframes imageInference"
+python ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/nnframes/imageInference/tmp.py \
+    analytics-zoo-models/bigdl_inception-v1_imagenet_0.4.0.model \
+    hdfs://172.168.2.181:9000/kaggle/train_100
+
+exit_status=$?
+if [ $exit_status -ne 0 ];
+then
+    clear_up
+    echo "nnframes_imageInference failed"
+    exit $exit_status
+fi
+
+echo "start example test for nnframes finetune"
 python ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/nnframes/finetune/tmp.py \
     analytics-zoo-models/bigdl_inception-v1_imagenet_0.4.0.model \
     analytics-zoo-models/dogs-vs-cats/samples
@@ -178,10 +201,22 @@ then
     exit $exit_status
 fi
 
+python ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/nnframes/nnframes/imageTransferLearning/tmp.py \
+    analytics-zoo-models/bigdl_inception-v1_imagenet_0.4.0.model \
+    analytics-zoo-models/dogs-vs-cats/samples
+
+exit_status=$?
+if [ $exit_status -ne 0 ];
+then
+    clear_up
+    echo "nnframes_imageTransferLearning failed"
+    exit $exit_status
+fi
+
 unset SPARK_DRIVER_MEMORY
 now=$(date "+%s")
 time5=$((now-start))
-echo "nnframes_finetune time used:$time5 seconds"
+echo "nnframes time used:$time5 seconds"
 
 # This should be done at the very end after all tests finish.
 clear_up
