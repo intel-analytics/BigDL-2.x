@@ -18,8 +18,12 @@ import pytest
 
 import keras.layers as KLayer
 from keras.models import Sequential as KSequential
+
+from bigdl.optim.optimizer import SGD
 from test.zoo.pipeline.utils.test_utils import ZooTestCase
 import zoo.pipeline.api.keras.layers as ZLayer
+from zoo.feature.common import ChainedPreprocessing
+from zoo.feature.image import *
 from zoo.pipeline.api.keras.models import Model as ZModel
 from zoo.pipeline.api.net import Net, TFNet
 from bigdl.nn.layer import Linear, Sigmoid, SoftMax, Model as BModel
@@ -163,6 +167,40 @@ class TestLayer(ZooTestCase):
 
         self.assert_allclose(output_value, output_value_ref)
         self.assert_allclose(grad_input_value, grad_input_value_ref)
+
+    def test_training(self):
+
+        images = []
+        labels = []
+        for i in range(0, 32):
+            features = np.random.uniform(0, 1, (200, 200, 3))
+            label = np.array([2])
+            images.append(features)
+            labels.append(label)
+        image_set = DistributedImageSet(self.sc.parallelize(images),
+                                        self.sc.parallelize(labels))
+
+        transformer = ChainedPreprocessing(
+            [ImageBytesToMat(), ImageResize(256, 256), ImageCenterCrop(224, 224),
+             ImageChannelNormalize(0.485, 0.456, 0.406, 0.229, 0.224, 0.225),
+             ImageMatToTensor(format="NHWC"), ImageSetToSample(target_keys=['label'])])
+        data = image_set.transform(transformer)
+
+        from nets import inception
+        import tensorflow as tf
+        slim = tf.contrib.slim
+        images = tf.placeholder(dtype=tf.float32, shape=(None, 224, 224, 3))
+
+        with slim.arg_scope(inception.inception_v1_arg_scope()):
+            logits, end_points = inception.inception_v1(images, num_classes=1000, is_training=False)
+
+        sess = tf.Session()
+        sess.run(tf.global_variables_initializer())
+        model = TFNet.from_session(sess, inputs=[images], outputs=[logits], generate_backward=True)
+        model.compile(optimizer=SGD(0.001), loss="sparse_categorical_crossentropy", metrics=["accuracy"])
+        model.fit(data, batch_size=8, nb_epoch=2, validation_data=data)
+        result = model.predict(data, batch_per_thread=8)
+        accuracy = model.evaluate(data, batch_size=8)
 
 
 if __name__ == "__main__":
