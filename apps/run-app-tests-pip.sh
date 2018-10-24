@@ -40,6 +40,7 @@ echo "anomaly-detection-nyc-taxi time used:$time1 seconds"
 echo "#2 start app test for object-detection"
 start=$(date "+%s")
 
+# Conversion to py file and data preparation
 ${ANALYTICS_ZOO_HOME}/apps/ipynb2py.sh ${ANALYTICS_ZOO_HOME}/apps/object-detection/object-detection
 FILENAME="${ANALYTICS_ZOO_HOME}/apps/object-detection/analytics-zoo_ssd-mobilenet-300x300_PASCAL_0.1.0.model"
 if [ -f "$FILENAME" ]
@@ -75,6 +76,7 @@ else
     wget $FTP_URI/analytics-zoo-data/apps/object-detection/ffmpeg-linux64-v3.3.1 -P /root/.imageio/ffmpeg/
 fi
 
+# Run the example
 export SPARK_DRIVER_MEMORY=12g
 python ${ANALYTICS_ZOO_HOME}/apps/object-detection/object-detection.py
 
@@ -94,6 +96,7 @@ echo "object-detection time used:$time2 seconds"
 echo "#3 start app test for image-similarity"
 start=$(date "+%s")
 
+# Conversion to py file and data preparation
 ${ANALYTICS_ZOO_HOME}/apps/ipynb2py.sh ${ANALYTICS_ZOO_HOME}/apps/image-similarity/image-similarity
 sed "s/setBatchSize(20)/setBatchSize(56)/g;s%/tmp/images%${ANALYTICS_ZOO_HOME}/apps/image-similarity%g;s%/googlenet_places365/deploy.prototxt%/googlenet_places365/deploy_googlenet_places365.prototxt%g;s%/vgg_16_places365/deploy.prototxt%/vgg_16_places365/deploy_vgg16_places365.prototxt%g;s%/vgg_16_places365/vgg16_places365.caffemodel%/vgg_16_places365/vgg16_place365.caffemodel%g" ${ANALYTICS_ZOO_HOME}/apps/image-similarity/image-similarity.py >${ANALYTICS_ZOO_HOME}/apps/image-similarity/tmp.py
 FILENAME="${ANALYTICS_ZOO_HOME}/apps/image-similarity/imageClassification.tar.gz"
@@ -153,6 +156,7 @@ else
    echo "Finished downloading model"
 fi
 
+# Run the example
 export SPARK_DRIVER_MEMORY=12g
 python ${ANALYTICS_ZOO_HOME}/apps/image-similarity/tmp.py
 
