@@ -1,5 +1,5 @@
-## Custom Loss example
-This example illustrates how to define a custom loss function and ```Lambda``` layer.
+## Autograd Examples
+There are two examples that illustrate how to define a custom loss function and ```Lambda``` layer.
 
 ## Install or download Analytics Zoo
 Follow the instructions [here](https://analytics-zoo.github.io/master/#PythonUserGuide/install/) to install analytics-zoo via __pip__ or __download the prebuilt package__.
@@ -10,7 +10,6 @@ You can easily use the following commands to run this example:
 export SPARK_DRIVER_MEMORY=2g
 python custom.py
 python customloss.py
-
 ```
 
 See [here](https://analytics-zoo.github.io/master/#PythonUserGuide/run/#run-after-pip-install) for more running guidance after pip install.
@@ -21,7 +20,7 @@ Run the following command for Spark local mode (MASTER=local[*]) or cluster mode
 export SPARK_HOME=the root directory of Spark
 export ANALYTICS_ZOO_HOME=the folder where you extract the downloaded Analytics Zoo zip package
 ${ANALYTICS_ZOO_HOME}/bin/spark-submit-with-zoo.sh \
- --master ${MASTER}\
+    --master ${MASTER}\
     --driver-memory 2g \
     --executor-memory 2g \
     path/to/custom.py 
