@@ -149,20 +149,21 @@ else
     -P analytics-zoo-models
 fi
 
-if [ -f analytics-zoo-models/dogs-vs-cats/train.zip ]
+if [ -f analytics-zoo-data/data/dogs-vs-cats/train.zip ]
 then
-   echo "analytics-zoo-models/dogs-vs-cats/train.zip already exists."
+   echo "analytics-zoo-data/data/dogs-vs-cats/train.zip already exists."
 else
    # echo "Downloading dogs and cats images"
    wget  $FTP_URI/analytics-zoo-data/data/dogs-vs-cats/train.zip\
-    -P analytics-zoo-models/dogs-vs-cats
-   unzip analytics-zoo-models/dogs-vs-cats/train.zip -d analytics-zoo-models/dogs-vs-cats
-   mkdir -p analytics-zoo-models/dogs-vs-cats/samples
-   cp analytics-zoo-models/dogs-vs-cats/train/cat.7* analytics-zoo-models/dogs-vs-cats/samples
-   cp analytics-zoo-models/dogs-vs-cats/train/dog.7* analytics-zoo-models/dogs-vs-cats/samples
+    -P analytics-zoo-data/data/dogs-vs-cats
+   unzip analytics-zoo-data/data/dogs-vs-cats/train.zip -d analytics-zoo-data/data/dogs-vs-cats
+   mkdir -p analytics-zoo-data/data/dogs-vs-cats/samples
+   cp analytics-zoo-data/data/dogs-vs-cats/train/cat.7* analytics-zoo-data/data/dogs-vs-cats/samples
+   cp analytics-zoo-data/data/dogs-vs-cats/train/dog.7* analytics-zoo-data/data/dogs-vs-cats/samples
    # echo "Finished downloading images"
 fi
 
+# total batch size: 32 should be divided by total core number: 28
 sed "s/setBatchSize(32)/setBatchSize(56)/g" \
     ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/nnframes/finetune/image_finetuning_example.py \
     > ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/nnframes/finetune/tmp.py
@@ -191,7 +192,7 @@ fi
 echo "start example test for nnframes finetune"
 python ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/nnframes/finetune/tmp.py \
     analytics-zoo-models/bigdl_inception-v1_imagenet_0.4.0.model \
-    analytics-zoo-models/dogs-vs-cats/samples
+    analytics-zoo-data/data/dogs-vs-cats/samples
 
 exit_status=$?
 if [ $exit_status -ne 0 ];
@@ -201,9 +202,9 @@ then
     exit $exit_status
 fi
 
-python ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/nnframes/nnframes/imageTransferLearning/tmp.py \
+python ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/nnframes/imageTransferLearning/tmp.py \
     analytics-zoo-models/bigdl_inception-v1_imagenet_0.4.0.model \
-    analytics-zoo-models/dogs-vs-cats/samples
+    analytics-zoo-data/data/dogs-vs-cats/samples
 
 exit_status=$?
 if [ $exit_status -ne 0 ];
