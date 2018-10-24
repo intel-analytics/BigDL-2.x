@@ -1,4 +1,4 @@
-## Autograd Examples
+# Autograd Examples
 There are two examples that illustrate how to define a custom loss function and ```Lambda``` layer.
 
 ## Install or download Analytics Zoo
