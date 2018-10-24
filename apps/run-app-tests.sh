@@ -379,12 +379,12 @@ then
 else
    echo "Downloading places365 deploy model"
    
-   wget https://github.com/CSAILVision/places365/blob/master/deploy_alexnet_places365.prototxt -P ${ANALYTICS_ZOO_HOME}/apps/image-similarity/alexnet_places365
+   wget https://raw.githubusercontent.com/CSAILVision/places365/master/deploy_alexnet_places365.prototxt -P ${ANALYTICS_ZOO_HOME}/apps/image-similarity/alexnet_places365
    
    echo "Finished downloading model"
 fi
 
-FILENAME="${ANALYTICS_ZOO_HOME}/apps/image-similarity/alexnet_places365/alexnet_places365.caffemodel"gaile
+FILENAME="${ANALYTICS_ZOO_HOME}/apps/image-similarity/alexnet_places365/alexnet_places365.caffemodel"
 if [ -f "$FILENAME" ]
 then
    echo "$FILENAME already exists."
@@ -403,7 +403,7 @@ then
 else
    echo "Downloading VGG deploy model"
    
-   wget https://github.com/CSAILVision/places365/blob/master/deploy_vgg16_places365.prototxt -P ${ANALYTICS_ZOO_HOME}/apps/image-similarity/vgg_16_places365
+   wget https://raw.githubusercontent.com/CSAILVision/places365/master/deploy_vgg16_places365.prototxt -P ${ANALYTICS_ZOO_HOME}/apps/image-similarity/vgg_16_places365
    
    echo "Finished downloading model"
 fi
