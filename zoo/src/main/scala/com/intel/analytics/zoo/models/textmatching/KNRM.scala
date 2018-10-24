@@ -79,7 +79,7 @@ class KNRM[T: ClassTag] private(
       val mmLog = A.log(mmDocSum + 1.0)
       // Remark: Keep the reduced dimension for the last sum and squeeze after stack.
       // Otherwise, when batch=1, the output will become a Scalar not compatible stack.
-      val mmSum = A.sum(mmLog, 1, keepDims = true)
+      val mmSum = A.sum(mmLog, 1, keepdims = true)
       KM.append(mmSum)
     }
     val Phi = Squeeze(2).inputs(A.stack(KM.toList).node)
