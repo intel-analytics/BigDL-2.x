@@ -147,7 +147,7 @@ Here we use Analytics Zoo [Object Detection Python example](https://github.com/i
     VENV_HOME=the parent directory of venv.zip and venv folder
     
     PYSPARK_PYTHON=${VENV_HOME}/venv.zip/venv/bin/python ${SPARK_HOME}/bin/spark-submit \
-    --conf spark.yarn.appMasterEnv.PYSPARK_PYTHON=${VENV_HOME}/venv.zip/venv/bin/python \
+    --conf spark.yarn.appMasterEnv.PYSPARK_PYTHON=venv.zip/venv/bin/python \
     --master yarn-cluster \
     --executor-memory 10g \
     --driver-memory 10g \
@@ -173,7 +173,7 @@ Here we use Analytics Zoo [Object Detection Python example](https://github.com/i
     PYTHONPATH=${ANALYTICS_ZOO_PY_ZIP}:$PYTHONPATH
     VENV_HOME=the parent directory of venv.zip and venv folder
     
-    PYSPARK_DRIVER_PYTHON=${VENV_HOME}/venv/bin/python PYSPARK_PYTHON=${VENV_HOME}/venv.zip/venv/bin/python ${SPARK_HOME}/bin/spark-submit \
+    PYSPARK_DRIVER_PYTHON=${VENV_HOME}/venv/bin/python PYSPARK_PYTHON=venv.zip/venv/bin/python ${SPARK_HOME}/bin/spark-submit \
     --master yarn \
     --deploy-mode client \
     --executor-memory 10g \
