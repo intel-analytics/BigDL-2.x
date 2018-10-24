@@ -27,11 +27,13 @@ from pyspark import RDD
 from bigdl.nn.criterion import Criterion
 from bigdl.nn.layer import Model as BModel
 from bigdl.nn.layer import Layer
-from bigdl.util.common import *
+from bigdl.util.common import to_list, callBigDlFunc, get_spark_context, \
+    JavaValue, get_node_and_core_number
+from zoo.common import Sample, JTensor
 from zoo.feature.image import ImageSet
 from zoo.pipeline.api.keras.engine.topology import ZooKerasLayer, KerasNet
 from zoo.util.tf import export_tf
-from bigdl.optim.optimizer import Sample, Optimizer, EveryEpoch
+from bigdl.optim.optimizer import Optimizer, EveryEpoch
 from bigdl.optim.optimizer import MaxEpoch
 
 
@@ -200,6 +202,20 @@ class Net:
         return BModel.load_keras(json_path, hdf5_path, by_name)
 
 
+def to_sample_rdd(x, y, sc, num_slices=None):
+    """
+    Conver x and y into RDD[Sample]
+    :param sc: SparkContext
+    :param x: ndarray and the first dimension should be batch
+    :param y: ndarray and the first dimension should be batch
+    :param numSlices:
+    :return:
+    """
+    x_rdd = sc.parallelize(x, num_slices)
+    y_rdd = sc.parallelize(y, num_slices)
+    return x_rdd.zip(y_rdd).map(lambda item: Sample.from_ndarray(item[0], item[1]))
+
+
 class TFNet(Layer):
     def __init__(self, path, input_names=None, output_names=None, bigdl_type="float"):
         if input_names is None and output_names is None:
@@ -215,6 +231,26 @@ class TFNet(Layer):
                                         input_names,
                                         output_names)
 
+    @staticmethod
+    def check_input(input):
+        """
+        :param input: ndarray or list of ndarray or JTensor or list of JTensor.
+        :return: (list of JTensor, isTable)
+        """
+        def to_jtensor(i):
+            if isinstance(i, np.ndarray):
+                return JTensor.from_ndarray(i)
+            elif isinstance(i, JTensor):
+                return i
+            else:
+                raise Exception("Error unknown input type %s" % type(i))
+        if type(input) is list:
+            if len(input) == 0:
+                raise Exception('Error when checking: empty input')
+            return list(map(lambda i: to_jtensor(i), input)), True
+        else:
+            return [to_jtensor(input)], False
+
     def predict(self, x, batch_pre_core=-1, distributed=True):
         """
         Use a model to do prediction.
@@ -227,7 +263,7 @@ class TFNet(Layer):
             return ImageSet(results)
         if distributed:
             if isinstance(x, np.ndarray):
-                data_rdd = to_sample_rdd(x, np.zeros([x.shape[0]]))
+                data_rdd = to_sample_rdd(x, np.zeros([x.shape[0]]), get_spark_context())
             elif isinstance(x, RDD):
                 data_rdd = x
             else:

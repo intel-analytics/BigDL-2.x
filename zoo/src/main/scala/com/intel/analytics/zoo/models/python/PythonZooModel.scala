@@ -20,9 +20,10 @@ import java.util.{List => JList, Map => JMap}
 
 import com.intel.analytics.bigdl.dataset.PaddingParam
 import com.intel.analytics.bigdl.nn.abstractnn.{AbstractModule, Activity}
-import com.intel.analytics.bigdl.python.api.{PythonBigDL, Sample}
+import com.intel.analytics.bigdl.python.api.Sample
 import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric
 import com.intel.analytics.bigdl.transform.vision.image.ImageFeature
+import com.intel.analytics.zoo.common.PythonZoo
 import com.intel.analytics.zoo.feature.common.Preprocessing
 import com.intel.analytics.zoo.feature.image._
 import com.intel.analytics.zoo.models.common.ZooModel
@@ -47,7 +48,7 @@ object PythonZooModel {
   def ofDouble(): PythonZooModel[Double] = new PythonZooModel[Double]()
 }
 
-class PythonZooModel[T: ClassTag](implicit ev: TensorNumeric[T]) extends PythonBigDL[T] {
+class PythonZooModel[T: ClassTag](implicit ev: TensorNumeric[T]) extends PythonZoo[T] {
 
   def saveZooModel(
       model: ZooModel[Activity, Activity, T],
