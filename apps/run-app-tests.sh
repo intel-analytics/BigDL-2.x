@@ -415,7 +415,7 @@ then
 else
    echo "Downloading VGG weight model"
    
-   wget $FTP_URI/var/ftpd/ftpusers/zoo/vgg16_places365.caffemodel -P ${ANALYTICS_ZOO_HOME}/apps/image-similarity/vgg_16_places365
+   wget $FTP_URI/analytics-zoo-models/image-classification/vgg16_places365.caffemodel -P ${ANALYTICS_ZOO_HOME}/apps/image-similarity/vgg_16_places365
    
    echo "Finished downloading model"
 fi
