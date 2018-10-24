@@ -28,6 +28,7 @@ from nets import lenet
 
 slim = tf.contrib.slim
 
+
 def main():
 
     sc = init_nncontext()
