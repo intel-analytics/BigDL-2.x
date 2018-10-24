@@ -1,25 +1,21 @@
 ## Image Classification example
 This example illustrates how to do the image classification with pre-trained model
 
-## Install or download Analytics Zoo
-Follow the instructions [here](https://analytics-zoo.github.io/master/#PythonUserGuide/install/) to install analytics-zoo via __pip__ or __download the prebuilt package__.
-
+## Download Analytics Zoo
+You can download Analytics Zoo prebuilt release and nightly build package from [here](https://analytics-zoo.github.io/master/#release-download/) and extract it.
 ## Run the example
-1. Download the pre-trained model
-
+### Download the pre-trained model
 You can download pre-trained models from [Image Classification](https://github.com/intel-analytics/analytics-zoo/blob/master/docs/docs/ProgrammingGuide/image-classification.md)
 
-2. Prepare predict dataset
+### Prepare predict dataset
 Put your image data for prediction in one folder.
 
-3. Run this example
- Run the following command for Spark local mode (`MASTER=local[*]`) or cluster mode, adjust
- the memory size according to your image:
+### Run this example
+Run the following command for Spark local mode (MASTER=local[*]) or cluster mode:
 ```bash
 export SPARK_HOME=the root directory of Spark
 export ANALYTICS_ZOO_HOME=the folder where you extract the downloaded Analytics Zoo zip package
-
-master=... // spark master
+MASTER=...
 modelPath=... // model path
 imagePath=... // image path
 ANALYTICS_ZOO_HOME=...
@@ -35,3 +31,4 @@ spark-shell-with-zoo \
 ${ZOO_JAR_PATH} -f $imagePath --model $modelPath --partition 4 --topN 5
 
 ```
+See [here](https://github.com/intel-analytics/analytics-zoo/tree/master/zoo/src/main/scala/com/intel/analytics/zoo/examples/textclassification#options) for more configurable options for this example.
