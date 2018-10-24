@@ -31,7 +31,6 @@ from bigdl.util.common import to_list, callBigDlFunc, get_spark_context, \
 from zoo.common import Sample, JTensor
 from zoo.feature.image import ImageSet
 from zoo.pipeline.api.keras.engine.topology import ZooKerasLayer, KerasNet
-from zoo.util.tf import export_tf
 from bigdl.optim.optimizer import Optimizer, EveryEpoch
 from bigdl.optim.optimizer import MaxEpoch
 
@@ -291,6 +290,7 @@ class TFNet(Layer):
     @staticmethod
     def from_session(sess, inputs, outputs,
                      generate_backward=False, allow_non_differentiable_input=True):
+        from zoo.util.tf import export_tf
         temp = tempfile.mkdtemp()
         try:
             export_tf(sess, temp, inputs, outputs,
@@ -363,6 +363,7 @@ class TFOptimizer:
     def __init__(self, loss, optim_method, sess=None,
                  val_outputs=None, val_labels=None, val_method=None):
         import tensorflow as tf
+        from zoo.util.tf import export_tf
         '''
         TFOptimizer is used for distributed training of tensorflow
         on Spark/BigDL.
