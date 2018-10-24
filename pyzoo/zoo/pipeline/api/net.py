@@ -251,7 +251,7 @@ class TFNet(Layer):
         else:
             return [to_jtensor(input)], False
 
-    def predict(self, x, batch_pre_core=-1, distributed=True):
+    def predict(self, x, batch_per_core=-1, distributed=True):
         """
         Use a model to do prediction.
         """
@@ -259,7 +259,7 @@ class TFNet(Layer):
             results = callBigDlFunc(self.bigdl_type, "zooPredict",
                                     self.value,
                                     x,
-                                    batch_pre_core)
+                                    batch_per_core)
             return ImageSet(results)
         if distributed:
             if isinstance(x, np.ndarray):
@@ -271,14 +271,14 @@ class TFNet(Layer):
             results = callBigDlFunc(self.bigdl_type, "zooPredict",
                                     self.value,
                                     data_rdd,
-                                    batch_pre_core)
+                                    batch_per_core)
             return results.map(lambda result: Layer.convert_output(result))
         else:
             if isinstance(x, np.ndarray) or isinstance(x, list):
                 results = callBigDlFunc(self.bigdl_type, "zooPredict",
                                         self.value,
                                         self._to_jtensors(x),
-                                        batch_pre_core)
+                                        batch_per_core)
                 return [Layer.convert_output(result) for result in results]
             else:
                 raise TypeError("Unsupported prediction data type: %s" % type(x))
