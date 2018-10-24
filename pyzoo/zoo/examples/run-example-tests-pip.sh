@@ -137,5 +137,49 @@ now=$(date "+%s")
 time4=$((now-start))
 echo "objectdetection time used:$time4 seconds"
 
+echo "start example test for nnframes_finetune"
+#timer
+start=$(date "+%s")
+
+if [ -f analytics-zoo-models/bigdl_inception-v1_imagenet_0.4.0.model ]
+then
+   echo "analytics-zoo-models/bigdl_inception-v1_imagenet_0.4.0.model already exists."
+else
+   wget $FTP_URI/analytics-zoo-models/image-classification/bigdl_inception-v1_imagenet_0.4.0.model \
+    -P analytics-zoo-models
+fi
+
+if [ -f analytics-zoo-models/dogs-vs-cats/train.zip ]
+then
+   echo "analytics-zoo-models/dogs-vs-cats/train.zip already exists."
+else
+   # echo "Downloading dogs and cats images"
+   wget  $FTP_URI/analytics-zoo-data/data/dogs-vs-cats/train.zip\
+    -P analytics-zoo-models/dogs-vs-cats
+   unzip analytics-zoo-models/dogs-vs-cats/train.zip -d analytics-zoo-models/dogs-vs-cats
+   mkdir -p analytics-zoo-models/dogs-vs-cats/samples
+   cp analytics-zoo-models/dogs-vs-cats/train/cat.7* analytics-zoo-models/dogs-vs-cats/samples
+   cp analytics-zoo-models/dogs-vs-cats/train/dog.7* analytics-zoo-models/dogs-vs-cats/samples
+   # echo "Finished downloading images"
+fi
+
+export SPARK_DRIVER_MEMORY=10g
+python ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/nnframes/finetune/image_finetuning_example.py \
+    analytics-zoo-models/bigdl_inception-v1_imagenet_0.4.0.model \
+    analytics-zoo-models/dogs-vs-cats/samples
+
+exit_status=$?
+if [ $exit_status -ne 0 ];
+then
+    clear_up
+    echo "nnframes_finetune failed"
+    exit $exit_status
+fi
+
+unset SPARK_DRIVER_MEMORY
+now=$(date "+%s")
+time5=$((now-start))
+echo "nnframes_finetune time used:$time5 seconds"
+
 # This should be done at the very end after all tests finish.
 clear_up
