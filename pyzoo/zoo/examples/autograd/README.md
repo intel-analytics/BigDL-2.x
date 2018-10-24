@@ -19,12 +19,17 @@ Run the following command for Spark local mode (MASTER=local[*]) or cluster mode
 ```bash
 export SPARK_HOME=the root directory of Spark
 export ANALYTICS_ZOO_HOME=the folder where you extract the downloaded Analytics Zoo zip package
+MASTER=...
 ${ANALYTICS_ZOO_HOME}/bin/spark-submit-with-zoo.sh \
     --master ${MASTER}\
     --driver-memory 2g \
     --executor-memory 2g \
-    path/to/custom.py 
-    path/to/customloss.py 
+    custom.py 
+${ANALYTICS_ZOO_HOME}/bin/spark-submit-with-zoo.sh \
+    --master ${MASTER}\
+    --driver-memory 2g \
+    --executor-memory 2g \
+    customloss.py 
 ```
 See [here](https://analytics-zoo.github.io/master/#PythonUserGuide/run/#run-without-pip-install) for more running guidance without pip install.
 
