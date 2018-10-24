@@ -39,6 +39,11 @@ class Embedding(ZooKerasLayer):
           Default is 'uniform'.
     W_regularizer: An instance of [[Regularizer]], (eg. L1 or L2 regularization),
                    applied to the embedding matrix. Default is None.
+    weights: Initial weights set to this layer, which should be a numpy array of
+             size (inputDim, outputDim). Default is None and in this case weights are
+             initialized by the initialization method specified by 'init'.
+             Otherwise, 'weights' will override 'init' to take effect.
+    trainable: Whether this layer is trainable or not. Default is True.
     input_length: Positive int. The sequence length of each input.
     name: String to set the name of the layer.
           If not specified, its name will by default to be a generated string.

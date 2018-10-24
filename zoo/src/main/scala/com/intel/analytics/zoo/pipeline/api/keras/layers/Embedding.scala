@@ -38,13 +38,14 @@ import scala.reflect.ClassTag
  * @param inputDim Int > 0. Size of the vocabulary, ie. 1 + maximum integer
  *                 index occurring in the input data.
  *                 Each word index in the input should be within range [0, inputDim-1].
- * @param outputDim Int >= 0. Dimension of the dense embedding.
+ * @param outputDim Int > 0. Dimension of the dense embedding.
  * @param init Initialization method for the weights of the layer. Default is RandomUniform.
  *             You can also pass in corresponding string representations such as 'uniform'
  *             or 'normal', etc. for simple init methods in the factory method.
- * @param weights Initial weights set to this layer, which should be a Tensor of size
- *                (inputDim, outputDim). Default is null and in this case weights are
+ * @param weights Tensor. Initial weights set to this layer, which should be a Tensor of
+ *                size (inputDim, outputDim). Default is null and in this case weights are
  *                initialized by the initialization method specified by 'init'.
+ *                Otherwise, 'weights' will override 'init' to take effect.
  * @param trainable Whether this layer is trainable or not. Default is true.
  * @param wRegularizer An instance of [[Regularizer]], (eg. L1 or L2 regularization),
  *                     applied to the embedding matrix. Default is null.
@@ -82,7 +83,6 @@ class Embedding[T: ClassTag](
     }
     if (! trainable) layer.freeze()
     model.add(layer)
-    layer.freeze()
     model.asInstanceOf[AbstractModule[Tensor[T], Tensor[T], T]]
   }
 }
