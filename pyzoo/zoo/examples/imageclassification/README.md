@@ -15,6 +15,7 @@ Put your image data for prediction in one folder.
 export SPARK_DRIVER_MEMORY=10g
 ```
 See [here](https://github.com/intel-analytics/analytics-zoo/tree/master/pyzoo/zoo/examples/textclassification#options) for more configurable options for this example.
+
 See [here](https://analytics-zoo.github.io/master/#PythonUserGuide/run/#run-after-pip-install) for more running guidance after pip install.
 
 ## Run with prebuilt package
@@ -38,4 +39,5 @@ ${ANALYTICS_ZOO_HOME}/bin/spark-shell-with-zoo.sh \
     path/to/predict.py -f $imagePath --model $modelPath --topN 5 --partition_num ${partitionNum}
 ```
 See [here](https://github.com/intel-analytics/analytics-zoo/tree/master/pyzoo/zoo/examples/textclassification#options) for more configurable options for this example.
+
 See [here](https://analytics-zoo.github.io/master/#PythonUserGuide/run/#run-without-pip-install) for more running guidance without pip install.
