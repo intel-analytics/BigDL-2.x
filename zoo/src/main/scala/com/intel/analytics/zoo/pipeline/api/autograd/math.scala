@@ -136,8 +136,8 @@ object AutoGrad {
    * Mean of a tensor, alongside the specified axis.
    * @param axis axis to compute the mean. 0-based indexed.
    * @param keepDims A boolean, whether to keep the dimensions or not.
-   *If `keepDims` is `False`, the rank of the tensor is reduced
-   *by 1. If `keepDims` is `True`,
+   *If `keepdims` is `False`, the rank of the tensor is reduced
+   *by 1. If `keep_dims` is `True`,
    *the reduced dimensions are retained with length 1.
    * @return
    *         A tensor with the mean of elements of `x`.
