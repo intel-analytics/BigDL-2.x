@@ -163,8 +163,10 @@ else
    # echo "Finished downloading images"
 fi
 
+sed "s/setBatchSize(32)/setBatchSize(56)/g" ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/nnframes/finetune/image_finetuning_example.py > ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/nnframes/finetune/tmp.py
+
 export SPARK_DRIVER_MEMORY=10g
-python ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/nnframes/finetune/image_finetuning_example.py \
+python ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/nnframes/finetune/tmp.py \
     analytics-zoo-models/bigdl_inception-v1_imagenet_0.4.0.model \
     analytics-zoo-models/dogs-vs-cats/samples
 
