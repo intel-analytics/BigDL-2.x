@@ -34,8 +34,8 @@ class TestKNRM(ZooTestCase):
                 return K.tf.exp(-0.5 * (x - mu) * (x - mu) / sigma / sigma)
             return Activation(kernel)
 
-        query = Input(name='query', shape=(text1_length,))
-        doc = Input(name='doc', shape=(text2_length,))
+        query = Input(name='query', shape=(text1_length, ))
+        doc = Input(name='doc', shape=(text2_length, ))
         embedding = Embedding(vocab_size, embed_size, name="embedding")
         q_embed = embedding(query)
         d_embed = embedding(doc)
@@ -66,7 +66,7 @@ class TestKNRM(ZooTestCase):
         koutput = kmodel.predict([input_data[:, :5], input_data[:, 5:]])
         kweights = kmodel.get_weights()
         bweights = [kweights[0], np.transpose(kweights[1]), kweights[2]]
-        model = KNRM(5, 10, 20, 100)  # Model definition on Scala side
+        model = KNRM(5, 10, 20, 100)
         model.set_weights(bweights)
         output = model.forward(input_data)
         self.assert_allclose(output, koutput)

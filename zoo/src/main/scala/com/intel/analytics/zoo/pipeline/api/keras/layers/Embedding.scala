@@ -63,6 +63,9 @@ class Embedding[T: ClassTag](
   extends BEmbedding[T] (
     inputDim, outputDim, init, wRegularizer, inputShape) with Net {
 
+  require(inputDim > 0, s"inputDim of Embedding must be a positive integer, but got $inputDim")
+  require(outputDim > 0, s"outputDim of Embedding must be a positive integer, but got $outputDim")
+
   if (weights != null) {
     require(weights.size().sameElements(Array(inputDim, outputDim)),
     "weights size should match (inputDim, outputDim)")

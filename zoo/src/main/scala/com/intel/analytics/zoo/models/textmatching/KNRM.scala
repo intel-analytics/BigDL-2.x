@@ -40,11 +40,11 @@ import scala.reflect.ClassTag
  * @param embedWeights Tensor. Pre-trained word embedding weights if any. Default is null and in
  *                     this case, initial weights will be randomized.
  * @param trainEmbed Boolean. Whether to train the embedding layer or not. Default is true.
- * @param kernelNum Integer. The number of kernels to use.
+ * @param kernelNum Integer. The number of kernels to use. Default is 21.
  * @param sigma Double. Defines the kernel width, or the range of its softTF count.
  *              Default is 0.1.
  * @param exactSigma Double. The sigma used for the kernel that harvests exact matches
- *                   in the case where mu=1.0. Default is 0.001.
+ *                   in the case where RBF mu=1.0. Default is 0.001.
  */
 class KNRM[T: ClassTag] private(
     override val text1Length: Int,
@@ -70,7 +70,7 @@ class KNRM[T: ClassTag] private(
     val KM = new ArrayBuffer[Variable[T]]()
     for (i <- 0 until kernelNum) {
       var mu = 1.0 / (kernelNum - 1) + (2.0 * i) / (kernelNum - 1) - 1.0
-      val _sigma = if (mu > 1.0) {
+      val _sigma = if (mu > 1.0) { // Eaxct match.
         mu = 1.0
         exactSigma
       } else sigma

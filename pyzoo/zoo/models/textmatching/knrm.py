@@ -16,8 +16,8 @@
 
 import sys
 
-from zoo.models.common.zoo_model import ZooModel
 import zoo.pipeline.api.autograd as A
+from zoo.models.common.zoo_model import ZooModel
 from zoo.models.textmatching.text_matcher import TextMatcher
 from zoo.pipeline.api.keras.layers import Input, Embedding, Dense, Squeeze
 from zoo.pipeline.api.keras.models import Model
@@ -42,10 +42,10 @@ class KNRM(TextMatcher):
     embed_weights: Numpy array. Pre-trained word embedding weights if any. Default is None
                    and in this case, initial weights will be randomized.
     train_embed: Boolean. Whether to train the embedding layer or not. Default is True.
-    kernel_num: Int. The number of kernels to use.
+    kernel_num: Int. The number of kernels to use. Default is 21.
     sigma: Float. Defines the kernel width, or the range of its softTF count. Default is 0.1.
     exact_sigma: Float. The sigma used for the kernel that harvests exact matches
-                 in the case where mu=1.0. Default is 0.001.
+                 in the case where RBF mu=1.0. Default is 0.001.
     """
     def __init__(self, text1_length, text2_length, vocab_size, embed_size=300, embed_weights=None,
                  train_embed=True, kernel_num=21, sigma=0.1, exact_sigma=0.001, bigdl_type="float"):
@@ -72,15 +72,16 @@ class KNRM(TextMatcher):
         # Remark: Share weights for embedding is not supported.
         # Thus here the model takes concatenated input and slice to split the input.
         input = Input(name='input', shape=(self.text1_length + self.text2_length, ))
-        embedding = Embedding(self.vocab_size, self.embed_size, weights=self.embed_weights)(input)
+        embedding = Embedding(self.vocab_size, self.embed_size,
+                              weights=self.embed_weights, trainable=self.train_embed)(input)
         query_embed = embedding.slice(1, 0, self.text1_length)
         doc_embed = embedding.slice(1, self.text1_length, self.text2_length)
-        mm = A.batch_dot(query_embed, doc_embed, axes=[2, 2])
+        mm = A.batch_dot(query_embed, doc_embed, axes=[2, 2])  # Translation Matrix.
         KM = []
         for i in range(self.kernel_num):
             mu = 1. / (self.kernel_num - 1) + (2. * i) / (self.kernel_num - 1) - 1.0
             sigma = self.sigma
-            if mu > 1.0:
+            if mu > 1.0:  # Exact match.
                 sigma = self.exact_sigma
                 mu = 1.0
             mm_exp = A.exp(-0.5 * (mm - mu) * (mm - mu) / sigma / sigma)

@@ -34,7 +34,7 @@ class Embedding(ZooKerasLayer):
 
     # Arguments
     input_dim: Size of the vocabulary. Int > 0.
-    output_dim: Dimension of the dense embedding. Int >= 0.
+    output_dim: Dimension of the dense embedding. Int > 0.
     init: String representation of the initialization method for the weights of the layer.
           Default is 'uniform'.
     W_regularizer: An instance of [[Regularizer]], (eg. L1 or L2 regularization),
