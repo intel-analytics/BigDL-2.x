@@ -20,7 +20,6 @@ import tempfile
 import six
 import os
 import json
-import tensorflow as tf
 import numpy as np
 from pyspark import RDD
 
@@ -363,6 +362,7 @@ class TFOptimizer:
 
     def __init__(self, loss, optim_method, sess=None,
                  val_outputs=None, val_labels=None, val_method=None):
+        import tensorflow as tf
         '''
         TFOptimizer is used for distributed training of tensorflow
         on Spark/BigDL.
@@ -469,6 +469,7 @@ class TFDataset:
 
     def __init__(self, rdd, names, shapes, types, batch_size,
                  batch_pre_thread, hard_code_batch_size=False, val_rdd=None):
+        import tensorflow as tf
         '''
         TFDatasets represents a distributed collection of elements to be feed into
         Tensorflow graph. TFDatasets can be created using a RDD and each of its records
@@ -533,6 +534,7 @@ class TFDataset:
     def from_rdd(rdd, names=None, shapes=None, types=None,
                  batch_size=-1, batch_pre_thread=-1,
                  hard_code_batch_size=False, val_rdd=None):
+        import tensorflow as tf
         if not names:
             names = ["features", "labels"]
         if not shapes:
@@ -559,6 +561,7 @@ def _check_the_same(all_required_inputs, inputs_in_datasets):
 class TFPredictor:
 
     def __init__(self, sess, outputs):
+        import tensorflow as tf
         '''
         TFPredictor takes a list of tensorflow tensors as the model outputs and
         feed all the elements in TFDatasets to produce those outputs and returns
