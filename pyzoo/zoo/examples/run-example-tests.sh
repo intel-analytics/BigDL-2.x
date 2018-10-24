@@ -177,7 +177,7 @@ ${SPARK_HOME}/bin/spark-submit \
 echo "start example test for nnframes imageTransferLearning"
 ${SPARK_HOME}/bin/spark-submit \
    --master local[1] \
-   --driver-memimageTransferLearning/ory 5g \
+   --driver-memory 5g \
    --py-files ${ANALYTICS_ZOO_PYZIP},${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/nnframes/imageTransferLearning/tmp.py \
    --jars ${ANALYTICS_ZOO_JAR} \
    --conf spark.driver.extraClassPath=${ANALYTICS_ZOO_JAR} \
