@@ -18,17 +18,15 @@ export ANALYTICS_ZOO_HOME=the folder where you extract the downloaded Analytics 
 MASTER=...
 modelPath=... // model path
 imagePath=... // image path
-ANALYTICS_ZOO_HOME=...
-ZOO_JAR_PATH=${ANALYTICS_ZOO_HOME}/lib/analytics-zoo-bigdl_BIGDL_VERSION-spark_SPARK_VERSION-ZOO_VERSION-jar-with-dependencies.jar
-spark-shell-with-zoo \
---verbose \
---master $master \
---conf spark.executor.cores=1 \
---total-executor-cores 4 \
---driver-memory 8g \
---executor-memory 8g \
---class com.intel.analytics.zoo.examples.imageclassification.Predict \
-${ZOO_JAR_PATH} -f $imagePath --model $modelPath --partition 4 --topN 5
+${ANALYTICS_ZOO_HOME}/bin/spark-shell-with-zoo.sh \
+     --master ${MASTER} \
+     --driver-memory 8g \
+     --executor-memory 8g \
+     --verbose \
+     --conf spark.executor.cores=1 \
+     --total-executor-cores 4 \           
+     --class com.intel.analytics.zoo.examples.imageclassification.Predict \
+     ${ZOO_JAR_PATH} -f $imagePath --model $modelPath --partition 4 --topN 5
 
 ```
 See [here](https://github.com/intel-analytics/analytics-zoo/tree/master/zoo/src/main/scala/com/intel/analytics/zoo/examples/textclassification#options) for more configurable options for this example.
