@@ -37,7 +37,6 @@ now=$(date "+%s")
 time1=$((now-start))
 echo "anomaly-detection-nyc-taxi time used:$time1 seconds"
 
-
 echo "#2 start app test for object-detection"
 start=$(date "+%s")
 
