@@ -107,5 +107,35 @@ now=$(date "+%s")
 time3=$((now-start))
 echo "autograd time used:$time3 seconds"
 
+echo "start example test for objectdetection"
+#timer
+start=$(date "+%s")
+
+if [ -f analytics-zoo-models/analytics-zoo_ssd-mobilenet-300x300_PASCAL_0.1.0.model ]
+then
+    echo "analytics-zoo-models/analytics-zoo_ssd-mobilenet-300x300_PASCAL_0.1.0.model already exists"
+else
+    wget $FTP_URI/analytics-zoo-models/object-detection/analytics-zoo_ssd-mobilenet-300x300_PASCAL_0.1.0.model \
+    -P analytics-zoo-models
+fi
+
+export SPARK_DRIVER_MEMORY=10g
+python ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/objectdetection/predict.py \
+    analytics-zoo-models/analytics-zoo_ssd-mobilenet-300x300_PASCAL_0.1.0.model \
+    hdfs://172.168.2.181:9000/kaggle/train_100 \
+    /tmp
+exit_status=$?
+if [ $exit_status -ne 0 ];
+then
+    clear_up
+    echo "objectdetection failed"
+    exit $exit_status
+fi
+
+unset SPARK_DRIVER_MEMORY
+now=$(date "+%s")
+time4=$((now-start))
+echo "objectdetection time used:$time4 seconds"
+
 # This should be done at the very end after all tests finish.
 clear_up
