@@ -14,6 +14,7 @@
 # limitations under the License.
 #
 
+import tensorflow as tf
 from zoo import init_nncontext
 from zoo.pipeline.api.net import TFDataset, TFPredictor
 import numpy as np
@@ -21,13 +22,11 @@ import sys
 
 from bigdl.dataset import mnist
 from bigdl.dataset.transformer import *
-import tensorflow as tf
-
-slim = tf.contrib.slim
 
 sys.path.append("/tmp/models/slim")  # add the slim library
 from nets import lenet
 
+slim = tf.contrib.slim
 
 def main():
 
