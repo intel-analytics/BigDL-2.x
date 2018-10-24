@@ -108,7 +108,7 @@ else
    
    echo "Finished downloading images"
 fi
-FILENAME="${ANALYTICS_ZOO_HOME}/apps/image-similarity/googlenet_places365/deploy_googlenet_places365.prototxt"
+ FILENAME="${ANALYTICS_ZOO_HOME}/apps/image-similarity/googlenet_places365/deploy_googlenet_places365.prototxt"
 if [ -f "$FILENAME" ]
 then
    echo "$FILENAME already exists."
@@ -119,7 +119,7 @@ else
    
    echo "Finished downloading model"
 fi
-FILENAME="${ANALYTICS_ZOO_HOME}/apps/image-similarity/googlenet_places365/googlenet_places365.caffemodel"
+ FILENAME="${ANALYTICS_ZOO_HOME}/apps/image-similarity/googlenet_places365/googlenet_places365.caffemodel"
 if [ -f "$FILENAME" ]
 then
    echo "$FILENAME already exists."
@@ -130,7 +130,7 @@ else
    
    echo "Finished downloading model"
 fi
-FILENAME=" ${ANALYTICS_ZOO_HOME}/apps/image-similarity/vgg_16_places365/deploy_vgg16_places365.prototxt"
+ FILENAME=" ${ANALYTICS_ZOO_HOME}/apps/image-similarity/vgg_16_places365/deploy_vgg16_places365.prototxt"
 if [ -f "$FILENAME" ]
 then
    echo "$FILENAME already exists."
@@ -138,10 +138,10 @@ else
    echo "Downloading VGG deploy model"
    
    wget https://raw.githubusercontent.com/CSAILVision/places365/master/deploy_vgg16_places365.prototxt -P ${ANALYTICS_ZOO_HOME}/apps/image-similarity/vgg_16_places365
-       
+   
    echo "Finished downloading model"
 fi
-FILENAME="${ANALYTICS_ZOO_HOME}/apps/image-similarity/vgg_16_places365/vgg16_hybrid1365.caffemodel"
+ FILENAME="${ANALYTICS_ZOO_HOME}/apps/image-similarity/vgg_16_places365/vgg16_hybrid1365.caffemodel"
 if [ -f "$FILENAME" ]
 then
    echo "$FILENAME already exists."
