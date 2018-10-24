@@ -126,18 +126,27 @@ ${SPARK_HOME}/bin/spark-submit \
    --driver-memory 10g \
    --py-files ${ANALYTICS_ZOO_PYZIP},${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/nnframes/finetune/image_finetuning_example.py \
 /tmp/zoo/bigdl_inception-v1_imagenet_0.4.0.model /tmp/zoo/dogs_cats/samples
+   --jars ${ANALYTICS_ZOO_JAR} \
+   --conf spark.driver.extraClassPath=${ANALYTICS_ZOO_JAR} \
+   --conf spark.executor.extraClassPath=${ANALYTICS_ZOO_JAR} \
 
 ${SPARK_HOME}/bin/spark-submit \
    --master local[1] \
    --driver-memory 3g \
    --py-files ${ANALYTICS_ZOO_PYZIP},${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/nnframes/imageInference/ImageInferenceExample.py \
 /tmp/zoo/bigdl_inception-v1_imagenet_0.4.0.model /tmp/zoo/infer_images
+   --jars ${ANALYTICS_ZOO_JAR} \
+   --conf spark.driver.extraClassPath=${ANALYTICS_ZOO_JAR} \
+   --conf spark.executor.extraClassPath=${ANALYTICS_ZOO_JAR} \
 
 ${SPARK_HOME}/bin/spark-submit \
---master local[1] \
---driver-memimageTransferLearning/ory 5g \
---py-files ${ANALYTICS_ZOO_PYZIP},${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/nnframes/imageTransferLearning/ImageTransferLearningExample.py \
+   --master local[1] \
+   --driver-memimageTransferLearning/ory 5g \
+   --py-files ${ANALYTICS_ZOO_PYZIP},${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/nnframes/imageTransferLearning/ImageTransferLearningExample.py \
 /tmp/zoo/bigdl_inception-v1_imagenet_0.4.0.model /tmp/zoo/dogs_cats/samples
+   --jars ${ANALYTICS_ZOO_JAR} \
+   --conf spark.driver.extraClassPath=${ANALYTICS_ZOO_JAR} \
+   --conf spark.executor.extraClassPath=${ANALYTICS_ZOO_JAR} \
 now=$(date "+%s")
 time5=$((now-start))
 
