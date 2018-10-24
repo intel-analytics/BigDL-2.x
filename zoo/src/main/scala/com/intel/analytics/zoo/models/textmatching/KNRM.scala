@@ -70,7 +70,7 @@ class KNRM[T: ClassTag] private(
     val KM = new ArrayBuffer[Variable[T]]()
     for (i <- 0 until kernelNum) {
       var mu = 1.0 / (kernelNum - 1) + (2.0 * i) / (kernelNum - 1) - 1.0
-      val _sigma = if (mu > 1.0) { // Eaxct match.
+      val _sigma = if (mu > 1.0) { // Exact match.
         mu = 1.0
         exactSigma
       } else sigma
