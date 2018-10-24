@@ -118,8 +118,32 @@ ${SPARK_HOME}/bin/spark-submit \
 now=$(date "+%s")
 time4=$((now-start))
 
+echo "#5 start example test for nnframes"
+#timer
+start=$(date "+%s")
+${SPARK_HOME}/bin/spark-submit \
+   --master local[2] \
+   --driver-memory 10g \
+   --py-files ${ANALYTICS_ZOO_PYZIP},${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/nnframes/finetune/image_finetuning_example.py \
+/tmp/zoo/bigdl_inception-v1_imagenet_0.4.0.model /tmp/zoo/dogs_cats/samples
+
+${SPARK_HOME}/bin/spark-submit \
+   --master local[1] \
+   --driver-memory 3g \
+   --py-files ${ANALYTICS_ZOO_PYZIP},${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/nnframes/imageInference/ImageInferenceExample.py \
+/tmp/zoo/bigdl_inception-v1_imagenet_0.4.0.model /tmp/zoo/infer_images
+
+${SPARK_HOME}/bin/spark-submit \
+--master local[1] \
+--driver-memimageTransferLearning/ory 5g \
+--py-files ${ANALYTICS_ZOO_PYZIP},${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/nnframes/imageTransferLearning/ImageTransferLearningExample.py \
+/tmp/zoo/bigdl_inception-v1_imagenet_0.4.0.model /tmp/zoo/dogs_cats/samples
+now=$(date "+%s")
+time5=$((now-start))
+
 
 echo "#1 textclassification time used:$time1 seconds"
 echo "#2 customized loss and layer time used:$time2 seconds"
 echo "#3 image-classification time used:$time3 seconds"
 echo "#4 object-detection loss and layer time used:$time4 seconds"
+echo "#5 nnframes time used:$time5 seconds
