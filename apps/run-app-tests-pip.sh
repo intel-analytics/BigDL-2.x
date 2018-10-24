@@ -76,7 +76,7 @@ else
     wget $FTP_URI/analytics-zoo-data/apps/object-detection/ffmpeg-linux64-v3.3.1 -P /root/.imageio/ffmpeg/
 fi
 
-# Run the example
+# Run the example 
 export SPARK_DRIVER_MEMORY=12g
 python ${ANALYTICS_ZOO_HOME}/apps/object-detection/object-detection.py
 
