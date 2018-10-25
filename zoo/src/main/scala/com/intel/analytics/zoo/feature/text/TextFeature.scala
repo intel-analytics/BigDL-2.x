@@ -34,10 +34,11 @@ import scala.reflect.ClassTag
 class TextFeature extends Serializable {
   import TextFeature.logger
 
-  private def this(text: String, label: Option[Int]) {
+  private def this(text: String, label: Option[Int], id: String) {
     this
     require(text != null, "text for a TextFeature can't be null")
     state(TextFeature.text) = text
+    state(TextFeature.id) = id
     if (label.nonEmpty) {
       state(TextFeature.label) = label.get
     }
@@ -118,6 +119,12 @@ class TextFeature extends Serializable {
 
 object TextFeature {
   /**
+   * Key for the identifier of this TextFeature which should not be modified.
+   * It can be the id of the text in your corpus or the uri of the file.
+   * Value should be a String.
+   */
+  val id = "id"
+  /**
    * Key for the original text content which should not be modified.
    * Value should be a String.
    */
@@ -154,8 +161,8 @@ object TextFeature {
   /**
    * Create a TextFeature without label.
    */
-  def apply(text: String): TextFeature = {
-    new TextFeature(text, None)
+  def apply(text: String, id: String = null): TextFeature = {
+    new TextFeature(text, None, id)
   }
 
   /**
@@ -163,6 +170,14 @@ object TextFeature {
    * It is recommended that label starts from 0.
    */
   def apply(text: String, label: Int): TextFeature = {
-    new TextFeature(text, Some(label))
+    new TextFeature(text, Some(label), null)
+  }
+
+  /**
+   * Create a TextFeature with label and id.
+   * It is recommended that label starts from 0.
+   */
+  def apply(text: String, label: Int, id: String): TextFeature = {
+    new TextFeature(text, Some(label), id)
   }
 }

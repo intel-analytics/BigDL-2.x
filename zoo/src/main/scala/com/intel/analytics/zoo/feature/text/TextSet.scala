@@ -214,13 +214,12 @@ object TextSet {
       val textRDD = sc.wholeTextFiles(path + "/*", minPartitions).map{case (p, text) =>
         val parts = p.split("/")
         val category = parts(parts.length - 2)
-        TextFeature(text, label = categoryToLabel(category))
+        TextFeature(text, label = categoryToLabel(category), id = p)
       }
       TextSet.rdd(textRDD)
     }
     else {
-      val texts = ArrayBuffer[String]()
-      val labels = ArrayBuffer[Int]()
+      val features = ArrayBuffer[TextFeature]()
       val categoryToLabel = new util.HashMap[String, Int]()
       val categoryPath = new File(path)
       require(categoryPath.exists(), s"$path doesn't exist. Please check your input path")
@@ -233,16 +232,11 @@ object TextSet {
         textFiles.foreach { file =>
           val source = Source.fromFile(file, "ISO-8859-1")
           val text = try source.getLines().toList.mkString("\n") finally source.close()
-          texts.append(text)
-          labels.append(label)
+          features.append(TextFeature(text, label, file.getAbsolutePath))
         }
       }
-      logger.info(s"Found ${texts.length} texts.")
       logger.info(s"Found ${categoryToLabel.size()} classes")
-      val textArr = texts.zip(labels).map{case (text, label) =>
-        TextFeature(text, label)
-      }.toArray
-      TextSet.array(textArr)
+      TextSet.array(features.toArray)
     }
     textSet
   }
