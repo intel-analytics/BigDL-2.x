@@ -13,9 +13,6 @@ In this directory, there are two projects
 
 To run this sample, please follow the steps below.
 
-## Download Analytics Zoo
-You can download Analytics Zoo prebuilt release and nightly build package from [here](https://analytics-zoo.github.io/master/#release-download/) and extract it.
-
 ## Start up the applications
 ### Import Project
 In the IDE(eg: IDEA), Select New - Project from Existing Source, look through the directory to find pom.xml file of the project(eg: text-classification-training) and click OK, then select open as project in the window pop out next, using maven to build up the project.
