@@ -158,12 +158,12 @@ else
 fi
 
 export SPARK_DRIVER_MEMORY=12g
-python${ANALYTICS_ZOO_HOME}/apps/tfnet/tmp.py
+python ${ANALYTICS_ZOO_HOME}/apps/tfnet/tmp.py
 
 exit_status=$?
 if [ $exit_status -ne 0 ];
 then
-    #clear_up
+    clear_up
     echo "image_classification_inference failed"
     exit $exit_status
 fi
