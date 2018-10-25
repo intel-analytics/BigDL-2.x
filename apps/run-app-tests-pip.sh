@@ -99,15 +99,15 @@ start=$(date "+%s")
 # Conversion to py file and data preparation
 ${ANALYTICS_ZOO_HOME}/apps/ipynb2py.sh ${ANALYTICS_ZOO_HOME}/apps/image-similarity/image-similarity
 sed "s/setBatchSize(20)/setBatchSize(56)/g;s/setMaxEpoch(2)/setMaxEpoch(1)/g;s%/tmp/images%${ANALYTICS_ZOO_HOME}/apps/image-similarity%g;s%/googlenet_places365/deploy.prototxt%/googlenet_places365/deploy_googlenet_places365.prototxt%g;s%/vgg_16_places365/deploy.prototxt%/vgg_16_places365/deploy_vgg16_places365.prototxt%g;s%./samples%${ANALYTICS_ZOO_HOME}/apps/image-similarity/samples%g" ${ANALYTICS_ZOO_HOME}/apps/image-similarity/image-similarity.py >${ANALYTICS_ZOO_HOME}/apps/image-similarity/tmp.py
-FILENAME="${ANALYTICS_ZOO_HOME}/apps/image-similarity/imageClassification.tar.gz"
+FILENAME="${ANALYTICS_ZOO_HOME}/apps/image-similarity/miniimageClassification.tar.gz"
 if [ -f "$FILENAME" ]
 then
    echo "$FILENAME already exists."
 else
    echo "Downloading images"
    
-   wget $FTP_URI/analytics-zoo-data/imageClassification.tar.gz -P ${ANALYTICS_ZOO_HOME}/apps/image-similarity
-   tar -zxvf ${ANALYTICS_ZOO_HOME}/apps/image-similarity/imageClassification.tar.gz -C ${ANALYTICS_ZOO_HOME}/apps/image-similarity
+   wget $FTP_URI/analytics-zoo-data/miniimageClassification.tar.gz -P ${ANALYTICS_ZOO_HOME}/apps/image-similarity
+   tar -zxvf ${ANALYTICS_ZOO_HOME}/apps/image-similarity/miniimageClassification.tar.gz -C ${ANALYTICS_ZOO_HOME}/apps/image-similarity
    
    echo "Finished downloading images"
 fi
