@@ -33,7 +33,7 @@ Run the following command for Spark local mode (`MASTER=local[*]`) or cluster mo
     export SPARK_HOME=the root directory of Spark
     export ANALYTICS_ZOO_HOME=the folder where you extract the downloaded Analytics Zoo zip package
 
-Run the following bash command to start the jupyter notebook. Change parameter settings as you need, ie `MASTER = local[physcial_core_number]`.
+Run the following bash command to start the jupyter notebook. Change parameter settings as you need, e.g. `MASTER = local[physcial_core_number]`.
 
 	MASTER=local[*]
 	${ANALYTICS_ZOO_HOME}/bin/jupyter-with-zoo.sh \
