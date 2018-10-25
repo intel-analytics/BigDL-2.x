@@ -37,6 +37,29 @@ now=$(date "+%s")
 time1=$((now-start))
 echo "anomaly-detection-nyc-taxi time used:$time1 seconds"
 
+echo "#4 start app test for wide_n_deep"
+#timer
+start=$(date "+%s")
+${ANALYTICS_ZOO_HOME}/apps/ipynb2py.sh ${ANALYTICS_ZOO_HOME}/apps/recommendation-wide-n-deep/wide_n_deep
+sed "s/end_trigger=MaxEpoch(10)/end_trigger=MaxEpoch(5)/g" ${ANALYTICS_ZOO_HOME}/apps/recommendation-wide-n-deep/wide_n_deep.py >${ANALYTICS_ZOO_HOME}/apps/recommendation-wide-n-deep/tmp_test.py
+${SPARK_HOME}/bin/spark-submit \
+        --master ${MASTER} \
+        --driver-cores 2  \
+        --driver-memory 12g  \
+        --total-executor-cores 2  \
+        --executor-cores 2  \
+        --executor-memory 12g \
+        --conf spark.akka.frameSize=64 \
+        --py-files ${ANALYTICS_ZOO_PYZIP},${ANALYTICS_ZOO_HOME}/apps/recommendation-wide-n-deep/tmp_test.py  \
+        --properties-file ${ANALYTICS_ZOO_CONF} \
+        --jars ${ANALYTICS_ZOO_JAR} \
+        --conf spark.driver.extraClassPath=${ANALYTICS_ZOO_JAR} \
+        --conf spark.executor.extraClassPath=${ANALYTICS_ZOO_JAR} \
+        ${ANALYTICS_ZOO_HOME}/apps/recommendation-wide-n-deep/tmp_test.py
+now=$(date "+%s")
+time4=$((now-start))
+rm ${ANALYTICS_ZOO_HOME}/apps/recommendation-wide-n-deep/tmp_test.py
+
 echo "#10 start app test for dogs-vs-cats"
 start=$(date "+%s")
 
