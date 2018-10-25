@@ -57,5 +57,3 @@ In the first place, you need to edit the run/debug configurations as below:
 For `SimpleDriver.java`, simply running it can get the prediction result in the terminal.
 
 For `WebServiceDriver.java`, running it will start the web service application. To see the output, you can use tools such as `Postman` to send a POST request whose body contains an article text to the server's url followed with directory "/predict", (eg: localhost:8080/predict). Then the application will respond with the prediction result.
-
-
