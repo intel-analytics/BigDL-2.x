@@ -17,7 +17,7 @@ in Analytics Zoo. These notebooks are developed on Apache Spark 2.1
    more vivid images at the cost of more training time.
 
 ## Install or download Analytics Zoo  
-* Run `export SPARK_HOME=the root directory of Spark`.	Follow the instructions [here](https://analytics-zoo.github.io/master/#PythonUserGuide/install/) to install analytics-zoo via __pip__ or __download the prebuilt package__.
+* Follow the instructions [here](https://analytics-zoo.github.io/master/#PythonUserGuide/install/) to install analytics-zoo via __pip__ or __download the prebuilt package__.
 
 ## Run after pip install
 You can easily use the following commands to run this example:
