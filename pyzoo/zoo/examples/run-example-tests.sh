@@ -12,114 +12,44 @@ export PYTHONPATH=${ANALYTICS_ZOO_PYZIP}:$PYTHONPATH
 
 set -e
 
-echo "#1 start example test for textclassification"
+echo "#6 start example test for tensorflow"
 #timer
 start=$(date "+%s")
-if [ -f analytics-zoo-data/data/glove.6B.zip ]
+echo "start example test for tensorflow tfnet"
+if [ -f analytics-zoo-models/ssd_mobilenet_v1_coco_2017_11_17.tar.gz ]
 then
-    echo "analytics-zoo-data/data/glove.6B.zip already exists" 
+   echo "analytics-zoo-models/bigdl_inception-v1_imagenet_0.4.0.model already exists."
 else
-    wget $FTP_URI/analytics-zoo-data/data/glove/glove.6B.zip -P analytics-zoo-data/data 
-    unzip -q analytics-zoo-data/data/glove.6B.zip -d analytics-zoo-data/data/glove.6B
-fi 
-if [ -f analytics-zoo-data/data/20news-18828.tar.gz ]
-then 
-    echo "analytics-zoo-data/data/20news-18828.tar.gz already exists" 
-else
-    wget $FTP_URI/analytics-zoo-data/data/news20/20news-18828.tar.gz -P analytics-zoo-data/data 
-    tar zxf analytics-zoo-data/data/20news-18828.tar.gz -C analytics-zoo-data/data/
-fi
-
-echo "check if model directory exists"
-if [ ! -d analytics-zoo-models ]
-then
-    mkdir analytics-zoo-models
-fi
-
-if [ -f analytics-zoo-models/image-classification/analytics-zoo_squeezenet_imagenet_0.1.0.model ]
-then
-    echo "analytics-zoo-models/image-classification/analytics-zoo_squeezenet_imagenet_0.1.0.model already exists"
-else
-    wget $FTP_URI/analytics-zoo-models/image-classification/analytics-zoo_squeezenet_imagenet_0.1.0.model\
+   wget http://download.tensorflow.org/models/object_detection/ssd_mobilenet_v1_coco_2017_11_17.tar.gz \
     -P analytics-zoo-models
+   tar zxf analytics-zoo-models/ssd_mobilenet_v1_coco_2017_11_17.tar.gz -C analytics-zoo-models/
 fi
-if [ -f analytics-zoo-models/analytics-zoo_ssd-mobilenet-300x300_PASCAL_0.1.0.model ]
+${SPARK_HOME}/bin/spark-submit \
+    --master ${MASTER} \
+    --driver-memory 200g \
+    --executor-memory 200g \
+    --properties-file ${ANALYTICS_ZOO_CONF} \
+    --py-files ${ANALYTICS_ZOO_PY_ZIP},${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/tensorflow/tfnet/predict.py \
+    --jars ${ANALYTICS_ZOO_JAR} \
+    --conf spark.driver.extraClassPath=${ANALYTICS_ZOO_JAR} \
+    --conf spark.executor.extraClassPath=${ANALYTICS_ZOO_JAR} \
+    ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/tensorflow/tfnet/predict.py \
+    --image hdfs://172.168.2.181:9000/kaggle/train_100 \
+    --model analytics-zoo-models/ssd_mobilenet_v1_coco_2017_11_17/frozen_inference_graph.pb
+    
+echo "start example test for tensorflow distributed_training"
+if [ -d analytics-zoo-models/model ]
 then
-    echo "analytics-zoo-models/analytics-zoo_ssd-mobilenet-300x300_PASCAL_0.1.0.model already exists"
+    echo "analytics-zoo-models/bigdl_inception-v1_imagenet_0.4.0.model already exists."
 else
-    wget $FTP_URI/analytics-zoo-models/object-detection/analytics-zoo_ssd-mobilenet-300x300_PASCAL_0.1.0.model \
-    -P analytics-zoo-models
-fi
-
+    rm -rf analytics-zoo-models
+    git clone https://github.com/tensorflow/models/ analytics-zoo-models
+    export PYTHONPATH=$PYTHONPATH:`pwd`/analytics-zoo-models/model/research:`pwd`/analytics-zoo-models/model/research/slim
+ fi
 ${SPARK_HOME}/bin/spark-submit \
-    --master ${MASTER} \
-    --driver-memory 2g \
-    --executor-memory 2g \
-    --py-files ${ANALYTICS_ZOO_PYZIP},${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/textclassification/text_classification.py \
-    --jars ${ANALYTICS_ZOO_JAR} \
-    --conf spark.driver.extraClassPath=${ANALYTICS_ZOO_JAR} \
-    --conf spark.executor.extraClassPath=${ANALYTICS_ZOO_JAR} \
-    ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/textclassification/text_classification.py \
-    --nb_epoch 2 \
-    --data_path analytics-zoo-data/data/20news-18828 \
-    --embedding_path analytics-zoo-data/data/glove.6B
-
-
+    --master local[4] \
+   ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/tensorflow/distributed_training/train_lenet.py
+   ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/tensorflow/distributed_training/evaluate_lenet.py
 now=$(date "+%s")
-time1=$((now-start))
-
-echo "#2 start example test for customized loss and layer (Funtional API)"
-#timer
-start=$(date "+%s")
-${SPARK_HOME}/bin/spark-submit \
-    --master ${MASTER} \
-    --driver-memory 20g \
-    --executor-memory 20g \
-    --py-files ${ANALYTICS_ZOO_PYZIP},${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/autograd/custom.py \
-    --jars ${ANALYTICS_ZOO_JAR} \
-    --conf spark.driver.extraClassPath=${ANALYTICS_ZOO_JAR} \
-    --conf spark.executor.extraClassPath=${ANALYTICS_ZOO_JAR} \
-    ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/autograd/custom.py \
-    --nb_epoch 2
-now=$(date "+%s")
-time2=$((now-start))
-
-echo "#3 start example test for image-classification"
-#timer
-start=$(date "+%s")
-${SPARK_HOME}/bin/spark-submit \
-    --master ${MASTER} \
-    --driver-memory 20g \
-    --executor-memory 20g \
-    --py-files ${ANALYTICS_ZOO_PYZIP},${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/imageclassification/predict.py \
-    --jars ${ANALYTICS_ZOO_JAR} \
-    --conf spark.driver.extraClassPath=${ANALYTICS_ZOO_JAR} \
-    --conf spark.executor.extraClassPath=${ANALYTICS_ZOO_JAR} \
-    ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/imageclassification/predict.py \
-    -f hdfs://172.168.2.181:9000/kaggle/train_100 \
-    --model analytics-zoo-models/analytics-zoo_squeezenet_imagenet_0.1.0.model \
-    --topN 5
-now=$(date "+%s")
-time3=$((now-start))
-
-echo "#4 start example test for object-detection"
-#timer
-start=$(date "+%s")
-${SPARK_HOME}/bin/spark-submit \
-    --master ${MASTER} \
-    --driver-memory 20g \
-    --executor-memory 20g \
-    --py-files ${ANALYTICS_ZOO_PYZIP},${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/objectdetection/predict.py \
-    --jars ${ANALYTICS_ZOO_JAR} \
-    --conf spark.driver.extraClassPath=${ANALYTICS_ZOO_JAR} \
-    --conf spark.executor.extraClassPath=${ANALYTICS_ZOO_JAR} \
-    ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/objectdetection/predict.py \
-    analytics-zoo-models/analytics-zoo_ssd-mobilenet-300x300_PASCAL_0.1.0.model hdfs://172.168.2.181:9000/kaggle/train_100 /tmp
-now=$(date "+%s")
-time4=$((now-start))
-
-
-echo "#1 textclassification time used:$time1 seconds"
-echo "#2 customized loss and layer time used:$time2 seconds"
-echo "#3 image-classification time used:$time3 seconds"
-echo "#4 object-detection loss and layer time used:$time4 seconds"
+time6=$((now-start))
+echo "#6 tensorflow time used:$time6 seconds"
