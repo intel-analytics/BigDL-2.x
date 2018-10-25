@@ -29,4 +29,3 @@ ${ANALYTICS_ZOO_HOME}/bin/spark-shell-with-zoo.sh \
      ${ZOO_JAR_PATH} -f $imagePath --model $modelPath --partition 4 --topN 5
 
 ```
-See [here](https://github.com/intel-analytics/analytics-zoo/tree/master/zoo/src/main/scala/com/intel/analytics/zoo/examples/textclassification#options) for more configurable options for this example.
