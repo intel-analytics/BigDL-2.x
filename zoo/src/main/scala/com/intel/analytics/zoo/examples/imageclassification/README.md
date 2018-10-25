@@ -26,6 +26,5 @@ ${ANALYTICS_ZOO_HOME}/bin/spark-shell-with-zoo.sh \
      --conf spark.executor.cores=1 \
      --total-executor-cores 4 \           
      --class com.intel.analytics.zoo.examples.imageclassification.Predict \
-     ${ZOO_JAR_PATH} -f $imagePath --model $modelPath --partition 4 --topN 5
-
+     -f $imagePath --model $modelPath --partition 4 --topN 5
 ```
