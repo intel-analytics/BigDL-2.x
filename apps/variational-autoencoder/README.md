@@ -22,7 +22,7 @@ in Analytics Zoo. These notebooks are developed on Apache Spark 2.1
 ## Run after pip install
 You can easily use the following commands to run this example:
 
-    export SPARK_DRIVER_MEMORY=1g
+    export SPARK_DRIVER_MEMORY=22g
     jupyter notebook --notebook-dir=./ --ip=* --no-browser
 
 See [here](https://analytics-zoo.github.io/master/#PythonUserGuide/run/#run-after-pip-install) for more running guidance after pip install.
