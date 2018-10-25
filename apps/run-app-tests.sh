@@ -413,29 +413,6 @@ time12=$((now-start))
 rm ${ANALYTICS_ZOO_HOME}/apps/tfnet/tmp.py
 echo "#12 image_classification_inference time used:$time12 seconds"
 
-elif [ $1=4 ]; then
-echo "#13 start app test for image-augementation-3d"
-#timer
-start=$(date "+%s")
-${ANALYTICS_ZOO_HOME}/apps/ipynb2py.sh ${ANALYTICS_ZOO_HOME}/apps/image-augmentation-3d/image-augementation-3d
-${SPARK_HOME}/bin/spark-submit \
-        --master ${MASTER} \
-        --driver-cores 2  \
-        --total-executor-cores 2  \
-        --executor-cores 2  \
-        --driver-memory 1g  \
-        --executor-memory 1g \
-        --conf spark.akka.frameSize=64 \
-        --py-files ${ANALYTICS_ZOO_PYZIP},${ANALYTICS_ZOO_HOME}/apps/image-augmentation-3d/image-augementation-3d.py \
-        --properties-file ${ANALYTICS_ZOO_CONF} \
-        --jars ${ANALYTICS_ZOO_JAR} \
-        --conf spark.driver.extraClassPath=${ANALYTICS_ZOO_JAR} \
-        --conf spark.executor.extraClassPath=${ANALYTICS_ZOO_JAR} \
-        ${ANALYTICS_ZOO_HOME}/apps/image-augmentation-3d/image-augementation-3d.py
-now=$(date "+%s")
-time13=$((now-start))
-echo "#13 image-augementation-3d time used:$time13 seconds"
-
 else
 echo "#1 start app test for anomaly-detection-nyc-taxi"
 #timer
@@ -783,4 +760,3 @@ echo "#8 sentimentAnalysis time used:$time8 seconds"
 echo "#9 image-augmentation time used:$time9 seconds"
 echo "#10 dogs-vs-cats time used:$time10 seconds"
 echo "#12 image_classification_inference time used:$time12 seconds"
-echo "#13 image-augementation-3d time used:$time13 seconds"
