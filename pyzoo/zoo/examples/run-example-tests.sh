@@ -217,6 +217,7 @@ if [ -d analytics-zoo-models/model ]
 then
     echo "analytics-zoo-models/bigdl_inception-v1_imagenet_0.4.0.model already exists."
 else
+    rm -rf analytics-zoo-models
     git clone https://github.com/tensorflow/models/ analytics-zoo-models
     export PYTHONPATH=$PYTHONPATH:`pwd`/analytics-zoo-models/model/research:`pwd`/analytics-zoo-models/model/research/slim
  fi
