@@ -16,7 +16,9 @@
 
 package com.intel.analytics.zoo.pipeline.api.keras.layers
 
-import com.intel.analytics.bigdl.nn.keras.{KerasLayer, ConvLSTM2D => BigDLConvLSTM2D}
+import com.intel.analytics.bigdl.nn.{Cell, ConvLSTMPeephole}
+import com.intel.analytics.bigdl.nn.abstractnn.TensorModule
+import com.intel.analytics.bigdl.nn.keras.KerasLayer
 import com.intel.analytics.bigdl.optim.Regularizer
 import com.intel.analytics.bigdl.tensor.Tensor
 import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric
@@ -54,28 +56,55 @@ import scala.reflect.ClassTag
  * @param uRegularizer An instance of [[Regularizer]], (eg. L1 or L2 regularization),
  *                     applied to the recurrent weights matrices. Default is null.
  * @param bRegularizer An instance of [[Regularizer]], applied to the bias. Default is null.
- * @param returnSequences Whether to return the full sequence or the last output
+ * @param returnSeq Whether to return the full sequence or the last output
  *                        in the output sequence. Default is false.
- * @param goBackwards Whether the input sequence will be processed backwards. Default is false.
- * @param inputShape A Single Shape, does not include the batch dimension.
+ * @param goBackward Whether the input sequence will be processed backwards. Default is false.
+ * @param mInputShape A Single Shape, does not include the batch dimension.
  * @tparam T The numeric type of parameter(e.g. weight, bias). Only support float/double now.
  */
 class ConvLSTM2D[T: ClassTag](
-   override val nbFilter: Int,
-   override val nbKernel: Int,
-   override val activation: KerasLayer[Tensor[T], Tensor[T], T] = null,
-   override val innerActivation: KerasLayer[Tensor[T], Tensor[T], T] = null,
-   override val dimOrdering: String = "CHANNEL_FIRST",
-   override val subsample: Int = 1,
-   wRegularizer: Regularizer[T] = null,
-   uRegularizer: Regularizer[T] = null,
-   bRegularizer: Regularizer[T] = null,
-   override val returnSequences: Boolean = false,
-   override val goBackwards: Boolean = false,
-   override val inputShape: Shape = null)(implicit ev: TensorNumeric[T])
-  extends BigDLConvLSTM2D[T](nbFilter, nbKernel, activation, innerActivation, dimOrdering,
-                              subsample, wRegularizer, uRegularizer, bRegularizer, returnSequences,
-                              goBackwards, inputShape) with Net {}
+   val nbFilter: Int,
+   val nbKernel: Int,
+   val activation: KerasLayer[Tensor[T], Tensor[T], T] = null,
+   val innerActivation: KerasLayer[Tensor[T], Tensor[T], T] = null,
+   val dimOrdering: String = "CHANNEL_FIRST",
+   val subsample: Int = 1,
+   var wRegularizer: Regularizer[T] = null,
+   var uRegularizer: Regularizer[T] = null,
+   var bRegularizer: Regularizer[T] = null,
+   var returnSeq: Boolean = false,
+   var goBackward: Boolean = false,
+   var mInputShape: Shape = null)(implicit ev: TensorNumeric[T])
+  extends Recurrent[T](nbKernel, returnSeq, goBackward, mInputShape) with Net {
+
+  require(dimOrdering.toLowerCase() == "channel_first", s"ConvLSTM2D currently only supports " +
+    s"format CHANNEL_FIRST, but got format $dimOrdering")
+
+  override def computeOutputShape(inputShape: Shape): Shape = {
+    val input = inputShape.toSingle().toArray
+    require(input.length == 5,
+      s"ConvLSTM2D requires 5D input, but got input dim ${input.length}")
+    val rows = KerasUtils.computeConvOutputLength(input(3), nbKernel, "same", subsample)
+    val cols = KerasUtils.computeConvOutputLength(input(4), nbKernel, "same", subsample)
+    if (returnSequences) Shape(input(0), input(1), nbFilter, rows, cols)
+    else Shape(input(0), nbFilter, rows, cols)
+  }
+
+  override def buildCell(input: Array[Int]): Cell[T] = {
+    ConvLSTMPeephole(
+      inputSize = input(2),
+      outputSize = nbFilter,
+      kernelI = nbKernel,
+      kernelC = nbKernel,
+      stride = subsample,
+      activation = activation.doBuild(inputShape).asInstanceOf[TensorModule[T]],
+      innerActivation = innerActivation.doBuild(inputShape).asInstanceOf[TensorModule[T]],
+      wRegularizer = wRegularizer,
+      uRegularizer = uRegularizer,
+      bRegularizer = bRegularizer,
+      withPeephole = false)
+  }
+}
 
 object ConvLSTM2D {
   def apply[@specialized(Float, Double) T: ClassTag](
