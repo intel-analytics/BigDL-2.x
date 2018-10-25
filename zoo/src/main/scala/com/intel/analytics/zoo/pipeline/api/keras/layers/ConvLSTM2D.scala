@@ -38,7 +38,7 @@ import scala.reflect.ClassTag
  * When using this layer as the first layer in a model, you need to provide the argument
  * inputShape (a Single Shape, does not include the batch dimension).
  *
- * @param nbFilter Number of convolution filters to use.
+ * @param outputDimension Number of convolution filters to use.
  * @param nbKernel Number of rows/columns in the convolution kernel. Square kernel.
  * @param activation Activation function to use.
  *                   You can also pass in corresponding string representations such as 'relu'
@@ -63,7 +63,7 @@ import scala.reflect.ClassTag
  * @tparam T The numeric type of parameter(e.g. weight, bias). Only support float/double now.
  */
 class ConvLSTM2D[T: ClassTag](
-   val nbFilter: Int,
+   var outputDimension: Int,
    val nbKernel: Int,
    val activation: KerasLayer[Tensor[T], Tensor[T], T] = null,
    val innerActivation: KerasLayer[Tensor[T], Tensor[T], T] = null,
@@ -75,7 +75,7 @@ class ConvLSTM2D[T: ClassTag](
    var returnSeq: Boolean = false,
    var goBackward: Boolean = false,
    var mInputShape: Shape = null)(implicit ev: TensorNumeric[T])
-  extends Recurrent[T](nbKernel, returnSeq, goBackward, mInputShape) with Net {
+  extends Recurrent[T](outputDimension, returnSeq, goBackward, mInputShape) with Net {
 
   require(dimOrdering.toLowerCase() == "channel_first", s"ConvLSTM2D currently only supports " +
     s"format CHANNEL_FIRST, but got format $dimOrdering")
@@ -86,14 +86,14 @@ class ConvLSTM2D[T: ClassTag](
       s"ConvLSTM2D requires 5D input, but got input dim ${input.length}")
     val rows = KerasUtils.computeConvOutputLength(input(3), nbKernel, "same", subsample)
     val cols = KerasUtils.computeConvOutputLength(input(4), nbKernel, "same", subsample)
-    if (returnSequences) Shape(input(0), input(1), nbFilter, rows, cols)
-    else Shape(input(0), nbFilter, rows, cols)
+    if (returnSequences) Shape(input(0), input(1), outputDimension, rows, cols)
+    else Shape(input(0), outputDimension, rows, cols)
   }
 
   override def buildCell(input: Array[Int]): Cell[T] = {
     ConvLSTMPeephole(
       inputSize = input(2),
-      outputSize = nbFilter,
+      outputSize = outputDimension,
       kernelI = nbKernel,
       kernelC = nbKernel,
       stride = subsample,
