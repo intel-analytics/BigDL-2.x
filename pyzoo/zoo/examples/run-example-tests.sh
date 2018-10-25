@@ -204,7 +204,7 @@ ${SPARK_HOME}/bin/spark-submit \
     --driver-memory 200g \
     --executor-memory 200g \
     --properties-file ${ANALYTICS_ZOO_CONF} \
-    --py-files ${ANALYTICS_ZOO_PY_ZIP},${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/tfnet/predict.py \
+    --py-files ${ANALYTICS_ZOO_PY_ZIP},${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/tensorflow/tfnet/predict.py \
     --jars ${ANALYTICS_ZOO_JAR} \
     --conf spark.driver.extraClassPath=${ANALYTICS_ZOO_JAR} \
     --conf spark.executor.extraClassPath=${ANALYTICS_ZOO_JAR} \
