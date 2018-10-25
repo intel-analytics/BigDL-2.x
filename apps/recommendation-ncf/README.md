@@ -26,8 +26,8 @@ See [here](https://analytics-zoo.github.io/master/#PythonUserGuide/run/#run-afte
 ## Run with prebuild package
 Run the following command for Spark local mode (MASTER=local[*]) or cluster mode:
 
-    `export SPARK_HOME=the root directory of Spark`
-    `export ANALYTICS_ZOO_HOME=the folder where you extract the downloaded Analytics Zoo zip package`
+    export SPARK_HOME=the root directory of Spark
+    export ANALYTICS_ZOO_HOME=the folder where you extract the downloaded Analytics Zoo zip package
 
 ```
     ${ANALYTICS_ZOO_HOME}/bin/jupyter-with-zoo.sh \
