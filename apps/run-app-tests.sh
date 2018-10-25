@@ -352,7 +352,7 @@ echo "#10 dogs-vs-cats time used:$time10 seconds"
 
 
 
-elif [ $1 = 6 ]; then
+elif [ $1 = 5 ]; then
 echo "#12 start app test for image_classification_inference"
 #timer
 start=$(date "+%s")
