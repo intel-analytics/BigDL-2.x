@@ -1,6 +1,6 @@
-
 #!/usr/bin/env bash
-rt ANALYTICS_ZOO_HOME=${ANALYTICS_ZOO_ROOT}/dist
+
+export ANALYTICS_ZOO_HOME=${ANALYTICS_ZOO_ROOT}/dist
 
 clear_up () {
     echo "Clearing up environment. Uninstalling analytics-zoo"
@@ -159,4 +159,3 @@ echo "#5 using_variational_autoencoder_to_generate_digital_numbers time used:$ti
 
 # This should be done at the very end after all tests finish.
 clear_up
-
