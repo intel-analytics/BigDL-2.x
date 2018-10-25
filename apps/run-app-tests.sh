@@ -350,106 +350,15 @@ time10=$((now-start))
 rm ${ANALYTICS_ZOO_HOME}/apps/dogs-vs-cats/tmp.py
 echo "#10 dogs-vs-cats time used:$time10 seconds"
 
-elif [ $1=4 ]; then
-echo "#11 start app test for image-similarity"
-#timer
-start=$(date "+%s")
 
-${ANALYTICS_ZOO_HOME}/apps/ipynb2py.sh ${ANALYTICS_ZOO_HOME}/apps/image-similarity/image-similarity
 
-sed "s%/tmp/images%${ANALYTICS_ZOO_HOME}/apps/image-similarity%g;s%/googlenet_places365/deploy.prototxt%/googlenet_places365/deploy_googlenet_places365.prototxt%g;s%/vgg_16_places365/deploy.prototxt%/vgg_16_places365/deploy_vgg16_places365.prototxt%g" ${ANALYTICS_ZOO_HOME}/apps/image-similarity/image-similarity.py >${ANALYTICS_ZOO_HOME}/apps/image-similarity/tmp.py
-
-FILENAME="${ANALYTICS_ZOO_HOME}/apps/image-similarity/imageClassification.tar.gz"
-if [ -f "$FILENAME" ]
-then
-   echo "$FILENAME already exists."
-else
-   echo "Downloading images"
-   
-   wget $FTP_URI/analytics-zoo-data/imageClassification.tar.gz -P ${ANALYTICS_ZOO_HOME}/apps/image-similarity
-   tar -zxvf ${ANALYTICS_ZOO_HOME}/apps/image-similarity/imageClassification.tar.gz -C ${ANALYTICS_ZOO_HOME}/apps/image-similarity
-   
-   echo "Finished downloading images"
-fi
-
-FILENAME="${ANALYTICS_ZOO_HOME}/apps/image-similarity/googlenet_places365/deploy_googlenet_places365.prototxt"
-if [ -f "$FILENAME" ]
-then
-   echo "$FILENAME already exists."
-else
-   echo "Downloading places365 deploy model"
-   
-   wget https://raw.githubusercontent.com/CSAILVision/places365/master/deploy_googlenet_places365.prototxt -P ${ANALYTICS_ZOO_HOME}/apps/image-similarity/googlenet_places365
-   
-   echo "Finished downloading model"
-fi
-
-FILENAME="${ANALYTICS_ZOO_HOME}/apps/image-similarity/googlenet_places365/googlenet_places365.caffemodel"
-if [ -f "$FILENAME" ]
-then
-   echo "$FILENAME already exists."
-else
-   echo "Downloading places365 weight model"
-   
-   wget http://places2.csail.mit.edu/models_places365/googlenet_places365.caffemodel -P ${ANALYTICS_ZOO_HOME}/apps/image-similarity/googlenet_places365
-   
-   echo "Finished downloading model"
-fi
-
-FILENAME=" ${ANALYTICS_ZOO_HOME}/apps/image-similarity/vgg_16_places365/deploy_vgg16_places365.prototxt"
-if [ -f "$FILENAME" ]
-then
-   echo "$FILENAME already exists."
-else
-   echo "Downloading VGG deploy model"
-   
-   wget https://raw.githubusercontent.com/CSAILVision/places365/master/deploy_vgg16_places365.prototxt -P ${ANALYTICS_ZOO_HOME}/apps/image-similarity/vgg_16_places365
-   
-   echo "Finished downloading model"
-fi
-
-FILENAME="${ANALYTICS_ZOO_HOME}/apps/image-similarity/vgg_16_places365/vgg16_hybrid1365.caffemodel"
-if [ -f "$FILENAME" ]
-then
-   echo "$FILENAME already exists."
-else
-   echo "Downloading VGG weight model"
-   
-   wget http://places2.csail.mit.edu/models_places365/vgg16_places365.caffemodel -P ${ANALYTICS_ZOO_HOME}/apps/image-similarity/vgg_16_places365
-   
-   echo "Finished downloading model"
-fi
-
-${SPARK_HOME}/bin/spark-submit \
-        --master ${MASTER} \
-        --driver-cores 2  \
-        --driver-memory 12g  \
-        --total-executor-cores 2  \
-        --executor-cores 2  \
-        --executor-memory 12g \
-        --conf spark.akka.frameSize=64 \
-        --py-files ${ANALYTICS_ZOO_PYZIP},${ANALYTICS_ZOO_HOME}/apps/image-similarity/tmp.py  \
-        --properties-file ${ANALYTICS_ZOO_CONF} \
-        --jars ${ANALYTICS_ZOO_JAR} \
-        --conf spark.driver.extraClassPath=${ANALYTICS_ZOO_JAR} \
-        --conf spark.executor.extraClassPath=${ANALYTICS_ZOO_JAR} \
-        ${ANALYTICS_ZOO_HOME}/apps/image-similarity/tmp.py
-
-now=$(date "+%s")
-time11=$((now-start))
-rm ${ANALYTICS_ZOO_HOME}/apps/image-similarity/tmp.py
-echo "#11 image-similarity time used:$time11 seconds"
-
-elif [ $1=5 ]; then
+elif [ $1 = 5 ]; then
 echo "#12 start app test for image_classification_inference"
 #timer
 start=$(date "+%s")
-
-${ANALYTICS_ZOO_HOME}/apps/ipynb2py.sh ${ANALYTICS_ZOO_HOME}/apps/tfnet/image_classification_inference
-
-sed "s%/path/to/yourdownload%${ANALYTICS_ZOO_HOME}/apps/tfnet%g;s%file:///path/toyourdownload/dogs-vs-cats/train%${ANALYTICS_ZOO_HOME}/apps/tfnet/data/minitrain%g;s%test.jpg%${ANALYTICS_ZOO_HOME}/apps/tfnet/test.jpg%g;s%imagenet_class_index.json%${ANALYTICS_ZOO_HOME}/apps/tfnet/imagenet_class_index.json%g" ${ANALYTICS_ZOO_HOME}/apps/tfnet/image_classification_inference.py > ${ANALYTICS_ZOO_HOME}/apps/tfnet/tmp.py
-
-FILENAME="${ANALYTICS_ZOO_HOME}/apps/tfnet/models/*"
+ ${ANALYTICS_ZOO_HOME}/apps/ipynb2py.sh ${ANALYTICS_ZOO_HOME}/apps/tfnet/image_classification_inference
+ sed "s%/path/to/yourdownload%${ANALYTICS_ZOO_HOME}/apps/tfnet%g;s%file:///path/toyourdownload/dogs-vs-cats/train%${ANALYTICS_ZOO_HOME}/apps/tfnet/data/minitrain%g;s%test.jpg%${ANALYTICS_ZOO_HOME}/apps/tfnet/test.jpg%g;s%imagenet_class_index.json%${ANALYTICS_ZOO_HOME}/apps/tfnet/imagenet_class_index.json%g" ${ANALYTICS_ZOO_HOME}/apps/tfnet/image_classification_inference.py > ${ANALYTICS_ZOO_HOME}/apps/tfnet/tmp.py
+ FILENAME="${ANALYTICS_ZOO_HOME}/apps/tfnet/models/*"
 if [ -f "$FILENAME" ]
 then
    echo "$FILENAME already exists."
@@ -460,8 +369,7 @@ else
    
    echo "Finished downloading model"
 fi
-
-FILENAME="${ANALYTICS_ZOO_HOME}/apps/tfnet/checkpoint/inception_v1.ckpt"
+ FILENAME="${ANALYTICS_ZOO_HOME}/apps/tfnet/checkpoint/inception_v1.ckpt"
 if [ -f "$FILENAME" ]
 then
    echo "$FILENAME already exists."
@@ -473,8 +381,7 @@ else
    
    echo "Finished downloading checkpoint"
 fi
-
-FILENAME="${ANALYTICS_ZOO_HOME}/apps/tfnet/data/minitrain.zip"
+ FILENAME="${ANALYTICS_ZOO_HOME}/apps/tfnet/data/minitrain.zip"
 if [ -f "$FILENAME" ]
 then
    echo "$FILENAME already exists."
@@ -485,11 +392,9 @@ else
    unzip -d ${ANALYTICS_ZOO_HOME}/apps/tfnet/data/minitrain ${ANALYTICS_ZOO_HOME}/apps/tfnet/data/minitrain.zip
    #wget $FTP_URI/analytics-zoo-data/data/dogs-vs-cats/train.zip -P ${ANALYTICS_ZOO_HOME}/apps/tfnet/data
    #unzip -d ${ANALYTICS_ZOO_HOME}/apps/tfnet/data ${ANALYTICS_ZOO_HOME}/apps/tfnet/data/train.zip
-
-   echo "Finished downloading images"
+    echo "Finished downloading images"
 fi
-
-${SPARK_HOME}/bin/spark-submit \
+ ${SPARK_HOME}/bin/spark-submit \
         --master ${MASTER} \
         --driver-cores 2  \
         --driver-memory 12g  \
@@ -503,8 +408,7 @@ ${SPARK_HOME}/bin/spark-submit \
         --conf spark.driver.extraClassPath=${ANALYTICS_ZOO_JAR} \
         --conf spark.executor.extraClassPath=${ANALYTICS_ZOO_JAR} \
         ${ANALYTICS_ZOO_HOME}/apps/tfnet/tmp.py
-
-now=$(date "+%s")
+ now=$(date "+%s")
 time12=$((now-start))
 rm ${ANALYTICS_ZOO_HOME}/apps/tfnet/tmp.py
 echo "#12 image_classification_inference time used:$time12 seconds"
@@ -518,7 +422,7 @@ ${ANALYTICS_ZOO_HOME}/apps/ipynb2py.sh ${ANALYTICS_ZOO_HOME}/apps/anomaly-detect
 chmod +x ${ANALYTICS_ZOO_HOME}/bin/data/NAB/nyc_taxi/get_nyc_taxi.sh
 
 ${ANALYTICS_ZOO_HOME}/bin/data/NAB/nyc_taxi/get_nyc_taxi.sh
-sed "s/nb_epoch=30/nb_epoch=15/g" ${ANALYTICS_ZOO_HOME}/apps/anomaly-detection/anomaly-detection-nyc-taxi.py >${ANALYTICS_ZOO_HOME}/apps/anomaly-detection/tmp_test.py
+sed "s/nb_epoch=20/nb_epoch=15/g" ${ANALYTICS_ZOO_HOME}/apps/anomaly-detection/anomaly-detection-nyc-taxi.py >${ANALYTICS_ZOO_HOME}/apps/anomaly-detection/tmp_test.py
 ${SPARK_HOME}/bin/spark-submit \
         --master ${MASTER} \
         --driver-cores 2  \
@@ -855,5 +759,4 @@ echo "#7 using_variational_autoencoder_and_deep_feature_loss_to_generate_faces t
 echo "#8 sentimentAnalysis time used:$time8 seconds"
 echo "#9 image-augmentation time used:$time9 seconds"
 echo "#10 dogs-vs-cats time used:$time10 seconds"
-echo "#11 image-similarity time used:$time11 seconds"
 echo "#12 image_classification_inference time used:$time12 seconds"
