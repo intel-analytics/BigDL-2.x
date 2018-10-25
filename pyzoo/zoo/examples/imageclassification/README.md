@@ -13,9 +13,12 @@ Put your image data for prediction in one folder.
 ## Run after pip install
 ```bash
 export SPARK_DRIVER_MEMORY=10g
+modelPath=... // model path
+imagePath=... // image path
+topN=... // top n prediction
+partitionNum=... // A suggestion value of the minimal partition number
+python predict.py -f $imagePath --model $modelPath --topN 5 --partition_num ${partitionNum}
 ```
-See [here](https://github.com/intel-analytics/analytics-zoo/tree/master/pyzoo/zoo/examples/textclassification#options) for more configurable options for this example.
-
 See [here](https://analytics-zoo.github.io/master/#PythonUserGuide/run/#run-after-pip-install) for more running guidance after pip install.
 
 ## Run with prebuilt package
@@ -32,12 +35,6 @@ ${ANALYTICS_ZOO_HOME}/bin/spark-shell-with-zoo.sh \
     --master local[4] \
     --driver-memory 10g \
     --executor-memory 10g \
-    --py-files ${PYTHON_API_ZIP_PATH} \
-    --jars ${ZOO_JAR_PATH} \
-    --conf spark.driver.extraClassPath=${ZOO_JAR_PATH} \
-    --conf spark.executor.extraClassPath=${ZOO_JAR_PATH} \
     path/to/predict.py -f $imagePath --model $modelPath --topN 5 --partition_num ${partitionNum}
 ```
-See [here](https://github.com/intel-analytics/analytics-zoo/tree/master/pyzoo/zoo/examples/textclassification#options) for more configurable options for this example.
-
 See [here](https://analytics-zoo.github.io/master/#PythonUserGuide/run/#run-without-pip-install) for more running guidance without pip install.
