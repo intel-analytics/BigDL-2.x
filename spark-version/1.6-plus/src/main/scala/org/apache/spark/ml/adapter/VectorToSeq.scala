@@ -28,6 +28,3 @@ trait VectorToSeq {
     }
   }
 }
-
-
-
