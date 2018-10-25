@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-#export ANALYTICS_ZOO_HOME=${ANALYTICS_ZOO_ROOT}/dist
+export ANALYTICS_ZOO_HOME=${ANALYTICS_ZOO_ROOT}/dist
 
 clear_up () {
     echo "Clearing up environment. Uninstalling analytics-zoo"
@@ -10,7 +10,7 @@ clear_up () {
 }
 
 chmod +x ${ANALYTICS_ZOO_HOME}/apps/ipynb2py.sh
-<<com
+
 echo "#1 start app test for anomaly-detection"
 start=$(date "+%s")
 
@@ -133,13 +133,13 @@ else
    echo "Finished"
 fi
 
-export SPARK_DRIVER_MEMORY=12g
+export SPARK_DRIVER_MEMORY=200g
 python ${ANALYTICS_ZOO_HOME}/apps/variational-autoencoder/using_variational_autoencoder_to_generate_faces.py
 
 exit_status=$?
 if [ $exit_status -ne 0 ];
 then
-    #clear_up
+    clear_up
     echo "using_variational_autoencoder_to_generate_faces failed"
     exit $exit_status
 fi
@@ -148,7 +148,7 @@ unset SPARK_DRIVER_MEMORY
 now=$(date "+%s")
 time6=$((now-start))
 echo "#6 using_variational_autoencoder_to_generate_faces time used:$time6 seconds"
-com
+
 
 echo "#7 start app test for using_variational_autoencoder_and_deep_feature_loss_to_generate_faces"
 #timer
@@ -177,18 +177,19 @@ else
    echo "Finished"
 fi
 
-export SPARK_DRIVER_MEMORY=12g
+export SPARK_DRIVER_MEMORY=200g
 python ${ANALYTICS_ZOO_HOME}/apps/variational-autoencoder/using_variational_autoencoder_and_deep_feature_loss_to_generate_faces.py
 
 exit_status=$?
 if [ $exit_status -ne 0 ];
 then
-    #clear_up
+    clear_up
     echo "using_variational_autoencoder_and_deep_feature_loss_to_generate_faces failed"
     exit $exit_status
 fi
 
 unset SPARK_DRIVER_MEMORY
+
 now=$(date "+%s")
 time7=$((now-start))
 echo "#7 using_variational_autoencoder_and_deep_feature_loss_to_generate_faces time used:$time7 seconds"
