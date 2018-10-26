@@ -35,7 +35,7 @@ now=$(date "+%s")
 time9=$((now-start))
 echo "#9 image-augmentation time used:$time9 seconds"
 
-echo "#11 start app test for image-augementation-3d"
+echo "#11 start app test for image-augmentation-3d"
 # timer
 start=$(date "+%s")
 
