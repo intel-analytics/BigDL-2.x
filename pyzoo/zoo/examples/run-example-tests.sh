@@ -17,17 +17,22 @@ echo "#6 start example test for tensorflow"
 start=$(date "+%s")
     
 echo "start example test for tensorflow distributed_training"
-if [ ! -d analytics-zoo-model ]
+if [ ! -d analytics-zoo-tensorflow-models ]
 then
-    mkdir analytics-zoo-model
+    mkdir analytics-zoo-tensorflow-models
 fi
-sed "s%/tmp%analytics-zoo-model%g"
-if [ -d analytics-zoo-model/model ]
+sed "s%/tmp%analytics-zoo-tensorflow-models%g"
+if [ -d analytics-zoo-tensorflow-models/slim ]
 then
-    echo "analytics-zoo-model/bigdl_inception-v1_imagenet_0.4.0.model already exists."
+    echo "analytics-zoo-tensorflow-models/slim already exists."
 else
-    git clone https://github.com/tensorflow/models/ analytics-zoo-model
-    export PYTHONPATH=$PYTHONPATH:`pwd`/analytics-zoo-model/model/research:`pwd`/analytics-zoo-models/model/research/slim
+    echo "Downloading research/slim"
+   
+   wget $FTP_URI/analytics-zoo-tensorflow-models/models/research/slim.tar.gz -P analytics-zoo-tensorflow-models
+   tar -zxvf analytics-zoo-tensorflow-models/slim.tar.gz -C analytics-zoo-tensorflow-models
+   
+   echo "Finished downloading research/slim"
+   export PYTHONPATH=$PYTHONPATH:`pwd`/analytics-zoo-model/slim
  fi
 ${SPARK_HOME}/bin/spark-submit \
     --master ${master} \
