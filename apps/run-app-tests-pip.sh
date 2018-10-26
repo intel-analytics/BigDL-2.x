@@ -84,7 +84,7 @@ exit_status=$?
 if [ $exit_status -ne 0 ];
 then
     clear_up
-    echo "anomaly-detection failed"
+    echo "object-detection failed"
     exit $exit_status
 fi
 
@@ -164,7 +164,7 @@ exit_status=$?
 if [ $exit_status -ne 0 ];
 then
     clear_up
-    echo "anomaly-detection failed"
+    echo "image-similarity failed"
     exit $exit_status
 fi
 
