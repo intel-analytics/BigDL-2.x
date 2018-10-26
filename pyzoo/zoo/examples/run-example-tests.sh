@@ -20,7 +20,11 @@ echo "start example test for tensorflow distributed_training"
 if [ ! -d analytics-zoo-tensorflow-models ]
 then
     mkdir analytics-zoo-tensorflow-models
+    mkdir -p analytics-zoo-tensorflow-models/mnist
+    mkdir -p analytics-zoo-tensorflow-models/az_lenet
+    mkdir -p analytics-zoo-tensorflow-models/lenet
 fi
+
 sed "s%/tmp%analytics-zoo-tensorflow-models%g;s%models/slim%slim%g"
 if [ -d analytics-zoo-tensorflow-models/slim ]
 then
@@ -32,19 +36,31 @@ else
    tar -zxvf analytics-zoo-tensorflow-models/slim.tar.gz -C analytics-zoo-tensorflow-models
    
    echo "Finished downloading research/slim"
-   export PYTHONPATH=$PYTHONPATH:`pwd`/analytics-zoo-model/slim
+   export PYTHONPATH=$PYTHONPATH:`pwd`/analytics-zoo-tensorflow-models/slim
  fi
+
+echo "start example test for tensorflow distributed_training train_lenet"
 ${SPARK_HOME}/bin/spark-submit \
     --master ${master} \
     --driver-memory 200g \
     --executor-memory 200g \
     --properties-file ${ANALYTICS_ZOO_CONF} \
     --py-files ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/tensorflow/distributed_training/train_lenet.py \
-    ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/tensorflow/distributed_training/evaluate_lenet.py \
     --jars ${ANALYTICS_ZOO_JAR} \
     --conf spark.driver.extraClassPath=${ANALYTICS_ZOO_JAR} \
     --conf spark.executor.extraClassPath=${ANALYTICS_ZOO_JAR} \
     ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/tensorflow/distributed_training/train_lenet.py \
+    
+echo "start example test for tensorflow distributed_training evaluate_lenet"
+${SPARK_HOME}/bin/spark-submit \
+    --master ${master} \
+    --driver-memory 200g \
+    --executor-memory 200g \
+    --properties-file ${ANALYTICS_ZOO_CONF} \
+    --py-files ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/tensorflow/distributed_training/evaluate_lenet.py \
+    --jars ${ANALYTICS_ZOO_JAR} \
+    --conf spark.driver.extraClassPath=${ANALYTICS_ZOO_JAR} \
+    --conf spark.executor.extraClassPath=${ANALYTICS_ZOO_JAR} \
     ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/tensorflow/distributed_training/evaluate_lenet.py \
     
 now=$(date "+%s")
