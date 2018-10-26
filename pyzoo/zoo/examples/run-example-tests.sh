@@ -17,7 +17,6 @@ echo "#6 start example test for tensorflow"
 start=$(date "+%s")
     
 echo "start example test for tensorflow distributed_training"
-sed "s%/tmp%analytics-zoo-tensorflow-models%g;s%models/slim%slim%g"
 
 if [ ! -d analytics-zoo-tensorflow-models ]
 then
@@ -26,6 +25,8 @@ then
     mkdir -p analytics-zoo-tensorflow-models/az_lenet
     mkdir -p analytics-zoo-tensorflow-models/lenet
 fi
+
+sed "s%/tmp%analytics-zoo-tensorflow-models%g;s%models/slim%slim%g"
 if [ -d analytics-zoo-tensorflow-models/slim ]
 then
     echo "analytics-zoo-tensorflow-models/slim already exists."
