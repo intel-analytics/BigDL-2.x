@@ -40,11 +40,11 @@ echo "#11 start app test for image-augementation-3d"
 start=$(date "+%s")
 
 # Conversion to py file and data preparation
-${ANALYTICS_ZOO_HOME}/apps/ipynb2py.sh ${ANALYTICS_ZOO_HOME}/apps/image-augmentation-3d/image-augmentation-3d
+${ANALYTICS_ZOO_HOME}/apps/ipynb2py.sh ${ANALYTICS_ZOO_HOME}/apps/image-augmentation-3d/image-augementation-3d
 
 # Run the example
 export SPARK_DRIVER_MEMORY=1g
-python ${ANALYTICS_ZOO_HOME}/apps/image-augmentation-3d/image-augmentation-3d.py
+python ${ANALYTICS_ZOO_HOME}/apps/image-augmentation-3d/image-augementation-3d.py
 
 exit_status=$?
 if [ $exit_status -ne 0 ];
