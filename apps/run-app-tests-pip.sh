@@ -361,5 +361,3 @@ echo "#12 image_classification_inference time used:$time12 seconds"
 
 # This should be done at the very end after all tests finish.
 clear_up
-
-
