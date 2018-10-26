@@ -67,12 +67,12 @@ start=$(date "+%s")
 
 # Conversion to py file and data preparation
 ${ANALYTICS_ZOO_HOME}/apps/ipynb2py.sh ${ANALYTICS_ZOO_HOME}/apps/sentiment-analysis/sentiment
+FILENAME="/tmp/.bigdl/dataset/glove.6B.zip"
 
 # Run the example
 export SPARK_DRIVER_MEMORY=12g
 python ${ANALYTICS_ZOO_HOME}/apps/sentiment-analysis/sentiment.py
 
-FILENAME="/tmp/.bigdl/dataset/glove.6B.zip"
 if [ -f "$FILENAME" ]
 then
    echo "$FILENAME already exists."
