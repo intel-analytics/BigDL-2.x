@@ -25,7 +25,7 @@ then
     mkdir -p analytics-zoo-tensorflow-models/lenet
 fi
 
-sed "s%/tmp%analytics-zoo-tensorflow-models%g;s%models/slim%slim%g;s%MaxEpoch(5)%MaxEpoch(2)%g"
+sed "s/MaxEpoch(5)/MaxEpoch(2)/g;s%/tmp%analytics-zoo-tensorflow-models%g;s%models/slim%slim%g"
 if [ -d analytics-zoo-tensorflow-models/slim ]
 then
     echo "analytics-zoo-tensorflow-models/slim already exists."
@@ -39,7 +39,7 @@ else
    export PYTHONPATH=`pwd`/analytics-zoo-tensorflow-models/slim:$PYTHONPATH
  fi
 
-echo "start example test for tensorflow distributed_training train_lenet"
+echo "start example test for tensorflow distributed_training train_lenet 1"
 ${SPARK_HOME}/bin/spark-submit \
     --master ${MASTER} \
     --driver-memory 200g \
@@ -65,7 +65,7 @@ else
    export PYTHONPATH=`pwd`/analytics-zoo-tensorflow-models/slim:$PYTHONPATH
  fi
 
-echo "start example test for tensorflow distributed_training evaluate_lenet"
+echo "start example test for tensorflow distributed_training evaluate_lenet 2"
 ${SPARK_HOME}/bin/spark-submit \
     --master ${master} \
     --driver-memory 200g \
