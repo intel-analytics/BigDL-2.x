@@ -16,7 +16,7 @@ start=$(date "+%s")
 
 # Conversion to py file and data preparation
 ${ANALYTICS_ZOO_HOME}/apps/ipynb2py.sh ${ANALYTICS_ZOO_HOME}/apps/recommendation-ncf/ncf-explicit-feedback
-sed "s/end_trigger=MaxEpoch(10)/end_trigger=MaxEpoch(5)/g; s/movielens_data = movielens.get_id_ratings("/tmp/movielens/")/movielens_data = (movielens.get_id_ratings("/tmp/movielens/"))[0:50000:]/g" ${ANALYTICS_ZOO_HOME}/apps/recommendation-ncf/ncf-explicit-feedback.py >${ANALYTICS_ZOO_HOME}/apps/recommendation-ncf/tmp.py
+sed "s/end_trigger=MaxEpoch(10)/end_trigger=MaxEpoch(5)/g;s/movielens_data = movielens.get_id_ratings("/tmp/movielens/")/movielens_data = (movielens.get_id_ratings("/tmp/movielens/"))[0:50000:]/g" ${ANALYTICS_ZOO_HOME}/apps/recommendation-ncf/ncf-explicit-feedback.py >${ANALYTICS_ZOO_HOME}/apps/recommendation-ncf/tmp.py
 
 # Run the example
 export SPARK_DRIVER_MEMORY=12g
