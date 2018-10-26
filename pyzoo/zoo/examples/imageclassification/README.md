@@ -2,7 +2,7 @@
 This example illustrates how to do the image classification with pre-trained model
 
 ## Install or download Analytics Zoo
-Follow the instructions [here](https://analytics-zoo.github.io/master/#PythonUserGuide/install/) to install analytics-zoo via __pip__ or __download the prebuilt package__.
+Follow the instructions [here](https://analytics-zoo.github.io/master/#PythonUserGuide/install/) to install analytics-zoo via pip or download the prebuilt package.
 
 ## Prepare pre-trained models
 Download pre-trained models from [Image Classification](https://github.com/intel-analytics/analytics-zoo/blob/master/docs/docs/ProgrammingGuide/image-classification.md)
@@ -19,17 +19,15 @@ modelPath=... // model path
 imagePath=... // image path
 topN=... // top n prediction
 partitionNum=... // A suggestion value of the minimal partition number
-
 python path/to/predict.py -f $imagePath --model $modelPath --topN 5 --partition_num ${partitionNum}
 ```
 See [here](https://analytics-zoo.github.io/master/#PythonUserGuide/run/#run-after-pip-install) for more running guidance after pip install.
-
 
 ## Run with prebuilt package
 ```bash
 export SPARK_HOME=the root directory of Spark
 export ANALYTICS_ZOO_HOME=the folder where you extract the downloaded Analytics Zoo zip package
-
+MASTER=...
 modelPath=... // model path
 imagePath=... // image path
 topN=... // top n prediction
