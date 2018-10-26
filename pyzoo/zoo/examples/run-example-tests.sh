@@ -25,7 +25,7 @@ then
     mkdir -p analytics-zoo-tensorflow-models/lenet
 fi
 
-sed "s%/tmp%analytics-zoo-tensorflow-models%g;s%models/slim%slim%g"
+sed "s%/tmp%analytics-zoo-tensorflow-models%g;s%models/slim%slim%g;s%MaxEpoch(5)%MaxEpoch(2)%g"
 if [ -d analytics-zoo-tensorflow-models/slim ]
 then
     echo "analytics-zoo-tensorflow-models/slim already exists."
