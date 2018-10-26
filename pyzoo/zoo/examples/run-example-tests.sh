@@ -12,20 +12,6 @@ export PYTHONPATH=${ANALYTICS_ZOO_PYZIP}:$PYTHONPATH
 
 set -e
 
-#!/bin/bash
-
-export SPARK_HOME=$SPARK_HOME
-export MASTER=local[4]
-export FTP_URI=$FTP_URI
-export ANALYTICS_ZOO_ROOT=$ANALYTICS_ZOO_ROOT
-export ANALYTICS_ZOO_HOME=$ANALYTICS_ZOO_ROOT/dist
-export ANALYTICS_ZOO_JAR=`find ${ANALYTICS_ZOO_HOME}/lib -type f -name "analytics-zoo*jar-with-dependencies.jar"`
-export ANALYTICS_ZOO_PYZIP=`find ${ANALYTICS_ZOO_HOME}/lib -type f -name "analytics-zoo*python-api.zip"`
-export ANALYTICS_ZOO_CONF=${ANALYTICS_ZOO_HOME}/conf/spark-analytics-zoo.conf
-export PYTHONPATH=${ANALYTICS_ZOO_PYZIP}:$PYTHONPATH
-
-set -e
-
 echo "#6 start example test for tensorflow"
 #timer
 start=$(date "+%s")
@@ -52,11 +38,11 @@ ${SPARK_HOME}/bin/spark-submit \
     --model analytics-zoo-models/ssd_mobilenet_v1_coco_2017_11_17/frozen_inference_graph.pb
     
 echo "start example test for tensorflow distributed_training"
+sed "s%/tmp%analytics-zoo-models%g"
 if [ -d analytics-zoo-models/model ]
 then
     echo "analytics-zoo-models/bigdl_inception-v1_imagenet_0.4.0.model already exists."
 else
-    rm -rf analytics-zoo-models
     git clone https://github.com/tensorflow/models/ analytics-zoo-models
     export PYTHONPATH=$PYTHONPATH:`pwd`/analytics-zoo-models/model/research:`pwd`/analytics-zoo-models/model/research/slim
  fi
