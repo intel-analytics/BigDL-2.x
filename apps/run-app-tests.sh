@@ -429,7 +429,9 @@ ${SPARK_HOME}/bin/spark-submit \
         ${ANALYTICS_ZOO_HOME}/apps/sentiment-analysis/sentiment.py
 now=$(date "+%s")
 time11=$((now-start))
-elif [$1=4]; then
+
+
+elif [ $1 = 4 ]; then
 echo "#12 start app test for image_classification_inference"
 #timer
 start=$(date "+%s")
@@ -491,7 +493,9 @@ fi
 time12=$((now-start))
 rm ${ANALYTICS_ZOO_HOME}/apps/tfnet/tmp.py
 echo "#12 image_classification_inference time used:$time12 seconds"
-elif [$1=5]; then
+
+
+elif [ $1 = 5 ]; then
 echo "#13 start app test for image-augmentation-3d"
 #timer
 start=$(date "+%s")
