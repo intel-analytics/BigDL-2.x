@@ -67,7 +67,7 @@ else
 
 echo "start example test for tensorflow distributed_training evaluate_lenet 2"
 ${SPARK_HOME}/bin/spark-submit \
-    --master ${master} \
+    --master ${MASTER} \
     --driver-memory 200g \
     --executor-memory 200g \
     --properties-file ${ANALYTICS_ZOO_CONF} \
