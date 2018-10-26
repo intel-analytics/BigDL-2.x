@@ -50,7 +50,21 @@ ${SPARK_HOME}/bin/spark-submit \
     --conf spark.driver.extraClassPath=${ANALYTICS_ZOO_JAR} \
     --conf spark.executor.extraClassPath=${ANALYTICS_ZOO_JAR} \
     ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/tensorflow/distributed_training/train_lenet.py \
-    
+
+sed "s%/tmp%analytics-zoo-tensorflow-models%g;s%models/slim%slim%g"
+if [ -d analytics-zoo-tensorflow-models/slim ]
+then
+    echo "analytics-zoo-tensorflow-models/slim already exists."
+else
+    echo "Downloading research/slim"
+   
+   wget $FTP_URI/analytics-zoo-tensorflow-models/models/research/slim.tar.gz -P analytics-zoo-tensorflow-models
+   tar -zxvf analytics-zoo-tensorflow-models/slim.tar.gz -C analytics-zoo-tensorflow-models
+   
+   echo "Finished downloading research/slim"
+   export PYTHONPATH=`pwd`/analytics-zoo-tensorflow-models/slim:$PYTHONPATH
+ fi
+
 echo "start example test for tensorflow distributed_training evaluate_lenet"
 ${SPARK_HOME}/bin/spark-submit \
     --master ${master} \
