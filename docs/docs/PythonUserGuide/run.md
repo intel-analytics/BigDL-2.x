@@ -137,9 +137,9 @@ Here we use Analytics Zoo [Object Detection Python example](https://github.com/i
 
 * Yarn cluster mode
 ```
-    SPARK_HOME=the root directory of Spark
-    ANALYTICS_ZOO_HOME=the folder where you extract the downloaded Analytics Zoo zip package
-    VENV_HOME=the parent directory of venv.zip and venv folder
+    export SPARK_HOME=the root directory of Spark
+    export ANALYTICS_ZOO_HOME=the folder where you extract the downloaded Analytics Zoo zip package
+    export VENV_HOME=the parent directory of venv.zip and venv folder
     
     PYSPARK_PYTHON=${VENV_HOME}/venv.zip/venv/bin/python ${ANALYTICS_ZOO_HOME}/bin/spark-submit-with-zoo.sh \
     --conf spark.yarn.appMasterEnv.PYSPARK_PYTHON=venv.zip/venv/bin/python \
@@ -149,14 +149,14 @@ Here we use Analytics Zoo [Object Detection Python example](https://github.com/i
     --executor-cores 8 \
     --num-executors 2 \
     --archives ${VENV_HOME}/venv.zip \
-    ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/objectdetection/predict.py model_path image_path output_path
+    predict.py model_path image_path output_path
 ```
 
 * Yarn client mode
 ```
-    SPARK_HOME=the root directory of Spark
-    ANALYTICS_ZOO_HOME=the folder where you extract the downloaded Analytics Zoo zip package
-    VENV_HOME=the parent directory of venv.zip and venv folder
+    export SPARK_HOME=the root directory of Spark
+    export ANALYTICS_ZOO_HOME=the folder where you extract the downloaded Analytics Zoo zip package
+    export VENV_HOME=the parent directory of venv.zip and venv folder
     
     PYSPARK_DRIVER_PYTHON=${VENV_HOME}/venv/bin/python PYSPARK_PYTHON=venv.zip/venv/bin/python ${ANALYTICS_ZOO_HOME}/bin/spark-submit-with-zoo.sh \
     --master yarn \
@@ -166,7 +166,7 @@ Here we use Analytics Zoo [Object Detection Python example](https://github.com/i
     --executor-cores 16 \
     --num-executors 2 \
     --archives ${VENV_HOME}/venv.zip \
-    ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/objectdetection/predict.py model_path image_path output_path
+    predict.py model_path image_path output_path
 ```
 
 ---
