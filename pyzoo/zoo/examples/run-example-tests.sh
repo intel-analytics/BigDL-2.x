@@ -21,7 +21,7 @@ if [ ! -d analytics-zoo-tensorflow-models ]
 then
     mkdir analytics-zoo-tensorflow-models
 fi
-sed "s%/tmp%analytics-zoo-tensorflow-models%g"
+sed "s%/tmp%analytics-zoo-tensorflow-models%g;s%models/slim%slim%g"
 if [ -d analytics-zoo-tensorflow-models/slim ]
 then
     echo "analytics-zoo-tensorflow-models/slim already exists."
