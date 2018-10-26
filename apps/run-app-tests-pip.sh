@@ -33,7 +33,7 @@ fi
 unset SPARK_DRIVER_MEMORY
 now=$(date "+%s")
 time1=$((now-start))
-echo "recommendation-ncf time used:$time1 seconds"
+echo "recommendation-ncf time used:$time1 secondser"
 
 # This should be done at the very end after all tests finish.
 clear_up
