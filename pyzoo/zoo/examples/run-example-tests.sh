@@ -38,6 +38,10 @@ ${SPARK_HOME}/bin/spark-submit \
     --model analytics-zoo-models/ssd_mobilenet_v1_coco_2017_11_17/frozen_inference_graph.pb
     
 echo "start example test for tensorflow distributed_training"
+if [ ! -d analytics-zoo-models ]
+then
+    mkdir analytics-zoo-models
+fi
 sed "s%/tmp%analytics-zoo-models%g"
 if [ -d analytics-zoo-models/model ]
 then
