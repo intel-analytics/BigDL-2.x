@@ -38,17 +38,20 @@ ${SPARK_HOME}/bin/spark-submit \
     --model analytics-zoo-models/ssd_mobilenet_v1_coco_2017_11_17/frozen_inference_graph.pb
     
 echo "start example test for tensorflow distributed_training"
-sed "s%/tmp%analytics-zoo-models%g"
-if [ -d analytics-zoo-models/model ]
+if [ ! -d analytics-zoo-model ]
 then
-    echo "analytics-zoo-models/bigdl_inception-v1_imagenet_0.4.0.model already exists."
+    mkdir analytics-zoo-model
+fi
+sed "s%/tmp%analytics-zoo-model%g"
+if [ -d analytics-zoo-model/model ]
+then
+    echo "analytics-zoo-model/bigdl_inception-v1_imagenet_0.4.0.model already exists."
 else
-    rm -rf analytics-zoo-models
-    git clone https://github.com/tensorflow/models/ analytics-zoo-models
-    export PYTHONPATH=$PYTHONPATH:`pwd`/analytics-zoo-models/model/research:`pwd`/analytics-zoo-models/model/research/slim
+    git clone https://github.com/tensorflow/models/ analytics-zoo-model
+    export PYTHONPATH=$PYTHONPATH:`pwd`/analytics-zoo-model/model/research:`pwd`/analytics-zoo-models/model/research/slim
  fi
 ${SPARK_HOME}/bin/spark-submit \
-    --master local[4] \
+    --master ${master} \
     --driver-memory 200g \
     --executor-memory 200g \
     --properties-file ${ANALYTICS_ZOO_CONF} \
