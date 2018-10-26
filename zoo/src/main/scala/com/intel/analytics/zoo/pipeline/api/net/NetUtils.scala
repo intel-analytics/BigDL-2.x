@@ -377,6 +377,7 @@ private[zoo] class RegistryMap[T]() {
         logger.debug(s"$id already exists, read from registry. " +
           s"Current registry size: $getRegistrySize")
         return (value, false)
+      case _ =>
     }
 
     registry.synchronized {
