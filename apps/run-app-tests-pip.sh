@@ -48,6 +48,13 @@ sed "s/end_trigger=MaxEpoch(10)/end_trigger=MaxEpoch(5)/g" ${ANALYTICS_ZOO_HOME}
 export SPARK_DRIVER_MEMORY=22g
 python ${ANALYTICS_ZOO_HOME}/apps/recommendation-wide-n-deep/wide_n_deep.py
 
+if [ $exit_status -ne 0 ];
+then
+    clear_up
+    echo "anomaly-detection failed"
+    exit $exit_status
+fi
+
 unset SPARK_DRIVER_MEMORY
 now=$(date "+%s")
 time4=$((now-start))
