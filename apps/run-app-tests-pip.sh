@@ -37,7 +37,6 @@ now=$(date "+%s")
 time1=$((now-start))
 echo "anomaly-detection-nyc-taxi time used:$time1 seconds"
 
-<<<<<<< HEAD
 echo "#4 start app test for wide_n_deep"
 start=$(date "+%s")
 
@@ -48,7 +47,7 @@ sed "s/end_trigger=MaxEpoch(10)/end_trigger=MaxEpoch(5)/g" ${ANALYTICS_ZOO_HOME}
 # Run the example
 export SPARK_DRIVER_MEMORY=22g
 python ${ANALYTICS_ZOO_HOME}/apps/recommendation-wide-n-deep/wide_n_deep.py
-=======
+
 echo "#2 start app test for object-detection"
 start=$(date "+%s")
 
@@ -91,13 +90,11 @@ fi
 # Run the example 
 export SPARK_DRIVER_MEMORY=12g
 python ${ANALYTICS_ZOO_HOME}/apps/object-detection/object-detection.py
->>>>>>> cf93b36fe75f9f81bb7df82a437e208fe17311a2
 
 exit_status=$?
 if [ $exit_status -ne 0 ];
 then
     clear_up
-<<<<<<< HEAD
     echo "recommendation-wide-n-deep"
 =======
     echo "object-detection failed"
@@ -357,6 +354,55 @@ now=$(date "+%s")
 time12=$((now-start))
 rm ${ANALYTICS_ZOO_HOME}/apps/tfnet/tmp.py
 echo "#12 image_classification_inference time used:$time12 seconds"
+
+echo "#4 start app test for wide_n_deep"
+start=$(date "+%s")
+
+# Conversion to py file and data preparation
+${ANALYTICS_ZOO_HOME}/apps/ipynb2py.sh ${ANALYTICS_ZOO_HOME}/apps/recommendation-wide-n-deep/wide_n_deep
+sed "s/end_trigger=MaxEpoch(10)/end_trigger=MaxEpoch(5)/g" ${ANALYTICS_ZOO_HOME}/apps/recommendation-wide-n-deep/wide_n_deep.py >${ANALYTICS_ZOO_HOME}/apps/recommendation-wide-n-deep/tmp_test.py
+
+# Run the example
+export SPARK_DRIVER_MEMORY=22g
+python ${ANALYTICS_ZOO_HOME}/apps/recommendation-wide-n-deep/wide_n_deep.py
+
+exit_status=$?
+if [ $exit_status -ne 0 ];
+then
+    clear_up
+    echo "recommendation-wide-n-deep"
+    exit $exit_status
+fi
+
+unset SPARK_DRIVER_MEMORY
+now=$(date "+%s")
+time4=$((now-start))
+echo "ecommendation-wide-n-deep time used:$time4 seconds"
+
+echo "#8 start app test for sentiment-analysis"
+#timer
+start=$(date "+%s")
+
+# Conversion to py file and data preparation
+${ANALYTICS_ZOO_HOME}/apps/ipynb2py.sh ${ANALYTICS_ZOO_HOME}/apps/sentiment-analysis/sentiment
+FILENAME="/tmp/.bigdl/dataset/glove.6B.zip"
+if [ -f "$FILENAME" ]
+then
+   echo "$FILENAME already exists."
+else
+   echo "Downloading glove6B"
+   wget -P /tmp/.bigdl/dataset/ $FTP_URI/analytics-zoo-data/data/glove/glove.6B.zip
+   echo "Finished"
+fi
+
+# Run the example
+export SPARK_DRIVER_MEMORY=12g
+python ${ANALYTICS_ZOO_HOME}/apps/sentiment-analysis/sentiment.py
+
+unset SPARK_DRIVER_MEMORY
+now=$(date "+%s")
+time8=$((now-start))
+echo "sentiment-analysis time used:$time8 seconds
 
 # This should be done at the very end after all tests finish.
 clear_up
