@@ -438,17 +438,9 @@ start=$(date "+%s")
  sed "s%/path/to/yourdownload%${ANALYTICS_ZOO_HOME}/apps/tfnet%g;s%file:///path/toyourdownload/dogs-vs-cats/train%${ANALYTICS_ZOO_HOME}/apps/tfnet/data/minitrain%g;s%test.jpg%${ANALYTICS_ZOO_HOME}/apps/tfnet/test.jpg%g;s%imagenet_class_index.json%${ANALYTICS_ZOO_HOME}/apps/tfnet/imagenet_class_index.json%g" ${ANALYTICS_ZOO_HOME}/apps/tfnet/image_classification_inference.py > ${ANALYTICS_ZOO_HOME}/apps/tfnet/tmp.py
  ModelPath="${ANALYTICS_ZOO_HOME}/apps/tfnet/models/"
  rm -rf "$ModelPath"
- FILENAME="${ANALYTICS_ZOO_HOME}/apps/tfnet/models/*"
-if [ -f "$FILENAME" ]
-then
-   echo "$FILENAME already exists."
-else
-   echo "Downloading model"
-   
-   git clone https://github.com/tensorflow/models/ ${ANALYTICS_ZOO_HOME}/apps/tfnet/models
-   
-   echo "Finished downloading model"
-fi
+ echo "Downloading model"
+ git clone https://github.com/tensorflow/models/ ${ANALYTICS_ZOO_HOME}/apps/tfnet/models
+ echo "Finished downloading model"
  FILENAME="${ANALYTICS_ZOO_HOME}/apps/tfnet/checkpoint/inception_v1.ckpt"
 if [ -f "$FILENAME" ]
 then
@@ -938,17 +930,9 @@ start=$(date "+%s")
  sed "s%/path/to/yourdownload%${ANALYTICS_ZOO_HOME}/apps/tfnet%g;s%file:///path/toyourdownload/dogs-vs-cats/train%${ANALYTICS_ZOO_HOME}/apps/tfnet/data/minitrain%g;s%test.jpg%${ANALYTICS_ZOO_HOME}/apps/tfnet/test.jpg%g;s%imagenet_class_index.json%${ANALYTICS_ZOO_HOME}/apps/tfnet/imagenet_class_index.json%g" ${ANALYTICS_ZOO_HOME}/apps/tfnet/image_classification_inference.py > ${ANALYTICS_ZOO_HOME}/apps/tfnet/tmp.py
  ModelPath="${ANALYTICS_ZOO_HOME}/apps/tfnet/models/"
  rm -rf "$ModelPath"
- FILENAME="${ANALYTICS_ZOO_HOME}/apps/tfnet/models/*"
-if [ -f "$FILENAME" ]
-then
-   echo "$FILENAME already exists."
-else
-   echo "Downloading model"
-   
-   git clone https://github.com/tensorflow/models/ ${ANALYTICS_ZOO_HOME}/apps/tfnet/models
-   
-   echo "Finished downloading model"
-fi
+ echo "Downloading model"
+ git clone https://github.com/tensorflow/models/ ${ANALYTICS_ZOO_HOME}/apps/tfnet/models
+ echo "Finished downloading model"
  FILENAME="${ANALYTICS_ZOO_HOME}/apps/tfnet/checkpoint/inception_v1.ckpt"
 if [ -f "$FILENAME" ]
 then
