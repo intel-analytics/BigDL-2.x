@@ -36,16 +36,16 @@ else
    tar -zxvf analytics-zoo-tensorflow-models/slim.tar.gz -C analytics-zoo-tensorflow-models
    
    echo "Finished downloading research/slim"
-   export PYTHONPATH=$PYTHONPATH:`pwd`/analytics-zoo-tensorflow-models/slim
+   export PYTHONPATH=`pwd`/analytics-zoo-tensorflow-models/slim:$PYTHONPATH
  fi
 
 echo "start example test for tensorflow distributed_training train_lenet"
 ${SPARK_HOME}/bin/spark-submit \
-    --master ${master} \
+    --master ${MASTER} \
     --driver-memory 200g \
     --executor-memory 200g \
     --properties-file ${ANALYTICS_ZOO_CONF} \
-    --py-files ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/tensorflow/distributed_training/train_lenet.py \
+    --py-files ${ANALYTICS_ZOO_PYZIP},${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/tensorflow/distributed_training/train_lenet.py \
     --jars ${ANALYTICS_ZOO_JAR} \
     --conf spark.driver.extraClassPath=${ANALYTICS_ZOO_JAR} \
     --conf spark.executor.extraClassPath=${ANALYTICS_ZOO_JAR} \
@@ -57,7 +57,7 @@ ${SPARK_HOME}/bin/spark-submit \
     --driver-memory 200g \
     --executor-memory 200g \
     --properties-file ${ANALYTICS_ZOO_CONF} \
-    --py-files ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/tensorflow/distributed_training/evaluate_lenet.py \
+    --py-files ${ANALYTICS_ZOO_PYZIP},${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/tensorflow/distributed_training/evaluate_lenet.py \
     --jars ${ANALYTICS_ZOO_JAR} \
     --conf spark.driver.extraClassPath=${ANALYTICS_ZOO_JAR} \
     --conf spark.executor.extraClassPath=${ANALYTICS_ZOO_JAR} \
