@@ -26,7 +26,7 @@ exit_status=$?
 if [ $exit_status -ne 0 ];
 then
     clear_up
-    echo "anomaly-detection failed"
+    echo "image-augmentation failed"
     exit $exit_status
 fi
 
@@ -40,24 +40,24 @@ echo "#11 start app test for image-augementation-3d"
 start=$(date "+%s")
 
 # Conversion to py file and data preparation
-${ANALYTICS_ZOO_HOME}/apps/ipynb2py.sh ${ANALYTICS_ZOO_HOME}/apps/image-augmentation-3d/image-augementation-3d
+${ANALYTICS_ZOO_HOME}/apps/ipynb2py.sh ${ANALYTICS_ZOO_HOME}/apps/image-augmentation-3d/image-augmentation-3d
 
 # Run the example
 export SPARK_DRIVER_MEMORY=1g
-python ${ANALYTICS_ZOO_HOME}/apps/image-augmentation-3d/image-augementation-3d.py
+python ${ANALYTICS_ZOO_HOME}/apps/image-augmentation-3d/image-augmentation-3d.py
 
 exit_status=$?
 if [ $exit_status -ne 0 ];
 then
     clear_up
-    echo "anomaly-detection failed"
+    echo "image-augmentation-3d failed"
     exit $exit_status
 fi
 
 unset SPARK_DRIVER_MEMORY
 now=$(date "+%s")
 time11=$((now-start))
-echo "#11 image-augementation-3d time used:$time11 seconds"
+echo "#11 image-augmentation-3d time used:$time11 seconds"
 
 echo "#1 start app test for anomaly-detection"
 start=$(date "+%s")
