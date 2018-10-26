@@ -271,8 +271,8 @@ fi
 
 unset SPARK_DRIVER_MEMORY
 now=$(date "+%s")
-time1=$((now-start))
-echo "#10 dogs-vs-cats time used:$time1 seconds"
+time10=$((now-start))
+echo "#10 dogs-vs-cats time used:$time10 seconds"
 
 echo "#11 start app test for image-augmentation-3d"
 # timer
