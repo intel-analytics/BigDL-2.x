@@ -62,8 +62,17 @@ else
  fi
 ${SPARK_HOME}/bin/spark-submit \
     --master local[4] \
-   ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/tensorflow/distributed_training/train_lenet.py
-   ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/tensorflow/distributed_training/evaluate_lenet.py
+    --driver-memory 200g \
+    --executor-memory 200g \
+    --properties-file ${ANALYTICS_ZOO_CONF} \
+    --py-files ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/tensorflow/distributed_training/train_lenet.py \
+    ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/tensorflow/distributed_training/evaluate_lenet.py \
+    --jars ${ANALYTICS_ZOO_JAR} \
+    --conf spark.driver.extraClassPath=${ANALYTICS_ZOO_JAR} \
+    --conf spark.executor.extraClassPath=${ANALYTICS_ZOO_JAR} \
+    ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/tensorflow/distributed_training/train_lenet.py \
+    ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/tensorflow/distributed_training/evaluate_lenet.py \
+    
 now=$(date "+%s")
 time6=$((now-start))
 echo "#6 tensorflow time used:$time6 seconds"
