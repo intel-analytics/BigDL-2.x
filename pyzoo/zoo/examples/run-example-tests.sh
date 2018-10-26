@@ -17,7 +17,7 @@ echo "#6 start example test for tensorflow"
 start=$(date "+%s")
     
 echo "start example test for tensorflow distributed_training"
-sed "s/end_trigger=MaxEpoch(5)/end_trigger=MaxEpoch(2)/g;s%/tmp%analytics-zoo-tensorflow-models%g;s%models/slim%slim%g"
+sed "s%/tmp%analytics-zoo-tensorflow-models%g;s%models/slim%slim%g"
 
 if [ ! -d analytics-zoo-tensorflow-models ]
 then
