@@ -34,11 +34,13 @@ import scala.reflect.ClassTag
 class TextFeature extends Serializable {
   import TextFeature.logger
 
-  private def this(text: String, label: Option[Int], id: String) {
+  private def this(text: String, label: Option[Int], uri: String) {
     this
     require(text != null, "text for a TextFeature can't be null")
     state(TextFeature.text) = text
-    state(TextFeature.uri) = id
+    if (uri != null) {
+      state(TextFeature.uri) = uri
+    }
     if (label.nonEmpty) {
       state(TextFeature.label) = label.get
     }
@@ -101,7 +103,20 @@ class TextFeature extends Serializable {
   /**
    * Get the identifier of the TextFeature.
    */
-  def getURI: String = apply[String](TextFeature.uri)
+  def uri(): String = apply[String](TextFeature.uri)
+
+  /**
+   * Set the uri for the TextFeature.
+   * @param id String.
+   * @return The TextFeature with uri.
+   */
+  def setURI(id: String): this.type = {
+    if (uri() != null) {
+      logger.warn(s"uri exists, overwriting the original uri ${uri()}")
+    }
+    state(TextFeature.uri) = id
+    this
+  }
 
   /**
    * Get the tokens of the TextFeature.
@@ -186,3 +201,5 @@ object TextFeature {
     new TextFeature(text, Some(label), uri)
   }
 }
+
+case class Relation(text1ID: String, text2ID: String, label: Int)

@@ -24,12 +24,13 @@ class TextFeatureSpec extends FlatSpec with Matchers {
   val text1 = "Hello my friend, please annotate my text"
   val text2 = "hello world, this is some sentence for my test"
 
-  "TextFeature with label" should "work properly" in {
-    val feature = TextFeature(text1, label = 0)
+  "TextFeature with label and uri" should "work properly" in {
+    val feature = TextFeature(text1, label = 0, uri = "xxxx")
     require(feature.getText == text1)
     require(feature.hasLabel)
     require(feature.getLabel == 0)
-    require(feature.keys() == HashSet("label", "text"))
+    require(feature.uri() == "xxxx")
+    require(feature.keys() == HashSet("label", "text", "uri"))
     require(feature.getTokens == null)
     require(feature.getSample == null)
     require(feature.getPredict == null)
