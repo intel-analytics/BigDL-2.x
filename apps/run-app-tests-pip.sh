@@ -37,55 +37,6 @@ now=$(date "+%s")
 time1=$((now-start))
 echo "anomaly-detection-nyc-taxi time used:$time1 seconds"
 
-echo "#4 start app test for wide_n_deep"
-start=$(date "+%s")
-
-# Conversion to py file and data preparation
-${ANALYTICS_ZOO_HOME}/apps/ipynb2py.sh ${ANALYTICS_ZOO_HOME}/apps/recommendation-wide-n-deep/wide_n_deep
-sed "s/end_trigger=MaxEpoch(10)/end_trigger=MaxEpoch(5)/g" ${ANALYTICS_ZOO_HOME}/apps/recommendation-wide-n-deep/wide_n_deep.py >${ANALYTICS_ZOO_HOME}/apps/recommendation-wide-n-deep/tmp_test.py
-
-# Run the example
-export SPARK_DRIVER_MEMORY=22g
-python ${ANALYTICS_ZOO_HOME}/apps/recommendation-wide-n-deep/wide_n_deep.py
-
-if [ $exit_status -ne 0 ];
-then
-    clear_up
-    echo "anomaly-detection failed"
-    exit $exit_status
-fi
-
-unset SPARK_DRIVER_MEMORY
-now=$(date "+%s")
-time4=$((now-start))
-echo "recommendation-wide-n-deep time used:$time4 seconds"
-rm ${ANALYTICS_ZOO_HOME}/apps/recommendation-wide-n-deep/tmp_test.py
-
-echo "#11 start app test for sentiment-analysis"
-start=$(date "+%s")
-
-# Conversion to py file and data preparation
-${ANALYTICS_ZOO_HOME}/apps/ipynb2py.sh ${ANALYTICS_ZOO_HOME}/apps/sentiment-analysis/sentiment
-FILENAME="/tmp/.bigdl/dataset/glove.6B.zip"
-if [ -f "$FILENAME" ]
-then
-   echo "$FILENAME already exists."
-else
-   echo "Downloading glove6B"
-   wget -P /tmp/.bigdl/dataset/ $FTP_URI/analytics-zoo-data/data/glove/glove.6B.zip
-   echo "Finished"
-fi
-
-# Run the example
-export SPARK_DRIVER_MEMORY=12g
-python ${ANALYTICS_ZOO_HOME}/apps/sentiment-analysis/sentiment.py
-
-unset SPARK_DRIVER_MEMORY
-now=$(date "+%s")
-time11=$((now-start))
-echo "sentiment-analysis time used:$time11 seconds"
-rm ${ANALYTICS_ZOO_HOME}/apps/sentiment-analysis/sentiment.py
-
 echo "#2 start app test for object-detection"
 start=$(date "+%s")
 
@@ -154,10 +105,10 @@ then
    echo "$FILENAME already exists."
 else
    echo "Downloading images"
-
+   
    wget $FTP_URI/analytics-zoo-data/miniimageClassification.tar.gz -P ${ANALYTICS_ZOO_HOME}/apps/image-similarity
    tar -zxvf ${ANALYTICS_ZOO_HOME}/apps/image-similarity/miniimageClassification.tar.gz -C ${ANALYTICS_ZOO_HOME}/apps/image-similarity
-
+   
    echo "Finished downloading images"
 fi
 FILENAME="${ANALYTICS_ZOO_HOME}/apps/image-similarity/googlenet_places365/deploy_googlenet_places365.prototxt"
@@ -166,9 +117,9 @@ then
    echo "$FILENAME already exists."
 else
    echo "Downloading places365 deploy model"
-
+   
    wget https://raw.githubusercontent.com/CSAILVision/places365/master/deploy_googlenet_places365.prototxt -P ${ANALYTICS_ZOO_HOME}/apps/image-similarity/googlenet_places365
-
+   
    echo "Finished downloading model"
 fi
 FILENAME="${ANALYTICS_ZOO_HOME}/apps/image-similarity/googlenet_places365/googlenet_places365.caffemodel"
@@ -177,9 +128,9 @@ then
    echo "$FILENAME already exists."
 else
    echo "Downloading places365 weight model"
-
+   
    wget http://places2.csail.mit.edu/models_places365/googlenet_places365.caffemodel -P ${ANALYTICS_ZOO_HOME}/apps/image-similarity/googlenet_places365
-
+   
    echo "Finished downloading model"
 fi
 FILENAME=" ${ANALYTICS_ZOO_HOME}/apps/image-similarity/vgg_16_places365/deploy_vgg16_places365.prototxt"
@@ -188,9 +139,9 @@ then
    echo "$FILENAME already exists."
 else
    echo "Downloading VGG deploy model"
-
+   
    wget https://raw.githubusercontent.com/CSAILVision/places365/master/deploy_vgg16_places365.prototxt -P ${ANALYTICS_ZOO_HOME}/apps/image-similarity/vgg_16_places365
-
+   
    echo "Finished downloading model"
 fi
 FILENAME="${ANALYTICS_ZOO_HOME}/apps/image-similarity/vgg_16_places365/vgg16_hybrid1365.caffemodel"
@@ -199,9 +150,9 @@ then
    echo "$FILENAME already exists."
 else
    echo "Downloading VGG weight model"
-
+   
    wget http://places2.csail.mit.edu/models_places365/vgg16_places365.caffemodel -P ${ANALYTICS_ZOO_HOME}/apps/image-similarity/vgg_16_places365
-
+   
    echo "Finished downloading model"
 fi
 
@@ -359,6 +310,48 @@ now=$(date "+%s")
 time12=$((now-start))
 rm ${ANALYTICS_ZOO_HOME}/apps/tfnet/tmp.py
 echo "#12 image_classification_inference time used:$time12 seconds"
+
+echo "#4 start app test for wide_n_deep"
+start=$(date "+%s")
+
+# Conversion to py file and data preparation
+${ANALYTICS_ZOO_HOME}/apps/ipynb2py.sh ${ANALYTICS_ZOO_HOME}/apps/recommendation-wide-n-deep/wide_n_deep
+sed "s/end_trigger=MaxEpoch(10)/end_trigger=MaxEpoch(5)/g" ${ANALYTICS_ZOO_HOME}/apps/recommendation-wide-n-deep/wide_n_deep.py >${ANALYTICS_ZOO_HOME}/apps/recommendation-wide-n-deep/tmp_test.py
+
+# Run the example
+export SPARK_DRIVER_MEMORY=22g
+python ${ANALYTICS_ZOO_HOME}/apps/recommendation-wide-n-deep/wide_n_deep.py
+
+unset SPARK_DRIVER_MEMORY
+now=$(date "+%s")
+time4=$((now-start))
+echo "recommendation-wide-n-deep time used:$time4 seconds"
+rm ${ANALYTICS_ZOO_HOME}/apps/recommendation-wide-n-deep/tmp_test.py
+
+echo "#11 start app test for sentiment-analysis"
+start=$(date "+%s")
+
+# Conversion to py file and data preparation
+${ANALYTICS_ZOO_HOME}/apps/ipynb2py.sh ${ANALYTICS_ZOO_HOME}/apps/sentiment-analysis/sentiment
+FILENAME="/tmp/.bigdl/dataset/glove.6B.zip"
+if [ -f "$FILENAME" ]
+then
+   echo "$FILENAME already exists."
+else
+   echo "Downloading glove6B"
+   wget -P /tmp/.bigdl/dataset/ $FTP_URI/analytics-zoo-data/data/glove/glove.6B.zip
+   echo "Finished"
+fi
+
+# Run the example
+export SPARK_DRIVER_MEMORY=12g
+python ${ANALYTICS_ZOO_HOME}/apps/sentiment-analysis/sentiment.py
+
+unset SPARK_DRIVER_MEMORY
+now=$(date "+%s")
+time11=$((now-start))
+echo "sentiment-analysis time used:$time11 seconds"
+rm ${ANALYTICS_ZOO_HOME}/apps/sentiment-analysis/sentiment.py
 
 # This should be done at the very end after all tests finish.
 clear_up
