@@ -91,7 +91,7 @@ fi
 unset SPARK_DRIVER_MEMORY
 now=$(date "+%s")
 time2=$((now-start))
-echo "object-detection time used:$time2 seconds"
+echo "#2 object-detection time used:$time2 seconds"
 
 echo "#3 start app test for image-similarity"
 start=$(date "+%s")
@@ -173,6 +173,54 @@ now=$(date "+%s")
 time3=$((now-start))
 echo "#3 image-similarity time used:$time3 seconds"
 
+echo "#5 start app test for using_variational_autoencoder_to_generate_digital_numbers"
+#timer
+start=$(date "+%s")
+
+${ANALYTICS_ZOO_HOME}/apps/ipynb2py.sh ${ANALYTICS_ZOO_HOME}/apps/variational-autoencoder/using_variational_autoencoder_to_generate_digital_numbers
+
+sed "s/nb_epoch = 6/nb_epoch=2/g; s/batch_size=batch_size/batch_size=1008/g" ${ANALYTICS_ZOO_HOME}/apps/variational-autoencoder/using_variational_autoencoder_to_generate_digital_numbers.py > ${ANALYTICS_ZOO_HOME}/apps/variational-autoencoder/tmp_test.py
+
+export SPARK_DRIVER_MEMORY=12g
+python ${ANALYTICS_ZOO_HOME}/apps/variational-autoencoder/tmp_test.py
+
+exit_status=$?
+if [ $exit_status -ne 0 ];
+then
+    clear_up
+    echo "using_variational_autoencoder_to_generate_digital_numbers failed"
+    exit $exit_status
+fi
+
+unset SPARK_DRIVER_MEMORY
+now=$(date "+%s")
+time5=$((now-start))
+echo "#5 using_variational_autoencoder_to_generate_digital_numbers time used:$time5 seconds"
+
+echo "#9 start app test for image-augmentation"
+# timer
+start=$(date "+%s")
+
+# Conversion to py file and data preparation
+${ANALYTICS_ZOO_HOME}/apps/ipynb2py.sh ${ANALYTICS_ZOO_HOME}/apps/image-augmentation/image-augmentation
+
+# Run the example
+export SPARK_DRIVER_MEMORY=1g
+python ${ANALYTICS_ZOO_HOME}/apps/image-augmentation/image-augmentation.py
+
+exit_status=$?
+if [ $exit_status -ne 0 ];
+then
+    clear_up
+    echo "image-augmentation failed"
+    exit $exit_status
+fi
+
+unset SPARK_DRIVER_MEMORY
+now=$(date "+%s")
+time9=$((now-start))
+echo "#9 image-augmentation time used:$time9 seconds"
+
 echo "#10 start app test for dogs-vs-cats"
 start=$(date "+%s")
 
@@ -223,33 +271,32 @@ fi
 
 unset SPARK_DRIVER_MEMORY
 now=$(date "+%s")
-time1=$((now-start))
-echo "dogs-vs-cats time used:$time1 seconds"
+time10=$((now-start))
+echo "#10 dogs-vs-cats time used:$time10 seconds"
 
-echo "#5 start app test for using_variational_autoencoder_to_generate_digital_numbers"
-#timer
+echo "#11 start app test for image-augmentation-3d"
+# timer
 start=$(date "+%s")
 
-${ANALYTICS_ZOO_HOME}/apps/ipynb2py.sh ${ANALYTICS_ZOO_HOME}/apps/variational-autoencoder/using_variational_autoencoder_to_generate_digital_numbers
+# Conversion to py file and data preparation
+${ANALYTICS_ZOO_HOME}/apps/ipynb2py.sh ${ANALYTICS_ZOO_HOME}/apps/image-augmentation-3d/image-augmentation-3d
 
-sed "s/nb_epoch = 6/nb_epoch=2/g; s/batch_size=batch_size/batch_size=1008/g" ${ANALYTICS_ZOO_HOME}/apps/variational-autoencoder/using_variational_autoencoder_to_generate_digital_numbers.py > ${ANALYTICS_ZOO_HOME}/apps/variational-autoencoder/tmp_test.py
-
-export SPARK_DRIVER_MEMORY=12g
-python ${ANALYTICS_ZOO_HOME}/apps/variational-autoencoder/tmp_test.py
+# Run the example
+export SPARK_DRIVER_MEMORY=1g
+python ${ANALYTICS_ZOO_HOME}/apps/image-augmentation-3d/image-augmentation-3d.py
 
 exit_status=$?
 if [ $exit_status -ne 0 ];
 then
     clear_up
-    echo "using_variational_autoencoder_to_generate_digital_numbers failed"
+    echo "image-augmentation-3d failed"
     exit $exit_status
 fi
 
 unset SPARK_DRIVER_MEMORY
 now=$(date "+%s")
-time5=$((now-start))
-echo "#5 using_variational_autoencoder_to_generate_digital_numbers time used:$time5 seconds"
-
+time11=$((now-start))
+echo "#11 image-augmentation-3d time used:$time11 seconds"
 
 echo "#12 start app test for image_classification_inference"
 #timer
@@ -310,6 +357,75 @@ now=$(date "+%s")
 time12=$((now-start))
 rm ${ANALYTICS_ZOO_HOME}/apps/tfnet/tmp.py
 echo "#12 image_classification_inference time used:$time12 seconds"
+
+
+echo "#6 start app test for using_variational_autoencoder_to_generate_faces"
+#timer
+start=$(date "+%s")
+ ${ANALYTICS_ZOO_HOME}/apps/ipynb2py.sh ${ANALYTICS_ZOO_HOME}/apps/variational-autoencoder/using_variational_autoencoder_to_generate_faces
+ sed -i "s/data_files\[\:100000\]/data_files\[\:5000\]/g; s/batch_size=batch_size/batch_size=1008/g" ${ANALYTICS_ZOO_HOME}/apps/variational-autoencoder/using_variational_autoencoder_to_generate_faces.py
+FILENAME="${ANALYTICS_ZOO_HOME}/apps/variational-autoencoder/img_align_celeba.zip"
+if [ -f "$FILENAME" ]
+then
+   echo "$FILENAME already exists."
+else
+   echo "Downloading celeba images"
+   wget -P ${ANALYTICS_ZOO_HOME}/apps/variational-autoencoder/ ftp://zoo:1234qwer@10.239.47.211/analytics-zoo-data/apps/variational-autoencoder/img_align_celeba.zip --no-host-directories
+   unzip -d ${ANALYTICS_ZOO_HOME}/apps/variational-autoencoder/ ${ANALYTICS_ZOO_HOME}/apps/variational-autoencoder/img_align_celeba.zip
+   echo "Finished"
+fi
+ export SPARK_DRIVER_MEMORY=200g
+python ${ANALYTICS_ZOO_HOME}/apps/variational-autoencoder/using_variational_autoencoder_to_generate_faces.py
+ exit_status=$?
+if [ $exit_status -ne 0 ];
+then
+    clear_up
+    echo "using_variational_autoencoder_to_generate_faces failed"
+    exit $exit_status
+fi
+ unset SPARK_DRIVER_MEMORY
+now=$(date "+%s")
+time6=$((now-start))
+echo "#6 using_variational_autoencoder_to_generate_faces time used:$time6 seconds"
+
+
+echo "#7 start app test for using_variational_autoencoder_and_deep_feature_loss_to_generate_faces"
+#timer
+start=$(date "+%s")
+${ANALYTICS_ZOO_HOME}/apps/ipynb2py.sh ${ANALYTICS_ZOO_HOME}/apps/variational-autoencoder/using_variational_autoencoder_and_deep_feature_loss_to_generate_faces
+ sed -i "s/data_files\[\:100000\]/data_files\[\:5000\]/g; s/batch_size=batch_size/batch_size=1008/g" ${ANALYTICS_ZOO_HOME}/apps/variational-autoencoder/using_variational_autoencoder_and_deep_feature_loss_to_generate_faces.py
+FILENAME="${ANALYTICS_ZOO_HOME}/apps/variational-autoencoder/analytics-zoo_vgg-16_imagenet_0.1.0.model"
+if [ -f "$FILENAME" ]
+then
+   echo "$FILENAME already exists."
+else
+   echo "Downloading VGG model"
+   wget -P ${ANALYTICS_ZOO_HOME}/apps/variational-autoencoder/ ftp://zoo:1234qwer@10.239.47.211/analytics-zoo-data/apps/variational-autoencoder/analytics-zoo_vgg-16_imagenet_0.1.0.model --no-host-directories
+   echo "Finished"
+fi
+ FILENAME="${ANALYTICS_ZOO_HOME}/apps/variational-autoencoder/img_align_celeba.zip"
+if [ -f "$FILENAME" ]
+then
+   echo "$FILENAME already exists."
+else
+   echo "Downloading celeba images"
+   wget -P ${ANALYTICS_ZOO_HOME}/apps/variational-autoencoder/ ftp://zoo:1234qwer@10.239.47.211/analytics-zoo-data/apps/variational-autoencoder/img_align_celeba.zip --no-host-directories
+   unzip -d ${ANALYTICS_ZOO_HOME}/apps/variational-autoencoder/ ${ANALYTICS_ZOO_HOME}/apps/variational-autoencoder/img_align_celeba.zip
+   echo "Finished"
+fi
+ export SPARK_DRIVER_MEMORY=200g
+python ${ANALYTICS_ZOO_HOME}/apps/variational-autoencoder/using_variational_autoencoder_and_deep_feature_loss_to_generate_faces.py
+ exit_status=$?
+if [ $exit_status -ne 0 ];
+then
+    clear_up
+    echo "using_variational_autoencoder_and_deep_feature_loss_to_generate_faces failed"
+    exit $exit_status
+fi
+ unset SPARK_DRIVER_MEMORY
+ now=$(date "+%s")
+time7=$((now-start))
+echo "#7 using_variational_autoencoder_and_deep_feature_loss_to_generate_faces time used:$time7 seconds"
 
 echo "#4 start app test for wide_n_deep"
 start=$(date "+%s")
