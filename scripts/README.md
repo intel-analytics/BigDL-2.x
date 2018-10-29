@@ -39,7 +39,7 @@ analytics-zoo
 ## Run Scripts
 After setting the necessary environment variables above, you can run those scripts. One example is shown as following.
 ```bash
-./spark-submit-with-zoo.sh \
+spark-submit-with-zoo.sh \
     --master your_master_of_spark \
     --driver-cores cores_number_of_driver  \
     --driver-memory memory_size_of_driver  \
@@ -50,4 +50,4 @@ After setting the necessary environment variables above, you can run those scrip
 ```
 Note that not all the parameters are required. You only need to set the necessary ones.
 
-See [here](https://analytics-zoo.github.io/master/#PythonUserGuide/install/#for-yarn-cluster) for yarn cluster instructions.
+See [here](https://analytics-zoo.github.io/master/#PythonUserGuide/install/#for-yarn-cluster) for instructions if you want to run on yarn cluster.
