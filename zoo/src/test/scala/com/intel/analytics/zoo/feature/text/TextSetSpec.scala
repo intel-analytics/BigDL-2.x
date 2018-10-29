@@ -99,7 +99,7 @@ class TextSetSpec extends FlatSpec with Matchers with BeforeAndAfter {
     val textSet = TextSet.read(path, sc)
     require(textSet.isDistributed)
     require(textSet.toDistributed().rdd.count() == 5)
-    require(textSet.toDistributed().rdd.collect().head.keys() == HashSet("label", "text"))
+    require(textSet.toDistributed().rdd.collect().head.keys() == HashSet("label", "text", "uri"))
     val transformed = textSet.tokenize().normalize()
       .shapeSequence(len = 30).word2idx().generateSample()
     val model = buildModel()
@@ -111,6 +111,7 @@ class TextSetSpec extends FlatSpec with Matchers with BeforeAndAfter {
     val textFeatures = predictSet.rdd.collect()
     textFeatures.foreach(feature => {
       require(feature.contains("predict"))
+      require(feature.getURI.contains("news20"))
       val input = feature.getSample.feature.reshape(Array(1, 30))
       val output = model.forward(input).toTensor[Float].split(1)(0)
       feature.getPredict[Float] should be (output)
@@ -122,7 +123,7 @@ class TextSetSpec extends FlatSpec with Matchers with BeforeAndAfter {
     val textSet = TextSet.read(path)
     require(textSet.isLocal)
     require(textSet.toLocal().array.length == 5)
-    require(textSet.toLocal().array.head.keys() == HashSet("label", "text"))
+    require(textSet.toLocal().array.head.keys() == HashSet("label", "text", "uri"))
     val tokenized = textSet -> Tokenizer() -> Normalizer() -> SequenceShaper(len = 30)
     val wordIndex = tokenized.generateWordIndexMap()
     val transformed = tokenized -> WordIndexer(wordIndex) -> TextFeatureToSample()
@@ -136,6 +137,7 @@ class TextSetSpec extends FlatSpec with Matchers with BeforeAndAfter {
     val textFeatures = predictSet.array
     textFeatures.foreach(feature => {
       require(feature.contains("predict"))
+      require(feature.getURI.contains("news20"))
       val input = feature.getSample.feature.reshape(Array(1, 30))
       val output = model.forward(input).toTensor[Float].split(1)(0)
       feature.getPredict[Float] should be(output)

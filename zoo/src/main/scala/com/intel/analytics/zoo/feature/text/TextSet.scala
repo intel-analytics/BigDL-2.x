@@ -214,7 +214,7 @@ object TextSet {
       val textRDD = sc.wholeTextFiles(path + "/*", minPartitions).map{case (p, text) =>
         val parts = p.split("/")
         val category = parts(parts.length - 2)
-        TextFeature(text, label = categoryToLabel(category), id = p)
+        TextFeature(text, label = categoryToLabel(category), uri = p)
       }
       TextSet.rdd(textRDD)
     }

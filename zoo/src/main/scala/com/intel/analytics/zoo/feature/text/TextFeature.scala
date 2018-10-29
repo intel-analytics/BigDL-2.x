@@ -38,7 +38,7 @@ class TextFeature extends Serializable {
     this
     require(text != null, "text for a TextFeature can't be null")
     state(TextFeature.text) = text
-    state(TextFeature.id) = id
+    state(TextFeature.uri) = id
     if (label.nonEmpty) {
       state(TextFeature.label) = label.get
     }
@@ -99,6 +99,11 @@ class TextFeature extends Serializable {
   def getText: String = apply[String](TextFeature.text)
 
   /**
+   * Get the identifier of the TextFeature.
+   */
+  def getURI: String = apply[String](TextFeature.uri)
+
+  /**
    * Get the tokens of the TextFeature.
    * If text hasn't been segmented, null will be returned.
    */
@@ -119,13 +124,13 @@ class TextFeature extends Serializable {
 
 object TextFeature {
   /**
-   * Key for the identifier of this TextFeature which should not be modified.
+   * Key for the identifier of the TextFeature.
    * It can be the id of the text in your corpus or the uri of the file.
    * Value should be a String.
    */
-  val id = "id"
+  val uri = "uri"
   /**
-   * Key for the original text content which should not be modified.
+   * Key for the original text content.
    * Value should be a String.
    */
   val text = "text"
@@ -161,8 +166,8 @@ object TextFeature {
   /**
    * Create a TextFeature without label.
    */
-  def apply(text: String, id: String = null): TextFeature = {
-    new TextFeature(text, None, id)
+  def apply(text: String, uri: String = null): TextFeature = {
+    new TextFeature(text, None, uri)
   }
 
   /**
@@ -174,10 +179,10 @@ object TextFeature {
   }
 
   /**
-   * Create a TextFeature with label and id.
+   * Create a TextFeature with label and uri.
    * It is recommended that label starts from 0.
    */
-  def apply(text: String, label: Int, id: String): TextFeature = {
-    new TextFeature(text, Some(label), id)
+  def apply(text: String, label: Int, uri: String): TextFeature = {
+    new TextFeature(text, Some(label), uri)
   }
 }
