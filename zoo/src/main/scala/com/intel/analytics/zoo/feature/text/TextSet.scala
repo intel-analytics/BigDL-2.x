@@ -122,11 +122,14 @@ abstract class TextSet {
    * @param maxWordsNum Integer. The maximum number of words to be taken into consideration.
    *                    Default is -1, namely all words will be considered.
    */
-  def word2idx(removeTopN: Int = 0, maxWordsNum: Int = -1): TextSet = {
+  def word2idx(
+      removeTopN: Int = 0,
+      maxWordsNum: Int = -1,
+      existingMap: Map[String, Int] = null): TextSet = {
     if (wordIndex != null) {
       TextSet.logger.warn("wordIndex already exists. Using the existing wordIndex")
     } else {
-      generateWordIndexMap(removeTopN, maxWordsNum)
+      generateWordIndexMap(removeTopN, maxWordsNum, existingMap)
     }
     transform(WordIndexer(wordIndex))
   }
@@ -145,7 +148,10 @@ abstract class TextSet {
    * Make sure you call this after tokenize. Otherwise you will get an exception.
    * See word2idx for more details.
    */
-  def generateWordIndexMap(removeTopN: Int = 0, maxWordsNum: Int = 5000): Map[String, Int]
+  def generateWordIndexMap(
+      removeTopN: Int = 0,
+      maxWordsNum: Int = 5000,
+      existingMap: Map[String, Int] = null): Map[String, Int]
 
   private var wordIndex: Map[String, Int] = _
 
@@ -243,13 +249,26 @@ object TextSet {
 
   /**
    * Zip word with its corresponding index. Index starts from 1.
-   * @param frequencies Array of words, each with its occurrence frequency in descending order.
+   * @param words Array of words, each with its occurrence frequency in descending order.
    * @return WordIndex map.
    */
-  def wordIndexFromFrequencies(frequencies: Array[(String, Int)]): Map[String, Int] = {
-    val indexes = Range(1, frequencies.length + 1)
-    frequencies.zip(indexes).map{item =>
-      (item._1._1, item._2)}.toMap
+  def wordsToMap(words: Array[String], existingMap: Map[String, Int] = null): Map[String, Int] = {
+    if (existingMap == null) {
+      val indexes = Range(1, words.length + 1)
+      words.zip(indexes).map{item =>
+        (item._1, item._2)}.toMap
+    }
+    else {
+      val resMap = collection.mutable.Map(existingMap.toSeq: _*)
+      var i = existingMap.values.max + 1
+      for (word <- words) {
+        if(!existingMap.contains(word)) {
+          resMap(word) = i
+          i += 1
+        }
+      }
+      resMap.toMap
+    }
   }
 }
 
@@ -282,13 +301,15 @@ class LocalTextSet(var array: Array[TextFeature]) extends TextSet {
   }
 
   override def generateWordIndexMap(
-    removeTopN: Int = 0, maxWordsNum: Int = -1): Map[String, Int] = {
+    removeTopN: Int = 0,
+    maxWordsNum: Int = -1,
+    existingMap: Map[String, Int] = null): Map[String, Int] = {
     var frequencies = array.flatMap(_.getTokens).filter(_ != "##")  // "##" is the padElement.
-      .groupBy(identity).mapValues(_.length).toArray.sortBy(- _._2).drop(removeTopN)
+      .groupBy(identity).mapValues(_.length).toArray.sortBy(- _._2).map(_._1).drop(removeTopN)
     if (maxWordsNum > 0) {
       frequencies = frequencies.take(maxWordsNum)
     }
-    val wordIndex = TextSet.wordIndexFromFrequencies(frequencies)
+    val wordIndex = TextSet.wordsToMap(frequencies, existingMap)
     setWordIndex(wordIndex)
     wordIndex
   }
@@ -323,13 +344,15 @@ class DistributedTextSet(var rdd: RDD[TextFeature]) extends TextSet {
   }
 
   override def generateWordIndexMap(
-    removeTopN: Int = 0, maxWordsNum: Int = -1): Map[String, Int] = {
+    removeTopN: Int = 0,
+    maxWordsNum: Int = -1,
+    existingMap: Map[String, Int]): Map[String, Int] = {
     var frequencies = rdd.flatMap(_.getTokens).filter(_ != "##")  // "##" is the padElement.
-      .map(word => (word, 1)).reduceByKey(_ + _).sortBy(- _._2).collect().drop(removeTopN)
+      .map(word => (word, 1)).reduceByKey(_ + _).sortBy(- _._2).map(_._1).collect().drop(removeTopN)
     if (maxWordsNum > 0) {
       frequencies = frequencies.take(maxWordsNum)
     }
-    val wordIndex = TextSet.wordIndexFromFrequencies(frequencies)
+    val wordIndex = TextSet.wordsToMap(frequencies, existingMap)
     setWordIndex(wordIndex)
     wordIndex
   }
@@ -343,9 +366,9 @@ class DistributedTextSet(var rdd: RDD[TextFeature]) extends TextSet {
     val res = resRDD.map(x => {
       val feature = TextFeature(null, x._3, x._1.uri() + x._2.uri())
       val text1IndexedTokens = x._1[Array[Float]](TextFeature.indexedTokens)
-      val text2IndexedTokens = x._1[Array[Float]](TextFeature.indexedTokens)
+      val text2IndexedTokens = x._2[Array[Float]](TextFeature.indexedTokens)
       if (text1IndexedTokens != null & text2IndexedTokens != null) {
-        feature(TextFeature.tokens) = text1IndexedTokens ++ text2IndexedTokens
+        feature(TextFeature.indexedTokens) = text1IndexedTokens ++ text2IndexedTokens
       }
       feature
     })

@@ -147,17 +147,30 @@ class TextSetSpec extends FlatSpec with Matchers with BeforeAndAfter {
 
   "TextSet and relations RDD" should "work properly" in {
     val q1 = TextFeature("who are you", uri = "Q1")
-    val q2 = TextFeature("where are you", uri = "Q2")
+    val q2 = TextFeature("where are you now", uri = "Q2")
     val qSet = TextSet.rdd(sc.parallelize(Seq(q1, q2)))
-    val a1 = TextFeature("I'm xxxx", uri = "D1")
-    val a2 = TextFeature("I'm in xxxx", uri = "D2")
+    val qTransformed = qSet.tokenize().normalize().shapeSequence(4).word2idx()
+    val qMap = qTransformed.getWordIndex
+    val a1 = TextFeature("I am xxxx", uri = "A1")
+    val a2 = TextFeature("I am in xxxx now", uri = "A2")
     val aSet = TextSet.rdd(sc.parallelize(Seq(a1, a2)))
-    val r1 = Relation("Q1", "D1", 1)
-    val r2 = Relation("Q1", "D2", 0)
-    val r3 = Relation("Q2", "D1", 0)
-    val r4 = Relation("Q2", "D2", 1)
+    val aTransformed = aSet.tokenize().normalize().shapeSequence(5).word2idx(existingMap = qMap)
+    val wordIndex = aTransformed.getWordIndex
+    for (word <- qMap.keySet) {
+      require(wordIndex.contains(word))
+      require(wordIndex(word) == qMap(word))
+    }
+    val r1 = Relation("Q1", "A1", 1)
+    val r2 = Relation("Q1", "A2", 0)
+    val r3 = Relation("Q2", "A1", 0)
+    val r4 = Relation("Q2", "A2", 1)
     val relations = sc.parallelize(Seq(r1, r2, r3, r4))
-    val res = qSet.pair(aSet, relations)
-    res.toDistributed().rdd.collect()
+    val resultSet = qSet.pair(aSet, relations).generateSample()
+    val resFeatures = resultSet.toDistributed().rdd.collect()
+    for (feature <- resFeatures) {
+      require(feature.keys() == Set("indexedTokens", "label", "sample", "uri"))
+      require(feature.getSample.feature().size().sameElements(Array(9)))
+      require(feature.getSample.label().size().sameElements(Array(1)))
+    }
   }
 }
