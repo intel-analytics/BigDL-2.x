@@ -34,7 +34,7 @@ import scala.reflect.ClassTag
 class TextFeature extends Serializable {
   import TextFeature.logger
 
-  private[zoo] def this(text: String, label: Option[Int], uri: String) {
+  private def this(text: String, label: Option[Int], uri: String) {
     this
     if (text != null) {
       state(TextFeature.text) = text
@@ -98,26 +98,15 @@ class TextFeature extends Serializable {
 
   /**
    * Get the text content of the TextFeature.
+   * Return null if it doesn't exist.
    */
   def getText: String = apply[String](TextFeature.text)
 
   /**
    * Get the identifier of the TextFeature.
+   * Return null if it doesn't exist.
    */
   def uri(): String = apply[String](TextFeature.uri)
-
-  /**
-   * Set the uri for the TextFeature.
-   * @param id String.
-   * @return The TextFeature with uri.
-   */
-  def setURI(id: String): this.type = {
-    if (uri() != null) {
-      logger.warn(s"uri exists, overwriting the original uri ${uri()}")
-    }
-    state(TextFeature.uri) = id
-    this
-  }
 
   /**
    * Get the tokens of the TextFeature.
