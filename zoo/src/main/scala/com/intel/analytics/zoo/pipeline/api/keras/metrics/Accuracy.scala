@@ -18,22 +18,29 @@ package com.intel.analytics.zoo.pipeline.api.keras.metrics
 
 import com.intel.analytics.bigdl.nn.abstractnn.Activity
 import com.intel.analytics.bigdl.optim.{AccuracyResult, Top1Accuracy, ValidationResult, Top5Accuracy => BigDLTop5Accuracy}
-import com.intel.analytics.bigdl.tensor.Tensor
 import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric
 
+import scala.reflect.ClassTag
+
 /**
- * Measures top1 accuracy for classification problems.
+ * Measures top1 accuracy for multi-class classification
+ * or accuracy for binary classification.
  *
  * @param zeroBasedLabel Boolean. Whether target labels start from 0. Default is true.
  *                       If false, labels start from 1.
+ *                       Note that this only takes effect for multi-class classification.
+ *                       For binary classification, labels ought to be 0 or 1.
  */
-class Accuracy[T](
+class Accuracy[T: ClassTag](
     val zeroBasedLabel: Boolean = true)(implicit ev: TensorNumeric[T])
   extends Top1Accuracy[T] {
 
   override def apply(output: Activity, target: Activity):
   ValidationResult = {
-    if (zeroBasedLabel) {
+    val _output = output.toTensor[T]
+    val binaryClassification = (_output.dim() == 2 && _output.size(2) == 1) ||
+      (_output.dim() == 1 && _output.size(1) == 1)
+    if (zeroBasedLabel && ! binaryClassification) {
       super.apply(output, target.toTensor[T].clone().add(ev.fromType(1.0f)))
     }
     else {
@@ -43,12 +50,12 @@ class Accuracy[T](
 }
 
 /**
- * Measures top5 accuracy for classification problems.
+ * Measures top5 accuracy for multi-class classification.
  *
  * @param zeroBasedLabel Boolean. Whether target labels start from 0. Default is true.
  *                       If false, labels start from 1.
  */
-class Top5Accuracy[T](
+class Top5Accuracy[T: ClassTag](
     val zeroBasedLabel: Boolean = true)(implicit ev: TensorNumeric[T])
   extends BigDLTop5Accuracy[T] {
 

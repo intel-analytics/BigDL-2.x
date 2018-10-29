@@ -4,18 +4,14 @@ For Python users, Analytics Zoo can be installed either [from pip](#install-from
 
 ---
 ## **Install from pip**
-
-Analytics Zoo can be installed via pip easily using the following command.
-
-***Install analytics-zoo-0.3.0.dev0***
-
-* Note that you might need to add `sudo` if you don't have the permission for installation.
+You can use the following command to install the latest release version of __analytics-zoo__ via pip easily:
 
 ```bash
-pip install --upgrade pip
-pip install analytics-zoo==0.3.0.dev0     # for Python 2.7
-pip3 install analytics-zoo==0.3.0.dev0    # for Python 3.5 and Python 3.6
+pip install analytics-zoo     # for Python 2.7
+pip3 install analytics-zoo    # for Python 3.5 and Python 3.6
 ```
+
+* Note that you might need to add `sudo` if you don't have the permission for installation.
 
 **Important:**
 
@@ -29,11 +25,11 @@ sc = init_nncontext()
 
 **Remarks:**
 
-1. We've tested this package with pip 9.0.1.
+1. We've tested this package with pip 9.0.1. `pip install --upgrade pip` if necessary.
 2. Pip install supports __Mac__ and __Linux__ platforms.
 3. Pip install only supports __local__ mode. Cluster mode might be supported in the future. For those who want to use Analytics Zoo in cluster mode, please try to [install without pip](#install-without-pip).
 4. You need to install Java __>= JDK8__ before running Analytics Zoo, which is required by `pyspark`.
-5. `pyspark`(2.2), `bigdl==0.6.0` and its dependencies will be automatically installed if they haven't been detected in the current Python environment.
+5. `pyspark`, `bigdl==0.6.0` and their dependencies will automatically be installed if they haven't been detected in the current Python environment.
 
 
 ---
@@ -80,7 +76,9 @@ apt-get install -y zip
 easy_install pip
 ```
 * Create the virtualenv package for dependencies.
-    * Under $ANALYTICS_ZOO_HOME (the dist directory under the Analytics Zoo project), you can find ```bin/python_package.sh```. Run this script to create the dependency virtual environment according to the dependencies listed in `requirements.txt`. You can add your own dependencies into this file if you wish. The current requirements only contain those needed for running Analytics Zoo Python examples and models.
+    * ```export ANALYTICS_ZOO_HOME=the folder where you extract the downloaded Analytics Zoo zip package```
+    
+    * Run ```${ANALYTICS_ZOO_HOME}/bin/python_package.sh``` to create the dependency virtual environment according to the dependencies listed in `requirements.txt`. You can add your own dependencies into this file if you wish. The current requirements only contain those needed for running Analytics Zoo Python examples and models.
 
     * After running this script, there will be `venv.zip` and `venv` directory generated in current directory. You can use them to submit your Python jobs. Please refer to [here](run.md#run-with-virtual-environment-on-yarn) for the commands to submit an Analytics Zoo Python job with the created virtual environment in Yarn cluster.
 

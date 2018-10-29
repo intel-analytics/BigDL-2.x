@@ -30,6 +30,7 @@ slim = tf.contrib.slim
 
 
 def main():
+
     sc = init_nncontext()
 
     # get data, pre-process and create TFDataset
@@ -44,7 +45,7 @@ def main():
                                  names=["features", "labels"],
                                  shapes=[[28, 28, 1], [1]],
                                  types=[tf.float32, tf.int32],
-                                 batch_pre_core=20
+                                 batch_per_thread=20
                                  )
 
     # construct the model from TFDataset
@@ -55,7 +56,7 @@ def main():
     with slim.arg_scope(lenet.lenet_arg_scope()):
         logits, end_points = lenet.lenet(images, num_classes=10, is_training=False)
 
-    predictions = tf.argmax(logits, axis=1, output_type=tf.int32)
+    predictions = tf.to_int32(tf.argmax(logits, axis=1))
     correct = tf.expand_dims(tf.to_int32(tf.equal(predictions, labels)), axis=1)
 
     saver = tf.train.Saver()
