@@ -157,12 +157,7 @@ class TextSetSpec extends FlatSpec with Matchers with BeforeAndAfter {
     val r3 = Relation("Q2", "D1", 0)
     val r4 = Relation("Q2", "D2", 1)
     val relations = sc.parallelize(Seq(r1, r2, r3, r4))
-    val groupedQ = qSet.rdd.keyBy(x => x.uri())
-    val groupedA = aSet.rdd.keyBy(x => x.uri())
-    val relationsQ = relations.keyBy(x => x.text1ID)
-    val relationsJoinQ = relationsQ.join(groupedQ).map(_._2)
-    val relationsA = relationsJoinQ.keyBy(x => x._1.text2ID)
-    val resultRDD = relationsA.join(groupedA).map(x => (x._2._1._2, x._2._2, x._2._1._1.label))
-    resultRDD.count()
+    val res = qSet.pair(aSet, relations)
+    res.toDistributed().rdd.collect()
   }
 }

@@ -34,15 +34,16 @@ import scala.reflect.ClassTag
 class TextFeature extends Serializable {
   import TextFeature.logger
 
-  private def this(text: String, label: Option[Int], uri: String) {
+  private[zoo] def this(text: String, label: Option[Int], uri: String) {
     this
-    require(text != null, "text for a TextFeature can't be null")
-    state(TextFeature.text) = text
-    if (uri != null) {
-      state(TextFeature.uri) = uri
+    if (text != null) {
+      state(TextFeature.text) = text
     }
     if (label.nonEmpty) {
       state(TextFeature.label) = label.get
+    }
+    if (uri != null) {
+      state(TextFeature.uri) = uri
     }
   }
 

@@ -333,4 +333,22 @@ class DistributedTextSet(var rdd: RDD[TextFeature]) extends TextSet {
     setWordIndex(wordIndex)
     wordIndex
   }
+
+  def pair(textSet: TextSet, relationSet: RDD[Relation]): TextSet = {
+    require(textSet.isDistributed)
+    val joinedText1 = rdd.keyBy(_.uri()).join(relationSet.keyBy(_.text1ID)).map(_._2)
+    val resRDD = textSet.toDistributed().rdd.keyBy(_.uri()).join(
+      joinedText1.keyBy(_._2.text2ID))
+      .map(x => (x._2._2._1, x._2._1, x._2._2._2.label))
+    val res = resRDD.map(x => {
+      val feature = TextFeature(null, x._3, x._1.uri() + x._2.uri())
+      val text1IndexedTokens = x._1[Array[Float]](TextFeature.indexedTokens)
+      val text2IndexedTokens = x._1[Array[Float]](TextFeature.indexedTokens)
+      if (text1IndexedTokens != null & text2IndexedTokens != null) {
+        feature(TextFeature.tokens) = text1IndexedTokens ++ text2IndexedTokens
+      }
+      feature
+    })
+    TextSet.rdd(res)
+  }
 }
