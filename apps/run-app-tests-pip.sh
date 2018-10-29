@@ -437,9 +437,14 @@ sed "s/end_trigger=MaxEpoch(10)/end_trigger=MaxEpoch(5)/g" ${ANALYTICS_ZOO_HOME}
 # Run the example
 export SPARK_DRIVER_MEMORY=22g
 python ${ANALYTICS_ZOO_HOME}/apps/recommendation-wide-n-deep/wide_n_deep.py
-
-unset SPARK_DRIVER_MEMORY
-now=$(date "+%s")
+if [ $exit_status -ne 0 ];
+then
+    clear_up
+    echo "using_variational_autoencoder_and_deep_feature_loss_to_generate_faces failed"
+    exit $exit_status
+fi
+ unset SPARK_DRIVER_MEMORY
+ now=$(date "+%s")
 time4=$((now-start))
 echo "recommendation-wide-n-deep time used:$time4 seconds"
 rm ${ANALYTICS_ZOO_HOME}/apps/recommendation-wide-n-deep/tmp_test.py
@@ -462,9 +467,14 @@ fi
 # Run the example
 export SPARK_DRIVER_MEMORY=12g
 python ${ANALYTICS_ZOO_HOME}/apps/sentiment-analysis/sentiment.py
-
-unset SPARK_DRIVER_MEMORY
-now=$(date "+%s")
+if [ $exit_status -ne 0 ];
+then
+    clear_up
+    echo "using_variational_autoencoder_and_deep_feature_loss_to_generate_faces failed"
+    exit $exit_status
+fi
+ unset SPARK_DRIVER_MEMORY
+ now=$(date "+%s")
 time11=$((now-start))
 echo "sentiment-analysis time used:$time11 seconds"
 rm ${ANALYTICS_ZOO_HOME}/apps/sentiment-analysis/sentiment.py
