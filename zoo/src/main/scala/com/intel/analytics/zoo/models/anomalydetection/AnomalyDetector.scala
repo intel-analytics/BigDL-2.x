@@ -1,15 +1,17 @@
 package com.intel.analytics.zoo.models.anomalydetection
 
+import com.intel.analytics.bigdl.Criterion
 import com.intel.analytics.bigdl.dataset.Sample
 import com.intel.analytics.bigdl.nn.abstractnn.{AbstractModule, Activity}
+import com.intel.analytics.bigdl.optim.{OptimMethod, ValidationMethod, ValidationResult}
 import com.intel.analytics.bigdl.tensor.Tensor
 import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric
 import com.intel.analytics.bigdl.utils.{Shape, T}
+import com.intel.analytics.zoo.feature.text.TextSet
 import com.intel.analytics.zoo.models.common.ZooModel
-import com.intel.analytics.zoo.pipeline.api.keras.layers.{Dense, Dropout, LSTM}
-import com.intel.analytics.zoo.pipeline.api.keras.models.Sequential
+import com.intel.analytics.zoo.pipeline.api.keras.layers._
+import com.intel.analytics.zoo.pipeline.api.keras.models.{KerasNet, Sequential}
 import org.apache.spark.rdd.RDD
-
 
 import scala.reflect.ClassTag
 
@@ -24,11 +26,9 @@ class AnomalyDetector[T: ClassTag] private(
   override def buildModel(): AbstractModule[Tensor[T], Tensor[T], T] = {
 
     val model = Sequential()
+    model.add(InputLayer(inputShape = featureShape))
 
-    model.add(LSTM(hiddenLayers(0), returnSequences = true, inputShape = featureShape))
-      .add(Dropout(dropouts(0)))
-
-    for (i <- 1 to hiddenLayers.length - 1) {
+    for (i <- 0 to hiddenLayers.length - 1) {
       model.add(LSTM(hiddenLayers(i), returnSequences = true))
         .add(Dropout(dropouts(i)))
     }
@@ -38,6 +38,34 @@ class AnomalyDetector[T: ClassTag] private(
       .add(Dense(outputDim = 1))
 
     model.asInstanceOf[AbstractModule[Tensor[T], Tensor[T], T]]
+  }
+
+  def compile(
+               optimizer: OptimMethod[T],
+               loss: Criterion[T],
+               metrics: List[ValidationMethod[T]] = null)(implicit ev: TensorNumeric[T]): Unit = {
+    model.asInstanceOf[KerasNet[T]].compile(optimizer, loss, metrics)
+  }
+
+  def fit(
+           x: RDD[Sample[T]],
+           batchSize: Int,
+           nbEpoch: Int,
+           validationData: RDD[Sample[T]] = null)(implicit ev: TensorNumeric[T]): Unit = {
+    model.asInstanceOf[KerasNet[T]].fit(x, batchSize, nbEpoch, validationData)
+  }
+
+  def evaluate(
+                x: RDD[Sample[T]],
+                batchSize: Int)
+              (implicit ev: TensorNumeric[T]): Array[(ValidationResult, ValidationMethod[T])] = {
+    model.asInstanceOf[KerasNet[T]].evaluate(x, batchSize)
+  }
+
+  def predict(
+               x: RDD[Sample[T]],
+               batchPerThread: Int): RDD[Activity] = {
+    model.asInstanceOf[KerasNet[T]].predict(x, batchPerThread)
   }
 
 }
@@ -150,7 +178,7 @@ object AnomalyDetector {
     *                     (2,3), 4, 1
     *                     (3,4), 5, 2
     *                     (4,5), 6, 3
-    **/
+    * */
   def unroll[T: ClassTag](dataRdd: RDD[Array[T]],
                           unrollLength: Int,
                           predictStep: Int = 1

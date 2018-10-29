@@ -18,11 +18,12 @@ package com.intel.analytics.zoo.examples.anomalydetection
 
 import com.intel.analytics.bigdl.dataset.Sample
 import com.intel.analytics.bigdl.numeric.NumericFloat
-import com.intel.analytics.bigdl.utils.{Shape, T}
+import com.intel.analytics.bigdl.optim._
+import com.intel.analytics.bigdl.utils.Shape
 import com.intel.analytics.zoo.common.NNContext
 import com.intel.analytics.zoo.models.anomalydetection.{AnomalyDetector, FeatureLabelIndex}
 import com.intel.analytics.zoo.models.anomalydetection.AnomalyDetector._
-import com.intel.analytics.zoo.pipeline.api.keras.models.Sequential
+import com.intel.analytics.zoo.pipeline.api.keras.objectives.MeanSquaredError
 import org.apache.log4j.{Level, Logger}
 import org.apache.spark.SparkConf
 import org.apache.spark.ml.linalg.Vectors
@@ -35,11 +36,12 @@ import org.joda.time.format.DateTimeFormat
 case class Taxi(ts: String, value: Float)
 
 case class LocalParams(val inputDir: String = "./data/NAB/nyc_taxi/",
+                       val unrollLength: Int = 50,
                        val batchSize: Int = 1024,
                        val nEpochs: Int = 20
                       )
 
-object AnomalyDetectorExample {
+object AnomalyDetection {
 
   def main(args: Array[String]): Unit = {
 
@@ -73,18 +75,19 @@ object AnomalyDetectorExample {
     val sqlContext = SQLContext.getOrCreate(sc)
 
     val featureDF = loadData(sqlContext, param.inputDir)
-    val featureShape = Shape(50, 3)
-    val (trainRdd, testRdd) = assemblyFeature(featureDF, ifScale = true, 50, testdataSize = 1000)
+    val featureShape = Shape(param.unrollLength, 3)
+    val (trainRdd, testRdd) = assemblyFeature(featureDF, true, param.unrollLength, 1000)
 
-    val model = AnomalyDetector[Double](featureShape).buildModel().asInstanceOf[Sequential[Float]]
-    model.compile(loss = "mse", optimizer = "rmsprop")
+    val model: AnomalyDetector[Float] = AnomalyDetector[Float](featureShape)
+    model.compile(optimizer = new RMSprop(learningRate = 0.001, decayRate = 0.9),
+      loss = MeanSquaredError[Float]())
     model.fit(trainRdd, batchSize = param.batchSize, nbEpoch = param.nEpochs)
     val predictions = model.predict(testRdd)
 
     val yPredict: RDD[Float] = predictions.map(x => x.toTensor.toArray()(0))
     val yTruth: RDD[Float] = testRdd.map(x => x.label.toArray()(0))
-    val anomolies = detectAnomalies(yPredict, yTruth, 5)
-    anomolies.take(5).foreach(println)
+    val anomalies = detectAnomalies(yPredict, yTruth, 5)
+    anomalies.take(5).foreach(println)
   }
 
   def loadData(sqlContext: SQLContext, dataPath: String) = {
