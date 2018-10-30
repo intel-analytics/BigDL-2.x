@@ -172,8 +172,8 @@ class TestLayer(ZooTestCase):
 
         images = []
         labels = []
-        for i in range(0, 32):
-            features = np.random.uniform(0, 1, (200, 200, 3))
+        for i in range(0, 16):
+            features = np.random.uniform(0, 1, (28, 28, 1))
             label = np.array([2])
             images.append(features)
             labels.append(label)
@@ -181,25 +181,25 @@ class TestLayer(ZooTestCase):
                                         self.sc.parallelize(labels))
 
         transformer = ChainedPreprocessing(
-            [ImageBytesToMat(), ImageResize(256, 256), ImageCenterCrop(224, 224),
-             ImageChannelNormalize(0.485, 0.456, 0.406, 0.229, 0.224, 0.225),
+            [ImageBytesToMat(),
              ImageMatToTensor(format="NHWC"), ImageSetToSample(target_keys=['label'])])
         data = image_set.transform(transformer)
 
-        from nets import inception
+        from nets import lenet
         import tensorflow as tf
         slim = tf.contrib.slim
-        images = tf.placeholder(dtype=tf.float32, shape=(None, 224, 224, 3))
+        images = tf.placeholder(dtype=tf.float32, shape=(None, 28, 28))
+        ep_images = tf.expand_dims(images, axis=3)
 
-        with slim.arg_scope(inception.inception_v1_arg_scope()):
-            logits, end_points = inception.inception_v1(images, num_classes=1000, is_training=False)
+        with slim.arg_scope(lenet.lenet_arg_scope()):
+            logits, end_points = lenet.lenet(ep_images, num_classes=10)
 
         sess = tf.Session()
         sess.run(tf.global_variables_initializer())
         model = TFNet.from_session(sess, inputs=[images], outputs=[logits], generate_backward=True)
         model.compile(optimizer=SGD(0.001),
                       loss="sparse_categorical_crossentropy", metrics=["accuracy"])
-        model.fit(data, batch_size=8, nb_epoch=2, validation_data=data)
+        model.fit(data, batch_size=8, nb_epoch=1, validation_data=data)
         result = model.predict(data, batch_per_thread=8)
         accuracy = model.evaluate(data, batch_size=8)
 
