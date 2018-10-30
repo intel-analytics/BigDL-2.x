@@ -201,7 +201,7 @@ class Net:
 
 class TFNet(KerasNet):
     def __init__(self, path, input_names=None, output_names=None):
-        self.bigdl_type="float"
+        self.bigdl_type = "float"
         if input_names is None and output_names is None:
             self.value = callBigDlFunc(
                 self.bigdl_type, "createTFNet", path)
