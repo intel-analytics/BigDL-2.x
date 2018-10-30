@@ -103,7 +103,7 @@ class TestSimpleIntegration(ZooTestCase):
         model = Sequential()
         model.add(Dense(4, activation="relu", input_shape=(10, )))
         x = np.random.random([300, 10])
-        y = np.random.random([300, ])
+        y = np.random.random([300, 4])
         model.compile(optimizer="sgd", loss="mae")
         model.fit(x, y, batch_size=112, nb_epoch=2)
         model.predict(x)
