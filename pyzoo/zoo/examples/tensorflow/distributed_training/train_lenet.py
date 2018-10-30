@@ -69,11 +69,14 @@ def main():
                             val_method=Top1Accuracy())
     optimizer.set_train_summary(TrainSummary("/tmp/az_lenet", "lenet"))
     optimizer.set_val_summary(ValidationSummary("/tmp/az_lenet", "lenet"))
+    checkpoint_trigger = SeveralIteration(20)
+    optimizer.set_checkpoint(checkpoint_trigger, "/tep/checkpoints")
     # kick off training
     optimizer.optimize(end_trigger=MaxEpoch(5))
 
     saver = tf.train.Saver()
     saver.save(optimizer.sess, "/tmp/lenet/")
+    print("finish this function")
 
 if __name__ == '__main__':
     main()
