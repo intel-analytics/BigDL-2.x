@@ -19,6 +19,7 @@ import keras.layers as klayers
 import keras.objectives as kloss
 import pytest
 
+from bigdl.optim.optimizer import SGD
 from test.zoo.pipeline.utils.test_utils import ZooTestCase
 from zoo.pipeline.api.autograd import *
 from zoo.pipeline.api.keras.models import *
