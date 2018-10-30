@@ -25,7 +25,7 @@ import sys
 from bigdl.dataset import mnist
 from bigdl.dataset.transformer import *
 
-sys.path.append("/tmp/models/slim")  # add the slim library
+sys.path.append("/home/ludviq/workspace/models/research/slim/")  # add the slim library
 from nets import lenet
 
 slim = tf.contrib.slim
@@ -68,7 +68,9 @@ def main():
                             val_labels=[labels],
                             val_method=Top1Accuracy())
     optimizer.set_train_summary(TrainSummary("/tmp/az_lenet", "lenet"))
+    optimizer.set_checkpoint(1000, "/tep/checkpoints")
     optimizer.set_val_summary(ValidationSummary("/tmp/az_lenet", "lenet"))
+    # optimizer.set_checkpoint(1000, "/tep/checkpoints")
     # kick off training
     optimizer.optimize(end_trigger=MaxEpoch(5))
 
