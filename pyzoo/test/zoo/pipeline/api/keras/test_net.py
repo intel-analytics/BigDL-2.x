@@ -205,6 +205,5 @@ class TestLayer(ZooTestCase):
         accuracy = model.evaluate(data, batch_size=8)
 
 
-
 if __name__ == "__main__":
     pytest.main([__file__])
