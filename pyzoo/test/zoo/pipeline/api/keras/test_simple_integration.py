@@ -166,11 +166,11 @@ class TestSimpleIntegration(ZooTestCase):
         sess.run(tf.global_variables_initializer())
         model = TFNet.from_session(sess, inputs=[images], outputs=[logits], generate_backward=True)
         sess.close()
-        # model.compile(optimizer=SGD(0.001),
-        #               loss="sparse_categorical_crossentropy", metrics=["accuracy"])
-        # model.fit(data, batch_size=8, nb_epoch=2, validation_data=data)
-        # result = model.predict(data, batch_per_thread=8)
-        # accuracy = model.evaluate(data, batch_size=8)
+        model.compile(optimizer=SGD(0.001),
+                      loss="sparse_categorical_crossentropy", metrics=["accuracy"])
+        model.fit(data, batch_size=8, nb_epoch=2, validation_data=data)
+        result = model.predict(data, batch_per_thread=2)
+        accuracy = model.evaluate(data, batch_size=8)
 
     def test_remove_batch(self):
         from zoo.pipeline.api.utils import remove_batch
