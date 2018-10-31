@@ -26,6 +26,7 @@ import com.intel.analytics.bigdl.utils.T
 import com.intel.analytics.zoo.common.NNContext
 import com.intel.analytics.zoo.models.common.ZooModel
 import com.intel.analytics.zoo.models.recommendation.{NeuralCF, UserItemFeature, Utils}
+import com.intel.analytics.zoo.optim.ZooOptimizer
 import org.apache.log4j.{Level, Logger}
 import org.apache.spark.SparkConf
 import org.apache.spark.rdd.RDD
@@ -101,60 +102,17 @@ object NeuralCFexample {
       learningRate = 5e-3,
       learningRateDecay = 1e-6)
 
-    val optimizer: Optimizer[Float, MiniBatch[Float]] = Optimizer(
+    val optimizer: ZooOptimizer[Float, MiniBatch[Float]] = ZooOptimizer(
       model = ncf,
       sampleRDD = trainRdds,
       criterion = ClassNLLCriterion[Float](),
-      batchSize = param.batchSize)
+      batchSize = param.batchSize,
+      splitsNum = 3)
 
-    println("total count: " + trainRdds.count())
-
-    val trainSplits = 3
-
-    val buckets = (0 to trainSplits -1).map(x=> 1.0 / trainSplits).toArray
-
-    val trainRddArray: Array[RDD[Sample[Float]]] = trainRdds.randomSplit(buckets, 1L)
-
-    println(trainRddArray.map(x=> x.count()).mkString("|"))
-
-    trainRddArray.map(rdd => {
-
-      println("***************************************")
-      println("subTrainRdd split: " + rdd.count())
-
-      optimizer
-        .setModel(ncf)
-        .setOptimMethod(optimMethod)
-        .setEndWhen(Trigger.maxEpoch(20))
-        .setTrainData(rdd, batchSize = param.batchSize)
-        .optimize()
-    })
-
-//    val splitTrainRdds = trainRdds.map(x => {
-//      val hashcode = x.hashCode()
-//      val grp = hashcode % trainSplits
-//      val group = if (grp < 0) {
-//        grp + trainSplits
-//      } else {
-//        grp
-//      }
-//      (group, x)
-//    })
-//
-//    splitTrainRdds.map(x=> (x._1,1)).reduceByKey( _ + _ ).take(10).sortBy(x=> x._1).foreach(println)
-//
-//    (0 to trainSplits - 1).map(i => {
-//      val subTrainRdd = splitTrainRdds.filter(x => x._1 == i).map(x => x._2)
-//      println("***************************************")
-//      println("subTrainRdd split: " + i + "; count: " + subTrainRdd.count())
-//
-//      optimizer
-//        .setModel(ncf)
-//        .setOptimMethod(optimMethod)
-//        .setEndWhen(Trigger.maxEpoch(10))
-//        .setTrainData(subTrainRdd, batchSize = param.batchSize)
-//        .optimize()
-//    })
+    optimizer
+      .setOptimMethod(optimMethod)
+      .setEndWhen(Trigger.maxEpoch(10))
+      .optimize()
 
     val results = ncf.predict(validationRdds)
     results.take(5).foreach(println)
