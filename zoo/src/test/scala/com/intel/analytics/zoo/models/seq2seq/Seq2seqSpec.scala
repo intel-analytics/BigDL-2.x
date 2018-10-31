@@ -42,8 +42,9 @@ class Seq2seqSpec extends FlatSpec with Matchers with BeforeAndAfter {
     val hiddenSize = 6
     val batchSize = 1
     val seqLen = 2
-    val encoder = Encoder[Float](Array(LSTM[Float](hiddenSize, returnSequences = true)), Embedding(10, inputSize))
-    val decoder = Decoder[Float](Array(LSTM[Float](hiddenSize, returnSequences = true)), Embedding(10, inputSize))
+    val numLayer = 1
+    val encoder = Encoder[Float]("lstm", numLayer, hiddenSize, Embedding[Float](10, inputSize))
+    val decoder = Decoder[Float]("lstm", numLayer, hiddenSize, Embedding[Float](10, inputSize))
 
     val input = Tensor.ones[Float](batchSize, seqLen)
     val input2 = Tensor[Float](batchSize, seqLen)
@@ -59,12 +60,9 @@ class Seq2seqSpec extends FlatSpec with Matchers with BeforeAndAfter {
     val hiddenSize = 5
     val batchSize = 1
     val seqLen = 2
-    val encoder = Encoder[Float](Array(LSTM[Float](hiddenSize, returnSequences = true),
-      LSTM[Float](hiddenSize, returnSequences = true),
-      LSTM[Float](hiddenSize, returnSequences = true)), Embedding(10, inputSize))
-    val decoder = Decoder[Float](Array(LSTM[Float](hiddenSize, returnSequences = true),
-      LSTM[Float](hiddenSize, returnSequences = true),
-      LSTM[Float](hiddenSize, returnSequences = true)), Embedding(10, inputSize))
+    val numLayer = 3
+    val encoder = Encoder[Float]("lstm", numLayer, hiddenSize, Embedding[Float](10, inputSize))
+    val decoder = Decoder[Float]("lstm", numLayer, hiddenSize, Embedding[Float](10, inputSize))
 
     val input = Tensor.ones[Float](batchSize, seqLen)
     val input2 = Tensor[Float](batchSize, seqLen)

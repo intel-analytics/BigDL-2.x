@@ -28,6 +28,7 @@ import com.intel.analytics.zoo.pipeline.api.keras.layers.utils.KerasUtils
 import com.intel.analytics.zoo.pipeline.api.keras.layers._
 import com.intel.analytics.zoo.pipeline.api.keras.models.{Model, Sequential}
 
+import scala.collection.mutable.ArrayBuffer
 import scala.reflect.ClassTag
 
 class Decoder[T: ClassTag](val rnns: Array[Recurrent[T]],
@@ -73,29 +74,28 @@ class Decoder[T: ClassTag](val rnns: Array[Recurrent[T]],
 }
 
 object Decoder {
-  def apply[@specialized(Float, Double) T: ClassTag](rnn: Array[Recurrent[T]],
-    embedding: KerasLayer[Tensor[T], Tensor[T], T] = null,
-    inputShape: Shape = null)(implicit ev: TensorNumeric[T]): Decoder[T] = {
-    new Decoder[T](rnn, embedding, inputShape)
+  def apply[@specialized(Float, Double) T: ClassTag](rnns: Array[Recurrent[T]],
+    embedding: KerasLayer[Tensor[T], Tensor[T], T],
+    inputShape: Shape)(implicit ev: TensorNumeric[T]): Decoder[T] = {
+    new Decoder[T](rnns, embedding, inputShape)
   }
 
-//  def apply[@specialized(Float, Double) T: ClassTag](rnnType: String,
-//    numLayers: Int,
-//    hiddenSize: Int,
-//    dropout: Double,
-//    embedding: KerasLayer[Tensor[T], Tensor[T], T] = null,
-//    inputShape: Shape = null)(implicit ev: TensorNumeric[T]): Decoder[T] = {
-//    val rnn = new ArrayBuffer[Recurrent[T]]()
-//    rnnType.toLowerCase() match {
-//      case "lstm" =>
-//        for (i <- 1 to numLayers) rnn.append(LSTM(hiddenSize, returnSequences = true))
-//      case "gru" => {
-//        for (i <- 1 to numLayers) rnn.append(GRU(hiddenSize, returnSequences = true))
-//      }
-//      case _ => throw new IllegalArgumentException(s"Please use " +
-//        s"Decoder(rnn: Array[Recurrent[T]], embedding: KerasLayer[Activity, Activity, T])" +
-//        s"to create a decoder")
-//    }
-//    Decoder[T](rnn.toArray, embedding, inputShape)
-//  }
+  def apply[@specialized(Float, Double) T: ClassTag](rnnType: String,
+    numLayers: Int,
+    hiddenSize: Int,
+    embedding: KerasLayer[Tensor[T], Tensor[T], T] = null,
+    inputShape: Shape = null)(implicit ev: TensorNumeric[T]): Decoder[T] = {
+    val rnn = new ArrayBuffer[Recurrent[T]]()
+    rnnType.toLowerCase() match {
+      case "lstm" =>
+        for (i <- 1 to numLayers) rnn.append(LSTM(hiddenSize, returnSequences = true))
+      case "gru" => {
+        for (i <- 1 to numLayers) rnn.append(GRU(hiddenSize, returnSequences = true))
+      }
+      case _ => throw new IllegalArgumentException(s"Please use " +
+        s"Decoder(rnn: Array[Recurrent[T]], embedding: KerasLayer[Activity, Activity, T])" +
+        s"to create a decoder")
+    }
+    Decoder[T](rnn.toArray, embedding, inputShape)
+  }
 }
