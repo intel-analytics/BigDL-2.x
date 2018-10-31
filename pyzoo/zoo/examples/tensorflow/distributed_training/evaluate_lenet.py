@@ -29,14 +29,14 @@ from nets import lenet
 slim = tf.contrib.slim
 
 
-def main():
+def main(data_num):
 
     sc = init_nncontext()
 
     # get data, pre-process and create TFDataset
     (images_data, labels_data) = mnist.read_data_sets("/tmp/mnist", "test")
-    image_rdd = sc.parallelize(images_data)
-    labels_rdd = sc.parallelize(labels_data)
+    image_rdd = sc.parallelize(images_data[:data_num])
+    labels_rdd = sc.parallelize(labels_data[:data_num])
     rdd = image_rdd.zip(labels_rdd) \
         .map(lambda rec_tuple: [normalizer(rec_tuple[0], mnist.TRAIN_MEAN, mnist.TRAIN_STD),
                                 np.array(rec_tuple[1])])
@@ -73,4 +73,9 @@ def main():
 
 
 if __name__ == '__main__':
-    main()
+
+    data_num = 60000
+
+    if len(sys.argv) > 1:
+        data_num = int(sys.argv[1])
+    main(data_num)

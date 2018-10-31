@@ -262,7 +262,7 @@ else
 fi
 
 export SPARK_DRIVER_MEMORY=20g
-python ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/tensorflow/distributed_training/train_lenet.py
+python ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/tensorflow/distributed_training/train_lenet.py 1 1000
 exit_status=$?
 if [ $exit_status -ne 0 ];
 then
@@ -271,7 +271,7 @@ then
     exit $exit_status
 fi
 
-python ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/tensorflow/distributed_training/evaluate_lenet.py
+python ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/tensorflow/distributed_training/evaluate_lenet.py 1000
 
 exit_status=$?
 if [ $exit_status -ne 0 ];
