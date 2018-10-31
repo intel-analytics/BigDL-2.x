@@ -52,6 +52,7 @@ class TFNet(graphDef: TFGraphHolder,
 
   override def finalize(): Unit = {
     this.graph.close()
+    this.sess.close()
   }
 
   // todo if an exception is thrown during forward or backward, there will be memory leak
