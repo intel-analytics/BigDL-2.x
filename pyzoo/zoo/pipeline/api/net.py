@@ -27,7 +27,7 @@ from bigdl.nn.criterion import Criterion
 from bigdl.nn.layer import Model as BModel
 from bigdl.nn.layer import Layer
 from bigdl.util.common import to_list, callBigDlFunc, get_spark_context, \
-    JavaValue, get_node_and_core_number
+    JavaValue, get_node_and_core_number, callJavaFunc
 from zoo.common import Sample, JTensor
 from zoo.pipeline.api.keras.engine.topology import ZooKerasLayer, KerasNet
 from bigdl.optim.optimizer import Optimizer, EveryEpoch
@@ -233,6 +233,9 @@ class TFNet(KerasNet):
             shutil.rmtree(temp)
 
         return net
+
+    def close(self):
+        callJavaFunc(self.value.close)
 
 
 def _find_placeholders(grads):

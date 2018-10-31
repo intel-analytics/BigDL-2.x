@@ -50,6 +50,10 @@ class TFNet(graphDef: TFGraphHolder,
                     config: Array[Int])
   extends KerasNet[Float] {
 
+  override def finalize(): Unit = {
+    this.graph.close()
+  }
+
   // todo if an exception is thrown during forward or backward, there will be memory leak
   // maybe create a resource manager to handle tensor creation and destruction
 
@@ -563,6 +567,12 @@ class TFNet(graphDef: TFGraphHolder,
 
   override def computeOutputShape(calcInputShape: Shape): Shape = {
     LayerWrapperByForward.computeOutputShape[Float](doBuild(calcInputShape), calcInputShape)
+  }
+
+
+  def close(): Unit = {
+    this.sess.close()
+    this.graph.close()
   }
 }
 
