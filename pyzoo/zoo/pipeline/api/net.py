@@ -27,9 +27,8 @@ from bigdl.nn.criterion import Criterion
 from bigdl.nn.layer import Model as BModel
 from bigdl.nn.layer import Layer
 from bigdl.util.common import to_list, callBigDlFunc, get_spark_context, \
-    JavaValue, get_node_and_core_number
+    JavaValue, get_node_and_core_number, callJavaFunc
 from zoo.common import Sample, JTensor
-from zoo.feature.image import ImageSet
 from zoo.pipeline.api.keras.engine.topology import ZooKerasLayer, KerasNet
 from bigdl.optim.optimizer import Optimizer, EveryEpoch
 from bigdl.optim.optimizer import MaxEpoch
@@ -200,86 +199,19 @@ class Net:
         return BModel.load_keras(json_path, hdf5_path, by_name)
 
 
-def to_sample_rdd(x, y, sc, num_slices=None):
-    """
-    Conver x and y into RDD[Sample]
-    :param sc: SparkContext
-    :param x: ndarray and the first dimension should be batch
-    :param y: ndarray and the first dimension should be batch
-    :param numSlices:
-    :return:
-    """
-    x_rdd = sc.parallelize(x, num_slices)
-    y_rdd = sc.parallelize(y, num_slices)
-    return x_rdd.zip(y_rdd).map(lambda item: Sample.from_ndarray(item[0], item[1]))
-
-
-class TFNet(Layer):
-    def __init__(self, path, input_names=None, output_names=None, bigdl_type="float"):
+class TFNet(KerasNet):
+    def __init__(self, path, input_names=None, output_names=None):
+        self.bigdl_type = "float"
         if input_names is None and output_names is None:
-            super(TFNet, self).__init__(None, bigdl_type,
-                                        path)
+            self.value = callBigDlFunc(
+                self.bigdl_type, "createTFNet", path)
         else:
             if isinstance(input_names, six.string_types):
                 input_names = [input_names]
             if isinstance(output_names, six.string_types):
                 output_names = [output_names]
-            super(TFNet, self).__init__(None, bigdl_type,
-                                        path,
-                                        input_names,
-                                        output_names)
-
-    @staticmethod
-    def check_input(input):
-        """
-        :param input: ndarray or list of ndarray or JTensor or list of JTensor.
-        :return: (list of JTensor, isTable)
-        """
-        def to_jtensor(i):
-            if isinstance(i, np.ndarray):
-                return JTensor.from_ndarray(i)
-            elif isinstance(i, JTensor):
-                return i
-            else:
-                raise Exception("Error unknown input type %s" % type(i))
-        if type(input) is list:
-            if len(input) == 0:
-                raise Exception('Error when checking: empty input')
-            return list(map(lambda i: to_jtensor(i), input)), True
-        else:
-            return [to_jtensor(input)], False
-
-    def predict(self, x, batch_per_thread=-1, distributed=True):
-        """
-        Use a model to do prediction.
-        """
-        if isinstance(x, ImageSet):
-            results = callBigDlFunc(self.bigdl_type, "zooPredict",
-                                    self.value,
-                                    x,
-                                    batch_per_thread)
-            return ImageSet(results)
-        if distributed:
-            if isinstance(x, np.ndarray):
-                data_rdd = to_sample_rdd(x, np.zeros([x.shape[0]]), get_spark_context())
-            elif isinstance(x, RDD):
-                data_rdd = x
-            else:
-                raise TypeError("Unsupported prediction data type: %s" % type(x))
-            results = callBigDlFunc(self.bigdl_type, "zooPredict",
-                                    self.value,
-                                    data_rdd,
-                                    batch_per_thread)
-            return results.map(lambda result: Layer.convert_output(result))
-        else:
-            if isinstance(x, np.ndarray) or isinstance(x, list):
-                results = callBigDlFunc(self.bigdl_type, "zooPredict",
-                                        self.value,
-                                        self._to_jtensors(x),
-                                        batch_per_thread)
-                return [Layer.convert_output(result) for result in results]
-            else:
-                raise TypeError("Unsupported prediction data type: %s" % type(x))
+            self.value = callBigDlFunc(
+                self.bigdl_type, "createTFNet", path, input_names, output_names)
 
     @staticmethod
     def from_export_folder(folder):
@@ -301,6 +233,9 @@ class TFNet(Layer):
             shutil.rmtree(temp)
 
         return net
+
+    def close(self):
+        callJavaFunc(self.value.close)
 
 
 def _find_placeholders(grads):
