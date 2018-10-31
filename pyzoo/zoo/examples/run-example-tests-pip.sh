@@ -227,7 +227,7 @@ if [ -f analytics-zoo-models/ssd_mobilenet_v1_coco_2017_11_17.tar.gz ]
 then
    echo "analytics-zoo-models/bigdl_inception-v1_imagenet_0.4.0.model already exists."
 else
-   wget $FTP_URI/analytics-zoo-models/tensorflow/ssd_mobilenet_v1_coco_2017_11_17.tar.gz \
+   wget http://download.tensorflow.org/models/object_detection/ssd_mobilenet_v1_coco_2017_11_17.tar.gz \
     -P analytics-zoo-models
    tar zxf analytics-zoo-models/ssd_mobilenet_v1_coco_2017_11_17.tar.gz -C analytics-zoo-models/
 fi
