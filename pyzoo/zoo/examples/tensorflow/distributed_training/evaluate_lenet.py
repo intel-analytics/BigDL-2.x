@@ -74,7 +74,7 @@ def main(data_num):
 
 if __name__ == '__main__':
 
-    data_num = 60000
+    data_num = 10000
 
     if len(sys.argv) > 1:
         data_num = int(sys.argv[1])
