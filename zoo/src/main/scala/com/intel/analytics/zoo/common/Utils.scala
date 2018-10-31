@@ -18,12 +18,16 @@ package com.intel.analytics.zoo.common
 
 import java.io._
 
-import com.intel.analytics.bigdl.utils.File
+import com.intel.analytics.bigdl.nn.abstractnn.Activity
+import com.intel.analytics.bigdl.tensor.Tensor
+import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric
+import com.intel.analytics.bigdl.utils.{File, T, Table}
 import com.intel.analytics.zoo.common.NNContext.getClass
 import org.apache.commons.io.filefilter.WildcardFileFilter
 import org.apache.log4j.Logger
 
 import scala.collection.mutable.ArrayBuffer
+import scala.reflect.ClassTag
 
 private[zoo] object Utils {
 
@@ -59,6 +63,49 @@ private[zoo] object Utils {
     throw new AnalyticsZooException(errMessage, cause)
   }
 
+  def cat[@specialized(Float, Double) T: ClassTag]
+    (tensors: Array[Tensor[T]])(implicit ev: TensorNumeric[T]): Tensor[T] = {
+    val sizes = tensors.head.size()
+    val newTensor = Tensor[T](Array(tensors.size) ++ sizes)
+
+    for (i <- 1 to tensors.size) {
+      newTensor.select(1, i).copy(tensors(i - 1))
+    }
+    newTensor
+  }
+
+  def cat[@specialized(Float, Double) T: ClassTag]
+  (tables: Array[Table])(implicit ev: TensorNumeric[T]): Table = {
+    val size = tables.head.length()
+    val res = T()
+    for (i <- 1 to size) {
+      res.insert(cat(tables.map(_[Tensor[T]](i))))
+    }
+    res
+  }
+
+  def cat[@specialized(Float, Double) T: ClassTag]
+  (activities: Array[Activity])(implicit ev: TensorNumeric[T]): Activity = {
+    if (activities.head.isTensor) cat(activities.map(_.toTensor))
+    else cat(activities.map(_.toTable))
+  }
+
+  def split[@specialized(Float, Double) T: ClassTag]
+  (tensor: Tensor[T])(implicit ev: TensorNumeric[T]): Array[Tensor[T]] = {
+    tensor.split(1)
+  }
+
+  def split[@specialized(Float, Double) T: ClassTag]
+  (activity: Activity)(implicit ev: TensorNumeric[T]): Array[Activity] = {
+    if (activity.isTensor) split(activity.toTensor)
+    else {
+      val table = activity.toTable
+      require(table.length() <  3, "only support split table with length < 3")
+      val data1 = table[Tensor[T]](1).split(1)
+      val data2 = table[Tensor[T]](2).split(1)
+      data1.zip(data2).map(x => T(x._1, x._2))
+    }
+  }
 }
 
 class AnalyticsZooException(message: String, cause: Throwable)

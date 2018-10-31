@@ -16,51 +16,78 @@
 
 package com.intel.analytics.zoo.models.seq2seq
 
-import com.intel.analytics.bigdl.nn.abstractnn.{AbstractModule}
+import com.intel.analytics.bigdl.nn.abstractnn.{AbstractModule, Activity}
 import com.intel.analytics.bigdl.nn.keras.KerasLayer
 import com.intel.analytics.bigdl.tensor.Tensor
 import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric
-import com.intel.analytics.bigdl.utils.{Shape, T, Table}
+import com.intel.analytics.bigdl.utils.{Shape, SingleShape, MultiShape, T}
 import com.intel.analytics.zoo.pipeline.api.Net
 import com.intel.analytics.zoo.pipeline.api.keras.layers.utils.KerasUtils
-import com.intel.analytics.zoo.pipeline.api.keras.layers.{GRU, LSTM, Recurrent}
+import com.intel.analytics.zoo.pipeline.api.keras.layers._
 import com.intel.analytics.zoo.pipeline.api.keras.models.Sequential
+import com.intel.analytics.zoo.common.Utils
 
-import scala.collection.mutable.ArrayBuffer
 import scala.reflect.ClassTag
 
-class Encoder[T: ClassTag](val rnn: Array[Recurrent[T]],
+class Encoder[T: ClassTag](val rnns: Array[Recurrent[T]],
   val embedding: KerasLayer[Tensor[T], Tensor[T], T],
   val inputShape: Shape = null)(implicit ev: TensorNumeric[T])
-  extends KerasLayer[Tensor[T], Table, T](KerasUtils.addBatch(inputShape))
+  extends KerasLayer[Tensor[T], Activity, T](KerasUtils.addBatch(inputShape))
     with Net {
 
-  override def doBuild(inputShape: Shape): AbstractModule[Tensor[T], Table, T] = {
+  override def doBuild(inputShape: Shape): AbstractModule[Tensor[T], Activity, T] = {
     val layer = Sequential()
-    if (embedding != null) layer.add(embedding)
-    rnn.foreach(layer.add(_))
-    layer.asInstanceOf[AbstractModule[Tensor[T], Table, T]]
+    layer.add(InputLayer(KerasUtils.removeBatch(inputShape)))
+    if (embedding != null) {
+      layer.add(embedding)
+    }
+    rnns.foreach(layer.add(_))
+    layer.asInstanceOf[AbstractModule[Tensor[T], Activity, T]]
   }
 
-  override def updateOutput(input: Tensor[T]): Table = {
-    val laborOutput = labor.updateOutput(input)
-
-    // concat array of states(batch x hidden) to (batch x hidden x numLayers)
-    val states = rnn.map(_.getHiddenState())
-    val headState = states.head
-    val catStates = if (headState.isTensor) {
-      // non LSTM
-      Tensor(states.map(_.toTensor.storage().array()).flatten,
-        shape = headState.toTensor.size() ++ Array(rnn.length))
+  override def computeOutputShape(inputShape: Shape): Shape = {
+    val rnnShape = labor.getOutputShape()
+    val sizes = rnnShape.toSingle().toArray
+    val statesShape = if (rnns.head.getName().toLowerCase.contains("lstm")) {
+        SingleShape(List(sizes.head, 2, rnns.length) ++ sizes.drop(2))
     } else {
-      // LSMT
-      T(Tensor(states.map(_.toTable[Tensor[T]](0).storage().array()).flatten,
-        shape = headState.toTensor.size() ++ Array(rnn.length)),
-      Tensor(states.map(_.toTable[Tensor[T]](1).storage().array()).flatten,
-        shape = headState.toTensor.size() ++ Array(rnn.length)))
-      }
+      SingleShape(List(sizes.head, rnns.length) ++ sizes.drop(2))
+    }
+    Shape(List(rnnShape, statesShape))
+  }
+
+  override def updateOutput(input: Tensor[T]): Activity = {
+    val laborOutput = labor.updateOutput(input)
+    val states = rnns.map(_.getHiddenState())
+
+    // concat states from Array(batch x hidden) to numLayers x batch x hidden
+    val catStates = Utils.cat(states)
     output = T(laborOutput, catStates)
     output
+  }
+
+  override def updateGradInput(input: Tensor[T], gradOutput: Activity): Tensor[T] = {
+    val rnnGradOutput = gradOutput.toTable[Tensor[T]](1)
+    val gradStates = gradOutput.toTable[Activity](2)
+
+    // split states from numLayers x batch x hidden to Array(batch, hidden)
+    val splitStates = Utils.split(gradStates)
+    for ((rnn, state) <- rnns.zip(splitStates)) {
+      rnn.setGradHiddenState(state)
+    }
+    labor.updateGradInput(input, rnnGradOutput)
+  }
+
+  override def accGradParameters(input: Tensor[T], gradOutput: Activity): Unit = {
+    val rnnGradOutput = gradOutput.toTable[Tensor[T]](1)
+    val gradStates = gradOutput.toTable[Activity](2)
+
+    // split states from numLayers x batch x hidden to Array(batch, hidden)
+    val splitStates = Utils.split(gradStates)
+    for ((rnn, state) <- rnns.zip(splitStates)) {
+      rnn.setGradHiddenState(state)
+    }
+    labor.accGradParameters(input, rnnGradOutput)
   }
 }
 
@@ -71,23 +98,23 @@ object Encoder {
     new Encoder[T](rnn, embedding, inputShape)
   }
 
-  def apply[@specialized(Float, Double) T: ClassTag](rnnType: String,
-    numLayers: Int,
-    hiddenSize: Int,
-    dropout: Double,
-    embedding: KerasLayer[Tensor[T], Tensor[T], T] = null,
-    inputShape: Shape = null)(implicit ev: TensorNumeric[T]): Encoder[T] = {
-    val rnn = new ArrayBuffer[Recurrent[T]]()
-    rnnType.toLowerCase() match {
-      case "lstm" =>
-        for (i <- 1 to numLayers) rnn.append(LSTM(hiddenSize, returnSequences = true))
-      case "gru" => {
-        for (i <- 1 to numLayers) rnn.append(GRU(hiddenSize, returnSequences = true))
-      }
-      case _ => throw new IllegalArgumentException(s"Please use " +
-        s"Encoder(rnn: Array[Recurrent[T]], embedding: KerasLayer[Activity, Activity, T])" +
-        s"to create a encoder")
-    }
-    Encoder[T](rnn.toArray, embedding, inputShape)
-  }
+//  def apply[@specialized(Float, Double) T: ClassTag](rnnType: String,
+//    numLayers: Int,
+//    hiddenSize: Int,
+//    dropout: Double,
+//    embedding: KerasLayer[Tensor[T], Tensor[T], T] = null,
+//    inputShape: Shape = null)(implicit ev: TensorNumeric[T]): Encoder[T] = {
+//    val rnn = new ArrayBuffer[Recurrent[T]]()
+//    rnnType.toLowerCase() match {
+//      case "lstm" =>
+//        for (i <- 1 to numLayers) rnn.append(LSTM(hiddenSize, returnSequences = true))
+//      case "gru" => {
+//        for (i <- 1 to numLayers) rnn.append(GRU(hiddenSize, returnSequences = true))
+//      }
+//      case _ => throw new IllegalArgumentException(s"Please use " +
+//        s"Encoder(rnn: Array[Recurrent[T]], embedding: KerasLayer[Activity, Activity, T])" +
+//        s"to create a encoder")
+//    }
+//    Encoder[T](rnn.toArray, embedding, inputShape)
+//  }
 }
