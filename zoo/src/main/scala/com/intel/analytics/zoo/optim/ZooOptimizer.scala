@@ -15,7 +15,7 @@ class ZooOptimizer[T: ClassTag, D](optimzer: Optimizer[T, D],
                                    model: Module[T],
                                    trainRdd: RDD[Sample[T]],
                                    batchSize: Int,
-                                   splitsNum: Int = 1) {
+                                   nSplits: Int = 1) {
 
   def setValidation(trigger: Trigger, dataset: DataSet[MiniBatch[T]],
                     vMethods: Array[ValidationMethod[T]]): this.type = {
@@ -297,11 +297,11 @@ class ZooOptimizer[T: ClassTag, D](optimzer: Optimizer[T, D],
 
   def optimize() = {
 
-    if (splitsNum == 1) {
+    if (nSplits == 1) {
       optimzer.optimize()
     } else {
 
-      val splits: Array[Double] = (0 to splitsNum - 1).map(x => 1.0 / splitsNum).toArray
+      val splits: Array[Double] = (0 to nSplits - 1).map(x => 1.0 / nSplits).toArray
       val trainRddArray: Array[RDD[Sample[T]]] = trainRdd.randomSplit(splits, 1L)
 
       trainRddArray.map(rdd => {
@@ -323,6 +323,7 @@ object ZooOptimizer {
     * @param sampleRDD           training Samples
     * @param criterion           loss function
     * @param batchSize           mini batch size
+    * @param nSplits             splits of train rdd
     * @param featurePaddingParam feature padding strategy, see
     *                            [[com.intel.analytics.bigdl.dataset.PaddingParam]] for details.
     * @param labelPaddingParam   label padding strategy, see
@@ -334,13 +335,13 @@ object ZooOptimizer {
                           sampleRDD: RDD[Sample[T]],
                           criterion: Criterion[T],
                           batchSize: Int,
-                          splitsNum: Int = 1,
+                          nSplits: Int = 1,
                           featurePaddingParam: PaddingParam[T] = null,
                           labelPaddingParam: PaddingParam[T] = null
                         )(implicit ev: TensorNumeric[T]): ZooOptimizer[T, MiniBatch[T]] = {
 
     val optimizer = Optimizer(model, sampleRDD, criterion, batchSize, featurePaddingParam, labelPaddingParam)
-    new ZooOptimizer(optimizer, model, sampleRDD, batchSize, splitsNum)
+    new ZooOptimizer(optimizer, model, sampleRDD, batchSize, nSplits)
   }
 
 
@@ -354,6 +355,7 @@ object ZooOptimizer {
     * @param criterion     loss function
     * @param batchSize     mini batch size
     * @param miniBatchImpl An User-Defined MiniBatch implementation
+    * @param nSplits       splits of train rdd
     * @return an new Optimizer
     */
   def apply[T: ClassTag](
@@ -362,10 +364,10 @@ object ZooOptimizer {
                           criterion: Criterion[T],
                           batchSize: Int,
                           miniBatchImpl: MiniBatch[T],
-                          splitsNum: Int
+                          nSplits: Int
                         )(implicit ev: TensorNumeric[T]): ZooOptimizer[T, MiniBatch[T]] = {
     val optimizer = Optimizer(model, sampleRDD, criterion, batchSize, miniBatchImpl)
-    new ZooOptimizer(optimizer, model, sampleRDD, batchSize, splitsNum)
+    new ZooOptimizer(optimizer, model, sampleRDD, batchSize, nSplits)
   }
 
 }

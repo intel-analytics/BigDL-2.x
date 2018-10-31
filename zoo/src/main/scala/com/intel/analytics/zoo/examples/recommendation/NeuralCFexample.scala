@@ -38,7 +38,8 @@ case class NeuralCFParams(val inputDir: String = "./data/ml-1m",
                           val batchSize: Int = 80000,
                           val nEpochs: Int = 10,
                           val learningRate: Double = 1e-3,
-                          val learningRateDecay: Double = 1e-6
+                          val learningRateDecay: Double = 1e-6,
+                          val nSplits: Int = 3
                          )
 
 case class Rating(userId: Int, itemId: Int, label: Int)
@@ -99,19 +100,19 @@ object NeuralCFexample {
     val validationRdds = validationpairFeatureRdds.map(x => x.sample)
 
     val optimMethod: Adam[Float] = new Adam[Float](
-      learningRate = 5e-3,
-      learningRateDecay = 1e-6)
+      learningRate = param.learningRate,
+      learningRateDecay = param.learningRateDecay)
 
     val optimizer: ZooOptimizer[Float, MiniBatch[Float]] = ZooOptimizer(
       model = ncf,
       sampleRDD = trainRdds,
       criterion = ClassNLLCriterion[Float](),
       batchSize = param.batchSize,
-      splitsNum = 3)
+      nSplits = 3)
 
     optimizer
       .setOptimMethod(optimMethod)
-      .setEndWhen(Trigger.maxEpoch(10))
+      .setEndWhen(Trigger.maxEpoch(param.nEpochs))
       .optimize()
 
     val results = ncf.predict(validationRdds)
