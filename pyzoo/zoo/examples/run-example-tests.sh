@@ -60,7 +60,7 @@ ${SPARK_HOME}/bin/spark-submit \
     --conf spark.driver.extraClassPath=${ANALYTICS_ZOO_JAR} \
     --conf spark.executor.extraClassPath=${ANALYTICS_ZOO_JAR} \
     ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/textclassification/text_classification.py \
-    --nb_epoch 2 \
+    --nb_epoch 1 \
     --data_path analytics-zoo-data/data/20news-18828 \
     --embedding_path analytics-zoo-data/data/glove.6B
 
