@@ -158,8 +158,8 @@ else
     -P analytics-zoo-data/data/dogs-vs-cats
    unzip analytics-zoo-data/data/dogs-vs-cats/train.zip -d analytics-zoo-data/data/dogs-vs-cats
    mkdir -p analytics-zoo-data/data/dogs-vs-cats/samples
-   cp analytics-zoo-data/data/dogs-vs-cats/train/cat.71* analytics-zoo-data/data/dogs-vs-cats/samples
-   cp analytics-zoo-data/data/dogs-vs-cats/train/dog.71* analytics-zoo-data/data/dogs-vs-cats/samples
+   cp analytics-zoo-data/data/dogs-vs-cats/train/cat.7* analytics-zoo-data/data/dogs-vs-cats/samples
+   cp analytics-zoo-data/data/dogs-vs-cats/train/dog.7* analytics-zoo-data/data/dogs-vs-cats/samples
    # echo "Finished downloading images"
 fi
 
@@ -262,7 +262,7 @@ else
 fi
 
 export SPARK_DRIVER_MEMORY=20g
-python ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/tensorflow/distributed_training/train_lenet.py 1 1000
+python ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/tensorflow/distributed_training/train_lenet.py
 exit_status=$?
 if [ $exit_status -ne 0 ];
 then
@@ -271,7 +271,7 @@ then
     exit $exit_status
 fi
 
-python ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/tensorflow/distributed_training/evaluate_lenet.py 1000
+python ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/tensorflow/distributed_training/evaluate_lenet.py
 
 exit_status=$?
 if [ $exit_status -ne 0 ];
