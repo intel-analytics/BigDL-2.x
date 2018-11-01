@@ -51,6 +51,7 @@ Yarn Test Suite
    Create Directory                 /tmp/objectdetection/output
    Build SparkJar                   spark_2.x
    Set Environment Variable         SPARK_HOME               /opt/work/spark-2.1.0-bin-hadoop2.7
+   Set Environment Variable         HADOOP_CONF_DIR          /opt/work/hadoop-2.6.5/etc/hadoop
    Set Environment Variable         http_proxy               ${http_proxy}
    Set Environment Variable         https_proxy              ${https_proxy}
    ${submit}=                       Catenate                 SEPARATOR=/    /opt/work/spark-2.1.0-bin-hadoop2.7/bin    spark-submit
