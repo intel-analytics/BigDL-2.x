@@ -72,7 +72,7 @@ class Embedding(ZooKerasLayer):
 
 class WordEmbedding(ZooKerasLayer):
     """
-    Embedding layer with pre-trained weights for words.
+    Embedding layer that directly loads pre-trained word vectors as weights.
     Turn non-negative integers (indices) into dense vectors of fixed size.
     Currently only GloVe embedding is supported.
     The input of this layer should be 2D.

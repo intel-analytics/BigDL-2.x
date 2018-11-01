@@ -1,5 +1,5 @@
-Analytics Zoo provides a series of Text APIs for end-to-end text processing pipeline,
-including text loading, pre-processing, inference, etc.
+Analytics Zoo provides a series of text related APIs for end-to-end text processing pipeline,
+including text loading, pre-processing, training and inference, etc.
 
 ---
 ## **Load Texts as TextSet**
@@ -143,4 +143,30 @@ transformed_text_set = text_set.generate_sample()
 
 ---
 ## **WordEmbedding**
+This is an Embedding layer that directly loads pre-trained word vectors as weights, 
+which turns non-negative integers (indices) into dense vectors of fixed size.
 
+Currently only GloVe embedding is supported for this layer.
+
+The input of this layer should be 2D.
+
+**Scala**
+```scala
+embedding = WordEmbedding(embeddingFile, wordIndex = null, trainable = false, inputLength: Int = -1)
+```
+
+* `embeddingFile`: The path to the word embedding file. Currently only *glove.6B.50d.txt, glove.6B.100d.txt, glove.6B.200d.txt, glove.6B.300d.txt, glove.42B.300d.txt, glove.840B.300d.txt* are supported. You can download from [here](https://nlp.stanford.edu/projects/glove/).
+* `wordIndex`: Map of word (String) and its corresponding index (integer). The index is supposed to __start from 1__ with 0 reserved for unknown words. During the prediction, if you have words that are not in the wordIndex for the training, you can map them to index 0. Default is null. In this case, all the words in the embeddingFile will be taken into account and you can call `WordEmbedding.getWordIndex(embeddingFile)` to retrieve the map.
+* `trainable`: To configure whether the weights of this layer will be updated or not. Only false is supported for now.
+* `inputLength`: Positive integer. The sequence length of each input.
+
+
+**Python**
+```python
+embedding = WordEmbedding(embedding_file, word_index=None, trainable=False, input_length=None)
+```
+
+* `embedding_file` The path to the word embedding file. Currently only *glove.6B.50d.txt, glove.6B.100d.txt, glove.6B.200d.txt, glove.6B.300d.txt, glove.42B.300d.txt, glove.840B.300d.txt* are supported. You can download from [here](https://nlp.stanford.edu/projects/glove/).
+* `word_index` Dictionary of word (string) and its corresponding index (int). The index is supposed to __start from 1__ with 0 reserved for unknown words. During the prediction, if you have words that are not in the wordIndex for the training, you can map them to index 0. Default is None. In this case, all the words in the embedding_file will be taken into account and you can call `WordEmbedding.get_word_index(embedding_file)` to retrieve the map.
+* `trainable`: To configure whether the weights of this layer will be updated or not. Only False is supported for now.
+* `inputLength`: Positive int. The sequence length of each input.
