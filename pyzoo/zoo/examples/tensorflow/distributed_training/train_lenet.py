@@ -31,14 +31,14 @@ from nets import lenet
 slim = tf.contrib.slim
 
 
-def main():
+def main(max_epoch, data_num):
     sc = init_nncontext()
 
     # get data, pre-process and create TFDataset
     def get_data_rdd(dataset):
         (images_data, labels_data) = mnist.read_data_sets("/tmp/mnist", dataset)
-        image_rdd = sc.parallelize(images_data)
-        labels_rdd = sc.parallelize(labels_data)
+        image_rdd = sc.parallelize(images_data[:data_num])
+        labels_rdd = sc.parallelize(labels_data[:data_num])
         rdd = image_rdd.zip(labels_rdd) \
             .map(lambda rec_tuple: [normalizer(rec_tuple[0], mnist.TRAIN_MEAN, mnist.TRAIN_STD),
                                     np.array(rec_tuple[1])])
@@ -70,10 +70,17 @@ def main():
     optimizer.set_train_summary(TrainSummary("/tmp/az_lenet", "lenet"))
     optimizer.set_val_summary(ValidationSummary("/tmp/az_lenet", "lenet"))
     # kick off training
-    optimizer.optimize(end_trigger=MaxEpoch(5))
+    optimizer.optimize(end_trigger=MaxEpoch(max_epoch))
 
     saver = tf.train.Saver()
     saver.save(optimizer.sess, "/tmp/lenet/")
 
 if __name__ == '__main__':
-    main()
+
+    max_epoch = 5
+    data_num = 60000
+
+    if len(sys.argv) > 1:
+        max_epoch = int(sys.argv[1])
+        data_num = int(sys.argv[2])
+    main(max_epoch, data_num)
