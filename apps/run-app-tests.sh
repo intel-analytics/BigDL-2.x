@@ -272,7 +272,7 @@ rm ${ANALYTICS_ZOO_HOME}/apps/image-similarity/tmp.py
 echo "#6 image-similarity time used:$time6 seconds"
 fi
 
-elif [ RUN_PART2 = 1 ]; then
+if [ RUN_PART2 = 1 ]; then
 echo "#7 start app test for using_variational_autoencoder_and_deep_feature_loss_to_generate_faces"
 #timer
 start=$(date "+%s")
