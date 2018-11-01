@@ -39,12 +39,13 @@ import scala.reflect.ClassTag
  * @tparam T Numeric type of parameter(e.g. weight, bias). Only support float/double now
  */
 class MaxPooling1D[T: ClassTag](
-   val poolSize: Int = 2,
-   val strides: Int = -1,
-   val padding: String = "valid",
-   override val inputShape: Shape = null)(implicit ev: TensorNumeric[T])
+                                 val poolSize: Int = 2,
+                                 val strides: Int = -1,
+                                 val padding: String = "valid",
+                                 override val inputShape: Shape = null)(
+  implicit ev: TensorNumeric[T])
   extends klayers1.MaxPooling1D[T](poolLength = poolSize,
-    stride = strides, borderMode = padding, inputShape) with Net {
+    stride = strides, borderMode = padding, inputShape = inputShape) with Net {
 
 }
 
