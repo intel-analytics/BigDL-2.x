@@ -34,7 +34,7 @@ RUN_PART2=1
 RUN_PART3=1
 fi
 
-if [ RUN_PART1 = 1 ]; then
+if [ $RUN_PART1 = 1 ]; then
 echo "#1 start app test for anomaly-detection-nyc-taxi"
 #timer
 start=$(date "+%s")
@@ -272,7 +272,7 @@ rm ${ANALYTICS_ZOO_HOME}/apps/image-similarity/tmp.py
 echo "#6 image-similarity time used:$time6 seconds"
 fi
 
-if [ RUN_PART2 = 1 ]; then
+if [ $RUN_PART2 = 1 ]; then
 echo "#7 start app test for using_variational_autoencoder_and_deep_feature_loss_to_generate_faces"
 #timer
 start=$(date "+%s")
@@ -354,7 +354,7 @@ time8=$((now-start))
 echo "#8 using_variational_autoencoder_to_generate_faces time used:$time8 seconds"
 fi
 
-if [ RUN_PART3 = 1 ]; then
+if [ $RUN_PART3 = 1 ]; then
 echo "#9 start app test for image-augmentation"
 #timer
 start=$(date "+%s")
