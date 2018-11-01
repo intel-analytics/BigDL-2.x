@@ -24,6 +24,10 @@ import torch
 import onnx.helper as helper
 import onnx
 from zoo.pipeline.api.onnx.onnx_loader import OnnxLoader
+from onnx import backend
+from onnx.backend import test
+from onnx.backend.test.case import node
+from onnx.backend.test.case.node import pool_op_common
 
 
 class TestModelLoading(OnnxTestCase):
@@ -202,6 +206,13 @@ class TestModelLoading(OnnxTestCase):
         input_shape_with_batch = (1, 3, 224, 224)
         self.compare_with_pytorch(pytorch_model, input_shape_with_batch)
 
+    def test_onnx_averagepool2d_padding(self):
+        pytorch_model = torch.nn.Sequential(
+            torch.nn.AvgPool2d(kernel_size=10, padding=4, count_include_pad=False)
+        )
+        input_shape_with_batch = (1, 3, 224, 224)
+        self.compare_with_pytorch(pytorch_model, input_shape_with_batch)
+
     def test_onnx_relu(self):
         pytorch_model = torch.nn.Sequential(
             torch.nn.ReLU()
@@ -363,6 +374,8 @@ class TestModelLoading(OnnxTestCase):
         ]]]).astype(np.float32)
         y = np.array([[[[7, 9],
                         [17, 19]]]]).astype(np.float32)
+        output = OnnxLoader.run_node(node, [x])
+        np.testing.assert_almost_equal(output["y"], y, decimal=5)
 
     def test_onnx_logsoftmax(self):
         pytorch_model = torch.nn.Sequential(
@@ -686,3 +699,52 @@ class TestModelLoading(OnnxTestCase):
 
         output = OnnxLoader.run_node(node, [x, y])
         np.testing.assert_almost_equal(output['greater'], z, decimal=5)
+
+    def test_maxpool1d(self):
+        node = onnx.helper.make_node(
+            'MaxPool',
+            inputs=['x'],
+            outputs=['y'],
+            kernel_shape=[2],
+        )
+        x = np.random.randn(1, 3, 32).astype(np.float32)
+        x_shape = np.array(np.shape(x))
+        kernel_shape = np.array([2])
+        strides = [1]
+        out_shape = pool_op_common.get_output_shape('VALID', x_shape[2:], kernel_shape, strides)
+        padded = x
+        y = pool_op_common.pool(padded, x_shape, kernel_shape, strides, out_shape, [0], 'MAX')
+        output = OnnxLoader.run_node(node, [x])
+        np.testing.assert_almost_equal(output["y"], y, decimal=5)
+
+    def test_maxpool1d_strides(self):
+        node = onnx.helper.make_node(
+            'MaxPool',
+            inputs=['x'],
+            outputs=['y'],
+            kernel_shape=[2],
+            strides=[2]
+        )
+        x = np.random.randn(1, 3, 32).astype(np.float32)
+        x_shape = np.array(np.shape(x))
+        kernel_shape = np.array([2])
+        strides = [2]
+        out_shape = pool_op_common.get_output_shape('VALID', x_shape[2:], kernel_shape, strides)
+        padded = x
+        y = pool_op_common.pool(padded, x_shape, kernel_shape, strides, out_shape, [0], 'MAX')
+        output = OnnxLoader.run_node(node, [x])
+        np.testing.assert_almost_equal(output["y"], y, decimal=5)
+
+    def test_onnx_maxpool1d(self):
+        pytorch_model = torch.nn.Sequential(
+            torch.nn.MaxPool1d(2)
+        )
+        input_shape_with_batch = (1, 3, 32)
+        self.compare_with_pytorch(pytorch_model, input_shape_with_batch)
+
+    def test_maxpool1d_pads(self):
+        pytorch_model = torch.nn.Sequential(
+            torch.nn.MaxPool1d(2, padding=1)
+        )
+        input_shape_with_batch = (1, 3, 32)
+        self.compare_with_pytorch(pytorch_model, input_shape_with_batch)

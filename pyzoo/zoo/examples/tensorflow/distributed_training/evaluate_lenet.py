@@ -29,13 +29,14 @@ from nets import lenet
 slim = tf.contrib.slim
 
 
-def main():
+def main(data_num):
+
     sc = init_nncontext()
 
     # get data, pre-process and create TFDataset
     (images_data, labels_data) = mnist.read_data_sets("/tmp/mnist", "test")
-    image_rdd = sc.parallelize(images_data)
-    labels_rdd = sc.parallelize(labels_data)
+    image_rdd = sc.parallelize(images_data[:data_num])
+    labels_rdd = sc.parallelize(labels_data[:data_num])
     rdd = image_rdd.zip(labels_rdd) \
         .map(lambda rec_tuple: [normalizer(rec_tuple[0], mnist.TRAIN_MEAN, mnist.TRAIN_STD),
                                 np.array(rec_tuple[1])])
@@ -44,7 +45,7 @@ def main():
                                  names=["features", "labels"],
                                  shapes=[[28, 28, 1], [1]],
                                  types=[tf.float32, tf.int32],
-                                 batch_pre_core=20
+                                 batch_per_thread=20
                                  )
 
     # construct the model from TFDataset
@@ -55,7 +56,7 @@ def main():
     with slim.arg_scope(lenet.lenet_arg_scope()):
         logits, end_points = lenet.lenet(images, num_classes=10, is_training=False)
 
-    predictions = tf.argmax(logits, axis=1, output_type=tf.int32)
+    predictions = tf.to_int32(tf.argmax(logits, axis=1))
     correct = tf.expand_dims(tf.to_int32(tf.equal(predictions, labels)), axis=1)
 
     saver = tf.train.Saver()
@@ -72,4 +73,9 @@ def main():
 
 
 if __name__ == '__main__':
-    main()
+
+    data_num = 10000
+
+    if len(sys.argv) > 1:
+        data_num = int(sys.argv[1])
+    main(data_num)
