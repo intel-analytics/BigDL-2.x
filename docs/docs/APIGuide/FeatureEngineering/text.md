@@ -42,7 +42,7 @@ Only need to specify this when sc is not None. Default is 1.
 
 
 ---
-**TextSet Transformations**
+## **TextSet Transformations**
 Analytics Zoo provides many transformation methods for a `TextSet` for text preprocessing pipeline, which will return the transformed `TextSet`:
 
 ### **Tokenization**
@@ -140,3 +140,7 @@ transformedTextSet = textSet.generateSample()
 ```python
 transformed_text_set = text_set.generate_sample()
 ```
+
+---
+## **WordEmbedding**
+
