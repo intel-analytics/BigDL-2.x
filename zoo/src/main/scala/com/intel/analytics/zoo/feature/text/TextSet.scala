@@ -93,7 +93,7 @@ abstract class TextSet {
   }
 
   /**
-   * Do normalization on tokens.
+   * Do normalization on tokens. Need to tokenize first.
    * See Normalizer for more details.
    */
   def normalize(): TextSet = {
@@ -102,6 +102,7 @@ abstract class TextSet {
 
   /**
    * Shape the sequence of tokens to a fixed length. Padding element will be "##".
+   * Need to tokenize first.
    * See SequenceShaper for more details.
    */
   def shapeSequence(
@@ -114,6 +115,7 @@ abstract class TextSet {
    * Map word tokens to indices.
    * Index will start from 1 and corresponds to the occurrence frequency of each word sorted
    * in descending order.
+   * Need to tokenize first.
    * See WordIndexer for more details.
    * After word2idx, you can get the wordIndex map by calling 'getWordIndex'.
    *
@@ -133,6 +135,7 @@ abstract class TextSet {
 
   /**
    * Generate BigDL Sample.
+   * Need to word2idx first.
    * See TextFeatureToSample for more details.
    */
   def generateSample(): TextSet = {

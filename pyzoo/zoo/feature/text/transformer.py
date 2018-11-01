@@ -54,6 +54,7 @@ class Tokenizer(TextTransformer):
 class Normalizer(TextTransformer):
     """
     Removes all dirty characters from tokens and convert to lower case.
+    Need to be tokenize first.
     Original tokens will be replaced by normalized tokens.
 
     >>> normalizer = Normalizer()
@@ -70,6 +71,7 @@ class SequenceShaper(TextTransformer):
     the beginning or the end.
     If the original sequence is shorter than the target length, it will be padded to the end.
     The original token sequence will be replaced by the shaped sequence.
+    Need to tokenize first.
 
     # Arguments
     len: The target length.
@@ -90,6 +92,7 @@ class SequenceShaper(TextTransformer):
 class WordIndexer(TextTransformer):
     """
     Given a wordIndex map, transform tokens to corresponding indices.
+    Need to tokenize first.
 
     # Arguments
     map: Dict with word as its key and index as its value.
@@ -108,6 +111,7 @@ class WordIndexer(TextTransformer):
 class TextFeatureToSample(TextTransformer):
     """
     Transform indexedTokens and label (if any) of a TextFeature to a BigDL Sample.
+    Need to word2idx first.
 
     >>> to_sample = TextFeatureToSample()
     creating: createTextFeatureToSample

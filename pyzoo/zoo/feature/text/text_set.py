@@ -157,7 +157,7 @@ class TextSet(JavaValue):
 
     def normalize(self):
         """
-        Do normalization on tokens.
+        Do normalization on tokens. Need to tokenize first.
         See Normalizer for more details.
 
         :return: TextSet after normalization.
@@ -165,14 +165,15 @@ class TextSet(JavaValue):
         jvalue = callBigDlFunc(self.bigdl_type, "textSetNormalize", self.value)
         return TextSet(jvalue=jvalue)
 
-    def shape_sequence(self, len, mode="pre"):
+    def shape_sequence(self, len, trunc_mode="pre"):
         """
         Shape the sequence of tokens to a fixed length. Padding element will be "##".
+        Need to tokenize first.
         See SequenceShaper for more details.
 
         :return: TextSet after sequence shaping.
         """
-        jvalue = callBigDlFunc(self.bigdl_type, "textSetShapeSequence", self.value, len, mode)
+        jvalue = callBigDlFunc(self.bigdl_type, "textSetShapeSequence", self.value, len, trunc_mode)
         return TextSet(jvalue=jvalue)
 
     def word2idx(self, remove_topN=0, max_words_num=-1):
@@ -180,6 +181,7 @@ class TextSet(JavaValue):
         Map word tokens to indices.
         Index will start from 1 and corresponds to the occurrence frequency of each word sorted
         in descending order.
+        Need to tokenize first.
         See WordIndexer for more details.
 
         :param remove_topN: Int. Remove the topN words with highest frequencies in the case
@@ -196,6 +198,7 @@ class TextSet(JavaValue):
     def generate_sample(self):
         """
         Generate BigDL Sample.
+        Need to word2idx first.
         See TextFeatureToSample for more details.
 
         :return: TextSet with Samples.
