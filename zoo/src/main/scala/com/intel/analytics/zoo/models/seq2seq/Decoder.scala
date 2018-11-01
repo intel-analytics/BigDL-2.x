@@ -21,16 +21,22 @@ import com.intel.analytics.bigdl.nn.keras.KerasLayer
 import com.intel.analytics.bigdl.tensor.Tensor
 import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric
 import com.intel.analytics.bigdl.utils._
-import com.intel.analytics.zoo.common.Utils
+
 import com.intel.analytics.zoo.pipeline.api.Net
 import com.intel.analytics.zoo.pipeline.api.keras.layers.SelectTable
 import com.intel.analytics.zoo.pipeline.api.keras.layers.utils.KerasUtils
 import com.intel.analytics.zoo.pipeline.api.keras.layers._
-import com.intel.analytics.zoo.pipeline.api.keras.models.{Model, Sequential}
+import com.intel.analytics.zoo.pipeline.api.keras.models.{Sequential}
 
 import scala.collection.mutable.ArrayBuffer
 import scala.reflect.ClassTag
 
+/**
+ * [[Decoder]] A generic recurrent neural network decoder
+ * @param rnns rnn layers used for decoder, support stacked rnn layers
+ * @param embedding embedding layer in decoder
+ * @param inputShape shape of input
+ */
 class Decoder[T: ClassTag](val rnns: Array[Recurrent[T]],
   val embedding: KerasLayer[Tensor[T], Tensor[T], T],
   val inputShape: Shape = null)(implicit ev: TensorNumeric[T])
@@ -51,10 +57,13 @@ class Decoder[T: ClassTag](val rnns: Array[Recurrent[T]],
   }
 
   override def updateOutput(input: Activity): Tensor[T] = {
-    val states = input.toTable[Activity](2)
+    val states = input.toTable[Tensor[T]](2)
 
     // split states from numLayers x batch x hidden to Array(batch, hidden)
-    val splitStates = Utils.split(states)
+    val splitStates = if (rnns.head.getName().toLowerCase.contains("lstm"))
+      Utils.splitToTable(states, rnns.size)
+    else Utils.splitToTensor(states, rnns.size)
+
     for ((rnn, state) <- rnns.zip(splitStates)) {
       rnn.setHiddenState(state)
     }
@@ -67,19 +76,33 @@ class Decoder[T: ClassTag](val rnns: Array[Recurrent[T]],
     val gradStates = rnns.map(_.getGradHiddenState())
 
     // concat states from Array(batch x hidden) to numLayers x batch x hidden
-    val catGradstates = Utils.cat(gradStates)
+    val catGradstates = Utils.join(gradStates)
     gradInput = T(rnnsGradInput, catGradstates)
     gradInput
   }
 }
 
 object Decoder {
+  /**
+   * [[Decoder]] A generic recurrent neural network decoder
+   * @param rnns rnn layers used for decoder, support stacked rnn layers
+   * @param embedding embedding layer in decoder
+   * @param inputShape shape of input
+   */
   def apply[@specialized(Float, Double) T: ClassTag](rnns: Array[Recurrent[T]],
     embedding: KerasLayer[Tensor[T], Tensor[T], T],
     inputShape: Shape)(implicit ev: TensorNumeric[T]): Decoder[T] = {
     new Decoder[T](rnns, embedding, inputShape)
   }
 
+  /**
+   * [[Decoder]] A generic recurrent neural network decoder
+   * @param rnnType rnn type used for decoder, currently only support "lstm | gru"
+   * @param numLayers number of layers used in decoder
+   * @param hiddenSize hidden size of decoder
+   * @param embedding embedding layer in decoder
+   * @param inputShape shape of input
+   */
   def apply[@specialized(Float, Double) T: ClassTag](rnnType: String,
     numLayers: Int,
     hiddenSize: Int,

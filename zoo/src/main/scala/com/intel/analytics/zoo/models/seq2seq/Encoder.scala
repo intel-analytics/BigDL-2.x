@@ -20,16 +20,21 @@ import com.intel.analytics.bigdl.nn.abstractnn.{AbstractModule, Activity}
 import com.intel.analytics.bigdl.nn.keras.KerasLayer
 import com.intel.analytics.bigdl.tensor.Tensor
 import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric
-import com.intel.analytics.bigdl.utils.{MultiShape, Shape, SingleShape, T}
+import com.intel.analytics.bigdl.utils.{Shape, SingleShape, T}
 import com.intel.analytics.zoo.pipeline.api.Net
 import com.intel.analytics.zoo.pipeline.api.keras.layers.utils.KerasUtils
 import com.intel.analytics.zoo.pipeline.api.keras.layers._
 import com.intel.analytics.zoo.pipeline.api.keras.models.Sequential
-import com.intel.analytics.zoo.common.Utils
 
 import scala.collection.mutable.ArrayBuffer
 import scala.reflect.ClassTag
 
+/**
+ * [[Encoder]] A generic recurrent neural network encoder
+ * @param rnns rnn layers used for encoder, support stacked rnn layers
+ * @param embedding embedding layer in encoder
+ * @param inputShape shape of input
+ */
 class Encoder[T: ClassTag](val rnns: Array[Recurrent[T]],
   val embedding: KerasLayer[Tensor[T], Tensor[T], T],
   val inputShape: Shape = null)(implicit ev: TensorNumeric[T])
@@ -47,12 +52,13 @@ class Encoder[T: ClassTag](val rnns: Array[Recurrent[T]],
   }
 
   override def computeOutputShape(inputShape: Shape): Shape = {
+    // batch x seq x hidden
     val rnnShape = labor.getOutputShape()
     val sizes = rnnShape.toSingle().toArray
     val statesShape = if (rnns.head.getName().toLowerCase.contains("lstm")) {
-        SingleShape(List(sizes.head, 2, rnns.length) ++ sizes.drop(2))
+        SingleShape(List(sizes.head, 2 * rnns.length * sizes(2)) ++ sizes.drop(3))
     } else {
-      SingleShape(List(sizes.head, rnns.length) ++ sizes.drop(2))
+      SingleShape(List(sizes.head, rnns.length * sizes(2)) ++ sizes.drop(3))
     }
     Shape(List(rnnShape, statesShape))
   }
@@ -61,18 +67,21 @@ class Encoder[T: ClassTag](val rnns: Array[Recurrent[T]],
     val laborOutput = labor.updateOutput(input)
     val states = rnns.map(_.getHiddenState())
 
-    // concat states from Array(batch x hidden) to numLayers x batch x hidden
-    val catStates = Utils.cat(states)
+    // join states from Array(batch x hidden) to batch x numLayers x hidden
+    val catStates = Utils.join(states)
     output = T(laborOutput, catStates)
     output
   }
 
   override def updateGradInput(input: Tensor[T], gradOutput: Activity): Tensor[T] = {
     val rnnGradOutput = gradOutput.toTable[Tensor[T]](1)
-    val gradStates = gradOutput.toTable[Activity](2)
+    val gradStates = gradOutput.toTable[Tensor[T]](2)
 
     // split states from numLayers x batch x hidden to Array(batch, hidden)
-    val splitStates = Utils.split(gradStates)
+    val splitStates = if (rnns.head.getName().toLowerCase.contains("lstm"))
+      Utils.splitToTable(gradStates, rnns.size)
+    else Utils.splitToTensor(gradStates, rnns.size)
+
     for ((rnn, state) <- rnns.zip(splitStates)) {
       rnn.setGradHiddenState(state)
     }
@@ -81,10 +90,13 @@ class Encoder[T: ClassTag](val rnns: Array[Recurrent[T]],
 
   override def accGradParameters(input: Tensor[T], gradOutput: Activity): Unit = {
     val rnnGradOutput = gradOutput.toTable[Tensor[T]](1)
-    val gradStates = gradOutput.toTable[Activity](2)
+    val gradStates = gradOutput.toTable[Tensor[T]](2)
 
     // split states from numLayers x batch x hidden to Array(batch, hidden)
-    val splitStates = Utils.split(gradStates)
+    val splitStates = if (rnns.head.getName().toLowerCase.contains("lstm"))
+      Utils.splitToTable(gradStates, rnns.size)
+    else Utils.splitToTensor(gradStates, rnns.size)
+
     for ((rnn, state) <- rnns.zip(splitStates)) {
       rnn.setGradHiddenState(state)
     }
@@ -93,12 +105,26 @@ class Encoder[T: ClassTag](val rnns: Array[Recurrent[T]],
 }
 
 object Encoder {
+  /**
+   * [[Encoder]] A generic recurrent neural network encoder
+   * @param rnns rnn layers used for encoder, support stacked rnn layers
+   * @param embedding embedding layer in encoder
+   * @param inputShape shape of input
+   */
   def apply[@specialized(Float, Double) T: ClassTag](rnns: Array[Recurrent[T]],
     embedding: KerasLayer[Tensor[T], Tensor[T], T],
     inputShape: Shape)(implicit ev: TensorNumeric[T]): Encoder[T] = {
     new Encoder[T](rnns, embedding, inputShape)
   }
 
+  /**
+   * [[Encoder]] A generic recurrent neural network encoder
+   * @param rnnType rnn type used for encoder, currently only support "lstm | gru"
+   * @param numLayers number of layers used in encoder
+   * @param hiddenSize hidden size of encoder
+   * @param embedding embedding layer in encoder
+   * @param inputShape shape of input
+   */
   def apply[@specialized(Float, Double) T: ClassTag](rnnType: String,
     numLayers: Int,
     hiddenSize: Int,
