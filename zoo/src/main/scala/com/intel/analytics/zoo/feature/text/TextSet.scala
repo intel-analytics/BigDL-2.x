@@ -196,9 +196,11 @@ object TextSet {
    *             ascending order sorted among all subdirectories.
    *             All texts will be given a label according to the subdirectory where it is located.
    *             Labels start from 0.
-   * @param sc An instance of SparkContext if any. Default is null.
-   * @param minPartitions A suggestion value of the minimal partition number.
-   *                      Integer. Default is 1. Only need to specify this when sc is not null.
+   * @param sc An instance of SparkContext.
+   *           If specified, texts will be read as a DistributedTextSet.
+   *           Default is null and in this cases texts will be read as a LocalTextSet.
+   * @param minPartitions Integer. A suggestion value of the minimal partition number for input
+   *                      texts. Only need to specify this when sc is not null. Default is 1.
    * @return TextSet.
    */
   def read(path: String, sc: SparkContext = null, minPartitions: Int = 1): TextSet = {
@@ -260,6 +262,9 @@ object TextSet {
 }
 
 
+/**
+ * LocalTextSet is comprised of array of TextFeature.
+ */
 class LocalTextSet(var array: Array[TextFeature]) extends TextSet {
 
   override def transform(transformer: Preprocessing[TextFeature, TextFeature]): TextSet = {
@@ -301,6 +306,9 @@ class LocalTextSet(var array: Array[TextFeature]) extends TextSet {
 }
 
 
+/**
+ * DistributedTextSet is comprised of RDD of TextFeature.
+ */
 class DistributedTextSet(var rdd: RDD[TextFeature]) extends TextSet {
 
   override def transform(transformer: Preprocessing[TextFeature, TextFeature]): TextSet = {

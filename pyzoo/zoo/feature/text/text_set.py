@@ -226,9 +226,11 @@ class TextSet(JavaValue):
                ascending order sorted among all subdirectories.
                All texts will be given a label according to the subdirectory where it is located.
                Labels start from 0.
-        :param sc: An instance of SparkContext if any. Default is None.
-        :param min_partitions: A suggestion value of the minimal partition number.
-                               Int. Default is 1. Only need to specify this when sc is not None.
+        :param sc: An instance of SparkContext.
+                   If specified, texts will be read as a DistributedTextSet.
+                   Default is None and in this cases texts will be read as a LocalTextSet.
+        :param min_partitions: Int. A suggestion value of the minimal partition number for input texts.
+                               Only need to specify this when sc is not None. Default is 1.
         :return: TextSet.
         """
         jvalue = callBigDlFunc(bigdl_type, "readTextSet", path, sc, min_partitions)
