@@ -114,7 +114,7 @@ object WordEmbedding {
    * Please use this layer as the first layer in a model.
    *
    * @param embeddingFile The path to the embedding file.
-   *                      Currently only the following GloVe files are supported:
+   *                      Currently the following GloVe files are supported:
    *                      "glove.6B.50d.txt", "glove.6B.100d.txt", "glove.6B.200d.txt"
    *                      "glove.6B.300d.txt", "glove.42B.300d.txt", "glove.840B.300d.txt".
    *                      You can download them from: https://nlp.stanford.edu/projects/glove/.

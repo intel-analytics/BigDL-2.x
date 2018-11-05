@@ -53,7 +53,7 @@ class Tokenizer(TextTransformer):
 
 class Normalizer(TextTransformer):
     """
-    Removes all dirty characters from tokens and convert to lower case.
+    Removes all dirty characters (non English alphabet) from tokens and converts words to lower case.
     Need to be tokenize first.
     Original tokens will be replaced by normalized tokens.
 
@@ -74,7 +74,7 @@ class SequenceShaper(TextTransformer):
     Need to tokenize first.
 
     # Arguments
-    len: The target length.
+    len: Positive int. The target length.
     trunc_mode: Truncation mode. Either 'pre' or 'post'. Default is 'pre'.
                 If 'pre', the sequence will be truncated from the beginning.
                 If 'post', the sequence will be truncated from the end.

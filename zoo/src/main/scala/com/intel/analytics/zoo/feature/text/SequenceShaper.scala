@@ -28,7 +28,7 @@ import com.intel.analytics.zoo.feature.text.TruncMode.TruncMode
  * Output key: TextFeature.tokens
  * The original token sequence will be replaced by the shaped sequence.
  *
- * @param len The target length.
+ * @param len Positive integer. The target length.
  * @param truncMode Truncation mode. Either TruncMode.pre or TruncMode.post.
  *                  If TruncMode.pre, the sequence will be truncated from the beginning.
  *                  If TruncMode.post, the sequence will be truncated from the end.

@@ -113,14 +113,15 @@ abstract class TextSet {
 
   /**
    * Map word tokens to indices.
-   * Index will start from 1 and corresponds to the occurrence frequency of each word sorted
-   * in descending order.
+   * Result index will start from 1 and corresponds to the occurrence frequency of each word
+   * sorted in descending order.
    * Need to tokenize first.
    * See WordIndexer for more details.
-   * After word2idx, you can get the wordIndex map by calling 'getWordIndex'.
+   * After word2idx, you can get the generated wordIndex map by calling 'getWordIndex'.
    *
-   * @param removeTopN Integer. Remove the topN words with highest frequencies in the case
-   *                   where those are treated as stopwords. Default is 0, namely remove nothing.
+   * @param removeTopN Non-negative Integer. Remove the topN words with highest frequencies in
+   *                   the case where those are treated as stopwords.
+   *                   Default is 0, namely remove nothing.
    * @param maxWordsNum Integer. The maximum number of words to be taken into consideration.
    *                    Default is -1, namely all words will be considered.
    */
