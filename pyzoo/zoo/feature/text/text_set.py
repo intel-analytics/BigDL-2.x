@@ -233,8 +233,8 @@ class TextSet(JavaValue):
         :param sc: An instance of SparkContext.
                    If specified, texts will be read as a DistributedTextSet.
                    Default is None and in this cases texts will be read as a LocalTextSet.
-        :param min_partitions: Int. A suggestion value of the minimal partition number for input texts.
-                               Only need to specify this when sc is not None. Default is 1.
+        :param min_partitions: Int. A suggestion value of the minimal partition number for input
+                               texts. Only need to specify this when sc is not None. Default is 1.
         :return: TextSet.
         """
         jvalue = callBigDlFunc(bigdl_type, "readTextSet", path, sc, min_partitions)

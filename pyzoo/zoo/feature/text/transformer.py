@@ -53,8 +53,8 @@ class Tokenizer(TextTransformer):
 
 class Normalizer(TextTransformer):
     """
-    Removes all dirty characters (non English alphabet) from tokens and converts words to lower case.
-    Need to be tokenize first.
+    Removes all dirty characters (non English alphabet) from tokens and converts words to
+    lower case. Need to tokenize first.
     Original tokens will be replaced by normalized tokens.
 
     >>> normalizer = Normalizer()
