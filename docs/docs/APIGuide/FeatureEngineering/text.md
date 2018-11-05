@@ -128,7 +128,7 @@ transformed_text_set = text_set.word2idx(remove_topN=0, max_words_num=-1)
 * `max_words_num`: Int. The maximum number of words to be taken into consideration. Default is -1, namely all words will be considered.
 
 
-### **Generation of BigDL Sample**
+### **BigDL Sample Generation**
 Transform indices and label (if any) to a BigDL [Sample](https://bigdl-project.github.io/master/#APIGuide/Data/#sample). 
 Need to word2idx first.
 

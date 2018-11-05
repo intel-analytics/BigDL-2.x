@@ -43,7 +43,7 @@ Only need to specify this when `sc` is not None. Default is 1.
 
 ---
 ## **Build Text Transformation Pipeline**
-You can easily call transformation methods of a `TextSet` in order to build the text transformation pipeline. Please refer to [here](../APIGuide/FeatureEngineering/text.md/#textset-transformations) for more details.
+You can easily call transformation methods of a `TextSet` one by one to build the text transformation pipeline. Please refer to [here](../APIGuide/FeatureEngineering/text/#textset-transformations) for more details.
 
 **Scala Example**
 ```scala
@@ -67,7 +67,7 @@ model.fit(transformedTextSet, batchSize = ..., nbEpoch = ...)
 
 **Python**
 ```python
-model.fit(transformed_text_set, batch_size = ..., nb_epoch = ...)
+model.fit(transformed_text_set, batch_size=..., nb_epoch=...)
 ```
 
 
