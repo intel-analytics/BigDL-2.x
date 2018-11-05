@@ -202,7 +202,7 @@ object TextSet {
    *             Labels start from 0.
    * @param sc An instance of SparkContext.
    *           If specified, texts will be read as a DistributedTextSet.
-   *           Default is null and in this cases texts will be read as a LocalTextSet.
+   *           Default is null and in this case texts will be read as a LocalTextSet.
    * @param minPartitions Integer. A suggestion value of the minimal partition number for input
    *                      texts. Only need to specify this when sc is not null. Default is 1.
    * @return TextSet.

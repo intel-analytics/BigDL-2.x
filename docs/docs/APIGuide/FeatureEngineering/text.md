@@ -142,6 +142,7 @@ transformedTextSet = textSet.generateSample()
 transformed_text_set = text_set.generate_sample()
 ```
 
+
 ---
 ## **WordEmbedding**
 This is a special Embedding layer that directly loads pre-trained word vectors as weights, 
