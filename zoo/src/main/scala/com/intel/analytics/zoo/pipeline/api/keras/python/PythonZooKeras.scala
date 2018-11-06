@@ -854,7 +854,7 @@ class PythonZooKeras[T: ClassTag](implicit ev: TensorNumeric[T]) extends PythonZ
   }
 
   def createZooKerasTimeDistributed(
-      layer: KerasLayer[Tensor[T], Tensor[T], T],
+      layer: KerasLayer[Activity, Tensor[T], T],
       inputShape: JList[Int] = null): TimeDistributed[T] = {
     TimeDistributed(layer, toScalaShape(inputShape))
   }

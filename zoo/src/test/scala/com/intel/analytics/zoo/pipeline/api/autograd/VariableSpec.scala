@@ -16,9 +16,11 @@
 
 package com.intel.analytics.zoo.pipeline.api.autograd
 
-import com.intel.analytics.bigdl.utils.Shape
+import com.intel.analytics.bigdl.utils.{Shape, T}
+import com.intel.analytics.bigdl.tensor.Tensor
 import com.intel.analytics.zoo.pipeline.api.autograd.{AutoGrad => A}
 import com.intel.analytics.zoo.pipeline.api.keras.layers.KerasBaseSpec
+import com.intel.analytics.zoo.pipeline.api.keras.models.Model
 
 class VariableSpec extends KerasBaseSpec {
 
@@ -27,5 +29,19 @@ class VariableSpec extends KerasBaseSpec {
     val t = A.log(yTrue)
     val name = t.name
     assert(name.contains("Log"))
+  }
+
+  "Variable operator" should "be able to work with different element size" in {
+    val x = Variable[Float](inputShape = Shape(2, 5))
+    val y = Variable[Float](inputShape = Shape(2, 1))
+    val diff = x - y
+    val model = Model[Float](Array(x, y), diff)
+    val xValue = Tensor[Float](3, 2, 5).rand()
+    val yValue = Tensor[Float](3, 2, 1).rand()
+    val output = model.forward(T(xValue, yValue)).toTensor[Float]
+    require(output.nElement() == xValue.nElement())
+    for (i <- 1 to xValue.dim()) {
+      require((xValue.narrow(3, i, 1) - yValue).almostEqual(output.narrow(3, i, 1), 1e-8) == true)
+    }
   }
 }

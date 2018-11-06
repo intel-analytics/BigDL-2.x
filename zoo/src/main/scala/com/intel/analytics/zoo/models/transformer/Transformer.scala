@@ -17,6 +17,7 @@
 package com.intel.analytics.zoo.models.transformer
 
 import com.intel.analytics.bigdl.nn.abstractnn.{AbstractModule, Activity}
+import com.intel.analytics.bigdl.nn.keras.KerasLayer
 import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric
 import com.intel.analytics.bigdl.utils.Shape
 import com.intel.analytics.zoo.models.common.ZooModel
@@ -33,20 +34,21 @@ class Transformer[T: ClassTag] private(
   embeddingSize: Int,
   embeddingDrop: Double,
   nLayer: Int,
-  afn: String,
-  residPdrop: Int,
-  attnPdrop: Int,
+//  afn: String,
+  residPdrop: Double,
+  attnPdrop: Double,
   nHead: Int)(implicit ev: TensorNumeric[T])
   extends ZooModel[Activity, Activity, T] {
 
   override def buildModel(): AbstractModule[Activity, Activity, T] = {
-    val input = Variable(inputShape = Shape(1, 2))
-//    x = x.view(-1, x.size(-2), x.size(-1)) #(16, 77, 2)
+    val input = Variable(inputShape = Shape(77, 2))
+    val r = Reshape(Array(77 * 2)).from(input)
+    val e = Embedding(vocab, embeddingSize, inputLength = 77 * 2).from(r)
 
-    val e = Embedding(vocab, embeddingSize, inputLength = 77).from(input)
+    val r2 = Reshape(Array(77, 2, embeddingSize)).from(e)
 
 //  Add the position information to the input embeddings
-    val h = AutoGrad.sum(e, 2, false)
+    val h = AutoGrad.sum(r2, 2, false)
 
     var nextInput: Variable[T] = h
 
@@ -71,25 +73,32 @@ class Transformer[T: ClassTag] private(
   val g = Parameter[T](Shape(embeddingSize), initWeight = Tensor.ones(embeddingSize))
   val b = Parameter[T](Shape(embeddingSize), initWeight = Tensor(embeddingSize))
   def layerNorm(x: Variable[T], e: Double = 1e-5): Variable[T] = {
-    val u = AutoGrad.mean(x, -1, true)
-    val s = AutoGrad.mean(AutoGrad.square(x - u), -1, true)
+    val sizes = x.getOutputShape().toSingle().toArray
+    val u = AutoGrad.mean(x, sizes.size - 1, true)
+    val s = AutoGrad.mean(AutoGrad.square(x - u), sizes.size - 1, true)
     val y = (x - u) / AutoGrad.sqrt(s + e)
-    g * y + b
+    TimeDistributed[T](Dense[T](embeddingSize)
+      .asInstanceOf[KerasLayer[Activity, Tensor[T], T]]).from(y)
   }
 
-  // g, b for layerNorm
-  val g2 = Parameter[T](Shape(embeddingSize), initWeight = Tensor.ones(embeddingSize))
-  val b2 = Parameter[T](Shape(embeddingSize), initWeight = Tensor(embeddingSize))
   def layerNorm2(x: Variable[T], e: Double = 1e-5): Variable[T] = {
-    val u = AutoGrad.mean(x, -1, true)
-    val s = AutoGrad.mean(AutoGrad.square(x - u), -1, true)
-    val y = (x - u) / AutoGrad.sqrt(s + e)
-    g2 * y + b2
+    val sizes = x.getOutputShape().toSingle().toArray
+    val u = AutoGrad.mean(x, sizes.size - 1, true)
+    val eu = Expand(sizes).from(u)
+    val s = AutoGrad.mean(AutoGrad.square(x - eu), sizes.size -1, true)
+    val y = (x - eu) / AutoGrad.sqrt(s + e)
+    TimeDistributed[T](Dense[T](embeddingSize)
+      .asInstanceOf[KerasLayer[Activity, Tensor[T], T]]).from(y)
+  }
+
+  def gelu(x: Variable[T]): Variable[T] = {
+    x * 0.5 * (Activation("tanh").from((AutoGrad.square(x) * x * 0.044715 + x)
+      * (scala.math.sqrt(2 / scala.math.Pi))) + 1)
   }
 
   def mlp(x: Variable[T]): Variable[T] = {
     val h = Conv1D(embeddingSize * 4, 1).from(x)
-    val a = Activation(afn).from(h)
+    val a = gelu(h)
     val h2 = Conv1D(embeddingSize, 1).from(a)
     Dropout(residPdrop).from(h2)
   }
@@ -103,57 +112,61 @@ class Transformer[T: ClassTag] private(
     val k = splitHeads(key, k = true)
     val v = splitHeads(value)
     val a = attn(q, k, v)
-    val m = mergeHeads(a)
-    val n = Conv1D(embeddingSize, 1).from(m)
+    val m = mergeHeads(a) // m: (-1, 77, 768)
+    val n = Conv1D(embeddingSize, 1).from(m) // n: (-1, 77, 768)
     Dropout(residPdrop).from(n)
   }
 
   def splitHeads(x: Variable[T], k: Boolean = false): Variable[T] = {
     val sizes = x.getOutputShape().toSingle().toArray
-    val r = Reshape(sizes.dropRight(1) ++ Array(nHead, sizes.last)).from(x)
-    if (k) Permute(Array(0, 2, 3, 1)).from(r)
-    else Permute(Array(0, 2, 1, 3)).from(r)
+    val newSizes = sizes.drop(1).dropRight(1) ++ Array(nHead, sizes.last / nHead)
+    val r = Reshape(newSizes).from(x)
+    if (k) Permute(Array(2, 3, 1)).from(r)
+    else Permute(Array(2, 1, 3)).from(r)
   }
 
   def mergeHeads(x: Variable[T]): Variable[T] = {
-    val p = AutoGrad.contiguous(Permute[T](Array(0, 2, 1, 3)).from(x))
+    val p = AutoGrad.contiguous(Permute[T](Array(2, 1, 3)).from(x))
     val sizes = p.getOutputShape().toSingle().toArray
-    Reshape(sizes.dropRight(2) ++ Array(sizes.last * sizes(sizes.length - 2))).from(p)
+    Reshape(sizes.drop(1).dropRight(2) ++ Array(sizes.last * sizes(sizes.length - 2))).from(p)
   }
 
   // weights and ab belong to Attention
-  val weights = Utils.tril(Tensor.ones(nCtx, nCtx)).view(1, 1, nCtx, nCtx)
-  val ab = Parameter[T](Shape(1, 1, nCtx, nCtx), trainable = false, initWeight = weights)
+  val weights = Utils.tril(Tensor.ones(77, 77)).view(1, 1, 77, 77)
+  // TODO: NOT HARD CODE 77
+  val ab = Parameter[T](Shape(1, 1, 77, 77), trainable = false, initWeight = weights)
 
   // scale shoule be set in Attention
   def attn(q: Variable[T], k: Variable[T], v: Variable[T], scale: Boolean = false): Variable[T] = {
-    // TODO: should be matmul(q, k)
-    var w = q * k
+    // q:(16, 12, 77, 64) k:(16, 12, 64, 77)
+    var w = AutoGrad.mm(q, k) // w: (16, 12, 77, 77)
     if (scale) w = w / scala.math.sqrt(v.getOutputShape().toSingle().toArray.last)
 
-    w = w * ab + (ab * (-1) + 1) * -1e9
+    // TODO: w: (-1, 12, 77, 77), ab: (1, 1, 77, 77) w*ab
+//    w = AutoGrad.mm(w, ab) + (ab * (-1) + 1) * -1e9
     // TODO: softmax with last dim
+//    val lw = w.indexSelect(-1, 0)
     w = Activation("softmax").from(w)
     w = Dropout(attnPdrop).from(w)
 
-    // TODO: should be matmul(w, v)
-    w * v
+    AutoGrad.mm(w, v)
   }
 }
 
 object Transformer {
   def apply[@specialized(Float, Double) T: ClassTag](
-    vocab: Int,
-    nCtx: Int,
-    embeddingSize: Int,
-    embeddingDrop: Double,
-    nLayer: Int,
-    afn: String,
-    residPdrop: Int,
-    attnPdrop: Int,
-    nHead: Int)(implicit ev: TensorNumeric[T]): Transformer[T] = {
+    vocab: Int = 40990,
+    nCtx: Int = 512,
+    embeddingSize: Int = 768,
+    embeddingDrop: Double = 0.1,
+    nLayer: Int = 1,
+//    afn: String = "gelu",
+    residPdrop: Double = 0.1,
+    attnPdrop: Double = 0.1,
+    nHead: Int = 12)(implicit ev: TensorNumeric[T]): Transformer[T] = {
     new Transformer[T](vocab, nCtx, embeddingSize, embeddingDrop, nLayer,
-      afn, residPdrop, attnPdrop, nHead).build()
+//      afn,
+      residPdrop, attnPdrop, nHead).build()
   }
 
   /**
