@@ -46,7 +46,7 @@ class Decoder[T: ClassTag](val rnns: Array[Recurrent[T]],
   override def doBuild(inputShape: Shape): AbstractModule[Activity, Tensor[T], T] = {
     val layer = Sequential()
     // get decoder input
-    layer.add(SelectTable(1, KerasUtils.removeBatch(inputShape)))
+    layer.add(SelectTable(0, KerasUtils.removeBatch(inputShape)))
     if (embedding != null) layer.add(embedding)
     rnns.foreach(layer.add(_))
     layer.asInstanceOf[AbstractModule[Activity, Tensor[T], T]]

@@ -27,12 +27,24 @@ import com.intel.analytics.zoo.pipeline.api.keras.layers.utils.KerasUtils
 
 import scala.reflect.ClassTag
 
+/**
+ * Creates a module that takes a table as input and outputs the element at index `index`
+ *
+ * When you use this layer as the first layer of a model, you need to provide the argument
+ * inputShape.
+ *
+ * Remark: This layer is from Torch and wrapped in Keras style.
+ *
+ * @param index the index to be selected. 0-based index.
+ * @param inputShape A Single Shape, does not include the batch dimension.
+ * @tparam T Numeric type of parameter(e.g. weight, bias). Only support float/double now.
+ */
 class SelectTable[T: ClassTag](index: Int, inputShape: Shape = null)
   (implicit ev: TensorNumeric[T])
   extends LayerWrapperByForward[T](KerasUtils.addBatch(inputShape)) {
 
   override def doBuild(inputShape: Shape): AbstractModule[Activity, Activity, T] = {
-    val layer = com.intel.analytics.bigdl.nn.SelectTable(index)
+    val layer = com.intel.analytics.bigdl.nn.SelectTable(index + 1)
     layer.asInstanceOf[AbstractModule[Activity, Activity, T]]
   }
 }

@@ -48,7 +48,7 @@ class Seq2seq[T: ClassTag](
 
     val encoderOutput = encoder.inputs(encoderInput)
 
-    val encoderFinalStates = SelectTable(2).inputs(encoderOutput)
+    val encoderFinalStates = SelectTable(1).inputs(encoderOutput)
     val decoderInitStates = if (bridge != null) bridge.inputs(encoderFinalStates)
     else encoderFinalStates
     val decoderOutput = decoder.inputs(Array(decoderInput, decoderInitStates))
