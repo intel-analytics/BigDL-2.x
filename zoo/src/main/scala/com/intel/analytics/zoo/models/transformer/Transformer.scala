@@ -131,7 +131,7 @@ class Transformer[T: ClassTag] private(
   }
 
   // weights and ab belong to Attention
-  val weights = Utils.tril(Tensor.ones(1, 77, 77))
+  val weights = Utils.tril(Tensor.ones(77, 77)).view(1, 77, 77)
   // TODO: NOT HARD CODE 77
   val ab = Parameter[T](Shape(1, 77, 77), trainable = false, initWeight = weights)
 

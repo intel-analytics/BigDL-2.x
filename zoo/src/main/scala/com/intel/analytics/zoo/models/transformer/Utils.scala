@@ -17,14 +17,21 @@
 package com.intel.analytics.zoo.models.transformer
 
 import com.intel.analytics.bigdl.tensor.Tensor
+import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric
 
 import scala.reflect.ClassTag
 
-/**
-  * Created by ding on 10/23/18.
-  */
 object Utils {
-  def tril[T: ClassTag](x: Tensor[T]): Tensor[T] = {
+  def tril[T: ClassTag](x: Tensor[T])(implicit ev: TensorNumeric[T]): Tensor[T] = {
+    require(x.dim() == 2, "tril expects a matrix!")
+    val stride1 = x.stride(1)
+    val stride2 = x.stride(2)
+    for (i <- 0 until x.size(1)) {
+      for (c <- i + 1 until x.size(2)) {
+        val data = x.storage().array
+        data(i * stride1 + c * stride2) = ev.fromType(0)
+      }
+    }
     x
   }
 }

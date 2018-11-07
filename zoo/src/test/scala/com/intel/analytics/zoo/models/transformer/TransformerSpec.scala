@@ -29,6 +29,21 @@ class TransformerSpec extends ZooSpecHelper {
     val output = model.forward(input)
     val gradInput = model.backward(input, output)
   }
+
+  "Utils tril" should "be able to work" in {
+    val data = Tensor.ones[Float](3, 3)
+    Utils.tril(data)
+    val expect = Array[Float](1, 0, 0, 1, 1, 0, 1, 1, 1)
+    val res = data.storage().array()
+    require(expect.deep == res.deep)
+
+    val data2 = Tensor.ones[Float](4, 6)
+    Utils.tril(data2)
+    val expect2 = Array[Float](1, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0,
+      1, 1, 1, 0, 0, 0, 1, 1, 1, 1, 0, 0)
+    val res2 = data2.storage().array()
+    require(expect2.deep == res2.deep)
+  }
 }
 
 class TransformerSerialTest extends ModuleSerializationTest {
