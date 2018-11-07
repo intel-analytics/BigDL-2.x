@@ -23,7 +23,7 @@ import com.intel.analytics.bigdl.utils.{T, Table}
 
 import scala.reflect.ClassTag
 
-private[zoo] class InternalExpand[T: ClassTag](tgtSizes: Array[Int])
+private[zoo] class InternalExpand[T: ClassTag](tgtSizes: Array[Int], includeBatch: Boolean = false)
   (implicit ev: TensorNumeric[T]) extends AbstractModule[Tensor[T], Tensor[T], T] {
 
   override def updateOutput(input: Tensor[T]): Tensor[T] = {
@@ -33,12 +33,13 @@ private[zoo] class InternalExpand[T: ClassTag](tgtSizes: Array[Int])
     val tensorStride = input.stride()
     val tensorSize = input.size()
 
-    var i = 0
+    // check if need batch dim
+    var i = if (includeBatch) 0 else 1
     while (i < tensorDim) {
       if (tensorSize(i) == 1) {
         tensorSize(i) = tgtSizes(i)
         tensorStride(i) = 0
-      } else if (tensorSize(i) != tgtSizes(i) && tgtSizes(i) != -1) {
+      } else if (tensorSize(i) != tgtSizes(i)) {
         throw new UnsupportedOperationException(
           "incorrect size: only supporting singleton expansion (size=1)")
       }
@@ -57,7 +58,8 @@ private[zoo] class InternalExpand[T: ClassTag](tgtSizes: Array[Int])
     val tensorStride2 = gradOutput.stride()
     val tensorSize2 = gradOutput.size()
 
-    var i = 0
+    // check if need batch dim
+    var i = if (includeBatch) 0 else 1
     while (i < tensorDim) {
       if (tensorSize(i) == 1) {
         tensorSize2(i) = tensorSize(i)
@@ -73,8 +75,8 @@ private[zoo] class InternalExpand[T: ClassTag](tgtSizes: Array[Int])
 }
 
 private[zoo] object InternalExpand {
-  def apply[@specialized(Float, Double) T: ClassTag](tgtSizes: Array[Int])
+  def apply[@specialized(Float, Double) T: ClassTag](tgtSizes: Array[Int], includeBatch: Boolean = false)
     (implicit ev: TensorNumeric[T]) : InternalExpand[T] = {
-    new InternalExpand[T](tgtSizes)
+    new InternalExpand[T](tgtSizes, includeBatch)
   }
 }

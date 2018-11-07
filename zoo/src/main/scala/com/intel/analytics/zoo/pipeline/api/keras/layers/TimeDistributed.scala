@@ -54,7 +54,10 @@ class TimeDistributed[T: ClassTag](
     val sizes = inputShape.toSingle().toArray
     require(sizes.length >= 3,
       s"TimeDistributed requires at least 3D input, but got input dim ${sizes.length}")
-    seqLen = sizes(1)
+    if (seqLen != 0) {
+      // in case time dim is singleton
+      if (sizes(1) != 1) seqLen = sizes(1)
+    } else seqLen = sizes(1)
     Shape(Array(sizes(0)) ++ sizes.drop(2))
   }
 

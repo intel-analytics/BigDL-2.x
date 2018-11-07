@@ -87,14 +87,15 @@ private[zoo] class InternalTimeDistributed[T: ClassTag](
   }
 
   private def getActivitySize(input: Activity): Array[Array[Int]] = {
-    val sizes = ArrayBuffer[Array[Int]]()
-    if (input.isTensor) sizes.append(input.toTensor.size())
-    else {
+    if (input.isTensor) {
+      Array(input.toTensor.size())
+    } else {
+      val sizes = new Array[Array[Int]](input.toTable.length)
       input.toTable.foreach { case ((key: Int, value: Tensor[T])) =>
-        sizes.append(value.size())
+        sizes(key - 1) = (value.size())
       }
+      sizes
     }
-    sizes.toArray
   }
 
   override def updateOutput(input: Activity): Tensor[T] = {
@@ -109,17 +110,19 @@ private[zoo] class InternalTimeDistributed[T: ClassTag](
       combine(srcSizes, tgtSizes)
     }
     resizeActivity(input, internalInputSize)
-    val batch = oriSizes.head(0)
-    val step = oriSizes.head(1)
 
     val _output = layer.forward(input).toTensor[T]
 
     if (outputSize == null) {
       val combinedShape = _output.size()
-      require(combinedShape(0) == batch * step,
-        s"combined batch: ${combinedShape(0)} should match ${batch} * ${step}")
-      val splitedShape = Array(batch, step) ++ combinedShape.drop(1)
-      outputSize = splitedShape
+      // in case of singleton
+      var i = 0
+      while (i < oriSizes.length && oriSizes(i)(0) * oriSizes(i)(1) != combinedShape(0)) {
+        i += 1
+      }
+      require(i < oriSizes.length,
+        s"combined batch: ${combinedShape(0)} should match ${oriSizes(i)(0)} * ${oriSizes(i)(1)}")
+      outputSize = Array(oriSizes(i)(0), oriSizes(i)(1)) ++ combinedShape.drop(1)
     }
     resizeActivity(input, oriSizes)
     output.set(_output).resize(outputSize)

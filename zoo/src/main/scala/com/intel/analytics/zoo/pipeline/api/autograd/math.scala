@@ -262,8 +262,17 @@ object AutoGrad {
       axes: List[Int] = null)(implicit ev: TensorNumeric[T]): Variable[T] = {
     require(x.getOutputShape().isInstanceOf[SingleShape], "Only accept single shape")
     require(y.getOutputShape().isInstanceOf[SingleShape], "Only accept single shape")
-    val xShape = x.getOutputShape().toSingle().toArray
-    val yShape = y.getOutputShape().toSingle().toArray
+    var xx = x
+    var yy = y
+    var yShape = yy.getOutputShape().toSingle()
+    var xShape = xx.getOutputShape().toSingle()
+    if (yShape.size > xShape.size) {
+      xx = AutoGrad.expandDims(x, 0)
+    } else if (yShape.size < xShape.size) {
+      yy = AutoGrad.expandDims(y, 0)
+    }
+    xShape = xx.getOutputShape().toSingle()
+    yShape = yy.getOutputShape().toSingle()
     var transposeX = false
     var transposeY = false
     var left = 0
@@ -292,7 +301,9 @@ object AutoGrad {
       transB = transposeY)
     val kmm = new KerasLayerWrapper[T](mm.asInstanceOf[AbstractModule[Activity, Activity, T]])
 
-    TimeDistributed(kmm.asInstanceOf[KerasLayer[Activity, Tensor[T], T]]).from(x, y)
+    if (xShape.length > 3 || yShape.length > 3) {
+      TimeDistributed(kmm.asInstanceOf[KerasLayer[Activity, Tensor[T], T]]).from(xx, yy)
+    } else kmm.from(xx, yy)
   }
 
   /**

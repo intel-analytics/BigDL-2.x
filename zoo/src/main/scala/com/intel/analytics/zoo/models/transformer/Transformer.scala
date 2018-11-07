@@ -84,9 +84,8 @@ class Transformer[T: ClassTag] private(
   def layerNorm2(x: Variable[T], e: Double = 1e-5): Variable[T] = {
     val sizes = x.getOutputShape().toSingle().toArray
     val u = AutoGrad.mean(x, sizes.size - 1, true)
-    val eu = Expand(sizes).from(u)
-    val s = AutoGrad.mean(AutoGrad.square(x - eu), sizes.size -1, true)
-    val y = (x - eu) / AutoGrad.sqrt(s + e)
+    val s = AutoGrad.mean(AutoGrad.square(x - u), sizes.size -1, true)
+    val y = (x - u) / AutoGrad.sqrt(s + e)
     TimeDistributed[T](Dense[T](embeddingSize)
       .asInstanceOf[KerasLayer[Activity, Tensor[T], T]]).from(y)
   }
@@ -111,7 +110,7 @@ class Transformer[T: ClassTag] private(
     val q = splitHeads(query)
     val k = splitHeads(key, k = true)
     val v = splitHeads(value)
-    val a = attn(q, k, v)
+    val a = attn(q, k, v) // m: (-1, 12, 77, 64)
     val m = mergeHeads(a) // m: (-1, 77, 768)
     val n = Conv1D(embeddingSize, 1).from(m) // n: (-1, 77, 768)
     Dropout(residPdrop).from(n)
@@ -132,18 +131,17 @@ class Transformer[T: ClassTag] private(
   }
 
   // weights and ab belong to Attention
-  val weights = Utils.tril(Tensor.ones(77, 77)).view(1, 1, 77, 77)
+  val weights = Utils.tril(Tensor.ones(1, 77, 77))
   // TODO: NOT HARD CODE 77
-  val ab = Parameter[T](Shape(1, 1, 77, 77), trainable = false, initWeight = weights)
+  val ab = Parameter[T](Shape(1, 77, 77), trainable = false, initWeight = weights)
 
   // scale shoule be set in Attention
   def attn(q: Variable[T], k: Variable[T], v: Variable[T], scale: Boolean = false): Variable[T] = {
-    // q:(16, 12, 77, 64) k:(16, 12, 64, 77)
+    // q:(16, 12, 77, 64) k:(16, 12, 64, 77) v:(16, 12, 77, 64)
     var w = AutoGrad.mm(q, k) // w: (16, 12, 77, 77)
     if (scale) w = w / scala.math.sqrt(v.getOutputShape().toSingle().toArray.last)
 
-    // TODO: w: (-1, 12, 77, 77), ab: (1, 1, 77, 77) w*ab
-//    w = AutoGrad.mm(w, ab) + (ab * (-1) + 1) * -1e9
+    w = AutoGrad.mm(ab, w) + (ab * (-1) + 1) * -1e9
     // TODO: softmax with last dim
 //    val lw = w.indexSelect(-1, 0)
     w = Activation("softmax").from(w)
