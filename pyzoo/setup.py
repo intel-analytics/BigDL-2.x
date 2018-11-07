@@ -39,7 +39,7 @@ def get_analytics_zoo_packages():
 packages = get_analytics_zoo_packages()
 
 try:
-    exec(open('zoo/version.py').read())
+    exec(open('zoo/__init__.py').read())
 except IOError:
     print("Failed to load Analytics Zoo version file for packaging. \
       You must be in Analytics Zoo's pyzoo dir.")
