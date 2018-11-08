@@ -751,5 +751,5 @@ class TestModelLoading(OnnxTestCase):
 
     def test_threshold(self):
         pytorch_model = torch.Threshold(1, 2)
-        input_shape_with_batch = [2, 3]
+        input_shape_with_batch = (2, 3)
         self.compare_with_pytorch(pytorch_model, input_shape_with_batch)
