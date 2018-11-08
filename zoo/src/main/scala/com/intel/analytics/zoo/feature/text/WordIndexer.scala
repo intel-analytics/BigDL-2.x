@@ -16,8 +16,11 @@
 
 package com.intel.analytics.zoo.feature.text
 
+import org.apache.log4j.Logger
+
 /**
  * Given a wordIndex map, transform tokens to corresponding indices.
+ * Need to tokenize first.
  * Input key: TextFeature.tokens
  * Output key: TextFeature.indexedTokens
  *
@@ -30,6 +33,12 @@ package com.intel.analytics.zoo.feature.text
 class WordIndexer(
    val map: Map[String, Int],
    val replaceElement: Int = 0) extends TextTransformer {
+
+  require(map != null, "map for WordIndexer can't be null")
+
+  if (map.values.exists(_ == replaceElement)) {
+    WordIndexer.logger.warn(s"replaceElement $replaceElement exists in the wordIndex map")
+  }
 
   override def transform(feature: TextFeature): TextFeature = {
     require(feature.contains(TextFeature.tokens), "TextFeature doesn't contain tokens yet, " +
@@ -49,6 +58,8 @@ class WordIndexer(
 }
 
 object WordIndexer {
+  val logger: Logger = Logger.getLogger(getClass)
+
   def apply(
      wordIndex: Map[String, Int],
      replaceElement: Int = 0): WordIndexer = {

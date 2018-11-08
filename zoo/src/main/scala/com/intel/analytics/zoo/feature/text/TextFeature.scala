@@ -17,6 +17,7 @@
 package com.intel.analytics.zoo.feature.text
 
 import com.intel.analytics.bigdl.dataset.Sample
+import com.intel.analytics.bigdl.tensor.Tensor
 import org.apache.log4j.Logger
 
 import scala.collection.{Set, mutable}
@@ -25,8 +26,8 @@ import scala.reflect.ClassTag
 /**
  * Each TextFeature keeps information of a single text record.
  * It can include various status of a text,
- * e.g. original text content, category label, words after tokenization,
- * index representation of tokens, BigDL Sample representation and so on.
+ * e.g. original text content, category label, tokens, index representation
+ * of tokens, BigDL Sample representation, prediction result and so on.
  * It uses a HashMap to store all these data.
  * Each key is a string that can be used to identify the corresponding value.
  */
@@ -106,7 +107,13 @@ class TextFeature extends Serializable {
    * Get the Sample representation of the TextFeature.
    * If the TextFeature hasn't been transformed to Sample, null will be returned.
    */
-  def getSample[T: ClassTag]: Sample[T] = apply[Sample[T]](TextFeature.sample)
+  def getSample: Sample[Float] = apply[Sample[Float]](TextFeature.sample)
+
+  /**
+   * Get the prediction probability distribution of the TextFeature.
+   * If the TextFeature hasn't been predicted by a model, null will be returned.
+   */
+  def getPredict[T: ClassTag]: Tensor[T] = apply[Tensor[T]](TextFeature.predict)
 }
 
 object TextFeature {
@@ -138,7 +145,7 @@ object TextFeature {
   val sample = "sample"
   /**
    * Key for the text prediction result.
-   * Value should be a BigDL Activity.
+   * Value should be a BigDL Tensor.
    */
   val predict = "predict"
 

@@ -29,15 +29,15 @@ if sys.version >= '3':
 
 class TextClassifier(ZooModel):
     """
-    The model used for text classification.
+    The model used for text classification with WordEmbedding as its first layer.
 
     # Arguments
     class_num: The number of text categories to be classified. Positive int.
-    embedding_file: The path to the embedding file.
+    embedding_file: The path to the word embedding file.
                     Currently only the following GloVe files are supported:
                     "glove.6B.50d.txt", "glove.6B.100d.txt", "glove.6B.200d.txt"
                     "glove.6B.300d.txt", "glove.42B.300d.txt", "glove.840B.300d.txt".
-                    You can download them from: https://nlp.stanford.edu/projects/glove/.
+                    You can download from: https://nlp.stanford.edu/projects/glove/.
     word_index: Dictionary of word (string) and its corresponding index (int).
                 The index is supposed to start from 1 with 0 reserved for unknown words.
                 During the prediction, if you have words that are not in the word_index
@@ -113,3 +113,21 @@ class TextClassifier(ZooModel):
         model = ZooModel._do_load(jmodel, bigdl_type)
         model.__class__ = TextClassifier
         return model
+
+    def compile(self, optimizer, loss, metrics=None):
+        self.model.compile(optimizer, loss, metrics)
+
+    def set_tensorboard(self, log_dir, app_name):
+        self.model.set_tensorboard(log_dir, app_name)
+
+    def set_checkpoint(self, path, over_write=True):
+        self.model.set_checkpoint(path, over_write)
+
+    def fit(self, x, y=None, batch_size=32, nb_epoch=10, validation_data=None, distributed=True):
+        self.model.fit(x, y, batch_size, nb_epoch, validation_data, distributed)
+
+    def evaluate(self, x, y=None, batch_size=32):
+        return self.model.evaluate(x, y, batch_size)
+
+    def predict(self, x, batch_per_thread=4, distributed=True):
+        return self.model.predict(x, batch_per_thread, distributed)

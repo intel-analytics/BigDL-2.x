@@ -20,9 +20,9 @@ MAINTAINER The Analytics-Zoo Authors https://github.com/intel-analytics/analytic
 
 WORKDIR /opt/work
 
-ARG ANALYTICS_ZOO_VERSION=0.3.0-SNAPSHOT
+ARG ANALYTICS_ZOO_VERSION=0.4.0-SNAPSHOT
 ARG BIGDL_VERSION=0.6.0
-ARG SPARK_VERSION=2.2.0
+ARG SPARK_VERSION=2.3.1
 ARG RUNTIME_DRIVER_CORES=4
 ARG RUNTIME_DRIVER_MEMORY=20g
 ARG RUNTIME_EXECUTOR_CORES=4
@@ -59,11 +59,11 @@ RUN apt-get install -y --force-yes software-properties-common python-software-pr
     pip2 install --upgrade setuptools && \
     pip2 install numpy scipy && \
     pip2 install --no-binary pandas -I pandas && \
-    pip2 install scikit-learn matplotlib seaborn jupyter wordcloud moviepy requests opencv-python tensorflow && \
+    pip2 install scikit-learn matplotlib seaborn jupyter wordcloud moviepy requests h5py opencv-python tensorflow && \
     python2 -m pip install ipykernel && \
     python2 -m ipykernel install --user
 #spark
-RUN wget https://d3kbcqa49mib13.cloudfront.net/spark-${SPARK_VERSION}-bin-hadoop2.7.tgz && \
+RUN wget http://mirrors.shu.edu.cn/apache/spark/spark-${SPARK_VERSION}/spark-${SPARK_VERSION}-bin-hadoop2.7.tgz && \
     tar -zxvf spark-${SPARK_VERSION}-bin-hadoop2.7.tgz && \
     mv spark-${SPARK_VERSION}-bin-hadoop2.7 spark-${SPARK_VERSION} && \
     rm spark-${SPARK_VERSION}-bin-hadoop2.7.tgz
