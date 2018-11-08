@@ -49,7 +49,7 @@ class TransformerSpec extends ZooSpecHelper {
 class TransformerSerialTest extends ModuleSerializationTest {
   override def test(): Unit = {
     val model = Transformer[Float]()
-    val input = Tensor[Float](Array(1, 100, 50)).rand()
+    val input = Tensor[Float](Array(2, 2, 77, 2)).rand()
     ZooSpecHelper.testZooModelLoadSave(
       model.asInstanceOf[ZooModel[Tensor[Float], Tensor[Float], Float]],
       input, Transformer.loadModel[Float])

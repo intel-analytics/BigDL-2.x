@@ -41,11 +41,12 @@ class Transformer[T: ClassTag] private(
   extends ZooModel[Activity, Activity, T] {
 
   override def buildModel(): AbstractModule[Activity, Activity, T] = {
-    val input = Variable(inputShape = Shape(77, 2))
-    val r = Reshape(Array(77 * 2)).from(input)
-    val e = Embedding(vocab, embeddingSize, inputLength = 77 * 2).from(r)
+    // (sequence length, position)
+    val input = Variable(Shape(nCtx, 2))
+    val r = Reshape(Array(nCtx * 2)).from(input)
+    val e = Embedding(vocab, embeddingSize, inputLength = nCtx * 2).from(r)
 
-    val r2 = Reshape(Array(77, 2, embeddingSize)).from(e)
+    val r2 = Reshape(Array(nCtx, 2, embeddingSize)).from(e)
 
 //  Add the position information to the input embeddings
     val h = AutoGrad.sum(r2, 2, false)
@@ -131,9 +132,8 @@ class Transformer[T: ClassTag] private(
   }
 
   // weights and ab belong to Attention
-  val weights = Utils.tril(Tensor.ones(77, 77)).view(1, 77, 77)
-  // TODO: NOT HARD CODE 77
-  val ab = Parameter[T](Shape(1, 77, 77), trainable = false, initWeight = weights)
+  val weights = Utils.tril(Tensor.ones(nCtx, nCtx)).view(1, 77, 77)
+  val ab = Parameter[T](Shape(1, nCtx, nCtx), trainable = false, initWeight = weights)
 
   // scale shoule be set in Attention
   def attn(q: Variable[T], k: Variable[T], v: Variable[T], scale: Boolean = false): Variable[T] = {
@@ -154,10 +154,10 @@ class Transformer[T: ClassTag] private(
 object Transformer {
   def apply[@specialized(Float, Double) T: ClassTag](
     vocab: Int = 40990,
-    nCtx: Int = 512,
+    nCtx: Int = 77, // seq len
     embeddingSize: Int = 768,
     embeddingDrop: Double = 0.1,
-    nLayer: Int = 1,
+    nLayer: Int = 12,
 //    afn: String = "gelu",
     residPdrop: Double = 0.1,
     attnPdrop: Double = 0.1,
