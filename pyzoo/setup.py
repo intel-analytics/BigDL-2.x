@@ -39,13 +39,14 @@ def get_analytics_zoo_packages():
 packages = get_analytics_zoo_packages()
 
 try:
-    exec(open('zoo/__init__.py').read())
+    with open('zoo/__init__.py', 'r') as f:
+        for line in f.readlines():
+            if '__version__' in line:
+                VERSION = line.split(" ")[2]
 except IOError:
     print("Failed to load Analytics Zoo version file for packaging. \
       You must be in Analytics Zoo's pyzoo dir.")
     sys.exit(-1)
-
-VERSION = __version__
 
 building_error_msg = """
 If you are packing python API from zoo source, you must build Analytics Zoo first
