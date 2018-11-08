@@ -97,7 +97,7 @@ object AnomalyDetector {
   }
 
   /**
-    * Load an existing NeuralCF model (with weights).
+    * Load an existing AnomalyDetector model (with weights).
     *
     * @param path       The path for the pre-defined model.
     *                   Local file system, HDFS and Amazon S3 are supported.
@@ -128,7 +128,7 @@ object AnomalyDetector {
     val totalCount = yTruth.count()
 
     val threshold: Float = yTruth.zip(yPredict)
-      .map(x => diff(x._1, x._2))
+      .map(x => absdiff(x._1, x._2))
       .sortBy(x => -x)
       .take((totalCount * anomalyFraction.toFloat / 100).toInt)
       .min
@@ -150,14 +150,14 @@ object AnomalyDetector {
                                    threshold: Float): RDD[(T, T, Any)] = {
     require(yTruth.count() == yPredict.count(), s"length of predictions and truth should match")
     val anomalies = yTruth.zip(yPredict).map { x =>
-      val d = diff(x._1, x._2)
+      val d = absdiff(x._1, x._2)
       val anomaly = if (d > threshold) x._1 else null
       (x._1, x._2, anomaly) //yTruth, yPredict, anomaly
     }
     anomalies
   }
 
-  def diff[T: ClassTag](A: T, B: T): Float = {
+  def absdiff[T: ClassTag](A: T, B: T): Float = {
     if (A.isInstanceOf[Float]) {
       Math.abs(A.asInstanceOf[Float] - B.asInstanceOf[Float])
     } else {

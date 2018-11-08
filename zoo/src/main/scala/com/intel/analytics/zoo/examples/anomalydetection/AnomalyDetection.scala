@@ -22,7 +22,6 @@ import com.intel.analytics.bigdl.optim._
 import com.intel.analytics.bigdl.utils.Shape
 import com.intel.analytics.zoo.common.NNContext
 import com.intel.analytics.zoo.models.anomalydetection.{AnomalyDetector, FeatureLabelIndex}
-import com.intel.analytics.zoo.models.anomalydetection.AnomalyDetector._
 import com.intel.analytics.zoo.pipeline.api.keras.objectives.MeanSquaredError
 import org.apache.log4j.{Level, Logger}
 import org.apache.spark.SparkConf
@@ -76,7 +75,8 @@ object AnomalyDetection {
 
     val featureDF = loadData(sqlContext, param.inputDir)
     val featureShape = Shape(param.unrollLength, 3)
-    val (trainRdd, testRdd) = assemblyFeature(featureDF, true, param.unrollLength, 1000)
+    val unrolled = assemblyFeature(featureDF, true, param.unrollLength)
+    val (trainRdd, testRdd) = trainTestSplit(unrolled, testSize = 1000)
 
     val model: AnomalyDetector[Float] = AnomalyDetector[Float](featureShape)
     model.compile(optimizer = new RMSprop(learningRate = 0.001, decayRate = 0.9),
@@ -86,7 +86,7 @@ object AnomalyDetection {
 
     val yPredict: RDD[Float] = predictions.map(x => x.toTensor.toArray()(0))
     val yTruth: RDD[Float] = testRdd.map(x => x.label.toArray()(0))
-    val anomalies = detectAnomalies(yPredict, yTruth, 5)
+    val anomalies = AnomalyDetector.detectAnomalies(yPredict, yTruth, 5)
     anomalies.take(5).foreach(println)
   }
 
@@ -116,9 +116,7 @@ object AnomalyDetection {
 
   def assemblyFeature(featureDF: DataFrame,
                       ifScale: Boolean = true,
-                      unrollLength: Int,
-                      testdataSize: Int = 1000
-                     ): (RDD[Sample[Float]], RDD[Sample[Float]]) = {
+                      unrollLength: Int) = {
 
     val scaler = new org.apache.spark.ml.feature.StandardScaler()
       .setInputCol("features")
@@ -136,25 +134,25 @@ object AnomalyDetection {
     val dataRdd: RDD[Array[Float]] = scaledDF.rdd
       .map(row => row.getAs[org.apache.spark.ml.linalg.DenseVector](0).toArray.map(x => x.toFloat))
 
-    val unrolled: RDD[FeatureLabelIndex[Float]] = unroll(dataRdd, unrollLength)
+    AnomalyDetector.unroll(dataRdd, unrollLength)
+  }
 
-    val cutPoint = unrolled.count() - testdataSize
+  def trainTestSplit(unrolled: RDD[FeatureLabelIndex[Float]], testSize: Int = 1000) ={
 
-    val train: RDD[Sample[Float]] = toSampleRdd(unrolled.filter(x => x.index < cutPoint))
-    val test = toSampleRdd(unrolled.filter(x => x.index >= cutPoint))
+    val cutPoint = unrolled.count() - testSize
+
+    val train = AnomalyDetector.toSampleRdd(unrolled.filter(x => x.index < cutPoint))
+    val test = AnomalyDetector.toSampleRdd(unrolled.filter(x => x.index >= cutPoint))
 
     (train, test)
   }
 
-  def assemblyFeature(featureDF: DataFrame,
-                      ifScale: Boolean,
-                      unrollLength: Int,
-                      testdataSize: Float
-                     ): (RDD[Sample[Float]], RDD[Sample[Float]]) = {
-    val totalCount = featureDF.count()
-    val testSizeInt = (totalCount * testdataSize).toInt
+  def trainTestSplit(unrolled: RDD[FeatureLabelIndex[Float]], testSize: Float)
+  : (RDD[Sample[Float]], RDD[Sample[Float]]) = {
 
-    val (train, test) = assemblyFeature(featureDF, ifScale, unrollLength: Int, testSizeInt)
-    (train, test)
+    val totalSize = unrolled.count()
+    val testSizeInt = (totalSize * testSize).toInt
+
+    trainTestSplit(unrolled, testSizeInt)
   }
 }
