@@ -71,15 +71,17 @@ class Transformer[T: ClassTag] private(
   }
 
   // g, b for layerNorm
-  val g = Parameter[T](Shape(embeddingSize), initWeight = Tensor.ones(embeddingSize))
-  val b = Parameter[T](Shape(embeddingSize), initWeight = Tensor(embeddingSize))
+  val g = Parameter[T](Shape(1, embeddingSize),
+    initWeight = Tensor.ones[T](embeddingSize).view(1, embeddingSize))
+  val b = Parameter[T](Shape(1, embeddingSize),
+    initWeight = Tensor[T](embeddingSize).view(1, embeddingSize))
+
   def layerNorm(x: Variable[T], e: Double = 1e-5): Variable[T] = {
     val sizes = x.getOutputShape().toSingle().toArray
     val u = AutoGrad.mean(x, sizes.size - 1, true)
     val s = AutoGrad.mean(AutoGrad.square(x - u), sizes.size - 1, true)
     val y = (x - u) / AutoGrad.sqrt(s + e)
-    TimeDistributed[T](Dense[T](embeddingSize)
-      .asInstanceOf[KerasLayer[Activity, Tensor[T], T]]).from(y)
+    y * g + b
   }
 
   def layerNorm2(x: Variable[T], e: Double = 1e-5): Variable[T] = {
@@ -132,7 +134,7 @@ class Transformer[T: ClassTag] private(
   }
 
   // weights and ab belong to Attention
-  val weights = Utils.tril(Tensor.ones(nCtx, nCtx)).view(1, 77, 77)
+  val weights = Utils.tril(Tensor.ones(nCtx, nCtx)).view(1, nCtx, nCtx)
   val ab = Parameter[T](Shape(1, nCtx, nCtx), trainable = false, initWeight = weights)
 
   // scale shoule be set in Attention
@@ -141,6 +143,7 @@ class Transformer[T: ClassTag] private(
     var w = AutoGrad.mm(q, k) // w: (16, 12, 77, 77)
     if (scale) w = w / scala.math.sqrt(v.getOutputShape().toSingle().toArray.last)
 
+    // mask attention
     w = AutoGrad.mm(ab, w) + (ab * (-1) + 1) * -1e9
     // TODO: softmax with last dim
 //    val lw = w.indexSelect(-1, 0)

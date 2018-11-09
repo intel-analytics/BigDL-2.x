@@ -24,7 +24,7 @@ import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric
 import com.intel.analytics.bigdl.utils._
 import com.intel.analytics.bigdl.{nn => bnn}
 import com.intel.analytics.zoo.pipeline.api.keras.layers._
-import com.intel.analytics.zoo.pipeline.api.keras.layers.internal.{InternalCAddTable, InternalExpand, InternalMM}
+import com.intel.analytics.zoo.pipeline.api.keras.layers.internal.{InternalCAddTable, InternalCMulTable, InternalExpand, InternalMM}
 import com.intel.analytics.zoo.pipeline.api.keras.models._
 
 import scala.reflect.ClassTag
@@ -443,7 +443,7 @@ class Variable[T: ClassTag] private[zoo] (private[zoo] var node: ModuleNode[T],
 
   def *(a: Variable[T]): Variable[T] = {
     val o =
-      new KerasLayerWrapper[T](bnn.CMulTable[T]().asInstanceOf[AbstractModule[Activity, Activity, T]])
+      new KerasLayerWrapper[T](InternalCMulTable[T]().asInstanceOf[AbstractModule[Activity, Activity, T]])
     val (x, y) = broadcast(this, a)
     Variable(o.inputs(Array(x.node, y.node)))
   }
@@ -538,13 +538,23 @@ class Variable[T: ClassTag] private[zoo] (private[zoo] var node: ModuleNode[T],
 
     var yShape = yy.getOutputShape().toSingle()
     var xShape = xx.getOutputShape().toSingle()
-    if (yShape.size > xShape.size) {
-      xx = AutoGrad.expandDims(xx, 0)
-    } else if (yShape.size < xShape.size) {
+    // add batch dim if it doesn't exist
+    if (yShape.head != -1) {
       yy = AutoGrad.expandDims(yy, 0)
+      yShape = yy.getOutputShape().toSingle()
     }
-    yShape = yy.getOutputShape().toSingle()
-    xShape = xx.getOutputShape().toSingle()
+    if (xShape.head != -1) {
+      xx = AutoGrad.expandDims(xx, 0)
+      xShape = xx.getOutputShape().toSingle()
+    }
+
+    if (yShape.size > xShape.size) {
+      xx = AutoGrad.expandDims(xx, 1)
+      xShape = xx.getOutputShape().toSingle()
+    } else if (yShape.size < xShape.size) {
+      yy = AutoGrad.expandDims(yy, 1)
+      yShape = yy.getOutputShape().toSingle()
+    }
 
     require(xShape.size == yShape.size,
       s"The two variables should have the same dims," +
@@ -554,6 +564,7 @@ class Variable[T: ClassTag] private[zoo] (private[zoo] var node: ModuleNode[T],
     // Ignore the batch dim
     val xElements = xShape.drop(1).reduceLeft(_+_)
     val yElements = yShape.drop(1).reduceLeft(_+_)
+    // should not expand batch dim here as it's -1
     if (xElements < yElements) {
       xx = xx.expand(yShape)
     } else if (xElements > yElements) {
