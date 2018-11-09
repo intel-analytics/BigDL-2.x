@@ -42,7 +42,7 @@ try:
     with open('zoo/__init__.py', 'r') as f:
         for line in f.readlines():
             if '__version__' in line:
-                VERSION = line.split(" ")[2]
+                VERSION = line.strip().replace("\"", "").split(" ")[2]
 except IOError:
     print("Failed to load Analytics Zoo version file for packaging. \
       You must be in Analytics Zoo's pyzoo dir.")
