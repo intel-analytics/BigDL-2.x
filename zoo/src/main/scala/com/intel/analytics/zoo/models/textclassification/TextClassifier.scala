@@ -95,6 +95,14 @@ class TextClassifier[T: ClassTag] private(
       batchPerThread: Int): TextSet = {
     model.asInstanceOf[KerasNet[T]].predict(x, batchPerThread)
   }
+
+  def setTensorBoard(logDir: String, appName: String): Unit = {
+    model.asInstanceOf[KerasNet[T]].setTensorBoard(logDir, appName)
+  }
+
+  def setCheckpoint(path: String, overWrite: Boolean = true): Unit = {
+    model.asInstanceOf[KerasNet[T]].setCheckpoint(path, overWrite)
+  }
 }
 
 object TextClassifier {

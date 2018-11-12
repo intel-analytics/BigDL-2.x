@@ -163,9 +163,7 @@ abstract class KerasNet[T: ClassTag](implicit ev: TensorNumeric[T])
    * @param logDir The base directory path to store training and validation logs.
    * @param appName The name of the application.
    */
-  def setTensorBoard(
-      logDir: String,
-      appName: String): Unit = {
+  def setTensorBoard(logDir: String, appName: String): Unit = {
     if (this.internalOptimizer != null) {
       internalOptimizer.setTrainSummary(TrainSummary(tensorBoardLogDir, tensorBoardAppName))
     }
