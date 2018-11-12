@@ -7,6 +7,7 @@ import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric
 import com.intel.analytics.bigdl.utils.Table
 import com.intel.analytics.bigdl.visualization.{TrainSummary, ValidationSummary}
 import org.apache.spark.rdd.RDD
+import org.apache.spark.storage.StorageLevel
 
 import scala.reflect.ClassTag
 
@@ -15,7 +16,8 @@ class ZooOptimizer[T: ClassTag, D](optimzer: Optimizer[T, D],
                                    model: Module[T],
                                    trainRdd: RDD[Sample[T]],
                                    batchSize: Int,
-                                   nSplits: Int = 1) {
+                                   nEpochs: Int,
+                                   nRdds: Int = 1) {
 
   def setValidation(trigger: Trigger, dataset: DataSet[MiniBatch[T]],
                     vMethods: Array[ValidationMethod[T]]): this.type = {
@@ -235,7 +237,7 @@ class ZooOptimizer[T: ClassTag, D](optimzer: Optimizer[T, D],
     * @return the optimizer
     */
   def setEndWhen(endWhen: Trigger): this.type = {
-    optimzer.setEndWhen(endWhen)
+    optimzer.setEndWhen(Trigger.maxEpoch(1))
     this
   }
 
@@ -297,19 +299,26 @@ class ZooOptimizer[T: ClassTag, D](optimzer: Optimizer[T, D],
 
   def optimize() = {
 
-    if (nSplits == 1) {
+    if (nRdds == 1) {
       optimzer.optimize()
     } else {
 
-      val splits: Array[Double] = (0 to nSplits - 1).map(x => 1.0 / nSplits).toArray
+      val splits: Array[Double] = (0 to nRdds - 1).map(x => 1.0 / nRdds).toArray
       val trainRddArray: Array[RDD[Sample[T]]] = trainRdd.randomSplit(splits, 1L)
 
-      trainRddArray.map(rdd => {
+      trainRddArray.map(x => x.persist(StorageLevel.DISK_ONLY))
+
+      val allIndex = (1 to nEpochs).flatMap(x => (0 to nRdds - 1))
+
+      optimzer.setEndWhen(Trigger.maxEpoch(1))
+
+      allIndex.map(index => {
         optimzer
           .setModel(model)
-          .setTrainData(rdd, batchSize)
+          .setTrainData(trainRddArray(index), batchSize)
           .optimize()
       })
+
     }
   }
 }
@@ -323,7 +332,7 @@ object ZooOptimizer {
     * @param sampleRDD           training Samples
     * @param criterion           loss function
     * @param batchSize           mini batch size
-    * @param nSplits             splits of train rdd
+    * @param nRdds             splits of train rdd
     * @param featurePaddingParam feature padding strategy, see
     *                            [[com.intel.analytics.bigdl.dataset.PaddingParam]] for details.
     * @param labelPaddingParam   label padding strategy, see
@@ -335,13 +344,14 @@ object ZooOptimizer {
                           sampleRDD: RDD[Sample[T]],
                           criterion: Criterion[T],
                           batchSize: Int,
-                          nSplits: Int = 1,
+                          nEpochs: Int,
+                          nRdds: Int = 1,
                           featurePaddingParam: PaddingParam[T] = null,
                           labelPaddingParam: PaddingParam[T] = null
                         )(implicit ev: TensorNumeric[T]): ZooOptimizer[T, MiniBatch[T]] = {
 
     val optimizer = Optimizer(model, sampleRDD, criterion, batchSize, featurePaddingParam, labelPaddingParam)
-    new ZooOptimizer(optimizer, model, sampleRDD, batchSize, nSplits)
+    new ZooOptimizer(optimizer, model, sampleRDD, batchSize, nEpochs, nRdds)
   }
 
 
@@ -364,10 +374,11 @@ object ZooOptimizer {
                           criterion: Criterion[T],
                           batchSize: Int,
                           miniBatchImpl: MiniBatch[T],
+                          nRdds: Int,
                           nSplits: Int
                         )(implicit ev: TensorNumeric[T]): ZooOptimizer[T, MiniBatch[T]] = {
     val optimizer = Optimizer(model, sampleRDD, criterion, batchSize, miniBatchImpl)
-    new ZooOptimizer(optimizer, model, sampleRDD, batchSize, nSplits)
+    new ZooOptimizer(optimizer, model, sampleRDD, batchSize, nRdds, nSplits)
   }
 
 }

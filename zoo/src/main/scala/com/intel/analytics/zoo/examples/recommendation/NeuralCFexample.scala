@@ -37,9 +37,9 @@ import scopt.OptionParser
 case class NeuralCFParams(val inputDir: String = "./data/ml-1m",
                           val batchSize: Int = 80000,
                           val nEpochs: Int = 10,
-                          val learningRate: Double = 1e-3,
+                          val learningRate: Double = 1e-2,
                           val learningRateDecay: Double = 1e-6,
-                          val nSplits: Int = 3
+                          val nRdds: Int = 3
                          )
 
 case class Rating(userId: Int, itemId: Int, label: Int)
@@ -99,36 +99,59 @@ object NeuralCFexample {
     val trainRdds = trainpairFeatureRdds.map(x => x.sample)
     val validationRdds = validationpairFeatureRdds.map(x => x.sample)
 
+    val beginTime = System.nanoTime()
     val optimMethod: Adam[Float] = new Adam[Float](
       learningRate = param.learningRate,
       learningRateDecay = param.learningRateDecay)
 
-    val optimizer: ZooOptimizer[Float, MiniBatch[Float]] = ZooOptimizer(
+    //    val optimizer: ZooOptimizer[Float, MiniBatch[Float]] = ZooOptimizer(
+    //      model = ncf,
+    //      sampleRDD = trainRdds,
+    //      criterion = ClassNLLCriterion[Float](),
+    //      batchSize = param.batchSize,
+    //      nEpochs = param.nEpochs,
+    //      nRdds = param.nRdds)
+    //
+    //    optimizer
+    //      .setOptimMethod(optimMethod)
+    //      .optimize()
+    //
+    val optimizer = Optimizer(
       model = ncf,
       sampleRDD = trainRdds,
       criterion = ClassNLLCriterion[Float](),
-      batchSize = param.batchSize,
-      nSplits = 3)
+      batchSize = param.batchSize)
 
     optimizer
       .setOptimMethod(optimMethod)
       .setEndWhen(Trigger.maxEpoch(param.nEpochs))
       .optimize()
 
+    val endTime = System.nanoTime()
+
     val results = ncf.predict(validationRdds)
-    results.take(5).foreach(println)
+    results.take(10).foreach(println)
     val resultsClass = ncf.predictClass(validationRdds)
-    resultsClass.take(5).foreach(println)
+    resultsClass.take(10).foreach(println)
 
     val userItemPairPrediction = ncf.predictUserItemPair(validationpairFeatureRdds)
 
-    userItemPairPrediction.take(5).foreach(println)
+    userItemPairPrediction.take(10).foreach(println)
 
     val userRecs = ncf.recommendForUser(validationpairFeatureRdds, 3)
     val itemRecs = ncf.recommendForItem(validationpairFeatureRdds, 3)
 
     userRecs.take(10).foreach(println)
     itemRecs.take(10).foreach(println)
+
+    val pairPredictionsDF = sqlContext.createDataFrame(userItemPairPrediction).toDF()
+    val out = pairPredictionsDF.join(ratings, Array("userId", "itemId"))
+
+    val correctCounts = out.filter(col("prediction") === col("label")).count()
+
+    val accuracy = correctCounts.toDouble / out.count()
+    println("accuracy: " + accuracy)
+    println("training time: " + (endTime - beginTime) * (1e-9))
   }
 
   def loadPublicData(sqlContext: SQLContext, dataPath: String): (DataFrame, Int, Int) = {
