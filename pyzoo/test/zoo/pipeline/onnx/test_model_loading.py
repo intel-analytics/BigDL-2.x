@@ -783,4 +783,3 @@ class TestModelLoading(OnnxTestCase):
         z = x * y
         output = OnnxLoader.run_node(node, [x, y])
         np.testing.assert_almost_equal(output['z'], z, decimal=5)
-
