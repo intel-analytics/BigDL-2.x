@@ -623,7 +623,13 @@ class TestModelLoading(OnnxTestCase):
             np.testing.assert_almost_equal(output["transposed"], transposed, decimal=5)
 
     def test_torch_transpose(self):
-        input_shape_with_batch = (2, 3, 5)
+        class Transpose(torch.nn.Module):
+            def __init__(self, *dim):
+                super(Transpose, self).__init__()
+                # self.shape = shape
 
-        pytorch_model = torch.transpose(x, 1, 0)
+            def forward(self, input):
+                return input.transpose(1, 2)
+        pytorch_model = Transpose()
+        input_shape_with_batch = (2, 3, 5)
         self.compare_with_pytorch(pytorch_model, input_shape_with_batch)
