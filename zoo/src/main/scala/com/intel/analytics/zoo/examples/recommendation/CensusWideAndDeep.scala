@@ -52,13 +52,6 @@ case class Record(
                    income_bracket: String
                )
 
-case class CensusParams(modelType: String = "wide_n_deep",
-                        inputDir: String = "./data/census/",
-                        onSpark: Boolean = true,
-                        batchSize: Int = 40,
-                        maxEpoch: Int = 40,
-                        logDir: Option[String] = None)
-
 object CensusWideAndDeep {
 
   val recordSchema = StructType(Array(
@@ -81,37 +74,7 @@ object CensusWideAndDeep {
 
   case class RecordSample[T: ClassTag](sample: Sample[T])
 
-  def main(args: Array[String]): Unit = {
-    val defaultParams = CensusParams()
-    val parser = new OptionParser[CensusParams]("WideAndDeep Example") {
-      opt[String]("modelType")
-        .text(s"modelType")
-        .action((x, c) => c.copy(modelType = x))
-      opt[String]("inputDir")
-        .text(s"inputDir")
-        .action((x, c) => c.copy(inputDir = x))
-      opt[Boolean]("onSpark")
-        .text(s"whether run on spark, default is true")
-        .action((x, c) => c.copy(onSpark = x))
-      opt[Int]('b', "batchSize")
-        .text(s"batch size, default is 40")
-        .action((x, c) => c.copy(batchSize = x))
-      opt[Int]('e', "maxEpoch")
-        .text(s"max epoch, default is 40")
-        .action((x, c) => c.copy(maxEpoch = x))
-      opt[String]("logDir")
-        .text(s"logDir")
-        .action((x, c) => c.copy(logDir = Some(x)))
-    }
-    parser.parse(args, defaultParams).map {
-      params =>
-        run(params)
-    } getOrElse {
-      System.exit(1)
-    }
-  }
-
-  def run(params: CensusParams): Unit = {
+  def run(params: WNDParams): Unit = {
     Logger.getLogger("org").setLevel(Level.ERROR)
 
     val batchSize = params.batchSize
@@ -192,7 +155,7 @@ object CensusWideAndDeep {
 
     if (params.logDir.isDefined) {
       val logdir = params.logDir.get
-      val appName = "/wnd" + System.nanoTime()
+      val appName = "/census_wnd" + System.nanoTime()
       optimizer
         .setTrainSummary(new TrainSummary(logdir, appName))
         .setValidationSummary(new ValidationSummary(logdir, appName))
