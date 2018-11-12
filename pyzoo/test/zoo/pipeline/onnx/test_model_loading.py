@@ -757,3 +757,30 @@ class TestModelLoading(OnnxTestCase):
         pytorch_model = Mul()
         input_shape_with_batch = [(1, 3), (1, 3)]
         self.compare_with_pytorch(pytorch_model, input_shape_with_batch)
+
+    def test_mul1(self):
+        node = onnx.helper.make_node(
+            'Mul',
+            inputs=['x', 'y'],
+            outputs=['z'],
+        )
+
+        x = np.array([1, 2, 3]).astype(np.float32).reshape([3, 1])
+        y = np.array([4, 5, 6]).astype(np.float32).reshape([3, 1])
+        z = x * y  # expected output [4., 10., 18.]
+        output = OnnxLoader.run_node(node, [x, y])
+        np.testing.assert_almost_equal(output['z'], z, decimal=5)
+
+    def test_mul2(self):
+        node = onnx.helper.make_node(
+            'Mul',
+            inputs=['x', 'y'],
+            outputs=['z'],
+        )
+
+        x = np.random.randn(3, 4, 5).astype(np.float32)
+        y = np.random.randn(3, 4, 5).astype(np.float32)
+        z = x * y
+        output = OnnxLoader.run_node(node, [x, y])
+        np.testing.assert_almost_equal(output['z'], z, decimal=5)
+
