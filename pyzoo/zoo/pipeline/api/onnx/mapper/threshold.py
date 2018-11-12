@@ -23,5 +23,6 @@ class ThresholdMapper(OperatorMapper):
         super(ThresholdMapper, self).__init__(node, _params, _all_tensors)
 
     def _to_tensor(self):
+        assert self.model_inputs[0] <= 0
         threshold = zlayers.Activation("relu")
         return threshold(self.model_inputs[0].zvalue)
