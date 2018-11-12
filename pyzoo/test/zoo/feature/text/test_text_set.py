@@ -19,8 +19,7 @@ import pytest
 from zoo.feature.common import ChainedPreprocessing
 from zoo.feature.text import *
 from zoo.common.nncontext import *
-from zoo.pipeline.api.keras.models import Sequential
-from zoo.pipeline.api.keras.layers import Embedding, Convolution1D, Flatten, Dense
+from zoo.models.textclassification import TextClassifier
 
 
 class TestTextSet:
@@ -38,21 +37,13 @@ class TestTextSet:
         self.labels = [0., 1, 1]
         resource_path = os.path.join(os.path.split(__file__)[0], "../../resources")
         self.path = os.path.join(resource_path, "news20")
+        self.glove_path = os.path.join(resource_path, "glove.6B/glove.6B.50d.txt")
 
     def teardown_method(self, method):
         """ teardown any state that was previously setup with a setup_method
         call.
         """
         self.sc.stop()
-
-    @staticmethod
-    def _build_model(sequence_length):
-        model = Sequential()
-        model.add(Embedding(20, 10, input_length=sequence_length))
-        model.add(Convolution1D(4, 3))
-        model.add(Flatten())
-        model.add(Dense(5, activation="softmax"))
-        return model
 
     def test_textset_without_label(self):
         local_set = LocalTextSet(self.texts)
@@ -96,7 +87,7 @@ class TestTextSet:
         for sample in samples:
             assert sample.feature.shape[0] == 10
 
-        model = TestTextSet._build_model(10)
+        model = TextClassifier(5, self.glove_path, word_index, 10)
         model.compile("adagrad", "sparse_categorical_crossentropy", ['accuracy'])
         model.fit(transformed, batch_size=2, nb_epoch=2, validation_data=transformed)
         res_set = model.predict(transformed, batch_per_thread=2)
@@ -130,7 +121,7 @@ class TestTextSet:
         for sample in samples:
             assert sample.feature.shape[0] == 5
 
-        model = TestTextSet._build_model(5)
+        model = TextClassifier(5, self.glove_path, word_index, 5, encoder="lstm")
         model.compile("sgd", "sparse_categorical_crossentropy", metrics=['accuracy'])
         model.fit(transformed, batch_size=2, nb_epoch=2)
         res_set = model.predict(transformed, batch_per_thread=2)
