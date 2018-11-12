@@ -23,7 +23,7 @@ from unittest import TestCase
 import keras.backend as K
 
 from zoo.common.nncontext import *
-import numpy as np
+
 np.random.seed(1337)  # for reproducibility
 
 
