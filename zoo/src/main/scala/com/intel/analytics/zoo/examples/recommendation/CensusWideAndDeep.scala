@@ -56,7 +56,8 @@ case class CensusParams(modelType: String = "wide_n_deep",
                         inputDir: String = "./data/census/",
                         onSpark: Boolean = true,
                         batchSize: Int = 40,
-                        maxEpoch: Int = 40)
+                        maxEpoch: Int = 40,
+                        logDir: Option[String] = None)
 
 object CensusWideAndDeep {
 
@@ -95,9 +96,12 @@ object CensusWideAndDeep {
       opt[Int]('b', "batchSize")
         .text(s"batch size, default is 40")
         .action((x, c) => c.copy(batchSize = x))
-      opt[String]('e', "maxEpoch")
+      opt[Int]('e', "maxEpoch")
         .text(s"max epoch, default is 40")
-        .action((x, c) => c.copy(inputDir = x))
+        .action((x, c) => c.copy(maxEpoch = x))
+      opt[String]("logDir")
+        .text(s"logDir")
+        .action((x, c) => c.copy(logDir = Some(x)))
     }
     parser.parse(args, defaultParams).map {
       params =>
@@ -162,9 +166,6 @@ object CensusWideAndDeep {
       throw new IllegalArgumentException(s"Unkown modelType ${modelType}")
     }
 
-    val logdir = "/tmp/census_bigdl/"
-    val appName = "wnd" + System.nanoTime()
-
     val sample2batch = SampleToMiniBatch(batchSize)
     // Local optimizer
     val (trainRdds, validationRdds) = if (onSpark) {
@@ -185,12 +186,20 @@ object CensusWideAndDeep {
       criterion = ClassNLLCriterion[Float]())
     optimizer
       .setOptimMethods(optimMethods)
-      .setTrainSummary(new TrainSummary(logdir, appName))
-      .setValidationSummary(new ValidationSummary(logdir, appName))
       .setValidation(Trigger.everyEpoch, validationRdds,
         Array(new Top1Accuracy[Float], new Loss[Float]()))
-      .setCheckpoint(logdir + appName, Trigger.everyEpoch)
       .setEndWhen(Trigger.maxEpoch(maxEpoch))
+
+    if (params.logDir.isDefined) {
+      val logdir = params.logDir.get
+      val appName = "/wnd" + System.nanoTime()
+      optimizer
+        .setTrainSummary(new TrainSummary(logdir, appName))
+        .setValidationSummary(new ValidationSummary(logdir, appName))
+        .setCheckpoint(logdir + appName, Trigger.everyEpoch)
+    }
+
+    optimizer
       .optimize()
   }
 
@@ -198,9 +207,12 @@ object CensusWideAndDeep {
   (DataFrame, DataFrame) = {
     val training = sqlContext.read.schema(recordSchema)
         .option("delimiter", ",")
+      .option("ignoreLeadingWhiteSpace", "true")
         .csv(dataPath + "/adult.data")
     val validation = sqlContext.read.schema(recordSchema)
         .option("delimiter", ",")
+      .option("header", "true")
+      .option("ignoreLeadingWhiteSpace", "true")
         .csv(dataPath + "/adult.test")
 
     (training, validation)
