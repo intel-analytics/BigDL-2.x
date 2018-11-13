@@ -108,6 +108,14 @@ abstract class ZooModel[A <: Activity: ClassTag, B <: Activity: ClassTag, T: Cla
     KerasUtils.toZeroBasedLabel(zeroBasedLabel, model.predictClass(x, batchSize))
   }
 
+  /**
+   * Set the model to be in evaluate status, i.e. remove the effect of Dropout, etc.
+   */
+  def setEvaluateStatus(): this.type = {
+    model.evaluate()
+    this
+  }
+
   override def updateOutput(input: A): B = {
     output = model.updateOutput(input)
     output

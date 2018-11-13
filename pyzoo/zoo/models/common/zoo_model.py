@@ -76,6 +76,14 @@ class ZooModel(ZooModelCreator, Container):
         callBigDlFunc(self.bigdl_type, "zooModelSummary",
                       self.value)
 
+    def set_evaluate_status(self):
+        """
+        Set the model to be in evaluate status, i.e. remove the effect of Dropout, etc.
+        """
+        callBigDlFunc(self.bigdl_type, "zooModelSetEvaluateStatus",
+                      self.value)
+        return self
+
     @staticmethod
     def _do_load(jmodel, bigdl_type="float"):
         model = Layer(jvalue=jmodel, bigdl_type=bigdl_type)
