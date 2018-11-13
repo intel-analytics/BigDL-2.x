@@ -21,9 +21,7 @@ import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric.NumericF
 import com.intel.analytics.zoo.common.NNContext
 import com.intel.analytics.zoo.models.textclassification.TextClassifier
 import com.intel.analytics.zoo.pipeline.api.keras.ZooSpecHelper
-import com.intel.analytics.zoo.pipeline.api.keras.layers.{Convolution1D, Dense, Embedding, Flatten}
 import com.intel.analytics.zoo.pipeline.api.keras.metrics.Accuracy
-import com.intel.analytics.zoo.pipeline.api.keras.models.Sequential
 import com.intel.analytics.zoo.pipeline.api.keras.objectives.SparseCategoricalCrossEntropy
 import org.apache.spark.{SparkConf, SparkContext}
 
@@ -52,15 +50,6 @@ class TextSetSpec extends ZooSpecHelper {
     val feature1 = TextFeature(text1, label = 0)
     val feature2 = TextFeature(text2, label = 1)
     Array(feature1, feature2)
-  }
-
-  def buildModel(): Sequential[Float] = {
-    val model = Sequential()
-    model.add(Embedding(300, 20, inputLength = 30))
-    model.add(Convolution1D(8, 4))
-    model.add(Flatten())
-    model.add(Dense(3, activation = "softmax"))
-    model
   }
 
   "DistributedTextSet Transformation" should "work properly" in {
@@ -118,7 +107,7 @@ class TextSetSpec extends ZooSpecHelper {
     textFeatures.foreach(feature => {
       require(feature.contains("predict"))
       val input = feature.getSample.feature.reshape(Array(1, 30))
-      val output = model.evaluate().forward(input).toTensor[Float].split(1)(0)
+      val output = model.setEvaluateStatus().forward(input).toTensor[Float].split(1)(0)
       feature.getPredict[Float] should be (output)
     })
     val accuracy = model.evaluate(transformed, batchSize = 4)
@@ -150,7 +139,7 @@ class TextSetSpec extends ZooSpecHelper {
     textFeatures.foreach(feature => {
       require(feature.contains("predict"))
       val input = feature.getSample.feature.reshape(Array(1, 30))
-      val output = model.evaluate().forward(input).toTensor[Float].split(1)(0)
+      val output = model.setEvaluateStatus().forward(input).toTensor[Float].split(1)(0)
       feature.getPredict[Float] should be(output)
     })
     val accuracy = model.evaluate(transformed, batchSize = 4)

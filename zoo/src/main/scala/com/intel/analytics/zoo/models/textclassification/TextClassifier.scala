@@ -103,6 +103,11 @@ class TextClassifier[T: ClassTag] private(
   def setCheckpoint(path: String, overWrite: Boolean = true): Unit = {
     model.asInstanceOf[KerasNet[T]].setCheckpoint(path, overWrite)
   }
+
+  def setEvaluateStatus(): this.type = {
+    model.asInstanceOf[KerasNet[T]].setEvaluateStatus()
+    this
+  }
 }
 
 object TextClassifier {

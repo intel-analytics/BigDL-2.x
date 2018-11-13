@@ -227,6 +227,13 @@ abstract class KerasNet[T: ClassTag](implicit ev: TensorNumeric[T])
   }
 
   /**
+   * Set the model to be in evaluate status, i.e. remove the effect of Dropout, etc.
+   */
+  def setEvaluateStatus(): this.type = {
+    evaluate()
+  }
+
+  /**
    * Convert RDD of Sample to DataSet of MiniBatch.
    */
   private def toDataSet(x: RDD[Sample[T]], batchSize: Int): DataSet[MiniBatch[T]] = {
