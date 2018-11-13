@@ -608,7 +608,7 @@ class TestModelLoading(OnnxTestCase):
         pytorch_model = IndexSelect()
         input_shape_with_batch = (3, 4)
         self.compare_with_pytorch(pytorch_model, input_shape_with_batch)
-        
+
     def test_onnx_concat(self):
         class Concat(torch.nn.Module):
             def forward(self, x):
@@ -620,7 +620,8 @@ class TestModelLoading(OnnxTestCase):
 
     def test_concat(self):
         test_cases = {
-            '1d': ([1, 2], [3, 4]),
+            '1d': ([1, 2], 
+                   [3, 4]),
             '2d': ([[1, 2], [3, 4]],
                    [[5, 6], [7, 8]]),
             '3d': ([[[1, 2], [3, 4]], [[5, 6], [7, 8]]],
