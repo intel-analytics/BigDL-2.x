@@ -17,10 +17,12 @@
 import pytest
 import shutil
 
+from bigdl.optim.optimizer import SGD
 from zoo.feature.common import ChainedPreprocessing
 from zoo.feature.text import *
 from zoo.common.nncontext import *
 from zoo.models.textclassification import TextClassifier
+from zoo.pipeline.api.keras.objectives import SparseCategoricalCrossEntropy
 
 
 class TestTextSet:
@@ -142,14 +144,13 @@ class TestTextSet:
             assert sample.feature.shape[0] == 5
 
         model = TextClassifier(5, self.glove_path, word_index, 5, encoder="lstm")
-        model.compile("sgd", "sparse_categorical_crossentropy", metrics=['accuracy'])
+        model.compile(SGD(), SparseCategoricalCrossEntropy())
         model.fit(transformed, batch_size=2, nb_epoch=2)
         res_set = model.predict(transformed, batch_per_thread=2)
         predicts = res_set.get_predicts().collect()
         for predict in predicts:
             assert len(predict) == 1
             assert predict[0].shape == (5, )
-        acc = model.evaluate(transformed, batch_size=2)
 
         tmp_path = create_tmp_path() + ".bigdl"
         model.save_model(tmp_path, over_write=True)
