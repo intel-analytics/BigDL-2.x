@@ -620,8 +620,7 @@ class TestModelLoading(OnnxTestCase):
 
     def test_concat(self):
         test_cases = {
-            '1d': ([1, 2],
-                   [3, 4]),
+            '1d': ([1, 2], [3, 4]),
             '2d': ([[1, 2], [3, 4]],
                    [[5, 6], [7, 8]]),
             '3d': ([[[1, 2], [3, 4]], [[5, 6], [7, 8]]],
