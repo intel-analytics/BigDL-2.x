@@ -29,7 +29,7 @@ In these two examples, we demostrate how to use BigDL to build neural network re
    --dataset ml-1m
 ```
 
-### Run the wide and deep example with cemsus dataset
+### Run the wide and deep example with Census Income dataset
 ``` bash
    export ANALYTICS_ZOO_HOME=the folder where you extract the downloaded Analytics Zoo zip package
    master=... // spark master
