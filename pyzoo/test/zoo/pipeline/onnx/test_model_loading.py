@@ -20,7 +20,7 @@ from zoo.pipeline.api.keras.layers import *
 import numpy as np
 
 np.random.seed(1337)  # for reproducibility
-import torch as torch
+import torch
 import onnx.helper as helper
 import onnx
 from zoo.pipeline.api.onnx.onnx_loader import OnnxLoader
