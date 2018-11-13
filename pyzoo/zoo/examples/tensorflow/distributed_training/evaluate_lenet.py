@@ -30,6 +30,7 @@ slim = tf.contrib.slim
 
 
 def main():
+
     sc = init_nncontext()
 
     # get data, pre-process and create TFDataset
@@ -44,7 +45,7 @@ def main():
                                  names=["features", "labels"],
                                  shapes=[[28, 28, 1], [1]],
                                  types=[tf.float32, tf.int32],
-                                 batch_pre_core=20
+                                 batch_per_thread=20
                                  )
 
     # construct the model from TFDataset

@@ -48,7 +48,7 @@ def main():
     testing_rdd = get_data_rdd("test")
     dataset = TFDataset.from_rdd(training_rdd,
                                  names=["features", "labels"],
-                                 shapes=[[28, 28, 1], [1]],
+                                 shapes=[[28, 28, 1], []],
                                  types=[tf.float32, tf.int32],
                                  batch_size=280,
                                  val_rdd=testing_rdd
@@ -57,12 +57,10 @@ def main():
     # construct the model from TFDataset
     images, labels = dataset.tensors
 
-    labels_sq = tf.squeeze(labels)
-
     with slim.arg_scope(lenet.lenet_arg_scope()):
         logits, end_points = lenet.lenet(images, num_classes=10, is_training=True)
 
-    loss = tf.reduce_mean(tf.losses.sparse_softmax_cross_entropy(logits=logits, labels=labels_sq))
+    loss = tf.reduce_mean(tf.losses.sparse_softmax_cross_entropy(logits=logits, labels=labels))
 
     # create a optimizer
     optimizer = TFOptimizer(loss, Adam(1e-3),

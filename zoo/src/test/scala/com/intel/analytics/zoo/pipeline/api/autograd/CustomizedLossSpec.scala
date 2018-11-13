@@ -83,7 +83,7 @@ class CustomizedLossSpec extends KerasBaseSpec {
 
     def lossFunc[T: ClassTag](yTrue: Variable[T], yPred: Variable[T])(
         implicit ev: TensorNumeric[T]): Variable[T] = {
-      var output = yPred / (A.sum(yPred, axis = 1, keepdims = true)) // .broadcast(axis = 1, times = 3)
+      var output = yPred / (A.sum(yPred, axis = 1, keepDims = true)) // .broadcast(axis = 1, times = 3)
       output = A.clip(output, AutoGrad.epsilon(), 1.0 - AutoGrad.epsilon())
       -A.sum(A.log(output) * yTrue, axis = 1)
     }

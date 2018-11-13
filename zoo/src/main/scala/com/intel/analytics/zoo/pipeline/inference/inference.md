@@ -16,6 +16,8 @@ Inference provides multiple Scala interfaces.
 
 ## Primary APIs
 
+**InferenceModel**
+`InferenceModel` is a thead-safe wrapper of FloatInferenceModels, which can be used to load models and do the predictions.
 
 **InferenceSupportive**
 
