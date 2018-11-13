@@ -133,6 +133,10 @@ class PythonZooModel[T: ClassTag](implicit ev: TensorNumeric[T]) extends PythonZ
     model.setTensorBoard(logDir, appName)
   }
 
+  def textClassifierSetEvaluateStatus(model: TextClassifier[T]): TextClassifier[T] = {
+    model.setEvaluateStatus()
+  }
+
   def loadObjectDetector(path: String, weightPath: String = null): ObjectDetector[T] = {
     ObjectDetector.loadModel(path, weightPath)
   }

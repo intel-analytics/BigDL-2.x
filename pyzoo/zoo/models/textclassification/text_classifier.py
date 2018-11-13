@@ -114,6 +114,7 @@ class TextClassifier(ZooModel):
         model.__class__ = TextClassifier
         return model
 
+    # For the following methods, please refer to KerasNet for documentation.
     def compile(self, optimizer, loss, metrics=None):
         if isinstance(optimizer, six.string_types):
             optimizer = to_bigdl_optim_method(optimizer)
@@ -139,7 +140,17 @@ class TextClassifier(ZooModel):
                       path,
                       over_write)
 
+    def set_evaluate_status(self):
+        callBigDlFunc(self.bigdl_type, "textClassifierSetEvaluateStatus",
+                      self.value)
+
     def fit(self, x, batch_size=32, nb_epoch=10, validation_data=None):
+        """
+        Fit on TextSet.
+        """
+        assert isinstance(x, TextSet), "x should be a TextSet"
+        if validation_data:
+            assert isinstance(validation_data, TextSet), "validation_data should be a TextSet"
         callBigDlFunc(self.bigdl_type, "textClassifierFit",
                       self.value,
                       x,
@@ -148,12 +159,20 @@ class TextClassifier(ZooModel):
                       validation_data)
 
     def evaluate(self, x, batch_size=32):
+        """
+        Evaluate on TextSet.
+        """
+        assert isinstance(x, TextSet), "x should be a TextSet"
         return callBigDlFunc(self.bigdl_type, "textClassifierEvaluate",
                              self.value,
                              x,
                              batch_size)
 
     def predict(self, x, batch_per_thread=4):
+        """
+        Predict on TextSet.
+        """
+        assert isinstance(x, TextSet), "x should be a TextSet"
         results = callBigDlFunc(self.bigdl_type, "textClassifierPredict",
                                 self.value,
                                 x,

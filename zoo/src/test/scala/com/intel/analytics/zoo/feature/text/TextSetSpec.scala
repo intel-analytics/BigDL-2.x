@@ -116,7 +116,8 @@ class TextSetSpec extends ZooSpecHelper {
     val saveFile = createTmpFile()
     model.saveModel(saveFile.getAbsolutePath, overWrite = true)
     val loadedModel = TextClassifier.loadModel[Float](saveFile.getAbsolutePath)
-    val predictResults = model.predict(transformed, batchPerThread = 2).toLocal().array
+    val predictResults = model.predict(transformed, batchPerThread = 2)
+      .toDistributed().rdd.collect()
   }
 
   "TextSet read without sc, fit, predict and evaluate" should "work properly" in {
