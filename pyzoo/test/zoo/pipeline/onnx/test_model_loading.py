@@ -600,6 +600,15 @@ class TestModelLoading(OnnxTestCase):
         output = OnnxLoader.run_node(node, [x])
         np.testing.assert_almost_equal(output["y"], y, decimal=5)
 
+    def test_onnx_index_select(self):
+        class IndexSelect(torch.nn.Module):
+            def forward(self, x):
+                return torch.index_select(x, dim=1, index=torch.tensor(1))
+
+        pytorch_model = IndexSelect()
+        input_shape_with_batch = (3, 4)
+        self.compare_with_pytorch(pytorch_model, input_shape_with_batch)
+        
     def test_onnx_concat(self):
         class Concat(torch.nn.Module):
             def forward(self, x):
@@ -632,12 +641,3 @@ class TestModelLoading(OnnxTestCase):
                 y = np.concatenate(values, i)
                 output = OnnxLoader.run_node(node, [v for v in values])
                 np.testing.assert_almost_equal(output["output"], y, decimal=5)
-
-    def test_onnx_index_select(self):
-        class IndexSelect(torch.nn.Module):
-            def forward(self, x):
-                return torch.index_select(x, dim=1, index=torch.tensor(1))
-
-        pytorch_model = IndexSelect()
-        input_shape_with_batch = (3, 4)
-        self.compare_with_pytorch(pytorch_model, input_shape_with_batch)
