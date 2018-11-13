@@ -16,27 +16,33 @@
 
 package com.intel.analytics.zoo.feature.text
 
+import com.intel.analytics.bigdl.optim.{Adagrad, SGD}
 import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric.NumericFloat
 import com.intel.analytics.zoo.common.NNContext
+import com.intel.analytics.zoo.models.textclassification.TextClassifier
+import com.intel.analytics.zoo.pipeline.api.keras.ZooSpecHelper
 import com.intel.analytics.zoo.pipeline.api.keras.layers.{Convolution1D, Dense, Embedding, Flatten}
+import com.intel.analytics.zoo.pipeline.api.keras.metrics.Accuracy
 import com.intel.analytics.zoo.pipeline.api.keras.models.Sequential
+import com.intel.analytics.zoo.pipeline.api.keras.objectives.SparseCategoricalCrossEntropy
 import org.apache.spark.{SparkConf, SparkContext}
-import org.scalatest.{BeforeAndAfter, FlatSpec, Matchers}
 
 import scala.collection.immutable.HashSet
 
-class TextSetSpec extends FlatSpec with Matchers with BeforeAndAfter {
+class TextSetSpec extends ZooSpecHelper {
   val text1 = "Hello my friend, please annotate my text"
   val text2 = "hello world, this is some sentence for my test"
   val path: String = getClass.getClassLoader.getResource("news20").getPath
   var sc : SparkContext = _
+  val gloveDir: String = getClass.getClassLoader.getResource("glove.6B").getPath
+  val embeddingFile: String = gloveDir + "/glove.6B.50d.txt"
 
-  before {
+  override def doBefore(): Unit = {
     val conf = new SparkConf().setAppName("Test TextSet").setMaster("local[1]")
     sc = NNContext.initNNContext(conf)
   }
 
-  after {
+  override def doAfter(): Unit = {
     if (sc != null) {
       sc.stop()
     }
@@ -102,8 +108,8 @@ class TextSetSpec extends FlatSpec with Matchers with BeforeAndAfter {
     require(textSet.toDistributed().rdd.collect().head.keys() == HashSet("label", "text"))
     val transformed = textSet.tokenize().normalize()
       .shapeSequence(len = 30).word2idx().generateSample()
-    val model = buildModel()
-    model.compile("sgd", "sparse_categorical_crossentropy", List("accuracy"))
+    val model = TextClassifier(3, embeddingFile, transformed.getWordIndex, 30)
+    model.compile(new SGD[Float](), SparseCategoricalCrossEntropy[Float](), List(new Accuracy()))
     model.fit(transformed, batchSize = 4, nbEpoch = 2, validationData = transformed)
     require(! transformed.toDistributed().rdd.first().contains("predict"))
 
@@ -112,10 +118,16 @@ class TextSetSpec extends FlatSpec with Matchers with BeforeAndAfter {
     textFeatures.foreach(feature => {
       require(feature.contains("predict"))
       val input = feature.getSample.feature.reshape(Array(1, 30))
-      val output = model.forward(input).toTensor[Float].split(1)(0)
+      val output = model.evaluate().forward(input).toTensor[Float].split(1)(0)
       feature.getPredict[Float] should be (output)
     })
     val accuracy = model.evaluate(transformed, batchSize = 4)
+
+    // Test for loaded model predict on TextSet
+    val saveFile = createTmpFile()
+    model.saveModel(saveFile.getAbsolutePath, overWrite = true)
+    val loadedModel = TextClassifier.loadModel[Float](saveFile.getAbsolutePath)
+    val predictResults = model.predict(transformed, batchPerThread = 2).toLocal().array
   }
 
   "TextSet read without sc, fit, predict and evaluate" should "work properly" in {
@@ -127,8 +139,9 @@ class TextSetSpec extends FlatSpec with Matchers with BeforeAndAfter {
     val wordIndex = tokenized.generateWordIndexMap()
     val transformed = tokenized -> WordIndexer(wordIndex) -> TextFeatureToSample()
     require(transformed.getWordIndex == wordIndex)
-    val model = buildModel()
-    model.compile("sgd", "sparse_categorical_crossentropy", List("accuracy"))
+    val model = TextClassifier(10, embeddingFile, wordIndex, 30)
+    model.compile(new Adagrad[Float](), SparseCategoricalCrossEntropy[Float](),
+      List(new Accuracy()))
     model.fit(transformed, batchSize = 4, nbEpoch = 2, validationData = transformed)
     require(! transformed.toLocal().array.head.contains("predict"))
 
@@ -137,9 +150,14 @@ class TextSetSpec extends FlatSpec with Matchers with BeforeAndAfter {
     textFeatures.foreach(feature => {
       require(feature.contains("predict"))
       val input = feature.getSample.feature.reshape(Array(1, 30))
-      val output = model.forward(input).toTensor[Float].split(1)(0)
+      val output = model.evaluate().forward(input).toTensor[Float].split(1)(0)
       feature.getPredict[Float] should be(output)
     })
     val accuracy = model.evaluate(transformed, batchSize = 4)
+
+    val saveFile = createTmpFile()
+    model.saveModel(saveFile.getAbsolutePath, overWrite = true)
+    val loadedModel = TextClassifier.loadModel[Float](saveFile.getAbsolutePath)
+    val predictResults = model.predict(transformed, batchPerThread = 2).toLocal().array
   }
 }
