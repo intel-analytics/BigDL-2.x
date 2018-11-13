@@ -21,7 +21,8 @@ import com.intel.analytics.bigdl.nn.keras.KerasLayer
 import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric
 import com.intel.analytics.bigdl.utils.Shape
 import com.intel.analytics.zoo.models.common.ZooModel
-import com.intel.analytics.zoo.pipeline.api.keras.layers._
+import com.intel.analytics.zoo.pipeline.api.keras.layers.{Reshape, Embedding, Dense, Conv1D,
+TimeDistributed, Activation, Dropout, Permute}
 import com.intel.analytics.zoo.pipeline.api.autograd.{AutoGrad, Parameter, Variable}
 import com.intel.analytics.zoo.pipeline.api.keras.models.Model
 import com.intel.analytics.bigdl.tensor.Tensor
@@ -48,7 +49,7 @@ class Transformer[T: ClassTag] private(
 
     val r2 = Reshape(Array(nCtx, 2, embeddingSize)).from(e)
 
-//  Add the position information to the input embeddings
+    // Add the position information to the input embeddings
     val h = AutoGrad.sum(r2, 2, false)
 
     var nextInput: Variable[T] = h
@@ -84,13 +85,17 @@ class Transformer[T: ClassTag] private(
     y * g + b
   }
 
+  // g, b for layerNorm
+  val g2 = Parameter[T](Shape(1, embeddingSize),
+    initWeight = Tensor.ones[T](embeddingSize).view(1, embeddingSize))
+  val b2 = Parameter[T](Shape(1, embeddingSize),
+    initWeight = Tensor[T](embeddingSize).view(1, embeddingSize))
   def layerNorm2(x: Variable[T], e: Double = 1e-5): Variable[T] = {
     val sizes = x.getOutputShape().toSingle().toArray
     val u = AutoGrad.mean(x, sizes.size - 1, true)
     val s = AutoGrad.mean(AutoGrad.square(x - u), sizes.size -1, true)
     val y = (x - u) / AutoGrad.sqrt(s + e)
-    TimeDistributed[T](Dense[T](embeddingSize)
-      .asInstanceOf[KerasLayer[Activity, Tensor[T], T]]).from(y)
+    y * g2 + b2
   }
 
   def gelu(x: Variable[T]): Variable[T] = {
@@ -160,7 +165,7 @@ object Transformer {
     nCtx: Int = 77, // seq len
     embeddingSize: Int = 768,
     embeddingDrop: Double = 0.1,
-    nLayer: Int = 12,
+    nLayer: Int = 1,
 //    afn: String = "gelu",
     residPdrop: Double = 0.1,
     attnPdrop: Double = 0.1,
