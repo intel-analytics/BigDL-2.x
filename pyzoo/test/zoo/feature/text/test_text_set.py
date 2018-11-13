@@ -15,6 +15,7 @@
 #
 
 import pytest
+import shutil
 
 from zoo.feature.common import ChainedPreprocessing
 from zoo.feature.text import *
@@ -89,13 +90,32 @@ class TestTextSet:
 
         model = TextClassifier(5, self.glove_path, word_index, 10)
         model.compile("adagrad", "sparse_categorical_crossentropy", ['accuracy'])
+        tmp_log_dir = create_tmp_path()
+        tmp_checkpoint_path = create_tmp_path()
+        os.mkdir(tmp_checkpoint_path)
+        model.set_tensorboard(tmp_log_dir, "textclassification")
+        model.set_checkpoint(tmp_checkpoint_path)
         model.fit(transformed, batch_size=2, nb_epoch=2, validation_data=transformed)
+        acc = model.evaluate(transformed, batch_size=2)
         res_set = model.predict(transformed, batch_per_thread=2)
         predicts = res_set.get_predicts()
-        for predict in predicts:
-            assert len(predict) == 1
-            assert predict[0].shape == (5, )
-        acc = model.evaluate(transformed, batch_size=2)
+
+        # Test for loaded model predict on TextSet
+        tmp_path = create_tmp_path() + ".bigdl"
+        model.save_model(tmp_path, over_write=True)
+        loaded_model = TextClassifier.load_model(tmp_path)
+        loaded_res_set = loaded_model.predict(transformed, batch_per_thread=2)
+        loaded_predicts = loaded_res_set.get_predicts()
+        assert len(predicts) == len(loaded_predicts)
+
+        for i in range(0, len(predicts)):
+            assert len(predicts[i]) == 1
+            assert len(loaded_predicts[i]) == 1
+            assert predicts[i][0].shape == (5, )
+            assert np.allclose(predicts[i][0], loaded_predicts[i][0])
+        shutil.rmtree(tmp_log_dir)
+        shutil.rmtree(tmp_checkpoint_path)
+        os.remove(tmp_path)
 
     def test_distributed_textset_integration(self):
         texts_rdd = self.sc.parallelize(self.texts)
@@ -130,6 +150,14 @@ class TestTextSet:
             assert len(predict) == 1
             assert predict[0].shape == (5, )
         acc = model.evaluate(transformed, batch_size=2)
+
+        tmp_path = create_tmp_path() + ".bigdl"
+        model.save_model(tmp_path, over_write=True)
+        loaded_model = TextClassifier.load_model(tmp_path)
+        loaded_res_set = loaded_model.predict(transformed, batch_per_thread=2)
+        loaded_predicts = loaded_res_set.get_predicts().collect()
+        assert len(loaded_predicts) == len(predicts)
+        os.remove(tmp_path)
 
     def test_read_local(self):
         local_set = TextSet.read(self.path)

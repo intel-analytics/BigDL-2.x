@@ -68,6 +68,7 @@ class TextClassifier[T: ClassTag] private(
     model
   }
 
+  // For the following methods, please refer to KerasNet for documentation.
   def compile(
       optimizer: OptimMethod[T],
       loss: Criterion[T],

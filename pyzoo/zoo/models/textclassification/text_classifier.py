@@ -143,6 +143,7 @@ class TextClassifier(ZooModel):
     def set_evaluate_status(self):
         callBigDlFunc(self.bigdl_type, "textClassifierSetEvaluateStatus",
                       self.value)
+        return self
 
     def fit(self, x, batch_size=32, nb_epoch=10, validation_data=None):
         """
