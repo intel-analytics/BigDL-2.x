@@ -32,4 +32,3 @@ class GatherMapper(OperatorMapper):
         data = self.model_inputs[0].zvalue
 
         return data.slice(dim=dim, start_index=1, length=1)
-
