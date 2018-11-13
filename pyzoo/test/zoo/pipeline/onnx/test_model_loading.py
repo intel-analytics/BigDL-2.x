@@ -20,7 +20,7 @@ from zoo.pipeline.api.keras.layers import *
 import numpy as np
 
 np.random.seed(1337)  # for reproducibility
-import torch
+import torch as torch
 import onnx.helper as helper
 import onnx
 from zoo.pipeline.api.onnx.onnx_loader import OnnxLoader
@@ -636,8 +636,7 @@ class TestModelLoading(OnnxTestCase):
     def test_onnx_index_select(self):
         class IndexSelect(torch.nn.Module):
             def forward(self, x):
-                y = x[:, 1:]
-                return y[:, 0]
+                return torch.index_select(x, dim=1, index=torch.tensor(1))
 
         pytorch_model = IndexSelect()
         input_shape_with_batch = (3, 4)

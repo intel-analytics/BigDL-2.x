@@ -18,21 +18,18 @@ import zoo.pipeline.api.keras.layers as zlayers
 from zoo.pipeline.api.autograd import Parameter
 import bigdl.nn.layer as blayer
 
-class IndexSelectMapper(OperatorMapper):
+
+class GatherMapper(OperatorMapper):
     def __init__(self, node, initializer, _all_tensors):
-        super(IndexSelectMapper, self).__init__(node, initializer, _all_tensors)
+        super(GatherMapper, self).__init__(node, initializer, _all_tensors)
 
     def _to_tensor(self):
-        dim = 1
-        index = 1
+        dim = int(self.onnx_attr['axis'])
 
-        if "dim" in self.onnx_attr.keys():
-            dim = int(self.onnx_attr['dim'])
         assert dim >= 0, "Currently dim>=0 is required."
         assert dim == 1, "Currently dim=0 is not supported"
 
         data = self.model_inputs[0].zvalue
 
-        return data.index_select(dim=dim, index=index)
-
+        return data.slice(dim=dim, start_index=1, length=1)
 
