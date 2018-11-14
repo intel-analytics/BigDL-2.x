@@ -754,3 +754,15 @@ class TestModelLoading(OnnxTestCase):
             torch.nn.Threshold(0, 0))
         input_shape_with_batch = (2, 3)
         self.compare_with_pytorch(pytorch_model, input_shape_with_batch)
+
+    def test_onnx_div(self):
+        class Div(torch.nn.Module):
+            def forward(self, x):
+                return x[0] * x[1]
+
+        pytorch_model = Div()
+        input_shape_with_batch = [(1, 3), (1, 3)]
+        self.compare_with_pytorch(pytorch_model, input_shape_with_batch)
+
+
+
