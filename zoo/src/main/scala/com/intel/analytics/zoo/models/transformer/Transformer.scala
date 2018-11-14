@@ -94,7 +94,7 @@ class Transformer[T: ClassTag] private(
     val sizes = x.getOutputShape().toSingle().toArray
     val u = AutoGrad.mean(x, sizes.size - 1, true)
     val s = AutoGrad.mean(AutoGrad.square(x - u), sizes.size -1, true)
-    val y = (x - u) / AutoGrad.sqrt(s + e)
+    val y = (x - u) / AutoGrad.sqrt(s + e) // y: (-1, 2, 4) g2: (1, 4)
     y * g2 + b2
   }
 

@@ -52,22 +52,18 @@ private[zoo] class InternalExpand[T: ClassTag](tgtSizes: Array[Int], includeBatc
 
   override def updateGradInput(input: Tensor[T], gradOutput: Tensor[T]): Tensor[T] = {
     val tensorDim = input.dim()
-    val tensorStride = input.stride()
     val tensorSize = input.size()
 
-    val tensorStride2 = gradOutput.stride()
-    val tensorSize2 = gradOutput.size()
-
+    gradInput = Tensor[T](tensorSize)
     // check if need batch dim
     var i = if (includeBatch) 0 else 1
+
     while (i < tensorDim) {
       if (tensorSize(i) == 1) {
-        tensorSize2(i) = tensorSize(i)
-        tensorStride2(i) = tensorStride(i)
+        gradOutput.split(i + 1).foreach(gradInput.add(_))
       }
       i += 1
     }
-    gradInput.set(gradOutput.storage(), gradOutput.storageOffset(), tensorSize2, tensorStride2)
     gradInput
   }
 

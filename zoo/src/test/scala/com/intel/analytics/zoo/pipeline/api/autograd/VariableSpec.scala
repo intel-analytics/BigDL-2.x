@@ -31,6 +31,28 @@ class VariableSpec extends KerasBaseSpec {
     assert(name.contains("Log"))
   }
 
+  "Expand and CMulTable" should "be able to generate correct result" in {
+    val xValue = Tensor[Float]((2 until 18).toArray.map(_.toFloat), Array(2, 2, 4))
+    val yValue = Tensor[Float]((2 until 6).toArray.map(_.toFloat), Array(1, 4))
+    val x = Variable[Float](inputShape = Shape(2, 4))
+    val y = Parameter[Float](inputShape = Shape(1, 4),
+      initWeight = yValue)
+    val z = x * y
+    val model = Model[Float](Array(x, y), z)
+    val output = model.forward(T(xValue, yValue)).toTensor[Float]
+    val expect = Tensor[Float](Array[Float](4f, 9f, 16f, 25f, 12f, 21f, 32f, 45f,
+    20f, 33f, 48f, 65f, 28f, 45f, 64f, 85f), Array(2, 2, 4))
+    require(output.almostEqual(expect, 1e-8) == true)
+
+    val gradOutput = Tensor[Float]((20 until 36).toArray.map(_.toFloat), Array(2, 2, 4))
+    val gradInput = model.backward(T(xValue, yValue), gradOutput).toTable
+    val expect2 = Tensor[Float](Array[Float](40f, 63f, 88f, 115f, 48f, 75f, 104f, 135f,
+    56f, 87f, 120f, 155f, 64f, 99f, 136f, 175f), Array(2, 2, 4))
+    require(gradInput[Tensor[Float]](1).almostEqual(expect2, 1e-8) == true)
+    val expect3 = Tensor[Float](Array[Float](912f, 1052f, 1200f, 1356f), Array(1, 4))
+    require(gradInput[Tensor[Float]](2).almostEqual(expect3, 1e-8) == true)
+  }
+
   "Variable operator" should "be able to work with different element size" in {
     val x = Variable[Float](inputShape = Shape(2, 5))
     val y = Variable[Float](inputShape = Shape(2, 1))
