@@ -758,11 +758,39 @@ class TestModelLoading(OnnxTestCase):
     def test_onnx_div(self):
         class Div(torch.nn.Module):
             def forward(self, x):
-                return x[0] * x[1]
+                return x[0] / x[1]
 
         pytorch_model = Div()
         input_shape_with_batch = [(1, 3), (1, 3)]
         self.compare_with_pytorch(pytorch_model, input_shape_with_batch)
+
+    def test_div1(self):
+        node = onnx.helper.make_node(
+            'Div',
+            inputs=['x', 'y'],
+            outputs=['z'],
+        )
+
+        x = np.array([3, 4]).astype(np.float32).reshape([2, 1])
+        y = np.array([1, 2]).astype(np.float32).reshape([2, 1])
+        z = x / y
+        output = OnnxLoader.run_node(node, [x, y])
+        np.testing.assert_almost_equal(output["z"], z, decimal=5)
+
+    def test_div2(self):
+        node = onnx.helper.make_node(
+            'Div',
+            inputs=['x', 'y'],
+            outputs=['z'],
+        )
+
+        x = np.random.randn(3, 4, 5).astype(np.float32)
+        y = np.random.rand(3, 4, 5).astype(np.float32) + 1.0
+        z = x / y
+        output = OnnxLoader.run_node(node, [x, y])
+        np.testing.assert_almost_equal(output["z"], z, decimal=5)
+
+
 
 
 
