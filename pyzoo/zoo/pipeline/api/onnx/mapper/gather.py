@@ -31,8 +31,8 @@ class GatherMapper(OperatorMapper):
         
         dim = int(self.onnx_attr['axis'])
         assert dim == 1, "Currently only dim=1 is supported"
-        
+
         index = self.model_inputs[1].zvalue
         assert index.shape == (1,), "Currently only one index is supported."
 
-        return data.slice(dim=dim, start_index=index, length=1)
+        return zautograd.expand_dims(data.index_select(dim=dim, index=1), axis=1) 
