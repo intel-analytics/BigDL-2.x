@@ -599,7 +599,7 @@ class TestModelLoading(OnnxTestCase):
                 # self.shape = shape
 
             def forward(self, input):
-                return input.permute((2, 1))
+                return input.permute((0, 1))
 
         pytorch_model = torch.nn.Sequential(
             Permute((2, 1)))
@@ -629,7 +629,20 @@ class TestModelLoading(OnnxTestCase):
                 # self.shape = shape
 
             def forward(self, input):
-                return input.transpose(1, 2)
+                return torch.transpose(input, 1, 2)
         pytorch_model = Transpose()
         input_shape_with_batch = (2, 3, 5)
+        self.compare_with_pytorch(pytorch_model, input_shape_with_batch)
+
+    def test_pytorch_t1(self):
+        class T(torch.nn.Module):
+            def __init__(self, *dim):
+                super(T, self).__init__()
+                # self.shape = shape
+
+            def forward(self, input):
+                return torch.t(input)
+
+        pytorch_model = T()
+        input_shape_with_batch = (2, 3)
         self.compare_with_pytorch(pytorch_model, input_shape_with_batch)
