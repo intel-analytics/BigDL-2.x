@@ -603,7 +603,7 @@ class TestModelLoading(OnnxTestCase):
     def test_onnx_index_select(self):
         class IndexSelect(torch.nn.Module):
             def forward(self, x):
-                return torch.index_select(x, dim=1, index=torch.tensor(1))
+                return torch.index_select(x, dim=1, index=torch.tensor([1]))
 
         pytorch_model = IndexSelect()
         input_shape_with_batch = (3, 4)
