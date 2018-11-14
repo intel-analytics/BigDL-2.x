@@ -29,7 +29,6 @@ class TransposeMapper(OperatorMapper):
         assert len(self.model_inputs) == 1, "Transpose accept single input only"
         dims = [int(i) for i in self.onnx_attr['perm']]
         for j in range(len(dims)):
-            if dims[j] == 0:
-                raise Exception("Not Supported.")
+            assert dims[j] != 0, "Not supported"
         transpose = zlayers.Permute((2, 3))
         return transpose
