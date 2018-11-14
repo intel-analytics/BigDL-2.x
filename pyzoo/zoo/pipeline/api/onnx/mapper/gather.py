@@ -23,12 +23,16 @@ class GatherMapper(OperatorMapper):
     def __init__(self, node, initializer, _all_tensors):
         super(GatherMapper, self).__init__(node, initializer, _all_tensors)
 
+    def _extract_model_inputs(self):
+        return [self._to_zoo_input(i) for i in self._input_list]
+
     def _to_tensor(self):
-        dim = int(self.onnx_attr['axis'])
-
-        assert dim >= 0, "Currently dim>=0 is required."
-        assert dim == 1, "Currently dim=0 is not supported"
-
         data = self.model_inputs[0].zvalue
+        
+        dim = int(self.onnx_attr['axis'])
+        assert dim == 1, "Currently only dim=1 is supported"
+        
+        index = self.model_inputs[1].zvalue
+        assert index.shape == (1,), "Currently only one index is supported."
 
-        return data.slice(dim=dim, start_index=1, length=1)
+        return data.slice(dim=dim, start_index=index, length=1)
