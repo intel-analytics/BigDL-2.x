@@ -755,7 +755,7 @@ class TestModelLoading(OnnxTestCase):
         input_shape_with_batch = (2, 3)
         self.compare_with_pytorch(pytorch_model, input_shape_with_batch)
 
-     def test_onnx_mul(self):
+    def test_onnx_mul(self):
         class Mul(torch.nn.Module):
             def forward(self, x):
                 return x[0] * x[1]
