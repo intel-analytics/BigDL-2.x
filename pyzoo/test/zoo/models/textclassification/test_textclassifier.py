@@ -34,6 +34,11 @@ class TestTextClassifier(ZooTestCase):
         model.summary()
         input_data = np.random.randint(20, size=(4, 500))
         self.assert_forward_backward(model, input_data)
+        model.set_evaluate_status()
+        # Forward twice will get the same output
+        output1 = model.forward(input_data)
+        output2 = model.forward(input_data)
+        assert np.allclose(output1, output2)
 
     def test_save_load(self):
         model = TextClassifier(20, glove_path, sequence_length=100)
