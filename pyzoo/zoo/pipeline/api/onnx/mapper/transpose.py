@@ -30,5 +30,5 @@ class TransposeMapper(OperatorMapper):
         dims = [int(i) for i in self.onnx_attr['perm']]
         for j in range(len(dims)):
             assert dims[j] != 0, "Not supported"
-        transpose = zlayers.Permute((2, 3))
+        transpose = zlayers.Permute(dims)
         return transpose

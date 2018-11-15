@@ -634,7 +634,7 @@ class TestModelLoading(OnnxTestCase):
         input_shape_with_batch = (2, 3, 5)
         self.compare_with_pytorch(pytorch_model, input_shape_with_batch)
 
-    def test_pytorch_t1(self):
+    def test_pytorch_t(self):
         class T(torch.nn.Module):
             def __init__(self, *dim):
                 super(T, self).__init__()
@@ -642,7 +642,6 @@ class TestModelLoading(OnnxTestCase):
 
             def forward(self, input):
                 return torch.t(input)
-
         pytorch_model = T()
         input_shape_with_batch = (2, 3)
         self.compare_with_pytorch(pytorch_model, input_shape_with_batch)
