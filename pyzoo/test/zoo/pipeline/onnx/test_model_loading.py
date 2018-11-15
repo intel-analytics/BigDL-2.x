@@ -748,3 +748,23 @@ class TestModelLoading(OnnxTestCase):
         )
         input_shape_with_batch = (1, 3, 32)
         self.compare_with_pytorch(pytorch_model, input_shape_with_batch)
+
+    def test_onnx_expand(self):
+        node = onnx.helper.make_node(
+            'Expand',
+            inputs=['data', 'new_shape'],
+            outputs=['expanded'],
+        )
+        shape = [3, 1]
+        new_shape = [3, 4]
+        data = np.reshape(np.arange(1, np.prod(shape) + 1, dtype=np.float32), shape)
+        # print(data)
+        # [[1.], [2.], [3.]]
+        expanded = np.tile(data, 4)
+        # print(expanded)
+        # [[1., 1., 1., 1.],
+        # [2., 2., 2., 2.],
+        # [3., 3., 3., 3.]]
+        new_shape = np.array(new_shape, dtype=np.int64)
+        output = OnnxLoader.run_node(node, [data, new_shape])
+        np.testing.assert_almost_equal(output["expanded"], expanded, decimal=5)
