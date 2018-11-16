@@ -16,12 +16,12 @@
 
 package com.intel.analytics.zoo.models.transformer
 
+import com.intel.analytics.bigdl.nn.RandomNormal
 import com.intel.analytics.bigdl.nn.abstractnn.{AbstractModule, Activity}
 import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric
 import com.intel.analytics.bigdl.utils.Shape
 import com.intel.analytics.zoo.models.common.ZooModel
-import com.intel.analytics.zoo.pipeline.api.keras.layers.{Reshape, Embedding, Conv1D,
- Activation, Dropout, Permute}
+import com.intel.analytics.zoo.pipeline.api.keras.layers._
 import com.intel.analytics.zoo.pipeline.api.autograd.{AutoGrad, Parameter, Variable}
 import com.intel.analytics.zoo.pipeline.api.keras.models.Model
 import com.intel.analytics.bigdl.tensor.Tensor
@@ -48,7 +48,6 @@ class Transformer[T: ClassTag] private(
 
     val r2 = Reshape(Array(nCtx, 2, embeddingSize)).from(e)
 
-    // Add the position information to the input embeddings
     val h = AutoGrad.sum(r2, 2, false)
 
     var nextInput: Variable[T] = h
@@ -103,14 +102,14 @@ class Transformer[T: ClassTag] private(
   }
 
   def mlp(x: Variable[T]): Variable[T] = {
-    val h = Conv1D(embeddingSize * 4, 1).from(x)
+    val h = new Convolution1D(embeddingSize * 4, 1, init = RandomNormal(0.0, 0.02)).from(x)
     val a = gelu(h)
-    val h2 = Conv1D(embeddingSize, 1).from(a)
+    val h2 = new Convolution1D(embeddingSize, 1, init = RandomNormal(0.0, 0.02)).from(a)
     Dropout(residPdrop).from(h2)
   }
 
   def attention(x: Variable[T]): Variable[T] = {
-    val c = Conv1D(embeddingSize * 3, 1).from(x)
+    val c = new Convolution1D(embeddingSize * 3, 1, init = RandomNormal(0.0, 0.02)).from(x)
     val query = c.slice(2, 0, embeddingSize)
     val key = c.slice(2, embeddingSize, embeddingSize)
     val value = c.slice(2, embeddingSize * 2, embeddingSize)
@@ -119,7 +118,7 @@ class Transformer[T: ClassTag] private(
     val v = splitHeads(value)
     val a = attn(q, k, v, true) // m: (-1, 12, 77, 64)
     val m = mergeHeads(a) // m: (-1, 77, 768)
-    val n = Conv1D(embeddingSize, 1).from(m) // n: (-1, 77, 768)
+    val n = new Convolution1D(embeddingSize, 1, init = RandomNormal(0.0, 0.02)).from(m) // n: (-1, 77, 768)
     Dropout(residPdrop).from(n)
   }
 
@@ -162,7 +161,7 @@ object Transformer {
     nCtx: Int = 77, // seq len
     embeddingSize: Int = 768,
     embeddingDrop: Double = 0.1,
-    nLayer: Int = 1,
+    nLayer: Int = 12,
 //    afn: String = "gelu",
     residPdrop: Double = 0.1,
     attnPdrop: Double = 0.1,

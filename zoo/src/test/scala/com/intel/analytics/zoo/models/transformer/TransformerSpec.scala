@@ -38,7 +38,7 @@ class TransformerSpec extends ZooSpecHelper {
   "Transformer model" should "be able to generate correct result" in {
     RNG.setSeed(42)
     val model = Transformer[Float](vocab = 10, embeddingSize = 4, nCtx = 2, nHead = 2,
-      residPdrop = 0, attnPdrop = 0)
+      residPdrop = 0, attnPdrop = 0, nLayer = 1)
     val data = Array[Float](6, 3, 7, 4, 6, 9, 2, 6, 7, 4, 3, 7, 7, 2, 5, 4)
     val wb = model.parameters()._1
 
@@ -271,7 +271,7 @@ class TransformerSpec extends ZooSpecHelper {
 
   "Attention" should "be able to generate correct result" in {
     val transformer = Transformer[Float](vocab = 10, embeddingSize = 4, nCtx = 2, nHead = 2,
-      residPdrop = 0, attnPdrop = 0)
+      residPdrop = 0, attnPdrop = 0, nLayer = 1)
 
     val xValue = Tensor[Float](Array[Float](0.6532f, 0.3958f, 0.9147f, 0.2036f,
     0.2018f, 0.2018f, 0.9497f, 0.6666f,
