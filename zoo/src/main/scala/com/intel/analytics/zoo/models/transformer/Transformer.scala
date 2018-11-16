@@ -17,12 +17,11 @@
 package com.intel.analytics.zoo.models.transformer
 
 import com.intel.analytics.bigdl.nn.abstractnn.{AbstractModule, Activity}
-import com.intel.analytics.bigdl.nn.keras.KerasLayer
 import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric
 import com.intel.analytics.bigdl.utils.Shape
 import com.intel.analytics.zoo.models.common.ZooModel
-import com.intel.analytics.zoo.pipeline.api.keras.layers.{Reshape, Embedding, Dense, Conv1D,
-TimeDistributed, Activation, Dropout, Permute}
+import com.intel.analytics.zoo.pipeline.api.keras.layers.{Reshape, Embedding, Conv1D,
+ Activation, Dropout, Permute}
 import com.intel.analytics.zoo.pipeline.api.autograd.{AutoGrad, Parameter, Variable}
 import com.intel.analytics.zoo.pipeline.api.keras.models.Model
 import com.intel.analytics.bigdl.tensor.Tensor
@@ -118,7 +117,7 @@ class Transformer[T: ClassTag] private(
     val q = splitHeads(query)
     val k = splitHeads(key, k = true)
     val v = splitHeads(value)
-    val a = attn(q, k, v) // m: (-1, 12, 77, 64)
+    val a = attn(q, k, v, true) // m: (-1, 12, 77, 64)
     val m = mergeHeads(a) // m: (-1, 77, 768)
     val n = Conv1D(embeddingSize, 1).from(m) // n: (-1, 77, 768)
     Dropout(residPdrop).from(n)
@@ -149,10 +148,8 @@ class Transformer[T: ClassTag] private(
     if (scale) w = w / scala.math.sqrt(v.getOutputShape().toSingle().toArray.last)
 
     // mask attention
-    w = AutoGrad.mm(ab, w) + (ab * (-1) + 1) * -1e9
-    // TODO: softmax with last dim
-//    val lw = w.indexSelect(-1, 0)
-    w = Activation("softmax").from(w)
+    w = w * ab + (ab * (-1) + 1) * -1e9
+    w = Activation[Float]("softmax").from(w)
     w = Dropout(attnPdrop).from(w)
 
     AutoGrad.mm(w, v)
