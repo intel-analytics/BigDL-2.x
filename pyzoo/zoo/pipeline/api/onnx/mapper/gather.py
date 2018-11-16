@@ -36,4 +36,4 @@ class GatherMapper(OperatorMapper):
         assert indices.shape == (1,), "Currently only one index is supported."
         index = int(indices.get_weight().max())
 
-        return zautograd.expand_dims(data.index_select(dim=dim, index=index), axis=1) 
+        return zautograd.expand_dims(data.index_select(dim=dim, index=index), axis=1)
