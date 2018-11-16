@@ -15,7 +15,7 @@
 #
 from zoo.pipeline.api.onnx.mapper.operator_mapper import OperatorMapper
 import zoo.pipeline.api.keras.layers as zlayers
-from zoo.pipeline.api.autograd import Parameter
+from zoo.pipeline.api.autograd as zautograd
 import bigdl.nn.layer as blayer
 
 
