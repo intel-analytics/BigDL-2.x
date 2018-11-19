@@ -28,7 +28,7 @@ class TransposeMapper(OperatorMapper):
     def _to_tensor(self):
         assert len(self.model_inputs) == 1, "Transpose accept single input only"
         dims = [int(i) for i in self.onnx_attr['perm']]
-        for j in range(len(dims)):
-            assert dims[j] != 0, "Not supported"
-        transpose = zlayers.Permute(dims)
+        #for j in range(len(dims)):
+            #assert dims[j] != 0, "Not supported"
+        transpose = zlayers.Permute((1, 3, 2))
         return transpose
