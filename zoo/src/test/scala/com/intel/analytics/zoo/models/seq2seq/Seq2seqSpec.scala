@@ -40,7 +40,7 @@ class Seq2seqSpec extends FlatSpec with Matchers with BeforeAndAfter {
   "Seq2seq model with single rnn" should "be able to work" in {
     val inputSize = 3
     val hiddenSize = 6
-    val batchSize = 1
+    val batchSize = 2
     val seqLen = 2
     val numLayer = 1
     val encoder = Encoder[Float]("lstm", numLayer, hiddenSize, Embedding[Float](10, inputSize))

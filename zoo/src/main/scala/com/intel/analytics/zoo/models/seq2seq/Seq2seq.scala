@@ -17,12 +17,13 @@
 package com.intel.analytics.zoo.models.seq2seq
 
 import com.intel.analytics.bigdl.nn.abstractnn.AbstractModule
+import com.intel.analytics.bigdl.nn.keras.KerasLayer
 import com.intel.analytics.bigdl.tensor.Tensor
 import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric
 import com.intel.analytics.bigdl.utils._
 import com.intel.analytics.zoo.models.common.ZooModel
 import com.intel.analytics.zoo.pipeline.api.keras.models.Model
-import com.intel.analytics.zoo.pipeline.api.keras.layers.{SelectTable, Input}
+import com.intel.analytics.zoo.pipeline.api.keras.layers.{Input, SelectTable}
 
 import scala.reflect.ClassTag
 
@@ -37,7 +38,7 @@ class Seq2seq[T: ClassTag](
   encoder: Encoder[T],
   decoder: Decoder[T],
   inputShape: Shape,
-  bridge: Bridge[T] = null)
+  bridge: KerasLayer[Tensor[T], Tensor[T], T] = null)
   (implicit ev: TensorNumeric[T]) extends ZooModel[Table, Tensor[T], T] {
 
   override def buildModel(): AbstractModule[Table, Tensor[T], T] = {
@@ -70,7 +71,7 @@ object Seq2seq {
     encoder: Encoder[T],
     decoder: Decoder[T],
     inputShape: Shape,
-    bridge: Bridge[T] = null
+    bridge: KerasLayer[Tensor[T], Tensor[T], T] = null
   )(implicit ev: TensorNumeric[T]): Seq2seq[T] = {
     new Seq2seq[T](encoder, decoder, inputShape, bridge).build()
   }
