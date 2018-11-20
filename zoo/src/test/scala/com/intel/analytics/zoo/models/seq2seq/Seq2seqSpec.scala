@@ -59,7 +59,7 @@ class Seq2seqSpec extends FlatSpec with Matchers with BeforeAndAfter {
     val decoder2 = Decoder[Float]("lstm", numLayer, hiddenSize, Embedding[Float](10, inputSize))
     val bridge = Bridge[Float]("dense", "lstm", numLayer, hiddenSize)
     val model2 = Seq2seq[Float](encoder2, decoder2,
-      Shape(List(SingleShape(List(seqLen)), SingleShape(List(seqLen)))),
+      Shape(List(SingleShape(List(-1)), SingleShape(List(-1)))),
       bridge)
     model2.forward(T(input, input2))
     model2.backward(T(input, input2), gradOutput)

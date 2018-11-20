@@ -31,7 +31,7 @@ import scala.reflect.ClassTag
  * [[Seq2seq]] A trainable interface for a simple, generic encoder + decoder model
  * @param encoder an encoder object
  * @param decoder a decoder object
- * @param inputShape shape of input
+ * @param inputShape shape of input, for variable length, please input -1
  * @param bridge connect encoder and decoder
  */
 class Seq2seq[T: ClassTag](

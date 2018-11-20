@@ -39,13 +39,14 @@ private[zoo] object LayerWrapperByForward {
 
   private def singleShapeDummyValue[T: ClassTag](
      singleShape: Shape)(implicit ev: TensorNumeric[T]): Tensor[T] = {
-    // There's no batch dimension in `Parameter`
-    val enrichShape = if (! isConcreteShape(singleShape)) {
-      List(2) ++ KerasUtils.removeBatch(singleShape).toSingle()
-    } else {
-      singleShape.toSingle()
+    val newShape = new Array[Int](singleShape.toSingle().length)
+    singleShape.toSingle().copyToArray(newShape)
+    for (i <- 0 until newShape.length) {
+      if (newShape(i) == -1) {
+        newShape(i) = 2
+      }
     }
-    Tensor[T](enrichShape.toArray).fill(ev.one)
+    Tensor[T](newShape).fill(ev.one)
   }
 
   private def isConcreteShape(shape: Shape): Boolean = {
