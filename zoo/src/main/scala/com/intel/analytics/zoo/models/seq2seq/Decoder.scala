@@ -116,7 +116,7 @@ object Decoder {
         for (i <- 1 to numLayers) rnn.append(GRU(hiddenSize, returnSequences = true))
       }
       case _ => throw new IllegalArgumentException(s"Please use " +
-        s"Decoder(rnn: Array[Recurrent[T]], embedding: KerasLayer[Activity, Activity, T])" +
+        s"Decoder(rnn: Array[Recurrent[T]], embedding: KerasLayer[Tensor[T], Tensor[T], T])" +
         s"to create a decoder")
     }
     Decoder[T](rnn.toArray, embedding, inputShape)

@@ -39,7 +39,9 @@ object Bridge {
     decoderHiddenSize: Int,
     inputShape: Shape = null)(implicit ev: TensorNumeric[T]):
     KerasLayer[Tensor[T], Tensor[T], T] = {
-    val numStates = if (rnnType.toLowerCase == "lstm") 2 * numLayers else numLayers
+    val rnnName = rnnType.toLowerCase
+    require(rnnName == "lstm" || rnnName == "gru", "rnnType has to be lstm or gru")
+    val numStates = if (rnnName == "lstm") 2 * numLayers else numLayers
     val bridge = bridgeType.toLowerCase() match {
       case "dense" =>
         Dense(decoderHiddenSize * numStates, bias = false, inputShape = inputShape)

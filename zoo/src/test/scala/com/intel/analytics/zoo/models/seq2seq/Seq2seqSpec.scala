@@ -27,7 +27,7 @@ class Seq2seqSpec extends FlatSpec with Matchers with BeforeAndAfter {
   var sc : SparkContext = _
 
   before {
-    val conf = new SparkConf().setAppName("Test ObjectDetector").setMaster("local[1]")
+    val conf = new SparkConf().setAppName("Test Seq2seq").setMaster("local[1]")
     sc = NNContext.initNNContext(conf)
   }
 
