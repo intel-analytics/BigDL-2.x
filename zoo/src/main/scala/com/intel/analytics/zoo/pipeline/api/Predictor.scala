@@ -35,8 +35,8 @@ import scala.collection.Iterator.empty
 import scala.reflect.ClassTag
 
 
-class MapIteratorWithShutdown[T, B](preIter: Iterator[T], shutdownHook: () => Unit)
-                                   (f: T => GenTraversableOnce[B]) extends Iterator[B] {
+class FlatMapIteratorWithShutdown[T, B](preIter: Iterator[T], shutdownHook: () => Unit)
+                                       (f: T => GenTraversableOnce[B]) extends Iterator[B] {
   private var cur: Iterator[B] = empty
   private def nextCur() {
     try {
@@ -62,10 +62,10 @@ class MapIteratorWithShutdown[T, B](preIter: Iterator[T], shutdownHook: () => Un
   override def next(): B = (if (hasNext) cur else empty).next()
 }
 
-object MapIteratorWithShutdown {
+object FlatMapIteratorWithShutdown {
   def apply[T, B](preIter: Iterator[T], shutdownHook: () => Unit)
-                 (f: T => GenTraversableOnce[B]): MapIteratorWithShutdown[T, B] =
-    new MapIteratorWithShutdown(preIter, shutdownHook)(f)
+                 (f: T => GenTraversableOnce[B]): FlatMapIteratorWithShutdown[T, B] =
+    new FlatMapIteratorWithShutdown(preIter, shutdownHook)(f)
 }
 
 object Predictor {
@@ -174,7 +174,7 @@ object Predictor {
       def shutdownHook() = {
         localModel.release()
       }
-      MapIteratorWithShutdown(batchedIter, shutdownHook) { imageFeatures =>
+      FlatMapIteratorWithShutdown(batchedIter, shutdownHook) { imageFeatures =>
         Predictor.predictImageBatch[T](localModel, imageFeatures, outputLayer, predictKey,
           localToBatch, shareBuffer)
         imageFeatures
@@ -207,7 +207,7 @@ object Predictor {
       def shutdownHook() = {
         localModel.release()
       }
-      MapIteratorWithShutdown(miniBatch, shutdownHook) { batch =>
+      FlatMapIteratorWithShutdown(miniBatch, shutdownHook) { batch =>
         val output = localModel.forward(batch.getInput)
         splitBatch(output, shareBuffer, batch.size())
       }
