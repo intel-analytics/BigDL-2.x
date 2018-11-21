@@ -38,7 +38,16 @@ import scala.reflect.ClassTag
 class MapIteratorWithShutdown[T, B](preIter: Iterator[T], shutdownHook: () => Unit)
                                    (f: T => GenTraversableOnce[B]) extends Iterator[B] {
   private var cur: Iterator[B] = empty
-  private def nextCur() { cur = f(preIter.next()).toIterator }
+  private def nextCur() {
+    try {
+      cur = f(preIter.next()).toIterator
+    } catch {
+      case e: Throwable =>
+        shutdownHook()
+        throw e
+    }
+
+  }
   override def hasNext: Boolean = {
     while (!cur.hasNext) {
       if (!preIter.hasNext) {
