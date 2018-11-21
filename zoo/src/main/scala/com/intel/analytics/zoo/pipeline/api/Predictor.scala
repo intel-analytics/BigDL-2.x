@@ -33,29 +33,32 @@ import org.apache.spark.rdd.RDD
 import scala.reflect.ClassTag
 
 
-class ShutDownIterator[T](preIter: Iterator[T])(shutdownHook: => Unit) extends Iterator[T] {
+class MapIteratorWithShutdown[T, B](preIter: Iterator[T], shutdownHook: () => Unit)
+                                   (f: T => B) extends Iterator[B] {
   override def hasNext: Boolean = {
     if (!preIter.hasNext) {
-      shutdownHook
+      shutdownHook()
     }
     preIter.hasNext
   }
 
-  override def next(): T = {
+  override def next(): B = {
     if (!hasNext) {
       throw new NoSuchElementException("next on empty iterator")
     }
     try {
-      preIter.next()
+      val pre = preIter.next()
+      f(pre)
     } finally {
-      shutdownHook
+      shutdownHook()
     }
   }
 }
 
-object ShutDownIterator {
-  def apply[T](preIter: Iterator[T])(shutdownHook: => Unit): ShutDownIterator[T] =
-    new ShutDownIterator(preIter)(shutdownHook)
+object MapIteratorWithShutdown {
+  def apply[T, B](preIter: Iterator[T], shutdownHook: () => Unit)
+                 (f: T => B): MapIteratorWithShutdown[T, B] =
+    new MapIteratorWithShutdown(preIter, shutdownHook)(f)
 }
 
 object Predictor {
@@ -160,16 +163,17 @@ object Predictor {
     val result = rdd.mapPartitions(partition => {
       val localModel = modelBroad.value()
       val localToBatch = toBatchBroad.value._1.cloneTransformer()
-
-      val res = partition.grouped(localBatchPerPartition).flatMap(imageFeatures => {
+      val batchedIter = partition.grouped(localBatchPerPartition)
+      def shutdownHook() = {
+        localModel.release()
+      }
+      val predictionIter = MapIteratorWithShutdown(batchedIter, shutdownHook) { imageFeatures =>
         Predictor.predictImageBatch[T](localModel, imageFeatures, outputLayer, predictKey,
           localToBatch, shareBuffer)
         imageFeatures
-      })
-
-      ShutDownIterator(res) {
-        localModel.release()
       }
+
+      predictionIter.flatten
     })
     ImageFrame.rdd(result)
   }
@@ -195,14 +199,14 @@ object Predictor {
       val localModel = modelBroad.value()
       val localTransformer = otherBroad.value.cloneTransformer()
       val miniBatch = localTransformer(partition)
-      val result = miniBatch.flatMap(batch => {
-        val output = localModel.forward(batch.getInput)
-        splitBatch(output, shareBuffer, batch.size())
-
-      })
-      ShutDownIterator(result) {
+      def shutdownHook() = {
         localModel.release()
       }
+      val predictionIter = MapIteratorWithShutdown(miniBatch, shutdownHook) { batch =>
+        val output = localModel.forward(batch.getInput)
+        splitBatch(output, shareBuffer, batch.size())
+      }
+      predictionIter.flatten
     }
   }
 
