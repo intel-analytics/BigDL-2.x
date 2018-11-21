@@ -55,6 +55,7 @@ class TFNet(private val graphDef: TFGraphHolder,
                     config: Array[Int])
   extends AbstractModule[Activity, Activity, Float] with Predictable[Float] {
 
+  val module: Module[Float] = this
   implicit val ev = TensorNumeric.NumericFloat
   implicit val tag: ClassTag[Float] = ClassTag(Float.getClass)
 

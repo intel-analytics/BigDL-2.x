@@ -19,11 +19,12 @@ package com.intel.analytics.zoo.pipeline.api
 import com.intel.analytics.bigdl._
 import com.intel.analytics.bigdl.dataset.{LocalDataSet, MiniBatch, PaddingParam, Sample, SampleToMiniBatch, Transformer, DataSet => _}
 import com.intel.analytics.bigdl.models.utils.ModelBroadcast
+import com.intel.analytics.bigdl.nn.Module
 import com.intel.analytics.bigdl.nn.abstractnn.Activity
-import com.intel.analytics.bigdl.optim.LocalPredictor
+import com.intel.analytics.bigdl.optim.{LocalPredictor, Predictor}
 import com.intel.analytics.bigdl.tensor.Tensor
 import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric
-import com.intel.analytics.bigdl.transform.vision.image.{DistributedImageFrame, ImageFeature, ImageFrame}
+import com.intel.analytics.bigdl.transform.vision.image.{DistributedImageFrame, ImageFeature, ImageFrame, LocalImageFrame}
 import com.intel.analytics.bigdl.utils.{T, Table}
 import com.intel.analytics.zoo.feature.image.ImageSet
 import com.intel.analytics.zoo.feature.text._
@@ -191,8 +192,7 @@ object Predictor {
 
 trait Predictable[T]  {
 
-  this: Module[T] =>
-
+  val module: Module[T]
 
   implicit val tag: ClassTag[T]
   implicit val ev: com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric[T]
@@ -207,7 +207,12 @@ trait Predictable[T]  {
   def predict(
                x: RDD[Sample[T]],
                batchPerThread: Int)(implicit ev: TensorNumeric[T]): RDD[Activity] = {
-    this.predict(x, batchPerThread * x.getNumPartitions, false)
+    Predictor.predict(x,
+      batchSize = -1,
+      shareBuffer = false,
+      model = module,
+      batchPerPartition = batchPerThread,
+      featurePaddingParam = None)
   }
 
   /**
@@ -218,7 +223,7 @@ trait Predictable[T]  {
    */
   def predict(
                x: RDD[Sample[T]])(implicit ev: TensorNumeric[T]): RDD[Activity] = {
-    this.predict(x, batchPerThread = 4)
+    predict(x, batchPerThread = 4)
   }
 
   /**
@@ -230,7 +235,7 @@ trait Predictable[T]  {
   def predict(
                x: LocalDataSet[MiniBatch[T]],
                batchPerThread: Int)(implicit ev: TensorNumeric[T]): Array[Activity] = {
-    val localPredictor = LocalPredictor(this, batchPerCore = batchPerThread)
+    val localPredictor = LocalPredictor(module, batchPerCore = batchPerThread)
     localPredictor.predict(x)
   }
 
@@ -253,7 +258,7 @@ trait Predictable[T]  {
   def predict(
                x: Array[Sample[T]],
                batchPerThread: Int)(implicit ev: TensorNumeric[T]): Array[Activity] = {
-    val localPredictor = LocalPredictor(this, batchPerCore = batchPerThread)
+    val localPredictor = LocalPredictor(module, batchPerCore = batchPerThread)
     localPredictor.predict(x)
   }
 
@@ -278,8 +283,19 @@ trait Predictable[T]  {
   def predict(
                x: ImageSet,
                batchPerThread: Int): ImageSet = {
-    ImageSet.fromImageFrame(predictImage(x.toImageFrame(),
-      batchPerPartition = batchPerThread))
+
+    val resultImageFrame = x.toImageFrame() match {
+      case distributedImageFrame: DistributedImageFrame =>
+        Predictor(module, None, batchPerThread)
+          .predictImage(distributedImageFrame, outputLayer = null)
+      case localImageFrame: LocalImageFrame =>
+        val predictor = LocalPredictor(module, None, batchPerCore = batchPerThread)
+        val imageFrame = predictor.predictImage(localImageFrame, outputLayer = null,
+          shareBuffer = false)
+        predictor.shutdown()
+        imageFrame
+    }
+    ImageSet.fromImageFrame(resultImageFrame)
   }
 
   /**
@@ -307,7 +323,7 @@ trait Predictable[T]  {
                batchPerThread: Int): TextSet = {
     x match {
       case distributed: DistributedTextSet =>
-        TextPredictor[T](this, batchPerThread).predict(distributed)
+        TextPredictor[T](module, batchPerThread).predict(distributed)
       case local: LocalTextSet =>
         val features = local.array
         val samples = features.map(_.getSample).asInstanceOf[Array[Sample[T]]]
@@ -346,7 +362,11 @@ trait Predictable[T]  {
                       batchPerThread: Int = 4,
                       zeroBasedLabel: Boolean = true): RDD[Int] = {
     KerasUtils.toZeroBasedLabel(zeroBasedLabel,
-      this.predictClass(x, batchPerThread * x.getNumPartitions))
+      Predictor.predictClass(x,
+        batchSize = -1,
+        model = module,
+        batchPerPartition = batchPerThread,
+        featurePaddingParam = None))
   }
 
 }
