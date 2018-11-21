@@ -30,11 +30,10 @@ import com.intel.analytics.zoo.feature.text._
 import com.intel.analytics.zoo.pipeline.api.keras.layers.utils.KerasUtils
 import org.apache.spark.rdd.RDD
 
-import scala.collection.AbstractIterator
 import scala.reflect.ClassTag
 
 
-class ShutDownIterator[T](preIter: Iterator[T])(shutdownHook: => Unit) extends AbstractIterator[T] {
+class ShutDownIterator[T](preIter: Iterator[T])(shutdownHook: => Unit) extends Iterator[T] {
   override def hasNext: Boolean = {
     if (!preIter.hasNext) {
       shutdownHook
@@ -162,13 +161,13 @@ object Predictor {
       val localModel = modelBroad.value()
       val localToBatch = toBatchBroad.value._1.cloneTransformer()
 
-      val result = partition.grouped(localBatchPerPartition).flatMap(imageFeatures => {
+      val res = partition.grouped(localBatchPerPartition).flatMap(imageFeatures => {
         Predictor.predictImageBatch[T](localModel, imageFeatures, outputLayer, predictKey,
           localToBatch, shareBuffer)
         imageFeatures
       })
 
-      ShutDownIterator(result) {
+      ShutDownIterator(res) {
         localModel.release()
       }
     })
@@ -225,7 +224,7 @@ object Predictor {
 
 trait Predictable[T]  {
 
-  val module: Module[T]
+  protected val module: Module[T]
 
   implicit val tag: ClassTag[T]
   implicit val ev: com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric[T]

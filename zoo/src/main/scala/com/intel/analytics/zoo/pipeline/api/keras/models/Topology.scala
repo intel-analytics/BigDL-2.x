@@ -46,7 +46,7 @@ import scala.language.implicitConversions
 abstract class KerasNet[T](implicit val tag: ClassTag[T], implicit val ev: TensorNumeric[T])
   extends KerasLayer[Activity, Activity, T] with Net with Predictable[T] {
 
-  val module: Module[T] = this
+  protected val module: Module[T] = this
 
   def getSubModules(): List[AbstractModule[Activity, Activity, T]] = {
     require(this.labor.isInstanceOf[Container[Activity, Activity, T]],
