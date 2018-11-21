@@ -57,9 +57,7 @@ class TFNet(private val graphDef: TFGraphHolder,
 
   val module: Module[Float] = this
   implicit val ev = TensorNumeric.NumericFloat
-  implicit val tag: ClassTag[Float] = ClassTag(Float.getClass)
-
-  type T = Float
+  implicit val tag: ClassTag[Float] = ClassTag.Float
 
   // todo if an exception is thrown during forward or backward, there will be memory leak
   // maybe create a resource manager to handle tensor creation and destruction
@@ -102,7 +100,7 @@ class TFNet(private val graphDef: TFGraphHolder,
   @transient
   private lazy val tensorManager = new ResourceManager()
 
-  private[zoo] def graph = graphDef.tfGraph
+  private[zoo] def graph = graphDef.tfGraph.graph
 
   val inputNames: Array[String] = graphMeta.inputNames
   private val inputTypes = inputNames.map(name2type)
@@ -197,7 +195,7 @@ class TFNet(private val graphDef: TFGraphHolder,
 
   @transient
   private[zoo] lazy val sess = {
-    val sess = new Session(graphDef.tfGraph, config.map(_.toByte))
+    val sess = new Session(this.graph, config.map(_.toByte))
     sess
   }
   @transient
@@ -577,20 +575,20 @@ object TFNet {
 
   private val graphDefRegistry = new RegistryMap[Array[Byte]]()
 
-  private class ClosableGraph(val graph: Graph) {
+  class ClosableGraph(val graph: Graph) {
     override def finalize(): Unit = {
       println("in ClosableGraph finalize")
       graph.close()
     }
   }
 
-  class TFGraphHolder(@transient var tfGraph: Graph, private var id: String)
+  class TFGraphHolder(@transient var tfGraph: ClosableGraph, private var id: String)
     extends SerializationHolder {
 
     override def writeInternal(out: CommonOutputStream): Unit = {
       val (graphDef, _) = graphDefRegistry.getOrCreate(id) {
         timing("export as graph def") {
-          tfGraph.toGraphDef
+          tfGraph.graph.toGraphDef
         }
       }
       val len = graphDef.length
@@ -635,7 +633,7 @@ object TFNet {
         }
 
       }
-      tfGraph = graph.graph
+      tfGraph = graph
       id = id
     }
   }
@@ -730,7 +728,7 @@ object TFNet {
     val graph = new Graph()
     graph.importGraphDef(graphDef.toByteArray)
 
-    new TFNet(new TFGraphHolder(graph, graphId), graphMeta, config.map(_.toInt))
+    new TFNet(new TFGraphHolder(new ClosableGraph(graph), graphId), graphMeta, config.map(_.toInt))
   }
 
   /**

@@ -17,11 +17,10 @@
 package com.intel.analytics.zoo.pipeline.api
 
 import com.intel.analytics.bigdl._
-import com.intel.analytics.bigdl.dataset.{LocalDataSet, MiniBatch, PaddingParam, Sample, SampleToMiniBatch, Transformer, DataSet => _}
+import com.intel.analytics.bigdl.dataset.{LocalDataSet, MiniBatch, PaddingParam, Sample, SampleToMiniBatch, Transformer}
 import com.intel.analytics.bigdl.models.utils.ModelBroadcast
-import com.intel.analytics.bigdl.nn.Module
 import com.intel.analytics.bigdl.nn.abstractnn.Activity
-import com.intel.analytics.bigdl.optim.{LocalPredictor, Predictor}
+import com.intel.analytics.bigdl.optim.LocalPredictor
 import com.intel.analytics.bigdl.tensor.Tensor
 import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric
 import com.intel.analytics.bigdl.transform.vision.image.{DistributedImageFrame, ImageFeature, ImageFrame, LocalImageFrame}
@@ -31,7 +30,34 @@ import com.intel.analytics.zoo.feature.text._
 import com.intel.analytics.zoo.pipeline.api.keras.layers.utils.KerasUtils
 import org.apache.spark.rdd.RDD
 
+import scala.collection.AbstractIterator
 import scala.reflect.ClassTag
+
+
+class ShutDownIterator[T](preIter: Iterator[T])(shutdownHook: => Unit) extends AbstractIterator[T] {
+  override def hasNext: Boolean = {
+    if (!preIter.hasNext) {
+      shutdownHook
+    }
+    preIter.hasNext
+  }
+
+  override def next(): T = {
+    if (!hasNext) {
+      throw new NoSuchElementException("next on empty iterator")
+    }
+    try {
+      preIter.next()
+    } finally {
+      shutdownHook
+    }
+  }
+}
+
+object ShutDownIterator {
+  def apply[T](preIter: Iterator[T])(shutdownHook: => Unit): ShutDownIterator[T] =
+    new ShutDownIterator(preIter)(shutdownHook)
+}
 
 object Predictor {
   def apply[T: ClassTag](model: Module[T],
@@ -136,11 +162,15 @@ object Predictor {
       val localModel = modelBroad.value()
       val localToBatch = toBatchBroad.value._1.cloneTransformer()
 
-      partition.grouped(localBatchPerPartition).flatMap(imageFeatures => {
+      val result = partition.grouped(localBatchPerPartition).flatMap(imageFeatures => {
         Predictor.predictImageBatch[T](localModel, imageFeatures, outputLayer, predictKey,
           localToBatch, shareBuffer)
         imageFeatures
       })
+
+      ShutDownIterator(result) {
+        localModel.release()
+      }
     })
     ImageFrame.rdd(result)
   }
@@ -166,11 +196,14 @@ object Predictor {
       val localModel = modelBroad.value()
       val localTransformer = otherBroad.value.cloneTransformer()
       val miniBatch = localTransformer(partition)
-      miniBatch.flatMap(batch => {
+      val result = miniBatch.flatMap(batch => {
         val output = localModel.forward(batch.getInput)
         splitBatch(output, shareBuffer, batch.size())
 
       })
+      ShutDownIterator(result) {
+        localModel.release()
+      }
     }
   }
 
