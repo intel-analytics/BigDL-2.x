@@ -23,5 +23,7 @@ class ExpandMapper(OperatorMapper):
         super(ExpandMapper, self).__init__(node, _params, _all_tensors)
 
     def _to_tensor(self):
-        expand = zlayers.
+        assert len(self.model_inputs) == 1, "AveragePool accept single input only"
+        shape = [int(i) for i in self.onnx_attr['shape']]
+        expand = zlayers.autograd.expand_dims()
         return expand(self.model_inputs[0].zvalue)
