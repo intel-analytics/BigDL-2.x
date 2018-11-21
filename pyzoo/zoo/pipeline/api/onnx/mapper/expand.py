@@ -15,7 +15,7 @@
 #
 from zoo.pipeline.api.onnx.mapper.operator_mapper import OperatorMapper
 from zoo.pipeline.api.onnx.onnx_helper import OnnxHelper
-import zoo.pipeline.api.keras.layers as zlayers
+import zoo.pipeline.api.autograd as autograd
 import numpy as np
 
 
@@ -31,8 +31,8 @@ class ExpandMapper(OperatorMapper):
 
     def _to_tensor(self):
         assert len(self.model_inputs) == 1, "Expand accept single input only"
-        data = [int(i) for i in self._input_list[0].data]
+        data = self.model_inputs[0].zvalue
         shape = np.shape(data)
         new_shape = [int(i) for i in self._input_list[1].zvalue]
-        expand = zlayers.autograd.expand_dims(self.model_inputs, 1)
-        return expand(self.model_inputs[0].zvalue)
+        return autograd.expand_dims(data, 0)
+

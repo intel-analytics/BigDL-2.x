@@ -756,15 +756,19 @@ class TestModelLoading(OnnxTestCase):
             outputs=['expanded'],
         )
         shape = [3, 1]
-        new_shape = [3, 4]
         data = np.reshape(np.arange(1, np.prod(shape) + 1, dtype=np.float32), shape)
         # print(data)
         # [[1.], [2.], [3.]]
-        expanded = np.tile(data, 4)
+        new_shape = [2, 1, 6]
+        expanded = data * np.ones(new_shape, dtype=np.float32)
         # print(expanded)
-        # [[1., 1., 1., 1.],
-        # [2., 2., 2., 2.],
-        # [3., 3., 3., 3.]]
+        # [[[1., 1., 1., 1., 1., 1.],
+        #  [2., 2., 2., 2., 2., 2.],
+        #  [3., 3., 3., 3., 3., 3.]],
+        #
+        # [[1., 1., 1., 1., 1., 1.],
+        #  [2., 2., 2., 2., 2., 2.],
+        #  [3., 3., 3., 3., 3., 3.]]]
         new_shape = np.array(new_shape, dtype=np.int64)
         output = OnnxLoader.run_node(node, [data, new_shape])
         np.testing.assert_almost_equal(output["expanded"], expanded, decimal=5)
