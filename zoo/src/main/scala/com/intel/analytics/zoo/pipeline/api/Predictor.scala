@@ -30,34 +30,32 @@ import com.intel.analytics.zoo.feature.text._
 import com.intel.analytics.zoo.pipeline.api.keras.layers.utils.KerasUtils
 import org.apache.spark.rdd.RDD
 
+import scala.collection.{GenTraversableOnce, Iterator}
+import scala.collection.Iterator.empty
 import scala.reflect.ClassTag
 
 
 class MapIteratorWithShutdown[T, B](preIter: Iterator[T], shutdownHook: () => Unit)
-                                   (f: T => B) extends Iterator[B] {
+                                   (f: T => GenTraversableOnce[B]) extends Iterator[B] {
+  private var cur: Iterator[B] = empty
+  private def nextCur() { cur = f(preIter.next()).toIterator }
   override def hasNext: Boolean = {
-    if (!preIter.hasNext) {
-      shutdownHook()
+    while (!cur.hasNext) {
+      if (!preIter.hasNext) {
+        shutdownHook()
+        return false
+      }
+      nextCur()
     }
-    preIter.hasNext
+    true
   }
 
-  override def next(): B = {
-    if (!hasNext) {
-      throw new NoSuchElementException("next on empty iterator")
-    }
-    try {
-      val pre = preIter.next()
-      f(pre)
-    } finally {
-      shutdownHook()
-    }
-  }
+  override def next(): B = (if (hasNext) cur else empty).next()
 }
 
 object MapIteratorWithShutdown {
   def apply[T, B](preIter: Iterator[T], shutdownHook: () => Unit)
-                 (f: T => B): MapIteratorWithShutdown[T, B] =
+                 (f: T => GenTraversableOnce[B]): MapIteratorWithShutdown[T, B] =
     new MapIteratorWithShutdown(preIter, shutdownHook)(f)
 }
 
@@ -167,13 +165,11 @@ object Predictor {
       def shutdownHook() = {
         localModel.release()
       }
-      val predictionIter = MapIteratorWithShutdown(batchedIter, shutdownHook) { imageFeatures =>
+      MapIteratorWithShutdown(batchedIter, shutdownHook) { imageFeatures =>
         Predictor.predictImageBatch[T](localModel, imageFeatures, outputLayer, predictKey,
           localToBatch, shareBuffer)
         imageFeatures
       }
-
-      predictionIter.flatten
     })
     ImageFrame.rdd(result)
   }
@@ -202,11 +198,10 @@ object Predictor {
       def shutdownHook() = {
         localModel.release()
       }
-      val predictionIter = MapIteratorWithShutdown(miniBatch, shutdownHook) { batch =>
+      MapIteratorWithShutdown(miniBatch, shutdownHook) { batch =>
         val output = localModel.forward(batch.getInput)
         splitBatch(output, shareBuffer, batch.size())
       }
-      predictionIter.flatten
     }
   }
 
