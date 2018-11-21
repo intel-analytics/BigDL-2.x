@@ -18,10 +18,15 @@ package com.intel.analytics.zoo.pipeline.api.net
 import java.io.{File, FileInputStream, InputStream}
 import java.nio._
 
+import com.intel.analytics.bigdl.Module
+import com.intel.analytics.bigdl.dataset.{PaddingParam, Sample}
 import com.intel.analytics.bigdl.nn.abstractnn.{AbstractModule, Activity}
 import com.intel.analytics.bigdl.tensor.Tensor
+import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric
 import com.intel.analytics.bigdl.utils.{MultiShape, Shape, T}
+import com.intel.analytics.zoo.pipeline.api.{Predictable, Predictor}
 import com.intel.analytics.zoo.pipeline.api.net.TFNet.TFGraphHolder
+import org.apache.spark.rdd.RDD
 import org.tensorflow.framework.GraphDef
 import org.tensorflow.types.UInt8
 import org.tensorflow.{DataType, Graph, Session, Tensor => TTensor}
@@ -31,6 +36,7 @@ import org.json4s._
 import org.slf4j.LoggerFactory
 
 import scala.collection.mutable
+import scala.reflect.ClassTag
 
 /**
  * [[TFNet]] wraps a tensorflow subgraph as a layer, and use tensorflow to
@@ -44,10 +50,15 @@ import scala.collection.mutable
  *
  * @param graphDef serialized representation of a graph
  */
-class TFNet(graphDef: TFGraphHolder,
+class TFNet(private val graphDef: TFGraphHolder,
                     val graphMeta: Meta,
                     config: Array[Int])
-  extends AbstractModule[Activity, Activity, Float] {
+  extends AbstractModule[Activity, Activity, Float] with Predictable[Float] {
+
+  implicit val ev = TensorNumeric.NumericFloat
+  implicit val tag: ClassTag[Float] = ClassTag(Float.getClass)
+
+  type T = Float
 
   // todo if an exception is thrown during forward or backward, there will be memory leak
   // maybe create a resource manager to handle tensor creation and destruction
@@ -418,6 +429,16 @@ class TFNet(graphDef: TFGraphHolder,
     (weights, gradWeights)
   }
 
+  override def finalize(): Unit = {
+    super.finalize()
+    this.sess.close()
+  }
+
+  override def release(): Unit = {
+    super.release()
+    this.sess.close()
+  }
+
   private def getOutput(idx: Int): Tensor[Float] = {
     if (output.isTable) {
       output.toTable[Tensor[Float]](idx)
@@ -551,9 +572,16 @@ object TFNet {
   @transient
   private lazy val inDriver = NetUtils.isDriver
 
-  private val graphRegistry = new RegistryMap[Graph]()
+  private val graphRegistry = new RegistryMap[ClosableGraph]()
 
   private val graphDefRegistry = new RegistryMap[Array[Byte]]()
+
+  private class ClosableGraph(val graph: Graph) {
+    override def finalize(): Unit = {
+      println("in ClosableGraph finalize")
+      graph.close()
+    }
+  }
 
   class TFGraphHolder(@transient var tfGraph: Graph, private var id: String)
     extends SerializationHolder {
@@ -602,11 +630,12 @@ object TFNet {
         timing("creating graph obj from graph def") {
           val g = new Graph()
           g.importGraphDef(graphDef)
-          g
+          new ClosableGraph(g)
         }
 
       }
-      tfGraph = graph
+      tfGraph = graph.graph
+      id = id
     }
   }
 

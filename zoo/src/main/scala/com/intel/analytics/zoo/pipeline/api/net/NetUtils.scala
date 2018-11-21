@@ -15,6 +15,8 @@
  */
 package com.intel.analytics.zoo.pipeline.api.net
 
+import java.util.concurrent.{ConcurrentHashMap, ConcurrentMap}
+
 import com.esotericsoftware.kryo.{Kryo, KryoSerializable}
 import com.esotericsoftware.kryo.io.{Input, Output}
 import com.intel.analytics.bigdl.Module
