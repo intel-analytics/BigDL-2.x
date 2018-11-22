@@ -9,11 +9,11 @@ Analytics Zoo provides two Recommender models, including Wide and Deep(WND) lear
 The examples/notebooks are included in the Analytics Zoo source code.
 
 1. Wide and Deep Learning Model.
-    [Scala example](https://github.com/intel-analytics/analytics-zoo/tree/master/zoo/src/main/scala/com/intel/analytics/zoo/examples/models/recommendation/WideAndDeepExample.scala)
-    [Python notebook](https://github.com/intel-analytics/analytics-zoo/tree/master/apps/recommendation/wide_n_deep.ipynb)
+    [Scala example](https://github.com/intel-analytics/analytics-zoo/tree/master/zoo/src/main/scala/com/intel/analytics/zoo/examples/recommendation/WideAndDeepExample.scala)
+    [Python notebook](https://github.com/intel-analytics/analytics-zoo/tree/master/apps/recommendation-wide-n-deep/wide_n_deep.ipynb)
 2. NCF.
-    [Scala example](https://github.com/intel-analytics/analytics-zoo/tree/master/zoo/src/main/scala/com/intel/analytics/zoo/examples/models/recommendation/NeuralCFexample.scala)
-    [Python notebook](https://github.com/intel-analytics/analytics-zoo/tree/master/apps/recommendation/ncf-explicit-feedback.ipynb)
+    [Scala example](https://github.com/intel-analytics/analytics-zoo/tree/master/zoo/src/main/scala/com/intel/analytics/zoo/examples/recommendation/NeuralCFexample.scala)
+    [Python notebook](https://github.com/intel-analytics/analytics-zoo/tree/master/apps/recommendation-ncf/ncf-explicit-feedback.ipynb)
 
 ---
 ## Wide and Deep
