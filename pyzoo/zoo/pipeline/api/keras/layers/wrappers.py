@@ -105,3 +105,26 @@ class KerasLayerWrapper(ZooKerasLayer):
                                                 torch_layer,
                                                 list(input_shape) if input_shape else None,
                                                 **kwargs)
+
+class ClampWrapper(ZooKerasLayer):
+    """
+    Wrap a torch style layer to keras style layer.
+    This layer can be built multiple times.
+    This layer will return a keras compatible layer
+
+    # Arguments
+    torch_layer: a torch style layer.
+    input_shape: A shape tuple, not including batch.
+    i.e If the input data is (2, 3, 4) and 2 is the batch size, you should input: (3, 4) here.
+    >>> from zoo.pipeline.api.keras.layers import KerasLayerWrapper
+    >>> from bigdl.nn.layer import Clamp
+    >>> clamp = Clamp(-3.4028234663852886e+38, 3.4028234663852886e+38)
+    creating: createClamp
+    >>> kerasLayer = KerasLayerWrapper(clamp)
+    creating: createZooKerasClampWrapper
+    """
+    def __init__(self, torch_layer, input_shape=None, **kwargs):
+        super(ClampWrapper, self).__init__(None,
+                                                torch_layer,
+                                                list(input_shape) if input_shape else None,
+                                                **kwargs)

@@ -13,10 +13,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
+from zoo.pipeline.api.keras.layers import ClampWrapper
 from zoo.pipeline.api.onnx.mapper.operator_mapper import OperatorMapper
-from zoo.pipeline.api.onnx.onnx_helper import OnnxHelper
-import zoo.pipeline.api.keras.layers as zlayers
-import numpy as np
+
 class ClipMapper(OperatorMapper):
     def __init__(self, node, _params, _all_tensors):
         super(ClipMapper, self).__init__(node, _params, _all_tensors)
@@ -24,5 +23,5 @@ class ClipMapper(OperatorMapper):
     def _to_tensor(self):
         min = int(self.onnx_attr['min'])
         max = int(self.onnx_attr['max'])
-        clip = np.clip(self.model_inputs[0].zvalue, min, max)
+        clip = ClampWrapper(min, max)
         return clip
