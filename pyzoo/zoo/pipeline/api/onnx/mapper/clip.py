@@ -13,15 +13,21 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-from zoo.pipeline.api.keras.layers import ClampWrapper
+from zoo.pipeline.api.keras.layers import KerasLayerWrapper
 from zoo.pipeline.api.onnx.mapper.operator_mapper import OperatorMapper
+import numpy as np
+import zoo.pipeline.api.keras.layers as zlayers
+from bigdl.nn.layer import Clamp
+
 
 class ClipMapper(OperatorMapper):
     def __init__(self, node, _params, _all_tensors):
         super(ClipMapper, self).__init__(node, _params, _all_tensors)
 
     def _to_tensor(self):
+        assert len(self.model_inputs) == 1, "Clip accept single input only"
         min = int(self.onnx_attr['min'])
         max = int(self.onnx_attr['max'])
-        clip = ClampWrapper(min, max)
-        return clip
+        assert min <= max, "Min must be smaller or equal than Max"
+        clip = Clamp(min, max)
+        return clip(self.model_inputs[0].zvalue)
