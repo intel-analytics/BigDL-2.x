@@ -38,7 +38,6 @@ class SequenceShaperSpec extends FlatSpec with Matchers {
     require(transformed.getIndices.sameElements(Array(1.0f, 2.0f, 3.0f)))
   }
 
-
   "SequenceShaper pad for indices" should "work properly" in {
     val transformer = SequenceShaper(len = 7)
     val transformed = transformer.transform(genFeature())

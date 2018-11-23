@@ -180,6 +180,7 @@ class TextSet(JavaValue):
                             Default is 0, namely remove nothing.
         :param max_words_num: Int. The maximum number of words to be taken into consideration.
                               Default is -1, namely all words will be considered.
+
         :return: TextSet after word2idx.
         """
         jvalue = callBigDlFunc(self.bigdl_type, "textSetWord2idx", self.value,
@@ -238,6 +239,7 @@ class TextSet(JavaValue):
                    Default is None and in this case texts will be read as a LocalTextSet.
         :param min_partitions: Int. A suggestion value of the minimal partition number for input
                                texts. Only need to specify this when sc is not None. Default is 1.
+
         :return: TextSet.
         """
         jvalue = callBigDlFunc(bigdl_type, "readTextSet", path, sc, min_partitions)
