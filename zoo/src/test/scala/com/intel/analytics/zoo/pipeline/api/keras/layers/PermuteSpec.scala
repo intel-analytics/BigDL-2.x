@@ -37,7 +37,7 @@ class PermuteSpec extends KerasBaseSpec {
     val seq = Sequential[Float]()
     val layer = Permute[Float](Array(3, 1, 4, 2), inputShape = Shape(3, 4, 5, 6))
     seq.add(layer)
-    seq.getOutputShape().toSingle().toArray should be (Array(-1, 5, 3, 6, 4))
+    seq.getOutputShape().toSingle().toArray should be(Array(-1, 5, 3, 6, 4))
     checkOutputAndGrad(seq.asInstanceOf[AbstractModule[Tensor[Float], Tensor[Float], Float]],
       kerasCode)
   }
@@ -51,10 +51,11 @@ class PermuteSpec extends KerasBaseSpec {
         |output_tensor = K.permute_dimensions(input_tensor, (1, 0, 3, 2))
       """.stripMargin
     val seq = Sequential[Float]()
-    val layer = Permute[Float](Array(1, 0 ,3, 2), inputShape = Shape(3, 4, 5))
+    val layer = Permute[Float](Array(1, 0, 3, 2), inputShape = Shape(3, 4, 5))
     seq.add(layer)
-    seq.getOutputShape().toSingle().toArray should be (Array(-1, 2, 5, 4))
-    checkOutputAndGradForTensor(seq.asInstanceOf[AbstractModule[Tensor[Float], Tensor[Float], Float]],
+    seq.getOutputShape().toSingle().toArray should be(Array(-1, 1, 5, 4))
+    checkOutputAndGradForTensor(
+      seq.asInstanceOf[AbstractModule[Tensor[Float], Tensor[Float], Float]],
       kerasCode)
   }
 

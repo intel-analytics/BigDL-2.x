@@ -18,8 +18,7 @@ package com.intel.analytics.zoo.pipeline.api.keras.layers
 
 import com.intel.analytics.bigdl.nn.Transpose
 import com.intel.analytics.bigdl.nn.abstractnn.{AbstractModule, Activity}
-import com.intel.analytics.bigdl.nn.keras.{KerasLayer, Permute => BigDLPermute}
-import com.intel.analytics.bigdl.tensor.Tensor
+import com.intel.analytics.bigdl.nn.keras.{Permute => BigDLPermute}
 import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric
 import com.intel.analytics.bigdl.utils.Shape
 import com.intel.analytics.zoo.pipeline.api.Net
@@ -47,7 +46,8 @@ class Permute[T: ClassTag](
 
   override def doBuild(inputShape: Shape): AbstractModule[Activity, Activity, T] = {
     val originSwaps = Permute.permToPair(dims)
-    val torchSwaps = if (dims.contains(0)) { // user want to change the batch dim
+    // Swap with the axis 0
+    val torchSwaps = if (dims.contains(0)) {
       originSwaps.map(pair => (pair._1 + 1, pair._2 + 1))
     } else {
       originSwaps.map(pair => (pair._1 + 2, pair._2 + 2))
@@ -60,8 +60,8 @@ class Permute[T: ClassTag](
 
 object Permute {
   def apply[@specialized(Float, Double) T: ClassTag](
-    dims: Array[Int],
-    inputShape: Shape = null)(implicit ev: TensorNumeric[T]): Permute[T] = {
+      dims: Array[Int],
+      inputShape: Shape = null)(implicit ev: TensorNumeric[T]): Permute[T] = {
     new Permute[T](dims, inputShape)
   }
 
@@ -71,7 +71,7 @@ object Permute {
     def sort(arr: Array[Int], low: Int, high: Int): Unit = {
       var i = low
       var j = high
-      val pivot = arr(low + (high - low)/2)
+      val pivot = arr(low + (high - low) / 2)
 
       while (i <= j) {
         while (arr(i) < pivot) i += 1
@@ -94,9 +94,8 @@ object Permute {
       arr(j) = temp
       pairs += ((i, j))
     }
-    sort(perm.clone(), 0, perm.length-1)
+    sort(perm.clone(), 0, perm.length - 1)
 
     pairs.filter(pair => pair._1 != pair._2).reverse.toArray
   }
-
 }
