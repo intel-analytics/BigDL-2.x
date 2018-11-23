@@ -16,8 +16,6 @@
 
 package com.intel.analytics.zoo.feature.text
 
-import org.apache.log4j.Logger
-
 /**
  * Given a wordIndex map, transform tokens to corresponding indices.
  * Those words not in the map will be aborted.
@@ -26,7 +24,6 @@ import org.apache.log4j.Logger
  * Output key: TextFeature.indexedTokens
  *
  * @param map Map of each word (String) and its index (integer).
- *            It is recommended that the map contains all the words in your corpus.
  */
 class WordIndexer(val map: Map[String, Int]) extends TextTransformer {
 
@@ -50,8 +47,6 @@ class WordIndexer(val map: Map[String, Int]) extends TextTransformer {
 }
 
 object WordIndexer {
-  val logger: Logger = Logger.getLogger(getClass)
-
   def apply(wordIndex: Map[String, Int]): WordIndexer = {
     new WordIndexer(wordIndex)
   }

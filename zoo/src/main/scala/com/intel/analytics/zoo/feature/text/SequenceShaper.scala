@@ -23,7 +23,7 @@ import com.intel.analytics.zoo.feature.text.TruncMode.TruncMode
  * If the original sequence is longer than the target length, it will be truncated from
  * the beginning or the end.
  * If the original sequence is shorter than the target length, it will be padded to the end.
- * Need to tokenize first.
+ * Need to word2idx first.
  * Input key: TextFeature.indexedTokens
  * Output key: TextFeature.indexedTokens
  * The original indexedTokens sequence will be replaced by the shaped indices sequence.
@@ -32,7 +32,7 @@ import com.intel.analytics.zoo.feature.text.TruncMode.TruncMode
  * @param truncMode Truncation mode. Either TruncMode.pre or TruncMode.post.
  *                  If TruncMode.pre, the sequence will be truncated from the beginning.
  *                  If TruncMode.post, the sequence will be truncated from the end.
- *                  Default is TruncMode.post.
+ *                  Default is TruncMode.pre.
  * @param padElement Integer. The index element to be padded to the sequence if the original
  *                   length is smaller than the target length.
  *                   Default is 0 with the convention that we reserve index 0 for unknown words.
@@ -47,7 +47,7 @@ class SequenceShaper(
   override def transform(feature: TextFeature): TextFeature = {
     require(feature.contains(TextFeature.indexedTokens), "TextFeature doesn't contain " +
       "indexedTokens, please transform from word to index first")
-    val indices = feature[Array[Float]](TextFeature.indexedTokens)
+    val indices = feature.getIndices
     val shapedIndices = if (indices.length > len) {
       truncMode match {
         case TruncMode.pre => indices.slice(indices.length - len, indices.length)
