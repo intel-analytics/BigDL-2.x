@@ -29,6 +29,6 @@ class WordIndexerSpec extends FlatSpec with Matchers with BeforeAndAfter {
     val wordIndexer = WordIndexer(wordIndex)
     val transformed = wordIndexer.transform(feature)
     require(transformed[Array[Float]](TextFeature.indexedTokens)
-      .sameElements(Array(0.0f, 2.0f, 1.0f, 0.0f, 3.0f, 2.0f, 4.0f, 0.0f)))
+      .sameElements(Array(2.0f, 1.0f, 3.0f, 2.0f, 4.0f)))
   }
 }
