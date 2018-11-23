@@ -77,9 +77,9 @@ class TestTextSet:
         assert not local_set.is_distributed()
         assert local_set.get_texts() == self.texts
         assert local_set.get_labels() == self.labels
-        tokenized = ChainedPreprocessing([Tokenizer(), Normalizer(), SequenceShaper(10)])(local_set)
+        tokenized = ChainedPreprocessing([Tokenizer(), Normalizer()])(local_set)
         word_index = tokenized.generate_word_index_map(max_words_num=10)
-        transformed = ChainedPreprocessing([WordIndexer(word_index),
+        transformed = ChainedPreprocessing([WordIndexer(word_index), SequenceShaper(10),
                                             TextFeatureToSample()])(tokenized)
         assert transformed.is_local()
         word_index = transformed.get_word_index()
@@ -134,10 +134,9 @@ class TestTextSet:
         assert set(train_texts + test_texts) == set(self.texts)
 
         tokenized = Tokenizer()(distributed_set)
-        transformed = tokenized.normalize().shape_sequence(5)\
-            .word2idx().generate_sample()
+        transformed = tokenized.normalize().word2idx().shape_sequence(5).generate_sample()
         word_index = transformed.get_word_index()
-        assert len(word_index) == 10
+        assert len(word_index) == 14
         samples = transformed.get_samples().collect()
         assert len(samples) == 3
         for sample in samples:
