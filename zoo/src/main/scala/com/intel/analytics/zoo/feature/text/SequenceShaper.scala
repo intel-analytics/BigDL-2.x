@@ -19,14 +19,14 @@ package com.intel.analytics.zoo.feature.text
 import com.intel.analytics.zoo.feature.text.TruncMode.TruncMode
 
 /**
- * Shape the sequence of tokens to a fixed length.
+ * Shape the sequence of indices to a fixed length.
  * If the original sequence is longer than the target length, it will be truncated from
  * the beginning or the end.
  * If the original sequence is shorter than the target length, it will be padded to the end.
  * Need to word2idx first.
  * Input key: TextFeature.indexedTokens
  * Output key: TextFeature.indexedTokens
- * The original indexedTokens sequence will be replaced by the shaped indices sequence.
+ * The original indices sequence will be replaced by the shaped sequence.
  *
  * @param len Positive integer. The target length.
  * @param truncMode Truncation mode. Either TruncMode.pre or TruncMode.post.
