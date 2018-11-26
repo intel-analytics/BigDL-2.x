@@ -602,15 +602,15 @@ class TestModelLoading(OnnxTestCase):
 
     def test_onnx_index_select(self):
         class IndexSelect(torch.nn.Module):
-            def __init__(self, *dim, *index):
+            def __init__(self, *parameter):
                 super(IndexSelect, self).__init__()
-                self.dim = dim
-                self.index = index
+                self.dim = parameter[0]
+                self.index = parameter[1]
 
             def forward(self, x):
                 return torch.index_select(x, dim=self.dim, index=torch.tensor(self.index))
 
-        pytorch_model = IndexSelect(1, 1)
+        pytorch_model = IndexSelect(1, 2)
         input_shape_with_batch = (3, 4, 5, 6)
         self.compare_with_pytorch(pytorch_model, input_shape_with_batch)
 
