@@ -78,10 +78,10 @@ object QARanker {
       val sc = NNContext.initNNContext("QARanker Example")
 
       val qSet = TextSet.readCSV(param.dataPath + "question_corpus.csv", sc, param.partitionNum)
-        .tokenize().normalize().shapeSequence(param.text1Length).word2idx(minFreq = 2)
+        .tokenize().normalize().word2idx(minFreq = 2).shapeSequence(param.text1Length)
       val aSet = TextSet.readCSV(param.dataPath + "answer_corpus.csv", sc, param.partitionNum)
-        .tokenize().normalize().shapeSequence(param.text2Length)
-        .word2idx(minFreq = 2, existingMap = qSet.getWordIndex)
+        .tokenize().normalize().word2idx(minFreq = 2, existingMap = qSet.getWordIndex)
+        .shapeSequence(param.text2Length)
       val wordIndex = aSet.getWordIndex
 
       val trainRelations = Relations.readCSV(param.dataPath + "relation_train.csv",
