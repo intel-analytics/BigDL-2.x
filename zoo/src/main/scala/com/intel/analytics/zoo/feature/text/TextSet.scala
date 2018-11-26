@@ -458,7 +458,7 @@ class LocalTextSet(var array: Array[TextFeature]) extends TextSet {
         .groupBy(identity).mapValues(_.length).toArray
       if (minFreq > 1) frequencies = frequencies.filter(_._2 >= minFreq)
       if (removeTopN > 0 || maxWordsNum > 0) {
-        // Need to sort in this case.
+        // Need to sort by frequency in this case.
         var res = frequencies.sortBy(- _._2).map(_._1)
         if (removeTopN > 0) res = res.drop(removeTopN)
         if (maxWordsNum > 0) res = res.take(maxWordsNum)
@@ -520,7 +520,7 @@ class DistributedTextSet(var rdd: RDD[TextFeature]) extends TextSet {
         .map(word => (word, 1)).reduceByKey(_ + _)
       if (minFreq > 1) frequencies = frequencies.filter(_._2 >= minFreq)
       if (removeTopN > 0 || maxWordsNum > 0) {
-        // Need to sort in this case
+        // Need to sort by frequency in this case
         var res = frequencies.sortBy(- _._2).map(_._1).collect()
         if (removeTopN > 0) res = res.drop(removeTopN)
         if (maxWordsNum > 0) res = res.take(maxWordsNum)
