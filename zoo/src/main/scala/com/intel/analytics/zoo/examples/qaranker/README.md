@@ -43,7 +43,7 @@ See [here](#options) for more configurable options for this example.
 * `--text2Length` The length of each answer. Default is 40.
 * `--tokenLength` The size of each word vector. GloVe supports tokenLength 50, 100, 200 and 300. Default is 300 for `glove.840B.300d.txt`.
 * `-b` `--batchSize` The number of samples per gradient update. Default is 200.
-* `--nbEpoch` The number of iterations to train the model. Default is 25.
+* `--nbEpoch` The number of iterations to train the model. Default is 30.
 * `-l` `--learningRate` The learning rate for the KNRM model. Default is 0.001.
 * `--partitionNum` The number of partitions to cut the dataset into. Datault is 4.
 * `--model` Specify this option only if you want to load an existing KNRM model and in this case its path should be provided.
@@ -52,7 +52,7 @@ See [here](#options) for more configurable options for this example.
 ## Results
 You can find the validation information from the log during the training process:
 ```
-INFO  TextMatcher$:86 - ndcg@3: 0.6229470346296505
-INFO  TextMatcher$:86 - ndcg@5: 0.6783623052090008
-INFO  TextMatcher$:77 - map: 0.627557320088597
+INFO  TextMatcher$:86 - ndcg@3: 0.6417297245909217
+INFO  TextMatcher$:86 - ndcg@5: 0.688879313318335
+INFO  TextMatcher$:77 - map: 0.6373270433829106
 ```
