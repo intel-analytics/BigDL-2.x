@@ -78,17 +78,17 @@ object QARanker {
     parser.parse(args, QARankerParams()).map { param =>
       val sc = NNContext.initNNContext("QARanker Example")
 
-      val qSet = TextSet.readCSV(param.dataPath + "question_corpus.csv", sc, param.partitionNum)
+      val qSet = TextSet.readCSV(param.dataPath + "/question_corpus.csv", sc, param.partitionNum)
         .tokenize().normalize().word2idx(minFreq = 2).shapeSequence(param.text1Length)
-      val aSet = TextSet.readCSV(param.dataPath + "answer_corpus.csv", sc, param.partitionNum)
+      val aSet = TextSet.readCSV(param.dataPath + "/answer_corpus.csv", sc, param.partitionNum)
         .tokenize().normalize().word2idx(minFreq = 2, existingMap = qSet.getWordIndex)
         .shapeSequence(param.text2Length)
       val wordIndex = aSet.getWordIndex
 
-      val trainRelations = Relations.readCSV(param.dataPath + "relation_train.csv",
+      val trainRelations = Relations.readCSV(param.dataPath + "/relation_train.csv",
         sc, param.partitionNum)
       val trainSet = TextSet.fromRelationPairs(trainRelations, qSet, aSet)
-      val validateRelations = Relations.readCSV(param.dataPath + "relation_valid.csv",
+      val validateRelations = Relations.readCSV(param.dataPath + "/relation_valid.csv",
         sc, param.partitionNum)
       val validateSet = TextSet.fromRelationLists(validateRelations, qSet, aSet)
 
