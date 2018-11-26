@@ -67,8 +67,8 @@ object Relations {
 case class Relation(id1: String, id2: String, label: Int)
 
 /**
- * It is made up of two relations:
- * Relation(id1, id2Pos, label>0)
- * Relation(id1, id2Neg, label=0)
+ * A relation pair is made up of two relations:
+ * Relation(id1, id2Positive, label>0)
+ * Relation(id1, id2Negative, label=0)
  */
-case class RelationPair(id1: String, id2Pos: String, id2Neg: String)
+case class RelationPair(id1: String, id2Positive: String, id2Negative: String)

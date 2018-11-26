@@ -326,9 +326,9 @@ object TextSet {
     val joinedText1 = text1Corpus.toDistributed().rdd.keyBy(_.uri())
       .join(pairsRDD.keyBy(_.id1)).map(_._2)
     val joinedText2Pos = text2Corpus.toDistributed().rdd.keyBy(_.uri())
-      .join(joinedText1.keyBy(_._2.id2Pos)).map(x => (x._2._2._1, x._2._1, x._2._2._2))
+      .join(joinedText1.keyBy(_._2.id2Positive)).map(x => (x._2._2._1, x._2._1, x._2._2._2))
     val joinedText2Neg = text2Corpus.toDistributed().rdd.keyBy(_.uri())
-      .join(joinedText2Pos.keyBy(_._3.id2Neg))
+      .join(joinedText2Pos.keyBy(_._3.id2Negative))
       .map(x => (x._2._2._1, x._2._2._2, x._2._1))
     val res = joinedText2Neg.map(x => {
       val textFeature = TextFeature(null, x._1.uri() + x._2.uri() + x._3.uri())
@@ -457,10 +457,14 @@ class LocalTextSet(var array: Array[TextFeature]) extends TextSet {
       var frequencies = array.flatMap(_.getTokens)
         .groupBy(identity).mapValues(_.length).toArray
       if (minFreq > 1) frequencies = frequencies.filter(_._2 >= minFreq)
-      var res = frequencies.sortBy(- _._2).map(_._1)
-      if (removeTopN > 0) res = res.drop(removeTopN)
-      if (maxWordsNum > 0) res = res.take(maxWordsNum)
-      res
+      if (removeTopN > 0 || maxWordsNum > 0) {
+        // Need to sort in this case.
+        var res = frequencies.sortBy(- _._2).map(_._1)
+        if (removeTopN > 0) res = res.drop(removeTopN)
+        if (maxWordsNum > 0) res = res.take(maxWordsNum)
+        res
+      }
+      else frequencies.map(_._1)
     }
     val wordIndex = TextSet.wordsToMap(words, existingMap)
     setWordIndex(wordIndex)
@@ -515,10 +519,14 @@ class DistributedTextSet(var rdd: RDD[TextFeature]) extends TextSet {
       var frequencies = rdd.flatMap(_.getTokens)
         .map(word => (word, 1)).reduceByKey(_ + _)
       if (minFreq > 1) frequencies = frequencies.filter(_._2 >= minFreq)
-      var res = frequencies.sortBy(- _._2).map(_._1).collect()
-      if (removeTopN > 0) res = res.drop(removeTopN)
-      if (maxWordsNum > 0) res = res.take(maxWordsNum)
-      res
+      if (removeTopN > 0 || maxWordsNum > 0) {
+        // Need to sort in this case
+        var res = frequencies.sortBy(- _._2).map(_._1).collect()
+        if (removeTopN > 0) res = res.drop(removeTopN)
+        if (maxWordsNum > 0) res = res.take(maxWordsNum)
+        res
+      }
+      else frequencies.map(_._1).collect()
     }
     val wordIndex = TextSet.wordsToMap(words, existingMap)
     setWordIndex(wordIndex)
