@@ -116,7 +116,7 @@ class TextFeature extends Serializable {
 
   /**
    * Get the token indices of the TextFeature.
-   * If text hasn't been segmented or mapped from word to index, null will be returned.
+   * If text hasn't been segmented or transformed from word to index, null will be returned.
    */
   def getIndices: Array[Float] = apply[Array[Float]](TextFeature.indexedTokens)
 

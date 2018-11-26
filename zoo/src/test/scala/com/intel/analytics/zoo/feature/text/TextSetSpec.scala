@@ -63,7 +63,6 @@ class TextSetSpec extends ZooSpecHelper {
     require(wordIndex.toArray.length == 13)
     require(wordIndex.keySet == HashSet("hello", "friend", "please", "annotate", "my", "text",
       "world", "some", "sentence", "for", "test", "this", "is"))
-    require(wordIndex("my") == 1)
 
     val features = transformed.toDistributed().rdd.collect()
     require(features.length == 2)

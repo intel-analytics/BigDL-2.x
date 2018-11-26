@@ -115,11 +115,18 @@ abstract class TextSet {
    * See WordIndexer for more details.
    * After word2idx, you can get the generated wordIndex map by calling 'getWordIndex'.
    *
-   * @param removeTopN Non-negative Integer. Remove the topN words with highest frequencies in
+   * @param removeTopN Non-negative integer. Remove the topN words with highest frequencies in
    *                   the case where those are treated as stopwords.
    *                   Default is 0, namely remove nothing.
    * @param maxWordsNum Integer. The maximum number of words to be taken into consideration.
-   *                    Default is -1, namely all words will be considered.
+   *                    Default is -1, namely all words will be considered. Otherwise, it should
+   *                    be a positive integer.
+   * @param minFreq Positive integer. Only those words with frequency >= minFreq will be taken into
+   *                consideration. Default is 1, namely all words that occur will be considered.
+   * @param existingMap Existing map of word index if any. Default is null and in this case a new
+   *                    map with index starting from 1 will be generated.
+   *                    If not null, then the generated map will preserve the word index in
+   *                    existingMap and assign subsequent indices to new words.
    */
   def word2idx(
     removeTopN: Int = 0,
@@ -439,13 +446,23 @@ class LocalTextSet(var array: Array[TextFeature]) extends TextSet {
     maxWordsNum: Int = -1,
     minFreq: Int = 1,
     existingMap: Map[String, Int] = null): Map[String, Int] = {
-    var frequencies = array.flatMap(_.getTokens).filter(_ != "##")  // "##" is the padElement.
-      .groupBy(identity).mapValues(_.length).toArray.filter(_._2 >= minFreq)
-      .sortBy(- _._2).map(_._1).drop(removeTopN)
-    if (maxWordsNum > 0) {
-      frequencies = frequencies.take(maxWordsNum)
+    require(removeTopN >= 0, "removeTopN should be a non-negative integer")
+    require(maxWordsNum == -1 || maxWordsNum > 0,
+      "maxWordsNum should be either -1 or a positive integer")
+    require(minFreq >= 1, "minFreq should be a positive integer")
+    val words = if (removeTopN == 0 && maxWordsNum == -1 && minFreq == 1) {
+      array.flatMap(_.getTokens).distinct
     }
-    val wordIndex = TextSet.wordsToMap(frequencies, existingMap)
+    else {
+      var frequencies = array.flatMap(_.getTokens)
+        .groupBy(identity).mapValues(_.length).toArray
+      if (minFreq > 1) frequencies = frequencies.filter(_._2 >= minFreq)
+      var res = frequencies.sortBy(- _._2).map(_._1)
+      if (removeTopN > 0) res = res.drop(removeTopN)
+      if (maxWordsNum > 0) res = res.take(maxWordsNum)
+      res
+    }
+    val wordIndex = TextSet.wordsToMap(words, existingMap)
     setWordIndex(wordIndex)
     wordIndex
   }
@@ -487,13 +504,23 @@ class DistributedTextSet(var rdd: RDD[TextFeature]) extends TextSet {
     maxWordsNum: Int = -1,
     minFreq: Int = 1,
     existingMap: Map[String, Int] = null): Map[String, Int] = {
-    var frequencies = rdd.flatMap(_.getTokens).filter(_ != "##")  // "##" is the padElement.
-      .map(word => (word, 1)).reduceByKey(_ + _).filter(_._2 >= minFreq)
-      .sortBy(- _._2).map(_._1).collect().drop(removeTopN)
-    if (maxWordsNum > 0) {
-      frequencies = frequencies.take(maxWordsNum)
+    require(removeTopN >= 0, "removeTopN should be a non-negative integer")
+    require(maxWordsNum == -1 || maxWordsNum > 0,
+      "maxWordsNum should be either -1 or a positive integer")
+    require(minFreq >= 1, "minFreq should be a positive integer")
+    val words = if (removeTopN == 0 && maxWordsNum == -1 && minFreq == 1) {
+      rdd.flatMap(_.getTokens).distinct().collect()
     }
-    val wordIndex = TextSet.wordsToMap(frequencies, existingMap)
+    else {
+      var frequencies = rdd.flatMap(_.getTokens)
+        .map(word => (word, 1)).reduceByKey(_ + _)
+      if (minFreq > 1) frequencies = frequencies.filter(_._2 >= minFreq)
+      var res = frequencies.sortBy(- _._2).map(_._1).collect()
+      if (removeTopN > 0) res = res.drop(removeTopN)
+      if (maxWordsNum > 0) res = res.take(maxWordsNum)
+      res
+    }
+    val wordIndex = TextSet.wordsToMap(words, existingMap)
     setWordIndex(wordIndex)
     wordIndex
   }
