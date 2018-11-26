@@ -1,0 +1,113 @@
+/*
+ * Copyright 2018 Analytics Zoo Authors.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package com.intel.analytics.zoo.examples.qaranker
+
+import com.intel.analytics.bigdl.optim.SGD
+import com.intel.analytics.bigdl.optim.SGD.Poly
+import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric.NumericFloat
+import com.intel.analytics.bigdl.utils.Shape
+import com.intel.analytics.zoo.common.NNContext
+import com.intel.analytics.zoo.models.textmatching.KNRM
+import com.intel.analytics.zoo.pipeline.api.keras.models.Sequential
+import com.intel.analytics.zoo.pipeline.api.keras.layers.TimeDistributed
+import com.intel.analytics.zoo.pipeline.api.keras.objectives.RankHinge
+import com.intel.analytics.zoo.feature.text.{Relations, TextSet}
+import scopt.OptionParser
+
+
+case class QARankerParams(
+    dataPath: String = "./", embeddingFile: String = "./",
+    text1Length: Int = 10, text2Length: Int = 40,
+    tokenLength: Int = 300, batchSize: Int = 200,
+    nbEpoch: Int = 30, learningRate: Double = 0.001,
+    partitionNum: Int = 4, model: Option[String] = None)
+
+
+object QARanker {
+  def main(args: Array[String]): Unit = {
+    val parser = new OptionParser[QARankerParams]("QARanker Example") {
+      opt[String]("dataPath")
+        .required()
+        .text("The directory containing the corpus and relations")
+        .action((x, c) => c.copy(dataPath = x))
+      opt[String]("embeddingFile")
+        .required()
+        .text("The file path to GloVe embeddings")
+        .action((x, c) => c.copy(embeddingFile = x))
+      opt[Int]("text1Length")
+        .text("The length of each question")
+        .action((x, c) => c.copy(text1Length = x))
+      opt[Int]("text2Length")
+        .text("The length of each answer")
+        .action((x, c) => c.copy(text2Length = x))
+      opt[Int]("tokenLength")
+        .text("The size of each word vector, 50 or 100 or 200 or 300 for GloVe")
+        .action((x, c) => c.copy(tokenLength = x))
+      opt[Int]('b', "batchSize")
+        .text("The number of samples per gradient update")
+        .action((x, c) => c.copy(batchSize = x))
+      opt[Int]("nbEpoch")
+        .text("The number of epochs to train the model")
+        .action((x, c) => c.copy(nbEpoch = x))
+      opt[Double]('l', "learningRate")
+        .text("The learning rate for the TextMatching model")
+        .action((x, c) => c.copy(learningRate = x))
+      opt[Int]("partitionNum")
+        .text("The number of partitions to cut the dataset into")
+        .action((x, c) => c.copy(partitionNum = x))
+      opt[String]("model")
+        .text("Model snapshot location if any")
+        .action((x, c) => c.copy(model = Some(x)))
+    }
+
+    parser.parse(args, QARankerParams()).map { param =>
+      val sc = NNContext.initNNContext("QARanker Example")
+
+      val qSet = TextSet.readCSV(param.dataPath + "question_corpus.csv", sc, param.partitionNum)
+        .tokenize().normalize().shapeSequence(param.text1Length).word2idx(minFreq = 2)
+      val aSet = TextSet.readCSV(param.dataPath + "answer_corpus.csv", sc, param.partitionNum)
+        .tokenize().normalize().shapeSequence(param.text2Length)
+        .word2idx(minFreq = 2, existingMap = qSet.getWordIndex)
+      val wordIndex = aSet.getWordIndex
+
+      val trainRelations = Relations.readCSV(param.dataPath + "relation_train.csv",
+        sc, param.partitionNum)
+      val trainSet = TextSet.fromRelationPairs(trainRelations, qSet, aSet)
+      val validateRelations = Relations.readCSV(param.dataPath + "relation_valid.csv",
+        sc, param.partitionNum)
+      val validateSet = TextSet.fromRelationLists(validateRelations, qSet, aSet)
+
+      val knrm = if (param.model.isDefined) {
+        KNRM.loadModel(param.model.get)
+      } else {
+        KNRM(param.text1Length, param.text2Length, param.embeddingFile, wordIndex)
+      }
+      val model = Sequential()
+        .add(TimeDistributed(knrm, inputShape = Shape(2, param.text1Length + param.text2Length)))
+      val optimizer = new SGD(learningRate = param.learningRate,
+        learningRateSchedule = Poly(0.5, 50 * 400))
+      model.compile(optimizer = optimizer, loss = RankHinge[Float]())
+      for (i <- 1 to param.nbEpoch) {
+        model.fit(trainSet, batchSize = param.batchSize, nbEpoch = 1)
+        knrm.evaluateNDCG(validateSet, 3)
+        knrm.evaluateNDCG(validateSet, 5)
+        knrm.evaluateMAP(validateSet)
+      }
+      sc.stop()
+    }
+  }
+}

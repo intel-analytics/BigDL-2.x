@@ -32,11 +32,17 @@ import org.apache.spark.rdd.RDD
 
 import scala.collection.mutable.ArrayBuffer
 import scala.io.Source
+import java.io.PrintWriter
+
+import com.intel.analytics.bigdl.tensor.Tensor
+import org.apache.spark.sql.SQLContext
 
 /**
  * TextSet wraps a set of TextFeature.
  */
 abstract class TextSet {
+  import TextSet.logger
+
   /**
    * Transform from one TextSet to another.
    */
@@ -115,11 +121,15 @@ abstract class TextSet {
    * @param maxWordsNum Integer. The maximum number of words to be taken into consideration.
    *                    Default is -1, namely all words will be considered.
    */
-  def word2idx(removeTopN: Int = 0, maxWordsNum: Int = -1): TextSet = {
+  def word2idx(
+    removeTopN: Int = 0,
+    maxWordsNum: Int = -1,
+    minFreq: Int = 1,
+    existingMap: Map[String, Int] = null): TextSet = {
     if (wordIndex != null) {
-      TextSet.logger.warn("wordIndex already exists. Using the existing wordIndex")
+      logger.warn("wordIndex already exists. Using the existing wordIndex")
     } else {
-      generateWordIndexMap(removeTopN, maxWordsNum)
+      generateWordIndexMap(removeTopN, maxWordsNum, minFreq, existingMap)
     }
     transform(WordIndexer(wordIndex))
   }
@@ -151,7 +161,11 @@ abstract class TextSet {
    * Make sure you call this after tokenize. Otherwise you will get an exception.
    * See word2idx for more details.
    */
-  def generateWordIndexMap(removeTopN: Int = 0, maxWordsNum: Int = 5000): Map[String, Int]
+  def generateWordIndexMap(
+      removeTopN: Int = 0,
+      maxWordsNum: Int = 5000,
+      minFreq: Int = 1,
+      existingMap: Map[String, Int] = null): Map[String, Int]
 
   private var wordIndex: Map[String, Int] = _
 
@@ -164,6 +178,21 @@ abstract class TextSet {
   def setWordIndex(map: Map[String, Int]): this.type = {
     wordIndex = map
     this
+  }
+
+  def saveWordIndex(path: String): Unit = {
+    if (wordIndex == null) {
+      logger.warn("wordIndex is null, please transform from word to index first")
+    }
+    else {
+      val pw = new PrintWriter(new File(path))
+      for (item <- wordIndex) {
+        pw.print(item._1)
+        pw.print(" ")
+        pw.println(item._2)
+      }
+      pw.close()
+    }
   }
 }
 
@@ -222,13 +251,12 @@ object TextSet {
       val textRDD = sc.wholeTextFiles(path + "/*", minPartitions).map{case (p, text) =>
         val parts = p.split("/")
         val category = parts(parts.length - 2)
-        TextFeature(text, label = categoryToLabel(category))
+        TextFeature(text, label = categoryToLabel(category), uri = p)
       }
       TextSet.rdd(textRDD)
     }
     else {
-      val texts = ArrayBuffer[String]()
-      val labels = ArrayBuffer[Int]()
+      val features = ArrayBuffer[TextFeature]()
       val categoryToLabel = new util.HashMap[String, Int]()
       val categoryPath = new File(path)
       require(categoryPath.exists(), s"$path doesn't exist. Please check your input path")
@@ -241,29 +269,137 @@ object TextSet {
         textFiles.foreach { file =>
           val source = Source.fromFile(file, "ISO-8859-1")
           val text = try source.getLines().toList.mkString("\n") finally source.close()
-          texts.append(text)
-          labels.append(label)
+          features.append(TextFeature(text, label, file.getAbsolutePath))
         }
       }
-      logger.info(s"Found ${texts.length} texts.")
       logger.info(s"Found ${categoryToLabel.size()} classes")
-      val textArr = texts.zip(labels).map{case (text, label) =>
-        TextFeature(text, label)
-      }.toArray
-      TextSet.array(textArr)
+      TextSet.array(features.toArray)
     }
     textSet
   }
 
+  // Without header
+  // ID, content
+  def readCSV(path: String, sc: SparkContext = null, minPartitions: Int = 1): TextSet = {
+    if (sc != null) {
+      val textRDD = sc.textFile(path, minPartitions).map(line => {
+        val subs = line.split(",", 2) // "," may exist in content.
+        TextFeature(subs(1), uri = subs(0))
+      })
+      TextSet.rdd(textRDD)
+    }
+    else {
+      val src = Source.fromFile(path)
+      val textArray = src.getLines().toArray.map(line => {
+        val subs = line.split(",", 2)
+        TextFeature(subs(1), uri = subs(0))
+      })
+      TextSet.array(textArray)
+    }
+  }
+
+  def readParquet(path: String, sqlContext: SQLContext): DistributedTextSet = {
+    val textRDD = sqlContext.read.parquet(path).rdd.map(row => {
+      val uri = row.getAs[String](TextFeature.uri)
+      val text = row.getAs[String](TextFeature.text)
+      TextFeature(text, uri = uri)
+    })
+    TextSet.rdd(textRDD)
+  }
+
+  // Generate RelationPairs: (text1ID, text2PosID, text2NegID)
+  // and transform each RelationPair to a TextFeature.
+  def fromRelationPairs(
+      relations: RDD[Relation],
+      text1Corpus: TextSet,
+      text2Corpus: TextSet): TextSet = {
+    val pairsRDD = Relations.generateRelationPairs(relations)
+    require(text1Corpus.isDistributed, "text1Corpus must be a DistributedTextSet")
+    require(text2Corpus.isDistributed, "text2Corpus must be a DistributedTextSet")
+    val joinedText1 = text1Corpus.toDistributed().rdd.keyBy(_.uri())
+      .join(pairsRDD.keyBy(_.text1ID)).map(_._2)
+    val joinedText2Pos = text2Corpus.toDistributed().rdd.keyBy(_.uri())
+      .join(joinedText1.keyBy(_._2.text2PosID)).map(x => (x._2._2._1, x._2._1, x._2._2._2))
+    val joinedText2Neg = text2Corpus.toDistributed().rdd.keyBy(_.uri())
+      .join(joinedText2Pos.keyBy(_._3.text2NegID))
+      .map(x => (x._2._2._1, x._2._2._2, x._2._1))
+    val res = joinedText2Neg.map(x => {
+      val textFeature = TextFeature(null, x._1.uri() + x._2.uri() + x._3.uri())
+      val text1 = x._1.getIndices
+      val text2Pos = x._2.getIndices
+      val text2Neg = x._3.getIndices
+      require(text1 != null,
+        "text1Corpus haven't been transformed from word to index yet, please word2idx first")
+      require(text2Pos != null && text2Neg != null,
+        "text2Corpus haven't been transformed from word to index yet, please word2idx first")
+      require(text2Pos.length == text2Neg.length,
+        "text2Corpus contains text2 with different lengths, please shapeSequence first")
+      val pairedIndices = text1 ++ text2Pos ++ text1 ++ text2Neg
+      val feature = Tensor(pairedIndices, Array(2, text1.length + text2Pos.length))
+      val label = Tensor(Array(1.0f, 0.0f), Array(2, 1))
+      textFeature(TextFeature.sample) = Sample(feature, label)
+      textFeature
+    })
+    TextSet.rdd(res)
+  }
+
+  // Generate RelationLists: each question together with all its answers and labels
+  // and transform each RelationList to a TextFeature.
+  def fromRelationLists(
+      relations: RDD[Relation],
+      text1Corpus: TextSet,
+      text2Corpus: TextSet): TextSet = {
+    require(text1Corpus.isDistributed, "text1Corpus must be a DistributedTextSet")
+    require(text2Corpus.isDistributed, "text2Corpus must be a DistributedTextSet")
+    val joinedText1 = text1Corpus.toDistributed().rdd.keyBy(_.uri())
+      .join(relations.keyBy(_.text1ID)).map(_._2)
+    val joinedText2 = text2Corpus.toDistributed().rdd.keyBy(_.uri()).join(
+      joinedText1.keyBy(_._2.text2ID))
+      .map(x => (x._2._2._1, x._2._1, x._2._2._2.label))
+    val joinedLists = joinedText2.groupBy(_._1.uri()).map(_._2.toArray)
+    val res = joinedLists.map(x => {
+      val text1 = x.head._1
+      val text2Array = x.map(_._2)
+      val textFeature = TextFeature(null,
+        uri = text1.uri() ++ text2Array.map(_.uri()).mkString(""))
+      val text1Indices = text1.getIndices
+      require(text1Indices != null,
+        "text1Corpus haven't been transformed from word to index yet, please word2idx first")
+      val text2IndicesArray = text2Array.map(_.getIndices)
+      text2IndicesArray.foreach(x => require(x != null,
+        "text2Corpus haven't been transformed from word to index yet, please word2idx first"))
+      val data = text2IndicesArray.flatMap(text1Indices ++ _)
+      val feature = Tensor(data,
+        Array(text2Array.length, text1Indices.length + text2IndicesArray.head.length))
+      val label = Tensor(x.map(_._3.toFloat), Array(text2Array.length, 1))
+      textFeature(TextFeature.sample) = Sample(feature, label)
+      textFeature
+    })
+    TextSet.rdd(res)
+  }
+
   /**
    * Zip word with its corresponding index. Index starts from 1.
-   * @param frequencies Array of words, each with its occurrence frequency in descending order.
+   * @param words Array of words, each with its occurrence frequency in descending order.
    * @return WordIndex map.
    */
-  def wordIndexFromFrequencies(frequencies: Array[(String, Int)]): Map[String, Int] = {
-    val indexes = Range(1, frequencies.length + 1)
-    frequencies.zip(indexes).map{item =>
-      (item._1._1, item._2)}.toMap
+  def wordsToMap(words: Array[String], existingMap: Map[String, Int] = null): Map[String, Int] = {
+    if (existingMap == null) {
+      val indexes = Range(1, words.length + 1)
+      words.zip(indexes).map{item =>
+        (item._1, item._2)}.toMap
+    }
+    else {
+      val resMap = collection.mutable.Map(existingMap.toSeq: _*)
+      var i = existingMap.values.max + 1
+      for (word <- words) {
+        if (!existingMap.contains(word)) {
+          resMap(word) = i
+          i += 1
+        }
+      }
+      resMap.toMap
+    }
   }
 }
 
@@ -299,13 +435,17 @@ class LocalTextSet(var array: Array[TextFeature]) extends TextSet {
   }
 
   override def generateWordIndexMap(
-    removeTopN: Int = 0, maxWordsNum: Int = -1): Map[String, Int] = {
+    removeTopN: Int = 0,
+    maxWordsNum: Int = -1,
+    minFreq: Int = 1,
+    existingMap: Map[String, Int] = null): Map[String, Int] = {
     var frequencies = array.flatMap(_.getTokens).filter(_ != "##")  // "##" is the padElement.
-      .groupBy(identity).mapValues(_.length).toArray.sortBy(- _._2).drop(removeTopN)
+      .groupBy(identity).mapValues(_.length).toArray.filter(_._2 >= minFreq)
+      .sortBy(- _._2).map(_._1).drop(removeTopN)
     if (maxWordsNum > 0) {
       frequencies = frequencies.take(maxWordsNum)
     }
-    val wordIndex = TextSet.wordIndexFromFrequencies(frequencies)
+    val wordIndex = TextSet.wordsToMap(frequencies, existingMap)
     setWordIndex(wordIndex)
     wordIndex
   }
@@ -343,13 +483,17 @@ class DistributedTextSet(var rdd: RDD[TextFeature]) extends TextSet {
   }
 
   override def generateWordIndexMap(
-    removeTopN: Int = 0, maxWordsNum: Int = -1): Map[String, Int] = {
+    removeTopN: Int = 0,
+    maxWordsNum: Int = -1,
+    minFreq: Int = 1,
+    existingMap: Map[String, Int] = null): Map[String, Int] = {
     var frequencies = rdd.flatMap(_.getTokens).filter(_ != "##")  // "##" is the padElement.
-      .map(word => (word, 1)).reduceByKey(_ + _).sortBy(- _._2).collect().drop(removeTopN)
+      .map(word => (word, 1)).reduceByKey(_ + _).filter(_._2 >= minFreq)
+      .sortBy(- _._2).map(_._1).collect().drop(removeTopN)
     if (maxWordsNum > 0) {
       frequencies = frequencies.take(maxWordsNum)
     }
-    val wordIndex = TextSet.wordIndexFromFrequencies(frequencies)
+    val wordIndex = TextSet.wordsToMap(frequencies, existingMap)
     setWordIndex(wordIndex)
     wordIndex
   }

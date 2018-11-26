@@ -93,7 +93,7 @@ class TextSetSpec extends ZooSpecHelper {
     val textSet = TextSet.read(path, sc)
     require(textSet.isDistributed)
     require(textSet.toDistributed().rdd.count() == 5)
-    require(textSet.toDistributed().rdd.collect().head.keys() == HashSet("label", "text"))
+    require(textSet.toDistributed().rdd.collect().head.keys() == HashSet("label", "text", "uri"))
     val transformed = textSet.tokenize().normalize().word2idx()
       .shapeSequence(len = 30).generateSample()
     val model = TextClassifier(3, embeddingFile, transformed.getWordIndex, 30)
@@ -123,7 +123,7 @@ class TextSetSpec extends ZooSpecHelper {
     val textSet = TextSet.read(path)
     require(textSet.isLocal)
     require(textSet.toLocal().array.length == 5)
-    require(textSet.toLocal().array.head.keys() == HashSet("label", "text"))
+    require(textSet.toLocal().array.head.keys() == HashSet("label", "text", "uri"))
     val tokenized = textSet -> Tokenizer() -> Normalizer()
     val wordIndex = tokenized.generateWordIndexMap()
     val transformed = tokenized -> WordIndexer(wordIndex) -> SequenceShaper(len = 30) ->

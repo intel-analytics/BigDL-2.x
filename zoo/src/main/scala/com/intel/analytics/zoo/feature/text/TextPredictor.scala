@@ -49,7 +49,7 @@ object TextPredictor {
     batchPerThread: Int,
     shareBuffer: Boolean = false)(implicit ev: TensorNumeric[T]): DistributedTextSet = {
     val rdd = textSet.rdd
-    val modelBroad = ModelBroadcast[T]().broadcast(rdd.sparkContext, model.evaluate())
+    val modelBroad = ModelBroadcast[T]().broadcast(rdd.sparkContext, model.setEvaluateStatus())
     val partitionNum = rdd.partitions.length
     val toBatchBroad = rdd.sparkContext.broadcast(SampleToMiniBatch[T](
       batchSize = partitionNum * batchPerThread,

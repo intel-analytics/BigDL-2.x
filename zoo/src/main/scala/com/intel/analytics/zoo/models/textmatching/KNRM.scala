@@ -21,7 +21,7 @@ import com.intel.analytics.bigdl.tensor.Tensor
 import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric
 import com.intel.analytics.bigdl.utils.Shape
 import com.intel.analytics.zoo.models.common.ZooModel
-import com.intel.analytics.zoo.pipeline.api.autograd.{Lambda, Variable, AutoGrad => A}
+import com.intel.analytics.zoo.pipeline.api.autograd.{Variable, AutoGrad => A}
 import com.intel.analytics.zoo.pipeline.api.keras.layers._
 import com.intel.analytics.zoo.pipeline.api.keras.models.Model
 
@@ -83,7 +83,7 @@ class KNRM[T: ClassTag] private(
       KM.append(mmSum)
     }
     val Phi = Squeeze(2).inputs(A.stack(KM.toList).node)
-    val output = Dense(1, init = "uniform", activation = "sigmoid").inputs(Phi)
+    val output = Dense(1, init = "uniform").inputs(Phi)
     Model(input, output)
   }
 }
@@ -92,13 +92,28 @@ object KNRM {
   def apply[@specialized(Float, Double) T: ClassTag](
       text1Length: Int,
       text2Length: Int,
-      vocabSize: Int,
-      embedSize: Int = 300,
-      embedWeights: Tensor[T] = null,
+      embeddingFile: String,
+      wordIndex: Map[String, Int] = null,
       trainEmbed: Boolean = true,
       kernelNum: Int = 21,
       sigma: Double = 0.1,
       exactSigma: Double = 0.001)(implicit ev: TensorNumeric[T]): KNRM[T] = {
+    val (vocabSize, embedSize, embedWeights) = WordEmbedding.prepareEmbedding[T](
+      embeddingFile, wordIndex, randomizeUnknownWords = true, normalizeEmbedding = true)
+    new KNRM[T](text1Length, text2Length, vocabSize, embedSize, embedWeights,
+      trainEmbed, kernelNum, sigma, exactSigma).build()
+  }
+
+  def apply[@specialized(Float, Double) T: ClassTag](
+      text1Length: Int,
+      text2Length: Int,
+      vocabSize: Int,
+      embedSize: Int,
+      embedWeights: Tensor[T],
+      trainEmbed: Boolean,
+      kernelNum: Int,
+      sigma: Double,
+      exactSigma: Double)(implicit ev: TensorNumeric[T]): KNRM[T] = {
     new KNRM[T](text1Length, text2Length, vocabSize, embedSize, embedWeights,
       trainEmbed, kernelNum, sigma, exactSigma).build()
   }

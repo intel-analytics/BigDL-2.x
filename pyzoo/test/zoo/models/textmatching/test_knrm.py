@@ -55,7 +55,7 @@ class TestKNRM(ZooTestCase):
             KM.append(mm_sum)
 
         Phi = Lambda(lambda x: K.tf.stack(x, 1))(KM)
-        out_ = Dense(1, init="uniform", activation="sigmoid", name="dense")(Phi)
+        out_ = Dense(1, init="uniform", name="dense")(Phi)
 
         model = Model([query, doc], out_)
         return model
