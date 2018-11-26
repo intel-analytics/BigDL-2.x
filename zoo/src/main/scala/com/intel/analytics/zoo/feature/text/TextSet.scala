@@ -21,7 +21,7 @@ import java.util
 
 import com.intel.analytics.bigdl.DataSet
 import com.intel.analytics.bigdl.dataset.{DataSet, Sample}
-import com.intel.analytics.zoo.feature.common.Preprocessing
+import com.intel.analytics.zoo.feature.common.{Preprocessing, Relation, Relations}
 import com.intel.analytics.zoo.feature.text.TruncMode.TruncMode
 import org.apache.hadoop.conf.Configuration
 import org.apache.hadoop.fs.{FileSystem, Path}
@@ -317,11 +317,11 @@ object TextSet {
     require(text1Corpus.isDistributed, "text1Corpus must be a DistributedTextSet")
     require(text2Corpus.isDistributed, "text2Corpus must be a DistributedTextSet")
     val joinedText1 = text1Corpus.toDistributed().rdd.keyBy(_.uri())
-      .join(pairsRDD.keyBy(_.text1ID)).map(_._2)
+      .join(pairsRDD.keyBy(_.id1)).map(_._2)
     val joinedText2Pos = text2Corpus.toDistributed().rdd.keyBy(_.uri())
-      .join(joinedText1.keyBy(_._2.text2PosID)).map(x => (x._2._2._1, x._2._1, x._2._2._2))
+      .join(joinedText1.keyBy(_._2.id2Pos)).map(x => (x._2._2._1, x._2._1, x._2._2._2))
     val joinedText2Neg = text2Corpus.toDistributed().rdd.keyBy(_.uri())
-      .join(joinedText2Pos.keyBy(_._3.text2NegID))
+      .join(joinedText2Pos.keyBy(_._3.id2Neg))
       .map(x => (x._2._2._1, x._2._2._2, x._2._1))
     val res = joinedText2Neg.map(x => {
       val textFeature = TextFeature(null, x._1.uri() + x._2.uri() + x._3.uri())
@@ -352,9 +352,9 @@ object TextSet {
     require(text1Corpus.isDistributed, "text1Corpus must be a DistributedTextSet")
     require(text2Corpus.isDistributed, "text2Corpus must be a DistributedTextSet")
     val joinedText1 = text1Corpus.toDistributed().rdd.keyBy(_.uri())
-      .join(relations.keyBy(_.text1ID)).map(_._2)
+      .join(relations.keyBy(_.id1)).map(_._2)
     val joinedText2 = text2Corpus.toDistributed().rdd.keyBy(_.uri()).join(
-      joinedText1.keyBy(_._2.text2ID))
+      joinedText1.keyBy(_._2.id2))
       .map(x => (x._2._2._1, x._2._1, x._2._2._2.label))
     val joinedLists = joinedText2.groupBy(_._1.uri()).map(_._2.toArray)
     val res = joinedLists.map(x => {

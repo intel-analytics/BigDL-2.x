@@ -21,11 +21,12 @@ import com.intel.analytics.bigdl.optim.SGD.Poly
 import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric.NumericFloat
 import com.intel.analytics.bigdl.utils.Shape
 import com.intel.analytics.zoo.common.NNContext
-import com.intel.analytics.zoo.models.textmatching.KNRM
 import com.intel.analytics.zoo.pipeline.api.keras.models.Sequential
 import com.intel.analytics.zoo.pipeline.api.keras.layers.TimeDistributed
 import com.intel.analytics.zoo.pipeline.api.keras.objectives.RankHinge
-import com.intel.analytics.zoo.feature.text.{Relations, TextSet}
+import com.intel.analytics.zoo.models.textmatching.KNRM
+import com.intel.analytics.zoo.feature.common.Relations
+import com.intel.analytics.zoo.feature.text.TextSet
 import scopt.OptionParser
 
 

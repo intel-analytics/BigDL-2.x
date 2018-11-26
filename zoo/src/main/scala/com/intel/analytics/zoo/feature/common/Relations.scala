@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.intel.analytics.zoo.feature.text
+package com.intel.analytics.zoo.feature.common
 
 import org.apache.spark.SparkContext
 import org.apache.spark.rdd.RDD
@@ -26,15 +26,15 @@ object Relations {
 
   def readParquet(path: String, sqlContext: SQLContext): RDD[Relation] = {
     sqlContext.read.parquet(path).rdd.map(row => {
-      val text1ID = row.getAs[String]("text1ID")
-      val text2ID = row.getAs[String]("text2ID")
+      val id1 = row.getAs[String]("id1")
+      val id2 = row.getAs[String]("id2")
       val label = row.getAs[Int]("label")
-      Relation(text1ID, text2ID, label)
+      Relation(id1, id2, label)
     })
   }
 
   // Without header
-  // QID, AID, label
+  // id1, id2, label
   def readCSV(path: String, sc: SparkContext, minPartitions: Int = 1): RDD[Relation] = {
     sc.textFile(path, minPartitions).map(line => {
       val subs = line.split(",")
@@ -51,16 +51,24 @@ object Relations {
   }
 
   def generateRelationPairs(relations: RDD[Relation]): RDD[RelationPair] = {
-    val positive = relations.filter(_.label == 1).groupBy(_.text1ID)
-    val negative = relations.filter(_.label == 0).groupBy(_.text1ID)
+    val positive = relations.filter(_.label == 1).groupBy(_.id1)
+    val negative = relations.filter(_.label == 0).groupBy(_.id1)
     positive.cogroup(negative).flatMap(x => {
-      val posIDs = x._2._1.flatten.toArray.map(_.text2ID)
-      val negIDs = x._2._2.flatten.toArray.map(_.text2ID)
+      val posIDs = x._2._1.flatten.toArray.map(_.id2)
+      val negIDs = x._2._2.flatten.toArray.map(_.id2)
       posIDs.flatMap(y => negIDs.map(z => RelationPair(x._1, y, z)))
     })
   }
 }
 
-case class Relation(text1ID: String, text2ID: String, label: Int)
+/**
+ * It represents the relationship between two items.
+ */
+case class Relation(id1: String, id2: String, label: Int)
 
-case class RelationPair(text1ID: String, text2PosID: String, text2NegID: String)
+/**
+ * It is made up of two relations:
+ * Relation(id1, id2Pos, label>0)
+ * Relation(id1, id2Neg, label=0)
+ */
+case class RelationPair(id1: String, id2Pos: String, id2Neg: String)
