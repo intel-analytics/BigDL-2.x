@@ -24,6 +24,10 @@ import torch
 import onnx.helper as helper
 import onnx
 from zoo.pipeline.api.onnx.onnx_loader import OnnxLoader
+from onnx import backend
+from onnx.backend import test
+from onnx.backend.test.case import node
+from onnx.backend.test.case.node import pool_op_common
 
 
 class TestModelLoading(OnnxTestCase):
@@ -202,6 +206,13 @@ class TestModelLoading(OnnxTestCase):
         input_shape_with_batch = (1, 3, 224, 224)
         self.compare_with_pytorch(pytorch_model, input_shape_with_batch)
 
+    def test_onnx_averagepool2d_padding(self):
+        pytorch_model = torch.nn.Sequential(
+            torch.nn.AvgPool2d(kernel_size=10, padding=4, count_include_pad=False)
+        )
+        input_shape_with_batch = (1, 3, 224, 224)
+        self.compare_with_pytorch(pytorch_model, input_shape_with_batch)
+
     def test_onnx_relu(self):
         pytorch_model = torch.nn.Sequential(
             torch.nn.ReLU()
@@ -363,6 +374,8 @@ class TestModelLoading(OnnxTestCase):
         ]]]).astype(np.float32)
         y = np.array([[[[7, 9],
                         [17, 19]]]]).astype(np.float32)
+        output = OnnxLoader.run_node(node, [x])
+        np.testing.assert_almost_equal(output["y"], y, decimal=5)
 
     def test_onnx_logsoftmax(self):
         pytorch_model = torch.nn.Sequential(
@@ -632,3 +645,230 @@ class TestModelLoading(OnnxTestCase):
                 y = np.concatenate(values, i)
                 output = OnnxLoader.run_node(node, [v for v in values])
                 np.testing.assert_almost_equal(output["output"], y, decimal=5)
+
+    def test_torch_add(self):
+        class Add(torch.nn.Module):
+            def forward(self, x):
+                return torch.add(x[0], 1, x[1])
+
+        pytorch_model = Add()
+        input_shape_with_batch = [(1, 3), (1, 3)]
+        self.compare_with_pytorch(pytorch_model, input_shape_with_batch)
+
+    def test_onnx_leakyrelu(self):
+        pytorch_model = torch.nn.Sequential(
+            torch.nn.LeakyReLU()
+        )
+        input_shape_with_batch = (1, 3)
+        self.compare_with_pytorch(pytorch_model, input_shape_with_batch)
+
+    def test_leakyrelu(self):
+        node = helper.make_node(
+            'LeakyRelu',
+            inputs=['x'],
+            outputs=['y'],
+            alpha=0.1
+        )
+
+        x = np.array([-1, 0, 1]).astype(np.float32)
+        # expected output [-0.1, 0., 1.]
+        y = np.clip(x, 0, np.inf) + np.clip(x, -np.inf, 0) * 0.1
+
+        output = OnnxLoader.run_node(node, [x])
+        np.testing.assert_almost_equal(output["y"], y, decimal=5)
+
+    def test_onnx_gt(self):
+        class gt(torch.nn.Module):
+            def forward(self, x):
+                return torch.gt(x[0], x[1])
+
+        pytorch_model = gt()
+        input_shape_with_batch = [(1, 3), (1, 3)]
+        self.compare_with_pytorch(pytorch_model, input_shape_with_batch)
+
+    def test_gt(self):
+        node = helper.make_node(
+            'Greater',
+            inputs=['x', 'y'],
+            outputs=['greater'],
+        )
+
+        x = np.random.randn(3, 4, 5).astype(np.float32)
+        y = np.random.randn(3, 4, 5).astype(np.float32)
+        z = np.greater(x, y)
+
+        output = OnnxLoader.run_node(node, [x, y])
+        np.testing.assert_almost_equal(output['greater'], z, decimal=5)
+
+    def test_maxpool1d(self):
+        node = onnx.helper.make_node(
+            'MaxPool',
+            inputs=['x'],
+            outputs=['y'],
+            kernel_shape=[2],
+        )
+        x = np.random.randn(1, 3, 32).astype(np.float32)
+        x_shape = np.array(np.shape(x))
+        kernel_shape = np.array([2])
+        strides = [1]
+        out_shape = pool_op_common.get_output_shape('VALID', x_shape[2:], kernel_shape, strides)
+        padded = x
+        y = pool_op_common.pool(padded, x_shape, kernel_shape, strides, out_shape, [0], 'MAX')
+        output = OnnxLoader.run_node(node, [x])
+        np.testing.assert_almost_equal(output["y"], y, decimal=5)
+
+    def test_maxpool1d_strides(self):
+        node = onnx.helper.make_node(
+            'MaxPool',
+            inputs=['x'],
+            outputs=['y'],
+            kernel_shape=[2],
+            strides=[2]
+        )
+        x = np.random.randn(1, 3, 32).astype(np.float32)
+        x_shape = np.array(np.shape(x))
+        kernel_shape = np.array([2])
+        strides = [2]
+        out_shape = pool_op_common.get_output_shape('VALID', x_shape[2:], kernel_shape, strides)
+        padded = x
+        y = pool_op_common.pool(padded, x_shape, kernel_shape, strides, out_shape, [0], 'MAX')
+        output = OnnxLoader.run_node(node, [x])
+        np.testing.assert_almost_equal(output["y"], y, decimal=5)
+
+    def test_onnx_maxpool1d(self):
+        pytorch_model = torch.nn.Sequential(
+            torch.nn.MaxPool1d(2)
+        )
+        input_shape_with_batch = (1, 3, 32)
+        self.compare_with_pytorch(pytorch_model, input_shape_with_batch)
+
+    def test_maxpool1d_pads(self):
+        pytorch_model = torch.nn.Sequential(
+            torch.nn.MaxPool1d(2, padding=1)
+        )
+        input_shape_with_batch = (1, 3, 32)
+        self.compare_with_pytorch(pytorch_model, input_shape_with_batch)
+
+    def test_threshold(self):
+        pytorch_model = torch.nn.Sequential(
+            torch.nn.Threshold(0, 0))
+        input_shape_with_batch = (2, 3)
+        self.compare_with_pytorch(pytorch_model, input_shape_with_batch)
+
+    def test_onnx_mul(self):
+        class Mul(torch.nn.Module):
+            def forward(self, x):
+                return x[0] * x[1]
+
+        pytorch_model = Mul()
+        input_shape_with_batch = [(1, 3), (1, 3)]
+        self.compare_with_pytorch(pytorch_model, input_shape_with_batch)
+
+    def test_mul1(self):
+        node = onnx.helper.make_node(
+            'Mul',
+            inputs=['x', 'y'],
+            outputs=['z'],
+        )
+
+        x = np.array([1, 2, 3]).astype(np.float32).reshape([3, 1])
+        y = np.array([4, 5, 6]).astype(np.float32).reshape([3, 1])
+        z = x * y  # expected output [4., 10., 18.]
+        output = OnnxLoader.run_node(node, [x, y])
+        np.testing.assert_almost_equal(output['z'], z, decimal=5)
+
+    def test_mul2(self):
+        node = onnx.helper.make_node(
+            'Mul',
+            inputs=['x', 'y'],
+            outputs=['z'],
+        )
+
+        x = np.random.randn(3, 4, 5).astype(np.float32)
+        y = np.random.randn(3, 4, 5).astype(np.float32)
+        z = x * y
+        output = OnnxLoader.run_node(node, [x, y])
+        np.testing.assert_almost_equal(output['z'], z, decimal=5)
+
+    def test_onnx_div(self):
+        class Div(torch.nn.Module):
+            def forward(self, x):
+                return x[0] / x[1]
+
+        pytorch_model = Div()
+        input_shape_with_batch = [(1, 3), (1, 3)]
+        self.compare_with_pytorch(pytorch_model, input_shape_with_batch)
+
+    def test_div1(self):
+        node = onnx.helper.make_node(
+            'Div',
+            inputs=['x', 'y'],
+            outputs=['z'],
+        )
+
+        x = np.array([3, 4]).astype(np.float32).reshape([2, 1])
+        y = np.array([1, 2]).astype(np.float32).reshape([2, 1])
+        z = x / y
+        output = OnnxLoader.run_node(node, [x, y])
+        np.testing.assert_almost_equal(output["z"], z, decimal=5)
+
+    def test_div2(self):
+        node = onnx.helper.make_node(
+            'Div',
+            inputs=['x', 'y'],
+            outputs=['z'],
+        )
+
+        x = np.random.randn(3, 4, 5).astype(np.float32)
+        y = np.random.rand(3, 4, 5).astype(np.float32) + 1.0
+        z = x / y
+        output = OnnxLoader.run_node(node, [x, y])
+        np.testing.assert_almost_equal(output["z"], z, decimal=5)
+
+    def test_pow(self):
+        class Power(torch.nn.Module):
+            def forward(self, x):
+                return torch.pow(x, 2)
+
+        pytorch_model = Power()
+        input_shape_with_batch = (1, 2, 2)
+        self.compare_with_pytorch(pytorch_model, input_shape_with_batch)
+
+    def test_onnx_elu(self):
+        node = onnx.helper.make_node(
+            'Elu',
+            inputs=['x'],
+            outputs=['y'],
+            alpha=2.0
+        )
+
+        x = np.random.randn(3, 4, 5).astype(np.float32)
+        y = np.clip(x, 0, np.inf) + (np.exp(np.clip(x, -np.inf, 0)) - 1) * 2.0
+        output = OnnxLoader.run_node(node, [x])
+        np.testing.assert_almost_equal(output["y"], y, decimal=5)
+
+    def test_onnx_elu_default(self):
+        node = onnx.helper.make_node(
+            'Elu',
+            inputs=['x'],
+            outputs=['y']
+        )
+
+        x = np.random.randn(3, 4, 5).astype(np.float32)
+        y = np.clip(x, 0, np.inf) + (np.exp(np.clip(x, -np.inf, 0)) - 1) * 1.0
+        output = OnnxLoader.run_node(node, [x])
+        np.testing.assert_almost_equal(output["y"], y, decimal=5)
+
+    def test_elu_default(self):
+        pytorch_model = torch.nn.Sequential(
+            torch.nn.ELU()
+        )
+        input_shape_with_batch = (1, 3)
+        self.compare_with_pytorch(pytorch_model, input_shape_with_batch)
+
+    def test_elu(self):
+        pytorch_model = torch.nn.Sequential(
+            torch.nn.ELU(alpha=2)
+        )
+        input_shape_with_batch = (1, 3)
+        self.compare_with_pytorch(pytorch_model, input_shape_with_batch)

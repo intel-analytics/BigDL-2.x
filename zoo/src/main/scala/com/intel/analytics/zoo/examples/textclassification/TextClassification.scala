@@ -94,8 +94,9 @@ object TextClassification {
       val textSet = TextSet.read(param.dataPath)
         .toDistributed(sc, param.partitionNum)
       println("Processing text dataset...")
-      val transformed = textSet.tokenize().normalize().shapeSequence(param.sequenceLength)
-        .word2idx(removeTopN = 10, maxWordsNum = param.maxWordsNum).generateSample()
+      val transformed = textSet.tokenize().normalize()
+        .word2idx(removeTopN = 10, maxWordsNum = param.maxWordsNum)
+        .shapeSequence(param.sequenceLength).generateSample()
       val Array(trainTextSet, valTextSet) = transformed.randomSplit(
         Array(param.trainingSplit, 1 - param.trainingSplit))
 
