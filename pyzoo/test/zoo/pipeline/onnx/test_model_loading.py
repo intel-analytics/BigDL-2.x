@@ -610,7 +610,7 @@ class TestModelLoading(OnnxTestCase):
             def forward(self, x):
                 return torch.index_select(x, dim=self.dim, index=torch.tensor(self.index))
 
-        pytorch_model = IndexSelect(1, 2)
+        pytorch_model = IndexSelect(2, 3)
         input_shape_with_batch = (3, 4, 5, 6)
         self.compare_with_pytorch(pytorch_model, input_shape_with_batch)
 
