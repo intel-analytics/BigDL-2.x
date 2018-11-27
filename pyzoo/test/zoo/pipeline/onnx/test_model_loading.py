@@ -872,3 +872,17 @@ class TestModelLoading(OnnxTestCase):
         )
         input_shape_with_batch = (1, 3)
         self.compare_with_pytorch(pytorch_model, input_shape_with_batch)
+
+    def test_onnx_embedding(self):
+        class Embedding(torch.nn.Module):
+            def __init__(self, *parameter):
+                super(Embedding, self).__init__()
+                self.weight = torch.randn(parameter)
+
+            def forward(self, x):
+                return torch.embedding(self.weight, x)
+
+        pytorch_model = Embedding(10, 3)
+        input_shape_with_batch = (2, 4)
+        input_data_with_batch = [[1,2,4,5],[4,3,2,9]]
+        self.compare_with_pytorch(pytorch_model, input_shape_with_batch, input_data_with_batch)
