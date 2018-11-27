@@ -907,8 +907,9 @@ class TestModelLoading(OnnxTestCase):
         class clamp(torch.nn.Module):
             def forward(self, x):
                 return torch.clamp(x, -1, 1)
-
-        pytorch_model = clamp()
+        pytorch_model = torch.nn.Sequential(
+            clamp()
+        )
         input_shape_with_batch = (1, 3,  32)
         self.compare_with_pytorch(pytorch_model, input_shape_with_batch)
 
