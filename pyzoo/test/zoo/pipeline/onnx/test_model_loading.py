@@ -632,3 +632,17 @@ class TestModelLoading(OnnxTestCase):
                 y = np.concatenate(values, i)
                 output = OnnxLoader.run_node(node, [v for v in values])
                 np.testing.assert_almost_equal(output["output"], y, decimal=5)
+
+    def test_onnx_embedding(self):
+        class Embedding(torch.nn.Module):
+            def __init__(self, *parameter):
+                super(Embedding, self).__init__()
+                self.weight = torch.randn(parameter)
+
+            def forward(self, x):
+                return torch.embedding(self.weight, x)
+
+        pytorch_model = Embedding(10, 3)
+        input_shape_with_batch = (2, 4)
+        input_data_with_batch = [[1,2,4,5],[4,3,2,9]]
+        self.compare_with_pytorch(pytorch_model, input_shape_with_batch, input_data_with_batch)
