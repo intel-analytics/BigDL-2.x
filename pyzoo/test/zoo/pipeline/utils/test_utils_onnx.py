@@ -43,7 +43,7 @@ class OnnxTestCase(ZooTestCase):
             dummy_input = [torch.autograd.Variable(torch.randn(shape))
                            for shape in input_shape_with_batch]
         else:
-            dummy_input = torch.autograd.Variable(torch.LongTensor(input_data_with_batch))
+            dummy_input = [torch.autograd.Variable(torch.LongTensor(input_data_with_batch))]
         if len(dummy_input) == 1:
             dummy_input = dummy_input[0]
         return dummy_input
