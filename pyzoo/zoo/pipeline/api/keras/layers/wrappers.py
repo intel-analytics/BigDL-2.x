@@ -94,9 +94,8 @@ class KerasLayerWrapper(ZooKerasLayer):
     input_shape: A shape tuple, not including batch.
     i.e If the input data is (2, 3, 4) and 2 is the batch size, you should input: (3, 4) here.
     >>> from zoo.pipeline.api.keras.layers import KerasLayerWrapper
-    >>> from bigdl.nn.layer import Clamp, Linear
+    >>> from bigdl.nn.layer import Linear
     >>> linear = Linear(100, 10, with_bias=True)
-    >>> clamp = Clamp(min=-1, max=1)
     creating: createLinear
     >>> kerasLayer = KerasLayerWrapper(linear, input_shape=(100, ))
     >>> kerasLayer = KerasLayerWrapper(clamp, input_shape=(100, ))
