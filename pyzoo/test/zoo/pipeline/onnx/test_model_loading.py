@@ -914,16 +914,27 @@ class TestModelLoading(OnnxTestCase):
         input_shape_with_batch = (1, 3, 32)
         self.compare_with_pytorch(pytorch_model, input_shape_with_batch)
 
+    def test_exception_clip(self):
+        import pytest
+        with pytest.raises(Exception) as e_info:
+            class clamp(torch.nn.Module):
+                def forward(self, x):
+                    return torch.clamp(x, 1, -1)
+
+            pytorch_model = torch.nn.Sequential(
+                clamp()
+            )
+            input_shape_with_batch = (1, 3, 32)
+            self.compare_with_pytorch(pytorch_model, input_shape_with_batch)
+
     def test_onnx_clip(self):
         node = onnx.helper.make_node(
             'Clip',
             inputs=['x'],
             outputs=['y'],
-            min=-1.0,
-            max=1.0
         )
 
-        x = np.array([-2, 0, 2]).astype(np.float32)
-        y = np.clip(x, -1, 1)  # expected output [-1., 0., 1.]
+        x = np.array([-1, 0, 1]).astype(np.float32)
+        y = np.array([-1, 0, 1]).astype(np.float32)
         output = OnnxLoader.run_node(node, [x])
         np.testing.assert_almost_equal(output["y"], y, decimal=5)

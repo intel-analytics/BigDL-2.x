@@ -29,5 +29,5 @@ class ClipMapper(OperatorMapper):
         min = int(self.onnx_attr['min'])
         max = int(self.onnx_attr['max'])
         assert min <= max, "Min must be smaller or equal than Max"
-        clip = Clamp(min, max)
+        clip = KerasLayerWrapper(Clamp(min, max))
         return clip(self.model_inputs[0].zvalue)
