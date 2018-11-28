@@ -926,4 +926,3 @@ class TestModelLoading(OnnxTestCase):
             )
             input_shape_with_batch = (1, 3, 32)
             self.compare_with_pytorch(pytorch_model, input_shape_with_batch)
-
