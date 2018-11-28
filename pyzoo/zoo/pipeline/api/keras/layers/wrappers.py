@@ -98,7 +98,7 @@ class KerasLayerWrapper(ZooKerasLayer):
     >>> linear = Linear(100, 10, with_bias=True)
     >>> clamp = Clamp(min=-1, max=1)
     creating: createLinear
-    #>>> kerasLayer = KerasLayerWrapper(linear, input_shape=(100, ))
+    >>> kerasLayer = KerasLayerWrapper(linear, input_shape=(100, ))
     >>> kerasLayer = KerasLayerWrapper(clamp, input_shape=(100, ))
     creating: createZooKerasKerasLayerWrapper
     """
