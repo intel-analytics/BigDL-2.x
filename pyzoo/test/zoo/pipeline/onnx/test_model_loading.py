@@ -902,3 +902,27 @@ class TestModelLoading(OnnxTestCase):
         )
         input_shape_with_batch = (1, 3)
         self.compare_with_pytorch(pytorch_model, input_shape_with_batch)
+
+    def test_torch_clip(self):
+        class clamp(torch.nn.Module):
+            def forward(self, x):
+                return torch.clamp(x, -1, 1)
+
+        pytorch_model = torch.nn.Sequential(
+            clamp()
+        )
+        input_shape_with_batch = (1, 3, 32)
+        self.compare_with_pytorch(pytorch_model, input_shape_with_batch)
+
+    def test_exception_clip(self):
+        import pytest
+        with pytest.raises(Exception) as e_info:
+            class clamp(torch.nn.Module):
+                def forward(self, x):
+                    return torch.clamp(x, 1, -1)
+
+            pytorch_model = torch.nn.Sequential(
+                clamp()
+            )
+            input_shape_with_batch = (1, 3, 32)
+            self.compare_with_pytorch(pytorch_model, input_shape_with_batch)
