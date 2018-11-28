@@ -98,8 +98,8 @@ class KerasLayerWrapper(ZooKerasLayer):
     >>> linear = Linear(100, 10, with_bias=True)
     creating: createLinear
     >>> kerasLayer = KerasLayerWrapper(linear, input_shape=(100, ))
-    >>> kerasLayer = KerasLayerWrapper(clamp, input_shape=(100, ))
     creating: createZooKerasKerasLayerWrapper
+    >>> kerasLayer = KerasLayerWrapper(clamp, input_shape=(100, ))
     """
     def __init__(self, torch_layer, input_shape=None, **kwargs):
         super(KerasLayerWrapper, self).__init__(None,
