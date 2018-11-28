@@ -99,7 +99,6 @@ class KerasLayerWrapper(ZooKerasLayer):
     creating: createLinear
     >>> kerasLayer = KerasLayerWrapper(linear, input_shape=(100, ))
     creating: createZooKerasKerasLayerWrapper
-    >>> kerasLayer = KerasLayerWrapper(clamp, input_shape=(100, ))
     """
     def __init__(self, torch_layer, input_shape=None, **kwargs):
         super(KerasLayerWrapper, self).__init__(None,
