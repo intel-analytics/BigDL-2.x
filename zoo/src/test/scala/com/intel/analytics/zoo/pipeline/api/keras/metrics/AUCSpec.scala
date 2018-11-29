@@ -165,11 +165,9 @@ class AUCSpec extends FlatSpec with Matchers{
     }
     val model = Sequential[Double]().add(Linear[Double](2, 2)).add(Linear[Double](2, 1))
 
-    val optimizer = new DistriOptimizer[Double](model, dataSet,
-      new MSECriterion[Double]())
-      .setEndWhen(Trigger.maxEpoch(2)).setOptimMethod(new SGD)
-      .setValidation(Trigger.everyEpoch, dataSet,
-      Array(new AUC[Double](20)))
+    val optimizer = new DistriOptimizer[Double](model, dataSet, new MSECriterion[Double]())
+      .setEndWhen(Trigger.maxIteration(5)).setOptimMethod(new SGD)
+      .setValidation(Trigger.severalIteration(1), dataSet, Array(new AUC[Double](20)))
     optimizer.optimize()
     sc.stop()
   }
@@ -201,9 +199,8 @@ class AUCSpec extends FlatSpec with Matchers{
 
     val optimizer = new DistriOptimizer[Double](model, dataSet,
       new MSECriterion[Double]())
-      .setEndWhen(Trigger.maxEpoch(2)).setOptimMethod(new SGD)
-      .setValidation(Trigger.everyEpoch, dataSet,
-        Array(new AUC[Double](20)))
+      .setEndWhen(Trigger.maxIteration(5)).setOptimMethod(new SGD)
+      .setValidation(Trigger.severalIteration(1), dataSet, Array(new AUC[Double](20)))
     optimizer.optimize()
     sc.stop()
   }
