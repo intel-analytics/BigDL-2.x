@@ -27,17 +27,16 @@ class GatherMapper(OperatorMapper):
         return [self._to_zoo_input(i) for i in self._input_list]
 
     def _to_tensor(self):
-        data = self.model_inputs[0].zvalue
+        data = self.model_inputs[0]
         indices = self.model_inputs[1].zvalue
-
-        if "axis" in self.onnx_attr.keys():
+        
+        if "1" in self._initializer.keys() and data == self._initializer['1']:
+            embedding = zlayers.Embedding(input_dim=data.zvalue.shape[0], output_dim=data.zvalue.shape[1],
+                                          weights=data.zvalue.get_weight(),  input_length=indices.shape[1])
+            return embedding(indices)
+        else:
             dim = int(self.onnx_attr['axis'])
             assert dim >= 1, "Currently only dim>=1 is supported."
             assert indices.shape == (1,), "Currently only one index is supported."
-
             index = int(indices.get_weight().max())
-            return zautograd.expand_dims(data.index_select(dim=dim, index=index), axis=dim)
-        else:
-            embedding = zlayers.Embedding(input_dim=data.shape[0], output_dim=data.shape[1],
-                                          weights=data.get_weight(),  input_length=indices.shape[1])
-            return embedding(indices)
+            return zautograd.expand_dims(data.zvalue.index_select(dim=dim, index=index), axis=dim)
