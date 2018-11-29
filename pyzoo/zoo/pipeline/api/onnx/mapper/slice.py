@@ -43,7 +43,8 @@ class SliceMapper(OperatorMapper):
         for j in range(len(starts)):
             lens.append(ends[j] - starts[j])
             # slice(, len=-1) equals to slice(, len=length)
-            # y = x[0:2, 0:-2] means start is（0，0）, ends is（2，-2）, lens is(2, -3)
+            # y = x[0:2, 0:-1] means start is（0，0）, ends is（2，-1）,
+            # which is equivalent to slice(, len=-2) as "end=-1" is exclusive here.
             if lens[j] < 0:
                 lens[j] -= 1
         for i in range(len(starts)):

@@ -23,6 +23,7 @@ np.random.seed(1337)  # for reproducibility
 import torch
 import onnx.helper as helper
 import onnx
+import pytest
 from zoo.pipeline.api.onnx.onnx_loader import OnnxLoader
 from onnx import backend
 from onnx.backend import test
@@ -946,9 +947,25 @@ class TestModelLoading(OnnxTestCase):
             def forward(self, x):
                 return x[self.starts:self.ends]
 
-        pytorch_model = Slice(0, 0, 3)
+        pytorch_model = Slice(0, 0, 2)
         input_shape_with_batch = (3, 3, 3)
         self.compare_with_pytorch(pytorch_model, input_shape_with_batch)
+
+    def test_slice1_start_out_of_bounds(self):
+        with pytest.raises(Exception) as e_info:
+            node = onnx.helper.make_node(
+                'Slice',
+                inputs=['x'],
+                outputs=['y'],
+                axes=[0],
+                starts=[1000],
+                ends=[1000],
+            )
+
+            x = np.random.randn(3, 3, 3).astype(np.float32)
+            y = x[1000:1000]
+            output = OnnxLoader.run_node(node, [x])
+            np.testing.assert_almost_equal(output["y"], y, decimal=5)
 
     def test_onnx_slice2(self):
         class Slice(torch.nn.Module):
