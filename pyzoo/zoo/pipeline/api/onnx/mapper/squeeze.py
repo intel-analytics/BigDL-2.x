@@ -25,18 +25,6 @@ class SqueezeMapper(OperatorMapper):
     def __init__(self, node, initializer, _all_tensors):
         super(SqueezeMapper, self).__init__(node, initializer, _all_tensors)
 
-    def _extract_model_inputs(self):
-        """
-        :return: list of OnnxInput
-        """
-        input = self._input_list[0]
-        if isinstance(input.zvalue, np.ndarray):
-            self.is_batch = False
-            return [self._to_zoo_input(input, is_constant=True)]
-        else:
-            self.is_batch = True
-            return [self._to_zoo_input(input)]
-
     def _to_tensor(self):
         dim = None
         if "axes" in self.onnx_attr.keys():
