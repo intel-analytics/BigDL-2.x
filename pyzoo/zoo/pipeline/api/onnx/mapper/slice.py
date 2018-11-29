@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*
 #
 # Copyright 2018 Analytics Zoo Authors.
 #
@@ -12,7 +13,6 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#
 from zoo.pipeline.api.onnx.mapper.operator_mapper import OperatorMapper
 import zoo.pipeline.api.keras.layers as zlayers
 import zoo.pipeline.api.autograd as autograd
@@ -43,8 +43,8 @@ class SliceMapper(OperatorMapper):
         for j in range(len(starts)):
             lens.append(ends[j] - starts[j])
             # slice(, len=-1) equals to slice(, len=length)
-            # y = x[:2, 0:-1] means start is(0，0), ends is(2，-1)
-            # which is equivalent to slice(, len=-2) as "end=-1" is exclusive here.
+            # y = x[:2,0:-1] means start is(0,0) and ends is(2,-1)
+            # which is equivalent to slice(,len=-2) as "end=-1" is exclusive here.
             if lens[j] < 0:
                 lens[j] -= 1
         for i in range(len(starts)):
