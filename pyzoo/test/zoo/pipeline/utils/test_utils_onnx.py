@@ -39,7 +39,7 @@ class OnnxTestCase(ZooTestCase):
         return onnx_path
 
     def _generate_pytorch_input(self, input_shape_with_batch, input_data_with_batch):
-        if input_data_with_batch == 0:
+        if input_data_with_batch == None:
             dummy_input = [torch.autograd.Variable(torch.randn(shape))
                            for shape in input_shape_with_batch]
         else:
@@ -55,14 +55,16 @@ class OnnxTestCase(ZooTestCase):
         else:
             return tensors
 
-    def compare_with_pytorch(self, pytorch_model, input_shape_with_batch, input_data_with_batch=0,
+    def compare_with_pytorch(self, pytorch_model, input_shape_with_batch, input_data_with_batch=None,
                              compare_result=True, rtol=1e-6, atol=1e-6):
         input_shape_with_batch = to_list(input_shape_with_batch)
+        if input_data_with_batch != None:
+            input_data_with_batch = to_list(input_data_with_batch)
         onnx_path = self.dump_pytorch_to_onnx(pytorch_model, input_shape_with_batch,
                                               input_data_with_batch)
         onnx_model = onnx.load(onnx_path)
         # TODO: we only consider single  output for now
-        if input_data_with_batch == 0:
+        if input_data_with_batch == None:
             input_data_with_batch = [np.random.uniform(0, 1, shape).astype(np.float32)
                                      for shape in input_shape_with_batch]
         else:
