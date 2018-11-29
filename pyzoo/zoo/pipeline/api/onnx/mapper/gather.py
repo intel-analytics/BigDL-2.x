@@ -30,7 +30,7 @@ class GatherMapper(OperatorMapper):
         data = self.model_inputs[0]
         indices = self.model_inputs[1].zvalue
 
-        if "1" in self._initializer.keys() and data == self._initializer['1']:
+        if self._initializer and isinstance(data.zvalue, zautograd.Parameter):
             embedding = zlayers.Embedding(input_dim=data.zvalue.shape[0],
                                           output_dim=data.zvalue.shape[1],
                                           weights=data.zvalue.get_weight(),
