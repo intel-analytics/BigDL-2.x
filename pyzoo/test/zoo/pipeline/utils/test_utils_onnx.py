@@ -43,7 +43,8 @@ class OnnxTestCase(ZooTestCase):
             dummy_input = [torch.autograd.Variable(torch.randn(shape))
                            for shape in input_shape_with_batch]
         else:
-            dummy_input = [torch.autograd.Variable(torch.LongTensor(input_data_with_batch))]
+            dummy_input = [torch.autograd.Variable(torch.LongTensor(data))
+                           for data in input_data_with_batch]
         if len(dummy_input) == 1:
             dummy_input = dummy_input[0]
         return dummy_input
@@ -69,7 +70,8 @@ class OnnxTestCase(ZooTestCase):
             input_data_with_batch = [np.random.uniform(0, 1, shape).astype(np.float32)
                                      for shape in input_shape_with_batch]
         else:
-            input_data_with_batch = [np.array(input_data_with_batch).astype(np.long)]
+            input_data_with_batch = [np.array(data).astype(np.long)
+                                     for data in input_data_with_batch]
         # coutput = caffe2.python.onnx.backend.run_model(onnx_model, input_data_with_batch)[0]
 
         pytorch_out = pytorch_model.forward(self._convert_ndarray_to_tensor(input_data_with_batch))
