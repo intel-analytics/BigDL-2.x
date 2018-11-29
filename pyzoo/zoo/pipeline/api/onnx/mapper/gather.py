@@ -31,8 +31,10 @@ class GatherMapper(OperatorMapper):
         indices = self.model_inputs[1].zvalue
         
         if "1" in self._initializer.keys() and data == self._initializer['1']:
-            embedding = zlayers.Embedding(input_dim=data.zvalue.shape[0], output_dim=data.zvalue.shape[1],
-                                          weights=data.zvalue.get_weight(),  input_length=indices.shape[1])
+            embedding = zlayers.Embedding(input_dim=data.zvalue.shape[0],
+                                          output_dim=data.zvalue.shape[1],
+                                          weights=data.zvalue.get_weight(),
+                                          input_length=indices.shape[1])
             return embedding(indices)
         else:
             dim = int(self.onnx_attr['axis'])
