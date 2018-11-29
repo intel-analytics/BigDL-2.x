@@ -27,13 +27,13 @@ class GatherMapper(OperatorMapper):
         return [self._to_zoo_input(i) for i in self._input_list]
 
     def _to_tensor(self):
-        data = self.model_inputs[0]
+        data = self.model_inputs[0].zvalue
         indices = self.model_inputs[1].zvalue
 
-        if self._initializer and isinstance(data.zvalue, zautograd.Parameter):
-            embedding = zlayers.Embedding(input_dim=data.zvalue.shape[0],
-                                          output_dim=data.zvalue.shape[1],
-                                          weights=data.zvalue.get_weight(),
+        if self._initializer and isinstance(data, zautograd.Parameter):
+            embedding = zlayers.Embedding(input_dim=data.shape[0],
+                                          output_dim=data.shape[1],
+                                          weights=data.get_weight(),
                                           input_length=indices.shape[1])
             return embedding(indices)
         else:
@@ -41,4 +41,4 @@ class GatherMapper(OperatorMapper):
             assert dim >= 1, "Currently only dim>=1 is supported."
             assert indices.shape == (1,), "Currently only one index is supported."
             index = int(indices.get_weight().max())
-            return zautograd.expand_dims(data.zvalue.index_select(dim=dim, index=index), axis=dim)
+            return zautograd.expand_dims(data.index_select(dim=dim, index=index), axis=dim)
