@@ -324,6 +324,15 @@ class PythonZooKeras[T: ClassTag](implicit ev: TensorNumeric[T]) extends PythonZ
       trainable, wRegularizer, if (inputShape != null) inputShape.get(0) else -1)
   }
 
+  def createZooKerasCharEmbedding(
+      inputDim: Int,
+      outputDim: Int,
+      charEmbedDim: Int,
+      kernelRow: Int = 2,
+      inputShape: JList[Int] = null): CharEmbedding[T] = {
+    CharEmbedding[T](inputDim, outputDim, charEmbedDim, inputShape.get(0), kernelRow)
+  }
+  
   def createZooKerasBatchNormalization(
       epsilon: Double = 0.001,
       momentum: Double = 0.99,
