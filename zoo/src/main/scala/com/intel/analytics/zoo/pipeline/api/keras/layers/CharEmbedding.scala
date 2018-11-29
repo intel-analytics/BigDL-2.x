@@ -72,20 +72,19 @@ class CharEmbedding[T: ClassTag](
   def doBuild(inputShape: Shape): AbstractModule[Tensor[T], Tensor[T], T] = {
     val input = inputShape.toSingle().toArray
     val model = Sequential[T]()
-    val layer = Embedding(
+    val layer = com.intel.analytics.zoo.pipeline.api.keras.layers.Embedding(
       inputDim = inputDim,
       outputDim = charEmbedDim,
       inputLength = input(1))
     model.add(layer)
-    model.add(com.intel.analytics.bigdl.nn.keras.Reshape(Array(1, input(1), charEmbedDim)))
-    model.add(com.intel.analytics.bigdl.nn.keras.Convolution2D(
+    model.add(com.intel.analytics.zoo.pipeline.api.keras.layers.Reshape(Array(1, input(1), charEmbedDim)))
+    model.add(com.intel.analytics.zoo.pipeline.api.keras.layers.Convolution2D(
       nbFilter = outputDim,
       nbRow = kernelRow,
-      nbCol = charEmbedDim,
-      dimOrdering = "th"))
-    model.add(com.intel.analytics.bigdl.nn.keras.MaxPooling2D(poolSize = (inputLength - kernelRow + 1, 1)))
-    model.add(com.intel.analytics.bigdl.nn.keras.Reshape(Array(outputDim)))
-    model.add(com.intel.analytics.bigdl.nn.keras.Highway())
+      nbCol = charEmbedDim))
+    model.add(com.intel.analytics.zoo.pipeline.api.keras.layers.MaxPooling2D(poolSize = (inputLength - kernelRow + 1, 1)))
+    model.add(com.intel.analytics.zoo.pipeline.api.keras.layers.Reshape(Array(outputDim)))
+    model.add(com.intel.analytics.zoo.pipeline.api.keras.layers.Highway())
     model.asInstanceOf[AbstractModule[Tensor[T], Tensor[T], T]]
   }
 }
