@@ -20,10 +20,14 @@ import com.intel.analytics.bigdl.dataset.{DistributedDataSet, MiniBatch, Sample}
 import com.intel.analytics.bigdl.nn._
 import com.intel.analytics.bigdl.optim._
 import com.intel.analytics.bigdl.tensor.Tensor
+import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric.NumericFloat
 import com.intel.analytics.bigdl.utils.Engine
 import com.intel.analytics.bigdl.utils.RandomGenerator._
-import org.apache.spark.{SparkContext}
+import com.intel.analytics.zoo.pipeline.api.keras.objectives.BinaryCrossEntropy
+import com.intel.analytics.zoo.pipeline.nnframes.NNEstimator
+import org.apache.spark.SparkContext
 import org.apache.spark.rdd.RDD
+import org.apache.spark.sql.SQLContext
 import org.scalatest.{FlatSpec, Matchers}
 
 class AUCSpec extends FlatSpec with Matchers{
@@ -226,5 +230,42 @@ class AUCSpec extends FlatSpec with Matchers{
     intercept[Exception] {
       model.evaluate(dataSet, Array(new AUC[Float](20).asInstanceOf[ValidationMethod[Float]]))
     }
+  }
+
+  "AUC" should "work with numOfRecords % batchSize == 1" in {
+    val conf = Engine.createSparkConf()
+      .setAppName("AUC test")
+      .setMaster("local[1]")
+    val sc = new SparkContext(conf)
+    val sqlContext = SQLContext.getOrCreate(sc)
+    Engine.init
+
+    val data = sc.parallelize((1 to 3).flatMap { i =>
+      Seq(
+        (Array(2.0, 1.0), 1.0),
+        (Array(1.0, 2.0), 0.0),
+        (Array(2.0, 1.0), 1.0),
+        (Array(1.0, 2.0), 0.0))
+    })
+    val df = sqlContext.createDataFrame(data).toDF("features", "label")
+
+    // 9 % 4 == 1, numOfRecords % batchSize == 1
+    val data2 = sc.parallelize((1 to 3).flatMap { i =>
+      Seq(
+        (Array(2.0, 1.0), 1.0),
+        (Array(1.0, 2.0), 0.0),
+        (Array(2.0, 1.0), 1.0))
+    })
+    val df2 = sqlContext.createDataFrame(data2).toDF("features", "label")
+
+    val model = Sequential().add(Linear(2, 1))
+    val criterion = BinaryCrossEntropy()
+    val estimator = NNEstimator(model, criterion)
+      .setMaxEpoch(2)
+      .setBatchSize(4)
+      .setValidation(Trigger.severalIteration(1), df2, Array(new AUC()), 4)
+    val dlModel = estimator.fit(df)
+
+    val prediction1 = dlModel.transform(df).collect()
   }
 }
