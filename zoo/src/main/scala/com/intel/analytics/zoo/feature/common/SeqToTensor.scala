@@ -30,25 +30,26 @@ class SeqToTensor[T: ClassTag](size: Array[Int])(implicit ev: TensorNumeric[T])
   extends Preprocessing[Any, Tensor[T]] with VectorToSeq {
 
   override def apply(prev: Iterator[Any]): Iterator[Tensor[T]] = {
-    val vectorNames = Seq("org.apache.spark.mllib.linalg.DenseVector",
+    val vectorNames = Set(
+      "org.apache.spark.mllib.linalg.DenseVector",
       "org.apache.spark.mllib.linalg.SparseVector",
       "org.apache.spark.ml.linalg.DenseVector",
       "org.apache.spark.ml.linalg.SparseVector")
+
     prev.map { f =>
-      val className = f.getClass().getName()
+      val className = f.getClass.getName
       val feature = if (vectorNames.contains(className)) {
         vectorToArray(f).map(ev.fromType(_))
       } else {
         f match {
+          case sd: Seq[Any] => matchSeq(sd)
           case ff: Float => Array(ff).map(ev.fromType(_))
           case dd: Double => Array(dd).map(ev.fromType(_))
           case ii: Int => Array(ii).map(ev.fromType(_))
-          case sd: Seq[Any] => matchSeq(sd)
           case _ => throw new IllegalArgumentException("SeqToTensor only supports Float, Double, " +
             s"Array[Float], Array[Double] or MLlib Vector but got $f")
         }
       }
-
       Tensor(feature, if (size.isEmpty) Array(feature.length) else size).contiguous()
     }
   }

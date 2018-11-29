@@ -13,20 +13,6 @@
     <artifactId>analytics-zoo-bigdl_${bigdl.version}-spark_${spark.version}</artifactId>
     <packaging>jar</packaging>
 
-    <properties>
-        <maven-enforcer-plugin.version>1.3.1</maven-enforcer-plugin.version>
-        <java.version>1.7</java.version>
-        <javac.version>1.7</javac.version>
-        <spark-scope>provided</spark-scope>
-        <bigdl-scope>compile</bigdl-scope>
-        <scala.major.version>2.11</scala.major.version>
-        <scala.version>2.11.8</scala.version>
-        <scala.macros.version>2.1.0</scala.macros.version>
-        <scalatest.version>2.2.4</scalatest.version>
-        <spark.version>2.1.0</spark.version>
-        <bigdl.version>0.7.1</bigdl.version>
-    </properties>
-
     <distributionManagement>
         <snapshotRepository>
             <id>ossrh</id>

@@ -86,24 +86,21 @@
     </licenses>
 
     <properties>
+        <bigdl.artifactId>bigdl-SPARK_2.1</bigdl.artifactId>
         <maven-site-plugin.version>3.4</maven-site-plugin.version>
         <wagon-ssh.version>1.0</wagon-ssh.version>
         <maven-enforcer-plugin.version>1.3.1</maven-enforcer-plugin.version>
         <spark-scope>provided</spark-scope>
         <bigdl-scope>compile</bigdl-scope>
-        <scala.macros.version>2.1.0</scala.macros.version>
-        <scalatest.version>2.2.4</scalatest.version>
-        <bigdl.version>0.6.0</bigdl.version>
-
         <!--following are switched in profiles-->
-        <java.version>1.8</java.version>
-        <javac.version>1.8</javac.version>
-        <spark-version.project>2.1</spark-version.project>
-        <spark.version>2.1.0</spark.version>
+        <java.version>1.7</java.version>
+        <javac.version>1.7</javac.version>
         <scala.major.version>2.11</scala.major.version>
         <scala.version>2.11.8</scala.version>
         <scala.macros.version>2.1.0</scala.macros.version>
-        <bigdl.artifactId>bigdl-SPARK_${spark-version.project}</bigdl.artifactId>
+        <scalatest.version>2.2.4</scalatest.version>
+        <spark.version>2.1.0</spark.version>
+        <bigdl.version>0.7.1</bigdl.version>
     </properties>
 
     <distributionManagement>
@@ -201,9 +198,27 @@
             </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-enforcer-plugin</artifactId>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-assembly-plugin</artifactId>
                 <executions>
 
+                </executions>
+            </plugin>
+	    <plugin>
+		<groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-source-plugin</artifactId>
+                <version>3.0.1</version>
+                <executions>
+                    <execution>
+                        <id>attach-sources</id>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>jar-no-fork</goal>
+                        </goals>
+                    </execution>
                 </executions>
             </plugin>
             <plugin>

@@ -59,7 +59,9 @@ class FeatureSpec extends FlatSpec with Matchers with BeforeAndAfter {
   "SeqToTensor" should "convert ML Vector" in {
     var appSparkVersion = org.apache.spark.SPARK_VERSION
     if (appSparkVersion.trim.startsWith("2")) {
-      val v = org.apache.spark.ml.linalg.Vectors.dense(1, 2)
+      val c = Class.forName("org.apache.spark.ml.linalg.DenseVector")
+        .getConstructor(Array(1.0, 2.0).getClass)
+      val v = c.newInstance(Array(1.0, 2.0))
       val t = SeqToTensor[Double]().apply(Iterator(v))
       assert(t.next().toArray().deep == Array(1.0, 2.0).deep)
     }
