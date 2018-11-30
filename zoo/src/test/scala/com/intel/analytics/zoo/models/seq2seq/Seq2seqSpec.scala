@@ -39,7 +39,7 @@ class Seq2seqSpec extends FlatSpec with Matchers with BeforeAndAfter {
 
     val gradOutput = Tensor[Float](batchSize, seqLen, hiddenSize).rand()
     val model = Seq2seq[Float](encoder, decoder,
-      Shape(List(SingleShape(List(seqLen)), SingleShape(List(seqLen)))))
+      SingleShape(List(seqLen)), SingleShape(List(seqLen)))
     model.forward(T(input, input2))
     model.backward(T(input, input2), gradOutput)
 
@@ -47,7 +47,7 @@ class Seq2seqSpec extends FlatSpec with Matchers with BeforeAndAfter {
     val decoder2 = Decoder[Float]("lstm", numLayer, hiddenSize, Embedding[Float](10, inputSize))
     val bridge = Bridge[Float]("dense", "lstm", numLayer, hiddenSize)
     val model2 = Seq2seq[Float](encoder2, decoder2,
-      Shape(List(SingleShape(List(-1)), SingleShape(List(-1)))),
+      SingleShape(List(-1)), SingleShape(List(-1)),
       bridge)
     model2.forward(T(input, input2))
     model2.backward(T(input, input2), gradOutput)
@@ -71,7 +71,7 @@ class Seq2seqSpec extends FlatSpec with Matchers with BeforeAndAfter {
 
     val bridge = Bridge[Float]("dense", "lstm", numLayer, decoderHiddenSize)
     val model2 = Seq2seq[Float](encoder, decoder,
-      Shape(List(SingleShape(List(seqLen)), SingleShape(List(seqLen)))),
+      SingleShape(List(seqLen)), SingleShape(List(seqLen)),
       bridge)
     model2.forward(T(input, input2))
     model2.backward(T(input, input2), gradOutput)
@@ -90,16 +90,16 @@ class Seq2seqSpec extends FlatSpec with Matchers with BeforeAndAfter {
     val input2 = Tensor[Float](batchSize, seqLen)
 
     val gradOutput = Tensor[Float](batchSize, seqLen, hiddenSize).rand()
-//    val model = Seq2seq[Float](encoder, decoder,
-//      Shape(List(SingleShape(List(seqLen)), SingleShape(List(seqLen)))))
-//    model.forward(T(input, input2))
-//    model.backward(T(input, input2), gradOutput)
+    val model = Seq2seq[Float](encoder, decoder,
+      SingleShape(List(seqLen)), SingleShape(List(seqLen)))
+    model.forward(T(input, input2))
+    model.backward(T(input, input2), gradOutput)
 
     val encoder2 = Encoder[Float]("lstm", numLayer, hiddenSize, Embedding[Float](10, inputSize))
     val decoder2 = Decoder[Float]("lstm", numLayer, hiddenSize, Embedding[Float](10, inputSize))
     val bridge = Bridge[Float]("dense", "lstm", numLayer, hiddenSize)
     val model2 = Seq2seq[Float](encoder2, decoder2,
-      Shape(List(SingleShape(List(seqLen)), SingleShape(List(seqLen)))), bridge)
+      SingleShape(List(seqLen)), SingleShape(List(seqLen)), bridge)
     model2.forward(T(input, input2))
     model2.backward(T(input, input2), gradOutput)
   }
@@ -124,7 +124,7 @@ class Seq2seqSpec extends FlatSpec with Matchers with BeforeAndAfter {
 
     val bridge = Bridge[Float]("densenonlinear", "lstm", numLayer, decoderHiddenSize)
     val model = Seq2seq[Float](encoder, decoder,
-      Shape(List(SingleShape(List(seqLen)), SingleShape(List(seqLen)))), bridge)
+      SingleShape(List(seqLen)), SingleShape(List(seqLen)), bridge)
     model.forward(T(input, input2))
     model.backward(T(input, input2), gradOutput)
   }

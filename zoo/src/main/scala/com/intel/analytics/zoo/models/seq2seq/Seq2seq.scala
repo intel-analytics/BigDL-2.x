@@ -31,21 +31,21 @@ import scala.reflect.ClassTag
  * [[Seq2seq]] A trainable interface for a simple, generic encoder + decoder model
  * @param encoder an encoder object
  * @param decoder a decoder object
- * @param inputShape shape of input, for variable length, please input -1
+ * @param encoderInputShape shape of encoder input, for variable length, please input -1
+ * @param decoderInputShape shape of decoder input, for variable length, please input -1
  * @param bridge connect encoder and decoder
  */
 class Seq2seq[T: ClassTag](
   encoder: Encoder[T],
   decoder: Decoder[T],
-  inputShape: Shape,
+  encoderInputShape: Shape,
+  decoderInputShape: Shape,
   bridge: Bridge[T] = null)
   (implicit ev: TensorNumeric[T]) extends ZooModel[Table, Tensor[T], T] {
 
   override def buildModel(): AbstractModule[Table, Tensor[T], T] = {
-    val encodeInputShape = inputShape.toMulti().head
-    val decodeInputShape = inputShape.toMulti().last
-    val encoderInput = Input(encodeInputShape)
-    val decoderInput = Input(decodeInputShape)
+    val encoderInput = Input(encoderInputShape)
+    val decoderInput = Input(decoderInputShape)
 
     val encoderOutput = encoder.inputs(encoderInput)
 
@@ -66,15 +66,17 @@ object Seq2seq {
    * [[Seq2seq]] A trainable interface for a simple, generic encoder + decoder model
    * @param encoder an encoder object
    * @param decoder a decoder object
-   * @param inputShape shape of input
+   * @param encoderInputShape shape of encoder input, for variable length, please input -1
+   * @param decoderInputShape shape of decoder input, for variable length, please input -1
    * @param bridge connect encoder and decoder
    */
   def apply[@specialized(Float, Double) T: ClassTag](
     encoder: Encoder[T],
     decoder: Decoder[T],
-    inputShape: Shape,
+    encoderInputShape: Shape,
+    decoderInputShape: Shape,
     bridge: Bridge[T] = null
   )(implicit ev: TensorNumeric[T]): Seq2seq[T] = {
-    new Seq2seq[T](encoder, decoder, inputShape, bridge).build()
+    new Seq2seq[T](encoder, decoder, encoderInputShape, decoderInputShape, bridge).build()
   }
 }
