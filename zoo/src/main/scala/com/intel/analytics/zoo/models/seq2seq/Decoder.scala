@@ -57,16 +57,14 @@ class Decoder[T: ClassTag](val rnns: Array[Recurrent[T]],
   }
 
   override def updateOutput(input: Activity): Tensor[T] = {
-    val states = input.toTable[Tensor[T]](2)
+    val states = input.toTable[Table](2)
 
-    // split states from numLayers x batch x hidden to Array(batch, hidden)
-    val splitStates = if (rnns.head.getName().toLowerCase.contains("lstm"))
-      Utils.splitToTable(states, rnns.size)
-    else Utils.splitToTensor(states, rnns.size)
-
-    for ((rnn, state) <- rnns.zip(splitStates)) {
-      rnn.setHiddenState(state)
+    var i = 0
+    while (i < rnns.size) {
+      rnns(i).setHiddenState(states(i + 1))
+      i += 1
     }
+
     output = labor.updateOutput(input)
     output
   }
@@ -75,9 +73,7 @@ class Decoder[T: ClassTag](val rnns: Array[Recurrent[T]],
     val rnnsGradInput = labor.updateGradInput(input, gradOutput)
     val gradStates = rnns.map(_.getGradHiddenState())
 
-    // concat states from Array(batch x hidden) to numLayers x batch x hidden
-    val catGradstates = Utils.join(gradStates)
-    gradInput = T(rnnsGradInput, catGradstates)
+    gradInput = T(rnnsGradInput, T.array(gradStates))
     gradInput
   }
 }
@@ -97,7 +93,7 @@ object Decoder {
 
   /**
    * [[Decoder]] A generic recurrent neural network decoder
-   * @param rnnType rnn type used for decoder, currently only support "lstm | gru"
+   * @param rnnType style of recurrent unit, one of [SimpleRNN, LSTM, GRU]
    * @param numLayers number of layers used in decoder
    * @param hiddenSize hidden size of decoder
    * @param embedding embedding layer in decoder

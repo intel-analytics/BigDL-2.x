@@ -20,7 +20,7 @@ import com.intel.analytics.bigdl.nn.abstractnn.{AbstractModule, Activity}
 import com.intel.analytics.bigdl.nn.keras.KerasLayer
 import com.intel.analytics.bigdl.tensor.Tensor
 import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric
-import com.intel.analytics.bigdl.utils.{Shape, SingleShape, T}
+import com.intel.analytics.bigdl.utils._
 import com.intel.analytics.zoo.pipeline.api.Net
 import com.intel.analytics.zoo.pipeline.api.keras.layers.utils.KerasUtils
 import com.intel.analytics.zoo.pipeline.api.keras.layers._
@@ -56,49 +56,46 @@ class Encoder[T: ClassTag](val rnns: Array[Recurrent[T]],
     val rnnShape = labor.getOutputShape()
     val sizes = rnnShape.toSingle().toArray
     val statesShape = if (rnns.head.getName().toLowerCase.contains("lstm")) {
-        SingleShape(List(sizes.head, 2 * rnns.length * sizes(2)) ++ sizes.drop(3))
+      val innerShape =
+        MultiShape(Array.fill[Shape](2)(SingleShape(List(sizes(0)) ++ sizes.drop(2))).toList)
+      val shape = Array.fill[Shape](rnns.length)(innerShape)
+      MultiShape(shape.toList)
     } else {
-      SingleShape(List(sizes.head, rnns.length * sizes(2)) ++ sizes.drop(3))
+      val shape = Array.fill[Shape](rnns.length)(SingleShape(List(sizes(0)) ++ sizes.drop(2)))
+      MultiShape(shape.toList)
     }
     Shape(List(rnnShape, statesShape))
   }
 
+  // ouput is T(rnnOutput, T(layer1states, layer2states, ...))
   override def updateOutput(input: Tensor[T]): Activity = {
     val laborOutput = labor.updateOutput(input)
     val states = rnns.map(_.getHiddenState())
 
-    // join states from Array(batch x hidden) to batch x numLayers x hidden
-    val catStates = Utils.join(states)
-    output = T(laborOutput, catStates)
+    output = T(laborOutput, T.array(states))
     output
   }
 
   override def updateGradInput(input: Tensor[T], gradOutput: Activity): Tensor[T] = {
     val rnnGradOutput = gradOutput.toTable[Tensor[T]](1)
-    val gradStates = gradOutput.toTable[Tensor[T]](2)
+    val gradStates = gradOutput.toTable[Table](2)
 
-    // split states from numLayers x batch x hidden to Array(batch, hidden)
-    val splitStates = if (rnns.head.getName().toLowerCase.contains("lstm"))
-      Utils.splitToTable(gradStates, rnns.size)
-    else Utils.splitToTensor(gradStates, rnns.size)
-
-    for ((rnn, state) <- rnns.zip(splitStates)) {
-      rnn.setGradHiddenState(state)
+    var i = 0
+    while (i < rnns.size) {
+      rnns(i).setGradHiddenState(gradStates(i + 1))
+      i += 1
     }
     labor.updateGradInput(input, rnnGradOutput)
   }
 
   override def accGradParameters(input: Tensor[T], gradOutput: Activity): Unit = {
     val rnnGradOutput = gradOutput.toTable[Tensor[T]](1)
-    val gradStates = gradOutput.toTable[Tensor[T]](2)
+    val gradStates = gradOutput.toTable[Table](2)
 
-    // split states from numLayers x batch x hidden to Array(batch, hidden)
-    val splitStates = if (rnns.head.getName().toLowerCase.contains("lstm"))
-      Utils.splitToTable(gradStates, rnns.size)
-    else Utils.splitToTensor(gradStates, rnns.size)
-
-    for ((rnn, state) <- rnns.zip(splitStates)) {
-      rnn.setGradHiddenState(state)
+    var i = 0
+    while (i < rnns.size) {
+      rnns(i).setGradHiddenState(gradStates(i + 1))
+      i += 1
     }
     labor.accGradParameters(input, rnnGradOutput)
   }
@@ -119,7 +116,7 @@ object Encoder {
 
   /**
    * [[Encoder]] A generic recurrent neural network encoder
-   * @param rnnType rnn type used for encoder, currently only support "lstm | gru"
+   * @param rnnType style of recurrent unit, one of [SimpleRNN, LSTM, GRU]
    * @param numLayers number of layers used in encoder
    * @param hiddenSize hidden size of encoder
    * @param embedding embedding layer in encoder

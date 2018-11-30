@@ -38,7 +38,7 @@ class Seq2seq[T: ClassTag](
   encoder: Encoder[T],
   decoder: Decoder[T],
   inputShape: Shape,
-  bridge: KerasLayer[Tensor[T], Tensor[T], T] = null)
+  bridge: Bridge[T] = null)
   (implicit ev: TensorNumeric[T]) extends ZooModel[Table, Tensor[T], T] {
 
   override def buildModel(): AbstractModule[Table, Tensor[T], T] = {
@@ -49,9 +49,11 @@ class Seq2seq[T: ClassTag](
 
     val encoderOutput = encoder.inputs(encoderInput)
 
+    // select table is 0 based
     val encoderFinalStates = SelectTable(1).inputs(encoderOutput)
     val decoderInitStates = if (bridge != null) bridge.inputs(encoderFinalStates)
     else encoderFinalStates
+
     val decoderOutput = decoder.inputs(Array(decoderInput, decoderInitStates))
 
     Model(Array(encoderInput, decoderInput), decoderOutput)
@@ -71,7 +73,7 @@ object Seq2seq {
     encoder: Encoder[T],
     decoder: Decoder[T],
     inputShape: Shape,
-    bridge: KerasLayer[Tensor[T], Tensor[T], T] = null
+    bridge: Bridge[T] = null
   )(implicit ev: TensorNumeric[T]): Seq2seq[T] = {
     new Seq2seq[T](encoder, decoder, inputShape, bridge).build()
   }
