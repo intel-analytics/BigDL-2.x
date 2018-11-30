@@ -934,3 +934,15 @@ class TestModelLoading(OnnxTestCase):
         input_shape_with_batch = (2, 4)
         input_data_with_batch = [[[1, 2, 4, 5], [4, 3, 2, 9]]]
         self.compare_with_pytorch(pytorch_model, input_shape_with_batch, input_data_with_batch)
+
+    def test_onnx_unsqueeze(self):
+        node = onnx.helper.make_node(
+            'Unsqueeze',
+            inputs=['x'],
+            outputs=['y'],
+            axes=[0],
+        )
+        x = np.random.randn(3, 4, 5).astype(np.float32)
+        y = np.expand_dims(x, axis=0)
+        output = OnnxLoader.run_node(node, [x])
+        np.testing.assert_almost_equal(output["y"], y, decimal=5)
