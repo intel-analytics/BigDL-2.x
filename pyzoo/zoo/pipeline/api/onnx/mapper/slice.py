@@ -37,9 +37,7 @@ class SliceMapper(OperatorMapper):
         if "axes" in self.onnx_attr.keys():
             axes = self.onnx_attr['axes']
         else:
-            axes = []
-            for q in range(len(starts)):
-                axes.append(q)
+            axes = range(len(starts))
         for j in range(len(starts)):
             lens.append(ends[j] - starts[j])
             # slice(, len=-1) equals to slice(, len=length)
