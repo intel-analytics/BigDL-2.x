@@ -82,7 +82,8 @@ object Bridge {
     inputShape: Shape = null)(implicit ev: TensorNumeric[T]):
     Bridge[T] = {
     val rnnName = rnnType.toLowerCase
-    require(rnnName == "lstm" || rnnName == "gru", "rnnType has to be lstm or gru")
+    require(rnnName == "lstm" || rnnName == "gru" || rnnName == "simplernn",
+      "rnnType has to be lstm | gru | simplernn")
     val numStates = if (rnnName == "lstm") 2 * numLayers else numLayers
     val bridge = bridgeType.toLowerCase() match {
       case "dense" =>
