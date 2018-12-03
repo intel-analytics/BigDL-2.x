@@ -677,6 +677,30 @@ class TestModelLoading(OnnxTestCase):
                 output = OnnxLoader.run_node(node, [v for v in values])
                 np.testing.assert_almost_equal(output["output"], y, decimal=5)
 
+    def test_concat_axis(self):
+        test_cases = {
+            '1d': ([1, 2],
+                   [3, 4]),
+            '2d': ([[1, 2], [3, 4]],
+                   [[5, 6], [7, 8]]),
+            '3d': ([[[1, 2], [3, 4]], [[5, 6], [7, 8]]],
+                   [[[9, 10], [11, 12]], [[13, 14], [15, 16]]])
+        }  # type: Dict[Text, Sequence[Any]]
+
+        for test_case, values_ in test_cases.items():
+            values = [np.asarray(v, dtype=np.float32) for v in values_]
+            for i in range(1, len(values[0].shape)):
+                in_args = ['value' + str(k) for k in range(len(values))]
+                node = onnx.helper.make_node(
+                    'Concat',
+                    inputs=[s for s in in_args],
+                    outputs=['output'],
+                    axis=0
+                )
+                y = np.concatenate(values, 0)
+                output = OnnxLoader.run_node(node, [v for v in values])
+                np.testing.assert_almost_equal(output["output"], y, decimal=5)
+
     def test_torch_add(self):
         class Add(torch.nn.Module):
             def forward(self, x):
