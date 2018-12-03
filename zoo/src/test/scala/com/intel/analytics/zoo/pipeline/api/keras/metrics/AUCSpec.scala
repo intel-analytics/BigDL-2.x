@@ -230,6 +230,7 @@ class AUCSpec extends FlatSpec with Matchers{
     intercept[Exception] {
       model.evaluate(dataSet, Array(new AUC[Float](20).asInstanceOf[ValidationMethod[Float]]))
     }
+    sc.stop()
   }
 
   "AUC" should "work with numOfRecords % batchSize == 1" in {
@@ -267,5 +268,6 @@ class AUCSpec extends FlatSpec with Matchers{
     val dlModel = estimator.fit(df)
 
     val prediction1 = dlModel.transform(df).collect()
+    sc.stop()
   }
 }
