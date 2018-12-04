@@ -17,10 +17,11 @@
 package com.intel.analytics.zoo.feature.image
 
 import com.intel.analytics.bigdl.DataSet
-import com.intel.analytics.bigdl.dataset.{DataSet, Sample}
-import com.intel.analytics.bigdl.transform.vision.image.{DistributedImageFrame, ImageFeature, ImageFrame, LocalImageFrame}
+import com.intel.analytics.bigdl.dataset._
+import com.intel.analytics.bigdl.transform.vision.image._
 import com.intel.analytics.zoo.common.Utils
 import com.intel.analytics.zoo.feature.common.Preprocessing
+import com.intel.analytics.zoo.feature.common.persistent.memory.OptaneDCDataSet
 import org.apache.commons.io.FileUtils
 import org.apache.spark.SparkContext
 import org.apache.spark.rdd.RDD
@@ -76,7 +77,7 @@ abstract class ImageSet {
   /**
    * Convert ImageSet to DataSet of Sample.
    */
-  def toDataSet[T: ClassTag]: DataSet[Sample[T]]
+  def toDataSet[T: ClassTag](cacheWithOptaneDC: Boolean = false): DataSet[Sample[T]]
 }
 
 class LocalImageSet(var array: Array[ImageFeature]) extends ImageSet {
@@ -93,7 +94,10 @@ class LocalImageSet(var array: Array[ImageFeature]) extends ImageSet {
     ImageFrame.array(array)
   }
 
-  override def toDataSet[T: ClassTag]: DataSet[Sample[T]] = {
+  override def toDataSet[T: ClassTag](cacheWithOptaneDC: Boolean = false): DataSet[Sample[T]] = {
+    if (cacheWithOptaneDC) {
+      throw new RuntimeException("Not supported yet for caching with optaneDC")
+    }
     DataSet.array(array.map(_[Sample[T]](ImageFeature.sample)))
   }
 }
@@ -112,10 +116,18 @@ class DistributedImageSet(var rdd: RDD[ImageFeature]) extends ImageSet {
     ImageFrame.rdd(rdd)
   }
 
-  override def toDataSet[T: ClassTag]: DataSet[Sample[T]] = {
-    DataSet.rdd(rdd.map(_[Sample[T]](ImageFeature.sample)))
+  override def toDataSet[T: ClassTag](cacheWithOptanDC: Boolean = false): DataSet[Sample[T]] = {
+    if (!cacheWithOptanDC) {
+      DataSet.rdd(rdd.map(_[Sample[T]](ImageFeature.sample)))
+    } else {
+      // we are supposing the rdd of ImageFeature should has the "mat" field at this point
+      val transformer = MatToTensor[Float]() -> ImageFrameToSample[Float](targetKeys = Array
+      (ImageFeature.label)) -> ImageFeatureToSample[T]()
+      OptaneDCDataSet.rdd[ImageFeature](rdd).transform(transformer)
+    }
   }
 }
+
 
 object ImageSet {
 
