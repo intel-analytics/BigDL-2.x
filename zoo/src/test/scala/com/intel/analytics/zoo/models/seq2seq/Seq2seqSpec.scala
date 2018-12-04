@@ -246,15 +246,6 @@ class Seq2seqSpec extends FlatSpec with Matchers with BeforeAndAfter {
       0.5944f, 0.6541f, 0.0337f), Array(batchSize, 1, hiddenSize))
 
     val w = seq.parameters()._1
-//    w(0).set(Tensor[Float](Array[Float](-0.5053f, -0.3676f,  0.5771f,  0.1090f,  0.1779f, -0.5385f,
-//      -0.3792f, -0.1922f, 0.0903f, -0.5080f, -0.2488f, -0.3456f,  0.0016f, -0.2148f,
-//      -0.0400f, -0.3912f, -0.3963f, -0.3368f, -0.1976f, -0.4557f, 0.4841f, -0.1146f,
-//      0.4968f,  0.1799f, -0.4889f,  0.3995f, -0.1589f, -0.2213f, -0.4792f, -0.5740f),
-//      Array(3, 10)))
-//    w(1).set(Tensor[Float](Array[Float](0.1652f, -0.1261f,  0.2248f,
-//      -0.4738f,  0.4286f, -0.4238f,
-//      -0.0997f,  0.1206f,  0.2981f), Array(3, 3)))
-//    w(2).set(Tensor[Float](Array[Float](0.4661f,  0.5259f, -0.4578f), Array(3)))
     w(0).set(Tensor[Float](Array[Float](0.4414f,  0.4792f, -0.1353f,  0.5304f, -0.1265f,  0.1165f, -0.2811f,  0.3391f,
       0.5090f, -0.4236f,
       0.5018f,  0.1081f,  0.4266f,  0.0782f,  0.2784f, -0.0815f,  0.4451f,  0.0853f,
