@@ -55,7 +55,7 @@ class InternalRecurrent[T: ClassTag](
 
   override def accGradParameters(input: Tensor[T], gradOutput: Tensor[T]): Unit = {
     if (initGradHiddenState != null) gradHidden = initGradHiddenState
-    super.updateGradInput(input, gradOutput)
+    super.accGradParameters(input, gradOutput)
   }
 
   override def updateGradInput(input: Tensor[T], gradOutput: Tensor[T]): Tensor[T] = {

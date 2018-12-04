@@ -131,9 +131,10 @@ object Encoder {
     rnnType.toLowerCase() match {
       case "lstm" =>
         for (i <- 1 to numLayers) rnn.append(LSTM(hiddenSize, returnSequences = true))
-      case "gru" => {
+      case "gru" =>
         for (i <- 1 to numLayers) rnn.append(GRU(hiddenSize, returnSequences = true))
-      }
+      case "simplernn" =>
+        for (i <- 1 to numLayers) rnn.append(SimpleRNN(hiddenSize, returnSequences = true))
       case _ => throw new IllegalArgumentException(s"Please use " +
         s"Encoder(rnn: Array[Recurrent[T]], embedding: KerasLayer[Activity, Activity, T])" +
         s"to create a encoder")

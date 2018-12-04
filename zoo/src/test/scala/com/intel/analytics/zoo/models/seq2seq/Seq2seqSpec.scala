@@ -17,10 +17,9 @@
 package com.intel.analytics.zoo.models.seq2seq
 
 import com.intel.analytics.bigdl.tensor.Tensor
-import com.intel.analytics.bigdl.utils.{Shape, SingleShape, T}
-import com.intel.analytics.zoo.common.NNContext
-import com.intel.analytics.zoo.pipeline.api.keras.layers.{Embedding, LSTM, Recurrent}
-import org.apache.spark.{SparkConf, SparkContext}
+import com.intel.analytics.bigdl.utils.{SingleShape, T}
+import com.intel.analytics.zoo.pipeline.api.keras.layers.{Embedding, SimpleRNN}
+import com.intel.analytics.zoo.pipeline.api.keras.models.Sequential
 import org.scalatest.{BeforeAndAfter, FlatSpec, Matchers}
 
 class Seq2seqSpec extends FlatSpec with Matchers with BeforeAndAfter {
@@ -127,5 +126,166 @@ class Seq2seqSpec extends FlatSpec with Matchers with BeforeAndAfter {
       SingleShape(List(seqLen)), SingleShape(List(seqLen)), bridge)
     model.forward(T(input, input2))
     model.backward(T(input, input2), gradOutput)
+  }
+
+  "Seq2seq model with simple rnn" should "generate correct result" in {
+    val inputSize = 10
+    val hiddenSize = 3
+    val batchSize = 2
+    val seqLen = 4
+    val numLayer = 1
+    val encoder = Encoder[Float]("SimpleRNN", numLayer, hiddenSize)
+    val decoder = Decoder[Float]("SimpleRNN", numLayer, hiddenSize)
+
+    val input = Tensor[Float](batchSize, seqLen, inputSize)
+    val input2 = Tensor[Float](batchSize, seqLen-1, inputSize)
+
+    val gradOutput = Tensor[Float](Array[Float](0.5535f, 0.4117f, 0.3510f,
+  0.3881f, 0.5073f, 0.4701f,
+  0.3155f, 0.9211f, 0.6948f,
+
+  0.8196f, 0.9297f, 0.4505f,
+  0.6202f, 0.6401f, 0.0459f,
+  0.4751f, 0.1985f, 0.1941f), Array(batchSize, seqLen - 1, hiddenSize))
+    val model = Seq2seq[Float](encoder, decoder,
+      SingleShape(List(seqLen, inputSize)), SingleShape(List(seqLen, inputSize)))
+
+    val w = model.parameters()._1
+    w(3).set(Tensor[Float](Array[Float](-0.5080f, -0.2488f, -0.3456f,  0.0016f, -0.2148f, -0.0400f, -0.3912f, -0.3963f,
+      -0.3368f, -0.1976f,
+      -0.4557f,  0.4841f, -0.1146f,  0.4968f,  0.1799f, -0.4889f,  0.3995f, -0.1589f,
+      -0.2213f, -0.4792f,
+      -0.5740f,  0.1652f, -0.1261f,  0.2248f, -0.4738f,  0.4286f, -0.4238f, -0.0997f,
+      0.1206f,  0.2981f),
+      Array(3, 10)))
+    w(4).set(Tensor[Float](Array[Float](0.4661f,  0.5259f, -0.4578f,
+      0.1453f, -0.2483f, -0.0633f,
+      -0.4321f,  0.5259f, -0.4237f), Array(3, 3)))
+    w(5).set(Tensor[Float](Array[Float](0.3086f, 0.2029f, 0.1876f), Array(3)))
+    w(0).set(Tensor[Float](Array[Float](0.5556f, -0.4765f, -0.5727f, -0.4517f, -0.3884f,  0.2339f,  0.2067f,  0.4797f,
+      -0.2982f, -0.3936f,
+      0.3063f, -0.2334f,  0.3504f, -0.1370f,  0.3303f, -0.4486f, -0.2914f,  0.1760f,
+      0.1221f, -0.1472f,
+      0.3441f,  0.3925f, -0.4187f, -0.3082f,  0.5287f, -0.1948f, -0.2047f, -0.5586f,
+      -0.3306f,  0.1442f), Array(3, 10)))
+    w(1).set(Tensor[Float](Array[Float](-0.0762f, -0.4191f,  0.0135f,
+      -0.3944f, -0.4898f, -0.3179f,
+      -0.5053f, -0.3676f,  0.5771f), Array(3, 3)))
+    w(2).set(Tensor[Float](Array[Float](0.1090f,  0.1779f, -0.5385f), Array(3)))
+
+    val output = model.forward(T(input, input2))
+    val expectO = Tensor[Float](Array[Float](0.6669f,  0.1809f,  0.5919f,
+      0.6669f,  0.1809f,  0.5919f,
+
+      0.4166f,  0.2141f, -0.2508f,
+      0.4166f,  0.2141f, -0.2508f,
+
+      0.6232f,  0.2224f,  0.2227f,
+      0.6232f,  0.2224f,  0.2227f), Array(seqLen-1, batchSize, hiddenSize))
+    assert(output.transpose(1, 2).almostEqual(expectO, 1e-4) == true)
+    val encoderO = model.asInstanceOf[Seq2seq[Float]].encoder.output.toTable
+    val memoryBank = encoderO[Tensor[Float]](1).transpose(1, 2)
+    val expectMemoryBank = Tensor[Float](Array[Float](0.1086f,  0.1761f, -0.4918f,
+      0.1086f,  0.1761f, -0.4918f,
+
+      0.0203f,  0.2024f, -0.7361f,
+      0.0203f,  0.2024f, -0.7361f,
+
+      0.0127f,  0.2957f, -0.7810f,
+      0.0127f,  0.2957f, -0.7810f,
+
+      -0.0264f,  0.2695f, -0.8021f,
+      -0.0264f,  0.2695f, -0.8021f), Array(seqLen, batchSize, hiddenSize))
+    assert(memoryBank.almostEqual(expectMemoryBank, 1e-4) == true)
+
+    val t = model.backward(T(input, input2), gradOutput)
+    val gradients = model.parameters()._2
+    val expect_g0 = Tensor[Float](3, inputSize)
+    val expect_g1 = Tensor[Float](Array[Float](0.0259f,  0.1994f, -0.5182f,
+      0.0210f,  0.0824f, -0.1596f,
+      -0.0031f, -0.0908f,  0.2592f), Array(3, hiddenSize))
+    val expect_g2 = Tensor[Float](Array[Float](0.6213f,  0.0846f, -0.3706f), Array(3))
+    val expect_g3 = Tensor[Float](3, inputSize)
+    val expect_g4 = Tensor[Float](Array[Float](0.7355f,  0.5617f, -0.5289f,
+      1.4155f,  0.8520f, -0.4186f,
+      0.2639f,  0.2236f, -0.4776f), Array(3, hiddenSize))
+    val expect_g5 = Tensor[Float](Array[Float](2.4615f, 3.8764f, 0.9632f), Array(3))
+    assert(gradients(0).almostEqual(expect_g0, 1e-4) == true)
+    assert(gradients(1).almostEqual(expect_g1, 1e-4) == true)
+    assert(gradients(2).almostEqual(expect_g2, 1e-4) == true)
+    assert(gradients(3).almostEqual(expect_g3, 1e-4) == true)
+    assert(gradients(4).almostEqual(expect_g4, 1e-3) == true)
+    assert(gradients(5).almostEqual(expect_g5, 1e-4) == true)
+  }
+
+  "Simple rnn" should "generate correct result" in {
+    val inputSize = 10
+    val hiddenSize = 3
+    val batchSize = 3
+    val seqLen = 2
+    val seq = Sequential[Float]()
+    val rnn = SimpleRNN[Float](hiddenSize, inputShape = SingleShape(List(seqLen, inputSize)))
+    seq.add(rnn)
+
+    val input = Tensor[Float](Array[Float](0.2814f, 0.7886f, 0.5895f, 0.7539f, 0.1952f, 0.0050f, 0.3068f, 0.1165f,
+      0.9103f, 0.6440f,
+      0.7071f, 0.6581f, 0.4913f, 0.8913f, 0.1447f, 0.5315f, 0.1587f, 0.6542f,
+      0.3278f, 0.6532f,
+
+      0.3958f, 0.9147f, 0.2036f, 0.2018f, 0.2018f, 0.9497f, 0.6666f, 0.9811f,
+      0.0874f, 0.0041f,
+      0.1088f, 0.1637f, 0.7025f, 0.6790f, 0.9155f, 0.2418f, 0.1591f, 0.7653f,
+      0.2979f, 0.8035f,
+
+      0.3813f, 0.7860f, 0.1115f, 0.2477f, 0.6524f, 0.6057f, 0.3725f, 0.7980f,
+      0.8399f, 0.1374f,
+      0.2331f, 0.9578f, 0.3313f, 0.3227f, 0.0162f, 0.2137f, 0.6249f, 0.4340f,
+      0.1371f, 0.5117f), Array(batchSize, seqLen, inputSize))
+    val gradOutput = Tensor[Float](Array[Float](0.1585f, 0.0758f, 0.2247f,
+      0.0624f, 0.1816f, 0.9998f,
+      0.5944f, 0.6541f, 0.0337f), Array(batchSize, 1, hiddenSize))
+
+    val w = seq.parameters()._1
+//    w(0).set(Tensor[Float](Array[Float](-0.5053f, -0.3676f,  0.5771f,  0.1090f,  0.1779f, -0.5385f,
+//      -0.3792f, -0.1922f, 0.0903f, -0.5080f, -0.2488f, -0.3456f,  0.0016f, -0.2148f,
+//      -0.0400f, -0.3912f, -0.3963f, -0.3368f, -0.1976f, -0.4557f, 0.4841f, -0.1146f,
+//      0.4968f,  0.1799f, -0.4889f,  0.3995f, -0.1589f, -0.2213f, -0.4792f, -0.5740f),
+//      Array(3, 10)))
+//    w(1).set(Tensor[Float](Array[Float](0.1652f, -0.1261f,  0.2248f,
+//      -0.4738f,  0.4286f, -0.4238f,
+//      -0.0997f,  0.1206f,  0.2981f), Array(3, 3)))
+//    w(2).set(Tensor[Float](Array[Float](0.4661f,  0.5259f, -0.4578f), Array(3)))
+    w(0).set(Tensor[Float](Array[Float](0.4414f,  0.4792f, -0.1353f,  0.5304f, -0.1265f,  0.1165f, -0.2811f,  0.3391f,
+      0.5090f, -0.4236f,
+      0.5018f,  0.1081f,  0.4266f,  0.0782f,  0.2784f, -0.0815f,  0.4451f,  0.0853f,
+      -0.2695f,  0.1472f,
+      -0.2660f, -0.0677f, -0.2345f,  0.3830f, -0.4557f, -0.2662f, -0.1630f, -0.3471f,
+      0.0545f, -0.5702f),
+      Array(3, 10)))
+    w(1).set(Tensor[Float](Array[Float](0.5214f, -0.4904f,  0.4457f,
+      0.0961f, -0.1875f,  0.3568f,
+      0.0900f,  0.4665f,  0.0631f), Array(3, 3)))
+    w(2).set(Tensor[Float](Array[Float](-0.1821f,  0.1551f, -0.1566f), Array(3)))
+
+    val output = seq.forward(input).toTensor[Float]
+    val expectO = Tensor[Float](Array[Float](0.6281f,  0.6263f, -0.5795f,
+      -0.2112f,  0.5615f, -0.7511f,
+      0.1154f,  0.5124f, -0.5010f), Array(batchSize, 1, hiddenSize))
+    assert(output.almostEqual(expectO, 1e-4) == true)
+    val gradInput = seq.backward(input, gradOutput)
+    val gradients = seq.parameters()._2
+    val g0 = Tensor[Float](Array[Float](0.2974f,  0.8258f,  0.3330f,  0.3917f,  0.1920f,  0.3254f,  0.4901f,  0.5321f,
+      0.2947f,  0.4570f,
+      0.0972f,  0.3953f,  0.2626f,  0.2420f, -0.0144f,  0.0803f,  0.2896f,  0.2136f,
+      -0.0728f,  0.3490f,
+      0.2488f,  0.3925f,  0.4412f,  0.5204f,  0.5441f,  0.3237f,  0.2083f,  0.6135f,
+      0.3656f,  0.5135f), Array(batchSize, inputSize))
+    val g1 = Tensor[Float](Array[Float](0.5478f,  0.4415f, -0.5645f,
+      0.4788f,  0.3961f, -0.5058f,
+      0.4002f,  0.4189f, -0.4501f), Array(batchSize, hiddenSize))
+    val g2 = Tensor[Float](Array[Float](0.9774f, 0.4912f, 0.8570f), Array(batchSize))
+    assert(gradients(0).almostEqual(g0, 1e-3) == true)
+    assert(gradients(1).almostEqual(g1, 1e-4) == true)
+    assert(gradients(2).almostEqual(g2, 1e-3) == true)
   }
 }

@@ -36,8 +36,8 @@ import scala.reflect.ClassTag
  * @param bridge connect encoder and decoder
  */
 class Seq2seq[T: ClassTag](
-  encoder: Encoder[T],
-  decoder: Decoder[T],
+  val encoder: Encoder[T],
+  val decoder: Decoder[T],
   encoderInputShape: Shape,
   decoderInputShape: Shape,
   bridge: Bridge[T] = null)
