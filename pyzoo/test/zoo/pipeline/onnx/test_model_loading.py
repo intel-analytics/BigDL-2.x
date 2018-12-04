@@ -1050,3 +1050,37 @@ class TestModelLoading(OnnxTestCase):
         y = x[:, :, 3:4]
         output = OnnxLoader.run_node(node, [x])
         np.testing.assert_almost_equal(output["y"], y, decimal=5)
+
+    def test_onnx_split(self):
+        class Split(torch.nn.Module):
+            def __init__(self, *parameter):
+                super(Split, self).__init__()
+                self.split = parameter[0]
+                self.axis = parameter[1]
+
+            def forward(self, x):
+                return torch.split(x, self.split, self.axis)
+
+        pytorch_model = Split(2, 0)
+        input_shape_with_batch = (20, 10, 5)
+        self.compare_with_pytorch(pytorch_model, input_shape_with_batch)
+
+    def test_split(self):
+        node = onnx.helper.make_node(
+            'Split',
+            inputs=['input'],
+            outputs=['output_1', 'output_2'],
+            axis=1,
+            split=[2, 4]
+        )
+
+        input = np.array([[1., 2., 3., 4., 5., 6.],
+                          [7., 8., 9., 10., 11., 12.]]).astype(np.float32)
+        y = [np.array([[1., 2., 3.], [7., 8., 9.]]).astype(np.float32),
+                    np.array([[4., 5., 6.], [10., 11., 12.]]).astype(np.float32)]
+        output = OnnxLoader.run_node(node, [input])
+        np.testing.assert_almost_equal(output["y"], y, decimal=5)
+
+
+
+
