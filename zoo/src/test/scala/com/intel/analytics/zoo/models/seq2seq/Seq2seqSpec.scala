@@ -16,15 +16,18 @@
 
 package com.intel.analytics.zoo.models.seq2seq
 
+import com.intel.analytics.bigdl.nn.abstractnn.{AbstractModule, Activity}
+import com.intel.analytics.bigdl.nn.keras.KerasLayer
 import com.intel.analytics.bigdl.tensor.Tensor
-import com.intel.analytics.bigdl.utils.{SingleShape, T}
-import com.intel.analytics.zoo.pipeline.api.keras.layers.{Embedding, SimpleRNN}
+import com.intel.analytics.bigdl.utils.{Shape, SingleShape, T}
+import com.intel.analytics.zoo.pipeline.api.keras.layers.internal.InternalEcho
+import com.intel.analytics.zoo.pipeline.api.keras.layers.{Embedding, KerasLayerWrapper, SimpleRNN}
 import com.intel.analytics.zoo.pipeline.api.keras.models.Sequential
 import org.scalatest.{BeforeAndAfter, FlatSpec, Matchers}
 
 class Seq2seqSpec extends FlatSpec with Matchers with BeforeAndAfter {
 
-  "Seq2seq model with single rnn" should "be able to work" in {
+  "Seq2seq model with lstm" should "be able to work" in {
     val inputSize = 3
     val hiddenSize = 6
     val batchSize = 2
@@ -52,7 +55,7 @@ class Seq2seqSpec extends FlatSpec with Matchers with BeforeAndAfter {
     model2.backward(T(input, input2), gradOutput)
   }
 
-  "Seq2seq model with single rnn" should "be able to work with different" +
+  "Seq2seq model with lstm" should "be able to work with different" +
     "encoder/decoder hiddensize" in {
     val inputSize = 3
     val encoderHiddenSize = 4
@@ -76,7 +79,7 @@ class Seq2seqSpec extends FlatSpec with Matchers with BeforeAndAfter {
     model2.backward(T(input, input2), gradOutput)
   }
 
-  "Seq2seq model with multiple rnns" should "be able to work" in {
+  "Seq2seq model with multiple lstm" should "be able to work" in {
     val inputSize = 3
     val hiddenSize = 5
     val batchSize = 1
@@ -103,7 +106,7 @@ class Seq2seqSpec extends FlatSpec with Matchers with BeforeAndAfter {
     model2.backward(T(input, input2), gradOutput)
   }
 
-  "Seq2seq model with multiple rnns" should "be able to work with different" +
+  "Seq2seq model with multiple lstm" should "be able to work with different" +
     "encoder/decoder hiddensize" in {
     val inputSize = 3
     val encoderHiddenSize = 4
@@ -128,6 +131,27 @@ class Seq2seqSpec extends FlatSpec with Matchers with BeforeAndAfter {
     model.backward(T(input, input2), gradOutput)
   }
 
+  "Seq2seq model with multiple simple rnn" should "be able to work" in {
+    val inputSize = 10
+    val hiddenSize = 3
+    val batchSize = 2
+    val seqLen = 4
+    val numLayer = 2
+    val encoder = Encoder[Float]("SimpleRNN", numLayer, hiddenSize)
+    val decoder = Decoder[Float]("SimpleRNN", numLayer, hiddenSize)
+
+    val input = Tensor[Float](batchSize, seqLen, inputSize).rand()
+    val input2 = Tensor[Float](batchSize, seqLen, inputSize).rand()
+
+    val gradOutput = Tensor[Float](batchSize, seqLen, hiddenSize).rand()
+    val model = Seq2seq[Float](encoder, decoder,
+      SingleShape(List(seqLen, inputSize)), SingleShape(List(seqLen, inputSize)),
+      Bridge("dense", "simplernn", numLayer, hiddenSize))
+
+    val output = model.forward(T(input, input2))
+    val t = model.backward(T(input, input2), gradOutput)
+  }
+
   "Seq2seq model with simple rnn" should "generate correct result" in {
     val inputSize = 10
     val hiddenSize = 3
@@ -148,30 +172,36 @@ class Seq2seqSpec extends FlatSpec with Matchers with BeforeAndAfter {
   0.6202f, 0.6401f, 0.0459f,
   0.4751f, 0.1985f, 0.1941f), Array(batchSize, seqLen - 1, hiddenSize))
     val model = Seq2seq[Float](encoder, decoder,
-      SingleShape(List(seqLen, inputSize)), SingleShape(List(seqLen, inputSize)))
+      SingleShape(List(seqLen, inputSize)), SingleShape(List(seqLen-1, inputSize)))
 
-    val w = model.parameters()._1
-    w(3).set(Tensor[Float](Array[Float](-0.5080f, -0.2488f, -0.3456f,  0.0016f, -0.2148f, -0.0400f, -0.3912f, -0.3963f,
+    val w3 = Tensor[Float](Array[Float](-0.5080f, -0.2488f, -0.3456f,  0.0016f, -0.2148f, -0.0400f, -0.3912f, -0.3963f,
       -0.3368f, -0.1976f,
       -0.4557f,  0.4841f, -0.1146f,  0.4968f,  0.1799f, -0.4889f,  0.3995f, -0.1589f,
       -0.2213f, -0.4792f,
       -0.5740f,  0.1652f, -0.1261f,  0.2248f, -0.4738f,  0.4286f, -0.4238f, -0.0997f,
       0.1206f,  0.2981f),
-      Array(3, 10)))
-    w(4).set(Tensor[Float](Array[Float](0.4661f,  0.5259f, -0.4578f,
+      Array(3, 10))
+    val w4 = Tensor[Float](Array[Float](0.4661f,  0.5259f, -0.4578f,
       0.1453f, -0.2483f, -0.0633f,
-      -0.4321f,  0.5259f, -0.4237f), Array(3, 3)))
-    w(5).set(Tensor[Float](Array[Float](0.3086f, 0.2029f, 0.1876f), Array(3)))
-    w(0).set(Tensor[Float](Array[Float](0.5556f, -0.4765f, -0.5727f, -0.4517f, -0.3884f,  0.2339f,  0.2067f,  0.4797f,
+      -0.4321f,  0.5259f, -0.4237f), Array(3, 3))
+    val w5 = Tensor[Float](Array[Float](0.3086f, 0.2029f, 0.1876f), Array(3))
+    val w0 = Tensor[Float](Array[Float](0.5556f, -0.4765f, -0.5727f, -0.4517f, -0.3884f,  0.2339f,  0.2067f,  0.4797f,
       -0.2982f, -0.3936f,
       0.3063f, -0.2334f,  0.3504f, -0.1370f,  0.3303f, -0.4486f, -0.2914f,  0.1760f,
       0.1221f, -0.1472f,
       0.3441f,  0.3925f, -0.4187f, -0.3082f,  0.5287f, -0.1948f, -0.2047f, -0.5586f,
-      -0.3306f,  0.1442f), Array(3, 10)))
-    w(1).set(Tensor[Float](Array[Float](-0.0762f, -0.4191f,  0.0135f,
+      -0.3306f,  0.1442f), Array(3, 10))
+    val w1 = Tensor[Float](Array[Float](-0.0762f, -0.4191f,  0.0135f,
       -0.3944f, -0.4898f, -0.3179f,
-      -0.5053f, -0.3676f,  0.5771f), Array(3, 3)))
-    w(2).set(Tensor[Float](Array[Float](0.1090f,  0.1779f, -0.5385f), Array(3)))
+      -0.5053f, -0.3676f,  0.5771f), Array(3, 3))
+    val w2 = Tensor[Float](Array[Float](0.1090f,  0.1779f, -0.5385f), Array(3))
+    val w = model.parameters()._1
+    w(3).set(w3)
+    w(4).set(w4)
+    w(5).set(w5)
+    w(0).set(w0)
+    w(1).set(w1)
+    w(2).set(w2)
 
     val output = model.forward(T(input, input2))
     val expectO = Tensor[Float](Array[Float](0.6669f,  0.1809f,  0.5919f,
@@ -216,6 +246,30 @@ class Seq2seqSpec extends FlatSpec with Matchers with BeforeAndAfter {
     assert(gradients(3).almostEqual(expect_g3, 1e-4) == true)
     assert(gradients(4).almostEqual(expect_g4, 1e-3) == true)
     assert(gradients(5).almostEqual(expect_g5, 1e-4) == true)
+
+    val encoder2 = Encoder[Float]("SimpleRNN", numLayer, hiddenSize)
+    val decoder2 = Decoder[Float]("SimpleRNN", numLayer, hiddenSize)
+    val model2 = Seq2seq[Float](encoder2, decoder2,
+      SingleShape(List(seqLen, inputSize)), SingleShape(List(seqLen, inputSize)),
+      bridge = new Bridge[Float]("simplernn",
+        new KerasLayerWrapper[Float](
+          new InternalEcho[Float]().asInstanceOf[AbstractModule[Activity, Activity, Float]],
+        Shape(Array(hiddenSize)))
+          .asInstanceOf[KerasLayer[Tensor[Float], Tensor[Float], Float]]))
+    val w_2 = model2.parameters()._1
+    w_2(3).set(w3)
+    w_2(4).set(w4)
+    w_2(5).set(w5)
+    w_2(0).set(w0)
+    w_2(1).set(w1)
+    w_2(2).set(w2)
+    val output2 = model2.forward(T(input, input2))
+    model2.backward(T(input, input2), gradOutput)
+    val gradients2 = model2.parameters()._2
+    assert(output.almostEqual(output2, 1e-8) == true)
+    for (i <- 0 until gradients.size) {
+      assert(gradients(i).almostEqual(gradients2(i), 1e-8) == true)
+    }
   }
 
   "Simple rnn" should "generate correct result" in {

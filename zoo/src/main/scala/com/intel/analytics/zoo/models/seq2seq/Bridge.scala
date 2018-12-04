@@ -36,32 +36,38 @@ import scala.reflect.ClassTag
  */
 class Bridge[T: ClassTag](rnnType: String,
   bridge: KerasLayer[Tensor[T], Tensor[T], T],
-  inputShape: Shape)(implicit ev: TensorNumeric[T])
+  inputShape: Shape = null)(implicit ev: TensorNumeric[T])
   extends KerasLayer[Activity, Activity, T](KerasUtils.addBatch(inputShape))
     with Net {
 
+  var layerNum: Int = 0
   override def doBuild(inputShape: Shape): AbstractModule[Activity, Activity, T] = {
-    val layerNum = inputShape.toMulti().size
+    layerNum = inputShape.toMulti().size
     val layer = Sequential()
-    layer.add(new KerasLayerWrapper[T](new InternalJoinTable(2, -1)
-      .asInstanceOf[AbstractModule[Activity, Activity, T]], KerasUtils.removeBatch(inputShape)))
+    if (rnnType.toLowerCase.contains("lstm") || layerNum != 1) {
+      layer.add(new KerasLayerWrapper[T](new InternalJoinTable(2, -1)
+        .asInstanceOf[AbstractModule[Activity, Activity, T]], KerasUtils.removeBatch(inputShape)))
+    }
 
     layer.add(bridge)
 
-    if (rnnType.toLowerCase.contains("lstm")) {
-      layer.add(new KerasLayerWrapper[T](new InternalSplitTensor[T](2, layerNum, true)
-        .asInstanceOf[AbstractModule[Activity, Activity, T]]))
-    } else {
-      layer.add(new KerasLayerWrapper[T](new InternalSplitTensor[T](2, layerNum, false)
-        .asInstanceOf[AbstractModule[Activity, Activity, T]]))
+    if (layerNum != 1 || rnnType.toLowerCase.contains("lstm")) {
+      if (rnnType.toLowerCase.contains("lstm")) {
+        layer.add(new KerasLayerWrapper[T](new InternalSplitTensor[T](2, layerNum, true)
+          .asInstanceOf[AbstractModule[Activity, Activity, T]]))
+      } else {
+        layer.add(new KerasLayerWrapper[T](new InternalSplitTensor[T](2, layerNum, false)
+          .asInstanceOf[AbstractModule[Activity, Activity, T]]))
+      }
     }
 
     layer.asInstanceOf[AbstractModule[Activity, Activity, T]]
   }
 
   override def updateGradInput(input: Activity, gradOutput: Activity): Activity = {
-    // the previous is selectTable, need fake one edge
-    gradInput = T(labor.updateGradInput(input, gradOutput), T())
+    gradInput = if (rnnType.toLowerCase.contains("lstm") || layerNum > 1)
+      T(labor.updateGradInput(input, gradOutput), T())
+    else labor.updateGradInput(input, gradOutput)
     gradInput
   }
 }
@@ -92,8 +98,8 @@ object Bridge {
         Dense(decoderHiddenSize * numStates, activation = "tanh", bias = false,
           inputShape = inputShape)
       case _ => throw new IllegalArgumentException(s"Please use " +
-        s"Bridge(bridge: KerasLayer[Tensor[T], Tensor[T], T], inputShape: Shape)" +
-        s"to create a bridge")
+        s"Bridge(rnnType: String, bridge: KerasLayer[Tensor[T], Tensor[T], T]," +
+        s"inputShape: Shape) to create a bridge")
     }
     new Bridge(rnnType, bridge, inputShape)
   }
