@@ -23,7 +23,7 @@ import com.intel.analytics.zoo.models.textclassification.TextClassifier
 import com.intel.analytics.zoo.pipeline.api.keras.ZooSpecHelper
 import com.intel.analytics.zoo.pipeline.api.keras.metrics.Accuracy
 import com.intel.analytics.zoo.pipeline.api.keras.objectives.SparseCategoricalCrossEntropy
-import org.apache.spark.sql.SparkSession
+import org.apache.spark.sql.SQLContext
 import org.apache.spark.{SparkConf, SparkContext}
 
 import scala.collection.immutable.HashSet
@@ -172,7 +172,7 @@ class TextSetSpec extends ZooSpecHelper {
 
   "TextSet read parquet" should "work properly" in {
     val textSet = TextSet.readParquet(qaDir + "/question_corpus.parquet",
-      SparkSession.builder().getOrCreate().sqlContext)
+      SQLContext.getOrCreate(sc))
     require(textSet.isDistributed)
     val features = textSet.toDistributed().rdd.collect()
     require(features.length == 2)

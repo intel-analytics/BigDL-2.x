@@ -18,7 +18,7 @@ package com.intel.analytics.zoo.feature
 
 import com.intel.analytics.zoo.common.NNContext
 import com.intel.analytics.zoo.feature.common.{Relation, RelationPair, Relations}
-import org.apache.spark.sql.SparkSession
+import org.apache.spark.sql.SQLContext
 import org.apache.spark.{SparkConf, SparkContext}
 import org.scalatest.{BeforeAndAfter, FlatSpec, Matchers}
 
@@ -67,8 +67,7 @@ class RelationsSpec extends FlatSpec with Matchers with BeforeAndAfter {
   }
 
   "Read parquet file" should "work properly" in {
-    val relations = Relations.readParquet(parquetRelations,
-      SparkSession.builder().getOrCreate().sqlContext)
+    val relations = Relations.readParquet(parquetRelations, SQLContext.getOrCreate(sc))
     require(relations.count() == 4)
     require(relations.collect().toSet == targetRelations)
   }
