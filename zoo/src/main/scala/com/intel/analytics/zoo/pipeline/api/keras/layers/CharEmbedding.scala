@@ -59,7 +59,6 @@ class CharEmbedding[T: ClassTag](
 
   require(inputDim > 0, s"inputDim of Embedding must be a positive integer, but got $inputDim")
   require(outputDim > 0, s"outputDim of Embedding must be a positive integer, but got $outputDim")
-  require(charEmbedDim > 0, s"charEmbedDim of Embedding must be a positive integer, but got $charEmbedDim")
   require(kernelRow > 0, s"kernelRow must be a positive integer, but got $kernelRow")
 
   override def computeOutputShape(inputShape: Shape): Shape = {
@@ -96,6 +95,7 @@ object CharEmbedding {
       charEmbedDim: Int = 50,
       inputLength: Int,
       kernelRow: Int = 2)(implicit ev: TensorNumeric[T]): CharEmbedding[T] = {
-    new CharEmbedding[T](inputDim, outputDim, charEmbedDim, inputLength, kernelRow, Shape(inputLength))
+    new CharEmbedding[T]
+      (inputDim, outputDim, charEmbedDim, inputLength, kernelRow, Shape(inputLength))
   }
 }
