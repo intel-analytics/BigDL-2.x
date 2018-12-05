@@ -1,4 +1,4 @@
-## Summary
+# Summary
 This example uses pre-trained GloVe embeddings to convert words to vectors,
 and trains a [KNRM](https://arxiv.org/abs/1706.06613) model to solve question answering task 
 on WikiQA dataset.
@@ -11,10 +11,10 @@ You can download Analytics Zoo prebuilt release and nightly build package from [
 ## Data Preparation
 __QA Dataset:__
 - [WikiQA](https://www.microsoft.com/en-us/download/details.aspx?id=52419) is a new publicly available set of question and sentence pairs.
-- Instead of using original WikiQA dataset, we refer to [MatchZoo](https://github.com/NTMC-Community/MatchZoo) to process the raw data into corpus and relations.
-Thus this example expects the following input files instead of the original WikiQA format:
-    - `question_corpus.csv`: The question corpus. Each record contains QuestionID and content separated by comma.
-    - `answer_corpus.csv`: The answer corpus. Each record contains AnswerID and content separated by comma.
+- Instead of using original WikiQA dataset format directly, we refer to [MatchZoo](https://github.com/NTMC-Community/MatchZoo) to process the raw data into corpus and relations.
+Thus this example expects the following input files put under the same directory, which ought to applicable for general question answering tasks:
+    - `question_corpus.csv`: Each record contains QuestionID and content separated by comma.
+    - `answer_corpus.csv`: Each record contains AnswerID and content separated by comma.
     - `relation_train.csv` and `relation_valid.csv`: Question and answer correspondence for training and validation respectively. Each record contains QuestionID, AnswerID and label (0 or 1) separated by comma.
 - For convenience, you are __recommended to directly download__ our processed WikiQA dataset from [here](https://s3.amazonaws.com/analytics-zoo-data/WikiQAProcessed.zip) and unzip it.
 - Alternatively, you can follow similar steps listed in this [script](https://github.com/NTMC-Community/MatchZoo/blob/master/data/WikiQA/run_data.sh) to process raw WikiQA dataset if you wish.
@@ -31,7 +31,7 @@ Run the following command for Spark local mode (`MASTER=local[*]`) or cluster mo
 export SPARK_HOME=the root directory of Spark
 export ANALYTICS_ZOO_HOME=the folder where you extract the downloaded Analytics Zoo zip package
 MASTER=...
-dataDir=the directory containing corpus and relations of WikiQA
+dataDir=the directory that contains corpus and relations csv files listed above
 glovePath=the file path to GloVe embeddings
 
 ${ANALYTICS_ZOO_HOME}/bin/spark-shell-with-zoo.sh \
@@ -59,6 +59,8 @@ See [here](#options) for more configurable options for this example.
 
 
 ## Results
+We use [NDCG](https://en.wikipedia.org/wiki/Discounted_cumulative_gain) and [MAP](https://en.wikipedia.org/wiki/Evaluation_measures_(information_retrieval)#Mean_average_precision) to evaluate the performance. These are metrics commonly used for ranking tasks.
+
 You can find the validation information from the console log during the training process:
 ```
 INFO  TextMatcher$:86 - ndcg@3: 0.6417297245909217

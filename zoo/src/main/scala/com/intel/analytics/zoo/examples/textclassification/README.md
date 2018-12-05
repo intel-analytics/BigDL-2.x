@@ -1,4 +1,4 @@
-## Summary
+# Summary
 This text classification example uses pre-trained GloVe embeddings to convert words to vectors,
 and trains a CNN, LSTM or GRU `TextClassifier` model on 20 Newsgroup dataset.
 It was first described in: https://blog.keras.io/using-pre-trained-word-embeddings-in-a-keras-model.html
