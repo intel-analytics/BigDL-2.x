@@ -32,6 +32,10 @@ import scala.reflect.ClassTag
  * Kernel-pooling Neural Ranking Model with RBF kernel.
  * https://arxiv.org/abs/1706.06613
  *
+ * Input shape: (batch, text1Length + text2Length)
+ * Every single input is expected to be the concatenation of text1 sequence and text2 sequence.
+ * Output shape: (batch, 1)
+ *
  * @param text1Length Sequence length of text1 (query).
  * @param text2Length Sequence length of text2 (doc).
  * @param vocabSize Integer. The inputDim of the embedding layer. Ought to be the total number
@@ -45,6 +49,12 @@ import scala.reflect.ClassTag
  *              Default is 0.1.
  * @param exactSigma Double. The sigma used for the kernel that harvests exact matches
  *                   in the case where RBF mu=1.0. Default is 0.001.
+ * @param targetMode String. The target mode of the model. Either 'ranking' or 'classification'.
+ *                   For ranking, the output will be a relevance score between text1 and text2 and
+ *                   you are recommended to use RankHinge as loss for pairwise training.
+ *                   For classification, the last layer will be sigmoid and the output will be a
+ *                   probability between 0 and 1 indicating whether text1 is related to text2 and
+ *                   you are recommended to use BCECriterion as loss for binary classification.
  */
 class KNRM[T: ClassTag] private(
     override val text1Length: Int,

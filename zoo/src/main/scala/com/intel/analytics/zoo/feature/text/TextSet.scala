@@ -92,7 +92,7 @@ abstract class TextSet {
 
   /**
    * Do tokenization on original text.
-   * See Tokenizer for more details.
+   * See [[Tokenizer]] for more details.
    */
   def tokenize(): TextSet = {
     transform(Tokenizer())
@@ -101,7 +101,7 @@ abstract class TextSet {
   /**
    * Do normalization on tokens.
    * Need to tokenize first.
-   * See Normalizer for more details.
+   * See [[Normalizer]] for more details.
    */
   def normalize(): TextSet = {
     transform(Normalizer())
@@ -112,7 +112,7 @@ abstract class TextSet {
    * Result index will start from 1 and corresponds to the occurrence frequency of each word
    * sorted in descending order.
    * Need to tokenize first.
-   * See WordIndexer for more details.
+   * See [[WordIndexer]] for more details.
    * After word2idx, you can get the generated wordIndex map by calling 'getWordIndex'.
    *
    * @param removeTopN Non-negative integer. Remove the topN words with highest frequencies in
@@ -141,10 +141,14 @@ abstract class TextSet {
     transform(WordIndexer(wordIndex))
   }
 
+  def word2idx(map: Map[String, Int]): TextSet = {
+    transform(WordIndexer(map))
+  }
+
   /**
    * Shape the sequence of indices to a fixed length.
    * Need to word2idx first.
-   * See SequenceShaper for more details.
+   * See [[SequenceShaper]] for more details.
    */
   def shapeSequence(
       len: Int,
@@ -156,7 +160,7 @@ abstract class TextSet {
   /**
    * Generate BigDL Sample.
    * Need to word2idx first.
-   * See TextFeatureToSample for more details.
+   * See [[TextFeatureToSample]] for more details.
    */
   def generateSample(): TextSet = {
     transform(TextFeatureToSample())
@@ -327,7 +331,7 @@ object TextSet {
    *
    * @param path The path to the parquet file.
    * @param sqlContext An instance of SQLContext.
-   * @return TextSet.
+   * @return DistributedTextSet.
    */
   def readParquet(path: String, sqlContext: SQLContext): DistributedTextSet = {
     val textRDD = sqlContext.read.parquet(path).rdd.map(row => {
@@ -338,20 +342,36 @@ object TextSet {
     TextSet.rdd(textRDD)
   }
 
-  // Generate RelationPairs: (text1ID, text2PosID, text2NegID)
-  // and transform each RelationPair to a TextFeature.
+  /**
+   * Used to generate a TextSet for pairwise training.
+   *
+   * This method does the following:
+   * 1. Generate all RelationPairs: (id1, id2Positive, id2Negative) from Relations.
+   * 2. Join RelationPairs with corpus to transform id to indexedTokens.
+   * Note: Make sure that the corpus has been transformed by [[SequenceShaper]] and [[WordIndexer]].
+   * 3. For each pair, generate a TextFeature having Sample with:
+   * - feature of shape (2, text1Length + text2Length).
+   * - label of value [1 0] as the positive relation is placed before the negative one.
+   *
+   * @param relations RDD of [[Relation]].
+   * @param corpus1 DistributedTextSet that contains all [[Relation.id1]]. For each TextFeature
+   *                in corpus1, text must have been transformed to indexedTokens of the same length.
+   * @param corpus2 DistributedTextSet that contains all [[Relation.id2]]. For each TextFeature
+   *                in corpus2, text must have been transformed to indexedTokens of the same length.
+   * @return DistributedTextSet.
+   */
   def fromRelationPairs(
       relations: RDD[Relation],
-      text1Corpus: TextSet,
-      text2Corpus: TextSet): TextSet = {
+      corpus1: TextSet,
+      corpus2: TextSet): DistributedTextSet = {
     val pairsRDD = Relations.generateRelationPairs(relations)
-    require(text1Corpus.isDistributed, "text1Corpus must be a DistributedTextSet")
-    require(text2Corpus.isDistributed, "text2Corpus must be a DistributedTextSet")
-    val joinedText1 = text1Corpus.toDistributed().rdd.keyBy(_.uri())
+    require(corpus1.isDistributed, "text1Corpus must be a DistributedTextSet")
+    require(corpus2.isDistributed, "text2Corpus must be a DistributedTextSet")
+    val joinedText1 = corpus1.toDistributed().rdd.keyBy(_.uri())
       .join(pairsRDD.keyBy(_.id1)).map(_._2)
-    val joinedText2Pos = text2Corpus.toDistributed().rdd.keyBy(_.uri())
+    val joinedText2Pos = corpus2.toDistributed().rdd.keyBy(_.uri())
       .join(joinedText1.keyBy(_._2.id2Positive)).map(x => (x._2._2._1, x._2._1, x._2._2._2))
-    val joinedText2Neg = text2Corpus.toDistributed().rdd.keyBy(_.uri())
+    val joinedText2Neg = corpus2.toDistributed().rdd.keyBy(_.uri())
       .join(joinedText2Pos.keyBy(_._3.id2Negative))
       .map(x => (x._2._2._1, x._2._2._2, x._2._1))
     val res = joinedText2Neg.map(x => {
@@ -374,17 +394,35 @@ object TextSet {
     TextSet.rdd(res)
   }
 
-  // Generate RelationLists: each question together with all its answers and labels
-  // and transform each RelationList to a TextFeature.
+  /**
+   * Used to generate a TextSet for ranking.
+   *
+   * This method does the following:
+   * 1. For each [[Relation.id1]], find the list of [[Relation.id2]] with corresponding
+   * [[Relation.label]] that comes together with [[Relation.id1]].
+   * In other words, group relations by [[Relation.id1]].
+   * 2. Join with corpus to transform each id to indexedTokens.
+   * Note: Make sure that the corpus has been transformed by [[SequenceShaper]] and [[WordIndexer]].
+   * 3. For each pair, generate a TextFeature having Sample with:
+   * - feature of shape (listLength, text1Length + text2Length).
+   * - label of shape (listLength, 1).
+   *
+   * @param relations RDD of [[Relation]].
+   * @param corpus1 DistributedTextSet that contains all [[Relation.id1]]. For each TextFeature
+   *                in corpus1, text must have been transformed to indexedTokens of the same length.
+   * @param corpus2 DistributedTextSet that contains all [[Relation.id2]]. For each TextFeature
+   *                in corpus2, text must have been transformed to indexedTokens of the same length.
+   * @return DistributedTextSet.
+   */
   def fromRelationLists(
       relations: RDD[Relation],
-      text1Corpus: TextSet,
-      text2Corpus: TextSet): TextSet = {
-    require(text1Corpus.isDistributed, "text1Corpus must be a DistributedTextSet")
-    require(text2Corpus.isDistributed, "text2Corpus must be a DistributedTextSet")
-    val joinedText1 = text1Corpus.toDistributed().rdd.keyBy(_.uri())
+      corpus1: TextSet,
+      corpus2: TextSet): DistributedTextSet = {
+    require(corpus1.isDistributed, "text1Corpus must be a DistributedTextSet")
+    require(corpus2.isDistributed, "text2Corpus must be a DistributedTextSet")
+    val joinedText1 = corpus1.toDistributed().rdd.keyBy(_.uri())
       .join(relations.keyBy(_.id1)).map(_._2)
-    val joinedText2 = text2Corpus.toDistributed().rdd.keyBy(_.uri()).join(
+    val joinedText2 = corpus2.toDistributed().rdd.keyBy(_.uri()).join(
       joinedText1.keyBy(_._2.id2))
       .map(x => (x._2._2._1, x._2._1, x._2._2._2.label))
     val joinedLists = joinedText2.groupBy(_._1.uri()).map(_._2.toArray)
