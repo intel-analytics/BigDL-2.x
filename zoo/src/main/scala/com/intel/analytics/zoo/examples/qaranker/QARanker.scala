@@ -85,10 +85,10 @@ object QARanker {
         .shapeSequence(param.answerLength)
       val wordIndex = aSet.getWordIndex
 
-      val trainRelations = Relations.readCSV(param.dataPath + "/relation_train.csv",
+      val trainRelations = Relations.read(param.dataPath + "/relation_train.csv",
         sc, param.partitionNum)
       val trainSet = TextSet.fromRelationPairs(trainRelations, qSet, aSet)
-      val validateRelations = Relations.readCSV(param.dataPath + "/relation_valid.csv",
+      val validateRelations = Relations.read(param.dataPath + "/relation_valid.csv",
         sc, param.partitionNum)
       val validateSet = TextSet.fromRelationLists(validateRelations, qSet, aSet)
 

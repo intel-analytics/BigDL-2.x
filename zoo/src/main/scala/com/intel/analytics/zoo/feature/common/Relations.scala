@@ -24,6 +24,55 @@ import scala.io.Source
 
 object Relations {
 
+  /**
+   * Read relations from csv or txt file.
+   * Each record is supposed to contain the following three fields in order:
+   * id1(String), id2(String) and label(Integer).
+   *
+   * For csv file, it should be without header.
+   * For txt file, each line should contain one record with fields separated by comma.
+   *
+   * @param path The path to the relations file, which can either be a local file path or HDFS path.
+   * @param sc An instance of SparkContext.
+   * @param minPartitions Integer. A suggestion value of the minimal partition number for input
+   *                      texts. Default is 1.
+   * @return RDD of [[Relation]].
+   */
+  def read(path: String, sc: SparkContext, minPartitions: Int = 1): RDD[Relation] = {
+    sc.textFile(path, minPartitions).map(line => {
+      val subs = line.split(",")
+      Relation(subs(0), subs(1), subs(2).toInt)
+    })
+  }
+
+  /**
+   * Read relations from csv or txt file.
+   * Each record is supposed to contain the following three fields in order:
+   * id1(String), id2(String) and label(Integer).
+   *
+   * For csv file, it should be without header.
+   * For txt file, each line should contain one record with fields separated by comma.
+   *
+   * @param path The local file path to the relations file.
+   * @return Array of [[Relation]].
+   */
+  def read(path: String): Array[Relation] = {
+    val src = Source.fromFile(path)
+    src.getLines().toArray.map(line => {
+      val subs = line.split(",")
+      Relation(subs(0), subs(1), subs(2).toInt)
+    })
+  }
+
+  /**
+   * Read relations from parquet file.
+   * Schema should be the following:
+   * "id1"(String), "id2"(String) and "label"(Integer).
+   *
+   * @param path The path to the parquet file.
+   * @param sqlContext An instance of SparkContext.
+   * @return RDD of [[Relation]].
+   */
   def readParquet(path: String, sqlContext: SQLContext): RDD[Relation] = {
     sqlContext.read.parquet(path).rdd.map(row => {
       val id1 = row.getAs[String]("id1")
@@ -33,25 +82,13 @@ object Relations {
     })
   }
 
-  // Without header
-  // id1, id2, label
-  def readCSV(path: String, sc: SparkContext, minPartitions: Int = 1): RDD[Relation] = {
-    sc.textFile(path, minPartitions).map(line => {
-      val subs = line.split(",")
-      Relation(subs(0), subs(1), subs(2).toInt)
-    })
-  }
-
-  def readCSV(path: String): Array[Relation] = {
-    val src = Source.fromFile(path)
-    src.getLines().toArray.map(line => {
-      val subs = line.split(",")
-      Relation(subs(0), subs(1), subs(2).toInt)
-    })
-  }
-
+  /**
+   * Generate all [[RelationPair]]s from given [[Relation]]s.
+   * Essentially, for each positive relation (id1 and id2 with label>0), it will be
+   * paired with every negative relation of the same id1 (id2 with label=0).
+   */
   def generateRelationPairs(relations: RDD[Relation]): RDD[RelationPair] = {
-    val positive = relations.filter(_.label == 1).groupBy(_.id1)
+    val positive = relations.filter(_.label > 0).groupBy(_.id1)
     val negative = relations.filter(_.label == 0).groupBy(_.id1)
     positive.cogroup(negative).flatMap(x => {
       val posIDs = x._2._1.flatten.toArray.map(_.id2)
