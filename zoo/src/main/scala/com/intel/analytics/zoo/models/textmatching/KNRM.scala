@@ -67,7 +67,7 @@ class KNRM[T: ClassTag] private(
     val sigma: Double = 0.1,
     val exactSigma: Double = 0.001,
     override val targetMode: String = "ranking")(implicit ev: TensorNumeric[T])
-  extends TextMatcher[T](text1Length, vocabSize, embedSize, embedWeights, trainEmbed) {
+  extends TextMatcher[T](text1Length, vocabSize, embedSize, embedWeights, trainEmbed, targetMode) {
 
   override def buildModel(): AbstractModule[Activity, Activity, T] = {
     // Remark: Share weights for embedding is not supported.
