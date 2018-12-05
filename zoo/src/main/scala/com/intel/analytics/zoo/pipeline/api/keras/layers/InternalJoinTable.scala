@@ -20,7 +20,7 @@ import com.intel.analytics.bigdl.nn.JoinTable
 import com.intel.analytics.bigdl.nn.abstractnn.AbstractModule
 import com.intel.analytics.bigdl.tensor.Tensor
 import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric
-import com.intel.analytics.bigdl.utils.Table
+import com.intel.analytics.bigdl.utils.{T, Table}
 
 import scala.reflect.ClassTag
 
@@ -39,7 +39,7 @@ class InternalJoinTable[T: ClassTag](val dimension: Int,
 
   override def updateGradInput(input: Table, gradOutput: Tensor[_]): Table = {
     val g = innerLayer.updateGradInput(flat, gradOutput)
-    gradInput = g.inverseFlatten(input)
+    gradInput = T(g.inverseFlatten(input), T())
     gradInput
   }
 }

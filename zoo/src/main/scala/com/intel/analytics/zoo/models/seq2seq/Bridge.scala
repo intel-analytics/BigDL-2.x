@@ -40,9 +40,8 @@ class Bridge[T: ClassTag](rnnType: String,
   extends KerasLayer[Activity, Activity, T](KerasUtils.addBatch(inputShape))
     with Net {
 
-  var layerNum: Int = 0
   override def doBuild(inputShape: Shape): AbstractModule[Activity, Activity, T] = {
-    layerNum = inputShape.toMulti().size
+    val layerNum = inputShape.toMulti().size
     val layer = Sequential()
     if (rnnType.toLowerCase.contains("lstm") || layerNum != 1) {
       layer.add(new KerasLayerWrapper[T](new InternalJoinTable(2, -1)
@@ -62,13 +61,6 @@ class Bridge[T: ClassTag](rnnType: String,
     }
 
     layer.asInstanceOf[AbstractModule[Activity, Activity, T]]
-  }
-
-  override def updateGradInput(input: Activity, gradOutput: Activity): Activity = {
-    gradInput = if (rnnType.toLowerCase.contains("lstm") || layerNum > 1)
-      T(labor.updateGradInput(input, gradOutput), T())
-    else labor.updateGradInput(input, gradOutput)
-    gradInput
   }
 }
 
