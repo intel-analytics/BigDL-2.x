@@ -29,25 +29,25 @@ import scala.reflect.ClassTag
 
 
 /**
-  * Turn sequence of character indices into dense word vectors of fixed size.
-  * The input of this layer should be 2D.
-  *
-  * This layer can only be used as the first layer in a model, you need to provide the argument
-  * inputShape (a Single Shape, does not include the batch dimension).
-  * 
-  * References
-  *   - [Character-Aware Neural Language Models](https://arxiv.org/abs/1508.06615)
-  *
-  * @param inputDim Int > 0. Size of the alphabet, ie. 1 + maximum integer
-  *                 index occurring in the input data.
-  *                 Each character index in the input should be within range [0, inputDim-1].
-  * @param outputDim Int > 0. Dimension of the dense character-level word embedding.
-  * @param charEmbedDim Int > 0. Dimension of the dense character embedding.
-  * @param inputLength Int > 0. The sequence length of each word.
-  * @param kernelRow Int > 0. Number of rows in the char-cnn kernel.
-  * @param inputShape A Single Shape, does not include the batch dimension.
-  * @tparam T Numeric type of parameter(e.g. weight, bias). Only support float/double now.
-  */
+ * Turn sequence of character indices into dense word vectors of fixed size.
+ * The input of this layer should be 2D.
+ *
+ * This layer can only be used as the first layer in a model, you need to provide the argument
+ * inputShape (a Single Shape, does not include the batch dimension).
+ *
+ * References
+ *   - [Character-Aware Neural Language Models](https://arxiv.org/abs/1508.06615)
+ *
+ * @param inputDim Int > 0. Size of the alphabet, ie. 1 + maximum integer
+ *                 index occurring in the input data.
+ *                 Each character index in the input should be within range [0, inputDim-1].
+ * @param outputDim Int > 0. Dimension of the dense character-level word embedding.
+ * @param charEmbedDim Int > 0. Dimension of the dense character embedding.
+ * @param inputLength Int > 0. The sequence length of each word.
+ * @param kernelRow Int > 0. Number of rows in the char-cnn kernel.
+ * @param inputShape A Single Shape, does not include the batch dimension.
+ * @tparam T Numeric type of parameter(e.g. weight, bias). Only support float/double now.
+ */
 class CharEmbedding[T: ClassTag](
     val inputDim: Int,
     val outputDim: Int,
