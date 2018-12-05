@@ -32,7 +32,7 @@ import scopt.OptionParser
 
 case class QARankerParams(
     dataPath: String = "./", embeddingFile: String = "./",
-    text1Length: Int = 10, text2Length: Int = 40,
+    questionLength: Int = 10, answerLength: Int = 40,
     tokenLength: Int = 300, batchSize: Int = 200,
     nbEpoch: Int = 30, learningRate: Double = 0.001,
     partitionNum: Int = 4, model: Option[String] = None)
@@ -49,19 +49,19 @@ object QARanker {
         .required()
         .text("The file path to GloVe embeddings")
         .action((x, c) => c.copy(embeddingFile = x))
-      opt[Int]("text1Length")
+      opt[Int]("questionLength")
         .text("The length of each question")
-        .action((x, c) => c.copy(text1Length = x))
-      opt[Int]("text2Length")
+        .action((x, c) => c.copy(questionLength = x))
+      opt[Int]("answerLength")
         .text("The length of each answer")
-        .action((x, c) => c.copy(text2Length = x))
+        .action((x, c) => c.copy(answerLength = x))
       opt[Int]("tokenLength")
         .text("The size of each word vector, 50 or 100 or 200 or 300 for GloVe")
         .action((x, c) => c.copy(tokenLength = x))
       opt[Int]('b', "batchSize")
         .text("The number of samples per gradient update")
         .action((x, c) => c.copy(batchSize = x))
-      opt[Int]("nbEpoch")
+      opt[Int]('e', "nbEpoch")
         .text("The number of epochs to train the model")
         .action((x, c) => c.copy(nbEpoch = x))
       opt[Double]('l', "learningRate")
@@ -70,7 +70,7 @@ object QARanker {
       opt[Int]("partitionNum")
         .text("The number of partitions to cut the dataset into")
         .action((x, c) => c.copy(partitionNum = x))
-      opt[String]("model")
+      opt[String]('m', "model")
         .text("Model snapshot location if any")
         .action((x, c) => c.copy(model = Some(x)))
     }
@@ -79,10 +79,10 @@ object QARanker {
       val sc = NNContext.initNNContext("QARanker Example")
 
       val qSet = TextSet.readCSV(param.dataPath + "/question_corpus.csv", sc, param.partitionNum)
-        .tokenize().normalize().word2idx(minFreq = 2).shapeSequence(param.text1Length)
+        .tokenize().normalize().word2idx(minFreq = 2).shapeSequence(param.questionLength)
       val aSet = TextSet.readCSV(param.dataPath + "/answer_corpus.csv", sc, param.partitionNum)
         .tokenize().normalize().word2idx(minFreq = 2, existingMap = qSet.getWordIndex)
-        .shapeSequence(param.text2Length)
+        .shapeSequence(param.answerLength)
       val wordIndex = aSet.getWordIndex
 
       val trainRelations = Relations.readCSV(param.dataPath + "/relation_train.csv",
@@ -95,10 +95,10 @@ object QARanker {
       val knrm = if (param.model.isDefined) {
         KNRM.loadModel(param.model.get)
       } else {
-        KNRM(param.text1Length, param.text2Length, param.embeddingFile, wordIndex)
+        KNRM(param.questionLength, param.answerLength, param.embeddingFile, wordIndex)
       }
       val model = Sequential()
-        .add(TimeDistributed(knrm, inputShape = Shape(2, param.text1Length + param.text2Length)))
+        .add(TimeDistributed(knrm, inputShape = Shape(2, param.questionLength + param.answerLength)))
       val optimizer = new SGD(learningRate = param.learningRate,
         learningRateSchedule = Poly(0.5, 50 * 400))
       model.compile(optimizer = optimizer, loss = RankHinge[Float]())

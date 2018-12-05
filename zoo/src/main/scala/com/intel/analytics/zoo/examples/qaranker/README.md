@@ -1,6 +1,7 @@
 ## Summary
-This QA Ranker example uses pre-trained GloVe embeddings to convert words to vectors,
-and trains a [KNRM](https://arxiv.org/abs/1706.06613) model on WikiQA dataset.
+This example uses pre-trained GloVe embeddings to convert words to vectors,
+and trains a [KNRM](https://arxiv.org/abs/1706.06613) model to solve question answering task 
+on WikiQA dataset.
 
 
 ## Download Analytics Zoo
@@ -8,11 +9,19 @@ You can download Analytics Zoo prebuilt release and nightly build package from [
 
 
 ## Data Preparation
-The data used in this example are:
-- [WikiQA](https://www.microsoft.com/en-us/download/details.aspx?id=52419): a new publicly available set of question and sentence pairs.
-- Word Embeddings: We use [`glove.840B.300d.txt`](http://nlp.stanford.edu/data/glove.840B.300d.zip) in this example. You can also choose other available GloVe embeddings from [here](https://nlp.stanford.edu/projects/glove/).
+__QA Dataset:__
+- [WikiQA](https://www.microsoft.com/en-us/download/details.aspx?id=52419) is a new publicly available set of question and sentence pairs.
+- Instead of using original WikiQA dataset, we refer to [MatchZoo](https://github.com/NTMC-Community/MatchZoo) to process the raw data into corpus and relations.
+Thus this example expects the following input files instead of the original WikiQA format:
+    - `question_corpus.csv`: The question corpus. Each record contains QuestionID and content separated by comma.
+    - `answer_corpus.csv`: The answer corpus. Each record contains AnswerID and content separated by comma.
+    - `relation_train.csv` and `relation_valid.csv`: Question and answer correspondence for training and validation respectively. Each record contains QuestionID, AnswerID and label (0 or 1) separated by comma.
+- For convenience, you are __recommended to directly download__ our processed WikiQA dataset from [here](https://s3.amazonaws.com/analytics-zoo-data/WikiQAProcessed.zip) and unzip it.
+- Alternatively, you can follow similar steps listed in this [script](https://github.com/NTMC-Community/MatchZoo/blob/master/data/WikiQA/run_data.sh) to process raw WikiQA dataset if you wish.
 
-For WikiQA dataset, we refer to MatchZoo to process it into corpus and relations: `question_corpus.csv`, `answer_corpus.csv`, `relation_train.csv` and `relation_valid.csv`.
+__Word Embeddings:__
+- We use [`glove.840B.300d.txt`](http://nlp.stanford.edu/data/glove.840B.300d.zip) in this example.
+- You can also choose other available GloVe embeddings from [here](https://nlp.stanford.edu/projects/glove/).
 
 
 ## Run this example
@@ -39,18 +48,18 @@ See [here](#options) for more configurable options for this example.
 ## Options
 * `--dataPath` This option is __required__. The directory containing the corpus and relations.
 * `--embeddingFile` This option is __required__. The file path to GloVe embeddings.
-* `--text1Length` The length of each question. Default is 10.
-* `--text2Length` The length of each answer. Default is 40.
+* `--questionLength` The sequence length of each question. Default is 10.
+* `--answerLength` The sequence length of each answer. Default is 40.
 * `--tokenLength` The size of each word vector. GloVe supports tokenLength 50, 100, 200 and 300. Default is 300 for `glove.840B.300d.txt`.
+* `--partitionNum` The number of partitions to cut the datasets into. Default is 4.
 * `-b` `--batchSize` The number of samples per gradient update. Default is 200.
-* `--nbEpoch` The number of iterations to train the model. Default is 30.
+* `-e` `--nbEpoch` The number of iterations to train the model. Default is 30.
 * `-l` `--learningRate` The learning rate for the KNRM model. Default is 0.001.
-* `--partitionNum` The number of partitions to cut the dataset into. Datault is 4.
-* `--model` Specify this option only if you want to load an existing KNRM model and in this case its path should be provided.
+* `-m` `--model` Specify this option only if you want to load an existing KNRM model and in this case its path should be provided.
 
 
 ## Results
-You can find the validation information from the log during the training process:
+You can find the validation information from the console log during the training process:
 ```
 INFO  TextMatcher$:86 - ndcg@3: 0.6417297245909217
 INFO  TextMatcher$:86 - ndcg@5: 0.688879313318335
