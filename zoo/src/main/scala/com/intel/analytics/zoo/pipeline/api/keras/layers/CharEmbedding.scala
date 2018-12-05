@@ -72,19 +72,19 @@ class CharEmbedding[T: ClassTag](
   def doBuild(inputShape: Shape): AbstractModule[Tensor[T], Tensor[T], T] = {
     val input = inputShape.toSingle().toArray
     val model = Sequential[T]()
-    val layer = com.intel.analytics.zoo.pipeline.api.keras.layers.Embedding(
+    val layer = Embedding(
       inputDim = inputDim,
       outputDim = charEmbedDim,
       inputLength = input(1))
     model.add(layer)
-    model.add(com.intel.analytics.zoo.pipeline.api.keras.layers.Reshape(Array(1, input(1), charEmbedDim)))
-    model.add(com.intel.analytics.zoo.pipeline.api.keras.layers.Convolution2D(
+    model.add(Reshape(Array(1, input(1), charEmbedDim)))
+    model.add(Convolution2D(
       nbFilter = outputDim,
       nbRow = kernelRow,
       nbCol = charEmbedDim))
-    model.add(com.intel.analytics.zoo.pipeline.api.keras.layers.MaxPooling2D(poolSize = (inputLength - kernelRow + 1, 1)))
-    model.add(com.intel.analytics.zoo.pipeline.api.keras.layers.Reshape(Array(outputDim)))
-    model.add(com.intel.analytics.zoo.pipeline.api.keras.layers.Highway())
+    model.add(MaxPooling2D(poolSize = (inputLength - kernelRow + 1, 1)))
+    model.add(Reshape(Array(outputDim)))
+    model.add(Highway())
     model.asInstanceOf[AbstractModule[Tensor[T], Tensor[T], T]]
   }
 }
@@ -93,10 +93,9 @@ object CharEmbedding {
   def apply[@specialized(Float, Double) T: ClassTag](
       inputDim: Int,
       outputDim: Int,
-      charEmbedDim: Int,
+      charEmbedDim: Int = 50,
       inputLength: Int,
-      kernelRow: Int = 2,
-      inputShape: Shape = null)(implicit ev: TensorNumeric[T]): CharEmbedding[T] = {
+      kernelRow: Int = 2)(implicit ev: TensorNumeric[T]): CharEmbedding[T] = {
     new CharEmbedding[T](inputDim, outputDim, charEmbedDim, inputLength, kernelRow, Shape(inputLength))
   }
 }
