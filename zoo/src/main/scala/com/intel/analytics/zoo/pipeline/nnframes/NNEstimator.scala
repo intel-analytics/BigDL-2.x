@@ -380,10 +380,10 @@ class NNEstimator[T: ClassTag] private[zoo] (
     if (isSet(learningRate) || isSet(learningRateDecay)) {
       val state = T()
       if (isSet(learningRate)) {
-        state.insert("learningRate" -> $(learningRate))
+        state.add(T("learningRate" -> $(learningRate)))
       }
       if (isSet(learningRateDecay)) {
-        state.insert("learningRateDecay" -> $(learningRateDecay))
+        state.add(T("learningRateDecay" -> $(learningRateDecay)))
       }
       optimizer.setState(state)
     }
