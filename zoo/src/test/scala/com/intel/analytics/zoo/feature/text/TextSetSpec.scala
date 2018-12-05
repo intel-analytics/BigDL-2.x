@@ -23,6 +23,7 @@ import com.intel.analytics.zoo.models.textclassification.TextClassifier
 import com.intel.analytics.zoo.pipeline.api.keras.ZooSpecHelper
 import com.intel.analytics.zoo.pipeline.api.keras.metrics.Accuracy
 import com.intel.analytics.zoo.pipeline.api.keras.objectives.SparseCategoricalCrossEntropy
+import org.apache.spark.sql.SparkSession
 import org.apache.spark.{SparkConf, SparkContext}
 
 import scala.collection.immutable.HashSet
@@ -34,6 +35,11 @@ class TextSetSpec extends ZooSpecHelper {
   var sc : SparkContext = _
   val gloveDir: String = getClass.getClassLoader.getResource("glove.6B").getPath
   val embeddingFile: String = gloveDir + "/glove.6B.50d.txt"
+  val qaDir: String = getClass.getClassLoader.getResource("qa").getPath
+  val questionPath: String = qaDir + "/question_corpus.csv"
+  val answerPath: String = qaDir + "/answer_corpus.csv"
+  val q1 = "what is your project"
+  val q2 = "how old are you"
 
   override def doBefore(): Unit = {
     val conf = new SparkConf().setAppName("Test TextSet").setMaster("local[1]")
@@ -148,5 +154,27 @@ class TextSetSpec extends ZooSpecHelper {
     model.saveModel(saveFile.getAbsolutePath, overWrite = true)
     val loadedModel = TextClassifier.loadModel[Float](saveFile.getAbsolutePath)
     val predictResults = loadedModel.predict(transformed, batchPerThread = 2).toLocal().array
+  }
+
+  "TextSet read corpus with sc" should "work properly" in {
+    val textSet = TextSet.readCSV(questionPath, sc, 2)
+    require(textSet.isDistributed)
+    val features = textSet.toDistributed().rdd.collect()
+    require(features.length == 2)
+  }
+
+  "TextSet read corpus without sc" should "work properly" in {
+    val textSet = TextSet.readCSV(answerPath)
+    require(textSet.isLocal)
+    val features = textSet.toLocal().array
+    require(features.length == 2)
+  }
+
+  "TextSet read parquet" should "work properly" in {
+    val textSet = TextSet.readParquet(qaDir + "/question_corpus.parquet",
+      SparkSession.builder().getOrCreate().sqlContext)
+    require(textSet.isDistributed)
+    val features = textSet.toDistributed().rdd.collect()
+    require(features.length == 2)
   }
 }

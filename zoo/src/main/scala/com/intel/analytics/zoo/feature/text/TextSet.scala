@@ -285,8 +285,23 @@ object TextSet {
     textSet
   }
 
-  // Without header
-  // ID, content
+  /**
+   * Read texts from csv file.
+   * Each record is supposed to contain the following two fields in order:
+   * id(String) and text(String).
+   *
+   * Note that the csv file should be without header.
+   * If sc is defined, read texts as DistributedTextSet from local file system or HDFS.
+   * If sc is null, read texts as LocalTextSet from local file system.
+   *
+   * @param path The path to the csv file.
+   * @param sc An instance of SparkContext.
+   *           If specified, texts will be read as a DistributedTextSet.
+   *           Default is null and in this case texts will be read as a LocalTextSet.
+   * @param minPartitions Integer. A suggestion value of the minimal partition number for input
+   *                      texts. Only need to specify this when sc is not null. Default is 1.
+   * @return TextSet.
+   */
   def readCSV(path: String, sc: SparkContext = null, minPartitions: Int = 1): TextSet = {
     if (sc != null) {
       val textRDD = sc.textFile(path, minPartitions).map(line => {
@@ -305,9 +320,18 @@ object TextSet {
     }
   }
 
+  /**
+   * Read texts from parquet file.
+   * Schema should be the following:
+   * "id"(String) and "text"(String).
+   *
+   * @param path The path to the parquet file.
+   * @param sqlContext An instance of SQLContext.
+   * @return TextSet.
+   */
   def readParquet(path: String, sqlContext: SQLContext): DistributedTextSet = {
     val textRDD = sqlContext.read.parquet(path).rdd.map(row => {
-      val uri = row.getAs[String](TextFeature.uri)
+      val uri = row.getAs[String]("id")
       val text = row.getAs[String](TextFeature.text)
       TextFeature(text, uri = uri)
     })

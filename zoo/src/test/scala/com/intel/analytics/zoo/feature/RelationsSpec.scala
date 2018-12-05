@@ -18,6 +18,7 @@ package com.intel.analytics.zoo.feature
 
 import com.intel.analytics.zoo.common.NNContext
 import com.intel.analytics.zoo.feature.common.{Relation, RelationPair, Relations}
+import org.apache.spark.sql.SparkSession
 import org.apache.spark.{SparkConf, SparkContext}
 import org.scalatest.{BeforeAndAfter, FlatSpec, Matchers}
 
@@ -25,7 +26,8 @@ class RelationsSpec extends FlatSpec with Matchers with BeforeAndAfter {
   val path: String = getClass.getClassLoader.getResource("qa").getPath
   val txtRelations: String = path + "/relations.txt"
   val csvRelations: String = path + "/relations.csv"
-  val targetRelations = Array(Relation("Q1", "A1", 1), Relation("Q1", "A2", 0),
+  val parquetRelations: String = path + "/relations.parquet"
+  val targetRelations = Set(Relation("Q1", "A1", 1), Relation("Q1", "A2", 0),
     Relation("Q2", "A1", 0), Relation("Q2", "A2", 1))
   var sc : SparkContext = _
 
@@ -43,25 +45,32 @@ class RelationsSpec extends FlatSpec with Matchers with BeforeAndAfter {
   "Read txt file with sc" should "work properly" in {
     val relations = Relations.read(txtRelations, sc)
     require(relations.count() == 4)
-    require(relations.collect().sameElements(targetRelations))
+    require(relations.collect().toSet == targetRelations)
   }
 
   "Read txt file without sc" should "work properly" in {
     val relations = Relations.read(txtRelations)
     require(relations.length == 4)
-    require(relations.sameElements(targetRelations))
+    require(relations.toSet == targetRelations)
   }
 
   "Read csv file with sc" should "work properly" in {
     val relations = Relations.read(csvRelations, sc)
     require(relations.count() == 4)
-    require(relations.collect().sameElements(targetRelations))
+    require(relations.collect().toSet == targetRelations)
   }
 
   "Read csv file without sc" should "work properly" in {
     val relations = Relations.read(csvRelations)
     require(relations.length == 4)
-    require(relations.sameElements(targetRelations))
+    require(relations.toSet == targetRelations)
+  }
+
+  "Read parquet file" should "work properly" in {
+    val relations = Relations.readParquet(parquetRelations,
+      SparkSession.builder().getOrCreate().sqlContext)
+    require(relations.count() == 4)
+    require(relations.collect().toSet == targetRelations)
   }
 
   "Generate relation pairs" should "work properly" in {

@@ -70,7 +70,7 @@ object Relations {
    * "id1"(String), "id2"(String) and "label"(Integer).
    *
    * @param path The path to the parquet file.
-   * @param sqlContext An instance of SparkContext.
+   * @param sqlContext An instance of SQLContext.
    * @return RDD of [[Relation]].
    */
   def readParquet(path: String, sqlContext: SQLContext): RDD[Relation] = {
