@@ -55,7 +55,8 @@ class KNRM[T: ClassTag] private(
     override val trainEmbed: Boolean = true,
     val kernelNum: Int = 21,
     val sigma: Double = 0.1,
-    val exactSigma: Double = 0.001)(implicit ev: TensorNumeric[T])
+    val exactSigma: Double = 0.001,
+    override val targetMode: String = "ranking")(implicit ev: TensorNumeric[T])
   extends TextMatcher[T](text1Length, vocabSize, embedSize, embedWeights, trainEmbed) {
 
   override def buildModel(): AbstractModule[Activity, Activity, T] = {
@@ -83,7 +84,8 @@ class KNRM[T: ClassTag] private(
       KM.append(mmSum)
     }
     val Phi = Squeeze(2).inputs(A.stack(KM.toList).node)
-    val output = Dense(1, init = "uniform").inputs(Phi)
+    val output = if (targetMode == "ranking") Dense(1, init = "uniform").inputs(Phi)
+    else Dense(1, init = "uniform", activation = "sigmoid").inputs(Phi)
     Model(input, output)
   }
 }
@@ -97,11 +99,12 @@ object KNRM {
       trainEmbed: Boolean = true,
       kernelNum: Int = 21,
       sigma: Double = 0.1,
-      exactSigma: Double = 0.001)(implicit ev: TensorNumeric[T]): KNRM[T] = {
+      exactSigma: Double = 0.001,
+      targetMode: String = "ranking")(implicit ev: TensorNumeric[T]): KNRM[T] = {
     val (vocabSize, embedSize, embedWeights) = WordEmbedding.prepareEmbedding[T](
       embeddingFile, wordIndex, randomizeUnknownWords = true, normalizeEmbedding = true)
     new KNRM[T](text1Length, text2Length, vocabSize, embedSize, embedWeights,
-      trainEmbed, kernelNum, sigma, exactSigma).build()
+      trainEmbed, kernelNum, sigma, exactSigma, targetMode).build()
   }
 
   def apply[@specialized(Float, Double) T: ClassTag](
@@ -113,9 +116,10 @@ object KNRM {
       trainEmbed: Boolean,
       kernelNum: Int,
       sigma: Double,
-      exactSigma: Double)(implicit ev: TensorNumeric[T]): KNRM[T] = {
+      exactSigma: Double,
+      targetMode: String)(implicit ev: TensorNumeric[T]): KNRM[T] = {
     new KNRM[T](text1Length, text2Length, vocabSize, embedSize, embedWeights,
-      trainEmbed, kernelNum, sigma, exactSigma).build()
+      trainEmbed, kernelNum, sigma, exactSigma, targetMode).build()
   }
 
   /**

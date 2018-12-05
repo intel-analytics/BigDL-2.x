@@ -36,10 +36,14 @@ abstract class TextMatcher[T: ClassTag](
     val vocabSize: Int,
     val embedSize: Int = 300,
     val embedWeights: Tensor[T] = null,
-    val trainEmbed: Boolean = true)(implicit ev: TensorNumeric[T])
+    val trainEmbed: Boolean = true,
+    val targetMode: String = "ranking")(implicit ev: TensorNumeric[T])
   extends ZooModel[Activity, Activity, T] {
 
   import TextMatcher.logger
+
+  require(targetMode == "ranking" || targetMode == "classification", "targetModel should be " +
+    s"either 'ranking' or 'classification', but got $targetMode")
 
   def evaluate(
       textSet: TextSet,

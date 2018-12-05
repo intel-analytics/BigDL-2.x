@@ -97,8 +97,8 @@ object QARanker {
       } else {
         KNRM(param.questionLength, param.answerLength, param.embeddingFile, wordIndex)
       }
-      val model = Sequential()
-        .add(TimeDistributed(knrm, inputShape = Shape(2, param.questionLength + param.answerLength)))
+      val model = Sequential().add(TimeDistributed(
+        knrm, inputShape = Shape(2, param.questionLength + param.answerLength)))
       val optimizer = new SGD(learningRate = param.learningRate,
         learningRateSchedule = Poly(0.5, 50 * 400))
       model.compile(optimizer = optimizer, loss = RankHinge[Float]())

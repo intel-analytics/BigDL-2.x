@@ -24,20 +24,22 @@ import com.intel.analytics.zoo.pipeline.api.keras.serializer.ModuleSerialization
 class KNRMSpec extends ZooSpecHelper {
 
   "KNRM model" should "compute the correct output shape" in {
-    val model = KNRM[Float](5, 10, 100, 20, null, true, 10, 0.05, 0.001).buildModel()
+    val model = KNRM[Float](5, 10, 100, 20, null, true, 10, 0.05, 0.001, "ranking").buildModel()
     model.getOutputShape().toSingle().toArray should be (Array(-1, 1))
   }
 
-  "KNRM forward and backward" should "work properly" in {
-    val model = KNRM[Float](10, 20, 15, 10, null, true, 21, 0.1, 0.001)
+  "KNRM classification forward and backward" should "work properly" in {
+    val model = KNRM[Float](10, 20, 15, 10, null, true, 21, 0.1, 0.001, "classification")
     val input = Tensor[Float](Array(2, 30)).rand(0.0, 0.95).apply1(x => (x*15).toInt)
     val output = model.forward(input)
+    val outputValues = output.toTensor[Float].clone().squeeze().toArray()
+    outputValues.foreach(x => require(x >= 0.0f && x <= 1.0f))
     val gradInput = model.backward(input, output)
   }
 
   "KNRM with embedding weights batch=1 forward and backward" should "work properly" in {
     val weights = Tensor[Float](30, 100).rand()
-    val model = KNRM[Float](15, 60, 30, 100, weights, true, 12, 0.2, 1e-4)
+    val model = KNRM[Float](15, 60, 30, 100, weights, false, 12, 0.2, 1e-4, "ranking")
     val input = Tensor[Float](Array(1, 75)).rand(0.0, 1.0).apply1(x => (x*20).toInt)
     val output = model.forward(input)
     val gradInput = model.backward(input, output)
@@ -47,7 +49,7 @@ class KNRMSpec extends ZooSpecHelper {
 
 class KNRMSerialTest extends ModuleSerializationTest {
   override def test(): Unit = {
-    val model = KNRM[Float](10, 20, 15, 10, null, true, 21, 0.1, 0.001)
+    val model = KNRM[Float](10, 20, 15, 10, null, true, 21, 0.1, 0.001, "ranking")
     val input = Tensor[Float](Array(2, 30)).rand(0.0, 0.95).apply1(x => (x*15).toInt)
     ZooSpecHelper.testZooModelLoadSave(
       model.asInstanceOf[ZooModel[Tensor[Float], Tensor[Float], Float]],

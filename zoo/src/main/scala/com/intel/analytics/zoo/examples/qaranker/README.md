@@ -59,7 +59,7 @@ See [here](#options) for more configurable options for this example.
 
 
 ## Results
-We use [NDCG](https://en.wikipedia.org/wiki/Discounted_cumulative_gain) and [MAP](https://en.wikipedia.org/wiki/Evaluation_measures_(information_retrieval)#Mean_average_precision) to evaluate the performance. These are metrics commonly used for ranking tasks.
+We use [NDCG](https://en.wikipedia.org/wiki/Evaluation_measures_(information_retrieval)#Discounted_cumulative_gain) and [MAP](https://en.wikipedia.org/wiki/Evaluation_measures_(information_retrieval)#Mean_average_precision) to evaluate the performance. These are metrics commonly used for ranking tasks.
 
 You can find the validation information from the console log during the training process:
 ```
