@@ -23,12 +23,7 @@ class ConcatMapper(OperatorMapper):
         super(ConcatMapper, self).__init__(node, _params, _all_tensors)
 
     def _to_tensor(self):
-        axis = 0
-        if "axis" in self.onnx_attr.keys():
-            axis = int(self.onnx_attr['axis'])
-
-        assert axis != 0, "Currently axis=0 is not supported"
-
+        assert 'axis' in self.onnx_attr, "axis is a required attribute"
+        axis = int(self.onnx_attr['axis'])
         data = [i.zvalue for i in self.model_inputs]
-
         return zlayers.Merge(mode="concat", concat_axis=axis)(data)

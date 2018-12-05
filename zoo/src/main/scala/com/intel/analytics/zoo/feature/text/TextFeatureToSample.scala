@@ -24,6 +24,7 @@ import scala.reflect.ClassTag
 
 /**
  * Transform indexedTokens and label (if any) of a TextFeature to a BigDL Sample.
+ * Need to word2idx first.
  * Input key: TextFeature.indexedTokens and TextFeature.label (if any)
  * Output key: TextFeature.sample
  */
@@ -32,9 +33,8 @@ class TextFeatureToSample extends TextTransformer {
   override def transform(feature: TextFeature): TextFeature = {
     require(feature.contains(TextFeature.indexedTokens), "TextFeature doesn't contain indexTokens" +
       " yet. Please use WordIndexer to transform tokens to indexedTokens first")
-    val indexedTokens = feature[Array[Float]](TextFeature.indexedTokens)
-    val input = Tensor[Float](data = indexedTokens,
-      shape = Array(indexedTokens.length))
+    val indices = feature.getIndices
+    val input = Tensor[Float](data = indices, shape = Array(indices.length))
     val sample = if (feature.hasLabel) {
       Sample[Float](input, feature.getLabel.toFloat)
     }
