@@ -19,6 +19,7 @@ package com.intel.analytics.zoo.feature.text
 import com.intel.analytics.bigdl.optim.{Adagrad, SGD}
 import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric.NumericFloat
 import com.intel.analytics.zoo.common.NNContext
+import com.intel.analytics.zoo.feature.common.Relation
 import com.intel.analytics.zoo.models.textclassification.TextClassifier
 import com.intel.analytics.zoo.pipeline.api.keras.ZooSpecHelper
 import com.intel.analytics.zoo.pipeline.api.keras.metrics.Accuracy
@@ -181,5 +182,90 @@ class TextSetSpec extends ZooSpecHelper {
     require(features.length == 2)
     val texts = features.map(_.getText).toSet
     require(texts == Set(q1, q2))
+  }
+
+  "TextSet word2idx with minFreq and existingMap" should "work properly" in {
+    val text = "hello my my my world hello how are you you"
+    val feature = TextFeature(text)
+    val distributed = TextSet.rdd(sc.parallelize(Seq(feature)))
+    val distributedTransformed = distributed.tokenize().word2idx(minFreq = 2,
+      existingMap = Map("hello" -> 1, "test" -> 2))
+    val wordIndex = distributedTransformed.getWordIndex
+    require(wordIndex("hello") == 1)
+    require(wordIndex("test") == 2)
+    require(wordIndex.keySet == Set("hello", "test", "my", "you"))
+    require(wordIndex.values.toArray.sorted.sameElements(Array(1, 2, 3, 4)))
+    val my = wordIndex("my").toFloat
+    val you = wordIndex("you").toFloat
+    val indices = distributedTransformed.toDistributed().rdd.collect()(0).getIndices
+    require(indices.sameElements(Array(1.0f, my, my, my, 1.0f, you, you)))
+
+    val local = TextSet.array(Array(feature))
+    val localTransformed = local.tokenize().word2idx(removeTopN = 1, minFreq = 2,
+      existingMap = Map("world" -> 2))
+    val wordIndex2 = localTransformed.getWordIndex
+    require(wordIndex2("world") == 2)
+    require(wordIndex2.keySet == Set("hello", "world", "you"))
+    require(wordIndex2.values.toArray.sorted.sameElements(Array(2, 3, 4)))
+    val hello = wordIndex2("hello").toFloat
+    val you2 = wordIndex2("you").toFloat
+    val indices2 = localTransformed.toLocal().array(0).getIndices
+    require(indices2.sameElements(Array(hello, 2.0f, hello, you2, you2)))
+  }
+
+  "TextSet from relation pairs and lists" should "work properly" in {
+    val relations = Array(Relation("Q1", "A1", 1), Relation("Q2", "A1", 0), Relation("Q2", "A2", 1),
+      Relation("Q2", "A3", 0))
+    val relationsRDD = sc.parallelize(relations)
+    val qIndices = Array(1.0f, 2.0f, 3.0f)
+    val q1 = TextFeature(null, uri = "Q1")
+    q1(TextFeature.indexedTokens) = qIndices
+    val q2 = TextFeature(null, uri = "Q2")
+    q2(TextFeature.indexedTokens) = qIndices
+    val qSet = TextSet.rdd(sc.parallelize(Seq(q1, q2)))
+    val aIndices = Array(2.0f, 2.0f, 3.0f, 5.0f, 4.0f, 0.0f)
+    val a1 = TextFeature(null, uri = "A1")
+    a1(TextFeature.indexedTokens) = aIndices
+    val a2 = TextFeature(null, uri = "A2")
+    a2(TextFeature.indexedTokens) = aIndices
+    val a3 = TextFeature(null, uri = "A3")
+    a3(TextFeature.indexedTokens) = aIndices
+    val aSet = TextSet.rdd(sc.parallelize(Seq(a1, a2, a3)))
+    val pairSet = TextSet.fromRelationPairs(relationsRDD, qSet, aSet)
+    require(pairSet.isDistributed)
+    val pairFeatures = pairSet.toDistributed().rdd.collect()
+    require(pairFeatures.length == 2)
+    require(pairFeatures.map(_.uri()).toSet == Set("Q2A2A1", "Q2A2A3"))
+    pairFeatures.foreach(feature => {
+      val sample = feature.getSample
+      require(sample.feature().size().sameElements(Array(2, 9)))
+      require(sample.feature().reshape(Array(18)).toArray().sameElements(
+        qIndices ++ aIndices ++ qIndices ++ aIndices))
+      require(sample.label().size().sameElements(Array(2, 1)))
+      require(sample.label().reshape(Array(2)).toArray().sameElements(Array(1.0f, 0.0f)))
+    })
+
+    val listSet = TextSet.fromRelationLists(relationsRDD, qSet, aSet)
+    require(listSet.isDistributed)
+    val listFeatures = listSet.toDistributed().rdd.collect().sortBy(_.uri().length)
+    require(listFeatures.length == 2)
+    val listFeature1 = listFeatures(0)
+    require(listFeature1.uri() == "Q1A1")
+    val sample1 = listFeature1.getSample
+    require(sample1.feature().size().sameElements(Array(1, 9)))
+    require(sample1.feature().reshape(Array(9)).toArray().sameElements(qIndices ++ aIndices))
+    require(sample1.label().size().sameElements(Array(1, 1)))
+    require(sample1.label().reshape(Array(1)).toArray().sameElements(Array(1.0f)))
+    val listFeature2 = listFeatures(1)
+    require(listFeature2.uri().startsWith("Q2"))
+    require(listFeature2.uri().contains("A1") && listFeature2.uri().contains("A2") &&
+      listFeature2.uri().contains("A3"))
+    val sample2 = listFeature2.getSample
+    require(sample2.feature().size().sameElements(Array(3, 9)))
+    require(sample2.feature().reshape(Array(27)).toArray().sameElements(qIndices ++ aIndices
+      ++ qIndices ++ aIndices ++ qIndices ++ aIndices))
+    require(sample2.label().size().sameElements(Array(3, 1)))
+    require(sample2.label().reshape(Array(3)).toArray().sorted
+      .sameElements(Array(0.0f, 0.0f, 1.0f)))
   }
 }
