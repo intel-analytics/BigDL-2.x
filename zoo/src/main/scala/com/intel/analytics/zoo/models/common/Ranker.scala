@@ -27,8 +27,8 @@ import scala.reflect.ClassTag
 import scala.util.Random
 
 /**
- * Trait for Ranking models (e.g., TextMatcher and Ranker).
- * Provides validation methods with different metrics.
+ * Trait for Ranking models (e.g., TextMatcher and Ranker) that
+ * provides validation methods with different metrics.
  */
 trait Ranker[T] {
 
@@ -39,10 +39,11 @@ trait Ranker[T] {
   implicit val tag: ClassTag[T]
   implicit val ev: com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric[T]
 
-  def evaluate(
-      textSet: TextSet,
+  // TODO: May need to provide more types for x if this it to be used by Recommender
+  protected def evaluate(
+      x: TextSet,
       metrics: (Tensor[T], Tensor[T]) => Double): Double = {
-    val result = textSet match {
+    val result = x match {
       case distributed: DistributedTextSet =>
         val rdd = distributed.rdd
         val modelBroad = ModelBroadcast[T]().broadcast(rdd.sparkContext, model.evaluate())
@@ -67,19 +68,36 @@ trait Ranker[T] {
     result
   }
 
+  /**
+   * Evaluate using Mean average precision on TextSet.
+   *
+   * @param x TextSet. Each TextFeature should contain Sample with batch features and labels.
+   *          In other words, each Sample should be a batch of records having both positive
+   *          and negative labels.
+   * @param threshold If label > threshold, then it will be considered as a positive record.
+   */
   def evaluateMAP(
-      textSet: TextSet,
+      x: TextSet,
       threshold: Double = 0.0): Double = {
-    val map = evaluate(textSet, Ranker.map[T](threshold))
+    val map = evaluate(x, Ranker.map[T](threshold))
     logger.info(s"map: $map")
     map
   }
 
+  /**
+   * Evaluate using normalized discounted cumulative gain on TextSet.
+   *
+   * @param x TextSet. Each TextFeature should contain Sample with batch features and labels.
+   *          In other words, each Sample should be a batch of records having both positive
+   *          and negative labels.
+   * @param k Positive integer. Rank position.
+   * @param threshold If label > threshold, then it will be considered as a positive record.
+   */
   def evaluateNDCG(
-      textSet: TextSet,
+      x: TextSet,
       k: Int,
       threshold: Double = 0.0): Double = {
-    val ndcg = evaluate(textSet, Ranker.ndcg[T](k, threshold))
+    val ndcg = evaluate(x, Ranker.ndcg[T](k, threshold))
     logger.info(s"ndcg@$k: $ndcg")
     ndcg
   }
@@ -92,9 +110,11 @@ object Ranker {
   def ndcg[@specialized(Float, Double) T: ClassTag](
       k: Int, threshold: Double = 0.0)
     (implicit ev: TensorNumeric[T]): (Tensor[T], Tensor[T]) => Double = {
+
     require(k > 0, s"k for NDCG should be a positive integer, but got $k")
+
     def validate(output: Tensor[T], target: Tensor[T])
-                (implicit ev: TensorNumeric[T]): Double = {
+      (implicit ev: TensorNumeric[T]): Double = {
       require(output.size().length == 2 && output.size()(1) == 1,
         s"output should be of shape (batch, 1), but got ${output.size()}")
       require(target.size().length == 2 && target.size()(1) == 1,
@@ -118,14 +138,16 @@ object Ranker {
       }
       if (idcg == 0.0) 0.0 else dcg / idcg
     }
+
     validate
   }
 
   def map[@specialized(Float, Double) T: ClassTag](
       threshold: Double = 0.0)
     (implicit ev: TensorNumeric[T]): (Tensor[T], Tensor[T]) => Double = {
+
     def validate(output: Tensor[T], target: Tensor[T])
-                (implicit ev: TensorNumeric[T]): Double = {
+      (implicit ev: TensorNumeric[T]): Double = {
       require(output.size().length == 2 && output.size()(1) == 1,
         s"output should be of shape (batch, 1), but got ${output.size()}")
       require(target.size().length == 2 && target.size()(1) == 1,
@@ -144,6 +166,7 @@ object Ranker {
       if (ipos == 0) 0.0
       else s / ipos
     }
+
     validate
   }
 }

@@ -32,7 +32,7 @@ class RankerSpec extends FlatSpec with Matchers {
     val target2 = Tensor[Float](Array(0.0f, 0.0f, 1.0f, 0.0f, 1.0f, 0.0f,
       0.0f, 0.0f, 0.0f, 0.0f), Array(10, 1))
     val res2 = Ranker.map[Float]().apply(output2, target2)
-    require(res2.toFloat == 0.83333333f)
+    require(res2.toFloat == 0.83333333f) // The result is calculated from Python MatchZoo
   }
 
   "ndcg" should "generate the correct answer" in {
@@ -48,7 +48,7 @@ class RankerSpec extends FlatSpec with Matchers {
     val target2 = Tensor[Float](Array(1.0f, 0.0f, 1.0f, 0.0f, 1.0f, 0.0f,
       0.0f, 0.0f, 0.0f, 0.0f), Array(10, 1))
     val res2 = Ranker.ndcg[Float](3).apply(output2, target2)
-    require(res2.toFloat == 0.70391809f)
+    require(res2.toFloat == 0.70391809f) // The result is calculated from Python MatchZoo
   }
 
 }

@@ -36,10 +36,9 @@ class TextSetSpec extends ZooSpecHelper {
   val gloveDir: String = getClass.getClassLoader.getResource("glove.6B").getPath
   val embeddingFile: String = gloveDir + "/glove.6B.50d.txt"
   val qaDir: String = getClass.getClassLoader.getResource("qa").getPath
-  val questionPath: String = qaDir + "/question_corpus.csv"
-  val answerPath: String = qaDir + "/answer_corpus.csv"
-  val q1 = "what is your project"
-  val q2 = "how old are you"
+  val corpus: String = qaDir + "/question_corpus.csv"
+  val q1 = "what is your project?"
+  val q2 = "how old are you?"
 
   override def doBefore(): Unit = {
     val conf = new SparkConf().setAppName("Test TextSet").setMaster("local[1]")
@@ -157,17 +156,21 @@ class TextSetSpec extends ZooSpecHelper {
   }
 
   "TextSet read corpus with sc" should "work properly" in {
-    val textSet = TextSet.readCSV(questionPath, sc, 2)
+    val textSet = TextSet.readCSV(corpus, sc, 2)
     require(textSet.isDistributed)
     val features = textSet.toDistributed().rdd.collect()
     require(features.length == 2)
+    val texts = features.map(_.getText).toSet
+    require(texts == Set(q1, q2))
   }
 
   "TextSet read corpus without sc" should "work properly" in {
-    val textSet = TextSet.readCSV(answerPath)
+    val textSet = TextSet.readCSV(corpus)
     require(textSet.isLocal)
     val features = textSet.toLocal().array
     require(features.length == 2)
+    val texts = features.map(_.getText).toSet
+    require(texts == Set(q1, q2))
   }
 
   "TextSet read parquet" should "work properly" in {
@@ -176,5 +179,7 @@ class TextSetSpec extends ZooSpecHelper {
     require(textSet.isDistributed)
     val features = textSet.toDistributed().rdd.collect()
     require(features.length == 2)
+    val texts = features.map(_.getText).toSet
+    require(texts == Set(q1, q2))
   }
 }
