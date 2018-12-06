@@ -1,4 +1,4 @@
-## Summary
+# Summary
 This text classification example uses pre-trained GloVe embeddings to convert words to vectors,
 and trains a CNN, LSTM or GRU `TextClassifier` model on 20 Newsgroup dataset.
 It was first described in: https://blog.keras.io/using-pre-trained-word-embeddings-in-a-keras-model.html
@@ -53,7 +53,7 @@ See [here](#options) for more configurable options for this example.
 * `--dataPath` This option is __required__. The path where News20 dataset locate.
 * `--embeddingPath` This option is __required__. The path where GloVe embeddings locate.
 * `--classNum` The number of classes to do classification. Default is 20 for News20 dataset.
-* `--partitionNum` The number of partitions to cut the dataset into. Datault is 4.
+* `--partitionNum` The number of partitions to cut the dataset into. Default is 4.
 * `--tokenLength` The size of each word vector. GloVe supports tokenLength 50, 100, 200 and 300. Default is 200.
 * `--sequenceLength` The length of a sequence. Default is 500.
 * `--maxWordsNum` The maximum number of words sorted by frequencies to be taken into consideration. Default is 5000.
@@ -61,9 +61,9 @@ See [here](#options) for more configurable options for this example.
 * `--encoderOutputDim` The output dimension of the encoder. Default is 256.
 * `--trainingSplit` The split portion of the data for training. Default is 0.8.
 * `-b` `--batchSize` The number of samples per gradient update. Default is 128.
-* `--nbEpoch` The number of iterations to train the model. Default is 20.
+* `-e` `--nbEpoch` The number of iterations to train the model. Default is 20.
 * `-l` `--learningRate` The learning rate for the TextClassifier model. Default is 0.01.
-* `--model` Specify this option only if you want to load an existing TextClassifier model and in this case its path should be provided.
+* `-m` `--model` Specify this option only if you want to load an existing TextClassifier model and in this case its path should be provided.
 
 
 ## Results
