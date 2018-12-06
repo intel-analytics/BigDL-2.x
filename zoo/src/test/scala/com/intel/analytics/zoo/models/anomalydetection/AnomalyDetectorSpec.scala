@@ -20,6 +20,7 @@ import com.intel.analytics.bigdl.tensor.Tensor
 import com.intel.analytics.bigdl.utils.{Shape, T}
 import com.intel.analytics.zoo.common.NNContext
 import com.intel.analytics.zoo.pipeline.api.keras.ZooSpecHelper
+import com.intel.analytics.zoo.pipeline.api.keras.serializer.ModuleSerializationTest
 import org.apache.log4j.{Level, Logger}
 import org.apache.spark.rdd.RDD
 import org.apache.spark.sql.{DataFrame, SQLContext}
@@ -78,7 +79,17 @@ class AnomalyDetectorSpec extends ZooSpecHelper {
     val labels: Array[Float] = unrolled.map(x => x.label).collect()
     assert(unrolled.count() == 96)
     assert(indicies.max == 95 && indicies.min == 0)
-    assert(labels.max == 104 && labels.min == 8)
+    assert(labels.max == 104 && labels.min == 9)
   }
 
+}
+
+class AnomalyDetectorSerialTest extends ModuleSerializationTest {
+  override def test(): Unit = {
+
+    val model = AnomalyDetector[Float](Shape(10, 2), Array(10, 5), Array(0.2f, 0.2f))
+    val data = Tensor[Float](10, 10, 2).randn(0.0, 0.1)
+    ZooSpecHelper.testZooModelLoadSave(model, data, AnomalyDetector.loadModel[Float])
+
+  }
 }

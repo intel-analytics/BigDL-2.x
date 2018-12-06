@@ -16,16 +16,14 @@
 
 package com.intel.analytics.zoo.examples.anomalydetection
 
-import com.intel.analytics.bigdl.dataset.Sample
 import com.intel.analytics.bigdl.numeric.NumericFloat
 import com.intel.analytics.bigdl.optim._
 import com.intel.analytics.bigdl.utils.Shape
 import com.intel.analytics.zoo.common.NNContext
-import com.intel.analytics.zoo.models.anomalydetection.{AnomalyDetector, FeatureLabelIndex}
+import com.intel.analytics.zoo.models.anomalydetection._
 import com.intel.analytics.zoo.pipeline.api.keras.objectives.MeanSquaredError
 import org.apache.log4j.{Level, Logger}
 import org.apache.spark.SparkConf
-import org.apache.spark.ml.linalg.Vectors
 import org.apache.spark.rdd.RDD
 import org.apache.spark.sql.{DataFrame, SQLContext}
 import org.apache.spark.sql.functions._
@@ -76,7 +74,7 @@ object AnomalyDetection {
     val featureDF = loadData(sqlContext, param.inputDir)
     val featureShape = Shape(param.unrollLength, 3)
     val unrolled = assemblyFeature(featureDF, true, param.unrollLength)
-    val (trainRdd, testRdd) = trainTestSplit(unrolled, testSize = 1000)
+    val (trainRdd, testRdd) = Utils.trainTestSplit(unrolled, testSize = 1000)
 
     val model: AnomalyDetector[Float] = AnomalyDetector[Float](featureShape)
     model.compile(optimizer = new RMSprop(learningRate = 0.001, decayRate = 0.9),
@@ -104,55 +102,27 @@ object AnomalyDetection {
 
     val hourUDF = udf((time: String) => (formatter.parseDateTime(time).hourOfDay().get()))
     val awakeUDF = udf((hour: Int) => if (hour >= 6 && hour <= 23) 1 else 0)
-    val vectorUDF = udf((col1: Double, col2: Double, col3: Double) =>
-      Vectors.dense(Array(col1, col2, col3)))
-
     val featureDF = df.withColumn("hour", hourUDF(col("ts")))
       .withColumn("awake", awakeUDF(col("hour")))
       .select("value", "hour", "awake")
 
-    featureDF.withColumn("features", vectorUDF(col("value"), col("hour"), col("awake")))
+    featureDF
   }
 
   def assemblyFeature(featureDF: DataFrame,
                       ifScale: Boolean = true,
                       unrollLength: Int) = {
 
-    val scaler = new org.apache.spark.ml.feature.StandardScaler()
-      .setInputCol("features")
-      .setOutputCol("scaledFeatures")
-      .setWithStd(true)
-      .setWithMean(true)
-
     val scaledDF = if (ifScale) {
-      val scalerModel = scaler.fit(featureDF)
-      scalerModel.transform(featureDF).select("scaledFeatures")
+      Utils.standardScale(featureDF, Seq("value", "hour", "awake"))
     } else {
-      featureDF.select("feature")
+      featureDF
     }
-
+    val featureLen = scaledDF.columns.length
     val dataRdd: RDD[Array[Float]] = scaledDF.rdd
-      .map(row => row.getAs[org.apache.spark.ml.linalg.DenseVector](0).toArray.map(x => x.toFloat))
+      .map(row => (0 to featureLen - 1).toArray.map(x => row.getAs[Float](x)))
 
     AnomalyDetector.unroll(dataRdd, unrollLength)
   }
 
-  def trainTestSplit(unrolled: RDD[FeatureLabelIndex[Float]], testSize: Int = 1000) ={
-
-    val cutPoint = unrolled.count() - testSize
-
-    val train = AnomalyDetector.toSampleRdd(unrolled.filter(x => x.index < cutPoint))
-    val test = AnomalyDetector.toSampleRdd(unrolled.filter(x => x.index >= cutPoint))
-
-    (train, test)
-  }
-
-  def trainTestSplit(unrolled: RDD[FeatureLabelIndex[Float]], testSize: Float)
-  : (RDD[Sample[Float]], RDD[Sample[Float]]) = {
-
-    val totalSize = unrolled.count()
-    val testSizeInt = (totalSize * testSize).toInt
-
-    trainTestSplit(unrolled, testSizeInt)
-  }
 }

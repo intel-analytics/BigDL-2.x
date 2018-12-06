@@ -89,10 +89,10 @@ object AnomalyDetector {
     * @tparam T Numeric type of parameter(e.g. weight, bias). Only support float/double now.
     */
   def apply[@specialized(Float, Double) T: ClassTag](
-                                                      featureShape: Shape,
-                                                      hiddenLayers: Array[Int] = Array(8, 32, 15),
-                                                      dropouts: Array[Float] = Array(0.2f, 0.2f, 0.2f)
-                                                    )(implicit ev: TensorNumeric[T]): AnomalyDetector[T] = {
+      featureShape: Shape,
+      hiddenLayers: Array[Int] = Array(8, 32, 15),
+      dropouts: Array[Float] = Array(0.2f, 0.2f, 0.2f))
+     (implicit ev: TensorNumeric[T]): AnomalyDetector[T] = {
     new AnomalyDetector[T](featureShape, hiddenLayers, dropouts).build()
   }
 
@@ -107,8 +107,8 @@ object AnomalyDetector {
     * @tparam T Numeric type of parameter(e.g. weight, bias). Only support float/double now.
     */
   def loadModel[T: ClassTag](
-                              path: String,
-                              weightPath: String = null)(implicit ev: TensorNumeric[T]): AnomalyDetector[T] = {
+      path: String,
+      weightPath: String = null)(implicit ev: TensorNumeric[T]): AnomalyDetector[T] = {
     ZooModel.loadModel(path, weightPath).asInstanceOf[AnomalyDetector[T]]
   }
 
@@ -121,9 +121,10 @@ object AnomalyDetector {
     * @param anomalyFraction Int. What percentage of the number of total values compared to be
     *                        considered as anomalies.
     */
-  def detectAnomalies[T: ClassTag](yTruth: RDD[T],
-                                   yPredict: RDD[T],
-                                   anomalyFraction: Int = 5): RDD[(T, T, Any)] = {
+  def detectAnomalies[T: ClassTag](
+      yTruth: RDD[T],
+      yPredict: RDD[T],
+      anomalyFraction: Int = 5): RDD[(T, T, Any)] = {
     require(yTruth.count() == yPredict.count(), s"length of predictions and truth should match")
     val totalCount = yTruth.count()
 
@@ -145,9 +146,10 @@ object AnomalyDetector {
     * @param threshold Float. The threshold of absolute difference, data points with a difference
     *                  above the threshold is considered as anomalies.
     */
-  def detectAnomalies[T: ClassTag](yTruth: RDD[T],
-                                   yPredict: RDD[T],
-                                   threshold: Float): RDD[(T, T, Any)] = {
+  def detectAnomalies[T: ClassTag](
+      yTruth: RDD[T],
+      yPredict: RDD[T],
+      threshold: Float): RDD[(T, T, Any)] = {
     require(yTruth.count() == yPredict.count(), s"length of predictions and truth should match")
     val anomalies = yTruth.zip(yPredict).map { x =>
       val d = absdiff(x._1, x._2)
@@ -228,4 +230,3 @@ object AnomalyDetector {
   }
 
 }
-
