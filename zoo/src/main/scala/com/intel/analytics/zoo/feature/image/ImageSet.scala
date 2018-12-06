@@ -116,8 +116,8 @@ class DistributedImageSet(var rdd: RDD[ImageFeature]) extends ImageSet {
     ImageFrame.rdd(rdd)
   }
 
-  override def toDataSet[T: ClassTag](cacheWithOptanDC: Boolean = false): DataSet[Sample[T]] = {
-    if (!cacheWithOptanDC) {
+  override def toDataSet[T: ClassTag](cacheWithOptaneDC: Boolean = false): DataSet[Sample[T]] = {
+    if (!cacheWithOptaneDC) {
       DataSet.rdd(rdd.map(_[Sample[T]](ImageFeature.sample)))
     } else {
       // we are supposing the rdd of ImageFeature should has the "mat" field at this point

@@ -16,14 +16,12 @@
 
 package com.intel.analytics.zoo.feature.common.persistent.memory
 
-import java.nio.ByteBuffer
 import java.util.concurrent.atomic.AtomicInteger
 
 import com.intel.analytics.bigdl.dataset.{ByteRecord, DistributedDataSet}
 import com.intel.analytics.bigdl.transform.vision.image.ImageFeature
 import com.intel.analytics.bigdl.utils.RandomGenerator
 import com.intel.analytics.zoo.pipeline.api.keras.layers.utils.EngineRef
-import org.apache.commons.lang3.SerializationUtils
 import org.apache.spark.rdd.RDD
 
 import scala.collection.mutable.ArrayBuffer
@@ -56,7 +54,7 @@ private[zoo] class ByteRecordImageConverter extends NativeArrayConverter[ByteRec
         labels.append(data.label)
         i += 1
       }
-      Iterator.single(OptaneDCImageArray(optaneDCArray, labels.toArray))
+      Iterator.single(OptaneDCByteRecordArray(optaneDCArray, labels.toArray))
     }
 }
 
@@ -117,7 +115,7 @@ private[zoo] abstract class ArrayLike[T: ClassTag] extends Serializable {
   def apply(i: Int): T = throw new Error()
 }
 
-private[zoo] case class OptaneDCImageArray(imgs: NativeVarLenBytesArray,
+private[zoo] case class OptaneDCByteRecordArray(imgs: NativeVarLenBytesArray,
     label: Array[Float]) extends ArrayLike[ByteRecord] {
   override def length: Int = {
     imgs.recordNum
