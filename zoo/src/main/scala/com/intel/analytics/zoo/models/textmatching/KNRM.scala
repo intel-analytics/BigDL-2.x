@@ -50,11 +50,12 @@ import scala.reflect.ClassTag
  * @param exactSigma Double. The sigma used for the kernel that harvests exact matches
  *                   in the case where RBF mu=1.0. Default is 0.001.
  * @param targetMode String. The target mode of the model. Either 'ranking' or 'classification'.
- *                   For ranking, the output will be a relevance score between text1 and text2 and
+ *                   For ranking, the output will be the relevance score between text1 and text2 and
  *                   you are recommended to use RankHinge as loss for pairwise training.
- *                   For classification, the last layer will be sigmoid and the output will be a
+ *                   For classification, the last layer will be sigmoid and the output will be the
  *                   probability between 0 and 1 indicating whether text1 is related to text2 and
  *                   you are recommended to use BCECriterion as loss for binary classification.
+ *                   Default mode is 'ranking'.
  */
 class KNRM[T: ClassTag] private(
     override val text1Length: Int,

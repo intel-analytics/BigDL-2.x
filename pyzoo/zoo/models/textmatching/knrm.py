@@ -92,7 +92,7 @@ class KNRM(TextMatcher):
             mm_sum = A.sum(mm_log, 1, keepDims=True)
             KM.append(mm_sum)
         Phi = Squeeze(2)(A.stack(KM, 1))
-        output = Dense(1, init="uniform")(Phi)
+        output = Dense(1, init="uniform", activation="sigmoid")(Phi)
         model = Model(input=input, output=output)
         return model
 
