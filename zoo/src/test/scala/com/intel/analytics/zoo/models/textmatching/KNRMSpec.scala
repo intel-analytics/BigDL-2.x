@@ -37,10 +37,19 @@ class KNRMSpec extends ZooSpecHelper {
     val gradInput = model.backward(input, output)
   }
 
-  "KNRM with embedding weights batch=1 forward and backward" should "work properly" in {
+  "KNRM batch=1 forward and backward" should "work properly" in {
     val weights = Tensor[Float](30, 100).rand()
     val model = KNRM[Float](15, 60, 30, 100, weights, false, 12, 0.2, 1e-4, "ranking")
     val input = Tensor[Float](Array(1, 75)).rand(0.0, 1.0).apply1(x => (x*20).toInt)
+    val output = model.forward(input)
+    val gradInput = model.backward(input, output)
+  }
+
+  "KNRM ranking with glove embedding forward and backward" should "work properly" in {
+    val gloveDir = getClass.getClassLoader.getResource("glove.6B").getPath
+    val embeddingFile = gloveDir + "/glove.6B.50d.txt"
+    val model = KNRM[Float](5, 15, embeddingFile)
+    val input = Tensor[Float](Array(2, 20)).rand(0.0, 1.0).apply1(x => (x*15).toInt)
     val output = model.forward(input)
     val gradInput = model.backward(input, output)
   }
