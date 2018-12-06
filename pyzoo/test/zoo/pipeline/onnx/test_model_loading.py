@@ -1114,3 +1114,65 @@ class TestModelLoading(OnnxTestCase):
         reduced = np.mean(data, axis=tuple(axes), keepdims=keepdims == 1)
         output = OnnxLoader.run_node(node, [data])
         np.testing.assert_almost_equal(output["reduced"], reduced, decimal=5)
+
+    def test_onnx_reducesum_keepdims(self):
+        class ReduceSum(torch.nn.Module):
+            def __init__(self, *parameter):
+                super(ReduceSum, self).__init__()
+                self.dim = parameter[0]
+                self.keepdim = parameter[1]
+
+            def forward(self, x):
+                return torch.sum(x, dim=self.dim, keepdim=self.keepdim)
+
+        pytorch_model = ReduceSum(1, True)
+        input_shape_with_batch = (20, 10, 5)
+        self.compare_with_pytorch(pytorch_model, input_shape_with_batch)
+
+    def test_onnx_reducesum(self):
+        class ReduceSum(torch.nn.Module):
+            def __init__(self, *parameter):
+                super(ReduceSum, self).__init__()
+                self.dim = parameter[0]
+                self.keepdim = parameter[1]
+
+            def forward(self, x):
+                return torch.sum(x, dim=self.dim, keepdim=self.keepdim)
+
+        pytorch_model = ReduceSum(1, False)
+        input_shape_with_batch = (20, 10, 5)
+        self.compare_with_pytorch(pytorch_model, input_shape_with_batch)
+
+    def test_reducesum_do_not_keepdims(self):
+        axes = [1]
+        keepdims = 0
+
+        node = onnx.helper.make_node(
+            'ReduceSum',
+            inputs=['data'],
+            outputs=['reduced'],
+            axes=axes,
+            keepdims=keepdims)
+
+        data = np.array([[[1, 2], [3, 4]], [[5, 6], [7, 8]], [[9, 10], [11, 12]]],
+                        dtype=np.float32)
+        reduced = np.sum(data, axis=tuple(axes), keepdims=keepdims == 1)
+        output = OnnxLoader.run_node(node, [data])
+        np.testing.assert_almost_equal(output["reduced"], reduced, decimal=5)
+
+    def test_reducesum_keepdims(self):
+        shape = [3, 2, 2]
+        axes = [1]
+        keepdims = 1
+
+        node = onnx.helper.make_node(
+            'ReduceSum',
+            inputs=['data'],
+            outputs=['reduced'],
+            axes=axes,
+            keepdims=keepdims)
+        np.random.seed(0)
+        data = np.random.uniform(-10, 10, shape).astype(np.float32)
+        reduced = np.sum(data, axis=tuple(axes), keepdims=keepdims == 1)
+        output = OnnxLoader.run_node(node, [data])
+        np.testing.assert_almost_equal(output["reduced"], reduced, decimal=5)
