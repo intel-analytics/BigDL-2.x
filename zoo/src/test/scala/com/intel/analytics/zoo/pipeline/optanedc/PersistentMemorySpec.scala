@@ -19,7 +19,7 @@ package com.intel.analytics.zoo.pipeline.optanedc
 import com.intel.analytics.bigdl.dataset.{DistributedDataSet, MiniBatch}
 import com.intel.analytics.bigdl.utils.Engine
 import com.intel.analytics.zoo.common.NNContext
-import com.intel.analytics.zoo.feature.common.persistent.memory.{MemoryAllocator, NativeBytesArray, NativeVarLenBytesArray, OptaneDCFloatArray}
+import com.intel.analytics.zoo.feature.common.persistent.memory._
 import com.intel.analytics.zoo.models.image.inception.ImageNet2012
 import com.intel.analytics.zoo.persistent.memory._
 import com.intel.analytics.zoo.pipeline.api.keras.ZooSpecHelper
@@ -63,7 +63,7 @@ class PersistentMemorySpec extends ZooSpecHelper {
   "NativeBytesArray optanedc" should "be ok" in {
     val sizeOfItem = 100
     val sizeOfRecord = 5
-    val nativeArray = new NativeBytesArray(sizeOfItem, sizeOfRecord)
+    val nativeArray = new NativeFixLenBytesArray(sizeOfItem, sizeOfRecord, OptaneDC)
     val targetArray = ArrayBuffer[Byte]()
     val rec = Array[Byte](193.toByte, 169.toByte, 0, 90, 4)
     (0 until 100).foreach {i =>
@@ -79,15 +79,36 @@ class PersistentMemorySpec extends ZooSpecHelper {
   }
 
   "NativevarBytesArray optane dc" should "be ok" in {
-    val nativeArray = new NativeVarLenBytesArray(3, 5 + 2 + 6)
+    val nativeArray = new NativeVarLenBytesArray(3, 5 + 2 + 6, OptaneDC)
     val targetArray = ArrayBuffer[Byte]()
-    val rec1 = Array[Byte](193.toByte, 169.toByte, 0, 90, 4)
-    val rec2 = Array[Byte](90, 4)
-    val rec3 = Array[Byte](193.toByte, 169.toByte, 0, 90, 4, 5)
+    val rec0 = Array[Byte](193.toByte, 169.toByte, 0, 90, 4)
+    val rec1 = Array[Byte](90, 4)
+    val rec2 = Array[Byte](193.toByte, 169.toByte, 0, 90, 4, 5)
 
-    nativeArray.set(0, rec1)
-    nativeArray.set(1, rec2)
-    nativeArray.set(2, rec3)
+    nativeArray.set(0, rec0)
+    nativeArray.set(1, rec1)
+    nativeArray.set(2, rec2)
+
+    assert(nativeArray.get(0) === rec0)
+    assert(nativeArray.get(1) === rec1)
+    assert(nativeArray.get(2) === rec2)
+    nativeArray.free()
+  }
+
+  "NativevarFloatsArray dram" should "be ok" in {
+    val nativeArray = new NativeVarLenFloatsArray(3, (5 + 2 + 6) * 4, OptaneDC)
+    val targetArray = ArrayBuffer[Byte]()
+    val rec0 = Array[Float](1.2f, 1.3f, 0, 0.1f, 0.2f)
+    val rec1 = Array[Float](0.9f, 4.0f)
+    val rec2 = Array[Float](193.5f, 169.4f, 0.0f, 90.1f, 4.3f, 5.6f)
+
+    nativeArray.set(0, rec0)
+    nativeArray.set(1, rec1)
+    nativeArray.set(2, rec2)
+
+    assert(nativeArray.get(0) === rec0)
+    assert(nativeArray.get(1) === rec1)
+    assert(nativeArray.get(2) === rec2)
     nativeArray.free()
   }
 

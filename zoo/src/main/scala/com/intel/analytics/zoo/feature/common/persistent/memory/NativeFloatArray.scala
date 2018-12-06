@@ -56,3 +56,21 @@ class NativeFloatArray(val recordNum: Int,
     index
   }
 }
+
+
+class NativeVarLenFloatsArray(recordNum: Int, totalSizeByBytes: Long,
+    memoryType: MemoryType = OptaneDC) extends NativeVarLenArray[Float](recordNum,
+  totalSizeByBytes, memoryType, 4) {
+
+  override def putSingle(offset: Long, s: Float): Unit = {
+    Platform.putFloat(null, offset, s.asInstanceOf[Float])
+  }
+
+  override def get(i: Int): Array[Float] = {
+    assert(isValidIndex(i))
+    val recordLen = indexer(i)._2 / typeLen
+    val result = new Array[Float](recordLen)
+    Platform.copyMemory(null, indexOf(i), result, Platform.FLOAT_ARRAY_OFFSET, indexer(i)._2)
+    return result
+  }
+}
