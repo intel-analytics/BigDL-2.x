@@ -33,9 +33,9 @@ import scopt.OptionParser
 case class QARankerParams(
     dataPath: String = "./", embeddingFile: String = "./",
     questionLength: Int = 10, answerLength: Int = 40,
-    tokenLength: Int = 300, batchSize: Int = 200,
+    partitionNum: Int = 4, batchSize: Int = 200,
     nbEpoch: Int = 30, learningRate: Double = 0.001,
-    partitionNum: Int = 4, model: Option[String] = None)
+    model: Option[String] = None)
 
 
 object QARanker {
@@ -50,14 +50,14 @@ object QARanker {
         .text("The file path to GloVe embeddings")
         .action((x, c) => c.copy(embeddingFile = x))
       opt[Int]("questionLength")
-        .text("The length of each question")
+        .text("The sequence length of each question")
         .action((x, c) => c.copy(questionLength = x))
       opt[Int]("answerLength")
-        .text("The length of each answer")
+        .text("The sequence length of each answer")
         .action((x, c) => c.copy(answerLength = x))
-      opt[Int]("tokenLength")
-        .text("The size of each word vector, 50 or 100 or 200 or 300 for GloVe")
-        .action((x, c) => c.copy(tokenLength = x))
+      opt[Int]("partitionNum")
+        .text("The number of partitions to cut the dataset into")
+        .action((x, c) => c.copy(partitionNum = x))
       opt[Int]('b', "batchSize")
         .text("The number of samples per gradient update")
         .action((x, c) => c.copy(batchSize = x))
@@ -65,13 +65,10 @@ object QARanker {
         .text("The number of epochs to train the model")
         .action((x, c) => c.copy(nbEpoch = x))
       opt[Double]('l', "learningRate")
-        .text("The learning rate for the TextMatching model")
+        .text("The learning rate for the model")
         .action((x, c) => c.copy(learningRate = x))
-      opt[Int]("partitionNum")
-        .text("The number of partitions to cut the dataset into")
-        .action((x, c) => c.copy(partitionNum = x))
       opt[String]('m', "model")
-        .text("Model snapshot location if any")
+        .text("KNRM model snapshot location if any")
         .action((x, c) => c.copy(model = Some(x)))
     }
 

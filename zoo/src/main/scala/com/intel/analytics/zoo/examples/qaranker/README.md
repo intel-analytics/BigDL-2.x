@@ -50,11 +50,10 @@ See [here](#options) for more configurable options for this example.
 * `--embeddingFile` This option is __required__. The file path to GloVe embeddings.
 * `--questionLength` The sequence length of each question. Default is 10.
 * `--answerLength` The sequence length of each answer. Default is 40.
-* `--tokenLength` The size of each word vector. GloVe supports tokenLength 50, 100, 200 and 300. Default is 300 for `glove.840B.300d.txt`.
 * `--partitionNum` The number of partitions to cut the datasets into. Default is 4.
 * `-b` `--batchSize` The number of samples per gradient update. Default is 200.
 * `-e` `--nbEpoch` The number of iterations to train the model. Default is 30.
-* `-l` `--learningRate` The learning rate for the KNRM model. Default is 0.001.
+* `-l` `--learningRate` The learning rate for the model. Default is 0.001.
 * `-m` `--model` Specify this option only if you want to load an existing KNRM model and in this case its path should be provided.
 
 
