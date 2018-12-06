@@ -105,7 +105,7 @@ case class Relation(id1: String, id2: String, label: Int)
 
 /**
  * A relation pair is made up of two relations:
- * Relation(id1, id2Positive, label>0)
- * Relation(id1, id2Negative, label=0)
+ * Relation(id1, id2Positive, label>0) [Positive Relation]
+ * Relation(id1, id2Negative, label=0) [Negative Relation]
  */
 case class RelationPair(id1: String, id2Positive: String, id2Negative: String)

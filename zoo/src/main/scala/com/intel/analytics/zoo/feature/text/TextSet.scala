@@ -141,10 +141,6 @@ abstract class TextSet {
     transform(WordIndexer(wordIndex))
   }
 
-  def word2idx(map: Map[String, Int]): TextSet = {
-    transform(WordIndexer(map))
-  }
-
   /**
    * Shape the sequence of indices to a fixed length.
    * Need to word2idx first.
@@ -191,6 +187,12 @@ abstract class TextSet {
     this
   }
 
+  /**
+   * Save wordIndex map to local text file, which may be used for inference.
+   * Each line will be "word id".
+   *
+   * @param path Local text file path.
+   */
   def saveWordIndex(path: String): Unit = {
     if (wordIndex == null) {
       logger.warn("wordIndex is null, please transform from word to index first")
@@ -365,8 +367,8 @@ object TextSet {
       corpus1: TextSet,
       corpus2: TextSet): DistributedTextSet = {
     val pairsRDD = Relations.generateRelationPairs(relations)
-    require(corpus1.isDistributed, "text1Corpus must be a DistributedTextSet")
-    require(corpus2.isDistributed, "text2Corpus must be a DistributedTextSet")
+    require(corpus1.isDistributed, "corpus1 must be a DistributedTextSet")
+    require(corpus2.isDistributed, "corpus2 must be a DistributedTextSet")
     val joinedText1 = corpus1.toDistributed().rdd.keyBy(_.uri())
       .join(pairsRDD.keyBy(_.id1)).map(_._2)
     val joinedText2Pos = corpus2.toDistributed().rdd.keyBy(_.uri())
@@ -380,11 +382,11 @@ object TextSet {
       val text2Pos = x._2.getIndices
       val text2Neg = x._3.getIndices
       require(text1 != null,
-        "text1Corpus haven't been transformed from word to index yet, please word2idx first")
+        "corpus1 haven't been transformed from word to index yet, please word2idx first")
       require(text2Pos != null && text2Neg != null,
-        "text2Corpus haven't been transformed from word to index yet, please word2idx first")
+        "corpus2 haven't been transformed from word to index yet, please word2idx first")
       require(text2Pos.length == text2Neg.length,
-        "text2Corpus contains text2 with different lengths, please shapeSequence first")
+        "corpus2 contains texts with different lengths, please shapeSequence first")
       val pairedIndices = text1 ++ text2Pos ++ text1 ++ text2Neg
       val feature = Tensor(pairedIndices, Array(2, text1.length + text2Pos.length))
       val label = Tensor(Array(1.0f, 0.0f), Array(2, 1))
@@ -418,8 +420,8 @@ object TextSet {
       relations: RDD[Relation],
       corpus1: TextSet,
       corpus2: TextSet): DistributedTextSet = {
-    require(corpus1.isDistributed, "text1Corpus must be a DistributedTextSet")
-    require(corpus2.isDistributed, "text2Corpus must be a DistributedTextSet")
+    require(corpus1.isDistributed, "corpus1 must be a DistributedTextSet")
+    require(corpus2.isDistributed, "corpus2 must be a DistributedTextSet")
     val joinedText1 = corpus1.toDistributed().rdd.keyBy(_.uri())
       .join(relations.keyBy(_.id1)).map(_._2)
     val joinedText2 = corpus2.toDistributed().rdd.keyBy(_.uri()).join(
@@ -433,10 +435,10 @@ object TextSet {
         uri = text1.uri() ++ text2Array.map(_.uri()).mkString(""))
       val text1Indices = text1.getIndices
       require(text1Indices != null,
-        "text1Corpus haven't been transformed from word to index yet, please word2idx first")
+        "corpus1 haven't been transformed from word to index yet, please word2idx first")
       val text2IndicesArray = text2Array.map(_.getIndices)
       text2IndicesArray.foreach(x => require(x != null,
-        "text2Corpus haven't been transformed from word to index yet, please word2idx first"))
+        "corpus2 haven't been transformed from word to index yet, please word2idx first"))
       val data = text2IndicesArray.flatMap(text1Indices ++ _)
       val feature = Tensor(data,
         Array(text2Array.length, text1Indices.length + text2IndicesArray.head.length))
@@ -448,8 +450,13 @@ object TextSet {
   }
 
   /**
-   * Zip word with its corresponding index. Index starts from 1.
-   * @param words Array of words, each with its occurrence frequency in descending order.
+   * Assign each word an index to form a map.
+   *
+   * @param words Array of words.
+   * @param existingMap Existing map of word index if any. Default is null and in this case a new
+   *                    map with index starting from 1 will be generated.
+   *                    If not null, then the generated map will preserve the word index in
+   *                    existingMap and assign subsequent indices to new words.
    * @return WordIndex map.
    */
   def wordsToMap(words: Array[String], existingMap: Map[String, Int] = null): Map[String, Int] = {
