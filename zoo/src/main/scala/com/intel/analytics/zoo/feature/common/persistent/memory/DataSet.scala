@@ -27,7 +27,7 @@ import org.apache.spark.rdd.RDD
 import scala.collection.mutable.ArrayBuffer
 import scala.reflect.ClassTag
 
-private[zoo] abstract class NativeArrayConverter[T <: Serializable : ClassTag]
+private[zoo] abstract class NativeArrayConverter[T: ClassTag]
   extends Serializable {
 
   def getBytesPerRecord(record: T): Long

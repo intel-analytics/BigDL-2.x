@@ -1,9 +1,7 @@
 # Inception Model on Imagenet
-This example demonstrates how to use BigDL to train and evaluate [Inception v1](https://arxiv.org/abs/1409.4842) architecture on the [ImageNet](http://image-net.org/index) data.
+This example demonstrates how to use Analytic-Zoo to train and evaluate [Inception v1](https://arxiv.org/abs/1409.4842) architecture on the [ImageNet](http://image-net.org/index) data.
 ## Get the JAR
-You can build one by refer to the
-[Build Page](https://bigdl-project.github.io/master/#ScalaUserGuide/install-build-src/) from the source code. We
-will release a pre-build package soon.
+You can download Analytics Zoo prebuilt release and nightly build package from [here](https://analytics-zoo.github.io/master/#release-download/) and extract it.
 
 ## Prepare the data
 You can download imagenet-2012 data from <http://image-net.org/download-images>.
@@ -35,9 +33,6 @@ Now all the images belonging to the same category are moved to the same folder.
 This command will transform the images into hadoop sequence files, which are 
 more suitable for a distributed training.
 
-Bigdl has different versions, bigdl-VERSION-jar-with-dependencies.jar used in the following command is a general name.
-Please update it according to your bigdl version. It can be found in the **lib** folder of the distributed package.
-If you build from source, it can be found in the **dist/lib** folder.
 
 ```bash
 spark-submit --class com.intel.analytics.bigdl.models.utils.ImageNetSeqFileGenerator bigdl-VERSION-jar-with-dependencies.jar -f imagenet_folder -o output_folder -p cores_number
@@ -48,35 +43,20 @@ It will generate the hadoop sequence files in the output folder.
 ## Train the Model
 * Spark standalone, example command
 ```bash
-spark-submit \
+export SPARK_HOME=the root directory of Spark
+export ANALYTICS_ZOO_HOME=the folder where you extract the downloaded Analytics Zoo zip package
+
+${ANALYTICS_ZOO_HOME}/bin/spark-shell-with-zoo.sh \
 --master spark://xxx.xxx.xxx.xxx:xxxx \
 --executor-cores cores_per_executor \
 --total-executor-cores total_cores_for_the_job \
---driver-class-path dist/lib/bigdl-VERSION-jar-with-dependencies.jar \
---class com.intel.analytics.bigdl.models.inception.TrainInceptionV1 \
-dist/lib/bigdl-VERSION-jar-with-dependencies.jar \
+--class com.intel.analytics.zoo.models.image.inception.TrainInceptionV1 \
 --batchSize batch_size \
 --learningRate learningRate \
 -f hdfs://.../imagenet \
 --checkpoint ~/models
 ```
-* Spark yarn client mode, example command
-```bash
-spark-submit \
---master yarn \
---deploy-mode client \
---executor-cores cores_per_executor \
---num-executors executors_number \
---driver-class-path dist/lib/bigdl-VERSION-jar-with-dependencies.jar \
---class com.intel.analytics.bigdl.models.inception.TrainInceptionV1 \
-dist/lib/bigdl-VERSION-jar-with-dependencies.jar \
---batchSize batch_size \
---learningRate learningRate \
---weightDecay weightDecay \
---checkpointIteration checkpointIteration \
--f hdfs://.../imagenet \
---checkpoint ~/models
-```
+
 In the above commands
 * -f: where you put your ImageNet data, it should be a hdfs folder
 * --checkpoint: Where you cache the model/train_state snapshot. You should input a folder and
@@ -95,37 +75,3 @@ policy.
 * --gradientL2NormThreshold: optional. Gradient L2-Norm threshold used for norm2 gradient clipping.
 * --gradientMin: optional. Max gradient clipping by value, used in constant gradient clipping.
 * --gradientMax: optional. Min gradient clipping by value, used in constant gradient clipping.
-
-## Test the Model
-* Spark standalone, example command
-```bash
-spark-submit \
---master spark://xxx.xxx.xxx.xxx:xxxx \
---executor-cores cores_per_executor \
---total-executor-cores total_cores_for_the_job \
---driver-class-path dist/lib/bigdl-VERSION-jar-with-dependencies.jar \
---class com.intel.analytics.bigdl.models.inception.Test \
-dist/lib/bigdl-VERSION-jar-with-dependencies.jar \
---batchSize batch_size \
--f hdfs://.../imagenet/val \
---model model.file
-```
-* Spark yarn client mode, example command
-```bash
-spark-submit \
---master yarn \
---deploy-mode client \
---executor-cores cores_per_executor \
---num-executors executors_number \
---driver-class-path dist/lib/bigdl-VERSION-jar-with-dependencies.jar \
---class com.intel.analytics.bigdl.models.inception.Test \
-dist/lib/bigdl-VERSION-jar-with-dependencies.jar \
---batchSize batch_size \
--f hdfs://.../imagenet/val \
---model model.file
-```
-In the above command
-* -f: where you put your ImageNet data, it should be a hdfs folder
-* --model: the model snapshot file
-* --batchSize: The mini-batch size. It is expected that the mini-batch size is a multiple of
-node_number * core_number. In this example, node_number is 1 and the mini-batch size is suggested to be set to core_number * 4
