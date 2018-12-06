@@ -28,7 +28,7 @@ class ReduceMeanMapper(OperatorMapper):
 
     def _to_tensor(self):
         input = self.model_inputs[0].zvalue
-        # scala requires 'int', not a list of int
+        assert len(self.onnx_attr['axes']) == 1, "we only support axes with 1 elements for now"
         axes = self.onnx_attr['axes'][0]
         keepdims = True if self.onnx_attr['keepdims'] == 1 else False
         return autograd.mean(input, axis=int(axes), keepDims=keepdims)

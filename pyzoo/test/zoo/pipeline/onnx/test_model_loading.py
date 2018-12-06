@@ -1051,7 +1051,7 @@ class TestModelLoading(OnnxTestCase):
         output = OnnxLoader.run_node(node, [x])
         np.testing.assert_almost_equal(output["y"], y, decimal=5)
 
-    def test_onnx_reducemean(self):
+    def test_onnx_reducemean_keepdims(self):
         class ReduceMean(torch.nn.Module):
             def __init__(self, *parameter):
                 super(ReduceMean, self).__init__()
@@ -1062,6 +1062,20 @@ class TestModelLoading(OnnxTestCase):
                 return torch.mean(x, dim=self.dim, keepdim=self.keepdim)
 
         pytorch_model = ReduceMean(1, True)
+        input_shape_with_batch = (1, 2, 2)
+        self.compare_with_pytorch(pytorch_model, input_shape_with_batch)
+
+    def test_onnx_reducemean(self):
+        class ReduceMean(torch.nn.Module):
+            def __init__(self, *parameter):
+                super(ReduceMean, self).__init__()
+                self.dim = parameter[0]
+                self.keepdim = parameter[1]
+
+            def forward(self, x):
+                return torch.mean(x, dim=self.dim, keepdim=self.keepdim)
+
+        pytorch_model = ReduceMean(1, False)
         input_shape_with_batch = (1, 2, 2)
         self.compare_with_pytorch(pytorch_model, input_shape_with_batch)
 
