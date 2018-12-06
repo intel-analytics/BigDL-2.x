@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 The BigDL Authors.
+ * Copyright 2018 Analytics Zoo Authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,13 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package com.intel.analytics.zoo.models.image.inception
 
 import com.intel.analytics.bigdl.{DataSet, dataset}
 import com.intel.analytics.bigdl.dataset._
 import com.intel.analytics.bigdl.dataset.image.{BGRImgCropper, BGRImgNormalizer, BytesToBGRImg, MTLabeledBGRImgToBatch, HFlip => DatasetHFlip}
 import com.intel.analytics.zoo.feature.common.persistent.memory.OptaneDCDataSet
-import com.intel.analytics.zoo.feature.image.ImageSet
 import com.intel.analytics.zoo.pipeline.api.keras.layers.utils.EngineRef
 import org.apache.hadoop.io.Text
 import org.apache.spark.SparkContext
