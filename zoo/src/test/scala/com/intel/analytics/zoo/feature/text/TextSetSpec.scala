@@ -18,12 +18,16 @@ package com.intel.analytics.zoo.feature.text
 
 import com.intel.analytics.bigdl.optim.{Adagrad, SGD}
 import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric.NumericFloat
+import com.intel.analytics.bigdl.utils.Shape
 import com.intel.analytics.zoo.common.NNContext
 import com.intel.analytics.zoo.feature.common.Relation
 import com.intel.analytics.zoo.models.textclassification.TextClassifier
+import com.intel.analytics.zoo.models.textmatching.KNRM
 import com.intel.analytics.zoo.pipeline.api.keras.ZooSpecHelper
+import com.intel.analytics.zoo.pipeline.api.keras.layers.TimeDistributed
 import com.intel.analytics.zoo.pipeline.api.keras.metrics.Accuracy
-import com.intel.analytics.zoo.pipeline.api.keras.objectives.SparseCategoricalCrossEntropy
+import com.intel.analytics.zoo.pipeline.api.keras.models.Sequential
+import com.intel.analytics.zoo.pipeline.api.keras.objectives.{RankHinge, SparseCategoricalCrossEntropy}
 import org.apache.spark.sql.SQLContext
 import org.apache.spark.{SparkConf, SparkContext}
 
@@ -213,7 +217,7 @@ class TextSetSpec extends ZooSpecHelper {
     require(indices2.sameElements(Array(hello, 2.0f, hello, you2, you2)))
   }
 
-  "TextSet from relation pairs and lists" should "work properly" in {
+  "TextSet from relation pairs and lists with training and validation" should "work properly" in {
     val relations = Array(Relation("Q1", "A1", 1), Relation("Q2", "A1", 0), Relation("Q2", "A2", 1),
       Relation("Q2", "A3", 0))
     val relationsRDD = sc.parallelize(relations)
@@ -267,5 +271,15 @@ class TextSetSpec extends ZooSpecHelper {
     require(sample2.label().size().sameElements(Array(3, 1)))
     require(sample2.label().reshape(Array(3)).toArray().sorted
       .sameElements(Array(0.0f, 0.0f, 1.0f)))
+
+    val gloveDir = getClass.getClassLoader.getResource("glove.6B").getPath
+    val embeddingFile = gloveDir + "/glove.6B.50d.txt"
+    val knrm = KNRM[Float](3, 6, embeddingFile)
+    val model = Sequential().add(TimeDistributed(knrm, inputShape = Shape(2, 9)))
+    model.compile(optimizer = new SGD[Float](), loss = RankHinge[Float]())
+    model.fit(pairSet, batchSize = 2, nbEpoch = 2)
+    knrm.evaluateNDCG(listSet, 3)
+    knrm.evaluateNDCG(listSet, 5)
+    knrm.evaluateMAP(listSet)
   }
 }
