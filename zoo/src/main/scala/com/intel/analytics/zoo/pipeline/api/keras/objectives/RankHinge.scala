@@ -25,7 +25,7 @@ import com.intel.analytics.zoo.pipeline.api.autograd.{CustomLoss, Variable, Auto
 import scala.reflect.ClassTag
 
 /**
- * Hinge loss for ranking problems.
+ * Hinge loss for pairwise ranking problems.
  *
  * @param margin Double. Default is 1.0.
  */
