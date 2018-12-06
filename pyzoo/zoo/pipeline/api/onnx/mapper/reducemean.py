@@ -31,4 +31,4 @@ class ReduceMeanMapper(OperatorMapper):
         # scala requires 'int', not a list of int
         axes = self.onnx_attr['axes'][0]
         keepdims = True if self.onnx_attr['keepdims'] == 1 else False
-        return autograd.mean(input, axis=axes, keepDims=keepdims)
+        return autograd.mean(input, axis=int(axes), keepDims=keepdims)
