@@ -122,8 +122,8 @@ class DistributedImageSet(var rdd: RDD[ImageFeature]) extends ImageSet {
     } else {
       // we are supposing the rdd of ImageFeature should has the "mat" field at this point
       val transformer = MatToTensor[Float]() -> ImageFrameToSample[Float](targetKeys = Array
-      (ImageFeature.label)) -> ImageFeatureToSample[T]()
-      OptaneDCDataSet.rdd[ImageFeature](rdd).transform(transformer)
+      (ImageFeature.label)) -> ImageFeatureToSample[Float]()
+      OptaneDCDataSet.rdd[ImageFeature](rdd).transform(transformer).asInstanceOf[DataSet[Sample[T]]]
     }
   }
 }

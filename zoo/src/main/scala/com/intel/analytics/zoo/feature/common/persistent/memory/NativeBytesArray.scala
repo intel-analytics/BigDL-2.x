@@ -20,7 +20,8 @@ import com.intel.analytics.zoo.persistent.memory.{MemoryType, NativeArray, Optan
 import org.apache.spark.unsafe.Platform
 
 object OptaneDCVarBytesArray {
-  def apply(iterator: Iterator[Array[Byte]], recordNumber: Int, recordBytes: Int): NativeBytesArray = {
+  def apply(iterator: Iterator[Array[Byte]],
+      recordNumber: Int, recordBytes: Int): NativeBytesArray = {
     val nativeArray = new NativeBytesArray(recordNumber, recordBytes)
     var i = 0
     while(iterator.hasNext) {

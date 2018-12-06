@@ -22,19 +22,17 @@ import com.intel.analytics.bigdl.transform.vision.image.ImageFeature
 
 import scala.reflect.ClassTag
 
-class ImageFeatureToSample[T: ClassTag](
-    sampleKey: String = ImageFeature.sample)(implicit ev: TensorNumeric[T])
+class ImageFeatureToSample[T: ClassTag]()(implicit ev: TensorNumeric[T])
   extends Transformer[ImageFeature, Sample[T]] {
 
   override def apply(prev: Iterator[ImageFeature]): Iterator[Sample[T]] = {
-    prev.map(_[Sample[T]](sampleKey))
+    prev.map(_[Sample[T]](ImageFeature.sample))
   }
 }
 
 object ImageFeatureToSample {
-  def apply[T: ClassTag](
-      sampleKey: String = ImageFeature.sample)
+  def apply[T: ClassTag]()
     (implicit ev: TensorNumeric[T]): ImageFeatureToSample[T] =
-    new ImageFeatureToSample(sampleKey)
+    new ImageFeatureToSample()
 }
 
