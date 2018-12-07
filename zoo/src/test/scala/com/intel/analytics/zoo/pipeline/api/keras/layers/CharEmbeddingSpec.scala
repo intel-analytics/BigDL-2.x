@@ -26,7 +26,11 @@ class CharEmbeddingSpec extends KerasBaseSpec {
   // Compared results with Keras on Python side
   "CharEmbedding" should "work properly" in {
     val seq = Sequential[Float]()
-    val layer = CharEmbedding[Float](inputDim = 10, outputDim = 50, charEmbedDim = 32, inputLength = 4)
+    val layer = CharEmbedding[Float](
+      inputDim = 10,
+      outputDim = 50,
+      charEmbedDim = 32,
+      inputLength = 4)
     seq.add(layer)
     seq.getOutputShape().toSingle().toArray should be (Array(-1, 50))
     val input = Tensor[Float](2, 4)
@@ -46,7 +50,11 @@ class CharEmbeddingSpec extends KerasBaseSpec {
 
 class EmbeddingSerialTest extends ModuleSerializationTest {
   override def test(): Unit = {
-    val layer = CharEmbedding[Float](inputDim = 10, outputDim = 50, charEmbedDim = 32, inputLength = 4)
+    val layer = CharEmbedding[Float](
+      inputDim = 10,
+      outputDim = 50,
+      charEmbedDim = 32,
+      inputLength = 4)
     layer.build(Shape(2, 4))
     val input = Tensor[Float](2, 4)
     input(Array(1, 1)) = 1
