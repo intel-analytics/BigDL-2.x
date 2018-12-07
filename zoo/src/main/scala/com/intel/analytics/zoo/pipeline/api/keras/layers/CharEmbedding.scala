@@ -43,7 +43,6 @@ import scala.reflect.ClassTag
  *                 Each character index in the input should be within range [0, inputDim-1].
  * @param outputDim Int > 0. Dimension of the dense character-level word embedding.
  * @param charEmbedDim Int > 0. Dimension of the dense character embedding.
- * @param inputLength Int > 0. The sequence length of each word.
  * @param kernelRow Int > 0. Number of rows in the char-cnn kernel.
  * @param inputShape A Single Shape, does not include the batch dimension.
  * @tparam T Numeric type of parameter(e.g. weight, bias). Only support float/double now.
@@ -51,7 +50,6 @@ import scala.reflect.ClassTag
 class CharEmbedding[T: ClassTag](
     val inputDim: Int,
     val outputDim: Int,
-    val charEmbedDim: Int,
     val inputLength: Int,
     val kernelRow: Int,
     val inputShape: Shape = null)(implicit ev: TensorNumeric[T])
@@ -76,13 +74,10 @@ class CharEmbedding[T: ClassTag](
       outputDim = charEmbedDim,
       inputLength = input(1))
     model.add(layer)
-    model.add(Reshape(Array(1, input(1), charEmbedDim)))
-    model.add(Convolution2D(
+    model.add(Convolution1D(
       nbFilter = outputDim,
-      nbRow = kernelRow,
-      nbCol = charEmbedDim))
-    model.add(MaxPooling2D(poolSize = (inputLength - kernelRow + 1, 1)))
-    model.add(Reshape(Array(outputDim)))
+      filterLength = kernelRow))
+    model.add(GlobalMaxPooling1D())
     model.add(Highway())
     model.asInstanceOf[AbstractModule[Tensor[T], Tensor[T], T]]
   }
@@ -95,7 +90,6 @@ object CharEmbedding {
       charEmbedDim: Int = 50,
       inputLength: Int,
       kernelRow: Int = 2)(implicit ev: TensorNumeric[T]): CharEmbedding[T] = {
-    new CharEmbedding[T]
-      (inputDim, outputDim, charEmbedDim, inputLength, kernelRow, Shape(inputLength))
+    new CharEmbedding[T](inputDim, outputDim, charEmbedDim, kernelRow, Shape(inputLength))
   }
 }
