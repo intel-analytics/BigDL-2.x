@@ -15,8 +15,7 @@ import org.apache.spark.rdd.RDD
 
 import scala.reflect.ClassTag
 
-class AnomalyDetector[T: ClassTag] private(
-                                            val featureShape: Shape,
+class AnomalyDetector[T: ClassTag] private(val featureShape: Shape,
                                             val hiddenLayers: Array[Int] = Array(8, 32, 15),
                                             val dropouts: Array[Float] = Array(0.2f, 0.2f, 0.2f)
                                           )
@@ -40,31 +39,27 @@ class AnomalyDetector[T: ClassTag] private(
     model.asInstanceOf[AbstractModule[Tensor[T], Tensor[T], T]]
   }
 
-  def compile(
-               optimizer: OptimMethod[T],
-               loss: Criterion[T],
-               metrics: List[ValidationMethod[T]] = null)(implicit ev: TensorNumeric[T]): Unit = {
+  def compile(optimizer: OptimMethod[T],
+              loss: Criterion[T],
+              metrics: List[ValidationMethod[T]] = null)(implicit ev: TensorNumeric[T]): Unit = {
     model.asInstanceOf[KerasNet[T]].compile(optimizer, loss, metrics)
   }
 
-  def fit(
-           x: RDD[Sample[T]],
-           batchSize: Int,
-           nbEpoch: Int,
-           validationData: RDD[Sample[T]] = null)(implicit ev: TensorNumeric[T]): Unit = {
+  def fit(x: RDD[Sample[T]],
+          batchSize: Int,
+          nbEpoch: Int,
+          validationData: RDD[Sample[T]] = null)(implicit ev: TensorNumeric[T]): Unit = {
     model.asInstanceOf[KerasNet[T]].fit(x, batchSize, nbEpoch, validationData)
   }
 
-  def evaluate(
-                x: RDD[Sample[T]],
-                batchSize: Int)
+  def evaluate(x: RDD[Sample[T]],
+               batchSize: Int)
               (implicit ev: TensorNumeric[T]): Array[(ValidationResult, ValidationMethod[T])] = {
     model.asInstanceOf[KerasNet[T]].evaluate(x, batchSize)
   }
 
-  def predict(
-               x: RDD[Sample[T]],
-               batchPerThread: Int): RDD[Activity] = {
+  def predict(x: RDD[Sample[T]],
+              batchPerThread: Int): RDD[Activity] = {
     model.asInstanceOf[KerasNet[T]].predict(x, batchPerThread)
   }
 
@@ -89,10 +84,10 @@ object AnomalyDetector {
     * @tparam T Numeric type of parameter(e.g. weight, bias). Only support float/double now.
     */
   def apply[@specialized(Float, Double) T: ClassTag](
-      featureShape: Shape,
-      hiddenLayers: Array[Int] = Array(8, 32, 15),
-      dropouts: Array[Float] = Array(0.2f, 0.2f, 0.2f))
-     (implicit ev: TensorNumeric[T]): AnomalyDetector[T] = {
+                                                      featureShape: Shape,
+                                                      hiddenLayers: Array[Int] = Array(8, 32, 15),
+                                                      dropouts: Array[Float] = Array(0.2f, 0.2f, 0.2f))
+                                                    (implicit ev: TensorNumeric[T]): AnomalyDetector[T] = {
     new AnomalyDetector[T](featureShape, hiddenLayers, dropouts).build()
   }
 
@@ -107,8 +102,8 @@ object AnomalyDetector {
     * @tparam T Numeric type of parameter(e.g. weight, bias). Only support float/double now.
     */
   def loadModel[T: ClassTag](
-      path: String,
-      weightPath: String = null)(implicit ev: TensorNumeric[T]): AnomalyDetector[T] = {
+                              path: String,
+                              weightPath: String = null)(implicit ev: TensorNumeric[T]): AnomalyDetector[T] = {
     ZooModel.loadModel(path, weightPath).asInstanceOf[AnomalyDetector[T]]
   }
 
@@ -122,9 +117,9 @@ object AnomalyDetector {
     *                        considered as anomalies.
     */
   def detectAnomalies[T: ClassTag](
-      yTruth: RDD[T],
-      yPredict: RDD[T],
-      anomalyFraction: Int = 5): RDD[(T, T, Any)] = {
+                                    yTruth: RDD[T],
+                                    yPredict: RDD[T],
+                                    anomalyFraction: Int = 5): RDD[(T, T, Any)] = {
     require(yTruth.count() == yPredict.count(), s"length of predictions and truth should match")
     val totalCount = yTruth.count()
 
@@ -147,9 +142,9 @@ object AnomalyDetector {
     *                  above the threshold is considered as anomalies.
     */
   def detectAnomalies[T: ClassTag](
-      yTruth: RDD[T],
-      yPredict: RDD[T],
-      threshold: Float): RDD[(T, T, Any)] = {
+                                    yTruth: RDD[T],
+                                    yPredict: RDD[T],
+                                    threshold: Float): RDD[(T, T, Any)] = {
     require(yTruth.count() == yPredict.count(), s"length of predictions and truth should match")
     val anomalies = yTruth.zip(yPredict).map { x =>
       val d = absdiff(x._1, x._2)
