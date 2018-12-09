@@ -5,7 +5,7 @@ import com.intel.analytics.bigdl.tensor.Tensor
 import com.intel.analytics.bigdl.utils.T
 import com.intel.analytics.zoo.pipeline.inference.InferenceModel
 
-class NueralCFModel() extends InferenceModel{
+class NueralCFModel extends InferenceModel{
 
   def load(path:String) = {
     doLoad(path,null)

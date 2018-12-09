@@ -1,12 +1,7 @@
 package com.intel.analytics.zoo.apps.recommendation.interence
 
 
-import com.intel.analytics.bigdl.tensor.Tensor
-import com.intel.analytics.bigdl.utils.T
-import com.intel.analytics.zoo.apps.recommendation.inference.NueralCFModel
-import com.intel.analytics.zoo.models.recommendation.NeuralCF
-
-object SimpleDriver {
+object SimpleScalaDriver {
 
   def main(args: Array[String]): Unit = {
 
@@ -15,10 +10,7 @@ object SimpleDriver {
     val rcm = new NueralCFModel()
     rcm.load(modelPath)
 
-    val userIds = ( 1 to 10)
-    val itemIds = ( 2 to 6)
-
-    val userItemPair = userIds.flatMap( x=> itemIds.map(y => (x,y)))
+    val userItemPair = ( 1 to 10).map( x=> (x, x+1))
 
     val userItemFeature = rcm.preProcess(userItemPair)
 
