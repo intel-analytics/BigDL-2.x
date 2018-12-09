@@ -12,16 +12,18 @@ public class NueralCFModel extends AbstractInferenceModel {
 
     }
 
-    public List<JTensor> preProcess(List<Integer> userIds, List<Integer> itemIDs){
+    public List<List<JTensor>> preProcess(List<UserItemPair> userItemPairs){
 
-        List<JTensor> input = new ArrayList<JTensor>();
+        List<List<JTensor>> jts = new ArrayList<>();
 
-        for(int i =0; i < userIds.size(); i++){
-            input.add(new JTensor(new float[]{userIds.get(i), itemIDs.get(i)}, new int[]{2}));
+        for(int i =0; i < userItemPairs.size(); i++){
+            List<JTensor> input = new ArrayList<JTensor>();
+            input.add(new JTensor(new float[]{userItemPairs.get(i).getUserId(),
+                    userItemPairs.get(i).getItemId()}, new int[]{2}));
+            jts.add(input);
         }
 
-        return input;
-
+        return jts;
     }
 }
 

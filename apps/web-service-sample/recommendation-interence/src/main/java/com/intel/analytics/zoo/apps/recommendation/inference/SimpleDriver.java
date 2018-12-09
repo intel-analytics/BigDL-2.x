@@ -15,24 +15,12 @@ public class SimpleDriver {
 
         rcm.load(modelPath);
 
-        List<Integer> userIds = new ArrayList<>();
+        List<UserItemPair> userItemPairs = new ArrayList<>();
         for(int i= 1; i < 10; i++){
-            userIds.add(i);
+           userItemPairs.add(new UserItemPair(i, i+1));
         }
 
-        List<Integer> itemIds = new ArrayList<>();
-        for(int i=2; i < 11; i++){
-            itemIds.add(i);
-        }
-
-        List<List<JTensor>> jts = new ArrayList<>();
-
-
-        for(int i =0; i < userIds.size(); i++){
-            List<JTensor> input = new ArrayList<JTensor>();
-            input.add(new JTensor(new float[]{userIds.get(i), itemIds.get(i)}, new int[]{2}));
-            jts.add(input);
-        }
+        List<List<JTensor>> jts = rcm.preProcess(userItemPairs);
 
         List<List<JTensor>> finalResult = rcm.predict(jts);
 
