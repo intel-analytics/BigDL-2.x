@@ -25,17 +25,17 @@ from bigdl.util.common import *
 np.random.seed(1337)  # for reproducibility
 
 
-class TestLayer(ZooTestCase):
+class TestTF(ZooTestCase):
 
     def test_init_tf_net(self):
-        resource_path = os.path.join(os.path.split(__file__)[0], "../../../resources")
+        resource_path = os.path.join(os.path.split(__file__)[0], "../../resources")
         tfnet_path = os.path.join(resource_path, "tfnet")
         net = TFNet.from_export_folder(tfnet_path)
         output = net.forward(np.random.rand(2, 4))
         assert output.shape == (2, 2)
 
     def test_from_folder_load_tf(self):
-        resource_path = os.path.join(os.path.split(__file__)[0], "../../../resources")
+        resource_path = os.path.join(os.path.split(__file__)[0], "../../resources")
         tfnet_path = os.path.join(resource_path, "tfnet")
         net = Net.load_tf(tfnet_path)
         output = net.forward(np.random.rand(2, 4))
@@ -83,14 +83,14 @@ class TestLayer(ZooTestCase):
 
     def test_tf_optimizer_with_sparse_gradient(self):
         import tensorflow as tf
-        ids = np.random.randint(0, 10, size=[40, 10])
+        ids = np.random.randint(0, 10, size=[40])
         labels = np.random.randint(0, 5, size=[40])
         id_rdd = self.sc.parallelize(ids)
         label_rdd = self.sc.parallelize(labels)
         training_rdd = id_rdd.zip(label_rdd).map(lambda x: [x[0], x[1]])
         dataset = TFDataset.from_rdd(training_rdd,
                                      names=["ids", "labels"],
-                                     shapes=[[10], []],
+                                     shapes=[[], []],
                                      types=[tf.int32, tf.int32],
                                      batch_size=8)
         id_tensor, label_tensor = dataset.tensors
@@ -99,7 +99,6 @@ class TestLayer(ZooTestCase):
             shape=[10, 5])
 
         embedding = tf.nn.embedding_lookup(embedding_table, id_tensor)
-        embedding = tf.layers.flatten(embedding)
         logits = tf.layers.dense(embedding, 5)
         loss = tf.reduce_mean(tf.losses.
                               sparse_softmax_cross_entropy(logits=logits,
