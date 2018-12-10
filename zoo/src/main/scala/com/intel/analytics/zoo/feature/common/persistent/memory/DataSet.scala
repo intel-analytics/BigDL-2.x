@@ -36,7 +36,7 @@ private[zoo] abstract class NativeArrayConverter[T: ClassTag]
       countPerPartition: Iterator[(Int, Long)]): Iterator[ArrayLike[T]]
 }
 
-private[zoo] class ByteRecordImageConverter extends NativeArrayConverter[ByteRecord] {
+private[zoo] class ByteRecordConverter extends NativeArrayConverter[ByteRecord] {
 
   override def getBytesPerRecord(byteRecord: ByteRecord): Long = {
     byteRecord.data.length
@@ -101,7 +101,7 @@ object OptaneDCDataSet {
     typeOf[T] match {
       case t if t =:= typeOf[ByteRecord] =>
         doRdd[ByteRecord](data.asInstanceOf[RDD[ByteRecord]],
-          new ByteRecordImageConverter()).asInstanceOf[OptaneDCDataSet[T]]
+          new ByteRecordConverter()).asInstanceOf[OptaneDCDataSet[T]]
       case t if t =:= typeOf[ImageFeature] =>
         doRdd[ImageFeature](data.asInstanceOf[RDD[ImageFeature]],
           new ImageFeatureConverter()).asInstanceOf[OptaneDCDataSet[T]]
@@ -115,14 +115,13 @@ private[zoo] abstract class ArrayLike[T: ClassTag] extends Serializable {
   def apply(i: Int): T = throw new Error()
 }
 
-private[zoo] case class OptaneDCByteRecordArray(imgs: NativeVarLenBytesArray,
+private[zoo] case class OptaneDCByteRecordArray(records: NativeVarLenBytesArray,
     label: Array[Float]) extends ArrayLike[ByteRecord] {
   override def length: Int = {
-    imgs.recordNum
+    records.recordNum
   }
   override def apply(i: Int): ByteRecord = {
-    // TODO: we may need to change this to Long
-    ByteRecord(imgs.get(i), label(i.toInt))
+    ByteRecord(records.get(i), label(i.toInt))
   }
 }
 
