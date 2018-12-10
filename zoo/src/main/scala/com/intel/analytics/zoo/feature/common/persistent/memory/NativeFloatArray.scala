@@ -57,6 +57,29 @@ class NativeFloatArray(val recordNum: Int,
   }
 }
 
+object NativeVarLenFloatsArray {
+  // Backward compatible with Spark.6
+  val FLOAT_ARRAY_OFFSET = {
+    var unsafe: sun.misc.Unsafe = null
+    var _UNSAFE: sun.misc.Unsafe = null
+    try {
+      val unsafeField = classOf[sun.misc.Unsafe].getDeclaredField("theUnsafe")
+      unsafeField.setAccessible(true)
+      unsafe = unsafeField.get(null).asInstanceOf[(sun.misc.Unsafe)]
+    } catch {
+      case cause: Throwable =>
+        unsafe = null
+    }
+    _UNSAFE = unsafe
+
+    if (_UNSAFE != null) {
+      _UNSAFE.arrayBaseOffset(classOf[Array[Float]])
+    } else {
+      0
+    }
+  }
+}
+
 
 class NativeVarLenFloatsArray(recordNum: Int, totalSizeByBytes: Long,
     memoryType: MemoryType = OptaneDC) extends NativeVarLenArray[Float](recordNum,
@@ -70,7 +93,8 @@ class NativeVarLenFloatsArray(recordNum: Int, totalSizeByBytes: Long,
     assert(isValidIndex(i))
     val recordLen = indexer(i)._2 / typeLen
     val result = new Array[Float](recordLen)
-    Platform.copyMemory(null, indexOf(i), result, Platform.FLOAT_ARRAY_OFFSET, indexer(i)._2)
+    Platform.copyMemory(null, indexOf(i), result,
+      NativeVarLenFloatsArray.FLOAT_ARRAY_OFFSET, indexer(i)._2)
     return result
   }
 }
