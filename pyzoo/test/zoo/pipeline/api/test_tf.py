@@ -43,6 +43,7 @@ class TestTF(ZooTestCase):
 
     def test_for_scalar(self):
         import tensorflow as tf
+        tf.reset_default_graph()
         input1 = tf.placeholder(dtype=tf.float32, shape=())
         output = input1 + 1
         sess = tf.Session()
@@ -59,6 +60,7 @@ class TestTF(ZooTestCase):
 
     def test_init_tfnet_from_session(self):
         import tensorflow as tf
+        tf.reset_default_graph()
         input1 = tf.placeholder(dtype=tf.float32, shape=(None, 2))
         label1 = tf.placeholder(dtype=tf.float32, shape=(None, 1))
         hidden = tf.layers.dense(input1, 4)
@@ -83,6 +85,7 @@ class TestTF(ZooTestCase):
 
     def test_tf_optimizer_with_sparse_gradient(self):
         import tensorflow as tf
+        tf.reset_default_graph()
         ids = np.random.randint(0, 10, size=[40])
         labels = np.random.randint(0, 5, size=[40])
         id_rdd = self.sc.parallelize(ids)
@@ -99,9 +102,8 @@ class TestTF(ZooTestCase):
             shape=[10, 5])
 
         embedding = tf.nn.embedding_lookup(embedding_table, id_tensor)
-        logits = tf.layers.dense(embedding, 5)
         loss = tf.reduce_mean(tf.losses.
-                              sparse_softmax_cross_entropy(logits=logits,
+                              sparse_softmax_cross_entropy(logits=embedding,
                                                            labels=label_tensor))
 
         optimizer = TFOptimizer(loss, Adam(1e-3))
