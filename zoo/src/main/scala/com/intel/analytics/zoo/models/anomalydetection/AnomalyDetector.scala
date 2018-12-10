@@ -30,6 +30,15 @@ import org.apache.spark.rdd.RDD
 
 import scala.reflect.ClassTag
 
+/**
+ * The anomaly detector model for sequence data based on LSTM.
+ *
+ * @param featureShape The input shape of features.
+ * @param hiddenLayers Units of hidden layers of LSTM.
+ * @param dropouts     Fraction of the input units to drop out. Float between 0 and 1.
+ * @tparam T Numeric type of parameter(e.g. weight, bias). Only support float/double now.
+ */
+
 class AnomalyDetector[T: ClassTag] private(val featureShape: Shape,
                                            val hiddenLayers: Array[Int] = Array(8, 32, 15),
                                            val dropouts: Array[Float] = Array(0.2f, 0.2f, 0.2f))
@@ -80,21 +89,20 @@ class AnomalyDetector[T: ClassTag] private(val featureShape: Shape,
 }
 
 case class FeatureLabelIndex[T: ClassTag](feature: Array[Array[T]], label: T, index: Long) {
-  override def toString =
+  override def toString(): String =
     "value: " + feature
       .map(x => x.mkString("|")).mkString(",") + " label:" + label + " index:" + index
 }
 
 
 object AnomalyDetector {
-  /**
-    * The factory method to create an anomaly detector for single time series
-    *
-    * @param featureShape The input shape of features.
-    * @param hiddenLayers Units of hidden layers of LSTM.
-    * @param dropouts     Fraction of the input units to drop out. Float between 0 and 1.
-    * @tparam T Numeric type of parameter(e.g. weight, bias). Only support float/double now.
-    */
+ /**
+  * The factory method to create an anomaly detector for single time series
+  * @param featureShape The input shape of features.
+  * @param hiddenLayers Units of hidden layers of LSTM.
+  * @param dropouts     Fraction of the input units to drop out. Float between 0 and 1.
+  * @tparam T Numeric type of parameter(e.g. weight, bias). Only support float/double now.
+  */
   def apply[@specialized(Float, Double) T: ClassTag](
       featureShape: Shape,
       hiddenLayers: Array[Int] = Array(8, 32, 15),
@@ -103,31 +111,30 @@ object AnomalyDetector {
     new AnomalyDetector[T](featureShape, hiddenLayers, dropouts).build()
   }
 
-  /**
-    * Load an existing AnomalyDetector model (with weights).
-    *
-    * @param path       The path for the pre-defined model.
-    *                   Local file system, HDFS and Amazon S3 are supported.
-    *                   HDFS path should be like "hdfs://[host]:[port]/xxx".
-    *                   Amazon S3 path should be like "s3a://bucket/xxx".
-    * @param weightPath The path for pre-trained weights if any. Default is null.
-    * @tparam T Numeric type of parameter(e.g. weight, bias). Only support float/double now.
-    */
+ /**
+  * Load an existing AnomalyDetector model (with weights).
+  * @param path       The path for the pre-defined model.
+  *                   Local file system, HDFS and Amazon S3 are supported.
+  *                   HDFS path should be like "hdfs://[host]:[port]/xxx".
+  *                   Amazon S3 path should be like "s3a://bucket/xxx".
+  * @param weightPath The path for pre-trained weights if any. Default is null.
+  * @tparam T Numeric type of parameter(e.g. weight, bias). Only support float/double now.
+  */
   def loadModel[T: ClassTag](
       path: String,
       weightPath: String = null)(implicit ev: TensorNumeric[T]): AnomalyDetector[T] = {
     ZooModel.loadModel(path, weightPath).asInstanceOf[AnomalyDetector[T]]
   }
 
-  /**
-    * Compare predictions and truth to detect anomalies by ranking the absolute differences。
-    * Most distant values are considered as anomalies.
-    *
-    * @param yTruth          Truth to be compared
-    * @param yPredict        Predictions
-    * @param anomalyFraction Int. What percentage of the number of total values compared to be
-    *                        considered as anomalies.
-    */
+ /**
+  * Compare predictions and truth to detect anomalies by ranking the absolute differences。
+  * Most distant values are considered as anomalies.
+  *
+  * @param yTruth          Truth to be compared
+  * @param yPredict        Predictions
+  * @param anomalyFraction Int. What percentage of the number of total values compared to be
+  *                        considered as anomalies.
+  */
   def detectAnomalies[T: ClassTag](yTruth: RDD[T],
                                    yPredict: RDD[T],
                                    anomalyFraction: Int = 5): RDD[(T, T, Any)] = {
@@ -144,14 +151,14 @@ object AnomalyDetector {
   }
 
   /**
-    * Compare predictions and truth to detect anomalies by ranking the absolute differences.
-    * Most distant values are considered as anomalies.
-    *
-    * @param yTruth    Truth to be compared
-    * @param yPredict  Predictions
-    * @param threshold Float. The threshold of absolute difference, data points with a difference
-    *                  above the threshold is considered as anomalies.
-    */
+   * Compare predictions and truth to detect anomalies by ranking the absolute differences.
+   * Most distant values are considered as anomalies.
+   *
+   * @param yTruth    Truth to be compared
+   * @param yPredict  Predictions
+   * @param threshold Float. The threshold of absolute difference, data points with a difference
+   *                  above the threshold is considered as anomalies.
+   */
   def detectAnomalies[T: ClassTag](yTruth: RDD[T],
                                    yPredict: RDD[T],
                                    threshold: Float): RDD[(T, T, Any)] = {
@@ -159,7 +166,7 @@ object AnomalyDetector {
     val anomalies = yTruth.zip(yPredict).map { x =>
       val d = absdiff(x._1, x._2)
       val anomaly = if (d > threshold) x._1 else null
-      (x._1, x._2, anomaly) //yTruth, yPredict, anomaly
+      (x._1, x._2, anomaly) // yTruth, yPredict, anomaly
     }
     anomalies
   }
@@ -172,20 +179,21 @@ object AnomalyDetector {
     }
   }
 
-  /** Unroll a rdd of arrays to prepare features and labels.
-    *
-    * @param dataRdd      data to be unrolled with a length.
-    * @param unrollLength the length of precious values to predict future value.
-    * @param predictStep  use precious values to predict future value, default is 1.
-    *
-    *                     a simple example
-    *                     data: (1,2,3,4,5,6); unrollLength: 2, predictStep: 1
-    *                     features, label, index
-    *                     (1,2), 3, 0
-    *                     (2,3), 4, 1
-    *                     (3,4), 5, 2
-    *                     (4,5), 6, 3
-    **/
+  /**
+   * Unroll a rdd of arrays to prepare features and labels.
+   *
+   * @param dataRdd      data to be unrolled with a length.
+   * @param unrollLength the length of precious values to predict future value.
+   * @param predictStep  use precious values to predict future value, default is 1.
+   *
+   *                     a simple example
+   *                     data: (1,2,3,4,5,6); unrollLength: 2, predictStep: 1
+   *                     features, label, index
+   *                     (1,2), 3, 0
+   *                     (2,3), 4, 1
+   *                     (3,4), 5, 2
+   *                     (4,5), 6, 3
+   */
   def unroll[T: ClassTag](dataRdd: RDD[Array[T]],
                           unrollLength: Int,
                           predictStep: Int = 1
@@ -196,12 +204,12 @@ object AnomalyDetector {
 
     val offset: Int = unrollLength - 1 + predictStep
 
-    //RDD[index of record, label]
+    // RDD[index of record, label]
     val labelRdd: RDD[(Long, T)] = indexRdd
       .filter(x => (x._2 >= offset))
       .map(x => (x._2 - offset, x._1(0)))
 
-    //RDD[index of record, feature]
+    // RDD[index of record, feature]
     val featureRdd: RDD[(Long, Array[Array[T]])] = indexRdd
       .flatMap(x => {
         val pairs: Seq[(Long, List[(Array[T], Long)])] = if (x._2 < unrollLength) {
@@ -225,7 +233,8 @@ object AnomalyDetector {
     featureLabelIndex
   }
 
-  def toSampleRdd[T: ClassTag](rdd: RDD[FeatureLabelIndex[T]])(implicit ev: TensorNumeric[T]) = {
+  def toSampleRdd[T: ClassTag](rdd: RDD[FeatureLabelIndex[T]])
+                              (implicit ev: TensorNumeric[T]): RDD[Sample[T]] = {
     rdd.map(x => {
       val shape: Array[Int] = Array(x.feature.length, x.feature(0).length)
       val data = x.feature.flatten

@@ -88,7 +88,7 @@ object AnomalyDetection {
     anomalies.take(5).foreach(println)
   }
 
-  def loadData(sqlContext: SQLContext, dataPath: String) = {
+  def loadData(sqlContext: SQLContext, dataPath: String): DataFrame = {
 
     @transient lazy val formatter = DateTimeFormat.forPattern("yyyy-MM-dd HH:mm:ss")
     import sqlContext.implicits._
@@ -111,7 +111,7 @@ object AnomalyDetection {
 
   def assemblyFeature(featureDF: DataFrame,
                       ifScale: Boolean = true,
-                      unrollLength: Int) = {
+                      unrollLength: Int): RDD[FeatureLabelIndex[Float]] = {
 
     val scaledDF = if (ifScale) {
       Utils.standardScale(featureDF, Seq("value", "hour", "awake"))

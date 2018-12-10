@@ -73,7 +73,7 @@ class AnomalyDetectorSpec extends ZooSpecHelper {
     val data: RDD[Array[Float]] = sc.parallelize(5 to 104)
       .map(x => Array(x.toFloat))
 
-    val unrolled: RDD[FeatureLabelIndex[Float]] = AnomalyDetector.unroll[Float](data, unrollLength = 3, predictStep = 2)
+    val unrolled = AnomalyDetector.unroll[Float](data, unrollLength = 3, predictStep = 2)
 
     val indicies: Array[Long] = unrolled.map(x => x.index).collect()
     val labels: Array[Float] = unrolled.map(x => x.label).collect()
