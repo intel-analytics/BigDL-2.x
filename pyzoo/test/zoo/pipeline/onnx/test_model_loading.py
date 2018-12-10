@@ -30,6 +30,20 @@ from onnx.backend.test.case import node
 from onnx.backend.test.case.node import pool_op_common
 
 
+class Squeeze(torch.nn.Module):
+    def __init__(self, *dim):
+        super(Squeeze, self).__init__()
+        if dim:
+            self.dim = dim[0]
+        else:
+            self.dim = -1
+
+    def forward(self, x):
+        if (self.dim >= 0):
+            return torch.squeeze(x, dim=self.dim)
+        else:
+            return torch.squeeze(x)
+
 class TestModelLoading(OnnxTestCase):
     def test_onnx_conv2d(self):
         pytorch_model = torch.nn.Sequential(
@@ -536,38 +550,18 @@ class TestModelLoading(OnnxTestCase):
         np.testing.assert_almost_equal(output["z"], z, decimal=5)
 
     def test_onnx_squeeze(self):
-        class Squeeze(torch.nn.Module):
-            def forward(self, x):
-                return torch.squeeze(x)
-
         pytorch_model = Squeeze()
         input_shape_with_batch = (2, 1, 2, 1, 2)
         self.compare_with_pytorch(pytorch_model, input_shape_with_batch)
 
     def test_onnx_squeeze_dim0(self):
-        class Squeeze(torch.nn.Module):
-            def __init__(self, *dim):
-                super(Squeeze, self).__init__()
-                self.dim = dim[0]
-
-            def forward(self, x):
-                return torch.squeeze(x, dim=self.dim)
-
         pytorch_model = Squeeze(0)
-        input_shape_with_batch = (2, 1, 2, 1, 2)
+        input_shape_with_batch = (1, 2, 3)
         self.compare_with_pytorch(pytorch_model, input_shape_with_batch)
 
-    def test_onnx_squeeze_dim(self):
-        class Squeeze(torch.nn.Module):
-            def __init__(self, *dim):
-                super(Squeeze, self).__init__()
-                self.dim = dim[0]
-
-            def forward(self, x):
-                return torch.squeeze(x, dim=self.dim)
-
-        pytorch_model = Squeeze(3)
-        input_shape_with_batch = (2, 1, 2, 1, 2)
+    def test_onnx_squeeze_dim1(self):
+        pytorch_model = Squeeze(1)
+        input_shape_with_batch = (2, 1, 3, 1, 2)
         self.compare_with_pytorch(pytorch_model, input_shape_with_batch)
 
     def test_squeeze(self):
