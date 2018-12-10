@@ -71,6 +71,7 @@ object Train {
 
       val dictionary = new ZooDictionary(idx2w, w2idx)
       val vocabSize = dictionary.getVocabSize()
+      // we are sure _ will not used in the training data so we can use it as padding
       val padId = dictionary.getIndex("_") + 1
 
       val chat1 = Source
@@ -78,7 +79,6 @@ object Train {
         .getLines
         .toList
         .map(_.split(",").map(_.toInt))
-        .map(s => s.filter(id => id != 0))
 
       val chat2List = Source
         .fromFile(param.dataFolder + "chat2_1.txt", "UTF-8")
@@ -87,9 +87,7 @@ object Train {
         .toIterator
 
       val chat2 = SentenceIdxBiPadding(dictionary = dictionary)
-        .apply(chat2List)
-        .map(_.split(",").map(_.toInt))
-        .map(s => s.filter(id => id != 0))
+        .apply(chat2List).map(_.split(",").map(_.toInt))
         .toList
 
       val tokens = sc.parallelize(chat1.zip(chat2))
@@ -100,12 +98,8 @@ object Train {
         .map(chatIdxToLabeledChat(_))
         .map(labeledChatToSample(_))
 
-      val padFeature = Tensor[Float](T(0))
-      val padLabel = Tensor[Float](T(0))
-
       val stdv = 1.0 / math.sqrt(param.embedDim)
 
-      RNG.setSeed(100)
       val embEnc =
         new Embedding(vocabSize, param.embedDim, maskZero = true,
           paddingValue = padId, init = RandomUniform(-stdv, stdv))
@@ -130,7 +124,7 @@ object Train {
       // need fix in checkWithCurrentInputShape KerasLayer.scala to take account -1
       generator.add(TimeDistributed[Float](Dense(vocabSize),
         Shape(Array(2, param.embedDim))))
-      generator.add(TimeDistributed[Float](Activation("softmax")))
+      generator.add(TimeDistributed[Float](Activation("log_softmax")))
 
       val model = Seq2seq(encoder, decoder, Shape(Array(-1)),
         Shape(Array(-1)), generator = generator)
@@ -155,12 +149,6 @@ object Train {
       while (i <= param.nEpochs) {
         model.fit(
           trainSet, batchSize = param.batchSize,
-          featurePaddingParam = PaddingParam[Float](
-            paddingTensor =
-              Some(Array(padFeature, padFeature))),
-          labelPaddingParam = PaddingParam[Float](
-            paddingTensor =
-              Some(Array(padLabel))),
           nbEpoch = i)
 
 //        for (seed <- seeds) {
@@ -204,13 +192,13 @@ object Train {
   def chatIdxToLabeledChat[T: ClassTag](
     chat: (Array[Int], Array[Int]))(implicit ev: TensorNumeric[T])
   : (Array[T], Array[T], Array[T]) = {
-//    val (indices1, indices2) =
-//      (chat._1.map(x => ev.fromType[Int](x + 1)),
-//        chat._2.map(x => ev.fromType[Int](x + 1)))
+    val evOne = ev.fromType(1)
     val (indices1, indices2) =
     (chat._1.map(x => ev.fromType[Int](x)),
       chat._2.map(x => ev.fromType[Int](x)))
-    val label = indices2.drop(1)
+    // raw data is 0 based, and we need change it to 1 based.
+    // Embeddding will add 1 for feature, we need manually add 1 for label
+    val label = indices2.drop(1).clone().map(x => ev.plus(x, evOne))
     (indices1, indices2.take(indices2.length - 1), label)
   }
 
@@ -226,7 +214,9 @@ object Train {
 
     override def apply(prev: Iterator[String]): Iterator[String] = {
       prev.map(x => {
-        val sentence = sentenceStart + "," + x + "," + sentenceEnd
+        val index = x.indexOf(",0")
+        val sentence = if (index == -1) x
+        else sentenceStart + "," + x.slice(0, index) + "," + sentenceEnd + x.slice(index, x.length)
         sentence
       })
     }
