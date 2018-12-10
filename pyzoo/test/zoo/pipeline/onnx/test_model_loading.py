@@ -44,6 +44,7 @@ class Squeeze(torch.nn.Module):
         else:
             return torch.squeeze(x)
 
+
 class TestModelLoading(OnnxTestCase):
     def test_onnx_conv2d(self):
         pytorch_model = torch.nn.Sequential(
