@@ -1,3 +1,19 @@
+/*
+ * Copyright 2018 Analytics Zoo Authors.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package com.intel.analytics.zoo.models.anomalydetection
 
 import com.intel.analytics.bigdl.Criterion
@@ -6,8 +22,7 @@ import com.intel.analytics.bigdl.nn.abstractnn.{AbstractModule, Activity}
 import com.intel.analytics.bigdl.optim.{OptimMethod, ValidationMethod, ValidationResult}
 import com.intel.analytics.bigdl.tensor.Tensor
 import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric
-import com.intel.analytics.bigdl.utils.{Shape, T}
-import com.intel.analytics.zoo.feature.text.TextSet
+import com.intel.analytics.bigdl.utils.Shape
 import com.intel.analytics.zoo.models.common.ZooModel
 import com.intel.analytics.zoo.pipeline.api.keras.layers._
 import com.intel.analytics.zoo.pipeline.api.keras.models.{KerasNet, Sequential}
@@ -16,9 +31,8 @@ import org.apache.spark.rdd.RDD
 import scala.reflect.ClassTag
 
 class AnomalyDetector[T: ClassTag] private(val featureShape: Shape,
-                                            val hiddenLayers: Array[Int] = Array(8, 32, 15),
-                                            val dropouts: Array[Float] = Array(0.2f, 0.2f, 0.2f)
-                                          )
+                                           val hiddenLayers: Array[Int] = Array(8, 32, 15),
+                                           val dropouts: Array[Float] = Array(0.2f, 0.2f, 0.2f))
                                           (implicit ev: TensorNumeric[T])
   extends ZooModel[Tensor[T], Tensor[T], T] {
 
@@ -65,9 +79,7 @@ class AnomalyDetector[T: ClassTag] private(val featureShape: Shape,
 
 }
 
-case class FeatureLabelIndex[T: ClassTag] private(
-                                                   feature: Array[Array[T]],
-                                                   label: T, index: Long) {
+case class FeatureLabelIndex[T: ClassTag](feature: Array[Array[T]], label: T, index: Long) {
   override def toString =
     "value: " + feature
       .map(x => x.mkString("|")).mkString(",") + " label:" + label + " index:" + index
@@ -84,10 +96,10 @@ object AnomalyDetector {
     * @tparam T Numeric type of parameter(e.g. weight, bias). Only support float/double now.
     */
   def apply[@specialized(Float, Double) T: ClassTag](
-                                                      featureShape: Shape,
-                                                      hiddenLayers: Array[Int] = Array(8, 32, 15),
-                                                      dropouts: Array[Float] = Array(0.2f, 0.2f, 0.2f))
-                                                    (implicit ev: TensorNumeric[T]): AnomalyDetector[T] = {
+      featureShape: Shape,
+      hiddenLayers: Array[Int] = Array(8, 32, 15),
+      dropouts: Array[Float] = Array(0.2f, 0.2f, 0.2f))
+      (implicit ev: TensorNumeric[T]): AnomalyDetector[T] = {
     new AnomalyDetector[T](featureShape, hiddenLayers, dropouts).build()
   }
 
@@ -102,8 +114,8 @@ object AnomalyDetector {
     * @tparam T Numeric type of parameter(e.g. weight, bias). Only support float/double now.
     */
   def loadModel[T: ClassTag](
-                              path: String,
-                              weightPath: String = null)(implicit ev: TensorNumeric[T]): AnomalyDetector[T] = {
+      path: String,
+      weightPath: String = null)(implicit ev: TensorNumeric[T]): AnomalyDetector[T] = {
     ZooModel.loadModel(path, weightPath).asInstanceOf[AnomalyDetector[T]]
   }
 
@@ -116,10 +128,9 @@ object AnomalyDetector {
     * @param anomalyFraction Int. What percentage of the number of total values compared to be
     *                        considered as anomalies.
     */
-  def detectAnomalies[T: ClassTag](
-                                    yTruth: RDD[T],
-                                    yPredict: RDD[T],
-                                    anomalyFraction: Int = 5): RDD[(T, T, Any)] = {
+  def detectAnomalies[T: ClassTag](yTruth: RDD[T],
+                                   yPredict: RDD[T],
+                                   anomalyFraction: Int = 5): RDD[(T, T, Any)] = {
     require(yTruth.count() == yPredict.count(), s"length of predictions and truth should match")
     val totalCount = yTruth.count()
 
@@ -141,10 +152,9 @@ object AnomalyDetector {
     * @param threshold Float. The threshold of absolute difference, data points with a difference
     *                  above the threshold is considered as anomalies.
     */
-  def detectAnomalies[T: ClassTag](
-                                    yTruth: RDD[T],
-                                    yPredict: RDD[T],
-                                    threshold: Float): RDD[(T, T, Any)] = {
+  def detectAnomalies[T: ClassTag](yTruth: RDD[T],
+                                   yPredict: RDD[T],
+                                   threshold: Float): RDD[(T, T, Any)] = {
     require(yTruth.count() == yPredict.count(), s"length of predictions and truth should match")
     val anomalies = yTruth.zip(yPredict).map { x =>
       val d = absdiff(x._1, x._2)
@@ -175,7 +185,7 @@ object AnomalyDetector {
     *                     (2,3), 4, 1
     *                     (3,4), 5, 2
     *                     (4,5), 6, 3
-    * */
+    **/
   def unroll[T: ClassTag](dataRdd: RDD[Array[T]],
                           unrollLength: Int,
                           predictStep: Int = 1
