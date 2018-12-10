@@ -1176,3 +1176,55 @@ class TestModelLoading(OnnxTestCase):
         reduced = np.sum(data, axis=tuple(axes), keepdims=keepdims == 1)
         output = OnnxLoader.run_node(node, [data])
         np.testing.assert_almost_equal(output["reduced"], reduced, decimal=5)
+
+    def test_onnx_unsqueeze_axis0(self):
+        class Unsqueeze(torch.nn.Module):
+            def __init__(self, *parameter):
+                super(Unsqueeze, self).__init__()
+                self.dim = parameter[0]
+
+            def forward(self, x):
+                return torch.unsqueeze(x, dim=self.dim)
+
+        pytorch_model = Unsqueeze(0)
+        input_shape_with_batch = (1, 2, 2)
+        self.compare_with_pytorch(pytorch_model, input_shape_with_batch)
+
+    def test_unsqueeze_axis0(self):
+        node = onnx.helper.make_node(
+            'Unsqueeze',
+            inputs=['x'],
+            outputs=['y'],
+            axes=[0],
+        )
+        x = np.random.randn(1, 3, 4, 5).astype(np.float32)
+        y = np.expand_dims(x, axis=0)
+
+        output = OnnxLoader.run_node(node, [x])
+        np.testing.assert_almost_equal(output["y"], y, decimal=5)
+
+    def test_onnx_unsqueeze_axis1(self):
+        class Unsqueeze(torch.nn.Module):
+            def __init__(self, *parameter):
+                super(Unsqueeze, self).__init__()
+                self.dim = parameter[0]
+
+            def forward(self, x):
+                return torch.unsqueeze(x, dim=self.dim)
+
+        pytorch_model = Unsqueeze(1)
+        input_shape_with_batch = (1, 2, 2)
+        self.compare_with_pytorch(pytorch_model, input_shape_with_batch)
+
+    def test_unsqueeze_axis1(self):
+        node = onnx.helper.make_node(
+            'Unsqueeze',
+            inputs=['x'],
+            outputs=['y'],
+            axes=[1],
+        )
+        x = np.random.randn(3, 1, 4, 5).astype(np.float32)
+        y = np.expand_dims(x, axis=1)
+
+        output = OnnxLoader.run_node(node, [x])
+        np.testing.assert_almost_equal(output["y"], y, decimal=5)
