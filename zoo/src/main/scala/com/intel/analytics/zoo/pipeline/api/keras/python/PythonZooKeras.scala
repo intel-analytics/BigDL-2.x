@@ -957,6 +957,17 @@ class PythonZooKeras[T: ClassTag](implicit ev: TensorNumeric[T]) extends PythonZ
     new AUC[T](thresholdNum)
   }
 
+  def createAdamWithSchedule(
+      learningRate: Double = 1e-3,
+      learningRateDecay: Double = 0.0,
+      leaningRateSchedule: SGD.LearningRateSchedule = SGD.Default(),
+      beta1: Double = 0.9,
+      beta2: Double = 0.999,
+      Epsilon: Double = 1e-8): AdamWithSchedule[T] = {
+    new AdamWithSchedule[T](
+      learningRate, learningRateDecay, leaningRateSchedule, beta1, beta2, Epsilon)
+  }
+
   def createZooKerasHardShrink(
       value: Double = 0.5,
       inputShape: JList[Int] = null): HardShrink[T] = {

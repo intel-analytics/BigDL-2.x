@@ -34,12 +34,12 @@ import scala.reflect.ClassTag
  * @tparam T
  */
 class AdamWithSchedule[@specialized(Float, Double) T: ClassTag](
- learningRate: Double = 1e-3,
- learningRateDecay: Double = 0.0,
- learningRateSchedule: LearningRateSchedule = Default(),
- var beta1: Double = 0.9,
- var beta2: Double = 0.999,
- var Epsilon: Double = 1e-8)(implicit ev: TensorNumeric[T])
+  learningRate: Double = 1e-3,
+  learningRateDecay: Double = 0.0,
+  learningRateSchedule: LearningRateSchedule = Default(),
+  var beta1: Double = 0.9,
+  var beta2: Double = 0.999,
+  var Epsilon: Double = 1e-8)(implicit ev: TensorNumeric[T])
   extends SGD[T](learningRate = learningRate,
     learningRateDecay = learningRateDecay, learningRateSchedule = learningRateSchedule) {
 
@@ -56,6 +56,7 @@ class AdamWithSchedule[@specialized(Float, Double) T: ClassTag](
    */
   override def optimize(feval: (Tensor[T]) => (T, Tensor[T]),
                parameter: Tensor[T]): (Tensor[T], Array[T]) = {
+    this.updateHyperParameter()
     if (buffer == null) buffer = Tensor[T]()
     val lr = this.learningRate
     val lrd = this.learningRateDecay
@@ -66,7 +67,7 @@ class AdamWithSchedule[@specialized(Float, Double) T: ClassTag](
     val (fx, dfdx) = feval(parameter)
 
     var timestep = state.getOrElse[Int]("evalCounter", 0)
-
+//    println("getting timestamp: ", timestep)
     val (_s, _r, _denom) =
       if (state.get[Tensor[T]]("s").isDefined) {
         (state.get[Tensor[T]]("s").get, state.get[Tensor[T]]("r").get,
@@ -76,9 +77,9 @@ class AdamWithSchedule[@specialized(Float, Double) T: ClassTag](
           Tensor[T]().resizeAs(dfdx).zero())
       }
 
-    val clr = this.learningRateSchedule.currentRate
+    val clr = - this.learningRateSchedule.currentRate
 //    val clr = lr / (1 + timestep*lrd)
-    println("current lr: ", clr)
+//    println("current lr: ", clr)
     timestep = timestep + 1
 
     /**
@@ -101,6 +102,7 @@ class AdamWithSchedule[@specialized(Float, Double) T: ClassTag](
     val stepSize = clr * sqrt(biasCorrection2) / biasCorrection1
     parameter.addcdiv(ev.fromType[Double](-stepSize), _s, _denom)
 
+//    println("setting timestamp: ", timestep)
     state("evalCounter") = timestep // A tmp tensor to hold the sqrt(v) + epsilon
     state("s") = _s // 1st moment variables
     state("r") = _r // 2nd moment variables
@@ -122,10 +124,6 @@ class AdamWithSchedule[@specialized(Float, Double) T: ClassTag](
     state.delete("r")
   }
 
-  override def updateHyperParameter(config: Table, state: Table): Unit = {
-    val lrSchedule = config.get[LearningRateSchedule]("learningRateSchedule").getOrElse(Default())
-    lrSchedule.updateHyperParameter(config, state)
-  }
 
   override def getLearningRate(): Double = this.learningRate
 }

@@ -20,8 +20,10 @@ import java.io.File
 
 import com.intel.analytics.bigdl.models.inception.Inception_v1
 import com.intel.analytics.bigdl.models.lenet.LeNet5
+import com.intel.analytics.bigdl.nn.VariableFormat.Default
 import com.intel.analytics.bigdl.nn._
-import com.intel.analytics.bigdl.optim.{Adam, LBFGS, Loss, Trigger}
+import com.intel.analytics.bigdl.optim.SGD.{EpochDecay, Plateau}
+import com.intel.analytics.bigdl.optim._
 import com.intel.analytics.bigdl.tensor.Tensor
 import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric.NumericFloat
 import com.intel.analytics.bigdl.utils.Engine
@@ -109,12 +111,15 @@ class NNClassifierSpec extends FlatSpec with Matchers with BeforeAndAfter {
   }
 
   "NNClassifier" should "support model with Sigmoid" in {
+    Logger.getLogger("org").setLevel(Level.WARN)
     val model = new Sequential().add(Linear[Float](6, 10)).add(Linear[Float](10, 1))
-      .add(Sigmoid[Float])
+      .add(Sigmoid[Float]())
     val criterion = BCECriterion[Float]()
     val classifier = NNClassifier(model, criterion, Array(6))
-      .setOptimMethod(new Adam[Float]())
-      .setLearningRate(0.01)
+      .setOptimMethod(new AdamWithSchedule[Float](learningRate = 0.01
+//        ,learningRateSchedule = SGD.Default()
+        ,learningRateSchedule = Plateau("Loss", 0.99f, 1, "min", 0.01f, 0, 1e-15f)
+      ))
       .setBatchSize(10)
       .setMaxEpoch(10)
     val data = sc.parallelize(smallData.map(t => (t._1, t._2 - 1.0)))
