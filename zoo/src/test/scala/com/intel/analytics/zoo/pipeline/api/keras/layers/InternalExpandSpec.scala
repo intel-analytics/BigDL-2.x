@@ -36,6 +36,19 @@ class InternalExpandSpec extends KerasBaseSpec {
     val gradInput = layer.backward(input, gradOutput)
     require(gradInput.nElement() == input.nElement())
   }
+
+  "InternalExpand with expand batch dim" should "generate correct output" in {
+    val tgtSizes = Array(5, 4, 3)
+    val layer = InternalExpand[Float](tgtSizes, true)
+    val input = Tensor[Float](1, 4, 3).rand()
+    val gradOutput = Tensor[Float](5, 4, 3).rand()
+    val output = layer.forward(input)
+    for (i <- 1 to 5) {
+      require(output.narrow(1, i, 1).almostEqual(input, 1e-8) == true)
+    }
+    val gradInput = layer.backward(input, gradOutput)
+    require(gradInput.nElement() == input.nElement())
+  }
 }
 
 class ExpandSerialTest extends ModuleSerializationTest {

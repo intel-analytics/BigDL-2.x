@@ -23,7 +23,15 @@ import com.intel.analytics.bigdl.utils.{T, Table}
 
 import scala.reflect.ClassTag
 
-private[zoo] class InternalExpand[T: ClassTag](tgtSizes: Array[Int], includeBatch: Boolean = false)
+/**
+ * Expand tensor to configured size
+
+ * @param tgtSizes target tensor sizes
+ * @param expandBatchDim whether need expand batch dim
+ * @tparam T Numeric type of parameter(e.g. weight, bias). Only support float/double now.
+ */
+private[zoo] class InternalExpand[T: ClassTag](tgtSizes: Array[Int],
+  expandBatchDim: Boolean = false)
   (implicit ev: TensorNumeric[T]) extends AbstractModule[Tensor[T], Tensor[T], T] {
 
   override def updateOutput(input: Tensor[T]): Tensor[T] = {
@@ -34,7 +42,7 @@ private[zoo] class InternalExpand[T: ClassTag](tgtSizes: Array[Int], includeBatc
     val tensorSize = input.size()
 
     // check if need batch dim
-    var i = if (includeBatch) 0 else 1
+    var i = if (expandBatchDim) 0 else 1
     while (i < tensorDim) {
       if (tensorSize(i) == 1) {
         tensorSize(i) = tgtSizes(i)
@@ -56,7 +64,7 @@ private[zoo] class InternalExpand[T: ClassTag](tgtSizes: Array[Int], includeBatc
 
     gradInput = Tensor[T](tensorSize)
     // check if need batch dim
-    var i = if (includeBatch) 0 else 1
+    var i = if (expandBatchDim) 0 else 1
 
     while (i < tensorDim) {
       if (tensorSize(i) == 1) {
