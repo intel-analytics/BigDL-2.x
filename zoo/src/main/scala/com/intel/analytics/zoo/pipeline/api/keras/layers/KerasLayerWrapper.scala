@@ -43,7 +43,7 @@ private[zoo] object LayerWrapperByForward {
     singleShape.toSingle().copyToArray(newShape)
     for (i <- 0 until newShape.length) {
       if (newShape(i) == -1) {
-        newShape(i) = 2
+        newShape(i) = 1
       }
     }
     Tensor[T](newShape).fill(ev.one)

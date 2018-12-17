@@ -68,6 +68,7 @@ class TextClassifier[T: ClassTag] private(
     model
   }
 
+  // For the following methods, please refer to KerasNet for documentation.
   def compile(
       optimizer: OptimMethod[T],
       loss: Criterion[T],
@@ -94,6 +95,14 @@ class TextClassifier[T: ClassTag] private(
       x: TextSet,
       batchPerThread: Int): TextSet = {
     model.asInstanceOf[KerasNet[T]].predict(x, batchPerThread)
+  }
+
+  def setTensorBoard(logDir: String, appName: String): Unit = {
+    model.asInstanceOf[KerasNet[T]].setTensorBoard(logDir, appName)
+  }
+
+  def setCheckpoint(path: String, overWrite: Boolean = true): Unit = {
+    model.asInstanceOf[KerasNet[T]].setCheckpoint(path, overWrite)
   }
 }
 

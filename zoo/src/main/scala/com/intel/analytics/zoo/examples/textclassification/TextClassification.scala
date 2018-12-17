@@ -77,13 +77,13 @@ object TextClassification {
       opt[Int]('b', "batchSize")
         .text("The number of samples per gradient update")
         .action((x, c) => c.copy(batchSize = x))
-      opt[Int]("nbEpoch")
+      opt[Int]('e', "nbEpoch")
         .text("The number of epochs to train the model")
         .action((x, c) => c.copy(nbEpoch = x))
       opt[Double]('l', "learningRate")
         .text("The learning rate for the TextClassifier model")
         .action((x, c) => c.copy(learningRate = x))
-      opt[String]("model")
+      opt[String]('m', "model")
         .text("Model snapshot location if any")
         .action((x, c) => c.copy(model = Some(x)))
     }
@@ -94,8 +94,9 @@ object TextClassification {
       val textSet = TextSet.read(param.dataPath)
         .toDistributed(sc, param.partitionNum)
       println("Processing text dataset...")
-      val transformed = textSet.tokenize().normalize().shapeSequence(param.sequenceLength)
-        .word2idx(removeTopN = 10, maxWordsNum = param.maxWordsNum).generateSample()
+      val transformed = textSet.tokenize().normalize()
+        .word2idx(removeTopN = 10, maxWordsNum = param.maxWordsNum)
+        .shapeSequence(param.sequenceLength).generateSample()
       val Array(trainTextSet, valTextSet) = transformed.randomSplit(
         Array(param.trainingSplit, 1 - param.trainingSplit))
 

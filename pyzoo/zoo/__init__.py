@@ -29,3 +29,5 @@ JavaCreator.add_creator_class("com.intel.analytics.zoo.feature.python.PythonText
 JavaCreator.add_creator_class("com.intel.analytics.zoo.pipeline.api.net.python.PythonZooNet")
 for clz in creator_classes:
     JavaCreator.add_creator_class(clz)
+
+__version__ = "0.4.0.dev0"

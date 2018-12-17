@@ -34,7 +34,6 @@ from zoo.pipeline.api.keras.engine.topology import ZooKerasLayer, KerasNet
 from bigdl.optim.optimizer import Optimizer, EveryEpoch
 from bigdl.optim.optimizer import MaxEpoch
 
-
 if sys.version >= '3':
     long = int
     unicode = str
@@ -382,8 +381,10 @@ class TFOptimizer:
         grads_vars = tf.train.GradientDescentOptimizer(0).compute_gradients(loss)
         variables = []
         grads = []
+        from zoo.util.tf import process_grad
         for (grad, var) in grads_vars:
             variables.append(var)
+            grad = process_grad(grad)
             grads.append(grad)
         self.export_dir = tempfile.mkdtemp()
         all_required_inputs = _find_placeholders([loss])
