@@ -80,6 +80,7 @@ class OnnxTestCase(ZooTestCase):
             input_data_with_batch[0] if len(input_data_with_batch) == 1 else input_data_with_batch)
         if compare_result:
             self.assert_allclose(pytorch_out.detach().numpy(), zoutput, rtol, atol)
+            assert tuple(pytorch_out.size()[1:]) == zmodel.get_output_shape()[1:]
 
     def gen_rnd(self, shape, low=-1.0, high=1.0):
         return np.random.uniform(low, high, np.prod(shape)) \
