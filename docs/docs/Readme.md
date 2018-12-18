@@ -8,7 +8,7 @@ pip install mkdocs==0.16.3
 cd analytics-zoo
 docs/gen_site.py -m 8080
 ```
-Then choose correct proxy and open the link. 
+Then choose correct proxy and open the link of your ip address and port number. 
 
 Tips:
 * Please use python27, for now python3 is not supported.
@@ -17,3 +17,4 @@ Tips:
 ```
 python -m pip install --user --upgrade pip==9.0.3
 ```
+
