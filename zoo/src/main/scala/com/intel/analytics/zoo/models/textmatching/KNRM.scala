@@ -129,7 +129,7 @@ object KNRM {
       exactSigma: Double = 0.001,
       targetMode: String = "ranking")(implicit ev: TensorNumeric[T]): KNRM[T] = {
     val (vocabSize, embedSize, embedWeights) = WordEmbedding.prepareEmbedding[T](
-      embeddingFile, wordIndex, randomizeUnknownWords = true, normalizeEmbedding = true)
+      embeddingFile, wordIndex, randomizeUnknown = true, normalize = true)
     new KNRM[T](text1Length, text2Length, vocabSize, embedSize, embedWeights,
       trainEmbed, kernelNum, sigma, exactSigma, targetMode).build()
   }

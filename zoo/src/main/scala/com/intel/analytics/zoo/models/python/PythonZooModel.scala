@@ -337,11 +337,11 @@ def zooModelSetEvaluateStatus(
   def prepareEmbedding(
       embeddingFile: String,
       wordIndex: JMap[String, Int] = null,
-      randomizeUnknownWords: Boolean = false,
-      normalizeEmbedding: Boolean = false): JTensor = {
+      randomizeUnknown: Boolean = false,
+      normalize: Boolean = false): JTensor = {
     val (_, _, embedWeights) = WordEmbedding.prepareEmbedding[T](
       embeddingFile, if (wordIndex!= null) wordIndex.asScala.toMap else null,
-      randomizeUnknownWords, normalizeEmbedding)
+      randomizeUnknown, normalize)
     toJTensor(embedWeights)
   }
 
