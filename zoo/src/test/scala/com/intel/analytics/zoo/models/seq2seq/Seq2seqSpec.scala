@@ -33,8 +33,8 @@ class Seq2seqSpec extends FlatSpec with Matchers with BeforeAndAfter {
     val batchSize = 2
     val seqLen = 2
     val numLayer = 1
-    val encoder = Encoder[Float]("lstm", numLayer, hiddenSize, Embedding[Float](10, inputSize))
-    val decoder = Decoder[Float]("lstm", numLayer, hiddenSize, Embedding[Float](10, inputSize))
+    val encoder = RNNEncoder[Float]("lstm", numLayer, hiddenSize, Embedding[Float](10, inputSize))
+    val decoder = RNNDecoder[Float]("lstm", numLayer, hiddenSize, Embedding[Float](10, inputSize))
 
     val input = Tensor.ones[Float](batchSize, seqLen)
     val input2 = Tensor[Float](batchSize, seqLen)
@@ -63,8 +63,8 @@ class Seq2seqSpec extends FlatSpec with Matchers with BeforeAndAfter {
     val batchSize = 1
     val seqLen = 2
     val numLayer = 1
-    val encoder = Encoder[Float]("lstm", numLayer, encoderHiddenSize, Embedding[Float](10, inputSize))
-    val decoder = Decoder[Float]("lstm", numLayer, decoderHiddenSize, Embedding[Float](10, decoderHiddenSize))
+    val encoder = RNNEncoder[Float]("lstm", numLayer, encoderHiddenSize, Embedding[Float](10, inputSize))
+    val decoder = RNNDecoder[Float]("lstm", numLayer, decoderHiddenSize, Embedding[Float](10, decoderHiddenSize))
 
     val input = Tensor.ones[Float](batchSize, seqLen)
     val input2 = Tensor[Float](batchSize, seqLen)
@@ -85,8 +85,8 @@ class Seq2seqSpec extends FlatSpec with Matchers with BeforeAndAfter {
     val batchSize = 1
     val seqLen = 2
     val numLayer = 3
-    val encoder = Encoder[Float]("lstm", numLayer, hiddenSize, Embedding[Float](10, inputSize))
-    val decoder = Decoder[Float]("lstm", numLayer, hiddenSize, Embedding[Float](10, inputSize))
+    val encoder = RNNEncoder[Float]("lstm", numLayer, hiddenSize, Embedding[Float](10, inputSize))
+    val decoder = RNNDecoder[Float]("lstm", numLayer, hiddenSize, Embedding[Float](10, inputSize))
 
     val input = Tensor.ones[Float](batchSize, seqLen)
     val input2 = Tensor[Float](batchSize, seqLen)
@@ -114,9 +114,9 @@ class Seq2seqSpec extends FlatSpec with Matchers with BeforeAndAfter {
     val batchSize = 1
     val seqLen = 2
     val numLayer = 3
-    val encoder = Encoder[Float]("lstm", numLayer, encoderHiddenSize,
+    val encoder = RNNEncoder[Float]("lstm", numLayer, encoderHiddenSize,
       Embedding[Float](10, inputSize))
-    val decoder = Decoder[Float]("lstm", numLayer, decoderHiddenSize,
+    val decoder = RNNDecoder[Float]("lstm", numLayer, decoderHiddenSize,
       Embedding[Float](10, decoderHiddenSize))
 
     val input = Tensor.ones[Float](batchSize, seqLen)
@@ -137,8 +137,8 @@ class Seq2seqSpec extends FlatSpec with Matchers with BeforeAndAfter {
     val batchSize = 2
     val seqLen = 4
     val numLayer = 2
-    val encoder = Encoder[Float]("SimpleRNN", numLayer, hiddenSize)
-    val decoder = Decoder[Float]("SimpleRNN", numLayer, hiddenSize)
+    val encoder = RNNEncoder[Float]("SimpleRNN", numLayer, hiddenSize)
+    val decoder = RNNDecoder[Float]("SimpleRNN", numLayer, hiddenSize)
 
     val input = Tensor[Float](batchSize, seqLen, inputSize).rand()
     val input2 = Tensor[Float](batchSize, seqLen, inputSize).rand()

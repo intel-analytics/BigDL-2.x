@@ -32,16 +32,16 @@ import scala.collection.mutable.ArrayBuffer
 import scala.reflect.ClassTag
 
 /**
- * [[Decoder]] A generic recurrent neural network decoder
+ * [[RNNDecoder]] A generic recurrent neural network decoder
+ *
  * @param rnns rnn layers used for decoder, support stacked rnn layers
  * @param embedding embedding layer in decoder
  * @param inputShape shape of input
  */
-class Decoder[T: ClassTag](val rnns: Array[Recurrent[T]],
+class RNNDecoder[T: ClassTag](val rnns: Array[Recurrent[T]],
   val embedding: KerasLayer[Tensor[T], Tensor[T], T],
   val inputShape: Shape = null)(implicit ev: TensorNumeric[T])
-  extends KerasLayer[Activity, Tensor[T], T](KerasUtils.addBatch(inputShape))
-    with Net {
+  extends Decoder {
 
   override def doBuild(inputShape: Shape): AbstractModule[Activity, Tensor[T], T] = {
     val layer = Sequential()
@@ -78,21 +78,23 @@ class Decoder[T: ClassTag](val rnns: Array[Recurrent[T]],
   }
 }
 
-object Decoder {
+object RNNDecoder {
   /**
-   * [[Decoder]] A generic recurrent neural network decoder
+   * [[RNNDecoder]] A generic recurrent neural network decoder
+ *
    * @param rnns rnn layers used for decoder, support stacked rnn layers
    * @param embedding embedding layer in decoder
    * @param inputShape shape of input
    */
   def apply[@specialized(Float, Double) T: ClassTag](rnns: Array[Recurrent[T]],
     embedding: KerasLayer[Tensor[T], Tensor[T], T],
-    inputShape: Shape)(implicit ev: TensorNumeric[T]): Decoder[T] = {
-    new Decoder[T](rnns, embedding, inputShape)
+    inputShape: Shape)(implicit ev: TensorNumeric[T]): RNNDecoder[T] = {
+    new RNNDecoder[T](rnns, embedding, inputShape)
   }
 
   /**
-   * [[Decoder]] A generic recurrent neural network decoder
+    * [[RNNDecoder]] A generic recurrent neural network decoder
+ *
    * @param rnnType style of recurrent unit, one of [SimpleRNN, LSTM, GRU]
    * @param numLayers number of layers used in decoder
    * @param hiddenSize hidden size of decoder
@@ -103,7 +105,7 @@ object Decoder {
     numLayers: Int,
     hiddenSize: Int,
     embedding: KerasLayer[Tensor[T], Tensor[T], T] = null,
-    inputShape: Shape = null)(implicit ev: TensorNumeric[T]): Decoder[T] = {
+    inputShape: Shape = null)(implicit ev: TensorNumeric[T]): RNNDecoder[T] = {
     val rnn = new ArrayBuffer[Recurrent[T]]()
     rnnType.toLowerCase() match {
       case "lstm" =>
@@ -116,6 +118,6 @@ object Decoder {
         s"Decoder(rnn: Array[Recurrent[T]], embedding: KerasLayer[Tensor[T], Tensor[T], T])" +
         s"to create a decoder")
     }
-    Decoder[T](rnn.toArray, embedding, inputShape)
+    RNNDecoder[T](rnn.toArray, embedding, inputShape)
   }
 }
