@@ -111,13 +111,11 @@ class NNClassifierSpec extends FlatSpec with Matchers with BeforeAndAfter {
   }
 
   "NNClassifier" should "support model with Sigmoid" in {
-    Logger.getLogger("org").setLevel(Level.WARN)
     val model = new Sequential().add(Linear[Float](6, 10)).add(Linear[Float](10, 1))
       .add(Sigmoid[Float]())
     val criterion = BCECriterion[Float]()
     val classifier = NNClassifier(model, criterion, Array(6))
       .setOptimMethod(new AdamWithSchedule[Float](learningRate = 0.01
-//        ,learningRateSchedule = SGD.Default()
         ,learningRateSchedule = Plateau("Loss", 0.99f, 1, "min", 0.01f, 0, 1e-15f)
       ))
       .setBatchSize(10)

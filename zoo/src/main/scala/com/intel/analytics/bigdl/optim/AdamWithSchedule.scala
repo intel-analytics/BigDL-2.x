@@ -25,13 +25,13 @@ import scala.math._
 import scala.reflect.ClassTag
 
 /**
- * An implementation of Adam http://arxiv.org/pdf/1412.6980.pdf
+ * An implementation of Adam http://arxiv.org/pdf/1412.6980.pdf with learning rate schedule.
  * @param learningRate learning rate
  * @param learningRateDecay learning rate decay
+ * @param learningRateSchedule learning rate schedule
  * @param beta1 first moment coefficient
  * @param beta2 second moment coefficient
  * @param Epsilon for numerical stability
- * @tparam T
  */
 class AdamWithSchedule[@specialized(Float, Double) T: ClassTag](
   learningRate: Double = 1e-3,
@@ -67,7 +67,6 @@ class AdamWithSchedule[@specialized(Float, Double) T: ClassTag](
     val (fx, dfdx) = feval(parameter)
 
     var timestep = state.getOrElse[Int]("evalCounter", 0)
-//    println("getting timestamp: ", timestep)
     val (_s, _r, _denom) =
       if (state.get[Tensor[T]]("s").isDefined) {
         (state.get[Tensor[T]]("s").get, state.get[Tensor[T]]("r").get,
@@ -79,7 +78,6 @@ class AdamWithSchedule[@specialized(Float, Double) T: ClassTag](
 
     val clr = - this.learningRateSchedule.currentRate
 //    val clr = lr / (1 + timestep*lrd)
-//    println("current lr: ", clr)
     timestep = timestep + 1
 
     /**
@@ -102,7 +100,6 @@ class AdamWithSchedule[@specialized(Float, Double) T: ClassTag](
     val stepSize = clr * sqrt(biasCorrection2) / biasCorrection1
     parameter.addcdiv(ev.fromType[Double](-stepSize), _s, _denom)
 
-//    println("setting timestamp: ", timestep)
     state("evalCounter") = timestep // A tmp tensor to hold the sqrt(v) + epsilon
     state("s") = _s // 1st moment variables
     state("r") = _r // 2nd moment variables
@@ -123,7 +120,4 @@ class AdamWithSchedule[@specialized(Float, Double) T: ClassTag](
     state.delete("s")
     state.delete("r")
   }
-
-
-  override def getLearningRate(): Double = this.learningRate
 }

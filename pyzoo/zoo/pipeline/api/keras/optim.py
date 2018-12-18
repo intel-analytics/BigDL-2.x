@@ -20,6 +20,7 @@ if sys.version >= '3':
     long = int
     unicode = str
 
+
 class AdamWithSchedule(OptimMethod):
     """
 

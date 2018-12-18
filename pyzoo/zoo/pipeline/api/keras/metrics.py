@@ -17,7 +17,6 @@
 from bigdl.util.common import *
 from zoo.pipeline.api.keras.base import ZooKerasCreator
 
-
 if sys.version >= '3':
     long = int
     unicode = str
