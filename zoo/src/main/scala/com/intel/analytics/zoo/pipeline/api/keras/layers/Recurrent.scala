@@ -46,6 +46,11 @@ abstract class Recurrent[T: ClassTag](
     model.asInstanceOf[AbstractModule[Tensor[T], Tensor[T], T]]
   }
 
+  def getHiddenShape(): Array[Int] = {
+    require(this.isBuilt(), "Cannot getHiddenShape before call doBuild!")
+    rec.getHiddenShape()
+  }
+
   def getHiddenState(): Activity = {
     rec.getHiddenState()
   }

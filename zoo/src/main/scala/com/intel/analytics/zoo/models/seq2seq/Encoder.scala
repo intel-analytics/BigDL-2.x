@@ -55,16 +55,21 @@ class Encoder[T: ClassTag](val rnns: Array[Recurrent[T]],
     // batch x seq x hidden
     val rnnShape = labor.getOutputShape()
     val sizes = rnnShape.toSingle().toArray
-    val statesShape = if (rnns.head.getName().toLowerCase.contains("lstm")) {
-      val innerShape =
-        MultiShape(Array.fill[Shape](2)(SingleShape(List(sizes(0)) ++ sizes.drop(2))).toList)
-      val shape = Array.fill[Shape](rnns.length)(innerShape)
-      MultiShape(shape.toList)
-    } else {
-      val shape = Array.fill[Shape](rnns.length)(SingleShape(List(sizes(0)) ++ sizes.drop(2)))
-      MultiShape(shape.toList)
+
+    val statesShape = rnns.map { rnn =>
+      SingleShape(List(sizes(0)) ++ rnn.getHiddenShape().toList)
     }
-    Shape(List(rnnShape, statesShape))
+
+//    val statesShape = if (rnns.head.getName().toLowerCase.contains("lstm")) {
+//      val innerShape =
+//        MultiShape(Array.fill[Shape](2)(SingleShape(List(sizes(0)) ++ sizes.drop(2))).toList)
+//      val shape = Array.fill[Shape](rnns.length)(innerShape)
+//      MultiShape(shape.toList)
+//    } else {
+//      val shape = Array.fill[Shape](rnns.length)(SingleShape(List(sizes(0)) ++ sizes.drop(2)))
+//      MultiShape(shape.toList)
+//    }
+    Shape(List(rnnShape, MultiShape(statesShape.toList)))
   }
 
   // ouput is T(rnnOutput, T(layer1states, layer2states, ...))

@@ -35,22 +35,22 @@ import scala.reflect.ClassTag
  * [[Seq2seq]] A trainable interface for a simple, generic encoder + decoder model
  * @param encoder an encoder object
  * @param decoder a decoder object
- * @param encoderInputShape shape of encoder input, for variable length, please input -1
- * @param decoderInputShape shape of decoder input, for variable length, please input -1
+ * @param inputShape shape of encoder input, for variable length, please input -1
+ * @param outputShape shape of decoder input, for variable length, please input -1
  * @param bridge connect encoder and decoder
  */
 class Seq2seq[T: ClassTag](
   val encoder: Encoder[T],
   val decoder: Decoder[T],
-  encoderInputShape: Shape,
-  decoderInputShape: Shape,
+  inputShape: Shape,
+  outputShape: Shape,
   bridge: Bridge[T] = null,
   generator: KerasLayer[Activity, Activity, T] = null)
   (implicit ev: TensorNumeric[T]) extends ZooModel[Table, Tensor[T], T] {
 
   override def buildModel(): AbstractModule[Table, Tensor[T], T] = {
-    val encoderInput = Input(encoderInputShape)
-    val decoderInput = Input(decoderInputShape)
+    val encoderInput = Input(inputShape)
+    val decoderInput = Input(outputShape)
 
     val encoderOutput = encoder.inputs(encoderInput)
 

@@ -40,6 +40,10 @@ class InternalRecurrent[T: ClassTag](
     this
   }
 
+  def getHiddenShape(): Array[Int] = {
+    this.topology.hiddensShape
+  }
+
   // get gradient hidden state at the first time step
   def getGradHiddenState(): Activity = {
     require(cells != null && cells(0).gradInput != null,
