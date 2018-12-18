@@ -130,6 +130,15 @@ class WordEmbedding(ZooKerasLayer):
                              embedding_file)
 
 
+def prepare_embedding(embedding_file, word_index=None,
+                      randomize_unknown=True, normalize=True):
+    return callBigDlFunc("float", "prepareEmbedding",
+                         embedding_file,
+                         word_index,
+                         randomize_unknown,
+                         normalize).to_ndarray()
+    
+
 class SparseEmbedding(ZooKerasLayer):
     """
     SparseEmbedding is the sparse version of layer Embedding.

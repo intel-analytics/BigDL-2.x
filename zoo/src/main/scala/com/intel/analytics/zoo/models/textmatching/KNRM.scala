@@ -149,10 +149,11 @@ object KNRM {
       kernelNum: Int,
       sigma: Double,
       exactSigma: Double,
+      targetMode: String,
       model: AbstractModule[Activity, Activity, T])
     (implicit ev: TensorNumeric[T]): KNRM[T] = {
     new KNRM[T](text1Length, text2Length, vocabSize, embedSize, embedWeights,
-      trainEmbed, kernelNum, sigma, exactSigma).addModel(model)
+      trainEmbed, kernelNum, sigma, exactSigma, targetMode).addModel(model)
   }
 
   /**

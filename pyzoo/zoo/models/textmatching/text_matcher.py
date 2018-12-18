@@ -29,10 +29,11 @@ class TextMatcher(ZooModel):
     Referred to MatchZoo implementation: https://github.com/NTMC-Community/MatchZoo
     """
     def __init__(self, text1_length, vocab_size, embed_size=300, embed_weights=None,
-                 train_embed=True, bigdl_type="float"):
+                 train_embed=True, target_mode="ranking", bigdl_type="float"):
         self.text1_length = text1_length
         self.vocab_size = vocab_size
         self.embed_size = embed_size
         self.embed_weights = embed_weights
         self.train_embed = train_embed
+        self.target_mode = target_mode
         self.bigdl_type = bigdl_type

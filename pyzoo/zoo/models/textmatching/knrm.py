@@ -19,7 +19,7 @@ import sys
 import zoo.pipeline.api.autograd as A
 from zoo.models.common.zoo_model import ZooModel
 from zoo.models.textmatching.text_matcher import TextMatcher
-from zoo.pipeline.api.keras.layers import Input, Embedding, Dense, Squeeze
+from zoo.pipeline.api.keras.layers import Input, Embedding, Dense, Squeeze, prepare_embedding
 from zoo.pipeline.api.keras.models import Model
 from bigdl.util.common import callBigDlFunc, JTensor
 
@@ -47,10 +47,13 @@ class KNRM(TextMatcher):
     exact_sigma: Float. The sigma used for the kernel that harvests exact matches
                  in the case where RBF mu=1.0. Default is 0.001.
     """
-    def __init__(self, text1_length, text2_length, vocab_size, embed_size=300, embed_weights=None,
-                 train_embed=True, kernel_num=21, sigma=0.1, exact_sigma=0.001, bigdl_type="float"):
+    def __init__(self, text1_length, text2_length, embedding_file, word_index=None,
+                 train_embed=True, kernel_num=21, sigma=0.1, exact_sigma=0.001,
+                 target_mode="ranking", bigdl_type="float"):
+        embed_weights = prepare_embedding(embedding_file, word_index)
+        vocab_size, embed_size = embed_weights.shape
         super(KNRM, self).__init__(text1_length, vocab_size, embed_size,
-                                   embed_weights, train_embed, bigdl_type)
+                                   embed_weights, train_embed, target_mode, bigdl_type)
         self.text2_length = text2_length
         self.kernel_num = kernel_num
         self.sigma = float(sigma)
@@ -66,6 +69,7 @@ class KNRM(TextMatcher):
                                           self.kernel_num,
                                           self.sigma,
                                           self.exact_sigma,
+                                          self.target_mode,
                                           self.model)
 
     def build_model(self):
