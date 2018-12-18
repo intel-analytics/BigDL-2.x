@@ -39,13 +39,14 @@ def get_analytics_zoo_packages():
 packages = get_analytics_zoo_packages()
 
 try:
-    exec(open('zoo/version.py').read())
+    with open('zoo/__init__.py', 'r') as f:
+        for line in f.readlines():
+            if '__version__' in line:
+                VERSION = line.strip().replace("\"", "").split(" ")[2]
 except IOError:
     print("Failed to load Analytics Zoo version file for packaging. \
       You must be in Analytics Zoo's pyzoo dir.")
     sys.exit(-1)
-
-VERSION = __version__
 
 building_error_msg = """
 If you are packing python API from zoo source, you must build Analytics Zoo first
@@ -87,13 +88,13 @@ def setup_package():
     metadata = dict(
         name='analytics-zoo',
         version=VERSION,
-        description='Analytics + AI platform for Apache Spark and BigDL',
+        description='Distributed Tensorflow, Keras and BigDL on Apache Spark',
         author='Analytics Zoo Authors',
-        author_email='analytics-zoo-user-group@googlegroups.com',
+        author_email='bigdl-user-group@googlegroups.com',
         license='Apache License, Version 2.0',
         url='https://github.com/intel-analytics/analytics-zoo',
         packages=packages,
-        install_requires=['pyspark>=2.2,<2.3', 'bigdl==0.6.0'],
+        install_requires=['pyspark>=2.2,<2.4', 'bigdl==0.7.1'],
         dependency_links=['https://d3kbcqa49mib13.cloudfront.net/spark-2.0.0-bin-hadoop2.7.tgz'],
         include_package_data=True,
         package_data={"zoo.share": ['lib/analytics-zoo*with-dependencies.jar', 'conf/*', 'bin/*',

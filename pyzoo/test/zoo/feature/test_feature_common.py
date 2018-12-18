@@ -16,10 +16,11 @@
 
 import pytest
 from bigdl.transform.vision.image import *
+from test.zoo.pipeline.utils.test_utils import ZooTestCase
 from zoo.feature.common import *
 
 
-class TestFeatureCommon():
+class TestFeatureCommon(ZooTestCase):
 
     def test_BigDL_adapter(self):
         new_preprocessing = BigDLAdapter(Resize(1, 1))

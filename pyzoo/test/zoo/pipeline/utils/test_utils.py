@@ -16,13 +16,13 @@
 
 from __future__ import print_function
 
+import logging
+import shutil
 from unittest import TestCase
 
 import keras.backend as K
-from bigdl.keras.converter import WeightLoader
-from bigdl.util.common import *
 
-import logging
+from zoo.common.nncontext import *
 
 np.random.seed(1337)  # for reproducibility
 
@@ -37,12 +37,15 @@ class ZooTestCase(TestCase):
         It is invoked for every test method of a class.
         """
         K.set_image_dim_ordering("th")
-        sparkConf = create_spark_conf().setMaster("local[4]").setAppName("zoo test case")
-        self.sc = get_spark_context(sparkConf)
+        sparkConf = init_spark_conf().setMaster("local[4]").setAppName("zoo test case")
+        assert str(sparkConf.get("spark.shuffle.reduceLocality.enabled")) == "false"
+        assert str(sparkConf.get("spark.serializer")) \
+            == "org.apache.spark.serializer.JavaSerializer"
+        assert SparkContext._active_spark_context is None
+        self.sc = init_nncontext(sparkConf)
         self.sc.setLogLevel("ERROR")
-
         self.sqlContext = SQLContext(self.sc)
-        init_engine()
+        self.tmp_dirs = []
 
     def teardown_method(self, method):
         """
@@ -50,6 +53,14 @@ class ZooTestCase(TestCase):
         """
         K.set_image_dim_ordering("th")
         self.sc.stop()
+        if hasattr(self, "tmp_dirs"):
+            for d in self.tmp_dirs:
+                shutil.rmtree(d)
+
+    def create_temp_dir(self):
+        tmp_dir = tempfile.mkdtemp()
+        self.tmp_dirs.append(tmp_dir)
+        return tmp_dir
 
     def assert_allclose(self, a, b, rtol=1e-6, atol=1e-6, msg=None):
         # from tensorflow
@@ -112,6 +123,7 @@ class ZooTestCase(TestCase):
         """
         Compare forward results for Keras model against Zoo Keras API model.
         """
+        from bigdl.keras.converter import WeightLoader
         WeightLoader.load_weights_from_kmodel(zmodel, kmodel)
         zmodel.training(is_training=False)
         bigdl_output = zmodel.forward(input_data)
@@ -133,7 +145,7 @@ class ZooTestCase(TestCase):
         """
         model_class = model.__class__
         tmp_path = create_tmp_path() + ".bigdl"
-        model.save_model(tmp_path)
+        model.save_model(tmp_path, over_write=True)
         loaded_model = model_class.load_model(tmp_path)
         assert isinstance(loaded_model, model_class)
         self.compare_output_and_grad_input(model, loaded_model, input_data, rtol, atol)

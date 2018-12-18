@@ -28,7 +28,7 @@ VENV="venv"
 virtualenv $VENV
 virtualenv --relocatable $VENV
 . $VENV/bin/activate
-pip install -U -r requirements.txt
+pip install -U -r ${ANALYTICS_ZOO_HOME}/bin/requirements.txt
 zip -q -r $VENV.zip $VENV
 
 

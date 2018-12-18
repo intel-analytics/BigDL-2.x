@@ -18,13 +18,17 @@ package com.intel.analytics.zoo.models.python
 
 import java.util.{List => JList, Map => JMap}
 
+import com.intel.analytics.bigdl.Criterion
 import com.intel.analytics.bigdl.dataset.PaddingParam
 import com.intel.analytics.bigdl.nn.abstractnn.{AbstractModule, Activity}
-import com.intel.analytics.bigdl.python.api.{PythonBigDL, Sample}
+import com.intel.analytics.bigdl.optim.{OptimMethod, ValidationMethod, ValidationResult}
+import com.intel.analytics.bigdl.python.api.{EvaluatedResult, JTensor, Sample}
 import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric
 import com.intel.analytics.bigdl.transform.vision.image.ImageFeature
+import com.intel.analytics.zoo.common.PythonZoo
 import com.intel.analytics.zoo.feature.common.Preprocessing
 import com.intel.analytics.zoo.feature.image._
+import com.intel.analytics.zoo.feature.text.TextSet
 import com.intel.analytics.zoo.models.common.ZooModel
 import com.intel.analytics.zoo.models.image.common.{ImageConfigure, ImageModel}
 import com.intel.analytics.zoo.models.image.objectdetection._
@@ -32,6 +36,7 @@ import com.intel.analytics.zoo.models.image.imageclassification.{ImageClassifier
 import com.intel.analytics.zoo.models.recommendation.{NeuralCF, Recommender, UserItemFeature, UserItemPrediction}
 import com.intel.analytics.zoo.models.recommendation._
 import com.intel.analytics.zoo.models.textclassification.TextClassifier
+import com.intel.analytics.zoo.models.textmatching.KNRM
 import com.intel.analytics.zoo.pipeline.api.keras.layers.Embedding
 import org.apache.spark.api.java.JavaRDD
 import org.apache.spark.rdd.RDD
@@ -47,7 +52,7 @@ object PythonZooModel {
   def ofDouble(): PythonZooModel[Double] = new PythonZooModel[Double]()
 }
 
-class PythonZooModel[T: ClassTag](implicit ev: TensorNumeric[T]) extends PythonBigDL[T] {
+class PythonZooModel[T: ClassTag](implicit ev: TensorNumeric[T]) extends PythonZoo[T] {
 
   def saveZooModel(
       model: ZooModel[Activity, Activity, T],
@@ -71,6 +76,66 @@ class PythonZooModel[T: ClassTag](implicit ev: TensorNumeric[T]) extends PythonB
       path: String,
       weightPath: String = null): TextClassifier[T] = {
     TextClassifier.loadModel(path, weightPath)
+  }
+
+  def textClassifierCompile(
+      model: TextClassifier[T],
+      optimizer: OptimMethod[T],
+      loss: Criterion[T],
+      metrics: JList[ValidationMethod[T]] = null): Unit = {
+    model.compile(optimizer, loss,
+      if (metrics == null) null else metrics.asScala.toList)
+  }
+
+  def textClassifierFit(
+      model: TextClassifier[T],
+      x: TextSet,
+      batchSize: Int,
+      nbEpoch: Int,
+      validationData: TextSet): Unit = {
+    model.fit(x, batchSize, nbEpoch, validationData)
+  }
+
+  def textClassifierPredict(
+      model: TextClassifier[T],
+      x: TextSet,
+      batchPerThread: Int): TextSet = {
+    model.predict(x, batchPerThread)
+  }
+
+  def textClassifierEvaluate(
+      model: TextClassifier[T],
+      x: TextSet,
+      batchSize: Int): JList[EvaluatedResult] = {
+    val resultArray = model.evaluate(x, batchSize)
+    processEvaluateResult(resultArray)
+  }
+
+  private def processEvaluateResult(
+    resultArray: Array[(ValidationResult, ValidationMethod[T])]): JList[EvaluatedResult] = {
+    resultArray.map { result =>
+      EvaluatedResult(result._1.result()._1, result._1.result()._2,
+        result._2.toString())
+    }.toList.asJava
+  }
+
+  def textClassifierSetCheckpoint(
+      model: TextClassifier[T],
+      path: String,
+      overWrite: Boolean = true): Unit = {
+    model.setCheckpoint(path, overWrite)
+  }
+
+  def textClassifierSetTensorBoard(
+      model: TextClassifier[T],
+      logDir: String,
+      appName: String): Unit = {
+    model.setTensorBoard(logDir, appName)
+  }
+
+def zooModelSetEvaluateStatus(
+    model: ZooModel[Activity, Activity, T]): ZooModel[Activity, Activity, T] = {
+    model.setEvaluateStatus()
   }
 
   def loadObjectDetector(path: String, weightPath: String = null): ObjectDetector[T] = {
@@ -245,6 +310,27 @@ class PythonZooModel[T: ClassTag](implicit ev: TensorNumeric[T]) extends PythonB
       batchSize: Int = 32,
       zeroBasedLabel: Boolean = true): JavaRDD[Int] = {
     module.predictClasses(toJSample(x), batchSize, zeroBasedLabel).toJavaRDD()
+  }
+
+  def createZooKNRM(
+      text1Length: Int,
+      text2Length: Int,
+      vocabSize: Int,
+      embedSize: Int,
+      embedWeights: JTensor = null,
+      trainEmbed: Boolean = true,
+      kernelNum: Int = 21,
+      sigma: Double = 0.1,
+      exactSigma: Double = 0.001,
+      model: AbstractModule[Activity, Activity, T]): KNRM[T] = {
+    KNRM[T](text1Length, text2Length, vocabSize, embedSize, toTensor(embedWeights),
+      trainEmbed, kernelNum, sigma, exactSigma, model)
+  }
+
+  def loadKNRM(
+      path: String,
+      weightPath: String = null): KNRM[T] = {
+    KNRM.loadModel(path, weightPath)
   }
 
 }

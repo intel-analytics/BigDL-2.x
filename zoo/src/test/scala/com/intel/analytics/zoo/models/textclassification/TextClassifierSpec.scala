@@ -31,7 +31,7 @@ class TextClassifierSpec extends ZooSpecHelper {
   override def doBefore(): Unit = {
     val conf = new SparkConf()
       .setMaster("local[4]")
-    sc = NNContext.initNNContext(conf, appName = "TrainingSpec")
+    sc = NNContext.initNNContext(conf, appName = "TextClassifierSpec")
   }
 
   override def doAfter(): Unit = {
@@ -84,7 +84,7 @@ class TextClassifierSpec extends ZooSpecHelper {
   }
 
   "TextClassifier with Embedding forward and backward" should "work properly" in {
-    val gloveDir = getClass().getClassLoader().getResource("glove.6B").getPath
+    val gloveDir = getClass.getClassLoader.getResource("glove.6B").getPath
     val embeddingFile = gloveDir + "/glove.6B.50d.txt"
     val model = TextClassifier[Float](5, embeddingFile)
     val input = Tensor[Float](2, 500).zero()
@@ -106,5 +106,18 @@ class TextClassifierSerialTest extends ModuleSerializationTest {
     ZooSpecHelper.testZooModelLoadSave(
       model.asInstanceOf[ZooModel[Tensor[Float], Tensor[Float], Float]],
       input, TextClassifier.loadModel[Float])
+
+    // Serialization with WordEmbedding
+    val gloveDir = getClass.getClassLoader.getResource("glove.6B").getPath
+    val embeddingFile = gloveDir + "/glove.6B.50d.txt"
+    val model2 = TextClassifier[Float](5, embeddingFile, sequenceLength = 100)
+    val input2 = Tensor[Float](2, 100).zero()
+    input2(Array(1, 10)) = 3
+    input2(Array(1, 28)) = 12
+    input2(Array(2, 72)) = 8
+    input2(Array(2, 4)) = 4
+    ZooSpecHelper.testZooModelLoadSave(
+      model2.asInstanceOf[ZooModel[Tensor[Float], Tensor[Float], Float]],
+      input2, TextClassifier.loadModel[Float])
   }
 }

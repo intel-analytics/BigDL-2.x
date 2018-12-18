@@ -90,9 +90,10 @@ class NetSpec extends ZooSpecHelper{
   "Load Tensorflow model" should "work properly" in {
     val resource = getClass().getClassLoader().getResource("models")
     val path = resource.getPath + "/" + "tensorflow"
-    val model = Net.loadTF[Float](s"$path/lenet.pb", Seq("Placeholder"), Seq("LeNet/fc4/BiasAdd"))
-    val newModel = model.newGraph("LeNet/fc3/Relu")
-    newModel.outputNodes.head.element.getName() should be ("LeNet/fc3/Relu")
+    val model = Net.loadTF[Float](s"$path/frozen_inference_graph.pb",
+      Seq("Placeholder"), Seq("dense_1/Sigmoid"))
+    val newModel = model.newGraph("dense/Relu")
+    newModel.outputNodes.head.element.getName() should be ("dense/Relu")
   }
 
   "net load model" should "work properly" in {
@@ -127,9 +128,9 @@ class NetSpec extends ZooSpecHelper{
   }
 
   "Load Tensorflow model from path" should "work properly" in {
-    val resource = getClass().getClassLoader().getResource("tf")
+    val resource = getClass().getClassLoader().getResource("tfnet")
     val model = Net.loadTF[Float](resource.getPath)
-    val result = model.forward(Tensor[Float](4, 1, 28, 28).rand())
-    result.toTensor[Float].size() should be (Array(4, 10))
+    val result = model.forward(Tensor[Float](2, 4).rand())
+    result.toTensor[Float].size() should be (Array(2, 2))
   }
 }

@@ -29,10 +29,10 @@
 
         <fileSet>
             <includes>
-                <include>**/*.conf</include>
+                <include>**/spark-analytics-zoo.conf</include>
             </includes>
             <outputDirectory>/..</outputDirectory>
-            <directory>${project.build.directory}/bigdl_python/sources</directory>
+            <directory>${project.parent.basedir}/zoo/src/main/resources</directory>
         </fileSet>
 
         <fileSet>

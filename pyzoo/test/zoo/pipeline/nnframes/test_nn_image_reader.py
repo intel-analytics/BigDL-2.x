@@ -31,7 +31,7 @@ class TestNNImageReader():
         setup any state tied to the execution of the given method in a
         class. setup_method is invoked for every test method of a class.
         """
-        sparkConf = create_spark_conf().setMaster("local[1]").setAppName("TestNNImageReader")
+        sparkConf = init_spark_conf().setMaster("local[1]").setAppName("TestNNImageReader")
         self.sc = init_nncontext(sparkConf)
         self.resource_path = os.path.join(os.path.split(__file__)[0], "../../resources")
 
@@ -53,7 +53,7 @@ class TestNNImageReader():
         assert first_row[2] == 500
         assert first_row[3] == 3
         assert first_row[4] == 16
-        assert len(first_row[5]) == 95959
+        assert len(first_row[5]) == 562500
 
     def test_read_image_withOriginColumn(self):
         image_path = os.path.join(self.resource_path, "pascal/000025.jpg")

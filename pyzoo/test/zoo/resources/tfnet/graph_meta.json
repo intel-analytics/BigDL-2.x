@@ -1,1 +1,1 @@
-{"input_names": ["batch:0"], "output_names": ["LeNet/fc4/BiasAdd:0"]}
+{"input_names": ["Placeholder:0"], "output_names": ["dense_1/Sigmoid:0"]}

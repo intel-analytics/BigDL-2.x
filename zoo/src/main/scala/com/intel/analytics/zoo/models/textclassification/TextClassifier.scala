@@ -16,12 +16,15 @@
 
 package com.intel.analytics.zoo.models.textclassification
 
+import com.intel.analytics.bigdl.Criterion
 import com.intel.analytics.bigdl.nn.abstractnn.{AbstractModule, Activity}
+import com.intel.analytics.bigdl.optim.{OptimMethod, ValidationMethod, ValidationResult}
 import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric
 import com.intel.analytics.bigdl.utils.Shape
+import com.intel.analytics.zoo.feature.text.TextSet
 import com.intel.analytics.zoo.models.common.ZooModel
 import com.intel.analytics.zoo.pipeline.api.keras.layers._
-import com.intel.analytics.zoo.pipeline.api.keras.models.Sequential
+import com.intel.analytics.zoo.pipeline.api.keras.models.{KerasNet, Sequential}
 
 import scala.reflect.ClassTag
 
@@ -64,6 +67,43 @@ class TextClassifier[T: ClassTag] private(
     model.add(Dense(classNum, activation = "softmax"))
     model
   }
+
+  // For the following methods, please refer to KerasNet for documentation.
+  def compile(
+      optimizer: OptimMethod[T],
+      loss: Criterion[T],
+      metrics: List[ValidationMethod[T]] = null)(implicit ev: TensorNumeric[T]): Unit = {
+    model.asInstanceOf[KerasNet[T]].compile(optimizer, loss, metrics)
+  }
+
+  def fit(
+      x: TextSet,
+      batchSize: Int,
+      nbEpoch: Int,
+      validationData: TextSet = null)(implicit ev: TensorNumeric[T]): Unit = {
+    model.asInstanceOf[KerasNet[T]].fit(x, batchSize, nbEpoch, validationData)
+  }
+
+  def evaluate(
+      x: TextSet,
+      batchSize: Int)
+    (implicit ev: TensorNumeric[T]): Array[(ValidationResult, ValidationMethod[T])] = {
+    model.asInstanceOf[KerasNet[T]].evaluate(x, batchSize)
+  }
+
+  def predict(
+      x: TextSet,
+      batchPerThread: Int): TextSet = {
+    model.asInstanceOf[KerasNet[T]].predict(x, batchPerThread)
+  }
+
+  def setTensorBoard(logDir: String, appName: String): Unit = {
+    model.asInstanceOf[KerasNet[T]].setTensorBoard(logDir, appName)
+  }
+
+  def setCheckpoint(path: String, overWrite: Boolean = true): Unit = {
+    model.asInstanceOf[KerasNet[T]].setCheckpoint(path, overWrite)
+  }
 }
 
 object TextClassifier {
@@ -72,11 +112,11 @@ object TextClassifier {
    * its first layer.
    *
    * @param classNum The number of text categories to be classified. Positive integer.
-   * @param embeddingFile The path to the embedding file.
+   * @param embeddingFile The path to the word embedding file.
    *                      Currently only the following GloVe files are supported:
-   *                      "glove.6B.50d.txt", "glove.6B.100d.txt", "glove.6B.200d.txt"
+   *                      "glove.6B.50d.txt", "glove.6B.100d.txt", "glove.6B.200d.txt",
    *                      "glove.6B.300d.txt", "glove.42B.300d.txt", "glove.840B.300d.txt".
-   *                      You can download them from: https://nlp.stanford.edu/projects/glove/.
+   *                      You can download from: https://nlp.stanford.edu/projects/glove/.
    * @param wordIndex Map of word (String) and its corresponding index (integer).
    *                  The index is supposed to start from 1 with 0 reserved for unknown words.
    *                  During the prediction, if you have words that are not in the wordIndex

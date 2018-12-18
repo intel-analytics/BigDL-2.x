@@ -20,6 +20,7 @@ import com.intel.analytics.bigdl.dataset.Sample
 import com.intel.analytics.bigdl.nn.{Container, Module}
 import com.intel.analytics.bigdl.nn.abstractnn.{AbstractModule, Activity}
 import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric
+import com.intel.analytics.zoo.pipeline.api.keras.layers.WordEmbedding
 import com.intel.analytics.zoo.pipeline.api.keras.layers.utils.KerasUtils
 import com.intel.analytics.zoo.pipeline.api.keras.models.{KerasNet, Model, Sequential}
 import com.intel.analytics.zoo.pipeline.api.net.GraphNet
@@ -107,6 +108,14 @@ abstract class ZooModel[A <: Activity: ClassTag, B <: Activity: ClassTag, T: Cla
     KerasUtils.toZeroBasedLabel(zeroBasedLabel, model.predictClass(x, batchSize))
   }
 
+  /**
+   * Set the model to be in evaluate status, i.e. remove the effect of Dropout, etc.
+   */
+  def setEvaluateStatus(): this.type = {
+    model.evaluate()
+    this
+  }
+
   override def updateOutput(input: A): B = {
     output = model.updateOutput(input)
     output
@@ -126,6 +135,7 @@ object ZooModel {
   Model
   Sequential
   GraphNet
+  WordEmbedding
   /**
    * Load an existing model (with weights).
    *

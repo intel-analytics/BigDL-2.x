@@ -25,17 +25,16 @@ import com.intel.analytics.bigdl.nn.{Container, Graph, StaticGraph, Sequential =
 import com.intel.analytics.bigdl.optim._
 import com.intel.analytics.bigdl.serialization.Bigdl.BigDLModule
 import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric
-import com.intel.analytics.bigdl.transform.vision.image.ImageFeatureToMiniBatch
 import com.intel.analytics.bigdl.utils._
 import com.intel.analytics.bigdl.utils.serializer.{DeserializeContext, ModuleData, ModuleSerializer, SerializeContext}
 import com.intel.analytics.bigdl.visualization.{TrainSummary, ValidationSummary}
 import com.intel.analytics.zoo.feature.image.ImageSet
-import com.intel.analytics.zoo.pipeline.api.Net
+import com.intel.analytics.zoo.feature.text._
+import com.intel.analytics.zoo.pipeline.api.{Net, Predictable}
 import com.intel.analytics.zoo.pipeline.api.autograd.{Lambda, Variable}
 import com.intel.analytics.zoo.pipeline.api.autograd._
 import com.intel.analytics.zoo.pipeline.api.keras.layers.Input
-import com.intel.analytics.zoo.pipeline.api.keras.layers.utils.{AbstractModuleRef, GraphRef, KerasLayerRef}
-import com.intel.analytics.zoo.pipeline.api.keras.layers.utils.KerasUtils
+import com.intel.analytics.zoo.pipeline.api.keras.layers.utils._
 import com.intel.analytics.zoo.pipeline.api.net.NetUtils
 import org.apache.spark.rdd.RDD
 
@@ -44,8 +43,10 @@ import scala.collection.mutable.ArrayBuffer
 import scala.reflect.ClassTag
 import scala.language.implicitConversions
 
-abstract class KerasNet[T: ClassTag](implicit ev: TensorNumeric[T])
-  extends KerasLayer[Activity, Activity, T] with Net {
+abstract class KerasNet[T](implicit val tag: ClassTag[T], implicit val ev: TensorNumeric[T])
+  extends KerasLayer[Activity, Activity, T] with Net with Predictable[T] {
+
+  protected val module: Module[T] = this
 
   def getSubModules(): List[AbstractModule[Activity, Activity, T]] = {
     require(this.labor.isInstanceOf[Container[Activity, Activity, T]],
@@ -164,11 +165,9 @@ abstract class KerasNet[T: ClassTag](implicit ev: TensorNumeric[T])
    * @param logDir The base directory path to store training and validation logs.
    * @param appName The name of the application.
    */
-  def setTensorBoard(
-      logDir: String,
-      appName: String): Unit = {
+  def setTensorBoard(logDir: String, appName: String): Unit = {
     if (this.internalOptimizer != null) {
-        internalOptimizer.setTrainSummary(TrainSummary(tensorBoardLogDir, tensorBoardAppName))
+      internalOptimizer.setTrainSummary(TrainSummary(tensorBoardLogDir, tensorBoardAppName))
     }
     this.tensorBoardLogDir = logDir
     this.tensorBoardAppName = appName
@@ -230,6 +229,13 @@ abstract class KerasNet[T: ClassTag](implicit ev: TensorNumeric[T])
   }
 
   /**
+   * Set the model to be in evaluate status, i.e. remove the effect of Dropout, etc.
+   */
+  def setEvaluateStatus(): this.type = {
+    evaluate()
+  }
+
+  /**
    * Convert RDD of Sample to DataSet of MiniBatch.
    */
   private def toDataSet(x: RDD[Sample[T]], batchSize: Int): DataSet[MiniBatch[T]] = {
@@ -241,15 +247,25 @@ abstract class KerasNet[T: ClassTag](implicit ev: TensorNumeric[T])
    * Convert ImageSet to DataSet of MiniBatch.
    */
   private def toDataSet(x: ImageSet, batchSize: Int): DataSet[MiniBatch[T]] = {
-    if (x != null) x.toDataSet() -> ImageFeatureToMiniBatch[T](batchSize)
+    if (x != null) x.toDataSet[T] -> SampleToMiniBatch[T](batchSize)
     else null
   }
 
   /**
-   * Train a model for a fixed number of epochs on a dataset.
+   * Convert TextSet to DataSet of MiniBatch.
+   */
+  private def toDataSet(x: TextSet, batchSize: Int): DataSet[MiniBatch[T]] = {
+    if (x != null) {
+      (x.toDataSet -> SampleToMiniBatch[Float](batchSize)).asInstanceOf[DataSet[MiniBatch[T]]]
+    }
+    else null
+  }
+
+  /**
+   * Train a model for a fixed number of epochs on a DataSet.
    *
    * @param x Training dataset. If x is an instance of LocalDataSet, train in local mode.
-   * @param nbEpoch Number of iterations to train.
+   * @param nbEpoch Number of epochs to train.
    * @param validationData Dataset for validation, or null if validation is not configured.
    */
   def fit(
@@ -270,7 +286,7 @@ abstract class KerasNet[T: ClassTag](implicit ev: TensorNumeric[T])
         vMethods = this.vMethods)
     }
     internalOptimizer.setOptimMethod(this.optimMethod)
-    .setEndWhen(Trigger.maxEpoch(getFinishedEpoch() + nbEpoch))
+      .setEndWhen(Trigger.maxEpoch(getFinishedEpoch() + nbEpoch))
 
     internalOptimizer match {
       case local: InternalLocalOptimizer[T] =>
@@ -303,11 +319,11 @@ abstract class KerasNet[T: ClassTag](implicit ev: TensorNumeric[T])
   }
 
   /**
-   * Train a model for a fixed number of epochs on RDD.
+   * Train a model for a fixed number of epochs on Sample RDD.
    *
    * @param x Training dataset, RDD of Sample.
    * @param batchSize Number of samples per gradient update. Default is 32.
-   * @param nbEpoch Number of iterations to train. Default is 10.
+   * @param nbEpoch Number of epochs to train. Default is 10.
    * @param validationData RDD of Sample, or null if validation is not configured. Default is null.
    */
   def fit(
@@ -315,6 +331,7 @@ abstract class KerasNet[T: ClassTag](implicit ev: TensorNumeric[T])
       batchSize: Int = 32,
       nbEpoch: Int = 10,
       validationData: RDD[Sample[T]] = null)(implicit ev: TensorNumeric[T]): Unit = {
+    KerasUtils.validateBatchSize(batchSize)
     this.fit(toDataSet(x, batchSize), nbEpoch, toDataSet(validationData, batchSize))
   }
 
@@ -323,14 +340,15 @@ abstract class KerasNet[T: ClassTag](implicit ev: TensorNumeric[T])
    *
    * @param x Training dataset, ImageSet.
    * @param batchSize Number of samples per gradient update.
-   * @param nbEpoch Number of iterations to train.
-   * @param validationData ImageSet, or null if validation is not configured. Default is null.
+   * @param nbEpoch Number of epochs to train.
+   * @param validationData ImageSet, or null if validation is not configured.
    */
   def fit(
       x: ImageSet,
       batchSize: Int,
       nbEpoch: Int,
       validationData: ImageSet)(implicit ev: TensorNumeric[T]): Unit = {
+    KerasUtils.validateBatchSize(batchSize)
     this.fit(toDataSet(x, batchSize), nbEpoch, toDataSet(validationData, batchSize))
   }
 
@@ -338,7 +356,31 @@ abstract class KerasNet[T: ClassTag](implicit ev: TensorNumeric[T])
       x: ImageSet,
       batchSize: Int,
       nbEpoch: Int)(implicit ev: TensorNumeric[T]): Unit = {
-    this.fit(toDataSet(x, batchSize), nbEpoch, null)
+    this.fit(x, batchSize, nbEpoch, null)
+  }
+
+  /**
+   * Train a model for a fixed number of epochs on TextSet.
+   *
+   * @param x Training dataset, TextSet.
+   * @param batchSize Number of samples per gradient update.
+   * @param nbEpoch Number of epochs to train.
+   * @param validationData TextSet, or null if validation is not configured.
+   */
+  def fit(
+      x: TextSet,
+      batchSize: Int,
+      nbEpoch: Int,
+      validationData: TextSet)(implicit ev: TensorNumeric[T]): Unit = {
+    KerasUtils.validateBatchSize(batchSize)
+    this.fit(toDataSet(x, batchSize), nbEpoch, toDataSet(validationData, batchSize))
+  }
+
+  def fit(
+      x: TextSet,
+      batchSize: Int,
+      nbEpoch: Int)(implicit ev: TensorNumeric[T]): Unit = {
+    this.fit(x, batchSize, nbEpoch, null)
   }
 
   /**
@@ -381,62 +423,23 @@ abstract class KerasNet[T: ClassTag](implicit ev: TensorNumeric[T])
   }
 
   /**
-   * Use a model to do prediction for RDD.
+   * Evaluate a model on TextSet.
    *
-   * @param x Prediction data, RDD of Sample.
+   * @param x Evaluation dataset, TextSet.
    * @param batchSize Number of samples per batch.
    */
-  def predict(
-      x: RDD[Sample[T]],
-      batchSize: Int)(implicit ev: TensorNumeric[T]): RDD[Activity] = {
-    this.predict(x, batchSize, false)
-  }
-
-  /**
-   * Use a model to do prediction in local mode.
-   *
-   * @param x Prediction data, LocalDataSet.
-   * @param batchSize Number of samples per batch.
-   */
-  def predict(
-      x: LocalDataSet[MiniBatch[T]],
-      batchSize: Int)(implicit ev: TensorNumeric[T]): Array[Activity] = {
-    val localPredictor = LocalPredictor(this, batchPerCore = KerasUtils.calBatchPerCore(batchSize))
-    localPredictor.predict(x)
-  }
-
-  /**
-   * Use a model to do prediction on ImageSet.
-   *
-   * @param x Prediction data, ImageSet.
-   * @param batchSize Number of samples per batch.
-   */
-  def predict(
-      x: ImageSet,
-      batchSize: Int): ImageSet = {
-    val batchPerPartition = if (x.isDistributed()) {
-      batchSize / x.toDistributed().rdd.partitions.length
+  def evaluate(
+      x: TextSet,
+      batchSize: Int): Array[(ValidationResult, ValidationMethod[T])] = {
+    require(this.vMethods != null, "Evaluation metrics haven't been set yet")
+    x match {
+      case distributed: DistributedTextSet =>
+        val rdd = distributed.rdd.map(_.getSample).filter(_ != null)
+        evaluate(rdd.asInstanceOf[RDD[Sample[T]]], batchSize)
+      case local: LocalTextSet =>
+        val localSet = toDataSet(local, batchSize).asInstanceOf[LocalDataSet[MiniBatch[T]]]
+        evaluate(localSet)
     }
-    else {
-      KerasUtils.calBatchPerCore(batchSize)
-    }
-    ImageSet.fromImageFrame(predictImage(x.toImageFrame(),
-      batchPerPartition = batchPerPartition))
-  }
-
-  /**
-   * Use a model to predict for classes. By default, label predictions start from 0.
-   *
-   * @param x Prediction data, RDD of Sample.
-   * @param batchSize Number of samples per batch. Default is 32.
-   * @param zeroBasedLabel Boolean. Whether result labels start from 0.
-   *                       Default is true. If false, result labels start from 1.
-   */
-  def predictClasses(
-      x: RDD[Sample[T]],
-      batchSize: Int = 32,
-      zeroBasedLabel: Boolean = true): RDD[Int] = {
-    KerasUtils.toZeroBasedLabel(zeroBasedLabel, super.predictClass(x, batchSize))
   }
 
   def toModel(): Model[T]
@@ -825,11 +828,11 @@ private[zoo] object InternalOptimizerUtil {
 private[zoo] class InternalLocalOptimizer[T: ClassTag] (
     model: Module[T],
     ds: LocalDataSet[MiniBatch[T]],
-    criterion: Criterion[T]
-)(implicit ev: TensorNumeric[T]) extends LocalOptimizer[T](model, ds, criterion) {
+    criterion: Criterion[T])
+  (implicit ev: TensorNumeric[T]) extends LocalOptimizer[T](model, ds, criterion) {
 
   def setTrainData(trainingDataSet: DataSet[MiniBatch[T]]): this.type = {
-     this.dataset = trainingDataSet
+    this.dataset = trainingDataSet
     this.endEpoch()
     this
   }
@@ -845,8 +848,8 @@ private[zoo] class InternalLocalOptimizer[T: ClassTag] (
 private[zoo] class InternalDistriOptimizer[T: ClassTag] (
     _model: Module[T],
     _dataset: DistributedDataSet[MiniBatch[T]],
-    _criterion: Criterion[T]
-)(implicit ev: TensorNumeric[T]) extends DistriOptimizer[T](_model, _dataset, _criterion) {
+    _criterion: Criterion[T])
+  (implicit ev: TensorNumeric[T]) extends DistriOptimizer[T](_model, _dataset, _criterion) {
 
   def setTrainData(trainingDataSet: DataSet[MiniBatch[T]]): this.type = {
     this.dataset = trainingDataSet

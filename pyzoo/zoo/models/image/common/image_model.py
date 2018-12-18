@@ -14,10 +14,6 @@
 # limitations under the License.
 #
 
-import sys
-
-from bigdl.util.common import callBigDlFunc
-
 from zoo.models.common.zoo_model import ZooModel
 from zoo.models.image.common.image_config import ImageConfigure
 from zoo.feature.image.imageset import *

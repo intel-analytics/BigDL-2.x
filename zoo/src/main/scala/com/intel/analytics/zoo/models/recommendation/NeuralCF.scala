@@ -40,7 +40,7 @@ import scala.reflect.ClassTag
  * @tparam T Numeric type of parameter(e.g. weight, bias). Only support float/double now.
  */
 
-class NeuralCF[T: ClassTag] private(
+class NeuralCF[T: ClassTag](
     val userCount: Int,
     val itemCount: Int,
     val numClasses: Int,

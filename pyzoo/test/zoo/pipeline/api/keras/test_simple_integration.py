@@ -131,7 +131,7 @@ class TestSimpleIntegration(ZooTestCase):
         model.add(Dense(20, activation="softmax"))
         model.compile(optimizer="sgd", loss="sparse_categorical_crossentropy", metrics=["accuracy"])
         model.fit(data, batch_size=8, nb_epoch=2, validation_data=data)
-        result = model.predict(data, batch_size=8)
+        result = model.predict(data, batch_per_thread=8)
         accuracy = model.evaluate(data, batch_size=8)
 
     def test_remove_batch(self):
@@ -222,6 +222,12 @@ class TestSimpleIntegration(ZooTestCase):
         assert word_index["the"] == 1
         assert word_index["for"] == 11
         assert word_index["as"] == 20
+
+    def test_set_evaluate_status(self):
+        model = Sequential().add(Dropout(0.2, input_shape=(4, ))).set_evaluate_status()
+        input_data = np.random.random([3, 4])
+        output = model.forward(input_data)
+        assert np.allclose(input_data, output)
 
 
 if __name__ == "__main__":

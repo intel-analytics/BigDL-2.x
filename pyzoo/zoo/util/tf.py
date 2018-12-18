@@ -26,6 +26,18 @@ import json
 import copy
 
 
+def process_grad(grad):
+    if grad is not None:
+        grad = ops.convert_to_tensor_or_indexed_slices(grad)
+        if isinstance(grad, ops.IndexedSlices):
+            # In IndexedSlices is not supported in java api, we have to convert it to
+            # a dense tensor. This operation is potentially expensive, but there seems
+            # no work around
+            grad = tf.unsorted_segment_sum(grad.values, grad.indices,
+                                           grad.dense_shape[0])
+    return grad
+
+
 def export_tf(sess, folder, inputs, outputs,
               generate_backward=False, allow_non_differentiable_input=True):
     """
@@ -79,12 +91,26 @@ def export_tf(sess, folder, inputs, outputs,
                                                       output_names,
                                                       type_enums)
 
+    nodes_of_graph = []
+    for node in optimized_graph_def.node:
+        nodes_of_graph.append(node.name + ":0")
+    nodes_of_graph_set = set(nodes_of_graph)
+
     new_input_names = []
+    error_input_nodes = []
     for t in inputs:
         if t.name in old_names2new:
+            if old_names2new[t.name] not in nodes_of_graph_set:
+                error_input_nodes.append("\"" + (t.name)[0:-2] + "\"")
             new_input_names.append(old_names2new[t.name])
         else:
+            if t.name not in nodes_of_graph_set:
+                error_input_nodes.append("\"" + (t.name)[0:-2] + "\"")
             new_input_names.append(t.name)
+
+    if error_input_nodes:
+        error_nodes_name = " and ".join(error_input_nodes)
+        raise ValueError("Node %s doesn't exist in the graph" % str(error_nodes_name))
 
     # check all placeholder in the graph are listed in the new_input_names:
     new_input_nodes = {name.split(":")[0] for name in new_input_names}
@@ -116,17 +142,6 @@ def export_tf(sess, folder, inputs, outputs,
             inputs = [g.get_tensor_by_name(x) for x in new_input_names]
             grads = tf.gradients(output_tensors, variables + inputs,
                                  grad_ys=grad_output_placeholders)
-
-            def process_grad(grad):
-                if grad is not None:
-                    grad = ops.convert_to_tensor_or_indexed_slices(grad)
-                    if isinstance(grad, ops.IndexedSlices):
-                        # In IndexedSlices is not supported in java api, we have to convert it to
-                        # a dense tensor. This operation is potentially expensive, but there seems
-                        # no work around
-                        grad = tf.unsorted_segment_sum(grad.values, grad.indices,
-                                                       grad.dense_shape[0])
-                return grad
 
             grads = [process_grad(grad) for grad in grads]
 

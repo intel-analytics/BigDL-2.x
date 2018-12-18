@@ -36,8 +36,12 @@ import scala.reflect.ClassTag
 
 object KerasUtils {
 
-  def getPadsFromBorderMode(borderMode: String = "valid"): (Int, Int) = {
-    if (borderMode == "same") {
+  def getPadsFromBorderMode(borderMode: String = "valid",
+      paddings: Array[Int] = null): (Int, Int) = {
+    if (paddings != null && !paddings.isEmpty) {
+      require(paddings.length == 2)
+      (paddings(0), paddings(1))
+    } else if (borderMode == "same") {
       // padH, padW
       (-1, -1)
     } else {
@@ -139,23 +143,24 @@ object KerasUtils {
   def toBigDLCriterion[T : ClassTag](loss: String)
     (implicit ev: TensorNumeric[T]): Criterion[T] = {
     loss.toLowerCase() match {
-      case "binary_crossentropy" => BCECriterion[T]()
-      case "categorical_crossentropy" => CategoricalCrossEntropy[T]()
-      case "mse" => MSECriterion[T]()
-      case "mean_squared_error" => MSECriterion[T]()
+      case "binary_crossentropy" => BinaryCrossEntropy[T]()
+      case "categorical_crossentropy" =>
+        com.intel.analytics.zoo.pipeline.api.keras.objectives.CategoricalCrossEntropy[T]()
+      case "mse" => MeanSquaredError[T]()
+      case "mean_squared_error" => MeanSquaredError[T]()
       case "mae" => MeanAbsoluteError[T]()
       case "mean_absolute_error" => MeanAbsoluteError[T]()
-      case "hinge" => MarginCriterion[T]()
-      case "mape" => MeanAbsolutePercentageCriterion[T]()
-      case "mean_absolute_percentage_error" => MeanAbsolutePercentageCriterion[T]()
-      case "msle" => MeanSquaredLogarithmicCriterion[T]()
-      case "mean_squared_logarithmic_error" => MeanSquaredLogarithmicCriterion[T]()
-      case "squared_hinge" => MarginCriterion[T](squared = true)
+      case "hinge" => Hinge[T]()
+      case "mape" => MeanAbsolutePercentageError[T]()
+      case "mean_absolute_percentage_error" => MeanAbsolutePercentageError[T]()
+      case "msle" => MeanSquaredLogarithmicError[T]()
+      case "mean_squared_logarithmic_error" => MeanSquaredLogarithmicError[T]()
+      case "squared_hinge" => SquaredHinge[T]()
       case "sparse_categorical_crossentropy" => SparseCategoricalCrossEntropy[T]()
-      case "kld" => KullbackLeiblerDivergenceCriterion[T]()
-      case "kullback_leibler_divergence" => KullbackLeiblerDivergenceCriterion[T]()
-      case "cosine_proximity" => CosineProximityCriterion[T]()
-      case "poisson" => PoissonCriterion[T]()
+      case "kld" => KullbackLeiblerDivergence[T]()
+      case "kullback_leibler_divergence" => KullbackLeiblerDivergence[T]()
+      case "cosine_proximity" => CosineProximity[T]()
+      case "poisson" => Poisson[T]()
       case _ => throw new IllegalArgumentException(s"Unsupported loss: $loss")
     }
   }
@@ -424,16 +429,9 @@ object KerasUtils {
     }
   }
 
-  def calBatchPerCore(batchSize: Int): Int = {
-    if (batchSize > 0) {
-      val batchPerCore = batchSize / new EngineRef().getCoreNumber()
-      if (batchPerCore < 1) {
-        1
-      } else {
-        batchPerCore
-      }
-    } else {
-      4
-    }
+  def validateBatchSize(batchSize: Int): Unit = {
+    val totalCores = EngineRef.getCoreNumber() * EngineRef.getNodeNumber()
+    require(batchSize % totalCores == 0,
+      s"BatchSize: ${batchSize} cannot be divided by ${totalCores}")
   }
 }

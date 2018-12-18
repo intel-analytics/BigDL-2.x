@@ -29,15 +29,15 @@ if sys.version >= '3':
 
 class TextClassifier(ZooModel):
     """
-    The model used for text classification.
+    The model used for text classification with WordEmbedding as its first layer.
 
     # Arguments
     class_num: The number of text categories to be classified. Positive int.
-    embedding_file: The path to the embedding file.
+    embedding_file: The path to the word embedding file.
                     Currently only the following GloVe files are supported:
                     "glove.6B.50d.txt", "glove.6B.100d.txt", "glove.6B.200d.txt"
                     "glove.6B.300d.txt", "glove.42B.300d.txt", "glove.840B.300d.txt".
-                    You can download them from: https://nlp.stanford.edu/projects/glove/.
+                    You can download from: https://nlp.stanford.edu/projects/glove/.
     word_index: Dictionary of word (string) and its corresponding index (int).
                 The index is supposed to start from 1 with 0 reserved for unknown words.
                 During the prediction, if you have words that are not in the word_index
@@ -113,3 +113,64 @@ class TextClassifier(ZooModel):
         model = ZooModel._do_load(jmodel, bigdl_type)
         model.__class__ = TextClassifier
         return model
+
+    # For the following methods, please refer to KerasNet for documentation.
+    def compile(self, optimizer, loss, metrics=None):
+        if isinstance(optimizer, six.string_types):
+            optimizer = to_bigdl_optim_method(optimizer)
+        if isinstance(loss, six.string_types):
+            loss = to_bigdl_criterion(loss)
+        if metrics and all(isinstance(metric, six.string_types) for metric in metrics):
+            metrics = to_bigdl_metrics(metrics)
+        callBigDlFunc(self.bigdl_type, "textClassifierCompile",
+                      self.value,
+                      optimizer,
+                      loss,
+                      metrics)
+
+    def set_tensorboard(self, log_dir, app_name):
+        callBigDlFunc(self.bigdl_type, "textClassifierSetTensorBoard",
+                      self.value,
+                      log_dir,
+                      app_name)
+
+    def set_checkpoint(self, path, over_write=True):
+        callBigDlFunc(self.bigdl_type, "textClassifierSetCheckpoint",
+                      self.value,
+                      path,
+                      over_write)
+
+    def fit(self, x, batch_size=32, nb_epoch=10, validation_data=None):
+        """
+        Fit on TextSet.
+        """
+        assert isinstance(x, TextSet), "x should be a TextSet"
+        if validation_data:
+            assert isinstance(validation_data, TextSet), "validation_data should be a TextSet"
+        callBigDlFunc(self.bigdl_type, "textClassifierFit",
+                      self.value,
+                      x,
+                      batch_size,
+                      nb_epoch,
+                      validation_data)
+
+    def evaluate(self, x, batch_size=32):
+        """
+        Evaluate on TextSet.
+        """
+        assert isinstance(x, TextSet), "x should be a TextSet"
+        return callBigDlFunc(self.bigdl_type, "textClassifierEvaluate",
+                             self.value,
+                             x,
+                             batch_size)
+
+    def predict(self, x, batch_per_thread=4):
+        """
+        Predict on TextSet.
+        """
+        assert isinstance(x, TextSet), "x should be a TextSet"
+        results = callBigDlFunc(self.bigdl_type, "textClassifierPredict",
+                                self.value,
+                                x,
+                                batch_per_thread)
+        return TextSet(results)

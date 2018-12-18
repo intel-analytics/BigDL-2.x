@@ -1,6 +1,7 @@
 # Compile products
 *.pyc
 *.class
+*.crc
 target/
 /dist/
 pyzoo/.pytest_cache/

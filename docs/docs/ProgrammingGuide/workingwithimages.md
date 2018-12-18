@@ -24,7 +24,7 @@ Python:
 from zoo.common.nncontext import *
 from zoo.pipeline.nnframes import *
 
-sc = init_nncontext(create_spark_conf().setAppName("app"))
+sc = init_nncontext("app")
 imageDF1 = NNImageReader.readImages("/tmp", sc)
 imageDF2 = NNImageReader.readImages("/tmp/*.jpg", sc)
 imageDF3 = NNImageReader.readImages("/tmp/a.jpg, /tmp/b.jpg", sc)
@@ -207,7 +207,7 @@ from zoo.pipeline.api.keras.models import *
 from zoo.pipeline.api.net import *
 from bigdl.optim.optimizer import *
 
-sc = init_nncontext(create_spark_conf().setAppName("train keras"))
+sc = init_nncontext("train keras")
 img_path="/tmp/image"
 image_set = ImageSet.read(img_path,sc, min_partitions=1)
 transformer = ChainedPreprocessing(
@@ -324,7 +324,7 @@ from zoo.pipeline.api.keras.models import *
 from zoo.pipeline.api.net import *
 from bigdl.optim.optimizer import *
 
-sc = init_nncontext(create_spark_conf().setAppName("train keras"))
+sc = init_nncontext("train keras")
 img_path="/tmp/image"
 image_set = ImageSet.read(img_path,sc, min_partitions=1)
 transformer = ChainedPreprocessing(
@@ -364,3 +364,6 @@ result = prediction.collect()
 You can load pre-trained Analytics-Zoo/BigDL model. Then call to `predictImageSet` to predict ImageSet.
 
 For details, you can check guide of [image classificaion](./image-classification.md) or [object detection](./object-detection.md)
+
+## 3D Image Support
+For 3D images, we can support above operations based on ImageSet. For details, please refer to [image API guide](../APIGuide/FeatureEngineering/image.md)

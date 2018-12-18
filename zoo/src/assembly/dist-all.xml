@@ -41,12 +41,12 @@
       <outputDirectory>/bigdl_python</outputDirectory>
       <directory>${project.build.directory}/bigdl_python/sources</directory>
     </fileSet>
-  </fileSets>
-  <files>
-    <file>
-      <source>${project.build.directory}/bigdl_python/sources/spark-bigdl.conf</source>
+    <fileSet>
       <outputDirectory>/conf</outputDirectory>
-      <destName>spark-analytics-zoo.conf</destName>
-    </file>
-  </files>
+      <directory>${project.parent.basedir}/zoo/src/main/resources</directory>
+      <includes>
+        <include>spark-analytics-zoo.conf</include>
+      </includes>
+    </fileSet>
+  </fileSets>
 </assembly>
