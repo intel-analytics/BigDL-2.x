@@ -23,7 +23,7 @@ if sys.version >= '3':
 
 class AdamWithSchedule(OptimMethod):
     """
-
+    An implementation of Adam with learning rate schedule.
     """
     def __init__(self,
                  learningrate=1e-3,

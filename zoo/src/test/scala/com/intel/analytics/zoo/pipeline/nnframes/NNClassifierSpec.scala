@@ -115,8 +115,9 @@ class NNClassifierSpec extends FlatSpec with Matchers with BeforeAndAfter {
       .add(Sigmoid[Float]())
     val criterion = BCECriterion[Float]()
     val classifier = NNClassifier(model, criterion, Array(6))
-      .setOptimMethod(new AdamWithSchedule[Float](learningRate = 0.01
-        ,learningRateSchedule = Plateau("Loss", 0.99f, 1, "min", 0.01f, 0, 1e-15f)
+      .setOptimMethod(new AdamWithSchedule[Float](
+        learningRate = 0.01,
+        learningRateSchedule = Plateau("Loss", 0.99f, 1, "min", 0.01f, 0, 1e-15f)
       ))
       .setBatchSize(10)
       .setMaxEpoch(10)
