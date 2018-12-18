@@ -20,7 +20,7 @@ import com.intel.analytics.bigdl.nn.abstractnn.{AbstractModule, Activity}
 import com.intel.analytics.bigdl.nn.keras.KerasLayer
 import com.intel.analytics.bigdl.tensor.Tensor
 import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric
-import com.intel.analytics.bigdl.utils.{Shape, T}
+import com.intel.analytics.bigdl.utils.{MultiShape, Shape, SingleShape, T}
 import com.intel.analytics.zoo.pipeline.api.Net
 import com.intel.analytics.zoo.pipeline.api.keras.layers.utils.KerasUtils
 import com.intel.analytics.zoo.pipeline.api.keras.layers._
@@ -30,11 +30,10 @@ import scala.reflect.ClassTag
 
 /**
  * [[Bridge]] defines how to transform encoder to decoder
- * @param rnnType style of recurrent unit, one of [SimpleRNN, LSTM, GRU]
  * @param bridge keras layer used to transform encoder state
  * @param inputShape shape of input
  */
-class Bridge[T: ClassTag](rnnType: String,
+class Bridge[T: ClassTag](
   bridge: KerasLayer[Tensor[T], Tensor[T], T],
   inputShape: Shape = null)(implicit ev: TensorNumeric[T])
   extends KerasLayer[Activity, Activity, T](KerasUtils.addBatch(inputShape))
@@ -42,16 +41,19 @@ class Bridge[T: ClassTag](rnnType: String,
 
   override def doBuild(inputShape: Shape): AbstractModule[Activity, Activity, T] = {
     val layerNum = inputShape.toMulti().size
+    val stateNum = if (inputShape.toMulti().head.isInstanceOf[SingleShape]) 1
+    else 2
+
     val layer = Sequential()
-    if (rnnType.toLowerCase.contains("lstm") || layerNum != 1) {
+    if (stateNum == 2 || layerNum != 1) {
       layer.add(new KerasLayerWrapper[T](new InternalJoinTable(2, -1)
         .asInstanceOf[AbstractModule[Activity, Activity, T]], KerasUtils.removeBatch(inputShape)))
     }
 
     layer.add(bridge)
 
-    if (layerNum != 1 || rnnType.toLowerCase.contains("lstm")) {
-      if (rnnType.toLowerCase.contains("lstm")) {
+    if (layerNum != 1 || stateNum == 2) {
+      if (stateNum == 2) {
         layer.add(new KerasLayerWrapper[T](new InternalSplitTensor[T](2, layerNum, true)
           .asInstanceOf[AbstractModule[Activity, Activity, T]]))
       } else {
@@ -93,6 +95,6 @@ object Bridge {
         s"Bridge(rnnType: String, bridge: KerasLayer[Tensor[T], Tensor[T], T]," +
         s"inputShape: Shape) to create a bridge")
     }
-    new Bridge(rnnType, bridge, inputShape)
+    new Bridge(bridge, inputShape)
   }
 }

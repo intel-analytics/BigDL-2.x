@@ -251,7 +251,7 @@ class Seq2seqSpec extends FlatSpec with Matchers with BeforeAndAfter {
     val decoder2 = Decoder[Float]("SimpleRNN", numLayer, hiddenSize)
     val model2 = Seq2seq[Float](encoder2, decoder2,
       SingleShape(List(seqLen, inputSize)), SingleShape(List(seqLen, inputSize)),
-      bridge = new Bridge[Float]("simplernn",
+      bridge = new Bridge[Float](
         new KerasLayerWrapper[Float](
           new InternalEcho[Float]().asInstanceOf[AbstractModule[Activity, Activity, Float]],
         Shape(Array(hiddenSize)))
