@@ -60,7 +60,6 @@ pages:
     - Image Classification: APIGuide/Models/image-classification.md
     - Text Classification: APIGuide/Models/text-classification.md
     - Recommendation: APIGuide/Models/recommendation.md
-<<<<<<< HEAD
 - Keras-Style API Guide:
   - Python Guide: KerasStyleAPIGuide/keras-api-python.md
   - Scala Guide: KerasStyleAPIGuide/keras-api-scala.md
@@ -100,7 +99,5 @@ pages:
     - Train, evaluate or predict a model: Keras2StyleAPIGuide/Optimization/training.md
     - Optimizers: Keras2StyleAPIGuide/Optimization/optimizer.md
     - Losses: Keras2StyleAPIGuide/Optimization/loss.md
-=======
->>>>>>> upstream/master
 - Powered by: powered-by.md
 - FAQ and Known Issues: known-issues.md
