@@ -31,6 +31,7 @@ import com.intel.analytics.bigdl.utils.RandomGenerator.RNG
 import com.intel.analytics.bigdl.visualization.{TrainSummary, ValidationSummary}
 import com.intel.analytics.zoo.feature.common._
 import com.intel.analytics.zoo.feature.image._
+import com.intel.analytics.zoo.pipeline.api.keras.optimizers.Adam
 import org.apache.log4j.{Level, Logger}
 import org.apache.spark.SparkContext
 import org.apache.spark.ml.feature.MinMaxScaler
@@ -115,9 +116,9 @@ class NNClassifierSpec extends FlatSpec with Matchers with BeforeAndAfter {
       .add(Sigmoid[Float]())
     val criterion = BCECriterion[Float]()
     val classifier = NNClassifier(model, criterion, Array(6))
-      .setOptimMethod(new AdamWithSchedule[Float](
-        learningRate = 0.01,
-        learningRateSchedule = Plateau("Loss", 0.99f, 1, "min", 0.01f, 0, 1e-15f)
+      .setOptimMethod(new Adam[Float](
+        lr = 0.01,
+        schedule = Plateau("Loss", 0.99f, 1, "min", 0.01f, 0, 1e-15f)
       ))
       .setBatchSize(10)
       .setMaxEpoch(10)
