@@ -26,7 +26,7 @@ if sys.version >= '3':
 class TextFeature(JavaValue):
     """
     Each TextFeature keeps information of a single text record.
-    It can include various status of a text,
+    It can include various status (if any) of a text,
     e.g. original text content, uri, category label, tokens, index representation
     of tokens, BigDL Sample representation, prediction result and so on.
     """

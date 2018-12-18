@@ -122,7 +122,7 @@ class WordEmbedding(ZooKerasLayer):
                         "glove.6B.300d.txt", "glove.42B.300d.txt", "glove.840B.300d.txt".
                         You can download them from: https://nlp.stanford.edu/projects/glove/.
 
-        # Returns
+        # Return
         Dictionary of word (string) and its corresponding index (int) obtained from
         the given embedding file.
         """
@@ -132,6 +132,30 @@ class WordEmbedding(ZooKerasLayer):
 
 def prepare_embedding(embedding_file, word_index=None,
                       randomize_unknown=True, normalize=True):
+    """
+    Prepare embedding weights from embedding_file given word_index.
+
+    # Arguments
+    embedding_file: The path to the embedding file.
+                    Currently only the following GloVe files are supported:
+                    "glove.6B.50d.txt", "glove.6B.100d.txt", "glove.6B.200d.txt"
+                    "glove.6B.300d.txt", "glove.42B.300d.txt", "glove.840B.300d.txt".
+                    You can download them from: https://nlp.stanford.edu/projects/glove/.
+    word_index: Dictionary of word (string) and its corresponding index (int).
+                The index is supposed to start from 1 with 0 reserved for unknown words.
+                During the prediction, if you have words that are not in the word_index
+                for the training, you can map them to index 0.
+                Default is None. In this case, all the words in the embedding_file will
+                be taken into account and you can call
+                WordEmbedding.get_word_index(embedding_file) to retrieve the dictionary.
+    randomize_unknown: Boolean. Whether to randomly initialize words that don't exist in
+                       embedding_file. Default is True.
+                       If False, corresponding entries to unknown words will be zero vectors.
+    normalize: Boolean. Whether to normalize word vectors. Default is True.
+
+    # Return
+    Pretrained embedding weights as a numpy array.
+    """
     return callBigDlFunc("float", "prepareEmbedding",
                          embedding_file,
                          word_index,
