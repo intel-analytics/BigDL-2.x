@@ -150,7 +150,7 @@ def prepare_embedding(embedding_file, word_index=None,
                          word_index,
                          randomize_unknown,
                          normalize).to_ndarray()
-    
+
 
 class SparseEmbedding(ZooKerasLayer):
     """
