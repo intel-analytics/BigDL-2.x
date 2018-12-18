@@ -15,7 +15,6 @@
 #
 
 from bigdl.util.common import *
-from bigdl.optim.optimizer import OptimMethod, Default
 from zoo.pipeline.api.keras.base import ZooKerasCreator
 
 
@@ -37,23 +36,6 @@ class AUC(JavaValue):
     """
     def __init__(self, threshold_num=200, bigdl_type="float"):
         JavaValue.__init__(self, None, bigdl_type, threshold_num)
-
-
-class AdamWithSchedule(OptimMethod):
-    """
-
-    """
-    def __init__(self,
-                 learningrate=1e-3,
-                 learningrate_decay=0.0,
-                 leaningrate_schedule=None,
-                 beta1 = 0.9,
-                 beta2 = 0.999,
-                 epsilon = 1e-8,
-                 bigdl_type="float"):
-        super(AdamWithSchedule, self).__init__(None, bigdl_type, learningrate, learningrate_decay,
-                                   leaningrate_schedule if (leaningrate_schedule) else Default(),
-                                   beta1, beta2, epsilon)
 
 
 class Accuracy(ZooKerasCreator, JavaValue):
