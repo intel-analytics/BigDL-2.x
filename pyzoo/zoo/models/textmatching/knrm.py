@@ -64,7 +64,8 @@ class KNRM(TextMatcher):
     def __init__(self, text1_length, text2_length, embedding_file, word_index=None,
                  train_embed=True, kernel_num=21, sigma=0.1, exact_sigma=0.001,
                  target_mode="ranking", bigdl_type="float"):
-        embed_weights = prepare_embedding(embedding_file, word_index)
+        embed_weights = prepare_embedding(embedding_file, word_index,
+                                          randomize_unknown=True, normalize=True)
         vocab_size, embed_size = embed_weights.shape
         super(KNRM, self).__init__(text1_length, vocab_size, embed_size,
                                    embed_weights, train_embed, target_mode, bigdl_type)

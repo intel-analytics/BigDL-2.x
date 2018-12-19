@@ -131,16 +131,16 @@ class WordEmbedding(ZooKerasLayer):
 
 
 def prepare_embedding(embedding_file, word_index=None,
-                      randomize_unknown=True, normalize=True):
+                      randomize_unknown=False, normalize=False):
     """
     Prepare embedding weights from embedding_file given word_index.
 
     # Arguments
     embedding_file and word_index: See WordEmbedding.
     randomize_unknown: Boolean. Whether to randomly initialize words that don't exist in
-                       embedding_file. Default is True.
-                       If False, corresponding entries to unknown words will be zero vectors.
-    normalize: Boolean. Whether to normalize word vectors. Default is True.
+                       embedding_file. Default is False and in this case corresponding entries
+                       to unknown words will be zero vectors.
+    normalize: Boolean. Whether to normalize word vectors. Default is False.
 
     # Return
     Pretrained embedding weights as a numpy array.
