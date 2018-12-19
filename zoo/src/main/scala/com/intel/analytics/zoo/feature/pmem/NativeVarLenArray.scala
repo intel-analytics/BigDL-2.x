@@ -14,14 +14,12 @@
  * limitations under the License.
  */
 
-package com.intel.analytics.zoo.feature.common.persistent.memory
-
-import com.intel.analytics.zoo.persistent.memory.{MemoryType, NativeArray}
+package com.intel.analytics.zoo.feature.pmem
 
 import scala.reflect.ClassTag
 
-private[zoo] abstract class NativeVarLenArray[T: ClassTag](val recordNum: Int, totalSizeByBytes:
-Long,
+private[zoo] abstract class NativeVarLenArray[T: ClassTag](val recordNum: Int,
+    totalSizeByBytes: Long,
     memoryType: MemoryType, protected val typeLen: Int) extends
   NativeArray[Array[T]](totalSizeByBytes, memoryType) {
 
@@ -29,7 +27,7 @@ Long,
   val indexer = new Array[(Long, Int)](recordNum)
 
   protected def isValidIndex(i: Int): Boolean = {
-    indexer(i) != null
+    i < recordNum && indexer(i) != null
   }
 
   // TODO: would be slow if we put item one by one.

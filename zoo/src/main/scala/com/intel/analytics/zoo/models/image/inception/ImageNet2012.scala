@@ -16,10 +16,11 @@
 
 package com.intel.analytics.zoo.models.image.inception
 
-import com.intel.analytics.bigdl.{DataSet, dataset}
+import com.intel.analytics.bigdl.DataSet
 import com.intel.analytics.bigdl.dataset._
 import com.intel.analytics.bigdl.dataset.image.{BGRImgCropper, BGRImgNormalizer, BytesToBGRImg, MTLabeledBGRImgToBatch, HFlip => DatasetHFlip}
-import com.intel.analytics.zoo.feature.common.persistent.memory.OptaneDCDataSet
+import com.intel.analytics.zoo.feature.common.FeatureSet
+import com.intel.analytics.zoo.feature.pmem.{DRAM, PMEM}
 import com.intel.analytics.zoo.pipeline.api.keras.layers.utils.EngineRef
 import org.apache.hadoop.io.Text
 import org.apache.spark.SparkContext
@@ -71,9 +72,9 @@ object ImageNet2012 {
     val rawData = readFromSeqFiles(path, sc, classNumber)
     val cachedDataSet: DistributedDataSet[ByteRecord] = if (cacheWithOptaneDC) {
       println("~~~~~~~ Caching with OptaneDC ~~~~~~~")
-      OptaneDCDataSet.rdd[ByteRecord](rawData)
+      FeatureSet.rdd[ByteRecord](rawData, memoryType = PMEM)
     } else {
-      DataSet.rdd(rawData)
+      FeatureSet.rdd[ByteRecord](rawData, memoryType = DRAM)
     }
     cachedDataSet.transform(
       MTLabeledBGRImgToBatch[ByteRecord](

@@ -1,10 +1,10 @@
-package com.intel.analytics.zoo.persistent.memory;
+package com.intel.analytics.zoo.pmem;
 
 public class PersistentMemoryAllocator implements BasicMemoryAllocator {
     private static volatile PersistentMemoryAllocator instance;
 
     private PersistentMemoryAllocator() {
-        new com.intel.analytics.zoo.persistent.memory.NativeLoader().init();
+        new com.intel.analytics.zoo.feature.pmem.NativeLoader().init();
     }
 
     public static PersistentMemoryAllocator getInstance() {

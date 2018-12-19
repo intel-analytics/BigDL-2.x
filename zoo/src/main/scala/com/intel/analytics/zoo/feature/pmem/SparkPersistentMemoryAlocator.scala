@@ -14,15 +14,15 @@
  * limitations under the License.
  */
 
-package com.intel.analytics.zoo.feature.common.persistent.memory
+package com.intel.analytics.zoo.feature.pmem
 
-import com.intel.analytics.zoo.persistent.memory._
+import com.intel.analytics.zoo.pmem._
 import org.apache.spark.SparkEnv
 
 object MemoryAllocator {
 
   def getInstance(memoryType: MemoryType = DRAM): BasicMemoryAllocator = {
-    if (memoryType == OptaneDC) {
+    if (memoryType == PMEM) {
       println("Using persistent memory")
       SparkPersistentMemoryAlocator.nativeAllocator
     } else {

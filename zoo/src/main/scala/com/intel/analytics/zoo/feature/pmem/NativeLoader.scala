@@ -1,4 +1,4 @@
-package com.intel.analytics.zoo.persistent.memory
+package com.intel.analytics.zoo.feature.pmem
 
 import java.io.{File, FileOutputStream}
 import java.nio.channels.{Channels, FileChannel, ReadableByteChannel}

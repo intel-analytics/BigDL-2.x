@@ -14,14 +14,13 @@
  * limitations under the License.
  */
 
-package com.intel.analytics.zoo.feature.common.persistent.memory
+package com.intel.analytics.zoo.feature.pmem
 
-import com.intel.analytics.zoo.persistent.memory.{MemoryType, NativeArray, OptaneDC}
 import org.apache.spark.unsafe.Platform
 
 object OptaneDCFloatArray {
-  def apply(iterator: Iterator[Float], numOfRecord: Int): NativeFloatArray = {
-    val aepArray = new NativeFloatArray(numOfRecord)
+  def apply(iterator: Iterator[Float], numOfRecord: Int): FloatArray = {
+    val aepArray = new FloatArray(numOfRecord)
     var i = 0
     while (iterator.hasNext) {
       aepArray.set(i, iterator.next())
@@ -35,9 +34,9 @@ object OptaneDCFloatArray {
  * An float array with fixed size stored in native memory.
  * @param recordNum number of item for this array.
  */
-class NativeFloatArray(val recordNum: Int,
+class FloatArray(val recordNum: Int,
     sizeOfRecordByBytes: Int = 4,
-    memoryType: MemoryType = OptaneDC) extends NativeArray[Float](
+    memoryType: MemoryType = PMEM) extends NativeArray[Float](
   recordNum * sizeOfRecordByBytes, memoryType) {
 
   override def get(i: Int): Float = {
@@ -57,7 +56,7 @@ class NativeFloatArray(val recordNum: Int,
   }
 }
 
-object NativeVarLenFloatsArray {
+object VarLenFloatsArray {
   // Backward compatible with Spark.6
   val FLOAT_ARRAY_OFFSET = {
     var unsafe: sun.misc.Unsafe = null
@@ -81,8 +80,8 @@ object NativeVarLenFloatsArray {
 }
 
 
-class NativeVarLenFloatsArray(recordNum: Int, totalSizeByBytes: Long,
-    memoryType: MemoryType = OptaneDC) extends NativeVarLenArray[Float](recordNum,
+class VarLenFloatsArray(recordNum: Int, totalSizeByBytes: Long,
+    memoryType: MemoryType = PMEM) extends NativeVarLenArray[Float](recordNum,
   totalSizeByBytes, memoryType, 4) {
 
   override def putSingle(offset: Long, s: Float): Unit = {
@@ -94,7 +93,7 @@ class NativeVarLenFloatsArray(recordNum: Int, totalSizeByBytes: Long,
     val recordLen = indexer(i)._2 / typeLen
     val result = new Array[Float](recordLen)
     Platform.copyMemory(null, indexOf(i), result,
-      NativeVarLenFloatsArray.FLOAT_ARRAY_OFFSET, indexer(i)._2)
+      VarLenFloatsArray.FLOAT_ARRAY_OFFSET, indexer(i)._2)
     return result
   }
 }

@@ -14,15 +14,20 @@
  * limitations under the License.
  */
 
-package com.intel.analytics.zoo.persistent.memory
-
-import com.intel.analytics.zoo.feature.common.persistent.memory.MemoryAllocator
+package com.intel.analytics.zoo.feature.pmem
 
 sealed trait MemoryType
 
-case object OptaneDC extends MemoryType
+case object PMEM extends MemoryType
 
 case object DRAM extends MemoryType
+
+sealed trait DataStrategy
+
+case object PARTITIONED extends DataStrategy
+
+case object REPLICATED extends DataStrategy
+
 
 /**
  *
@@ -30,12 +35,13 @@ case object DRAM extends MemoryType
  */
 abstract class NativeArray[T](totalBytes: Long, memoryType: MemoryType) {
 
+  assert(totalBytes > 0, s"The size of bytes should be larger than 0, but got: ${totalBytes}!")
+
   val memoryAllocator = MemoryAllocator.getInstance(memoryType)
 
   val startAddr: Long = memoryAllocator.allocate(totalBytes)
 
-  assert(startAddr > 0, "Not enough memory!")
-  assert(totalBytes > 0, "The size of bytes should be larger than 0!")
+  assert(startAddr > 0, s"Not enough memory to allocate: ${totalBytes} bytes!")
 
   val lastOffSet = startAddr + totalBytes
 

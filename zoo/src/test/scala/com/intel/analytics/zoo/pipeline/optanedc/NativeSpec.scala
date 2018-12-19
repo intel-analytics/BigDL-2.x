@@ -19,9 +19,8 @@ package com.intel.analytics.zoo.pipeline.optanedc
 import com.intel.analytics.bigdl.dataset.{DistributedDataSet, MiniBatch}
 import com.intel.analytics.bigdl.utils.Engine
 import com.intel.analytics.zoo.common.NNContext
-import com.intel.analytics.zoo.feature.common.persistent.memory.{MemoryAllocator, NativeFixLenBytesArray, NativeVarLenBytesArray, NativeVarLenFloatsArray}
+import com.intel.analytics.zoo.feature.pmem._
 import com.intel.analytics.zoo.models.image.inception.ImageNet2012
-import com.intel.analytics.zoo.persistent.memory._
 import com.intel.analytics.zoo.pipeline.api.keras.ZooSpecHelper
 import org.apache.spark.SparkContext
 
@@ -51,7 +50,7 @@ class NativeSpec extends ZooSpecHelper {
   "NativeBytesArray dram" should "be ok" in {
     val sizeOfItem = 100
     val sizeOfRecord = 5
-    val nativeArray = new NativeFixLenBytesArray(sizeOfItem, sizeOfRecord, DRAM)
+    val nativeArray = new FixLenBytesArray(sizeOfItem, sizeOfRecord, DRAM)
     val targetArray = ArrayBuffer[Byte]()
     val rec = Array[Byte](193.toByte, 169.toByte, 0, 90, 4)
     (0 until 100).foreach {i =>
@@ -68,7 +67,7 @@ class NativeSpec extends ZooSpecHelper {
 
 
   "NativevarBytesArray dram" should "be ok" in {
-    val nativeArray = new NativeVarLenBytesArray(3, 5 + 2 + 6, DRAM)
+    val nativeArray = new VarLenBytesArray(3, 5 + 2 + 6, DRAM)
     val targetArray = ArrayBuffer[Byte]()
     val rec0 = Array[Byte](193.toByte, 169.toByte, 0, 90, 4)
     val rec1 = Array[Byte](90, 4)
@@ -86,7 +85,7 @@ class NativeSpec extends ZooSpecHelper {
 
 
   "NativevarFloatsArray dram" should "be ok" in {
-    val nativeArray = new NativeVarLenFloatsArray(3, (5 + 2 + 6) * 4, DRAM)
+    val nativeArray = new VarLenFloatsArray(3, (5 + 2 + 6) * 4, DRAM)
     val targetArray = ArrayBuffer[Byte]()
     val rec0 = Array[Float](1.2f, 1.3f, 0, 0.1f, 0.2f)
     val rec1 = Array[Float](0.9f, 4.0f)

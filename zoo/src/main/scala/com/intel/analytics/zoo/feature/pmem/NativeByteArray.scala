@@ -14,28 +14,12 @@
  * limitations under the License.
  */
 
-package com.intel.analytics.zoo.feature.common.persistent.memory
+package com.intel.analytics.zoo.feature.pmem
 
-import com.intel.analytics.zoo.persistent.memory.{MemoryType, NativeArray, OptaneDC}
 import org.apache.spark.unsafe.Platform
 
-import scala.reflect.ClassTag
-
-object OptaneDCVarBytesArray {
-  def apply(iterator: Iterator[Array[Byte]],
-      recordNumber: Int, recordBytes: Int): NativeFixLenBytesArray = {
-    val nativeArray = new NativeFixLenBytesArray(recordNumber, recordBytes)
-    var i = 0
-    while(iterator.hasNext) {
-      nativeArray.set(i, iterator.next())
-      i += 1
-    }
-    nativeArray
-  }
-}
-
-class NativeVarLenBytesArray(recordNum: Int, totalSizeByBytes: Long,
-    memoryType: MemoryType = OptaneDC) extends NativeVarLenArray[Byte](recordNum,
+class VarLenBytesArray(recordNum: Int, totalSizeByBytes: Long,
+    memoryType: MemoryType = PMEM) extends NativeVarLenArray[Byte](recordNum,
   totalSizeByBytes, memoryType, 1) {
 
   def putSingle(offset: Long, s: Byte): Unit = {
@@ -51,8 +35,8 @@ class NativeVarLenBytesArray(recordNum: Int, totalSizeByBytes: Long,
   }
 }
 
-class NativeFixLenBytesArray(val numOfRecord: Long, val sizeOfRecordByByte: Int,
-    memoryType: MemoryType = OptaneDC) extends
+class FixLenBytesArray(val numOfRecord: Long, val sizeOfRecordByByte: Int,
+    memoryType: MemoryType = PMEM) extends
   NativeArray[Array[Byte]](numOfRecord * sizeOfRecordByByte, memoryType) {
 
   override def get(i: Int): Array[Byte] = {

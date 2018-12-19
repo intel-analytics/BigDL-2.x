@@ -21,7 +21,6 @@ import com.intel.analytics.bigdl.dataset._
 import com.intel.analytics.bigdl.transform.vision.image._
 import com.intel.analytics.zoo.common.Utils
 import com.intel.analytics.zoo.feature.common.Preprocessing
-import com.intel.analytics.zoo.feature.common.persistent.memory.OptaneDCDataSet
 import org.apache.commons.io.FileUtils
 import org.apache.spark.SparkContext
 import org.apache.spark.rdd.RDD
@@ -120,10 +119,7 @@ class DistributedImageSet(var rdd: RDD[ImageFeature]) extends ImageSet {
     if (!cacheWithOptaneDC) {
       DataSet.rdd(rdd.map(_[Sample[T]](ImageFeature.sample)))
     } else {
-      // we are supposing the rdd of ImageFeature should has the "mat" field at this point
-      val transformer = MatToTensor[Float]() -> ImageFrameToSample[Float](targetKeys = Array
-      (ImageFeature.label)) -> ImageFeatureToSample[Float]()
-      OptaneDCDataSet.rdd[ImageFeature](rdd).transform(transformer).asInstanceOf[DataSet[Sample[T]]]
+      throw new IllegalArgumentException("Not supported for now")
     }
   }
 }

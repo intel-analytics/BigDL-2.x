@@ -1,4 +1,4 @@
-package com.intel.analytics.zoo.persistent.memory;
+package com.intel.analytics.zoo.pmem;
 
 public interface BasicMemoryAllocator {
     long allocate(long size);

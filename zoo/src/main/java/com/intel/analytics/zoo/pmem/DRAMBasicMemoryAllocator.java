@@ -1,4 +1,4 @@
-package com.intel.analytics.zoo.persistent.memory;
+package com.intel.analytics.zoo.pmem;
 
 public class DRAMBasicMemoryAllocator implements BasicMemoryAllocator {
     public static DRAMBasicMemoryAllocator instance = new DRAMBasicMemoryAllocator();
