@@ -30,7 +30,7 @@ sc = init_nncontext()
 3. Pip install only supports __local__ mode. Cluster mode might be supported in the future. For those who want to use Analytics Zoo in cluster mode, please try to [install without pip](#install-without-pip).
 4. You need to install Java __>= JDK8__ before running Analytics Zoo, which is required by `pyspark`.
 5. `bigdl==0.6.0` and its dependencies will automatically be installed if they haven't been detected in the current Python environment.
-6. We've tested with `pyspark==2.3.2` and you are recommended to use this version as guided in the command above.
+6. We've tested with `pyspark==2.3.2` and thus you are strongly recommended to install this version as guided in the command above.
 
 
 ---
