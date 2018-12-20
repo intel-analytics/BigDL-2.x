@@ -20,7 +20,7 @@ ELU(alpha=1.0, input_shape=None, name=None)
 **Scala example:**
 ```scala
 import com.intel.analytics.zoo.pipeline.api.keras.layers.ELU
-import com.intel.analytics.zoo.pipeline.api.keras.models._
+import com.intel.analytics.zoo.pipeline.api.keras.models.Sequential
 import com.intel.analytics.bigdl.utils.Shape
 import com.intel.analytics.bigdl.tensor.Tensor
 
