@@ -21,6 +21,8 @@ import six
 import os
 import json
 import numpy as np
+import keras
+import keras.backend as keras_backend
 from pyspark import RDD
 
 from bigdl.nn.criterion import Criterion
@@ -30,7 +32,8 @@ from bigdl.util.common import to_list, callBigDlFunc, get_spark_context, \
     JavaValue, get_node_and_core_number
 from zoo.common import Sample, JTensor
 from zoo.feature.image import ImageSet
-from zoo.pipeline.api.keras.engine.topology import ZooKerasLayer, KerasNet
+from zoo.pipeline.api.keras.engine.topology import ZooKerasLayer, KerasNet, SGD, RMSprop, Adagrad, Adadelta, Adam, \
+    Adamax, Top1Accuracy, to_bigdl_metric, Loss
 from bigdl.optim.optimizer import Optimizer, EveryEpoch
 from bigdl.optim.optimizer import MaxEpoch
 
@@ -359,8 +362,9 @@ class TFValidationMethod(JavaValue):
 
 class TFOptimizer:
 
-    def __init__(self, loss, optim_method, sess=None,
-                 val_outputs=None, val_labels=None, val_method=None):
+    def __init__(self, loss, optim_method, dataset, inputs, sess,
+                 grads, variables, graph,
+                 val_outputs=None, val_labels=None, val_method=None, add_sample_weights_num=0):
         import tensorflow as tf
         from zoo.util.tf import export_tf
         '''
@@ -373,33 +377,23 @@ class TFOptimizer:
         should use the Session to load the pre-trained variables and pass it to TFOptimizer.
         '''
         self.optim_method = optim_method
-        if sess is None:
-            self.sess = tf.Session()
-            self.sess.run(tf.global_variables_initializer())
-        else:
-            self.sess = sess
-        grads_vars = tf.train.GradientDescentOptimizer(0).compute_gradients(loss)
-        variables = []
-        grads = []
-        from zoo.util.tf import process_grad
-        for (grad, var) in grads_vars:
-            variables.append(var)
-            grad = process_grad(grad)
-            grads.append(grad)
-        self.export_dir = tempfile.mkdtemp()
-        all_required_inputs = _find_placeholders([loss])
-        self.dataset = tf.get_collection(all_required_inputs[0].name)[0]
+        self.sess = sess
+        self.dataset = dataset
+        self.inputs = inputs
+        self.graph = graph
+
         if self.dataset.batch_size <= 0:
             raise ValueError("You should set batch_size instead of batch_per_thread for training")
-        self.inputs = self.dataset.tensors
 
-        _check_the_same(all_required_inputs, self.inputs)
 
         if val_outputs is not None and val_labels is not None:
+            with self.graph.as_default():
+                val_labels = [tf.identity(v) for v in val_labels]
             outputs = val_outputs + val_labels + [loss]
         else:
             outputs = [loss]
 
+        self.export_dir = tempfile.mkdtemp()
         export_tf(self.sess, self.export_dir,
                   inputs=self.inputs,
                   outputs=grads + outputs)
@@ -418,20 +412,23 @@ class TFOptimizer:
         with open(os.path.join(self.export_dir, "training_meta.json"), "w") as f:
             f.write(json.dumps(meta))
 
-        self.training_helper_layer = TFTrainingHelper(self.export_dir)
-
         self.variable_placeholders = []
-        assigns = []
-        for v in variables:
-            p = tf.placeholder(dtype=tf.float32, shape=v.shape)
-            a = tf.assign(v, p)
-            self.variable_placeholders.append(p)
-            assigns.append(a)
-        self.assign = tf.group(*assigns)
+        with self.graph.as_default():
+            assigns = []
+            for v in variables:
+                p = tf.placeholder(dtype=tf.float32, shape=v.shape)
+                a = tf.assign(v, p)
+                self.variable_placeholders.append(p)
+                assigns.append(a)
+            assign = tf.group(*assigns)
+        self.assign = assign
+
+        self.training_helper_layer = TFTrainingHelper(self.export_dir)
 
         data = self.dataset.rdd
         batch_size = self.dataset.batch_size
-        sample_rdd = data.map(lambda t: Sample.from_ndarray(t, [np.array([0.0])]))
+        sample_rdd = data.map(lambda t: Sample.from_ndarray(
+            t + [np.array(1.0)] * add_sample_weights_num, [np.array([0.0])]))
 
         self.optimizer = Optimizer.create(self.training_helper_layer,
                                           sample_rdd,
@@ -441,12 +438,122 @@ class TFOptimizer:
 
         if val_outputs is not None and val_labels is not None:
             val_sample_rdd = self.dataset.val_rdd\
-                .map(lambda t: Sample.from_ndarray(t, [np.array([0.0])]))
-            val_method = TFValidationMethod(val_method, len(val_outputs), len(val_labels))
+                .map(lambda t: Sample.from_ndarray(t  + [np.array(1.0)] * add_sample_weights_num, [np.array([0.0])]))
+            val_method = [TFValidationMethod(m, len(val_outputs), len(val_labels)) for m in to_list(val_method)]
             self.optimizer.set_validation(self.dataset.batch_size,
                                           val_sample_rdd,
                                           EveryEpoch(),
                                           val_method)
+
+    @classmethod
+    def from_loss(cls, loss, optim_method, session=None, val_outputs=None, val_labels=None, val_method=None):
+        import tensorflow as tf
+        if session is None:
+            sess = tf.Session()
+            sess.run(tf.global_variables_initializer())
+        else:
+            sess = session
+        grads_vars = tf.train.GradientDescentOptimizer(0).compute_gradients(loss)
+        variables = []
+        grads = []
+        from zoo.util.tf import process_grad
+        for (grad, var) in grads_vars:
+            variables.append(var)
+            grad = process_grad(grad)
+            grads.append(grad)
+
+        all_required_inputs = _find_placeholders([loss])
+        dataset = tf.get_collection(all_required_inputs[0].name)[0]
+
+        inputs = dataset.tensors
+
+        _check_the_same(all_required_inputs, inputs)
+        return cls(loss, optim_method, dataset, inputs, sess,
+                 grads, variables, loss.graph, val_outputs, val_labels, val_method)
+
+    @classmethod
+    def from_keras_model(cls, keras_model, dataset):
+
+        loss = keras_model.total_loss
+        inputs = keras_model.inputs + keras_model.targets + keras_model.sample_weights
+
+        variables = keras_model._collected_trainable_weights
+        keras_optimizer = keras_model.optimizer
+        grads = keras_optimizer.get_gradients(loss, variables)
+        sess = keras_backend.get_session()
+        with sess.as_default():
+            optim_method = TFOptimizer._to_bigdl_optim_method(keras_optimizer)
+
+        if keras_model.metrics:
+            if isinstance(keras_model.metrics, dict):
+                raise ValueError("different metrics for different outputs are not supported right now")
+            bigdl_val_methods = [to_bigdl_metric(m) for m in keras_model.metrics_names]
+            val_outputs = keras_model.outputs
+            val_labels = keras_model.targets
+        else:
+            val_outputs = None
+            val_labels = None
+            bigdl_val_methods = None
+
+        return cls(loss, optim_method, dataset, inputs, sess,
+                 grads, variables, loss.graph, val_outputs, val_labels,
+                   bigdl_val_methods, len(keras_model.sample_weights))
+
+    @staticmethod
+    def _to_bigdl_optim_method(keras_optimizer):
+
+        if isinstance(keras_optimizer, keras.optimizers.TFOptimizer):
+            optim_method = TFOptimizer._to_bigdl_optim_method_from_tf_optimizer(keras_optimizer)
+
+        elif isinstance(keras_optimizer, keras.optimizers.Optimizer):
+            optim_method = TFOptimizer._to_bigdl_optim_method_from_keras_optimizer(keras_optimizer)
+        else:
+            raise ValueError("Wrong type of optimizer")
+
+        return optim_method
+
+    @staticmethod
+    def _to_bigdl_optim_method_from_tf_optimizer(tf_optimizer):
+        raise NotImplementedError()
+
+
+    @staticmethod
+    def _to_bigdl_optim_method_from_keras_optimizer(keras_optimizer):
+        if isinstance(keras_optimizer, keras.optimizers.SGD):
+            return SGD(learningrate=keras_optimizer.lr,
+                       learningrate_decay=keras_optimizer.decay,
+                       momentum=keras_optimizer.momentum,
+                       nesterov=keras_optimizer.nesterov)
+        elif isinstance(keras_optimizer, keras.optimizers.RMSprop):
+            lr = float(keras_optimizer.lr.initial_value.eval())
+            decay = float(keras_optimizer.decay.initial_value.eval())
+            rho = float(keras_optimizer.rho.initial_value.eval())
+            epsilon = keras_optimizer.epsilon
+
+            return RMSprop(learningrate=lr,
+                    learningrate_decay=decay,
+                    decayrate=rho,
+                    epsilon=epsilon)
+        elif isinstance(keras_optimizer, keras.optimizers.Adagrad):
+            return Adagrad(learningrate=keras_optimizer.lr,
+                 learningrate_decay=keras_optimizer.decay)
+
+        elif isinstance(keras_optimizer, keras.optimizers.Adadelta):
+            return Adadelta(decayrate=keras_optimizer.rho,
+                 epsilon=keras_optimizer.epsilon)
+        elif isinstance(keras_optimizer, keras.optimizers.Adam):
+            return Adam(learningrate=keras_optimizer.lr,
+                 learningrate_decay=keras_optimizer.decay,
+                 beta1=keras_optimizer.beta_1,
+                 beta2=keras_optimizer.beta_2,
+                 epsilon=keras_optimizer.epsilon)
+        elif isinstance(keras_optimizer, keras.optimizers.Adamax):
+            return Adamax(learningrate=keras_optimizer.lr,
+                 beta1=keras_optimizer.beta_1,
+                 beta2=keras_optimizer.beta_2,
+                 epsilon=keras_optimizer.epsilon)
+        else:
+            TypeError("Unsupported optimizer: %s" % type(keras_optimizer))
 
     def set_train_summary(self, summary):
         self.optimizer.set_train_summary(summary)

@@ -21,6 +21,8 @@ from zoo.pipeline.api.net import TFOptimizer, TFDataset
 from bigdl.optim.optimizer import *
 import numpy as np
 import sys
+from keras.models import Model
+from keras.layers import *
 
 from bigdl.dataset import mnist
 from bigdl.dataset.transformer import *
@@ -29,6 +31,7 @@ sys.path.append("/tmp/models/slim")  # add the slim library
 from nets import lenet
 
 slim = tf.contrib.slim
+
 
 def main(max_epoch, data_num):
     sc = init_nncontext()
@@ -53,19 +56,25 @@ def main(max_epoch, data_num):
                                  val_rdd=testing_rdd
                                  )
 
-    # construct the model from TFDataset
-    images, labels = dataset.tensors
+    data = Input(shape=[28, 28, 1])
 
-    with slim.arg_scope(lenet.lenet_arg_scope()):
-        logits, end_points = lenet.lenet(images, num_classes=10, is_training=True)
+    x = Flatten()(data)
+    x = Dense(64, activation='relu')(x)
+    x = Dense(64, activation='relu')(x)
+    predictions = Dense(10, activation='softmax')(x)
 
-    loss = tf.reduce_mean(tf.losses.sparse_softmax_cross_entropy(logits=logits, labels=labels))
+    model = Model(input=data, output=predictions)
 
-    # create a optimizer
-    optimizer = TFOptimizer.from_loss(loss, Adam(1e-3),
-                            val_outputs=[logits],
-                            val_labels=[labels],
-                            val_method=Top1Accuracy())
+    model.compile(optimizer='rmsprop',
+                  loss='sparse_categorical_crossentropy',
+                  metrics=['accuracy'])
+
+    # (images_data, labels_data) = mnist.read_data_sets("/tmp/mnist", "train")
+
+    # model.fit(images_data, labels_data)
+    #
+    optimizer = TFOptimizer.from_keras_model(model, dataset)
+
     optimizer.set_train_summary(TrainSummary("/tmp/az_lenet", "lenet"))
     optimizer.set_val_summary(ValidationSummary("/tmp/az_lenet", "lenet"))
     # kick off training
