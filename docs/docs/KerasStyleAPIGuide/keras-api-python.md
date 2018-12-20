@@ -1,5 +1,5 @@
 ## **Introduction**
-We hereby introduce a new set of __Keras-Style API__ based on [__Keras 1.2.2__](https://faroit.github.io/keras-docs/1.2.2/) in BigDL for the sake of user-friendliness. Users, especially those familiar with Keras, are recommended to use the new API to create a BigDL model and train, evaluate or tune it in a distributed fashion.
+We hereby introduce a new set of __Keras-Style API__ based on [__Keras 1.2.2__](https://faroit.github.io/keras-docs/1.2.2/) in Analytics Zoo for the sake of user-friendliness. Users, especially those familiar with Keras, are recommended to use the new API to create an Analytics Zoo model and train, evaluate or tune it in a distributed fashion.
 
 To define a model in Python using the Keras-Style API, now one just need to import the following packages:
 
@@ -131,7 +131,7 @@ See [here](https://github.com/intel-analytics/BigDL/tree/master/pyspark/bigdl/ex
 
 ---
 ## **Keras Code Support**
-If you have an existing piece of Keras code for a model definition, without installing Keras, you can directly migrate the code to construct a BigDL model by just replacing Keras import lines with:
+If you have an existing piece of Keras code for a model definition, without installing Keras, you can directly migrate the code to construct an Analytics Zoo model by just replacing Keras import lines with:
 
 ```python
 from zoo.pipeline.api.keras.models import *
@@ -142,12 +142,12 @@ and making modifications subject to the following limitations:
 
 1. The Keras version we support and test is [__Keras 1.2.2__](https://faroit.github.io/keras-docs/1.2.2/) with TensorFlow backend.
 
-2. There exist some arguments supported in Keras layers but not supported in BigDL for now. See [here](../../APIGuide/keras-issues/#unsupported-layer-arguments) for the full list of unsupported layer arguments. Also, currently we haven't supported self-defined Keras layers or [`Lambda`](https://faroit.github.io/keras-docs/1.2.2/layers/core/#lambda) layers.
+2. There exist some arguments supported in Keras layers but not supported in Analytics Zoo for now. See [here](../../APIGuide/keras-issues/#unsupported-layer-arguments) for the full list of unsupported layer arguments. Also, currently we haven't supported self-defined Keras layers or [`Lambda`](https://faroit.github.io/keras-docs/1.2.2/layers/core/#lambda) layers.
 
-3. The default dim_ordering in BigDL is `th` (Channel First, channel_axis=1).
+3. The default dim_ordering in Analytics Zoo is `th` (Channel First, channel_axis=1).
 
 4. Keras [backend](https://faroit.github.io/keras-docs/1.2.2/backend/) related code needs to be deleted or refactored appropriately.
 
 5. Code involving Keras utility functions or loading weights from HDF5 files should be removed.
 
-__Remark:__ We have tested for migrating Keras code definition of [VGG16](https://faroit.github.io/keras-docs/1.2.2/applications/#vgg16), [VGG19](https://faroit.github.io/keras-docs/1.2.2/applications/#vgg19), [ResNet50](https://faroit.github.io/keras-docs/1.2.2/applications/#resnet50) and [InceptionV3](https://faroit.github.io/keras-docs/1.2.2/applications/#inceptionv3) into BigDL.
+__Remark:__ We have tested for migrating Keras code definition of [VGG16](https://faroit.github.io/keras-docs/1.2.2/applications/#vgg16), [VGG19](https://faroit.github.io/keras-docs/1.2.2/applications/#vgg19), [ResNet50](https://faroit.github.io/keras-docs/1.2.2/applications/#resnet50) and [InceptionV3](https://faroit.github.io/keras-docs/1.2.2/applications/#inceptionv3) into Analytics Zoo.
