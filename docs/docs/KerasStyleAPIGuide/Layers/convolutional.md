@@ -30,7 +30,7 @@ Convolution1D(nb_filter, filter_length, init="glorot_uniform", activation=None, 
 **Scala example:**
 ```scala
 import com.intel.analytics.zoo.pipeline.api.keras.layers.Convolution1D
-import com.intel.analytics.zoo.pipeline.api.keras.models._
+import com.intel.analytics.zoo.pipeline.api.keras.models.Sequential
 import com.intel.analytics.bigdl.utils.Shape
 import com.intel.analytics.bigdl.tensor.Tensor
 
