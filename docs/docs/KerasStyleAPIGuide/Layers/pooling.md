@@ -27,7 +27,7 @@ Parameters:
 **Scala example:**
 ```scala
 import com.intel.analytics.zoo.pipeline.api.keras.layers.MaxPooling3D
-import com.intel.analytics.zoo.pipeline.api.keras.models._
+import com.intel.analytics.zoo.pipeline.api.keras.models.Sequential
 import com.intel.analytics.bigdl.utils.Shape
 import com.intel.analytics.bigdl.tensor.Tensor
 
