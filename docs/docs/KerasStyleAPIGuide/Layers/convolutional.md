@@ -125,7 +125,7 @@ LocallyConnected1D(nb_filter, filter_length, activation=None, border_mode="valid
 **Scala example:**
 ```scala
 import com.intel.analytics.zoo.pipeline.api.keras.layers.LocallyConnected1D
-import com.intel.analytics.zoo.pipeline.api.keras.models._
+import com.intel.analytics.zoo.pipeline.api.keras.models.Sequential
 import com.intel.analytics.bigdl.utils.Shape
 import com.intel.analytics.bigdl.tensor.Tensor
 
@@ -215,7 +215,7 @@ UpSampling2D(size=(2, 2), dim_ordering="th", input_shape=None, name=None)
 **Scala example:**
 ```scala
 import com.intel.analytics.zoo.pipeline.api.keras.layers.UpSampling2D
-import com.intel.analytics.zoo.pipeline.api.keras.models._
+import com.intel.analytics.zoo.pipeline.api.keras.models.Sequential
 import com.intel.analytics.bigdl.utils.Shape
 import com.intel.analytics.bigdl.tensor.Tensor
 
