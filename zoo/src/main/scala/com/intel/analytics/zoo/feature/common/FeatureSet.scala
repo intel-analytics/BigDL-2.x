@@ -123,9 +123,7 @@ class DistributedFeatureSet[T: ClassTag]
 
 object DRAMFeatureSet {
   def rdd[T: ClassTag](data: RDD[T]): DistributedDataSet[T] = {
-    val nodeNumber = EngineRef.getNodeNumber()
-    val arrayLikeRDD = data.coalesce(nodeNumber, true)
-      .mapPartitions(iter => {
+    val arrayLikeRDD = data.mapPartitions(iter => {
         Iterator.single(new ArrayLikeWrapper(iter.toArray))
       }).setName("cached feature set in DRAM with PARTITIONED Strategy")
       .cache().asInstanceOf[RDD[ArrayLike[T]]]
@@ -137,10 +135,12 @@ object FeatureSet {
   def rdd[T: ClassTag](data: RDD[T],
       memoryType: MemoryType = DRAM,
       dataStrategy: DataStrategy = PARTITIONED): DistributedDataSet[T] = {
+    val nodeNumber = EngineRef.getNodeNumber()
+    val repartitionedData = data.coalesce(nodeNumber, true)
     if (memoryType == DRAM && dataStrategy == PARTITIONED) {
-      DRAMFeatureSet.rdd(data)
+      DRAMFeatureSet.rdd(repartitionedData)
     } else if (memoryType == PMEM && dataStrategy == PARTITIONED) {
-      PmemFeatureSet.rdd(data)
+      PmemFeatureSet.rdd(repartitionedData)
     } else {
       throw new IllegalArgumentException(s"MemoryType: ${memoryType} and ${dataStrategy} is not " +
         s"supported for now")

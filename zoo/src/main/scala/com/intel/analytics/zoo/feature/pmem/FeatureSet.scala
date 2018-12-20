@@ -71,9 +71,7 @@ object PmemFeatureSet {
   private def rdd[T: ClassTag](data: RDD[T], nativeArrayConverter:
   NativeArrayConverter[T]):
   DistributedFeatureSet[T] = {
-    val nodeNumber = EngineRef.getNodeNumber()
-    val coaleasedRdd = data.coalesce(nodeNumber, true)
-    val countPerPartition = coaleasedRdd.mapPartitions { iter =>
+    val countPerPartition = data.mapPartitions { iter =>
       require(iter.hasNext)
       var totalBytes: Long = 0L
       var totalRecordNum = 0
@@ -84,7 +82,7 @@ object PmemFeatureSet {
       }
       Iterator.single((totalRecordNum, totalBytes))
     }
-    val arrayRDD = coaleasedRdd.zipPartitions(countPerPartition) { (dataIter, countIter) =>
+    val arrayRDD = data.zipPartitions(countPerPartition) { (dataIter, countIter) =>
       nativeArrayConverter.toArray(dataIter, countIter)
     }.setName("FeatureSet cached in PMEM")
       .cache()
