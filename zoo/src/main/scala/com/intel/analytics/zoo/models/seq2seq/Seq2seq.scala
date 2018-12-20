@@ -39,12 +39,11 @@ import scala.reflect.ClassTag
  * @param outputShape shape of decoder input, for variable length, please input -1
  * @param bridge connect encoder and decoder
  */
-class Seq2seq[T: ClassTag] private(
+class Seq2seq[T: ClassTag] (
                             val encoder: Encoder[T],
                             val decoder: Decoder[T],
                             inputShape: Shape,
                             outputShape: Shape,
-                            bridgeType: String,
                             bridge: KerasLayer[Activity, Activity, T],
                             generator: KerasLayer[Activity, Activity, T])
   (implicit ev: TensorNumeric[T]) extends ZooModel[Table, Tensor[T], T] {
@@ -79,11 +78,6 @@ class Seq2seq[T: ClassTag] private(
     metrics: List[ValidationMethod[T]] = null)(implicit ev: TensorNumeric[T]): Unit = {
 model.asInstanceOf[KerasNet[T]].compile(optimizer, loss, metrics)
 }
-
-  def setCheckPoint(path: String, overWrite: Boolean = true)
-                   (implicit ev: TensorNumeric[T]): Unit = {
-    model.asInstanceOf[KerasNet[T]].setCheckpoint(path, overWrite)
-  }
 
   def fit(
     x: RDD[Sample[T]],
@@ -142,19 +136,7 @@ object Seq2seq {
     bridge: KerasLayer[Activity, Activity, T] = null,
     generator: KerasLayer[Activity, Activity, T] = null
   )(implicit ev: TensorNumeric[T]): Seq2seq[T] = {
-    new Seq2seq[T](encoder, decoder, encoderInputShape, decoderInputShape, "Customized",
+    new Seq2seq[T](encoder, decoder, encoderInputShape, decoderInputShape,
       bridge, generator).build()
-  }
-
-  def apply[@specialized(Float, Double) T: ClassTag](
-    encoder: RNNEncoder[T],
-    decoder: RNNDecoder[T],
-    encoderInputShape: Shape,
-    decoderInputShape: Shape,
-    bridgeType: String,
-    generator: KerasLayer[Activity, Activity, T]
-  )(implicit ev: TensorNumeric[T]): Seq2seq[T] = {
-    new Seq2seq[T](encoder, decoder, encoderInputShape, decoderInputShape, bridgeType,
-      null, generator).build()
   }
 }
