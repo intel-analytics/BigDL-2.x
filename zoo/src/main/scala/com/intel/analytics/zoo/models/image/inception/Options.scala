@@ -39,7 +39,7 @@ object Options {
     gradientL2NormThreshold: Option[Double] = None,
     gradientMin: Option[Double] = None,
     gradientMax: Option[Double] = None,
-    cacheWithAEP: Boolean = true
+    memoryType: String = "DRAM"
   )
 
   val trainParser = new OptionParser[TrainParams]("BigDL Inception Example") {
@@ -99,9 +99,9 @@ object Options {
     opt[Double]("gradientMin")
       .text("min gradient clipping by")
       .action((x, c) => c.copy(gradientMin = Some(x)))
-    opt[Boolean]("cacheWithAEP")
-      .text("cache with AEP")
-      .action((x, c) => c.copy(cacheWithAEP = x))
+    opt[String]("memoryType")
+      .text("memory type")
+      .action((x, c) => c.copy(memoryType = x))
   }
 
   case class TestParams(

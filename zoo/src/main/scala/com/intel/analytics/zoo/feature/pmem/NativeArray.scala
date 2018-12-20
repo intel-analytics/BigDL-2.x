@@ -22,11 +22,23 @@ case object PMEM extends MemoryType
 
 case object DRAM extends MemoryType
 
+case object DRAM_DIRECT extends MemoryType
+
 sealed trait DataStrategy
 
 case object PARTITIONED extends DataStrategy
 
 case object REPLICATED extends DataStrategy
+
+object MemoryType {
+  def fromString(str: String): MemoryType = {
+    str.toUpperCase() match {
+      case "PMEM" => PMEM
+      case "DRAM" => DRAM
+      case "DRAM_DIRECT" => DRAM_DIRECT
+    }
+  }
+}
 
 
 /**

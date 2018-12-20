@@ -21,13 +21,16 @@ import org.apache.spark.SparkEnv
 
 object MemoryAllocator {
 
-  def getInstance(memoryType: MemoryType = DRAM): BasicMemoryAllocator = {
-    if (memoryType == PMEM) {
-      println("Using persistent memory")
-      SparkPersistentMemoryAlocator.nativeAllocator
-    } else {
-      println("Using main memory")
-      DRAMBasicMemoryAllocator.instance
+  def getInstance(memoryType: MemoryType = DRAM_DIRECT): BasicMemoryAllocator = {
+    memoryType match {
+      case PMEM =>
+        println("Using persistent memory")
+        SparkPersistentMemoryAlocator.nativeAllocator
+      case DRAM_DIRECT =>
+        println("Using main memory")
+        DRAMBasicMemoryAllocator.instance
+      case _ =>
+        throw new IllegalArgumentException(s"Not supported memoryType: ${memoryType}")
     }
   }
 }

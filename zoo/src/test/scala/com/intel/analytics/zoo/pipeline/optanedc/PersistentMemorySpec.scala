@@ -45,7 +45,7 @@ class PersistentMemorySpec extends ZooSpecHelper {
 
   "load native lib optanedc" should "be ok" in {
     val address = MemoryAllocator.getInstance(PMEM).allocate(1000L)
-    MemoryAllocator.getInstance().free(address)
+    MemoryAllocator.getInstance(PMEM).free(address)
   }
 
   "NativeFloatArray optane dc" should "be ok" in {
@@ -122,7 +122,7 @@ class PersistentMemorySpec extends ZooSpecHelper {
       nodeNumber = 1,
       coresPerNode = 4,
       classNumber = 1000,
-      cacheWithOptaneDC = true).asInstanceOf[DistributedDataSet[MiniBatch[Float]]]
+      memoryType = PMEM).asInstanceOf[DistributedDataSet[MiniBatch[Float]]]
     val data = imageNet.data(train = false)
     assert(data.count() == 3)
     data.collect()

@@ -16,11 +16,8 @@
 
 package com.intel.analytics.zoo.feature.pmem
 
-import javassist.bytecode.stackmap.TypeTag
-
 import com.intel.analytics.bigdl.dataset.ByteRecord
 import com.intel.analytics.zoo.feature.common.{ArrayLike, DistributedFeatureSet}
-import com.intel.analytics.zoo.pipeline.api.keras.layers.utils.EngineRef
 import org.apache.spark.rdd.RDD
 
 import scala.reflect.ClassTag
@@ -34,7 +31,8 @@ private[zoo] abstract class NativeArrayConverter[T: ClassTag]
       countPerPartition: Iterator[(Int, Long)]): Iterator[ArrayLike[T]]
 }
 
-private[zoo] class ByteRecordConverter extends NativeArrayConverter[ByteRecord] {
+private[zoo] class ByteRecordConverter(
+    memoryType: MemoryType = PMEM) extends NativeArrayConverter[ByteRecord] {
 
   override def getBytesPerRecord(byteRecord: ByteRecord): Long = {
     byteRecord.data.length
@@ -43,8 +41,9 @@ private[zoo] class ByteRecordConverter extends NativeArrayConverter[ByteRecord] 
   override def toArray(recordIterator: Iterator[ByteRecord],
       countPerPartition: Iterator[(Int, Long)]): Iterator[ArrayLike[ByteRecord]] = {
       val count = countPerPartition.next()
-      val optaneDCArray = new VarLenBytesArray(count._1, count._2)
-      val labels = Array[Float](count._1)
+      val optaneDCArray = new VarLenBytesArray(count._1, count._2,
+        memoryType = memoryType)
+      val labels = new Array[Float](count._1)
       var i = 0
       while(recordIterator.hasNext) {
         val data = recordIterator.next()
@@ -52,11 +51,11 @@ private[zoo] class ByteRecordConverter extends NativeArrayConverter[ByteRecord] 
         labels(i) = data.label
         i += 1
       }
-      Iterator.single(OptaneDCByteRecordArray(optaneDCArray, labels.toArray))
+      Iterator.single(ByteRecordArray(optaneDCArray, labels))
     }
 }
 
-private[zoo] case class OptaneDCByteRecordArray(records: VarLenBytesArray,
+private[zoo] case class ByteRecordArray(records: VarLenBytesArray,
     label: Array[Float]) extends ArrayLike[ByteRecord] {
   override def length: Int = {
     records.recordNum
@@ -68,8 +67,8 @@ private[zoo] case class OptaneDCByteRecordArray(records: VarLenBytesArray,
 
 object PmemFeatureSet {
 
-  private def rdd[T: ClassTag](data: RDD[T], nativeArrayConverter:
-  NativeArrayConverter[T]):
+  private def rdd[T: ClassTag](data: RDD[T],
+      nativeArrayConverter: NativeArrayConverter[T]):
   DistributedFeatureSet[T] = {
     val countPerPartition = data.mapPartitions { iter =>
       require(iter.hasNext)
@@ -89,14 +88,16 @@ object PmemFeatureSet {
     new DistributedFeatureSet[T](arrayRDD.asInstanceOf[RDD[ArrayLike[T]]])
   }
 
-  def rdd[T: ClassTag](data: RDD[T]): DistributedFeatureSet[T] = {
+  def rdd[T: ClassTag](data: RDD[T],
+      memoryType: MemoryType = PMEM): DistributedFeatureSet[T] = {
+    var clazz: ClassTag[T] = implicitly[ClassTag[T]]
     implicitly[ClassTag[T]].runtimeClass match {
-      case t if t == ByteRecord.getClass =>
+      case t if t == classOf[ByteRecord] =>
         rdd[ByteRecord](data.asInstanceOf[RDD[ByteRecord]],
-          new ByteRecordConverter()).asInstanceOf[DistributedFeatureSet[T]]
+          new ByteRecordConverter(memoryType)).asInstanceOf[DistributedFeatureSet[T]]
       case _ =>
         throw new IllegalArgumentException(
-          s"${implicitly[ClassTag[T]].runtimeClass.getSimpleName} is not supported for now")
+          s"${implicitly[ClassTag[T]].runtimeClass} is not supported for now")
     }
   }
 }

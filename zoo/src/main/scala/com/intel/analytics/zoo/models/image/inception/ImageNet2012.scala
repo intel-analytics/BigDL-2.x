@@ -20,7 +20,7 @@ import com.intel.analytics.bigdl.DataSet
 import com.intel.analytics.bigdl.dataset._
 import com.intel.analytics.bigdl.dataset.image.{BGRImgCropper, BGRImgNormalizer, BytesToBGRImg, MTLabeledBGRImgToBatch, HFlip => DatasetHFlip}
 import com.intel.analytics.zoo.feature.common.FeatureSet
-import com.intel.analytics.zoo.feature.pmem.{DRAM, PMEM}
+import com.intel.analytics.zoo.feature.pmem.{DRAM, MemoryType, PMEM}
 import com.intel.analytics.zoo.pipeline.api.keras.layers.utils.EngineRef
 import org.apache.hadoop.io.Text
 import org.apache.spark.SparkContext
@@ -66,16 +66,12 @@ object ImageNet2012 {
     nodeNumber: Int,
     coresPerNode: Int,
     classNumber: Int,
-    cacheWithOptaneDC: Boolean = false
+    memoryType: MemoryType = DRAM
   )
   : DataSet[MiniBatch[Float]] = {
     val rawData = readFromSeqFiles(path, sc, classNumber)
-    val cachedDataSet: DistributedDataSet[ByteRecord] = if (cacheWithOptaneDC) {
-      println("~~~~~~~ Caching with OptaneDC ~~~~~~~")
-      FeatureSet.rdd[ByteRecord](rawData, memoryType = PMEM)
-    } else {
-      FeatureSet.rdd[ByteRecord](rawData, memoryType = DRAM)
-    }
+    val cachedDataSet: DistributedDataSet[ByteRecord] =
+      FeatureSet.rdd[ByteRecord](rawData, memoryType = memoryType)
     cachedDataSet.transform(
       MTLabeledBGRImgToBatch[ByteRecord](
         width = imageSize,

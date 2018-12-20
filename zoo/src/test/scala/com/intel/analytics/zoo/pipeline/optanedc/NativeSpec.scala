@@ -42,15 +42,15 @@ class NativeSpec extends ZooSpecHelper {
   }
 
   "load native lib dram" should "be ok" in {
-    val address = MemoryAllocator.getInstance(DRAM).allocate(1000L)
-    MemoryAllocator.getInstance().free(address)
+    val address = MemoryAllocator.getInstance(DRAM_DIRECT).allocate(1000L)
+    MemoryAllocator.getInstance(DRAM_DIRECT).free(address)
   }
 
 
   "NativeBytesArray dram" should "be ok" in {
     val sizeOfItem = 100
     val sizeOfRecord = 5
-    val nativeArray = new FixLenBytesArray(sizeOfItem, sizeOfRecord, DRAM)
+    val nativeArray = new FixLenBytesArray(sizeOfItem, sizeOfRecord, DRAM_DIRECT)
     val targetArray = ArrayBuffer[Byte]()
     val rec = Array[Byte](193.toByte, 169.toByte, 0, 90, 4)
     (0 until 100).foreach {i =>
@@ -67,7 +67,7 @@ class NativeSpec extends ZooSpecHelper {
 
 
   "NativevarBytesArray dram" should "be ok" in {
-    val nativeArray = new VarLenBytesArray(3, 5 + 2 + 6, DRAM)
+    val nativeArray = new VarLenBytesArray(3, 5 + 2 + 6, DRAM_DIRECT)
     val targetArray = ArrayBuffer[Byte]()
     val rec0 = Array[Byte](193.toByte, 169.toByte, 0, 90, 4)
     val rec1 = Array[Byte](90, 4)
@@ -85,7 +85,7 @@ class NativeSpec extends ZooSpecHelper {
 
 
   "NativevarFloatsArray dram" should "be ok" in {
-    val nativeArray = new VarLenFloatsArray(3, (5 + 2 + 6) * 4, DRAM)
+    val nativeArray = new VarLenFloatsArray(3, (5 + 2 + 6) * 4, DRAM_DIRECT)
     val targetArray = ArrayBuffer[Byte]()
     val rec0 = Array[Float](1.2f, 1.3f, 0, 0.1f, 0.2f)
     val rec1 = Array[Float](0.9f, 4.0f)
@@ -112,7 +112,7 @@ class NativeSpec extends ZooSpecHelper {
       nodeNumber = 1,
       coresPerNode = 4,
       classNumber = 1000,
-      cacheWithOptaneDC = false).asInstanceOf[DistributedDataSet[MiniBatch[Float]]]
+      memoryType = DRAM_DIRECT).asInstanceOf[DistributedDataSet[MiniBatch[Float]]]
     val data = imageNet.data(train = false)
     assert(data.count() == 3)
     data.collect()

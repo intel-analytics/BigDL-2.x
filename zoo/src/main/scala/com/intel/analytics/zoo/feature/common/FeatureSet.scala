@@ -137,13 +137,23 @@ object FeatureSet {
       dataStrategy: DataStrategy = PARTITIONED): DistributedDataSet[T] = {
     val nodeNumber = EngineRef.getNodeNumber()
     val repartitionedData = data.coalesce(nodeNumber, true)
-    if (memoryType == DRAM && dataStrategy == PARTITIONED) {
-      DRAMFeatureSet.rdd(repartitionedData)
-    } else if (memoryType == PMEM && dataStrategy == PARTITIONED) {
-      PmemFeatureSet.rdd(repartitionedData)
+    if (dataStrategy == PARTITIONED) {
+      memoryType match {
+        case DRAM =>
+          DRAMFeatureSet.rdd(repartitionedData)
+        case PMEM =>
+          println("~~~~~~~ Caching with AEP ~~~~~~~")
+          PmemFeatureSet.rdd(repartitionedData, PMEM)
+        case DRAM_DIRECT =>
+          println("~~~~~~~ Caching with DRAM DIRECT ~~~~~~~")
+          PmemFeatureSet.rdd[T](repartitionedData, DRAM_DIRECT)
+        case _ =>
+          throw new IllegalArgumentException(
+            s"MemoryType: ${memoryType} is not supported at the moment")
+      }
     } else {
-      throw new IllegalArgumentException(s"MemoryType: ${memoryType} and ${dataStrategy} is not " +
-        s"supported for now")
+      throw new IllegalArgumentException(
+        s"DataStrategy ${dataStrategy} is not supported at the moment")
     }
   }
 }

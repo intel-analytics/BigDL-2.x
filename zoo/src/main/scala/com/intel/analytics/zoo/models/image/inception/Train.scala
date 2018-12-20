@@ -21,6 +21,7 @@ import com.intel.analytics.bigdl.nn.{ClassNLLCriterion, Module}
 import com.intel.analytics.bigdl.optim.SGD.{Poly, SequentialSchedule, Warmup}
 import com.intel.analytics.bigdl.optim._
 import com.intel.analytics.bigdl.utils.{Engine, LoggerFilter, T, Table}
+import com.intel.analytics.zoo.feature.pmem.MemoryType
 import com.intel.analytics.zoo.pipeline.api.keras.layers.utils.EngineRef
 import org.apache.log4j.{Level, Logger}
 import org.apache.spark.SparkContext
@@ -47,7 +48,7 @@ object TrainInceptionV1 {
         EngineRef.getNodeNumber(),
         EngineRef.getCoreNumber(),
         param.classNumber,
-        param.cacheWithAEP
+        MemoryType.fromString(param.memoryType)
       )
       val valSet = ImageNet2012(
         param.folder + "/val",
