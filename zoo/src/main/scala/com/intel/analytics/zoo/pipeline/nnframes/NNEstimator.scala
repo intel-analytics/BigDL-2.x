@@ -18,6 +18,7 @@ package com.intel.analytics.zoo.pipeline.nnframes
 
 import java.io.{FileInputStream, FileOutputStream, ObjectInputStream, ObjectOutputStream}
 
+import com.intel.analytics.bigdl.adapter.BigDLAccessor
 import com.intel.analytics.bigdl.dataset.{SampleToMiniBatch, _}
 import com.intel.analytics.bigdl.models.utils.ModelBroadcast
 import com.intel.analytics.bigdl.optim._
@@ -29,6 +30,7 @@ import com.intel.analytics.bigdl.visualization.{TrainSummary, ValidationSummary}
 import com.intel.analytics.bigdl.{Criterion, DataSet, Module}
 import com.intel.analytics.zoo.feature.common.{Preprocessing, _}
 import org.apache.hadoop.fs.Path
+import org.apache.log4j.Logger
 import org.apache.spark.SparkContext
 import org.apache.spark.ml.adapter.{HasFeaturesCol, HasPredictionCol, SchemaUtils}
 import org.apache.spark.ml.param._
@@ -565,6 +567,8 @@ class NNModel[T: ClassTag] private[zoo] (
   extends DLTransformerBase[NNModel[T]] with NNParams[T]
     with HasBatchSize with MLWritable {
 
+  private val logger = Logger.getLogger(getClass)
+
   def setFeaturesCol(featuresColName: String): this.type = set(featuresCol, featuresColName)
 
   def setPredictionCol(value: String): this.type = set(predictionCol, value)
@@ -589,9 +593,18 @@ class NNModel[T: ClassTag] private[zoo] (
 
     val sc = dataFrame.sqlContext.sparkContext
     val modelBroadCast = ModelBroadcast[T]().broadcast(sc, model.evaluate())
-    val localBatchSize = $(batchSize)
+    // note that here we use batch per thread, but not batch per partition. For inference,
+    // GlobalBatchSize = batchPerThread * coreNumber() is more intuitive for the users
+    val numCores = BigDLAccessor.coreNumber()
+    val batchPerThread = Math.ceil($(batchSize).toDouble / numCores).toInt
+    if ($(batchSize) % numCores != 0) {
+      logger.warn(s"Global batch size (${$(batchSize)}) cannot be divided by total core number" +
+        s"($numCores). Setting batch per thread as ($batchPerThread), and actual Global batch" +
+        s" size is updated to ${numCores * batchPerThread}")
+    }
+
     val featureTransformersBC = sc.broadcast($(samplePreprocessing))
-    val toBatchBC = sc.broadcast(SampleToMiniBatch[T](localBatchSize))
+    val toBatchBC = sc.broadcast(SampleToMiniBatch[T](batchPerThread, partitionNum = Some(1)))
 
     // concat the prediction and other columns in DF. avoid zip between RDD
     val resultRDD = dataFrame.rdd.mapPartitions { rowIter =>
@@ -599,7 +612,7 @@ class NNModel[T: ClassTag] private[zoo] (
       val featureSteps = featureTransformersBC.value.cloneTransformer()
       val toBatch = toBatchBC.value.cloneTransformer()
 
-      rowIter.grouped(localBatchSize).flatMap { rowBatch =>
+      rowIter.grouped(batchPerThread).flatMap { rowBatch =>
         val featureSeq = rowBatch.map(r => featureFunc(r, featureColIndex))
         val samples = featureSteps(featureSeq.iterator)
         val predictions = toBatch(samples).flatMap { batch =>
