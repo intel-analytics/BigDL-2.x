@@ -16,42 +16,24 @@
 
 package com.intel.analytics.zoo.pipeline.api.keras.layers
 
-import com.intel.analytics.bigdl.nn.{SplitTable}
 import com.intel.analytics.bigdl.nn.abstractnn.AbstractModule
+import com.intel.analytics.bigdl.nn.JoinTable
 import com.intel.analytics.bigdl.tensor.Tensor
 import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric
 import com.intel.analytics.bigdl.utils.{T, Table}
 
 import scala.reflect.ClassTag
 
-class InternalSplitTensor[T: ClassTag](val dimension: Int, num: Int, nested: Boolean)
+class InternalSplitTensor[T: ClassTag](dimension: Int, num: Int)
   (implicit ev: TensorNumeric[T]) extends AbstractModule[Tensor[T], Table, T] {
 
-  def splitToTensor[@specialized(Float, Double) T: ClassTag]
-  (tensor: Tensor[T], num: Int)(implicit ev: TensorNumeric[T]): Array[Tensor[T]] = {
-    tensor.split(tensor.size(dimension) / num, dimension)
-  }
-
-  def splitToNestedTable[@specialized(Float, Double) T: ClassTag]
-  (tensor: Tensor[T], num: Int)(implicit ev: TensorNumeric[T]): Table = {
-    val states = T.array(tensor.split(tensor.size(dimension) / num, dimension))
-    var i = 1
-    while (i <= states.length()) {
-      val state = states[Tensor[T]](i)
-      states(i) = T.array(state.split(state.size(dimension) / 2, dimension))
-      i += 1
-    }
-    states
-  }
-
   override def updateOutput(input: Tensor[T]): Table = {
-    output = if (!nested) {
-      T.array(splitToTensor(input, num))
-    } else splitToNestedTable(input, num)
+    output =
+      T.array(input.split(input.size(dimension) / num, dimension))
     output
   }
 
-  private val innerLayer = new InternalJoinTable[T](dimension, -1)
+  private val innerLayer = new JoinTable[T](dimension, -1)
   override def updateGradInput(input: Tensor[T], gradOutput: Table): Tensor[T] = {
     gradInput = innerLayer.forward(gradOutput).toTensor[T]
     gradInput

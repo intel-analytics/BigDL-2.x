@@ -21,7 +21,6 @@ import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric
 
 import scala.reflect.ClassTag
 
-// test purpose
 class InternalEcho[T: ClassTag]()(implicit ev: TensorNumeric[T])
   extends AbstractModule[Activity, Activity, T]  {
 

@@ -57,7 +57,7 @@ class RNNEncoder[T: ClassTag](val rnns: Array[Recurrent[T]],
     val sizes = rnnShape.toSingle().toArray
 
     val statesShape = rnns.map { rnn =>
-      SingleShape(List(sizes(0)) ++ rnn.getHiddenShape().toList)
+      MultiShape(rnn.getHiddenShape().map(x => Shape(Array(sizes(0), x) ++ sizes.drop(3))).toList)
     }
 
     Shape(List(rnnShape, MultiShape(statesShape.toList)))
