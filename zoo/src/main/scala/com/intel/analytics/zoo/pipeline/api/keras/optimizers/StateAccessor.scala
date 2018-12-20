@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 The BigDL Authors.
+ * Copyright 2018 Analytics Zoo Authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,7 +23,9 @@ import scala.reflect.ClassTag
  * utility to access state
  */
 private[analytics] object StateAccessor {
-  def getState [@specialized(Float, Double) T: ClassTag] (optimMethod: OptimMethod[T]): Table = {
+
+  def getState[@specialized(Float, Double) T: ClassTag](optimMethod: OptimMethod[T]): Table = {
     optimMethod.state
   }
+
 }
