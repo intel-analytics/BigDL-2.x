@@ -18,12 +18,16 @@ package com.intel.analytics.bigdl.adapter
 import com.intel.analytics.bigdl.utils.Engine
 
 /**
- * to access private[bigdl] fields and methods.
+ * Access private[bigdl] fields and methods.
  */
 object BigDLAccessor {
 
   private[analytics] def coreNumber(): Int = {
     Engine.coreNumber()
+  }
+
+  private[analytics] def nodeNumber(): Int = {
+    Engine.nodeNumber()
   }
 
 }

@@ -46,6 +46,9 @@ import scala.reflect.ClassTag
 
 private[nnframes] trait HasBatchSize extends Params {
 
+  /**
+   * Global batch size across the cluster.
+   */
   final val batchSize: IntParam = new IntParam(this, "batchSize", "batchSize")
 
   def getBatchSize: Int = $(batchSize)
@@ -194,6 +197,9 @@ class NNEstimator[T: ClassTag] private[zoo] (
 
   def setPredictionCol(value: String): this.type = set(predictionCol, value)
 
+  /**
+   * Set global batch size across the cluster. Global batch size = Batch per thread * num of cores.
+   */
   def setBatchSize(value: Int): this.type = set(batchSize, value)
 
   def setEndWhen(trigger: Trigger): this.type = set(endWhen, trigger)
@@ -567,12 +573,16 @@ class NNModel[T: ClassTag] private[zoo] (
   extends DLTransformerBase[NNModel[T]] with NNParams[T]
     with HasBatchSize with MLWritable {
 
+  @transient
   private val logger = Logger.getLogger(getClass)
 
   def setFeaturesCol(featuresColName: String): this.type = set(featuresCol, featuresColName)
 
   def setPredictionCol(value: String): this.type = set(predictionCol, value)
 
+  /**
+   * Set global batch size across the cluster. Global batch size = Batch per thread * num of cores.
+   */
   def setBatchSize(value: Int): this.type = set(batchSize, value)
 
   /**
@@ -594,13 +604,16 @@ class NNModel[T: ClassTag] private[zoo] (
     val sc = dataFrame.sqlContext.sparkContext
     val modelBroadCast = ModelBroadcast[T]().broadcast(sc, model.evaluate())
     // note that here we use batch per thread, but not batch per partition. For inference,
-    // GlobalBatchSize = batchPerThread * coreNumber() is more intuitive for the users
-    val numCores = BigDLAccessor.coreNumber()
-    val batchPerThread = Math.ceil($(batchSize).toDouble / numCores).toInt
-    if ($(batchSize) % numCores != 0) {
+    // GlobalBatchSize = batchPerThread * coreNumber() appears to be more intuitive for the users
+    val totalNumCores = BigDLAccessor.coreNumber() * BigDLAccessor.nodeNumber()
+    val batchPerThread = Math.ceil($(batchSize).toDouble / totalNumCores).toInt
+    if ($(batchSize) % totalNumCores != 0) {
       logger.warn(s"Global batch size (${$(batchSize)}) cannot be divided by total core number" +
-        s"($numCores). Setting batch per thread as ($batchPerThread), and actual Global batch" +
-        s" size is updated to ${numCores * batchPerThread}")
+        s"($totalNumCores). Setting batch per thread as ($batchPerThread), and actual Global" +
+        s" batch size is updated to ${totalNumCores * batchPerThread}")
+    } else {
+      logger.info(s"Batch per thread: $batchPerThread; Total number of cores: $totalNumCores;" +
+        s" Global batch size: ${batchPerThread * totalNumCores}")
     }
 
     val featureTransformersBC = sc.broadcast($(samplePreprocessing))
