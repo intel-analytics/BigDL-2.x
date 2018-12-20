@@ -49,7 +49,8 @@ private[zoo] object LayerWrapperByForward {
     Tensor[T](newShape).fill(ev.one)
   }
 
-  private def shapeDummyValue[T: ClassTag](shape: Shape)(implicit ev: TensorNumeric[T]): Activity = {
+  private def shapeDummyValue[T: ClassTag](shape: Shape)
+    (implicit ev: TensorNumeric[T]): Activity = {
     if (shape.isInstanceOf[SingleShape]) return singleShapeDummyValue(shape)
     T.array(shape.toMulti().map(shapeDummyValue(_)).toArray)
   }

@@ -35,9 +35,9 @@ import scala.reflect.ClassTag
  * @param bridge keras layers used to do the transformation
  */
 class Bridge[T: ClassTag] private (bridgeType: String,
-  decoderHiddenSize: Int,
+                                   var decoderHiddenSize: Int,
   bridge: KerasLayer[Tensor[T], Tensor[T], T])(implicit ev: TensorNumeric[T])
-  extends KerasLayer[Activity, Activity, T]() with IdentityOutputShape with Net {
+  extends KerasLayer[Activity, Activity, T]() with Net {
 
   def this(bridge: KerasLayer[Tensor[T], Tensor[T], T])(implicit ev: TensorNumeric[T]) =
     this("customized", 0, bridge)
@@ -53,9 +53,9 @@ class Bridge[T: ClassTag] private (bridgeType: String,
 
     val layer = Sequential()
     if (stateNum > 1 || layerNum > 1) {
-      val flattenShape = if (stateNum == 1 || layerNum == 1)
+      val flattenShape = if (stateNum == 1 || layerNum == 1) {
         _inputShape.toMulti().map(_.toSingle()).flatten
-      else _inputShape.toMulti().map(_.toMulti().map(_.toSingle())).flatten.flatten
+      } else _inputShape.toMulti().map(_.toMulti().map(_.toSingle())).flatten.flatten
 
       val inputLayers = flattenShape.map(x => InputLayer(Shape(Array(x))))
       layer.add(Merge(inputLayers, mode = "concat"))
@@ -81,6 +81,19 @@ class Bridge[T: ClassTag] private (bridgeType: String,
     }
 
     layer.asInstanceOf[AbstractModule[Activity, Activity, T]]
+  }
+
+  private def updateShape(inputShape: Shape): Shape = {
+    if (inputShape.isInstanceOf[SingleShape]) {
+      val sizes = inputShape.toSingle()
+      Shape(Array(sizes(0), decoderHiddenSize) ++ sizes.drop(2))
+    } else {
+      MultiShape(inputShape.toMulti().map(updateShape(_)))
+    }
+  }
+
+  override def computeOutputShape(inputShape: Shape): Shape = {
+    MultiShape(inputShape.toMulti().map(updateShape(_)))
   }
 
   override def updateOutput(input: Activity): Activity = {

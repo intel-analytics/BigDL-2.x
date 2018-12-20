@@ -106,7 +106,8 @@ model.asInstanceOf[KerasNet[T]].compile(optimizer, loss, metrics)
     // Iteratively output predicted words
     while (j <= maxSeqLen && !break) {
       val modelOutput = updateOutput(T(sent1, curInput)).toTensor[T]
-      val generateOutput = if (buildOutput != null) buildOutput.forward(modelOutput) else modelOutput
+      val generateOutput = if (buildOutput != null) buildOutput.forward(modelOutput)
+      else modelOutput
       val predict = generateOutput.select(2, generateOutput.size(2))
 
       if (stopSign != null && predict.almostEqual(stopSign, 1e-8)) break = true

@@ -81,7 +81,7 @@ class RNNDecoder[T: ClassTag](val rnns: Array[Recurrent[T]],
 object RNNDecoder {
   /**
    * [[RNNDecoder]] A generic recurrent neural network decoder
- *
+   *
    * @param rnns rnn layers used for decoder, support stacked rnn layers
    * @param embedding embedding layer in decoder
    * @param inputShape shape of input
@@ -93,8 +93,8 @@ object RNNDecoder {
   }
 
   /**
-    * [[RNNDecoder]] A generic recurrent neural network decoder
- *
+   * [[RNNDecoder]] A generic recurrent neural network decoder
+   *
    * @param rnnType style of recurrent unit, one of [SimpleRNN, LSTM, GRU]
    * @param numLayers number of layers used in decoder
    * @param hiddenSize hidden size of decoder
