@@ -19,7 +19,7 @@ import sys
 import zoo.pipeline.api.autograd as A
 from zoo.models.common.zoo_model import ZooModel
 from zoo.models.textmatching.text_matcher import TextMatcher
-from zoo.pipeline.api.keras.layers import Input, Embedding, Dense, Squeeze
+from zoo.pipeline.api.keras.layers import Input, Embedding, Dense, Squeeze, prepare_embedding
 from zoo.pipeline.api.keras.models import Model
 from bigdl.util.common import callBigDlFunc, JTensor
 
@@ -36,21 +36,39 @@ class KNRM(TextMatcher):
     # Arguments:
     text1_length: Sequence length of text1 (query).
     text2_length: Sequence length of text2 (doc).
-    vocab_size: Int. The input_dim of the embedding layer. Ought to be the total number
-                of words in the corpus +1, with index 0 reserved for unknown words.
-    embed_size: Int. The output_dim of the embedding layer. Default is 300.
-    embed_weights: Numpy array. Pre-trained word embedding weights if any. Default is None
-                   and in this case, initial weights will be randomized.
+    embedding_file: The path to the word embedding file.
+                    Currently only the following GloVe files are supported:
+                    "glove.6B.50d.txt", "glove.6B.100d.txt", "glove.6B.200d.txt"
+                    "glove.6B.300d.txt", "glove.42B.300d.txt", "glove.840B.300d.txt".
+                    You can download from: https://nlp.stanford.edu/projects/glove/.
+    word_index: Dictionary of word (string) and its corresponding index (int).
+                The index is supposed to start from 1 with 0 reserved for unknown words.
+                During the prediction, if you have words that are not in the word_index
+                for the training, you can map them to index 0.
+                Default is None. In this case, all the words in the embedding_file will
+                be taken into account and you can call
+                WordEmbedding.get_word_index(embedding_file) to retrieve the dictionary.
     train_embed: Boolean. Whether to train the embedding layer or not. Default is True.
     kernel_num: Int. The number of kernels to use. Default is 21.
     sigma: Float. Defines the kernel width, or the range of its softTF count. Default is 0.1.
     exact_sigma: Float. The sigma used for the kernel that harvests exact matches
                  in the case where RBF mu=1.0. Default is 0.001.
+    target_mode: String. The target mode of the model. Either 'ranking' or 'classification'.
+                 For ranking, the output will be the relevance score between text1 and text2 and
+                 you are recommended to use RankHinge as loss for pairwise training.
+                 For classification, the last layer will be sigmoid and the output will be the
+                 probability between 0 and 1 indicating whether text1 is related to text2 and
+                 you are recommended to use 'binary_crossentropy' as loss for binary classification.
+                 Default mode is 'ranking'.
     """
-    def __init__(self, text1_length, text2_length, vocab_size, embed_size=300, embed_weights=None,
-                 train_embed=True, kernel_num=21, sigma=0.1, exact_sigma=0.001, bigdl_type="float"):
+    def __init__(self, text1_length, text2_length, embedding_file, word_index=None,
+                 train_embed=True, kernel_num=21, sigma=0.1, exact_sigma=0.001,
+                 target_mode="ranking", bigdl_type="float"):
+        embed_weights = prepare_embedding(embedding_file, word_index,
+                                          randomize_unknown=True, normalize=True)
+        vocab_size, embed_size = embed_weights.shape
         super(KNRM, self).__init__(text1_length, vocab_size, embed_size,
-                                   embed_weights, train_embed, bigdl_type)
+                                   embed_weights, train_embed, target_mode, bigdl_type)
         self.text2_length = text2_length
         self.kernel_num = kernel_num
         self.sigma = float(sigma)
@@ -66,6 +84,7 @@ class KNRM(TextMatcher):
                                           self.kernel_num,
                                           self.sigma,
                                           self.exact_sigma,
+                                          self.target_mode,
                                           self.model)
 
     def build_model(self):
