@@ -135,9 +135,9 @@ object FeatureSet {
   def rdd[T: ClassTag](data: RDD[T],
       memoryType: MemoryType = DRAM,
       dataStrategy: DataStrategy = PARTITIONED): DistributedDataSet[T] = {
-    val nodeNumber = EngineRef.getNodeNumber()
-    val repartitionedData = data.coalesce(nodeNumber, true)
     if (dataStrategy == PARTITIONED) {
+      val nodeNumber = EngineRef.getNodeNumber()
+      val repartitionedData = data.coalesce(nodeNumber, true)
       memoryType match {
         case DRAM =>
           DRAMFeatureSet.rdd(repartitionedData)
