@@ -1,4 +1,3 @@
----
 ## **SpatialDropout3D**
 Spatial 3D version of Dropout.
 

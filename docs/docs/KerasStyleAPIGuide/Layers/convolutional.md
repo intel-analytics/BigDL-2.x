@@ -1,4 +1,3 @@
----
 ## **LocallyConnected2D**
 Locally-connected layer for 2D inputs that works similarly to the SpatialConvolution layer, except that weights are unshared, that is, a different set of filters is applied at each different patch of the input.
 
