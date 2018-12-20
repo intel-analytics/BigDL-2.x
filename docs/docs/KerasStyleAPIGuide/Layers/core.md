@@ -121,7 +121,7 @@ Reshape(target_shape, input_shape=None, name=None)
 **Scala example:**
 ```scala
 import com.intel.analytics.zoo.pipeline.api.keras.layers.Reshape
-import com.intel.analytics.zoo.pipeline.api.keras.models._
+import com.intel.analytics.zoo.pipeline.api.keras.models.Sequential
 import com.intel.analytics.bigdl.utils.Shape
 import com.intel.analytics.bigdl.tensor.Tensor
 
@@ -238,7 +238,7 @@ MaxoutDense(output_dim, nb_feature=4, W_regularizer=None, b_regularizer=None, bi
 **Scala example:**
 ```scala
 import com.intel.analytics.zoo.pipeline.api.keras.layers.MaxoutDense
-import com.intel.analytics.zoo.pipeline.api.keras.models._
+import com.intel.analytics.zoo.pipeline.api.keras.models.Sequential
 import com.intel.analytics.bigdl.utils.Shape
 import com.intel.analytics.bigdl.tensor.Tensor
 
