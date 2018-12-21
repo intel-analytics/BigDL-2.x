@@ -509,7 +509,7 @@ class TFOptimizer:
             val_labels = None
             bigdl_val_methods = None
 
-        return cls(loss, optim_method, dataset, inputs, sess,
+        return cls(loss, optim_method, sess, dataset, inputs,
                  grads, variables, loss.graph, val_outputs, val_labels,
                    bigdl_val_methods, len(keras_model.sample_weights))
 
