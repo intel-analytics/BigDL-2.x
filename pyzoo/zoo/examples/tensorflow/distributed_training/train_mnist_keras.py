@@ -73,7 +73,7 @@ def main(max_epoch, data_num):
 
     # model.fit(images_data, labels_data)
     #
-    optimizer = TFOptimizer.from_keras_model(model, dataset)
+    optimizer = TFOptimizer.from_keras(model, dataset)
 
     optimizer.set_train_summary(TrainSummary("/tmp/az_lenet", "lenet"))
     optimizer.set_val_summary(ValidationSummary("/tmp/az_lenet", "lenet"))

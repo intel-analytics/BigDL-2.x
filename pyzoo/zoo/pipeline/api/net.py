@@ -362,8 +362,8 @@ class TFValidationMethod(JavaValue):
 
 class TFOptimizer:
 
-    def __init__(self, loss, optim_method, dataset, inputs, sess,
-                 grads, variables, graph,
+    def __init__(self, loss, optim_method, sess=None, dataset=None, inputs=None,
+                 grads=None, variables=None, graph=None,
                  val_outputs=None, val_labels=None, val_method=None, add_sample_weights_num=0):
         import tensorflow as tf
         from zoo.util.tf import export_tf
@@ -376,6 +376,13 @@ class TFOptimizer:
         :param sess: the current tensorflow Session, if you want to used a pre-trained model, you
         should use the Session to load the pre-trained variables and pass it to TFOptimizer.
         '''
+
+        if dataset is None:
+            args = TFOptimizer._get_arguments_from_loss(loss, optim_method, sess,
+                                                 val_outputs, val_labels, val_method)
+            loss, optim_method, sess, dataset, inputs = args[:5]
+            grads, variables, graph, val_outputs, val_labels, val_method = args[5:]
+
         self.optim_method = optim_method
         self.sess = sess
         self.dataset = dataset
@@ -384,7 +391,6 @@ class TFOptimizer:
 
         if self.dataset.batch_size <= 0:
             raise ValueError("You should set batch_size instead of batch_per_thread for training")
-
 
         if val_outputs is not None and val_labels is not None:
             with self.graph.as_default():
@@ -445,8 +451,8 @@ class TFOptimizer:
                                           EveryEpoch(),
                                           val_method)
 
-    @classmethod
-    def from_loss(cls, loss, optim_method, session=None, val_outputs=None, val_labels=None, val_method=None):
+    @staticmethod
+    def _get_arguments_from_loss(loss, optim_method, session, val_outputs, val_labels, val_method):
         import tensorflow as tf
         if session is None:
             sess = tf.Session()
@@ -468,11 +474,19 @@ class TFOptimizer:
         inputs = dataset.tensors
 
         _check_the_same(all_required_inputs, inputs)
-        return cls(loss, optim_method, dataset, inputs, sess,
+
+        return (loss, optim_method, sess, dataset, inputs,
                  grads, variables, loss.graph, val_outputs, val_labels, val_method)
 
     @classmethod
-    def from_keras_model(cls, keras_model, dataset):
+    def from_loss(cls, loss, optim_method, session=None, val_outputs=None, val_labels=None, val_method=None):
+        args = TFOptimizer._get_arguments_from_loss(loss, optim_method,
+                                                    session, val_outputs, val_labels, val_method)
+
+        return cls(*args)
+
+    @classmethod
+    def from_keras(cls, keras_model, dataset):
 
         loss = keras_model.total_loss
         inputs = keras_model.inputs + keras_model.targets + keras_model.sample_weights
