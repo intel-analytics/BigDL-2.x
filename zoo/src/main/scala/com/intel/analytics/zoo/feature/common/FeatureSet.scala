@@ -17,7 +17,6 @@
 package com.intel.analytics.zoo.feature.common
 
 import java.util.concurrent.atomic.AtomicInteger
-import javassist.bytecode.stackmap.TypeTag
 
 import com.intel.analytics.bigdl.dataset.DistributedDataSet
 import com.intel.analytics.bigdl.utils.RandomGenerator
