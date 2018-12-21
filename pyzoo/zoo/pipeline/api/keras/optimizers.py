@@ -24,7 +24,9 @@ if sys.version >= '3':
 
 class Adam(OptimMethod):
     """
-
+    An implementation of Adam with learning rate schedule.
+    >>> adam = Adam()
+    creating: createZooKerasAdam
     """
     def __init__(self,
                  lr = 1e-3,
@@ -35,15 +37,12 @@ class Adam(OptimMethod):
                  schedule = None,
                  bigdl_type = "float"):
         """
-        An implementation of Adam with learning rate schedule.
         :param lr learning rate
         :param beta_1 first moment coefficient
         :param beta_2 second moment coefficient
         :param epsilon for numerical stability
         :param decay learning rate decay
         :param schedule learning rate schedule, e.g. Warmup or Poly from BigDL
-        >>> adam = Adam()
-        creating: createZooKerasAdam
         """
 
         # explicitly reimplement the constructor since:
