@@ -1,5 +1,5 @@
 ## **Introduction**
-We hereby introduce a new set of __Keras-Style API__ based on [__Keras 1.2.2__](https://faroit.github.io/keras-docs/1.2.2/) in Analytics Zoo for the sake of user-friendliness. Users, especially those familiar with Keras, are recommended to use the new API to create an Analytics Zoo model and train, evaluate or tune it in a distributed fashion.
+We provide __Keras-Style API__ based on [__Keras 1.2.2__](https://faroit.github.io/keras-docs/1.2.2/) in Analytics Zoo for the sake of user-friendliness. Users, especially those familiar with Keras, can easily use our API to create an Analytics Zoo model and train, evaluate or tune it in a distributed fashion.
 
 To define a model in Python using the Keras-Style API, now one just need to import the following packages:
 
@@ -8,7 +8,7 @@ from zoo.pipeline.api.keras.layers import *
 from zoo.pipeline.api.keras.models import *
 ```
 
-One of the highlighted features with regard to the new API is __shape inference__. Users only need to specify the input shape (a shape tuple __excluding__ batch dimension, for example, `input_shape=(3, 4)` for 3D input) for the first layer of a model and for the remaining layers, the input dimension will be automatically inferred.
+One of the highlighted features with regard to the Keras-Style API is __shape inference__. Users only need to specify the input shape (a shape tuple __excluding__ batch dimension, for example, `input_shape=(3, 4)` for 3D input) for the first layer of a model and for the remaining layers, the input dimension will be automatically inferred.
 
 ---
 ## **Define a model**
@@ -28,8 +28,6 @@ get_output_shape()
 set_name(name)
 ```
 * Set the name of the model. Can alternatively specify the argument `name` in the constructor when creating a model.
-
-See [here](Optimization/training/) on how to train, predict or evaluate a defined model.
 
 ---
 ## **Sequential API**
@@ -102,7 +100,7 @@ model = Model([input1, input2], output)
 
 ---
 ## **Layers**
-See [here](Layers/core.md) for all the available layers for the new set of Keras-Style API.
+See [here](Layers/core.md) for all the available layers for the Keras-Style API.
 
 To set the name of a layer, you can either call `set_name(name)` or alternatively specify the argument `name` in the constructor when creating a layer.
 
@@ -127,7 +125,6 @@ model.add(Dense(10, activation="softmax", name="fc2"))
 model.get_input_shape() # (None, 28, 28, 1)
 model.get_output_shape() # (None, 10)
 ```
-See [here](https://github.com/intel-analytics/BigDL/tree/master/pyspark/bigdl/examples/lenet) for detailed introduction of LeNet, the full example code and running instructions.
 
 ---
 ## **Keras Code Support**
@@ -142,7 +139,7 @@ and making modifications subject to the following limitations:
 
 1. The Keras version we support and test is [__Keras 1.2.2__](https://faroit.github.io/keras-docs/1.2.2/) with TensorFlow backend.
 
-2. There exist some arguments supported in Keras layers but not supported in Analytics Zoo for now. See [here](../../APIGuide/keras-issues/#unsupported-layer-arguments) for the full list of unsupported layer arguments. Also, currently we haven't supported self-defined Keras layers or [`Lambda`](https://faroit.github.io/keras-docs/1.2.2/layers/core/#lambda) layers.
+2. There exist some arguments supported in Keras layers but not supported in Analytics Zoo for now. See [here](https://bigdl-project.github.io/0.7.0/#APIGuide/keras-issues/#unsupported-layer-arguments) for the full list of unsupported layer arguments. 
 
 3. The default dim_ordering in Analytics Zoo is `th` (Channel First, channel_axis=1).
 
