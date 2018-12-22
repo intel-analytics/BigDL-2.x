@@ -20,7 +20,8 @@ import com.intel.analytics.bigdl.nn.Graph
 import com.intel.analytics.bigdl.nn.Graph.ModuleNode
 import com.intel.analytics.bigdl.nn.abstractnn.{AbstractModule, Activity}
 import com.intel.analytics.bigdl.nn.keras.KerasLayer
-import com.intel.analytics.bigdl.utils.{Engine, Shape}
+import com.intel.analytics.bigdl.utils.{Engine, Shape, Table}
+import com.intel.analytics.zoo.pipeline.api.keras.optimizers.Adam
 
 import scala.collection.mutable
 import scala.reflect.ClassTag
@@ -69,18 +70,23 @@ class AbstractModuleRef[T: ClassTag](instance: AbstractModule[Activity, Activity
 }
 
 class GraphRef[T: ClassTag](instance: Graph[T]) {
-  def getOutputs(): Seq[ModuleNode[T]] = {
+  def getOutputs: Seq[ModuleNode[T]] = {
     KerasUtils.invokeMethod(instance, "outputs").asInstanceOf[Seq[ModuleNode[T]]]  // !!!!
   }
 }
 
 object EngineRef {
-  def getCoreNumber(): Int = {
+  def getCoreNumber: Int = {
     KerasUtils.invokeMethod(Engine, "coreNumber").asInstanceOf[Int]
   }
 
-  def getNodeNumber(): Int = {
+  def getNodeNumber: Int = {
     KerasUtils.invokeMethod(Engine, "nodeNumber").asInstanceOf[Int]
   }
 }
 
+object SGDRef {
+  def getstate[T: ClassTag](instance: Adam[T]): Table = {
+    KerasUtils.invokeMethod(instance, "state").asInstanceOf[Table]
+  }
+}

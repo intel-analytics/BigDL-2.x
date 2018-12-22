@@ -13,15 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-
 package com.intel.analytics.zoo.pipeline.api.keras.optimizers
 
-import com.intel.analytics.bigdl.optim.{SGD, StateAccessor}
+import com.intel.analytics.bigdl.optim.SGD
 import com.intel.analytics.bigdl.optim.SGD.{Default, LearningRateSchedule}
 import com.intel.analytics.bigdl.tensor.Tensor
 import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric
 import com.intel.analytics.bigdl.utils.Table
+import com.intel.analytics.zoo.pipeline.api.keras.layers.utils.SGDRef
 
 import scala.math._
 import scala.reflect.ClassTag
@@ -68,7 +67,7 @@ class Adam[@specialized(Float, Double) T: ClassTag](
     val eps = this.epsilon
 
     val (fx, dfdx) = feval(parameter)
-    val state = StateAccessor.getState(this)
+    val state = SGDRef.getstate(this)
     var timestep = state.getOrElse[Int]("evalCounter", 0)
     val (_s, _r, _denom) =
       if (state.get[Tensor[T]]("s").isDefined) {
@@ -120,7 +119,7 @@ class Adam[@specialized(Float, Double) T: ClassTag](
   }
 
   override def clearHistory(): Unit = {
-    val state = StateAccessor.getState(this)
+    val state = SGDRef.getstate(this)
     state.delete("s")
     state.delete("r")
   }
