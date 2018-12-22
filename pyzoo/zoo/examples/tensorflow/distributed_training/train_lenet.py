@@ -30,6 +30,7 @@ from nets import lenet
 
 slim = tf.contrib.slim
 
+
 def main(max_epoch, data_num):
     sc = init_nncontext()
 

@@ -194,7 +194,7 @@ class TFValidationMethod(val valMethod: ValidationMethod[Float],
       outputs
     }
 
-    val to1basedLabel = !valMethod.isInstanceOf[Accuracy[Float]]
+    val to1basedLabel = !valMethod.isInstanceOf[Accuracy[Float]] &&
       valMethod.isInstanceOf[Top1Accuracy[Float]] ||
         valMethod.isInstanceOf[Top5Accuracy[Float]] ||
         valMethod.isInstanceOf[TreeNNAccuracy[Float]]
