@@ -18,7 +18,6 @@ package com.intel.analytics.zoo.pipeline.nnframes
 
 import java.io.{FileInputStream, FileOutputStream, ObjectInputStream, ObjectOutputStream}
 
-import com.intel.analytics.bigdl.adapter.BigDLAccessor
 import com.intel.analytics.bigdl.dataset.{SampleToMiniBatch, _}
 import com.intel.analytics.bigdl.models.utils.ModelBroadcast
 import com.intel.analytics.bigdl.optim._
@@ -29,14 +28,14 @@ import com.intel.analytics.bigdl.utils.serializer.ModuleLoader
 import com.intel.analytics.bigdl.visualization.{TrainSummary, ValidationSummary}
 import com.intel.analytics.bigdl.{Criterion, DataSet, Module}
 import com.intel.analytics.zoo.feature.common.{Preprocessing, _}
+import com.intel.analytics.zoo.pipeline.api.keras.layers.utils.EngineRef
 import org.apache.hadoop.fs.Path
 import org.apache.log4j.Logger
 import org.apache.spark.SparkContext
 import org.apache.spark.ml.adapter.{HasFeaturesCol, HasPredictionCol, SchemaUtils}
 import org.apache.spark.ml.param._
 import org.apache.spark.ml.util._
-import org.apache.spark.ml.{DLEstimatorBase, DLTransformerBase, DefaultParamsWriterWrapper,
-  VectorCompatibility}
+import org.apache.spark.ml.{DLEstimatorBase, DLTransformerBase, DefaultParamsWriterWrapper, VectorCompatibility}
 import org.apache.spark.sql.types._
 import org.apache.spark.sql.{DataFrame, Row}
 import org.json4s.JsonDSL._
@@ -605,7 +604,7 @@ class NNModel[T: ClassTag] private[zoo] (
     val modelBroadCast = ModelBroadcast[T]().broadcast(sc, model.evaluate())
     // note that here we use batch per thread, but not batch per partition. For inference,
     // GlobalBatchSize = batchPerThread * coreNumber() appears to be more intuitive for the users
-    val totalNumCores = BigDLAccessor.coreNumber() * BigDLAccessor.nodeNumber()
+    val totalNumCores = EngineRef.getCoreNumber() * EngineRef.getNodeNumber()
     val batchPerThread = Math.ceil($(batchSize).toDouble / totalNumCores).toInt
     if ($(batchSize) % totalNumCores != 0) {
       logger.warn(s"Global batch size (${$(batchSize)}) cannot be divided by total core number" +
