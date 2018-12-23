@@ -13,24 +13,17 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-import heapq
 
 import tensorflow as tf
 from zoo import init_nncontext
 from zoo.pipeline.api.net import TFOptimizer, TFDataset
 from bigdl.optim.optimizer import *
-import numpy as np
 import sys
 from keras.models import Model
 from keras.layers import *
 
 from bigdl.dataset import mnist
 from bigdl.dataset.transformer import *
-
-sys.path.append("/tmp/models/slim")  # add the slim library
-from nets import lenet
-
-slim = tf.contrib.slim
 
 
 def main(max_epoch, data_num):
@@ -69,10 +62,6 @@ def main(max_epoch, data_num):
                   loss='sparse_categorical_crossentropy',
                   metrics=['accuracy'])
 
-    # (images_data, labels_data) = mnist.read_data_sets("/tmp/mnist", "train")
-
-    # model.fit(images_data, labels_data)
-    #
     optimizer = TFOptimizer.from_keras(model, dataset)
 
     optimizer.set_train_summary(TrainSummary("/tmp/az_lenet", "lenet"))
