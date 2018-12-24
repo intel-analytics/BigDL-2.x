@@ -83,7 +83,7 @@ object VarLenFloatsArray {
 
 class VarLenFloatsArray(recordNum: Int, totalSizeByBytes: Long,
     memoryType: MemoryType = PMEM) extends NativeVarLenArray[Float](recordNum,
-  totalSizeByBytes, memoryType, 4) {
+  totalSizeByBytes, memoryType, 2) {
 
   override def putSingle(offset: Long, s: Float): Unit = {
     Platform.putFloat(null, offset, s.asInstanceOf[Float])

@@ -75,3 +75,4 @@ policy.
 * --gradientL2NormThreshold: optional. Gradient L2-Norm threshold used for norm2 gradient clipping.
 * --gradientMin: optional. Max gradient clipping by value, used in constant gradient clipping.
 * --gradientMax: optional. Min gradient clipping by value, used in constant gradient clipping.
+* --memoryType: optional. The default value is `DRAM`, you can change it to `PMEM` if have AEP hardware.

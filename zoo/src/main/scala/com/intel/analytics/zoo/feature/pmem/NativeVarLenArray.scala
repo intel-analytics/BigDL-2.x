@@ -22,75 +22,51 @@ import scala.reflect.ClassTag
 
 private[zoo] abstract class NativeVarLenArray[T: ClassTag](val recordNum: Int,
     totalSizeByBytes: Long,
-    memoryType: MemoryType, protected val typeLen: Int) extends
+    memoryType: MemoryType, protected val moveStep: Int) extends
   NativeArray[Array[T]](totalSizeByBytes, memoryType) {
 
   // TODO: maybe this can be changed to native long array
-  val indexer = new Array[Long](recordNum)
+  val indexer = Array.fill[Long](recordNum + 1)(-1L)
 
-  var nextValidOffSet: Long = startAddr
-
-  var nextValidRecordId: Int = 0
+  indexer(0) = startAddr
 
   protected def isValidIndex(i: Int): Boolean = {
-    i < recordNum && indexer(i) != null
+    i < recordNum && indexer(i + 1) != null
   }
 
   protected def getRecordLength(i: Int): Int = {
-    val startOffSet = if (i == 0) {
-      startAddr
-    } else {
-      indexOf(i)
-    }
-    val nextOffSetTmp = if (i == nextValidRecordId - 1) {
-      nextValidOffSet
-    } else if (i < nextValidRecordId - 1) {
-      indexOf(i + 1)
-    } else {
-      throw new IllegalArgumentException(
-        s"Invalid index: ${i}, nextValidRecordId: ${nextValidRecordId}")
-    }
-    ((nextOffSetTmp - startOffSet) / typeLen).toInt
+    assert(isValidIndex(i), s"Invalid index: ${i}")
+    ((indexer(i + 1) - indexer(i)) >> moveStep).toInt
   }
 
   protected def getTypeOffSet(): Int
 
   def get(i: Int): Array[T] = {
-    assert(isValidIndex(i))
+    assert(isValidIndex(i), s"Invalid index ${i}")
     val recordLen = getRecordLength(i)
     val result = new Array[T](recordLen)
     Platform.copyMemory(null, indexOf(i), result,
-      getTypeOffSet(), recordLen * typeLen)
+      getTypeOffSet(), (recordLen << moveStep))
     return result
   }
 
   // TODO: would be slow if we put item one by one.
   def set(i: Int, ts: Array[T]): Unit = {
     assert(!deleted)
-    val curOffSet = if (i == 0) {
-      this.startAddr
-    } else {
-      assert(isValidIndex(i - 1))
-      nextValidOffSet
-    }
-    indexer(i) = curOffSet
-
+    val curOffSet = indexer(i)
+    assert(curOffSet != -1, s"Invalid index: ${i}")
     var j = 0
     while (j < ts.length) {
-      putSingle(curOffSet + j * typeLen, ts(j))
+      putSingle(curOffSet + (j << moveStep), ts(j))
       j += 1
     }
-
-    if (i == nextValidRecordId) {
-      nextValidRecordId = i + 1
-      nextValidOffSet = curOffSet + ts.length * typeLen
-    }
+    indexer(i + 1) = curOffSet + (ts.length << moveStep)
   }
 
   def putSingle(offset: Long, s: T): Unit
 
   def indexOf(i: Int): Long = {
-    assert(isValidIndex(i))
+    assert(isValidIndex(i), s"Invalid index: ${i}")
     return indexer(i)
   }
 }

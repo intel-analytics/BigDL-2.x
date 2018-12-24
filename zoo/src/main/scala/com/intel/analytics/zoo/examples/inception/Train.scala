@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intel.analytics.zoo.models.image.inception
+package com.intel.analytics.zoo.examples.inception
 
 import com.intel.analytics.bigdl._
 import com.intel.analytics.bigdl.models.inception.Inception_v1_NoAuxClassifier

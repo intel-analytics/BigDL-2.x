@@ -20,7 +20,7 @@ import org.apache.spark.unsafe.Platform
 
 class VarLenBytesArray(recordNum: Int, totalSizeByBytes: Long,
     memoryType: MemoryType = PMEM) extends NativeVarLenArray[Byte](recordNum,
-  totalSizeByBytes, memoryType, 1) {
+  totalSizeByBytes, memoryType, 0) {
 
   def putSingle(offset: Long, s: Byte): Unit = {
     Platform.putByte(null, offset, s.asInstanceOf[Byte])

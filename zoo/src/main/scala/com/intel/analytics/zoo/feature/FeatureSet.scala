@@ -20,24 +20,13 @@ import java.util.concurrent.atomic.AtomicInteger
 
 import com.intel.analytics.bigdl.dataset.DistributedDataSet
 import com.intel.analytics.bigdl.utils.RandomGenerator
+import com.intel.analytics.zoo.feature.common.ArrayLike
 import com.intel.analytics.zoo.feature.pmem._
 import com.intel.analytics.zoo.pipeline.api.keras.layers.utils.EngineRef
 import org.apache.spark.rdd.RDD
 import org.slf4j.{Logger, LoggerFactory}
 
 import scala.reflect.ClassTag
-
-private[zoo] abstract class ArrayLike[T: ClassTag] extends Serializable {
-  def length: Int = throw new Error()
-
-  def apply(i: Int): T = throw new Error()
-}
-
-private[zoo] class ArrayLikeWrapper[T: ClassTag](array: Array[T]) extends ArrayLike[T] {
-  override def length: Int = array.length
-
-  override def apply(i: Int): T = array(i)
-}
 
 
 /**
