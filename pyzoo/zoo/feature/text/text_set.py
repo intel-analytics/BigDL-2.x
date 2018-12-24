@@ -245,6 +245,21 @@ class TextSet(JavaValue):
         jvalue = callBigDlFunc(bigdl_type, "readTextSet", path, sc, min_partitions)
         return TextSet(jvalue=jvalue)
 
+    @classmethod
+    def read_csv(cls, path, sc=None, min_partitions=1, bigdl_type="float"):
+        jvalue = callBigDlFunc(bigdl_type, "textSetReadCSV", path, sc, min_partitions)
+        return TextSet(jvalue=jvalue)
+
+    @classmethod
+    def from_relation_pairs(cls, relations, corpus1, corpus2, bigdl_type="float"):
+        jvalue = callBigDlFunc(bigdl_type, "textSetFromRelationPairs", relations, corpus1, corpus2)
+        return TextSet(jvalue=jvalue)
+
+    @classmethod
+    def from_relation_lists(cls, relations, corpus1, corpus2, bigdl_type="float"):
+        jvalue = callBigDlFunc(bigdl_type, "textSetFromRelationLists", relations, corpus1, corpus2)
+        return TextSet(jvalue=jvalue)
+
 
 class LocalTextSet(TextSet):
     """

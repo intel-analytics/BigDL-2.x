@@ -18,7 +18,7 @@ import pytest
 import shutil
 
 from bigdl.optim.optimizer import SGD
-from zoo.feature.common import ChainedPreprocessing
+from zoo.feature.common import ChainedPreprocessing, Relations
 from zoo.feature.text import *
 from zoo.common.nncontext import *
 from zoo.models.textclassification import TextClassifier
@@ -41,6 +41,7 @@ class TestTextSet:
         resource_path = os.path.join(os.path.split(__file__)[0], "../../resources")
         self.path = os.path.join(resource_path, "news20")
         self.glove_path = os.path.join(resource_path, "glove.6B/glove.6B.50d.txt")
+        self.qa_path = os.path.join(resource_path, "qa")
 
     def teardown_method(self, method):
         """ teardown any state that was previously setup with a setup_method
@@ -176,6 +177,14 @@ class TestTextSet:
         assert sorted(distributed_set.get_labels().collect()) == [0, 0, 1]
         assert distributed_set.get_samples().collect() == [None, None, None]
         assert distributed_set.get_predicts().collect() == [None, None, None]
+
+    def test_relations(self):
+        relations = Relations.read(self.qa_path+"/relations.txt", self.sc)
+        text_set = TextSet.read_csv(self.qa_path+"/question_corpus.csv", self.sc)
+        transformed = text_set.tokenize().word2idx().shape_sequence(5)
+        relation_pairs = TextSet.from_relation_pairs(relations, transformed, transformed)
+        relation_pairs.get_samples().collect()
+        print("111")
 
 
 if __name__ == "__main__":

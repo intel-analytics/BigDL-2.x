@@ -88,6 +88,7 @@ object Relations {
    * paired with every negative relation of the same id1 (id2 with label=0).
    */
   def generateRelationPairs(relations: RDD[Relation]): RDD[RelationPair] = {
+    print(relations.collect().head.id1)
     val positive = relations.filter(_.label > 0).groupBy(_.id1)
     val negative = relations.filter(_.label == 0).groupBy(_.id1)
     positive.cogroup(negative).flatMap(x => {

@@ -22,6 +22,16 @@ if sys.version >= '3':
     unicode = str
 
 
+class Relations(object):
+    @classmethod
+    def read(cls, path, sc=None, min_partitions=1, bigdl_type="float"):
+        if sc:
+            jvalue = callBigDlFunc(bigdl_type, "readRelations", path, sc, min_partitions)
+        else:
+            jvalue = callBigDlFunc(bigdl_type, "readRelations", path)
+        return jvalue
+
+
 class Preprocessing(JavaValue):
     """
     Preprocessing defines data transform action during feature preprocessing. Python wrapper for

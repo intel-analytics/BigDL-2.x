@@ -23,10 +23,11 @@ import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric
 import com.intel.analytics.bigdl.dataset.{Sample => JSample}
 import com.intel.analytics.bigdl.nn.abstractnn.Activity
 import com.intel.analytics.zoo.common.PythonZoo
-import com.intel.analytics.zoo.feature.common.Preprocessing
+import com.intel.analytics.zoo.feature.common.{Preprocessing, Relation, Relations}
 import com.intel.analytics.zoo.feature.text.TruncMode.TruncMode
 import com.intel.analytics.zoo.feature.text.{DistributedTextSet, _}
 import org.apache.spark.api.java.{JavaRDD, JavaSparkContext}
+import org.apache.spark.rdd.RDD
 
 import scala.collection.JavaConverters._
 import scala.reflect.ClassTag
@@ -54,6 +55,10 @@ class PythonTextFeature[T: ClassTag](implicit ev: TensorNumeric[T]) extends Pyth
 
   def textFeatureGetLabel(feature: TextFeature): Int = {
     feature.getLabel
+  }
+
+  def textFeatureGetURI(feature: TextFeature): String = {
+    feature.getURI
   }
 
   def textFeatureHasLabel(feature: TextFeature): Boolean = {
@@ -182,6 +187,14 @@ class PythonTextFeature[T: ClassTag](implicit ev: TensorNumeric[T]) extends Pyth
     textSet.rdd.map(_.getText).toJavaRDD()
   }
 
+  def textSetGetURIs(textSet: LocalTextSet): JList[String] = {
+    textSet.array.map(_.getURI).toList.asJava
+  }
+
+  def textSetGetURIs(textSet: DistributedTextSet): JavaRDD[String] = {
+    textSet.rdd.map(_.getURI).toJavaRDD()
+  }
+
   def textSetGetLabels(textSet: LocalTextSet): JList[Int] = {
     textSet.array.map(_.getLabel).toList.asJava
   }
@@ -282,6 +295,53 @@ class PythonTextFeature[T: ClassTag](implicit ev: TensorNumeric[T]) extends Pyth
       transformer: Preprocessing[TextFeature, TextFeature],
       imageSet: TextSet): TextSet = {
     imageSet.transform(transformer)
+  }
+
+  private def toScalaRelations(relations: JavaRDD[Array[Object]]): RDD[Relation] = {
+    relations.rdd.foreach(x =>
+      require(x.length == 3, "Relation should consist of id1, id2 and label"))
+    relations.rdd.map(x =>
+      Relation(x(0).asInstanceOf[String], x(1).asInstanceOf[String], x(2).asInstanceOf[Int]))
+  }
+
+  private def toPythonRelations(relations: RDD[Relation]): JavaRDD[JList[Any]] = {
+    relations.map(x =>
+      List(x.id1, x.id2, x.label).asJava).toJavaRDD()
+  }
+
+  def readRelations(path: String): Array[Relation] = {
+    Relations.read(path)
+  }
+
+  def readRelations(
+      path: String,
+      sc: JavaSparkContext,
+      minPartitions: Int = 1): JavaRDD[Relation] = {
+    Relations.read(path, sc.sc, minPartitions).toJavaRDD()
+  }
+
+  def textSetFromRelationPairs(
+      relations: JavaRDD[Relation],
+      corpus1: TextSet,
+      corpus2: TextSet): DistributedTextSet = {
+    print(relations.rdd.collect().head)
+    TextSet.fromRelationPairs(relations.rdd, corpus1, corpus2)
+  }
+
+  def textSetFromRelationLists(
+      relations: JavaRDD[Relation],
+      corpus1: TextSet,
+      corpus2: TextSet): DistributedTextSet = {
+    TextSet.fromRelationLists(relations.rdd, corpus1, corpus2)
+  }
+
+  def textSetReadCSV(path: String, sc: JavaSparkContext, minPartitions: Int): TextSet = {
+    if (sc == null) {
+      TextSet.readCSV(path, null, minPartitions)
+    }
+    else {
+      TextSet.readCSV(path, sc.sc, minPartitions)
+    }
   }
 
 }
