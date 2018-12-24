@@ -16,7 +16,7 @@
 
 package com.intel.analytics.zoo.feature.pmem
 
-//import org.apache.spark.unsafe.Platform
+import org.apache.spark.unsafe.Platform
 
 import scala.reflect.ClassTag
 
@@ -44,7 +44,7 @@ private[zoo] abstract class NativeVarLenArray[T: ClassTag](val recordNum: Int,
     }
     val nextOffSetTmp = if (i == nextValidRecordId - 1) {
       nextValidOffSet
-    } else if (i < nextValidRecordId - 1){
+    } else if (i < nextValidRecordId - 1) {
       indexOf(i + 1)
     } else {
       throw new IllegalArgumentException(
@@ -53,23 +53,30 @@ private[zoo] abstract class NativeVarLenArray[T: ClassTag](val recordNum: Int,
     ((nextOffSetTmp - startOffSet) / typeLen).toInt
   }
 
-//  protected def getTypeOffSet(): Int
+  protected def getTypeOffSet(): Int
 
-
+  def get(i: Int): Array[T] = {
+    assert(isValidIndex(i))
+    val recordLen = getRecordLength(i)
+    val result = new Array[T](recordLen)
+    Platform.copyMemory(null, indexOf(i), result,
+      getTypeOffSet(), recordLen * typeLen)
+    return result
+  }
 
   // TODO: would be slow if we put item one by one.
   def set(i: Int, ts: Array[T]): Unit = {
     assert(!deleted)
     val curOffSet = if (i == 0) {
-        this.startAddr
+      this.startAddr
     } else {
-        assert(isValidIndex(i - 1))
-        nextValidOffSet
-      }
+      assert(isValidIndex(i - 1))
+      nextValidOffSet
+    }
     indexer(i) = curOffSet
 
     var j = 0
-    while(j < ts.length) {
+    while (j < ts.length) {
       putSingle(curOffSet + j * typeLen, ts(j))
       j += 1
     }

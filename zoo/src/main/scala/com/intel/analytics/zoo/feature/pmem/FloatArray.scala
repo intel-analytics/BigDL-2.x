@@ -89,23 +89,5 @@ class VarLenFloatsArray(recordNum: Int, totalSizeByBytes: Long,
     Platform.putFloat(null, offset, s.asInstanceOf[Float])
   }
 
-//  override def getTypeOffSet(): Int = VarLenFloatsArray.FLOAT_ARRAY_OFFSET
-//
-//  override def get(i: Int): Array[Float] = {
-//    assert(isValidIndex(i))
-//    val recordLen = getRecordLength(i)
-//    val result = new Array[Float](recordLen)
-//    Platform.copyMemory(null, indexOf(i), result,
-//      VarLenFloatsArray.FLOAT_ARRAY_OFFSET, recordLen)
-//    return result
-//  }
-
-
-  override def get(i: Int): Array[Float] = {
-    val recordLen = 5
-    val result = new Array[Float](recordLen)
-    Platform.copyMemory(null, this.startAddr, result,
-      VarLenFloatsArray.FLOAT_ARRAY_OFFSET, recordLen)
-    return result
-  }
+  override def getTypeOffSet(): Int = VarLenFloatsArray.FLOAT_ARRAY_OFFSET
 }

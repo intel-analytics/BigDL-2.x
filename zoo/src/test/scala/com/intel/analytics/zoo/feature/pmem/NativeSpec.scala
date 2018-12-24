@@ -99,17 +99,17 @@ class NativeSpec extends ZooSpecHelper {
   "NativevarFloatsArray dram" should "be ok" in {
     val nativeArray = new VarLenFloatsArray(3, (5 + 2 + 6) * 4, DIRECT)
     val targetArray = ArrayBuffer[Byte]()
-    val rec0 = Array[Float](1.2f, 1.1f, 0, 0.1f, 0.2f)
-//    val rec1 = Array[Float](0.9f, 4.0f)
-//    val rec2 = Array[Float](193.5f, 169.4f, 0.0f, 90.1f, 4.3f, 5.6f)
+    val rec0 = Array[Float](1.2f, 1.3f, 0, 0.1f, 0.2f)
+    val rec1 = Array[Float](0.9f, 4.0f)
+    val rec2 = Array[Float](193.5f, 169.4f, 0.0f, 90.1f, 4.3f, 5.6f)
 
     nativeArray.set(0, rec0)
-//    nativeArray.set(1, rec1)
-//    nativeArray.set(2, rec2)
+    nativeArray.set(1, rec1)
+    nativeArray.set(2, rec2)
 
     assert(nativeArray.get(0) === rec0)
-//    assert(nativeArray.get(1) === rec1)
-//    assert(nativeArray.get(2) === rec2)
+    assert(nativeArray.get(1) === rec1)
+    assert(nativeArray.get(2) === rec2)
     nativeArray.free()
   }
 
