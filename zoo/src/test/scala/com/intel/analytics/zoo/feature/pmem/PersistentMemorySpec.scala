@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.intel.analytics.zoo.pipeline.optanedc
+package com.intel.analytics.zoo.feature.pmem
 
 import com.intel.analytics.bigdl.dataset.{DistributedDataSet, MiniBatch}
 import com.intel.analytics.bigdl.utils.Engine
@@ -50,13 +50,13 @@ class PersistentMemorySpec extends ZooSpecHelper {
 
   "NativeFloatArray optane dc" should "be ok" in {
     val array = Array[Float](1.2f, 0.3f, 4.5f, 199999.6f)
-    val optaneDCArray = OptaneDCFloatArray(array.toIterator, array.size)
+    val floatArray = FloatArray(array.toIterator, array.size)
     var i = 0
-    while( i < optaneDCArray.recordNum) {
-      assert(optaneDCArray.get(i) == array(i))
+    while( i < floatArray.recordNum) {
+      assert(floatArray.get(i) == array(i))
       i += 1
     }
-    optaneDCArray.free()
+    floatArray.free()
   }
 
   "NativeBytesArray optanedc" should "be ok" in {

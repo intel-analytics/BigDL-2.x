@@ -16,6 +16,8 @@
 
 package com.intel.analytics.zoo.feature.pmem
 
+//import org.apache.spark.unsafe.Platform
+
 import scala.reflect.ClassTag
 
 private[zoo] abstract class NativeVarLenArray[T: ClassTag](val recordNum: Int,
@@ -24,29 +26,57 @@ private[zoo] abstract class NativeVarLenArray[T: ClassTag](val recordNum: Int,
   NativeArray[Array[T]](totalSizeByBytes, memoryType) {
 
   // TODO: maybe this can be changed to native long array
-  val indexer = new Array[(Long, Int)](recordNum)
+  val indexer = new Array[Long](recordNum)
+
+  var nextValidOffSet: Long = startAddr
+
+  var nextValidRecordId: Int = 0
 
   protected def isValidIndex(i: Int): Boolean = {
     i < recordNum && indexer(i) != null
   }
 
-  // TODO: would be slow if we put item one by one.
-  def set(i: Int, bytes: Array[T]): Unit = {
-    assert(!deleted)
-    if (!isValidIndex(i)) {
-      val startOffset = if (i == 0) {
-        this.startAddr
-      } else {
-        assert(isValidIndex(i - 1))
-        indexer(i - 1)._1 + indexer(i - 1)._2
-      }
-      indexer(i) = (startOffset, bytes.length * typeLen) // NB!!!
+  protected def getRecordLength(i: Int): Int = {
+    val startOffSet = if (i == 0) {
+      startAddr
+    } else {
+      indexOf(i)
     }
-    val startOffset = indexOf(i)
+    val nextOffSetTmp = if (i == nextValidRecordId - 1) {
+      nextValidOffSet
+    } else if (i < nextValidRecordId - 1){
+      indexOf(i + 1)
+    } else {
+      throw new IllegalArgumentException(
+        s"Invalid index: ${i}, nextValidRecordId: ${nextValidRecordId}")
+    }
+    ((nextOffSetTmp - startOffSet) / typeLen).toInt
+  }
+
+//  protected def getTypeOffSet(): Int
+
+
+
+  // TODO: would be slow if we put item one by one.
+  def set(i: Int, ts: Array[T]): Unit = {
+    assert(!deleted)
+    val curOffSet = if (i == 0) {
+        this.startAddr
+    } else {
+        assert(isValidIndex(i - 1))
+        nextValidOffSet
+      }
+    indexer(i) = curOffSet
+
     var j = 0
-    while(j < bytes.length) {
-      putSingle(startOffset + j * typeLen, bytes(j))
+    while(j < ts.length) {
+      putSingle(curOffSet + j * typeLen, ts(j))
       j += 1
+    }
+
+    if (i == nextValidRecordId) {
+      nextValidRecordId = i + 1
+      nextValidOffSet = curOffSet + ts.length * typeLen
     }
   }
 
@@ -54,6 +84,6 @@ private[zoo] abstract class NativeVarLenArray[T: ClassTag](val recordNum: Int,
 
   def indexOf(i: Int): Long = {
     assert(isValidIndex(i))
-    return indexer(i)._1
+    return indexer(i)
   }
 }

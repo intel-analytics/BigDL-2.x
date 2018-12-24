@@ -26,13 +26,17 @@ class VarLenBytesArray(recordNum: Int, totalSizeByBytes: Long,
     Platform.putByte(null, offset, s.asInstanceOf[Byte])
   }
 
+//  override def getTypeOffSet(): Int = Platform.BYTE_ARRAY_OFFSET
+
   override def get(i: Int): Array[Byte] = {
     assert(isValidIndex(i))
-    val recordLen = indexer(i)._2
+    val recordLen = getRecordLength(i)
     val result = new Array[Byte](recordLen)
     Platform.copyMemory(null, indexOf(i), result, Platform.BYTE_ARRAY_OFFSET, recordLen)
-    return result
+    result
   }
+
+
 }
 
 class FixLenBytesArray(val numOfRecord: Long, val sizeOfRecordByByte: Int,

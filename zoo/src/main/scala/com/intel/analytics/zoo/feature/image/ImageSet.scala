@@ -76,7 +76,7 @@ abstract class ImageSet {
   /**
    * Convert ImageSet to DataSet of Sample.
    */
-  def toDataSet[T: ClassTag](cacheWithOptaneDC: Boolean = false): DataSet[Sample[T]]
+  def toDataSet[T: ClassTag](): DataSet[Sample[T]]
 }
 
 class LocalImageSet(var array: Array[ImageFeature]) extends ImageSet {
@@ -93,10 +93,8 @@ class LocalImageSet(var array: Array[ImageFeature]) extends ImageSet {
     ImageFrame.array(array)
   }
 
-  override def toDataSet[T: ClassTag](cacheWithOptaneDC: Boolean = false): DataSet[Sample[T]] = {
-    if (cacheWithOptaneDC) {
-      throw new RuntimeException("Not supported yet for caching with optaneDC")
-    }
+  override def toDataSet[T: ClassTag](): DataSet[Sample[T]] = {
+
     DataSet.array(array.map(_[Sample[T]](ImageFeature.sample)))
   }
 }
@@ -115,12 +113,8 @@ class DistributedImageSet(var rdd: RDD[ImageFeature]) extends ImageSet {
     ImageFrame.rdd(rdd)
   }
 
-  override def toDataSet[T: ClassTag](cacheWithOptaneDC: Boolean = false): DataSet[Sample[T]] = {
-    if (!cacheWithOptaneDC) {
-      DataSet.rdd(rdd.map(_[Sample[T]](ImageFeature.sample)))
-    } else {
-      throw new IllegalArgumentException("Not supported for now")
-    }
+  override def toDataSet[T: ClassTag](): DataSet[Sample[T]] = {
+    DataSet.rdd(rdd.map(_[Sample[T]](ImageFeature.sample)))
   }
 }
 

@@ -22,7 +22,7 @@ case object PMEM extends MemoryType
 
 case object DRAM extends MemoryType
 
-case object DRAM_DIRECT extends MemoryType
+case object DIRECT extends MemoryType
 
 sealed trait DataStrategy
 
@@ -35,7 +35,7 @@ object MemoryType {
     str.toUpperCase() match {
       case "PMEM" => PMEM
       case "DRAM" => DRAM
-      case "DRAM_DIRECT" => DRAM_DIRECT
+      case "DIRECT" => DIRECT
     }
   }
 }

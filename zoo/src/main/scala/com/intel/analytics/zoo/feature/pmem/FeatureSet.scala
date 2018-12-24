@@ -17,7 +17,7 @@
 package com.intel.analytics.zoo.feature.pmem
 
 import com.intel.analytics.bigdl.dataset.ByteRecord
-import com.intel.analytics.zoo.feature.common.{ArrayLike, DistributedFeatureSet}
+import com.intel.analytics.zoo.feature.{ArrayLike, DistributedFeatureSet}
 import org.apache.spark.rdd.RDD
 
 import scala.reflect.ClassTag
@@ -41,17 +41,17 @@ private[zoo] class ByteRecordConverter(
   override def toArray(recordIterator: Iterator[ByteRecord],
       countPerPartition: Iterator[(Int, Long)]): Iterator[ArrayLike[ByteRecord]] = {
       val count = countPerPartition.next()
-      val optaneDCArray = new VarLenBytesArray(count._1, count._2,
+      val nativeArray = new VarLenBytesArray(count._1, count._2,
         memoryType = memoryType)
       val labels = new Array[Float](count._1)
       var i = 0
       while(recordIterator.hasNext) {
         val data = recordIterator.next()
-        optaneDCArray.set(i, data.data)
+        nativeArray.set(i, data.data)
         labels(i) = data.label
         i += 1
       }
-      Iterator.single(ByteRecordArray(optaneDCArray, labels))
+      Iterator.single(ByteRecordArray(nativeArray, labels))
     }
 }
 
@@ -83,7 +83,7 @@ object PmemFeatureSet {
     }
     val arrayRDD = data.zipPartitions(countPerPartition) { (dataIter, countIter) =>
       nativeArrayConverter.toArray(dataIter, countIter)
-    }.setName("FeatureSet cached in PMEM")
+    }.setName(s"FeatureSet: ${data.name} cached in PMEM")
       .cache()
     new DistributedFeatureSet[T](arrayRDD.asInstanceOf[RDD[ArrayLike[T]]])
   }

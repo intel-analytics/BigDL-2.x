@@ -21,12 +21,12 @@ import org.apache.spark.SparkEnv
 
 object MemoryAllocator {
 
-  def getInstance(memoryType: MemoryType = DRAM_DIRECT): BasicMemoryAllocator = {
+  def getInstance(memoryType: MemoryType = DIRECT): BasicMemoryAllocator = {
     memoryType match {
       case PMEM =>
         println("Using persistent memory")
         SparkPersistentMemoryAlocator.nativeAllocator
-      case DRAM_DIRECT =>
+      case DIRECT =>
         println("Using main memory")
         DRAMBasicMemoryAllocator.instance
       case _ =>
@@ -36,11 +36,15 @@ object MemoryAllocator {
 }
 
 object SparkPersistentMemoryAlocator {
-  // TODO: Passing the path as a parameter via sparkconf?
-  val memPaths = List("/mnt/pmem0", "/mnt/pmem1")
-  val memSizePerByte = 248 * 1024 * 1024 * 1024
+  private val sparkConf = SparkEnv.get.conf
+  private val memPaths = sparkConf.get(
+    "analytics.zoo.pmem.paths", "/mnt/pmem0:/mnt/pmem1").split(":")
+
+  private val memSizePerByte = sparkConf.getInt(
+    "analytics.zoo.pmem.bytesize.socket", 248) * 1024 * 1024 * 1024
   val pathIndex = executorID % memPaths.length
   println(s"Executor: ${executorID()} is using ${memPaths(pathIndex)}")
+
   lazy val nativeAllocator = {
     val instance = PersistentMemoryAllocator.getInstance()
     instance.initialize(memPaths(pathIndex), memSizePerByte)

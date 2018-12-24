@@ -19,7 +19,7 @@ package com.intel.analytics.zoo.models.image.inception
 import com.intel.analytics.bigdl.DataSet
 import com.intel.analytics.bigdl.dataset._
 import com.intel.analytics.bigdl.dataset.image.{BGRImgCropper, BGRImgNormalizer, BytesToBGRImg, MTLabeledBGRImgToBatch, HFlip => DatasetHFlip}
-import com.intel.analytics.zoo.feature.common.FeatureSet
+import com.intel.analytics.zoo.feature.{DistributedFeatureSet, FeatureSet}
 import com.intel.analytics.zoo.feature.pmem.{DRAM, MemoryType, PMEM}
 import com.intel.analytics.zoo.pipeline.api.keras.layers.utils.EngineRef
 import org.apache.hadoop.io.Text
@@ -70,9 +70,9 @@ object ImageNet2012 {
   )
   : DataSet[MiniBatch[Float]] = {
     val rawData = readFromSeqFiles(path, sc, classNumber)
-    val cachedDataSet: DistributedDataSet[ByteRecord] =
+    val featureSet: DistributedFeatureSet[ByteRecord] =
       FeatureSet.rdd[ByteRecord](rawData, memoryType = memoryType)
-    cachedDataSet.transform(
+    featureSet.transform(
       MTLabeledBGRImgToBatch[ByteRecord](
         width = imageSize,
         height = imageSize,

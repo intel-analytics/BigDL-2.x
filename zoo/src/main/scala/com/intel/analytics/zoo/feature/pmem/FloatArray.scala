@@ -18,15 +18,16 @@ package com.intel.analytics.zoo.feature.pmem
 
 import org.apache.spark.unsafe.Platform
 
-object OptaneDCFloatArray {
-  def apply(iterator: Iterator[Float], numOfRecord: Int): FloatArray = {
-    val aepArray = new FloatArray(numOfRecord)
+object FloatArray {
+  def apply(iterator: Iterator[Float], numOfRecord: Int,
+      memoryType: MemoryType = PMEM): FloatArray = {
+    val nativeArray = new FloatArray(numOfRecord, memoryType = memoryType)
     var i = 0
     while (iterator.hasNext) {
-      aepArray.set(i, iterator.next())
+      nativeArray.set(i, iterator.next())
       i += 1
     }
-    aepArray
+    nativeArray
   }
 }
 
@@ -88,12 +89,23 @@ class VarLenFloatsArray(recordNum: Int, totalSizeByBytes: Long,
     Platform.putFloat(null, offset, s.asInstanceOf[Float])
   }
 
+//  override def getTypeOffSet(): Int = VarLenFloatsArray.FLOAT_ARRAY_OFFSET
+//
+//  override def get(i: Int): Array[Float] = {
+//    assert(isValidIndex(i))
+//    val recordLen = getRecordLength(i)
+//    val result = new Array[Float](recordLen)
+//    Platform.copyMemory(null, indexOf(i), result,
+//      VarLenFloatsArray.FLOAT_ARRAY_OFFSET, recordLen)
+//    return result
+//  }
+
+
   override def get(i: Int): Array[Float] = {
-    assert(isValidIndex(i))
-    val recordLen = indexer(i)._2 / typeLen
+    val recordLen = 5
     val result = new Array[Float](recordLen)
-    Platform.copyMemory(null, indexOf(i), result,
-      VarLenFloatsArray.FLOAT_ARRAY_OFFSET, indexer(i)._2)
+    Platform.copyMemory(null, this.startAddr, result,
+      VarLenFloatsArray.FLOAT_ARRAY_OFFSET, recordLen)
     return result
   }
 }

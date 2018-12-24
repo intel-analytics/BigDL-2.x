@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.intel.analytics.zoo.feature.common
+package com.intel.analytics.zoo.feature
 
 import java.util.concurrent.atomic.AtomicInteger
 
@@ -23,6 +23,7 @@ import com.intel.analytics.bigdl.utils.RandomGenerator
 import com.intel.analytics.zoo.feature.pmem._
 import com.intel.analytics.zoo.pipeline.api.keras.layers.utils.EngineRef
 import org.apache.spark.rdd.RDD
+import org.slf4j.{Logger, LoggerFactory}
 
 import scala.reflect.ClassTag
 
@@ -121,19 +122,20 @@ class DistributedFeatureSet[T: ClassTag]
 }
 
 object DRAMFeatureSet {
-  def rdd[T: ClassTag](data: RDD[T]): DistributedDataSet[T] = {
+  def rdd[T: ClassTag](data: RDD[T]): DistributedFeatureSet[T] = {
     val arrayLikeRDD = data.mapPartitions(iter => {
         Iterator.single(new ArrayLikeWrapper(iter.toArray))
-      }).setName("cached feature set in DRAM with PARTITIONED Strategy")
+      }).setName(s"cached feature set: ${data.name} in DRAM with PARTITIONED Strategy" )
       .cache().asInstanceOf[RDD[ArrayLike[T]]]
     new DistributedFeatureSet[T](arrayLikeRDD)
   }
 }
 
 object FeatureSet {
+  val logger: Logger = LoggerFactory.getLogger(this.getClass)
   def rdd[T: ClassTag](data: RDD[T],
       memoryType: MemoryType = DRAM,
-      dataStrategy: DataStrategy = PARTITIONED): DistributedDataSet[T] = {
+      dataStrategy: DataStrategy = PARTITIONED): DistributedFeatureSet[T] = {
     if (dataStrategy == PARTITIONED) {
       val nodeNumber = EngineRef.getNodeNumber()
       val repartitionedData = data.coalesce(nodeNumber, true)
@@ -141,11 +143,11 @@ object FeatureSet {
         case DRAM =>
           DRAMFeatureSet.rdd(repartitionedData)
         case PMEM =>
-          println("~~~~~~~ Caching with AEP ~~~~~~~")
+          logger.info("~~~~~~~ Caching with AEP ~~~~~~~")
           PmemFeatureSet.rdd(repartitionedData, PMEM)
-        case DRAM_DIRECT =>
-          println("~~~~~~~ Caching with DRAM DIRECT ~~~~~~~")
-          PmemFeatureSet.rdd[T](repartitionedData, DRAM_DIRECT)
+        case DIRECT =>
+          logger.info("~~~~~~~ Caching with DIRECT ~~~~~~~")
+          PmemFeatureSet.rdd[T](repartitionedData, DIRECT)
         case _ =>
           throw new IllegalArgumentException(
             s"MemoryType: ${memoryType} is not supported at the moment")
