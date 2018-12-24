@@ -316,23 +316,22 @@ class PythonTextFeature[T: ClassTag](implicit ev: TensorNumeric[T]) extends Pyth
   def readRelations(
       path: String,
       sc: JavaSparkContext,
-      minPartitions: Int = 1): JavaRDD[Relation] = {
-    Relations.read(path, sc.sc, minPartitions).toJavaRDD()
+      minPartitions: Int = 1): JavaRDD[JList[Any]] = {
+    toPythonRelations(Relations.read(path, sc.sc, minPartitions))
   }
 
   def textSetFromRelationPairs(
-      relations: JavaRDD[Relation],
+      relations: JavaRDD[Array[Object]],
       corpus1: TextSet,
       corpus2: TextSet): DistributedTextSet = {
-    print(relations.rdd.collect().head)
-    TextSet.fromRelationPairs(relations.rdd, corpus1, corpus2)
+    TextSet.fromRelationPairs(toScalaRelations(relations), corpus1, corpus2)
   }
 
   def textSetFromRelationLists(
-      relations: JavaRDD[Relation],
+      relations: JavaRDD[Array[Object]],
       corpus1: TextSet,
       corpus2: TextSet): DistributedTextSet = {
-    TextSet.fromRelationLists(relations.rdd, corpus1, corpus2)
+    TextSet.fromRelationLists(toScalaRelations(relations), corpus1, corpus2)
   }
 
   def textSetReadCSV(path: String, sc: JavaSparkContext, minPartitions: Int): TextSet = {

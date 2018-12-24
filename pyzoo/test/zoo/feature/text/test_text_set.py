@@ -184,7 +184,6 @@ class TestTextSet:
         transformed = text_set.tokenize().word2idx().shape_sequence(5)
         relation_pairs = TextSet.from_relation_pairs(relations, transformed, transformed)
         relation_pairs.get_samples().collect()
-        print("111")
 
 
 if __name__ == "__main__":

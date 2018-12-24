@@ -22,14 +22,37 @@ if sys.version >= '3':
     unicode = str
 
 
+class Relation(object):
+    """
+    It represents the relationship between two items.
+    """
+    def __init__(self, id1, id2, label, bigdl_type="float"):
+        self.id1 = id1
+        self.id2 = id2
+        self.label = int(label)
+        self.bigdl_type = bigdl_type
+
+    def __reduce__(self):
+        return Relation, (self.id1, self.id2, self.label)
+
+    def __str__(self):
+        return "Relation [id1: %s, id2: %s, label: %s]" % (
+            self.id1, self.id2, self.label)
+
+    def to_tuple(self):
+        return self.id1, self.id2, self.label
+
+
 class Relations(object):
     @classmethod
     def read(cls, path, sc=None, min_partitions=1, bigdl_type="float"):
         if sc:
             jvalue = callBigDlFunc(bigdl_type, "readRelations", path, sc, min_partitions)
+            res = jvalue.map(lambda x: Relation(str(x[0]), str(x[1]), int(x[2])))
         else:
             jvalue = callBigDlFunc(bigdl_type, "readRelations", path)
-        return jvalue
+            res = [Relation(str(x[0]), str(x[1]), int(x[2])) for x in jvalue]
+        return res
 
 
 class Preprocessing(JavaValue):

@@ -252,11 +252,15 @@ class TextSet(JavaValue):
 
     @classmethod
     def from_relation_pairs(cls, relations, corpus1, corpus2, bigdl_type="float"):
+        if isinstance(relations, RDD):
+            relations = relations.map(lambda x: x.to_tuple())
         jvalue = callBigDlFunc(bigdl_type, "textSetFromRelationPairs", relations, corpus1, corpus2)
         return TextSet(jvalue=jvalue)
 
     @classmethod
     def from_relation_lists(cls, relations, corpus1, corpus2, bigdl_type="float"):
+        if isinstance(relations, RDD):
+            relations = relations.map(lambda x: x.to_tuple())
         jvalue = callBigDlFunc(bigdl_type, "textSetFromRelationLists", relations, corpus1, corpus2)
         return TextSet(jvalue=jvalue)
 
