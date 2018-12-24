@@ -89,7 +89,7 @@ Parameters:
 
 To merge a list of input __nodes__ (__NOT__ layers), following some merge mode in the Functional API:
 ```scala
-import com.intel.analytics.zoo.pipeline.api.keras.Merge.merge
+import com.intel.analytics.zoo.pipeline.api.keras.layers.Merge.merge
 
 merge(inputs, mode = "sum", concatAxis = -1) // This will return an output NODE.
 ```
@@ -103,8 +103,8 @@ Parameters:
 Example code to create a graph model:
 ```scala
 import com.intel.analytics.zoo.pipeline.api.keras.layers.{Dense, Input}
+import com.intel.analytics.zoo.pipeline.api.keras.layers.Merge.merge
 import com.intel.analytics.zoo.pipeline.api.keras.models.Model
-import com.intel.analytics.zoo.pipeline.api.keras.Merge.merge
 import com.intel.analytics.bigdl.utils.Shape
 
 // instantiate input nodes
