@@ -24,6 +24,7 @@ import com.intel.analytics.bigdl.optim._
 import com.intel.analytics.bigdl.python.api.{PythonBigDLKeras, Sample => JSample}
 import com.intel.analytics.bigdl.tensor.{Storage, Tensor}
 import com.intel.analytics.bigdl.utils.T
+import com.intel.analytics.zoo.pipeline.api.keras.metrics.Accuracy
 import org.apache.spark.api.java.JavaRDD
 import org.apache.spark.rdd.RDD
 import org.tensorflow.{Session, Tensor => TTensor}
@@ -176,6 +177,11 @@ class TFValidationMethod(val valMethod: ValidationMethod[Float],
   override def apply(output: Activity, target: Activity): ValidationResult = {
     // the output layout [grads..., outputs..., labels..., loss]
     val outputT = output.toTable
+
+    if (valMethod.isInstanceOf[Loss[Float]]) {
+      val loss = outputT[Tensor[Float]](outputT.length()).value()
+      return new LossResult(loss, 1)
+    }
     val outputActivity: Activity = if (outputLength == 1) {
       outputT[Tensor[Float]](outputT.length() - outputLength - targetLength)
     } else {
@@ -188,7 +194,7 @@ class TFValidationMethod(val valMethod: ValidationMethod[Float],
       outputs
     }
 
-    val to1basedLabel =
+    val to1basedLabel = !valMethod.isInstanceOf[Accuracy[Float]] &&
       valMethod.isInstanceOf[Top1Accuracy[Float]] ||
         valMethod.isInstanceOf[Top5Accuracy[Float]] ||
         valMethod.isInstanceOf[TreeNNAccuracy[Float]]
