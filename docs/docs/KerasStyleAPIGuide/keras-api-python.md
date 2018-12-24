@@ -139,7 +139,7 @@ and making modifications subject to the following limitations:
 
 1. The Keras version we support and test is [__Keras 1.2.2__](https://faroit.github.io/keras-docs/1.2.2/) with TensorFlow backend.
 
-2. There exist some arguments supported in Keras layers but not supported in Analytics Zoo for now. See [here](https://bigdl-project.github.io/0.7.0/#APIGuide/keras-issues/#unsupported-layer-arguments) for the full list of unsupported layer arguments. 
+2. There exist some arguments supported in Keras layers but not supported in Analytics Zoo for now. See [here](https://bigdl-project.github.io/master/#APIGuide/keras-issues/#unsupported-layer-arguments) for the full list of unsupported layer arguments. 
 
 3. The default dim_ordering in Analytics Zoo is `th` (Channel First, channel_axis=1).
 
