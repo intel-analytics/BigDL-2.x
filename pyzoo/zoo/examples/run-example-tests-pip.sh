@@ -281,25 +281,24 @@ then
     exit $exit_status
 fi
 
-# need tensorflow 1.10.0 to run this
-#python ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/tensorflow/distributed_training/train_mnist_keras.py
-#exit_status=$?
-#if [ $exit_status -ne 0 ];
-#then
-#    clear_up
-#    echo "tensorflow distributed_training train_mnist_keras failed"
-#    exit $exit_status
-#fi
-#
-#python ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/tensorflow/distributed_training/evaluate_mnist_keras.py
-#
-#exit_status=$?
-#if [ $exit_status -ne 0 ];
-#then
-#    clear_up
-#    echo "tensorflow distributed_training evaluate_mnist_keras failed"
-#    exit $exit_status
-#fi
+python ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/tensorflow/distributed_training/train_mnist_keras.py
+exit_status=$?
+if [ $exit_status -ne 0 ];
+then
+    clear_up
+    echo "tensorflow distributed_training train_mnist_keras failed"
+    exit $exit_status
+fi
+
+python ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/tensorflow/distributed_training/evaluate_mnist_keras.py
+
+exit_status=$?
+if [ $exit_status -ne 0 ];
+then
+    clear_up
+    echo "tensorflow distributed_training evaluate_mnist_keras failed"
+    exit $exit_status
+fi
 
 unset SPARK_DRIVER_MEMORY
 now=$(date "+%s")
