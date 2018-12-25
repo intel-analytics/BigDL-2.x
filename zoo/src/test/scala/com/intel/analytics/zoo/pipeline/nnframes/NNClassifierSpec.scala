@@ -20,10 +20,8 @@ import java.io.File
 
 import com.intel.analytics.bigdl.models.inception.Inception_v1
 import com.intel.analytics.bigdl.models.lenet.LeNet5
-import com.intel.analytics.bigdl.nn.VariableFormat.Default
 import com.intel.analytics.bigdl.nn._
-import com.intel.analytics.bigdl.optim.SGD.{EpochDecay, Plateau}
-import com.intel.analytics.bigdl.optim._
+import com.intel.analytics.bigdl.optim.{Adam, LBFGS, Loss, Trigger}
 import com.intel.analytics.bigdl.tensor.Tensor
 import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric.NumericFloat
 import com.intel.analytics.bigdl.utils.Engine
@@ -31,7 +29,6 @@ import com.intel.analytics.bigdl.utils.RandomGenerator.RNG
 import com.intel.analytics.bigdl.visualization.{TrainSummary, ValidationSummary}
 import com.intel.analytics.zoo.feature.common._
 import com.intel.analytics.zoo.feature.image._
-import com.intel.analytics.zoo.pipeline.api.keras.optimizers.Adam
 import org.apache.log4j.{Level, Logger}
 import org.apache.spark.SparkContext
 import org.apache.spark.ml.feature.MinMaxScaler
@@ -113,13 +110,11 @@ class NNClassifierSpec extends FlatSpec with Matchers with BeforeAndAfter {
 
   "NNClassifier" should "support model with Sigmoid" in {
     val model = new Sequential().add(Linear[Float](6, 10)).add(Linear[Float](10, 1))
-      .add(Sigmoid[Float]())
+      .add(Sigmoid[Float])
     val criterion = BCECriterion[Float]()
     val classifier = NNClassifier(model, criterion, Array(6))
-      .setOptimMethod(new Adam[Float](
-        lr = 0.01,
-        schedule = Plateau("Loss", 0.99f, 1, "min", 0.01f, 0, 1e-15f)
-      ))
+      .setOptimMethod(new Adam[Float]())
+      .setLearningRate(0.01)
       .setBatchSize(10)
       .setMaxEpoch(10)
     val data = sc.parallelize(smallData.map(t => (t._1, t._2 - 1.0)))

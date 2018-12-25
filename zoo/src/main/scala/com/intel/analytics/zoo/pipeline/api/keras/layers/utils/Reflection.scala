@@ -70,17 +70,17 @@ class AbstractModuleRef[T: ClassTag](instance: AbstractModule[Activity, Activity
 }
 
 class GraphRef[T: ClassTag](instance: Graph[T]) {
-  def getOutputs: Seq[ModuleNode[T]] = {
+  def getOutputs(): Seq[ModuleNode[T]] = {
     KerasUtils.invokeMethod(instance, "outputs").asInstanceOf[Seq[ModuleNode[T]]]  // !!!!
   }
 }
 
 object EngineRef {
-  def getCoreNumber: Int = {
+  def getCoreNumber(): Int = {
     KerasUtils.invokeMethod(Engine, "coreNumber").asInstanceOf[Int]
   }
 
-  def getNodeNumber: Int = {
+  def getNodeNumber(): Int = {
     KerasUtils.invokeMethod(Engine, "nodeNumber").asInstanceOf[Int]
   }
 }
