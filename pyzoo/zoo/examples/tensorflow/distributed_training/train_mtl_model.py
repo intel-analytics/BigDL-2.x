@@ -20,12 +20,13 @@ import argparse
 import pickle
 from os import path
 import tensorflow as tf
+import numpy as np
 
 from tensorflow.python.keras.utils import to_categorical
 
 from nlp_architect.contrib.tensorflow.python.keras.callbacks import ConllCallback
 from nlp_architect.data.intent_datasets import SNIPS
-from nlp_architect.models.intent_extraction import MultiTaskIntentModel
+from intent_extraction import MultiTaskIntentModel
 from nlp_architect.utils.embedding import get_embedding_matrix, load_word_embeddings
 from nlp_architect.utils.generic import one_hot
 from nlp_architect.utils.io import validate, validate_existing_directory, \
@@ -54,7 +55,7 @@ def validate_input_args():
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument('-b', type=int, default=10,
+    parser.add_argument('-b', type=int, default=128,
                         help='Batch size')
     parser.add_argument('-e', type=int, default=10,
                         help='Number of epochs')
@@ -89,23 +90,27 @@ if __name__ == '__main__':
     train_x, train_char, train_i, train_y = dataset.train_set
     test_x, test_char, test_i, test_y = dataset.test_set
 
-    test_y = to_categorical(test_y, dataset.label_vocab_size)
-    train_y = to_categorical(train_y, dataset.label_vocab_size)
-    train_i = one_hot(train_i, len(dataset.intents_vocab))
-    test_i = one_hot(test_i, len(dataset.intents_vocab))
-
-    train_inputs = [train_x, train_char]
-    train_outs = [train_i, train_y]
-    test_inputs = [test_x, test_char]
-    test_outs = [test_i, test_y]
+    # test_y = to_categorical(test_y, dataset.label_vocab_size)
+    # train_y = to_categorical(train_y, dataset.label_vocab_size)
+    # train_i = one_hot(train_i, len(dataset.intents_vocab))
+    # test_i = one_hot(test_i, len(dataset.intents_vocab))
+    #
+    # train_inputs = [train_x, train_char]
+    # train_outs = [train_i, train_y]
+    # test_inputs = [test_x, test_char]
+    # test_outs = [test_i, test_y]
 
     sc = init_nncontext()
 
     train_list = []
     for i in range(0, len(train_x)):
-        train_list.append([[train_x[i], train_char[i]], [train_i[i], train_y[i]]])
+        train_list.append([train_x[i], np.array(train_i[i])])
+    val_list = []
+    for i in range(0, len(test_x)):
+        val_list.append([test_x[i], np.array(test_i[i])])
 
     train_rdd = sc.parallelize(train_list)
+    val_rdd = sc.parallelize(val_list)
 
     print('Building model')
     model = MultiTaskIntentModel(use_cudnn=args.use_cudnn)
@@ -117,50 +122,46 @@ if __name__ == '__main__':
                 word_emb_dims=args.token_emb_size,
                 tagger_lstm_dims=args.lstm_hidden_size,
                 dropout=args.tagger_dropout)
-
-    dataset = TFDataset.from_rdd(train_rdd,
-                                 names=["i1", "i2", "o1", "o2"],
-                                 shapes=[[30], [30, 12], [7], [30, 73]],
-                                 types=[tf.int32, tf.int32, tf.float32, tf.float32],
-                                 batch_size=12)
-
-    model = model.model
-    from keras.optimizers import Adam
-    model.optimizer = Adam()
-    model.metrics = []
-
-    optimizer = TFOptimizer.from_keras(model, dataset)
-    optimizer.optimize(end_trigger=MaxEpoch(10))
-
     # initialize word embedding if external model selected
     if args.embedding_model is not None:
         print('Loading external word embedding')
         embedding_model, _ = load_word_embeddings(args.embedding_model)
         embedding_mat = get_embedding_matrix(embedding_model, dataset.word_vocab)
         model.load_embedding_weights(embedding_mat)
+    model = model.model
+    model.summary()
 
-    conll_cb = ConllCallback(test_inputs, test_y, dataset.tags_vocab.vocab, batch_size=args.b)
-    # train model
-    model.fit(x=train_inputs, y=train_outs,
-              batch_size=args.b, epochs=args.e,
-              validation=(test_inputs, test_outs),
-              callbacks=[conll_cb])
-    print('Training done')
+    dataset = TFDataset.from_rdd(train_rdd,
+                                 names=["i1", "o1"],
+                                 shapes=[[30], []],
+                                 types=[tf.int32, tf.int32],
+                                 batch_size=args.b,
+                                 val_rdd=val_rdd)
+    optimizer = TFOptimizer.from_keras(model, dataset)
+    optimizer.optimize(end_trigger=MaxEpoch(args.e))
 
-    print('Saving model')
-    model.save(args.model_path)
-    with open(args.model_info_path, 'wb') as fp:
-        info = {
-            'type': 'mtl',
-            'tags_vocab': dataset.tags_vocab.vocab,
-            'word_vocab': dataset.word_vocab.vocab,
-            'char_vocab': dataset.char_vocab.vocab,
-            'intent_vocab': dataset.intents_vocab.vocab,
-        }
-        pickle.dump(info, fp)
-
-    # test performance
-    predictions = model.predict(test_inputs, batch_size=args.b)
-    eval = get_conll_scores(predictions, test_y,
-                            {v: k for k, v in dataset.tags_vocab.vocab.items()})
-    print(eval)
+    # conll_cb = ConllCallback(test_inputs, test_y, dataset.tags_vocab.vocab, batch_size=args.b)
+    # # train model
+    # model.fit(x=train_inputs, y=train_outs,
+    #           batch_size=args.b, epochs=args.e,
+    #           validation=(test_inputs, test_outs),
+    #           callbacks=[conll_cb])
+    # print('Training done')
+    #
+    # print('Saving model')
+    # model.save(args.model_path)
+    # with open(args.model_info_path, 'wb') as fp:
+    #     info = {
+    #         'type': 'mtl',
+    #         'tags_vocab': dataset.tags_vocab.vocab,
+    #         'word_vocab': dataset.word_vocab.vocab,
+    #         'char_vocab': dataset.char_vocab.vocab,
+    #         'intent_vocab': dataset.intents_vocab.vocab,
+    #     }
+    #     pickle.dump(info, fp)
+    #
+    # # test performance
+    # predictions = model.predict(test_inputs, batch_size=args.b)
+    # eval = get_conll_scores(predictions, test_y,
+    #                         {v: k for k, v in dataset.tags_vocab.vocab.items()})
+    # print(eval)

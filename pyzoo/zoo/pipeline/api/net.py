@@ -34,6 +34,8 @@ from zoo.pipeline.api.keras.engine.topology import ZooKerasLayer, KerasNet, to_b
 from bigdl.optim.optimizer import EveryEpoch, MaxEpoch, Optimizer
 from bigdl.keras.optimization import OptimConverter
 
+from zoo.util.tf import process_grad
+
 if sys.version >= '3':
     long = int
     unicode = str
@@ -490,11 +492,12 @@ class TFOptimizer:
         import tensorflow.keras.backend as keras_backend
 
         loss = keras_model.total_loss
-        inputs = keras_model.inputs + keras_model.targets
+        inputs = keras_model.inputs + keras_model.targets + keras_model.sample_weights
 
         variables = keras_model._collected_trainable_weights
         keras_optimizer = keras_model.optimizer
         grads = keras_optimizer.get_gradients(loss, variables)
+        grads = [process_grad(grad) for grad in grads]
         sess = keras_backend.get_session()
         with sess.as_default():
             optim_method = OptimConverter.to_bigdl_optim_method(keras_optimizer)
@@ -513,7 +516,7 @@ class TFOptimizer:
 
         return cls(loss, optim_method, sess, dataset, inputs,
                    grads, variables, loss.graph, val_outputs, val_labels,
-                   bigdl_val_methods, 0)
+                   bigdl_val_methods, len(keras_model.sample_weights))
 
     def set_train_summary(self, summary):
         self.optimizer.set_train_summary(summary)
