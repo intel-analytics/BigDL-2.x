@@ -31,7 +31,7 @@ class BatchNormalizationMapper(OperatorMapper):
 
     def _extract_trainable_values(self):
         if len(self._input_list) == 5:
-            return [self._input_list[1].zvalue, self._input_list[2].zvalue]
+            return [self._input_list[1].zvalue.get_weight(), self._input_list[2].zvalue.get_weight()]
         else:
             return None
 
