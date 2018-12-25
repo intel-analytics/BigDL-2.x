@@ -699,7 +699,6 @@ def _check_the_same(all_required_inputs, inputs_in_datasets):
 class TFPredictor:
 
     def __init__(self, sess, outputs, inputs=None, dataset=None):
-        import tensorflow as tf
         '''
         TFPredictor takes a list of tensorflow tensors as the model outputs and
         feed all the elements in TFDatasets to produce those outputs and returns
@@ -710,6 +709,9 @@ class TFPredictor:
         to load the trained variables then pass into TFPredictor
         :param outputs: the output tensors of the tensorflow model
         '''
+        if inputs is None:
+            dataset, inputs = TFPredictor._get_datasets_and_inputs(outputs)
+
         self.sess = sess
         self.dataset = dataset
         self.inputs = inputs
