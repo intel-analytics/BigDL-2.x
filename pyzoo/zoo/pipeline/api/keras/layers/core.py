@@ -339,6 +339,7 @@ class Dense(ZooKerasLayer):
                                     list(input_shape) if input_shape else None,
                                     **kwargs)
 
+
 class GetShape(ZooKerasLayer):
     """
     GetShape gets the value of input_shape.

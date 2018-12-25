@@ -1272,4 +1272,3 @@ class TestModelLoading(OnnxTestCase):
 
         output = OnnxLoader.run_node(node, [x])
         np.testing.assert_almost_equal(output["y"], y, decimal=5)
-        
