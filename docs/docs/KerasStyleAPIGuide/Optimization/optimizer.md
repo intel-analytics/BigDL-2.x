@@ -2,6 +2,14 @@
 
 An optimizer is one of the two arguments required for compiling a model.
 
+**Scala:**
+
+```scala
+model.compile(loss='mean_squared_error', optimizer='sgd')
+```
+
+**Python:**
+
 ```python
 model.compile(loss='mean_squared_error', optimizer='sgd')
 ```
