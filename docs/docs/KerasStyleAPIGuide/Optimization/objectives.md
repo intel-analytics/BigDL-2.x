@@ -2,9 +2,26 @@
 
 An objective function (or loss function, or optimization score function) is one of the two parameters required to compile a model:
 
+**Scala:**
+
+```scala
+model.compile(loss='mean_squared_error', optimizer='sgd')
+```
+
+**Python:**
+
 ```python
 model.compile(loss='mean_squared_error', optimizer='sgd')
 ```
+
+**Scala:**
+
+```scala
+import com.intel.analytics.zoo.pipeline.api.keras.objectives
+model.compile(loss=objectives.MeanSquaredError, optimizer='sgd')
+```
+
+**Python:**
 
 ```python
 from zoo.pipeline.api.keras import objectives
@@ -15,7 +32,18 @@ model.compile(loss=objectives.MeanSquaredError, optimizer='sgd')
 
 ## Available objectives
 
-- __MeanSquaredError__ / __MSE__ / __mse__
+## MeanSquaredError ##
+
+**Scala:**
+
+```scala
+import com.intel.analytics.zoo.pipeline.api.keras
+loss = keras.objectives.MeanSquaredError()
+loss = keras.objectives.MSE()
+loss = keras.objectives.mse()
+```
+
+**Python:**
 
 ```python
 from zoo.pipeline.api import keras
@@ -24,7 +52,29 @@ keras.objectives.MSE()
 keras.objectives.mse()
 ```
 
-- __MeanAbsoluteError__ / __MAE__ / __mae__
+The mean squared error criterion e.g. input: a, target: b, total elements: n
+
+```
+loss(a, b) = 1/n * sum(|a_i - b_i|^2)
+```
+
+Parameters:
+
+ * `sizeAverage` a boolean indicating whether to divide the sum of squared error by n. 
+                 Default: true
+
+## MeanAbsoluteError ##
+
+**Scala:**
+
+```scala
+import com.intel.analytics.zoo.pipeline.api.keras
+loss = keras.objectives.MeanAbsoluteError()
+loss = keras.objectives.MAE()
+loss = keras.objectives.mae()
+```
+
+**Python:**
 
 ```python
 from zoo.pipeline.api import keras
@@ -33,16 +83,42 @@ keras.objectives.MAE()
 keras.objectives.mae()
 ```
 
-- __MeanAbsolutePercentageError__ / __MAPE__ /__mape__
+Measures the mean absolute value of the element-wise difference between input and target
+
+## MeanAbsolutePercentageError ##
+
+**Scala:**
+
+```scala
+import com.intel.analytics.zoo.pipeline.api.keras
+loss = keras.objectives.MeanAbsolutePercentageError()
+loss = keras.objectives.MAPE()
+loss = keras.objectives.mape()
+```
+
+**Python:**
 
 ```python
 from zoo.pipeline.api import keras
-keras.objectives.MeanAbsoluteError()
+keras.objectives.MeanAbsolutePercentageError()
 keras.objectives.MAPE()
 keras.objectives.mape()
 ```
 
-- __MeanSquaredLogarithmicError__ / __MSLE__ / __msle__
+compute mean absolute percentage error for intput and target
+
+## MeanSquaredLogarithmicError ##
+
+**Scala:**
+
+```scala
+import com.intel.analytics.zoo.pipeline.api.keras
+loss = keras.objectives.MeanSquaredLogarithmicError()
+loss = keras.objectives.MSLE()
+loss = keras.objectives.msle()
+```
+
+**Python:**
 
 ```python
 from zoo.pipeline.api import keras
@@ -51,44 +127,130 @@ keras.objectives.MSLE()
 keras.objectives.msle()
 ```
 
-- __SquaredHinge__
+compute mean squared logarithmic error for input and target
+
+
+## SquaredHinge ##
+
+
+**Scala:**
+
+```scala
+import com.intel.analytics.zoo.pipeline.api.keras
+loss = keras.objectives.SquaredHinge(margin=1.0, sizeAverage=true)
+```
+
+**Python:**
 
 ```python
 from zoo.pipeline.api import keras
-keras.objectives.SquaredHinge()
+keras.objectives.SquaredHinge(margin=1.0, sizeAverage=true)
 ```
 
-- __Hinge__
+Creates a criterion that optimizes a two-class classification squared hinge loss (margin-based loss) between input x (a Tensor of dimension 1) and output y.
+
+Parameters:
+
+ * `margin` if unspecified, is by default 1.
+ * `sizeAverage` whether to average the loss, is by default true
+
+## Hinge ##
+
+**Scala:**
+
+```scala
+import com.intel.analytics.zoo.pipeline.api.keras
+loss = keras.objectives.Hinge(margin=1.0, sizeAverage=true)
+```
+
+**Python:**
 
 ```python
 from zoo.pipeline.api import keras
-keras.objectives.Hinge()
+keras.objectives.Hinge(margin=1.0, sizeAverage=True)
 ```
 
-- __BinaryCrossEntropy__: Also known as logloss. 
+Creates a criterion that optimizes a two-class classification hinge loss (margin-based loss) between input x (a Tensor of dimension 1) and output y.
+
+Parameters:
+
+ * `margin` if unspecified, is by default 1.
+ * `sizeAverage` whether to average the loss, is by default true
+
+## BinaryCrossEntropy ##
+
+**Scala:**
+
+```scala
+import com.intel.analytics.zoo.pipeline.api.keras
+loss = keras.objectives.BinaryCrossEntropy(weights, sizeAverage)
+```
+
+**Python:**
 
 ```python
 from zoo.pipeline.api import keras
-keras.objectives.BinaryCrossEntropy()
+keras.objectives.BinaryCrossEntropy(weights, sizeAverage)
 ```
 
-- __CategoricalCrossEntropy__: Also known as multiclass logloss. __Note__: using this objective requires that your labels are binary arrays of shape `(nb_samples, nb_classes)`.
+Also known as logloss. 
+
+Parameters:
+
+* `weights` A tensor assigning weight to each of the classes
+* `sizeAverage` whether to divide the sequence length. Default is true.
+
+## CategoricalCrossEntropy ##
+
+**Scala:**
+
+```scala
+import com.intel.analytics.zoo.pipeline.api.keras
+loss = keras.objectives.CategoricalCrossEntropy()
+```
+
+**Python:**
 
 ```python
 from zoo.pipeline.api import keras
 keras.objectives.CategoricalCrossEntropy()
 ```
 
-- __Poisson__: mean of `(predictions - targets * log(predictions))`
+This is same with cross entropy criterion, except the target tensor is a
+one-hot tensor.
+
+## Poisson ##
+
+**Scala:**
+
+```scala
+import com.intel.analytics.zoo.pipeline.api.keras
+loss = keras.objectives.Poisson()
+```
+
+**Python:**
 
 ```python
 from zoo.pipeline.api import keras
 keras.objectives.Poisson()
 ```
 
-- __CosineProximity__: the opposite (negative) of the mean cosine proximity between predictions and targets.
+compute Poisson error for intput and target
+
+## CosineProximity ##
+
+**Scala:**
+
+```scala
+import com.intel.analytics.zoo.pipeline.api.keras
+loss = keras.objectives.CosineProximity()
+```
+
+**Python:**
 
 ```python
 from zoo.pipeline.api import keras
 keras.objectives.CosineProximity()
 ```
+
+Computes the negative of the mean cosine proximity between predictions and targets.
