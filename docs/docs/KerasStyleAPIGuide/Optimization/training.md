@@ -23,14 +23,14 @@ compile(optimizer, loss, metrics=None)
 
 Parameters:
 
-* `optimizer`: Optimization method to be used. Can either use the string representation of an optimization method. 
-* `loss`: Criterion to be used. Can either use the string representation of a criterion (see [here](loss/#available-losses)).
-* `metrics`: One or more validation methods to be used. Default is null if no validation needs to be configured. Can either use the string representation `Array("accuracy")`(Scala) `["accuracy"]`(Python).
+* `optimizer`: Optimization method to be used. One can alternatively pass in the corresponding string representation, such as 'sgd'.
+* `loss`: Criterion to be used. One can alternatively pass in the corresponding string representation, such as 'mse'. (see [here](loss/#available-losses)).
+* `metrics`: List of validation methods to be used. Default is None if no validation is needed. One can alternatively `Array("accuracy")`(Scala) `["accuracy"]`(Python).
 
 ---
 ## **Fit**
 
-Train a model for a fixed number of epochs on a dataset. Need to first [compile](#compile) the model beforehand.
+Train a model for a fixed number of epochs on a DataSet.
 
 **Scala:**
 ```scala
@@ -43,22 +43,20 @@ fit(x, y=None, batch_size=32, nb_epoch=10, validation_data=None, distributed=Tru
 
 Parameters:
 
-* `x`: Training dataset.
-* `batchSize`: Number of samples per gradient update.
-* `nbEpoch`: Number of iterations to train.
-* `validationData`: Dataset for validation. Default is null if validation is not configured.
-
-**Remark**
-
-- For __Scala__, x can either be RDD of Sample (specifying `batchSize`) or an instance of DataSet.
-- For __Python__, you can use x (a Numpy array) as features with y (a Numpy array) as labels; or only x (RDD of Sample without specifying y.
-- The parameter `distributed` is to choose whether to train the model using distributed mode or local mode in __Python__. Default is true. If in local mode, x and y must both be Numpy arrays.
-
+* `x`: Input data. A Numpy array or RDD of Sample, ImageSet or TextSet.
+* `y`: Labels. A Numpy array. Default is None if x is already Sample RDD or ImageSet or TextSet.
+* `batch_Size`: Number of samples per gradient update. Default is 32.
+* `nb_epoch`: Number of epochs to train.
+* `validationData`: Tuple (x_val, y_val) where x_val and y_val are both Numpy arrays.
+                    Can also be RDD of Sample or ImageSet or TextSet.
+                    Default is None if no validation is involved.
+* `distributed`: Boolean. Whether to train the model in distributed mode or local mode.
+                 Default is True. In local mode, x and y must both be Numpy arrays.
 
 ---
 ## **Evaluate**
 
-Evaluate a model on a given dataset using the metrics specified when you [compile](#compile) the model.
+Evaluate a model on a given dataset in distributed mode.
 
 **Scala:**
 ```scala
@@ -71,13 +69,9 @@ evaluate(x, y=None, batch_size=32)
 
 Parameters:
 
-* `x`: Evaluation dataset.
-* `batchSize`: Number of samples per batch.
-
-**Remark**
-
-- For __Scala__, x can either be RDD of Sample (specifying `batchSize`) or an instance of DataSet.
-- For __Python__, you can use x (a Numpy array) as features with y (a Numpy array) as labels; or only x (RDD of Sample without specifying y. Currently only evaluation in distributed mode is supported in Python.
+* `x`: Evaluation data. A Numpy array or RDD of Sample or ImageSet or TextSet.
+* `y`: Labels. A Numpy array. Default is None if x is already Sample RDD or ImageSet or TextSet.
+* `batchSize`: Number of samples per batch. Default is 32.
 
 ---
 ## **Predict**
@@ -95,10 +89,10 @@ predict(x, distributed=True)
 
 Parameters:
 
-* `x`: Prediction data.
-
-**Remark**
-
-- For __Scala__, x can either be RDD of Sample (specifying `batchSize`) or an instance of `LocalDataSet`.
-- For __Python__, x can either be a Numpy array representing labels or RDD of Sample.
-- The parameter `distributed` is to choose whether to do prediction using distributed mode or local mode in __Python__. Default is true. If in local mode, x must be a Numpy array.
+* `x`: Prediction data. A Numpy array or RDD of Sample or ImageSet.
+* `batch_per_thread`:
+        The default value is 4.
+        When distributed is True,the total batch size is batch_per_thread * rdd.getNumPartitions.
+        When distributed is False the total batch size is batch_per_thread * numOfCores.
+* `distributed`: Boolean. Whether to do prediction in distributed mode or local mode.
+                 Default is True. In local mode, x must be a Numpy array.
