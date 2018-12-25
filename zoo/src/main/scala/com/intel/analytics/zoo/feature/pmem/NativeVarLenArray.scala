@@ -31,7 +31,7 @@ private[zoo] abstract class NativeVarLenArray[T: ClassTag](val recordNum: Int,
   indexer(0) = startAddr
 
   protected def isValidIndex(i: Int): Boolean = {
-    i < recordNum && indexer(i + 1) != null
+    i < recordNum && indexer(i + 1) != -1
   }
 
   protected def getRecordLength(i: Int): Int = {

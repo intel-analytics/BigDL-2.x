@@ -70,8 +70,7 @@ object ImageNet2012 {
   )
   : DataSet[MiniBatch[Float]] = {
     val rawData = readFromSeqFiles(path, sc, classNumber)
-    val featureSet: DistributedFeatureSet[ByteRecord] =
-      FeatureSet.rdd[ByteRecord](rawData, memoryType = memoryType)
+    val featureSet = FeatureSet.rdd(rawData, memoryType = memoryType)
     featureSet.transform(
       MTLabeledBGRImgToBatch[ByteRecord](
         width = imageSize,
