@@ -19,8 +19,7 @@ package com.intel.analytics.zoo.feature.pmem
 import com.intel.analytics.bigdl.dataset.{DistributedDataSet, MiniBatch}
 import com.intel.analytics.bigdl.utils.Engine
 import com.intel.analytics.zoo.common.NNContext
-import com.intel.analytics.zoo.feature.pmem._
-import com.intel.analytics.zoo.models.image.inception.ImageNet2012
+import com.intel.analytics.zoo.examples.inception.ImageNet2012
 import com.intel.analytics.zoo.pipeline.api.keras.ZooSpecHelper
 import org.apache.spark.SparkContext
 import org.scalatest.Ignore

@@ -20,7 +20,7 @@ import java.util.concurrent.atomic.AtomicInteger
 
 import com.intel.analytics.bigdl.dataset.DistributedDataSet
 import com.intel.analytics.bigdl.utils.RandomGenerator
-import com.intel.analytics.zoo.feature.common.ArrayLike
+import com.intel.analytics.zoo.feature.common.{ArrayLike, ArrayLikeWrapper}
 import com.intel.analytics.zoo.feature.pmem._
 import com.intel.analytics.zoo.pipeline.api.keras.layers.utils.EngineRef
 import org.apache.spark.rdd.RDD
