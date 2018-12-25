@@ -490,7 +490,7 @@ class TFOptimizer:
         import tensorflow.keras.backend as keras_backend
 
         loss = keras_model.total_loss
-        inputs = keras_model.inputs + keras_model.targets + keras_model.sample_weights
+        inputs = keras_model.inputs + keras_model.targets
 
         variables = keras_model._collected_trainable_weights
         keras_optimizer = keras_model.optimizer
@@ -513,7 +513,7 @@ class TFOptimizer:
 
         return cls(loss, optim_method, sess, dataset, inputs,
                    grads, variables, loss.graph, val_outputs, val_labels,
-                   bigdl_val_methods, len(keras_model.sample_weights))
+                   bigdl_val_methods, 0)
 
     def set_train_summary(self, summary):
         self.optimizer.set_train_summary(summary)
