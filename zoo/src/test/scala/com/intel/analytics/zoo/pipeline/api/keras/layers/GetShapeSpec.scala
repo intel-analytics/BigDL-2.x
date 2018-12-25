@@ -20,7 +20,7 @@ class GetShapeSpec extends KerasBaseSpec {
     seq.add(ss)
     seq.getOutputShape().toSingle().toArray should be(Array(3))
     val outShape = seq.forward(Tensor[Float](Array(2, 3, 4)).randn())
-    outShape should be(Array(2, 3, 4))
+    outShape.toTensor[Float].storage().toArray should be(Array(2.0, 3.0, 2.0))
   }
 
   class GetShapeSerialTest extends ModuleSerializationTest {
