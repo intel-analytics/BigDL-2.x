@@ -19,7 +19,7 @@ package com.intel.analytics.zoo.pipeline.nnframes.python
 import java.util.{ArrayList => JArrayList, List => JList}
 
 import com.intel.analytics.bigdl.dataset.{Sample, Transformer}
-import com.intel.analytics.bigdl.optim.{OptimMethod, Trigger, ValidationMethod}
+import com.intel.analytics.bigdl.optim.{OptimMethod, Trigger, ValidationMethod, ValidationResult}
 import com.intel.analytics.bigdl.tensor.Tensor
 import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric
 import com.intel.analytics.bigdl.visualization.{TrainSummary, ValidationSummary}
@@ -74,6 +74,10 @@ class PythonNNFrames[T: ClassTag](implicit ev: TensorNumeric[T]) extends PythonZ
       model: Module[T],
       samplePreprocessing: Preprocessing[Any, Sample[T]]): NNClassifierModel[T] = {
     NNClassifierModel(model).setSamplePreprocessing(samplePreprocessing)
+  }
+
+  def createNNEvaluator(): NNEvaluator[T] = {
+    NNEvaluator()
   }
 
   def setOptimMethod(
@@ -213,5 +217,12 @@ class PythonNNFrames[T: ClassTag](implicit ev: TensorNumeric[T]) extends PythonZ
 
   def loadNNClassifierModel(path: String): NNClassifierModel[_] = {
     NNClassifierModel.load(path)
+  }
+
+  def nnEvaluatorEvaluate(
+      evaluator: NNEvaluator[T],
+      df: DataFrame,
+      vMethods: Array[ValidationMethod[T]]): Array[ValidationResult] = {
+    evaluator.evaluate(df, vMethods)
   }
 }
