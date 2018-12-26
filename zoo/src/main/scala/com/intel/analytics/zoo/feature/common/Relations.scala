@@ -20,6 +20,7 @@ import org.apache.spark.SparkContext
 import org.apache.spark.rdd.RDD
 import org.apache.spark.sql.SQLContext
 
+import scala.collection.mutable.ArrayBuffer
 import scala.io.Source
 
 object Relations {
@@ -96,7 +97,28 @@ object Relations {
       posIDs.flatMap(y => negIDs.map(z => RelationPair(x._1, y, z)))
     })
   }
-}
+
+  /**
+   * Generate all [[RelationPair]]s from given [[Relation]]s.
+   * Essentially, for each positive relation (id1 and id2 with label>0), it will be
+   * paired with every negative relation of the same id1 (id2 with label=0).
+   */
+  def generateRelationPairs_Array(relations: Array[Relation]): Array[RelationPair] = {
+    val rel_set: Map[String, Map[Int, ArrayBuffer[String]]] = Map()
+    val pair_list: List[String] = ()
+    for (i <- relations) {
+      if (rel_set.contains(i.id1) == false) {
+        rel_set.+(i.id1)
+      }
+      if (rel_set.get(i.id1).contains(i.label) == false) {
+        val map = Map(i.label -> ArrayBuffer[String])
+        rel_set.updated(i.id1, map)
+      }
+      val res = rel_set.get(i.id1)
+      res.get(i.label).+(i.id2)
+      rel_set.updated(i.id1, res)
+    }
+  }}
 
 /**
  * It represents the relationship between two items.
