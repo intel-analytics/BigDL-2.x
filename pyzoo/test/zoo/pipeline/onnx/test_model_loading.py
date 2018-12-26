@@ -1282,7 +1282,7 @@ class TestModelLoading(OnnxTestCase):
             inputs=['data'],
             outputs=['transposed'],
             perm=permutation
-            )
+        )
         transposed = np.transpose(data, permutation)
         output = OnnxLoader.run_node(node, [data])
         np.testing.assert_almost_equal(output["transposed"], transposed, decimal=5)
