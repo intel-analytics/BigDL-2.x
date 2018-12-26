@@ -14,6 +14,20 @@ model.compile(loss='mean_squared_error', optimizer='sgd')
 model.compile(loss='mean_squared_error', optimizer='sgd')
 ```
 
+**Scala:**
+
+```scala
+import com.intel.analytics.bigdl.optim.optimizer
+model.compile(loss=optimizer.Adam(), optimizer='sgd')
+```
+
+**Python:**
+
+```python
+from bigdl.optim import optimizer
+model.compile(loss=optimizer.Adam(), optimizer='sgd')
+```
+
 ---
 
 ## Available optimizers
