@@ -240,7 +240,7 @@ from zoo.pipeline.api.keras.layers import RReLU
 from zoo.pipeline.api.keras.models import Sequential
 
 model = Sequential()
-model.add(RReLU(input_shape = (1,4)))
+model.add(RReLU(input_shape = (1, 4)))
 input = np.random.random([1, 1, 4])
 output = model.forward(input)
 ```

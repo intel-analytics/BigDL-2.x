@@ -994,8 +994,13 @@ Cropping3D(cropping=((1, 1), (1, 1), (1, 1)), dim_ordering="th", input_shape=Non
 
 * `cropping`: Int tuple of tuple of length 3. How many units should be trimmed off at the beginning and end of the 3 cropping dimensions (i.e. kernel_dim1, kernel_dim2 and kernel_dim3). Default is ((1, 1), (1, 1), (1, 1)).
 * `dimOrdering`: Format of input data. Either 'CHANNEL_FIRST' (dimOrdering='th') or 'CHANNEL_LAST' (dimOrdering='tf'). Default is 'CHANNEL_FIRST'.
+<<<<<<< HEAD
 * `inputShape`: Only need to specify this argument when you use this layer as the first layer of a model. For Scala API, it should be a [`Shape`](../keras-api-scala/#shape) object. For Python API, it should be a shape tuple. Batch dimension should be excluded.
 
+=======
+* `inputShape`: A Single Shape, does not include the batch dimension.
+ 
+>>>>>>> fix problems in format
 **Scala example:**
 ```scala
 import com.intel.analytics.zoo.pipeline.api.keras.models.Sequential
@@ -1339,8 +1344,13 @@ ShareConvolution2D(nbFilter, nbRow, nbCol, init = "glorot_uniform", activation =
 ```
 **Python:**
 ```python
+<<<<<<< HEAD
 ShareConvolution2D(nb_filter, nb_row, nb_col, init="glorot_uniform", activation=None, subsample=(1, 1), pad_h=0, pad_w=0,
                    propagate_back=True, dim_ordering="th", W_regularizer=None, b_regularizer=None, bias=True, input_shape=None, name=None)
+=======
+ShareConvolution2D(nb_filter, nb_row, nb_col, init = "glorot_uniform", activation = None, subsample = (1, 1), pad_h = 0, pad_w = 0,
+                   propagate_back = True, dim_ordering = "th", W_regularizer = None, b_regularizer = None, bias = True, input_shape = None, name = None)
+>>>>>>> fix problems in format
 ```
 
 **Parameters:**
