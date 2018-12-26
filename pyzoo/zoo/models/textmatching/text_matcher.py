@@ -16,14 +16,14 @@
 
 import sys
 
-from zoo.models.common.zoo_model import ZooModel
+from zoo.models.common import *
 
 if sys.version >= '3':
     long = int
     unicode = str
 
 
-class TextMatcher(ZooModel):
+class TextMatcher(ZooModel, Ranker):
     """
     The base class for text matching models in Analytics Zoo.
     Referred to MatchZoo implementation: https://github.com/NTMC-Community/MatchZoo

@@ -17,7 +17,7 @@
 import sys
 
 import zoo.pipeline.api.autograd as A
-from zoo.models.common.zoo_model import ZooModel
+from zoo.models.common import ZooModel
 from zoo.models.textmatching.text_matcher import TextMatcher
 from zoo.pipeline.api.keras.layers import Input, Embedding, Dense, Squeeze, prepare_embedding
 from zoo.pipeline.api.keras.models import Model

@@ -129,10 +129,10 @@ abstract class TextSet {
    *                    existingMap and assign subsequent indices to new words.
    */
   def word2idx(
-    removeTopN: Int = 0,
-    maxWordsNum: Int = -1,
-    minFreq: Int = 1,
-    existingMap: Map[String, Int] = null): TextSet = {
+      removeTopN: Int = 0,
+      maxWordsNum: Int = -1,
+      minFreq: Int = 1,
+      existingMap: Map[String, Int] = null): TextSet = {
     if (wordIndex != null) {
       logger.warn("wordIndex already exists. Using the existing wordIndex")
     } else {

@@ -17,7 +17,7 @@
 import datetime as dt
 from optparse import OptionParser
 
-from bigdl.optim.optimizer import *
+from bigdl.optim.optimizer import Adagrad
 from zoo.common.nncontext import init_nncontext
 from zoo.feature.text import TextSet
 from zoo.models.textclassification import TextClassifier

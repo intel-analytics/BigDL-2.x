@@ -80,7 +80,6 @@ object QARanker {
       val aSet = TextSet.readCSV(param.dataPath + "/answer_corpus.csv", sc, param.partitionNum)
         .tokenize().normalize().word2idx(minFreq = 2, existingMap = qSet.getWordIndex)
         .shapeSequence(param.answerLength)
-      val wordIndex = aSet.getWordIndex
 
       val trainRelations = Relations.read(param.dataPath + "/relation_train.csv",
         sc, param.partitionNum)
@@ -92,6 +91,7 @@ object QARanker {
       val knrm = if (param.model.isDefined) {
         KNRM.loadModel(param.model.get)
       } else {
+        val wordIndex = aSet.getWordIndex
         KNRM(param.questionLength, param.answerLength, param.embeddingFile, wordIndex)
       }
       val model = Sequential().add(TimeDistributed(

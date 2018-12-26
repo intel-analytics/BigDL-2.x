@@ -14,5 +14,24 @@
 # limitations under the License.
 #
 
-from .zoo_model import *
-from .ranker import *
+import sys
+
+from bigdl.util.common import JavaValue, callBigDlFunc
+
+if sys.version >= '3':
+    long = int
+    unicode = str
+
+
+class Ranker(JavaValue):
+    def evaluate_ndcg(self, x, k, threshold=0.0):
+        """
+        """
+        callBigDlFunc(self.bigdl_type, "evaluateNDCG",
+                      self.value, x, k, threshold)
+
+    def evaluate_map(self, x, threshold=0.0):
+        """
+        """
+        callBigDlFunc(self.bigdl_type, "evaluateMAP",
+                      self.value, x, threshold)

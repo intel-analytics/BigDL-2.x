@@ -16,7 +16,7 @@
 
 import sys
 
-from zoo.models.common.zoo_model import ZooModel
+from zoo.models.common import ZooModel
 from zoo.models.recommendation.recommender import Recommender
 from bigdl.util.common import callBigDlFunc
 

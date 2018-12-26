@@ -18,7 +18,7 @@ import warnings
 
 from zoo.pipeline.api.keras.models import Sequential
 from zoo.pipeline.api.keras.layers import *
-from zoo.models.common.zoo_model import ZooModel
+from zoo.models.common import ZooModel
 from bigdl.util.common import callBigDlFunc
 
 

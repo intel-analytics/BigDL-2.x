@@ -26,8 +26,10 @@ import com.intel.analytics.zoo.common.PythonZoo
 import com.intel.analytics.zoo.feature.common.{Preprocessing, Relation, Relations}
 import com.intel.analytics.zoo.feature.text.TruncMode.TruncMode
 import com.intel.analytics.zoo.feature.text.{DistributedTextSet, _}
+import com.intel.analytics.zoo.models.common.Ranker
 import org.apache.spark.api.java.{JavaRDD, JavaSparkContext}
 import org.apache.spark.rdd.RDD
+import org.apache.spark.sql.SQLContext
 
 import scala.collection.JavaConverters._
 import scala.reflect.ClassTag
@@ -98,7 +100,7 @@ class PythonTextFeature[T: ClassTag](implicit ev: TensorNumeric[T]) extends Pyth
   }
 
   def createWordIndexer(map: JMap[String, Int]): WordIndexer = {
-    WordIndexer(map.asScala.toMap)
+    WordIndexer(if (map != null) map.asScala.toMap else null)
   }
 
   def createSequenceShaper(
@@ -166,8 +168,11 @@ class PythonTextFeature[T: ClassTag](implicit ev: TensorNumeric[T]) extends Pyth
   def textSetGenerateWordIndexMap(
       textSet: TextSet,
       removeTopN: Int = 0,
-      maxWordsNum: Int = -1): JMap[String, Int] = {
-    val res = textSet.generateWordIndexMap(removeTopN, maxWordsNum)
+      maxWordsNum: Int = -1,
+      minFreq: Int,
+      existingMap: JMap[String, Int]): JMap[String, Int] = {
+    val res = textSet.generateWordIndexMap(removeTopN, maxWordsNum, minFreq,
+      if (existingMap != null) existingMap.asScala.toMap else null)
     if (res == null) null else res.asJava
   }
 
@@ -261,19 +266,22 @@ class PythonTextFeature[T: ClassTag](implicit ev: TensorNumeric[T]) extends Pyth
     textSet.normalize()
   }
 
+  def textSetWord2idx(
+      textSet: TextSet,
+      removeTopN: Int,
+      maxWordsNum: Int,
+      minFreq: Int,
+      existingMap: JMap[String, Int]): TextSet = {
+    textSet.word2idx(removeTopN, maxWordsNum, minFreq,
+      if (existingMap != null) existingMap.asScala.toMap else null)
+  }
+
   def textSetShapeSequence(
       textSet: TextSet,
       len: Int,
       truncMode: String,
       padElement: Int): TextSet = {
     textSet.shapeSequence(len, toScalaTruncMode(truncMode), padElement)
-  }
-
-  def textSetWord2idx(
-      textSet: TextSet,
-      removeTopN: Int,
-      maxWordsNum: Int): TextSet = {
-    textSet.word2idx(removeTopN, maxWordsNum)
   }
 
   def textSetGenerateSample(textSet: TextSet): TextSet = {
@@ -309,8 +317,13 @@ class PythonTextFeature[T: ClassTag](implicit ev: TensorNumeric[T]) extends Pyth
       List(x.id1, x.id2, x.label).asJava).toJavaRDD()
   }
 
-  def readRelations(path: String): Array[Relation] = {
-    Relations.read(path)
+  private def toPythonRelations(relations: Array[Relation]): JList[JList[Any]] = {
+    relations.map(x =>
+      List(x.id1, x.id2, x.label).asJava).toList.asJava
+  }
+
+  def readRelations(path: String): JList[JList[Any]] = {
+    toPythonRelations(Relations.read(path))
   }
 
   def readRelations(
@@ -318,6 +331,12 @@ class PythonTextFeature[T: ClassTag](implicit ev: TensorNumeric[T]) extends Pyth
       sc: JavaSparkContext,
       minPartitions: Int = 1): JavaRDD[JList[Any]] = {
     toPythonRelations(Relations.read(path, sc.sc, minPartitions))
+  }
+
+  def readRelationsParquet(
+      path: String,
+      sqlContext: SQLContext): JavaRDD[JList[Any]] = {
+    toPythonRelations(Relations.readParquet(path, sqlContext))
   }
 
   def textSetFromRelationPairs(
@@ -341,6 +360,18 @@ class PythonTextFeature[T: ClassTag](implicit ev: TensorNumeric[T]) extends Pyth
     else {
       TextSet.readCSV(path, sc.sc, minPartitions)
     }
+  }
+
+  def textSetReadParquet(
+      path: String,
+      sqlContext: SQLContext): TextSet = {
+    TextSet.readParquet(path, sqlContext)
+  }
+
+  def textSetSaveWordIndex(
+      textSet: TextSet,
+      path: String): Unit = {
+    textSet.saveWordIndex(path)
   }
 
 }

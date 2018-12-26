@@ -166,7 +166,7 @@ class TextSet(JavaValue):
         jvalue = callBigDlFunc(self.bigdl_type, "textSetNormalize", self.value)
         return TextSet(jvalue=jvalue)
 
-    def word2idx(self, remove_topN=0, max_words_num=-1):
+    def word2idx(self, remove_topN=0, max_words_num=-1, min_freq=1, existing_map=None):
         """
         Map word tokens to indices.
         Result index will start from 1 and corresponds to the occurrence frequency of each word
@@ -184,7 +184,7 @@ class TextSet(JavaValue):
         :return: TextSet after word2idx.
         """
         jvalue = callBigDlFunc(self.bigdl_type, "textSetWord2idx", self.value,
-                               remove_topN, max_words_num)
+                               remove_topN, max_words_num, min_freq, existing_map)
         return TextSet(jvalue=jvalue)
 
     def shape_sequence(self, len, trunc_mode="pre", pad_element=0):
