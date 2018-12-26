@@ -18,14 +18,14 @@ model.compile(loss='mean_squared_error', optimizer='sgd')
 
 ```scala
 import com.intel.analytics.zoo.pipeline.api.keras.objectives
-model.compile(loss=objectives.MeanSquaredError, optimizer='sgd')
+model.compile(loss=objectives.MeanSquaredError(), optimizer='sgd')
 ```
 
 **Python:**
 
 ```python
 from zoo.pipeline.api.keras import objectives
-model.compile(loss=objectives.MeanSquaredError, optimizer='sgd')
+model.compile(loss=objectives.MeanSquaredError(), optimizer='sgd')
 ```
 
 ---
