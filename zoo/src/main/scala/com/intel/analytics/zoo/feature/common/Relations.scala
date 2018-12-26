@@ -103,22 +103,33 @@ object Relations {
    * Essentially, for each positive relation (id1 and id2 with label>0), it will be
    * paired with every negative relation of the same id1 (id2 with label=0).
    */
-  def generateRelationPairs_Array(relations: Array[Relation]): Array[RelationPair] = {
-    val rel_set: Map[String, Map[Int, ArrayBuffer[String]]] = Map()
-    val pair_list: List[String] = ()
+  def generateRelationPairs(relations: Array[Relation]): Array[RelationPair] = {
+    val relSet: Map[String, Map[Int, ArrayBuffer[String]]] = Map()
+    val pairList: List[String] = List()
     for (i <- relations) {
-      if (rel_set.contains(i.id1) == false) {
-        rel_set.+(i.id1)
+      if (relSet.contains(i.id1) == false) {
+        relSet.+(i.id1)
       }
-      if (rel_set.get(i.id1).contains(i.label) == false) {
+      if (relSet.get(i.id1).contains(i.label) == false) {
         val map = Map(i.label -> ArrayBuffer[String])
-        rel_set.updated(i.id1, map)
+        relSet.updated(i.id1, map)
       }
-      val res = rel_set.get(i.id1)
+      val res = relSet.get(i.id1)
       res.get(i.label).+(i.id2)
-      rel_set.updated(i.id1, res)
+      relSet.updated(i.id1, res)
     }
-  }}
+    for(i <- relations){
+      val map = relSet.get(i.id1)
+      val buffer0 = map.get(0)
+      val buffer1 = map.get(1)
+      for(m <- buffer1.length){
+        for(n <- buffer0.length){
+          pairList.:+(i.id1, m, n)
+        }
+      }
+    }
+  }
+}
 
 /**
  * It represents the relationship between two items.
