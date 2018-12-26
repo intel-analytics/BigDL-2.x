@@ -112,7 +112,7 @@ class PersistentMemorySpec extends ZooSpecHelper {
 
   "cached imageset optanedc" should "be ok" in {
 
-    val dataPath = getClass.getClassLoader.getResource("optandc/mini_imagenet_seq").getPath
+    val dataPath = getClass.getClassLoader.getResource("pmem/mini_imagenet_seq").getPath
 
     val imageNet = ImageNet2012(path = dataPath,
       sc = sc,

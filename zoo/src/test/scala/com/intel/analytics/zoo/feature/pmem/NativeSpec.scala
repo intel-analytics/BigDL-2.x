@@ -114,7 +114,7 @@ class NativeSpec extends ZooSpecHelper {
 
 
   "cached imageset dram" should "be ok" in {
-    val dataPath = getClass.getClassLoader.getResource("optandc/mini_imagenet_seq").getPath
+    val dataPath = getClass.getClassLoader.getResource("pmem/mini_imagenet_seq").getPath
 
     val imageNet = ImageNet2012(path = dataPath,
       sc = sc,
