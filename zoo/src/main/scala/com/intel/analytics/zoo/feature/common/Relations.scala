@@ -106,28 +106,29 @@ object Relations {
   def generateRelationPairs(relations: Array[Relation]): Array[RelationPair] = {
     val relSet: Map[String, Map[Int, ArrayBuffer[String]]] = Map()
     val pairList: List[String] = List()
-    for (i <- relations) {
-      if (relSet.contains(i.id1) == false) {
-        relSet.+(i.id1)
+    for (relation <- relations) {
+      if (relSet.contains(relation.id1)) {
+        relSet.+(relation.id1)
       }
-      if (relSet.get(i.id1).contains(i.label) == false) {
-        val map = Map(i.label -> ArrayBuffer[String])
-        relSet.updated(i.id1, map)
+      if (relSet.get(relation.id1).contains(relation.label)) {
+        val map = Map(relation.label -> ArrayBuffer[String])
+        relSet.updated(relation.id1, map)
       }
-      val res = relSet.get(i.id1)
-      res.get(i.label).+(i.id2)
-      relSet.updated(i.id1, res)
+      val res = relSet.get(relation.id1)
+      res.get(relation.label).+(relation.id2)
+      relSet.updated(relation.id1, res)
     }
-    for(i <- relations){
-      val map = relSet.get(i.id1)
+    for(relation <- relations){
+      val map = relSet.get(relation.id1)
       val buffer0 = map.get(0)
       val buffer1 = map.get(1)
       for(m <- buffer1.length){
         for(n <- buffer0.length){
-          pairList.:+(i.id1, m, n)
+          pairList.:+(relation.id1, m, n)
         }
       }
     }
+    pairList.toArray
   }
 }
 
