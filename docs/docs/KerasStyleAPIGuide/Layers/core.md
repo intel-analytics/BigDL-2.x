@@ -1285,7 +1285,11 @@ Select(dim, index, inputShape = null)
 ```
 **Python:**
 ```python
+<<<<<<< HEAD
 Select(dim, index, input_shape=None, name=None)
+=======
+Select(dim, index, input_shape = None, name = None)
+>>>>>>> fix problems in format
 ```
 
 **Parameters:**
@@ -1335,6 +1339,7 @@ output = model.forward(input)
 ```
 Input is:
 ```python
+<<<<<<< HEAD
 array([[[[0.53306099, 0.95147881, 0.15222129]],
         [[0.89604861, 0.90160974, 0.5230576 ]],
         [[0.70779386, 0.14438568, 0.37601195]]]])
@@ -1342,6 +1347,15 @@ array([[[[0.53306099, 0.95147881, 0.15222129]],
 Output is:
 ```python
 array([[[0.7077939 , 0.14438568, 0.37601194]]], dtype=float32)
+=======
+array([[0.5084155 , 0.95884451, 0.72973726],
+       [0.16981959, 0.65563077, 0.23995682],
+       [0.73532258, 0.13085087, 0.29553222]])
+```
+Output is:
+```python
+array([0.7297373 , 0.23995683, 0.29553223], dtype=float32)
+>>>>>>> fix problems in format
 ```
 
 ---
@@ -1427,7 +1441,11 @@ Negative(inputShape = null)
 ```
 **Python:**
 ```python
+<<<<<<< HEAD
 Negative(input_shape=None, name=None)
+=======
+Negative(input_shape = None)
+>>>>>>> fix problems in format
 ```
 
 **Parameters:**
@@ -1511,13 +1529,21 @@ CAdd(size, bRegularizer = null, inputShape = null)
 ```
 **Python:**
 ```python
+<<<<<<< HEAD
 CAdd(size, b_regularizer=None, input_shape=None, name=None)
+=======
+CAdd(size, bRegularizer = None, bigdl_type = "float", input_shape = None, name = None)
+>>>>>>> fix problems in format
 ```
 
 **Parameters:**
 
 * `size`: the size of the bias
+<<<<<<< HEAD
 * `bRegularizer`: An instance of [Regularizer](https://bigdl-project.github.io/master/#APIGuide/Regularizers/), applied to the bias. Default is null.
+=======
+* `bRegularizer`: An instance of [[Regularizer]], applied to the bias. Default is null.
+>>>>>>> fix problems in format
 * `inputShape`: Only need to specify this argument when you use this layer as the first layer of a model. For Scala API, it should be a [`Shape`](../keras-api-scala/#shape) object. For Python API, it should be a shape tuple. Batch dimension should be excluded.
 
 **Scala example:**

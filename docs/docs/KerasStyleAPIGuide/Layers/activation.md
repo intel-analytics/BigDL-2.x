@@ -194,11 +194,19 @@ For reference, see [Empirical Evaluation of Rectified Activations in Convolution
 
 **Scala:**
 ```scala
+<<<<<<< HEAD
 RReLU(lower = 1.0/8, upper = 1.0/3, inputShape = null)
 ```
 **Python:**
 ```python
 RReLU(lower=1.0/8, upper=1.0/3, input_shape=None, name=None)
+=======
+RReLU(lower=1.0/8, upper=1.0/3, inputShape = null)
+```
+**Python:**
+```python
+RReLU(lower=1.0/8, upper=1.0/3, input_shape = None, name=None)
+>>>>>>> fix problems in format
 ```
 
 **Parameters:**

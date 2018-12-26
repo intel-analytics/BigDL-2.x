@@ -14,7 +14,6 @@ Dropout(p, input_shape=None, name=None)
 
 * `p`: Fraction of the input units to drop. Between 0 and 1.
 * `inputShape`: Only need to specify this argument when you use this layer as the first layer of a model. For Scala API, it should be a [`Shape`](../keras-api-scala/#shape) object. For Python API, it should be a shape tuple. Batch dimension should be excluded.
-* `T`: Numeric type of parameter(e.g. weight, bias). Only support float/double now.
 
 **Scala example:**
 ```scala
