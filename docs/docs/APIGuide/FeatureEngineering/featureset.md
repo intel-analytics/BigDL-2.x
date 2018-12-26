@@ -12,3 +12,4 @@ Scala example:
    // featureSet -> feature transformer -> batch and sample transformer
    model.fit(featureSet)
 ```
+Take a look at [InceptionV1 example](https://github.com/intel-analytics/analytics-zoo/tree/master/zoo/src/main/scala/com/intel/analytics/zoo/examples/inception) for more details.
