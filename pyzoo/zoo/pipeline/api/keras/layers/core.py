@@ -356,8 +356,8 @@ class GetShape(ZooKerasLayer):
     """
     def __init__(self, input_shape=None, **kwargs):
         super(GetShape, self).__init__(None,
-                                    list(input_shape) if input_shape else None,
-                                    **kwargs)
+                                       list(input_shape) if input_shape else None,
+                                       **kwargs)
 
 
 class SparseDense(ZooKerasLayer):
