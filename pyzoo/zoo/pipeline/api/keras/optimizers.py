@@ -13,6 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
+
 from bigdl.util.common import *
 from bigdl.optim.optimizer import OptimMethod, Default
 from zoo.pipeline.api.keras.base import ZooKerasCreator
@@ -22,20 +23,20 @@ if sys.version >= '3':
     unicode = str
 
 
-class Adam(OptimMethod):
+class Adam(OptimMethod, ZooKerasCreator):
     """
     An implementation of Adam with learning rate schedule.
     >>> adam = Adam()
     creating: createZooKerasAdam
     """
     def __init__(self,
-                 lr = 1e-3,
-                 beta_1 = 0.9,
-                 beta_2 = 0.999,
-                 epsilon = 1e-8,
-                 decay = 0.0,
-                 schedule = None,
-                 bigdl_type = "float"):
+                 lr=1e-3,
+                 beta_1=0.9,
+                 beta_2=0.999,
+                 epsilon=1e-8,
+                 decay=0.0,
+                 schedule=None,
+                 bigdl_type="float"):
         """
         :param lr learning rate
         :param beta_1 first moment coefficient

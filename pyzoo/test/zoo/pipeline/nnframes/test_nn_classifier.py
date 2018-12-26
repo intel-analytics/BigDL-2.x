@@ -225,13 +225,13 @@ class TestNNClassifer():
         model = Sequential().add(Linear(2, 2))
         criterion = MSECriterion()
         df = self.get_estimator_df()
-        nnModel = NNEstimator(model, criterion, SeqToTensor([2]), SeqToTensor([2]))\
-            .setBatchSize(4)\
+        nnModel = NNEstimator(model, criterion, SeqToTensor([2]), SeqToTensor([2])) \
+            .setBatchSize(4) \
             .setLearningRate(0.01).setMaxEpoch(1) \
             .setPredictionCol("tt") \
             .setOptimMethod(KAdam(
                 schedule=Plateau("Loss", factor=0.1, patience=2, mode="min", epsilon=0.01,
-                                  cooldown=0, min_lr=1e-15))) \
+                                 cooldown=0, min_lr=1e-15))) \
             .fit(df)
         res = nnModel.transform(df)
         assert type(res).__name__ == 'DataFrame'
