@@ -438,7 +438,7 @@ import com.intel.analytics.bigdl.utils.Shape
 import com.intel.analytics.bigdl.tensor.Tensor
 
 val model = Sequential[Float]()
-model.add(Squeeze[Float](dim = 1, inputShape = Shape(1, 1, 1, 32)))
+model.add(Squeeze[Float](1, inputShape = Shape(1, 1, 1, 32)))
 val input = Tensor[Float](1, 1, 1, 32).randn()
 val output = model.forward(input)
 ```
@@ -489,4 +489,312 @@ Output is
    0.6093118 , 0.46709716, 0.14218839, 0.42517757, 0.9149958 ,
    0.0843243 , 0.27302307, 0.75281924, 0.36889312, 0.8691373 ,
    0.897742  , 0.7783884 ]]]
+```
+
+---
+## **BinaryThreshold**
+Threshold the input.
+
+If an input element is smaller than the threshold value, it will be replaced by 0; otherwise, it will be replaced by 1.
+
+When you use this layer as the first layer of a model, you need to provide the argument input_shape (a shape tuple, does not include the batch dimension).
+
+**Scala:**
+```scala
+BinaryThreshold(value = 1e-6, inputShape = null)
+```
+**Python:**
+```python
+BinaryThreshold(value=1e-6, input_shape=None, name=None)
+```
+
+**Parameters:**
+
+* `value': The threshold value to compare with. Default is 1e-6.
+* 'input_shape': A shape tuple, not including batch.
+
+**Scala example:**
+```scala
+import com.intel.analytics.zoo.pipeline.api.keras.layers.BinaryThreshold
+import com.intel.analytics.zoo.pipeline.api.keras.models.Sequential
+import com.intel.analytics.bigdl.utils.Shape
+import com.intel.analytics.bigdl.tensor.Tensor
+
+val model = Sequential[Float]()
+model.add(BinaryThreshold[Float](inputShape = Shape(2, 3, 4)))
+val input = Tensor[Float](2, 3).randn()
+val output = model.forward(input)
+```
+Input is:
+```scala
+input: com.intel.analytics.bigdl.tensor.Tensor[Float] =
+0.24746919      -1.3147599      1.059689
+-0.14579424     0.072433405     1.2220671
+[com.intel.analytics.bigdl.tensor.DenseTensor of size 2x3]
+```
+Output is:
+```scala
+output: com.intel.analytics.bigdl.nn.abstractnn.Activity =
+1.0     0.0     1.0
+0.0     1.0     1.0
+[com.intel.analytics.bigdl.tensor.DenseTensor of size 2x3]
+```
+
+**Python example:**
+```python
+import numpy as np
+from zoo.pipeline.api.keras.layers import BinaryThreshold
+from zoo.pipeline.api.keras.models import Sequential
+
+model = Sequential()
+model.add(BinaryThreshold(input_shape=(2, 3, 4)))
+input = np.random.random([2, 3])
+output = model.forward(input)
+```
+Input is:
+```python
+[[0.87335141, 0.57578887, 0.015348  ],
+ [0.85402094, 0.68184429, 0.17629184]]
+```
+Output is
+```python
+[[1., 1., 1.],
+ [1., 1., 1.]]
+```
+
+---
+## **Sqrt**
+Applies an element-wise square root operation to the input.
+
+When you use this layer as the first layer of a model, you need to provide the argument input_shape (a shape tuple, does not include the batch dimension).
+
+**Scala:**
+```scala
+Sqrt(inputShape = Null)
+```
+**Python:**
+```python
+Sqrt(input_shape=None, name=None)
+```
+
+**Parameters:**
+
+* 'input_shape': A shape tuple, not including batch.
+
+**Scala example:**
+```scala
+import com.intel.analytics.zoo.pipeline.api.keras.layers.Sqrt
+import com.intel.analytics.zoo.pipeline.api.keras.models.Sequential
+import com.intel.analytics.bigdl.utils.Shape
+import com.intel.analytics.bigdl.tensor.Tensor
+
+val model = Sequential[Float]()
+model.add(Sqrt[Float](inputShape = Shape(3)))
+val input = Tensor[Float](2, 3).randn()
+val output = model.forward(input)
+```
+Input is:
+```scala
+input: com.intel.analytics.bigdl.tensor.Tensor[Float] =
+0.6950394       0.5234307       1.7375475
+0.25833175      0.02685826      -0.6046901
+[com.intel.analytics.bigdl.tensor.DenseTensor of size 2x3]
+```
+Output is:
+```scala
+output: com.intel.analytics.bigdl.nn.abstractnn.Activity =
+0.8336902       0.7234851       1.3181607
+0.50826347      0.16388491      NaN
+[com.intel.analytics.bigdl.tensor.DenseTensor of size 2x3]
+```
+
+**Python example:**
+```python
+import numpy as np
+from zoo.pipeline.api.keras.layers import Sqrt
+from zoo.pipeline.api.keras.models import Sequential
+
+model = Sequential()
+model.add(Sqrt(input_shape=(3, )))
+input = np.random.random([2, 3])
+output = model.forward(input)
+```
+Input is:
+```python
+[[0.2484558 , 0.65280218, 0.35286984],
+ [0.19616094, 0.30966802, 0.82148169]]
+```
+Output is
+```python
+[[0.4984534 , 0.80796176, 0.5940285 ],
+ [0.4429006 , 0.55647826, 0.9063563 ]]
+```
+
+---
+## **MulConstant**
+Multiply the input by a (non-learnable) scalar constant.
+
+When you use this layer as the first layer of a model, you need to provide the argument input_shape (a shape tuple, does not include the batch dimension).
+
+**Scala:**
+```scala
+MulConstant(constant, inputShape = Null)
+```
+**Python:**
+```python
+MulConstant(constant, input_shape=None, name=None)
+```
+
+**Parameters:**
+
+* 'constant': The scalar constant to be multiplied.
+* 'input_shape': A shape tuple, not including batch.
+
+**Scala example:**
+```scala
+import com.intel.analytics.zoo.pipeline.api.keras.layers.MulConstant
+import com.intel.analytics.zoo.pipeline.api.keras.models.Sequential
+import com.intel.analytics.bigdl.utils.Shape
+import com.intel.analytics.bigdl.tensor.Tensor
+
+val model = Sequential[Float]()
+model.add(MulConstant[Float](2.2, inputShape = Shape(3, 4)))
+val input = Tensor[Float](2, 3, 4).randn()
+val output = model.forward(input)
+```
+Input is:
+```scala
+input: com.intel.analytics.bigdl.tensor.Tensor[Float] =
+(1,.,.) =
+-0.16873977     1.0812985       1.0942211       -0.67091423
+1.0086882       0.5915831       0.26184535      -1.361431
+1.5616825       -0.037591368    1.2794676       1.0692137
+
+(2,.,.) =
+0.29868057      -0.23266982     -0.7679556      -2.209848
+-0.13954644     -0.1368473      -0.54510623     1.8397199
+-0.58691734     -0.56410027     -1.5567777      0.050648995
+
+[com.intel.analytics.bigdl.tensor.DenseTensor of size 2x3x4]
+```
+Output is:
+```scala
+output: com.intel.analytics.bigdl.nn.abstractnn.Activity =
+(1,.,.) =
+-0.3712275      2.3788567       2.4072864       -1.4760114
+2.219114        1.3014828       0.57605976      -2.9951482
+3.4357016       -0.08270101     2.8148286       2.3522704
+
+(2,.,.) =
+0.6570973       -0.5118736      -1.6895024      -4.8616657
+-0.3070022      -0.30106407     -1.1992338      4.047384
+-1.2912182      -1.2410206      -3.424911       0.11142779
+
+[com.intel.analytics.bigdl.tensor.DenseTensor of size 2x3x4]
+```
+
+**Python example:**
+```python
+import numpy as np
+from zoo.pipeline.api.keras.layers import MulConstant
+from zoo.pipeline.api.keras.models import Sequential
+
+model = Sequential()
+model.add(MulConstant(2.2, input_shape=(3, 4)))
+input = np.random.random([2, 3, 4])
+output = model.forward(input)
+```
+Input is:
+```python
+[[[0.39874191, 0.66634984, 0.23907766, 0.31587494],
+  [0.78842014, 0.93057835, 0.80739529, 0.71541279],
+  [0.2231424 , 0.3372844 , 0.94678072, 0.52928034]],
+
+ [[0.60142458, 0.41221671, 0.00890549, 0.32069845],
+  [0.51122554, 0.76280426, 0.87579418, 0.17182832],
+  [0.54133184, 0.19814384, 0.92529327, 0.5616615 ]]]
+```
+Output is
+```python
+[[[0.8772322 , 1.4659697 , 0.5259709 , 0.6949249 ],
+  [1.7345244 , 2.0472724 , 1.7762697 , 1.5739082 ],
+  [0.4909133 , 0.7420257 , 2.0829177 , 1.1644168 ]],
+
+ [[1.3231341 , 0.9068768 , 0.01959208, 0.7055366 ],
+  [1.1246961 , 1.6781695 , 1.9267472 , 0.37802234],
+  [1.19093   , 0.43591645, 2.0356452 , 1.2356553 ]]]
+```
+
+---
+## **Scale**
+Scale is the combination of CMul and CAdd.
+
+Computes the element-wise product of the input and weight, with the shape of the weight "expand" to match the shape of the input.
+
+Similarly, perform an expanded bias and perform an element-wise add.
+
+When you use this layer as the first layer of a model, you need to provide the argument input_shape (a shape tuple, does not include the batch dimension).
+
+**Scala:**
+```scala
+Scale(size, inputShape = Null)
+```
+**Python:**
+```python
+Scale(size, input_shape=None, name=None)
+```
+
+**Parameters:**
+
+* 'size': Size of the weight and bias.
+* 'input_shape': A shape tuple, not including batch.
+
+**Scala example:**
+```scala
+import com.intel.analytics.zoo.pipeline.api.keras.layers.Scale
+import com.intel.analytics.zoo.pipeline.api.keras.models.Sequential
+import com.intel.analytics.bigdl.utils.Shape
+import com.intel.analytics.bigdl.tensor.Tensor
+
+val model = Sequential[Float]()
+var array = Array(1, 2)
+model.add(Scale[Float](array, inputShape = Shape(3)))
+val input = Tensor[Float](2, 3).randn()
+val output = model.forward(input)
+```
+Input is:
+```scala
+input: com.intel.analytics.bigdl.tensor.Tensor[Float] =
+-0.006399727    -0.06412822     -0.2334789
+0.31029955      1.6557469       1.9614618
+[com.intel.analytics.bigdl.tensor.DenseTensor of size 2x3]
+```
+Output is:
+```scala
+output: com.intel.analytics.bigdl.nn.abstractnn.Activity =
+0.09936619      0.57585865      0.20324506
+0.38537437      -0.8598822      -1.0186496
+[com.intel.analytics.bigdl.tensor.DenseTensor of size 2x3]
+```
+
+**Python example:**
+```python
+import numpy as np
+from zoo.pipeline.api.keras.layers import Scale
+from zoo.pipeline.api.keras.models import Sequential
+
+model = Sequential()
+model.add(Scale((2, 1), input_shape=(3, )))
+input = np.random.random([2, 3])
+output = model.forward(input)
+```
+Input is:
+```python
+[[0.7242994 , 0.77888884, 0.71470432],
+ [0.03058471, 0.00602764, 0.57513629]]
+```
+Output is
+```python
+[[1.0946966 , 1.1255064 , 1.0892813 ],
+ [0.58151895, 0.5909191 , 0.37307182]]
 ```
