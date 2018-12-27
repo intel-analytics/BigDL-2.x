@@ -42,7 +42,7 @@ import scala.reflect.ClassTag
  * @param init Initialization method for the weights of the layer. Default is RandomUniform.
  *             You can also pass in corresponding string representations such as 'uniform'
  *             or 'normal', etc. for simple init methods in the factory method.
- * @param weights Tensor. Initial weights set to this layer, which should be a Tensor of
+ * @param initWeights Tensor. Initial weights set to this layer, which should be a Tensor of
  *                size (inputDim, outputDim). Default is null and in this case weights are
  *                initialized by the initialization method specified by 'init'.
  *                Otherwise, 'weights' will override 'init' to take effect.
@@ -53,21 +53,23 @@ import scala.reflect.ClassTag
  * @tparam T Numeric type of parameter(e.g. weight, bias). Only support float/double now.
  */
 class Embedding[T: ClassTag](
-    override val inputDim: Int,
-    override val outputDim: Int,
-    override val init: InitializationMethod = RandomUniform,
-    val weights: Tensor[T] = null,
-    val trainable: Boolean = true,
-    wRegularizer: Regularizer[T] = null,
-    inputShape: Shape = null)(implicit ev: TensorNumeric[T])
+                              override val inputDim: Int,
+                              override val outputDim: Int,
+                              override val init: InitializationMethod = RandomUniform,
+                              val initWeights: Tensor[T] = null,
+                              val trainable: Boolean = true,
+                              wRegularizer: Regularizer[T] = null,
+                              maskZero: Boolean = false,
+                              paddingValue: Int = 0,
+                              inputShape: Shape = null)(implicit ev: TensorNumeric[T])
   extends BEmbedding[T] (
     inputDim, outputDim, init, wRegularizer, inputShape) with Net {
 
   require(inputDim > 0, s"inputDim of Embedding must be a positive integer, but got $inputDim")
   require(outputDim > 0, s"outputDim of Embedding must be a positive integer, but got $outputDim")
 
-  if (weights != null) {
-    require(weights.size().sameElements(Array(inputDim, outputDim)),
+  if (initWeights != null) {
+    require(initWeights.size().sameElements(Array(inputDim, outputDim)),
     "weights size should match (inputDim, outputDim)")
   }
 
@@ -77,12 +79,14 @@ class Embedding[T: ClassTag](
     val layer = LookupTable(
       nIndex = inputDim,
       nOutput = outputDim,
-      wRegularizer = wRegularizer)
-    if (weights != null) {
-      layer.setWeightsBias(Array(weights))
+      wRegularizer = wRegularizer,
+      maskZero = maskZero,
+      paddingValue = paddingValue)
+    if (initWeights != null) {
+      layer.setWeightsBias(Array(initWeights))
     }
     else {
-      layer.setInitMethod(weightInitMethod = init)
+      layer.setInitMethod(weightInitMethod = init, biasInitMethod = init)
     }
     if (! trainable) layer.freeze()
     model.add(layer)
@@ -98,10 +102,12 @@ object Embedding {
       weights: Tensor[T] = null,
       trainable: Boolean = true,
       wRegularizer: Regularizer[T] = null,
+      maskZero: Boolean = false,
+      paddingValue: Int = 0,
       inputLength: Int = -1)(implicit ev: TensorNumeric[T]): Embedding[T] = {
     // Remark: It is possible that inputShape is specified in Input node or layer.
     val shape = if (inputLength > 0) Shape(inputLength) else null
     new Embedding[T](inputDim, outputDim, KerasUtils.getInitMethod(init),
-      weights, trainable, wRegularizer, shape)
+      weights, trainable, wRegularizer, maskZero, paddingValue, shape)
   }
 }

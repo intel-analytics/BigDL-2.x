@@ -32,13 +32,13 @@ import org.apache.spark.rdd.RDD
 import scala.reflect.ClassTag
 
 /**
- * [[Seq2seq]] A trainable interface for a simple, generic encoder + decoder model
- * @param encoder an encoder object
- * @param decoder a decoder object
- * @param inputShape shape of encoder input, for variable length, please input -1
- * @param outputShape shape of decoder input, for variable length, please input -1
- * @param bridge connect encoder and decoder
- */
+  * [[Seq2seq]] A trainable interface for a simple, generic encoder + decoder model
+  * @param encoder an encoder object
+  * @param decoder a decoder object
+  * @param inputShape shape of encoder input, for variable length, please input -1
+  * @param outputShape shape of decoder input, for variable length, please input -1
+  * @param bridge connect encoder and decoder
+  */
 class Seq2seq[T: ClassTag] (
   val encoder: Encoder[T],
   val decoder: Decoder[T],
@@ -76,20 +76,23 @@ class Seq2seq[T: ClassTag] (
     optimizer: OptimMethod[T],
     loss: Criterion[T],
     metrics: List[ValidationMethod[T]] = null)(implicit ev: TensorNumeric[T]): Unit = {
-model.asInstanceOf[KerasNet[T]].compile(optimizer, loss, metrics)
-}
+    model.asInstanceOf[KerasNet[T]].compile(optimizer, loss, metrics)
+  }
 
   def fit(
     x: RDD[Sample[T]],
     batchSize: Int = 32,
     nbEpoch: Int = 10,
-    validationData: RDD[Sample[T]] = null)(implicit ev: TensorNumeric[T]): Unit = {
-      model.asInstanceOf[KerasNet[T]].fit(x, batchSize, nbEpoch, validationData)
+    validationData: RDD[Sample[T]] = null,
+    featurePaddingParam: PaddingParam[T] = null,
+    labelPaddingParam: PaddingParam[T] = null)(implicit ev: TensorNumeric[T]): Unit = {
+    model.asInstanceOf[KerasNet[T]].fit(x, batchSize, nbEpoch, validationData,
+      featurePaddingParam, labelPaddingParam)
   }
 
   def infer(input: Tensor[T], startSign: Tensor[T], maxSeqLen: Int = 30,
-            stopSign: Tensor[T] = null,
-            buildOutput: KerasLayer[Tensor[T], Tensor[T], T] = null): Tensor[T] = {
+    stopSign: Tensor[T] = null,
+    buildOutput: KerasLayer[Tensor[T], Tensor[T], T] = null): Tensor[T] = {
     val sent1 = input
     val sent2 = startSign
     require(sent2.size(Seq2seq.timeDim) == 1, "expect decoder input is batch x time(1) x feature")
@@ -123,13 +126,13 @@ model.asInstanceOf[KerasNet[T]].compile(optimizer, loss, metrics)
 object Seq2seq {
   val timeDim = 2
   /**
-   * [[Seq2seq]] A trainable interface for a simple, generic encoder + decoder model
-   * @param encoder an encoder object
-   * @param decoder a decoder object
-   * @param encoderInputShape shape of encoder input, for variable length, please input -1
-   * @param decoderInputShape shape of decoder input, for variable length, please input -1
-   * @param bridge connect encoder and decoder
-   */
+    * [[Seq2seq]] A trainable interface for a simple, generic encoder + decoder model
+    * @param encoder an encoder object
+    * @param decoder a decoder object
+    * @param encoderInputShape shape of encoder input, for variable length, please input -1
+    * @param decoderInputShape shape of decoder input, for variable length, please input -1
+    * @param bridge connect encoder and decoder
+    */
   def apply[@specialized(Float, Double) T: ClassTag](
     encoder: Encoder[T],
     decoder: Decoder[T],
