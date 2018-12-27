@@ -210,6 +210,126 @@ Output is
 ```
 
 ---
+## **Merge**
+Used to merge a list of inputs into a single output, following some merge mode.
+
+Merge must have at least two input layers.
+
+**Scala:**
+```scala
+Merge(layers = null, mode = "sum", concatAxis = -1, inputShape = null)
+```
+**Python:**
+```python
+Merge(layers=None, mode="sum", concat_axis=-1, input_shape=None, name=None)
+```
+
+**Parameters:**
+
+* `layers`: A list of layer instances. Must be more than one layer.
+* `mode`: Merge mode. String, must be one of: 'sum', 'mul', 'concat', 'ave', 'cos', 'dot', 'max'. Default is 'sum'.
+* `concatAxis`: Integer, axis to use when concatenating layers. Only specify this when merge mode is 'concat'. Default is -1, meaning the last axis of the input.
+* `inputShape`: Only need to specify this argument when you use this layer as the first layer of a model. For Scala API, it should be a [`Shape`](../keras-api-scala/#shape) object. For Python API, it should be a shape tuple. Batch dimension should be excluded.
+
+**Scala example:**
+```scala
+import com.intel.analytics.zoo.pipeline.api.keras.layers.InputLayer
+import com.intel.analytics.zoo.pipeline.api.keras.layers.Merge
+import com.intel.analytics.zoo.pipeline.api.keras.models.Sequential
+import com.intel.analytics.bigdl.utils.{Shape, T}
+import com.intel.analytics.bigdl.tensor.Tensor
+
+val model = Sequential[Float]()
+val l1 = InputLayer[Float](inputShape = Shape(2, 3))
+val l2 = InputLayer[Float](inputShape = Shape(2, 3))
+val layer = Merge[Float](layers = List(l1, l2), mode = "sum")
+model.add(layer)
+val input1 = Tensor[Float](2, 2, 3).rand(0, 1)
+val input2 = Tensor[Float](2, 2, 3).rand(0, 1)
+val input = T(1 -> input1, 2 -> input2)
+val output = model.forward(input)
+```
+Input is:
+```scala
+input: com.intel.analytics.bigdl.utils.Table =
+ {
+	2: (1,.,.) =
+	   0.87815475	0.15025006	0.34412447
+	   0.07909282	0.008027249	0.111715704
+
+	   (2,.,.) =
+	   0.52245367	0.2547527	0.35857987
+	   0.7718501	0.26783863	0.8642062
+
+	   [com.intel.analytics.bigdl.tensor.DenseTensor of size 2x2x3]
+	1: (1,.,.) =
+	   0.5377018	0.28364193	0.3424284
+	   0.0075349305	0.9018168	0.9435114
+
+	   (2,.,.) =
+	   0.09112563	0.88585275	0.3100201
+	   0.7910178	0.57497376	0.39764535
+
+	   [com.intel.analytics.bigdl.tensor.DenseTensor of size 2x2x3]
+ }
+```
+Output is:
+```scala
+output: com.intel.analytics.bigdl.nn.abstractnn.Activity =
+(1,.,.) =
+1.4158566	0.433892	0.6865529
+0.08662775	0.90984404	1.0552272
+
+(2,.,.) =
+0.6135793	1.1406054	0.66859996
+1.5628679	0.8428124	1.2618515
+
+[com.intel.analytics.bigdl.tensor.DenseTensor of size 2x2x3]
+```
+
+**Python example:**
+```python
+import numpy as np
+from zoo.pipeline.api.keras.layers import Merge, InputLayer
+from zoo.pipeline.api.keras.models import Sequential
+
+model = Sequential()
+l1 = InputLayer(input_shape=(3, 4))
+l2 = InputLayer(input_shape=(3, 4))
+model.add(Merge(layers=[l1, l2], mode='sum'))
+input = [np.random.random([2, 3, 4]), np.random.random([2, 3, 4])]
+output = model.forward(input)
+```
+Input is:
+```python
+[array([[[0.28764351, 0.0236015 , 0.78927442, 0.52646492],
+        [0.63922826, 0.45101604, 0.4555552 , 0.70105653],
+        [0.75790798, 0.78551523, 0.00686686, 0.61290369]],
+
+       [[0.00430865, 0.3303661 , 0.59915782, 0.90362298],
+        [0.26230717, 0.99383052, 0.50630521, 0.99119486],
+        [0.56138318, 0.68165639, 0.10644523, 0.51860127]]]),
+
+ array([[[0.84365767, 0.8854741 , 0.84183673, 0.96322321],
+        [0.49354248, 0.97936826, 0.2266097 , 0.88083622],
+        [0.11011776, 0.65762034, 0.17446099, 0.76658969]],
+
+       [[0.58266689, 0.86322199, 0.87122999, 0.19031255],
+        [0.42275118, 0.76379413, 0.21355413, 0.81132937],
+        [0.97294728, 0.68601731, 0.39871792, 0.63172344]]])]
+```
+Output is
+```python
+[[[1.1313012  0.90907556 1.6311111  1.4896882 ]
+  [1.1327708  1.4303843  0.6821649  1.5818927 ]
+  [0.8680257  1.4431355  0.18132785 1.3794935 ]]
+
+ [[0.5869755  1.1935881  1.4703878  1.0939355 ]
+  [0.68505836 1.7576246  0.71985936 1.8025242 ]
+  [1.5343305  1.3676738  0.50516313 1.1503248 ]]]
+```
+
+---
 ## **MaxoutDense**
 A dense maxout layer that takes the element-wise maximum of linear layers.
 
