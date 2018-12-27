@@ -16,9 +16,10 @@
 
 package com.intel.analytics.zoo.pipeline.api.keras.layers.internal
 
+import com.intel.analytics.bigdl.nn.JoinTable
 import com.intel.analytics.bigdl.tensor.Tensor
 import com.intel.analytics.bigdl.utils.{T, Table}
-import com.intel.analytics.zoo.pipeline.api.keras.layers.{InternalJoinTable, InternalSplitTensor}
+import com.intel.analytics.zoo.pipeline.api.keras.layers.{InternalSplitTensor}
 import org.scalatest.{FlatSpec, Matchers}
 
 class InternalSplitTensorpec extends FlatSpec with Matchers {
@@ -29,7 +30,7 @@ class InternalSplitTensorpec extends FlatSpec with Matchers {
       1.3f, 2.3f, 3.3f, 4.3f, 5.3f, 6.3f), Array(2, 6))
     val input = T(l1, l2)
 
-    val layer = new InternalJoinTable[Float](2, 2)
+    val layer = new JoinTable[Float](2, 2)
     val output = layer.forward(input).toTensor[Float]
 
     val layer2 = new InternalSplitTensor[Float](2, 2)

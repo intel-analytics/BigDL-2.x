@@ -21,7 +21,7 @@ import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric
 
 import scala.reflect.ClassTag
 
-class InternalEcho[T: ClassTag]()(implicit ev: TensorNumeric[T])
+class Echo[T: ClassTag]()(implicit ev: TensorNumeric[T])
   extends AbstractModule[Activity, Activity, T]  {
 
   override def updateOutput(input: Activity): Activity = {

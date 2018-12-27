@@ -40,12 +40,12 @@ import scala.reflect.ClassTag
  * @param bridge connect encoder and decoder
  */
 class Seq2seq[T: ClassTag] (
-                            val encoder: Encoder[T],
-                            val decoder: Decoder[T],
-                            inputShape: Shape,
-                            outputShape: Shape,
-                            bridge: KerasLayer[Activity, Activity, T],
-                            generator: KerasLayer[Activity, Activity, T])
+  val encoder: Encoder[T],
+  val decoder: Decoder[T],
+  inputShape: Shape,
+  outputShape: Shape,
+  bridge: KerasLayer[Activity, Activity, T],
+  generator: KerasLayer[Activity, Activity, T])
   (implicit ev: TensorNumeric[T]) extends ZooModel[Table, Tensor[T], T] {
 
   override def buildModel(): AbstractModule[Table, Tensor[T], T] = {
@@ -87,10 +87,11 @@ model.asInstanceOf[KerasNet[T]].compile(optimizer, loss, metrics)
       model.asInstanceOf[KerasNet[T]].fit(x, batchSize, nbEpoch, validationData)
   }
 
-  def inference(input: Table, maxSeqLen: Int = 30, stopSign: Tensor[T] = null,
-                buildOutput: KerasLayer[Tensor[T], Tensor[T], T] = null): Tensor[T] = {
-    val sent1 = input.toTable[Tensor[T]](1)
-    val sent2 = input.toTable[Tensor[T]](2)
+  def infer(input: Tensor[T], startSign: Tensor[T], maxSeqLen: Int = 30,
+            stopSign: Tensor[T] = null,
+            buildOutput: KerasLayer[Tensor[T], Tensor[T], T] = null): Tensor[T] = {
+    val sent1 = input
+    val sent2 = startSign
     require(sent2.size(Seq2seq.timeDim) == 1, "expect decoder input is batch x time(1) x feature")
 
     var curInput = sent2
@@ -130,8 +131,8 @@ object Seq2seq {
    * @param bridge connect encoder and decoder
    */
   def apply[@specialized(Float, Double) T: ClassTag](
-    encoder: RNNEncoder[T],
-    decoder: RNNDecoder[T],
+    encoder: Encoder[T],
+    decoder: Decoder[T],
     encoderInputShape: Shape,
     decoderInputShape: Shape,
     bridge: KerasLayer[Activity, Activity, T] = null,

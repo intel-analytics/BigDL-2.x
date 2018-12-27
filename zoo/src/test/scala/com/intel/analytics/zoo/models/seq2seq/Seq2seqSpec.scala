@@ -20,8 +20,9 @@ import com.intel.analytics.bigdl.nn.abstractnn.{AbstractModule, Activity}
 import com.intel.analytics.bigdl.nn.keras.KerasLayer
 import com.intel.analytics.bigdl.tensor.Tensor
 import com.intel.analytics.bigdl.utils.{Shape, SingleShape, T}
-import com.intel.analytics.zoo.pipeline.api.keras.layers.internal.InternalEcho
-import com.intel.analytics.zoo.pipeline.api.keras.layers.{Embedding, KerasLayerWrapper, SimpleRNN}
+import com.intel.analytics.zoo.pipeline.api.keras.layers.internal.Echo
+import com.intel.analytics.zoo.pipeline.api.keras.layers.{Embedding, KerasLayerWrapper, SimpleRNN,
+LSTM, Recurrent}
 import com.intel.analytics.zoo.pipeline.api.keras.models.Sequential
 import org.scalatest.{BeforeAndAfter, FlatSpec, Matchers}
 
@@ -53,6 +54,34 @@ class Seq2seqSpec extends FlatSpec with Matchers with BeforeAndAfter {
       )
     model2.forward(T(input, input2))
     model2.backward(T(input, input2), gradOutput)
+  }
+
+  "Seq2seq model with customized rnn" should "be able to work" in {
+    val inputSize = 3
+    val hiddenSize = 6
+    val batchSize = 2
+    val seqLen = 2
+
+    val encoderRNN = Array(LSTM[Float](4, returnSequences = true),
+      LSTM[Float](5, returnSequences = true),
+      LSTM[Float](hiddenSize, returnSequences = true))
+      .asInstanceOf[Array[Recurrent[Float]]]
+    val decoderRNN = Array(LSTM[Float](4, returnSequences = true),
+      LSTM[Float](5, returnSequences = true),
+      LSTM[Float](hiddenSize, returnSequences = true))
+      .asInstanceOf[Array[Recurrent[Float]]]
+
+    val encoder = RNNEncoder[Float](encoderRNN, Embedding[Float](10, inputSize), null)
+    val decoder = RNNDecoder[Float](decoderRNN, Embedding[Float](10, inputSize), null)
+
+    val input = Tensor.ones[Float](batchSize, seqLen)
+    val input2 = Tensor[Float](batchSize, seqLen)
+
+    val gradOutput = Tensor[Float](batchSize, seqLen, hiddenSize).rand()
+    val model = Seq2seq[Float](encoder, decoder,
+      SingleShape(List(seqLen)), SingleShape(List(seqLen)))
+    model.forward(T(input, input2))
+    model.backward(T(input, input2), gradOutput)
   }
 
   "Seq2seq model with lstm" should "be able to work with different" +
@@ -253,7 +282,7 @@ class Seq2seqSpec extends FlatSpec with Matchers with BeforeAndAfter {
       SingleShape(List(seqLen, inputSize)), SingleShape(List(seqLen, inputSize)),
       bridge = new Bridge[Float](
         new KerasLayerWrapper[Float](
-          new InternalEcho[Float]().asInstanceOf[AbstractModule[Activity, Activity, Float]],
+          new Echo[Float]().asInstanceOf[AbstractModule[Activity, Activity, Float]],
         Shape(Array(hiddenSize)))
           .asInstanceOf[KerasLayer[Tensor[Float], Tensor[Float], Float]]))
     val w_2 = model2.parameters()._1
