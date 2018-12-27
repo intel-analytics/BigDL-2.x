@@ -19,6 +19,7 @@ package com.intel.analytics.zoo.examples.chatbot
 import com.intel.analytics.bigdl.dataset._
 import com.intel.analytics.bigdl.dataset.text.utils.SentenceToken
 import com.intel.analytics.bigdl.dataset.text._
+import com.intel.analytics.bigdl.nn.keras.KerasLayer
 import com.intel.analytics.bigdl.nn.{InternalClassNLLCriterion, RandomUniform, TimeDistributedMaskCriterion}
 import com.intel.analytics.bigdl.numeric.NumericFloat
 import com.intel.analytics.bigdl.optim.{Adam, OptimMethod}
@@ -28,8 +29,9 @@ import com.intel.analytics.bigdl.utils.RandomGenerator._
 import com.intel.analytics.bigdl.utils.{Shape, T}
 import com.intel.analytics.zoo.common.{NNContext, ZooDictionary}
 import com.intel.analytics.zoo.models.seq2seq._
+import com.intel.analytics.zoo.pipeline.api.keras.layers.internal.InternalMax
 import com.intel.analytics.zoo.pipeline.api.keras.layers.utils.KerasUtils
-import com.intel.analytics.zoo.pipeline.api.keras.layers.{Activation, Dense, Embedding, TimeDistributed}
+import com.intel.analytics.zoo.pipeline.api.keras.layers.{Activation, Dense, Embedding, Max, TimeDistributed}
 import com.intel.analytics.zoo.pipeline.api.keras.models.Sequential
 import org.apache.log4j.{Level, Logger}
 
@@ -123,7 +125,7 @@ object Train {
       val generator = Sequential[Float]()
       // need fix in checkWithCurrentInputShape KerasLayer.scala to take account -1
       generator.add(TimeDistributed[Float](Dense(vocabSize),
-        Shape(Array(2, param.embedDim))))
+        Shape(Array(1, param.embedDim))))
       generator.add(TimeDistributed[Float](Activation("log_softmax")))
 
       val model = Seq2seq(encoder, decoder, Shape(Array(-1)),
@@ -144,6 +146,7 @@ object Train {
 
       val seeds = Array("happy birthday have a nice day",
         "donald trump won last nights presidential debate according to snap online polls")
+//      val seeds = Array("happy I am light rain")
 
       var i = 1
       while (i <= param.nEpochs) {
@@ -151,22 +154,35 @@ object Train {
           trainSet, batchSize = param.batchSize,
           nbEpoch = i)
 
-//        for (seed <- seeds) {
-//          println("Query> " + seed)
-//          val evenToken = SentenceTokenizer().apply(Array(seed).toIterator).toArray
-//          val oddToken = (SentenceBiPadding() -> SentenceTokenizer())
-//            .apply(Array("").toIterator).toArray
-//          val labeledChat = evenToken.zip(oddToken)
-//            .map(chatToLabeledChat(dictionary, _)).apply(0)
-//
-//          val sent1 = Tensor(Storage(labeledChat._1), 1, Array(1, labeledChat._1.length))
-//          val sent2 = Tensor(Storage(labeledChat._2), 1, Array(1, labeledChat._2.length))
-//          val sent3 = Tensor(Storage(labeledChat._2), 1, Array(1, labeledChat._2.length))
-//          val timeDim = 2
-//          val featDim = 3
-//          val end = dictionary.getIndex(SentenceToken.end) + 1
-//          val endSign = Tensor(Array(end.toFloat), Array(1))
-//        }
+        for (seed <- seeds) {
+          println("Query> " + seed)
+          val evenToken = SentenceTokenizer().apply(Array(seed).toIterator).toArray
+          val oddToken = (SentenceBiPadding() -> SentenceTokenizer())
+            .apply(Array("").toIterator).toArray
+          val labeledChat = evenToken.zip(oddToken)
+            .map(chatToLabeledChat(dictionary, _)).apply(0)
+
+          val sent1 = Tensor(Storage(labeledChat._1), 1, Array(1, labeledChat._1.length))
+          val sent2 = Tensor(Storage(labeledChat._2), 1, Array(1, labeledChat._2.length))
+          val sent3 = Tensor(Storage(labeledChat._2), 1, Array(1, labeledChat._2.length))
+          val timeDim = 2
+          val featDim = 3
+          val end = dictionary.getIndex(SentenceToken.end) + 1
+          val endSign = Tensor(Array(end.toFloat), Array(1))
+
+          // Max dim is 0 based
+          val layers = Max(dim = featDim - 1, returnValue = false)
+            .asInstanceOf[KerasLayer[Tensor[Float], Tensor[Float], Float]]
+          val output2 = model.infer(sent1, sent3, maxSeqLen = 30,
+            stopSign = endSign, buildOutput = layers).toTensor[Float]
+
+          val predArray = new Array[Float](output2.nElement())
+          Array.copy(output2.storage().array(), output2.storageOffset() - 1,
+            predArray, 0, output2.nElement())
+          val result = predArray.grouped(output2.size(timeDim)).toArray[Array[Float]]
+            .map(x => x.map(t => dictionary.getWord(t - 1)))
+          println(result.map(x => x.mkString(" ")).mkString("\n"))
+        }
         model.clearState()
         i += 1
       }
