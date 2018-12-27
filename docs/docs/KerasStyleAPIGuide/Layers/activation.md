@@ -77,9 +77,11 @@ model.add(Dense(32, activation="relu"))
 ## **HardTanh**
 Applies the hard tanh function element-wise to the input.
 
-       ⎧  maxValue, if x > maxValue
-f(x) = ⎨  minValue, if x < minValue
-       ⎩  x, otherwise
+f(x) = maxValue, if x > maxValue
+
+f(x) = minValue, if x < minValue
+
+f(x) = x, otherwise
 
 When you use this layer as the first layer of a model, you need to provide the argument input_shape (a shape tuple, does not include the batch dimension).
 
@@ -87,18 +89,18 @@ Remark: This layer is from Torch and wrapped in Keras style.
 
 **Scala:**
 ```scala
-HardTanh(minValue=-1, maxValue=1, inputShape=(3, 4))
+HardTanh(minValue=-1, maxValue=1, inputShape = null)
 ```
 **Python:**
 ```python
-HardTanh(min_value=-1, max_value=1, input_shape=(3, 4))
+HardTanh(min_value=-1, max_value=1, input_shape=None, name=None)
 ```
 
 **Parameters:**
 
-* 'minValue': The minimum threshold value. Default is -1.
-* 'maxValue': The maximum threshold value. Default is 1.
-* 'inputShape': A Single Shape, does not include the batch dimension.
+* `minValue`: The minimum threshold value. Default is -1.
+* `maxValue`: The maximum threshold value. Default is 1.
+* `inputShape`: A Single Shape, does not include the batch dimension.
 
 **Scala example:**
 ```scala

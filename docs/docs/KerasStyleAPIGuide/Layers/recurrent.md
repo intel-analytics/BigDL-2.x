@@ -67,7 +67,7 @@ from zoo.pipeline.api.keras.layers import SimpleRNN
 from zoo.pipeline.api.keras.models import Sequential
 
 model = Sequential()
-model.add(SimpleRNN(8, activation = "relu", input_shape = (4, 5)))
+model.add(SimpleRNN(8, activation="relu", input_shape=(4, 5)))
 input = np.random.random([2, 4, 5])
 output = model.forward(input)
 ```
@@ -156,7 +156,7 @@ from zoo.pipeline.api.keras.layers import GRU
 from zoo.pipeline.api.keras.models import Sequential
 
 model = Sequential()
-model.add(GRU(8, input_shape = (2, 3)))
+model.add(GRU(8, input_shape=(2, 3)))
 input = np.random.random([2, 2, 3])
 output = model.forward(input)
 ```
@@ -207,7 +207,7 @@ import com.intel.analytics.bigdl.utils.Shape
 import com.intel.analytics.bigdl.tensor.Tensor
 
 val model = Sequential[Float]()
-model.add(Highway(inputShape = Shape(3)))
+model.add(Highway[Float](inputShape = Shape(3)))
 val input = Tensor[Float](2, 3).randn()
 val output = model.forward(input)
 ```
@@ -233,7 +233,7 @@ from zoo.pipeline.api.keras.layers import Highway
 from zoo.pipeline.api.keras.models import Sequential
 
 model = Sequential()
-model.add(Highway(input_shape = (3)))
+model.add(Highway(input_shape=(3)))
 input = np.random.random([2, 3])
 output = model.forward(input)
 ```

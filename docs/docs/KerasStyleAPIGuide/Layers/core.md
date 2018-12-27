@@ -403,3 +403,82 @@ Output is
 [[0.4479192  0.4842512]
  [0.16833156 0.521764 ]]
 ```
+
+---
+## **Squeeze**
+Delete the singleton dimension(s). The batch dimension needs to be unchanged.
+
+For example, if input has size (2, 1, 3, 4, 1):
+
+Squeeze(1) will give output size (2, 3, 4, 1),
+
+Squeeze() will give output size (2, 3, 4)
+
+When you use this layer as the first layer of a model, you need to provide the argument input_shape (a shape tuple, does not include the batch dimension).
+
+**Scala:**
+```scala
+Squeeze(dims = null, inputShape = null)
+```
+**Python:**
+```python
+Squeeze(dim=None, input_shape=None, name=None)
+```
+
+**Parameters:**
+
+* `dims`: The dimension(s) to squeeze. 0-based index. Cannot squeeze the batch dimension. The selected dimensions must be singleton, i.e. having size 1. Default is null, and in this case all the non-batch singleton dimensions will be deleted.
+* `inputShape`: A Single Shape, does not include the batch dimension.
+
+**Scala example:**
+```scala
+import com.intel.analytics.zoo.pipeline.api.keras.layers.Squeeze
+import com.intel.analytics.zoo.pipeline.api.keras.models.Sequential
+import com.intel.analytics.bigdl.utils.Shape
+import com.intel.analytics.bigdl.tensor.Tensor
+
+val model = Sequential[Float]()
+model.add(Squeeze((1, 2), inputShape = Shape(1, 1, 1, 32)))
+val input = Tensor[Float](1, 1, 1, 32).randn()
+val output = model.forward(input)
+```
+Input is:
+```scala
+
+```
+Output is:
+```scala
+
+```
+
+**Python example:**
+```python
+import numpy as np
+from zoo.pipeline.api.keras.layers import Squeeze
+from zoo.pipeline.api.keras.models import Sequential
+
+model = Sequential()
+model.add(Squeeze((1, 2), input_shape=(1, 1, 1, 32)))
+input = np.random.random([1, 1, 1, 32])
+output = model.forward(input)
+```
+Input is:
+```python
+[[[[0.39465508, 0.60214806, 0.86593378, 0.85885375, 0.81509648,
+    0.14986173, 0.87313215, 0.84462834, 0.48711318, 0.48222313,
+    0.94778868, 0.73163438, 0.97177859, 0.45955752, 0.09131199,
+    0.90252283, 0.5911682 , 0.35952383, 0.97127314, 0.68692602,
+    0.68456455, 0.80941725, 0.90342994, 0.38239881, 0.06434352,
+    0.82133822, 0.61929595, 0.6128086 , 0.48682353, 0.89043116,
+    0.82961381, 0.66498806]]]]
+```
+Output is
+```python
+[[0.39465508, 0.60214806, 0.8659338 , 0.85885376, 0.8150965 ,
+  0.14986172, 0.87313217, 0.84462833, 0.48711318, 0.48222312,
+  0.94778866, 0.7316344 , 0.9717786 , 0.4595575 , 0.09131199,
+  0.9025228 , 0.5911682 , 0.35952383, 0.9712731 , 0.686926  ,
+  0.68456453, 0.80941725, 0.9034299 , 0.3823988 , 0.06434353,
+  0.82133824, 0.61929595, 0.6128086 , 0.48682353, 0.89043117,
+  0.8296138 , 0.66498804]]
+```
