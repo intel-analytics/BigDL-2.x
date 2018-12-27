@@ -159,7 +159,7 @@ WithinChannelLRN2D(size=5, alpha=1.0, beta=0.75, input_shape=None, name=None)
 * `size`: The side length of the square region to sum over. Default is 5.
 * `alpha`: The scaling parameter. Default is 1.0.
 * `beta`: The exponent. Default is 0.75.
-* `input_shape`: A shape tuple, not including batch.
+* `inputShape`: A shape tuple, not including batch.
 
 **Scala example:**
 ```scala

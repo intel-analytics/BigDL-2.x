@@ -510,8 +510,8 @@ BinaryThreshold(value=1e-6, input_shape=None, name=None)
 
 **Parameters:**
 
-* `value': The threshold value to compare with. Default is 1e-6.
-* 'input_shape': A shape tuple, not including batch.
+* `value`: The threshold value to compare with. Default is 1e-6.
+* `inputShape`: A shape tuple, not including batch.
 
 **Scala example:**
 ```scala
@@ -579,7 +579,7 @@ Sqrt(input_shape=None, name=None)
 
 **Parameters:**
 
-* 'input_shape': A shape tuple, not including batch.
+* `inputShape`: A shape tuple, not including batch.
 
 **Scala example:**
 ```scala
@@ -647,8 +647,8 @@ MulConstant(constant, input_shape=None, name=None)
 
 **Parameters:**
 
-* 'constant': The scalar constant to be multiplied.
-* 'input_shape': A shape tuple, not including batch.
+* `constant`: The scalar constant to be multiplied.
+* `inputShape`: A shape tuple, not including batch.
 
 **Scala example:**
 ```scala
@@ -746,8 +746,8 @@ Scale(size, input_shape=None, name=None)
 
 **Parameters:**
 
-* 'size': Size of the weight and bias.
-* 'input_shape': A shape tuple, not including batch.
+* `size`: Size of the weight and bias.
+* `inputShape`: A shape tuple, not including batch.
 
 **Scala example:**
 ```scala
@@ -797,4 +797,427 @@ Output is
 ```python
 [[1.0946966 , 1.1255064 , 1.0892813 ],
  [0.58151895, 0.5909191 , 0.37307182]]
+```
+
+---
+## **Log**
+Applies a log transformation to the input.
+
+When you use this layer as the first layer of a model, you need to provide the argument inputShape (a Single Shape, does not include the batch dimension).
+
+Remark: This layer is from Torch and wrapped in Keras style.
+
+**Scala:**
+```scala
+Log(inputShape = Null)
+```
+**Python:**
+```python
+Log(input_shape=None, name=None)
+```
+
+**Parameters:**
+
+* `inputShape`: A shape tuple, not including batch.
+
+**Scala example:**
+```scala
+import com.intel.analytics.zoo.pipeline.api.keras.layers.Log
+import com.intel.analytics.zoo.pipeline.api.keras.models.Sequential
+import com.intel.analytics.bigdl.utils.Shape
+import com.intel.analytics.bigdl.tensor.Tensor
+
+val model = Sequential[Float]()
+model.add(Log[Float](inputShape = Shape(4, 8, 8)))
+val input = Tensor[Float](3, 4, 4).randn()
+val output = model.forward(input)
+```
+Input is:
+```scala
+input: com.intel.analytics.bigdl.tensor.Tensor[Float] =
+(1,.,.) =
+0.5655537       0.6915928       -0.20194334     -1.1913823
+-1.1834141      -1.4117801      -0.1624319      -0.0063015744
+-0.1786272      -0.32872117     0.5877997       0.3035998
+0.83820426      -1.0102047      0.31135854      0.40690842
+
+(2,.,.) =
+-0.45988232     1.12236 1.3334968       0.03218876
+0.5010149       -0.10458872     -0.09090098     0.14120832
+0.56385756      -0.5863192      -1.3108164      0.54830015
+-0.27144676     1.7496641       1.498932        -0.4208943
+
+(3,.,.) =
+0.5307625       1.2332847       -1.2689664      1.2247863
+-2.153327       -0.044480614    0.01654169      -0.00867649
+-0.45684302     0.08870535      1.4512469       1.0856627
+-1.2377089      -0.23637708     0.47038174      1.0300478
+
+[com.intel.analytics.bigdl.tensor.DenseTensor of size 3x4x4]
+```
+Output is:
+```scala
+output: com.intel.analytics.bigdl.nn.abstractnn.Activity =
+(1,.,.) =
+-0.56995        -0.36875793     NaN     NaN
+NaN     NaN     NaN     NaN
+NaN     NaN     -0.531369       -1.1920449
+-0.17649345     NaN     -1.1668102      -0.8991671
+
+(2,.,.) =
+NaN     0.1154336       0.28780466      -3.436138
+-0.69111943     NaN     NaN     -1.957519
+-0.57295364     NaN     NaN     -0.6009324
+NaN     0.5594238       0.40475285      NaN
+
+(3,.,.) =
+-0.6334406      0.20968111      NaN     0.20276636
+NaN     NaN     -4.1018715      NaN
+NaN     -2.422435       0.37242308      0.0821906
+NaN     NaN     -0.7542107      0.029605184
+
+[com.intel.analytics.bigdl.tensor.DenseTensor of size 3x4x4]
+```
+
+**Python example:**
+```python
+import numpy as np
+from zoo.pipeline.api.keras.layers import Log
+from zoo.pipeline.api.keras.models import Sequential
+
+model = Sequential()
+model.add(Log(input_shape=(4, 8, 8)))
+input = np.random.random([3, 4, 4])
+output = model.forward(input)
+```
+Input is:
+```python
+[[[0.7335084 , 0.95096877, 0.37329445, 0.24883812],
+  [0.78232183, 0.59336697, 0.15057137, 0.13578071],
+  [0.21765247, 0.8728407 , 0.22514919, 0.13506015],
+  [0.95819393, 0.5018188 , 0.3401714 , 0.2348153 ]],
+
+ [[0.97346709, 0.06824436, 0.55497084, 0.22101866],
+  [0.32120739, 0.96392664, 0.01208597, 0.85363988],
+  [0.57188971, 0.68616151, 0.56406812, 0.08637165],
+  [0.32776286, 0.89831643, 0.99331583, 0.04152951]],
+
+ [[0.08701036, 0.57557746, 0.89328072, 0.55421705],
+  [0.95205566, 0.72101091, 0.81913302, 0.73175617],
+  [0.1912687 , 0.68418461, 0.40881983, 0.69839596],
+  [0.1133067 , 0.31547996, 0.75067178, 0.3865963 ]]]
+```
+Output is
+```python
+[[[-0.30991623, -0.05027409, -0.9853878 , -1.3909527 ],
+  [-0.2454891 , -0.5219422 , -1.8933182 , -1.9967141 ],
+  [-1.5248556 , -0.13600221, -1.4909921 , -2.0020351 ],
+  [-0.04270506, -0.68951625, -1.0783057 , -1.448956  ]],
+
+ [[-0.02689124, -2.6846604 , -0.58883965, -1.5095081 ],
+  [-1.1356683 , -0.03674011, -4.41571   , -0.15824583],
+  [-0.55880916, -0.37664223, -0.5725802 , -2.4490957 ],
+  [-1.1154649 , -0.10723288, -0.00670662, -3.181351  ]],
+
+ [[-2.441728  , -0.5523815 , -0.11285436, -0.5901989 ],
+  [-0.04913181, -0.327101  , -0.19950876, -0.31230795],
+  [-1.6540761 , -0.3795275 , -0.89448076, -0.35896906],
+  [-2.177657  , -1.15366   , -0.28678674, -0.9503743 ]]]
+```
+
+---
+## **Identity**
+Identity just return the input to output.
+
+It's useful in same parallel container to get an origin input.
+
+**Scala:**
+```scala
+Identity(inputShape = Null)
+```
+**Python:**
+```python
+Identity(input_shape=None, name=None)
+```
+
+**Parameters:**
+
+* `inputShape`: A shape tuple, not including batch.
+
+**Scala example:**
+```scala
+import com.intel.analytics.zoo.pipeline.api.keras.layers.Identity
+import com.intel.analytics.zoo.pipeline.api.keras.models.Sequential
+import com.intel.analytics.bigdl.utils.Shape
+import com.intel.analytics.bigdl.tensor.Tensor
+
+val model = Sequential[Float]()
+model.add(Identity[Float](inputShape = Shape(3)))
+val input = Tensor[Float](3, 4, 4).randn()
+val output = model.forward(input)
+```
+Input is:
+```scala
+input: com.intel.analytics.bigdl.tensor.Tensor[Float] =
+(1,.,.) =
+1.9601166       -0.86010313     0.0023731247    -0.81219757
+1.1469674       -1.5375912      -1.5348053      -0.34829113
+-1.236773       -0.7183283      -0.89256984     0.8605067
+0.7937664       0.52992857      -1.6157389      0.36134166
+
+(2,.,.) =
+-0.44434744     -0.23848957     -0.01632014     -0.58109635
+-0.19856784     -2.3421717      -0.5868049      -0.76775354
+0.80254126      1.78778 -1.1835604      1.4489703
+0.8731402       0.8906672       0.2800079       -0.6715317
+
+(3,.,.) =
+1.4093032       2.358169        -1.4620789      1.1904576
+-0.18263042     -0.31869793     2.01061 1.2159953
+-0.5801479      1.2949371       -0.7510707      -1.0707517
+0.30815956      -1.161963       -0.26964024     -0.4759499
+
+[com.intel.analytics.bigdl.tensor.DenseTensor of size 3x4x4]
+```
+Output is:
+```scala
+output: com.intel.analytics.bigdl.nn.abstractnn.Activity =
+(1,.,.) =
+1.9601166       -0.86010313     0.0023731247    -0.81219757
+1.1469674       -1.5375912      -1.5348053      -0.34829113
+-1.236773       -0.7183283      -0.89256984     0.8605067
+0.7937664       0.52992857      -1.6157389      0.36134166
+
+(2,.,.) =
+-0.44434744     -0.23848957     -0.01632014     -0.58109635
+-0.19856784     -2.3421717      -0.5868049      -0.76775354
+0.80254126      1.78778 -1.1835604      1.4489703
+0.8731402       0.8906672       0.2800079       -0.6715317
+
+(3,.,.) =
+1.4093032       2.358169        -1.4620789      1.1904576
+-0.18263042     -0.31869793     2.01061 1.2159953
+-0.5801479      1.2949371       -0.7510707      -1.0707517
+0.30815956      -1.161963       -0.26964024     -0.4759499
+
+[com.intel.analytics.bigdl.tensor.DenseTensor of size 3x4x4]
+```
+
+**Python example:**
+```python
+import numpy as np
+from zoo.pipeline.api.keras.layers import Identity
+from zoo.pipeline.api.keras.models import Sequential
+
+model = Sequential()
+model.add(Identity(input_shape=(3, )))
+input = np.random.random([3, 4, 4])
+output = model.forward(input)
+```
+Input is:
+```python
+[[[0.36751123, 0.92287101, 0.73894405, 0.33699379],
+  [0.69405782, 0.9653215 , 0.2617223 , 0.68205229],
+  [0.71455325, 0.99419333, 0.90886495, 0.10232991],
+  [0.1644055 , 0.30013138, 0.98921154, 0.26803146]],
+
+  [[0.35898357, 0.72067882, 0.13236563, 0.71935521],
+   [0.30865626, 0.71098844, 0.86718946, 0.12531168],
+   [0.84916882, 0.84221518, 0.52186664, 0.87239729],
+   [0.50637899, 0.10890469, 0.86832705, 0.93581179]],
+
+  [[0.19640105, 0.09341008, 0.12043328, 0.09261859],
+   [0.66019486, 0.07251262, 0.80929761, 0.39094486],
+   [0.63027391, 0.39537796, 0.55578905, 0.53933265],
+   [0.13885559, 0.56695373, 0.17036027, 0.4577097 ]]]
+```
+Output is
+```python
+[[[0.36751124, 0.922871  , 0.73894405, 0.33699378],
+  [0.6940578 , 0.9653215 , 0.2617223 , 0.6820523 ],
+  [0.71455324, 0.9941933 , 0.908865  , 0.10232991],
+  [0.1644055 , 0.30013138, 0.98921156, 0.26803148]],
+
+ [[0.35898358, 0.7206788 , 0.13236563, 0.7193552 ],
+  [0.30865628, 0.71098846, 0.86718947, 0.12531169],
+  [0.84916884, 0.8422152 , 0.5218666 , 0.8723973 ],
+  [0.506379  , 0.10890469, 0.868327  , 0.9358118 ]],
+
+ [[0.19640104, 0.09341008, 0.12043328, 0.09261858],
+  [0.6601949 , 0.07251262, 0.8092976 , 0.39094487],
+  [0.63027394, 0.39537796, 0.55578905, 0.5393326 ],
+  [0.13885559, 0.5669537 , 0.17036027, 0.4577097 ]]]
+```
+
+---
+## **LRN2D**
+Local Response Normalization between different feature maps.
+
+When you use this layer as the first layer of a model, you need to provide the argument input_shape (a shape tuple, does not include the batch dimension).
+
+**Scala:**
+```scala
+LRN2D(alpha = 1e-4, k = 1.0, beta = 0.75, n = 5, dimOrdering = "th", inputShape = Null)
+```
+**Python:**
+```python
+LRN2D(alpha=1e-4, k=1.0, beta=0.75, n=5, dim_ordering="th", input_shape=None, name=None)
+```
+
+**Parameters:**
+
+* `alpha`: Double. The scaling parameter. Default is 0.0001.
+* `k`: Double. A constant.
+* `beta`: Double. The exponent. Default is 0.75.
+* `n`: The number of channels to sum over.
+* `dimOrdering`: Format of input data. Either DataFormat.NCHW (dimOrdering='th') or DataFormat.NHWC (dimOrdering='tf'). Default is NCHW.
+* `inputShape`: A Single Shape, does not include the batch dimension.
+
+**Scala example:**
+```scala
+import com.intel.analytics.zoo.pipeline.api.keras.layers.LRN2D
+import com.intel.analytics.zoo.pipeline.api.keras.models.Sequential
+import com.intel.analytics.bigdl.utils.Shape
+import com.intel.analytics.bigdl.tensor.Tensor
+
+val model = Sequential[Float]()
+model.add(LRN2D[Float](1e-3, 1.2, 0.4, 3, dimOrdering = "tf", inputShape= Shape(4, 5, 6)))
+val input = Tensor[Float](2, 3, 3, 3).randn()
+val output = model.forward(input)
+```
+Input is:
+```scala
+input: com.intel.analytics.bigdl.tensor.Tensor[Float] =
+(1,1,.,.) =
+-0.6331058      -1.1622255      -0.20002009
+0.031907756     1.4720777       0.36692062
+0.16142464      -0.87992615     1.9201758
+
+(1,2,.,.) =
+-1.0693451      -1.0901353      0.6909652
+0.13340907      1.0220904       -1.0232266
+-1.4288133      0.8749622       -0.07012164
+
+(1,3,.,.) =
+-0.04984741     -1.4627954      1.2438095
+1.5584376       -0.36223406     -0.862751
+-0.68516856     -0.0066024275   -0.55539906
+
+(2,1,.,.) =
+1.8261654       -0.39168724     0.4531422
+-0.09046966     0.61876625      0.4553172
+0.58150214      -2.6587567      0.46114618
+
+(2,2,.,.) =
+0.75011647      -2.220607       -1.4024881
+-0.5560173      0.19422908      -2.5069134
+-0.7417007      1.3029631       -0.660577
+
+(2,3,.,.) =
+-0.17827246     1.8794266       1.2124214
+0.5774041       0.25620413      0.6461205
+0.33391082      -0.532468       1.3129597
+
+[com.intel.analytics.bigdl.tensor.DenseTensor of size 2x3x3x3]
+```
+Output is:
+```scala
+output: com.intel.analytics.bigdl.nn.abstractnn.Activity =
+(1,1,.,.) =
+-0.5884632      -1.0802679      -0.1859234
+0.02965645      1.3681923       0.34102687
+0.15005784      -0.81763095     1.7842402
+
+(1,2,.,.) =
+-0.9938776      -1.0131469      0.6422488
+0.12401139      0.94998133      -0.95103925
+-1.3279068      0.81316966      -0.065184206
+
+(1,3,.,.) =
+-0.046330474    -1.3593558      1.1558554
+1.4484164       -0.33663353     -0.8019933
+-0.63694555     -0.0061375294   -0.5163186
+
+(2,1,.,.) =
+1.6970686       -0.36398944     0.42125463
+-0.08410302     0.5752084       0.4232657
+0.54015917      -2.469669       0.4283661
+
+(2,2,.,.) =
+0.6969334       -2.0627165      -1.3028492
+-0.5168911      0.18043552      -2.32896
+-0.68936265     1.210961        -0.6139712
+
+(2,3,.,.) =
+-0.16566847     1.7462649       1.1265225
+0.53676987      0.23816296      0.60064477
+0.31041232      -0.49490157     1.2203434
+
+[com.intel.analytics.bigdl.tensor.DenseTensor of size 2x3x3x3]
+```
+
+**Python example:**
+```python
+import numpy as np
+from zoo.pipeline.api.keras.layers import LRN2D
+from zoo.pipeline.api.keras.models import Sequential
+
+model = Sequential()
+model.add(LRN2D(1e-3, 1.2, 0.4, 3, dim_ordering="tf", input_shape=(4, 5, 6)))
+input = np.random.random([2, 3, 3, 3])
+output = model.forward(input)
+```
+Input is:
+```python
+[[[[0.56356835, 0.57442602, 0.31515783],
+   [0.64858065, 0.45682821, 0.63889742],
+   [0.56114806, 0.32727298, 0.54948325]],
+
+  [[0.25249933, 0.27872938, 0.2341261 ],
+   [0.22254477, 0.0855324 , 0.95981825],
+   [0.55280765, 0.722852  , 0.95902286]],
+
+  [[0.65021279, 0.00722661, 0.64386904],
+   [0.36467587, 0.84466816, 0.05716471],
+   [0.16279813, 0.57831132, 0.52848513]]],
+
+
+ [[[0.94372659, 0.32741784, 0.03196349],
+   [0.06181632, 0.8300082 , 0.36091632],
+   [0.4961609 , 0.5816011 , 0.95777095]],
+
+  [[0.12676416, 0.32625023, 0.58114797],
+   [0.05347868, 0.5303113 , 0.20170834],
+   [0.76583324, 0.39418884, 0.84815322]],
+
+  [[0.62523604, 0.56888912, 0.69009855],
+   [0.34074716, 0.05078519, 0.05212047],
+   [0.50672308, 0.30567418, 0.47902636]]]]
+```
+Output is
+```python
+[[[[0.5238933 , 0.53398067, 0.2929779 ],
+   [0.602922  , 0.42464924, 0.59392124],
+   [0.52165645, 0.30423048, 0.5108133 ]],
+
+  [[0.23473667, 0.2591199 , 0.21765617],
+   [0.20689127, 0.07950803, 0.8922195 ],
+   [0.51387984, 0.6718813 , 0.89142925]],
+
+  [[0.604453  , 0.00671771, 0.59855634],
+   [0.3389953 , 0.7851862 , 0.05313992],
+   [0.15134202, 0.53759885, 0.49128178]]],
+
+
+ [[[0.87725437, 0.30435583, 0.02971505],
+   [0.05746418, 0.77156085, 0.33550152],
+   [0.46123454, 0.54060525, 0.89028406]],
+
+  [[0.11784688, 0.30328864, 0.5402475 ],
+   [0.04971581, 0.4929952 , 0.1875149 ],
+   [0.7119114 , 0.36640498, 0.7884236 ]],
+
+  [[0.58121526, 0.5288076 , 0.64150494],
+   [0.31677726, 0.04721269, 0.04845466],
+   [0.4710655 , 0.28415698, 0.44531912]]]]
 ```

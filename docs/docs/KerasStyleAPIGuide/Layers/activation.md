@@ -89,7 +89,7 @@ Remark: This layer is from Torch and wrapped in Keras style.
 
 **Scala:**
 ```scala
-HardTanh(minValue=-1, maxValue=1, inputShape = null)
+HardTanh(minValue = -1, maxValue = 1, inputShape = null)
 ```
 **Python:**
 ```python
