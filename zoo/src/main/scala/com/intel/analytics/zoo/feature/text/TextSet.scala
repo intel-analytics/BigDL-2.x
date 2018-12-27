@@ -396,24 +396,6 @@ object TextSet {
     TextSet.rdd(res)
   }
 
-  /**
-   * Used to generate a TextSet for pairwise training.
-   *
-   * This method does the following:
-   * 1. Generate all RelationPairs: (id1, id2Positive, id2Negative) from Relations.
-   * 2. Join RelationPairs with corpus to transform id to indexedTokens.
-   * Note: Make sure that the corpus has been transformed by [[SequenceShaper]] and [[WordIndexer]].
-   * 3. For each pair, generate a TextFeature having Sample with:
-   * - feature of shape (2, text1Length + text2Length).
-   * - label of value [1 0] as the positive relation is placed before the negative one.
-   *
-   * @param relations Array of [[Relation]].
-   * @param corpus1 LocalTextSet that contains all [[Relation.id1]]. For each TextFeature
-   *                in corpus1, text must have been transformed to indexedTokens of the same length.
-   * @param corpus2 LocalTextSet that contains all [[Relation.id2]]. For each TextFeature
-   *                in corpus2, text must have been transformed to indexedTokens of the same length.
-   * @return LocalTextSet.
-   */
   def fromRelationPairs(
       relations: Array[Relation],
       corpus1: TextSet,

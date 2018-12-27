@@ -99,18 +99,16 @@ object Relations {
   }
 
   /**
-   * Generate all [[RelationPair]]s from given [[Relation]]s.
-   * Essentially, for each positive relation (id1 and id2 with label>0), it will be
-   * paired with every negative relation of the same id1 (id2 with label=0).
+   * generateRelationPairs for Relation array
    */
   def generateRelationPairs(relations: Array[Relation]): Array[RelationPair] = {
     val relSet: Map[String, Map[Int, ArrayBuffer[String]]] = Map()
     val pairList: List[String] = List()
     for (relation <- relations) {
-      if (relSet.contains(relation.id1)) {
+      if (! relSet.contains(relation.id1)) {
         relSet.+(relation.id1)
       }
-      if (relSet.get(relation.id1).contains(relation.label)) {
+      if (! relSet.get(relation.id1).contains(relation.label)) {
         val map = Map(relation.label -> ArrayBuffer[String])
         relSet.updated(relation.id1, map)
       }
@@ -122,8 +120,8 @@ object Relations {
       val map = relSet.get(relation.id1)
       val buffer0 = map.get(0)
       val buffer1 = map.get(1)
-      for(m <- buffer1.length){
-        for(n <- buffer0.length){
+      for(m <- buffer1){
+        for(n <- buffer0){
           pairList.:+(relation.id1, m, n)
         }
       }
