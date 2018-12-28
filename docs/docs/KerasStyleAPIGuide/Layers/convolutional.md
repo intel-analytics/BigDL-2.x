@@ -778,7 +778,7 @@ import com.intel.analytics.bigdl.utils.Shape
 import com.intel.analytics.bigdl.tensor.Tensor
 
 val model = Sequential[Float]()
-model.add(ZeroPadding3D[Float](padding = (1, 1, 1), inputShape = Shape(2, 8, 8, 10)))
+model.add(ZeroPadding3D[Float](padding = (1, 1, 1), inputShape = Shape(1, 2, 1, 2)))
 val input = Tensor[Float](1, 1, 2, 1, 2).randn()
 val output = model.forward(input)
 ```
@@ -826,7 +826,7 @@ from zoo.pipeline.api.keras.layers import ZeroPadding3D
 from zoo.pipeline.api.keras.models import Sequential
 
 model = Sequential()
-model.add(ZeroPadding3D(padding=(1, 1, 1), input_shape=(2, 8, 8, 10)))
+model.add(ZeroPadding3D(padding=(1, 1, 1), input_shape=(1, 2, 1, 2)))
 input = np.random.random([1, 1, 2, 1, 2])
 output = model.forward(input)
 ```

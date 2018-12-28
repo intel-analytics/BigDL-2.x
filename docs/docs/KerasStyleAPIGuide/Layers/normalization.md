@@ -169,7 +169,7 @@ import com.intel.analytics.bigdl.utils.Shape
 import com.intel.analytics.bigdl.tensor.Tensor
 
 val model = Sequential[Float]()
-model.add(WithinChannelLRN2D[Float](inputShape = Shape(2, 3, 8)))
+model.add(WithinChannelLRN2D[Float](inputShape = Shape(3, 4)))
 val input = Tensor[Float](1, 3, 4).randn()
 val output = model.forward(input)
 ```
@@ -201,7 +201,7 @@ from zoo.pipeline.api.keras.layers import WithinChannelLRN2D
 from zoo.pipeline.api.keras.models import Sequential
 
 model = Sequential()
-model.add(WithinChannelLRN2D(input_shape=(2, 3, 8)))
+model.add(WithinChannelLRN2D(input_shape=(3, 4)))
 input = np.random.random([1, 3, 4])
 output = model.forward(input)
 ```

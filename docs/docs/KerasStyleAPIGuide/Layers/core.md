@@ -438,7 +438,7 @@ import com.intel.analytics.bigdl.utils.Shape
 import com.intel.analytics.bigdl.tensor.Tensor
 
 val model = Sequential[Float]()
-model.add(Squeeze[Float](1, inputShape = Shape(1, 1, 1, 32)))
+model.add(Squeeze[Float](1, inputShape = Shape(1, 1, 32)))
 val input = Tensor[Float](1, 1, 1, 32).randn()
 val output = model.forward(input)
 ```
@@ -466,7 +466,7 @@ from zoo.pipeline.api.keras.layers import Squeeze
 from zoo.pipeline.api.keras.models import Sequential
 
 model = Sequential()
-model.add(Squeeze(1, input_shape=(1, 1, 1, 32)))
+model.add(Squeeze(1, input_shape=(1, 1, 32)))
 input = np.random.random([1, 1, 1, 32])
 output = model.forward(input)
 ```
@@ -522,22 +522,58 @@ import com.intel.analytics.bigdl.tensor.Tensor
 
 val model = Sequential[Float]()
 model.add(BinaryThreshold[Float](inputShape = Shape(2, 3, 4)))
-val input = Tensor[Float](2, 3).randn()
+val input = Tensor[Float](2, 2, 3, 4).randn()
 val output = model.forward(input)
 ```
 Input is:
 ```scala
 input: com.intel.analytics.bigdl.tensor.Tensor[Float] =
-0.24746919      -1.3147599      1.059689
--0.14579424     0.072433405     1.2220671
-[com.intel.analytics.bigdl.tensor.DenseTensor of size 2x3]
+(1,1,.,.) =
+-1.1907398      -0.18995096     -2.0344417      -1.3789974
+-1.8801064      -0.74757665     -0.4339697      0.0058485097
+0.7012256       -0.6363152      2.0156987       -0.5512639
+
+(1,2,.,.) =
+-0.5251603      0.082127444     0.29550993      1.6357868
+-1.3828015      -0.11842779     0.3316966       -0.14360528
+0.21216457      -0.117370956    -0.12934707     -0.35854268
+
+(2,1,.,.) =
+-0.9071151      -2.8566089      -0.4796377      -0.915065
+-0.8439908      -0.25404388     -0.39926198     -0.15191565
+-1.0496653      -0.403675       -1.3591816      0.5311797
+
+(2,2,.,.) =
+0.53509855      -0.08892822     1.2196561       -0.62759316
+-0.47476718     -0.43337926     -0.10406987     1.4035174
+-1.7120812      1.1328355       0.9219375       1.3813454
+
+[com.intel.analytics.bigdl.tensor.DenseTensor of size 2x2x3x4]
 ```
 Output is:
 ```scala
 output: com.intel.analytics.bigdl.nn.abstractnn.Activity =
-1.0     0.0     1.0
-0.0     1.0     1.0
-[com.intel.analytics.bigdl.tensor.DenseTensor of size 2x3]
+(1,1,.,.) =
+0.0     0.0     0.0     0.0
+0.0     0.0     0.0     1.0
+1.0     0.0     1.0     0.0
+
+(1,2,.,.) =
+0.0     1.0     1.0     1.0
+0.0     0.0     1.0     0.0
+1.0     0.0     0.0     0.0
+
+(2,1,.,.) =
+0.0     0.0     0.0     0.0
+0.0     0.0     0.0     0.0
+0.0     0.0     0.0     1.0
+
+(2,2,.,.) =
+1.0     0.0     1.0     0.0
+0.0     0.0     0.0     1.0
+0.0     1.0     1.0     1.0
+
+[com.intel.analytics.bigdl.tensor.DenseTensor of size 2x2x3x4]
 ```
 
 **Python example:**
@@ -548,18 +584,46 @@ from zoo.pipeline.api.keras.models import Sequential
 
 model = Sequential()
 model.add(BinaryThreshold(input_shape=(2, 3, 4)))
-input = np.random.random([2, 3])
+input = np.random.random([2, 2, 3, 4])
 output = model.forward(input)
 ```
 Input is:
 ```python
-[[0.87335141, 0.57578887, 0.015348  ],
- [0.85402094, 0.68184429, 0.17629184]]
+[[[[0.39251031, 0.89560064, 0.94826505, 0.12508531],
+   [0.32738299, 0.4342822 , 0.4460907 , 0.22411114],
+   [0.57244209, 0.4662434 , 0.77926641, 0.37520199]],
+
+  [[0.96505949, 0.83902339, 0.27306266, 0.02059265],
+   [0.04738931, 0.46020822, 0.90156452, 0.28831492],
+   [0.6897974 , 0.41503956, 0.01914761, 0.01319553]]],
+
+
+ [[[0.27872031, 0.09379916, 0.19864558, 0.88633738],
+   [0.52456666, 0.33489463, 0.68707086, 0.23693124],
+   [0.47535936, 0.29494383, 0.83557663, 0.32998656]],
+
+  [[0.3098337 , 0.36557965, 0.60374616, 0.09181418],
+   [0.08452758, 0.07904724, 0.36483289, 0.76342299],
+   [0.67345088, 0.34587093, 0.00292717, 0.65672907]]]]
 ```
 Output is
 ```python
-[[1., 1., 1.],
- [1., 1., 1.]]
+[[[[1., 1., 1., 1.],
+   [1., 1., 1., 1.],
+   [1., 1., 1., 1.]],
+
+  [[1., 1., 1., 1.],
+   [1., 1., 1., 1.],
+   [1., 1., 1., 1.]]],
+
+
+ [[[1., 1., 1., 1.],
+   [1., 1., 1., 1.],
+   [1., 1., 1., 1.]],
+
+  [[1., 1., 1., 1.],
+   [1., 1., 1., 1.],
+   [1., 1., 1., 1.]]]]
 ```
 
 ---
@@ -828,55 +892,43 @@ import com.intel.analytics.bigdl.utils.Shape
 import com.intel.analytics.bigdl.tensor.Tensor
 
 val model = Sequential[Float]()
-model.add(Log[Float](inputShape = Shape(4, 8, 8)))
-val input = Tensor[Float](3, 4, 4).randn()
+model.add(Log[Float](inputShape = Shape(2, 4, 4)))
+val input = Tensor[Float](1, 2, 4, 4).randn()
 val output = model.forward(input)
 ```
 Input is:
 ```scala
 input: com.intel.analytics.bigdl.tensor.Tensor[Float] =
-(1,.,.) =
-0.5655537       0.6915928       -0.20194334     -1.1913823
--1.1834141      -1.4117801      -0.1624319      -0.0063015744
--0.1786272      -0.32872117     0.5877997       0.3035998
-0.83820426      -1.0102047      0.31135854      0.40690842
+(1,1,.,.) =
+0.38405678      -0.5502389      -0.383079       -0.988537
+-0.6294056      -0.7838047      0.8747865       -1.0659786
+-2.2445498      -0.5488076      -0.42898977     0.6916364
+1.6542299       -0.9966279      -0.38244298     1.6954672
 
-(2,.,.) =
--0.45988232     1.12236 1.3334968       0.03218876
-0.5010149       -0.10458872     -0.09090098     0.14120832
-0.56385756      -0.5863192      -1.3108164      0.54830015
--0.27144676     1.7496641       1.498932        -0.4208943
+(1,2,.,.) =
+0.43478605      -0.6678534      1.9530942       -0.5209587
+0.12899925      0.20572199      2.0359943       0.55223215
+0.65247816      0.8792108       -0.38860792     0.48663738
+-1.0084358      0.31141177      0.69208467      0.48385203
 
-(3,.,.) =
-0.5307625       1.2332847       -1.2689664      1.2247863
--2.153327       -0.044480614    0.01654169      -0.00867649
--0.45684302     0.08870535      1.4512469       1.0856627
--1.2377089      -0.23637708     0.47038174      1.0300478
-
-[com.intel.analytics.bigdl.tensor.DenseTensor of size 3x4x4]
+[com.intel.analytics.bigdl.tensor.DenseTensor of size 1x2x4x4]
 ```
 Output is:
 ```scala
 output: com.intel.analytics.bigdl.nn.abstractnn.Activity =
-(1,.,.) =
--0.56995        -0.36875793     NaN     NaN
-NaN     NaN     NaN     NaN
-NaN     NaN     -0.531369       -1.1920449
--0.17649345     NaN     -1.1668102      -0.8991671
+(1,1,.,.) =
+-0.95696485     NaN     NaN     NaN
+NaN     NaN     -0.13377543     NaN
+NaN     NaN     NaN     -0.36869493
+0.5033356       NaN     NaN     0.5279584
 
-(2,.,.) =
-NaN     0.1154336       0.28780466      -3.436138
--0.69111943     NaN     NaN     -1.957519
--0.57295364     NaN     NaN     -0.6009324
-NaN     0.5594238       0.40475285      NaN
+(1,2,.,.) =
+-0.83290124     NaN     0.6694149       NaN
+-2.0479486      -1.5812296      0.7109843       -0.5937868
+-0.4269776      -0.12873057     NaN     -0.720236
+NaN     -1.1666392      -0.36804697     -0.72597617
 
-(3,.,.) =
--0.6334406      0.20968111      NaN     0.20276636
-NaN     NaN     -4.1018715      NaN
-NaN     -2.422435       0.37242308      0.0821906
-NaN     NaN     -0.7542107      0.029605184
-
-[com.intel.analytics.bigdl.tensor.DenseTensor of size 3x4x4]
+[com.intel.analytics.bigdl.tensor.DenseTensor of size 1x2x4x4]
 ```
 
 **Python example:**
@@ -886,43 +938,33 @@ from zoo.pipeline.api.keras.layers import Log
 from zoo.pipeline.api.keras.models import Sequential
 
 model = Sequential()
-model.add(Log(input_shape=(4, 8, 8)))
-input = np.random.random([3, 4, 4])
+model.add(Log(input_shape=(2, 4, 4)))
+input = np.random.random([1, 2, 4, 4])
 output = model.forward(input)
 ```
 Input is:
 ```python
-[[[0.7335084 , 0.95096877, 0.37329445, 0.24883812],
-  [0.78232183, 0.59336697, 0.15057137, 0.13578071],
-  [0.21765247, 0.8728407 , 0.22514919, 0.13506015],
-  [0.95819393, 0.5018188 , 0.3401714 , 0.2348153 ]],
+[[[[0.90127539, 0.9861594 , 0.04722941, 0.63719453],
+   [0.46529477, 0.81511804, 0.24435558, 0.45003562],
+   [0.15170845, 0.35157662, 0.0925214 , 0.63852947],
+   [0.27817508, 0.42572846, 0.44363004, 0.03536394]],
 
- [[0.97346709, 0.06824436, 0.55497084, 0.22101866],
-  [0.32120739, 0.96392664, 0.01208597, 0.85363988],
-  [0.57188971, 0.68616151, 0.56406812, 0.08637165],
-  [0.32776286, 0.89831643, 0.99331583, 0.04152951]],
-
- [[0.08701036, 0.57557746, 0.89328072, 0.55421705],
-  [0.95205566, 0.72101091, 0.81913302, 0.73175617],
-  [0.1912687 , 0.68418461, 0.40881983, 0.69839596],
-  [0.1133067 , 0.31547996, 0.75067178, 0.3865963 ]]]
+  [[0.65027784, 0.00429838, 0.07434429, 0.18653305],
+   [0.19659183, 0.66647529, 0.77821197, 0.65894478],
+   [0.28212032, 0.52307663, 0.09589939, 0.71547588],
+   [0.84344158, 0.25291738, 0.52145649, 0.82982377]]]]
 ```
 Output is
 ```python
-[[[-0.30991623, -0.05027409, -0.9853878 , -1.3909527 ],
-  [-0.2454891 , -0.5219422 , -1.8933182 , -1.9967141 ],
-  [-1.5248556 , -0.13600221, -1.4909921 , -2.0020351 ],
-  [-0.04270506, -0.68951625, -1.0783057 , -1.448956  ]],
+[[[[-0.10394441, -0.01393729, -3.0527387 , -0.45068032],
+   [-0.76508415, -0.20442237, -1.4091308 , -0.79842854],
+   [-1.8857948 , -1.0453277 , -2.3803153 , -0.44858742],
+   [-1.2795045 , -0.85395354, -0.8127643 , -3.3420627 ]],
 
- [[-0.02689124, -2.6846604 , -0.58883965, -1.5095081 ],
-  [-1.1356683 , -0.03674011, -4.41571   , -0.15824583],
-  [-0.55880916, -0.37664223, -0.5725802 , -2.4490957 ],
-  [-1.1154649 , -0.10723288, -0.00670662, -3.181351  ]],
-
- [[-2.441728  , -0.5523815 , -0.11285436, -0.5901989 ],
-  [-0.04913181, -0.327101  , -0.19950876, -0.31230795],
-  [-1.6540761 , -0.3795275 , -0.89448076, -0.35896906],
-  [-2.177657  , -1.15366   , -0.28678674, -0.9503743 ]]]
+  [[-0.43035555, -5.4495163 , -2.5990484 , -1.6791469 ],
+   [-1.6266255 , -0.4057522 , -0.25075635, -0.41711554],
+   [-1.2654216 , -0.64802724, -2.3444557 , -0.33480743],
+   [-0.1702646 , -1.3746924 , -0.6511295 , -0.1865419 ]]]]
 ```
 
 ---
@@ -952,7 +994,7 @@ import com.intel.analytics.bigdl.utils.Shape
 import com.intel.analytics.bigdl.tensor.Tensor
 
 val model = Sequential[Float]()
-model.add(Identity[Float](inputShape = Shape(3)))
+model.add(Identity[Float](inputShape = Shape(4, 4)))
 val input = Tensor[Float](3, 4, 4).randn()
 val output = model.forward(input)
 ```
@@ -1010,7 +1052,7 @@ from zoo.pipeline.api.keras.layers import Identity
 from zoo.pipeline.api.keras.models import Sequential
 
 model = Sequential()
-model.add(Identity(input_shape=(3, )))
+model.add(Identity(input_shape=(4, 4)))
 input = np.random.random([3, 4, 4])
 output = model.forward(input)
 ```
@@ -1081,7 +1123,7 @@ import com.intel.analytics.bigdl.utils.Shape
 import com.intel.analytics.bigdl.tensor.Tensor
 
 val model = Sequential[Float]()
-model.add(LRN2D[Float](1e-3, 1.2, 0.4, 3, dimOrdering = "tf", inputShape= Shape(4, 5, 6)))
+model.add(LRN2D[Float](1e-3, 1.2, 0.4, 3, dimOrdering = "tf", inputShape= Shape(3, 3, 3)))
 val input = Tensor[Float](2, 3, 3, 3).randn()
 val output = model.forward(input)
 ```
@@ -1163,7 +1205,7 @@ from zoo.pipeline.api.keras.layers import LRN2D
 from zoo.pipeline.api.keras.models import Sequential
 
 model = Sequential()
-model.add(LRN2D(1e-3, 1.2, 0.4, 3, dim_ordering="tf", input_shape=(4, 5, 6)))
+model.add(LRN2D(1e-3, 1.2, 0.4, 3, dim_ordering="tf", input_shape=(3, 3, 3)))
 input = np.random.random([2, 3, 3, 3])
 output = model.forward(input)
 ```

@@ -110,23 +110,39 @@ import com.intel.analytics.bigdl.utils.Shape
 import com.intel.analytics.bigdl.tensor.Tensor
 
 val model = Sequential[Float]()
-model.add(HardTanh[Float](inputShape = Shape(3, 4)))
-val input = Tensor[Float](2, 3).randn()
+model.add(HardTanh[Float](-1, 0.5, inputShape = Shape(3, 4)))
+val input = Tensor[Float](2, 3, 4).randn()
 val output = model.forward(input)
 ```
 Input is:
 ```scala
 input: com.intel.analytics.bigdl.tensor.Tensor[Float] =
-0.09919507      -0.6138775      -1.013671
-0.039767493     -0.67715216     0.7960504
-[com.intel.analytics.bigdl.tensor.DenseTensor of size 2x3]
+(1,.,.) =
+1.8396661       -2.096241       -0.36010137     -1.97987
+-0.20326108     1.5972694       -1.4166505      -0.3369559
+-0.22637285     -1.1021988      1.0707928       -1.5014135
+
+(2,.,.) =
+-0.24511681     -1.1103313      -0.7901563      -1.0394055
+-0.033373486    0.22657289      -0.7928737      1.5241393
+0.49224186      -0.21418595     -0.32379007     -0.941034
+
+[com.intel.analytics.bigdl.tensor.DenseTensor of size 2x3x4]
 ```
 Output is:
 ```scala
 output: com.intel.analytics.bigdl.nn.abstractnn.Activity =
-0.09919507      -0.6138775      -1.0
-0.039767493     -0.67715216     0.7960504
-[com.intel.analytics.bigdl.tensor.DenseTensor of size 2x3]
+(1,.,.) =
+0.5     -1.0    -0.36010137     -1.0
+-0.20326108     0.5     -1.0    -0.3369559
+-0.22637285     -1.0    0.5     -1.0
+
+(2,.,.) =
+-0.24511681     -1.0    -0.7901563      -1.0
+-0.033373486    0.22657289      -0.7928737      0.5
+0.49224186      -0.21418595     -0.32379007     -0.941034
+
+[com.intel.analytics.bigdl.tensor.DenseTensor of size 2x3x4]
 ```
 
 **Python example:**
@@ -136,17 +152,27 @@ from zoo.pipeline.api.keras.layers import HardTanh
 from zoo.pipeline.api.keras.models import Sequential
 
 model = Sequential()
-model.add(HardTanh(max_value=0.5, input_shape=(3, 4)))
-input = np.random.random([2, 3])
+model.add(HardTanh(-1, 0.5, input_shape=(3, 4)))
+input = np.random.random([2, 3, 4])
 output = model.forward(input)
 ```
 Input is:
 ```python
-[[0.66739179, 0.58891271, 0.36706174],
- [0.2812784 , 0.60184909, 0.43580516]]
+[[[0.38707977, 0.94085094, 0.50552125, 0.42818523],
+  [0.5544486 , 0.36521357, 0.42551631, 0.93228245],
+  [0.29155494, 0.61710319, 0.93137551, 0.05688166]],
+
+ [[0.75222706, 0.36454257, 0.83076327, 0.82004643],
+  [0.29213453, 0.71532663, 0.99556398, 0.57001469],
+  [0.58088671, 0.32646428, 0.60736   , 0.14861018]]]
 ```
 Output is
 ```python
-[[0.5       , 0.5       , 0.36706173],
- [0.2812784 , 0.5       , 0.43580517]]
+[[[0.38707978, 0.5       , 0.5       , 0.42818522],
+  [0.5       , 0.36521357, 0.4255163 , 0.5       ],
+  [0.29155496, 0.5       , 0.5       , 0.05688166]],
+
+  [[0.5       , 0.36454257, 0.5       , 0.5       ],
+   [0.29213452, 0.5       , 0.5       , 0.5       ],
+   [0.5       , 0.3264643 , 0.5       , 0.14861017]]]
 ```
