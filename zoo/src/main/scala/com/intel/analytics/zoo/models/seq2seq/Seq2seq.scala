@@ -126,19 +126,19 @@ object Seq2seq {
    * [[Seq2seq]] A trainable interface for a simple, generic encoder + decoder model
    * @param encoder an encoder object
    * @param decoder a decoder object
-   * @param encoderInputShape shape of encoder input, for variable length, please input -1
-   * @param decoderInputShape shape of decoder input, for variable length, please input -1
+   * @param inputShape shape of encoder input, for variable length, please input -1
+   * @param outputShape shape of decoder input, for variable length, please input -1
    * @param bridge connect encoder and decoder
    */
   def apply[@specialized(Float, Double) T: ClassTag](
     encoder: Encoder[T],
     decoder: Decoder[T],
-    encoderInputShape: Shape,
-    decoderInputShape: Shape,
+    inputShape: Shape,
+    outputShape: Shape,
     bridge: KerasLayer[Activity, Activity, T] = null,
     generator: KerasLayer[Activity, Activity, T] = null
   )(implicit ev: TensorNumeric[T]): Seq2seq[T] = {
-    new Seq2seq[T](encoder, decoder, encoderInputShape, decoderInputShape,
+    new Seq2seq[T](encoder, decoder, inputShape, outputShape,
       bridge, generator).build()
   }
 }
