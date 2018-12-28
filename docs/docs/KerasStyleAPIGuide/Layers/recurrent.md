@@ -233,7 +233,7 @@ from zoo.pipeline.api.keras.layers import Highway
 from zoo.pipeline.api.keras.models import Sequential
 
 model = Sequential()
-model.add(Highway(input_shape=(3)))
+model.add(Highway(input_shape=(3, )))
 input = np.random.random([2, 3])
 output = model.forward(input)
 ```

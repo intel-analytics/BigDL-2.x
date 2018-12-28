@@ -1123,7 +1123,7 @@ import com.intel.analytics.bigdl.utils.Shape
 import com.intel.analytics.bigdl.tensor.Tensor
 
 val model = Sequential[Float]()
-model.add(LRN2D[Float](1e-3, 1.2, 0.4, 3, dimOrdering = "tf", inputShape= Shape(3, 3, 3)))
+model.add(LRN2D[Float](1e-3, 1.2, 0.4, 3, dimOrdering = "tf", inputShape = Shape(3, 3, 3)))
 val input = Tensor[Float](2, 3, 3, 3).randn()
 val output = model.forward(input)
 ```
