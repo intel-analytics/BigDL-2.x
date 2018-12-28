@@ -28,6 +28,7 @@ class Adam(OptimMethod, ZooKerasCreator):
     An implementation of Adam with learning rate schedule.
     >>> adam = Adam()
     creating: createZooKerasAdam
+    creating: createDefault
     """
     def __init__(self,
                  lr=1e-3,
