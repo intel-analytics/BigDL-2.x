@@ -425,12 +425,17 @@ object TextSet {
     }
     val Feature: TextFeature = TextFeature(null)
     for(pair <- pairsArray){
+      require(pair.id1 != null,
+        "pairsArray haven't been transformed from word to index yet, please word2idx first")
+      require(pair.id2Positive != null,
+        "pairsArray haven't been transformed from word to index yet, please word2idx first")
+      require(pair.id2Negative != null,
+        "pairsArray haven't been transformed from word to index yet, please word2idx first")
       val textFeature =TextFeature(null, pair.id1 + pair.id2Positive + pair.id2Negative)
       val pairedIndices = pair.id1 ++ pair.id2Positive ++ pair.id2Negative
       val feature = Tensor(pairedIndices, Array(2, pair.id1.length + pair.id2Positive.length))
       val label = Tensor(Array(1.0f, 0.0f), Array(2, 1))
       textFeature(TextFeature.sample) = Sample(feature, label)
-
     }
     TextSet.array(Feature)
   }
@@ -487,6 +492,43 @@ object TextSet {
       textFeature
     })
     TextSet.rdd(res)
+  }
+
+  def fromRelationLists(
+      relations: Array[Relation],
+      corpus1: TextSet,
+      corpus2: TextSet): LocalTextSet = {
+    require(corpus1.isLocal, "corpus1 must be a LocalTextSet")
+    require(corpus2.isLocal, "corpus2 must be a LocalTextSet")
+    val mapText1: Map[String, String] = Map()
+    val mapText2: Map[String, String] = Map()
+    val array1 = corpus1.toLocal().array
+    val array2 = corpus2.toLocal().array
+    val indicesRelation: Array[Relation] = Array()
+    for (i <- array1) {
+      mapText1.+(i.toString)
+      mapText1.updated(i.toString, i.getIndices)
+    }
+    for (i <- array2) {
+      mapText2.+(i.toString)
+      mapText2.updated(i.toString, i.getIndices)
+    }
+    val count: Int = 0
+    val Feature: TextFeature = TextFeature(null)
+    for(rel <- relations){
+      val indices1 = mapText1.get(rel.id1).toString
+      val indices2 = mapText2.get(rel.id2).toString
+      require(indices1 != null,
+        "id1 haven't been transformed from word to index yet, please word2idx first")
+      require(indices2 != null,
+        "id2 haven't been transformed from word to index yet, please word2idx first")
+      val textFeature = TextFeature(null, rel.id1 + rel.id2)
+      val listIndices = indices1 ++ indices2
+      val feature = Tensor(rel.id2.length, Array(listIndices.length, indices1.length + indices2.length))
+      val label = Tensor(rel.label, Array(rel.id2.length, 1))
+      textFeature(TextFeature.sample) = Sample(feature, label)
+    }
+    TextSet.array(Feature)
   }
 
   /**
