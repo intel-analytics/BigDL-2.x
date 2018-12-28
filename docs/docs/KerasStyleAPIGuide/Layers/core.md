@@ -1285,15 +1285,7 @@ Select(dim, index, inputShape = null)
 ```
 **Python:**
 ```python
-<<<<<<< HEAD
-<<<<<<< HEAD
 Select(dim, index, input_shape=None, name=None)
-=======
-Select(dim, index, input_shape = None, name = None)
->>>>>>> fix problems in format
-=======
-Select(dim, index, input_shape=None, name=None)
->>>>>>> format fixing
 ```
 
 **Parameters:**
@@ -1343,7 +1335,6 @@ output = model.forward(input)
 ```
 Input is:
 ```python
-<<<<<<< HEAD
 array([[[[0.53306099, 0.95147881, 0.15222129]],
         [[0.89604861, 0.90160974, 0.5230576 ]],
         [[0.70779386, 0.14438568, 0.37601195]]]])
@@ -1351,15 +1342,6 @@ array([[[[0.53306099, 0.95147881, 0.15222129]],
 Output is:
 ```python
 array([[[0.7077939 , 0.14438568, 0.37601194]]], dtype=float32)
-=======
-array([[0.5084155 , 0.95884451, 0.72973726],
-       [0.16981959, 0.65563077, 0.23995682],
-       [0.73532258, 0.13085087, 0.29553222]])
-```
-Output is:
-```python
-array([0.7297373 , 0.23995683, 0.29553223], dtype=float32)
->>>>>>> fix problems in format
 ```
 
 ---
@@ -1434,7 +1416,6 @@ array([[0.        , 0.        , 1.2698183 , 0.        , 0.10656227],
        [0.        , 0.        , 0.6236721 , 0.00299606, 0.29664695]],
       dtype=float32)
 ```
-
 ---
 ## **Negative**
 Computes the negative value of each element of the input.
@@ -1445,15 +1426,7 @@ Negative(inputShape = null)
 ```
 **Python:**
 ```python
-<<<<<<< HEAD
-<<<<<<< HEAD
 Negative(input_shape=None, name=None)
-=======
-Negative(input_shape = None)
->>>>>>> fix problems in format
-=======
-Negative(input_shape=None, name=None)
->>>>>>> format fixing
 ```
 
 **Parameters:**
@@ -1531,31 +1504,20 @@ Or the bias will be expanded to the same size of the input.
 
 The expand means repeat on unmatched singleton dimension (if some unmatched dimension isn't a singleton dimension, an error will be raised).
 
+
 **Scala:**
 ```scala
 CAdd(size, bRegularizer = null, inputShape = null)
 ```
 **Python:**
 ```python
-<<<<<<< HEAD
-<<<<<<< HEAD
 CAdd(size, b_regularizer=None, input_shape=None, name=None)
-=======
-CAdd(size, bRegularizer = None, bigdl_type = "float", input_shape = None, name = None)
->>>>>>> fix problems in format
-=======
-CAdd(size, b_regularizer=None, input_shape=None, name=None)
->>>>>>> format fixing
 ```
 
 **Parameters:**
 
 * `size`: the size of the bias
-<<<<<<< HEAD
 * `bRegularizer`: An instance of [Regularizer](https://bigdl-project.github.io/master/#APIGuide/Regularizers/), applied to the bias. Default is null.
-=======
-* `bRegularizer`: An instance of [[Regularizer]], applied to the bias. Default is null.
->>>>>>> fix problems in format
 * `inputShape`: Only need to specify this argument when you use this layer as the first layer of a model. For Scala API, it should be a [`Shape`](../keras-api-scala/#shape) object. For Python API, it should be a shape tuple. Batch dimension should be excluded.
 
 **Scala example:**
@@ -1573,42 +1535,22 @@ Input is:
 ```scala
 input: com.intel.analytics.bigdl.tensor.Tensor[Float] =
 (1,.,.) =
-<<<<<<< HEAD
 0.2183351       0.32434112      0.89350265
 0.3348259       0.78677046      0.24054797
 (2,.,.) =
 0.9945844       0.72363794      0.7737936
 0.05522544      0.3517818       0.7417069
-=======
-0.8307629       0.29374534      0.94095033
-0.29307735      0.6757629       0.02053078
-
-(2,.,.) =
-0.06481274      0.7025387       0.36737472
-0.8491518       0.9951159       0.30828404
-
->>>>>>> format fixing
 [com.intel.analytics.bigdl.tensor.DenseTensor of size 2x2x3]
 ```
 Output is:
 ```scala
 output: com.intel.analytics.bigdl.nn.abstractnn.Activity =
 (1,.,.) =
-<<<<<<< HEAD
 0.1358028       0.6956667       1.0837181
 0.6767027       0.7955346       0.5063505
 (2,.,.) =
 0.9120521       1.0949634       0.96400905
 0.3971022       0.36054593      1.0075095
-=======
-1.0659276       0.63978815      0.70648277
-0.27080405      0.7008597       0.19885683
-
-(2,.,.) =
-0.29997745      1.0485816       0.13290718
-0.8268785       1.0202128       0.4866101
-
->>>>>>> format fixing
 [com.intel.analytics.bigdl.tensor.DenseTensor of size 2x2x3]
 ```
 
@@ -1626,10 +1568,6 @@ Input is:
 ```python
 array([[[0.4122004 , 0.73289359, 0.11500016],
         [0.26974491, 0.32166632, 0.91408442]],
-<<<<<<< HEAD
-=======
-
->>>>>>> format fixing
        [[0.66824327, 0.80271314, 0.75981145],
         [0.39271431, 0.07312566, 0.4966805 ]]])
 ```
@@ -1637,10 +1575,6 @@ Output is
 ```python
 array([[[ 0.06560206,  0.38629526, -0.23159817],
         [ 0.44287407,  0.4947955 ,  1.0872136 ]],
-<<<<<<< HEAD
-=======
-
->>>>>>> format fixing
        [[ 0.32164496,  0.45611483,  0.41321313],
         [ 0.56584346,  0.24625483,  0.6698097 ]]], dtype=float32)
 ```
