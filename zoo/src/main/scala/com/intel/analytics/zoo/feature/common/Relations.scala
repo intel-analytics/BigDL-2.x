@@ -109,7 +109,7 @@ object Relations {
         relSet.+(relation.id1)
       }
       if (! relSet.get(relation.id1).contains(relation.label)) {
-        val map = Map(relation.label -> ArrayBuffer[String])
+        val map = Map(relation.label -> ArrayBuffer())
         relSet.updated(relation.id1, map)
       }
       val res = relSet.get(relation.id1)
@@ -122,7 +122,7 @@ object Relations {
       val buffer1 = map.get(1)
       for(m <- buffer1){
         for(n <- buffer0){
-          pairList.:+(relation.id1, m, n)
+          pairList.:+(RelationPair(relation.id1, m, n))
         }
       }
     }

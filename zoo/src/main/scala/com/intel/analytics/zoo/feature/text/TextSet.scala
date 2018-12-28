@@ -21,7 +21,7 @@ import java.util
 
 import com.intel.analytics.bigdl.DataSet
 import com.intel.analytics.bigdl.dataset.{DataSet, Sample}
-import com.intel.analytics.zoo.feature.common.{Preprocessing, Relation, Relations}
+import com.intel.analytics.zoo.feature.common.{Preprocessing, Relation, RelationPair, Relations}
 import com.intel.analytics.zoo.feature.text.TruncMode.TruncMode
 import org.apache.hadoop.conf.Configuration
 import org.apache.hadoop.fs.{FileSystem, Path}
@@ -405,10 +405,36 @@ object TextSet {
     require(corpus2.isLocal, "corpus2 must be a LocalTextSet")
     val mapText1: Map[String, String] = Map()
     val mapText2: Map[String, String] = Map()
-    for(i <- corpus1){
-      mapText1.+(i)
+    val array1 = corpus1.toLocal().array
+    val array2 = corpus2.toLocal().array
+    for (i <- array1) {
+      mapText1.+(i.toString)
+      mapText1.updated(i.toString, i.getIndices)
     }
+    for (i <- array2) {
+      mapText2.+(i.toString)
+      mapText2.updated(i.toString, i.getIndices)
+    }
+    val count: Int = 0
+    for (pair <- pairsArray.toBuffer[RelationPair]) {
+      val indices1 = mapText1.get(pair.id1)
+      val indices2 = mapText2.get(pair.id2Positive)
+      val indices3 = mapText2.get(pair.id2Negative)
+      pairsArray.toBuffer.update(count, (indices1, indices2, indices3))
+      count += 1
+    }
+    val Feature: TextFeature = TextFeature(null)
+    for(pair <- pairsArray){
+      val textFeature =TextFeature(null, pair.id1 + pair.id2Positive + pair.id2Negative)
+      val pairedIndices = pair.id1 ++ pair.id2Positive ++ pair.id2Negative
+      val feature = Tensor(pairedIndices, Array(2, pair.id1.length + pair.id2Positive.length))
+      val label = Tensor(Array(1.0f, 0.0f), Array(2, 1))
+      textFeature(TextFeature.sample) = Sample(feature, label)
+
+    }
+    TextSet.array(Feature)
   }
+
 
   /**
    * Used to generate a TextSet for ranking.
