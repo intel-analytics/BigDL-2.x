@@ -77,7 +77,7 @@ class Bridge[T: ClassTag] private (bridgeType: String,
     layer.add(_bridge)
 
     if (layerNum > 1 || stateNum > 1) {
-      layer.add(SplitTensor[T](Bridge.splitDim, layerNum))
+      layer.add(SplitTensor[T](Bridge.splitDim, layerNum * stateNum))
     }
 
     layer.asInstanceOf[AbstractModule[Activity, Activity, T]]
@@ -100,16 +100,7 @@ class Bridge[T: ClassTag] private (bridgeType: String,
     val _input = input.toTable.flatten()
     val _output = labor.forward(_input)
 
-    // labor may change the hidden size, we need split output ourselves
-    output = T()
-    if (_input.length() > input.toTable.length()) {
-      _output.toTable.foreach { case ((key: Int, value: Tensor[T])) =>
-        val stateNum = input.toTable[Table](key).length()
-        val states =
-          value.split(value.size(Bridge.splitDim + 1) / stateNum, Bridge.splitDim + 1)
-        output.toTable.update(key, T.array(states))
-      }
-    } else output = _output
+    output = _output.toTable.inverseFlatten(input.toTable)
     output
   }
 

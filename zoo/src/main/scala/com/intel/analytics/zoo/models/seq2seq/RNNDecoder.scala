@@ -58,8 +58,6 @@ class RNNDecoder[T: ClassTag](val rnns: Array[Recurrent[T]],
 
   override def updateOutput(input: Activity): Tensor[T] = {
     val states = input.toTable[Table](2)
-    require(states.length() == rnns.length, "rnn encoder and decoder should" +
-      "has the same number of layers!")
 
     var i = 0
     while (i < rnns.size) {

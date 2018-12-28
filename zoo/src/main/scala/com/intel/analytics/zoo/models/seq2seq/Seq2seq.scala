@@ -92,7 +92,7 @@ model.asInstanceOf[KerasNet[T]].compile(optimizer, loss, metrics)
             buildOutput: KerasLayer[Tensor[T], Tensor[T], T] = null): Tensor[T] = {
     val sent1 = input
     val sent2 = startSign
-    require(sent2.size(Seq2seq.timeDim) == 1, "expect decoder input is batch x time(1) x feature")
+    sent2.resize(Array(1, 1) ++ startSign.size())
 
     var curInput = sent2
     val sizes = curInput.size()
@@ -124,20 +124,22 @@ object Seq2seq {
   val timeDim = 2
   /**
    * [[Seq2seq]] A trainable interface for a simple, generic encoder + decoder model
-   * @param encoder an encoder object
-   * @param decoder a decoder object
+   * @param encoder a rnn encoder object
+   * @param decoder a rnn decoder object
    * @param inputShape shape of encoder input, for variable length, please input -1
    * @param outputShape shape of decoder input, for variable length, please input -1
    * @param bridge connect encoder and decoder
    */
   def apply[@specialized(Float, Double) T: ClassTag](
-    encoder: Encoder[T],
-    decoder: Decoder[T],
+    encoder: RNNEncoder[T],
+    decoder: RNNDecoder[T],
     inputShape: Shape,
     outputShape: Shape,
     bridge: KerasLayer[Activity, Activity, T] = null,
     generator: KerasLayer[Activity, Activity, T] = null
   )(implicit ev: TensorNumeric[T]): Seq2seq[T] = {
+    require(encoder.rnns.length == decoder.rnns.length, "rnn encoder and decoder should has" +
+      " the same number of layers!")
     new Seq2seq[T](encoder, decoder, inputShape, outputShape,
       bridge, generator).build()
   }

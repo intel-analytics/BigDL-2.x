@@ -16,13 +16,10 @@
 
 package com.intel.analytics.zoo.models.seq2seq
 
-import com.intel.analytics.bigdl.nn.abstractnn.{AbstractModule, Activity}
 import com.intel.analytics.bigdl.nn.keras.KerasLayer
 import com.intel.analytics.bigdl.tensor.Tensor
 import com.intel.analytics.bigdl.utils.{Shape, SingleShape, T}
-import com.intel.analytics.zoo.pipeline.api.keras.layers.internal.Echo
-import com.intel.analytics.zoo.pipeline.api.keras.layers.{Embedding, KerasLayerWrapper, SimpleRNN,
-LSTM, Recurrent}
+import com.intel.analytics.zoo.pipeline.api.keras.layers._
 import com.intel.analytics.zoo.pipeline.api.keras.models.Sequential
 import org.scalatest.{BeforeAndAfter, FlatSpec, Matchers}
 
@@ -280,11 +277,8 @@ class Seq2seqSpec extends FlatSpec with Matchers with BeforeAndAfter {
     val decoder2 = RNNDecoder[Float]("SimpleRNN", numLayer, hiddenSize)
     val model2 = Seq2seq[Float](encoder2, decoder2,
       SingleShape(List(seqLen, inputSize)), SingleShape(List(seqLen, inputSize)),
-      bridge = new Bridge[Float](
-        new KerasLayerWrapper[Float](
-          new Echo[Float]().asInstanceOf[AbstractModule[Activity, Activity, Float]],
-        Shape(Array(hiddenSize)))
-          .asInstanceOf[KerasLayer[Tensor[Float], Tensor[Float], Float]]))
+      bridge = new Bridge[Float](Identity[Float](Shape(Array(hiddenSize)))
+        .asInstanceOf[KerasLayer[Tensor[Float], Tensor[Float], Float]]))
     val w_2 = model2.parameters()._1
     w_2(3).set(w3)
     w_2(4).set(w4)
