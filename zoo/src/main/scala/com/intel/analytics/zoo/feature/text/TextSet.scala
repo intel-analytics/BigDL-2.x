@@ -504,7 +504,6 @@ object TextSet {
     val mapText2: Map[String, String] = Map()
     val array1 = corpus1.toLocal().array
     val array2 = corpus2.toLocal().array
-    val indicesRelation: Array[Relation] = Array()
     for (i <- array1) {
       mapText1.+(i.toString)
       mapText1.updated(i.toString, i.getIndices)
