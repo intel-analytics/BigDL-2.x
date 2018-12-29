@@ -156,6 +156,7 @@ Output is:
 output: com.intel.analytics.bigdl.nn.abstractnn.Activity =
 (1,.,.) =
 0.0     0.0     0.0     0.0     0.0     0.0     0.0     0.0     0.0     0.0     0.0     0.0     0.0     0.0     0.0     0.0     0.0     0.0     0.0     0.00.0     0.0     0.0     0.0     0.0     0.0     0.0     0.0     0.0     0.0     0.0     0.0     0.0     0.0     0.0     0.0     0.0     0.0     0.0     0.00.0     0.0     0.0     0.0     0.0     0.0     0.0     0.0     0.0     0.0
+
 [com.intel.analytics.bigdl.tensor.DenseTensor of size 1x1x50]
 ```
 

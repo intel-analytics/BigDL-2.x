@@ -994,13 +994,8 @@ Cropping3D(cropping=((1, 1), (1, 1), (1, 1)), dim_ordering="th", input_shape=Non
 
 * `cropping`: Int tuple of tuple of length 3. How many units should be trimmed off at the beginning and end of the 3 cropping dimensions (i.e. kernel_dim1, kernel_dim2 and kernel_dim3). Default is ((1, 1), (1, 1), (1, 1)).
 * `dimOrdering`: Format of input data. Either 'CHANNEL_FIRST' (dimOrdering='th') or 'CHANNEL_LAST' (dimOrdering='tf'). Default is 'CHANNEL_FIRST'.
-<<<<<<< HEAD
 * `inputShape`: Only need to specify this argument when you use this layer as the first layer of a model. For Scala API, it should be a [`Shape`](../keras-api-scala/#shape) object. For Python API, it should be a shape tuple. Batch dimension should be excluded.
 
-=======
-* `inputShape`: A Single Shape, does not include the batch dimension.
- 
->>>>>>> fix problems in format
 **Scala example:**
 ```scala
 import com.intel.analytics.zoo.pipeline.api.keras.models.Sequential
@@ -1344,13 +1339,8 @@ ShareConvolution2D(nbFilter, nbRow, nbCol, init = "glorot_uniform", activation =
 ```
 **Python:**
 ```python
-<<<<<<< HEAD
 ShareConvolution2D(nb_filter, nb_row, nb_col, init="glorot_uniform", activation=None, subsample=(1, 1), pad_h=0, pad_w=0,
                    propagate_back=True, dim_ordering="th", W_regularizer=None, b_regularizer=None, bias=True, input_shape=None, name=None)
-=======
-ShareConvolution2D(nb_filter, nb_row, nb_col, init = "glorot_uniform", activation = None, subsample = (1, 1), pad_h = 0, pad_w = 0,
-                   propagate_back = True, dim_ordering = "th", W_regularizer = None, b_regularizer = None, bias = True, input_shape = None, name = None)
->>>>>>> fix problems in format
 ```
 
 **Parameters:**
@@ -1421,7 +1411,7 @@ from zoo.pipeline.api.keras.layers import ShareConvolution2D
 import numpy as np
 
 model = Sequential()
-model.add(ShareConvolution2D(2, 2, 3, input_shape = (2, 2, 3)))
+model.add(ShareConvolution2D(2, 2, 3, input_shape=(2, 2, 3)))
 input = np.random.random([1, 2, 2, 3])
 output = model.forward(input)
 ```
@@ -1480,9 +1470,11 @@ input: com.intel.analytics.bigdl.tensor.Tensor[Float] =
 (1,.,.) =
 -0.8499613      0.6955453       -2.8545783
 -0.26392975     -0.5695636      0.13427743
+
 (2,.,.) =
 0.52427506      -0.7843101      -0.12673262
 1.0643414       0.69714475      -0.013671399
+
 [com.intel.analytics.bigdl.tensor.DenseTensor of size 2x2x3]
 ```
 Output is:
@@ -1495,6 +1487,7 @@ output: com.intel.analytics.bigdl.nn.abstractnn.Activity =
 -0.26392975     -0.5695636      0.13427743
 -0.26392975     -0.5695636      0.13427743
 -0.26392975     -0.5695636      0.13427743
+
 (2,.,.) =
 0.52427506      -0.7843101      -0.12673262
 0.52427506      -0.7843101      -0.12673262
@@ -1502,6 +1495,7 @@ output: com.intel.analytics.bigdl.nn.abstractnn.Activity =
 1.0643414       0.69714475      -0.013671399
 1.0643414       0.69714475      -0.013671399
 1.0643414       0.69714475      -0.013671399
+
 [com.intel.analytics.bigdl.tensor.DenseTensor of size 2x6x3]
 ```
 
@@ -1520,6 +1514,7 @@ Input is:
 ```python
 array([[[0.22908319, 0.6684591 , 0.12425427],
         [0.02378978, 0.12953109, 0.70786959]],
+
        [[0.40711686, 0.64417535, 0.92019981],
         [0.28788481, 0.77902591, 0.93019748]]])
 ```
@@ -1531,6 +1526,7 @@ array([[[0.2290832 , 0.6684591 , 0.12425426],
         [0.02378978, 0.12953109, 0.7078696 ],
         [0.02378978, 0.12953109, 0.7078696 ],
         [0.02378978, 0.12953109, 0.7078696 ]],
+
        [[0.40711686, 0.64417535, 0.9201998 ],
         [0.40711686, 0.64417535, 0.9201998 ],
         [0.40711686, 0.64417535, 0.9201998 ],
