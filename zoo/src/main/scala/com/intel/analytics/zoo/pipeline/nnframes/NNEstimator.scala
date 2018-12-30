@@ -32,11 +32,10 @@ import com.intel.analytics.zoo.pipeline.api.keras.layers.utils.EngineRef
 import org.apache.hadoop.fs.Path
 import org.apache.log4j.Logger
 import org.apache.spark.SparkContext
-import org.apache.spark.ml.adapter.{DefaultParamsWriterWrapper, HasFeaturesCol, HasPredictionCol,
-  SchemaUtils}
+import org.apache.spark.ml.adapter.{HasFeaturesCol, HasPredictionCol, SchemaUtils}
 import org.apache.spark.ml.param._
 import org.apache.spark.ml.util._
-import org.apache.spark.ml.{DLEstimatorBase, DLTransformerBase, VectorCompatibility}
+import org.apache.spark.ml.{DLEstimatorBase, DLTransformerBase, DefaultParamsWriterWrapper, VectorCompatibility}
 import org.apache.spark.sql.types._
 import org.apache.spark.sql.{DataFrame, Row}
 import org.json4s.JsonDSL._
