@@ -26,6 +26,7 @@ import com.intel.analytics.zoo.pipeline.api.keras.layers.utils.KerasUtils
 import com.intel.analytics.zoo.pipeline.api.keras.layers._
 import com.intel.analytics.zoo.pipeline.api.keras.models.Sequential
 
+import scala.collection.mutable.ArrayBuffer
 import scala.reflect.ClassTag
 
 /**
@@ -59,7 +60,7 @@ class Bridge[T: ClassTag] private (bridgeType: String,
 
       val inputLayers = flattenShape.map(x => InputLayer(Shape(Array(x))))
       layer.add(Merge(inputLayers, mode = "concat"))
-    }
+    } else layer.add(InputLayer(_inputShape))
 
     // construct bridge
     val _bridge = bridgeType.toLowerCase() match {
@@ -92,7 +93,22 @@ class Bridge[T: ClassTag] private (bridgeType: String,
     }
   }
 
+  private def constructTensor(inputShape: Shape): Activity = {
+    if (inputShape.isInstanceOf[SingleShape]) {
+      val singleShape = inputShape.toSingle().toArray
+      Tensor(Array(1) ++ singleShape.drop(1)).fill(ev.one)
+    }
+    else {
+      T.array(inputShape.toMulti().map(constructTensor(_)).toArray)
+    }
+  }
+
   override def computeOutputShape(inputShape: Shape): Shape = {
+    if (decoderHiddenSize == 0) {
+      val _input = constructTensor(inputShape)
+      val _output = updateOutput(_input)
+      decoderHiddenSize = _output.toTable.get[Table](1).get.get[Tensor[T]](1).get.size(2)
+    }
     MultiShape(inputShape.toMulti().map(updateShape(_)))
   }
 

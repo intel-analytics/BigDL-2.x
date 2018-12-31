@@ -22,7 +22,6 @@ import com.intel.analytics.bigdl.tensor.Tensor
 import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric
 import com.intel.analytics.bigdl.utils._
 
-import com.intel.analytics.zoo.pipeline.api.Net
 import com.intel.analytics.zoo.pipeline.api.keras.layers.SelectTable
 import com.intel.analytics.zoo.pipeline.api.keras.layers.utils.KerasUtils
 import com.intel.analytics.zoo.pipeline.api.keras.layers._
@@ -43,12 +42,37 @@ class RNNDecoder[T: ClassTag](val rnns: Array[Recurrent[T]],
   val inputShape: Shape = null)(implicit ev: TensorNumeric[T])
   extends Decoder {
 
+  private def checkStateShape(stateShape: Shape, hiddenSizes: Array[Int]): Boolean = {
+    if (stateShape.isInstanceOf[SingleShape]) {
+      if (hiddenSizes.length > 1) return false
+      return stateShape.toSingle()(1) == hiddenSizes.head
+    } else {
+      var isMatch = true
+      var i = 0
+      while (i < stateShape.toMulti().size) {
+        isMatch = isMatch && checkStateShape(stateShape.toMulti()(i), Array(hiddenSizes(i)))
+        i += 1
+      }
+      isMatch
+    }
+  }
+
   override def doBuild(inputShape: Shape): AbstractModule[Activity, Tensor[T], T] = {
     val layer = Sequential()
+
     // get decoder input
     layer.add(SelectTable(0, KerasUtils.removeBatch(inputShape)))
     if (embedding != null) layer.add(embedding)
     rnns.foreach(layer.add(_))
+
+    val stateShape = inputShape.toMulti().last
+    var i = 0
+    while (i < rnns.size) {
+      require(checkStateShape(stateShape.toMulti()(i), rnns(i).getHiddenShape()) == true,
+        "states shape should match layers")
+      i += 1
+    }
+
     layer.asInstanceOf[AbstractModule[Activity, Tensor[T], T]]
   }
 
@@ -115,7 +139,7 @@ object RNNDecoder {
       case "simplernn" =>
         for (i <- 1 to numLayers) rnn.append(SimpleRNN(hiddenSize, returnSequences = true))
       case _ => throw new IllegalArgumentException(s"Please use " +
-        s"Decoder(rnn: Array[Recurrent[T]], embedding: KerasLayer[Tensor[T], Tensor[T], T])" +
+        s"RNNDecoder(rnn: Array[Recurrent[T]], embedding: KerasLayer[Tensor[T], Tensor[T], T])" +
         s"to create a decoder")
     }
     RNNDecoder[T](rnn.toArray, embedding, inputShape)

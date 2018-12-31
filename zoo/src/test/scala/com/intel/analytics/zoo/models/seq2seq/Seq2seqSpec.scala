@@ -122,8 +122,8 @@ class Seq2seqSpec extends FlatSpec with Matchers with BeforeAndAfter {
     val gradOutput = Tensor[Float](batchSize, seqLen, hiddenSize).rand()
     val model = Seq2seq[Float](encoder, decoder,
       SingleShape(List(seqLen)), SingleShape(List(seqLen)))
-//    model.forward(T(input, input2))
-//    model.backward(T(input, input2), gradOutput)
+    model.forward(T(input, input2))
+    model.backward(T(input, input2), gradOutput)
 
     val encoder2 = RNNEncoder[Float]("lstm", numLayer, hiddenSize, Embedding[Float](10, inputSize))
     val decoder2 = RNNDecoder[Float]("lstm", numLayer, hiddenSize, Embedding[Float](10, inputSize))
@@ -132,6 +132,15 @@ class Seq2seqSpec extends FlatSpec with Matchers with BeforeAndAfter {
       SingleShape(List(seqLen)), SingleShape(List(seqLen)), bridge)
     model2.forward(T(input, input2))
     model2.backward(T(input, input2), gradOutput)
+
+    val encoder3 = RNNEncoder[Float]("lstm", numLayer, hiddenSize, Embedding[Float](10, inputSize))
+    val decoder3 = RNNDecoder[Float]("lstm", numLayer, hiddenSize, Embedding[Float](10, inputSize))
+    val model3 = Seq2seq[Float](encoder3, decoder3,
+      SingleShape(List(seqLen)), SingleShape(List(seqLen)),
+      bridge = new Bridge[Float](Dense[Float](hiddenSize * numLayer * 2)
+        .asInstanceOf[KerasLayer[Tensor[Float], Tensor[Float], Float]]))
+    model3.forward(T(input, input2))
+    model3.backward(T(input, input2), gradOutput)
   }
 
   "Seq2seq model with multiple lstm" should "be able to work with different" +
@@ -178,6 +187,18 @@ class Seq2seqSpec extends FlatSpec with Matchers with BeforeAndAfter {
 
     val output = model.forward(T(input, input2))
     val t = model.backward(T(input, input2), gradOutput)
+
+
+    val encoder2 = RNNEncoder[Float]("SimpleRNN", numLayer, hiddenSize)
+    val decoder2 = RNNDecoder[Float]("SimpleRNN", numLayer, hiddenSize)
+
+    val model2 = Seq2seq[Float](encoder2, decoder2,
+      SingleShape(List(seqLen, inputSize)), SingleShape(List(seqLen, inputSize)),
+      bridge = new Bridge[Float](Dense[Float](hiddenSize * numLayer)
+        .asInstanceOf[KerasLayer[Tensor[Float], Tensor[Float], Float]]))
+
+    model2.forward(T(input, input2))
+    model2.backward(T(input, input2), gradOutput)
   }
 
   "Seq2seq model with simple rnn" should "generate correct result" in {
@@ -277,7 +298,7 @@ class Seq2seqSpec extends FlatSpec with Matchers with BeforeAndAfter {
     val decoder2 = RNNDecoder[Float]("SimpleRNN", numLayer, hiddenSize)
     val model2 = Seq2seq[Float](encoder2, decoder2,
       SingleShape(List(seqLen, inputSize)), SingleShape(List(seqLen, inputSize)),
-      bridge = new Bridge[Float](Identity[Float](Shape(Array(hiddenSize)))
+      bridge = new Bridge[Float](Identity[Float]()
         .asInstanceOf[KerasLayer[Tensor[Float], Tensor[Float], Float]]))
     val w_2 = model2.parameters()._1
     w_2(3).set(w3)
