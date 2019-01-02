@@ -9,9 +9,6 @@ part of the gradient to next layer.
 
 The most common input is 2D.
 
-When you use this layer as the first layer of a model, you need to provide the argument
-inputShape (a Single Shape, does not include the batch dimension).
-
 **Scala:**
 ```scala
 SparseDense(outputDim, init = "glorot_uniform", activation = null, wRegularizer = null, bRegularizer = null, backwardStart = -1, backwardLength = -1, initWeight = null, initBias = null, initGradWeight = null, initGradBias = null, bias = true, inputShape = null)
@@ -414,8 +411,6 @@ Squeeze(1) will give output size (2, 3, 4, 1),
 
 Squeeze() will give output size (2, 3, 4)
 
-When you use this layer as the first layer of a model, you need to provide the argument input_shape (a shape tuple, does not include the batch dimension).
-
 **Scala:**
 ```scala
 Squeeze(dims = null, inputShape = null)
@@ -428,7 +423,7 @@ Squeeze(dim=None, input_shape=None, name=None)
 **Parameters:**
 
 * `dims`: The dimension(s) to squeeze. 0-based index. Cannot squeeze the batch dimension. The selected dimensions must be singleton, i.e. having size 1. Default is null, and in this case all the non-batch singleton dimensions will be deleted.
-* `inputShape`: A Single Shape, does not include the batch dimension.
+* `inputShape`:  Only need to specify this argument when you use this layer as the first layer of a model. For Scala API, it should be a [`Shape`](../keras-api-scala/#shape) object. For Python API, it should be a shape tuple. Batch dimension should be excluded.
 
 **Scala example:**
 ```scala
@@ -497,8 +492,6 @@ Threshold the input.
 
 If an input element is smaller than the threshold value, it will be replaced by 0; otherwise, it will be replaced by 1.
 
-When you use this layer as the first layer of a model, you need to provide the argument input_shape (a shape tuple, does not include the batch dimension).
-
 **Scala:**
 ```scala
 BinaryThreshold(value = 1e-6, inputShape = null)
@@ -511,7 +504,7 @@ BinaryThreshold(value=1e-6, input_shape=None, name=None)
 **Parameters:**
 
 * `value`: The threshold value to compare with. Default is 1e-6.
-* `inputShape`: A shape tuple, not including batch.
+* `inputShape`: Only need to specify this argument when you use this layer as the first layer of a model. For Scala API, it should be a [`Shape`](../keras-api-scala/#shape) object. For Python API, it should be a shape tuple. Batch dimension should be excluded.
 
 **Scala example:**
 ```scala
@@ -630,11 +623,9 @@ Output is
 ## **Sqrt**
 Applies an element-wise square root operation to the input.
 
-When you use this layer as the first layer of a model, you need to provide the argument input_shape (a shape tuple, does not include the batch dimension).
-
 **Scala:**
 ```scala
-Sqrt(inputShape = Null)
+Sqrt(inputShape = null)
 ```
 **Python:**
 ```python
@@ -643,7 +634,7 @@ Sqrt(input_shape=None, name=None)
 
 **Parameters:**
 
-* `inputShape`: A shape tuple, not including batch.
+* `inputShape`: Only need to specify this argument when you use this layer as the first layer of a model. For Scala API, it should be a [`Shape`](../keras-api-scala/#shape) object. For Python API, it should be a shape tuple. Batch dimension should be excluded.
 
 **Scala example:**
 ```scala
@@ -698,11 +689,9 @@ Output is
 ## **MulConstant**
 Multiply the input by a (non-learnable) scalar constant.
 
-When you use this layer as the first layer of a model, you need to provide the argument input_shape (a shape tuple, does not include the batch dimension).
-
 **Scala:**
 ```scala
-MulConstant(constant, inputShape = Null)
+MulConstant(constant, inputShape = null)
 ```
 **Python:**
 ```python
@@ -712,7 +701,7 @@ MulConstant(constant, input_shape=None, name=None)
 **Parameters:**
 
 * `constant`: The scalar constant to be multiplied.
-* `inputShape`: A shape tuple, not including batch.
+* `inputShape`: Only need to specify this argument when you use this layer as the first layer of a model. For Scala API, it should be a [`Shape`](../keras-api-scala/#shape) object. For Python API, it should be a shape tuple. Batch dimension should be excluded.
 
 **Scala example:**
 ```scala
@@ -797,11 +786,9 @@ Computes the element-wise product of the input and weight, with the shape of the
 
 Similarly, perform an expanded bias and perform an element-wise add.
 
-When you use this layer as the first layer of a model, you need to provide the argument input_shape (a shape tuple, does not include the batch dimension).
-
 **Scala:**
 ```scala
-Scale(size, inputShape = Null)
+Scale(size, inputShape = null)
 ```
 **Python:**
 ```python
@@ -811,7 +798,7 @@ Scale(size, input_shape=None, name=None)
 **Parameters:**
 
 * `size`: Size of the weight and bias.
-* `inputShape`: A shape tuple, not including batch.
+* `inputShape`: Only need to specify this argument when you use this layer as the first layer of a model. For Scala API, it should be a [`Shape`](../keras-api-scala/#shape) object. For Python API, it should be a shape tuple. Batch dimension should be excluded.
 
 **Scala example:**
 ```scala
@@ -867,13 +854,9 @@ Output is
 ## **Log**
 Applies a log transformation to the input.
 
-When you use this layer as the first layer of a model, you need to provide the argument inputShape (a Single Shape, does not include the batch dimension).
-
-Remark: This layer is from Torch and wrapped in Keras style.
-
 **Scala:**
 ```scala
-Log(inputShape = Null)
+Log(inputShape = null)
 ```
 **Python:**
 ```python
@@ -882,7 +865,7 @@ Log(input_shape=None, name=None)
 
 **Parameters:**
 
-* `inputShape`: A shape tuple, not including batch.
+* `inputShape`: Only need to specify this argument when you use this layer as the first layer of a model. For Scala API, it should be a [`Shape`](../keras-api-scala/#shape) object. For Python API, it should be a shape tuple. Batch dimension should be excluded.
 
 **Scala example:**
 ```scala
@@ -975,7 +958,7 @@ It's useful in same parallel container to get an origin input.
 
 **Scala:**
 ```scala
-Identity(inputShape = Null)
+Identity(inputShape = null)
 ```
 **Python:**
 ```python
@@ -984,7 +967,7 @@ Identity(input_shape=None, name=None)
 
 **Parameters:**
 
-* `inputShape`: A shape tuple, not including batch.
+* `inputShape`: Only need to specify this argument when you use this layer as the first layer of a model. For Scala API, it should be a [`Shape`](../keras-api-scala/#shape) object. For Python API, it should be a shape tuple. Batch dimension should be excluded.
 
 **Scala example:**
 ```scala
