@@ -522,6 +522,7 @@ from zoo.pipeline.api.keras.layers import UpSampling3D
 model = Sequential()
 model.add(UpSampling3D((2, 2, 2), input_shape=(1, 1, 2, 2)))
 input = np.random.random([1, 1, 1, 2, 2])
+output = model.forward(input)
 ```
 Input is:
 ```python
