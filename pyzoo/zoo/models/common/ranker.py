@@ -27,11 +27,11 @@ class Ranker(JavaValue):
     def evaluate_ndcg(self, x, k, threshold=0.0):
         """
         """
-        callBigDlFunc(self.bigdl_type, "evaluateNDCG",
-                      self.value, x, k, threshold)
+        return callBigDlFunc(self.bigdl_type, "evaluateNDCG",
+                             self.value, x, k, threshold)
 
     def evaluate_map(self, x, threshold=0.0):
         """
         """
-        callBigDlFunc(self.bigdl_type, "evaluateMAP",
-                      self.value, x, threshold)
+        return callBigDlFunc(self.bigdl_type, "evaluateMAP",
+                             self.value, x, threshold)

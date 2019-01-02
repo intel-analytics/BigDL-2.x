@@ -101,6 +101,16 @@ class TextSet(JavaValue):
         """
         return callBigDlFunc(self.bigdl_type, "textSetGetTexts", self.value)
 
+    def get_uris(self):
+        """
+        Get the identifiers of a TextSet.
+        If a text doesn't have a uri, its corresponding position will be None.
+
+        :return: List of String for LocalTextSet.
+                 RDD of String for DistributedTextSet.
+        """
+        return callBigDlFunc(self.bigdl_type, "textSetGetURIs", self.value)
+
     def get_labels(self):
         """
         Get the labels of a TextSet (if any).

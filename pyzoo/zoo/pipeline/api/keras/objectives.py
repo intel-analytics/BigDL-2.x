@@ -158,7 +158,7 @@ class Hinge(LossFunction):
     hinge loss (margin-based loss) between input x (a Tensor of dimension 1) and output y.
 
     # Arguments:
-    margin: if unspecified, is by default 1.
+    margin: Float. Default is 1.0.
     size_average: Boolean. Whether losses are averaged over observations for each
                   mini-batch. Default is True. If False, the losses are instead
                   summed for each mini-batch.
@@ -254,7 +254,7 @@ class SquaredHinge(LossFunction):
     between input x (a Tensor of dimension 1) and output y.
 
     # Arguments:
-    margin: if unspecified, is by default 1.
+    margin: Float. Default is 1.0.
     size_average: Boolean. Whether losses are averaged over observations for each
                   mini-batch. Default is True. If False, the losses are instead
                   summed for each mini-batch.
@@ -268,6 +268,10 @@ class SquaredHinge(LossFunction):
 
 class RankHinge(LossFunction):
     """
+    Hinge loss for pairwise ranking problems.
+
+    # Arguments:
+    margin: Float. Default is 1.0.
 
     >>> loss = RankHinge()
     creating: createZooKerasRankHinge

@@ -14,8 +14,6 @@
 # limitations under the License.
 #
 
-import sys
-
 from zoo.models.common import *
 
 if sys.version >= '3':

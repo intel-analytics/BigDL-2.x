@@ -44,8 +44,8 @@ class Relation(object):
 
 
 class Relations(object):
-    @classmethod
-    def read(cls, path, sc=None, min_partitions=1, bigdl_type="float"):
+    @staticmethod
+    def read(path, sc=None, min_partitions=1, bigdl_type="float"):
         if sc:
             jvalue = callBigDlFunc(bigdl_type, "readRelations", path, sc, min_partitions)
             res = jvalue.map(lambda x: Relation(str(x[0]), str(x[1]), int(x[2])))

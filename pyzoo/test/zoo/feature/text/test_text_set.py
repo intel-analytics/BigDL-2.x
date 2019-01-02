@@ -22,6 +22,9 @@ from zoo.feature.common import ChainedPreprocessing, Relations
 from zoo.feature.text import *
 from zoo.common.nncontext import *
 from zoo.models.textclassification import TextClassifier
+from zoo.models.textmatching import KNRM
+from zoo.pipeline.api.keras.models import Sequential
+from zoo.pipeline.api.keras.layers import TimeDistributed
 from zoo.pipeline.api.keras.objectives import SparseCategoricalCrossEntropy
 
 
@@ -178,12 +181,30 @@ class TestTextSet:
         assert distributed_set.get_samples().collect() == [None, None, None]
         assert distributed_set.get_predicts().collect() == [None, None, None]
 
-    def test_relations(self):
+    def test_qaranker_distributed_integration(self):
         relations = Relations.read(self.qa_path+"/relations.txt", self.sc)
+        assert relations.count() == 4
         text_set = TextSet.read_csv(self.qa_path+"/question_corpus.csv", self.sc)
-        transformed = text_set.tokenize().word2idx().shape_sequence(5)
+        assert text_set.get_uris().collect() == ["Q1", "Q2"]
+        transformed = text_set.tokenize().normalize().word2idx().shape_sequence(5)
         relation_pairs = TextSet.from_relation_pairs(relations, transformed, transformed)
-        relation_pairs.get_samples().collect()
+        pair_samples = relation_pairs.get_samples().collect()
+        assert len(pair_samples) == 2
+        for sample in pair_samples:
+            assert list(sample.feature.shape) == [2, 10]
+            assert np.allclose(sample.label.to_ndarray(), np.array([[1.0], [0.0]]))
+        relation_lists = TextSet.from_relation_lists(relations, transformed, transformed)
+        relation_samples = relation_lists.get_samples().collect()
+        assert len(relation_samples) == 2
+        for sample in relation_samples:
+            assert list(sample.feature.shape) == [2, 10]
+            assert list(sample.label.shape) == [2, 1]
+        knrm = KNRM(5, 5, self.glove_path, word_index=transformed.get_word_index())
+        model = Sequential().add(TimeDistributed(knrm, input_shape=(2, 10)))
+        model.compile("sgd", "rank_hinge")
+        model.fit(relation_pairs, batch_size=2, nb_epoch=2)
+        print(knrm.evaluate_ndcg(relation_lists, 3))
+        print(knrm.evaluate_map(relation_lists))
 
 
 if __name__ == "__main__":
