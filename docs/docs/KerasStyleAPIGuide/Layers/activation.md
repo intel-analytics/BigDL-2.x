@@ -177,6 +177,7 @@ Output is
    [0.5       , 0.3264643 , 0.5       , 0.14861017]]]
 ```
 
+---
 ## **RReLU**
 Applies the randomized leaky rectified linear unit element-wise to the input.
 
@@ -194,27 +195,11 @@ For reference, see [Empirical Evaluation of Rectified Activations in Convolution
 
 **Scala:**
 ```scala
-<<<<<<< HEAD
-<<<<<<< HEAD
 RReLU(lower = 1.0/8, upper = 1.0/3, inputShape = null)
 ```
 **Python:**
 ```python
 RReLU(lower=1.0/8, upper=1.0/3, input_shape=None, name=None)
-=======
-RReLU(lower=1.0/8, upper=1.0/3, inputShape = null)
-```
-**Python:**
-```python
-RReLU(lower=1.0/8, upper=1.0/3, input_shape = None, name=None)
->>>>>>> fix problems in format
-=======
-RReLU(lower = 1.0/8, upper = 1.0/3, inputShape = null)
-```
-**Python:**
-```python
-RReLU(lower=1.0/8, upper=1.0/3, input_shape=None, name=None)
->>>>>>> format fixing
 ```
 
 **Parameters:**
@@ -231,21 +216,24 @@ import com.intel.analytics.bigdl.utils.Shape
 import com.intel.analytics.bigdl.tensor.Tensor
 val model = Sequential[Float]()
 model.add(RReLU[Float](inputShape = Shape(1, 4)))
-val input = Tensor[Float](1, 4).rand()
+val input = Tensor[Float](1, 1, 4).rand()
 val output = model.forward(input)
 ```
 Input is:
 ```scala
 input: com.intel.analytics.bigdl.tensor.Tensor[Float] =
-0.45819774      0.337987        0.9469945       0.13629237
-[com.intel.analytics.bigdl.tensor.DenseTensor of size 1x4]
-```
+(1,.,.) =
+0.94700974      0.10242243      0.36114395      0.054554284
 
+[com.intel.analytics.bigdl.tensor.DenseTensor of size 1x1x4]
+```
 Output is:
 ```scala
 output: com.intel.analytics.bigdl.nn.abstractnn.Activity =
-0.45819774      0.337987        0.9469945       0.13629237
-[com.intel.analytics.bigdl.tensor.DenseTensor of size 1x4]
+(1,.,.) =
+0.94700974      0.10242243      0.36114395      0.054554284
+
+[com.intel.analytics.bigdl.tensor.DenseTensor of size 1x1x4]
 ```
 
 **Python example:**
@@ -255,14 +243,14 @@ from zoo.pipeline.api.keras.layers import RReLU
 from zoo.pipeline.api.keras.models import Sequential
 model = Sequential()
 model.add(RReLU(input_shape = (1,4)))
-input = np.random.random([1, 4])
+input = np.random.random([1, 1, 4])
 output = model.forward(input)
 ```
 Input is:
 ```python
-array([[0.18920137, 0.69756514, 0.69502922, 0.01312884]])
+array([[[0.13629929, 0.45604206, 0.89164672, 0.15428345]]])
 ```
 Ouput is:
 ```python
-array([[0.18920137, 0.69756514, 0.6950292 , 0.01312884]], dtype=float32)
+array([[[0.1362993 , 0.45604205, 0.89164674, 0.15428345]]], dtype=float32)
 ```

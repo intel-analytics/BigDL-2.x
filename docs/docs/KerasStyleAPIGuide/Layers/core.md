@@ -1416,6 +1416,7 @@ array([[0.        , 0.        , 1.2698183 , 0.        , 0.10656227],
        [0.        , 0.        , 0.6236721 , 0.00299606, 0.29664695]],
       dtype=float32)
 ```
+
 ---
 ## **Negative**
 Computes the negative value of each element of the input.
