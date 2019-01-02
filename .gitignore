@@ -2,6 +2,7 @@
 *.pyc
 *.class
 *.crc
+*.o
 target/
 /dist/
 pyzoo/.pytest_cache/

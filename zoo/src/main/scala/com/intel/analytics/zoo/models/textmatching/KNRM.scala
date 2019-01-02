@@ -54,8 +54,8 @@ import scala.reflect.ClassTag
  *                   you are recommended to use RankHinge as loss for pairwise training.
  *                   For classification, the last layer will be sigmoid and the output will be the
  *                   probability between 0 and 1 indicating whether text1 is related to text2 and
- *                   you are recommended to use BCECriterion as loss for binary classification.
- *                   Default mode is 'ranking'.
+ *                   you are recommended to use 'binary_crossentropy' as loss for binary
+ *                   classification. Default mode is 'ranking'.
  */
 class KNRM[T: ClassTag] private(
     override val text1Length: Int,
@@ -102,6 +102,22 @@ class KNRM[T: ClassTag] private(
 }
 
 object KNRM {
+  /**
+   * The factory method to create a KNRM instance using embeddingFile and wordIndex.
+   *
+   * @param embeddingFile The path to the word embedding file.
+   *                      Currently only the following GloVe files are supported:
+   *                      "glove.6B.50d.txt", "glove.6B.100d.txt", "glove.6B.200d.txt",
+   *                      "glove.6B.300d.txt", "glove.42B.300d.txt", "glove.840B.300d.txt".
+   *                      You can download from: https://nlp.stanford.edu/projects/glove/.
+   * @param wordIndex Map of word (String) and its corresponding index (integer).
+   *                  The index is supposed to start from 1 with 0 reserved for unknown words.
+   *                  During the prediction, if you have words that are not in the wordIndex
+   *                  for the training, you can map them to index 0.
+   *                  Default is null. In this case, all the words in the embeddingFile will
+   *                  be taken into account and you can call
+   *                  WordEmbedding.getWordIndex(embeddingFile) to retrieve the map.
+   */
   def apply[@specialized(Float, Double) T: ClassTag](
       text1Length: Int,
       text2Length: Int,
@@ -113,7 +129,7 @@ object KNRM {
       exactSigma: Double = 0.001,
       targetMode: String = "ranking")(implicit ev: TensorNumeric[T]): KNRM[T] = {
     val (vocabSize, embedSize, embedWeights) = WordEmbedding.prepareEmbedding[T](
-      embeddingFile, wordIndex, randomizeUnknownWords = true, normalizeEmbedding = true)
+      embeddingFile, wordIndex, randomizeUnknown = true, normalize = true)
     new KNRM[T](text1Length, text2Length, vocabSize, embedSize, embedWeights,
       trainEmbed, kernelNum, sigma, exactSigma, targetMode).build()
   }
@@ -149,10 +165,11 @@ object KNRM {
       kernelNum: Int,
       sigma: Double,
       exactSigma: Double,
+      targetMode: String,
       model: AbstractModule[Activity, Activity, T])
     (implicit ev: TensorNumeric[T]): KNRM[T] = {
     new KNRM[T](text1Length, text2Length, vocabSize, embedSize, embedWeights,
-      trainEmbed, kernelNum, sigma, exactSigma).addModel(model)
+      trainEmbed, kernelNum, sigma, exactSigma, targetMode).addModel(model)
   }
 
   /**

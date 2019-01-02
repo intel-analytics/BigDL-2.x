@@ -30,9 +30,9 @@ from bigdl.util.common import to_list, callBigDlFunc, get_spark_context, \
     JavaValue, get_node_and_core_number
 from zoo.common import Sample, JTensor
 from zoo.feature.image import ImageSet
-from zoo.pipeline.api.keras.engine.topology import ZooKerasLayer, KerasNet
-from bigdl.optim.optimizer import Optimizer, EveryEpoch
-from bigdl.optim.optimizer import MaxEpoch
+from zoo.pipeline.api.keras.engine.topology import ZooKerasLayer, KerasNet, to_bigdl_metric
+from bigdl.optim.optimizer import EveryEpoch, MaxEpoch, Optimizer
+from bigdl.keras.optimization import OptimConverter
 
 if sys.version >= '3':
     long = int
@@ -359,8 +359,9 @@ class TFValidationMethod(JavaValue):
 
 class TFOptimizer:
 
-    def __init__(self, loss, optim_method, sess=None,
-                 val_outputs=None, val_labels=None, val_method=None):
+    def __init__(self, loss, optim_method, sess=None, dataset=None, inputs=None,
+                 grads=None, variables=None, graph=None,
+                 val_outputs=None, val_labels=None, val_method=None, add_sample_weights_num=0):
         import tensorflow as tf
         from zoo.util.tf import export_tf
         '''
@@ -372,34 +373,30 @@ class TFOptimizer:
         :param sess: the current tensorflow Session, if you want to used a pre-trained model, you
         should use the Session to load the pre-trained variables and pass it to TFOptimizer.
         '''
+
+        if dataset is None:
+            args = TFOptimizer._get_arguments_from_loss(loss, optim_method, sess,
+                                                        val_outputs, val_labels, val_method)
+            loss, optim_method, sess, dataset, inputs = args[:5]
+            grads, variables, graph, val_outputs, val_labels, val_method = args[5:]
+
         self.optim_method = optim_method
-        if sess is None:
-            self.sess = tf.Session()
-            self.sess.run(tf.global_variables_initializer())
-        else:
-            self.sess = sess
-        grads_vars = tf.train.GradientDescentOptimizer(0).compute_gradients(loss)
-        variables = []
-        grads = []
-        from zoo.util.tf import process_grad
-        for (grad, var) in grads_vars:
-            variables.append(var)
-            grad = process_grad(grad)
-            grads.append(grad)
-        self.export_dir = tempfile.mkdtemp()
-        all_required_inputs = _find_placeholders([loss])
-        self.dataset = tf.get_collection(all_required_inputs[0].name)[0]
+        self.sess = sess
+        self.dataset = dataset
+        self.inputs = inputs
+        self.graph = graph
+
         if self.dataset.batch_size <= 0:
             raise ValueError("You should set batch_size instead of batch_per_thread for training")
-        self.inputs = self.dataset.tensors
-
-        _check_the_same(all_required_inputs, self.inputs)
 
         if val_outputs is not None and val_labels is not None:
+            with self.graph.as_default():
+                val_labels = [tf.identity(v) for v in val_labels]
             outputs = val_outputs + val_labels + [loss]
         else:
             outputs = [loss]
 
+        self.export_dir = tempfile.mkdtemp()
         export_tf(self.sess, self.export_dir,
                   inputs=self.inputs,
                   outputs=grads + outputs)
@@ -418,20 +415,23 @@ class TFOptimizer:
         with open(os.path.join(self.export_dir, "training_meta.json"), "w") as f:
             f.write(json.dumps(meta))
 
-        self.training_helper_layer = TFTrainingHelper(self.export_dir)
-
         self.variable_placeholders = []
-        assigns = []
-        for v in variables:
-            p = tf.placeholder(dtype=tf.float32, shape=v.shape)
-            a = tf.assign(v, p)
-            self.variable_placeholders.append(p)
-            assigns.append(a)
-        self.assign = tf.group(*assigns)
+        with self.graph.as_default():
+            assigns = []
+            for v in variables:
+                p = tf.placeholder(dtype=tf.float32, shape=v.shape)
+                a = tf.assign(v, p)
+                self.variable_placeholders.append(p)
+                assigns.append(a)
+            assign = tf.group(*assigns)
+        self.assign = assign
+
+        self.training_helper_layer = TFTrainingHelper(self.export_dir)
 
         data = self.dataset.rdd
         batch_size = self.dataset.batch_size
-        sample_rdd = data.map(lambda t: Sample.from_ndarray(t, [np.array([0.0])]))
+        sample_rdd = data.map(lambda t: Sample.from_ndarray(
+            t + [np.array(1.0)] * add_sample_weights_num, [np.array([0.0])]))
 
         self.optimizer = Optimizer.create(self.training_helper_layer,
                                           sample_rdd,
@@ -441,12 +441,79 @@ class TFOptimizer:
 
         if val_outputs is not None and val_labels is not None:
             val_sample_rdd = self.dataset.val_rdd\
-                .map(lambda t: Sample.from_ndarray(t, [np.array([0.0])]))
-            val_method = TFValidationMethod(val_method, len(val_outputs), len(val_labels))
+                .map(lambda t: Sample.from_ndarray(t + [np.array(1.0)] * add_sample_weights_num,
+                                                   [np.array([0.0])]))
+            val_method = [TFValidationMethod(m, len(val_outputs), len(val_labels))
+                          for m in to_list(val_method)]
             self.optimizer.set_validation(self.dataset.batch_size,
                                           val_sample_rdd,
                                           EveryEpoch(),
                                           val_method)
+
+    @staticmethod
+    def _get_arguments_from_loss(loss, optim_method, session, val_outputs, val_labels, val_method):
+        import tensorflow as tf
+        if session is None:
+            sess = tf.Session()
+            sess.run(tf.global_variables_initializer())
+        else:
+            sess = session
+        grads_vars = tf.train.GradientDescentOptimizer(0).compute_gradients(loss)
+        variables = []
+        grads = []
+        from zoo.util.tf import process_grad
+        for (grad, var) in grads_vars:
+            variables.append(var)
+            grad = process_grad(grad)
+            grads.append(grad)
+
+        all_required_inputs = _find_placeholders([loss])
+        dataset = tf.get_collection(all_required_inputs[0].name)[0]
+
+        inputs = dataset.tensors
+
+        _check_the_same(all_required_inputs, inputs)
+
+        return (loss, optim_method, sess, dataset, inputs,
+                grads, variables, loss.graph, val_outputs, val_labels, val_method)
+
+    @classmethod
+    def from_loss(cls, loss, optim_method, session=None, val_outputs=None,
+                  val_labels=None, val_method=None):
+        args = TFOptimizer._get_arguments_from_loss(loss, optim_method,
+                                                    session, val_outputs, val_labels, val_method)
+
+        return cls(*args)
+
+    @classmethod
+    def from_keras(cls, keras_model, dataset):
+        import tensorflow.keras.backend as keras_backend
+
+        loss = keras_model.total_loss
+        inputs = keras_model.inputs + keras_model.targets + keras_model.sample_weights
+
+        variables = keras_model._collected_trainable_weights
+        keras_optimizer = keras_model.optimizer
+        grads = keras_optimizer.get_gradients(loss, variables)
+        sess = keras_backend.get_session()
+        with sess.as_default():
+            optim_method = OptimConverter.to_bigdl_optim_method(keras_optimizer)
+
+        if keras_model.metrics:
+            if isinstance(keras_model.metrics, dict):
+                raise ValueError(
+                    "different metrics for different outputs are not supported right now")
+            bigdl_val_methods = [to_bigdl_metric(m) for m in keras_model.metrics_names]
+            val_outputs = keras_model.outputs
+            val_labels = keras_model.targets
+        else:
+            val_outputs = None
+            val_labels = None
+            bigdl_val_methods = None
+
+        return cls(loss, optim_method, sess, dataset, inputs,
+                   grads, variables, loss.graph, val_outputs, val_labels,
+                   bigdl_val_methods, len(keras_model.sample_weights))
 
     def set_train_summary(self, summary):
         self.optimizer.set_train_summary(summary)
