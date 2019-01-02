@@ -883,6 +883,7 @@ import com.intel.analytics.zoo.pipeline.api.keras.models.Sequential
 import com.intel.analytics.zoo.pipeline.api.keras.layers.Cropping2D
 import com.intel.analytics.bigdl.utils.Shape
 import com.intel.analytics.bigdl.tensor.Tensor
+
 val model = Sequential[Float]()
 model.add(Cropping2D[Float](((0, 1), (1, 0)), inputShape = Shape(2, 3, 4)))
 val input = Tensor[Float](2, 2, 3, 4).randn()
@@ -932,6 +933,7 @@ output: com.intel.analytics.bigdl.nn.abstractnn.Activity =
 from zoo.pipeline.api.keras.layers import Cropping2D
 from zoo.pipeline.api.keras.models import Sequential
 import numpy as np
+
 model = Sequential()
 model.add(Cropping2D(((0, 1), (1, 0)), input_shape=(2, 3, 4)))
 input = np.random.random([2, 2, 3, 4])
@@ -991,6 +993,7 @@ import com.intel.analytics.zoo.pipeline.api.keras.models.Sequential
 import com.intel.analytics.zoo.pipeline.api.keras.layers.Cropping3D
 import com.intel.analytics.bigdl.utils.Shape
 import com.intel.analytics.bigdl.tensor.Tensor
+
 val model = Sequential[Float]()
 model.add(Cropping3D[Float](((1, 1), (1, 1), (1, 1)), inputShape = Shape(2, 3, 4, 5)))
 val input = Tensor[Float](2, 2, 3, 4, 5).randn()
@@ -1084,6 +1087,7 @@ output: com.intel.analytics.bigdl.nn.abstractnn.Activity =
 import numpy as np
 from zoo.pipeline.api.keras.layers import Cropping3D
 from zoo.pipeline.api.keras.models import Sequential
+
 model = Sequential()
 model.add(Cropping3D(((1, 1), (1, 1), (1, 1)), input_shape=(2, 3, 4, 5)))
 input = np.random.random([2, 2, 3, 4, 5])
@@ -1179,6 +1183,7 @@ import com.intel.analytics.zoo.pipeline.api.keras.models.Sequential
 import com.intel.analytics.zoo.pipeline.api.keras.layers.ZeroPadding2D
 import com.intel.analytics.bigdl.utils.Shape
 import com.intel.analytics.bigdl.tensor.Tensor
+
 val model = Sequential[Float]()
 model.add(ZeroPadding2D[Float]((1, 1), inputShape = Shape(2, 2, 3)))
 val input = Tensor[Float](2, 2, 2, 3).randn()
@@ -1232,6 +1237,7 @@ output: com.intel.analytics.bigdl.nn.abstractnn.Activity =
 import numpy as np
 from zoo.pipeline.api.keras.layers import ZeroPadding2D
 from zoo.pipeline.api.keras.models import Sequential
+
 model = Sequential()
 model.add(ZeroPadding2D(input_shape=(2, 2, 3)))
 input = np.random.random([2, 2, 2, 3])
@@ -1320,6 +1326,7 @@ import com.intel.analytics.zoo.pipeline.api.keras.models.Sequential
 import com.intel.analytics.zoo.pipeline.api.keras.layers.ShareConvolution2D
 import com.intel.analytics.bigdl.utils.Shape
 import com.intel.analytics.bigdl.tensor.Tensor
+
 val model = Sequential[Float]()
 model.add(ShareConvolution2D[Float](nbFilter = 2, nbRow = 2, nbCol = 3, inputShape = Shape(2, 2, 3)))
 val input = Tensor[Float](1, 2, 2, 3).randn()
@@ -1351,6 +1358,7 @@ output: com.intel.analytics.bigdl.nn.abstractnn.Activity =
 from zoo.pipeline.api.keras.models import Sequential
 from zoo.pipeline.api.keras.layers import ShareConvolution2D
 import numpy as np
+
 model = Sequential()
 model.add(ShareConvolution2D(2, 2, 3, input_shape = (2, 2, 3)))
 input = np.random.random([1, 2, 2, 3])

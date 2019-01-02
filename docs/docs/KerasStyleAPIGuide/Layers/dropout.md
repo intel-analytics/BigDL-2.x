@@ -64,10 +64,10 @@ import numpy as np
 from zoo.pipeline.api.keras.layers import Dropout
 from zoo.pipeline.api.keras.models import Sequential
 
-domodel = Sequential()
-domodel.add(Dropout(0.3, input_shape=(3, 4)))
+model = Sequential()
+model.add(Dropout(0.3, input_shape=(3, 4)))
 input = np.random.random([2, 3, 4])
-output = domodel.forward(input)
+output = model.forward(input)
 ```
 Input is:
 ```python

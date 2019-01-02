@@ -214,6 +214,7 @@ import com.intel.analytics.zoo.pipeline.api.keras.models.Sequential
 import com.intel.analytics.zoo.pipeline.api.keras.layers.RReLU
 import com.intel.analytics.bigdl.utils.Shape
 import com.intel.analytics.bigdl.tensor.Tensor
+
 val model = Sequential[Float]()
 model.add(RReLU[Float](inputShape = Shape(1, 4)))
 val input = Tensor[Float](1, 1, 4).rand()
@@ -241,6 +242,7 @@ output: com.intel.analytics.bigdl.nn.abstractnn.Activity =
 import numpy as np
 from zoo.pipeline.api.keras.layers import RReLU
 from zoo.pipeline.api.keras.models import Sequential
+
 model = Sequential()
 model.add(RReLU(input_shape = (1,4)))
 input = np.random.random([1, 1, 4])

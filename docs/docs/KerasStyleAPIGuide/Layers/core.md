@@ -1272,8 +1272,8 @@ The batch dimension needs to be unchanged.
 
 For example, if input is:
 
-1 2 3
-4 5 6
+[[1, 2, 3], 
+ [4, 5, 6]]
 
 Select(1, 1) will give output [2 5]
 
@@ -1299,6 +1299,7 @@ Select(dim, index, input_shape=None, name=None)
 import com.intel.analytics.zoo.pipeline.api.keras.models.Sequential
 import com.intel.analytics.zoo.pipeline.api.keras.layers.Select
 import com.intel.analytics.bigdl.tensor.Tensor
+
 val model = Sequential[Float]()
 model.add(Select[Float](1, 2, inputShape = Shape(3, 1, 3)))
 val input = Tensor[Float](1, 3, 1, 3).randn()
@@ -1328,6 +1329,7 @@ output: com.intel.analytics.bigdl.nn.abstractnn.Activity =
 from zoo.pipeline.api.keras.layers import Select
 from zoo.pipeline.api.keras.models import Sequential
 import numpy as np
+
 model = Sequential()
 model.add(Select(1, 2, input_shape=(3, 1, 3)))
 input = np.random.random([1, 3, 1, 3])
@@ -1362,7 +1364,7 @@ Dense(output_dim, init="glorot_uniform", activation=None, W_regularizer=None, b_
 **Parameters:**
 
 * `outputDim`: The size of the output dimension.
-* `init`: Initialization method for the weights of the layer. Default is Xavier.You can also pass in corresponding string representations such as 'glorot_uniform'or 'normal', etc. for simple init methods in the factory method.
+* `init`: Initialization method for the weights of the layer. Default is Xavier.You can also pass in corresponding string representations such as 'glorot_uniform' or 'normal', etc. for simple init methods in the factory method.
 * `activation`: Activation function to use. Default is null.You can also pass in corresponding string representations such as 'relu'or 'sigmoid', etc. for simple activations in the factory method.
 * `wRegularizer`: An instance of [Regularizer](https://bigdl-project.github.io/master/#APIGuide/Regularizers/), applied to the input weights matrices. Default is null.
 * `bRegularizer`: An instance of [Regularizer](https://bigdl-project.github.io/master/#APIGuide/Regularizers/), applied to the bias. Default is null.
@@ -1375,6 +1377,7 @@ import com.intel.analytics.zoo.pipeline.api.keras.models.Sequential
 import com.intel.analytics.zoo.pipeline.api.keras.layers.Dense
 import com.intel.analytics.bigdl.utils.Shape
 import com.intel.analytics.bigdl.tensor.Tensor
+
 val model = Sequential[Float]()
 model.add(Dense[Float](5, activation = "relu", inputShape = Shape(4)))
 val input = Tensor[Float](2, 4).randn()
@@ -1400,6 +1403,7 @@ output: com.intel.analytics.bigdl.nn.abstractnn.Activity =
 import numpy as np
 from zoo.pipeline.api.keras.layers import Dense
 from zoo.pipeline.api.keras.models import Sequential
+
 model = Sequential()
 model.add(Dense(5, activation="relu", input_shape=(4, )))
 input = np.random.random([2, 4])
@@ -1440,6 +1444,7 @@ import com.intel.analytics.zoo.pipeline.api.keras.models.Sequential
 import com.intel.analytics.zoo.pipeline.api.keras.layers.Negative
 import com.intel.analytics.bigdl.utils.Shape
 import com.intel.analytics.bigdl.tensor.Tensor
+
 val model = Sequential[Float]()
 model.add(Negative[Float](inputShape = Shape(2, 3)))
 val input = Tensor[Float](2, 2, 3).randn()
@@ -1473,6 +1478,7 @@ output: com.intel.analytics.bigdl.nn.abstractnn.Activity =
 from zoo.pipeline.api.keras.layers import Negative
 from zoo.pipeline.api.keras.models import Sequential
 import numpy as np
+
 model = Sequential()
 model.add(Negative(input_shape=(2, 3)))
 input = np.random.random([2, 2, 3])
@@ -1527,6 +1533,7 @@ import com.intel.analytics.zoo.pipeline.api.keras.models.Sequential
 import com.intel.analytics.zoo.pipeline.api.keras.layers.CAdd
 import com.intel.analytics.bigdl.utils.Shape
 import com.intel.analytics.bigdl.tensor.Tensor
+
 val model = Sequential[Float]()
 model.add(CAdd[Float](Array(2, 3), inputShape = Shape(2, 3)))
 val input = Tensor[Float](2, 2, 3).rand()
@@ -1560,6 +1567,7 @@ output: com.intel.analytics.bigdl.nn.abstractnn.Activity =
 from zoo.pipeline.api.keras.layers import CAdd
 from zoo.pipeline.api.keras.models import Sequential
 import numpy as np
+
 model = Sequential()
 model.add(CAdd([2, 1], input_shape = (2, 3)))
 input = np.random.rand(2, 2, 3)
