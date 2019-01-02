@@ -141,6 +141,7 @@ object Bridge {
   def apply[@specialized(Float, Double) T: ClassTag](bridgeType: String,
     decoderHiddenSize: Int)(implicit ev: TensorNumeric[T]):
   KerasLayer[Activity, Activity, T] = {
+    require(decoderHiddenSize > 0, "invalid decoderHiddenSize")
     new Bridge(bridgeType, decoderHiddenSize)
   }
 

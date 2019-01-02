@@ -69,7 +69,10 @@ class RNNDecoder[T: ClassTag](val rnns: Array[Recurrent[T]],
     var i = 0
     while (i < rnns.size) {
       require(checkStateShape(stateShape.toMulti()(i), rnns(i).getHiddenShape()) == true,
-        "states shape should match layers")
+        s"decoder init states shape should match decoder layers! " +
+          s"Decoder layer expect hidden size (${rnns(i).getHiddenShape().mkString(" ")})," +
+          s" which actually feed shape is ${stateShape.toMulti()(i)}. Please update decoder" +
+          s" hidden size or update bridge/encoder hidden size")
       i += 1
     }
 
