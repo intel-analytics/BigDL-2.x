@@ -20,6 +20,7 @@ import java.util.{ArrayList => JArrayList, List => JList}
 
 import com.intel.analytics.bigdl.dataset.{Sample, Transformer}
 import com.intel.analytics.bigdl.optim.{OptimMethod, Trigger, ValidationMethod, ValidationResult}
+import com.intel.analytics.bigdl.python.api.EvaluatedResult
 import com.intel.analytics.bigdl.tensor.Tensor
 import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric
 import com.intel.analytics.bigdl.visualization.{TrainSummary, ValidationSummary}
@@ -27,6 +28,7 @@ import com.intel.analytics.bigdl.{Criterion, Module}
 import com.intel.analytics.zoo.common.PythonZoo
 import com.intel.analytics.zoo.feature.common._
 import com.intel.analytics.zoo.feature.image.RowToImageFeature
+import com.intel.analytics.zoo.pipeline.api.keras.python.PythonZooKeras
 import com.intel.analytics.zoo.pipeline.nnframes._
 import org.apache.spark.api.java.JavaSparkContext
 import org.apache.spark.sql.DataFrame
@@ -222,7 +224,8 @@ class PythonNNFrames[T: ClassTag](implicit ev: TensorNumeric[T]) extends PythonZ
   def nnEvaluatorEvaluate(
       evaluator: NNEvaluator[T],
       df: DataFrame,
-      vMethods: Array[ValidationMethod[T]]): Array[ValidationResult] = {
-    evaluator.evaluate(df, vMethods)
+      vMethods: JList[ValidationMethod[T]]): JList[EvaluatedResult] = {
+    val resultArray = evaluator.evaluate(df, vMethods.asScala.toArray)
+    PythonZooKeras.processEvaluateResult(resultArray)
   }
 }

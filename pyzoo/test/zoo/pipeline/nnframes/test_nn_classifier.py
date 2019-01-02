@@ -21,6 +21,7 @@ import string
 from bigdl.nn.criterion import *
 from bigdl.nn.layer import *
 from bigdl.optim.optimizer import *
+from bigdl.util.common import EvaluatedResult
 from numpy.testing import assert_allclose
 from pyspark.ml import Pipeline
 from pyspark.ml.feature import MinMaxScaler
@@ -611,9 +612,10 @@ class TestNNClassifer():
             StructField("label", DoubleType(), False)])
         df = self.sqlContext.createDataFrame(data, schema)
         nnClassifierModel = classifier.fit(df)
-        assert(isinstance(nnClassifierModel, NNClassifierModel))
+        assert isinstance(nnClassifierModel, NNClassifierModel)
         res = nnClassifierModel.transform(df)
-        NNEvaluator.evaluate(df, [AUC()])
+        eva_results = NNEvaluator.evaluate(res, [AUC()])
+        assert isinstance(eva_results[0], EvaluatedResult)
 
     def test_input_node_of_tfnet_from_session(self):
         import tensorflow as tff

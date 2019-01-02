@@ -49,7 +49,7 @@ class NNEvaluator[T: ClassTag] private[zoo] (
   def evaluate(
       dataframe: DataFrame,
       vMethods: Array[ValidationMethod[T]]
-    ): Array[ValidationResult] = {
+    ): Array[(ValidationResult, ValidationMethod[T])] = {
 
     dataframe.select($(predictionCol), $(labelCol)).rdd.map { row =>
       val prediction = SeqToTensor().apply(Iterator(row.get(0))).next()
@@ -60,7 +60,7 @@ class NNEvaluator[T: ClassTag] private[zoo] (
       }
     }.reduce((left, right) => {
       left.zip(right).map { case (l, r) => l + r }
-    })
+    }).zip(vMethods)
   }
 }
 

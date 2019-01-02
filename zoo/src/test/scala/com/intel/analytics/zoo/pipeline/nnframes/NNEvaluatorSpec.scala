@@ -69,7 +69,7 @@ class NNEvaluatorSpec extends FlatSpec with Matchers with BeforeAndAfter {
     val nnModel = classifier.fit(df)
     val predictionDF = nnModel.transform(df)
     val evaluateResult = new NNEvaluator().evaluate(predictionDF, Array(new AUC()))
-    require(evaluateResult.head.asInstanceOf[AucScore].result()._1 > 0.8)
+    require(evaluateResult.head._1.result()._1 > 0.8)
   }
 
   "NNEvaluator" should "support image FEATURE types" in {
@@ -83,7 +83,7 @@ class NNEvaluatorSpec extends FlatSpec with Matchers with BeforeAndAfter {
       .transform(imageDF)
 
     val evaluateResult = new NNEvaluator().evaluate(predictionDF, Array(new Top1Accuracy[Float]()))
-    require(evaluateResult.head.isInstanceOf[AccuracyResult])
+    require(evaluateResult.head._1.isInstanceOf[AccuracyResult])
   }
 
   "NNEvaluator" should "support image FEATURE types with NNEstimator" in {
@@ -98,6 +98,6 @@ class NNEvaluatorSpec extends FlatSpec with Matchers with BeforeAndAfter {
 
     val evaluateResult = new NNEvaluator().evaluate(predictionDF, Array(new Top1Accuracy[Float](),
       new Top5Accuracy[Float]()))
-    require(evaluateResult.forall(r => r.isInstanceOf[AccuracyResult]))
+    require(evaluateResult.forall(r => r._1.isInstanceOf[AccuracyResult]))
   }
 }

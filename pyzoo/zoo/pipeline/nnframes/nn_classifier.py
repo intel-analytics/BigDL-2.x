@@ -564,7 +564,6 @@ class NNEvaluator(JavaValue):
         """
         super(NNEvaluator, self).__init__(jvalue, bigdl_type)
 
-    def evaluate(self, vMethods):
-        callBigDlFunc(self.bigdl_type, "nnEvaluatorEvaluate",
-                      self.value, vMethods)
-        return self
+    def evaluate(self, df, vMethods):
+        results = callBigDlFunc(self.bigdl_type, "nnEvaluatorEvaluate", self.value, df, vMethods)
+        return results
