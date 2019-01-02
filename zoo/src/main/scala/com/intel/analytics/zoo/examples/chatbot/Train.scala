@@ -16,11 +16,13 @@
 
 package com.intel.analytics.zoo.examples.chatbot
 
+import com.intel.analytics.bigdl.nn.abstractnn.{AbstractModule, Activity}
 import com.intel.analytics.bigdl.dataset._
 import com.intel.analytics.bigdl.dataset.text.utils.SentenceToken
 import com.intel.analytics.bigdl.dataset.text._
+import com.intel.analytics.bigdl.nn.{InitializationMethod, RandomUniform, LookupTable,
+TimeDistributedMaskCriterion, InternalClassNLLCriterion}
 import com.intel.analytics.bigdl.nn.keras.KerasLayer
-import com.intel.analytics.bigdl.nn.{InternalClassNLLCriterion, RandomUniform, TimeDistributedMaskCriterion}
 import com.intel.analytics.bigdl.numeric.NumericFloat
 import com.intel.analytics.bigdl.optim.{Adam, OptimMethod}
 import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric
@@ -31,7 +33,7 @@ import com.intel.analytics.zoo.common.{NNContext, ZooDictionary}
 import com.intel.analytics.zoo.models.seq2seq._
 import com.intel.analytics.zoo.pipeline.api.keras.layers.internal.InternalMax
 import com.intel.analytics.zoo.pipeline.api.keras.layers.utils.KerasUtils
-import com.intel.analytics.zoo.pipeline.api.keras.layers.{Activation, Dense, Embedding, Max, TimeDistributed}
+import com.intel.analytics.zoo.pipeline.api.keras.layers._
 import com.intel.analytics.zoo.pipeline.api.keras.models.Sequential
 import org.apache.log4j.{Level, Logger}
 
@@ -81,6 +83,7 @@ object Train {
         .getLines
         .toList
         .map(_.split(",").map(_.toInt))
+        .map(s => s.filter(id => id != 0))
 
       val chat2List = Source
         .fromFile(param.dataFolder + "chat2_1.txt", "UTF-8")
@@ -90,6 +93,7 @@ object Train {
 
       val chat2 = SentenceIdxBiPadding(dictionary = dictionary)
         .apply(chat2List).map(_.split(",").map(_.toInt))
+        .map(s => s.filter(id => id != 0))
         .toList
 
       val tokens = sc.parallelize(chat1.zip(chat2))
@@ -102,12 +106,29 @@ object Train {
 
       val stdv = 1.0 / math.sqrt(param.embedDim)
 
-      val embEnc =
-        new Embedding(vocabSize, param.embedDim, maskZero = true,
-          paddingValue = padId, init = RandomUniform(-stdv, stdv))
-      val embDec =
-        new Embedding(vocabSize, param.embedDim, maskZero = true,
-          paddingValue = padId, init = RandomUniform(-stdv, stdv))
+      val wInit: InitializationMethod = RandomUniform(-stdv, stdv)
+      val bInit: InitializationMethod = RandomUniform(-stdv, stdv)
+
+      val embEnc = new KerasLayerWrapper[Float](LookupTable(
+        vocabSize,
+        param.embedDim,
+        paddingValue = padId,
+        maskZero = true
+      ).setInitMethod(wInit, bInit).asInstanceOf[AbstractModule[Activity, Activity, Float]])
+
+      val embDec = new KerasLayerWrapper[Float](LookupTable(
+        vocabSize,
+        param.embedDim,
+        paddingValue = padId,
+        maskZero = true
+      ).setInitMethod(wInit, bInit).asInstanceOf[AbstractModule[Activity, Activity, Float]])
+
+//      val embEnc =
+//        new Embedding(vocabSize, param.embedDim, maskZero = true,
+//          paddingValue = padId, init = RandomUniform(-stdv, stdv))
+//      val embDec =
+//        new Embedding(vocabSize, param.embedDim, maskZero = true,
+//          paddingValue = padId, init = RandomUniform(-stdv, stdv))
       val embEncW = embEnc.parameters()._1
       val embDecW = embDec.parameters()._1
       val embEncG = embEnc.parameters()._2
@@ -117,10 +138,13 @@ object Train {
         embEncG(i).set(embDecG(i))
       }
 
+      val padFeature = Tensor[Float](T(padId))
+      val padLabel = Tensor[Float](T(padId))
+
       val encoder = RNNEncoder[Float]("lstm", 3, param.embedDim,
-        embEnc)
+        embEnc.asInstanceOf[KerasLayer[Tensor[Float], Tensor[Float], Float]])
       val decoder = RNNDecoder[Float]("lstm", 3, param.embedDim,
-        embDec)
+        embDec.asInstanceOf[KerasLayer[Tensor[Float], Tensor[Float], Float]])
 
       val generator = Sequential[Float]()
       // need fix in checkWithCurrentInputShape KerasLayer.scala to take account -1
@@ -152,6 +176,12 @@ object Train {
       while (i <= param.nEpochs) {
         model.fit(
           trainSet, batchSize = param.batchSize,
+          featurePaddingParam = PaddingParam[Float](
+            paddingTensor =
+              Some(Array(padFeature, padFeature))),
+          labelPaddingParam = PaddingParam[Float](
+            paddingTensor =
+              Some(Array(padLabel))),
           nbEpoch = i)
 
         for (seed <- seeds) {
@@ -210,11 +240,12 @@ object Train {
   : (Array[T], Array[T], Array[T]) = {
     val evOne = ev.fromType(1)
     val (indices1, indices2) =
-    (chat._1.map(x => ev.fromType[Int](x)),
-      chat._2.map(x => ev.fromType[Int](x)))
+    (chat._1.map(x => ev.fromType[Int](x + 1)),
+      chat._2.map(x => ev.fromType[Int](x + 1)))
     // raw data is 0 based, and we need change it to 1 based.
     // Embeddding will add 1 for feature, we need manually add 1 for label
-    val label = indices2.drop(1).clone().map(x => ev.plus(x, evOne))
+//    val label = indices2.drop(1).clone().map(x => ev.plus(x, evOne))
+    val label = indices2.drop(1)
     (indices1, indices2.take(indices2.length - 1), label)
   }
 
@@ -229,12 +260,17 @@ object Train {
     val sentenceEnd = dictionary.getIndex(end.getOrElse(SentenceToken.end))
 
     override def apply(prev: Iterator[String]): Iterator[String] = {
+//      prev.map(x => {
+//        val index = x.indexOf(",0")
+//        val sentence = if (index == -1) x
+//        else sentenceStart + "," + x.slice(0, index) + "," + sentenceEnd + x.slice(index, x.length)
+//        sentence
+//      })
       prev.map(x => {
-        val index = x.indexOf(",0")
-        val sentence = if (index == -1) x
-        else sentenceStart + "," + x.slice(0, index) + "," + sentenceEnd + x.slice(index, x.length)
+        val sentence = sentenceStart + "," + x + "," + sentenceEnd
         sentence
       })
+
     }
   }
 
