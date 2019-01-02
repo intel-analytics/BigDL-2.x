@@ -31,7 +31,7 @@ class GetShapeSpec extends KerasBaseSpec {
     seq.add(input)
     val dense = Dense[Float](2, activation = "relu")
     seq.add(dense)
-    val ss = new GetShape[Float](inputShape = Shape(3, 2))
+    val ss = new GetShape[Float]()
     seq.add(ss)
     seq.getOutputShape().toSingle().toArray should be(Array(3))
     val outShape = seq.forward(Tensor[Float](Array(2, 3, 4)).randn())
