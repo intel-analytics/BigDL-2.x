@@ -38,7 +38,8 @@ def extract_scala_class(class_path):
                          "InternalLocalOptimizer", "InternalDistriOptimizer",
                          "EmbeddingMatrixHolder", "InternalParameter", "KerasParameter",
                          "InternalCAddTable",
-                         "EmbeddingMatrixHolder", "Pooling2D"}
+                         "EmbeddingMatrixHolder", "Pooling2D", "InternalSplitTensor",
+                         "SplitTensor", "SelectTable"}
     content = "\n".join([line for line in open(class_path).readlines()
                          if all([key not in line for key in exclude_key_words])])
     match = re.findall(r"class ([\w]+)[^{]+", content)
