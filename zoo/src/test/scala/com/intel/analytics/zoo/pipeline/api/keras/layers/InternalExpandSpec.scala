@@ -71,4 +71,3 @@ class InternalExpandSerialTest extends ModuleSerializationTest {
     runSerializationTest(layer, input)
   }
 }
-
