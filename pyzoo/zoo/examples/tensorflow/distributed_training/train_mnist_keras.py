@@ -19,8 +19,8 @@ from zoo import init_nncontext
 from zoo.pipeline.api.net import TFOptimizer, TFDataset
 from bigdl.optim.optimizer import *
 import sys
-from keras.models import Model
-from keras.layers import *
+from tensorflow.keras.models import Model
+from tensorflow.keras.layers import *
 
 from bigdl.dataset import mnist
 from bigdl.dataset.transformer import *
@@ -56,7 +56,7 @@ def main(max_epoch, data_num):
     x = Dense(64, activation='relu')(x)
     predictions = Dense(10, activation='softmax')(x)
 
-    model = Model(input=data, output=predictions)
+    model = Model(inputs=data, outputs=predictions)
 
     model.compile(optimizer='rmsprop',
                   loss='sparse_categorical_crossentropy',
@@ -64,13 +64,12 @@ def main(max_epoch, data_num):
 
     optimizer = TFOptimizer.from_keras(model, dataset)
 
-    optimizer.set_train_summary(TrainSummary("/tmp/az_lenet", "lenet"))
-    optimizer.set_val_summary(ValidationSummary("/tmp/az_lenet", "lenet"))
+    optimizer.set_train_summary(TrainSummary("/tmp/mnist_log", "mnist"))
+    optimizer.set_val_summary(ValidationSummary("/tmp/mnist_log", "mnist"))
     # kick off training
     optimizer.optimize(end_trigger=MaxEpoch(max_epoch))
 
-    saver = tf.train.Saver()
-    saver.save(optimizer.sess, "/tmp/lenet/")
+    model.save_weights("/tmp/mnist_keras.h5")
 
 if __name__ == '__main__':
 

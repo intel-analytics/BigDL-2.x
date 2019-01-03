@@ -16,6 +16,7 @@
 
 import sys
 import tempfile
+import warnings
 
 import six
 import os
@@ -32,7 +33,6 @@ from zoo.common import Sample, JTensor
 from zoo.feature.image import ImageSet
 from zoo.pipeline.api.keras.engine.topology import ZooKerasLayer, KerasNet, to_bigdl_metric
 from bigdl.optim.optimizer import EveryEpoch, MaxEpoch, Optimizer
-from bigdl.keras.optimization import OptimConverter
 
 if sys.version >= '3':
     long = int
@@ -361,7 +361,7 @@ class TFOptimizer:
 
     def __init__(self, loss, optim_method, sess=None, dataset=None, inputs=None,
                  grads=None, variables=None, graph=None,
-                 val_outputs=None, val_labels=None, val_method=None, add_sample_weights_num=0):
+                 val_outputs=None, val_labels=None, val_method=None, val_split=0.0):
         import tensorflow as tf
         from zoo.util.tf import export_tf
         '''
@@ -431,24 +431,41 @@ class TFOptimizer:
         data = self.dataset.rdd
         batch_size = self.dataset.batch_size
         sample_rdd = data.map(lambda t: Sample.from_ndarray(
-            t + [np.array(1.0)] * add_sample_weights_num, [np.array([0.0])]))
-
-        self.optimizer = Optimizer.create(self.training_helper_layer,
-                                          sample_rdd,
-                                          IdentityCriterion(),
-                                          batch_size=batch_size,
-                                          optim_method=self.optim_method)
+            t, [np.array([0.0])]))
 
         if val_outputs is not None and val_labels is not None:
-            val_sample_rdd = self.dataset.val_rdd\
-                .map(lambda t: Sample.from_ndarray(t + [np.array(1.0)] * add_sample_weights_num,
-                                                   [np.array([0.0])]))
-            val_method = [TFValidationMethod(m, len(val_outputs), len(val_labels))
-                          for m in to_list(val_method)]
+            if self.dataset.val_rdd is not None:
+                val_rdd = self.dataset.val_rdd \
+                    .map(lambda t: Sample.from_ndarray(t,
+                                                       [np.array([0.0])]))
+                val_method = [TFValidationMethod(m, len(val_outputs), len(val_labels))
+                              for m in to_list(val_method)]
+                training_rdd = sample_rdd
+
+            elif val_split != 0.0:
+                training_rdd, val_rdd = sample_rdd.randomSplit([1-val_split, val_split])
+                val_method = [TFValidationMethod(m, len(val_outputs), len(val_labels))
+                              for m in to_list(val_method)]
+            else:
+                raise ValueError("Validation data is not specified. Please set " +
+                                 "val rdd in TFDataset, or set val_split larger than zero")
+
+            self.optimizer = Optimizer.create(self.training_helper_layer,
+                                              training_rdd,
+                                              IdentityCriterion(),
+                                              batch_size=batch_size,
+                                              optim_method=self.optim_method)
             self.optimizer.set_validation(self.dataset.batch_size,
-                                          val_sample_rdd,
+                                          val_rdd,
                                           EveryEpoch(),
                                           val_method)
+        else:
+            training_rdd = sample_rdd
+            self.optimizer = Optimizer.create(self.training_helper_layer,
+                                              training_rdd,
+                                              IdentityCriterion(),
+                                              batch_size=batch_size,
+                                              optim_method=self.optim_method)
 
     @staticmethod
     def _get_arguments_from_loss(loss, optim_method, session, val_outputs, val_labels, val_method):
@@ -474,35 +491,40 @@ class TFOptimizer:
 
         _check_the_same(all_required_inputs, inputs)
 
-        return (loss, optim_method, sess, dataset, inputs,
-                grads, variables, loss.graph, val_outputs, val_labels, val_method)
+        return [loss, optim_method, sess, dataset, inputs,
+                grads, variables, loss.graph, val_outputs, val_labels, val_method]
 
     @classmethod
     def from_loss(cls, loss, optim_method, session=None, val_outputs=None,
-                  val_labels=None, val_method=None):
+                  val_labels=None, val_method=None, val_split=0.0):
         args = TFOptimizer._get_arguments_from_loss(loss, optim_method,
-                                                    session, val_outputs, val_labels, val_method)
+                                                    session, val_outputs,
+                                                    val_labels, val_method)
 
-        return cls(*args)
+        return cls(*(args + [val_split]))
 
     @classmethod
-    def from_keras(cls, keras_model, dataset):
-        import tensorflow.keras.backend as keras_backend
+    def from_keras(cls, keras_model, dataset, val_spilt=0.0):
+        import tensorflow.keras.backend as K
 
         loss = keras_model.total_loss
-        inputs = keras_model.inputs + keras_model.targets + keras_model.sample_weights
+        inputs = keras_model.inputs + keras_model.targets
 
         variables = keras_model._collected_trainable_weights
         keras_optimizer = keras_model.optimizer
         grads = keras_optimizer.get_gradients(loss, variables)
-        sess = keras_backend.get_session()
+        sess = K.get_session()
         with sess.as_default():
-            optim_method = OptimConverter.to_bigdl_optim_method(keras_optimizer)
+            optim_method = TFOptimizer.to_bigdl_optim_method(keras_optimizer)
 
         if keras_model.metrics:
             if isinstance(keras_model.metrics, dict):
                 raise ValueError(
                     "different metrics for different outputs are not supported right now")
+
+            if dataset.val_rdd is None and val_spilt == 0.0:
+                raise ValueError("Validation data is not specified. Please set " +
+                                 "val rdd in TFDataset, or set val_split larger than zero")
             bigdl_val_methods = [to_bigdl_metric(m) for m in keras_model.metrics_names]
             val_outputs = keras_model.outputs
             val_labels = keras_model.targets
@@ -513,7 +535,55 @@ class TFOptimizer:
 
         return cls(loss, optim_method, sess, dataset, inputs,
                    grads, variables, loss.graph, val_outputs, val_labels,
-                   bigdl_val_methods, len(keras_model.sample_weights))
+                   bigdl_val_methods, val_spilt)
+
+    @staticmethod
+    def to_bigdl_optim_method(koptim_method):
+        # koptim_method is always an object
+        import tensorflow.keras.backend as K
+        import tensorflow.keras.optimizers as koptimizers
+        import bigdl.optim.optimizer as boptimizer
+        lr = float(K.eval(koptim_method.lr))
+        decay = float(K.eval(koptim_method.decay))
+        if isinstance(koptim_method, koptimizers.Adagrad):
+            warnings.warn("For Adagrad, we don't support epsilon for now")
+            return boptimizer.Adagrad(learningrate=lr,
+                                      learningrate_decay=decay)
+        elif isinstance(koptim_method, koptimizers.SGD):
+            momentum = float(K.eval(koptim_method.momentum))
+            return boptimizer.SGD(learningrate=lr,
+                                  learningrate_decay=decay,
+                                  momentum=momentum,
+                                  nesterov=koptim_method.nesterov)
+        elif isinstance(koptim_method, koptimizers.Adam):
+            beta1 = float(K.eval(koptim_method.beta_1))
+            beta2 = float(K.eval(koptim_method.beta_2))
+            return boptimizer.Adam(learningrate=lr,
+                                   learningrate_decay=decay,
+                                   beta1=beta1,
+                                   beta2=beta2,
+                                   epsilon=koptim_method.epsilon)
+        elif isinstance(koptim_method, koptimizers.RMSprop):
+            rho = float(K.eval(koptim_method.rho))
+            return boptimizer.RMSprop(learningrate=lr,
+                                      learningrate_decay=decay,
+                                      decayrate=rho,
+                                      epsilon=koptim_method.epsilon)
+        elif isinstance(koptim_method, koptimizers.Adadelta):
+            warnings.warn(
+                "For Adadelta, we don't support learning rate and learning rate decay for now")
+            return boptimizer.Adadelta(decayrate=koptim_method.rho,
+                                       epsilon=koptim_method.epsilon)
+        elif isinstance(koptim_method, koptimizers.Adamax):
+            beta1 = float(K.eval(koptim_method.beta_1))
+            beta2 = float(K.eval(koptim_method.beta_2))
+            warnings.warn("For Adamax, we don't support learning rate decay for now")
+            return boptimizer.Adamax(learningrate=lr,
+                                     beta1=beta1,
+                                     beta2=beta2,
+                                     epsilon=koptim_method.epsilon)
+        else:
+            raise Exception("We don't support %s for now" % koptim_method)
 
     def set_train_summary(self, summary):
         self.optimizer.set_train_summary(summary)
@@ -629,8 +699,7 @@ def _check_the_same(all_required_inputs, inputs_in_datasets):
 
 class TFPredictor:
 
-    def __init__(self, sess, outputs):
-        import tensorflow as tf
+    def __init__(self, sess, outputs, inputs=None, dataset=None):
         '''
         TFPredictor takes a list of tensorflow tensors as the model outputs and
         feed all the elements in TFDatasets to produce those outputs and returns
@@ -641,15 +710,38 @@ class TFPredictor:
         to load the trained variables then pass into TFPredictor
         :param outputs: the output tensors of the tensorflow model
         '''
+        if inputs is None:
+            dataset, inputs = TFPredictor._get_datasets_and_inputs(outputs)
+
         self.sess = sess
-        all_required_inputs = _find_placeholders(outputs)
-        self.dataset = tf.get_collection(all_required_inputs[0].name)[0]
-        self.inputs = self.dataset.tensors
-        _check_the_same(all_required_inputs, self.inputs)
+        self.dataset = dataset
+        self.inputs = inputs
         self.tfnet = TFNet.from_session(sess, self.inputs, outputs)
         if self.dataset.batch_per_thread <= 0:
             raise ValueError("You should set batch_per_thread on TFDataset" +
                              "instead of batch_size for prediction")
+
+    @staticmethod
+    def _get_datasets_and_inputs(outputs):
+        import tensorflow as tf
+        all_required_inputs = _find_placeholders(outputs)
+        dataset = tf.get_collection(all_required_inputs[0].name)[0]
+        inputs = dataset.tensors
+        _check_the_same(all_required_inputs, inputs)
+        return dataset, inputs
+
+    @classmethod
+    def from_outputs(cls, sess, outputs):
+        dataset, inputs = TFPredictor._get_datasets_and_inputs(outputs)
+        return cls(sess, outputs, inputs, dataset)
+
+    @classmethod
+    def from_keras(cls, keras_model, dataset):
+        import tensorflow.keras.backend as K
+        sess = K.get_session()
+        outputs = keras_model.outputs
+        inputs = keras_model.inputs
+        return cls(sess, outputs, inputs, dataset)
 
     def predict(self):
         rdd = self.dataset.rdd
