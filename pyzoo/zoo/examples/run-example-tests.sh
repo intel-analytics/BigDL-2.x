@@ -283,7 +283,7 @@ ${SPARK_HOME}/bin/spark-submit \
     --jars ${ANALYTICS_ZOO_JAR} \
     --conf spark.driver.extraClassPath=${ANALYTICS_ZOO_JAR} \
     --conf spark.executor.extraClassPath=${ANALYTICS_ZOO_JAR} \
-    ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/tensorflow/distributed_training/train_mnist_keras.py 1, 1000\
+    ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/tensorflow/distributed_training/train_mnist_keras.py 1 1000\
 
 echo "start example test for tensorflow distributed_training evaluate_lenet 4"
 ${SPARK_HOME}/bin/spark-submit \
