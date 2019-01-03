@@ -35,7 +35,7 @@ class GetShapeSpec extends KerasBaseSpec {
     seq.add(ss)
     seq.getOutputShape().toSingle().toArray should be(Array(3))
     val outShape = seq.forward(Tensor[Float](Array(2, 3, 4)).randn())
-    outShape should be(Array(2, 3, 4))
+    outShape.toTensor[Float].storage().toArray should be(Array(2, 3, 4))
   }
 
 }
@@ -43,7 +43,7 @@ class GetShapeSpec extends KerasBaseSpec {
 class GetShapeSerialTest extends ModuleSerializationTest {
   override def test(): Unit = {
     val ss = new GetShape[Float](inputShape = Shape(3, 2))
-    ss.build(Shape(3, 2))
+    ss.build(Shape(2, 3, 2))
     val input = Tensor[Float](2, 3, 2).apply1(_ => Random.nextFloat())
     runSerializationTest(ss, input)
   }
