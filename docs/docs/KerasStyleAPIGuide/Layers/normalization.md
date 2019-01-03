@@ -142,11 +142,9 @@ Output is
 ## **LRN2D**
 Local Response Normalization between different feature maps.
 
-When you use this layer as the first layer of a model, you need to provide the argument input_shape (a shape tuple, does not include the batch dimension).
-
 **Scala:**
 ```scala
-LRN2D(alpha = 1e-4, k = 1.0, beta = 0.75, n = 5, dimOrdering = "th", inputShape = Null)
+LRN2D(alpha = 1e-4, k = 1.0, beta = 0.75, n = 5, dimOrdering = "th", inputShape = null)
 ```
 **Python:**
 ```python
@@ -160,7 +158,7 @@ LRN2D(alpha=1e-4, k=1.0, beta=0.75, n=5, dim_ordering="th", input_shape=None, na
 * `beta`: Double. The exponent. Default is 0.75.
 * `n`: The number of channels to sum over.
 * `dimOrdering`: Format of input data. Either DataFormat.NCHW (dimOrdering='th') or DataFormat.NHWC (dimOrdering='tf'). Default is NCHW.
-* `inputShape`: A Single Shape, does not include the batch dimension.
+* `inputShape`:  Only need to specify this argument when you use this layer as the first layer of a model. For Scala API, it should be a [`Shape`](../keras-api-scala/#shape) object. For Python API, it should be a shape tuple. Batch dimension should be excluded.
 
 **Scala example:**
 ```scala
@@ -315,13 +313,9 @@ Output is
 ## **WithinChannelLRN2D**
 The local response normalization layer performs a kind of "lateral inhibition" by normalizing over local input regions. The local regions extend spatially, in separate channels (i.e., they have shape 1 x size x size).
 
-When you use this layer as the first layer of a model, you need to provide the argument inputShape (a Single Shape, does not include the batch dimension).
-
-Remark: This layer is from Torch and wrapped in Keras style.
-
 **Scala:**
 ```scala
-WithinChannelLRN2D(size = 5, alpha = 1.0, beta = 0.75, inputShape = Null)
+WithinChannelLRN2D(size = 5, alpha = 1.0, beta = 0.75, inputShape = null)
 ```
 **Python:**
 ```python
@@ -333,7 +327,7 @@ WithinChannelLRN2D(size=5, alpha=1.0, beta=0.75, input_shape=None, name=None)
 * `size`: The side length of the square region to sum over. Default is 5.
 * `alpha`: The scaling parameter. Default is 1.0.
 * `beta`: The exponent. Default is 0.75.
-* `inputShape`: A shape tuple, not including batch.
+* `inputShape`:  Only need to specify this argument when you use this layer as the first layer of a model. For Scala API, it should be a [`Shape`](../keras-api-scala/#shape) object. For Python API, it should be a shape tuple. Batch dimension should be excluded.
 
 **Scala example:**
 ```scala
