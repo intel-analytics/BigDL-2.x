@@ -386,6 +386,9 @@ class TFOptimizer:
         self.inputs = inputs
         self.graph = graph
 
+        from zoo.util.tf import process_grad
+        grads = [process_grad(grad) for grad in grads]
+
         if self.dataset.batch_size <= 0:
             raise ValueError("You should set batch_size instead of batch_per_thread for training")
 
@@ -478,10 +481,8 @@ class TFOptimizer:
         grads_vars = tf.train.GradientDescentOptimizer(0).compute_gradients(loss)
         variables = []
         grads = []
-        from zoo.util.tf import process_grad
         for (grad, var) in grads_vars:
             variables.append(var)
-            grad = process_grad(grad)
             grads.append(grad)
 
         all_required_inputs = _find_placeholders([loss])
@@ -513,8 +514,6 @@ class TFOptimizer:
         variables = keras_model._collected_trainable_weights
         keras_optimizer = keras_model.optimizer
         grads = keras_optimizer.get_gradients(loss, variables)
-        from zoo.util.tf import process_grad
-        grads = [process_grad(grad) for grad in grads]
         sess = K.get_session()
         with sess.as_default():
             optim_method = TFOptimizer.to_bigdl_optim_method(keras_optimizer)
