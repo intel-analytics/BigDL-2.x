@@ -67,7 +67,7 @@ def main(max_epoch, data_num):
     optimizer.set_train_summary(TrainSummary("/tmp/mnist_log", "mnist"))
     optimizer.set_val_summary(ValidationSummary("/tmp/mnist_log", "mnist"))
     # kick off training
-    optimizer.optimize(end_trigger=MaxEpoch(5))
+    optimizer.optimize(end_trigger=MaxEpoch(max_epoch))
 
     model.save_weights("/tmp/mnist_keras.h5")
 

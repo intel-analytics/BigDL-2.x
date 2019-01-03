@@ -27,6 +27,7 @@ from bigdl.dataset.transformer import *
 
 DISTRIBUTED = True
 
+
 def main(data_num):
 
     data = Input(shape=[28, 28, 1])
