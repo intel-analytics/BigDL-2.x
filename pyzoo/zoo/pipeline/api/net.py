@@ -513,6 +513,8 @@ class TFOptimizer:
         variables = keras_model._collected_trainable_weights
         keras_optimizer = keras_model.optimizer
         grads = keras_optimizer.get_gradients(loss, variables)
+        from zoo.util.tf import process_grad
+        grads = [process_grad(grad) for grad in grads]
         sess = K.get_session()
         with sess.as_default():
             optim_method = TFOptimizer.to_bigdl_optim_method(keras_optimizer)
