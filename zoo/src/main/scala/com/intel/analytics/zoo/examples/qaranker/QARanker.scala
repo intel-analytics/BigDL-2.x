@@ -17,7 +17,6 @@
 package com.intel.analytics.zoo.examples.qaranker
 
 import com.intel.analytics.bigdl.optim.SGD
-import com.intel.analytics.bigdl.optim.SGD.Poly
 import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric.NumericFloat
 import com.intel.analytics.bigdl.utils.Shape
 import com.intel.analytics.zoo.common.NNContext
@@ -94,12 +93,10 @@ object QARanker {
         val wordIndex = aSet.getWordIndex
         KNRM(param.questionLength, param.answerLength, param.embeddingFile, wordIndex)
       }
-      knrm.saveModel("/home/kai/knrm2.model", overWrite = true)
       val model = Sequential().add(TimeDistributed(
         knrm, inputShape = Shape(2, param.questionLength + param.answerLength)))
-      val optimizer = new SGD(learningRate = param.learningRate,
-        learningRateSchedule = Poly(0.5, 50 * 400))
-      model.compile(optimizer = optimizer, loss = RankHinge[Float]())
+      model.compile(optimizer = new SGD(learningRate = param.learningRate),
+        loss = RankHinge[Float]())
       for (i <- 1 to param.nbEpoch) {
         model.fit(trainSet, batchSize = param.batchSize, nbEpoch = 1)
         knrm.evaluateNDCG(validateSet, 3)

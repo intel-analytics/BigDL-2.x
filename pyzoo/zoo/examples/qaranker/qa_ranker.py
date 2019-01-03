@@ -17,7 +17,7 @@
 import sys
 from optparse import OptionParser
 
-from bigdl.optim.optimizer import SGD, Poly
+from bigdl.optim.optimizer import SGD
 from zoo.common.nncontext import init_nncontext
 from zoo.feature.common import Relations
 from zoo.feature.text import TextSet
@@ -66,8 +66,7 @@ if __name__ == "__main__":
         TimeDistributed(
             knrm,
             input_shape=(2, int(options.question_length) + int(options.answer_length))))
-    model.compile(optimizer=SGD(learningrate=float(options.learning_rate),
-                                leaningrate_schedule=Poly(0.5, 50 * 400)),
+    model.compile(optimizer=SGD(learningrate=float(options.learning_rate)),
                   loss="rank_hinge")
     for i in range(0, int(options.nb_epoch)):
         model.fit(train_set, batch_size=int(options.batch_size), nb_epoch=1)
