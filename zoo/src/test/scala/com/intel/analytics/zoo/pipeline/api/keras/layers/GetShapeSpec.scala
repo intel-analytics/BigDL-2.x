@@ -35,7 +35,7 @@ class GetShapeSpec extends KerasBaseSpec {
     seq.add(ss)
     seq.getOutputShape().toSingle().toArray should be(Array(3))
     val outShape = seq.forward(Tensor[Float](Array(2, 3, 4)).randn())
-    outShape.toTensor[Int].storage().toArray should be(Array(2, 3, 4))
+    outShape.toTensor[Float].storage().toArray should be(Array(2, 3, 2))
   }
 
 }
