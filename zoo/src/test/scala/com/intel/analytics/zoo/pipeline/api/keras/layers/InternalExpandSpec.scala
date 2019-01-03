@@ -61,7 +61,7 @@ class InternalExpandSpec extends KerasBaseSpec {
   }
 }
 
-class ExpandSerialTest extends ModuleSerializationTest {
+class InternalExpandSerialTest extends ModuleSerializationTest {
   override def test(): Unit = {
     val layer = Expand[Float](tgtSizes = Array(3, 2, 4), inputShape = Shape(2, 1))
     layer.build(Shape(3, 2, 1))
