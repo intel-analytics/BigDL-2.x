@@ -306,10 +306,10 @@ class PythonTextFeature[T: ClassTag](implicit ev: TensorNumeric[T]) extends Pyth
   }
 
   private def toScalaRelations(relations: JavaRDD[Array[Object]]): RDD[Relation] = {
-    relations.rdd.foreach(x =>
-      require(x.length == 3, "Relation should consist of id1, id2 and label"))
-    relations.rdd.map(x =>
-      Relation(x(0).asInstanceOf[String], x(1).asInstanceOf[String], x(2).asInstanceOf[Int]))
+    relations.rdd.map(x => {
+      require(x.length == 3, "Relation should consist of id1, id2 and label")
+      Relation(x(0).asInstanceOf[String], x(1).asInstanceOf[String], x(2).asInstanceOf[Int])
+    })
   }
 
   private def toPythonRelations(relations: RDD[Relation]): JavaRDD[JList[Any]] = {
