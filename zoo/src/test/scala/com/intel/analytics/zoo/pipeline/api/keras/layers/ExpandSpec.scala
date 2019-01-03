@@ -23,9 +23,9 @@ import com.intel.analytics.zoo.pipeline.api.keras.serializer.ModuleSerialization
 class ExpandSerialTest extends ModuleSerializationTest {
   override def test(): Unit = {
     val tgtSizes = Array(3, 2, 4)
-    val layer = Expand[Float](tgtSizes, inputShape = Shape(2, 4)).setName("Expand")
+    val layer = Expand[Float](tgtSizes, inputShape = Shape(2, 1)).setName("Expand")
     val input = Tensor[Float](3, 2, 1).rand()
-    layer.build(Shape(2, 4))
+    layer.build(Shape(3, 2, 1))
     runSerializationTest(layer, input)
   }
 }
