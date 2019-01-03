@@ -423,7 +423,7 @@ Squeeze(dim=None, input_shape=None, name=None)
 **Parameters:**
 
 * `dims`: The dimension(s) to squeeze. 0-based index. Cannot squeeze the batch dimension. The selected dimensions must be singleton, i.e. having size 1. Default is null, and in this case all the non-batch singleton dimensions will be deleted.
-* `inputShape`:  Only need to specify this argument when you use this layer as the first layer of a model. For Scala API, it should be a [`Shape`](../keras-api-scala/#shape) object. For Python API, it should be a shape tuple. Batch dimension should be excluded.
+* `inputShape`: Only need to specify this argument when you use this layer as the first layer of a model. For Scala API, it should be a [`Shape`](../keras-api-scala/#shape) object. For Python API, it should be a shape tuple. Batch dimension should be excluded.
 
 **Scala example:**
 ```scala
