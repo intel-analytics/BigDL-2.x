@@ -103,15 +103,18 @@ class KNRM(TextMatcher):
             if mu > 1.0:  # Exact match.
                 sigma = self.exact_sigma
                 mu = 1.0
-            mm_exp = A.exp(-0.5 * (mm - mu) * (mm - mu) / sigma / sigma)
-            mm_doc_sum = A.sum(mm_exp, 2)
+            mm_exp = A.exp((-0.5) * (mm - mu) * (mm - mu) / sigma / sigma)
+            mm_doc_sum = A.sum(mm_exp, axis=2)
             mm_log = A.log(mm_doc_sum + 1.0)
             # Remark: Keep the reduced dimension for the last sum and squeeze after stack.
             # Otherwise, when batch=1, the output will become a Scalar not compatible for stack.
-            mm_sum = A.sum(mm_log, 1, keepDims=True)
+            mm_sum = A.sum(mm_log, axis=1, keepDims=True)
             KM.append(mm_sum)
-        Phi = Squeeze(2)(A.stack(KM, 1))
-        output = Dense(1, init="uniform", activation="sigmoid")(Phi)
+        Phi = Squeeze(2)(A.stack(KM))
+        if self.target_mode == "ranking":
+            output = Dense(1, init="uniform")(Phi)
+        else:
+            output = Dense(1, init="uniform", activation="sigmoid")(Phi)
         model = Model(input=input, output=output)
         return model
 

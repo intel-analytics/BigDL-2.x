@@ -37,7 +37,7 @@ abstract class TextMatcher[T](
   (implicit val tag: ClassTag[T], implicit val ev: TensorNumeric[T])
   extends ZooModel[Activity, Activity, T] with Ranker[T] {
 
-  require(targetMode == "ranking" || targetMode == "classification", "targetModel should be " +
+  require(targetMode == "ranking" || targetMode == "classification", "targetMode should be " +
     s"either 'ranking' or 'classification', but got $targetMode")
 
 }

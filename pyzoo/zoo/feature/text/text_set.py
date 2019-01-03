@@ -261,6 +261,11 @@ class TextSet(JavaValue):
         return TextSet(jvalue=jvalue)
 
     @classmethod
+    def read_parquet(cls, path, sc, bigdl_type="float"):
+        jvalue = callBigDlFunc(bigdl_type, "textSetReadParquet", path, sc)
+        return DistributedTextSet(jvalue=jvalue)
+
+    @classmethod
     def from_relation_pairs(cls, relations, corpus1, corpus2, bigdl_type="float"):
         if isinstance(relations, RDD):
             relations = relations.map(lambda x: x.to_tuple())

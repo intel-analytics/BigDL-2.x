@@ -35,7 +35,7 @@ if __name__ == "__main__":
     parser.add_option("--partition_num", dest="partition_num", default="4")
     parser.add_option("-b", "--batch_size", dest="batch_size", default="200")
     parser.add_option("-e", "--nb_epoch", dest="nb_epoch", default="30")
-    parser.add_option("-l", "--learning_rate", dest="learning_rate", default="0.01")
+    parser.add_option("-l", "--learning_rate", dest="learning_rate", default="0.001")
     parser.add_option("-m", "--model", dest="model")
 
     (options, args) = parser.parse_args(sys.argv)

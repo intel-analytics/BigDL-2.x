@@ -94,6 +94,7 @@ object QARanker {
         val wordIndex = aSet.getWordIndex
         KNRM(param.questionLength, param.answerLength, param.embeddingFile, wordIndex)
       }
+      knrm.saveModel("/home/kai/knrm2.model", overWrite = true)
       val model = Sequential().add(TimeDistributed(
         knrm, inputShape = Shape(2, param.questionLength + param.answerLength)))
       val optimizer = new SGD(learningRate = param.learningRate,

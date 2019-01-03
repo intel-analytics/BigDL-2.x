@@ -54,6 +54,11 @@ class Relations(object):
             res = [Relation(str(x[0]), str(x[1]), int(x[2])) for x in jvalue]
         return res
 
+    @staticmethod
+    def read_parquet(path, sc, bigdl_type="float"):
+        jvalue = callBigDlFunc(bigdl_type, "readRelationsParquet", path, sc)
+        return jvalue.map(lambda x: Relation(str(x[0]), str(x[1]), int(x[2])))
+
 
 class Preprocessing(JavaValue):
     """

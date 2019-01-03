@@ -71,7 +71,7 @@ class TestKNRM(ZooTestCase):
         koutput = kmodel.predict([input_data[:, :5], input_data[:, 5:]])
         kweights = kmodel.get_weights()
         bweights = [kweights[0], np.transpose(kweights[1]), kweights[2]]
-        model = KNRM(5, 10, glove_path)
+        model = KNRM(5, 10, glove_path, target_mode="classification")
         model.set_weights(bweights)
         output = model.forward(input_data)
         self.assert_allclose(output, koutput)

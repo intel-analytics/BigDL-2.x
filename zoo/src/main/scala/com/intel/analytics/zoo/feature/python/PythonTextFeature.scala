@@ -335,7 +335,8 @@ class PythonTextFeature[T: ClassTag](implicit ev: TensorNumeric[T]) extends Pyth
 
   def readRelationsParquet(
       path: String,
-      sqlContext: SQLContext): JavaRDD[JList[Any]] = {
+      sc: JavaSparkContext): JavaRDD[JList[Any]] = {
+    val sqlContext = new SQLContext(sc)
     toPythonRelations(Relations.readParquet(path, sqlContext))
   }
 
@@ -364,7 +365,8 @@ class PythonTextFeature[T: ClassTag](implicit ev: TensorNumeric[T]) extends Pyth
 
   def textSetReadParquet(
       path: String,
-      sqlContext: SQLContext): TextSet = {
+      sc: JavaSparkContext): TextSet = {
+    val sqlContext = new SQLContext(sc)
     TextSet.readParquet(path, sqlContext)
   }
 

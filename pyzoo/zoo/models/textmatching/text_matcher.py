@@ -33,5 +33,7 @@ class TextMatcher(ZooModel, Ranker):
         self.embed_size = embed_size
         self.embed_weights = embed_weights
         self.train_embed = train_embed
+        assert target_mode == "ranking" or target_mode == "classification", "target_mode should be either " \
+                                                                            "ranking or classification"
         self.target_mode = target_mode
         self.bigdl_type = bigdl_type
