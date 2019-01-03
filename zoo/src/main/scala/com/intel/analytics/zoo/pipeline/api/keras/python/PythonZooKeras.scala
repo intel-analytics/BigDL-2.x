@@ -55,7 +55,7 @@ object PythonZooKeras {
 
   def ofDouble(): PythonZooKeras[Double] = new PythonZooKeras[Double]()
 
-  private[zoo] def processEvaluateResult [T: ClassTag](
+  private[zoo] def processEvaluateResult [T: ClassTag] (
       resultArray: Array[(ValidationResult, ValidationMethod[T])]
     ): JList[EvaluatedResult] = {
 
