@@ -27,14 +27,14 @@ class GetShapeSpec extends KerasBaseSpec {
 
   "GetShape" should "be test" in {
     val seq = Sequential[Float]()
-    val input = InputLayer[Float](inputShape = Shape(3, 2), name = "input1")
+    val input = InputLayer[Float](inputShape = Shape(3, 4), name = "input1")
     seq.add(input)
     val dense = Dense[Float](2, activation = "relu")
     seq.add(dense)
     val ss = new GetShape[Float]()
     seq.add(ss)
     seq.getOutputShape().toSingle().toArray should be(Array(3))
-    val outShape = seq.forward(Tensor[Float](Array(2, 3, 2)).randn())
+    val outShape = seq.forward(Tensor[Float](Array(2, 3, 4)).randn())
     outShape.toTensor[Float].storage().toArray should be(Array(2, 3, 2))
   }
 
