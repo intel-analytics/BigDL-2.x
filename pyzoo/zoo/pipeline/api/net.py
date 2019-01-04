@@ -441,7 +441,7 @@ For example:
 from zoo.util.tf import variable_creator_scope
 with variable_creator_scope():
     model = tf.keras.models.Sequential([
-    tf.keras.layers.Embedding(1, 1, input_length=1)])                
+    tf.keras.layers.Embedding(1, 1, input_length=1)])
                 """)
 
         data = self.dataset.rdd
