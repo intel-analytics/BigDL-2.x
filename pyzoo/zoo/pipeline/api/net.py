@@ -443,6 +443,8 @@ with variable_creator_scope():
     model = tf.keras.models.Sequential([
     tf.keras.layers.Embedding(1, 1, input_length=1)])
                 """)
+            else:
+                raise e
 
         data = self.dataset.rdd
         batch_size = self.dataset.batch_size
