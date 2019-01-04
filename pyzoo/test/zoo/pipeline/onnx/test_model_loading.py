@@ -661,19 +661,19 @@ class TestModelLoading(OnnxTestCase):
 
     def test_index_select_axis0(self):
         import pytest
-        with pytest.raises(Exception) as e_info:
-            class IndexSelect(torch.nn.Module):
-                def __init__(self, *parameter):
-                    super(IndexSelect, self).__init__()
-                    self.dim = parameter[0]
-                    self.index = parameter[1]
+        # with pytest.raises(Exception) as e_info:
+        class IndexSelect(torch.nn.Module):
+            def __init__(self, *parameter):
+                super(IndexSelect, self).__init__()
+                self.dim = parameter[0]
+                self.index = parameter[1]
 
-                def forward(self, x):
-                    return torch.index_select(x, dim=self.dim, index=torch.tensor(self.index))
+            def forward(self, x):
+                return torch.index_select(x, dim=self.dim, index=torch.tensor(self.index))
 
-            pytorch_model = IndexSelect(0, 2)
-            input_shape_with_batch = (3, 4, 5, 6)
-            self.compare_with_pytorch(pytorch_model, input_shape_with_batch)
+        pytorch_model = IndexSelect(0, 2)
+        input_shape_with_batch = (3, 4, 5, 6)
+        self.compare_with_pytorch(pytorch_model, input_shape_with_batch)
 
     def test_onnx_concat(self):
         class Concat(torch.nn.Module):
@@ -1327,6 +1327,6 @@ class TestModelLoading(OnnxTestCase):
         np.testing.assert_almost_equal(output["y"], y, decimal=5)
 
     def test_onnx_lstm(self):
-        pytorch_model = torch.nn.LSTM(10, 20, 2)
+        pytorch_model = torch.nn.LSTM(10, 20, 1)
         input_shape_with_batch = (6, 3, 10)
         self.compare_with_pytorch(pytorch_model, input_shape_with_batch)
