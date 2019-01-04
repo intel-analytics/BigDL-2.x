@@ -22,6 +22,7 @@ import six
 import os
 import json
 import numpy as np
+from py4j.protocol import Py4JJavaError
 from pyspark import RDD
 
 from bigdl.nn.criterion import Criterion
@@ -428,8 +429,22 @@ class TFOptimizer:
                 assigns.append(a)
             assign = tf.group(*assigns)
         self.assign = assign
-
-        self.training_helper_layer = TFTrainingHelper(self.export_dir)
+        try:
+            self.training_helper_layer = TFTrainingHelper(self.export_dir)
+        except Py4JJavaError as e:
+            if "expects to be colocated with unknown node" in str(e):
+                raise Exception("""
+If you are using the embedding layer in tf.keras, then this is a
+known issue of tensorflow, see https://github.com/tensorflow/tensorflow/issues/21889.
+Please add zoo.util.tf.variable_creator_scope before model construction.
+For example:
+from zoo.util.tf import variable_creator_scope
+with variable_creator_scope():
+    model = tf.keras.models.Sequential([
+    tf.keras.layers.Embedding(1, 1, input_length=1)])
+                """)
+            else:
+                raise e
 
         data = self.dataset.rdd
         batch_size = self.dataset.batch_size
@@ -597,6 +612,7 @@ class TFOptimizer:
             end_trigger = MaxEpoch(1)
 
         self.optimizer.set_end_when(end_trigger)
+
         self.optimizer.optimize()
 
         variables = self.training_helper_layer.get_weights()
