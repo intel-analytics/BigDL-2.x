@@ -24,14 +24,37 @@ if sys.version >= '3':
 
 
 class Ranker(JavaValue):
+    """
+    Base class for Ranking models (e.g., TextMatcher and Ranker) that
+    provides validation methods with different metrics.
+    """
     def evaluate_ndcg(self, x, k, threshold=0.0):
         """
+        Evaluate using normalized discounted cumulative gain on TextSet.
+
+        :param x: TextSet. Each TextFeature should contain Sample with batch features and labels.
+                  In other words, each Sample should be a batch of records having both positive
+                  and negative labels.
+        :param k: Positive int. Rank position.
+        :param threshold: Float. If label > threshold, then it will be considered as
+                          a positive record. Default is 0.0.
+
+        :return: Float. NDCG result.
         """
         return callBigDlFunc(self.bigdl_type, "evaluateNDCG",
                              self.value, x, k, threshold)
 
     def evaluate_map(self, x, threshold=0.0):
         """
+        Evaluate using mean average precision on TextSet.
+
+        :param x: TextSet. Each TextFeature should contain Sample with batch features and labels.
+                  In other words, each Sample should be a batch of records having both positive
+                  and negative labels.
+        :param threshold: Float. If label > threshold, then it will be considered as
+                          a positive record. Default is 0.0.
+
+        :return: Float. MAP result.
         """
         return callBigDlFunc(self.bigdl_type, "evaluateMAP",
                              self.value, x, threshold)

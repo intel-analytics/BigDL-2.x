@@ -49,7 +49,7 @@ class KNRM(TextMatcher):
                 be taken into account and you can call
                 WordEmbedding.get_word_index(embedding_file) to retrieve the dictionary.
     train_embed: Boolean. Whether to train the embedding layer or not. Default is True.
-    kernel_num: Int. The number of kernels to use. Default is 21.
+    kernel_num: Int > 1. The number of kernels to use. Default is 21.
     sigma: Float. Defines the kernel width, or the range of its softTF count. Default is 0.1.
     exact_sigma: Float. The sigma used for the kernel that harvests exact matches
                  in the case where RBF mu=1.0. Default is 0.001.
@@ -70,6 +70,7 @@ class KNRM(TextMatcher):
         super(KNRM, self).__init__(text1_length, vocab_size, embed_size,
                                    embed_weights, train_embed, target_mode, bigdl_type)
         self.text2_length = text2_length
+        assert kernel_num > 1, "kernel_num must be an int larger than 1"
         self.kernel_num = kernel_num
         self.sigma = float(sigma)
         self.exact_sigma = float(exact_sigma)

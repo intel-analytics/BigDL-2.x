@@ -44,7 +44,7 @@ import scala.reflect.ClassTag
  * @param embedWeights Tensor. Pre-trained word embedding weights if any. Default is null and in
  *                     this case, initial weights will be randomized.
  * @param trainEmbed Boolean. Whether to train the embedding layer or not. Default is true.
- * @param kernelNum Integer. The number of kernels to use. Default is 21.
+ * @param kernelNum Integer > 1. The number of kernels to use. Default is 21.
  * @param sigma Double. Defines the kernel width, or the range of its softTF count.
  *              Default is 0.1.
  * @param exactSigma Double. The sigma used for the kernel that harvests exact matches
@@ -69,6 +69,8 @@ class KNRM[T: ClassTag] private(
     val exactSigma: Double = 0.001,
     override val targetMode: String = "ranking")(implicit ev: TensorNumeric[T])
   extends TextMatcher[T](text1Length, vocabSize, embedSize, embedWeights, trainEmbed, targetMode) {
+
+  require(kernelNum > 1, s"kernelNum must be an integer greater than 1, but got $kernelNum")
 
   override def buildModel(): AbstractModule[Activity, Activity, T] = {
     // Remark: Share weights for embedding is not supported.
