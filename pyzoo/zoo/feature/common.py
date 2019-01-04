@@ -71,6 +71,15 @@ class Relations(object):
 
     @staticmethod
     def read_parquet(path, sc, bigdl_type="float"):
+        """
+        Read relations from parquet file.
+        Schema should be the following:
+        "id1"(string), "id2"(string) and "label"(int).
+
+        :param path: The path to the parquet file.
+        :param sc: An instance of SparkContext.
+        :return: RDD of Relation.
+        """
         jvalue = callBigDlFunc(bigdl_type, "readRelationsParquet", path, sc)
         return jvalue.map(lambda x: Relation(str(x[0]), str(x[1]), int(x[2])))
 

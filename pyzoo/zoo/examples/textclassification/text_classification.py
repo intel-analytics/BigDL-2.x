@@ -14,6 +14,7 @@
 # limitations under the License.
 #
 
+import sys
 import datetime as dt
 from optparse import OptionParser
 
