@@ -14,4 +14,4 @@
 # limitations under the License.
 #
 
-from .seq_to_seq import *
+from .seq2seq import *
