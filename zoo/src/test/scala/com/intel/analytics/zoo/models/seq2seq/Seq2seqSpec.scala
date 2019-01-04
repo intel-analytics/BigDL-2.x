@@ -432,7 +432,7 @@ class BridgeSerialTest extends ModuleSerializationTest {
     val mul2 = MultiShape(List(MultiShape(List(shape3, shape4))))
     val layer = Bridge[Float]("dense", 2)
     layer.build(mul2)
-    val input = Tensor[Float](2, 3).rand()
+    val input = T(T(Tensor[Float](2, 2).rand(), Tensor[Float](2, 2).rand()))
     runSerializationTest(layer, input)
   }
 }
