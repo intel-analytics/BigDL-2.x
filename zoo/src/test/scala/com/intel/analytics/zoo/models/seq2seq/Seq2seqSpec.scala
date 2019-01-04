@@ -423,3 +423,16 @@ class Seq2seqSerialTest extends ModuleSerializationTest {
 //      input, Seq2seq.loadModel[Float])
   }
 }
+
+class BridgeSerialTest extends ModuleSerializationTest {
+  override def test(): Unit = {
+    val shape3 = SingleShape(List(2, 2))
+    val shape4 = SingleShape(List(2, 2))
+
+    val mul2 = MultiShape(List(MultiShape(List(shape3, shape4))))
+    val layer = Bridge[Float]("dense", 2)
+    layer.build(mul2)
+    val input = Tensor[Float](2, 3).rand()
+    runSerializationTest(layer, input)
+  }
+}
