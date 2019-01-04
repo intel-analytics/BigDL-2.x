@@ -26,6 +26,7 @@ import com.intel.analytics.zoo.pipeline.api.keras.layers.utils.KerasUtils
 import com.intel.analytics.zoo.pipeline.api.keras.layers._
 import com.intel.analytics.zoo.pipeline.api.keras.models.Sequential
 
+import scala.collection.mutable.ArrayBuffer
 import scala.reflect.ClassTag
 
 /**
@@ -59,7 +60,7 @@ class Bridge[T: ClassTag] private (bridgeType: String,
 
       val inputLayers = flattenShape.map(x => InputLayer(Shape(Array(x))))
       layer.add(Merge(inputLayers, mode = "concat"))
-    }
+    } else layer.add(InputLayer(_inputShape))
 
     // construct bridge
     val _bridge = bridgeType.toLowerCase() match {
@@ -77,7 +78,7 @@ class Bridge[T: ClassTag] private (bridgeType: String,
     layer.add(_bridge)
 
     if (layerNum > 1 || stateNum > 1) {
-      layer.add(SplitTensor[T](Bridge.splitDim, layerNum))
+      layer.add(SplitTensor[T](Bridge.splitDim, layerNum * stateNum))
     }
 
     layer.asInstanceOf[AbstractModule[Activity, Activity, T]]
@@ -92,7 +93,22 @@ class Bridge[T: ClassTag] private (bridgeType: String,
     }
   }
 
+  private def constructTensor(inputShape: Shape): Activity = {
+    if (inputShape.isInstanceOf[SingleShape]) {
+      val singleShape = inputShape.toSingle().toArray
+      Tensor(Array(1) ++ singleShape.drop(1)).fill(ev.one)
+    }
+    else {
+      T.array(inputShape.toMulti().map(constructTensor(_)).toArray)
+    }
+  }
+
   override def computeOutputShape(inputShape: Shape): Shape = {
+    if (decoderHiddenSize == 0) {
+      val _input = constructTensor(inputShape)
+      val _output = updateOutput(_input)
+      decoderHiddenSize = _output.toTable.get[Table](1).get.get[Tensor[T]](1).get.size(2)
+    }
     MultiShape(inputShape.toMulti().map(updateShape(_)))
   }
 
@@ -100,16 +116,7 @@ class Bridge[T: ClassTag] private (bridgeType: String,
     val _input = input.toTable.flatten()
     val _output = labor.forward(_input)
 
-    // labor may change the hidden size, we need split output ourselves
-    output = T()
-    if (_input.length() > input.toTable.length()) {
-      _output.toTable.foreach { case ((key: Int, value: Tensor[T])) =>
-        val stateNum = input.toTable[Table](key).length()
-        val states =
-          value.split(value.size(Bridge.splitDim + 1) / stateNum, Bridge.splitDim + 1)
-        output.toTable.update(key, T.array(states))
-      }
-    } else output = _output
+    output = _output.toTable.inverseFlatten(input.toTable)
     output
   }
 
@@ -134,6 +141,7 @@ object Bridge {
   def apply[@specialized(Float, Double) T: ClassTag](bridgeType: String,
     decoderHiddenSize: Int)(implicit ev: TensorNumeric[T]):
   KerasLayer[Activity, Activity, T] = {
+    require(decoderHiddenSize > 0, "invalid decoderHiddenSize")
     new Bridge(bridgeType, decoderHiddenSize)
   }
 

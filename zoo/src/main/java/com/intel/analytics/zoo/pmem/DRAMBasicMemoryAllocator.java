@@ -14,22 +14,15 @@
  * limitations under the License.
  */
 
-package com.intel.analytics.zoo.pipeline.api.keras.layers.internal
+package com.intel.analytics.zoo.pmem;
 
-import com.intel.analytics.bigdl.nn.abstractnn.{AbstractModule, Activity}
-import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric
-
-import scala.reflect.ClassTag
-
-class Echo[T: ClassTag]()(implicit ev: TensorNumeric[T])
-  extends AbstractModule[Activity, Activity, T]  {
-
-  override def updateOutput(input: Activity): Activity = {
-    this.output = input
-    this.output
-  }
-  override def updateGradInput(input: Activity, gradOutput: Activity): Activity = {
-    this.gradInput = gradOutput
-    this.gradInput
-  }
+public class DRAMBasicMemoryAllocator implements BasicMemoryAllocator {
+    public static DRAMBasicMemoryAllocator instance = new DRAMBasicMemoryAllocator();
+    private DRAMBasicMemoryAllocator() {}
+    public long allocate(long size) {
+        return org.apache.spark.unsafe.Platform.allocateMemory(size);
+    }
+    public void free(long address) {
+        org.apache.spark.unsafe.Platform.freeMemory(address);
+    }
 }

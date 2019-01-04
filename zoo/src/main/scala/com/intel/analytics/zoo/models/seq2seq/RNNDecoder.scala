@@ -22,7 +22,6 @@ import com.intel.analytics.bigdl.tensor.Tensor
 import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric
 import com.intel.analytics.bigdl.utils._
 
-import com.intel.analytics.zoo.pipeline.api.Net
 import com.intel.analytics.zoo.pipeline.api.keras.layers.SelectTable
 import com.intel.analytics.zoo.pipeline.api.keras.layers.utils.KerasUtils
 import com.intel.analytics.zoo.pipeline.api.keras.layers._
@@ -41,14 +40,42 @@ import scala.reflect.ClassTag
 class RNNDecoder[T: ClassTag](val rnns: Array[Recurrent[T]],
   val embedding: KerasLayer[Tensor[T], Tensor[T], T],
   val inputShape: Shape = null)(implicit ev: TensorNumeric[T])
-  extends Decoder {
+  extends Decoder[T](inputShape) {
+
+  private def checkStateShape(stateShape: Shape, hiddenSizes: Array[Int]): Boolean = {
+    if (stateShape.isInstanceOf[SingleShape]) {
+      if (hiddenSizes.length > 1) return false
+      return stateShape.toSingle()(1) == hiddenSizes.head
+    } else {
+      var isMatch = true
+      var i = 0
+      while (i < stateShape.toMulti().size) {
+        isMatch = isMatch && checkStateShape(stateShape.toMulti()(i), Array(hiddenSizes(i)))
+        i += 1
+      }
+      isMatch
+    }
+  }
 
   override def doBuild(inputShape: Shape): AbstractModule[Activity, Tensor[T], T] = {
     val layer = Sequential()
+
     // get decoder input
     layer.add(SelectTable(0, KerasUtils.removeBatch(inputShape)))
     if (embedding != null) layer.add(embedding)
     rnns.foreach(layer.add(_))
+
+    val stateShape = inputShape.toMulti().last
+    var i = 0
+    while (i < rnns.size) {
+      require(checkStateShape(stateShape.toMulti()(i), rnns(i).getHiddenShape()) == true,
+        s"decoder init states shape should match decoder layers! " +
+          s"Decoder layer expect hidden size (${rnns(i).getHiddenShape().mkString(" ")})," +
+          s" which actually feed shape is ${stateShape.toMulti()(i)}. Please update decoder" +
+          s" hidden size or update bridge/encoder hidden size")
+      i += 1
+    }
+
     layer.asInstanceOf[AbstractModule[Activity, Tensor[T], T]]
   }
 
@@ -58,8 +85,6 @@ class RNNDecoder[T: ClassTag](val rnns: Array[Recurrent[T]],
 
   override def updateOutput(input: Activity): Tensor[T] = {
     val states = input.toTable[Table](2)
-    require(states.length() == rnns.length, "rnn encoder and decoder should" +
-      "has the same number of layers!")
 
     var i = 0
     while (i < rnns.size) {
@@ -117,7 +142,7 @@ object RNNDecoder {
       case "simplernn" =>
         for (i <- 1 to numLayers) rnn.append(SimpleRNN(hiddenSize, returnSequences = true))
       case _ => throw new IllegalArgumentException(s"Please use " +
-        s"Decoder(rnn: Array[Recurrent[T]], embedding: KerasLayer[Tensor[T], Tensor[T], T])" +
+        s"RNNDecoder(rnn: Array[Recurrent[T]], embedding: KerasLayer[Tensor[T], Tensor[T], T])" +
         s"to create a decoder")
     }
     RNNDecoder[T](rnn.toArray, embedding, inputShape)

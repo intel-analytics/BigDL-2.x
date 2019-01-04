@@ -16,8 +16,8 @@ Run the following command for Spark local mode (MASTER=local[*]) or cluster mode
 export SPARK_HOME=the root directory of Spark
 export ANALYTICS_ZOO_HOME=the folder where you extract the downloaded Analytics Zoo zip package
 MASTER=...
-modelPath=... // model path
-imagePath=... // image path
+modelPath=... // model path. Local file system/HDFS/Amazon S3 are supported
+imagePath=... // image path. Local file system/HDFS are supported. With local file system, the files need to be available on all nodes in the cluster and please use file:///... for local files.
 ${ANALYTICS_ZOO_HOME}/bin/spark-shell-with-zoo.sh \
      --master ${MASTER} \
      --driver-memory 8g \
