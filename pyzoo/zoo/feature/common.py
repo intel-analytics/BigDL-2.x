@@ -54,7 +54,8 @@ class Relations(object):
         For csv file, it should be without header.
         For txt file, each line should contain one record with fields separated by comma.
 
-        :param path: The path to the relations file, which can either be a local file path or HDFS path.
+        :param path: The path to the relations file, which can either be a local file path
+                     or HDFS path.
         :param sc: An instance of SparkContext.
                    If specified, return RDD of Relation.
                    Default is None and in this case return list of Relation.

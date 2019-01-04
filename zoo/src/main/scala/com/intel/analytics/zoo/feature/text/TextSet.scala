@@ -405,7 +405,7 @@ object TextSet {
    * In other words, group relations by [[Relation.id1]].
    * 2. Join with corpus to transform each id to indexedTokens.
    * Note: Make sure that the corpus has been transformed by [[SequenceShaper]] and [[WordIndexer]].
-   * 3. For each pair, generate a TextFeature having Sample with:
+   * 3. For each list, generate a TextFeature having Sample with:
    * - feature of shape (listLength, text1Length + text2Length).
    * - label of shape (listLength, 1).
    *
