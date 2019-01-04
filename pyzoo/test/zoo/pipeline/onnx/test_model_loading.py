@@ -1325,3 +1325,34 @@ class TestModelLoading(OnnxTestCase):
 
         output = OnnxLoader.run_node(node, [x])
         np.testing.assert_almost_equal(output["y"], y, decimal=5)
+
+    def test_sum(self):
+        data_0 = np.array([3, 0, 2]).astype(np.float32)
+        data_1 = np.array([1, 3, 4]).astype(np.float32)
+        data_2 = np.array([2, 6, 6]).astype(np.float32)
+        result = np.array([6, 9, 12]).astype(np.float32)
+        node = onnx.helper.make_node(
+            'Sum',
+            inputs=['data_0', 'data_1', 'data_2'],
+            outputs=['result'],
+        )
+
+        output = OnnxLoader.run_node(node, [data_0, data_1, data_2])
+        np.testing.assert_almost_equal(output["result"], result, decimal=5)
+
+        node = onnx.helper.make_node(
+            'Sum',
+            inputs=['data_0'],
+            outputs=['result'],
+        )
+        output = OnnxLoader.run_node(node, [data_0])
+        np.testing.assert_almost_equal(output["result"], result, decimal=5)
+
+        result = np.add(data_0, data_1)
+        node = onnx.helper.make_node(
+            'Sum',
+            inputs=['data_0', 'data_1'],
+            outputs=['result'],
+        )
+        output = OnnxLoader.run_node(node, [data_0, data_1])
+        np.testing.assert_almost_equal(output["result"], result, decimal=5)
