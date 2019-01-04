@@ -20,7 +20,6 @@ import com.intel.analytics.bigdl.utils.{MultiShape, Shape, SingleShape, T}
 import com.intel.analytics.zoo.pipeline.api.keras.serializer.ModuleSerializationTest
 
 class SelectTableSerialTest extends ModuleSerializationTest {
-  test()
   override def test(): Unit = {
     val shape1 = SingleShape(List(2))
     val shape2 = SingleShape(List(2))
@@ -30,9 +29,7 @@ class SelectTableSerialTest extends ModuleSerializationTest {
 
     val mul1 = MultiShape(List(shape1, shape2))
     val mul2 = MultiShape(List(shape3, shape4))
-//    val layer = SelectTable[Float](0, inputShape = MultiShape(List(Shape(2), Shape(2))))
-val layer = SelectTable[Float](0)
-//    layer.build(MultiShape(List(Shape(2, 2), Shape(2, 2))))
+    val layer = SelectTable[Float](0, mul1)
     layer.build(mul2)
     val input = T(Tensor[Float](1, 2).rand(), Tensor[Float](1, 2).rand())
     runSerializationTest(layer, input)

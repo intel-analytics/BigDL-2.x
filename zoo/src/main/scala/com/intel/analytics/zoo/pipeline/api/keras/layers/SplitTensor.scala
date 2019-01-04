@@ -35,7 +35,7 @@ import scala.reflect.ClassTag
  * @param num elements number in the table
  * @tparam T Numeric type. Only support float/double now
  */
-class SplitTensor[T: ClassTag](dimension: Int, num: Int,
+class SplitTensor[T: ClassTag](val dimension: Int, val num: Int,
   val inputShape: Shape = null)(implicit ev: TensorNumeric[T])
   extends KerasLayer[Tensor[T], Table, T](KerasUtils.addBatch(inputShape)) with Net {
 

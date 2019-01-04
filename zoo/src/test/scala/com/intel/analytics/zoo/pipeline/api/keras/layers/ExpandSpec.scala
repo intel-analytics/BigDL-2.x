@@ -21,7 +21,6 @@ import com.intel.analytics.bigdl.utils.Shape
 import com.intel.analytics.zoo.pipeline.api.keras.serializer.ModuleSerializationTest
 
 class ExpandSerialTest extends ModuleSerializationTest {
-  test()
   override def test(): Unit = {
     val tgtSizes = Array(3, 2, 4)
     val layer = Expand[Float](tgtSizes, inputShape = Shape(2, 1)).setName("Expand")

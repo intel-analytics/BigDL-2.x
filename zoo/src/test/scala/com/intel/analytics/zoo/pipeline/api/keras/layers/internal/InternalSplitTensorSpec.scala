@@ -18,8 +18,9 @@ package com.intel.analytics.zoo.pipeline.api.keras.layers.internal
 
 import com.intel.analytics.bigdl.nn.JoinTable
 import com.intel.analytics.bigdl.tensor.Tensor
-import com.intel.analytics.bigdl.utils.{T, Table}
-import com.intel.analytics.zoo.pipeline.api.keras.layers.{InternalSplitTensor}
+import com.intel.analytics.bigdl.utils.{Shape, T, Table}
+import com.intel.analytics.zoo.pipeline.api.keras.layers.{Expand, InternalSplitTensor}
+import com.intel.analytics.zoo.pipeline.api.keras.serializer.ModuleSerializationTest
 import org.scalatest.{FlatSpec, Matchers}
 
 class InternalSplitTensorpec extends FlatSpec with Matchers {
@@ -43,5 +44,14 @@ class InternalSplitTensorpec extends FlatSpec with Matchers {
 
     val gradInput = layer2.backward(output, o2)
     assert(output.almostEqual(gradInput, 1e-8) == true)
+  }
+}
+
+
+class InternalSplitTensorSerialTest extends ModuleSerializationTest {
+  override def test(): Unit = {
+    val layer = new InternalSplitTensor[Float](2, 2).setName("InternalSplitTensor")
+    val input = Tensor[Float](4, 4).rand()
+    runSerializationTest(layer, input)
   }
 }

@@ -39,7 +39,7 @@ import scala.reflect.ClassTag
  * @param inputShape A Single Shape, does not include the batch dimension.
  * @tparam T Numeric type of parameter(e.g. weight, bias). Only support float/double now.
  */
-class SelectTable[T: ClassTag](index: Int, inputShape: Shape = null)
+class SelectTable[T: ClassTag](index: Int, val inputShape: Shape = null)
   (implicit ev: TensorNumeric[T])
   extends LayerWrapperByForward[T](KerasUtils.addBatch(inputShape)) {
 
