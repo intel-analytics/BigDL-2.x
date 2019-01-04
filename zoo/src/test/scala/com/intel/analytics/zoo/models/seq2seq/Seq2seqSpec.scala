@@ -19,9 +19,14 @@ package com.intel.analytics.zoo.models.seq2seq
 import com.intel.analytics.bigdl.nn.keras.KerasLayer
 import com.intel.analytics.bigdl.tensor.Tensor
 import com.intel.analytics.bigdl.utils.{Shape, SingleShape, T}
+import com.intel.analytics.zoo.models.common.ZooModel
+import com.intel.analytics.zoo.pipeline.api.keras.ZooSpecHelper
 import com.intel.analytics.zoo.pipeline.api.keras.layers._
 import com.intel.analytics.zoo.pipeline.api.keras.models.Sequential
+import com.intel.analytics.zoo.pipeline.api.keras.serializer.ModuleSerializationTest
 import org.scalatest.{BeforeAndAfter, FlatSpec, Matchers}
+
+import scala.util.Random
 
 class Seq2seqSpec extends FlatSpec with Matchers with BeforeAndAfter {
 
@@ -374,5 +379,39 @@ class Seq2seqSpec extends FlatSpec with Matchers with BeforeAndAfter {
     assert(gradients(0).almostEqual(g0, 1e-3) == true)
     assert(gradients(1).almostEqual(g1, 1e-4) == true)
     assert(gradients(2).almostEqual(g2, 1e-3) == true)
+  }
+}
+
+class RNNEncoderSerialTest extends ModuleSerializationTest {
+  override def test(): Unit = {
+    val layer = RNNEncoder[Float]("lstm", 1, 3, inputShape = Shape(2))
+    layer.build(Shape(1, 2))
+    val input = Tensor[Float](1, 2).apply1(_ => Random.nextFloat())
+    runSerializationTest(layer, input)
+  }
+}
+
+class RNNDecoderSerialTest extends ModuleSerializationTest {
+  override def test(): Unit = {
+    val layer = RNNDecoder[Float]("lstm", 1, 3, inputShape = Shape(2))
+    layer.build(Shape(1, 2))
+    val input = Tensor[Float](1, 2).apply1(_ => Random.nextFloat())
+    runSerializationTest(layer, input)
+  }
+}
+
+class Seq2seqSerialTest extends ModuleSerializationTest {
+  override def test(): Unit = {
+    // TODO: support save seq2seq(shape)
+//    val encoder = RNNEncoder[Float]("lstm", 1, 3)
+//    val decoder = RNNDecoder[Float]("lstm", 1, 3)
+//
+//    val input = Tensor.ones[Float](1, 2, 2)
+//    val model = Seq2seq[Float](encoder, decoder,
+//      SingleShape(List(2, 2)), SingleShape(List(2, 2)))
+//
+//    ZooSpecHelper.testZooModelLoadSave(
+//      model.asInstanceOf[ZooModel[Tensor[Float], Tensor[Float], Float]],
+//      input, Seq2seq.loadModel[Float])
   }
 }

@@ -143,4 +143,20 @@ object Seq2seq {
     new Seq2seq[T](encoder, decoder, inputShape, outputShape,
       bridge, generator).build()
   }
+
+  /**
+   * Load an existing seq2seq model (with weights).
+   *
+   * @param path The path for the pre-defined model.
+   *             Local file system, HDFS and Amazon S3 are supported.
+   *             HDFS path should be like "hdfs://[host]:[port]/xxx".
+   *             Amazon S3 path should be like "s3a://bucket/xxx".
+   * @param weightPath The path for pre-trained weights if any. Default is null.
+   * @tparam T Numeric type of parameter(e.g. weight, bias). Only support float/double now.
+   */
+  def loadModel[T: ClassTag](
+    path: String,
+    weightPath: String = null)(implicit ev: TensorNumeric[T]): Seq2seq[T] = {
+    ZooModel.loadModel(path, weightPath).asInstanceOf[Seq2seq[T]]
+  }
 }

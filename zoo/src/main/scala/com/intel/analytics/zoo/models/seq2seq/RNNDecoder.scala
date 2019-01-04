@@ -40,7 +40,7 @@ import scala.reflect.ClassTag
 class RNNDecoder[T: ClassTag](val rnns: Array[Recurrent[T]],
   val embedding: KerasLayer[Tensor[T], Tensor[T], T],
   val inputShape: Shape = null)(implicit ev: TensorNumeric[T])
-  extends Decoder {
+  extends Decoder[T](inputShape) {
 
   private def checkStateShape(stateShape: Shape, hiddenSizes: Array[Int]): Boolean = {
     if (stateShape.isInstanceOf[SingleShape]) {
