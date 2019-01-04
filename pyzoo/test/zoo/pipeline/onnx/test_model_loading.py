@@ -1303,7 +1303,32 @@ class TestModelLoading(OnnxTestCase):
             output = OnnxLoader.run_node(node, [data])
             np.testing.assert_almost_equal(output["transposed"], transposed, decimal=5)
 
+<<<<<<< HEAD
     def test_onnx_lstm(self):
         pytorch_model = torch.nn.LSTM(10, 20, 2)
         input_shape_with_batch = (6, 3, 10)
         self.compare_with_pytorch(pytorch_model, input_shape_with_batch)
+=======
+    def test_shape(self):
+        node = onnx.helper.make_node(
+            'Shape',
+            inputs=['x'],
+            outputs=['y'],
+        )
+        x = np.array([
+            [1, 2, 3],
+            [4, 5, 6],
+        ]).astype(np.float32)
+        y = np.array([
+            2, 3,
+        ]).astype(np.int64)
+
+        output = OnnxLoader.run_node(node, [x])
+        np.testing.assert_almost_equal(output["y"], y, decimal=5)
+
+        x = np.random.randn(3, 4, 5).astype(np.float32)
+        y = np.array(x.shape).astype(np.int64)
+
+        output = OnnxLoader.run_node(node, [x])
+        np.testing.assert_almost_equal(output["y"], y, decimal=5)
+>>>>>>> 7ef842a5da4bb37cf040eb43ee96239157cf52fd
