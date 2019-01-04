@@ -46,6 +46,21 @@ class Relation(object):
 class Relations(object):
     @staticmethod
     def read(path, sc=None, min_partitions=1, bigdl_type="float"):
+        """
+        Read relations from csv or txt file.
+        Each record is supposed to contain the following three fields in order:
+        id1(string), id2(string) and label(int).
+
+        For csv file, it should be without header.
+        For txt file, each line should contain one record with fields separated by comma.
+
+        :param path: The path to the relations file, which can either be a local file path or HDFS path.
+        :param sc: An instance of SparkContext.
+                   If specified, return RDD of Relation.
+                   Default is None and in this case return list of Relation.
+        :param min_partitions: Int. A suggestion value of the minimal partition number for input
+                               texts. Only need to specify this when sc is not None. Default is 1.
+        """
         if sc:
             jvalue = callBigDlFunc(bigdl_type, "readRelations", path, sc, min_partitions)
             res = jvalue.map(lambda x: Relation(str(x[0]), str(x[1]), int(x[2])))

@@ -74,7 +74,7 @@ We use [NDCG](https://en.wikipedia.org/wiki/Evaluation_measures_(information_ret
 
 You can find the validation information from the console log during the training process:
 ```
-INFO  Ranker$:101 - ndcg@3: 0.6175060695846906
-INFO  Ranker$:101 - ndcg@5: 0.6773301305366833
-INFO  Ranker$:83 - map: 0.6292063317678072
+INFO  Ranker$:101 - ndcg@3: 0.627045395285388
+INFO  Ranker$:101 - ndcg@5: 0.6863500126591011
+INFO  Ranker$:83 - map: 0.6385866141096943
 ```
