@@ -1302,3 +1302,26 @@ class TestModelLoading(OnnxTestCase):
             transposed = np.transpose(data)
             output = OnnxLoader.run_node(node, [data])
             np.testing.assert_almost_equal(output["transposed"], transposed, decimal=5)
+
+    def test_shape(self):
+        node = onnx.helper.make_node(
+            'Shape',
+            inputs=['x'],
+            outputs=['y'],
+        )
+        x = np.array([
+            [1, 2, 3],
+            [4, 5, 6],
+        ]).astype(np.float32)
+        y = np.array([
+            2, 3,
+        ]).astype(np.int64)
+
+        output = OnnxLoader.run_node(node, [x])
+        np.testing.assert_almost_equal(output["y"], y, decimal=5)
+
+        x = np.random.randn(3, 4, 5).astype(np.float32)
+        y = np.array(x.shape).astype(np.int64)
+
+        output = OnnxLoader.run_node(node, [x])
+        np.testing.assert_almost_equal(output["y"], y, decimal=5)
