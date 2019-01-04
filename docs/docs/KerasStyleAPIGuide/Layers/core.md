@@ -9,9 +9,6 @@ part of the gradient to next layer.
 
 The most common input is 2D.
 
-When you use this layer as the first layer of a model, you need to provide the argument
-inputShape (a Single Shape, does not include the batch dimension).
-
 **Scala:**
 ```scala
 SparseDense(outputDim, init = "glorot_uniform", activation = null, wRegularizer = null, bRegularizer = null, backwardStart = -1, backwardLength = -1, initWeight = null, initBias = null, initGradWeight = null, initGradBias = null, bias = true, inputShape = null)
@@ -414,8 +411,6 @@ Squeeze(1) will give output size (2, 3, 4, 1),
 
 Squeeze() will give output size (2, 3, 4)
 
-When you use this layer as the first layer of a model, you need to provide the argument input_shape (a shape tuple, does not include the batch dimension).
-
 **Scala:**
 ```scala
 Squeeze(dims = null, inputShape = null)
@@ -428,7 +423,7 @@ Squeeze(dim=None, input_shape=None, name=None)
 **Parameters:**
 
 * `dims`: The dimension(s) to squeeze. 0-based index. Cannot squeeze the batch dimension. The selected dimensions must be singleton, i.e. having size 1. Default is null, and in this case all the non-batch singleton dimensions will be deleted.
-* `inputShape`: A Single Shape, does not include the batch dimension.
+* `inputShape`: Only need to specify this argument when you use this layer as the first layer of a model. For Scala API, it should be a [`Shape`](../keras-api-scala/#shape) object. For Python API, it should be a shape tuple. Batch dimension should be excluded.
 
 **Scala example:**
 ```scala
@@ -497,8 +492,6 @@ Threshold the input.
 
 If an input element is smaller than the threshold value, it will be replaced by 0; otherwise, it will be replaced by 1.
 
-When you use this layer as the first layer of a model, you need to provide the argument input_shape (a shape tuple, does not include the batch dimension).
-
 **Scala:**
 ```scala
 BinaryThreshold(value = 1e-6, inputShape = null)
@@ -511,7 +504,7 @@ BinaryThreshold(value=1e-6, input_shape=None, name=None)
 **Parameters:**
 
 * `value`: The threshold value to compare with. Default is 1e-6.
-* `inputShape`: A shape tuple, not including batch.
+* `inputShape`: Only need to specify this argument when you use this layer as the first layer of a model. For Scala API, it should be a [`Shape`](../keras-api-scala/#shape) object. For Python API, it should be a shape tuple. Batch dimension should be excluded.
 
 **Scala example:**
 ```scala
@@ -630,11 +623,9 @@ Output is
 ## **Sqrt**
 Applies an element-wise square root operation to the input.
 
-When you use this layer as the first layer of a model, you need to provide the argument input_shape (a shape tuple, does not include the batch dimension).
-
 **Scala:**
 ```scala
-Sqrt(inputShape = Null)
+Sqrt(inputShape = null)
 ```
 **Python:**
 ```python
@@ -643,7 +634,7 @@ Sqrt(input_shape=None, name=None)
 
 **Parameters:**
 
-* `inputShape`: A shape tuple, not including batch.
+* `inputShape`: Only need to specify this argument when you use this layer as the first layer of a model. For Scala API, it should be a [`Shape`](../keras-api-scala/#shape) object. For Python API, it should be a shape tuple. Batch dimension should be excluded.
 
 **Scala example:**
 ```scala
@@ -698,11 +689,9 @@ Output is
 ## **MulConstant**
 Multiply the input by a (non-learnable) scalar constant.
 
-When you use this layer as the first layer of a model, you need to provide the argument input_shape (a shape tuple, does not include the batch dimension).
-
 **Scala:**
 ```scala
-MulConstant(constant, inputShape = Null)
+MulConstant(constant, inputShape = null)
 ```
 **Python:**
 ```python
@@ -712,7 +701,7 @@ MulConstant(constant, input_shape=None, name=None)
 **Parameters:**
 
 * `constant`: The scalar constant to be multiplied.
-* `inputShape`: A shape tuple, not including batch.
+* `inputShape`: Only need to specify this argument when you use this layer as the first layer of a model. For Scala API, it should be a [`Shape`](../keras-api-scala/#shape) object. For Python API, it should be a shape tuple. Batch dimension should be excluded.
 
 **Scala example:**
 ```scala
@@ -797,11 +786,9 @@ Computes the element-wise product of the input and weight, with the shape of the
 
 Similarly, perform an expanded bias and perform an element-wise add.
 
-When you use this layer as the first layer of a model, you need to provide the argument input_shape (a shape tuple, does not include the batch dimension).
-
 **Scala:**
 ```scala
-Scale(size, inputShape = Null)
+Scale(size, inputShape = null)
 ```
 **Python:**
 ```python
@@ -811,7 +798,7 @@ Scale(size, input_shape=None, name=None)
 **Parameters:**
 
 * `size`: Size of the weight and bias.
-* `inputShape`: A shape tuple, not including batch.
+* `inputShape`: Only need to specify this argument when you use this layer as the first layer of a model. For Scala API, it should be a [`Shape`](../keras-api-scala/#shape) object. For Python API, it should be a shape tuple. Batch dimension should be excluded.
 
 **Scala example:**
 ```scala
@@ -867,13 +854,9 @@ Output is
 ## **Log**
 Applies a log transformation to the input.
 
-When you use this layer as the first layer of a model, you need to provide the argument inputShape (a Single Shape, does not include the batch dimension).
-
-Remark: This layer is from Torch and wrapped in Keras style.
-
 **Scala:**
 ```scala
-Log(inputShape = Null)
+Log(inputShape = null)
 ```
 **Python:**
 ```python
@@ -882,7 +865,7 @@ Log(input_shape=None, name=None)
 
 **Parameters:**
 
-* `inputShape`: A shape tuple, not including batch.
+* `inputShape`: Only need to specify this argument when you use this layer as the first layer of a model. For Scala API, it should be a [`Shape`](../keras-api-scala/#shape) object. For Python API, it should be a shape tuple. Batch dimension should be excluded.
 
 **Scala example:**
 ```scala
@@ -975,7 +958,7 @@ It's useful in same parallel container to get an origin input.
 
 **Scala:**
 ```scala
-Identity(inputShape = Null)
+Identity(inputShape = null)
 ```
 **Python:**
 ```python
@@ -984,7 +967,7 @@ Identity(input_shape=None, name=None)
 
 **Parameters:**
 
-* `inputShape`: A shape tuple, not including batch.
+* `inputShape`: Only need to specify this argument when you use this layer as the first layer of a model. For Scala API, it should be a [`Shape`](../keras-api-scala/#shape) object. For Python API, it should be a shape tuple. Batch dimension should be excluded.
 
 **Scala example:**
 ```scala
@@ -1092,174 +1075,325 @@ Output is
 ```
 
 ---
-## **LRN2D**
-Local Response Normalization between different feature maps.
+## **Select**
+Select an index of the input in the given dim and return the subset part.
 
-When you use this layer as the first layer of a model, you need to provide the argument input_shape (a shape tuple, does not include the batch dimension).
+The batch dimension needs to be unchanged.
+
+For example, if input is:
+
+[[1, 2, 3], 
+ [4, 5, 6]]
+
+Select(1, 1) will give output [2 5]
+
+Select(1, -1) will give output [3 6]
 
 **Scala:**
 ```scala
-LRN2D(alpha = 1e-4, k = 1.0, beta = 0.75, n = 5, dimOrdering = "th", inputShape = Null)
+Select(dim, index, inputShape = null)
 ```
 **Python:**
 ```python
-LRN2D(alpha=1e-4, k=1.0, beta=0.75, n=5, dim_ordering="th", input_shape=None, name=None)
+Select(dim, index, input_shape=None, name=None)
 ```
 
 **Parameters:**
 
-* `alpha`: Double. The scaling parameter. Default is 0.0001.
-* `k`: Double. A constant.
-* `beta`: Double. The exponent. Default is 0.75.
-* `n`: The number of channels to sum over.
-* `dimOrdering`: Format of input data. Either DataFormat.NCHW (dimOrdering='th') or DataFormat.NHWC (dimOrdering='tf'). Default is NCHW.
-* `inputShape`: A Single Shape, does not include the batch dimension.
+* `dim`: The dimension to select. 0-based index. Cannot select the batch dimension. -1 means the last dimension of the input.
+* `index`: The index of the dimension to be selected. 0-based index. -1 means the last dimension of the input.
+* `inputShape`: Only need to specify this argument when you use this layer as the first layer of a model. For Scala API, it should be a [`Shape`](../keras-api-scala/#shape) object. For Python API, it should be a shape tuple. Batch dimension should be excluded.
 
 **Scala example:**
 ```scala
-import com.intel.analytics.zoo.pipeline.api.keras.layers.LRN2D
 import com.intel.analytics.zoo.pipeline.api.keras.models.Sequential
-import com.intel.analytics.bigdl.utils.Shape
+import com.intel.analytics.zoo.pipeline.api.keras.layers.Select
 import com.intel.analytics.bigdl.tensor.Tensor
 
 val model = Sequential[Float]()
-model.add(LRN2D[Float](1e-3, 1.2, 0.4, 3, dimOrdering = "tf", inputShape = Shape(3, 3, 3)))
-val input = Tensor[Float](2, 3, 3, 3).randn()
+model.add(Select[Float](1, 2, inputShape = Shape(3, 1, 3)))
+val input = Tensor[Float](1, 3, 1, 3).randn()
 val output = model.forward(input)
 ```
 Input is:
 ```scala
 input: com.intel.analytics.bigdl.tensor.Tensor[Float] =
 (1,1,.,.) =
--0.6331058      -1.1622255      -0.20002009
-0.031907756     1.4720777       0.36692062
-0.16142464      -0.87992615     1.9201758
-
+-0.67646945     -0.5485965      -0.11103154
 (1,2,.,.) =
--1.0693451      -1.0901353      0.6909652
-0.13340907      1.0220904       -1.0232266
--1.4288133      0.8749622       -0.07012164
-
+-0.13488655     0.43843046      -0.04482145
 (1,3,.,.) =
--0.04984741     -1.4627954      1.2438095
-1.5584376       -0.36223406     -0.862751
--0.68516856     -0.0066024275   -0.55539906
-
-(2,1,.,.) =
-1.8261654       -0.39168724     0.4531422
--0.09046966     0.61876625      0.4553172
-0.58150214      -2.6587567      0.46114618
-
-(2,2,.,.) =
-0.75011647      -2.220607       -1.4024881
--0.5560173      0.19422908      -2.5069134
--0.7417007      1.3029631       -0.660577
-
-(2,3,.,.) =
--0.17827246     1.8794266       1.2124214
-0.5774041       0.25620413      0.6461205
-0.33391082      -0.532468       1.3129597
-
-[com.intel.analytics.bigdl.tensor.DenseTensor of size 2x3x3x3]
+-0.18094881     0.19431554      -1.7624844
+[com.intel.analytics.bigdl.tensor.DenseTensor of size 1x3x1x3]
 ```
 Output is:
 ```scala
 output: com.intel.analytics.bigdl.nn.abstractnn.Activity =
-(1,1,.,.) =
--0.5884632      -1.0802679      -0.1859234
-0.02965645      1.3681923       0.34102687
-0.15005784      -0.81763095     1.7842402
+(1,.,.) =
+-0.18094881     0.19431554      -1.7624844
+[com.intel.analytics.bigdl.tensor.DenseTensor of size 1x1x3]
+```
 
-(1,2,.,.) =
--0.9938776      -1.0131469      0.6422488
-0.12401139      0.94998133      -0.95103925
--1.3279068      0.81316966      -0.065184206
+**Python example:**
+```python
+from zoo.pipeline.api.keras.layers import Select
+from zoo.pipeline.api.keras.models import Sequential
+import numpy as np
 
-(1,3,.,.) =
--0.046330474    -1.3593558      1.1558554
-1.4484164       -0.33663353     -0.8019933
--0.63694555     -0.0061375294   -0.5163186
+model = Sequential()
+model.add(Select(1, 2, input_shape=(3, 1, 3)))
+input = np.random.random([1, 3, 1, 3])
+output = model.forward(input)
+```
+Input is:
+```python
+array([[[[0.53306099, 0.95147881, 0.15222129]],
+        [[0.89604861, 0.90160974, 0.5230576 ]],
+        [[0.70779386, 0.14438568, 0.37601195]]]])
+```
+Output is:
+```python
+array([[[0.7077939 , 0.14438568, 0.37601194]]], dtype=float32)
+```
 
-(2,1,.,.) =
-1.6970686       -0.36398944     0.42125463
--0.08410302     0.5752084       0.4232657
-0.54015917      -2.469669       0.4283661
+---
+## **Dense**
+A densely-connected NN layer.
 
-(2,2,.,.) =
-0.6969334       -2.0627165      -1.3028492
--0.5168911      0.18043552      -2.32896
--0.68936265     1.210961        -0.6139712
+The most common input is 2D.
 
-(2,3,.,.) =
--0.16566847     1.7462649       1.1265225
-0.53676987      0.23816296      0.60064477
-0.31041232      -0.49490157     1.2203434
+**Scala:**
+```scala
+Dense(outputDim, init = "glorot_uniform", activation = null, wRegularizer = null, bRegularizer = null, bias = true, inputShape = null)
+```
+**Python:**
+```python
+Dense(output_dim, init="glorot_uniform", activation=None, W_regularizer=None, b_regularizer=None, bias=True, input_dim=None, input_shape=None, name=None)
+```
 
-[com.intel.analytics.bigdl.tensor.DenseTensor of size 2x3x3x3]
+**Parameters:**
+
+* `outputDim`: The size of the output dimension.
+* `init`: Initialization method for the weights of the layer. Default is Xavier.You can also pass in corresponding string representations such as 'glorot_uniform' or 'normal', etc. for simple init methods in the factory method.
+* `activation`: Activation function to use. Default is null.You can also pass in corresponding string representations such as 'relu'or 'sigmoid', etc. for simple activations in the factory method.
+* `wRegularizer`: An instance of [Regularizer](https://bigdl-project.github.io/master/#APIGuide/Regularizers/), applied to the input weights matrices. Default is null.
+* `bRegularizer`: An instance of [Regularizer](https://bigdl-project.github.io/master/#APIGuide/Regularizers/), applied to the bias. Default is null.
+* `bias`: Whether to include a bias (i.e. make the layer affine rather than linear). Default is true.
+* `inputShape`: Only need to specify this argument when you use this layer as the first layer of a model. For Scala API, it should be a [`Shape`](../keras-api-scala/#shape) object. For Python API, it should be a shape tuple. Batch dimension should be excluded.
+
+**Scala example:**
+```scala
+import com.intel.analytics.zoo.pipeline.api.keras.models.Sequential
+import com.intel.analytics.zoo.pipeline.api.keras.layers.Dense
+import com.intel.analytics.bigdl.utils.Shape
+import com.intel.analytics.bigdl.tensor.Tensor
+
+val model = Sequential[Float]()
+model.add(Dense[Float](5, activation = "relu", inputShape = Shape(4)))
+val input = Tensor[Float](2, 4).randn()
+val output = model.forward(input)
+```
+Input is:
+```scala
+input: com.intel.analytics.bigdl.tensor.Tensor[Float] =
+1.4289935       -1.7659454      -0.08306135     -1.0153456
+1.0191492       0.37392816      1.3076705       -0.19495767
+[com.intel.analytics.bigdl.tensor.DenseTensor of size 2x4]
+```
+Output is:
+```scala
+output: com.intel.analytics.bigdl.nn.abstractnn.Activity =
+0.5421522       0.49008092      0.0     0.0     0.0
+0.07940009      0.0     0.12953377      0.0     0.0
+[com.intel.analytics.bigdl.tensor.DenseTensor of size 2x5]
 ```
 
 **Python example:**
 ```python
 import numpy as np
-from zoo.pipeline.api.keras.layers import LRN2D
+from zoo.pipeline.api.keras.layers import Dense
 from zoo.pipeline.api.keras.models import Sequential
 
 model = Sequential()
-model.add(LRN2D(1e-3, 1.2, 0.4, 3, dim_ordering="tf", input_shape=(3, 3, 3)))
-input = np.random.random([2, 3, 3, 3])
+model.add(Dense(5, activation="relu", input_shape=(4, )))
+input = np.random.random([2, 4])
 output = model.forward(input)
 ```
 Input is:
 ```python
-[[[[0.56356835, 0.57442602, 0.31515783],
-   [0.64858065, 0.45682821, 0.63889742],
-   [0.56114806, 0.32727298, 0.54948325]],
-
-  [[0.25249933, 0.27872938, 0.2341261 ],
-   [0.22254477, 0.0855324 , 0.95981825],
-   [0.55280765, 0.722852  , 0.95902286]],
-
-  [[0.65021279, 0.00722661, 0.64386904],
-   [0.36467587, 0.84466816, 0.05716471],
-   [0.16279813, 0.57831132, 0.52848513]]],
-
-
- [[[0.94372659, 0.32741784, 0.03196349],
-   [0.06181632, 0.8300082 , 0.36091632],
-   [0.4961609 , 0.5816011 , 0.95777095]],
-
-  [[0.12676416, 0.32625023, 0.58114797],
-   [0.05347868, 0.5303113 , 0.20170834],
-   [0.76583324, 0.39418884, 0.84815322]],
-
-  [[0.62523604, 0.56888912, 0.69009855],
-   [0.34074716, 0.05078519, 0.05212047],
-   [0.50672308, 0.30567418, 0.47902636]]]]
+array([[0.64593485, 0.67393322, 0.72505368, 0.04654095],
+       [0.19430753, 0.47800889, 0.00743648, 0.6412403 ]])
 ```
 Output is
 ```python
-[[[[0.5238933 , 0.53398067, 0.2929779 ],
-   [0.602922  , 0.42464924, 0.59392124],
-   [0.52165645, 0.30423048, 0.5108133 ]],
+array([[0.        , 0.        , 1.2698183 , 0.        , 0.10656227],
+       [0.        , 0.        , 0.6236721 , 0.00299606, 0.29664695]],
+      dtype=float32)
+```
 
-  [[0.23473667, 0.2591199 , 0.21765617],
-   [0.20689127, 0.07950803, 0.8922195 ],
-   [0.51387984, 0.6718813 , 0.89142925]],
+---
+## **Negative**
+Computes the negative value of each element of the input.
 
-  [[0.604453  , 0.00671771, 0.59855634],
-   [0.3389953 , 0.7851862 , 0.05313992],
-   [0.15134202, 0.53759885, 0.49128178]]],
+**Scala:**
+```scala
+Negative(inputShape = null)
+```
+**Python:**
+```python
+Negative(input_shape=None, name=None)
+```
+
+**Parameters:**
+
+* `inputShape`: Only need to specify this argument when you use this layer as the first layer of a model. For Scala API, it should be a [`Shape`](../keras-api-scala/#shape) object. For Python API, it should be a shape tuple. Batch dimension should be excluded.
+
+**Scala example:**
+```scala
+import com.intel.analytics.zoo.pipeline.api.keras.models.Sequential
+import com.intel.analytics.zoo.pipeline.api.keras.layers.Negative
+import com.intel.analytics.bigdl.utils.Shape
+import com.intel.analytics.bigdl.tensor.Tensor
+
+val model = Sequential[Float]()
+model.add(Negative[Float](inputShape = Shape(2, 3)))
+val input = Tensor[Float](2, 2, 3).randn()
+val output = model.forward(input)
+```
+Input is:
+```scala
+input: com.intel.analytics.bigdl.tensor.Tensor[Float] =
+(1,.,.) =
+1.031705        -0.5723963      1.998631
+-0.32908052     2.4069138       -2.4111257
+(2,.,.) =
+0.5355049       -1.4404331      -0.38116863
+-0.45641592     -1.1485358      0.94766915
+[com.intel.analytics.bigdl.tensor.DenseTensor of size 2x2x3]
+```
+Output is:
+```scala
+output: com.intel.analytics.bigdl.nn.abstractnn.Activity =
+(1,.,.) =
+-1.031705       0.5723963       -1.998631
+0.32908052      -2.4069138      2.4111257
+(2,.,.) =
+-0.5355049      1.4404331       0.38116863
+0.45641592      1.1485358       -0.94766915
+[com.intel.analytics.bigdl.tensor.DenseTensor of size 2x2x3]
+```
+
+**Python example:**
+```python
+from zoo.pipeline.api.keras.layers import Negative
+from zoo.pipeline.api.keras.models import Sequential
+import numpy as np
+
+model = Sequential()
+model.add(Negative(input_shape=(2, 3)))
+input = np.random.random([2, 2, 3])
+output = model.forward(input)
+```
+Input is:
+```python
+array([[[0.39261261, 0.03164615, 0.32179116],
+        [0.11969367, 0.61610712, 0.42573733]],
+       [[0.36794656, 0.90912174, 0.540356  ],
+        [0.42667627, 0.04154093, 0.84692964]]])
+```
+Output is
+```python
+array([[[-0.3926126 , -0.03164615, -0.32179114],
+        [-0.11969367, -0.6161071 , -0.42573732]],
+       [[-0.36794657, -0.90912175, -0.540356  ],
+        [-0.42667627, -0.04154094, -0.84692967]]], dtype=float32)
+```
+
+---
+## **CAdd**
+This layer has a bias with given size.
+
+The bias will be added element-wise to the input.
+
+If the element number of the bias matches the input, a simple element-wise addition will be done.
+
+Or the bias will be expanded to the same size of the input.
+
+The expand means repeat on unmatched singleton dimension (if some unmatched dimension isn't a singleton dimension, an error will be raised).
 
 
- [[[0.87725437, 0.30435583, 0.02971505],
-   [0.05746418, 0.77156085, 0.33550152],
-   [0.46123454, 0.54060525, 0.89028406]],
+**Scala:**
+```scala
+CAdd(size, bRegularizer = null, inputShape = null)
+```
+**Python:**
+```python
+CAdd(size, b_regularizer=None, input_shape=None, name=None)
+```
 
-  [[0.11784688, 0.30328864, 0.5402475 ],
-   [0.04971581, 0.4929952 , 0.1875149 ],
-   [0.7119114 , 0.36640498, 0.7884236 ]],
+**Parameters:**
 
-  [[0.58121526, 0.5288076 , 0.64150494],
-   [0.31677726, 0.04721269, 0.04845466],
-   [0.4710655 , 0.28415698, 0.44531912]]]]
+* `size`: the size of the bias
+* `bRegularizer`: An instance of [Regularizer](https://bigdl-project.github.io/master/#APIGuide/Regularizers/), applied to the bias. Default is null.
+* `inputShape`: Only need to specify this argument when you use this layer as the first layer of a model. For Scala API, it should be a [`Shape`](../keras-api-scala/#shape) object. For Python API, it should be a shape tuple. Batch dimension should be excluded.
+
+**Scala example:**
+```scala
+import com.intel.analytics.zoo.pipeline.api.keras.models.Sequential
+import com.intel.analytics.zoo.pipeline.api.keras.layers.CAdd
+import com.intel.analytics.bigdl.utils.Shape
+import com.intel.analytics.bigdl.tensor.Tensor
+
+val model = Sequential[Float]()
+model.add(CAdd[Float](Array(2, 3), inputShape = Shape(2, 3)))
+val input = Tensor[Float](2, 2, 3).rand()
+val output = model.forward(input)
+```
+Input is:
+```scala
+input: com.intel.analytics.bigdl.tensor.Tensor[Float] =
+(1,.,.) =
+0.2183351       0.32434112      0.89350265
+0.3348259       0.78677046      0.24054797
+(2,.,.) =
+0.9945844       0.72363794      0.7737936
+0.05522544      0.3517818       0.7417069
+[com.intel.analytics.bigdl.tensor.DenseTensor of size 2x2x3]
+```
+Output is:
+```scala
+output: com.intel.analytics.bigdl.nn.abstractnn.Activity =
+(1,.,.) =
+0.1358028       0.6956667       1.0837181
+0.6767027       0.7955346       0.5063505
+(2,.,.) =
+0.9120521       1.0949634       0.96400905
+0.3971022       0.36054593      1.0075095
+[com.intel.analytics.bigdl.tensor.DenseTensor of size 2x2x3]
+```
+
+**Python example:**
+```python
+from zoo.pipeline.api.keras.layers import CAdd
+from zoo.pipeline.api.keras.models import Sequential
+import numpy as np
+
+model = Sequential()
+model.add(CAdd([2, 1], input_shape = (2, 3)))
+input = np.random.rand(2, 2, 3)
+output = model.forward(input)
+```
+Input is:
+```python
+array([[[0.4122004 , 0.73289359, 0.11500016],
+        [0.26974491, 0.32166632, 0.91408442]],
+       [[0.66824327, 0.80271314, 0.75981145],
+        [0.39271431, 0.07312566, 0.4966805 ]]])
+```
+Output is
+```python
+array([[[ 0.06560206,  0.38629526, -0.23159817],
+        [ 0.44287407,  0.4947955 ,  1.0872136 ]],
+       [[ 0.32164496,  0.45611483,  0.41321313],
+        [ 0.56584346,  0.24625483,  0.6698097 ]]], dtype=float32)
 ```
