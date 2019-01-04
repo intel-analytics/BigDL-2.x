@@ -56,5 +56,6 @@ class LSTMMapper(OperatorMapper):
                                       b_regularizer=b_regularizer,
                                       dropout_U=dropout_U,
                                       dropout_W=dropout_W)
+
         lstm_tensor = lstm(input.zvalue)
         return lstm_tensor
