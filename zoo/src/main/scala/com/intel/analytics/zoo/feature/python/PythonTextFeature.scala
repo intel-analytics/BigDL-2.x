@@ -43,12 +43,12 @@ object PythonTextFeature {
 
 class PythonTextFeature[T: ClassTag](implicit ev: TensorNumeric[T]) extends PythonZoo[T] {
 
-  def createTextFeature(text: String): TextFeature = {
-    TextFeature(text)
+  def createTextFeature(text: String, uri: String): TextFeature = {
+    TextFeature(text, uri)
   }
 
-  def createTextFeature(text: String, label: Int): TextFeature = {
-    TextFeature(text, label)
+  def createTextFeature(text: String, label: Int, uri: String = null): TextFeature = {
+    TextFeature(text, label, uri)
   }
 
   def textFeatureGetText(feature: TextFeature): String = {
@@ -131,7 +131,7 @@ class PythonTextFeature[T: ClassTag](implicit ev: TensorNumeric[T]) extends Pyth
       }
     }
     else {
-      texts.asScala.toArray.map(createTextFeature)
+      texts.asScala.toArray.map(text => createTextFeature(text, null))
     }
     TextSet.array(features)
   }
@@ -146,7 +146,7 @@ class PythonTextFeature[T: ClassTag](implicit ev: TensorNumeric[T]) extends Pyth
       }
     }
     else {
-      texts.rdd.map(createTextFeature)
+      texts.rdd.map(text => createTextFeature(text, null))
     }
     TextSet.rdd(features)
   }

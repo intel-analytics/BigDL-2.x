@@ -181,6 +181,14 @@ class TestTextSet:
         assert distributed_set.get_samples().collect() == [None, None, None]
         assert distributed_set.get_predicts().collect() == [None, None, None]
 
+    def test_read_csv_parquet(self):
+        text_set = TextSet.read_csv(self.qa_path + "/question_corpus.csv", self.sc)
+        text_set2 = TextSet.read_csv(self.qa_path + "/question_corpus.csv")
+        text_set3 = TextSet.read_parquet(self.qa_path + "/question_corpus.parquet", self.sc)
+        assert text_set.is_distributed()
+        assert text_set2.is_local()
+        assert text_set3.is_distributed()
+
     def test_qaranker_distributed_integration(self):
         relations = Relations.read(self.qa_path+"/relations.txt", self.sc)
         assert relations.count() == 4
