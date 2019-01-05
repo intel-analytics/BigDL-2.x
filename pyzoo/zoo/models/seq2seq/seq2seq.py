@@ -14,11 +14,8 @@
 # limitations under the License.
 #
 
-import warnings
-
 
 from zoo.pipeline.api.keras.layers import *
-from bigdl.util.common import callBigDlFunc
 from zoo.models.common.zoo_model import ZooModel
 
 from zoo.pipeline.api.keras.engine import ZooKerasLayer
@@ -28,19 +25,18 @@ if sys.version >= '3':
     unicode = str
 
 
-class Encoder(ZooKerasLayer):
-    """
-    The basic encoder class for seqseq model.
-    """
+def createRNN(rnn_type, nlayers, hidden_size):
+    if (rnn_type == "lstm"):
+        return [LSTM(hidden_size, return_sequences=True) for layer in range(nlayers)]
+    elif (rnn_type == "gru"):
+        return [GRU(hidden_size, return_sequences=True) for layer in range(nlayers)]
+    elif (rnn_type == "simplernn"):
+        return [SimpleRNN(hidden_size, return_sequences=True) for layer in range(nlayers)]
+    else :
+        raise Exception('Only support lstm|gru|simplernn')
 
 
-class Decoder(ZooKerasLayer):
-    """
-    The basic Decoder class for seqseq model.
-    """
-
-
-class RNNEncoder(Encoder):
+class RNNEncoder(ZooKerasLayer):
     """
     A generic recurrent neural network encoder
 
@@ -50,9 +46,17 @@ class RNNEncoder(Encoder):
     input_shape: shape of input, not including batch
 
     >>> encoder = RNNEncoder.initialize("lstm", 2, 3)
+    creating: createZooKerasLSTM
+    creating: createZooKerasRNNEncoder
+    
+    >>> lstm = LSTM(3)
+    creating: createZooKerasLSTM
+    >>> embedding = Embedding(1000, 32, input_length=10, name="embedding1")
+    creating: createZooKerasEmbedding
+    >>> encoder = RNNEncoder([lstm], embedding)
     creating: createZooKerasRNNEncoder
     """
-    def __init__(self, rnns, embedding, input_shape=None):
+    def __init__(self, rnns, embedding=None, input_shape=None):
         super(RNNEncoder, self).__init__(None,
                                          rnns,
                                          embedding,
@@ -60,15 +64,11 @@ class RNNEncoder(Encoder):
 
     @classmethod
     def initialize(cls, rnn_type, nlayers, hidden_size, embedding=None, input_shape=None):
-        rnns = {
-            'lstm': [LSTM(hidden_size, return_sequences=True) for layer in range(nlayers)],
-            'gru': [GRU(hidden_size, return_sequences=True) for layer in range(nlayers)],
-            'simplernn': [SimpleRNN(hidden_size, return_sequences=True) for layer in range(nlayers)]
-        }[rnn_type]()
-        RNNEncoder(rnns, embedding, input_shape)
+        rnns = createRNN(rnn_type.lower(), nlayers, hidden_size)
+        return RNNEncoder(rnns, embedding, input_shape)
 
 
-class RNNDecoder(Decoder):
+class RNNDecoder(ZooKerasLayer):
     """
     A generic recurrent neural network decoder
 
@@ -78,9 +78,17 @@ class RNNDecoder(Decoder):
     input_shape: shape of input, not including batch
 
     >>> decoder = RNNDecoder.initialize("lstm", 2, 3)
+    creating: createZooKerasLSTM
+    creating: createZooKerasRNNDecoder
+    
+    >>> lstm = LSTM(3)
+    creating: createZooKerasLSTM
+    >>> embedding = Embedding(1000, 32, input_length=10, name="embedding1")
+    creating: createZooKerasEmbedding
+    >>> encoder = RNNDecoder([lstm], embedding)
     creating: createZooKerasRNNDecoder
     """
-    def __init__(self, rnns, embedding, input_shape=None):
+    def __init__(self, rnns, embedding=None, input_shape=None):
         super(RNNDecoder, self).__init__(None,
                                          rnns,
                                          embedding,
@@ -88,12 +96,8 @@ class RNNDecoder(Decoder):
 
     @classmethod
     def initialize(cls, rnn_type, nlayers, hidden_size, embedding=None, input_shape=None):
-        rnns = {
-            'lstm': [LSTM(hidden_size, return_sequences=True) for layer in range(nlayers)],
-            'gru': [GRU(hidden_size, return_sequences=True) for layer in range(nlayers)],
-            'simplernn': [SimpleRNN(hidden_size, return_sequences=True) for layer in range(nlayers)]
-        }[rnn_type]()
-        RNNDecoder(rnns, embedding, input_shape)
+        rnns = createRNN(rnn_type.lower(), nlayers, hidden_size)
+        return RNNDecoder(rnns, embedding, input_shape)
 
 
 class Bridge(ZooKerasLayer):
@@ -105,26 +109,29 @@ class Bridge(ZooKerasLayer):
     input_shape: shape of input, not including batch
 
     >>> bridge = Bridge.initialize("dense", 2)
-    creating: createZooKerasRNNDecoder
+    creating: createZooKerasBridge
+    >>> dense = Dense(3)
+    >>> bridge = Bridge.initialize_from_keraslayer("dense", 2)
+    creating: createZooKerasDense
+    creating: createZooKerasBridge
     """
-    def __init__(self, bridge_type, decoder_hidden_size, bridge, input_shape=None):
-        super(Bridge, self).__init__(None, bridge_type, decoder_hidden_size, bridge,
-                                         list(input_shape) if input_shape else None)
+    def __init__(self, bridge_type, decoder_hidden_size, bridge):
+        super(Bridge, self).__init__(None, bridge_type, decoder_hidden_size, bridge)
 
     @classmethod
-    def initialize(cls, bridge_type, decoder_hidden_size, input_shape=None):
+    def initialize(cls, bridge_type, decoder_hidden_size):
         """
         bridge_type: currently only support "dense | densenonlinear"
         decoder_hiddenSize: hidden size of decoder
         """
-        Bridge(bridge_type, decoder_hidden_size, None, input_shape)
+        return Bridge(bridge_type, decoder_hidden_size, None)
 
     @classmethod
-    def initialize_from_layer(cls, bridge, input_shape=None):
+    def initialize_from_keraslayer(cls, bridge):
         """
         bridge: keras layers used to do the transformation
         """
-        Bridge("customized", 0, bridge, input_shape)
+        return Bridge("customized", 0, bridge)
 
 
 class Seq2seq(ZooModel):
@@ -134,10 +141,27 @@ class Seq2seq(ZooModel):
     # Arguments
     encoder: an encoder object
     decoder: a decoder object
-    input_shape: shape of encoder input, for variable length, please input -1
-    output_shape: shape of decoder input, for variable length, please input -1
+    input_shape: shape of encoder input, for variable length, please use -1 as seq len
+    output_shape: shape of decoder input, for variable length, please use -1 as seq len
     bridge: connect encoder and decoder
+
+    >>> encoder = RNNEncoder.initialize("LSTM", 1, 4)
+    >>> decoder = RNNDecoder.initialize("LSTM", 1, 4)
+    >>> bridge = Bridge.initialize("dense", 4)
+    >>> seq2seq = Seq2seq(encoder, decoder, [2, 4], [2, 4], bridge)
+    creating: createZooKerasRNNEncoder
+    creating: createZooKerasLSTM
+    creating: createZooKerasRNNDecoder
+    creating: createZooKerasBridge
+    creating: createZooSeq2seq
     """
 
-    def __init__(self, encoder, decoder, input_shape, output_shape, bridge=None, generator=None):
-        super(Seq2seq, self).__init__(None, encoder, decoder, input_shape, output_shape, bridge, generator)
+    def __init__(self, encoder, decoder, input_shape, output_shape, bridge=None,
+                 generator=None, bigdl_type="float"):
+        super(Seq2seq, self).__init__(None, bigdl_type,
+                                      encoder,
+                                      decoder,
+                                      list(input_shape) if input_shape else None,
+                                      list(output_shape) if output_shape else None,
+                                      bridge,
+                                      generator)

@@ -31,7 +31,7 @@ import com.intel.analytics.bigdl.nn.InitializationMethod
 import com.intel.analytics.bigdl.nn.Container
 import com.intel.analytics.bigdl.nn.abstractnn.{AbstractModule, Activity}
 import com.intel.analytics.bigdl.nn.keras.{KerasLayer, KerasModel}
-import com.intel.analytics.bigdl.utils.Table
+import com.intel.analytics.bigdl.utils.{Shape, Table}
 import com.intel.analytics.zoo.feature.image.ImageSet
 import com.intel.analytics.zoo.pipeline.api.autograd._
 import com.intel.analytics.zoo.pipeline.api.keras.layers.{KerasLayerWrapper, _}
@@ -43,6 +43,7 @@ import com.intel.analytics.zoo.pipeline.api.keras.optimizers.Adam
 import org.apache.spark.api.java.JavaRDD
 import com.intel.analytics.zoo.common.PythonZoo
 import com.intel.analytics.zoo.feature.text.TextSet
+import com.intel.analytics.zoo.models.seq2seq.{Bridge, RNNDecoder, RNNEncoder}
 import com.intel.analytics.zoo.pipeline.api.Predictable
 import com.intel.analytics.zoo.pipeline.api.net.GraphNet
 
@@ -1209,5 +1210,22 @@ class PythonZooKeras[T: ClassTag](implicit ev: TensorNumeric[T]) extends PythonZ
 
   def setParameterWeight(parameter: Parameter[T], value: JTensor): Unit = {
     parameter.setWeight(toTensor(value))
+  }
+
+  def createZooKerasRNNEncoder(rnns: JList[Recurrent[T]],
+    embedding: KerasLayer[Tensor[T], Tensor[T], T] = null,
+    inputShape: Shape = null): RNNEncoder[T] = {
+    RNNEncoder(rnns.asScala.toArray, embedding, inputShape)
+  }
+
+  def createZooKerasRNNDecoder(rnns: JList[Recurrent[T]],
+    embedding: KerasLayer[Tensor[T], Tensor[T], T] = null,
+    inputShape: Shape = null): RNNDecoder[T] = {
+    RNNDecoder(rnns.asScala.toArray, embedding, inputShape)
+  }
+
+  def createZooKerasBridge(bridgeType: String, decoderHiddenSize: Int,
+    bridge: KerasLayer[Tensor[T], Tensor[T], T]): KerasLayer[Activity, Activity, T] = {
+    new Bridge(bridgeType, decoderHiddenSize, bridge)
   }
 }

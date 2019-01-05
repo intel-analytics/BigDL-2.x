@@ -20,7 +20,16 @@ import cv2
 from zoo.common.nncontext import init_nncontext
 from zoo.models.image.objectdetection import *
 
-from zoo.models.seq2seq import Encoder
+from zoo.models.seq2seq import *
+from zoo.pipeline.api.keras.layers import *
+
+encoder = RNNEncoder.initialize("LSTM", 1, 4)
+decoder = RNNDecoder.initialize("LSTM", 1, 4)
+
+bridge = Bridge.initialize("dense", 4)
+
+seq2seq = Seq2seq(encoder, decoder, [2, 4], [2, 4], bridge)
+
 sc = init_nncontext("Object Detection Example")
 
 parser = argparse.ArgumentParser()
