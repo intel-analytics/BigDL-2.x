@@ -1,6 +1,8 @@
 package com.intel.analytics.zoo.examples.recommendation
 
 import com.intel.analytics.bigdl.dataset.{MiniBatch, Sample}
+import com.intel.analytics.bigdl.nn.Module
+import com.intel.analytics.bigdl.nn.abstractnn.{AbstractModule, Activity}
 import com.intel.analytics.bigdl.optim._
 import com.intel.analytics.bigdl.tensor.Tensor
 import com.intel.analytics.bigdl.utils.T
@@ -14,6 +16,7 @@ import org.apache.log4j.{Level, Logger}
 import org.apache.spark.SparkConf
 import org.apache.spark.ml.Pipeline
 import org.apache.spark.ml.feature.StringIndexer
+import org.apache.spark.rdd.RDD
 import org.apache.spark.sql.{Column, DataFrame, SQLContext}
 import org.apache.spark.sql.functions._
 import org.apache.spark.storage.StorageLevel
@@ -24,9 +27,10 @@ import scala.collection.mutable
 case class SessionParams(val nEpochs: Int = 2,
                          val batchSize: Int = 4000,
                          val inputDir: String = "/Users/guoqiong/intelWork/projects/sessionRec/yoochoose-data/yoochoose-test.dat",
+                         val outputDir:String = "/Users/guoqiong/intelWork/projects/sessionRec/modelOutput.bigdl/",
                          val logDir: String = "./log/",
-                         val featureLength:Int = 10
-                      )
+                         val featureLength: Int = 10
+                        )
 
 case class Session(session: String, timestamp: String, item: String, category: String)
 
@@ -72,9 +76,7 @@ object SessionRecExp {
     val featureRdds = assemblyFeature(sessionDF.sample(false, 0.1), params.featureLength)
     val Array(train, validation) = featureRdds.randomSplit(Array(0.8, 0.2))
 
-
-    val model = SessionRecommender[Float](itemCnt, 20, params.featureLength, 100)
-  //  val model = buildModel(itemCnt.toInt, params.maxLength, params.embedOutDim)
+    val model = SessionRecommender[Float](itemCnt.toInt, 20, params.featureLength, 100)
 
     val optimizer: Optimizer[Float, MiniBatch[Float]] = Optimizer(
       model = model,
@@ -96,8 +98,12 @@ object SessionRecExp {
 
     val trained_model = optimizer.optimize()
 
-    trained_model.saveModule(params.inputDir, null, overWrite = true)
-    println("Model has been saved")
+    trained_model.saveModule(params.outputDir, null, overWrite = true)
+
+    val loaded = Module.loadModule[Float](params.outputDir)
+    val results: RDD[Activity] = loaded.predict(validation)
+    results.take(10).foreach(println)
+
   }
 
   def buildModel(itemCnt: Int,

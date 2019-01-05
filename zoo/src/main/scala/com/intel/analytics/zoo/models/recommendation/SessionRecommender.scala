@@ -25,13 +25,15 @@ class SessionRecommender[T: ClassTag](val itemCnt: Int,
     model.asInstanceOf[AbstractModule[Tensor[T], Tensor[T], T]]
   }
 
-  object SessionRecommender {
-    def apply[@specialized(Float, Double) T: ClassTag](itemCnt: Int,
-                                                       embedDim: Int,
-                                                       featureLength: Int,
-                                                       hiddenUnit: Int = 100)(implicit ev: TensorNumeric[T]): SessionRecommender[T] =
-      new SessionRecommender[T](itemCnt, embedDim, featureLength, hiddenUnit).build()
-  }
+}
+
+object SessionRecommender {
+
+  def apply[@specialized(Float, Double) T: ClassTag](itemCnt: Int,
+                                                     embedDim: Int,
+                                                     featureLength: Int,
+                                                     hiddenUnit: Int = 100)(implicit ev: TensorNumeric[T]): SessionRecommender[T] =
+    new SessionRecommender[T](itemCnt, embedDim, featureLength, hiddenUnit).build()
 
   def loadModel[T: ClassTag](path: String,
                              weightPath: String = null)(implicit ev: TensorNumeric[T]): SessionRecommender[T] = {
