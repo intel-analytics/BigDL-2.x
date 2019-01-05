@@ -22,6 +22,7 @@ import com.intel.analytics.bigdl.tensor.Tensor
 import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric
 import com.intel.analytics.bigdl.utils.{MultiShape, Shape, Table}
 import com.intel.analytics.zoo.pipeline.api.Net
+import com.intel.analytics.zoo.pipeline.api.keras.layers.internal.InternalSplitTensor
 import com.intel.analytics.zoo.pipeline.api.keras.layers.utils.KerasUtils
 
 import scala.reflect.ClassTag
@@ -35,7 +36,7 @@ import scala.reflect.ClassTag
  * @param num elements number in the table
  * @tparam T Numeric type. Only support float/double now
  */
-class SplitTensor[T: ClassTag](dimension: Int, num: Int,
+class SplitTensor[T: ClassTag](val dimension: Int, val num: Int,
   val inputShape: Shape = null)(implicit ev: TensorNumeric[T])
   extends KerasLayer[Tensor[T], Table, T](KerasUtils.addBatch(inputShape)) with Net {
 
@@ -57,4 +58,3 @@ object SplitTensor {
     new SplitTensor[T](dimension, num, inputShape)
   }
 }
-
