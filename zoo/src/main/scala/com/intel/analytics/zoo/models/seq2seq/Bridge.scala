@@ -35,7 +35,7 @@ import scala.reflect.ClassTag
  * @param decoderHiddenSize hidden size of decoder
  * @param bridge keras layers used to do the transformation
  */
-class Bridge[T: ClassTag] private[zoo] (bridgeType: String,
+class Bridge[T: ClassTag] private[zoo] (val bridgeType: String,
   var decoderHiddenSize: Int,
   bridge: KerasLayer[Tensor[T], Tensor[T], T])(implicit ev: TensorNumeric[T])
   extends KerasLayer[Activity, Activity, T]() with Net {
