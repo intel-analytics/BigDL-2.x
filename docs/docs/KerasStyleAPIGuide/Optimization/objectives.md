@@ -4,8 +4,8 @@ An objective function (or loss function, or optimization score function) is one 
 
 **Scala:**
 
-```scala
-model.compile(loss = 'mean_squared_error', optimizer = 'sgd)
+```scala"
+model.compile(loss = "mean_squared_error", optimizer = "sgd")
 ```
 
 **Python:**
@@ -18,7 +18,7 @@ model.compile(loss='mean_squared_error', optimizer='sgd')
 
 ```scala
 import com.intel.analytics.zoo.pipeline.api.keras.objectives
-model.compile(loss = objectives.MeanSquaredError(), optimizer = 'sgd')
+model.compile(loss = objectives.MeanSquaredError(), optimizer = "sgd")
 ```
 
 **Python:**
