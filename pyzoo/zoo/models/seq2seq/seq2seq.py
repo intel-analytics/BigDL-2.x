@@ -114,7 +114,7 @@ class Bridge(ZooKerasLayer):
     creating: createZooKerasBridge
     >>> dense = Dense(3)
     creating: createZooKerasDense
-    >>> bridge = Bridge.initialize_from_keraslayer("dense", 2)
+    >>> bridge = Bridge.initialize_from_keraslayer(dense)
     creating: createZooKerasBridge
     """
     def __init__(self, bridge_type, decoder_hidden_size, bridge):
