@@ -29,7 +29,7 @@ import com.intel.analytics.zoo.common.PythonZoo
 import com.intel.analytics.zoo.feature.common.Preprocessing
 import com.intel.analytics.zoo.feature.image._
 import com.intel.analytics.zoo.feature.text.TextSet
-import com.intel.analytics.zoo.models.common.ZooModel
+import com.intel.analytics.zoo.models.common.{Ranker, ZooModel}
 import com.intel.analytics.zoo.models.image.common.{ImageConfigure, ImageModel}
 import com.intel.analytics.zoo.models.image.objectdetection._
 import com.intel.analytics.zoo.models.image.imageclassification.{ImageClassifier, LabelReader => IMCLabelReader}
@@ -343,6 +343,21 @@ def zooModelSetEvaluateStatus(
       embeddingFile, if (wordIndex!= null) wordIndex.asScala.toMap else null,
       randomizeUnknown, normalize)
     toJTensor(embedWeights)
+  }
+
+  def evaluateNDCG(
+      ranker: Ranker[T],
+      x: TextSet,
+      k: Int,
+      threshold: Double): Double = {
+    ranker.evaluateNDCG(x, k, threshold)
+  }
+
+  def evaluateMAP(
+      ranker: Ranker[T],
+      x: TextSet,
+      threshold: Double): Double = {
+    ranker.evaluateMAP(x, threshold)
   }
 
 }

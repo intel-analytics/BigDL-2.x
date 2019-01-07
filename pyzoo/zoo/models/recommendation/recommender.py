@@ -18,7 +18,7 @@ import sys
 
 from pyspark import RDD
 
-from zoo.models.common.zoo_model import ZooModel
+from zoo.models.common import ZooModel
 from bigdl.util.common import callBigDlFunc
 
 

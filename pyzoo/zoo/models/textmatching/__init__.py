@@ -14,4 +14,5 @@
 # limitations under the License.
 #
 
+from .text_matcher import *
 from .knrm import *
