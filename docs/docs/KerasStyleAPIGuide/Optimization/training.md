@@ -14,8 +14,15 @@ Configure the learning process. Must be called before [fit](#fit) or [evaluate](
 
 **Scala:**
 ```scala
-compile(optimizer, loss, metrics=null)
+compile(optimizer, loss, metrics = null)
 ```
+
+Parameters:
+
+ * @param optimizer Optimization method to be used.
+ * @param loss Criterion to be used.
+ * @param metrics Validation method(s) to be used. Default is null if no validation is needed.
+
 **Python**
 ```python
 compile(optimizer, loss, metrics=None)
@@ -34,8 +41,16 @@ Train a model for a fixed number of epochs on a DataSet.
 
 **Scala:**
 ```scala
-fit(x, y=null, batch_size=32，nbEpoch=10, validationData=null, distributed=true)
+fit(x, batchSize = 32，nbEpoch = 10, validationData = null)
 ```
+
+Parameters:
+
+* @param x Training dataset, RDD of Sample.
+* @param batchSize Number of samples per gradient update. Default is 32.
+* @param nbEpoch Number of epochs to train. Default is 10.
+* @param validationData RDD of Sample, or null if validation is not configured. Default is null.
+
 **Python**
 ```python
 fit(x, y=None, batch_size=32, nb_epoch=10, validation_data=None, distributed=True)
@@ -44,7 +59,7 @@ fit(x, y=None, batch_size=32, nb_epoch=10, validation_data=None, distributed=Tru
 Parameters:
 
 * `x`: Input data. A Numpy array or RDD of Sample or [ImageSet](../../APIGuide/FeatureEngineering/image/) or [TextSet](../../APIGuide/FeatureEngineering/text).
-* `y`: Labels. A Numpy array. Default is None if x is already Sample RDD or [ImageSet](../../APIGuide/FeatureEngineering/image/) or [TextSet](../../APIGuide/FeatureEngineering/text).
+* `y`: Labels. A Numpy array. Default is None if x is already Sample RDD or ImageSet or TextSet.
 * `batch_Size`: Number of samples per gradient update. Default is 32.
 * `nb_epoch`: Number of epochs to train.
 * `validationData`: Tuple (x_val, y_val) where x_val and y_val are both Numpy arrays.
@@ -60,8 +75,14 @@ Evaluate a model on a given dataset in distributed mode.
 
 **Scala:**
 ```scala
-evaluate(x, y=null, batch_size=32)
+evaluate(x, batchSize = 32)
 ```
+
+Parameters:
+
+* @param x Evaluation dataset, RDD of Sample.
+* @param batchSize Number of samples per batch.
+
 **Python**
 ```python
 evaluate(x, y=None, batch_size=32)
@@ -80,8 +101,13 @@ Use a model to do prediction.
 
 **Scala:**
 ```scala
-predict(x, distributed=True)
+predict(x)
 ```
+
+Parameters:
+
+* @param x Evaluation dataset, RDD of Sample.
+
 **Python**
 ```python
 predict(x, distributed=True)
@@ -97,14 +123,19 @@ Parameters:
 * `distributed`: Boolean. Whether to do prediction in distributed mode or local mode.
                  Default is True. In local mode, x must be a Numpy array.
                  
-## **Predict_classes**
-
-Use a model to do prediction.
+Use a model to predict class labels.
 
 **Scala:**
 ```scala
-predict_classes(x, batch_per_thread=4, zero_based_label=True)
+predictClasses(x, batchPerThread=4, zeroBasedLabel=True)
 ```
+
+Parameters:
+
+* @param x Prediction data, RDD of Sample.
+* @param batchPerThread The default batchPerThread is 4, and the total batchSize is batchPerThread * rdd.getNumPartitions.
+* @param zeroBasedLabel Boolean. Whether result labels start from 0. Default is true. If false, result labels start from 1.
+
 **Python**
 ```python
 predict_classes(x, batch_per_thread=4, zero_based_label=True)
