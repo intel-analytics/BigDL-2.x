@@ -96,7 +96,7 @@ Spatial 2D version of Dropout.
 
 This version performs the same function as Dropout, however it drops entire 2D feature maps instead of individual elements. If adjacent pixels within feature maps are strongly correlated (as is normally the case in early convolution layers) then regular dropout will not regularize the activations and will otherwise just result in an effective learning rate decrease. In this case, SpatialDropout2D will help promote independence between feature maps and should be used instead.
 
-The input of this layer should be 4D.
+The input of this layer should be 4D tensor with shape: (samples, channels, rows, cols) if data_format='th' (Channel First) or 4D tensor with shape: (samples, rows, cols, channels) if data_format='tf' (Channel Last).
 
 **Scala:**
 ```scala
