@@ -17,15 +17,55 @@
 package com.intel.analytics.zoo.pipeline.inference
 
 import java.io.{IOException, ObjectInputStream, ObjectOutputStream}
+import java.util.{List => JList}
 
+import com.intel.analytics.bigdl.Module
 import com.intel.analytics.bigdl.nn.abstractnn.{AbstractModule, Activity}
-import com.intel.analytics.bigdl.utils.Engine
+import com.intel.analytics.bigdl.tensor.Tensor
+import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric
+import com.intel.analytics.bigdl.utils.{Engine, Table}
+
+import scala.collection.mutable.ArrayBuffer
+import scala.reflect.ClassTag
 
 class FloatInferenceModel(var model: AbstractModule[Activity, Activity, Float])
-  extends InferenceSupportive with Serializable {
+  extends ExecutiveInferenceModel with InferenceSupportive with Serializable {
 
-  def predict(inputActivity: Activity): Activity = {
+  override def predict(inputs: JList[JList[JTensor]]): JList[JList[JTensor]] = {
+    val batchSize = inputs.size()
+    require(batchSize > 0, "inputs size should > 0")
+
+    val inputActivity = transferListOfActivityToActivityOfBatch(inputs, batchSize)
+    val result: Activity = predict(inputActivity)
+
+    val outputs = result.isTensor match {
+      case true =>
+        val outputTensor = result.toTensor[Float]
+        transferBatchTensorToJListOfJListOfJTensor(outputTensor, batchSize)
+      case false =>
+        val outputTable: Table = result.toTable
+        transferBatchTableToJListOfJListOfJTensor(outputTable, batchSize)
+    }
+    outputs
+  }
+
+  override def predict(inputActivity: Activity): Activity = {
     model.forward(inputActivity)
+  }
+
+  override def copy(num: Int): Array[ExecutiveInferenceModel] = {
+    cloneSharedWeightsModelsIntoArray(this, num)
+  }
+
+  override def release(): Unit = {
+    isReleased match {
+      case true =>
+      case false => model = null
+    }
+  }
+
+  override def isReleased(): Boolean = {
+    model == null
   }
 
   @throws(classOf[IOException])
@@ -43,4 +83,56 @@ class FloatInferenceModel(var model: AbstractModule[Activity, Activity, Float])
   }
 
   override def toString: String = s"FloatInferenceModel($model)"
+
+  def cloneSharedWeightsModelsIntoArray(originalModel: FloatInferenceModel, num: Int):
+  Array[ExecutiveInferenceModel] = {
+    var modelList = ArrayBuffer[FloatInferenceModel]()
+    val emptyModel = originalModel.model.cloneModule()
+    clearWeightsBias(emptyModel)
+    var i = 0
+    while (i < num) {
+      val clonedModel = emptyModel.cloneModule
+      val newModel = makeUpModel(clonedModel, originalModel.model.getWeightsBias)
+      modelList.append(newModel)
+      i += 1
+    }
+    modelList.toArray
+  }
+
+  private def clearTensor[T: ClassTag](tensors: Array[Tensor[T]])(implicit ev: TensorNumeric[T]):
+  Unit = {
+    var i = 0
+    while (i < tensors.length) {
+      if (tensors(i) != null) {
+        tensors(i).set()
+      }
+      i += 1
+    }
+  }
+
+  private def clearWeightsBias(model: Module[Float]): Unit = {
+    clearTensor(model.parameters()._1)
+    clearTensor(model.parameters()._2)
+  }
+
+  private def putWeightsBias(weightBias: Array[Tensor[Float]], localModel: Module[Float]):
+  Module[Float] = {
+    val localWeightBias = localModel.parameters()._1
+    var i = 0
+    while (i < localWeightBias.length) {
+      if (localWeightBias(i) != null) {
+        localWeightBias(i).set(weightBias(i))
+      }
+      i += 1
+    }
+    localModel
+  }
+
+  private def makeUpModel(model: Module[Float], weightBias: Array[Tensor[Float]]):
+  FloatInferenceModel = {
+    val newModel = model.cloneModule()
+    putWeightsBias(weightBias, newModel)
+    newModel.evaluate()
+    new FloatInferenceModel(newModel)
+  }
 }
