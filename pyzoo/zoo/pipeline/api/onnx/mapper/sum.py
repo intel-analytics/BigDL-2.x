@@ -17,6 +17,7 @@ from zoo.pipeline.api.onnx.mapper.operator_mapper import OperatorMapper
 import zoo.pipeline.api.autograd as autograd
 from zoo.pipeline.api.onnx.onnx_helper import OnnxHelper
 import zoo.pipeline.api.keras.layers as zlayers
+import numpy as np
 
 class SumMapper(OperatorMapper):
     def __init__(self, node, _params, _all_tensors):
@@ -24,12 +25,18 @@ class SumMapper(OperatorMapper):
 
     def _extract_model_inputs(self):
         """
-        :return: list of inputs
+        :return: list of OnnxInput
         """
-        assert len(self._input_list) > 0
-        return [self._to_zoo_input(oi) for oi in self._input_list]
+        def gen_input(input):
+            if isinstance(input.zvalue, np.ndarray):
+                return self._to_zoo_input(input, is_constant=True)
+            else:
+                return self._to_zoo_input(input)
+        return [gen_input(i) for i in self._input_list]
+
 
     def _to_tensor(self):
-        for i in range(len(self._input_list)):
-            sum += float(self.model_inputs[i].zvalue)
-        return sum
+        result = self._input_list[0].zvalue
+        for i in self._input_list[1:]:
+            result += i.zvalue
+        return result

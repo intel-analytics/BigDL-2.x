@@ -1343,10 +1343,10 @@ class TestModelLoading(OnnxTestCase):
         node = onnx.helper.make_node(
             'Sum',
             inputs=['data_0'],
-            outputs=['result'],
+            outputs=['data_0'],
         )
         output = OnnxLoader.run_node(node, [data_0])
-        np.testing.assert_almost_equal(output["result"], result, decimal=5)
+        np.testing.assert_almost_equal(output["data_0"], data_0, decimal=5)
 
         result = np.add(data_0, data_1)
         node = onnx.helper.make_node(
