@@ -31,9 +31,10 @@ glove_path = os.path.join(resource_path, "glove.6B/glove.6B.50d.txt")
 class TestKNRM(ZooTestCase):
 
     # Model definition from MatchZoo rewritten in Keras 1.2.2
-    def keras_knrm(self, text1_length, text2_length, vocab_size, embed_size,
+    @staticmethod
+    def keras_knrm(text1_length, text2_length, vocab_size, embed_size,
                    kernel_num=21, sigma=0.1, exact_sigma=0.001):
-        def Kernel_layer(mu, sigma):
+        def kernel_layer(mu, sigma):
             def kernel(x):
                 return K.tf.exp(-0.5 * (x - mu) * (x - mu) / sigma / sigma)
             return Activation(kernel)
@@ -52,7 +53,7 @@ class TestKNRM(ZooTestCase):
             if mu > 1.0:
                 sigma = exact_sigma
                 mu = 1.0
-            mm_exp = Kernel_layer(mu, sigma)(mm)
+            mm_exp = kernel_layer(mu, sigma)(mm)
             mm_doc_sum = Lambda(lambda x: K.tf.reduce_sum(x, 2))(mm_exp)
             mm_log = Activation(K.tf.log1p)(mm_doc_sum)
             mm_sum = Lambda(lambda x: K.tf.reduce_sum(x, 1))(mm_log)
@@ -70,7 +71,7 @@ class TestKNRM(ZooTestCase):
         koutput = kmodel.predict([input_data[:, :5], input_data[:, 5:]])
         kweights = kmodel.get_weights()
         bweights = [kweights[0], np.transpose(kweights[1]), kweights[2]]
-        model = KNRM(5, 10, glove_path)
+        model = KNRM(5, 10, glove_path, target_mode="classification")
         model.set_weights(bweights)
         output = model.forward(input_data)
         self.assert_allclose(output, koutput)
