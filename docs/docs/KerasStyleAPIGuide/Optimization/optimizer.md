@@ -5,7 +5,7 @@ An optimizer is one of the two arguments required for compiling a model.
 **Scala:**
 
 ```scala
-model.compile(loss='mean_squared_error', optimizer='sgd')
+model.compile(loss = 'mean_squared_error', optimizer = 'sgd')
 ```
 
 **Python:**
@@ -18,14 +18,14 @@ model.compile(loss='mean_squared_error', optimizer='sgd')
 
 ```scala
 import com.intel.analytics.bigdl.optim.optimizer
-model.compile(loss=optimizer.Adam(), optimizer='sgd')
+model.compile(loss = 'mean_squared_error', optimizer = optimizer.Adam())
 ```
 
 **Python:**
 
 ```python
 from bigdl.optim import optimizer
-model.compile(loss=optimizer.Adam(), optimizer='sgd')
+model.compile(loss='mean_squared_error', optimizer=optimizer.Adam())
 ```
 
 ---
