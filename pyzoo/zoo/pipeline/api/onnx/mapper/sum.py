@@ -19,6 +19,7 @@ from zoo.pipeline.api.onnx.onnx_helper import OnnxHelper
 import zoo.pipeline.api.keras.layers as zlayers
 import numpy as np
 
+
 class SumMapper(OperatorMapper):
     def __init__(self, node, _params, _all_tensors):
         super(SumMapper, self).__init__(node, _params, _all_tensors)
@@ -33,7 +34,6 @@ class SumMapper(OperatorMapper):
             else:
                 return self._to_zoo_input(input)
         return [gen_input(i) for i in self._input_list]
-
 
     def _to_tensor(self):
         result = self._input_list[0].zvalue
