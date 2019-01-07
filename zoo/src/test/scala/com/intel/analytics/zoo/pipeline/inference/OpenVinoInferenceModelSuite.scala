@@ -83,8 +83,8 @@ class OpenVinoInferenceModelSuite extends FunSuite with Matchers with BeforeAndA
     fasterrcnnOutputdata2FilePath = s"$dirName/outputdata_2"
 
 
-    fasterrcnnModel1 = InferenceModelFactory.
-      loadOpenvinoIR(fasterrcnnModelFilePath, fasterrcnnWeightFilePath, fasterrcnnDeviceType)
+    fasterrcnnModel1 = InferenceModelFactory.loadOpenvinoInferenceModelForIR(
+      fasterrcnnModelFilePath, fasterrcnnWeightFilePath, fasterrcnnDeviceType)
     fasterrcnnModel2 = InferenceModelFactory.loadOpenvinoInferenceModelForTF(
       faserrcnnFrozenModelFilePath, faserrcnnPipelineConfigFilePath,
       faserrcnnExtensionsConfigFilePath, fasterrcnnDeviceType)
