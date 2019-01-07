@@ -38,8 +38,8 @@ import scala.reflect.ClassTag
  */
 class RNNEncoder[T: ClassTag](val rnns: Array[Recurrent[T]],
   val embedding: KerasLayer[Tensor[T], Tensor[T], T],
-  inputShape: Shape = null)(implicit ev: TensorNumeric[T])
-  extends Encoder(inputShape) {
+  val inputShape: Shape = null)(implicit ev: TensorNumeric[T])
+  extends Encoder[T](inputShape) {
 
   override def doBuild(inputShape: Shape): AbstractModule[Tensor[T], Activity, T] = {
     val layer = Sequential()

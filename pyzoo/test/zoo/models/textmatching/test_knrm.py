@@ -14,6 +14,7 @@
 # limitations under the License.
 #
 
+import os
 import pytest
 
 from keras.layers import *
@@ -23,13 +24,17 @@ from test.zoo.pipeline.utils.test_utils import ZooTestCase
 
 np.random.seed(1337)  # for reproducibility
 
+resource_path = os.path.join(os.path.split(__file__)[0], "../../resources")
+glove_path = os.path.join(resource_path, "glove.6B/glove.6B.50d.txt")
+
 
 class TestKNRM(ZooTestCase):
 
     # Model definition from MatchZoo rewritten in Keras 1.2.2
-    def keras_knrm(self, text1_length, text2_length, vocab_size, embed_size,
+    @staticmethod
+    def keras_knrm(text1_length, text2_length, vocab_size, embed_size,
                    kernel_num=21, sigma=0.1, exact_sigma=0.001):
-        def Kernel_layer(mu, sigma):
+        def kernel_layer(mu, sigma):
             def kernel(x):
                 return K.tf.exp(-0.5 * (x - mu) * (x - mu) / sigma / sigma)
             return Activation(kernel)
@@ -48,7 +53,7 @@ class TestKNRM(ZooTestCase):
             if mu > 1.0:
                 sigma = exact_sigma
                 mu = 1.0
-            mm_exp = Kernel_layer(mu, sigma)(mm)
+            mm_exp = kernel_layer(mu, sigma)(mm)
             mm_doc_sum = Lambda(lambda x: K.tf.reduce_sum(x, 2))(mm_exp)
             mm_log = Activation(K.tf.log1p)(mm_doc_sum)
             mm_sum = Lambda(lambda x: K.tf.reduce_sum(x, 1))(mm_log)
@@ -61,26 +66,25 @@ class TestKNRM(ZooTestCase):
         return model
 
     def test_with_keras(self):
-        kmodel = self.keras_knrm(5, 10, 20, 100)
+        kmodel = self.keras_knrm(5, 10, 22, 50)
         input_data = np.random.randint(20, size=(4, 15))
         koutput = kmodel.predict([input_data[:, :5], input_data[:, 5:]])
         kweights = kmodel.get_weights()
         bweights = [kweights[0], np.transpose(kweights[1]), kweights[2]]
-        model = KNRM(5, 10, 20, 100)
+        model = KNRM(5, 10, glove_path, target_mode="classification")
         model.set_weights(bweights)
         output = model.forward(input_data)
         self.assert_allclose(output, koutput)
 
     def test_forward_backward(self):
-        weights = np.random.random([40, 20])
-        model = KNRM(15, 60, 40, 20, embed_weights=weights,
+        model = KNRM(15, 60, glove_path, word_index={"is": 1, "to": 2, "the": 3, "for": 4},
                      kernel_num=10, sigma=0.15, exact_sigma=1e-4)
-        input_data = np.random.randint(40, size=(1, 75))
+        input_data = np.random.randint(5, size=(1, 75))
         self.assert_forward_backward(model, input_data)
 
     def test_save_load(self):
-        model = KNRM(5, 10, 100)
-        input_data = np.random.randint(100, size=(3, 15))
+        model = KNRM(5, 10, glove_path)
+        input_data = np.random.randint(20, size=(3, 15))
         self.assert_zoo_model_save_load(model, input_data)
 
 

@@ -29,7 +29,7 @@ import com.intel.analytics.zoo.common.PythonZoo
 import com.intel.analytics.zoo.feature.common.Preprocessing
 import com.intel.analytics.zoo.feature.image._
 import com.intel.analytics.zoo.feature.text.TextSet
-import com.intel.analytics.zoo.models.common.ZooModel
+import com.intel.analytics.zoo.models.common.{Ranker, ZooModel}
 import com.intel.analytics.zoo.models.image.common.{ImageConfigure, ImageModel}
 import com.intel.analytics.zoo.models.image.objectdetection._
 import com.intel.analytics.zoo.models.image.imageclassification.{ImageClassifier, LabelReader => IMCLabelReader}
@@ -37,7 +37,7 @@ import com.intel.analytics.zoo.models.recommendation.{NeuralCF, Recommender, Use
 import com.intel.analytics.zoo.models.recommendation._
 import com.intel.analytics.zoo.models.textclassification.TextClassifier
 import com.intel.analytics.zoo.models.textmatching.KNRM
-import com.intel.analytics.zoo.pipeline.api.keras.layers.Embedding
+import com.intel.analytics.zoo.pipeline.api.keras.layers.{Embedding, WordEmbedding}
 import org.apache.spark.api.java.JavaRDD
 import org.apache.spark.rdd.RDD
 import org.apache.spark.sql.DataFrame
@@ -322,15 +322,42 @@ def zooModelSetEvaluateStatus(
       kernelNum: Int = 21,
       sigma: Double = 0.1,
       exactSigma: Double = 0.001,
+      targetMode: String = "ranking",
       model: AbstractModule[Activity, Activity, T]): KNRM[T] = {
     KNRM[T](text1Length, text2Length, vocabSize, embedSize, toTensor(embedWeights),
-      trainEmbed, kernelNum, sigma, exactSigma, model)
+      trainEmbed, kernelNum, sigma, exactSigma, targetMode, model)
   }
 
   def loadKNRM(
       path: String,
       weightPath: String = null): KNRM[T] = {
     KNRM.loadModel(path, weightPath)
+  }
+
+  def prepareEmbedding(
+      embeddingFile: String,
+      wordIndex: JMap[String, Int] = null,
+      randomizeUnknown: Boolean = false,
+      normalize: Boolean = false): JTensor = {
+    val (_, _, embedWeights) = WordEmbedding.prepareEmbedding[T](
+      embeddingFile, if (wordIndex!= null) wordIndex.asScala.toMap else null,
+      randomizeUnknown, normalize)
+    toJTensor(embedWeights)
+  }
+
+  def evaluateNDCG(
+      ranker: Ranker[T],
+      x: TextSet,
+      k: Int,
+      threshold: Double): Double = {
+    ranker.evaluateNDCG(x, k, threshold)
+  }
+
+  def evaluateMAP(
+      ranker: Ranker[T],
+      x: TextSet,
+      threshold: Double): Double = {
+    ranker.evaluateMAP(x, threshold)
   }
 
 }

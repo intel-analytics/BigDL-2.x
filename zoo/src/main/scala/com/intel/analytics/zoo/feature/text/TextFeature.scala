@@ -25,8 +25,8 @@ import scala.reflect.ClassTag
 
 /**
  * Each TextFeature keeps information of a single text record.
- * It can include various status of a text,
- * e.g. original text content, category label, tokens, index representation
+ * It can include various status (if any) of a text,
+ * e.g. original text content, uri, category label, tokens, index representation
  * of tokens, BigDL Sample representation, prediction result and so on.
  * It uses a HashMap to store all these data.
  * Each key is a string that can be used to identify the corresponding value.
@@ -106,7 +106,7 @@ class TextFeature extends Serializable {
    * Get the identifier of the TextFeature.
    * Return null if it doesn't exist.
    */
-  def uri(): String = apply[String](TextFeature.uri)
+  def getURI: String = apply[String](TextFeature.uri)
 
   /**
    * Get the tokens of the TextFeature.

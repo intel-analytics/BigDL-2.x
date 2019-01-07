@@ -46,6 +46,16 @@ class Squeeze(torch.nn.Module):
             return torch.squeeze(x)
 
 
+class Transpose(torch.nn.Module):
+    def __init__(self, *parameter):
+        super(Transpose, self).__init__()
+        self.dim0 = parameter[0]
+        self.dim1 = parameter[1]
+
+    def forward(self, x):
+        return torch.transpose(x, dim0=self.dim0, dim1=self.dim1)
+
+
 class TestModelLoading(OnnxTestCase):
     def test_onnx_conv2d(self):
         pytorch_model = torch.nn.Sequential(
@@ -515,7 +525,7 @@ class TestModelLoading(OnnxTestCase):
                 x = F.relu(F.max_pool2d(self.conv2_drop(self.conv2(x)), 2))
                 x = x.view(-1, 320)
                 x = F.relu(self.fc1(x))
-                x = F.dropout(x, training=self.training)
+                x = F.dropout2d(x, training=self.training)
                 x = self.fc2(x)
                 return F.log_softmax(x, dim=1)
 
@@ -1246,6 +1256,72 @@ class TestModelLoading(OnnxTestCase):
         )
         x = np.random.randn(3, 1, 4, 5).astype(np.float32)
         y = np.expand_dims(x, axis=1)
+
+        output = OnnxLoader.run_node(node, [x])
+        np.testing.assert_almost_equal(output["y"], y, decimal=5)
+
+    def test_onnx_transpose(self):
+        pytorch_model = Transpose(2, 3)
+        input_shape_with_batch = (3, 7, 8, 9)
+        self.compare_with_pytorch(pytorch_model, input_shape_with_batch)
+
+    def test_onnx_transpose0(self):
+        import pytest
+        with pytest.raises(Exception) as e_info:
+            pytorch_model = Transpose(0, 3)
+            input_shape_with_batch = (3, 7, 8, 9)
+            self.compare_with_pytorch(pytorch_model, input_shape_with_batch)
+
+    def test_transpose(self):
+        shape = (2, 3, 4)
+        data = np.random.random_sample(shape).astype(np.float32)
+        permutation = (0, 2, 1)
+
+        node = onnx.helper.make_node(
+            'Transpose',
+            inputs=['data'],
+            outputs=['transposed'],
+            perm=permutation
+        )
+        transposed = np.transpose(data, permutation)
+        output = OnnxLoader.run_node(node, [data])
+        np.testing.assert_almost_equal(output["transposed"], transposed, decimal=5)
+
+    def test_transpose_default(self):
+        import pytest
+        with pytest.raises(Exception) as e_info:
+            shape = (2, 3, 4)
+            data = np.random.random_sample(shape).astype(np.float32)
+
+            node = onnx.helper.make_node(
+                'Transpose',
+                inputs=['data'],
+                outputs=['transposed']
+            )
+
+            transposed = np.transpose(data)
+            output = OnnxLoader.run_node(node, [data])
+            np.testing.assert_almost_equal(output["transposed"], transposed, decimal=5)
+
+    def test_shape(self):
+        node = onnx.helper.make_node(
+            'Shape',
+            inputs=['x'],
+            outputs=['y'],
+        )
+        x = np.array([
+            [1, 2, 3],
+            [4, 5, 6],
+        ]).astype(np.float32)
+        y = np.array([
+            2, 3,
+        ]).astype(np.int64)
+
+        output = OnnxLoader.run_node(node, [x])
+        np.testing.assert_almost_equal(output["y"], y, decimal=5)
+
+        x = np.random.randn(3, 4, 5).astype(np.float32)
+        y = np.array(x.shape).astype(np.int64)
 
         output = OnnxLoader.run_node(node, [x])
         np.testing.assert_almost_equal(output["y"], y, decimal=5)

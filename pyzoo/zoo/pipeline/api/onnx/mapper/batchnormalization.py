@@ -16,6 +16,7 @@
 from zoo.pipeline.api.onnx.mapper.operator_mapper import OperatorMapper
 from zoo.pipeline.api.onnx.onnx_helper import OnnxHelper
 import zoo.pipeline.api.keras.layers as zlayers
+import zoo.pipeline.api.autograd as autograd
 import numpy as np
 
 
@@ -31,7 +32,11 @@ class BatchNormalizationMapper(OperatorMapper):
 
     def _extract_trainable_values(self):
         if len(self._input_list) == 5:
-            return [self._input_list[1].zvalue, self._input_list[2].zvalue]
+            if isinstance(self._input_list[1].zvalue, autograd.Parameter):
+                return [self._input_list[1].zvalue.get_weight(),
+                        self._input_list[2].zvalue.get_weight()]
+            else:
+                return [self._input_list[1].zvalue, self._input_list[2].zvalue]
         else:
             return None
 

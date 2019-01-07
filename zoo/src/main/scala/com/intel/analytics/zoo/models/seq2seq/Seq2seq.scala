@@ -32,13 +32,13 @@ import org.apache.spark.rdd.RDD
 import scala.reflect.ClassTag
 
 /**
-  * [[Seq2seq]] A trainable interface for a simple, generic encoder + decoder model
-  * @param encoder an encoder object
-  * @param decoder a decoder object
-  * @param inputShape shape of encoder input, for variable length, please input -1
-  * @param outputShape shape of decoder input, for variable length, please input -1
-  * @param bridge connect encoder and decoder
-  */
+ * [[Seq2seq]] A trainable interface for a simple, generic encoder + decoder model
+ * @param encoder an encoder object
+ * @param decoder a decoder object
+ * @param inputShape shape of encoder input, for variable length, please input -1
+ * @param outputShape shape of decoder input, for variable length, please input -1
+ * @param bridge connect encoder and decoder
+ */
 class Seq2seq[T: ClassTag] (
   val encoder: Encoder[T],
   val decoder: Decoder[T],
@@ -91,11 +91,12 @@ class Seq2seq[T: ClassTag] (
   }
 
   def infer(input: Tensor[T], startSign: Tensor[T], maxSeqLen: Int = 30,
-    stopSign: Tensor[T] = null,
-    buildOutput: KerasLayer[Tensor[T], Tensor[T], T] = null): Tensor[T] = {
+            stopSign: Tensor[T] = null,
+            buildOutput: KerasLayer[Tensor[T], Tensor[T], T] = null): Tensor[T] = {
     val sent1 = input
     val sent2 = startSign
-    require(sent2.size(Seq2seq.timeDim) == 1, "expect decoder input is batch x time(1) x feature")
+
+    sent2.resize(Array(1, 1) ++ startSign.size())
 
     var curInput = sent2
     val sizes = curInput.size()
@@ -126,22 +127,40 @@ class Seq2seq[T: ClassTag] (
 object Seq2seq {
   val timeDim = 2
   /**
-    * [[Seq2seq]] A trainable interface for a simple, generic encoder + decoder model
-    * @param encoder an encoder object
-    * @param decoder a decoder object
-    * @param encoderInputShape shape of encoder input, for variable length, please input -1
-    * @param decoderInputShape shape of decoder input, for variable length, please input -1
-    * @param bridge connect encoder and decoder
-    */
+   * [[Seq2seq]] A trainable interface for a simple, generic encoder + decoder model
+   * @param encoder a rnn encoder object
+   * @param decoder a rnn decoder object
+   * @param inputShape shape of encoder input, for variable length, please input -1
+   * @param outputShape shape of decoder input, for variable length, please input -1
+   * @param bridge connect encoder and decoder
+   */
   def apply[@specialized(Float, Double) T: ClassTag](
-    encoder: Encoder[T],
-    decoder: Decoder[T],
-    encoderInputShape: Shape,
-    decoderInputShape: Shape,
+    encoder: RNNEncoder[T],
+    decoder: RNNDecoder[T],
+    inputShape: Shape,
+    outputShape: Shape,
     bridge: KerasLayer[Activity, Activity, T] = null,
     generator: KerasLayer[Activity, Activity, T] = null
   )(implicit ev: TensorNumeric[T]): Seq2seq[T] = {
-    new Seq2seq[T](encoder, decoder, encoderInputShape, decoderInputShape,
+    require(encoder.rnns.length == decoder.rnns.length, "rnn encoder and decoder should has" +
+      " the same number of layers!")
+    new Seq2seq[T](encoder, decoder, inputShape, outputShape,
       bridge, generator).build()
+  }
+
+  /**
+   * Load an existing seq2seq model (with weights).
+   *
+   * @param path The path for the pre-defined model.
+   *             Local file system, HDFS and Amazon S3 are supported.
+   *             HDFS path should be like "hdfs://[host]:[port]/xxx".
+   *             Amazon S3 path should be like "s3a://bucket/xxx".
+   * @param weightPath The path for pre-trained weights if any. Default is null.
+   * @tparam T Numeric type of parameter(e.g. weight, bias). Only support float/double now.
+   */
+  def loadModel[T: ClassTag](
+    path: String,
+    weightPath: String = null)(implicit ev: TensorNumeric[T]): Seq2seq[T] = {
+    ZooModel.loadModel(path, weightPath).asInstanceOf[Seq2seq[T]]
   }
 }
