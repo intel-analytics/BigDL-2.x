@@ -56,6 +56,14 @@ public abstract class AbstractInferenceModel extends InferenceModel implements S
     doLoadTF(modelPath, intraOpParallelismThreads, interOpParallelismThreads, usePerSessionThreads);
   }
 
+  public void loadTFAsOpenvino(String frozenModelFilePath, String pipelineConfigFilePath, String extensionsConfigFilePath, DeviceType.DeviceTypeEnumVal deviceType) {
+    doLoadTensorflowModelAsOpenvino(frozenModelFilePath, pipelineConfigFilePath, extensionsConfigFilePath, deviceType);
+  }
+
+  public void loadOpenvinoIR(String modelFilePath, String weightFilePath, DeviceType.DeviceTypeEnumVal deviceType) {
+    doLoadOpenvinoIR(modelFilePath, weightFilePath, deviceType);
+  }
+
   public void reload(String modelPath) {
     doReload(modelPath, null);
   }

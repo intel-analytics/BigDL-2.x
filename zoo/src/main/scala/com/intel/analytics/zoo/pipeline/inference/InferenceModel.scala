@@ -72,7 +72,8 @@ class InferenceModel(private var supportedConcurrentNum: Int = 1,
     }
     clearModelQueue()
     this.originalModel =
-      InferenceModelFactory.loadOpenvinoIR(modelFilePath, weightFilePath, deviceType)
+      InferenceModelFactory.loadOpenvinoInferenceModelForIR(
+        modelFilePath, weightFilePath, deviceType)
     offerModelQueue()
   }
 

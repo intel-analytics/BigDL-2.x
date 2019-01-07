@@ -58,7 +58,7 @@ object InferenceModelFactory {
       frozenModelFilePath, pipelineConfigFilePath, extensionsConfigFilePath, deviceType)
   }
 
-  def loadOpenvinoIR(modelFilePath: String,
+  def loadOpenvinoInferenceModelForIR(modelFilePath: String,
                      weightFilePath: String,
                      deviceType: DeviceTypeEnumVal): OpenVinoInferenceModel = {
     OpenVinoInferenceSupportive.loadOpenVinoIR(modelFilePath, weightFilePath, deviceType)
