@@ -47,6 +47,7 @@ class RNNEncoder(ZooKerasLayer):
 
     >>> encoder = RNNEncoder.initialize("lstm", 2, 3)
     creating: createZooKerasLSTM
+    creating: createZooKerasLSTM
     creating: createZooKerasRNNEncoder
 
     >>> lstm = LSTM(3)
@@ -78,6 +79,7 @@ class RNNDecoder(ZooKerasLayer):
     input_shape: shape of input, not including batch
 
     >>> decoder = RNNDecoder.initialize("lstm", 2, 3)
+    creating: createZooKerasLSTM
     creating: createZooKerasLSTM
     creating: createZooKerasRNNDecoder
 
@@ -111,8 +113,8 @@ class Bridge(ZooKerasLayer):
     >>> bridge = Bridge.initialize("dense", 2)
     creating: createZooKerasBridge
     >>> dense = Dense(3)
-    >>> bridge = Bridge.initialize_from_keraslayer("dense", 2)
     creating: createZooKerasDense
+    >>> bridge = Bridge.initialize_from_keraslayer("dense", 2)
     creating: createZooKerasBridge
     """
     def __init__(self, bridge_type, decoder_hidden_size, bridge):
@@ -146,13 +148,14 @@ class Seq2seq(ZooModel):
     bridge: connect encoder and decoder
 
     >>> encoder = RNNEncoder.initialize("LSTM", 1, 4)
-    >>> decoder = RNNDecoder.initialize("LSTM", 1, 4)
-    >>> bridge = Bridge.initialize("dense", 4)
-    >>> seq2seq = Seq2seq(encoder, decoder, [2, 4], [2, 4], bridge)
+    creating: createZooKerasLSTM
     creating: createZooKerasRNNEncoder
+    >>> decoder = RNNDecoder.initialize("LSTM", 1, 4)
     creating: createZooKerasLSTM
     creating: createZooKerasRNNDecoder
+    >>> bridge = Bridge.initialize("dense", 4)
     creating: createZooKerasBridge
+    >>> seq2seq = Seq2seq(encoder, decoder, [2, 4], [2, 4], bridge)
     creating: createZooSeq2seq
     """
 
