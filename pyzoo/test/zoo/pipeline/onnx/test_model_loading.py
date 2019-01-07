@@ -1228,7 +1228,7 @@ class TestModelLoading(OnnxTestCase):
             outputs=['y'],
             axes=[0],
         )
-        x = np.random.randn(1, 3, 4, 5).astype(np.float32)
+        x = np.random.randn(1).astype(np.float32)
         y = np.expand_dims(x, axis=0)
 
         output = OnnxLoader.run_node(node, [x])

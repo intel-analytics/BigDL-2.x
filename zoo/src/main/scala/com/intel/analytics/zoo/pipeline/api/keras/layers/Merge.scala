@@ -71,6 +71,9 @@ class Merge[T: ClassTag](
     val input1 = input.head.toSingle().toArray
     val output = input1.clone()
     require(Math.abs(concatAxis) < output.length, s"Invalid concat axis $concatAxis")
+    if (axis == 0) {
+      return Shape(output)
+    }
     axis = if (concatAxis < 0) concatAxis + output.length else concatAxis
     var i = 1
     while (i < input.length) {

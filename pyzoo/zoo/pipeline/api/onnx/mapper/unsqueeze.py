@@ -17,8 +17,6 @@
 from zoo.pipeline.api.onnx.mapper.operator_mapper import OperatorMapper
 import zoo.pipeline.api.keras.layers as zlayers
 import numpy as np
-from zoo.pipeline.api.autograd import Parameter
-import bigdl.nn.layer as blayer
 import zoo.pipeline.api.autograd as autograd
 
 
@@ -44,4 +42,6 @@ class UnsqueezeMapper(OperatorMapper):
         if "axes" in self.onnx_attr.keys():
             assert len(self.onnx_attr['axes']) == 1, "we only accept one dim input"
             dim = int(self.onnx_attr['axes'][0])
+        if dim == 0 and data.shape == (1,):
+            return zlayers.Reshape((1, ))(data)
         return autograd.expand_dims(data, axis=dim)
