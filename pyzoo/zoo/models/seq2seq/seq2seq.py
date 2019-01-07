@@ -32,7 +32,7 @@ def createRNN(rnn_type, nlayers, hidden_size):
         return [GRU(hidden_size, return_sequences=True) for layer in range(nlayers)]
     elif (rnn_type == "simplernn"):
         return [SimpleRNN(hidden_size, return_sequences=True) for layer in range(nlayers)]
-    else :
+    else:
         raise Exception('Only support lstm|gru|simplernn')
 
 
@@ -48,7 +48,7 @@ class RNNEncoder(ZooKerasLayer):
     >>> encoder = RNNEncoder.initialize("lstm", 2, 3)
     creating: createZooKerasLSTM
     creating: createZooKerasRNNEncoder
-    
+
     >>> lstm = LSTM(3)
     creating: createZooKerasLSTM
     >>> embedding = Embedding(1000, 32, input_length=10, name="embedding1")
@@ -80,7 +80,7 @@ class RNNDecoder(ZooKerasLayer):
     >>> decoder = RNNDecoder.initialize("lstm", 2, 3)
     creating: createZooKerasLSTM
     creating: createZooKerasRNNDecoder
-    
+
     >>> lstm = LSTM(3)
     creating: createZooKerasLSTM
     >>> embedding = Embedding(1000, 32, input_length=10, name="embedding1")
