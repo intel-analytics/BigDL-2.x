@@ -32,7 +32,7 @@ model.compile(loss=objectives.MeanSquaredError(), optimizer='sgd')
 
 ## Available objectives
 
-## MeanSquaredError ##
+### MeanSquaredError
 
 **Scala:**
 
@@ -63,7 +63,7 @@ Parameters:
  * `sizeAverage` a boolean indicating whether to divide the sum of squared error by n. 
                  Default: true
 
-## MeanAbsoluteError ##
+### MeanAbsoluteError
 
 **Scala:**
 
@@ -85,7 +85,7 @@ keras.objectives.mae()
 
 Measures the mean absolute value of the element-wise difference between input and target
 
-## MeanAbsolutePercentageError ##
+### MeanAbsolutePercentageError
 
 **Scala:**
 
@@ -107,7 +107,7 @@ keras.objectives.mape()
 
 compute mean absolute percentage error for intput and target
 
-## MeanSquaredLogarithmicError ##
+### MeanSquaredLogarithmicError
 
 **Scala:**
 
@@ -130,8 +130,7 @@ keras.objectives.msle()
 compute mean squared logarithmic error for input and target
 
 
-## SquaredHinge ##
-
+### SquaredHinge
 
 **Scala:**
 
@@ -154,7 +153,7 @@ Parameters:
  * `margin` if unspecified, is by default 1.
  * `sizeAverage` whether to average the loss, is by default true
 
-## Hinge ##
+### Hinge
 
 **Scala:**
 
@@ -177,7 +176,7 @@ Parameters:
  * `margin` if unspecified, is by default 1.
  * `sizeAverage` whether to average the loss, is by default true
 
-## BinaryCrossEntropy ##
+### BinaryCrossEntropy
 
 **Scala:**
 
@@ -200,7 +199,7 @@ Parameters:
 * `weights` A tensor assigning weight to each of the classes
 * `sizeAverage` whether to divide the sequence length. Default is true.
 
-## CategoricalCrossEntropy ##
+### CategoricalCrossEntropy
 
 **Scala:**
 
@@ -219,7 +218,7 @@ keras.objectives.CategoricalCrossEntropy()
 This is same with cross entropy criterion, except the target tensor is a
 one-hot tensor.
 
-## Poisson ##
+### Poisson
 
 **Scala:**
 
@@ -237,7 +236,7 @@ keras.objectives.Poisson()
 
 compute Poisson error for intput and target
 
-## CosineProximity ##
+### CosineProximity
 
 **Scala:**
 
