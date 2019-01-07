@@ -135,7 +135,6 @@ if __name__ == '__main__':
     model = model.model
     from tensorflow.keras.optimizers import Adam
     model.optimizer = Adam()
-    metrics = model.metrics
     model.metrics = []
 
     # Distributed training using TFOptimizer
@@ -160,15 +159,15 @@ if __name__ == '__main__':
         print(res)
 
     # Local evaluation using TensorFlow
-    model.metrics = metrics
     predictions = model.predict(test_inputs, batch_size=args.b)
     print("Intent evaluation results: ")
     intent_classes = sorted([(k, v) for k, v in dataset.intents_vocab.vocab.items()], key=lambda k: k[1])
     print(classification_report(intent_truth, np.argmax(predictions[0], axis=1),
                                 target_names=[i[0] for i in intent_classes], labels=[i[1] for i in intent_classes]))
     print("NER evaluation results: ")
-    print(get_conll_scores(predictions, test_y,
-                           {v: k for k, v in dataset.tags_vocab.vocab.items()}))
+    eval = get_conll_scores(predictions, test_y,
+                            {v: k for k, v in dataset.tags_vocab.vocab.items()})
+    print(eval)
 
     print('Saving model')
     model.save(args.model_path)
