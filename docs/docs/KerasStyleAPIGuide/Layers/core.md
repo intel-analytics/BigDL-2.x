@@ -2069,11 +2069,11 @@ Permutes the dimensions of the input according to a given pattern.
 Useful for connecting RNNs and convnets together.
 
 ```scala
-Permute(dim, offset, length = 1, inputShape = null)
+Permute(dims, inputShape = null)
 ```
 **Python:**
 ```python
-Permute(self, dim, offset, length=1, input_shape=None, name=None)
+Permute(dims, input_shape=None, name=None)
 ```
 
 **Parameters:**

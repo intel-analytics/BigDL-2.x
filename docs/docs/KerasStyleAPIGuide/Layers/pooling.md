@@ -440,11 +440,11 @@ The input of this layer should be 4D.
 
 **Scala:**
 ```scala
-AveragePooling1D(poolSize = 2, strides = -1, dimOrdering = "valid", inputShape = null)
+GlobalAveragePooling2D(dimOrdering = "th", inputShape = null)
 ```
 **Python:**
 ```python
-AveragePooling1D(pool_length=2, stride=None, border_mode="valid", input_shape=None, name=None)
+GlobalAveragePooling2D(dim_ordering="th", input_shape=None, name=None)
 ```
 
 **Parameters:**

@@ -220,7 +220,7 @@ Input is:
 ```scala
 input: com.intel.analytics.bigdl.tensor.Tensor[Float] =
 (1,.,.) =
-0.94700974      0.10242243      0.36114395      0.054554284
+0.1308445       0.001281989     0.13936701      0.21237929
 
 [com.intel.analytics.bigdl.tensor.DenseTensor of size 1x1x4]
 ```
@@ -228,7 +228,7 @@ Output is:
 ```scala
 output: com.intel.analytics.bigdl.nn.abstractnn.Activity =
 (1,.,.) =
-0.94700974      0.10242243      0.36114395      0.054554284
+0.1308445       0.001281989     0.13936701      0.21237929
 
 [com.intel.analytics.bigdl.tensor.DenseTensor of size 1x1x4]
 ```
@@ -246,9 +246,177 @@ output = model.forward(input)
 ```
 Input is:
 ```python
-array([[[0.13629929, 0.45604206, 0.89164672, 0.15428345]]])
+array([[[0.42103899, 0.5255088 , 0.70384155, 0.55685647]]])
 ```
 Ouput is:
 ```python
-array([[[0.1362993 , 0.45604205, 0.89164674, 0.15428345]]], dtype=float32)
+array([[[0.421039  , 0.5255088 , 0.70384157, 0.55685645]]], dtype=float32)
 ```
+
+
+---
+## **Available Activations**
+* [relu](#relu)
+* [elu](#elu)
+* [tanh](#tanh)
+* [sigmoid](#sigmoid)
+* [hard_sigmoid](#hardsigmoid)
+* [softmax](#softmax)
+* [softplus](#softplus)
+* [softsign](#softsign)
+
+---
+## ELU ##
+
+**Scala:**
+
+```scala
+ELU(alpha = 1.0, inputShape = null)
+```
+**Python:**
+```python
+ELU(alpha=1.0, input_shape=None, name=None)
+```
+
+Exponential Linear Unit.
+It follows:
+f(x) =  alpha * (exp(x) - 1.) for x < 0,
+f(x) = x for x >= 0.
+
+**Parameters:**
+
+* `alpha`: Double, scale for the negative factor. Default is 1.0.
+* `input_shape`: Only need to specify this argument when you use this layer as the first layer of a model. For Scala API, it should be a [`Shape`](../keras-api-scala/#shape) object. For Python API, it should be a shape tuple. Batch dimension should be excluded.
+
+---
+## ReLU ##
+
+**Scala:**
+```scala
+val relu = ReLU(ip = false)
+```
+**Python:**
+```python
+relu = ReLU(ip)
+```
+
+ReLU applies the element-wise rectified linear unit (ReLU) function to the input
+```
+ReLU function : f(x) = max(0, x)
+```
+
+**Parameters:**
+
+* `ip`: Illustrate if the ReLU function is done on the origin input
+
+---
+## Tanh ##
+**Scala:**
+```scala
+val activation = Tanh()
+```
+**Python:**
+```python
+activation = Tanh()
+```
+
+Applies the Tanh function element-wise to the input Tensor,
+thus outputting a Tensor of the same dimension.
+Tanh is defined as
+```
+f(x) = (exp(x)-exp(-x))/(exp(x)+exp(-x)).
+```
+
+---
+## Sigmoid ##
+
+**Scala:**
+```scala
+val module = Sigmoid()
+```
+**Python:**
+```python
+module = Sigmoid()
+```
+
+Applies the Sigmoid function element-wise to the input Tensor,
+thus outputting a Tensor of the same dimension.
+
+Sigmoid is defined as: `f(x) = 1 / (1 + exp(-x))`
+
+---
+## HardSigmoid ##
+
+**Scala:**
+```scala
+val module = HardSigmoid()
+```
+**Python:**
+```python
+module = HardSigmoid()
+```
+
+Activate each element as below
+
+```
+           ⎧  0, if x < -2.5
+    f(x) = ⎨  1, if x > 2.5
+           ⎩  0.2 * x + 0.5, otherwise
+```
+
+---
+## SoftMax ##
+
+**Scala:**
+```scala
+val layer = SoftMax()
+```
+**Python:**
+```python
+layer = SoftMax()
+```
+
+Applies the SoftMax function to an n-dimensional input Tensor, rescaling them so that the
+elements of the n-dimensional output Tensor lie in the range (0, 1) and sum to 1.
+Softmax is defined as:`f_i(x) = exp(x_i - shift) / sum_j exp(x_j - shift)`
+where `shift = max_i(x_i)`.
+
+---
+## SoftPlus ##
+
+**Scala:**
+```scala
+val model = SoftPlus(beta = 1.0)
+```
+**Python:**
+```python
+model = SoftPlus(beta = 1.0)
+```
+
+Apply the SoftPlus function to an n-dimensional input tensor.
+SoftPlus function: 
+```
+f_i(x) = 1/beta * log(1 + exp(beta * x_i))
+```
+
+**Parameters:**
+
+* `beta`: Controls sharpness of transfer function
+
+---
+## SoftSign ##
+
+**Scala:**
+```scala
+val softSign = SoftSign()
+```
+**Python:**
+```python
+softSign = SoftSign()
+```
+
+SoftSign applies SoftSign function to the input tensor
+
+SoftSign function: `f_i(x) = x_i / (1+|x_i|)`
+
+---
