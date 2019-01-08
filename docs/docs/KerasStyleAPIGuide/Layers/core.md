@@ -1957,7 +1957,7 @@ Narrow(dim, offset, length = 1, inputShape = null)
 ```
 **Python:**
 ```python
-Narrow(self, dim, offset, length=1, input_shape=None, name=None)
+Narrow(dim, offset, length=1, input_shape=None, name=None)
 ```
 
 **Parameters:**
