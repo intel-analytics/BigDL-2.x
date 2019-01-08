@@ -26,15 +26,17 @@ class ConstantFillMapper(OperatorMapper):
     def __init__(self, node, _params, _all_tensors):
         super(ConstantFillMapper, self).__init__(node, _params, _all_tensors)
 
-    def _extract_model_inputs(self):
-        """
-        :return: list of OnnxInput
-        """
-        input = OnnxInput(name=self.op_name, zvalue=OnnxHelper.to_numpy(self.onnx_attr['value']))
-        return [self._to_zoo_input(input, is_constant=True)]
+    # def _extract_model_inputs(self):
+    #     """
+    #     :return: list of OnnxInput
+    #     """
+    #     value = TensorProto(self.onnx_attr['value'])
+    #     input = OnnxInput(name=self.op_name, zvalue=OnnxHelper.to_numpy(value))
+    #     return [self._to_zoo_input(input, is_constant=True)]
 
     def _to_tensor(self):
         data = self.model_inputs[0].zvalue
+        zlayers.ConstantFill(value)(data)
         # dtype = int(self.onnx_attr['dtype'])
         input_as_shape = int(self.onnx_attr['input_as_shape'])
         if input_as_shape == True:
