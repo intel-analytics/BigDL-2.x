@@ -27,7 +27,7 @@ import scala.collection.mutable
 case class SessionParams(val nEpochs: Int = 2,
                          val batchSize: Int = 4000,
                          val inputDir: String = "/Users/guoqiong/intelWork/projects/sessionRec/yoochoose-data/yoochoose-test.dat",
-                         val outputDir:String = "/Users/guoqiong/intelWork/projects/sessionRec/modelOutput.bigdl/",
+                         val outputDir: String = "/Users/guoqiong/intelWork/projects/sessionRec/modelOutput.bigdl/",
                          val logDir: String = "./log/",
                          val featureLength: Int = 10
                         )
@@ -104,19 +104,6 @@ object SessionRecExp {
     val results: RDD[Activity] = loaded.predict(validation)
     results.take(10).foreach(println)
 
-  }
-
-  def buildModel(itemCnt: Int,
-                 maxLength: Int,
-                 embedOutDim: Int
-                ): Sequential[Float] = {
-    val model = Sequential[Float]()
-
-    model.add(Embedding[Float](itemCnt, embedOutDim, init = "normal", inputLength = maxLength))
-      //  .add(GRU[Float](40, returnSequences = true))
-      .add(GRU[Float](200, returnSequences = false))
-      .add(Dense[Float](itemCnt, activation = "log_softmax"))
-    model
   }
 
   def loadPublicData(sqlContext: SQLContext, dataPath: String) = {
