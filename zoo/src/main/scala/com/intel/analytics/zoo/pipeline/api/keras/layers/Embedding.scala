@@ -61,6 +61,7 @@ class Embedding[T: ClassTag](
                               wRegularizer: Regularizer[T] = null,
                               maskZero: Boolean = false,
                               paddingValue: Int = 0,
+                              expectZeroBased: Boolean = false,
                               inputShape: Shape = null)(implicit ev: TensorNumeric[T])
   extends BEmbedding[T] (
     inputDim, outputDim, init, wRegularizer, inputShape) with Net {
@@ -75,7 +76,9 @@ class Embedding[T: ClassTag](
 
   override def doBuild(inputShape: Shape): AbstractModule[Tensor[T], Tensor[T], T] = {
     val model = TSequential[T]()
-    model.add(TAddConstant(1.0))
+    if (!expectZeroBased) {
+      model.add(TAddConstant(1.0))
+    }
     val layer = LookupTable(
       nIndex = inputDim,
       nOutput = outputDim,
@@ -104,10 +107,11 @@ object Embedding {
       wRegularizer: Regularizer[T] = null,
       maskZero: Boolean = false,
       paddingValue: Int = 0,
+      expectZeroBased: Boolean = false,
       inputLength: Int = -1)(implicit ev: TensorNumeric[T]): Embedding[T] = {
     // Remark: It is possible that inputShape is specified in Input node or layer.
     val shape = if (inputLength > 0) Shape(inputLength) else null
     new Embedding[T](inputDim, outputDim, KerasUtils.getInitMethod(init),
-      weights, trainable, wRegularizer, maskZero, paddingValue, shape)
+      weights, trainable, wRegularizer, maskZero, paddingValue, expectZeroBased, shape)
   }
 }
