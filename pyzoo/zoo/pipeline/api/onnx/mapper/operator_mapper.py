@@ -59,7 +59,10 @@ class OperatorMapper(object):
             if is_parameter or is_constant:
                 shape = input.zvalue
             else:
-                shape = input.zvalue[1:]
+                if len(input.zvalue) == 1:
+                    return []
+                else:
+                    return input.zvalue[1:]
         else:
             raise Exception("not supported type " + str(type(input.zvalue)))
 

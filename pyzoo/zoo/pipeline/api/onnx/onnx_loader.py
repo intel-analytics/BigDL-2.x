@@ -105,8 +105,8 @@ class OnnxLoader(object):
             for input in mapper.model_inputs:
                 # Only update the original inputs here.
                 if input.name in self._inputs:
-                    self._inputs[input.name] = input.zvalue
-                self._all_tensors[input.name] = input.zvalue
+                    self._inputs[input.name] = OnnxInput(input.name, input.zvalue)
+                self._all_tensors[input.name] = OnnxInput(input.name, input.zvalue)
             tensor = mapper.to_tensor()
             output_ids = list(node.output)
             assert len(output_ids) == 1 or node.op_type == "Dropout",\
@@ -118,5 +118,6 @@ class OnnxLoader(object):
             if i.name not in self._all_tensors:
                 raise Exception("The output haven't been calculate")
             output_tensors.append(self._all_tensors[i.name].zvalue)
-        model = zmodels.Model(input=list(self._inputs.values()), output=output_tensors)
+        model = zmodels.Model(input=[v.zvalue for v in self._inputs.values()],
+                              output=output_tensors)
         return model
