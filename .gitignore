@@ -44,4 +44,3 @@ pyspark/build/
 */.classpath
 */.project
 */.settings/
-zoo/src/main/resources/libzoo_openvino.so
