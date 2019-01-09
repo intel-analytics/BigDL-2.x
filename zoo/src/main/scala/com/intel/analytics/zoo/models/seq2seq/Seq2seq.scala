@@ -38,6 +38,7 @@ import scala.reflect.ClassTag
  * @param inputShape shape of encoder input, for variable length, please input -1
  * @param outputShape shape of decoder input, for variable length, please input -1
  * @param bridge connect encoder and decoder
+ * @param generator Feeding decoder output to generator to generate final result
  */
 class Seq2seq[T: ClassTag] (
   val encoder: Encoder[T],
@@ -129,6 +130,7 @@ object Seq2seq {
    * @param inputShape shape of encoder input, for variable length, please input -1
    * @param outputShape shape of decoder input, for variable length, please input -1
    * @param bridge connect encoder and decoder
+   * @param generator Feeding decoder output to generator to generate final result
    */
   def apply[@specialized(Float, Double) T: ClassTag](
     encoder: RNNEncoder[T],
