@@ -269,7 +269,6 @@ abstract class KerasNet[T](implicit val tag: ClassTag[T], implicit val ev: Tenso
     else null
   }
 
-  var t = false
   /**
    * Train a model for a fixed number of epochs on a DataSet.
    *
@@ -297,14 +296,11 @@ abstract class KerasNet[T](implicit val tag: ClassTag[T], implicit val ev: Tenso
     internalOptimizer.setOptimMethod(this.optimMethod)
       .setEndWhen(Trigger.maxEpoch(getFinishedEpoch() + nbEpoch))
 
-    if (!t) {
-      internalOptimizer match {
-        case local: InternalLocalOptimizer[T] =>
-          local.setTrainData(x)
-        case dis: InternalDistriOptimizer[T] =>
-          dis.setTrainData(x)
-      }
-      t = true
+    internalOptimizer match {
+      case local: InternalLocalOptimizer[T] =>
+        local.setTrainData(x)
+      case dis: InternalDistriOptimizer[T] =>
+        dis.setTrainData(x)
     }
 
     internalOptimizer.optimize()

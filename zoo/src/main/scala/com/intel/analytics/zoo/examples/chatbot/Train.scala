@@ -103,9 +103,6 @@ object Train {
         .map(chatIdxToLabeledChat(_))
         .map(labeledChatToSample(_))
 
-      val seed = 100
-      RNG.setSeed(seed)
-
       val stdv = 1.0 / math.sqrt(param.embedDim)
 
       val wInit: InitializationMethod = RandomUniform(-stdv, stdv)
