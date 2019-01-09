@@ -24,10 +24,9 @@ from zoo.models.seq2seq import *
 
 class TestSeq2seq(ZooTestCase):
 
-
     def test_forward_backward(self):
             input_data = [np.random.randint(20, size=(1, 2, 4)),
-            np.random.randint(20, size=(1, 2, 4))]
+                          np.random.randint(20, size=(1, 2, 4))]
             encoder = RNNEncoder.initialize("LSTM", 1, 4)
             decoder = RNNDecoder.initialize("LSTM", 1, 4)
             bridge = Bridge.initialize("dense", 4)
