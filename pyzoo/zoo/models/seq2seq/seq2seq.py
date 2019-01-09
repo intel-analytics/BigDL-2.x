@@ -66,6 +66,12 @@ class RNNEncoder(ZooKerasLayer):
 
     @classmethod
     def initialize(cls, rnn_type, nlayers, hidden_size, embedding=None, input_shape=None):
+        """
+        rnn_type: currently support "simplernn | lstm | gru"
+        nlayers: number of layers used in encoder
+        decoder_hiddenSize: hidden size of encoder
+        embedding: embedding layer in encoder, `None` is supported
+        """
         rnns = createRNN(rnn_type, nlayers, hidden_size)
         return RNNEncoder(rnns, embedding, input_shape)
 
@@ -99,6 +105,12 @@ class RNNDecoder(ZooKerasLayer):
 
     @classmethod
     def initialize(cls, rnn_type, nlayers, hidden_size, embedding=None, input_shape=None):
+        """
+        rnn_type: currently support "simplernn | lstm | gru"
+        nlayers: number of layers used in decoder
+        decoder_hiddenSize: hidden size of decoder
+        embedding: embedding layer in decoder, `None` is supported
+        """
         rnns = createRNN(rnn_type, nlayers, hidden_size)
         return RNNDecoder(rnns, embedding, input_shape)
 
@@ -148,6 +160,7 @@ class Seq2seq(ZooModel):
     input_shape: shape of encoder input, for variable length, please use -1 as seq len
     output_shape: shape of decoder input, for variable length, please use -1 as seq len
     bridge: connect encoder and decoder
+    generator: Feeding decoder output to generator to generate final result, `None` is supported
 
     >>> encoder = RNNEncoder.initialize("LSTM", 1, 4)
     creating: createZooKerasLSTM

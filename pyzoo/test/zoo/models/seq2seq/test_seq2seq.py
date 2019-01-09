@@ -31,7 +31,6 @@ class TestSeq2seq(ZooTestCase):
             decoder = RNNDecoder.initialize("LSTM", 1, 4)
             bridge = Bridge.initialize("dense", 4)
             model = Seq2seq(encoder, decoder, [2, 4], [2, 4], bridge)
-            input_data = np.random.randint(20, size=(4, 500))
             self.assert_forward_backward(model, input_data)
 
 
