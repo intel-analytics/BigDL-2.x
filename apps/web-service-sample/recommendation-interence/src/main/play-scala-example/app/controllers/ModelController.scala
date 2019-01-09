@@ -45,8 +45,8 @@ class ModelController @Inject()(cc: ControllerComponents) extends AbstractContro
           val predict = LocalPredictor(params.recModel.get).predict(inputSample)
             .map { x =>
               val _output = x.toTensor[Float]
-              val indices = _output.topk(11, 1, false)
-              val predict = (1 to 20).map{
+              val indices = _output.topk(10, 1, false)
+              val predict = (1 to 10).map{
                 i =>
                   val predict = indices._2.valueAt(i).toInt - 1
                   val probability = Math.exp(_output.valueAt(predict).toDouble)
