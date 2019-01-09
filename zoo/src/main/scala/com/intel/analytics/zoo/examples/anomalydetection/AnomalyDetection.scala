@@ -73,7 +73,8 @@ object AnomalyDetection {
 
     val featureDF = loadData(sqlContext, param.inputDir)
     val featureShape = Shape(param.unrollLength, 3)
-    val unrolled = assemblyFeature(featureDF, true, param.unrollLength)
+    val unrolled: RDD[FeatureLabelIndex[Float]] =
+      assemblyFeature(featureDF, true, param.unrollLength)
     val (trainRdd, testRdd) = Utils.trainTestSplit(unrolled, testSize = 1000)
 
     val model: AnomalyDetector[Float] = AnomalyDetector[Float](featureShape)
