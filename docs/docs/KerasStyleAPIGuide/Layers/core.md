@@ -226,7 +226,7 @@ Merge(layers=None, mode="sum", concat_axis=-1, input_shape=None, name=None)
 * `layers`: A list of layer instances. Must be more than one layer.
 * `mode`: Merge mode. String, must be one of: 'sum', 'mul', 'concat', 'ave', 'cos', 'dot', 'max'. Default is 'sum'.
 * `concatAxis`: Integer, axis to use when concatenating layers. Only specify this when merge mode is 'concat'. Default is -1, meaning the last axis of the input.
-* `inputShape`: Only need to specify this argument when you use this layer as the first layer of a model. For Scala API, it should be a [`MultiShape`](../keras-api-scala/#multishape) object. For Python API, it should be a list of shape tuple. Batch dimension should be excluded.
+* `inputShape`: Only need to specify this argument when you use this layer as the first layer of a model. For Scala API, it should be a [`MultiShape`](../keras-api-scala/#shape) object. For Python API, it should be a list of shape tuple. Batch dimension should be excluded.
 
 **Scala example:**
 ```scala
