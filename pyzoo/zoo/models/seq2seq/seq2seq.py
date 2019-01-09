@@ -69,7 +69,7 @@ class RNNEncoder(ZooKerasLayer):
         """
         rnn_type: currently support "simplernn | lstm | gru"
         nlayers: number of layers used in encoder
-        decoder_hiddenSize: hidden size of encoder
+        hidden_size: hidden size of encoder
         embedding: embedding layer in encoder, `None` is supported
         """
         rnns = createRNN(rnn_type, nlayers, hidden_size)
@@ -108,7 +108,7 @@ class RNNDecoder(ZooKerasLayer):
         """
         rnn_type: currently support "simplernn | lstm | gru"
         nlayers: number of layers used in decoder
-        decoder_hiddenSize: hidden size of decoder
+        hidden_size: hidden size of decoder
         embedding: embedding layer in decoder, `None` is supported
         """
         rnns = createRNN(rnn_type, nlayers, hidden_size)
