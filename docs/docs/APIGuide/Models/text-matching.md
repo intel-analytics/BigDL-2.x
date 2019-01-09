@@ -1,15 +1,16 @@
-Analytics Zoo provides pre-defined KNRM model that can be used for text matching (e.g. question answering).
+Analytics Zoo provides a pre-defined KNRM model that can be used for text matching (e.g. question answering).
 The model could be fed into NNFrames or BigDL Optimizer directly for training.
 More text matching models will be supported in the future.
 
 ---
 ## **Build a KNRM Model**
+Kernel-pooling Neural Ranking Model with RBF kernel. See [here](https://arxiv.org/abs/1706.06613) for more details.
+
 You can call the following API in Scala and Python respectively to create a `KNRM` with *pre-trained GloVe word embeddings*.
 
 **Scala**
 ```scala
-val knrm = KNRM(text1Length, text2Length, embeddingFile, wordIndex = null, trainEmbed = true,
-                kernelNum = 21, sigma = 0.1, exactSigma = 0.001, targetMode = "ranking")
+val knrm = KNRM(text1Length, text2Length, embeddingFile, wordIndex = null, trainEmbed = true, kernelNum = 21, sigma = 0.1, exactSigma = 0.001, targetMode = "ranking")
 ```
 
 * `text1Length`: Sequence length of text1 (query).
@@ -29,8 +30,7 @@ See [here](https://github.com/intel-analytics/analytics-zoo/tree/master/zoo/src/
 
 **Python**
 ```python
-knrm = KNRM(text1_length, text2_length, embedding_file, word_index=None, train_embed=True,
-            kernel_num=21, sigma=0.1, exact_sigma=0.001, target_mode="ranking")
+knrm = KNRM(text1_length, text2_length, embedding_file, word_index=None, train_embed=True, kernel_num=21, sigma=0.1, exact_sigma=0.001, target_mode="ranking")
 ```
 
 * `text1_length`: Sequence length of text1 (query).
@@ -75,7 +75,7 @@ To load a KNRM model (with weights) saved [above](#save-model):
 
 **Scala**
 ```scala
-KNRM.loadModel[Float](path, weightPath = null)
+KNRM.loadModel(path, weightPath = null)
 ```
 
 * `path`: The path for the pre-defined model. Local file system, HDFS and Amazon S3 are supported. HDFS path should be like "hdfs://[host]:[port]/xxx". Amazon S3 path should be like "s3a://bucket/xxx".

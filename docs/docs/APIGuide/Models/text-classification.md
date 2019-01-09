@@ -62,7 +62,7 @@ To load a TextClassifier model (with weights) saved [above](#save-model):
 
 **Scala**
 ```scala
-TextClassifier.loadModel[Float](path, weightPath = null)
+TextClassifier.loadModel(path, weightPath = null)
 ```
 
 * `path`: The path for the pre-defined model. Local file system, HDFS and Amazon S3 are supported. HDFS path should be like "hdfs://[host]:[port]/xxx". Amazon S3 path should be like "s3a://bucket/xxx".
