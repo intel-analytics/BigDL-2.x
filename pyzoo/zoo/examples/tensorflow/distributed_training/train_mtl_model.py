@@ -132,7 +132,7 @@ if __name__ == '__main__':
 
     model = model.model
     from tensorflow.keras.optimizers import Adam
-    model.optimizer = Adam()
+    model.optimizer = Adam(lr=0.01)
     model.metrics = []
 
     # Distributed training using TFOptimizer
