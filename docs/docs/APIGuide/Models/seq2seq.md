@@ -32,9 +32,9 @@ val encoder = RNNEncoder(rnns, embedding, inputShape)
 encoder = RNNEncoder.initialize(rnn_type, nlayers, hidden_size, embedding):
 ```
 
-* `rnnType` style of recurrent unit, one of [SimpleRNN, LSTM, GRU]
-* `numLayers` number of layers used in encoder
-* `hiddenSize` hidden size of encoder
+* `rnn_type` style of recurrent unit, one of [SimpleRNN, LSTM, GRU]
+* `nlayers` number of layers used in encoder
+* `hidden_size` hidden size of encoder
 * `embedding` embedding layer in encoder, `None` is supported
 
 Or
@@ -92,7 +92,7 @@ please use following API to create a `Bridge`.
 
 **Scala**
 ```scala
-val bridge = Bridge(bridgeType, hiddenSize)
+val bridge = Bridge(bridgeType, decoderHiddenSize)
 ```
 
 * `bridgeType` currently only support "dense | densenonlinear"
@@ -111,7 +111,7 @@ bridge = Bridge.initialize(bridge_type, decoder_hidden_size)
 ```
 
 * `bridge_type`: currently only support "dense | densenonlinear"
-* `decoder_hiddenSize`: hidden size of decoder
+* `decoder_hidden_size`: hidden size of decoder
 
 Or
 
@@ -133,8 +133,8 @@ val seq2seq = Seq2seq(encoder,
     generator)
 ```
 
-* `encoder` a rnn encoder object
-* `decoder` a rnn decoder object
+* `encoder` an encoder object
+* `decoder` a decoder object
 * `inputShape` shape of encoder input, for variable length, please input -1
 * `outputShape` shape of decoder input, for variable length, please input -1
 * `bridge` connect encoder and decoder, you can input `null`
@@ -146,8 +146,8 @@ seq2seq = Seq2seq(encoder, decoder, input_shape, output_shape, bridge,
                  generator)
 ```
 
-* `encoder` a rnn encoder object
-* `decoder` a rnn decoder object
+* `encoder` an encoder object
+* `decoder` a decoder object
 * `input_shape` shape of encoder input, for variable length, please input -1
 * `output_shape` shape of decoder input, for variable length, please input -1
 * `bridge` connect encoder and decoder, you can input `null`
