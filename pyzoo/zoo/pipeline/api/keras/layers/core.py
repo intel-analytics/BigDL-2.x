@@ -495,3 +495,24 @@ class Highway(ZooKerasLayer):
                                       bias,
                                       list(input_shape) if input_shape else None,
                                       **kwargs)
+
+
+class ConstantFill(ZooKerasLayer):
+    """
+    ConstantFill fills the output with a constant value.
+    Also, the output shape is specified by the 'shape' attribute.
+    When you use this layer as the first layer of a model, you need to provide the argument
+    dtype: one of the types from DataType enum in TensorProto, not supported now.
+    extra_shape: not supported now.
+    input_as_shape: currently set to '1', 1D tensor containing the desired output shape.
+    shape: shape of the output tensor.
+    value: value for the elements of the output tensor.
+    # Arguments
+    dtype, extra_shape, input_as_shape, shape, value.
+    creating: createZooKerasConstantFill
+    """
+    def __init__(self, value, input_shape=None, **kwargs):
+        super(ConstantFill, self).__init__(None,
+                                           value,
+                                           list(input_shape) if input_shape else None,
+                                           **kwargs)

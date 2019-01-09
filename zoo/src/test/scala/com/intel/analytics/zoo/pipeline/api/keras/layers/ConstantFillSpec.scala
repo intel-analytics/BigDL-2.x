@@ -31,7 +31,7 @@ class ConstantFillSpec extends KerasBaseSpec {
     seq.add(input)
     val fill = new ConstantFill[Float](2.2f)
     seq.add(fill)
-val inputData = Tensor[Float](Array(2, 3, 4)).randn()
+    val inputData = Tensor[Float](Array(2, 3, 4)).randn()
     val out = seq.forward(inputData)
     out.toTensor[Float].almostEqual(inputData.clone().fill(2.2f), 1e-3)
   }
@@ -40,7 +40,7 @@ val inputData = Tensor[Float](Array(2, 3, 4)).randn()
 
 class ConstantFillSerialTest extends ModuleSerializationTest {
   override def test(): Unit = {
-    val ss = new GetShape[Float](inputShape = Shape(3, 2))
+    val ss = new ConstantFill[Float](inputShape = Shape(3, 2))
     ss.build(Shape(2, 3, 2))
     val input = Tensor[Float](2, 3, 2).apply1(_ => Random.nextFloat())
     runSerializationTest(ss, input)

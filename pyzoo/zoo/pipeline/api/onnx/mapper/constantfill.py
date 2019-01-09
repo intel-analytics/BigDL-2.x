@@ -36,9 +36,12 @@ class ConstantFillMapper(OperatorMapper):
 
     def _to_tensor(self):
         data = self.model_inputs[0].zvalue
+        value = self.onnx_attr['value']
         zlayers.ConstantFill(value)(data)
-        # dtype = int(self.onnx_attr['dtype'])
+        assert self.onnx_attr['dtype'] == 1, "currently is set by default value"
+        assert 'extra_shape' not in self.onnx_attr, "currently we do not support extra_shape"
+        assert 'shape' not in self.onnx_attr, "currently we do not support shape"
         input_as_shape = int(self.onnx_attr['input_as_shape'])
         if input_as_shape == True:
-            assert data.shape == (1,), "The input should be a 1D tensor."
+            assert data.shape == (None,), "The input should be a 1D tensor."
         return data
