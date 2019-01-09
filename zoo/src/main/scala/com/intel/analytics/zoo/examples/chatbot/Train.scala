@@ -56,7 +56,8 @@ object Train {
       val sc = NNContext.initNNContext("Chatbot Example")
 
       val idx2w = Source
-        .fromFile(param.dataFolder + "idx2w.csv", "UTF-8")
+//        .fromFile(param.dataFolder + "idx2w.csv", "UTF-8")
+        .fromFile("/home/ding/data/chatbot/idx2w.csv", "UTF-8")
         .getLines
         .map(x => {
           val split = x.split(",")
@@ -65,7 +66,8 @@ object Train {
         .toMap
 
       val w2idx = Source
-        .fromFile(param.dataFolder + "w2idx.csv", "UTF-8")
+//        .fromFile(param.dataFolder + "w2idx.csv", "UTF-8")
+        .fromFile("/home/ding/data/chatbot/w2idx.csv", "UTF-8")
         .getLines
         .map(x => {
           val split = x.split(",")
@@ -85,6 +87,7 @@ object Train {
         .map(_.split(",").map(_.toInt))
         .map(s => s.filter(id => id != 0))
 
+
       val chat2List = Source
         .fromFile(param.dataFolder + "chat2_1.txt", "UTF-8")
         .getLines
@@ -96,6 +99,7 @@ object Train {
         .map(s => s.filter(id => id != 0))
         .toList
 
+
       val tokens = sc.parallelize(chat1.zip(chat2))
 
       val trainRDD = tokens
@@ -103,6 +107,9 @@ object Train {
       val trainSet = trainRDD
         .map(chatIdxToLabeledChat(_))
         .map(labeledChatToSample(_))
+
+      val seed = 100
+//      RNG.setSeed(seed)
 
       val stdv = 1.0 / math.sqrt(param.embedDim)
 
@@ -184,35 +191,35 @@ object Train {
               Some(Array(padLabel))),
           nbEpoch = i)
 
-        for (seed <- seeds) {
-          println("Query> " + seed)
-          val evenToken = SentenceTokenizer().apply(Array(seed).toIterator).toArray
-          val oddToken = (SentenceBiPadding() -> SentenceTokenizer())
-            .apply(Array("").toIterator).toArray
-          val labeledChat = evenToken.zip(oddToken)
-            .map(chatToLabeledChat(dictionary, _)).apply(0)
-
-          val sent1 = Tensor(Storage(labeledChat._1), 1, Array(1, labeledChat._1.length))
-          val sent2 = Tensor(Storage(labeledChat._2), 1, Array(1, labeledChat._2.length))
-          val sent3 = Tensor(Storage(labeledChat._2), 1, Array(1, labeledChat._2.length))
-          val timeDim = 2
-          val featDim = 3
-          val end = dictionary.getIndex(SentenceToken.end) + 1
-          val endSign = Tensor(Array(end.toFloat), Array(1))
-
-          // Max dim is 0 based
-          val layers = Max(dim = featDim - 1, returnValue = false)
-            .asInstanceOf[KerasLayer[Tensor[Float], Tensor[Float], Float]]
-          val output2 = model.infer(sent1, sent3, maxSeqLen = 30,
-            stopSign = endSign, buildOutput = layers).toTensor[Float]
-
-          val predArray = new Array[Float](output2.nElement())
-          Array.copy(output2.storage().array(), output2.storageOffset() - 1,
-            predArray, 0, output2.nElement())
-          val result = predArray.grouped(output2.size(timeDim)).toArray[Array[Float]]
-            .map(x => x.map(t => dictionary.getWord(t - 1)))
-          println(result.map(x => x.mkString(" ")).mkString("\n"))
-        }
+//        for (seed <- seeds) {
+//          println("Query> " + seed)
+//          val evenToken = SentenceTokenizer().apply(Array(seed).toIterator).toArray
+//          val oddToken = (SentenceBiPadding() -> SentenceTokenizer())
+//            .apply(Array("").toIterator).toArray
+//          val labeledChat = evenToken.zip(oddToken)
+//            .map(chatToLabeledChat(dictionary, _)).apply(0)
+//
+//          val sent1 = Tensor(Storage(labeledChat._1), 1, Array(1, labeledChat._1.length))
+//          val sent2 = Tensor(Storage(labeledChat._2), 1, Array(1, labeledChat._2.length))
+//          val sent3 = Tensor(Storage(labeledChat._2), 1, Array(1, labeledChat._2.length))
+//          val timeDim = 2
+//          val featDim = 3
+//          val end = dictionary.getIndex(SentenceToken.end) + 1
+//          val endSign = Tensor(Array(end.toFloat), Array(1))
+//
+//          // Max dim is 0 based
+//          val layers = Max(dim = featDim - 1, returnValue = false)
+//            .asInstanceOf[KerasLayer[Tensor[Float], Tensor[Float], Float]]
+//          val output2 = model.infer(sent1, sent3, maxSeqLen = 30,
+//            stopSign = endSign, buildOutput = layers).toTensor[Float]
+//
+//          val predArray = new Array[Float](output2.nElement())
+//          Array.copy(output2.storage().array(), output2.storageOffset() - 1,
+//            predArray, 0, output2.nElement())
+//          val result = predArray.grouped(output2.size(timeDim)).toArray[Array[Float]]
+//            .map(x => x.map(t => dictionary.getWord(t - 1)))
+//          println(result.map(x => x.mkString(" ")).mkString("\n"))
+//        }
         model.clearState()
         i += 1
       }

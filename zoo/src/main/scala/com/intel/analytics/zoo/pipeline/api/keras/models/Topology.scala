@@ -269,6 +269,7 @@ abstract class KerasNet[T](implicit val tag: ClassTag[T], implicit val ev: Tenso
     else null
   }
 
+  var t = false
   /**
    * Train a model for a fixed number of epochs on a DataSet.
    *
@@ -296,12 +297,16 @@ abstract class KerasNet[T](implicit val tag: ClassTag[T], implicit val ev: Tenso
     internalOptimizer.setOptimMethod(this.optimMethod)
       .setEndWhen(Trigger.maxEpoch(getFinishedEpoch() + nbEpoch))
 
-    internalOptimizer match {
-      case local: InternalLocalOptimizer[T] =>
-        local.setTrainData(x)
-      case dis: InternalDistriOptimizer[T] =>
-        dis.setTrainData(x)
+    if (!t) {
+      internalOptimizer match {
+        case local: InternalLocalOptimizer[T] =>
+          local.setTrainData(x)
+        case dis: InternalDistriOptimizer[T] =>
+          dis.setTrainData(x)
+      }
+      t = true
     }
+
     internalOptimizer.optimize()
   }
 
@@ -842,6 +847,8 @@ private[zoo] class InternalLocalOptimizer[T: ClassTag] (
     criterion: Criterion[T])
   (implicit ev: TensorNumeric[T]) extends LocalOptimizer[T](model, ds, criterion) {
 
+  def getTrainData() = this.dataset
+
   def setTrainData(trainingDataSet: DataSet[MiniBatch[T]]): this.type = {
     this.dataset = trainingDataSet
     this.endEpoch()
@@ -861,6 +868,8 @@ private[zoo] class InternalDistriOptimizer[T: ClassTag] (
     _dataset: DistributedDataSet[MiniBatch[T]],
     _criterion: Criterion[T])
   (implicit ev: TensorNumeric[T]) extends DistriOptimizer[T](_model, _dataset, _criterion) {
+
+  def getTrainData() = this.dataset
 
   def setTrainData(trainingDataSet: DataSet[MiniBatch[T]]): this.type = {
     this.dataset = trainingDataSet
