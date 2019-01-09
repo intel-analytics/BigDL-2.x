@@ -197,7 +197,7 @@
                         <version>3.1.0</version>
                         <executions>
                             <execution>
-                                <id>copy-resources</id>
+                                <id>copy-resources-1</id>
                                 <phase>validate</phase>
                                 <goals>
                                     <goal>copy-resources</goal>
@@ -206,9 +206,9 @@
                                     <outputDirectory>${basedir}/target/classes</outputDirectory>
                                     <resources>
                                         <resource>
-                                            <directory>bin</directory>
+                                            <directory>${basedir}/bin</directory>
                                             <includes>
-                                                <include>zoo-mo-run.sh</include>
+                                                <include>zoo-openvino-mo-run.sh</include>
                                             </includes>
                                             <filtering>true</filtering>
                                         </resource>
@@ -365,6 +365,10 @@
         <resources>
             <resource>
                 <directory>${project.basedir}/src/main/resources</directory>
+                <excludes>
+                    <exclude>inference.tar.gz</exclude>
+                </excludes>
+                <filtering>true</filtering>
             </resource>
             <resource>
                 <!-- Include the properties file to provide the build information. -->

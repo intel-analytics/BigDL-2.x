@@ -47,7 +47,7 @@ object OpenVinoInferenceSupportive extends InferenceSupportive {
   load("libiomp5.so")
   load("libcpu_extension.so")
   load("libMKLDNNPlugin.so")
-  load("libzoo_openvino.so")
+  load("libzoo_inference.so")
 
   def loadTensorflowModel(frozenModelFilePath: String,
                           pipelineConfigFilePath: String,
@@ -56,7 +56,8 @@ object OpenVinoInferenceSupportive extends InferenceSupportive {
     logger.info(s"start to optimize tensorflow model from " +
       s"$frozenModelFilePath, $pipelineConfigFilePath, $extensionsConfigFilePath")
     timing("load tensorflow model to openvino IR") {
-      val loadTensorflowModelScriptPath: String = "./bin/zoo-openvino-mo-run.sh"
+      val loadTensorflowModelScriptPath: String = OpenVinoInferenceSupportive.
+        getClass.getResource("/zoo-openvino-mo-run.sh").getPath()
       val tmpDir = Files.createTempDir()
       val outputPath: String = tmpDir.getCanonicalPath
 

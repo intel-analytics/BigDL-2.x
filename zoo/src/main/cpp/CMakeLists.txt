@@ -17,11 +17,11 @@
 cmake_minimum_required(VERSION 3.0.0)
 
 set (CMAKE_CXX_FLAGS "-std=c++11")
-set (LIB_FOLDER "${CMAKE_CURRENT_SOURCE_DIR}/../resources")
+set (LIB_FOLDER "${CMAKE_CURRENT_SOURCE_DIR}/../../../target/classes")
 set (INCLUDE_DIRS "${CMAKE_CURRENT_SOURCE_DIR}/../../../target/openvino/include")
 set (InferenceEngine_INCLUDE_DIRS "${CMAKE_CURRENT_SOURCE_DIR}/../../../target/openvino/include/inference_engine")
 set (InferenceEngine_LIBRARIES inference_engine)
-set (CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/../resources)
+set (CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/../../../target/classes)
 
 message (${INCLUDE_DIRS})
 
@@ -53,7 +53,7 @@ link_directories(
 # Create library file from sources.
 # add_library(inference_engine_interface SHARED ${MAIN_SRC} ${CMAKE_CURRENT_SOURCE_DIR}/include/extension/ext_list.cpp)
 
-add_library(zoo_openvino SHARED ${MAIN_SRC})
+add_library(zoo_inference SHARED ${MAIN_SRC})
 
-target_link_libraries(zoo_openvino inference_engine cpu_extension dl pthread)
+target_link_libraries(zoo_inference inference_engine cpu_extension dl pthread)
 
