@@ -37,10 +37,10 @@ from bigdl.optim.optimizer import MaxEpoch
 from zoo.common.nncontext import init_nncontext
 from zoo.util.tf import variable_creator_scope
 from zoo.pipeline.api.net import TFOptimizer, TFDataset, TFPredictor
+from zoo.util.tf import export_tf
 
 
 def validate_input_args():
-    global model_path
     validate((args.b, int, 1, 100000000))
     validate((args.e, int, 1, 100000000))
     validate((args.sentence_length, int, 1, 10000))
@@ -48,8 +48,6 @@ def validate_input_args():
     validate((args.intent_hidden_size, int, 1, 10000))
     validate((args.lstm_hidden_size, int, 1, 10000))
     validate((args.tagger_dropout, float, 0, 1))
-    model_path = path.join(path.dirname(path.realpath(__file__)), str(args.model_path))
-    validate_parent_exists(model_path)
     model_info_path = path.join(path.dirname(path.realpath(__file__)), str(args.model_info_path))
     validate_parent_exists(model_info_path)
 
@@ -76,8 +74,8 @@ if __name__ == '__main__':
                         help='Path to word embedding model file')
     parser.add_argument('--use_cudnn', default=False, action='store_true',
                         help='use CUDNN based LSTM cells')
-    parser.add_argument('--model_path', type=str, default='model.h5',
-                        help='Model file path')
+    parser.add_argument('--export_path', type=str, default='/tmp/mtl/',
+                        help='Export TensorFlow path')
     parser.add_argument('--model_info_path', type=str, default='model_info.dat',
                         help='Path for saving model topology')
     args = parser.parse_args()
@@ -146,8 +144,6 @@ if __name__ == '__main__':
     optimizer = TFOptimizer.from_keras(model, train_dataset)
     optimizer.optimize(end_trigger=MaxEpoch(args.e))
     print('Training done')
-    saver = tf.train.Saver()
-    saver.save(optimizer.sess, "/tmp/mtl/")
 
     # Distributed prediction using TFPredictor
     val_dataset = TFDataset.from_rdd(test_rdd,
@@ -171,8 +167,7 @@ if __name__ == '__main__':
                             {v: k for k, v in dataset.tags_vocab.vocab.items()})
     print(eval)
 
-    print('Saving model')
-    model.save(args.model_path)
+    export_tf(tf.keras.backend.get_session(), args.export_path, model.inputs, model.outputs)
     with open(args.model_info_path, 'wb') as fp:
         info = {
             'type': 'mtl',
