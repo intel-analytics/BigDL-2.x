@@ -81,7 +81,8 @@ class RNNEncoder[T: ClassTag](val rnns: Array[Recurrent[T]],
       rnns(i).setGradHiddenState(gradStates(i + 1))
       i += 1
     }
-    labor.updateGradInput(input, rnnGradOutput)
+    gradInput = labor.updateGradInput(input, rnnGradOutput)
+    gradInput
   }
 
   override def accGradParameters(input: Tensor[T], gradOutput: Activity): Unit = {

@@ -16,11 +16,12 @@
 
 package com.intel.analytics.zoo.models.seq2seq
 
-import com.intel.analytics.bigdl.nn.abstractnn.{AbstractModule, Activity}
+import com.intel.analytics.bigdl.nn.abstractnn.{Activity, AbstractModule}
 import com.intel.analytics.bigdl.nn.keras.KerasLayer
 import com.intel.analytics.bigdl.tensor.Tensor
 import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric
 import com.intel.analytics.bigdl.utils._
+
 import com.intel.analytics.zoo.pipeline.api.Net
 import com.intel.analytics.zoo.pipeline.api.keras.layers.utils.KerasUtils
 import com.intel.analytics.zoo.pipeline.api.keras.layers._
@@ -34,8 +35,8 @@ import scala.reflect.ClassTag
  * @param decoderHiddenSize hidden size of decoder
  * @param bridge keras layers used to do the transformation
  */
-class Bridge[T: ClassTag] private[seq2seq] (val bridgeType: String,
-                                   var decoderHiddenSize: Int,
+class Bridge[T: ClassTag] private[zoo] (val bridgeType: String,
+  var decoderHiddenSize: Int,
   bridge: KerasLayer[Tensor[T], Tensor[T], T])(implicit ev: TensorNumeric[T])
   extends KerasLayer[Activity, Activity, T]() with Net {
 
