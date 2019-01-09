@@ -15,7 +15,7 @@
 #
 
 from zoo.common.nncontext import init_nncontext
-from zoo.models.anomalydetection_bk import AnomalyDetector
+from zoo.models.anomalydetection import AnomalyDetector
 import pandas as pd
 from pyspark.sql import SQLContext
 from pyspark import sql

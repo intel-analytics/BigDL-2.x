@@ -17,7 +17,7 @@
 import pytest
 
 import numpy as np
-from zoo.models.anomalydetection_bk import AnomalyDetector
+from zoo.models.anomalydetection import AnomalyDetector
 from test.zoo.pipeline.utils.test_utils import ZooTestCase
 
 np.random.seed(1337)  # for reproducibility
