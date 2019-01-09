@@ -16,7 +16,7 @@
 
 
 from zoo.pipeline.api.keras.layers import *
-from zoo.models.common.zoo_model import ZooModel
+from zoo.models.common import ZooModel
 
 from zoo.pipeline.api.keras.engine import ZooKerasLayer
 
@@ -26,11 +26,12 @@ if sys.version >= '3':
 
 
 def createRNN(rnn_type, nlayers, hidden_size):
-    if (rnn_type == "lstm"):
+    _rnn_type = rnn_type.lower()
+    if (_rnn_type == "lstm"):
         return [LSTM(hidden_size, return_sequences=True) for layer in range(nlayers)]
-    elif (rnn_type == "gru"):
+    elif (_rnn_type == "gru"):
         return [GRU(hidden_size, return_sequences=True) for layer in range(nlayers)]
-    elif (rnn_type == "simplernn"):
+    elif (_rnn_type == "simplernn"):
         return [SimpleRNN(hidden_size, return_sequences=True) for layer in range(nlayers)]
     else:
         raise Exception('Only support lstm|gru|simplernn')
@@ -65,7 +66,7 @@ class RNNEncoder(ZooKerasLayer):
 
     @classmethod
     def initialize(cls, rnn_type, nlayers, hidden_size, embedding=None, input_shape=None):
-        rnns = createRNN(rnn_type.lower(), nlayers, hidden_size)
+        rnns = createRNN(rnn_type, nlayers, hidden_size)
         return RNNEncoder(rnns, embedding, input_shape)
 
 
@@ -98,7 +99,7 @@ class RNNDecoder(ZooKerasLayer):
 
     @classmethod
     def initialize(cls, rnn_type, nlayers, hidden_size, embedding=None, input_shape=None):
-        rnns = createRNN(rnn_type.lower(), nlayers, hidden_size)
+        rnns = createRNN(rnn_type, nlayers, hidden_size)
         return RNNDecoder(rnns, embedding, input_shape)
 
 
@@ -107,14 +108,15 @@ class Bridge(ZooKerasLayer):
     defines how to transform encoder to decoder
 
     # Arguments
+    bridge_type: currently only support "dense | densenonlinear"
+    decoder_hiddenSize: hidden size of decoder
     bridge: keras layers used to do the transformation
-    input_shape: shape of input, not including batch
 
     >>> bridge = Bridge.initialize("dense", 2)
     creating: createZooKerasBridge
     >>> dense = Dense(3)
     creating: createZooKerasDense
-    >>> bridge = Bridge.initialize_from_keraslayer(dense)
+    >>> bridge = Bridge.initialize_from_keras_layer(dense)
     creating: createZooKerasBridge
     """
     def __init__(self, bridge_type, decoder_hidden_size, bridge):
@@ -129,7 +131,7 @@ class Bridge(ZooKerasLayer):
         return Bridge(bridge_type, decoder_hidden_size, None)
 
     @classmethod
-    def initialize_from_keraslayer(cls, bridge):
+    def initialize_from_keras_layer(cls, bridge):
         """
         bridge: keras layers used to do the transformation
         """
