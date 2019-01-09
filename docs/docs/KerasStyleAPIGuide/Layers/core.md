@@ -2169,3 +2169,63 @@ array([[[[0.14016896, 0.7275626 , 0.7908709 ],
         [[0.5860832 , 0.338014  , 0.9260269 ],
          [0.46813026, 0.95118374, 0.13145027]]]], dtype=float32)
 ```
+---
+## **ResizeBilinear**
+Resize the input image with bilinear interpolation. The input image must be a float tensor with NHWC or NCHW layout.
+
+```scala
+ResizeBilinear(outputHeight, outputWidth, alignCorners = false, dimOrdering = "th", inputShape = null)
+```
+**Python:**
+```python
+ResizeBilinear(output_height, output_width, align_corner=False, dim_ordering="th", input_shape=(2, 3, 5, 7), name=None)
+```
+
+**Parameters:**
+
+* `outputHeight`: output height
+* `outputWidth`: output width
+* `alignCorners`: align corner or not
+* `dimOrdering`: Format of input data. Either DataFormat.NCHW (dimOrdering='th') or DataFormat.NHWC (dimOrdering='tf'). Default is NCHW.
+* `inputShape`: Only need to specify this argument when you use this layer as the first layer of a model. For Scala API, it should be a [`Shape`](../keras-api-scala/#shape) object. For Python API, it should be a shape tuple. Batch dimension should be excluded.
+
+**Scala example:**
+```scala
+import com.intel.analytics.zoo.pipeline.api.keras.models.Sequential
+import com.intel.analytics.zoo.pipeline.api.keras.layers.ResizeBilinear
+import com.intel.analytics.bigdl.utils.Shape
+import com.intel.analytics.bigdl.tensor.Tensor
+
+val model = SequentialFloat
+model.add(ResizeBilinear[Float](10, 20, inputShape = Shape(2, 3, 5, 7)))
+val input = Tensor[Float](2, 2, 3, 5, 7).rand()
+val output = model.forward(input)
+```
+Input is:
+```scala
+
+```
+Output is:
+```scala
+
+```
+
+**Python example:**
+```python
+from zoo.pipeline.api.keras.layers import ResizeBilinear
+from zoo.pipeline.api.keras.models import Sequential
+import numpy as np
+
+model = Sequential()
+model.add(ResizeBilinear(10, 20, input_shape=(2, 3, 5, 7)))
+input = np.random.rand(2, 2, 3, 5, 7)
+output = model.forward(input)
+```
+Input is:
+```python
+
+```
+Output is
+```python
+
+```

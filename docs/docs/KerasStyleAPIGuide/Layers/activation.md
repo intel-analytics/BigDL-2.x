@@ -266,29 +266,6 @@ array([[[0.421039  , 0.5255088 , 0.70384157, 0.55685645]]], dtype=float32)
 * [softsign](#softsign)
 
 ---
-## ELU ##
-
-**Scala:**
-
-```scala
-ELU(alpha = 1.0, inputShape = null)
-```
-**Python:**
-```python
-ELU(alpha=1.0, input_shape=None, name=None)
-```
-
-Exponential Linear Unit.
-It follows:
-f(x) =  alpha * (exp(x) - 1.) for x < 0,
-f(x) = x for x >= 0.
-
-**Parameters:**
-
-* `alpha`: Double, scale for the negative factor. Default is 1.0.
-* `input_shape`: Only need to specify this argument when you use this layer as the first layer of a model. For Scala API, it should be a [`Shape`](../keras-api-scala/#shape) object. For Python API, it should be a shape tuple. Batch dimension should be excluded.
-
----
 ## ReLU ##
 
 **Scala:**
@@ -308,6 +285,33 @@ ReLU function : f(x) = max(0, x)
 **Parameters:**
 
 * `ip`: Illustrate if the ReLU function is done on the origin input
+
+---
+## ELU ##
+
+
+**Scala:**
+
+```scala
+val m = ELU(alpha = 1.0, inplace = false)
+```
+**Python:**
+```python
+m = ELU(alpha=1.0, inplace=False)
+```
+
+
+Applies exponential linear unit (`ELU`), which parameter a varies the convergence value of the exponential function below zero:
+
+`ELU` is defined as:
+
+```
+f(x) = max(0, x) + min(0, alpha * (exp(x) - 1))
+```
+
+The output dimension is always equal to input dimension.
+
+For reference see [Fast and Accurate Deep Network Learning by Exponential Linear Units (ELUs)](http://arxiv.org/abs/1511.07289).
 
 ---
 ## Tanh ##
