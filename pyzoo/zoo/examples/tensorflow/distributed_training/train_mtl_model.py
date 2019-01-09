@@ -146,6 +146,8 @@ if __name__ == '__main__':
     optimizer = TFOptimizer.from_keras(model, train_dataset)
     optimizer.optimize(end_trigger=MaxEpoch(args.e))
     print('Training done')
+    saver = tf.train.Saver()
+    saver.save(optimizer.sess, "/tmp/mtl/")
 
     # Distributed prediction using TFPredictor
     val_dataset = TFDataset.from_rdd(test_rdd,
