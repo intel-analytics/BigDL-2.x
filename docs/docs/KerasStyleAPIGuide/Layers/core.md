@@ -1402,8 +1402,6 @@ array([[[ 0.06560206,  0.38629526, -0.23159817],
 ## **GaussianSampler**
 Takes {mean, log_variance} as input and samples from the Gaussian distribution.
 
-When you use this layer as the first layer of a model, you need to provide the argument inputShape (a Single Shape, does not include the batch dimension).
-
 **Scala:**
 ```scala
 GaussianSampler(inputShape = null)
