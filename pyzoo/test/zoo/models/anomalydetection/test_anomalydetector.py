@@ -22,11 +22,12 @@ from test.zoo.pipeline.utils.test_utils import ZooTestCase
 
 np.random.seed(1337)  # for reproducibility
 
+
 class TestAnomalyDetector(ZooTestCase):
 
     def test_forward_backward(self):
         model = AnomalyDetector(feature_shape=(10, 3), hidden_layers=[8, 32, 15],
-                            dropouts=[0.2, 0.2, 0.2])
+                                dropouts=[0.2, 0.2, 0.2])
         model.summary()
         input_data = np.random.rand(100, 10, 3)
         self.assert_forward_backward(model, input_data)
@@ -38,7 +39,7 @@ class TestAnomalyDetector(ZooTestCase):
 
     def test_save_load(self):
         model = AnomalyDetector(feature_shape=(10, 3), hidden_layers=[8, 32, 15],
-                            dropouts=[0.2, 0.2, 0.2])
+                                dropouts=[0.2, 0.2, 0.2])
         input_data = np.random.rand(100, 10, 3)
         self.assert_zoo_model_save_load(model, input_data)
 

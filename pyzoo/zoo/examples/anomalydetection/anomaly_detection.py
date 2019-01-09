@@ -52,7 +52,7 @@ if __name__ == "__main__":
     [train, test] = AnomalyDetector.train_test_split(unrolled, 1000)
 
     model = AnomalyDetector(feature_shape=(int(options.unroll_len), feature_size),
-                            hidden_layers=[8, 32, 15],dropouts=[0.2, 0.2, 0.2])
+                            hidden_layers=[8, 32, 15], dropouts=[0.2, 0.2, 0.2])
     model.compile(loss='mse', optimizer='rmsprop')
     model.fit(train, batch_size=int(options.batch_size), nb_epoch=int(options.nb_epoch))
     test.cache()
