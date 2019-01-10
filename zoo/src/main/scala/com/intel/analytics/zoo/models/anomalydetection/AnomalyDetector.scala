@@ -39,10 +39,10 @@ import scala.reflect.ClassTag
  * @tparam T Numeric type of parameter(e.g. weight, bias). Only support float/double now.
  */
 
-class AnomalyDetector[T: ClassTag] private(val featureShape: Shape,
-                                           val hiddenLayers: Array[Int] = Array(8, 32, 15),
-                                           val dropouts: Array[Double] = Array(0.2, 0.2, 0.2))
-                                          (implicit ev: TensorNumeric[T])
+class AnomalyDetector[T: ClassTag] (val featureShape: Shape,
+                                    val hiddenLayers: Array[Int] = Array(8, 32, 15),
+                                    val dropouts: Array[Double] = Array(0.2, 0.2, 0.2))
+                                   (implicit ev: TensorNumeric[T])
   extends ZooModel[Tensor[T], Tensor[T], T] {
 
   override def buildModel(): AbstractModule[Tensor[T], Tensor[T], T] = {

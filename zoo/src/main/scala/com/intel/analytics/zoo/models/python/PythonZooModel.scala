@@ -143,8 +143,9 @@ class PythonZooModel[T: ClassTag](implicit ev: TensorNumeric[T]) extends PythonZ
       hiddenLayers: JList[Int],
       dropouts: JList[Double],
       model: AbstractModule[Activity, Activity, T]): AnomalyDetector[T] = {
-    AnomalyDetector[T](Shape(featureShape.asScala.toArray),
+    new AnomalyDetector[T](Shape(featureShape.asScala.toArray),
       hiddenLayers.asScala.toArray, dropouts.asScala.toArray)
+      .addModel(model.asInstanceOf[AbstractModule[Tensor[T], Tensor[T], T]])
   }
 
   def loadAnomalyDetector(
