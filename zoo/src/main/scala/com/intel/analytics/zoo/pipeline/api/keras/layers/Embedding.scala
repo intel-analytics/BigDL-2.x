@@ -49,6 +49,10 @@ import scala.reflect.ClassTag
  * @param trainable Whether this layer is trainable or not. Default is true.
  * @param wRegularizer An instance of [[Regularizer]], (eg. L1 or L2 regularization),
  *                     applied to the embedding matrix. Default is null.
+ * @param maskZero: if maskZero is set to true, the input whose value equals `paddingValue`
+ *                the output will be masked to zero vector.
+ * @param paddingValue padding value, default 0
+ * @param expectZeroBased default false and input should be 1 based. Otherwise need to be 0 base
  * @param inputShape A Single Shape, does not include the batch dimension.
  * @tparam T Numeric type of parameter(e.g. weight, bias). Only support float/double now.
  */

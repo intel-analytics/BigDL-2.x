@@ -96,7 +96,7 @@ class Seq2seq[T: ClassTag] (
     val sent1 = input
     val sent2 = startSign
 
-    sent2.resize(Array(1, 1) ++ startSign.size())
+    sent2.resize(Array(1) ++ startSign.size())
 
     var curInput = sent2
     val sizes = curInput.size()

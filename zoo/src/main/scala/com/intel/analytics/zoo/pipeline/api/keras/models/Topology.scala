@@ -241,10 +241,12 @@ abstract class KerasNet[T](implicit val tag: ClassTag[T], implicit val ev: Tenso
   private def toDataSet(x: RDD[Sample[T]], batchSize: Int,
     featurePaddingParam: PaddingParam[T] = null,
     labelPaddingParam: PaddingParam[T] = null): DataSet[MiniBatch[T]] = {
-    val _featurePaddingParam = if (featurePaddingParam != null)
-      Some(featurePaddingParam) else None
-    val _labelPaddingParam = if (labelPaddingParam != null)
-      Some(labelPaddingParam) else None
+    val _featurePaddingParam = if (featurePaddingParam != null) {
+      Some(featurePaddingParam)
+    } else None
+    val _labelPaddingParam = if (labelPaddingParam != null) {
+      Some(labelPaddingParam)
+    } else None
 
     if (x != null) DataSet.rdd(x) -> SampleToMiniBatch[T](batchSize, _featurePaddingParam,
       _labelPaddingParam)
@@ -843,8 +845,6 @@ private[zoo] class InternalLocalOptimizer[T: ClassTag] (
     criterion: Criterion[T])
   (implicit ev: TensorNumeric[T]) extends LocalOptimizer[T](model, ds, criterion) {
 
-  def getTrainData() = this.dataset
-
   def setTrainData(trainingDataSet: DataSet[MiniBatch[T]]): this.type = {
     this.dataset = trainingDataSet
     this.endEpoch()
@@ -864,8 +864,6 @@ private[zoo] class InternalDistriOptimizer[T: ClassTag] (
     _dataset: DistributedDataSet[MiniBatch[T]],
     _criterion: Criterion[T])
   (implicit ev: TensorNumeric[T]) extends DistriOptimizer[T](_model, _dataset, _criterion) {
-
-  def getTrainData() = this.dataset
 
   def setTrainData(trainingDataSet: DataSet[MiniBatch[T]]): this.type = {
     this.dataset = trainingDataSet

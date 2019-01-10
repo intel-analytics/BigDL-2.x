@@ -26,7 +26,6 @@ import com.intel.analytics.bigdl.numeric.NumericFloat
 import com.intel.analytics.bigdl.optim.{Adam, OptimMethod}
 import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric
 import com.intel.analytics.bigdl.tensor.{Storage, Tensor}
-import com.intel.analytics.bigdl.utils.RandomGenerator._
 import com.intel.analytics.bigdl.utils.{Shape, T}
 import com.intel.analytics.zoo.common.{NNContext, ZooDictionary}
 import com.intel.analytics.zoo.models.seq2seq._
@@ -58,8 +57,7 @@ object Train {
         .map(x => {
           val split = x.split(",")
           (split(0).toInt, if (split.length < 2) "" else split(1))
-        })
-        .toMap
+        }).toMap
 
       val w2idx = Source
         .fromFile(param.dataFolder + "w2idx.csv", "UTF-8")
@@ -67,8 +65,7 @@ object Train {
         .map(x => {
           val split = x.split(",")
           (split(0), split(1).toInt)
-        })
-        .toMap
+        }).toMap
 
       val dictionary = new ZooDictionary(idx2w, w2idx)
       val vocabSize = dictionary.getVocabSize()
@@ -94,7 +91,6 @@ object Train {
         .map(s => s.filter(id => id != 0))
         .toList
 
-
       val tokens = sc.parallelize(chat1.zip(chat2))
 
       val trainRDD = tokens
@@ -104,10 +100,6 @@ object Train {
         .map(labeledChatToSample(_))
 
       val stdv = 1.0 / math.sqrt(param.embedDim)
-
-      val wInit: InitializationMethod = RandomUniform(-stdv, stdv)
-      val bInit: InitializationMethod = RandomUniform(-stdv, stdv)
-
       val embEnc =
         new Embedding(vocabSize, param.embedDim, maskZero = true,
           paddingValue = padId, init = RandomUniform(-stdv, stdv), expectZeroBased = false)
@@ -132,7 +124,6 @@ object Train {
         embDec.asInstanceOf[KerasLayer[Tensor[Float], Tensor[Float], Float]])
 
       val generator = Sequential[Float]()
-      // need fix in checkWithCurrentInputShape KerasLayer.scala to take account -1
       generator.add(TimeDistributed[Float](Dense(vocabSize),
         Shape(Array(1, param.embedDim))))
       generator.add(TimeDistributed[Float](Activation("log_softmax")))
@@ -140,11 +131,7 @@ object Train {
       val model = Seq2seq(encoder, decoder, Shape(Array(-1)),
         Shape(Array(-1)), generator = generator)
 
-      val optimMethod = if (param.stateSnapshot.isDefined) {
-        OptimMethod.load[Float](param.stateSnapshot.get)
-      } else {
-        new Adam[Float](learningRate = 0.0001)
-      }
+      val optimMethod = new Adam[Float](learningRate = param.learningRate)
 
       model.compile(
         optimizer = optimMethod,
@@ -177,8 +164,7 @@ object Train {
             .map(chatToLabeledChat(dictionary, _)).apply(0)
 
           val sent1 = Tensor(Storage(labeledChat._1), 1, Array(1, labeledChat._1.length))
-          val sent2 = Tensor(Storage(labeledChat._2), 1, Array(1, labeledChat._2.length))
-          val sent3 = Tensor(Storage(labeledChat._2), 1, Array(1, labeledChat._2.length))
+          val sent2 = Tensor(Storage(labeledChat._2), 1, Array(labeledChat._2.length))
           val timeDim = 2
           val featDim = 3
           val end = dictionary.getIndex(SentenceToken.end) + 1
@@ -187,13 +173,13 @@ object Train {
           // Max dim is 0 based
           val layers = Max(dim = featDim - 1, returnValue = false)
             .asInstanceOf[KerasLayer[Tensor[Float], Tensor[Float], Float]]
-          val output2 = model.infer(sent1, sent3, maxSeqLen = 30,
+          val output = model.infer(sent1, sent2, maxSeqLen = 30,
             stopSign = endSign, buildOutput = layers).toTensor[Float]
 
-          val predArray = new Array[Float](output2.nElement())
-          Array.copy(output2.storage().array(), output2.storageOffset() - 1,
-            predArray, 0, output2.nElement())
-          val result = predArray.grouped(output2.size(timeDim)).toArray[Array[Float]]
+          val predArray = new Array[Float](output.nElement())
+          Array.copy(output.storage().array(), output.storageOffset() - 1,
+            predArray, 0, output.nElement())
+          val result = predArray.grouped(output.size(timeDim)).toArray[Array[Float]]
             .map(x => x.map(t => dictionary.getWord(t - 1)))
           println(result.map(x => x.mkString(" ")).mkString("\n"))
         }
@@ -203,7 +189,6 @@ object Train {
       sc.stop()
     })
   }
-
 
   def chatToLabeledChat[T: ClassTag](
     dictionary: Dictionary,
@@ -219,7 +204,6 @@ object Train {
   def chatIdxToLabeledChat[T: ClassTag](
     chat: (Array[Int], Array[Int]))(implicit ev: TensorNumeric[T])
   : (Array[T], Array[T], Array[T]) = {
-    val evOne = ev.fromType(1)
     val (indices1, indices2) =
     (chat._1.map(x => ev.fromType[Int](x + 1)),
       chat._2.map(x => ev.fromType[Int](x + 1)))
@@ -231,18 +215,14 @@ object Train {
     start: Option[String] = None,
     end: Option[String] = None,
     dictionary: Dictionary
-  )
-    extends Transformer[String, String] {
-
+  ) extends Transformer[String, String] {
     val sentenceStart = dictionary.getIndex(start.getOrElse(SentenceToken.start))
     val sentenceEnd = dictionary.getIndex(end.getOrElse(SentenceToken.end))
-
     override def apply(prev: Iterator[String]): Iterator[String] = {
       prev.map(x => {
         val sentence = sentenceStart + "," + x + "," + sentenceEnd
         sentence
       })
-
     }
   }
 
@@ -253,7 +233,6 @@ object Train {
       dictionary: Dictionary
     ): SentenceIdxBiPadding = new SentenceIdxBiPadding(start, end, dictionary)
   }
-
 
   def labeledChatToSample[T: ClassTag](
     labeledChat: (Array[T], Array[T], Array[T]))
