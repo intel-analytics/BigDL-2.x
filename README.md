@@ -1,7 +1,9 @@
-# 
 <div align="center">
-  <img src="https://github.com/analytics-zoo/analytics-zoo.github.io/tree/master/img/logo.png"><br>
+  <img src="https://github.com/analytics-zoo/analytics-zoo.github.io/blob/master/img/logo.jpg"><br>
 </div>
+
+--------
+# 
 *A unified analytics + AI platform for __distributed TensorFlow, Keras and BigDL on Apache Spark__*
 
 ---
