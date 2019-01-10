@@ -39,10 +39,10 @@ import scala.reflect.ClassTag
  * @tparam T Numeric type of parameter(e.g. weight, bias). Only support float/double now.
  */
 
-class AnomalyDetector[T: ClassTag] private(val featureShape: Shape,
-                                           val hiddenLayers: Array[Int] = Array(8, 32, 15),
-                                           val dropouts: Array[Float] = Array(0.2f, 0.2f, 0.2f))
-                                          (implicit ev: TensorNumeric[T])
+class AnomalyDetector[T: ClassTag] (val featureShape: Shape,
+                                    val hiddenLayers: Array[Int] = Array(8, 32, 15),
+                                    val dropouts: Array[Double] = Array(0.2, 0.2, 0.2))
+                                   (implicit ev: TensorNumeric[T])
   extends ZooModel[Tensor[T], Tensor[T], T] {
 
   override def buildModel(): AbstractModule[Tensor[T], Tensor[T], T] = {
@@ -86,6 +86,13 @@ class AnomalyDetector[T: ClassTag] private(val featureShape: Shape,
     model.asInstanceOf[KerasNet[T]].predict(x, batchPerThread)
   }
 
+  def setTensorBoard(logDir: String, appName: String): Unit = {
+    model.asInstanceOf[KerasNet[T]].setTensorBoard(logDir, appName)
+  }
+
+  def setCheckpoint(path: String, overWrite: Boolean = true): Unit = {
+    model.asInstanceOf[KerasNet[T]].setCheckpoint(path, overWrite)
+  }
 }
 
 case class FeatureLabelIndex[T: ClassTag](feature: Array[Array[T]], label: T, index: Long) {
@@ -106,7 +113,7 @@ object AnomalyDetector {
   def apply[@specialized(Float, Double) T: ClassTag](
       featureShape: Shape,
       hiddenLayers: Array[Int] = Array(8, 32, 15),
-      dropouts: Array[Float] = Array(0.2f, 0.2f, 0.2f))
+      dropouts: Array[Double] = Array(0.2, 0.2, 0.2))
       (implicit ev: TensorNumeric[T]): AnomalyDetector[T] = {
     new AnomalyDetector[T](featureShape, hiddenLayers, dropouts).build()
   }
@@ -132,19 +139,18 @@ object AnomalyDetector {
   *
   * @param yTruth          Truth to be compared
   * @param yPredict        Predictions
-  * @param anomalyFraction Int. What percentage of the number of total values compared to be
-  *                        considered as anomalies.
+  * @param anomalySize Int. The size to be considered as anomalies.
   */
   def detectAnomalies[T: ClassTag](yTruth: RDD[T],
                                    yPredict: RDD[T],
-                                   anomalyFraction: Int = 5): RDD[(T, T, Any)] = {
+                                   anomalySize: Int = 5): RDD[(T, T, Any)] = {
     require(yTruth.count() == yPredict.count(), s"length of predictions and truth should match")
     val totalCount = yTruth.count()
 
     val threshold: Float = yTruth.zip(yPredict)
       .map(x => absdiff(x._1, x._2))
       .sortBy(x => -x)
-      .take((totalCount * anomalyFraction.toFloat / 100).toInt)
+      .take((totalCount * anomalySize.toFloat / 100).toInt)
       .min
 
     detectAnomalies(yTruth, yPredict, threshold)
@@ -163,7 +169,7 @@ object AnomalyDetector {
                                    yPredict: RDD[T],
                                    threshold: Float): RDD[(T, T, Any)] = {
     require(yTruth.count() == yPredict.count(), s"length of predictions and truth should match")
-    val anomalies = yTruth.zip(yPredict).map { x =>
+    val anomalies: RDD[(T, T, Any)] = yTruth.zip(yPredict).map { x =>
       val d = absdiff(x._1, x._2)
       val anomaly = if (d > threshold) x._1 else null
       (x._1, x._2, anomaly) // yTruth, yPredict, anomaly
@@ -171,7 +177,7 @@ object AnomalyDetector {
     anomalies
   }
 
-  def absdiff[T: ClassTag](A: T, B: T): Float = {
+  private def absdiff[T: ClassTag](A: T, B: T): Float = {
     if (A.isInstanceOf[Float]) {
       Math.abs(A.asInstanceOf[Float] - B.asInstanceOf[Float])
     } else {
