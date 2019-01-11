@@ -1230,18 +1230,25 @@ class PythonZooKeras[T: ClassTag](implicit ev: TensorNumeric[T]) extends PythonZ
 
   def createZooKerasRNNEncoder(rnns: JList[Recurrent[T]],
     embedding: KerasLayer[Tensor[T], Tensor[T], T] = null,
-    inputShape: Shape = null): RNNEncoder[T] = {
-    RNNEncoder(rnns.asScala.toArray, embedding, inputShape)
+    inputShape: JList[Int] = null): RNNEncoder[T] = {
+    RNNEncoder(rnns.asScala.toArray, embedding, toScalaShape(inputShape))
   }
 
   def createZooKerasRNNDecoder(rnns: JList[Recurrent[T]],
     embedding: KerasLayer[Tensor[T], Tensor[T], T] = null,
-    inputShape: Shape = null): RNNDecoder[T] = {
-    RNNDecoder(rnns.asScala.toArray, embedding, inputShape)
+    inputShape: JList[Int] = null): RNNDecoder[T] = {
+    RNNDecoder(rnns.asScala.toArray, embedding, toScalaShape(inputShape))
   }
 
   def createZooKerasBridge(bridgeType: String, decoderHiddenSize: Int,
     bridge: KerasLayer[Tensor[T], Tensor[T], T]): KerasLayer[Activity, Activity, T] = {
     new Bridge(bridgeType, decoderHiddenSize, bridge)
+  }
+
+  def createZooKerasMax(dim: Int,
+    numInputDims: Int = Int.MinValue,
+    returnValue: Boolean = true,
+    inputShape: JList[Int] = null): Max[T] = {
+    Max[T](dim, numInputDims, returnValue, toScalaShape(inputShape))
   }
 }
