@@ -153,7 +153,7 @@ object Train {
           labelPaddingParam = PaddingParam[Float](
             paddingTensor =
               Some(Array(padLabel))),
-          nbEpoch = i)
+          nbEpoch = 1)
 
         for (seed <- seeds) {
           println("Query> " + seed)

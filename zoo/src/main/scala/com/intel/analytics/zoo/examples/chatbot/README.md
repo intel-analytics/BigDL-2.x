@@ -29,7 +29,7 @@ ${ANALYTICS_ZOO_HOME}/bin/spark-shell-with-zoo.sh \
 ```
 
 ### Results
-You can find infered answers for given query at end of several epochs.
+You can find infered answers for given query at end of each epoch.
 Query> happy birthday have a nice day
 SENTENCESTART thank you  SENTENCEEND
 Query> donald trump won last nights presidential debate according to snap online polls
