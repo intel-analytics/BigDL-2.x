@@ -62,6 +62,10 @@ class ZooTestCase(TestCase):
         self.tmp_dirs.append(tmp_dir)
         return tmp_dir
 
+    def assert_list_allclose(self, a, b, rtol=1e-6, atol=1e-6, msg=None):
+        for(i1, i2) in zip(a, b):
+            assert_allclose(self, i1, i2, rtol, atol, msg)
+
     def assert_allclose(self, a, b, rtol=1e-6, atol=1e-6, msg=None):
         # from tensorflow
         self.assertEqual(a.shape, b.shape, "Shape mismatch: expected %s, got %s." %
@@ -158,12 +162,18 @@ class ZooTestCase(TestCase):
         output1 = model1.forward(input_data)
         rng.set_seed(1000)
         output2 = model2.forward(input_data)
-        self.assert_allclose(output1, output2, rtol, atol)
+        if isinstance(output1, list):
+            self.assert_list_allclose(output1, output2, rtol, atol)
+        else:
+            self.assert_allclose(output1, output2, rtol, atol)
         rng.set_seed(1000)
         grad_input1 = model1.backward(input_data, output1)
         rng.set_seed(1000)
         grad_input2 = model2.backward(input_data, output1)
-        self.assert_allclose(grad_input1, grad_input2, rtol, atol)
+        if isinstance(grad_input1, list):
+            self.assert_list_allclose(grad_input1, grad_input2, rtol, atol)
+        else:
+            self.assert_allclose(grad_input1, grad_input2, rtol, atol)
 
     def compare_output_and_grad_input_set_weights(self, model1, model2, input_data,
                                                   rtol=1e-6, atol=1e-6):
