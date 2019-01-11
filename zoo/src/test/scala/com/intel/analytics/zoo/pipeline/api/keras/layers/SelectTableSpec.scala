@@ -20,7 +20,6 @@ import com.intel.analytics.bigdl.utils.{MultiShape, Shape, SingleShape, T}
 import com.intel.analytics.zoo.pipeline.api.keras.serializer.ModuleSerializationTest
 
 class SelectTableSerialTest extends ModuleSerializationTest {
-  test()
   override def test(): Unit = {
     val shape1 = SingleShape(List(2))
     val shape2 = SingleShape(List(2))

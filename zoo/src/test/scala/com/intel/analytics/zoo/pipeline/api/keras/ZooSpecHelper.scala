@@ -88,9 +88,8 @@ abstract class ZooSpecHelper extends FlatSpec with Matchers with BeforeAndAfter 
       val gradInput1 = model1.backward(input, output1)
       RandomGenerator.RNG.setSeed(1000)
       val gradInput2 = model2.backward(input, output2)
-      gradInput2.toTensor[Float].size()
-        .sameElements(gradInput1.toTensor[Float].size()) should be (true)
-      gradInput2.toTensor[Float].almostEqual(gradInput1.toTensor[Float], precision) should be (true)
+      gradInput2.size().sameElements(gradInput1.size()) should be (true)
+      gradInput2.almostEqual(gradInput1, precision) should be (true)
     }
   }
 
