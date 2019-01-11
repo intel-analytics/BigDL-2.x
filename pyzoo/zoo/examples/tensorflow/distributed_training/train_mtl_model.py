@@ -149,7 +149,7 @@ if __name__ == '__main__':
     val_dataset = TFDataset.from_rdd(test_rdd,
                                      names=["i1", "i2"],
                                      shapes=[[30], [30, 12]],
-                                     types=[tf.int32, tf.int32, tf.float32, tf.float32],
+                                     types=[tf.int32, tf.int32],
                                      batch_per_thread=4)
     predictor = TFPredictor.from_keras(model, val_dataset)
     predict_results = predictor.predict()
