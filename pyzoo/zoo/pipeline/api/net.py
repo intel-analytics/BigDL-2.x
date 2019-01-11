@@ -347,8 +347,12 @@ class IdentityCriterion(Criterion):
 
 
 class TFTrainingHelper(Layer):
-    def __init__(self, path):
-        super(TFTrainingHelper, self).__init__(None, "float", path)
+    def __init__(self, path, configProto):
+        if configProto is not None:
+            byte_arr = configProto.SerializeToString()
+        else:
+            byte_arr = None
+        super(TFTrainingHelper, self).__init__(None, "float", path, byte_arr)
 
 
 class TFValidationMethod(JavaValue):
@@ -362,7 +366,8 @@ class TFOptimizer:
 
     def __init__(self, loss, optim_method, sess=None, dataset=None, inputs=None,
                  grads=None, variables=None, graph=None,
-                 val_outputs=None, val_labels=None, val_method=None, val_split=0.0, tensors_with_value=None):
+                 val_outputs=None, val_labels=None, val_method=None, val_split=0.0,
+                 tensors_with_value=None, session_config=None):
         import tensorflow as tf
         from zoo.util.tf import export_tf
         '''
@@ -444,7 +449,7 @@ class TFOptimizer:
             assign = tf.group(*assigns)
         self.assign = assign
         try:
-            self.training_helper_layer = TFTrainingHelper(self.export_dir)
+            self.training_helper_layer = TFTrainingHelper(self.export_dir, session_config)
         except Py4JJavaError as e:
             if "expects to be colocated with unknown node" in str(e):
                 raise Exception("""
@@ -525,20 +530,20 @@ with variable_creator_scope():
 
     @classmethod
     def from_loss(cls, loss, optim_method, session=None, val_outputs=None,
-                  val_labels=None, val_method=None, val_split=0.0):
+                  val_labels=None, val_method=None, val_split=0.0, config=None):
         args = TFOptimizer._get_arguments_from_loss(loss, optim_method,
                                                     session, val_outputs,
                                                     val_labels, val_method)
 
-        return cls(*(args + [val_split]))
+        return cls(*(args + [val_split, config]))
 
     @classmethod
-    def from_keras(cls, keras_model, dataset, val_spilt=0.0):
+    def from_keras(cls, keras_model, dataset, val_spilt=0.0, config=None):
         import tensorflow.keras.backend as K
         loss = keras_model.total_loss
         inputs = keras_model.inputs + keras_model.targets
 
-        variables = keras_model._collected_trainable_weights
+        variables = keras_model._collected_trainable_weights[1:]
         keras_optimizer = keras_model.optimizer
         grads = keras_optimizer.get_gradients(loss, variables)
 
@@ -568,7 +573,8 @@ with variable_creator_scope():
 
         return cls(loss, optim_method, sess, dataset, inputs,
                    grads, variables, loss.graph, val_outputs, val_labels,
-                   bigdl_val_methods, val_spilt, tensors_with_value=tensor_with_value)
+                   bigdl_val_methods, val_spilt,
+                   tensors_with_value=tensor_with_value, session_config=config)
 
     @staticmethod
     def to_bigdl_optim_method(koptim_method):

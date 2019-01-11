@@ -108,8 +108,8 @@ class PythonZooNet[T: ClassTag](implicit ev: TensorNumeric[T]) extends PythonZoo
     TFNet(path)
   }
 
-  def createTFTrainingHelper(modelPath: String): TFTrainingHelper = {
-    TFTrainingHelper(modelPath)
+  def createTFTrainingHelper(modelPath: String, config: Array[Byte] = null): TFTrainingHelper = {
+    TFTrainingHelper(modelPath, config)
   }
 
   def createIdentityCriterion(): IdentityCriterion = {
@@ -128,4 +128,5 @@ class PythonZooNet[T: ClassTag](implicit ev: TensorNumeric[T]) extends PythonZoo
     new TFOptimizer(modelPath, optimMethod,
       toJSample(x).asInstanceOf[RDD[JSample[Float]]], batchSize)
   }
+
 }

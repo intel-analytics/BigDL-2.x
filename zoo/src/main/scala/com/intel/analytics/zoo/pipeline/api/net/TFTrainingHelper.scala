@@ -142,7 +142,7 @@ private[zoo] class TFTrainingHelper(tfnet: TFNet,
 
 object TFTrainingHelper {
 
-  def apply(modelPath: String): TFTrainingHelper = {
+  def apply(modelPath: String, sessionConfig: Array[Byte] = null): TFTrainingHelper = {
     val (model, meta) = NetUtils.processTFFolder(modelPath)
 
     val folderPath = Path(modelPath)
@@ -160,7 +160,12 @@ object TFTrainingHelper {
         trainingMeta.variables.toSeq).toArray,
       meta.outputNames)
     val graphDef = TFNet.parseGraph(model)
-    val tfnet = TFNet(graphDef, model, newMeta, TFNet.defaultSessionConfig.toByteArray())
+    val config = if (sessionConfig != null) {
+      sessionConfig
+    } else {
+      TFNet.defaultSessionConfig.toByteArray()
+    }
+    val tfnet = TFNet(graphDef, model, newMeta, config)
 
 
     new TFTrainingHelper(tfnet,
