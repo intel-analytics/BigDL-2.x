@@ -206,4 +206,3 @@ class Seq2seq(ZooModel):
         model = ZooModel._do_load(jmodel, bigdl_type)
         model.__class__ = Seq2seq
         return model
-

@@ -54,9 +54,7 @@ class Bridge[T: ClassTag] private[zoo] (val bridgeType: String,
 
     val layer = Sequential()
     if (stateNum > 1 || layerNum > 1) {
-      val flattenShape = if (stateNum == 1 || layerNum == 1) {
-        _inputShape.toMulti().map(_.toSingle()).flatten
-      } else _inputShape.toMulti().map(_.toMulti().map(_.toSingle())).flatten.flatten
+      val flattenShape = _inputShape.toMulti().map(_.toMulti().map(_.toSingle())).flatten.flatten
 
       val inputLayers = flattenShape.map(x => InputLayer(Shape(Array(x))))
       layer.add(Merge(inputLayers, mode = "concat"))
