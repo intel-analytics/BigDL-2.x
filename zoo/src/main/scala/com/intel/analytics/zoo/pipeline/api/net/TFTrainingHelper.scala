@@ -38,7 +38,8 @@ private[zoo] class TFTrainingHelper(tfnet: TFNet,
                                     inputs: Array[String],
                                     outputs: Array[String],
                                     variables: Array[String],
-                                    gradVariables: Array[String])
+                                    gradVariables: Array[String],
+                                    defaultTensorValue: Array[Array[Float]])
   extends AbstractModule[Activity, Activity, Float] {
 
   override def parameters(): (Array[Tensor[Float]], Array[Tensor[Float]]) = {
@@ -92,6 +93,20 @@ private[zoo] class TFTrainingHelper(tfnet: TFNet,
 
     }
 
+    if (this.isTraining()) {
+      var i = 0
+      while (i < defaultTensorValue.length) {
+        feeds.insert(Tensor.scalar[Float](defaultTensorValue(i)(0)))
+        i += 1
+      }
+    } else {
+      var i = 0
+      while (i < defaultTensorValue.length) {
+        feeds.insert(Tensor.scalar[Float](defaultTensorValue(i)(1)))
+        i += 1
+      }
+    }
+
     var i = 0
     while (i < weights.length) {
       feeds.insert(weights(i))
@@ -141,7 +156,8 @@ object TFTrainingHelper {
     val trainingMeta = parse(jsonStr).camelizeKeys.extract[TrainMeta]
 
     val newMeta = Meta(
-      (meta.inputNames.toSeq ++: trainingMeta.variables.toSeq).toArray,
+      (meta.inputNames.toSeq ++:
+        trainingMeta.variables.toSeq).toArray,
       meta.outputNames)
     val graphDef = TFNet.parseGraph(model)
     val tfnet = TFNet(graphDef, model, newMeta, TFNet.defaultSessionConfig.toByteArray())
@@ -151,7 +167,9 @@ object TFTrainingHelper {
       trainingMeta.inputNames,
       trainingMeta.outputNames,
       trainingMeta.variables,
-      trainingMeta.gradVariables)
+      trainingMeta.gradVariables,
+      trainingMeta.defaultTensorValues
+    )
   }
 }
 
@@ -238,7 +256,8 @@ class MergeFeatureLabel() extends Transformer[Sample[Float], Sample[Float]] {
 }
 
 case class TrainMeta(inputNames: Array[String], outputNames: Array[String],
-                     variables: Array[String], gradVariables: Array[String])
+                     variables: Array[String], gradVariables: Array[String],
+                     defaultTensorValues: Array[Array[Float]])
 
 
 class TFOptimizer(modelPath: String,

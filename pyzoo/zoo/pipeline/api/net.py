@@ -33,7 +33,7 @@ from bigdl.util.common import to_list, callBigDlFunc, get_spark_context, \
 from zoo.common import Sample, JTensor
 from zoo.feature.image import ImageSet
 from zoo.pipeline.api.keras.engine.topology import ZooKerasLayer, KerasNet, to_bigdl_metric
-from bigdl.optim.optimizer import EveryEpoch, MaxEpoch, Optimizer
+from bigdl.optim.optimizer import EveryEpoch, MaxEpoch, Optimizer, Adam
 
 if sys.version >= '3':
     long = int
@@ -362,7 +362,7 @@ class TFOptimizer:
 
     def __init__(self, loss, optim_method, sess=None, dataset=None, inputs=None,
                  grads=None, variables=None, graph=None,
-                 val_outputs=None, val_labels=None, val_method=None, val_split=0.0):
+                 val_outputs=None, val_labels=None, val_method=None, val_split=0.0, tensors_with_value=None):
         import tensorflow as tf
         from zoo.util.tf import export_tf
         '''
@@ -381,10 +381,20 @@ class TFOptimizer:
             loss, optim_method, sess, dataset, inputs = args[:5]
             grads, variables, graph, val_outputs, val_labels, val_method = args[5:]
 
+        additional_inputs = []
+        additional_values = []
+        all_required_inputs = _find_placeholders([loss])
+        all_required_inputs_names = [v.name for v in all_required_inputs]
+        if tensors_with_value:
+            for t, v in tensors_with_value.items():
+                if t.name in all_required_inputs_names:
+                    additional_inputs.append(t)
+                    additional_values.append(v)
+
         self.optim_method = optim_method
         self.sess = sess
         self.dataset = dataset
-        self.inputs = inputs
+        self.inputs = inputs + additional_inputs
         self.graph = graph
 
         from zoo.util.tf import process_grad
@@ -409,11 +419,15 @@ class TFOptimizer:
         grad_names = [g.name for g in grads]
         output_names = [o.name for o in outputs]
 
+        def to_floats(vs):
+            return [float(v) for v in vs]
+
         meta = {
             "input_names": [i.name for i in self.inputs],
             "output_names": output_names,
             "variables": variable_names,
-            "grad_variables": grad_names
+            "grad_variables": grad_names,
+            "default_tensor_values": [to_floats(v) for v in additional_values]
         }
 
         with open(os.path.join(self.export_dir, "training_meta.json"), "w") as f:
@@ -450,7 +464,6 @@ with variable_creator_scope():
         batch_size = self.dataset.batch_size
         sample_rdd = data.map(lambda t: Sample.from_ndarray(
             t, [np.array([0.0])]))
-
         if val_outputs is not None and val_labels is not None:
             if self.dataset.val_rdd is not None:
                 val_rdd = self.dataset.val_rdd \
@@ -522,13 +535,13 @@ with variable_creator_scope():
     @classmethod
     def from_keras(cls, keras_model, dataset, val_spilt=0.0):
         import tensorflow.keras.backend as K
-
         loss = keras_model.total_loss
         inputs = keras_model.inputs + keras_model.targets
 
         variables = keras_model._collected_trainable_weights
         keras_optimizer = keras_model.optimizer
         grads = keras_optimizer.get_gradients(loss, variables)
+
         sess = K.get_session()
         with sess.as_default():
             optim_method = TFOptimizer.to_bigdl_optim_method(keras_optimizer)
@@ -549,9 +562,13 @@ with variable_creator_scope():
             val_labels = None
             bigdl_val_methods = None
 
+        tensor_with_value = {
+            K.learning_phase(): [True, False]
+        }
+
         return cls(loss, optim_method, sess, dataset, inputs,
                    grads, variables, loss.graph, val_outputs, val_labels,
-                   bigdl_val_methods, val_spilt)
+                   bigdl_val_methods, val_spilt, tensors_with_value=tensor_with_value)
 
     @staticmethod
     def to_bigdl_optim_method(koptim_method):
