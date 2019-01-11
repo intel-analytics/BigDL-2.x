@@ -7,10 +7,11 @@ To start with this example, you need prepare your dataset.
 
 1. Prepare training dataset
 
-    The dataset can be downloaded from https://s3-ap-southeast-1.amazonaws.com/chatbot-data.
+    The dataset can be downloaded from https://s3.amazonaws.com/analytics-zoo-data/chatbot-data.tar.gz.
     
     ```bash
-    wget https://s3-ap-southeast-1.amazonaws.com/chatbot-data
+    wget https://s3.amazonaws.com/analytics-zoo-data/chatbot-data.tar.gz
+    tar zxvf chatbot-data.tar.gz
     ```
 
 ## Run this example
