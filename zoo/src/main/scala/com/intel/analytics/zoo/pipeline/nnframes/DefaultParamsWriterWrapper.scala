@@ -38,7 +38,6 @@ object DefaultParamsWriterWrapper {
   }
 
   def getAndSetParams(instance: Params, metadata: Metadata): Unit = {
-//    DefaultParamsReader.getAndSetParams(instance, metadata)
     implicit val format = DefaultFormats
     metadata.params match {
       case JObject(pairs) =>
