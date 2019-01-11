@@ -95,6 +95,10 @@ model.asInstanceOf[KerasNet[T]].compile(optimizer, loss, metrics)
       model.asInstanceOf[KerasNet[T]].fit(x, batchSize, nbEpoch, validationData)
   }
 
+  def setCheckpoint(path: String, overWrite: Boolean = true): Unit = {
+    model.asInstanceOf[KerasNet[T]].setCheckpoint(path, overWrite)
+  }
+
   def infer(input: Tensor[T], startSign: Tensor[T], maxSeqLen: Int = 30,
             stopSign: Tensor[T] = null,
             buildOutput: KerasLayer[Tensor[T], Tensor[T], T] = null): Tensor[T] = {
@@ -226,7 +230,8 @@ object Seq2seq extends ContainerSerializable {
       KerasUtils.removeBatch(seq2seq.bridge.getOutputShape())
     } else KerasUtils.removeBatch(Shape(seq2seq.encoder.getOutputShape().toMulti().drop(1)))
     val decoderShape =
-      MultiShape(List(KerasUtils.removeBatch(seq2seq.encoder.getOutputShape().toMulti().head), statesShape))
+      MultiShape(List(KerasUtils.removeBatch(seq2seq.encoder.getOutputShape().toMulti().head),
+        statesShape))
     seq2seq.decoder.asInstanceOf[RNNDecoder[T]].inputShape = decoderShape
     val decoderBuilder = AttrValue.newBuilder
     DataConverter.setAttributeValue(context, decoderBuilder,

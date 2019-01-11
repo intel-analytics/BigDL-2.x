@@ -373,4 +373,15 @@ def zooModelSetEvaluateStatus(
       threshold: Double): Double = {
     ranker.evaluateMAP(x, threshold)
   }
+
+  def seq2seqSetCheckpoint(model: Seq2seq[T],
+    path: String,
+    overWrite: Boolean = true): Unit = {
+    model.setCheckpoint(path, overWrite)
+  }
+
+  def loadSeq2seq(path: String,
+    weightPath: String = null): Seq2seq[T] = {
+    Seq2seq.loadModel(path, weightPath)
+  }
 }
