@@ -24,8 +24,7 @@ import sys
 
 if __name__ == "__main__":
     parser = OptionParser()
-    parser.add_option("--input_dir", dest="input_dir", default="../data/NAB/nyc_taxi/nyc_taxi.csv")
-    parser.add_option("--partition_num", dest="partition_num", default="8")
+    parser.add_option("--input_dir", dest="input_dir")
     parser.add_option("-b", "--batch_size", dest="batch_size", default="1024")
     parser.add_option("--nb_epoch", dest="nb_epoch", default="20")
     parser.add_option("--unroll_len", dest="unroll_len", default="24")
@@ -57,7 +56,7 @@ if __name__ == "__main__":
     model.fit(train, batch_size=int(options.batch_size), nb_epoch=int(options.nb_epoch))
     test.cache()
     y_predict = model.predict(test).map(lambda x: float(x[0]))
-    y_test = test.map(lambda x: float(x.label.to_ndarray()[0]))
-    anomalies = AnomalyDetector.detect_anomalies(y_test, y_predict, 20)
+    y_truth = test.map(lambda x: float(x.label.to_ndarray()[0]))
+    anomalies = AnomalyDetector.detect_anomalies(y_predict, y_truth, 50)
 
     print(anomalies.take(10)[0:10])

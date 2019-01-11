@@ -85,7 +85,7 @@ object AnomalyDetection {
 
     val yPredict: RDD[Float] = predictions.map(x => x.toTensor.toArray()(0))
     val yTruth: RDD[Float] = testRdd.map(x => x.label.toArray()(0))
-    val anomalies = AnomalyDetector.detectAnomalies(yPredict, yTruth, 5)
+    val anomalies = AnomalyDetector.detectAnomalies(yTruth, yPredict, 50)
     anomalies.take(5).foreach(println)
   }
 

@@ -152,9 +152,9 @@ class AnomalyDetector(ZooModel):
         Unroll a rdd of arrays to prepare features and labels.
 
         # Arguments
-        data_rdd: data to be unrolled with a length.
-        unroll_length: the length of precious values to predict future value.
-        predict_step: use precious values to predict future value, default is 1.
+        data_rdd: RDD[Array]. data to be unrolled, it holds original time series features
+        unroll_length: Int. the length of precious values to predict future value.
+        predict_step: Int. How many time steps to predict future value, default is 1.
         return: an rdd of FeatureLableIndex
         a simple example
                      data: (1,2,3,4,5,6); unrollLength: 2, predictStep: 1
@@ -169,6 +169,13 @@ class AnomalyDetector(ZooModel):
 
     @classmethod
     def detect_anomalies(cls, ytruth, ypredict, anomaly_size):
+        """
+        # Arguments
+        :param ytruth: RDD of float or double values. Truth to be compared.
+        :param ypredict: RDD of float or double values. Predictions.
+        :param anomaly_size: Int. The size to be considered as anomalies.
+        :return: RDD of [ytruth, ypredict, anomaly], anomaly is None or ytruth
+        """
         return callBigDlFunc("float", "detectAnomalies", ytruth, ypredict, anomaly_size)
 
     @staticmethod

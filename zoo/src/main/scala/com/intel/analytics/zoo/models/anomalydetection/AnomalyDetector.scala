@@ -137,8 +137,8 @@ object AnomalyDetector {
   * Compare predictions and truth to detect anomalies by ranking the absolute differences。
   * Most distant values are considered as anomalies.
   *
-  * @param yTruth          Truth to be compared
-  * @param yPredict        Predictions
+  * @param yTruth      RDD[T]. Truth to be compared
+  * @param yPredict    RDD[T]. Predictions
   * @param anomalySize Int. The size to be considered as anomalies.
   */
   def detectAnomalies[T: ClassTag](yTruth: RDD[T],
@@ -164,6 +164,7 @@ object AnomalyDetector {
    * @param yPredict  Predictions
    * @param threshold Float. The threshold of absolute difference, data points with a difference
    *                  above the threshold is considered as anomalies.
+   * @return RDD[(yTruth, yPredict, anomaly)], anomaly is null or yTruth
    */
   def detectAnomalies[T: ClassTag](yTruth: RDD[T],
                                    yPredict: RDD[T],
@@ -188,9 +189,9 @@ object AnomalyDetector {
   /**
    * Unroll a rdd of arrays to prepare features and labels.
    *
-   * @param dataRdd      data to be unrolled with a length.
-   * @param unrollLength the length of precious values to predict future value.
-   * @param predictStep  use precious values to predict future value, default is 1.
+   * @param dataRdd      RDD[Array[T]]. Features to be unrolled.
+   * @param unrollLength Int. The length of precious values to predict future value.
+   * @param predictStep  Int. how many time steps to predict future value, default is 1.
    *
    *                     a simple example
    *                     data: (1,2,3,4,5,6); unrollLength: 2, predictStep: 1
