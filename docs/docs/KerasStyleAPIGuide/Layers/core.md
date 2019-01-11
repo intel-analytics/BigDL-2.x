@@ -1512,7 +1512,7 @@ Exp(input_shape=None, name=None)
 
 **Parameters:**
 
-* `inputShape`: A Single Shape, does not include the batch dimension.
+* `inputShape`: Only need to specify this argument when you use this layer as the first layer of a model. For Scala API, it should be a [`MultiShape`](../keras-api-scala/#shape) object that consists of two identical Single Shape. For Python API, it should be a list of two identical shape tuple. Batch dimension should be excluded.
 
 **Scala example:**
 ```scala
@@ -1644,7 +1644,7 @@ Square(input_shape=None, name=None)
 
 **Parameters:**
 
-* `inputShape`: A Single Shape, does not include the batch dimension.
+* `inputShape`: Only need to specify this argument when you use this layer as the first layer of a model. For Scala API, it should be a [`MultiShape`](../keras-api-scala/#shape) object that consists of two identical Single Shape. For Python API, it should be a list of two identical shape tuple. Batch dimension should be excluded.
 
 **Scala example:**
 ```scala
