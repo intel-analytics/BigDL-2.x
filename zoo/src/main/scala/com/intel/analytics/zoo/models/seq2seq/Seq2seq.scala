@@ -92,7 +92,7 @@ model.asInstanceOf[KerasNet[T]].compile(optimizer, loss, metrics)
             buildOutput: KerasLayer[Tensor[T], Tensor[T], T] = null): Tensor[T] = {
     val sent1 = input
     val sent2 = startSign
-    sent2.resize(Array(1, 1) ++ startSign.size())
+    sent2.resize(Array(1) ++ startSign.size())
 
     var curInput = sent2
     val sizes = curInput.size()
@@ -101,7 +101,11 @@ model.asInstanceOf[KerasNet[T]].compile(optimizer, loss, metrics)
     var break = false
 
     if (!buildOutput.isBuilt()) {
-      buildOutput.build(generator.getOutputShape())
+      if (generator != null) {
+        buildOutput.build(generator.getOutputShape())
+      } else {
+        buildOutput.build(decoder.getOutputShape())
+      }
     }
     var j = 1
     // Iteratively output predicted words

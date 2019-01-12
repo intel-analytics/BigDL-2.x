@@ -16,15 +16,15 @@
 
 package com.intel.analytics.zoo.models.seq2seq
 
+import com.intel.analytics.bigdl.nn.Max
+import com.intel.analytics.bigdl.nn.abstractnn.{AbstractModule, Activity}
 import com.intel.analytics.bigdl.nn.keras.KerasLayer
 import com.intel.analytics.bigdl.tensor.Tensor
-import com.intel.analytics.bigdl.utils.{MultiShape, Shape, SingleShape, T}
+import com.intel.analytics.bigdl.utils.{MultiShape, SingleShape, T}
 import com.intel.analytics.zoo.pipeline.api.keras.layers._
 import com.intel.analytics.zoo.pipeline.api.keras.models.Sequential
 import com.intel.analytics.zoo.pipeline.api.keras.serializer.ModuleSerializationTest
 import org.scalatest.{BeforeAndAfter, FlatSpec, Matchers}
-
-import scala.util.Random
 
 class Seq2seqSpec extends FlatSpec with Matchers with BeforeAndAfter {
 
@@ -54,6 +54,13 @@ class Seq2seqSpec extends FlatSpec with Matchers with BeforeAndAfter {
       )
     model2.forward(T(input, input2))
     model2.backward(T(input, input2), gradOutput)
+
+    val sent1 = Tensor(Array[Float](5.4f, 6.3f), Array(1, 2))
+    val sent2 = Tensor(Array[Float](1.3f), Array(1))
+    val layers = new KerasLayerWrapper[Float](Max[Float](2)
+      .asInstanceOf[AbstractModule[Activity, Activity, Float]])
+      .asInstanceOf[KerasLayer[Tensor[Float], Tensor[Float], Float]]
+    val result = model.infer(sent1, sent2, maxSeqLen = 30, buildOutput = layers).toTensor[Float]
   }
 
   "Seq2seq model with customized rnn" should "be able to work" in {
