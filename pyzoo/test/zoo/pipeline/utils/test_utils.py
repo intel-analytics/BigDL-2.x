@@ -62,10 +62,6 @@ class ZooTestCase(TestCase):
         self.tmp_dirs.append(tmp_dir)
         return tmp_dir
 
-    def assert_list_allclose(self, a, b, rtol=1e-6, atol=1e-6, msg=None):
-        for(i1, i2) in zip(a, b):
-            assert_allclose(self, i1, i2, rtol, atol, msg)
-
     def assert_allclose(self, a, b, rtol=1e-6, atol=1e-6, msg=None):
         # from tensorflow
         self.assertEqual(a.shape, b.shape, "Shape mismatch: expected %s, got %s." %
@@ -86,6 +82,10 @@ class ZooTestCase(TestCase):
             print("not close tol = ", atol + rtol * np.abs(y))
             print("dtype = %s, shape = %s" % (a.dtype, a.shape))
             np.testing.assert_allclose(a, b, rtol=rtol, atol=atol, err_msg=msg)
+
+    def assert_list_allclose(self, a, b, rtol=1e-6, atol=1e-6, msg=None):
+        for(i1, i2) in zip(a, b):
+            self.assert_allclose(self, i1, i2, rtol, atol, msg)
 
     def compare_loss(self, y_a, y_b, kloss, zloss, rtol=1e-6, atol=1e-6):
         """
