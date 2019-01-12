@@ -85,7 +85,7 @@ class ZooTestCase(TestCase):
 
     def assert_list_allclose(self, a, b, rtol=1e-6, atol=1e-6, msg=None):
         for(i1, i2) in zip(a, b):
-            self.assert_allclose(self, i1, i2, rtol, atol, msg)
+            self.assert_allclose(i1, i2, rtol, atol, msg)
 
     def compare_loss(self, y_a, y_b, kloss, zloss, rtol=1e-6, atol=1e-6):
         """
