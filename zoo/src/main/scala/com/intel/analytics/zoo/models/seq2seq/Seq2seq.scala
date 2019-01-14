@@ -91,7 +91,8 @@ model.asInstanceOf[KerasNet[T]].compile(optimizer, loss, metrics)
             stopSign: Tensor[T] = null,
             buildOutput: KerasLayer[Tensor[T], Tensor[T], T] = null): Tensor[T] = {
     val sent1 = input
-    val sent2 = startSign
+    val sent2 = Tensor[T](startSign.size())
+    sent2.copy(startSign)
     sent2.resize(Array(1) ++ startSign.size())
 
     var curInput = sent2
@@ -100,7 +101,7 @@ model.asInstanceOf[KerasNet[T]].compile(optimizer, loss, metrics)
     concat.narrow(Seq2seq.timeDim, 1, 1).copy(sent2)
     var break = false
 
-    if (!buildOutput.isBuilt()) {
+    if (buildOutput != null && !buildOutput.isBuilt()) {
       if (generator != null) {
         buildOutput.build(generator.getOutputShape())
       } else {

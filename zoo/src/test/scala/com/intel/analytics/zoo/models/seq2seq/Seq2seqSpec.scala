@@ -55,12 +55,14 @@ class Seq2seqSpec extends FlatSpec with Matchers with BeforeAndAfter {
     model2.forward(T(input, input2))
     model2.backward(T(input, input2), gradOutput)
 
-    val sent1 = Tensor(Array[Float](5.4f, 6.3f), Array(1, 2))
-    val sent2 = Tensor(Array[Float](1.3f), Array(1))
-    val layers = new KerasLayerWrapper[Float](Max[Float](2)
-      .asInstanceOf[AbstractModule[Activity, Activity, Float]])
-      .asInstanceOf[KerasLayer[Tensor[Float], Tensor[Float], Float]]
-    val result = model.infer(sent1, sent2, maxSeqLen = 30, buildOutput = layers).toTensor[Float]
+    val sent1 = Tensor(Array[Float](25f, 39f, 99f, 123f), Array(1, 2, 2))
+    val sent2 = Tensor(Array[Float](45f, 60f), Array(1, 2))
+    val encoder3 = RNNEncoder[Float]("lstm", numLayer, 2)
+    val decoder3 = RNNDecoder[Float]("lstm", numLayer, 2)
+    val model3 = Seq2seq[Float](encoder3, decoder3,
+      SingleShape(List(2, 2)), SingleShape(List(2, 2)))
+
+    val result = model3.infer(sent1, sent2, maxSeqLen = 3).toTensor[Float]
   }
 
   "Seq2seq model with customized rnn" should "be able to work" in {
