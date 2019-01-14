@@ -21,9 +21,9 @@ import java.util.{ArrayList, Arrays, List => JList}
 import com.intel.analytics.bigdl.nn.abstractnn.Activity
 import scala.collection.JavaConverters._
 
-class OpenVinoInferenceModel(var executableNetworkReference: Long = -1,
-                             var supportive: OpenVinoInferenceSupportive)
-  extends ExecutiveInferenceModel with InferenceSupportive with Serializable {
+class OpenVINOModel(var executableNetworkReference: Long = -1,
+                    var supportive: OpenVinoInferenceSupportive)
+  extends AbstractModel with InferenceSupportive with Serializable {
 
   override def predict(inputs: JList[JList[JTensor]]): JList[JList[JTensor]] = {
     val outputs = new ArrayList[JList[JTensor]]()
@@ -52,7 +52,7 @@ class OpenVinoInferenceModel(var executableNetworkReference: Long = -1,
     transferListOfActivityToActivityOfBatch(outputs, batchSize)
   }
 
-  override def copy(num: Int): Array[ExecutiveInferenceModel] = Array(this)
+  override def copy(num: Int): Array[AbstractModel] = Array(this)
 
   override def release(): Unit = {
     isReleased match {

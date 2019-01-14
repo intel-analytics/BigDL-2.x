@@ -21,46 +21,46 @@ import com.intel.analytics.zoo.pipeline.inference.DeviceType.DeviceTypeEnumVal
 
 object InferenceModelFactory {
 
-  def loadFloatInferenceModel(modelPath: String): FloatInferenceModel = {
-    loadFloatInferenceModel(modelPath, null)
+  def loadFloatModel(modelPath: String): FloatModel = {
+    loadFloatModel(modelPath, null)
   }
 
-  def loadFloatInferenceModel(modelPath: String, weightPath: String)
-  : FloatInferenceModel = {
+  def loadFloatModel(modelPath: String, weightPath: String)
+  : FloatModel = {
     val model = ModelLoader.loadFloatModel(modelPath, weightPath)
     model.evaluate()
-    new FloatInferenceModel(model)
+    new FloatModel(model)
   }
 
-  def loadFloatInferenceModelForCaffe(modelPath: String, weightPath: String)
-  : FloatInferenceModel = {
+  def loadFloatModelForCaffe(modelPath: String, weightPath: String): FloatModel = {
     val model = ModelLoader.loadFloatModelForCaffe(modelPath, weightPath)
     model.evaluate()
-    new FloatInferenceModel(model)
+    new FloatModel(model)
   }
 
-  def loadFloatInferenceModelForTF(modelPath: String,
-                                   intraOpParallelismThreads: Int = 1,
-                                   interOpParallelismThreads: Int = 1,
-                                   usePerSessionThreads: Boolean = true): FloatInferenceModel = {
+  def loadFloatModelForTF(modelPath: String,
+                          intraOpParallelismThreads: Int = 1,
+                          interOpParallelismThreads: Int = 1,
+                          usePerSessionThreads: Boolean = true): FloatModel = {
     val sessionConfig = TFNet.SessionConfig(intraOpParallelismThreads,
       interOpParallelismThreads, usePerSessionThreads)
     val model = ModelLoader.loadFloatModelForTF(modelPath, sessionConfig)
     model.evaluate()
-    new FloatInferenceModel(model)
+    new FloatModel(model)
   }
 
-  def loadOpenvinoInferenceModelForTF(frozenModelFilePath: String,
-                                      pipelineConfigFilePath: String,
-                                      extensionsConfigFilePath: String,
-                                      deviceType: DeviceTypeEnumVal): OpenVinoInferenceModel = {
+  def loadOpenVINOModelForTF(modelPath: String,
+                             modelType: String,
+                             pipelineConfigPath: String,
+                             extensionsConfigPath: String,
+                             deviceType: DeviceTypeEnumVal): OpenVINOModel = {
     OpenVinoInferenceSupportive.loadTensorflowModel(
-      frozenModelFilePath, pipelineConfigFilePath, extensionsConfigFilePath, deviceType)
+      modelPath, modelType, pipelineConfigPath, extensionsConfigPath, deviceType)
   }
 
-  def loadOpenvinoInferenceModelForIR(modelFilePath: String,
-                     weightFilePath: String,
-                     deviceType: DeviceTypeEnumVal): OpenVinoInferenceModel = {
+  def loadOpenVINOModelForIR(modelFilePath: String,
+                             weightFilePath: String,
+                             deviceType: DeviceTypeEnumVal): OpenVINOModel = {
     OpenVinoInferenceSupportive.loadOpenVinoIR(modelFilePath, weightFilePath, deviceType)
   }
 }

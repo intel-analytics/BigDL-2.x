@@ -48,20 +48,24 @@ public abstract class AbstractInferenceModel extends InferenceModel implements S
     doLoadCaffe(modelPath, weightPath);
   }
 
-  public void loadTF(String modelPath) {
-    doLoadTF(modelPath, 1, 1, true);
+  public void loadTF(String modelPath, String backend) {
+    doLoadTF(modelPath, backend);
+  }
+
+  public void loadTF(String modelPath, String backend, String modelType) {
+    doLoadTF(modelPath, backend, modelType);
   }
 
   public void loadTF(String modelPath, int intraOpParallelismThreads, int interOpParallelismThreads, boolean usePerSessionThreads) {
     doLoadTF(modelPath, intraOpParallelismThreads, interOpParallelismThreads, usePerSessionThreads);
   }
 
-  public void loadTFAsOpenvino(String frozenModelFilePath, String pipelineConfigFilePath, String extensionsConfigFilePath, DeviceType.DeviceTypeEnumVal deviceType) {
-    doLoadTensorflowModelAsOpenvino(frozenModelFilePath, pipelineConfigFilePath, extensionsConfigFilePath, deviceType);
+  public void loadTF(String modelPath, String modelType, String pipelineConfigFilePath, String extensionsConfigFilePath) {
+    doLoadTF(modelPath, modelType, pipelineConfigFilePath, extensionsConfigFilePath);
   }
 
-  public void loadOpenvinoIR(String modelFilePath, String weightFilePath, DeviceType.DeviceTypeEnumVal deviceType) {
-    doLoadOpenvinoIR(modelFilePath, weightFilePath, deviceType);
+  public void loadOpenVINO(String modelFilePath, String weightFilePath, DeviceType.DeviceTypeEnumVal deviceType) {
+    doLoadOpenVINO(modelFilePath, weightFilePath, deviceType);
   }
 
   public void reload(String modelPath) {

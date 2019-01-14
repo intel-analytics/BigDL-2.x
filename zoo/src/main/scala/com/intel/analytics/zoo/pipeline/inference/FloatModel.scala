@@ -28,8 +28,8 @@ import com.intel.analytics.bigdl.utils.{Engine, Table}
 import scala.collection.mutable.ArrayBuffer
 import scala.reflect.ClassTag
 
-class FloatInferenceModel(var model: AbstractModule[Activity, Activity, Float])
-  extends ExecutiveInferenceModel with InferenceSupportive with Serializable {
+class FloatModel(var model: AbstractModule[Activity, Activity, Float])
+  extends AbstractModel with InferenceSupportive with Serializable {
 
   override def predict(inputs: JList[JList[JTensor]]): JList[JList[JTensor]] = {
     val batchSize = inputs.size()
@@ -53,14 +53,14 @@ class FloatInferenceModel(var model: AbstractModule[Activity, Activity, Float])
     model.forward(inputActivity)
   }
 
-  override def copy(num: Int): Array[ExecutiveInferenceModel] = {
+  override def copy(num: Int): Array[AbstractModel] = {
     cloneSharedWeightsModelsIntoArray(this, num)
   }
 
   override def release(): Unit = {
     isReleased match {
       case true =>
-      case false => model = null
+      case false => model.release(); model = null
     }
   }
 
@@ -84,9 +84,9 @@ class FloatInferenceModel(var model: AbstractModule[Activity, Activity, Float])
 
   override def toString: String = s"FloatInferenceModel($model)"
 
-  def cloneSharedWeightsModelsIntoArray(originalModel: FloatInferenceModel, num: Int):
-  Array[ExecutiveInferenceModel] = {
-    var modelList = ArrayBuffer[FloatInferenceModel]()
+  def cloneSharedWeightsModelsIntoArray(originalModel: FloatModel, num: Int):
+  Array[AbstractModel] = {
+    var modelList = ArrayBuffer[FloatModel]()
     val emptyModel = originalModel.model.cloneModule()
     clearWeightsBias(emptyModel)
     var i = 0
@@ -129,10 +129,10 @@ class FloatInferenceModel(var model: AbstractModule[Activity, Activity, Float])
   }
 
   private def makeUpModel(model: Module[Float], weightBias: Array[Tensor[Float]]):
-  FloatInferenceModel = {
+  FloatModel = {
     val newModel = model.cloneModule()
     putWeightsBias(weightBias, newModel)
     newModel.evaluate()
-    new FloatInferenceModel(newModel)
+    new FloatModel(newModel)
   }
 }

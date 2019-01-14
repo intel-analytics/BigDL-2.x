@@ -49,9 +49,10 @@ object OpenVinoInferenceSupportive extends InferenceSupportive {
   load("libzoo_inference.so")
 
   def loadTensorflowModel(frozenModelFilePath: String,
+                          modelType: String,
                           pipelineConfigFilePath: String,
                           extensionsConfigFilePath: String,
-                          deviceType: DeviceTypeEnumVal): OpenVinoInferenceModel = {
+                          deviceType: DeviceTypeEnumVal): OpenVINOModel = {
     logger.info(s"start to optimize tensorflow model from " +
       s"$frozenModelFilePath, $pipelineConfigFilePath, $extensionsConfigFilePath")
     timing("load tensorflow model to openvino IR") {
@@ -92,12 +93,12 @@ object OpenVinoInferenceSupportive extends InferenceSupportive {
 
   def loadOpenVinoIR(modelFilePath: String,
                      weightFilePath: String,
-                     deviceType: DeviceTypeEnumVal): OpenVinoInferenceModel = {
+                     deviceType: DeviceTypeEnumVal): OpenVINOModel = {
     timing("load openvino IR") {
       val supportive: OpenVinoInferenceSupportive = new OpenVinoInferenceSupportive()
       val executableNetworkReference: Long =
         supportive.loadOpenVinoIR(modelFilePath, weightFilePath, deviceType.value)
-      new OpenVinoInferenceModel(executableNetworkReference, supportive)
+      new OpenVINOModel(executableNetworkReference, supportive)
     }
   }
 

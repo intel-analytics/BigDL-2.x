@@ -27,7 +27,7 @@ import scala.language.postfixOps
 import sys.process._
 
 @OpenVinoTest
-class OpenVinoInferenceModelSuite extends FunSuite with Matchers with BeforeAndAfterAll
+class OpenVINOModelSuite extends FunSuite with Matchers with BeforeAndAfterAll
   with InferenceSupportive {
 
   var dataStoreUrl = "https://s3-ap-southeast-1.amazonaws.com"
@@ -55,8 +55,8 @@ class OpenVinoInferenceModelSuite extends FunSuite with Matchers with BeforeAndA
   val url_ov_fasterrcnn_tf_conf = s"$url_ov_fasterrcnn_tf/pipeline.config"
 
   var dir: File = _
-  var fasterrcnnModel1: OpenVinoInferenceModel = _
-  var fasterrcnnModel2: OpenVinoInferenceModel = _
+  var fasterrcnnModel1: OpenVINOModel = _
+  var fasterrcnnModel2: OpenVINOModel = _
   val fasterrcnnInferenceModel1: InferenceModel = new InferenceModel(3)
   val fasterrcnnInferenceModel2: InferenceModel = new InferenceModel(3)
   val fasterrcnnInputShape = Array(1, 3, 600, 600)
@@ -93,16 +93,25 @@ class OpenVinoInferenceModelSuite extends FunSuite with Matchers with BeforeAndA
     fasterrcnnOutputdata2FilePath = s"$dirName/outputdata_2"
 
 
-    fasterrcnnModel1 = InferenceModelFactory.loadOpenvinoInferenceModelForIR(
-      fasterrcnnModelFilePath, fasterrcnnWeightFilePath, fasterrcnnDeviceType)
-    fasterrcnnModel2 = InferenceModelFactory.loadOpenvinoInferenceModelForTF(
-      faserrcnnFrozenModelFilePath, faserrcnnPipelineConfigFilePath,
+    fasterrcnnModel1 = InferenceModelFactory.loadOpenVINOModelForIR(
+      fasterrcnnModelFilePath,
+      fasterrcnnWeightFilePath,
+      fasterrcnnDeviceType)
+    fasterrcnnModel2 = InferenceModelFactory.loadOpenVINOModelForTF(
+      faserrcnnFrozenModelFilePath,
+      null,
+      faserrcnnPipelineConfigFilePath,
       faserrcnnExtensionsConfigFilePath, fasterrcnnDeviceType)
-    fasterrcnnInferenceModel1.
-      doLoadOpenvinoIR(fasterrcnnModelFilePath, fasterrcnnWeightFilePath, fasterrcnnDeviceType)
-    fasterrcnnInferenceModel2.doLoadTensorflowModelAsOpenvino(
-      faserrcnnFrozenModelFilePath, faserrcnnPipelineConfigFilePath,
-      faserrcnnExtensionsConfigFilePath, fasterrcnnDeviceType)
+
+    fasterrcnnInferenceModel1.doLoadOpenVINO(
+      fasterrcnnModelFilePath,
+      fasterrcnnWeightFilePath,
+      fasterrcnnDeviceType)
+    fasterrcnnInferenceModel2.doLoadTF(
+      faserrcnnFrozenModelFilePath,
+      null,
+      faserrcnnPipelineConfigFilePath,
+      faserrcnnExtensionsConfigFilePath)
   }
 
   override def afterAll() {
@@ -179,11 +188,16 @@ class OpenVinoInferenceModelSuite extends FunSuite with Matchers with BeforeAndA
     threads2.foreach(_.join())
   }
 
-  def almostEqual(x: Float, y: Float, precision: Float): Boolean = (x - y).abs <= precision
+  def almostEqual(x: Float, y: Float, precision: Float): Boolean = {
+    (x - y).abs <= precision match {
+      case true => true
+      case false => println(x, y); false
+    }
+  }
   def almostEqual(x: Array[Float], y: Array[Float], precision: Float): Boolean = {
     x.length == y.length match {
       case true => x.zip(y).filter(t => !almostEqual(t._1, t._2, precision)).length == 0
-      case false => false
+      case false => println(x.length, y.length); false
     }
   }
 }

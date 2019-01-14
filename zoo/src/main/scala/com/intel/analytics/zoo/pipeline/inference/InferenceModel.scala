@@ -29,11 +29,11 @@ import com.intel.analytics.zoo.pipeline.inference.DeviceType.DeviceTypeEnumVal
 import scala.collection.JavaConverters._
 
 class InferenceModel(private var supportedConcurrentNum: Int = 1,
-                     private var originalModel: ExecutiveInferenceModel = null,
+                     private var originalModel: AbstractModel = null,
                      private[inference] var modelQueue:
-                     LinkedBlockingQueue[ExecutiveInferenceModel] = null)
+                     LinkedBlockingQueue[AbstractModel] = null)
   extends InferenceSupportive with Serializable {
-  this.modelQueue = new LinkedBlockingQueue[ExecutiveInferenceModel](supportedConcurrentNum)
+  this.modelQueue = new LinkedBlockingQueue[AbstractModel](supportedConcurrentNum)
   this.originalModel match {
     case null =>
     case _ => offerModelQueue()
@@ -41,29 +41,79 @@ class InferenceModel(private var supportedConcurrentNum: Int = 1,
 
   def doLoad(modelPath: String, weightPath: String): Unit = {
     clearModelQueue()
-    this.originalModel = InferenceModelFactory.loadFloatInferenceModel(modelPath, weightPath)
+    this.originalModel = InferenceModelFactory.loadFloatModel(modelPath, weightPath)
     offerModelQueue()
   }
 
   def doLoadCaffe(modelPath: String, weightPath: String): Unit = {
     clearModelQueue()
-    this.originalModel = InferenceModelFactory.
-      loadFloatInferenceModelForCaffe(modelPath, weightPath)
+    this.originalModel = InferenceModelFactory.loadFloatModelForCaffe(modelPath, weightPath)
     offerModelQueue()
+  }
+
+  def doLoadTF(modelPath: String, backend: String): Unit = {
+    doLoadTF(modelPath, backend, null)
+  }
+
+  def doLoadTF(modelPath: String, backend: String, modelType: String): Unit = {
+    backend.toLowerCase match {
+      case "tensorflow" | "tf" => doLoadTF(modelPath, 1, 1, true)
+      case "openvino" | "ov" => doLoadTF(modelPath, modelType, null, null)
+    }
   }
 
   def doLoadTF(modelPath: String,
                intraOpParallelismThreads: Int,
                interOpParallelismThreads: Int,
                usePerSessionThreads: Boolean): Unit = {
+    doLoadTensorflowModel(
+      modelPath,
+      intraOpParallelismThreads,
+      interOpParallelismThreads,
+      usePerSessionThreads)
+  }
+
+
+  def doLoadTF(modelPath: String,
+               modelType: String,
+               pipelineConfigPath: String,
+               extensionsConfigPath: String): Unit = {
+    doLoadTensorflowModelAsOpenVINO(
+      modelPath,
+      modelType,
+      pipelineConfigPath,
+      extensionsConfigPath,
+      DeviceType.CPU
+    )
+  }
+
+  def doLoadTensorflowModel(modelPath: String,
+                            intraOpParallelismThreads: Int,
+                            interOpParallelismThreads: Int,
+                            usePerSessionThreads: Boolean): Unit = {
     clearModelQueue()
     this.originalModel =
-      InferenceModelFactory.loadFloatInferenceModelForTF(modelPath,
+      InferenceModelFactory.loadFloatModelForTF(modelPath,
         intraOpParallelismThreads, interOpParallelismThreads, usePerSessionThreads)
     offerModelQueue()
   }
 
-  def doLoadOpenvinoIR(modelFilePath: String,
+  def doLoadTensorflowModelAsOpenVINO(modelPath: String,
+                                      modelType: String,
+                                      pipelineConfigPath: String,
+                                      extensionsConfigPath: String,
+                                      deviceType: DeviceTypeEnumVal): Unit = {
+    if (supportedConcurrentNum > 1) {
+      InferenceSupportive.logger.warn(s"supportedConcurrentNum is $supportedConcurrentNum > 1, " +
+        s"openvino model not supports shared weights model copies")
+    }
+    clearModelQueue()
+    this.originalModel = InferenceModelFactory.loadOpenVINOModelForTF(
+      modelPath, modelType, pipelineConfigPath, extensionsConfigPath, deviceType)
+    offerModelQueue()
+  }
+
+  def doLoadOpenVINO(modelFilePath: String,
                        weightFilePath: String,
                        deviceType: DeviceTypeEnumVal): Unit = {
     if (supportedConcurrentNum > 1) {
@@ -72,22 +122,7 @@ class InferenceModel(private var supportedConcurrentNum: Int = 1,
     }
     clearModelQueue()
     this.originalModel =
-      InferenceModelFactory.loadOpenvinoInferenceModelForIR(
-        modelFilePath, weightFilePath, deviceType)
-    offerModelQueue()
-  }
-
-  def doLoadTensorflowModelAsOpenvino(frozenModelFilePath: String,
-                                      pipelineConfigFilePath: String,
-                                      extensionsConfigFilePath: String,
-                                      deviceType: DeviceTypeEnumVal): Unit = {
-    if (supportedConcurrentNum > 1) {
-      InferenceSupportive.logger.warn(s"supportedConcurrentNum is $supportedConcurrentNum > 1, " +
-        s"openvino model not supports shared weights model copies")
-    }
-    clearModelQueue()
-    this.originalModel = InferenceModelFactory.loadOpenvinoInferenceModelForTF(
-      frozenModelFilePath, pipelineConfigFilePath, extensionsConfigFilePath, deviceType)
+      InferenceModelFactory.loadOpenVINOModelForIR(modelFilePath, weightFilePath, deviceType)
     offerModelQueue()
   }
 
@@ -120,7 +155,7 @@ class InferenceModel(private var supportedConcurrentNum: Int = 1,
   }
 
   def doPredict(inputActivity: Activity): Activity = {
-    var model: ExecutiveInferenceModel = null
+    var model: AbstractModel = null
     try {
       model = modelQueue.take
     } catch {
@@ -135,7 +170,7 @@ class InferenceModel(private var supportedConcurrentNum: Int = 1,
   }
 
   private def predict(inputs: JList[JList[JTensor]]): JList[JList[JTensor]] = {
-    var model: ExecutiveInferenceModel = null
+    var model: AbstractModel = null
     try {
       model = modelQueue.take
     } catch {
@@ -180,8 +215,8 @@ class InferenceModel(private var supportedConcurrentNum: Int = 1,
     System.setProperty("bigdl.coreNumber", System.getProperty("bigdl.coreNumber", "1"))
     Engine.init
     this.supportedConcurrentNum = in.readInt
-    this.originalModel = in.readObject.asInstanceOf[FloatInferenceModel]
-    this.modelQueue = new LinkedBlockingQueue[ExecutiveInferenceModel](supportedConcurrentNum)
+    this.originalModel = in.readObject.asInstanceOf[FloatModel]
+    this.modelQueue = new LinkedBlockingQueue[AbstractModel](supportedConcurrentNum)
     offerModelQueue()
   }
 

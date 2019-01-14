@@ -152,7 +152,7 @@
                                     <goal>exec</goal>
                                 </goals>
                                 <configuration>
-                                    <executable>${basedir}/bin/zoo-openvino-prepare-headers.sh</executable>
+                                    <executable>${basedir}/bin/zoo-openvino-prepare-resources.sh</executable>
                                     <workingDirectory>${project.build.directory}/openvino</workingDirectory>
                                 </configuration>
                             </execution>
