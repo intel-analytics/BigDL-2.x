@@ -166,17 +166,29 @@ object CensusWideAndDeep {
       .optimize()
   }
 
-  def loadCensusData(sqlContext: SQLContext, dataPath: String):
-  (DataFrame, DataFrame) = {
-    val training = sqlContext.read.schema(recordSchema)
-        .option("delimiter", ",")
-      .option("ignoreLeadingWhiteSpace", "true")
-        .csv(dataPath + "/adult.data")
-    val validation = sqlContext.read.schema(recordSchema)
-        .option("delimiter", ",")
-      .option("header", "true")
-      .option("ignoreLeadingWhiteSpace", "true")
-        .csv(dataPath + "/adult.test")
+  def loadCensusData(sqlContext: SQLContext, dataPath: String): (DataFrame, DataFrame) = {
+    import sqlContext.implicits._
+    val training = sqlContext.sparkContext
+      .textFile(dataPath + "/adult.data")
+      .map(_.split(",").map(_.trim))
+      .filter(_.size == 15).map(array =>
+      Record(
+        array(0).toInt, array(1), array(2).toInt, array(3), array(4).toInt,
+        array(5), array(6), array(7), array(8), array(9),
+        array(10).toInt, array(11).toInt, array(12).toInt, array(13), array(14)
+      )
+    ).toDF()
+
+    val validation = sqlContext.sparkContext
+      .textFile(dataPath + "/adult.test")
+      .map(_.split(",").map(_.trim))
+      .filter(_.size == 15).map(array =>
+      Record(
+        array(0).toInt, array(1), array(2).toInt, array(3), array(4).toInt,
+        array(5), array(6), array(7), array(8), array(9),
+        array(10).toInt, array(11).toInt, array(12).toInt, array(13), array(14)
+      )
+    ).toDF()
 
     (training, validation)
   }
