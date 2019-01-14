@@ -34,7 +34,7 @@ private[zoo] class InternalCMulTable[T: ClassTag]()
     while (i <= input.length() && sizes == null) {
       if (input[Tensor[T]](i).size(1) != 1) {
         sizes = input[Tensor[T]](i).size()
-        expandLayer = InternalExpand(sizes, true)
+        expandLayer = InternalExpand(sizes)
       }
       i += 1
     }
@@ -59,7 +59,7 @@ private[zoo] class InternalCMulTable[T: ClassTag]()
     while (i <= input.length() && sizes == null) {
       if (input[Tensor[T]](i).size(1) != 1) {
         sizes = input[Tensor[T]](i).size()
-        expandLayer = InternalExpand(sizes, true)
+        expandLayer = InternalExpand(sizes)
       }
       i += 1
     }

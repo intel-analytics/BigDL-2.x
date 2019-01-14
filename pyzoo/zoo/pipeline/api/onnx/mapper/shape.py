@@ -13,5 +13,15 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
+from zoo.pipeline.api.onnx.mapper.operator_mapper import OperatorMapper
+import zoo.pipeline.api.keras.layers as zlayers
+import bigdl.nn.layer as blayer
 
-__version__ = "0.3.0.dev0"
+
+class ShapeMapper(OperatorMapper):
+    def __init__(self, node, initializer, _all_tensors):
+        super(ShapeMapper, self).__init__(node, initializer, _all_tensors)
+
+    def _to_tensor(self):
+        data = self.model_inputs[0].zvalue
+        return zlayers.GetShape()(data)

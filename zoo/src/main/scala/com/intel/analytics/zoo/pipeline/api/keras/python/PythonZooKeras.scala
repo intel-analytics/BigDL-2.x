@@ -19,7 +19,7 @@ package com.intel.analytics.zoo.pipeline.api.keras.python
 import java.util
 import java.util.{List => JList, Map => JMap}
 
-import com.intel.analytics.bigdl.Criterion
+import com.intel.analytics.bigdl.{Criterion, Module}
 import com.intel.analytics.bigdl.dataset.{DataSet, LocalDataSet, MiniBatch}
 
 import scala.collection.JavaConverters._
@@ -31,7 +31,7 @@ import com.intel.analytics.bigdl.nn.InitializationMethod
 import com.intel.analytics.bigdl.nn.Container
 import com.intel.analytics.bigdl.nn.abstractnn.{AbstractModule, Activity}
 import com.intel.analytics.bigdl.nn.keras.{KerasLayer, KerasModel}
-import com.intel.analytics.bigdl.utils.Table
+import com.intel.analytics.bigdl.utils.{Shape, Table}
 import com.intel.analytics.zoo.feature.image.ImageSet
 import com.intel.analytics.zoo.pipeline.api.autograd._
 import com.intel.analytics.zoo.pipeline.api.keras.layers.{KerasLayerWrapper, _}
@@ -39,9 +39,12 @@ import com.intel.analytics.zoo.pipeline.api.keras.layers.utils.KerasUtils
 import com.intel.analytics.zoo.pipeline.api.keras.metrics.{AUC, Accuracy, Top5Accuracy}
 import com.intel.analytics.zoo.pipeline.api.keras.models.{KerasNet, Model, Sequential}
 import com.intel.analytics.zoo.pipeline.api.keras.objectives._
+import com.intel.analytics.zoo.pipeline.api.keras.optimizers.Adam
 import org.apache.spark.api.java.JavaRDD
 import com.intel.analytics.zoo.common.PythonZoo
 import com.intel.analytics.zoo.feature.text.TextSet
+import com.intel.analytics.zoo.models.common.ZooModel
+import com.intel.analytics.zoo.models.seq2seq.{Bridge, RNNDecoder, RNNEncoder}
 import com.intel.analytics.zoo.pipeline.api.net.GraphNet
 
 import scala.collection.mutable.ArrayBuffer
@@ -137,80 +140,6 @@ class PythonZooKeras[T: ClassTag](implicit ev: TensorNumeric[T]) extends PythonZ
     module.fit(trainData, nbEpoch, valData)
   }
 
-  def zooPredict(
-      module: AbstractModule[Activity, Activity, T],
-      x: JavaRDD[Sample],
-      batchPerThread: Int): JavaRDD[JList[Object]] = {
-    val resRDD = module match {
-      case net: KerasNet[T] =>
-        net.predict(x.rdd.map(toJSample), batchPerThread)
-      case _ =>
-        module.predict(x.rdd.map(toJSample), batchPerThread * x.getNumPartitions)
-    }
-
-    resRDD.map(activityToList).toJavaRDD()
-  }
-
-  def zooForward(model: AbstractModule[Activity, Activity, T],
-                   input: JList[JTensor],
-                   inputIsTable: Boolean): JList[Object] = {
-    val inputActivity = jTensorsToActivity(input, inputIsTable)
-    val outputActivity = model.forward(inputActivity)
-    activityToList(outputActivity)
-  }
-
-  def activityToList(outputActivity: Activity): JList[Object] = {
-    if (outputActivity.isInstanceOf[Tensor[T]]) {
-      val list = new util.ArrayList[Object]()
-      list.add(toJTensor(outputActivity.toTensor))
-      list
-    } else {
-      table2JList(outputActivity.toTable)
-    }
-  }
-
-  private def table2JList(t: Table): JList[Object] = {
-    var i = 1
-    val list = new util.ArrayList[Object]()
-    while (i <= t.length()) {
-      val item = t[Object](i)
-      if (item.isInstanceOf[Tensor[T]]) {
-        list.add(toJTensor(item.asInstanceOf[Tensor[T]]))
-      } else if (item.isInstanceOf[Table]) {
-        list.add(table2JList(item.asInstanceOf[Table]))
-      } else {
-        throw new IllegalArgumentException(s"Table contains unrecognizable objects $item")
-      }
-      i += 1
-    }
-    list
-  }
-
-  def zooPredict(
-      module: KerasNet[T],
-      x: JList[JTensor],
-      batchPerThread: Int): JList[JList[Object]] = {
-    val sampleArray = toSampleArray(x.asScala.toList.map{f => toTensor(f)})
-    val localPredictor = LocalPredictor(module,
-      batchPerCore = batchPerThread)
-    val result = localPredictor.predict(sampleArray)
-    result.map(activityToList).toList.asJava
-  }
-
-  def zooPredict(
-      module: KerasNet[T],
-      x: ImageSet,
-      batchPerThread: Int): ImageSet = {
-    module.predict(x, batchPerThread)
-  }
-
-  def zooPredict(
-      module: KerasNet[T],
-      x: TextSet,
-      batchPerThread: Int): TextSet = {
-    module.predict(x, batchPerThread)
-  }
-
   private def processEvaluateResult(
     resultArray: Array[(ValidationResult, ValidationMethod[T])]): JList[EvaluatedResult] = {
     resultArray.map { result =>
@@ -281,12 +210,8 @@ class PythonZooKeras[T: ClassTag](implicit ev: TensorNumeric[T]) extends PythonZ
     module.saveGraphTopology(logPath, backward)
   }
 
-  def zooPredictClasses(
-      module: KerasNet[T],
-      x: JavaRDD[Sample],
-      batchPerThread: Int,
-      zeroBasedLabel: Boolean = true): JavaRDD[Int] = {
-    module.predictClasses(toJSample(x), batchPerThread, zeroBasedLabel).toJavaRDD()
+  def zooSetEvaluateStatus(model: KerasNet[T]): KerasNet[T] = {
+    model.setEvaluateStatus()
   }
 
   def kerasNetToModel(value: KerasNet[T]): Model[T] = {
@@ -312,13 +237,21 @@ class PythonZooKeras[T: ClassTag](implicit ev: TensorNumeric[T]) extends PythonZ
       bRegularizer, bias, toScalaShape(inputShape))
   }
 
+  def createZooKerasGetShape(
+      inputShape: JList[Int] = null): GetShape[T] = {
+    new GetShape(toScalaShape(inputShape))
+  }
+
   def createZooKerasEmbedding(
       inputDim: Int,
       outputDim: Int,
       init: String = "uniform",
+      weights: JTensor = null,
+      trainable: Boolean = true,
       wRegularizer: Regularizer[T] = null,
       inputShape: JList[Int] = null): Embedding[T] = {
-    Embedding[T](inputDim, outputDim, init, wRegularizer, inputShape.get(0))
+    Embedding[T](inputDim, outputDim, init, toTensor(weights),
+      trainable, wRegularizer, if (inputShape != null) inputShape.get(0) else -1)
   }
 
   def createZooKerasBatchNormalization(
@@ -541,8 +474,11 @@ class PythonZooKeras[T: ClassTag](implicit ev: TensorNumeric[T]) extends PythonZ
       poolLength: Int = 2,
       stride: Int = -1,
       borderMode: String = "valid",
-      inputShape: JList[Int] = null): MaxPooling1D[T] = {
-    MaxPooling1D(poolLength, stride, borderMode, toScalaShape(inputShape))
+      inputShape: JList[Int] = null,
+      pad: Int = 0): MaxPooling1D[T] = {
+    MaxPooling1D(poolLength, stride, borderMode, toScalaShape(inputShape),
+      pad)
+
   }
 
   def createZooKerasMaxPooling3D(
@@ -859,6 +795,12 @@ class PythonZooKeras[T: ClassTag](implicit ev: TensorNumeric[T]) extends PythonZ
     TimeDistributed(layer, toScalaShape(inputShape))
   }
 
+  def createZooKerasTimeDistributed(
+      layer: ZooModel[Activity, Activity, T],
+      inputShape: JList[Int]): TimeDistributed[T] = {
+    TimeDistributed(layer, toScalaShape(inputShape))
+  }
+
   def createZooKerasBidirectional(
       layer: com.intel.analytics.bigdl.nn.keras.Recurrent[T],
       mergeMode: String = "concat",
@@ -1028,6 +970,17 @@ class PythonZooKeras[T: ClassTag](implicit ev: TensorNumeric[T]) extends PythonZ
     new AUC[T](thresholdNum)
   }
 
+  def createZooKerasAdam(
+      lr: Double = 1e-3,
+      beta_1: Double = 0.9,
+      beta_2: Double = 0.999,
+      epsilon: Double = 1e-8,
+      decay: Double = 0.0,
+      schedule: SGD.LearningRateSchedule = SGD.Default()
+      ): Adam[T] = {
+    new Adam[T](lr, beta_1, beta_2, epsilon, decay, schedule)
+  }
+
   def createZooKerasHardShrink(
       value: Double = 0.5,
       inputShape: JList[Int] = null): HardShrink[T] = {
@@ -1136,8 +1089,8 @@ class PythonZooKeras[T: ClassTag](implicit ev: TensorNumeric[T]) extends PythonZ
   }
 
   def createZooKerasGaussianSampler(
-      inputShape: JList[Int] = null): GaussianSampler[T] = {
-    GaussianSampler(toScalaShape(inputShape))
+      inputShape: JList[JList[Int]] = null): GaussianSampler[T] = {
+    GaussianSampler(toScalaMultiShape(inputShape))
   }
 
   def createZooKerasResizeBilinear(
@@ -1219,6 +1172,10 @@ class PythonZooKeras[T: ClassTag](implicit ev: TensorNumeric[T]) extends PythonZ
       sizeAverage)
   }
 
+  def createZooKerasRankHinge(margin: Double = 1.0): RankHinge[T] = {
+    RankHinge[T](margin)
+  }
+
   def createZooKerasAccuracy(
       zeroBasedLabel: Boolean = true): ValidationMethod[T] = {
     new Accuracy(zeroBasedLabel)
@@ -1235,7 +1192,7 @@ class PythonZooKeras[T: ClassTag](implicit ev: TensorNumeric[T]) extends PythonZ
       trainable: Boolean = false,
       inputShape: JList[Int] = null): WordEmbedding[T] = {
     WordEmbedding[T](embeddingFile, if (wordIndex!= null) wordIndex.asScala.toMap else null,
-      trainable, inputShape.get(0))
+      trainable, if (inputShape != null) inputShape.get(0) else -1)
   }
 
   def wordEmbeddingGetWordIndex(
@@ -1268,5 +1225,22 @@ class PythonZooKeras[T: ClassTag](implicit ev: TensorNumeric[T]) extends PythonZ
 
   def setParameterWeight(parameter: Parameter[T], value: JTensor): Unit = {
     parameter.setWeight(toTensor(value))
+  }
+
+  def createZooKerasRNNEncoder(rnns: JList[Recurrent[T]],
+    embedding: KerasLayer[Tensor[T], Tensor[T], T] = null,
+    inputShape: Shape = null): RNNEncoder[T] = {
+    RNNEncoder(rnns.asScala.toArray, embedding, inputShape)
+  }
+
+  def createZooKerasRNNDecoder(rnns: JList[Recurrent[T]],
+    embedding: KerasLayer[Tensor[T], Tensor[T], T] = null,
+    inputShape: Shape = null): RNNDecoder[T] = {
+    RNNDecoder(rnns.asScala.toArray, embedding, inputShape)
+  }
+
+  def createZooKerasBridge(bridgeType: String, decoderHiddenSize: Int,
+    bridge: KerasLayer[Tensor[T], Tensor[T], T]): KerasLayer[Activity, Activity, T] = {
+    new Bridge(bridgeType, decoderHiddenSize, bridge)
   }
 }

@@ -89,10 +89,10 @@ private[zoo] class InternalMM[T: ClassTag](
       // with different batch dim
       if (ma.size(1) != mb.size(1)) {
         if (ma.size(1) == 1) {
-          expandLayer = InternalExpand(mb.size(), true)
+          expandLayer = InternalExpand(mb.size())
           ma = expandLayer.forward(ma)
         } else if (mb.size(1) == 1) {
-          expandLayer = InternalExpand(ma.size(), true)
+          expandLayer = InternalExpand(ma.size())
           mb = expandLayer.forward(mb)
         } else {
           throw new InvalidParameterException("inputs must contain the same number of" +
@@ -117,10 +117,10 @@ private[zoo] class InternalMM[T: ClassTag](
         s"second input dim ${mb.dim()}")
       // with different batch dim
       if (ma.size(1) == 1) {
-        expandLayer = InternalExpand(mb.size(), true)
+        expandLayer = InternalExpand(mb.size())
         ma = expandLayer.forward(ma)
       } else if (mb.size(1) == 1) {
-        expandLayer = InternalExpand(ma.size(), true)
+        expandLayer = InternalExpand(ma.size())
         mb = expandLayer.forward(mb)
       } else {
         throw new InvalidParameterException("inputs must contain the same number of" +

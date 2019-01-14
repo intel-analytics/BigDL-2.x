@@ -19,13 +19,13 @@ package com.intel.analytics.zoo.pipeline.api.keras.layers
 import java.io._
 import java.util.concurrent.atomic.AtomicInteger
 
-import com.intel.analytics.bigdl.nn.Identity
+import com.intel.analytics.bigdl.nn.{Identity => BIdentity}
 import com.intel.analytics.bigdl.nn.abstractnn.AbstractModule
 import com.intel.analytics.bigdl.serialization.Bigdl._
 import com.intel.analytics.bigdl.tensor.Tensor
 import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric
 import com.intel.analytics.bigdl.utils.Shape
-import com.intel.analytics.bigdl.utils.serializer.{DeserializeContext, ModuleSerializer, SerializeContext}
+import com.intel.analytics.bigdl.utils.serializer.{DeserializeContext, SerializeContext}
 import com.intel.analytics.bigdl.utils.serializer.converters.{DataConverter, TensorConverter}
 import com.intel.analytics.zoo.pipeline.api.keras.layers.WordEmbedding.EmbeddingMatrixHolder
 import com.intel.analytics.zoo.pipeline.api.net.{NetUtils, RegistryMap, SerializationHolder}
@@ -37,7 +37,7 @@ import scala.reflect.ClassTag
 import scala.reflect.runtime.universe
 
 /**
- * Embedding layer with pre-trained weights for words.
+ * Embedding layer that directly loads pre-trained word vectors as weights.
  * Turn non-negative integers (indices) into dense vectors of fixed size.
  * Currently only GloVe embedding is supported.
  * The input of this layer should be 2D.
@@ -49,14 +49,14 @@ class WordEmbedding[T: ClassTag] private(
     override val inputDim: Int,
     override val outputDim: Int,
     embeddingMatrix: EmbeddingMatrixHolder[T],
-    val trainable: Boolean = false,
+    override val trainable: Boolean = false,
     override val inputShape: Shape = null)(implicit ev: TensorNumeric[T])
   extends Embedding[T](inputDim, outputDim, inputShape = inputShape) {
 
   require(!trainable, "WordEmbedding is not trainable for now.")
 
   override def doBuild(inputShape: Shape): AbstractModule[Tensor[T], Tensor[T], T] = {
-    Identity().asInstanceOf[AbstractModule[Tensor[T], Tensor[T], T]]
+    BIdentity().asInstanceOf[AbstractModule[Tensor[T], Tensor[T], T]]
   }
 
   private def weight: Tensor[T] = embeddingMatrix.weight
@@ -110,11 +110,11 @@ object WordEmbedding {
   val id = new AtomicInteger(0) // id in the registry map should be unique
 
   /**
-   * Embedding layer with pre-trained weights for words.
+   * Embedding layer that directly loads pre-trained word vectors as weights.
    * Please use this layer as the first layer in a model.
    *
    * @param embeddingFile The path to the embedding file.
-   *                      Currently only the following GloVe files are supported:
+   *                      Currently the following GloVe files are supported:
    *                      "glove.6B.50d.txt", "glove.6B.100d.txt", "glove.6B.200d.txt"
    *                      "glove.6B.300d.txt", "glove.42B.300d.txt", "glove.840B.300d.txt".
    *                      You can download them from: https://nlp.stanford.edu/projects/glove/.
@@ -134,8 +134,30 @@ object WordEmbedding {
       embeddingFile: String,
       wordIndex: Map[String, Int] = null,
       trainable: Boolean = false,
-      inputLength: Int)(implicit ev: TensorNumeric[T]): WordEmbedding[T] = {
+      inputLength: Int = -1)(implicit ev: TensorNumeric[T]): WordEmbedding[T] = {
+    val shape = if (inputLength > 0) Shape(inputLength) else null
+    val (inputDim, outputDim, embeddingMatrix) = prepareEmbedding[T](embeddingFile, wordIndex)
+    id.getAndIncrement()
+    new WordEmbedding[T](inputDim, outputDim,
+      new EmbeddingMatrixHolder[T](embeddingMatrix, "WordEmbedding" + id.toString),
+      trainable, shape)
+  }
 
+  /**
+   * Prepare embedding weights from embeddingFile given wordIndex.
+   *
+   * @param randomizeUnknown Boolean. Whether to randomly initialize words that don't exist in
+   *                         embedding_file. Default is false and in this case corresponding entries
+   *                         to unknown words will be zero vectors.
+   * @param normalize Boolean. Whether to normalize word vectors. Default is false.
+   * @return Embedding input dim, output dim and pretrained weights.
+   */
+  def prepareEmbedding[@specialized(Float, Double) T: ClassTag](
+      embeddingFile: String,
+      wordIndex: Map[String, Int],
+      randomizeUnknown: Boolean = false,
+      normalize: Boolean = false)
+    (implicit ev: TensorNumeric[T]): (Int, Int, Tensor[T]) = {
     require(new File(embeddingFile).exists(),
       s"embeddingFile $embeddingFile doesn't exist. Please check your file path.")
 
@@ -145,15 +167,13 @@ object WordEmbedding {
           "with 0 reserved for unknown words.")
     }
 
-    id.getAndIncrement()
     val indexVec = buildIndexVec[T](wordIndex, embeddingFile)
     val inputDim = if (wordIndex == null) calcInputDimFromIndexVec[T](indexVec)
     else calcInputDimFromWordIndex(wordIndex)
     val outputDim = getOutputDimFromEmbeddingFile(embeddingFile)
-    val embeddingMatrix = buildEmbeddingMatrix[T](indexVec, inputDim, outputDim)
-    new WordEmbedding[T](inputDim, outputDim,
-      new EmbeddingMatrixHolder[T](embeddingMatrix, "WordEmbedding" + id.toString),
-      trainable, Shape(inputLength))
+    val embeddingMatrix = buildEmbeddingMatrix[T](indexVec, inputDim,
+      outputDim, randomizeUnknown, normalize)
+    (inputDim, outputDim, embeddingMatrix)
   }
 
   def calcInputDimFromWordIndex(wordIndex: Map[String, Int]): Int = {
@@ -232,14 +252,37 @@ object WordEmbedding {
   def buildEmbeddingMatrix[@specialized(Float, Double) T: ClassTag](
       indexVec: Map[Int, Array[T]],
       inputDim: Int,
-      outputDim: Int)(implicit ev: TensorNumeric[T]): Tensor[T] = {
+      outputDim: Int,
+      randomizeUnknown: Boolean = false,
+      normalize: Boolean = false)(implicit ev: TensorNumeric[T]): Tensor[T] = {
     val weights = Tensor[T](inputDim, outputDim).zero()
     for (i <- 1 until inputDim) {
       if (indexVec.get(i).isDefined) {
-        weights.narrow(1, i + 1, 1).copy(Tensor[T](indexVec(i), Array(outputDim)))
+        val vec = if (normalize) normalizeVector(indexVec(i)) else indexVec(i)
+        weights.narrow(1, i + 1, 1).copy(Tensor[T](vec, Array(outputDim)))
+      }
+      else if (randomizeUnknown) {
+        val vec = if (normalize) normalizeVector(randomVector(outputDim))
+        else randomVector(outputDim)
+        weights.narrow(1, i + 1, 1).copy(Tensor[T](vec, Array(outputDim)))
       }
     }
     weights
+  }
+
+  def normalizeVector[@specialized(Float, Double) T: ClassTag](
+      vec: Array[T])(implicit ev: TensorNumeric[T]): Array[T] = {
+    val sum = ev.sqrt(ev.sum(vec.length, vec.map(x => ev.times(x, x)), 0, 1))
+    vec.map(ev.divide(_, sum))
+  }
+
+  def randomVector[@specialized(Float, Double) T: ClassTag](
+      dim: Int)(implicit ev: TensorNumeric[T]): Array[T] = {
+    val alpha = ev.rand()
+    val vector = Array.fill(dim) {1}.map(x => {
+      ev.times(ev.minus(ev.times(ev.fromType(2.0), ev.rand()), ev.fromType(1.0)), alpha)
+    })
+    vector
   }
 
   /**

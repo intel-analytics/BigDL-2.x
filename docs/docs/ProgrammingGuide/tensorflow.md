@@ -1,7 +1,17 @@
-Analytics-Zoo provides a set APIs for running tensorflow model on Spark in a distributed fashion.
+Analytics-Zoo provides a set APIs for running TensorFlow model on Spark in a distributed fashion.
+
+## System Requirement
+TensorFlow version: 1.10
+
+OS version (all 64-bit): __Ubuntu 16.04 or later__, __macOS 10.12.6 or later__, __Windows 7 or later__ (TensorFlow is
+ only tested and supported on these 64-bit systems as stated [here](https://www.tensorflow.org/install/)).
+ 
+To run on other system may require you to manually compile the TensorFlow source code. Instructions can
+be found [here](https://github.com/tensorflow/tensorflow/tree/v1.10.0/tensorflow/java).
+
 
 ## Concepts
-- **TFDatasets** represents a distributed collection of elements to be fed into a Tensorflow graph.
+- **TFDatasets** represents a distributed collection of elements to be fed into a TensorFlow graph.
 TFDatasets can be created directly from an RDD; each record in the RDD should be a list of numpy.ndarray
 representing the input data. TFDatasets must be used with the TFOptimizer or TFPredictor (to be described next).
 
@@ -31,7 +41,7 @@ train_rdd = sc.parallelize(file_list)
   .map(lambda image_label: decode_to_ndarrays(image_label))
 
 # TFDataset represents a distributed set of elements,
-# in which each element contains one or more Tensorflow Tensor objects. 
+# in which each element contains one or more TensorFlow Tensor objects. 
 dataset = TFDataset.from_rdd(train_rdd,
                              names=["features", "labels"],
                              shapes=[[28, 28, 1], [1]],
@@ -53,6 +63,26 @@ with slim.arg_scope(lenet.lenet_arg_scope()):
 
 loss = tf.reduce_mean(tf.losses.sparse_softmax_cross_entropy(logits=logits, labels=squeezed_labels))
 ```
+
+You can also construct your model using Keras provided by Tensorflow.
+
+```python
+from tensorflow.keras.models import Model
+from tensorflow.keras.layers import *
+
+data = Input(shape=[28, 28, 1])
+
+x = Flatten()(data)
+x = Dense(64, activation='relu')(x)
+x = Dense(64, activation='relu')(x)
+predictions = Dense(10, activation='softmax')(x)
+
+model = Model(inputs=data, outputs=predictions)
+
+model.compile(optimizer='rmsprop',
+            loss='sparse_categorical_crossentropy',
+            metrics=['accuracy'])
+```
    
 3.Distributed training on Spark and BigDL
 
@@ -60,7 +90,18 @@ loss = tf.reduce_mean(tf.losses.sparse_softmax_cross_entropy(logits=logits, labe
 from zoo.pipeline.api.net import TFOptimizer
 from bigdl.optim.optimizer import MaxIteration, Adam, MaxEpoch, TrainSummary
 
-optimizer = TFOptimizer(loss, Adam(1e-3))
+optimizer = TFOptimizer.from_loss(loss, Adam(1e-3))
+optimizer.set_train_summary(TrainSummary("/tmp/az_lenet", "lenet"))
+optimizer.optimize(end_trigger=MaxEpoch(5))
+```
+
+For Keras model:
+
+```python
+from zoo.pipeline.api.net import TFOptimizer
+from bigdl.optim.optimizer import MaxIteration, MaxEpoch, TrainSummary
+
+optimizer = TFOptimizer.from_keras(keras_model=model, dataset=dataset)
 optimizer.set_train_summary(TrainSummary("/tmp/az_lenet", "lenet"))
 optimizer.optimize(end_trigger=MaxEpoch(5))
 ```
@@ -70,6 +111,12 @@ optimizer.optimize(end_trigger=MaxEpoch(5))
 ```python
 saver = tf.train.Saver()
 saver.save(optimizer.sess, "/tmp/lenet/")
+```
+
+For Keras model, you can also Keras' `save_weights` api.
+
+```python
+model.save_weights("/tmp/keras.h5")
 ```
 
 ### Inference
@@ -89,7 +136,7 @@ testing_rdd = sc.parallelize(file_list)
   .map(lambda image_label: decode_to_ndarrays(image_label))
 
 # TFDataset represents a distributed set of elements,
-# in which each element contains one or more Tensorflow Tensor objects. 
+# in which each element contains one or more TensorFlow Tensor objects. 
 dataset = TFDataset.from_rdd(testing_rdd,
                              names=["features"],
                              shapes=[[28, 28, 1]],
@@ -112,10 +159,36 @@ saver = tf.train.Saver()
 saver.restore(sess, "/tmp/lenet")
 ```
 
+As before, you can also construct and restore your model using Keras provided by Tensorflow.
+
+```python
+from tensorflow.keras.models import Model
+from tensorflow.keras.layers import *
+
+data = Input(shape=[28, 28, 1])
+
+x = Flatten()(data)
+x = Dense(64, activation='relu')(x)
+x = Dense(64, activation='relu')(x)
+predictions = Dense(10, activation='softmax')(x)
+
+model = Model(inputs=data, outputs=predictions)
+
+model.load_weights("/tmp/mnist_keras.h5")
+
+```
+
 3.Run predictions
 
 ```python
-predictor = TFPredictor(sess, [logits])
+predictor = TFPredictor.from_outputs(sess, [logits])
+predictions_rdd = predictor.predict()
+```
+
+For keras model:
+
+```python
+predictor = TFPredictor.from_keras(model, dataset)
 predictions_rdd = predictor.predict()
 ```
 

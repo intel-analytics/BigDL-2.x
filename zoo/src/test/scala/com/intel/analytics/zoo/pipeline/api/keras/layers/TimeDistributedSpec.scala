@@ -106,4 +106,3 @@ class TimeDistributedSerialTest extends ModuleSerializationTest {
     runSerializationTest(layer, input)
   }
 }
-

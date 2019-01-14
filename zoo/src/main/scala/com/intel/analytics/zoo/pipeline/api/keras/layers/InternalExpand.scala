@@ -23,7 +23,13 @@ import com.intel.analytics.bigdl.utils.{T, Table}
 
 import scala.reflect.ClassTag
 
-private[zoo] class InternalExpand[T: ClassTag](tgtSizes: Array[Int], includeBatch: Boolean = false)
+/**
+ * Expand tensor to configured size
+
+ * @param tgtSizes target tensor sizes, dim whose size is -1 will be ignored
+ * @tparam T Numeric type of parameter(e.g. weight, bias). Only support float/double now.
+ */
+private[zoo] class InternalExpand[T: ClassTag](tgtSizes: Array[Int])
   (implicit ev: TensorNumeric[T]) extends AbstractModule[Tensor[T], Tensor[T], T] {
 
   override def updateOutput(input: Tensor[T]): Tensor[T] = {
@@ -33,15 +39,16 @@ private[zoo] class InternalExpand[T: ClassTag](tgtSizes: Array[Int], includeBatc
     val tensorStride = input.stride()
     val tensorSize = input.size()
 
-    // check if need batch dim
-    var i = if (includeBatch) 0 else 1
+    var i = 0
     while (i < tensorDim) {
-      if (tensorSize(i) == 1) {
-        tensorSize(i) = tgtSizes(i)
-        tensorStride(i) = 0
-      } else if (tensorSize(i) != tgtSizes(i)) {
-        throw new UnsupportedOperationException(
-          "incorrect size: only supporting singleton expansion (size=1)")
+      if (tgtSizes(i) != -1) {
+        if (tensorSize(i) == 1) {
+          tensorSize(i) = tgtSizes(i)
+          tensorStride(i) = 0
+        } else if (tensorSize(i) != tgtSizes(i)) {
+          throw new UnsupportedOperationException(
+            "incorrect size: only supporting singleton expansion (size=1)")
+        }
       }
       i += 1
     }
@@ -55,24 +62,23 @@ private[zoo] class InternalExpand[T: ClassTag](tgtSizes: Array[Int], includeBatc
     val tensorSize = input.size()
 
     gradInput = Tensor[T](tensorSize)
-    // check if need batch dim
-    var i = if (includeBatch) 0 else 1
-
+    var i = 0
     while (i < tensorDim) {
-      if (tensorSize(i) == 1) {
-        gradOutput.split(i + 1).foreach(gradInput.add(_))
+      if (tgtSizes(i) != -1) {
+        if (tensorSize(i) == 1) {
+          gradOutput.split(i + 1).foreach(gradInput.add(_))
+        }
       }
       i += 1
     }
     gradInput
   }
-
-  override def toString: String = s"Expand()"
+  override def toString: String = s"InternalExpand()"
 }
 
 private[zoo] object InternalExpand {
-  def apply[@specialized(Float, Double) T: ClassTag](tgtSizes: Array[Int], includeBatch: Boolean = false)
+  def apply[@specialized(Float, Double) T: ClassTag](tgtSizes: Array[Int])
     (implicit ev: TensorNumeric[T]) : InternalExpand[T] = {
-    new InternalExpand[T](tgtSizes, includeBatch)
+    new InternalExpand[T](tgtSizes)
   }
 }

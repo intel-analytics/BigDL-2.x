@@ -18,7 +18,7 @@ import warnings
 
 from zoo.pipeline.api.keras.models import Sequential
 from zoo.pipeline.api.keras.layers import *
-from zoo.models.common.zoo_model import ZooModel
+from zoo.models.common import ZooModel
 from bigdl.util.common import callBigDlFunc
 
 
@@ -114,20 +114,63 @@ class TextClassifier(ZooModel):
         model.__class__ = TextClassifier
         return model
 
+    # For the following methods, please refer to KerasNet for documentation.
     def compile(self, optimizer, loss, metrics=None):
-        self.model.compile(optimizer, loss, metrics)
+        if isinstance(optimizer, six.string_types):
+            optimizer = to_bigdl_optim_method(optimizer)
+        if isinstance(loss, six.string_types):
+            loss = to_bigdl_criterion(loss)
+        if metrics and all(isinstance(metric, six.string_types) for metric in metrics):
+            metrics = to_bigdl_metrics(metrics)
+        callBigDlFunc(self.bigdl_type, "textClassifierCompile",
+                      self.value,
+                      optimizer,
+                      loss,
+                      metrics)
 
     def set_tensorboard(self, log_dir, app_name):
-        self.model.set_tensorboard(log_dir, app_name)
+        callBigDlFunc(self.bigdl_type, "textClassifierSetTensorBoard",
+                      self.value,
+                      log_dir,
+                      app_name)
 
     def set_checkpoint(self, path, over_write=True):
-        self.model.set_checkpoint(path, over_write)
+        callBigDlFunc(self.bigdl_type, "textClassifierSetCheckpoint",
+                      self.value,
+                      path,
+                      over_write)
 
-    def fit(self, x, y=None, batch_size=32, nb_epoch=10, validation_data=None, distributed=True):
-        self.model.fit(x, y, batch_size, nb_epoch, validation_data, distributed)
+    def fit(self, x, batch_size=32, nb_epoch=10, validation_data=None):
+        """
+        Fit on TextSet.
+        """
+        assert isinstance(x, TextSet), "x should be a TextSet"
+        if validation_data:
+            assert isinstance(validation_data, TextSet), "validation_data should be a TextSet"
+        callBigDlFunc(self.bigdl_type, "textClassifierFit",
+                      self.value,
+                      x,
+                      batch_size,
+                      nb_epoch,
+                      validation_data)
 
-    def evaluate(self, x, y=None, batch_size=32):
-        return self.model.evaluate(x, y, batch_size)
+    def evaluate(self, x, batch_size=32):
+        """
+        Evaluate on TextSet.
+        """
+        assert isinstance(x, TextSet), "x should be a TextSet"
+        return callBigDlFunc(self.bigdl_type, "textClassifierEvaluate",
+                             self.value,
+                             x,
+                             batch_size)
 
-    def predict(self, x, batch_per_thread=4, distributed=True):
-        return self.model.predict(x, batch_per_thread, distributed)
+    def predict(self, x, batch_per_thread=4):
+        """
+        Predict on TextSet.
+        """
+        assert isinstance(x, TextSet), "x should be a TextSet"
+        results = callBigDlFunc(self.bigdl_type, "textClassifierPredict",
+                                self.value,
+                                x,
+                                batch_per_thread)
+        return TextSet(results)

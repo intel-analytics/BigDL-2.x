@@ -14,10 +14,11 @@
 # limitations under the License.
 #
 
+import sys
 import datetime as dt
 from optparse import OptionParser
 
-from bigdl.optim.optimizer import *
+from bigdl.optim.optimizer import Adagrad
 from zoo.common.nncontext import init_nncontext
 from zoo.feature.text import TextSet
 from zoo.models.textclassification import TextClassifier
@@ -46,8 +47,9 @@ if __name__ == "__main__":
 
     text_set = TextSet.read(path=options.data_path).to_distributed(sc, int(options.partition_num))
     print("Processing text dataset...")
-    transformed = text_set.tokenize().normalize().shape_sequence(len=int(options.sequence_length))\
-        .word2idx(remove_topN=10, max_words_num=int(options.max_words_num)).generate_sample()
+    transformed = text_set.tokenize().normalize()\
+        .word2idx(remove_topN=10, max_words_num=int(options.max_words_num))\
+        .shape_sequence(len=int(options.sequence_length)).generate_sample()
     train_set, val_set = transformed.random_split(
         [float(options.training_split), 1 - float(options.training_split)])
 

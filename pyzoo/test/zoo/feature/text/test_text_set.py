@@ -15,12 +15,17 @@
 #
 
 import pytest
+import shutil
 
-from zoo.feature.common import ChainedPreprocessing
+from bigdl.optim.optimizer import SGD
+from zoo.feature.common import ChainedPreprocessing, Relations
 from zoo.feature.text import *
 from zoo.common.nncontext import *
+from zoo.models.textclassification import TextClassifier
+from zoo.models.textmatching import KNRM
 from zoo.pipeline.api.keras.models import Sequential
-from zoo.pipeline.api.keras.layers import Embedding, Convolution1D, Flatten, Dense
+from zoo.pipeline.api.keras.layers import TimeDistributed
+from zoo.pipeline.api.keras.objectives import SparseCategoricalCrossEntropy
 
 
 class TestTextSet:
@@ -38,21 +43,14 @@ class TestTextSet:
         self.labels = [0., 1, 1]
         resource_path = os.path.join(os.path.split(__file__)[0], "../../resources")
         self.path = os.path.join(resource_path, "news20")
+        self.glove_path = os.path.join(resource_path, "glove.6B/glove.6B.50d.txt")
+        self.qa_path = os.path.join(resource_path, "qa")
 
     def teardown_method(self, method):
         """ teardown any state that was previously setup with a setup_method
         call.
         """
         self.sc.stop()
-
-    @staticmethod
-    def _build_model(sequence_length):
-        model = Sequential()
-        model.add(Embedding(20, 10, input_length=sequence_length))
-        model.add(Convolution1D(4, 3))
-        model.add(Flatten())
-        model.add(Dense(5, activation="softmax"))
-        return model
 
     def test_textset_without_label(self):
         local_set = LocalTextSet(self.texts)
@@ -83,9 +81,9 @@ class TestTextSet:
         assert not local_set.is_distributed()
         assert local_set.get_texts() == self.texts
         assert local_set.get_labels() == self.labels
-        tokenized = ChainedPreprocessing([Tokenizer(), Normalizer(), SequenceShaper(10)])(local_set)
+        tokenized = ChainedPreprocessing([Tokenizer(), Normalizer()])(local_set)
         word_index = tokenized.generate_word_index_map(max_words_num=10)
-        transformed = ChainedPreprocessing([WordIndexer(word_index),
+        transformed = ChainedPreprocessing([WordIndexer(word_index), SequenceShaper(10),
                                             TextFeatureToSample()])(tokenized)
         assert transformed.is_local()
         word_index = transformed.get_word_index()
@@ -96,15 +94,34 @@ class TestTextSet:
         for sample in samples:
             assert sample.feature.shape[0] == 10
 
-        model = TestTextSet._build_model(10)
+        model = TextClassifier(5, self.glove_path, word_index, 10)
         model.compile("adagrad", "sparse_categorical_crossentropy", ['accuracy'])
+        tmp_log_dir = create_tmp_path()
+        tmp_checkpoint_path = create_tmp_path()
+        os.mkdir(tmp_checkpoint_path)
+        model.set_tensorboard(tmp_log_dir, "textclassification")
+        model.set_checkpoint(tmp_checkpoint_path)
         model.fit(transformed, batch_size=2, nb_epoch=2, validation_data=transformed)
+        acc = model.evaluate(transformed, batch_size=2)
         res_set = model.predict(transformed, batch_per_thread=2)
         predicts = res_set.get_predicts()
-        for predict in predicts:
-            assert len(predict) == 1
-            assert predict[0].shape == (5, )
-        acc = model.evaluate(transformed, batch_size=2)
+
+        # Test for loaded model predict on TextSet
+        tmp_path = create_tmp_path() + ".bigdl"
+        model.save_model(tmp_path, over_write=True)
+        loaded_model = TextClassifier.load_model(tmp_path)
+        loaded_res_set = loaded_model.predict(transformed, batch_per_thread=2)
+        loaded_predicts = loaded_res_set.get_predicts()
+        assert len(predicts) == len(loaded_predicts)
+
+        for i in range(0, len(predicts)):
+            assert len(predicts[i]) == 1
+            assert len(loaded_predicts[i]) == 1
+            assert predicts[i][0].shape == (5, )
+            assert np.allclose(predicts[i][0], loaded_predicts[i][0])
+        shutil.rmtree(tmp_log_dir)
+        shutil.rmtree(tmp_checkpoint_path)
+        os.remove(tmp_path)
 
     def test_distributed_textset_integration(self):
         texts_rdd = self.sc.parallelize(self.texts)
@@ -121,24 +138,30 @@ class TestTextSet:
         assert set(train_texts + test_texts) == set(self.texts)
 
         tokenized = Tokenizer()(distributed_set)
-        transformed = tokenized.normalize().shape_sequence(5)\
-            .word2idx().generate_sample()
+        transformed = tokenized.normalize().word2idx().shape_sequence(5).generate_sample()
         word_index = transformed.get_word_index()
-        assert len(word_index) == 10
+        assert len(word_index) == 14
         samples = transformed.get_samples().collect()
         assert len(samples) == 3
         for sample in samples:
             assert sample.feature.shape[0] == 5
 
-        model = TestTextSet._build_model(5)
-        model.compile("sgd", "sparse_categorical_crossentropy", metrics=['accuracy'])
+        model = TextClassifier(5, self.glove_path, word_index, 5, encoder="lstm")
+        model.compile(SGD(), SparseCategoricalCrossEntropy())
         model.fit(transformed, batch_size=2, nb_epoch=2)
         res_set = model.predict(transformed, batch_per_thread=2)
         predicts = res_set.get_predicts().collect()
         for predict in predicts:
             assert len(predict) == 1
             assert predict[0].shape == (5, )
-        acc = model.evaluate(transformed, batch_size=2)
+
+        tmp_path = create_tmp_path() + ".bigdl"
+        model.save_model(tmp_path, over_write=True)
+        loaded_model = TextClassifier.load_model(tmp_path)
+        loaded_res_set = loaded_model.predict(transformed, batch_per_thread=2)
+        loaded_predicts = loaded_res_set.get_predicts().collect()
+        assert len(loaded_predicts) == len(predicts)
+        os.remove(tmp_path)
 
     def test_read_local(self):
         local_set = TextSet.read(self.path)
@@ -157,6 +180,39 @@ class TestTextSet:
         assert sorted(distributed_set.get_labels().collect()) == [0, 0, 1]
         assert distributed_set.get_samples().collect() == [None, None, None]
         assert distributed_set.get_predicts().collect() == [None, None, None]
+
+    def test_read_csv_parquet(self):
+        text_set = TextSet.read_csv(self.qa_path + "/question_corpus.csv", self.sc)
+        text_set2 = TextSet.read_csv(self.qa_path + "/question_corpus.csv")
+        text_set3 = TextSet.read_parquet(self.qa_path + "/question_corpus.parquet", self.sc)
+        assert text_set.is_distributed()
+        assert text_set2.is_local()
+        assert text_set3.is_distributed()
+
+    def test_qaranker_distributed_integration(self):
+        relations = Relations.read(self.qa_path+"/relations.txt", self.sc)
+        assert relations.count() == 4
+        text_set = TextSet.read_csv(self.qa_path+"/question_corpus.csv", self.sc)
+        assert text_set.get_uris().collect() == ["Q1", "Q2"]
+        transformed = text_set.tokenize().normalize().word2idx().shape_sequence(5)
+        relation_pairs = TextSet.from_relation_pairs(relations, transformed, transformed)
+        pair_samples = relation_pairs.get_samples().collect()
+        assert len(pair_samples) == 2
+        for sample in pair_samples:
+            assert list(sample.feature.shape) == [2, 10]
+            assert np.allclose(sample.label.to_ndarray(), np.array([[1.0], [0.0]]))
+        relation_lists = TextSet.from_relation_lists(relations, transformed, transformed)
+        relation_samples = relation_lists.get_samples().collect()
+        assert len(relation_samples) == 2
+        for sample in relation_samples:
+            assert list(sample.feature.shape) == [2, 10]
+            assert list(sample.label.shape) == [2, 1]
+        knrm = KNRM(5, 5, self.glove_path, word_index=transformed.get_word_index())
+        model = Sequential().add(TimeDistributed(knrm, input_shape=(2, 10)))
+        model.compile("sgd", "rank_hinge")
+        model.fit(relation_pairs, batch_size=2, nb_epoch=2)
+        print(knrm.evaluate_ndcg(relation_lists, 3))
+        print(knrm.evaluate_map(relation_lists))
 
 
 if __name__ == "__main__":

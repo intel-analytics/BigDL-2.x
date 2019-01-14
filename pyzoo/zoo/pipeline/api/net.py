@@ -16,12 +16,13 @@
 
 import sys
 import tempfile
+import warnings
 
 import six
 import os
 import json
-import tensorflow as tf
 import numpy as np
+from py4j.protocol import Py4JJavaError
 from pyspark import RDD
 
 from bigdl.nn.criterion import Criterion
@@ -31,11 +32,8 @@ from bigdl.util.common import to_list, callBigDlFunc, get_spark_context, \
     JavaValue, get_node_and_core_number
 from zoo.common import Sample, JTensor
 from zoo.feature.image import ImageSet
-from zoo.pipeline.api.keras.engine.topology import ZooKerasLayer, KerasNet
-from zoo.util.tf import export_tf
-from bigdl.optim.optimizer import Optimizer, EveryEpoch
-from bigdl.optim.optimizer import MaxEpoch
-
+from zoo.pipeline.api.keras.engine.topology import ZooKerasLayer, KerasNet, to_bigdl_metric
+from bigdl.optim.optimizer import EveryEpoch, MaxEpoch, Optimizer
 
 if sys.version >= '3':
     long = int
@@ -251,7 +249,7 @@ class TFNet(Layer):
         else:
             return [to_jtensor(input)], False
 
-    def predict(self, x, batch_pre_core=-1, distributed=True):
+    def predict(self, x, batch_per_thread=-1, distributed=True):
         """
         Use a model to do prediction.
         """
@@ -259,7 +257,7 @@ class TFNet(Layer):
             results = callBigDlFunc(self.bigdl_type, "zooPredict",
                                     self.value,
                                     x,
-                                    batch_pre_core)
+                                    batch_per_thread)
             return ImageSet(results)
         if distributed:
             if isinstance(x, np.ndarray):
@@ -271,14 +269,14 @@ class TFNet(Layer):
             results = callBigDlFunc(self.bigdl_type, "zooPredict",
                                     self.value,
                                     data_rdd,
-                                    batch_pre_core)
+                                    batch_per_thread)
             return results.map(lambda result: Layer.convert_output(result))
         else:
             if isinstance(x, np.ndarray) or isinstance(x, list):
                 results = callBigDlFunc(self.bigdl_type, "zooPredict",
                                         self.value,
                                         self._to_jtensors(x),
-                                        batch_pre_core)
+                                        batch_per_thread)
                 return [Layer.convert_output(result) for result in results]
             else:
                 raise TypeError("Unsupported prediction data type: %s" % type(x))
@@ -292,6 +290,7 @@ class TFNet(Layer):
     @staticmethod
     def from_session(sess, inputs, outputs,
                      generate_backward=False, allow_non_differentiable_input=True):
+        from zoo.util.tf import export_tf
         temp = tempfile.mkdtemp()
         try:
             export_tf(sess, temp, inputs, outputs,
@@ -361,8 +360,11 @@ class TFValidationMethod(JavaValue):
 
 class TFOptimizer:
 
-    def __init__(self, loss, optim_method, sess=None,
-                 val_outputs=None, val_labels=None, val_method=None):
+    def __init__(self, loss, optim_method, sess=None, dataset=None, inputs=None,
+                 grads=None, variables=None, graph=None,
+                 val_outputs=None, val_labels=None, val_method=None, val_split=0.0):
+        import tensorflow as tf
+        from zoo.util.tf import export_tf
         '''
         TFOptimizer is used for distributed training of tensorflow
         on Spark/BigDL.
@@ -372,32 +374,33 @@ class TFOptimizer:
         :param sess: the current tensorflow Session, if you want to used a pre-trained model, you
         should use the Session to load the pre-trained variables and pass it to TFOptimizer.
         '''
-        self.optim_method = optim_method
-        if sess is None:
-            self.sess = tf.Session()
-            self.sess.run(tf.global_variables_initializer())
-        else:
-            self.sess = sess
-        grads_vars = tf.train.GradientDescentOptimizer(0).compute_gradients(loss)
-        variables = []
-        grads = []
-        for (grad, var) in grads_vars:
-            variables.append(var)
-            grads.append(grad)
-        self.export_dir = tempfile.mkdtemp()
-        all_required_inputs = _find_placeholders([loss])
-        self.dataset = tf.get_collection(all_required_inputs[0].name)[0]
-        if self.dataset.batch_size <= 0:
-            raise ValueError("You should set batch_size instead of batch_per_core for training")
-        self.inputs = self.dataset.tensors
 
-        _check_the_same(all_required_inputs, self.inputs)
+        if dataset is None:
+            args = TFOptimizer._get_arguments_from_loss(loss, optim_method, sess,
+                                                        val_outputs, val_labels, val_method)
+            loss, optim_method, sess, dataset, inputs = args[:5]
+            grads, variables, graph, val_outputs, val_labels, val_method = args[5:]
+
+        self.optim_method = optim_method
+        self.sess = sess
+        self.dataset = dataset
+        self.inputs = inputs
+        self.graph = graph
+
+        from zoo.util.tf import process_grad
+        grads = [process_grad(grad) for grad in grads]
+
+        if self.dataset.batch_size <= 0:
+            raise ValueError("You should set batch_size instead of batch_per_thread for training")
 
         if val_outputs is not None and val_labels is not None:
+            with self.graph.as_default():
+                val_labels = [tf.identity(v) for v in val_labels]
             outputs = val_outputs + val_labels + [loss]
         else:
             outputs = [loss]
 
+        self.export_dir = tempfile.mkdtemp()
         export_tf(self.sess, self.export_dir,
                   inputs=self.inputs,
                   outputs=grads + outputs)
@@ -416,35 +419,187 @@ class TFOptimizer:
         with open(os.path.join(self.export_dir, "training_meta.json"), "w") as f:
             f.write(json.dumps(meta))
 
-        self.training_helper_layer = TFTrainingHelper(self.export_dir)
-
         self.variable_placeholders = []
-        assigns = []
-        for v in variables:
-            p = tf.placeholder(dtype=tf.float32, shape=v.shape)
-            a = tf.assign(v, p)
-            self.variable_placeholders.append(p)
-            assigns.append(a)
-        self.assign = tf.group(*assigns)
+        with self.graph.as_default():
+            assigns = []
+            for v in variables:
+                p = tf.placeholder(dtype=tf.float32, shape=v.shape)
+                a = tf.assign(v, p)
+                self.variable_placeholders.append(p)
+                assigns.append(a)
+            assign = tf.group(*assigns)
+        self.assign = assign
+        try:
+            self.training_helper_layer = TFTrainingHelper(self.export_dir)
+        except Py4JJavaError as e:
+            if "expects to be colocated with unknown node" in str(e):
+                raise Exception("""
+If you are using the embedding layer in tf.keras, then this is a
+known issue of tensorflow, see https://github.com/tensorflow/tensorflow/issues/21889.
+Please add zoo.util.tf.variable_creator_scope before model construction.
+For example:
+from zoo.util.tf import variable_creator_scope
+with variable_creator_scope():
+    model = tf.keras.models.Sequential([
+    tf.keras.layers.Embedding(1, 1, input_length=1)])
+                """)
+            else:
+                raise e
 
         data = self.dataset.rdd
         batch_size = self.dataset.batch_size
-        sample_rdd = data.map(lambda t: Sample.from_ndarray(t, [np.array([0.0])]))
-
-        self.optimizer = Optimizer.create(self.training_helper_layer,
-                                          sample_rdd,
-                                          IdentityCriterion(),
-                                          batch_size=batch_size,
-                                          optim_method=self.optim_method)
+        sample_rdd = data.map(lambda t: Sample.from_ndarray(
+            t, [np.array([0.0])]))
 
         if val_outputs is not None and val_labels is not None:
-            val_sample_rdd = self.dataset.val_rdd\
-                .map(lambda t: Sample.from_ndarray(t, [np.array([0.0])]))
-            val_method = TFValidationMethod(val_method, len(val_outputs), len(val_labels))
+            if self.dataset.val_rdd is not None:
+                val_rdd = self.dataset.val_rdd \
+                    .map(lambda t: Sample.from_ndarray(t,
+                                                       [np.array([0.0])]))
+                val_method = [TFValidationMethod(m, len(val_outputs), len(val_labels))
+                              for m in to_list(val_method)]
+                training_rdd = sample_rdd
+
+            elif val_split != 0.0:
+                training_rdd, val_rdd = sample_rdd.randomSplit([1-val_split, val_split])
+                val_method = [TFValidationMethod(m, len(val_outputs), len(val_labels))
+                              for m in to_list(val_method)]
+            else:
+                raise ValueError("Validation data is not specified. Please set " +
+                                 "val rdd in TFDataset, or set val_split larger than zero")
+
+            self.optimizer = Optimizer.create(self.training_helper_layer,
+                                              training_rdd,
+                                              IdentityCriterion(),
+                                              batch_size=batch_size,
+                                              optim_method=self.optim_method)
             self.optimizer.set_validation(self.dataset.batch_size,
-                                          val_sample_rdd,
+                                          val_rdd,
                                           EveryEpoch(),
                                           val_method)
+        else:
+            training_rdd = sample_rdd
+            self.optimizer = Optimizer.create(self.training_helper_layer,
+                                              training_rdd,
+                                              IdentityCriterion(),
+                                              batch_size=batch_size,
+                                              optim_method=self.optim_method)
+
+    @staticmethod
+    def _get_arguments_from_loss(loss, optim_method, session, val_outputs, val_labels, val_method):
+        import tensorflow as tf
+        if session is None:
+            sess = tf.Session()
+            sess.run(tf.global_variables_initializer())
+        else:
+            sess = session
+        grads_vars = tf.train.GradientDescentOptimizer(0).compute_gradients(loss)
+        variables = []
+        grads = []
+        for (grad, var) in grads_vars:
+            variables.append(var)
+            grads.append(grad)
+
+        all_required_inputs = _find_placeholders([loss])
+        dataset = tf.get_collection(all_required_inputs[0].name)[0]
+
+        inputs = dataset.tensors
+
+        _check_the_same(all_required_inputs, inputs)
+
+        return [loss, optim_method, sess, dataset, inputs,
+                grads, variables, loss.graph, val_outputs, val_labels, val_method]
+
+    @classmethod
+    def from_loss(cls, loss, optim_method, session=None, val_outputs=None,
+                  val_labels=None, val_method=None, val_split=0.0):
+        args = TFOptimizer._get_arguments_from_loss(loss, optim_method,
+                                                    session, val_outputs,
+                                                    val_labels, val_method)
+
+        return cls(*(args + [val_split]))
+
+    @classmethod
+    def from_keras(cls, keras_model, dataset, val_spilt=0.0):
+        import tensorflow.keras.backend as K
+
+        loss = keras_model.total_loss
+        inputs = keras_model.inputs + keras_model.targets
+
+        variables = keras_model._collected_trainable_weights
+        keras_optimizer = keras_model.optimizer
+        grads = keras_optimizer.get_gradients(loss, variables)
+        sess = K.get_session()
+        with sess.as_default():
+            optim_method = TFOptimizer.to_bigdl_optim_method(keras_optimizer)
+
+        if keras_model.metrics:
+            if isinstance(keras_model.metrics, dict):
+                raise ValueError(
+                    "different metrics for different outputs are not supported right now")
+
+            if dataset.val_rdd is None and val_spilt == 0.0:
+                raise ValueError("Validation data is not specified. Please set " +
+                                 "val rdd in TFDataset, or set val_split larger than zero")
+            bigdl_val_methods = [to_bigdl_metric(m) for m in keras_model.metrics_names]
+            val_outputs = keras_model.outputs
+            val_labels = keras_model.targets
+        else:
+            val_outputs = None
+            val_labels = None
+            bigdl_val_methods = None
+
+        return cls(loss, optim_method, sess, dataset, inputs,
+                   grads, variables, loss.graph, val_outputs, val_labels,
+                   bigdl_val_methods, val_spilt)
+
+    @staticmethod
+    def to_bigdl_optim_method(koptim_method):
+        # koptim_method is always an object
+        import tensorflow.keras.backend as K
+        import tensorflow.keras.optimizers as koptimizers
+        import bigdl.optim.optimizer as boptimizer
+        lr = float(K.eval(koptim_method.lr))
+        decay = float(K.eval(koptim_method.decay))
+        if isinstance(koptim_method, koptimizers.Adagrad):
+            warnings.warn("For Adagrad, we don't support epsilon for now")
+            return boptimizer.Adagrad(learningrate=lr,
+                                      learningrate_decay=decay)
+        elif isinstance(koptim_method, koptimizers.SGD):
+            momentum = float(K.eval(koptim_method.momentum))
+            return boptimizer.SGD(learningrate=lr,
+                                  learningrate_decay=decay,
+                                  momentum=momentum,
+                                  nesterov=koptim_method.nesterov)
+        elif isinstance(koptim_method, koptimizers.Adam):
+            beta1 = float(K.eval(koptim_method.beta_1))
+            beta2 = float(K.eval(koptim_method.beta_2))
+            return boptimizer.Adam(learningrate=lr,
+                                   learningrate_decay=decay,
+                                   beta1=beta1,
+                                   beta2=beta2,
+                                   epsilon=koptim_method.epsilon)
+        elif isinstance(koptim_method, koptimizers.RMSprop):
+            rho = float(K.eval(koptim_method.rho))
+            return boptimizer.RMSprop(learningrate=lr,
+                                      learningrate_decay=decay,
+                                      decayrate=rho,
+                                      epsilon=koptim_method.epsilon)
+        elif isinstance(koptim_method, koptimizers.Adadelta):
+            warnings.warn(
+                "For Adadelta, we don't support learning rate and learning rate decay for now")
+            return boptimizer.Adadelta(decayrate=koptim_method.rho,
+                                       epsilon=koptim_method.epsilon)
+        elif isinstance(koptim_method, koptimizers.Adamax):
+            beta1 = float(K.eval(koptim_method.beta_1))
+            beta2 = float(K.eval(koptim_method.beta_2))
+            warnings.warn("For Adamax, we don't support learning rate decay for now")
+            return boptimizer.Adamax(learningrate=lr,
+                                     beta1=beta1,
+                                     beta2=beta2,
+                                     epsilon=koptim_method.epsilon)
+        else:
+            raise Exception("We don't support %s for now" % koptim_method)
 
     def set_train_summary(self, summary):
         self.optimizer.set_train_summary(summary)
@@ -457,6 +612,7 @@ class TFOptimizer:
             end_trigger = MaxEpoch(1)
 
         self.optimizer.set_end_when(end_trigger)
+
         self.optimizer.optimize()
 
         variables = self.training_helper_layer.get_weights()
@@ -468,7 +624,8 @@ class TFOptimizer:
 class TFDataset:
 
     def __init__(self, rdd, names, shapes, types, batch_size,
-                 batch_pre_thread, hard_code_batch_size=False, val_rdd=None):
+                 batch_per_thread, hard_code_batch_size=False, val_rdd=None):
+        import tensorflow as tf
         '''
         TFDatasets represents a distributed collection of elements to be feed into
         Tensorflow graph. TFDatasets can be created using a RDD and each of its records
@@ -482,14 +639,14 @@ class TFDataset:
         :param types: the types of the result tensors, should be a list of tf.dtype
         :param batch_size: the batch size, used for training, should be a multiple of
         total core num
-        :param batch_pre_thread: the batch size for each thread, used for inference
+        :param batch_per_thread: the batch size for each thread, used for inference
         :param hard_code_batch_size: whether to hard code the batch_size into tensorflow graph,
         if True, the static size of the first dimension of the resulting tensors is
-        batch_size/total_core_num (training) or batch_pre_thread for inference; if False,
+        batch_size/total_core_num (training) or batch_per_thread for inference; if False,
         it is None.
         '''
-        if batch_size > 0 and batch_pre_thread > 0:
-            raise ValueError("bath_size and batch_per_core should not be set simultaneously")
+        if batch_size > 0 and batch_per_thread > 0:
+            raise ValueError("bath_size and batch_per_thread should not be set simultaneously")
 
         node_num, core_num = get_node_and_core_number()
         self.total_core_num = node_num * core_num
@@ -499,11 +656,11 @@ class TFDataset:
                                  "of total core number, but got batch_size: " +
                                  "%s where total core number is %s" % (batch_size,
                                                                        self.total_core_num))
-        if batch_size <= 0 and batch_pre_thread <= 0:
-            batch_pre_thread = 1
+        if batch_size <= 0 and batch_per_thread <= 0:
+            batch_per_thread = 1
             batch_size = self.total_core_num
         self.batch_size = batch_size
-        self.batch_pre_thread = batch_pre_thread
+        self.batch_per_thread = batch_per_thread
 
         if not hard_code_batch_size:
             self.tensors = [tf.placeholder(name=names[i],
@@ -511,10 +668,10 @@ class TFDataset:
                                            shape=[None] + shapes[i])
                             for i in range(len(names))]
         else:
-            if batch_pre_thread > 0:
+            if batch_per_thread > 0:
                 self.tensors = [tf.placeholder(name=names[i],
                                                dtype=types[i],
-                                               shape=[batch_pre_thread] + shapes[i])
+                                               shape=[batch_per_thread] + shapes[i])
                                 for i in range(len(names))]
             else:
                 self.tensors = [tf.placeholder(name=names[i],
@@ -531,8 +688,9 @@ class TFDataset:
 
     @staticmethod
     def from_rdd(rdd, names=None, shapes=None, types=None,
-                 batch_size=-1, batch_pre_thread=-1,
+                 batch_size=-1, batch_per_thread=-1,
                  hard_code_batch_size=False, val_rdd=None):
+        import tensorflow as tf
         if not names:
             names = ["features", "labels"]
         if not shapes:
@@ -541,7 +699,7 @@ class TFDataset:
         if not types:
             types = [tf.float32] * len(names)
         return TFDataset(rdd, names, shapes, types,
-                         batch_size, batch_pre_thread,
+                         batch_size, batch_per_thread,
                          hard_code_batch_size, val_rdd)
 
 
@@ -558,7 +716,7 @@ def _check_the_same(all_required_inputs, inputs_in_datasets):
 
 class TFPredictor:
 
-    def __init__(self, sess, outputs):
+    def __init__(self, sess, outputs, inputs=None, dataset=None):
         '''
         TFPredictor takes a list of tensorflow tensors as the model outputs and
         feed all the elements in TFDatasets to produce those outputs and returns
@@ -569,18 +727,41 @@ class TFPredictor:
         to load the trained variables then pass into TFPredictor
         :param outputs: the output tensors of the tensorflow model
         '''
+        if inputs is None:
+            dataset, inputs = TFPredictor._get_datasets_and_inputs(outputs)
+
         self.sess = sess
-        all_required_inputs = _find_placeholders(outputs)
-        self.dataset = tf.get_collection(all_required_inputs[0].name)[0]
-        self.inputs = self.dataset.tensors
-        _check_the_same(all_required_inputs, self.inputs)
+        self.dataset = dataset
+        self.inputs = inputs
         self.tfnet = TFNet.from_session(sess, self.inputs, outputs)
-        if self.dataset.batch_pre_thread <= 0:
-            raise ValueError("You should set batch_pre_thread on TFDataset" +
+        if self.dataset.batch_per_thread <= 0:
+            raise ValueError("You should set batch_per_thread on TFDataset" +
                              "instead of batch_size for prediction")
+
+    @staticmethod
+    def _get_datasets_and_inputs(outputs):
+        import tensorflow as tf
+        all_required_inputs = _find_placeholders(outputs)
+        dataset = tf.get_collection(all_required_inputs[0].name)[0]
+        inputs = dataset.tensors
+        _check_the_same(all_required_inputs, inputs)
+        return dataset, inputs
+
+    @classmethod
+    def from_outputs(cls, sess, outputs):
+        dataset, inputs = TFPredictor._get_datasets_and_inputs(outputs)
+        return cls(sess, outputs, inputs, dataset)
+
+    @classmethod
+    def from_keras(cls, keras_model, dataset):
+        import tensorflow.keras.backend as K
+        sess = K.get_session()
+        outputs = keras_model.outputs
+        inputs = keras_model.inputs
+        return cls(sess, outputs, inputs, dataset)
 
     def predict(self):
         rdd = self.dataset.rdd
         sample_rdd = rdd.map(lambda x: Sample.from_ndarray(x, np.array([0.0])))
 
-        return self.tfnet.predict(sample_rdd, self.dataset.batch_pre_thread)
+        return self.tfnet.predict(sample_rdd, self.dataset.batch_per_thread)
