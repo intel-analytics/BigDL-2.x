@@ -1,7 +1,7 @@
 A FeatureSet can be used to represent an input pipeline as a collection of elements which is used in the model optimization process. You can use FeatureSet to switch the memory type between `DRAM` 
 and `PMEM`.
 * `DRAM` is the default mode which would cached the training data in main memory.
-* `PMEM` mode would try to cache the training data in AEP rather than main memory. You should install the AEP hardware and [memkind library](https://github.com/memkind/memkind) before switch
+* `PMEM` mode would try to cache the training data in AEP rather than main memory. You should install the AEP hardware and [memkind library](https://github.com/memkind/memkind) before switching
  to this option. 
  
 * You can use FeatureSet.rdd() function to create a FeatureSet.
