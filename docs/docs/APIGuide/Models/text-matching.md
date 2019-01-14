@@ -1,5 +1,5 @@
 Analytics Zoo provides a pre-defined KNRM model that can be used for text matching (e.g. question answering).
-The model could be fed into NNFrames or BigDL Optimizer directly for training.
+For training, the model provides methods compile and fit or alternatively it could be fed into NNFrames and BigDL Optimizer.
 More text matching models will be supported in the future.
 
 ---

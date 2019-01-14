@@ -2,7 +2,7 @@ Analytics Zoo provides pre-defined models having different encoders that can be 
 
 **Highlights**
 
-1. Easy-to-use models, could be fed into NNFrames or BigDL Optimizer for training.
+1. Easy-to-use Keras-Style defined models which provides compile and fit methods for training. Alternatively, they could be fed into NNFrames or BigDL Optimizer.
 2. The encoders we support include CNN, LSTM and GRU.
 
 ---
