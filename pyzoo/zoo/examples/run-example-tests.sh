@@ -315,7 +315,7 @@ ${SPARK_HOME}/bin/spark-submit \
     --conf spark.executor.extraClassPath=${ANALYTICS_ZOO_JAR} \
     ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/anomalydetection/anomaly_detection.py \
     --nb_epoch 1 \
-    --input_dir hdfs://172.168.2.181:9000/NAB/nyc_taxi
+    --input_dir hdfs://172.168.2.181:9000/NAB/nyc_taxi/nyc_taxi.csv
 now=$(date "+%s")
 time7=$((now-start))
 echo "#7 anomalydetection time used:$time7 seconds"
