@@ -17,7 +17,7 @@
 package com.intel.analytics.zoo.pipeline.inference
 
 import java.io.File
-import java.util.Arrays
+import java.util.{Arrays, Properties}
 
 import com.google.common.io.Files
 import org.scalatest._
@@ -30,7 +30,17 @@ import sys.process._
 class OpenVinoInferenceModelSuite extends FunSuite with Matchers with BeforeAndAfterAll
   with InferenceSupportive {
 
-  val url_ov = "https://s3-ap-southeast-1.amazonaws.com/analytics-zoo-models/openvino"
+  var dataStoreUrl = "https://s3-ap-southeast-1.amazonaws.com"
+  try {
+    val prop = new Properties()
+    prop.load(this.getClass.getResourceAsStream("/app.properties"))
+    dataStoreUrl = prop.getProperty("data-store-url")
+  } catch { case e: Exception =>
+    dataStoreUrl = "https://s3-ap-southeast-1.amazonaws.com"
+  }
+
+  val url_ov = s"$dataStoreUrl/analytics-zoo-models/openvino"
+  // val url_ov = "http://10.239.45.10:8081/repository/raw/openvinotests"
   val url_ov_fasterrcnn_ir = s"$url_ov/IR_faster_rcnn_resnet101_coco_2018_01_28"
   val url_ov_fasterrcnn_ir_bin = s"$url_ov_fasterrcnn_ir/frozen_inference_graph.bin"
   val url_ov_fasterrcnn_ir_xml = s"$url_ov_fasterrcnn_ir/frozen_inference_graph.xml"

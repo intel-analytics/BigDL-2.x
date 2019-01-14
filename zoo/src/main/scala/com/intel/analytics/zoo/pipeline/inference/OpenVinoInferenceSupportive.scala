@@ -23,7 +23,6 @@ import com.google.common.io.Files
 import com.intel.analytics.zoo.pipeline.inference.DeviceType.DeviceTypeEnumVal
 import org.slf4j.LoggerFactory
 
-import scala.util.Random
 import scala.language.postfixOps
 import sys.process._
 
@@ -58,6 +57,8 @@ object OpenVinoInferenceSupportive extends InferenceSupportive {
     timing("load tensorflow model to openvino IR") {
       val loadTensorflowModelScriptPath: String = OpenVinoInferenceSupportive.
         getClass.getResource("/zoo-openvino-mo-run.sh").getPath()
+      val motfpyFilePath: String = OpenVinoInferenceSupportive.
+        getClass.getResource("/model_optimizer/mo_tf.py").getPath()
       val tmpDir = Files.createTempDir()
       val outputPath: String = tmpDir.getCanonicalPath
 
@@ -69,7 +70,8 @@ object OpenVinoInferenceSupportive extends InferenceSupportive {
           frozenModelFilePath,
           pipelineConfigFilePath,
           extensionsConfigFilePath,
-          outputPath) #> log !
+          outputPath,
+          motfpyFilePath) #> log !
       }
       logger.info(s"tensorflow model optimized, please check the output log $logFilePath")
       val modelFilePath: String = s"$outputPath/frozen_inference_graph.xml"
