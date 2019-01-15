@@ -829,7 +829,7 @@ Multiply a single scalar factor to the incoming data
 
 **Scala:**
 ```scala
-Mul[T: ClassTag](inputShape = null)
+Mul(inputShape = null)
 ```
 **Python:**
 ```python
@@ -839,6 +839,8 @@ Mul(input_shape=None, name=None)
 **Parameters:**
 
 * `inputShape`: Only need to specify this argument when you use this layer as the first layer of a model. For Scala API, it should be a [`Shape`](../keras-api-scala/#shape) object. For Python API, it should be a shape tuple. Batch dimension should be excluded.
+* `name`: String to set the name of the layer. If not specified, its name will by default to be a generated string.
+
 
 **Scala example:**
 ```scala
@@ -1632,7 +1634,8 @@ array([[[ 0.06560206,  0.38629526, -0.23159817],
 ## **RepeatVector**
 Repeats the input n times.
 
-The input of this layer should be 2D.
+The input of this layer should be 2D, i.e. (num_samples, features).
+The output of thi layer should be 3D, i.e. (num_samples, n, features).
 
 **Scala:**
 ```scala
@@ -1647,6 +1650,7 @@ RepeatVector(n, input_shape=None, name=None)
 
 * `n`: Repetition factor. Integer.
 * `inputShape`: Only need to specify this argument when you use this layer as the first layer of a model. For Scala API, it should be a [`Shape`](../keras-api-scala/#shape) object. For Python API, it should be a shape tuple. Batch dimension should be excluded.
+* `name`: String to set the name of the layer. If not specified, its name will by default to be a generated string.
 
 **Scala example:**
 ```scala
