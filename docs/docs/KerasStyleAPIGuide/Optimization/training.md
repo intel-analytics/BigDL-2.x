@@ -101,7 +101,7 @@ Use a model to do prediction.
 
 **Scala:**
 ```scala
-predict(x, batchPerThread=4)
+predict(x, batchPerThread = 4)
 ```
 
 Parameters:
@@ -128,7 +128,7 @@ Use a model to predict class labels.
 
 **Scala:**
 ```scala
-predictClasses(x, batchPerThread=4, zeroBasedLabel=True)
+predictClasses(x, batchPerThread = 4, zeroBasedLabel = True)
 ```
 
 Parameters:
