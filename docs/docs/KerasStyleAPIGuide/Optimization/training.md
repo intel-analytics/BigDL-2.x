@@ -101,12 +101,13 @@ Use a model to do prediction.
 
 **Scala:**
 ```scala
-predict(x)
+predict(x, batchPerThread=4)
 ```
 
 Parameters:
 
 * `x`: Evaluation dataset, RDD of Sample.
+* `batchPerThread`: The total batchSize is batchPerThread * numOfCores.
 
 **Python**
 ```python
