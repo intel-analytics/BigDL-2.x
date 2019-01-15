@@ -39,9 +39,9 @@ class UnsqueezeMapper(OperatorMapper):
             return [self._to_zoo_input(input)]
 
     def _to_tensor(self):
-        dim = None
         data = self.model_inputs[0].zvalue
-        if "axes" in self.onnx_attr.keys():
-            assert len(self.onnx_attr['axes']) == 1, "we only accept one dim input"
-            dim = int(self.onnx_attr['axes'][0])
-        return autograd.expand_dims(data, axis=dim)
+        dim = tuple([int(i) for i in self.onnx_attr['axes']])
+        data = autograd.expand_dims(data, axis=dim[0])
+        for i in dim[1:]:
+            data = autograd.expand_dims(data, axis=i+1)
+        return data
