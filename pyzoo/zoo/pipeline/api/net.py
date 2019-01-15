@@ -543,7 +543,7 @@ with variable_creator_scope():
         loss = keras_model.total_loss
         inputs = keras_model.inputs + keras_model.targets
 
-        variables = keras_model._collected_trainable_weights[1:]
+        variables = keras_model._collected_trainable_weights
         keras_optimizer = keras_model.optimizer
         grads = keras_optimizer.get_gradients(loss, variables)
 
