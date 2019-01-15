@@ -40,8 +40,7 @@ class UnsqueezeMapper(OperatorMapper):
 
     def _to_tensor(self):
         data = self.model_inputs[0].zvalue
-        dim = tuple([int(i) for i in self.onnx_attr['axes']])
-        data = autograd.expand_dims(data, axis=dim[0])
-        for i in dim[1:]:
-            data = autograd.expand_dims(data, axis=i+1)
+        dim = sorted(tuple([int(i) for i in self.onnx_attr['axes']]))
+        for i in dim:
+            data = autograd.expand_dims(data, axis=i)
         return data
