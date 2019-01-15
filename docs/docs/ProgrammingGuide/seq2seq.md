@@ -48,13 +48,13 @@ After building the model, we can use BigDL Optimizer to train it (with validatio
 **Scala**
 ```scala
 import com.intel.analytics.bigdl.optim._
-import com.intel.analytics.bigdl.nn.{TimeDistributedMaskCriterion, InternalClassNLLCriterion}
+import com.intel.analytics.bigdl.nn.{TimeDistributedMaskCriterion, ClassNLLCriterion}
 
 val optimizer = Optimizer(
 model,
 trainSet,
 TimeDistributedMaskCriterion(
-  InternalClassNLLCriterion(paddingValue = padId),
+  ClassNLLCriterion(paddingValue = padId),
   paddingValue = padId
 ),
 batchSize = 128)
