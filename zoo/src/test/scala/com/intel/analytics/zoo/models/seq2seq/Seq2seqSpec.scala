@@ -385,6 +385,8 @@ class RNNEncoderSerialTest extends ModuleSerializationTest {
     val cell = LSTM[Float](3).asInstanceOf[Recurrent[Float]]
     val layer = RNNEncoder[Float](Array(cell), Embedding[Float](10, 4), Shape(2))
     layer.build(Shape(1, 2))
+    val w = layer.parameters()._1
+    w.foreach(_.fill(100.0f))
     val input = Tensor[Float](1, 2).rand()
     runSerializationTest(layer, input)
   }
@@ -400,12 +402,15 @@ class RNNDecoderSerialTest extends ModuleSerializationTest {
     val shape4 = SingleShape(List(1, 6))
     val mul2 = MultiShape(List(MultiShape(List(shape3, shape4))))
 
-    val shape = MultiShape(List(Shape(2, 6), mul))
-    val layer = RNNDecoder[Float]("lstm", 1, 6, inputShape = shape)
+    val shape = MultiShape(List(Shape(2), mul))
+    val layer = RNNDecoder[Float]("lstm", 1, 6, inputShape = shape,
+      embedding = Embedding[Float](100, 6))
 
-    layer.build(MultiShape(List(Shape(1, 2, 6), mul2)))
+    layer.build(MultiShape(List(Shape(1, 2), mul2)))
+    val w = layer.parameters()._1
+    w.foreach(_.fill(50.0f))
     val states = T(T(Tensor[Float](1, 6).rand(), Tensor[Float](1, 6).rand()))
-    val input = T(Tensor[Float](1, 2, 6).rand(), states)
+    val input = T(Tensor[Float](1, 2).rand(), states)
     runSerializationTest(layer, input)
   }
 }
@@ -419,6 +424,8 @@ class Seq2seqSerialTest extends ModuleSerializationTest {
     val input2 = Tensor[Float](1, 2, 2)
     val model = Seq2seq[Float](encoder, decoder,
       SingleShape(List(2, 2)), SingleShape(List(2, 2)))
+    val w = model.parameters()._1
+    w.foreach(_.fill(150.0f))
 
     ZooSpecHelper.testZooModelLoadSave2(
       model.asInstanceOf[ZooModel[Table, Tensor[Float], Float]],
