@@ -96,10 +96,13 @@ class WideAndDeepSpec extends ZooSpecHelper {
 
   "WideAndDeep deep model embedding and continuous part" should "work properly" in {
     val columnInfo = ColumnFeatureInfo(
+      indicatorCols = Array("occupation", "gender"),
+      indicatorDims = Array(21, 3),
       embedCols = Array("userId", "itemId"),
       embedInDims = Array(100, 100),
       embedOutDims = Array(20, 20),
-      continuousCols = Array("age"))
+      continuousCols = Array("age")
+    )
     val model = WideAndDeep[Float]("deep", 5, columnInfo)
 
     val data: RDD[Tensor[Float]] = datain
@@ -144,6 +147,11 @@ class WideAndDeepSpec extends ZooSpecHelper {
       wideBaseDims = Array(21, 3),
       wideCrossCols = Array("occupation-gender"),
       wideCrossDims = Array(100),
+      indicatorCols = Array("occupation", "gender"),
+      indicatorDims = Array(21, 3),
+      embedCols = Array("userId", "itemId"),
+      embedInDims = Array(100, 100),
+      embedOutDims = Array(20, 20),
       continuousCols = Array("age"))
     val model = WideAndDeep[Float]("wide_n_deep", 2, columnInfo)
 
@@ -154,11 +162,12 @@ class WideAndDeepSpec extends ZooSpecHelper {
       .select("occupation", "gender", "age", "userId", "itemId")
       .unionAll(datain.select("occupation", "gender", "age", "userId", "itemId"))
       .withColumn("occupation-gender", bucketUDF(col("occupation"), col("gender")))
+
     val data: RDD[Activity] = unioned
       .rdd.map(r => {
       val wideTensor: Tensor[Float] = Utils.getWideTensor(r, columnInfo)
       val deepTensor: Tensor[Float] = Utils.getDeepTensor(r, columnInfo)
-      T(wideTensor, deepTensor)
+      T(T(wideTensor, deepTensor))
     })
     data.map { input =>
       val output = model.forward(input)
