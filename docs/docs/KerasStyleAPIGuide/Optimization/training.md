@@ -19,9 +19,9 @@ compile(optimizer, loss, metrics = null)
 
 Parameters:
 
- * @param optimizer Optimization method to be used.
- * @param loss Criterion to be used.
- * @param metrics Validation method(s) to be used. Default is null if no validation is needed.
+* `optimizer`: Optimization method to be used.
+* `loss`: Criterion to be used.
+* `metrics`: Validation method(s) to be used. Default is null if no validation is needed.
 
 **Python**
 ```python
@@ -46,10 +46,10 @@ fit(x, batchSize = 32，nbEpoch = 10, validationData = null)
 
 Parameters:
 
-* @param x Training dataset, RDD of Sample.
-* @param batchSize Number of samples per gradient update. Default is 32.
-* @param nbEpoch Number of epochs to train. Default is 10.
-* @param validationData RDD of Sample, or null if validation is not configured. Default is null.
+* `x`: Training dataset, RDD of Sample.
+* `batchSize`: Number of samples per gradient update. Default is 32.
+* `nbEpoch`: Number of epochs to train. Default is 10.
+* `validationData`: RDD of Sample, or null if validation is not configured. Default is null.
 
 **Python**
 ```python
@@ -80,8 +80,8 @@ evaluate(x, batchSize = 32)
 
 Parameters:
 
-* @param x Evaluation dataset, RDD of Sample.
-* @param batchSize Number of samples per batch.
+* `x`: Evaluation dataset, RDD of Sample.
+* `batchSize`: Number of samples per batch.
 
 **Python**
 ```python
@@ -106,7 +106,7 @@ predict(x)
 
 Parameters:
 
-* @param x Evaluation dataset, RDD of Sample.
+* `x`: Evaluation dataset, RDD of Sample.
 
 **Python**
 ```python
@@ -132,9 +132,9 @@ predictClasses(x, batchPerThread=4, zeroBasedLabel=True)
 
 Parameters:
 
-* @param x Prediction data, RDD of Sample.
-* @param batchPerThread The default batchPerThread is 4, and the total batchSize is batchPerThread * rdd.getNumPartitions.
-* @param zeroBasedLabel Boolean. Whether result labels start from 0. Default is true. If false, result labels start from 1.
+* `x`: Prediction data, RDD of Sample.
+* `batchPerThread`: The default batchPerThread is 4, and the total batchSize is batchPerThread * rdd.getNumPartitions.
+* `zeroBasedLabel`: Boolean. Whether result labels start from 0. Default is true. If false, result labels start from 1.
 
 **Python**
 ```python
