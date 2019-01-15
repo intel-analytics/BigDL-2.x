@@ -283,16 +283,16 @@ class TextSetSpec extends ZooSpecHelper {
     knrm.evaluateMAP(listSet)
   }
 
-  "TextSet from relation pairs and lists with training and validation" should "work properly" in {
+  "Array TextSet from relation pairs and lists with training and validation" should "work properly" in {
     val relations = Array(Relation("Q1", "A1", 1), Relation("Q2", "A1", 0), Relation("Q2", "A2", 1),
       Relation("Q2", "A3", 0))
-    val relationsArray = sc.parallelize(relations)
+    val relationsArray = relations
     val qIndices = Array(1.0f, 2.0f, 3.0f)
     val q1 = TextFeature(null, uri = "Q1")
     q1(TextFeature.indexedTokens) = qIndices
     val q2 = TextFeature(null, uri = "Q2")
     q2(TextFeature.indexedTokens) = qIndices
-    val qSet = TextSet.rdd(sc.parallelize(Seq(q1, q2)))
+    val qSet = TextSet.array(Array(q1, q2))
     val aIndices = Array(2.0f, 2.0f, 3.0f, 5.0f, 4.0f, 0.0f)
     val a1 = TextFeature(null, uri = "A1")
     a1(TextFeature.indexedTokens) = aIndices
@@ -300,10 +300,10 @@ class TextSetSpec extends ZooSpecHelper {
     a2(TextFeature.indexedTokens) = aIndices
     val a3 = TextFeature(null, uri = "A3")
     a3(TextFeature.indexedTokens) = aIndices
-    val aSet = TextSet.rdd(sc.parallelize(Seq(a1, a2, a3)))
+    val aSet = TextSet.array(Array(a1, a2, a3))
     val pairSet = TextSet.fromRelationPairs(relationsArray, qSet, aSet)
     require(pairSet.isLocal)
-    val pairFeatures = pairSet.toLocal().array.collect()
+    val pairFeatures = pairSet.toLocal().array
     require(pairFeatures.length == 2)
     require(pairFeatures.map(_.uri()).toSet == Set("Q2A2A1", "Q2A2A3"))
     pairFeatures.foreach(feature => {
@@ -317,7 +317,7 @@ class TextSetSpec extends ZooSpecHelper {
 
     val listSet = TextSet.fromRelationLists(relationsArray, qSet, aSet)
     require(listSet.isLocal)
-    val listFeatures = listSet.toLocal().rdd.collect().sortBy(_.uri().length)
+    val listFeatures = listSet.toLocal().array.sortBy(_.uri().length)
     require(listFeatures.length == 2)
     val listFeature1 = listFeatures(0)
     require(listFeature1.uri() == "Q1A1")
