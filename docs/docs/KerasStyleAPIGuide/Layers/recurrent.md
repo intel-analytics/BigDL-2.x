@@ -115,6 +115,7 @@ Parameters:
 * `uRegularizer`: An instance of [Regularizer](../../APIGuide/Regularizers/), applied the recurrent weights matrices. Default is null.
 * `bRegularizer`: An instance of [Regularizer](../../APIGuide/Regularizers/), applied to the bias. Default is null.
 * `inputShape`: Only need to specify this argument when you use this layer as the first layer of a model. For Scala API, it should be a [`Shape`](../keras-api-scala/#shape) object. For Python API, it should be a shape tuple. Batch dimension should be excluded.
+* `name`: String to set the name of the layer. If not specified, its name will by default to be a generated string.
 
 **Scala example:**
 ```scala
