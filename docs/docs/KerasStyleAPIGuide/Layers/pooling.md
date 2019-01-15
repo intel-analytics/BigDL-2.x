@@ -239,7 +239,8 @@ Data format currently supported for this layer is 'CHANNEL_FIRST' (dimOrdering='
 
 Border mode currently supported for this layer is 'valid'.
 
-The input of this layer should be 5D.
+The input of this layer should be 5D, i.e. (batch_size, spatial_dim1, spatial_dim2, spatial_dim3, channels).
+The output of this layer should be 2D, i.e. (batch_size, channels).
 
 **Scala:**
 ```scala
@@ -254,6 +255,7 @@ Parameters:
 
 * `dimOrdering`: Format of input data. Only 'th' (Channel First) is supported for now.
 * `inputShape`: Only need to specify this argument when you use this layer as the first layer of a model. For Scala API, it should be a [`Shape`](../keras-api-scala/#shape) object. For Python API, it should be a shape tuple. Batch dimension should be excluded.
+* `name`: String to set the name of the layer. If not specified, its name will by default to be a generated string.
 
 **Scala example:**
 
