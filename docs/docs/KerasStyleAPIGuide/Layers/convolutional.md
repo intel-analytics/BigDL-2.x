@@ -100,7 +100,8 @@ Applies a 2D convolution over an input image composed of several input planes.
 
 You can also use `Conv2D` as an alias of this layer.
 
-The input of this layer should be 4D.
+The input of this layer should be 4D, i.e. (samples, channels, rows, cols).
+The output of this layer should be 4D, i.e. (samples, filters, new_rows, new_cols).
 
 **Scala:**
 ```scala
@@ -125,6 +126,7 @@ Convolution2D(nb_filter, nb_row, nb_col, init="glorot_uniform", activation=None,
 * `bRegularizer`: An instance of [Regularizer](../../APIGuide/Regularizers/), applied to the bias. Default is null.
 * `bias`: Whether to include a bias (i.e. make the layer affine rather than linear). Default is true.
 * `inputShape`: Only need to specify this argument when you use this layer as the first layer of a model. For Scala API, it should be a [`Shape`](../keras-api-scala/#shape) object. For Python API, it should be a shape tuple. Batch dimension should be excluded.
+* `name`: String to set the name of the layer. If not specified, its name will by default to be a generated string.
 
 **Scala example:**
 ```scala
@@ -1024,7 +1026,10 @@ Output is
 ## **Cropping1D**
 Cropping layer for 1D input (e.g. temporal sequence).
 
-The input of this layer should be 3D.
+It crops along the time dimension (axis 1). 
+
+The input of this layer should be 3D, i.e. (batch, axis_to_crop, features).
+The output of this layer should be 3D, i.e. (batch, cropped_axis, features).
 
 **Scala:**
 ```scala
@@ -1039,6 +1044,7 @@ Cropping1D(cropping=(1, 1), input_shape=None, name=None)
 
 * `cropping`: Length 2. How many units should be trimmed off at the beginning and end of the cropping dimension. Default is (1, 1).
 * `inputShape`: Only need to specify this argument when you use this layer as the first layer of a model. For Scala API, it should be a [`Shape`](../keras-api-scala/#shape) object. For Python API, it should be a shape tuple. Batch dimension should be excluded.
+* `name`: String to set the name of the layer. If not specified, its name will by default to be a generated string.
 
 **Scala example:**
 ```scala
