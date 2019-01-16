@@ -27,7 +27,7 @@ class LRNMapper(OperatorMapper):
         alpha = float(self.onnx_attr['alpha']) if "alpha" in self.onnx_attr else 0.0001
         beta = float(self.onnx_attr['beta']) if "beta" in self.onnx_attr else 0.75
         bias = float(self.onnx_attr['bias']) if "bias" in self.onnx_attr else 1.0
-        size = self.onnx_attr['size']
+        size = int(self.onnx_attr['size'])
         dim_ordering = "th"
 
         return zlayers.LRN2D(alpha=alpha, k=bias, beta=beta,
