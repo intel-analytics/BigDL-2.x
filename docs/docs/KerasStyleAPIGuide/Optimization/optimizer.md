@@ -79,21 +79,6 @@ An implementation of Adam optimization, first-order gradient-based optimization 
 
 ## Adamax
 
-*AdaDelta* implementation for *SGD* 
-It has been proposed in `ADADELTA: An Adaptive Learning Rate Method`.
-http://arxiv.org/abs/1212.5701.
-
-**Scala:**
-```scala
-val optimMethod = Adadelta(decayRate = 0.9, Epsilon = 1e-10)
-```
-**Python:**
-```python
-optim_method = AdaDelta(decayrate = 0.9, epsilon = 1e-10)
-```
-
-## Adadelta
-
 An implementation of Adamax http://arxiv.org/pdf/1412.6980.pdf
 
 Arguments:
@@ -106,6 +91,21 @@ Arguments:
 Returns:
 
 the new x vector and the function list {fx}, evaluated before the update
+
+## Adadelta
+
+*AdaDelta* implementation for *SGD* 
+It has been proposed in `ADADELTA: An Adaptive Learning Rate Method`.
+http://arxiv.org/abs/1212.5701.
+
+**Scala:**
+```scala
+val optimMethod = Adadelta(decayRate = 0.9, Epsilon = 1e-10)
+```
+**Python:**
+```python
+optim_method = AdaDelta(decayrate = 0.9, epsilon = 1e-10)
+```
 
 ## Adagrad
 
