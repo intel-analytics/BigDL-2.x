@@ -144,7 +144,7 @@ predict_classes(x, batch_per_thread=4, zero_based_label=True)
 
 Parameters:
 
-* `x`: Prediction data. A Numpy array or RDD of Sample or [ImageSet](../../APIGuide/FeatureEngineering/image/) or [TextSet](../../APIGuide/FeatureEngineering/text)..
+* `x`: Prediction data. A Numpy array or RDD of Sample or [ImageSet](../../APIGuide/FeatureEngineering/image/) or [TextSet](../../APIGuide/FeatureEngineering/text).
 * `batch_per_thread`:
         The default value is 4.
         When distributed is True,the total batch size is batch_per_thread * rdd.getNumPartitions.
