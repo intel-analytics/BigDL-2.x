@@ -464,6 +464,7 @@ class NNEstimatorSpec extends FlatSpec with Matchers with BeforeAndAfter {
      *  nnModel.write.overwrite().save(modelLocation)
      */
     val data = sqlContext.createDataFrame(smallData).toDF("features", "label")
+    NNModel.load(modelLocation).setBatchSize(8) // try load multiple times.
     val loadedModel = NNModel.load(modelLocation).setBatchSize(8)
     loadedModel.transform(data).collect()
   }
