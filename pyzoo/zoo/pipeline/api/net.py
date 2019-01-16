@@ -530,15 +530,15 @@ with variable_creator_scope():
 
     @classmethod
     def from_loss(cls, loss, optim_method, session=None, val_outputs=None,
-                  val_labels=None, val_method=None, val_split=0.0, config=None):
+                  val_labels=None, val_method=None, val_split=0.0, **kwargs):
         args = TFOptimizer._get_arguments_from_loss(loss, optim_method,
                                                     session, val_outputs,
                                                     val_labels, val_method)
 
-        return cls(*(args + [val_split, config]))
+        return cls(*(args + [val_split]), **kwargs)
 
     @classmethod
-    def from_keras(cls, keras_model, dataset, val_spilt=0.0, config=None):
+    def from_keras(cls, keras_model, dataset, val_spilt=0.0, **kwargs):
         import tensorflow.keras.backend as K
         loss = keras_model.total_loss
         inputs = keras_model.inputs + keras_model.targets
@@ -574,7 +574,7 @@ with variable_creator_scope():
         return cls(loss, optim_method, sess, dataset, inputs,
                    grads, variables, loss.graph, val_outputs, val_labels,
                    bigdl_val_methods, val_spilt,
-                   tensors_with_value=tensor_with_value, session_config=config)
+                   tensors_with_value=tensor_with_value, **kwargs)
 
     @staticmethod
     def to_bigdl_optim_method(koptim_method):
