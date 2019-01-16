@@ -73,18 +73,21 @@ object AnomalyDetection {
 
     val featureDF = loadData(sqlContext, param.inputDir)
     val featureShape = Shape(param.unrollLength, 3)
-    val unrolled = assemblyFeature(featureDF, true, param.unrollLength)
+    val unrolled: RDD[FeatureLabelIndex[Float]] =
+      assemblyFeature(featureDF, true, param.unrollLength)
     val (trainRdd, testRdd) = Utils.trainTestSplit(unrolled, testSize = 1000)
 
     val model: AnomalyDetector[Float] = AnomalyDetector[Float](featureShape)
     model.compile(optimizer = new RMSprop(learningRate = 0.001, decayRate = 0.9),
-      loss = MeanSquaredError[Float]())
-    model.fit(trainRdd, batchSize = param.batchSize, nbEpoch = param.nEpochs)
+      loss = MeanSquaredError[Float](),
+      metrics = List( new MAE[Float]()))
+    model.fit(trainRdd, batchSize = param.batchSize, nbEpoch = param.nEpochs,
+      validationData = testRdd)
     val predictions = model.predict(testRdd)
 
     val yPredict: RDD[Float] = predictions.map(x => x.toTensor.toArray()(0))
     val yTruth: RDD[Float] = testRdd.map(x => x.label.toArray()(0))
-    val anomalies = AnomalyDetector.detectAnomalies(yPredict, yTruth, 5)
+    val anomalies = AnomalyDetector.detectAnomalies(yTruth, yPredict, 50)
     anomalies.take(5).foreach(println)
   }
 
