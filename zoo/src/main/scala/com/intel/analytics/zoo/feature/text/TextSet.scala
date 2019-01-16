@@ -408,8 +408,7 @@ object TextSet {
     val array1 = corpus1.toLocal().array
     val array2 = corpus2.toLocal().array
     for (i <- array1) {
-      mapText1.+(i.toString)
-      mapText1.updated(i.toString, i.getIndices)
+      mapText1(i.uri()) = i.getIndices
     }
     for (i <- array2) {
       mapText2.+(i.toString)

@@ -284,9 +284,8 @@ class TextSetSpec extends ZooSpecHelper {
   }
 
   "Array TextSet from relation pairs and lists with training and validation" should "work properly" in {
-    val relations = Array(Relation("Q1", "A1", 1), Relation("Q2", "A1", 0), Relation("Q2", "A2", 1),
+    val relations = Array(Relation("Q1", "A1", 1), Relation("Q1", "A2", 0), Relation("Q2", "A1", 0), Relation("Q2", "A2", 1),
       Relation("Q2", "A3", 0))
-    val relationsArray = relations
     val qIndices = Array(1.0f, 2.0f, 3.0f)
     val q1 = TextFeature(null, uri = "Q1")
     q1(TextFeature.indexedTokens) = qIndices
@@ -301,11 +300,11 @@ class TextSetSpec extends ZooSpecHelper {
     val a3 = TextFeature(null, uri = "A3")
     a3(TextFeature.indexedTokens) = aIndices
     val aSet = TextSet.array(Array(a1, a2, a3))
-    val pairSet = TextSet.fromRelationPairs(relationsArray, qSet, aSet)
+    val pairSet = TextSet.fromRelationPairs(relations, qSet, aSet)
     require(pairSet.isLocal)
     val pairFeatures = pairSet.toLocal().array
-    require(pairFeatures.length == 2)
-    require(pairFeatures.map(_.uri()).toSet == Set("Q2A2A1", "Q2A2A3"))
+    require(pairFeatures.length == 3)
+    require(pairFeatures.map(_.uri()).toSet == Set("Q1A1A2", "Q2A2A1", "Q2A2A3"))
     pairFeatures.foreach(feature => {
       val sample = feature.getSample
       require(sample.feature().size().sameElements(Array(2, 9)))
@@ -315,7 +314,7 @@ class TextSetSpec extends ZooSpecHelper {
       require(sample.label().reshape(Array(2)).toArray().sameElements(Array(1.0f, 0.0f)))
     })
 
-    val listSet = TextSet.fromRelationLists(relationsArray, qSet, aSet)
+    val listSet = TextSet.fromRelationLists(relations, qSet, aSet)
     require(listSet.isLocal)
     val listFeatures = listSet.toLocal().array.sortBy(_.uri().length)
     require(listFeatures.length == 2)

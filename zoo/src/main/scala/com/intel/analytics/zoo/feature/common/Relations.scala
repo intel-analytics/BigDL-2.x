@@ -20,7 +20,7 @@ import org.apache.spark.SparkContext
 import org.apache.spark.rdd.RDD
 import org.apache.spark.sql.SQLContext
 
-import scala.collection.mutable.ArrayBuffer
+import scala.collection.mutable.{ArrayBuffer, ListBuffer}
 import scala.io.Source
 
 object Relations {
@@ -102,27 +102,43 @@ object Relations {
    * generateRelationPairs for Relation array
    */
   def generateRelationPairs(relations: Array[Relation]): Array[RelationPair] = {
-    val relSet: Map[String, Map[Int, ArrayBuffer[String]]] = Map()
-    val pairList: List[String] = List()
+    val relSet: scala.collection.mutable.Map[String, scala.collection.mutable.Map[Int, ArrayBuffer[String]]] = scala.collection.mutable.Map()
+    val pairList: ListBuffer[RelationPair] = ListBuffer()
     for (relation <- relations) {
       if (! relSet.contains(relation.id1)) {
-        relSet.+(relation.id1)
+        val map: scala.collection.mutable.Map[Int, ArrayBuffer[String]] = scala.collection.mutable.Map()
+        relSet(relation.id1) = map
+        if (! relSet.get(relation.id1).get.contains(relation.label)) {
+          val buffer: ArrayBuffer[String] = ArrayBuffer()
+          buffer.append(relation.id2)
+          val map = scala.collection.mutable.Map(relation.label -> buffer)
+          relSet(relation.id1) = map
+        }
       }
-      if (! relSet.get(relation.id1).contains(relation.label)) {
-        val map = Map(relation.label -> ArrayBuffer())
-        relSet.updated(relation.id1, map)
+      else{
+        if (! relSet.get(relation.id1).get.contains(relation.label)) {
+          val buffer: ArrayBuffer[String] = ArrayBuffer()
+          buffer.append(relation.id2)
+          val map = relSet.get(relation.id1).get
+          map(relation.label) = buffer
+          relSet(relation.id1) = map
+        }
+        else{
+          val res = relSet.get(relation.id1).get
+          res.get(relation.label).get.append(relation.id2)
+          relSet(relation.id1) = res
+        }
       }
-      val res = relSet.get(relation.id1)
-      res.get(relation.label).+(relation.id2)
-      relSet.updated(relation.id1, res)
     }
-    for(relation <- relations){
-      val map = relSet.get(relation.id1)
-      val buffer0 = map.get(0)
-      val buffer1 = map.get(1)
+
+    for((k, v) <- relSet){
+      val map = v
+      val buffer0 = map.get(0).get.toArray
+      val buffer1 = map.get(1).get.toArray
       for(m <- buffer1){
         for(n <- buffer0){
-          pairList.:+(RelationPair(relation.id1, m, n))
+          val pair = RelationPair(k, m, n)
+          pairList.append(pair)
         }
       }
     }
