@@ -16,11 +16,11 @@
 
 package com.intel.analytics.zoo.models.seq2seq
 
-import com.intel.analytics.bigdl.nn.Max
-import com.intel.analytics.bigdl.nn.abstractnn.{AbstractModule, Activity}
 import com.intel.analytics.bigdl.nn.keras.KerasLayer
 import com.intel.analytics.bigdl.tensor.Tensor
-import com.intel.analytics.bigdl.utils.{MultiShape, SingleShape, T}
+import com.intel.analytics.bigdl.utils.{MultiShape, Shape, SingleShape, T, Table}
+import com.intel.analytics.zoo.models.common.ZooModel
+import com.intel.analytics.zoo.pipeline.api.keras.ZooSpecHelper
 import com.intel.analytics.zoo.pipeline.api.keras.layers._
 import com.intel.analytics.zoo.pipeline.api.keras.models.Sequential
 import com.intel.analytics.zoo.pipeline.api.keras.serializer.ModuleSerializationTest
@@ -391,43 +391,54 @@ class Seq2seqSpec extends FlatSpec with Matchers with BeforeAndAfter {
 
 class RNNEncoderSerialTest extends ModuleSerializationTest {
   override def test(): Unit = {
-    // TODO: fix seraialTest exception
-//    val cell = LSTM[Float](3).asInstanceOf[Recurrent[Float]]
-//    val layer = RNNEncoder[Float](Array(cell), null, null)
-//    layer.build(Shape(1, 2, 6))
-//    val input = Tensor[Float](1, 2, 6).rand()
-//    runSerializationTest(layer, input)
+    val cell = LSTM[Float](3).asInstanceOf[Recurrent[Float]]
+    val layer = RNNEncoder[Float](Array(cell), Embedding[Float](10, 4), Shape(2))
+    layer.build(Shape(1, 2))
+    val w = layer.parameters()._1
+    w.foreach(_.fill(100.0f))
+    val input = Tensor[Float](1, 2).rand()
+    runSerializationTest(layer, input)
   }
 }
 
 class RNNDecoderSerialTest extends ModuleSerializationTest {
   override def test(): Unit = {
-    // TODO: fix seraialTest exception
-//    val shape3 = SingleShape(List(1, 6))
-//    val shape4 = SingleShape(List(1, 6))
-//
-//    val mul2 = MultiShape(List(MultiShape(List(shape3, shape4))))
-//    val layer = RNNDecoder[Float]("lstm", 1, 6)
-//    layer.build(MultiShape(List(Shape(1, 2, 6), mul2)))
-//    val states = T(T(Tensor[Float](1, 6).rand(), Tensor[Float](1, 6).rand()))
-//    val input = T(Tensor[Float](1, 2, 6).rand(), states)
-//    runSerializationTest(layer, input)
+    val shape1 = SingleShape(List(6))
+    val shape2 = SingleShape(List(6))
+    val mul = MultiShape(List(MultiShape(List(shape1, shape2))))
+
+    val shape3 = SingleShape(List(1, 6))
+    val shape4 = SingleShape(List(1, 6))
+    val mul2 = MultiShape(List(MultiShape(List(shape3, shape4))))
+
+    val shape = MultiShape(List(Shape(2), mul))
+    val layer = RNNDecoder[Float]("lstm", 1, 6, inputShape = shape,
+      embedding = Embedding[Float](100, 6))
+
+    layer.build(MultiShape(List(Shape(1, 2), mul2)))
+    val w = layer.parameters()._1
+    w.foreach(_.fill(50.0f))
+    val states = T(T(Tensor[Float](1, 6).rand(), Tensor[Float](1, 6).rand()))
+    val input = T(Tensor[Float](1, 2).rand(), states)
+    runSerializationTest(layer, input)
   }
 }
 
 class Seq2seqSerialTest extends ModuleSerializationTest {
   override def test(): Unit = {
-    // TODO: support save seq2seq(shape)
-//    val encoder = RNNEncoder[Float]("lstm", 1, 3)
-//    val decoder = RNNDecoder[Float]("lstm", 1, 3)
-//
-//    val input = Tensor.ones[Float](1, 2, 2)
-//    val model = Seq2seq[Float](encoder, decoder,
-//      SingleShape(List(2, 2)), SingleShape(List(2, 2)))
-//
-//    ZooSpecHelper.testZooModelLoadSave(
-//      model.asInstanceOf[ZooModel[Tensor[Float], Tensor[Float], Float]],
-//      input, Seq2seq.loadModel[Float])
+    val encoder = RNNEncoder[Float]("lstm", 1, 2)
+    val decoder = RNNDecoder[Float]("lstm", 1, 2)
+
+    val input = Tensor.ones[Float](1, 2, 2)
+    val input2 = Tensor[Float](1, 2, 2)
+    val model = Seq2seq[Float](encoder, decoder,
+      SingleShape(List(2, 2)), SingleShape(List(2, 2)))
+    val w = model.parameters()._1
+    w.foreach(_.fill(150.0f))
+
+    ZooSpecHelper.testZooModelLoadSave2(
+      model.asInstanceOf[ZooModel[Table, Tensor[Float], Float]],
+      T(input, input2), Seq2seq.loadModel[Float])
   }
 }
 
