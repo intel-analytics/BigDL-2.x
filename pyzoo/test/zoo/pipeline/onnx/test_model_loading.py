@@ -1444,7 +1444,7 @@ class TestModelLoading(OnnxTestCase):
         import caffe2.python.onnx.backend as backend
 
         ndarray_input = np.random.randn(1, 3, 224, 224).astype(np.float32)
-        onnx_model = onnx.load("/home/xinqi/inception_v2/model.onnx")
+        onnx_model = onnx.load("/home/xinqi/bvlc_googlenet/model.onnx")
         zmodel = OnnxLoader(onnx_model.graph).to_keras()
         zoutput = zmodel.forward(ndarray_input)
 
