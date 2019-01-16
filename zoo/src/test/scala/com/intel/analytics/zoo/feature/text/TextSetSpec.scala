@@ -30,6 +30,7 @@ import com.intel.analytics.zoo.pipeline.api.keras.models.Sequential
 import com.intel.analytics.zoo.pipeline.api.keras.objectives.{RankHinge, SparseCategoricalCrossEntropy}
 import org.apache.spark.sql.SQLContext
 import org.apache.spark.{SparkConf, SparkContext}
+import com.intel.analytics.zoo.feature.text.TextFeature
 
 import scala.collection.immutable.HashSet
 
@@ -304,31 +305,33 @@ class TextSetSpec extends ZooSpecHelper {
     require(pairSet.isLocal)
     val pairFeatures = pairSet.toLocal().array
     require(pairFeatures.length == 3)
-    require(pairFeatures.map(_.uri()).toSet == Set("Q1A1A2", "Q2A2A1", "Q2A2A3"))
-    pairFeatures.foreach(feature => {
+    require(pairFeatures.map(_.getURI).toSet == Set("Q1A1A2", "Q2A2A1", "Q2A2A3"))
+
+    for(feature <- pairFeatures){
       val sample = feature.getSample
       require(sample.feature().size().sameElements(Array(2, 9)))
       require(sample.feature().reshape(Array(18)).toArray().sameElements(
         qIndices ++ aIndices ++ qIndices ++ aIndices))
       require(sample.label().size().sameElements(Array(2, 1)))
       require(sample.label().reshape(Array(2)).toArray().sameElements(Array(1.0f, 0.0f)))
-    })
+    }
 
     val listSet = TextSet.fromRelationLists(relations, qSet, aSet)
     require(listSet.isLocal)
-    val listFeatures = listSet.toLocal().array.sortBy(_.uri().length)
+    val listFeatures = listSet.toLocal().array.sortBy(_.getURI.length)
     require(listFeatures.length == 2)
     val listFeature1 = listFeatures(0)
-    require(listFeature1.uri() == "Q1A1")
+    require(listFeature1.getURI.startsWith("Q1"))
+    require(listFeature1.getURI.contains("A1") && listFeature1.getURI.contains("A2"))
     val sample1 = listFeature1.getSample
-    require(sample1.feature().size().sameElements(Array(1, 9)))
-    require(sample1.feature().reshape(Array(9)).toArray().sameElements(qIndices ++ aIndices))
-    require(sample1.label().size().sameElements(Array(1, 1)))
-    require(sample1.label().reshape(Array(1)).toArray().sameElements(Array(1.0f)))
+    require(sample1.feature().size().sameElements(Array(2, 9)))
+    require(sample1.feature().reshape(Array(18)).toArray().sameElements(qIndices ++ aIndices))
+    require(sample1.label().size().sameElements(Array(2, 1)))
+    require(sample1.label().reshape(Array(2)).toArray().sorted.sameElements(Array(0.0f, 1.0f)))
     val listFeature2 = listFeatures(1)
-    require(listFeature2.uri().startsWith("Q2"))
-    require(listFeature2.uri().contains("A1") && listFeature2.uri().contains("A2") &&
-      listFeature2.uri().contains("A3"))
+    require(listFeature2.getURI.startsWith("Q2"))
+    require(listFeature2.getURI.contains("A1") && listFeature2.getURI.contains("A2") &&
+      listFeature2.getURI.contains("A3"))
     val sample2 = listFeature2.getSample
     require(sample2.feature().size().sameElements(Array(3, 9)))
     require(sample2.feature().reshape(Array(27)).toArray().sameElements(qIndices ++ aIndices
