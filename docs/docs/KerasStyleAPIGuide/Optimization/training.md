@@ -46,7 +46,7 @@ fit(x, batchSize = 32，nbEpoch = 10, validationData = null)
 
 Parameters:
 
-* `x`: Training dataset, RDD of Sample.
+* `x`: Training dataset, RDD of Sample or [ImageSet](../../APIGuide/FeatureEngineering/image/) or [TextSet](../../APIGuide/FeatureEngineering/text).
 * `batchSize`: Number of samples per gradient update. Default is 32.
 * `nbEpoch`: Number of epochs to train. Default is 10.
 * `validationData`: RDD of Sample, or null if validation is not configured. Default is null.
@@ -80,7 +80,7 @@ evaluate(x, batchSize = 32)
 
 Parameters:
 
-* `x`: Evaluation dataset, RDD of Sample.
+* `x`: Evaluation dataset, RDD of Sample or [ImageSet](../../APIGuide/FeatureEngineering/image/) or [TextSet](../../APIGuide/FeatureEngineering/text).
 * `batchSize`: Number of samples per batch.
 
 **Python**
@@ -106,7 +106,7 @@ predict(x, batchPerThread = 4)
 
 Parameters:
 
-* `x`: Evaluation dataset, RDD of Sample.
+* `x`: Evaluation dataset, RDD of Sample or [ImageSet](../../APIGuide/FeatureEngineering/image/) or [TextSet](../../APIGuide/FeatureEngineering/text).
 * `batchPerThread`: The total batchSize is batchPerThread * numOfCores.
 
 **Python**
@@ -133,7 +133,7 @@ predictClasses(x, batchPerThread = 4, zeroBasedLabel = True)
 
 Parameters:
 
-* `x`: Prediction data, RDD of Sample.
+* `x`: Prediction data, RDD of Sample or [ImageSet](../../APIGuide/FeatureEngineering/image/) or [TextSet](../../APIGuide/FeatureEngineering/text).
 * `batchPerThread`: The default batchPerThread is 4, and the total batchSize is batchPerThread * rdd.getNumPartitions.
 * `zeroBasedLabel`: Boolean. Whether result labels start from 0. Default is true. If false, result labels start from 1.
 
