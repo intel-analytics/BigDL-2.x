@@ -77,12 +77,6 @@ loss = TimeDistributedMaskCriterion(
 
 model.fit(
   trainSet, batchSize = param.batchSize,
-  featurePaddingParam = PaddingParam[Float](
-    paddingTensor =
-      Some(Array(padFeature, padFeature))),
-  labelPaddingParam = PaddingParam[Float](
-    paddingTensor =
-      Some(Array(padLabel))),
   nbEpoch = 20)
 ```
 
