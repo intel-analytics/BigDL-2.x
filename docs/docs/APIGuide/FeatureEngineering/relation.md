@@ -1,4 +1,4 @@
-A relation represents the relationship between two items.
+A Relation represents the relationship between two items.
 
 **Scala**
 ```scala
@@ -12,9 +12,10 @@ relation = Relation(id1, id2, label)
 
 * `id1`: String. The id of one item.
 * `id2`: String. The id of the other item.
-* `label`: Int. The label between the two items. Usually you can put 0 as label if they are unrelated and a positive integer if they are related.
+* `label`: Integer. The label between the two items. By convention you can use 0 if they are unrelated and a positive integer if they are related.
 
 A RelationPair is made up of two relations of the same id1, namely:
+
 * Relation(id1, id2Positive, label>0) (A positive Relation)
 * Relation(id1, id2Negative, label=0) (A negative Relation)
 
@@ -22,9 +23,10 @@ A RelationPair is made up of two relations of the same id1, namely:
 ## **Read Relations**
 __From csv or txt file__
 
-Each record is supposed to contain id1, id2 and label described above in order.
+Each record is supposed to contain id1, id2 and label described above in the exact order.
 
 For csv file, it should be without header.
+
 For txt file, each line should contain one record with fields separated by comma.
 
 **Scala**
@@ -35,7 +37,7 @@ relationsArray = Relations.read(path)
 
 * `path`: The path to the relations file, which can either be a local file path or HDFS path (in this case `sc` needs to be specified).
 * `sc`: An instance of SparkContext. If specified, return RDD of Relation. Otherwise, return array of Relation.
-* `min_partitions`: Integer. A suggestion value of the minimal partition number for input
+* `minPartitions`: Integer. A suggestion value of the minimal partition number for input
 texts. Only takes effect when sc is specified. Default is 1.
 
 **Python**
@@ -50,6 +52,7 @@ relations_list = Relations.read(path)
 texts. Only takes effect when sc is specified. Default is 1.
 
 __From parquet file__
+
 Read relations from parquet file exactly with the schema in Relation. Return RDD of Relation.
 
 **Scala**
