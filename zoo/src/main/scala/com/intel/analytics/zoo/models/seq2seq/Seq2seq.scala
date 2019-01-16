@@ -18,18 +18,25 @@ package com.intel.analytics.zoo.models.seq2seq
 
 import com.intel.analytics.bigdl._
 import com.intel.analytics.bigdl.dataset.{PaddingParam, Sample}
+import com.intel.analytics.bigdl.nn.{BatchNormParams, Cell}
 import com.intel.analytics.bigdl.nn.abstractnn.{AbstractModule, Activity}
-import com.intel.analytics.bigdl.nn.keras.KerasLayer
+import com.intel.analytics.bigdl.nn.keras.{KerasLayer, KerasLayerSerializable}
 import com.intel.analytics.bigdl.optim.{OptimMethod, ValidationMethod}
+import com.intel.analytics.bigdl.serialization.Bigdl.{AttrValue, BigDLModule}
 import com.intel.analytics.bigdl.tensor.Tensor
 import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric
 import com.intel.analytics.bigdl.utils._
+import com.intel.analytics.bigdl.utils.serializer.converters.DataConverter
+import com.intel.analytics.bigdl.utils.serializer.{ContainerSerializable, DeserializeContext, ModuleSerializer, SerializeContext}
 import com.intel.analytics.zoo.models.common.ZooModel
 import com.intel.analytics.zoo.pipeline.api.keras.models.{KerasNet, Model, Sequential}
 import com.intel.analytics.zoo.pipeline.api.keras.layers._
+import com.intel.analytics.zoo.pipeline.api.keras.layers.utils.KerasUtils
 import org.apache.spark.rdd.RDD
 
+import scala.collection.mutable.ArrayBuffer
 import scala.reflect.ClassTag
+import scala.reflect.runtime._
 
 /**
  * [[Seq2seq]] A trainable interface for a simple, generic encoder + decoder model
@@ -38,14 +45,15 @@ import scala.reflect.ClassTag
  * @param inputShape shape of encoder input, for variable length, please input -1
  * @param outputShape shape of decoder input, for variable length, please input -1
  * @param bridge connect encoder and decoder
+ * @param generator Feeding decoder output to generator to generate final result
  */
 class Seq2seq[T: ClassTag] (
   val encoder: Encoder[T],
   val decoder: Decoder[T],
-  inputShape: Shape,
-  outputShape: Shape,
-  bridge: KerasLayer[Activity, Activity, T],
-  generator: KerasLayer[Activity, Activity, T])
+  val inputShape: Shape,
+  val outputShape: Shape,
+  val bridge: KerasLayer[Activity, Activity, T],
+  val generator: KerasLayer[Activity, Activity, T])
   (implicit ev: TensorNumeric[T]) extends ZooModel[Table, Tensor[T], T] {
 
   override def buildModel(): AbstractModule[Table, Tensor[T], T] = {
@@ -87,6 +95,10 @@ model.asInstanceOf[KerasNet[T]].compile(optimizer, loss, metrics)
       model.asInstanceOf[KerasNet[T]].fit(x, batchSize, nbEpoch, validationData)
   }
 
+  def setCheckpoint(path: String, overWrite: Boolean = true): Unit = {
+    model.asInstanceOf[KerasNet[T]].setCheckpoint(path, overWrite)
+  }
+
   def infer(input: Tensor[T], startSign: Tensor[T], maxSeqLen: Int = 30,
             stopSign: Tensor[T] = null,
             buildOutput: KerasLayer[Tensor[T], Tensor[T], T] = null): Tensor[T] = {
@@ -120,7 +132,11 @@ model.asInstanceOf[KerasNet[T]].compile(optimizer, loss, metrics)
   }
 }
 
-object Seq2seq {
+object Seq2seq extends ContainerSerializable {
+  ModuleSerializer.registerModule(
+    "com.intel.analytics.zoo.models.seq2seq.Seq2seq",
+    Seq2seq)
+
   val timeDim = 2
   /**
    * [[Seq2seq]] A trainable interface for a simple, generic encoder + decoder model
@@ -129,6 +145,7 @@ object Seq2seq {
    * @param inputShape shape of encoder input, for variable length, please input -1
    * @param outputShape shape of decoder input, for variable length, please input -1
    * @param bridge connect encoder and decoder
+   * @param generator Feeding decoder output to generator to generate final result
    */
   def apply[@specialized(Float, Double) T: ClassTag](
     encoder: RNNEncoder[T],
@@ -158,5 +175,92 @@ object Seq2seq {
     path: String,
     weightPath: String = null)(implicit ev: TensorNumeric[T]): Seq2seq[T] = {
     ZooModel.loadModel(path, weightPath).asInstanceOf[Seq2seq[T]]
+  }
+
+  override def doLoadModule[T: ClassTag](context : DeserializeContext)
+    (implicit ev: TensorNumeric[T]) : AbstractModule[Activity, Activity, T] = {
+
+    val attrMap = context.bigdlModule.getAttrMap
+
+    val encoderAttr = attrMap.get("encoder")
+    val encoder = DataConverter.getAttributeValue(context, encoderAttr).
+      asInstanceOf[RNNEncoder[T]]
+
+    val decoderAttr = attrMap.get("decoder")
+    val decoder = DataConverter.getAttributeValue(context, decoderAttr).
+      asInstanceOf[RNNDecoder[T]]
+
+    val bridgeAttr = attrMap.get("bridge")
+    val bridge = DataConverter.getAttributeValue(context, bridgeAttr).
+      asInstanceOf[KerasLayer[Activity, Activity, T]]
+
+    val generatorAttr = attrMap.get("generator")
+    val generator = DataConverter.getAttributeValue(context, generatorAttr).
+      asInstanceOf[KerasLayer[Activity, Activity, T]]
+
+    val inputShapeAttr = attrMap.get("inputShape")
+    val inputShape = DataConverter.getAttributeValue(context, inputShapeAttr).asInstanceOf[Shape]
+
+    val outputShapeAttr = attrMap.get("outputShape")
+    val outputShape =
+      DataConverter.getAttributeValue(context, outputShapeAttr).asInstanceOf[Shape]
+
+    val seq2seq = new Seq2seq(encoder, decoder, inputShape, outputShape, bridge, generator)
+
+    val modelAttr = attrMap.get("model")
+    val model = DataConverter.getAttributeValue(context, modelAttr).
+      asInstanceOf[AbstractModule[Table, Tensor[T], T]]
+    seq2seq.addModel(model)
+    seq2seq
+  }
+
+  override def doSerializeModule[T: ClassTag](context: SerializeContext[T],
+    seq2seqBuilder : BigDLModule.Builder)
+    (implicit ev: TensorNumeric[T]) : Unit = {
+
+    val seq2seq = context.moduleData.module.asInstanceOf[Seq2seq[T]]
+
+    seq2seq.encoder.asInstanceOf[RNNEncoder[T]].inputShape = seq2seq.inputShape
+    val encoderBuilder = AttrValue.newBuilder
+    DataConverter.setAttributeValue(context, encoderBuilder,
+      seq2seq.encoder, ModuleSerializer.abstractModuleType)
+    seq2seqBuilder.putAttr("encoder", encoderBuilder.build)
+
+    val statesShape = if (seq2seq.bridge != null) {
+      KerasUtils.removeBatch(seq2seq.bridge.getOutputShape())
+    } else KerasUtils.removeBatch(Shape(seq2seq.encoder.getOutputShape().toMulti().drop(1)))
+    val decoderShape =
+      MultiShape(List(KerasUtils.removeBatch(seq2seq.encoder.getOutputShape().toMulti().head),
+        statesShape))
+    seq2seq.decoder.asInstanceOf[RNNDecoder[T]].inputShape = decoderShape
+    val decoderBuilder = AttrValue.newBuilder
+    DataConverter.setAttributeValue(context, decoderBuilder,
+      seq2seq.decoder, ModuleSerializer.abstractModuleType)
+    seq2seqBuilder.putAttr("decoder", decoderBuilder.build)
+
+    val bridgeBuilder = AttrValue.newBuilder
+    DataConverter.setAttributeValue(context, bridgeBuilder,
+      seq2seq.bridge, ModuleSerializer.abstractModuleType)
+    seq2seqBuilder.putAttr("bridge", bridgeBuilder.build)
+
+    val generatorBuilder = AttrValue.newBuilder
+    DataConverter.setAttributeValue(context, generatorBuilder,
+      seq2seq.generator, ModuleSerializer.abstractModuleType)
+    seq2seqBuilder.putAttr("generator", generatorBuilder.build)
+
+    val shapeBuilder = AttrValue.newBuilder
+    DataConverter.setAttributeValue(context, shapeBuilder,
+      seq2seq.inputShape, universe.typeOf[Shape])
+    seq2seqBuilder.putAttr("inputShape", shapeBuilder.build)
+
+    val outputShapeBuilder = AttrValue.newBuilder
+    DataConverter.setAttributeValue(context, outputShapeBuilder,
+      seq2seq.outputShape, universe.typeOf[Shape])
+    seq2seqBuilder.putAttr("outputShape", outputShapeBuilder.build)
+
+    val laborBuilder = AttrValue.newBuilder
+    DataConverter.setAttributeValue(context, laborBuilder,
+      seq2seq.model, ModuleSerializer.abstractModuleType)
+    seq2seqBuilder.putAttr("model", laborBuilder.build)
   }
 }
