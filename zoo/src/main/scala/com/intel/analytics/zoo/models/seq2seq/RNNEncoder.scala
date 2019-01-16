@@ -17,10 +17,14 @@
 package com.intel.analytics.zoo.models.seq2seq
 
 import com.intel.analytics.bigdl.nn.abstractnn.{AbstractModule, Activity}
-import com.intel.analytics.bigdl.nn.keras.KerasLayer
+import com.intel.analytics.bigdl.nn.keras.{KerasLayer, KerasLayerSerializable}
+import com.intel.analytics.bigdl.serialization.Bigdl.{AttrValue, BigDLModule}
 import com.intel.analytics.bigdl.tensor.Tensor
 import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric
-import com.intel.analytics.bigdl.utils._
+import com.intel.analytics.bigdl.utils.{Shape, _}
+import com.intel.analytics.bigdl.utils.serializer.{DeserializeContext, ModuleSerializable, ModuleSerializer, SerializeContext}
+import com.intel.analytics.bigdl.utils.serializer.converters.DataConverter
+import com.intel.analytics.bigdl.utils.serializer.converters.DataConverter.ArrayConverter
 import com.intel.analytics.zoo.pipeline.api.Net
 import com.intel.analytics.zoo.pipeline.api.keras.layers.utils.KerasUtils
 import com.intel.analytics.zoo.pipeline.api.keras.layers._
@@ -28,6 +32,7 @@ import com.intel.analytics.zoo.pipeline.api.keras.models.Sequential
 
 import scala.collection.mutable.ArrayBuffer
 import scala.reflect.ClassTag
+import scala.reflect.runtime._
 
 /**
  * [[RNNEncoder]] A generic recurrent neural network encoder
@@ -38,7 +43,7 @@ import scala.reflect.ClassTag
  */
 class RNNEncoder[T: ClassTag](val rnns: Array[Recurrent[T]],
   val embedding: KerasLayer[Tensor[T], Tensor[T], T],
-  val inputShape: Shape = null)(implicit ev: TensorNumeric[T])
+  var inputShape: Shape = null)(implicit ev: TensorNumeric[T])
   extends Encoder[T](inputShape) {
 
   override def doBuild(inputShape: Shape): AbstractModule[Tensor[T], Activity, T] = {
@@ -98,7 +103,11 @@ class RNNEncoder[T: ClassTag](val rnns: Array[Recurrent[T]],
   }
 }
 
-object RNNEncoder {
+object RNNEncoder extends KerasLayerSerializable {
+  ModuleSerializer.registerModule(
+    "com.intel.analytics.zoo.models.seq2seq.RNNEncoder",
+    RNNEncoder)
+
   /**
    * [[RNNEncoder]] A generic recurrent neural network encoder
    *
@@ -139,5 +148,58 @@ object RNNEncoder {
         s"to create a encoder")
     }
     RNNEncoder[T](rnn.toArray, embedding, inputShape)
+  }
+
+  override def doLoadModule[T: ClassTag](context : DeserializeContext)
+    (implicit ev: TensorNumeric[T]) : AbstractModule[Activity, Activity, T] = {
+
+    val attrMap = context.bigdlModule.getAttrMap
+
+    val rnns = DataConverter.getAttributeValue(context, attrMap.get("rnns")).
+      asInstanceOf[Array[AbstractModule[_, _, T]]].map(_.asInstanceOf[Recurrent[T]])
+    rnns.map(_.labor = null)
+    rnns.map(_.modules.clear())
+
+    val embeddingAttr = attrMap.get("embedding")
+    val embedding = DataConverter.getAttributeValue(context, embeddingAttr).
+      asInstanceOf[KerasLayer[Tensor[T], Tensor[T], T]]
+    if (embedding != null) {
+      embedding.labor = null
+      embedding.modules.clear()
+    }
+
+    val shapeAttr = attrMap.get("shape")
+    val shape = DataConverter.getAttributeValue(context, shapeAttr).asInstanceOf[Shape]
+    val encoder = RNNEncoder(rnns, embedding, shape)
+
+    encoder.build(KerasUtils.addBatch(shape))
+    encoder.asInstanceOf[AbstractModule[Activity, Activity, T]]
+  }
+
+  override def doSerializeModule[T: ClassTag](context: SerializeContext[T],
+    encoderBuilder : BigDLModule.Builder)
+    (implicit ev: TensorNumeric[T]) : Unit = {
+
+    val encoder = context.moduleData.module.asInstanceOf[RNNEncoder[T]]
+    require(encoder.inputShape != null, "Encoder serialize cannot work without inputShape")
+
+    val rnnsBuilder = AttrValue.newBuilder
+    ArrayConverter.setAttributeValue(context, rnnsBuilder,
+      context.moduleData.module.asInstanceOf[RNNEncoder[T]].rnns,
+      scala.reflect.runtime.universe.typeOf[Array[_ <:
+        AbstractModule[_ <: Activity, _ <:  Activity, _ <: Any]]])
+    encoderBuilder.putAttr("rnns", rnnsBuilder.build)
+
+    val embeddingBuilder = AttrValue.newBuilder
+    DataConverter.setAttributeValue(context, embeddingBuilder,
+      encoder.embedding, ModuleSerializer.abstractModuleType)
+    encoderBuilder.putAttr("embedding", embeddingBuilder.build)
+
+    val shapeBuilder = AttrValue.newBuilder
+    DataConverter.setAttributeValue(context, shapeBuilder,
+      encoder.inputShape, universe.typeOf[Shape])
+    encoderBuilder.putAttr("shape", shapeBuilder.build)
+
+    appendKerasLabel(context, encoderBuilder)
   }
 }

@@ -90,6 +90,5 @@ class AnomalyDetectorSerialTest extends ModuleSerializationTest {
     val model = AnomalyDetector[Float](Shape(10, 2), Array(10, 5), Array(0.2f, 0.2f))
     val data = Tensor[Float](10, 10, 2).randn(0.0, 0.1)
     ZooSpecHelper.testZooModelLoadSave(model, data, AnomalyDetector.loadModel[Float])
-
   }
 }

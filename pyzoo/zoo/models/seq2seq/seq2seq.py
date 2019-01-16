@@ -69,7 +69,7 @@ class RNNEncoder(ZooKerasLayer):
         """
         rnn_type: currently support "simplernn | lstm | gru"
         nlayers: number of layers used in encoder
-        decoder_hiddenSize: hidden size of encoder
+        hidden_size: hidden size of encoder
         embedding: embedding layer in encoder, `None` is supported
         """
         rnns = createRNN(rnn_type, nlayers, hidden_size)
@@ -108,7 +108,7 @@ class RNNDecoder(ZooKerasLayer):
         """
         rnn_type: currently support "simplernn | lstm | gru"
         nlayers: number of layers used in decoder
-        decoder_hiddenSize: hidden size of decoder
+        hidden_size: hidden size of decoder
         embedding: embedding layer in decoder, `None` is supported
         """
         rnns = createRNN(rnn_type, nlayers, hidden_size)
@@ -183,3 +183,26 @@ class Seq2seq(ZooModel):
                                       list(output_shape) if output_shape else None,
                                       bridge,
                                       generator)
+
+    def set_checkpoint(self, path, over_write=True):
+        callBigDlFunc(self.bigdl_type, "seq2seqSetCheckpoint",
+                      self.value,
+                      path,
+                      over_write)
+
+    @staticmethod
+    def load_model(path, weight_path=None, bigdl_type="float"):
+        """
+        Load an existing Seq2seq model (with weights).
+
+        # Arguments
+        path: The path for the pre-defined model.
+              Local file system, HDFS and Amazon S3 are supported.
+              HDFS path should be like 'hdfs://[host]:[port]/xxx'.
+              Amazon S3 path should be like 's3a://bucket/xxx'.
+        weight_path: The path for pre-trained weights if any. Default is None.
+        """
+        jmodel = callBigDlFunc(bigdl_type, "loadSeq2seq", path, weight_path)
+        model = ZooModel._do_load(jmodel, bigdl_type)
+        model.__class__ = Seq2seq
+        return model

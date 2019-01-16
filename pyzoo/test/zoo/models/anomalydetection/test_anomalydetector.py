@@ -17,31 +17,31 @@
 import pytest
 
 import numpy as np
-
+from zoo.models.anomalydetection import AnomalyDetector
 from test.zoo.pipeline.utils.test_utils import ZooTestCase
-from zoo.models.seq2seq import *
+
+np.random.seed(1337)  # for reproducibility
 
 
-class TestSeq2seq(ZooTestCase):
+class TestAnomalyDetector(ZooTestCase):
 
     def test_forward_backward(self):
-        input_data = [np.random.randint(20, size=(1, 2, 4)),
-                      np.random.randint(20, size=(1, 2, 4))]
-        encoder = RNNEncoder.initialize("LSTM", 1, 4)
-        decoder = RNNDecoder.initialize("LSTM", 1, 4)
-        bridge = Bridge.initialize("dense", 4)
-        model = Seq2seq(encoder, decoder, [2, 4], [2, 4], bridge)
+        model = AnomalyDetector(feature_shape=(10, 3), hidden_layers=[8, 32, 15],
+                                dropouts=[0.2, 0.2, 0.2])
+        model.summary()
+        input_data = np.random.rand(100, 10, 3)
         self.assert_forward_backward(model, input_data)
+        model.set_evaluate_status()
+        # Forward twice will get the same output
+        output1 = model.forward(input_data)
+        output2 = model.forward(input_data)
+        assert np.allclose(output1, output2)
 
     def test_save_load(self):
-        input_data = [np.random.randint(20, size=(1, 2, 4)),
-                      np.random.randint(20, size=(1, 2, 4))]
-        encoder = RNNEncoder.initialize("LSTM", 1, 4)
-        decoder = RNNDecoder.initialize("LSTM", 1, 4)
-        bridge = Bridge.initialize("dense", 4)
-        model = Seq2seq(encoder, decoder, [2, 4], [2, 4], bridge)
+        model = AnomalyDetector(feature_shape=(10, 3), hidden_layers=[8, 32, 15],
+                                dropouts=[0.2, 0.2, 0.2])
+        input_data = np.random.rand(100, 10, 3)
         self.assert_zoo_model_save_load(model, input_data)
-
 
 if __name__ == "__main__":
     pytest.main([__file__])
