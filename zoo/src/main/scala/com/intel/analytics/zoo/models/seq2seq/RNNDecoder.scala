@@ -101,7 +101,6 @@ class RNNDecoder[T: ClassTag](val rnns: Array[Recurrent[T]],
   }
 
   override def updateGradInput(input: Activity, gradOutput: Tensor[T]): Activity = {
-//    val rnnsGradInput = labor.updateGradInput(input, gradOutput)
     labor.updateGradInput(input, gradOutput)
     val gradStates = rnns.map(_.getGradHiddenState())
     val rnnsGradInput = Tensor[T](input.toTable[Tensor[T]](1).size())
