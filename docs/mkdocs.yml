@@ -55,6 +55,7 @@ pages:
     - Inference: APIGuide/PipelineAPI/inference.md
   - Feature Engineering:
     - FeatureSet: APIGuide/FeatureEngineering/featureset.md
+    - Relation: APIGuide/FeatureEngineering/relation.md
     - Image: APIGuide/FeatureEngineering/image.md
     - Text: APIGuide/FeatureEngineering/text.md
   - Models:
