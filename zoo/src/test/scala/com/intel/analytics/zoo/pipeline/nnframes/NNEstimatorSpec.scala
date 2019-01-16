@@ -463,10 +463,13 @@ class NNEstimatorSpec extends FlatSpec with Matchers with BeforeAndAfter {
      *  val nnModel = NNModel(module, Array(6)).setBatchSize(10)
      *  nnModel.write.overwrite().save(modelLocation)
      */
-    val data = sqlContext.createDataFrame(smallData).toDF("features", "label")
-    NNModel.load(modelLocation).setBatchSize(8) // try load multiple times.
-    val loadedModel = NNModel.load(modelLocation).setBatchSize(8)
-    loadedModel.transform(data).collect()
+    var appSparkVersion = org.apache.spark.SPARK_VERSION
+    if (appSparkVersion.trim.startsWith("2")) {
+      val data = sqlContext.createDataFrame(smallData).toDF("features", "label")
+      NNModel.load(modelLocation).setBatchSize(8) // try load multiple times.
+      val loadedModel = NNModel.load(modelLocation).setBatchSize(8)
+      loadedModel.transform(data).collect()
+    }
   }
 
   "An NNEstimator" should "supports deep copy" in {
