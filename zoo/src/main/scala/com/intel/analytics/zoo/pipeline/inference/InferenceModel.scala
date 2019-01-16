@@ -105,7 +105,7 @@ class InferenceModel(private var supportedConcurrentNum: Int = 1,
                                       deviceType: DeviceTypeEnumVal): Unit = {
     if (supportedConcurrentNum > 1) {
       InferenceSupportive.logger.warn(s"supportedConcurrentNum is $supportedConcurrentNum > 1, " +
-        s"openvino model not supports shared weights model copies")
+        s"openvino model does not support shared weights model copies")
     }
     clearModelQueue()
     this.originalModel = InferenceModelFactory.loadOpenVINOModelForTF(
@@ -118,7 +118,7 @@ class InferenceModel(private var supportedConcurrentNum: Int = 1,
                        deviceType: DeviceTypeEnumVal): Unit = {
     if (supportedConcurrentNum > 1) {
       InferenceSupportive.logger.warn(s"supportedConcurrentNum is $supportedConcurrentNum > 1, " +
-        s"openvino model not supports shared weights model copies")
+        s"openvino model does not support shared weights model copies")
     }
     clearModelQueue()
     this.originalModel =
@@ -219,6 +219,8 @@ class InferenceModel(private var supportedConcurrentNum: Int = 1,
     this.modelQueue = new LinkedBlockingQueue[AbstractModel](supportedConcurrentNum)
     offerModelQueue()
   }
+
+  def getOriginalModel: AbstractModel = originalModel
 
   override def toString: String =
     s"InferenceModel($supportedConcurrentNum, $originalModel, $modelQueue)"

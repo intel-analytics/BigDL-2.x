@@ -152,7 +152,7 @@
                                     <goal>exec</goal>
                                 </goals>
                                 <configuration>
-                                    <executable>${basedir}/bin/zoo-openvino-prepare-resources.sh</executable>
+                                    <executable>${basedir}/bin/zoo-build.sh</executable>
                                     <workingDirectory>${project.build.directory}/openvino</workingDirectory>
                                 </configuration>
                             </execution>
@@ -209,7 +209,7 @@
                                         <resource>
                                             <directory>${basedir}/bin</directory>
                                             <includes>
-                                                <include>zoo-openvino-mo-run.sh</include>
+                                                <include>zoo-optimize-model.sh</include>
                                             </includes>
                                             <filtering>true</filtering>
                                         </resource>
