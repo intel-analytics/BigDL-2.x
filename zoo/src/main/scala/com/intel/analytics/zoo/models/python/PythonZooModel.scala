@@ -21,7 +21,7 @@ import java.util.{List => JList, Map => JMap}
 import com.intel.analytics.bigdl.{Criterion, dataset}
 import com.intel.analytics.bigdl.dataset.PaddingParam
 import com.intel.analytics.bigdl.nn.abstractnn.{AbstractModule, Activity}
-import com.intel.analytics.bigdl.nn.keras.KerasLayer
+import com.intel.analytics.bigdl.nn.keras.{KerasLayer, KerasModel}
 import com.intel.analytics.bigdl.optim.{OptimMethod, ValidationMethod, ValidationResult}
 import com.intel.analytics.bigdl.python.api.{EvaluatedResult, JTensor, Sample}
 import com.intel.analytics.bigdl.tensor.Tensor
@@ -475,5 +475,34 @@ class PythonZooModel[T: ClassTag](implicit ev: TensorNumeric[T]) extends PythonZ
   def loadSeq2seq(path: String,
     weightPath: String = null): Seq2seq[T] = {
     Seq2seq.loadModel(path, weightPath)
+  }
+
+  def seq2seqCompile(
+    model: Seq2seq[T],
+    optimizer: OptimMethod[T],
+    loss: Criterion[T],
+    metrics: JList[ValidationMethod[T]] = null): Unit = {
+    model.compile(optimizer, loss,
+      if (metrics == null) null else metrics.asScala.toList)
+  }
+
+  def seq2seqFit(model: Seq2seq[T],
+    x: JavaRDD[Sample],
+    batchSize: Int,
+    nbEpoch: Int,
+    validationData: JavaRDD[Sample] = null): Unit = {
+    model.fit(toJSample(x), batchSize, nbEpoch, toJSample(validationData))
+  }
+
+  def seq2seqInfer(model: Seq2seq[T],
+    input: JTensor,
+    startSign: JTensor,
+    maxSeqLen: Int = 30,
+    stopSign: JTensor = null,
+    buildOutput: KerasLayer[Tensor[T], Tensor[T], T]): JTensor = {
+    val result =
+      model.infer(toTensor(input), toTensor(startSign), maxSeqLen,
+        toTensor(stopSign), buildOutput)
+    toJTensor(result)
   }
 }

@@ -44,6 +44,7 @@ seq2seq = Seq2seq(encoder, decoder, input_shape=[2, 4], output_shape=[2, 4], bri
 ---
 ## **Train a Seq2seq model**
 After building the model, we can use BigDL Optimizer to train it (with validation) using RDD of [Sample](https://bigdl-project.github.io/master/#APIGuide/Data/#sample).
+`feature` is expected to be a sequence(eg. batch x seqLen x feature) and `label` is also a sequence(eg. batch x seqLen x feature).
 
 **Scala**
 ```scala
@@ -65,6 +66,26 @@ optimizer
   .optimize()
 ```
 
+Also we can use `Seq2seq.fit` api to train the model.
+```scala
+model.compile(
+optimizer = optimMethod,
+loss = TimeDistributedMaskCriterion(
+  ClassNLLCriterion(paddingValue = padId),
+  paddingValue = padId
+))
+
+model.fit(
+  trainSet, batchSize = param.batchSize,
+  featurePaddingParam = PaddingParam[Float](
+    paddingTensor =
+      Some(Array(padFeature, padFeature))),
+  labelPaddingParam = PaddingParam[Float](
+    paddingTensor =
+      Some(Array(padLabel))),
+  nbEpoch = 20)
+```
+
 **Python**
 ```python
 from bigdl.optim.optimizer import *
@@ -82,6 +103,13 @@ optimizer.set_validation(
     trigger=EveryEpoch())
 ```
 
+Also we can use `Seq2seq.fit` api to train the model.
+```python
+model.compile(optimizer, loss, metrics)
+
+model.fit(x, batch_size=32, nb_epoch=10, validation_data=None)
+```
+
 ---
 ## **Do prediction**
 
@@ -91,5 +119,6 @@ val result = model.infer(input, startSign, maxSeqLen, stopSign, buildOutput)
 ```
 
 **Python**
-
-Python API is under development.
+```python
+result = model.infer(input, start_sign, max_seq_len, stop_sign, build_output)
+```
