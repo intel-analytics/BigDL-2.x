@@ -60,6 +60,7 @@ each iteration.
 ```scala
 val optim = new Adam(learningRate=1e-3, learningRateDecay=0.0, beta1=0.9, beta2=0.999, Epsilon=1e-8)
 ```
+
 **Python:**
 ```python
 optim = Adam(learningrate=1e-3, learningrate_decay=0.0, beta1=0.9, beta2=0.999, epsilon=1e-8, bigdl_type="float")
@@ -102,6 +103,7 @@ http://arxiv.org/abs/1212.5701.
 ```scala
 val optimMethod = Adadelta(decayRate = 0.9, Epsilon = 1e-10)
 ```
+
 **Python:**
 ```python
 optim_method = AdaDelta(decayrate = 0.9, epsilon = 1e-10)
@@ -114,7 +116,11 @@ optim_method = AdaDelta(decayrate = 0.9, epsilon = 1e-10)
 val adagrad = new Adagrad(learningRate = 1e-3,
                           learningRateDecay = 0.0,
                           weightDecay = 0.0)
+```
 
+**Python:**
+```python
+optim_method = Adagrad(learningrate=1e-3,learningrate_decay=0.0,weightdecay=0.0,)
 ```
 
  An implementation of Adagrad. See the original paper:
