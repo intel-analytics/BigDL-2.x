@@ -30,4 +30,5 @@ class LRNMapper(OperatorMapper):
         size = self.onnx_attr['size']
         dim_ordering = "th"
 
-        return zlayers.LRN2D(alpha=alpha, k=bias, beta=beta, n=size, dim_ordering=dim_ordering)(data)
+        return zlayers.LRN2D(alpha=alpha, k=bias, beta=beta,
+                             n=size, dim_ordering=dim_ordering)(data)
