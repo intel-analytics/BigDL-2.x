@@ -48,6 +48,10 @@ public abstract class AbstractInferenceModel extends InferenceModel implements S
     doLoadCaffe(modelPath, weightPath);
   }
 
+  public void loadTF(String modelPath) {
+    doLoadTF(modelPath);
+  }
+
   public void loadTF(String modelPath, String backend) {
     doLoadTF(modelPath, backend);
   }
@@ -64,8 +68,8 @@ public abstract class AbstractInferenceModel extends InferenceModel implements S
     doLoadTF(modelPath, modelType, pipelineConfigFilePath, extensionsConfigFilePath);
   }
 
-  public void loadOpenVINO(String modelFilePath, String weightFilePath, DeviceType.DeviceTypeEnumVal deviceType) {
-    doLoadOpenVINO(modelFilePath, weightFilePath, deviceType);
+  public void loadOpenVINO(String modelFilePath, String weightFilePath) {
+    doLoadOpenVINO(modelFilePath, weightFilePath);
   }
 
   public void reload(String modelPath) {

@@ -51,6 +51,10 @@ class InferenceModel(private var supportedConcurrentNum: Int = 1,
     offerModelQueue()
   }
 
+  def doLoadTF(modelPath: String): Unit = {
+    doLoadTF(modelPath, "tensorflow", null)
+  }
+
   def doLoadTF(modelPath: String, backend: String): Unit = {
     doLoadTF(modelPath, backend, null)
   }
@@ -114,15 +118,14 @@ class InferenceModel(private var supportedConcurrentNum: Int = 1,
   }
 
   def doLoadOpenVINO(modelFilePath: String,
-                       weightFilePath: String,
-                       deviceType: DeviceTypeEnumVal): Unit = {
+                       weightFilePath: String): Unit = {
     if (supportedConcurrentNum > 1) {
       InferenceSupportive.logger.warn(s"supportedConcurrentNum is $supportedConcurrentNum > 1, " +
         s"openvino model does not support shared weights model copies")
     }
     clearModelQueue()
     this.originalModel =
-      InferenceModelFactory.loadOpenVINOModelForIR(modelFilePath, weightFilePath, deviceType)
+      InferenceModelFactory.loadOpenVINOModelForIR(modelFilePath, weightFilePath, DeviceType.CPU)
     offerModelQueue()
   }
 
