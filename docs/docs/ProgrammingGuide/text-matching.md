@@ -49,16 +49,116 @@ you are recommended to use 'binary_crossentropy' as loss for binary classificati
 
 ---
 ## **Pairwise training**
+For ranking, the model can be trained pairwisely with the following steps:
+
+1. Read train relations. See [here](../APIGuide/FeatureEngineering/relation/#read-relations) for more details.
+2. Read text1 and text2 corpus as TextSet and do preprocessing transformations.
+3. Generate all relation pairs from train relations. Each pair is made up of a positive relation and a negative one of the same id1.
+During the training process, we intend to optimize the margin loss within each pair.
+We provide the following API to generate a `TextSet` for pairwise training:
+
+**Scala**
+```scala
+val trainSet = TextSet.fromRelationPairs(relations, corpus1, corpus2)
+```
+
+* `relations`: RDD or array of Relation.
+* `corpus1`: TextSet that contains all id1 in `relations`.
+* `corpus2`: TextSet that contains all id2 in `relations`.
+* For `corpus1` and `corpus2` respectively, each text must have been transformed to indices of the same length by
+  calling [tokenize](../APIGuide/FeatureEngineering/text/#tokenization), [word2idx](../APIGuide/FeatureEngineering/text/#word-to-index) 
+  and [shapeSequence](../APIGuide/FeatureEngineering/text/#sequence-shaping) in order.
+* If `relation` is an RDD, then `corpus1` and `corpus2` must both be DistributedTextSet.
+If `relation` is an array, then `corpus1` and `corpus2` must both be LocalTextSet.
+
+**Python**
+```python
+train_set = TextSet.from_relation_pairs(relations, corpus1, corpus2)
+```
+
+* `relations`: RDD or list of Relation.
+* `corpus1`: TextSet that contains all id1 in `relations`.
+* `corpus2`: TextSet that contains all id2 in `relations`.
+* For `corpus1` and `corpus2` respectively, each text must have been transformed to indices of the same length by
+  calling [tokenize](../APIGuide/FeatureEngineering/text/#tokenization), [word2idx](../APIGuide/FeatureEngineering/text/#word-to-index) 
+  and [shape_sequence](../APIGuide/FeatureEngineering/text/#sequence-shaping) in order.
+* If `relation` is an RDD, then `corpus1` and `corpus2` must both be DistributedTextSet.
+If `relation` is a list, then `corpus1` and `corpus2` must both be LocalTextSet.
+
+4. Call compile and fit to train the model:
+
+**Scala**
+```scala
+val model = Sequential().add(TimeDistributed(knrm, inputShape = Shape(2, text1Length + text2Length)))
+model.compile(optimizer = new SGD(learningRate), loss = RankHinge())
+model.fit(trainSet, batchSize, nbEpoch)
+```
+
+**Python**
+```python
+model = Sequential().add(TimeDistributed(knrm, input_shape=(2, text1Length + text2Length)))
+model.compile(optimizer=SGD(learning_rate), loss='rank_hinge')
+model.fit(train_set, batch_size, nb_epoch)
+```
 
 
 ---
 ## **Listwise evaluation**
+Given text1 and a list of text2 candidates, we provide metrics [NDCG](https://en.wikipedia.org/wiki/Evaluation_measures_(information_retrieval)#Discounted_cumulative_gain) and [MAP](https://en.wikipedia.org/wiki/Evaluation_measures_(information_retrieval)#Mean_average_precision) to listwisely evaluate a ranking model with the following steps:
 
+1. Read validation relations. See [here](../APIGuide/FeatureEngineering/relation/#read-relations) for more details.
+2. Read text1 and text2 corpus as TextSet and do the same preprocessing transformations as in the training phase.
+3. Generate all relation lists from validation relations. Each list is made up of one id1 and all id2 related to id1.
+We provide the following API to generate a `TextSet` for listwise evaluation:
 
+**Scala**
+```scala
+val validateSet = TextSet.fromRelationLists(relations, corpus1, corpus2)
+```
+
+* `relations`: RDD or array of Relation.
+* `corpus1`: TextSet that contains all id1 in `relations`.
+* `corpus2`: TextSet that contains all id2 in `relations`.
+* For `corpus1` and `corpus2` respectively, each text must have been transformed to indices of the same length as during the training process by 
+calling [tokenize](../APIGuide/FeatureEngineering/text/#tokenization), [word2idx](../APIGuide/FeatureEngineering/text/#word-to-index) 
+and [shapeSequence](../APIGuide/FeatureEngineering/text/#sequence-shaping) in order.
+* If `relation` is an RDD, then `corpus1` and `corpus2` must both be DistributedTextSet.
+If `relation` is an array, then `corpus1` and `corpus2` must both be LocalTextSet.
+
+**Python**
+```python
+validate_set = TextSet.from_relation_lists(relations, corpus1, corpus2)
+```
+
+* `relations`: RDD or list of Relation.
+* `corpus1`: TextSet that contains all id1 in `relations`.
+* `corpus2`: TextSet that contains all id2 in `relations`.
+* For `corpus1` and `corpus2` respectively, each text must have been transformed to indices of the same length as during the training process by 
+calling [tokenize](../APIGuide/FeatureEngineering/text/#tokenization), [word2idx](../APIGuide/FeatureEngineering/text/#word-to-index) 
+and [shape_sequence](../APIGuide/FeatureEngineering/text/#sequence-shaping) in order.
+* If `relation` is an RDD, then `corpus1` and `corpus2` must both be DistributedTextSet.
+If `relation` is a list, then `corpus1` and `corpus2` must both be LocalTextSet.
+
+4. Call evaluateNDCG or evaluateMAP to evaluate the model:
+
+**Scala**
+```scala
+knrm.evaluateNDCG(validateSet, k, threshold = 0.0)
+knrm.evaluateMAP(validateSet, threshold = 0.0)
+```
+
+**Python**
+```python
+knrm.evaluate_ndcg(validate_set, k, threshold=0.0)
+knrm.evaluate_map(validate_set, threshold=0.0)
+```
+
+* `k`: Positive integer. Rank position.
+* `threshold`: If label > threshold, then it will be considered as a positive record. Default is 0.0.
 
 ---
 ## **Examples**
-We provide an example to train the KNRM model on WikiQA dataset and uses the model for ranking.
+We provide an example to train and evaluate the KNRM model on WikiQA dataset for ranking.
 
 See [here](https://github.com/intel-analytics/analytics-zoo/tree/master/zoo/src/main/scala/com/intel/analytics/zoo/examples/qaranker) for the Scala example.
 
