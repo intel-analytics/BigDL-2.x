@@ -106,13 +106,23 @@ model.fit(x, batch_size=32, nb_epoch=10, validation_data=None)
 
 ---
 ## **Do prediction**
-
+Predict output with given input
 **Scala**
 ```scala
 val result = model.infer(input, startSign, maxSeqLen, stopSign, buildOutput)
 ```
+* `input`: a sequence of data feed into encoder, eg: batch x seqLen x featureSize
+* `startSign`: a tensor which represents start and is fed into decoder
+* `maxSeqLen`: max sequence length for final output
+* `stopSign`: a tensor that indicates model should stop infer further if current output is the same with stopSign
+* `buildOutput`: Feeding model output to buildOutput to generate final result
 
 **Python**
 ```python
 result = model.infer(input, start_sign, max_seq_len, stop_sign, build_output)
 ```
+* `input`: a sequence of data feed into encoder, eg: batch x seqLen x featureSize
+* `start_sign`: a ndarray which represents start and is fed into decoder
+* `max_seq_len`: max sequence length for final output
+* `stop_sign`: a ndarray that indicates model should stop infer further if current output is the same with stopSign
+* `build_output`: Feeding model output to buildOutput to generate final result

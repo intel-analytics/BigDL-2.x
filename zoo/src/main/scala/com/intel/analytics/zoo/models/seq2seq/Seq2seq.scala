@@ -99,6 +99,15 @@ model.asInstanceOf[KerasNet[T]].compile(optimizer, loss, metrics)
     model.asInstanceOf[KerasNet[T]].setCheckpoint(path, overWrite)
   }
 
+  /**
+   * Infer output with given input
+   * @param input a sequence of data feed into encoder, eg: batch x seqLen x featureSize
+   * @param startSign a tensor which represents start and is fed into decoder
+   * @param maxSeqLen max sequence length for final output
+   * @param stopSign a tensor that indicates model should stop infer further if current
+   *                 output is the same with stopSign
+   * @param buildOutput Feeding model output to buildOutput to generate final result
+   */
   def infer(input: Tensor[T], startSign: Tensor[T], maxSeqLen: Int = 30,
             stopSign: Tensor[T] = null,
             buildOutput: KerasLayer[Tensor[T], Tensor[T], T] = null): Tensor[T] = {

@@ -231,6 +231,17 @@ class Seq2seq(ZooModel):
                       validation_data)
 
     def infer(self, input, start_sign, max_seq_len=30, stop_sign=None, build_output=None):
+        """
+        Inference API for given input
+
+        # Arguments
+        input: a sequence of data feed into encoder, eg: batch x seqLen x featureSize
+        start_sign: a ndarray which represents start and is fed into decoder
+        max_seq_len: max sequence length for final output
+        stop_sign: a ndarray that indicates model should stop infer further if current output
+        is the same with stopSign
+        build_output: Feeding model output to buildOutput to generate final result
+        """
         jinput, input_is_table = Layer.check_input(input)
         assert not input_is_table
         jstart_sign, start_sign_is_table = Layer.check_input(start_sign)
