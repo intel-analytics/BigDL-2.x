@@ -410,7 +410,6 @@ class RNNDecoderSerialTest extends ModuleSerializationTest {
     val shape3 = SingleShape(List(1, 6))
     val shape4 = SingleShape(List(1, 6))
     val mul2 = MultiShape(List(MultiShape(List(shape3, shape4))))
-
     val shape = MultiShape(List(Shape(2), mul))
     val layer = RNNDecoder[Float]("lstm", 1, 6, inputShape = shape,
       embedding = Embedding[Float](100, 6))

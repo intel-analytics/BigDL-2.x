@@ -14,11 +14,12 @@
 # limitations under the License.
 #
 
-
+from bigdl.nn.layer import Layer
 from zoo.pipeline.api.keras.layers import *
 from zoo.models.common import ZooModel
 
 from zoo.pipeline.api.keras.engine import ZooKerasLayer
+
 
 if sys.version >= '3':
     long = int
@@ -206,3 +207,55 @@ class Seq2seq(ZooModel):
         model = ZooModel._do_load(jmodel, bigdl_type)
         model.__class__ = Seq2seq
         return model
+
+    # For the following methods, please refer to KerasNet for documentation.
+    def compile(self, optimizer, loss, metrics=None):
+        if isinstance(optimizer, six.string_types):
+            optimizer = to_bigdl_optim_method(optimizer)
+        if isinstance(loss, six.string_types):
+            loss = to_bigdl_criterion(loss)
+        if metrics and all(isinstance(metric, six.string_types) for metric in metrics):
+            metrics = to_bigdl_metrics(metrics)
+        callBigDlFunc(self.bigdl_type, "seq2seqCompile",
+                      self.value,
+                      optimizer,
+                      loss,
+                      metrics)
+
+    def fit(self, x, batch_size=32, nb_epoch=10, validation_data=None):
+        callBigDlFunc(self.bigdl_type, "seq2seqFit",
+                      self.value,
+                      x,
+                      batch_size,
+                      nb_epoch,
+                      validation_data)
+
+    def infer(self, input, start_sign, max_seq_len=30, stop_sign=None, build_output=None):
+        """
+        Inference API for given input
+
+        # Arguments
+        input: a sequence of data feed into encoder, eg: batch x seqLen x featureSize
+        start_sign: a ndarray which represents start and is fed into decoder
+        max_seq_len: max sequence length for final output
+        stop_sign: a ndarray that indicates model should stop infer further if current output
+        is the same with stopSign
+        build_output: Feeding model output to buildOutput to generate final result
+        """
+        jinput, input_is_table = Layer.check_input(input)
+        assert not input_is_table
+        jstart_sign, start_sign_is_table = Layer.check_input(start_sign)
+        assert not start_sign_is_table
+        if stop_sign:
+            jstop_sign, stop_sign_is_table = Layer.check_input(stop_sign)
+            assert not start_sign_is_table
+        else:
+            jstop_sign = None
+        results = callBigDlFunc(self.bigdl_type, "seq2seqInfer",
+                                self.value,
+                                jinput[0],
+                                jstart_sign[0],
+                                max_seq_len,
+                                jstop_sign[0] if jstop_sign else None,
+                                build_output)
+        return results
