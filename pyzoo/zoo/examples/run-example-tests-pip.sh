@@ -305,5 +305,34 @@ now=$(date "+%s")
 time7=$((now-start))
 echo "tensorflow distributed_training time used:$time7 seconds"
 
+
+echo "start test for anomalydetection"
+#timer
+start=$(date "+%s")
+# prepare data
+if [ -f analytics-zoo-data/data/NAB/nyc_taxi/nyc_taxi.csv ]
+then
+    echo "analytics-zoo-data/data/NAB/nyc_taxi/nyc_taxi.csv already exists"
+else
+    wget $FTP_URI/analytics-zoo-data/data/NAB/nyc_taxi/nyc_taxi.csv \
+    -P analytics-zoo-data/data/NAB/nyc_taxi/
+fi
+# Run the example
+export SPARK_DRIVER_MEMORY=2g
+python ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/anomalydetection/anomaly_detection.py \
+    --nb_epoch 1 \
+    --input_dir analytics-zoo-data//data/NAB/nyc_taxi/nyc_taxi.csv
+exit_status=$?
+if [ $exit_status -ne 0 ];
+then
+    clear_up
+    echo "anomalydetection failed"
+    exit $exit_status
+fi
+now=$(date "+%s")
+time8=$((now-start))
+echo "anomalydetection time used:$time8 seconds"
+
+
 # This should be done at the very end after all tests finish.
 clear_up
