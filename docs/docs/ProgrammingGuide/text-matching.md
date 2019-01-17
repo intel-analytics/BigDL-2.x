@@ -160,7 +160,7 @@ knrm.evaluate_map(validate_set, threshold=0.0)
 
 ---
 ## **Examples**
-We provide an example to train and evaluate the KNRM model on WikiQA dataset for ranking.
+We provide an example to train and evaluate a KNRM model on WikiQA dataset for ranking.
 
 See [here](https://github.com/intel-analytics/analytics-zoo/tree/master/zoo/src/main/scala/com/intel/analytics/zoo/examples/qaranker) for the Scala example.
 
