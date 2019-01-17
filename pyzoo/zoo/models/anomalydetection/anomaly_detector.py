@@ -203,8 +203,8 @@ class AnomalyDetector(ZooModel):
             matrix.append(line)
             return matrix
 
-        return unrolled_rdd.map(lambda y: \
-            FeatureLableIndex(row_to_feature(y[0]), float(y[1]), long(y[2])))
+        return unrolled_rdd\
+            .map(lambda y: FeatureLableIndex(row_to_feature(y[0]), float(y[1]), long(y[2])))
 
 
 class FeatureLableIndex(object):

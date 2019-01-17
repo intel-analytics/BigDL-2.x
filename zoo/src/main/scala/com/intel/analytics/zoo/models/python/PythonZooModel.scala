@@ -210,7 +210,7 @@ class PythonZooModel[T: ClassTag](implicit ev: TensorNumeric[T]) extends PythonZ
 
   def toUnrolledJavaRdd(features: RDD[FeatureLabelIndex[Double]]): JavaRDD[JList[String]] = {
     features.map(x =>
-      List(x.feature.map(x=> x.mkString("|")).mkString(","), x.label.toString,
+      List(x.feature.map(x => x.mkString("|")).mkString(","), x.label.toString,
         x.index.toString).asJava).toJavaRDD()
   }
 
