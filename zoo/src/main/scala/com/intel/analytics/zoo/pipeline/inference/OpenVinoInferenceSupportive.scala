@@ -16,11 +16,12 @@
 
 package com.intel.analytics.zoo.pipeline.inference
 
-import java.io.{File, FileOutputStream}
+import java.io.{File, FileOutputStream, InputStream}
 import java.nio.channels.Channels
 
 import com.google.common.io.Files
 import com.intel.analytics.zoo.pipeline.inference.DeviceType.DeviceTypeEnumVal
+import com.intel.analytics.zoo.core.openvino.OpenvinoNativeLoader
 import org.slf4j.LoggerFactory
 
 import scala.language.postfixOps
@@ -42,11 +43,28 @@ class OpenVinoInferenceSupportive {
 object OpenVinoInferenceSupportive extends InferenceSupportive {
   val logger = LoggerFactory.getLogger(getClass)
 
-  load("libinference_engine.so")
-  load("libiomp5.so")
-  load("libcpu_extension.so")
-  load("libMKLDNNPlugin.so")
-  load("libzoo_inference.so")
+  timing("load native so for openvino") {
+    OpenvinoNativeLoader.load()
+  }
+
+  var openvinoTempDirDirPath: String = _
+  timing("prepare openvino scripts") {
+    val ovtmpDir = Files.createTempDir()
+    openvinoTempDirDirPath = ovtmpDir.getCanonicalPath
+    val OpenvinoNativeLoaderClass = (new OpenvinoNativeLoader()).getClass
+    val zooShPath = "/zoo-optimize-model.sh"
+    val zooShInputStream = OpenvinoNativeLoaderClass.getResourceAsStream(zooShPath)
+    val zooShFile = writeFile(zooShInputStream, openvinoTempDirDirPath, zooShPath)
+    val zooTarPath = "/model-optimizer.tar.gz"
+    val zooTarInputStream = OpenvinoNativeLoaderClass.getResourceAsStream(zooTarPath)
+    val zooTarFile = writeFile(zooTarInputStream, openvinoTempDirDirPath, zooTarPath)
+    val zooConfPath = "/pipeline-configs.tar.gz"
+    val zooConfInputStream = OpenvinoNativeLoaderClass.getResourceAsStream(zooConfPath)
+    val zooConfFile = writeFile(zooConfInputStream, openvinoTempDirDirPath, zooConfPath)
+    s"tar -xzvf ${zooTarFile.getAbsolutePath} -C $openvinoTempDirDirPath" !;
+    s"tar -xzvf ${zooConfFile.getAbsolutePath} -C $openvinoTempDirDirPath" !;
+    s"ls -alh $openvinoTempDirDirPath" !;
+  }
 
   def loadTensorflowModel(modelPath: String,
                           modelType: String,
@@ -70,22 +88,23 @@ object OpenVinoInferenceSupportive extends InferenceSupportive {
     }
 
     val actualPipelineConfigPath = pipelineConfigPath match {
-      case null | "" => ModelType.resolveActualPipelineConfigPath(modelType)
+      case null | "" =>
+        val path = ModelType.resolveActualPipelineConfigPath(modelType)
+        s"$openvinoTempDirDirPath/$path"
       case _ => pipelineConfigPath
     }
     val actualExtensionsConfigPath = extensionsConfigPath match {
-      case null | "" => ModelType.resolveActualExtensionsConfigPath(modelType)
+      case null | "" =>
+        val path = ModelType.resolveActualExtensionsConfigPath(modelType)
+        s"$openvinoTempDirDirPath/$path"
       case _ => extensionsConfigPath
     }
 
     timing("load tensorflow model to openvino IR") {
-      val loadTensorflowModelScriptPath: String = OpenVinoInferenceSupportive.
-        getClass.getResource("/zoo-optimize-model.sh").getPath()
-      val motfpyFilePath: String = OpenVinoInferenceSupportive.
-        getClass.getResource("/model_optimizer/mo_tf.py").getPath()
+      val loadTensorflowModelScriptPath: String = s"$openvinoTempDirDirPath/zoo-optimize-model.sh"
+      val motfpyFilePath: String = s"$openvinoTempDirDirPath/model-optimizer/mo_tf.py"
       val tmpDir = Files.createTempDir()
       val outputPath: String = tmpDir.getCanonicalPath
-
       val logFilePath = s"$outputPath/tensorflowmodeloptimize.log"
       val log = new java.io.File(logFilePath)
       timing("optimize tensorflow model") {
@@ -141,6 +160,17 @@ object OpenVinoInferenceSupportive extends InferenceSupportive {
     } finally {
       file.delete()
     }
+  }
+
+  def writeFile(inputStream: InputStream, dirPath: String, filePath: String): File = {
+    val file = new File(s"$dirPath/$filePath")
+    val src = Channels.newChannel(inputStream)
+    val dest = new FileOutputStream(file).getChannel
+    dest.transferFrom(src, 0, Long.MaxValue)
+    dest.close()
+    src.close()
+    logger.info(s"file output to ${file.getAbsoluteFile} ...")
+    file
   }
 }
 
@@ -200,8 +230,7 @@ object ModelType {
   }
 
   def resolveActualPipelineConfigPath(modelType : String): String = {
-    val path = s"/pipeline-configs/object_detection/$modelType.config"
-    ModelType.getClass.getResource(path).getPath()
+   s"pipeline-configs/object_detection/$modelType.config"
   }
 
   def resolveActualExtensionsConfigPath(modelType : String): String = {
@@ -211,8 +240,7 @@ object ModelType {
       case t if t.contains("mask_rcnn") => "mask_rcnn"
       case t if t.contains("rfcn") => "rfcn"
     }
-    val path = s"/model_optimizer/extensions/front/tf/${category}_support.json"
-    ModelType.getClass.getResource(path).getPath()
+    s"model-optimizer/extensions/front/tf/${category}_support.json"
   }
 
 }
