@@ -141,8 +141,7 @@ class OpenVINOModelSuite extends FunSuite with Matchers with BeforeAndAfterAll
 
     fasterrcnnInferenceModel1.doLoadOpenVINO(
       fasterrcnnModelFilePath,
-      fasterrcnnWeightFilePath,
-      fasterrcnnDeviceType)
+      fasterrcnnWeightFilePath)
     fasterrcnnInferenceModel2.doLoadTF(
       faserrcnnFrozenModelFilePath,
       null,
