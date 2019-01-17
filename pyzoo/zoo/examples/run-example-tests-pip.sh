@@ -317,18 +317,6 @@ else
     wget $FTP_URI/analytics-zoo-data/data/NAB/nyc_taxi/nyc_taxi.csv \
     -P analytics-zoo-data/data/NAB/nyc_taxi/
 fi
-${SPARK_HOME}/bin/spark-submit \
-    --master ${MASTER} \
-    --driver-memory 2g \
-    --executor-memory 2g \
-    --py-files ${ANALYTICS_ZOO_PYZIP},${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/anomalydetection/anomaly_detection.py \
-    --jars ${ANALYTICS_ZOO_JAR} \
-    --conf spark.driver.extraClassPath=${ANALYTICS_ZOO_JAR} \
-    --conf spark.executor.extraClassPath=${ANALYTICS_ZOO_JAR} \
-    ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/anomalydetection/anomaly_detection.py \
-    --nb_epoch 1 \
-    --input_dir analytics-zoo-data/data/NAB/nyc_taxi/nyc_taxi.csv
-
 # Run the example
 export SPARK_DRIVER_MEMORY=2g
 python ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/anomalydetection/anomaly_detection.py \
