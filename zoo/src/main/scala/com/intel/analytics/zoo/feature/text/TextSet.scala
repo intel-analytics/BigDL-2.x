@@ -508,7 +508,6 @@ object TextSet {
       mapText2(i.getURI) = i.getIndices
     }
     val resMap: scala.collection.mutable.Map[String, ArrayBuffer[String]] = scala.collection.mutable.Map()
-    val labelMap: scala.collection.mutable.Map[String, Int] = scala.collection.mutable.Map()
     for(rel <- relations){
       if (! resMap.contains(rel.id1)) {
         val buffer: ArrayBuffer[String] = ArrayBuffer()
@@ -519,24 +518,26 @@ object TextSet {
         buffer.append(rel.id2)
         resMap(rel.id1) = buffer
       }
-      if(! labelMap.contains(rel.id2)){
-        labelMap(rel.id2) = rel.label
-      }
     }
     val featureBuffer: ArrayBuffer[TextFeature] = ArrayBuffer()
-    for(rel <- relations){
-      val id2Array = resMap.get(rel.id1).get
+    for((k, v) <- resMap){
+      val labelMap: scala.collection.mutable.Map[String, Int] = scala.collection.mutable.Map()
+      for(rel <- relations){
+        if(rel.id1 == k){
+          labelMap(rel.id2) = rel.label
+        }
+      }
+      val id2Array = v
       val id2ArrayLength = id2Array.length
-      val textFeature = TextFeature(null, uri = rel.id1 ++ id2Array.mkString(""))
-      var indices2Array: Array[Float] = Array()
+      val textFeature = TextFeature(null, uri = k ++ id2Array.mkString(""))
+      var indices2Array: ArrayBuffer[Array[Float]] = ArrayBuffer()
       for(buf <- id2Array){
-        import Array._
         val indices = mapText2.get(buf.toString).get
-        indices2Array = concat(indices2Array, indices)
+        indices2Array.append(indices)
       }
       require(indices2Array != null,
         "id2 haven't been transformed from word to index yet, please word2idx first")
-      val indices1 = mapText1.get(rel.id1).get
+      val indices1 = mapText1.get(k).get
       require(indices1 != null,
         "id1 haven't been transformed from word to index yet, please word2idx first")
       val labelArray: ArrayBuffer[Float] = ArrayBuffer()
@@ -548,9 +549,9 @@ object TextSet {
       for(indices <- indices2Array){
         import Array._
         listIndices = concat(listIndices, indices1)
-        listIndices= concat(listIndices, Array(indices))
+        listIndices= concat(listIndices, indices)
       }
-      val feature = Tensor(listIndices, Array(id2ArrayLength, indices1.length + indices2Array.head.toString.length))
+      val feature = Tensor(listIndices, Array(id2ArrayLength, indices1.length + indices2Array.head.length))
       val label = Tensor(labelArray.toArray, Array(id2ArrayLength, 1))
       textFeature(TextFeature.sample) = Sample(feature, label)
       featureBuffer.append(textFeature)

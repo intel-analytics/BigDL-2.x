@@ -133,14 +133,17 @@ object Relations {
 
     for((k, v) <- relSet){
       val map = v
-      val buffer0 = map.get(0).get.toArray
-      val buffer1 = map.get(1).get.toArray
-      for(m <- buffer1){
-        for(n <- buffer0){
-          val pair = RelationPair(k, m, n)
-          pairList.append(pair)
+      if(map.contains(0) && map.contains(1)) {
+        val buffer0 = map.get(0).get.toArray
+        val buffer1 = map.get(1).get.toArray
+        for (m <- buffer1) {
+          for (n <- buffer0) {
+            val pair = RelationPair(k, m, n)
+            pairList.append(pair)
+          }
         }
       }
+      else{}
     }
     pairList.toArray
   }
