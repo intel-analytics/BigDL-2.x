@@ -10,7 +10,7 @@ including text loading, pre-processing, training and inference, etc.
 ---
 ## **Read texts as TextSet**
 
-#### Read texts from a directory
+#### **Read texts from a directory**
 Read texts with labels from a directory.
 
 Under this specified directory path, there are supposed to be several subdirectories, each of which contains a number of text files belonging to this category. 
@@ -41,7 +41,7 @@ Default is None and in this case texts will be read as a LocalTextSet.
 Only need to specify this when sc is not None. Default is 1.
 
 
-#### Read texts from csv file
+#### **Read texts from csv file**
 Read texts with id from csv file.
 
 Each record is supposed to contain id(String) and text(String) in order.
@@ -71,8 +71,8 @@ Default is None and in this case texts will be read as a LocalTextSet.
 Only need to specify this when sc is not None. Default is 1.
 
 
-#### Read texts from parquet file
-Read texts with id from parquet file with schema 'id'(String) and 'text'(String). Return a DistributedTextSet.
+#### **Read texts from parquet file**
+Read texts with id from parquet file with schema id(String) and text(String). Return a DistributedTextSet.
 
 **Scala**
 ```scala
@@ -93,7 +93,7 @@ text_set = TextSet.read_parquet(path, sc)
 
 ---
 ## **TextSet Transformations**
-Analytics Zoo provides many transformation methods for a `TextSet` to form a text preprocessing pipeline, which will return the transformed `TextSet` that can be directly used for training and inference:
+Analytics Zoo provides many transformation methods for a TextSet to form a text preprocessing pipeline, which will return the transformed TextSet that can be directly used for training and inference:
 
 ### **Tokenization**
 Do tokenization on original text.
@@ -130,24 +130,30 @@ Result index will start from 1 and corresponds to the occurrence frequency of ea
 Here we adopt the convention that index 0 will be reserved for unknown words.
 Need to tokenize first.
 
-After word2idx, you can get the generated wordIndex map by calling ```getWordIndex``` (Scala) or ```get_word_index()``` (Python) of the transformed `TextSet`.
+After word2idx, you can get the generated wordIndex map by calling ```getWordIndex``` (Scala) or ```get_word_index()``` (Python) of the transformed TextSet.
 
 **Scala**
 ```scala
-transformedTextSet = textSet.word2idx(removeTopN = 0, maxWordsNum = -1)
+transformedTextSet = textSet.word2idx(removeTopN = 0, maxWordsNum = -1, minFreq = 1, existingMap = null)
 ```
 
 * `removeTopN`: Non-negative integer. Remove the topN words with highest frequencies in the case where those are treated as stopwords. Default is 0, namely remove nothing.
-* `maxWordsNum`: Integer. The maximum number of words to be taken into consideration. Default is -1, namely all words will be considered.
+* `maxWordsNum`: Integer. The maximum number of words to be taken into consideration. Default is -1, namely all words will be considered. Otherwise, it should be a positive integer.
+* `minFreq`: Positive integer. Only those words with frequency >= minFreq will be taken into consideration. Default is 1, namely all words that occur will be considered.
+* `existingMap`: Existing map of word index if any. Default is null and in this case a new map with index starting from 1 will be generated. 
+If not null, then the generated map will preserve the word index in existingMap and assign subsequent indices to new words.
 
 
 **Python**
 ```python
-transformed_text_set = text_set.word2idx(remove_topN=0, max_words_num=-1)
+transformed_text_set = text_set.word2idx(remove_topN=0, max_words_num=-1, min_freq=1, existing_map=None)
 ```
 
 * `remove_topN`: Non-negative int. Remove the topN words with highest frequencies in the case where those are treated as stopwords. Default is 0, namely remove nothing.
-* `max_words_num`: Int. The maximum number of words to be taken into consideration. Default is -1, namely all words will be considered.
+* `max_words_num`: Int. The maximum number of words to be taken into consideration. Default is -1, namely all words will be considered. Otherwise, it should be a positive int.
+* `min_freq`: Positive int. Only those words with frequency >= min_freq will be taken into consideration. Default is 1, namely all words that occur will be considered.
+* `existing_map`: Existing dictionary of word index if any. Default is None and in this case a new map with index starting from 1 will be generated. 
+If not None, then the generated map will preserve the word index in existing_map and assign subsequent indices to new words.
 
 
 ### **Sequence Shaping**
@@ -160,10 +166,10 @@ transformedTextSet = textSet.shapeSequence(len, truncMode = TruncMode.pre, padEl
 ```
 
 * `len`: Positive integer. The target length.
-* `truncMode`: Truncation mode if the original sequence is longer than the target length. Either `TruncMode.pre` or `TruncMode.post`. 
-If `TruncMode.pre`, the sequence will be truncated from the beginning. 
-If `TruncMode.post`, the sequence will be truncated from the end. 
-Default is `TruncMode.post`.
+* `truncMode`: Truncation mode if the original sequence is longer than the target length. Either 'TruncMode.pre' or 'TruncMode.post'. 
+If 'TruncMode.pre', the sequence will be truncated from the beginning. 
+If 'TruncMode.post', the sequence will be truncated from the end. 
+Default is 'TruncMode.post'.
 * `padElement`: Integer. The index element to be padded to the end of the sequence if the original length is smaller than the target length.
 Default is 0 with the convention that we reserve index 0 for unknown words.
 
@@ -174,10 +180,10 @@ transformed_text_set = text_set.shape_sequence(len, trunc_mode="pre", pad_elemen
 ```
 
 * `len`: Positive int. The target length.
-* `truncMode`: String. Truncation mode if the original sequence is longer than the target length. Either `pre` or `post`. 
-If `pre`, the sequence will be truncated from the beginning. 
-If `post`, the sequence will be truncated from the end. 
-Default is `post`.
+* `truncMode`: String. Truncation mode if the original sequence is longer than the target length. Either 'pre' or 'post'. 
+If 'pre', the sequence will be truncated from the beginning. 
+If 'post', the sequence will be truncated from the end. 
+Default is 'post'.
 * `padElement`: Int. The index element to be padded to the end of the sequence if the original length is smaller than the target length.
 Default is 0 with the convention that we reserve index 0 for unknown words.
 

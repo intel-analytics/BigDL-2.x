@@ -191,10 +191,11 @@ class TextSet(JavaValue):
                             Default is 0, namely remove nothing.
         :param max_words_num: Int. The maximum number of words to be taken into consideration.
                               Default is -1, namely all words will be considered.
+                              Otherwise, it should be a positive int.
         :param min_freq: Positive int. Only those words with frequency >= min_freq will be taken
                          into consideration.
                          Default is 1, namely all words that occur will be considered.
-        :param existing_map: Existing map of word index if any.
+        :param existing_map: Existing dictionary of word index if any.
                              Default is None and in this case a new map with index starting
                              from 1 will be generated.
                              If not None, then the generated map will preserve the word index in
