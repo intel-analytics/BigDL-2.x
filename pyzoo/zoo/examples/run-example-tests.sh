@@ -50,13 +50,6 @@ else
     wget $FTP_URI/analytics-zoo-models/object-detection/analytics-zoo_ssd-mobilenet-300x300_PASCAL_0.1.0.model \
     -P analytics-zoo-models
 fi
-if [ -f analytics-zoo-data/data/NAB/nyc_taxi/nyc_taxi.csv ]
-then
-    echo "analytics-zoo-data/data/NAB/nyc_taxi/nyc_taxi.csv already exists"
-else
-    wget $FTP_URI/analytics-zoo-data/data/NAB/nyc_taxi/nyc_taxi.csv \
-    -P analytics-zoo-data/data/NBA/nyc_taxi/
-fi
 
 
 ${SPARK_HOME}/bin/spark-submit \
@@ -311,6 +304,13 @@ time6=$((now-start))
 echo "#6 tensorflow time used:$time6 seconds"
 
 echo "#7 start example test for anomalydetection"
+if [ -f analytics-zoo-data/data/NAB/nyc_taxi/nyc_taxi.csv ]
+then
+    echo "analytics-zoo-data/data/NAB/nyc_taxi/nyc_taxi.csv already exists"
+else
+    wget $FTP_URI/analytics-zoo-data/data/NAB/nyc_taxi/nyc_taxi.csv \
+    -P analytics-zoo-data/data/NAB/nyc_taxi/
+fi
 #timer
 start=$(date "+%s")
 ${SPARK_HOME}/bin/spark-submit \
@@ -323,7 +323,7 @@ ${SPARK_HOME}/bin/spark-submit \
     --conf spark.executor.extraClassPath=${ANALYTICS_ZOO_JAR} \
     ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/anomalydetection/anomaly_detection.py \
     --nb_epoch 1 \
-    --input_dir analytics-zoo-data/data/NBA/nyc_taxi/nyc_taxi.csv
+    --input_dir analytics-zoo-data/data/NAB/nyc_taxi/nyc_taxi.csv
 now=$(date "+%s")
 time7=$((now-start))
 echo "#7 anomalydetection time used:$time7 seconds"

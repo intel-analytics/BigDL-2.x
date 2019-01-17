@@ -36,11 +36,10 @@ if __name__ == "__main__":
 
     def load_and_scale(input_path):
         df = pd.read_csv(input_path)
-        print(df.head(10))
         df['datetime'] = pd.to_datetime(df['timestamp'])
         df['hours'] = df['datetime'].dt.hour
         df['awake'] = (((df['hours'] >= 6) & (df['hours'] <= 23)) | (df['hours'] == 0)).astype(int)
-        print(df.info())
+        print(df.head(10))
         sqlContext = SQLContext(sc)
         dfspark = sqlContext.createDataFrame(df[["value", "hours", "awake"]])
         feature_size = len(["value", "hours", "awake"])

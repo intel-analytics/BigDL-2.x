@@ -200,18 +200,18 @@ class PythonZooModel[T: ClassTag](implicit ev: TensorNumeric[T]) extends PythonZ
     com.intel.analytics.zoo.models.anomalydetection.Utils.standardScale(df, fields)
   }
 
-  def toUnrolledJavaRdd(features: RDD[FeatureLabelIndex[Double]]): JavaRDD[JList[Any]] = {
-    features.map(x =>
-      List(x.feature, x.label,
-        x.index.toDouble).asJava).toJavaRDD()
-  }
-
   def unroll(dataRdd: JavaRDD[JList[Double]],
-      unrollLength: Int,
-      predictStep: Int = 1): JavaRDD[JList[Any]] = {
+             unrollLength: Int,
+             predictStep: Int = 1): JavaRDD[JList[String]] = {
     val rdd: RDD[Array[Double]] = dataRdd.rdd.map(x => x.asScala.toArray)
     val unrolled = AnomalyDetector.unroll[Double](rdd, unrollLength, predictStep)
     toUnrolledJavaRdd(unrolled)
+  }
+
+  def toUnrolledJavaRdd(features: RDD[FeatureLabelIndex[Double]]): JavaRDD[JList[String]] = {
+    features.map(x =>
+      List(x.feature.map(x=> x.mkString("|")).mkString(","), x.label.toString,
+        x.index.toString).asJava).toJavaRDD()
   }
 
   def toAnomaliesJavaRdd(anomaliesRdd: RDD[(Double, Double, Any)]): JavaRDD[JList[Any]] = {
