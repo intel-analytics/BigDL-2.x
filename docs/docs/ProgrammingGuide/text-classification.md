@@ -35,68 +35,34 @@ text_classifier = TextClassifier(class_num, embedding_file, word_index=None, seq
 
 ---
 ## **Train a TextClassifier model**
-After building the model, we can use BigDL Optimizer to train it (with validation) using RDD of [Sample](https://bigdl-project.github.io/master/#APIGuide/Data/#sample).
+After building the model, we can call compile and fit to train it (with validation).
 
-Note that raw text data may need to go through tokenization and word2index before being fed into the Optimizer. You can refer to the [examples](#examples) we provide for data pre-processing.
+For training and validation data, you can first read files as `TextSet` (see [here](../APIGuide/FeatureEngineering/text/#read-texts-from-a-directory)) and then do preprocessing (see [here](../APIGuide/FeatureEngineering/text/#textset-transformations)).
 
 **Scala**
 ```scala
-import com.intel.analytics.bigdl.optim._
-import com.intel.analytics.zoo.pipeline.api.keras.metrics.Accuracy
-import com.intel.analytics.zoo.pipeline.api.keras.objectives.SparseCategoricalCrossEntropy
-
-val optimizer = Optimizer(
-  model = textClassifier,
-  sampleRDD = trainRDD,
-  criterion = SparseCategoricalCrossEntropy[Float](),
-  batchSize = 128)
-
-optimizer
-  .setOptimMethod(new Adagrad(learningRate = 0.01, learningRateDecay = 0.001))
-  .setValidation(Trigger.everyEpoch, valRDD, Array(new Accuracy), 128)
-  .setEndWhen(Trigger.maxEpoch(20))
-  .optimize()
+model.compile(optimizer = new Adagrad(learningRate), loss = SparseCategoricalCrossEntropy(), metrics = List(new Accuracy()))
+model.fit(trainSet, batchSize, nbEpoch, validateSet)
 ```
 
 **Python**
 ```python
-from bigdl.optim.optimizer import *
-from zoo.pipeline.api.keras.objectives import SparseCategoricalCrossEntropy
-from zoo.pipeline.api.keras.metrics import Accuracy
-
-optimizer = Optimizer(
-    model=text_classifier,
-    training_rdd=train_rdd,
-    criterion=SparseCategoricalCrossEntropy(),
-    end_trigger=MaxEpoch(20),
-    batch_size=128,
-    optim_method=Adagrad(learningrate=0.01, learningrate_decay=0.001))
-    
-optimizer.set_validation(
-    batch_size=128,
-    val_rdd=val_rdd,
-    trigger=EveryEpoch(),
-    val_method=[Accuracy()])
+model.compile(optimizer=Adagrad(learning_rate, loss="sparse_categorical_crossentropy", metrics=['accuracy'])
+model.fit(train_set, batch_size, nb_epoch, validate_set)
 ```
 
 ---
 ## **Do prediction**
-After training the model, it can be used to predict probabilities or class labels.
+After training the model, it can be used to predict probability distributions.
 
 **Scala**
 ```scala
-// Predict for probability distributions.
-val results = textClassifier.predict(rdd)
-// Predict for class labels. By default, label starts from 0.
-val resultClasses = textClassifier.predictClasses(rdd)
+val predictSet = textClassifier.predict(validateSet)
 ```
 
 **Python**
 ```python
-# Predict for probability distributions.
-results = text_classifier.predict(rdd)
-# Predict for class labels. By default, label starts from 0.
-result_classes = text_classifier.predict_classes(rdd)
+predict_set = text_classifier.predict(validate_set)
 ```
 
 ---
