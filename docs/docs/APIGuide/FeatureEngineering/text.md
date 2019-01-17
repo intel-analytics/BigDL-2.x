@@ -2,27 +2,31 @@ Analytics Zoo provides a series of text related APIs for end-to-end text process
 including text loading, pre-processing, training and inference, etc.
 
 ---
-## **Load texts as TextSet**
+## **TextSet**
 `TextSet` is a collection of TextFeatures where each `TextFeature` keeps information of a single text record.
 
 `TextSet` can either be a `DistributedTextSet` consisting of text RDD or a `LocalTextSet` consisting of text array.
 
-You can read texts from local or distributed text path as a `TextSet` using the following API:
+---
+## **Read texts as TextSet**
+
+#### Read texts from a directory
+Read texts with labels from a directory.
+
+Under this specified directory path, there are supposed to be several subdirectories, each of which contains a number of text files belonging to this category. 
+Each category will be a given a label (starting from 0) according to its position in the ascending order sorted among all subdirectories. 
+Each text will be a given a label according to the directory where it is located.
 
 **Scala**
 ```scala
 textSet = TextSet.read(path, sc = null, minPartitions = 1)
 ```
 
-* `path`: String. Folder path to texts. Local file system and HDFS are supported. If you want to read from HDFS, `sc` needs to be defined.
-Currently under this specified path, there are supposed to be several subdirectories, each of which contains a number of text files belonging to this category. 
-Each category will be a given a label (starting from 0) according to its position in the ascending order sorted among all subdirectories. 
-Each text will be a given a label according to the directory where it is located.
-More text formats will be supported in the future.
-* `sc`: An instance of SparkContext. If specified, texts will be read as a `DistributedTextSet`. 
-Default is null and in this case texts will be read as a `LocalTextSet`. 
+* `path`: String. Folder path to texts. Local file system and HDFS are supported. If you want to read from HDFS, sc needs to be specified.
+* `sc`: An instance of SparkContext. If specified, texts will be read as a DistributedTextSet. 
+Default is null and in this case texts will be read as a LocalTextSet. 
 * `minPartitions`: Integer. A suggestion value of the minimal partition number for input texts.
-Only need to specify this when `sc` is not null. Default is 1.
+Only need to specify this when sc is not null. Default is 1.
 
 
 **Python**
@@ -30,15 +34,61 @@ Only need to specify this when `sc` is not null. Default is 1.
 text_set = TextSet.read(path, sc=None, min_partitions=1)
 ```
 
-* `path`: String. Folder path to texts. Local file system and HDFS are supported. If you want to read from HDFS, `sc` needs to be defined.
-Currently under this specified path, there are supposed to be several subdirectories, each of which contains a number of text files belonging to this category. 
-Each category will be a given a label (starting from 0) according to its position in the ascending order sorted among all subdirectories. 
-Each text will be a given a label according to the directory where it is located.
-More text formats will be supported in the future.
-* `sc`: An instance of SparkContext. If specified, texts will be read as a `DistributedTextSet`. 
-Default is None and in this case texts will be read as a `LocalTextSet`. 
+* `path`: String. Folder path to texts. Local file system and HDFS are supported. If you want to read from HDFS, sc needs to be defined.
+* `sc`: An instance of SparkContext. If specified, texts will be read as a DistributedTextSet. 
+Default is None and in this case texts will be read as a LocalTextSet. 
 * `min_partitions`: Int. A suggestion value of the minimal partition number for input texts.
-Only need to specify this when `sc` is not None. Default is 1.
+Only need to specify this when sc is not None. Default is 1.
+
+
+#### Read texts from csv file
+Read texts with id from csv file.
+
+Each record is supposed to contain id(String) and text(String) in order.
+
+Note that the csv file should be without header.
+
+**Scala**
+```scala
+textSet = TextSet.readCSV(path, sc = null, minPartitions = 1)
+```
+
+* `path`: String. The path to the csv file. Local file system and HDFS are supported. If you want to read from HDFS, sc needs to be specified.
+* `sc`: An instance of SparkContext. If specified, texts will be read as a DistributedTextSet. 
+Default is null and in this case texts will be read as a LocalTextSet. 
+* `minPartitions`: Integer. A suggestion value of the minimal partition number for input texts.
+Only need to specify this when sc is not null. Default is 1.
+
+**Python**
+```python
+text_set = TextSet.read_csv(path, sc=None, min_partitions=1)
+```
+
+* `path`: String. The path to the csv file. Local file system and HDFS are supported. If you want to read from HDFS, sc needs to be defined.
+* `sc`: An instance of SparkContext. If specified, texts will be read as a DistributedTextSet. 
+Default is None and in this case texts will be read as a LocalTextSet. 
+* `min_partitions`: Int. A suggestion value of the minimal partition number for input texts.
+Only need to specify this when sc is not None. Default is 1.
+
+
+#### Read texts from parquet file
+Read texts with id from parquet file with schema 'id'(String) and 'text'(String). Return a DistributedTextSet.
+
+**Scala**
+```scala
+textSet = TextSet.readParquet(path, sqlContext)
+```
+
+* `path`: The path to the parquet file.
+* `sqlContext`: An instance of SQLContext.
+
+**Python**
+```python
+text_set = TextSet.read_parquet(path, sc)
+```
+
+* `path`: The path to the parquet file.
+* `sc`: An instance of SparkContext.
 
 
 ---
