@@ -52,8 +52,9 @@ you are recommended to use 'binary_crossentropy' as loss for binary classificati
 For ranking, the model can be trained pairwisely with the following steps:
 
 1. Read train relations. See [here](../APIGuide/FeatureEngineering/relation/#read-relations) for more details.
-2. Read text1 and text2 corpus as TextSet and do preprocessing transformations.
-3. Generate all relation pairs from train relations. Each pair is made up of a positive relation and a negative one of the same id1.
+2. Read text1 and text2 corpus as TextSet. See [here](../APIGuide/FeatureEngineering/text/#read-texts-from-csv-file) for more details.
+3. Preprocess text1 and text2 corpus. See [here](../APIGuide/FeatureEngineering/text/#textset-transformations) for more details.
+4. Generate all relation pairs from train relations. Each pair is made up of a positive relation and a negative one of the same id1.
 During the training process, we intend to optimize the margin loss within each pair.
 We provide the following API to generate a `TextSet` for pairwise training:
 
@@ -107,7 +108,8 @@ model.fit(train_set, batch_size, nb_epoch)
 Given text1 and a list of text2 candidates, we provide metrics [NDCG](https://en.wikipedia.org/wiki/Evaluation_measures_(information_retrieval)#Discounted_cumulative_gain) and [MAP](https://en.wikipedia.org/wiki/Evaluation_measures_(information_retrieval)#Mean_average_precision) to listwisely evaluate a ranking model with the following steps:
 
 1. Read validation relations. See [here](../APIGuide/FeatureEngineering/relation/#read-relations) for more details.
-2. Read text1 and text2 corpus as TextSet and do the same preprocessing transformations as in the training phase.
+2. Read text1 and text2 corpus as TextSet. See [here](../APIGuide/FeatureEngineering/text/#read-texts-from-csv-file) for more details.
+3. Preprocess text1 and text2 corpus same as the training phase. See [here](../APIGuide/FeatureEngineering/text/#textset-transformations) for more details.
 3. Generate all relation lists from validation relations. Each list is made up of one id1 and all id2 combined with id1.
 We provide the following API to generate a `TextSet` for listwise evaluation:
 
