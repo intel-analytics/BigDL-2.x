@@ -1,5 +1,5 @@
 Analytics Zoo provides a pre-defined KNRM model that can be used for text matching (e.g. question answering).
-For training, the model provides methods compile and fit or alternatively it could be fed into NNFrames and BigDL Optimizer.
+For training, you can use Keras-Style API methods or alternatively feed the model into NNFrames and BigDL Optimizer.
 More text matching models will be supported in the future.
 
 ---
@@ -25,7 +25,7 @@ val knrm = KNRM(text1Length, text2Length, embeddingFile, wordIndex = null, train
 For classification, the last layer will be sigmoid and the output will be the probability between 0 and 1 indicating whether text1 is related to text2 and
 you are recommended to use 'binary_crossentropy' as loss for binary classification. Default mode is 'ranking'.
 
-See [here](https://github.com/intel-analytics/analytics-zoo/tree/master/zoo/src/main/scala/com/intel/analytics/zoo/examples/qaranker) for the Scala example that trains the KNRM model on WikiQA dataset.
+See [here](https://github.com/intel-analytics/analytics-zoo/tree/master/zoo/src/main/scala/com/intel/analytics/zoo/examples/qaranker) for the Scala example that trains a KNRM model on WikiQA dataset.
 
 
 **Python**
@@ -45,7 +45,7 @@ knrm = KNRM(text1_length, text2_length, embedding_file, word_index=None, train_e
 For classification, the last layer will be sigmoid and the output will be the probability between 0 and 1 indicating whether text1 is related to text2 and
 you are recommended to use 'binary_crossentropy' as loss for binary classification. Default mode is 'ranking'.
 
-See [here](https://github.com/intel-analytics/analytics-zoo/tree/master/pyzoo/zoo/examples/qaranker) for the Python example that trains the KNRM model on WikiQA dataset.
+See [here](https://github.com/intel-analytics/analytics-zoo/tree/master/pyzoo/zoo/examples/qaranker) for the Python example that trains a KNRM model on WikiQA dataset.
 
 ---
 ## **Save Model**

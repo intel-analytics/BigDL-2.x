@@ -1,12 +1,7 @@
 A Relation represents the relationship between two items.
 
-**Scala**
+**Scala/Python**
 ```scala
-relation = Relation(id1, id2, label)
-```
-
-**Python**
-```python
 relation = Relation(id1, id2, label)
 ```
 
@@ -35,7 +30,7 @@ relationsRDD = Relations.read(path, sc, minPartitions = 1)
 relationsArray = Relations.read(path)
 ```
 
-* `path`: The path to the relations file, which can either be a local file path or HDFS path (in this case `sc` needs to be specified).
+* `path`: The path to the relations file, which can either be a local file path or HDFS path (in this case sc needs to be specified).
 * `sc`: An instance of SparkContext. If specified, return RDD of Relation. Otherwise, return array of Relation.
 * `minPartitions`: Integer. A suggestion value of the minimal partition number for input
 texts. Only takes effect when sc is specified. Default is 1.
@@ -46,7 +41,7 @@ relations_rdd = Relations.read(path, sc, min_partitions = 1)
 relations_list = Relations.read(path)
 ```
 
-* `path`: The path to the relations file, which can either be a local file path or HDFS path (in this case `sc` needs to be specified).
+* `path`: The path to the relations file, which can either be a local file path or HDFS path (in this case sc needs to be specified).
 * `sc`: An instance of SparkContext. If specified, return RDD of Relation. Otherwise, return list of Relation.
 * `min_partitions`: Integer. A suggestion value of the minimal partition number for input
 texts. Only takes effect when sc is specified. Default is 1.
