@@ -339,6 +339,16 @@ class TextSetSpec extends ZooSpecHelper {
     require(sample2.label().size().sameElements(Array(3, 1)))
     require(sample2.label().reshape(Array(3)).toArray().sorted
       .sameElements(Array(0.0f, 0.0f, 1.0f)))
+
+    val gloveDir = getClass.getClassLoader.getResource("glove.6B").getPath
+    val embeddingFile = gloveDir + "/glove.6B.50d.txt"
+    val knrm = KNRM[Float](3, 6, embeddingFile)
+    val model = Sequential().add(TimeDistributed(knrm, inputShape = Shape(2, 9)))
+    model.compile(optimizer = new SGD[Float](), loss = RankHinge[Float]())
+    model.fit(pairSet, batchSize = 2, nbEpoch = 2)
+    knrm.evaluateNDCG(listSet, 3)
+    knrm.evaluateNDCG(listSet, 5)
+    knrm.evaluateMAP(listSet)
   }
 
   "Array2 TextSet from relation pairs and lists with training and validation" should "work properly" in {
@@ -394,5 +404,15 @@ class TextSetSpec extends ZooSpecHelper {
     require(sample2.label().size().sameElements(Array(3, 1)))
     require(sample2.label().reshape(Array(3)).toArray().sorted
       .sameElements(Array(0.0f, 0.0f, 1.0f)))
+
+    val gloveDir = getClass.getClassLoader.getResource("glove.6B").getPath
+    val embeddingFile = gloveDir + "/glove.6B.50d.txt"
+    val knrm = KNRM[Float](3, 6, embeddingFile)
+    val model = Sequential().add(TimeDistributed(knrm, inputShape = Shape(2, 9)))
+    model.compile(optimizer = new SGD[Float](), loss = RankHinge[Float]())
+    model.fit(pairSet, batchSize = 2, nbEpoch = 2)
+    knrm.evaluateNDCG(listSet, 3)
+    knrm.evaluateNDCG(listSet, 5)
+    knrm.evaluateMAP(listSet)
   }
 }
