@@ -49,11 +49,11 @@ import scala.reflect.ClassTag
  * @param trainable Whether this layer is trainable or not. Default is true.
  * @param wRegularizer An instance of [[Regularizer]], (eg. L1 or L2 regularization),
  *                     applied to the embedding matrix. Default is null.
+ * @param inputShape A Single Shape, does not include the batch dimension.
  * @param maskZero: if maskZero is set to true, the input whose value equals `paddingValue`
  *                the output will be masked to zero vector.
  * @param paddingValue padding value, default 0
  * @param expectZeroBased default false and input should be 1 based. Otherwise need to be 0 base
- * @param inputShape A Single Shape, does not include the batch dimension.
  * @tparam T Numeric type of parameter(e.g. weight, bias). Only support float/double now.
  */
 class Embedding[T: ClassTag](
@@ -63,10 +63,11 @@ class Embedding[T: ClassTag](
                               val initWeights: Tensor[T] = null,
                               val trainable: Boolean = true,
                               wRegularizer: Regularizer[T] = null,
+                              inputShape: Shape = null,
                               maskZero: Boolean = false,
                               paddingValue: Int = 0,
-                              expectZeroBased: Boolean = false,
-                              inputShape: Shape = null)(implicit ev: TensorNumeric[T])
+                              expectZeroBased: Boolean = false
+                              )(implicit ev: TensorNumeric[T])
   extends BEmbedding[T] (
     inputDim, outputDim, init, wRegularizer, inputShape) with Net {
 
@@ -109,13 +110,14 @@ object Embedding {
       weights: Tensor[T] = null,
       trainable: Boolean = true,
       wRegularizer: Regularizer[T] = null,
+      inputLength: Int = -1,
       maskZero: Boolean = false,
       paddingValue: Int = 0,
-      expectZeroBased: Boolean = false,
-      inputLength: Int = -1)(implicit ev: TensorNumeric[T]): Embedding[T] = {
+      expectZeroBased: Boolean = false
+      )(implicit ev: TensorNumeric[T]): Embedding[T] = {
     // Remark: It is possible that inputShape is specified in Input node or layer.
     val shape = if (inputLength > 0) Shape(inputLength) else null
     new Embedding[T](inputDim, outputDim, KerasUtils.getInitMethod(init),
-      weights, trainable, wRegularizer, maskZero, paddingValue, expectZeroBased, shape)
+      weights, trainable, wRegularizer, shape, maskZero, paddingValue, expectZeroBased)
   }
 }

@@ -249,10 +249,14 @@ class PythonZooKeras[T: ClassTag](implicit ev: TensorNumeric[T]) extends PythonZ
       weights: JTensor = null,
       trainable: Boolean = true,
       wRegularizer: Regularizer[T] = null,
+      inputShape: JList[Int] = null,
       maskZero: Boolean = false,
-      inputShape: JList[Int] = null): Embedding[T] = {
+      paddingValue: Int = 0,
+      expectZeroBased: Boolean = false
+      ): Embedding[T] = {
+    val inputLen = if (inputShape != null) inputShape.get(0) else -1
     Embedding[T](inputDim, outputDim, init, toTensor(weights),
-      trainable, wRegularizer, maskZero, if (inputShape != null) inputShape.get(0) else -1)
+      trainable, wRegularizer, inputLen, maskZero, paddingValue, expectZeroBased)
   }
 
   def createZooKerasBatchNormalization(
