@@ -48,7 +48,7 @@ class Embedding(ZooKerasLayer):
     mask_zero: if maskZero is set to true, the input whose value equals `paddingValue`
     the output will be masked to zero vector.
     padding_value: padding value, default 0
-    expect_zero_based: default false and input should be 1 based. Otherwise need to be 0 base
+    zero_based_id: default True and input should be 0 based. Otherwise need to be 1 base
     name: String to set the name of the layer.
           If not specified, its name will by default to be a generated string.
 
@@ -61,7 +61,7 @@ class Embedding(ZooKerasLayer):
     """
     def __init__(self, input_dim, output_dim, init="uniform", weights=None, trainable=True,
                  input_length=None, W_regularizer=None, input_shape=None, mask_zero=False,
-                 padding_value=0, expect_zero_based=False, **kwargs):
+                 padding_value=0, zero_based_id=True, **kwargs):
         if input_length:
             input_shape = (input_length, )
         super(Embedding, self).__init__(None,
@@ -74,7 +74,7 @@ class Embedding(ZooKerasLayer):
                                         list(input_shape) if input_shape else None,
                                         mask_zero,
                                         padding_value,
-                                        expect_zero_based,
+                                        zero_based_id,
                                         **kwargs)
 
 

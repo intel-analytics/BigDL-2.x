@@ -19,11 +19,11 @@ package com.intel.analytics.zoo.examples.chatbot
 import com.intel.analytics.bigdl.dataset._
 import com.intel.analytics.bigdl.dataset.text.utils.SentenceToken
 import com.intel.analytics.bigdl.dataset.text._
-import com.intel.analytics.bigdl.nn.{InitializationMethod, RandomUniform,
-TimeDistributedMaskCriterion, InternalClassNLLCriterion}
+import com.intel.analytics.bigdl.nn.{RandomUniform,
+TimeDistributedMaskCriterion, ClassNLLCriterion}
 import com.intel.analytics.bigdl.nn.keras.KerasLayer
 import com.intel.analytics.bigdl.numeric.NumericFloat
-import com.intel.analytics.bigdl.optim.{Adam, OptimMethod}
+import com.intel.analytics.bigdl.optim.{Adam}
 import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric
 import com.intel.analytics.bigdl.tensor.{Storage, Tensor}
 import com.intel.analytics.bigdl.utils.{Shape, T}
@@ -102,10 +102,10 @@ object Train {
       val stdv = 1.0 / math.sqrt(param.embedDim)
       val embEnc =
         new Embedding(vocabSize, param.embedDim, maskZero = true,
-          paddingValue = padId, init = RandomUniform(-stdv, stdv), expectZeroBased = false)
+          paddingValue = padId, init = RandomUniform(-stdv, stdv), zeroBasedId = false)
       val embDec =
         new Embedding(vocabSize, param.embedDim, maskZero = true,
-          paddingValue = padId, init = RandomUniform(-stdv, stdv), expectZeroBased = false)
+          paddingValue = padId, init = RandomUniform(-stdv, stdv), zeroBasedId = false)
       val embEncW = embEnc.parameters()._1
       val embDecW = embDec.parameters()._1
       val embEncG = embEnc.parameters()._2
@@ -119,9 +119,9 @@ object Train {
       val padLabel = Tensor[Float](T(padId))
 
       val encoder = RNNEncoder[Float]("lstm", 3, param.embedDim,
-        embEnc.asInstanceOf[KerasLayer[Tensor[Float], Tensor[Float], Float]])
+        embEnc)
       val decoder = RNNDecoder[Float]("lstm", 3, param.embedDim,
-        embDec.asInstanceOf[KerasLayer[Tensor[Float], Tensor[Float], Float]])
+        embDec)
 
       val generator = Sequential[Float]()
       generator.add(TimeDistributed[Float](Dense(vocabSize),
@@ -136,7 +136,7 @@ object Train {
       model.compile(
         optimizer = optimMethod,
         loss = TimeDistributedMaskCriterion(
-          InternalClassNLLCriterion(paddingValue = padId),
+          ClassNLLCriterion(paddingValue = padId),
           paddingValue = padId
         ))
 
@@ -211,6 +211,14 @@ object Train {
     (indices1, indices2.take(indices2.length - 1), label)
   }
 
+  /**
+   * [[SentenceIdxBiPadding]] Add start and end sign to sentence
+   * @param start sign added to the start of the sentence. By default is None
+   *              which means will use predefined SENTENCESTART
+   * @param end sign added to the end of the sentence. By default is None
+   *              which means will use predefined SENTENCEEND
+   * @param dictionary dictionary used to index start and end
+   */
   class SentenceIdxBiPadding(
     start: Option[String] = None,
     end: Option[String] = None,

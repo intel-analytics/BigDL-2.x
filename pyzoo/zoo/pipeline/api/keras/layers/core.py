@@ -504,8 +504,8 @@ class Max(ZooKerasLayer):
 
     # Arguments
     dim: max along this dimension
-    numInputDims: Optional. If in a batch model, set to the inputDims.
-    returnValue: Optional. Config whether return value or indices
+    num_input_dims: Optional. If in a batch model, set to the inputDims.
+    return_value: Optional. Config whether return value or indices
     input_shape: A shape tuple, not including batch.
 
     >>> max = Max(dim=1, input_shape=(3, 5))

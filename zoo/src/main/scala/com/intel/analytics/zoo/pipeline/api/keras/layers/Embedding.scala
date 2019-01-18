@@ -53,7 +53,7 @@ import scala.reflect.ClassTag
  * @param maskZero: if maskZero is set to true, the input whose value equals `paddingValue`
  *                the output will be masked to zero vector.
  * @param paddingValue padding value, default 0
- * @param expectZeroBased default false and input should be 1 based. Otherwise need to be 0 base
+ * @param zeroBasedId default true and input should be 0 based. Otherwise need to be 1 base
  * @tparam T Numeric type of parameter(e.g. weight, bias). Only support float/double now.
  */
 class Embedding[T: ClassTag](
@@ -66,7 +66,7 @@ class Embedding[T: ClassTag](
                               inputShape: Shape = null,
                               maskZero: Boolean = false,
                               paddingValue: Int = 0,
-                              expectZeroBased: Boolean = false
+                              zeroBasedId: Boolean = true
                               )(implicit ev: TensorNumeric[T])
   extends BEmbedding[T] (
     inputDim, outputDim, init, wRegularizer, inputShape) with Net {
@@ -81,7 +81,7 @@ class Embedding[T: ClassTag](
 
   override def doBuild(inputShape: Shape): AbstractModule[Tensor[T], Tensor[T], T] = {
     val model = TSequential[T]()
-    if (!expectZeroBased) {
+    if (zeroBasedId) {
       model.add(TAddConstant(1.0))
     }
     val layer = LookupTable(
