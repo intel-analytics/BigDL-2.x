@@ -203,18 +203,18 @@ class PythonZooModel[T: ClassTag](implicit ev: TensorNumeric[T]) extends PythonZ
   def unroll(dataRdd: JavaRDD[JList[Double]],
              unrollLength: Int,
              predictStep: Int = 1): JavaRDD[JList[String]] = {
-    val rdd: RDD[Array[Double]] = dataRdd.rdd.map(x => x.asScala.toArray)
-    val unrolled = AnomalyDetector.unroll[Double](rdd, unrollLength, predictStep)
+    val rdd: RDD[Array[Float]] = dataRdd.rdd.map(x => x.asScala.toArray.map(_.toFloat))
+    val unrolled = AnomalyDetector.unroll[Float](rdd, unrollLength, predictStep)
     toUnrolledJavaRdd(unrolled)
   }
 
-  def toUnrolledJavaRdd(features: RDD[FeatureLabelIndex[Double]]): JavaRDD[JList[String]] = {
+  private def toUnrolledJavaRdd(features: RDD[FeatureLabelIndex[Float]]): JavaRDD[JList[String]] = {
     features.map(x =>
       List(x.feature.map(x => x.mkString("|")).mkString(","), x.label.toString,
         x.index.toString).asJava).toJavaRDD()
   }
 
-  def toAnomaliesJavaRdd(anomaliesRdd: RDD[(Double, Double, Any)]): JavaRDD[JList[Any]] = {
+  private def toAnomaliesJavaRdd(anomaliesRdd: RDD[(Double, Double, Any)]): JavaRDD[JList[Any]] = {
     anomaliesRdd.map(x =>
       List(x._1, x._2, x._3.asInstanceOf[Any])
         .asJava).toJavaRDD()
