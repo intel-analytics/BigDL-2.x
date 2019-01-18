@@ -406,6 +406,27 @@ class TestModelLoading(OnnxTestCase):
         output = OnnxLoader.run_node(node, [x])
         np.testing.assert_almost_equal(output["y"], y, decimal=5)
 
+        node = onnx.helper.make_node(
+            'MaxPool',
+            inputs=['x'],
+            outputs=['y'],
+            kernel_shape=[3, 3],
+            pads=[1, 1, 1, 1],
+            strides=[2, 2]
+        )
+        x = np.random.randn(1, 3, 32, 32).astype(np.float32)
+        x_shape = np.shape(x)
+        kernel_shape = (3, 3)
+        strides = (2, 2)
+        pad_bottom = pad_top = pad_right = pad_left = 1
+        pad_shape = [pad_top + pad_bottom, pad_left + pad_right]
+        out_shape = pool_op_common.get_output_shape('VALID', np.add(x_shape[2:], pad_shape), kernel_shape, strides)
+        padded = np.pad(x, ((0, 0), (0, 0), (pad_top, pad_bottom), (pad_left, pad_right)), mode='constant',
+                        constant_values=np.nan)
+        y = pool_op_common.pool(padded, x_shape, kernel_shape, strides, out_shape, (0, 0), 'MAX')
+        output = OnnxLoader.run_node(node, [x])
+        np.testing.assert_almost_equal(output["y"], y, decimal=5)
+
     def test_onnx_logsoftmax(self):
         pytorch_model = torch.nn.Sequential(
             torch.nn.LogSoftmax()
