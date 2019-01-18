@@ -129,7 +129,28 @@ keras.objectives.msle()
 
 compute mean squared logarithmic error for input and target
 
+### SquaredHinge
 
+**Scala:**
+
+```scala
+import com.intel.analytics.zoo.pipeline.api.keras
+loss = keras.objectives.RankHinge(margin=1.0)
+```
+
+**Python:**
+
+```python
+from zoo.pipeline.api import keras
+keras.objectives.RankHinge(margin=1.0)
+```
+
+Creates a criterion that measures the loss given an input x = {x1, x2}, a table of two Tensors of size 1 (they contain only scalars), and a label y (1 or -1). In batch mode, x is a table of two Tensors of size batchsize, and y is a Tensor of size batchsize containing 1 or -1 for each corresponding pair of elements in the input Tensor. If y == 1 then it assumed the first input should be ranked higher (have a larger value) than the second input, and vice-versa for y == -1.
+
+Parameters:
+
+ * `margin` if unspecified, is by default 1.
+ 
 ### SquaredHinge
 
 **Scala:**
