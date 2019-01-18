@@ -52,16 +52,12 @@ public abstract class AbstractInferenceModel extends InferenceModel implements S
     doLoadTF(modelPath);
   }
 
-  public void loadTF(String modelPath, String backend) {
-    doLoadTF(modelPath, backend);
-  }
-
-  public void loadTF(String modelPath, String backend, String modelType) {
-    doLoadTF(modelPath, backend, modelType);
-  }
-
   public void loadTF(String modelPath, int intraOpParallelismThreads, int interOpParallelismThreads, boolean usePerSessionThreads) {
     doLoadTF(modelPath, intraOpParallelismThreads, interOpParallelismThreads, usePerSessionThreads);
+  }
+
+  public void loadTF(String modelPath, String modelType) {
+    doLoadTF(modelPath, modelType);
   }
 
   public void loadTF(String modelPath, String modelType, String pipelineConfigFilePath, String extensionsConfigFilePath) {

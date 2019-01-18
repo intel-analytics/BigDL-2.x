@@ -39,26 +39,56 @@ class InferenceModel(private var supportedConcurrentNum: Int = 1,
     case _ => offerModelQueue()
   }
 
+  /**
+    * loads a bigdl, analytics-zoo model
+    * @param modelPath the file path of the model
+    * @param weightPath the file path of the weights
+    */
   def doLoad(modelPath: String, weightPath: String): Unit = {
     clearModelQueue()
     this.originalModel = InferenceModelFactory.loadFloatModel(modelPath, weightPath)
     offerModelQueue()
   }
 
+  /**
+    * loads a caffe model
+    * @param modelPath the path of the prototxt file
+    * @param weightPath the path of the caffemodel file
+    */
   def doLoadCaffe(modelPath: String, weightPath: String): Unit = {
     clearModelQueue()
     this.originalModel = InferenceModelFactory.loadFloatModelForCaffe(modelPath, weightPath)
     offerModelQueue()
   }
 
+  /**
+    * loads a TF model as TFNet
+    * @param modelPath the path of the tensorflow model file
+    */
   def doLoadTF(modelPath: String): Unit = {
     doLoadTF(modelPath, "tensorflow", null)
   }
 
-  def doLoadTF(modelPath: String, backend: String): Unit = {
-    doLoadTF(modelPath, backend, null)
+  /**
+    * loads a TF model as OpenVINO
+    * @param modelPath the path of the tensorflow model
+    * @param modelType the type of the tensorflow model,
+    *                  please refer to [[ModelType]]
+    *                  e.g. faster_rcnn_resnet101_coco, mask_rcnn_inception_v2_coco,
+    *                  rfcn_resnet101_coco, ssd_inception_v2_coco
+    */
+  def doLoadTF(modelPath: String, modelType: String): Unit = {
+    doLoadTF(modelPath, "openvino", modelType)
   }
 
+  /**
+    * loads a TF model as specified backend
+    * @param modelPath the path of the tensorflow model
+    * @param backend the backend of the tensorflow model, e.g. "tensorflow", "openvino"
+    * @param modelType the type of the tensorflow model,
+    *                  e.g. faster_rcnn_resnet101_coco, mask_rcnn_inception_v2_coco,
+    *                  rfcn_resnet101_coco, ssd_inception_v2_coco
+    */
   def doLoadTF(modelPath: String, backend: String, modelType: String): Unit = {
     backend.toLowerCase match {
       case "tensorflow" | "tf" => doLoadTF(modelPath, 1, 1, true)
@@ -66,6 +96,13 @@ class InferenceModel(private var supportedConcurrentNum: Int = 1,
     }
   }
 
+  /**
+    * loads a TF model as TFNet
+    * @param modelPath the path of the tensorflow model
+    * @param intraOpParallelismThreads the num of intraOpParallelismThreads
+    * @param interOpParallelismThreads the num of interOpParallelismThreads
+    * @param usePerSessionThreads whether to perSessionThreads
+    */
   def doLoadTF(modelPath: String,
                intraOpParallelismThreads: Int,
                interOpParallelismThreads: Int,
@@ -77,7 +114,16 @@ class InferenceModel(private var supportedConcurrentNum: Int = 1,
       usePerSessionThreads)
   }
 
-
+  /**
+    * loads a TF model as OpenVINO
+    *
+    * @param modelPath the path of the tensorflow model
+    * @param modelType the type of the tensorflow model,
+    *                  e.g. faster_rcnn_resnet101_coco, mask_rcnn_inception_v2_coco,
+    *                  rfcn_resnet101_coco, ssd_inception_v2_coco
+    * @param pipelineConfigPath the path of the pipeline configure file
+    * @param extensionsConfigPath the path of the extensions configure file
+    */
   def doLoadTF(modelPath: String,
                modelType: String,
                pipelineConfigPath: String,
@@ -91,10 +137,26 @@ class InferenceModel(private var supportedConcurrentNum: Int = 1,
     )
   }
 
-  def doLoadTensorflowModel(modelPath: String,
-                            intraOpParallelismThreads: Int,
-                            interOpParallelismThreads: Int,
-                            usePerSessionThreads: Boolean): Unit = {
+  /**
+    * loads a openvino IR
+    * @param modelPath the path of openvino ir xml file
+    * @param weightPath the path of openvino ir bin file
+    */
+  def doLoadOpenVINO(modelPath: String, weightPath: String): Unit = {
+    if (supportedConcurrentNum > 1) {
+      InferenceSupportive.logger.warn(s"supportedConcurrentNum is $supportedConcurrentNum > 1, " +
+        s"openvino model does not support shared weights model copies")
+    }
+    clearModelQueue()
+    this.originalModel =
+      InferenceModelFactory.loadOpenVINOModelForIR(modelPath, weightPath, DeviceType.CPU)
+    offerModelQueue()
+  }
+
+  private def doLoadTensorflowModel(modelPath: String,
+                                    intraOpParallelismThreads: Int,
+                                    interOpParallelismThreads: Int,
+                                    usePerSessionThreads: Boolean): Unit = {
     clearModelQueue()
     this.originalModel =
       InferenceModelFactory.loadFloatModelForTF(modelPath,
@@ -102,11 +164,11 @@ class InferenceModel(private var supportedConcurrentNum: Int = 1,
     offerModelQueue()
   }
 
-  def doLoadTensorflowModelAsOpenVINO(modelPath: String,
-                                      modelType: String,
-                                      pipelineConfigPath: String,
-                                      extensionsConfigPath: String,
-                                      deviceType: DeviceTypeEnumVal): Unit = {
+  private def doLoadTensorflowModelAsOpenVINO(modelPath: String,
+                                              modelType: String,
+                                              pipelineConfigPath: String,
+                                              extensionsConfigPath: String,
+                                              deviceType: DeviceTypeEnumVal): Unit = {
     if (supportedConcurrentNum > 1) {
       InferenceSupportive.logger.warn(s"supportedConcurrentNum is $supportedConcurrentNum > 1, " +
         s"openvino model does not support shared weights model copies")
@@ -117,18 +179,11 @@ class InferenceModel(private var supportedConcurrentNum: Int = 1,
     offerModelQueue()
   }
 
-  def doLoadOpenVINO(modelFilePath: String,
-                       weightFilePath: String): Unit = {
-    if (supportedConcurrentNum > 1) {
-      InferenceSupportive.logger.warn(s"supportedConcurrentNum is $supportedConcurrentNum > 1, " +
-        s"openvino model does not support shared weights model copies")
-    }
-    clearModelQueue()
-    this.originalModel =
-      InferenceModelFactory.loadOpenVINOModelForIR(modelFilePath, weightFilePath, DeviceType.CPU)
-    offerModelQueue()
-  }
-
+  /**
+    * reloads the bigdl, analytics-zoo model
+    * @param modelPath the file path of the model
+    * @param weightPath the file path of the weights
+    */
   def doReload(modelPath: String, weightPath: String): Unit = {
     clearModelQueue()
     doLoad(modelPath, weightPath)
@@ -149,6 +204,11 @@ class InferenceModel(private var supportedConcurrentNum: Int = 1,
     }
   }
 
+  /**
+    * predicts the inference result
+    * @param inputs the input tensor with batch
+    * @return the output tensor with batch
+    */
   def doPredict(inputs: JList[JList[JTensor]]): JList[JList[JTensor]] = {
     timing(s"model predict for batch ${inputs.size()}") {
       val batchSize = inputs.size()
@@ -157,6 +217,11 @@ class InferenceModel(private var supportedConcurrentNum: Int = 1,
     }
   }
 
+  /**
+    * predicts the inference result
+    * @param inputActivity the input activity
+    * @return the output activity
+    */
   def doPredict(inputActivity: Activity): Activity = {
     var model: AbstractModel = null
     try {
