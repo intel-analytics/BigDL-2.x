@@ -44,7 +44,7 @@ class InferenceModel(private var supportedConcurrentNum: Int = 1,
     * @param modelPath the file path of the model
     * @param weightPath the file path of the weights
     */
-  def doLoad(modelPath: String, weightPath: String): Unit = {
+  def doLoad(modelPath: String, weightPath: String = null): Unit = {
     clearModelQueue()
     this.originalModel = InferenceModelFactory.loadFloatModel(modelPath, weightPath)
     offerModelQueue()
