@@ -129,7 +129,7 @@ keras.objectives.msle()
 
 compute mean squared logarithmic error for input and target
 
-### SquaredHinge
+### RankHinge
 
 **Scala:**
 
