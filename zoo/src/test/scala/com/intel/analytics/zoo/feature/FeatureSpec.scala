@@ -27,6 +27,7 @@ import com.intel.analytics.zoo.feature.common.{BigDLAdapter, Preprocessing}
 import com.intel.analytics.zoo.feature.image._
 import org.apache.commons.io.FileUtils
 import org.apache.log4j.Logger
+import org.apache.spark.rdd.ZippedPartitionsWithLocalityRDD
 import org.apache.spark.{SparkConf, SparkContext}
 import org.opencv.imgcodecs.Imgcodecs
 import org.scalatest.{BeforeAndAfter, FlatSpec, Matchers}
@@ -151,6 +152,43 @@ class FeatureSpec extends FlatSpec with Matchers with BeforeAndAfter {
 
     imf2.floats().length should be (270 * 290 * 3)
     imf2.floats() should equal(imf.floats())
+  }
+
+  "distributed feature set" should "train all batch in optimizer" in {
+    val data = sc.parallelize(Range(1, 10, 1)).map{v =>
+      Tensor[Float](1).setValue(1, v)
+    }.cache()
+    val dataNum = data.count().toInt
+    val fs = FeatureSet.rdd(data)
+    fs.shuffle()
+    val dataRDD = fs.data(true)
+    val modelRdd = data.map(_.valueAt(1)).cache()
+    // just like
+    val allData = (0 until dataNum).flatMap{i =>
+      dataRDD.zipPartitions(modelRdd, preservesPartitioning = true){(dataIter, modelIter) =>
+        Iterator.single(dataIter.next())
+      }.collect()
+    }.toArray
+    val sortedAllData = allData.map(_.valueAt(1)).sorted
+    sortedAllData should be (Array.range(1, 10))
+  }
+
+  "distributed feature set" should "validate all batch in optimizer" in {
+    val data = sc.parallelize(Range(1, 10, 1)).map{v =>
+      Tensor[Float](1).setValue(1, v)
+    }.cache()
+    val dataNum = data.count().toInt
+    val fs = FeatureSet.rdd(data)
+    fs.shuffle()
+    val dataRDD = fs.data(false)
+    val modelRdd = data.map(_.valueAt(1)).cache()
+    // just like
+    val allData =
+      ZippedPartitionsWithLocalityRDD(dataRDD, modelRdd){(dataIter, modelIter) =>
+        dataIter.map(batch => batch.valueAt(1))
+      }.collect()
+    val sortedAllData = allData.sorted
+    sortedAllData should be (Array.range(1, 10))
   }
 }
 

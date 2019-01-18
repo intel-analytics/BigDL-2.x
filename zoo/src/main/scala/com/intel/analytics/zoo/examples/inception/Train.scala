@@ -57,7 +57,8 @@ object TrainInceptionV1 {
         param.batchSize,
         EngineRef.getNodeNumber(),
         EngineRef.getCoreNumber(),
-        param.classNumber
+        param.classNumber,
+        MemoryType.fromString(param.memoryType)
       )
 
       val model = if (param.modelSnapshot.isDefined) {

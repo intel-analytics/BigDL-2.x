@@ -45,36 +45,45 @@ class DistributedFeatureSet[T: ClassTag]
     Iterator.single(array.length)
   }).reduce(_ + _)
 
-  protected var indexes: RDD[Array[Int]] = buffer.mapPartitions(iter => {
-    Iterator.single[Array[Int]]((0 until iter.next().length).toArray[Int])
+  protected var indexes: RDD[(Array[Int], AtomicInteger)] = buffer.mapPartitions(iter => {
+    Iterator.single(((0 until iter.next().length).toArray), new AtomicInteger(0))
   }).setName("original index").cache()
 
 
   override def data(train: Boolean): RDD[T] = {
-    val _train = train
-    buffer.zipPartitions(indexes)((dataIter, indexIter) => {
-      val indexes = indexIter.next()
-      val indexOffset = math.max(1, indexes.length)
-      val localData = dataIter.next()
-      val offset = if (_train) {
-        RandomGenerator.RNG.uniform(0, indexOffset).toInt
-      } else {
-        0
-      }
-      new Iterator[T] {
-        private val _offset = new AtomicInteger(offset)
+    if (train) {
+      buffer.zipPartitions(indexes)((dataIter, indexIter) => {
+        val indexCache = indexIter.next()
+        val indexes = indexCache._1
+        val localData = dataIter.next()
+        new Iterator[T] {
+          private val _offset = indexCache._2
 
-        override def hasNext: Boolean = {
-          if (_train) true else _offset.get() < localData.length
-        }
+          override def hasNext: Boolean = {
+            true
+          }
 
-        override def next(): T = {
-          val i = _offset.getAndIncrement()
-          if (_train) {
+          override def next(): T = {
+            val i = _offset.getAndIncrement()
             // indexes is an Array, we should improve this
             // as the maximum length is limited by Int.max
             localData(indexes(i % localData.length))
-          } else {
+          }
+        }
+      })
+    } else {
+      buffer.zipPartitions(indexes)((dataIter, indexIter) => {
+        val indexes = indexIter.next()._1
+        val localData = dataIter.next()
+        new Iterator[T] {
+          private val _offset = new AtomicInteger(0)
+
+          override def hasNext: Boolean = {
+            _offset.get() < localData.length
+          }
+
+          override def next(): T = {
+            val i = _offset.getAndIncrement()
             if (i < localData.length) {
               localData(indexes(i))
             } else {
@@ -82,8 +91,9 @@ class DistributedFeatureSet[T: ClassTag]
             }
           }
         }
-      }
-    })
+      })
+
+    }
   }
 
   override def size(): Long = count
@@ -91,7 +101,8 @@ class DistributedFeatureSet[T: ClassTag]
   override def shuffle(): Unit = {
     indexes.unpersist()
     indexes = buffer.mapPartitions(iter => {
-      Iterator.single(RandomGenerator.shuffle((0 until iter.next().length).toArray))
+      Iterator.single((RandomGenerator.shuffle((0 until iter.next().length).toArray))
+        , new AtomicInteger(0))
     }).setName("shuffled index").cache()
   }
 
