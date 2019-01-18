@@ -67,6 +67,7 @@ Output is
  [0.3880082  0.7628685  0.9577797 ]]
 ```
 
+---
 ## **ELU**
 Exponential Linear Unit.
 
