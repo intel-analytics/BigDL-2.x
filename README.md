@@ -18,7 +18,7 @@ __Analytics Zoo__ provides a unified analytics + AI platform that seamlessly uni
 In addition, Analytics Zoo also provides a rich set of analytics and AI support for the end-to-end pipeline, including:
 - *Easy-to-use abstractions and APIs* (e.g., transfer learning support, autograd operations, Spark DataFrame and ML pipeline support, online model serving API, etc.) 
 - *Common feature engineering operations* (for image, text, 3D image, etc.)
-- *Built-in deep learning models* (e.g., object detection, image classification, text classification, recommendation, etc.) 
+- *Built-in deep learning models* (e.g., object detection, image classification, text classification, recommendation, anomaly detection, text matching, etc.) 
 - *Reference use cases* (e.g., anomaly detection, sentiment analysis, fraud detection, image similarity, etc.)
 
 ## How to use Analytics Zoo?
@@ -33,14 +33,14 @@ In addition, Analytics Zoo also provides a rich set of analytics and AI support 
 ---
 
 ## Overview
-- [Distributed Tensorflow and Keras on Spark/BigDL](#distributed-tensorflow-and-keras-on-sparkbigdl)
+- [Distributed TensorFlow and Keras on Spark/BigDL](#distributed-tensorflow-and-keras-on-sparkbigdl)
   - Data wrangling and analysis using PySpark
   - Deep learning model development using TensorFlow or Keras
   - Distributed training/inference on Spark and BigDL
   - All within a single unified pipeline and in a user-transparent fashion!
 
 - [High level abstractions and APIs](#high-level-abstractions-and-apis)
-  - [Transfer learning](#transfer-learning): customize pretained model for *feature extraction or fine-tuning*
+  - [Transfer learning](#transfer-learning): customize pretrained model for *feature extraction or fine-tuning*
   - [`autograd`](#autograd): build custom layer/loss using *auto differentiation operations* 
   - [`nnframes`](#nnframes): native deep learning support in *Spark DataFrames and ML Pipelines*
   - [Model serving](#model-serving): productionize *model serving and inference* using [POJO](https://en.wikipedia.org/wiki/Plain_old_Java_object) APIs
@@ -50,10 +50,12 @@ In addition, Analytics Zoo also provides a rich set of analytics and AI support 
   - [Image classification API](#image-classification-api): high-level API and pretrained models (e.g., VGG, Inception, ResNet, MobileNet, etc.) for *image classification*
   - [Text classification API](#text-classification-api): high-level API and pre-defined models (using CNN, LSTM, etc.) for *text classification*
   - [Recommedation API](#recommendation-api): high-level API and pre-defined models (e.g., Neural Collaborative Filtering, Wide and Deep Learning, etc.) for *recommendation*
+  - [Anomaly detection API](#anomaly-detection-api): high-level API and pre-defined models based on LSTM for *anomaly detection*
+  - [Text matching API](#text-matching-api): high-level API and pre-defined KNRM model for *text matching*
   
 - [Reference use cases](#reference-use-cases): a collection of end-to-end *reference use cases* (e.g., anomaly detection, sentiment analysis, fraud detection, image augmentation, object detection, variational autoencoder, etc.)
 
-## _Distributed Tensorflow and Keras on Spark/BigDL_
+## _Distributed TensorFlow and Keras on Spark/BigDL_
 To make it easy to build and productionize the deep learning applications for Big Data, Analytics Zoo provides a unified analytics + AI platform that seamlessly unites Spark, TensorFlow, Keras and BigDL programs into an integrated pipeline (as illustrated below), which can then transparently run on a large-scale Hadoop/Spark clusters for distributed training and inference. (Please see more details [here](https://analytics-zoo.github.io/master/#ProgrammingGuide/tensorflow/)).
 
 1. Data wrangling and analysis using PySpark
@@ -69,7 +71,7 @@ To make it easy to build and productionize the deep learning applications for Bi
      .map(lambda image_label: decode_to_ndarrays(image_label))
 
    #TFDataset represents a distributed set of elements,
-   #in which each element contains one or more Tensorflow Tensor objects. 
+   #in which each element contains one or more TensorFlow Tensor objects. 
    dataset = TFDataset.from_rdd(train_rdd,
                                 names=["features", "labels"],
                                 shapes=[[28, 28, 1], [1]],
@@ -158,7 +160,7 @@ Using the high level transfer learning APIs, you can easily customize pretrained
    ```
 
 ### _`autograd`_
-`autograd` provides automatic differentiation for math operations, so that you can easily build your own *custom loss and layer* (in both Python and Scala), as illustracted below. (See more details [here](https://analytics-zoo.github.io/master/#ProgrammingGuide/autograd/))
+`autograd` provides automatic differentiation for math operations, so that you can easily build your own *custom loss and layer* (in both Python and Scala), as illustrated below. (See more details [here](https://analytics-zoo.github.io/master/#ProgrammingGuide/autograd/))
 
 1. Define model using Keras-style API and `autograd` 
    ```python
@@ -228,7 +230,7 @@ Using the high level transfer learning APIs, you can easily customize pretrained
    
 
 ### _Model Serving_
-Using the [POJO](https://en.wikipedia.org/wiki/Plain_old_Java_object) model serving API, you can productionize model serving and infernece in any Java based frameworks (e.g., [Spring Framework](https://spring.io), Apache [Storm](http://storm.apache.org), [Kafka](http://kafka.apache.org) or [Flink](http://flink.apache.org), etc.), as illustrated below:
+Using the [POJO](https://en.wikipedia.org/wiki/Plain_old_Java_object) model serving API, you can productionize model serving and inference in any Java based frameworks (e.g., [Spring Framework](https://spring.io), Apache [Storm](http://storm.apache.org), [Kafka](http://kafka.apache.org) or [Flink](http://flink.apache.org), etc.), as illustrated below:
 
 ```python
 import com.intel.analytics.zoo.pipeline.inference.AbstractInferenceModel;
@@ -249,7 +251,7 @@ List<List<JTensor>> result = model.predict(inputs);
 ```
 
 ## _Built-in deep learning models_
-Analytics Zoo provides several built-in deep learning models that you can use for a variety of problem types, such as *object detection*, *image classification*, *text classification*, *recommendation*, etc.
+Analytics Zoo provides several built-in deep learning models that you can use for a variety of problem types, such as *object detection*, *image classification*, *text classification*, *recommendation*, *anomaly detection*, *text matching*, etc.
 
 ### _Object detection API_
 Using *Analytics Zoo Object Detection API* (including a set of pretrained detection models such as SSD and Faster-RCNN), you can easily build your object detection applications (e.g., localizing and identifying multiple objects in images and videos), as illustrated below. (See more details [here](https://analytics-zoo.github.io/master/#ProgrammingGuide/object-detection/))
@@ -286,6 +288,12 @@ Using *Analytics Zoo Image Classification API* (including a set of pretrained de
 
 ### _Recommendation API_
 *Analytics Zoo Recommendation API* provides a set of pre-defined models (such as Neural Collaborative Filtering, Wide and Deep Learning, etc.) for recommendations. (See more details [here](https://analytics-zoo.github.io/master/#ProgrammingGuide/recommendation/))
+
+### _Anomaly detection API_
+*Analytics Zoo Anomaly Detection API* provides a set of pre-defined models based on LSTM to detect anomalies for time series data. (See more details [here](https://analytics-zoo.github.io/master/#ProgrammingGuide/anomaly-detection/))
+
+### _Text matching API_
+*Analytics Zoo Text Matching API* provides pre-defined KNRM model for ranking or classification. (See more details [here](https://analytics-zoo.github.io/master/#ProgrammingGuide/text-matching/))
 
 ## _Reference use cases_
 Analytics Zoo provides a collection of end-to-end reference use cases, including *time series anomaly detection*, *sentiment analysis*, *fraud detection*, *image similarity*, etc. (See more details [here](https://analytics-zoo.github.io/master/#ProgrammingGuide/usercases-overview/))

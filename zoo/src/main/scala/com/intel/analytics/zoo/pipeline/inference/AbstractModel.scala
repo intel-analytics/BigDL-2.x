@@ -13,15 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+package com.intel.analytics.zoo.pipeline.inference
 
-package com.intel.analytics.zoo.pipeline.inference;
+import java.util.{List => JList}
 
-public class InferenceRuntimeException extends RuntimeException {
-	public InferenceRuntimeException(String msg) {
-		super(msg);
-	}
+import com.intel.analytics.bigdl.nn.abstractnn.Activity
 
-	public InferenceRuntimeException(String msg, Throwable cause) {
-		super(msg, cause);
-	}
+trait AbstractModel {
+  def predict(inputs: JList[JList[JTensor]]): JList[JList[JTensor]]
+  def predict(inputActivity: Activity): Activity
+  def copy(num: Int): Array[AbstractModel]
+  def release(): Unit
+  def isReleased(): Boolean
 }
