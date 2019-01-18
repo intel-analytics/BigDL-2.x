@@ -36,7 +36,8 @@ class TestInferenceModel(ZooTestCase):
 
     def test_load_openvino(self):
         model = InferenceModel()
-        model.load_openvino(base_dir + "frozen_inference_graph.xml", base_dir + "frozen_inference_graph.bin")
+        model.load_openvino(base_dir + "frozen_inference_graph.xml",
+                            base_dir + "frozen_inference_graph.bin")
         input_data = np.random.random([1, 1, 3, 600, 600])
         output_data = model.predict(input_data)
 

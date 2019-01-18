@@ -49,4 +49,3 @@ class InferenceModel(JavaValue):
                                jinputs,
                                input_is_table)
         return KerasNet.convert_output(output)
-

@@ -27,7 +27,7 @@ if __name__ == "__main__":
                       help="The path where the images are stored, "
                            "can be either a folder or an image path")
     parser.add_option("--base_dir", type=str, dest="base_dir",
-                      help="The directory that contains frozen_inference_graph.xml and frozen_inference_graph.bin")
+                      help="The directory that contains TensorFlow model and config")
     (options, args) = parser.parse_args(sys.argv)
 
     images = ImageSet.read(options.img_path, resize_height=600, resize_width=600).get_image()
