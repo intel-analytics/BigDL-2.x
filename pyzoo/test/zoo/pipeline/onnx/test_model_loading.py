@@ -1325,3 +1325,17 @@ class TestModelLoading(OnnxTestCase):
 
         output = OnnxLoader.run_node(node, [x])
         np.testing.assert_almost_equal(output["y"], y, decimal=5)
+
+    def test_globalaveragepool(self):
+        node = onnx.helper.make_node(
+            'GlobalAveragePool',
+            inputs=['x'],
+            outputs=['y'],
+        )
+        x = np.random.randn(2, 3, 7, 5).astype(np.float32)
+        spatial_shape = np.ndim(x) - 2
+        y = np.average(x, axis=tuple(range(spatial_shape, spatial_shape + 2)))
+        for _ in range(spatial_shape):
+            y = np.expand_dims(y, -1)
+        output = OnnxLoader.run_node(node, [x])
+        np.testing.assert_almost_equal(output["y"], y, decimal=5)
