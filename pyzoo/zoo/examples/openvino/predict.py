@@ -17,7 +17,6 @@
 import sys
 from optparse import OptionParser
 
-from zoo.common.nncontext import init_nncontext
 from zoo.feature.image import ImageSet
 from zoo.pipeline.inference import InferenceModel
 
@@ -31,10 +30,9 @@ if __name__ == "__main__":
                       help="The directory that contains frozen_inference_graph.xml and frozen_inference_graph.bin")
     (options, args) = parser.parse_args(sys.argv)
 
-    sc = init_nncontext("TFNet Object Detection Example")
     images = ImageSet.read(options.img_path, resize_height=600, resize_width=600).get_image()
     model = InferenceModel()
-    model.load_openvino_ir(options.base_dir + "/frozen_inference_graph.xml",
-                           options.base_dir + "/frozen_inference_graph.bin")
+    model.load_openvino(options.base_dir + "/frozen_inference_graph.xml",
+                        options.base_dir + "/frozen_inference_graph.bin")
     predictions = model.predict(images[0].reshape((1, 1, 3, 600, 600)))
     print(predictions)

@@ -34,16 +34,16 @@ class TestInferenceModel(ZooTestCase):
         input_data = np.random.random([4, 28, 28, 1])
         output_data = model.predict(input_data)
 
-    def test_load_openvino_ir(self):
+    def test_load_openvino(self):
         model = InferenceModel()
-        model.load_openvino_ir(base_dir + "frozen_inference_graph.xml", base_dir + "frozen_inference_graph.bin", "cpu")
+        model.load_openvino(base_dir + "frozen_inference_graph.xml", base_dir + "frozen_inference_graph.bin")
         input_data = np.random.random([1, 1, 3, 600, 600])
         output_data = model.predict(input_data)
 
-    def test_load_tf_as_openvino(self):
+    def test_load_tf(self):
         model = InferenceModel(3)
-        model.load_tf_as_openvino(base_dir + "frozen_inference_graph.pb", base_dir + "pipeline.config",
-                                  base_dir + "faster_rcnn_support.json", "cpu")
+        model.load_tf(base_dir + "frozen_inference_graph.pb", None, base_dir + "pipeline.config",
+                      base_dir + "faster_rcnn_support.json")
         input_data = np.random.random([1, 1, 3, 600, 600])
         output_data = model.predict(input_data)
 

@@ -27,21 +27,19 @@ class InferenceModel(JavaValue):
         callBigDlFunc(self.bigdl_type, "inferenceModelLoad",
                       self.value, model_path, weight_path)
 
-    def load_tf(self, model_path, intra_op_parallelism_threads,
-                inter_op_parallelism_threads, use_per_session_threads):
+    def load_caffe(self, model_path, weight_path=None):
+        callBigDlFunc(self.bigdl_type, "inferenceModelLoad",
+                      self.value, model_path, weight_path)
+
+    def load_openvino(self, model_path, weight_path):
+        callBigDlFunc(self.bigdl_type, "inferenceModelLoadOpenVINO",
+                      self.value, model_path, weight_path)
+
+    def load_tf(self, model_path, model_type,
+                pipeline_config_path, extensions_config_path):
         callBigDlFunc(self.bigdl_type, "inferenceModelLoadTF",
-                      self.value, model_path, intra_op_parallelism_threads,
-                      inter_op_parallelism_threads, use_per_session_threads)
-
-    def load_openvino_ir(self, model_path, weight_path, device_type="cpu"):
-        callBigDlFunc(self.bigdl_type, "inferenceModelLoadOpenvinoIR",
-                      self.value, model_path, weight_path, device_type)
-
-    def load_tf_as_openvino(self, frozen_model_path, pipeline_config_path,
-                            extensions_config_path, device_type="cpu"):
-        callBigDlFunc(self.bigdl_type, "inferenceModelLoadTFModelAsOpenvino",
-                      self.value, frozen_model_path, pipeline_config_path,
-                      extensions_config_path, device_type)
+                      self.value, model_path, model_type,
+                      pipeline_config_path, extensions_config_path)
 
     def predict(self, inputs):
         jinputs, input_is_table = Layer.check_input(inputs)

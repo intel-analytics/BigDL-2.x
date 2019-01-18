@@ -43,14 +43,11 @@ class PythonInferenceModel[T: ClassTag](implicit ev: TensorNumeric[T]) extends P
     model.doLoad(modelPath, weightPath)
   }
 
-  def inferenceModelLoadTF(
+  def inferenceModelLoadCaffe(
       model: InferenceModel,
       modelPath: String,
-      intraOpParallelismThreads: Int,
-      interOpParallelismThreads: Int,
-      usePerSessionThreads: Boolean): Unit = {
-    model.doLoadTF(modelPath, intraOpParallelismThreads,
-      interOpParallelismThreads, usePerSessionThreads)
+      weightPath: String): Unit = {
+    model.doLoadCaffe(modelPath, weightPath)
   }
 
   def inferenceModelLoadOpenVINO(
@@ -60,14 +57,13 @@ class PythonInferenceModel[T: ClassTag](implicit ev: TensorNumeric[T]) extends P
     model.doLoadOpenVINO(modelPath, weightPath)
   }
 
-  def inferenceModelLoadTFModelAsOpenvino(
+  def inferenceModelLoadTF(
       model: InferenceModel,
-      frozenModelFilePath: String,
+      modelPath: String,
+      modelType: String,
       pipelineConfigFilePath: String,
-      extensionsConfigFilePath: String,
-      deviceType: String): Unit = {
-    model.doLoadTensorflowModelAsOpenvino(frozenModelFilePath, pipelineConfigFilePath,
-      extensionsConfigFilePath, toScalaDeviceType(deviceType))
+      extensionsConfigFilePath: String): Unit = {
+    model.doLoadTF(modelPath, modelType, pipelineConfigFilePath, extensionsConfigFilePath)
   }
 
   def inferenceModelPredict(
@@ -77,14 +73,5 @@ class PythonInferenceModel[T: ClassTag](implicit ev: TensorNumeric[T]) extends P
     val inputActivity = jTensorsToActivity(inputs, inputIsTable)
     val outputActivity = model.doPredict(inputActivity)
     activityToList(outputActivity)
-  }
-
-  private def toScalaDeviceType(deviceType: String): DeviceTypeEnumVal = {
-    deviceType.toLowerCase() match {
-      case "cpu" => DeviceType.CPU
-      case "gpu" => DeviceType.GPU
-      case _ => throw new IllegalArgumentException(s"Unsupported deviceType $deviceType, " +
-        s"please use cpu or gpu")
-    }
   }
 }
