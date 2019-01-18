@@ -12,7 +12,7 @@ Masking(mask_value=0.0, input_shape=None, name=None)
 
 **Parameters:**
 
-* `maskValue`: Mask value. For each timestep in the input (the second dimension), if all the values in the input at that timestep are equal to 'maskValue', then the timestep will masked (skipped) in all downstream layers.
+* `maskValue`: Mask value. For each timestep in the input (the second dimension), if all the values in the input at that timestep are equal to 'maskValue', then the timestep will be masked (skipped) in all downstream layers.
 * `inputShape`: Only need to specify this argument when you use this layer as the first layer of a model. For Scala API, it should be a [`Shape`](../keras-api-scala/#shape) object. For Python API, it should be a shape tuple. Batch dimension should be excluded.
 
 **Scala example:**

@@ -1,7 +1,7 @@
 ## **LocallyConnected2D**
-Locally-connected layer for 2D inputs that works similarly to the SpatialConvolution layer, except that weights are unshared, that is, a different set of filters is applied at each different patch of the input.
+A Locally-connected layers for 2D input works similarly to a SpatialConvolution layer, except that weights are unshared, that is, a different set of filters is applied at different patch of the input.
 
-The input of this layer should be 4D.
+The input of this layer should be 4D. The first dimension is samples, the second dimension is chanels, the third dimension is rows, the fourth dimension id cols.
 
 **Scala:**
 ```scala
@@ -14,7 +14,7 @@ LocallyConnected2D(nb_filter, nb_row, nb_col, activation=None, border_mode="vali
 
 **Parameters:**
 
-* `nbFilter`: Number of convolution filters to use.
+* `nbFilter`: Number of convolution filters.
 * `nbRow`: Number of rows in the convolution kernel.
 * `nbCol`: Number of columns in the convolution kernel.
 * `activation`: String representation of the activation function to use. See [here](activation/#available-activations) for available activation strings. Default is null.

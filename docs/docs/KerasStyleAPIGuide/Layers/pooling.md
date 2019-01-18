@@ -1,7 +1,7 @@
 ## **MaxPooling1D**
 Max pooling operation for temporal data.
 
-The input of this layer should be 3D.
+The input of this layer should be 3D. The first dimension is batch_size, the second dimension is steps, the third dimension is features.
 
 **Scala:**
 ```scala
@@ -112,7 +112,7 @@ Output is:
 ## **MaxPooling2D**
 Max pooling operation for spatial data.
 
-The input of this layer should be 4D.
+The input of this layer should be 4D. The first dimension is batch_size, the second dimension is rows, the third dimension is cols, the fourth dimension is channels.
 
 **Scala:**
 ```scala
