@@ -22,7 +22,7 @@ import java.util
 import com.intel.analytics.bigdl.tensor.Tensor
 import org.scalatest.{BeforeAndAfter, FlatSpec, Matchers}
 
-class FloatInferenceModelSpec extends FlatSpec with Matchers with BeforeAndAfter
+class FloatModelSpec extends FlatSpec with Matchers with BeforeAndAfter
   with InferenceSupportive {
 
   val inputTensor1 = Tensor[Float](3, 5, 5).rand()
@@ -46,11 +46,10 @@ class FloatInferenceModelSpec extends FlatSpec with Matchers with BeforeAndAfter
   val modelPath = resource.getPath + "/caffe/test_persist.prototxt"
   val weightPath = resource.getPath + "/caffe/test_persist.caffemodel"
 
-  var floatInferenceModel: FloatInferenceModel = _
+  var floatInferenceModel: FloatModel = _
 
   before {
-    floatInferenceModel = InferenceModelFactory.
-      loadFloatInferenceModelForCaffe(modelPath, weightPath)
+    floatInferenceModel = InferenceModelFactory.loadFloatModelForCaffe(modelPath, weightPath)
   }
 
   after {
@@ -140,7 +139,7 @@ class FloatInferenceModelSpec extends FlatSpec with Matchers with BeforeAndAfter
 
     val bis = new ByteArrayInputStream(bytes)
     val in = new ObjectInputStream(bis)
-    val floatInferenceModel2 = in.readObject.asInstanceOf[FloatInferenceModel]
+    val floatInferenceModel2 = in.readObject.asInstanceOf[FloatModel]
     assert(floatInferenceModel.model == floatInferenceModel2.model)
     in.close()
   }
