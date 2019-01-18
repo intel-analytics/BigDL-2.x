@@ -28,18 +28,30 @@ class InferenceModel(JavaValue):
                       self.value, model_path, weight_path)
 
     def load_caffe(self, model_path, weight_path=None):
-        callBigDlFunc(self.bigdl_type, "inferenceModelLoad",
+        callBigDlFunc(self.bigdl_type, "inferenceModelLoadCaffe",
                       self.value, model_path, weight_path)
 
     def load_openvino(self, model_path, weight_path):
         callBigDlFunc(self.bigdl_type, "inferenceModelLoadOpenVINO",
                       self.value, model_path, weight_path)
 
-    def load_tf(self, model_path, model_type,
-                pipeline_config_path, extensions_config_path):
-        callBigDlFunc(self.bigdl_type, "inferenceModelLoadTF",
-                      self.value, model_path, model_type,
-                      pipeline_config_path, extensions_config_path)
+    def load_tf(self, model_path, backend="tensorflow",
+                intra_op_parallelism_threads=1, inter_op_parallelism_threads=1,
+                use_per_session_threads=True, model_type=None,
+                pipeline_config_path=None, extensions_config_path=None):
+        backend = backend.lower()
+        if backend == "tensorflow" or backend == "tf":
+            callBigDlFunc(self.bigdl_type, "inferenceModelTensorFlowLoadTF",
+                          self.value, model_path, intra_op_parallelism_threads,
+                          inter_op_parallelism_threads, use_per_session_threads)
+        elif backend == "openvino" or backend == "ov":
+            if all(arg is None for arg in [model_type, pipeline_config_path, extensions_config_path]):
+                raise ValueError("For openvino backend, you must provide either model_type or "
+                                 "pipeline_config_path and extensions_config_path")
+            callBigDlFunc(self.bigdl_type, "inferenceModelOpenVINOLoadTF",
+                          self.value, model_path, model_type, pipeline_config_path, extensions_config_path)
+        else:
+            raise ValueError("Currently only tensorflow and openvino are supported as backend")
 
     def predict(self, inputs):
         jinputs, input_is_table = Layer.check_input(inputs)
