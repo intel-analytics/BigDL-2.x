@@ -14,14 +14,14 @@
  * limitations under the License.
  */
 
-package com.intel.analytics.zoo.pipeline.inference;
+package com.intel.analytics.zoo.pipeline.inference
 
-public class InferenceRuntimeException extends RuntimeException {
-	public InferenceRuntimeException(String msg) {
-		super(msg);
-	}
+object DeviceType extends Enumeration {
+  val CPU = value("CPU", 0)
+  val GPU = value("GPU", 1)
 
-	public InferenceRuntimeException(String msg, Throwable cause) {
-		super(msg, cause);
-	}
+  class DeviceTypeEnumVal(name: String, val value: Int) extends Val(nextId, name)
+
+  protected final def value(name: String, value: Int): DeviceTypeEnumVal =
+    new DeviceTypeEnumVal(name, value)
 }
