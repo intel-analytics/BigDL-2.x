@@ -23,7 +23,7 @@ develop your java applications.
 
 AbstractInferenceModel provides `load` API for loading a pre-trained model,
 thus we can conveniently load various kinds of pre-trained models in java applications. The load result of
-`AbstractInferenceModel` is a `AbstractModel`.
+`AbstractInferenceModel` is an `AbstractModel`.
 We just need to specify the model path and optionally weight path if exists where we previously saved the model.
 
 ***load***
