@@ -19,11 +19,36 @@ from tensorflow.core.framework import graph_pb2
 from tensorflow.core.framework import node_def_pb2
 from tensorflow.python.framework import graph_util
 from tensorflow.python.framework import ops
+from tensorflow.python.ops import variable_scope
 from tensorflow.python.platform import gfile
+from tensorflow.python.util import tf_contextlib
 import tensorflow as tf
 import os
 import json
 import copy
+
+
+def _variable_creator(next_creator, **kwargs):
+    kwargs["use_resource"] = False
+    return next_creator(**kwargs)
+
+
+@tf_contextlib.contextmanager
+def variable_creator_scope():
+    with variable_scope.variable_creator_scope(_variable_creator):
+        yield
+
+
+def process_grad(grad):
+    if grad is not None:
+        grad = ops.convert_to_tensor_or_indexed_slices(grad)
+        if isinstance(grad, ops.IndexedSlices):
+            # In IndexedSlices is not supported in java api, we have to convert it to
+            # a dense tensor. This operation is potentially expensive, but there seems
+            # no work around
+            grad = tf.unsorted_segment_sum(grad.values, grad.indices,
+                                           grad.dense_shape[0])
+    return grad
 
 
 def export_tf(sess, folder, inputs, outputs,
@@ -59,7 +84,7 @@ def export_tf(sess, folder, inputs, outputs,
     non_placeholder_input_names = []
     type_enums = []
     for input_tensor in inputs:
-        if input_tensor.op.type != "Placeholder":
+        if input_tensor.op.type not in ["Placeholder", "PlaceholderWithDefault"]:
             non_placeholder_input_names.append(input_tensor.name)
             type_enums.append(input_tensor.dtype.as_datatype_enum)
 
@@ -130,17 +155,6 @@ def export_tf(sess, folder, inputs, outputs,
             inputs = [g.get_tensor_by_name(x) for x in new_input_names]
             grads = tf.gradients(output_tensors, variables + inputs,
                                  grad_ys=grad_output_placeholders)
-
-            def process_grad(grad):
-                if grad is not None:
-                    grad = ops.convert_to_tensor_or_indexed_slices(grad)
-                    if isinstance(grad, ops.IndexedSlices):
-                        # In IndexedSlices is not supported in java api, we have to convert it to
-                        # a dense tensor. This operation is potentially expensive, but there seems
-                        # no work around
-                        grad = tf.unsorted_segment_sum(grad.values, grad.indices,
-                                                       grad.dense_shape[0])
-                return grad
 
             grads = [process_grad(grad) for grad in grads]
 

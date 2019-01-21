@@ -25,6 +25,7 @@
         <scalatest.version>2.2.4</scalatest.version>
         <spark.version>2.1.0</spark.version>
         <bigdl.version>0.7.1</bigdl.version>
+        <data-store-url>https://s3-ap-southeast-1.amazonaws.com</data-store-url>
     </properties>
 
     <distributionManagement>
@@ -175,6 +176,11 @@
 
     <dependencies>
         <dependency>
+            <groupId>joda-time</groupId>
+            <artifactId>joda-time</artifactId>
+            <version>2.9.9</version>
+        </dependency>
+        <dependency>
             <groupId>org.scalatest</groupId>
             <artifactId>scalatest_${scala.major.version}</artifactId>
             <version>${scalatest.version}</version>
@@ -182,7 +188,8 @@
         </dependency>
         <dependency>
             <groupId>org.reflections</groupId>
-            <artifactId>reflections</artifactId> <version>0.9.9-RC1</version>
+            <artifactId>reflections</artifactId>
+            <version>0.9.9-RC1</version>
             <scope>test</scope>
         </dependency>
         <dependency>
@@ -250,12 +257,19 @@
             <artifactId>proto</artifactId>
             <version>1.10.0</version>
         </dependency>
+
+        <dependency>
+            <groupId>com.intel.analytics.zoo</groupId>
+            <artifactId>zoo-core-dist-all</artifactId>
+            <version>0.1.0-SNAPSHOT</version>
+        </dependency>
     </dependencies>
 
     <build>
         <resources>
             <resource>
                 <directory>${project.basedir}/src/main/resources</directory>
+                <filtering>true</filtering>
             </resource>
             <resource>
                 <!-- Include the properties file to provide the build information. -->
@@ -409,7 +423,8 @@
                         <id>with-spark</id>
                         <configuration>
                             <descriptors>
-                                <descriptor>${project.basedir}/src/assembly/all-in-one.xml</descriptor>
+                                <descriptor>${project.basedir}/src/assembly/all-in-one.xml
+                                </descriptor>
                             </descriptors>
                         </configuration>
                         <phase>package</phase>
@@ -423,7 +438,8 @@
                         <inherited>false</inherited>
                         <configuration>
                             <descriptors>
-                                <descriptor>${project.basedir}/src/assembly/python-zip.xml</descriptor>
+                                <descriptor>${project.basedir}/src/assembly/python-zip.xml
+                                </descriptor>
                             </descriptors>
                         </configuration>
                         <phase>package</phase>
@@ -455,7 +471,8 @@
                         </goals>
                         <configuration>
                             <descriptors>
-                                <descriptor>${project.basedir}/src/assembly/dist-all.xml</descriptor>
+                                <descriptor>${project.basedir}/src/assembly/dist-all.xml
+                                </descriptor>
                             </descriptors>
                         </configuration>
                     </execution>
@@ -473,7 +490,8 @@
                     <sourceDirectory>${basedir}/src/main/scala</sourceDirectory>
                     <testSourceDirectory>${basedir}/src/test/scala</testSourceDirectory>
                     <configLocation>${project.basedir}/scalastyle_config.xml</configLocation>
-                    <outputFile>${project.build.directory}/stylecheck/scalastyle-output.xml</outputFile>
+                    <outputFile>${project.build.directory}/stylecheck/scalastyle-output.xml
+                    </outputFile>
                     <outputEncoding>UTF-8</outputEncoding>
                 </configuration>
                 <executions>
@@ -520,7 +538,9 @@
                                 <!-- Do not change the arg orders. It is a weird way to pass in
                                 this arg. Maybe it is a bug of the plugin. -->
                                 <arg>-skip-packages</arg>
-                                <arg>caffe:org.tensorflow:netty:org.apache.spark.sparkExtension:org.apache.spark.rdd:org.apache.spark.storage:org.apache.spark.bigdl</arg>
+                                <arg>
+                                    caffe:org.tensorflow:netty:org.apache.spark.sparkExtension:org.apache.spark.rdd:org.apache.spark.storage:org.apache.spark.bigdl
+                                </arg>
                             </args>
                         </configuration>
                     </execution>
@@ -558,6 +578,24 @@
                     <nexusUrl>https://oss.sonatype.org/</nexusUrl>
                     <autoReleaseAfterClose>false</autoReleaseAfterClose>
                 </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>properties-maven-plugin</artifactId>
+                <version>1.0.0</version>
+                <executions>
+                    <execution>
+                        <phase>generate-resources</phase>
+                        <goals>
+                            <goal>write-project-properties</goal>
+                        </goals>
+                        <configuration>
+                            <outputFile>
+                                ${project.build.outputDirectory}/app.properties
+                            </outputFile>
+                        </configuration>
+                    </execution>
+                </executions>
             </plugin>
         </plugins>
     </build>

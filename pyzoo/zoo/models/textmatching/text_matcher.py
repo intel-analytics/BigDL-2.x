@@ -14,25 +14,26 @@
 # limitations under the License.
 #
 
-import sys
-
-from zoo.models.common.zoo_model import ZooModel
+from zoo.models.common import *
 
 if sys.version >= '3':
     long = int
     unicode = str
 
 
-class TextMatcher(ZooModel):
+class TextMatcher(ZooModel, Ranker):
     """
     The base class for text matching models in Analytics Zoo.
     Referred to MatchZoo implementation: https://github.com/NTMC-Community/MatchZoo
     """
     def __init__(self, text1_length, vocab_size, embed_size=300, embed_weights=None,
-                 train_embed=True, bigdl_type="float"):
+                 train_embed=True, target_mode="ranking", bigdl_type="float"):
         self.text1_length = text1_length
         self.vocab_size = vocab_size
         self.embed_size = embed_size
         self.embed_weights = embed_weights
         self.train_embed = train_embed
+        assert target_mode == "ranking" or target_mode == "classification",\
+            "target_mode should be either ranking or classification"
+        self.target_mode = target_mode
         self.bigdl_type = bigdl_type

@@ -63,7 +63,7 @@ def main(data_num):
 
     with tf.Session() as sess:
         sess.run(tf.global_variables_initializer())
-        saver.restore(sess, "/tmp/lenet/")
+        saver.restore(sess, "/tmp/lenet/model")
 
         predictor = TFPredictor(sess, [correct])
 

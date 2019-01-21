@@ -19,7 +19,7 @@ package com.intel.analytics.zoo.models.textmatching
 import com.intel.analytics.bigdl.nn.abstractnn.Activity
 import com.intel.analytics.bigdl.tensor.Tensor
 import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric
-import com.intel.analytics.zoo.models.common.ZooModel
+import com.intel.analytics.zoo.models.common.{Ranker, ZooModel}
 
 import scala.reflect.ClassTag
 
@@ -27,12 +27,17 @@ import scala.reflect.ClassTag
  * The base class for text matching models in Analytics Zoo.
  * Referred to MatchZoo implementation: https://github.com/NTMC-Community/MatchZoo
  */
-abstract class TextMatcher[T: ClassTag](
+abstract class TextMatcher[T](
     val text1Length: Int,
     val vocabSize: Int,
     val embedSize: Int = 300,
     val embedWeights: Tensor[T] = null,
-    val trainEmbed: Boolean = true)(implicit ev: TensorNumeric[T])
-  extends ZooModel[Activity, Activity, T] {
+    val trainEmbed: Boolean = true,
+    val targetMode: String = "ranking")
+  (implicit val tag: ClassTag[T], implicit val ev: TensorNumeric[T])
+  extends ZooModel[Activity, Activity, T] with Ranker[T] {
+
+  require(targetMode == "ranking" || targetMode == "classification", "targetMode should be " +
+    s"either 'ranking' or 'classification', but got $targetMode")
 
 }

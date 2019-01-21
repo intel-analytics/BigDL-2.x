@@ -161,6 +161,7 @@ object KerasUtils {
       case "kullback_leibler_divergence" => KullbackLeiblerDivergence[T]()
       case "cosine_proximity" => CosineProximity[T]()
       case "poisson" => Poisson[T]()
+      case "rank_hinge" => RankHinge[T]()
       case _ => throw new IllegalArgumentException(s"Unsupported loss: $loss")
     }
   }
@@ -205,7 +206,7 @@ object KerasUtils {
     if (shape.isInstanceOf[SingleShape]) {
       Shape((List(-1) ++ shape.toSingle()).toArray)
     } else {
-      Shape(shape.toMulti().map {addBatch})
+      MultiShape(shape.toMulti().map {addBatch})
     }
   }
 
@@ -216,7 +217,7 @@ object KerasUtils {
     if (shape.isInstanceOf[SingleShape]) {
       Shape(shape.toSingle().slice(1, shape.toSingle().length).toArray)
     } else {
-      Shape(shape.toMulti().map {removeBatch})
+      MultiShape(shape.toMulti().map {removeBatch})
     }
   }
 

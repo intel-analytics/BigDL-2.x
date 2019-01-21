@@ -28,12 +28,15 @@ import com.intel.analytics.bigdl.utils.serializer.ModuleLoader
 import com.intel.analytics.bigdl.visualization.{TrainSummary, ValidationSummary}
 import com.intel.analytics.bigdl.{Criterion, DataSet, Module}
 import com.intel.analytics.zoo.feature.common.{Preprocessing, _}
+import com.intel.analytics.zoo.pipeline.api.Net
+import com.intel.analytics.zoo.pipeline.api.keras.layers.utils.EngineRef
 import org.apache.hadoop.fs.Path
+import org.apache.log4j.Logger
 import org.apache.spark.SparkContext
 import org.apache.spark.ml.adapter.{HasFeaturesCol, HasPredictionCol, SchemaUtils}
 import org.apache.spark.ml.param._
 import org.apache.spark.ml.util._
-import org.apache.spark.ml.{DLEstimatorBase, DLTransformerBase, DefaultParamsWriterWrapper}
+import org.apache.spark.ml.{DLEstimatorBase, DLTransformerBase, DefaultParamsWriterWrapper, VectorCompatibility}
 import org.apache.spark.sql.types._
 import org.apache.spark.sql.{DataFrame, Row}
 import org.json4s.JsonDSL._
@@ -43,6 +46,9 @@ import scala.reflect.ClassTag
 
 private[nnframes] trait HasBatchSize extends Params {
 
+  /**
+   * Global batch size across the cluster.
+   */
   final val batchSize: IntParam = new IntParam(this, "batchSize", "batchSize")
 
   def getBatchSize: Int = $(batchSize)
@@ -60,7 +66,9 @@ private[nnframes] trait TrainingParams[@specialized(Float, Double) T] extends Pa
   /**
    * learning rate for the optimizer in the NNEstimator.
    * Default: 0.001
+   * :: deprecated, please set the learning rate with optimMethod directly.
    */
+  @deprecated("Please set the learning rate with optimMethod directly", "0.4.0")
   final val learningRate = new DoubleParam(
     this, "learningRate", "learningRate", ParamValidators.gt(0))
 
@@ -69,7 +77,9 @@ private[nnframes] trait TrainingParams[@specialized(Float, Double) T] extends Pa
   /**
    * learning rate decay for each iteration.
    * Default: 0
+   * :: deprecated, please set the learning rate decay with optimMethod directly.
    */
+  @deprecated("Please set the learning rate decay with optimMethod directly", "0.4.0")
   final val learningRateDecay = new DoubleParam(this, "learningRateDecay", "learningRateDecay")
 
   def getLearningRateDecay: Double = $(learningRateDecay)
@@ -132,13 +142,22 @@ private[nnframes] trait TrainingParams[@specialized(Float, Double) T] extends Pa
  * Common trait for NNEstimator and NNModel
  */
 private[nnframes] trait NNParams[@specialized(Float, Double) T] extends HasFeaturesCol
-  with HasPredictionCol with HasBatchSize {
+  with HasPredictionCol with HasBatchSize with VectorCompatibility {
 
   final val samplePreprocessing = new Param[Preprocessing[Any, Sample[T]]](this,
     "samplePreprocessing", "samplePreprocessing ")
 
   def getSamplePreprocessing: Preprocessing[Any, Sample[T]] = $(samplePreprocessing)
 
+  protected def unwrapVectorAsNecessary(colType: DataType): (Row, Int) => Any = {
+    // to support both ML Vector and MLlib Vector
+    if (colType.typeName.contains("vector")) {
+      (row: Row, index: Int) => getVectorSeq(row, colType, index)
+    } else {
+      (row: Row, index: Int) => row.get(index)
+    }
+  }
+  // set default here to apply to both estimator and model
   setDefault(batchSize -> 1)
 }
 
@@ -178,13 +197,24 @@ class NNEstimator[T: ClassTag] private[zoo] (
 
   def setPredictionCol(value: String): this.type = set(predictionCol, value)
 
+  /**
+   * Set global batch size across the cluster. Global batch size = Batch per thread * num of cores.
+   */
   def setBatchSize(value: Int): this.type = set(batchSize, value)
 
   def setEndWhen(trigger: Trigger): this.type = set(endWhen, trigger)
 
+  /**
+   * :: deprecated, please set the learning rate with optimMethod directly.
+   */
+  @deprecated("Please set with optimMethod directly", "0.4.0")
   def setLearningRate(value: Double): this.type = set(learningRate, value)
   setDefault(learningRate -> 1e-3)
 
+  /**
+   * :: deprecated, please set with optimMethod directly.
+   */
+  @deprecated("Please set with optimMethod directly.", "0.4.0")
   def setLearningRateDecay(value: Double): this.type = set(learningRateDecay, value)
   setDefault(learningRateDecay -> 0.0)
 
@@ -333,18 +363,20 @@ class NNEstimator[T: ClassTag] private[zoo] (
 
     val sp = $(samplePreprocessing).asInstanceOf[Preprocessing[(Any, Option[Any]), Sample[T]]]
     val featureColIndex = dataFrame.schema.fieldIndex($(featuresCol))
-    val labelColIndex = if (dataFrame.columns.contains($(labelCol))) {
-      Some(dataFrame.schema.fieldIndex($(labelCol)))
+    val featureType = dataFrame.schema($(featuresCol)).dataType
+    val featureFunc = unwrapVectorAsNecessary(featureType)
+
+    val labelFunc: (Row) => Option[Any] = if (dataFrame.columns.contains($(labelCol))) {
+      val lci = dataFrame.schema.fieldIndex($(labelCol))
+      val labelFunc = unwrapVectorAsNecessary(dataFrame.schema($(labelCol)).dataType)
+      (row: Row) => Some(labelFunc(row, lci))
     } else {
-      None
+      (row: Row) => None
     }
 
     val featureAndLabel = dataFrame.rdd.map { row =>
-      val features = row.get(featureColIndex)
-      val labels = labelColIndex match {
-        case Some(i) => Some(row.get(i))
-        case None => None
-      }
+      val features = featureFunc(row, featureColIndex)
+      val labels = labelFunc(row)
       (features, labels)
     }
     val initialDataSet = if ($(cachingSample)) {
@@ -358,12 +390,23 @@ class NNEstimator[T: ClassTag] private[zoo] (
 
   protected override def internalFit(dataFrame: DataFrame): NNModel[T] = {
     val trainingDataSet = getDataSet(dataFrame, $(batchSize))
-    val state = T("learningRate" -> $(learningRate), "learningRateDecay" -> $(learningRateDecay))
     val endTrigger = if (isSet(endWhen)) $(endWhen) else Trigger.maxEpoch($(maxEpoch))
     val optimizer = Optimizer(model, trainingDataSet, criterion)
-      .setState(state)
       .setOptimMethod($(optimMethod))
       .setEndWhen(endTrigger)
+
+    // only set learning rate if user specifically set the values, otherwise use the
+    // learning rate from $(optimMethod)
+    if (isSet(learningRate) || isSet(learningRateDecay)) {
+      val state = T()
+      if (isSet(learningRate)) {
+        state.add(T("learningRate" -> $(learningRate)))
+      }
+      if (isSet(learningRateDecay)) {
+        state.add(T("learningRateDecay" -> $(learningRateDecay)))
+      }
+      optimizer.setState(state)
+    }
 
     if (isSet(l2GradientClippingParams)) {
       optimizer.setGradientClippingByl2Norm($(l2GradientClippingParams))
@@ -530,10 +573,16 @@ class NNModel[T: ClassTag] private[zoo] (
   extends DLTransformerBase[NNModel[T]] with NNParams[T]
     with HasBatchSize with MLWritable {
 
+  @transient
+  private val logger = Logger.getLogger(getClass)
+
   def setFeaturesCol(featuresColName: String): this.type = set(featuresCol, featuresColName)
 
   def setPredictionCol(value: String): this.type = set(predictionCol, value)
 
+  /**
+   * Set global batch size across the cluster. Global batch size = Batch per thread * num of cores.
+   */
   def setBatchSize(value: Int): this.type = set(batchSize, value)
 
   /**
@@ -549,12 +598,26 @@ class NNModel[T: ClassTag] private[zoo] (
   protected override def internalTransform(dataFrame: DataFrame): DataFrame = {
 
     val featureColIndex = dataFrame.schema.fieldIndex($(featuresCol))
+    val featureType = dataFrame.schema($(featuresCol)).dataType
+    val featureFunc = unwrapVectorAsNecessary(featureType)
 
     val sc = dataFrame.sqlContext.sparkContext
     val modelBroadCast = ModelBroadcast[T]().broadcast(sc, model.evaluate())
-    val localBatchSize = $(batchSize)
+    // note that here we use batch per thread, but not batch per partition. For inference,
+    // GlobalBatchSize = batchPerThread * coreNumber() appears to be more intuitive for the users
+    val totalNumCores = EngineRef.getCoreNumber() * EngineRef.getNodeNumber()
+    val batchPerThread = Math.ceil($(batchSize).toDouble / totalNumCores).toInt
+    if ($(batchSize) % totalNumCores != 0) {
+      logger.warn(s"Global batch size (${$(batchSize)}) cannot be divided by total core number" +
+        s"($totalNumCores). Setting batch per thread as ($batchPerThread), and actual Global" +
+        s" batch size is updated to ${totalNumCores * batchPerThread}")
+    } else {
+      logger.info(s"Batch per thread: $batchPerThread; Total number of cores: $totalNumCores;" +
+        s" Global batch size: ${batchPerThread * totalNumCores}")
+    }
+
     val featureTransformersBC = sc.broadcast($(samplePreprocessing))
-    val toBatchBC = sc.broadcast(SampleToMiniBatch[T](localBatchSize))
+    val toBatchBC = sc.broadcast(SampleToMiniBatch[T](batchPerThread, partitionNum = Some(1)))
 
     // concat the prediction and other columns in DF. avoid zip between RDD
     val resultRDD = dataFrame.rdd.mapPartitions { rowIter =>
@@ -562,8 +625,8 @@ class NNModel[T: ClassTag] private[zoo] (
       val featureSteps = featureTransformersBC.value.cloneTransformer()
       val toBatch = toBatchBC.value.cloneTransformer()
 
-      rowIter.grouped(localBatchSize).flatMap { rowBatch =>
-        val featureSeq = rowBatch.map(r => r.get(featureColIndex))
+      rowIter.grouped(batchPerThread).flatMap { rowBatch =>
+        val featureSeq = rowBatch.map(r => featureFunc(r, featureColIndex))
         val samples = featureSteps(featureSeq.iterator)
         val predictions = toBatch(samples).flatMap { batch =>
           val batchResult = localModel.forward(batch.getInput()).toTensor
@@ -673,6 +736,7 @@ object NNModel extends MLReadable[NNModel[_]] {
   }
 
   private[nnframes] def getMetaAndModel(path: String, sc: SparkContext) = {
+    Net // this is necessary to load Net and register the serializer
     val meta = DefaultParamsWriterWrapper.loadMetadata(path, sc)
     val (modulePath, weightPath) =
       new Path(path, "module").toString -> new Path(path, "weight").toString

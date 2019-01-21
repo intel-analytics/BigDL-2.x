@@ -22,7 +22,7 @@ import com.intel.analytics.bigdl.nn.ClassNLLCriterion
 import com.intel.analytics.bigdl.nn.abstractnn.Activity
 import com.intel.analytics.bigdl.optim.{Adam, Optimizer, Trigger}
 import com.intel.analytics.bigdl.tensor.Tensor
-import com.intel.analytics.bigdl.utils.T
+import com.intel.analytics.bigdl.utils.{T, Table}
 import com.intel.analytics.zoo.common.NNContext
 import com.intel.analytics.zoo.pipeline.api.keras.ZooSpecHelper
 import com.intel.analytics.zoo.pipeline.api.keras.serializer.ModuleSerializationTest
@@ -74,7 +74,8 @@ class WideAndDeepSpec extends ZooSpecHelper {
     data.map { input =>
       val output = model.forward(input)
       val gradInput = model.backward(input, output)
-    }
+    }.count()
+
   }
 
 
@@ -86,26 +87,32 @@ class WideAndDeepSpec extends ZooSpecHelper {
 
     val data = datain
       .rdd.map(r => Utils.getDeepTensor(r, columnInfo))
-    data.map { input =>
-      val output = model.forward(input)
-      val gradInput = model.backward(input, output)
-    }
+    data.map{ input =>
+      val feature : Tensor[Float] = input.reshape(Array(1, input.size(1)))
+      val output = model.forward(feature)
+      val gradInput = model.backward(feature, output)
+    }.count()
   }
 
   "WideAndDeep deep model embedding and continuous part" should "work properly" in {
     val columnInfo = ColumnFeatureInfo(
+      indicatorCols = Array("occupation", "gender"),
+      indicatorDims = Array(21, 3),
       embedCols = Array("userId", "itemId"),
       embedInDims = Array(100, 100),
       embedOutDims = Array(20, 20),
-      continuousCols = Array("age"))
+      continuousCols = Array("age")
+    )
     val model = WideAndDeep[Float]("deep", 5, columnInfo)
 
-    val data = datain
+    val data: RDD[Tensor[Float]] = datain
       .rdd.map(r => Utils.getDeepTensor(r, columnInfo))
-    data.map { input =>
-      val output = model.forward(input)
-      val gradInput = model.backward(input, output)
-    }
+
+    data.map{ input =>
+      val feature : Tensor[Float] = input.reshape(Array(1, input.size(1)))
+      val output = model.forward(feature)
+      val gradInput = model.backward(feature, output)
+    }.count()
   }
 
   "WideAndDeep full model forward and backward" should "work properly" in {
@@ -126,12 +133,12 @@ class WideAndDeepSpec extends ZooSpecHelper {
       .rdd.map(r => {
       val wideTensor: Tensor[Float] = Utils.getWideTensor(r, columnInfo)
       val deepTensor: Tensor[Float] = Utils.getDeepTensor(r, columnInfo)
-      T(wideTensor, deepTensor)
+      T(T(wideTensor, deepTensor))
     })
     data.map { input =>
       val output = model.forward(input)
       val gradInput = model.backward(input, output)
-    }
+    }.count()
   }
 
   "WideAndDeep full model implicit forward and backward" should "work properly" in {
@@ -140,6 +147,11 @@ class WideAndDeepSpec extends ZooSpecHelper {
       wideBaseDims = Array(21, 3),
       wideCrossCols = Array("occupation-gender"),
       wideCrossDims = Array(100),
+      indicatorCols = Array("occupation", "gender"),
+      indicatorDims = Array(21, 3),
+      embedCols = Array("userId", "itemId"),
+      embedInDims = Array(100, 100),
+      embedOutDims = Array(20, 20),
       continuousCols = Array("age"))
     val model = WideAndDeep[Float]("wide_n_deep", 2, columnInfo)
 
@@ -150,16 +162,17 @@ class WideAndDeepSpec extends ZooSpecHelper {
       .select("occupation", "gender", "age", "userId", "itemId")
       .unionAll(datain.select("occupation", "gender", "age", "userId", "itemId"))
       .withColumn("occupation-gender", bucketUDF(col("occupation"), col("gender")))
+
     val data: RDD[Activity] = unioned
       .rdd.map(r => {
       val wideTensor: Tensor[Float] = Utils.getWideTensor(r, columnInfo)
       val deepTensor: Tensor[Float] = Utils.getDeepTensor(r, columnInfo)
-      T(wideTensor, deepTensor)
+      T(T(wideTensor, deepTensor))
     })
     data.map { input =>
       val output = model.forward(input)
       val gradInput = model.backward(input, output)
-    }
+    }.count()
   }
 
   "WideAndDeep predictUserItemPair" should "have correct predictions" in {

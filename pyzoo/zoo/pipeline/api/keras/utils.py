@@ -63,6 +63,8 @@ def to_bigdl_criterion(criterion):
         return Poisson()
     elif criterion == "cosine_proximity" or criterion == "cosine":
         return CosineProximity()
+    elif criterion == "rank_hinge":
+        return RankHinge()
     else:
         raise TypeError("Unsupported loss: %s" % criterion)
 
@@ -74,6 +76,7 @@ def to_bigdl_metric(metric):
     elif metric == "top5accuracy" or metric == "top5acc":
         return metrics.Top5Accuracy()
     elif metric == "mae":
+        from bigdl.optim.optimizer import MAE
         return MAE()
     elif metric == "auc":
         return metrics.AUC()
