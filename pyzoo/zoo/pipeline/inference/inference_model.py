@@ -45,11 +45,15 @@ class InferenceModel(JavaValue):
                           self.value, model_path, intra_op_parallelism_threads,
                           inter_op_parallelism_threads, use_per_session_threads)
         elif backend == "openvino" or backend == "ov":
-            if all(arg is None for arg in [model_type, pipeline_config_path, extensions_config_path]):
-                raise ValueError("For openvino backend, you must provide either model_type or "
-                                 "pipeline_config_path and extensions_config_path")
-            callBigDlFunc(self.bigdl_type, "inferenceModelOpenVINOLoadTF",
-                          self.value, model_path, model_type, pipeline_config_path, extensions_config_path)
+            if model_type:
+                callBigDlFunc(self.bigdl_type, "inferenceModelOpenVINOLoadTF",
+                              self.value, model_path, model_type)
+            else:
+                assert pipeline_config_path is not None and extensions_config_path is not None,\
+                    "For openvino backend, you must provide either model_type or both " \
+                    "pipeline_config_path and extensions_config_path"
+                callBigDlFunc(self.bigdl_type, "inferenceModelOpenVINOLoadTF",
+                              self.value, model_path, pipeline_config_path, extensions_config_path)
         else:
             raise ValueError("Currently only tensorflow and openvino are supported as backend")
 

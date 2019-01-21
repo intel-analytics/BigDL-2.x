@@ -60,10 +60,16 @@ class PythonInferenceModel[T: ClassTag](implicit ev: TensorNumeric[T]) extends P
   def inferenceModelOpenVINOLoadTF(
       model: InferenceModel,
       modelPath: String,
-      modelType: String,
+      modelType: String): Unit = {
+    model.doLoadTF(modelPath, modelType)
+  }
+
+  def inferenceModelOpenVINOLoadTF(
+      model: InferenceModel,
+      modelPath: String,
       pipelineConfigFilePath: String,
       extensionsConfigFilePath: String): Unit = {
-    model.doLoadTF(modelPath, modelType, pipelineConfigFilePath, extensionsConfigFilePath)
+    model.doLoadTF(modelPath, pipelineConfigFilePath, extensionsConfigFilePath)
   }
 
   def inferenceModelTensorFlowLoadTF(
