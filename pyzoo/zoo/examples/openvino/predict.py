@@ -38,7 +38,8 @@ if __name__ == "__main__":
     (options, args) = parser.parse_args(sys.argv)
 
     sc = init_nncontext("OpenVINO Object Detection Inference Example")
-    images = ImageSet.read(options.img_path, sc, resize_height=600, resize_width=600).get_image().collect()
+    images = ImageSet.read(options.img_path, sc,
+                           resize_height=600, resize_width=600).get_image().collect()
     input_data = np.concatenate([image.reshape((1, 1) + image.shape) for image in images], axis=0)
     model = InferenceModel()
     model.load_tf(options.model_path, backend="openvino",
