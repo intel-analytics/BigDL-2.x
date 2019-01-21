@@ -59,8 +59,8 @@ class TestInferenceModel(ZooTestCase):
         local_path = self.create_temp_dir()
         url = data_url + "/TF_faster_rcnn_resnet101_coco_2018_01_28"
         maybe_download("frozen_inference_graph.pb", local_path, url + "/frozen_inference_graph.pb")
-        maybe_download("faster_rcnn_support.json", local_path, url + "/faster_rcnn_support.json")
         maybe_download("pipeline.config", local_path, url + "/pipeline.config")
+        maybe_download("faster_rcnn_support.json", local_path, url + "/faster_rcnn_support.json")
         model = InferenceModel(3)
         model.load_tf(local_path + "/frozen_inference_graph.pb", backend="openvino",
                       pipeline_config_path=local_path + "/pipeline.config",

@@ -29,11 +29,11 @@ if __name__ == "__main__":
                       help="The path where the images are stored, "
                            "can be either a folder or an image path")
     parser.add_option("--model", type=str, dest="model_path",
-                      help="The directory that contains TensorFlow model and config")
+                      help="Path to the TensorFlow model file")
     parser.add_option("--pipeline", type=str, dest="pipeline_config_path",
-                      help="The directory that contains TensorFlow model and config")
+                      help="Path to the pipeline configure file")
     parser.add_option("--extensions", type=str, dest="extensions_config_path",
-                      help="The directory that contains TensorFlow model and config")
+                      help="Path to the extensions configure file")
 
     (options, args) = parser.parse_args(sys.argv)
 
