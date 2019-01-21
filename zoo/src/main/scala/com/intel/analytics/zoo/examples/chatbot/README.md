@@ -1,7 +1,10 @@
 ## Summary
 This example demonstrates how to train a chatbot and use it to inference answers for queries.
 
-## Preparation
+## Download Analytics Zoo
+You can download Analytics Zoo prebuilt release and nightly build package from [here](https://analytics-zoo.github.io/master/#release-download/) and extract it.
+
+## Data Preparation
 
 To start with this example, you need prepare your dataset.
 
@@ -14,10 +17,15 @@ Prepare training dataset
     tar zxvf chatbot-data.tar.gz
     ```
 After unzip the file, you will get 4 files.
+
 idx2w.csv: dictionary which used to map words to indexes.
+
 w2idx.csv: dictionary which used to index words
+
 chat1_1.txt: Queries. Each line is a query. The file has been indexed with dictionray
+
 chat2_1.txt: Answers to the queries. The file has been indexed with dictionray
+
 
 ## Run this example
 

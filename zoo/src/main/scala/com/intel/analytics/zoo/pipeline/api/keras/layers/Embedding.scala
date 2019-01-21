@@ -104,20 +104,20 @@ class Embedding[T: ClassTag](
 
 object Embedding {
   def apply[@specialized(Float, Double) T: ClassTag](
-      inputDim: Int,
-      outputDim: Int,
-      init: String = "uniform",
-      weights: Tensor[T] = null,
-      trainable: Boolean = true,
-      wRegularizer: Regularizer[T] = null,
-      inputLength: Int = -1,
-      maskZero: Boolean = false,
-      paddingValue: Int = 0,
-      expectZeroBased: Boolean = false
+    inputDim: Int,
+    outputDim: Int,
+    init: String = "uniform",
+    weights: Tensor[T] = null,
+    trainable: Boolean = true,
+    wRegularizer: Regularizer[T] = null,
+    inputLength: Int = -1,
+    maskZero: Boolean = false,
+    paddingValue: Int = 0,
+    zeroBasedId: Boolean = false
       )(implicit ev: TensorNumeric[T]): Embedding[T] = {
     // Remark: It is possible that inputShape is specified in Input node or layer.
     val shape = if (inputLength > 0) Shape(inputLength) else null
     new Embedding[T](inputDim, outputDim, KerasUtils.getInitMethod(init),
-      weights, trainable, wRegularizer, shape, maskZero, paddingValue, expectZeroBased)
+      weights, trainable, wRegularizer, shape, maskZero, paddingValue, zeroBasedId)
   }
 }
