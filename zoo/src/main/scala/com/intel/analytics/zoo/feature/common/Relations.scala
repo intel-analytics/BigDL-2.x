@@ -118,7 +118,7 @@ object Relations {
           relSet(relation.id1) = map
         }
       }
-      else{
+      else {
         if (! relSet.get(relation.id1).get.contains(relation.label)) {
           val buffer: ArrayBuffer[String] = ArrayBuffer()
           buffer.append(relation.id2)
@@ -126,7 +126,7 @@ object Relations {
           map(relation.label) = buffer
           relSet(relation.id1) = map
         }
-        else{
+        else {
           val res = relSet.get(relation.id1).get
           res.get(relation.label).get.append(relation.id2)
           relSet(relation.id1) = res
@@ -134,7 +134,7 @@ object Relations {
       }
     }
 
-    for((k, v) <- relSet){
+    for((k, v) <- relSet) {
       val map = v
       if(map.contains(0) && map.contains(1)) {
         val buffer0 = map.get(0).get.toArray
@@ -146,7 +146,7 @@ object Relations {
           }
         }
       }
-      else{}
+      else {}
     }
     pairList.toArray
   }

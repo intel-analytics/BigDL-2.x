@@ -309,7 +309,7 @@ class TextSetSpec extends ZooSpecHelper {
     require(pairFeatures.length == 3)
     require(pairFeatures.map(_.getURI).toSet == Set("Q1A1A2", "Q2A2A1", "Q2A2A3"))
 
-    for(feature <- pairFeatures){
+    for(feature <- pairFeatures) {
       val sample = feature.getSample
       require(sample.feature().size().sameElements(Array(2, 9)))
       require(sample.feature().reshape(Array(18)).toArray().sameElements(

@@ -412,7 +412,7 @@ object TextSet {
     for (i <- array1) {mapText1(i.getURI) = i.getIndices}
     for (i <- array2) {mapText2(i.getURI) = i.getIndices}
     val Feature: ArrayBuffer[TextFeature] = ArrayBuffer()
-    for(pair <- pairsArray){
+    for(pair <- pairsArray) {
       require(mapText1.contains(pair.id1))
       val indices1 = mapText1.get(pair.id1).get
       require(mapText2.contains(pair.id2Positive))
@@ -425,7 +425,7 @@ object TextSet {
         "pairsArray haven't been transformed from word to index yet, please word2idx first")
       require(indices2Neg != null,
         "pairsArray haven't been transformed from word to index yet, please word2idx first")
-      val textFeature =TextFeature(null, pair.id1 + pair.id2Positive + pair.id2Negative)
+      val textFeature = TextFeature(null, pair.id1 + pair.id2Positive + pair.id2Negative)
       val pairedIndices = indices1 ++ indices2Pos ++ indices1 ++ indices2Neg
       val feature = Tensor(pairedIndices, Array(2, indices1.length + indices2Pos.length))
       val label = Tensor(Array(1.0f, 0.0f), Array(2, 1))
@@ -505,27 +505,28 @@ object TextSet {
     val array2 = corpus2.toLocal().array
     for (i <- array1) {mapText1(i.getURI) = i.getIndices}
     for (i <- array2) {mapText2(i.getURI) = i.getIndices}
-    val resMap: scala.collection.mutable.Map[String, ArrayBuffer[String]] = scala.collection.mutable.Map()
-    for(rel <- relations){
+    val resMap: scala.collection.mutable.Map[String, ArrayBuffer[String]] =
+      scala.collection.mutable.Map()
+    for(rel <- relations) {
       if (! resMap.contains(rel.id1)) {
         val buffer: ArrayBuffer[String] = ArrayBuffer()
         resMap(rel.id1) = buffer
       }
-      if(! resMap.get(rel.id1).get.contains(rel.id2)){
+      if(! resMap.get(rel.id1).get.contains(rel.id2)) {
        val buffer = resMap.get(rel.id1).get
         buffer.append(rel.id2)
         resMap(rel.id1) = buffer
       }
     }
     val featureBuffer: ArrayBuffer[TextFeature] = ArrayBuffer()
-    for((k, v) <- resMap){
+    for((k, v) <- resMap) {
       val labelMap: scala.collection.mutable.Map[String, Int] = scala.collection.mutable.Map()
-      for(rel <- relations){if(rel.id1 == k){labelMap(rel.id2) = rel.label}}
+      for(rel <- relations) {if(rel.id1 == k){labelMap(rel.id2) = rel.label}}
       val id2Array = v
       val id2ArrayLength = id2Array.length
       val textFeature = TextFeature(null, uri = k ++ id2Array.mkString(""))
       var indices2Array: ArrayBuffer[Array[Float]] = ArrayBuffer()
-      for(buf <- id2Array){
+      for(buf <- id2Array) {
         val indices = mapText2.get(buf.toString).get
         indices2Array.append(indices)
       }
@@ -535,17 +536,18 @@ object TextSet {
       require(indices1 != null,
         "id1 haven't been transformed from word to index yet, please word2idx first")
       val labelArray: ArrayBuffer[Float] = ArrayBuffer()
-      for(id <- id2Array){
+      for(id <- id2Array) {
         val label = labelMap.get(id).get
         labelArray.append(label.toFloat)
       }
       var listIndices: Array[Float] = Array()
-      for(indices <- indices2Array){
+      for(indices <- indices2Array) {
         import Array._
         listIndices = concat(listIndices, indices1)
-        listIndices= concat(listIndices, indices)
+        listIndices = concat(listIndices, indices)
       }
-      val feature = Tensor(listIndices, Array(id2ArrayLength, indices1.length + indices2Array.head.length))
+      val feature = Tensor(listIndices, Array(id2ArrayLength,
+        indices1.length + indices2Array.head.length))
       val label = Tensor(labelArray.toArray, Array(id2ArrayLength, 1))
       textFeature(TextFeature.sample) = Sample(feature, label)
       featureBuffer.append(textFeature)
