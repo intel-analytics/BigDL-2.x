@@ -14,7 +14,7 @@ Inference provides multiple Scala interfaces.
 
 2. Support transformation of various input data type, thus supporting future prediction tasks.
 
-3. Combined with OpenVINO toolkits, an optimized inference performance is given on Tensorflow models with 10+ times shorter inference time than direct Tensorflow model inference.
+3. Transparently support the OpenVINO toolkit, which deliver a significant boost for inference speed (up to 19.9x).
 
 ## Primary APIs
 
