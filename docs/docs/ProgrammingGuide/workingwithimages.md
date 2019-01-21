@@ -370,4 +370,14 @@ For 3D images, we can support above operations based on ImageSet. For details, p
 
 ## Caching Images in Intel Optane DIMMs.
 Here is a scala [example](https://github.com/intel-analytics/analytics-zoo/blob/master/zoo/src/main/scala/com/intel/analytics/zoo/examples/inception/README.md) to train Inception V1 with ImageNet-2012 dataset. If you set the option `memoryType` to `PMEM`, the data will be cached in Intel Optane DIMMs.  
-Before using `PMEM`, you need Intel Optane DIMMs(so-called AEP internally) hardware and [installing run requirements of memkind](https://github.com/memkind/memkind#run-requirements).
+Before using `PMEM`, you need Intel Optane DIMMs(so-called AEP internally) hardware and [installing run requirements of memkind](https://github.com/memkind/memkind#run-requirements).  
+
+In the InceptionV1 example, we use an new dataset called `FeatureSet` to cache the data. Only scala API currently.
+
+ **Scala example:**
+ ```
+ val rawData = readFromSeqFiles(path, sc, classNumber)
+ val featureSet = FeatureSet.rdd(rawData, memoryType = PMEM)
+ ```
+ `readFromSeqFiles` read the Sequence File into RDD[ByteRecord], then 'FeatureSet.rdd(rawData, memoryType = PMEM)' will cache the data to Intel Optane DIMMs.
+ 
