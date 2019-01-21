@@ -15,8 +15,10 @@
 #
 
 import sys
+import numpy as np
 from optparse import OptionParser
 
+from zoo.common.nncontext import init_nncontext
 from zoo.feature.image import ImageSet
 from zoo.pipeline.inference import InferenceModel
 
@@ -26,13 +28,22 @@ if __name__ == "__main__":
     parser.add_option("--image", type=str, dest="img_path",
                       help="The path where the images are stored, "
                            "can be either a folder or an image path")
-    parser.add_option("--base_dir", type=str, dest="base_dir",
+    parser.add_option("--model", type=str, dest="model_path",
                       help="The directory that contains TensorFlow model and config")
+    parser.add_option("--pipeline", type=str, dest="pipeline_config_path",
+                      help="The directory that contains TensorFlow model and config")
+    parser.add_option("--extensions", type=str, dest="extensions_config_path",
+                      help="The directory that contains TensorFlow model and config")
+
     (options, args) = parser.parse_args(sys.argv)
 
-    images = ImageSet.read(options.img_path, resize_height=600, resize_width=600).get_image()
+    sc = init_nncontext("OpenVINO Object Detection Inference Example")
+    images = ImageSet.read(options.img_path, sc, resize_height=600, resize_width=600).get_image().collect()
+    input_data = np.concatenate([image.reshape((1, 1) + image.shape) for image in images], axis=0)
     model = InferenceModel()
-    model.load_openvino(options.base_dir + "/frozen_inference_graph.xml",
-                        options.base_dir + "/frozen_inference_graph.bin")
-    predictions = model.predict(images[0].reshape((1, 1, 3, 600, 600)))
-    print(predictions)
+    model.load_tf(options.model_path, backend="openvino",
+                  pipeline_config_path=options.pipeline_config_path,
+                  extensions_config_path=options.extensions_config_path)
+    predictions = model.predict(input_data)
+    # Print the detection result of the first image.
+    print(predictions[0])

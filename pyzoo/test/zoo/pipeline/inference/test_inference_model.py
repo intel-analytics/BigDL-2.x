@@ -53,7 +53,7 @@ class TestInferenceModel(ZooTestCase):
         model.load_tf(base_dir + "frozen_inference_graph.pb", backend="openvino",
                       pipeline_config_path=base_dir + "pipeline.config",
                       extensions_config_path=base_dir + "faster_rcnn_support.json")
-        input_data = np.random.random([1, 1, 3, 600, 600])
+        input_data = np.random.random([4, 1, 3, 600, 600])
         output_data = model.predict(input_data)
 
 
