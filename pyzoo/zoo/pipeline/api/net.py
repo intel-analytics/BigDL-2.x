@@ -404,6 +404,7 @@ class TFOptimizer:
         self.dataset = dataset
         self.inputs = inputs + additional_inputs
         self.graph = graph
+        self.session_config = session_config
 
         from zoo.util.tf import process_grad
         grads = [process_grad(grad) for grad in grads]
@@ -418,10 +419,13 @@ class TFOptimizer:
         else:
             outputs = [loss]
 
+        self.grads = grads
+        self.outputs = outputs
+
         self.export_dir = tempfile.mkdtemp()
         export_tf(self.sess, self.export_dir,
                   inputs=self.inputs,
-                  outputs=grads + outputs)
+                  outputs=self.grads + self.outputs)
 
         variable_names = [v.name for v in variables]
         grad_names = [g.name for g in grads]
@@ -629,6 +633,14 @@ with variable_creator_scope():
                                      epsilon=koptim_method.epsilon)
         else:
             raise Exception("We don't support %s for now" % koptim_method)
+
+    def refresh_weights(self):
+        from zoo.util.tf import export_tf
+        export_tf(self.sess, self.export_dir,
+                  inputs=self.inputs,
+                  outputs=self.grads + self.outputs)
+        self.training_helper_layer = TFTrainingHelper(self.export_dir, self.session_config)
+
 
     def set_train_summary(self, summary):
         self.optimizer.set_train_summary(summary)
