@@ -7,9 +7,12 @@ to make inferences with OpenVINO toolkit as backend using Analytics Zoo, which d
 Follow the instructions [here](https://analytics-zoo.github.io/master/#PythonUserGuide/install/) to install analytics-zoo via __pip__ or __download the prebuilt package__.
 
 ## Model and Data Preparation
-1. Download the following files for pre-trained TensorFlow `faster_rcnn_resnet101_coco`: [model](https://s3-ap-southeast-1.amazonaws.com/analytics-zoo-models/openvino/TF_faster_rcnn_resnet101_coco_2018_01_28/frozen_inference_graph.pb), 
-[pipeline configure](https://s3-ap-southeast-1.amazonaws.com/analytics-zoo-models/openvino/TF_faster_rcnn_resnet101_coco_2018_01_28/pipeline.config) and
-[extensions configure](https://s3-ap-southeast-1.amazonaws.com/analytics-zoo-models/openvino/TF_faster_rcnn_resnet101_coco_2018_01_28/faster_rcnn_support.json)
+1. Download the following files for pre-trained TensorFlow `faster_rcnn_resnet101_coco`:
+```bash
+wget https://s3-ap-southeast-1.amazonaws.com/analytics-zoo-models/openvino/TF_faster_rcnn_resnet101_coco_2018_01_28/frozen_inference_graph.pb
+wget https://s3-ap-southeast-1.amazonaws.com/analytics-zoo-models/openvino/TF_faster_rcnn_resnet101_coco_2018_01_28/pipeline.config
+wget https://s3-ap-southeast-1.amazonaws.com/analytics-zoo-models/openvino/TF_faster_rcnn_resnet101_coco_2018_01_28/faster_rcnn_support.json
+```
 
 2. Prepare the image dataset for inference. Put the images to do prediction in the same folder.
 
