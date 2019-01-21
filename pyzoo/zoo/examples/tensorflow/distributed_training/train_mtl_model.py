@@ -25,7 +25,6 @@ import tensorflow as tf
 from sklearn.metrics import classification_report
 from tensorflow.python.keras.utils import to_categorical
 
-from nlp_architect.contrib.tensorflow.python.keras.callbacks import ConllCallback
 from nlp_architect.data.intent_datasets import SNIPS
 from nlp_architect.models.intent_extraction import MultiTaskIntentModel
 from nlp_architect.utils.embedding import get_embedding_matrix, load_word_embeddings
@@ -34,7 +33,7 @@ from nlp_architect.utils.io import validate, validate_existing_directory, \
     validate_existing_filepath, validate_parent_exists
 from nlp_architect.utils.metrics import get_conll_scores
 from bigdl.optim.optimizer import MaxEpoch
-from zoo.common.nncontext import init_nncontext
+from zoo.common.nncontext import *
 from zoo.util.tf import variable_creator_scope
 from zoo.pipeline.api.net import TFOptimizer, TFDataset, TFPredictor
 from zoo.util.tf import export_tf
@@ -81,7 +80,8 @@ if __name__ == '__main__':
     args = parser.parse_args()
     validate_input_args()
 
-    sc = init_nncontext("Intent Extraction and NER example")
+    conf = init_spark_conf().setMaster("local[1]").setAppName("Intent Extraction and NER example")
+    sc = init_nncontext(conf)
 
     # load dataset
     print('Loading dataset')
@@ -132,7 +132,7 @@ if __name__ == '__main__':
 
     model = model.model
     from tensorflow.keras.optimizers import Adam
-    model.optimizer = Adam(lr=0.01)
+    model.optimizer = Adam()
     model.metrics = []
 
     # Distributed training using TFOptimizer
