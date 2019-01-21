@@ -15,7 +15,7 @@ develop your java applications.
 
 2. In a few lines, run large scale inference from pre-trained models of Analytics-Zoo, Caffe, Tensorflow and OpenVINO Intermediate Representation(IR).
 
-3. Combined with OpenVINO toolkits, an optimized inference performance is given on Tensorflow models with 10+ times shorter inference time than direct Tensorflow model inference.
+3. Transparently support the OpenVINO toolkit, which deliver a significant boost for inference speed (up to 19.9x).
 
 ## Primary APIs
 
