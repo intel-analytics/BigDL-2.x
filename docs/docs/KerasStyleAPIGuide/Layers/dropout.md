@@ -3,7 +3,7 @@ Spatial 3D version of Dropout.
 
 This version performs the same functionalities as Dropout, however it drops entire 3D feature maps instead of individual elements. If adjacent voxels within feature maps are strongly correlated (as is normally the case in early convolution layers) then regular dropout will not regularize the activations and will otherwise just result in an effective learning rate decrease. In this case, SpatialDropout3D will help promote independence between feature maps and should be used instead.
 
-The input of this layer should be 5D. The first dimension is batch, the second dimension is dim1, the third dimension is dim2, the fourth dimension is dim3.
+The input is 5D tensor with shape: (batch_size, channels, dim1, dim2, dim3)
 
 **Scala:**
 ```scala

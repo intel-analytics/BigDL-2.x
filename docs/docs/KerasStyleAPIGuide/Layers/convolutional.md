@@ -1,7 +1,7 @@
 ## **LocallyConnected2D**
-A Locally-connected layers for 2D input works similarly to a SpatialConvolution layer, except that weights are unshared, that is, a different set of filters is applied at different patch of the input.
+A Locally-connected layer for 2D input works similarly to a SpatialConvolution layer, except that weights are unshared, that is, a different set of filters is applied at different patch of the input.
 
-The input of this layer should be 4D. The first dimension is samples, the second dimension is chanels, the third dimension is rows, the fourth dimension id cols.
+The input is 2D tensor with shape: (batch_size, channels, rows, cols).
 
 **Scala:**
 ```scala

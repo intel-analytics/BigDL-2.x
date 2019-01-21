@@ -1,7 +1,7 @@
 ## **MaxPooling1D**
 Max pooling operation for temporal data.
 
-The input of this layer should be 3D. The first dimension is batch_size, the second dimension is steps, the third dimension is features.
+The input is 3D tensor with shape:(batch_size, steps, feature_dim).
 
 **Scala:**
 ```scala
@@ -112,8 +112,7 @@ Output is:
 ## **MaxPooling2D**
 Max pooling operation for spatial data.
 
-The input of this layer should be 4D. The first dimension is batch_size, the second dimension is rows, the third dimension is cols, the fourth dimension is channels.
-
+The input is 4D tensor with shape:(batch_size, rows, cols, channels).
 **Scala:**
 ```scala
 MaxPooling2D(poolSize = (2, 2), strides = null, borderMode = "valid", dimOrdering = "th", inputShape = null)
@@ -238,7 +237,7 @@ Data format currently supported for this layer is 'CHANNEL_FIRST' (dimOrdering='
 
 Border mode currently supported for this layer is 'valid'.
 
-The input of this layer should be 5D.
+The input is 5D tensor with shape:(batch_size, spatial_dim1, spatial_dim2, spatial_dim3, channels).
 
 **Scala:**
 ```scala
@@ -385,7 +384,7 @@ Output is:
 ## **GlobalMaxPooling1D**
 Global max pooling operation for temporal data.
 
-The input of this layer should be 3D.
+The input is 3D with the shape:(batch_size, steps, features).
 
 **Scala:**
 ```scala
