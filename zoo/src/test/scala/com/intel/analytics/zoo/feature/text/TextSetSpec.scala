@@ -284,8 +284,10 @@ class TextSetSpec extends ZooSpecHelper {
     knrm.evaluateMAP(listSet)
   }
 
-  "Array TextSet from relation pairs and lists with training and validation" should "work properly" in {
-    val relations = Array(Relation("Q1", "A1", 1), Relation("Q1", "A2", 0), Relation("Q2", "A1", 0), Relation("Q2", "A2", 1),
+  "Array TextSet from relation pairs and lists with training and validation" should
+    "work properly" in {
+    val relations = Array(Relation("Q1", "A1", 1), Relation("Q1", "A2", 0),
+      Relation("Q2", "A1", 0), Relation("Q2", "A2", 1),
       Relation("Q2", "A3", 0))
     val qIndices = Array(1.0f, 2.0f, 3.0f)
     val q1 = TextFeature(null, uri = "Q1")
@@ -325,9 +327,11 @@ class TextSetSpec extends ZooSpecHelper {
     require(listFeature1.getURI.contains("A1") && listFeature1.getURI.contains("A2"))
     val sample1 = listFeature1.getSample
     require(sample1.feature().size().sameElements(Array(2, 9)))
-    require(sample1.feature().reshape(Array(18)).toArray().sameElements(qIndices ++ aIndices ++ qIndices ++ aIndices))
+    require(sample1.feature().reshape(Array(18)).toArray()
+      .sameElements(qIndices ++ aIndices ++ qIndices ++ aIndices))
     require(sample1.label().size().sameElements(Array(2, 1)))
-    require(sample1.label().reshape(Array(2)).toArray().sorted.sameElements(Array(0.0f, 1.0f)))
+    require(sample1.label().reshape(Array(2)).toArray().sorted.
+      sameElements(Array(0.0f, 1.0f)))
     val listFeature2 = listFeatures(1)
     require(listFeature2.getURI.startsWith("Q2"))
     require(listFeature2.getURI.contains("A1") && listFeature2.getURI.contains("A2") &&
@@ -351,7 +355,8 @@ class TextSetSpec extends ZooSpecHelper {
     knrm.evaluateMAP(listSet)
   }
 
-  "Array2 TextSet from relation pairs and lists with training and validation" should "work properly" in {
+  "Array2 TextSet from relation pairs and lists with training and validation" should
+    "work properly" in {
     val relations = Array(Relation("Q1", "A1", 1), Relation("Q2", "A1", 0), Relation("Q2", "A2", 1),
       Relation("Q2", "A3", 0))
     val qIndices = Array(1.0f, 2.0f, 3.0f)

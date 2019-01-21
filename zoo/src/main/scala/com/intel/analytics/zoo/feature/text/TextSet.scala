@@ -403,16 +403,14 @@ object TextSet {
     val pairsArray = Relations.generateRelationPairs(relations)
     require(corpus1.isLocal, "corpus1 must be a LocalTextSet")
     require(corpus2.isLocal, "corpus2 must be a LocalTextSet")
-    val mapText1: scala.collection.mutable.Map[String, Array[Float]] = scala.collection.mutable.Map()
-    val mapText2: scala.collection.mutable.Map[String, Array[Float]] = scala.collection.mutable.Map()
+    val mapText1: scala.collection.mutable.Map[String, Array[Float]] =
+      scala.collection.mutable.Map()
+    val mapText2: scala.collection.mutable.Map[String, Array[Float]] =
+      scala.collection.mutable.Map()
     val array1 = corpus1.toLocal().array
     val array2 = corpus2.toLocal().array
-    for (i <- array1) {
-      mapText1(i.getURI) = i.getIndices
-    }
-    for (i <- array2) {
-      mapText2(i.getURI) = i.getIndices
-    }
+    for (i <- array1) {mapText1(i.getURI) = i.getIndices}
+    for (i <- array2) {mapText2(i.getURI) = i.getIndices}
     val Feature: ArrayBuffer[TextFeature] = ArrayBuffer()
     for(pair <- pairsArray){
       require(mapText1.contains(pair.id1))
@@ -495,18 +493,18 @@ object TextSet {
       relations: Array[Relation],
       corpus1: TextSet,
       corpus2: TextSet): LocalTextSet = {
-    require(corpus1.isLocal, "corpus1 must be a LocalTextSet")
-    require(corpus2.isLocal, "corpus2 must be a LocalTextSet")
-    val mapText1: scala.collection.mutable.Map[String, Array[Float]] = scala.collection.mutable.Map()
-    val mapText2: scala.collection.mutable.Map[String, Array[Float]] = scala.collection.mutable.Map()
+    require(corpus1.isLocal,
+      "corpus1 must be a LocalTextSet")
+    require(corpus2.isLocal,
+      "corpus2 must be a LocalTextSet")
+    val mapText1: scala.collection.mutable.Map[String, Array[Float]] =
+      scala.collection.mutable.Map()
+    val mapText2: scala.collection.mutable.Map[String, Array[Float]] =
+      scala.collection.mutable.Map()
     val array1 = corpus1.toLocal().array
     val array2 = corpus2.toLocal().array
-    for (i <- array1) {
-      mapText1(i.getURI) = i.getIndices
-    }
-    for (i <- array2) {
-      mapText2(i.getURI) = i.getIndices
-    }
+    for (i <- array1) {mapText1(i.getURI) = i.getIndices}
+    for (i <- array2) {mapText2(i.getURI) = i.getIndices}
     val resMap: scala.collection.mutable.Map[String, ArrayBuffer[String]] = scala.collection.mutable.Map()
     for(rel <- relations){
       if (! resMap.contains(rel.id1)) {
@@ -522,11 +520,7 @@ object TextSet {
     val featureBuffer: ArrayBuffer[TextFeature] = ArrayBuffer()
     for((k, v) <- resMap){
       val labelMap: scala.collection.mutable.Map[String, Int] = scala.collection.mutable.Map()
-      for(rel <- relations){
-        if(rel.id1 == k){
-          labelMap(rel.id2) = rel.label
-        }
-      }
+      for(rel <- relations){if(rel.id1 == k){labelMap(rel.id2) = rel.label}}
       val id2Array = v
       val id2ArrayLength = id2Array.length
       val textFeature = TextFeature(null, uri = k ++ id2Array.mkString(""))

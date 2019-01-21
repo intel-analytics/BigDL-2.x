@@ -102,11 +102,14 @@ object Relations {
    * generateRelationPairs for Relation array
    */
   def generateRelationPairs(relations: Array[Relation]): Array[RelationPair] = {
-    val relSet: scala.collection.mutable.Map[String, scala.collection.mutable.Map[Int, ArrayBuffer[String]]] = scala.collection.mutable.Map()
+    val relSet: scala.collection.mutable.Map[String,
+      scala.collection.mutable.Map[Int, ArrayBuffer[String]]] =
+      scala.collection.mutable.Map()
     val pairList: ListBuffer[RelationPair] = ListBuffer()
     for (relation <- relations) {
       if (! relSet.contains(relation.id1)) {
-        val map: scala.collection.mutable.Map[Int, ArrayBuffer[String]] = scala.collection.mutable.Map()
+        val map: scala.collection.mutable.Map[Int, ArrayBuffer[String]] =
+          scala.collection.mutable.Map()
         relSet(relation.id1) = map
         if (! relSet.get(relation.id1).get.contains(relation.label)) {
           val buffer: ArrayBuffer[String] = ArrayBuffer()
