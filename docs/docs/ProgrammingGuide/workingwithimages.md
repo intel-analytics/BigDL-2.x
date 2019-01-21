@@ -367,3 +367,7 @@ For details, you can check guide of [image classificaion](./image-classification
 
 ## 3D Image Support
 For 3D images, we can support above operations based on ImageSet. For details, please refer to [image API guide](../APIGuide/FeatureEngineering/image.md)
+
+## Caching Images in Intel Optane DIMMs.
+Here is a scala [example](https://github.com/intel-analytics/analytics-zoo/blob/master/zoo/src/main/scala/com/intel/analytics/zoo/examples/inception/README.md) to train Inception V1. If you set `memoryType` to `PMEM`, the data will be cached in Intel Optane DIMMs.  
+Before using `PMEM`, you need Intel Optane DIMMs(so-called AEP internally) hardware and [installing run requirements of memkind](https://github.com/memkind/memkind#run-requirements).
