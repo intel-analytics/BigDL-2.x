@@ -200,7 +200,6 @@ class Seq2seqSpec extends FlatSpec with Matchers with BeforeAndAfter {
     val output = model.forward(T(input, input2))
     val t = model.backward(T(input, input2), gradOutput)
 
-
     val encoder2 = RNNEncoder[Float]("SimpleRNN", numLayer, hiddenSize)
     val decoder2 = RNNDecoder[Float]("SimpleRNN", numLayer, hiddenSize)
 
