@@ -19,7 +19,7 @@ wget https://s3-ap-southeast-1.amazonaws.com/analytics-zoo-models/openvino/TF_fa
 
 ## Run this example after pip install
 ```bash
-image_path=directory path containing images
+image_path=directory path that contain images
 model_path=path to frozen_inference_graph.pb
 pipeline_path=path to pipeline.config
 extensions_path=path to faster_rcnn_support.json
@@ -35,7 +35,7 @@ See [here](#options) for more configurable options for this example.
 export SPARK_HOME=the root directory of Spark
 export ANALYTICS_ZOO_HOME=the directory where you extract the downloaded Analytics Zoo zip package
 MASTER=local[*]
-image_path=directory path containing images
+image_path=directory path that contain images
 model_path=path to frozen_inference_graph.pb
 pipeline_path=path to pipeline.config
 extensions_path=path to faster_rcnn_support.json
