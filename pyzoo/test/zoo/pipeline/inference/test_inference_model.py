@@ -45,10 +45,10 @@ class TestInferenceModel(ZooTestCase):
     def test_load_openvino(self):
         local_path = self.create_temp_dir()
         url = data_url + "/IR_faster_rcnn_resnet101_coco_2018_01_28"
-        maybe_download("frozen_inference_graph.bin",
-                       local_path, url + "/frozen_inference_graph.bin")
         maybe_download("frozen_inference_graph.xml",
                        local_path, url + "/frozen_inference_graph.xml")
+        maybe_download("frozen_inference_graph.bin",
+                       local_path, url + "/frozen_inference_graph.bin")
         model = InferenceModel()
         model.load_openvino(local_path + "/frozen_inference_graph.xml",
                             local_path + "/frozen_inference_graph.bin")
