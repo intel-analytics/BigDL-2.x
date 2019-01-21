@@ -18,13 +18,14 @@ import os
 import pytest
 import numpy as np
 
+from bigdl.dataset.base import maybe_download
 from test.zoo.pipeline.utils.test_utils import ZooTestCase
 from zoo.pipeline.inference import InferenceModel
 
 np.random.seed(1337)  # for reproducibility
 
 resource_path = os.path.join(os.path.split(__file__)[0], "../../resources")
-base_dir = "/home/kai/Documents/openvino/"
+data_url = "https://s3-ap-southeast-1.amazonaws.com/analytics-zoo-models/openvino"
 
 
 class TestInferenceModel(ZooTestCase):
@@ -42,17 +43,26 @@ class TestInferenceModel(ZooTestCase):
         output_data = model.predict(input_data)
 
     def test_load_openvino(self):
+        local_path = self.create_temp_dir()
+        url = data_url + "/IR_faster_rcnn_resnet101_coco_2018_01_28"
+        maybe_download("frozen_inference_graph.bin", local_path, url + "/frozen_inference_graph.bin")
+        maybe_download("frozen_inference_graph.xml", local_path, url + "/frozen_inference_graph.xml")
         model = InferenceModel()
-        model.load_openvino(base_dir + "frozen_inference_graph.xml",
-                            base_dir + "frozen_inference_graph.bin")
+        model.load_openvino(local_path + "/frozen_inference_graph.xml",
+                            local_path + "/frozen_inference_graph.bin")
         input_data = np.random.random([1, 1, 3, 600, 600])
         output_data = model.predict(input_data)
 
-    def test_load_tf(self):
+    def test_load_tf_openvino(self):
+        local_path = self.create_temp_dir()
+        url = data_url + "/TF_faster_rcnn_resnet101_coco_2018_01_28"
+        maybe_download("frozen_inference_graph.pb", local_path, url + "/frozen_inference_graph.pb")
+        maybe_download("faster_rcnn_support.json", local_path, url + "/faster_rcnn_support.json")
+        maybe_download("pipeline.config", local_path, url + "/pipeline.config")
         model = InferenceModel(3)
-        model.load_tf(base_dir + "frozen_inference_graph.pb", backend="openvino",
-                      pipeline_config_path=base_dir + "pipeline.config",
-                      extensions_config_path=base_dir + "faster_rcnn_support.json")
+        model.load_tf(local_path + "/frozen_inference_graph.pb", backend="openvino",
+                      pipeline_config_path=local_path + "/pipeline.config",
+                      extensions_config_path=local_path + "/faster_rcnn_support.json")
         input_data = np.random.random([4, 1, 3, 600, 600])
         output_data = model.predict(input_data)
 
