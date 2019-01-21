@@ -22,7 +22,8 @@ import com.intel.analytics.bigdl.serialization.Bigdl.{AttrValue, BigDLModule}
 import com.intel.analytics.bigdl.tensor.Tensor
 import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric
 import com.intel.analytics.bigdl.utils._
-import com.intel.analytics.bigdl.utils.serializer.{DeserializeContext, ModuleSerializer, SerializeContext}
+import com.intel.analytics.bigdl.utils.serializer.{DeserializeContext, ModuleSerializer,
+SerializeContext}
 import com.intel.analytics.bigdl.utils.serializer.converters.DataConverter
 import com.intel.analytics.bigdl.utils.serializer.converters.DataConverter.ArrayConverter
 import com.intel.analytics.zoo.pipeline.api.keras.layers.SelectTable
@@ -79,7 +80,6 @@ class RNNDecoder[T: ClassTag](val rnns: Array[Recurrent[T]],
           s" hidden size or update bridge/encoder hidden size")
       i += 1
     }
-
     layer.asInstanceOf[AbstractModule[Activity, Tensor[T], T]]
   }
 

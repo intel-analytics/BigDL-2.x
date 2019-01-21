@@ -84,15 +84,18 @@ class Seq2seq[T: ClassTag] (
     optimizer: OptimMethod[T],
     loss: Criterion[T],
     metrics: List[ValidationMethod[T]] = null)(implicit ev: TensorNumeric[T]): Unit = {
-model.asInstanceOf[KerasNet[T]].compile(optimizer, loss, metrics)
-}
+    model.asInstanceOf[KerasNet[T]].compile(optimizer, loss, metrics)
+  }
 
   def fit(
     x: RDD[Sample[T]],
     batchSize: Int = 32,
     nbEpoch: Int = 10,
-    validationData: RDD[Sample[T]] = null)(implicit ev: TensorNumeric[T]): Unit = {
-      model.asInstanceOf[KerasNet[T]].fit(x, batchSize, nbEpoch, validationData)
+    validationData: RDD[Sample[T]] = null,
+    featurePaddingParam: PaddingParam[T] = null,
+    labelPaddingParam: PaddingParam[T] = null)(implicit ev: TensorNumeric[T]): Unit = {
+    model.asInstanceOf[KerasNet[T]].fit(x, batchSize, nbEpoch, validationData,
+      featurePaddingParam, labelPaddingParam)
   }
 
   def setCheckpoint(path: String, overWrite: Boolean = true): Unit = {
