@@ -14,7 +14,7 @@ Inference provides multiple Scala interfaces.
 
 2. Support transformation of various input data type, thus supporting future prediction tasks.
 
-3. Combined with OpenVINO toolkits, an optimized inference performance is given on Tensorflow models with 12 times shorter inference time than direct Tensorflow model inference.
+3. Combined with OpenVINO toolkits, an optimized inference performance is given on Tensorflow models with 10+ times shorter inference time than direct Tensorflow model inference.
 
 ## Primary APIs
 
@@ -32,7 +32,7 @@ Inference provides multiple Scala interfaces.
 
 ***doLoadTF***
 
-`doLoadTF` method is to load a tensorflow model. There are two backends to load a tensorflow model: TFNet and OpenVINO. 
+`doLoadTF` method is to load a tensorflow model. The model can be loaded as a `FloatModel` or an `OpenVINOModel`. There are two backends to load a tensorflow model: TFNet and OpenVINO. 
 
 <span id="jump">For OpenVINO backend, supported tensorflow models are listed below:</span>
                                           
@@ -86,14 +86,6 @@ Inference provides multiple Scala interfaces.
 ***doLoadOpenVINO***
                                           
 `doLoadOpenVINO` method is to load an OpenVINO Intermediate Representation(IR).
-
-***doLoadTensorflowModel***
-
-`doLoadTensorflowModel` method is to load a tensorflow model as FloatModel.
-
-***doLoadTensorflowModelAsOpenVINO***
-
-`doLoadTensorflowModelAsOpenVINO` method is to load a tensorflow model as OpenVINOModel.
 
 ***doReload***
 
