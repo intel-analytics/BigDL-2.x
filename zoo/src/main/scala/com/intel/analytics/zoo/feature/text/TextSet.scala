@@ -512,7 +512,7 @@ object TextSet {
         val buffer: ArrayBuffer[String] = ArrayBuffer()
         resMap(rel.id1) = buffer
       }
-      if(! resMap.get(rel.id1).get.contains(rel.id2)) {
+      if (! resMap.get(rel.id1).get.contains(rel.id2)) {
        val buffer = resMap.get(rel.id1).get
         buffer.append(rel.id2)
         resMap(rel.id1) = buffer
@@ -521,7 +521,7 @@ object TextSet {
     val featureBuffer: ArrayBuffer[TextFeature] = ArrayBuffer()
     for((k, v) <- resMap) {
       val labelMap: scala.collection.mutable.Map[String, Int] = scala.collection.mutable.Map()
-      for(rel <- relations) {if(rel.id1 == k){labelMap(rel.id2) = rel.label}}
+      for(rel <- relations) {if (rel.id1 == k) {labelMap(rel.id2) = rel.label}}
       val id2Array = v
       val id2ArrayLength = id2Array.length
       val textFeature = TextFeature(null, uri = k ++ id2Array.mkString(""))
