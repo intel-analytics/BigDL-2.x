@@ -7,12 +7,7 @@ to make inferences with OpenVINO toolkit as backend using Analytics Zoo, which d
 Follow the instructions [here](https://analytics-zoo.github.io/master/#PythonUserGuide/install/) to install analytics-zoo via __pip__ or __download the prebuilt package__.
 
 ## Model and Data Preparation
-1. Download the following files for pre-trained TensorFlow `faster_rcnn_resnet101_coco`:
-```bash
-wget https://s3-ap-southeast-1.amazonaws.com/analytics-zoo-models/openvino/TF_faster_rcnn_resnet101_coco_2018_01_28/frozen_inference_graph.pb
-wget https://s3-ap-southeast-1.amazonaws.com/analytics-zoo-models/openvino/TF_faster_rcnn_resnet101_coco_2018_01_28/pipeline.config
-wget https://s3-ap-southeast-1.amazonaws.com/analytics-zoo-models/openvino/TF_faster_rcnn_resnet101_coco_2018_01_28/faster_rcnn_support.json
-```
+1. Download the model file for pre-trained TensorFlow `faster_rcnn_resnet101_coco` from [here](https://s3-ap-southeast-1.amazonaws.com/analytics-zoo-models/openvino/TF_faster_rcnn_resnet101_coco_2018_01_28/frozen_inference_graph.pb).
 
 2. Prepare the image dataset for inference. Put the images to do prediction in the same folder.
 
@@ -21,10 +16,8 @@ wget https://s3-ap-southeast-1.amazonaws.com/analytics-zoo-models/openvino/TF_fa
 ```bash
 image_path=directory path that contain images
 model_path=path to frozen_inference_graph.pb
-pipeline_path=path to pipeline.config
-extensions_path=path to faster_rcnn_support.json
 
-python predict.py --image ${image_path} --model ${model_path} --pipeline ${pipeline_path} --extensions ${extensions_path}
+python predict.py --image ${image_path} --model ${model_path}
 ```
 
 See [here](#options) for more configurable options for this example.
@@ -37,16 +30,12 @@ export ANALYTICS_ZOO_HOME=the directory where you extract the downloaded Analyti
 MASTER=local[*]
 image_path=directory path that contain images
 model_path=path to frozen_inference_graph.pb
-pipeline_path=path to pipeline.config
-extensions_path=path to faster_rcnn_support.json
 
 ${ANALYTICS_ZOO_HOME}/bin/spark-submit-with-zoo.sh \
     --master $MASTER \
     predict.py \
     --image ${image_path} \
-    --model ${model_path} \
-    --pipeline ${pipeline_path} \
-    --extensions ${extensions_path}
+    --model ${model_path}
 ```
 
 See [here](#options) for more configurable options for this example.
@@ -55,8 +44,7 @@ See [here](#options) for more configurable options for this example.
 ## Options
 * `--image` The path where the images are stored. It can be either a folder or an image path. Local file system, HDFS and Amazon S3 are supported.
 * `--model` The path to the TensorFlow object detection model.
-* `--pipeline` The path to the pipeline configure file.
-* `--extensions` The path to the extensions configure file.
+* `--model_type` The type of the TensorFlow model. For the model downloaded from the link [above](#model-and-data-preparation), it is default to be "faster_rcnn_resnet101_coco". If you use other models, you need to change to the corresponding model_type.
 
 ## Results
 We print the detection result of the first image to the console.

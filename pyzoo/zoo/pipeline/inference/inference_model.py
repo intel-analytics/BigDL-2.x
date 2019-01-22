@@ -101,11 +101,12 @@ class InferenceModel(JavaValue):
                 callBigDlFunc(self.bigdl_type, "inferenceModelOpenVINOLoadTF",
                               self.value, model_path, model_type)
             else:
-                assert ov_pipeline_config_path is not None and ov_extensions_config_path is not None,\
-                    "For openvino backend, you must provide either model_type or both " \
-                    "pipeline_config_path and extensions_config_path"
+                if ov_pipeline_config_path is None and ov_extensions_config_path is None:
+                    raise Exception("For openvino backend, you must provide either model_type or "
+                                    "both pipeline_config_path and extensions_config_path")
                 callBigDlFunc(self.bigdl_type, "inferenceModelOpenVINOLoadTF",
-                              self.value, model_path, ov_pipeline_config_path, ov_extensions_config_path)
+                              self.value, model_path, ov_pipeline_config_path,
+                              ov_extensions_config_path)
         else:
             raise ValueError("Currently only tensorflow and openvino are supported as backend")
 
