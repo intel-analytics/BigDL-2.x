@@ -36,52 +36,23 @@ Inference provides multiple Scala interfaces.
 
 <span id="jump">For OpenVINO backend, supported tensorflow models are listed below:</span>
                                           
-    embedded_ssd_mobilenet_v1_coco
-    facessd_mobilenet_v2_quantized_320x320_open_image_v4
     faster_rcnn_inception_resnet_v2_atrous_coco
-    faster_rcnn_inception_resnet_v2_atrous_cosine_lr_coco
+    faster_rcnn_inception_resnet_v2_atrous_lowproposals_coco
+    faster_rcnn_inception_resnet_v2_atrous_lowproposals_oid
     faster_rcnn_inception_resnet_v2_atrous_oid
-    faster_rcnn_inception_resnet_v2_atrous_pets
-    faster_rcnn_inception_v2_coco
-    faster_rcnn_inception_v2_pets
     faster_rcnn_nas_coco
-    faster_rcnn_resnet101_atrous_coco
-    faster_rcnn_resnet101_ava_v2.1
+    faster_rcnn_nas_lowproposals_coco
     faster_rcnn_resnet101_coco
-    faster_rcnn_resnet101_fgvc
     faster_rcnn_resnet101_kitti
-    faster_rcnn_resnet101_pets
-    faster_rcnn_resnet101_voc07
-    faster_rcnn_resnet152_coco
-    faster_rcnn_resnet152_pets
-    faster_rcnn_resnet50_coco
-    faster_rcnn_resnet50_fgvc
-    faster_rcnn_resnet50_pets
+    faster_rcnn_resnet101_lowproposals_coco
     mask_rcnn_inception_resnet_v2_atrous_coco
     mask_rcnn_inception_v2_coco
     mask_rcnn_resnet101_atrous_coco
-    mask_rcnn_resnet101_pets
     mask_rcnn_resnet50_atrous_coco
-    rfcn_resnet101_coco
-    rfcn_resnet101_pets
     ssd_inception_v2_coco
-    ssd_inception_v2_pets
-    ssd_inception_v3_pets
-    ssd_mobilenet_v1_0.75_depth_300x300_coco14_sync
-    ssd_mobilenet_v1_0.75_depth_quantized_300x300_coco14_sync
-    ssd_mobilenet_v1_0.75_depth_quantized_300x300_pets_sync
-    ssd_mobilenet_v1_300x300_coco14_sync
     ssd_mobilenet_v1_coco
-    ssd_mobilenet_v1_focal_loss_pets
-    ssd_mobilenet_v1_fpn_shared_box_predictor_640x640_coco14_sync
-    ssd_mobilenet_v1_pets
-    ssd_mobilenet_v1_ppn_shared_box_predictor_300x300_coco14_sync
-    ssd_mobilenet_v1_quantized_300x300_coco14_sync
     ssd_mobilenet_v2_coco
-    ssd_mobilenet_v2_quantized_300x300_coco
-    ssd_resnet50_v1_fpn_shared_box_predictor_640x640_coco14_sync
-    ssdlite_mobilenet_v1_coco
-    ssdlite_mobilenet_v2_coco    
+    ssdlite_mobilenet_v2_coco
                                           
 ***doLoadOpenVINO***
                                           
