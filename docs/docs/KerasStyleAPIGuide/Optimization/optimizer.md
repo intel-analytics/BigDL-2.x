@@ -17,15 +17,15 @@ model.compile(loss='mean_squared_error', optimizer='sgd')
 **Scala:**
 
 ```scala
-import com.intel.analytics.bigdl.optim.optimizer
-model.compile(loss = "mean_squared_error", optimizer = optimizer.Adam())
+import com.intel.analytics.bigdl.optim.optimizer.Adam
+model.compile(loss = "mean_squared_error", optimizer = Adam())
 ```
 
 **Python:**
 
 ```python
-from bigdl.optim import optimizer
-model.compile(loss='mean_squared_error', optimizer=optimizer.Adam())
+from bigdl.optim.optimizer import Adam
+model.compile(loss='mean_squared_error', optimizer= Adam())
 ```
 
 ---
@@ -58,12 +58,12 @@ each iteration.
 
 **Scala:**
 ```scala
-val optim = new Adam(learningRate=1e-3, learningRateDecay=0.0, beta1=0.9, beta2=0.999, Epsilon=1e-8)
+val optimMethod = new Adam(learningRate=1e-3, learningRateDecay=0.0, beta1=0.9, beta2=0.999, Epsilon=1e-8)
 ```
 
 **Python:**
 ```python
-optim = Adam(learningrate=1e-3, learningrate_decay=0.0, beta1=0.9, beta2=0.999, epsilon=1e-8, bigdl_type="float")
+optim_method = Adam(learningrate=1e-3, learningrate_decay=0.0, beta1=0.9, beta2=0.999, epsilon=1e-8, bigdl_type="float")
 ```
 
 An implementation of Adam optimization, first-order gradient-based optimization of stochastic  objective  functions. http://arxiv.org/pdf/1412.6980.pdf
@@ -113,7 +113,7 @@ optim_method = AdaDelta(decayrate = 0.9, epsilon = 1e-10)
 
 **Scala:**
 ```scala
-val adagrad = new Adagrad(learningRate = 1e-3,
+val optimMethod = new Adagrad(learningRate = 1e-3,
                           learningRateDecay = 0.0,
                           weightDecay = 0.0)
 ```
