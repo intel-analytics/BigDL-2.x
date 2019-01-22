@@ -61,7 +61,7 @@ Parameters:
 `x`: Training data. A Numpy array or RDD of Sample or [ImageSet](../../APIGuide/FeatureEngineering/image/) or [TextSet](../../APIGuide/FeatureEngineering/text).
 `y`: Labels. A Numpy array. Default is None if x is already Sample RDD or ImageSet or TextSet.
 `batch_size`: Number of samples per gradient update. Default is 32.
-`nb_epoch`: Number of epochs to train.
+`nb_epoch`: Number of epochs to train. Default is 10.
 `validationData`: Tuple (x_val, y_val) where x_val and y_val are both Numpy arrays.
                     Can also be RDD of Sample or ImageSet or TextSet.
                     Default is None if no validation is involved.
@@ -81,7 +81,7 @@ evaluate(x, batchSize = 32)
 Parameters:
 
 `x`: Evaluation dataset. RDD of Sample or [ImageSet](../../APIGuide/FeatureEngineering/image/) or [TextSet](../../APIGuide/FeatureEngineering/text).
-`batchSize`: Number of samples per batch.
+`batchSize`: Number of samples per batch. Default is 32.
 
 **Python**
 ```python
