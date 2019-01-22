@@ -32,7 +32,7 @@ export SPARK_HOME=the root directory of Spark
 export ANALYTICS_ZOO_HOME=the directory where you extract the downloaded Analytics Zoo zip package
 MASTER=... # Spark Master
 ${ANALYTICS_ZOO_HOME}/bin/spark-submit-with-zoo.sh \
-    --master $MASTER \
+    --master ${MASTER} \
     predict.py \
     --image path_to_image_folder \
     --model path_to_tensorflow_graph

@@ -3,8 +3,10 @@
 This example illustrates how to use a pre-trained TensorFlow object detection model
 to make inferences with OpenVINO toolkit as backend using Analytics Zoo, which delivers a significant boost for inference speed ([up to 19.9x](https://software.intel.com/en-us/blogs/2018/05/15/accelerate-computer-vision-from-edge-to-cloud-with-openvino-toolkit)).
 
+
 ## Install or download Analytics Zoo
 Follow the instructions [here](https://analytics-zoo.github.io/master/#PythonUserGuide/install/) to install analytics-zoo via __pip__ or __download the prebuilt package__.
+
 
 ## Model and Data Preparation
 1. Download the model file for pre-trained TensorFlow `faster_rcnn_resnet101_coco` from [here](https://s3-ap-southeast-1.amazonaws.com/analytics-zoo-models/openvino/TF_faster_rcnn_resnet101_coco_2018_01_28/frozen_inference_graph.pb).
@@ -14,6 +16,7 @@ Follow the instructions [here](https://analytics-zoo.github.io/master/#PythonUse
 
 ## Run this example after pip install
 ```bash
+export SPARK_DRIVER_MEMORY=10g
 image_path=directory path that contain images
 model_path=path to frozen_inference_graph.pb
 
@@ -33,6 +36,8 @@ model_path=path to frozen_inference_graph.pb
 
 ${ANALYTICS_ZOO_HOME}/bin/spark-submit-with-zoo.sh \
     --master $MASTER \
+    --driver-memory 10g \
+    --executor-memory 10g \
     predict.py \
     --image ${image_path} \
     --model ${model_path}
