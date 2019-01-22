@@ -30,10 +30,9 @@ if __name__ == "__main__":
                            "can be either a folder or an image path")
     parser.add_option("--model", type=str, dest="model_path",
                       help="Path to the TensorFlow model file")
-    parser.add_option("--pipeline", type=str, dest="pipeline_config_path",
-                      help="Path to the pipeline configure file")
-    parser.add_option("--extensions", type=str, dest="extensions_config_path",
-                      help="Path to the extensions configure file")
+    parser.add_option("--model_type", type=str, dest="model_type",
+                      help="The type of the TensorFlow model",
+                      default="faster_rcnn_resnet101_coco")
 
     (options, args) = parser.parse_args(sys.argv)
 
@@ -42,9 +41,7 @@ if __name__ == "__main__":
                            resize_height=600, resize_width=600).get_image().collect()
     input_data = np.concatenate([image.reshape((1, 1) + image.shape) for image in images], axis=0)
     model = InferenceModel()
-    model.load_tf(options.model_path, backend="openvino",
-                  pipeline_config_path=options.pipeline_config_path,
-                  extensions_config_path=options.extensions_config_path)
+    model.load_tf(options.model_path, backend="openvino", model_type=options.model_type)
     predictions = model.predict(input_data)
     # Print the detection result of the first image.
     print(predictions[0])

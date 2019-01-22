@@ -64,7 +64,7 @@ class InferenceModel(JavaValue):
     def load_tf(self, model_path, backend="tensorflow",
                 intra_op_parallelism_threads=1, inter_op_parallelism_threads=1,
                 use_per_session_threads=True, model_type=None,
-                pipeline_config_path=None, extensions_config_path=None):
+                ov_pipeline_config_path=None, ov_extensions_config_path=None):
         """
         Load an TensorFlow model using tensorflow or openvino backend.
 
@@ -82,11 +82,11 @@ class InferenceModel(JavaValue):
                                              The number of interOpParallelismThreads. Default is 1.
         :param use_per_session_threads: For 'tensorflow' backend only. Boolean.
                                         Whether to use perSessionThreads. Default is True.
-        :param model_type: For 'openvino' backend only. The type of the tensorflow model,
+        :param model_type: For 'openvino' backend only. The type of the TensorFlow model,
                            e.g. faster_rcnn_resnet101_coco, ssd_inception_v2_coco, etc.
-        :param pipeline_config_path: For 'openvino' backend only. String.
+        :param ov_pipeline_config_path: For 'openvino' backend only. String.
                                      The file path to the pipeline configure file.
-        :param extensions_config_path: For 'openvino' backend only. String.
+        :param ov_extensions_config_path: For 'openvino' backend only. String.
                                        The file path to the extensions configure file.
                                        Please input pipeline_config_path and extensions_config_path
                                        for 'openvino' backend if model_type is not specified.
@@ -101,11 +101,11 @@ class InferenceModel(JavaValue):
                 callBigDlFunc(self.bigdl_type, "inferenceModelOpenVINOLoadTF",
                               self.value, model_path, model_type)
             else:
-                assert pipeline_config_path is not None and extensions_config_path is not None,\
+                assert ov_pipeline_config_path is not None and ov_extensions_config_path is not None,\
                     "For openvino backend, you must provide either model_type or both " \
                     "pipeline_config_path and extensions_config_path"
                 callBigDlFunc(self.bigdl_type, "inferenceModelOpenVINOLoadTF",
-                              self.value, model_path, pipeline_config_path, extensions_config_path)
+                              self.value, model_path, ov_pipeline_config_path, ov_extensions_config_path)
         else:
             raise ValueError("Currently only tensorflow and openvino are supported as backend")
 

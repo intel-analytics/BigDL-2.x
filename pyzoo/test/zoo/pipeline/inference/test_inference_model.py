@@ -63,10 +63,14 @@ class TestInferenceModel(ZooTestCase):
         maybe_download("faster_rcnn_support.json", local_path, url + "/faster_rcnn_support.json")
         model = InferenceModel(3)
         model.load_tf(local_path + "/frozen_inference_graph.pb", backend="openvino",
-                      pipeline_config_path=local_path + "/pipeline.config",
-                      extensions_config_path=local_path + "/faster_rcnn_support.json")
+                      ov_pipeline_config_path=local_path + "/pipeline.config",
+                      ov_extensions_config_path=local_path + "/faster_rcnn_support.json")
         input_data = np.random.random([4, 1, 3, 600, 600])
         output_data = model.predict(input_data)
+        model2 = InferenceModel(5)
+        model2.load_tf(local_path + "/frozen_inference_graph.pb", backend="openvino",
+                       model_type="faster_rcnn_resnet101_coco")
+        output_data2 = model2.predict(input_data)
 
 
 if __name__ == "__main__":
