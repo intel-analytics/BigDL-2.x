@@ -89,10 +89,6 @@ Arguments:
 * beta2 : second moment coefficient
 * Epsilon : for numerical stability
 
-Returns:
-
-the new x vector and the function list {fx}, evaluated before the update
-
 ## Adadelta
 
 *AdaDelta* implementation for *SGD* 
