@@ -28,6 +28,7 @@ import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric
 import com.intel.analytics.bigdl.utils._
 import com.intel.analytics.bigdl.utils.serializer.{DeserializeContext, ModuleData, ModuleSerializer, SerializeContext}
 import com.intel.analytics.bigdl.visualization.{TrainSummary, ValidationSummary}
+import com.intel.analytics.zoo.feature.DistributedFeatureSet
 import com.intel.analytics.zoo.feature.image.ImageSet
 import com.intel.analytics.zoo.feature.text._
 import com.intel.analytics.zoo.pipeline.api.{Net, Predictable}
@@ -373,7 +374,10 @@ abstract class KerasNet[T](implicit val tag: ClassTag[T], implicit val ev: Tenso
       nbEpoch: Int,
       validationData: TextSet)(implicit ev: TensorNumeric[T]): Unit = {
     KerasUtils.validateBatchSize(batchSize)
-    this.fit(toDataSet(x, batchSize), nbEpoch, toDataSet(validationData, batchSize))
+    val dataset = x.toDataSet
+    this.fit((dataset -> SampleToMiniBatch[Float](batchSize)).asInstanceOf[DataSet[MiniBatch[T]]],
+      nbEpoch, toDataSet(validationData, batchSize))
+    dataset.toDistributed().unpersist()
   }
 
   def fit(

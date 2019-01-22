@@ -104,6 +104,8 @@ class DistributedFeatureSet[T: ClassTag]
   }
 
   override def unpersist(): Unit = {
+    println("--------unpersisting----------")
+    buffer.map(_.free()).count()
     buffer.unpersist()
     indexes.unpersist()
     isCached = false
