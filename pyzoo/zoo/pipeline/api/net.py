@@ -249,7 +249,7 @@ class TFNet(Layer):
         else:
             return [to_jtensor(input)], False
 
-    def predict(self, x, batch_per_thread=-1, distributed=True):
+    def predict(self, x, batch_per_thread=1, distributed=True):
         """
         Use a model to do prediction.
         """
