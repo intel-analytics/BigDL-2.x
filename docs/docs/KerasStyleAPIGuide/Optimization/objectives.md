@@ -50,8 +50,6 @@ Parameters:
 ```scala
 import com.intel.analytics.zoo.pipeline.api.keras.objectives.MeanSquaredError
 loss = MeanSquaredError()
-loss = MSE()
-loss = mse()
 ```
 
 **Python:**
@@ -59,8 +57,6 @@ loss = mse()
 ```python
 from zoo.pipeline.api import keras.objectives.MeanSquaredError
 loss = MeanSquaredError()
-loss = MSE()
-loss = mse()
 ```
 
 ### MeanAbsoluteError
@@ -72,8 +68,6 @@ Measures the mean absolute value of the element-wise difference between input an
 ```scala
 import com.intel.analytics.zoo.pipeline.api.keras.objectives.MeanAbsoluteError
 loss = MeanAbsoluteError()
-loss = MAE()
-loss = mae()
 ```
 
 **Python:**
@@ -81,8 +75,6 @@ loss = mae()
 ```python
 from zoo.pipeline.api import keras.objectives.MeanAbsoluteError
 loss = MeanAbsoluteError()
-loss = MAE()
-loss = mae()
 ```
 
 ### MeanAbsolutePercentageError
@@ -94,8 +86,6 @@ compute mean absolute percentage error for intput and target
 ```scala
 import com.intel.analytics.zoo.pipeline.api.keras.objectives.MeanAbsolutePercentageError
 loss = MeanAbsolutePercentageError()
-loss = MAPE()
-loss = mape()
 ```
 
 **Python:**
@@ -103,8 +93,6 @@ loss = mape()
 ```python
 from zoo.pipeline.api import keras.objectives.MeanAbsolutePercentageError
 loss = MeanAbsolutePercentageError()
-loss = MAPE()
-loss = mape()
 ```
 
 ### MeanSquaredLogarithmicError
@@ -116,8 +104,6 @@ Compute mean squared logarithmic error for input and target
 ```scala
 import com.intel.analytics.zoo.pipeline.api.keras.objectives.MeanSquaredLogarithmicError
 loss = MeanSquaredLogarithmicError()
-loss = MSLE()
-loss = msle()
 ```
 
 **Python:**
@@ -125,8 +111,6 @@ loss = msle()
 ```python
 from zoo.pipeline.api import keras.objectives.MeanSquaredLogarithmicError
 loss = MeanSquaredLogarithmicError()
-loss = MSLE()
-loss = msle()
 ```
 
 ### BinaryCrossEntropy
