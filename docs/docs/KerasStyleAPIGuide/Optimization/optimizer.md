@@ -34,6 +34,10 @@ model.compile(loss='mean_squared_error', optimizer=Adam())
 
 ## SGD
 
+A plain implementation of SGD which provides optimize method. After setting 
+optimization method when create Optimize, Optimize will call optimization method at the end of 
+each iteration.
+
 **Scala:**
 ```scala
 val optimMethod = SGD(learningRate = 1e-3, learningRateDecay = 0.0, 
@@ -50,21 +54,7 @@ optim_method = SGD(learningrate=1e-3, learningrate_decay=0.0, weightdecay=0.0,
                    weightdecays=None, bigdl_type="float")
 ```
 
-A plain implementation of SGD which provides optimize method. After setting 
-optimization method when create Optimize, Optimize will call optimization method at the end of 
-each iteration.
-
 ## Adam
-
-**Scala:**
-```scala
-val optimMethod = new Adam(learningRate = 1e-3, learningRateDecay = 0.0, beta1 = 0.9, beta2 = 0.999, Epsilon = 1e-8)
-```
-
-**Python:**
-```python
-optim_method = Adam(learningrate=1e-3, learningrate_decay=0.0, beta1=0.9, beta2=0.999, epsilon=1e-8, bigdl_type="float")
-```
 
 An implementation of Adam optimization, first-order gradient-based optimization of stochastic  objective  functions. http://arxiv.org/pdf/1412.6980.pdf
 
@@ -77,6 +67,16 @@ An implementation of Adam optimization, first-order gradient-based optimization 
  `beta2` second moment coefficient. Default value is 0.999.
  
  `Epsilon` for numerical stability. Default value is 1e-8.
+
+**Scala:**
+```scala
+val optimMethod = new Adam(learningRate = 1e-3, learningRateDecay = 0.0, beta1 = 0.9, beta2 = 0.999, Epsilon = 1e-8)
+```
+
+**Python:**
+```python
+optim_method = Adam(learningrate=1e-3, learningrate_decay=0.0, beta1=0.9, beta2=0.999, epsilon=1e-8, bigdl_type="float")
+```
 
 ## Adamax
 
@@ -111,6 +111,9 @@ optim_method = AdaDelta(decayrate=0.9, epsilon=1e-10)
 
 ## Adagrad
 
+ An implementation of Adagrad. See the original paper:
+ <http://jmlr.org/papers/volume12/duchi11a/duchi11a.pdf>
+
 **Scala:**
 ```scala
 val optimMethod = new Adagrad(learningRate = 1e-3,
@@ -122,9 +125,6 @@ val optimMethod = new Adagrad(learningRate = 1e-3,
 ```python
 optim_method = Adagrad(learningrate=1e-3, learningrate_decay=0.0, weightdecay=0.0)
 ```
-
- An implementation of Adagrad. See the original paper:
- <http://jmlr.org/papers/volume12/duchi11a/duchi11a.pdf>
 
 ## Rmsprop
 
