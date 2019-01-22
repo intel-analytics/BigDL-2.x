@@ -32,7 +32,7 @@ Parameters:
 
 * `optimizer`: Optimization method to be used. One can alternatively pass in the corresponding string representation, such as 'sgd'.
 * `loss`: Criterion to be used. One can alternatively pass in the corresponding string representation, such as 'mse'. (see [here](objectives/#available-objectives)).
-* `metrics`: List of validation methods to be used. Default is None if no validation is needed. One can alternatively `Array("accuracy")`(Scala) `["accuracy"]`(Python).
+* `metrics`: List of validation methods to be used. Default is None if no validation is needed.
 
 ---
 ## **Fit**
@@ -46,7 +46,7 @@ fit(x, batchSize = 32，nbEpoch = 10, validationData = null)
 
 Parameters:
 
-* `x`: Training dataset, RDD of Sample or [ImageSet](../../APIGuide/FeatureEngineering/image/) or [TextSet](../../APIGuide/FeatureEngineering/text).
+* `x`: Training dataset, RDD of Sample or ImageSet or TextSet.
 * `batchSize`: Number of samples per gradient update. Default is 32.
 * `nbEpoch`: Number of epochs to train. Default is 10.
 * `validationData`: RDD of Sample, or null if validation is not configured. Default is null.
@@ -58,9 +58,9 @@ fit(x, y=None, batch_size=32, nb_epoch=10, validation_data=None, distributed=Tru
 
 Parameters:
 
-* `x`: Input data. A Numpy array or RDD of Sample or [ImageSet](../../APIGuide/FeatureEngineering/image/) or [TextSet](../../APIGuide/FeatureEngineering/text).
+* `x`: Training data. A Numpy array or RDD of Sample or ImageSet or TextSet.
 * `y`: Labels. A Numpy array. Default is None if x is already Sample RDD or ImageSet or TextSet.
-* `batch_Size`: Number of samples per gradient update. Default is 32.
+* `batch_size`: Number of samples per gradient update. Default is 32.
 * `nb_epoch`: Number of epochs to train.
 * `validationData`: Tuple (x_val, y_val) where x_val and y_val are both Numpy arrays.
                     Can also be RDD of Sample or ImageSet or TextSet.
@@ -80,7 +80,7 @@ evaluate(x, batchSize = 32)
 
 Parameters:
 
-* `x`: Evaluation dataset, RDD of Sample or [ImageSet](../../APIGuide/FeatureEngineering/image/) or [TextSet](../../APIGuide/FeatureEngineering/text).
+* `x`: Evaluation dataset, RDD of Sample or ImageSet or TextSet.
 * `batchSize`: Number of samples per batch.
 
 **Python**
@@ -90,8 +90,8 @@ evaluate(x, y=None, batch_size=32)
 
 Parameters:
 
-* `x`: Evaluation data. A Numpy array or RDD of Sample or [ImageSet](../../APIGuide/FeatureEngineering/image/) or [TextSet](../../APIGuide/FeatureEngineering/text).
-* `y`: Labels. A Numpy array. Default is None if x is already Sample RDD or [ImageSet](../../APIGuide/FeatureEngineering/image/) or [TextSet](../../APIGuide/FeatureEngineering/text).
+* `x`: Evaluation data. A Numpy array or RDD of Sample or ImageSet or TextSet.
+* `y`: Labels. Default is None if x is set already. A Numpy array or RDD of Sample or ImageSet or TextSet.
 * `batchSize`: Number of samples per batch. Default is 32.
 
 ---
@@ -106,7 +106,7 @@ predict(x, batchPerThread = 4)
 
 Parameters:
 
-* `x`: Evaluation dataset, RDD of Sample or [ImageSet](../../APIGuide/FeatureEngineering/image/) or [TextSet](../../APIGuide/FeatureEngineering/text).
+* `x`: Prediction dataset. RDD of Sample or ImageSet or TextSet.
 * `batchPerThread`: The total batchSize is batchPerThread * numOfCores.
 
 **Python**
@@ -116,11 +116,11 @@ predict(x, distributed=True)
 
 Parameters:
 
-* `x`: Prediction data. A Numpy array or RDD of Sample or [ImageSet](../../APIGuide/FeatureEngineering/image/) or [TextSet](../../APIGuide/FeatureEngineering/text).
+* `x`: Prediction data. A Numpy array or RDD of Sample or ImageSet or TextSet.
 * `batch_per_thread`:
         The default value is 4.
-        When distributed is True,the total batch size is batch_per_thread * rdd.getNumPartitions.
-        When distributed is False the total batch size is batch_per_thread * numOfCores.
+        When distributed is True, the total batch size is batch_per_thread * rdd.getNumPartitions.
+        When distributed is False, the total batch size is batch_per_thread * numOfCores.
 * `distributed`: Boolean. Whether to do prediction in distributed mode or local mode.
                  Default is True. In local mode, x must be a Numpy array.
                  
@@ -128,13 +128,13 @@ Use a model to predict class labels.
 
 **Scala:**
 ```scala
-predictClasses(x, batchPerThread = 4, zeroBasedLabel = True)
+predictClasses(x, batchPerThread = 4, zeroBasedLabel = true)
 ```
 
 Parameters:
 
-* `x`: Prediction data, RDD of Sample or [ImageSet](../../APIGuide/FeatureEngineering/image/) or [TextSet](../../APIGuide/FeatureEngineering/text).
-* `batchPerThread`: The default batchPerThread is 4, and the total batchSize is batchPerThread * rdd.getNumPartitions.
+* `x`: Prediction dataset. RDD of Sample or ImageSet or TextSet.
+* `batchPerThread`: The default value is 4, and the total batchSize is batchPerThread * rdd.getNumPartitions.
 * `zeroBasedLabel`: Boolean. Whether result labels start from 0. Default is true. If false, result labels start from 1.
 
 **Python**
@@ -144,7 +144,7 @@ predict_classes(x, batch_per_thread=4, zero_based_label=True)
 
 Parameters:
 
-* `x`: Prediction data. A Numpy array or RDD of Sample or [ImageSet](../../APIGuide/FeatureEngineering/image/) or [TextSet](../../APIGuide/FeatureEngineering/text).
+* `x`: Prediction data. A Numpy array or RDD of Sample or ImageSet or TextSet.
 * `batch_per_thread`:
         The default value is 4.
         When distributed is True,the total batch size is batch_per_thread * rdd.getNumPartitions.
