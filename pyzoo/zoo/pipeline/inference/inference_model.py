@@ -85,11 +85,11 @@ class InferenceModel(JavaValue):
         :param model_type: For 'openvino' backend only. The type of the TensorFlow model,
                            e.g. faster_rcnn_resnet101_coco, ssd_inception_v2_coco, etc.
         :param ov_pipeline_config_path: For 'openvino' backend only. String.
-                                     The file path to the pipeline configure file.
+                                        The file path to the pipeline configure file.
         :param ov_extensions_config_path: For 'openvino' backend only. String.
-                                       The file path to the extensions configure file.
-                                       Please input pipeline_config_path and extensions_config_path
-                                       for 'openvino' backend if model_type is not specified.
+                                          The file path to the extensions configure file.
+                                          Need pipeline_config_path and extensions_config_path
+                                          for 'openvino' backend if model_type is not specified.
         """
         backend = backend.lower()
         if backend == "tensorflow" or backend == "tf":
