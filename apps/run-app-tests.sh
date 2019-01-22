@@ -470,7 +470,13 @@ start=$(date "+%s")
  ModelPath="${ANALYTICS_ZOO_HOME}/apps/tfnet/models/"
  rm -rf "$ModelPath"
  echo "Downloading model"
- git clone https://github.com/tensorflow/models/ ${ANALYTICS_ZOO_HOME}/apps/tfnet/models
+ mkdir -p ${ANALYTICS_ZOO_HOME}/apps/tfnet/models/research/slim/nets
+ touch ${ANALYTICS_ZOO_HOME}/apps/tfnet/models/research/slim/nets/__init__.py
+ touch ${ANALYTICS_ZOO_HOME}/apps/tfnet/models/research/slim/nets/inception.py
+ echo "from nets.inception_v1 import inception_v1" >> ${ANALYTICS_ZOO_HOME}/apps/tfnet/models/research/slim/nets/inception.py
+ echo "from nets.inception_v1 import inception_v1_arg_scope" >> ${ANALYTICS_ZOO_HOME}/apps/tfnet/models/research/slim/nets/inception.py
+ wget https://raw.githubusercontent.com/tensorflow/models/master/research/slim/nets/inception_utils.py -p ${ANALYTICS_ZOO_HOME}/apps/tfnet/models/research/slim/nets/
+ wget https://raw.githubusercontent.com/tensorflow/models/master/research/slim/nets/inception_v1.py -p ${ANALYTICS_ZOO_HOME}/apps/tfnet/models/research/slim/nets/
  echo "Finished downloading model"
  FILENAME="${ANALYTICS_ZOO_HOME}/apps/tfnet/checkpoint/inception_v1.ckpt"
 if [ -f "$FILENAME" ]
