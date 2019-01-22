@@ -9,7 +9,10 @@ Follow the instructions [here](https://analytics-zoo.github.io/master/#PythonUse
 
 
 ## Model and Data Preparation
-1. Download the model file for pre-trained TensorFlow `faster_rcnn_resnet101_coco` from [here](https://s3-ap-southeast-1.amazonaws.com/analytics-zoo-models/openvino/TF_faster_rcnn_resnet101_coco_2018_01_28/frozen_inference_graph.pb).
+1. Prepare a pre-trained TensorFlow object detection model. You can download from [tensorflow detection model zoo](https://github.com/tensorflow/models/blob/master/research/object_detection/g3doc/detection_model_zoo.md).
+   
+In this example, we use `frozen_inference_graph.pb` of the `faster_rcnn_resnet101_coco` model downloaded from [here](http://download.tensorflow.org/models/object_detection/faster_rcnn_resnet101_coco_2018_01_28.tar.gz).
+
 
 2. Prepare the image dataset for inference. Put the images to do prediction in the same folder.
 
@@ -49,7 +52,7 @@ See [here](#options) for more configurable options for this example.
 ## Options
 * `--image` The path where the images are stored. It can be either a folder or an image path. Local file system, HDFS and Amazon S3 are supported.
 * `--model` The path to the TensorFlow object detection model.
-* `--model_type` The type of the TensorFlow model. For the model downloaded from the link [above](#model-and-data-preparation), it is default to be "faster_rcnn_resnet101_coco". If you use other models, you need to change to the corresponding model_type.
+* `--model_type` The type of the TensorFlow model. In this example, we use "faster_rcnn_resnet101_coco". If you download other models, you need to change to the corresponding model_type.
 
 ## Results
 We print the detection result of the first image to the console.
