@@ -23,6 +23,8 @@ cd "`dirname $0`"
 export PYSPARK_PYTHON=python
 export PYSPARK_DRIVER_PYTHON=python
 
+py_version="$(python -V 2>&1)"
+
 python -m pytest -v --doctest-modules ../zoo \
     --ignore=../zoo/pipeline/api/keras2
 exit_status_1=$?
@@ -31,11 +33,26 @@ then
     exit $exit_status_1
 fi
 
-python -m pytest -v ../test --ignore=../test/zoo/pipeline/utils/test_utils.py \
-   --ignore=../test/zoo/pipeline/api/keras2/ \
-   --ignore=../test/zoo/pipeline/autograd
-exit_status_2=$?
-if [ $exit_status_2 -ne 0 ];
-then
-    exit $exit_status_2
+if [[ $py_version == *"Python 2.7"* ]]; then
+    echo "Running Python 2.7"
+    echo "Skipping OpenVINO tests"
+    python -m pytest -v ../test --ignore=../test/zoo/pipeline/utils/test_utils.py \
+       --ignore=../test/zoo/pipeline/api/keras2/ \
+       --ignore=../test/zoo/pipeline/autograd/ \
+       --ignore=../test/zoo/pipeline/inference/
+    exit_status_2=$?
+    if [ $exit_status_2 -ne 0 ];
+    then
+        exit $exit_status_2
+    fi
+else
+    echo "Running Python 3"
+    python -m pytest -v ../test --ignore=../test/zoo/pipeline/utils/test_utils.py \
+       --ignore=../test/zoo/pipeline/api/keras2/ \
+       --ignore=../test/zoo/pipeline/autograd/
+    exit_status_3=$?
+    if [ $exit_status_3 -ne 0 ];
+    then
+        exit $exit_status_3
+    fi
 fi
