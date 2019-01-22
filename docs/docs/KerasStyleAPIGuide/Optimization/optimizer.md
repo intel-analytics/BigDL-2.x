@@ -25,7 +25,7 @@ model.compile(loss = "mean_squared_error", optimizer = Adam())
 
 ```python
 from bigdl.optim.optimizer import Adam
-model.compile(loss='mean_squared_error', optimizer= Adam())
+model.compile(loss='mean_squared_error', optimizer=Adam())
 ```
 
 ---
@@ -36,18 +36,18 @@ model.compile(loss='mean_squared_error', optimizer= Adam())
 
 **Scala:**
 ```scala
-val optimMethod = SGD(learningRate= 1e-3,learningRateDecay=0.0,
-                      weightDecay=0.0,momentum=0.0,dampening=Double.MaxValue,
-                      nesterov=false,learningRateSchedule=Default(),
-                      learningRates=null,weightDecays=null)
+val optimMethod = SGD(learningRate = 1e-3, learningRateDecay = 0.0, 
+                      weightDecay = 0.0, momentum = 0.0, dampening = Double.MaxValue, 
+                      nesterov = false, learningRateSchedule = Default(), 
+                      learningRates = null, weightDecays = null)
 ```
 
 **Python:**
-```python
-optim_method = SGD(learningrate=1e-3,learningrate_decay=0.0,weightdecay=0.0,
-                   momentum=0.0,dampening=DOUBLEMAX,nesterov=False,
-                   leaningrate_schedule=None,learningrates=None,
-                   weightdecays=None,bigdl_type="float")
+```python 
+optim_method = SGD(learningrate=1e-3, learningrate_decay=0.0, weightdecay=0.0, 
+                   momentum=0.0, dampening=DOUBLEMAX, nesterov=False, 
+                   leaningrate_schedule=None, learningrates=None, 
+                   weightdecays=None, bigdl_type="float")
 ```
 
 A plain implementation of SGD which provides optimize method. After setting 
@@ -58,7 +58,7 @@ each iteration.
 
 **Scala:**
 ```scala
-val optimMethod = new Adam(learningRate=1e-3, learningRateDecay=0.0, beta1=0.9, beta2=0.999, Epsilon=1e-8)
+val optimMethod = new Adam(learningRate = 1e-3, learningRateDecay = 0.0, beta1 = 0.9, beta2 = 0.999, Epsilon = 1e-8)
 ```
 
 **Python:**
@@ -106,7 +106,7 @@ val optimMethod = Adadelta(decayRate = 0.9, Epsilon = 1e-10)
 
 **Python:**
 ```python
-optim_method = AdaDelta(decayrate = 0.9, epsilon = 1e-10)
+optim_method = AdaDelta(decayrate=0.9, epsilon=1e-10)
 ```
 
 ## Adagrad
@@ -120,7 +120,7 @@ val optimMethod = new Adagrad(learningRate = 1e-3,
 
 **Python:**
 ```python
-optim_method = Adagrad(learningrate=1e-3,learningrate_decay=0.0,weightdecay=0.0,)
+optim_method = Adagrad(learningrate=1e-3, learningrate_decay=0.0, weightdecay=0.0)
 ```
 
  An implementation of Adagrad. See the original paper:
