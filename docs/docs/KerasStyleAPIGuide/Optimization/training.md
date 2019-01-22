@@ -46,7 +46,7 @@ fit(x, batchSize = 32，nbEpoch = 10, validationData = null)
 
 Parameters:
 
-`x`: Training dataset, RDD of Sample or ImageSet or TextSet.
+`x`: Training dataset. RDD of Sample or ImageSet or TextSet.
 `batchSize`: Number of samples per gradient update. Default is 32.
 `nbEpoch`: Number of epochs to train. Default is 10.
 `validationData`: RDD of Sample, or null if validation is not configured. Default is null.
@@ -80,7 +80,7 @@ evaluate(x, batchSize = 32)
 
 Parameters:
 
-`x`: Evaluation dataset, RDD of Sample or ImageSet or TextSet.
+`x`: Evaluation dataset. RDD of Sample or ImageSet or TextSet.
 `batchSize`: Number of samples per batch.
 
 **Python**
