@@ -28,7 +28,7 @@ import org.scalatest.Ignore
 
 import scala.collection.mutable.ArrayBuffer
 
-//@Ignore
+@Ignore
 class PersistentMemorySpec extends ZooSpecHelper {
   var sc: SparkContext = null
 

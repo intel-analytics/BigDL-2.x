@@ -104,7 +104,7 @@ class DistributedFeatureSet[T: ClassTag]
   }
 
   override def unpersist(): Unit = {
-    println("--------unpersisting----------")
+    FeatureSet.logger.info("Releasing data in AEP")
     buffer.map(_.free()).count()
     buffer.unpersist()
     indexes.unpersist()
