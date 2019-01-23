@@ -225,7 +225,7 @@ ${SPARK_HOME}/bin/spark-submit \
 now=$(date "+%s")
 time8=$((now-start))
 
-echo "#7 start example test for tensorflow"
+echo "#6 start example test for tensorflow"
 #timer
 start=$(date "+%s")
 echo "start example test for tensorflow tfnet"
