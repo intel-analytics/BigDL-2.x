@@ -19,9 +19,9 @@ compile(optimizer, loss, metrics = null)
 
 Parameters:
 
-`optimizer`: Optimization method to be used.
-`loss`: Criterion to be used.
-`metrics`: Validation method(s) to be used. Default is null if no validation is needed.
+* `optimizer`: Optimization method to be used.
+* `loss`: Criterion to be used.
+* `metrics`: Validation method(s) to be used. Default is null if no validation is needed.
 
 **Python**
 ```python
@@ -30,9 +30,9 @@ compile(optimizer, loss, metrics=None)
 
 Parameters:
 
-`optimizer`: Optimization method to be used. One can alternatively pass in the corresponding string representation, such as 'sgd'.
-`loss`: Criterion to be used. One can alternatively pass in the corresponding string representation, such as 'mse'. (see [here](objectives/#available-objectives)).
-`metrics`: List of validation methods to be used. Default is None if no validation is needed.
+* `optimizer`: Optimization method to be used. One can alternatively pass in the corresponding string representation, such as 'sgd'.
+* `loss`: Criterion to be used. One can alternatively pass in the corresponding string representation, such as 'mse'. (see [here](objectives/#available-objectives)).
+* `metrics`: List of validation methods to be used. Default is None if no validation is needed.
 
 ---
 ## **Fit**
@@ -46,10 +46,10 @@ fit(x, batchSize = 32，nbEpoch = 10, validationData = null)
 
 Parameters:
 
-`x`: Training dataset. RDD of Sample or [ImageSet](../../APIGuide/FeatureEngineering/image/) or [TextSet](../../APIGuide/FeatureEngineering/text).
-`batchSize`: Number of samples per gradient update. Default is 32.
-`nbEpoch`: Number of epochs to train. Default is 10.
-`validationData`: RDD of Sample or ImageSet or TextSet, or null if validation is not configured. Default is null.
+* `x`: Training dataset. RDD of Sample or [ImageSet](../../APIGuide/FeatureEngineering/image/) or [TextSet](../../APIGuide/FeatureEngineering/text).
+* `batchSize`: Number of samples per gradient update. Default is 32.
+* `nbEpoch`: Number of epochs to train. Default is 10.
+* `validationData`: RDD of Sample or ImageSet or TextSet, or null if validation is not configured. Default is null.
 
 **Python**
 ```python
@@ -58,14 +58,14 @@ fit(x, y=None, batch_size=32, nb_epoch=10, validation_data=None, distributed=Tru
 
 Parameters:
 
-`x`: Training data. A Numpy array or RDD of Sample or [ImageSet](../../APIGuide/FeatureEngineering/image/) or [TextSet](../../APIGuide/FeatureEngineering/text).
-`y`: Labels. A Numpy array. Default is None if x is already Sample RDD or ImageSet or TextSet.
-`batch_size`: Number of samples per gradient update. Default is 32.
-`nb_epoch`: Number of epochs to train. Default is 10.
-`validationData`: Tuple (x_val, y_val) where x_val and y_val are both Numpy arrays.
+* `x`: Training data. A Numpy array or RDD of Sample or [ImageSet](../../APIGuide/FeatureEngineering/image/) or [TextSet](../../APIGuide/FeatureEngineering/text).
+* `y`: Labels. A Numpy array. Default is None if x is already Sample RDD or ImageSet or TextSet.
+* `batch_size`: Number of samples per gradient update. Default is 32.
+* `nb_epoch`: Number of epochs to train. Default is 10.
+* `validationData`: Tuple (x_val, y_val) where x_val and y_val are both Numpy arrays.
                     Can also be RDD of Sample or ImageSet or TextSet.
                     Default is None if no validation is involved.
-`distributed`: Boolean. Whether to train the model in distributed mode or local mode.
+* `distributed`: Boolean. Whether to train the model in distributed mode or local mode.
                  Default is True. In local mode, x and y must both be Numpy arrays.
 
 ---
@@ -80,8 +80,8 @@ evaluate(x, batchSize = 32)
 
 Parameters:
 
-`x`: Evaluation dataset. RDD of Sample or [ImageSet](../../APIGuide/FeatureEngineering/image/) or [TextSet](../../APIGuide/FeatureEngineering/text).
-`batchSize`: Number of samples per batch. Default is 32.
+* `x`: Evaluation dataset. RDD of Sample or [ImageSet](../../APIGuide/FeatureEngineering/image/) or [TextSet](../../APIGuide/FeatureEngineering/text).
+* `batchSize`: Number of samples per batch. Default is 32.
 
 **Python**
 ```python
@@ -90,9 +90,9 @@ evaluate(x, y=None, batch_size=32)
 
 Parameters:
 
-`x`: Evaluation data. A Numpy array or RDD of Sample or [ImageSet](../../APIGuide/FeatureEngineering/image/) or [TextSet](../../APIGuide/FeatureEngineering/text).
-`y`: Labels. Default is None if x is set already. A Numpy array or RDD of Sample or ImageSet or TextSet.
-`batchSize`: Number of samples per batch. Default is 32.
+* `x`: Evaluation data. A Numpy array or RDD of Sample or [ImageSet](../../APIGuide/FeatureEngineering/image/) or [TextSet](../../APIGuide/FeatureEngineering/text).
+* `y`: Labels. Default is None if x is set already. A Numpy array or RDD of Sample or ImageSet or TextSet.
+* `batchSize`: Number of samples per batch. Default is 32.
 
 ---
 ## **Predict**
@@ -106,8 +106,8 @@ predict(x, batchPerThread = 4)
 
 Parameters:
 
-`x`: Prediction dataset. RDD of Sample or [ImageSet](../../APIGuide/FeatureEngineering/image/) or [TextSet](../../APIGuide/FeatureEngineering/text).
-`batchPerThread`: The total batchSize is batchPerThread * numOfCores.
+* `x`: Prediction dataset. RDD of Sample or [ImageSet](../../APIGuide/FeatureEngineering/image/) or [TextSet](../../APIGuide/FeatureEngineering/text).
+* `batchPerThread`: The total batchSize is batchPerThread * numOfCores.
 
 **Python**
 ```python
@@ -116,12 +116,12 @@ predict(x, distributed=True)
 
 Parameters:
 
-`x`: Prediction data. A Numpy array or RDD of Sample or [ImageSet](../../APIGuide/FeatureEngineering/image/) or [TextSet](../../APIGuide/FeatureEngineering/text).
-`batch_per_thread`:
+* `x`: Prediction data. A Numpy array or RDD of Sample or [ImageSet](../../APIGuide/FeatureEngineering/image/) or [TextSet](../../APIGuide/FeatureEngineering/text).
+* `batch_per_thread`:
         The default value is 4.
         When distributed is True, the total batch size is batch_per_thread * rdd.getNumPartitions.
         When distributed is False, the total batch size is batch_per_thread * numOfCores.
-`distributed`: Boolean. Whether to do prediction in distributed mode or local mode.
+* `distributed`: Boolean. Whether to do prediction in distributed mode or local mode.
                  Default is True. In local mode, x must be a Numpy array.
                  
 Use a model to predict class labels.
@@ -133,9 +133,9 @@ predictClasses(x, batchPerThread = 4, zeroBasedLabel = true)
 
 Parameters:
 
-`x`: Prediction dataset. RDD of Sample or [ImageSet](../../APIGuide/FeatureEngineering/image/) or [TextSet](../../APIGuide/FeatureEngineering/text).
-`batchPerThread`: The default value is 4, and the total batchSize is batchPerThread * rdd.getNumPartitions.
-`zeroBasedLabel`: Boolean. Whether result labels start from 0. Default is true. If false, result labels start from 1.
+* `x`: Prediction dataset. RDD of Sample or [ImageSet](../../APIGuide/FeatureEngineering/image/) or [TextSet](../../APIGuide/FeatureEngineering/text).
+* `batchPerThread`: The default value is 4, and the total batchSize is batchPerThread * rdd.getNumPartitions.
+* `zeroBasedLabel`: Boolean. Whether result labels start from 0. Default is true. If false, result labels start from 1.
 
 **Python**
 ```python
@@ -144,11 +144,11 @@ predict_classes(x, batch_per_thread=4, zero_based_label=True)
 
 Parameters:
 
-`x`: Prediction data. A Numpy array or RDD of Sample or [ImageSet](../../APIGuide/FeatureEngineering/image/) or [TextSet](../../APIGuide/FeatureEngineering/text).
-`batch_per_thread`:
+* `x`: Prediction data. A Numpy array or RDD of Sample or [ImageSet](../../APIGuide/FeatureEngineering/image/) or [TextSet](../../APIGuide/FeatureEngineering/text).
+* `batch_per_thread`:
         The default value is 4.
         When distributed is True,the total batch size is batch_per_thread * rdd.getNumPartitions.
         When distributed is False the total batch size is batch_per_thread * numOfCores.
-`zero_based_label`: Boolean. Whether result labels start from 0.
+* `zero_based_label`: Boolean. Whether result labels start from 0.
                       Default is True. If False, result labels start from 1.
 
