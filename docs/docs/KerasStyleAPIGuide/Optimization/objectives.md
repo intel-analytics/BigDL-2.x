@@ -70,43 +70,21 @@ Measures the mean absolute value of the element-wise difference between input an
 loss = MeanAbsoluteError(sizeAverage = true)
 ```
 
+Parameters:
+
+ * `sizeAverage` a boolean indicating whether to divide the sum of squared error by n. 
+                 Default: true
+
 **Python:**
 
 ```python
 loss = MeanAbsoluteError(size_average=True)
 ```
 
-### MeanAbsolutePercentageError
+Parameters:
 
-Compute mean absolute percentage error for intput and target
-
-**Scala:**
-
-```scala
-loss = MeanAbsolutePercentageError()
-```
-
-**Python:**
-
-```python
-loss = MeanAbsolutePercentageError()
-```
-
-### MeanSquaredLogarithmicError
-
-Compute mean squared logarithmic error for input and target
-
-**Scala:**
-
-```scala
-loss = MeanSquaredLogarithmicError()
-```
-
-**Python:**
-
-```python
-loss = MeanSquaredLogarithmicError()
-```
+ * `size_average` a boolean indicating whether to divide the sum of squared error by n. 
+                 Default: True
 
 ### BinaryCrossEntropy
 
@@ -115,7 +93,7 @@ Also known as logloss.
 **Scala:**
 
 ```scala
-loss = keras.objectives.BinaryCrossEntropy(weights = null, sizeAverage = true)
+loss = BinaryCrossEntropy(weights = null, sizeAverage = true)
 ```
 
 Parameters:
@@ -133,6 +111,80 @@ Parameters:
 
 * `weights` A tensor assigning weight to each of the classes
 * `size_average` whether to divide the sequence length. Default is True.
+
+### SparseCategoricalCrossEntropy
+
+A loss often used in multi-class classification problems with SoftMax as the last layer of the neural network. By default, input(y_pred) is supposed to be probabilities of each class, and target(y_true) is supposed to be the class label starting from 0.
+
+**Scala:**
+
+```scala
+loss = SparseCategoricalCrossEntropy(logProbAsInput = false, zeroBasedLabel = true, weights = null, sizeAverage = true, paddingValue = -1)
+```
+
+Parameters:
+
+ * `logProbAsInput` Boolean. Whether to accept log-probabilities or probabilities as input. Default is false and inputs should be probabilities.
+ * `zeroBasedLabel` Boolean. Whether target labels start from 0. Default is true. If false, labels start from 1.
+ * `weights` Tensor. Weights of each class if you have an unbalanced training set. Default is null.
+ * `sizeAverage` Boolean. Whether losses are averaged over observations for each mini-batch. Default is true. If false, the losses are instead summed for each mini-batch.
+ * `paddingValue` Integer. If the target is set to this value, the training process will skip this sample. In other words, the forward process will return zero output and the backward process will also return zero gradInput. Default is -1.
+
+**Python:**
+
+```python
+loss = SparseCategoricalCrossEntropy(log_prob_as_input=False, zero_based_label=True, weights=None, size_average=True, padding_value=-1)
+```
+
+Parameters:
+
+ * `log_prob_as_input` Boolean. Whether to accept log-probabilities or probabilities as input. Default is false and inputs should be probabilities.
+ * `zero_based_label` Boolean. Whether target labels start from 0. Default is true. If false, labels start from 1.
+ * `weights` A Numpy array. Weights of each class if you have an unbalanced training set. Default is None.
+ * `size_average` Boolean. Whether losses are averaged over observations for each mini-batch. Default is True. If False, the losses are instead summed for each mini-batch.
+ * `padding_value` Integer. If the target is set to this value, the training process will skip this sample. In other words, the forward process will return zero output and the backward process will also return zero gradInput. Default is -1.
+
+### MeanAbsolutePercentageError
+
+Compute mean absolute percentage error for intput and target
+
+**Scala:**
+
+```scala
+loss = MeanAbsolutePercentageError()
+```
+
+Parameters:
+
+ * `sizeAverage` a boolean indicating whether to divide the sum of squared error by n. 
+                 Default: true
+
+**Python:**
+
+```python
+loss = MeanAbsolutePercentageError()
+```
+
+Parameters:
+
+ * `size_average` a boolean indicating whether to divide the sum of squared error by n. 
+                 Default: True
+
+### MeanSquaredLogarithmicError
+
+Compute mean squared logarithmic error for input and target
+
+**Scala:**
+
+```scala
+loss = MeanSquaredLogarithmicError()
+```
+
+**Python:**
+
+```python
+loss = MeanSquaredLogarithmicError()
+```
 
 ### CategoricalCrossEntropy
 
@@ -158,7 +210,7 @@ Creates a criterion that optimizes a two-class classification hinge loss (margin
 **Scala:**
 
 ```scala
-loss = keras.objectives.Hinge(margin = 1.0, sizeAverage = true)
+loss = Hinge(margin = 1.0, sizeAverage = true)
 ```
 
 Parameters:
@@ -219,7 +271,7 @@ Parameters:
 **Python:**
 
 ```python
-loss = SquaredHinge(margin=1.0, size_average=true)
+loss = SquaredHinge(margin=1.0, size_average=True)
 ```
 
 Parameters:
@@ -258,38 +310,6 @@ loss = CosineProximity()
 ```python
 loss = CosineProximity()
 ```
-
-### SparseCategoricalCrossEntropy
-
-A loss often used in multi-class classification problems with SoftMax as the last layer of the neural network. By default, input(y_pred) is supposed to be probabilities of each class, and target(y_true) is supposed to be the class label starting from 0.
-
-**Scala:**
-
-```scala
-loss = SparseCategoricalCrossEntropy(logProbAsInput = false, zeroBasedLabel = true, weights = null, sizeAverage = true, paddingValue = -1)
-```
-
-Parameters:
-
- * `logProbAsInput` Boolean. Whether to accept log-probabilities or probabilities as input. Default is false and inputs should be probabilities.
- * `zeroBasedLabel` Boolean. Whether target labels start from 0. Default is true. If false, labels start from 1.
- * `weights` Tensor. Weights of each class if you have an unbalanced training set. Default is null.
- * `sizeAverage` Boolean. Whether losses are averaged over observations for each mini-batch. Default is true. If false, the losses are instead summed for each mini-batch.
- * `paddingValue` Integer. If the target is set to this value, the training process will skip this sample. In other words, the forward process will return zero output and the backward process will also return zero gradInput. Default is -1.
-
-**Python:**
-
-```python
-loss = SparseCategoricalCrossEntropy(log_prob_as_input=False, zero_based_label=True, weights=None, size_average=True, padding_value=-1)
-```
-
-Parameters:
-
- * `log_prob_as_input` Boolean. Whether to accept log-probabilities or probabilities as input. Default is false and inputs should be probabilities.
- * `zero_based_label` Boolean. Whether target labels start from 0. Default is true. If false, labels start from 1.
- * `weights` Tensor. Weights of each class if you have an unbalanced training set. Default is None.
- * `size_average` Boolean. Whether losses are averaged over observations for each mini-batch. Default is True. If False, the losses are instead summed for each mini-batch.
- * `padding_value` Integer. If the target is set to this value, the training process will skip this sample. In other words, the forward process will return zero output and the backward process will also return zero gradInput. Default is -1.
 
 ### KullbackLeiblerDivergence
 
