@@ -92,7 +92,7 @@ Parameters:
 
 * `x`: Evaluation data. A Numpy array or RDD of Sample or [ImageSet](../../APIGuide/FeatureEngineering/image/) or [TextSet](../../APIGuide/FeatureEngineering/text).
 * `y`: Labels. Default is None if x is set already. A Numpy array or RDD of Sample or ImageSet or TextSet.
-* `batchSize`: Number of samples per batch. Default is 32.
+* `batch_size`: Number of samples per batch. Default is 32.
 
 ---
 ## **Predict**
