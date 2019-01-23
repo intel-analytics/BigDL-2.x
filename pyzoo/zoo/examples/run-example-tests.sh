@@ -205,8 +205,7 @@ then
     echo "analytics-zoo-data/data/20news-18828.tar.gz already exists"
 else
     wget https://s3.amazonaws.com/analytics-zoo-data/WikiQAProcessed.zip -P analytics-zoo-data/data
-    sudo apt-get install unzip
-    unzip analytics-zoo-data/data/WikiQAProcessed.zip -D analytics-zoo-data/data/
+    unzip analytics-zoo-data/data/WikiQAProcessed.zip -d analytics-zoo-data/data/
 fi
 
 ${SPARK_HOME}/bin/spark-submit \
