@@ -40,11 +40,6 @@ The mean squared error criterion e.g. input: a, target: b, total elements: n
 loss(a, b) = 1/n * sum(|a_i - b_i|^2)
 ```
 
-Parameters:
-
- * `sizeAverage` a boolean indicating whether to divide the sum of squared error by n. 
-                 Default: true
-
 **Scala:**
 
 ```scala
@@ -52,12 +47,22 @@ import com.intel.analytics.zoo.pipeline.api.keras.objectives.MeanSquaredError
 loss = MeanSquaredError()
 ```
 
+Parameters:
+
+ * `sizeAverage` a boolean indicating whether to divide the sum of squared error by n. 
+                 Default: true
+
 **Python:**
 
 ```python
 from zoo.pipeline.api import keras.objectives.MeanSquaredError
 loss = MeanSquaredError()
 ```
+
+Parameters:
+
+ * `sizeAverage` a boolean indicating whether to divide the sum of squared error by n. 
+                 Default: true
 
 ### MeanAbsoluteError
 
@@ -117,11 +122,6 @@ loss = MeanSquaredLogarithmicError()
 
 Also known as logloss. 
 
-Parameters:
-
-* `weights` A tensor assigning weight to each of the classes
-* `sizeAverage` whether to divide the sequence length. Default is true.
-
 **Scala:**
 
 ```scala
@@ -129,12 +129,22 @@ import com.intel.analytics.zoo.pipeline.api.keras.objectives.BinaryCrossEntropy
 loss = keras.objectives.BinaryCrossEntropy(weights, sizeAverage)
 ```
 
+Parameters:
+
+* `weights` A tensor assigning weight to each of the classes
+* `sizeAverage` whether to divide the sequence length. Default is true.
+
 **Python:**
 
 ```python
 from zoo.pipeline.api import keras.objectives.BinaryCrossEntropy
 loss = BinaryCrossEntropy(weights, sizeAverage)
 ```
+
+Parameters:
+
+* `weights` A tensor assigning weight to each of the classes
+* `size_average` whether to divide the sequence length. Default is true.
 
 ### CategoricalCrossEntropy
 
@@ -159,17 +169,17 @@ loss = CategoricalCrossEntropy()
 
 Creates a criterion that optimizes a two-class classification hinge loss (margin-based loss) between input x (a Tensor of dimension 1) and output y.
 
-Parameters:
-
- * `margin` if unspecified, is by default 1.
- * `sizeAverage` whether to average the loss, is by default true
-
 **Scala:**
 
 ```scala
 import com.intel.analytics.zoo.pipeline.api.keras.objectives.Hinge
 loss = keras.objectives.Hinge(margin=1.0, sizeAverage=true)
 ```
+
+Parameters:
+
+ * `margin` if unspecified, is by default 1.
+ * `sizeAverage` whether to average the loss, is by default true
 
 **Python:**
 
@@ -178,13 +188,14 @@ from zoo.pipeline.api import keras.objectives.Hinge
 loss = Hinge(margin=1.0, sizeAverage=True)
 ```
 
-### RankHinge
-
-Hinge loss for pairwise ranking problems.
-
 Parameters:
 
  * `margin` if unspecified, is by default 1.
+ * `size_average` whether to average the loss, is by default true
+
+### RankHinge
+
+Hinge loss for pairwise ranking problems.
 
 **Scala:**
 
@@ -193,6 +204,10 @@ import com.intel.analytics.zoo.pipeline.api.keras.objectives.RankHinge
 loss = RankHinge(margin=1.0)
 ```
 
+Parameters:
+
+ * `margin` if unspecified, is by default 1.
+
 **Python:**
 
 ```python
@@ -200,14 +215,13 @@ from zoo.pipeline.api import keras.objectives.RankHinge
 loss = RankHinge(margin=1.0)
 ```
 
-### SquaredHinge
-
-Creates a criterion that optimizes a two-class classification squared hinge loss (margin-based loss) between input x (a Tensor of dimension 1) and output y.
-
 Parameters:
 
  * `margin` if unspecified, is by default 1.
- * `sizeAverage` whether to average the loss, is by default true
+
+### SquaredHinge
+
+Creates a criterion that optimizes a two-class classification squared hinge loss (margin-based loss) between input x (a Tensor of dimension 1) and output y.
 
 **Scala:**
 
@@ -216,12 +230,22 @@ import com.intel.analytics.zoo.pipeline.api.keras.objectives.SquaredHinge
 loss = SquaredHinge(margin=1.0, sizeAverage=true)
 ```
 
+Parameters:
+
+ * `margin` if unspecified, is by default 1.
+ * `sizeAverage` whether to average the loss, is by default true
+
 **Python:**
 
 ```python
 from zoo.pipeline.api import keras
 loss = SquaredHinge(margin=1.0, sizeAverage=true)
 ```
+
+Parameters:
+
+ * `margin` if unspecified, is by default 1.
+ * `size_average` whether to average the loss, is by default true
 
 ### Poisson
 
@@ -263,6 +287,13 @@ loss = CosineProximity()
 
 A loss often used in multi-class classification problems with SoftMax as the last layer of the neural network. By default, input(y_pred) is supposed to be probabilities of each class, and target(y_true) is supposed to be the class label starting from 0.
 
+**Scala:**
+
+```scala
+import com.intel.analytics.zoo.pipeline.api.keras.objectives.SparseCategoricalCrossEntropy
+loss = SparseCategoricalCrossEntropy()
+```
+
 Parameters:
 
  * `logProbAsInput` Boolean. Whether to accept log-probabilities or probabilities as input. Default is false and inputs should be probabilities.
@@ -271,19 +302,20 @@ Parameters:
  * `sizeAverage` Boolean. Whether losses are averaged over observations for each mini-batch. Default is true. If false, the losses are instead summed for each mini-batch.
  * `paddingValue` Integer. If the target is set to this value, the training process will skip this sample. In other words, the forward process will return zero output and the backward process will also return zero gradInput. Default is -1.
 
-**Scala:**
-
-```scala
-import com.intel.analytics.zoo.pipeline.api.keras.objectives.SparseCategoricalCrossEntropy
-loss = SparseCategoricalCrossEntropy()
-```
-
 **Python:**
 
 ```python
 from zoo.pipeline.api import keras.objectives.SparseCategoricalCrossEntropy
 loss = SparseCategoricalCrossEntropy()
 ```
+
+Parameters:
+
+ * `log_prob_as_input` Boolean. Whether to accept log-probabilities or probabilities as input. Default is false and inputs should be probabilities.
+ * `zero_based_label` Boolean. Whether target labels start from 0. Default is true. If false, labels start from 1.
+ * `weights` Tensor. Weights of each class if you have an unbalanced training set. Default is null.
+ * `size_average` Boolean. Whether losses are averaged over observations for each mini-batch. Default is true. If false, the losses are instead summed for each mini-batch.
+ * `padding_value` Integer. If the target is set to this value, the training process will skip this sample. In other words, the forward process will return zero output and the backward process will also return zero gradInput. Default is -1.
 
 ### KullbackLeiblerDivergence
 
