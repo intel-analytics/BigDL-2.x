@@ -32,7 +32,7 @@ Parameters:
 
 * `optimizer`: Optimization method to be used. One can alternatively pass in the corresponding string representation, such as 'sgd'.
 * `loss`: Criterion to be used. One can alternatively pass in the corresponding string representation, such as 'mse'. (see [here](objectives/#available-objectives)).
-* `metrics`: List of validation methods to be used. Default is None if no validation is needed.
+* `metrics`: List of validation methods to be used. Default is None if no validation is needed. For convenience, string representations are supported: 'accuracy' (or 'acc'), 'top5accuracy' (or 'top5acc'), 'mae', 'auc', 'treennaccuracy' and 'loss'. For example, you can either use [Accuracy()] or ['accuracy'].
 
 ---
 ## **Fit**
