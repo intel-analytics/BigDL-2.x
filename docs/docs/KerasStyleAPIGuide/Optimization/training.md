@@ -64,7 +64,7 @@ Parameters:
 * `y`: Labels. A Numpy array. Default is None if x is already Sample RDD or ImageSet or TextSet.
 * `batch_size`: Number of samples per gradient update. Default is 32.
 * `nb_epoch`: Number of epochs to train. Default is 10.
-* `validationData`: Tuple (x_val, y_val) where x_val and y_val are both Numpy arrays.
+* `validation_data`: Tuple (x_val, y_val) where x_val and y_val are both Numpy arrays.
                     Can also be RDD of Sample or ImageSet or TextSet.
                     Default is None if no validation is involved.
 * `distributed`: Boolean. Whether to train the model in distributed mode or local mode.
@@ -113,7 +113,7 @@ Parameters:
 
 **Python**
 ```python
-predict(x, distributed=True)
+predict(x, batch_per_thread=4, distributed=True)
 ```
 
 Parameters:
