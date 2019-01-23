@@ -17,14 +17,12 @@ model.compile(loss='mean_squared_error', optimizer='sgd')
 **Scala:**
 
 ```scala
-import com.intel.analytics.zoo.pipeline.api.keras.objectives.MeanSquaredError
 model.compile(loss = MeanSquaredError(), optimizer = "sgd")
 ```
 
 **Python:**
 
 ```python
-from zoo.pipeline.api.keras import objectives.MeanSquaredError
 model.compile(loss=MeanSquaredError(), optimizer='sgd')
 ```
 
@@ -43,7 +41,6 @@ loss(a, b) = 1/n * sum(|a_i - b_i|^2)
 **Scala:**
 
 ```scala
-import com.intel.analytics.zoo.pipeline.api.keras.objectives.MeanSquaredError
 loss = MeanSquaredError()
 ```
 
@@ -55,14 +52,13 @@ Parameters:
 **Python:**
 
 ```python
-from zoo.pipeline.api import keras.objectives.MeanSquaredError
 loss = MeanSquaredError()
 ```
 
 Parameters:
 
  * `sizeAverage` a boolean indicating whether to divide the sum of squared error by n. 
-                 Default: true
+                 Default: True
 
 ### MeanAbsoluteError
 
@@ -71,14 +67,12 @@ Measures the mean absolute value of the element-wise difference between input an
 **Scala:**
 
 ```scala
-import com.intel.analytics.zoo.pipeline.api.keras.objectives.MeanAbsoluteError
 loss = MeanAbsoluteError()
 ```
 
 **Python:**
 
 ```python
-from zoo.pipeline.api import keras.objectives.MeanAbsoluteError
 loss = MeanAbsoluteError()
 ```
 
@@ -89,14 +83,12 @@ Compute mean absolute percentage error for intput and target
 **Scala:**
 
 ```scala
-import com.intel.analytics.zoo.pipeline.api.keras.objectives.MeanAbsolutePercentageError
 loss = MeanAbsolutePercentageError()
 ```
 
 **Python:**
 
 ```python
-from zoo.pipeline.api import keras.objectives.MeanAbsolutePercentageError
 loss = MeanAbsolutePercentageError()
 ```
 
@@ -107,14 +99,12 @@ Compute mean squared logarithmic error for input and target
 **Scala:**
 
 ```scala
-import com.intel.analytics.zoo.pipeline.api.keras.objectives.MeanSquaredLogarithmicError
 loss = MeanSquaredLogarithmicError()
 ```
 
 **Python:**
 
 ```python
-from zoo.pipeline.api import keras.objectives.MeanSquaredLogarithmicError
 loss = MeanSquaredLogarithmicError()
 ```
 
@@ -125,7 +115,6 @@ Also known as logloss.
 **Scala:**
 
 ```scala
-import com.intel.analytics.zoo.pipeline.api.keras.objectives.BinaryCrossEntropy
 loss = keras.objectives.BinaryCrossEntropy(weights, sizeAverage)
 ```
 
@@ -137,14 +126,13 @@ Parameters:
 **Python:**
 
 ```python
-from zoo.pipeline.api import keras.objectives.BinaryCrossEntropy
 loss = BinaryCrossEntropy(weights, sizeAverage)
 ```
 
 Parameters:
 
 * `weights` A tensor assigning weight to each of the classes
-* `size_average` whether to divide the sequence length. Default is true.
+* `size_average` whether to divide the sequence length. Default is True.
 
 ### CategoricalCrossEntropy
 
@@ -154,14 +142,12 @@ one-hot tensor.
 **Scala:**
 
 ```scala
-import com.intel.analytics.zoo.pipeline.api.keras.objectives.CategoricalCrossEntropy
 loss = CategoricalCrossEntropy()
 ```
 
 **Python:**
 
 ```python
-from zoo.pipeline.api import keras.objectives.CategoricalCrossEntropy
 loss = CategoricalCrossEntropy()
 ```
 
@@ -172,7 +158,6 @@ Creates a criterion that optimizes a two-class classification hinge loss (margin
 **Scala:**
 
 ```scala
-import com.intel.analytics.zoo.pipeline.api.keras.objectives.Hinge
 loss = keras.objectives.Hinge(margin=1.0, sizeAverage=true)
 ```
 
@@ -184,14 +169,13 @@ Parameters:
 **Python:**
 
 ```python
-from zoo.pipeline.api import keras.objectives.Hinge
 loss = Hinge(margin=1.0, sizeAverage=True)
 ```
 
 Parameters:
 
  * `margin` if unspecified, is by default 1.
- * `size_average` whether to average the loss, is by default true
+ * `size_average` whether to average the loss, is by default True
 
 ### RankHinge
 
@@ -200,7 +184,6 @@ Hinge loss for pairwise ranking problems.
 **Scala:**
 
 ```scala
-import com.intel.analytics.zoo.pipeline.api.keras.objectives.RankHinge
 loss = RankHinge(margin=1.0)
 ```
 
@@ -211,7 +194,6 @@ Parameters:
 **Python:**
 
 ```python
-from zoo.pipeline.api import keras.objectives.RankHinge
 loss = RankHinge(margin=1.0)
 ```
 
@@ -226,7 +208,6 @@ Creates a criterion that optimizes a two-class classification squared hinge loss
 **Scala:**
 
 ```scala
-import com.intel.analytics.zoo.pipeline.api.keras.objectives.SquaredHinge
 loss = SquaredHinge(margin=1.0, sizeAverage=true)
 ```
 
@@ -238,14 +219,13 @@ Parameters:
 **Python:**
 
 ```python
-from zoo.pipeline.api import keras
 loss = SquaredHinge(margin=1.0, sizeAverage=true)
 ```
 
 Parameters:
 
  * `margin` if unspecified, is by default 1.
- * `size_average` whether to average the loss, is by default true
+ * `size_average` whether to average the loss, is by default True
 
 ### Poisson
 
@@ -254,14 +234,12 @@ Compute Poisson error for intput and target
 **Scala:**
 
 ```scala
-import com.intel.analytics.zoo.pipeline.api.keras.objectives.Poisson
 loss = Poisson()
 ```
 
 **Python:**
 
 ```python
-from zoo.pipeline.api import keras.objectives.Poisson
 loss = Poisson()
 ```
 
@@ -272,14 +250,12 @@ Computes the negative of the mean cosine proximity between predictions and targe
 **Scala:**
 
 ```scala
-import com.intel.analytics.zoo.pipeline.api.keras.objectives.CosineProximity
 loss = CosineProximity()
 ```
 
 **Python:**
 
 ```python
-from zoo.pipeline.api import keras.objectives.CosineProximity
 loss = CosineProximity()
 ```
 
@@ -290,7 +266,6 @@ A loss often used in multi-class classification problems with SoftMax as the las
 **Scala:**
 
 ```scala
-import com.intel.analytics.zoo.pipeline.api.keras.objectives.SparseCategoricalCrossEntropy
 loss = SparseCategoricalCrossEntropy()
 ```
 
@@ -305,7 +280,6 @@ Parameters:
 **Python:**
 
 ```python
-from zoo.pipeline.api import keras.objectives.SparseCategoricalCrossEntropy
 loss = SparseCategoricalCrossEntropy()
 ```
 
@@ -313,8 +287,8 @@ Parameters:
 
  * `log_prob_as_input` Boolean. Whether to accept log-probabilities or probabilities as input. Default is false and inputs should be probabilities.
  * `zero_based_label` Boolean. Whether target labels start from 0. Default is true. If false, labels start from 1.
- * `weights` Tensor. Weights of each class if you have an unbalanced training set. Default is null.
- * `size_average` Boolean. Whether losses are averaged over observations for each mini-batch. Default is true. If false, the losses are instead summed for each mini-batch.
+ * `weights` Tensor. Weights of each class if you have an unbalanced training set. Default is None.
+ * `size_average` Boolean. Whether losses are averaged over observations for each mini-batch. Default is True. If False, the losses are instead summed for each mini-batch.
  * `padding_value` Integer. If the target is set to this value, the training process will skip this sample. In other words, the forward process will return zero output and the backward process will also return zero gradInput. Default is -1.
 
 ### KullbackLeiblerDivergence
@@ -329,13 +303,11 @@ and output K.sum(y_true * K.log(y_true / y_pred), axis=-1)
 **Scala:**
 
 ```scala
-import com.intel.analytics.zoo.pipeline.api.keras.objectives.KullbackLeiblerDivergence
 loss = KullbackLeiblerDivergence()
 ```
 
 **Python:**
 
 ```python
-from zoo.pipeline.api import keras.objectives.KullbackLeiblerDivergence
 loss = KullbackLeiblerDivergence()
 ```
