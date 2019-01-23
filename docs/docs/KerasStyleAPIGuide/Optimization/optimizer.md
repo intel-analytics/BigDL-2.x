@@ -58,15 +58,11 @@ optim_method = SGD(learningrate=1e-3, learningrate_decay=0.0, weightdecay=0.0,
 
 An implementation of Adam optimization, first-order gradient-based optimization of stochastic  objective  functions. http://arxiv.org/pdf/1412.6980.pdf
 
- `learningRate` learning rate. Default value is 1e-3. 
- 
- `learningRateDecay` learning rate decay. Default value is 0.0.
- 
- `beta1` first moment coefficient. Default value is 0.9.
- 
- `beta2` second moment coefficient. Default value is 0.999.
- 
- `Epsilon` for numerical stability. Default value is 1e-8.
+* `learningRate` learning rate. Default value is 1e-3. 
+* `learningRateDecay` learning rate decay. Default value is 0.0.
+* `beta1` first moment coefficient. Default value is 0.9.
+* `beta2` second moment coefficient. Default value is 0.999.
+* `Epsilon` for numerical stability. Default value is 1e-8.
 
 **Scala:**
 ```scala
@@ -84,10 +80,10 @@ An implementation of Adamax http://arxiv.org/pdf/1412.6980.pdf
 
 Arguments:
 
-* learningRate : learning rate
-* beta1 : first moment coefficient
-* beta2 : second moment coefficient
-* Epsilon : for numerical stability
+* `learningRate` : learning rate
+* `beta1` : first moment coefficient
+* `beta2` : second moment coefficient
+* `Epsilon` : for numerical stability
 
 ## Adadelta
 
@@ -126,7 +122,7 @@ optim_method = Adagrad(learningrate=1e-3, learningrate_decay=0.0, weightdecay=0.
 
 An implementation of RMSprop (Reference: http://arxiv.org/pdf/1308.0850v5.pdf, Sec 4.2)
 
-* learningRate : learning rate
-* learningRateDecay : learning rate decay
-* decayRate : decayRate, also called rho
-* Epsilone : for numerical stability
+* `learningRate` : learning rate
+* `learningRateDecay` : learning rate decay
+* `decayRate` : decayRate, also called rho
+* `Epsilone` : for numerical stability
