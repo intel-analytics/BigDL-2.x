@@ -79,7 +79,7 @@ loss = MeanAbsoluteError()
 
 ### MeanAbsolutePercentageError
 
-compute mean absolute percentage error for intput and target
+Compute mean absolute percentage error for intput and target
 
 **Scala:**
 
