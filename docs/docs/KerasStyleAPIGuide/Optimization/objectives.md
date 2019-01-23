@@ -23,7 +23,7 @@ model.compile(loss = MeanSquaredError(), optimizer = "sgd")
 **Python:**
 
 ```python
-model.compile(loss=MeanSquaredError(), optimizer='sgd')
+model.compile(loss=MeanSquaredError(size_average=True), optimizer='sgd')
 ```
 
 ---
@@ -52,12 +52,12 @@ Parameters:
 **Python:**
 
 ```python
-loss = MeanSquaredError()
+loss = MeanSquaredError(size_average=True)
 ```
 
 Parameters:
 
- * `sizeAverage` a boolean indicating whether to divide the sum of squared error by n. 
+ * `size_average` a boolean indicating whether to divide the sum of squared error by n. 
                  Default: True
 
 ### MeanAbsoluteError
@@ -73,7 +73,7 @@ loss = MeanAbsoluteError()
 **Python:**
 
 ```python
-loss = MeanAbsoluteError()
+loss = MeanAbsoluteError(size_average=True)
 ```
 
 ### MeanAbsolutePercentageError
@@ -115,7 +115,7 @@ Also known as logloss.
 **Scala:**
 
 ```scala
-loss = keras.objectives.BinaryCrossEntropy(weights, sizeAverage)
+loss = keras.objectives.BinaryCrossEntropy(weights = null, sizeAverage = true)
 ```
 
 Parameters:
@@ -126,7 +126,7 @@ Parameters:
 **Python:**
 
 ```python
-loss = BinaryCrossEntropy(weights, sizeAverage)
+loss = BinaryCrossEntropy(weights=None, size_average=True)
 ```
 
 Parameters:
@@ -158,7 +158,7 @@ Creates a criterion that optimizes a two-class classification hinge loss (margin
 **Scala:**
 
 ```scala
-loss = keras.objectives.Hinge(margin=1.0, sizeAverage=true)
+loss = keras.objectives.Hinge(margin = 1.0, sizeAverage = true)
 ```
 
 Parameters:
@@ -169,7 +169,7 @@ Parameters:
 **Python:**
 
 ```python
-loss = Hinge(margin=1.0, sizeAverage=True)
+loss = Hinge(margin=1.0, size_average=True)
 ```
 
 Parameters:
@@ -184,7 +184,7 @@ Hinge loss for pairwise ranking problems.
 **Scala:**
 
 ```scala
-loss = RankHinge(margin=1.0)
+loss = RankHinge(margin = 1.0)
 ```
 
 Parameters:
@@ -208,7 +208,7 @@ Creates a criterion that optimizes a two-class classification squared hinge loss
 **Scala:**
 
 ```scala
-loss = SquaredHinge(margin=1.0, sizeAverage=true)
+loss = SquaredHinge(margin = 1.0, sizeAverage = true)
 ```
 
 Parameters:
@@ -219,7 +219,7 @@ Parameters:
 **Python:**
 
 ```python
-loss = SquaredHinge(margin=1.0, sizeAverage=true)
+loss = SquaredHinge(margin=1.0, size_average=true)
 ```
 
 Parameters:
@@ -266,7 +266,7 @@ A loss often used in multi-class classification problems with SoftMax as the las
 **Scala:**
 
 ```scala
-loss = SparseCategoricalCrossEntropy()
+loss = SparseCategoricalCrossEntropy(logProbAsInput = false, zeroBasedLabel = true, weights = null, sizeAverage = true, paddingValue = -1)
 ```
 
 Parameters:
@@ -280,7 +280,7 @@ Parameters:
 **Python:**
 
 ```python
-loss = SparseCategoricalCrossEntropy()
+loss = SparseCategoricalCrossEntropy(log_prob_as_input=False, zero_based_label=True, weights=None, size_average=True, padding_value=-1)
 ```
 
 Parameters:
