@@ -321,6 +321,7 @@ fi
 export SPARK_DRIVER_MEMORY=2g
 python ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/anomalydetection/anomaly_detection.py \
     --nb_epoch 1 \
+    -b 1008 \
     --input_dir analytics-zoo-data//data/NAB/nyc_taxi/nyc_taxi.csv
 exit_status=$?
 if [ $exit_status -ne 0 ];
