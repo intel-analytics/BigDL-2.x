@@ -21,7 +21,9 @@ Parameters:
 
 * `optimizer`: Optimization method to be used.
 * `loss`: Criterion to be used.
-* `metrics`: Validation method(s) to be used. Default is null if no validation is needed. Alternatively, one can pass in the corresponding Keras-Style string representations when calling compile. For example: optimizer = "sgd", loss = "mse", metrics = List("accuracy")
+* `metrics`: Validation method(s) to be used. Default is null if no validation is needed. 
+
+Alternatively, one can pass in the corresponding Keras-Style string representations when calling compile. For example: optimizer = "sgd", loss = "mse", metrics = List("accuracy")
 
 **Python**
 ```python
