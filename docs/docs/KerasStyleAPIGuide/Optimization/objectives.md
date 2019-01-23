@@ -17,7 +17,7 @@ model.compile(loss='mean_squared_error', optimizer='sgd')
 **Scala:**
 
 ```scala
-model.compile(loss = MeanSquaredError(), optimizer = "sgd")
+model.compile(loss = MeanSquaredError(sizeAverage = true), optimizer = "sgd")
 ```
 
 **Python:**
@@ -41,7 +41,7 @@ loss(a, b) = 1/n * sum(|a_i - b_i|^2)
 **Scala:**
 
 ```scala
-loss = MeanSquaredError()
+loss = MeanSquaredError(sizeAverage = true)
 ```
 
 Parameters:
@@ -67,7 +67,7 @@ Measures the mean absolute value of the element-wise difference between input an
 **Scala:**
 
 ```scala
-loss = MeanAbsoluteError()
+loss = MeanAbsoluteError(sizeAverage = true)
 ```
 
 **Python:**
