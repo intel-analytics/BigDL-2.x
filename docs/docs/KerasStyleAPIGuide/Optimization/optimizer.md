@@ -17,14 +17,12 @@ model.compile(loss='mean_squared_error', optimizer='sgd')
 **Scala:**
 
 ```scala
-import com.intel.analytics.bigdl.optim.optimizer.Adam
 model.compile(loss = "mean_squared_error", optimizer = Adam())
 ```
 
 **Python:**
 
 ```python
-from bigdl.optim.optimizer import Adam
 model.compile(loss='mean_squared_error', optimizer=Adam())
 ```
 
