@@ -321,6 +321,7 @@ fi
 export SPARK_DRIVER_MEMORY=2g
 python ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/anomalydetection/anomaly_detection.py \
     --nb_epoch 1 \
+    -b 1008 \
     --input_dir analytics-zoo-data//data/NAB/nyc_taxi/nyc_taxi.csv
 exit_status=$?
 if [ $exit_status -ne 0 ];
@@ -332,6 +333,45 @@ fi
 now=$(date "+%s")
 time8=$((now-start))
 echo "anomalydetection time used:$time8 seconds"
+
+
+echo "start example test for qaranker"
+start=$(date "+%s")
+
+if [ -f analytics-zoo-data/data/glove.6B.zip ]
+then
+    echo "analytics-zoo-data/data/glove.6B.zip already exists"
+else
+    wget $FTP_URI/analytics-zoo-data/data/glove/glove.6B.zip -P analytics-zoo-data/data
+    unzip -q analytics-zoo-data/data/glove.6B.zip -d analytics-zoo-data/data/glove.6B
+fi
+if [ -f analytics-zoo-data/data/WikiQAProcessed.zip ]
+then
+    echo "analytics-zoo-data/data/WikiQAProcessed.zip already exists"
+else
+    wget https://s3.amazonaws.com/analytics-zoo-data/WikiQAProcessed.zip -P analytics-zoo-data/data
+    unzip analytics-zoo-data/data/WikiQAProcessed.zip -d analytics-zoo-data/data/
+fi
+
+# Run the example
+export SPARK_DRIVER_MEMORY=3g
+python ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/qaranker/qa_ranker.py \
+    --nb_epoch 2 \
+    --batch_size 112 \
+    --data_path analytics-zoo-data/data/WikiQAProcessed \
+    --embedding_file analytics-zoo-data/data/glove.6B/glove.6B.50d.txt
+exit_status=$?
+if [ $exit_status -ne 0 ];
+then
+    clear_up
+    echo "qaranker failed"
+    exit $exit_status
+fi
+
+unset SPARK_DRIVER_MEMORY
+now=$(date "+%s")
+time9=$((now-start))
+echo "qaranker time used:$time9 seconds"
 
 
 # This should be done at the very end after all tests finish.
