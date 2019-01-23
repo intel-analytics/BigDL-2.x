@@ -317,7 +317,7 @@ else
     wget $FTP_URI/analytics-zoo-data/data/NAB/nyc_taxi/nyc_taxi.csv \
     -P analytics-zoo-data/data/NAB/nyc_taxi/
 fi
-sed "s/model.predict(test)/g; s/model.predict(test, batch_per_thread=56)/g" ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/anomalydetection/anomaly_detection.py > ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/anomalydetection/anomaly_detection2.py
+sed "s/model.predict(test)/model.predict(test, batch_per_thread=56)/" ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/anomalydetection/anomaly_detection.py > ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/anomalydetection/anomaly_detection2.py
 
 # Run the example
 export SPARK_DRIVER_MEMORY=2g
