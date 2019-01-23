@@ -189,41 +189,6 @@ ${SPARK_HOME}/bin/spark-submit \
 now=$(date "+%s")
 time5=$((now-start))
 
-echo "#8 start example test for qaranker"
-#timer
-start=$(date "+%s")
-
-if [ -f analytics-zoo-data/data/glove.6B.zip ]
-then
-    echo "analytics-zoo-data/data/glove.6B.zip already exists"
-else
-    wget $FTP_URI/analytics-zoo-data/data/glove/glove.6B.zip -P analytics-zoo-data/data
-    unzip -q analytics-zoo-data/data/glove.6B.zip -d analytics-zoo-data/data/glove.6B
-fi
-if [ -f analytics-zoo-data/data/WikiQAProcessed.zip ]
-then
-    echo "analytics-zoo-data/data/20news-18828.tar.gz already exists"
-else
-    wget https://s3.amazonaws.com/analytics-zoo-data/WikiQAProcessed.zip -P analytics-zoo-data/data
-    unzip analytics-zoo-data/data/WikiQAProcessed.zip -d analytics-zoo-data/data/
-fi
-
-${SPARK_HOME}/bin/spark-submit \
-    --master ${MASTER} \
-    --driver-memory 3g \
-    --executor-memory 3g \
-    --py-files ${ANALYTICS_ZOO_PYZIP},${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/qaranker/qa_ranker.py \
-    --jars ${ANALYTICS_ZOO_JAR} \
-    --conf spark.driver.extraClassPath=${ANALYTICS_ZOO_JAR} \
-    --conf spark.executor.extraClassPath=${ANALYTICS_ZOO_JAR} \
-    ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/qaranker/qa_ranker.py \
-    --nb_epoch 2 \
-    --data_path analytics-zoo-data/data/WikiQAProcessed \
-    --embedding_file analytics-zoo-data/data/glove.6B/glove.6B.50d.txt
-
-now=$(date "+%s")
-time8=$((now-start))
-
 echo "#6 start example test for tensorflow"
 #timer
 start=$(date "+%s")
@@ -363,6 +328,41 @@ ${SPARK_HOME}/bin/spark-submit \
 now=$(date "+%s")
 time7=$((now-start))
 echo "#7 anomalydetection time used:$time7 seconds"
+
+echo "#8 start example test for qaranker"
+#timer
+start=$(date "+%s")
+
+if [ -f analytics-zoo-data/data/glove.6B.zip ]
+then
+    echo "analytics-zoo-data/data/glove.6B.zip already exists"
+else
+    wget $FTP_URI/analytics-zoo-data/data/glove/glove.6B.zip -P analytics-zoo-data/data
+    unzip -q analytics-zoo-data/data/glove.6B.zip -d analytics-zoo-data/data/glove.6B
+fi
+if [ -f analytics-zoo-data/data/WikiQAProcessed.zip ]
+then
+    echo "analytics-zoo-data/data/WikiQAProcessed.zip already exists"
+else
+    wget https://s3.amazonaws.com/analytics-zoo-data/WikiQAProcessed.zip -P analytics-zoo-data/data
+    unzip analytics-zoo-data/data/WikiQAProcessed.zip -d analytics-zoo-data/data/
+fi
+
+${SPARK_HOME}/bin/spark-submit \
+    --master ${MASTER} \
+    --driver-memory 3g \
+    --executor-memory 3g \
+    --py-files ${ANALYTICS_ZOO_PYZIP},${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/qaranker/qa_ranker.py \
+    --jars ${ANALYTICS_ZOO_JAR} \
+    --conf spark.driver.extraClassPath=${ANALYTICS_ZOO_JAR} \
+    --conf spark.executor.extraClassPath=${ANALYTICS_ZOO_JAR} \
+    ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/qaranker/qa_ranker.py \
+    --nb_epoch 2 \
+    --data_path analytics-zoo-data/data/WikiQAProcessed \
+    --embedding_file analytics-zoo-data/data/glove.6B/glove.6B.50d.txt
+
+now=$(date "+%s")
+time8=$((now-start))
 
 
 echo "#1 textclassification time used:$time1 seconds"
