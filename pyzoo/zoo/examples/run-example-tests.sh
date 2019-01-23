@@ -212,7 +212,7 @@ ${SPARK_HOME}/bin/spark-submit \
     --master ${MASTER} \
     --driver-memory 3g \
     --executor-memory 3g \
-    --py-files ${ANALYTICS_ZOO_PYZIP}, ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/qaranker/qa_ranker.py \
+    --py-files ${ANALYTICS_ZOO_PYZIP},${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/qaranker/qa_ranker.py \
     --jars ${ANALYTICS_ZOO_JAR} \
     --conf spark.driver.extraClassPath=${ANALYTICS_ZOO_JAR} \
     --conf spark.executor.extraClassPath=${ANALYTICS_ZOO_JAR} \
