@@ -76,7 +76,7 @@ else
     wget $FTP_URI/analytics-zoo-data/apps/object-detection/ffmpeg-linux64-v3.3.1 -P /root/.imageio/ffmpeg/
 fi
 
-# Run the example
+# Run the example 
 export SPARK_DRIVER_MEMORY=12g
 python ${ANALYTICS_ZOO_HOME}/apps/object-detection/object-detection.py
 
@@ -105,10 +105,10 @@ then
    echo "$FILENAME already exists."
 else
    echo "Downloading images"
-
+   
    wget $FTP_URI/analytics-zoo-data/miniimageClassification.tar.gz -P ${ANALYTICS_ZOO_HOME}/apps/image-similarity
    tar -zxvf ${ANALYTICS_ZOO_HOME}/apps/image-similarity/miniimageClassification.tar.gz -C ${ANALYTICS_ZOO_HOME}/apps/image-similarity
-
+   
    echo "Finished downloading images"
 fi
 FILENAME="${ANALYTICS_ZOO_HOME}/apps/image-similarity/googlenet_places365/deploy_googlenet_places365.prototxt"
@@ -117,9 +117,9 @@ then
    echo "$FILENAME already exists."
 else
    echo "Downloading places365 deploy model"
-
+   
    wget https://raw.githubusercontent.com/CSAILVision/places365/master/deploy_googlenet_places365.prototxt -P ${ANALYTICS_ZOO_HOME}/apps/image-similarity/googlenet_places365
-
+   
    echo "Finished downloading model"
 fi
 FILENAME="${ANALYTICS_ZOO_HOME}/apps/image-similarity/googlenet_places365/googlenet_places365.caffemodel"
@@ -128,9 +128,9 @@ then
    echo "$FILENAME already exists."
 else
    echo "Downloading places365 weight model"
-
+   
    wget http://places2.csail.mit.edu/models_places365/googlenet_places365.caffemodel -P ${ANALYTICS_ZOO_HOME}/apps/image-similarity/googlenet_places365
-
+   
    echo "Finished downloading model"
 fi
 FILENAME=" ${ANALYTICS_ZOO_HOME}/apps/image-similarity/vgg_16_places365/deploy_vgg16_places365.prototxt"
@@ -139,9 +139,9 @@ then
    echo "$FILENAME already exists."
 else
    echo "Downloading VGG deploy model"
-
+   
    wget https://raw.githubusercontent.com/CSAILVision/places365/master/deploy_vgg16_places365.prototxt -P ${ANALYTICS_ZOO_HOME}/apps/image-similarity/vgg_16_places365
-
+   
    echo "Finished downloading model"
 fi
 FILENAME="${ANALYTICS_ZOO_HOME}/apps/image-similarity/vgg_16_places365/vgg16_hybrid1365.caffemodel"
@@ -150,9 +150,9 @@ then
    echo "$FILENAME already exists."
 else
    echo "Downloading VGG weight model"
-
+   
    wget http://places2.csail.mit.edu/models_places365/vgg16_places365.caffemodel -P ${ANALYTICS_ZOO_HOME}/apps/image-similarity/vgg_16_places365
-
+   
    echo "Finished downloading model"
 fi
 
@@ -310,7 +310,7 @@ then
    echo "$FILENAME already exists."
 else
    echo "Downloading model"
-
+   
     mkdir -p ${ANALYTICS_ZOO_HOME}/apps/tfnet/models/research/slim/nets
     touch ${ANALYTICS_ZOO_HOME}/apps/tfnet/models/research/slim/nets/__init__.py
     touch ${ANALYTICS_ZOO_HOME}/apps/tfnet/models/research/slim/nets/inception.py
@@ -318,7 +318,7 @@ else
     echo "from nets.inception_v1 import inception_v1_arg_scope" >> ${ANALYTICS_ZOO_HOME}/apps/tfnet/models/research/slim/nets/inception.py
     wget https://raw.githubusercontent.com/tensorflow/models/master/research/slim/nets/inception_utils.py -P ${ANALYTICS_ZOO_HOME}/apps/tfnet/models/research/slim/nets/
     wget https://raw.githubusercontent.com/tensorflow/models/master/research/slim/nets/inception_v1.py -P ${ANALYTICS_ZOO_HOME}/apps/tfnet/models/research/slim/nets/
-
+   
    echo "Finished downloading model"
 fi
 FILENAME="${ANALYTICS_ZOO_HOME}/apps/tfnet/checkpoint/inception_v1.ckpt"
@@ -327,10 +327,10 @@ then
    echo "$FILENAME already exists."
 else
    echo "Downloading inception_v1 checkpoint"
-
+   
    wget http://download.tensorflow.org/models/inception_v1_2016_08_28.tar.gz -P ${ANALYTICS_ZOO_HOME}/apps/tfnet/checkpoint
    tar -zxvf ${ANALYTICS_ZOO_HOME}/apps/tfnet/checkpoint/inception_v1_2016_08_28.tar.gz -C ${ANALYTICS_ZOO_HOME}/apps/tfnet/checkpoint
-
+   
    echo "Finished downloading checkpoint"
 fi
 FILENAME="${ANALYTICS_ZOO_HOME}/apps/tfnet/data/minitrain.zip"
@@ -339,7 +339,7 @@ then
    echo "$FILENAME already exists."
 else
    echo "Downloading dogs and cats images"
-
+   
    wget $FTP_URI/analytics-zoo-data/data/dogs-vs-cats/minitrain.zip -P ${ANALYTICS_ZOO_HOME}/apps/tfnet/data
    unzip -d ${ANALYTICS_ZOO_HOME}/apps/tfnet/data/minitrain ${ANALYTICS_ZOO_HOME}/apps/tfnet/data/minitrain.zip
    #wget $FTP_URI/analytics-zoo-data/data/dogs-vs-cats/train.zip -P ${ANALYTICS_ZOO_HOME}/apps/tfnet/data
