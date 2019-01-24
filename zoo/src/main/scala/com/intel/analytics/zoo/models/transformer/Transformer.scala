@@ -118,7 +118,8 @@ class Transformer[T: ClassTag] private(
     val v = splitHeads(value)
     val a = attn(q, k, v, true) // m: (-1, 12, 77, 64)
     val m = mergeHeads(a) // m: (-1, 77, 768)
-    val n = new Convolution1D(embeddingSize, 1, init = RandomNormal(0.0, 0.02)).from(m) // n: (-1, 77, 768)
+    val n = new Convolution1D(embeddingSize, 1, init = RandomNormal(0.0, 0.02))
+      .from(m) // n: (-1, 77, 768)
     Dropout(residPdrop).from(n)
   }
 
@@ -172,15 +173,15 @@ object Transformer {
   }
 
   /**
-    * Load an existing Transformer model (with weights).
-    *
-    * @param path The path for the pre-defined model.
-    *             Local file system, HDFS and Amazon S3 are supported.
-    *             HDFS path should be like "hdfs://[host]:[port]/xxx".
-    *             Amazon S3 path should be like "s3a://bucket/xxx".
-    * @param weightPath The path for pre-trained weights if any. Default is null.
-    * @tparam T Numeric type of parameter(e.g. weight, bias). Only support float/double now.
-    */
+   * Load an existing Transformer model (with weights).
+   *
+   * @param path The path for the pre-defined model.
+   *             Local file system, HDFS and Amazon S3 are supported.
+   *             HDFS path should be like "hdfs://[host]:[port]/xxx".
+   *             Amazon S3 path should be like "s3a://bucket/xxx".
+   * @param weightPath The path for pre-trained weights if any. Default is null.
+   * @tparam T Numeric type of parameter(e.g. weight, bias). Only support float/double now.
+   */
   def loadModel[T: ClassTag](
     path: String,
     weightPath: String = null)(implicit ev: TensorNumeric[T]): Transformer[T] = {
