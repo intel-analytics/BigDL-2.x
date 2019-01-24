@@ -18,7 +18,7 @@ __Analytics Zoo__ provides a unified analytics + AI platform that seamlessly uni
 In addition, Analytics Zoo also provides a rich set of analytics and AI support for the end-to-end pipeline, including:
 - *Easy-to-use abstractions and APIs* (e.g., transfer learning support, autograd operations, Spark DataFrame and ML pipeline support, online model serving API, etc.) 
 - *Common feature engineering operations* (for image, text, 3D image, etc.)
-- *Built-in deep learning models* (e.g., object detection, image classification, text classification, recommendation, anomaly detection, text matching, etc.) 
+- *Built-in deep learning models* (e.g., object detection, image classification, text classification, recommendation, anomaly detection, text matching, sequence to sequence etc.) 
 - *Reference use cases* (e.g., anomaly detection, sentiment analysis, fraud detection, image similarity, etc.)
 
 ## How to use Analytics Zoo?
