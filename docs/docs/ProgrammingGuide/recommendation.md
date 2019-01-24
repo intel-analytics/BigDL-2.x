@@ -10,7 +10,7 @@ The examples/notebooks are included in the Analytics Zoo source code.
 
 1. Wide and Deep Learning Model.
     [Scala example](https://github.com/intel-analytics/analytics-zoo/tree/master/zoo/src/main/scala/com/intel/analytics/zoo/examples/recommendation/WideAndDeepExample.scala)
-    [Python notebook](https://github.com/intel-analytics/analytics-zoo/blob/master/apps/recommendation-wide-n-deep/wide_n_deep.ipynb)
+    [Python notebook](https://github.com/intel-analytics/analytics-zoo/tree/master/apps/recommendation-wide-n-deep/wide_n_deep.ipynb)
 2. NCF.
     [Scala example](https://github.com/intel-analytics/analytics-zoo/tree/master/zoo/src/main/scala/com/intel/analytics/zoo/examples/recommendation/NeuralCFexample.scala)
     [Python notebook](https://github.com/intel-analytics/analytics-zoo/tree/master/apps/recommendation-ncf/ncf-explicit-feedback.ipynb)
@@ -43,7 +43,7 @@ val userItemPairPrediction = wideAndDeep.predictUserItemPair(validationpairFeatu
 val userRecs = wideAndDeep.recommendForUser(validationpairFeatureRdds, 3)
 val itemRecs = wideAndDeep.recommendForItem(validationpairFeatureRdds, 3)
 ``` 
-See more details in our[Recommender API](../APIGuide/Models/recommendation.md) and [Scala example](https://github.com/intel-analytics/analytics-zoo/tree/master/zoo/src/main/scala/com/intel/analytics/zoo/examples/models/recommendation/WideAndDeepExample.scala).
+See more details in our[Recommender API](../APIGuide/Models/recommendation.md) and [Scala example](https://github.com/intel-analytics/analytics-zoo/tree/master/zoo/src/main/scala/com/intel/analytics/zoo/examples/recommendation/WideAndDeepExample.scala).
 
 **Python**
 
@@ -68,7 +68,7 @@ userItemPairPrediction = wide_n_deep.predict_user_item_pair(valPairFeatureRdds)
 userRecs = wide_n_deep.recommend_for_user(valPairFeatureRdds, 3)
 itemRecs = wide_n_deep.recommend_for_item(valPairFeatureRdds, 3)
 ``` 
-See more details in our [Recommender API](../APIGuide/Models/recommendation.md) and [Python notebook](https://github.com/intel-analytics/analytics-zoo/tree/master/apps/recommendation/wide_n_deep.ipynb).
+See more details in our [Recommender API](../APIGuide/Models/recommendation.md) and [Python notebook](https://github.com/intel-analytics/analytics-zoo/tree/master/apps/recommendation-wide-n-deep/wide_n_deep.ipynb).
 
 ---
 ## Neural network-based Collaborative Filtering
