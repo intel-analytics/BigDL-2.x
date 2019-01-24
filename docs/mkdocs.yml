@@ -43,9 +43,7 @@ pages:
     - Anomaly Detection API: ProgrammingGuide/anomaly-detection.md
     - Text Matching API: ProgrammingGuide/text-matching.md
     - Sequence to Sequence API: ProgrammingGuide/seq2seq.md
-  - Reference Use Cases:
-    - Use Cases: ProgrammingGuide/usercases-overview.md
-    - Anomaly Detection: ProgrammingGuide/anomaly-detection.md
+  - Reference Use Cases: ProgrammingGuide/usercases-overview.md
 - White Paper:
   - BigDL: wp-bigdl.md
 - API Guide:
