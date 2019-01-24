@@ -56,11 +56,11 @@ In addition, Analytics Zoo also provides a rich set of analytics and AI support 
 
 - [Reference use cases](#reference-use-cases): a collection of end-to-end *reference use cases* (e.g., anomaly detection, sentiment analysis, fraud detection, image augmentation, object detection, variational autoencoder, etc.)
 
-- [Docker images and builders]
-    - Analytics-Zoo in Docker
-    - How to build it.
-    - How to use the image.
-    - Notice
+- [Docker images and builders](#docker-images-and-builders)
+    - [Analytics-Zoo in Docker](#analyticszoo-in-docker)
+    - [How to build it](#how-to-bulid-it)
+    - [How to use the image](#how-to-use-the-image)
+    - [Notice](#notice)
 
 ## _Distributed TensorFlow and Keras on Spark/BigDL_
 To make it easy to build and productionize the deep learning applications for Big Data, Analytics Zoo provides a unified analytics + AI platform that seamlessly unites Spark, TensorFlow, Keras and BigDL programs into an integrated pipeline (as illustrated below), which can then transparently run on a large-scale Hadoop/Spark clusters for distributed training and inference. (Please see more details [here](https://analytics-zoo.github.io/master/#ProgrammingGuide/tensorflow/)).
@@ -342,7 +342,7 @@ Analytics Zoo provides a collection of end-to-end reference use cases, including
 - spark-${SPARK_VERSION} is the Spark home.
 - analytics-zoo is cloned from https://github.com/intel-analytics/analytics-zoo, contains apps, examples using analytics-zoo.
 
-### _How to build it._
+### _How to build it_
 
 **By default, you can build a Analytics-Zoo:default image with latest nightly-build Analytics-Zoo distributions:**
 
@@ -369,7 +369,7 @@ sudo docker build \
     --rm -t intelanalytics/analytics-zoo:0.3.0-bigdl_0.6.0-spark_2.3.1 .
 ```
 
-### _How to use the image._
+### _How to use the image_
 **To start a notebook directly with a specified port(e.g. 12345). You can view the notebook on http://[host-ip]:12345**
 ```bash
 sudo docker run -it --rm -p 12345:12345 \
