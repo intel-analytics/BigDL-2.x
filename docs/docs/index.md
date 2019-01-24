@@ -57,8 +57,8 @@ In addition, Analytics Zoo also provides a rich set of analytics and AI support 
 - [Reference use cases](#reference-use-cases): a collection of end-to-end *reference use cases* (e.g., anomaly detection, sentiment analysis, fraud detection, image augmentation, object detection, variational autoencoder, etc.)
 
 - [Docker images and builders](#docker-images-and-builders)
-    - [Analytics-Zoo in Docker](#analyticszoo-in-docker)
-    - [How to build it](#how-to-bulid-it)
+    - [Analytics-Zoo in Docker](#analytics-zoo-in-docker)
+    - [How to build it](#how-to-build-it)
     - [How to use the image](#how-to-use-the-image)
     - [Notice](#notice)
 
