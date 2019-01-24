@@ -31,11 +31,7 @@ class MaxPoolMapper(OperatorMapper):
 
         if (rank == 4):  # NCHW
             pool_size = [int(i) for i in self.onnx_attr['kernel_shape']]
-            if "strides" in self.onnx_attr.keys():
-                strides = [int(i) for i in self.onnx_attr['strides']]
-            else:
-                strides = [1 for i in self.onnx_attr['kernel_shape']]
-
+            strides = [int(i) for i in self.onnx_attr['strides']] if "strides" in self.onnx_attr else [1, 1]
             border_mode, pads = OnnxHelper.get_padds(self.onnx_attr)
 
             maxpool = zlayers.MaxPooling2D(pool_size=pool_size,
@@ -45,10 +41,7 @@ class MaxPoolMapper(OperatorMapper):
             return maxpool(self.model_inputs[0].zvalue)
         elif (rank == 3):
             pool_length = int(self.onnx_attr['kernel_shape'][0])
-            if "strides" in self.onnx_attr.keys():
-                stride = int(self.onnx_attr['strides'][0])
-            else:
-                stride = 1
+            stride = [int(i) for i in self.onnx_attr['strides']] if "strides" in self.onnx_attr else 1
             border_mode, pads = OnnxHelper.get_padds(self.onnx_attr)
             if border_mode is None and pads is None:
                 border_mode = 'valid'

@@ -387,38 +387,20 @@ class TestModelLoading(OnnxTestCase):
         np.testing.assert_almost_equal(output["y"], y, decimal=5)
 
     def test_maxpool2d_strides(self):
-        node = helper.make_node(
-            'MaxPool',
-            inputs=['x'],
-            outputs=['y'],
-            kernel_shape=[2, 2],
-            strides=[2, 2]
-        )
-        x = np.array([[[
-            [1, 2, 3, 4, 5],
-            [6, 7, 8, 9, 10],
-            [11, 12, 13, 14, 15],
-            [16, 17, 18, 19, 20],
-            [21, 22, 23, 24, 25],
-        ]]]).astype(np.float32)
-        y = np.array([[[[7, 9],
-                        [17, 19]]]]).astype(np.float32)
-        output = OnnxLoader.run_node(node, [x])
-        np.testing.assert_almost_equal(output["y"], y, decimal=5)
-
         node = onnx.helper.make_node(
             'MaxPool',
             inputs=['x'],
             outputs=['y'],
             kernel_shape=[3, 3],
-            pads=[1, 1, 1, 1],
+            pads=[0, 0, 1, 1],
             strides=[2, 2]
         )
         x = np.random.randn(1, 3, 32, 32).astype(np.float32)
         x_shape = np.shape(x)
         kernel_shape = (3, 3)
         strides = (2, 2)
-        pad_bottom = pad_top = pad_right = pad_left = 1
+        pad_bottom = pad_top = 0
+        pad_right = pad_left = 1
         pad_shape = [pad_top + pad_bottom, pad_left + pad_right]
         out_shape = pool_op_common.get_output_shape('VALID', np.add(x_shape[2:], pad_shape), kernel_shape, strides)
         padded = np.pad(x, ((0, 0), (0, 0), (pad_top, pad_bottom), (pad_left, pad_right)), mode='constant',
@@ -1466,7 +1448,7 @@ class TestModelLoading(OnnxTestCase):
         import caffe2.python.onnx.backend as backend
 
         ndarray_input = np.random.randn(1, 3, 224, 224).astype(np.float32)
-        onnx_model = onnx.load("/home/xinqi/resnet50/model.onnx")
+        onnx_model = onnx.load("/home/xinqi/densenet121/model.onnx")
         zmodel = OnnxLoader(onnx_model.graph).to_keras()
         zoutput = zmodel.forward(ndarray_input)
 
@@ -1479,7 +1461,7 @@ class TestModelLoading(OnnxTestCase):
         import caffe2.python.onnx.backend as backend
 
         ndarray_input = np.random.randn(1, 3, 224, 224).astype(np.float32)
-        onnx_model = onnx.load("/home/xinqi/densenet121/model.onnx")
+        onnx_model = onnx.load("/home/xinqi/bvlc_alexnet/model.onnx")
         zmodel = OnnxLoader(onnx_model.graph).to_keras()
         zoutput = zmodel.forward(ndarray_input)
 

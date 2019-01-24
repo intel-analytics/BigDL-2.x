@@ -74,7 +74,7 @@ class OnnxHelper:
             if len(pads) == 4:
                 assert pads[0] == pads[1]
                 assert pads[2] == pads[3]
-                pads = [pads[0], pads[1]]
+                pads = [pads[0], pads[2]]
             elif len(pads) == 2:
                 assert pads[0] == pads[1]
                 pads = pads[0]
