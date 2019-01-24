@@ -392,14 +392,14 @@ class TestModelLoading(OnnxTestCase):
             inputs=['x'],
             outputs=['y'],
             kernel_shape=[3, 3],
-            pads=[0, 0, 1, 1],
+            pads=[1, 1, 1, 1],
             strides=[2, 2]
         )
         x = np.random.randn(1, 3, 32, 32).astype(np.float32)
         x_shape = np.shape(x)
         kernel_shape = (3, 3)
         strides = (2, 2)
-        pad_bottom = pad_top = 0
+        pad_bottom = pad_top = 1
         pad_right = pad_left = 1
         pad_shape = [pad_top + pad_bottom, pad_left + pad_right]
         out_shape = pool_op_common.get_output_shape('VALID', np.add(x_shape[2:], pad_shape), kernel_shape, strides)
