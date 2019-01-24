@@ -50,7 +50,7 @@ ${ANALYTICS_ZOO_HOME}/bin/spark-shell-with-zoo.sh \
 --master spark://xxx.xxx.xxx.xxx:xxxx \
 --executor-cores cores_per_executor \
 --total-executor-cores total_cores_for_the_job \
---class com.intel.analytics.zoo.models.image.inception.TrainInceptionV1 \
+--class com.intel.analytics.zoo.examples.inception.TrainInceptionV1 \
 --batchSize batch_size \
 --learningRate learningRate \
 -f hdfs://.../imagenet \

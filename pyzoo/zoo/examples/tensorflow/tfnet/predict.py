@@ -16,11 +16,9 @@
 
 from optparse import OptionParser
 
-from bigdl.nn.layer import Sequential, Transpose, Contiguous, SelectTable
 from zoo.pipeline.api.net import TFNet
 from zoo.common.nncontext import init_nncontext
 from zoo.feature.common import *
-from zoo.feature.image.imagePreprocessing import *
 from zoo.models.image.objectdetection import *
 
 

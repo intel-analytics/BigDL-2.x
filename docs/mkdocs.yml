@@ -40,9 +40,10 @@ pages:
     - Image Classification API: ProgrammingGuide/image-classification.md
     - Text Classification API: ProgrammingGuide/text-classification.md
     - Recommendation API: ProgrammingGuide/recommendation.md
-  - Reference Use Cases:
-    - Use Cases: ProgrammingGuide/usercases-overview.md
-    - Anomaly Detection: ProgrammingGuide/anomaly-detection.md
+    - Anomaly Detection API: ProgrammingGuide/anomaly-detection.md
+    - Text Matching API: ProgrammingGuide/text-matching.md
+    - Sequence to Sequence API: ProgrammingGuide/seq2seq.md
+  - Reference Use Cases: ProgrammingGuide/usercases-overview.md
 - White Paper:
   - BigDL: wp-bigdl.md
 - API Guide:
@@ -53,6 +54,8 @@ pages:
     - Net: APIGuide/PipelineAPI/net.md
     - Inference: APIGuide/PipelineAPI/inference.md
   - Feature Engineering:
+    - FeatureSet: APIGuide/FeatureEngineering/featureset.md
+    - Relation: APIGuide/FeatureEngineering/relation.md
     - Image: APIGuide/FeatureEngineering/image.md
     - Text: APIGuide/FeatureEngineering/text.md
   - Models:
@@ -60,6 +63,9 @@ pages:
     - Image Classification: APIGuide/Models/image-classification.md
     - Text Classification: APIGuide/Models/text-classification.md
     - Recommendation: APIGuide/Models/recommendation.md
+    - Anomaly Detection: APIGuide/Models/anomaly-detection.md
+    - Text Matching: APIGuide/Models/text-matching.md
+    - Sequence to Sequence: APIGuide/Models/seq2seq.md
 - Keras-Style API Guide:
   - Python Guide: KerasStyleAPIGuide/keras-api-python.md
   - Scala Guide: KerasStyleAPIGuide/keras-api-scala.md
@@ -77,27 +83,27 @@ pages:
     - Layer Wrappers: KerasStyleAPIGuide/Layers/wrappers.md
   - Optimization:
     - Train, evaluate or predict a model: KerasStyleAPIGuide/Optimization/training.md
-    - Optimizers: KerasStyleAPIGuide/Optimization/optimizer.md
-    - Losses: KerasStyleAPIGuide/Optimization/loss.md
-- Keras2-Style API Guide:
-  - Python Guide: Keras2StyleAPIGuide/keras-api-python.md
-  - Scala Guide: Keras2StyleAPIGuide/keras-api-scala.md
-  - Layers:
-    - Activation: Keras2StyleAPIGuide/Layers/activation.md
-    - Initialization: Keras2StyleAPIGuide/Layers/initialization.md
-    - Core Layers: Keras2StyleAPIGuide/Layers/core.md
-    - Convolutional Layers: Keras2StyleAPIGuide/Layers/convolutional.md
-    - Pooling Layers: Keras2StyleAPIGuide/Layers/pooling.md
-    - Merge Layers: Keras2StyleAPIGuide/Layers/merge.md
-    - Recurrent Layers: Keras2StyleAPIGuide/Layers/recurrent.md
-    - Normalization Layers: Keras2StyleAPIGuide/Layers/normalization.md
-    - Embedding Layers: Keras2StyleAPIGuide/Layers/embedding.md
-    - Dropout Layers: Keras2StyleAPIGuide/Layers/dropout.md
-    - Advanced Activations: Keras2StyleAPIGuide/Layers/advanced-activation.md
-    - Layer Wrappers: Keras2StyleAPIGuide/Layers/wrappers.md
-  - Optimization:
-    - Train, evaluate or predict a model: Keras2StyleAPIGuide/Optimization/training.md
-    - Optimizers: Keras2StyleAPIGuide/Optimization/optimizer.md
-    - Losses: Keras2StyleAPIGuide/Optimization/loss.md
+    - Optimizers: KerasStyleAPIGuide/Optimization/optimizers.md
+    - Objectives: KerasStyleAPIGuide/Optimization/objectives.md
+#- Keras2-Style API Guide:
+#  - Python Guide: Keras2StyleAPIGuide/keras-api-python.md
+#  - Scala Guide: Keras2StyleAPIGuide/keras-api-scala.md
+#  - Layers:
+#    - Activation: Keras2StyleAPIGuide/Layers/activation.md
+#    - Initialization: Keras2StyleAPIGuide/Layers/initialization.md
+#    - Core Layers: Keras2StyleAPIGuide/Layers/core.md
+#    - Convolutional Layers: Keras2StyleAPIGuide/Layers/convolutional.md
+#    - Pooling Layers: Keras2StyleAPIGuide/Layers/pooling.md
+#    - Merge Layers: Keras2StyleAPIGuide/Layers/merge.md
+#    - Recurrent Layers: Keras2StyleAPIGuide/Layers/recurrent.md
+#    - Normalization Layers: Keras2StyleAPIGuide/Layers/normalization.md
+#    - Embedding Layers: Keras2StyleAPIGuide/Layers/embedding.md
+#    - Dropout Layers: Keras2StyleAPIGuide/Layers/dropout.md
+#    - Advanced Activations: Keras2StyleAPIGuide/Layers/advanced-activation.md
+#    - Layer Wrappers: Keras2StyleAPIGuide/Layers/wrappers.md
+#  - Optimization:
+#    - Train, evaluate or predict a model: Keras2StyleAPIGuide/Optimization/training.md
+#    - Optimizers: Keras2StyleAPIGuide/Optimization/optimizer.md
+#    - Losses: Keras2StyleAPIGuide/Optimization/loss.md
 - Powered by: powered-by.md
 - FAQ and Known Issues: known-issues.md
