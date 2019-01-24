@@ -17,8 +17,8 @@
 import sys
 
 import zoo.pipeline.api.autograd as A
-from zoo.models.common.zoo_model import ZooModel
-from zoo.models.textmatching.text_matcher import TextMatcher
+from zoo.models.common import ZooModel
+from zoo.models.textmatching import TextMatcher
 from zoo.pipeline.api.keras.layers import Input, Embedding, Dense, Squeeze, prepare_embedding
 from zoo.pipeline.api.keras.models import Model
 from bigdl.util.common import callBigDlFunc, JTensor
@@ -49,13 +49,13 @@ class KNRM(TextMatcher):
                 be taken into account and you can call
                 WordEmbedding.get_word_index(embedding_file) to retrieve the dictionary.
     train_embed: Boolean. Whether to train the embedding layer or not. Default is True.
-    kernel_num: Int. The number of kernels to use. Default is 21.
+    kernel_num: Int > 1. The number of kernels to use. Default is 21.
     sigma: Float. Defines the kernel width, or the range of its softTF count. Default is 0.1.
     exact_sigma: Float. The sigma used for the kernel that harvests exact matches
                  in the case where RBF mu=1.0. Default is 0.001.
     target_mode: String. The target mode of the model. Either 'ranking' or 'classification'.
                  For ranking, the output will be the relevance score between text1 and text2 and
-                 you are recommended to use RankHinge as loss for pairwise training.
+                 you are recommended to use 'rank_hinge' as loss for pairwise training.
                  For classification, the last layer will be sigmoid and the output will be the
                  probability between 0 and 1 indicating whether text1 is related to text2 and
                  you are recommended to use 'binary_crossentropy' as loss for binary classification.
@@ -70,6 +70,7 @@ class KNRM(TextMatcher):
         super(KNRM, self).__init__(text1_length, vocab_size, embed_size,
                                    embed_weights, train_embed, target_mode, bigdl_type)
         self.text2_length = text2_length
+        assert kernel_num > 1, "kernel_num must be an int larger than 1"
         self.kernel_num = kernel_num
         self.sigma = float(sigma)
         self.exact_sigma = float(exact_sigma)
@@ -103,15 +104,18 @@ class KNRM(TextMatcher):
             if mu > 1.0:  # Exact match.
                 sigma = self.exact_sigma
                 mu = 1.0
-            mm_exp = A.exp(-0.5 * (mm - mu) * (mm - mu) / sigma / sigma)
-            mm_doc_sum = A.sum(mm_exp, 2)
+            mm_exp = A.exp((-0.5) * (mm - mu) * (mm - mu) / sigma / sigma)
+            mm_doc_sum = A.sum(mm_exp, axis=2)
             mm_log = A.log(mm_doc_sum + 1.0)
             # Remark: Keep the reduced dimension for the last sum and squeeze after stack.
             # Otherwise, when batch=1, the output will become a Scalar not compatible for stack.
-            mm_sum = A.sum(mm_log, 1, keepDims=True)
+            mm_sum = A.sum(mm_log, axis=1, keepDims=True)
             KM.append(mm_sum)
-        Phi = Squeeze(2)(A.stack(KM, 1))
-        output = Dense(1, init="uniform", activation="sigmoid")(Phi)
+        Phi = Squeeze(2)(A.stack(KM))
+        if self.target_mode == "ranking":
+            output = Dense(1, init="uniform")(Phi)
+        else:
+            output = Dense(1, init="uniform", activation="sigmoid")(Phi)
         model = Model(input=input, output=output)
         return model
 

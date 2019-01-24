@@ -17,7 +17,6 @@
 package com.intel.analytics.zoo.examples.qaranker
 
 import com.intel.analytics.bigdl.optim.SGD
-import com.intel.analytics.bigdl.optim.SGD.Poly
 import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric.NumericFloat
 import com.intel.analytics.bigdl.utils.Shape
 import com.intel.analytics.zoo.common.NNContext
@@ -80,7 +79,6 @@ object QARanker {
       val aSet = TextSet.readCSV(param.dataPath + "/answer_corpus.csv", sc, param.partitionNum)
         .tokenize().normalize().word2idx(minFreq = 2, existingMap = qSet.getWordIndex)
         .shapeSequence(param.answerLength)
-      val wordIndex = aSet.getWordIndex
 
       val trainRelations = Relations.read(param.dataPath + "/relation_train.csv",
         sc, param.partitionNum)
@@ -92,13 +90,13 @@ object QARanker {
       val knrm = if (param.model.isDefined) {
         KNRM.loadModel(param.model.get)
       } else {
+        val wordIndex = aSet.getWordIndex
         KNRM(param.questionLength, param.answerLength, param.embeddingFile, wordIndex)
       }
       val model = Sequential().add(TimeDistributed(
         knrm, inputShape = Shape(2, param.questionLength + param.answerLength)))
-      val optimizer = new SGD(learningRate = param.learningRate,
-        learningRateSchedule = Poly(0.5, 50 * 400))
-      model.compile(optimizer = optimizer, loss = RankHinge[Float]())
+      model.compile(optimizer = new SGD(learningRate = param.learningRate),
+        loss = RankHinge[Float]())
       for (i <- 1 to param.nbEpoch) {
         model.fit(trainSet, batchSize = param.batchSize, nbEpoch = 1)
         knrm.evaluateNDCG(validateSet, 3)

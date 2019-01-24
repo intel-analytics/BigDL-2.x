@@ -22,6 +22,7 @@ import six
 import os
 import json
 import numpy as np
+from py4j.protocol import Py4JJavaError
 from pyspark import RDD
 
 from bigdl.nn.criterion import Criterion
@@ -32,7 +33,7 @@ from bigdl.util.common import to_list, callBigDlFunc, get_spark_context, \
 from zoo.common import Sample, JTensor
 from zoo.feature.image import ImageSet
 from zoo.pipeline.api.keras.engine.topology import ZooKerasLayer, KerasNet, to_bigdl_metric
-from bigdl.optim.optimizer import EveryEpoch, MaxEpoch, Optimizer
+from bigdl.optim.optimizer import EveryEpoch, MaxEpoch, Optimizer, Adam
 
 if sys.version >= '3':
     long = int
@@ -248,7 +249,7 @@ class TFNet(Layer):
         else:
             return [to_jtensor(input)], False
 
-    def predict(self, x, batch_per_thread=-1, distributed=True):
+    def predict(self, x, batch_per_thread=1, distributed=True):
         """
         Use a model to do prediction.
         """
@@ -346,8 +347,12 @@ class IdentityCriterion(Criterion):
 
 
 class TFTrainingHelper(Layer):
-    def __init__(self, path):
-        super(TFTrainingHelper, self).__init__(None, "float", path)
+    def __init__(self, path, configProto):
+        if configProto is not None:
+            byte_arr = configProto.SerializeToString()
+        else:
+            byte_arr = None
+        super(TFTrainingHelper, self).__init__(None, "float", path, byte_arr)
 
 
 class TFValidationMethod(JavaValue):
@@ -361,7 +366,8 @@ class TFOptimizer:
 
     def __init__(self, loss, optim_method, sess=None, dataset=None, inputs=None,
                  grads=None, variables=None, graph=None,
-                 val_outputs=None, val_labels=None, val_method=None, val_split=0.0):
+                 val_outputs=None, val_labels=None, val_method=None, val_split=0.0,
+                 tensors_with_value=None, session_config=None):
         import tensorflow as tf
         from zoo.util.tf import export_tf
         '''
@@ -380,10 +386,20 @@ class TFOptimizer:
             loss, optim_method, sess, dataset, inputs = args[:5]
             grads, variables, graph, val_outputs, val_labels, val_method = args[5:]
 
+        additional_inputs = []
+        additional_values = []
+        all_required_inputs = _find_placeholders([loss])
+        all_required_inputs_names = [v.name for v in all_required_inputs]
+        if tensors_with_value:
+            for t, v in tensors_with_value.items():
+                if t.name in all_required_inputs_names:
+                    additional_inputs.append(t)
+                    additional_values.append(v)
+
         self.optim_method = optim_method
         self.sess = sess
         self.dataset = dataset
-        self.inputs = inputs
+        self.inputs = inputs + additional_inputs
         self.graph = graph
 
         from zoo.util.tf import process_grad
@@ -408,11 +424,15 @@ class TFOptimizer:
         grad_names = [g.name for g in grads]
         output_names = [o.name for o in outputs]
 
+        def to_floats(vs):
+            return [float(v) for v in vs]
+
         meta = {
             "input_names": [i.name for i in self.inputs],
             "output_names": output_names,
             "variables": variable_names,
-            "grad_variables": grad_names
+            "grad_variables": grad_names,
+            "default_tensor_values": [to_floats(v) for v in additional_values]
         }
 
         with open(os.path.join(self.export_dir, "training_meta.json"), "w") as f:
@@ -428,14 +448,27 @@ class TFOptimizer:
                 assigns.append(a)
             assign = tf.group(*assigns)
         self.assign = assign
-
-        self.training_helper_layer = TFTrainingHelper(self.export_dir)
+        try:
+            self.training_helper_layer = TFTrainingHelper(self.export_dir, session_config)
+        except Py4JJavaError as e:
+            if "expects to be colocated with unknown node" in str(e):
+                raise Exception("""
+If you are using the embedding layer in tf.keras, then this is a
+known issue of tensorflow, see https://github.com/tensorflow/tensorflow/issues/21889.
+Please add zoo.util.tf.variable_creator_scope before model construction.
+For example:
+from zoo.util.tf import variable_creator_scope
+with variable_creator_scope():
+    model = tf.keras.models.Sequential([
+    tf.keras.layers.Embedding(1, 1, input_length=1)])
+                """)
+            else:
+                raise e
 
         data = self.dataset.rdd
         batch_size = self.dataset.batch_size
         sample_rdd = data.map(lambda t: Sample.from_ndarray(
             t, [np.array([0.0])]))
-
         if val_outputs is not None and val_labels is not None:
             if self.dataset.val_rdd is not None:
                 val_rdd = self.dataset.val_rdd \
@@ -497,23 +530,23 @@ class TFOptimizer:
 
     @classmethod
     def from_loss(cls, loss, optim_method, session=None, val_outputs=None,
-                  val_labels=None, val_method=None, val_split=0.0):
+                  val_labels=None, val_method=None, val_split=0.0, **kwargs):
         args = TFOptimizer._get_arguments_from_loss(loss, optim_method,
                                                     session, val_outputs,
                                                     val_labels, val_method)
 
-        return cls(*(args + [val_split]))
+        return cls(*(args + [val_split]), **kwargs)
 
     @classmethod
-    def from_keras(cls, keras_model, dataset, val_spilt=0.0):
+    def from_keras(cls, keras_model, dataset, val_spilt=0.0, **kwargs):
         import tensorflow.keras.backend as K
-
         loss = keras_model.total_loss
         inputs = keras_model.inputs + keras_model.targets
 
         variables = keras_model._collected_trainable_weights
         keras_optimizer = keras_model.optimizer
         grads = keras_optimizer.get_gradients(loss, variables)
+
         sess = K.get_session()
         with sess.as_default():
             optim_method = TFOptimizer.to_bigdl_optim_method(keras_optimizer)
@@ -534,9 +567,14 @@ class TFOptimizer:
             val_labels = None
             bigdl_val_methods = None
 
+        tensor_with_value = {
+            K.learning_phase(): [True, False]
+        }
+
         return cls(loss, optim_method, sess, dataset, inputs,
                    grads, variables, loss.graph, val_outputs, val_labels,
-                   bigdl_val_methods, val_spilt)
+                   bigdl_val_methods, val_spilt,
+                   tensors_with_value=tensor_with_value, **kwargs)
 
     @staticmethod
     def to_bigdl_optim_method(koptim_method):
@@ -597,6 +635,7 @@ class TFOptimizer:
             end_trigger = MaxEpoch(1)
 
         self.optimizer.set_end_when(end_trigger)
+
         self.optimizer.optimize()
 
         variables = self.training_helper_layer.get_weights()

@@ -129,10 +129,10 @@ abstract class TextSet {
    *                    existingMap and assign subsequent indices to new words.
    */
   def word2idx(
-    removeTopN: Int = 0,
-    maxWordsNum: Int = -1,
-    minFreq: Int = 1,
-    existingMap: Map[String, Int] = null): TextSet = {
+      removeTopN: Int = 0,
+      maxWordsNum: Int = -1,
+      minFreq: Int = 1,
+      existingMap: Map[String, Int] = null): TextSet = {
     if (wordIndex != null) {
       logger.warn("wordIndex already exists. Using the existing wordIndex")
     } else {
@@ -229,21 +229,22 @@ object TextSet {
   }
 
   /**
-   * Read text files as TextSet.
-   * If sc is defined, read texts as DistributedTextSet from local file system or HDFS.
-   * If sc is null, read texts as LocalTextSet from local file system.
+   * Read text files with labels from a directory.
    *
-   * @param path String. Folder path to texts. The folder structure is expected to be the following:
-   *             path
-   *                ├── dir1 - text1, text2, ...
-   *                ├── dir2 - text1, text2, ...
-   *                └── dir3 - text1, text2, ...
-   *             Under the target path, there ought to be N subdirectories (dir1 to dirN). Each
-   *             subdirectory represents a category and contains all texts that belong to such
-   *             category. Each category will be a given a label according to its position in the
-   *             ascending order sorted among all subdirectories.
-   *             All texts will be given a label according to the subdirectory where it is located.
-   *             Labels start from 0.
+   * The directory structure is expected to be the following:
+   * path
+   *   ├── dir1 - text1, text2, ...
+   *   ├── dir2 - text1, text2, ...
+   *   └── dir3 - text1, text2, ...
+   * Under the target path, there ought to be N subdirectories (dir1 to dirN). Each
+   * subdirectory represents a category and contains all texts that belong to such
+   * category. Each category will be a given a label according to its position in the
+   * ascending order sorted among all subdirectories.
+   * All texts will be given a label according to the subdirectory where it is located.
+   * Labels start from 0.
+   *
+   * @param path The folder path to texts. Local file system and HDFS are supported.
+   *             If you want to read from HDFS, sc needs to be specified.
    * @param sc An instance of SparkContext.
    *           If specified, texts will be read as a DistributedTextSet.
    *           Default is null and in this case texts will be read as a LocalTextSet.
@@ -292,15 +293,12 @@ object TextSet {
   }
 
   /**
-   * Read texts from csv file.
+   * Read texts with id from csv file.
    * Each record is supposed to contain the following two fields in order:
    * id(String) and text(String).
    *
-   * Note that the csv file should be without header.
-   * If sc is defined, read texts as DistributedTextSet from local file system or HDFS.
-   * If sc is null, read texts as LocalTextSet from local file system.
-   *
-   * @param path The path to the csv file.
+   * @param path The path to the csv file. Local file system and HDFS are supported.
+   *             If you want to read from HDFS, sc needs to be specified.
    * @param sc An instance of SparkContext.
    *           If specified, texts will be read as a DistributedTextSet.
    *           Default is null and in this case texts will be read as a LocalTextSet.
@@ -327,7 +325,7 @@ object TextSet {
   }
 
   /**
-   * Read texts from parquet file.
+   * Read texts with id from parquet file.
    * Schema should be the following:
    * "id"(String) and "text"(String).
    *
@@ -369,15 +367,15 @@ object TextSet {
     val pairsRDD = Relations.generateRelationPairs(relations)
     require(corpus1.isDistributed, "corpus1 must be a DistributedTextSet")
     require(corpus2.isDistributed, "corpus2 must be a DistributedTextSet")
-    val joinedText1 = corpus1.toDistributed().rdd.keyBy(_.uri())
+    val joinedText1 = corpus1.toDistributed().rdd.keyBy(_.getURI)
       .join(pairsRDD.keyBy(_.id1)).map(_._2)
-    val joinedText2Pos = corpus2.toDistributed().rdd.keyBy(_.uri())
+    val joinedText2Pos = corpus2.toDistributed().rdd.keyBy(_.getURI)
       .join(joinedText1.keyBy(_._2.id2Positive)).map(x => (x._2._2._1, x._2._1, x._2._2._2))
-    val joinedText2Neg = corpus2.toDistributed().rdd.keyBy(_.uri())
+    val joinedText2Neg = corpus2.toDistributed().rdd.keyBy(_.getURI)
       .join(joinedText2Pos.keyBy(_._3.id2Negative))
       .map(x => (x._2._2._1, x._2._2._2, x._2._1))
     val res = joinedText2Neg.map(x => {
-      val textFeature = TextFeature(null, x._1.uri() + x._2.uri() + x._3.uri())
+      val textFeature = TextFeature(null, x._1.getURI + x._2.getURI + x._3.getURI)
       val text1 = x._1.getIndices
       val text2Pos = x._2.getIndices
       val text2Neg = x._3.getIndices
@@ -405,7 +403,7 @@ object TextSet {
    * In other words, group relations by [[Relation.id1]].
    * 2. Join with corpus to transform each id to indexedTokens.
    * Note: Make sure that the corpus has been transformed by [[SequenceShaper]] and [[WordIndexer]].
-   * 3. For each pair, generate a TextFeature having Sample with:
+   * 3. For each list, generate a TextFeature having Sample with:
    * - feature of shape (listLength, text1Length + text2Length).
    * - label of shape (listLength, 1).
    *
@@ -422,17 +420,17 @@ object TextSet {
       corpus2: TextSet): DistributedTextSet = {
     require(corpus1.isDistributed, "corpus1 must be a DistributedTextSet")
     require(corpus2.isDistributed, "corpus2 must be a DistributedTextSet")
-    val joinedText1 = corpus1.toDistributed().rdd.keyBy(_.uri())
+    val joinedText1 = corpus1.toDistributed().rdd.keyBy(_.getURI)
       .join(relations.keyBy(_.id1)).map(_._2)
-    val joinedText2 = corpus2.toDistributed().rdd.keyBy(_.uri()).join(
+    val joinedText2 = corpus2.toDistributed().rdd.keyBy(_.getURI).join(
       joinedText1.keyBy(_._2.id2))
       .map(x => (x._2._2._1, x._2._1, x._2._2._2.label))
-    val joinedLists = joinedText2.groupBy(_._1.uri()).map(_._2.toArray)
+    val joinedLists = joinedText2.groupBy(_._1.getURI).map(_._2.toArray)
     val res = joinedLists.map(x => {
       val text1 = x.head._1
       val text2Array = x.map(_._2)
       val textFeature = TextFeature(null,
-        uri = text1.uri() ++ text2Array.map(_.uri()).mkString(""))
+        uri = text1.getURI ++ text2Array.map(_.getURI).mkString(""))
       val text1Indices = text1.getIndices
       require(text1Indices != null,
         "corpus1 haven't been transformed from word to index yet, please word2idx first")

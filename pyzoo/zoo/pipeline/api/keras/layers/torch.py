@@ -751,7 +751,7 @@ class GaussianSampler(ZooKerasLayer):
     # Arguments
     input_shape: A shape tuple, not including batch.
 
-    >>> gaussianSampler = GaussianSampler(input_shape=(2, 3, 5, 7))
+    >>> gaussianSampler = GaussianSampler(input_shape=[(3,),(3,)])
     creating: createZooKerasGaussianSampler
     """
     def __init__(self, input_shape=None, **kwargs):
@@ -780,7 +780,7 @@ class ResizeBilinear(ZooKerasLayer):
     creating: createZooKerasResizeBilinear
     """
     def __init__(self, output_height, output_width, align_corner=False,
-                 dim_ordering="th", input_shape=(2, 3, 5, 7), **kwargs):
+                 dim_ordering="th", input_shape=None, **kwargs):
         super(ResizeBilinear, self).__init__(None,
                                              output_height,
                                              output_width,

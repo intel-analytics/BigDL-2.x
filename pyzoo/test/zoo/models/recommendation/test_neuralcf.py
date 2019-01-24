@@ -30,19 +30,19 @@ np.random.seed(1337)  # for reproducibility
 class TestNeuralCF(ZooTestCase):
 
     def test_forward_backward_without_mf(self):
-        model = NeuralCF(30, 12, 2, include_mf=False)
+        model = NeuralCF(30, 30, 2, include_mf=False)
         model.summary()
-        input_data = np.random.randint(10, size=(10, 2))
+        input_data = np.random.randint(1, 30,  size=(10, 2))
         self.assert_forward_backward(model, input_data)
 
     def test_forward_backward_with_mf(self):
         model = NeuralCF(10, 10, 5, 5, 5)
-        input_data = np.random.randint(10, size=(3, 2))
+        input_data = np.random.randint(1, 10, size=(3, 2))
         self.assert_forward_backward(model, input_data)
 
     def test_save_load(self):
         model = NeuralCF(10000, 2000, 10)
-        input_data = np.random.randint(1500, size=(300, 2))
+        input_data = np.random.randint(100, 2000, size=(300, 2))
         self.assert_zoo_model_save_load(model, input_data)
 
     def test_predict_recommend(self):

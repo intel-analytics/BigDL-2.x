@@ -25,6 +25,7 @@
         <scalatest.version>2.2.4</scalatest.version>
         <spark.version>2.1.0</spark.version>
         <bigdl.version>0.7.1</bigdl.version>
+        <data-store-url>https://s3-ap-southeast-1.amazonaws.com</data-store-url>
     </properties>
 
     <distributionManagement>
@@ -256,12 +257,19 @@
             <artifactId>proto</artifactId>
             <version>1.10.0</version>
         </dependency>
+
+        <dependency>
+            <groupId>com.intel.analytics.zoo</groupId>
+            <artifactId>zoo-core-dist-all</artifactId>
+            <version>0.1.0-SNAPSHOT</version>
+        </dependency>
     </dependencies>
 
     <build>
         <resources>
             <resource>
                 <directory>${project.basedir}/src/main/resources</directory>
+                <filtering>true</filtering>
             </resource>
             <resource>
                 <!-- Include the properties file to provide the build information. -->
@@ -570,6 +578,24 @@
                     <nexusUrl>https://oss.sonatype.org/</nexusUrl>
                     <autoReleaseAfterClose>false</autoReleaseAfterClose>
                 </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>properties-maven-plugin</artifactId>
+                <version>1.0.0</version>
+                <executions>
+                    <execution>
+                        <phase>generate-resources</phase>
+                        <goals>
+                            <goal>write-project-properties</goal>
+                        </goals>
+                        <configuration>
+                            <outputFile>
+                                ${project.build.outputDirectory}/app.properties
+                            </outputFile>
+                        </configuration>
+                    </execution>
+                </executions>
             </plugin>
         </plugins>
     </build>
