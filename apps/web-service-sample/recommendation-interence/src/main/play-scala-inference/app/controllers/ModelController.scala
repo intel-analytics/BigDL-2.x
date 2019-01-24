@@ -42,19 +42,33 @@ class ModelController @Inject()(cc: ControllerComponents) extends AbstractContro
 
       val predict = params.recModel match {
         case Some(_) =>
-          val predict = LocalPredictor(params.recModel.get).predict(inputSample)
-            .map { x =>
-              val _output = x.toTensor[Float]
-              val indices = _output.topk(10, 1, false)
-              val predict = (1 to 10).map{
-                i =>
-                  val predict = indices._2.valueAt(i).toInt - 1
-                  val probability = Math.exp(_output.valueAt(predict).toDouble)
-                  Map(s"predict$i" -> revertStringIndex(predict.toString), s"probability$i" -> probability)
-              }
-              predict.toArray
-            }.head
-          predict
+          Map(
+            "0" -> Map(
+              "atc" -> "true",
+              "heading" -> "Office Depot top sellers",
+              "name" -> "content2_json",
+              "type" -> "json",
+              "sku" -> LocalPredictor(params.recModel.get).predict(inputSample)
+                .map { x =>
+                  val _output = x.toTensor[Float]
+                  val indices = _output.topk(20, 1, false)
+                  val predict = (1 to 20).map{ i =>
+                    val predict = indices._2.valueAt(i).toInt - 1
+                    //                      val probability = Math.exp(_output.valueAt(predict).toDouble)
+                    Map(
+                      i -> Map(
+                        "id" -> revertStringIndex(predict.toString),
+                        "url" -> "N/A",
+                        "categoryID" -> "N/A",
+                        "categoryName" -> "N/A"
+                      )
+                    )
+                  }
+                  predict.toArray
+                }.head
+            )
+          )
+
         case None => Map("predict" -> "N/A", "probability" -> 0.0)
       }
 
