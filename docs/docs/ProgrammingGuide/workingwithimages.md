@@ -368,7 +368,6 @@ For details, you can check guide of [image classificaion](./image-classification
 ## 3D Image Support
 For 3D images, we can support above operations based on ImageSet. For details, please refer to [image API guide](../APIGuide/FeatureEngineering/image.md)
 
-
 ## Caching Images in Persistent Memory
 Here is a scala [example](https://github.com/intel-analytics/analytics-zoo/blob/master/zoo/src/main/scala/com/intel/analytics/zoo/examples/inception/README.md) to train Inception V1 with ImageNet-2012 dataset. If you set the option `memoryType` to `PMEM`, the data will be cached in Intel Optane DC Persistent Memory; please refer to the guide [here](https://github.com/memkind/memkind#run-requirements) on how to set up the system environment.
 
@@ -381,3 +380,4 @@ In the InceptionV1 example, we use an new dataset called [FeatureSet](../APIGuid
  val featureSet = FeatureSet.rdd(rawData, memoryType = PMEM)
  ```
  `readFromSeqFiles` read the Sequence File into `RDD[ByteRecord]`, then `FeatureSet.rdd(rawData, memoryType = PMEM)` will cache the data to Intel Optane DC Persistent Memory.
+
