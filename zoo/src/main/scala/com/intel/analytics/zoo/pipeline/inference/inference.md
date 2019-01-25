@@ -14,7 +14,7 @@ Inference provides multiple Scala interfaces.
 
 2. Support transformation of various input data type, thus supporting future prediction tasks.
 
-3. Transparently support the OpenVINO toolkit, which deliver a significant boost for inference speed (up to [up to 19.9x](https://software.intel.com/en-us/blogs/2018/05/15/accelerate-computer-vision-from-edge-to-cloud-with-openvino-toolkit)).
+3. Transparently support the OpenVINO toolkit, which deliver a significant boost for inference speed ([up to 19.9x](https://software.intel.com/en-us/blogs/2018/05/15/accelerate-computer-vision-from-edge-to-cloud-with-openvino-toolkit)).
 
 ## Primary APIs
 
