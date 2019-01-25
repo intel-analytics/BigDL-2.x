@@ -18,7 +18,7 @@ package com.intel.analytics.zoo.feature
 
 import java.util.concurrent.atomic.AtomicInteger
 
-import com.intel.analytics.bigdl.dataset.DistributedDataSet
+import com.intel.analytics.bigdl.dataset.{DistributedDataSet, Utils}
 import com.intel.analytics.bigdl.utils.RandomGenerator
 import com.intel.analytics.zoo.feature.common.{ArrayLike, ArrayLikeWrapper}
 import com.intel.analytics.zoo.feature.pmem._
@@ -35,7 +35,7 @@ import scala.reflect.ClassTag
  */
 // T is the returning value type. like ByteRecord
 class DistributedFeatureSet[T: ClassTag]
-(buffer: RDD[ArrayLike[T]])
+(buffer: RDD[ArrayLike[T]], isInOrder: Boolean = false, groupSize: Int = 1)
   extends DistributedDataSet[T] {
 
   protected lazy val count: Long = buffer.mapPartitions(iter => {
@@ -46,15 +46,15 @@ class DistributedFeatureSet[T: ClassTag]
   }).reduce(_ + _)
 
   protected var indexes: RDD[Array[Int]] = buffer.mapPartitions(iter => {
-    Iterator.single[Array[Int]]((0 until iter.next().length).toArray[Int])
+    Iterator.single((0 until iter.next().length).toArray)
   }).setName("original index").cache()
-
 
   override def data(train: Boolean): RDD[T] = {
     val _train = train
+    val _groupSize = if (isInOrder) Utils.getBatchSize(groupSize) else 1
     buffer.zipPartitions(indexes)((dataIter, indexIter) => {
       val indexes = indexIter.next()
-      val indexOffset = math.max(1, indexes.length)
+      val indexOffset = math.max(1, indexes.length - (_groupSize - 1))
       val localData = dataIter.next()
       val offset = if (_train) {
         RandomGenerator.RNG.uniform(0, indexOffset).toInt
@@ -71,8 +71,6 @@ class DistributedFeatureSet[T: ClassTag]
         override def next(): T = {
           val i = _offset.getAndIncrement()
           if (_train) {
-            // indexes is an Array, we should improve this
-            // as the maximum length is limited by Int.max
             localData(indexes(i % localData.length))
           } else {
             if (i < localData.length) {
@@ -89,10 +87,12 @@ class DistributedFeatureSet[T: ClassTag]
   override def size(): Long = count
 
   override def shuffle(): Unit = {
-    indexes.unpersist()
-    indexes = buffer.mapPartitions(iter => {
-      Iterator.single(RandomGenerator.shuffle((0 until iter.next().length).toArray))
-    }).setName("shuffled index").cache()
+    if (!isInOrder) {
+      indexes.unpersist()
+      indexes = buffer.mapPartitions(iter => {
+        Iterator.single(RandomGenerator.shuffle((0 until iter.next().length).toArray))
+      }).setName("shuffled index").cache()
+    }
   }
 
   override def originRDD(): RDD[_] = buffer
@@ -130,6 +130,7 @@ object FeatureSet {
       val repartitionedData = data.coalesce(nodeNumber, true)
       memoryType match {
         case DRAM =>
+          logger.info("~~~~~~~ Caching with DRAM ~~~~~~~")
           DRAMFeatureSet.rdd(repartitionedData)
         case PMEM =>
           logger.info("~~~~~~~ Caching with AEP ~~~~~~~")
