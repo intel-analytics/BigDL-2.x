@@ -380,4 +380,4 @@ In the InceptionV1 example, we use an new dataset called [FeatureSet](../APIGuid
  val rawData = readFromSeqFiles(path, sc, classNumber)
  val featureSet = FeatureSet.rdd(rawData, memoryType = PMEM)
  ```
- `readFromSeqFiles` read the Sequence File into RDD[ByteRecord], then 'FeatureSet.rdd(rawData, memoryType = PMEM)' will cache the data to Intel Optane DC Persistent Memory.
+ `readFromSeqFiles` read the Sequence File into `RDD[ByteRecord]`, then `FeatureSet.rdd(rawData, memoryType = PMEM)` will cache the data to Intel Optane DC Persistent Memory.
