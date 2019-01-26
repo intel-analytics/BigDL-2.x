@@ -173,6 +173,10 @@ class Seq2seq(ZooModel):
     >>> bridge = Bridge.initialize("dense", 4)
     creating: createZooKerasBridge
     >>> seq2seq = Seq2seq(encoder, decoder, [2, 4], [2, 4], bridge)
+    creating: createZooKerasInput
+    creating: createZooKerasInput
+    creating: createZooKerasSelectTable
+    creating: createZooKerasModel
     creating: createZooSeq2seq
     """
 
