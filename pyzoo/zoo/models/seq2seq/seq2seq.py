@@ -201,7 +201,8 @@ class Seq2seq(ZooModel):
         encoder_output = self.encoder(encoder_input)
 
         encoder_final_states = SelectTable(1)(encoder_output)
-        decoder_init_states = self.bridge(encoder_final_states) if self.bridge else encoder_final_states
+        decoder_init_states =\
+            self.bridge(encoder_final_states) if self.bridge else encoder_final_states
 
         decoder_output = self.decoder([decoder_input, decoder_init_states])
 

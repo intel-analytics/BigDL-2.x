@@ -793,7 +793,7 @@ class ResizeBilinear(ZooKerasLayer):
 class SelectTable(ZooKerasLayer):
     """
     Creates a module that takes a list of JTensors as input and outputs the element at index `index`
- 
+
     # Arguments
     index: the index to be selected. 0-based index
     input_shape: A shape tuple, not including batch.
@@ -806,4 +806,3 @@ class SelectTable(ZooKerasLayer):
                                           index,
                                           list(input_shape) if input_shape else None,
                                           **kwargs)
-
