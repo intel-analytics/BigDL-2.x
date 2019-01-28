@@ -10,7 +10,7 @@
 | Spark 2.3.1   | [download](https://oss.sonatype.org/content/repositories/snapshots/com/intel/analytics/zoo/analytics-zoo-bigdl_0.7.2-spark_2.3.1/0.5.0-SNAPSHOT/)|
 | Spark 2.4.0   | [download](https://oss.sonatype.org/content/repositories/snapshots/com/intel/analytics/zoo/analytics-zoo-bigdl_0.7.2-spark_2.4.0/0.5.0-SNAPSHOT/)|
 
-## **Release 0.4.0 **
+## **Release 0.4.0**
 
 | | BigDL 0.7.2 | 
 | ------------- | --------- |
