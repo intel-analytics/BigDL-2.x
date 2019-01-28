@@ -339,6 +339,13 @@ class TestModelLoading(OnnxTestCase):
         input_shape_with_batch = (1, 3, 224, 224)
         self.compare_with_pytorch(pytorch_model, input_shape_with_batch)
 
+    def test_onnx_maxpool2d_pads(self):
+        pytorch_model = torch.nn.Sequential(
+            torch.nn.MaxPool2d(kernel_size=2, padding=(0, 1))
+        )
+        input_shape_with_batch = (1, 3, 224, 224)
+        self.compare_with_pytorch(pytorch_model, input_shape_with_batch)
+
     def test_maxpool2d_pads(self):
         node = helper.make_node(
             'MaxPool',
@@ -399,8 +406,7 @@ class TestModelLoading(OnnxTestCase):
         x_shape = np.shape(x)
         kernel_shape = (3, 3)
         strides = (2, 2)
-        pad_bottom = pad_top = 1
-        pad_right = pad_left = 1
+        pad_top = pad_left = pad_right = pad_bottom = 1
         pad_shape = [pad_top + pad_bottom, pad_left + pad_right]
         out_shape = pool_op_common.get_output_shape('VALID', np.add(x_shape[2:], pad_shape), kernel_shape, strides)
         padded = np.pad(x, ((0, 0), (0, 0), (pad_top, pad_bottom), (pad_left, pad_right)), mode='constant',
@@ -1461,7 +1467,7 @@ class TestModelLoading(OnnxTestCase):
         import caffe2.python.onnx.backend as backend
 
         ndarray_input = np.random.randn(1, 3, 224, 224).astype(np.float32)
-        onnx_model = onnx.load("/home/xinqi/bvlc_alexnet/model.onnx")
+        onnx_model = onnx.load("/home/xinqi/bvlc_googlenet/model.onnx")
         zmodel = OnnxLoader(onnx_model.graph).to_keras()
         zoutput = zmodel.forward(ndarray_input)
 
