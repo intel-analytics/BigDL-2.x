@@ -19,6 +19,7 @@ package com.intel.analytics.zoo.feature.pmem
 import com.intel.analytics.bigdl.dataset.ByteRecord
 import com.intel.analytics.zoo.feature.DistributedFeatureSet
 import com.intel.analytics.zoo.feature.common.ArrayLike
+import org.apache.log4j.Logger
 import org.apache.spark.rdd.RDD
 
 import scala.reflect.ClassTag
@@ -84,11 +85,14 @@ object PmemFeatureSet {
     }
     val arrayRDD = data.zipPartitions(countPerPartition) { (dataIter, countIter) =>
       // Add a hooker to offset the pmem resource
-      val execThread = Thread.currentThread()
       Runtime.getRuntime().addShutdownHook(new Thread() {
+        val logger = Logger.getLogger(getClass)
         override def run(): Unit = NativeArray.synchronized {
-          NativeArray.natives.map {native =>
-            native.free()
+          var i = 0
+          while(i < NativeArray.natives.size) {
+            NativeArray.natives(i).free()
+            logger.info(s"Offset AEP: ${NativeArray.natives(i).startAddr}")
+            NativeArray.natives.remove(i)
           }
         }
       })
