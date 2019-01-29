@@ -1,5 +1,5 @@
-# RNN based recommendation service using BigDL, Mleap, and Play
-A example on how to serve rnn recommendation model trained by BigDL and Spark using BigDL, Mleap, and Play
+# Zoo serving using Analytics Zoo, Mleap, and Play
+A generic webservice framework to serve models trained by Analytics Zoo and Spark using Analytics Zoo, Mleap, and Play
 
 ## Requirements
 ```scala
@@ -8,13 +8,15 @@ scalaVersion := "2.11.12"
 val jacksonVersion = "2.6.7"
 val sparkVersion = "2.3.1"
 val analyticsZooVersion = "0.3.0"
+val mleapVersion = "0.12.0"
 
 libraryDependencies += guice
 libraryDependencies += "com.intel.analytics.zoo" % "analytics-zoo-bigdl_0.7.1-spark_2.3.1" % analyticsZooVersion
-libraryDependencies += "com.fasterxml.jackson.module" %% "jackson-module-scala" % jacksonVersion
+//libraryDependencies += "com.fasterxml.jackson.module" %% "jackson-module-scala" % jacksonVersion
+libraryDependencies += "com.fasterxml.jackson.dataformat" % "jackson-dataformat-yaml" % jacksonVersion
 libraryDependencies += "com.amazonaws" % "aws-java-sdk" % "1.11.354"
-libraryDependencies += "ml.combust.mleap" %% "mleap-spark" % "0.12.0"
-libraryDependencies += "ml.combust.mleap" %% "mleap-spark-extension" % "0.12.0"
+libraryDependencies += "ml.combust.mleap" %% "mleap-spark" % mleapVersion
+libraryDependencies += "ml.combust.mleap" %% "mleap-spark-extension" % mleapVersion
 libraryDependencies ++= Seq(
   "org.apache.spark" %% "spark-core" % sparkVersion,
   "org.apache.spark" %% "spark-mllib" % sparkVersion,
@@ -26,17 +28,31 @@ dependencyOverrides += "com.google.guava" % "guava" % "17.0"
 ```
 
 ## How to run
-Using Intellij IDE
-```scala
-sbt runProd
+#### Model config file
+To launch the webservice, you need to supply a modelConfig file first (conf/modelConfig), see below example:
+```yaml
+# Sample WND serving config
+type: wnd
+modelPath: tmp/WDModel
+useIndexerPath: tmp/userIndexer.zip
+itemIndexerPath: tmp/itemIndexer.zip
+lookupPath: tmp/ATCSKU.csv
 ```
-Package code to one jar and run directly using the java command
-```scala
+Current webservice support session recommender and wide and deep model trained by Analytics Zoo
+
+#### Use terminal
+You need to have sbt installed on your machine
+```bash
+sbt runProd
+``` 
+#### Package code to one jar and run directly using the java command
+```bash
 sbt -J-Xmx2G assembly
-java -Xmx1g -jar ${location of assembled jar}
+java -Xmx2g -jar ${location of assembled jar}
 ```
 
 ## API Introduction
+you can use postman to send request
 
 ### Check health
 **Path:** /`healthcheck`  
@@ -62,8 +78,9 @@ None
 }
 ```
 
-### Run recommendation model
-**Path:** /`recModel`  
+### Run model
+#### Session recommender model
+**Path:** /`inference`  
 **Methods:** POST  
 **Params:**  
 ```json
@@ -245,6 +262,88 @@ None
     }
 }
 ```  
+
+#### Wide and deep model
+**Path:** /`inference`  
+**Methods:** POST  
+**Params:**  
+```json
+{
+    "COOKIE_ID": "80031540652853011880052",
+    "ATC_SKU": ["677252", "440539", "429457"],
+    "loyalty_ind": 1,
+    "od_card_user_ind": 1,
+    "hvb_flg": 1,
+    "agent_smb_flg": 1,
+    "interval_avg_day_cnt": 159.36,
+    "customer_type_nm": "CONSUMER",
+    "SKU_NUM": "244559",
+    "rating": 2,
+    "STAR_RATING_AVG": 1,
+    "reviews_cnt": 1,
+    "sales_flg": 1,
+    "GENDER_CD": "F"
+}
+``` 
+**Return:**
+```json
+[
+    {
+        "predict": 1,
+        "probability": 0.7123838989001036,
+        "atcSku": "677252"
+    },
+    {
+        "predict": 1,
+        "probability": 0.6807899545355797,
+        "atcSku": "440539"
+    },
+    {
+        "predict": 1,
+        "probability": 0.6962240684141258,
+        "atcSku": "429457"
+    }
+]
+```  
+
+### Update model
+#### Session recommender model
+**Path:** /`update`  
+**Methods:** POST  
+**Params:**  
+```json
+{
+	"modelPath": "tmp/rnnModel",
+	"transformerPath": "tmp/skuIndexer.zip",
+	"lookupPath": "tmp/skuLookUp"
+}
+```  
+**Return:**
+```json
+{
+    "status": "success"
+}
+```
+**Error_message:** ""Nah nah nah nah nah...this request contains bad characters...""
+
+#### Wide and deep model
+**Path:** /`update`  
+**Methods:** POST  
+**Params:**  
+```json
+{
+	"modelPath": "tmp/WDModel",
+	"useIndexerPath": "tmp/userIndexer.zip",
+	"itemIndexerPath": "tmp/itemIndexer.zip",
+	"lookupPath": "tmp/ATCSKU.csv"
+}
+```  
+**Return:**
+```json
+{
+    "status": "success"
+}
+```
 **Error_message:** ""Nah nah nah nah nah...this request contains bad characters...""
 
 ## Contact & Feedback
