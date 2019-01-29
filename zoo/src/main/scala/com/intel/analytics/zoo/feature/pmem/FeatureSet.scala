@@ -86,15 +86,9 @@ object PmemFeatureSet {
     val arrayRDD = data.zipPartitions(countPerPartition) { (dataIter, countIter) =>
       // Add a hooker to offset the pmem resource
       Runtime.getRuntime().addShutdownHook(new Thread() {
-        val logger = Logger.getLogger(getClass)
-        override def run(): Unit = NativeArray.synchronized {
-          var i = 0
-          while(i < NativeArray.natives.size) {
-            NativeArray.natives(i).free()
-            logger.info(s"Offset AEP: ${NativeArray.natives(i).startAddr}")
-            NativeArray.natives.remove(i)
+        override def run(): Unit = {
+            NativeArray.natives.map{_.free()}
           }
-        }
       })
       nativeArrayConverter.toArray(dataIter, countIter)
     }.setName(s"FeatureSet: ${data.name} cached in PMEM")
