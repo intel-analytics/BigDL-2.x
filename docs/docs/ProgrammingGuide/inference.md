@@ -36,15 +36,15 @@ List<List<JTensor>> result = model.predict(inputList);
 ## Scala Example
 
 ```scala
-import com.intel.analytics.zoo.pipeline.inference.AbstractInferenceModel
+import com.intel.analytics.zoo.pipeline.inference.InferenceModel
 
-class TextClassificationModel extends AbstractInferenceModel {
+class TextClassificationModel extends InferenceModel {
 
 }
 
-var model = new TextClassificationModel()
-model.load(modelPath, weightPath)
-var result = model.predict(inputList)
+val model = new TextClassificationModel()
+model.doLoad(modelPath, weightPath)
+val result = model.doPredict(inputList)
 
 ```
 
