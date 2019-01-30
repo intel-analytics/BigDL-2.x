@@ -43,7 +43,7 @@ object MemoryType {
 }
 
 object NativeArray {
-  private val natives= new ArrayBuffer[NativeArray[_]]()
+  private val natives = new ArrayBuffer[NativeArray[_]]()
 
   def free(): Unit = {
     NativeArray.natives.map{_.free()}
