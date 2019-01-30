@@ -77,6 +77,14 @@ class ImInfo(ImagePreprocessing):
         super(ImInfo, self).__init__(bigdl_type)
 
 
+class DummyGT(ImagePreprocessing):
+    """
+
+    """
+    def __init__(self, bigdl_type="float"):
+        super(DummyGT, self).__init__(bigdl_type)
+
+
 class DecodeOutput(ImagePreprocessing):
     """
     Decode the detection output

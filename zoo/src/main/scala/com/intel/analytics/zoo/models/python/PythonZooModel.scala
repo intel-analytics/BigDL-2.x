@@ -35,7 +35,7 @@ import com.intel.analytics.zoo.feature.text.TextSet
 import com.intel.analytics.zoo.models.anomalydetection.{AnomalyDetector, FeatureLabelIndex}
 import com.intel.analytics.zoo.models.common.{Ranker, ZooModel}
 import com.intel.analytics.zoo.models.image.common.{ImageConfigure, ImageModel}
-import com.intel.analytics.zoo.models.image.objectdetection._
+import com.intel.analytics.zoo.models.image.objectdetection.{DummyGT, _}
 import com.intel.analytics.zoo.models.image.imageclassification.{ImageClassifier, LabelReader => IMCLabelReader}
 import com.intel.analytics.zoo.models.recommendation.{NeuralCF, Recommender, UserItemFeature, UserItemPrediction}
 import com.intel.analytics.zoo.models.recommendation._
@@ -286,6 +286,10 @@ class PythonZooModel[T: ClassTag](implicit ev: TensorNumeric[T]) extends PythonZ
 
   def createImInfo(): ImInfo = {
     ImInfo()
+  }
+
+  def createDummyGT(): DummyGT = {
+    DummyGT()
   }
 
   def createDecodeOutput(): DecodeOutput = {
