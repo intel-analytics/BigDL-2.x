@@ -19,7 +19,6 @@ package com.intel.analytics.zoo.feature.pmem
 import com.intel.analytics.bigdl.dataset.ByteRecord
 import com.intel.analytics.zoo.feature.DistributedFeatureSet
 import com.intel.analytics.zoo.feature.common.ArrayLike
-import org.apache.log4j.Logger
 import org.apache.spark.rdd.RDD
 
 import scala.reflect.ClassTag
