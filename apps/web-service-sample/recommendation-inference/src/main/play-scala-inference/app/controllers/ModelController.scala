@@ -50,7 +50,7 @@ class ModelController @Inject()(cc: ControllerComponents) extends AbstractContro
                   "heading" -> "Office Depot top sellers",
                   "name" -> "content2_json",
                   "type" -> "json",
-                  "sku" -> LocalPredictor(rnnParams.recModel.get).predict(inputSample)
+                  "sku" -> rnnParams.recModel.get.predict(inputSample)
                     .map { x =>
                       val _output = x.toTensor[Float]
                       val indices = _output.topk(numPredicts, 1, false)
@@ -79,8 +79,8 @@ class ModelController @Inject()(cc: ControllerComponents) extends AbstractContro
           val requestMap = jsonMapper.readValue(requestJson, classOf[Map[String, String]])
           val sku = requestMap("COOKIE_ID")
           val atc = requestMap("SKU_NUM")
-          val uid = leapTransformWnd(sku, "COOKIE_ID", "userId", wndParams.userIndexerModel.get, jsonMapper)
-          val iid = leapTransformWnd(atc, "SKU_NUM", "itemId", wndParams.itemIndexerModel.get, jsonMapper)
+          val uid = leapTransform(sku, "COOKIE_ID", "userId", wndParams.userIndexerModel.get, jsonMapper)
+          val iid = leapTransform(atc, "SKU_NUM", "itemId", wndParams.itemIndexerModel.get, jsonMapper)
 
           println(Files.exists(Paths.get("./modelFiles/userIndexer.zip")))
 
@@ -93,7 +93,7 @@ class ModelController @Inject()(cc: ControllerComponents) extends AbstractContro
           val trainSample = train.map(x => x.sample)
           println("Sample is created, ready to predict")
 
-          val localPredictor = LocalPredictor(wndParams.wndModel.get)
+          val localPredictor = wndParams.wndModel.get
           val prediction = localPredictor.predict(trainSample)
             .zipWithIndex.map( p => {
             val id = p._2.toString

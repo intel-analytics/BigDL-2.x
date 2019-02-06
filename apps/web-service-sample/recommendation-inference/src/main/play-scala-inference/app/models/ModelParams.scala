@@ -9,6 +9,7 @@ import com.amazonaws.services.s3.AmazonS3ClientBuilder
 import com.intel.analytics.bigdl.nn.Module
 import com.intel.analytics.bigdl.nn.abstractnn.{AbstractModule, Activity}
 import com.intel.analytics.bigdl.numeric.NumericFloat
+import com.intel.analytics.bigdl.optim.LocalPredictor
 import com.intel.analytics.bigdl.utils.Engine
 import com.intel.analytics.zoo.models.common.ZooModel
 import com.intel.analytics.zoo.models.recommendation.Recommender
@@ -27,7 +28,7 @@ case class RnnParams(
                         skuLookUpPath: String,
                         env: String,
                         bucketName: String,
-                        var recModel: Option[AbstractModule[Activity, Activity, Float]],
+                        var recModel: Option[LocalPredictor[Float]],
                         var recModelVersion: Option[Long],
                         var skuIndexerModel: Option[Transformer],
                         var skuIndexerModelVersion: Option[Long],
@@ -41,7 +42,7 @@ case class WndParams(
                       atcArrayPath: String,
                       env: String,
                       bucketName: String,
-                      var wndModel: Option[Recommender[Float]],
+                      var wndModel: Option[LocalPredictor[Float]],
                       var wndModelVersion: Option[Long],
                       var userIndexerModel: Option[Transformer],
                       var userIndexerModelVersion: Option[Long],
@@ -130,7 +131,7 @@ object ModelParams {
     if (new File(currentDir+ "/" + path).exists()) {
       lock.readLock().lock()
       try {
-        Some(Module.loadModule[Float](currentDir+ "/" + path))
+        Some(LocalPredictor(Module.loadModule[Float](currentDir+ "/" + path)))
       }
           catch {
             case e: Exception => println(s"Cannot load bigDL model at $currentDir/$path"); None
@@ -147,7 +148,7 @@ object ModelParams {
     if (new File(currentDir+ "/" + path).exists()) {
       lock.readLock().lock()
       try {
-        Some(ZooModel.loadModel[Float](path).asInstanceOf[Recommender[Float]])
+        Some(LocalPredictor(ZooModel.loadModel[Float](path).asInstanceOf[Recommender[Float]]))
       }
       catch {
         case e: Exception => println(s"Cannot load bigDL model at $currentDir$path"); None
