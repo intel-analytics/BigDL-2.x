@@ -14,9 +14,12 @@
 # limitations under the License.
 #
 from bigdl.optim.optimizer import MaxEpoch
+from tensorflow.python.keras.engine import training_utils
 
 from zoo.pipeline.api.net import TFDataset, TFOptimizer, TFPredictor
+from bigdl.util.common import get_spark_context
 import tensorflow.keras.backend as K
+import numpy as np
 
 class Model(object):
 
@@ -30,49 +33,52 @@ class Model(object):
         return cls(model)
 
     def get_weights(self):
-        pass
+        return self.model.get_weights()
+
+    def set_weights(self, weights):
+        self.model.set_weights(weights)
+
+    def save_weights(self, filepath, overwrite=True, save_format=None):
+        self.model.save_weights(filepath, overwrite, save_format)
+
+    def load_weights(self, filepath, by_name=False):
+        self.model.load_weights(filepath, by_name)
 
     def fit(self,
             x=None,
             y=None,
             batch_size=None,
             epochs=1,
-            verbose=1,
-            callbacks=None,
             validation_split=0.,
             validation_data=None,
-            shuffle=True,
-            class_weight=None,
-            sample_weight=None,
-            initial_epoch=0,
-            steps_per_epoch=None,
-            validation_steps=None,
-            max_queue_size=10,
-            workers=1,
-            use_multiprocessing=False,
+            distributed=False,
             **kwargs
             ):
         if isinstance(x, TFDataset):
             # todo check arguments
-            self._fit_distributed(x, validation_split, **kwargs)
+            self._fit_distributed(x, validation_split, epochs, **kwargs)
+
+        elif distributed:
+            sc = get_spark_context()
+            train_rdd = _create_rdd_x_y(x, y, self.model._feed_input_names, self.model._feed_output_names, sc)
+
+            val_rdd = None
+            if validation_data is not None:
+                val_rdd = _create_rdd_x_y(validation_data[0], validation_data[1], self.model._feed_input_names, self.model._feed_output_names, sc)
+
+            dataset = TFDataset.from_rdd(train_rdd,
+                                         names=self.model._feed_input_names + self.model._feed_output_names,
+                                         batch_size=batch_size,
+                                         val_rdd=val_rdd)
+            self._fit_distributed(dataset, validation_split, epochs, **kwargs)
+
         else:
             self.model.fit(x=x,
                            y=y,
                            batch_size=batch_size,
                            epochs=epochs,
-                           verbose=verbose,
-                           callbacks=callbacks,
                            validation_split=validation_split,
                            validation_data=validation_data,
-                           shuffle=shuffle,
-                           class_weight=class_weight,
-                           sample_weight=sample_weight,
-                           initial_epoch=initial_epoch,
-                           steps_per_epoch=steps_per_epoch,
-                           validation_steps=validation_steps,
-                           max_queue_size=max_queue_size,
-                           workers=workers,
-                           use_multiprocessing=use_multiprocessing,
                            **kwargs
                            )
 
@@ -87,64 +93,52 @@ class Model(object):
                  x=None,
                  y=None,
                  batch_size=None,
-                 verbose=1,
-                 sample_weight=None,
-                 steps=None,
-                 callbacks=None,
-                 max_queue_size=10,
-                 workers=1,
-                 use_multiprocessing=False
+                 distributed=False
                  ):
         if isinstance(x, TFDataset):
             # todo check arguments
-            self._evaluate_distributed(x, batch_size)
+            return self._evaluate_distributed(x, batch_size)
         else:
-            self.model.evaluate(x=x,
+            if distributed:
+                sc = get_spark_context()
+                rdd = _create_rdd_x_y(x, y, self.model._feed_input_names, self.model._feed_output_names, sc)
+
+                dataset = TFDataset.from_rdd(rdd,
+                                             names=self.model._feed_input_names + self.model._feed_output_names,
+                                             batch_size=batch_size)
+                return self._evaluate_distributed(dataset, batch_size)
+            else:
+                return self.model.evaluate(x=x,
                                 y=y,
-                                batch_size=batch_size,
-                                verbose=verbose,
-                                sample_weight=sample_weight,
-                                steps=steps,
-                                callbacks=callbacks,
-                                max_queue_size=max_queue_size,
-                                workers=workers,
-                                use_multiprocessing=use_multiprocessing)
+                                batch_size=batch_size)
 
     def _evaluate_distributed(self, x, batch_size):
         metrics_tensors = [
-            self.model._all_stateful_metrics_tensors[m] for m in self.model.metrics_names[1:]
+            self.model.metrics_tensors[m] for m in range(len(self.model.metrics_names)-1)
         ]
-        predictor = TFPredictor.from_outputs(K.get_session(), [self.model.total_loss] + metrics_tensors)
+
+        predictor = TFPredictor(K.get_session(), [self.model.total_loss] + metrics_tensors, self.model.inputs + self.model.targets, x)
         result = predictor.predict()
-        metrics_sum = result.map(lambda x: x.append(1.0)).reduce(elem_sum)
+        metrics_sum = result.map(lambda x: x + [np.array(1.0)]).reduce(lambda a,b: elem_sum(a, b))
         length = len(metrics_sum) - 1
         for i in range(length):
             metrics_sum[i] /= metrics_sum[length]
         return metrics_sum[:length]
 
-
     def predict(self,
                 x,
                 batch_size=None,
                 verbose=0,
-                steps=None,
-                callbacks=None,
-                max_queue_size=10,
-                workers=1,
-                use_multiprocessing=False):
+                steps=None):
 
         if isinstance(x, TFDataset):
             # todo check arguments
-            self._predict_distributed(x, batch_size)
+            return self._predict_distributed(x, batch_size)
         else:
-            self.model.predict(x=x,
-                               batch_size=batch_size,
-                               verbose=verbose,
-                               steps=steps,
-                               callbacks=callbacks,
-                               max_queue_size=max_queue_size,
-                               workers=workers,
-                               use_multiprocessing=use_multiprocessing)
+            return self.model.predict(x=x,
+                                      batch_size=batch_size,
+                                      verbose=verbose,
+                                      steps=steps)
 
     def _predict_distributed(self, x, batch_size):
         predictor = TFPredictor.from_keras(self.model, x)
@@ -170,6 +164,49 @@ class Model(object):
 
     def predict_on_batch(self, x):
         return self.model.predict_on_batch(x)
+
+
+def _create_rdd_x_y(x, y, input_names, output_names, sc):
+    x = training_utils.standardize_input_data(x, input_names,
+                                              check_batch_axis=False, exception_prefix='input')
+    y = training_utils.standardize_input_data(y, output_names,
+                                              shapes=None, check_batch_axis=False, exception_prefix='target')
+
+    num_samples = x[0].shape[0]
+    num_inputs = len(x)
+
+    input_data = []
+    for i in range(num_samples):
+        sample = []
+        for j in range(num_inputs):
+            sample.append(x[j][i])
+
+        for j in range(num_inputs):
+            sample.append((y[j][i]))
+
+        input_data.append(sample)
+
+    rdd = sc.parallelize(input_data)
+    return rdd
+
+
+def _create_rdd_x(x, input_names, sc):
+    x = training_utils.standardize_input_data(x, input_names,
+                                              check_batch_axis=False, exception_prefix='input')
+
+    num_samples = x[0].shape[0]
+    num_inputs = len(x)
+
+    input_data = []
+    for i in range(num_samples):
+        sample = []
+        for j in range(num_inputs):
+            sample.append(x[j][i])
+
+        input_data.append(sample)
+
+    rdd = sc.parallelize(input_data)
+    return rdd
 
 
 def elem_sum(arr1, arr2):
