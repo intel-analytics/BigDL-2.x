@@ -17,18 +17,23 @@
 package com.intel.analytics.zoo.models.seq2seq
 
 import com.intel.analytics.bigdl.nn.abstractnn.{AbstractModule, Activity}
-import com.intel.analytics.bigdl.nn.keras.KerasLayer
+import com.intel.analytics.bigdl.nn.keras.{KerasLayer, KerasLayerSerializable}
+import com.intel.analytics.bigdl.serialization.Bigdl.{AttrValue, BigDLModule}
 import com.intel.analytics.bigdl.tensor.Tensor
 import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric
 import com.intel.analytics.bigdl.utils._
-
+import com.intel.analytics.bigdl.utils.serializer.{DeserializeContext, ModuleSerializer,
+SerializeContext}
+import com.intel.analytics.bigdl.utils.serializer.converters.DataConverter
+import com.intel.analytics.bigdl.utils.serializer.converters.DataConverter.ArrayConverter
 import com.intel.analytics.zoo.pipeline.api.keras.layers.SelectTable
 import com.intel.analytics.zoo.pipeline.api.keras.layers.utils.KerasUtils
 import com.intel.analytics.zoo.pipeline.api.keras.layers._
-import com.intel.analytics.zoo.pipeline.api.keras.models.{Sequential}
+import com.intel.analytics.zoo.pipeline.api.keras.models.Sequential
 
 import scala.collection.mutable.ArrayBuffer
 import scala.reflect.ClassTag
+import scala.reflect.runtime._
 
 /**
  * [[RNNDecoder]] A generic recurrent neural network decoder
@@ -39,7 +44,7 @@ import scala.reflect.ClassTag
  */
 class RNNDecoder[T: ClassTag](val rnns: Array[Recurrent[T]],
   val embedding: KerasLayer[Tensor[T], Tensor[T], T],
-  val inputShape: Shape = null)(implicit ev: TensorNumeric[T])
+  var inputShape: Shape = null)(implicit ev: TensorNumeric[T])
   extends Decoder[T](inputShape) {
 
   private def checkStateShape(stateShape: Shape, hiddenSizes: Array[Int]): Boolean = {
@@ -75,7 +80,6 @@ class RNNDecoder[T: ClassTag](val rnns: Array[Recurrent[T]],
           s" hidden size or update bridge/encoder hidden size")
       i += 1
     }
-
     layer.asInstanceOf[AbstractModule[Activity, Tensor[T], T]]
   }
 
@@ -99,14 +103,18 @@ class RNNDecoder[T: ClassTag](val rnns: Array[Recurrent[T]],
   override def updateGradInput(input: Activity, gradOutput: Tensor[T]): Activity = {
     labor.updateGradInput(input, gradOutput)
     val gradStates = rnns.map(_.getGradHiddenState())
-    val rnnsGradInput = input.toTable[Tensor[T]](1).zero()
+    val rnnsGradInput = Tensor[T](input.toTable[Tensor[T]](1).size())
 
     gradInput = T(rnnsGradInput, T.array(gradStates))
     gradInput
   }
 }
 
-object RNNDecoder {
+object RNNDecoder extends KerasLayerSerializable {
+  ModuleSerializer.registerModule(
+    "com.intel.analytics.zoo.models.seq2seq.RNNDecoder",
+    RNNDecoder)
+
   /**
    * [[RNNDecoder]] A generic recurrent neural network decoder
    *
@@ -147,5 +155,58 @@ object RNNDecoder {
         s"to create a decoder")
     }
     RNNDecoder[T](rnn.toArray, embedding, inputShape)
+  }
+
+  override def doLoadModule[T: ClassTag](context : DeserializeContext)
+    (implicit ev: TensorNumeric[T]) : AbstractModule[Activity, Activity, T] = {
+
+    val attrMap = context.bigdlModule.getAttrMap
+
+    val rnns = DataConverter.getAttributeValue(context, attrMap.get("rnns")).
+      asInstanceOf[Array[AbstractModule[_, _, T]]].map(_.asInstanceOf[Recurrent[T]])
+    rnns.map(_.labor = null)
+    rnns.map(_.modules.clear())
+
+    val embeddingAttr = attrMap.get("embedding")
+    val embedding = DataConverter.getAttributeValue(context, embeddingAttr).
+      asInstanceOf[KerasLayer[Tensor[T], Tensor[T], T]]
+    if (embedding != null) {
+      embedding.labor = null
+      embedding.modules.clear()
+    }
+
+    val shapeAttr = attrMap.get("shape")
+    val shape = DataConverter.getAttributeValue(context, shapeAttr).asInstanceOf[Shape]
+    val decoder = RNNDecoder(rnns, embedding, shape)
+
+    decoder.build(KerasUtils.addBatch(shape))
+
+    decoder.asInstanceOf[AbstractModule[Activity, Activity, T]]
+  }
+
+  override def doSerializeModule[T: ClassTag](context: SerializeContext[T],
+    decoderBuilder : BigDLModule.Builder)
+    (implicit ev: TensorNumeric[T]) : Unit = {
+
+    val decoder = context.moduleData.module.asInstanceOf[RNNDecoder[T]]
+
+    val rnnsBuilder = AttrValue.newBuilder
+    ArrayConverter.setAttributeValue(context, rnnsBuilder,
+      context.moduleData.module.asInstanceOf[RNNDecoder[T]].rnns,
+      scala.reflect.runtime.universe.typeOf[Array[_ <:
+        AbstractModule[_ <: Activity, _ <:  Activity, _ <: Any]]])
+    decoderBuilder.putAttr("rnns", rnnsBuilder.build)
+
+    val embeddingBuilder = AttrValue.newBuilder
+    DataConverter.setAttributeValue(context, embeddingBuilder,
+      decoder.embedding, ModuleSerializer.abstractModuleType)
+    decoderBuilder.putAttr("embedding", embeddingBuilder.build)
+
+    val shapeBuilder = AttrValue.newBuilder
+    DataConverter.setAttributeValue(context, shapeBuilder,
+      decoder.inputShape, universe.typeOf[Shape])
+    decoderBuilder.putAttr("shape", shapeBuilder.build)
+
+    appendKerasLabel(context, decoderBuilder)
   }
 }

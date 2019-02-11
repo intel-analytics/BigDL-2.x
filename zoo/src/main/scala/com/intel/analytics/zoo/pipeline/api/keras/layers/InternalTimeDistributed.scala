@@ -113,17 +113,16 @@ private[zoo] class InternalTimeDistributed[T: ClassTag](
 
     val _output = layer.forward(input).toTensor[T]
 
-    if (outputSize == null) {
-      val combinedShape = _output.size()
-      // in case of singleton
-      var i = 0
-      while (i < oriSizes.length && oriSizes(i)(0) * oriSizes(i)(1) != combinedShape(0)) {
-        i += 1
-      }
-      require(i < oriSizes.length,
-        s"combined batch: ${combinedShape(0)} should match ${oriSizes(i)(0)} * ${oriSizes(i)(1)}")
-      outputSize = Array(oriSizes(i)(0), oriSizes(i)(1)) ++ combinedShape.drop(1)
+    val combinedShape = _output.size()
+    // in case of singleton
+    var i = 0
+    while (i < oriSizes.length && oriSizes(i)(0) * oriSizes(i)(1) != combinedShape(0)) {
+      i += 1
     }
+    require(i < oriSizes.length,
+      s"combined batch: ${combinedShape(0)} should match ${oriSizes(i)(0)} * ${oriSizes(i)(1)}")
+    outputSize = Array(oriSizes(i)(0), oriSizes(i)(1)) ++ combinedShape.drop(1)
+
     resizeActivity(input, oriSizes)
     output.set(_output).resize(outputSize)
 
