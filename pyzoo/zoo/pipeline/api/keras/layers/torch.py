@@ -796,7 +796,7 @@ class SelectTable(ZooKerasLayer):
 
     # Arguments
     index: the index to be selected. 0-based index
-    input_shape: A shape tuple, not including batch.
+    input_shape: a list of shape tuples, not including batch.
 
     >>> selectTable = SelectTable(0, input_shape=[[2, 3], [5, 7]])
     creating: createZooKerasSelectTable

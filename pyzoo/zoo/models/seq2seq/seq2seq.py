@@ -182,6 +182,8 @@ class Seq2seq(ZooModel):
 
     def __init__(self, encoder, decoder, input_shape, output_shape, bridge=None,
                  generator=None, bigdl_type="float"):
+        if (input_shape is None) or (output_shape is None):
+            raise TypeError('input_shape and output_shape cannot be None')
         self.encoder = encoder
         self.decoder = decoder
         self.input_shape = list(input_shape)
