@@ -26,6 +26,20 @@ class VarLenBytesArray(recordNum: Int, totalSizeByBytes: Long,
     Platform.putByte(null, offset, s.asInstanceOf[Byte])
   }
 
+  override def get(i: Int): Array[Byte] = {
+    assert(isValidIndex(i), s"Invalid index ${i}")
+    val recordLen = getRecordLength(i)
+    val result = new Array[Byte](recordLen)
+
+    val startOffset = indexOf(i)
+    var j: Int = 0
+    while(j < recordLen) {
+      result(j) = Platform.getByte(null, startOffset + j)
+      j += 1
+    }
+    return result
+  }
+
   override def getTypeOffSet(): Int = Platform.BYTE_ARRAY_OFFSET
 }
 
