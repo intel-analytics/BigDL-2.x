@@ -47,6 +47,8 @@ Run Spark Test
    Run Shell                        ${submit} --master ${spark_master} --driver-memory 5g --executor-memory 10g --total-executor-cores 32 --executor-cores 8 --class com.intel.analytics.zoo.examples.nnframes.imageInference.ImageInferenceExample ${jar_path} --caffeDefPath ${integration_data_dir}/models/nnframes/deploy.prototxt --caffeWeightsPath ${integration_data_dir}/models/nnframes/bvlc_googlenet.caffemodel --batchSize 32 --imagePath ${public_hdfs_master}:9000/dogs_cats/samples
    Log To Console                   begin imageTransferLearning
    Run Shell                        ${submit} --master ${spark_master} --driver-memory 5g --executor-memory 10g --total-executor-cores 32 --executor-cores 8 --class com.intel.analytics.zoo.examples.nnframes.imageTransferLearning.ImageTransferLearning ${jar_path} --caffeDefPath ${integration_data_dir}/models/nnframes/deploy.prototxt --caffeWeightsPath ${integration_data_dir}/models/nnframes/bvlc_googlenet.caffemodel --batchSize 32 --imagePath ${public_hdfs_master}:9000/dogs_cats/samples --nEpochs 20
+   Log To Console                   begin QARanker
+   Run Shell                        ${ANALYTICS_ZOO_HOME}/bin/spark-shell-with-zoo.sh --master ${MASTER} --driver-memory 3g --executor-memory 3g --class com.intel.analytics.zoo.examples.qaranker.QARanker --dataPath ${dataDir} --embeddingFile ${glovePath} --batchSize 196
    Remove Directory                 /tmp/objectdetection        recursive=True
 
 Spark2.1 Test Suite
