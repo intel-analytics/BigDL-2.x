@@ -16,6 +16,7 @@
 
 package com.intel.analytics.zoo.pipeline.api.keras.layers
 
+import com.intel.analytics.bigdl.nn.ConvLSTMPeephole3D
 import com.intel.analytics.bigdl.tensor.Tensor
 import com.intel.analytics.bigdl.utils.Shape
 import com.intel.analytics.zoo.pipeline.api.keras.ZooSpecHelper
@@ -34,6 +35,29 @@ class ConvLSTM3DSpec extends ZooSpecHelper {
     val actualOutputShape = output.size()
     require(expectedOutputShape.drop(1).sameElements(actualOutputShape.drop(1)))
     val gradInput = layer.backward(input, output)
+  }
+
+  "ConvLSTM3D return sequences and go backwards" should "forward and backward " +
+    "properly with correct output shape" in {
+    val layer = ConvLSTM3D[Float](12, 4, returnSequences = true, goBackwards = true,
+      inputShape = Shape(20, 3, 12, 12, 12))
+    layer.build(Shape(-1, 20, 3, 12, 12, 12))
+    val input = Tensor[Float](Array(4, 20, 3, 12, 12, 12)).rand()
+    val output = layer.forward(input)
+    val expectedOutputShape = layer.getOutputShape().toSingle().toArray
+    val actualOutputShape = output.size()
+    require(expectedOutputShape.drop(1).sameElements(actualOutputShape.drop(1)))
+    val gradInput = layer.backward(input, output)
+  }
+
+  "ConvLSTM3D" should "be the same as BigDL" in {
+    val blayer = com.intel.analytics.bigdl.nn.Recurrent[Float]()
+      .add(ConvLSTMPeephole3D[Float](4, 4, 2, 2, withPeephole = false))
+    val zlayer = ConvLSTM3D[Float](4, 2, returnSequences = true,
+      inputShape = Shape(12, 4, 8, 8, 8))
+    zlayer.build(Shape(-1, 12, 4, 8, 8, 8))
+    val input = Tensor[Float](Array(4, 12, 4, 8, 8, 8)).rand()
+    compareOutputAndGradInputSetWeights(blayer, zlayer, input)
   }
 }
 

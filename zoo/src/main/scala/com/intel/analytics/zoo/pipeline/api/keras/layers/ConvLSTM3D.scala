@@ -25,19 +25,44 @@ import com.intel.analytics.zoo.pipeline.api.keras.layers.utils.KerasUtils
 
 import scala.reflect.ClassTag
 
-// only support channel_first: (batch, time, channels, dim1, dim2, dim3)
-// currently only support same padding. TODO: test for valid padding
+/**
+ * Convolutional LSTM for 3D input.
+ * Data format currently supported for this layer is 'CHANNEL_FIRST' (dimOrdering='th').
+ * Border mode currently supported for this layer is 'same'.
+ * The convolution kernel for this layer is a cubic kernel with equal strides 'subsample'
+ * for all dimensions.
+ * The input of this layer should be 6D, i.e. (samples, time, channels, dim1, dim2, dim3)
+ *
+ * When using this layer as the first layer in a model, you need to provide the argument
+ * inputShape (a Single Shape, does not include the batch dimension).
+ *
+ * @param nbFilter Number of convolution filters to use.
+ * @param nbKernel Length of the first, second and third dimensions in
+ *                 the convolution kernel. Cubic kernel.
+ * @param subsample Factor by which to subsample output.
+ *                  Also called strides elsewhere. Default is 1.
+ * @param wRegularizer An instance of [[Regularizer]], (eg. L1 or L2 regularization),
+ *                     applied to the input weights matrices. Default is null.
+ * @param uRegularizer An instance of [[Regularizer]], (eg. L1 or L2 regularization),
+ *                     applied to the recurrent weights matrices. Default is null.
+ * @param bRegularizer An instance of [[Regularizer]], applied to the bias. Default is null.
+ * @param returnSeq Whether to return the full sequence or the last output
+ *                        in the output sequence. Default is false.
+ * @param goBackward Whether the input sequence will be processed backwards. Default is false.
+ * @param mInputShape A Single Shape, does not include the batch dimension.
+ * @tparam T The numeric type of parameter(e.g. weight, bias). Only support float/double now.
+ */
 class ConvLSTM3D[T: ClassTag](
     var nbFilter: Int,
-    val nbKernel: Int, // both square kernels
-    val subsample: Int = 1, // same stride for all dimensions
+    val nbKernel: Int,
+    val subsample: Int = 1,
     var wRegularizer: Regularizer[T] = null,
     var uRegularizer: Regularizer[T] = null,
     var bRegularizer: Regularizer[T] = null,
-    override val returnSequences: Boolean = false,
-    override val goBackwards: Boolean = false,
-    override val inputShape: Shape = null)(implicit ev: TensorNumeric[T]) extends Recurrent[T] (
-  nbFilter, returnSequences, goBackwards, inputShape) with Net {
+    var returnSeq: Boolean = false,
+    var goBackward: Boolean = false,
+    var mInputShape: Shape = null)(implicit ev: TensorNumeric[T]) extends Recurrent[T] (
+  nbFilter, returnSeq, goBackward, mInputShape) with Net {
 
   override def computeOutputShape(inputShape: Shape): Shape = {
     val input = inputShape.toSingle().toArray
