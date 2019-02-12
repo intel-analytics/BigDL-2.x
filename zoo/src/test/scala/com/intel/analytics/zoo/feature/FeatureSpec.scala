@@ -99,6 +99,11 @@ class FeatureSpec extends FlatSpec with Matchers with BeforeAndAfter {
     images.toDistributed().rdd.collect()
   }
 
+  "Distribute ImageSet" should "supports repartition" in {
+    val image = ImageSet.read(resource.getFile, sc, resizeH = 200, resizeW = 200)
+    require(image.toDistributed().repartition(2).rdd.partitions.length == 2)
+  }
+
   "ImageBytesToMat" should "work with png and jpg" in {
     val path = getClass.getClassLoader.getResource("png").getFile
     val image = ImageSet.read(path, sc)

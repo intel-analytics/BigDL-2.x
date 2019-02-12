@@ -182,3 +182,9 @@ class DistributedImageSet(ImageSet):
                             (predict[0],
                              list(map(lambda x: x.to_ndarray(), predict[1]))) if predict[1]
                             else (predict[0], None))
+
+    def repartition(self, numPartitions):
+        """
+        repartition the underlying rdd
+        """
+        callBigDlFunc(self.bigdl_type, "distributedImageSetToPredict", self.value, key)

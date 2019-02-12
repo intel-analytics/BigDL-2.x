@@ -19,8 +19,10 @@ package com.intel.analytics.zoo.feature.image
 import com.intel.analytics.bigdl.DataSet
 import com.intel.analytics.bigdl.dataset._
 import com.intel.analytics.bigdl.transform.vision.image._
+import com.intel.analytics.bigdl.transform.vision.image.opencv.OpenCVMat
 import com.intel.analytics.zoo.common.Utils
 import com.intel.analytics.zoo.feature.common.Preprocessing
+import com.intel.analytics.zoo.pipeline.api.keras.layers.utils.EngineRef
 import org.apache.commons.io.FileUtils
 import org.apache.spark.SparkContext
 import org.apache.spark.rdd.RDD
@@ -115,6 +117,18 @@ class DistributedImageSet(var rdd: RDD[ImageFeature]) extends ImageSet {
 
   override def toDataSet[T: ClassTag](): DataSet[Sample[T]] = {
     DataSet.rdd(rdd.map(_[Sample[T]](ImageFeature.sample)))
+  }
+
+  /**
+   * repartition the underlying rdd
+   */
+  def repartition(numPartitions: Int): this.type = {
+    val numCores = EngineRef.getCoreNumber()
+    // load OpenCV native lib on all executors
+    this.rdd.sparkContext.parallelize(1 to numCores, numCores)
+      .mapPartitions(iter => OpenCVMat.toString.toIterator).count()
+    this.rdd = rdd.repartition(numPartitions)
+    this
   }
 }
 
