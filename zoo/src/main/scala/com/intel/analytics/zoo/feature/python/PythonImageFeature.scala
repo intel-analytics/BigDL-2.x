@@ -66,8 +66,8 @@ class PythonImageFeature[T: ClassTag](implicit ev: TensorNumeric[T]) extends Pyt
 
   def isDistributedImageSet(imageSet: ImageSet): Boolean = imageSet.isDistributed()
 
-  def distributedImageSetRepartition(imageSet: ImageSet, numPartitions: Int): ImageSet = {
-    imageSet.toDistributed().repartition(numPartitions)
+  def distributedImageSetRepartition(imageSet: DistributedImageSet, numPartitions: Int): ImageSet = {
+    imageSet.repartition(numPartitions)
   }
 
   def localImageSetToImageTensor(imageSet: LocalImageSet,
