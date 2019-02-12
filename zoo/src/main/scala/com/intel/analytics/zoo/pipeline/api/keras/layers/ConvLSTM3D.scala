@@ -28,7 +28,7 @@ import scala.reflect.ClassTag
 // only support channel_first: (batch, time, channels, dim1, dim2, dim3)
 // currently only support same padding. TODO: test for valid padding
 class ConvLSTM3D[T: ClassTag](
-    val nbFilter: Int,
+    var nbFilter: Int,
     val nbKernel: Int, // both square kernels
     val subsample: Int = 1, // same stride for all dimensions
     var wRegularizer: Regularizer[T] = null,
