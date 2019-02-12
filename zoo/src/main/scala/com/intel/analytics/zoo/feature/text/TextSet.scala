@@ -30,7 +30,7 @@ import org.apache.log4j.Logger
 import org.apache.spark.SparkContext
 import org.apache.spark.rdd.RDD
 
-import scala.collection.mutable.ArrayBuffer
+import scala.collection.mutable.{ArrayBuffer, Map => MMap}
 import scala.io.Source
 import java.io.PrintWriter
 
@@ -403,10 +403,8 @@ object TextSet {
     val pairsArray = Relations.generateRelationPairs(relations)
     require(corpus1.isLocal, "corpus1 must be a LocalTextSet")
     require(corpus2.isLocal, "corpus2 must be a LocalTextSet")
-    val mapText1: scala.collection.mutable.Map[String, Array[Float]] =
-      scala.collection.mutable.Map()
-    val mapText2: scala.collection.mutable.Map[String, Array[Float]] =
-      scala.collection.mutable.Map()
+    val mapText1: MMap[String, Array[Float]] = MMap()
+    val mapText2: MMap[String, Array[Float]] = MMap()
     val array1 = corpus1.toLocal().array
     val array2 = corpus2.toLocal().array
     for (i <- array1) {mapText1(i.getURI) = i.getIndices}
@@ -497,16 +495,13 @@ object TextSet {
       "corpus1 must be a LocalTextSet")
     require(corpus2.isLocal,
       "corpus2 must be a LocalTextSet")
-    val mapText1: scala.collection.mutable.Map[String, Array[Float]] =
-      scala.collection.mutable.Map()
-    val mapText2: scala.collection.mutable.Map[String, Array[Float]] =
-      scala.collection.mutable.Map()
+    val mapText1: MMap[String, Array[Float]] = MMap()
+    val mapText2: MMap[String, Array[Float]] = MMap()
     val array1 = corpus1.toLocal().array
     val array2 = corpus2.toLocal().array
     for (i <- array1) {mapText1(i.getURI) = i.getIndices}
     for (i <- array2) {mapText2(i.getURI) = i.getIndices}
-    val resMap: scala.collection.mutable.Map[String, ArrayBuffer[String]] =
-      scala.collection.mutable.Map()
+    val resMap: MMap[String, ArrayBuffer[String]] = MMap()
     for(rel <- relations) {
       if (! resMap.contains(rel.id1)) {
         val buffer: ArrayBuffer[String] = ArrayBuffer()
@@ -520,7 +515,7 @@ object TextSet {
     }
     val featureBuffer: ArrayBuffer[TextFeature] = ArrayBuffer()
     for((k, v) <- resMap) {
-      val labelMap: scala.collection.mutable.Map[String, Int] = scala.collection.mutable.Map()
+      val labelMap: MMap[String, Int] = MMap()
       for(rel <- relations) {if (rel.id1 == k) {labelMap(rel.id2) = rel.label}}
       val id2Array = v
       val id2ArrayLength = id2Array.length

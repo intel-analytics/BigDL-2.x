@@ -20,7 +20,7 @@ import org.apache.spark.SparkContext
 import org.apache.spark.rdd.RDD
 import org.apache.spark.sql.SQLContext
 
-import scala.collection.mutable.{ArrayBuffer, ListBuffer}
+import scala.collection.mutable.{Map => MMap, ArrayBuffer, ListBuffer}
 import scala.io.Source
 
 object Relations {
@@ -102,19 +102,16 @@ object Relations {
    * generateRelationPairs for Relation array
    */
   def generateRelationPairs(relations: Array[Relation]): Array[RelationPair] = {
-    val relSet: scala.collection.mutable.Map[String,
-      scala.collection.mutable.Map[Int, ArrayBuffer[String]]] =
-      scala.collection.mutable.Map()
+    val relSet: MMap[String, MMap[Int, ArrayBuffer[String]]] = MMap()
     val pairList: ListBuffer[RelationPair] = ListBuffer()
     for (relation <- relations) {
       if (! relSet.contains(relation.id1)) {
-        val map: scala.collection.mutable.Map[Int, ArrayBuffer[String]] =
-          scala.collection.mutable.Map()
+        val map: MMap[Int, ArrayBuffer[String]] = MMap()
         relSet(relation.id1) = map
         if (! relSet.get(relation.id1).get.contains(relation.label)) {
           val buffer: ArrayBuffer[String] = ArrayBuffer()
           buffer.append(relation.id2)
-          val map = scala.collection.mutable.Map(relation.label -> buffer)
+          val map = MMap(relation.label -> buffer)
           relSet(relation.id1) = map
         }
       }
@@ -146,7 +143,6 @@ object Relations {
           }
         }
       }
-      else {}
     }
     pairList.toArray
   }
