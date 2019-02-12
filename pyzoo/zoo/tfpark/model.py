@@ -105,12 +105,12 @@ class Model(object):
 
                 dataset = TFDataset.from_rdd(rdd,
                                              names=self.model._feed_input_names + self.model._feed_output_names,
-                                             batch_size=batch_size)
+                                             batch_size=-1 if batch_size is None else batch_size)
                 return self._evaluate_distributed(dataset, batch_size)
             else:
                 return self.model.evaluate(x=x,
-                                y=y,
-                                batch_size=batch_size)
+                                           y=y,
+                                           batch_size=batch_size)
 
     def _evaluate_distributed(self, x, batch_size):
         metrics_tensors = [
@@ -129,13 +129,23 @@ class Model(object):
                 x,
                 batch_size=None,
                 verbose=0,
-                steps=None):
+                steps=None,
+                distributed=False):
 
         if isinstance(x, TFDataset):
             # todo check arguments
             return self._predict_distributed(x, batch_size)
         else:
-            return self.model.predict(x=x,
+            if distributed:
+                sc = get_spark_context()
+                rdd = _create_rdd_x(x, self.model._feed_input_names, sc)
+
+                dataset = TFDataset.from_rdd(rdd,
+                                             names=self.model._feed_input_names,
+                                             batch_size=-1 if batch_size is None else batch_size)
+                return np.array(self._predict_distributed(dataset, batch_size).collect())
+            else:
+                return self.model.predict(x=x,
                                       batch_size=batch_size,
                                       verbose=verbose,
                                       steps=steps)
