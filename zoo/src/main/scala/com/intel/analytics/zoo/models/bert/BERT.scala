@@ -82,6 +82,19 @@ class BERT[T: ClassTag] private(
   }
 
   def block(x: Variable[T], attention_mask: Variable[T] = null): Variable[T] = {
+
+    // g, b for layerNorm
+    val g = Parameter[T](Shape(1, hidden_size),
+      initWeight = Tensor.ones[T](hidden_size).view(1, hidden_size))
+    val b = Parameter[T](Shape(1, hidden_size),
+      initWeight = Tensor[T](hidden_size).view(1, hidden_size))
+
+    // g, b for layerNorm
+    val g2 = Parameter[T](Shape(1, hidden_size),
+      initWeight = Tensor.ones[T](hidden_size).view(1, hidden_size))
+    val b2 = Parameter[T](Shape(1, hidden_size),
+      initWeight = Tensor[T](hidden_size).view(1, hidden_size))
+
     val a = attention(x, attention_mask)
     // BertOutput2
     val n = layerNorm(x + a, e=1e-12, weight=g2, bias=b2)
@@ -116,18 +129,6 @@ class BERT[T: ClassTag] private(
     val y = (x - u) / AutoGrad.sqrt(s + e)
     y * weight + bias
   }
-
-  // g, b for layerNorm
-  val g = Parameter[T](Shape(1, hidden_size),
-    initWeight = Tensor.ones[T](hidden_size).view(1, hidden_size))
-  val b = Parameter[T](Shape(1, hidden_size),
-    initWeight = Tensor[T](hidden_size).view(1, hidden_size))
-
-  // g, b for layerNorm
-  val g2 = Parameter[T](Shape(1, hidden_size),
-    initWeight = Tensor.ones[T](hidden_size).view(1, hidden_size))
-  val b2 = Parameter[T](Shape(1, hidden_size),
-    initWeight = Tensor[T](hidden_size).view(1, hidden_size))
 
   def gelu(x: Variable[T]): Variable[T] = {
     x * 0.5 * (Activation("tanh").from((AutoGrad.square(x) * x * 0.044715 + x)

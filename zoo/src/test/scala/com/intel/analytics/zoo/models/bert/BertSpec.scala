@@ -30,7 +30,7 @@ class BertSpec extends ZooSpecHelper {
   "Bert model" should "be able to work" in {
     val model = BERT[Float](vocab = 100,
       hidden_size = 10,
-    num_hidden_layers = 2,
+    num_hidden_layers = 3,
     num_attention_heads = 2,
     intermediate_size = 64,
     hidden_dropout_prob = 0.1,
@@ -38,6 +38,9 @@ class BertSpec extends ZooSpecHelper {
     maxPositionEmbeddings = 10,
 //    typeVocabSize = 2,
     output_all_encoded_layers = false)
+
+    val w = model.parameters()._1
+    require(w.length == 53)
     val inputIds = Tensor[Float](Array[Float](7, 20, 39, 27, 10,
       39, 30, 21, 17, 15), Array(1, 10))
     val segmentIds = Tensor[Float](Array[Float](0, 0, 0, 0, 0, 1, 1, 1, 1, 1), Array(1, 10))
