@@ -28,7 +28,9 @@ import com.intel.analytics.zoo.pipeline.api.keras.models.Model
 
 class TransformerSpec extends ZooSpecHelper {
   "Transformer model" should "be able to work" in {
-    val model = Transformer[Float](vocab = 100, embeddingSize = 768)
+    val model = Transformer[Float](vocab = 100, embeddingSize = 768, nLayer = 3)
+    val w = model.parameters()._1
+    require(w.length == 38)
     val input = Tensor[Float](Array(2, 2, 77, 2)).rand().resize(4, 77, 2)
     val gradOutput = Tensor[Float](4, 77, 768).rand()
     val output = model.forward(input)

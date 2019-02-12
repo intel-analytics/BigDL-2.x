@@ -62,38 +62,32 @@ class Transformer[T: ClassTag] private(
   }
 
   def block(x: Variable[T]): Variable[T] = {
+    // g, b for layerNorm
+    val g = Parameter[T](Shape(1, embeddingSize),
+      initWeight = Tensor.ones[T](embeddingSize).view(1, embeddingSize))
+    val b = Parameter[T](Shape(1, embeddingSize),
+      initWeight = Tensor[T](embeddingSize).view(1, embeddingSize))
+
+    // g, b for layerNorm
+    val g2 = Parameter[T](Shape(1, embeddingSize),
+      initWeight = Tensor.ones[T](embeddingSize).view(1, embeddingSize))
+    val b2 = Parameter[T](Shape(1, embeddingSize),
+      initWeight = Tensor[T](embeddingSize).view(1, embeddingSize))
     val a = attention(x)
-    val n = layerNorm(x + a)
+    val n = layerNorm(x + a, weight = g, bias = b)
     val m = mlp(n)
-    val h = layerNorm2(n + m)
+    val h = layerNorm(n + m, weight = g2, bias = b2)
     h
   }
 
-  // g, b for layerNorm
-  val g = Parameter[T](Shape(1, embeddingSize),
-    initWeight = Tensor.ones[T](embeddingSize).view(1, embeddingSize))
-  val b = Parameter[T](Shape(1, embeddingSize),
-    initWeight = Tensor[T](embeddingSize).view(1, embeddingSize))
 
-  def layerNorm(x: Variable[T], e: Double = 1e-5): Variable[T] = {
-    val sizes = x.getOutputShape().toSingle().toArray
-    val u = AutoGrad.mean(x, sizes.size - 1, true)
-    val s = AutoGrad.mean(AutoGrad.square(x - u), sizes.size - 1, true)
-    val y = (x - u) / AutoGrad.sqrt(s + e)
-    y * g + b
-  }
-
-  // g, b for layerNorm
-  val g2 = Parameter[T](Shape(1, embeddingSize),
-    initWeight = Tensor.ones[T](embeddingSize).view(1, embeddingSize))
-  val b2 = Parameter[T](Shape(1, embeddingSize),
-    initWeight = Tensor[T](embeddingSize).view(1, embeddingSize))
-  def layerNorm2(x: Variable[T], e: Double = 1e-5): Variable[T] = {
+  def layerNorm(x: Variable[T], e: Double = 1e-5, weight: Parameter[T],
+                bias: Parameter[T]): Variable[T] = {
     val sizes = x.getOutputShape().toSingle().toArray
     val u = AutoGrad.mean(x, sizes.size - 1, true)
     val s = AutoGrad.mean(AutoGrad.square(x - u), sizes.size -1, true)
     val y = (x - u) / AutoGrad.sqrt(s + e) // y: (-1, 2, 4) g2: (1, 4)
-    y * g2 + b2
+    y * weight + bias
   }
 
   def gelu(x: Variable[T]): Variable[T] = {
