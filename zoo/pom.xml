@@ -389,6 +389,7 @@
                             <artifactSet>
                                 <includes>
                                     <include>org.spark-project.spark:unused</include>
+                                    <include>com.intel.analytics.zoo:zoo-core-dist-all</include>
                                 </includes>
                             </artifactSet>
                         </configuration>
