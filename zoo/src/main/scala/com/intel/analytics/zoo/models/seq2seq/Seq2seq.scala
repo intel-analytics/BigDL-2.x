@@ -179,6 +179,25 @@ object Seq2seq extends ContainerSerializable {
   }
 
   /**
+   * This factory method is mainly for Python use.
+   * Pass in a model to build the Seq2seq.
+   * Note that if you use this factory method, arguments such as encoder, decoder, etc
+   * should match the model definition to eliminate ambiguity.
+   */
+  private[zoo] def apply[@specialized(Float, Double) T: ClassTag](
+     encoder: RNNEncoder[T],
+     decoder: RNNDecoder[T],
+     inputShape: Shape,
+     outputShape: Shape,
+     bridge: KerasLayer[Activity, Activity, T],
+     generator: KerasLayer[Activity, Activity, T],
+     model: AbstractModule[Table, Tensor[T], T])
+   (implicit ev: TensorNumeric[T]): Seq2seq[T] = {
+    new Seq2seq[T](encoder, decoder, inputShape, outputShape, bridge, generator)
+      .addModel(model)
+  }
+
+  /**
    * Load an existing seq2seq model (with weights).
    *
    * @param path The path for the pre-defined model.
