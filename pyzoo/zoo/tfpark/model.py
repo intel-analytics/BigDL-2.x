@@ -105,7 +105,7 @@ class Model(object):
 
                 dataset = TFDataset.from_rdd(rdd,
                                              names=self.model._feed_input_names + self.model._feed_output_names,
-                                             batch_size=-1 if batch_size is None else batch_size)
+                                             batch_per_thread=-1 if batch_size is None else batch_size)
                 return self._evaluate_distributed(dataset, batch_size)
             else:
                 return self.model.evaluate(x=x,
