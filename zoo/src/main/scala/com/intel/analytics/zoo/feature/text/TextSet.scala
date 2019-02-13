@@ -572,7 +572,7 @@ class DistributedTextSet(var rdd: RDD[TextFeature],
   }
 
   override def randomSplit(weights: Array[Double]): Array[TextSet] = {
-    rdd.randomSplit(weights).map(v => TextSet.rdd(v))
+    rdd.randomSplit(weights).map(v => TextSet.rdd(v, this.memoryType))
   }
 
   override def generateWordIndexMap(

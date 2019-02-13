@@ -17,13 +17,11 @@
 package com.intel.analytics.zoo.feature.pmem
 
 import com.intel.analytics.bigdl.dataset.{ByteRecord, Sample}
-import com.intel.analytics.bigdl.transform.vision.image.ImageFeature
 import com.intel.analytics.zoo.feature.DistributedFeatureSet
 import com.intel.analytics.zoo.feature.common.ArrayLike
 import org.apache.spark.rdd.RDD
 
 import scala.reflect.ClassTag
-import scala.reflect.classTag
 
 private[zoo] abstract class NativeArrayConverter[T: ClassTag]
   extends Serializable {
