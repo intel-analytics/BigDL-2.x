@@ -36,7 +36,7 @@ import java.io.PrintWriter
 
 import com.intel.analytics.bigdl.tensor.Tensor
 import com.intel.analytics.zoo.feature.FeatureSet
-import com.intel.analytics.zoo.feature.pmem.{DIRECT, DRAM, MemoryType, PMEM}
+import com.intel.analytics.zoo.feature.pmem.{DRAM, MemoryType}
 import org.apache.spark.sql.SQLContext
 
 /**
