@@ -396,6 +396,24 @@ object TextSet {
     TextSet.rdd(res)
   }
 
+  /**
+    * Used to generate a TextSet for pairwise training.
+    *
+    * This method does the following:
+    * 1. Generate all RelationPairs: (id1, id2Positive, id2Negative) from Relations.
+    * 2. Join RelationPairs with corpus to transform id to indexedTokens.
+    * Note: Make sure that the corpus has been transformed by [[SequenceShaper]] and [[WordIndexer]].
+    * 3. For each pair, generate a TextFeature having Sample with:
+    * - feature of shape (2, text1Length + text2Length).
+    * - label of value [1 0] as the positive relation is placed before the negative one.
+    *
+    * @param relations Array of [[Relation]].
+    * @param corpus1 LocalTextSet that contains all [[Relation.id1]]. For each TextFeature
+    *                in corpus1, text must have been transformed to indexedTokens of the same length.
+    * @param corpus2 LocalTextSet that contains all [[Relation.id2]]. For each TextFeature
+    *                in corpus2, text must have been transformed to indexedTokens of the same length.
+    * @return LocalTextSet.
+    */
   def fromRelationPairs(
       relations: Array[Relation],
       corpus1: TextSet,
@@ -407,32 +425,30 @@ object TextSet {
     val mapText2: MMap[String, Array[Float]] = MMap()
     val array1 = corpus1.toLocal().array
     val array2 = corpus2.toLocal().array
-    for (i <- array1) {mapText1(i.getURI) = i.getIndices}
-    for (i <- array2) {mapText2(i.getURI) = i.getIndices}
+    for (i <- array1) {mapText1(i.getURI) = i.getIndices
+      require(i.getIndices != null, "the value in mapText1 shouldn't be null")}
+    for (i <- array2) {mapText2(i.getURI) = i.getIndices
+      require(i.getIndices != null, "the value in mapText2 shouldn't be null")}
     val Feature: ArrayBuffer[TextFeature] = ArrayBuffer()
-    for(pair <- pairsArray) {
-      require(mapText1.contains(pair.id1))
-      val indices1 = mapText1.get(pair.id1).get
-      require(mapText2.contains(pair.id2Positive))
-      val indices2Pos = mapText2.get(pair.id2Positive).get
-      require(mapText2.contains(pair.id2Negative))
-      val indices2Neg = mapText2.get(pair.id2Negative).get
+    val res = pairsArray.map(x => {
+      val indices1 = mapText1.get(x.id1).get
+      val indices2Pos = mapText2.get(x.id2Positive).get
+      val indices2Neg = mapText2.get(x.id2Negative).get
       require(indices1 != null,
         "pairsArray haven't been transformed from word to index yet, please word2idx first")
       require(indices2Pos != null,
         "pairsArray haven't been transformed from word to index yet, please word2idx first")
-      require(indices2Neg != null,
+      require(indices2Neg.length == indices2Pos.length,
         "pairsArray haven't been transformed from word to index yet, please word2idx first")
-      val textFeature = TextFeature(null, pair.id1 + pair.id2Positive + pair.id2Negative)
+      val textFeature = TextFeature(null, x.id1 + x.id2Positive + x.id2Negative)
       val pairedIndices = indices1 ++ indices2Pos ++ indices1 ++ indices2Neg
       val feature = Tensor(pairedIndices, Array(2, indices1.length + indices2Pos.length))
       val label = Tensor(Array(1.0f, 0.0f), Array(2, 1))
       textFeature(TextFeature.sample) = Sample(feature, label)
       Feature.append(textFeature)
-    }
+    })
     TextSet.array(Feature.toArray)
   }
-
 
   /**
    * Used to generate a TextSet for ranking.
@@ -487,6 +503,26 @@ object TextSet {
     TextSet.rdd(res)
   }
 
+  /**
+    * Used to generate a TextSet for ranking.
+    *
+    * This method does the following:
+    * 1. For each [[Relation.id1]], find the list of [[Relation.id2]] with corresponding
+    * [[Relation.label]] that comes together with [[Relation.id1]].
+    * In other words, group relations by [[Relation.id1]].
+    * 2. Join with corpus to transform each id to indexedTokens.
+    * Note: Make sure that the corpus has been transformed by [[SequenceShaper]] and [[WordIndexer]].
+    * 3. For each list, generate a TextFeature having Sample with:
+    * - feature of shape (listLength, text1Length + text2Length).
+    * - label of shape (listLength, 1).
+    *
+    * @param relations Array of [[Relation]].
+    * @param corpus1 LocalTextSet that contains all [[Relation.id1]]. For each TextFeature
+    *                in corpus1, text must have been transformed to indexedTokens of the same length.
+    * @param corpus2 LocalTextSet that contains all [[Relation.id2]]. For each TextFeature
+    *                in corpus2, text must have been transformed to indexedTokens of the same length.
+    * @return LocalTextSet.
+    */
   def fromRelationLists(
       relations: Array[Relation],
       corpus1: TextSet,
@@ -499,8 +535,10 @@ object TextSet {
     val mapText2: MMap[String, Array[Float]] = MMap()
     val array1 = corpus1.toLocal().array
     val array2 = corpus2.toLocal().array
-    for (i <- array1) {mapText1(i.getURI) = i.getIndices}
-    for (i <- array2) {mapText2(i.getURI) = i.getIndices}
+    for (i <- array1) {mapText1(i.getURI) = i.getIndices
+      require(i.getIndices != null, "the value in mapText1 shouldn't be null")}
+    for (i <- array2) {mapText2(i.getURI) = i.getIndices
+      require(i.getIndices != null, "the value in mapText2 shouldn't be null")}
     val resMap: MMap[String, ArrayBuffer[String]] = MMap()
     for(rel <- relations) {
       if (! resMap.contains(rel.id1)) {
@@ -508,26 +546,22 @@ object TextSet {
         resMap(rel.id1) = buffer
       }
       if (! resMap.get(rel.id1).get.contains(rel.id2)) {
-       val buffer = resMap.get(rel.id1).get
+        val buffer = resMap.get(rel.id1).get
         buffer.append(rel.id2)
-        resMap(rel.id1) = buffer
       }
     }
     val featureBuffer: ArrayBuffer[TextFeature] = ArrayBuffer()
-    for((k, v) <- resMap) {
+    for((id1, id2ArrayBuffer) <- resMap) {
       val labelMap: MMap[String, Int] = MMap()
-      for(rel <- relations) {if (rel.id1 == k) {labelMap(rel.id2) = rel.label}}
-      val id2Array = v
+      for(rel <- relations) {if (rel.id1 == id1) {labelMap(rel.id2) = rel.label}}
+      val id2Array = id2ArrayBuffer
       val id2ArrayLength = id2Array.length
-      val textFeature = TextFeature(null, uri = k ++ id2Array.mkString(""))
+      val textFeature = TextFeature(null, uri = id1 ++ id2Array.mkString(""))
       var indices2Array: ArrayBuffer[Array[Float]] = ArrayBuffer()
-      for(buf <- id2Array) {
-        val indices = mapText2.get(buf.toString).get
-        indices2Array.append(indices)
-      }
+      indices2Array = id2Array.map(x => {mapText2.get(x.toString).get})
       require(indices2Array != null,
         "id2 haven't been transformed from word to index yet, please word2idx first")
-      val indices1 = mapText1.get(k).get
+      val indices1 = mapText1.get(id1).get
       require(indices1 != null,
         "id1 haven't been transformed from word to index yet, please word2idx first")
       val labelArray: ArrayBuffer[Float] = ArrayBuffer()
