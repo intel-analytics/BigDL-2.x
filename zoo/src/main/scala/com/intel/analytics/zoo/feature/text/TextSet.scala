@@ -397,23 +397,14 @@ object TextSet {
   }
 
   /**
-    * Used to generate a TextSet for pairwise training.
-    *
-    * This method does the following:
-    * 1. Generate all RelationPairs: (id1, id2Positive, id2Negative) from Relations.
-    * 2. Join RelationPairs with corpus to transform id to indexedTokens.
-    * Note: Make sure that the corpus has been transformed by [[SequenceShaper]] and [[WordIndexer]].
-    * 3. For each pair, generate a TextFeature having Sample with:
-    * - feature of shape (2, text1Length + text2Length).
-    * - label of value [1 0] as the positive relation is placed before the negative one.
-    *
-    * @param relations Array of [[Relation]].
-    * @param corpus1 LocalTextSet that contains all [[Relation.id1]]. For each TextFeature
-    *                in corpus1, text must have been transformed to indexedTokens of the same length.
-    * @param corpus2 LocalTextSet that contains all [[Relation.id2]]. For each TextFeature
-    *                in corpus2, text must have been transformed to indexedTokens of the same length.
-    * @return LocalTextSet.
-    */
+   * Generate a TextSet for pairwise training using Relation array.
+   * @param relations Array of [[Relation]].
+   * @param corpus1 LocalTextSet that contains all [[Relation.id1]]. For each TextFeature
+   *                in corpus1, text must have been transformed to indexedTokens of the same length.
+   * @param corpus2 LocalTextSet that contains all [[Relation.id2]]. For each TextFeature
+   *                in corpus2, text must have been transformed to indexedTokens of the same length.
+   * @return LocalTextSet.
+   */
   def fromRelationPairs(
       relations: Array[Relation],
       corpus1: TextSet,
@@ -504,25 +495,14 @@ object TextSet {
   }
 
   /**
-    * Used to generate a TextSet for ranking.
-    *
-    * This method does the following:
-    * 1. For each [[Relation.id1]], find the list of [[Relation.id2]] with corresponding
-    * [[Relation.label]] that comes together with [[Relation.id1]].
-    * In other words, group relations by [[Relation.id1]].
-    * 2. Join with corpus to transform each id to indexedTokens.
-    * Note: Make sure that the corpus has been transformed by [[SequenceShaper]] and [[WordIndexer]].
-    * 3. For each list, generate a TextFeature having Sample with:
-    * - feature of shape (listLength, text1Length + text2Length).
-    * - label of shape (listLength, 1).
-    *
-    * @param relations Array of [[Relation]].
-    * @param corpus1 LocalTextSet that contains all [[Relation.id1]]. For each TextFeature
-    *                in corpus1, text must have been transformed to indexedTokens of the same length.
-    * @param corpus2 LocalTextSet that contains all [[Relation.id2]]. For each TextFeature
-    *                in corpus2, text must have been transformed to indexedTokens of the same length.
-    * @return LocalTextSet.
-    */
+   *  Generate a TextSet for pairwise training using Relation array.
+   * @param relations Array of [[Relation]].
+   * @param corpus1 LocalTextSet that contains all [[Relation.id1]]. For each TextFeature
+   *                in corpus1, text must have been transformed to indexedTokens of the same length.
+   * @param corpus2 LocalTextSet that contains all [[Relation.id2]]. For each TextFeature
+   *                in corpus2, text must have been transformed to indexedTokens of the same length.
+   * @return LocalTextSet.
+   */
   def fromRelationLists(
       relations: Array[Relation],
       corpus1: TextSet,
