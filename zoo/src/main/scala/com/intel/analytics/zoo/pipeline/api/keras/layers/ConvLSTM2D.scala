@@ -33,7 +33,7 @@ import scala.reflect.ClassTag
  * Note that currently only 'same' padding is supported.
  * The convolution kernel for this layer is a square kernel with equal strides.
  * The input of this layer should be 5D, i.e. (samples, time, channels, rows, cols), and
- * CHANNEL_FIRST' (dimOrdering='th') is expected.
+ * 'CHANNEL_FIRST' (dimOrdering='th') is expected.
  *
  * When using this layer as the first layer in a model, you need to provide the argument
  * inputShape (a Single Shape, does not include the batch dimension).
@@ -57,7 +57,7 @@ import scala.reflect.ClassTag
  *                     applied to the recurrent weights matrices. Default is null.
  * @param bRegularizer An instance of [[Regularizer]], applied to the bias. Default is null.
  * @param returnSeq Whether to return the full sequence or the last output
- *                        in the output sequence. Default is false.
+ *                  in the output sequence. Default is false.
  * @param goBackward Whether the input sequence will be processed backwards. Default is false.
  * @param mInputShape A Single Shape, does not include the batch dimension.
  * @tparam T The numeric type of parameter(e.g. weight, bias). Only support float/double now.
