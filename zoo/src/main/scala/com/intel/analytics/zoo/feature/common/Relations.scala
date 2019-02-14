@@ -125,7 +125,7 @@ object Relations {
     }
 
     for((id1, labelMap) <- relSet) {
-      if(labelMap.contains(0) && labelMap.contains(1)) {
+      if (labelMap.contains(0) && labelMap.contains(1)) {
         val negatives = labelMap.get(0).get.toArray
         val positives = labelMap.get(1).get.toArray
         for (id2Positive <- positives) {

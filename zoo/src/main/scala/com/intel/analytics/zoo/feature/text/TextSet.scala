@@ -398,6 +398,7 @@ object TextSet {
 
   /**
    * Generate a TextSet for pairwise training using Relation array.
+   *
    * @param relations Array of [[Relation]].
    * @param corpus1 LocalTextSet that contains all [[Relation.id1]]. For each TextFeature
    *                in corpus1, text must have been transformed to indexedTokens of the same length.
@@ -495,7 +496,8 @@ object TextSet {
   }
 
   /**
-   *  Generate a TextSet for pairwise training using Relation array.
+   * Generate a TextSet for ranking using Relation array.
+   *
    * @param relations Array of [[Relation]].
    * @param corpus1 LocalTextSet that contains all [[Relation.id1]]. For each TextFeature
    *                in corpus1, text must have been transformed to indexedTokens of the same length.
