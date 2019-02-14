@@ -417,17 +417,17 @@ object TextSet {
     val mapText2: MMap[String, Array[Float]] = MMap()
     val arrayText1 = corpus1.toLocal().array
     val arrayText2 = corpus2.toLocal().array
-    for (i <- arrayText1) {
-      val indices = i.getIndices
+    for (text <- arrayText1) {
+      val indices = text.getIndices
       require(indices != null,
         "corpus1 haven't been transformed from word to index yet, please word2idx first")
-      mapText1(i.getURI) = indices
+      mapText1(text.getURI) = indices
     }
-    for (i <- arrayText2) {
-      val indices = i.getIndices
+    for (text <- arrayText2) {
+      val indices = text.getIndices
       require(indices != null,
         "corpus2 haven't been transformed from word to index yet, please word2idx first")
-      mapText2(i.getURI) = indices
+      mapText2(text.getURI) = indices
     }
     val res = pairsArray.map(x => {
       val indices1 = mapText1.get(x.id1).get
@@ -512,25 +512,23 @@ object TextSet {
       relations: Array[Relation],
       corpus1: TextSet,
       corpus2: TextSet): LocalTextSet = {
-    require(corpus1.isLocal,
-      "corpus1 must be a LocalTextSet")
-    require(corpus2.isLocal,
-      "corpus2 must be a LocalTextSet")
+    require(corpus1.isLocal, "corpus1 must be a LocalTextSet")
+    require(corpus2.isLocal, "corpus2 must be a LocalTextSet")
     val mapText1: MMap[String, Array[Float]] = MMap()
     val mapText2: MMap[String, Array[Float]] = MMap()
     val array1 = corpus1.toLocal().array
     val array2 = corpus2.toLocal().array
-    for (i <- array1) {
-      val indices = i.getIndices
+    for (text <- array1) {
+      val indices = text.getIndices
       require(indices != null,
         "corpus1 haven't been transformed from word to index yet, please word2idx first")
-      mapText1(i.getURI) = indices
+      mapText1(text.getURI) = indices
     }
-    for (i <- array2) {
-      val indices = i.getIndices
+    for (text <- array2) {
+      val indices = text.getIndices
       require(indices != null,
         "corpus2 haven't been transformed from word to index yet, please word2idx first")
-      mapText2(i.getURI) = indices
+      mapText2(text.getURI) = indices
     }
     val resMap: MMap[String, ArrayBuffer[String]] = MMap()
     for(rel <- relations) {
