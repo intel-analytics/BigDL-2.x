@@ -74,15 +74,17 @@ object QARanker {
     parser.parse(args, QARankerParams()).map { param =>
       val sc = NNContext.initNNContext("QARanker Example")
 
-      val qSet = TextSet.readCSV(param.dataPath + "/question_corpus.csv")
+      val qSet = TextSet.readCSV(param.dataPath + "/question_corpus.csv", sc, param.partitionNum)
         .tokenize().normalize().word2idx(minFreq = 2).shapeSequence(param.questionLength)
-      val aSet = TextSet.readCSV(param.dataPath + "/answer_corpus.csv")
+      val aSet = TextSet.readCSV(param.dataPath + "/answer_corpus.csv", sc, param.partitionNum)
         .tokenize().normalize().word2idx(minFreq = 2, existingMap = qSet.getWordIndex)
         .shapeSequence(param.answerLength)
 
-      val trainRelations = Relations.read(param.dataPath + "/relation_train.csv")
+      val trainRelations = Relations.read(param.dataPath + "/relation_train.csv",
+        sc, param.partitionNum)
       val trainSet = TextSet.fromRelationPairs(trainRelations, qSet, aSet)
-      val validateRelations = Relations.read(param.dataPath + "/relation_valid.csv")
+      val validateRelations = Relations.read(param.dataPath + "/relation_valid.csv",
+        sc, param.partitionNum)
       val validateSet = TextSet.fromRelationLists(validateRelations, qSet, aSet)
       println("validateSet :" + validateSet.toLocal().array.length)
       val knrm = if (param.model.isDefined) {
