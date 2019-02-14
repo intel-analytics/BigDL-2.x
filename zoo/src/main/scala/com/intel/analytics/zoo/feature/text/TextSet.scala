@@ -417,20 +417,24 @@ object TextSet {
     val mapText2: MMap[String, Array[Float]] = MMap()
     val arrayText1 = corpus1.toLocal().array
     val arrayText2 = corpus2.toLocal().array
-    for (i <- arrayText1) {mapText1(i.getURI) = i.getIndices
-      require(i.getIndices != null, "the value in mapText1 shouldn't be null")}
-    for (i <- arrayText2) {mapText2(i.getURI) = i.getIndices
-      require(i.getIndices != null, "the value in mapText2 shouldn't be null")}
+    for (i <- arrayText1) {
+      val indices = i.getIndices
+      require(indices != null,
+        "corpus1 haven't been transformed from word to index yet, please word2idx first")
+      mapText1(i.getURI) = indices
+    }
+    for (i <- arrayText2) {
+      val indices = i.getIndices
+      require(indices != null,
+        "corpus2 haven't been transformed from word to index yet, please word2idx first")
+      mapText2(i.getURI) = indices
+    }
     val res = pairsArray.map(x => {
       val indices1 = mapText1.get(x.id1).get
       val indices2Pos = mapText2.get(x.id2Positive).get
       val indices2Neg = mapText2.get(x.id2Negative).get
-      require(indices1 != null,
-        "pairsArray haven't been transformed from word to index yet, please word2idx first")
-      require(indices2Pos != null,
-        "pairsArray haven't been transformed from word to index yet, please word2idx first")
       require(indices2Neg.length == indices2Pos.length,
-        "pairsArray haven't been transformed from word to index yet, please word2idx first")
+        "corpus2 contains texts with different lengths, please shapeSequence first")
       val textFeature = TextFeature(null, x.id1 + x.id2Positive + x.id2Negative)
       val pairedIndices = indices1 ++ indices2Pos ++ indices1 ++ indices2Neg
       val feature = Tensor(pairedIndices, Array(2, indices1.length + indices2Pos.length))
@@ -516,10 +520,18 @@ object TextSet {
     val mapText2: MMap[String, Array[Float]] = MMap()
     val array1 = corpus1.toLocal().array
     val array2 = corpus2.toLocal().array
-    for (i <- array1) {mapText1(i.getURI) = i.getIndices
-      require(i.getIndices != null, "the value in mapText1 shouldn't be null")}
-    for (i <- array2) {mapText2(i.getURI) = i.getIndices
-      require(i.getIndices != null, "the value in mapText2 shouldn't be null")}
+    for (i <- array1) {
+      val indices = i.getIndices
+      require(indices != null,
+        "corpus1 haven't been transformed from word to index yet, please word2idx first")
+      mapText1(i.getURI) = indices
+    }
+    for (i <- array2) {
+      val indices = i.getIndices
+      require(indices != null,
+        "corpus2 haven't been transformed from word to index yet, please word2idx first")
+      mapText2(i.getURI) = indices
+    }
     val resMap: MMap[String, ArrayBuffer[String]] = MMap()
     for(rel <- relations) {
       if (! resMap.contains(rel.id1)) {
@@ -540,11 +552,7 @@ object TextSet {
       val textFeature = TextFeature(null, uri = id1 ++ id2Array.mkString(""))
       var indices2Array: ArrayBuffer[Array[Float]] = ArrayBuffer()
       indices2Array = id2Array.map(x => {mapText2.get(x.toString).get})
-      require(indices2Array != null,
-        "id2 haven't been transformed from word to index yet, please word2idx first")
       val indices1 = mapText1.get(id1).get
-      require(indices1 != null,
-        "id1 haven't been transformed from word to index yet, please word2idx first")
       val labelArray: ArrayBuffer[Float] = ArrayBuffer()
       for(id <- id2Array) {
         val label = labelMap.get(id).get
