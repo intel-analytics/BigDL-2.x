@@ -21,12 +21,12 @@ from bigdl.util.common import get_spark_context
 import tensorflow.keras.backend as K
 import numpy as np
 
+
 class Model(object):
 
     def __init__(self, model=None):
         self.model = model
         self.tf_optimizer = None
-
 
     @classmethod
     def from_keras(cls, model):
@@ -128,8 +128,6 @@ class Model(object):
     def predict(self,
                 x,
                 batch_size=None,
-                verbose=0,
-                steps=None,
                 distributed=False):
 
         if isinstance(x, TFDataset):
@@ -146,9 +144,7 @@ class Model(object):
                 return np.array(self._predict_distributed(dataset, batch_size).collect())
             else:
                 return self.model.predict(x=x,
-                                      batch_size=batch_size,
-                                      verbose=verbose,
-                                      steps=steps)
+                                      batch_size=batch_size)
 
     def _predict_distributed(self, x, batch_size):
         predictor = TFPredictor.from_keras(self.model, x)
