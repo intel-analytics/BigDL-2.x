@@ -103,7 +103,7 @@ object Relations {
    */
   def generateRelationPairs(relations: Array[Relation]): Array[RelationPair] = {
     val relSet: MMap[String, MMap[Int, ArrayBuffer[String]]] = MMap()
-    val pairList: ListBuffer[RelationPair] = ListBuffer()
+    val pairList: ArrayBuffer[RelationPair] = ArrayBuffer()
     for (relation <- relations) {
       if (! relSet.contains(relation.id1)) {
         val id2Array: ArrayBuffer[String] = ArrayBuffer()
