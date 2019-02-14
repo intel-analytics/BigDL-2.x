@@ -106,30 +106,28 @@ object Relations {
     val pairList: ListBuffer[RelationPair] = ListBuffer()
     for (relation <- relations) {
       if (! relSet.contains(relation.id1)) {
-        relSet.+(relation.id1)
         val buffer: ArrayBuffer[String] = ArrayBuffer()
         buffer.append(relation.id2)
         relSet(relation.id1) = MMap(relation.label -> buffer)
       }
       else {
-        if (! relSet.get(relation.id1).get.contains(relation.label)) {
-          val buffer: ArrayBuffer[String] = ArrayBuffer()
-          buffer.append(relation.id2)
-          val map = relSet.get(relation.id1).get
-          map(relation.label) = buffer
-          relSet(relation.id1) = map
+        val labelMap = relSet.get(relation.id1).get
+        if (! labelMap.contains(relation.label)) {
+          val id2Array: ArrayBuffer[String] = ArrayBuffer()
+          id2Array.append(relation.id2)
+          labelMap(relation.label) = id2Array
+          relSet(relation.id1) = labelMap
         }
         else {
-          val res = relSet.get(relation.id1).get
-          res.get(relation.label).get.append(relation.id2)
+          labelMap.get(relation.label).get.append(relation.id2)
         }
       }
     }
 
-    for((id1, map) <- relSet) {
-      if(map.contains(0) && map.contains(1)) {
-        val negatives = map.get(0).get.toArray
-        val positives = map.get(1).get.toArray
+    for((id1, labelMap) <- relSet) {
+      if(labelMap.contains(0) && labelMap.contains(1)) {
+        val negatives = labelMap.get(0).get.toArray
+        val positives = labelMap.get(1).get.toArray
         for (id2Positive <- positives) {
           for (id2Negative <- negatives) {
             val pair = RelationPair(id1, id2Positive, id2Negative)
