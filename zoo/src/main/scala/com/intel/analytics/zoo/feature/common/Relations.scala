@@ -106,9 +106,9 @@ object Relations {
     val pairList: ListBuffer[RelationPair] = ListBuffer()
     for (relation <- relations) {
       if (! relSet.contains(relation.id1)) {
-        val buffer: ArrayBuffer[String] = ArrayBuffer()
-        buffer.append(relation.id2)
-        relSet(relation.id1) = MMap(relation.label -> buffer)
+        val id2Array: ArrayBuffer[String] = ArrayBuffer()
+        id2Array.append(relation.id2)
+        relSet(relation.id1) = MMap(relation.label -> id2Array)
       }
       else {
         val labelMap = relSet.get(relation.id1).get
