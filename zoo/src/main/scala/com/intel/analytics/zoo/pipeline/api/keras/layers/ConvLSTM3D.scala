@@ -27,11 +27,11 @@ import scala.reflect.ClassTag
 
 /**
  * Convolutional LSTM for 3D input.
- * Data format currently supported for this layer is 'CHANNEL_FIRST' (dimOrdering='th').
- * Border mode currently supported for this layer is 'same'.
- * The convolution kernel for this layer is a cubic kernel with equal strides 'subsample'
- * for all dimensions.
- * The input of this layer should be 6D, i.e. (samples, time, channels, dim1, dim2, dim3)
+ * Note that currently only 'same' padding is supported.
+ * The convolution kernel for this layer is a cubic kernel with equal strides for
+ * all dimensions.
+ * The input of this layer should be 6D, i.e. (samples, time, channels, dim1, dim2, dim3),
+ * and 'CHANNEL_FIRST' (dimOrdering='th') is expected.
  *
  * When using this layer as the first layer in a model, you need to provide the argument
  * inputShape (a Single Shape, does not include the batch dimension).
