@@ -415,13 +415,12 @@ object TextSet {
     require(corpus2.isLocal, "corpus2 must be a LocalTextSet")
     val mapText1: MMap[String, Array[Float]] = MMap()
     val mapText2: MMap[String, Array[Float]] = MMap()
-    val array1 = corpus1.toLocal().array
-    val array2 = corpus2.toLocal().array
-    for (i <- array1) {mapText1(i.getURI) = i.getIndices
+    val arrayText1 = corpus1.toLocal().array
+    val arrayText2 = corpus2.toLocal().array
+    for (i <- arrayText1) {mapText1(i.getURI) = i.getIndices
       require(i.getIndices != null, "the value in mapText1 shouldn't be null")}
-    for (i <- array2) {mapText2(i.getURI) = i.getIndices
+    for (i <- arrayText2) {mapText2(i.getURI) = i.getIndices
       require(i.getIndices != null, "the value in mapText2 shouldn't be null")}
-    val Feature: ArrayBuffer[TextFeature] = ArrayBuffer()
     val res = pairsArray.map(x => {
       val indices1 = mapText1.get(x.id1).get
       val indices2Pos = mapText2.get(x.id2Positive).get
@@ -437,9 +436,9 @@ object TextSet {
       val feature = Tensor(pairedIndices, Array(2, indices1.length + indices2Pos.length))
       val label = Tensor(Array(1.0f, 0.0f), Array(2, 1))
       textFeature(TextFeature.sample) = Sample(feature, label)
-      Feature.append(textFeature)
+      textFeature
     })
-    TextSet.array(Feature.toArray)
+    TextSet.array(res)
   }
 
   /**
