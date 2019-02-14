@@ -21,7 +21,7 @@ import java.util
 
 import com.intel.analytics.bigdl.DataSet
 import com.intel.analytics.bigdl.dataset.{DataSet, Sample}
-import com.intel.analytics.zoo.feature.common.{Preprocessing, Relation, RelationPair, Relations}
+import com.intel.analytics.zoo.feature.common.{Preprocessing, Relation, Relations}
 import com.intel.analytics.zoo.feature.text.TruncMode.TruncMode
 import org.apache.hadoop.conf.Configuration
 import org.apache.hadoop.fs.{FileSystem, Path}
