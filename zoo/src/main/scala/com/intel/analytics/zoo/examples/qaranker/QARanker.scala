@@ -86,7 +86,7 @@ object QARanker {
       val validateRelations = Relations.read(param.dataPath + "/relation_valid.csv",
         sc, param.partitionNum)
       val validateSet = TextSet.fromRelationLists(validateRelations, qSet, aSet)
-      println("validateSet :" + validateSet.toLocal().array.length)
+
       val knrm = if (param.model.isDefined) {
         KNRM.loadModel(param.model.get)
       } else {
@@ -103,7 +103,6 @@ object QARanker {
         knrm.evaluateNDCG(validateSet, 5)
         knrm.evaluateMAP(validateSet)
       }
-      println(validateSet.toLocal().array.length)
       sc.stop()
     }
   }
