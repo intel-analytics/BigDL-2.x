@@ -20,7 +20,7 @@ import org.apache.spark.SparkContext
 import org.apache.spark.rdd.RDD
 import org.apache.spark.sql.SQLContext
 
-import scala.collection.mutable.{Map => MMap, ArrayBuffer, ListBuffer}
+import scala.collection.mutable.{Map => MMap, ArrayBuffer}
 import scala.io.Source
 
 object Relations {
