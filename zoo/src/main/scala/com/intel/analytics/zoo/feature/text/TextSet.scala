@@ -569,14 +569,9 @@ object TextSet {
         val label = labelMap.get(id).get
         labelArray.append(label.toFloat)
       }
-      var listIndices: Array[Float] = Array()
-      for(indices <- indices2Array) {
-        import Array._
-        listIndices = concat(listIndices, indices1)
-        listIndices = concat(listIndices, indices)
-      }
-      val feature = Tensor(listIndices, Array(id2ArrayLength,
-        indices1.length + indices2Array.head.length))
+      val data = indices2Array.flatMap(indices1 ++ _).toArray
+      val feature = Tensor(data,
+        Array(id2ArrayLength, indices1.length + indices2Array.head.length))
       val label = Tensor(labelArray.toArray, Array(id2ArrayLength, 1))
       textFeature(TextFeature.sample) = Sample(feature, label)
       featureBuffer.append(textFeature)
