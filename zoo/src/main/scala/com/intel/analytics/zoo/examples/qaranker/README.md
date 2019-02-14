@@ -54,7 +54,9 @@ See [here](#options) for more configurable options for this example.
 * `-b` `--batchSize` The number of samples per gradient update. Default is 200.
 * `-e` `--nbEpoch` The number of iterations to train the model. Default is 30.
 * `-l` `--learningRate` The learning rate for the model. Default is 0.001.
+* `--memoryType` Memory type used for caching training data. Default is `DRAM`. You can change it to `PMEM` if you have Intel Optane DC Persistent Memory.
 * `-m` `--model` Specify this option only if you want to load an existing KNRM model and in this case its path should be provided.
+
 
 
 ## Results
