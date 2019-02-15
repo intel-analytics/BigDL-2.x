@@ -102,7 +102,7 @@ class ConvLSTM2DSpec extends KerasBaseSpec {
     val layer = ConvLSTM2D[Float](8, 2, goBackwards = true, borderMode = "valid",
       innerActivation = "sigmoid", inputShape = Shape(4, 8, 15, 15))
     seq.add(layer)
-    seq.getOutputShape().toSingle().toArray should be (Array(-1, 8, 16, 16))
+    seq.getOutputShape().toSingle().toArray should be (Array(-1, 8, 14, 14))
     checkOutputAndGrad(seq.asInstanceOf[AbstractModule[Tensor[Float], Tensor[Float], Float]],
       kerasCode, weightConverter, precision = 1e-2)
   }
