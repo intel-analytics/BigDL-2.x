@@ -538,8 +538,8 @@ object TextSet {
         text1Map(rel.id1) = id2Array
       }
       else {
-        val buffer = text1Map.get(rel.id1).get
-        buffer.append((rel.id2, rel.label))
+        val id2Array = text1Map.get(rel.id1).get
+        id2Array.append((rel.id2, rel.label))
       }
     }
     val features: ArrayBuffer[TextFeature] = ArrayBuffer()
