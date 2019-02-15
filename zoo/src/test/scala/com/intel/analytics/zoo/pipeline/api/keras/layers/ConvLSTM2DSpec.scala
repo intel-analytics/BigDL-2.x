@@ -64,7 +64,7 @@ class ConvLSTM2DSpec extends KerasBaseSpec {
     val layer = ConvLSTM2D[Float](32, 4, returnSequences = true, borderMode = "valid",
       inputShape = Shape(8, 40, 40, 32))
     seq.add(layer)
-    seq.getOutputShape().toSingle().toArray should be (Array(-1, 8, 32, 40, 32))
+    seq.getOutputShape().toSingle().toArray should be (Array(-1, 8, 32, 37, 29))
     checkOutputAndGrad(seq.asInstanceOf[AbstractModule[Tensor[Float], Tensor[Float], Float]],
       kerasCode, weightConverter, precision = 1e-2)
   }
@@ -100,7 +100,7 @@ class ConvLSTM2DSpec extends KerasBaseSpec {
       """.stripMargin
     val seq = Sequential[Float]()
     val layer = ConvLSTM2D[Float](8, 2, goBackwards = true, borderMode = "valid",
-      innerActivation = "sigmoid", inputShape = Shape(4, 8, 16, 16))
+      innerActivation = "sigmoid", inputShape = Shape(4, 8, 15, 15))
     seq.add(layer)
     seq.getOutputShape().toSingle().toArray should be (Array(-1, 8, 16, 16))
     checkOutputAndGrad(seq.asInstanceOf[AbstractModule[Tensor[Float], Tensor[Float], Float]],
