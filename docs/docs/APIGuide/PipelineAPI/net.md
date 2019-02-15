@@ -201,10 +201,11 @@ the [Image Classification Using TFNet Notebook](https://github.com/intel-analyti
 
 ## TFDataset
 
-TFDatset represents a distributed collection of elements to be feed into TensorFlow graph.
-TFDatasets can be created using a RDD and each of its records is a list of numpy.ndarray representing
-the tensors to be feed into TensorFlow graph on each iteration. TFDatasets must be used with the
-TFOptimizer or TFPredictor.
+TFDatasets represents a distributed collection of elements (nested structure a.k.a
+nested tuple or dictionary of tensors) to be feed into Tensorflow graph.
+TFDatasets can be created using a RDD and each of its records is one or more numpy.ndarray
+of the same nested structure, representing the tensors to be feed into TensorFlow
+graph on each iteration. TFDatasets must be used with TFOptimizer or TFPredictor.
 
 __Note__: This feature currently requires __tensorflow 1.10__ and OS is one of the following 64-bit systems.
 __Ubuntu 16.04 or later__, __macOS 10.12.6 or later__ and __Windows 7 or later__.
@@ -215,10 +216,13 @@ be found [here](https://github.com/tensorflow/tensorflow/tree/v1.10.0/tensorflow
 **Python**
 ```python
    dataset = TFDataset.from_rdd(train_rdd,
-                                 names=["features", "labels"],
-                                 shapes=[[28, 28, 1], [1]],
-                                 types=[tf.float32, tf.int32],
-                                 batch_size=BATCH_SIZE)
+                                tensor_structure=(TensorMeta(dtype=tf.float32,
+                                                             name="feature",
+                                                             shape=(28, 28, 1)),
+                                                  TensorMeta(dtype=tf.int32,
+                                                             name="label",
+                                                             shape=())),
+                                batch_size=BATCH_SIZE)
 ```
 
 ## TFOptimizer
