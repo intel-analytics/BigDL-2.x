@@ -530,33 +530,32 @@ object TextSet {
         "corpus2 haven't been transformed from word to index yet, please word2idx first")
       mapText2(text.getURI) = indices
     }
-    val resMap: MMap[String, ArrayBuffer[(String, Int)]] = MMap()
+    val text1Map: MMap[String, ArrayBuffer[(String, Int)]] = MMap()
     for(rel <- relations) {
-      if (! resMap.contains(rel.id1)) {
+      if (! text1Map.contains(rel.id1)) {
         val buffer: ArrayBuffer[(String, Int)] = ArrayBuffer()
-        resMap(rel.id1) = buffer
+        text1Map(rel.id1) = buffer
       }
-      if (! resMap.get(rel.id1).get.contains(rel.id2)) {
-        val buffer = resMap.get(rel.id1).get
+      if (! text1Map.get(rel.id1).get.contains(rel.id2)) {
+        val buffer = text1Map.get(rel.id1).get
         buffer.append((rel.id2, rel.label))
       }
     }
-    val featureBuffer: ArrayBuffer[TextFeature] = ArrayBuffer()
-    for((id1, id2LabelArray) <- resMap) {
+    val features: ArrayBuffer[TextFeature] = ArrayBuffer()
+    for((id1, id2LabelArray) <- text1Map) {
       val id2ArrayLength = id2LabelArray.length
-      val textFeature = TextFeature(null, uri = id1 ++ id2LabelArray.mkString(""))
+      val textFeature = TextFeature(null, uri = id1 ++ id2LabelArray.map(_._1).mkString(""))
       var indices2Array: ArrayBuffer[Array[Float]] = ArrayBuffer()
-      indices2Array = id2LabelArray.map(x => {mapText2.get(x.toString).get})
+      indices2Array = id2LabelArray.map(x => {mapText2.get(x._1.toString).get})
       val indices1 = mapText1.get(id1).get
       val data = indices2Array.flatMap(indices1 ++ _).toArray
       val feature = Tensor(data,
         Array(id2ArrayLength, indices1.length + indices2Array.head.length))
-      val shape = Array(id2ArrayLength, 1)
-      val label = Tensor(id2LabelArray.toArray.map(_._2.toFloat), shape)
+      val label = Tensor(id2LabelArray.toArray.map(_._2.toFloat), Array(id2ArrayLength, 1))
       textFeature(TextFeature.sample) = Sample(feature, label)
-      featureBuffer.append(textFeature)
+      features.append(textFeature)
     }
-    TextSet.array(featureBuffer.toArray)
+    TextSet.array(features.toArray)
   }
 
   /**
