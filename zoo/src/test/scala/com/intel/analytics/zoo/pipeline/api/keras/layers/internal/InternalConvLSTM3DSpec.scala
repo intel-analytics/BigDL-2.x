@@ -21,6 +21,7 @@ import com.intel.analytics.bigdl.optim.{L2Regularizer, SGD}
 import com.intel.analytics.bigdl.tensor.Tensor
 import com.intel.analytics.bigdl.utils.{T, Table}
 import com.intel.analytics.zoo.pipeline.api.keras.layers.InternalConvLSTM3D
+import com.intel.analytics.zoo.pipeline.api.keras.layers.internal.InternalRecurrent
 import org.scalatest.{BeforeAndAfter, FlatSpec, Matchers}
 
 import scala.math._

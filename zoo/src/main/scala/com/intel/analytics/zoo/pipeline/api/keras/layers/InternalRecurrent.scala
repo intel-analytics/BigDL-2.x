@@ -14,8 +14,9 @@
  * limitations under the License.
  */
 
-package com.intel.analytics.bigdl.nn
+package com.intel.analytics.zoo.pipeline.api.keras.layers.internal
 
+import com.intel.analytics.bigdl.nn.{BatchNormParams, BigDLWrapperUtils, Cell, Recurrent}
 import com.intel.analytics.bigdl.nn.abstractnn.{AbstractModule, Activity}
 import com.intel.analytics.bigdl.serialization.Bigdl.{AttrValue, BigDLModule}
 import com.intel.analytics.bigdl.tensor.Tensor
@@ -118,14 +119,14 @@ class InternalRecurrent[T: ClassTag](
     else hidden
 
     while (i <= times) {
-      currentInput(inputDim) = Recurrent.selectCopy(input2Cell, i, stepInput2CellBuf)
+      currentInput(inputDim) = BigDLWrapperUtils.selectCopy(input2Cell, i, stepInput2CellBuf)
       cells(i - 1).forward(currentInput)
       val curOutput = cells(i - 1).output
       currentInput(hidDim) = curOutput[Table](hidDim)
       i += 1
     }
 
-    Recurrent.copy(cells.map(x => x.output.toTable[Tensor[T]](inputDim)),
+    BigDLWrapperUtils.copy(cells.map(x => x.output.toTable[Tensor[T]](inputDim)),
       output)
     output
   }
