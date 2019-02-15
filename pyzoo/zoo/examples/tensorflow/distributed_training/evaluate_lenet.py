@@ -16,7 +16,7 @@
 
 import tensorflow as tf
 from zoo import init_nncontext
-from zoo.pipeline.api.net import TFDataset, TFPredictor
+from zoo.pipeline.api.net import TFDataset, TFPredictor, TensorMeta
 import numpy as np
 import sys
 
@@ -42,16 +42,16 @@ def main(data_num):
                                 np.array(rec_tuple[1])])
 
     dataset = TFDataset.from_rdd(rdd,
-                                 names=["features", "labels"],
-                                 shapes=[[28, 28, 1], [1]],
-                                 types=[tf.float32, tf.int32],
-                                 batch_per_thread=20
-                                 )
+                                 tensor_structure=(TensorMeta(dtype=tf.float32,
+                                                              name="feature",
+                                                              shape=(28, 28, 1)),
+                                                   TensorMeta(dtype=tf.int32,
+                                                              name="label",
+                                                              shape=())),
+                                 batch_per_thread=20)
 
     # construct the model from TFDataset
     images, labels = dataset.tensors
-
-    labels = tf.squeeze(labels)
 
     with slim.arg_scope(lenet.lenet_arg_scope()):
         logits, end_points = lenet.lenet(images, num_classes=10, is_training=False)
@@ -65,7 +65,7 @@ def main(data_num):
         sess.run(tf.global_variables_initializer())
         saver.restore(sess, "/tmp/lenet/model")
 
-        predictor = TFPredictor(sess, [correct])
+        predictor = TFPredictor.from_outputs(sess, [correct])
 
         accuracy = predictor.predict().mean()
 

@@ -17,7 +17,7 @@ import heapq
 
 import tensorflow as tf
 from zoo import init_nncontext
-from zoo.pipeline.api.net import TFOptimizer, TFDataset
+from zoo.pipeline.api.net import TFOptimizer, TFDataset, TensorMeta
 from bigdl.optim.optimizer import *
 import numpy as np
 import sys
@@ -40,16 +40,19 @@ def main(max_epoch, data_num):
         image_rdd = sc.parallelize(images_data[:data_num])
         labels_rdd = sc.parallelize(labels_data[:data_num])
         rdd = image_rdd.zip(labels_rdd) \
-            .map(lambda rec_tuple: [normalizer(rec_tuple[0], mnist.TRAIN_MEAN, mnist.TRAIN_STD),
-                                    np.array(rec_tuple[1])])
+            .map(lambda rec_tuple: (normalizer(rec_tuple[0], mnist.TRAIN_MEAN, mnist.TRAIN_STD),
+                                    np.array(rec_tuple[1])))
         return rdd
 
     training_rdd = get_data_rdd("train")
     testing_rdd = get_data_rdd("test")
     dataset = TFDataset.from_rdd(training_rdd,
-                                 names=["features", "labels"],
-                                 shapes=[[28, 28, 1], []],
-                                 types=[tf.float32, tf.int32],
+                                 tensor_structure=(TensorMeta(dtype=tf.float32,
+                                                              name="feature",
+                                                              shape=(28, 28, 1)),
+                                                   TensorMeta(dtype=tf.int32,
+                                                              name="label",
+                                                              shape=())),
                                  batch_size=280,
                                  val_rdd=testing_rdd
                                  )
@@ -63,10 +66,10 @@ def main(max_epoch, data_num):
     loss = tf.reduce_mean(tf.losses.sparse_softmax_cross_entropy(logits=logits, labels=labels))
 
     # create a optimizer
-    optimizer = TFOptimizer(loss, Adam(1e-3),
-                            val_outputs=[logits],
-                            val_labels=[labels],
-                            val_method=Top1Accuracy())
+    optimizer = TFOptimizer.from_loss(loss, Adam(1e-3),
+                                      val_outputs=[logits],
+                                      val_labels=[labels],
+                                      val_method=Top1Accuracy())
     optimizer.set_train_summary(TrainSummary("/tmp/az_lenet", "lenet"))
     optimizer.set_val_summary(ValidationSummary("/tmp/az_lenet", "lenet"))
     # kick off training
