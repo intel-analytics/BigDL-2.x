@@ -44,10 +44,10 @@ class ConvLSTM2D(ZooKerasLayer):
     inner_activation: String representation of the activation function for inner cells.
                       Default is 'hard_sigmoid'.
     dim_ordering: Format of input data. Only 'th' (Channel First) is supported for now.
-    border_mode: Only 'same' is supported for now.
     subsample: Tuple of length 2. Factor by which to subsample output.
                Also called strides elsewhere.
                Only support subsample[0] equal to subsample[1] for now. Default is (1, 1).
+    border_mode: One of "same" or "valid". Also called padding elsewhere. Default is "same".
     W_regularizer: An instance of [[Regularizer]], (eg. L1 or L2 regularization),
                    applied to the input weights matrices. Default is None.
     U_regularizer: An instance of [[Regularizer]], applied the recurrent weights matrices.
@@ -69,8 +69,8 @@ class ConvLSTM2D(ZooKerasLayer):
                  return_sequences=False, go_backwards=False, input_shape=None, **kwargs):
         if nb_row != nb_col:
             raise ValueError("For ConvLSTM2D, only square kernel is supported for now")
-        if border_mode != "same":
-            raise ValueError("For ConvLSTM2D, only border_mode='same' is supported for now")
+        if border_mode != "same" and border_mode != "valid":
+            raise ValueError("For ConvLSTM2D, only support border_mode as 'same' and 'valid'")
         if subsample[0] != subsample[1]:
             raise ValueError("For ConvLSTM2D, only equal strides is supported for now")
         super(ConvLSTM2D, self).__init__(None,
@@ -80,6 +80,7 @@ class ConvLSTM2D(ZooKerasLayer):
                                          inner_activation,
                                          dim_ordering,
                                          subsample[0],
+                                         border_mode,
                                          W_regularizer,
                                          U_regularizer,
                                          b_regularizer,
@@ -109,6 +110,7 @@ class ConvLSTM3D(ZooKerasLayer):
     subsample: Tuple of length 3. Factor by which to subsample output.
                Also called strides elsewhere. Default is (1, 1, 1).
                Only support subsample[0] equal to subsample[1] equal to subsample[2] for now.
+    border_mode: One of "same" or "valid". Also called padding elsewhere. Default is "same".
     W_regularizer: An instance of [[Regularizer]], (eg. L1 or L2 regularization),
                    applied to the input weights matrices. Default is None.
     U_regularizer: An instance of [[Regularizer]], applied the recurrent weights matrices.
@@ -129,14 +131,15 @@ class ConvLSTM3D(ZooKerasLayer):
                  return_sequences=False, go_backwards=False, input_shape=None, **kwargs):
         if dim_ordering != "th":
             raise ValueError("For ConvLSTM3D, only dim_ordering='th' is supported for now")
-        if border_mode != "same":
-            raise ValueError("For ConvLSTM3D, only border_mode='same' is supported for now")
+        if border_mode != "same" and border_mode != "valid":
+            raise ValueError("For ConvLSTM3D, only support border_mode as 'same' and 'valid'")
         if subsample[0] != subsample[1] or subsample[1] != subsample[2]:
             raise ValueError("For ConvLSTM3D, only equal strides is supported for now")
         super(ConvLSTM3D, self).__init__(None,
                                          nb_filter,
                                          nb_kernel,
                                          subsample[0],
+                                         border_mode,
                                          W_regularizer,
                                          U_regularizer,
                                          b_regularizer,

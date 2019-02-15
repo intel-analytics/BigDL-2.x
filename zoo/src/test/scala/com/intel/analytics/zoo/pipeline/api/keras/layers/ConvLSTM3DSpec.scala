@@ -50,7 +50,7 @@ class ConvLSTM3DSpec extends ZooSpecHelper {
     val gradInput = layer.backward(input, output)
   }
 
-  "ConvLSTM3D" should "be the same as BigDL" in {
+  "ConvLSTM3D with same padding" should "be the same as BigDL" in {
     val blayer = com.intel.analytics.bigdl.nn.Recurrent[Float]()
       .add(ConvLSTMPeephole3D[Float](4, 4, 2, 2, withPeephole = false))
     val zlayer = ConvLSTM3D[Float](4, 2, returnSequences = true,
@@ -58,6 +58,14 @@ class ConvLSTM3DSpec extends ZooSpecHelper {
     zlayer.build(Shape(-1, 12, 4, 8, 8, 8))
     val input = Tensor[Float](Array(4, 12, 4, 8, 8, 8)).rand()
     compareOutputAndGradInputSetWeights(blayer, zlayer, input)
+  }
+
+  "ConvLSTM3D with valid padding" should "work" in {
+    val zlayer = ConvLSTM3D[Float](4, 2, returnSequences = true,
+      borderMode = "valid", inputShape = Shape(12, 4, 8, 8, 8))
+    zlayer.build(Shape(-1, 12, 4, 8, 8, 8))
+    val input = Tensor[Float](Array(4, 12, 4, 8, 8, 8)).rand()
+    zlayer.forward(input)
   }
 }
 
