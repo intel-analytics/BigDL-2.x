@@ -546,8 +546,7 @@ object TextSet {
     for((id1, id2LabelArray) <- text1Map) {
       val id2ArrayLength = id2LabelArray.length
       val textFeature = TextFeature(null, uri = id1 ++ id2LabelArray.map(_._1).mkString(""))
-      var indices2Array: ArrayBuffer[Array[Float]] = ArrayBuffer()
-      indices2Array = id2LabelArray.map(x => {mapText2.get(x._1.toString).get})
+      val indices2Array = id2LabelArray.map(x => {mapText2.get(x._1.toString).get})
       val indices1 = mapText1.get(id1).get
       val data = indices2Array.flatMap(indices1 ++ _).toArray
       val feature = Tensor(data,
