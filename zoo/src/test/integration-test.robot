@@ -48,7 +48,7 @@ Run Spark Test
    Log To Console                   begin imageTransferLearning
    Run Shell                        ${submit} --master ${spark_master} --driver-memory 5g --executor-memory 10g --total-executor-cores 32 --executor-cores 8 --class com.intel.analytics.zoo.examples.nnframes.imageTransferLearning.ImageTransferLearning ${jar_path} --caffeDefPath ${integration_data_dir}/models/nnframes/deploy.prototxt --caffeWeightsPath ${integration_data_dir}/models/nnframes/bvlc_googlenet.caffemodel --batchSize 32 --imagePath ${public_hdfs_master}:9000/dogs_cats/samples --nEpochs 20
    Log To Console                   begin QARanker
-   Run Shell                        ${submit} --master ${spark_master} --driver-memory 3g --executor-memory 3g  --total-executor-cores 32 --executor-cores 8 --class com.intel.analytics.zoo.examples.qaranker.QARanker ${jar_path} --dataPath ${public_hdfs_master}:9000/WikiQAProcessed --embeddingPath ${integration_data_dir}/text_data/glove.6B/glove.6B.100d.txt --batchSize 196 --nEpochs 2
+   Run Shell                        ${submit} --master ${spark_master} --driver-memory 3g --executor-memory 3g  --total-executor-cores 32 --executor-cores 8 --class com.intel.analytics.zoo.examples.qaranker.QARanker ${jar_path} --dataPath ${public_hdfs_master}:9000/WikiQAProcessed --embeddingFile ${integration_data_dir}/text_data/glove.6B/glove.6B.100d.txt --batchSize 196 --nEpochs 2
    Remove Directory                 /tmp/objectdetection        recursive=True
 
 Spark2.1 Test Suite
