@@ -533,10 +533,11 @@ object TextSet {
     val text1Map: MMap[String, ArrayBuffer[(String, Int)]] = MMap()
     for(rel <- relations) {
       if (! text1Map.contains(rel.id1)) {
-        val buffer: ArrayBuffer[(String, Int)] = ArrayBuffer()
-        text1Map(rel.id1) = buffer
+        val id2Array: ArrayBuffer[(String, Int)] = ArrayBuffer()
+        id2Array.append((rel.id2, rel.label))
+        text1Map(rel.id1) = id2Array
       }
-      if (! text1Map.get(rel.id1).get.contains(rel.id2)) {
+      else {
         val buffer = text1Map.get(rel.id1).get
         buffer.append((rel.id2, rel.label))
       }
