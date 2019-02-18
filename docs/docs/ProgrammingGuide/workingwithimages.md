@@ -141,6 +141,7 @@ which can be used by the following prediction or training tasks.
 
 ```python
 from zoo.feature.image.imagePreprocessing import *
+from zoo.feature.common import ChainedPreprocessing
 
 img_aug = ChainedPreprocessing([ImageBytesToMat(),
       ImageColorJitter(),
