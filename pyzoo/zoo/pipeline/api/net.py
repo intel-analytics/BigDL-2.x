@@ -42,7 +42,6 @@ if sys.version >= '3':
 
 
 class GraphNet(BModel):
-
     def __init__(self, input, output, jvalue=None, bigdl_type="float", **kwargs):
         super(BModel, self).__init__(jvalue,
                                      to_list(input),
@@ -110,7 +109,6 @@ class GraphNet(BModel):
 
 
 class Net:
-
     @staticmethod
     def load_bigdl(model_path, weight_path=None, bigdl_type="float"):
         """
@@ -236,6 +234,7 @@ class TFNet(Layer):
         :param input: ndarray or list of ndarray or JTensor or list of JTensor.
         :return: (list of JTensor, isTable)
         """
+
         def to_jtensor(i):
             if isinstance(i, np.ndarray):
                 return JTensor.from_ndarray(i)
@@ -243,6 +242,7 @@ class TFNet(Layer):
                 return i
             else:
                 raise Exception("Error unknown input type %s" % type(i))
+
         if type(input) is list:
             if len(input) == 0:
                 raise Exception('Error when checking: empty input')
@@ -342,7 +342,6 @@ def _find_placeholders(grads):
 
 
 class IdentityCriterion(Criterion):
-
     def __init__(self):
         super(IdentityCriterion, self).__init__(None, "float")
 
@@ -357,14 +356,12 @@ class TFTrainingHelper(Layer):
 
 
 class TFValidationMethod(JavaValue):
-
     def __init__(self, val_method, output_length, target_length):
         JavaValue.__init__(self, None, "float",
                            val_method, output_length, target_length)
 
 
 class TFOptimizer:
-
     def __init__(self, loss, optim_method, sess=None, dataset=None, inputs=None,
                  grads=None, variables=None, graph=None,
                  val_outputs=None, val_labels=None, val_method=None, val_split=0.0,
@@ -478,6 +475,7 @@ with variable_creator_scope():
             if isinstance(t, list):
                 t = tuple(t)
             return Sample.from_ndarray(nest.flatten(t), [np.array([0.0])])
+
         sample_rdd = data.map(to_sample)
         if val_outputs is not None and val_labels is not None:
             if self.dataset.val_rdd is not None:
@@ -487,7 +485,7 @@ with variable_creator_scope():
                 training_rdd = sample_rdd
 
             elif val_split != 0.0:
-                training_rdd, val_rdd = sample_rdd.randomSplit([1-val_split, val_split])
+                training_rdd, val_rdd = sample_rdd.randomSplit([1 - val_split, val_split])
                 val_method = [TFValidationMethod(m, len(val_outputs), len(val_labels))
                               for m in to_list(val_method)]
             else:
@@ -653,7 +651,6 @@ with variable_creator_scope():
 
 
 class TensorMeta(object):
-
     def __init__(self, dtype, name=None, shape=None):
         self.dtype = dtype
         self.name = name
@@ -661,7 +658,6 @@ class TensorMeta(object):
 
 
 class TFDataset:
-
     def __init__(self, rdd, tensor_structure, batch_size,
                  batch_per_thread, hard_code_batch_size=False, val_rdd=None):
         '''
@@ -714,16 +710,16 @@ class TFDataset:
 
         self.rdd = rdd
         self.input_names = nest.pack_sequence_as(
-                    self.tensor_structure, [t.name for t in nest.flatten(self.tensor_structure)])
+            self.tensor_structure, [t.name for t in nest.flatten(self.tensor_structure)])
 
         self._tensors = None
 
     @property
     def tensors(self):
         '''
-        a nested structure of TensorFlow tensor object in TensorFlow graph. The elements of this dataset
-        will be fed into these tensors on each iteration.
-        :return: 
+        a nested structure of TensorFlow tensor object in TensorFlow graph.
+        The elements of this dataset will be fed into these tensors on each iteration.
+        :return: the nested structure of TensorFlow tensor object
         '''
         import tensorflow as tf
         from tensorflow.python.data.util import nest
@@ -731,19 +727,26 @@ class TFDataset:
         if self._tensors is None:
             if not self.hard_code_batch_size:
                 tensors = nest.pack_sequence_as(
-                    self.tensor_structure, [tf.placeholder(name=t.name, dtype=t.dtype, shape=[None] + list(t.shape))
+                    self.tensor_structure, [tf.placeholder(name=t.name,
+                                                           dtype=t.dtype,
+                                                           shape=[None] + list(t.shape))
                                             for t in nest.flatten(self.tensor_structure)])
             else:
                 if self.batch_per_thread > 0:
                     tensors = nest.pack_sequence_as(
                         self.tensor_structure,
-                        [tf.placeholder(name=t.name, dtype=t.dtype, shape=[self.batch_per_thread] + list(t.shape))
+                        [tf.placeholder(name=t.name,
+                                        dtype=t.dtype,
+                                        shape=[self.batch_per_thread] + list(t.shape))
                          for t in nest.flatten(self.tensor_structure)])
                 else:
                     tensors = nest.pack_sequence_as(
-                        self.tensor_structure, [tf.placeholder(name=t.name, dtype=t.dtype,
-                                                               shape=[self.batch_size // self.total_core_num] + list(t.shape))
-                                                for t in nest.flatten(self.tensor_structure)])
+                        self.tensor_structure,
+                        [tf.placeholder(name=t.name,
+                                        dtype=t.dtype,
+                                        shape=[self.batch_size // self.total_core_num] +
+                                        list(t.shape))
+                         for t in nest.flatten(self.tensor_structure)])
 
             for tensor in nest.flatten(tensors):
                 tf.get_default_graph().clear_collection(tensor.name)
@@ -758,9 +761,9 @@ class TFDataset:
                  hard_code_batch_size=False, val_rdd=None, tensor_structure=None):
         '''
         Create a TFDataset from a rdd
-        
-        :param rdd: a rdd of nested structure of numpy.ndarray each representing the tensors to feed into
-         TensorFlow graph on each iteration
+
+        :param rdd: a rdd of nested structure of numpy.ndarray each representing
+        the tensors to feed into TensorFlow graph on each iteration
         :param names: this argument is deprecated, please tensor_structure.
         :param shapes: this argument is deprecated, please tensor_structure.
         :param types: this argument is deprecated,  please tensor_structure.
@@ -771,7 +774,7 @@ class TFDataset:
         if True, the static size of the first dimension of the resulting tensors is
         batch_size/total_core_num (training) or batch_per_thread for inference; if False,
         it is None.
-        :param val_rdd: validation data with the same structure of rdd 
+        :param val_rdd: validation data with the same structure of rdd
         :param tensor_structure: a nested structure of zoo.pipeline.api.net.TensorMate object defining the
         nested structure of each element of the rdd
         :return: a TFDataset
@@ -812,7 +815,6 @@ def _check_the_same(all_required_inputs, inputs_in_datasets):
 
 
 class TFPredictor:
-
     def __init__(self, sess, outputs, inputs=None, dataset=None):
         '''
         TFPredictor takes a list of TensorFlow tensors as the model outputs and
