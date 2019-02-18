@@ -495,7 +495,7 @@ object TextSet {
       val label = Tensor(x.map(_._3.toFloat), Array(text2Array.length, 1))
       textFeature(TextFeature.sample) = Sample(feature, label)
       textFeature
-    }).setName("Relation Lists")
+    }).setName("Listwise Evaluation Set")
     TextSet.rdd(res)
   }
 
