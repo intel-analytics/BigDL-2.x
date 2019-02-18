@@ -214,6 +214,31 @@ class TestTextSet:
         print(knrm.evaluate_ndcg(relation_lists, 3))
         print(knrm.evaluate_map(relation_lists))
 
+    def test_qaranker_local_integration(self):
+        relations = Relations.read(self.qa_path+"/relations.txt")
+        assert len(relations) == 4
+        text_set = TextSet.read_csv(self.qa_path+"/question_corpus.csv")
+        assert text_set.get_uris() == ["Q1", "Q2"]
+        transformed = text_set.tokenize().normalize().word2idx().shape_sequence(5)
+        relation_pairs = TextSet.from_relation_pairs(relations, transformed, transformed)
+        pair_samples = relation_pairs.get_samples()
+        assert len(pair_samples) == 2
+        for sample in pair_samples:
+            assert list(sample.feature.shape) == [2, 10]
+            assert np.allclose(sample.label.to_ndarray(), np.array([[1.0], [0.0]]))
+        relation_lists = TextSet.from_relation_lists(relations, transformed, transformed)
+        relation_samples = relation_lists.get_samples()
+        assert len(relation_samples) == 2
+        for sample in relation_samples:
+            assert list(sample.feature.shape) == [2, 10]
+            assert list(sample.label.shape) == [2, 1]
+        knrm = KNRM(5, 5, self.glove_path, word_index=transformed.get_word_index())
+        model = Sequential().add(TimeDistributed(knrm, input_shape=(2, 10)))
+        model.compile("sgd", "rank_hinge")
+        model.fit(relation_pairs, batch_size=2, nb_epoch=2)
+        print(knrm.evaluate_ndcg(relation_lists, 3))
+        print(knrm.evaluate_map(relation_lists))
+
 
 if __name__ == "__main__":
     pytest.main([__file__])
