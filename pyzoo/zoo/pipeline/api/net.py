@@ -714,6 +714,38 @@ class TFDataset:
 
         self._tensors = None
 
+    def _create_placeholders(self):
+        import tensorflow as tf
+        from tensorflow.python.data.util import nest
+        if not self.hard_code_batch_size:
+            tensors = nest.pack_sequence_as(
+                self.tensor_structure, [tf.placeholder(name=t.name,
+                                                       dtype=t.dtype,
+                                                       shape=[None] + list(t.shape))
+                                        for t in nest.flatten(self.tensor_structure)])
+        else:
+            if self.batch_per_thread > 0:
+                tensors = nest.pack_sequence_as(
+                    self.tensor_structure,
+                    [tf.placeholder(name=t.name,
+                                    dtype=t.dtype,
+                                    shape=[self.batch_per_thread] + list(t.shape))
+                     for t in nest.flatten(self.tensor_structure)])
+            else:
+                tensors = nest.pack_sequence_as(
+                    self.tensor_structure,
+                    [tf.placeholder(name=t.name,
+                                    dtype=t.dtype,
+                                    shape=[self.batch_size // self.total_core_num] +
+                                          list(t.shape))
+                     for t in nest.flatten(self.tensor_structure)])
+
+        for tensor in nest.flatten(tensors):
+            tf.get_default_graph().clear_collection(tensor.name)
+            tf.add_to_collection(tensor.name, self)
+
+        return tensors
+
     @property
     def tensors(self):
         '''
@@ -721,44 +753,41 @@ class TFDataset:
         The elements of this dataset will be fed into these tensors on each iteration.
         :return: the nested structure of TensorFlow tensor object
         '''
-        import tensorflow as tf
-        from tensorflow.python.data.util import nest
 
         if self._tensors is None:
-            if not self.hard_code_batch_size:
-                tensors = nest.pack_sequence_as(
-                    self.tensor_structure, [tf.placeholder(name=t.name,
-                                                           dtype=t.dtype,
-                                                           shape=[None] + list(t.shape))
-                                            for t in nest.flatten(self.tensor_structure)])
-            else:
-                if self.batch_per_thread > 0:
-                    tensors = nest.pack_sequence_as(
-                        self.tensor_structure,
-                        [tf.placeholder(name=t.name,
-                                        dtype=t.dtype,
-                                        shape=[self.batch_per_thread] + list(t.shape))
-                         for t in nest.flatten(self.tensor_structure)])
-                else:
-                    tensors = nest.pack_sequence_as(
-                        self.tensor_structure,
-                        [tf.placeholder(name=t.name,
-                                        dtype=t.dtype,
-                                        shape=[self.batch_size // self.total_core_num] +
-                                        list(t.shape))
-                         for t in nest.flatten(self.tensor_structure)])
-
-            for tensor in nest.flatten(tensors):
-                tf.get_default_graph().clear_collection(tensor.name)
-                tf.add_to_collection(tensor.name, self)
+            tensors = self._create_placeholders()
             self._tensors = tensors
 
         return self._tensors
 
+    @property
+    def feature_tensors(self):
+
+        if self._tensors is None:
+            tensors = self._create_placeholders()
+            self._tensors = tensors
+
+        if not isinstance(self._tensors, tuple):
+            raise ValueError("To use feature_tensors, the element in TFDataset must be a tuple of two component")
+
+        return self._tensors[0]
+
+    @property
+    def label_tensors(self):
+
+        if self._tensors is None:
+            tensors = self._create_placeholders()
+            self._tensors = tensors
+
+        if not isinstance(self._tensors, tuple):
+            raise ValueError("To use label_tensors, the element in TFDataset must be a tuple of two component")
+
+        return self._tensors[1]
+
     @staticmethod
     def from_rdd(rdd, names=None, shapes=None, types=None,
                  batch_size=-1, batch_per_thread=-1,
-                 hard_code_batch_size=False, val_rdd=None, tensor_structure=None):
+                 hard_code_batch_size=False, val_rdd=None):
         '''
         Create a TFDataset from a rdd
 
@@ -781,26 +810,50 @@ class TFDataset:
         '''
         import tensorflow as tf
 
-        if tensor_structure is None:
-            if names is not None or shapes is not None or types is not None:
-                logging.warning("Using argument names, shapes or types is deprecated," +
-                                " please use the tensor_structure argument")
-                if not names:
-                    names = ["features", "labels"]
-                if not shapes:
-                    shapes = [None] * len(names)
+        if names is not None or shapes is not None or types is not None:
+            logging.warning("Using argument names, shapes or types is deprecated," +
+                            " please use the tensor_structure argument")
+            if not names:
+                names = ["features", "labels"]
+            if not shapes:
+                shapes = [None] * len(names)
 
-                if not types:
-                    types = [tf.float32] * len(names)
-                tensor_structure = []
-                for i in range(len(names)):
-                    tensor_structure.append(TensorMeta(types[i], name=names[i], shape=shapes[i]))
-            else:
-                tensor_structure = [TensorMeta(dtype=tf.float32), TensorMeta(dtype=tf.float32)]
+            if not types:
+                types = [tf.float32] * len(names)
+            tensor_structure = []
+            for i in range(len(names)):
+                tensor_structure.append(TensorMeta(types[i], name=names[i], shape=shapes[i]))
+        else:
+            tensor_structure = [TensorMeta(dtype=tf.float32), TensorMeta(dtype=tf.float32)]
 
         return TFDataset(rdd, tensor_structure,
                          batch_size, batch_per_thread,
                          hard_code_batch_size, val_rdd)
+
+    @staticmethod
+    def from_tuple_rdd(rdd, features, labels = None, batch_size=-1, batch_per_thread=-1,
+                       hard_code_batch_size=False, val_rdd=None):
+        feature_structure = _to_tensor_structure(features)
+        if labels is not None:
+            label_structure = _to_tensor_structure(labels)
+
+        else:
+            label_structure = None
+
+        tensor_structure = (feature_structure, label_structure)
+        TFDataset(rdd, tensor_structure,
+                  batch_size, batch_per_thread,
+                  hard_code_batch_size, val_rdd)
+
+
+def _to_tensor_structure(tensors):
+    if isinstance(tensors, tuple):
+        tensor_structure = TensorMeta(dtype=tensors[0], shape=tensors[1], name="input0")
+    else:
+        tensor_structure = {}
+        for key, value in enumerate(tensors):
+            tensor_structure[key] = TensorMeta(dtype=value[0], shape=value[1], name=key)
+    return tensor_structure
 
 
 def _check_the_same(all_required_inputs, inputs_in_datasets):
