@@ -16,7 +16,7 @@
 
 import tensorflow as tf
 from zoo import init_nncontext
-from zoo.pipeline.api.net import TFDataset, TFPredictor, TensorMeta
+from zoo.pipeline.api.net import TFDataset, TFPredictor
 import numpy as np
 import sys
 from tensorflow.keras.models import Model
@@ -52,13 +52,11 @@ def main(data_num):
             .map(lambda rec_tuple: [normalizer(rec_tuple[0], mnist.TRAIN_MEAN, mnist.TRAIN_STD)])
 
         dataset = TFDataset.from_rdd(rdd,
-                                     tensor_structure=(TensorMeta(dtype=tf.float32,
-                                                                  name="feature",
-                                                                  shape=(28, 28, 1)),
-                                                       TensorMeta(dtype=tf.int32,
-                                                                  name="label",
-                                                                  shape=())),
-                                     batch_per_thread=20)
+                                     names=["features"],
+                                     shapes=[[28, 28, 1]],
+                                     types=[tf.float32],
+                                     batch_per_thread=20
+                                     )
         predictor = TFPredictor.from_keras(model, dataset)
 
         accuracy = predictor.predict().zip(labels_rdd).map(lambda x: np.argmax(x[0]) == x[1]).mean()
