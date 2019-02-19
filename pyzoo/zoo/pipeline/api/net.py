@@ -842,6 +842,55 @@ class TFDataset:
                   batch_size, batch_per_thread,
                   hard_code_batch_size, val_rdd)
 
+    @staticmethod
+    def from_tensors(tensors, batch_size=-1, batch_per_thread=-1,
+                 hard_code_batch_size=False, val_tensors=None):
+        sc = get_spark_context()
+        node_num, core_num = get_node_and_core_number()
+        total_core_num = node_num * core_num
+
+        rdd, tensor_structure = _tensors_to_rdd(tensors, sc, total_core_num)
+
+        val_rdd = None
+        if val_tensors is not None:
+            val_rdd = _tensors_to_rdd(val_tensors, sc, total_core_num)
+
+        return TFDataset(rdd, tensor_structure, batch_size, batch_per_thread, hard_code_batch_size, val_rdd)
+
+
+def _tensors_to_rdd(tensors, sc, splits):
+    from tensorflow.python.data.util import nest
+    import tensorflow as tf
+    if isinstance(tensors, list):
+        data_list = _splits(tensors)
+        rdd = sc.parallelize(data_list, splits)
+        tensor_structure = [TensorMeta(tf.as_dtype(t.dtype),
+                                       shape=t.shape[1:],
+                                       name="input_%s" % i)
+                            for i, t in enumerate(tensors)]
+    else:
+        flattened = nest.flatten(tensors)
+        data_list = _splits(flattened)
+        rdd = sc.parallelize(data_list, splits)
+        rdd = rdd.map(lambda x: nest.pack_sequence_as(tensors, x))
+        tensor_structure = nest.pack_sequence_as(tensors,
+                                                 [TensorMeta(tf.as_dtype(t.dtype),
+                                                             shape=t.shape[1:],
+                                                             name="input_%s" % i)
+                                                  for i, t in enumerate(flattened)])
+    return rdd, tensor_structure
+
+
+def _splits(tensors):
+    data_list = []
+    data_size = tensors[0].shape[0]
+    for i in range(data_size):
+        sample = []
+        for j in range(len(tensors)):
+            sample.append(tensors[j][i])
+        data_list.append(sample)
+    return data_list
+
 
 def _to_tensor_structure(tensors):
     if isinstance(tensors, tuple):
