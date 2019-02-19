@@ -661,8 +661,7 @@ class TFDataset:
     def __init__(self, rdd, tensor_structure, batch_size,
                  batch_per_thread, hard_code_batch_size=False, val_rdd=None):
         '''
-        TFDatasets represents a distributed collection of elements (nested structure a.k.a
-        nested tuple or dictionary of tensors) to be feed into Tensorflow graph.
+        TFDatasets represents a distributed collection of elements to be feed into Tensorflow graph.
         TFDatasets can be created using a RDD and each of its records is one or more numpy.ndarray
         of the same nested structure, representing the tensors to be feed into TensorFlow
         graph on each iteration. TFDatasets must be used with TFOptimizer or TFPredictor.
@@ -789,23 +788,21 @@ class TFDataset:
                  batch_size=-1, batch_per_thread=-1,
                  hard_code_batch_size=False, val_rdd=None):
         '''
-        Create a TFDataset from a rdd
+        Create a TFDataset from a rdd, each element of the rdd must be a list of numpy.ndarray.
 
-        :param rdd: a rdd of nested structure of numpy.ndarray each representing
-        the tensors to feed into TensorFlow graph on each iteration
-        :param names: this argument is deprecated, please tensor_structure.
-        :param shapes: this argument is deprecated, please tensor_structure.
-        :param types: this argument is deprecated,  please tensor_structure.
+        :param rdd: a rdd of list of numpy.ndarray each representing a tensor to feed into
+        tensorflow graph on each iteration
+        :param names: the names of the resulting tensors, should be a list of str
+        :param shapes: the shapes of the resulting tensors, should be a list of list of int
+        :param types: the types of the result tensors, should be a list of tf.dtype
         :param batch_size: the batch size, used for training, should be a multiple of
         total core num
         :param batch_per_thread: the batch size for each thread, used for inference
-        :param hard_code_batch_size: whether to hard code the batch_size into TensorFlow graph,
+        :param hard_code_batch_size: whether to hard code the batch_size into tensorflow graph,
         if True, the static size of the first dimension of the resulting tensors is
         batch_size/total_core_num (training) or batch_per_thread for inference; if False,
         it is None.
         :param val_rdd: validation data with the same structure of rdd
-        :param tensor_structure: a nested structure of zoo.pipeline.api.net.TensorMate object defining the
-        nested structure of each element of the rdd
         :return: a TFDataset
         '''
         import tensorflow as tf
