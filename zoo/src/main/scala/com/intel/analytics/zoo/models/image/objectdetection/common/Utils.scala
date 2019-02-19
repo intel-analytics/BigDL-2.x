@@ -25,12 +25,10 @@ import com.intel.analytics.bigdl.nn._
 import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric
 import com.intel.analytics.bigdl.transform.vision.image.augmentation._
 import com.intel.analytics.bigdl.transform.vision.image.label.roi._
-import com.intel.analytics.bigdl.transform.vision.image.{BytesToMat, ImageFeature, MatToFloats}
-import com.intel.analytics.zoo.feature.image.{ImageSet, LocalImageSet}
-import com.intel.analytics.zoo.models.image.objectdetection.common.dataset.{FrcnnMiniBatch,
-  FrcnnToBatch}
-import com.intel.analytics.zoo.models.image.objectdetection.common.dataset.roiimage.{ByteRecord,
-  RecordToFeature, RoiImageToBatch, SSDMiniBatch}
+import com.intel.analytics.bigdl.transform.vision.image.{BytesToMat, ImageFeature, ImageFrame, MatToFloats}
+import com.intel.analytics.zoo.feature.image._
+import com.intel.analytics.zoo.models.image.objectdetection.common.dataset.{FrcnnMiniBatch, FrcnnToBatch}
+import com.intel.analytics.zoo.models.image.objectdetection.common.dataset.roiimage.{ByteRecord, RoiImageToBatch, RoiRecordToFeature, SSDMiniBatch}
 import com.intel.analytics.zoo.models.image.objectdetection.fasterrcnn
 import org.apache.hadoop.io.Text
 import org.apache.spark.SparkContext
@@ -40,9 +38,19 @@ import scala.reflect.ClassTag
 
 
 object IOUtils {
-  def loadSeqFiles(nPartition: Int, seqFloder: String, sc: SparkContext): RDD[ByteRecord] = {
-    sc.sequenceFile(seqFloder, classOf[Text], classOf[Text],
-      nPartition).map(x => ByteRecord(x._2.copyBytes(), x._1.toString))
+  def loadRoiSeqFiles(seqFloder: String, sc: SparkContext, nPartition: Option[Int] = None): RDD[ByteRecord] = {
+    val raw = if(nPartition.isDefined) {
+      sc.sequenceFile(seqFloder, classOf[Text], classOf[Text], nPartition.get)
+    } else {
+      sc.sequenceFile(seqFloder, classOf[Text], classOf[Text])
+    }
+    raw.map(x => ByteRecord(x._2.copyBytes(), x._1.toString))
+  }
+
+  def roiSeqFilesToImageFrame(url: String, sc: SparkContext, partitionNum: Option[Int] = None): ImageFrame = {
+    val rdd = loadRoiSeqFiles(url, sc, partitionNum)
+    val featureRDD = RoiRecordToFeature(true)(rdd)
+    ImageFrame.rdd(featureRDD)
   }
 
   def localImagePaths(folder: String): LocalImageSet = {
@@ -57,56 +65,57 @@ object IOUtils {
   def loadSSDTrainSet(folder: String, sc: SparkContext, resolution: Int, batchSize: Int,
                       parNum: Int)
   : DataSet[SSDMiniBatch] = {
-    val trainRdd = loadSeqFiles(parNum, folder, sc)
-    DataSet.rdd(trainRdd) -> RecordToFeature(true) ->
-      BytesToMat() ->
-      RoiNormalize() ->
-      ColorJitter() ->
-      RandomTransformer(Expand() -> RoiProject(), 0.5) ->
-      RandomSampler() ->
-      Resize(resolution, resolution, -1) ->
-      RandomTransformer(HFlip() -> RoiHFlip(), 0.5) ->
-      ChannelNormalize(123f, 117f, 104f) ->
-      MatToFloats(validHeight = resolution, validWidth = resolution) ->
+//    val trainRdd = loadSeqFiles(parNum, folder, sc)
+    val imageFrame = roiSeqFilesToImageFrame(folder, sc)
+    DataSet.imageFrame(imageFrame) ->
+      ImageBytesToMat() ->
+      ImageRoiNormalize() ->
+      ImageColorJitter() ->
+      ImageRandomPreprocessing(ImageExpand() -> ImageRoiProject(), 0.5) ->
+      ImageRandomSampler() ->
+      ImageResize(resolution, resolution, -1) ->
+      ImageRandomPreprocessing(ImageHFlip() -> ImageRoiHFlip(), 0.5) ->
+      ImageChannelNormalize(123f, 117f, 104f) ->
+      ImageMatToFloats(validHeight = resolution, validWidth = resolution) ->
       RoiImageToBatch(batchSize)
   }
 
   def loadSSDValSet(folder: String, sc: SparkContext, resolution: Int, batchSize: Int, parNum: Int)
   : DataSet[SSDMiniBatch] = {
-    val valRdd = loadSeqFiles(parNum, folder, sc)
-
-    DataSet.rdd(valRdd) -> RecordToFeature(true) ->
-      BytesToMat() ->
-      RoiNormalize() ->
-      Resize(resolution, resolution) ->
-      ChannelNormalize(123f, 117f, 104f) ->
-      MatToFloats(validHeight = resolution, validWidth = resolution) ->
+//    val valRdd = loadSeqFiles(parNum, folder, sc)
+    val imageFrame = roiSeqFilesToImageFrame(folder, sc)
+    DataSet.imageFrame(imageFrame) ->
+      ImageBytesToMat() ->
+      ImageRoiNormalize() ->
+      ImageResize(resolution, resolution) ->
+      ImageChannelNormalize(123f, 117f, 104f) ->
+      ImageMatToFloats(validHeight = resolution, validWidth = resolution) ->
       RoiImageToBatch(batchSize)
   }
 
   def loadFasterrcnnTrainSet(folder: String, sc: SparkContext, param: fasterrcnn.PreProcessParam,
                              batchSize: Int, parNum: Int)
   : DataSet[FrcnnMiniBatch] = {
-    val trainRdd = loadSeqFiles(parNum, folder, sc)
-    DataSet.rdd(trainRdd) -> RecordToFeature(true) ->
-      BytesToMat() ->
-      RandomAspectScale(param.scales, param.scaleMultipleOf) -> RoiResize() ->
-      RandomTransformer(HFlip() -> RoiHFlip(false), 0.5) ->
-      ChannelNormalize(param.pixelMeanRGB._1, param.pixelMeanRGB._2, param.pixelMeanRGB._3) ->
-      MatToFloats(validHeight = 600, validWidth = 600) ->
+    val trainRdd = loadRoiSeqFiles(folder, sc, Some(parNum))
+//    val imageFrame = roiSeqFilesToImageFrame(folder, sc)
+    DataSet.rdd(trainRdd) -> RoiRecordToFeature(true) ->
+      ImageBytesToMat() ->
+      ImageRandomAspectScale(param.scales, param.scaleMultipleOf) -> RoiResize() ->
+      ImageRandomPreprocessing(ImageHFlip() -> ImageRoiHFlip(false), 0.5) ->
+      ImageChannelNormalize(param.pixelMeanRGB._1, param.pixelMeanRGB._2, param.pixelMeanRGB._3) ->
+      ImageMatToFloats(validHeight = 600, validWidth = 600) ->
       FrcnnToBatch(batchSize, true)
   }
 
   def loadFasterrcnnValSet(folder: String, sc: SparkContext, param: fasterrcnn.PreProcessParam,
                            batchSize: Int, parNum: Int)
   : DataSet[FrcnnMiniBatch] = {
-    val valRdd = loadSeqFiles(parNum, folder, sc)
-
-    DataSet.rdd(valRdd) -> RecordToFeature(true) ->
-      BytesToMat() ->
-      AspectScale(param.scales(0), param.scaleMultipleOf) ->
-      ChannelNormalize(param.pixelMeanRGB._1, param.pixelMeanRGB._2, param.pixelMeanRGB._3) ->
-      MatToFloats(100, 100) ->
+    val valRdd = loadRoiSeqFiles(folder, sc, Some(parNum))
+    DataSet.rdd(valRdd) -> RoiRecordToFeature(true) ->
+      ImageBytesToMat() ->
+      ImageAspectScale(param.scales(0), param.scaleMultipleOf) ->
+      ImageChannelNormalize(param.pixelMeanRGB._1, param.pixelMeanRGB._2, param.pixelMeanRGB._3) ->
+      ImageMatToFloats(100, 100) ->
       FrcnnToBatch(param.batchSize, true)
   }
 }

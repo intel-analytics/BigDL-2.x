@@ -51,6 +51,7 @@ object Train {
     className: String = "",
     batchSize: Int = 4,
     learningRate: Double = 0.001,
+    learningRateDecay: Double = 0.0005,
     overWriteCheckpoint: Boolean = false,
     maxEpoch: Int = 20,
     jobName: String = "Analytics Zoo SSD Train Messi Example",
@@ -65,7 +66,7 @@ object Train {
     opt[String]('v', "valFolder")
       .text("url of hdfs folder store the validation hadoop sequence files")
       .action((x, c) => c.copy(valFolder = x))
-    opt[Int]('r', "resolution")
+      opt[Int]('r', "resolution")
       .text("input resolution 300 or 512")
       .action((x, c) => c.copy(resolution = x))
       .required()
@@ -86,6 +87,9 @@ object Train {
     opt[Double]('l', "learningRate")
       .text("inital learning rate")
       .action((x, c) => c.copy(learningRate = x))
+    opt[Double]("learningRateDecay")
+      .text("learning rate decay")
+      .action((x, c) => c.copy(learningRateDecay = x))
     opt[Int]('b', "batchSize")
       .text("batch size")
       .action((x, c) => c.copy(batchSize = x))
@@ -128,8 +132,8 @@ object Train {
       val optimMethod = if (param.stateSnapshot.isDefined) {
         OptimMethod.load[Float](param.stateSnapshot.get)
       } else {
-        new Adam[Float](learningRate = 0.0001,
-          learningRateDecay = 0.0005)
+        new Adam[Float](learningRate = param.learningRate,
+          learningRateDecay = param.learningRateDecay)
       }
       optimize(model, trainSet, valSet, param, optimMethod,
         Trigger.maxEpoch(param.maxEpoch), classes)

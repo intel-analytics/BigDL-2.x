@@ -22,11 +22,16 @@ import com.intel.analytics.bigdl.dataset.Transformer
 import com.intel.analytics.bigdl.tensor.Tensor
 import com.intel.analytics.bigdl.transform.vision.image.ImageFeature
 import com.intel.analytics.bigdl.transform.vision.image.label.roi.RoiLabel
+import com.intel.analytics.zoo.feature.common.Preprocessing
 
 import scala.collection.Iterator
 
-class RecordToFeature(convertLabel: Boolean = false, outKey: String = ImageFeature.bytes)
-  extends Transformer[ByteRecord, ImageFeature] {
+/**
+ * Convert ROI image record to ImageFeature.
+ *
+ */
+class RoiRecordToFeature(convertLabel: Boolean = false, outKey: String = ImageFeature.bytes)
+  extends Preprocessing[ByteRecord, ImageFeature] {
   @transient var data: Array[Byte] = _
   @transient var gtClasses: Tensor[Float] = _
   @transient var gtBoxes: Tensor[Float] = _
@@ -82,7 +87,7 @@ class RecordToFeature(convertLabel: Boolean = false, outKey: String = ImageFeatu
   }
 }
 
-object RecordToFeature {
-  def apply(convertLabel: Boolean = false, outKey: String = ImageFeature.bytes): RecordToFeature
-  = new RecordToFeature(convertLabel, outKey)
+object RoiRecordToFeature {
+  def apply(convertLabel: Boolean = false, outKey: String = ImageFeature.bytes): RoiRecordToFeature
+  = new RoiRecordToFeature(convertLabel, outKey)
 }

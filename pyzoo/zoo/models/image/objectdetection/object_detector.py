@@ -21,7 +21,9 @@ from bigdl.util.common import callBigDlFunc
 from zoo.models.image.common.image_model import ImageModel
 from zoo.feature.image.imageset import *
 from zoo.feature.image.imagePreprocessing import *
-
+from bigdl.nn.criterion import Criterion
+from bigdl.nn.layer import *
+from bigdl.nn.initialization_method import *
 
 if sys.version >= '3':
     long = int
@@ -40,6 +42,16 @@ def read_coco_label_map():
     load coco label map
     """
     return callBigDlFunc("float", "readCocoLabelMap")
+
+
+def add_conv_relu(prev_nodes, n_input_plane, n_output_plane, kernel, stride, pad,
+                name, prefix="conv", n_group=1, propagate_back=True):
+    conv = SpatialConvolution(n_input_plane, n_output_plane, kernel, kernel, stride, stride,
+                              pad, pad, n_group, propagate_back) \
+        .set_init_method(weight_init_method=Xavier(), bias_init_method=Zeros()) \
+        .set_name(prefix + name)(prev_nodes)
+    relu = ReLU(True).set_name("relu" + name)(conv)
+    return relu
 
 
 class ObjectDetector(ImageModel):
@@ -133,3 +145,233 @@ class Visualizer(ImagePreprocessing):
         jset = callBigDlFunc(bigdl_type,
                              "transformImageSet", self.value, image_set)
         return ImageSet(jvalue=jset)
+
+
+class RoiRecordToFeature(Preprocessing):
+    """
+    Convert ROI image record to ImageFeature.
+    """
+    def __init__(self, convert_label=False, out_key="bytes", bigdl_type="float"):
+        super(RoiRecordToFeature, self).__init__(bigdl_type, convert_label, out_key)
+
+
+class RoiImageToBatch(Preprocessing):
+    """
+    Convert a batch of labeled BGR images into a Mini-batch.
+
+    Notice: The totalBatch means a total batch size. In distributed environment, the batch should be
+    divided by total core number
+    """
+    def __init__(self, total_batch, convert_label=True, partition_num=None,
+                 keep_image_feature=True, input_key="floats", bigdl_type="float"):
+        super(RoiImageToBatch, self).__init__(bigdl_type, total_batch, convert_label,
+                                              partition_num, keep_image_feature, input_key)
+
+
+class FrcnnToBatch(Preprocessing):
+    """
+    Convert a batch of labeled BGR images into a Mini-batch.
+
+    Notice: The totalBatch means a total batch size. In distributed environment, the batch should be
+    divided by total core number
+    """
+    def __init__(self, total_batch, convert_label=True, partition_num=-1,
+                 keep_image_feature=True, input_key="floats", bigdl_type="float"):
+        super(FrcnnToBatch  , self).__init__(bigdl_type, total_batch, convert_label,
+                                             partition_num, keep_image_feature, input_key)
+
+
+class MeanAveragePrecision(JavaValue):
+    """
+    Caculate the percentage that output's max probability index equals target.
+
+    >>> top1 = MeanAveragePrecision(False, ["dog","cat"], True)
+    creating: createMeanAveragePrecision
+    """
+    def __init__(self, use_07_metric, classes, normalized=True, bigdl_type="float"):
+        JavaValue.__init__(self, None, bigdl_type, use_07_metric, normalized, classes)
+
+
+class FrcnnCriterion(Criterion):
+    """
+    Fast RCNN criterion
+
+    >>> criterion = FrcnnCriterion()
+    creating: createFrcnnCriterion
+    """
+    def __init__(self, rpn_sigma=3, frcnn_sigma=1, ignore_label=-1,rpn_loss_cls_weight=1,
+                 rpn_loss_bbox_weight=1, loss_cls_weight=1, loss_bbox_weight=1,
+                 bigdl_type="float"):
+        super(FrcnnCriterion, self).__init__(None, bigdl_type, rpn_sigma, frcnn_sigma,
+                                             ignore_label, rpn_loss_cls_weight,
+                                             rpn_loss_bbox_weight, loss_cls_weight,
+                                             loss_bbox_weight)
+
+
+class MultiBoxLossParam():
+    def __init__(self, loc_weight=1.0, n_classes=21, share_location=True, overlap_threshold=0.5,
+                 bg_label_ind=0, use_difficult_gt=True, neg_pos_ratio=3.0, neg_overlap=0.5):
+        self.loc_weight = loc_weight
+        self.n_classes = n_classes
+        self.share_location = share_location
+        self.overlap_threshold = overlap_threshold
+        self.bg_label_ind = bg_label_ind
+        self.use_difficult_gt = use_difficult_gt
+        self.neg_pos_ratio = neg_pos_ratio
+        self.neg_overlap = neg_overlap
+
+    def __reduce__(self):
+        return MultiBoxLossParam, (self.loc_weight, self.n_classes, self.share_location,
+                                   self.overlap_threshold, self.bg_label_ind,
+                                   self.use_difficult_gt,self.neg_pos_ratio, self.neg_overlap)
+
+    def __str__(self):
+        return "MultiBoxLossParam {loc_weight: %s, n_classes: %s, share_location: %s, " \
+               "overlap_threshold: %s, bg_label_ind: %s, use_difficult_gt: %s, " \
+                "neg_pos_ratio: %s, neg_overlap: %s}" \
+               % (self.loc_weight, self.n_classes, self.share_location,
+                  self.overlap_threshold, self.bg_label_ind, self.use_difficult_gt,
+                  self.neg_pos_ratio, self.neg_overlap)
+
+
+class MultiBoxLoss(Criterion):
+    """
+    MultiBox Loss
+
+    >>> criterion = MultiBoxLoss()
+    creating: createMultiBoxLoss
+    """
+    def __init__(self, multibox_loss_param, bigdl_type="float"):
+        super(MultiBoxLoss, self).__init__(None, bigdl_type, multibox_loss_param)
+
+
+class PreProcessParam():
+    def __init__(self, batch_size= 1, scales=[600], scale_multiple_of=1,
+                 pixel_mean_rgb=(122.7717, 115.9465, 102.9801),
+                 has_label=False, n_partition=-1, norms=(1, 1, 1)):
+        self.batch_size = batch_size
+        self.scales = scales
+        self.scale_multiple_of = scale_multiple_of
+        self.pixel_mean_rgb = pixel_mean_rgb
+        self.has_label = has_label
+        self.n_partition = n_partition
+        self.norms = norms
+
+    def __reduce__(self):
+        return PreProcessParam, (self.batch_size, self.scales,
+                                 self.scale_multiple_of, self.pixel_mean_rgb,
+                                 self.has_label, self.n_partition, self.norms)
+
+    def __str__(self):
+        return "PreProcessParam {batch_size: %s, scales: %s, " \
+               "scale_multiple_of: %s, pixel_mean_rgb: %s, thresh: %s}" \
+               % (self.n_classes, self.bbox_vote,
+                  self.nms_thresh, self.max_per_image, self.has_label,
+                  self.n_partition, self.norms)
+
+
+class PostProcessParam():
+    def __init__(self, n_classes, bbox_vote, nms_thresh=0.3, max_per_image=100, thresh=0.05):
+        self.n_classes = n_classes
+        self.bbox_vote = bbox_vote
+        self.nms_thresh = nms_thresh
+        self.max_per_image = max_per_image
+        self.thresh = thresh
+
+    def __reduce__(self):
+        return PostProcessParam, (self.n_classes, self.bbox_vote,
+                                   self.nms_thresh, self.max_per_image,
+                                   self.thresh)
+
+    def __str__(self):
+        return "PostProcessParam {n_classes: %s, bbox_vote: %s, " \
+               "nms_thresh: %s, max_per_image: %s, thresh: %s}" \
+               % (self.n_classes, self.bbox_vote,
+                  self.nms_thresh, self.max_per_image, self.thresh)
+
+
+class ProposalTarget(Layer):
+    """
+    Assign object detection proposals to ground-truth targets. Produces proposal
+    classification labels and bounding-box regression targets.
+    :param roiPerImage Minibatch size (number of regions of interest [ROIs])
+
+    >>> pt = ProposalTarget(1, 5)
+    creating: createProposalTarget
+    """
+    def __init__(self, roi_per_image, num_classes, bigdl_type="float"):
+        super(ProposalTarget, self).__init__(None, bigdl_type, roi_per_image, num_classes)
+
+    def set_debug(self, is_debug):
+        self.value.setDebug(is_debug)
+        return self
+
+
+class EvaluateOnly(Container):
+    """
+    If is a container to contral different behavior in training mode and evaluate mode
+    in training mode, the submodules will be skipped and input directly be passed to output;
+    in evaluation mode, the modules will process the input tensors.
+
+    >>> pt = EvaluateOnly(SoftMax())
+    creating: createEvaluateOnly
+    """
+    def __init__(self, module, bigdl_type="float"):
+        super(EvaluateOnly, self).__init__(None, bigdl_type, module)
+
+
+class BboxPred(Layer):
+    """
+
+    >>> bp = BboxPred(1024, 64, 16)
+    creating: createBboxPred
+    """
+    def __init__(self, input_size, output_size, n_class, with_bias=True, w_regularizer= None,
+                 b_regularizer=None, normalized=False, bigdl_type="float"):
+        super(BboxPred, self).__init__(None, bigdl_type, input_size, output_size, n_class,
+                                       with_bias, w_regularizer, b_regularizer, normalized)
+
+
+class AnchorTarget(Layer):
+    """
+    Compute bounding-box regression targets for an image.
+
+    >>> ratios = (0.5, 1.0, 2.0)
+    >>> scales = (8, 16, 32)
+    >>> at = AnchorTarget(ratios, scales)
+    creating: createAnchorTarget
+    """
+    def __init__(self, ratios, scales, bigdl_type="float"):
+        super(AnchorTarget, self).__init__(None, bigdl_type, ratios, scales)
+
+    def set_debug(self, is_debug):
+        self.value.setDebug(is_debug)
+        return self
+
+
+class DetectionOutputFrcnn(Layer):
+    """
+    Compute bounding-box regression targets for an image.
+
+    >>> ratios = (0.5, 1.0, 2.0)
+    >>> scales = (8, 16, 32)
+    >>> at = AnchorTarget(ratios, scales)
+    creating: createAnchorTarget
+    """
+    def __init__(self, nms_thresh, n_classes, bbox_vote, max_per_image, thresh, bigdl_type="float"):
+        super(DetectionOutputFrcnn, self).__init__(None, bigdl_type,
+                                                   nms_thresh, n_classes, bbox_vote, max_per_image, thresh)
+
+
+def load_model_weights(src_model, target_model, match_all=True):
+    """
+    Load weights from pretrained model
+    """
+    return callBigDlFunc("float", "loadModelWeights", src_model, target_model, match_all)
+
+
+def load_roi_seq_files(url, sc, partition_num=-1):
+    """
+    Load roi sequence files to image frame
+    """
+    return callBigDlFunc("float", "loadRoiSeqFiles", url, sc, partition_num)

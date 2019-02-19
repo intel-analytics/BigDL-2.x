@@ -17,7 +17,7 @@
 package com.intel.analytics.zoo.models.image.objectdetection.common
 
 import com.intel.analytics.bigdl._
-import com.intel.analytics.bigdl.nn.{Module => _, _}
+import com.intel.analytics.bigdl.nn._
 import com.intel.analytics.bigdl.tensor.Tensor
 import com.intel.analytics.bigdl.utils.Table
 import org.apache.log4j.Logger

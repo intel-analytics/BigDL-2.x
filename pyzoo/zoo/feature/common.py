@@ -14,8 +14,9 @@
 # limitations under the License.
 #
 
-from bigdl.util.common import *
 import sys
+
+from bigdl.util.common import *
 
 if sys.version >= '3':
     long = int
@@ -26,6 +27,7 @@ class Relation(object):
     """
     It represents the relationship between two items.
     """
+
     def __init__(self, id1, id2, label, bigdl_type="float"):
         self.id1 = id1
         self.id2 = id2
@@ -90,6 +92,7 @@ class Preprocessing(JavaValue):
     Preprocessing defines data transform action during feature preprocessing. Python wrapper for
     the scala Preprocessing
     """
+
     def __init__(self, bigdl_type="float", *args):
         self.bigdl_type = bigdl_type
         self.value = callBigDlFunc(bigdl_type, JavaValue.jvm_class_constructor(self), *args)
@@ -117,6 +120,7 @@ class ChainedPreprocessing(Preprocessing):
     chains two Preprocessing together. The output type of the first
     Preprocessing should be the same with the input type of the second Preprocessing.
     """
+
     def __init__(self, transformers, bigdl_type="float"):
         for transfomer in transformers:
             assert isinstance(transfomer, Preprocessing), \
@@ -129,6 +133,7 @@ class ScalarToTensor(Preprocessing):
     """
     a Preprocessing that converts a number to a Tensor.
     """
+
     def __init__(self, bigdl_type="float"):
         super(ScalarToTensor, self).__init__(bigdl_type)
 
@@ -138,6 +143,7 @@ class SeqToTensor(Preprocessing):
     a Transformer that converts an Array[_] or Seq[_] to a Tensor.
     :param size dimensions of target Tensor.
     """
+
     def __init__(self, size=[], bigdl_type="float"):
         super(SeqToTensor, self).__init__(bigdl_type, size)
 
@@ -147,6 +153,7 @@ class ArrayToTensor(Preprocessing):
     a Transformer that converts an Array[_] to a Tensor.
     :param size dimensions of target Tensor.
     """
+
     def __init__(self, size, bigdl_type="float"):
         super(ArrayToTensor, self).__init__(bigdl_type, size)
 
@@ -157,6 +164,7 @@ class MLlibVectorToTensor(Preprocessing):
     .. note:: Deprecated in 0.4.0. NNEstimator will automatically extract Vectors now.
     :param size dimensions of target Tensor.
     """
+
     def __init__(self, size, bigdl_type="float"):
         super(MLlibVectorToTensor, self).__init__(bigdl_type, size)
 
@@ -169,6 +177,7 @@ class FeatureLabelPreprocessing(Preprocessing):
     :param feature_transformer transformer for feature, transform F to Tensor[T]
     :param label_transformer transformer for label, transform L to Tensor[T]
     """
+
     def __init__(self, feature_transformer, label_transformer, bigdl_type="float"):
         super(FeatureLabelPreprocessing, self).__init__(bigdl_type,
                                                         feature_transformer, label_transformer)
@@ -178,6 +187,7 @@ class TensorToSample(Preprocessing):
     """
      a Transformer that converts Tensor to Sample.
     """
+
     def __init__(self, bigdl_type="float"):
         super(TensorToSample, self).__init__(bigdl_type)
 
@@ -196,5 +206,22 @@ class ToTuple(Preprocessing):
     """
      a Transformer that converts Feature to (Feature, None).
     """
+
     def __init__(self, bigdl_type="float"):
         super(ToTuple, self).__init__(bigdl_type)
+
+
+class BigDLDataSet(JavaValue):
+    def __init__(self, jvalue=None, bigdl_type="float"):
+        self.bigdl_type = bigdl_type
+        if jvalue:
+            self.value = jvalue
+
+    @classmethod
+    def rdd(cls, rdd, bigdl_type="float"):
+        jvalue = callBigDlFunc(bigdl_type, "createDatasetFromRDD", rdd)
+        return BigDLDataSet(jvalue=jvalue)
+
+    def transform(self, transformer):
+        jvalue = callBigDlFunc(self.bigdl_type, "transformDataset", self.value, transformer)
+        return BigDLDataSet(jvalue=jvalue)

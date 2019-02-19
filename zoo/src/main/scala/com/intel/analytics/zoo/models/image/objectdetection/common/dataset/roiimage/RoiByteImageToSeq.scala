@@ -24,6 +24,7 @@ import com.intel.analytics.bigdl.dataset.Transformer
 import com.intel.analytics.bigdl.tensor.Tensor
 import com.intel.analytics.bigdl.transform.vision.image.ImageFeature
 import com.intel.analytics.bigdl.transform.vision.image.label.roi.RoiLabel
+import com.intel.analytics.zoo.feature.common.Preprocessing
 import com.intel.analytics.zoo.models.image.objectdetection.common.dataset.roiimage.RoiByteImageToSeq._
 import org.apache.commons.io.FileUtils
 import org.apache.hadoop.conf.Configuration
@@ -33,7 +34,7 @@ import org.apache.hadoop.io.{SequenceFile, Text}
 import scala.collection.Iterator
 
 class RoiByteImageToSeq(blockSize: Int, baseFileName: Path) extends
-  Transformer[ImageFeature, String] {
+  Preprocessing[ImageFeature, String] {
   private val conf: Configuration = new Configuration
   private var index = 0
   private val preBuffer: ByteBuffer = ByteBuffer.allocate(4 * 2)

@@ -72,13 +72,13 @@ object Option {
       .text("where to cache the model")
       .action((x, c) => c.copy(checkpoint = Some(x)))
     opt[Int]("step")
-      .text("step to decay learning rate")
+        .text("step to decay learning rate")
       .action((x, c) => c.copy(step = x))
     opt[Int]('e', "maxEpoch")
-      .text("iteration numbers")
+      .text("epoch numbers")
       .action((x, c) => c.copy(maxEpoch = x))
     opt[Double]('l', "learningRate")
-      .text("inital learning rate")
+      .text("initial learning rate")
       .action((x, c) => c.copy(learningRate = x))
     opt[Double]("learningRateDecay")
       .text("learning rate decay")
@@ -96,13 +96,13 @@ object Option {
       .text("job name")
       .action((x, c) => c.copy(jobName = x))
     opt[String]("summary")
-      .text("train validate summary")
+      .text("train validate summary directory")
       .action((x, c) => c.copy(summaryDir = Some(x)))
     opt[Int]('p', "partition")
       .text("number of partitions")
       .action((x, c) => c.copy(nPartition = x))
     opt[Int]('b', "batchSize")
-      .text("batch size, has to be same with total cores")
+        .text("batch size, has to be same with total cores")
       .action((x, c) => c.copy(batchSize = x))
       .required()
   }
@@ -169,7 +169,7 @@ object Train {
   private def optimize(model: Module[Float],
     trainSet: DataSet[FrcnnMiniBatch],
     valSet: DataSet[FrcnnMiniBatch], param: TrainParams, optimMethod: OptimMethod[Float],
-    endTrigger: Trigger,
+      endTrigger: Trigger,
     criterion: Criterion[Float],
     validationMethod: ValidationMethod[Float]): Module[Float] = {
     val optimizer = Optimizer(

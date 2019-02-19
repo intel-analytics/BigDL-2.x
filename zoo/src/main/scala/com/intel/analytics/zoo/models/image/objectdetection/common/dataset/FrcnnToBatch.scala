@@ -22,6 +22,7 @@ import com.intel.analytics.bigdl.tensor.{Storage, Tensor}
 import com.intel.analytics.bigdl.transform.vision.image.ImageFeature
 import com.intel.analytics.bigdl.transform.vision.image.label.roi.RoiLabel
 import com.intel.analytics.bigdl.utils.{T, Table}
+import com.intel.analytics.zoo.feature.common.Preprocessing
 
 import scala.collection.Iterator
 import scala.collection.mutable.ArrayBuffer
@@ -45,7 +46,7 @@ class FrcnnToBatch(totalBatch: Int,
   convertLabel: Boolean = true,
   partitionNum: Option[Int] = None, val keepImageFeature: Boolean = true,
   inputKey: String = ImageFeature.floats)
-  extends Transformer[ImageFeature, FrcnnMiniBatch] {
+  extends Preprocessing[ImageFeature, FrcnnMiniBatch] {
 
   private val batchPerPartition = Utils.getBatchSize(totalBatch, partitionNum)
 

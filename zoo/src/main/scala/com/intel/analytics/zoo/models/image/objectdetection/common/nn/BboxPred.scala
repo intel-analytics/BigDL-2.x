@@ -26,13 +26,13 @@ import org.apache.log4j.Logger
 import scala.reflect.ClassTag
 
 class BboxPred[T: ClassTag](inputSize: Int,
-  outputSize: Int,
-  withBias: Boolean = true,
-  wRegularizer: Regularizer[T] = null,
-  bRegularizer: Regularizer[T] = null,
-  nClass: Int,
-  var normalized: Boolean = false)(implicit ev: TensorNumeric[T]) extends Linear[T](
-  inputSize, outputSize, withBias, wRegularizer, bRegularizer) {
+                            outputSize: Int,
+                            nClass: Int,
+                            withBias: Boolean = true,
+                            wRegularizer: Regularizer[T] = null,
+                            bRegularizer: Regularizer[T] = null,
+                            var normalized: Boolean = false)(implicit ev: TensorNumeric[T])
+  extends Linear[T](inputSize, outputSize, withBias, wRegularizer, bRegularizer) {
 
   private val means = ProposalTarget.BBOX_NORMALIZE_MEANS.reshape(Array(1, 4))
     .expand(Array(nClass, 4)).reshape(Array(nClass * 4)).asInstanceOf[Tensor[T]]
@@ -66,10 +66,10 @@ object BboxPred {
   val logger = Logger.getLogger(getClass)
 
   def apply[@specialized(Float, Double) T: ClassTag](inputSize: Int,
-    outputSize: Int,
+    outputSize: Int, nClass: Int,
     withBias: Boolean = true,
     wRegularizer: Regularizer[T] = null,
-    bRegularizer: Regularizer[T] = null, nClass: Int,
+    bRegularizer: Regularizer[T] = null,
     normalized: Boolean = false)(implicit ev: TensorNumeric[T]): BboxPred[T] =
-    new BboxPred[T](inputSize, outputSize, withBias, wRegularizer, bRegularizer, nClass, normalized)
+    new BboxPred[T](inputSize, outputSize, nClass, withBias, wRegularizer, bRegularizer, normalized)
 }
