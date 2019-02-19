@@ -52,7 +52,7 @@ import scala.reflect.ClassTag
  * @param subsample Factor by which to subsample output.
  *                  Also called strides elsewhere. Default is 1.
  * @param borderMode One of "same" or "valid".
- *                  Also called padding elsewhere. Default is "same".
+ *                  Also called padding elsewhere. Default is "valid".
  * @param wRegularizer An instance of [[Regularizer]], (eg. L1 or L2 regularization),
  *                     applied to the input weights matrices. Default is null.
  * @param uRegularizer An instance of [[Regularizer]], (eg. L1 or L2 regularization),
@@ -71,7 +71,7 @@ class ConvLSTM2D[T: ClassTag](
    val innerActivation: KerasLayer[Tensor[T], Tensor[T], T] = null,
    val dimOrdering: String = "CHANNEL_FIRST",
    val subsample: Int = 1,
-   val borderMode: String = "same",
+   val borderMode: String = "valid",
    var wRegularizer: Regularizer[T] = null,
    var uRegularizer: Regularizer[T] = null,
    var bRegularizer: Regularizer[T] = null,
@@ -122,7 +122,7 @@ object ConvLSTM2D {
     innerActivation: String = "hard_sigmoid",
     dimOrdering: String = "th",
     subsample: Int = 1,
-    borderMode: String = "same",
+    borderMode: String = "valid",
     wRegularizer: Regularizer[T] = null,
     uRegularizer: Regularizer[T] = null,
     bRegularizer: Regularizer[T] = null,

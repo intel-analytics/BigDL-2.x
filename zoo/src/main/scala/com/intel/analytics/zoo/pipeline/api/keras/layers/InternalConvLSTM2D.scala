@@ -33,7 +33,7 @@ class InternalConvLSTM2D[T : ClassTag](
   val outputSize: Int,
   val kernel: Int,
   val stride: Int = 1,
-  val padding: Int = -1,
+  val padding: Int = 0,
   var activation: TensorModule[T] = null,
   var innerActivation: TensorModule[T] = null,
   var wRegularizer: Regularizer[T] = null,

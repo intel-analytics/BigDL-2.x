@@ -41,6 +41,7 @@ class InternalConvLSTM3DSpec extends FlatSpec with BeforeAndAfter with Matchers 
           inputSize,
           hiddenSize,
           kernal,
+          padding = -1,
           withPeephole = true)))
 
     val input = Tensor[Double](batchSize, seqLength, inputSize, 5, 5, 5).rand
@@ -85,6 +86,7 @@ class InternalConvLSTM3DSpec extends FlatSpec with BeforeAndAfter with Matchers 
         inputSize,
         hiddenSize,
         kernal,
+        padding = -1,
         withPeephole = true))
 
     val input = Tensor[Double](batchSize, seqLength, inputSize, 3, 3, 3).rand
@@ -125,6 +127,7 @@ class InternalConvLSTM3DSpec extends FlatSpec with BeforeAndAfter with Matchers 
           inputSize,
           hiddenSize,
           kernal,
+          padding = -1,
           withPeephole = true)))
 
     val (weights1, grad1) = model1.getParameters()
@@ -135,6 +138,7 @@ class InternalConvLSTM3DSpec extends FlatSpec with BeforeAndAfter with Matchers 
           inputSize,
           hiddenSize,
           kernal,
+          padding = -1,
           wRegularizer = L2Regularizer(0.1),
           uRegularizer = L2Regularizer(0.1),
           bRegularizer = L2Regularizer(0.1),

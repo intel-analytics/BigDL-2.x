@@ -42,6 +42,7 @@ class InternalConvLSTMSpec extends FlatSpec with BeforeAndAfter with Matchers {
           hiddenSize,
           kernal,
           1,
+          padding = -1,
           withPeephole = false)))
 
     val input = Tensor[Double](batchSize, seqLength, inputSize, kernal, kernal).rand
@@ -130,7 +131,7 @@ class InternalConvLSTMSpec extends FlatSpec with BeforeAndAfter with Matchers {
     val rec = new InternalRecurrent[Double]()
     val model = Sequential[Double]()
       .add(rec
-        .add(new InternalConvLSTM2D[Double](inputSize, hiddenSize, 3, 1,
+        .add(new InternalConvLSTM2D[Double](inputSize, hiddenSize, 3, 1, padding = -1,
           withPeephole = false)))
 
     val weightData = Array(
@@ -518,7 +519,8 @@ class InternalConvLSTMSpec extends FlatSpec with BeforeAndAfter with Matchers {
     val rec = new InternalRecurrent[Double]()
     val model = Sequential[Double]()
       .add(rec
-        .add(new InternalConvLSTM2D[Double](inputSize, hiddenSize, 3, 1, withPeephole = false)))
+        .add(new InternalConvLSTM2D[Double](inputSize, hiddenSize, 3, 1,
+          padding = -1, withPeephole = false)))
 
     val weightData = Array(
       -0.0697708, 0.187022, 0.08511595, 0.096392, 0.004365, -0.181258, 0.0446674,
@@ -808,7 +810,8 @@ class InternalConvLSTMSpec extends FlatSpec with BeforeAndAfter with Matchers {
     val rec = new InternalRecurrent[Double]()
     val model = Sequential[Double]()
       .add(rec
-        .add(new InternalConvLSTM2D[Double](inputSize, hiddenSize, 3, 1, withPeephole = false)))
+        .add(new InternalConvLSTM2D[Double](inputSize, hiddenSize, 3, 1,
+          padding = -1, withPeephole = false)))
 
     val weightData = Array(
       -0.0697708, 0.187022, 0.08511595, 0.096392, 0.004365, -0.181258, 0.0446674,
@@ -1068,13 +1071,15 @@ class InternalConvLSTMSpec extends FlatSpec with BeforeAndAfter with Matchers {
     val rec = new InternalRecurrent[Double]()
     val model = Sequential[Double]()
       .add(rec
-        .add(new InternalConvLSTM2D[Double](inputSize, hiddenSize, 3, 1, withPeephole = false)))
+        .add(new InternalConvLSTM2D[Double](inputSize, hiddenSize, 3, 1,
+          padding = -1, withPeephole = false)))
 
     RNG.setSeed(890)
     val rec2 = new InternalRecurrent[Double]()
     val model2 = Sequential[Double]()
       .add(rec2
-        .add(new InternalConvLSTM2D[Double](inputSize, hiddenSize, 3, 1, withPeephole = false)))
+        .add(new InternalConvLSTM2D[Double](inputSize, hiddenSize, 3, 1,
+          padding = -1, withPeephole = false)))
 
     val output = model.forward(input).asInstanceOf[Tensor[Double]]
 
@@ -1116,6 +1121,7 @@ class InternalConvLSTMSpec extends FlatSpec with BeforeAndAfter with Matchers {
           hiddenSize,
           kernal,
           1,
+          padding = -1,
           withPeephole = true)))
 
     val (weights1, grad1) = model1.getParameters()
@@ -1127,6 +1133,7 @@ class InternalConvLSTMSpec extends FlatSpec with BeforeAndAfter with Matchers {
           hiddenSize,
           kernal,
           1,
+          padding = -1,
           wRegularizer = L2Regularizer(0.1),
           uRegularizer = L2Regularizer(0.1),
           bRegularizer = L2Regularizer(0.1),

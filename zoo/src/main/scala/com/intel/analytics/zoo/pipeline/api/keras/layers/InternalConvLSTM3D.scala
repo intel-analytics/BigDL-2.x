@@ -17,7 +17,6 @@
 package com.intel.analytics.zoo.pipeline.api.keras.layers
 
 import com.intel.analytics.bigdl.tensor.Tensor
-import com.intel.analytics.bigdl.nn.abstractnn.{AbstractModule, Activity, TensorModule}
 import com.intel.analytics.bigdl.nn.{CAddTable, CMulTable, Cell, ConcatTable, Contiguous,
 FlattenTable, NarrowTable, ParallelTable, Sigmoid, VolumetricConvolution, Tanh,
 SelectTable => BSelectTable, Sequential => BSequential, Identity => BIdentity,
@@ -33,7 +32,7 @@ class InternalConvLSTM3D[T : ClassTag](val inputSize: Int,
   val outputSize: Int,
   val kernel: Int,
   val stride: Int = 1,
-  val padding: Int = -1,
+  val padding: Int = 0,
   var wRegularizer: Regularizer[T] = null,
   var uRegularizer: Regularizer[T] = null,
   var bRegularizer: Regularizer[T] = null,

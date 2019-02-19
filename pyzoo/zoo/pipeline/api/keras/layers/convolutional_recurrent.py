@@ -26,7 +26,6 @@ if sys.version >= '3':
 class ConvLSTM2D(ZooKerasLayer):
     """
     Convolutional LSTM.
-    Note that currently only 'same' padding is supported.
     The convolution kernel for this layer is a square kernel with equal strides 'subsample'.
     The input of this layer should be 5D, i.e. (samples, time, channels, rows, cols) and
     dim_ordering='th' (Channel First) is expected.
@@ -47,7 +46,7 @@ class ConvLSTM2D(ZooKerasLayer):
     subsample: Tuple of length 2. Factor by which to subsample output.
                Also called strides elsewhere.
                Only support subsample[0] equal to subsample[1] for now. Default is (1, 1).
-    border_mode: One of "same" or "valid". Also called padding elsewhere. Default is "same".
+    border_mode: One of "same" or "valid". Also called padding elsewhere. Default is "valid".
     W_regularizer: An instance of [[Regularizer]], (eg. L1 or L2 regularization),
                    applied to the input weights matrices. Default is None.
     U_regularizer: An instance of [[Regularizer]], applied the recurrent weights matrices.
@@ -64,7 +63,7 @@ class ConvLSTM2D(ZooKerasLayer):
     creating: createZooKerasConvLSTM2D
     """
     def __init__(self, nb_filter, nb_row, nb_col, activation="tanh",
-                 inner_activation="hard_sigmoid", dim_ordering="th", border_mode="same",
+                 inner_activation="hard_sigmoid", dim_ordering="th", border_mode="valid",
                  subsample=(1, 1), W_regularizer=None, U_regularizer=None, b_regularizer=None,
                  return_sequences=False, go_backwards=False, input_shape=None, **kwargs):
         if nb_row != nb_col:
@@ -93,7 +92,6 @@ class ConvLSTM2D(ZooKerasLayer):
 class ConvLSTM3D(ZooKerasLayer):
     """
     Convolutional LSTM for 3D input.
-    Note that currently only 'same' padding is supported.
     The convolution kernel for this layer is a cubic kernel with equal strides for all dimensions.
     The input of this layer should be 6D, i.e. (samples, time, channels, dim1, dim2, dim3),
     and 'CHANNEL_FIRST' (dimOrdering='th') is expected.
@@ -110,7 +108,7 @@ class ConvLSTM3D(ZooKerasLayer):
     subsample: Tuple of length 3. Factor by which to subsample output.
                Also called strides elsewhere. Default is (1, 1, 1).
                Only support subsample[0] equal to subsample[1] equal to subsample[2] for now.
-    border_mode: One of "same" or "valid". Also called padding elsewhere. Default is "same".
+    border_mode: One of "same" or "valid". Also called padding elsewhere. Default is "valid".
     W_regularizer: An instance of [[Regularizer]], (eg. L1 or L2 regularization),
                    applied to the input weights matrices. Default is None.
     U_regularizer: An instance of [[Regularizer]], applied the recurrent weights matrices.
@@ -126,7 +124,7 @@ class ConvLSTM3D(ZooKerasLayer):
     >>> convlstm3d = ConvLSTM3D(10, 4, input_shape=(8, 4, 10, 32, 32))
     creating: createZooKerasConvLSTM3D
     """
-    def __init__(self, nb_filter, nb_kernel, dim_ordering="th", border_mode="same",
+    def __init__(self, nb_filter, nb_kernel, dim_ordering="th", border_mode="valid",
                  subsample=(1, 1, 1), W_regularizer=None, U_regularizer=None, b_regularizer=None,
                  return_sequences=False, go_backwards=False, input_shape=None, **kwargs):
         if dim_ordering != "th":
