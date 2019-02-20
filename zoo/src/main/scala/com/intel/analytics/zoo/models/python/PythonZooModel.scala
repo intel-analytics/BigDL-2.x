@@ -32,6 +32,7 @@ import com.intel.analytics.bigdl.utils.Shape
 import com.intel.analytics.zoo.common.PythonZoo
 import com.intel.analytics.zoo.feature.common.Preprocessing
 import com.intel.analytics.zoo.feature.image._
+import com.intel.analytics.zoo.feature.image.roi.RoiRecordToFeature
 import com.intel.analytics.zoo.feature.text.TextSet
 import com.intel.analytics.zoo.models.anomalydetection.{AnomalyDetector, FeatureLabelIndex}
 import com.intel.analytics.zoo.models.common.{Ranker, ZooModel}
@@ -39,8 +40,6 @@ import com.intel.analytics.zoo.models.image.common.{ImageConfigure, ImageModel}
 import com.intel.analytics.zoo.models.image.objectdetection.{DummyGT, _}
 import com.intel.analytics.zoo.models.image.imageclassification.{ImageClassifier, LabelReader => IMCLabelReader}
 import com.intel.analytics.zoo.models.image.objectdetection.common.{MeanAveragePrecision, ModuleUtil}
-import com.intel.analytics.zoo.models.image.objectdetection.common.dataset.FrcnnToBatch
-import com.intel.analytics.zoo.models.image.objectdetection.common.dataset.roiimage.{ByteRecord, RoiImageToBatch, RoiRecordToFeature}
 import com.intel.analytics.zoo.models.image.objectdetection.common.nn._
 import com.intel.analytics.zoo.models.recommendation.{NeuralCF, Recommender, UserItemFeature, UserItemPrediction}
 import com.intel.analytics.zoo.models.recommendation._
@@ -49,6 +48,9 @@ import com.intel.analytics.zoo.models.textclassification.TextClassifier
 import com.intel.analytics.zoo.models.textmatching.KNRM
 import com.intel.analytics.zoo.pipeline.api.keras.layers.{Embedding, Recurrent, WordEmbedding}
 import com.intel.analytics.zoo.models.image.objectdetection.common.IOUtils
+import com.intel.analytics.zoo.models.image.objectdetection.common.dataset.ByteRecord
+import com.intel.analytics.zoo.models.image.objectdetection.fasterrcnn.RoiImageToFrcnnBatch
+import com.intel.analytics.zoo.models.image.objectdetection.ssd.RoiImageToSSDBatch
 import org.apache.spark.api.java.{JavaRDD, JavaSparkContext}
 import org.apache.spark.api.java.JavaRDD
 import org.apache.spark.rdd.RDD
@@ -310,15 +312,15 @@ class PythonZooModel[T: ClassTag](implicit ev: TensorNumeric[T]) extends PythonZ
 
   def createRoiImageToBatch(batchSize: Int, convertLabel: Boolean = true,
                             partitionNum: Option[Int] = None, keepImageFeature: Boolean = true,
-                            inputKey: String = ImageFeature.floats): RoiImageToBatch = {
-    RoiImageToBatch(batchSize, convertLabel, partitionNum, keepImageFeature, inputKey)
+                            inputKey: String = ImageFeature.floats): RoiImageToSSDBatch = {
+    RoiImageToSSDBatch(batchSize, convertLabel, partitionNum, keepImageFeature, inputKey)
   }
 
   def createFrcnnToBatch(batchSize: Int, convertLabel: Boolean = true,
                          partitionNum: Int = -1, keepImageFeature: Boolean = true,
-                         inputKey: String = ImageFeature.floats): FrcnnToBatch = {
+                         inputKey: String = ImageFeature.floats): RoiImageToFrcnnBatch = {
     val pn = if (partitionNum == -1) None else Some(partitionNum)
-    FrcnnToBatch(batchSize, convertLabel, pn, keepImageFeature, inputKey)
+    RoiImageToFrcnnBatch(batchSize, convertLabel, pn, keepImageFeature, inputKey)
   }
 
   def createMeanAveragePrecision(use07metric: Boolean, normalized: Boolean = true,

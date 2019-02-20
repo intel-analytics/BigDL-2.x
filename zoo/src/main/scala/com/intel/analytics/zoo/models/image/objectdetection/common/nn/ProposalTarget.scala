@@ -22,8 +22,8 @@ import com.intel.analytics.bigdl.tensor.Tensor
 import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric
 import com.intel.analytics.bigdl.utils.{T, Table}
 import com.intel.analytics.zoo.models.image.objectdetection.common.BboxUtil
-import com.intel.analytics.zoo.models.image.objectdetection.common.dataset.FrcnnMiniBatch
 import com.intel.analytics.zoo.models.image.objectdetection.common.nn.ProposalTarget._
+import com.intel.analytics.zoo.models.image.objectdetection.fasterrcnn.FrcnnMiniBatch
 import org.apache.log4j.Logger
 
 import scala.util.Random

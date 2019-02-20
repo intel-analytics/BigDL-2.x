@@ -14,15 +14,15 @@
  * limitations under the License.
  */
 
-package com.intel.analytics.zoo.models.image.objectdetection.common.dataset.roiimage
+package com.intel.analytics.zoo.feature.image.roi
 
 import java.nio.ByteBuffer
 
-import com.intel.analytics.bigdl.dataset.Transformer
 import com.intel.analytics.bigdl.tensor.Tensor
 import com.intel.analytics.bigdl.transform.vision.image.ImageFeature
 import com.intel.analytics.bigdl.transform.vision.image.label.roi.RoiLabel
 import com.intel.analytics.zoo.feature.common.Preprocessing
+import com.intel.analytics.zoo.models.image.objectdetection.common.dataset.ByteRecord
 
 import scala.collection.Iterator
 

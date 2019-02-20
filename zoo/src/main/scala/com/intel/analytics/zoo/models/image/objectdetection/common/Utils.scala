@@ -27,9 +27,12 @@ import com.intel.analytics.bigdl.transform.vision.image.augmentation._
 import com.intel.analytics.bigdl.transform.vision.image.label.roi._
 import com.intel.analytics.bigdl.transform.vision.image.{BytesToMat, ImageFeature, ImageFrame, MatToFloats}
 import com.intel.analytics.zoo.feature.image._
-import com.intel.analytics.zoo.models.image.objectdetection.common.dataset.{FrcnnMiniBatch, FrcnnToBatch}
-import com.intel.analytics.zoo.models.image.objectdetection.common.dataset.roiimage.{ByteRecord, RoiImageToBatch, RoiRecordToFeature, SSDMiniBatch}
+import com.intel.analytics.zoo.feature.image.roi.RoiRecordToFeature
+import com.intel.analytics.zoo.models.image.objectdetection.common.dataset.{ByteRecord, SSDMiniBatch}
+import com.intel.analytics.zoo.models.image.objectdetection.common.dataset.roiimage.ByteRecord
 import com.intel.analytics.zoo.models.image.objectdetection.fasterrcnn
+import com.intel.analytics.zoo.models.image.objectdetection.fasterrcnn.{FrcnnMiniBatch, RoiImageToFrcnnBatch}
+import com.intel.analytics.zoo.models.image.objectdetection.ssd.{RoiImageToSSDBatch, SSDMiniBatch}
 import org.apache.hadoop.io.Text
 import org.apache.spark.SparkContext
 import org.apache.spark.rdd.RDD
@@ -77,7 +80,7 @@ object IOUtils {
       ImageRandomPreprocessing(ImageHFlip() -> ImageRoiHFlip(), 0.5) ->
       ImageChannelNormalize(123f, 117f, 104f) ->
       ImageMatToFloats(validHeight = resolution, validWidth = resolution) ->
-      RoiImageToBatch(batchSize)
+      RoiImageToSSDBatch(batchSize)
   }
 
   def loadSSDValSet(folder: String, sc: SparkContext, resolution: Int, batchSize: Int, parNum: Int)
@@ -90,7 +93,7 @@ object IOUtils {
       ImageResize(resolution, resolution) ->
       ImageChannelNormalize(123f, 117f, 104f) ->
       ImageMatToFloats(validHeight = resolution, validWidth = resolution) ->
-      RoiImageToBatch(batchSize)
+      RoiImageToSSDBatch(batchSize)
   }
 
   def loadFasterrcnnTrainSet(folder: String, sc: SparkContext, param: fasterrcnn.PreProcessParam,
@@ -104,7 +107,7 @@ object IOUtils {
       ImageRandomPreprocessing(ImageHFlip() -> ImageRoiHFlip(false), 0.5) ->
       ImageChannelNormalize(param.pixelMeanRGB._1, param.pixelMeanRGB._2, param.pixelMeanRGB._3) ->
       ImageMatToFloats(validHeight = 600, validWidth = 600) ->
-      FrcnnToBatch(batchSize, true)
+      RoiImageToFrcnnBatch(batchSize, true)
   }
 
   def loadFasterrcnnValSet(folder: String, sc: SparkContext, param: fasterrcnn.PreProcessParam,
@@ -116,7 +119,7 @@ object IOUtils {
       ImageAspectScale(param.scales(0), param.scaleMultipleOf) ->
       ImageChannelNormalize(param.pixelMeanRGB._1, param.pixelMeanRGB._2, param.pixelMeanRGB._3) ->
       ImageMatToFloats(100, 100) ->
-      FrcnnToBatch(param.batchSize, true)
+      RoiImageToFrcnnBatch(param.batchSize, true)
   }
 }
 

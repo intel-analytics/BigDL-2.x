@@ -14,22 +14,24 @@
  * limitations under the License.
  */
 
-package com.intel.analytics.zoo.models.image.objectdetection.common.dataset.roiimage
+package com.intel.analytics.zoo.models.image.objectdetection.fasterrcnn
 
-import com.intel.analytics.bigdl.dataset.{Transformer, Utils}
+import com.intel.analytics.bigdl.dataset.Utils
+import com.intel.analytics.bigdl.numeric.NumericFloat
 import com.intel.analytics.bigdl.tensor.{Storage, Tensor}
 import com.intel.analytics.bigdl.transform.vision.image.ImageFeature
 import com.intel.analytics.bigdl.transform.vision.image.label.roi.RoiLabel
+import com.intel.analytics.bigdl.utils.{T, Table}
 import com.intel.analytics.zoo.feature.common.Preprocessing
 
 import scala.collection.Iterator
 import scala.collection.mutable.ArrayBuffer
 
-object RoiImageToBatch {
+object RoiImageToFrcnnBatch {
   def apply(batchSize: Int, convertLabel: Boolean = true,
     partitionNum: Option[Int] = None, keepImageFeature: Boolean = true,
-    inputKey: String = ImageFeature.floats): RoiImageToBatch
-  = new RoiImageToBatch(batchSize, convertLabel, partitionNum, keepImageFeature, inputKey)
+    inputKey: String = ImageFeature.floats): RoiImageToFrcnnBatch
+  = new RoiImageToFrcnnBatch(batchSize, convertLabel, partitionNum, keepImageFeature, inputKey)
 }
 
 /**
@@ -37,25 +39,25 @@ object RoiImageToBatch {
  *
  * Notice: The totalBatch means a total batch size. In distributed environment, the batch should be
  * divided by total core number
+ *
  * @param totalBatch
  */
-class RoiImageToBatch(totalBatch: Int,
-  convertLabel: Boolean = true,
-  partitionNum: Option[Int] = None, val keepImageFeature: Boolean = true,
-  inputKey: String = ImageFeature.floats)
-  extends Preprocessing[ImageFeature, SSDMiniBatch] {
+class RoiImageToFrcnnBatch(totalBatch: Int,
+                           convertLabel: Boolean = true,
+                           partitionNum: Option[Int] = None, val keepImageFeature: Boolean = true,
+                           inputKey: String = ImageFeature.floats)
+  extends Preprocessing[ImageFeature, FrcnnMiniBatch] {
 
   private val batchPerPartition = Utils.getBatchSize(totalBatch, partitionNum)
 
-  override def apply(prev: Iterator[ImageFeature]): Iterator[SSDMiniBatch] = {
+  override def apply(prev: Iterator[ImageFeature]): Iterator[FrcnnMiniBatch] = {
     val batchSizePerPartition = batchPerPartition
-    new Iterator[SSDMiniBatch] {
-      private val featureTensor: Tensor[Float] = Tensor[Float]()
-      private val labelTensor: Tensor[Float] = Tensor[Float]()
-      private val imInfoTensor: Tensor[Float] = Tensor[Float]()
-      private var featureData: Array[Float] = null
+    new Iterator[FrcnnMiniBatch] {
+      private val inputBatch: Table = T()
+      private val labelTensor: Tensor[Float] = Tensor()
+//      private val imInfoTensor: Tensor[Float] = Tensor[Float]()
       private var labelData: ArrayBuffer[Float] = null
-      private var imInfoData: Array[Float] = null
+//      private var imInfoData: Array[Float] = null
       private var maps: Array[ImageFeature] = null
       private var width = 0
       private var height = 0
@@ -63,27 +65,37 @@ class RoiImageToBatch(totalBatch: Int,
 
       override def hasNext: Boolean = prev.hasNext
 
-      override def next(): SSDMiniBatch = {
+      override def next(): FrcnnMiniBatch = {
         if (prev.hasNext) {
           var i = 0
+          inputBatch.clear()
           if (labelData != null) labelData.clear()
           while (i < batchSize && prev.hasNext) {
+            val input = T()
+            inputBatch.insert(input)
             val feature = prev.next()
             height = feature.getHeight()
             width = feature.getWidth()
-            if (featureData == null) {
-              featureData = new Array[Float](batchSize * 3 * height * width)
-              imInfoData = new Array[Float](batchSize * 4)
+            if (maps == null) {
+//              imInfoData = new Array[Float](batchSize * 4)
               maps = new Array[ImageFeature](batchSize)
               if (convertLabel) {
                 labelData = new ArrayBuffer[Float]()
               }
             }
-            feature.copyTo(featureData, i * width * height * 3, inputKey, false)
-            imInfoData(i * 4) = height
-            imInfoData(i * 4 + 1) = width
-            imInfoData(i * 4 + 2) = feature.getOriginalHeight / height.toFloat
-            imInfoData(i * 4 + 3) = feature.getOriginalWidth / width.toFloat
+            require(feature.contains(inputKey), s"there should be ${inputKey} in ImageFeature")
+            val data = feature.floats(inputKey)
+            // hwc to chw
+            val featureTensor = Tensor(Storage(data))
+              .resize(1, feature.getHeight(), feature.getWidth(), 3).transpose(2, 4).transpose(3, 4)
+              .contiguous()
+            val imInfoTensor = Tensor(T(height, width, height.toFloat / feature.getOriginalHeight,
+              width.toFloat / feature.getOriginalWidth)).resize(1, 4)
+            input(1) = featureTensor
+            input(2) = imInfoTensor
+            input(3) = labelTensor
+
+            maps(i) = feature
             if (convertLabel) {
               require(feature.hasLabel(), "if convert label, there should be label")
               val target = feature.getLabel[RoiLabel]
@@ -101,34 +113,27 @@ class RoiImageToBatch(totalBatch: Int,
                   r += 1
                 }
               } else {
-                labelData.append(i)
-                labelData.append(-1)
-                // difficult
-                labelData.append(-1)
-                labelData.append(-1)
-                labelData.append(-1)
-                labelData.append(-1)
-                labelData.append(-1)
+//                labelData.append(i)
+//                labelData.append(-1)
+//                // difficult
+//                labelData.append(-1)
+//                labelData.append(-1)
+//                labelData.append(-1)
+//                labelData.append(-1)
+//                labelData.append(-1)
+                // ignore image that doesn't have label
+                inputBatch.remove()
+                i -= 1
               }
             }
-            maps(i) = feature
             i += 1
-          }
-
-          if (featureTensor.nElement() != i * 3 * height * width) {
-            featureTensor.set(Storage[Float](featureData),
-              storageOffset = 1, sizes = Array(i, 3, height, width))
-            imInfoTensor.set(Storage[Float](imInfoData), storageOffset = 1, sizes = Array(i, 4))
           }
           val batch = if (convertLabel) {
             labelTensor.set(Storage[Float](labelData.toArray),
               storageOffset = 1, sizes = Array(labelData.length / 7, 7))
-            SSDMiniBatch(featureTensor, labelTensor, imInfoTensor)
+            FrcnnMiniBatch(inputBatch, labelTensor)
           } else {
-            SSDMiniBatch(featureTensor, null, imInfoTensor)
-          }
-          if (keepImageFeature) {
-            batch.imageFeatures = maps
+            FrcnnMiniBatch(inputBatch, null)
           }
           batch
         } else {

@@ -14,40 +14,25 @@
  * limitations under the License.
  */
 
-package com.intel.analytics.zoo.models.image.objectdetection.common.dataset.roiimage
+package com.intel.analytics.zoo.models.image.objectdetection.fasterrcnn
 
 import com.intel.analytics.bigdl.dataset.{MiniBatch, Sample}
+import com.intel.analytics.bigdl.nn.abstractnn.Activity
 import com.intel.analytics.bigdl.tensor.Tensor
 import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric
-import com.intel.analytics.bigdl.transform.vision.image.ImageFeature
+import com.intel.analytics.bigdl.utils.Table
 import com.intel.analytics.zoo.models.image.objectdetection.common.BboxUtil
 
-/**
- * A batch of data feed into the model. The first size is batchsize
- * @param input
- * @param target
- */
-class SSDMiniBatch(val input: Tensor[Float], val target: Tensor[Float],
-  val imInfo: Tensor[Float] = null)
+class FrcnnMiniBatch(val input: Table, val target: Tensor[Float])
   extends MiniBatch[Float] {
 
   private val targetIndices = if (target != null) BboxUtil.getGroundTruthIndices(target) else null
-  var imageFeatures: Array[ImageFeature] = _
 
-  override def size(): Int = {
-    input.size(1)
-  }
-
-  override def getInput(): Tensor[Float] = {
-    input
-  }
-
-  override def getTarget(): Tensor[Float] = {
-    target
-  }
+  override def size(): Int = input.length()
 
   override def slice(offset: Int, length: Int): MiniBatch[Float] = {
-    val subInput = input.narrow(1, offset, length)
+    require(length == 1, "only batch 1 is supported")
+    val subInput = input[Table](offset)
     val subTarget = if (target != null) {
       var i = 0
       val targetOffset = targetIndices(offset - 1)._1
@@ -56,21 +41,39 @@ class SSDMiniBatch(val input: Tensor[Float], val target: Tensor[Float],
         targetLength += targetIndices(offset + i - 1)._2
         i += 1
       }
-      target.narrow(1, targetOffset, targetLength)
+      val subt = target.narrow(1, targetOffset, targetLength)
+      subInput.update(3, subt)
+      subt
     } else null
-
-    SSDMiniBatch(subInput, subTarget)
+    FrcnnMiniBatch(subInput, subTarget)
   }
 
-  override def set(samples: Seq[Sample[Float]])(implicit ev: TensorNumeric[Float])
-  : SSDMiniBatch.this.type = {
+  override def getInput(): Activity = input
+
+  override def getTarget(): Activity = target
+
+  def getSample(): Table = getInput().toTable[Table](1)
+
+  override def set(samples: Seq[Sample[Float]])(implicit ev: TensorNumeric[Float]): this.type = {
     throw new NotImplementedError("do not use Sample here")
   }
 }
 
-object SSDMiniBatch {
-  def apply(data: Tensor[Float], labels: Tensor[Float], imInfo: Tensor[Float] = null):
-  SSDMiniBatch = new SSDMiniBatch(data, labels, imInfo)
+object FrcnnMiniBatch {
+  def apply(input: Table, target: Tensor[Float]): FrcnnMiniBatch = {
+    new FrcnnMiniBatch(input, target)
+  }
+
+  def getBboxes(batchInput: Tensor[Float]): Tensor[Float] = {
+    batchInput.narrow(2, 4, 4)
+  }
+
+  val imageIndex = 1
+  val labelIndex = 2
+  val difficultIndex = 3
+  val x1Index = 4
+  val y1Index = 5
+  val x2Index = 6
+  val y2Index = 7
 }
 
-case class ByteRecord(var data: Array[Byte], path: String)
