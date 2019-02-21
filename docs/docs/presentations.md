@@ -6,7 +6,7 @@
  
 * [Baidu Create 2018 Beijing:](http://create.baidu.com/)Intel Analytics Zoo Solution at Scale[[Slides]](https://github.com/analytics-zoo/analytics-zoo.github.io/blob/master/presentations/IntelDataAnalyticsSolutionatScala.pdf)
 
-* [Spark+AI Summit 2018 SF:](https://databricks.com/session/analytics-zoo-building-analytics-and-ai-pipeline-for-apache-spark-and-bigdl)Analytics Zoo: Building Analytics and AI Pipeline for Apache Spark and BigDL[[Slides]]()
+* [Spark+AI Summit 2018 SF:](https://databricks.com/session/analytics-zoo-building-analytics-and-ai-pipeline-for-apache-spark-and-bigdl)Analytics Zoo: Building Analytics and AI Pipeline for Apache Spark and BigDL[[Video]](https://jason-dai.github.io/cvpr2018/slides/BigData_DL_Jason-CVPR.pdf)
 
 * [Spark+AI Summit 2018 SF:](https://databricks.com/session/building-deep-reinforcement-learning-applications-on-apache-spark-using-bigdl)Building Deep Reinforcement Learning Applications on Apache Spark with Analytics Zoo using BigDL[[Slides]](https://github.com/analytics-zoo/analytics-zoo.github.io/blob/master/presentations/Building%20Deep%20Reinforcement%20Learning%20Applications%20on%20Apache%20Spark%20with%20Analytics%20Zoo%20using%20BigDL.pdf)
 
