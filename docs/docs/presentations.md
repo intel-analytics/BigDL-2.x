@@ -6,11 +6,11 @@
  
 * [Baidu Create 2018 Beijing:](http://create.baidu.com/)Intel Analytics Zoo Solution at Scale[[Slides]](https://github.com/analytics-zoo/analytics-zoo.github.io/blob/master/presentations/IntelDataAnalyticsSolutionatScala.pdf)
 
-* [Spark+AI Summit 2018 San Francisco:](https://databricks.com/session/analytics-zoo-building-analytics-and-ai-pipeline-for-apache-spark-and-bigdl)Analytics Zoo: Building Analytics and AI Pipeline for Apache Spark and BigDL[[Slides]]()
+* [Spark+AI Summit 2018 SF:](https://databricks.com/session/analytics-zoo-building-analytics-and-ai-pipeline-for-apache-spark-and-bigdl)Analytics Zoo: Building Analytics and AI Pipeline for Apache Spark and BigDL[[Slides]]()
 
-* [Spark+AI Summit 2018 San Francisco:](https://databricks.com/session/building-deep-reinforcement-learning-applications-on-apache-spark-using-bigdl)Building Deep Reinforcement Learning Applications on Apache Spark with Analytics Zoo using BigDL[[Slides]](https://github.com/analytics-zoo/analytics-zoo.github.io/blob/master/presentations/Building%20Deep%20Reinforcement%20Learning%20Applications%20on%20Apache%20Spark%20with%20Analytics%20Zoo%20using%20BigDL.pdf)
+* [Spark+AI Summit 2018 SF:](https://databricks.com/session/building-deep-reinforcement-learning-applications-on-apache-spark-using-bigdl)Building Deep Reinforcement Learning Applications on Apache Spark with Analytics Zoo using BigDL[[Slides]](https://github.com/analytics-zoo/analytics-zoo.github.io/blob/master/presentations/Building%20Deep%20Reinforcement%20Learning%20Applications%20on%20Apache%20Spark%20with%20Analytics%20Zoo%20using%20BigDL.pdf)
 
-* [Spark+AI Summit 2018 San Francisco:](https://databricks.com/session/using-crowdsourced-images-to-create-image-recognition-models-with-bigdl)Using Crowdsourced Images to Create Image Recognition Models with Analytics Zoo using BigDL[[Slides]](https://github.com/analytics-zoo/analytics-zoo.github.io/blob/master/presentations/Using%20Crowdsourced%20Images%20to%20Create%20Image%20Recognition%20Models%20with%20Analytics%20Zoo%20using%20BigDL.pdf)
+* [Spark+AI Summit 2018 SF:](https://databricks.com/session/using-crowdsourced-images-to-create-image-recognition-models-with-bigdl)Using Crowdsourced Images to Create Image Recognition Models with Analytics Zoo using BigDL[[Slides]](https://github.com/analytics-zoo/analytics-zoo.github.io/blob/master/presentations/Using%20Crowdsourced%20Images%20to%20Create%20Image%20Recognition%20Models%20with%20Analytics%20Zoo%20using%20BigDL.pdf)
 
 * [Strata 2018 New York:](https://conferences.oreilly.com/strata/strata-ny-2018/public/schedule/detail/69413)A deep learning approach for precipitation nowcasting with RNN using Analytics Zoo on BigDL[[Slides]](https://github.com/analytics-zoo/analytics-zoo.github.io/blob/master/presentations/A%20deep%20learning%20approach%20for%20precipitation%20nowcasting%20with%20RNN%20using%20Analytics%20Zoo%20on%20BigDL.pdf)
 
