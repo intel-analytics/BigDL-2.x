@@ -736,7 +736,7 @@ class TFDataset:
                     [tf.placeholder(name=t.name,
                                     dtype=t.dtype,
                                     shape=[self.batch_size // self.total_core_num] +
-                                          list(t.shape))
+                                    list(t.shape))
                      for t in nest.flatten(self.tensor_structure)])
 
         for tensor in nest.flatten(tensors):
@@ -767,7 +767,8 @@ class TFDataset:
             self._tensors = tensors
 
         if not isinstance(self._tensors, tuple):
-            raise ValueError("To use feature_tensors, the element in TFDataset must be a tuple of two component")
+            raise ValueError("To use feature_tensors, " +
+                             "the element in TFDataset must be a tuple of two component")
 
         return self._tensors[0]
 
@@ -779,7 +780,8 @@ class TFDataset:
             self._tensors = tensors
 
         if not isinstance(self._tensors, tuple):
-            raise ValueError("To use label_tensors, the element in TFDataset must be a tuple of two component")
+            raise ValueError("To use label_tensors, the element in " +
+                             "TFDataset must be a tuple of two component")
 
         return self._tensors[1]
 
@@ -828,7 +830,7 @@ class TFDataset:
                          hard_code_batch_size, val_rdd)
 
     @staticmethod
-    def from_tuple_rdd(rdd, features, labels = None, batch_size=-1, batch_per_thread=-1,
+    def from_tuple_rdd(rdd, features, labels=None, batch_size=-1, batch_per_thread=-1,
                        hard_code_batch_size=False, val_rdd=None):
         feature_structure = _to_tensor_structure(features)
         if labels is not None:
@@ -844,7 +846,7 @@ class TFDataset:
 
     @staticmethod
     def from_tensors(tensors, batch_size=-1, batch_per_thread=-1,
-                 hard_code_batch_size=False, val_tensors=None):
+                     hard_code_batch_size=False, val_tensors=None):
         sc = get_spark_context()
         node_num, core_num = get_node_and_core_number()
         total_core_num = node_num * core_num
@@ -855,7 +857,8 @@ class TFDataset:
         if val_tensors is not None:
             val_rdd = _tensors_to_rdd(val_tensors, sc, total_core_num)
 
-        return TFDataset(rdd, tensor_structure, batch_size, batch_per_thread, hard_code_batch_size, val_rdd)
+        return TFDataset(rdd, tensor_structure, batch_size,
+                         batch_per_thread, hard_code_batch_size, val_rdd)
 
 
 def _tensors_to_rdd(tensors, sc, splits):
