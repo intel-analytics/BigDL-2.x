@@ -15,7 +15,7 @@
  */
 package com.intel.analytics.zoo.pipeline.api.net
 
-import java.io.{File, FileInputStream, InputStream}
+import java.io.{File, FileInputStream, FileOutputStream, InputStream}
 import java.nio._
 
 import com.intel.analytics.bigdl.Module
@@ -28,8 +28,8 @@ import com.intel.analytics.zoo.pipeline.api.{Predictable, Predictor}
 import com.intel.analytics.zoo.pipeline.api.net.TFNet.TFGraphHolder
 import org.apache.spark.rdd.RDD
 import org.tensorflow.framework.GraphDef
-import org.tensorflow.types.{TFBool, UInt8}
-import org.tensorflow.{DataType, Graph, Session, Tensor => TTensor}
+import org.tensorflow.types.UInt8
+import org.tensorflow.{DataType, Graph, NativeLibrary, Session, Tensor => TTensor}
 
 import scala.collection.JavaConverters._
 import org.json4s._
@@ -577,6 +577,89 @@ class TFNet(private val graphDef: TFGraphHolder,
 }
 
 object TFNet {
+
+  val iomp5name = "libiomp5.so"
+  val iomp5Resource: InputStream =
+    classOf[TFNet].getClassLoader.getResourceAsStream("org/tensorflow/native/linux-x86_64/libiomp5.so")
+
+  val mklname = "libmklml_intel.so"
+  val mklResource: InputStream =
+    classOf[TFNet].getClassLoader.getResourceAsStream("org/tensorflow/native/linux-x86_64/libmklml_intel.so")
+
+  val frameworkname = "libtensorflow_framework.so"
+  val frameworkResource: InputStream =
+    classOf[TFNet].getClassLoader.getResourceAsStream("org/tensorflow/native/linux-x86_64/libtensorflow_framework.so")
+
+  val jniname = "libtensorflow_jni.so"
+  val jniRsource: InputStream =
+    classOf[TFNet].getClassLoader.getResourceAsStream("org/tensorflow/native/linux-x86_64/libtensorflow_jni.so")
+
+  // Create a temporary directory for the extracted resource and its dependencies.
+  val tempPath: File = createTemporaryDirectory
+  // Deletions are in the reverse order of requests, so we need to request that the directory be
+  // deleted first, so that it is empty when the request is fulfilled.
+  tempPath.deleteOnExit()
+  val tempDirectory: String = tempPath.getCanonicalPath
+
+  extractResource(iomp5Resource, iomp5name, tempDirectory)
+  extractResource(mklResource, mklname, tempDirectory)
+  extractResource(frameworkResource, frameworkname, tempDirectory)
+  System.load(extractResource(jniRsource, jniname, tempDirectory))
+
+
+
+  private def extractResource(resource: InputStream,
+                              resourceName: String,
+                              extractToDirectory: String) = {
+    val dst = new File(extractToDirectory, resourceName)
+    dst.deleteOnExit()
+    val dstPath = dst.toString
+    val nbytes = copy(resource, dst)
+    dstPath
+  }
+
+  private def copy(src: InputStream, dstFile: File) = {
+    val dst = new FileOutputStream(dstFile)
+    try {
+      val buffer = new Array[Byte](1 << 20)
+      // 1MB
+      var ret = 0
+      var n = 0
+      var continue = true
+      while (continue) {
+        n = src.read(buffer)
+        if (n >= 0) {
+          dst.write(buffer, 0, n)
+          ret += n
+        } else {
+          continue = false
+        }
+      }
+      ret
+    } finally {
+      dst.close()
+      src.close()
+    }
+  }
+
+
+  private def createTemporaryDirectory: File = {
+    val baseDirectory = new File(System.getProperty("java.io.tmpdir"))
+    val directoryName = "tensorflow_native_libraries-" + System.currentTimeMillis + "-"
+    var attempt = 0
+    while ( {
+      attempt < 1000
+    }) {
+      val temporaryDirectory = new File(baseDirectory, directoryName + attempt)
+      if (temporaryDirectory.mkdir) return temporaryDirectory
+
+      {
+        attempt += 1; attempt - 1
+      }
+    }
+    throw new IllegalStateException("Could not create a temporary directory (tried to make " + directoryName + "*) to extract TensorFlow native libraries.")
+  }
+
 
   @transient
   private lazy val inDriver = NetUtils.isDriver

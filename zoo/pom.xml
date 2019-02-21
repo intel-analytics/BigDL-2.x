@@ -249,8 +249,8 @@
         </dependency>
         <dependency>
             <groupId>org.tensorflow</groupId>
-            <artifactId>tensorflow</artifactId>
-            <version>1.10.0</version>
+            <artifactId>libtensorflow</artifactId>
+            <version>1.13.0-rc2</version>
         </dependency>
         <dependency>
             <groupId>org.tensorflow</groupId>
