@@ -16,28 +16,30 @@ start=$(date "+%s")
 
 # Conversion to py file and data preparation
 ${ANALYTICS_ZOO_HOME}/apps/ipynb2py.sh ${ANALYTICS_ZOO_HOME}/apps/recommendation-wide-n-deep/wide_n_deep
-sed "s/end_trigger=MaxEpoch(10)/end_trigger=MaxEpoch(5)/g" ${ANALYTICS_ZOO_HOME}/apps/recommendation-wide-n-deep/wide_n_deep.py >${ANALYTICS_ZOO_HOME}/apps/recommendation-wide-n-deep/tmp_test.py
+sed "s/end_trigger=MaxEpoch(10)/end_trigger=MaxEpoch(5)/g; s/batch_size=8000/batch_size=8008/g" ${ANALYTICS_ZOO_HOME}/apps/recommendation-wide-n-deep/wide_n_deep.py >${ANALYTICS_ZOO_HOME}/apps/recommendation-wide-n-deep/tmp_test.py
 
 # Run the example
 export SPARK_DRIVER_MEMORY=22g
-python ${ANALYTICS_ZOO_HOME}/apps/recommendation-wide-n-deep/wide_n_deep.py
+python ${ANALYTICS_ZOO_HOME}/apps/recommendation-wide-n-deep/tmp_test.py
+
+exit_status=$?
 if [ $exit_status -ne 0 ];
 then
     clear_up
-    echo "using_variational_autoencoder_and_deep_feature_loss_to_generate_faces failed"
+    echo "recommendation-wide-n-deep failed"
     exit $exit_status
 fi
  unset SPARK_DRIVER_MEMORY
  now=$(date "+%s")
 time4=$((now-start))
 echo "recommendation-wide-n-deep time used:$time4 seconds"
-rm ${ANALYTICS_ZOO_HOME}/apps/recommendation-wide-n-deep/tmp_test.py
 
 echo "#11 start app test for sentiment-analysis"
 start=$(date "+%s")
 
 # Conversion to py file and data preparation
 ${ANALYTICS_ZOO_HOME}/apps/ipynb2py.sh ${ANALYTICS_ZOO_HOME}/apps/sentiment-analysis/sentiment
+sed "s/batch_size=64/batch_size=84/g" ${ANALYTICS_ZOO_HOME}/apps/sentiment-analysis/sentiment.py >${ANALYTICS_ZOO_HOME}/apps/sentiment-analysis/tmp_test.py
 FILENAME="/tmp/.bigdl/dataset/glove.6B.zip"
 if [ -f "$FILENAME" ]
 then
@@ -51,20 +53,18 @@ fi
 # Run the example
 export SPARK_DRIVER_MEMORY=12g
 python ${ANALYTICS_ZOO_HOME}/apps/sentiment-analysis/sentiment.py
+
+exit_status=$?
 if [ $exit_status -ne 0 ];
 then
     clear_up
-    echo "using_variational_autoencoder_and_deep_feature_loss_to_generate_faces failed"
+    echo "sentiment-analysis failed"
     exit $exit_status
 fi
  unset SPARK_DRIVER_MEMORY
  now=$(date "+%s")
 time11=$((now-start))
 echo "sentiment-analysis time used:$time11 seconds"
-rm ${ANALYTICS_ZOO_HOME}/apps/sentiment-analysis/sentiment.py
-
-# This should be done at the very end after all tests finish.
-clear_up
 
 echo "#1 start app test for anomaly-detection"
 start=$(date "+%s")
