@@ -24,11 +24,11 @@ import com.intel.analytics.bigdl.utils.LoggerFilter
 import com.intel.analytics.bigdl.visualization.{TrainSummary, ValidationSummary}
 import com.intel.analytics.zoo.common.NNContext
 import com.intel.analytics.bigdl.nn.Module
-import com.intel.analytics.zoo.models.image.objectdetection.common.{IOUtils, ModuleUtil}
+import com.intel.analytics.zoo.models.image.objectdetection.common.ModuleUtil
 import com.intel.analytics.zoo.models.image.objectdetection.common.nn.MultiBoxLoss
 import com.intel.analytics.zoo.models.image.objectdetection.common.nn.MultiBoxLossParam
 import com.intel.analytics.zoo.models.image.objectdetection.common.optim.MeanAveragePrecision
-import com.intel.analytics.zoo.models.image.objectdetection.ssd.{SSDDataSet, SSDMiniBatch, SSDVgg}
+import com.intel.analytics.zoo.models.image.objectdetection.ssd.{SSD, SSDDataSet, SSDMiniBatch, SSDVgg}
 import org.apache.log4j.{Level, Logger}
 import org.apache.spark.SparkConf
 import scopt.OptionParser
@@ -125,7 +125,7 @@ object Train {
       val valSet = SSDDataSet.loadSSDValSet(param.valFolder, sc, param.resolution, param.batchSize,
         Some(param.nPartition))
 
-      val model = SSDVgg(classes.length, param.resolution)
+      val model = SSD[Float](classes.length, param.resolution)
       val m = Module.loadModule(param.modelSnapshot.get)
       ModuleUtil.loadModelWeights(m, model, false)
 

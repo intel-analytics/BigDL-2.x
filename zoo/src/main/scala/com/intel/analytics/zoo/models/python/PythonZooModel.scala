@@ -47,7 +47,6 @@ import com.intel.analytics.zoo.models.seq2seq.{RNNDecoder, RNNEncoder, Seq2seq}
 import com.intel.analytics.zoo.models.textclassification.TextClassifier
 import com.intel.analytics.zoo.models.textmatching.KNRM
 import com.intel.analytics.zoo.pipeline.api.keras.layers.{Embedding, Recurrent, WordEmbedding}
-import com.intel.analytics.zoo.models.image.objectdetection.common.IOUtils
 import com.intel.analytics.zoo.models.image.objectdetection.common.dataset.{ByteRecord, Imdb}
 import com.intel.analytics.zoo.models.image.objectdetection.common.optim.MeanAveragePrecision
 import com.intel.analytics.zoo.models.image.objectdetection.fasterrcnn.RoiImageToFrcnnBatch

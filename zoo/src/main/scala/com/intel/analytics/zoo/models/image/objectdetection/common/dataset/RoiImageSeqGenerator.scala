@@ -19,7 +19,8 @@ package com.intel.analytics.zoo.models.image.objectdetection.common.dataset
 import java.io.File
 import java.nio.file.Paths
 
-import com.intel.analytics.zoo.models.image.objectdetection.common.IOUtils
+import com.intel.analytics.bigdl.transform.vision.image.ImageFeature
+import com.intel.analytics.zoo.feature.image.{ImageSet, LocalImageSet}
 import scopt.OptionParser
 
 object RoiImageSeqGenerator {
@@ -54,12 +55,21 @@ object RoiImageSeqGenerator {
       .action((x, c) => c.copy(imageSet = Some(x)))
   }
 
+  def localImagePaths(folder: String): LocalImageSet = {
+    val arr = new File(folder).listFiles().map(x => {
+      val imf = ImageFeature()
+      imf(ImageFeature.uri) = x.getAbsolutePath
+      imf
+    })
+    ImageSet.array(arr)
+  }
+
   def main(args: Array[String]): Unit = {
     parser.parse(args, RoiImageSeqGeneratorParams()).map(param => {
       val roidbs = if (param.imageSet.isEmpty) {
         // no label
         require(new File(param.folder).exists(), s"${param.folder} not exists!")
-        IOUtils.localImagePaths(param.folder)
+        localImagePaths(param.folder)
       } else {
         Imdb.getImdb(param.imageSet.get, param.folder).getRoidb(false)
       }

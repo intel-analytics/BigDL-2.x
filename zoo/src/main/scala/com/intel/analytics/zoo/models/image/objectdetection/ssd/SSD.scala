@@ -17,14 +17,35 @@
 package com.intel.analytics.zoo.models.image.objectdetection.ssd
 
 import com.intel.analytics.zoo.models.image.objectdetection.common.ModuleUtil
-
 import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric
 import com.intel.analytics.bigdl.utils.serializer._
 import com.intel.analytics.bigdl._
 import com.intel.analytics.bigdl.nn.Graph.ModuleNode
 import com.intel.analytics.bigdl.nn._
+import com.intel.analytics.bigdl.nn.abstractnn.{AbstractModule, Activity}
+import com.intel.analytics.bigdl.tensor.Tensor
+import com.intel.analytics.zoo.models.image.common.ImageModel
 
 import scala.reflect.ClassTag
+
+class SSD[T: ClassTag](classNum: Int, resolution: Int = 300,
+                       dataset: String = "pascal", sizes: Array[Float] = null,
+                       postProcessParam: DetectionOutputParam = null)(implicit ev: TensorNumeric[T])
+  extends ImageModel[T] {
+
+  override def buildModel(): AbstractModule[Activity, Activity, T] = {
+    SSDVgg[T](classNum, resolution, dataset, sizes, postProcessParam)
+  }
+}
+
+object SSD {
+  def apply[T: ClassTag](classNum: Int, resolution: Int = 300,
+                         dataset: String = "pascal", sizes: Array[Float] = null,
+                         postProcessParam: DetectionOutputParam = null)(implicit ev: TensorNumeric[T]): SSD[T] = {
+    new SSD(classNum, resolution, dataset, sizes, postProcessParam)
+  }
+}
+
 
 object SSDVgg extends ModuleSerializable {
   def apply[@specialized(Float, Double) T: ClassTag](classNum: Int, resolution: Int = 300,
