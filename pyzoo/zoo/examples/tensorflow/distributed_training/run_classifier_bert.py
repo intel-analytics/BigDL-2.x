@@ -14,6 +14,8 @@
 # limitations under the License.
 #
 
+from optparse import OptionParser
+
 import tensorflow as tf
 from bigdl.optim.optimizer import Adam, MaxEpoch
 from zoo.common.nncontext import *
@@ -40,12 +42,15 @@ def generate_tf_dataset(examples, seq_len, batch_size):
 
 
 if __name__ == '__main__':
+    parser = OptionParser()
+    parser.add_option("--bert_base_dir", dest="bert_base_dir")
+    parser.add_option("--mrpc_data_dir", dest="data_dir")
+
+    (options, args) = parser.parse_args(sys.argv)
     # Model and data files
-    bert_base_dir = "/home/kai/Downloads/bert_models/uncased_L-12_H-768_A-12/"
-    bert_config_file = bert_base_dir + "bert_config.json"
-    vocab_file = bert_base_dir + "vocab.txt"
-    init_checkpoint = bert_base_dir + "bert_model.ckpt"
-    data_dir = "/home/kai/Downloads/glue_data/MRPC/"
+    bert_config_file = options.bert_base_dir + "/bert_config.json"
+    vocab_file = options.bert_base_dir + "/vocab.txt"
+    init_checkpoint = options.bert_base_dir + "/bert_model.ckpt"
 
     # Options
     do_lower_case = False
@@ -56,15 +61,15 @@ if __name__ == '__main__':
     learning_rate = 1e-6
     nb_epoch = 50
 
-    sc = init_nncontext("BERT Classification Example")
+    sc = init_nncontext("BERT MRPC Classification Example")
 
     # Data preparation and preprocessing
     processor = MrpcProcessor()
     label_list = processor.get_labels()
     tokenizer = FullTokenizer(vocab_file, do_lower_case)
-    train_examples = processor.get_train_examples(data_dir)
+    train_examples = processor.get_train_examples(options.data_dir)
     train_dataset = generate_tf_dataset(train_examples, max_seq_length, train_batch_size)
-    eval_examples = processor.get_dev_examples(data_dir)
+    eval_examples = processor.get_dev_examples(options.data_dir)
     eval_dataset = generate_tf_dataset(eval_examples, max_seq_length, eval_batch_size)
 
     # Model loading and construction
