@@ -14,22 +14,19 @@
  * limitations under the License.
  */
 
-package com.intel.analytics.zoo.feature.common
+package com.intel.analytics.bigdl.nn
 
 import scala.reflect.ClassTag
+import com.intel.analytics.bigdl.tensor.Tensor
 
+import scala.collection.mutable.ArrayBuffer
 
-private[zoo] abstract class ArrayLike[T: ClassTag] extends Serializable {
-  def length: Int = throw new Error()
+object BigDLWrapperUtils {
+  def selectCopy[T: ClassTag](src: Tensor[T], srcIndex: Int, dst: Tensor[T]): Tensor[T] = {
+    Recurrent.selectCopy(src, srcIndex, dst)
+  }
 
-  def apply(i: Int): T = throw new Error()
-
-  def free(): Unit = {}
+  def copy[T: ClassTag](src: ArrayBuffer[Tensor[T]], dst: Tensor[T]): Unit = {
+    Recurrent.copy(src, dst)
+  }
 }
-
-private[zoo] class ArrayLikeWrapper[T: ClassTag](array: Array[T]) extends ArrayLike[T] {
-  override def length: Int = array.length
-
-  override def apply(i: Int): T = array(i)
-}
-

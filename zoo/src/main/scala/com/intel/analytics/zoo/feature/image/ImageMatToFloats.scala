@@ -20,8 +20,8 @@ import com.intel.analytics.bigdl.transform.vision.image.MatToFloats
 
 import scala.reflect.ClassTag
 
-  class ImageMatToFloats(validHeight: Int, validWidth: Int, validChannels: Int,
-                         outKey: String = ImageFeature.floats, shareBuffer: Boolean = true)
+class ImageMatToFloats(validHeight: Int, validWidth: Int, validChannels: Int,
+                       outKey: String = ImageFeature.floats, shareBuffer: Boolean = true)
   extends ImageProcessing {
 
   private val internalMatToFloats =

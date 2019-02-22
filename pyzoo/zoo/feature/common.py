@@ -209,19 +209,3 @@ class ToTuple(Preprocessing):
 
     def __init__(self, bigdl_type="float"):
         super(ToTuple, self).__init__(bigdl_type)
-
-
-class BigDLDataSet(JavaValue):
-    def __init__(self, jvalue=None, bigdl_type="float"):
-        self.bigdl_type = bigdl_type
-        if jvalue:
-            self.value = jvalue
-
-    @classmethod
-    def rdd(cls, rdd, bigdl_type="float"):
-        jvalue = callBigDlFunc(bigdl_type, "createDatasetFromRDD", rdd)
-        return BigDLDataSet(jvalue=jvalue)
-
-    def transform(self, transformer):
-        jvalue = callBigDlFunc(self.bigdl_type, "transformDataset", self.value, transformer)
-        return BigDLDataSet(jvalue=jvalue)

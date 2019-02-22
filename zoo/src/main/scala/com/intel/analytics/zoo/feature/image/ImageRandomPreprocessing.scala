@@ -16,7 +16,6 @@
 package com.intel.analytics.zoo.feature.image
 
 import com.intel.analytics.bigdl.transform.vision.image.{ImageFeature, augmentation}
-import com.intel.analytics.zoo.feature.common.Preprocessing
 
 /**
  * Randomly apply the preprocessing to some of the input ImageFeatures, with probability specified.

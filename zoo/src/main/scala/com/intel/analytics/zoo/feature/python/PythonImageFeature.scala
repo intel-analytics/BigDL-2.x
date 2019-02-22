@@ -413,19 +413,4 @@ class PythonImageFeature[T: ClassTag](implicit ev: TensorNumeric[T]) extends Pyt
   def createImageRandomSampler(): ImageRandomSampler = {
     ImageRandomSampler()
   }
-
-  def createDatasetFromRDD(data: JavaRDD[Any]): DistributedDataSet[Any] = {
-    DataSet.rdd(data)
-  }
-
-  def transformDataset(dataset: DataSet[Any],
-                              transformer: Preprocessing[Any, Any]): DataSet[Any] = {
-    dataset -> transformer
-  }
-
-  def createChainedImagePreprocessing(list: JList[ImageProcessing]): ImageProcessing = {
-    var cur = list.get(0)
-    (1 until list.size()).foreach(t => cur = cur -> list.get(t))
-    cur
-  }
 }

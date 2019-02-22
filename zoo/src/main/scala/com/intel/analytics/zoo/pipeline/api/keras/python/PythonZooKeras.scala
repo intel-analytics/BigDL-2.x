@@ -635,6 +635,7 @@ class PythonZooKeras[T: ClassTag](implicit ev: TensorNumeric[T]) extends PythonZ
       innerActivation: String = "hard_sigmoid",
       dimOrdering: String = "th",
       subsample: Int = 1,
+      borderMode: String = "same",
       wRegularizer: Regularizer[T] = null,
       uRegularizer: Regularizer[T] = null,
       bRegularizer: Regularizer[T] = null,
@@ -642,7 +643,22 @@ class PythonZooKeras[T: ClassTag](implicit ev: TensorNumeric[T]) extends PythonZ
       goBackwards: Boolean = false,
       inputShape: JList[Int] = null): ConvLSTM2D[T] = {
     ConvLSTM2D(nbFilter, nbKernel, activation, innerActivation,
-      dimOrdering, subsample, wRegularizer, uRegularizer, bRegularizer,
+      dimOrdering, subsample, borderMode, wRegularizer, uRegularizer, bRegularizer,
+      returnSequences, goBackwards, toScalaShape(inputShape))
+  }
+
+  def createZooKerasConvLSTM3D(
+      nbFilter: Int,
+      nbKernel: Int,
+      subsample: Int = 1,
+      borderMode: String = "same",
+      wRegularizer: Regularizer[T] = null,
+      uRegularizer: Regularizer[T] = null,
+      bRegularizer: Regularizer[T] = null,
+      returnSequences: Boolean = false,
+      goBackwards: Boolean = false,
+      inputShape: JList[Int] = null): ConvLSTM3D[T] = {
+    ConvLSTM3D(nbFilter, nbKernel, subsample, borderMode, wRegularizer, uRegularizer, bRegularizer,
       returnSequences, goBackwards, toScalaShape(inputShape))
   }
 
@@ -1254,5 +1270,11 @@ class PythonZooKeras[T: ClassTag](implicit ev: TensorNumeric[T]) extends PythonZ
     returnValue: Boolean = true,
     inputShape: JList[Int] = null): Max[T] = {
     Max[T](dim, numInputDims, returnValue, toScalaShape(inputShape))
+  }
+
+  def createZooKerasSelectTable(
+    index: Int,
+    inputShape: JList[JList[Int]] = null): SelectTable[T] = {
+    SelectTable[T](index, toScalaMultiShape(inputShape))
   }
 }

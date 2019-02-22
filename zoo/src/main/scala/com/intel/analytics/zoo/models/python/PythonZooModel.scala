@@ -27,8 +27,8 @@ import com.intel.analytics.bigdl.optim.{OptimMethod, Regularizer, ValidationMeth
 import com.intel.analytics.bigdl.python.api.{EvaluatedResult, JTensor, Sample}
 import com.intel.analytics.bigdl.tensor.Tensor
 import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric
-import com.intel.analytics.bigdl.transform.vision.image.{ImageFeature, ImageFrame}
-import com.intel.analytics.bigdl.utils.Shape
+import com.intel.analytics.bigdl.transform.vision.image.ImageFeature
+import com.intel.analytics.bigdl.utils.{Shape, Table}
 import com.intel.analytics.zoo.common.PythonZoo
 import com.intel.analytics.zoo.feature.common.Preprocessing
 import com.intel.analytics.zoo.feature.image._
@@ -490,9 +490,10 @@ class PythonZooModel[T: ClassTag](implicit ev: TensorNumeric[T]) extends PythonZ
     inputShape: JList[Int],
     outputShape: JList[Int],
     bridge: KerasLayer[Activity, Activity, T] = null,
-    generator: KerasLayer[Activity, Activity, T] = null): Seq2seq[T] = {
+    generator: KerasLayer[Activity, Activity, T] = null,
+    model: AbstractModule[Table, Tensor[T], T]): Seq2seq[T] = {
     Seq2seq(encoder, decoder, toScalaShape(inputShape),
-      toScalaShape(outputShape), bridge, generator)
+      toScalaShape(outputShape), bridge, generator, model)
   }
 
   def evaluateNDCG(

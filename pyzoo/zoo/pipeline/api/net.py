@@ -18,6 +18,7 @@ import sys
 import tempfile
 import warnings
 
+import logging
 import six
 import os
 import json
@@ -41,7 +42,6 @@ if sys.version >= '3':
 
 
 class GraphNet(BModel):
-
     def __init__(self, input, output, jvalue=None, bigdl_type="float", **kwargs):
         super(BModel, self).__init__(jvalue,
                                      to_list(input),
@@ -109,7 +109,6 @@ class GraphNet(BModel):
 
 
 class Net:
-
     @staticmethod
     def load_bigdl(model_path, weight_path=None, bigdl_type="float"):
         """
@@ -235,6 +234,7 @@ class TFNet(Layer):
         :param input: ndarray or list of ndarray or JTensor or list of JTensor.
         :return: (list of JTensor, isTable)
         """
+
         def to_jtensor(i):
             if isinstance(i, np.ndarray):
                 return JTensor.from_ndarray(i)
@@ -242,6 +242,7 @@ class TFNet(Layer):
                 return i
             else:
                 raise Exception("Error unknown input type %s" % type(i))
+
         if type(input) is list:
             if len(input) == 0:
                 raise Exception('Error when checking: empty input')
@@ -341,7 +342,6 @@ def _find_placeholders(grads):
 
 
 class IdentityCriterion(Criterion):
-
     def __init__(self):
         super(IdentityCriterion, self).__init__(None, "float")
 
@@ -356,29 +356,29 @@ class TFTrainingHelper(Layer):
 
 
 class TFValidationMethod(JavaValue):
-
     def __init__(self, val_method, output_length, target_length):
         JavaValue.__init__(self, None, "float",
                            val_method, output_length, target_length)
 
 
 class TFOptimizer:
-
     def __init__(self, loss, optim_method, sess=None, dataset=None, inputs=None,
                  grads=None, variables=None, graph=None,
                  val_outputs=None, val_labels=None, val_method=None, val_split=0.0,
                  tensors_with_value=None, session_config=None):
-        import tensorflow as tf
-        from zoo.util.tf import export_tf
         '''
-        TFOptimizer is used for distributed training of tensorflow
+        TFOptimizer is used for distributed training of TensorFlow
         on Spark/BigDL.
 
-        :param loss: The loss tensor of the tensorflow model, should be a scalar
+        :param loss: The loss tensor of the TensorFlow model, should be a scalar
         :param optim_method: the optimization method to be used, such as bigdl.optim.optimizer.Adam
-        :param sess: the current tensorflow Session, if you want to used a pre-trained model, you
+        :param sess: the current TensorFlow Session, if you want to used a pre-trained model, you
         should use the Session to load the pre-trained variables and pass it to TFOptimizer.
         '''
+
+        import tensorflow as tf
+        from tensorflow.python.data.util import nest
+        from zoo.util.tf import export_tf
 
         if dataset is None:
             args = TFOptimizer._get_arguments_from_loss(loss, optim_method, sess,
@@ -395,6 +395,9 @@ class TFOptimizer:
                 if t.name in all_required_inputs_names:
                     additional_inputs.append(t)
                     additional_values.append(v)
+
+        if not isinstance(inputs, list):
+            inputs = nest.flatten(inputs)
 
         self.optim_method = optim_method
         self.sess = sess
@@ -454,7 +457,7 @@ class TFOptimizer:
             if "expects to be colocated with unknown node" in str(e):
                 raise Exception("""
 If you are using the embedding layer in tf.keras, then this is a
-known issue of tensorflow, see https://github.com/tensorflow/tensorflow/issues/21889.
+known issue of TensorFlow, see https://github.com/tensorflow/tensorflow/issues/21889.
 Please add zoo.util.tf.variable_creator_scope before model construction.
 For example:
 from zoo.util.tf import variable_creator_scope
@@ -467,19 +470,22 @@ with variable_creator_scope():
 
         data = self.dataset.rdd
         batch_size = self.dataset.batch_size
-        sample_rdd = data.map(lambda t: Sample.from_ndarray(
-            t, [np.array([0.0])]))
+
+        def to_sample(t):
+            if isinstance(t, list):
+                t = tuple(t)
+            return Sample.from_ndarray(nest.flatten(t), [np.array([0.0])])
+
+        sample_rdd = data.map(to_sample)
         if val_outputs is not None and val_labels is not None:
             if self.dataset.val_rdd is not None:
-                val_rdd = self.dataset.val_rdd \
-                    .map(lambda t: Sample.from_ndarray(t,
-                                                       [np.array([0.0])]))
+                val_rdd = self.dataset.val_rdd.map(to_sample)
                 val_method = [TFValidationMethod(m, len(val_outputs), len(val_labels))
                               for m in to_list(val_method)]
                 training_rdd = sample_rdd
 
             elif val_split != 0.0:
-                training_rdd, val_rdd = sample_rdd.randomSplit([1-val_split, val_split])
+                training_rdd, val_rdd = sample_rdd.randomSplit([1 - val_split, val_split])
                 val_method = [TFValidationMethod(m, len(val_outputs), len(val_labels))
                               for m in to_list(val_method)]
             else:
@@ -644,30 +650,24 @@ with variable_creator_scope():
         self.sess.run(self.assign, feed_dict=feed_dict)
 
 
+class TensorMeta(object):
+    def __init__(self, dtype, name=None, shape=None):
+        self.dtype = dtype
+        self.name = name
+        self.shape = shape
+
+
 class TFDataset:
-
-    def __init__(self, rdd, names, shapes, types, batch_size,
+    def __init__(self, rdd, tensor_structure, batch_size,
                  batch_per_thread, hard_code_batch_size=False, val_rdd=None):
-        import tensorflow as tf
         '''
-        TFDatasets represents a distributed collection of elements to be feed into
-        Tensorflow graph. TFDatasets can be created using a RDD and each of its records
-        is a list of numpy.ndarray representing the tensors to be feed into tensorflow
+        TFDatasets represents a distributed collection of elements to be feed into Tensorflow graph.
+        TFDatasets can be created using a RDD and each of its records is one or more numpy.ndarray
+        of the same nested structure, representing the tensors to be feed into TensorFlow
         graph on each iteration. TFDatasets must be used with TFOptimizer or TFPredictor.
-
-        :param rdd: a rdd of list of numpy.ndarray each representing a tensor to feed into
-         tensorflow graph on each iteration
-        :param names: the names of the resulting tensors, should be a list of str
-        :param shapes: the shapes of the resulting tensors, should be a list of list of int
-        :param types: the types of the result tensors, should be a list of tf.dtype
-        :param batch_size: the batch size, used for training, should be a multiple of
-        total core num
-        :param batch_per_thread: the batch size for each thread, used for inference
-        :param hard_code_batch_size: whether to hard code the batch_size into tensorflow graph,
-        if True, the static size of the first dimension of the resulting tensors is
-        batch_size/total_core_num (training) or batch_per_thread for inference; if False,
-        it is None.
         '''
+        import tensorflow as tf
+
         if batch_size > 0 and batch_per_thread > 0:
             raise ValueError("bath_size and batch_per_thread should not be set simultaneously")
 
@@ -684,46 +684,225 @@ class TFDataset:
             batch_size = self.total_core_num
         self.batch_size = batch_size
         self.batch_per_thread = batch_per_thread
+        self.hard_code_batch_size = hard_code_batch_size
+        self.tensor_structure = tensor_structure
 
-        if not hard_code_batch_size:
-            self.tensors = [tf.placeholder(name=names[i],
-                                           dtype=types[i],
-                                           shape=[None] + shapes[i])
-                            for i in range(len(names))]
-        else:
-            if batch_per_thread > 0:
-                self.tensors = [tf.placeholder(name=names[i],
-                                               dtype=types[i],
-                                               shape=[batch_per_thread] + shapes[i])
-                                for i in range(len(names))]
-            else:
-                self.tensors = [tf.placeholder(name=names[i],
-                                               dtype=types[i],
-                                               shape=[batch_size / self.total_core_num] + shapes[i])
-                                for i in range(len(names))]
+        if isinstance(self.tensor_structure, list):
+            self.tensor_structure = tuple(tensor_structure)
 
         self.val_rdd = val_rdd
+        from tensorflow.python.data.util import nest
 
-        self.rdd = rdd.map(lambda arr: arr[:len(names)])
-        self.input_names = names
-        for i in range(len(self.tensors)):
-            tf.add_to_collection(self.tensors[i].name, self)
+        if not self.hard_code_batch_size:
+            self.output_shapes = nest.pack_sequence_as(
+                self.tensor_structure, [[None] + list(t.shape)
+                                        for t in nest.flatten(self.tensor_structure)])
+        else:
+            if self.batch_per_thread > 0:
+                self.output_shapes = nest.pack_sequence_as(
+                    self.tensor_structure, [[self.batch_per_thread] + t.shape
+                                            for t in nest.flatten(self.tensor_structure)])
+            else:
+                self.output_shapes = nest.pack_sequence_as(
+                    self.tensor_structure, [[self.batch_size // self.total_core_num] + t.shape
+                                            for t in nest.flatten(self.tensor_structure)])
+
+        self.rdd = rdd
+        self.input_names = nest.pack_sequence_as(
+            self.tensor_structure, [t.name for t in nest.flatten(self.tensor_structure)])
+
+        self._tensors = None
+
+    def _create_placeholders(self):
+        import tensorflow as tf
+        from tensorflow.python.data.util import nest
+        if not self.hard_code_batch_size:
+            tensors = nest.pack_sequence_as(
+                self.tensor_structure, [tf.placeholder(name=t.name,
+                                                       dtype=t.dtype,
+                                                       shape=[None] + list(t.shape))
+                                        for t in nest.flatten(self.tensor_structure)])
+        else:
+            if self.batch_per_thread > 0:
+                tensors = nest.pack_sequence_as(
+                    self.tensor_structure,
+                    [tf.placeholder(name=t.name,
+                                    dtype=t.dtype,
+                                    shape=[self.batch_per_thread] + list(t.shape))
+                     for t in nest.flatten(self.tensor_structure)])
+            else:
+                tensors = nest.pack_sequence_as(
+                    self.tensor_structure,
+                    [tf.placeholder(name=t.name,
+                                    dtype=t.dtype,
+                                    shape=[self.batch_size // self.total_core_num] +
+                                    list(t.shape))
+                     for t in nest.flatten(self.tensor_structure)])
+
+        for tensor in nest.flatten(tensors):
+            tf.get_default_graph().clear_collection(tensor.name)
+            tf.add_to_collection(tensor.name, self)
+
+        return tensors
+
+    @property
+    def tensors(self):
+        '''
+        a nested structure of TensorFlow tensor object in TensorFlow graph.
+        The elements of this dataset will be fed into these tensors on each iteration.
+        :return: the nested structure of TensorFlow tensor object
+        '''
+
+        if self._tensors is None:
+            tensors = self._create_placeholders()
+            self._tensors = tensors
+
+        return self._tensors
+
+    @property
+    def feature_tensors(self):
+
+        if self._tensors is None:
+            tensors = self._create_placeholders()
+            self._tensors = tensors
+
+        if not isinstance(self._tensors, tuple):
+            raise ValueError("To use feature_tensors, " +
+                             "the element in TFDataset must be a tuple of two component")
+
+        return self._tensors[0]
+
+    @property
+    def label_tensors(self):
+
+        if self._tensors is None:
+            tensors = self._create_placeholders()
+            self._tensors = tensors
+
+        if not isinstance(self._tensors, tuple):
+            raise ValueError("To use label_tensors, the element in " +
+                             "TFDataset must be a tuple of two component")
+
+        return self._tensors[1]
 
     @staticmethod
     def from_rdd(rdd, names=None, shapes=None, types=None,
                  batch_size=-1, batch_per_thread=-1,
                  hard_code_batch_size=False, val_rdd=None):
-        import tensorflow as tf
-        if not names:
-            names = ["features", "labels"]
-        if not shapes:
-            shapes = [None] * len(names)
+        '''
+        Create a TFDataset from a rdd, each element of the rdd must be a list of numpy.ndarray.
 
-        if not types:
-            types = [tf.float32] * len(names)
-        return TFDataset(rdd, names, shapes, types,
+        :param rdd: a rdd of list of numpy.ndarray each representing a tensor to feed into
+        tensorflow graph on each iteration
+        :param names: the names of the resulting tensors, should be a list of str
+        :param shapes: the shapes of the resulting tensors, should be a list of list of int
+        :param types: the types of the result tensors, should be a list of tf.dtype
+        :param batch_size: the batch size, used for training, should be a multiple of
+        total core num
+        :param batch_per_thread: the batch size for each thread, used for inference
+        :param hard_code_batch_size: whether to hard code the batch_size into tensorflow graph,
+        if True, the static size of the first dimension of the resulting tensors is
+        batch_size/total_core_num (training) or batch_per_thread for inference; if False,
+        it is None.
+        :param val_rdd: validation data with the same structure of rdd
+        :return: a TFDataset
+        '''
+        import tensorflow as tf
+
+        if names is not None or shapes is not None or types is not None:
+            logging.warning("Using argument names, shapes or types is deprecated," +
+                            " please use the tensor_structure argument")
+            if not names:
+                names = ["features", "labels"]
+            if not shapes:
+                shapes = [None] * len(names)
+
+            if not types:
+                types = [tf.float32] * len(names)
+            tensor_structure = []
+            for i in range(len(names)):
+                tensor_structure.append(TensorMeta(types[i], name=names[i], shape=shapes[i]))
+        else:
+            tensor_structure = [TensorMeta(dtype=tf.float32), TensorMeta(dtype=tf.float32)]
+
+        return TFDataset(rdd, tensor_structure,
                          batch_size, batch_per_thread,
                          hard_code_batch_size, val_rdd)
+
+    @staticmethod
+    def from_tuple_rdd(rdd, features, labels=None, batch_size=-1, batch_per_thread=-1,
+                       hard_code_batch_size=False, val_rdd=None):
+        feature_structure = _to_tensor_structure(features)
+        if labels is not None:
+            label_structure = _to_tensor_structure(labels)
+
+        else:
+            label_structure = None
+
+        tensor_structure = (feature_structure, label_structure)
+        TFDataset(rdd, tensor_structure,
+                  batch_size, batch_per_thread,
+                  hard_code_batch_size, val_rdd)
+
+    @staticmethod
+    def from_tensors(tensors, batch_size=-1, batch_per_thread=-1,
+                     hard_code_batch_size=False, val_tensors=None):
+        sc = get_spark_context()
+        node_num, core_num = get_node_and_core_number()
+        total_core_num = node_num * core_num
+
+        rdd, tensor_structure = _tensors_to_rdd(tensors, sc, total_core_num)
+
+        val_rdd = None
+        if val_tensors is not None:
+            val_rdd = _tensors_to_rdd(val_tensors, sc, total_core_num)
+
+        return TFDataset(rdd, tensor_structure, batch_size,
+                         batch_per_thread, hard_code_batch_size, val_rdd)
+
+
+def _tensors_to_rdd(tensors, sc, splits):
+    from tensorflow.python.data.util import nest
+    import tensorflow as tf
+    if isinstance(tensors, list):
+        data_list = _splits(tensors)
+        rdd = sc.parallelize(data_list, splits)
+        tensor_structure = [TensorMeta(tf.as_dtype(t.dtype),
+                                       shape=t.shape[1:],
+                                       name="input_%s" % i)
+                            for i, t in enumerate(tensors)]
+    else:
+        flattened = nest.flatten(tensors)
+        data_list = _splits(flattened)
+        rdd = sc.parallelize(data_list, splits)
+        rdd = rdd.map(lambda x: nest.pack_sequence_as(tensors, x))
+        tensor_structure = nest.pack_sequence_as(tensors,
+                                                 [TensorMeta(tf.as_dtype(t.dtype),
+                                                             shape=t.shape[1:],
+                                                             name="input_%s" % i)
+                                                  for i, t in enumerate(flattened)])
+    return rdd, tensor_structure
+
+
+def _splits(tensors):
+    data_list = []
+    data_size = tensors[0].shape[0]
+    for i in range(data_size):
+        sample = []
+        for j in range(len(tensors)):
+            sample.append(tensors[j][i])
+        data_list.append(sample)
+    return data_list
+
+
+def _to_tensor_structure(tensors):
+    if isinstance(tensors, tuple):
+        tensor_structure = TensorMeta(dtype=tensors[0], shape=tensors[1], name="input0")
+    else:
+        tensor_structure = {}
+        for key, value in enumerate(tensors):
+            tensor_structure[key] = TensorMeta(dtype=value[0], shape=value[1], name=key)
+    return tensor_structure
 
 
 def _check_the_same(all_required_inputs, inputs_in_datasets):
@@ -738,17 +917,16 @@ def _check_the_same(all_required_inputs, inputs_in_datasets):
 
 
 class TFPredictor:
-
     def __init__(self, sess, outputs, inputs=None, dataset=None):
         '''
-        TFPredictor takes a list of tensorflow tensors as the model outputs and
+        TFPredictor takes a list of TensorFlow tensors as the model outputs and
         feed all the elements in TFDatasets to produce those outputs and returns
         a Spark RDD with each of its elements representing the model prediction
         for the corresponding input elements.
 
-        :param sess: the current tensorflow Session, you should first use this session
+        :param sess: the current TensorFlow Session, you should first use this session
         to load the trained variables then pass into TFPredictor
-        :param outputs: the output tensors of the tensorflow model
+        :param outputs: the output tensors of the TensorFlow model
         '''
         if inputs is None:
             dataset, inputs = TFPredictor._get_datasets_and_inputs(outputs)
