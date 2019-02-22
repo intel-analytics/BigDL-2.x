@@ -16,20 +16,20 @@
 
 package com.intel.analytics.zoo.pipeline.api.net
 
-import java.nio.FloatBuffer
+import java.nio._
 
 import com.intel.analytics.bigdl.dataset.{MiniBatch, Sample, Transformer}
 import com.intel.analytics.bigdl.nn.abstractnn.{AbstractCriterion, AbstractModule, Activity}
 import com.intel.analytics.bigdl.optim._
-import com.intel.analytics.bigdl.python.api.{PythonBigDLKeras, Sample => JSample}
-import com.intel.analytics.bigdl.tensor.{Storage, Tensor}
+import com.intel.analytics.bigdl.tensor.Tensor
 import com.intel.analytics.bigdl.utils.T
 import com.intel.analytics.zoo.pipeline.api.keras.metrics.Accuracy
-import org.apache.spark.api.java.JavaRDD
+import com.intel.analytics.zoo.pipeline.api.net.TFNet.ClosableGraph
 import org.apache.spark.rdd.RDD
-import org.tensorflow.{Session, Tensor => TTensor}
+import org.tensorflow.types.UInt8
+import org.tensorflow.{DataType, Session, Tensor => TTensor}
 
-import scala.collection.Iterator
+import scala.collection.{Iterator, mutable}
 import scala.collection.JavaConverters._
 import scala.io.Source
 import scala.reflect.io.Path
@@ -210,7 +210,7 @@ class TFValidationMethod(val valMethod: ValidationMethod[Float],
     } else {
       var i = outputT.length() - outputLength - targetLength
       val outputs = T()
-      while (i < outputLength - targetLength) {
+      while (i < outputT.length() - targetLength) {
         outputs.insert(outputT(i))
           i += 1
       }
@@ -228,7 +228,7 @@ class TFValidationMethod(val valMethod: ValidationMethod[Float],
     } else {
       var i = outputT.length() - targetLength
       val targets = T()
-      while (i < outputLength) {
+      while (i < outputT.length()) {
         val t = outputT[Tensor[Float]](i)
         if (to1basedLabel) t.add(1.0f)
         targets.insert(t)
@@ -281,6 +281,297 @@ class TFOptimizer(modelPath: String,
     optimizer.setEndWhen(endTrigger)
     optimizer.optimize()
     trainer.parameters()._1
+  }
+}
+
+
+class TFStatefulValidationMethod(val metricName: String,
+                                 @ transient var graph: ClosableGraph,
+                                 val outputNames: Array[String],
+                                 val targetNames: Array[String],
+                                 val outputIndices: Array[Int],
+                                 val targetIndices: Array[Int],
+                                 val metricsTensorNames: Array[String],
+                                 val initVariables: Map[String, (Tensor[Float], DataType)],
+                                 val assignVariableOp: String,
+                                 val allOutputLength: Int,
+                                 val allTargetLength: Int
+                         ) extends ValidationMethod[Float] {
+
+
+  override def apply(output: Activity, target: Activity): ValidationResult = {
+    // the output layout [grads..., outputs..., labels..., loss]
+
+    val outputT = output.toTable
+
+    val outputActivity = if (allOutputLength == 1) {
+      outputT[Tensor[Float]](outputT.length() - allOutputLength - allTargetLength)
+    } else {
+      val offset = outputT.length() - allOutputLength - allTargetLength
+      val outputs = T()
+      var i = 0
+      while (i < outputIndices.length) {
+        outputs.insert(outputT(outputIndices(i)))
+        i += 1
+      }
+      outputs
+    }
+
+    val targetActivity = if (allTargetLength == 1) {
+      val t = outputT[Tensor[Float]](outputT.length() - allTargetLength)
+      t
+    } else {
+      val offset = outputT.length() - allTargetLength
+      val targets = T()
+      var i = 0
+      while (i < targetIndices.length) {
+        val t = outputT[Tensor[Float]](targetIndices(i))
+        targets.insert(t)
+        i += 1
+      }
+      targets
+    }
+
+    null
+  }
+
+  override protected def format(): String = {
+    metricName
+  }
+
+}
+
+class TFStatefulValidationResult(@transient var graph: ClosableGraph,
+                                 val outputNames: Array[String],
+                                 val targetNames: Array[String],
+                                 val updateOp: String,
+                                 val metricsTensorName: String,
+                                 var outputs: mutable.ArrayBuffer[Array[Tensor[Float]]],
+                                 var targets: mutable.ArrayBuffer[Array[Tensor[Float]]],
+                                 val initVariables: Map[String, (Tensor[Float], Int)],
+                                 val assignVariableOp: String,
+                                 val metricName: String
+                        ) extends ValidationResult {
+
+  private var currentResult: (Float, Int) = (0.0f, -1)
+
+  private def resetState(sess: Session) = {
+    val runner = sess.runner()
+    val variableTensors = initVariables.mapValues(valueAndType =>
+      Utils.bigdl2Tf(valueAndType._1, new DataType(valueAndType._2)))
+
+    for ((key, value) <- variableTensors) {
+      runner.feed(key, value)
+    }
+
+    runner.fetch(assignVariableOp)
+
+    variableTensors.foreach(x => x._2.close())
+  }
+
+  private def updateState(sess: Session) = {
+    var i = 0
+    while (i < outputs.length) {
+      val runner = sess.runner()
+      outputs.apply(i)
+      val outputTFTensors = outputs(i).map(Utils.bigdl2Tf(_, DataType.FLOAT))
+      val targetTFTensors = targets(i).map(Utils.bigdl2Tf(_, DataType.FLOAT))
+
+      var j = 0
+      while (j < outputNames.length) {
+        runner.feed(outputNames(j), outputTFTensors(j))
+        j += 1
+      }
+
+      j = 0
+      while (j < targetNames.length) {
+        runner.feed(targetNames(j), targetTFTensors(j))
+        j += 1
+      }
+
+      runner.fetch(updateOp)
+
+      runner.run()
+
+      outputTFTensors.foreach(_.close())
+      targetTFTensors.foreach(_.close())
+
+      i += 1
+    }
+  }
+
+  private def getResult(sess: Session): Float = {
+    val runner = sess.runner()
+    runner.fetch(metricsTensorName)
+    val tfTensor = runner.run().get(0)
+    val tensor = Tensor[Float]()
+    Utils.tf2bigdl(tfTensor, tensor)
+    tfTensor.close()
+    tensor.value()
+  }
+
+  private def calcCurrentResult() = {
+
+    val sess = new Session(graph.graph)
+    resetState(sess)
+    updateState(sess)
+    val value = getResult(sess)
+    val count = outputs.flatMap(_.map(_.size(1))).sum
+    (value, count)
+  }
+
+  override def result(): (Float, Int) = {
+    if (currentResult._2 >= 0) {
+      currentResult
+    } else {
+      calcCurrentResult()
+      currentResult
+    }
+  }
+
+  // scalastyle:off methodName
+  override def +(other: ValidationResult): ValidationResult = {
+    val tfResult = other.asInstanceOf[TFStatefulValidationResult]
+    this.outputs ++= tfResult.outputs
+    this.targets ++= tfResult.targets
+    currentResult = (0.0f, -1)
+    this
+  }
+  // scalastyle:on methodName
+
+  override protected def format(): String = {
+    val (value, count) = if (currentResult._2 >= 0) {
+      currentResult
+    } else {
+      calcCurrentResult()
+      currentResult
+    }
+    s"Metrics(Name: $metricName, Value: $value, Count: $count)"
+  }
+}
+
+object Utils {
+
+  private def createTFTensor(shape: Array[Long], buffer: FloatBuffer): TTensor[_] = {
+    val TFTensor : TTensor[_] = TTensor.create(shape, buffer)
+    TFTensor
+  }
+
+  private def createTFTensor(shape: Array[Long], buffer: ByteBuffer): TTensor[_] = {
+    val TFTensor : TTensor[_] = TTensor.create(classOf[UInt8], shape, buffer)
+    TFTensor
+  }
+
+  private def createTFTensor(shape: Array[Long], buffer: IntBuffer): TTensor[_] = {
+    val TFTensor : TTensor[_] = TTensor.create(shape, buffer)
+    TFTensor
+  }
+
+  private def createTFTensor(shape: Array[Long], buffer: LongBuffer): TTensor[_] = {
+    val TFTensor : TTensor[_] = TTensor.create(shape, buffer)
+    TFTensor
+  }
+
+  private def createTFTensor(shape: Array[Long], buffer: DoubleBuffer): TTensor[_] = {
+    val TFTensor : TTensor[_] = TTensor.create(shape, buffer)
+    TFTensor
+  }
+
+  private def createBoolTFTensor(shape: Array[Long], bytes: ByteBuffer): TTensor[_] = {
+    val TFTensor : TTensor[_] = TTensor.create(classOf[java.lang.Boolean], shape, bytes)
+    TFTensor
+  }
+
+  private def floatToInt(array: Array[Float]): Array[Int] = {
+    val result = new Array[Int](array.length)
+    var i = 0
+    while (i < array.length) {
+      result(i) = array(i).toInt
+      i = i + 1
+    }
+    result
+  }
+
+  private def floatToLong(array: Array[Float]): Array[Long] = {
+    val result = new Array[Long](array.length)
+    var i = 0
+    while (i < array.length) {
+      result(i) = array(i).toLong
+      i = i + 1
+    }
+    result
+  }
+
+  private def floatToDouble(array: Array[Float]): Array[Double] = {
+    val result = new Array[Double](array.length)
+    var i = 0
+    while (i < array.length) {
+      result(i) = array(i).toDouble
+      i = i + 1
+    }
+    result
+  }
+
+  private def floatToUint8(array: Array[Float]): Array[Byte] = {
+    val result = new Array[Byte](array.length)
+    var i = 0
+    while (i < array.length) {
+      result(i) = array(i).toByte
+      i = i + 1
+    }
+    result
+  }
+
+  private def floatToBool(array: Array[Float]): Array[Byte] = {
+    val result = new Array[Byte](array.length)
+    var i = 0
+    while (i < array.length) {
+      result(i) = if (array(i) == 0.0) 0.toByte else 1.toByte
+      i = i + 1
+    }
+    result
+  }
+
+
+  def bigdl2Tf(t: Tensor[Float], dataType: DataType): TTensor[_] = {
+
+    require(t.isContiguous(), "input to tfnet must be contiguous")
+    val shape = t.size().map(_.toLong)
+    val arr = t.storage().array()
+    val offset: Int = t.storageOffset() - 1
+    val length: Int = shape.product.toInt
+
+    if (dataType == DataType.FLOAT) {
+      val buffer = FloatBuffer.wrap(arr, offset, length)
+      createTFTensor(shape, buffer)
+    } else if (dataType == DataType.UINT8) {
+      val buffer = ByteBuffer.wrap(floatToUint8(arr), offset, length)
+      createTFTensor(shape, buffer)
+    } else if (dataType == DataType.INT32) {
+      val buffer = IntBuffer.wrap(floatToInt(arr), offset, length)
+      createTFTensor(shape, buffer)
+    } else if (dataType == DataType.INT64) {
+      val buffer = LongBuffer.wrap(floatToLong(arr), offset, length)
+      createTFTensor(shape, buffer)
+    } else if (dataType == DataType.DOUBLE) {
+      val buffer = DoubleBuffer.wrap(floatToDouble(arr), offset, length)
+      createTFTensor(shape, buffer)
+    } else if (dataType == DataType.BOOL) {
+      val buffer = ByteBuffer.wrap(floatToBool(arr), offset, length)
+      createBoolTFTensor(shape, buffer)
+    } else {
+      throw new Exception(s"data type ${dataType} are not supported")
+    }
+  }
+
+  def tf2bigdl(t: TTensor[_], output: Tensor[Float]): Unit = {
+    val shape = t.shape().map(_.toInt)
+    output.resize(shape)
+    val buffer = FloatBuffer.wrap(
+      output.storage().array(),
+      output.storageOffset() - 1,
+      shape.product)
+    t.writeTo(buffer)
   }
 }
 

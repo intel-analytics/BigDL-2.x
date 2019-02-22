@@ -28,7 +28,7 @@ import com.intel.analytics.zoo.pipeline.api.{Predictable, Predictor}
 import com.intel.analytics.zoo.pipeline.api.net.TFNet.TFGraphHolder
 import org.apache.spark.rdd.RDD
 import org.tensorflow.framework.GraphDef
-import org.tensorflow.types.{TFBool, UInt8}
+import org.tensorflow.types.UInt8
 import org.tensorflow.{DataType, Graph, Session, Tensor => TTensor}
 
 import scala.collection.JavaConverters._
