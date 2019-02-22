@@ -155,7 +155,7 @@ class RoiRecordToFeature(Preprocessing):
         super(RoiRecordToFeature, self).__init__(bigdl_type, convert_label, out_key)
 
 
-class RoiImageToBatch(Preprocessing):
+class RoiImageToSSDBatch(Preprocessing):
     """
     Convert a batch of labeled BGR images into a Mini-batch.
 
@@ -164,21 +164,8 @@ class RoiImageToBatch(Preprocessing):
     """
     def __init__(self, total_batch, convert_label=True, partition_num=None,
                  keep_image_feature=True, input_key="floats", bigdl_type="float"):
-        super(RoiImageToBatch, self).__init__(bigdl_type, total_batch, convert_label,
+        super(RoiImageToSSDBatch, self).__init__(bigdl_type, total_batch, convert_label,
                                               partition_num, keep_image_feature, input_key)
-
-
-class FrcnnToBatch(Preprocessing):
-    """
-    Convert a batch of labeled BGR images into a Mini-batch.
-
-    Notice: The totalBatch means a total batch size. In distributed environment, the batch should be
-    divided by total core number
-    """
-    def __init__(self, total_batch, convert_label=True, partition_num=-1,
-                 keep_image_feature=True, input_key="floats", bigdl_type="float"):
-        super(FrcnnToBatch  , self).__init__(bigdl_type, total_batch, convert_label,
-                                             partition_num, keep_image_feature, input_key)
 
 
 class MeanAveragePrecision(JavaValue):
@@ -190,22 +177,6 @@ class MeanAveragePrecision(JavaValue):
     """
     def __init__(self, use_07_metric, classes, normalized=True, bigdl_type="float"):
         JavaValue.__init__(self, None, bigdl_type, use_07_metric, normalized, classes)
-
-
-class FrcnnCriterion(Criterion):
-    """
-    Fast RCNN criterion
-
-    >>> criterion = FrcnnCriterion()
-    creating: createFrcnnCriterion
-    """
-    def __init__(self, rpn_sigma=3, frcnn_sigma=1, ignore_label=-1,rpn_loss_cls_weight=1,
-                 rpn_loss_bbox_weight=1, loss_cls_weight=1, loss_bbox_weight=1,
-                 bigdl_type="float"):
-        super(FrcnnCriterion, self).__init__(None, bigdl_type, rpn_sigma, frcnn_sigma,
-                                             ignore_label, rpn_loss_cls_weight,
-                                             rpn_loss_bbox_weight, loss_cls_weight,
-                                             loss_bbox_weight)
 
 
 class MultiBoxLossParam():
@@ -288,79 +259,6 @@ class PostProcessParam():
                "nms_thresh: %s, max_per_image: %s, thresh: %s}" \
                % (self.n_classes, self.bbox_vote,
                   self.nms_thresh, self.max_per_image, self.thresh)
-
-
-class ProposalTarget(Layer):
-    """
-    Assign object detection proposals to ground-truth targets. Produces proposal
-    classification labels and bounding-box regression targets.
-    :param roiPerImage Minibatch size (number of regions of interest [ROIs])
-
-    >>> pt = ProposalTarget(1, 5)
-    creating: createProposalTarget
-    """
-    def __init__(self, roi_per_image, num_classes, bigdl_type="float"):
-        super(ProposalTarget, self).__init__(None, bigdl_type, roi_per_image, num_classes)
-
-    def set_debug(self, is_debug):
-        self.value.setDebug(is_debug)
-        return self
-
-
-class EvaluateOnly(Container):
-    """
-    If is a container to contral different behavior in training mode and evaluate mode
-    in training mode, the submodules will be skipped and input directly be passed to output;
-    in evaluation mode, the modules will process the input tensors.
-
-    >>> pt = EvaluateOnly(SoftMax())
-    creating: createEvaluateOnly
-    """
-    def __init__(self, module, bigdl_type="float"):
-        super(EvaluateOnly, self).__init__(None, bigdl_type, module)
-
-
-class BboxPred(Layer):
-    """
-
-    >>> bp = BboxPred(1024, 64, 16)
-    creating: createBboxPred
-    """
-    def __init__(self, input_size, output_size, n_class, with_bias=True, w_regularizer= None,
-                 b_regularizer=None, normalized=False, bigdl_type="float"):
-        super(BboxPred, self).__init__(None, bigdl_type, input_size, output_size, n_class,
-                                       with_bias, w_regularizer, b_regularizer, normalized)
-
-
-class AnchorTarget(Layer):
-    """
-    Compute bounding-box regression targets for an image.
-
-    >>> ratios = (0.5, 1.0, 2.0)
-    >>> scales = (8, 16, 32)
-    >>> at = AnchorTarget(ratios, scales)
-    creating: createAnchorTarget
-    """
-    def __init__(self, ratios, scales, bigdl_type="float"):
-        super(AnchorTarget, self).__init__(None, bigdl_type, ratios, scales)
-
-    def set_debug(self, is_debug):
-        self.value.setDebug(is_debug)
-        return self
-
-
-class DetectionOutputFrcnn(Layer):
-    """
-    Compute bounding-box regression targets for an image.
-
-    >>> ratios = (0.5, 1.0, 2.0)
-    >>> scales = (8, 16, 32)
-    >>> at = AnchorTarget(ratios, scales)
-    creating: createAnchorTarget
-    """
-    def __init__(self, nms_thresh, n_classes, bbox_vote, max_per_image, thresh, bigdl_type="float"):
-        super(DetectionOutputFrcnn, self).__init__(None, bigdl_type,
-                                                   nms_thresh, n_classes, bbox_vote, max_per_image, thresh)
 
 
 def load_model_weights(src_model, target_model, match_all=True):

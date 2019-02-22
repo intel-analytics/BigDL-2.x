@@ -17,7 +17,7 @@
 package com.intel.analytics.zoo.models.image.objectdetection.dataset.roiimage
 
 import com.intel.analytics.bigdl.tensor.{Storage, Tensor}
-import com.intel.analytics.zoo.models.image.objectdetection.common.dataset.SSDMiniBatch
+import com.intel.analytics.zoo.models.image.objectdetection.ssd.SSDMiniBatch
 import org.scalatest.{FlatSpec, Matchers}
 
 class SSDMiniBatchSpec extends FlatSpec with Matchers {

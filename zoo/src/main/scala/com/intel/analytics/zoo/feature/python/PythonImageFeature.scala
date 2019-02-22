@@ -29,6 +29,7 @@ import com.intel.analytics.bigdl.transform.vision.image.opencv.OpenCVMat
 import com.intel.analytics.zoo.common.PythonZoo
 import com.intel.analytics.zoo.feature.common.Preprocessing
 import com.intel.analytics.zoo.feature.image._
+import com.intel.analytics.zoo.feature.image.roi.RoiRecordToFeature
 import com.intel.analytics.zoo.feature.image3d._
 import org.apache.spark.api.java.{JavaRDD, JavaSparkContext}
 import org.apache.spark.rdd.RDD
@@ -402,6 +403,11 @@ class PythonImageFeature[T: ClassTag](implicit ev: TensorNumeric[T]) extends Pyt
 
   def createImageRoiProject(needMeetCenterConstraint: Boolean = true): ImageRoiProject = {
     ImageRoiProject(needMeetCenterConstraint)
+  }
+
+  def createRoiRecordToFeature(convertLabel: Boolean = false,
+                               outKey: String = ImageFeature.bytes): RoiRecordToFeature = {
+    RoiRecordToFeature(convertLabel, outKey)
   }
 
   def createImageRandomSampler(): ImageRandomSampler = {

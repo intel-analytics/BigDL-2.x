@@ -16,7 +16,7 @@
 
 package com.intel.analytics.zoo.models.image.objectdetection
 
-import com.intel.analytics.zoo.models.image.objectdetection.common.EvalUtil
+import com.intel.analytics.zoo.models.image.objectdetection.common.optim.EvalUtil
 import org.scalatest.{FlatSpec, Matchers}
 
 

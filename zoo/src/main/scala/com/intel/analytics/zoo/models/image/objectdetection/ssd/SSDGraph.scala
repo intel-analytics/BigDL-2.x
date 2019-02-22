@@ -24,7 +24,7 @@ import com.intel.analytics.bigdl.numeric.NumericFloat
 import com.intel.analytics.bigdl.optim.{L2Regularizer, Regularizer}
 import com.intel.analytics.bigdl.tensor.Storage
 import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric
-import com.intel.analytics.zoo.models.image.objectdetection.common.OBUtils
+import com.intel.analytics.zoo.models.image.objectdetection.common.ModuleUtil
 import org.apache.log4j.Logger
 
 import scala.reflect.ClassTag
@@ -83,19 +83,19 @@ object SSDGraph {
       params("conv4_3_norm").nInput, numClasses)
     val fc7Out = getConcatOutput(relu7, "fc7", params, 1024, numClasses)
 
-    val relu6_1 = OBUtils.addConvRelu(relu7, (1024, 256, 1, 1, 0), "6_1")
-    val relu6_2 = OBUtils.addConvRelu(relu6_1, (256, 512, 3, 2, 1), "6_2")
+    val relu6_1 = ModuleUtil.addConvRelu(relu7, (1024, 256, 1, 1, 0), "6_1")
+    val relu6_2 = ModuleUtil.addConvRelu(relu6_1, (256, 512, 3, 2, 1), "6_2")
     val c6Out = getConcatOutput(relu6_2, "conv6_2", params, params("conv6_2").nInput, numClasses)
 
-    val relu7_1 = OBUtils.addConvRelu(relu6_2, (512, 128, 1, 1, 0), "7_1")
-    val relu7_2 = OBUtils.addConvRelu(relu7_1, (128, 256, 3, 2, 1), "7_2")
+    val relu7_1 = ModuleUtil.addConvRelu(relu6_2, (512, 128, 1, 1, 0), "7_1")
+    val relu7_2 = ModuleUtil.addConvRelu(relu7_1, (128, 256, 3, 2, 1), "7_2")
     val c7Out = getConcatOutput(relu7_2, "conv7_2", params, params("conv7_2").nInput, numClasses)
 
-    val relu8_1 = OBUtils.addConvRelu(relu7_2, (256, 128, 1, 1, 0), "8_1")
+    val relu8_1 = ModuleUtil.addConvRelu(relu7_2, (256, 128, 1, 1, 0), "8_1")
     val relu8_2 = if (isLastPool || resolution == 512) {
-      OBUtils.addConvRelu(relu8_1, (128, 256, 3, 2, 1), "8_2")
+      ModuleUtil.addConvRelu(relu8_1, (128, 256, 3, 2, 1), "8_2")
     } else {
-      OBUtils.addConvRelu(relu8_1, (128, 256, 3, 1, 0), "8_2")
+      ModuleUtil.addConvRelu(relu8_1, (128, 256, 3, 1, 0), "8_2")
     }
 
     val c8Out = getConcatOutput(relu8_2, "conv8_2", params, params("conv8_2").nInput, numClasses)
@@ -104,18 +104,18 @@ object SSDGraph {
       val pool6 = SpatialAveragePooling[T](3, 3).setName("pool6").inputs(relu8_2)
       (getConcatOutput(pool6, "pool6", params, params("pool6").nInput, numClasses), pool6)
     } else {
-      val relu9_1 = OBUtils.addConvRelu(relu8_2, (256, 128, 1, 1, 0), "9_1")
+      val relu9_1 = ModuleUtil.addConvRelu(relu8_2, (256, 128, 1, 1, 0), "9_1")
       val relu9_2 = if (resolution == 512) {
-        OBUtils.addConvRelu(relu9_1, (128, 256, 3, 2, 1), "9_2")
+        ModuleUtil.addConvRelu(relu9_1, (128, 256, 3, 2, 1), "9_2")
       } else {
-        OBUtils.addConvRelu(relu9_1, (128, 256, 3, 1, 0), "9_2")
+        ModuleUtil.addConvRelu(relu9_1, (128, 256, 3, 1, 0), "9_2")
       }
       (getConcatOutput(relu9_2, "conv9_2", params, params("conv9_2").nInput, numClasses), relu9_2)
     }
 
     val c10Out = if (resolution == 512) {
-      val relu10_1 = OBUtils.addConvRelu(relu9_2, (256, 128, 1, 1, 0), "10_1")
-      val relu10_2 = OBUtils.addConvRelu(relu10_1, (128, 256, 4, 1, 1), "10_2")
+      val relu10_1 = ModuleUtil.addConvRelu(relu9_2, (256, 128, 1, 1, 0), "10_1")
+      val relu10_2 = ModuleUtil.addConvRelu(relu10_1, (128, 256, 4, 1, 1), "10_2")
       getConcatOutput(relu10_2, "conv10_2", params, params("conv10_2").nInput, numClasses)
     } else {
       null

@@ -22,6 +22,7 @@ import com.intel.analytics.bigdl.transform.vision.image.augmentation._
 import com.intel.analytics.bigdl.transform.vision.image.label.roi._
 import com.intel.analytics.bigdl.transform.vision.image.opencv.OpenCVMat
 import com.intel.analytics.bigdl.transform.vision.image.{BytesToMat, MatToFloats}
+import com.intel.analytics.zoo.feature.image._
 import com.intel.analytics.zoo.models.image.objectdetection.common.dataset.Imdb
 import org.opencv.core.{Mat, Point, Scalar}
 import org.opencv.imgcodecs.Imgcodecs
@@ -46,15 +47,15 @@ class DataAugmentationSpec extends FlatSpec with Matchers with BeforeAndAfter {
     val resource = getClass().getClassLoader().getResource("VOCdevkit")
     val voc = Imdb.getImdb("voc_2007_testcode", resource.getPath)
     val roidb = voc.getRoidb(true).array.toIterator
-    val imgAug = BytesToMat() ->
-      RoiNormalize() ->
-      ColorJitter() ->
-      RandomTransformer(Expand() -> RoiProject(), 0.5) ->
-      RandomSampler() ->
-      Resize(300, 300, -1) ->
-      RandomTransformer(HFlip() -> RoiHFlip(), 0.5) ->
-      ChannelNormalize(123f, 117f, 104f) ->
-      MatToFloats(validHeight = 300, validWidth = 300)
+    val imgAug = ImageBytesToMat() ->
+      ImageRoiNormalize() ->
+      ImageColorJitter() ->
+      ImageRandomPreprocessing(ImageExpand() -> ImageRoiProject(), 0.5) ->
+      ImageRandomSampler() ->
+      ImageResize(300, 300, -1) ->
+      ImageRandomPreprocessing(ImageHFlip() -> ImageRoiHFlip(), 0.5) ->
+      ImageChannelNormalize(123f, 117f, 104f) ->
+      ImageMatToFloats(validHeight = 300, validWidth = 300)
     val out = imgAug(roidb)
     out.foreach(img => {
       val tmpFile = java.io.File.createTempFile("module", ".jpg")

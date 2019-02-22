@@ -14,11 +14,12 @@
  * limitations under the License.
  */
 
-package com.intel.analytics.zoo.models.image.objectdetection.common
+package com.intel.analytics.zoo.models.image.objectdetection.common.optim
 
 import com.intel.analytics.bigdl.nn.abstractnn.Activity
 import com.intel.analytics.bigdl.optim.{ValidationMethod, ValidationResult}
 import com.intel.analytics.bigdl.tensor.Tensor
+import com.intel.analytics.zoo.models.image.objectdetection.common.BboxUtil
 import org.apache.commons.lang3.SerializationUtils
 
 class MeanAveragePrecision(use07metric: Boolean, normalized: Boolean = true, classes: Array[String])

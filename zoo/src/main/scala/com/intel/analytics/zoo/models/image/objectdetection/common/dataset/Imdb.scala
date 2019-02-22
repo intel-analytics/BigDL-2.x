@@ -19,9 +19,13 @@ package com.intel.analytics.zoo.models.image.objectdetection.common.dataset
 import java.io.File
 import java.util.concurrent.atomic.AtomicInteger
 
-import com.intel.analytics.bigdl.transform.vision.image.ImageFeature
-import com.intel.analytics.zoo.feature.image.LocalImageSet
+import com.intel.analytics.bigdl.transform.vision.image.{ImageFeature, ImageFrame}
+import com.intel.analytics.zoo.feature.image.{ImageSet, LocalImageSet}
+import com.intel.analytics.zoo.feature.image.roi.RoiRecordToFeature
 import org.apache.commons.io.FileUtils
+import org.apache.hadoop.io.Text
+import org.apache.spark.SparkContext
+import org.apache.spark.rdd.RDD
 
 trait Imdb {
   def getRoidb(readImage: Boolean = true): LocalImageSet
@@ -69,5 +73,20 @@ object Imdb {
         }
       }
     }
+  }
+
+  def loadRoiSeqFiles(seqFloder: String, sc: SparkContext, nPartition: Option[Int] = None): RDD[ByteRecord] = {
+    val raw = if(nPartition.isDefined) {
+      sc.sequenceFile(seqFloder, classOf[Text], classOf[Text], nPartition.get)
+    } else {
+      sc.sequenceFile(seqFloder, classOf[Text], classOf[Text])
+    }
+    raw.map(x => ByteRecord(x._2.copyBytes(), x._1.toString))
+  }
+
+  def roiSeqFilesToImageSet(url: String, sc: SparkContext, partitionNum: Option[Int] = None): ImageSet = {
+    val rdd = loadRoiSeqFiles(url, sc, partitionNum)
+    val featureRDD = RoiRecordToFeature(true)(rdd)
+    ImageSet.rdd(featureRDD)
   }
 }

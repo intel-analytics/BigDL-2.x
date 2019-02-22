@@ -39,7 +39,7 @@ import com.intel.analytics.zoo.models.common.{Ranker, ZooModel}
 import com.intel.analytics.zoo.models.image.common.{ImageConfigure, ImageModel}
 import com.intel.analytics.zoo.models.image.objectdetection.{DummyGT, _}
 import com.intel.analytics.zoo.models.image.imageclassification.{ImageClassifier, LabelReader => IMCLabelReader}
-import com.intel.analytics.zoo.models.image.objectdetection.common.{MeanAveragePrecision, ModuleUtil}
+import com.intel.analytics.zoo.models.image.objectdetection.common.ModuleUtil
 import com.intel.analytics.zoo.models.image.objectdetection.common.nn._
 import com.intel.analytics.zoo.models.recommendation.{NeuralCF, Recommender, UserItemFeature, UserItemPrediction}
 import com.intel.analytics.zoo.models.recommendation._
@@ -48,7 +48,8 @@ import com.intel.analytics.zoo.models.textclassification.TextClassifier
 import com.intel.analytics.zoo.models.textmatching.KNRM
 import com.intel.analytics.zoo.pipeline.api.keras.layers.{Embedding, Recurrent, WordEmbedding}
 import com.intel.analytics.zoo.models.image.objectdetection.common.IOUtils
-import com.intel.analytics.zoo.models.image.objectdetection.common.dataset.ByteRecord
+import com.intel.analytics.zoo.models.image.objectdetection.common.dataset.{ByteRecord, Imdb}
+import com.intel.analytics.zoo.models.image.objectdetection.common.optim.MeanAveragePrecision
 import com.intel.analytics.zoo.models.image.objectdetection.fasterrcnn.RoiImageToFrcnnBatch
 import com.intel.analytics.zoo.models.image.objectdetection.ssd.RoiImageToSSDBatch
 import org.apache.spark.api.java.{JavaRDD, JavaSparkContext}
@@ -310,17 +311,10 @@ class PythonZooModel[T: ClassTag](implicit ev: TensorNumeric[T]) extends PythonZ
     RoiRecordToFeature(convertLabel, outKey)
   }
 
-  def createRoiImageToBatch(batchSize: Int, convertLabel: Boolean = true,
+  def createRoiImageToSSDBatch(batchSize: Int, convertLabel: Boolean = true,
                             partitionNum: Option[Int] = None, keepImageFeature: Boolean = true,
                             inputKey: String = ImageFeature.floats): RoiImageToSSDBatch = {
     RoiImageToSSDBatch(batchSize, convertLabel, partitionNum, keepImageFeature, inputKey)
-  }
-
-  def createFrcnnToBatch(batchSize: Int, convertLabel: Boolean = true,
-                         partitionNum: Int = -1, keepImageFeature: Boolean = true,
-                         inputKey: String = ImageFeature.floats): RoiImageToFrcnnBatch = {
-    val pn = if (partitionNum == -1) None else Some(partitionNum)
-    RoiImageToFrcnnBatch(batchSize, convertLabel, pn, keepImageFeature, inputKey)
   }
 
   def createMeanAveragePrecision(use07metric: Boolean, normalized: Boolean = true,
@@ -328,44 +322,13 @@ class PythonZooModel[T: ClassTag](implicit ev: TensorNumeric[T]) extends PythonZ
     new MeanAveragePrecision(use07metric, normalized, classes.asScala.toArray)
   }
 
-  def createFrcnnCriterion(rpnSigma: Float = 3, frcnnSigma: Float = 1,
-                           ignoreLabel: Int = -1, rpnLossClsWeight: Float = 1,
-                           rpnLossBboxWeight: Float = 1,
-                           lossClsWeight: Float = 1,
-                           lossBboxWeight: Float = 1): FrcnnCriterion = {
-    new FrcnnCriterion(rpnSigma, frcnnSigma, Some(ignoreLabel), rpnLossClsWeight, rpnLossBboxWeight,
-      lossClsWeight, lossBboxWeight)
-  }
-
   def createMultiBoxLoss(param: MultiBoxLossParam): MultiBoxLoss[T] = {
     new MultiBoxLoss[T](param)
-  }
-
-  def createProposalTarget(batchSize: Int, numClasses: Int): ProposalTarget = {
-    ProposalTarget(batchSize, numClasses)
   }
 
   def createDetectionOutputFrcnn(nmsThresh: Double, nClasses: Int, bboxVote: Boolean,
                                  maxPerImage: Int, thresh: Double ): DetectionOutputFrcnn = {
     DetectionOutputFrcnn(nmsThresh.toFloat, nClasses, bboxVote, maxPerImage, thresh)
-  }
-
-  def createEvaluateOnly(module: Module[T]): EvaluateOnly[T] = {
-    EvaluateOnly(module)
-  }
-
-  def createBboxPred(inputSize: Int,
-                     outputSize: Int,
-                     nClass: Int,
-                     withBias: Boolean = true,
-                     wRegularizer: Regularizer[T] = null,
-                     bRegularizer: Regularizer[T] = null,
-                     normalized: Boolean = false): BboxPred[T] = {
-    BboxPred(inputSize, outputSize, nClass, withBias, wRegularizer, bRegularizer, normalized)
-  }
-
-  def createAnchorTarget(ratios: JList[Double], scales: JList[Double]): AnchorTarget = {
-    AnchorTarget(ratios.asScala.toArray.map(_.toFloat), scales.asScala.toArray.map(_.toFloat))
   }
 
   def loadModelWeights(srcModel: Module[Float], targetModel: Module[Float],
@@ -375,7 +338,7 @@ class PythonZooModel[T: ClassTag](implicit ev: TensorNumeric[T]) extends PythonZ
 
   def loadRoiSeqFiles(url: String, sc: JavaSparkContext, partitionNum: Int= -1): JavaRDD[ByteRecord] = {
     val pn = if (partitionNum <= 0) None else Some(partitionNum)
-    IOUtils.loadRoiSeqFiles(url, sc, pn)
+    Imdb.loadRoiSeqFiles(url, sc, pn)
   }
 
   def createPaddingParam(): PaddingParam[T] = {

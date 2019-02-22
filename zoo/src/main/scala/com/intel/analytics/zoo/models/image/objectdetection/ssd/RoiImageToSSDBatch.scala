@@ -21,7 +21,6 @@ import com.intel.analytics.bigdl.tensor.{Storage, Tensor}
 import com.intel.analytics.bigdl.transform.vision.image.ImageFeature
 import com.intel.analytics.bigdl.transform.vision.image.label.roi.RoiLabel
 import com.intel.analytics.zoo.feature.common.Preprocessing
-import com.intel.analytics.zoo.models.image.objectdetection.common.dataset.SSDMiniBatch
 
 import scala.collection.Iterator
 import scala.collection.mutable.ArrayBuffer

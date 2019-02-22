@@ -14,11 +14,12 @@
  * limitations under the License.
  */
 
-package com.intel.analytics.zoo.models.image.objectdetection.common
+package com.intel.analytics.zoo.models.image.objectdetection.common.optim
 
-import com.intel.analytics.zoo.models.image.objectdetection.common.dataset.PascalVoc._
 import com.intel.analytics.bigdl.tensor.Tensor
 import com.intel.analytics.bigdl.transform.vision.image.label.roi.RoiLabel
+import com.intel.analytics.zoo.models.image.objectdetection.common.dataset.PascalVoc._
+import com.intel.analytics.zoo.models.image.objectdetection.common.BboxUtil
 import org.apache.commons.lang3.SerializationUtils
 import org.apache.log4j.Logger
 

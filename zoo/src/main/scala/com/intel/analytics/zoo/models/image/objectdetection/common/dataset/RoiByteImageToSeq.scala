@@ -20,19 +20,20 @@ import java.io.File
 import java.nio.ByteBuffer
 import java.nio.file.Path
 
+import com.intel.analytics.bigdl.dataset.Transformer
 import com.intel.analytics.bigdl.tensor.Tensor
-import com.intel.analytics.bigdl.transform.vision.image.ImageFeature
-import com.intel.analytics.bigdl.transform.vision.image.label.roi.RoiLabel
-import com.intel.analytics.zoo.feature.common.Preprocessing
 import org.apache.commons.io.FileUtils
 import org.apache.hadoop.conf.Configuration
 import org.apache.hadoop.fs.{Path => hPath}
 import org.apache.hadoop.io.{SequenceFile, Text}
+import RoiByteImageToSeq._
+import com.intel.analytics.bigdl.transform.vision.image.ImageFeature
+import com.intel.analytics.bigdl.transform.vision.image.label.roi.RoiLabel
 
 import scala.collection.Iterator
 
 class RoiByteImageToSeq(blockSize: Int, baseFileName: Path) extends
-  Preprocessing[ImageFeature, String] {
+  Transformer[ImageFeature, String] {
   private val conf: Configuration = new Configuration
   private var index = 0
   private val preBuffer: ByteBuffer = ByteBuffer.allocate(4 * 2)

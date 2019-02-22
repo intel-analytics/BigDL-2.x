@@ -17,10 +17,14 @@
 package com.intel.analytics.zoo.models.image.objectdetection.common
 
 import com.intel.analytics.bigdl._
+import com.intel.analytics.bigdl.nn.Graph.ModuleNode
 import com.intel.analytics.bigdl.nn._
 import com.intel.analytics.bigdl.tensor.Tensor
+import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric
 import com.intel.analytics.bigdl.utils.Table
 import org.apache.log4j.Logger
+
+import scala.reflect.ClassTag
 
 object ModuleUtil {
 
@@ -114,6 +118,25 @@ object ModuleUtil {
           if (matchAll) new Exception(s"module $name cannot find corresponding weight bias")
         }
     }
+  }
+
+  def addConvRelu[@specialized(Float, Double) T: ClassTag](prevNodes: ModuleNode[T],
+                                                           p: (Int, Int, Int, Int, Int), name: String,
+                                                           prefix: String = "conv", nGroup: Int = 1,
+                                                           propogateBack: Boolean = true)
+                                                          (implicit ev: TensorNumeric[T]): ModuleNode[T] = {
+    val conv = SpatialConvolution[T](p._1, p._2, p._3, p._3, p._4, p._4,
+      p._5, p._5, nGroup = nGroup, propagateBack = propogateBack)
+      .setInitMethod(weightInitMethod = Xavier, biasInitMethod = Zeros)
+      .setName(s"$prefix$name").inputs(prevNodes)
+    ReLU[T](true).setName(s"relu$name").inputs(conv)
+  }
+
+  def stopGradient[@specialized(Float, Double) T: ClassTag](model: Graph[T]): Unit = {
+    val priorboxNames = model.modules
+      .filter(_.getClass.getName.toLowerCase().endsWith("priorbox"))
+      .map(_.getName()).toArray
+    model.stopGradient(priorboxNames)
   }
 
 }

@@ -16,7 +16,7 @@
 
 package com.intel.analytics.zoo.models.image.objectdetection.ssd
 
-import com.intel.analytics.zoo.models.image.objectdetection.common.OBUtils
+import com.intel.analytics.zoo.models.image.objectdetection.common.ModuleUtil
 
 import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric
 import com.intel.analytics.bigdl.utils.serializer._
@@ -56,7 +56,7 @@ object SSDVgg extends ModuleSerializable {
       }
     }
 
-    val (conv1_1, relu4_3, poo5) = SSDVgg.vgg16[T]
+    val (conv1_1, relu4_3, pool5) = SSDVgg.vgg16[T]
 
     val postParam = if (postProcessParam == null) DetectionOutputParam(classNum)
     else postProcessParam
@@ -79,7 +79,7 @@ object SSDVgg extends ModuleSerializable {
       params += "conv9_2" -> ComponetParam(256, 4,
         minSizes = Array(priorBoxSizes(5)), maxSizes = Array(priorBoxSizes(6)),
         aspectRatios = Array(2), isFlip, isClip, variances, 300, 300)
-      SSDGraph[T](classNum, resolution, conv1_1, relu4_3, poo5, params,
+      SSDGraph[T](classNum, resolution, conv1_1, relu4_3, pool5, params,
         normScale = 20f, isLastPool = false, param = postParam)
     } else {
       params += "conv4_3_norm" -> ComponetParam(512, 4,
@@ -103,7 +103,7 @@ object SSDVgg extends ModuleSerializable {
       params += "conv10_2" -> ComponetParam(256, 4,
         minSizes = Array(priorBoxSizes(6)), maxSizes = Array(priorBoxSizes(7)),
         aspectRatios = Array(2), isFlip, isClip, variances, 512, 512)
-      SSDGraph(classNum, resolution, conv1_1, relu4_3, poo5, params, normScale = 20f,
+      SSDGraph(classNum, resolution, conv1_1, relu4_3, pool5, params, normScale = 20f,
         isLastPool = false, param = postParam)
     }
   }
@@ -115,28 +115,28 @@ object SSDVgg extends ModuleSerializable {
       .setName(s"conv1_1").inputs()
 
     val relu1_1 = ReLU(true).setName(s"relu1_1").inputs(conv1_1)
-    val relu1_2 = OBUtils.addConvRelu(relu1_1, (64, 64, 3, 1, 1), "1_2")
+    val relu1_2 = ModuleUtil.addConvRelu(relu1_1, (64, 64, 3, 1, 1), "1_2")
     val pool1 = SpatialMaxPooling(2, 2, 2, 2).ceil().setName("pool1").inputs(relu1_2)
 
-    val relu2_1 = OBUtils.addConvRelu(pool1, (64, 128, 3, 1, 1), "2_1")
-    val relu2_2 = OBUtils.addConvRelu(relu2_1, (128, 128, 3, 1, 1), "2_2")
+    val relu2_1 = ModuleUtil.addConvRelu(pool1, (64, 128, 3, 1, 1), "2_1")
+    val relu2_2 = ModuleUtil.addConvRelu(relu2_1, (128, 128, 3, 1, 1), "2_2")
     val pool2 = SpatialMaxPooling(2, 2, 2, 2).ceil().setName("pool2").inputs(relu2_2)
 
-    val relu3_1 = OBUtils.addConvRelu(pool2, (128, 256, 3, 1, 1), "3_1")
-    val relu3_2 = OBUtils.addConvRelu(relu3_1, (256, 256, 3, 1, 1), "3_2")
-    val relu3_3 = OBUtils.addConvRelu(relu3_2, (256, 256, 3, 1, 1), "3_3")
+    val relu3_1 = ModuleUtil.addConvRelu(pool2, (128, 256, 3, 1, 1), "3_1")
+    val relu3_2 = ModuleUtil.addConvRelu(relu3_1, (256, 256, 3, 1, 1), "3_2")
+    val relu3_3 = ModuleUtil.addConvRelu(relu3_2, (256, 256, 3, 1, 1), "3_3")
     val pool3 = SpatialMaxPooling(2, 2, 2, 2).ceil().setName("pool3").inputs(relu3_3)
 
-    val relu4_1 = OBUtils.addConvRelu(pool3, (256, 512, 3, 1, 1), "4_1")
-    val relu4_2 = OBUtils.addConvRelu(relu4_1, (512, 512, 3, 1, 1), "4_2")
-    val relu4_3 = OBUtils.addConvRelu(relu4_2, (512, 512, 3, 1, 1), "4_3")
+    val relu4_1 = ModuleUtil.addConvRelu(pool3, (256, 512, 3, 1, 1), "4_1")
+    val relu4_2 = ModuleUtil.addConvRelu(relu4_1, (512, 512, 3, 1, 1), "4_2")
+    val relu4_3 = ModuleUtil.addConvRelu(relu4_2, (512, 512, 3, 1, 1), "4_3")
 
     val pool4 = SpatialMaxPooling(2, 2, 2, 2).ceil().setName("pool4").inputs(relu4_3)
-    val relu5_1 = OBUtils.addConvRelu(pool4, (512, 512, 3, 1, 1), "5_1")
-    val relu5_2 = OBUtils.addConvRelu(relu5_1, (512, 512, 3, 1, 1), "5_2")
-    val relu5_3 = OBUtils.addConvRelu(relu5_2, (512, 512, 3, 1, 1), "5_3")
-    val poo5 = SpatialMaxPooling[T](3, 3, 1, 1, 1, 1).ceil().setName("pool5").inputs(relu5_3)
-    (conv1_1, relu4_3, poo5)
+    val relu5_1 = ModuleUtil.addConvRelu(pool4, (512, 512, 3, 1, 1), "5_1")
+    val relu5_2 = ModuleUtil.addConvRelu(relu5_1, (512, 512, 3, 1, 1), "5_2")
+    val relu5_3 = ModuleUtil.addConvRelu(relu5_2, (512, 512, 3, 1, 1), "5_3")
+    val pool5 = SpatialMaxPooling[T](3, 3, 1, 1, 1, 1).ceil().setName("pool5").inputs(relu5_3)
+    (conv1_1, relu4_3, pool5)
   }
 }
 
