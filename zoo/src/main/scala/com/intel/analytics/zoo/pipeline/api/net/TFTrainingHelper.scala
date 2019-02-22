@@ -285,6 +285,7 @@ class TFOptimizer(modelPath: String,
 }
 
 
+// todo make it serializable
 class TFStatefulValidationMethod(val metricName: String,
                                  @ transient var graph: ClosableGraph,
                                  val outputNames: Array[String],
@@ -341,6 +342,7 @@ class TFStatefulValidationMethod(val metricName: String,
 
 }
 
+// todo make it serializable
 class TFStatefulValidationResult(@transient var graph: ClosableGraph,
                                  val outputNames: Array[String],
                                  val targetNames: Array[String],
