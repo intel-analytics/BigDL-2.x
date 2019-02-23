@@ -42,7 +42,7 @@ object SSD {
   def apply[T: ClassTag](classNum: Int, resolution: Int = 300,
                          dataset: String = "pascal", sizes: Array[Float] = null,
                          postProcessParam: DetectionOutputParam = null)(implicit ev: TensorNumeric[T]): SSD[T] = {
-    new SSD(classNum, resolution, dataset, sizes, postProcessParam)
+    new SSD(classNum, resolution, dataset, sizes, postProcessParam).build()
   }
 }
 
