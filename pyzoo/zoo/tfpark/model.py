@@ -20,7 +20,7 @@ from zoo.pipeline.api.net import TFDataset, TFOptimizer, TFPredictor
 from bigdl.util.common import get_spark_context
 import tensorflow.keras.backend as K
 import numpy as np
-
+import logging
 
 class Model(object):
 
@@ -140,7 +140,7 @@ class Model(object):
 
                 dataset = TFDataset.from_rdd(rdd,
                                              names=self.model._feed_input_names,
-                                             batch_size=-1 if batch_size is None else batch_size)
+                                             batch_per_thread=-1 if batch_size is None else batch_size)
                 return np.array(self._predict_distributed(dataset, batch_size).collect())
             else:
                 return self.model.predict(x=x,
