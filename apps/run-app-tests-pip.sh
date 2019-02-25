@@ -16,7 +16,7 @@ start=$(date "+%s")
 
 # Conversion to py file and data preparation
 ${ANALYTICS_ZOO_HOME}/apps/ipynb2py.sh ${ANALYTICS_ZOO_HOME}/apps/recommendation-wide-n-deep/wide_n_deep
-sed "s/end_trigger=MaxEpoch(10)/end_trigger=MaxEpoch(5)/g; s/batch_size=8000/batch_size=8008/g" ${ANALYTICS_ZOO_HOME}/apps/recommendation-wide-n-deep/wide_n_deep.py >${ANALYTICS_ZOO_HOME}/apps/recommendation-wide-n-deep/tmp_test.py
+sed "s/end_trigger=MaxEpoch(10)/end_trigger=MaxEpoch(5)/g; s/batch_size = 8000/batch_size = 8008/g" ${ANALYTICS_ZOO_HOME}/apps/recommendation-wide-n-deep/wide_n_deep.py >${ANALYTICS_ZOO_HOME}/apps/recommendation-wide-n-deep/tmp_test.py
 
 # Run the example
 export SPARK_DRIVER_MEMORY=22g
