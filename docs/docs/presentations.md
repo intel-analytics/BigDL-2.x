@@ -1,7 +1,5 @@
 **Talks:**
 
-* [Accelerating analytics and AI from the edge to the cloud](https://conferences.oreilly.com/strata/strata-ca-2018/public/schedule/detail/66393)  *[[Slides Download]](https://cdn.oreillystatic.com/en/assets/1/event/269/Accelerating%20analytics%20and%20AI%20from%20the%20edge%20to%20the%20cloud%20_sponsored%20by%20Intel_%20Presentation.pdf)*<br />(Strata Data conference, March 2018, San Jose)
-
 * [Automatic 3D MRI knee damage classification with 3D CNN using BigDL on Spark](https://conferences.oreilly.com/strata/strata-ca-2018/public/schedule/detail/64023)  *[[Slides Download]](https://cdn.oreillystatic.com/en/assets/1/event/269/Automatic%203D%20MRI%20knee%20damage%20classification%20with%203D%20CNN%20using%20BigDL%20on%20Spark%20Presentation.pdf)*<br /> (Strata Data conference, March 2018, San Jose)
 
 * [Accelerating deep learning on Apache Spark using BigDL with coarse-grained scheduling](https://conferences.oreilly.com/strata/strata-ca-2018/public/schedule/detail/63960)  *[[Slides Download]](https://cdn.oreillystatic.com/en/assets/1/event/269/Accelerating%20deep%20learning%20on%20Apache%20Spark%20using%20BigDL%20with%20coarse-grained%20scheduling%20Presentation.pptx)*<br /> (Strata Data conference, March 2018, San Jose)
