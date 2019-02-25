@@ -37,12 +37,12 @@ class TestTFPark(ZooTestCase):
         rdd_x = self.sc.parallelize(x)
         rdd_y = self.sc.parallelize(y)
 
-        rdd = rdd_x.zip(rdd_y).map(lambda x: list(x))
+        rdd = rdd_x.zip(rdd_y)
 
         dataset = TFDataset.from_rdd(rdd,
+                                     features=(tf.float32, [10]),
+                                     labels=(tf.int32, []),
                                      names=["features", "labels"],
-                                     shapes=[[10], []],
-                                     types=[tf.float32, tf.int32],
                                      batch_size=4,
                                      val_rdd=rdd
                                      )
@@ -56,12 +56,11 @@ class TestTFPark(ZooTestCase):
         rdd_x = self.sc.parallelize(x)
         rdd_y = self.sc.parallelize(y)
 
-        rdd = rdd_x.zip(rdd_y).map(lambda x: list(x))
+        rdd = rdd_x.zip(rdd_y)
 
         dataset = TFDataset.from_rdd(rdd,
-                                     names=["features", "labels"],
-                                     shapes=[[10], []],
-                                     types=[tf.float32, tf.int32],
+                                     features=(tf.float32, [10]),
+                                     labels=(tf.int32, []),
                                      batch_per_thread=1
                                      )
         return dataset

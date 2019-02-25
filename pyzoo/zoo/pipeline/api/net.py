@@ -377,7 +377,7 @@ class TFOptimizer:
         '''
 
         import tensorflow as tf
-        from tensorflow.python.data.util import nest
+        from tensorflow.python.util import nest
         from zoo.util.tf import export_tf
 
         if dataset is None:
@@ -641,7 +641,6 @@ with variable_creator_scope():
                   outputs=self.grads + self.outputs)
         self.training_helper_layer = TFTrainingHelper(self.export_dir, self.session_config)
 
-
     def set_train_summary(self, summary):
         self.optimizer.set_train_summary(summary)
 
@@ -673,10 +672,11 @@ class TFDataset:
     def __init__(self, rdd, tensor_structure, batch_size,
                  batch_per_thread, hard_code_batch_size=False, val_rdd=None):
         '''
-        TFDatasets represents a distributed collection of elements to be feed into Tensorflow graph.
-        TFDatasets can be created using a RDD and each of its records is one or more numpy.ndarray
-        of the same nested structure, representing the tensors to be feed into TensorFlow
-        graph on each iteration. TFDatasets must be used with TFOptimizer or TFPredictor.
+        TFDatasets represents a distributed collection of elements to be feed into Tensorflow
+        graph. TFDatasets can be created using a RDD and each of its records is one or more
+        numpy.ndarray of the same nested structure, representing the tensors to be feed into
+        TensorFlow graph on each iteration. TFDatasets must be used with TFOptimizer or
+        TFPredictor.
         '''
         import tensorflow as tf
 
@@ -703,31 +703,36 @@ class TFDataset:
             self.tensor_structure = tuple(tensor_structure)
 
         self.val_rdd = val_rdd
-        from tensorflow.python.data.util import nest
+        from tensorflow.python.util import nest
 
         if not self.hard_code_batch_size:
             self.output_shapes = nest.pack_sequence_as(
                 self.tensor_structure, [[None] + list(t.shape)
+                                        if t is not None else None
                                         for t in nest.flatten(self.tensor_structure)])
         else:
             if self.batch_per_thread > 0:
                 self.output_shapes = nest.pack_sequence_as(
                     self.tensor_structure, [[self.batch_per_thread] + t.shape
+                                            if t is not None else None
                                             for t in nest.flatten(self.tensor_structure)])
             else:
                 self.output_shapes = nest.pack_sequence_as(
                     self.tensor_structure, [[self.batch_size // self.total_core_num] + t.shape
+                                            if t is not None else None
                                             for t in nest.flatten(self.tensor_structure)])
 
         self.rdd = rdd
         self.input_names = nest.pack_sequence_as(
-            self.tensor_structure, [t.name for t in nest.flatten(self.tensor_structure)])
+            self.tensor_structure, [t.name
+                                    if t is not None else None
+                                    for t in nest.flatten(self.tensor_structure)])
 
         self._tensors = None
 
     def _create_placeholders(self):
         import tensorflow as tf
-        from tensorflow.python.data.util import nest
+        from tensorflow.python.util import nest
         if not self.hard_code_batch_size:
             tensors = nest.pack_sequence_as(
                 self.tensor_structure, [tf.placeholder(name=t.name,
@@ -780,7 +785,8 @@ class TFDataset:
 
         if not isinstance(self._tensors, tuple):
             raise ValueError("To use feature_tensors, " +
-                             "the element in TFDataset must be a tuple of two component")
+                             "the element in TFDataset must be a tuple of two component. " +
+                             "Please use Dataset.from_rdd(rdd, features=..., labels=...). ")
 
         return self._tensors[0]
 
@@ -792,15 +798,17 @@ class TFDataset:
             self._tensors = tensors
 
         if not isinstance(self._tensors, tuple):
-            raise ValueError("To use label_tensors, the element in " +
-                             "TFDataset must be a tuple of two component")
+            raise ValueError("To use label_tensors, " +
+                             "the element in TFDataset must be a tuple of two component. " +
+                             "Please use Dataset.from_rdd(rdd, features=..., labels=...). ")
 
         return self._tensors[1]
 
     @staticmethod
     def from_rdd(rdd, names=None, shapes=None, types=None,
                  batch_size=-1, batch_per_thread=-1,
-                 hard_code_batch_size=False, val_rdd=None):
+                 hard_code_batch_size=False, val_rdd=None,
+                 features=None, labels=None):
         '''
         Create a TFDataset from a rdd, each element of the rdd must be a list of numpy.ndarray.
 
@@ -820,6 +828,19 @@ class TFDataset:
         :return: a TFDataset
         '''
         import tensorflow as tf
+
+        if features is not None:
+            feature_structure = _to_tensor_structure(features)
+            if labels is not None:
+                label_structure = _to_tensor_structure(labels)
+
+            else:
+                label_structure = None
+
+            tensor_structure = (feature_structure, label_structure)
+            return TFDataset(rdd, tensor_structure,
+                             batch_size, batch_per_thread,
+                             hard_code_batch_size, val_rdd)
 
         if names is not None or shapes is not None or types is not None:
             logging.warning("Using argument names, shapes or types is deprecated," +
@@ -842,22 +863,7 @@ class TFDataset:
                          hard_code_batch_size, val_rdd)
 
     @staticmethod
-    def from_tuple_rdd(rdd, features, labels=None, batch_size=-1, batch_per_thread=-1,
-                       hard_code_batch_size=False, val_rdd=None):
-        feature_structure = _to_tensor_structure(features)
-        if labels is not None:
-            label_structure = _to_tensor_structure(labels)
-
-        else:
-            label_structure = None
-
-        tensor_structure = (feature_structure, label_structure)
-        TFDataset(rdd, tensor_structure,
-                  batch_size, batch_per_thread,
-                  hard_code_batch_size, val_rdd)
-
-    @staticmethod
-    def from_tensors(tensors, batch_size=-1, batch_per_thread=-1,
+    def from_ndarrays(tensors, batch_size=-1, batch_per_thread=-1,
                      hard_code_batch_size=False, val_tensors=None):
         sc = get_spark_context()
         node_num, core_num = get_node_and_core_number()
@@ -874,7 +880,7 @@ class TFDataset:
 
 
 def _tensors_to_rdd(tensors, sc, splits):
-    from tensorflow.python.data.util import nest
+    from tensorflow.python.util import nest
     import tensorflow as tf
     if isinstance(tensors, list):
         data_list = _splits(tensors)
@@ -910,6 +916,9 @@ def _splits(tensors):
 def _to_tensor_structure(tensors):
     if isinstance(tensors, tuple):
         tensor_structure = TensorMeta(dtype=tensors[0], shape=tensors[1], name="input0")
+    elif isinstance(tensors, list):
+        tensor_structure = [TensorMeta(dtype=value[0], shape=value[1], name=idx)
+                            for (idx, value) in enumerate(tensors)]
     else:
         tensor_structure = {}
         for key, value in enumerate(tensors):
@@ -969,6 +978,7 @@ class TFPredictor:
     def from_keras(cls, keras_model, dataset):
         import tensorflow.keras.backend as K
         sess = K.get_session()
+
         outputs = keras_model.outputs
         inputs = keras_model.inputs
         return cls(sess, outputs, inputs, dataset)

@@ -19,6 +19,7 @@ from tensorflow.python.keras.engine import training_utils
 from zoo.pipeline.api.net import TFDataset, TFOptimizer, TFPredictor
 from bigdl.util.common import get_spark_context
 import tensorflow.keras.backend as K
+from tensorflow.python.util import nest
 import numpy as np
 import logging
 
@@ -31,6 +32,10 @@ class Model(object):
     @classmethod
     def from_keras(cls, model):
         return cls(model)
+
+    @property
+    def metrics_names(self):
+        return self.model.metrics_names
 
     def get_weights(self):
         return self.model.get_weights()
@@ -56,19 +61,28 @@ class Model(object):
             ):
         if isinstance(x, TFDataset):
             # todo check arguments
+            x = _standarize_feature_label_dataset(x, self.model)
             self._fit_distributed(x, validation_split, epochs, **kwargs)
 
         elif distributed:
             sc = get_spark_context()
-            train_rdd = _create_rdd_x_y(x, y, self.model._feed_input_names, self.model._feed_output_names, sc)
+            train_rdd, types, shapes = _create_rdd_x_y(x, y,
+                                                       self.model._feed_input_names,
+                                                       self.model._feed_output_names,
+                                                       sc)
 
             val_rdd = None
             if validation_data is not None:
-                val_rdd = _create_rdd_x_y(validation_data[0], validation_data[1], self.model._feed_input_names, self.model._feed_output_names, sc)
-
+                val_rdd, _, _ = _create_rdd_x_y(validation_data[0], validation_data[1],
+                                                self.model._feed_input_names,
+                                                self.model._feed_output_names,
+                                                sc)
+            names = self.model._feed_input_names + self.model._feed_output_names
             dataset = TFDataset.from_rdd(train_rdd,
-                                         names=self.model._feed_input_names + self.model._feed_output_names,
-                                         batch_size=batch_size,
+                                         names=names,
+                                         shapes=shapes,
+                                         types=types,
+                                         batch_size=batch_size if batch_size is not None else 32,
                                          val_rdd=val_rdd)
             self._fit_distributed(dataset, validation_split, epochs, **kwargs)
 
@@ -82,9 +96,10 @@ class Model(object):
                            **kwargs
                            )
 
-    def _fit_distributed(self, x, validation_split, epochs, **kwargs):
+    def _fit_distributed(self, dataset, validation_split, epochs, **kwargs):
         if not self.tf_optimizer:
-            self.tf_optimizer = TFOptimizer.from_keras(self.model, x, val_spilt=validation_split, **kwargs)
+            self.tf_optimizer = TFOptimizer.from_keras(self.model, dataset,
+                                                       val_spilt=validation_split, **kwargs)
         else:
             self.tf_optimizer.refresh_weights()
         self.tf_optimizer.optimize(MaxEpoch(epochs))
@@ -96,28 +111,35 @@ class Model(object):
                  distributed=False
                  ):
         if isinstance(x, TFDataset):
+            x = _standarize_feature_label_dataset(x, self.model)
             # todo check arguments
             return self._evaluate_distributed(x, batch_size)
         else:
             if distributed:
                 sc = get_spark_context()
-                rdd = _create_rdd_x_y(x, y, self.model._feed_input_names, self.model._feed_output_names, sc)
-
+                rdd, types, shapes = _create_rdd_x_y(x, y,
+                                                           self.model._feed_input_names,
+                                                           self.model._feed_output_names,
+                                                           sc)
+                names = self.model._feed_input_names + self.model._feed_output_names
                 dataset = TFDataset.from_rdd(rdd,
-                                             names=self.model._feed_input_names + self.model._feed_output_names,
-                                             batch_per_thread=-1 if batch_size is None else batch_size)
+                                             names=names,
+                                             types=types,
+                                             shapes=shapes,
+                                             batch_per_thread=-1 if batch_size is None
+                                             else batch_size)
                 return self._evaluate_distributed(dataset, batch_size)
             else:
                 return self.model.evaluate(x=x,
                                            y=y,
                                            batch_size=batch_size)
 
-    def _evaluate_distributed(self, x, batch_size):
+    def _evaluate_distributed(self, dataset, batch_size):
         metrics_tensors = [
             self.model.metrics_tensors[m] for m in range(len(self.model.metrics_names)-1)
         ]
-
-        predictor = TFPredictor(K.get_session(), [self.model.total_loss] + metrics_tensors, self.model.inputs + self.model.targets, x)
+        predictor = TFPredictor(K.get_session(), [self.model.total_loss] + metrics_tensors,
+                                self.model.inputs + self.model.targets, dataset)
         result = predictor.predict()
         metrics_sum = result.map(lambda x: x + [np.array(1.0)]).reduce(lambda a,b: elem_sum(a, b))
         length = len(metrics_sum) - 1
@@ -132,19 +154,23 @@ class Model(object):
 
         if isinstance(x, TFDataset):
             # todo check arguments
+            x = _standarize_feature_dataset(x, self.model)
             return self._predict_distributed(x, batch_size)
         else:
             if distributed:
                 sc = get_spark_context()
-                rdd = _create_rdd_x(x, self.model._feed_input_names, sc)
+                rdd, types, shapes = _create_rdd_x(x, self.model._feed_input_names, sc)
 
                 dataset = TFDataset.from_rdd(rdd,
                                              names=self.model._feed_input_names,
-                                             batch_per_thread=-1 if batch_size is None else batch_size)
+                                             types=types,
+                                             shapes=shapes,
+                                             batch_per_thread=-1 if batch_size is None
+                                             else batch_size)
                 return np.array(self._predict_distributed(dataset, batch_size).collect())
             else:
                 return self.model.predict(x=x,
-                                      batch_size=batch_size)
+                                          batch_size=batch_size)
 
     def _predict_distributed(self, x, batch_size):
         predictor = TFPredictor.from_keras(self.model, x)
@@ -172,33 +198,81 @@ class Model(object):
         return self.model.predict_on_batch(x)
 
 
+def _standarize_feature_label_dataset(dataset, model):
+    input_names = model.input_names
+    output_names = model.output_names
+    rdd = dataset.rdd.map(lambda sample: _training_reorder(sample, input_names, output_names))
+    if dataset.val_rdd is not None:
+        val_rdd = dataset.val_rdd.map(
+            lambda sample: _training_reorder(sample, input_names, output_names))
+    else:
+        val_rdd = None
+    tensor_structure = _training_reorder(dataset.tensor_structure, input_names, output_names)
+    dataset = TFDataset(rdd, tensor_structure, dataset.batch_size,
+                  -1, dataset.hard_code_batch_size, val_rdd)
+    return dataset
+
+
+def _standarize_feature_dataset(dataset, model):
+    input_names = model.input_names
+    rdd = dataset.rdd.map(lambda sample: _reorder(sample, input_names))
+    feature_schema = _reorder(dataset.tensor_structure[0], input_names)
+
+    dataset = TFDataset(rdd, feature_schema, dataset.batch_size,
+                  -1, dataset.hard_code_batch_size)
+    return dataset
+
+
+def _training_reorder(x, input_names, output_names):
+    assert isinstance(x, tuple)
+
+    return _reorder(x[0], input_names) + _reorder(x[1], output_names)
+
+
+def _reorder(x, names):
+    if isinstance(x, dict):
+        return [x[name] for name in names]
+    elif isinstance(x, list):
+        return x
+    else:
+        return [x]
+
+
 def _create_rdd_x_y(x, y, input_names, output_names, sc):
     x = training_utils.standardize_input_data(x, input_names,
-                                              check_batch_axis=False, exception_prefix='input')
+                                              check_batch_axis=False,
+                                              exception_prefix='input')
     y = training_utils.standardize_input_data(y, output_names,
-                                              shapes=None, check_batch_axis=False, exception_prefix='target')
+                                              shapes=None, check_batch_axis=False,
+                                              exception_prefix='target')
 
     num_samples = x[0].shape[0]
     num_inputs = len(x)
+    num_targets = len(y)
 
     input_data = []
     for i in range(num_samples):
-        sample = []
+        inputs = []
         for j in range(num_inputs):
-            sample.append(x[j][i])
+            inputs.append(x[j][i])
 
-        for j in range(num_inputs):
-            sample.append((y[j][i]))
+        targets = []
+        for j in range(num_targets):
+            targets.append((y[j][i]))
 
-        input_data.append(sample)
+        input_data.append(inputs + targets)
+
+    types = [x.dtype for x in input_data[0]]
+    shapes = [x.shape for x in input_data[0]]
 
     rdd = sc.parallelize(input_data)
-    return rdd
+    return rdd, types, shapes
 
 
 def _create_rdd_x(x, input_names, sc):
     x = training_utils.standardize_input_data(x, input_names,
-                                              check_batch_axis=False, exception_prefix='input')
+                                              check_batch_axis=False,
+                                              exception_prefix='input')
 
     num_samples = x[0].shape[0]
     num_inputs = len(x)
@@ -211,8 +285,11 @@ def _create_rdd_x(x, input_names, sc):
 
         input_data.append(sample)
 
+    types = [x.dtype for x in input_data[0]]
+    shapes = [x.shape for x in input_data[0]]
+
     rdd = sc.parallelize(input_data)
-    return rdd
+    return rdd, types, shapes
 
 
 def elem_sum(arr1, arr2):
