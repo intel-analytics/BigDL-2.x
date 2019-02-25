@@ -14,18 +14,18 @@
  * limitations under the License.
  */
 
-package com.intel.analytics.zoo.pipeline.api.keras.layers
+package com.intel.analytics.zoo.pipeline.api.keras2.layers
 
 import com.intel.analytics.bigdl.utils.Shape
 import com.intel.analytics.bigdl.tensor.Tensor
 import com.intel.analytics.zoo.pipeline.api.keras.serializer.ModuleSerializationTest
 
 class SoftMaxSerialTest extends ModuleSerializationTest {
-  test()
   override def test(): Unit = {
-    val layer = Activation[Float]("softmax", inputShape = Shape(2, 2, 2, 2, 2))
-    layer.build(Shape(3, 2, 2, 2, 2, 2))
-    val input = Tensor[Float](3, 2, 2, 2, 2, 2).rand()
+    val layer = Activation[Float]("softmax", inputShape = Shape(2, 2, 2))
+    layer.build(Shape(3, 2, 2, 2))
+    val input = Tensor[Float](3, 2, 2, 2).rand()
     runSerializationTest(layer, input)
   }
 }
+
