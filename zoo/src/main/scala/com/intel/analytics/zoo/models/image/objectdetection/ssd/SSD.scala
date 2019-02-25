@@ -47,7 +47,7 @@ object SSD {
 }
 
 
-object SSDVgg extends ModuleSerializable {
+object SSDVgg {
   def apply[@specialized(Float, Double) T: ClassTag](classNum: Int, resolution: Int = 300,
     dataset: String = "pascal", sizes: Array[Float] = null,
     postProcessParam: DetectionOutputParam = null)

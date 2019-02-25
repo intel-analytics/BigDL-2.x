@@ -24,6 +24,7 @@ import com.intel.analytics.bigdl.utils.LoggerFilter
 import com.intel.analytics.bigdl.visualization.{TrainSummary, ValidationSummary}
 import com.intel.analytics.zoo.common.NNContext
 import com.intel.analytics.bigdl.nn.Module
+import com.intel.analytics.zoo.models.image.common.ImageModel
 import com.intel.analytics.zoo.models.image.objectdetection.common.ModuleUtil
 import com.intel.analytics.zoo.models.image.objectdetection.common.nn.MultiBoxLoss
 import com.intel.analytics.zoo.models.image.objectdetection.common.nn.MultiBoxLossParam
@@ -126,7 +127,7 @@ object Train {
         Some(param.nPartition))
 
       val model = SSD[Float](classes.length, param.resolution)
-      val m = Module.loadModule(param.modelSnapshot.get)
+      val m = ImageModel.loadModel(param.modelSnapshot.get, modelType = "objectdetection")
       ModuleUtil.loadModelWeights(m, model, false)
 
       val optimMethod = if (param.stateSnapshot.isDefined) {
@@ -137,7 +138,7 @@ object Train {
       }
       optimize(model, trainSet, valSet, param, optimMethod,
         Trigger.maxEpoch(param.maxEpoch), classes)
-      model.saveModule("./final.model")
+//      model.saveModel("./final.model")
     })
   }
 
