@@ -1454,20 +1454,7 @@ class TestModelLoading(OnnxTestCase):
         import caffe2.python.onnx.backend as backend
 
         ndarray_input = np.random.randn(1, 3, 224, 224).astype(np.float32)
-        onnx_model = onnx.load("/home/xinqi/densenet121/model.onnx")
-        zmodel = OnnxLoader(onnx_model.graph).to_keras()
-        zoutput = zmodel.forward(ndarray_input)
-
-        rep = backend.prepare(onnx_model, device="CPU")  # or "CPU"
-        outputs = rep.run(ndarray_input)
-        print(outputs[0])
-
-    def test_inception_v2(self):
-        import torchvision
-        import caffe2.python.onnx.backend as backend
-
-        ndarray_input = np.random.randn(1, 3, 224, 224).astype(np.float32)
-        onnx_model = onnx.load("/home/xinqi/bvlc_googlenet/model.onnx")
+        onnx_model = onnx.load("/home/xinqi/resnet50/model.onnx")
         zmodel = OnnxLoader(onnx_model.graph).to_keras()
         zoutput = zmodel.forward(ndarray_input)
 
