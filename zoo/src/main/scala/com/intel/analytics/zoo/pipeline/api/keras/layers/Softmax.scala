@@ -31,7 +31,7 @@ class SoftMax[T: ClassTag](override val inputShape: Shape = null)(implicit ev: T
 
   override def doBuild(inputShape: Shape): AbstractModule[Tensor[T], Tensor[T], T] = {
     val input = inputShape.toSingle().toArray
-    require(input.length < 6, "SoftMax only support 2d/3d/4d/5d input")
+    require(input.length < 5, "SoftMax only support 2d/3d/4d input")
     val layer = com.intel.analytics.bigdl.nn.SoftMax()
     if (input.length <= 2) {
       layer.asInstanceOf[AbstractModule[Tensor[T], Tensor[T], T]]
