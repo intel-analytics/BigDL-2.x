@@ -14,17 +14,23 @@
  * limitations under the License.
  */
 
-package com.intel.analytics.zoo.pipeline.api.keras.layers
+package com.intel.analytics.zoo.pipeline.api.keras2.layers
 
+import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric
 import com.intel.analytics.bigdl.utils.Shape
-import com.intel.analytics.bigdl.tensor.Tensor
-import com.intel.analytics.zoo.pipeline.api.keras.serializer.ModuleSerializationTest
+import com.intel.analytics.zoo.pipeline.api.Net
+import com.intel.analytics.zoo.pipeline.api.keras.{layers => klayers1}
 
-class SoftMaxSerialTest extends ModuleSerializationTest {
-  override def test(): Unit = {
-    val layer = Activation[Float]("softmax", inputShape = Shape(2, 2, 2, 2))
-    layer.build(Shape(3, 2, 2, 2, 2))
-    val input = Tensor[Float](3, 2, 2, 2, 2).rand()
-    runSerializationTest(layer, input)
+import scala.reflect.ClassTag
+
+class SoftMax[T: ClassTag](override val inputShape: Shape = null)(implicit ev: TensorNumeric[T])
+  extends klayers1.SoftMax[T](inputShape) with Net {
+
+}
+
+object SoftMax {
+  def apply[@specialized(Float, Double) T: ClassTag](
+    inputShape: Shape = null)(implicit ev: TensorNumeric[T]): SoftMax[T] = {
+    new SoftMax[T](inputShape)
   }
 }
