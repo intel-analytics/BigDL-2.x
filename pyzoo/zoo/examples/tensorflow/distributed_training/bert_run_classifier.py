@@ -30,7 +30,7 @@ def to_list_numpy(feature):
             np.array(feature.segment_ids), np.array(feature.label_id)]
 
 
-def generate_tf_dataset(examples, seq_len, batch_size):
+def generate_tf_dataset(examples, seq_len, batch_per_thread):
     features = convert_examples_to_features(examples, label_list, seq_len, tokenizer)
     features = [to_list_numpy(feature) for feature in features]
     rdd = getOrCreateSparkContext().parallelize(features)
@@ -38,39 +38,34 @@ def generate_tf_dataset(examples, seq_len, batch_size):
                               names=["input_ids", "input_mask", "segment_ids", "label_id"],
                               shapes=[[seq_len], [seq_len], [seq_len], [1]],
                               types=[tf.int32, tf.int32, tf.int32, tf.int32],
-                              batch_size=batch_size)
+                              batch_per_thread=batch_per_thread)
 
 
 if __name__ == '__main__':
     parser = OptionParser()
     parser.add_option("--bert_base_dir", dest="bert_base_dir")
     parser.add_option("--mrpc_data_dir", dest="data_dir")
+    parser.add_option("--batch_per_thread", dest="batch_per_thread", type=int, default=8)
+    parser.add_option("--max_seq_length", dest="max_seq_length", type=int, default=128)
+    parser.add_option("-e", "--nb_epoch", dest="nb_epoch", type=int, default=50)
+    parser.add_option("-l", "--learning_rate", dest="learning_rate", type=float, default=1e-6)
 
     (options, args) = parser.parse_args(sys.argv)
     # Model and data files
-    bert_config_file = options.bert_base_dir + "/bert_config.json"
-    vocab_file = options.bert_base_dir + "/vocab.txt"
-    init_checkpoint = options.bert_base_dir + "/bert_model.ckpt"
-
-    # Options
-    do_lower_case = False
-    max_seq_length = 128
-    train_batch_size = 32
-    eval_batch_size = 8
-    predict_batch_size = 8
-    learning_rate = 1e-6
-    nb_epoch = 50
+    bert_config_file = options.bert_base_dir + "bert_config.json"
+    vocab_file = options.bert_base_dir + "vocab.txt"
+    init_checkpoint = options.bert_base_dir + "bert_model.ckpt"
 
     sc = init_nncontext("BERT MRPC Classification Example")
 
     # Data preparation and preprocessing
     processor = MrpcProcessor()
     label_list = processor.get_labels()
-    tokenizer = FullTokenizer(vocab_file, do_lower_case)
+    tokenizer = FullTokenizer(vocab_file, False)
     train_examples = processor.get_train_examples(options.data_dir)
-    train_dataset = generate_tf_dataset(train_examples, max_seq_length, train_batch_size)
+    train_dataset = generate_tf_dataset(train_examples, options.max_seq_length, options.batch_per_thread)
     eval_examples = processor.get_dev_examples(options.data_dir)
-    eval_dataset = generate_tf_dataset(eval_examples, max_seq_length, eval_batch_size)
+    eval_dataset = generate_tf_dataset(eval_examples, options.max_seq_length, options.batch_per_thread)
 
     # Model loading and construction
     input_ids, input_mask, segment_ids, label_ids = train_dataset.tensors
@@ -92,7 +87,7 @@ if __name__ == '__main__':
             tf.logging.info("  name = %s, shape = %s%s", var.name, var.shape, init_string)
 
     # Training
-    optimizer = TFOptimizer(loss, Adam(learning_rate))
-    optimizer.optimize(end_trigger=MaxEpoch(nb_epoch))
+    optimizer = TFOptimizer(loss, Adam(options.learning_rate))
+    optimizer.optimize(end_trigger=MaxEpoch(options.nb_epoch))
 
     print("Finished")
