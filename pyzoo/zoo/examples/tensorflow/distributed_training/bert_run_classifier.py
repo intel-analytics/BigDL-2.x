@@ -44,7 +44,7 @@ def generate_tf_dataset(examples, seq_len, batch_per_thread):
 if __name__ == '__main__':
     parser = OptionParser()
     parser.add_option("--bert_base_dir", dest="bert_base_dir")
-    parser.add_option("--mrpc_data_dir", dest="data_dir")
+    parser.add_option("--data_dir", dest="data_dir")
     parser.add_option("--batch_per_thread", dest="batch_per_thread", type=int, default=8)
     parser.add_option("--max_seq_length", dest="max_seq_length", type=int, default=128)
     parser.add_option("-e", "--nb_epoch", dest="nb_epoch", type=int, default=50)
@@ -52,9 +52,9 @@ if __name__ == '__main__':
 
     (options, args) = parser.parse_args(sys.argv)
     # Model and data files
-    bert_config_file = options.bert_base_dir + "bert_config.json"
-    vocab_file = options.bert_base_dir + "vocab.txt"
-    init_checkpoint = options.bert_base_dir + "bert_model.ckpt"
+    bert_config_file = options.bert_base_dir + "/bert_config.json"
+    vocab_file = options.bert_base_dir + "/vocab.txt"
+    init_checkpoint = options.bert_base_dir + "/bert_model.ckpt"
 
     sc = init_nncontext("BERT MRPC Classification Example")
 
