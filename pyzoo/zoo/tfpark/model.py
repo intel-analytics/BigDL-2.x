@@ -208,9 +208,10 @@ def _standarize_feature_label_dataset(dataset, model):
     else:
         val_rdd = None
     tensor_structure = _training_reorder(dataset.tensor_structure, input_names, output_names)
-    dataset = TFDataset(rdd, tensor_structure, dataset.batch_size,
-                  -1, dataset.hard_code_batch_size, val_rdd)
-    return dataset
+    new_dataset = TFDataset(rdd, tensor_structure, dataset.batch_size,
+                            -1, dataset.hard_code_batch_size, val_rdd)
+    new_dataset.batch_per_thread = dataset.batch_per_thread
+    return new_dataset
 
 
 def _standarize_feature_dataset(dataset, model):
