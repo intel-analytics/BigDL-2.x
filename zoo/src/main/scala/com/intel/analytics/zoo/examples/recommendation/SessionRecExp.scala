@@ -76,7 +76,13 @@ object SessionRecExp {
     val featureRdds = assemblyFeature(sessionDF.sample(false, 0.1), params.featureLength)
     val Array(train, validation) = featureRdds.randomSplit(Array(0.8, 0.2))
 
-    val model = SessionRecommender[Float](itemCnt.toInt, 20, params.featureLength, 100)
+    val model = SessionRecommender[Float](
+      itemCount = itemCnt.toInt,
+      itemEmbed = 20,
+      numClasses = itemCnt.toInt + 1
+      maxLength = params.featureLength,
+      includeHistory = false
+    )
 
     val optimizer: Optimizer[Float, MiniBatch[Float]] = Optimizer(
       model = model,
