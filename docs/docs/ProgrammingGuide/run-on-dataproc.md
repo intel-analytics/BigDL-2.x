@@ -1,17 +1,6 @@
-
-<<<<<<< HEAD
 ## **Deploy Analytics Zoo with BigDL on Dataproc**
 
 Before using Analytics Zoo and BigDL on Google Dataproc, you need setup a project and create a cluster on Dataproc(you may refer to [https://cloud.google.com/sdk/docs/how-to](https://cloud.google.com/dataproc/docs/how-to) for more instructions). Now you can create a Cloud Dataproc cluster using the Google Cloud SDK's(https://cloud.google.com/sdk/docs/) gcloud command-line tool.
-
-To make it easy to try out Analytics Zoo on Spark on Dataproc, an initial action script is provided.
-=======
-## **Deploy Zoo with BigDL on Dataproc**
-
-Before using Zoo and BigDL on Google Dataproc, you need setup a project and create a cluster on Dataproc(you may refer to [https://cloud.google.com/sdk/docs/how-to](https://cloud.google.com/dataproc/docs/how-to) for more instructions). Now you can create a Cloud Dataproc cluster using the Google Cloud SDK's(https://cloud.google.com/sdk/docs/) gcloud command-line tool.
-
-To make it easy to try out BigDL on Spark on Dataproc, an initial action script is provided.
->>>>>>> cf4a7617285dac1c53090c83d27dc9ee1d539a73
 
 Note:
  The actual version of the initialization script with Zoo support is still under review here: [https://github.com/GoogleCloudPlatform/dataproc-initialization-actions/pull/469]).
