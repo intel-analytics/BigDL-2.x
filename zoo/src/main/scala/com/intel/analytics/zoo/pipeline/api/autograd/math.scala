@@ -538,15 +538,6 @@ class Variable[T: ClassTag] private[zoo] (private[zoo] var node: ModuleNode[T],
 
     var yShape = yy.getOutputShape().toSingle()
     var xShape = xx.getOutputShape().toSingle()
-    // add batch dim if it doesn't exist
-    if (yShape.head != -1) {
-      yy = AutoGrad.expandDims(yy, 0)
-      yShape = yy.getOutputShape().toSingle()
-    }
-    if (xShape.head != -1) {
-      xx = AutoGrad.expandDims(xx, 0)
-      xShape = xx.getOutputShape().toSingle()
-    }
 
     if (yShape.size > xShape.size) {
       xx = AutoGrad.expandDims(xx, 1)
