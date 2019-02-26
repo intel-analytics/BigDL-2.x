@@ -42,19 +42,6 @@ class TestInferenceModel(ZooTestCase):
         input_data = np.random.random([4, 3, 8, 8])
         output_data = model.predict(input_data)
 
-    def test_load_openvino(self):
-        local_path = self.create_temp_dir()
-        url = data_url + "/IR_faster_rcnn_resnet101_coco_2018_01_28"
-        maybe_download("frozen_inference_graph.xml",
-                       local_path, url + "/frozen_inference_graph.xml")
-        maybe_download("frozen_inference_graph.bin",
-                       local_path, url + "/frozen_inference_graph.bin")
-        model = InferenceModel()
-        model.load_openvino(local_path + "/frozen_inference_graph.xml",
-                            local_path + "/frozen_inference_graph.bin")
-        input_data = np.random.random([1, 1, 3, 600, 600])
-        output_data = model.predict(input_data)
-
     def test_load_tf_openvino(self):
         local_path = self.create_temp_dir()
         url = data_url + "/TF_faster_rcnn_resnet101_coco_2018_01_28"
