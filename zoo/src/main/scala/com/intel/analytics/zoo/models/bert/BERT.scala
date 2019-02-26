@@ -16,14 +16,18 @@
 
 package com.intel.analytics.zoo.models.bert
 
+import com.intel.analytics.bigdl._
+import com.intel.analytics.bigdl.dataset.Sample
 import com.intel.analytics.bigdl.nn.abstractnn.{AbstractModule, Activity}
+import com.intel.analytics.bigdl.optim.{OptimMethod, ValidationMethod}
 import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric
 import com.intel.analytics.bigdl.utils.Shape
 import com.intel.analytics.zoo.models.common.ZooModel
 import com.intel.analytics.zoo.pipeline.api.keras.layers._
 import com.intel.analytics.zoo.pipeline.api.autograd.{AutoGrad, Parameter, Variable}
-import com.intel.analytics.zoo.pipeline.api.keras.models.Model
+import com.intel.analytics.zoo.pipeline.api.keras.models.{KerasNet, Model}
 import com.intel.analytics.bigdl.tensor.Tensor
+import org.apache.spark.rdd.RDD
 
 import scala.reflect.ClassTag
 
@@ -37,7 +41,9 @@ class BERT[T: ClassTag] private(
    attention_probs_dropout_prob: Double = 0.1,
    maxPositionEmbeddings: Int = 512,
 //   typeVocabSize: Int = 2,
-   output_all_encoded_layers: Boolean = true)(implicit ev: TensorNumeric[T])
+   output_all_encoded_layers: Boolean = true,
+   // For debug usage
+   debug: Boolean = false)(implicit ev: TensorNumeric[T])
   extends ZooModel[Activity, Activity, T] {
   require(hidden_size >= num_attention_heads, "num_attention_heads cannot be" +
     "larger than hidden_size!")
@@ -48,6 +54,7 @@ class BERT[T: ClassTag] private(
     val tokenTypeInput = Variable(Shape(maxPositionEmbeddings))
     val positionInput = Variable(Shape(maxPositionEmbeddings))
     val attentionMask = Variable(Shape(1, 1, maxPositionEmbeddings))
+//    val attentionMask = Variable(Shape(maxPositionEmbeddings))
 
     val wordEmbeddings = Embedding(vocab, hidden_size, inputLength = maxPositionEmbeddings).from(wordInput)
     val positionEmbeddings = Embedding(maxPositionEmbeddings, hidden_size, inputLength = maxPositionEmbeddings)
@@ -68,16 +75,21 @@ class BERT[T: ClassTag] private(
     val modelOutput = new Array[Variable[T]](modelOutputSize)
     modelOutput(0) = block(nextInput, extended_attention_mask)
 
-    // TODO: CLONE for each num_hidden_layers
     for (i <- 1 until num_hidden_layers) {
       val output = block(modelOutput(i - 1), extended_attention_mask)
       modelOutput(i) = output
     }
 
-    val model = if (output_all_encoded_layers) {
-      Model(Array(wordInput, tokenTypeInput, positionInput, attentionMask), modelOutput)
-    } else Model(Array(wordInput, tokenTypeInput, positionInput, attentionMask), modelOutput.last)
-
+    // Temporily for bert example
+    val model = if (debug) {
+      val poolOutput = Select(2, -1).from(modelOutput.last)
+      val logitcs = Dense(2).from(poolOutput)
+      Model(Array(wordInput, tokenTypeInput, positionInput, attentionMask), logitcs)
+    } else {
+      if (output_all_encoded_layers) {
+        Model(Array(wordInput, tokenTypeInput, positionInput, attentionMask), modelOutput)
+      } else Model(Array(wordInput, tokenTypeInput, positionInput, attentionMask), modelOutput.last)
+    }
     model
   }
 
@@ -180,6 +192,22 @@ class BERT[T: ClassTag] private(
     w = Dropout(hidden_dropout_prob).from(w)
     w
   }
+
+  def compile(
+               optimizer: OptimMethod[T],
+               loss: Criterion[T],
+               metrics: List[ValidationMethod[T]] = null)(implicit ev: TensorNumeric[T]): Unit = {
+    model.asInstanceOf[KerasNet[T]].compile(optimizer, loss, metrics)
+  }
+
+  def fit(
+           x: RDD[Sample[T]],
+           batchSize: Int = 32,
+           nbEpoch: Int = 10,
+           validationData: RDD[Sample[T]] = null)(implicit ev: TensorNumeric[T]): Unit = {
+    model.asInstanceOf[KerasNet[T]].fit(x, batchSize, nbEpoch, validationData)
+  }
+
 }
 
 object BERT {
@@ -193,10 +221,11 @@ object BERT {
     attention_probs_dropout_prob: Double = 0.1,
     maxPositionEmbeddings: Int = 512,
 //    typeVocabSize: Int = 2,
-    output_all_encoded_layers: Boolean = true)(implicit ev: TensorNumeric[T]): BERT[T] = {
+    output_all_encoded_layers: Boolean = true,
+    debug: Boolean = false)(implicit ev: TensorNumeric[T]): BERT[T] = {
     new BERT[T](vocab, hidden_size, num_hidden_layers, num_attention_heads,
       intermediate_size, hidden_dropout_prob, attention_probs_dropout_prob, maxPositionEmbeddings,
-      output_all_encoded_layers).build()
+      output_all_encoded_layers, debug).build()
   }
 
   def loadModel[T: ClassTag](

@@ -52,6 +52,30 @@ class BertSpec extends ZooSpecHelper {
     val gradInput = model.backward(T(inputIds, segmentIds, positionIds, masks), gradOutput)
   }
 
+  "Bert model wit pool" should "be able to work" in {
+    val model = BERT[Float](vocab = 100,
+      hidden_size = 10,
+      num_hidden_layers = 3,
+      num_attention_heads = 2,
+      intermediate_size = 64,
+      hidden_dropout_prob = 0.1,
+      attention_probs_dropout_prob = 0.1,
+      maxPositionEmbeddings = 10,
+      //    typeVocabSize = 2,
+      output_all_encoded_layers = false,
+      debug = true)
+
+    val inputIds = Tensor[Float](Array[Float](7, 20, 39, 27, 10,
+      39, 30, 21, 17, 15), Array(1, 10))
+    val segmentIds = Tensor[Float](Array[Float](0, 0, 0, 0, 0, 1, 1, 1, 1, 1), Array(1, 10))
+    val positionIds = Tensor[Float](Array[Float](0, 1, 2, 3, 4, 5, 6, 7, 8, 9), Array(1, 10))
+    val masks = Tensor[Float](1, 1, 1, 10).fill(1.0f)
+
+    val output = model.forward(T(inputIds, segmentIds, positionIds, masks))
+    val gradOutput = Tensor[Float](output.toTensor[Float].size()).rand()
+    val gradInput = model.backward(T(inputIds, segmentIds, positionIds, masks), gradOutput)
+  }
+
   "BERT" should "be able to generate correct result" in {
     val model = BERT[Float](vocab = 20,
       hidden_size = 10,
