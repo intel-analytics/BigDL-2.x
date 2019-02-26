@@ -29,7 +29,7 @@ trait MleapSavePredict {
 
     val mleapModelPath = s"jar:file:$savePath/mleapmodel/spark-pipeline.zip"
 
-    new File(mleapModelPath).delete()
+    new File(s"$savePath/mleapmodel/spark-pipeline.zip").delete()
 
     val bigDLModelPath = s"$savePath/bigdlModel/model"
 

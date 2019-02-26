@@ -15,8 +15,8 @@ class NCFMleapFrame2Sample extends MleapFrame2Sample {
        .get
        .dataset
        .map(row => {
-      val uid = row.getAs[Int](0) + 1
-      val iid = row.getAs[Int](1) + 1
+      val uid = row.getAs[Double](0).toInt + 1
+      val iid = row.getAs[Double](1).toInt + 1
 
       val label = row.getAs[Int](2)
       val feature: Tensor[Float] = Tensor[Float](T(uid.toFloat, iid.toFloat))

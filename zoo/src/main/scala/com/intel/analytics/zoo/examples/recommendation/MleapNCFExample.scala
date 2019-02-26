@@ -96,7 +96,7 @@ object MleapNCFExample extends MleapSavePredict{
 
     saveModels[Float](df,pipeline,ncf,"/Users/guoqiong/intelWork/git/analytics-zoo/model/")
 
-    predictor(sqlContext,param.inputDir,param.inputDir)
+    predictor(sqlContext,param.inputDir,"/Users/guoqiong/intelWork/git/analytics-zoo/model/")
   }
 
   def predictor(sqlContext: SQLContext, dataPath: String, savePath:String) ={
