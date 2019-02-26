@@ -104,7 +104,7 @@ object ImageNet2012Val {
         height = imageSize,
         batchSize = batchSize,
         transformer = (BytesToBGRImg() -> BGRImgCropper(imageSize, imageSize, CropCenter)
-          -> DatasetHFlip(0.5) -> BGRImgNormalizer(0.485, 0.456, 0.406, 0.229, 0.224, 0.225))
+          -> BGRImgNormalizer(0.485, 0.456, 0.406, 0.229, 0.224, 0.225))
       ))
   }
 
