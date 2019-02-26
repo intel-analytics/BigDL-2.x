@@ -45,12 +45,12 @@ def main(max_epoch):
                                  val_rdd=testing_rdd)
 
     keras_model = tf.keras.Sequential(
-            [tf.keras.layers.Flatten(input_shape=(28, 28, 1)),
-             tf.keras.layers.Dense(64, activation='relu'),
-             tf.keras.layers.Dense(64, activation='relu'),
-             tf.keras.layers.Dense(10, activation='softmax'),
-             ]
-        )
+        [tf.keras.layers.Flatten(input_shape=(28, 28, 1)),
+         tf.keras.layers.Dense(64, activation='relu'),
+         tf.keras.layers.Dense(64, activation='relu'),
+         tf.keras.layers.Dense(10, activation='softmax'),
+         ]
+    )
 
     keras_model.compile(optimizer='rmsprop',
                         loss='sparse_categorical_crossentropy',

@@ -22,6 +22,7 @@ import tensorflow.keras.backend as K
 import tensorflow as tf
 import numpy as np
 
+
 class Model(object):
 
     def __init__(self, model=None):
@@ -129,9 +130,9 @@ class Model(object):
             if distributed:
                 sc = get_spark_context()
                 rdd, types, shapes = _create_rdd_x_y(x, y,
-                                                           self.model._feed_input_names,
-                                                           self.model._feed_output_names,
-                                                           sc)
+                                                     self.model._feed_input_names,
+                                                     self.model._feed_output_names,
+                                                     sc)
                 names = self.model._feed_input_names + self.model._feed_output_names
                 dataset = TFDataset.from_rdd(rdd,
                                              names=names,
@@ -149,7 +150,7 @@ class Model(object):
         predictor = TFPredictor(K.get_session(), self.metrics_tensors,
                                 self.model.inputs + self.model.targets, dataset)
         result = predictor.predict()
-        metrics_sum = result.map(lambda x: x + [np.array(1.0)]).reduce(lambda a,b: elem_sum(a, b))
+        metrics_sum = result.map(lambda x: x + [np.array(1.0)]).reduce(lambda a, b: elem_sum(a, b))
         length = len(metrics_sum) - 1
         for i in range(length):
             metrics_sum[i] /= metrics_sum[length]
@@ -229,7 +230,7 @@ def _standarize_feature_dataset(dataset, model):
     feature_schema = _reorder(dataset.tensor_structure[0], input_names)
 
     dataset = TFDataset(rdd, feature_schema, dataset.batch_size,
-                  -1, dataset.hard_code_batch_size)
+                        -1, dataset.hard_code_batch_size)
     return dataset
 
 

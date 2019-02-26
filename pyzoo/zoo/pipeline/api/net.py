@@ -864,7 +864,7 @@ class TFDataset:
 
     @staticmethod
     def from_ndarrays(tensors, batch_size=-1, batch_per_thread=-1,
-                     hard_code_batch_size=False, val_tensors=None):
+                      hard_code_batch_size=False, val_tensors=None):
         sc = get_spark_context()
         node_num, core_num = get_node_and_core_number()
         total_core_num = node_num * core_num

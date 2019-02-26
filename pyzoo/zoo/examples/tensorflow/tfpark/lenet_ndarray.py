@@ -31,12 +31,12 @@ def main(max_epoch):
     testing_images_data = (testing_images_data - mnist.TRAIN_MEAN) / mnist.TRAIN_STD
 
     keras_model = tf.keras.Sequential(
-            [tf.keras.layers.Flatten(input_shape=(28, 28, 1)),
-             tf.keras.layers.Dense(64, activation='relu'),
-             tf.keras.layers.Dense(64, activation='relu'),
-             tf.keras.layers.Dense(10, activation='softmax'),
-             ]
-        )
+        [tf.keras.layers.Flatten(input_shape=(28, 28, 1)),
+         tf.keras.layers.Dense(64, activation='relu'),
+         tf.keras.layers.Dense(64, activation='relu'),
+         tf.keras.layers.Dense(10, activation='softmax'),
+         ]
+    )
 
     keras_model.compile(optimizer='rmsprop',
                         loss='sparse_categorical_crossentropy',
@@ -51,7 +51,8 @@ def main(max_epoch):
               batch_size=320,
               distributed=True)
 
-    result = model.evaluate(testing_images_data, testing_labels_data, distributed=False, batch_per_thread=80)
+    result = model.evaluate(testing_images_data, testing_labels_data,
+                            distributed=False, batch_per_thread=80)
 
     print(model.metrics_names)
     print(result)
