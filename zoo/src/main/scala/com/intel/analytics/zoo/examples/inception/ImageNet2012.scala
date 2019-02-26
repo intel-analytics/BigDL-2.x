@@ -96,7 +96,8 @@ object ImageNet2012Val {
     classNumber: Int,
     memoryType: MemoryType = DRAM
   ): DataSet[MiniBatch[Float]] = {
-    val rawData = ImageNet2012.readFromSeqFiles(path, sc, classNumber).setName("ImageNet2012 Validation Set")
+    val rawData = ImageNet2012.readFromSeqFiles(path, sc, classNumber)
+      .setName("ImageNet2012 Validation Set")
     val featureSet = FeatureSet.rdd(rawData, memoryType = memoryType)
     featureSet.transform(
       MTLabeledBGRImgToBatch[ByteRecord](
