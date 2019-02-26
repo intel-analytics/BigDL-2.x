@@ -84,7 +84,7 @@ object OpenVinoInferenceSupportive extends InferenceSupportive {
         s"modeltype is not provided, extensionsConfigPath, " +
           s"extensionsConfigPath should be specified")
       case _ => ModelType.isSupported(modelType) match {
-          case true => _
+          case true => logger.info(s"$modelType is supported." )
           case false => logger.warn(s"$modelType not supported, " +
             s"supported modeltypes are listed: ${ModelType.object_detection_types}")
         }
