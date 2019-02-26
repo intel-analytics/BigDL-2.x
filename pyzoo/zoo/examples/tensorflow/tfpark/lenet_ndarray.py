@@ -48,10 +48,10 @@ def main(max_epoch):
               training_labels_data,
               validation_data=(testing_images_data, testing_labels_data),
               epochs=max_epoch,
-              batch_size=280,
+              batch_size=320,
               distributed=True)
 
-    result = model.evaluate(testing_images_data, testing_labels_data, distributed=True)
+    result = model.evaluate(testing_images_data, testing_labels_data, distributed=False, batch_per_thread=80)
 
     print(model.metrics_names)
     print(result)

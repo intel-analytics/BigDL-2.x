@@ -18,30 +18,30 @@ import sys
 import tensorflow as tf
 import numpy as np
 from zoo import init_nncontext
-from bigdl.dataset import mnist
-from zoo.pipeline.api.net import TFDataset
-from zoo.tfpark.model import Model
+from zoo.tfpark.model import Model, TFDataset
+
+
+def get_data_rdd(dataset, sc):
+    from bigdl.dataset import mnist
+    (images_data, labels_data) = mnist.read_data_sets("/tmp/mnist", dataset)
+    image_rdd = sc.parallelize(images_data)
+    labels_rdd = sc.parallelize(labels_data)
+    rdd = image_rdd.zip(labels_rdd) \
+        .map(lambda rec_tuple: ((rec_tuple[0] - mnist.TRAIN_MEAN) / mnist.TRAIN_STD,
+                                np.array(rec_tuple[1])))
+    return rdd
 
 
 def main(max_epoch):
     sc = init_nncontext()
 
-    def get_data_rdd(dataset):
-        (images_data, labels_data) = mnist.read_data_sets("/tmp/mnist", dataset)
-        image_rdd = sc.parallelize(images_data)
-        labels_rdd = sc.parallelize(labels_data)
-        rdd = image_rdd.zip(labels_rdd) \
-            .map(lambda rec_tuple: ((rec_tuple[0] - mnist.TRAIN_MEAN) / mnist.TRAIN_STD,
-                                    np.array(rec_tuple[1])))
-        return rdd
-
-    training_rdd = get_data_rdd("train")
-    testing_rdd = get_data_rdd("test")
+    training_rdd = get_data_rdd("train", sc)
+    testing_rdd = get_data_rdd("test", sc)
 
     dataset = TFDataset.from_rdd(training_rdd,
                                  features=(tf.float32, [28, 28, 1]),
                                  labels=(tf.int32, []),
-                                 batch_size=280,
+                                 batch_size=320,
                                  val_rdd=testing_rdd)
 
     keras_model = tf.keras.Sequential(
@@ -65,7 +65,7 @@ def main(max_epoch):
     eval_dataset = TFDataset.from_rdd(
         testing_rdd,
         features=(tf.float32, [28, 28, 1]),
-        labels=(tf.int32, []))
+        labels=(tf.int32, []), batch_per_thread=80)
     result = model.evaluate(eval_dataset)
 
     print(model.metrics_names)

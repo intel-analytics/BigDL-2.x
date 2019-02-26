@@ -19,14 +19,25 @@ from tensorflow.python.keras.engine import training_utils
 from zoo.pipeline.api.net import TFDataset, TFOptimizer, TFPredictor
 from bigdl.util.common import get_spark_context
 import tensorflow.keras.backend as K
-from tensorflow.python.util import nest
+import tensorflow as tf
 import numpy as np
-import logging
 
 class Model(object):
 
     def __init__(self, model=None):
         self.model = model
+        metrics_tensors = [
+            self.model.metrics_tensors[m] for m in range(len(self.model.metrics_names) - 1)
+        ]
+
+        metrics_tensors = [self.model.total_loss] + metrics_tensors
+        batch_size = tf.shape(model.inputs[0])
+
+        def repeat(x, times):
+            return tf.tile(tf.expand_dims(x, 0), tf.expand_dims(times, 0))
+
+        self.metrics_tensors = [repeat(x, batch_size[0]) for x in metrics_tensors]
+
         self.tf_optimizer = None
 
     @classmethod
@@ -107,13 +118,13 @@ class Model(object):
     def evaluate(self,
                  x=None,
                  y=None,
-                 batch_size=None,
+                 batch_per_thread=None,
                  distributed=False
                  ):
         if isinstance(x, TFDataset):
             x = _standarize_feature_label_dataset(x, self.model)
             # todo check arguments
-            return self._evaluate_distributed(x, batch_size)
+            return self._evaluate_distributed(x, batch_per_thread)
         else:
             if distributed:
                 sc = get_spark_context()
@@ -126,19 +137,16 @@ class Model(object):
                                              names=names,
                                              types=types,
                                              shapes=shapes,
-                                             batch_per_thread=-1 if batch_size is None
-                                             else batch_size)
-                return self._evaluate_distributed(dataset, batch_size)
+                                             batch_per_thread=-1 if batch_per_thread is None
+                                             else batch_per_thread)
+                return self._evaluate_distributed(dataset, batch_per_thread)
             else:
                 return self.model.evaluate(x=x,
                                            y=y,
-                                           batch_size=batch_size)
+                                           batch_size=batch_per_thread)
 
     def _evaluate_distributed(self, dataset, batch_size):
-        metrics_tensors = [
-            self.model.metrics_tensors[m] for m in range(len(self.model.metrics_names)-1)
-        ]
-        predictor = TFPredictor(K.get_session(), [self.model.total_loss] + metrics_tensors,
+        predictor = TFPredictor(K.get_session(), self.metrics_tensors,
                                 self.model.inputs + self.model.targets, dataset)
         result = predictor.predict()
         metrics_sum = result.map(lambda x: x + [np.array(1.0)]).reduce(lambda a,b: elem_sum(a, b))
@@ -149,13 +157,13 @@ class Model(object):
 
     def predict(self,
                 x,
-                batch_size=None,
+                batch_per_thread=None,
                 distributed=False):
 
         if isinstance(x, TFDataset):
             # todo check arguments
             x = _standarize_feature_dataset(x, self.model)
-            return self._predict_distributed(x, batch_size)
+            return self._predict_distributed(x, batch_per_thread)
         else:
             if distributed:
                 sc = get_spark_context()
@@ -165,12 +173,12 @@ class Model(object):
                                              names=self.model._feed_input_names,
                                              types=types,
                                              shapes=shapes,
-                                             batch_per_thread=-1 if batch_size is None
-                                             else batch_size)
-                return np.array(self._predict_distributed(dataset, batch_size).collect())
+                                             batch_per_thread=-1 if batch_per_thread is None
+                                             else batch_per_thread)
+                return np.array(self._predict_distributed(dataset, batch_per_thread).collect())
             else:
                 return self.model.predict(x=x,
-                                          batch_size=batch_size)
+                                          batch_size=batch_per_thread)
 
     def _predict_distributed(self, x, batch_size):
         predictor = TFPredictor.from_keras(self.model, x)
@@ -201,10 +209,11 @@ class Model(object):
 def _standarize_feature_label_dataset(dataset, model):
     input_names = model.input_names
     output_names = model.output_names
-    rdd = dataset.rdd.map(lambda sample: _training_reorder(sample, input_names, output_names))
+    rdd = dataset.rdd.map(lambda x: (x[0], _process_labels(x[1])))\
+        .map(lambda sample: _training_reorder(sample, input_names, output_names))
     if dataset.val_rdd is not None:
-        val_rdd = dataset.val_rdd.map(
-            lambda sample: _training_reorder(sample, input_names, output_names))
+        val_rdd = dataset.val_rdd.map(lambda x: (x[0], _process_labels(x[1])))\
+            .map(lambda sample: _training_reorder(sample, input_names, output_names))
     else:
         val_rdd = None
     tensor_structure = _training_reorder(dataset.tensor_structure, input_names, output_names)
@@ -222,6 +231,15 @@ def _standarize_feature_dataset(dataset, model):
     dataset = TFDataset(rdd, feature_schema, dataset.batch_size,
                   -1, dataset.hard_code_batch_size)
     return dataset
+
+
+def _process_labels(ys):
+    if isinstance(ys, dict):
+        return {k: np.expand_dims(y, axis=1) if y.ndim == 0 else y for k, y in ys.items()}
+    elif isinstance(ys, list):
+        return [np.expand_dims(y, axis=1) if y.ndim == 0 else y for y in ys]
+    else:
+        return np.expand_dims(ys, axis=1) if ys.ndim == 0 else ys
 
 
 def _training_reorder(x, input_names, output_names):
@@ -259,7 +277,10 @@ def _create_rdd_x_y(x, y, input_names, output_names, sc):
 
         targets = []
         for j in range(num_targets):
-            targets.append((y[j][i]))
+            if y[j][i].ndim == 0:
+                targets.append(np.expand_dims(y[j][i], axis=1))
+            else:
+                targets.append(y[j][i])
 
         input_data.append(inputs + targets)
 
