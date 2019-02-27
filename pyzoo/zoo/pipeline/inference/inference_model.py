@@ -98,7 +98,7 @@ class InferenceModel(JavaValue):
                           inter_op_parallelism_threads, use_per_session_threads)
         elif backend == "openvino" or backend == "ov":
             if model_type:
-		if pipelineConfigPath:
+                if pipelineConfigPath:
                     callBigDlFunc(self.bigdl_type, "inferenceModelOpenVINOLoadTF",
                                   self.value, model_path, model_type, ov_pipeline_config_path, None)
                 else:
