@@ -53,8 +53,8 @@ def main(max_epoch):
     )
 
     model.compile(optimizer='rmsprop',
-                        loss='sparse_categorical_crossentropy',
-                        metrics=['accuracy'])
+                  loss='sparse_categorical_crossentropy',
+                  metrics=['accuracy'])
 
     keras_model = KerasModel(model)
 

@@ -39,20 +39,20 @@ def main(max_epoch):
     )
 
     model.compile(optimizer='rmsprop',
-                        loss='sparse_categorical_crossentropy',
-                        metrics=['accuracy'])
+                  loss='sparse_categorical_crossentropy',
+                  metrics=['accuracy'])
 
     keras_model = KerasModel(model)
 
     keras_model.fit(training_images_data,
-              training_labels_data,
-              validation_data=(testing_images_data, testing_labels_data),
-              epochs=max_epoch,
-              batch_size=320,
-              distributed=True)
+                    training_labels_data,
+                    validation_data=(testing_images_data, testing_labels_data),
+                    epochs=max_epoch,
+                    batch_size=320,
+                    distributed=True)
 
     result = keras_model.evaluate(testing_images_data, testing_labels_data,
-                            distributed=False, batch_per_thread=80)
+                                  distributed=False, batch_per_thread=80)
 
     print(keras_model.metrics_names)
     print(result)

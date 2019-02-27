@@ -558,8 +558,7 @@ with variable_creator_scope():
         grads = keras_optimizer.get_gradients(loss, variables)
 
         sess = K.get_session()
-        with sess.as_default():
-            optim_method = TFOptimizer.to_bigdl_optim_method(keras_optimizer)
+        optim_method = TFOptimizer.to_bigdl_optim_method(keras_optimizer)
 
         if keras_model.metrics and (dataset.val_rdd is not None or val_spilt != 0.0):
             if isinstance(keras_model.metrics, dict):
