@@ -22,6 +22,8 @@ from bigdl.dataset.base import maybe_download
 from test.zoo.pipeline.utils.test_utils import ZooTestCase
 from zoo.pipeline.inference import InferenceModel
 
+import tarfile
+
 np.random.seed(1337)  # for reproducibility
 
 resource_path = os.path.join(os.path.split(__file__)[0], "../../resources")
