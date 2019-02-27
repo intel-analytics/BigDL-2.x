@@ -45,15 +45,16 @@ class TestInferenceModel(ZooTestCase):
     def test_load_tf_openvino(self):
         local_path = self.create_temp_dir()
         url = data_url + "/models/object_detection/faster_rcnn_resnet101_coco_2018_01_28.tar.gz"
-        file_abs_path = maybe_download("faster_rcnn_resnet101_coco_2018_01_28.tar.gz", local_path, url)
-	tar = tarfile.open(file_abs_path, "r:gz")
+        file_abs_path = maybe_download("faster_rcnn_resnet101_coco_2018_01_28.tar.gz", 
+                                       local_path, url)
+        tar = tarfile.open(file_abs_path, "r:gz")
         extracted_to = os.path.join(local_path, "faster_rcnn_resnet101_coco_2018_01_28")
         if not os.path.exists(extracted_to):
             print("Extracting %s to %s" % (file_abs_path, extracted_to))
             tar.extractall(local_path)
             tar.close()
         model = InferenceModel(3)
-        model.load_tf(model_path=extracted_to + "/frozen_inference_graph.pb", 
+        model.load_tf(model_path=extracted_to + "/frozen_inference_graph.pb",
                       backend="openvino",
                       model_type="faster_rcnn_resnet101_coco",
                       ov_pipeline_config_path=local_path + "/pipeline.config",
