@@ -19,6 +19,7 @@ from bigdl.nn.layer import Layer
 from zoo.pipeline.api.keras.engine import KerasNet
 import tarfile
 
+
 class InferenceModel(JavaValue):
     """
     Model for thread-safe inference.
