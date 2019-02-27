@@ -17,7 +17,7 @@
 from bigdl.util.common import JavaValue, callBigDlFunc
 from bigdl.nn.layer import Layer
 from zoo.pipeline.api.keras.engine import KerasNet
-
+import tarfile
 
 class InferenceModel(JavaValue):
     """
