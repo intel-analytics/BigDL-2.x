@@ -25,7 +25,7 @@ from zoo.pipeline.inference import InferenceModel
 np.random.seed(1337)  # for reproducibility
 
 resource_path = os.path.join(os.path.split(__file__)[0], "../../resources")
-data_url = "https://s3-ap-southeast-1.amazonaws.com/analytics-zoo-models/openvino"
+data_url = "http://download.tensorflow.org"
 
 
 class TestInferenceModel(ZooTestCase):
@@ -44,20 +44,22 @@ class TestInferenceModel(ZooTestCase):
 
     def test_load_tf_openvino(self):
         local_path = self.create_temp_dir()
-        url = data_url + "/TF_faster_rcnn_resnet101_coco_2018_01_28"
-        maybe_download("frozen_inference_graph.pb", local_path, url + "/frozen_inference_graph.pb")
-        maybe_download("pipeline.config", local_path, url + "/pipeline.config")
-        maybe_download("faster_rcnn_support.json", local_path, url + "/faster_rcnn_support.json")
+        url = data_url + "/models/object_detection/faster_rcnn_resnet101_coco_2018_01_28.tar.gz"
+        file_abs_path = maybe_download("faster_rcnn_resnet101_coco_2018_01_28.tar.gz", local_path, url)
+	tar = tarfile.open(file_abs_path, "r:gz")
+        extracted_to = os.path.join(local_path, "faster_rcnn_resnet101_coco_2018_01_28")
+        if not os.path.exists(extracted_to):
+            print("Extracting %s to %s" % (file_abs_path, extracted_to))
+            tar.extractall(local_path)
+            tar.close()
         model = InferenceModel(3)
-        model.load_tf(local_path + "/frozen_inference_graph.pb", backend="openvino",
+        model.load_tf(model_path=extracted_to + "/frozen_inference_graph.pb", 
+                      backend="openvino",
+                      model_type="faster_rcnn_resnet101_coco",
                       ov_pipeline_config_path=local_path + "/pipeline.config",
-                      ov_extensions_config_path=local_path + "/faster_rcnn_support.json")
+                      ov_extensions_config_path=None)
         input_data = np.random.random([4, 1, 3, 600, 600])
         output_data = model.predict(input_data)
-        model2 = InferenceModel(5)
-        model2.load_tf(local_path + "/frozen_inference_graph.pb", backend="openvino",
-                       model_type="faster_rcnn_resnet101_coco")
-        output_data2 = model2.predict(input_data)
 
 
 if __name__ == "__main__":
