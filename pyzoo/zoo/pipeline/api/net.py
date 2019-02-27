@@ -843,8 +843,6 @@ class TFDataset:
                              hard_code_batch_size, val_rdd)
 
         if names is not None or shapes is not None or types is not None:
-            logging.warning("Using argument names, shapes or types is deprecated," +
-                            " please use the tensor_structure argument")
             if not names:
                 names = ["features", "labels"]
             if not shapes:
