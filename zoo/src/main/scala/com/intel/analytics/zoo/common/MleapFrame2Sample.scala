@@ -6,7 +6,6 @@ import com.intel.analytics.bigdl.Module
 import com.intel.analytics.bigdl.dataset.Sample
 import com.intel.analytics.bigdl.nn.Module
 import com.intel.analytics.bigdl.optim.LocalPredictor
-import com.intel.analytics.zoo.models.common.ZooModel
 import org.apache.spark.ml.bundle.SparkBundleContext
 import org.apache.spark.ml.{Pipeline, PipelineModel}
 import org.apache.spark.sql.DataFrame
@@ -25,31 +24,35 @@ trait MleapFrame2Sample {
 
 trait MleapSavePredict {
 
-  def saveModels[T](df: DataFrame, mlibPipeline: Pipeline, model: Module[T], savePath: String) = {
+  def saveModels[T](df: DataFrame, plModel: PipelineModel, model: Module[T], savePath: String) = {
 
-    val mleapModelPath = s"jar:file:$savePath/mleapmodel/spark-pipeline.zip"
+    val mleapModelPath = s"jar:file:$savePath/mleapModel/spark-pipeline.zip"
 
-    new File(s"$savePath/mleapmodel/spark-pipeline.zip").delete()
+    val folder = new File(s"$savePath/mleapModel")
+    if(!folder.exists()){
+      folder.mkdirs()
+    }
+
+    new File(s"$savePath/mleapModel/spark-pipeline.zip").delete()
 
     val bigDLModelPath = s"$savePath/bigdlModel/model"
 
-    val pipeline: PipelineModel = mlibPipeline.fit(df)
     // then serialize pipeline
-    val sbc = SparkBundleContext().withDataset(pipeline.transform(df))
+    val sbc = SparkBundleContext().withDataset(plModel.transform(df))
     for (bf <- managed(BundleFile(mleapModelPath))) {
-      pipeline.writeBundle.save(bf)(sbc).get
+      plModel.writeBundle.save(bf)(sbc).get
     }
 
     model.saveModule(bigDLModelPath, null, true)
 
-    println("save model finished:" + mleapModelPath +":" + bigDLModelPath)
+    println("save model finished:" + mleapModelPath +";" + bigDLModelPath)
 
   }
 
   def loadNpredict[T](frame: DefaultLeapFrame, savePath: String, featureToSample: MleapFrame2Sample) = {
 
 
-    val mleapModelPath = s"jar:file:$savePath/mleapmodel/spark-pipeline.zip"
+    val mleapModelPath = s"jar:file:$savePath/mleapModel/spark-pipeline.zip"
     val bigDLModelPath = s"$savePath/bigdlModel/model"
 
     val bfiles = managed(BundleFile(mleapModelPath))

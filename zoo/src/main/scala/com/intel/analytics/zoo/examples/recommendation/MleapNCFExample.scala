@@ -5,15 +5,14 @@ import com.intel.analytics.bigdl.nn.ClassNLLCriterion
 import com.intel.analytics.bigdl.optim.{Adam, Optimizer, Trigger}
 import com.intel.analytics.bigdl.tensor.{IntType, Tensor}
 import com.intel.analytics.bigdl.utils.T
-import com.intel.analytics.zoo.common.{MleapSavePredict, NNContext}
+import com.intel.analytics.zoo.common.{MleapFrame2Sample, MleapSavePredict, NNContext}
 import com.intel.analytics.zoo.examples.recommendation.NeuralCFexample.assemblyFeature
 import com.intel.analytics.zoo.models.recommendation.{NeuralCF, UserItemFeature, Utils}
 import ml.combust.mleap.core.types.{ScalarType, StructField, StructType}
 import ml.combust.mleap.runtime.frame.{DefaultLeapFrame, Row}
-import ml.combust.mleap.runtime.{DefaultLeapFrame, Row}
 import org.apache.log4j.{Level, Logger}
 import org.apache.spark.SparkConf
-import org.apache.spark.ml.Pipeline
+import org.apache.spark.ml.{Pipeline, PipelineModel}
 import org.apache.spark.ml.feature.StringIndexer
 import org.apache.spark.rdd.RDD
 import org.apache.spark.sql.{DataFrame, SQLContext}
@@ -21,8 +20,27 @@ import org.apache.spark.sql.functions.{lit, max}
 import org.apache.spark.sql.functions._
 import scopt.OptionParser
 
+import scala.io.Source
 
-object MleapNCFExample extends MleapSavePredict{
+class NCFMleapFrame2Sample extends MleapFrame2Sample {
+  override def toSample(frame: DefaultLeapFrame): Array[Sample[Float]] = {
+
+    frame.select("userId", "itemId", "label")
+      .get
+      .dataset
+      .map(row => {
+        val uid = row.getAs[Double](0).toInt + 1
+        val iid = row.getAs[Double](1).toInt + 1
+
+        val label = row.getAs[Int](2)
+        val feature: Tensor[Float] = Tensor[Float](T(uid.toFloat, iid.toFloat))
+
+        Sample(feature, Tensor[Float](T(label)))
+      }).toArray
+  }
+}
+
+object MleapNCFExample extends MleapSavePredict {
 
   def main(args: Array[String]): Unit = {
 
@@ -58,7 +76,7 @@ object MleapNCFExample extends MleapSavePredict{
     val sc = NNContext.initNNContext(conf)
     val sqlContext = SQLContext.getOrCreate(sc)
 
-    val (pipeline,df, ratings, userCount, itemCount) = loadPublicData(sqlContext, param.inputDir)
+    val (pipeline, df, ratings, userCount, itemCount) = loadPublicData(sqlContext, param.inputDir)
 
     val isImplicit = false
     val ncf = NeuralCF[Float](
@@ -87,43 +105,49 @@ object MleapNCFExample extends MleapSavePredict{
       learningRate = param.learningRate,
       learningRateDecay = param.learningRateDecay)
 
-//    optimizer
-//      .setOptimMethod(optimMethod)
-//      .setEndWhen(Trigger.maxEpoch(param.nEpochs))
-//      .optimize()
+    optimizer
+      .setOptimMethod(optimMethod)
+      .setEndWhen(Trigger.maxEpoch(param.nEpochs))
+      .optimize()
 
     println("train finished")
 
-    saveModels[Float](df,pipeline,ncf,"/Users/guoqiong/intelWork/git/analytics-zoo/model/")
+    val modelDir = System.getProperty("user.dir") + "/model"
 
-    predictor(sqlContext,param.inputDir,"/Users/guoqiong/intelWork/git/analytics-zoo/model/")
+    saveModels[Float](df, pipeline, ncf, modelDir)
+
+    inference(param.inputDir, modelDir)
   }
 
-  def predictor(sqlContext: SQLContext, dataPath: String, savePath:String) ={
+  def inference(dataDir: String, modelDir: String) = {
 
-    val data = sqlContext.sparkContext.textFile(dataPath + "/ratings.dat")
+    val data = Source
+      .fromFile(dataDir + "/ratings.dat", "UTF-8")
+      .getLines
       .map(x => {
         val line = x.split("::")
-        (line(0), line(1),line(2).toInt)
-      }).take(100).map(x=> Row(x._1, x._2,x._3))
+        (line(0), line(1), line(2).toInt)
+      }).take(100)
+      .map(x => Row(x._1, x._2, x._3))
+      .toSeq
 
     val schema: StructType = StructType(StructField("strUserId", ScalarType.String),
-      StructField("strItemId", ScalarType.String),    StructField("label", ScalarType.String)).get
+      StructField("strItemId", ScalarType.String), StructField("label", ScalarType.String)).get
 
-    val frame = DefaultLeapFrame(schema, data)
+    val mleapFrame = DefaultLeapFrame(schema, data)
 
-    val r = loadNpredict(frame,savePath, new NCFMleapFrame2Sample)
+    val result = loadNpredict(mleapFrame, modelDir, new NCFMleapFrame2Sample)
 
-    r.foreach(println)
+    result.foreach(println)
   }
 
-  def loadPublicData(sqlContext: SQLContext, dataPath: String): (Pipeline,DataFrame,DataFrame, Int, Int) = {
+  def loadPublicData(sqlContext: SQLContext, dataPath: String): (PipelineModel, DataFrame, DataFrame, Int, Int) = {
     import sqlContext.implicits._
     val df = sqlContext.read.text(dataPath + "/ratings.dat").as[String]
       .map(x => {
         val line = x.split("::")
         (line(0), line(1), line(2).toInt)
-      }).toDF("strUserId","strItemId","label").limit(100000)
+      }).toDF("strUserId", "strItemId", "label").limit(100000)
 
     val userIndexer = new StringIndexer().setInputCol("strUserId").setOutputCol("userId")
     val itemIndexer = new StringIndexer().setInputCol("strItemId").setOutputCol("itemId")
@@ -131,18 +155,18 @@ object MleapNCFExample extends MleapSavePredict{
     val pipelineEstimator: Pipeline = new Pipeline()
       .setStages(Array(userIndexer, itemIndexer))
 
-    val plModel = pipelineEstimator.fit(df)
+    val plModel: PipelineModel = pipelineEstimator.fit(df)
     val indexedDF = plModel.transform(df).withColumn("userId", col("userId") + 1)
-        .withColumn("itemId", col("itemId")  + 1)
+      .withColumn("itemId", col("itemId") + 1)
 
     indexedDF.show()
 
     val minMaxRow = indexedDF.agg(max("userId"), max("itemId")).collect()(0)
     val (userCount, itemCount) = (minMaxRow.getDouble(0).toInt, minMaxRow.getDouble(1).toInt)
 
-    println(userCount +"," + itemCount)
+    println(userCount + "," + itemCount)
 
-    (pipelineEstimator, df,indexedDF, userCount,itemCount)
+    (plModel, df, indexedDF, userCount, itemCount)
 
   }
 
