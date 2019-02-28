@@ -568,7 +568,7 @@ with variable_creator_scope():
             if dataset.val_rdd is None and val_spilt == 0.0:
                 raise ValueError("Validation data is not specified. Please set " +
                                  "val rdd in TFDataset, or set val_split larger than zero")
-            bigdl_val_methods = [to_bigdl_metric(m) for m in keras_model.metrics_names]
+            bigdl_val_methods = [to_bigdl_metric(m, keras_model.loss) for m in keras_model.metrics_names]
             val_outputs = keras_model.outputs
             val_labels = keras_model.targets
         else:
