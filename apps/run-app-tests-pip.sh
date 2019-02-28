@@ -33,6 +33,7 @@ fi
  now=$(date "+%s")
 time4=$((now-start))
 echo "recommendation-wide-n-deep time used:$time4 seconds"
+rm ${ANALYTICS_ZOO_HOME}/apps/recommendation-wide-n-deep/tmp_test.py
 
 echo "#11 start app test for sentiment-analysis"
 start=$(date "+%s")
@@ -511,3 +512,6 @@ unset SPARK_DRIVER_MEMORY
 now=$(date "+%s")
 time1=$((now-start))
 echo "recommendation-ncf time used:$time1 seconds"
+
+# This should be done at the very end after all tests finish.
+clear_up
