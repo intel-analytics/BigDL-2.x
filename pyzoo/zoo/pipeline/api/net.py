@@ -18,7 +18,6 @@ import sys
 import tempfile
 import warnings
 
-import logging
 import six
 import os
 import json
@@ -29,12 +28,13 @@ from pyspark import RDD
 from bigdl.nn.criterion import Criterion
 from bigdl.nn.layer import Model as BModel
 from bigdl.nn.layer import Layer
-from bigdl.util.common import to_list, callBigDlFunc, get_spark_context, \
+from bigdl.util.common import to_list, callBigDlFunc, \
     JavaValue, get_node_and_core_number
 from zoo.common import Sample, JTensor
+from zoo.common.nncontext import getOrCreateSparkContext
 from zoo.feature.image import ImageSet
 from zoo.pipeline.api.keras.engine.topology import ZooKerasLayer, KerasNet, to_bigdl_metric
-from bigdl.optim.optimizer import EveryEpoch, MaxEpoch, Optimizer, Adam
+from bigdl.optim.optimizer import EveryEpoch, MaxEpoch, Optimizer
 
 if sys.version >= '3':
     long = int
@@ -262,7 +262,7 @@ class TFNet(Layer):
             return ImageSet(results)
         if distributed:
             if isinstance(x, np.ndarray):
-                data_rdd = to_sample_rdd(x, np.zeros([x.shape[0]]), get_spark_context())
+                data_rdd = to_sample_rdd(x, np.zeros([x.shape[0]]), getOrCreateSparkContext())
             elif isinstance(x, RDD):
                 data_rdd = x
             else:
@@ -862,7 +862,7 @@ class TFDataset:
     @staticmethod
     def from_ndarrays(tensors, batch_size=-1, batch_per_thread=-1,
                       hard_code_batch_size=False, val_tensors=None):
-        sc = get_spark_context()
+        sc = getOrCreateSparkContext()
         node_num, core_num = get_node_and_core_number()
         total_core_num = node_num * core_num
 
