@@ -40,7 +40,7 @@ start=$(date "+%s")
 
 # Conversion to py file and data preparation
 ${ANALYTICS_ZOO_HOME}/apps/ipynb2py.sh ${ANALYTICS_ZOO_HOME}/apps/sentiment-analysis/sentiment
-sed "s/batch_size = 64/batch_size = 84/g" ${ANALYTICS_ZOO_HOME}/apps/sentiment-analysis/tmp_test.py >${ANALYTICS_ZOO_HOME}/apps/sentiment-analysis/tmp_test.py
+sed "s/batch_size = 64/batch_size = 84/g" ${ANALYTICS_ZOO_HOME}/apps/sentiment-analysis/sentiment.py >${ANALYTICS_ZOO_HOME}/apps/sentiment-analysis/tmp_test.py
 FILENAME="/tmp/.bigdl/dataset/glove.6B.zip"
 if [ -f "$FILENAME" ]
 then
@@ -53,7 +53,7 @@ fi
 
 # Run the example
 export SPARK_DRIVER_MEMORY=12g
-python ${ANALYTICS_ZOO_HOME}/apps/sentiment-analysis/sentiment.py
+python ${ANALYTICS_ZOO_HOME}/apps/sentiment-analysis/tmp_test.py
 
 exit_status=$?
 if [ $exit_status -ne 0 ];
