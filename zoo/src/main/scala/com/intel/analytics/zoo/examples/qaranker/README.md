@@ -54,7 +54,9 @@ See [here](#options) for more configurable options for this example.
 * `-b` `--batchSize` The number of samples per gradient update. Default is 200.
 * `-e` `--nbEpoch` The number of iterations to train the model. Default is 30.
 * `-l` `--learningRate` The learning rate for the model. Default is 0.001.
+* `--memoryType` Memory type used for caching training data. Default is `DRAM`. You can change it to `PMEM` if you have Intel Optane DC Persistent Memory.
 * `-m` `--model` Specify this option only if you want to load an existing KNRM model and in this case its path should be provided.
+
 
 
 ## Results
@@ -62,7 +64,7 @@ We use [NDCG](https://en.wikipedia.org/wiki/Evaluation_measures_(information_ret
 
 You can find the validation information from the console log during the training process:
 ```
-INFO  TextMatcher$:86 - ndcg@3: 0.6417297245909217
-INFO  TextMatcher$:86 - ndcg@5: 0.688879313318335
-INFO  TextMatcher$:77 - map: 0.6373270433829106
+INFO  Ranker$:103 - ndcg@3: 0.6449269813235653
+INFO  Ranker$:103 - ndcg@5: 0.6953062444306408
+INFO  Ranker$:84 - map: 0.6560713265739151
 ```

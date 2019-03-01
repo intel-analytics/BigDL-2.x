@@ -25,6 +25,7 @@ import com.intel.analytics.zoo.pipeline.api.keras.layers.TimeDistributed
 import com.intel.analytics.zoo.pipeline.api.keras.objectives.RankHinge
 import com.intel.analytics.zoo.models.textmatching.KNRM
 import com.intel.analytics.zoo.feature.common.Relations
+import com.intel.analytics.zoo.feature.pmem.MemoryType
 import com.intel.analytics.zoo.feature.text.TextSet
 import scopt.OptionParser
 
@@ -34,7 +35,7 @@ case class QARankerParams(
     questionLength: Int = 10, answerLength: Int = 40,
     partitionNum: Int = 4, batchSize: Int = 200,
     nbEpoch: Int = 30, learningRate: Double = 0.001,
-    model: Option[String] = None)
+    model: Option[String] = None, memoryType: String = "DRAM")
 
 
 object QARanker {
@@ -69,6 +70,9 @@ object QARanker {
       opt[String]('m', "model")
         .text("KNRM model snapshot location if any")
         .action((x, c) => c.copy(model = Some(x)))
+      opt[String]("memoryType")
+        .text("memory type")
+        .action((x, c) => c.copy(memoryType = x))
     }
 
     parser.parse(args, QARankerParams()).map { param =>
@@ -82,7 +86,8 @@ object QARanker {
 
       val trainRelations = Relations.read(param.dataPath + "/relation_train.csv",
         sc, param.partitionNum)
-      val trainSet = TextSet.fromRelationPairs(trainRelations, qSet, aSet)
+      val trainSet = TextSet.fromRelationPairs(trainRelations, qSet, aSet,
+        MemoryType.fromString(param.memoryType))
       val validateRelations = Relations.read(param.dataPath + "/relation_valid.csv",
         sc, param.partitionNum)
       val validateSet = TextSet.fromRelationLists(validateRelations, qSet, aSet)

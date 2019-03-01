@@ -124,8 +124,8 @@ object Train {
         embDec)
 
       val generator = Sequential[Float]()
-      generator.add(TimeDistributed[Float](
-        Dense(vocabSize).asInstanceOf[KerasLayer[Activity, Tensor[Float], Float]],
+      generator.add(TimeDistributed[Float](Dense(vocabSize)
+        .asInstanceOf[KerasLayer[Activity, Tensor[Float], Float]],
         Shape(Array(1, param.embedDim))))
       generator.add(TimeDistributed[Float](Activation("log_softmax")
         .asInstanceOf[KerasLayer[Activity, Tensor[Float], Float]]))

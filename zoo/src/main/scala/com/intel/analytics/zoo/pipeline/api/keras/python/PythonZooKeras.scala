@@ -16,7 +16,6 @@
 
 package com.intel.analytics.zoo.pipeline.api.keras.python
 
-import java.util
 import java.util.{List => JList, Map => JMap}
 
 import com.intel.analytics.bigdl.{Criterion, Module}
@@ -36,7 +35,6 @@ import com.intel.analytics.zoo.feature.image.ImageSet
 import com.intel.analytics.zoo.pipeline.api.autograd._
 import com.intel.analytics.zoo.pipeline.api.keras.layers.{KerasLayerWrapper, _}
 import com.intel.analytics.zoo.pipeline.api.keras.layers.utils.KerasUtils
-import com.intel.analytics.zoo.pipeline.api.keras.metrics.{AUC, Accuracy, Top5Accuracy}
 import com.intel.analytics.zoo.pipeline.api.keras.models.{KerasNet, Model, Sequential}
 import com.intel.analytics.zoo.pipeline.api.keras.objectives._
 import com.intel.analytics.zoo.pipeline.api.keras.optimizers.Adam
@@ -45,6 +43,7 @@ import com.intel.analytics.zoo.common.PythonZoo
 import com.intel.analytics.zoo.feature.text.TextSet
 import com.intel.analytics.zoo.models.common.ZooModel
 import com.intel.analytics.zoo.models.seq2seq.{Bridge, RNNDecoder, RNNEncoder}
+import com.intel.analytics.zoo.pipeline.api.keras.{metrics => zmetrics}
 import com.intel.analytics.zoo.pipeline.api.net.GraphNet
 
 import scala.collection.mutable.ArrayBuffer
@@ -635,6 +634,7 @@ class PythonZooKeras[T: ClassTag](implicit ev: TensorNumeric[T]) extends PythonZ
       innerActivation: String = "hard_sigmoid",
       dimOrdering: String = "th",
       subsample: Int = 1,
+      borderMode: String = "valid",
       wRegularizer: Regularizer[T] = null,
       uRegularizer: Regularizer[T] = null,
       bRegularizer: Regularizer[T] = null,
@@ -642,7 +642,22 @@ class PythonZooKeras[T: ClassTag](implicit ev: TensorNumeric[T]) extends PythonZ
       goBackwards: Boolean = false,
       inputShape: JList[Int] = null): ConvLSTM2D[T] = {
     ConvLSTM2D(nbFilter, nbKernel, activation, innerActivation,
-      dimOrdering, subsample, wRegularizer, uRegularizer, bRegularizer,
+      dimOrdering, subsample, borderMode, wRegularizer, uRegularizer, bRegularizer,
+      returnSequences, goBackwards, toScalaShape(inputShape))
+  }
+
+  def createZooKerasConvLSTM3D(
+      nbFilter: Int,
+      nbKernel: Int,
+      subsample: Int = 1,
+      borderMode: String = "valid",
+      wRegularizer: Regularizer[T] = null,
+      uRegularizer: Regularizer[T] = null,
+      bRegularizer: Regularizer[T] = null,
+      returnSequences: Boolean = false,
+      goBackwards: Boolean = false,
+      inputShape: JList[Int] = null): ConvLSTM3D[T] = {
+    ConvLSTM3D(nbFilter, nbKernel, subsample, borderMode, wRegularizer, uRegularizer, bRegularizer,
       returnSequences, goBackwards, toScalaShape(inputShape))
   }
 
@@ -972,7 +987,7 @@ class PythonZooKeras[T: ClassTag](implicit ev: TensorNumeric[T]) extends PythonZ
   }
 
   def createAUC(thresholdNum: Int): ValidationMethod[T] = {
-    new AUC[T](thresholdNum)
+    new zmetrics.AUC[T](thresholdNum)
   }
 
   def createZooKerasAdam(
@@ -1183,12 +1198,24 @@ class PythonZooKeras[T: ClassTag](implicit ev: TensorNumeric[T]) extends PythonZ
 
   def createZooKerasAccuracy(
       zeroBasedLabel: Boolean = true): ValidationMethod[T] = {
-    new Accuracy(zeroBasedLabel)
+    new zmetrics.Accuracy(zeroBasedLabel)
+  }
+
+  def createZooKerasSparseCategoricalAccuracy(): ValidationMethod[T] = {
+    new zmetrics.SparseCategoricalAccuracy()
+  }
+
+  def createZooKerasBinaryAccuracy(): ValidationMethod[T] = {
+    new zmetrics.BinaryAccuracy()
+  }
+
+  def createZooKerasCategoricalAccuracy(): ValidationMethod[T] = {
+    new zmetrics.CategoricalAccuracy()
   }
 
   def createZooKerasTop5Accuracy(
       zeroBasedLabel: Boolean = true): ValidationMethod[T] = {
-    new Top5Accuracy(zeroBasedLabel)
+    new zmetrics.Top5Accuracy(zeroBasedLabel)
   }
 
   def createZooKerasWordEmbedding(
@@ -1254,5 +1281,11 @@ class PythonZooKeras[T: ClassTag](implicit ev: TensorNumeric[T]) extends PythonZ
     returnValue: Boolean = true,
     inputShape: JList[Int] = null): Max[T] = {
     Max[T](dim, numInputDims, returnValue, toScalaShape(inputShape))
+  }
+
+  def createZooKerasSelectTable(
+    index: Int,
+    inputShape: JList[JList[Int]] = null): SelectTable[T] = {
+    SelectTable[T](index, toScalaMultiShape(inputShape))
   }
 }

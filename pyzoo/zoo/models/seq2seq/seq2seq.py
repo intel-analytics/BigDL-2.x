@@ -19,6 +19,7 @@ from zoo.pipeline.api.keras.layers import *
 from zoo.models.common import ZooModel
 
 from zoo.pipeline.api.keras.engine import ZooKerasLayer
+from zoo.pipeline.api.keras.models import Model
 
 
 if sys.version >= '3':
@@ -172,18 +173,48 @@ class Seq2seq(ZooModel):
     >>> bridge = Bridge.initialize("dense", 4)
     creating: createZooKerasBridge
     >>> seq2seq = Seq2seq(encoder, decoder, [2, 4], [2, 4], bridge)
+    creating: createZooKerasInput
+    creating: createZooKerasInput
+    creating: createZooKerasSelectTable
+    creating: createZooKerasModel
     creating: createZooSeq2seq
     """
 
     def __init__(self, encoder, decoder, input_shape, output_shape, bridge=None,
                  generator=None, bigdl_type="float"):
-        super(Seq2seq, self).__init__(None, bigdl_type,
-                                      encoder,
-                                      decoder,
-                                      list(input_shape) if input_shape else None,
-                                      list(output_shape) if output_shape else None,
-                                      bridge,
-                                      generator)
+        if (input_shape is None) or (output_shape is None):
+            raise TypeError('input_shape and output_shape cannot be None')
+        self.encoder = encoder
+        self.decoder = decoder
+        self.input_shape = list(input_shape)
+        self.output_shape = list(output_shape)
+        self.bridge = bridge
+        self.generator = generator
+        self.bigdl_type = bigdl_type
+        self.model = self.build_model()
+        super(Seq2seq, self).__init__(None, self.bigdl_type,
+                                      self.encoder,
+                                      self.decoder,
+                                      self.input_shape,
+                                      self.output_shape,
+                                      self.bridge,
+                                      self.generator,
+                                      self.model)
+
+    def build_model(self):
+        encoder_input = Input(name="encoder_input", shape=self.input_shape)
+        decoder_input = Input(name="decoder_input", shape=self.output_shape)
+        encoder_output = self.encoder(encoder_input)
+
+        encoder_final_states = SelectTable(1)(encoder_output)
+        decoder_init_states =\
+            self.bridge(encoder_final_states) if self.bridge else encoder_final_states
+
+        decoder_output = self.decoder([decoder_input, decoder_init_states])
+
+        output = self.generator(decoder_output) if self.generator else decoder_output
+
+        return Model([encoder_input, decoder_input], output)
 
     def set_checkpoint(self, path, over_write=True):
         callBigDlFunc(self.bigdl_type, "seq2seqSetCheckpoint",
@@ -215,7 +246,7 @@ class Seq2seq(ZooModel):
         if isinstance(loss, six.string_types):
             loss = to_bigdl_criterion(loss)
         if metrics and all(isinstance(metric, six.string_types) for metric in metrics):
-            metrics = to_bigdl_metrics(metrics)
+            metrics = to_bigdl_metrics(metrics, loss)
         callBigDlFunc(self.bigdl_type, "seq2seqCompile",
                       self.value,
                       optimizer,

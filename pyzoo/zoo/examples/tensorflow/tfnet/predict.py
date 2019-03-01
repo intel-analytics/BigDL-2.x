@@ -23,7 +23,7 @@ from zoo.models.image.objectdetection import *
 
 
 def predict(model_path, img_path, partition_num=4):
-    inputs = "ToFloat:0"
+    inputs = "image_tensor:0"
     outputs = ["num_detections:0", "detection_boxes:0",
                "detection_scores:0", "detection_classes:0"]
 
