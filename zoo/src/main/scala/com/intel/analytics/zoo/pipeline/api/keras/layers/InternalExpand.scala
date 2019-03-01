@@ -92,6 +92,7 @@ private[zoo] class InternalExpand[T: ClassTag](tgtSizes: Array[Int])
     gradInput = _gradOutput
     gradInput
   }
+
   override def toString: String = s"InternalExpand()"
 }
 

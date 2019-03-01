@@ -541,6 +541,7 @@ class Variable[T: ClassTag] private[zoo] (private[zoo] var node: ModuleNode[T],
 
     var yShape = yy.getOutputShape().toSingle()
     var xShape = xx.getOutputShape().toSingle()
+
     if (yShape.size > xShape.size) {
       xx = AutoGrad.expandDims(xx, 0)
       xShape = xx.getOutputShape().toSingle()
