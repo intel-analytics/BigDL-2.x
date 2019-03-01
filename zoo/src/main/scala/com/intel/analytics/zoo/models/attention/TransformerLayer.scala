@@ -14,35 +14,45 @@
  * limitations under the License.
  */
 
-package com.intel.analytics.zoo.models.transformer
+package com.intel.analytics.zoo.models.attention
 
 import com.intel.analytics.bigdl.nn.RandomNormal
 import com.intel.analytics.bigdl.nn.abstractnn.{AbstractModule, Activity}
+import com.intel.analytics.bigdl.nn.keras.KerasLayer
 import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric
-import com.intel.analytics.bigdl.utils.Shape
+import com.intel.analytics.bigdl.utils.{Shape, SingleShape}
 import com.intel.analytics.zoo.models.common.ZooModel
 import com.intel.analytics.zoo.pipeline.api.keras.layers._
 import com.intel.analytics.zoo.pipeline.api.autograd.{AutoGrad, Parameter, Variable}
-import com.intel.analytics.zoo.pipeline.api.keras.models.Model
+import com.intel.analytics.zoo.pipeline.api.keras.models.{Model, Sequential}
 import com.intel.analytics.bigdl.tensor.Tensor
+import com.intel.analytics.zoo.pipeline.api.Net
+import com.intel.analytics.zoo.pipeline.api.keras.layers.utils.KerasUtils
 
 import scala.reflect.ClassTag
 
-class Transformer[T: ClassTag] private(
-  vocab: Int,
-  nCtx: Int,
-  embeddingSize: Int,
-  embeddingDrop: Double,
-  nLayer: Int,
+class TransformerLayer[T: ClassTag] (
+  val vocab: Int,
+  val nCtx: Int,
+  val embeddingSize: Int,
+  val embeddingDrop: Double,
+  val nLayer: Int,
 //  afn: String,
-  residPdrop: Double,
-  attnPdrop: Double,
-  nHead: Int)(implicit ev: TensorNumeric[T])
-  extends ZooModel[Activity, Activity, T] {
+  val residPdrop: Double,
+  val attnPdrop: Double,
+  val nHead: Int,
+  var inputShape: Shape = null)(implicit ev: TensorNumeric[T])
+  extends KerasLayer[Tensor[T], Tensor[T], T](KerasUtils.addBatch(inputShape))
+    with Net {
 
-  override def buildModel(): AbstractModule[Activity, Activity, T] = {
+  override def doBuild(inputShape: Shape): AbstractModule[Tensor[T], Tensor[T], T] = {
     // (sequence length, position)
-    val input = Variable(Shape(nCtx, 2))
+    require(inputShape.isInstanceOf[SingleShape], "TransformerLayer input must" +
+      " be a single shape")
+    val _inputShape = KerasUtils.removeBatch(inputShape)
+    require(_inputShape.equals(Shape(nCtx, 2)), "TransformerLayer input shape" +
+      " must be Shape(nCtx, 2)")
+    val input = Variable(_inputShape)
     val r = Reshape(Array(nCtx * 2)).from(input)
     val e = Embedding(vocab, embeddingSize, inputLength = nCtx * 2).from(r)
 
@@ -58,7 +68,7 @@ class Transformer[T: ClassTag] private(
     }
 
     val model = Model(input, nextInput)
-    model
+    model.asInstanceOf[AbstractModule[Tensor[T], Tensor[T], T]]
   }
 
   def block(x: Variable[T]): Variable[T] = {
@@ -150,7 +160,7 @@ class Transformer[T: ClassTag] private(
   }
 }
 
-object Transformer {
+object TransformerLayer {
   def apply[@specialized(Float, Double) T: ClassTag](
     vocab: Int = 40990,
     nCtx: Int = 77, // seq len
@@ -160,25 +170,9 @@ object Transformer {
 //    afn: String = "gelu",
     residPdrop: Double = 0.1,
     attnPdrop: Double = 0.1,
-    nHead: Int = 12)(implicit ev: TensorNumeric[T]): Transformer[T] = {
-    new Transformer[T](vocab, nCtx, embeddingSize, embeddingDrop, nLayer,
+    nHead: Int = 12)(implicit ev: TensorNumeric[T]): TransformerLayer[T] = {
+    new TransformerLayer[T](vocab, nCtx, embeddingSize, embeddingDrop, nLayer,
 //      afn,
-      residPdrop, attnPdrop, nHead).build()
-  }
-
-  /**
-   * Load an existing Transformer model (with weights).
-   *
-   * @param path The path for the pre-defined model.
-   *             Local file system, HDFS and Amazon S3 are supported.
-   *             HDFS path should be like "hdfs://[host]:[port]/xxx".
-   *             Amazon S3 path should be like "s3a://bucket/xxx".
-   * @param weightPath The path for pre-trained weights if any. Default is null.
-   * @tparam T Numeric type of parameter(e.g. weight, bias). Only support float/double now.
-   */
-  def loadModel[T: ClassTag](
-    path: String,
-    weightPath: String = null)(implicit ev: TensorNumeric[T]): Transformer[T] = {
-    ZooModel.loadModel(path, weightPath).asInstanceOf[Transformer[T]]
+      residPdrop, attnPdrop, nHead)
   }
 }
