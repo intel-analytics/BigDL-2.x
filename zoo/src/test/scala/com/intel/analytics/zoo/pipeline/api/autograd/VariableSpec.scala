@@ -130,4 +130,16 @@ class VariableSpec extends KerasBaseSpec {
       3858f, 3952f), Array(2, 3, 4, 2))
     require(gradInput[Tensor[Float]](2).almostEqual(expect3, 1e-8) == true)
   }
+
+  "4d mm" should "be work with axes" in {
+    val xValue = Tensor[Float](Array(2, 2, 3, 4)).rand()
+    val yValue = Tensor[Float](Array(2, 2, 3, 4)).rand()
+    val x = Variable[Float](inputShape = Shape(2, 3, 4))
+    val y = Variable[Float](inputShape = Shape(2, 3, 4))
+    val z = AutoGrad.mm(x, y, axes = List(3, 3))
+    val model = Model[Float](Array(x, y), z)
+    val input = T(xValue, yValue)
+    val output = model.forward(input).toTensor[Float]
+    model.backward(input, output)
+  }
 }

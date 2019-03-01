@@ -27,7 +27,7 @@ import scala.reflect.ClassTag
 
 /**
  * Module to perform matrix multiplication on two mini-batch inputs,
- * producing a mini-batch.
+ * producing a mini-batch. Input with different batchSize are supported.
  *
  * @param transA specifying whether or not transpose the first input matrix
  * @param transB specifying whether or not transpose the second input matrix
@@ -88,16 +88,9 @@ private[zoo] class InternalMM[T: ClassTag](
 
       // with different batch dim
       if (ma.size(1) != mb.size(1)) {
-        if (ma.size(1) == 1) {
-          expandLayer = InternalExpand(mb.size())
-          ma = expandLayer.forward(ma)
-        } else if (mb.size(1) == 1) {
-          expandLayer = InternalExpand(ma.size())
-          mb = expandLayer.forward(mb)
-        } else {
-          throw new InvalidParameterException("inputs must contain the same number of" +
-            "minibatches. The minibatces of each are ${ma.size(1)} and ${mb.size(1)}\"")
-        }
+        val newTensors = expandTensor(ma, mb)
+        ma = newTensors._1
+        mb = newTensors._2
       }
       output.resize(ma.size(1), ma.size(2), mb.size(3))
       output.bmm(ma, mb)
@@ -116,16 +109,9 @@ private[zoo] class InternalMM[T: ClassTag](
       require(mb.dim() == 3, "second input tensor must be 3D" +
         s"second input dim ${mb.dim()}")
       // with different batch dim
-      if (ma.size(1) == 1) {
-        expandLayer = InternalExpand(mb.size())
-        ma = expandLayer.forward(ma)
-      } else if (mb.size(1) == 1) {
-        expandLayer = InternalExpand(ma.size())
-        mb = expandLayer.forward(mb)
-      } else {
-        throw new InvalidParameterException("inputs must contain the same number of" +
-          "minibatches. The minibatces of each are ${ma.size(1)} and ${mb.size(1)}\"")
-      }
+      val newTensors = expandTensor(ma, mb)
+      ma = newTensors._1
+      mb = newTensors._2
     }
 
     gradInput[Tensor[T]](1).resizeAs(ma)
@@ -212,6 +198,20 @@ private[zoo] class InternalMM[T: ClassTag](
     gradInput[Tensor[T]](2).set()
 
     this
+  }
+
+  private def expandTensor(ma: Tensor[T], mb: Tensor[T]): (Tensor[T], Tensor[T]) = {
+    val (newA, newB) = if (ma.size(1) == 1) {
+      expandLayer = InternalExpand(mb.size())
+      (expandLayer.forward(ma), mb)
+    } else if (mb.size(1) == 1) {
+      expandLayer = InternalExpand(ma.size())
+      (ma, expandLayer.forward(mb))
+    } else {
+      throw new InvalidParameterException("inputs must contain the same number of" +
+        "minibatches. The minibatces of each are ${ma.size(1)} and ${mb.size(1)}\"")
+    }
+    (newA, newB)
   }
 }
 

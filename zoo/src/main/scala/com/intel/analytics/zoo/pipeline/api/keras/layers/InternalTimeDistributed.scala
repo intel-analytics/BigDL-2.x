@@ -28,8 +28,9 @@ import scala.reflect.ClassTag
 
 
 /**
- * NB: This implementation is almost the same as "com.intel.analytics.bigdl.nn.Timedistributed"
- * except for some bug fixing. We need to merge this back to BigDL in the next release.
+ * NB: This implementation includes some bug fixes for
+ * "com.intel.analytics.bigdl.nn.Timedistributed". Also it accepts input as Tensor
+ * or Tables whose elements are Tensor. Nested Tables are not supported currently.
  *
  * This layer is intended to apply contained layer to each temporal time slice
  * of input tensor.
