@@ -66,6 +66,12 @@ object bert {
     Logger.getLogger("org").setLevel(Level.ERROR)
     val conf = new SparkConf()
     conf.setAppName("BertExample")
+    conf.set("bigdl.ModelBroadcastFactory",
+      "com.intel.analytics.bigdl.models.utils.ProtoBufferModelBroadcastFactory")
+    conf.setExecutorEnv("bigdl.ModelBroadcastFactory",
+      "com.intel.analytics.bigdl.models.utils.ProtoBufferModelBroadcastFactory")
+    System.setProperty("bigdl.ModelBroadcastFactory",
+      "com.intel.analytics.bigdl.models.utils.ProtoBufferModelBroadcastFactory")
     val sc = NNContext.initNNContext(conf)
 
     val chat1 = Source
@@ -80,8 +86,7 @@ object bert {
 
     val trainSet = trainRDD
       .map(labeledChatToSample(_))
-    System.setProperty("bigdl.ModelBroadcastFactory",
-      "com.intel.analytics.bigdl.models.utils.ProtoBufferModelBroadcastFactory")
+
     val model = BERT[Float](8004, debug = true, num_hidden_layers = 10)
     model.compile(optimizer = new RMSprop(learningRate = 0.001, decayRate = 0.9),
       loss = SparseCategoricalCrossEntropy[Float]())
