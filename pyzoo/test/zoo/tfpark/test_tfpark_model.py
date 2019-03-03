@@ -38,6 +38,23 @@ class TestTFPark(ZooTestCase):
                       metrics=['accuracy'])
         return model
 
+    def create_multi_input_output_model(self):
+        data1 = tf.keras.layers.Input(shape=[10])
+        data2 = tf.keras.layers.Input(shape=[10])
+
+        x1 = tf.keras.layers.Flatten()(data1)
+        x1 = tf.keras.layers.Dense(10, activation='relu')(x1)
+        pred1 = tf.keras.layers.Dense(2, activation='softmax')(x1)
+
+        x2 = tf.keras.layers.Flatten()(data2)
+        x2 = tf.keras.layers.Dense(10, activation='relu')(x2)
+        pred2 = tf.keras.layers.Dense(2)(x2)
+
+        model = tf.keras.models.Model(inputs=[data1, data2], outputs=[pred1, pred2])
+        model.compile(optimizer='rmsprop',
+                      loss=['sparse_categorical_crossentropy', 'mse'])
+        return model
+
     def create_training_data(self):
         np.random.seed(20)
         x = np.random.rand(20, 10)
@@ -113,6 +130,15 @@ class TestTFPark(ZooTestCase):
 
         model.fit(x, y, batch_size=4, distributed=True)
 
+    def test_training_with_ndarry_distributed_twice(self):
+        keras_model = self.create_model()
+        model = KerasModel(keras_model)
+
+        x, y = self.create_training_data()
+
+        model.fit(x, y, batch_size=4, distributed=True)
+        model.fit(x, y, batch_size=4, distributed=True)
+
     def test_training_with_validation_data(self):
 
         keras_model = self.create_model()
@@ -134,6 +160,18 @@ class TestTFPark(ZooTestCase):
         val_x, val_y = self.create_training_data()
 
         model.fit(x, y, validation_data=(val_x, val_y), batch_size=4, distributed=True)
+
+    def test_training_with_validation_data_distributed_multi_heads(self):
+
+        keras_model = self.create_multi_input_output_model()
+        model = KerasModel(keras_model)
+
+        x, y = self.create_training_data()
+
+        val_x, val_y = self.create_training_data()
+
+        model.fit([x, x], [y, y], validation_data=([val_x, val_x], [val_y, val_y]),
+                  batch_size=4, distributed=True)
 
     def test_training_and_validation_with_dataset(self):
         keras_model = self.create_model()
@@ -249,6 +287,7 @@ class TestTFPark(ZooTestCase):
 
         assert np.square(acc - results_pre[1]) < 0.000001
 
+    # move the test here to avoid keras session to be closed (not sure about why)
     def test_tf_optimizer_with_sparse_gradient_using_keras(self):
         import tensorflow as tf
 
