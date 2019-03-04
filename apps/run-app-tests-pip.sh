@@ -475,8 +475,8 @@ then
     echo "recommendation-wide-n-deep failed"
     exit $exit_status
 fi
- unset SPARK_DRIVER_MEMORY
- now=$(date "+%s")
+unset SPARK_DRIVER_MEMORY
+now=$(date "+%s")
 time4=$((now-start))
 echo "recommendation-wide-n-deep time used:$time4 seconds"
 rm ${ANALYTICS_ZOO_HOME}/apps/recommendation-wide-n-deep/tmp_test.py
@@ -508,8 +508,8 @@ then
     echo "sentiment-analysis failed"
     exit $exit_status
 fi
- unset SPARK_DRIVER_MEMORY
- now=$(date "+%s")
+unset SPARK_DRIVER_MEMORY
+now=$(date "+%s")
 time11=$((now-start))
 echo "sentiment-analysis time used:$time11 seconds"
 
