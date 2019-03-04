@@ -250,18 +250,17 @@
         <dependency>
             <groupId>org.tensorflow</groupId>
             <artifactId>libtensorflow</artifactId>
-            <version>1.13.0-rc2</version>
+            <version>1.13.1</version>
         </dependency>
         <dependency>
             <groupId>org.tensorflow</groupId>
             <artifactId>proto</artifactId>
-            <version>1.10.0</version>
+            <version>1.13.1</version>
         </dependency>
-
         <dependency>
             <groupId>com.intel.analytics.zoo</groupId>
             <artifactId>zoo-core-dist-all</artifactId>
-            <version>0.5.0-SNAPSHOT</version>
+            <version>0.5.0test</version>
         </dependency>
     </dependencies>
 
