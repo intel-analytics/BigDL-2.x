@@ -56,7 +56,7 @@ def load_data(dest_dir='/tmp/.bigdl/dataset', nb_words=None, oov_char=2):
         for s in x:
             new_s = []
             for word in s:
-                if word >= nb_words:
+                if word < nb_words:
                     new_s.append(word)
             new_x.append(new_s)
         x = new_x
