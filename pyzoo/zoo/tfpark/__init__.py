@@ -16,3 +16,4 @@
 
 from zoo.pipeline.api.net import TFDataset
 from zoo.tfpark.model import KerasModel
+from zoo.tfpark.text import *
