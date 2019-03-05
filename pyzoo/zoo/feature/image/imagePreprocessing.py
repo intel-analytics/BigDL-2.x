@@ -347,7 +347,7 @@ class RowToImageFeature(Preprocessing):
         super(RowToImageFeature, self).__init__(bigdl_type)
 
 
-class ImageRandomPreprocessing(ImagePreprocessing):
+class ImageRandomPreprocessing(Preprocessing):
     """
     Randomly apply the preprocessing to some of the input ImageFeatures, with probability specified.
     E.g. if prob = 0.5, the preprocessing will apply to half of the input ImageFeatures.
