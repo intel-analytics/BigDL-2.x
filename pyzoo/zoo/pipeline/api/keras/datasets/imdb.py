@@ -42,6 +42,10 @@ def load_data(dest_dir='/tmp/.bigdl/dataset', nb_words=None, oov_char=2):
 
     :argument
         dest_dir: where to cache the data (relative to `~/.bigdl/dataset`).
+        nb_words: number of words to keep, the words are already indexed by frequency
+                  so that the less frequent words would be abandoned
+        oov_char: index to pad the abandoned words, if None, one abandoned word 
+                  would be taken place with its next word and total length -= 1
 
     :return
         the train, test separated IMDB dataset.
