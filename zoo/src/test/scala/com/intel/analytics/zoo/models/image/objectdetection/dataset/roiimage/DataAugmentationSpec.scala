@@ -18,10 +18,8 @@ package com.intel.analytics.zoo.models.image.objectdetection.dataset.roiimage
 
 import java.io.File
 
-import com.intel.analytics.bigdl.transform.vision.image.augmentation._
 import com.intel.analytics.bigdl.transform.vision.image.label.roi._
 import com.intel.analytics.bigdl.transform.vision.image.opencv.OpenCVMat
-import com.intel.analytics.bigdl.transform.vision.image.{BytesToMat, MatToFloats}
 import com.intel.analytics.zoo.feature.image._
 import com.intel.analytics.zoo.models.image.objectdetection.common.dataset.Imdb
 import org.opencv.core.{Mat, Point, Scalar}

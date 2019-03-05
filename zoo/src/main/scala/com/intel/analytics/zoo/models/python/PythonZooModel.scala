@@ -18,12 +18,11 @@ package com.intel.analytics.zoo.models.python
 
 import java.util.{List => JList, Map => JMap}
 
-import com.intel.analytics.bigdl.{Criterion, Module, dataset}
+import com.intel.analytics.bigdl.{Criterion, dataset}
 import com.intel.analytics.bigdl.dataset.PaddingParam
-import com.intel.analytics.bigdl.nn.DetectionOutputFrcnn
 import com.intel.analytics.bigdl.nn.abstractnn.{AbstractModule, Activity}
 import com.intel.analytics.bigdl.nn.keras.{KerasLayer, KerasModel}
-import com.intel.analytics.bigdl.optim.{OptimMethod, Regularizer, ValidationMethod, ValidationResult}
+import com.intel.analytics.bigdl.optim.{OptimMethod, ValidationMethod, ValidationResult}
 import com.intel.analytics.bigdl.python.api.{EvaluatedResult, JTensor, Sample}
 import com.intel.analytics.bigdl.tensor.Tensor
 import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric
@@ -32,26 +31,18 @@ import com.intel.analytics.bigdl.utils.{Shape, Table}
 import com.intel.analytics.zoo.common.PythonZoo
 import com.intel.analytics.zoo.feature.common.Preprocessing
 import com.intel.analytics.zoo.feature.image._
-import com.intel.analytics.zoo.feature.image.roi.RoiRecordToFeature
 import com.intel.analytics.zoo.feature.text.TextSet
 import com.intel.analytics.zoo.models.anomalydetection.{AnomalyDetector, FeatureLabelIndex}
 import com.intel.analytics.zoo.models.common.{Ranker, ZooModel}
 import com.intel.analytics.zoo.models.image.common.{ImageConfigure, ImageModel}
-import com.intel.analytics.zoo.models.image.objectdetection.{DummyGT, _}
+import com.intel.analytics.zoo.models.image.objectdetection._
 import com.intel.analytics.zoo.models.image.imageclassification.{ImageClassifier, LabelReader => IMCLabelReader}
-import com.intel.analytics.zoo.models.image.objectdetection.common.ModuleUtil
-import com.intel.analytics.zoo.models.image.objectdetection.common.nn._
 import com.intel.analytics.zoo.models.recommendation.{NeuralCF, Recommender, UserItemFeature, UserItemPrediction}
 import com.intel.analytics.zoo.models.recommendation._
 import com.intel.analytics.zoo.models.seq2seq.{RNNDecoder, RNNEncoder, Seq2seq}
 import com.intel.analytics.zoo.models.textclassification.TextClassifier
 import com.intel.analytics.zoo.models.textmatching.KNRM
 import com.intel.analytics.zoo.pipeline.api.keras.layers.{Embedding, Recurrent, WordEmbedding}
-import com.intel.analytics.zoo.models.image.objectdetection.common.dataset.{ByteRecord, Imdb}
-import com.intel.analytics.zoo.models.image.objectdetection.common.optim.MeanAveragePrecision
-import com.intel.analytics.zoo.models.image.objectdetection.fasterrcnn.RoiImageToFrcnnBatch
-import com.intel.analytics.zoo.models.image.objectdetection.ssd.RoiImageToSSDBatch
-import org.apache.spark.api.java.{JavaRDD, JavaSparkContext}
 import org.apache.spark.api.java.JavaRDD
 import org.apache.spark.rdd.RDD
 import org.apache.spark.sql.{DataFrame, SQLContext}
@@ -297,47 +288,8 @@ class PythonZooModel[T: ClassTag](implicit ev: TensorNumeric[T]) extends PythonZ
     ImInfo()
   }
 
-  def createDummyGT(): DummyGT = {
-    DummyGT()
-  }
-
   def createDecodeOutput(): DecodeOutput = {
     DecodeOutput()
-  }
-
-  def createRoiRecordToFeature(convertLabel: Boolean = false,
-                               outKey: String = ImageFeature.bytes): RoiRecordToFeature = {
-    RoiRecordToFeature(convertLabel, outKey)
-  }
-
-  def createRoiImageToSSDBatch(batchSize: Int, convertLabel: Boolean = true,
-                            partitionNum: Option[Int] = None, keepImageFeature: Boolean = true,
-                            inputKey: String = ImageFeature.floats): RoiImageToSSDBatch = {
-    RoiImageToSSDBatch(batchSize, convertLabel, partitionNum, keepImageFeature, inputKey)
-  }
-
-  def createMeanAveragePrecision(use07metric: Boolean, normalized: Boolean = true,
-                                 classes: JList[String]): MeanAveragePrecision = {
-    new MeanAveragePrecision(use07metric, normalized, classes.asScala.toArray)
-  }
-
-  def createMultiBoxLoss(param: MultiBoxLossParam): MultiBoxLoss[T] = {
-    new MultiBoxLoss[T](param)
-  }
-
-  def createDetectionOutputFrcnn(nmsThresh: Double, nClasses: Int, bboxVote: Boolean,
-                                 maxPerImage: Int, thresh: Double ): DetectionOutputFrcnn = {
-    DetectionOutputFrcnn(nmsThresh.toFloat, nClasses, bboxVote, maxPerImage, thresh)
-  }
-
-  def loadModelWeights(srcModel: Module[Float], targetModel: Module[Float],
-                       matchAll: Boolean): Unit = {
-    ModuleUtil.loadModelWeights(srcModel, targetModel, matchAll)
-  }
-
-  def loadRoiSeqFiles(url: String, sc: JavaSparkContext, partitionNum: Int= -1): JavaRDD[ByteRecord] = {
-    val pn = if (partitionNum <= 0) None else Some(partitionNum)
-    Imdb.loadRoiSeqFiles(url, sc, pn)
   }
 
   def createPaddingParam(): PaddingParam[T] = {

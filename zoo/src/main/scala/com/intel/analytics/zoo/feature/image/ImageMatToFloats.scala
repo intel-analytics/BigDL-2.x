@@ -17,18 +17,41 @@ package com.intel.analytics.zoo.feature.image
 
 import com.intel.analytics.bigdl.transform.vision.image.ImageFeature
 import com.intel.analytics.bigdl.transform.vision.image.MatToFloats
+import com.intel.analytics.bigdl.transform.vision.image.opencv.OpenCVMat
 
 import scala.reflect.ClassTag
 
 class ImageMatToFloats(validHeight: Int, validWidth: Int, validChannels: Int,
                        outKey: String = ImageFeature.floats, shareBuffer: Boolean = true)
   extends ImageProcessing {
-
-  private val internalMatToFloats =
-    MatToFloats(validHeight, validWidth, validChannels, outKey, shareBuffer)
+  @transient private var data: Array[Float] = _
 
   override def apply(prev: Iterator[ImageFeature]): Iterator[ImageFeature] = {
-    internalMatToFloats.apply(prev)
+    prev.map(transform(_))
+  }
+
+  override def transform(feature: ImageFeature): ImageFeature = {
+    var input: OpenCVMat = null
+    val (height, width, channel) = if (feature.isValid) {
+      input = feature.opencvMat()
+      (input.height(), input.width(), input.channels())
+    } else {
+      (validHeight, validWidth, validChannels)
+    }
+    if (!shareBuffer || null == data || data.length < height * width * channel) {
+      data = new Array[Float](height * width * channel)
+    }
+    if (feature.isValid) {
+      try {
+        OpenCVMat.toFloatPixels(input, data)
+      } finally {
+        if (null != input) input.release()
+        feature(ImageFeature.mat) = null
+      }
+    }
+    feature(outKey) = data
+    feature(ImageFeature.size) = (height, width, channel)
+    feature
   }
 }
 
@@ -37,4 +60,5 @@ object ImageMatToFloats {
   def apply[T: ClassTag](validHeight: Int = 300, validWidth: Int = 300, validChannels: Int = 3,
     outKey: String = ImageFeature.floats, shareBuffer: Boolean = true): ImageMatToFloats =
     new ImageMatToFloats(validHeight, validWidth, validChannels, outKey, shareBuffer)
+
 }

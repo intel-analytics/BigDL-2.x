@@ -121,19 +121,6 @@ class ImageMatToTensor(ImagePreprocessing):
                                                share_buffer, format)
 
 
-class ImageMatToFloats(ImagePreprocessing):
-    """
-    MatToFloats
-    :param toRGB BGR to RGB (default is BGR)
-    :param tensorKey key to store transformed tensor
-    :param format DataFormat.NCHW or DataFormat.NHWC
-    """
-    def __init__(self, valid_height=300, valid_width=300, valid_channels=3,
-                       out_key="floats", share_buffer=True, bigdl_type="float"):
-        super(ImageMatToFloats, self).__init__(bigdl_type, valid_height, valid_width,
-                                               valid_channels,out_key, share_buffer)
-
-
 class ImageSetToSample(ImagePreprocessing):
     """
     transform imageframe to samples
@@ -370,66 +357,3 @@ class ImageRandomPreprocessing(ImagePreprocessing):
 
     def __init__(self, preprocessing, prob, bigdl_type="float"):
         super(ImageRandomPreprocessing, self).__init__(bigdl_type, preprocessing, float(prob))
-
-
-class ImageRoiNormalize(ImagePreprocessing):
-    """
-    Normalize Roi to [0, 1]
-    """
-
-    def __init__(self, bigdl_type="float"):
-        super(ImageRoiNormalize, self).__init__(bigdl_type)
-
-
-class ImageRoiHFlip(ImagePreprocessing):
-    """
-    horizontally flip the roi
-    :param normalized whether the roi is normalized, i.e. in range [0, 1]
-    """
-
-    def __init__(self, normalized=True, bigdl_type="float"):
-        super(ImageRoiHFlip, self).__init__(bigdl_type, normalized)
-
-
-class ImageRoiResize(ImagePreprocessing):
-    """
-    resize the roi according to scale
-    :param normalized whether the roi is normalized, i.e. in range [0, 1]
-    """
-
-    def __init__(self, normalized=False, bigdl_type="float"):
-        super(ImageRoiResize, self).__init__(bigdl_type, normalized)
-
-
-class ImageRoiProject(ImagePreprocessing):
-    """
-    Project gt boxes onto the coordinate system defined by image boundary
-    :param needMeetCenterConstraint whether need to meet center constraint, i.e., the center of
-    gt box need be within image boundary
-    """
-
-    def __init__(self, need_meet_center_constraint=True, bigdl_type="float"):
-        super(ImageRoiProject, self).__init__(bigdl_type, need_meet_center_constraint)
-
-
-class ImageRandomSampler(ImagePreprocessing):
-    """
-    Random sample a bounding box given some constraints and crop the image
-    This is used in SSD training augmentation
-    """
-
-    def __init__(self, bigdl_type="float"):
-        super(ImageRandomSampler, self).__init__(bigdl_type)
-
-
-class ChainedImagePreprocessing(ImagePreprocessing):
-    """
-    chains two ImagePreprocessing together. The output type of the first
-    ImagePreprocessing should be the same with the input type of the second ImagePreprocessing.
-    """
-    def __init__(self, transformers, bigdl_type="float"):
-        for transfomer in transformers:
-            assert isinstance(transfomer, ImagePreprocessing), \
-                str(transfomer) + " should be subclass of Preprocessing "
-
-        super(ChainedImagePreprocessing, self).__init__(bigdl_type, transformers)

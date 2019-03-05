@@ -18,8 +18,6 @@ package com.intel.analytics.zoo.feature.python
 
 import java.util.{List => JList}
 
-import com.intel.analytics.bigdl.DataSet
-import com.intel.analytics.bigdl.dataset.{DataSet, DistributedDataSet, Transformer}
 import com.intel.analytics.bigdl.nn.abstractnn.DataFormat
 import com.intel.analytics.bigdl.python.api.JTensor
 import com.intel.analytics.bigdl.tensor.{Storage, Tensor}
@@ -29,10 +27,8 @@ import com.intel.analytics.bigdl.transform.vision.image.opencv.OpenCVMat
 import com.intel.analytics.zoo.common.PythonZoo
 import com.intel.analytics.zoo.feature.common.Preprocessing
 import com.intel.analytics.zoo.feature.image._
-import com.intel.analytics.zoo.feature.image.roi.RoiRecordToFeature
 import com.intel.analytics.zoo.feature.image3d._
 import org.apache.spark.api.java.{JavaRDD, JavaSparkContext}
-import org.apache.spark.rdd.RDD
 import org.opencv.imgcodecs.Imgcodecs
 import org.opencv.imgproc.Imgproc
 
@@ -245,11 +241,6 @@ class PythonImageFeature[T: ClassTag](implicit ev: TensorNumeric[T]) extends Pyt
     }
   }
 
-  def createImageMatToFloats(validHeight: Int, validWidth: Int, validChannels: Int,
-                             outKey: String, shareBuffer: Boolean = true): ImageMatToFloats = {
-    ImageMatToFloats(validChannels, validWidth, validChannels, outKey, shareBuffer)
-  }
-
   def createImageHue(deltaLow: Double, deltaHigh: Double): ImageHue = {
     ImageHue(deltaLow, deltaHigh)
   }
@@ -387,30 +378,5 @@ class PythonImageFeature[T: ClassTag](implicit ev: TensorNumeric[T]) extends Pyt
         size = jTensor.shape)
     }
     tensor
-  }
-
-  def createImageRoiNormalize(): ImageRoiNormalize = {
-    ImageRoiNormalize()
-  }
-
-  def createImageRoiHFlip(normalized: Boolean = true): ImageRoiHFlip = {
-    ImageRoiHFlip(normalized)
-  }
-
-  def createImageRoiResize(normalized: Boolean = false): ImageRoiResize = {
-    ImageRoiResize(normalized)
-  }
-
-  def createImageRoiProject(needMeetCenterConstraint: Boolean = true): ImageRoiProject = {
-    ImageRoiProject(needMeetCenterConstraint)
-  }
-
-  def createRoiRecordToFeature(convertLabel: Boolean = false,
-                               outKey: String = ImageFeature.bytes): RoiRecordToFeature = {
-    RoiRecordToFeature(convertLabel, outKey)
-  }
-
-  def createImageRandomSampler(): ImageRandomSampler = {
-    ImageRandomSampler()
   }
 }
