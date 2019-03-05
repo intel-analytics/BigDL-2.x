@@ -20,7 +20,7 @@ import nlp_architect.models.intent_extraction as intent_models
 
 
 # TODO: add word embedding file support
-class TextModel(KerasModel):
+class TextKerasModel(KerasModel):
     def __init__(self, labor, optimizer=None, *args):
         self.labor = labor
         with variable_creator_scope():
@@ -30,7 +30,7 @@ class TextModel(KerasModel):
             # use string to recompile or use a mapping between tf.train.optimizers and tf.keras.optimizers
             if optimizer:
                 model.compile(loss=model.loss, optimizer=optimizer, metrics=model.metrics)
-            super(TextModel, self).__init__(model)
+            super(TextKerasModel, self).__init__(model)
 
     def save_model(self, path):
         self.labor.save(path)
@@ -43,18 +43,18 @@ class TextModel(KerasModel):
         return model
 
 
-class IntentNER(TextModel):
+class IntentAndEntity(TextKerasModel):
     def __init__(self, word_length, num_labels, num_intent_labels, word_vocab_size,
                  char_vocab_size, word_emb_dims=100, char_emb_dims=30,
                  char_lstm_dims=30, tagger_lstm_dims=100, dropout=0.2, optimizer='adam'):
-        super(IntentNER, self).__init__(intent_models.MultiTaskIntentModel(use_cudnn=False), optimizer,
-                                        word_length, num_labels, num_intent_labels,
-                                        word_vocab_size, char_vocab_size, word_emb_dims,
-                                        char_emb_dims, char_lstm_dims, tagger_lstm_dims, dropout)
+        super(IntentAndEntity, self).__init__(intent_models.MultiTaskIntentModel(use_cudnn=False), optimizer,
+                                              word_length, num_labels, num_intent_labels,
+                                              word_vocab_size, char_vocab_size, word_emb_dims,
+                                              char_emb_dims, char_lstm_dims, tagger_lstm_dims, dropout)
 
     @staticmethod
     def load_model(path):
         labor = intent_models.MultiTaskIntentModel(use_cudnn=False)
-        model = TextModel._load_model(labor, path)
-        model.__class__ = IntentNER
+        model = TextKerasModel._load_model(labor, path)
+        model.__class__ = IntentAndEntity
         return model

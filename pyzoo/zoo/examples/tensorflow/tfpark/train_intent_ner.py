@@ -29,7 +29,7 @@ from nlp_architect.utils.io import validate, validate_existing_directory, \
     validate_existing_filepath, validate_parent_exists
 from nlp_architect.utils.metrics import get_conll_scores
 from zoo.common.nncontext import *
-from zoo.tfpark import IntentNER
+from zoo.tfpark import IntentAndEntity
 
 
 def validate_input_args():
@@ -90,14 +90,14 @@ if __name__ == '__main__':
     train_i = one_hot(train_i, len(dataset.intents_vocab))
     test_i = one_hot(test_i, len(dataset.intents_vocab))
 
-    model = IntentNER(dataset.word_len,
-                      dataset.label_vocab_size,
-                      dataset.intent_size,
-                      dataset.word_vocab_size,
-                      dataset.char_vocab_size,
-                      word_emb_dims=args.token_emb_size,
-                      tagger_lstm_dims=args.lstm_hidden_size,
-                      dropout=args.tagger_dropout)
+    model = IntentAndEntity(dataset.word_len,
+                            dataset.label_vocab_size,
+                            dataset.intent_size,
+                            dataset.word_vocab_size,
+                            dataset.char_vocab_size,
+                            word_emb_dims=args.token_emb_size,
+                            tagger_lstm_dims=args.lstm_hidden_size,
+                            dropout=args.tagger_dropout)
     model.fit([train_x, train_char], [train_i, train_y], batch_size=args.b,
               distributed=True, epochs=args.e)
     # [total_loss, intent_loss, ner_loss, intent_acc, ner_acc]
