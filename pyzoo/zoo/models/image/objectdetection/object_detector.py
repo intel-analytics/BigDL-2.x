@@ -22,6 +22,7 @@ from zoo.models.image.common.image_model import ImageModel
 from zoo.feature.image.imageset import *
 from zoo.feature.image.imagePreprocessing import *
 
+
 if sys.version >= '3':
     long = int
     unicode = str

@@ -292,6 +292,10 @@ class PythonZooModel[T: ClassTag](implicit ev: TensorNumeric[T]) extends PythonZ
     DecodeOutput()
   }
 
+  def createScaleDetection(): ScaleDetection = {
+    ScaleDetection()
+  }
+
   def createPaddingParam(): PaddingParam[T] = {
     PaddingParam()
   }
