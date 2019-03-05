@@ -20,6 +20,7 @@ import java.io.File
 import java.util.concurrent.atomic.AtomicInteger
 
 import com.intel.analytics.bigdl.transform.vision.image.{ImageFeature, ImageFrame}
+import com.intel.analytics.bigdl.utils.Engine
 import com.intel.analytics.zoo.feature.image.{ImageSet, LocalImageSet}
 import com.intel.analytics.zoo.feature.image.roi.RoiRecordToFeature
 import org.apache.commons.io.FileUtils

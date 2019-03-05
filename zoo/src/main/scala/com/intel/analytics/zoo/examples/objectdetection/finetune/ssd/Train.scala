@@ -23,13 +23,13 @@ import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric.NumericF
 import com.intel.analytics.bigdl.utils.LoggerFilter
 import com.intel.analytics.bigdl.visualization.{TrainSummary, ValidationSummary}
 import com.intel.analytics.zoo.common.NNContext
-import com.intel.analytics.bigdl.nn.Module
+import com.intel.analytics.zoo.feature.DistributedFeatureSet
 import com.intel.analytics.zoo.models.image.common.ImageModel
 import com.intel.analytics.zoo.models.image.objectdetection.common.ModuleUtil
 import com.intel.analytics.zoo.models.image.objectdetection.common.nn.MultiBoxLoss
 import com.intel.analytics.zoo.models.image.objectdetection.common.nn.MultiBoxLossParam
 import com.intel.analytics.zoo.models.image.objectdetection.common.optim.MeanAveragePrecision
-import com.intel.analytics.zoo.models.image.objectdetection.ssd.{SSD, SSDDataSet, SSDMiniBatch, SSDVgg}
+import com.intel.analytics.zoo.models.image.objectdetection.ssd.{SSD, SSDDataSet, SSDMiniBatch}
 import org.apache.log4j.{Level, Logger}
 import org.apache.spark.SparkConf
 import scopt.OptionParser
@@ -46,18 +46,19 @@ object Train {
     trainFolder: String = "./",
     valFolder: String = "./",
     resolution: Int = 300,
+    dataset: String = "pascal",
     checkpoint: Option[String] = None,
     modelSnapshot: Option[String] = None,
     stateSnapshot: Option[String] = None,
     className: String = "",
     batchSize: Int = 4,
-    learningRate: Double = 0.001,
+    learningRate: Double = 0.0001,
     learningRateDecay: Double = 0.0005,
     overWriteCheckpoint: Boolean = false,
     maxEpoch: Int = 20,
     jobName: String = "Analytics Zoo SSD Train Messi Example",
     summaryDir: Option[String] = None,
-    nPartition: Int = 1
+    nPartition: Option[Int] = None
   )
 
   val trainParser = new OptionParser[TrainParams]("Analytics Zoo SSD Example") {
@@ -71,6 +72,9 @@ object Train {
       .text("input resolution 300 or 512")
       .action((x, c) => c.copy(resolution = x))
       .required()
+    opt[String]('d', "dataset")
+      .text("which dataset of the model will be used")
+      .action((x, c) => c.copy(dataset = x))
     opt[String]("model")
       .text("model snapshot location")
       .action((x, c) => c.copy(modelSnapshot = Some(x)))
@@ -109,7 +113,7 @@ object Train {
       .action((x, c) => c.copy(summaryDir = Some(x)))
     opt[Int]('p', "partition")
       .text("number of partitions")
-      .action((x, c) => c.copy(nPartition = x))
+      .action((x, c) => c.copy(nPartition = Some(x)))
   }
 
   val logger = Logger.getLogger(getClass.getName)
@@ -121,12 +125,12 @@ object Train {
 
       val classes = Source.fromFile(param.className).getLines().toArray
       val trainSet = SSDDataSet.loadSSDTrainSet(param.trainFolder, sc, param.resolution,
-        param.batchSize, Some(param.nPartition))
+        param.batchSize, param.nPartition)
 
       val valSet = SSDDataSet.loadSSDValSet(param.valFolder, sc, param.resolution, param.batchSize,
-        Some(param.nPartition))
+        param.nPartition)
 
-      val model = SSD[Float](classes.length, param.resolution)
+      val model = SSD[Float](classes.length, param.resolution, param.dataset)
       val m = ImageModel.loadModel(param.modelSnapshot.get, modelType = "objectdetection")
       ModuleUtil.loadModelWeights(m, model, false)
 
@@ -138,15 +142,17 @@ object Train {
       }
       optimize(model, trainSet, valSet, param, optimMethod,
         Trigger.maxEpoch(param.maxEpoch), classes)
-//      model.saveModel("./final.model")
+      model.saveModel("./final.model",overWrite = true)
     })
   }
 
-  private def optimize(model: Module[Float],
-    trainSet: DataSet[SSDMiniBatch],
-    valSet: DataSet[SSDMiniBatch], param: TrainParams, optimMethod: OptimMethod[Float],
-    endTrigger: Trigger,
-    classes: Array[String]): Module[Float] = {
+  private def optimize(model: SSD[Float],
+                       trainSet: DistributedFeatureSet[SSDMiniBatch],
+                       valSet: DistributedFeatureSet[SSDMiniBatch],
+                       param: TrainParams,
+                       optimMethod: OptimMethod[Float],
+                       endTrigger: Trigger,
+                       classes: Array[String]): SSD[Float] = {
     val optimizer = Optimizer(
       model = model,
       dataset = trainSet,
@@ -174,6 +180,6 @@ object Train {
         valSet.asInstanceOf[DataSet[MiniBatch[Float]]],
         Array(new MeanAveragePrecision(true, normalized = true, classes = classes)))
       .setEndWhen(endTrigger)
-      .optimize()
+      .optimize().asInstanceOf[SSD[Float]]
   }
 }

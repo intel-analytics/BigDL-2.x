@@ -25,6 +25,7 @@ import com.intel.analytics.bigdl.optim.{L2Regularizer, Regularizer}
 import com.intel.analytics.bigdl.tensor.Storage
 import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric
 import com.intel.analytics.zoo.models.image.objectdetection.common.ModuleUtil
+import com.intel.analytics.bigdl.nn.DetectionOutputSSD
 import org.apache.log4j.Logger
 
 import scala.reflect.ClassTag
@@ -57,7 +58,13 @@ object SSDGraph {
   def apply[@specialized(Float, Double) T: ClassTag](numClasses: Int, resolution: Int,
     input: ModuleNode[T], basePart1: ModuleNode[T], basePart2: ModuleNode[T],
     params: Map[String, ComponetParam], isLastPool: Boolean, normScale: Float,
-    param: DetectionOutputParam,
+                                                     shareLocation: Boolean = true,
+                                                     bgLabel: Int = 0,
+                                                     nmsThresh: Float = 0.45f,
+                                                     nmsTopk: Int = 400,
+                                                     keepTopK: Int = 200,
+                                                     confThresh: Float = 0.01f,
+                                                     varianceEncodedInTarget: Boolean = false,
     wRegularizer: Regularizer[T] = null,
     bRegularizer: Regularizer[T] = null)(implicit ev: TensorNumeric[T])
   : AbstractModule[Activity, Activity, T] = {
@@ -144,7 +151,13 @@ object SSDGraph {
     stopGradient(model)
     val ssd = Sequential[T]()
     ssd.add(model)
-    ssd.add(DetectionOutputSSD[T](param))
+    ssd.add(new DetectionOutputSSD[T](numClasses, shareLocation,
+      bgLabel,
+      nmsThresh,
+      nmsTopk,
+      keepTopK,
+      confThresh,
+      varianceEncodedInTarget))
     setRegularizer(model, _wRegularizer, bRegularizer)
     ssd
   }

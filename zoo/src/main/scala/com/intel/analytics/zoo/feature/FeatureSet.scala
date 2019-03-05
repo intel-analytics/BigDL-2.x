@@ -20,7 +20,7 @@ import java.util.concurrent.atomic.AtomicInteger
 
 import com.intel.analytics.bigdl.dataset.DistributedDataSet
 import com.intel.analytics.bigdl.utils.RandomGenerator
-import com.intel.analytics.zoo.feature.common.{ArrayLike, ArrayLikeWrapper}
+import com.intel.analytics.zoo.feature.common.{ArrayLike, ArrayLikeWrapper, Preprocessing}
 import com.intel.analytics.zoo.feature.pmem._
 import com.intel.analytics.zoo.pipeline.api.keras.layers.utils.EngineRef
 import org.apache.spark.rdd.RDD
@@ -34,9 +34,9 @@ import scala.reflect.ClassTag
  * @param buffer
  */
 // T is the returning value type. like ByteRecord
-class DistributedFeatureSet[T: ClassTag]
+class CachedDistributedFeatureSet[T: ClassTag]
 (buffer: RDD[ArrayLike[T]])
-  extends DistributedDataSet[T] {
+  extends DistributedFeatureSet[T] {
 
   protected lazy val count: Long = buffer.mapPartitions(iter => {
     require(iter.hasNext)
@@ -112,13 +112,55 @@ class DistributedFeatureSet[T: ClassTag]
   }
 }
 
+trait DistributedFeatureSet[T] extends DistributedDataSet[T] {
+
+  def -> [C: ClassTag](transformer: Preprocessing[T, C]): DistributedFeatureSet[C] = {
+    this.transform(transformer)
+  }
+
+  def transform[C: ClassTag](transformer: Preprocessing[T, C]): DistributedFeatureSet[C] = {
+    val preDataSet = this
+
+    val broadcast = this.originRDD().sparkContext.broadcast(transformer)
+
+    val cachedTransformer =
+      preDataSet.originRDD().mapPartitions(_ => Iterator
+        .single(broadcast.value.cloneTransformer())
+      ).setName("Cached Transformer").persist()
+
+
+    new DistributedFeatureSet[C] {
+      override def size(): Long = preDataSet.size()
+
+      override def shuffle(): Unit = preDataSet.shuffle()
+
+      override def data(train: Boolean): RDD[C] =
+        preDataSet.data(train).zipPartitions(cachedTransformer)(
+          (data, tran) => tran.next()(data))
+
+      override def originRDD(): RDD[_] = preDataSet.originRDD()
+
+      override def cache(): Unit = {
+        cachedTransformer.count()
+        isCached = true
+      }
+
+      override def unpersist(): Unit = {
+        cachedTransformer.unpersist()
+        isCached = false
+      }
+    }
+  }
+
+}
+
 object DRAMFeatureSet {
   def rdd[T: ClassTag](data: RDD[T]): DistributedFeatureSet[T] = {
     val arrayLikeRDD = data.mapPartitions(iter => {
         Iterator.single(new ArrayLikeWrapper(iter.toArray))
       }).setName(s"cached feature set: ${data.name} in DRAM" )
       .cache().asInstanceOf[RDD[ArrayLike[T]]]
-    new DistributedFeatureSet[T](arrayLikeRDD)
+    new CachedDistributedFeatureSet[T](arrayLikeRDD)
   }
 }
 
