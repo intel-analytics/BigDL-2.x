@@ -29,7 +29,7 @@ from nlp_architect.utils.io import validate, validate_existing_directory, \
     validate_existing_filepath, validate_parent_exists
 from nlp_architect.utils.metrics import get_conll_scores
 from zoo.common.nncontext import *
-from zoo.tfpark import IntentAndEntity
+from zoo.tfpark.text import IntentAndEntity
 
 
 def validate_input_args():

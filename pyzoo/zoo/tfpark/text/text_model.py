@@ -14,9 +14,7 @@
 # limitations under the License.
 #
 
-from zoo.tfpark import KerasModel
-from zoo.util.tf import variable_creator_scope
-import nlp_architect.models.intent_extraction as intent_models
+from zoo.tfpark import KerasModel, variable_creator_scope
 
 
 # TODO: add word embedding file support
@@ -40,21 +38,4 @@ class TextKerasModel(KerasModel):
         labor.load(path)
         model = KerasModel(labor.model)
         model.labor = labor
-        return model
-
-
-class IntentAndEntity(TextKerasModel):
-    def __init__(self, word_length, num_labels, num_intent_labels, word_vocab_size,
-                 char_vocab_size, word_emb_dims=100, char_emb_dims=30,
-                 char_lstm_dims=30, tagger_lstm_dims=100, dropout=0.2, optimizer='adam'):
-        super(IntentAndEntity, self).__init__(intent_models.MultiTaskIntentModel(use_cudnn=False), optimizer,
-                                              word_length, num_labels, num_intent_labels,
-                                              word_vocab_size, char_vocab_size, word_emb_dims,
-                                              char_emb_dims, char_lstm_dims, tagger_lstm_dims, dropout)
-
-    @staticmethod
-    def load_model(path):
-        labor = intent_models.MultiTaskIntentModel(use_cudnn=False)
-        model = TextKerasModel._load_model(labor, path)
-        model.__class__ = IntentAndEntity
         return model
