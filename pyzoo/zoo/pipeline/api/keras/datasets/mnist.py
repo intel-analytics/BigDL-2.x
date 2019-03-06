@@ -15,11 +15,10 @@
 #
 
 import gzip
-
 import numpy
 
 from bigdl.dataset import base
-from bigdl.dataset.transformer import *
+
 
 SOURCE_URL = 'http://yann.lecun.com/exdb/mnist/'
 
@@ -119,21 +118,14 @@ def read_data_sets(train_dir, data_type="train"):
         return test_images, test_labels
 
 
-def load_data(location="/tmp/mnist"):
+def load_data(location="/tmp/.zoo/mnist"):
     (train_images, train_labels) = read_data_sets(location, "train")
     (test_images, test_labels) = read_data_sets(location, "test")
-    X_train = normalizer(train_images, TRAIN_MEAN, TRAIN_STD)
-    X_test = normalizer(test_images, TRAIN_MEAN, TRAIN_STD)
-    Y_train = train_labels + 1
-    Y_test = test_labels + 1
-    return (X_train, Y_train), (X_test, Y_test)
+
+    return (train_images, train_labels), (test_images, test_labels)
 
 
 if __name__ == "__main__":
     (train_images, train_labels), (test_images, test_labels) = load_data()
-    train, _ = read_data_sets("/tmp/mnist/", "train")
-    test, _ = read_data_sets("/tmp/mnist", "test")
-    assert numpy.abs(numpy.mean(train) - TRAIN_MEAN) / TRAIN_MEAN < 1e-7
-    assert numpy.abs(numpy.std(train) - TRAIN_STD) / TRAIN_STD < 1e-7
-    assert numpy.abs(numpy.mean(test) - TEST_MEAN) / TEST_MEAN < 1e-7
-    assert numpy.abs(numpy.std(test) - TEST_STD) / TEST_STD < 1e-7
+    train, _ = read_data_sets("/tmp/.zoo/mnist/", "train")
+    test, _ = read_data_sets("/tmp/.zoo/mnist", "test")
