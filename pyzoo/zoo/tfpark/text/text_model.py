@@ -22,8 +22,8 @@ class TextKerasModel(KerasModel):
     def __init__(self, labor, optimizer=None, *args):
         self.labor = labor
         with variable_creator_scope():
-            labor.build(*args)
-            model = labor.model
+            self.labor.build(*args)
+            model = self.labor.model
             # tf.train.optimizers will cause error, e.g. lr vs learning_rate
             # use string to recompile or use a mapping between tf.train.optimizers and tf.keras.optimizers
             if optimizer:
@@ -35,7 +35,8 @@ class TextKerasModel(KerasModel):
 
     @staticmethod
     def _load_model(labor, path):
-        labor.load(path)
-        model = KerasModel(labor.model)
-        model.labor = labor
-        return model
+        with variable_creator_scope():
+            labor.load(path)
+            model = KerasModel(labor.model)
+            model.labor = labor
+            return model

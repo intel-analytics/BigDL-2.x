@@ -14,18 +14,18 @@
 # limitations under the License.
 #
 
-from zoo.tfpark.text import TextKerasModel
 import nlp_architect.models.intent_extraction as intent_models
+from zoo.tfpark.text import TextKerasModel
 
 
 class IntentAndEntity(TextKerasModel):
-    def __init__(self, word_length, num_labels, num_intent_labels, word_vocab_size,
-                 char_vocab_size, word_emb_dims=100, char_emb_dims=30,
-                 char_lstm_dims=30, tagger_lstm_dims=100, dropout=0.2, optimizer='adam'):
+    def __init__(self, num_intents, num_entities, word_length, word_vocab_size,
+                 char_vocab_size, word_emb_dim=100, char_emb_dim=30,
+                 char_lstm_dim=30, tagger_lstm_dim=100, dropout=0.2, optimizer='adam'):
         super(IntentAndEntity, self).__init__(intent_models.MultiTaskIntentModel(use_cudnn=False), optimizer,
-                                              word_length, num_labels, num_intent_labels,
-                                              word_vocab_size, char_vocab_size, word_emb_dims,
-                                              char_emb_dims, char_lstm_dims, tagger_lstm_dims, dropout)
+                                              word_length, num_entities, num_intents,
+                                              word_vocab_size, char_vocab_size, word_emb_dim,
+                                              char_emb_dim, char_lstm_dim, tagger_lstm_dim, dropout)
 
     @staticmethod
     def load_model(path):

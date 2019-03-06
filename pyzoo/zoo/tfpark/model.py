@@ -16,6 +16,7 @@
 
 from bigdl.optim.optimizer import MaxEpoch
 from tensorflow.python.keras.engine import training_utils
+from tensorflow.python.keras import models
 
 from zoo.common.nncontext import getOrCreateSparkContext
 from zoo.pipeline.api.net import TFDataset, TFOptimizer, TFPredictor
@@ -58,6 +59,14 @@ class KerasModel(object):
 
     def load_weights(self, filepath, by_name=False):
         self.model.load_weights(filepath, by_name)
+
+    def save_model(self, path):
+        assert self.model, 'Model has not been defined yet'
+        self.model.save(path)
+
+    @staticmethod
+    def load_model(path):
+        return KerasModel(models.load_model(path))
 
     def fit(self,
             x=None,

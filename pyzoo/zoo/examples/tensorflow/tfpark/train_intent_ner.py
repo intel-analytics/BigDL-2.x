@@ -95,8 +95,8 @@ if __name__ == '__main__':
                             dataset.intent_size,
                             dataset.word_vocab_size,
                             dataset.char_vocab_size,
-                            word_emb_dims=args.token_emb_size,
-                            tagger_lstm_dims=args.lstm_hidden_size,
+                            word_emb_dim=args.token_emb_size,
+                            tagger_lstm_dim=args.lstm_hidden_size,
                             dropout=args.tagger_dropout)
     model.fit([train_x, train_char], [train_i, train_y], batch_size=args.b,
               distributed=True, epochs=args.e)

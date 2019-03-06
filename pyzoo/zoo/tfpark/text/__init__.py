@@ -16,3 +16,5 @@
 
 from .text_model import *
 from .intent_extraction import *
+from .ner import *
+from .pos_tagging import *

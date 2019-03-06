@@ -24,12 +24,21 @@ from zoo.tfpark.text import *
 class TestTextModel(ZooTestCase):
 
     def test_intent_entity(self):
-        model = IntentAndEntity(10, 5, 8, 200, 50)
-        input = [np.random.randint(200, size=(8, 30)), np.random.randint(50, size=(8, 30, 10))]
-        output = model.predict(input, distributed=True)
+        model = IntentAndEntity(num_intents=8, num_entities=5, word_length=10,
+                                word_vocab_size=200, char_vocab_size=50)
+        input_data = [np.random.randint(200, size=(8, 30)), np.random.randint(50, size=(8, 30, 10))]
+        output = model.predict(input_data, distributed=True)
         assert isinstance(output, list) and len(output) == 2
         assert output[0].shape == (8, 8)
         assert output[1].shape == (8, 30, 5)
+        self.assert_tfpark_model_save_load(model, input_data)
+
+    def test_ner_crf(self):
+        model = NERCRF(num_entities=10, word_length=5, word_vocab_size=20, char_vocab_size=10)
+        input_data = [np.random.randint(20, size=(15, 12)), np.random.randint(10, size=(15, 12, 5))]
+        output = model.predict(input_data, distributed=True)
+        assert output.shape == (15, 12, 10)
+        self.assert_tfpark_model_save_load(model, input_data)
 
 
 if __name__ == "__main__":
