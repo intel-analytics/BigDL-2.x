@@ -14,34 +14,32 @@
  * limitations under the License.
  */
 
-package com.intel.analytics.zoo.models.attention
+package com.intel.analytics.zoo.pipeline.api.keras.layers
 
 import com.intel.analytics.bigdl.nn.RandomNormal
-import com.intel.analytics.bigdl.nn.abstractnn.{AbstractModule, Activity}
+import com.intel.analytics.bigdl.nn.abstractnn.AbstractModule
 import com.intel.analytics.bigdl.nn.keras.KerasLayer
+import com.intel.analytics.bigdl.tensor.Tensor
 import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric
 import com.intel.analytics.bigdl.utils.{Shape, SingleShape}
-import com.intel.analytics.zoo.models.common.ZooModel
-import com.intel.analytics.zoo.pipeline.api.keras.layers._
-import com.intel.analytics.zoo.pipeline.api.autograd.{AutoGrad, Parameter, Variable}
-import com.intel.analytics.zoo.pipeline.api.keras.models.{Model, Sequential}
-import com.intel.analytics.bigdl.tensor.Tensor
 import com.intel.analytics.zoo.pipeline.api.Net
+import com.intel.analytics.zoo.pipeline.api.autograd.{AutoGrad, Parameter, Variable}
 import com.intel.analytics.zoo.pipeline.api.keras.layers.utils.KerasUtils
+import com.intel.analytics.zoo.pipeline.api.keras.models.{KerasNet, Model, Sequential}
 
 import scala.reflect.ClassTag
 
-class TransformerLayer[T: ClassTag] (
-  val vocab: Int,
-  val nCtx: Int,
-  val embeddingSize: Int,
-  val embeddingDrop: Double,
-  val nLayer: Int,
-//  afn: String,
-  val residPdrop: Double,
-  val attnPdrop: Double,
-  val nHead: Int,
-  var inputShape: Shape = null)(implicit ev: TensorNumeric[T])
+class TransformerEncoder[T: ClassTag](
+   val vocab: Int,
+   val seqLen: Int,
+   val nLayer: Int,
+   val residPdrop: Double,
+   val attnPdrop: Double,
+   val nHead: Int,
+   var embeddingSize: Int,
+   val embeddingDrop: Double,
+   val embeddingLayer: KerasLayer[Tensor[T], Tensor[T], T],
+   var inputShape: Shape = null)(implicit ev: TensorNumeric[T])
   extends KerasLayer[Tensor[T], Tensor[T], T](KerasUtils.addBatch(inputShape))
     with Net {
 
@@ -50,13 +48,26 @@ class TransformerLayer[T: ClassTag] (
     require(inputShape.isInstanceOf[SingleShape], "TransformerLayer input must" +
       " be a single shape")
     val _inputShape = KerasUtils.removeBatch(inputShape)
-    require(_inputShape.equals(Shape(nCtx, 2)), "TransformerLayer input shape" +
-      " must be Shape(nCtx, 2)")
+    require(_inputShape.equals(Shape(seqLen, 2)), "TransformerLayer input shape" +
+      " must be Shape(seqLen, 2)")
     val input = Variable(_inputShape)
-    val r = Reshape(Array(nCtx * 2)).from(input)
-    val e = Embedding(vocab, embeddingSize, inputLength = nCtx * 2).from(r)
+    val r = Reshape(Array(seqLen * 2)).from(input)
 
-    val r2 = Reshape(Array(nCtx, 2, embeddingSize)).from(e)
+    val _embedding = Sequential[T]()
+    if (embeddingLayer == null) {
+      require(embeddingSize > 0, "embeddingSize must be great" +
+        "than 0 with default embedding layer")
+        _embedding.add(Embedding(vocab, embeddingSize, inputLength = seqLen * 2))
+        .add(Dropout(embeddingDrop))
+    } else {
+      _embedding.add(embeddingLayer)
+    }
+    val e = _embedding.from(r)
+
+    if (embeddingSize == 0) {
+      embeddingSize = e.getOutputShape().toSingle().last
+    }
+    val r2 = Reshape(Array(seqLen, 2, embeddingSize)).from(e)
 
     val h = AutoGrad.sum(r2, 2, false)
 
@@ -83,7 +94,7 @@ class TransformerLayer[T: ClassTag] (
       initWeight = Tensor.ones[T](embeddingSize).view(1, embeddingSize))
     val b2 = Parameter[T](Shape(1, embeddingSize),
       initWeight = Tensor[T](embeddingSize).view(1, embeddingSize))
-    val a = attention(x)
+    val a = multiHeadSelfAttention(x)
     val n = layerNorm(x + a, weight = g, bias = b)
     val m = mlp(n)
     val h = layerNorm(n + m, weight = g2, bias = b2)
@@ -112,7 +123,7 @@ class TransformerLayer[T: ClassTag] (
     Dropout(residPdrop).from(h2)
   }
 
-  def attention(x: Variable[T]): Variable[T] = {
+  def multiHeadSelfAttention(x: Variable[T]): Variable[T] = {
     val c = new Convolution1D(embeddingSize * 3, 1, init = RandomNormal(0.0, 0.02)).from(x)
     val query = c.slice(2, 0, embeddingSize)
     val key = c.slice(2, embeddingSize, embeddingSize)
@@ -142,8 +153,8 @@ class TransformerLayer[T: ClassTag] (
   }
 
   // weights and ab belong to Attention
-  val weights = Utils.tril(Tensor.ones(nCtx, nCtx)).view(1, nCtx, nCtx)
-  val ab = Parameter[T](Shape(1, nCtx, nCtx), trainable = false, initWeight = weights)
+  val weights = KerasUtils.tril(Tensor.ones(seqLen, seqLen)).view(1, seqLen, seqLen)
+  val ab = Parameter[T](Shape(1, seqLen, seqLen), trainable = false, initWeight = weights)
 
   // scale shoule be set in Attention
   def attn(q: Variable[T], k: Variable[T], v: Variable[T], scale: Boolean = false): Variable[T] = {
@@ -160,19 +171,30 @@ class TransformerLayer[T: ClassTag] (
   }
 }
 
-object TransformerLayer {
+object TransformerEncoder {
   def apply[@specialized(Float, Double) T: ClassTag](
     vocab: Int = 40990,
-    nCtx: Int = 77, // seq len
-    embeddingSize: Int = 768,
-    embeddingDrop: Double = 0.1,
+    seqLen: Int = 77, // seq len
     nLayer: Int = 12,
-//    afn: String = "gelu",
     residPdrop: Double = 0.1,
     attnPdrop: Double = 0.1,
-    nHead: Int = 12)(implicit ev: TensorNumeric[T]): TransformerLayer[T] = {
-    new TransformerLayer[T](vocab, nCtx, embeddingSize, embeddingDrop, nLayer,
-//      afn,
-      residPdrop, attnPdrop, nHead)
+    nHead: Int = 12,
+    embeddingSize: Int = 0,
+    embeddingDrop: Double = 0)(implicit ev: TensorNumeric[T]): TransformerEncoder[T] = {
+    new TransformerEncoder[T](vocab, seqLen, nLayer,
+      residPdrop, attnPdrop, nHead, embeddingSize, embeddingDrop, null)
+  }
+
+  def apply[@specialized(Float, Double) T: ClassTag](
+    vocab: Int,
+    seqLen: Int,
+    nLayer: Int,
+    residPdrop: Double,
+    attnPdrop: Double,
+    nHead: Int,
+    embeddingLayer: KerasLayer[Tensor[T], Tensor[T], T])
+    (implicit ev: TensorNumeric[T]): TransformerEncoder[T] = {
+    new TransformerEncoder[T](vocab, seqLen, nLayer,
+      residPdrop, attnPdrop, nHead, 0, 0, embeddingLayer = embeddingLayer)
   }
 }
