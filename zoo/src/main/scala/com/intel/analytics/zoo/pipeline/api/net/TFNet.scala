@@ -581,59 +581,6 @@ object TFNet {
 
   assert(TFNetNative.isLoaded)
 
-  private def extractResource(resource: InputStream,
-                              resourceName: String,
-                              extractToDirectory: String) = {
-    val dst = new File(extractToDirectory, resourceName)
-    dst.deleteOnExit()
-    val dstPath = dst.toString
-    val nbytes = copy(resource, dst)
-    dstPath
-  }
-
-  private def copy(src: InputStream, dstFile: File) = {
-    val dst = new FileOutputStream(dstFile)
-    try {
-      val buffer = new Array[Byte](1 << 20)
-      // 1MB
-      var ret = 0
-      var n = 0
-      var continue = true
-      while (continue) {
-        n = src.read(buffer)
-        if (n >= 0) {
-          dst.write(buffer, 0, n)
-          ret += n
-        } else {
-          continue = false
-        }
-      }
-      ret
-    } finally {
-      dst.close()
-      src.close()
-    }
-  }
-
-
-  private def createTemporaryDirectory: File = {
-    val baseDirectory = new File(System.getProperty("java.io.tmpdir"))
-    val directoryName = "tensorflow_native_libraries-" + System.currentTimeMillis + "-"
-    var attempt = 0
-    while ( {
-      attempt < 1000
-    }) {
-      val temporaryDirectory = new File(baseDirectory, directoryName + attempt)
-      if (temporaryDirectory.mkdir) return temporaryDirectory
-
-      {
-        attempt += 1; attempt - 1
-      }
-    }
-    throw new IllegalStateException("Could not create a temporary directory (tried to make " + directoryName + "*) to extract TensorFlow native libraries.")
-  }
-
-
   @transient
   private lazy val inDriver = NetUtils.isDriver
 
