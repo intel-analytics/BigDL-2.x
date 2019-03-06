@@ -33,6 +33,7 @@ class TextKerasModel(KerasModel):
     def save_model(self, path):
         self.labor.save(path)
 
+    # Remark: CRF has error when directly load by tf.keras load_model
     @staticmethod
     def _load_model(labor, path):
         with variable_creator_scope():

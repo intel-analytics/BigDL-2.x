@@ -15,6 +15,8 @@
 #
 
 import nlp_architect.models.intent_extraction as intent_models
+from tensorflow.python.keras.models import Model
+from zoo.tfpark import KerasModel
 from zoo.tfpark.text import TextKerasModel
 
 
@@ -32,4 +34,24 @@ class IntentAndEntity(TextKerasModel):
         labor = intent_models.MultiTaskIntentModel(use_cudnn=False)
         model = TextKerasModel._load_model(labor, path)
         model.__class__ = IntentAndEntity
+        return model
+
+
+class IntentExtractor(KerasModel):
+    """
+    The model uses only the word-level input and intent output of IntentAndEntity.
+    """
+    def __init__(self, num_intents, word_vocab_size, word_emb_dim=100,
+                 lstm_hidden_size=100, dropout=0.2, optimizer='adam'):
+        labor = IntentAndEntity(num_intents, 2, 2, word_vocab_size, 2, word_emb_dim,
+                                tagger_lstm_dim=lstm_hidden_size, dropout=dropout)
+        model = Model(labor.model.input[0], labor.model.output[0])
+        model.compile(loss=labor.model.loss["intent_classifier_output"], optimizer=optimizer,
+                      metrics=[labor.model.metrics["intent_classifier_output"]])
+        super(IntentExtractor, self).__init__(model)
+
+    @staticmethod
+    def load_model(path):
+        model = KerasModel.load_model(path)
+        model.__class__ = IntentExtractor
         return model

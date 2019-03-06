@@ -27,11 +27,27 @@ class NERCRF(TextKerasModel):
         super(NERCRF, self).__init__(ner_model.NERCRF(use_cudnn=False), optimizer,
                                      word_length, num_entities, word_vocab_size, char_vocab_size, word_emb_dim,
                                      char_emb_dim, 20, tagger_lstm_dim, dropout, crf_mode)
-        # Remark: In nlp-architect NERCRF.build(..), word_lstm_dims is never used. Thus, remove this argument here.
+        # Remark: In nlp-architect NERCRF.build(..), word_lstm_dims is never used.
+        # Thus, remove this argument here to avoid ambiguity.
 
     @staticmethod
     def load_model(path):
         labor = ner_model.NERCRF(use_cudnn=False)
         model = TextKerasModel._load_model(labor, path)
         model.__class__ = NERCRF
+        return model
+
+
+class NERSeq2seq(TextKerasModel):
+    def __init__(self, num_entities, word_vocab_size, word_emb_dim=100, encoder_depth=1, decoder_depth=1,
+                 lstm_hidden_size=100, encoder_dropout=0.5, decoder_dropout=0.5, optimizer='adam'):
+        super(NERSeq2seq, self).__init__(Seq2SeqIntentModel(), optimizer, word_vocab_size, num_entities,
+                                         word_emb_dim, encoder_depth, decoder_depth, lstm_hidden_size,
+                                         encoder_dropout, decoder_dropout)
+
+    @staticmethod
+    def load_model(path):
+        labor = Seq2SeqIntentModel()
+        model = TextKerasModel._load_model(labor, path)
+        model.__class__ = NERSeq2seq
         return model
