@@ -3,7 +3,7 @@ package com.intel.analytics.zoo.pipeline.estimator
 import com.intel.analytics.bigdl.Module
 import com.intel.analytics.bigdl.dataset.{DistributedDataSet, MiniBatch}
 import com.intel.analytics.bigdl.nn._
-import com.intel.analytics.bigdl.optim.{LBFGS, SGD, Trigger}
+import com.intel.analytics.bigdl.optim.{LBFGS, Loss, SGD, Trigger}
 import com.intel.analytics.bigdl.tensor.{Storage, Tensor}
 import com.intel.analytics.bigdl.utils.{Engine, LoggerFilter, RandomGenerator}
 import com.intel.analytics.zoo.common.NNContext
@@ -147,6 +147,30 @@ class DistriEstimatorSpec extends ZooSpecHelper {
 
     val result2 = mm.forward(input2).asInstanceOf[Tensor[Double]]
     result2(Array(1)) should be(1.0 +- 5e-2)
+  }
+
+  "Train multi times" should "be trained with good result" in {
+    LoggerFilter.redirectSparkInfoLogs()
+    val mm = mse
+    mm.parameters()._1.foreach(_.fill(0.125))
+    val estimator = Estimator(mm, new MSECriterion[Double]())
+    val sgd = new SGD[Double](20)
+    estimator.train(dataSet, sgd, maxSteps = Some(10))
+    estimator.evaluate(dataSet, Array(new Loss[Double](new MSECriterion[Double]())))
+    estimator.train(dataSet, sgd, maxSteps = Some(20))
+    estimator.evaluate(dataSet, Array(new Loss[Double](new MSECriterion[Double]())))
+    estimator.train(dataSet, sgd, maxSteps = Some(30))
+    estimator.evaluate(dataSet, Array(new Loss[Double](new MSECriterion[Double]())))
+  }
+
+  "Evaluate" should "works with good result" in {
+    LoggerFilter.redirectSparkInfoLogs()
+    val mm = mse
+    mm.parameters()._1.foreach(_.fill(0.125))
+    val estimator = Estimator(mm, new MSECriterion[Double]())
+    estimator.train(dataSet, new SGD[Double](20), Option(Trigger.maxEpoch(1)))
+    val result = estimator.evaluate(dataSet, Array(new Loss[Double](new MSECriterion[Double]())))
+    result
   }
 
 }

@@ -23,7 +23,7 @@ import com.intel.analytics.bigdl.optim._
 import com.intel.analytics.bigdl.utils.{Engine, LoggerFilter, T, Table}
 import com.intel.analytics.zoo.feature.pmem.MemoryType
 import com.intel.analytics.zoo.pipeline.api.keras.layers.utils.EngineRef
-import com.intel.analytics.zoo.pipeline.estimator.Estimator
+import com.intel.analytics.zoo.pipeline.estimator.{Estimator}
 import org.apache.log4j.{Level, Logger}
 import org.apache.spark.SparkContext
 
@@ -206,9 +206,14 @@ object TrainInceptionV1Estimator {
         )
       }
 
-      estimator.train(trainSet, optimMethod,
-        trigger = Some(endTrigger),
-        checkPoint = Some(checkpointTrigger))
+      var iter = 0
+      while (iter < param.maxIteration) {
+        iter += param.checkpointIteration
+        estimator.train(trainSet, optimMethod,
+          maxSteps = Some(iter),
+          checkPoint = Some(checkpointTrigger))
+        estimator.evaluate(valSet, Array(new Top1Accuracy[Float], new Top5Accuracy[Float]))
+      }
 
       sc.stop()
     })
