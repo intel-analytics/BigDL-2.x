@@ -19,7 +19,7 @@ from bigdl.dataset import base
 import numpy as np
 
 from six.moves import cPickle
-import sys
+
 
 def download_imdb(dest_dir):
     """Download pre-processed IMDB movie review data
@@ -37,41 +37,42 @@ def download_imdb(dest_dir):
     return file_abs_path
 
 
-def load_data(dest_dir='/tmp/.bigdl/dataset', nb_words=None, oov_char=2):
+def load_data(dest_dir='/tmp/.zoo/dataset', nb_words=None, oov_char=2):
     """Load IMDB dataset.
 
     :argument
         dest_dir: where to cache the data (relative to `~/.bigdl/dataset`).
         nb_words: number of words to keep, the words are already indexed by frequency
                   so that the less frequent words would be abandoned
-        oov_char: index to pad the abandoned words, if None, one abandoned word 
+        oov_char: index to pad the abandoned words, if None, one abandoned word
                   would be taken place with its next word and total length -= 1
-
     :return
         the train, test separated IMDB dataset.
     """
     path = download_imdb(dest_dir)
-    '''
-    f = np.load(path)
-    x_train = f['x_train']
-    y_train = f['y_train']
-    x_test = f['x_test']
-    y_test = f['y_test']
-    '''
+
     f = open(path, 'rb')
 
     (x_train, y_train), (x_test, y_test) = cPickle.load(f)
     # imdb.pkl would return different numbers of variables, not 4
 
     f.close()
-
+    shuffle_by_seed([x_train, y_train, x_test, y_test])
     x = x_train + x_test
 
     if not nb_words:
         nb_words = max([max(s) for s in x])
 
     if oov_char is not None:
-        x = [[oov_char if word >= nb_words else word for word in s] for s in x]
+        new_x = []
+        for s in x:
+            new_s = []
+            for word in s:
+                if word >= nb_words:
+                    new_s.append(oov_char)
+                else:
+                    new_s.append(word)
+            new_x.append(new_s)
     else:
         new_x = []
         for s in x:
@@ -80,18 +81,19 @@ def load_data(dest_dir='/tmp/.bigdl/dataset', nb_words=None, oov_char=2):
                 if word < nb_words:
                     new_s.append(word)
             new_x.append(new_s)
-        x = new_x
+    x = new_x
 
-    x_train = np.array(x[:len(x_train)])
-    y_train = np.array(y_train)
-
-    x_test = np.array(x[len(x_test):])
-    y_test = np.array(y_test)
-
-    return (x_train, y_train), (x_test, y_test)
+    return (np.array(x[:len(x_train)]), np.array(y_train)), \
+           (np.array(x[len(x_train):]), np.array(y_test))
 
 
-def get_word_index(dest_dir='/tmp/.bigdl/dataset', path='imdb_word_index.pkl'):
+def shuffle_by_seed(arr_list, seed=0):
+    for arr in arr_list:
+        np.random.seed(seed)
+        np.random.shuffle(arr)
+
+
+def get_word_index(dest_dir='/tmp/.zoo/dataset', path='imdb_word_index.pkl'):
     """Retrieves the dictionary mapping word indices back to words.
 
     # Arguments
@@ -107,10 +109,7 @@ def get_word_index(dest_dir='/tmp/.bigdl/dataset', path='imdb_word_index.pkl'):
                     )
     f = open(path, 'rb')
 
-    if sys.version_info < (3,):
-        data = cPickle.load(f)
-    else:
-        data = cPickle.load(f, encoding='latin1')
+    data = cPickle.load(f, encoding='latin1')
 
     f.close()
     return data
