@@ -26,19 +26,23 @@ import com.intel.analytics.zoo.models.image.common.ImageModel
 
 import scala.reflect.ClassTag
 
-class SSD[T: ClassTag](classNum: Int, resolution: Int = 300,
-                       dataset: String = "pascal", sizes: Array[Float] = null,
-                       shareLocation: Boolean = true,
-                       bgLabel: Int = 0,
-                       nmsThresh: Float = 0.45f,
-                       nmsTopk: Int = 400,
-                       keepTopK: Int = 200,
-                       confThresh: Float = 0.01f,
-                       varianceEncodedInTarget: Boolean = false)(implicit ev: TensorNumeric[T])
-  extends ImageModel[T] {
+
+abstract class SSD[T: ClassTag]()(implicit ev: TensorNumeric[T])
+  extends ImageModel[T]
+
+class SSDVGG[T: ClassTag](classNum: Int, resolution: Int = 300,
+                          dataset: String = "pascal", sizes: Array[Float] = null,
+                          shareLocation: Boolean = true,
+                          bgLabel: Int = 0,
+                          nmsThresh: Float = 0.45f,
+                          nmsTopk: Int = 400,
+                          keepTopK: Int = 200,
+                          confThresh: Float = 0.01f,
+                          varianceEncodedInTarget: Boolean = false)(implicit ev: TensorNumeric[T])
+  extends SSD[T] {
 
   override def buildModel(): AbstractModule[Activity, Activity, T] = {
-    SSDVgg[T](classNum, resolution, dataset, sizes,
+    SSDVGG.build[T](classNum, resolution, dataset, sizes,
       shareLocation,
       bgLabel,
       nmsThresh,
@@ -49,14 +53,14 @@ class SSD[T: ClassTag](classNum: Int, resolution: Int = 300,
   }
 }
 
-object SSD {
+object SSDVGG {
   def apply[T: ClassTag](classNum: Int, resolution: Int = 300,
                          dataset: String = "pascal", sizes: Array[Float] = null,
                          postProcessParam: DetectionOutputParam = null)
-                        (implicit ev: TensorNumeric[T]): SSD[T] = {
+                        (implicit ev: TensorNumeric[T]): SSDVGG[T] = {
     val postParam = if (postProcessParam == null) DetectionOutputParam(classNum)
     else postProcessParam
-    new SSD(classNum, resolution, dataset, sizes,
+    new SSDVGG[T](classNum, resolution, dataset, sizes,
       postParam.shareLocation,
       postParam.bgLabel,
       postParam.nmsThresh,
@@ -65,22 +69,18 @@ object SSD {
       postParam.confThresh,
       postParam.varianceEncodedInTarget).build()
   }
-}
 
-
-object SSDVgg {
-
-  def apply[@specialized(Float, Double) T: ClassTag](classNum: Int, resolution: Int = 300,
-                                                     dataset: String = "pascal",
-                                                     sizes: Array[Float] = null,
-                                                     shareLocation: Boolean = true,
-                                                     bgLabel: Int = 0,
-                                                     nmsThresh: Float = 0.45f,
-                                                     nmsTopk: Int = 400,
-                                                     keepTopK: Int = 200,
-                                                     confThresh: Float = 0.01f,
-                                                     varianceEncodedInTarget: Boolean = false)
-                                                    (implicit ev: TensorNumeric[T]): Module[T] = {
+  def build[T: ClassTag](classNum: Int, resolution: Int = 300,
+                         dataset: String = "pascal",
+                         sizes: Array[Float] = null,
+                         shareLocation: Boolean = true,
+                         bgLabel: Int = 0,
+                         nmsThresh: Float = 0.45f,
+                         nmsTopk: Int = 400,
+                         keepTopK: Int = 200,
+                         confThresh: Float = 0.01f,
+                         varianceEncodedInTarget: Boolean = false)
+                        (implicit ev: TensorNumeric[T]): Module[T] = {
     require(resolution == 300 || resolution == 512, "only support 300*300 or 512*512 as input")
     val isClip = false
     val isFlip = true
@@ -106,7 +106,7 @@ object SSDVgg {
       }
     }
 
-    val (conv1_1, relu4_3, pool5) = SSDVgg.vgg16[T]
+    val (conv1_1, relu4_3, pool5) = vgg16[T]
 
     if (resolution == 300) {
       params += "conv4_3_norm" -> ComponetParam(512, 4,

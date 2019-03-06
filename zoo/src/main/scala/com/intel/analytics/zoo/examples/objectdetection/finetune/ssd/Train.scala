@@ -29,7 +29,7 @@ import com.intel.analytics.zoo.models.image.objectdetection.common.ModuleUtil
 import com.intel.analytics.zoo.models.image.objectdetection.common.nn.MultiBoxLoss
 import com.intel.analytics.zoo.models.image.objectdetection.common.nn.MultiBoxLossParam
 import com.intel.analytics.zoo.models.image.objectdetection.common.optim.MeanAveragePrecision
-import com.intel.analytics.zoo.models.image.objectdetection.ssd.{SSD, SSDDataSet, SSDMiniBatch}
+import com.intel.analytics.zoo.models.image.objectdetection.ssd.{SSDVGG, SSDDataSet, SSDMiniBatch}
 import org.apache.log4j.{Level, Logger}
 import org.apache.spark.SparkConf
 import scopt.OptionParser
@@ -130,7 +130,7 @@ object Train {
       val valSet = SSDDataSet.loadSSDValSet(param.valFolder, sc, param.resolution, param.batchSize,
         param.nPartition)
 
-      val model = SSD[Float](classes.length, param.resolution, param.dataset)
+      val model = SSDVGG[Float](classes.length, param.resolution, param.dataset)
       val m = ImageModel.loadModel(param.modelSnapshot.get, modelType = "objectdetection")
       ModuleUtil.loadModelWeights(m, model, false)
 
@@ -146,13 +146,13 @@ object Train {
     })
   }
 
-  private def optimize(model: SSD[Float],
+  private def optimize(model: SSDVGG[Float],
                        trainSet: DistributedFeatureSet[SSDMiniBatch],
                        valSet: DistributedFeatureSet[SSDMiniBatch],
                        param: TrainParams,
                        optimMethod: OptimMethod[Float],
                        endTrigger: Trigger,
-                       classes: Array[String]): SSD[Float] = {
+                       classes: Array[String]): SSDVGG[Float] = {
     val optimizer = Optimizer(
       model = model,
       dataset = trainSet,
@@ -180,6 +180,6 @@ object Train {
         valSet.asInstanceOf[DataSet[MiniBatch[Float]]],
         Array(new MeanAveragePrecision(true, normalized = true, classes = classes)))
       .setEndWhen(endTrigger)
-      .optimize().asInstanceOf[SSD[Float]]
+      .optimize().asInstanceOf[SSDVGG[Float]]
   }
 }
