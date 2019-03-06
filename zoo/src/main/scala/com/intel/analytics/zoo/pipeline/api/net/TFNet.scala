@@ -24,6 +24,7 @@ import com.intel.analytics.bigdl.nn.abstractnn.{AbstractModule, Activity}
 import com.intel.analytics.bigdl.tensor.Tensor
 import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric
 import com.intel.analytics.bigdl.utils.{MultiShape, Shape, T}
+import com.intel.analytics.zoo.core.tfnet.TFNetNative
 import com.intel.analytics.zoo.pipeline.api.{Predictable, Predictor}
 import com.intel.analytics.zoo.pipeline.api.net.TFNet.TFGraphHolder
 import org.apache.spark.rdd.RDD
@@ -578,35 +579,7 @@ class TFNet(private val graphDef: TFGraphHolder,
 
 object TFNet {
 
-  val iomp5name = "libiomp5.so"
-  val iomp5Resource: InputStream =
-    classOf[TFNet].getClassLoader.getResourceAsStream("org/tensorflow/native/linux-x86_64/libiomp5.so")
-
-  val mklname = "libmklml_intel.so"
-  val mklResource: InputStream =
-    classOf[TFNet].getClassLoader.getResourceAsStream("org/tensorflow/native/linux-x86_64/libmklml_intel.so")
-
-  val frameworkname = "libtensorflow_framework.so"
-  val frameworkResource: InputStream =
-    classOf[TFNet].getClassLoader.getResourceAsStream("org/tensorflow/native/linux-x86_64/libtensorflow_framework.so")
-
-  val jniname = "libtensorflow_jni.so"
-  val jniRsource: InputStream =
-    classOf[TFNet].getClassLoader.getResourceAsStream("org/tensorflow/native/linux-x86_64/libtensorflow_jni.so")
-
-  // Create a temporary directory for the extracted resource and its dependencies.
-  val tempPath: File = createTemporaryDirectory
-  // Deletions are in the reverse order of requests, so we need to request that the directory be
-  // deleted first, so that it is empty when the request is fulfilled.
-  tempPath.deleteOnExit()
-  val tempDirectory: String = tempPath.getCanonicalPath
-
-  extractResource(iomp5Resource, iomp5name, tempDirectory)
-  extractResource(mklResource, mklname, tempDirectory)
-  extractResource(frameworkResource, frameworkname, tempDirectory)
-  System.load(extractResource(jniRsource, jniname, tempDirectory))
-
-
+  assert(TFNetNative.isLoaded)
 
   private def extractResource(resource: InputStream,
                               resourceName: String,
