@@ -22,6 +22,7 @@ import com.intel.analytics.bigdl.nn.Graph._
 import com.intel.analytics.bigdl.nn.abstractnn.{AbstractModule, Activity}
 import com.intel.analytics.bigdl.nn.keras.{KerasLayer, KerasLayerSerializable}
 import com.intel.analytics.bigdl.nn.{Container, Graph, StaticGraph, Sequential => TSequential}
+import com.intel.analytics.bigdl.optim.DistriOptimizer.Cache
 import com.intel.analytics.bigdl.optim._
 import com.intel.analytics.bigdl.serialization.Bigdl.BigDLModule
 import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric
@@ -37,9 +38,11 @@ import com.intel.analytics.zoo.pipeline.api.autograd._
 import com.intel.analytics.zoo.pipeline.api.keras.layers.Input
 import com.intel.analytics.zoo.pipeline.api.keras.layers.utils._
 import com.intel.analytics.zoo.pipeline.api.net.NetUtils
-import org.apache.spark.rdd.RDD
+import com.intel.analytics.zoo.pipeline.estimator.Estimator
+import org.apache.spark.rdd.{RDD, ZippedPartitionsWithExecutorLocalityRDD}
 
 import scala.collection.JavaConverters._
+import scala.collection.immutable.HashMap
 import scala.collection.mutable.ArrayBuffer
 import scala.reflect.ClassTag
 import scala.language.implicitConversions
@@ -914,7 +917,13 @@ private[zoo] class InternalDistriOptimizer[T: ClassTag] (
     _model: Module[T],
     _dataset: DistributedDataSet[MiniBatch[T]],
     _criterion: Criterion[T])
-  (implicit ev: TensorNumeric[T]) extends DistriOptimizer[T](_model, _dataset, _criterion) {
+  (implicit ev: TensorNumeric[T]) extends DistriOptimizer[T](_model, _dataset, _criterion)
+  with Estimator[T]{
+
+  def setCheckpointDir(path: String): this.type = {
+    checkpointPath = Some(path)
+    this
+  }
 
   def setTrainData(trainingDataSet: DataSet[MiniBatch[T]]): this.type = {
     this.dataset = trainingDataSet
@@ -926,4 +935,118 @@ private[zoo] class InternalDistriOptimizer[T: ClassTag] (
     InternalOptimizerUtil.endEpoch(this)
     this
   }
+
+  override def train(
+        trainSet: DataSet[MiniBatch[T]],
+        optimMethod: OptimMethod[T] = new SGD[T](),
+        trigger: Option[Trigger] = None,
+        steps: Option[Int] = None,
+        maxSteps: Option[Int] = None,
+        checkPoint: Option[Trigger]): this.type = {
+    this.setTrainData(trainSet)
+    this.setOptimMethod(optimMethod)
+    val endWhen = if (trigger.isDefined) {
+      trigger.get
+    } else if (steps.isDefined) {
+      val currentIteration = InternalOptimizerUtil
+        .getStateFromOptimizer(this).apply[Int]("neval")
+      Trigger.maxIteration(currentIteration + steps.get)
+    } else if (maxSteps.isDefined){
+      Trigger.maxIteration(maxSteps.get)
+    } else {
+      Trigger.maxIteration(Int.MaxValue)
+    }
+    this.setEndWhen(endWhen)
+    if (checkPoint.isDefined && checkpointPath.isDefined) {
+      this.setCheckpoint(checkpointPath.get, checkPoint.get)
+    }
+    this.optimize()
+    this
+  }
+
+  override def evaluate(validationSet: DataSet[MiniBatch[T]]
+              ): HashMap[ValidationMethod[T], ValidationResult] = {
+
+//    InternalDistriOptimizer.validate(
+//      validationTrigger,
+//      validationDataSet,
+//      validationMethods,
+//      models,
+//      driverState,
+//      validationSummary,
+//      _header
+//    )
+    return null
+  }
 }
+
+//object InternalDistriOptimizer extends AbstractOptimizer {
+//
+//  protected def validate[T](validationTrigger: Option[Trigger],
+//                            validationDataSet: Option[DataSet[MiniBatch[T]]],
+//                            validationMethods: Option[Array[ValidationMethod[T]]],
+//                            models: RDD[Cache[T]],
+//                            state: Table,
+//                            validationSummary: Option[ValidationSummary],
+//                            header: String): Unit = {
+//    if (validationTrigger.isEmpty || validationDataSet.isEmpty) {
+//      return
+//    }
+//    val trigger = validationTrigger.get
+//    if (!trigger(state)) {
+//      return
+//    }
+//    val vMethods = validationMethods.get
+//    val validateRDD = validationDataSet.get.toDistributed().data(train = false)
+//    val _subModelNumber = EngineRef.getEngineType match {
+//      case MklBlas => EngineRef.getCoreNumber()
+//      case MklDnn => 1
+//      case _ => throw new IllegalArgumentException
+//    }
+//    val results = ZippedPartitionsWithExecutorLocalityRDD(models, validateRDD)((modelIter, dataIter) => {
+//      val cached = modelIter.next()
+//      val vMethodsArr = cached.localMethods
+//      val workingModels = cached.localModels
+//
+//      workingModels.foreach(_.evaluate())
+//      dataIter.map(batch => {
+//        val stackSize = batch.size() / _subModelNumber
+//        val extraSize = batch.size() % _subModelNumber
+//        val parallelism = if (stackSize == 0) extraSize else _subModelNumber
+//        Engine.default.invokeAndWait(
+//          (0 until parallelism).map(b =>
+//            () => {
+//              val offset = b * stackSize + math.min(b, extraSize) + 1
+//              val length = stackSize + (if (b < extraSize) 1 else 0)
+//              val miniBatch = batch.slice(offset, length)
+//              val input = miniBatch.getInput()
+//              val target = miniBatch.getTarget()
+//              val output = workingModels(b).forward(input)
+//              val validatMethods = vMethodsArr(b).get
+//              validatMethods.map(validation => {
+//                validation(output, target)
+//              })
+//            }
+//          )
+//        ).reduce((left, right) => {
+//          left.zip(right).map { case (l, r) =>
+//            l + r
+//          }
+//        })
+//      })
+//    }).reduce((left, right) => {
+//      left.zip(right).map { case (l, r) =>
+//        l + r
+//      }
+//    }).zip(vMethods)
+//    state("score") = results(0)._1.result._1
+//    if(validationSummary.isDefined) {
+//      results.foreach { r =>
+//        val result = r._1.result
+//        validationSummary.get.addScalar(r._2.toString(), result._1,
+//          state[Int]("neval") - 1
+//        )
+//      }
+//    }
+//  }
+//}
