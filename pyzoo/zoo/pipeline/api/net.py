@@ -698,9 +698,6 @@ class TFDataset:
         self.hard_code_batch_size = hard_code_batch_size
         self.tensor_structure = tensor_structure
 
-        if isinstance(self.tensor_structure, list):
-            self.tensor_structure = tuple(tensor_structure)
-
         self.val_rdd = val_rdd
 
         if not self.hard_code_batch_size:
