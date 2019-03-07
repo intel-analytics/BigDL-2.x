@@ -29,6 +29,14 @@
 
         <fileSet>
             <includes>
+                <include>**/*.py</include>
+            </includes>
+            <outputDirectory>/nlp_architect</outputDirectory>
+            <directory>${project.build.directory}/nlp-architect/sources</directory>
+        </fileSet>
+
+        <fileSet>
+            <includes>
                 <include>**/spark-analytics-zoo.conf</include>
             </includes>
             <outputDirectory>/..</outputDirectory>

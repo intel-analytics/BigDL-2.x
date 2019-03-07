@@ -349,6 +349,22 @@
                             <goal>exec</goal>
                         </goals>
                     </execution>
+                    <execution>
+                        <id>nlp_architect</id>
+                        <phase>package</phase>
+                        <configuration>
+                            <arguments>
+                                <argument>${project.basedir}/../scripts/get_nlp_architect</argument>
+                                <argument>${project.build.directory}/nlp-architect</argument>
+                                <argument>0.3.1</argument>
+                            </arguments>
+
+                            <executable>bash</executable>
+                        </configuration>
+                        <goals>
+                            <goal>exec</goal>
+                        </goals>
+                    </execution>
                 </executions>
             </plugin>
             <plugin>
