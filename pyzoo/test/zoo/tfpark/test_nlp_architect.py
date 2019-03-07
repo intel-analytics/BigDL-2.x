@@ -21,7 +21,7 @@ from test.zoo.pipeline.utils.test_utils import ZooTestCase
 from zoo.tfpark.text import *
 
 
-class TestTextModel(ZooTestCase):
+class TestNLPArchitect(ZooTestCase):
 
     def test_intent_entity(self):
         model = IntentEntity(num_intents=8, num_entities=5, word_length=10,
