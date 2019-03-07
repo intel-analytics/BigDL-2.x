@@ -156,11 +156,11 @@ class DistriEstimatorSpec extends ZooSpecHelper {
     val estimator = Estimator(mm, new MSECriterion[Double]())
     val sgd = new SGD[Double](20)
     estimator.train(dataSet, sgd, maxSteps = Some(10))
-    estimator.evaluate(dataSet, Array(new Loss[Double](new MSECriterion[Double]())))
+//    estimator.evaluate(dataSet, Array(new Loss[Double](new MSECriterion[Double]())))
     estimator.train(dataSet, sgd, maxSteps = Some(20))
-    estimator.evaluate(dataSet, Array(new Loss[Double](new MSECriterion[Double]())))
+//    estimator.evaluate(dataSet, Array(new Loss[Double](new MSECriterion[Double]())))
     estimator.train(dataSet, sgd, maxSteps = Some(30))
-    estimator.evaluate(dataSet, Array(new Loss[Double](new MSECriterion[Double]())))
+//    estimator.evaluate(dataSet, Array(new Loss[Double](new MSECriterion[Double]())))
   }
 
   "Evaluate" should "works with good result" in {

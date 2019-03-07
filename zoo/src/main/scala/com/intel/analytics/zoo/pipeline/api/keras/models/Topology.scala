@@ -993,7 +993,7 @@ private[zoo] class InternalDistriOptimizer[T: ClassTag] (
         steps: Option[Int] = None,
         maxSteps: Option[Int] = None,
         checkPoint: Option[Trigger]): this.type = {
-    this.setTrainData(trainSet)
+    this.dataset = trainSet
     this.setOptimMethod(optimMethod)
     val endWhen = if (trigger.isDefined) {
       trigger.get
