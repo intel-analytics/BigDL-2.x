@@ -20,12 +20,23 @@ import com.intel.analytics.bigdl.nn.{Narrow => BNarrow}
 import com.intel.analytics.zoo.pipeline.api.keras.layers.{Narrow => ZNarrow}
 import com.intel.analytics.bigdl.tensor.Tensor
 import com.intel.analytics.bigdl.utils.Shape
+import com.intel.analytics.zoo.pipeline.api.autograd.Parameter
 import com.intel.analytics.zoo.pipeline.api.keras.ZooSpecHelper
 import com.intel.analytics.zoo.pipeline.api.keras.serializer.ModuleSerializationTest
 
 import scala.util.Random
 
 class NarrowSpec extends ZooSpecHelper {
+
+  "Narrow Zoo 1D" should "be the same as BigDL" in {
+    val blayer = BNarrow[Float](0, 1, 2)
+    val input1 = Parameter[Float](inputShape = Shape(3), name = "input1")
+    val zlayer = ZNarrow[Float](0, 1, 2, inputShape = Shape(3))
+    zlayer.build(Shape(-1, 3))
+    zlayer.getOutputShape().toSingle().toArray should be (Array(2))
+    val input = Tensor[Float](Array(4)).rand()
+    compareOutputAndGradInput(blayer, zlayer, input)
+  }
 
   "Narrow Zoo 2D" should "be the same as BigDL" in {
     val blayer = BNarrow[Float](2, 3, -1)
