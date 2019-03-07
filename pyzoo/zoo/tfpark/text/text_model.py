@@ -24,16 +24,18 @@ class TextKerasModel(KerasModel):
         with variable_creator_scope():
             self.labor.build(*args)
             model = self.labor.model
-            # Remark: tf.train.optimizers will cause error when mapped to BigDL optimizer, e.g. lr vs learning_rate.
-            # Two ways to handle this: either recompile the model using the corresponding string or tf.keras.optimizer,
+            # Remark: tf.train.optimizers have error when mapped to BigDL optimizer.
+            # Two ways to handle this:
+            # Either recompile the model using the string or tf.keras.optimizers,
             # or add a mapping between tf.train.optimizers and tf.keras.optimizers.
             if optimizer:
                 model.compile(loss=model.loss, optimizer=optimizer, metrics=model.metrics)
             super(TextKerasModel, self).__init__(model)
 
     # Remark: nlp-architect CRF layer has error when directly loaded by tf.keras.models.load_model.
-    # Thus we keep the nlp-architect class as labor and uses its save and load method, which only saves the weights
-    # and model parameters and reconstruct the model using the exact parameters and setting weights.
+    # Thus we keep the nlp-architect class as labor and uses its save/load,
+    # which only saves the weights with model parameters
+    # and reconstruct the model using the exact parameters and setting weights when loading.
     def save_model(self, path):
         self.labor.save(path)
 

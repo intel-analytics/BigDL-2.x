@@ -161,6 +161,7 @@ class ZooTestCase(TestCase):
         model.save_model(tmp_path)
         loaded_model = model_class.load_model(tmp_path)
         assert isinstance(loaded_model, model_class)
+        # Calling predict will remove the impact of dropout
         output1 = model.predict(input_data)
         output2 = loaded_model.predict(input_data, distributed=True)
         if isinstance(output1, list):

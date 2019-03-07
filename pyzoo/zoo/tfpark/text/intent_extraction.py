@@ -22,8 +22,8 @@ class IntentEntity(TextKerasModel):
     def __init__(self, num_intents, num_entities, word_length, word_vocab_size,
                  char_vocab_size, word_emb_dim=100, char_emb_dim=30,
                  char_lstm_dim=30, tagger_lstm_dim=100, dropout=0.2, optimizer='adam'):
-        super(IntentEntity, self).__init__(intent_models.MultiTaskIntentModel(use_cudnn=False), optimizer,
-                                           word_length, num_entities, num_intents,
+        super(IntentEntity, self).__init__(intent_models.MultiTaskIntentModel(use_cudnn=False),
+                                           optimizer, word_length, num_entities, num_intents,
                                            word_vocab_size, char_vocab_size, word_emb_dim,
                                            char_emb_dim, char_lstm_dim, tagger_lstm_dim, dropout)
 
