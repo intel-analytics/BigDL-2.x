@@ -18,10 +18,12 @@ package com.intel.analytics.zoo.models.image.objectdetection.common
 
 import com.intel.analytics.bigdl._
 import com.intel.analytics.bigdl.nn.Graph.ModuleNode
+import com.intel.analytics.bigdl.nn.abstractnn.Activity
 import com.intel.analytics.bigdl.nn._
 import com.intel.analytics.bigdl.tensor.Tensor
 import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric
 import com.intel.analytics.bigdl.utils.Table
+
 import org.apache.log4j.Logger
 
 import scala.reflect.ClassTag
@@ -60,6 +62,7 @@ object ModuleUtil {
 
   private val out1 = Tensor[Float](1)
   private val out2 = Tensor[Float](1)
+
   private def shareOutput(module: Module[Float]): Unit = {
     if (module.isInstanceOf[Graph[Float]]) {
       val modules = module.asInstanceOf[Graph[Float]].getForwardExecutions
@@ -82,7 +85,15 @@ object ModuleUtil {
     }
   }
 
-
+  /**
+   * Load model weights and bias from source model to target model
+   *
+   * @param srcModel        source model
+   * @param targetModel     target model
+   * @param matchAll whether to match all layers' weights and bias,
+   *                 if not, only load existing source weights and bias
+   * @return
+   */
   def loadModelWeights(srcModel: Module[Float], targetModel: Module[Float],
     matchAll: Boolean = true): this.type = {
     val srcParameter = srcModel.getParametersTable()
@@ -120,6 +131,20 @@ object ModuleUtil {
     }
   }
 
+  /**
+   * Create Convolution layer followed by Relu activation
+   * @param prevNodes previous node for convolution layer node
+   * @param p convolution size info.
+   *          Should be (input plane number, output plane number, kernel size, stride size, pad size).
+   *          We'are assuming kernel width = kernel height, stride width = stride height, pad width = pad height
+   * @param name layer name
+   * @param prefix prefix for the layer name
+   * @param nGroup kernel group number
+   * @param propogateBack whether to propagate gradient back
+   * @param ev
+   * @tparam T
+   * @return Relu node
+   */
   def addConvRelu[@specialized(Float, Double) T: ClassTag](prevNodes: ModuleNode[T],
                                                            p: (Int, Int, Int, Int, Int), name: String,
                                                            prefix: String = "conv", nGroup: Int = 1,
@@ -132,11 +157,40 @@ object ModuleUtil {
     ReLU[T](true).setName(s"relu$name").inputs(conv)
   }
 
+
+  /**
+   * Stop the input gradient of layers whose name ended with priorbox in a model,
+   * their input gradient are not computed.
+   *
+   * @param model the graph model
+   * @tparam T
+   */
   def stopGradient[@specialized(Float, Double) T: ClassTag](model: Graph[T]): Unit = {
     val priorboxNames = model.modules
       .filter(_.getClass.getName.toLowerCase().endsWith("priorbox"))
       .map(_.getName()).toArray
     model.stopGradient(priorboxNames)
+  }
+
+  /**
+   * select results (confs || locs || priorboxes), use JoinTable to concat them into one tensor
+   * @param start start index of the result
+   * @param dim dimension to join
+   * @param nInputDims specify the number of dimensions for the input
+   * @param name result layer name
+   * @return
+   */
+  def selectResults[@specialized(Float, Double) T: ClassTag](start: Int, dim: Int,
+                                                             nInputDims: Int, numComponents: Int,
+                                                             name: String)
+                                                            (implicit ev: TensorNumeric[T]): Module[T] = {
+    val con = ConcatTable[Activity, T]().setName(s"select results $name")
+    var i = start
+    while (i <= numComponents * 3) {
+      con.add(SelectTable(i).setName(s"select $name $i"))
+      i += 3
+    }
+    Sequential[T]().add(con).add(JoinTable[T](dim, nInputDims).setName(name))
   }
 
 }

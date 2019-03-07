@@ -148,7 +148,7 @@ object SSDGraph {
 
     val model = Graph(input, Array(loc, conf, priors))
     model.setScaleB(2)
-    stopGradient(model)
+    ModuleUtil.stopGradient(model)
     val ssd = Sequential[T]()
     ssd.add(model)
     ssd.add(new DetectionOutputSSD[T](numClasses, shareLocation,
@@ -182,58 +182,6 @@ object SSDGraph {
       val m = module.asInstanceOf[NormalizeScale[T]]
       m.wRegularizer = wRegularizer
     }
-  }
-
-  private def stopGradient[@specialized(Float, Double) T: ClassTag](model: Graph[T]): Unit = {
-    val priorboxNames = model.modules
-      .filter(_.getClass.getName.toLowerCase().endsWith("priorbox"))
-      .map(_.getName()).toArray
-    model.stopGradient(priorboxNames)
-  }
-
-  /**
-   * share the storage of SpatialConvolution fInput
-   * note that this sharing only works for Inference only
-   * @param model model to share
-   */
-  def shareMemory[@specialized(Float, Double) T: ClassTag](model: Module[T]): Unit = {
-    logger.info("Share memory in ssd")
-    val shareFinputStorage = Storage[T]()
-    shareModules(model, shareFinputStorage)
-  }
-
-  private def shareModules[@specialized(Float, Double) T: ClassTag](module: Module[T],
-    shareFinputStorage: Storage[T]): Unit = {
-    BUtils.getNamedModules(module)
-    module match {
-      case m: Container[_, _, T] =>
-        for (m <- module.asInstanceOf[Container[_, _, T]].modules) {
-          shareModules(m, shareFinputStorage)
-        }
-      case _ =>
-        if (module.getClass.getName.endsWith("SpatialConvolution")) {
-          module.asInstanceOf[SpatialConvolution[T]].fInput.set(shareFinputStorage)
-        }
-    }
-  }
-
-  /**
-   * select results (confs || locs || priorboxes), use JoinTable to concat them into one tensor
-   * @param start
-   * @param dim
-   * @param nInputDims
-   * @param name
-   * @return
-   */
-  private def selectResults(start: Int, dim: Int, nInputDims: Int, numComponents: Int,
-    name: String): Module[Float] = {
-    val con = ConcatTable().setName(s"select results $name")
-    var i = start
-    while (i <= numComponents * 3) {
-      con.add(SelectTable(i).setName(s"select $name $i"))
-      i += 3
-    }
-    Sequential().add(con).add(JoinTable(dim, nInputDims).setName(name))
   }
 
   private def getConcatOutput[@specialized(Float, Double) T: ClassTag](conv: ModuleNode[T],

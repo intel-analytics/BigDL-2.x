@@ -30,6 +30,11 @@ import scala.collection.mutable.ArrayBuffer
 import scala.io.Source
 import scala.util.parsing.json.JSON
 
+/**
+* Parse the coco dataset, load images and annotations
+* @param imageSet train, val, test, etc
+* @param devkitPath dataset folder
+*/
 class Coco(val imageSet: String, devkitPath: String) extends Imdb {
 
   override def getRoidb(readImage: Boolean = true): LocalImageSet = {

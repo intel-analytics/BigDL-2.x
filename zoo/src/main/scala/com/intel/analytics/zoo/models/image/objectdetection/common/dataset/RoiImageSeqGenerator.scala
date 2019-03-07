@@ -23,6 +23,10 @@ import com.intel.analytics.bigdl.transform.vision.image.ImageFeature
 import com.intel.analytics.zoo.feature.image.{ImageSet, LocalImageSet}
 import scopt.OptionParser
 
+
+/**
+ * Read roi images and store to sequence file
+ */
 object RoiImageSeqGenerator {
 
   case class RoiImageSeqGeneratorParams(

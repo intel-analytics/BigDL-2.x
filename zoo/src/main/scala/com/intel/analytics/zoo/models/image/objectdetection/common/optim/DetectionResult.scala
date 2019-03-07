@@ -51,7 +51,7 @@ class MeanAveragePrecision(use07metric: Boolean, normalized: Boolean = true, cla
 }
 
 /**
- *
+ *  Object Detection Validation Result
  * @param results each element is the result for one class
  * (count, (score, tp, fp))
  */

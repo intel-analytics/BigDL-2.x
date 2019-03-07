@@ -98,6 +98,17 @@ object EvalUtil {
     ap
   }
 
+  /**
+   * Evaluate batch from result
+   * @param results
+   * @param gt
+   * @param gtAreas
+   * @param clsInd
+   * @param ovThresh
+   * @param use07Metric
+   * @param normalized
+   * @return
+   */
   def evaluateBatch(results: Array[Array[RoiLabel]], gt: Tensor[Float], gtAreas: Tensor[Float],
     clsInd: Int, ovThresh: Double = 0.5,
     use07Metric: Boolean = false, normalized: Boolean = false): (Int, Array[(Float, Int, Int)]) = {

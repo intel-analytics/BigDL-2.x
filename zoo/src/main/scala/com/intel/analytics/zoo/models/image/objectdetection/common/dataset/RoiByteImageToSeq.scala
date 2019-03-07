@@ -32,6 +32,12 @@ import com.intel.analytics.bigdl.transform.vision.image.label.roi.RoiLabel
 
 import scala.collection.Iterator
 
+
+/**
+ * Transform roi byte images to sequence file
+ * @param blockSize block size
+ * @param baseFileName sequence file base name
+ */
 class RoiByteImageToSeq(blockSize: Int, baseFileName: Path) extends
   Transformer[ImageFeature, String] {
   private val conf: Configuration = new Configuration

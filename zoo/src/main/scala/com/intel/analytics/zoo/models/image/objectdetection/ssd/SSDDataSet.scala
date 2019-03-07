@@ -22,8 +22,20 @@ import com.intel.analytics.zoo.feature.image.roi.RoiRecordToFeature
 import com.intel.analytics.zoo.models.image.objectdetection.common.dataset.Imdb
 import org.apache.spark.SparkContext
 
+/**
+ * SSD Dataset accession
+ */
 object SSDDataSet {
 
+  /**
+   * Load train data from sequence file and do transformation before SSD training
+   * @param folder sequence file folder
+   * @param sc spark context
+   * @param resolution target resolution
+   * @param batchSize batch size for training
+   * @param parNum partition number
+   * @return distributec featureset for SSD training
+   */
   def loadSSDTrainSet(folder: String, sc: SparkContext, resolution: Int, batchSize: Int,
                       parNum: Option[Int])
   : DistributedFeatureSet[SSDMiniBatch] = {
@@ -41,6 +53,15 @@ object SSDDataSet {
       RoiImageToSSDBatch(batchSize)
   }
 
+  /**
+   * Load validation data from sequence file and do transformation before SSD validation
+   * @param folder sequence file folder
+   * @param sc spark context
+   * @param resolution target resolution
+   * @param batchSize batch size for validation
+   * @param parNum partition number
+   * @return distributec featureset for SSD validation
+   */
   def loadSSDValSet(folder: String, sc: SparkContext, resolution: Int, batchSize: Int, parNum: Option[Int])
   : DistributedFeatureSet[SSDMiniBatch] = {
     val valRdd = Imdb.loadRoiSeqFiles(folder, sc, parNum)

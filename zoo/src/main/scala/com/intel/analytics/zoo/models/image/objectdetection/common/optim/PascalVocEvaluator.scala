@@ -27,7 +27,7 @@ import scala.collection.mutable.ArrayBuffer
 
 
 /**
- *
+ * Evaluator for Pascal VOC
  * @param imageSet voc_2007_test, voc_2007_train, etc
  */
 class PascalVocEvaluator(imageSet: String) extends DetectionEvaluator {
@@ -37,7 +37,11 @@ class PascalVocEvaluator(imageSet: String) extends DetectionEvaluator {
   // The PASCAL VOC metric changed in 2010
   def use07metric: Boolean = year == "2007"
 
-
+  /**
+   * Get Average Precision for each class
+   * @param results
+   * @return
+   */
   def map(results: Array[(Int, Array[(Float, Int, Int)])]): Array[(String, Double)] = {
     import PascalVocEvaluator._
     val aps = ArrayBuffer[Double]()
@@ -59,6 +63,12 @@ class PascalVocEvaluator(imageSet: String) extends DetectionEvaluator {
   }
 
 
+  /**
+   * Evaluate batch from result
+   * @param results
+   * @param gt
+   * @return
+   */
   def evaluateBatch(results: Array[Array[RoiLabel]], gt: Tensor[Float])
   : Array[(Int, Array[(Float, Int, Int)])] = {
     var i = 0

@@ -25,6 +25,11 @@ import com.intel.analytics.zoo.feature.image.{ImageSet, LocalImageSet}
 import scala.io.Source
 
 
+/**
+ * Parse the customized dataset, load images and annotations
+ * @param imageSet train, val, test, etc
+ * @param devkitPath dataset folder
+ */
 class CustomizedDataSet(val imageSet: String, devkitPath: String) extends Imdb {
 
   def getRoidb(readImage: Boolean = true): LocalImageSet = {
