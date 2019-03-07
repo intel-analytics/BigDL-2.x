@@ -62,7 +62,6 @@ class KerasModel(object):
         self.model.load_weights(filepath, by_name)
 
     def save_model(self, path):
-        assert self.model, 'Model has not been defined yet'
         self.model.save(path)
 
     @staticmethod

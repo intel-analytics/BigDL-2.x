@@ -24,8 +24,8 @@ from zoo.tfpark.text import *
 class TestTextModel(ZooTestCase):
 
     def test_intent_entity(self):
-        model = IntentAndEntity(num_intents=8, num_entities=5, word_length=10,
-                                word_vocab_size=200, char_vocab_size=50)
+        model = IntentEntity(num_intents=8, num_entities=5, word_length=10,
+                             word_vocab_size=200, char_vocab_size=50)
         input_data = [np.random.randint(200, size=(8, 30)), np.random.randint(50, size=(8, 30, 10))]
         output = model.predict(input_data, distributed=True)
         assert isinstance(output, list) and len(output) == 2
