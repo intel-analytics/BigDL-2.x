@@ -36,7 +36,6 @@ def pack_sequence_as(structure, flat_sequence):
 
 
 def _yield_value(iterable):
-    """Yields the next value from the given iterable."""
     if isinstance(iterable, dict):
         for key in _sorted(iterable):
             yield iterable[key]
@@ -46,16 +45,6 @@ def _yield_value(iterable):
 
 
 def _sequence_like(instance, args):
-    """Converts the sequence `args` to the same type as `instance`.
-  
-    Args:
-      instance: an instance of `tuple`, `list`, `namedtuple`, `dict`, or
-          `collections.OrderedDict`.
-      args: elements to be converted to the `instance` type.
-  
-    Returns:
-      `args` with the type of `instance`.
-    """
     if isinstance(instance, dict):
         result = dict(zip(_sorted(instance), args))
         return type(instance)((key, result[key]) for key in six.iterkeys(instance))
@@ -78,13 +67,11 @@ def _packed_nest_with_indices(structure, flat, index):
 
 
 def _get_attrs_values(obj):
-    """Returns the list of values from an attrs instance."""
     attrs = getattr(obj.__class__, "__attrs_attrs__")
     return [getattr(obj, a.name) for a in attrs]
 
 
 def _sorted(dict_):
-    """Returns a sorted list of the dict keys, with error if keys not sortable."""
     try:
         return sorted(six.iterkeys(dict_))
     except TypeError:
