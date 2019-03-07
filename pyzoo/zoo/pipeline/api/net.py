@@ -476,8 +476,6 @@ with variable_creator_scope():
         batch_size = self.dataset.batch_size
 
         def to_sample(t):
-            if isinstance(t, list):
-                t = tuple(t)
             return Sample.from_ndarray(nest.flatten(t), [np.array([0.0])])
 
         sample_rdd = data.map(to_sample)
