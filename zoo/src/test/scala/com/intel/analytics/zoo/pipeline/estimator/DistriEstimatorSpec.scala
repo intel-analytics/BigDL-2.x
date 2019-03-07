@@ -6,8 +6,10 @@ import com.intel.analytics.bigdl.nn._
 import com.intel.analytics.bigdl.optim.{LBFGS, Loss, SGD, Trigger}
 import com.intel.analytics.bigdl.tensor.{Storage, Tensor}
 import com.intel.analytics.bigdl.utils.{Engine, LoggerFilter, RandomGenerator}
+import com.intel.analytics.bigdl.visualization.TrainSummary
 import com.intel.analytics.zoo.common.NNContext
 import com.intel.analytics.zoo.pipeline.api.keras.ZooSpecHelper
+import com.intel.analytics.zoo.pipeline.api.keras.models.InternalOptimizerUtil
 import org.apache.log4j.{Level, Logger}
 import org.apache.spark.{SparkConf, SparkContext}
 import org.apache.spark.rdd.RDD
@@ -126,7 +128,7 @@ class DistriEstimatorSpec extends ZooSpecHelper {
     RandomGenerator.RNG.setSeed(10)
     val mseModel = mse
     val estimator = Estimator(mseModel, new MSECriterion[Double]())
-    estimator.train(dataSet, new LBFGS[Double](), maxSteps = Some(100))
+    estimator.train(dataSet, new LBFGS[Double](), endTrigger = Some(Trigger.maxIteration(1000)))
 
     val result1 = mseModel.forward(input1).asInstanceOf[Tensor[Double]]
     result1(Array(1)) should be(0.0 +- 1e-2)
@@ -155,12 +157,16 @@ class DistriEstimatorSpec extends ZooSpecHelper {
     mm.parameters()._1.foreach(_.fill(0.125))
     val estimator = Estimator(mm, new MSECriterion[Double]())
     val sgd = new SGD[Double](20)
-    estimator.train(dataSet, sgd, maxSteps = Some(10))
-//    estimator.evaluate(dataSet, Array(new Loss[Double](new MSECriterion[Double]())))
-    estimator.train(dataSet, sgd, maxSteps = Some(20))
-//    estimator.evaluate(dataSet, Array(new Loss[Double](new MSECriterion[Double]())))
-    estimator.train(dataSet, sgd, maxSteps = Some(30))
-//    estimator.evaluate(dataSet, Array(new Loss[Double](new MSECriterion[Double]())))
+    val state = InternalOptimizerUtil.getStateFromOptiMethod(sgd)
+    estimator.train(dataSet, sgd, endTrigger = Some(Trigger.maxIteration(128)))
+    state[Int]("neval") should be (129)
+    state[Int]("epoch") should be (1)
+    estimator.train(dataSet, sgd, endTrigger = Some(Trigger.maxIteration(256)))
+    state[Int]("neval") should be (257)
+    state[Int]("epoch") should be (2)
+    estimator.train(dataSet, sgd, endTrigger = Some(Trigger.maxIteration(512)))
+    state[Int]("neval") should be (513)
+    state[Int]("epoch") should be (3)
   }
 
   "Evaluate" should "works with good result" in {
@@ -169,6 +175,26 @@ class DistriEstimatorSpec extends ZooSpecHelper {
     mm.parameters()._1.foreach(_.fill(0.125))
     val estimator = Estimator(mm, new MSECriterion[Double]())
     estimator.train(dataSet, new SGD[Double](20), Option(Trigger.maxEpoch(1)))
+    val result = estimator.evaluate(dataSet, Array(new Loss[Double](new MSECriterion[Double]())))
+    result
+  }
+
+  "Estimator" should "works with model dir" in {
+    LoggerFilter.redirectSparkInfoLogs()
+    val tmpdir = com.google.common.io.Files.createTempDir().getPath()
+    val mm = mse
+    mm.parameters()._1.foreach(_.fill(0.125))
+    val estimator = Estimator(mm, new MSECriterion[Double](), tmpdir)
+    estimator.train(dataSet, new SGD[Double](20), Option(Trigger.maxEpoch(1)))
+    val result = estimator.evaluate(dataSet, Array(new Loss[Double](new MSECriterion[Double]())))
+    result
+  }
+
+  "Estimator" should "works only evaluate" in {
+    LoggerFilter.redirectSparkInfoLogs()
+    val mm = mse
+    mm.parameters()._1.foreach(_.fill(0.125))
+    val estimator = Estimator(mm, new MSECriterion[Double]())
     val result = estimator.evaluate(dataSet, Array(new Loss[Double](new MSECriterion[Double]())))
     result
   }

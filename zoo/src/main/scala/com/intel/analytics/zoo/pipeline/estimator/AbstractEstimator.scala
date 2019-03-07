@@ -11,9 +11,7 @@ import scala.reflect.ClassTag
 trait AbstractEstimator[T]{
   def train(trainSet: DataSet[MiniBatch[T]],
             optimMethod: OptimMethod[T] = null,
-            trigger: Option[Trigger] = None,
-            steps: Option[Int] = None,
-            maxSteps: Option[Int] = None,
+            endTrigger: Option[Trigger] = None,
             checkPoint: Option[Trigger] = None): this.type
 
   def evaluate(validationSet: DataSet[MiniBatch[T]],
@@ -30,16 +28,12 @@ class Estimator[T: ClassTag] private[zoo](
 
   override def train(trainSet: DataSet[MiniBatch[T]],
             optimMethod: OptimMethod[T] = null,
-            trigger: Option[Trigger] = None,
-            steps: Option[Int] = None,
-            maxSteps: Option[Int] = None,
+            endTrigger: Option[Trigger] = None,
             checkPoint: Option[Trigger] = None): this.type = {
     if (internalEstimator != null) {
       internalEstimator.train(trainSet,
         optimMethod,
-        trigger,
-        steps,
-        maxSteps,
+        endTrigger,
         checkPoint)
       this
     } else {
@@ -49,7 +43,7 @@ class Estimator[T: ClassTag] private[zoo](
         case l: LocalDataSet[MiniBatch[T]] =>
           new InternalLocalOptimizer[T](model, l, criterion)
       }
-      internalDistriOptimizer.train(trainSet, optimMethod, trigger, steps, maxSteps, checkPoint)
+      internalDistriOptimizer.train(trainSet, optimMethod, endTrigger, checkPoint)
       this
 
     }
@@ -67,10 +61,10 @@ object Estimator {
   def apply[T: ClassTag](
                model: Module[T],
                criterion: Criterion[T],
-               modelDir: Option[String] = None)(implicit ev: TensorNumeric[T]): AbstractEstimator[T] = {
+               modelDir: String = "")(implicit ev: TensorNumeric[T]): AbstractEstimator[T] = {
     val estimator = new InternalDistriOptimizer[T](model, null, criterion)
-    if (modelDir.isDefined) {
-      estimator.setCheckpointDir(modelDir.get)
+    if (modelDir != null && modelDir != "") {
+      estimator.setCheckpointDir(modelDir)
     }
     estimator
   }

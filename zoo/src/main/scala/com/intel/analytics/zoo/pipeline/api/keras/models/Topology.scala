@@ -17,6 +17,7 @@
 package com.intel.analytics.zoo.pipeline.api.keras.models
 
 import com.intel.analytics.bigdl.dataset.{MiniBatch, _}
+import com.intel.analytics.bigdl.models.utils.ModelBroadcast
 import com.intel.analytics.bigdl.{DataSet, _}
 import com.intel.analytics.bigdl.nn.Graph._
 import com.intel.analytics.bigdl.nn.abstractnn.{AbstractModule, Activity}
@@ -922,19 +923,12 @@ private[zoo] class InternalLocalOptimizer[T: ClassTag] (
   override def train(
       trainSet: DataSet[MiniBatch[T]],
       optimMethod: OptimMethod[T] = new SGD[T](),
-      trigger: Option[Trigger] = None,
-      steps: Option[Int] = None,
-      maxSteps: Option[Int] = None,
+      endTrigger: Option[Trigger] = None,
       checkPoint: Option[Trigger]): this.type = {
     this.setTrainData(trainSet)
     this.setOptimMethod(optimMethod)
-    val endWhen = if (trigger.isDefined) {
-      trigger.get
-    } else if (steps.isDefined) {
-      val currentIteration = this.state[Int]("neval")
-      Trigger.maxIteration(currentIteration + steps.get)
-    } else if (maxSteps.isDefined){
-      Trigger.maxIteration(maxSteps.get)
+    val endWhen = if (endTrigger.isDefined) {
+      endTrigger.get
     } else {
       Trigger.maxIteration(Int.MaxValue)
     }
@@ -972,6 +966,11 @@ private[zoo] class InternalDistriOptimizer[T: ClassTag] (
 
   def setCheckpointDir(path: String): this.type = {
     checkpointPath = Some(path)
+    val currentTime = System.nanoTime()
+    val trainSummary = TrainSummary(path, currentTime.toString)
+    val valSummary = ValidationSummary(path, currentTime.toString)
+    this.setTrainSummary(trainSummary)
+    this.setValidationSummary(valSummary)
     this
   }
 
@@ -989,19 +988,12 @@ private[zoo] class InternalDistriOptimizer[T: ClassTag] (
   override def train(
         trainSet: DataSet[MiniBatch[T]],
         optimMethod: OptimMethod[T] = new SGD[T](),
-        trigger: Option[Trigger] = None,
-        steps: Option[Int] = None,
-        maxSteps: Option[Int] = None,
+        endTrigger: Option[Trigger] = None,
         checkPoint: Option[Trigger]): this.type = {
     this.dataset = trainSet
     this.setOptimMethod(optimMethod)
-    val endWhen = if (trigger.isDefined) {
-      trigger.get
-    } else if (steps.isDefined) {
-      val currentIteration = this.state[Int]("neval")
-      Trigger.maxIteration(currentIteration + steps.get)
-    } else if (maxSteps.isDefined){
-      Trigger.maxIteration(maxSteps.get)
+    val endWhen = if (endTrigger.isDefined) {
+      endTrigger.get
     } else {
       Trigger.maxIteration(Int.MaxValue)
     }
@@ -1014,73 +1006,118 @@ private[zoo] class InternalDistriOptimizer[T: ClassTag] (
   }
 
   override def evaluate(validationSet: DataSet[MiniBatch[T]],
-    validationMethod: Array[ValidationMethod[T]]
-              ): Map[ValidationMethod[T], ValidationResult] = {
-    val a = InternalOptimizerUtil.getModelCacheFromOptimizer(this)
+    validationMethod: Array[ValidationMethod[T]]): Map[ValidationMethod[T], ValidationResult] = {
+    val validateRDD = validationSet.toDistributed().data(train = false)
+    val sc = validateRDD.sparkContext
+    val optim = this.optimMethods.valuesIterator.next()
+    val state = InternalOptimizerUtil.getStateFromOptiMethod(optim)
+    val cachedModels = InternalOptimizerUtil.getModelCacheFromOptimizer(this)
+
+    val coresPerNode = EngineRef.getCoreNumber()
+    val _subModelNumber = EngineRef.getEngineType() match {
+      case MklBlas => coresPerNode
+      case MklDnn => 1
+      case _ => throw new IllegalArgumentException
+    }
+
+    val models = if (null != cachedModels) {
+      val bcVMethods = cachedModels.sparkContext.broadcast(validationMethod)
+      cachedModels.map{cache =>
+        Cache[T](
+          cache.localModels,
+          cache.modelWeights,
+          cache.modelGradients,
+          cache.localCriterions,
+          cache.localStates,
+          cache.moduleTimeList,
+          Array.tabulate(_subModelNumber)(_ =>
+            Some(bcVMethods.value.map(_.clone()))),
+          cache.optimMethods,
+          cache.parameterSynchronizer
+        )
+      }
+    } else {
+      val bcVMethods = validateRDD.sparkContext.broadcast(validationMethod)
+      val bcModel = ModelBroadcast[T]().broadcast(sc, model)
+      validateRDD.mapPartitions{_ =>
+        Iterator.single(Cache[T](
+          Array.tabulate(_subModelNumber)(_ => bcModel.value()),
+          null,
+          null,
+          null,
+          null,
+          null,
+          Array.tabulate(_subModelNumber){ _ =>
+            Some(bcVMethods.value.map(_.clone()))},
+          null,
+          null
+        ))
+      }
+    }
+
 
     InternalDistriOptimizer.validate(
-      Some(validationSet),
-      Some(validationMethod),
-      InternalOptimizerUtil.getModelCacheFromOptimizer(this),
+      validationSet,
+      validationMethod,
+      models,
       state,
-      validationSummary,
-      "123: "
+      validationSummary
     )
   }
 }
 
 object InternalDistriOptimizer {
 
-  protected def validate[T](validationDataSet: Option[DataSet[MiniBatch[T]]],
-                            validationMethods: Option[Array[ValidationMethod[T]]],
+  protected def validate[T](validationDataSet: DataSet[MiniBatch[T]],
+                            validationMethods: Array[ValidationMethod[T]],
                             models: RDD[Cache[T]],
                             state: Table,
-                            validationSummary: Option[ValidationSummary],
-                            header: String): Map[ValidationMethod[T], ValidationResult] = {
-    val vMethods = validationMethods.get
-    val validateRDD = validationDataSet.get.toDistributed().data(train = false)
+                            validationSummary: Option[ValidationSummary]
+                           ): Map[ValidationMethod[T], ValidationResult] = {
+    val vMethods = validationMethods
+    val validateRDD = validationDataSet.toDistributed().data(train = false)
     val _subModelNumber = EngineRef.getEngineType match {
       case MklBlas => EngineRef.getCoreNumber()
       case MklDnn => 1
       case _ => throw new IllegalArgumentException
     }
-    // TODO:
+    // TODO: evaluate local
     val bcVMethods = models.sparkContext.broadcast(vMethods)
     val results = ZippedPartitionsWithExecutorLocalityRDD(models, validateRDD)((modelIter, dataIter) => {
-      val cached = modelIter.next()
-      val vMethodsArr = cached.localMethods
-      val workingModels = cached.localModels
+        val cached = modelIter.next()
+        val vMethodsArr = cached.localMethods
+        val workingModels = cached.localModels
 
-      workingModels.foreach(_.evaluate())
-      dataIter.map(batch => {
-        val stackSize = batch.size() / _subModelNumber
-        val extraSize = batch.size() % _subModelNumber
-        val parallelism = if (stackSize == 0) extraSize else _subModelNumber
-        (0 until parallelism).toParArray.map { b =>
-          val offset = b * stackSize + math.min(b, extraSize) + 1
-          val length = stackSize + (if (b < extraSize) 1 else 0)
-          val miniBatch = batch.slice(offset, length)
-          val input = miniBatch.getInput()
-          val target = miniBatch.getTarget()
-          val output = workingModels(b).forward(input)
-          val validatMethods = bcVMethods.value.clone()
-          validatMethods.map(validation => {
-            validation(output, target)
+        workingModels.foreach(_.evaluate())
+        dataIter.map(batch => {
+          val stackSize = batch.size() / _subModelNumber
+          val extraSize = batch.size() % _subModelNumber
+          val parallelism = if (stackSize == 0) extraSize else _subModelNumber
+          (0 until parallelism).toParArray.map { b =>
+            val offset = b * stackSize + math.min(b, extraSize) + 1
+            val length = stackSize + (if (b < extraSize) 1 else 0)
+            val miniBatch = batch.slice(offset, length)
+            val input = miniBatch.getInput()
+            val target = miniBatch.getTarget()
+            val output = workingModels(b).forward(input)
+            val validatMethods = bcVMethods.value.clone()
+            validatMethods.map(validation => {
+              validation(output, target)
+            })
+          }.reduce((left, right) => {
+            left.zip(right).map { case (l, r) =>
+              l + r
+            }
           })
-        }.reduce((left, right) => {
-          left.zip(right).map { case (l, r) =>
-            l + r
-          }
         })
-      })
-    }).reduce((left, right) => {
-      left.zip(right).map { case (l, r) =>
-        l + r
-      }
-    }).zip(vMethods)
+      }).reduce((left, right) => {
+        left.zip(right).map { case (l, r) =>
+          l + r
+        }
+      }).zip(vMethods)
     results.foreach(r => {
       // TODO:
-      DistriOptimizer.logger.info(s"$header ${r._2} is ${r._1}")
+      DistriOptimizer.logger.info(s"${r._2} is ${r._1}")
     })
     state("score") = results(0)._1.result._1
     if(validationSummary.isDefined) {
