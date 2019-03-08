@@ -16,18 +16,21 @@
 
 package com.intel.analytics.zoo.pipeline.api.keras.layers
 
+import com.intel.analytics.bigdl.nn.Sum
+import com.intel.analytics.bigdl.nn.abstractnn.{AbstractModule, Activity}
+import com.intel.analytics.bigdl.nn.keras.KerasLayer
 import com.intel.analytics.bigdl.tensor.Tensor
 import com.intel.analytics.bigdl.utils.RandomGenerator._
 import com.intel.analytics.bigdl.utils.Shape
 import com.intel.analytics.zoo.pipeline.api.autograd.Variable
 import com.intel.analytics.zoo.pipeline.api.keras.ZooSpecHelper
 import com.intel.analytics.zoo.pipeline.api.keras.layers.utils.KerasUtils
-import com.intel.analytics.zoo.pipeline.api.keras.models.{KerasNet, Model}
+import com.intel.analytics.zoo.pipeline.api.keras.models.{KerasNet, Model, Sequential}
 import com.intel.analytics.zoo.pipeline.api.keras.serializer.ModuleSerializationTest
 
-class TransformerEncoderSpec extends ZooSpecHelper {
-  "TransformerEncoder" should "be able to work" in {
-    val model = TransformerEncoder[Float](vocab = 100, embeddingSize = 768, nLayer = 3)
+class TransformerLayerSpec extends ZooSpecHelper {
+  "TransformerLayer" should "be able to work" in {
+    val model = TransformerLayer[Float](vocab = 100, embeddingSize = 768, nLayer = 3)
     model.build(Shape(4, 77, 2))
     val w = model.parameters()._1
     require(w.length == 38)
@@ -37,22 +40,27 @@ class TransformerEncoderSpec extends ZooSpecHelper {
     val gradInput = model.backward(input, gradOutput)
   }
 
-  "TransformerEncoder with configured embedding" should "be able to work" in {
-    val model = TransformerEncoder[Float](vocab = 100, seqLen = 77, nLayer = 3,
-      residPdrop = 0.1, attnPdrop = 0.1, nHead = 12,
-      embeddingLayer = Embedding[Float](100, 768, inputLength = 154))
+  "TransformerLayer with configured embedding" should "be able to work" in {
+    val embedding = Sequential[Float]()
+      .add(Reshape[Float](Array(77 * 2), inputShape = Shape(77, 2)))
+      .add(Embedding[Float](100, 768, inputLength = 77 * 2))
+      .add(Reshape[Float](Array(77, 2, 768)))
+      .add(new KerasLayerWrapper[Float](Sum[Float](dimension = 3,
+        squeeze = true).asInstanceOf[AbstractModule[Activity, Activity, Float]]))
+    val model = TransformerLayer[Float](vocab = 100, seqLen = 77, nLayer = 3,
+      residPdrop = 0.1, attnPdrop = 0.1, nHead = 12, maskAttention = false,
+      embeddingLayer = embedding.asInstanceOf[KerasLayer[Tensor[Float], Tensor[Float], Float]])
+
     model.build(Shape(4, 77, 2))
-    val w = model.parameters()._1
-    require(w.length == 38)
     val input = Tensor[Float](Array(2, 2, 77, 2)).rand().resize(4, 77, 2)
     val gradOutput = Tensor[Float](4, 77, 768).rand()
     val output = model.forward(input)
     val gradInput = model.backward(input, gradOutput)
   }
 
-  "TransformerEncoder" should "be able to generate correct result" in {
+  "TransformerLayer" should "be able to generate correct result" in {
     RNG.setSeed(42)
-    val layer = TransformerEncoder[Float](vocab = 10, embeddingSize = 4, seqLen = 2, nHead = 2,
+    val layer = TransformerLayer[Float](vocab = 10, embeddingSize = 4, seqLen = 2, nHead = 2,
       residPdrop = 0, attnPdrop = 0, nLayer = 1)
     val data = Array[Float](6, 3, 7, 4, 6, 9, 2, 6, 7, 4, 3, 7, 7, 2, 5, 4)
     layer.build(Shape(4, 2, 2))
@@ -293,10 +301,10 @@ class TransformerEncoderSpec extends ZooSpecHelper {
   }
 
   "Attention" should "be able to generate correct result" in {
-    val transformerEncoder = TransformerEncoder[Float](vocab = 10, embeddingSize = 4,
+    val transformerLayer = TransformerLayer[Float](vocab = 10, embeddingSize = 4,
       seqLen = 2, nHead = 2,
       residPdrop = 0, attnPdrop = 0, nLayer = 1)
-    transformerEncoder.build(Shape(2, 2, 2))
+    transformerLayer.build(Shape(2, 2, 2))
 
     val xValue = Tensor[Float](Array[Float](0.6532f, 0.3958f, 0.9147f, 0.2036f,
     0.2018f, 0.2018f, 0.9497f, 0.6666f,
@@ -310,7 +318,7 @@ class TransformerEncoderSpec extends ZooSpecHelper {
     4f, 1f, 3f, 1f), Array(2, 2, 4))
     val x = Variable[Float](inputShape = Shape(2, 4))
 
-    val y = transformerEncoder.multiHeadSelfAttention(x)
+    val y = transformerLayer.multiHeadSelfAttention(x, 4)
     val model = Model[Float](input = x, output = y)
 
     val wb = model.parameters()._1
@@ -415,9 +423,9 @@ class TransformerEncoderSpec extends ZooSpecHelper {
   }
 }
 
-class TransformerEncoderSerialTest extends ModuleSerializationTest {
+class TransformerLayerSerialTest extends ModuleSerializationTest {
   override def test(): Unit = {
-    val layer = TransformerEncoder[Float](vocab = 100, embeddingSize = 768, nLayer = 3)
+    val layer = TransformerLayer[Float](vocab = 100, embeddingSize = 768, nLayer = 3)
     layer.build(Shape(2, 77, 2))
     val input = Tensor[Float](Array(2, 77, 2)).rand()
     runSerializationTest(layer, input)

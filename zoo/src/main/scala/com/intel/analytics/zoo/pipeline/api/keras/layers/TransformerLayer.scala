@@ -16,8 +16,9 @@
 
 package com.intel.analytics.zoo.pipeline.api.keras.layers
 
+import com.intel.analytics.bigdl.{nn => bnn}
 import com.intel.analytics.bigdl.nn.RandomNormal
-import com.intel.analytics.bigdl.nn.abstractnn.AbstractModule
+import com.intel.analytics.bigdl.nn.abstractnn.{AbstractModule, Activity}
 import com.intel.analytics.bigdl.nn.keras.KerasLayer
 import com.intel.analytics.bigdl.tensor.Tensor
 import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric
@@ -25,19 +26,18 @@ import com.intel.analytics.bigdl.utils.{Shape, SingleShape}
 import com.intel.analytics.zoo.pipeline.api.Net
 import com.intel.analytics.zoo.pipeline.api.autograd.{AutoGrad, Parameter, Variable}
 import com.intel.analytics.zoo.pipeline.api.keras.layers.utils.KerasUtils
-import com.intel.analytics.zoo.pipeline.api.keras.models.{KerasNet, Model, Sequential}
+import com.intel.analytics.zoo.pipeline.api.keras.models.{Model, Sequential}
 
 import scala.reflect.ClassTag
 
-class TransformerEncoder[T: ClassTag](
+class TransformerLayer[T: ClassTag](
    val vocab: Int,
    val seqLen: Int,
    val nLayer: Int,
    val residPdrop: Double,
    val attnPdrop: Double,
    val nHead: Int,
-   var embeddingSize: Int,
-   val embeddingDrop: Double,
+   val maskAttention: Boolean,
    val embeddingLayer: KerasLayer[Tensor[T], Tensor[T], T],
    var inputShape: Shape = null)(implicit ev: TensorNumeric[T])
   extends KerasLayer[Tensor[T], Tensor[T], T](KerasUtils.addBatch(inputShape))
@@ -48,33 +48,20 @@ class TransformerEncoder[T: ClassTag](
     require(inputShape.isInstanceOf[SingleShape], "TransformerLayer input must" +
       " be a single shape")
     val _inputShape = KerasUtils.removeBatch(inputShape)
+
     require(_inputShape.equals(Shape(seqLen, 2)), "TransformerLayer input shape" +
       " must be Shape(seqLen, 2)")
     val input = Variable(_inputShape)
-    val r = Reshape(Array(seqLen * 2)).from(input)
+    val embedding = Sequential[T]()
+      .add(embeddingLayer)
+    val e = embedding.from(input)
 
-    val _embedding = Sequential[T]()
-    if (embeddingLayer == null) {
-      require(embeddingSize > 0, "embeddingSize must be great" +
-        "than 0 with default embedding layer")
-        _embedding.add(Embedding(vocab, embeddingSize, inputLength = seqLen * 2))
-        .add(Dropout(embeddingDrop))
-    } else {
-      _embedding.add(embeddingLayer)
-    }
-    val e = _embedding.from(r)
+    val embeddingSize = e.getOutputShape().toSingle().last
 
-    if (embeddingSize == 0) {
-      embeddingSize = e.getOutputShape().toSingle().last
-    }
-    val r2 = Reshape(Array(seqLen, 2, embeddingSize)).from(e)
-
-    val h = AutoGrad.sum(r2, 2, false)
-
-    var nextInput: Variable[T] = h
+    var nextInput: Variable[T] = e
 
     for (i <- 0 until nLayer) {
-      val output = block(nextInput)
+      val output = block(nextInput, embeddingSize)
       nextInput = output
     }
 
@@ -82,7 +69,7 @@ class TransformerEncoder[T: ClassTag](
     model.asInstanceOf[AbstractModule[Tensor[T], Tensor[T], T]]
   }
 
-  def block(x: Variable[T]): Variable[T] = {
+  def block(x: Variable[T], embeddingSize: Int): Variable[T] = {
     // g, b for layerNorm
     val g = Parameter[T](Shape(1, embeddingSize),
       initWeight = Tensor.ones[T](embeddingSize).view(1, embeddingSize))
@@ -94,13 +81,12 @@ class TransformerEncoder[T: ClassTag](
       initWeight = Tensor.ones[T](embeddingSize).view(1, embeddingSize))
     val b2 = Parameter[T](Shape(1, embeddingSize),
       initWeight = Tensor[T](embeddingSize).view(1, embeddingSize))
-    val a = multiHeadSelfAttention(x)
+    val a = multiHeadSelfAttention(x, embeddingSize)
     val n = layerNorm(x + a, weight = g, bias = b)
-    val m = mlp(n)
+    val m = mlp(n, embeddingSize)
     val h = layerNorm(n + m, weight = g2, bias = b2)
     h
   }
-
 
   def layerNorm(x: Variable[T], e: Double = 1e-5, weight: Parameter[T],
                 bias: Parameter[T]): Variable[T] = {
@@ -116,14 +102,14 @@ class TransformerEncoder[T: ClassTag](
       * (scala.math.sqrt(2 / scala.math.Pi))) + 1)
   }
 
-  def mlp(x: Variable[T]): Variable[T] = {
+  def mlp(x: Variable[T], embeddingSize: Int): Variable[T] = {
     val h = new Convolution1D(embeddingSize * 4, 1, init = RandomNormal(0.0, 0.02)).from(x)
     val a = gelu(h)
     val h2 = new Convolution1D(embeddingSize, 1, init = RandomNormal(0.0, 0.02)).from(a)
     Dropout(residPdrop).from(h2)
   }
 
-  def multiHeadSelfAttention(x: Variable[T]): Variable[T] = {
+  def multiHeadSelfAttention(x: Variable[T], embeddingSize: Int): Variable[T] = {
     val c = new Convolution1D(embeddingSize * 3, 1, init = RandomNormal(0.0, 0.02)).from(x)
     val query = c.slice(2, 0, embeddingSize)
     val key = c.slice(2, embeddingSize, embeddingSize)
@@ -163,7 +149,9 @@ class TransformerEncoder[T: ClassTag](
     if (scale) w = w / scala.math.sqrt(v.getOutputShape().toSingle().toArray.last)
 
     // mask attention
-    w = w * ab + (ab * (-1) + 1) * -1e9
+    if (maskAttention) {
+      w = w * ab + (ab * (-1) + 1) * -1e9
+    }
     w = Activation[Float]("softmax").from(w)
     w = Dropout(attnPdrop).from(w)
 
@@ -171,7 +159,7 @@ class TransformerEncoder[T: ClassTag](
   }
 }
 
-object TransformerEncoder {
+object TransformerLayer {
   def apply[@specialized(Float, Double) T: ClassTag](
     vocab: Int = 40990,
     seqLen: Int = 77, // seq len
@@ -179,10 +167,21 @@ object TransformerEncoder {
     residPdrop: Double = 0.1,
     attnPdrop: Double = 0.1,
     nHead: Int = 12,
-    embeddingSize: Int = 0,
-    embeddingDrop: Double = 0)(implicit ev: TensorNumeric[T]): TransformerEncoder[T] = {
-    new TransformerEncoder[T](vocab, seqLen, nLayer,
-      residPdrop, attnPdrop, nHead, embeddingSize, embeddingDrop, null)
+    embeddingSize: Int = 768,
+    embeddingDrop: Double = 0,
+    maskAttention: Boolean = true)(implicit ev: TensorNumeric[T]): TransformerLayer[T] = {
+    require(embeddingSize > 0, "embeddingSize must be great" +
+      "than 0 with default embedding layer")
+    val embeddingLayer = Sequential[T]()
+      .add(Reshape(Array(seqLen * 2), inputShape = Shape(seqLen, 2)))
+      .add(Embedding(vocab, embeddingSize, inputLength = seqLen * 2))
+      .add(Dropout(embeddingDrop))
+      .add(Reshape(Array(seqLen, 2, embeddingSize)))
+        .add(new KerasLayerWrapper[T](bnn.Sum[T](dimension = 3,
+          squeeze = true).asInstanceOf[AbstractModule[Activity, Activity, T]]))
+    new TransformerLayer[T](vocab, seqLen, nLayer,
+      residPdrop, attnPdrop, nHead, maskAttention,
+      embeddingLayer.asInstanceOf[KerasLayer[Tensor[T], Tensor[T], T]])
   }
 
   def apply[@specialized(Float, Double) T: ClassTag](
@@ -192,9 +191,10 @@ object TransformerEncoder {
     residPdrop: Double,
     attnPdrop: Double,
     nHead: Int,
+    maskAttention: Boolean,
     embeddingLayer: KerasLayer[Tensor[T], Tensor[T], T])
-    (implicit ev: TensorNumeric[T]): TransformerEncoder[T] = {
-    new TransformerEncoder[T](vocab, seqLen, nLayer,
-      residPdrop, attnPdrop, nHead, 0, 0, embeddingLayer = embeddingLayer)
+    (implicit ev: TensorNumeric[T]): TransformerLayer[T] = {
+    new TransformerLayer[T](vocab, seqLen, nLayer,
+      residPdrop, attnPdrop, nHead, maskAttention, embeddingLayer = embeddingLayer)
   }
 }
