@@ -16,6 +16,10 @@ export ANALYTICS_ZOO_JAR=`find ${ANALYTICS_ZOO_HOME}/lib -type f -name "analytic
 export ANALYTICS_ZOO_PY_ZIP=`find ${ANALYTICS_ZOO_HOME}/lib -type f -name "analytics-zoo*python-api.zip"`
 export ANALYTICS_ZOO_CONF=${ANALYTICS_ZOO_HOME}/conf/spark-analytics-zoo.conf
 export PYTHONPATH=${ANALYTICS_ZOO_PY_ZIP}:${PYTHONPATH}
+export KMP_BLOCKTIME=0
+export KMP_AFFINITY=granularity=fine,verbose,compact,1,0
+export KMP_SETTINGS=1
+export OMP_NUM_THREADS=1
 
 # Check files
 if [ ! -f ${ANALYTICS_ZOO_CONF} ]; then
