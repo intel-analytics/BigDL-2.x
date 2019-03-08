@@ -33,6 +33,21 @@ class TestNLPArchitect(ZooTestCase):
         assert output[1].shape == (8, 30, 5)
         self.assert_tfpark_model_save_load(model, input_data)
 
+    def test_ner_crf_reg_mode(self):
+        model = NERCRF(num_entities=10, word_length=5, word_vocab_size=20, char_vocab_size=10)
+        input_data = [np.random.randint(20, size=(15, 12)), np.random.randint(10, size=(15, 12, 5))]
+        output = model.predict(input_data, distributed=True)
+        assert output.shape == (15, 12, 10)
+        self.assert_tfpark_model_save_load(model, input_data)
+
+    def test_ner_crf_pad_mode(self):
+        model = NERCRF(num_entities=15, word_length=8, word_vocab_size=20, char_vocab_size=10, crf_mode="pad")
+        input_data = [np.random.randint(20, size=(4, 12)), np.random.randint(10, size=(4, 12, 8)),
+                      np.random.randint(12, size=(15, 1))]
+        output = model.predict(input_data, distributed=True)
+        assert output.shape == (4, 12, 15)
+        self.assert_tfpark_model_save_load(model, input_data)
+
 
 if __name__ == "__main__":
     pytest.main([__file__])

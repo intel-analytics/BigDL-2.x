@@ -16,3 +16,4 @@
 
 from .text_model import *
 from .intent_extraction import *
+from .ner import *
