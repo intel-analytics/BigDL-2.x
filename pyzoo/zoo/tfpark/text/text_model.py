@@ -19,10 +19,10 @@ from zoo.tfpark import KerasModel, variable_creator_scope
 
 # TODO: add word embedding file support
 class TextKerasModel(KerasModel):
-    def __init__(self, labor, optimizer=None, *args):
+    def __init__(self, labor, optimizer=None, **kwargs):
         self.labor = labor
         with variable_creator_scope():
-            self.labor.build(*args)
+            self.labor.build(**kwargs)
             model = self.labor.model
             # Remark: tf.train.optimizers have error when mapped to BigDL optimizer.
             # Two ways to handle this:
