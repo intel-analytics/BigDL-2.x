@@ -17,10 +17,10 @@
 
 package com.intel.analytics.zoo.pipeline.api.autograd
 
-import com.intel.analytics.bigdl.nn.abstractnn.{AbstractModule, Activity, Initializable, TensorModule}
+import com.intel.analytics.bigdl.nn.abstractnn._
 import com.intel.analytics.bigdl.nn.keras.KerasLayer
 import com.intel.analytics.bigdl.nn.tf.InternalWithoutInput
-import com.intel.analytics.bigdl.nn.{InitializationMethod, RandomUniform, VariableFormat, Input => TInput}
+import com.intel.analytics.bigdl.nn.{InitializationMethod, RandomUniform, VariableFormat}
 import com.intel.analytics.bigdl.tensor.Tensor
 import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric
 import com.intel.analytics.bigdl.utils.{Node, Shape}
@@ -157,4 +157,46 @@ private[zoo] class InternalParameter[T: ClassTag](
   }
 
   override def hashCode(): Int = System.identityHashCode(this)
+}
+
+private[zoo] class InternalConstant[T: ClassTag](val data: Tensor[T])
+  (implicit ev: TensorNumeric[T])
+  extends TensorModule[T] {
+
+  override def updateOutput(input: Tensor[T]): Tensor[T] = {
+    output = data
+    output
+  }
+
+  override def updateGradInput(input: Tensor[T], gradOutput: Tensor[T]): Tensor[T] = {
+    gradInput = gradOutput
+    gradInput
+  }
+
+  override def equals(other: Any): Boolean = {
+    if (!other.isInstanceOf[InternalConstant[_]]) return false
+    this.eq(other.asInstanceOf[InternalConstant[_]])
+  }
+
+  override def hashCode(): Int = System.identityHashCode(this)
+}
+
+private[zoo] class KerasConstant[T: ClassTag] private[zoo](
+  val data: Tensor[T]
+  )(implicit ev: TensorNumeric[T])
+  extends KerasLayer[Activity, Activity, T]()
+    with InternalWithoutInput with IdentityOutputShape with Net {
+
+  override def doBuild(inputShape: Shape): AbstractModule[Activity, Activity, T] =
+    new InternalConstant[T](data).asInstanceOf[AbstractModule[Activity, Activity, T]]
+
+  override def skipDuplicateCheck(): Boolean = true
+}
+
+class Constant[T: ClassTag] private[zoo](val data: Tensor[T],
+  name: String = null)(implicit ev: TensorNumeric[T])
+  extends Variable[T](null, name) {
+
+  this.node = new Node(new KerasConstant[T](data))
+  this.node.element.asInstanceOf[KerasLayer[Tensor[T], Tensor[T], T]].build(Shape(data.size()))
 }
