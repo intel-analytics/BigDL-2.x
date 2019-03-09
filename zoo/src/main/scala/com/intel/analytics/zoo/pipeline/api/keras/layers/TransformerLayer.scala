@@ -31,8 +31,6 @@ import com.intel.analytics.zoo.pipeline.api.keras.models.{Model, Sequential}
 import scala.reflect.ClassTag
 
 class TransformerLayer[T: ClassTag](
-   val vocab: Int,
-   val seqLen: Int,
    val nLayer: Int,
    val residPdrop: Double,
    val attnPdrop: Double,
@@ -43,14 +41,13 @@ class TransformerLayer[T: ClassTag](
   extends KerasLayer[Tensor[T], Tensor[T], T](KerasUtils.addBatch(inputShape))
     with Net {
 
+  var seqLen: Int = 0
   override def doBuild(inputShape: Shape): AbstractModule[Tensor[T], Tensor[T], T] = {
-    // (sequence length, position)
     require(inputShape.isInstanceOf[SingleShape], "TransformerLayer input must" +
       " be a single shape")
     val _inputShape = KerasUtils.removeBatch(inputShape)
+    seqLen = _inputShape.toSingle().head
 
-    require(_inputShape.equals(Shape(seqLen, 2)), "TransformerLayer input shape" +
-      " must be Shape(seqLen, 2)")
     val input = Variable(_inputShape)
     val embedding = Sequential[T]()
       .add(embeddingLayer)
@@ -138,8 +135,10 @@ class TransformerLayer[T: ClassTag](
     Reshape(sizes.drop(1).dropRight(2) ++ Array(sizes.last * sizes(sizes.length - 2))).from(p)
   }
 
-  val data = KerasUtils.tril(Tensor.ones(seqLen, seqLen)).view(1, seqLen, seqLen)
-  val maskValue = new Constant[T](data)
+  lazy val maskValue = if (maskAttention) {
+    val data = KerasUtils.tril(Tensor.ones(seqLen, seqLen)).view(1, seqLen, seqLen)
+    new Constant[T](data)
+  } else null
 
   // scale shoule be set in Attention
   def attn(q: Variable[T], k: Variable[T], v: Variable[T], scale: Boolean = false): Variable[T] = {
@@ -178,14 +177,12 @@ object TransformerLayer {
       .add(Reshape(Array(seqLen, 2, embeddingSize)))
         .add(new KerasLayerWrapper[T](bnn.Sum[T](dimension = 3,
           squeeze = true).asInstanceOf[AbstractModule[Activity, Activity, T]]))
-    new TransformerLayer[T](vocab, seqLen, nLayer,
+    new TransformerLayer[T](nLayer,
       residPdrop, attnPdrop, nHead, maskAttention,
       embeddingLayer.asInstanceOf[KerasLayer[Tensor[T], Tensor[T], T]])
   }
 
   def apply[@specialized(Float, Double) T: ClassTag](
-    vocab: Int,
-    seqLen: Int,
     nLayer: Int,
     residPdrop: Double,
     attnPdrop: Double,
@@ -193,7 +190,7 @@ object TransformerLayer {
     maskAttention: Boolean,
     embeddingLayer: KerasLayer[Tensor[T], Tensor[T], T])
     (implicit ev: TensorNumeric[T]): TransformerLayer[T] = {
-    new TransformerLayer[T](vocab, seqLen, nLayer,
+    new TransformerLayer[T](nLayer,
       residPdrop, attnPdrop, nHead, maskAttention, embeddingLayer = embeddingLayer)
   }
 }

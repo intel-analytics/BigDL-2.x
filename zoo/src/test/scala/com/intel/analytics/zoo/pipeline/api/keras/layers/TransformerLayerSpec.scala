@@ -47,7 +47,7 @@ class TransformerLayerSpec extends ZooSpecHelper {
       .add(Reshape[Float](Array(77, 2, 768)))
       .add(new KerasLayerWrapper[Float](Sum[Float](dimension = 3,
         squeeze = true).asInstanceOf[AbstractModule[Activity, Activity, Float]]))
-    val model = TransformerLayer[Float](vocab = 100, seqLen = 77, nLayer = 3,
+    val model = TransformerLayer[Float](nLayer = 3,
       residPdrop = 0.1, attnPdrop = 0.1, nHead = 12, maskAttention = false,
       embeddingLayer = embedding.asInstanceOf[KerasLayer[Tensor[Float], Tensor[Float], Float]])
 
