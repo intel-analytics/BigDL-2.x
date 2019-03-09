@@ -127,14 +127,12 @@ private[zoo] class InternalParameter[T: ClassTag](
   }
 
   override def updateOutput(input: Tensor[T]): Tensor[T] = {
-    output.resizeAs(weight)
-    output.copy(weight)
+    output = weight
     output
   }
 
   override def updateGradInput(input: Tensor[T], gradOutput: Tensor[T]): Tensor[T] = {
-    gradInput.resizeAs(gradOutput)
-    gradInput.copy(gradOutput)
+    gradInput = gradOutput
     gradInput
   }
 
