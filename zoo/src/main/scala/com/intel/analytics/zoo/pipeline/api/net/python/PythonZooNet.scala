@@ -121,6 +121,10 @@ class PythonZooNet[T: ClassTag](implicit ev: TensorNumeric[T]) extends PythonZoo
     new TFValidationMethod(validationMethod, outputLength, targetLength)
   }
 
+  def createNonStatefulMetrics(idx: Int, name: String): NonStatefulMetrics = {
+    new NonStatefulMetrics(idx, name)
+  }
+
   def createTFOptimizer(modelPath: String,
                         optimMethod: OptimMethod[Float],
                         x: JavaRDD[Sample],

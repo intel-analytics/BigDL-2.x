@@ -362,11 +362,17 @@ class TFValidationMethod(JavaValue):
                            val_method, output_length, target_length)
 
 
+class NonStatefulMetrics(JavaValue):
+    def __init__(self, idx, name):
+        JavaValue.__init__(self, None, "float", idx, name)
+
+
 class TFOptimizer:
     def __init__(self, loss, optim_method, sess=None, dataset=None, inputs=None,
                  grads=None, variables=None, graph=None,
                  val_outputs=None, val_labels=None, val_method=None, val_split=0.0,
-                 tensors_with_value=None, session_config=None):
+                 tensors_with_value=None, session_config=None, metrics_tensors=None,
+                 metrics_names=None):
         '''
         TFOptimizer is used for distributed training of TensorFlow
         on Spark/BigDL.
@@ -412,12 +418,17 @@ class TFOptimizer:
         if self.dataset.batch_size <= 0:
             raise ValueError("You should set batch_size instead of batch_per_thread for training")
 
-        if val_outputs is not None and val_labels is not None:
+        if metrics_tensors is not None:
             with self.graph.as_default():
-                val_labels = [tf.identity(v) for v in val_labels]
-            outputs = val_outputs + val_labels + [loss]
+                real_batch_size = tf.shape(inputs[0])[0]
+            outputs = [real_batch_size] + metrics_tensors + [loss]
         else:
-            outputs = [loss]
+            if val_outputs is not None and val_labels is not None:
+                with self.graph.as_default():
+                    val_labels = [tf.identity(v) for v in val_labels]
+                outputs = val_outputs + val_labels + [loss]
+            else:
+                outputs = [loss]
 
         self.grads = grads
         self.outputs = outputs
@@ -479,17 +490,25 @@ with variable_creator_scope():
             return Sample.from_ndarray(nest.flatten(t), [np.array([0.0])])
 
         sample_rdd = data.map(to_sample)
-        if val_outputs is not None and val_labels is not None:
-            if self.dataset.val_rdd is not None:
-                val_rdd = self.dataset.val_rdd.map(to_sample)
+        has_val = val_outputs is not None and val_labels is not None
+        has_metrics = metrics_tensors is not None
+        has_validation = has_val or has_metrics
+        if has_validation:
+            if has_metrics:
+                all_name = metrics_names + ["loss"]
+                length = len(all_name)
+                val_method = [NonStatefulMetrics(length - i - 1, name)
+                              for i, name in enumerate(all_name)]
+            else:
                 val_method = [TFValidationMethod(m, len(val_outputs), len(val_labels))
                               for m in to_list(val_method)]
+            if self.dataset.val_rdd is not None:
+                val_rdd = self.dataset.val_rdd.map(to_sample)
                 training_rdd = sample_rdd
 
             elif val_split != 0.0:
                 training_rdd, val_rdd = sample_rdd.randomSplit([1 - val_split, val_split])
-                val_method = [TFValidationMethod(m, len(val_outputs), len(val_labels))
-                              for m in to_list(val_method)]
+
             else:
                 raise ValueError("Validation data is not specified. Please set " +
                                  "val rdd in TFDataset, or set val_split larger than zero")
@@ -551,6 +570,26 @@ with variable_creator_scope():
         loss = keras_model.total_loss
         inputs = keras_model.inputs + keras_model.targets
 
+        if len(keras_model.stateful_metric_names) > 0:
+            raise ValueError("Stateful metrics is currently not supported. " +
+                             "Found stateful metrics %s" % keras_model.stateful_metric_names)
+
+        i_length = len(keras_model.inputs)
+        all_length = len(inputs)
+        rdd = dataset.rdd.map(
+            lambda x: [np.expand_dims(x[i], axis=1)
+                       if i >= i_length and x[i].ndim == 0 else x[i] for i in range(all_length)])
+        val_rdd = None
+        if dataset.val_rdd is not None:
+            val_rdd = dataset.val_rdd.map(
+                lambda x: [np.expand_dims(x[i], axis=1)
+                           if i >= i_length and x[i].ndim == 0 else x[i]
+                           for i in range(all_length)])
+
+        new_dataset = TFDataset(rdd, dataset.tensor_structure, dataset.batch_size,
+                                -1, dataset.hard_code_batch_size, val_rdd)
+        new_dataset.batch_per_thread = dataset.batch_per_thread
+
         variables = keras_model._collected_trainable_weights
         keras_optimizer = keras_model.optimizer
         grads = keras_optimizer.get_gradients(loss, variables)
@@ -558,31 +597,26 @@ with variable_creator_scope():
         sess = K.get_session()
         optim_method = TFOptimizer.to_bigdl_optim_method(keras_optimizer)
 
-        if keras_model.metrics and (dataset.val_rdd is not None or val_spilt != 0.0):
-            if isinstance(keras_model.metrics, dict):
-                raise ValueError(
-                    "different metrics for different outputs are not supported right now")
-
-            if dataset.val_rdd is None and val_spilt == 0.0:
-                raise ValueError("Validation data is not specified. Please set " +
-                                 "val rdd in TFDataset, or set val_split larger than zero")
-            bigdl_val_methods =\
-                [to_bigdl_metric(m, keras_model.loss) for m in keras_model.metrics_names]
-            val_outputs = keras_model.outputs
-            val_labels = keras_model.targets
-        else:
-            val_outputs = None
-            val_labels = None
-            bigdl_val_methods = None
+        val_outputs = None
+        val_labels = None
+        bigdl_val_methods = None
+        metrics_tensors = None
+        metrics_names = None
+        if keras_model.metrics and (new_dataset.val_rdd is not None or val_spilt != 0.0):
+            metrics_tensors = keras_model.metrics_tensors
+            metrics_names = keras_model.metrics_names[1:]
 
         tensor_with_value = {
             K.learning_phase(): [True, False]
         }
 
-        return cls(loss, optim_method, sess, dataset, inputs,
+        return cls(loss, optim_method, sess, new_dataset, inputs,
                    grads, variables, loss.graph, val_outputs, val_labels,
                    bigdl_val_methods, val_spilt,
-                   tensors_with_value=tensor_with_value, **kwargs)
+                   tensors_with_value=tensor_with_value,
+                   metrics_tensors=metrics_tensors,
+                   metrics_names=metrics_names,
+                   **kwargs)
 
     @staticmethod
     def to_bigdl_optim_method(koptim_method):

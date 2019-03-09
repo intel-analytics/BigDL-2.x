@@ -194,6 +194,22 @@ class IdentityCriterion extends AbstractCriterion[Activity, Activity, Float]() {
   }
 }
 
+class NonStatefulMetrics(idx: Int, name: String) extends ValidationMethod[Float] {
+  override def apply(output: Activity, target: Activity): ValidationResult = {
+    // the output layout [grads..., metrics]
+    val outputT = output.toTable
+
+    val value = outputT[Tensor[Float]](outputT.length() - idx).value()
+    val count = outputT[Tensor[Float]](1).value().toInt
+
+    new ContiguousResult(value * count, count, name)
+  }
+
+  override protected def format(): String = {
+    name
+  }
+}
+
 class TFValidationMethod(val valMethod: ValidationMethod[Float],
                          outputLength: Int,
                          targetLength: Int) extends ValidationMethod[Float] {
