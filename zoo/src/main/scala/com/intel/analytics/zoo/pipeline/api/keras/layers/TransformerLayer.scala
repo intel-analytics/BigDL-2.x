@@ -24,7 +24,7 @@ import com.intel.analytics.bigdl.tensor.Tensor
 import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric
 import com.intel.analytics.bigdl.utils.{Shape, SingleShape}
 import com.intel.analytics.zoo.pipeline.api.Net
-import com.intel.analytics.zoo.pipeline.api.autograd.{AutoGrad, Parameter, Variable}
+import com.intel.analytics.zoo.pipeline.api.autograd.{AutoGrad, Constant, Parameter, Variable}
 import com.intel.analytics.zoo.pipeline.api.keras.layers.utils.KerasUtils
 import com.intel.analytics.zoo.pipeline.api.keras.models.{Model, Sequential}
 
@@ -138,9 +138,8 @@ class TransformerLayer[T: ClassTag](
     Reshape(sizes.drop(1).dropRight(2) ++ Array(sizes.last * sizes(sizes.length - 2))).from(p)
   }
 
-  // weights and ab belong to Attention
-  val weights = KerasUtils.tril(Tensor.ones(seqLen, seqLen)).view(1, seqLen, seqLen)
-  val ab = Parameter[T](Shape(1, seqLen, seqLen), trainable = false, initWeight = weights)
+  val data = KerasUtils.tril(Tensor.ones(seqLen, seqLen)).view(1, seqLen, seqLen)
+  val maskValue = new Constant[T](data)
 
   // scale shoule be set in Attention
   def attn(q: Variable[T], k: Variable[T], v: Variable[T], scale: Boolean = false): Variable[T] = {
@@ -150,7 +149,7 @@ class TransformerLayer[T: ClassTag](
 
     // mask attention
     if (maskAttention) {
-      w = w * ab + (ab * (-1) + 1) * -1e9
+      w = w * maskValue + (maskValue * (-1) + 1) * -1e9
     }
     w = Activation[Float]("softmax").from(w)
     w = Dropout(attnPdrop).from(w)
