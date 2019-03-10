@@ -357,12 +357,12 @@ class TFTrainingHelper(Layer):
 
 
 class TFValidationMethod(JavaValue):
-    def __init__(self, val_method, output_length, target_length):
+    def __init__(self, val_method, name, idx):
         JavaValue.__init__(self, None, "float",
-                           val_method, output_length, target_length)
+                           val_method, name, idx)
 
 
-class NonStatefulMetrics(JavaValue):
+class StatelessMetrics(JavaValue):
     def __init__(self, idx, name):
         JavaValue.__init__(self, None, "float", idx, name)
 
@@ -418,17 +418,18 @@ class TFOptimizer:
         if self.dataset.batch_size <= 0:
             raise ValueError("You should set batch_size instead of batch_per_thread for training")
 
+        outputs = []
+        if val_outputs is not None and val_labels is not None:
+            for i in range(len(val_outputs)):
+                outputs.append(val_outputs[i])
+                outputs.append(val_labels[i])
+
         if metrics_tensors is not None:
             with self.graph.as_default():
                 real_batch_size = tf.shape(inputs[0])[0]
-            outputs = [real_batch_size] + metrics_tensors + [loss]
-        else:
-            if val_outputs is not None and val_labels is not None:
-                with self.graph.as_default():
-                    val_labels = [tf.identity(v) for v in val_labels]
-                outputs = val_outputs + val_labels + [loss]
-            else:
-                outputs = [loss]
+            outputs.append(real_batch_size)
+            outputs.extend(metrics_tensors)
+            outputs.append(loss)
 
         self.grads = grads
         self.outputs = outputs
@@ -494,14 +495,16 @@ with variable_creator_scope():
         has_metrics = metrics_tensors is not None
         has_validation = has_val or has_metrics
         if has_validation:
+            all_val_methods = []
             if has_metrics:
                 all_name = metrics_names + ["loss"]
                 length = len(all_name)
-                val_method = [NonStatefulMetrics(length - i - 1, name)
-                              for i, name in enumerate(all_name)]
-            else:
-                val_method = [TFValidationMethod(m, len(val_outputs), len(val_labels))
-                              for m in to_list(val_method)]
+                all_val_methods.extend([StatelessMetrics(length - i - 1, name)
+                                        for i, name in enumerate(all_name)])
+            if has_validation:
+                val_methods = self._standarize_val_methods(val_method)
+                all_val_methods.extend([TFValidationMethod(m, name, idx)
+                                        for m, name, idx in val_methods])
             if self.dataset.val_rdd is not None:
                 val_rdd = self.dataset.val_rdd.map(to_sample)
                 training_rdd = sample_rdd
@@ -521,7 +524,7 @@ with variable_creator_scope():
             self.optimizer.set_validation(self.dataset.batch_size,
                                           val_rdd,
                                           EveryEpoch(),
-                                          val_method)
+                                          all_val_methods)
         else:
             training_rdd = sample_rdd
             self.optimizer = Optimizer.create(self.training_helper_layer,
@@ -529,6 +532,18 @@ with variable_creator_scope():
                                               IdentityCriterion(),
                                               batch_size=batch_size,
                                               optim_method=self.optim_method)
+
+    def _standarize_val_methods(self, val_method):
+        new_methods = []
+        if isinstance(val_method, list):
+            for i in range(len(val_method)):
+                if not isinstance(val_method[i], tuple):
+                    new_methods.append((val_method[i], "", i))
+                else:
+                    new_methods.append(val_method[i])
+        else:
+            new_methods.append((val_method, "", 0))
+        return new_methods
 
     @staticmethod
     def _get_arguments_from_loss(loss, optim_method, session, val_outputs, val_labels, val_method):
@@ -603,8 +618,22 @@ with variable_creator_scope():
         metrics_tensors = None
         metrics_names = None
         if keras_model.metrics and (new_dataset.val_rdd is not None or val_spilt != 0.0):
-            metrics_tensors = keras_model.metrics_tensors
-            metrics_names = keras_model.metrics_names[1:]
+            keras_metrics, zoo_metrics = handle_keras_metrics(keras_model)
+
+            bigdl_val_methods = []
+            val_outputs = []
+            val_labels = []
+            for i in range(len(zoo_metrics)):
+                metric_name, output, label, zoo_metric = zoo_metrics[i]
+                bigdl_val_methods.append((zoo_metric, metric_name, i))
+                val_outputs.append(output)
+                val_labels.append(label)
+
+            metrics_tensors = []
+            metrics_names = []
+            for i in range(len(keras_metrics)):
+                metrics_tensors.append(keras_metrics[i][1])
+                metrics_names.append(keras_metrics[i][0])
 
         tensor_with_value = {
             K.learning_phase(): [True, False]
@@ -691,6 +720,85 @@ with variable_creator_scope():
 
         feed_dict = dict(zip(self.variable_placeholders, variables))
         self.sess.run(self.assign, feed_dict=feed_dict)
+
+
+def handle_keras_metrics(keras_model):
+    import tensorflow as tf
+    if tf.__version__ == "1.13.1":
+        return _handle_keras_metrics_1_13(keras_model)
+    if tf.__version__ == "1.10.0":
+        return _handle_keras_metrics_1_10(keras_model)
+    raise ValueError("TensorFlow version: %s " % tf.__version__)
+
+
+def _handle_keras_metrics_1_10(keras_model):
+    keras_metics = [
+        (keras_model.metrics_names[i+1], keras_model.metrics_tensors[i])
+        for i in range(len(keras_model.metrics_tensors))
+    ]
+    zoo_metrics = []
+
+
+    return keras_metics, zoo_metrics
+
+def _handle_keras_metrics_1_13(keras_model):
+    loss_functions = keras_model.loss_functions
+    skip_target_indices = []
+    for i in range(len(loss_functions)):
+      if loss_functions[i] is None:
+        skip_target_indices.append(i)
+    keras_metrics = []
+    zoo_metrics = []
+    for i in range(len(keras_model.outputs)):
+        if i in skip_target_indices:
+          continue
+        _handle_per_output_metrics(keras_model, keras_model._per_output_metrics[i],
+                                   keras_metrics, zoo_metrics,
+                                   keras_model.outputs[i], keras_model.targets[i])
+    return keras_metrics, zoo_metrics
+
+
+
+def _handle_per_output_metrics(keras_model, metrics_dict, keras_metrics, zoo_metrics, output, label):
+    from tensorflow.python.keras import metrics as metrics_module
+    for metric_name, (metric_fn, stateful_fn) in metrics_dict.items():
+        success, zoo_metric = _to_zoo_metric(metric_fn)
+        if success:
+            zoo_metrics.append((metric_name, output, label, zoo_metric))
+        else:
+            if isinstance(metric_fn, metrics_module.Metric):
+                raise ValueError("%s is not supported for now" % metric_fn)
+            keras_metrics.append((metric_name, keras_model._compile_metrics_tensors[metric_name]))
+
+
+def _to_zoo_metric(keras_metric_fn):
+    from tensorflow.python.keras import metrics as metrics_module
+    from zoo.pipeline.api.keras import metrics as zoo_metrics
+
+    if isinstance(keras_metric_fn, metrics_module.Metric):
+        if isinstance(keras_metric_fn, metrics_module.BinaryAccuracy):
+            return True, zoo_metrics.BinaryAccuracy()
+        if isinstance(keras_metric_fn, metrics_module.SparseCategoricalAccuracy):
+            return True, zoo_metrics.SparseCategoricalAccuracy()
+        if isinstance(keras_metric_fn, metrics_module.CategoricalAccuracy):
+            return True, zoo_metrics.CategoricalAccuracy
+        return False, None
+    else:
+        if keras_metric_fn.__name__ == "sparse_categorical_accuracy":
+            return True, zoo_metrics.SparseCategoricalAccuracy()
+        if keras_metric_fn.__name__ == "binary_accuracy":
+            return True, zoo_metrics.BinaryAccuracy()
+        if keras_metric_fn.__name__ == "sparse_categorical_accuracy":
+            return True, zoo_metrics.SparseCategoricalAccuracy()
+        if keras_metric_fn.__name__ == "mean_squared_error":
+            from bigdl.optim.optimizer import MAE
+            return True, MAE()
+        return False, None
+
+
+
+
+
 
 
 class TensorMeta(object):

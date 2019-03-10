@@ -194,7 +194,7 @@ class IdentityCriterion extends AbstractCriterion[Activity, Activity, Float]() {
   }
 }
 
-class NonStatefulMetrics(idx: Int, name: String) extends ValidationMethod[Float] {
+class StatelessMetrics(idx: Int, name: String) extends ValidationMethod[Float] {
   override def apply(output: Activity, target: Activity): ValidationResult = {
     // the output layout [grads..., metrics]
     val outputT = output.toTable
@@ -211,53 +211,24 @@ class NonStatefulMetrics(idx: Int, name: String) extends ValidationMethod[Float]
 }
 
 class TFValidationMethod(val valMethod: ValidationMethod[Float],
-                         outputLength: Int,
-                         targetLength: Int) extends ValidationMethod[Float] {
+                         name: String,
+                         idx: Int) extends ValidationMethod[Float] {
   override def apply(output: Activity, target: Activity): ValidationResult = {
-    // the output layout [grads..., outputs..., labels..., loss]
+    // the output layout [outputs..., labels..., batch_size, metrics..., loss]
     val outputT = output.toTable
 
-    if (valMethod.isInstanceOf[Loss[Float]]) {
-      val loss = outputT[Tensor[Float]](outputT.length()).value()
-      return new LossResult(loss, 1)
-    }
-    val outputActivity: Activity = if (outputLength == 1) {
-      outputT[Tensor[Float]](outputT.length() - outputLength - targetLength)
-    } else {
-      var i = outputT.length() - outputLength - targetLength
-      val outputs = T()
-      while (i < outputLength - targetLength) {
-        outputs.insert(outputT(i))
-          i += 1
-      }
-      outputs
-    }
+    val outputTensor = outputT[Tensor[Float]](2 * idx + 1)
+    val labelTensor = outputT[Tensor[Float]](2 * idx + 2)
 
-    val to1basedLabel = !valMethod.isInstanceOf[Accuracy[Float]] &&
-      valMethod.isInstanceOf[Top1Accuracy[Float]] ||
-        valMethod.isInstanceOf[Top5Accuracy[Float]] ||
-        valMethod.isInstanceOf[TreeNNAccuracy[Float]]
-    val targetActivity = if (targetLength == 1) {
-      val t = outputT[Tensor[Float]](outputT.length() - targetLength)
-      if (to1basedLabel) t.add(1.0f)
-      t
-    } else {
-      var i = outputT.length() - targetLength
-      val targets = T()
-      while (i < outputLength) {
-        val t = outputT[Tensor[Float]](i)
-        if (to1basedLabel) t.add(1.0f)
-        targets.insert(t)
-        i += 1
-      }
-      targets
-    }
-
-    valMethod.apply(outputActivity, targetActivity)
+    valMethod.apply(outputTensor, labelTensor)
   }
 
   override protected def format(): String = {
-    valMethod.toString()
+    if (name == "") {
+      valMethod.toString()
+    } else {
+      name + " " + valMethod.toString()
+    }
   }
 }
 
