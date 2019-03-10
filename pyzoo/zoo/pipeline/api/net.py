@@ -748,13 +748,13 @@ def _handle_keras_metrics_1_13(keras_model):
     loss_functions = keras_model.loss_functions
     skip_target_indices = []
     for i in range(len(loss_functions)):
-      if loss_functions[i] is None:
-        skip_target_indices.append(i)
+        if loss_functions[i] is None:
+            skip_target_indices.append(i)
     keras_metrics = []
     zoo_metrics = []
     for i in range(len(keras_model.outputs)):
         if i in skip_target_indices:
-          continue
+            continue
         _handle_per_output_metrics(keras_model, keras_model._per_output_metrics[i],
                                    keras_metrics, zoo_metrics,
                                    i)
@@ -775,7 +775,8 @@ def _handle_per_output_metrics(keras_model, metrics_dict, keras_metrics, zoo_met
                 raise ValueError("%s is not supported for now" % metric_fn)
             keras_metrics.append((metric_name, keras_model._compile_metrics_tensors[metric_name]))
 
-    keras_metrics.append((output_name + '_loss', keras_model._compile_metrics_tensors[output_name + '_loss']))
+    keras_metrics.append((output_name + '_loss',
+                          keras_model._compile_metrics_tensors[output_name + '_loss']))
 
 
 def _to_zoo_metric(keras_metric_fn):
@@ -801,11 +802,6 @@ def _to_zoo_metric(keras_metric_fn):
             from bigdl.optim.optimizer import MAE
             return True, MAE()
         return False, None
-
-
-
-
-
 
 
 class TensorMeta(object):
