@@ -33,7 +33,7 @@ from bigdl.util.common import to_list, callBigDlFunc, \
 from zoo.common import Sample, JTensor
 from zoo.common.nncontext import getOrCreateSparkContext
 from zoo.feature.image import ImageSet
-from zoo.pipeline.api.keras.engine.topology import ZooKerasLayer, KerasNet, to_bigdl_metric
+from zoo.pipeline.api.keras.engine.topology import ZooKerasLayer, KerasNet
 from bigdl.optim.optimizer import EveryEpoch, MaxEpoch, Optimizer
 from zoo.util import nest
 
@@ -420,16 +420,19 @@ class TFOptimizer:
 
         outputs = []
         if val_outputs is not None and val_labels is not None:
-            for i in range(len(val_outputs)):
-                outputs.append(val_outputs[i])
-                outputs.append(val_labels[i])
+            with self.graph.as_default():
+                for i in range(len(val_outputs)):
+                    outputs.append(val_outputs[i])
+                    outputs.append(tf.identity(val_labels[i]))
 
         if metrics_tensors is not None:
-            with self.graph.as_default():
-                real_batch_size = tf.shape(inputs[0])[0]
-            outputs.append(real_batch_size)
             outputs.extend(metrics_tensors)
-            outputs.append(loss)
+
+        with self.graph.as_default():
+            real_batch_size = tf.shape(inputs[0])[0]
+
+        outputs.append(real_batch_size)
+        outputs.append(loss)
 
         self.grads = grads
         self.outputs = outputs
@@ -496,15 +499,20 @@ with variable_creator_scope():
         has_validation = has_val or has_metrics
         if has_validation:
             all_val_methods = []
-            if has_metrics:
-                all_name = metrics_names + ["loss"]
-                length = len(all_name)
-                all_val_methods.extend([StatelessMetrics(length - i - 1, name)
-                                        for i, name in enumerate(all_name)])
+            # output format is [val_out_0, val_label_0, ..., val_out_m, val_label_m,
+            #  metrics_0, ..., metrics_n, batch_size, loss]
             if has_validation:
                 val_methods = self._standarize_val_methods(val_method)
-                all_val_methods.extend([TFValidationMethod(m, name, idx)
-                                        for m, name, idx in val_methods])
+                all_val_methods.extend([TFValidationMethod(val_methods[i][0], val_methods[i][1], i)
+                                        for i in range(len(val_methods))])
+
+            if has_metrics:
+                offset = 2 * len(all_val_methods)
+                all_val_methods.extend([StatelessMetrics(offset + i, name)
+                                        for i, name in enumerate(metrics_names)])
+            length = (len(all_val_methods) - len(metrics_names)) * 2 + len(metrics_names) + 1
+            all_val_methods.append(StatelessMetrics(length, "loss"))
+
             if self.dataset.val_rdd is not None:
                 val_rdd = self.dataset.val_rdd.map(to_sample)
                 training_rdd = sample_rdd
@@ -538,11 +546,11 @@ with variable_creator_scope():
         if isinstance(val_method, list):
             for i in range(len(val_method)):
                 if not isinstance(val_method[i], tuple):
-                    new_methods.append((val_method[i], "", i))
+                    new_methods.append((val_method[i], ""))
                 else:
                     new_methods.append(val_method[i])
         else:
-            new_methods.append((val_method, "", 0))
+            new_methods.append((val_method, ""))
         return new_methods
 
     @staticmethod
@@ -585,10 +593,6 @@ with variable_creator_scope():
         loss = keras_model.total_loss
         inputs = keras_model.inputs + keras_model.targets
 
-        if len(keras_model.stateful_metric_names) > 0:
-            raise ValueError("Stateful metrics is currently not supported. " +
-                             "Found stateful metrics %s" % keras_model.stateful_metric_names)
-
         i_length = len(keras_model.inputs)
         all_length = len(inputs)
         rdd = dataset.rdd.map(
@@ -625,7 +629,7 @@ with variable_creator_scope():
             val_labels = []
             for i in range(len(zoo_metrics)):
                 metric_name, output, label, zoo_metric = zoo_metrics[i]
-                bigdl_val_methods.append((zoo_metric, metric_name, i))
+                bigdl_val_methods.append((zoo_metric, metric_name))
                 val_outputs.append(output)
                 val_labels.append(label)
 
@@ -737,9 +741,8 @@ def _handle_keras_metrics_1_10(keras_model):
         for i in range(len(keras_model.metrics_tensors))
     ]
     zoo_metrics = []
-
-
     return keras_metics, zoo_metrics
+
 
 def _handle_keras_metrics_1_13(keras_model):
     loss_functions = keras_model.loss_functions
@@ -754,13 +757,15 @@ def _handle_keras_metrics_1_13(keras_model):
           continue
         _handle_per_output_metrics(keras_model, keras_model._per_output_metrics[i],
                                    keras_metrics, zoo_metrics,
-                                   keras_model.outputs[i], keras_model.targets[i])
+                                   i)
     return keras_metrics, zoo_metrics
 
 
-
-def _handle_per_output_metrics(keras_model, metrics_dict, keras_metrics, zoo_metrics, output, label):
+def _handle_per_output_metrics(keras_model, metrics_dict, keras_metrics, zoo_metrics, idx):
     from tensorflow.python.keras import metrics as metrics_module
+    output = keras_model.outputs[idx]
+    label = keras_model.targets[idx]
+    output_name = keras_model.output_names[idx]
     for metric_name, (metric_fn, stateful_fn) in metrics_dict.items():
         success, zoo_metric = _to_zoo_metric(metric_fn)
         if success:
@@ -769,6 +774,8 @@ def _handle_per_output_metrics(keras_model, metrics_dict, keras_metrics, zoo_met
             if isinstance(metric_fn, metrics_module.Metric):
                 raise ValueError("%s is not supported for now" % metric_fn)
             keras_metrics.append((metric_name, keras_model._compile_metrics_tensors[metric_name]))
+
+    keras_metrics.append((output_name + '_loss', keras_model._compile_metrics_tensors[output_name + '_loss']))
 
 
 def _to_zoo_metric(keras_metric_fn):
@@ -788,8 +795,8 @@ def _to_zoo_metric(keras_metric_fn):
             return True, zoo_metrics.SparseCategoricalAccuracy()
         if keras_metric_fn.__name__ == "binary_accuracy":
             return True, zoo_metrics.BinaryAccuracy()
-        if keras_metric_fn.__name__ == "sparse_categorical_accuracy":
-            return True, zoo_metrics.SparseCategoricalAccuracy()
+        if keras_metric_fn.__name__ == "categorical_accuracy":
+            return True, zoo_metrics.CategoricalAccuracy()
         if keras_metric_fn.__name__ == "mean_squared_error":
             from bigdl.optim.optimizer import MAE
             return True, MAE()

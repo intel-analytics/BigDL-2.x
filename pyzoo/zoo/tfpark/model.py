@@ -14,32 +14,21 @@
 # limitations under the License.
 #
 
-from bigdl.optim.optimizer import MaxEpoch
+
 from tensorflow.python.keras.engine import training_utils
 
-from zoo.common.nncontext import getOrCreateSparkContext
-from zoo.pipeline.api.net import TFDataset, TFOptimizer, TFPredictor
+from zoo.pipeline.api.net import *
 import tensorflow.keras.backend as K
 import tensorflow as tf
 import numpy as np
+
+from zoo.util import nest
 
 
 class KerasModel(object):
 
     def __init__(self, model):
         self.model = model
-        metrics_tensors = [
-            self.model.metrics_tensors[m] for m in range(len(self.model.metrics_names) - 1)
-        ]
-
-        metrics_tensors = [self.model.total_loss] + metrics_tensors
-        batch_size = tf.shape(model.inputs[0])
-
-        def repeat(x, times):
-            return tf.tile(tf.expand_dims(x, 0), tf.expand_dims(times, 0))
-
-        self.metrics_tensors = [repeat(x, batch_size[0]) for x in metrics_tensors]
-
         self.tf_optimizer = None
         self.tf_optimizer_done_epochs = 0
 
@@ -148,14 +137,56 @@ class KerasModel(object):
                                            batch_size=batch_per_thread)
 
     def _evaluate_distributed(self, dataset):
-        predictor = TFPredictor(K.get_session(), self.metrics_tensors,
-                                self.model.inputs + self.model.targets, dataset)
-        result = predictor.predict()
-        metrics_sum = result.map(lambda x: x + [np.array(1.0)]).reduce(lambda a, b: elem_sum(a, b))
-        length = len(metrics_sum) - 1
-        for i in range(length):
-            metrics_sum[i] /= metrics_sum[length]
-        return metrics_sum[:length]
+        keras_metrics, zoo_metrics = handle_keras_metrics(self.model)
+        output_tensors = []
+        metric_names = []
+        val_methods = []
+        with self.model.total_loss.graph.as_default():
+            for i in range(len(zoo_metrics)):
+                metric_name, output, label, zoo_metric = zoo_metrics[i]
+                output_tensors.append(output)
+                output_tensors.append(tf.identity(label))
+                val_methods.append(TFValidationMethod(zoo_metric, metric_name, i))
+                metric_names.append(metric_name)
+
+        offset = 2 * len(val_methods)
+        for i in range(len(keras_metrics)):
+            output_tensors.append(keras_metrics[i][1])
+            val_methods.append(StatelessMetrics(offset + i, keras_metrics[i][0]))
+            metric_names.append(keras_metrics[i][0])
+
+        with self.model.total_loss.graph.as_default():
+            real_batch_size = tf.shape(self.model.inputs[0])[0]
+        output_tensors.append(real_batch_size)
+
+        offset += len(keras_metrics) + 1
+        output_tensors.append(self.model.total_loss)
+        val_methods.append(StatelessMetrics(offset, "loss"))
+        metric_names.append("loss")
+
+        i_length = len(self.model.inputs)
+        all_length = i_length + len(self.model.targets)
+
+        targets = self.model.targets
+
+        rdd = dataset.rdd.map(
+            lambda x: [np.expand_dims(x[i], axis=1)
+                       if i >= i_length and x[i].ndim == 0 else x[i] for i in range(all_length)])\
+            .map(lambda t: Sample.from_ndarray(nest.flatten(t), [np.array([0.0])]))
+
+        tfnet = TFNet.from_session(K.get_session(), self.model.inputs + targets,
+                                   output_tensors)
+
+        K.learning_phase()
+
+        results = tfnet.evaluate(rdd, dataset.batch_per_thread, val_methods)
+
+        results = [r.result for r in results]
+
+        result_dict = dict(zip(metric_names, results))
+
+        final_results = [result_dict[name] for name in self.model.metrics_names]
+        return final_results
 
     def predict(self,
                 x,

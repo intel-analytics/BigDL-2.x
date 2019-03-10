@@ -199,8 +199,8 @@ class StatelessMetrics(idx: Int, name: String) extends ValidationMethod[Float] {
     // the output layout [grads..., metrics]
     val outputT = output.toTable
 
-    val value = outputT[Tensor[Float]](outputT.length() - idx).value()
-    val count = outputT[Tensor[Float]](1).value().toInt
+    val value = outputT[Tensor[Float]](idx + 1).value()
+    val count = outputT[Tensor[Float]](outputT.length() - 1).value().toInt
 
     new ContiguousResult(value * count, count, name)
   }
