@@ -501,16 +501,20 @@ with variable_creator_scope():
             all_val_methods = []
             # output format is [val_out_0, val_label_0, ..., val_out_m, val_label_m,
             #  metrics_0, ..., metrics_n, batch_size, loss]
+            val_length = 0
             if has_validation:
                 val_methods = self._standarize_val_methods(val_method)
                 all_val_methods.extend([TFValidationMethod(val_methods[i][0], val_methods[i][1], i)
                                         for i in range(len(val_methods))])
+                val_length = len(all_val_methods)
 
+            metrics_length = 0
             if has_metrics:
                 offset = 2 * len(all_val_methods)
                 all_val_methods.extend([StatelessMetrics(offset + i, name)
                                         for i, name in enumerate(metrics_names)])
-            length = (len(all_val_methods) - len(metrics_names)) * 2 + len(metrics_names) + 1
+                metrics_length = len(metrics_names)
+            length = val_length * 2 + metrics_length + 1
             all_val_methods.append(StatelessMetrics(length, "loss"))
 
             if self.dataset.val_rdd is not None:
@@ -758,6 +762,10 @@ def _handle_keras_metrics_1_13(keras_model):
         _handle_per_output_metrics(keras_model, keras_model._per_output_metrics[i],
                                    keras_metrics, zoo_metrics,
                                    i)
+        if len(keras_model.outputs) > 1:
+            output_name = keras_model.output_names[i]
+            keras_metrics.append((output_name + '_loss',
+                                  keras_model._compile_metrics_tensors[output_name + '_loss']))
     return keras_metrics, zoo_metrics
 
 
@@ -765,7 +773,7 @@ def _handle_per_output_metrics(keras_model, metrics_dict, keras_metrics, zoo_met
     from tensorflow.python.keras import metrics as metrics_module
     output = keras_model.outputs[idx]
     label = keras_model.targets[idx]
-    output_name = keras_model.output_names[idx]
+
     for metric_name, (metric_fn, stateful_fn) in metrics_dict.items():
         success, zoo_metric = _to_zoo_metric(metric_fn)
         if success:
@@ -774,9 +782,6 @@ def _handle_per_output_metrics(keras_model, metrics_dict, keras_metrics, zoo_met
             if isinstance(metric_fn, metrics_module.Metric):
                 raise ValueError("%s is not supported for now" % metric_fn)
             keras_metrics.append((metric_name, keras_model._compile_metrics_tensors[metric_name]))
-
-    keras_metrics.append((output_name + '_loss',
-                          keras_model._compile_metrics_tensors[output_name + '_loss']))
 
 
 def _to_zoo_metric(keras_metric_fn):

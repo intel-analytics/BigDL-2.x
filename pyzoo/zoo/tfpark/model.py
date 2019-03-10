@@ -177,9 +177,8 @@ class KerasModel(object):
         tfnet = TFNet.from_session(K.get_session(), self.model.inputs + targets,
                                    output_tensors)
 
-        K.learning_phase()
-
-        results = tfnet.evaluate(rdd, dataset.batch_per_thread, val_methods)
+        batch_size = dataset.batch_per_thread * dataset.total_core_num
+        results = tfnet.evaluate(rdd, batch_size, val_methods)
 
         results = [r.result for r in results]
 

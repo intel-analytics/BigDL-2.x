@@ -20,11 +20,11 @@ import java.nio.FloatBuffer
 
 import com.intel.analytics.bigdl.dataset.{MiniBatch, Sample, Transformer}
 import com.intel.analytics.bigdl.nn.abstractnn.{AbstractCriterion, AbstractModule, Activity}
-import com.intel.analytics.bigdl.optim._
+import com.intel.analytics.bigdl.optim.{Top5Accuracy, _}
 import com.intel.analytics.bigdl.python.api.{PythonBigDLKeras, Sample => JSample}
 import com.intel.analytics.bigdl.tensor.{Storage, Tensor}
 import com.intel.analytics.bigdl.utils.T
-import com.intel.analytics.zoo.pipeline.api.keras.metrics.Accuracy
+import com.intel.analytics.zoo.pipeline.api.keras.metrics.{Accuracy, BinaryAccuracy, CategoricalAccuracy, SparseCategoricalAccuracy}
 import org.apache.spark.api.java.JavaRDD
 import org.apache.spark.rdd.RDD
 import org.tensorflow.{Session, Tensor => TTensor}
@@ -219,6 +219,19 @@ class TFValidationMethod(val valMethod: ValidationMethod[Float],
 
     val outputTensor = outputT[Tensor[Float]](2 * idx + 1)
     val labelTensor = outputT[Tensor[Float]](2 * idx + 2)
+
+    val to1basedLabel = valMethod match {
+        case _: SparseCategoricalAccuracy[Float] => false
+        case _: CategoricalAccuracy[Float] => false
+        case _: BinaryAccuracy[Float] => false
+        case v: Accuracy[Float] => !v.zeroBasedLabel
+        case _: Top1Accuracy[Float] => true
+        case _: Top5Accuracy[Float] => true
+        case _: TreeNNAccuracy[Float] => true
+        case _ => false
+      }
+
+    if (to1basedLabel) labelTensor.add(1.0f)
 
     valMethod.apply(outputTensor, labelTensor)
   }
