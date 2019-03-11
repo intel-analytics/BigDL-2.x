@@ -16,7 +16,7 @@
 
 package com.intel.analytics.zoo.pipeline.inference
 
-import java.io.{IOException, ObjectInputStream, ObjectOutputStream}
+import java.io.{IOException, InputStream, ObjectInputStream, ObjectOutputStream}
 import java.lang.{Float => JFloat, Integer => JInt}
 import java.util
 import java.util.concurrent.LinkedBlockingQueue
@@ -24,6 +24,7 @@ import java.util.{List => JList}
 
 import com.intel.analytics.bigdl.nn.abstractnn.Activity
 import com.intel.analytics.bigdl.utils.Engine
+import com.intel.analytics.zoo.common.CheckedObjectInputStream
 import com.intel.analytics.zoo.pipeline.inference.DeviceType.DeviceTypeEnumVal
 
 import scala.collection.JavaConverters._
@@ -279,23 +280,6 @@ class InferenceModel(private var supportedConcurrentNum: Int = 1,
     require(this.supportedConcurrentNum > 0, "supported concurrent number should > 0")
     val models = this.originalModel.copy(supportedConcurrentNum)
     models.map(this.modelQueue.offer(_))
-  }
-
-  @throws(classOf[IOException])
-  private def writeObject(out: ObjectOutputStream): Unit = {
-    out.writeInt(supportedConcurrentNum)
-    out.writeObject(originalModel)
-  }
-
-  @throws(classOf[IOException])
-  private def readObject(in: ObjectInputStream): Unit = {
-    System.setProperty("bigdl.localMode", System.getProperty("bigdl.localMode", "true"))
-    System.setProperty("bigdl.coreNumber", System.getProperty("bigdl.coreNumber", "1"))
-    Engine.init
-    this.supportedConcurrentNum = in.readInt
-    this.originalModel = in.readObject.asInstanceOf[FloatModel]
-    this.modelQueue = new LinkedBlockingQueue[AbstractModel](supportedConcurrentNum)
-    offerModelQueue()
   }
 
   def getOriginalModel: AbstractModel = originalModel

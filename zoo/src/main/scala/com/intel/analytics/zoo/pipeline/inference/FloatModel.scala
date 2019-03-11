@@ -16,7 +16,7 @@
 
 package com.intel.analytics.zoo.pipeline.inference
 
-import java.io.{IOException, ObjectInputStream, ObjectOutputStream}
+import java.io._
 import java.util.{List => JList}
 
 import com.intel.analytics.bigdl.Module
@@ -24,6 +24,7 @@ import com.intel.analytics.bigdl.nn.abstractnn.{AbstractModule, Activity}
 import com.intel.analytics.bigdl.tensor.Tensor
 import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric
 import com.intel.analytics.bigdl.utils.{Engine, Table}
+import com.intel.analytics.zoo.common.CheckedObjectInputStream
 
 import scala.collection.mutable.ArrayBuffer
 import scala.reflect.ClassTag
@@ -66,20 +67,6 @@ class FloatModel(var model: AbstractModule[Activity, Activity, Float])
 
   override def isReleased(): Boolean = {
     model == null
-  }
-
-  @throws(classOf[IOException])
-  private def writeObject(out: ObjectOutputStream): Unit = {
-    out.writeObject(model)
-  }
-
-  @throws(classOf[IOException])
-  private def readObject(in: ObjectInputStream): Unit = {
-    System.setProperty("bigdl.localMode", System.getProperty("bigdl.localMode", "true"))
-    System.setProperty("bigdl.coreNumber", System.getProperty("bigdl.coreNumber", "1"))
-    Engine.init
-    model = (in.readObject().asInstanceOf[AbstractModule[Activity, Activity, Float]])
-    model.evaluate()
   }
 
   override def toString: String = s"FloatInferenceModel($model)"
