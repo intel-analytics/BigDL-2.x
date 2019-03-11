@@ -24,6 +24,7 @@
 
 * A deep learning approach for precipitation nowcasting with RNN using Analytics Zoo on BigDL, [Strata Data conference](https://conferences.oreilly.com/strata/strata-ny-2018/public/schedule/detail/69413), Sep 2018, New York ([slides](https://github.com/analytics-zoo/analytics-zoo.github.io/blob/master/presentations/A%20deep%20learning%20approach%20for%20precipitation%20nowcasting%20with%20RNN%20using%20Analytics%20Zoo%20on%20BigDL.pdf))
 
+* Analytics Zoo: Unifying Big Data Analytics and AI for Apache Spark, [Shanghai Apache Spark+AI meetup](https://www.meetup.com/Shanghai-Apache-Spark-AI-Meetup/events/255788956/), Nov 2018, Shanghai ([slides](https://github.com/analytics-zoo/analytics-zoo.github.io/blob/master/presentations/Analytics%20Zoo-Unifying%20Big%20Data%20Analytics%20and%20AI%20for%20Apache%20Spark.pdf))
+
 * Use Intel Analytics Zoo to build an intelligent QA Bot for Microsoft Azure, [Shanghai Apache Spark+AI meetup](https://www.meetup.com/Shanghai-Apache-Spark-AI-Meetup/events/255788956/), Nov 2018, Shanghai ([slides](https://github.com/analytics-zoo/analytics-zoo.github.io/blob/master/presentations/Use%20Intel%20Analytics%20Zoo%20to%20build%20an%20intelligent%20QA%20Bot%20for%20Microsoft%20Azure.pdf))
 
-* Analytics Zoo: Unifying Big Data Analytics and AI for Apache Spark, [Shanghai Apache Spark+AI meetup](https://www.meetup.com/Shanghai-Apache-Spark-AI-Meetup/events/255788956/), Nov 2018, Shanghai ([slides](https://github.com/analytics-zoo/analytics-zoo.github.io/blob/master/presentations/Analytics%20Zoo-Unifying%20Big%20Data%20Analytics%20and%20AI%20for%20Apache%20Spark.pdf))
