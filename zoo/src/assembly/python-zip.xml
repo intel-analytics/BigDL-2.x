@@ -24,15 +24,7 @@
                 <exclude>docs/**/*</exclude>
             </excludes>
             <outputDirectory>/..</outputDirectory>
-            <directory>${project.build.directory}/bigdl_python/sources</directory>
-        </fileSet>
-
-        <fileSet>
-            <includes>
-                <include>**/*.py</include>
-            </includes>
-            <outputDirectory>/..</outputDirectory>
-            <directory>${project.build.directory}/nlp-architect/sources</directory>
+            <directory>${project.build.directory}/python/sources</directory>
         </fileSet>
 
         <fileSet>

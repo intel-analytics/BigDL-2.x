@@ -334,29 +334,13 @@
                         </goals>
                     </execution>
                     <execution>
-                        <id>bigdl_python</id>
+                        <id>python_packages</id>
                         <phase>package</phase>
                         <configuration>
                             <arguments>
-                                <argument>${project.basedir}/../scripts/get_bigdl_python</argument>
-                                <argument>${project.build.directory}/bigdl_python</argument>
+                                <argument>${project.basedir}/../scripts/get_python_packages</argument>
+                                <argument>${project.build.directory}/python</argument>
                                 <argument>${bigdl.version}</argument>
-                            </arguments>
-
-                            <executable>bash</executable>
-                        </configuration>
-                        <goals>
-                            <goal>exec</goal>
-                        </goals>
-                    </execution>
-                    <execution>
-                        <id>nlp_architect</id>
-                        <phase>package</phase>
-                        <configuration>
-                            <arguments>
-                                <argument>${project.basedir}/../scripts/get_nlp_architect</argument>
-                                <argument>${project.build.directory}/nlp-architect</argument>
-                                <argument>0.3.1</argument>
                             </arguments>
 
                             <executable>bash</executable>
