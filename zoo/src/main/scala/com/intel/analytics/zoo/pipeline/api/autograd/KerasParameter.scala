@@ -167,8 +167,7 @@ private[zoo] class InternalConstant[T: ClassTag](val data: Tensor[T])
   }
 
   override def updateGradInput(input: Tensor[T], gradOutput: Tensor[T]): Tensor[T] = {
-    gradInput = gradOutput
-    gradInput
+    null
   }
 
   override def equals(other: Any): Boolean = {
