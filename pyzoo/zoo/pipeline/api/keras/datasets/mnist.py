@@ -119,6 +119,7 @@ def read_data_sets(train_dir, data_type="train"):
 
 
 def load_data(location="/tmp/.zoo/dataset/mnist"):
+
     (train_images, train_labels) = read_data_sets(location, "train")
     (test_images, test_labels) = read_data_sets(location, "test")
 
@@ -127,5 +128,6 @@ def load_data(location="/tmp/.zoo/dataset/mnist"):
 
 if __name__ == "__main__":
     (train_images, train_labels), (test_images, test_labels) = load_data()
+
     train, _ = read_data_sets("/tmp/.zoo/dataset/mnist/", "train")
     test, _ = read_data_sets("/tmp/.zoo/dataset/mnist/", "test")

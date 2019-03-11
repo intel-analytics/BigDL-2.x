@@ -44,6 +44,7 @@ pages:
     - Text Matching API: ProgrammingGuide/text-matching.md
     - Sequence to Sequence API: ProgrammingGuide/seq2seq.md
   - Reference Use Cases: ProgrammingGuide/usercases-overview.md
+  - Run on Google Cloud Dataproc: ProgrammingGuide/run-on-dataproc.md
 - White Paper:
   - BigDL: wp-bigdl.md
 - API Guide:
@@ -106,4 +107,5 @@ pages:
 #    - Optimizers: Keras2StyleAPIGuide/Optimization/optimizer.md
 #    - Losses: Keras2StyleAPIGuide/Optimization/loss.md
 - Powered by: powered-by.md
+- Presentations: presentations.md
 - FAQ and Known Issues: known-issues.md
