@@ -669,7 +669,9 @@ with variable_creator_scope():
                 if momentum != 0.0 or centered:
                     warnings.warn(
                         "For RMSPropOptimizer, we don't support momentum and centered for now")
-                return boptimizer.RMSprop(learningrate=lr, learningrate_decay=decay, epsilon=epsilon)
+                return boptimizer.RMSprop(learningrate=lr,
+                                          learningrate_decay=decay,
+                                          epsilon=epsilon)
             elif isinstance(koptim_method, tftrain.AdadeltaOptimizer):
                 lr = get_value(koptim_method._lr)
                 rho = get_value(koptim_method._rho)
@@ -705,6 +707,7 @@ with variable_creator_scope():
 
         feed_dict = dict(zip(self.variable_placeholders, variables))
         self.sess.run(self.assign, feed_dict=feed_dict)
+
 
 class TensorMeta(object):
     def __init__(self, dtype, name=None, shape=None):
