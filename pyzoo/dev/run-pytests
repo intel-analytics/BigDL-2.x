@@ -42,7 +42,7 @@ if [[ $py_version == *"Python 2.7"* ]]; then
        --ignore=../test/zoo/pipeline/api/keras2/ \
        --ignore=../test/zoo/pipeline/autograd/ \
        --ignore=../test/zoo/pipeline/inference/ \
-       --ignore=../test/zoo/tfpark/test_nlp_architect.py
+       --ignore=../test/zoo/tfpark/test_text_models.py
     exit_status_2=$?
     if [ $exit_status_2 -ne 0 ];
     then
