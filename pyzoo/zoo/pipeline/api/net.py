@@ -35,6 +35,7 @@ from zoo.common.nncontext import getOrCreateSparkContext
 from zoo.feature.image import ImageSet
 from zoo.pipeline.api.keras.engine.topology import ZooKerasLayer, KerasNet, to_bigdl_metric
 from bigdl.optim.optimizer import EveryEpoch, MaxEpoch, Optimizer
+from zoo.util import nest
 
 if sys.version >= '3':
     long = int
@@ -377,7 +378,6 @@ class TFOptimizer:
         '''
 
         import tensorflow as tf
-        from tensorflow.python.util import nest
         from zoo.util.tf import export_tf
 
         if dataset is None:
@@ -476,8 +476,6 @@ with variable_creator_scope():
         batch_size = self.dataset.batch_size
 
         def to_sample(t):
-            if isinstance(t, list):
-                t = tuple(t)
             return Sample.from_ndarray(nest.flatten(t), [np.array([0.0])])
 
         sample_rdd = data.map(to_sample)
@@ -678,7 +676,6 @@ class TFDataset:
         TensorFlow graph on each iteration. TFDatasets must be used with TFOptimizer or
         TFPredictor.
         '''
-        import tensorflow as tf
 
         if batch_size > 0 and batch_per_thread > 0:
             raise ValueError("bath_size and batch_per_thread should not be set simultaneously")
@@ -699,11 +696,7 @@ class TFDataset:
         self.hard_code_batch_size = hard_code_batch_size
         self.tensor_structure = tensor_structure
 
-        if isinstance(self.tensor_structure, list):
-            self.tensor_structure = tuple(tensor_structure)
-
         self.val_rdd = val_rdd
-        from tensorflow.python.util import nest
 
         if not self.hard_code_batch_size:
             self.output_shapes = nest.pack_sequence_as(
@@ -732,7 +725,6 @@ class TFDataset:
 
     def _create_placeholders(self):
         import tensorflow as tf
-        from tensorflow.python.util import nest
         if not self.hard_code_batch_size:
             tensors = nest.pack_sequence_as(
                 self.tensor_structure, [tf.placeholder(name=t.name,
@@ -878,7 +870,6 @@ class TFDataset:
 
 
 def _tensors_to_rdd(tensors, sc, splits):
-    from tensorflow.python.util import nest
     import tensorflow as tf
     if isinstance(tensors, list):
         data_list = _splits(tensors)
