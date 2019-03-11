@@ -111,41 +111,6 @@ class TestTF(ZooTestCase):
             optimizer.optimize(end_trigger=MaxEpoch(1))
             optimizer.sess.close()
 
-    def test_tf_optimizer_with_sparse_gradient_using_keras(self):
-        import tensorflow as tf
-
-        ids = np.random.randint(0, 10, size=[40])
-        labels = np.random.randint(0, 5, size=[40])
-        id_rdd = self.sc.parallelize(ids)
-        label_rdd = self.sc.parallelize(labels)
-        training_rdd = id_rdd.zip(label_rdd).map(lambda x: [x[0], x[1]])
-        with tf.Graph().as_default():
-            dataset = TFDataset.from_rdd(training_rdd,
-                                         names=["ids", "labels"],
-                                         shapes=[[], []],
-                                         types=[tf.int32, tf.int32],
-                                         batch_size=8)
-            from tensorflow.python.ops import variable_scope
-
-            def variable_creator(**kwargs):
-                kwargs["use_resource"] = False
-                return variable_scope.default_variable_creator(None, **kwargs)
-
-            getter = lambda next_creator, **kwargs: variable_creator(**kwargs)
-            with variable_scope.variable_creator_scope(getter):
-                words_input = tf.keras.layers.Input(shape=(), name='words_input')
-                embedding_layer = tf.keras.layers.Embedding(input_dim=10,
-                                                            output_dim=5, name='word_embedding')
-                word_embeddings = embedding_layer(words_input)
-                embedding = tf.keras.layers.Flatten()(word_embeddings)
-                output = tf.keras.layers.Dense(5, activation="softmax")(embedding)
-                model = tf.keras.models.Model(inputs=[words_input], outputs=[output])
-                model.compile(optimizer="sgd", loss="sparse_categorical_crossentropy")
-
-            optimizer = TFOptimizer.from_keras(model, dataset)
-            optimizer.optimize(end_trigger=MaxEpoch(1))
-            optimizer.sess.close()
-
 
 if __name__ == "__main__":
     pytest.main([__file__])
