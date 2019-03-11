@@ -24,10 +24,7 @@ class TextKerasModel(KerasModel):
         with variable_creator_scope():
             self.labor.build(**kwargs)
             model = self.labor.model
-            # Remark: tf.train.optimizers have error when mapped to BigDL optimizer.
-            # Two ways to handle this:
-            # Either recompile the model using the string or tf.keras.optimizers,
-            # or add a mapping between tf.train.optimizers and tf.keras.optimizers.
+            # Recompile the model if user wants to use a different optimizer
             if optimizer:
                 model.compile(loss=model.loss, optimizer=optimizer, metrics=model.metrics)
             super(TextKerasModel, self).__init__(model)

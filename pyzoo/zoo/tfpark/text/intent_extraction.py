@@ -21,7 +21,7 @@ from zoo.tfpark.text import TextKerasModel
 class IntentEntity(TextKerasModel):
     def __init__(self, num_intents, num_entities, word_length, word_vocab_size,
                  char_vocab_size, word_emb_dim=100, char_emb_dim=30,
-                 char_lstm_dim=30, tagger_lstm_dim=100, dropout=0.2, optimizer='adam'):
+                 char_lstm_dim=30, tagger_lstm_dim=100, dropout=0.2, optimizer=None):
         super(IntentEntity, self).__init__(intent_models.MultiTaskIntentModel(use_cudnn=False),
                                            optimizer,
                                            word_length=word_length,
