@@ -170,9 +170,10 @@ object TransformerLayer {
 //    afn: String = "gelu",
     residPdrop: Double = 0.1,
     attnPdrop: Double = 0.1,
-    nHead: Int = 12)(implicit ev: TensorNumeric[T]): TransformerLayer[T] = {
+    nHead: Int = 12,
+    inputShape: Shape = null)(implicit ev: TensorNumeric[T]): TransformerLayer[T] = {
     new TransformerLayer[T](vocab, nCtx, embeddingSize, embeddingDrop, nLayer,
 //      afn,
-      residPdrop, attnPdrop, nHead)
+      residPdrop, attnPdrop, nHead, inputShape)
   }
 }

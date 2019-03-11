@@ -41,6 +41,7 @@ import com.intel.analytics.zoo.pipeline.api.keras.optimizers.Adam
 import org.apache.spark.api.java.JavaRDD
 import com.intel.analytics.zoo.common.PythonZoo
 import com.intel.analytics.zoo.feature.text.TextSet
+import com.intel.analytics.zoo.models.attention.TransformerLayer
 import com.intel.analytics.zoo.models.common.ZooModel
 import com.intel.analytics.zoo.models.seq2seq.{Bridge, RNNDecoder, RNNEncoder}
 import com.intel.analytics.zoo.pipeline.api.keras.{metrics => zmetrics}
@@ -1287,5 +1288,19 @@ class PythonZooKeras[T: ClassTag](implicit ev: TensorNumeric[T]) extends PythonZ
     index: Int,
     inputShape: JList[JList[Int]] = null): SelectTable[T] = {
     SelectTable[T](index, toScalaMultiShape(inputShape))
+  }
+
+  def createZooKerasTransformerLayer(
+    vocab: Int = 40990,
+    nCtx: Int = 77,
+    embeddingSize: Int = 768,
+    embeddingDrop: Double = 0.1,
+    nLayer: Int = 12,
+    residPdrop: Double = 0.1,
+    attnPdrop: Double = 0.1,
+    nHead: Int = 12,
+    inputShape: JList[Int] = null): TransformerLayer[T] = {
+    TransformerLayer(vocab, nCtx, embeddingSize, embeddingDrop, nLayer,
+      residPdrop, attnPdrop, nHead, toScalaShape(inputShape))
   }
 }
