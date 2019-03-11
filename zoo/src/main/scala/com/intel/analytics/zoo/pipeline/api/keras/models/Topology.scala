@@ -40,7 +40,7 @@ import com.intel.analytics.zoo.pipeline.api.keras.layers.Input
 import com.intel.analytics.zoo.pipeline.api.keras.layers.utils._
 import com.intel.analytics.zoo.pipeline.api.net.NetUtils
 import com.intel.analytics.zoo.pipeline.estimator.AbstractEstimator
-import org.apache.spark.rdd.{RDD, ZippedPartitionsWithExecutorLocalityRDD}
+import org.apache.spark.rdd.{RDD, ZippedPartitionsWithLocalityRDD}
 
 import scala.collection.JavaConverters._
 import scala.collection.immutable.HashMap
@@ -924,7 +924,9 @@ private[zoo] class InternalLocalOptimizer[T: ClassTag] (
       trainSet: DataSet[MiniBatch[T]],
       optimMethod: OptimMethod[T] = new SGD[T](),
       endTrigger: Option[Trigger] = None,
-      checkPoint: Option[Trigger]): this.type = {
+      checkPoint: Option[Trigger] = None,
+      validationSet: DataSet[MiniBatch[T]] = null,
+      validationMethod: Array[ValidationMethod[T]] = null): this.type = {
     this.setTrainData(trainSet)
     this.setOptimMethod(optimMethod)
     val endWhen = if (endTrigger.isDefined) {
@@ -935,6 +937,9 @@ private[zoo] class InternalLocalOptimizer[T: ClassTag] (
     this.setEndWhen(endWhen)
     if (checkPoint.isDefined && checkpointPath.isDefined) {
       this.setCheckpoint(checkpointPath.get, checkPoint.get)
+    }
+    if (validationMethod != null && validationSet != null) {
+      this.setValidation(checkPoint.get, validationSet, validationMethod)
     }
     this.optimize()
     this
@@ -989,7 +994,9 @@ private[zoo] class InternalDistriOptimizer[T: ClassTag] (
         trainSet: DataSet[MiniBatch[T]],
         optimMethod: OptimMethod[T] = new SGD[T](),
         endTrigger: Option[Trigger] = None,
-        checkPoint: Option[Trigger]): this.type = {
+        checkPoint: Option[Trigger] = None,
+        validationSet: DataSet[MiniBatch[T]] = null,
+        validationMethod: Array[ValidationMethod[T]] = null): this.type = {
     this.dataset = trainSet
     this.setOptimMethod(optimMethod)
     val endWhen = if (endTrigger.isDefined) {
@@ -1083,7 +1090,7 @@ object InternalDistriOptimizer {
     }
     // TODO: evaluate local
     val bcVMethods = models.sparkContext.broadcast(vMethods)
-    val results = ZippedPartitionsWithExecutorLocalityRDD(models, validateRDD)((modelIter, dataIter) => {
+    val results = ZippedPartitionsWithLocalityRDD(models, validateRDD)((modelIter, dataIter) => {
         val cached = modelIter.next()
         val vMethodsArr = cached.localMethods
         val workingModels = cached.localModels

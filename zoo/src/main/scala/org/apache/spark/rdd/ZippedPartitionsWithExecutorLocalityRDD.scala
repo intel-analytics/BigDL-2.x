@@ -25,12 +25,12 @@ import org.apache.spark.{Partition, SparkContext}
 import scala.collection.mutable.ArrayBuffer
 import scala.reflect.ClassTag
 
-object ZippedPartitionsWithExecutorLocalityRDD {
+object ZippedPartitionsWithLocalityRDD {
   def apply[T: ClassTag, B: ClassTag, V: ClassTag]
   (rdd1: RDD[T], rdd2: RDD[B], preservesPartitioning: Boolean = false)
     (f: (Iterator[T], Iterator[B]) => Iterator[V]): RDD[V] = rdd1.withScope {
     val sc = rdd1.sparkContext
-    new ZippedPartitionsWithExecutorLocalityRDD(
+    new ZippedPartitionsWithLocalityRDD(
       sc, sc.clean(f), rdd1, rdd2, preservesPartitioning)
   }
 
@@ -55,7 +55,7 @@ object ZippedPartitionsWithExecutorLocalityRDD {
  * @param _rdd2
  * @param preservesPartitioning
  */
-class ZippedPartitionsWithExecutorLocalityRDD[A: ClassTag, B: ClassTag, V: ClassTag](
+class ZippedPartitionsWithLocalityRDD[A: ClassTag, B: ClassTag, V: ClassTag](
   sc: SparkContext,
   _f: (Iterator[A], Iterator[B]) => Iterator[V],
   _rdd1: RDD[A],
@@ -95,7 +95,7 @@ class ZippedPartitionsWithExecutorLocalityRDD[A: ClassTag, B: ClassTag, V: Class
         parts(i) =
           new ZippedPartitionsLocalityPartition(i, Array(i, matchPartition._1), rdds, locs)
       } else {
-        ZippedPartitionsWithExecutorLocalityRDD.logger.warn(s"can't find locality partition" +
+        ZippedPartitionsWithLocalityRDD.logger.warn(s"can't find locality partition" +
           s"for partition $i Partition locations are (${curPrefs}) Candidate partition" +
           s" locations are\n" + s"${candidateLocs.mkString("\n")}.")
         nonmatchPartitionId.append(i)
@@ -110,25 +110,5 @@ class ZippedPartitionsWithExecutorLocalityRDD[A: ClassTag, B: ClassTag, V: Class
       parts(i) = new ZippedPartitionsLocalityPartition(i, Array(i, matchPartition._1), rdds, locs)
     }
     parts
-  }
-}
-
-
-private[spark] class ZippedPartitionsLocalityPartition(
-  idx: Int,
-  @transient val indexes: Seq[Int],
-  @transient val rdds: Seq[RDD[_]],
-  @transient override val preferredLocations: Seq[String])
-  extends ZippedPartitionsPartition(idx, rdds, preferredLocations) {
-
-  override val index: Int = idx
-  var _partitionValues = rdds.zip(indexes).map{ case (rdd, i) => rdd.partitions(i) }
-  override def partitions: Seq[Partition] = _partitionValues
-
-  @throws(classOf[IOException])
-  private def writeObject(oos: ObjectOutputStream): Unit = Utils.tryOrIOException {
-    // Update the reference to parent split at the time of task serialization
-    _partitionValues = rdds.zip(indexes).map{ case (rdd, i) => rdd.partitions(i) }
-    oos.defaultWriteObject()
   }
 }

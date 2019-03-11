@@ -12,7 +12,9 @@ trait AbstractEstimator[T]{
   def train(trainSet: DataSet[MiniBatch[T]],
             optimMethod: OptimMethod[T] = null,
             endTrigger: Option[Trigger] = None,
-            checkPoint: Option[Trigger] = None): this.type
+            checkPoint: Option[Trigger] = None,
+            validationSet: DataSet[MiniBatch[T]] = null,
+            validationMethod: Array[ValidationMethod[T]] = null): this.type
 
   def evaluate(validationSet: DataSet[MiniBatch[T]],
                validationMethod: Array[ValidationMethod[T]]
@@ -24,29 +26,25 @@ class Estimator[T: ClassTag] private[zoo](
       model: Module[T],
       criterion: Criterion[T],
       modelDir: Option[String] = None)(implicit ev: TensorNumeric[T]) extends AbstractEstimator[T] {
-  private var internalEstimator: AbstractEstimator[T] = null
+  protected var internalEstimator: AbstractEstimator[T] = null
 
   override def train(trainSet: DataSet[MiniBatch[T]],
             optimMethod: OptimMethod[T] = null,
             endTrigger: Option[Trigger] = None,
-            checkPoint: Option[Trigger] = None): this.type = {
-    if (internalEstimator != null) {
-      internalEstimator.train(trainSet,
-        optimMethod,
-        endTrigger,
-        checkPoint)
-      this
-    } else {
-      val internalDistriOptimizer = trainSet match {
+            checkPoint: Option[Trigger] = None,
+            validationSet: DataSet[MiniBatch[T]] = null,
+            validationMethod: Array[ValidationMethod[T]] = null): this.type = {
+    if (internalEstimator == null) {
+      internalEstimator = trainSet match {
         case d: DistributedDataSet[MiniBatch[T]] =>
           new InternalDistriOptimizer[T](model, null, criterion)
         case l: LocalDataSet[MiniBatch[T]] =>
           new InternalLocalOptimizer[T](model, l, criterion)
       }
-      internalDistriOptimizer.train(trainSet, optimMethod, endTrigger, checkPoint)
-      this
-
     }
+    internalEstimator.train(trainSet, optimMethod, endTrigger, checkPoint,
+      validationSet, validationMethod)
+    this
   }
 
   override def evaluate(validationSet: DataSet[MiniBatch[T]],
@@ -59,9 +57,9 @@ class Estimator[T: ClassTag] private[zoo](
 object Estimator {
   // TODO: local or dist?
   def apply[T: ClassTag](
-               model: Module[T],
-               criterion: Criterion[T],
-               modelDir: String = "")(implicit ev: TensorNumeric[T]): AbstractEstimator[T] = {
+        model: Module[T],
+        criterion: Criterion[T],
+        modelDir: String = "")(implicit ev: TensorNumeric[T]): AbstractEstimator[T] = {
     val estimator = new InternalDistriOptimizer[T](model, null, criterion)
     if (modelDir != null && modelDir != "") {
       estimator.setCheckpointDir(modelDir)

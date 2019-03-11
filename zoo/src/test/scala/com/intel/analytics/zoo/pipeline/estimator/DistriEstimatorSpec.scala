@@ -6,12 +6,10 @@ import com.intel.analytics.bigdl.nn._
 import com.intel.analytics.bigdl.optim.{LBFGS, Loss, SGD, Trigger}
 import com.intel.analytics.bigdl.tensor.{Storage, Tensor}
 import com.intel.analytics.bigdl.utils.{Engine, LoggerFilter, RandomGenerator}
-import com.intel.analytics.bigdl.visualization.TrainSummary
-import com.intel.analytics.zoo.common.NNContext
 import com.intel.analytics.zoo.pipeline.api.keras.ZooSpecHelper
 import com.intel.analytics.zoo.pipeline.api.keras.models.InternalOptimizerUtil
 import org.apache.log4j.{Level, Logger}
-import org.apache.spark.{SparkConf, SparkContext}
+import org.apache.spark.{SparkContext}
 import org.apache.spark.rdd.RDD
 
 object DistriEstimatorSpec {

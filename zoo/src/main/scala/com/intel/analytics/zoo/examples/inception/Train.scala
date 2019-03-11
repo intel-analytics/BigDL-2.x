@@ -157,7 +157,7 @@ object TrainInceptionV1Estimator {
         param.classNumber,
         MemoryType.fromString(param.memoryType)
       )
-      val valSet = ImageNet2012(
+      val valSet = ImageNet2012Val(
         param.folder + "/val",
         sc,
         imageSize,
@@ -206,14 +206,10 @@ object TrainInceptionV1Estimator {
         )
       }
 
-      var iter = 0
-      while (iter < param.maxIteration) {
-        iter += param.checkpointIteration
-        estimator.train(trainSet, optimMethod,
-          endTrigger = Some(Trigger.maxIteration(iter)),
-          checkPoint = Some(checkpointTrigger))
-        estimator.evaluate(valSet, Array(new Top1Accuracy[Float], new Top5Accuracy[Float]))
-      }
+      estimator.train(trainSet, optimMethod,
+        endTrigger = Some(endTrigger),
+        checkPoint = Some(checkpointTrigger),
+        valSet, Array(new Top1Accuracy[Float], new Top5Accuracy[Float]))
 
       sc.stop()
     })
