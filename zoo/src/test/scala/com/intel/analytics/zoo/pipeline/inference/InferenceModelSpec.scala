@@ -19,9 +19,7 @@ package com.intel.analytics.zoo.pipeline.inference
 import java.io._
 import java.util
 
-import com.intel.analytics.bigdl.nn.abstractnn.{AbstractModule, Activity}
 import com.intel.analytics.bigdl.tensor.Tensor
-import com.intel.analytics.bigdl.utils.Engine
 import com.intel.analytics.zoo.common.CheckedObjectInputStream
 import org.scalatest.{BeforeAndAfter, FlatSpec, Matchers}
 

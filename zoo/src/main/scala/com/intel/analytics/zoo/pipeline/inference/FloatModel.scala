@@ -23,8 +23,7 @@ import com.intel.analytics.bigdl.Module
 import com.intel.analytics.bigdl.nn.abstractnn.{AbstractModule, Activity}
 import com.intel.analytics.bigdl.tensor.Tensor
 import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric
-import com.intel.analytics.bigdl.utils.{Engine, Table}
-import com.intel.analytics.zoo.common.CheckedObjectInputStream
+import com.intel.analytics.bigdl.utils.Table
 
 import scala.collection.mutable.ArrayBuffer
 import scala.reflect.ClassTag
