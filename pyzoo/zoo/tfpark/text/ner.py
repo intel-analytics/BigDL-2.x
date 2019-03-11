@@ -19,21 +19,26 @@ import nlp_architect.models.ner_crf as ner_model
 from zoo.tfpark.text import TextKerasModel
 
 
-class NERCRF(TextKerasModel):
+class NER(TextKerasModel):
     def __init__(self, num_entities, word_vocab_size, word_length, char_vocab_size,
                  word_emb_dim=100, char_emb_dim=30, tagger_lstm_dim=100, dropout=0.5,
                  crf_mode='reg', optimizer=tf.keras.optimizers.Adam(0.001, clipnorm=5.)):
-        super(NERCRF, self).__init__(ner_model.NERCRF(use_cudnn=False), optimizer,
-                                     word_length=word_length, target_label_dims=num_entities,
-                                     word_vocab_size=word_vocab_size, char_vocab_size=char_vocab_size,
-                                     word_embedding_dims=word_emb_dim, char_embedding_dims=char_emb_dim,
-                                     tagger_lstm_dims=tagger_lstm_dim, dropout=dropout, crf_mode=crf_mode)
+        super(NER, self).__init__(ner_model.NERCRF(use_cudnn=False), optimizer,
+                                  word_length=word_length,
+                                  target_label_dims=num_entities,
+                                  word_vocab_size=word_vocab_size,
+                                  char_vocab_size=char_vocab_size,
+                                  word_embedding_dims=word_emb_dim,
+                                  char_embedding_dims=char_emb_dim,
+                                  tagger_lstm_dims=tagger_lstm_dim,
+                                  dropout=dropout,
+                                  crf_mode=crf_mode)
         # Remark: In nlp-architect NERCRF.build(..), word_lstm_dims is never used.
-        # Thus, remove this argument here to avoid ambiguity.
+        # Thus, removed this argument here to avoid ambiguity.
 
     @staticmethod
     def load_model(path):
         labor = ner_model.NERCRF(use_cudnn=False)
         model = TextKerasModel._load_model(labor, path)
-        model.__class__ = NERCRF
+        model.__class__ = NER
         return model
