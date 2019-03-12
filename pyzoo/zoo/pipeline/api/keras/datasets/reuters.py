@@ -113,9 +113,9 @@ def get_word_index(dest_dir='/tmp/.zoo/dataset', filename='reuters_word_index.pk
     """
 
     path = base.maybe_download(filename,
-                    work_directory=dest_dir,
-                    source_url='https://s3.amazonaws.com/text-datasets/reuters_word_index.pkl',
-                    )
+                               dest_dir,
+                               'https://s3.amazonaws.com/text-datasets/reuters_word_index.pkl')
+
     f = open(path, 'rb')
 
     data = cPickle.load(f, encoding='latin1')
