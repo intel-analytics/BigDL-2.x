@@ -18,9 +18,12 @@ from tensorflow.python.util import function_utils
 import tensorflow as tf
 
 from bigdl.optim.optimizer import MaxIteration
-from zoo.pipeline.api.net import TFDataset, TFOptimizer
+from zoo.common import Sample
+from zoo.pipeline.api.net import TFDataset, TFOptimizer, TFNet, TFValidationMethod
 from tensorflow.python.training import training
 from tensorflow.python.training import training_util
+
+from zoo.util import nest
 
 
 def add_train_op(model_fn, features, labels, mode, params, config, optimizer):
@@ -69,11 +72,10 @@ def add_train_op(model_fn, features, labels, mode, params, config, optimizer):
 
 class EstimatorSpec:
 
-    def __init__(self, mode, predictions=None, loss=None, export_outputs=None):
+    def __init__(self, mode, predictions=None, loss=None):
         self.mode = mode
         self.predictions = predictions
         self.loss = loss
-        self.export_outputs = export_outputs
 
 
 class Estimator(object):
@@ -136,7 +138,6 @@ class Estimator(object):
                         saver.restore(sess, latest_checkpoint)
                     else:
                         sess.run(tf.global_variables_initializer())
-                    start_step = _load_global_step_from_checkpoint_dir(self.estimator.model_dir)
                     opt = TFOptimizer.from_loss(spec.loss, optim_method, session=sess)
                     opt.optimize(MaxIteration(steps))
                     sess.run(assign_step, feed_dict={add_step_input: steps})
@@ -145,3 +146,39 @@ class Estimator(object):
                     return self
 
         return self.estimator.train(input_fn, hooks, steps, max_steps, saving_listeners)
+
+    def evaluate(self, input_fn, eval_methods, steps=None, checkpoint_path=None):
+        with tf.Graph().as_default() as g:
+            result = self.estimator._call_input_fn(input_fn, tf.estimator.ModeKeys.EVAL)
+            if isinstance(result, TFDataset):
+                spec = self._call_model_fn(result.feature_tensors,
+                                           result.label_tensors,
+                                           tf.estimator.ModeKeys.PREDICT,
+                                           self.config)
+                latest_checkpoint = self.estimator.latest_checkpoint()
+
+                if latest_checkpoint:
+                    checkpoint_path = latest_checkpoint
+
+                with tf.Session() as sess:
+                    saver = tf.train.Saver()
+                    if checkpoint_path:
+                        saver.restore(sess, checkpoint_path)
+                    else:
+                        sess.run(tf.global_variables_initializer())
+                    inputs = nest.flatten(result.feature_tensors)
+                    outputs = nest.flatten(spec.predictions)
+                    tfnet = TFNet.from_session(sess, inputs=inputs, outputs=outputs)
+
+                    rdd = result.rdd.map(lambda t: Sample.from_ndarray(nest.flatten(t[0]),
+                                                                       nest.flatten(t[1])))
+                    if result.batch_per_thread < 0:
+                        batch_size = result.batch_size
+                    else:
+                        batch_size = result.batch_per_thread * result.total_core_num
+
+                    results = tfnet.evaluate(rdd, batch_size, eval_methods)
+                    final_result = dict([(r.method, r.result) for r in results])
+                    return final_result
+
+        return self.estimator.evaluate(input_fn, steps, checkpoint_path=checkpoint_path)

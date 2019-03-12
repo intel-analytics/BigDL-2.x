@@ -17,6 +17,8 @@ import sys
 
 import tensorflow as tf
 import numpy as np
+
+from bigdl.optim.optimizer import Top1Accuracy
 from zoo import init_nncontext
 from zoo.tfpark import KerasModel, TFDataset
 from zoo.tfpark.estimator import Estimator, EstimatorSpec
@@ -45,21 +47,32 @@ def main(max_epoch):
         loss = tf.reduce_mean(tf.losses.sparse_softmax_cross_entropy(logits=logits, labels=labels))
         return EstimatorSpec(mode, predictions=logits, loss=loss)
 
-    def input_fn():
-        training_rdd = get_data_rdd("train", sc)
-        testing_rdd = get_data_rdd("test", sc)
+    def input_fn(mode):
+        if mode == tf.estimator.ModeKeys.TRAIN:
+            training_rdd = get_data_rdd("train", sc)
+            dataset = TFDataset.from_rdd(training_rdd,
+                                         features=(tf.float32, [28, 28, 1]),
+                                         labels=(tf.int32, []),
+                                         batch_size=320)
+        elif mode == tf.estimator.ModeKeys.EVAL:
+            testing_rdd = get_data_rdd("test", sc)
+            dataset = TFDataset.from_rdd(testing_rdd,
+                                         features=(tf.float32, [28, 28, 1]),
+                                         labels=(tf.int32, []),
+                                         batch_size=320)
+        else:
+            testing_rdd = get_data_rdd("test", sc).map()
+            dataset = TFDataset.from_rdd(testing_rdd,
+                                         features=(tf.float32, [28, 28, 1]),
+                                         batch_size=320)
 
-        dataset = TFDataset.from_rdd(training_rdd,
-                                     features=(tf.float32, [28, 28, 1]),
-                                     labels=(tf.int32, []),
-                                     batch_size=320,
-                                     val_rdd=testing_rdd)
         return dataset
-
     estimator = Estimator(model_fn, tf.train.AdamOptimizer(), model_dir="/tmp/estimator")
 
-    estimator.train(input_fn, steps=10)
+    estimator.train(input_fn, steps=60000//320*5)
 
+    result = estimator.evaluate(input_fn, [Top1Accuracy()])
+    print(result)
 
 if __name__ == '__main__':
 
