@@ -58,11 +58,10 @@ def load_data(path='boston_housing.npz', dest_dir='/tmp/.zoo/dataset', test_spli
         Tuple of Numpy arrays: `(x_train, y_train), (x_test, y_test)`.
     """
 
-    path = base.maybe_download(
-        path,
-        work_directory=dest_dir,
-        source_url='https://s3.amazonaws.com/keras-datasets/boston_housing.npz'
-        )
+    path = base.maybe_download(path,
+                               dest_dir,
+                               'https://s3.amazonaws.com/keras-datasets/boston_housing.npz')
+
     with np.load(path) as f:
         x = f['x']
         y = f['y']
