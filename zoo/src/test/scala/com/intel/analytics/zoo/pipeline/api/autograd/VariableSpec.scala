@@ -142,4 +142,16 @@ class VariableSpec extends KerasBaseSpec {
     val output = model.forward(input).toTensor[Float]
     model.backward(input, output)
   }
+
+  "Constant variable" should "be work" in {
+    val xValue = Tensor[Float](Array(2, 3, 4)).rand()
+    val yValue = Tensor[Float](Array(2, 3, 4)).rand()
+    val x = new Constant[Float](xValue)
+    val y = Variable[Float](inputShape = Shape(3, 4))
+    val z = y + x
+    val model = Model[Float](y, z)
+    val output = model.forward(yValue).toTensor[Float]
+    require(output.almostEqual(xValue.add(yValue), 1e-8))
+    model.backward(yValue, xValue).toTensor[Float]
+  }
 }
