@@ -16,6 +16,9 @@
 
 package com.intel.analytics.zoo.pipeline.api.keras.models
 
+import java.text.SimpleDateFormat
+import java.util.Calendar
+
 import com.intel.analytics.bigdl.dataset.{MiniBatch, _}
 import com.intel.analytics.bigdl.models.utils.ModelBroadcast
 import com.intel.analytics.bigdl.{DataSet, _}
@@ -935,8 +938,10 @@ private[zoo] class InternalLocalOptimizer[T: ClassTag] (
       Trigger.maxIteration(Int.MaxValue)
     }
     this.setEndWhen(endWhen)
-    if (checkPoint.isDefined && checkpointPath.isDefined) {
-      this.setCheckpoint(checkpointPath.get, checkPoint.get)
+    if (checkPoint.isDefined && checkpointDir.isDefined) {
+      // we should setCheckpoint every time before we call optimize(),
+      // as BigDL will overwrite checkpointPath to its subfolder.
+      this.setCheckpoint(checkpointDir.get+"/models", checkPoint.get)
     }
     if (validationMethod != null && validationSet != null) {
       this.setValidation(checkPoint.get, validationSet, validationMethod)
@@ -968,12 +973,15 @@ private[zoo] class InternalDistriOptimizer[T: ClassTag] (
     _criterion: Criterion[T])
   (implicit ev: TensorNumeric[T]) extends DistriOptimizer[T](_model, _dataset, _criterion)
   with AbstractEstimator[T]{
+  protected var checkpointDir: Option[String] = None
 
   def setCheckpointDir(path: String): this.type = {
-    checkpointPath = Some(path)
+    val pathAndTime = path + "/" +
+      new SimpleDateFormat("yyyy-MM-dd_HH:mm:ss").format(Calendar.getInstance().getTime())
+    checkpointDir = Some(pathAndTime)
     val currentTime = System.nanoTime()
-    val trainSummary = TrainSummary(path, currentTime.toString)
-    val valSummary = ValidationSummary(path, currentTime.toString)
+    val trainSummary = TrainSummary(pathAndTime, "summary")
+    val valSummary = ValidationSummary(pathAndTime, "summary")
     this.setTrainSummary(trainSummary)
     this.setValidationSummary(valSummary)
     this
