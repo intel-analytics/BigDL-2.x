@@ -40,7 +40,6 @@ def extract_scala_class(class_path):
                          "InternalCAddTable", "InternalGetShape",
                          "EmbeddingMatrixHolder", "Pooling2D", "InternalSplitTensor",
                          "SplitTensor", "Expand", "InternalMax", "InternalConvLSTM3D",
-                         "InternalConvLSTM2D", "InternalCMulTable", "SoftMax", "TransformerLayer",
                          "InternalConvLSTM2D", "InternalCMulTable", "SoftMax",
                          "KerasConstant", "InternalConstant", "Constant"}
     content = "\n".join([line for line in open(class_path).readlines()
