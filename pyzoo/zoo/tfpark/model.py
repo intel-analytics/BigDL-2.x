@@ -62,10 +62,21 @@ class KerasModel(object):
         self.model.load_weights(filepath, by_name)
 
     def save_model(self, path):
+        """
+        Save the model to a single HDF5 file.
+
+        :param path: String. The path to save the model.
+        """
         self.model.save(path)
 
     @staticmethod
     def load_model(path):
+        """
+        Load an existing keras model (with weights) from HDF5 file.
+
+        :param path: String. The path to the pre-defined model.
+        :return: KerasModel.
+        """
         with variable_creator_scope():
             return KerasModel(models.load_model(path))
 

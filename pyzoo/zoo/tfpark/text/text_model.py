@@ -19,12 +19,15 @@ from zoo.tfpark import KerasModel, variable_creator_scope
 
 # TODO: add word embedding file support
 class TextKerasModel(KerasModel):
+    """
+    The base class for text models in tfpark.
+    """
     def __init__(self, labor, optimizer=None, **kwargs):
         self.labor = labor
         with variable_creator_scope():
             self.labor.build(**kwargs)
             model = self.labor.model
-            # Recompile the model if user wants to use a different optimizer
+            # Recompile the model if user uses a different optimizer other than the default one.
             if optimizer:
                 model.compile(loss=model.loss, optimizer=optimizer, metrics=model.metrics)
             super(TextKerasModel, self).__init__(model)
@@ -34,6 +37,11 @@ class TextKerasModel(KerasModel):
     # which only saves the weights with model parameters
     # and reconstruct the model using the exact parameters and setting weights when loading.
     def save_model(self, path):
+        """
+        Save the model to a single HDF5 file.
+
+        :param path: String. The path to save the model.
+        """
         self.labor.save(path)
 
     @staticmethod
