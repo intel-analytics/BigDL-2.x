@@ -334,12 +334,12 @@
                         </goals>
                     </execution>
                     <execution>
-                        <id>bigdl_python</id>
+                        <id>python_packages</id>
                         <phase>package</phase>
                         <configuration>
                             <arguments>
-                                <argument>${project.basedir}/../scripts/get_bigdl_python</argument>
-                                <argument>${project.build.directory}/bigdl_python</argument>
+                                <argument>${project.basedir}/../scripts/get_python_packages</argument>
+                                <argument>${project.build.directory}/python</argument>
                                 <argument>${bigdl.version}</argument>
                             </arguments>
 
