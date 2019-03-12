@@ -36,7 +36,7 @@ class TransformerLayer[T: ClassTag](
    val attnPdrop: Double,
    val nHead: Int,
    val maskAttention: Boolean,
-   val embeddingLayer: KerasLayer[Tensor[T], Tensor[T], T],
+   val embeddingLayer: Net,
    var inputShape: Shape = null)(implicit ev: TensorNumeric[T])
   extends KerasLayer[Tensor[T], Tensor[T], T](KerasUtils.addBatch(inputShape))
     with Net {
@@ -49,9 +49,7 @@ class TransformerLayer[T: ClassTag](
     seqLen = _inputShape.toSingle().head
 
     val input = Variable(_inputShape)
-    val embedding = Sequential[T]()
-      .add(embeddingLayer)
-    val e = embedding.from(input)
+    val e = embeddingLayer.from(input)
 
     val embeddingSize = e.getOutputShape().toSingle().last
 
@@ -178,8 +176,7 @@ object TransformerLayer {
         .add(new KerasLayerWrapper[T](bnn.Sum[T](dimension = 3,
           squeeze = true).asInstanceOf[AbstractModule[Activity, Activity, T]]))
     new TransformerLayer[T](nLayer,
-      residPdrop, attnPdrop, nHead, maskAttention,
-      embeddingLayer.asInstanceOf[KerasLayer[Tensor[T], Tensor[T], T]])
+      residPdrop, attnPdrop, nHead, maskAttention, embeddingLayer)
   }
 
   def apply[@specialized(Float, Double) T: ClassTag](
@@ -188,7 +185,7 @@ object TransformerLayer {
     attnPdrop: Double,
     nHead: Int,
     maskAttention: Boolean,
-    embeddingLayer: KerasLayer[Tensor[T], Tensor[T], T])
+    embeddingLayer: Net)
     (implicit ev: TensorNumeric[T]): TransformerLayer[T] = {
     new TransformerLayer[T](nLayer,
       residPdrop, attnPdrop, nHead, maskAttention, embeddingLayer = embeddingLayer)

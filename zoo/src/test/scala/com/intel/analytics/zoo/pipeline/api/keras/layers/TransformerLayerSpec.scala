@@ -18,7 +18,6 @@ package com.intel.analytics.zoo.pipeline.api.keras.layers
 
 import com.intel.analytics.bigdl.nn.Sum
 import com.intel.analytics.bigdl.nn.abstractnn.{AbstractModule, Activity}
-import com.intel.analytics.bigdl.nn.keras.KerasLayer
 import com.intel.analytics.bigdl.tensor.Tensor
 import com.intel.analytics.bigdl.utils.RandomGenerator._
 import com.intel.analytics.bigdl.utils.Shape
@@ -49,7 +48,7 @@ class TransformerLayerSpec extends ZooSpecHelper {
         squeeze = true).asInstanceOf[AbstractModule[Activity, Activity, Float]]))
     val model = TransformerLayer[Float](nLayer = 3,
       residPdrop = 0.1, attnPdrop = 0.1, nHead = 12, maskAttention = false,
-      embeddingLayer = embedding.asInstanceOf[KerasLayer[Tensor[Float], Tensor[Float], Float]])
+      embeddingLayer = embedding)
 
     model.build(Shape(4, 77, 2))
     val input = Tensor[Float](Array(2, 2, 77, 2)).rand().resize(4, 77, 2)
