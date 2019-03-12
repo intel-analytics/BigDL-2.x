@@ -26,7 +26,7 @@ import com.intel.analytics.bigdl.utils.{Shape, SingleShape}
 import com.intel.analytics.zoo.pipeline.api.Net
 import com.intel.analytics.zoo.pipeline.api.autograd.{AutoGrad, Constant, Parameter, Variable}
 import com.intel.analytics.zoo.pipeline.api.keras.layers.utils.KerasUtils
-import com.intel.analytics.zoo.pipeline.api.keras.models.{Model, Sequential}
+import com.intel.analytics.zoo.pipeline.api.keras.models.{KerasNet, Model, Sequential}
 
 import scala.reflect.ClassTag
 
@@ -36,7 +36,7 @@ class TransformerLayer[T: ClassTag](
    val attnPdrop: Double,
    val nHead: Int,
    val maskAttention: Boolean,
-   val embeddingLayer: Net,
+   val embeddingLayer: KerasNet[T],
    var inputShape: Shape = null)(implicit ev: TensorNumeric[T])
   extends KerasLayer[Tensor[T], Tensor[T], T](KerasUtils.addBatch(inputShape))
     with Net {
@@ -185,7 +185,7 @@ object TransformerLayer {
     attnPdrop: Double,
     nHead: Int,
     maskAttention: Boolean,
-    embeddingLayer: Net)
+    embeddingLayer: KerasNet[T])
     (implicit ev: TensorNumeric[T]): TransformerLayer[T] = {
     new TransformerLayer[T](nLayer,
       residPdrop, attnPdrop, nHead, maskAttention, embeddingLayer = embeddingLayer)
