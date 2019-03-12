@@ -18,10 +18,12 @@ import sys
 import tensorflow as tf
 import numpy as np
 
-from bigdl.optim.optimizer import Top1Accuracy
 from zoo import init_nncontext
+from zoo.pipeline.api.keras.metrics import Accuracy
 from zoo.tfpark import KerasModel, TFDataset
 from zoo.tfpark.estimator import Estimator, EstimatorSpec
+import os
+# os.environ['PYSPARK_SUBMIT_ARGS'] = "--driver-java-options \" -Xdebug -Xrunjdwp:transport=dt_socket,server=y,suspend=y,address=5050\" /home/yang/sources/zoo/pyzoo/zoo/examples/tensorflow/tfpark/estimator_dataset.py"
 
 
 def get_data_rdd(dataset, sc):
@@ -35,6 +37,7 @@ def get_data_rdd(dataset, sc):
     return rdd
 
 
+
 def main(max_epoch):
     sc = init_nncontext()
 
@@ -44,8 +47,11 @@ def main(max_epoch):
         with slim.arg_scope(lenet.lenet_arg_scope()):
             logits, end_points = lenet.lenet(features, num_classes=10, is_training=True)
 
-        loss = tf.reduce_mean(tf.losses.sparse_softmax_cross_entropy(logits=logits, labels=labels))
-        return EstimatorSpec(mode, predictions=logits, loss=loss)
+        if mode == tf.estimator.ModeKeys.EVAL or mode == tf.estimator.ModeKeys.TRAIN:
+            loss = tf.reduce_mean(tf.losses.sparse_softmax_cross_entropy(logits=logits, labels=labels))
+            return EstimatorSpec(mode, predictions=logits, loss=loss)
+        else:
+            return EstimatorSpec(mode, predictions=logits)
 
     def input_fn(mode):
         if mode == tf.estimator.ModeKeys.TRAIN:
@@ -61,18 +67,22 @@ def main(max_epoch):
                                          labels=(tf.int32, []),
                                          batch_size=320)
         else:
-            testing_rdd = get_data_rdd("test", sc).map()
+            testing_rdd = get_data_rdd("test", sc).map(lambda x: x[0])
             dataset = TFDataset.from_rdd(testing_rdd,
                                          features=(tf.float32, [28, 28, 1]),
-                                         batch_size=320)
+                                         batch_per_thread=80)
 
         return dataset
     estimator = Estimator(model_fn, tf.train.AdamOptimizer(), model_dir="/tmp/estimator")
 
-    estimator.train(input_fn, steps=60000//320*5)
+    # estimator.train(input_fn, steps=60000//320)
+    #
+    # metrics = estimator.evaluate(input_fn, [Accuracy()])
+    # print(metrics)
 
-    result = estimator.evaluate(input_fn, [Top1Accuracy()])
-    print(result)
+    predictions = estimator.predict(input_fn)
+
+    print(predictions.first())
 
 if __name__ == '__main__':
 

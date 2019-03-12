@@ -13,17 +13,15 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-from tensorflow.python.estimator.estimator import _load_global_step_from_checkpoint_dir
 from tensorflow.python.util import function_utils
 import tensorflow as tf
 
 from bigdl.optim.optimizer import MaxIteration
 from zoo.common import Sample
-from zoo.pipeline.api.net import TFDataset, TFOptimizer, TFNet, TFValidationMethod
-from tensorflow.python.training import training
-from tensorflow.python.training import training_util
+from zoo.pipeline.api.net import TFDataset, TFOptimizer, TFNet
 
 from zoo.util import nest
+import numpy as np
 
 
 def add_train_op(model_fn, features, labels, mode, params, config, optimizer):
@@ -99,10 +97,6 @@ class Estimator(object):
         kwargs = {}
         if 'labels' in model_fn_args:
             kwargs['labels'] = labels
-        else:
-            if labels is not None:
-                raise ValueError(
-                    'model_fn does not take labels, but input_fn returns labels.')
         if 'mode' in model_fn_args:
             kwargs['mode'] = mode
         if 'params' in model_fn_args:
@@ -117,7 +111,7 @@ class Estimator(object):
 
         return model_fn_results
 
-    def train(self, input_fn, hooks=None, steps=None, max_steps=None, saving_listeners=None):
+    def train(self, input_fn, steps=None):
 
         with tf.Graph().as_default() as g:
             global_step_tensor = self.estimator._create_and_assert_global_step(g)
@@ -145,7 +139,7 @@ class Estimator(object):
                     saver.save(sess, self.estimator.model_dir + "/model", global_step=final_step)
                     return self
 
-        return self.estimator.train(input_fn, hooks, steps, max_steps, saving_listeners)
+        return self.estimator.train(input_fn, steps=steps)
 
     def evaluate(self, input_fn, eval_methods, steps=None, checkpoint_path=None):
         with tf.Graph().as_default() as g:
@@ -182,3 +176,33 @@ class Estimator(object):
                     return final_result
 
         return self.estimator.evaluate(input_fn, steps, checkpoint_path=checkpoint_path)
+
+    def predict(self, input_fn, checkpoint_path=None):
+        with tf.Graph().as_default() as g:
+            result = self.estimator._call_input_fn(input_fn, tf.estimator.ModeKeys.PREDICT)
+            if isinstance(result, TFDataset):
+                spec = self._call_model_fn(result.feature_tensors,
+                                           None,
+                                           tf.estimator.ModeKeys.PREDICT,
+                                           self.config)
+                latest_checkpoint = self.estimator.latest_checkpoint()
+
+                if latest_checkpoint:
+                    checkpoint_path = latest_checkpoint
+
+                with tf.Session() as sess:
+                    saver = tf.train.Saver()
+                    if checkpoint_path:
+                        saver.restore(sess, checkpoint_path)
+                    else:
+                        sess.run(tf.global_variables_initializer())
+                    inputs = nest.flatten(result.feature_tensors)
+                    outputs = nest.flatten(spec.predictions)
+                    tfnet = TFNet.from_session(sess, inputs=inputs, outputs=outputs)
+
+                    rdd = result.rdd.map(lambda t: Sample.from_ndarray(nest.flatten(t), np.array([0.0])))
+
+                    results = tfnet.predict(rdd, result.batch_per_thread)
+                    return results
+
+        return self.estimator.predict(input_fn, checkpoint_path=checkpoint_path)
