@@ -46,7 +46,7 @@ class TransformerLayer[T: ClassTag](
   val attnPdrop: Double,
   val nHead: Int,
   val maskAttention: Boolean,
-  val embeddingLayer: KerasLayer[Tensor[T], Tensor[T], T],
+  val embeddingLayer: Net,
   var inputShape: Shape = null)(implicit ev: TensorNumeric[T])
   extends KerasLayer[Tensor[T], Tensor[T], T](KerasUtils.addBatch(inputShape))
     with Net {
@@ -59,9 +59,7 @@ class TransformerLayer[T: ClassTag](
     seqLen = _inputShape.toSingle().head
 
     val input = Variable(_inputShape)
-    val embedding = Sequential[T]()
-      .add(embeddingLayer)
-    val e = embedding.from(input)
+    val e = embeddingLayer.from(input)
 
     val embeddingSize = e.getOutputShape().toSingle().last
 
@@ -100,7 +98,7 @@ class TransformerLayer[T: ClassTag](
     val sizes = x.getOutputShape().toSingle().toArray
     val u = AutoGrad.mean(x, sizes.size - 1, true)
     val s = AutoGrad.mean(AutoGrad.square(x - u), sizes.size -1, true)
-    val y = (x - u) / AutoGrad.sqrt(s + e) // y: (-1, 2, 4) g2: (1, 4)
+    val y = (x - u) / AutoGrad.sqrt(s + e)
     y * weight + bias
   }
 
@@ -124,10 +122,10 @@ class TransformerLayer[T: ClassTag](
     val q = splitHeads(query)
     val k = splitHeads(key, k = true)
     val v = splitHeads(value)
-    val a = attn(q, k, v, true) // m: (-1, 12, 77, 64)
-    val m = mergeHeads(a) // m: (-1, 77, 768)
+    val a = attn(q, k, v, true) // m: (batch, nhead, seqLen, embedddingSize/nhead)
+    val m = mergeHeads(a) // m: (batch, seqLen, embeddingSize)
     val n = new Convolution1D(embeddingSize, 1, init = RandomNormal(0.0, 0.02))
-      .from(m) // n: (-1, 77, 768)
+      .from(m) // n: (batch, seqLen, embeddingSize)
     Dropout(residPdrop).from(n)
   }
 
@@ -152,8 +150,9 @@ class TransformerLayer[T: ClassTag](
 
   // scale shoule be set in Attention
   def attn(q: Variable[T], k: Variable[T], v: Variable[T], scale: Boolean = false): Variable[T] = {
-    // q:(16, 12, 77, 64) k:(16, 12, 64, 77) v:(16, 12, 77, 64)
-    var w = AutoGrad.mm(q, k) // w: (16, 12, 77, 77)
+    // q, v:(batch, nHead, seqLen, embeddingSize/nHead)
+    // k:(batch, nHead, embeddingSize/nHead, seqLen)
+    var w = AutoGrad.mm(q, k) // w: (batch, nHead, seqLen, seqLen)
     if (scale) w = w / scala.math.sqrt(v.getOutputShape().toSingle().toArray.last)
 
     // mask attention
@@ -182,7 +181,7 @@ object TransformerLayer {
    */
   def apply[@specialized(Float, Double) T: ClassTag](
     vocab: Int = 40990,
-    seqLen: Int = 77, // seq len
+    seqLen: Int = 77,
     nBlock: Int = 12,
     residPdrop: Double = 0.1,
     attnPdrop: Double = 0.1,
@@ -201,7 +200,7 @@ object TransformerLayer {
           squeeze = true).asInstanceOf[AbstractModule[Activity, Activity, T]]))
     new TransformerLayer[T](nBlock,
       residPdrop, attnPdrop, nHead, maskAttention,
-      embeddingLayer.asInstanceOf[KerasLayer[Tensor[T], Tensor[T], T]])
+      embeddingLayer)
   }
 
   /**
@@ -219,10 +218,9 @@ object TransformerLayer {
     attnPdrop: Double,
     nHead: Int,
     maskAttention: Boolean,
-    embeddingLayer: KerasLayer[Tensor[T], Tensor[T], T])
+    embeddingLayer: Net)
     (implicit ev: TensorNumeric[T]): TransformerLayer[T] = {
     new TransformerLayer[T](nBlock,
-      residPdrop, attnPdrop, nHead, maskAttention,
-      embeddingLayer = embeddingLayer)
+      residPdrop, attnPdrop, nHead, maskAttention, embeddingLayer)
   }
 }

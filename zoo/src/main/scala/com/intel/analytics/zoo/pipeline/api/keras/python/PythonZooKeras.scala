@@ -41,9 +41,9 @@ import com.intel.analytics.zoo.pipeline.api.keras.optimizers.Adam
 import org.apache.spark.api.java.JavaRDD
 import com.intel.analytics.zoo.common.PythonZoo
 import com.intel.analytics.zoo.feature.text.TextSet
-import com.intel.analytics.zoo.models.attention.TransformerLayer
 import com.intel.analytics.zoo.models.common.ZooModel
 import com.intel.analytics.zoo.models.seq2seq.{Bridge, RNNDecoder, RNNEncoder}
+import com.intel.analytics.zoo.pipeline.api.Net
 import com.intel.analytics.zoo.pipeline.api.keras.{metrics => zmetrics}
 import com.intel.analytics.zoo.pipeline.api.net.GraphNet
 
@@ -1295,7 +1295,7 @@ class PythonZooKeras[T: ClassTag](implicit ev: TensorNumeric[T]) extends PythonZ
     attnDrop: Double,
     headNum: Int,
     maskAttention: Boolean,
-    embeddingLayer: KerasLayer[Tensor[T], Tensor[T], T]): TransformerLayer[T] = {
+    embeddingLayer: Net): TransformerLayer[T] = {
     TransformerLayer(nBlock = layerNum, residPdrop = residDrop,
       attnPdrop = attnDrop, nHead = headNum,
       maskAttention = maskAttention, embeddingLayer = embeddingLayer)

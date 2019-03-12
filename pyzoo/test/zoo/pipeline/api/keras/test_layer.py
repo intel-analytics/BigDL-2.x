@@ -26,6 +26,7 @@ from keras.engine import merge as kmerge, Model as KModel
 from keras.models import Sequential as KSequential
 import keras.backend as K
 from bigdl.keras.converter import WeightsConverter
+from zoo.pipeline.api.keras import regularizers
 
 np.random.seed(1337)  # for reproducibility
 
@@ -195,6 +196,15 @@ class TestLayer(ZooTestCase):
         m = ZModel(i1, s)
         # predict should not generate exception
         y = m.predict(a, distributed=False)
+
+    def test_regularizer(self):
+        model = ZSequential()
+        model.add(ZLayer.Dense(16, W_regularizer=regularizers.l2(0.001),
+                               activation='relu', input_shape=(10000,)))
+        model.summary()
+        model.compile(optimizer='rmsprop',
+                      loss='binary_crossentropy',
+                      metrics=['acc'])
 
 
 if __name__ == "__main__":
