@@ -38,8 +38,8 @@
       </includes>
     </fileSet>
     <fileSet>
-      <outputDirectory>/bigdl_python</outputDirectory>
-      <directory>${project.build.directory}/bigdl_python/sources</directory>
+      <outputDirectory>/python</outputDirectory>
+      <directory>${project.build.directory}/python/sources</directory>
     </fileSet>
     <fileSet>
       <outputDirectory>/conf</outputDirectory>
