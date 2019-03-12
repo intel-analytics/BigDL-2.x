@@ -32,7 +32,7 @@ class NarrowSpec extends ZooSpecHelper {
   "Narrow Zoo 1D" should "be the same as BigDL" in {
     val blayer = BNarrow[Float](1, 1, 2)
     val input1 = Parameter[Float](inputShape = Shape(4), name = "input1")
-    val zlayer = new ZNarrow[Float](1, 1, 2).from(input1)
+    val zlayer = new ZNarrow[Float](0, 0, 2).from(input1)
     val model = Model(input1, zlayer)
     model.getOutputShape().toSingle().toArray should be (Array(2))
     val input = Tensor[Float](Array(4)).rand()

@@ -62,23 +62,23 @@ class Narrow[T: ClassTag](
   private def getPositiveDimAndLength(inputShape: Shape): (Int, Int) = {
     val input = inputShape.toSingle().toArray
     // require(input.length >= 2, s"Narrow requires >= 2D input, but got input dim ${input.length}")
-    val positiveDim1 = if (dim < 0) dim + input.length else dim
-    val positiveDim2 = if (input.length>1) positiveDim1 else positiveDim1-1
+    val positiveDim = if (dim < 0) dim + input.length else dim
+    // val positiveDim2 = if (input.length>1) positiveDim1 else positiveDim1-1
     if (input.length >1) {
-      require(positiveDim2 >= 0 && positiveDim2 <= input.length - 1,
+      require(positiveDim >= 0 && positiveDim <= input.length - 1,
         s"Invalid select dim: $dim, dim should be within range [0, ${input.length - 1}]")
     }
-    val positiveLength = if (length < 0) length + input(positiveDim2) - offset + 1 else length
+    val positiveLength = if (length < 0) length + input(positiveDim) - offset + 1 else length
     // batch dimension is always -1 for now, so we skip the checking here.
     if(dim > 0 && input.length>1) {
-      require(offset >= 0 && offset <= input(positiveDim2) -1,
+      require(offset >= 0 && offset <= input(positiveDim) -1,
         s"Invalid narrow offset for dim $dim: $offset, " +
-          s"offset should be within range [0, ${input(positiveDim2) - 1}]")
-      require(positiveLength > 0 && positiveLength <= input(positiveDim2) - offset,
+          s"offset should be within range [0, ${input(positiveDim) - 1}]")
+      require(positiveLength > 0 && positiveLength <= input(positiveDim) - offset,
         s"Invalid narrow length for dim $dim with offset $offset: $length, " +
-          s"length should be within range (0, ${input(positiveDim2) - offset}]")
+          s"length should be within range (0, ${input(positiveDim) - offset}]")
     }
-    (positiveDim2, positiveLength)
+    (positiveDim, positiveLength)
   }
 
   override def computeOutputShape(inputShape: Shape): Shape = {
@@ -88,8 +88,7 @@ class Narrow[T: ClassTag](
 
   override def doBuild(inputShape: Shape): AbstractModule[Tensor[T], Tensor[T], T] = {
     val (positiveDim, positiveLength) = getPositiveDimAndLength(inputShape)
-    val offset2 = if (inputShape.toSingle().toArray.length>1) offset + 1 else offset
-    val layer = com.intel.analytics.bigdl.nn.Narrow(positiveDim + 1, offset2, positiveLength)
+    val layer = com.intel.analytics.bigdl.nn.Narrow(positiveDim + 1, offset + 1, positiveLength)
     layer.asInstanceOf[AbstractModule[Tensor[T], Tensor[T], T]]
   }
 }
