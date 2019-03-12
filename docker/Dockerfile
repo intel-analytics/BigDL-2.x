@@ -53,9 +53,9 @@ RUN wget https://build.funtoo.org/distfiles/oracle-java/jdk-8u152-linux-x64.tar.
     ln -s /opt/jdk1.8.0_152 /opt/jdk
 
 #python
-ADD ./install-python.sh ./
-RUN chmod a+x install-python.sh
-RUN ./install-python.sh
+ADD ./install-python.sh /opt/work
+RUN chmod a+x /opt/work/install-python.sh
+RUN /opt/work/install-python.sh
 
 #spark
 RUN wget https://archive.apache.org/dist/spark/spark-${SPARK_VERSION}/spark-${SPARK_VERSION}-bin-hadoop2.7.tgz && \
@@ -65,8 +65,8 @@ RUN wget https://archive.apache.org/dist/spark/spark-${SPARK_VERSION}/spark-${SP
 
 ADD ./download-analytics-zoo.sh /opt/work
 ADD ./start-notebook.sh /opt/work
-RUN chmod a+x download-analytics-zoo.sh && \
-    chmod a+x start-notebook.sh
-RUN ./download-analytics-zoo.sh
+RUN chmod a+x /opt/work/download-analytics-zoo.sh && \
+    chmod a+x /opt/work/start-notebook.sh
+RUN /opt/work/download-analytics-zoo.sh
 
 CMD ["/opt/work/start-notebook.sh"]
