@@ -925,13 +925,12 @@ private[zoo] class InternalLocalOptimizer[T: ClassTag] (
 
   override def train(
       trainSet: DataSet[MiniBatch[T]],
-      optimMethod: OptimMethod[T] = new SGD[T](),
+      criterion: Criterion[T],
       endTrigger: Option[Trigger] = None,
       checkPoint: Option[Trigger] = None,
       validationSet: DataSet[MiniBatch[T]] = null,
       validationMethod: Array[ValidationMethod[T]] = null): this.type = {
     this.setTrainData(trainSet)
-    this.setOptimMethod(optimMethod)
     val endWhen = if (endTrigger.isDefined) {
       endTrigger.get
     } else {
@@ -975,15 +974,16 @@ private[zoo] class InternalDistriOptimizer[T: ClassTag] (
   with AbstractEstimator[T]{
   protected var checkpointDir: Option[String] = None
 
-  def setCheckpointDir(path: String): this.type = {
-    val pathAndTime = path + "/" +
-      new SimpleDateFormat("yyyy-MM-dd_HH:mm:ss").format(Calendar.getInstance().getTime())
-    checkpointDir = Some(pathAndTime)
-    val currentTime = System.nanoTime()
-    val trainSummary = TrainSummary(pathAndTime, "summary")
-    val valSummary = ValidationSummary(pathAndTime, "summary")
-    this.setTrainSummary(trainSummary)
-    this.setValidationSummary(valSummary)
+  def setCheckpointDir(path: Option[String]): this.type = {
+    if (path.isDefined) {
+      val pathAndTime = path.get + "/" +
+        new SimpleDateFormat("yyyy-MM-dd_HH:mm:ss").format(Calendar.getInstance().getTime())
+      checkpointDir = Some(pathAndTime)
+      val trainSummary = TrainSummary(pathAndTime, "summary")
+      val valSummary = ValidationSummary(pathAndTime, "summary")
+      this.setTrainSummary(trainSummary)
+      this.setValidationSummary(valSummary)
+    }
     this
   }
 
@@ -1000,13 +1000,12 @@ private[zoo] class InternalDistriOptimizer[T: ClassTag] (
 
   override def train(
         trainSet: DataSet[MiniBatch[T]],
-        optimMethod: OptimMethod[T] = new SGD[T](),
+        criterion: Criterion[T],
         endTrigger: Option[Trigger] = None,
         checkPoint: Option[Trigger] = None,
         validationSet: DataSet[MiniBatch[T]] = null,
         validationMethod: Array[ValidationMethod[T]] = null): this.type = {
     this.dataset = trainSet
-    this.setOptimMethod(optimMethod)
     val endWhen = if (endTrigger.isDefined) {
       endTrigger.get
     } else {
@@ -1024,8 +1023,6 @@ private[zoo] class InternalDistriOptimizer[T: ClassTag] (
     validationMethod: Array[ValidationMethod[T]]): Map[ValidationMethod[T], ValidationResult] = {
     val validateRDD = validationSet.toDistributed().data(train = false)
     val sc = validateRDD.sparkContext
-    val optim = this.optimMethods.valuesIterator.next()
-    val state = InternalOptimizerUtil.getStateFromOptiMethod(optim)
     val cachedModels = InternalOptimizerUtil.getModelCacheFromOptimizer(this)
 
     val coresPerNode = EngineRef.getCoreNumber()

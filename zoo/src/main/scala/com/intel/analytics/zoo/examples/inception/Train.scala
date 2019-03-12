@@ -194,7 +194,7 @@ object TrainInceptionV1Estimator {
           weightDecay = param.weightDecay, momentum = 0.9, dampening = 0.0, nesterov = false,
           learningRateSchedule = lrSchedule)
       }
-      val estimator = Estimator[Float](model, new ClassNLLCriterion[Float](), param.checkpoint.get)
+      val estimator = Estimator[Float](model, optimMethod, param.checkpoint.get)
 
       val (checkpointTrigger, testTrigger, endTrigger) = if (param.maxEpoch.isDefined) {
         (Trigger.everyEpoch, Trigger.everyEpoch, Trigger.maxEpoch(param.maxEpoch.get))
@@ -206,7 +206,7 @@ object TrainInceptionV1Estimator {
         )
       }
 
-      estimator.train(trainSet, optimMethod,
+      estimator.train(trainSet, ClassNLLCriterion[Float](),
         endTrigger = Some(endTrigger),
         checkPoint = Some(checkpointTrigger),
         valSet, Array(new Top1Accuracy[Float], new Top5Accuracy[Float]))

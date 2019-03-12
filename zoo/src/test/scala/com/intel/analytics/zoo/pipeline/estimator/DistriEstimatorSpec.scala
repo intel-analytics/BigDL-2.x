@@ -125,8 +125,8 @@ class DistriEstimatorSpec extends ZooSpecHelper {
     LoggerFilter.redirectSparkInfoLogs()
     RandomGenerator.RNG.setSeed(10)
     val mseModel = mse
-    val estimator = Estimator(mseModel, new MSECriterion[Double]())
-    estimator.train(dataSet, new LBFGS[Double](), endTrigger = Some(Trigger.maxIteration(1000)))
+    val estimator = Estimator(mseModel, new LBFGS[Double]())
+    estimator.train(dataSet, new MSECriterion[Double](), endTrigger = Some(Trigger.maxIteration(1000)))
 
     val result1 = mseModel.forward(input1).asInstanceOf[Tensor[Double]]
     result1(Array(1)) should be(0.0 +- 1e-2)
@@ -139,8 +139,8 @@ class DistriEstimatorSpec extends ZooSpecHelper {
     LoggerFilter.redirectSparkInfoLogs()
     val mm = mse
     mm.parameters()._1.foreach(_.fill(0.125))
-    val estimator = Estimator(mm, new MSECriterion[Double]())
-    estimator.train(dataSet, new SGD[Double](20), Option(Trigger.maxEpoch(1)))
+    val estimator = Estimator(mm, new SGD[Double](20))
+    estimator.train(dataSet, new MSECriterion[Double](), Option(Trigger.maxEpoch(1)))
 
     val result1 = mm.forward(input1).asInstanceOf[Tensor[Double]]
     result1(Array(1)) should be(0.0 +- 5e-2)
@@ -151,18 +151,19 @@ class DistriEstimatorSpec extends ZooSpecHelper {
 
   "Train multi times" should "be trained with good result" in {
     LoggerFilter.redirectSparkInfoLogs()
-    val mm = mse
+    val mm = EstimatorSpecModel.mse
     mm.parameters()._1.foreach(_.fill(0.125))
-    val estimator = Estimator(mm, new MSECriterion[Double]())
     val sgd = new SGD[Double](20)
+    val estimator = Estimator(mm, sgd)
+    val mse = new MSECriterion[Double]()
     val state = InternalOptimizerUtil.getStateFromOptiMethod(sgd)
-    estimator.train(dataSet, sgd, endTrigger = Some(Trigger.maxIteration(128)))
+    estimator.train(dataSet, mse, endTrigger = Some(Trigger.maxIteration(128)))
     state[Int]("neval") should be (129)
     state[Int]("epoch") should be (1)
-    estimator.train(dataSet, sgd, endTrigger = Some(Trigger.maxIteration(256)))
+    estimator.train(dataSet, mse, endTrigger = Some(Trigger.maxIteration(256)))
     state[Int]("neval") should be (257)
     state[Int]("epoch") should be (2)
-    estimator.train(dataSet, sgd, endTrigger = Some(Trigger.maxIteration(512)))
+    estimator.train(dataSet, mse, endTrigger = Some(Trigger.maxIteration(512)))
     state[Int]("neval") should be (513)
     state[Int]("epoch") should be (3)
   }
@@ -171,8 +172,8 @@ class DistriEstimatorSpec extends ZooSpecHelper {
     LoggerFilter.redirectSparkInfoLogs()
     val mm = mse
     mm.parameters()._1.foreach(_.fill(0.125))
-    val estimator = Estimator(mm, new MSECriterion[Double]())
-    estimator.train(dataSet, new SGD[Double](20), Option(Trigger.maxEpoch(1)))
+    val estimator = Estimator(mm, new SGD[Double](20))
+    estimator.train(dataSet, new MSECriterion[Double](), Option(Trigger.maxEpoch(1)))
     val result = estimator.evaluate(dataSet, Array(new Loss[Double](new MSECriterion[Double]())))
     result
   }
@@ -182,8 +183,8 @@ class DistriEstimatorSpec extends ZooSpecHelper {
     val tmpdir = com.google.common.io.Files.createTempDir().getPath()
     val mm = mse
     mm.parameters()._1.foreach(_.fill(0.125))
-    val estimator = Estimator(mm, new MSECriterion[Double](), tmpdir)
-    estimator.train(dataSet, new SGD[Double](20), Option(Trigger.maxEpoch(1)))
+    val estimator = Estimator(mm, new SGD[Double](20), tmpdir)
+    estimator.train(dataSet, new MSECriterion[Double](), Option(Trigger.maxEpoch(1)))
     val result = estimator.evaluate(dataSet, Array(new Loss[Double](new MSECriterion[Double]())))
     result
   }
@@ -192,7 +193,7 @@ class DistriEstimatorSpec extends ZooSpecHelper {
     LoggerFilter.redirectSparkInfoLogs()
     val mm = mse
     mm.parameters()._1.foreach(_.fill(0.125))
-    val estimator = Estimator(mm, new MSECriterion[Double]())
+    val estimator = Estimator(mm)
     val result = estimator.evaluate(dataSet, Array(new Loss[Double](new MSECriterion[Double]())))
     result
   }
