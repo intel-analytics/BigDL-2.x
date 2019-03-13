@@ -157,7 +157,7 @@ class PythonZooKeras[T: ClassTag](implicit ev: TensorNumeric[T]) extends PythonZ
   def zooEvaluate(
       module: KerasNet[T],
       x: ImageSet,
-      batchSize: Int): JList[EvaluatedResult] = {
+      batchSize: Int): JList[Float] = {
     val resultArray = module.evaluate(x, batchSize)
     processEvaluateResult(resultArray)
   }
@@ -165,7 +165,7 @@ class PythonZooKeras[T: ClassTag](implicit ev: TensorNumeric[T]) extends PythonZ
   def zooEvaluate(
       module: KerasNet[T],
       x: TextSet,
-      batchSize: Int): JList[EvaluatedResult] = {
+      batchSize: Int): JList[Float] = {
     val resultArray = module.evaluate(x, batchSize)
     processEvaluateResult(resultArray)
   }

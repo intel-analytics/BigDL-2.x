@@ -112,7 +112,13 @@ abstract class KerasNet[T](implicit val tag: ClassTag[T], implicit val ev: Tenso
     LoggerFilter.redirectSparkInfoLogs()
     this.optimMethod = optimizer
     this.criterion = loss
-    this.vMethods = if (metrics == null) null else metrics.toArray
+
+
+    val lossArray: Array[ValidationMethod[T]] = Array(new Loss(this.criterion))
+    val metricArray = metrics.toArray
+
+    //this.vMethods = if (metrics == null) null else metrics.toArray
+    this.vMethods = if (metrics == null) lossArray else (lossArray ++ metricArray)
   }
 
   /**
@@ -414,6 +420,8 @@ abstract class KerasNet[T](implicit val tag: ClassTag[T], implicit val ev: Tenso
       (implicit ev: TensorNumeric[T]): Array[(ValidationResult, ValidationMethod[T])] = {
     // require(this.vMethods != null, "Evaluation metrics haven't been set yet")
 
+    this.evaluate(x, this.vMethods, Some(batchSize))
+    /*
     val loss = this.evaluate(x, Array(new Loss(this.criterion)), Some(batchSize))
 
     if (this.vMethods == null) {
@@ -424,6 +432,7 @@ abstract class KerasNet[T](implicit val tag: ClassTag[T], implicit val ev: Tenso
       val res = loss ++ evalRes
       return res
     }
+    */
   }
 
   /**
