@@ -18,7 +18,7 @@ package com.intel.analytics.zoo.feature
 
 import java.util.concurrent.atomic.AtomicInteger
 
-import com.intel.analytics.bigdl.dataset.DistributedDataSet
+import com.intel.analytics.bigdl.dataset.{AbstractDataSet, DistributedDataSet, Transformer}
 import com.intel.analytics.bigdl.utils.RandomGenerator
 import com.intel.analytics.zoo.feature.common.{ArrayLike, ArrayLikeWrapper}
 import com.intel.analytics.zoo.feature.pmem._
@@ -28,15 +28,164 @@ import org.slf4j.{Logger, LoggerFactory}
 
 import scala.reflect.ClassTag
 
+/**
+  * A set of data which is used in the model optimization process. The dataset can be access in
+  * a random data sample sequence. In the training process, the data sequence is a looped endless
+  * sequence. While in the validation process, the data sequence is a limited length sequence.
+  * User can use the data() method to get the data sequence.
+  *
+  * The sequence of the data is not fixed. It can be changed by the shuffle() method.
+  *
+  * User can create a dataset from a RDD, an array and a folder, etc. The DataSet object provides
+  * many factory methods.
+  *
+  * @tparam D Data type
+  * @tparam DataSequence Represent a sequence of data
+  */
+trait FeatureSet[D, DataSequence] extends AbstractDataSet[D, DataSequence]{
+  /**
+    * Get a sequence of data
+    *
+    * @param train if the data is used in train. If yes, the data sequence is a looped endless
+    *              sequence, or it has a limited length.
+    * @return data sequence
+    */
+  def data(train: Boolean): DataSequence
+
+  /**
+    * Change the order of the data sequence from the data set
+    */
+  def shuffle(): Unit
+
+  /**
+    * Total size of the data set
+    * @return
+    */
+  def size(): Long
+
+  /**
+    * Helper function to transform the data type in the data set.
+    * @param transformer
+    * @tparam C
+    * @return
+    */
+  override def transform[C: ClassTag](transformer: Transformer[D, C]): FeatureSet[C, _]
+
+  // scalastyle:off methodName
+  // scalastyle:off noSpaceBeforeLeftBracket
+  /**
+    * Helper function to transform the data type in the data set.
+    *
+    * @param transformer
+    * @tparam C
+    * @return
+    */
+  override def -> [C: ClassTag](transformer: Transformer[D, C]): FeatureSet[C, _] = {
+    this.transform(transformer)
+  }
+
+  // scalastyle:on noSpaceBeforeLeftBracket
+  // scalastyle:on methodName
+}
+
+/**
+  * Manage some 'local' data, e.g. data in files or memory. We use iterator to go through the data.
+  * @tparam T
+  */
+trait LocalFeatureSet[T] extends FeatureSet[T, Iterator[T]] {
+  override def transform[C: ClassTag](transformer: Transformer[T, C]): FeatureSet[C, _] = {
+    val preDataSet = this
+    new LocalFeatureSet[C] {
+      override def shuffle(): Unit = preDataSet.shuffle
+
+      override def size(): Long = preDataSet.size()
+
+      override def data(train: Boolean): Iterator[C] = transformer(preDataSet.data(train))
+    }
+  }
+}
+
+/**
+  * Represent a distributed data. Use RDD to go through all data.
+  *
+  * @tparam T
+  */
+trait DistributedFeatureSet[T] extends AbstractDataSet[T, RDD[T]] {
+
+  override def transform[C: ClassTag](transformer: Transformer[T, C]): DistributedFeatureSet[C] = {
+    val preDataSet = this
+
+    val broadcast = this.originRDD().sparkContext.broadcast(transformer)
+
+    val cachedTransformer =
+      preDataSet.originRDD().mapPartitions(_ => Iterator
+        .single(broadcast.value.cloneTransformer())
+      ).setName("Cached Transformer").persist()
+
+    new DistributedFeatureSet[C] {
+      override def size(): Long = preDataSet.size()
+
+      override def shuffle(): Unit = preDataSet.shuffle()
+
+      override def data(train: Boolean): RDD[C] =
+        preDataSet.data(train).zipPartitions(cachedTransformer)(
+          (data, tran) => tran.next()(data))
+
+      override def originRDD(): RDD[_] = preDataSet.originRDD()
+
+      override def cache(): Unit = {
+        cachedTransformer.count()
+        isCached = true
+      }
+
+      override def unpersist(): Unit = {
+        cachedTransformer.unpersist()
+        isCached = false
+      }
+    }
+  }
+
+  /**
+    * Get the 'origin' RDD of the dataset.
+    *
+    * @return
+    */
+  def originRDD(): RDD[_]
+
+  /**
+    * Trigger the computation of this dataset and cache it in memory.
+    */
+  def cache(): Unit = {
+    if (originRDD() != null) {
+      originRDD().count()
+    }
+    isCached = true
+  }
+
+  /**
+    * Unpersist rdd.
+    */
+  def unpersist(): Unit = {
+    if (originRDD() != null) {
+      originRDD().unpersist()
+      isCached = false
+    }
+  }
+
+  /**
+    * Check if rdd is cached.
+    */
+  var isCached = false
+}
 
 /**
  * Wrap a RDD as a DataSet.
  * @param buffer
  */
 // T is the returning value type. like ByteRecord
-class DistributedFeatureSet[T: ClassTag]
+class CachedDistributedFeatureSet[T: ClassTag]
 (buffer: RDD[ArrayLike[T]])
-  extends DistributedDataSet[T] {
+  extends DistributedFeatureSet[T] {
 
   protected lazy val count: Long = buffer.mapPartitions(iter => {
     require(iter.hasNext)
@@ -118,7 +267,7 @@ object DRAMFeatureSet {
         Iterator.single(new ArrayLikeWrapper(iter.toArray))
       }).setName(s"cached feature set: ${data.name} in DRAM" )
       .cache().asInstanceOf[RDD[ArrayLike[T]]]
-    new DistributedFeatureSet[T](arrayLikeRDD)
+    new CachedDistributedFeatureSet[T](arrayLikeRDD)
   }
 }
 
