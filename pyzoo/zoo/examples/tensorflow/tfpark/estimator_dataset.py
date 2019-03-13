@@ -21,7 +21,7 @@ import numpy as np
 from zoo import init_nncontext
 from zoo.pipeline.api.keras.metrics import Accuracy
 from zoo.tfpark import KerasModel, TFDataset
-from zoo.tfpark.estimator import Estimator, EstimatorSpec
+from zoo.tfpark.estimator import TFEstimator, TFEstimatorSpec
 import os
 # os.environ['PYSPARK_SUBMIT_ARGS'] = "--driver-java-options \" -Xdebug -Xrunjdwp:transport=dt_socket,server=y,suspend=y,address=5050\" /home/yang/sources/zoo/pyzoo/zoo/examples/tensorflow/tfpark/estimator_dataset.py"
 
@@ -37,8 +37,7 @@ def get_data_rdd(dataset, sc):
     return rdd
 
 
-
-def main(max_epoch):
+def main():
     sc = init_nncontext()
 
     def model_fn(features, labels, mode):
@@ -49,9 +48,9 @@ def main(max_epoch):
 
         if mode == tf.estimator.ModeKeys.EVAL or mode == tf.estimator.ModeKeys.TRAIN:
             loss = tf.reduce_mean(tf.losses.sparse_softmax_cross_entropy(logits=logits, labels=labels))
-            return EstimatorSpec(mode, predictions=logits, loss=loss)
+            return TFEstimatorSpec(mode, predictions=logits, loss=loss)
         else:
-            return EstimatorSpec(mode, predictions=logits)
+            return TFEstimatorSpec(mode, predictions=logits)
 
     def input_fn(mode):
         if mode == tf.estimator.ModeKeys.TRAIN:
@@ -73,21 +72,16 @@ def main(max_epoch):
                                          batch_per_thread=80)
 
         return dataset
-    estimator = Estimator(model_fn, tf.train.AdamOptimizer(), model_dir="/tmp/estimator")
+    estimator = TFEstimator(model_fn, tf.train.AdamOptimizer(), model_dir="/tmp/estimator")
 
-    # estimator.train(input_fn, steps=60000//320)
-    #
-    # metrics = estimator.evaluate(input_fn, [Accuracy()])
-    # print(metrics)
+    estimator.train(input_fn, steps=60000//320)
+
+    metrics = estimator.evaluate(input_fn, [Accuracy()])
+    print(metrics)
 
     predictions = estimator.predict(input_fn)
 
     print(predictions.first())
 
 if __name__ == '__main__':
-
-    max_epoch = 5
-
-    if len(sys.argv) > 1:
-        max_epoch = int(sys.argv[1])
-    main(max_epoch)
+    main()

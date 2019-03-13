@@ -48,6 +48,9 @@ def add_train_op(model_fn, features, labels, mode, params, config, optimizer):
         train_op = None
 
     if mode == tf.estimator.ModeKeys.TRAIN and train_op is None:
+        if optimizer is None:
+            raise ValueError("optimizer should be set when used for training. For example:" +
+                             " Estimator(model_fn, tf.train.AdamOptimizer())")
         grads_and_vars = optimizer.compute_gradients(spec.loss)
 
         vars_with_grad = [v for g, v in grads_and_vars if g is not None]
@@ -68,7 +71,7 @@ def add_train_op(model_fn, features, labels, mode, params, config, optimizer):
                                       spec.export_outputs)
 
 
-class EstimatorSpec:
+class TFEstimatorSpec:
 
     def __init__(self, mode, predictions=None, loss=None):
         self.mode = mode
@@ -76,9 +79,9 @@ class EstimatorSpec:
         self.loss = loss
 
 
-class Estimator(object):
+class TFEstimator(object):
 
-    def __init__(self, model_fn, optimizer, model_dir=None, config=None,
+    def __init__(self, model_fn, optimizer=None, model_dir=None, config=None,
                  params=None, warm_start_from=None):
 
         def tf_model_fn(features, labels, mode, params, config):
@@ -106,8 +109,8 @@ class Estimator(object):
 
         model_fn_results = self._model_fn(features=features, **kwargs)
 
-        if not isinstance(model_fn_results, EstimatorSpec):
-            raise ValueError('model_fn should return an EstimatorSpec.')
+        if not isinstance(model_fn_results, TFEstimatorSpec):
+            raise ValueError('model_fn should return an TFEstimatorSpec.')
 
         return model_fn_results
 
@@ -132,6 +135,7 @@ class Estimator(object):
                         saver.restore(sess, latest_checkpoint)
                     else:
                         sess.run(tf.global_variables_initializer())
+
                     opt = TFOptimizer.from_loss(spec.loss, optim_method, session=sess)
                     opt.optimize(MaxIteration(steps))
                     sess.run(assign_step, feed_dict={add_step_input: steps})
