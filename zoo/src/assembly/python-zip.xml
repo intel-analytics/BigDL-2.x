@@ -24,7 +24,7 @@
                 <exclude>docs/**/*</exclude>
             </excludes>
             <outputDirectory>/..</outputDirectory>
-            <directory>${project.build.directory}/bigdl_python/sources</directory>
+            <directory>${project.build.directory}/python/sources</directory>
         </fileSet>
 
         <fileSet>
