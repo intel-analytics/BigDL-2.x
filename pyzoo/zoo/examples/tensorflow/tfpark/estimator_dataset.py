@@ -13,17 +13,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-import sys
 
 import tensorflow as tf
 import numpy as np
 
 from zoo import init_nncontext
-from zoo.pipeline.api.keras.metrics import Accuracy
-from zoo.tfpark import KerasModel, TFDataset
+from zoo.tfpark import TFDataset
 from zoo.tfpark.estimator import TFEstimator, TFEstimatorSpec
-import os
-# os.environ['PYSPARK_SUBMIT_ARGS'] = "--driver-java-options \" -Xdebug -Xrunjdwp:transport=dt_socket,server=y,suspend=y,address=5050\" /home/yang/sources/zoo/pyzoo/zoo/examples/tensorflow/tfpark/estimator_dataset.py"
 
 
 def get_data_rdd(dataset, sc):
@@ -47,7 +43,8 @@ def main():
             logits, end_points = lenet.lenet(features, num_classes=10, is_training=True)
 
         if mode == tf.estimator.ModeKeys.EVAL or mode == tf.estimator.ModeKeys.TRAIN:
-            loss = tf.reduce_mean(tf.losses.sparse_softmax_cross_entropy(logits=logits, labels=labels))
+            loss = tf.reduce_mean(
+                tf.losses.sparse_softmax_cross_entropy(logits=logits, labels=labels))
             return TFEstimatorSpec(mode, predictions=logits, loss=loss)
         else:
             return TFEstimatorSpec(mode, predictions=logits)

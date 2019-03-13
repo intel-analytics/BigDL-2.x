@@ -33,7 +33,8 @@ class TestTFParkEstimator(ZooTestCase):
             logits = tf.layers.dense(h2, 10)
 
             if mode == tf.estimator.ModeKeys.EVAL or mode == tf.estimator.ModeKeys.TRAIN:
-                loss = tf.reduce_mean(tf.losses.sparse_softmax_cross_entropy(logits=logits, labels=labels))
+                loss = tf.reduce_mean(
+                    tf.losses.sparse_softmax_cross_entropy(logits=logits, labels=labels))
                 return TFEstimatorSpec(mode, predictions=logits, loss=loss)
             else:
                 return TFEstimatorSpec(mode, predictions=logits)

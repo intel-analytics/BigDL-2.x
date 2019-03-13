@@ -209,7 +209,8 @@ class TFEstimator(object):
                     outputs = nest.flatten(spec.predictions)
                     tfnet = TFNet.from_session(sess, inputs=inputs, outputs=outputs)
 
-                    rdd = result.rdd.map(lambda t: Sample.from_ndarray(nest.flatten(t), np.array([0.0])))
+                    rdd = result.rdd.map(lambda t:
+                                         Sample.from_ndarray(nest.flatten(t), np.array([0.0])))
 
                     results = tfnet.predict(rdd, result.batch_per_thread)
                     return results
