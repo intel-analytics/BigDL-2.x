@@ -415,14 +415,7 @@ abstract class KerasNet[T](implicit val tag: ClassTag[T], implicit val ev: Tenso
       batchSize: Int)
       (implicit ev: TensorNumeric[T]): Array[(ValidationResult, ValidationMethod[T])] = {
     require(this.vMethods != null, "Evaluation metrics haven't been set yet")
-
-    /******/
-    val loss = this.evaluate(x, Array(new Loss(this.criterion)), Some(batchSize))
-    val evalRes = this.evaluate(x, this.vMethods, Some(batchSize))
-
-    val res = Array(loss, evalRes)
-    return res
-    /******/
+    this.evaluate(x, this.vMethods, Some(batchSize))
   }
   */
   def evaluate(
