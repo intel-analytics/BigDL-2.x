@@ -147,12 +147,19 @@ class PythonZooKeras[T: ClassTag](implicit ev: TensorNumeric[T]) extends PythonZ
     }.toList.asJava
   }
 
+  private def processEvaluateResultRDD(
+    resultArray: Array[(ValidationResult, ValidationMethod[T])]): JList[Float] = {
+    resultArray.map { result =>
+      result._1.result()._1
+    }.toList.asJava
+  }
+
   def zooEvaluate(
       module: KerasNet[T],
       x: JavaRDD[Sample],
-      batchSize: Int = 32): JList[EvaluatedResult] = {
+      batchSize: Int = 32): JList[Float] = {
     val resultArray = module.evaluate(toJSample(x), batchSize)
-    processEvaluateResult(resultArray)
+    processEvaluateResultRDD(resultArray)
   }
 
   def zooEvaluate(
