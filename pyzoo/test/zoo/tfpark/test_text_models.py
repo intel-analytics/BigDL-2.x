@@ -61,7 +61,8 @@ class TestTextModels(ZooTestCase):
     def test_sequence_tagger_crf(self):
         model = SequenceTagger(num_pos_labels=8, num_chunk_labels=8, word_vocab_size=50,
                                char_vocab_size=20, classifier="crf")
-        input_data = [np.random.randint(50, size=(10, 15)), np.random.randint(20, size=(10, 15, 12))]
+        input_data = [np.random.randint(50, size=(10, 15)),
+                      np.random.randint(20, size=(10, 15, 12))]
         output = model.predict(input_data, distributed=True)
         assert isinstance(output, list) and len(output) == 2
         assert output[0].shape == (10, 15, 8)
