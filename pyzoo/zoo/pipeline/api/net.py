@@ -875,11 +875,11 @@ class TFDataset:
             feature_structure = _to_tensor_structure(features)
             if labels is not None:
                 label_structure = _to_tensor_structure(labels)
+                tensor_structure = (feature_structure, label_structure)
 
             else:
-                label_structure = None
+                tensor_structure = (feature_structure,)
 
-            tensor_structure = (feature_structure, label_structure)
             return TFDataset(rdd, tensor_structure,
                              batch_size, batch_per_thread,
                              hard_code_batch_size, val_rdd)
