@@ -50,7 +50,7 @@ class SequenceTagger(TextKerasModel):
                  classifier='softmax', optimizer=None):
         classifier = classifier.lower()
         assert classifier in ['softmax', 'crf'], "classifier should be either softmax or crf"
-        super(SequenceTagger, self).__init__(chunker.SequenceTagger(use_cudnn=False), None,
+        super(SequenceTagger, self).__init__(chunker.SequenceTagger(use_cudnn=False),
                                              vocabulary_size=word_vocab_size,
                                              num_pos_labels=num_pos_labels,
                                              num_chunk_labels=num_chunk_labels,
