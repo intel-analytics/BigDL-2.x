@@ -16,12 +16,14 @@
 from tensorflow.python.util import function_utils
 import tensorflow as tf
 
-from bigdl.optim.optimizer import MaxIteration
+from bigdl.optim.optimizer import MaxIteration, Loss, TreeNNAccuracy
 from zoo.common import Sample
+from zoo.pipeline.api.keras import metrics
 from zoo.pipeline.api.net import TFDataset, TFOptimizer, TFNet
 
 from zoo.util import nest
 import numpy as np
+import six
 
 
 def add_train_op(model_fn, features, labels, mode, params, config, optimizer):
@@ -146,6 +148,8 @@ class TFEstimator(object):
         return self.estimator.train(input_fn, steps=steps)
 
     def evaluate(self, input_fn, eval_methods, steps=None, checkpoint_path=None):
+        if not all(isinstance(metric, six.string_types) for metric in eval_methods):
+            raise ValueError("All metrics should be string types")
         with tf.Graph().as_default() as g:
             result = self.estimator._call_input_fn(input_fn, tf.estimator.ModeKeys.EVAL)
             if isinstance(result, TFDataset):
@@ -175,6 +179,7 @@ class TFEstimator(object):
                     else:
                         batch_size = result.batch_per_thread * result.total_core_num
 
+                    eval_methods = [self._to_bigdl_metric(m) for m in eval_methods]
                     results = tfnet.evaluate(rdd, batch_size, eval_methods)
                     final_result = dict([(r.method, r.result) for r in results])
                     return final_result
@@ -210,3 +215,22 @@ class TFEstimator(object):
                     return results
 
         return self.estimator.predict(input_fn, checkpoint_path=checkpoint_path)
+
+    @staticmethod
+    def _to_bigdl_metric(metric):
+        metric = metric.lower()
+        if metric == "accuracy" or metric == "acc":
+            return metrics.Accuracy()
+        elif metric == "top5accuracy" or metric == "top5acc":
+            return metrics.Top5Accuracy()
+        elif metric == "mae":
+            from bigdl.optim.optimizer import MAE
+            return MAE()
+        elif metric == "auc":
+            return metrics.AUC()
+        elif metric == "loss":
+            return Loss()
+        elif metric == "treennaccuracy":
+            return TreeNNAccuracy()
+        else:
+            raise TypeError("Unsupported metric: %s" % metric)

@@ -76,7 +76,7 @@ def main():
 
     estimator.train(input_fn, steps=60000//320)
 
-    metrics = estimator.evaluate(input_fn, [Accuracy()])
+    metrics = estimator.evaluate(input_fn, ["acc"])
     print(metrics)
 
     predictions = estimator.predict(input_fn)
