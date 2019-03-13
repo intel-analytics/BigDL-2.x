@@ -140,14 +140,6 @@ class PythonZooKeras[T: ClassTag](implicit ev: TensorNumeric[T]) extends PythonZ
   }
 
   private def processEvaluateResult(
-    resultArray: Array[(ValidationResult, ValidationMethod[T])]): JList[EvaluatedResult] = {
-    resultArray.map { result =>
-      EvaluatedResult(result._1.result()._1, result._1.result()._2,
-        result._2.toString())
-    }.toList.asJava
-  }
-
-  private def processEvaluateResultRDD(
     resultArray: Array[(ValidationResult, ValidationMethod[T])]): JList[Float] = {
     resultArray.map { result =>
       result._1.result()._1
@@ -159,7 +151,7 @@ class PythonZooKeras[T: ClassTag](implicit ev: TensorNumeric[T]) extends PythonZ
       x: JavaRDD[Sample],
       batchSize: Int = 32): JList[Float] = {
     val resultArray = module.evaluate(toJSample(x), batchSize)
-    processEvaluateResultRDD(resultArray)
+    processEvaluateResult(resultArray)
   }
 
   def zooEvaluate(
