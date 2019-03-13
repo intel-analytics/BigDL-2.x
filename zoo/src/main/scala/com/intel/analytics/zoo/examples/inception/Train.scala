@@ -50,7 +50,7 @@ object TrainInceptionV1 {
         param.classNumber,
         MemoryType.fromString(param.memoryType)
       )
-      val valSet = ImageNet2012(
+      val valSet = ImageNet2012Val(
         param.folder + "/val",
         sc,
         imageSize,
