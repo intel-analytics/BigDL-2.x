@@ -29,7 +29,6 @@ from onnx import backend
 from onnx.backend import test
 from onnx.backend.test.case import node
 from onnx.backend.test.case.node import pool_op_common
-import caffe2.python.onnx.backend as onnx_caffe2_backend
 
 
 class Squeeze(torch.nn.Module):
@@ -1326,16 +1325,3 @@ class TestModelLoading(OnnxTestCase):
 
         output = OnnxLoader.run_node(node, [x])
         np.testing.assert_almost_equal(output["y"], y, decimal=5)
-
-    def test_super_resolution(self):
-        x = torch.randn(4, 1, 85, 85, requires_grad=True)
-        onnx_model = onnx.load("/tmp/onnx_model_name.onnx")
-        W = {onnx_model.graph.input[0].name: x.data.numpy()}
-        prepared_backend = onnx_caffe2_backend.prepare(onnx_model)
-        coutput = prepared_backend.run(W)[0]
-        zmodel = OnnxLoader(onnx_model.graph).to_keras()
-        zoutput = zmodel.forward(W)
-        np.testing.assert_almost_equal(zoutput, coutput, decimal=3)
-        print("Exported model has been executed on Caffe2 backend, and the result looks good!")
-        if self.assert_allclose(coutput, zoutput, rtol=1e-6, atol=1e-6):
-            assert tuple(coutput.size()[1:]) == zmodel.get_output_shape()[1:]
