@@ -53,7 +53,7 @@ class Convolution1D(ZooKerasLayer):
     >>> conv1d = Convolution1D(12, 4, input_shape=(3, 16))
     creating: createZooKerasConvolution1D
     """
-    def __init__(self, nb_filter, filter_length, init="glorot_uniform",
+    def __init__(self, nb_filter, filter_length, init="glorot_uniform", limits=None,
                  activation=None, border_mode="valid", subsample_length=1,
                  W_regularizer=None, b_regularizer=None, bias=True,
                  input_shape=None, **kwargs):
@@ -61,6 +61,7 @@ class Convolution1D(ZooKerasLayer):
                                             nb_filter,
                                             filter_length,
                                             init,
+                                            limits,
                                             activation,
                                             border_mode,
                                             subsample_length,
