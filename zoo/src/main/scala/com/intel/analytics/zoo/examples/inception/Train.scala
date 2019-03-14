@@ -90,7 +90,7 @@ object TrainInceptionV1 {
 
       val optimizer = Optimizer(
         model = model,
-        dataset = trainSet,
+        dataset = trainSet.toDistributed(),
         criterion = new ClassNLLCriterion[Float]()
       )
 
@@ -124,7 +124,7 @@ object TrainInceptionV1 {
       optimizer
         .setOptimMethod(optimMethod)
         .setValidation(testTrigger,
-          valSet, Array(new Top1Accuracy[Float], new Top5Accuracy[Float]))
+          valSet.toDistributed(), Array(new Top1Accuracy[Float], new Top5Accuracy[Float]))
         .setEndWhen(endTrigger)
         .optimize()
       sc.stop()

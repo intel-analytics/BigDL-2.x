@@ -29,7 +29,7 @@ import org.slf4j.{Logger, LoggerFactory}
 import scala.reflect.ClassTag
 
 /**
-  * A set of data which is used in the model optimization process. The dataset can be access in
+  * A set of data which is used in the model optimization process. The FeatureSet can be access in
   * a random data sample sequence. In the training process, the data sequence is a looped endless
   * sequence. While in the validation process, the data sequence is a limited length sequence.
   * User can use the data() method to get the data sequence.
@@ -89,49 +89,32 @@ trait FeatureSet[D, DataSequence] extends AbstractDataSet[D, DataSequence]{
 }
 
 /**
-  * Manage some 'local' data, e.g. data in files or memory. We use iterator to go through the data.
-  * @tparam T
-  */
-trait LocalFeatureSet[T] extends FeatureSet[T, Iterator[T]] {
-  override def transform[C: ClassTag](transformer: Transformer[T, C]): FeatureSet[C, _] = {
-    val preDataSet = this
-    new LocalFeatureSet[C] {
-      override def shuffle(): Unit = preDataSet.shuffle
-
-      override def size(): Long = preDataSet.size()
-
-      override def data(train: Boolean): Iterator[C] = transformer(preDataSet.data(train))
-    }
-  }
-}
-
-/**
   * Represent a distributed data. Use RDD to go through all data.
   *
   * @tparam T
   */
-trait DistributedFeatureSet[T] extends AbstractDataSet[T, RDD[T]] {
+trait DistributedFeatureSet[T] extends FeatureSet[T, RDD[T]] {
 
   override def transform[C: ClassTag](transformer: Transformer[T, C]): DistributedFeatureSet[C] = {
-    val preDataSet = this
+    val preFeatureSet = this
 
     val broadcast = this.originRDD().sparkContext.broadcast(transformer)
 
     val cachedTransformer =
-      preDataSet.originRDD().mapPartitions(_ => Iterator
+      preFeatureSet.originRDD().mapPartitions(_ => Iterator
         .single(broadcast.value.cloneTransformer())
       ).setName("Cached Transformer").persist()
 
     new DistributedFeatureSet[C] {
-      override def size(): Long = preDataSet.size()
+      override def size(): Long = preFeatureSet.size()
 
-      override def shuffle(): Unit = preDataSet.shuffle()
+      override def shuffle(): Unit = preFeatureSet.shuffle()
 
       override def data(train: Boolean): RDD[C] =
-        preDataSet.data(train).zipPartitions(cachedTransformer)(
+        preFeatureSet.data(train).zipPartitions(cachedTransformer)(
           (data, tran) => tran.next()(data))
 
-      override def originRDD(): RDD[_] = preDataSet.originRDD()
+      override def originRDD(): RDD[_] = preFeatureSet.originRDD()
 
       override def cache(): Unit = {
         cachedTransformer.count()
@@ -141,6 +124,10 @@ trait DistributedFeatureSet[T] extends AbstractDataSet[T, RDD[T]] {
       override def unpersist(): Unit = {
         cachedTransformer.unpersist()
         isCached = false
+      }
+
+      override def toDistributed(): DistributedDataSet[C] = {
+        new DistributedDataSetWrapper[C](this)
       }
     }
   }
@@ -179,13 +166,44 @@ trait DistributedFeatureSet[T] extends AbstractDataSet[T, RDD[T]] {
 }
 
 /**
- * Wrap a RDD as a DataSet.
+ * Wrap a featureSet to DistributedDataSet.
+ * @param featureSet
+ * @param ev$1
+ * @tparam T
+ */
+private[zoo] class DistributedDataSetWrapper[T: ClassTag](featureSet: DistributedFeatureSet[T])
+  extends DistributedDataSet[T]{
+
+  override def data(train: Boolean): RDD[T] = {
+    featureSet.data(train)
+  }
+
+  override def size(): Long = featureSet.size()
+
+  override def shuffle(): Unit = {
+    featureSet.shuffle()
+  }
+
+  override def originRDD(): RDD[_] = featureSet.originRDD()
+
+  override def cache(): Unit = {
+    featureSet.cache()
+  }
+
+  override def unpersist(): Unit = {
+    featureSet.unpersist()
+  }
+
+}
+
+/**
+ * Wrap a RDD as a FeatureSet.
  * @param buffer
  */
 // T is the returning value type. like ByteRecord
 class CachedDistributedFeatureSet[T: ClassTag]
 (buffer: RDD[ArrayLike[T]])
-  extends DistributedFeatureSet[T] {
+  extends DistributedFeatureSet[T]{
 
   protected lazy val count: Long = buffer.mapPartitions(iter => {
     require(iter.hasNext)
@@ -258,6 +276,10 @@ class CachedDistributedFeatureSet[T: ClassTag]
     buffer.unpersist()
     indexes.unpersist()
     isCached = false
+  }
+
+  override def toDistributed(): DistributedDataSet[T] = {
+    new DistributedDataSetWrapper[T](this)
   }
 }
 
