@@ -64,6 +64,7 @@ class RotationTransformerSpec extends TorchSpec {
       Map("src" -> input.view(10, 10)),
       Array("dst"))
     val dstTorch = torchResult("dst").asInstanceOf[Tensor[Float]]
+    println(dstTorch)
     dst[Tensor[Float]](ImageFeature.imageTensor).view(10, 10).map(dstTorch, (v1, v2) => {
       assert(math.abs(v1-v2)<1e-6)
       v1
@@ -87,6 +88,7 @@ class RotationTransformerSpec extends TorchSpec {
       Map("src" -> input.view(10, 10)),
       Array("dst"))
     val dstTorch = torchResult("dst").asInstanceOf[Tensor[Float]]
+    println(dstTorch)
     dst[Tensor[Float]](ImageFeature.imageTensor).view(10, 10).map(dstTorch, (v1, v2) => {
       assert(math.abs(v1-v2)<1e-6)
       v1

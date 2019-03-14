@@ -115,6 +115,7 @@ class AffineTransformerSpec extends TorchSpec {
       Map("src" -> input.view(10, 10), "mat" -> mat2Tensor, "translation" -> translation2),
       Array("dst"))
     val dstTorch = torchResult("dst").asInstanceOf[Tensor[Double]]
+    println(dstTorch)
     val dstTensor = Tensor[Double](
       storage = Storage[Double](dst[Tensor[Float]](ImageFeature.imageTensor).storage().array()
         .map(_.toDouble)), storageOffset = 1, size = Array(10, 1, 10))
@@ -162,6 +163,7 @@ class AffineTransformerSpec extends TorchSpec {
       Map("src" -> input.view(10, 10), "mat" -> mat2Tensor, "translation" -> translation2),
       Array("dst"))
     val dstTorch = torchResult("dst").asInstanceOf[Tensor[Double]]
+    println(dstTorch)
     val dstTensor = Tensor[Double](
       storage = Storage[Double](dst[Tensor[Float]](ImageFeature.imageTensor).storage().array()
         .map(_.toDouble)), storageOffset = 1, size = Array(10, 10, 1))
