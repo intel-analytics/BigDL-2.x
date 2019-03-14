@@ -32,7 +32,7 @@ import com.intel.analytics.bigdl.nn.abstractnn.{AbstractModule, Activity}
 import com.intel.analytics.bigdl.nn.keras.{KerasLayer, KerasModel}
 import com.intel.analytics.bigdl.utils.{Shape, Table}
 import com.intel.analytics.zoo.feature.image.ImageSet
-import com.intel.analytics.zoo.pipeline.api.autograd._
+import com.intel.analytics.zoo.pipeline.api.autograd.{Constant, _}
 import com.intel.analytics.zoo.pipeline.api.keras.layers.{KerasLayerWrapper, _}
 import com.intel.analytics.zoo.pipeline.api.keras.layers.utils.KerasUtils
 import com.intel.analytics.zoo.pipeline.api.keras.models.{KerasNet, Model, Sequential}
@@ -347,6 +347,7 @@ class PythonZooKeras[T: ClassTag](implicit ev: TensorNumeric[T]) extends PythonZ
       nbFilter: Int,
       filterLength: Int,
       init: String = "glorot_uniform",
+      limits: JList[Double] = null,
       activation: String = null,
       borderMode: String = "valid",
       subsampleLength: Int = 1,
@@ -354,7 +355,7 @@ class PythonZooKeras[T: ClassTag](implicit ev: TensorNumeric[T]) extends PythonZ
       bRegularizer: Regularizer[T] = null,
       bias: Boolean = true,
       inputShape: JList[Int] = null): Convolution1D[T] = {
-    Convolution1D(nbFilter, filterLength, init, activation, borderMode,
+    Convolution1D(nbFilter, filterLength, init, limits.asScala.toArray, activation, borderMode,
       subsampleLength, wRegularizer, bRegularizer, bias, toScalaShape(inputShape))
   }
 
@@ -1258,6 +1259,11 @@ class PythonZooKeras[T: ClassTag](implicit ev: TensorNumeric[T]) extends PythonZ
 
   def setParameterWeight(parameter: Parameter[T], value: JTensor): Unit = {
     parameter.setWeight(toTensor(value))
+  }
+
+  def createZooKerasConstant(data: JTensor,
+    name: String = null): Constant[T] = {
+    new Constant[T](toTensor(data), name)
   }
 
   def createZooKerasRNNEncoder(rnns: JList[Recurrent[T]],

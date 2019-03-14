@@ -52,7 +52,6 @@ xmb_val = np.zeros((len(x_test), max_len, 2), dtype=np.int32)
 # Position information that is added to the input embeddings in the TransformerModel
 xmb_val[:, :, 1] = np.arange(max_len)
 xmb_val[:, :, 0] = x_test
-
 S_inputs = Input(shape=(max_len, 2))
 O_seq = TransformerLayer.init_with_default_embedding(
     vocab=max_features, embedding_size=128, n_head=8, seq_len=max_len)(S_inputs)
