@@ -47,11 +47,12 @@ ${ANALYTICS_ZOO_HOME}/bin/spark-submit-with-zoo.sh \
 __Options:__
 * `--model_path` and `model_info_path`: The path to `model.h5` and `model_info.dat` downloaded from [here](#download-the-pre-trained-model).
 * `--seq_length`: The maximum sequence length of inputs. Default is 30.
-* `--input_path`: The path to input txt file if any. Each line should be a sentence to perform NER on. It can be an HDFS path. If not specified, the program will perform NER on two example sentences.
+* `--input_path`: The path to the input txt file if any. Each line should be an input sentence for NER. It can be an HDFS path. If not specified, the program will perform NER on two example sentences and print the result.
 
 
 ## Results
-Given RDD of string as input, the result will be RDD of entity tags.
+Given RDD of string as input, the result will be RDD of list of entity tags.
+
 We print out several sample outputs to console:
 ```
 John	B-PER	
