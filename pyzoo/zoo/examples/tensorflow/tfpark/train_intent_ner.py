@@ -83,11 +83,11 @@ if __name__ == '__main__':
     train_i = one_hot(train_i, len(dataset.intents_vocab))
     test_i = one_hot(test_i, len(dataset.intents_vocab))
 
-    model = IntentEntity(dataset.intent_size,
-                         dataset.label_vocab_size,
-                         dataset.word_len,
-                         dataset.word_vocab_size,
-                         dataset.char_vocab_size,
+    model = IntentEntity(num_intents=dataset.intent_size,
+                         num_entities=dataset.label_vocab_size,
+                         word_vocab_size=dataset.word_vocab_size,
+                         char_vocab_size=dataset.char_vocab_size,
+                         word_length=dataset.word_len,
                          word_emb_dim=args.token_emb_size,
                          tagger_lstm_dim=args.lstm_hidden_size,
                          dropout=args.tagger_dropout)
