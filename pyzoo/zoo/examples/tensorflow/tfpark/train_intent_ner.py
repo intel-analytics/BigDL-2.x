@@ -38,7 +38,6 @@ def validate_input_args():
     validate((args.e, int, 1, 100000000))
     validate((args.sentence_length, int, 1, 10000))
     validate((args.token_emb_size, int, 1, 10000))
-    validate((args.intent_hidden_size, int, 1, 10000))
     validate((args.lstm_hidden_size, int, 1, 10000))
     validate((args.tagger_dropout, float, 0, 1))
     model_info_path = path.join(path.dirname(path.realpath(__file__)), str(args.model_info_path))
@@ -57,18 +56,12 @@ if __name__ == '__main__':
                         help='Max sentence length')
     parser.add_argument('--token_emb_size', type=int, default=100,
                         help='Token features embedding vector size')
-    parser.add_argument('--intent_hidden_size', type=int, default=100,
-                        help='Intent detection LSTM hidden size')
     parser.add_argument('--lstm_hidden_size', type=int, default=150,
                         help='Slot tags LSTM hidden size')
     parser.add_argument('--tagger_dropout', type=float, default=0.5,
                         help='Slot tags dropout value')
-    parser.add_argument('--embedding_model', type=validate_existing_filepath,
-                        help='Path to word embedding model file')
-    parser.add_argument('--use_cudnn', default=False, action='store_true',
-                        help='use CUDNN based LSTM cells')
-    parser.add_argument('--export_path', type=str, default='/tmp/mtl/',
-                        help='Export TensorFlow path')
+    parser.add_argument('--model_path', type=str, default='model.h5',
+                        help='Model file path')
     parser.add_argument('--model_info_path', type=str, default='model_info.dat',
                         help='Path for saving model topology')
     args = parser.parse_args()
@@ -112,4 +105,16 @@ if __name__ == '__main__':
     eval = get_conll_scores(predictions, test_y,
                             {v: k for k, v in dataset.tags_vocab.vocab.items()})
     print(eval)
+
+    print('Saving model')
+    model.save_model(args.model_path)
+    with open(args.model_info_path, 'wb') as fp:
+        info = {
+            'type': 'mtl',
+            'tags_vocab': dataset.tags_vocab.vocab,
+            'word_vocab': dataset.word_vocab.vocab,
+            'char_vocab': dataset.char_vocab.vocab,
+            'intent_vocab': dataset.intents_vocab.vocab,
+        }
+        pickle.dump(info, fp)
     sc.stop()
