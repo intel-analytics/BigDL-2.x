@@ -88,3 +88,10 @@ spark-submit \
     ${ZOO_JAR_PATH} --resolution 300 --model analytics-zoo_ssd-vgg16-300x300_PASCAL_0.1.0.model \
     --class xxx -f xxx -v xxx -e 1 --checkpoint folder
 ```
+* resolution: input resolution 300 or 512
+* model: model snapshot location
+* class : class file which contains object class names
+* f: url of hdfs or local folder store the train hadoop sequence image files.
+* v: url of hdfs or local folder store the validation hadoop sequence image files.
+* e: max epochs to run
+* checkpoint: folder to cache the model and state

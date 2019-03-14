@@ -19,9 +19,9 @@ class ImageRandomSampler extends ImageProcessing {
     internalSampler.apply(prev)
   }
 
-//  override def transformMat(feature: ImageFeature): Unit = {
-//    internalSampler.transformMat(feature)
-//  }
+  override def transform(feature: ImageFeature): ImageFeature = {
+    internalSampler.transform(feature)
+  }
 }
 
 object ImageRandomSampler {

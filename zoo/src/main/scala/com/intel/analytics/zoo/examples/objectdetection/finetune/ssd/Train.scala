@@ -58,7 +58,9 @@ object Train {
     maxEpoch: Int = 20,
     jobName: String = "Analytics Zoo SSD Train Messi Example",
     summaryDir: Option[String] = None,
-    nPartition: Option[Int] = None
+    nPartition: Option[Int] = None,
+    saveModelPath: String = "./final.model",
+    overWriteModel: Boolean = true
   )
 
   val trainParser = new OptionParser[TrainParams]("Analytics Zoo SSD Example") {
@@ -102,7 +104,7 @@ object Train {
       .text("class file")
       .action((x, c) => c.copy(className = x))
       .required()
-    opt[Unit]("overWrite")
+    opt[Unit]("overWriteCheckpoint")
       .text("overwrite checkpoint files")
       .action((_, c) => c.copy(overWriteCheckpoint = true))
     opt[String]("name")
@@ -114,6 +116,12 @@ object Train {
     opt[Int]('p', "partition")
       .text("number of partitions")
       .action((x, c) => c.copy(nPartition = Some(x)))
+    opt[String]('s',"saveModelPath")
+      .text("where to save trained model")
+      .action((x, c) => c.copy(saveModelPath = x))
+    opt[Unit]("overWriteModel")
+      .text("overwrite model file")
+      .action((_, c) => c.copy(overWriteModel = true))
   }
 
   val logger = Logger.getLogger(getClass.getName)
@@ -142,7 +150,7 @@ object Train {
       }
       optimize(model, trainSet, valSet, param, optimMethod,
         Trigger.maxEpoch(param.maxEpoch), classes)
-      model.saveModel("./final.model",overWrite = true)
+      model.saveModel(param.saveModelPath, overWrite = param.overWriteModel)
     })
   }
 
