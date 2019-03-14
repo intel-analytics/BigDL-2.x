@@ -33,11 +33,11 @@ from zoo.tfpark.text import NER
 def read_input_args():
     parser = argparse.ArgumentParser()
     parser.add_argument('--model_path', type=validate_existing_filepath, required=True,
-                        help='Path of model weights')
+                        help='The path to model weights')
     parser.add_argument('--model_info_path', type=validate_existing_filepath, required=True,
-                        help='Path of model topology')
-    parser.add_argument('--seq_length', type=int, default=30, help='Max sequence length of inputs')
-    parser.add_argument('--input_path', help='Path of input txt file. Each line should be a sentence')
+                        help='The path to model topology')
+    parser.add_argument('--seq_length', type=int, default=30, help='The maximum sequence length of inputs')
+    parser.add_argument('--input_path', help='The path to the input txt file if any. Each line should be a sentence')
     input_args = parser.parse_args()
     return input_args
 
