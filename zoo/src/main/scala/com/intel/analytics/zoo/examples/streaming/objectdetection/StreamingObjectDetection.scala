@@ -16,14 +16,11 @@
 
 package com.intel.analytics.zoo.examples.streaming.objectdetection
 
-import java.io.File
-import java.nio.file.Paths
 
 import com.intel.analytics.bigdl.transform.vision.image.ImageFeature
-import com.intel.analytics.zoo.common.{NNContext, Utils}
+import com.intel.analytics.zoo.common.NNContext
 import com.intel.analytics.zoo.feature.image.{ImageBytesToMat, ImageSet}
 import com.intel.analytics.zoo.models.image.objectdetection.{ObjectDetector, Visualizer}
-import org.apache.commons.io.FileUtils
 import org.apache.hadoop.conf.Configuration
 import org.apache.hadoop.fs.{FileSystem, Path}
 import org.apache.log4j.{Level, Logger}
@@ -39,16 +36,16 @@ object StreamingObjectDetection {
 
   val logger = Logger.getLogger(getClass)
 
-  case class PredictParam(image: String = "file:///tmp/zoo/streaming",
+  case class PredictParam(streamingPath: String = "file:///tmp/zoo/streaming",
                           outputFolder: String = "data/demo",
                           modelPath: String = "",
                           nPartition: Int = 1)
 
   val parser = new OptionParser[PredictParam]("Analytics Zoo Object Detection Demo") {
     head("Analytics Zoo Object Detection Demo")
-    opt[String]('i', "image")
-      .text("where you put the demo image data, can be image folder or image path")
-      .action((x, c) => c.copy(image = x))
+    opt[String]('i', "streamingPath")
+      .text("folder that used to store the streaming paths")
+      .action((x, c) => c.copy(streamingPath = x))
     opt[String]('o', "output")
       .text("where you put the output data")
       .action((x, c) => c.copy(outputFolder = x))
@@ -69,18 +66,17 @@ object StreamingObjectDetection {
       // Load pre-trained model
       val model = ObjectDetector.loadModel[Float](params.modelPath)
 
-      val lines = ssc.textFileStream(params.image)
+      val lines = ssc.textFileStream(params.streamingPath)
       lines.foreachRDD { batchPath =>
         // Read image files and load to RDD
         println("batchPath partition " + batchPath.getNumPartitions)
         println("batchPath count " + batchPath.count())
         if (!batchPath.isEmpty()) {
-          println(batchPath.top(1).apply(0))
           // RDD[String] => RDD[ImageFeature] => ImageSet
-          val dataset = ImageSet.rdd(batchPath.map(path => readFile(path)))
+          val dataSet = ImageSet.rdd(batchPath.map(path => readFile(path)))
           // Resize image
-          dataset -> ImageBytesToMat(imageCodec = Imgcodecs.CV_LOAD_IMAGE_COLOR)
-          val output = model.predictImageSet(dataset)
+          dataSet -> ImageBytesToMat(imageCodec = Imgcodecs.CV_LOAD_IMAGE_COLOR)
+          val output = model.predictImageSet(dataSet)
           val visualizer = Visualizer(model.getConfig.labelMap, encoding = "jpg")
           val visualized = visualizer(output).toDistributed()
           val result = visualized.rdd.map(imageFeature =>
@@ -98,44 +94,30 @@ object StreamingObjectDetection {
     println("Read image file " + path)
     val fspath = new Path(path)
     val fs = FileSystem.get(fspath.toUri, new Configuration())
-    if (path.contains("hdfs")) {
-      // Read HDFS image
-      val instream = fs.open(fspath)
-      val data = new Array[Byte](fs.getFileStatus(new Path(path))
-        .getLen.toInt)
-      instream.readFully(data)
-      instream.close()
-      ImageFeature.apply(data, null, path)
-    } else {
-      // Read local image
-      ImageFeature(FileUtils.readFileToByteArray(new File(path)), uri = path)
-    }
+    // Read local or remote image
+    val inputStream = fs.open(fspath)
+    val data = new Array[Byte](fs.getFileStatus(new Path(path))
+      .getLen.toInt)
+    inputStream.readFully(data)
+    inputStream.close()
+    ImageFeature.apply(data, null, path)
   }
 
   def writeFile(outPath: String, path: String, content: Array[Byte]): Unit = {
-    val finalName = s"detection_${ path.substring(path.lastIndexOf("/") + 1,
-      path.lastIndexOf(".")) }.jpg"
-    val fspath = new Path(outPath, finalName)
+    val fspath = getOutPath(outPath, path, "jpg")
     println("Writing image file " + fspath.toString)
     val fs = FileSystem.get(fspath.toUri, new Configuration())
-    if (outPath.contains("hdfs")) {
-      // Save to HDFS dir
-      val outstream = fs.create(
-        fspath,
-        true)
-      outstream.write(content)
-      outstream.close()
-    } else {
-      // Save to local dir
-      Utils.saveBytes(content,
-        getOutPath(outPath, path, "jpg"), true)
-    }
+    // Save to local or remote dir
+    val outStream = fs.create(
+      fspath,
+      true)
+    outStream.write(content)
+    outStream.close()
   }
 
-
-  private def getOutPath(outPath: String, uri: String, encoding: String): String = {
-    Paths.get(outPath,
-      s"detection_${ uri.substring(uri.lastIndexOf("/") + 1,
-        uri.lastIndexOf(".")) }.${encoding}").toString
+  private def getOutPath(outPath: String, path: String, encoding: String): Path = {
+    val finalName = s"detection_${ path.substring(path.lastIndexOf("/") + 1,
+      path.lastIndexOf(".")) }.${encoding}"
+    new Path(outPath, finalName)
   }
 }

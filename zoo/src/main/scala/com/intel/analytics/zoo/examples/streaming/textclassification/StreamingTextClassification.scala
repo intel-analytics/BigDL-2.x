@@ -30,13 +30,12 @@ import scopt.OptionParser
 case class TextClassificationParams(
   host: String = "localhost",
   port: Int = 9999,
-  indexPath: String = "textclassification.txt",
+  indexPath: String = "word2index.txt",
   embeddingPath: String = "./",
   classNum: Int = 20, tokenLength: Int = 200,
-  sequenceLength: Int = 500, encoder: String = "cnn",
+  sequenceLength: Int = 500,
   encoderOutputDim: Int = 256, maxWordsNum: Int = 5000,
   trainingSplit: Double = 0.8, batchSize: Int = 128,
-  nbEpoch: Int = 20, learningRate: Double = 0.01,
   partitionNum: Int = 4, model: Option[String] = None)
 
 object StreamingTextClassification {
@@ -71,9 +70,6 @@ object StreamingTextClassification {
       opt[Int]("maxWordsNum")
         .text("The maximum number of words to be taken into consideration")
         .action((x, c) => c.copy(maxWordsNum = x))
-      opt[String]("encoder")
-        .text("The encoder for the input sequence, cnn or lstm or gru")
-        .action((x, c) => c.copy(encoder = x))
       opt[Int]("encoderOutputDim")
         .text("The output dimension of the encoder")
         .action((x, c) => c.copy(encoderOutputDim = x))
@@ -84,7 +80,6 @@ object StreamingTextClassification {
         .text("Model snapshot location if any")
         .action((x, c) => c.copy(model = Some(x)))
     }
-
 
 
     parser.parse(args, TextClassificationParams()).map { param =>
