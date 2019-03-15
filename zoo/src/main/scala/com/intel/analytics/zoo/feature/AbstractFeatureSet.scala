@@ -18,6 +18,7 @@ package com.intel.analytics.zoo.feature
 
 import java.util.concurrent.atomic.AtomicInteger
 
+import com.intel.analytics.bigdl.DataSet
 import com.intel.analytics.bigdl.dataset.{AbstractDataSet, DistributedDataSet, Transformer}
 import com.intel.analytics.bigdl.utils.RandomGenerator
 import com.intel.analytics.zoo.feature.common.{ArrayLike, ArrayLikeWrapper}
@@ -42,7 +43,7 @@ import scala.reflect.ClassTag
   * @tparam D Data type
   * @tparam DataSequence Represent a sequence of data
   */
-trait FeatureSet[D, DataSequence] extends AbstractDataSet[D, DataSequence]{
+trait AbstractFeatureSet[D, DataSequence] extends AbstractDataSet[D, DataSequence]{
   /**
     * Get a sequence of data
     *
@@ -69,7 +70,7 @@ trait FeatureSet[D, DataSequence] extends AbstractDataSet[D, DataSequence]{
     * @tparam C
     * @return
     */
-  override def transform[C: ClassTag](transformer: Transformer[D, C]): FeatureSet[C, _]
+  override def transform[C: ClassTag](transformer: Transformer[D, C]): FeatureSet[C]
 
   // scalastyle:off methodName
   // scalastyle:off noSpaceBeforeLeftBracket
@@ -80,12 +81,18 @@ trait FeatureSet[D, DataSequence] extends AbstractDataSet[D, DataSequence]{
     * @tparam C
     * @return
     */
-  override def -> [C: ClassTag](transformer: Transformer[D, C]): FeatureSet[C, _] = {
+  override def -> [C: ClassTag](transformer: Transformer[D, C]): FeatureSet[C] = {
     this.transform(transformer)
   }
 
   // scalastyle:on noSpaceBeforeLeftBracket
   // scalastyle:on methodName
+
+  /**
+   * Convert FeatureSet to com.intel.analytics.bigdl.DataSet
+   * @return DataSet[D]
+   */
+  def toDataSet(): DataSet[D]
 }
 
 /**
@@ -93,7 +100,7 @@ trait FeatureSet[D, DataSequence] extends AbstractDataSet[D, DataSequence]{
   *
   * @tparam T
   */
-trait DistributedFeatureSet[T] extends FeatureSet[T, RDD[T]] {
+trait DistributedFeatureSet[T] extends AbstractFeatureSet[T, RDD[T]] {
 
   override def transform[C: ClassTag](transformer: Transformer[T, C]): DistributedFeatureSet[C] = {
     val preFeatureSet = this
@@ -163,6 +170,10 @@ trait DistributedFeatureSet[T] extends FeatureSet[T, RDD[T]] {
     * Check if rdd is cached.
     */
   var isCached = false
+
+  override def toDataSet(): DataSet[T] = {
+    toDistributed()
+  }
 }
 
 /**
