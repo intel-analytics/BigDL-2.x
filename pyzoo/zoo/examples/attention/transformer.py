@@ -59,6 +59,7 @@ O_seq = GlobalAveragePooling1D()(O_seq)
 O_seq = Dropout(0.2)(O_seq)
 outputs = Dense(2, activation='softmax')(O_seq)
 
+
 model = Model(S_inputs, outputs)
 model.summary()
 
