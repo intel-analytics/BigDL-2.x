@@ -114,9 +114,14 @@ abstract class KerasNet[T](implicit val tag: ClassTag[T], implicit val ev: Tenso
     this.criterion = loss
 
     val lossArray: Array[ValidationMethod[T]] = Array(new Loss(this.criterion))
-    val metricArray = metrics.toArray
 
-    this.vMethods = if (metrics == null) lossArray else (lossArray ++ metricArray)
+    if (metrics == null) {
+      this.vMethods = lossArray
+    }
+    else {
+      val metricsArray = metrics.toArray
+      this.vMethods = lossArray ++ metricsArray
+    }
   }
 
   /**
