@@ -30,57 +30,57 @@ import org.slf4j.{Logger, LoggerFactory}
 import scala.reflect.ClassTag
 
 /**
-  * A set of data which is used in the model optimization process. The FeatureSet can be access in
-  * a random data sample sequence. In the training process, the data sequence is a looped endless
-  * sequence. While in the validation process, the data sequence is a limited length sequence.
-  * User can use the data() method to get the data sequence.
-  *
-  * The sequence of the data is not fixed. It can be changed by the shuffle() method.
-  *
-  * User can create a dataset from a RDD, an array and a folder, etc. The DataSet object provides
-  * many factory methods.
-  *
-  * @tparam D Data type
-  * @tparam DataSequence Represent a sequence of data
-  */
+ * A set of data which is used in the model optimization process. The FeatureSet can be access in
+ * a random data sample sequence. In the training process, the data sequence is a looped endless
+ * sequence. While in the validation process, the data sequence is a limited length sequence.
+ * User can use the data() method to get the data sequence.
+ *
+ * The sequence of the data is not fixed. It can be changed by the shuffle() method.
+ *
+ * User can create a dataset from a RDD, an array and a folder, etc. The DataSet object provides
+ * many factory methods.
+ *
+ * @tparam D Data type
+ * @tparam DataSequence Represent a sequence of data
+ */
 trait AbstractFeatureSet[D, DataSequence] extends AbstractDataSet[D, DataSequence]{
   /**
-    * Get a sequence of data
-    *
-    * @param train if the data is used in train. If yes, the data sequence is a looped endless
-    *              sequence, or it has a limited length.
-    * @return data sequence
-    */
+   * Get a sequence of data
+   *
+   * @param train if the data is used in train. If yes, the data sequence is a looped endless
+   *              sequence, or it has a limited length.
+   * @return data sequence
+   */
   def data(train: Boolean): DataSequence
 
   /**
-    * Change the order of the data sequence from the data set
-    */
+   * Change the order of the data sequence from the data set
+   */
   def shuffle(): Unit
 
   /**
-    * Total size of the data set
-    * @return
-    */
+   * Total size of the data set
+   * @return
+   */
   def size(): Long
 
   /**
-    * Helper function to transform the data type in the data set.
-    * @param transformer
-    * @tparam C
-    * @return
-    */
+   * Helper function to transform the data type in the data set.
+   * @param transformer
+   * @tparam C
+   * @return
+   */
   override def transform[C: ClassTag](transformer: Transformer[D, C]): FeatureSet[C]
 
   // scalastyle:off methodName
   // scalastyle:off noSpaceBeforeLeftBracket
   /**
-    * Helper function to transform the data type in the data set.
-    *
-    * @param transformer
-    * @tparam C
-    * @return
-    */
+   * Helper function to transform the data type in the data set.
+   *
+   * @param transformer
+   * @tparam C
+   * @return
+   */
   override def -> [C: ClassTag](transformer: Transformer[D, C]): FeatureSet[C] = {
     this.transform(transformer)
   }
@@ -96,10 +96,10 @@ trait AbstractFeatureSet[D, DataSequence] extends AbstractDataSet[D, DataSequenc
 }
 
 /**
-  * Represent a distributed data. Use RDD to go through all data.
-  *
-  * @tparam T
-  */
+ * Represent a distributed data. Use RDD to go through all data.
+ *
+ * @tparam T
+ */
 trait DistributedFeatureSet[T] extends AbstractFeatureSet[T, RDD[T]] {
 
   override def transform[C: ClassTag](transformer: Transformer[T, C]): DistributedFeatureSet[C] = {
@@ -140,15 +140,15 @@ trait DistributedFeatureSet[T] extends AbstractFeatureSet[T, RDD[T]] {
   }
 
   /**
-    * Get the 'origin' RDD of the dataset.
-    *
-    * @return
-    */
+   * Get the 'origin' RDD of the dataset.
+   *
+   * @return
+   */
   def originRDD(): RDD[_]
 
   /**
-    * Trigger the computation of this dataset and cache it in memory.
-    */
+   * Trigger the computation of this dataset and cache it in memory.
+   */
   def cache(): Unit = {
     if (originRDD() != null) {
       originRDD().count()
@@ -157,8 +157,8 @@ trait DistributedFeatureSet[T] extends AbstractFeatureSet[T, RDD[T]] {
   }
 
   /**
-    * Unpersist rdd.
-    */
+   * Unpersist rdd.
+   */
   def unpersist(): Unit = {
     if (originRDD() != null) {
       originRDD().unpersist()
@@ -167,8 +167,8 @@ trait DistributedFeatureSet[T] extends AbstractFeatureSet[T, RDD[T]] {
   }
 
   /**
-    * Check if rdd is cached.
-    */
+   * Check if rdd is cached.
+   */
   var isCached = false
 
   override def toDataSet(): DataSet[T] = {
@@ -297,8 +297,8 @@ class CachedDistributedFeatureSet[T: ClassTag]
 object DRAMFeatureSet {
   def rdd[T: ClassTag](data: RDD[T]): DistributedFeatureSet[T] = {
     val arrayLikeRDD = data.mapPartitions(iter => {
-        Iterator.single(new ArrayLikeWrapper(iter.toArray))
-      }).setName(s"cached feature set: ${data.name} in DRAM" )
+      Iterator.single(new ArrayLikeWrapper(iter.toArray))
+    }).setName(s"cached feature set: ${data.name} in DRAM" )
       .cache().asInstanceOf[RDD[ArrayLike[T]]]
     new CachedDistributedFeatureSet[T](arrayLikeRDD)
   }
@@ -306,9 +306,10 @@ object DRAMFeatureSet {
 
 object FeatureSet {
   val logger: Logger = LoggerFactory.getLogger(this.getClass)
-  def rdd[T: ClassTag](data: RDD[T],
-      memoryType: MemoryType = DRAM,
-      dataStrategy: DataStrategy = PARTITIONED): DistributedFeatureSet[T] = {
+  def rdd[T: ClassTag](
+       data: RDD[T],
+       memoryType: MemoryType = DRAM,
+       dataStrategy: DataStrategy = PARTITIONED): DistributedFeatureSet[T] = {
     if (dataStrategy == PARTITIONED) {
       val nodeNumber = EngineRef.getNodeNumber()
       val repartitionedData = data.coalesce(nodeNumber, true).setName(data.name)
