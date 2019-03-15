@@ -32,16 +32,15 @@ case class TextClassificationParams(
   port: Int = 9999,
   indexPath: String = "word2index.txt",
   embeddingPath: String = "./",
-  classNum: Int = 20, tokenLength: Int = 200,
   sequenceLength: Int = 500,
-  encoderOutputDim: Int = 256, maxWordsNum: Int = 5000,
+  maxWordsNum: Int = 5000,
   trainingSplit: Double = 0.8, batchSize: Int = 128,
   partitionNum: Int = 4, model: Option[String] = None)
 
 object StreamingTextClassification {
 
   def main(args: Array[String]) {
-    val parser = new OptionParser[TextClassificationParams]("TextClassification Example") {
+    val parser = new OptionParser[TextClassificationParams]("Streaming Text Classification") {
       opt[String]('h', "host")
         .text("host for network connection")
         .action((x, c) => c.copy(host = x))
@@ -55,24 +54,15 @@ object StreamingTextClassification {
         .required()
         .text("The directory for GloVe embeddings")
         .action((x, c) => c.copy(embeddingPath = x))
-      opt[Int]("classNum")
-        .text("The number of classes to do classification")
-        .action((x, c) => c.copy(classNum = x))
       opt[Int]("partitionNum")
         .text("The number of partitions to cut the dataset into")
         .action((x, c) => c.copy(partitionNum = x))
-      opt[Int]("tokenLength")
-        .text("The size of each word vector, 50 or 100 or 200 or 300 for GloVe")
-        .action((x, c) => c.copy(tokenLength = x))
       opt[Int]("sequenceLength")
         .text("The length of each sequence")
         .action((x, c) => c.copy(sequenceLength = x))
       opt[Int]("maxWordsNum")
         .text("The maximum number of words to be taken into consideration")
         .action((x, c) => c.copy(maxWordsNum = x))
-      opt[Int]("encoderOutputDim")
-        .text("The output dimension of the encoder")
-        .action((x, c) => c.copy(encoderOutputDim = x))
       opt[Int]('b', "batchSize")
         .text("The number of samples per gradient update")
         .action((x, c) => c.copy(batchSize = x))
@@ -83,7 +73,7 @@ object StreamingTextClassification {
 
 
     parser.parse(args, TextClassificationParams()).map { param =>
-      val sc = NNContext.initNNContext("Network Text Streaming Predict")
+      val sc = NNContext.initNNContext("Analytics Zoo Streaming Text Classification")
       val ssc = new StreamingContext(sc, Seconds(3))
 
       val wordIndex: Map[String, Int] = readWordIndex(param.indexPath)
@@ -122,10 +112,21 @@ object StreamingTextClassification {
     }
   }
 
+  /**
+    * Convert word into index
+    * @param word word
+    * @param wordIndex Word to index map
+    * @return
+    */
   def word2index(word: String, wordIndex: Map[String, Int]): Int = {
     wordIndex.apply(word)
   }
 
+  /**
+    * Read word2index map from file
+    * @param path
+    * @return
+    */
   def readWordIndex(path: String): Map[String, Int] = {
     Source.fromFile(path).getLines.map { x =>
       val token = x.split(" ")

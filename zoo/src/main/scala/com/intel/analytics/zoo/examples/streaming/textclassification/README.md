@@ -1,8 +1,9 @@
-# Streaming Text Classification
+# Analytics Zoo Streaming Text Classification
 Based on Streaming example NetworkWordCount and Zoo text classification example. Network inputs (Strings) are pre-processed and classified by zoo. We applied a simple text classification model based on zoo example.
 
 ## Environment
 * Apache Spark 1.6.0/2.1.0 (This version needs to be same with the version you use to build Analytics Zoo)
+* Analytics Zoo
 
 ## Datasets and pre-trained models
 
@@ -21,9 +22,14 @@ nc -lk [port]
 ```
 MASTER=...
 embeddingPath=... // glove path. Local file system/HDFS/Amazon S3 are supported
-modelPath=... // model path. Local file system/HDFS/Amazon S3 are supported
+model=... // model path. Local file system/HDFS/Amazon S3 are supported
 indexPath=... // word index path. Local file system/HDFS/Amazon S3 are supported
-${SPARK_HOME}/bin/spark-submit --master local[*] --class com.intel.analytics.zoo.apps.streaming.StreamingTextClassification ../streaming-text-classification-0.1.0-SNAPSHOT-jar-with-dependencies.jar --embeddingPath /root/workspace/data/glove.6B --model /root/workspace/model/textclassification.model  --indexPath  /root/workspace/model/textclassification.txt
+${ANALYTICS_ZOO_HOME}/bin/spark-shell-with-zoo.sh \
+    --master ${MASTER} \
+    --driver-memory 2g \
+    --executor-memory 5g \
+    --class com.intel.analytics.zoo.examples.streaming.textclassification.TextClassification \
+    --embeddingPath ${glovePath} --model ${model} --indexPath ${indexPath}
 ```
 
 3. TERMINAL 1: Input text in Netcat

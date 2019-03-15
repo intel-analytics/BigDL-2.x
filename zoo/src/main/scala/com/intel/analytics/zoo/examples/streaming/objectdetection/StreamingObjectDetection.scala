@@ -37,12 +37,12 @@ object StreamingObjectDetection {
   val logger = Logger.getLogger(getClass)
 
   case class PredictParam(streamingPath: String = "file:///tmp/zoo/streaming",
-                          outputFolder: String = "data/demo",
-                          modelPath: String = "",
+                          outputFolder: String = "file:///tmp/zoo/output",
+                          model: String = "",
                           nPartition: Int = 1)
 
-  val parser = new OptionParser[PredictParam]("Analytics Zoo Object Detection Demo") {
-    head("Analytics Zoo Object Detection Demo")
+  val parser = new OptionParser[PredictParam]("Analytics Zoo Streaming Object Detection") {
+    head("Analytics Zoo Streaming Object Detection")
     opt[String]('i', "streamingPath")
       .text("folder that used to store the streaming paths")
       .action((x, c) => c.copy(streamingPath = x))
@@ -50,9 +50,9 @@ object StreamingObjectDetection {
       .text("where you put the output data")
       .action((x, c) => c.copy(outputFolder = x))
       .required()
-    opt[String]("modelPath")
+    opt[String]("model")
       .text("Analytics Zoo model path")
-      .action((x, c) => c.copy(modelPath = x))
+      .action((x, c) => c.copy(model = x))
     opt[Int]('p', "partition")
       .text("number of partitions")
       .action((x, c) => c.copy(nPartition = x))
@@ -60,11 +60,11 @@ object StreamingObjectDetection {
 
   def main(args: Array[String]): Unit = {
     parser.parse(args, PredictParam()).foreach { params =>
-      val sc = NNContext.initNNContext("Streaming Object Detection")
+      val sc = NNContext.initNNContext("Analytics Zoo Streaming Object Detection")
       val ssc = new StreamingContext(sc, Seconds(3))
 
       // Load pre-trained model
-      val model = ObjectDetector.loadModel[Float](params.modelPath)
+      val model = ObjectDetector.loadModel[Float](params.model)
 
       val lines = ssc.textFileStream(params.streamingPath)
       lines.foreachRDD { batchPath =>
@@ -90,6 +90,11 @@ object StreamingObjectDetection {
     }
   }
 
+  /**
+    * Read files from local or remote dir
+    * @param path file path
+    * @return
+    */
   def readFile(path: String): ImageFeature = {
     println("Read image file " + path)
     val fspath = new Path(path)
@@ -103,11 +108,16 @@ object StreamingObjectDetection {
     ImageFeature.apply(data, null, path)
   }
 
+  /**
+    * Write files to local or remote dir
+    * @param outPath output dir
+    * @param path input file path
+    * @param content file content
+    */
   def writeFile(outPath: String, path: String, content: Array[Byte]): Unit = {
     val fspath = getOutPath(outPath, path, "jpg")
     println("Writing image file " + fspath.toString)
     val fs = FileSystem.get(fspath.toUri, new Configuration())
-    // Save to local or remote dir
     val outStream = fs.create(
       fspath,
       true)
