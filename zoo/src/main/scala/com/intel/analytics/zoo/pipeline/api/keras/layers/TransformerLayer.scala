@@ -49,8 +49,9 @@ class TransformerLayer[T: ClassTag](
     seqLen = _inputShape.toSingle().head
 
     val input = Variable(_inputShape)
-    require(embeddingLayer.isInstanceOf[Net], "embeddingLayer needed to be from" +
-      "com.intel.analytics.zoo.pipeline.api.keras.layers")
+    require(embeddingLayer.isInstanceOf[Net], "use layers from" +
+      "com.intel.analytics.zoo.pipeline.api.keras and operators from" +
+      " com.intel.analytics.zoo.pipeline.api.autograd to construct the embedding layer")
     val embedding = embeddingLayer.asInstanceOf[Net]
     val e = embedding.from(input)
 
