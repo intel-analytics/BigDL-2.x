@@ -112,21 +112,22 @@ object StreamingTextClassification {
     }
   }
 
-  /** Convert word into index
-    *
-    * @param word word
-    * @param wordIndex Word to index map
-    * @return
-    */
+
+  /**
+   * Convert word into index
+   * @param word word
+   * @param wordIndex Word to index map
+   * @return
+   */
   def word2index(word: String, wordIndex: Map[String, Int]): Int = {
     wordIndex.apply(word)
   }
 
-  /** Read word2index map from file
-    *
-    * @param path
-    * @return
-    */
+  /**
+   * Read word2index map from file
+   * @param path
+   * @return
+   */
   def readWordIndex(path: String): Map[String, Int] = {
     Source.fromFile(path).getLines.map { x =>
       val token = x.split(" ")

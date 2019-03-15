@@ -90,11 +90,11 @@ object StreamingObjectDetection {
     }
   }
 
-  /** Read files from local or remote dir
-    *
-    * @param path file path
-    * @return ImageFeature
-    */
+  /**
+   * Read files from local or remote dir
+   * @param path file path
+   * @return ImageFeature
+   */
   def readFile(path: String): ImageFeature = {
     println("Read image file " + path)
     val fspath = new Path(path)
@@ -108,12 +108,12 @@ object StreamingObjectDetection {
     ImageFeature.apply(data, null, path)
   }
 
-  /** Write files to local or remote dir
-    *
-    * @param outPath output dir
-    * @param path input file path
-    * @param content file content
-    */
+  /**
+   * Write files to local or remote dir
+   * @param outPath output dir
+   * @param path input file path
+   * @param content file content
+   */
   def writeFile(outPath: String, path: String, content: Array[Byte]): Unit = {
     val fspath = getOutPath(outPath, path, "jpg")
     println("Writing image file " + fspath.toString)
@@ -125,6 +125,13 @@ object StreamingObjectDetection {
     outStream.close()
   }
 
+  /**
+   * Generate final file path for predicted images
+   * @param outPath
+   * @param path
+   * @param encoding
+   * @return
+   */
   private def getOutPath(outPath: String, path: String, encoding: String): Path = {
     val finalName = s"detection_${ path.substring(path.lastIndexOf("/") + 1,
       path.lastIndexOf(".")) }.${encoding}"
