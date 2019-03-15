@@ -484,19 +484,15 @@ class Parameter(kbase.ZooKerasLayer, VariableOperator):
                       kbase.JTensor.from_ndarray(value))
 
 
-class Constant(kbase.ZooKerasLayer, VariableOperator):
+class Constant(kbase.ZooKerasCreator, VariableOperator):
     """
     A constant Variable without weights.
     :param data: value of the Variable.
     :param name: Optional. Name of the Variable
     """
-    def __init__(self, data, name=None):
+    def __init__(self, data, name=None, bigdl_type="float"):
         self.data = data
-        super(Constant, self).__init__(None, JTensor.from_ndarray(data), name)
-
-    @property
-    def shape(self):
-        return self.data.shape
+        super(Constant, self).__init__(None, bigdl_type, JTensor.from_ndarray(data), name)
 
 
 class CustomLoss(LossFunction):
