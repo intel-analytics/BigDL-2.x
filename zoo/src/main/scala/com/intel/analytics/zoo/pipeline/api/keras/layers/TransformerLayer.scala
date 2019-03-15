@@ -36,7 +36,7 @@ class TransformerLayer[T: ClassTag](
    val attnPdrop: Double,
    val nHead: Int,
    val maskAttention: Boolean,
-   val embeddingLayer: KerasNet[T],
+   val embeddingLayer: KerasLayer[Tensor[T], Tensor[T], T],
    var inputShape: Shape = null)(implicit ev: TensorNumeric[T])
   extends KerasLayer[Tensor[T], Tensor[T], T](KerasUtils.addBatch(inputShape))
     with Net {
@@ -49,7 +49,10 @@ class TransformerLayer[T: ClassTag](
     seqLen = _inputShape.toSingle().head
 
     val input = Variable(_inputShape)
-    val e = embeddingLayer.from(input)
+    require(embeddingLayer.isInstanceOf[Net], "embeddingLayer needed to be from" +
+      "com.intel.analytics.zoo.pipeline.api.keras.layers")
+    val embedding = embeddingLayer.asInstanceOf[Net]
+    val e = embedding.from(input)
 
     val embeddingSize = e.getOutputShape().toSingle().last
 
@@ -175,6 +178,7 @@ object TransformerLayer {
       .add(Reshape(Array(seqLen, 2, embeddingSize)))
         .add(new KerasLayerWrapper[T](bnn.Sum[T](dimension = 3,
           squeeze = true).asInstanceOf[AbstractModule[Activity, Activity, T]]))
+      .asInstanceOf[KerasLayer[Tensor[T], Tensor[T], T]]
     new TransformerLayer[T](nLayer,
       residPdrop, attnPdrop, nHead, maskAttention, embeddingLayer)
   }
@@ -185,7 +189,7 @@ object TransformerLayer {
     attnPdrop: Double,
     nHead: Int,
     maskAttention: Boolean,
-    embeddingLayer: KerasNet[T])
+    embeddingLayer: KerasLayer[Tensor[T], Tensor[T], T])
     (implicit ev: TensorNumeric[T]): TransformerLayer[T] = {
     new TransformerLayer[T](nLayer,
       residPdrop, attnPdrop, nHead, maskAttention, embeddingLayer = embeddingLayer)
