@@ -486,7 +486,7 @@ class Parameter(kbase.ZooKerasLayer, VariableOperator):
 
 class Constant(kbase.ZooKerasLayer, VariableOperator):
     """
-    A un-trainable Variable without weights.
+    A constant Variable without weights.
     :param data: value of the Variable.
     :param name: Optional. Name of the Variable
     """

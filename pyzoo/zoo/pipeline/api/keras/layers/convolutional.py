@@ -62,7 +62,7 @@ class Convolution1D(ZooKerasLayer):
                                             nb_filter,
                                             filter_length,
                                             init,
-                                            limits,
+                                            list(limits) if limits else None,
                                             activation,
                                             border_mode,
                                             subsample_length,

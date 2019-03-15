@@ -355,7 +355,8 @@ class PythonZooKeras[T: ClassTag](implicit ev: TensorNumeric[T]) extends PythonZ
       bRegularizer: Regularizer[T] = null,
       bias: Boolean = true,
       inputShape: JList[Int] = null): Convolution1D[T] = {
-    Convolution1D(nbFilter, filterLength, init, limits.asScala.toArray, activation, borderMode,
+    val configedValue = if (limits != null) limits.asScala.toArray else null
+    Convolution1D(nbFilter, filterLength, init, configedValue, activation, borderMode,
       subsampleLength, wRegularizer, bRegularizer, bias, toScalaShape(inputShape))
   }
 
