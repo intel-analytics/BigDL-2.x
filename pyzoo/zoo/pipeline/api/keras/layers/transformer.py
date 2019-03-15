@@ -42,18 +42,6 @@ class TransformerLayer(ZooKerasLayer):
     n_head: head number
     mask_attention: whether unidirectional or bidirectional
     embedding_layer: embedding layer
-    >>> layer = TransformerLayer.init_with_default_embedding()
-    creating: createZooKerasSequential
-    creating: createZooKerasReshape
-    creating: createZooKerasEmbedding
-    creating: createZooKerasDropout
-    creating: createZooKerasReshape
-    creating: createSum
-    creating: createZooKerasKerasLayerWrapper
-    creating: createSqueeze
-    creating: createZooKerasKerasLayerWrapper
-    creating: createZooKerasTransformerLayer
-
     """
     def __init__(self, n_block, resid_drop, attn_drop,
                  n_head, mask_attention, embedding_layer, input_shape, bigdl_type="float"):
@@ -94,7 +82,7 @@ class TransformerLayer(ZooKerasLayer):
         return h
 
     def multi_head_self_attention(self, x, size):
-        c = Convolution1D(size * 3, 1, "normal", [0.0, 0.02])(x)
+        c = Convolution1D(size * 3, 1, "normal", (0.0, 0.02))(x)
         query = c.slice(2, 0, size)
         key = c.slice(2, size, size)
         value = c.slice(2, size*2, size)
@@ -103,7 +91,7 @@ class TransformerLayer(ZooKerasLayer):
         v = self.split_heads(value)
         a = self.attn(q, k, v, True)
         m = self.merge_heads(a)
-        n = Convolution1D(size, 1, "normal", [0.0, 0.02])(m)
+        n = Convolution1D(size, 1, "normal", (0.0, 0.02))(m)
         d = Dropout(self.resid_drop)(n)
         return d
 
@@ -147,9 +135,9 @@ class TransformerLayer(ZooKerasLayer):
         return y
 
     def mlp(self, x, size):
-        h = Convolution1D(size*4, 1, init="normal", limits=[0.0, 0.02])(x)
+        h = Convolution1D(size*4, 1, init="normal", limits=(0.0, 0.02))(x)
         a = self.gelu(h)
-        h2 = Convolution1D(size, 1, init="normal", limits=[0.0, 0.02])(a)
+        h2 = Convolution1D(size, 1, init="normal", limits=(0.0, 0.02))(a)
         y = Dropout(self.resid_drop)(h2)
         return y
 
