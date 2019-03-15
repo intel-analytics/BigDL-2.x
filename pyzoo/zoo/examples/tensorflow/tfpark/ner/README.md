@@ -24,11 +24,20 @@ pip install tensorflow==1.10.0
 
 ---
 ## Running command
-Run the following command for Spark cluster:
-
+Set the following environment variables:
 ```bash
 export SPARK_HOME=the root directory of Spark
-export ANALYTICS_ZOO_HOME=the folder where you extract the downloaded Analytics Zoo zip package
+export ANALYTICS_ZOO_HOME=the parent folder where you extract the downloaded Analytics Zoo zip package
+```
+Not that we only support Python 3.5 and Python, so you need to make sure that pyspark runs on the proper Python version.
+```bash
+export PYSPARK_PYTHON=/usr/bin/python3
+export PYSPARK_DRIVER_PYTHON=/usr/bin/python3
+```
+You may need to modify the python3 path according to your driver and worker node above.
+ 
+Run the following command for Spark cluster:
+```bash
 MASTER=...
 
 ${ANALYTICS_ZOO_HOME}/bin/spark-submit-with-zoo.sh \
