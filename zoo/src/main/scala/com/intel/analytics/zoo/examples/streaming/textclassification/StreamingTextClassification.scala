@@ -112,8 +112,8 @@ object StreamingTextClassification {
     }
   }
 
-  /**
-    * Convert word into index
+  /** Convert word into index
+    *
     * @param word word
     * @param wordIndex Word to index map
     * @return
@@ -122,8 +122,8 @@ object StreamingTextClassification {
     wordIndex.apply(word)
   }
 
-  /**
-    * Read word2index map from file
+  /** Read word2index map from file
+    *
     * @param path
     * @return
     */

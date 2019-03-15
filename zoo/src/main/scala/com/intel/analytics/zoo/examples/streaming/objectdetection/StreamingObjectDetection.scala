@@ -90,10 +90,10 @@ object StreamingObjectDetection {
     }
   }
 
-  /**
-    * Read files from local or remote dir
+  /** Read files from local or remote dir
+    *
     * @param path file path
-    * @return
+    * @return ImageFeature
     */
   def readFile(path: String): ImageFeature = {
     println("Read image file " + path)
@@ -108,8 +108,8 @@ object StreamingObjectDetection {
     ImageFeature.apply(data, null, path)
   }
 
-  /**
-    * Write files to local or remote dir
+  /** Write files to local or remote dir
+    *
     * @param outPath output dir
     * @param path input file path
     * @param content file content
