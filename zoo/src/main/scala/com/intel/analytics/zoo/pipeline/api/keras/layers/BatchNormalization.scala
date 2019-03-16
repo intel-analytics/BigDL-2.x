@@ -16,14 +16,17 @@
 
 package com.intel.analytics.zoo.pipeline.api.keras.layers
 
-import com.intel.analytics.bigdl.nn.keras.{BatchNormalization => BBatchNormalization}
-import com.intel.analytics.bigdl.nn.abstractnn.DataFormat
+import com.intel.analytics.bigdl.nn.{BatchNormalization => BBatchNormalization}
+import com.intel.analytics.bigdl.nn.keras.{BatchNormalization => BKBatchNormalization}
+import com.intel.analytics.bigdl.nn.abstractnn.{AbstractModule, DataFormat}
+import com.intel.analytics.bigdl.tensor.Tensor
 import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric
 import com.intel.analytics.bigdl.utils.Shape
 import com.intel.analytics.zoo.pipeline.api.Net
 import com.intel.analytics.zoo.pipeline.api.keras.layers.utils.KerasUtils
 
 import scala.reflect.ClassTag
+import com.intel.analytics.bigdl.nn._
 
 /**
  * Batch normalization layer.
@@ -55,8 +58,46 @@ class BatchNormalization[T: ClassTag](
    override val gammaInit: String = "one",
    override val dimOrdering: DataFormat = DataFormat.NCHW,
    override val inputShape: Shape = null)(implicit ev: TensorNumeric[T])
-  extends BBatchNormalization[T](
+  extends BKBatchNormalization[T](
     epsilon, momentum, betaInit, gammaInit, dimOrdering, inputShape) with Net {
+
+  private def getInit(init: String, n: Int): Tensor[T] = {
+    val weights = Tensor[T](n)
+    init.toLowerCase() match {
+      case "zero" => weights.fill(ev.zero)
+      case "one" => weights.fill(ev.one)
+      case "glorot_uniform" => Xavier.init(weights)
+        weights
+      case "uniform" => RandomUniform(-0.05, 0.05).init(weights)
+        weights
+      case "normal" => RandomNormal(0.0, 0.05).init(weights)
+        weights
+      case _ => throw new IllegalArgumentException(s"Unsupported initialization method: " +
+        s"${init.toLowerCase()}")
+    }
+  }
+
+  override def computeOutputShape(inputShape: Shape): Shape = {
+    val input = inputShape.toSingle().toArray
+    require(input.length == 4 || input.length == 2,
+      s"BatchNormalization requires 4D or 2D input, but got input dim ${input.length}")
+    inputShape
+  }
+
+  override def doBuild(inputShape: Shape): AbstractModule[Tensor[T], Tensor[T], T] = {
+    val input = inputShape.toSingle().toArray
+    if(input.length == 4) {
+     super.doBuild(inputShape)
+    } else {
+      val nOutput = input(1)
+      BBatchNormalization[T](nOutput,
+        epsilon,
+        momentum,
+        affine = true,
+        initWeight = getInit(gammaInit, nOutput),
+        initBias = getInit(betaInit, nOutput))
+    }
+  }
 }
 
 object BatchNormalization {
