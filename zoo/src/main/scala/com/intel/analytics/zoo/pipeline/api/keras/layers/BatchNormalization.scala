@@ -17,6 +17,7 @@
 package com.intel.analytics.zoo.pipeline.api.keras.layers
 
 import com.intel.analytics.bigdl.nn.{BatchNormalization => BBatchNormalization}
+import com.intel.analytics.bigdl.nn.{Xavier, RandomUniform, RandomNormal}
 import com.intel.analytics.bigdl.nn.keras.{BatchNormalization => BKBatchNormalization}
 import com.intel.analytics.bigdl.nn.abstractnn.{AbstractModule, DataFormat}
 import com.intel.analytics.bigdl.tensor.Tensor
@@ -26,7 +27,6 @@ import com.intel.analytics.zoo.pipeline.api.Net
 import com.intel.analytics.zoo.pipeline.api.keras.layers.utils.KerasUtils
 
 import scala.reflect.ClassTag
-import com.intel.analytics.bigdl.nn._
 
 /**
  * Batch normalization layer.
