@@ -34,7 +34,7 @@ case class TextClassificationParams(
   embeddingPath: String = "./",
   sequenceLength: Int = 500,
   maxWordsNum: Int = 5000,
-  trainingSplit: Double = 0.8, batchSize: Int = 128,
+  batchSize: Int = 128,
   partitionNum: Int = 4, model: Option[String] = None)
 
 object StreamingTextClassification {
@@ -89,7 +89,6 @@ object StreamingTextClassification {
       lines.foreachRDD { lineRdd =>
         if (!lineRdd.partitions.isEmpty) {
           // RDD to TextFeature
-          println("First line " + lineRdd.top(1).apply(0))
           val textFeature = lineRdd.map(x => TextFeature.apply(x))
           // RDD[TextFeature] to TextSet
           val dataSet = TextSet.rdd(textFeature)
