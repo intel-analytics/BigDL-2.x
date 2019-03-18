@@ -84,8 +84,8 @@ class KerasNet(ZooKerasLayer):
         """
         # exception handle
         if tag != "Loss" and tag != "LearningRate" and tag != "Throughput":
-            raise TypeError('Only "Loss", "LearningRate", "Throughput" \
-                            are supported in train summary')
+            raise TypeError('Only "Loss", "LearningRate", "Throughput"'
+                            + 'are supported in train summary')
 
         return callBigDlFunc(self.bigdl_type, "zooGetScalarFromSummary",
                              self.value, tag, "Train")
@@ -98,6 +98,13 @@ class KerasNet(ZooKerasLayer):
         # Arguments
         tag: The string variable represents the scalar wanted
         """
+        validation_set = set(('AUC', 'Accuracy', 'BinaryAccuracy', 'CategoricalAccuracy',
+                             'HitRatio', 'Loss', 'MAE', 'NDCG', 'SparseCategoricalAccuracy',
+                             'TFValidationMethod', 'Top1Accuracy',
+                             'Top5Accuracy', 'TreeNNAccuracy'))
+        if tag not in validation_set:
+            raise TypeError('Only subclasses of ValidationMethod are supported,'
+                            + 'which are ' + str(validation_set))
         return callBigDlFunc(self.bigdl_type, "zooGetScalarFromSummary",
                              self.value, tag, "Validation")
 
