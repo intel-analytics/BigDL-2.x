@@ -14,15 +14,18 @@
  * limitations under the License.
  */
 
-package com.intel.analytics.zoo.models.image.objectdetection.common.optim
+package com.intel.analytics.zoo.pipeline.api.keras.layers.internal
 
 import com.intel.analytics.bigdl.tensor.Tensor
-import com.intel.analytics.bigdl.transform.vision.image.label.roi.RoiLabel
+import com.intel.analytics.bigdl.utils.T
+import com.intel.analytics.zoo.pipeline.api.keras.serializer.ModuleSerializationTest
 
-abstract class DetectionEvaluator extends Serializable {
-
-  def evaluateBatch(results: Array[Array[RoiLabel]], gt: Tensor[Float])
-  : Array[(Int, Array[(Float, Int, Int)])]
-
-  def map(results: Array[(Int, Array[(Float, Int, Int)])]): Array[(String, Double)]
+class InternalCMulTableSerialTest extends ModuleSerializationTest {
+  override def test(): Unit = {
+    val layer = new InternalCMulTable[Float]().
+      setName("InternalCMulTable")
+    val a = Tensor[Float](2, 5, 5).rand()
+    val b = Tensor[Float](2, 5, 5).rand()
+    runSerializationTest(layer, T(a, b))
+  }
 }

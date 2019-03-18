@@ -16,7 +16,6 @@
 
 package com.intel.analytics.zoo.pipeline.api.keras.python
 
-import java.util
 import java.util.{List => JList, Map => JMap}
 
 import com.intel.analytics.bigdl.{Criterion, Module}
@@ -36,7 +35,6 @@ import com.intel.analytics.zoo.feature.image.ImageSet
 import com.intel.analytics.zoo.pipeline.api.autograd._
 import com.intel.analytics.zoo.pipeline.api.keras.layers.{KerasLayerWrapper, _}
 import com.intel.analytics.zoo.pipeline.api.keras.layers.utils.KerasUtils
-import com.intel.analytics.zoo.pipeline.api.keras.metrics.{AUC, Accuracy, Top5Accuracy}
 import com.intel.analytics.zoo.pipeline.api.keras.models.{KerasNet, Model, Sequential}
 import com.intel.analytics.zoo.pipeline.api.keras.objectives._
 import com.intel.analytics.zoo.pipeline.api.keras.optimizers.Adam
@@ -45,6 +43,7 @@ import com.intel.analytics.zoo.common.PythonZoo
 import com.intel.analytics.zoo.feature.text.TextSet
 import com.intel.analytics.zoo.models.common.ZooModel
 import com.intel.analytics.zoo.models.seq2seq.{Bridge, RNNDecoder, RNNEncoder}
+import com.intel.analytics.zoo.pipeline.api.keras.{metrics => zmetrics}
 import com.intel.analytics.zoo.pipeline.api.net.GraphNet
 
 import scala.collection.mutable.ArrayBuffer
@@ -141,17 +140,16 @@ class PythonZooKeras[T: ClassTag](implicit ev: TensorNumeric[T]) extends PythonZ
   }
 
   private def processEvaluateResult(
-    resultArray: Array[(ValidationResult, ValidationMethod[T])]): JList[EvaluatedResult] = {
+    resultArray: Array[(ValidationResult, ValidationMethod[T])]): JList[Float] = {
     resultArray.map { result =>
-      EvaluatedResult(result._1.result()._1, result._1.result()._2,
-        result._2.toString())
+      result._1.result()._1
     }.toList.asJava
   }
 
   def zooEvaluate(
       module: KerasNet[T],
       x: JavaRDD[Sample],
-      batchSize: Int = 32): JList[EvaluatedResult] = {
+      batchSize: Int = 32): JList[Float] = {
     val resultArray = module.evaluate(toJSample(x), batchSize)
     processEvaluateResult(resultArray)
   }
@@ -159,7 +157,7 @@ class PythonZooKeras[T: ClassTag](implicit ev: TensorNumeric[T]) extends PythonZ
   def zooEvaluate(
       module: KerasNet[T],
       x: ImageSet,
-      batchSize: Int): JList[EvaluatedResult] = {
+      batchSize: Int): JList[Float] = {
     val resultArray = module.evaluate(x, batchSize)
     processEvaluateResult(resultArray)
   }
@@ -167,7 +165,7 @@ class PythonZooKeras[T: ClassTag](implicit ev: TensorNumeric[T]) extends PythonZ
   def zooEvaluate(
       module: KerasNet[T],
       x: TextSet,
-      batchSize: Int): JList[EvaluatedResult] = {
+      batchSize: Int): JList[Float] = {
     val resultArray = module.evaluate(x, batchSize)
     processEvaluateResult(resultArray)
   }
@@ -635,7 +633,7 @@ class PythonZooKeras[T: ClassTag](implicit ev: TensorNumeric[T]) extends PythonZ
       innerActivation: String = "hard_sigmoid",
       dimOrdering: String = "th",
       subsample: Int = 1,
-      borderMode: String = "same",
+      borderMode: String = "valid",
       wRegularizer: Regularizer[T] = null,
       uRegularizer: Regularizer[T] = null,
       bRegularizer: Regularizer[T] = null,
@@ -651,7 +649,7 @@ class PythonZooKeras[T: ClassTag](implicit ev: TensorNumeric[T]) extends PythonZ
       nbFilter: Int,
       nbKernel: Int,
       subsample: Int = 1,
-      borderMode: String = "same",
+      borderMode: String = "valid",
       wRegularizer: Regularizer[T] = null,
       uRegularizer: Regularizer[T] = null,
       bRegularizer: Regularizer[T] = null,
@@ -811,7 +809,7 @@ class PythonZooKeras[T: ClassTag](implicit ev: TensorNumeric[T]) extends PythonZ
   }
 
   def createZooKerasTimeDistributed(
-      layer: KerasLayer[Tensor[T], Tensor[T], T],
+      layer: KerasLayer[Activity, Tensor[T], T],
       inputShape: JList[Int] = null): TimeDistributed[T] = {
     TimeDistributed(layer, toScalaShape(inputShape))
   }
@@ -988,7 +986,7 @@ class PythonZooKeras[T: ClassTag](implicit ev: TensorNumeric[T]) extends PythonZ
   }
 
   def createAUC(thresholdNum: Int): ValidationMethod[T] = {
-    new AUC[T](thresholdNum)
+    new zmetrics.AUC[T](thresholdNum)
   }
 
   def createZooKerasAdam(
@@ -1199,12 +1197,24 @@ class PythonZooKeras[T: ClassTag](implicit ev: TensorNumeric[T]) extends PythonZ
 
   def createZooKerasAccuracy(
       zeroBasedLabel: Boolean = true): ValidationMethod[T] = {
-    new Accuracy(zeroBasedLabel)
+    new zmetrics.Accuracy(zeroBasedLabel)
+  }
+
+  def createZooKerasSparseCategoricalAccuracy(): ValidationMethod[T] = {
+    new zmetrics.SparseCategoricalAccuracy()
+  }
+
+  def createZooKerasBinaryAccuracy(): ValidationMethod[T] = {
+    new zmetrics.BinaryAccuracy()
+  }
+
+  def createZooKerasCategoricalAccuracy(): ValidationMethod[T] = {
+    new zmetrics.CategoricalAccuracy()
   }
 
   def createZooKerasTop5Accuracy(
       zeroBasedLabel: Boolean = true): ValidationMethod[T] = {
-    new Top5Accuracy(zeroBasedLabel)
+    new zmetrics.Top5Accuracy(zeroBasedLabel)
   }
 
   def createZooKerasWordEmbedding(

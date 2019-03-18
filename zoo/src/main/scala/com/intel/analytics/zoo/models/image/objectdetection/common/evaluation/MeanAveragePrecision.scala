@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.intel.analytics.zoo.models.image.objectdetection.common.optim
+package com.intel.analytics.zoo.models.image.objectdetection.common.evaluation
 
 import com.intel.analytics.bigdl.nn.abstractnn.Activity
 import com.intel.analytics.bigdl.optim.{ValidationMethod, ValidationResult}
@@ -22,6 +22,12 @@ import com.intel.analytics.bigdl.tensor.Tensor
 import com.intel.analytics.zoo.models.image.objectdetection.common.BboxUtil
 import org.apache.commons.lang3.SerializationUtils
 
+/**
+  * Represent an average precision for object detection result.
+  * @param use07metric whether use 07 11 point method
+  * @param normalized whether normalized or not
+  * @param classes class names
+  */
 class MeanAveragePrecision(use07metric: Boolean, normalized: Boolean = true, classes: Array[String])
   extends ValidationMethod[Float] {
   override def apply(output: Activity, target: Activity): ValidationResult = {

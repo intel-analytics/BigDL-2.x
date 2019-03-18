@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.intel.analytics.zoo.models.image.objectdetection.common.nn
+package com.intel.analytics.zoo.models.image.objectdetection.common.loss
 
 import com.intel.analytics.bigdl.nn.abstractnn.AbstractCriterion
 import com.intel.analytics.bigdl.nn.{ClassNLLCriterion, LogSoftMax, SmoothL1Criterion}
@@ -278,7 +278,7 @@ class MultiBoxLoss[T: ClassTag](param: MultiBoxLossParam)
   }
 
 
-  private[nn] def computeConfLoss(conf: Tensor[Float], num: Int, numPredsPerClass: Int,
+  private[objectdetection] def computeConfLoss(conf: Tensor[Float], num: Int, numPredsPerClass: Int,
     nClasses: Int, bgIndex: Int, allMatchIndices: Array[Array[Int]],
     allGroundTruth: Map[Int, Tensor[Float]]): Array[Array[Float]] = {
     val allConfLoss = new Array[Array[Float]](num)

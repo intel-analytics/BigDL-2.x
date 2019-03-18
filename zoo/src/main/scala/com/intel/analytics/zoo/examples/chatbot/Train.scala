@@ -19,11 +19,11 @@ package com.intel.analytics.zoo.examples.chatbot
 import com.intel.analytics.bigdl.dataset._
 import com.intel.analytics.bigdl.dataset.text.utils.SentenceToken
 import com.intel.analytics.bigdl.dataset.text._
-import com.intel.analytics.bigdl.nn.{RandomUniform,
-TimeDistributedMaskCriterion, ClassNLLCriterion}
+import com.intel.analytics.bigdl.nn.abstractnn.Activity
+import com.intel.analytics.bigdl.nn.{ClassNLLCriterion, RandomUniform, TimeDistributedMaskCriterion}
 import com.intel.analytics.bigdl.nn.keras.KerasLayer
 import com.intel.analytics.bigdl.numeric.NumericFloat
-import com.intel.analytics.bigdl.optim.{Adam}
+import com.intel.analytics.bigdl.optim.Adam
 import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric
 import com.intel.analytics.bigdl.tensor.{Storage, Tensor}
 import com.intel.analytics.bigdl.utils.{Shape, T}
@@ -124,9 +124,11 @@ object Train {
         embDec)
 
       val generator = Sequential[Float]()
-      generator.add(TimeDistributed[Float](Dense(vocabSize),
+      generator.add(TimeDistributed[Float](Dense(vocabSize)
+        .asInstanceOf[KerasLayer[Activity, Tensor[Float], Float]],
         Shape(Array(1, param.embedDim))))
-      generator.add(TimeDistributed[Float](Activation("log_softmax")))
+      generator.add(TimeDistributed[Float](Activation("log_softmax")
+        .asInstanceOf[KerasLayer[Activity, Tensor[Float], Float]]))
 
       val model = Seq2seq(encoder, decoder, Shape(Array(-1)),
         Shape(Array(-1)), generator = generator)
