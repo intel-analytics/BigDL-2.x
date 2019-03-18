@@ -6,8 +6,6 @@ Based on Streaming example NetworkWordCount and Zoo text classification example.
 * Analytics Zoo
 
 ## Datasets and pre-trained models
-
-* Word embeding file: [golve](https://nlp.stanford.edu/projects/glove/)
 * Pre-trained model & word index: Save trained text classification model and word index in [Text Classification](https://github.com/intel-analytics/analytics-zoo/blob/master/docs/docs/ProgrammingGuide/text-classification.md).
 
 ## Run this example
@@ -29,7 +27,7 @@ ${ANALYTICS_ZOO_HOME}/bin/spark-shell-with-zoo.sh \
     --driver-memory 2g \
     --executor-memory 5g \
     --class com.intel.analytics.zoo.examples.streaming.textclassification.TextClassification \
-    --embeddingPath ${glovePath} --model ${model} --indexPath ${indexPath}
+    --model ${model} --indexPath ${indexPath}
 ```
 
 3. TERMINAL 1: Input text in Netcat

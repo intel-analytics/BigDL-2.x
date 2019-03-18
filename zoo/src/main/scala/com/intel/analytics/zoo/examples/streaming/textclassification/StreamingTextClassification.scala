@@ -31,7 +31,6 @@ case class TextClassificationParams(
   host: String = "localhost",
   port: Int = 9999,
   indexPath: String = "word2index.txt",
-  embeddingPath: String = "./",
   sequenceLength: Int = 500,
   maxWordsNum: Int = 5000,
   batchSize: Int = 128,
@@ -50,10 +49,6 @@ object StreamingTextClassification {
       opt[String]("indexPath")
         .text("Path of word to index text file")
         .action((x, c) => c.copy(indexPath = x))
-      opt[String]("embeddingPath")
-        .required()
-        .text("The directory for GloVe embeddings")
-        .action((x, c) => c.copy(embeddingPath = x))
       opt[Int]("partitionNum")
         .text("The number of partitions to cut the dataset into")
         .action((x, c) => c.copy(partitionNum = x))

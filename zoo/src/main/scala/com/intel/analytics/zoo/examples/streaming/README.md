@@ -17,5 +17,4 @@ Quick example about integrating analytics-zoo inference/predict service into str
 * Pre-trained model: [SSD 300x300](https://s3-ap-southeast-1.amazonaws.com/analytics-zoo-models/object-detection/analytics-zoo_ssd-vgg16-300x300_COCO_0.1.0.model)
 
 **2. Streaming Text Classification**
-* Word embeding file: [golve](https://nlp.stanford.edu/projects/glove/)
 * Pre-trained model: Save trained text classification model and word2index in [Text Classification](https://github.com/intel-analytics/analytics-zoo/blob/master/docs/docs/ProgrammingGuide/text-classification.md).
