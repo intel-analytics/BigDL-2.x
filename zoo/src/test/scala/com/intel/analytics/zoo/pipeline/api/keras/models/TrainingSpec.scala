@@ -218,7 +218,7 @@ class TrainingSpec extends FlatSpec with Matchers with BeforeAndAfter {
     val bigdlApi = sc.broadcast(new PythonBigDL[Float]())
 
     // python api require to take no type Sample and it takes JavaRDD as input
-    // use toPySample to convert to no type use toJavaRDD to convert to JavaRDD   
+    // use toPySample to convert to no type use toJavaRDD to convert to JavaRDD
     val jd = trainingData.map(j => bigdlApi.value.toPySample(j)).toJavaRDD()
     val res = api.zooEvaluate(model, jd, 8)
     res
