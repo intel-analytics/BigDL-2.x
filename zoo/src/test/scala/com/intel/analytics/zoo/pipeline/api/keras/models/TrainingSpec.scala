@@ -217,15 +217,34 @@ class TrainingSpec extends FlatSpec with Matchers with BeforeAndAfter {
     val api = new PythonZooKeras[Float]()
     val bigdlApi = sc.broadcast(new PythonBigDL[Float]())
 
-    /** python api require to take no type Sample
-      * and it takes JavaRDD as input
-      *
-      * use toPySample to convert to no type
-      * use toJavaRDD to convert to JavaRDD
-      **/
+    // python api require to take no type Sample and it takes JavaRDD as input
+    // use toPySample to convert to no type use toJavaRDD to convert to JavaRDD
     val jd = trainingData.map(j => bigdlApi.value.toPySample(j)).toJavaRDD()
     val res = api.zooEvaluate(model, jd, 8)
     res
+  }
+
+  "tensorboard api" should "work" in {
+    val trainingData = generateData(Array(12, 12), 1, 100)
+    val model = Sequential[Float]()
+
+    model.add(Dense[Float](8, activation = "relu", inputShape = Shape(12, 12)))
+    model.add(Flatten[Float]())
+    model.add(Dense[Float](2, activation = "softmax"))
+
+    model.compile(optimizer = "sgd", loss = "sparse_categorical_crossentropy",
+      metrics = List("accuracy"))
+    val api = new PythonZooKeras[Float]()
+
+    model.setTensorBoard("./", "testTensorBoard")
+    model.fit(trainingData, batchSize = 8, nbEpoch = 2, validationData = trainingData)
+
+    val rawTrain = model.getTrainSummary("Loss")
+    val rawVal = model.getValidationSummary("Loss")
+
+    val trainArr = api.zooGetScalarFromSummary(model, "Loss", "Train")
+    val valArr = api.zooGetScalarFromSummary(model, "Loss", "Validation")
+    valArr
   }
 
 }

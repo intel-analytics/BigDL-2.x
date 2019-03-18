@@ -60,6 +60,8 @@ abstract class KerasNet[T](implicit val tag: ClassTag[T], implicit val ev: Tenso
   private var vMethods: Array[ValidationMethod[T]] = null
   private var tensorBoardLogDir: String = null
   private var tensorBoardAppName: String = null
+  @transient private var trainSummary: TrainSummary = null
+  @transient private var validationSummary: ValidationSummary = null
   private var checkpointPath: String = null
   private var overWriteCheckPoint: Boolean = true
   private var constantGradientClippingParams: (Float, Float) = null
@@ -87,7 +89,8 @@ abstract class KerasNet[T](implicit val tag: ClassTag[T], implicit val ev: Tenso
       }
     }
     if (this.tensorBoardLogDir != null && this.tensorBoardAppName != null) {
-      internalOptimizer.setTrainSummary(TrainSummary(tensorBoardLogDir, tensorBoardAppName))
+      this.trainSummary = TrainSummary(tensorBoardLogDir, tensorBoardAppName)
+      internalOptimizer.setTrainSummary(this.trainSummary)
     }
     if (this.constantGradientClippingParams != null) {
       internalOptimizer.setConstantGradientClipping(this.constantGradientClippingParams._1,
@@ -114,9 +117,14 @@ abstract class KerasNet[T](implicit val tag: ClassTag[T], implicit val ev: Tenso
     this.criterion = loss
 
     val lossArray: Array[ValidationMethod[T]] = Array(new Loss(this.criterion))
-    val metricArray = metrics.toArray
 
-    this.vMethods = if (metrics == null) lossArray else (lossArray ++ metricArray)
+    if (metrics == null) {
+      this.vMethods = lossArray
+    }
+    else {
+      val metricsArray = metrics.toArray
+      this.vMethods = lossArray ++ metricsArray
+    }
   }
 
   /**
@@ -171,10 +179,36 @@ abstract class KerasNet[T](implicit val tag: ClassTag[T], implicit val ev: Tenso
    */
   def setTensorBoard(logDir: String, appName: String): Unit = {
     if (this.internalOptimizer != null) {
-      internalOptimizer.setTrainSummary(TrainSummary(tensorBoardLogDir, tensorBoardAppName))
+      this.trainSummary = TrainSummary(tensorBoardLogDir, tensorBoardAppName)
+      internalOptimizer.setTrainSummary(this.trainSummary)
     }
     this.tensorBoardLogDir = logDir
     this.tensorBoardAppName = appName
+  }
+
+  /**
+    * To get the scalar like "Loss", "LearningRate" from train summary
+    * Return is a Array of 3-tuples
+    *
+    * @param tag The string variable represents the parameter you want to return
+    *            supported tags are "LearningRate", "Loss", "Throughput"
+    */
+  def getTrainSummary(tag: String): Array[(Long, Float, Double)] = {
+    this.trainSummary.readScalar(tag)
+  }
+
+  /**
+    * To get the scalar like "Loss", "Top1Accuracy" from validation summary
+    * Return is a Array of 3-tuples
+    *
+    * @param tag The string variable represents the parameter you want to return
+    *            supported tags are "Loss", "Top1Accuracy", etc based on
+    *            validation metric. Use a method to_bigdl_metric to convert
+    *            your string to metric class name then this class name could be
+    *            the param of getValidationSummary tag
+    */
+  def getValidationSummary(tag: String): Array[(Long, Float, Double)] = {
+    this.validationSummary.readScalar(tag)
   }
 
   /**
@@ -292,8 +326,8 @@ abstract class KerasNet[T](implicit val tag: ClassTag[T], implicit val ev: Tenso
     if (validationData != null) {
       require(this.vMethods != null, "Validation metrics haven't been set yet")
       if (this.tensorBoardLogDir != null && this.tensorBoardAppName != null) {
-        internalOptimizer.setValidationSummary(
-          ValidationSummary(tensorBoardLogDir, tensorBoardAppName))
+        this.validationSummary = ValidationSummary(tensorBoardLogDir, tensorBoardAppName)
+        internalOptimizer.setValidationSummary(this.validationSummary)
       }
       internalOptimizer.setValidation(trigger = Trigger.everyEpoch,
         dataset = validationData,
