@@ -26,10 +26,9 @@ if sys.version >= '3':
 class ConvLSTM2D(ZooKerasLayer):
     """
     Convolutional LSTM.
-    Data format currently supported for this layer is dim_ordering='th' (Channel First).
-    Border mode currently supported for this layer is 'same'.
     The convolution kernel for this layer is a square kernel with equal strides 'subsample'.
-    The input of this layer should be 5D.
+    The input of this layer should be 5D, i.e. (samples, time, channels, rows, cols) and
+    dim_ordering='th' (Channel First) is expected.
 
     When you use this layer as the first layer of a model, you need to provide the argument
     input_shape (a shape tuple, does not include the batch dimension).
@@ -44,10 +43,10 @@ class ConvLSTM2D(ZooKerasLayer):
     inner_activation: String representation of the activation function for inner cells.
                       Default is 'hard_sigmoid'.
     dim_ordering: Format of input data. Only 'th' (Channel First) is supported for now.
-    border_mode: Only 'same' is supported for now.
     subsample: Tuple of length 2. Factor by which to subsample output.
                Also called strides elsewhere.
                Only support subsample[0] equal to subsample[1] for now. Default is (1, 1).
+    border_mode: One of "same" or "valid". Also called padding elsewhere. Default is "valid".
     W_regularizer: An instance of [[Regularizer]], (eg. L1 or L2 regularization),
                    applied to the input weights matrices. Default is None.
     U_regularizer: An instance of [[Regularizer]], applied the recurrent weights matrices.
@@ -64,13 +63,13 @@ class ConvLSTM2D(ZooKerasLayer):
     creating: createZooKerasConvLSTM2D
     """
     def __init__(self, nb_filter, nb_row, nb_col, activation="tanh",
-                 inner_activation="hard_sigmoid", dim_ordering="th", border_mode="same",
+                 inner_activation="hard_sigmoid", dim_ordering="th", border_mode="valid",
                  subsample=(1, 1), W_regularizer=None, U_regularizer=None, b_regularizer=None,
                  return_sequences=False, go_backwards=False, input_shape=None, **kwargs):
         if nb_row != nb_col:
             raise ValueError("For ConvLSTM2D, only square kernel is supported for now")
-        if border_mode != "same":
-            raise ValueError("For ConvLSTM2D, only border_mode='same' is supported for now")
+        if border_mode != "same" and border_mode != "valid":
+            raise ValueError("For ConvLSTM2D, only support border_mode as 'same' and 'valid'")
         if subsample[0] != subsample[1]:
             raise ValueError("For ConvLSTM2D, only equal strides is supported for now")
         super(ConvLSTM2D, self).__init__(None,
@@ -80,6 +79,65 @@ class ConvLSTM2D(ZooKerasLayer):
                                          inner_activation,
                                          dim_ordering,
                                          subsample[0],
+                                         border_mode,
+                                         W_regularizer,
+                                         U_regularizer,
+                                         b_regularizer,
+                                         return_sequences,
+                                         go_backwards,
+                                         list(input_shape) if input_shape else None,
+                                         **kwargs)
+
+
+class ConvLSTM3D(ZooKerasLayer):
+    """
+    Convolutional LSTM for 3D input.
+    The convolution kernel for this layer is a cubic kernel with equal strides for all dimensions.
+    The input of this layer should be 6D, i.e. (samples, time, channels, dim1, dim2, dim3),
+    and 'CHANNEL_FIRST' (dimOrdering='th') is expected.
+
+    When you use this layer as the first layer of a model, you need to provide the argument
+    input_shape (a shape tuple, does not include the batch dimension).
+
+    # Arguments
+    nb_filter: Number of convolution filters to use.
+    nb_kernel: Length of the first, second and third dimensions in the convolution kernel.
+               Cubic kernel.
+    dim_ordering: Format of input data. Only 'th' (Channel First) is supported for now.
+    border_mode: Only 'same' is supported for now.
+    subsample: Tuple of length 3. Factor by which to subsample output.
+               Also called strides elsewhere. Default is (1, 1, 1).
+               Only support subsample[0] equal to subsample[1] equal to subsample[2] for now.
+    border_mode: One of "same" or "valid". Also called padding elsewhere. Default is "valid".
+    W_regularizer: An instance of [[Regularizer]], (eg. L1 or L2 regularization),
+                   applied to the input weights matrices. Default is None.
+    U_regularizer: An instance of [[Regularizer]], applied the recurrent weights matrices.
+                   Default is None.
+    b_regularizer: An instance of [[Regularizer]], applied to the bias. Default is None.
+    return_sequences: Whether to return the full sequence or only return the last output
+                      in the output sequence. Default is False.
+    go_backwards: Whether the input sequence will be processed backwards. Default is False.
+    input_shape: A shape tuple, not including batch.
+    name: String to set the name of the layer.
+          If not specified, its name will by default to be a generated string.
+
+    >>> convlstm3d = ConvLSTM3D(10, 4, input_shape=(8, 4, 10, 32, 32))
+    creating: createZooKerasConvLSTM3D
+    """
+    def __init__(self, nb_filter, nb_kernel, dim_ordering="th", border_mode="valid",
+                 subsample=(1, 1, 1), W_regularizer=None, U_regularizer=None, b_regularizer=None,
+                 return_sequences=False, go_backwards=False, input_shape=None, **kwargs):
+        if dim_ordering != "th":
+            raise ValueError("For ConvLSTM3D, only dim_ordering='th' is supported for now")
+        if border_mode != "same" and border_mode != "valid":
+            raise ValueError("For ConvLSTM3D, only support border_mode as 'same' and 'valid'")
+        if subsample[0] != subsample[1] or subsample[1] != subsample[2]:
+            raise ValueError("For ConvLSTM3D, only equal strides is supported for now")
+        super(ConvLSTM3D, self).__init__(None,
+                                         nb_filter,
+                                         nb_kernel,
+                                         subsample[0],
+                                         border_mode,
                                          W_regularizer,
                                          U_regularizer,
                                          b_regularizer,

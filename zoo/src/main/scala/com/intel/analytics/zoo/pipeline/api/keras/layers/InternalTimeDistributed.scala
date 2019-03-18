@@ -28,8 +28,9 @@ import scala.reflect.ClassTag
 
 
 /**
- * NB: This implementation is almost the same as "com.intel.analytics.bigdl.nn.Timedistributed"
- * except for some bug fixing. We need to merge this back to BigDL in the next release.
+ * NB: This implementation includes some bug fixes for
+ * "com.intel.analytics.bigdl.nn.Timedistributed". Also it accepts input as Tensor
+ * or Tables whose elements are Tensor. Nested Tables are not supported currently.
  *
  * This layer is intended to apply contained layer to each temporal time slice
  * of input tensor.
@@ -113,17 +114,16 @@ private[zoo] class InternalTimeDistributed[T: ClassTag](
 
     val _output = layer.forward(input).toTensor[T]
 
-    if (outputSize == null) {
-      val combinedShape = _output.size()
-      // in case of singleton
-      var i = 0
-      while (i < oriSizes.length && oriSizes(i)(0) * oriSizes(i)(1) != combinedShape(0)) {
-        i += 1
-      }
-      require(i < oriSizes.length,
-        s"combined batch: ${combinedShape(0)} should match ${oriSizes(i)(0)} * ${oriSizes(i)(1)}")
-      outputSize = Array(oriSizes(i)(0), oriSizes(i)(1)) ++ combinedShape.drop(1)
+    val combinedShape = _output.size()
+    // in case of singleton
+    var i = 0
+    while (i < oriSizes.length && oriSizes(i)(0) * oriSizes(i)(1) != combinedShape(0)) {
+      i += 1
     }
+    require(i < oriSizes.length,
+      s"combined batch: ${combinedShape(0)} should match ${oriSizes(i)(0)} * ${oriSizes(i)(1)}")
+    outputSize = Array(oriSizes(i)(0), oriSizes(i)(1)) ++ combinedShape.drop(1)
+
     resizeActivity(input, oriSizes)
     output.set(_output).resize(outputSize)
 

@@ -39,7 +39,7 @@ if __name__ == "__main__":
         df['datetime'] = pd.to_datetime(df['timestamp'])
         df['hours'] = df['datetime'].dt.hour
         df['awake'] = (((df['hours'] >= 6) & (df['hours'] <= 23)) | (df['hours'] == 0)).astype(int)
-        print(df.info())
+        print(df.head(10))
         sqlContext = SQLContext(sc)
         dfspark = sqlContext.createDataFrame(df[["value", "hours", "awake"]])
         feature_size = len(["value", "hours", "awake"])
@@ -52,8 +52,9 @@ if __name__ == "__main__":
 
     model = AnomalyDetector(feature_shape=(int(options.unroll_len), feature_size),
                             hidden_layers=[8, 32, 15], dropouts=[0.2, 0.2, 0.2])
-    model.compile(loss='mse', optimizer='rmsprop')
-    model.fit(train, batch_size=int(options.batch_size), nb_epoch=int(options.nb_epoch))
+    model.compile(loss='mse', optimizer='rmsprop', metrics=['mae'])
+    model.fit(train, batch_size=int(options.batch_size), nb_epoch=int(options.nb_epoch),
+              validation_data=test)
     test.cache()
     y_predict = model.predict(test).map(lambda x: float(x[0]))
     y_truth = test.map(lambda x: float(x.label.to_ndarray()[0]))

@@ -115,6 +115,8 @@ object AnomalyDetector {
       hiddenLayers: Array[Int] = Array(8, 32, 15),
       dropouts: Array[Double] = Array(0.2, 0.2, 0.2))
       (implicit ev: TensorNumeric[T]): AnomalyDetector[T] = {
+    require(hiddenLayers.size == dropouts.size,
+      s"size of hiddenLayers and dropouts should be the same")
     new AnomalyDetector[T](featureShape, hiddenLayers, dropouts).build()
   }
 

@@ -30,11 +30,13 @@ import org.apache.log4j.Logger
 import org.apache.spark.SparkContext
 import org.apache.spark.rdd.RDD
 
-import scala.collection.mutable.ArrayBuffer
+import scala.collection.mutable.{ArrayBuffer, Map => MMap}
 import scala.io.Source
 import java.io.PrintWriter
 
 import com.intel.analytics.bigdl.tensor.Tensor
+import com.intel.analytics.zoo.feature.FeatureSet
+import com.intel.analytics.zoo.feature.pmem.{DRAM, MemoryType}
 import org.apache.spark.sql.SQLContext
 
 /**
@@ -224,26 +226,27 @@ object TextSet {
   /**
    * Create a DistributedTextSet from RDD of TextFeature.
    */
-  def rdd(data: RDD[TextFeature]): DistributedTextSet = {
-    new DistributedTextSet(data)
+  def rdd(data: RDD[TextFeature], memoryType: MemoryType = DRAM): DistributedTextSet = {
+    new DistributedTextSet(data, memoryType)
   }
 
   /**
-   * Read text files as TextSet.
-   * If sc is defined, read texts as DistributedTextSet from local file system or HDFS.
-   * If sc is null, read texts as LocalTextSet from local file system.
+   * Read text files with labels from a directory.
    *
-   * @param path String. Folder path to texts. The folder structure is expected to be the following:
-   *             path
-   *                ├── dir1 - text1, text2, ...
-   *                ├── dir2 - text1, text2, ...
-   *                └── dir3 - text1, text2, ...
-   *             Under the target path, there ought to be N subdirectories (dir1 to dirN). Each
-   *             subdirectory represents a category and contains all texts that belong to such
-   *             category. Each category will be a given a label according to its position in the
-   *             ascending order sorted among all subdirectories.
-   *             All texts will be given a label according to the subdirectory where it is located.
-   *             Labels start from 0.
+   * The directory structure is expected to be the following:
+   * path
+   *   ├── dir1 - text1, text2, ...
+   *   ├── dir2 - text1, text2, ...
+   *   └── dir3 - text1, text2, ...
+   * Under the target path, there ought to be N subdirectories (dir1 to dirN). Each
+   * subdirectory represents a category and contains all texts that belong to such
+   * category. Each category will be a given a label according to its position in the
+   * ascending order sorted among all subdirectories.
+   * All texts will be given a label according to the subdirectory where it is located.
+   * Labels start from 0.
+   *
+   * @param path The folder path to texts. Local file system and HDFS are supported.
+   *             If you want to read from HDFS, sc needs to be specified.
    * @param sc An instance of SparkContext.
    *           If specified, texts will be read as a DistributedTextSet.
    *           Default is null and in this case texts will be read as a LocalTextSet.
@@ -292,15 +295,12 @@ object TextSet {
   }
 
   /**
-   * Read texts from csv file.
+   * Read texts with id from csv file.
    * Each record is supposed to contain the following two fields in order:
    * id(String) and text(String).
    *
-   * Note that the csv file should be without header.
-   * If sc is defined, read texts as DistributedTextSet from local file system or HDFS.
-   * If sc is null, read texts as LocalTextSet from local file system.
-   *
-   * @param path The path to the csv file.
+   * @param path The path to the csv file. Local file system and HDFS are supported.
+   *             If you want to read from HDFS, sc needs to be specified.
    * @param sc An instance of SparkContext.
    *           If specified, texts will be read as a DistributedTextSet.
    *           Default is null and in this case texts will be read as a LocalTextSet.
@@ -327,7 +327,7 @@ object TextSet {
   }
 
   /**
-   * Read texts from parquet file.
+   * Read texts with id from parquet file.
    * Schema should be the following:
    * "id"(String) and "text"(String).
    *
@@ -365,7 +365,8 @@ object TextSet {
   def fromRelationPairs(
       relations: RDD[Relation],
       corpus1: TextSet,
-      corpus2: TextSet): DistributedTextSet = {
+      corpus2: TextSet,
+      memoryType: MemoryType = DRAM): DistributedTextSet = {
     val pairsRDD = Relations.generateRelationPairs(relations)
     require(corpus1.isDistributed, "corpus1 must be a DistributedTextSet")
     require(corpus2.isDistributed, "corpus2 must be a DistributedTextSet")
@@ -392,8 +393,57 @@ object TextSet {
       val label = Tensor(Array(1.0f, 0.0f), Array(2, 1))
       textFeature(TextFeature.sample) = Sample(feature, label)
       textFeature
+    }).setName("Pairwise Training Set")
+    TextSet.rdd(res, memoryType)
+  }
+
+  /**
+   * Generate a TextSet for pairwise training using Relation array.
+   *
+   * @param relations Array of [[Relation]].
+   * @param corpus1 LocalTextSet that contains all [[Relation.id1]]. For each TextFeature
+   *                in corpus1, text must have been transformed to indexedTokens of the same length.
+   * @param corpus2 LocalTextSet that contains all [[Relation.id2]]. For each TextFeature
+   *                in corpus2, text must have been transformed to indexedTokens of the same length.
+   * @return LocalTextSet.
+   */
+  def fromRelationPairs(
+      relations: Array[Relation],
+      corpus1: TextSet,
+      corpus2: TextSet): LocalTextSet = {
+    val pairsArray = Relations.generateRelationPairs(relations)
+    require(corpus1.isLocal, "corpus1 must be a LocalTextSet")
+    require(corpus2.isLocal, "corpus2 must be a LocalTextSet")
+    val mapText1: MMap[String, Array[Float]] = MMap()
+    val mapText2: MMap[String, Array[Float]] = MMap()
+    val arrayText1 = corpus1.toLocal().array
+    val arrayText2 = corpus2.toLocal().array
+    for (text <- arrayText1) {
+      val indices = text.getIndices
+      require(indices != null,
+        "corpus1 haven't been transformed from word to index yet, please word2idx first")
+      mapText1(text.getURI) = indices
+    }
+    for (text <- arrayText2) {
+      val indices = text.getIndices
+      require(indices != null,
+        "corpus2 haven't been transformed from word to index yet, please word2idx first")
+      mapText2(text.getURI) = indices
+    }
+    val res = pairsArray.map(x => {
+      val indices1 = mapText1.get(x.id1).get
+      val indices2Pos = mapText2.get(x.id2Positive).get
+      val indices2Neg = mapText2.get(x.id2Negative).get
+      require(indices2Neg.length == indices2Pos.length,
+        "corpus2 contains texts with different lengths, please shapeSequence first")
+      val textFeature = TextFeature(null, x.id1 + x.id2Positive + x.id2Negative)
+      val pairedIndices = indices1 ++ indices2Pos ++ indices1 ++ indices2Neg
+      val feature = Tensor(pairedIndices, Array(2, indices1.length + indices2Pos.length))
+      val label = Tensor(Array(1.0f, 0.0f), Array(2, 1))
+      textFeature(TextFeature.sample) = Sample(feature, label)
+      textFeature
     })
-    TextSet.rdd(res)
+    TextSet.array(res)
   }
 
   /**
@@ -445,8 +495,68 @@ object TextSet {
       val label = Tensor(x.map(_._3.toFloat), Array(text2Array.length, 1))
       textFeature(TextFeature.sample) = Sample(feature, label)
       textFeature
-    })
+    }).setName("Listwise Evaluation Set")
     TextSet.rdd(res)
+  }
+
+  /**
+   * Generate a TextSet for ranking using Relation array.
+   *
+   * @param relations Array of [[Relation]].
+   * @param corpus1 LocalTextSet that contains all [[Relation.id1]]. For each TextFeature
+   *                in corpus1, text must have been transformed to indexedTokens of the same length.
+   * @param corpus2 LocalTextSet that contains all [[Relation.id2]]. For each TextFeature
+   *                in corpus2, text must have been transformed to indexedTokens of the same length.
+   * @return LocalTextSet.
+   */
+  def fromRelationLists(
+      relations: Array[Relation],
+      corpus1: TextSet,
+      corpus2: TextSet): LocalTextSet = {
+    require(corpus1.isLocal, "corpus1 must be a LocalTextSet")
+    require(corpus2.isLocal, "corpus2 must be a LocalTextSet")
+    val mapText1: MMap[String, Array[Float]] = MMap()
+    val mapText2: MMap[String, Array[Float]] = MMap()
+    val arrayText1 = corpus1.toLocal().array
+    val arrayText2 = corpus2.toLocal().array
+    for (text <- arrayText1) {
+      val indices = text.getIndices
+      require(indices != null,
+        "corpus1 haven't been transformed from word to index yet, please word2idx first")
+      mapText1(text.getURI) = indices
+    }
+    for (text <- arrayText2) {
+      val indices = text.getIndices
+      require(indices != null,
+        "corpus2 haven't been transformed from word to index yet, please word2idx first")
+      mapText2(text.getURI) = indices
+    }
+    val text1Map: MMap[String, ArrayBuffer[(String, Int)]] = MMap()
+    for (rel <- relations) {
+      if (! text1Map.contains(rel.id1)) {
+        val id2Array: ArrayBuffer[(String, Int)] = ArrayBuffer()
+        id2Array.append((rel.id2, rel.label))
+        text1Map(rel.id1) = id2Array
+      }
+      else {
+        val id2Array = text1Map(rel.id1)
+        id2Array.append((rel.id2, rel.label))
+      }
+    }
+    val features: ArrayBuffer[TextFeature] = ArrayBuffer()
+    for((id1, id2LabelArray) <- text1Map) {
+      val id2ArrayLength = id2LabelArray.length
+      val textFeature = TextFeature(null, uri = id1 ++ id2LabelArray.map(_._1).mkString(""))
+      val indices2Array = id2LabelArray.map(x => {mapText2(x._1.toString)})
+      val indices1 = mapText1(id1)
+      val data = indices2Array.flatMap(indices1 ++ _).toArray
+      val feature = Tensor(data,
+        Array(id2ArrayLength, indices1.length + indices2Array.head.length))
+      val label = Tensor(id2LabelArray.toArray.map(_._2.toFloat), Array(id2ArrayLength, 1))
+      textFeature(TextFeature.sample) = Sample(feature, label)
+      features.append(textFeature)
+    }
+    TextSet.array(features.toArray)
   }
 
   /**
@@ -545,7 +655,8 @@ class LocalTextSet(var array: Array[TextFeature]) extends TextSet {
 /**
  * DistributedTextSet is comprised of RDD of TextFeature.
  */
-class DistributedTextSet(var rdd: RDD[TextFeature]) extends TextSet {
+class DistributedTextSet(var rdd: RDD[TextFeature],
+                         memoryType: MemoryType = DRAM) extends TextSet {
 
   override def transform(transformer: Preprocessing[TextFeature, TextFeature]): TextSet = {
     rdd = transformer(rdd)
@@ -565,11 +676,13 @@ class DistributedTextSet(var rdd: RDD[TextFeature]) extends TextSet {
   }
 
   override def toDataSet: DataSet[Sample[Float]] = {
-    DataSet.rdd(rdd.map(_[Sample[Float]](TextFeature.sample)))
+    FeatureSet.rdd(rdd.map(_[Sample[Float]](TextFeature.sample))
+      .setName(s"Samples in ${rdd.name}"),
+      memoryType)
   }
 
   override def randomSplit(weights: Array[Double]): Array[TextSet] = {
-    rdd.randomSplit(weights).map(TextSet.rdd)
+    rdd.randomSplit(weights).map(v => TextSet.rdd(v, this.memoryType))
   }
 
   override def generateWordIndexMap(

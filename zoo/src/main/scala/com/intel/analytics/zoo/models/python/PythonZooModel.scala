@@ -21,13 +21,13 @@ import java.util.{List => JList, Map => JMap}
 import com.intel.analytics.bigdl.{Criterion, dataset}
 import com.intel.analytics.bigdl.dataset.PaddingParam
 import com.intel.analytics.bigdl.nn.abstractnn.{AbstractModule, Activity}
-import com.intel.analytics.bigdl.nn.keras.KerasLayer
+import com.intel.analytics.bigdl.nn.keras.{KerasLayer, KerasModel}
 import com.intel.analytics.bigdl.optim.{OptimMethod, ValidationMethod, ValidationResult}
 import com.intel.analytics.bigdl.python.api.{EvaluatedResult, JTensor, Sample}
 import com.intel.analytics.bigdl.tensor.Tensor
 import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric
 import com.intel.analytics.bigdl.transform.vision.image.ImageFeature
-import com.intel.analytics.bigdl.utils.Shape
+import com.intel.analytics.bigdl.utils.{Shape, Table}
 import com.intel.analytics.zoo.common.PythonZoo
 import com.intel.analytics.zoo.feature.common.Preprocessing
 import com.intel.analytics.zoo.feature.image._
@@ -200,21 +200,21 @@ class PythonZooModel[T: ClassTag](implicit ev: TensorNumeric[T]) extends PythonZ
     com.intel.analytics.zoo.models.anomalydetection.Utils.standardScale(df, fields)
   }
 
-  def toUnrolledJavaRdd(features: RDD[FeatureLabelIndex[Double]]): JavaRDD[JList[Any]] = {
-    features.map(x =>
-      List(x.feature, x.label,
-        x.index.toDouble).asJava).toJavaRDD()
-  }
-
   def unroll(dataRdd: JavaRDD[JList[Double]],
-      unrollLength: Int,
-      predictStep: Int = 1): JavaRDD[JList[Any]] = {
-    val rdd: RDD[Array[Double]] = dataRdd.rdd.map(x => x.asScala.toArray)
-    val unrolled = AnomalyDetector.unroll[Double](rdd, unrollLength, predictStep)
+             unrollLength: Int,
+             predictStep: Int = 1): JavaRDD[JList[String]] = {
+    val rdd: RDD[Array[Float]] = dataRdd.rdd.map(x => x.asScala.toArray.map(_.toFloat))
+    val unrolled = AnomalyDetector.unroll[Float](rdd, unrollLength, predictStep)
     toUnrolledJavaRdd(unrolled)
   }
 
-  def toAnomaliesJavaRdd(anomaliesRdd: RDD[(Double, Double, Any)]): JavaRDD[JList[Any]] = {
+  private def toUnrolledJavaRdd(features: RDD[FeatureLabelIndex[Float]]): JavaRDD[JList[String]] = {
+    features.map(x =>
+      List(x.feature.map(x => x.mkString("|")).mkString(","), x.label.toString,
+        x.index.toString).asJava).toJavaRDD()
+  }
+
+  private def toAnomaliesJavaRdd(anomaliesRdd: RDD[(Double, Double, Any)]): JavaRDD[JList[Any]] = {
     anomaliesRdd.map(x =>
       List(x._1, x._2, x._3.asInstanceOf[Any])
         .asJava).toJavaRDD()
@@ -446,9 +446,10 @@ class PythonZooModel[T: ClassTag](implicit ev: TensorNumeric[T]) extends PythonZ
     inputShape: JList[Int],
     outputShape: JList[Int],
     bridge: KerasLayer[Activity, Activity, T] = null,
-    generator: KerasLayer[Activity, Activity, T] = null): Seq2seq[T] = {
+    generator: KerasLayer[Activity, Activity, T] = null,
+    model: AbstractModule[Table, Tensor[T], T]): Seq2seq[T] = {
     Seq2seq(encoder, decoder, toScalaShape(inputShape),
-      toScalaShape(outputShape), bridge, generator)
+      toScalaShape(outputShape), bridge, generator, model)
   }
 
   def evaluateNDCG(
@@ -464,5 +465,45 @@ class PythonZooModel[T: ClassTag](implicit ev: TensorNumeric[T]) extends PythonZ
       x: TextSet,
       threshold: Double): Double = {
     ranker.evaluateMAP(x, threshold)
+  }
+
+  def seq2seqSetCheckpoint(model: Seq2seq[T],
+    path: String,
+    overWrite: Boolean = true): Unit = {
+    model.setCheckpoint(path, overWrite)
+  }
+
+  def loadSeq2seq(path: String,
+    weightPath: String = null): Seq2seq[T] = {
+    Seq2seq.loadModel(path, weightPath)
+  }
+
+  def seq2seqCompile(
+    model: Seq2seq[T],
+    optimizer: OptimMethod[T],
+    loss: Criterion[T],
+    metrics: JList[ValidationMethod[T]] = null): Unit = {
+    model.compile(optimizer, loss,
+      if (metrics == null) null else metrics.asScala.toList)
+  }
+
+  def seq2seqFit(model: Seq2seq[T],
+    x: JavaRDD[Sample],
+    batchSize: Int,
+    nbEpoch: Int,
+    validationData: JavaRDD[Sample] = null): Unit = {
+    model.fit(toJSample(x), batchSize, nbEpoch, toJSample(validationData))
+  }
+
+  def seq2seqInfer(model: Seq2seq[T],
+    input: JTensor,
+    startSign: JTensor,
+    maxSeqLen: Int = 30,
+    stopSign: JTensor = null,
+    buildOutput: KerasLayer[Tensor[T], Tensor[T], T]): JTensor = {
+    val result =
+      model.infer(toTensor(input), toTensor(startSign), maxSeqLen,
+        toTensor(stopSign), buildOutput)
+    toJTensor(result)
   }
 }

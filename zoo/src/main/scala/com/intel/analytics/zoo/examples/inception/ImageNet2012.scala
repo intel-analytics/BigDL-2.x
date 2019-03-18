@@ -18,8 +18,8 @@ package com.intel.analytics.zoo.examples.inception
 
 import com.intel.analytics.bigdl.DataSet
 import com.intel.analytics.bigdl.dataset._
-import com.intel.analytics.bigdl.dataset.image.{BGRImgCropper, BGRImgNormalizer, BytesToBGRImg, MTLabeledBGRImgToBatch, HFlip => DatasetHFlip}
-import com.intel.analytics.zoo.feature.{DistributedFeatureSet, FeatureSet}
+import com.intel.analytics.bigdl.dataset.image.{BGRImgCropper, BGRImgNormalizer, BytesToBGRImg, CropCenter, MTLabeledBGRImgToBatch, HFlip => DatasetHFlip}
+import com.intel.analytics.zoo.feature.{FeatureSet}
 import com.intel.analytics.zoo.feature.pmem.{DRAM, MemoryType, PMEM}
 import com.intel.analytics.zoo.pipeline.api.keras.layers.utils.EngineRef
 import org.apache.hadoop.io.Text
@@ -29,12 +29,13 @@ object ImageNet2012 {
 
   /**
    * Extract hadoop sequence files from an HDFS path
+   *
    * @param url
    * @param sc
    * @param classNum
    * @return
    */
-  private def readFromSeqFiles(url: String, sc: SparkContext, classNum: Int) = {
+  private[inception] def readFromSeqFiles(url: String, sc: SparkContext, classNum: Int) = {
     val nodeNumber = EngineRef.getNodeNumber()
     val coreNumber = EngineRef.getCoreNumber()
     val rawData = sc.sequenceFile(url, classOf[Text], classOf[Text],
@@ -46,6 +47,7 @@ object ImageNet2012 {
 
   /**
    * get label from text of sequence file,
+   *
    * @param data text of sequence file, this text can split into parts by "\n"
    * @return
    */
@@ -68,8 +70,8 @@ object ImageNet2012 {
     classNumber: Int,
     memoryType: MemoryType = DRAM
   )
-  : DataSet[MiniBatch[Float]] = {
-    val rawData = readFromSeqFiles(path, sc, classNumber)
+  : FeatureSet[MiniBatch[Float]] = {
+    val rawData = readFromSeqFiles(path, sc, classNumber).setName("ImageNet2012 Training Set")
     val featureSet = FeatureSet.rdd(rawData, memoryType = memoryType)
     featureSet.transform(
       MTLabeledBGRImgToBatch[ByteRecord](
@@ -80,4 +82,31 @@ object ImageNet2012 {
           -> DatasetHFlip(0.5) -> BGRImgNormalizer(0.485, 0.456, 0.406, 0.229, 0.224, 0.225))
       ))
   }
+}
+
+
+object ImageNet2012Val {
+  def apply(
+    path : String,
+    sc: SparkContext,
+    imageSize : Int,
+    batchSize : Int,
+    nodeNumber: Int,
+    coresPerNode: Int,
+    classNumber: Int,
+    memoryType: MemoryType = DRAM
+  ): FeatureSet[MiniBatch[Float]] = {
+    val rawData = ImageNet2012.readFromSeqFiles(path, sc, classNumber)
+      .setName("ImageNet2012 Validation Set")
+    val featureSet = FeatureSet.rdd(rawData, memoryType = memoryType)
+    featureSet.transform(
+      MTLabeledBGRImgToBatch[ByteRecord](
+        width = imageSize,
+        height = imageSize,
+        batchSize = batchSize,
+        transformer = (BytesToBGRImg() -> BGRImgCropper(imageSize, imageSize, CropCenter)
+          -> BGRImgNormalizer(0.485, 0.456, 0.406, 0.229, 0.224, 0.225))
+      ))
+  }
+
 }

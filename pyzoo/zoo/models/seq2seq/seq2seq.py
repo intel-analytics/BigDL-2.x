@@ -14,11 +14,13 @@
 # limitations under the License.
 #
 
-
+from bigdl.nn.layer import Layer
 from zoo.pipeline.api.keras.layers import *
 from zoo.models.common import ZooModel
 
 from zoo.pipeline.api.keras.engine import ZooKerasLayer
+from zoo.pipeline.api.keras.models import Model
+
 
 if sys.version >= '3':
     long = int
@@ -69,7 +71,7 @@ class RNNEncoder(ZooKerasLayer):
         """
         rnn_type: currently support "simplernn | lstm | gru"
         nlayers: number of layers used in encoder
-        decoder_hiddenSize: hidden size of encoder
+        hidden_size: hidden size of encoder
         embedding: embedding layer in encoder, `None` is supported
         """
         rnns = createRNN(rnn_type, nlayers, hidden_size)
@@ -108,7 +110,7 @@ class RNNDecoder(ZooKerasLayer):
         """
         rnn_type: currently support "simplernn | lstm | gru"
         nlayers: number of layers used in decoder
-        decoder_hiddenSize: hidden size of decoder
+        hidden_size: hidden size of decoder
         embedding: embedding layer in decoder, `None` is supported
         """
         rnns = createRNN(rnn_type, nlayers, hidden_size)
@@ -171,15 +173,120 @@ class Seq2seq(ZooModel):
     >>> bridge = Bridge.initialize("dense", 4)
     creating: createZooKerasBridge
     >>> seq2seq = Seq2seq(encoder, decoder, [2, 4], [2, 4], bridge)
+    creating: createZooKerasInput
+    creating: createZooKerasInput
+    creating: createZooKerasSelectTable
+    creating: createZooKerasModel
     creating: createZooSeq2seq
     """
 
     def __init__(self, encoder, decoder, input_shape, output_shape, bridge=None,
                  generator=None, bigdl_type="float"):
-        super(Seq2seq, self).__init__(None, bigdl_type,
-                                      encoder,
-                                      decoder,
-                                      list(input_shape) if input_shape else None,
-                                      list(output_shape) if output_shape else None,
-                                      bridge,
-                                      generator)
+        if (input_shape is None) or (output_shape is None):
+            raise TypeError('input_shape and output_shape cannot be None')
+        self.encoder = encoder
+        self.decoder = decoder
+        self.input_shape = list(input_shape)
+        self.output_shape = list(output_shape)
+        self.bridge = bridge
+        self.generator = generator
+        self.bigdl_type = bigdl_type
+        self.model = self.build_model()
+        super(Seq2seq, self).__init__(None, self.bigdl_type,
+                                      self.encoder,
+                                      self.decoder,
+                                      self.input_shape,
+                                      self.output_shape,
+                                      self.bridge,
+                                      self.generator,
+                                      self.model)
+
+    def build_model(self):
+        encoder_input = Input(name="encoder_input", shape=self.input_shape)
+        decoder_input = Input(name="decoder_input", shape=self.output_shape)
+        encoder_output = self.encoder(encoder_input)
+
+        encoder_final_states = SelectTable(1)(encoder_output)
+        decoder_init_states =\
+            self.bridge(encoder_final_states) if self.bridge else encoder_final_states
+
+        decoder_output = self.decoder([decoder_input, decoder_init_states])
+
+        output = self.generator(decoder_output) if self.generator else decoder_output
+
+        return Model([encoder_input, decoder_input], output)
+
+    def set_checkpoint(self, path, over_write=True):
+        callBigDlFunc(self.bigdl_type, "seq2seqSetCheckpoint",
+                      self.value,
+                      path,
+                      over_write)
+
+    @staticmethod
+    def load_model(path, weight_path=None, bigdl_type="float"):
+        """
+        Load an existing Seq2seq model (with weights).
+
+        # Arguments
+        path: The path for the pre-defined model.
+              Local file system, HDFS and Amazon S3 are supported.
+              HDFS path should be like 'hdfs://[host]:[port]/xxx'.
+              Amazon S3 path should be like 's3a://bucket/xxx'.
+        weight_path: The path for pre-trained weights if any. Default is None.
+        """
+        jmodel = callBigDlFunc(bigdl_type, "loadSeq2seq", path, weight_path)
+        model = ZooModel._do_load(jmodel, bigdl_type)
+        model.__class__ = Seq2seq
+        return model
+
+    # For the following methods, please refer to KerasNet for documentation.
+    def compile(self, optimizer, loss, metrics=None):
+        if isinstance(optimizer, six.string_types):
+            optimizer = to_bigdl_optim_method(optimizer)
+        if isinstance(loss, six.string_types):
+            loss = to_bigdl_criterion(loss)
+        if metrics and all(isinstance(metric, six.string_types) for metric in metrics):
+            metrics = to_bigdl_metrics(metrics, loss)
+        callBigDlFunc(self.bigdl_type, "seq2seqCompile",
+                      self.value,
+                      optimizer,
+                      loss,
+                      metrics)
+
+    def fit(self, x, batch_size=32, nb_epoch=10, validation_data=None):
+        callBigDlFunc(self.bigdl_type, "seq2seqFit",
+                      self.value,
+                      x,
+                      batch_size,
+                      nb_epoch,
+                      validation_data)
+
+    def infer(self, input, start_sign, max_seq_len=30, stop_sign=None, build_output=None):
+        """
+        Inference API for given input
+
+        # Arguments
+        input: a sequence of data feed into encoder, eg: batch x seqLen x featureSize
+        start_sign: a ndarray which represents start and is fed into decoder
+        max_seq_len: max sequence length for final output
+        stop_sign: a ndarray that indicates model should stop infer further if current output
+        is the same with stopSign
+        build_output: Feeding model output to buildOutput to generate final result
+        """
+        jinput, input_is_table = Layer.check_input(input)
+        assert not input_is_table
+        jstart_sign, start_sign_is_table = Layer.check_input(start_sign)
+        assert not start_sign_is_table
+        if stop_sign:
+            jstop_sign, stop_sign_is_table = Layer.check_input(stop_sign)
+            assert not start_sign_is_table
+        else:
+            jstop_sign = None
+        results = callBigDlFunc(self.bigdl_type, "seq2seqInfer",
+                                self.value,
+                                jinput[0],
+                                jstart_sign[0],
+                                max_seq_len,
+                                jstop_sign[0] if jstop_sign else None,
+                                build_output)
+        return results

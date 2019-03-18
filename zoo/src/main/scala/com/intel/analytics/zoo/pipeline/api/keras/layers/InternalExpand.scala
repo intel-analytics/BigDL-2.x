@@ -63,16 +63,6 @@ private[zoo] class InternalExpand[T: ClassTag](tgtSizes: Array[Int])
     val tensorSize = input.size()
 
     gradInput = Tensor[T](tensorSize)
-//    val gradInput2 = Tensor[T](tensorSize)
-//    var j = 0
-//    while (j < tensorDim) {
-//      if (tgtSizes(j) != -1) {
-//        if (tensorSize(j) == 1) {
-//          gradOutput.split(j + 1).foreach(gradInput2.add(_))
-//        }
-//      }
-//      j += 1
-//    }
     val expandDim = new ArrayBuffer[Int]()
     var i = 0
     while (i < tensorDim) {
@@ -100,7 +90,6 @@ private[zoo] class InternalExpand[T: ClassTag](tgtSizes: Array[Int])
       i -= 1
     }
     gradInput = _gradOutput
-//    gradInput = gradInput2
     gradInput
   }
 

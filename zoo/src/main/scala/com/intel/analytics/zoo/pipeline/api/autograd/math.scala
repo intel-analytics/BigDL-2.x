@@ -280,13 +280,16 @@ object AutoGrad {
     if (xShape.length == 2 && yShape.length == 2) {
       left = 0
       right = 1
-    } else if ((xShape.length >= 3 && yShape.length >= 3)) {
+    } else if (xShape.length == 3 && yShape.length == 3) {
       left = 1
       right = 2
-      } else if (xShape.length > 4 && yShape.length > 4) {
+    } else if (xShape.length == 4 && yShape.length == 4) {
+      left = 2
+      right = 3
+    } else if (xShape.length > 4 && yShape.length > 4) {
         throw new IllegalArgumentException(s"Only support 2D/3D/4D input for now," +
           s"but got [${xShape.mkString(",")}] and [${xShape.mkString(",")}]")
-      }
+    }
     if (axes != null) {
       require(axes.length == 2, s"axes.length should be 2, but got: ${axes.length}")
       require(axes(0) >= left && axes(0) <= right,
@@ -538,21 +541,11 @@ class Variable[T: ClassTag] private[zoo] (private[zoo] var node: ModuleNode[T],
 
     var yShape = yy.getOutputShape().toSingle()
     var xShape = xx.getOutputShape().toSingle()
-    // add batch dim if it doesn't exist
-    if (yShape.head != -1) {
-      yy = AutoGrad.expandDims(yy, 0)
-      yShape = yy.getOutputShape().toSingle()
-    }
-    if (xShape.head != -1) {
+    if (yShape.size > xShape.size) {
       xx = AutoGrad.expandDims(xx, 0)
       xShape = xx.getOutputShape().toSingle()
-    }
-
-    if (yShape.size > xShape.size) {
-      xx = AutoGrad.expandDims(xx, 1)
-      xShape = xx.getOutputShape().toSingle()
     } else if (yShape.size < xShape.size) {
-      yy = AutoGrad.expandDims(yy, 1)
+      yy = AutoGrad.expandDims(yy, 0)
       yShape = yy.getOutputShape().toSingle()
     }
 
@@ -583,6 +576,10 @@ class Variable[T: ClassTag] private[zoo] (private[zoo] var node: ModuleNode[T],
     Variable(o.inputs(this.node))
   }
 
+  /**
+   * Expand variable to configured size
+   * @param sizes target variable sizes, dim whose size is -1 will be ignored
+   */
   def expand(sizes: List[Int]): Variable[T] = {
     val o =
       new KerasLayerWrapper[T](
