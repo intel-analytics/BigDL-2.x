@@ -16,7 +16,6 @@
 
 import argparse
 import cv2
-from pyspark import SparkContext
 from pyspark.streaming import StreamingContext
 
 from zoo.common.nncontext import init_nncontext
@@ -26,28 +25,35 @@ from zoo.models.image.objectdetection import *
 sc = init_nncontext("Streaming Object Detection Example")
 ssc = StreamingContext(sc, 1)
 
-lines = ssc.socketTextStream("localhost", 9999)
-
-
-parser = argparse.ArgumentParser()
-parser.add_argument('model_path', help="Path where the model is stored")
-parser.add_argument('img_path', help="Path where the images are stored")
-parser.add_argument('output_path', help="Path to store the detection results")
-parser.add_argument("--partition_num", type=int, default=1, help="The number of partitions")
-
-
-def predict(model_path, img_path, output_path, partition_num):
-    model = ObjectDetector.load_model(model_path)
-    image_set = ImageSet.read(img_path, sc, image_codec=1, min_partitions=partition_num)
-    output = model.predict_image_set(image_set)
-
-    config = model.get_config()
-    visualizer = Visualizer(config.label_map(), encoding="jpg")
-    visualized = visualizer(output).get_image(to_chw=False).collect()
-    for img_id in range(len(visualized)):
-        cv2.imwrite(output_path + '/' + str(img_id) + '.jpg', visualized[img_id])
-
 
 if __name__ == "__main__":
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--model', help="Path where the model is stored")
+    parser.add_argument('--img_path', help="Path where the images are stored")
+    parser.add_argument('--output_path', help="Path to store the detection results")
+    parser.add_argument('--streaming_path', help="Path to store the streaming text")
+    parser.add_argument("--partition_num", type=int, default=1, help="The number of partitions")
+
     args = parser.parse_args()
-    predict(args.model_path, args.img_path, args.output_path, args.partition_num)
+    lines = ssc.textFileStream(args.streaming_path)
+
+    model = ObjectDetector.load_model(args.model_path)
+
+    def predict(path):
+        image_set = ImageSet.read(args.img_path, sc, image_codec=1, min_partitions=args.partition_num)
+        output = model.predict_image_set(image_set)
+        model.predict_image()
+
+        config = model.get_config()
+        visualizer = Visualizer(config.label_map(), encoding="jpg")
+        visualized = visualizer(output).get_image(to_chw=False).collect()
+        for img_id in range(len(visualized)):
+            cv2.imwrite(args.output_path + '/' + str(img_id) + '.jpg', visualized[img_id])
+
+
+    lines.foreachRDD(predict)
+
+    # Start the computation
+    ssc.start()
+    # Wait for the computation to terminate
+    ssc.awaitTermination()
