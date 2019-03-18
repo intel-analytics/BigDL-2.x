@@ -4,19 +4,20 @@ import com.intel.analytics.bigdl.{Criterion, DataSet, Module}
 import com.intel.analytics.bigdl.dataset.{DistributedDataSet, LocalDataSet, MiniBatch}
 import com.intel.analytics.bigdl.optim._
 import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric
+import com.intel.analytics.zoo.feature.{DistributedFeatureSet, FeatureSet}
 import com.intel.analytics.zoo.pipeline.api.keras.models.{InternalDistriOptimizer, InternalLocalOptimizer}
 
 import scala.reflect.ClassTag
 
 trait AbstractEstimator[T]{
-  def train(trainSet: DataSet[MiniBatch[T]],
+  def train(trainSet: FeatureSet[MiniBatch[T]],
             criterion: Criterion[T] = null,
             endTrigger: Option[Trigger] = None,
             checkPoint: Option[Trigger] = None,
-            validationSet: DataSet[MiniBatch[T]] = null,
+            validationSet: FeatureSet[MiniBatch[T]] = null,
             validationMethod: Array[ValidationMethod[T]] = null): this.type
 
-  def evaluate(validationSet: DataSet[MiniBatch[T]],
+  def evaluate(validationSet: FeatureSet[MiniBatch[T]],
                validationMethod: Array[ValidationMethod[T]]
               ): Map[ValidationMethod[T], ValidationResult]
 
@@ -28,21 +29,19 @@ class Estimator[T: ClassTag] private[zoo](
       modelDir: Option[String] = None)(implicit ev: TensorNumeric[T]) extends AbstractEstimator[T] {
   protected var internalEstimator: AbstractEstimator[T] = null
 
-  override def train(trainSet: DataSet[MiniBatch[T]],
+  override def train(trainSet: FeatureSet[MiniBatch[T]],
             criterion: Criterion[T],
             endTrigger: Option[Trigger] = None,
             checkPoint: Option[Trigger] = None,
-            validationSet: DataSet[MiniBatch[T]] = null,
+            validationSet: FeatureSet[MiniBatch[T]] = null,
             validationMethod: Array[ValidationMethod[T]] = null): this.type = {
     if (internalEstimator == null) {
       internalEstimator = trainSet match {
-        case d: DistributedDataSet[MiniBatch[T]] =>
+        case d: DistributedFeatureSet[MiniBatch[T]] =>
           new InternalDistriOptimizer[T](model, null, criterion)
             .setCheckpointDir(modelDir)
             .setOptimMethods(optimMethods)
-        case l: LocalDataSet[MiniBatch[T]] =>
-          new InternalLocalOptimizer[T](model, l, criterion)
-          // TODO
+        case _ => throw new IllegalArgumentException("Unsupported FeatureSet type.")
       }
     }
     internalEstimator.train(trainSet, criterion, endTrigger, checkPoint,
@@ -50,17 +49,16 @@ class Estimator[T: ClassTag] private[zoo](
     this
   }
 
-  override def evaluate(validationSet: DataSet[MiniBatch[T]],
+  override def evaluate(validationSet: FeatureSet[MiniBatch[T]],
                         validationMethod: Array[ValidationMethod[T]]
               ): Map[ValidationMethod[T], ValidationResult] = {
     if (internalEstimator == null) {
       internalEstimator = validationSet match {
-        case d: DistributedDataSet[MiniBatch[T]] =>
+        case d: DistributedFeatureSet[MiniBatch[T]] =>
           new InternalDistriOptimizer[T](model, null, null)
             .setCheckpointDir(modelDir)
             .setOptimMethods(optimMethods)
-        case l: LocalDataSet[MiniBatch[T]] =>
-          new InternalLocalOptimizer[T](model, l, null)
+        case _ => throw new IllegalArgumentException("Unsupported FeatureSet type.")
         // TODO
       }
     }

@@ -33,7 +33,7 @@ import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric
 import com.intel.analytics.bigdl.utils._
 import com.intel.analytics.bigdl.utils.serializer.{DeserializeContext, ModuleData, ModuleSerializer, SerializeContext}
 import com.intel.analytics.bigdl.visualization.{TrainSummary, ValidationSummary}
-import com.intel.analytics.zoo.feature.DistributedFeatureSet
+import com.intel.analytics.zoo.feature.{DistributedFeatureSet, FeatureSet}
 import com.intel.analytics.zoo.feature.image.ImageSet
 import com.intel.analytics.zoo.feature.text._
 import com.intel.analytics.zoo.pipeline.api.{Net, Predictable}
@@ -907,8 +907,7 @@ private[zoo] class InternalLocalOptimizer[T: ClassTag] (
     model: Module[T],
     ds: LocalDataSet[MiniBatch[T]],
     criterion: Criterion[T])
-  (implicit ev: TensorNumeric[T]) extends LocalOptimizer[T](model, ds, criterion)
-  with AbstractEstimator[T]{
+  (implicit ev: TensorNumeric[T]) extends LocalOptimizer[T](model, ds, criterion) {
 
   def setTrainData(trainingDataSet: DataSet[MiniBatch[T]]): this.type = {
     this.dataset = trainingDataSet
@@ -921,48 +920,6 @@ private[zoo] class InternalLocalOptimizer[T: ClassTag] (
   // neither in optimizer.state nor optimMethod.state.
   // So we can only simply suppose the `epoch` has been correctly updated.
   def endEpoch[T: ClassTag](): Unit = {
-  }
-
-  override def train(
-      trainSet: DataSet[MiniBatch[T]],
-      criterion: Criterion[T],
-      endTrigger: Option[Trigger] = None,
-      checkPoint: Option[Trigger] = None,
-      validationSet: DataSet[MiniBatch[T]] = null,
-      validationMethod: Array[ValidationMethod[T]] = null): this.type = {
-    this.setTrainData(trainSet)
-    val endWhen = if (endTrigger.isDefined) {
-      endTrigger.get
-    } else {
-      Trigger.maxIteration(Int.MaxValue)
-    }
-    this.setEndWhen(endWhen)
-    if (checkPoint.isDefined && checkpointDir.isDefined) {
-      // we should setCheckpoint every time before we call optimize(),
-      // as BigDL will overwrite checkpointPath to its subfolder.
-      this.setCheckpoint(checkpointDir.get+"/models", checkPoint.get)
-    }
-    if (validationMethod != null && validationSet != null) {
-      this.setValidation(checkPoint.get, validationSet, validationMethod)
-    }
-    this.optimize()
-    this
-  }
-
-  override def evaluate(validationSet: DataSet[MiniBatch[T]],
-                        validationMethod: Array[ValidationMethod[T]]
-                       ): Map[ValidationMethod[T], ValidationResult] = {
-
-    //    InternalDistriOptimizer.validate(
-    //      validationTrigger,
-    //      validationDataSet,
-    //      validationMethods,
-    //      models,
-    //      driverState,
-    //      validationSummary,
-    //      _header
-    //    )
-    return null
   }
 }
 
@@ -988,22 +945,17 @@ private[zoo] class InternalDistriOptimizer[T: ClassTag] (
   }
 
   def setTrainData(trainingDataSet: DataSet[MiniBatch[T]]): this.type = {
-    this.dataset = trainingDataSet
-    this.dataset = if (trainingDataSet.isInstanceOf[DistributedFeatureSet[T]]) {
-      trainingDataSet.toDistributed()
-    } else {
-      trainingDataSet
-    }
+    this.dataset = trainingDataSet.toDistributed()
     InternalOptimizerUtil.endEpoch(this)
     this
   }
 
   override def train(
-        trainSet: DataSet[MiniBatch[T]],
+        trainSet: FeatureSet[MiniBatch[T]],
         criterion: Criterion[T],
         endTrigger: Option[Trigger] = None,
         checkPoint: Option[Trigger] = None,
-        validationSet: DataSet[MiniBatch[T]] = null,
+        validationSet: FeatureSet[MiniBatch[T]] = null,
         validationMethod: Array[ValidationMethod[T]] = null): this.type = {
     this.dataset = trainSet
     val endWhen = if (endTrigger.isDefined) {
@@ -1019,7 +971,7 @@ private[zoo] class InternalDistriOptimizer[T: ClassTag] (
     this
   }
 
-  override def evaluate(validationSet: DataSet[MiniBatch[T]],
+  override def evaluate(validationSet: FeatureSet[MiniBatch[T]],
     validationMethod: Array[ValidationMethod[T]]): Map[ValidationMethod[T], ValidationResult] = {
     val validateRDD = validationSet.toDistributed().data(train = false)
     val sc = validateRDD.sparkContext
@@ -1080,14 +1032,14 @@ private[zoo] class InternalDistriOptimizer[T: ClassTag] (
 
 object InternalDistriOptimizer {
 
-  protected def validate[T](validationDataSet: DataSet[MiniBatch[T]],
+  protected def validate[T](validationFeatureSet: FeatureSet[MiniBatch[T]],
                             validationMethods: Array[ValidationMethod[T]],
                             models: RDD[Cache[T]],
                             state: Table,
                             validationSummary: Option[ValidationSummary]
                            ): Map[ValidationMethod[T], ValidationResult] = {
     val vMethods = validationMethods
-    val validateRDD = validationDataSet.toDistributed().data(train = false)
+    val validateRDD = validationFeatureSet.toDistributed().data(train = false)
     val _subModelNumber = EngineRef.getEngineType match {
       case MklBlas => EngineRef.getCoreNumber()
       case MklDnn => 1

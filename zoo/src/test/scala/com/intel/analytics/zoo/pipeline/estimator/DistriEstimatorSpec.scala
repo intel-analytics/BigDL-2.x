@@ -6,10 +6,11 @@ import com.intel.analytics.bigdl.nn._
 import com.intel.analytics.bigdl.optim.{LBFGS, Loss, SGD, Trigger}
 import com.intel.analytics.bigdl.tensor.{Storage, Tensor}
 import com.intel.analytics.bigdl.utils.{Engine, LoggerFilter, RandomGenerator}
+import com.intel.analytics.zoo.feature.DistributedFeatureSet
 import com.intel.analytics.zoo.pipeline.api.keras.ZooSpecHelper
 import com.intel.analytics.zoo.pipeline.api.keras.models.InternalOptimizerUtil
 import org.apache.log4j.{Level, Logger}
-import org.apache.spark.{SparkContext}
+import org.apache.spark.SparkContext
 import org.apache.spark.rdd.RDD
 
 object DistriEstimatorSpec {
@@ -94,14 +95,14 @@ class DistriEstimatorSpec extends ZooSpecHelper {
 
   private var sc: SparkContext = _
 
-  private var dataSet: DistributedDataSet[MiniBatch[Double]] = _
+  private var dataSet: DistributedFeatureSet[MiniBatch[Double]] = _
 
   override def doBefore()= {
     sc = new SparkContext("local[1]", "RDDOptimizerSpec")
 
     val rdd = sc.parallelize(1 to (256 * nodeNumber), nodeNumber).map(prepareData)
 
-    dataSet = new DistributedDataSet[MiniBatch[Double]] {
+    dataSet = new DistributedFeatureSet[MiniBatch[Double]] {
       override def originRDD(): RDD[_] = rdd
 
       override def data(train: Boolean): RDD[MiniBatch[Double]] = rdd
