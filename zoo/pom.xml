@@ -381,6 +381,10 @@
                     <shadedArtifactAttached>false</shadedArtifactAttached>
                     <filters>
                         <filter>
+                            <!-->
+                            To work around https://github.com/intel-analytics/BigDL/issues/2734,
+                            we use shade to inplace BigDL's ZippedPartitionsWithLocalityRDD.
+                            <-->
                             <artifact>com.intel.analytics.bigdl.spark-version:*</artifact>
                             <excludes>
                                 <execlude>
