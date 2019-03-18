@@ -99,9 +99,9 @@ class KerasNet(ZooKerasLayer):
         tag: The string variable represents the scalar wanted
         """
         validation_set = set(('AUC', 'Accuracy', 'BinaryAccuracy', 'CategoricalAccuracy',
-                             'HitRatio', 'Loss', 'MAE', 'NDCG', 'SparseCategoricalAccuracy',
-                             'TFValidationMethod', 'Top1Accuracy',
-                             'Top5Accuracy', 'TreeNNAccuracy'))
+                              'HitRatio', 'Loss', 'MAE', 'NDCG', 'SparseCategoricalAccuracy',
+                              'TFValidationMethod', 'Top1Accuracy',
+                              'Top5Accuracy', 'TreeNNAccuracy'))
         if tag not in validation_set:
             raise TypeError('Only subclasses of ValidationMethod are supported,'
                             + 'which are ' + str(validation_set))
