@@ -19,7 +19,7 @@ package com.intel.analytics.zoo.examples.inception
 import com.intel.analytics.bigdl.DataSet
 import com.intel.analytics.bigdl.dataset._
 import com.intel.analytics.bigdl.dataset.image.{BGRImgCropper, BGRImgNormalizer, BytesToBGRImg, CropCenter, MTLabeledBGRImgToBatch, HFlip => DatasetHFlip}
-import com.intel.analytics.zoo.feature.{DistributedFeatureSet, FeatureSet}
+import com.intel.analytics.zoo.feature.{FeatureSet}
 import com.intel.analytics.zoo.feature.pmem.{DRAM, MemoryType, PMEM}
 import com.intel.analytics.zoo.pipeline.api.keras.layers.utils.EngineRef
 import org.apache.hadoop.io.Text
@@ -70,7 +70,7 @@ object ImageNet2012 {
     classNumber: Int,
     memoryType: MemoryType = DRAM
   )
-  : DataSet[MiniBatch[Float]] = {
+  : FeatureSet[MiniBatch[Float]] = {
     val rawData = readFromSeqFiles(path, sc, classNumber).setName("ImageNet2012 Training Set")
     val featureSet = FeatureSet.rdd(rawData, memoryType = memoryType)
     featureSet.transform(
@@ -95,7 +95,7 @@ object ImageNet2012Val {
     coresPerNode: Int,
     classNumber: Int,
     memoryType: MemoryType = DRAM
-  ): DataSet[MiniBatch[Float]] = {
+  ): FeatureSet[MiniBatch[Float]] = {
     val rawData = ImageNet2012.readFromSeqFiles(path, sc, classNumber)
       .setName("ImageNet2012 Validation Set")
     val featureSet = FeatureSet.rdd(rawData, memoryType = memoryType)

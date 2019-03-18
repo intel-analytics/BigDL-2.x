@@ -246,7 +246,6 @@ class TrainingSpec extends FlatSpec with Matchers with BeforeAndAfter {
     val valArr = api.zooGetScalarFromSummary(model, "Loss", "Validation")
     valArr
   }
-
 }
 
 object DummyDataSet extends LocalDataSet[MiniBatch[Float]] {
