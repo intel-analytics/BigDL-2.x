@@ -34,6 +34,8 @@ def read_word_index(path):
 
 if __name__ == "__main__":
     parser = OptionParser()
+    parser.add_option("--host", dest="host", default="localhost")
+    parser.add_option("--port", dest="port", default="9999")
     parser.add_option("--index_path", dest="index_path")
     parser.add_option("--partition_num", dest="partition_num", default="4")
     parser.add_option("--token_length", dest="token_length", default="200")
@@ -43,10 +45,11 @@ if __name__ == "__main__":
     parser.add_option("-m", "--model", dest="model")
 
     (options, args) = parser.parse_args(sys.argv)
-    sc = init_nncontext("Text Classification Example")
-    ssc = StreamingContext(sc, 1)
 
-    lines = ssc.socketTextStream("localhost", 9999)
+    sc = init_nncontext("Text Classification Example")
+    ssc = StreamingContext(sc, 3)
+    lines = ssc.socketTextStream(options.host, int(options.port))
+
     model = TextClassifier.load_model(options.model)
     word2index = read_word_index(options.index_path)
 
@@ -56,7 +59,7 @@ if __name__ == "__main__":
         text_set = DistributedTextSet(record)
         # TODO waiting for Kai's pr
         # text_set.set_word_index(word2index)
-        print("Processing text dataset...")
+        print("Processing text...")
         transformed = text_set.tokenize().normalize()\
             .word2idx(remove_topN=10, max_words_num=int(options.max_words_num))\
             .shape_sequence(len=int(options.sequence_length)).generate_sample()
