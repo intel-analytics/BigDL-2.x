@@ -244,6 +244,14 @@ class TrainingSpec extends FlatSpec with Matchers with BeforeAndAfter {
 
     val trainArr = api.zooGetScalarFromSummary(model, "Loss", "Train")
     val valArr = api.zooGetScalarFromSummary(model, "Loss", "Validation")
+
+    // delete test directory
+    import scala.reflect.io.Directory
+    import java.io.File
+    val dir = new Directory(new File("./testTensorBoard"))
+    if(dir.exists && dir.isDirectory){
+      dir.deleteRecursively()
+    }
     valArr
   }
 }

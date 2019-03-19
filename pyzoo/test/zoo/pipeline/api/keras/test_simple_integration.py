@@ -77,6 +77,10 @@ class TestSimpleIntegration(ZooTestCase):
         model.fit(X_train, y_train, batch_size=112, nb_epoch=2, validation_data=(X_test, y_test))
         model.set_gradient_clipping_by_l2_norm(0.2)
         model.fit(X_train, y_train, batch_size=112, nb_epoch=2, validation_data=(X_test, y_test))
+        # train_loss = model.get_train_summary("Loss")
+        # val_loss = model.get_validation_summary("Loss")
+        # np.array(train_loss)
+        # np.array(val_loss)
         model.evaluate(X_test, y_test, batch_size=112)
         result = model.predict(X_test).collect()
         for res in result:
