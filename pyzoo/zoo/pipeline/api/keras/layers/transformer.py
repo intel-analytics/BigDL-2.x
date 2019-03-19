@@ -58,12 +58,12 @@ class TransformerLayer(ZooKerasLayer):
 
         input = Input(shape=list(input_shape))
         embedding = embedding_layer(input)
-        embedding_size = embedding.get_output_shape()[-1]
+        hidden_size = embedding.get_output_shape()[-1]
 
         next_input = embedding
 
         for _ in range(n_block):
-            output = self.block(next_input, embedding_size)
+            output = self.block(next_input, hidden_size)
             next_input = output
 
         model = Model(input, next_input)
@@ -149,7 +149,7 @@ class TransformerLayer(ZooKerasLayer):
 
     @classmethod
     def init_with_default_embedding(cls, vocab=40990, seq_len=77, n_block=12, resid_drop=0.1,
-                                    attn_drop=0.1, n_head=12, embedding_size=768,
+                                    attn_drop=0.1, n_head=12, hidden_size=768,
                                     embedding_drop=0.1, mask_attention=True):
         """
         vocab: vocabulary size of training data, default is 40990
@@ -158,7 +158,7 @@ class TransformerLayer(ZooKerasLayer):
         resid_drop: drop probability of projection, default is 0.1
         attn_drop: drop probability of attention, default is 0.1
         n_head: head number, default is 12
-        embedding_size: embedding size
+        hidden_size: is also embedding size
         embedding_drop: drop probability of embedding layer, default is 0.1
         mask_attention: whether unidirectional or bidirectional, default is true(unidirectional)
         """
@@ -166,9 +166,9 @@ class TransformerLayer(ZooKerasLayer):
         embedding = Sequential()
 
         embedding.add(Reshape([seq_len * 2], input_shape=(seq_len, 2)))\
-            .add(Embedding(vocab, embedding_size, input_length=seq_len * 2))\
+            .add(Embedding(vocab, hidden_size, input_length=seq_len * 2))\
             .add(Dropout(embedding_drop))\
-            .add(Reshape((seq_len, 2, embedding_size)))\
+            .add(Reshape((seq_len, 2, hidden_size)))\
             .add(KerasLayerWrapper(Sum(dimension=3, squeeze=True)))
         # walk around for bug #1208, need remove this line after the bug fixed
         embedding.add(KerasLayerWrapper(Squeeze(dim=3)))

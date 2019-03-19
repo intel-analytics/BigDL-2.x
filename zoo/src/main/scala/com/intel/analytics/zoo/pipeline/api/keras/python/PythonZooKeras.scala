@@ -141,17 +141,16 @@ class PythonZooKeras[T: ClassTag](implicit ev: TensorNumeric[T]) extends PythonZ
   }
 
   private def processEvaluateResult(
-    resultArray: Array[(ValidationResult, ValidationMethod[T])]): JList[EvaluatedResult] = {
+    resultArray: Array[(ValidationResult, ValidationMethod[T])]): JList[Float] = {
     resultArray.map { result =>
-      EvaluatedResult(result._1.result()._1, result._1.result()._2,
-        result._2.toString())
+      result._1.result()._1
     }.toList.asJava
   }
 
   def zooEvaluate(
       module: KerasNet[T],
       x: JavaRDD[Sample],
-      batchSize: Int = 32): JList[EvaluatedResult] = {
+      batchSize: Int = 32): JList[Float] = {
     val resultArray = module.evaluate(toJSample(x), batchSize)
     processEvaluateResult(resultArray)
   }
@@ -159,7 +158,7 @@ class PythonZooKeras[T: ClassTag](implicit ev: TensorNumeric[T]) extends PythonZ
   def zooEvaluate(
       module: KerasNet[T],
       x: ImageSet,
-      batchSize: Int): JList[EvaluatedResult] = {
+      batchSize: Int): JList[Float] = {
     val resultArray = module.evaluate(x, batchSize)
     processEvaluateResult(resultArray)
   }
@@ -167,7 +166,7 @@ class PythonZooKeras[T: ClassTag](implicit ev: TensorNumeric[T]) extends PythonZ
   def zooEvaluate(
       module: KerasNet[T],
       x: TextSet,
-      batchSize: Int): JList[EvaluatedResult] = {
+      batchSize: Int): JList[Float] = {
     val resultArray = module.evaluate(x, batchSize)
     processEvaluateResult(resultArray)
   }
@@ -355,7 +354,8 @@ class PythonZooKeras[T: ClassTag](implicit ev: TensorNumeric[T]) extends PythonZ
       bRegularizer: Regularizer[T] = null,
       bias: Boolean = true,
       inputShape: JList[Int] = null): Convolution1D[T] = {
-    Convolution1D(nbFilter, filterLength, init, limits.asScala.toArray, activation, borderMode,
+    val configedValue = if (limits != null) limits.asScala.toArray else null
+    Convolution1D(nbFilter, filterLength, init, configedValue, activation, borderMode,
       subsampleLength, wRegularizer, bRegularizer, bias, toScalaShape(inputShape))
   }
 
@@ -1301,7 +1301,7 @@ class PythonZooKeras[T: ClassTag](implicit ev: TensorNumeric[T]) extends PythonZ
     attnDrop: Double,
     headNum: Int,
     maskAttention: Boolean,
-    embeddingLayer: KerasNet[T]): TransformerLayer[T] = {
+    embeddingLayer: KerasLayer[Tensor[T], Tensor[T], T]): TransformerLayer[T] = {
     TransformerLayer(nBlock = layerNum, residPdrop = residDrop,
       attnPdrop = attnDrop, nHead = headNum,
       maskAttention = maskAttention, embeddingLayer = embeddingLayer)

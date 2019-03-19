@@ -46,7 +46,7 @@ class TransformerLayer[T: ClassTag](
   val attnPdrop: Double,
   val nHead: Int,
   val maskAttention: Boolean,
-  val embeddingLayer: KerasNet[T],
+  val embeddingLayer: KerasLayer[Tensor[T], Tensor[T], T],
   var inputShape: Shape = null)(implicit ev: TensorNumeric[T])
   extends KerasLayer[Tensor[T], Tensor[T], T](KerasUtils.addBatch(inputShape))
     with Net {
@@ -59,14 +59,18 @@ class TransformerLayer[T: ClassTag](
     seqLen = _inputShape.toSingle().head
 
     val input = Variable(_inputShape)
-    val e = embeddingLayer.from(input)
 
-    val embeddingSize = e.getOutputShape().toSingle().last
+    require(embeddingLayer.isInstanceOf[Net], "use layers from" +
+      "com.intel.analytics.zoo.pipeline.api.keras and operators from" +
+      " com.intel.analytics.zoo.pipeline.api.autograd to construct the embedding layer")
+    val embedding = embeddingLayer.asInstanceOf[Net]
+    val e = embedding.from(input)
+    val hiddenSize = e.getOutputShape().toSingle().last
 
     var nextInput: Variable[T] = e
 
     for (i <- 0 until nBlock) {
-      val output = block(nextInput, embeddingSize)
+      val output = block(nextInput, hiddenSize)
       nextInput = output
     }
 
@@ -74,21 +78,21 @@ class TransformerLayer[T: ClassTag](
     model.asInstanceOf[AbstractModule[Tensor[T], Tensor[T], T]]
   }
 
-  def block(x: Variable[T], embeddingSize: Int): Variable[T] = {
+  def block(x: Variable[T], hiddenSize: Int): Variable[T] = {
     // g, b for layerNorm
-    val g = Parameter[T](Shape(1, embeddingSize),
-      initWeight = Tensor.ones[T](embeddingSize).view(1, embeddingSize))
-    val b = Parameter[T](Shape(1, embeddingSize),
-      initWeight = Tensor[T](embeddingSize).view(1, embeddingSize))
+    val g = Parameter[T](Shape(1, hiddenSize),
+      initWeight = Tensor.ones[T](hiddenSize).view(1, hiddenSize))
+    val b = Parameter[T](Shape(1, hiddenSize),
+      initWeight = Tensor[T](hiddenSize).view(1, hiddenSize))
 
     // g, b for layerNorm
-    val g2 = Parameter[T](Shape(1, embeddingSize),
-      initWeight = Tensor.ones[T](embeddingSize).view(1, embeddingSize))
-    val b2 = Parameter[T](Shape(1, embeddingSize),
-      initWeight = Tensor[T](embeddingSize).view(1, embeddingSize))
-    val a = multiHeadSelfAttention(x, embeddingSize)
+    val g2 = Parameter[T](Shape(1, hiddenSize),
+      initWeight = Tensor.ones[T](hiddenSize).view(1, hiddenSize))
+    val b2 = Parameter[T](Shape(1, hiddenSize),
+      initWeight = Tensor[T](hiddenSize).view(1, hiddenSize))
+    val a = multiHeadSelfAttention(x, hiddenSize)
     val n = layerNorm(x + a, weight = g, bias = b)
-    val m = mlp(n, embeddingSize)
+    val m = mlp(n, hiddenSize)
     val h = layerNorm(n + m, weight = g2, bias = b2)
     h
   }
@@ -107,25 +111,25 @@ class TransformerLayer[T: ClassTag](
       * (scala.math.sqrt(2 / scala.math.Pi))) + 1)
   }
 
-  def mlp(x: Variable[T], embeddingSize: Int): Variable[T] = {
-    val h = new Convolution1D(embeddingSize * 4, 1, init = RandomNormal(0.0, 0.02)).from(x)
+  def mlp(x: Variable[T], hiddenSize: Int): Variable[T] = {
+    val h = new Convolution1D(hiddenSize * 4, 1, init = RandomNormal(0.0, 0.02)).from(x)
     val a = gelu(h)
-    val h2 = new Convolution1D(embeddingSize, 1, init = RandomNormal(0.0, 0.02)).from(a)
+    val h2 = new Convolution1D(hiddenSize, 1, init = RandomNormal(0.0, 0.02)).from(a)
     Dropout(residPdrop).from(h2)
   }
 
-  def multiHeadSelfAttention(x: Variable[T], embeddingSize: Int): Variable[T] = {
-    val c = new Convolution1D(embeddingSize * 3, 1, init = RandomNormal(0.0, 0.02)).from(x)
-    val query = c.slice(2, 0, embeddingSize)
-    val key = c.slice(2, embeddingSize, embeddingSize)
-    val value = c.slice(2, embeddingSize * 2, embeddingSize)
+  def multiHeadSelfAttention(x: Variable[T], hiddenSize: Int): Variable[T] = {
+    val c = new Convolution1D(hiddenSize * 3, 1, init = RandomNormal(0.0, 0.02)).from(x)
+    val query = c.slice(2, 0, hiddenSize)
+    val key = c.slice(2, hiddenSize, hiddenSize)
+    val value = c.slice(2, hiddenSize * 2, hiddenSize)
     val q = splitHeads(query)
     val k = splitHeads(key, k = true)
     val v = splitHeads(value)
-    val a = attn(q, k, v, true) // m: (batch, nhead, seqLen, embedddingSize/nhead)
-    val m = mergeHeads(a) // m: (batch, seqLen, embeddingSize)
-    val n = new Convolution1D(embeddingSize, 1, init = RandomNormal(0.0, 0.02))
-      .from(m) // n: (batch, seqLen, embeddingSize)
+    val a = attn(q, k, v, true) // m: (batch, nhead, seqLen, hiddenSize/nhead)
+    val m = mergeHeads(a) // m: (batch, seqLen, hiddenSize)
+    val n = new Convolution1D(hiddenSize, 1, init = RandomNormal(0.0, 0.02))
+      .from(m) // n: (batch, seqLen, hiddenSize)
     Dropout(residPdrop).from(n)
   }
 
@@ -150,8 +154,8 @@ class TransformerLayer[T: ClassTag](
 
   // scale shoule be set in Attention
   def attn(q: Variable[T], k: Variable[T], v: Variable[T], scale: Boolean = false): Variable[T] = {
-    // q, v:(batch, nHead, seqLen, embeddingSize/nHead)
-    // k:(batch, nHead, embeddingSize/nHead, seqLen)
+    // q, v:(batch, nHead, seqLen, hiddenSize/nHead)
+    // k:(batch, nHead, hiddenSize/nHead, seqLen)
     var w = AutoGrad.mm(q, k) // w: (batch, nHead, seqLen, seqLen)
     if (scale) w = w / scala.math.sqrt(v.getOutputShape().toSingle().toArray.last)
 
@@ -175,7 +179,7 @@ object TransformerLayer {
    * @param residPdrop drop probability of projection, default is 0.1
    * @param attnPdrop drop probability of attention, default is 0.1
    * @param nHead head number, default is 12
-   * @param embeddingSize embedding size
+   * @param hiddenSize is also embedding size
    * @param embeddingDrop drop probability of embedding layer, default is 0.1
    * @param maskAttention whether unidirectional or bidirectional, default is true(unidirectional)
    */
@@ -186,21 +190,21 @@ object TransformerLayer {
     residPdrop: Double = 0.1,
     attnPdrop: Double = 0.1,
     nHead: Int = 12,
-    embeddingSize: Int = 768,
+    hiddenSize: Int = 768,
     embeddingDrop: Double = 0,
     maskAttention: Boolean = true)(implicit ev: TensorNumeric[T]): TransformerLayer[T] = {
-    require(embeddingSize > 0, "embeddingSize must be great" +
+    require(hiddenSize > 0, "hiddenSize must be great" +
       "than 0 with default embedding layer")
     val embeddingLayer = Sequential[T]()
       .add(Reshape(Array(seqLen * 2), Shape(seqLen, 2)))
-      .add(Embedding(vocab, embeddingSize, inputLength = seqLen * 2))
+      .add(Embedding(vocab, hiddenSize, inputLength = seqLen * 2))
       .add(Dropout(embeddingDrop))
-      .add(Reshape(Array(seqLen, 2, embeddingSize)))
+      .add(Reshape(Array(seqLen, 2, hiddenSize)))
         .add(new KerasLayerWrapper[T](bnn.Sum[T](dimension = 3,
           squeeze = true).asInstanceOf[AbstractModule[Activity, Activity, T]]))
     new TransformerLayer[T](nBlock,
       residPdrop, attnPdrop, nHead, maskAttention,
-      embeddingLayer)
+      embeddingLayer.asInstanceOf[KerasLayer[Tensor[T], Tensor[T], T]])
   }
 
   /**
@@ -218,9 +222,9 @@ object TransformerLayer {
     attnPdrop: Double,
     nHead: Int,
     maskAttention: Boolean,
-    embeddingLayer: KerasNet[T])
+    embeddingLayer: KerasLayer[Tensor[T], Tensor[T], T])
     (implicit ev: TensorNumeric[T]): TransformerLayer[T] = {
     new TransformerLayer[T](nBlock,
-      residPdrop, attnPdrop, nHead, maskAttention, embeddingLayer)
+      residPdrop, attnPdrop, nHead, maskAttention, embeddingLayer = embeddingLayer)
   }
 }

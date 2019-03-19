@@ -18,6 +18,7 @@ package com.intel.analytics.zoo.pipeline.api.keras.layers
 
 import com.intel.analytics.bigdl.nn.Sum
 import com.intel.analytics.bigdl.nn.abstractnn.{AbstractModule, Activity}
+import com.intel.analytics.bigdl.nn.keras.KerasLayer
 import com.intel.analytics.bigdl.tensor.Tensor
 import com.intel.analytics.bigdl.utils.RandomGenerator._
 import com.intel.analytics.bigdl.utils.Shape
@@ -29,7 +30,7 @@ import com.intel.analytics.zoo.pipeline.api.keras.serializer.ModuleSerialization
 
 class TransformerLayerSpec extends ZooSpecHelper {
   "TransformerLayer" should "be able to work" in {
-    val model = TransformerLayer[Float](vocab = 100, embeddingSize = 768, nBlock = 3)
+    val model = TransformerLayer[Float](vocab = 100, hiddenSize = 768, nBlock = 3)
     model.build(Shape(4, 77, 2))
     val w = model.parameters()._1
     require(w.length == 37)
@@ -48,7 +49,7 @@ class TransformerLayerSpec extends ZooSpecHelper {
         squeeze = true).asInstanceOf[AbstractModule[Activity, Activity, Float]]))
     val model = TransformerLayer[Float](nBlock = 3,
       residPdrop = 0.1, attnPdrop = 0.1, nHead = 12, maskAttention = false,
-      embeddingLayer = embedding)
+      embeddingLayer = embedding.asInstanceOf[KerasLayer[Tensor[Float], Tensor[Float], Float]])
 
     model.build(Shape(4, 77, 2))
     val input = Tensor[Float](Array(2, 2, 77, 2)).rand().resize(4, 77, 2)
@@ -59,7 +60,7 @@ class TransformerLayerSpec extends ZooSpecHelper {
 
   "TransformerLayer" should "be able to generate correct result" in {
     RNG.setSeed(42)
-    val layer = TransformerLayer[Float](vocab = 10, embeddingSize = 4, seqLen = 2, nHead = 2,
+    val layer = TransformerLayer[Float](vocab = 10, hiddenSize = 4, seqLen = 2, nHead = 2,
       residPdrop = 0, attnPdrop = 0, nBlock = 1)
     val data = Array[Float](6, 3, 7, 4, 6, 9, 2, 6, 7, 4, 3, 7, 7, 2, 5, 4)
     layer.build(Shape(4, 2, 2))
@@ -299,7 +300,7 @@ class TransformerLayerSpec extends ZooSpecHelper {
   }
 
   "Attention" should "be able to generate correct result" in {
-    val transformerLayer = TransformerLayer[Float](vocab = 10, embeddingSize = 4,
+    val transformerLayer = TransformerLayer[Float](vocab = 10, hiddenSize = 4,
       seqLen = 2, nHead = 2,
       residPdrop = 0, attnPdrop = 0, nBlock = 1)
     transformerLayer.build(Shape(2, 2, 2))
@@ -422,7 +423,7 @@ class TransformerLayerSpec extends ZooSpecHelper {
 
 class TransformerLayerSerialTest extends ModuleSerializationTest {
   override def test(): Unit = {
-    val layer = TransformerLayer[Float](vocab = 100, embeddingSize = 768, nBlock = 3)
+    val layer = TransformerLayer[Float](vocab = 100, hiddenSize = 768, nBlock = 3)
     layer.build(Shape(2, 77, 2))
     val input = Tensor[Float](Array(2, 77, 2)).rand()
     runSerializationTest(layer, input)

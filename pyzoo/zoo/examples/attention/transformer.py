@@ -54,7 +54,7 @@ xmb_val[:, :, 1] = np.arange(max_len)
 xmb_val[:, :, 0] = x_test
 S_inputs = Input(shape=(max_len, 2))
 O_seq = TransformerLayer.init_with_default_embedding(
-    vocab=max_features, embedding_size=128, n_head=8, seq_len=max_len)(S_inputs)
+    vocab=max_features, hidden_size=128, n_head=8, seq_len=max_len)(S_inputs)
 O_seq = GlobalAveragePooling1D()(O_seq)
 O_seq = Dropout(0.2)(O_seq)
 outputs = Dense(2, activation='softmax')(O_seq)
