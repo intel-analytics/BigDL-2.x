@@ -26,7 +26,7 @@ import com.intel.analytics.bigdl.utils.{Shape, SingleShape}
 import com.intel.analytics.zoo.pipeline.api.Net
 import com.intel.analytics.zoo.pipeline.api.autograd.{AutoGrad, Constant, Parameter, Variable}
 import com.intel.analytics.zoo.pipeline.api.keras.layers.utils.KerasUtils
-import com.intel.analytics.zoo.pipeline.api.keras.models.{KerasNet, Model, Sequential}
+import com.intel.analytics.zoo.pipeline.api.keras.models.{Model, Sequential}
 
 import scala.reflect.ClassTag
 
@@ -81,29 +81,15 @@ class TransformerLayer[T: ClassTag](
     val b2 = Parameter[T](Shape(1, embeddingSize),
       initWeight = Tensor[T](embeddingSize).view(1, embeddingSize))
     val a = multiHeadSelfAttention(x, embeddingSize)
-    val n = layerNorm(x + a, weight = g, bias = b)
+    val n = TransformerLayer.layerNorm(x + a, weight = g, bias = b)
     val m = mlp(n, embeddingSize)
-    val h = layerNorm(n + m, weight = g2, bias = b2)
+    val h = TransformerLayer.layerNorm(n + m, weight = g2, bias = b2)
     h
-  }
-
-  def layerNorm(x: Variable[T], e: Double = 1e-5, weight: Parameter[T],
-                bias: Parameter[T]): Variable[T] = {
-    val sizes = x.getOutputShape().toSingle().toArray
-    val u = AutoGrad.mean(x, sizes.size - 1, true)
-    val s = AutoGrad.mean(AutoGrad.square(x - u), sizes.size -1, true)
-    val y = (x - u) / AutoGrad.sqrt(s + e) // y: (-1, 2, 4) g2: (1, 4)
-    y * weight + bias
-  }
-
-  def gelu(x: Variable[T]): Variable[T] = {
-    x * 0.5 * (Activation("tanh").from((AutoGrad.square(x) * x * 0.044715 + x)
-      * (scala.math.sqrt(2 / scala.math.Pi))) + 1)
   }
 
   def mlp(x: Variable[T], embeddingSize: Int): Variable[T] = {
     val h = new Convolution1D(embeddingSize * 4, 1, init = RandomNormal(0.0, 0.02)).from(x)
-    val a = gelu(h)
+    val a = TransformerLayer.gelu(h)
     val h2 = new Convolution1D(embeddingSize, 1, init = RandomNormal(0.0, 0.02)).from(a)
     Dropout(residPdrop).from(h2)
   }
@@ -113,28 +99,14 @@ class TransformerLayer[T: ClassTag](
     val query = c.slice(2, 0, embeddingSize)
     val key = c.slice(2, embeddingSize, embeddingSize)
     val value = c.slice(2, embeddingSize * 2, embeddingSize)
-    val q = splitHeads(query)
-    val k = splitHeads(key, k = true)
-    val v = splitHeads(value)
+    val q = TransformerLayer.splitHeads(query, nHead)
+    val k = TransformerLayer.splitHeads(key, nHead, k = true)
+    val v = TransformerLayer.splitHeads(value, nHead)
     val a = attn(q, k, v, true) // m: (-1, 12, 77, 64)
-    val m = mergeHeads(a) // m: (-1, 77, 768)
+    val m = TransformerLayer.mergeHeads(a) // m: (-1, 77, 768)
     val n = new Convolution1D(embeddingSize, 1, init = RandomNormal(0.0, 0.02))
       .from(m) // n: (-1, 77, 768)
     Dropout(residPdrop).from(n)
-  }
-
-  def splitHeads(x: Variable[T], k: Boolean = false): Variable[T] = {
-    val sizes = x.getOutputShape().toSingle().toArray
-    val newSizes = sizes.drop(1).dropRight(1) ++ Array(nHead, sizes.last / nHead)
-    val r = Reshape(newSizes).from(x)
-    if (k) Permute(Array(2, 3, 1)).from(r)
-    else Permute(Array(2, 1, 3)).from(r)
-  }
-
-  def mergeHeads(x: Variable[T]): Variable[T] = {
-    val p = AutoGrad.contiguous(Permute[T](Array(2, 1, 3)).from(x))
-    val sizes = p.getOutputShape().toSingle().toArray
-    Reshape(sizes.drop(1).dropRight(2) ++ Array(sizes.last * sizes(sizes.length - 2))).from(p)
   }
 
   lazy val maskValue = if (maskAttention) {
@@ -194,5 +166,37 @@ object TransformerLayer {
     (implicit ev: TensorNumeric[T]): TransformerLayer[T] = {
     new TransformerLayer[T](nLayer,
       residPdrop, attnPdrop, nHead, maskAttention, embeddingLayer = embeddingLayer)
+  }
+
+  def layerNorm[@specialized(Float, Double) T: ClassTag](x: Variable[T],
+    e: Double = 1e-5, weight: Parameter[T], bias: Parameter[T])
+    (implicit ev: TensorNumeric[T]): Variable[T] = {
+    val sizes = x.getOutputShape().toSingle().toArray
+    val u = AutoGrad.mean(x, sizes.size - 1, true)
+    val s = AutoGrad.mean(AutoGrad.square(x - u), sizes.size -1, true)
+    val y = (x - u) / AutoGrad.sqrt(s + e) // y: (-1, 2, 4) g2: (1, 4)
+    y * weight + bias
+  }
+
+  def gelu[@specialized(Float, Double) T: ClassTag](x: Variable[T])
+    (implicit ev: TensorNumeric[T]): Variable[T] = {
+    x * 0.5 * (Activation("tanh").from((AutoGrad.square(x) * x * 0.044715 + x)
+      * (scala.math.sqrt(2 / scala.math.Pi))) + 1)
+  }
+
+  def splitHeads[@specialized(Float, Double) T: ClassTag](x: Variable[T],
+    nHead: Int, k: Boolean = false)(implicit ev: TensorNumeric[T]): Variable[T] = {
+    val sizes = x.getOutputShape().toSingle().toArray
+    val newSizes = sizes.drop(1).dropRight(1) ++ Array(nHead, sizes.last / nHead)
+    val r = Reshape(newSizes).from(x)
+    if (k) Permute(Array(2, 3, 1)).from(r)
+    else Permute(Array(2, 1, 3)).from(r)
+  }
+
+  def mergeHeads[@specialized(Float, Double) T: ClassTag](x: Variable[T])
+    (implicit ev: TensorNumeric[T]): Variable[T] = {
+    val p = AutoGrad.contiguous(Permute[T](Array(2, 1, 3)).from(x))
+    val sizes = p.getOutputShape().toSingle().toArray
+    Reshape(sizes.drop(1).dropRight(2) ++ Array(sizes.last * sizes(sizes.length - 2))).from(p)
   }
 }

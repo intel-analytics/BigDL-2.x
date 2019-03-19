@@ -14,32 +14,32 @@
  * limitations under the License.
  */
 
-package com.intel.analytics.zoo.models.bert
+package com.intel.analytics.zoo.pipeline.api.keras.layers
 
+import com.intel.analytics.bigdl.nn.abstractnn.Activity
+import com.intel.analytics.bigdl.nn.keras.KerasLayer
 import com.intel.analytics.bigdl.tensor.Tensor
-import com.intel.analytics.bigdl.utils.RandomGenerator._
 import com.intel.analytics.bigdl.utils.{Shape, T}
-import com.intel.analytics.zoo.models.common.ZooModel
 import com.intel.analytics.zoo.pipeline.api.autograd.{Parameter, Variable}
-import com.intel.analytics.zoo.pipeline.api.keras.ZooSpecHelper
-import com.intel.analytics.zoo.pipeline.api.keras.serializer.ModuleSerializationTest
-import com.intel.analytics.zoo.pipeline.api.keras.layers.{Activation, Conv1D}
 import com.intel.analytics.zoo.pipeline.api.keras.models.Model
+import com.intel.analytics.zoo.pipeline.api.keras.serializer.ModuleSerializationTest
+import com.intel.analytics.zoo.pipeline.api.keras.{BERT, ZooSpecHelper}
 
 class BertSpec extends ZooSpecHelper {
-  "Bert model" should "be able to work" in {
-    val model = BERT[Float](vocab = 100,
-      hidden_size = 10,
-    num_hidden_layers = 3,
-    num_attention_heads = 2,
-    intermediate_size = 64,
-    hidden_dropout_prob = 0.1,
-    attention_probs_dropout_prob = 0.1,
-    maxPositionEmbeddings = 10,
-//    typeVocabSize = 2,
-    output_all_encoded_layers = false)
+  "Bert " should "be able to work" in {
+    val layer = BERT[Float](vocab = 100,
+    hiddenSize = 10,
+    nBlock = 3,
+    nHead = 2,
+    intermediateSize = 64,
+    hiddenPDrop = 0.1,
+    attnPDrop = 0.1,
+    seqLen = 10,
+    outputAllBlock = false)
 
-    val w = model.parameters()._1
+    val shape = Shape(List(Shape(1, 10), Shape(1, 10), Shape(1, 10), Shape(1, 1, 1, 10)))
+    layer.build(shape)
+    val w = layer.parameters()._1
     require(w.length == 53)
     val inputIds = Tensor[Float](Array[Float](7, 20, 39, 27, 10,
       39, 30, 21, 17, 15), Array(1, 10))
@@ -47,23 +47,44 @@ class BertSpec extends ZooSpecHelper {
     val positionIds = Tensor[Float](Array[Float](0, 1, 2, 3, 4, 5, 6, 7, 8, 9), Array(1, 10))
     val masks = Tensor[Float](1, 1, 1, 10).fill(1.0f)
 
-    val output = model.forward(T(inputIds, segmentIds, positionIds, masks))
+    val output = layer.forward(T(inputIds, segmentIds, positionIds, masks))
     val gradOutput = Tensor[Float](output.toTensor[Float].size()).rand()
-    val gradInput = model.backward(T(inputIds, segmentIds, positionIds, masks), gradOutput)
+    val gradInput = layer.backward(T(inputIds, segmentIds, positionIds, masks), gradOutput)
   }
 
-  "Bert model wit pool" should "be able to work" in {
-    val model = BERT[Float](vocab = 100,
-      hidden_size = 10,
-      num_hidden_layers = 3,
-      num_attention_heads = 2,
-      intermediate_size = 64,
-      hidden_dropout_prob = 0.1,
-      attention_probs_dropout_prob = 0.1,
-      maxPositionEmbeddings = 10,
-      //    typeVocabSize = 2,
-      output_all_encoded_layers = false,
-      debug = true)
+  "Bert with configed embedding" should "be able to work" in {
+    val vocab = 100
+    val seqLen = 10
+    val hiddenPDrop = 0.1
+    val hiddenSize = 10
+    val wordInput = Variable[Float](Shape(seqLen))
+    val tokenTypeInput = Variable[Float](Shape(seqLen))
+    val positionInput = Variable[Float](Shape(seqLen))
+
+    val wordEmbeddings = Embedding[Float](vocab, hiddenSize, inputLength = seqLen)
+      .from[Float](wordInput)
+    val positionEmbeddings = Embedding[Float](seqLen, hiddenSize, inputLength = seqLen)
+      .from[Float](positionInput)
+    val tokenTypeEmbeddings = Embedding[Float](2, hiddenSize, inputLength = seqLen)
+      .from[Float](tokenTypeInput)
+
+    val embeddings =
+      wordEmbeddings.asInstanceOf[Variable[Float]] + positionEmbeddings + tokenTypeEmbeddings
+    val embeddingG = Parameter[Float](Shape(1, hiddenSize),
+      initWeight = Tensor.ones[Float](hiddenSize).view(1, hiddenSize))
+    val embeddingB = Parameter[Float](Shape(1, hiddenSize),
+      initWeight = Tensor[Float](hiddenSize).view(1, hiddenSize))
+    val afterNorm = TransformerLayer.layerNorm[Float](embeddings,
+      1e-5, embeddingG, embeddingB)
+    val h = Dropout[Float](hiddenPDrop).from(afterNorm)
+
+    val embeddingLayer = Model(Array(wordInput, tokenTypeInput, positionInput), h)
+
+    val layer = BERT[Float](hiddenSize = 10, nBlock = 3, nHead = 2,
+      intermediateSize = 64, hiddenPDrop = 0.1, attnPDrop = 0.1,
+      outputAllBlock = false, embeddingLayer.asInstanceOf[KerasLayer[Activity, Tensor[Float], Float]])
+    val shape = Shape(List(Shape(1, 10), Shape(1, 10), Shape(1, 10), Shape(1, 1, 1, 10)))
+    layer.build(shape)
 
     val inputIds = Tensor[Float](Array[Float](7, 20, 39, 27, 10,
       39, 30, 21, 17, 15), Array(1, 10))
@@ -71,23 +92,25 @@ class BertSpec extends ZooSpecHelper {
     val positionIds = Tensor[Float](Array[Float](0, 1, 2, 3, 4, 5, 6, 7, 8, 9), Array(1, 10))
     val masks = Tensor[Float](1, 1, 1, 10).fill(1.0f)
 
-    val output = model.forward(T(inputIds, segmentIds, positionIds, masks))
+    val output = layer.forward(T(inputIds, segmentIds, positionIds, masks))
     val gradOutput = Tensor[Float](output.toTensor[Float].size()).rand()
-    val gradInput = model.backward(T(inputIds, segmentIds, positionIds, masks), gradOutput)
+    val gradInput = layer.backward(T(inputIds, segmentIds, positionIds, masks), gradOutput)
   }
 
   "BERT" should "be able to generate correct result" in {
-    val model = BERT[Float](vocab = 20,
-      hidden_size = 10,
-      num_hidden_layers = 1,
-      num_attention_heads = 2,
-      intermediate_size = 64,
-      hidden_dropout_prob = 0,
-      attention_probs_dropout_prob = 0,
-      maxPositionEmbeddings = 6,
-      //    typeVocabSize = 2,
-      output_all_encoded_layers = false)
-    val wb = model.parameters()._1
+    val layer = BERT[Float](vocab = 20,
+      hiddenSize = 10,
+      nBlock = 1,
+      nHead = 2,
+      intermediateSize = 64,
+      hiddenPDrop = 0,
+      attnPDrop = 0,
+      seqLen = 6,
+      outputAllBlock = false)
+    val shape = Shape(List(Shape(2, 6), Shape(2, 6), Shape(2, 6), Shape(2, 1, 1, 6)))
+    layer.build(shape)
+
+    val wb = layer.parameters()._1
     val data = Array[Float](6f, 19f, 14f, 10f, 7f, 6f,
       18f, 10f, 10f, 3f, 7f, 2f)
 
@@ -482,7 +505,7 @@ class BertSpec extends ZooSpecHelper {
     val attentionMask = Tensor[Float](2, 1, 1, 6).fill(1.0f)
     val finalInput = T(input, tokenTypeInput, positionInput,
       attentionMask)
-    val output = model.forward(finalInput).toTensor[Float]
+    val output = layer.forward(finalInput).toTensor[Float]
 
     val expect = Tensor[Float](Array[Float](0.5962f, 1.0420f, 0.1113f, -0.2090f, 0.9805f,
       -1.4064f, -0.1274f,
@@ -527,8 +550,8 @@ class BertSpec extends ZooSpecHelper {
       27f, 6f, 72f, 71f, 11f, 33f, 32f, 47f, 22f, 61f
     ), Array(2, 6, 10))
 
-    model.backward(finalInput, gradOutput)
-    val grads = model.parameters()._2
+    layer.backward(finalInput, gradOutput)
+    val grads = layer.parameters()._2
 
     val expectGrad = new Array[Tensor[Float]](grads.size)
     expectGrad(20) = Tensor[Float](Array[Float](429f, 578f, 472f, 800f, 598f, 478f,
@@ -929,19 +952,25 @@ class BertSpec extends ZooSpecHelper {
 
 class BertSerialTest extends ModuleSerializationTest {
   override def test(): Unit = {
-    val model = BERT[Float](vocab = 100,
-      hidden_size = 768,
-      num_hidden_layers = 12,
-      num_attention_heads = 12,
-      intermediate_size = 1024,
-      hidden_dropout_prob = 0.1,
-      attention_probs_dropout_prob = 0.1,
-      maxPositionEmbeddings = 77,
-//      typeVocabSize = 2,
-      output_all_encoded_layers = false)
-    val input = Tensor[Float](Array(2, 2, 77, 2)).rand()
-    ZooSpecHelper.testZooModelLoadSave(
-      model.asInstanceOf[ZooModel[Tensor[Float], Tensor[Float], Float]],
-      input, BERT.loadModel[Float])
+    val layer = BERT[Float](vocab = 100,
+      hiddenSize = 768,
+      nBlock = 12,
+      nHead = 12,
+      intermediateSize = 1024,
+      hiddenPDrop = 0.1,
+      attnPDrop = 0.1,
+      seqLen = 6,
+      outputAllBlock = false)
+    val inputIds = Tensor[Float](2, 6).rand()
+    val segmentIds = Tensor[Float](Array[Float](0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1),
+      Array(2, 6))
+    val positionIds = Tensor[Float](Array[Float](0, 1, 2, 3, 4, 5, 0, 1, 2, 3, 4, 5),
+      Array(2, 6))
+    val masks = Tensor[Float](2, 1, 1, 6).fill(1.0f)
+
+    val shape = Shape(List(Shape(2, 6), Shape(2, 6), Shape(2, 6), Shape(2, 1, 1, 6)))
+    layer.build(shape)
+
+    runSerializationTest(layer, T(inputIds, segmentIds, positionIds, masks))
   }
 }
