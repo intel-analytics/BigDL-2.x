@@ -1,7 +1,7 @@
 # Analytics Zoo Streaming Object Detection
-Imagining we have pre-trained model and image files in file system, and we want to detect objects in these images. In streaming case, it's not an easy task to read image files with help of a third part framework (such HDFS or Kafka). To simplify this example, we package image pathes into text files. Then, these image pathes will be passed to executors through streaming API. Executors will read image content from file systems, and make prediction. The predicted results (images with boxes) will be stored to output dir.
+Imagining we have pre-trained model and image files in file system, and we want to detect objects in these images. In streaming case, it's not an easy task to read image files with help of a third part framework (such as HDFS or Kafka). To simplify this example, we package image paths into text files. Then, these image paths will be passed to executors through streaming API. Executors will read image content from file systems, and make prediction. The predicted results (images with boxes) will be stored to output dir.
 
-So, there are two applications in this example: ImagePathWriter and StreamingObjectDetection. ImagePathWriter will package image pathes into text files. Meanwhile, StreamingObjectDetection read image path from thoses text file, then read image content and make prediction.
+So, there are two applications in this example: ImagePathWriter and StreamingObjectDetection. ImagePathWriter will package image paths into text files. Meanwhile, StreamingObjectDetection read image path from those text files, then read image content and make prediction.
 
 ## Environment
 * Apache Spark 1.6.0/2.1.0 (This version needs to be same with the version you use to build Analytics Zoo)
