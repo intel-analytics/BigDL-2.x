@@ -28,7 +28,10 @@ trait AbstractEstimator[T]{
 }
 
 /**
- * Estimator class for training and evaluating BigDL models.
+ * Estimator class for training and evaluation BigDL models.
+ *
+ * Estimator wraps a model, and provide an uniform training, evaluation or prediction operation
+ * on both local host and distributed spark environment.
  *
  * @param model model
  * @param optimMethods optimMethods to optimize model
