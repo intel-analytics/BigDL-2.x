@@ -249,7 +249,7 @@ class TrainingSpec extends FlatSpec with Matchers with BeforeAndAfter {
     import scala.reflect.io.Directory
     import java.io.File
     val dir = new Directory(new File("./testTensorBoard"))
-    if(dir.exists && dir.isDirectory){
+    if (dir.exists && dir.isDirectory) {
       dir.deleteRecursively()
     }
     valArr
