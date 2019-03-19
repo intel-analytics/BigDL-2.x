@@ -210,10 +210,10 @@ abstract class KerasNet[T](implicit val tag: ClassTag[T], implicit val ev: Tenso
    * Return is a Array of 3-tuples
    *
    * @param tag The string variable represents the parameter you want to return
-   *            supported tags are "Loss", "Top1Accuracy", etc based on
-   *            validation metric. Use a method to_bigdl_metric to convert
-   *            your string to metric className then this className could be
-   *            the param of getValidationSummary tag
+   *            supported tags are 'AUC', 'Accuracy', 'BinaryAccuracy', 'CategoricalAccuracy',
+    *           'HitRatio', 'Loss', 'MAE', 'NDCG', 'SparseCategoricalAccuracy',
+    *           'TFValidationMethod', 'Top1Accuracy',
+    *           'Top5Accuracy', 'TreeNNAccuracy'.
    */
   def getValidationSummary(tag: String): Array[(Long, Float, Double)] = {
     this.validationSummary.readScalar(tag)
