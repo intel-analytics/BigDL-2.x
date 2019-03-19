@@ -94,7 +94,7 @@ class KerasNet(ZooKerasLayer):
         """
         Get the scalar from model validation summary
         Return 2-D array like object which could be converted
-        by nd.array()
+        by np.array()
         # Arguments
         tag: The string variable represents the scalar wanted
         """
