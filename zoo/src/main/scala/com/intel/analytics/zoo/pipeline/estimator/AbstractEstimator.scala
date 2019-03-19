@@ -1,19 +1,23 @@
 package com.intel.analytics.zoo.pipeline.estimator
 
-import com.intel.analytics.bigdl.{Criterion, DataSet, Module}
-import com.intel.analytics.bigdl.dataset.{DistributedDataSet, LocalDataSet, MiniBatch}
+import com.intel.analytics.bigdl.{Criterion, Module}
+import com.intel.analytics.bigdl.dataset.MiniBatch
 import com.intel.analytics.bigdl.optim._
 import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric
 import com.intel.analytics.zoo.feature.{DistributedFeatureSet, FeatureSet}
-import com.intel.analytics.zoo.pipeline.api.keras.models.{InternalDistriOptimizer, InternalLocalOptimizer}
+import com.intel.analytics.zoo.pipeline.api.keras.models.InternalDistriOptimizer
 
 import scala.reflect.ClassTag
 
+/**
+ * Abstract interface for Estimator.
+ * Estimator is a class to train and evaluate BigDL models.
+ */
 trait AbstractEstimator[T]{
   def train(trainSet: FeatureSet[MiniBatch[T]],
             criterion: Criterion[T] = null,
             endTrigger: Option[Trigger] = None,
-            checkPoint: Option[Trigger] = None,
+            checkPointTrigger: Option[Trigger] = None,
             validationSet: FeatureSet[MiniBatch[T]] = null,
             validationMethod: Array[ValidationMethod[T]] = null): this.type
 
@@ -23,16 +27,39 @@ trait AbstractEstimator[T]{
 
 }
 
+/**
+ * Estimator class for training and evaluating BigDL models.
+ *
+ * @param model model
+ * @param optimMethods optimMethods to optimize model
+ * @param modelDir model checkpoint directory, and related summary directory.
+ * @tparam T tensor numeric type
+ */
 class Estimator[T: ClassTag] private[zoo](
       model: Module[T],
       optimMethods: Map[String, OptimMethod[T]] = Map(),
       modelDir: Option[String] = None)(implicit ev: TensorNumeric[T]) extends AbstractEstimator[T] {
   protected var internalEstimator: AbstractEstimator[T] = null
 
+  /**
+   * Train model with provided trainSet and criterion.
+   * The training will end until the endTrigger is triggered.
+   * During the training, if checkPointTrigger is defined and triggered,
+   * the model will be saved to modelDir. And if validationSet and validationMethod
+   * is defined, the model will be evaluated at the checkpoint.
+   *
+   * @param trainSet training FeatureSet
+   * @param criterion Loss function
+   * @param endTrigger When to finish the training
+   * @param checkPointTrigger When to save a checkpoint and evaluate model.
+   * @param validationSet Validation FeatureSet.
+   * @param validationMethod Validation Methods.
+   * @return self
+   */
   override def train(trainSet: FeatureSet[MiniBatch[T]],
             criterion: Criterion[T],
             endTrigger: Option[Trigger] = None,
-            checkPoint: Option[Trigger] = None,
+            checkPointTrigger: Option[Trigger] = None,
             validationSet: FeatureSet[MiniBatch[T]] = null,
             validationMethod: Array[ValidationMethod[T]] = null): this.type = {
     if (internalEstimator == null) {
@@ -44,11 +71,17 @@ class Estimator[T: ClassTag] private[zoo](
         case _ => throw new IllegalArgumentException("Unsupported FeatureSet type.")
       }
     }
-    internalEstimator.train(trainSet, criterion, endTrigger, checkPoint,
+    internalEstimator.train(trainSet, criterion, endTrigger, checkPointTrigger,
       validationSet, validationMethod)
     this
   }
 
+  /**
+   * Evaluate the model on the validationSet with the validationMethods.
+   * @param validationSet validation FeatureSet
+   * @param validationMethod validation methods
+   * @return validation results
+   */
   override def evaluate(validationSet: FeatureSet[MiniBatch[T]],
                         validationMethod: Array[ValidationMethod[T]]
               ): Map[ValidationMethod[T], ValidationResult] = {
@@ -67,7 +100,14 @@ class Estimator[T: ClassTag] private[zoo](
 }
 
 object Estimator {
-  // TODO: local or dist?
+  /**
+   * Create an estimator
+   * @param model model
+   * @param optimMethods optimMethods to optimize model, submodule names and optimMethod pairs.
+   * @param modelDir model checkpoint directory, and related summary directory.
+   * @tparam T tensor numeric type
+   * @return a new estimator
+   */
   def apply[T: ClassTag](
         model: Module[T],
         optimMethods: Map[String, OptimMethod[T]],
@@ -79,6 +119,13 @@ object Estimator {
     }
   }
 
+  /**
+   * Create an estimator
+   * @param model model
+   * @param optimMethods optimMethods to optimize model, submodule names and optimMethod pairs.
+   * @tparam T tensor numeric type
+   * @return a new estimator
+   */
   def apply[T: ClassTag](
        model: Module[T],
        optimMethods: Map[String, OptimMethod[T]]
@@ -86,6 +133,14 @@ object Estimator {
     apply(model, optimMethods, "")
   }
 
+  /**
+   * Create an estimator
+   * @param model model
+   * @param optimMethods optimMethod to optimize model
+   * @param modelDir model checkpoint directory, and related summary directory.
+   * @tparam T tensor numeric type
+   * @return a new estimator
+   */
   def apply[T: ClassTag](
         model: Module[T],
         optimMethod: OptimMethod[T],
@@ -97,12 +152,25 @@ object Estimator {
     }
   }
 
+  /**
+   * Create an estimator
+   * @param model model
+   * @param optimMethods optimMethod to optimize model
+   * @tparam T tensor numeric type
+   * @return a new estimator
+   */
   def apply[T: ClassTag](
         model: Module[T],
         optimMethod: OptimMethod[T])(implicit ev: TensorNumeric[T]): AbstractEstimator[T] = {
     apply(model, optimMethod, "")
   }
 
+  /**
+   * Create an estimator
+   * @param model model
+   * @tparam T tensor numeric type
+   * @return a new estimator
+   */
   def apply[T: ClassTag](
         model: Module[T])(implicit ev: TensorNumeric[T]): AbstractEstimator[T] = {
     new Estimator[T](model, Map())

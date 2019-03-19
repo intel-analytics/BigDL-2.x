@@ -16,6 +16,7 @@
 
 package com.intel.analytics.zoo.pipeline.api.keras.models
 
+import java.io.File
 import java.text.SimpleDateFormat
 import java.util.Calendar
 
@@ -954,18 +955,24 @@ private[zoo] class InternalDistriOptimizer[T: ClassTag] (
         trainSet: FeatureSet[MiniBatch[T]],
         criterion: Criterion[T],
         endTrigger: Option[Trigger] = None,
-        checkPoint: Option[Trigger] = None,
+        checkPointTrigger: Option[Trigger] = None,
         validationSet: FeatureSet[MiniBatch[T]] = null,
         validationMethod: Array[ValidationMethod[T]] = null): this.type = {
-    this.dataset = trainSet
+    this.dataset = trainSet.toDataSet()
     val endWhen = if (endTrigger.isDefined) {
       endTrigger.get
     } else {
       Trigger.maxIteration(Int.MaxValue)
     }
     this.setEndWhen(endWhen)
-    if (checkPoint.isDefined && checkpointPath.isDefined) {
-      this.setCheckpoint(checkpointPath.get, checkPoint.get)
+    if (checkPointTrigger.isDefined && checkpointDir.isDefined) {
+      // we should setCheckpoint every time before we call optimize(),
+      // as BigDL will overwrite checkpointPath to its subfolder.
+      new File(checkpointDir.get + "/models").mkdirs()
+      this.setCheckpoint(checkpointDir.get+"/models", checkPointTrigger.get)
+    }
+    if (validationMethod != null && validationSet != null) {
+      this.setValidation(checkPointTrigger.get, validationSet.toDataSet(), validationMethod)
     }
     this.optimize()
     this

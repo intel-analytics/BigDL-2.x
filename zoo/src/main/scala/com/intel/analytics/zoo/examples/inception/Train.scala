@@ -140,6 +140,7 @@ object TrainInceptionV1Estimator {
   import Options._
 
   def main(args: Array[String]): Unit = {
+    Logger.getLogger("com.intel.analytics.bigdl.optim").setLevel(Level.DEBUG)
     trainParser.parse(args, new TrainParams()).map(param => {
       val imageSize = 224
       val conf = Engine.createSparkConf().setAppName("Analytics-zoo InceptionV1 Train Example")
@@ -208,7 +209,7 @@ object TrainInceptionV1Estimator {
 
       estimator.train(trainSet, ClassNLLCriterion[Float](),
         endTrigger = Some(endTrigger),
-        checkPoint = Some(checkpointTrigger),
+        checkPointTrigger = Some(checkpointTrigger),
         valSet, Array(new Top1Accuracy[Float], new Top5Accuracy[Float]))
 
       sc.stop()
