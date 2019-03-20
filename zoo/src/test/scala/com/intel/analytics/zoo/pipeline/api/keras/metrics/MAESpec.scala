@@ -23,10 +23,10 @@ import org.scalatest.{FlatSpec, Matchers}
 class MAESpec extends FlatSpec with Matchers {
   "MAE" should "be correct in 1d tensor" in {
     val output = Tensor(Storage(Array[Double](
-      0,0,0,0
+      0, 0, 0, 0
     )))
     val target = Tensor(Storage(Array[Double](
-      1,2,1,0
+      1, 2, 1, 0
     )))
     val validation = new MAE[Double]()
     val result = validation(output, target)
