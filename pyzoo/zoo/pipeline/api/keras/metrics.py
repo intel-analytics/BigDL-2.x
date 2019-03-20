@@ -39,7 +39,10 @@ class AUC(JavaValue):
 
 class MAE(ZooKerasCreator, JavaValue):
     """
+    Metric for mean absoluate error, similar from MAE criterion
 
+    >>> mae = MAE()
+    creating: createZooKerasMAE
 
     """
     def __init__(self, bigdl_type="float"):
