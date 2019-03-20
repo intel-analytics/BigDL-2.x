@@ -32,7 +32,6 @@ case class TextClassificationParams(
   port: Int = 9999,
   indexPath: String = "word2index.txt",
   sequenceLength: Int = 500,
-  maxWordsNum: Int = 5000,
   batchSize: Int = 128,
   partitionNum: Int = 4, model: Option[String] = None)
 
@@ -55,9 +54,6 @@ object StreamingTextClassification {
       opt[Int]("sequenceLength")
         .text("The length of each sequence")
         .action((x, c) => c.copy(sequenceLength = x))
-      opt[Int]("maxWordsNum")
-        .text("The maximum number of words to be taken into consideration")
-        .action((x, c) => c.copy(maxWordsNum = x))
       opt[Int]('b', "batchSize")
         .text("The number of samples per gradient update")
         .action((x, c) => c.copy(batchSize = x))
@@ -90,7 +86,7 @@ object StreamingTextClassification {
           // Pre-processing
           val transformed = dataSet.setWordIndex(wordIndex)
             .tokenize().normalize()
-            .word2idx(removeTopN = 10, maxWordsNum = param.maxWordsNum)
+            .word2idx(removeTopN = 10)
             .shapeSequence(param.sequenceLength).generateSample()
           val predictSet = model.predict(transformed,
             batchPerThread = param.partitionNum)
