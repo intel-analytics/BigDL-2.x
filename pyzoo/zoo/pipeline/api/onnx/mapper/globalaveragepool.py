@@ -28,8 +28,10 @@ class GlobalAveragePoolMapper(OperatorMapper):
     def _to_tensor(self):
         x = self.model_inputs[0].zvalue
         y = zlayers.GlobalAveragePooling2D()(x)
-        # Input data tensor from the previous operator; dimensions for image case are (N x C x H x W),
-        # where N is the batch size, C is the number of channels, and H and W are the height and the width of the data.
-        # Output data tensor from pooling across the input tensor. Dimensions will be N x C x 1 x 1
-        return zautograd.expand_dims(zautograd.expand_dims(y, 2), 3)
- 
+        '''
+        Input data tensor from the previous operator; dimensions for image case are (N x C x H x W),
+        where N is the batch size, C is the number of channels, and H and W are the height
+        and the width of the data.
+        Output data tensor from pooling across the input tensor. Dimensions will be N x C x 1 x 1.
+        '''
+        return zautograd.expand_dims(zautograd.expand_dims(y, axis=2), axis=3)
