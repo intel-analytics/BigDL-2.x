@@ -289,7 +289,7 @@ object AutoGrad {
     } else if (xShape.length > 4 && yShape.length > 4) {
         throw new IllegalArgumentException(s"Only support 2D/3D/4D input for now," +
           s"but got [${xShape.mkString(",")}] and [${xShape.mkString(",")}]")
-    }
+      }
     if (axes != null) {
       require(axes.length == 2, s"axes.length should be 2, but got: ${axes.length}")
       require(axes(0) >= left && axes(0) <= right,
@@ -541,6 +541,7 @@ class Variable[T: ClassTag] private[zoo] (private[zoo] var node: ModuleNode[T],
 
     var yShape = yy.getOutputShape().toSingle()
     var xShape = xx.getOutputShape().toSingle()
+
     if (yShape.size > xShape.size) {
       xx = AutoGrad.expandDims(xx, 0)
       xShape = xx.getOutputShape().toSingle()

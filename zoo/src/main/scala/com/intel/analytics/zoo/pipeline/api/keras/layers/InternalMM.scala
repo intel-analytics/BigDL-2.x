@@ -108,6 +108,7 @@ private[zoo] class InternalMM[T: ClassTag](
     if (ma.dim() > 2 && ma.size(1) != mb.size(1)) {
       require(mb.dim() == 3, "second input tensor must be 3D" +
         s"second input dim ${mb.dim()}")
+      // with different batch dim
       val newTensors = expandTensor(ma, mb)
       ma = newTensors._1
       mb = newTensors._2

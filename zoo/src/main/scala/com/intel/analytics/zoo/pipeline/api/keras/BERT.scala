@@ -139,17 +139,18 @@ class BERT[T: ClassTag] (
     val q = TransformerLayer.splitHeads(query, nHead)
     val k = TransformerLayer.splitHeads(key, nHead, k = true)
     val v = TransformerLayer.splitHeads(value, nHead)
-    val a = attn(q, k, v, attention_mask, true) // m: (-1, 12, 77, 64)
-    val m = TransformerLayer.mergeHeads(a) // m: (-1, 77, 768)
+    val a = attn(q, k, v, attention_mask, true) // // m: (batch, nhead, seqLen, hiddenSize/nhead)
+    val m = TransformerLayer.mergeHeads(a) // m: (batch, seqLen, hiddenSize)
 
-    val n = Dense(hiddenSize).from(m) // n: (-1, 77, 768)
+    val n = Dense(hiddenSize).from(m) // n: (batch, seqLen, hiddenSize)
     Dropout(attnPDrop).from(n)
   }
 
   def attn(q: Variable[T], k: Variable[T], v: Variable[T], attention_mask: Variable[T],
     scale: Boolean = false): Variable[T] = {
-    // q:(16, 12, 77, 64) k:(16, 12, 64, 77) v:(16, 12, 77, 64)
-    var w = AutoGrad.mm(q, k) // w: (16, 12, 77, 77)
+    // q, v:(batch, nHead, seqLen, hiddenSize/nHead)
+    // k:(batch, nHead, hiddenSize/nHead, seqLen)
+    var w = AutoGrad.mm(q, k) // w: (batch, nHead, seqLen, seqLen)
     if (scale) w = w / scala.math.sqrt(v.getOutputShape().toSingle().toArray.last)
 
     if (attention_mask != null) {

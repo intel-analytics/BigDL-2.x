@@ -41,9 +41,11 @@ class SoftMax[T: ClassTag](override val inputShape: Shape = null)(implicit ev: T
       seq.add(Transpose(Array((1, 3))))
       seq.add(layer)
       seq.add(Transpose(Array((1, 3))))
+
       val model = if (input.length > 3) {
         TTimeDistributed[T](seq.asInstanceOf[AbstractModule[Tensor[T], Tensor[T], T]])
-      } else seq
+      }
+      else seq
 
       model.asInstanceOf[AbstractModule[Tensor[T], Tensor[T], T]]
     }
