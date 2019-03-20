@@ -1339,3 +1339,10 @@ class TestModelLoading(OnnxTestCase):
             y = np.expand_dims(y, -1)
         output = OnnxLoader.run_node(node, [x])
         np.testing.assert_almost_equal(output["y"], y, decimal=5)
+
+    def test_onnx_globalaveragepool2(self):
+        pytorch_model = torch.nn.Sequential(
+            torch.nn.AdaptiveAvgPool2d((1, 1))
+        )
+        input_shape_with_batch = (1, 3, 224, 224)
+        self.compare_with_pytorch(pytorch_model, input_shape_with_batch)
