@@ -98,8 +98,8 @@ class PythonTextFeature[T: ClassTag](implicit ev: TensorNumeric[T]) extends Pyth
     Normalizer()
   }
 
-  def createWordIndexer(map: JMap[String, Int]): WordIndexer = {
-    WordIndexer(if (map != null) map.asScala.toMap else null)
+  def createWordIndexer(vocab: JMap[String, Int]): WordIndexer = {
+    WordIndexer(if (vocab != null) vocab.asScala.toMap else null)
   }
 
   def createSequenceShaper(
@@ -257,6 +257,12 @@ class PythonTextFeature[T: ClassTag](implicit ev: TensorNumeric[T]) extends Pyth
       textSet: TextSet,
       weights: JList[Double]): JList[TextSet] = {
     textSet.randomSplit(weights.asScala.toArray).toList.asJava
+  }
+
+  def textSetSetWordIndex(
+      textSet: TextSet,
+      map: JMap[String, Int]): TextSet = {
+    textSet.setWordIndex(if (map != null) map.asScala.toMap else null)
   }
 
   def textSetTokenize(textSet: TextSet): TextSet = {

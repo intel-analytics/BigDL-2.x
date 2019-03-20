@@ -30,7 +30,6 @@ import com.intel.analytics.zoo.pipeline.api.keras.models.Sequential
 import com.intel.analytics.zoo.pipeline.api.keras.objectives.{RankHinge, SparseCategoricalCrossEntropy}
 import org.apache.spark.sql.SQLContext
 import org.apache.spark.{SparkConf, SparkContext}
-import com.intel.analytics.zoo.feature.text.TextFeature
 
 import scala.collection.immutable.HashSet
 

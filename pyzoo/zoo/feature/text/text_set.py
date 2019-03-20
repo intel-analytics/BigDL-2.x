@@ -80,6 +80,14 @@ class TextSet(JavaValue):
         """
         return callBigDlFunc(self.bigdl_type, "textSetGetWordIndex", self.value)
 
+    def set_word_index(self, vocab):
+        """
+        Set the word index dictionary to the TextSet.
+
+        :return: TextSet with the word_index set.
+        """
+        return callBigDlFunc(self.bigdl_type, "textSetSetWordIndex", self.value, vocab)
+
     def generate_word_index_map(self, remove_topN=0, max_words_num=-1,
                                 min_freq=1, existing_map=None):
         """

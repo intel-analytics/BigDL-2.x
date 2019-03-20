@@ -16,7 +16,7 @@
 
 package com.intel.analytics.zoo.feature.text
 
-import java.io.File
+import java.io.{BufferedOutputStream, File, PrintWriter}
 import java.util
 
 import com.intel.analytics.bigdl.DataSet
@@ -32,8 +32,6 @@ import org.apache.spark.rdd.RDD
 
 import scala.collection.mutable.{ArrayBuffer, Map => MMap}
 import scala.io.Source
-import java.io.PrintWriter
-
 import com.intel.analytics.bigdl.tensor.Tensor
 import com.intel.analytics.zoo.feature.FeatureSet
 import com.intel.analytics.zoo.feature.pmem.{DRAM, MemoryType}
@@ -184,8 +182,8 @@ abstract class TextSet {
    */
   def getWordIndex: Map[String, Int] = wordIndex
 
-  def setWordIndex(map: Map[String, Int]): this.type = {
-    wordIndex = map
+  def setWordIndex(vocab: Map[String, Int]): this.type = {
+    wordIndex = vocab
     this
   }
 
@@ -197,16 +195,8 @@ abstract class TextSet {
    */
   def saveWordIndex(path: String): Unit = {
     if (wordIndex == null) {
-      logger.warn("wordIndex is null, please transform from word to index first")
-    }
-    else {
-      val pw = new PrintWriter(new File(path))
-      for (item <- wordIndex) {
-        pw.print(item._1)
-        pw.print(" ")
-        pw.println(item._2)
-      }
-      pw.close()
+      throw new Exception("wordIndex is null, nothing to save. " +
+        "Please transform from word to index first")
     }
   }
 }
@@ -649,6 +639,17 @@ class LocalTextSet(var array: Array[TextFeature]) extends TextSet {
     setWordIndex(wordIndex)
     wordIndex
   }
+
+  override def saveWordIndex(path: String): Unit = {
+    super.saveWordIndex(path)
+    val pw = new PrintWriter(new File(path))
+    for (item <- getWordIndex) {
+      pw.print(item._1)
+      pw.print(" ")
+      pw.println(item._2)
+    }
+    pw.close()
+  }
 }
 
 
@@ -713,5 +714,15 @@ class DistributedTextSet(var rdd: RDD[TextFeature],
     val wordIndex = TextSet.wordsToMap(words, existingMap)
     setWordIndex(wordIndex)
     wordIndex
+  }
+
+  override def saveWordIndex(path: String): Unit = {
+    super.saveWordIndex(path)
+    val fs = FileSystem.get(rdd.sparkContext.hadoopConfiguration)
+    val os = new BufferedOutputStream(fs.create(new Path(path)))
+    for (item <- getWordIndex) {
+      os.write((item._1 + " " + item._2 + "\n").getBytes("UTF-8"))
+    }
+    os.close()
   }
 }
