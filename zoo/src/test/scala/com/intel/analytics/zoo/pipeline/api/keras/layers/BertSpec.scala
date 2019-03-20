@@ -52,6 +52,31 @@ class BertSpec extends ZooSpecHelper {
     val gradInput = layer.backward(T(inputIds, segmentIds, positionIds, masks), gradOutput)
   }
 
+  "Bert with output all blocks " should "be able to work" in {
+    val layer = BERT[Float](vocab = 100,
+      hiddenSize = 10,
+      nBlock = 3,
+      nHead = 2,
+      intermediateSize = 64,
+      hiddenPDrop = 0.1,
+      attnPDrop = 0.1,
+      seqLen = 10,
+      outputAllBlock = true)
+
+    val shape = Shape(List(Shape(1, 10), Shape(1, 10), Shape(1, 10), Shape(1, 1, 1, 10)))
+    layer.build(shape)
+    val w = layer.parameters()._1
+    require(w.length == 53)
+    val inputIds = Tensor[Float](Array[Float](7, 20, 39, 27, 10,
+      39, 30, 21, 17, 15), Array(1, 10))
+    val segmentIds = Tensor[Float](Array[Float](0, 0, 0, 0, 0, 1, 1, 1, 1, 1), Array(1, 10))
+    val positionIds = Tensor[Float](Array[Float](0, 1, 2, 3, 4, 5, 6, 7, 8, 9), Array(1, 10))
+    val masks = Tensor[Float](1, 1, 1, 10).fill(1.0f)
+
+    val output = layer.forward(T(inputIds, segmentIds, positionIds, masks))
+    val gradInput = layer.backward(T(inputIds, segmentIds, positionIds, masks), output)
+  }
+
   "Bert with configed embedding" should "be able to work" in {
     val vocab = 100
     val seqLen = 10
@@ -80,7 +105,7 @@ class BertSpec extends ZooSpecHelper {
 
     val embeddingLayer = Model(Array(wordInput, tokenTypeInput, positionInput), h)
 
-    val layer = BERT[Float](hiddenSize = 10, nBlock = 3, nHead = 2,
+    val layer = BERT[Float](nBlock = 3, nHead = 2,
       intermediateSize = 64, hiddenPDrop = 0.1, attnPDrop = 0.1,
       outputAllBlock = false, embeddingLayer
         .asInstanceOf[KerasLayer[Activity, Tensor[Float], Float]])
