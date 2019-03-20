@@ -57,7 +57,7 @@ if __name__ == "__main__":
         if record.getNumPartitions() == 0:
             return
         text_set = DistributedTextSet(record)
-        # TODO waiting for Kai's pr
+        # TODO waiting for Kai's set_word_index pr
         # text_set.set_word_index(word2index)
         print("Processing text...")
         transformed = text_set.tokenize().normalize()\

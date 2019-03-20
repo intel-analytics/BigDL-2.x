@@ -23,7 +23,7 @@ streamingPath=... // text files location. Local file system/HDFS/Amazon S3 are s
 output=... // output path of prediction result. Local file system/HDFS/Amazon S3 are supported
 ${ANALYTICS_ZOO_HOME}/bin/spark-submit-with-zoo.sh \
     --master ${MASTER} \
-    --driver-memory 2g \
+    --driver-memory 5g \
     --executor-memory 5g \
     streaming_object_detection.py \
     --streamingPath ${streamingPath} --model ${model} --output ${output}
@@ -36,8 +36,7 @@ imageSourcePath=... // image path. Local file system/HDFS/Amazon S3 are supporte
 streamingPath=... // text files. Local file system/HDFS/Amazon S3 are supported
 ${SPARK_HOME}/bin/spark-submit-with-zoo.sh \
     --master ${MASTER} \
-    --driver-memory 2g \
-    --executor-memory 5g \
+    --driver-memory 5g \
     image_path_writer.py \
     --streamingPath ${streamingPath} --imageSourcePath ${imageSourcePath}
 ```
