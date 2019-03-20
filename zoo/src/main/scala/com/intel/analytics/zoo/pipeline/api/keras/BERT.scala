@@ -96,21 +96,17 @@ class BERT[T: ClassTag] (
       initWeight = Tensor[T](hiddenSize).view(1, hiddenSize))
 
     val a = attention(x, attention_mask)
-    // BertOutput2
-    val n = TransformerLayer.layerNorm(x + a, e=1e-12, weight=g2, bias=b2)
+    val n = TransformerLayer.layerNorm(x + a, e = 1e-12, weight = g2, bias = b2)
 
     val m = mlp(n)
-    // Bertoutput2
-    val h = TransformerLayer.layerNorm(n + m, e=1e-12, weight=g, bias=b)
+    val h = TransformerLayer.layerNorm(n + m, e = 1e-12, weight = g, bias = b)
     h
   }
 
   def mlp(x: Variable[T]): Variable[T] = {
-    // BertIntermediate
     val h = Dense(intermediateSize).from(x)
     val a = TransformerLayer.gelu(h)
 
-    // Bertoutput1
     val h2 = Dense(hiddenSize).from(a)
     Dropout(hiddenPDrop).from(h2)
   }
@@ -126,12 +122,11 @@ class BERT[T: ClassTag] (
     val v = TransformerLayer.splitHeads(value, nHead)
     val a = attn(q, k, v, attention_mask, true) // m: (-1, 12, 77, 64)
     val m = TransformerLayer.mergeHeads(a) // m: (-1, 77, 768)
-    // Bertoutput1
+
     val n = Dense(hiddenSize).from(m) // n: (-1, 77, 768)
     Dropout(attnPDrop).from(n)
   }
 
-  // scale shoule be set in Attention
   def attn(q: Variable[T], k: Variable[T], v: Variable[T], attention_mask: Variable[T],
     scale: Boolean = false): Variable[T] = {
     // q:(16, 12, 77, 64) k:(16, 12, 64, 77) v:(16, 12, 77, 64)
@@ -175,12 +170,11 @@ object BERT {
       .from(tokenTypeInput)
 
     val embeddings = wordEmbeddings + positionEmbeddings + tokenTypeEmbeddings
-    // g, b for layerNorm
-    val embeddingG = Parameter[T](Shape(1, hiddenSize),
+    val w = Parameter[T](Shape(1, hiddenSize),
       initWeight = Tensor.ones[T](hiddenSize).view(1, hiddenSize))
-    val embeddingB = Parameter[T](Shape(1, hiddenSize),
+    val b = Parameter[T](Shape(1, hiddenSize),
       initWeight = Tensor[T](hiddenSize).view(1, hiddenSize))
-    val afterNorm = TransformerLayer.layerNorm(embeddings, weight=embeddingG, bias=embeddingB)
+    val afterNorm = TransformerLayer.layerNorm(embeddings, weight = w, bias = b)
     val h = Dropout(hiddenPDrop).from(afterNorm)
 
     val embeddingLayer = Model(Array(wordInput, tokenTypeInput, positionInput), h)
