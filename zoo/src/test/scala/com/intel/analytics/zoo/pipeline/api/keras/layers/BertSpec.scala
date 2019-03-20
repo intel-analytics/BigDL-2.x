@@ -23,7 +23,7 @@ import com.intel.analytics.bigdl.utils.{Shape, T}
 import com.intel.analytics.zoo.pipeline.api.autograd.{Parameter, Variable}
 import com.intel.analytics.zoo.pipeline.api.keras.models.Model
 import com.intel.analytics.zoo.pipeline.api.keras.serializer.ModuleSerializationTest
-import com.intel.analytics.zoo.pipeline.api.keras.{BERT, ZooSpecHelper}
+import com.intel.analytics.zoo.pipeline.api.keras.ZooSpecHelper
 
 class BertSpec extends ZooSpecHelper {
   "Bert " should "be able to work" in {
@@ -972,7 +972,7 @@ class BertSpec extends ZooSpecHelper {
   }
 }
 
-class BertSerialTest extends ModuleSerializationTest {
+class BERTSerialTest extends ModuleSerializationTest {
   override def test(): Unit = {
     val layer = BERT[Float](vocab = 100,
       hiddenSize = 768,
