@@ -32,6 +32,10 @@ import scala.reflect.ClassTag
 
 /**
  * [[TransformerLayer]] A self attention keras like layer
+ * Input is a Tensor with shape [batch, seqLen, 2].
+ * [:, :, 1] represents token id
+ * [:, :, 2] represents postions in the sentence
+ * Output is a Tensor which output the states of Transformer layer
  * @param nBlock block number
  * @param residPdrop drop probability of projection
  * @param attnPdrop drop probability of attention
