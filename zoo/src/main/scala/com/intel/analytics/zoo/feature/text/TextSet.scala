@@ -16,7 +16,7 @@
 
 package com.intel.analytics.zoo.feature.text
 
-import java.io.{BufferedOutputStream, File, PrintWriter}
+import java.io._
 import java.util
 
 import com.intel.analytics.bigdl.DataSet
@@ -109,11 +109,18 @@ abstract class TextSet {
 
   /**
    * Map word tokens to indices.
-   * Result index will start from 1 and corresponds to the occurrence frequency of each word
-   * sorted in descending order.
-   * Need to tokenize first.
-   * See [[WordIndexer]] for more details.
+   * Important: You need to note that this method behaves differently for training and inference.
+   *
+   * ---------------------------------------Training--------------------------------------------
+   * During the training, you need to generate a new wordIndex map according to the texts you are
+   * dealing with. Thus this method will first do the map generation and then convert words to
+   * indices based on the generated map.
+   * You can specify the following arguments which poses some constraints when generating the map.
+   * In the result map, index will start from 1 and corresponds to the occurrence frequency of
+   * each word sorted in descending order.
    * After word2idx, you can get the generated wordIndex map by calling 'getWordIndex'.
+   * Also, you can call `saveWordIndex` to save this wordIndex map to be used in future training.
+   *
    *
    * @param removeTopN Non-negative integer. Remove the topN words with highest frequencies in
    *                   the case where those are treated as stopwords.
@@ -127,6 +134,15 @@ abstract class TextSet {
    *                    map with index starting from 1 will be generated.
    *                    If not null, then the generated map will preserve the word index in
    *                    existingMap and assign subsequent indices to new words.
+   *
+   * ---------------------------------------Inference--------------------------------------------
+   * During the inference, you are supposed to use exactly the same wordIndex map in the training
+   * stage instead of generating a new one.
+   * Thus please be aware that you do not need to specify any of the above arguments.
+   * You need to call `loadWordIndex` or `setWordIndex` beforehand for map loading.
+   *
+   * Need to tokenize first.
+   * See [[WordIndexer]] for more details.
    */
   def word2idx(
       removeTopN: Int = 0,
@@ -134,7 +150,7 @@ abstract class TextSet {
       minFreq: Int = 1,
       existingMap: Map[String, Int] = null): TextSet = {
     if (wordIndex != null) {
-      logger.warn("wordIndex already exists. Using the existing wordIndex")
+      logger.info("Using the existing wordIndex for transformation")
     } else {
       generateWordIndexMap(removeTopN, maxWordsNum, minFreq, existingMap)
     }
@@ -188,10 +204,13 @@ abstract class TextSet {
   }
 
   /**
-   * Save wordIndex map to local text file, which may be used for inference.
-   * Each line will be "word id".
+   * Save wordIndex map to text file, which can be used for future inference.
+   * Each separate line will be "word id".
    *
-   * @param path Local text file path.
+   * For LocalTextSet, save txt to a local file system.
+   * For DistributedTextSet, save txt to a local file system or HDFS.
+   *
+   * @param path The path to the text file.
    */
   def saveWordIndex(path: String): Unit = {
     if (wordIndex == null) {
@@ -199,6 +218,22 @@ abstract class TextSet {
         "Please transform from word to index first")
     }
   }
+
+  /**
+   * Load the wordIndex map which was saved after the training, so that this TextSet can
+   * directly use this wordIndex during inference.
+   * Each separate line should be "word id".
+   *
+   * Note that after calling `loadWordIndex`, you do not need to specify any argument when calling
+   * `word2idx` in the preprocessing pipeline as now you are using exactly the loaded wordIndex for
+   * transformation.
+   *
+   * For LocalTextSet, load txt from a local file system.
+   * For DistributedTextSet, load txt from a local file system or HDFS.
+   *
+   * @param path The path to the text file.
+   */
+  def loadWordIndex(path: String): TextSet
 }
 
 
@@ -421,9 +456,9 @@ object TextSet {
       mapText2(text.getURI) = indices
     }
     val res = pairsArray.map(x => {
-      val indices1 = mapText1.get(x.id1).get
-      val indices2Pos = mapText2.get(x.id2Positive).get
-      val indices2Neg = mapText2.get(x.id2Negative).get
+      val indices1 = mapText1(x.id1)
+      val indices2Pos = mapText2(x.id2Positive)
+      val indices2Neg = mapText2(x.id2Negative)
       require(indices2Neg.length == indices2Pos.length,
         "corpus2 contains texts with different lengths, please shapeSequence first")
       val textFeature = TextFeature(null, x.id1 + x.id2Positive + x.id2Negative)
@@ -650,6 +685,15 @@ class LocalTextSet(var array: Array[TextFeature]) extends TextSet {
     }
     pw.close()
   }
+
+  override def loadWordIndex(path: String): TextSet = {
+    val wordIndex = MMap[String, Int]()
+    for (line <- Source.fromFile(path).getLines) {
+      val values = line.split(" ")
+      wordIndex.put(values(0), values(1).toInt)
+    }
+    setWordIndex(wordIndex.toMap)
+  }
 }
 
 
@@ -724,5 +768,18 @@ class DistributedTextSet(var rdd: RDD[TextFeature],
       os.write((item._1 + " " + item._2 + "\n").getBytes("UTF-8"))
     }
     os.close()
+  }
+
+  override def loadWordIndex(path: String): TextSet = {
+    val fs = FileSystem.get(rdd.sparkContext.hadoopConfiguration)
+    val br = new BufferedReader(new InputStreamReader(fs.open(new Path(path))))
+    val wordIndex = MMap[String, Int]()
+    var line = br.readLine()
+    while (line != null) {
+      val values = line.split(" ")
+      wordIndex.put(values(0), values(1).toInt)
+      line = br.readLine()
+    }
+    setWordIndex(wordIndex.toMap)
   }
 }
