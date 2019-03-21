@@ -78,6 +78,5 @@ class OnnxHelper:
             elif len(pads) == 2:
                 assert pads[0] == pads[1]
                 pads = pads[0]
-            border_mode = 'valid'
 
         return border_mode, pads
