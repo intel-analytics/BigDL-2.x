@@ -121,6 +121,14 @@ class TextSetSpec extends ZooSpecHelper {
       wordIndex("annotate"), wordIndex("text"))))
   }
 
+  "Save a TextSet with no wordIndex" should "raise an error" in {
+    intercept[Exception] {
+      val tmpFile = createTmpFile()
+      val distributed = TextSet.rdd(sc.parallelize(genFeatures()))
+      distributed.saveWordIndex(tmpFile.getAbsolutePath)
+    }
+  }
+
   "TextSet read with sc, fit, predict and evaluate" should "work properly" in {
     val textSet = TextSet.read(path, sc)
     require(textSet.isDistributed)

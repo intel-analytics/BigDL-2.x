@@ -109,7 +109,7 @@ abstract class TextSet {
 
   /**
    * Map word tokens to indices.
-   * Important: You need to note that this method behaves differently for training and inference.
+   * Important: Take care that this method behaves a bit differently for training and inference.
    *
    * ---------------------------------------Training--------------------------------------------
    * During the training, you need to generate a new wordIndex map according to the texts you are
@@ -120,7 +120,6 @@ abstract class TextSet {
    * each word sorted in descending order.
    * After word2idx, you can get the generated wordIndex map by calling 'getWordIndex'.
    * Also, you can call `saveWordIndex` to save this wordIndex map to be used in future training.
-   *
    *
    * @param removeTopN Non-negative integer. Remove the topN words with highest frequencies in
    *                   the case where those are treated as stopwords.
@@ -198,6 +197,13 @@ abstract class TextSet {
    */
   def getWordIndex: Map[String, Int] = wordIndex
 
+  /**
+   * Assign a wordIndex map for this TextSet to use during word2idx.
+   * If you load the wordIndex from the saved file, you are recommended to use `loadWordIndex`
+   * directly.
+   *
+   * @param vocab Map of each word (String) and its index (integer).
+   */
   def setWordIndex(vocab: Map[String, Int]): this.type = {
     wordIndex = vocab
     this
@@ -592,7 +598,7 @@ object TextSet {
    *                    map with index starting from 1 will be generated.
    *                    If not null, then the generated map will preserve the word index in
    *                    existingMap and assign subsequent indices to new words.
-   * @return WordIndex map.
+   * @return wordIndex map.
    */
   def wordsToMap(words: Array[String], existingMap: Map[String, Int] = null): Map[String, Int] = {
     if (existingMap == null) {

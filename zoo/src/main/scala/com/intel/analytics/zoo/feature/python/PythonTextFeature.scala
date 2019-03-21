@@ -261,8 +261,8 @@ class PythonTextFeature[T: ClassTag](implicit ev: TensorNumeric[T]) extends Pyth
 
   def textSetSetWordIndex(
       textSet: TextSet,
-      map: JMap[String, Int]): TextSet = {
-    textSet.setWordIndex(if (map != null) map.asScala.toMap else null)
+      vocab: JMap[String, Int]): TextSet = {
+    textSet.setWordIndex(if (vocab != null) vocab.asScala.toMap else null)
   }
 
   def textSetTokenize(textSet: TextSet): TextSet = {
@@ -403,6 +403,12 @@ class PythonTextFeature[T: ClassTag](implicit ev: TensorNumeric[T]) extends Pyth
       textSet: TextSet,
       path: String): Unit = {
     textSet.saveWordIndex(path)
+  }
+
+  def textSetLoadWordIndex(
+      textSet: TextSet,
+      path: String): Unit = {
+    textSet.loadWordIndex(path)
   }
 
 }
