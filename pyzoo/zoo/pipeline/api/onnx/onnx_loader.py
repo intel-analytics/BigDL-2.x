@@ -42,7 +42,9 @@ class OnnxLoader(object):
     @classmethod
     def from_path(cls, onnx_path):
         onnx_model = onnx.load(onnx_path)
-        return cls(onnx_model.graph)
+        zmodel = OnnxLoader(onnx_model.graph).to_keras()
+        zmodel.training(is_training=is_training)
+        return zmodel
 
     @staticmethod
     # inputs_dict is a list of batch data
