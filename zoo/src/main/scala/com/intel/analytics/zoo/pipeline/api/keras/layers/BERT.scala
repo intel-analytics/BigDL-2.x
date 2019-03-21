@@ -142,7 +142,7 @@ class BERT[T: ClassTag] (
     val m = TransformerLayer.mergeHeads(a) // m: (batch, seqLen, hiddenSize)
 
     val n = Dense(hiddenSize).from(m) // n: (batch, seqLen, hiddenSize)
-    Dropout(attnPDrop).from(n)
+    Dropout(hiddenPDrop).from(n)
   }
 
   def attn(q: Variable[T], k: Variable[T], v: Variable[T], attention_mask: Variable[T],
@@ -156,9 +156,9 @@ class BERT[T: ClassTag] (
       w = w + attention_mask
     }
     w = Activation[Float]("softmax").from(w)
-    w = AutoGrad.mm(w, v)
+    w = Dropout(attnPDrop).from(w)
 
-    w = Dropout(hiddenPDrop).from(w)
+    w = AutoGrad.mm(w, v)
     w
   }
 }
@@ -167,7 +167,7 @@ object BERT {
   /**
    * [[BERT]] A self attention keras like layer
    * @param vocab vocabulary size of training data, default is 40990
-   * @param hiddenSize ize of the encoder layers, default is 768
+   * @param hiddenSize size of the encoder layers, default is 768
    * @param nBlock block number
    * @param nHead head number
    * @param seqLen sequence lenght
@@ -205,7 +205,7 @@ object BERT {
       initWeight = Tensor.ones[T](hiddenSize).view(1, hiddenSize))
     val b = Parameter[T](Shape(1, hiddenSize),
       initWeight = Tensor[T](hiddenSize).view(1, hiddenSize))
-    val afterNorm = TransformerLayer.layerNorm(embeddings, weight = w, bias = b)
+    val afterNorm = TransformerLayer.layerNorm(embeddings, e = 1e-12, weight = w, bias = b)
     val h = Dropout(hiddenPDrop).from(afterNorm)
 
     val embeddingLayer = Model(Array(wordInput, tokenTypeInput, positionInput), h)
