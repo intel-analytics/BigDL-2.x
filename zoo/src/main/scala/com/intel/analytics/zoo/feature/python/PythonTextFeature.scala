@@ -407,7 +407,7 @@ class PythonTextFeature[T: ClassTag](implicit ev: TensorNumeric[T]) extends Pyth
 
   def textSetLoadWordIndex(
       textSet: TextSet,
-      path: String): Unit = {
+      path: String): TextSet = {
     textSet.loadWordIndex(path)
   }
 

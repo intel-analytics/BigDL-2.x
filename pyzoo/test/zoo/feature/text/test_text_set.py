@@ -94,6 +94,16 @@ class TestTextSet:
         for sample in samples:
             assert sample.feature.shape[0] == 10
 
+        vocab_file = create_tmp_path() + ".txt"
+        transformed.save_word_index(vocab_file)
+        local_set2 = LocalTextSet(self.texts, self.labels)
+        local_set2.load_word_index(vocab_file)
+        transformed2 = local_set2.tokenize().normalize().word2idx().shape_sequence(10).generate_sample()
+        samples2 = transformed2.get_samples()
+        for s1, s2 in zip(samples, samples2):
+            assert np.allclose(s1.feature.to_ndarray(), s2.feature.to_ndarray())
+        os.remove(vocab_file)
+
         model = TextClassifier(5, self.glove_path, word_index, 10)
         model.compile("adagrad", "sparse_categorical_crossentropy", ['accuracy'])
         tmp_log_dir = create_tmp_path()
@@ -145,6 +155,16 @@ class TestTextSet:
         assert len(samples) == 3
         for sample in samples:
             assert sample.feature.shape[0] == 5
+
+        vocab_file = create_tmp_path() + ".txt"
+        transformed.save_word_index(vocab_file)
+        distributed_set2 = DistributedTextSet(texts_rdd, labels_rdd)
+        distributed_set2.load_word_index(vocab_file)
+        transformed2 = distributed_set2.tokenize().normalize().word2idx().shape_sequence(5).generate_sample()
+        samples2 = transformed2.get_samples().collect()
+        for s1, s2 in zip(samples, samples2):
+            assert np.allclose(s1.feature.to_ndarray(), s2.feature.to_ndarray())
+        os.remove(vocab_file)
 
         model = TextClassifier(5, self.glove_path, word_index, 5, encoder="lstm")
         model.compile(SGD(), SparseCategoricalCrossEntropy())
