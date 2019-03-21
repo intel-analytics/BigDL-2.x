@@ -19,14 +19,13 @@ import java.io.{File, FileInputStream, InputStream}
 import java.nio._
 
 import com.intel.analytics.bigdl.Module
-import com.intel.analytics.bigdl.dataset.{PaddingParam, Sample}
 import com.intel.analytics.bigdl.nn.abstractnn.{AbstractModule, Activity}
 import com.intel.analytics.bigdl.tensor.Tensor
 import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric
 import com.intel.analytics.bigdl.utils.{MultiShape, Shape, T}
-import com.intel.analytics.zoo.pipeline.api.{Predictable, Predictor}
+import com.intel.analytics.zoo.core.TFNetNative
+import com.intel.analytics.zoo.pipeline.api.Predictable
 import com.intel.analytics.zoo.pipeline.api.net.TFNet.TFGraphHolder
-import org.apache.spark.rdd.RDD
 import org.tensorflow.framework.GraphDef
 import org.tensorflow.types.UInt8
 import org.tensorflow.{DataType, Graph, Session, Tensor => TTensor}
@@ -86,6 +85,12 @@ class TFNet(private val graphDef: TFGraphHolder,
     }
     def createTFTensor(shape: Array[Long], buffer: DoubleBuffer): TTensor[_] = {
       val TFTensor : TTensor[_] = TTensor.create(shape, buffer)
+      tensorList = TFTensor :: tensorList
+      return TFTensor
+    }
+
+    def createBoolTFTensor(shape: Array[Long], bytes: ByteBuffer): TTensor[_] = {
+      val TFTensor : TTensor[_] = TTensor.create(classOf[java.lang.Boolean], shape, bytes)
       tensorList = TFTensor :: tensorList
       return TFTensor
     }
@@ -457,6 +462,7 @@ class TFNet(private val graphDef: TFGraphHolder,
   private def name2type(name: String): DataType = {
     val Array(op, idx) = name.split(":")
     val operation = graph.operation(op)
+    if (operation == null) throw new Exception(s"Operation $op not found")
     val output = operation.output(idx.toInt)
     output.dataType()
   }
@@ -498,6 +504,9 @@ class TFNet(private val graphDef: TFGraphHolder,
     } else if (dataType == DataType.DOUBLE) {
       val buffer = DoubleBuffer.wrap(TFNet.floatToDouble(arr), offset, length)
       tensorManager.createTFTensor(shape, buffer)
+    } else if (dataType == DataType.BOOL) {
+      val buffer = ByteBuffer.wrap(TFNet.floatToBool(arr), offset, length)
+      tensorManager.createBoolTFTensor(shape, buffer)
     } else {
       throw new Exception(s"data type ${dataType} are not supported")
     }
@@ -568,6 +577,8 @@ class TFNet(private val graphDef: TFGraphHolder,
 
 object TFNet {
 
+  assert(TFNetNative.isLoaded)
+
   @transient
   private lazy val inDriver = NetUtils.isDriver
 
@@ -608,6 +619,7 @@ object TFNet {
         val len = in.readInt()
         require(len != 0, "GraphDef length should not be zero," +
           "please set logging level to debug for more information")
+        assert(len >= 0, "GraphDef length should be an non-negative integer")
         val graphDef = new Array[Byte](len)
         timing("reading graph def from stream") {
           var numOfBytes = 0
@@ -621,6 +633,7 @@ object TFNet {
 
       if (!graphDefIsCreated) {
         val len = in.readInt()
+        assert(len >= 0, "GraphDef length should be an non-negative integer")
         in.skip(len)
       }
 
@@ -711,6 +724,16 @@ object TFNet {
     var i = 0
     while (i < array.length) {
       result(i) = array(i).toByte
+      i = i + 1
+    }
+    result
+  }
+
+  private def floatToBool(array: Array[Float]): Array[Byte] = {
+    val result = new Array[Byte](array.length)
+    var i = 0
+    while (i < array.length) {
+      result(i) = if (array(i) == 0.0) 0.toByte else 1.toByte
       i = i + 1
     }
     result

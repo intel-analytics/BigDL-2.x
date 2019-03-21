@@ -7,7 +7,7 @@
     <parent>
         <artifactId>zoo-parent</artifactId>
         <groupId>com.intel.analytics.zoo</groupId>
-        <version>0.4.0-SNAPSHOT</version>
+        <version>0.5.0-SNAPSHOT</version>
     </parent>
 
     <artifactId>analytics-zoo-bigdl_${bigdl.version}-spark_${spark.version}</artifactId>
@@ -24,7 +24,8 @@
         <scala.macros.version>2.1.0</scala.macros.version>
         <scalatest.version>2.2.4</scalatest.version>
         <spark.version>2.1.0</spark.version>
-        <bigdl.version>0.7.1</bigdl.version>
+        <bigdl.version>0.7.2</bigdl.version>
+        <data-store-url>https://s3-ap-southeast-1.amazonaws.com</data-store-url>
     </properties>
 
     <distributionManagement>
@@ -248,13 +249,18 @@
         </dependency>
         <dependency>
             <groupId>org.tensorflow</groupId>
-            <artifactId>tensorflow</artifactId>
-            <version>1.10.0</version>
+            <artifactId>libtensorflow</artifactId>
+            <version>1.13.1</version>
         </dependency>
         <dependency>
             <groupId>org.tensorflow</groupId>
             <artifactId>proto</artifactId>
-            <version>1.10.0</version>
+            <version>1.13.1</version>
+        </dependency>
+        <dependency>
+            <groupId>com.intel.analytics.zoo</groupId>
+            <artifactId>zoo-core-dist-all</artifactId>
+            <version>0.5.0-SNAPSHOT</version>
         </dependency>
     </dependencies>
 
@@ -262,6 +268,7 @@
         <resources>
             <resource>
                 <directory>${project.basedir}/src/main/resources</directory>
+                <filtering>true</filtering>
             </resource>
             <resource>
                 <!-- Include the properties file to provide the build information. -->
@@ -327,12 +334,12 @@
                         </goals>
                     </execution>
                     <execution>
-                        <id>bigdl_python</id>
+                        <id>python_packages</id>
                         <phase>package</phase>
                         <configuration>
                             <arguments>
-                                <argument>${project.basedir}/../scripts/get_bigdl_python</argument>
-                                <argument>${project.build.directory}/bigdl_python</argument>
+                                <argument>${project.basedir}/../scripts/get_python_packages</argument>
+                                <argument>${project.build.directory}/python</argument>
                                 <argument>${bigdl.version}</argument>
                             </arguments>
 
@@ -570,6 +577,24 @@
                     <nexusUrl>https://oss.sonatype.org/</nexusUrl>
                     <autoReleaseAfterClose>false</autoReleaseAfterClose>
                 </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>properties-maven-plugin</artifactId>
+                <version>1.0.0</version>
+                <executions>
+                    <execution>
+                        <phase>generate-resources</phase>
+                        <goals>
+                            <goal>write-project-properties</goal>
+                        </goals>
+                        <configuration>
+                            <outputFile>
+                                ${project.build.outputDirectory}/app.properties
+                            </outputFile>
+                        </configuration>
+                    </execution>
+                </executions>
             </plugin>
         </plugins>
     </build>

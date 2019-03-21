@@ -18,7 +18,7 @@ import warnings
 
 from zoo.pipeline.api.keras.models import Sequential
 from zoo.pipeline.api.keras.layers import *
-from zoo.models.common.zoo_model import ZooModel
+from zoo.models.common import ZooModel
 from bigdl.util.common import callBigDlFunc
 
 
@@ -121,7 +121,7 @@ class TextClassifier(ZooModel):
         if isinstance(loss, six.string_types):
             loss = to_bigdl_criterion(loss)
         if metrics and all(isinstance(metric, six.string_types) for metric in metrics):
-            metrics = to_bigdl_metrics(metrics)
+            metrics = to_bigdl_metrics(metrics, loss)
         callBigDlFunc(self.bigdl_type, "textClassifierCompile",
                       self.value,
                       optimizer,

@@ -14,10 +14,11 @@
 # limitations under the License.
 #
 
+import sys
 import datetime as dt
 from optparse import OptionParser
 
-from bigdl.optim.optimizer import *
+from bigdl.optim.optimizer import Adagrad
 from zoo.common.nncontext import init_nncontext
 from zoo.feature.text import TextSet
 from zoo.models.textclassification import TextClassifier
@@ -36,10 +37,10 @@ if __name__ == "__main__":
     parser.add_option("--encoder_output_dim", dest="encoder_output_dim", default="256")
     parser.add_option("--training_split", dest="training_split", default="0.8")
     parser.add_option("-b", "--batch_size", dest="batch_size", default="128")
-    parser.add_option("--nb_epoch", dest="nb_epoch", default="20")
+    parser.add_option("-e", "--nb_epoch", dest="nb_epoch", default="20")
     parser.add_option("-l", "--learning_rate", dest="learning_rate", default="0.01")
     parser.add_option("--log_dir", dest="log_dir", default="/tmp/.analytics-zoo")
-    parser.add_option("--model", dest="model")
+    parser.add_option("-m", "--model", dest="model")
 
     (options, args) = parser.parse_args(sys.argv)
     sc = init_nncontext("Text Classification Example")

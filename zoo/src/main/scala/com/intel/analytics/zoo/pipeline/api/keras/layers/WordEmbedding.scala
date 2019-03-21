@@ -27,6 +27,7 @@ import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric
 import com.intel.analytics.bigdl.utils.Shape
 import com.intel.analytics.bigdl.utils.serializer.{DeserializeContext, SerializeContext}
 import com.intel.analytics.bigdl.utils.serializer.converters.{DataConverter, TensorConverter}
+import com.intel.analytics.zoo.common.CheckedObjectInputStream
 import com.intel.analytics.zoo.pipeline.api.keras.layers.WordEmbedding.EmbeddingMatrixHolder
 import com.intel.analytics.zoo.pipeline.api.net.{NetUtils, RegistryMap, SerializationHolder}
 import org.slf4j.LoggerFactory
@@ -344,6 +345,7 @@ object WordEmbedding {
         val len = in.readInt()
         require(len != 0, "weight length should not be zero," +
           "please set logging level to debug for more information")
+        assert(len >= 0, "weight length should be an non-negative integer")
         val w = new Array[Byte](len)
         timing("reading weight from stream") {
           var numOfBytes = 0
@@ -352,7 +354,7 @@ object WordEmbedding {
             numOfBytes += read
           }
         }
-        val ois = new ObjectInputStream(new ByteArrayInputStream(w))
+        val ois = new CheckedObjectInputStream(classOf[Tensor[T]], new ByteArrayInputStream(w))
         try {
           ois.readObject().asInstanceOf[Tensor[T]]
         } finally {
@@ -361,6 +363,7 @@ object WordEmbedding {
       }
       if (!isCreated) {
         val len = in.readInt()
+        assert(len >= 0, "weight length should be an non-negative integer")
         in.skip(len)
       }
       weight = cachedWeight.asInstanceOf[Tensor[T]]

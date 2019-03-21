@@ -26,6 +26,16 @@ class TestFeatureCommon(ZooTestCase):
         new_preprocessing = BigDLAdapter(Resize(1, 1))
         assert isinstance(new_preprocessing, Preprocessing)
 
+    def test_relations(self):
+        resource_path = os.path.join(os.path.split(__file__)[0], "../resources")
+        path = os.path.join(resource_path, "qa")
+        relations = Relations.read(path + "/relations.txt")
+        assert isinstance(relations, list)
+        relations2 = Relations.read(path + "/relations.csv", self.sc, 2)
+        assert isinstance(relations2, RDD)
+        relations3 = Relations.read_parquet(path + "/relations.parquet", self.sc)
+        assert isinstance(relations3, RDD)
+
 
 if __name__ == "__main__":
     pytest.main([__file__])

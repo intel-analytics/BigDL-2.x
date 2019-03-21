@@ -62,6 +62,20 @@ object Utils {
     func
   }
 
+  def buckBuckets(bucketSize: Int)(col: String*): Int = {
+    Math.abs(col.reduce(_ + "_" + _).hashCode()) % bucketSize + 0
+  }
+
+  def bucketizedColumn(boundaries: Array[Float]): Float => Int = {
+    col1: Float => {
+      var index = 0
+      while(index < boundaries.length && col1 >= boundaries(index)) {
+        index += 1
+      }
+      index
+    }
+  }
+
   // save 0 for uncovered ones
   def categoricalFromVocabList(vocabList: Array[String]): (String) => Int = {
     val func = (sth: String) => {

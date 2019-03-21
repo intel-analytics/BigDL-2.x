@@ -24,7 +24,7 @@ import com.intel.analytics.bigdl.optim._
 import com.intel.analytics.bigdl.python.api.{PythonBigDLKeras, Sample => JSample}
 import com.intel.analytics.bigdl.tensor.{Storage, Tensor}
 import com.intel.analytics.bigdl.utils.T
-import com.intel.analytics.zoo.pipeline.api.keras.metrics.Accuracy
+import com.intel.analytics.zoo.pipeline.api.keras.metrics.{Accuracy, BinaryAccuracy, CategoricalAccuracy, SparseCategoricalAccuracy}
 import org.apache.spark.api.java.JavaRDD
 import org.apache.spark.rdd.RDD
 import org.tensorflow.{Session, Tensor => TTensor}
@@ -38,7 +38,8 @@ private[zoo] class TFTrainingHelper(tfnet: TFNet,
                                     inputs: Array[String],
                                     outputs: Array[String],
                                     variables: Array[String],
-                                    gradVariables: Array[String])
+                                    gradVariables: Array[String],
+                                    defaultTensorValue: Array[Array[Float]])
   extends AbstractModule[Activity, Activity, Float] {
 
   override def parameters(): (Array[Tensor[Float]], Array[Tensor[Float]]) = {
@@ -92,6 +93,20 @@ private[zoo] class TFTrainingHelper(tfnet: TFNet,
 
     }
 
+    if (this.isTraining()) {
+      var i = 0
+      while (i < defaultTensorValue.length) {
+        feeds.insert(Tensor.scalar[Float](defaultTensorValue(i)(0)))
+        i += 1
+      }
+    } else {
+      var i = 0
+      while (i < defaultTensorValue.length) {
+        feeds.insert(Tensor.scalar[Float](defaultTensorValue(i)(1)))
+        i += 1
+      }
+    }
+
     var i = 0
     while (i < weights.length) {
       feeds.insert(weights(i))
@@ -127,7 +142,7 @@ private[zoo] class TFTrainingHelper(tfnet: TFNet,
 
 object TFTrainingHelper {
 
-  def apply(modelPath: String): TFTrainingHelper = {
+  def apply(modelPath: String, sessionConfig: Array[Byte] = null): TFTrainingHelper = {
     val (model, meta) = NetUtils.processTFFolder(modelPath)
 
     val folderPath = Path(modelPath)
@@ -141,17 +156,25 @@ object TFTrainingHelper {
     val trainingMeta = parse(jsonStr).camelizeKeys.extract[TrainMeta]
 
     val newMeta = Meta(
-      (meta.inputNames.toSeq ++: trainingMeta.variables.toSeq).toArray,
+      (meta.inputNames.toSeq ++:
+        trainingMeta.variables.toSeq).toArray,
       meta.outputNames)
     val graphDef = TFNet.parseGraph(model)
-    val tfnet = TFNet(graphDef, model, newMeta, TFNet.defaultSessionConfig.toByteArray())
+    val config = if (sessionConfig != null) {
+      sessionConfig
+    } else {
+      TFNet.defaultSessionConfig.toByteArray()
+    }
+    val tfnet = TFNet(graphDef, model, newMeta, config)
 
 
     new TFTrainingHelper(tfnet,
       trainingMeta.inputNames,
       trainingMeta.outputNames,
       trainingMeta.variables,
-      trainingMeta.gradVariables)
+      trainingMeta.gradVariables,
+      trainingMeta.defaultTensorValues
+    )
   }
 }
 
@@ -194,10 +217,17 @@ class TFValidationMethod(val valMethod: ValidationMethod[Float],
       outputs
     }
 
-    val to1basedLabel = !valMethod.isInstanceOf[Accuracy[Float]] &&
-      valMethod.isInstanceOf[Top1Accuracy[Float]] ||
-        valMethod.isInstanceOf[Top5Accuracy[Float]] ||
-        valMethod.isInstanceOf[TreeNNAccuracy[Float]]
+    val to1basedLabel = valMethod match {
+      case _: SparseCategoricalAccuracy[Float] => false
+      case _: CategoricalAccuracy[Float] => false
+      case _: BinaryAccuracy[Float] => false
+      case v: Accuracy[Float] => !v.zeroBasedLabel
+      case _: Top1Accuracy[Float] => true
+      case _: Top5Accuracy[Float] => true
+      case _: TreeNNAccuracy[Float] => true
+      case _ => false
+    }
+
     val targetActivity = if (targetLength == 1) {
       val t = outputT[Tensor[Float]](outputT.length() - targetLength)
       if (to1basedLabel) t.add(1.0f)
@@ -238,7 +268,8 @@ class MergeFeatureLabel() extends Transformer[Sample[Float], Sample[Float]] {
 }
 
 case class TrainMeta(inputNames: Array[String], outputNames: Array[String],
-                     variables: Array[String], gradVariables: Array[String])
+                     variables: Array[String], gradVariables: Array[String],
+                     defaultTensorValues: Array[Array[Float]])
 
 
 class TFOptimizer(modelPath: String,

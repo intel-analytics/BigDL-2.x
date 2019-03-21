@@ -17,7 +17,7 @@ package com.intel.analytics.zoo.pipeline.api.keras
 
 import java.io.{File => JFile}
 
-import com.intel.analytics.bigdl.nn.abstractnn.AbstractModule
+import com.intel.analytics.bigdl.nn.abstractnn.{AbstractModule, Activity}
 import com.intel.analytics.bigdl.tensor.Tensor
 import com.intel.analytics.bigdl.utils.{RandomGenerator, Table}
 import com.intel.analytics.zoo.models.common.ZooModel
@@ -77,16 +77,17 @@ abstract class ZooSpecHelper extends FlatSpec with Matchers with BeforeAndAfter 
                                 input: Tensor[Float],
                                 precision: Double = 1e-5, compareBackward: Boolean = true): Unit = {
     // Set seed in case of random factors such as dropout
-    RandomGenerator.RNG.setSeed(1000)
+    val seed = System.currentTimeMillis()
+    RandomGenerator.RNG.setSeed(seed)
     val output1 = model1.forward(input)
-    RandomGenerator.RNG.setSeed(1000)
+    RandomGenerator.RNG.setSeed(seed)
     val output2 = model2.forward(input)
     output2.size().sameElements(output1.size()) should be (true)
     output2.almostEqual(output1, precision) should be (true)
     if(compareBackward) {
-      RandomGenerator.RNG.setSeed(1000)
+      RandomGenerator.RNG.setSeed(seed)
       val gradInput1 = model1.backward(input, output1)
-      RandomGenerator.RNG.setSeed(1000)
+      RandomGenerator.RNG.setSeed(seed)
       val gradInput2 = model2.backward(input, output2)
       gradInput2.size().sameElements(gradInput1.size()) should be (true)
       gradInput2.almostEqual(gradInput1, precision) should be (true)
@@ -98,15 +99,16 @@ abstract class ZooSpecHelper extends FlatSpec with Matchers with BeforeAndAfter 
       input: Table,
       precision: Double = 1e-5): Unit = {
     // Set seed in case of random factors such as dropout
-    RandomGenerator.RNG.setSeed(1000)
+    val seed = System.currentTimeMillis()
+    RandomGenerator.RNG.setSeed(seed)
     val output1 = model1.forward(input)
-    RandomGenerator.RNG.setSeed(1000)
+    RandomGenerator.RNG.setSeed(seed)
     val output2 = model2.forward(input)
     output2.size().sameElements(output1.size()) should be (true)
     output2.almostEqual(output1, precision) should be (true)
-    RandomGenerator.RNG.setSeed(1000)
+    RandomGenerator.RNG.setSeed(seed)
     val gradInput1 = model1.backward(input, output1)
-    RandomGenerator.RNG.setSeed(1000)
+    RandomGenerator.RNG.setSeed(seed)
     val gradInput2 = model2.backward(input, output2)
     gradInput1.length() == gradInput2.length() should be (true)
     var i = 1
@@ -141,6 +143,18 @@ abstract class ZooSpecHelper extends FlatSpec with Matchers with BeforeAndAfter 
       .asInstanceOf[ZooModel[Tensor[Float], Tensor[Float], Float]]
     require(loadedModel.modules.length == 1)
     compareOutputAndGradInput(model, loadedModel, input, precision)
+  }
+
+  def testZooModelLoadSave2[Model](model: ZooModel[Table, Tensor[Float], Float],
+                                   input: Table,
+                                   loader: (String, String) => Model,
+                                   precision: Double = 1e-5): Unit = {
+    val serFile = createTmpFile()
+    model.saveModel(serFile.getAbsolutePath, overWrite = true)
+    val loadedModel = loader(serFile.getAbsolutePath, null)
+      .asInstanceOf[ZooModel[Table, Tensor[Float], Float]]
+    require(loadedModel.modules.length == 1)
+    compareOutputAndGradInputTable2Tensor(model, loadedModel, input, precision)
   }
 }
 

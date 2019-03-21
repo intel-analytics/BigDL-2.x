@@ -1326,6 +1326,27 @@ class TestModelLoading(OnnxTestCase):
         output = OnnxLoader.run_node(node, [x])
         np.testing.assert_almost_equal(output["y"], y, decimal=5)
 
+    def test_globalaveragepool(self):
+        node = onnx.helper.make_node(
+            'GlobalAveragePool',
+            inputs=['x'],
+            outputs=['y'],
+        )
+        x = np.random.randn(2, 3, 7, 5).astype(np.float32)
+        spatial_shape = np.ndim(x) - 2
+        y = np.average(x, axis=tuple(range(spatial_shape, spatial_shape + 2)))
+        for _ in range(spatial_shape):
+            y = np.expand_dims(y, -1)
+        output = OnnxLoader.run_node(node, [x])
+        np.testing.assert_almost_equal(output["y"], y, decimal=5)
+
+    def test_onnx_globalaveragepool2(self):
+        pytorch_model = torch.nn.Sequential(
+            torch.nn.AdaptiveAvgPool2d((1, 1))
+        )
+        input_shape_with_batch = (1, 3, 224, 224)
+        self.compare_with_pytorch(pytorch_model, input_shape_with_batch)
+
     def test_lrn_default(self):
         import math
         alpha = 0.0001

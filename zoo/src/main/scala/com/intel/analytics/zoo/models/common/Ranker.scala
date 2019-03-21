@@ -69,12 +69,13 @@ trait Ranker[T] {
   }
 
   /**
-   * Evaluate using Mean average precision on TextSet.
+   * Evaluate using mean average precision on TextSet.
    *
    * @param x TextSet. Each TextFeature should contain Sample with batch features and labels.
    *          In other words, each Sample should be a batch of records having both positive
    *          and negative labels.
-   * @param threshold If label > threshold, then it will be considered as a positive record.
+   * @param threshold Double. If label > threshold, then it will be considered as
+   *                  a positive record. Default is 0.0.
    */
   def evaluateMAP(
       x: TextSet,
@@ -91,7 +92,8 @@ trait Ranker[T] {
    *          In other words, each Sample should be a batch of records having both positive
    *          and negative labels.
    * @param k Positive integer. Rank position.
-   * @param threshold If label > threshold, then it will be considered as a positive record.
+   * @param threshold Double. If label > threshold, then it will be considered as
+   *                  a positive record. Default is 0.0.
    */
   def evaluateNDCG(
       x: TextSet,
