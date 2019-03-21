@@ -931,14 +931,16 @@ private[zoo] class InternalDistriOptimizer[T: ClassTag] (
     _criterion: Criterion[T])
   (implicit ev: TensorNumeric[T]) extends DistriOptimizer[T](_model, _dataset, _criterion)
   with AbstractEstimator[T]{
+  import InternalDistriOptimizer.logger
   protected var checkpointDir: Option[String] = None
 
   def setCheckpointDir(path: Option[String]): this.type = {
     if (path.isDefined) {
       val pathAndTime = path.get + "/" +
-        new SimpleDateFormat("yyyy-MM-dd_HH-mm-ss").format(Calendar.getInstance().getTime())
+        new SimpleDateFormat("yyyy-MM-dd_HH-mm-ss")
+          .format(Calendar.getInstance().getTime())
       checkpointDir = Some(pathAndTime)
-      InternalDistriOptimizer.logger.info(s"Saving summaries to ${pathAndTime + "/summary"}")
+      logger.info(s"Saving summaries to ${pathAndTime + "/summary"}")
       val trainSummary = TrainSummary(pathAndTime, "summary")
       val valSummary = ValidationSummary(pathAndTime, "summary")
       this.setTrainSummary(trainSummary)
@@ -973,7 +975,7 @@ private[zoo] class InternalDistriOptimizer[T: ClassTag] (
       val logPath = new Path(checkpointDir.get + "/models")
       val fs = logPath.getFileSystem(new Configuration(false))
       fs.mkdirs(logPath)
-      InternalDistriOptimizer.logger.info(s"Saving checkpoints to ${logPath.toUri.toString}")
+      logger.info(s"Saving checkpoints to ${logPath.toUri.toString}")
       this.setCheckpoint(logPath.toUri.toString(), checkPointTrigger.get)
     }
     if (validationMethod != null && validationSet != null) {
@@ -983,8 +985,10 @@ private[zoo] class InternalDistriOptimizer[T: ClassTag] (
     this
   }
 
-  override def evaluate(validationSet: FeatureSet[MiniBatch[T]],
-    validationMethod: Array[ValidationMethod[T]]): Map[ValidationMethod[T], ValidationResult] = {
+  override def evaluate(
+        validationSet: FeatureSet[MiniBatch[T]],
+        validationMethod: Array[ValidationMethod[T]]
+      ): Map[ValidationMethod[T], ValidationResult] = {
     val validateRDD = validationSet.toDistributed().data(train = false)
     val sc = validateRDD.sparkContext
     val cachedModels = InternalOptimizerUtil.getModelCacheFromOptimizer(this)
@@ -1023,7 +1027,7 @@ private[zoo] class InternalDistriOptimizer[T: ClassTag] (
           null,
           null,
           null,
-          Array.tabulate(_subModelNumber){ _ =>
+          Array.tabulate(_subModelNumber) { _ =>
             Some(bcVMethods.value.map(_.clone()))},
           null,
           null
@@ -1060,7 +1064,8 @@ object InternalDistriOptimizer {
     }
     // TODO: evaluate local
     val bcVMethods = models.sparkContext.broadcast(vMethods)
-    val results = ZippedPartitionsWithLocalityRDD(models, validateRDD)((modelIter, dataIter) => {
+    val results = ZippedPartitionsWithLocalityRDD(models, validateRDD)(
+      (modelIter, dataIter) => {
         val cached = modelIter.next()
         val workingModels = cached.localModels
 

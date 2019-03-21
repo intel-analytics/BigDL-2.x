@@ -112,7 +112,7 @@ class DistriEstimatorSpec extends ZooSpecHelper {
 
   private var dataSet: DistributedFeatureSet[MiniBatch[Double]] = _
 
-  override def doBefore()= {
+  override def doBefore(): Unit = {
     sc = new SparkContext("local[1]", "RDDOptimizerSpec")
 
     val rdd = sc.parallelize(1 to (256 * nodeNumber), nodeNumber)
