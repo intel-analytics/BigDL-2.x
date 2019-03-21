@@ -64,7 +64,6 @@ class OnnxTestCase(ZooTestCase):
             input_data_with_batch = to_list(input_data_with_batch)
         onnx_path = self.dump_pytorch_to_onnx(pytorch_model, input_shape_with_batch,
                                               input_data_with_batch)
-        onnx_model = onnx.load(onnx_path)
         # TODO: we only consider single  output for now
         if input_data_with_batch is None:
             input_data_with_batch = [np.random.uniform(0, 1, shape).astype(np.float32)
@@ -75,7 +74,7 @@ class OnnxTestCase(ZooTestCase):
         # coutput = caffe2.python.onnx.backend.run_model(onnx_model, input_data_with_batch)[0]
 
         pytorch_out = pytorch_model.forward(self._convert_ndarray_to_tensor(input_data_with_batch))
-        zmodel = OnnxLoader(onnx_model.graph).to_keras()
+        zmodel = OnnxLoader.from_path(onnx_path, is_training=True)
         zoutput = zmodel.forward(
             input_data_with_batch[0] if len(input_data_with_batch) == 1 else input_data_with_batch)
         if compare_result:
