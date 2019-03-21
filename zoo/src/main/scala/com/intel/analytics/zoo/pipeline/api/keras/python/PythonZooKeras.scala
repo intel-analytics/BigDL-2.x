@@ -32,7 +32,7 @@ import com.intel.analytics.bigdl.nn.abstractnn.{AbstractModule, Activity}
 import com.intel.analytics.bigdl.nn.keras.{KerasLayer, KerasModel}
 import com.intel.analytics.bigdl.utils.{Shape, Table}
 import com.intel.analytics.zoo.feature.image.ImageSet
-import com.intel.analytics.zoo.pipeline.api.autograd._
+import com.intel.analytics.zoo.pipeline.api.autograd.{Constant, _}
 import com.intel.analytics.zoo.pipeline.api.keras.layers.{KerasLayerWrapper, _}
 import com.intel.analytics.zoo.pipeline.api.keras.layers.utils.KerasUtils
 import com.intel.analytics.zoo.pipeline.api.keras.models.{KerasNet, Model, Sequential}
@@ -43,6 +43,7 @@ import com.intel.analytics.zoo.common.PythonZoo
 import com.intel.analytics.zoo.feature.text.TextSet
 import com.intel.analytics.zoo.models.common.ZooModel
 import com.intel.analytics.zoo.models.seq2seq.{Bridge, RNNDecoder, RNNEncoder}
+import com.intel.analytics.zoo.pipeline.api.Net
 import com.intel.analytics.zoo.pipeline.api.keras.{metrics => zmetrics}
 import com.intel.analytics.zoo.pipeline.api.net.GraphNet
 
@@ -175,6 +176,21 @@ class PythonZooKeras[T: ClassTag](implicit ev: TensorNumeric[T]) extends PythonZ
       logDir: String,
       appName: String): Unit = {
     module.setTensorBoard(logDir, appName)
+  }
+
+  def zooGetScalarFromSummary(
+      module: KerasNet[T],
+      tag: String,
+      target: String): JList[JList[Any]] = {
+
+    require(target == "Train" || target == "Validation",
+      "Invalid target, must be Train or Validation.")
+    val scalarArray = if (target == "Train") module.getTrainSummary(tag)
+    else module.getValidationSummary(tag)
+
+    scalarArray.toList.map { tuple =>
+      List(tuple._1, tuple._2, tuple._3).asJava.asInstanceOf[JList[Any]]
+    }.asJava
   }
 
   def zooClearGradientClipping(module: KerasNet[T]): Unit = {
@@ -345,6 +361,7 @@ class PythonZooKeras[T: ClassTag](implicit ev: TensorNumeric[T]) extends PythonZ
       nbFilter: Int,
       filterLength: Int,
       init: String = "glorot_uniform",
+      limits: JList[Double] = null,
       activation: String = null,
       borderMode: String = "valid",
       subsampleLength: Int = 1,
@@ -352,7 +369,8 @@ class PythonZooKeras[T: ClassTag](implicit ev: TensorNumeric[T]) extends PythonZ
       bRegularizer: Regularizer[T] = null,
       bias: Boolean = true,
       inputShape: JList[Int] = null): Convolution1D[T] = {
-    Convolution1D(nbFilter, filterLength, init, activation, borderMode,
+    val configedValue = if (limits != null) limits.asScala.toArray else null
+    Convolution1D(nbFilter, filterLength, init, configedValue, activation, borderMode,
       subsampleLength, wRegularizer, bRegularizer, bias, toScalaShape(inputShape))
   }
 
@@ -1258,6 +1276,11 @@ class PythonZooKeras[T: ClassTag](implicit ev: TensorNumeric[T]) extends PythonZ
     parameter.setWeight(toTensor(value))
   }
 
+  def createZooKerasConstant(data: JTensor,
+    name: String = null): Constant[T] = {
+    new Constant[T](toTensor(data), name)
+  }
+
   def createZooKerasRNNEncoder(rnns: JList[Recurrent[T]],
     embedding: KerasLayer[Tensor[T], Tensor[T], T] = null,
     inputShape: JList[Int] = null): RNNEncoder[T] = {
@@ -1286,5 +1309,16 @@ class PythonZooKeras[T: ClassTag](implicit ev: TensorNumeric[T]) extends PythonZ
     index: Int,
     inputShape: JList[JList[Int]] = null): SelectTable[T] = {
     SelectTable[T](index, toScalaMultiShape(inputShape))
+  }
+
+  def createZooKerasTransformerLayer(layerNum: Int,
+    residDrop: Double,
+    attnDrop: Double,
+    headNum: Int,
+    maskAttention: Boolean,
+    embeddingLayer: KerasLayer[Tensor[T], Tensor[T], T]): TransformerLayer[T] = {
+    TransformerLayer(nBlock = layerNum, residPdrop = residDrop,
+      attnPdrop = attnDrop, nHead = headNum,
+      maskAttention = maskAttention, embeddingLayer = embeddingLayer)
   }
 }
