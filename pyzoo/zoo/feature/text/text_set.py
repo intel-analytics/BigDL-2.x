@@ -98,9 +98,9 @@ class TextSet(JavaValue):
         directly use this word_index during inference.
         Each separate line should be "word id".
 
-        Note that after calling `load_wordindex`, you do not need to specify any argument when calling
-        `word2idx` in the preprocessing pipeline as now you are using exactly the loaded word_index for
-        transformation.
+        Note that after calling `load_word_index`, you do not need to specify any argument when
+        calling `word2idx` in the preprocessing pipeline as now you are using exactly the loaded
+        word_index for transformation.
 
         For LocalTextSet, load txt from a local file system.
         For DistributedTextSet, load txt from a local file system or HDFS.
