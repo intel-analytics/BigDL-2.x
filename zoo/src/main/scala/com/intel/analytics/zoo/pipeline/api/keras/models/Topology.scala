@@ -44,6 +44,9 @@ import com.intel.analytics.zoo.pipeline.api.keras.layers.Input
 import com.intel.analytics.zoo.pipeline.api.keras.layers.utils._
 import com.intel.analytics.zoo.pipeline.api.net.NetUtils
 import com.intel.analytics.zoo.pipeline.estimator.AbstractEstimator
+import org.apache.hadoop.conf.Configuration
+import org.apache.hadoop.fs.Path
+import org.apache.log4j.Logger
 import org.apache.spark.rdd.{RDD, ZippedPartitionsWithLocalityRDD}
 
 import scala.collection.JavaConverters._
@@ -935,8 +938,9 @@ private[zoo] class InternalDistriOptimizer[T: ClassTag] (
   def setCheckpointDir(path: Option[String]): this.type = {
     if (path.isDefined) {
       val pathAndTime = path.get + "/" +
-        new SimpleDateFormat("yyyy-MM-dd_HH:mm:ss").format(Calendar.getInstance().getTime())
+        new SimpleDateFormat("yyyy-MM-dd_HH-mm-ss").format(Calendar.getInstance().getTime())
       checkpointDir = Some(pathAndTime)
+      InternalDistriOptimizer.logger.info(s"Saving summaries to ${pathAndTime + "/summary"}")
       val trainSummary = TrainSummary(pathAndTime, "summary")
       val valSummary = ValidationSummary(pathAndTime, "summary")
       this.setTrainSummary(trainSummary)
@@ -968,8 +972,11 @@ private[zoo] class InternalDistriOptimizer[T: ClassTag] (
     if (checkPointTrigger.isDefined && checkpointDir.isDefined) {
       // we should setCheckpoint every time before we call optimize(),
       // as BigDL will overwrite checkpointPath to its subfolder.
-      new File(checkpointDir.get + "/models").mkdirs()
-      this.setCheckpoint(checkpointDir.get+"/models", checkPointTrigger.get)
+      val logPath = new Path(checkpointDir.get + "/models")
+      val fs = logPath.getFileSystem(new Configuration(false))
+      fs.mkdirs(logPath)
+      InternalDistriOptimizer.logger.info(s"Saving checkpoints to ${logPath.toUri.toString}")
+      this.setCheckpoint(logPath.toUri.toString(), checkPointTrigger.get)
     }
     if (validationMethod != null && validationSet != null) {
       this.setValidation(checkPointTrigger.get, validationSet.toDataSet(), validationMethod)
@@ -1038,6 +1045,7 @@ private[zoo] class InternalDistriOptimizer[T: ClassTag] (
 }
 
 object InternalDistriOptimizer {
+  val logger = Logger.getLogger(this.getClass)
 
   protected def validate[T](validationFeatureSet: FeatureSet[MiniBatch[T]],
                             validationMethods: Array[ValidationMethod[T]],
@@ -1056,7 +1064,6 @@ object InternalDistriOptimizer {
     val bcVMethods = models.sparkContext.broadcast(vMethods)
     val results = ZippedPartitionsWithLocalityRDD(models, validateRDD)((modelIter, dataIter) => {
         val cached = modelIter.next()
-        val vMethodsArr = cached.localMethods
         val workingModels = cached.localModels
 
         workingModels.foreach(_.evaluate())
