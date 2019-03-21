@@ -115,7 +115,7 @@ object Train {
     opt[Int]('p', "partition")
       .text("number of partitions")
       .action((x, c) => c.copy(nPartition = Some(x)))
-    opt[String]('s',"saveModelPath")
+    opt[String]('s', "saveModelPath")
       .text("where to save trained model")
       .action((x, c) => c.copy(saveModelPath = x))
     opt[Unit]("overWriteModel")

@@ -23,11 +23,11 @@ import com.intel.analytics.zoo.models.image.objectdetection.common.BboxUtil
 import org.apache.commons.lang3.SerializationUtils
 
 /**
-  * Represent an average precision for object detection result.
-  * @param use07metric whether use 07 11 point method
-  * @param normalized whether normalized or not
-  * @param classes class names
-  */
+ * Represent an average precision for object detection result.
+ * @param use07metric whether use 07 11 point method
+ * @param normalized whether normalized or not
+ * @param classes class names
+ */
 class MeanAveragePrecision(use07metric: Boolean, normalized: Boolean = true, classes: Array[String])
   extends ValidationMethod[Float] {
   override def apply(output: Activity, target: Activity): ValidationResult = {

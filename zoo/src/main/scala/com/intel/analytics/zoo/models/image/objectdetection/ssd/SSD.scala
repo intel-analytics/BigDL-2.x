@@ -36,22 +36,22 @@ abstract class SSD[T: ClassTag]()(implicit ev: TensorNumeric[T])
   extends ImageModel[T]
 
 /**
-  * SSD model based on VGG16
-  * @param classNum
-  * @param resolution
-  * @param dataset
-  * @param sizes
-  * @param shareLocation
-  * @param bgLabel
-  * @param nmsThresh
-  * @param nmsTopk
-  * @param keepTopK
-  * @param confThresh
-  * @param varianceEncodedInTarget
-  * @param ev$1
-  * @param ev
-  * @tparam T
-  */
+ * SSD model based on VGG16
+ * @param classNum
+ * @param resolution
+ * @param dataset
+ * @param sizes
+ * @param shareLocation
+ * @param bgLabel
+ * @param nmsThresh
+ * @param nmsTopk
+ * @param keepTopK
+ * @param confThresh
+ * @param varianceEncodedInTarget
+ * @param ev$1
+ * @param ev
+ * @tparam T
+ */
 class SSDVGG[T: ClassTag](classNum: Int, resolution: Int = 300,
                           dataset: String = "pascal", sizes: Array[Float] = null,
                           shareLocation: Boolean = true,

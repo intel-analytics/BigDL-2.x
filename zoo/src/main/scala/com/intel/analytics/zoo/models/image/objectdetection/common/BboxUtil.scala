@@ -27,15 +27,15 @@ import scala.reflect.ClassTag
 object BboxUtil {
 
   /**
-    * Select tensor from matrix
-    *
-    * @param matrix    source matrix
-    * @param indices   indices array
-    * @param dim       dimension
-    * @param indiceLen indice length
-    * @param out       based tensor
-    * @return selected tensor
-    */
+   * Select tensor from matrix
+   *
+   * @param matrix    source matrix
+   * @param indices   indices array
+   * @param dim       dimension
+   * @param indiceLen indice length
+   * @param out       based tensor
+   * @return selected tensor
+   */
   def selectTensor(matrix: Tensor[Float], indices: Array[Int], dim: Int, indiceLen: Int = -1,
                    out: Tensor[Float] = null): Tensor[Float] = {
     assert(dim == 1 || dim == 2)
@@ -85,17 +85,17 @@ object BboxUtil {
   }
 
   /**
-    * return the max value in rows(d=0) or in cols(d=1)
-    * arr = [4 9
-    * 5 7
-    * 8 5]
-    *
-    * argmax2(arr, 1) will return 3, 1
-    * argmax2(arr, 2) will return 2, 2, 1
-    *
-    * @return
-    * todo: this maybe removed
-    */
+   * return the max value in rows(d=0) or in cols(d=1)
+   * arr = [4 9
+   * 5 7
+   * 8 5]
+   *
+   * argmax2(arr, 1) will return 3, 1
+   * argmax2(arr, 2) will return 2, 2, 1
+   *
+   * @return
+   * todo: this maybe removed
+   */
   def argmax2(arr: Tensor[Float], d: Int): Array[Int] = {
     require(d >= 1)
     arr.max(d)._2.storage().array().map(x => x.toInt)
@@ -136,13 +136,13 @@ object BboxUtil {
   }
 
   /**
-    * Concat multiple 2D tensors vertically
-    *
-    * @param tensors tensor list
-    * @param ev
-    * @tparam T
-    * @return
-    */
+   * Concat multiple 2D tensors vertically
+   *
+   * @param tensors tensor list
+   * @param ev
+   * @tparam T
+   * @return
+   */
   def vertcat2D[T: ClassTag](tensors: Tensor[T]*)
                             (implicit ev: TensorNumeric[T]): Tensor[T] = {
     require(tensors(0).dim() == 2, "only support 2D")
@@ -164,13 +164,13 @@ object BboxUtil {
   }
 
   /**
-    * Concat multiple 1D tensors vertically
-    *
-    * @param tensors
-    * @param ev
-    * @tparam T
-    * @return
-    */
+   * Concat multiple 1D tensors vertically
+   *
+   * @param tensors
+   * @param ev
+   * @tparam T
+   * @return
+   */
   def vertcat1D[T: ClassTag](tensors: Tensor[T]*)
                             (implicit ev: TensorNumeric[T]): Tensor[T] = {
     require(tensors(0).dim() == 1, "only support 1D")
@@ -189,11 +189,11 @@ object BboxUtil {
 
 
   /**
-    * Concat multiple 2D tensors horizontally
-    *
-    * @param tensors
-    * @return
-    */
+   * Concat multiple 2D tensors horizontally
+   *
+   * @param tensors
+   * @return
+   */
   def horzcat(tensors: Tensor[Float]*): Tensor[Float] = {
     require(tensors(0).dim() == 2, "currently only support 2D")
     val nRows = tensors(0).size(1)
@@ -212,9 +212,9 @@ object BboxUtil {
   }
 
   /**
-    * update with 2d tensor, the range must be equal to the src tensor size
-    *
-    */
+   * update with 2d tensor, the range must be equal to the src tensor size
+   *
+   */
   def updateRange(dest: Tensor[Float], startR: Int, endR: Int, startC: Int, endC: Int,
                   src: Tensor[Float]): Unit = {
     assert(src.size(1) == endR - startR + 1)
@@ -228,12 +228,12 @@ object BboxUtil {
 
 
   /**
-    * Get the overlap between boxes and query_boxes
-    *
-    * @param boxes      (N, 4) ndarray of float
-    * @param queryBoxes (K, >=4) ndarray of float
-    * @return overlaps: (N, K) ndarray of overlap between boxes and query_boxes
-    */
+   * Get the overlap between boxes and query_boxes
+   *
+   * @param boxes      (N, 4) ndarray of float
+   * @param queryBoxes (K, >=4) ndarray of float
+   * @return overlaps: (N, K) ndarray of overlap between boxes and query_boxes
+   */
   def bboxOverlap(boxes: Tensor[Float], queryBoxes: Tensor[Float]): Tensor[Float] = {
     require(boxes.size(2) >= 4)
     require(queryBoxes.size(2) >= 4)
@@ -263,15 +263,15 @@ object BboxUtil {
   }
 
   /**
-    * Select tensor from matrix
-    *
-    * @param matrix    source matrix
-    * @param indices   indices array
-    * @param dim       dimension
-    * @param indiceLen indice length
-    * @param out       based tensor
-    * @return selected tensor
-    */
+   * Select tensor from matrix
+   *
+   * @param matrix    source matrix
+   * @param indices   indices array
+   * @param dim       dimension
+   * @param indiceLen indice length
+   * @param out       based tensor
+   * @return selected tensor
+   */
   def selectMatrix(matrix: Tensor[Float], indices: Array[Int], dim: Int, indiceLen: Int = -1,
                    out: Tensor[Float] = null): Tensor[Float] = {
     assert(dim == 1 || dim == 2)
@@ -352,8 +352,8 @@ object BboxUtil {
   }
 
   /**
-    * decode batch
-    */
+   * decode batch
+   */
   def decodeBatchOutput(output: Tensor[Float], nClass: Int): Array[Array[RoiLabel]] = {
     var i = 0
     val batch = output.size(1)
@@ -417,13 +417,13 @@ object BboxUtil {
   }
 
   /**
-    * Encode BBox
-    *
-    * @param priorBox
-    * @param priorVariance
-    * @param gtBox
-    * @param enodeBbox
-    */
+   * Encode BBox
+   *
+   * @param priorBox
+   * @param priorVariance
+   * @param gtBox
+   * @param enodeBbox
+   */
   def encodeBBox(priorBox: Tensor[Float], priorVariance: Tensor[Float], gtBox: Tensor[Float],
                  enodeBbox: Tensor[Float]): Unit = {
     val px1 = priorBox.valueAt(1)
@@ -447,11 +447,11 @@ object BboxUtil {
   }
 
   /**
-    * Get groud truth indices from result
-    *
-    * @param result
-    * @return
-    */
+   * Get groud truth indices from result
+   *
+   * @param result
+   * @return
+   */
   def getGroundTruthIndices(result: Tensor[Float]): Map[Int, (Int, Int)] = {
     var indices = Map[Int, (Int, Int)]()
     if (result.nElement() == 0) return indices
@@ -479,11 +479,11 @@ object BboxUtil {
   }
 
   /**
-    * Get ground truth from result
-    *
-    * @param result
-    * @return
-    */
+   * Get ground truth from result
+   *
+   * @param result
+   * @return
+   */
   def getGroundTruths(result: Tensor[Float]): Map[Int, Tensor[Float]] = {
     val indices = getGroundTruthIndices(result).toArray.sortBy(_._1)
     var gtMap = Map[Int, Tensor[Float]]()
@@ -505,12 +505,12 @@ object BboxUtil {
   val logger = Logger.getLogger(getClass)
 
   /**
-    * Note that the output are stored in input deltas
-    *
-    * @param boxes  (N, 4)
-    * @param deltas (N, 4a)
-    * @return
-    */
+   * Note that the output are stored in input deltas
+   *
+   * @param boxes  (N, 4)
+   * @param deltas (N, 4a)
+   * @return
+   */
   def bboxTransformInv(boxes: Tensor[Float], deltas: Tensor[Float]): Tensor[Float] = {
     if (boxes.size(1) == 0) {
       return boxes
@@ -556,17 +556,17 @@ object BboxUtil {
   }
 
   /**
-    * Clip boxes to image boundaries.
-    * set the score of all boxes with any side smaller than minSize to 0
-    *
-    * @param boxes  N * 4a
-    * @param height height of image
-    * @param width  width of image
-    * @param minH   min height limit
-    * @param minW   min width limit
-    * @param scores scores for boxes
-    * @return the number of boxes kept (score > 0)
-    */
+   * Clip boxes to image boundaries.
+   * set the score of all boxes with any side smaller than minSize to 0
+   *
+   * @param boxes  N * 4a
+   * @param height height of image
+   * @param width  width of image
+   * @param minH   min height limit
+   * @param minW   min width limit
+   * @param scores scores for boxes
+   * @return the number of boxes kept (score > 0)
+   */
   def clipBoxes(boxes: Tensor[Float], height: Float, width: Float, minH: Float = 0,
                 minW: Float = 0, scores: Tensor[Float] = null): Int = {
     require(boxes.size(2) % 4 == 0, "boxes should have the shape N*4a")
@@ -607,14 +607,14 @@ object BboxUtil {
   }
 
   /**
-    * BBox vote result
-    *
-    * @param scoresNms N
-    * @param bboxNms   N * 4
-    * @param scoresAll M
-    * @param bboxAll   M * 4
-    * @return
-    */
+   * BBox vote result
+   *
+   * @param scoresNms N
+   * @param bboxNms   N * 4
+   * @param scoresAll M
+   * @param bboxAll   M * 4
+   * @return
+   */
   def bboxVote(scoresNms: Tensor[Float], bboxNms: Tensor[Float],
                scoresAll: Tensor[Float], bboxAll: Tensor[Float],
                areasBuf: Tensor[Float] = null): RoiLabel = {
@@ -668,12 +668,12 @@ object BboxUtil {
   }
 
   /**
-    * get the areas of boxes
-    *
-    * @param boxes N * 4 tensor
-    * @param areas buffer to store the results
-    * @return areas array
-    */
+   * get the areas of boxes
+   *
+   * @param boxes N * 4 tensor
+   * @param areas buffer to store the results
+   * @return areas array
+   */
   def getAreas(boxes: Tensor[Float], areas: Tensor[Float], startInd: Int = 1,
                normalized: Boolean = false): Tensor[Float] = {
     if (boxes.nElement() == 0) return areas
@@ -698,7 +698,8 @@ object BboxUtil {
   }
 
   private def decodeSingleBbox(i: Int, priorBox: Tensor[Float], priorVariance: Tensor[Float],
-                               isClipBoxes: Boolean, bbox: Tensor[Float], varianceEncodedInTarget: Boolean,
+                               isClipBoxes: Boolean, bbox: Tensor[Float],
+                               varianceEncodedInTarget: Boolean,
                                decodedBoxes: Tensor[Float]): Unit = {
     val x1 = priorBox.valueAt(i, 1)
     val y1 = priorBox.valueAt(i, 2)
@@ -763,9 +764,9 @@ object BboxUtil {
   }
 
   def decodeBboxesAll(allLocPreds: Array[Array[Tensor[Float]]], priorBoxes: Tensor[Float],
-                      priorVariances: Tensor[Float], nClasses: Int, bgLabel: Int, clipBoxes: Boolean,
-                      varianceEncodedInTarget: Boolean, shareLocation: Boolean,
-                      output: Array[Array[Tensor[Float]]] = null)
+                      priorVariances: Tensor[Float], nClasses: Int, bgLabel: Int,
+                      clipBoxes: Boolean, varianceEncodedInTarget: Boolean,
+                      shareLocation: Boolean, output: Array[Array[Tensor[Float]]] = null)
   : Array[Array[Tensor[Float]]] = {
     val batch = allLocPreds.length
     val allDecodeBboxes = if (output == null) {
@@ -804,15 +805,15 @@ object BboxUtil {
   }
 
   /**
-    * Get location prediction result
-    *
-    * @param loc
-    * @param numPredsPerClass
-    * @param numClasses
-    * @param shareLocation
-    * @param locPredsBuf
-    * @return
-    */
+   * Get location prediction result
+   *
+   * @param loc
+   * @param numPredsPerClass
+   * @param numClasses
+   * @param shareLocation
+   * @param locPredsBuf
+   * @return
+   */
   def getLocPredictions(loc: Tensor[Float], numPredsPerClass: Int, numClasses: Int,
                         shareLocation: Boolean, locPredsBuf: Array[Array[Tensor[Float]]] = null)
   : Array[Array[Tensor[Float]]] = {
@@ -862,14 +863,14 @@ object BboxUtil {
   }
 
   /**
-    * Get Confidence scores
-    *
-    * @param conf
-    * @param numPredsPerClass
-    * @param numClasses
-    * @param confBuf
-    * @return
-    */
+   * Get Confidence scores
+   *
+   * @param conf
+   * @param numPredsPerClass
+   * @param numClasses
+   * @param confBuf
+   * @return
+   */
   def getConfidenceScores(conf: Tensor[Float], numPredsPerClass: Int, numClasses: Int,
                           confBuf: Array[Array[Tensor[Float]]] = null)
   : Array[Array[Tensor[Float]]] = {
@@ -944,13 +945,13 @@ object BboxUtil {
 
 
   /**
-    * Project bbox onto the coordinate system defined by src_bbox.
-    *
-    * @param srcBox
-    * @param bbox
-    * @param projBox
-    * @return
-    */
+   * Project bbox onto the coordinate system defined by src_bbox.
+   *
+   * @param srcBox
+   * @param bbox
+   * @param projBox
+   * @return
+   */
   def projectBbox(srcBox: BoundingBox, bbox: BoundingBox,
                   projBox: BoundingBox): Boolean = {
     if (bbox.x1 >= srcBox.x2 || bbox.x2 <= srcBox.x1 ||
@@ -988,10 +989,9 @@ object BboxUtil {
     }
   }
 
-  def getMaxOverlaps(gtBboxes: Tensor[Float],
-                     gtAreas: Tensor[Float], gtInds: Array[Int],
-                     bbox: Tensor[Float], normalized: Boolean = false, overlaps: Tensor[Float] = null,
-                     gtOffset: Int = 0)
+  def getMaxOverlaps(gtBboxes: Tensor[Float], gtAreas: Tensor[Float], gtInds: Array[Int],
+                     bbox: Tensor[Float], normalized: Boolean = false,
+                     overlaps: Tensor[Float] = null, gtOffset: Int = 0)
   : (Float, Int) = {
     require(bbox.dim() == 1)
     var maxOverlap = Float.MinValue
@@ -1031,6 +1031,3 @@ object BboxUtil {
   }
 
 }
-
-
-

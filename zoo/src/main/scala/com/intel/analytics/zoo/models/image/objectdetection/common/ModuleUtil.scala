@@ -135,8 +135,10 @@ object ModuleUtil {
    * Create Convolution layer followed by Relu activation
    * @param prevNodes previous node for convolution layer node
    * @param p convolution size info.
-   *          Should be (input plane number, output plane number, kernel size, stride size, pad size).
-   *          We'are assuming kernel width = kernel height, stride width = stride height, pad width = pad height
+   *          Should be (input plane number, output plane number, kernel size, stride size,
+   *          pad size).
+   *          We'are assuming kernel width = kernel height, stride width = stride height,
+   *          pad width = pad height
    * @param name layer name
    * @param prefix prefix for the layer name
    * @param nGroup kernel group number
@@ -146,10 +148,13 @@ object ModuleUtil {
    * @return Relu node
    */
   def addConvRelu[@specialized(Float, Double) T: ClassTag](prevNodes: ModuleNode[T],
-                                                           p: (Int, Int, Int, Int, Int), name: String,
-                                                           prefix: String = "conv", nGroup: Int = 1,
+                                                           p: (Int, Int, Int, Int, Int),
+                                                           name: String,
+                                                           prefix: String = "conv",
+                                                           nGroup: Int = 1,
                                                            propogateBack: Boolean = true)
-                                                          (implicit ev: TensorNumeric[T]): ModuleNode[T] = {
+                                                          (implicit ev: TensorNumeric[T])
+  : ModuleNode[T] = {
     val conv = SpatialConvolution[T](p._1, p._2, p._3, p._3, p._4, p._4,
       p._5, p._5, nGroup = nGroup, propagateBack = propogateBack)
       .setInitMethod(weightInitMethod = Xavier, biasInitMethod = Zeros)
@@ -183,7 +188,8 @@ object ModuleUtil {
   def selectResults[@specialized(Float, Double) T: ClassTag](start: Int, dim: Int,
                                                              nInputDims: Int, numComponents: Int,
                                                              name: String)
-                                                            (implicit ev: TensorNumeric[T]): Module[T] = {
+                                                            (implicit ev: TensorNumeric[T]):
+  Module[T] = {
     val con = ConcatTable[Activity, T]().setName(s"select results $name")
     var i = start
     while (i <= numComponents * 3) {

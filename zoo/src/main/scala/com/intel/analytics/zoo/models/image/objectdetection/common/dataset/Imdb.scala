@@ -76,8 +76,9 @@ object Imdb {
     }
   }
 
-  def loadRoiSeqFiles(seqFloder: String, sc: SparkContext, nPartition: Option[Int] = None): RDD[ByteRecord] = {
-    val raw = if(nPartition.isDefined) {
+  def loadRoiSeqFiles(seqFloder: String, sc: SparkContext, nPartition: Option[Int] = None):
+  RDD[ByteRecord] = {
+    val raw = if (nPartition.isDefined) {
       sc.sequenceFile(seqFloder, classOf[Text], classOf[Text], nPartition.get)
     } else {
       sc.sequenceFile(seqFloder, classOf[Text], classOf[Text])
@@ -85,7 +86,8 @@ object Imdb {
     raw.map(x => ByteRecord(x._2.copyBytes(), x._1.toString))
   }
 
-  def roiSeqFilesToImageSet(url: String, sc: SparkContext, partitionNum: Option[Int] = None): ImageSet = {
+  def roiSeqFilesToImageSet(url: String, sc: SparkContext, partitionNum: Option[Int] = None):
+  ImageSet = {
     val rdd = loadRoiSeqFiles(url, sc, partitionNum)
     val featureRDD = RoiRecordToFeature(true)(rdd)
     ImageSet.rdd(featureRDD)

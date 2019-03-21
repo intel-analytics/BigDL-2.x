@@ -23,11 +23,11 @@ import com.intel.analytics.bigdl.transform.vision.image.ImageFeature
 import com.intel.analytics.zoo.models.image.objectdetection.common.BboxUtil
 
 /**
-  * A batch of data feed into the model. The first size is batchsize
-  *
-  * @param input
-  * @param target
-  */
+ * A batch of data feed into the model. The first size is batchsize
+ *
+ * @param input
+ * @param target
+ */
 class SSDMiniBatch(val input: Tensor[Float], val target: Tensor[Float],
                    val imInfo: Tensor[Float] = null)
   extends MiniBatch[Float] {
