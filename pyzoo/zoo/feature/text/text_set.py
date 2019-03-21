@@ -86,7 +86,7 @@ class TextSet(JavaValue):
         Each separate line will be "word id".
 
         For LocalTextSet, save txt to a local file system.
-        For DistributedTextSet, save txt to a local file system or HDFS.
+        For DistributedTextSet, save txt to a local or distributed file system (such as HDFS).
 
         :param path: The path to the text file.
         """
@@ -103,7 +103,7 @@ class TextSet(JavaValue):
         word_index for transformation.
 
         For LocalTextSet, load txt from a local file system.
-        For DistributedTextSet, load txt from a local file system or HDFS.
+        For DistributedTextSet, load txt from a local or distributed file system (such as HDFS).
 
         :return: TextSet with the loaded word_index.
         """
@@ -310,8 +310,9 @@ class TextSet(JavaValue):
         All texts will be given a label according to the subdirectory where it is located.
         Labels start from 0.
 
-        :param path: Folder path to texts. Local file system and HDFS are supported.
-                     If you want to read from HDFS, sc needs to be specified.
+        :param path: The folder path to texts. Local or distributed file system (such as HDFS)
+                     are supported. If you want to read from a distributed file system, sc
+                     needs to be specified.
         :param sc: An instance of SparkContext.
                    If specified, texts will be read as a DistributedTextSet.
                    Default is None and in this case texts will be read as a LocalTextSet.
@@ -331,11 +332,9 @@ class TextSet(JavaValue):
         id(string) and text(string).
         Note that the csv file should be without header.
 
-        If sc is defined, read texts as DistributedTextSet from local file system or HDFS.
-        If sc is None, read texts as LocalTextSet from local file system.
-
-        :param path: The path to the csv file. Local file system and HDFS are supported.
-                     If you want to read from HDFS, sc needs to be specified.
+        :param path: The path to the csv file. Local or distributed file system (such as HDFS)
+                     are supported. If you want to read from a distributed file system, sc
+                     needs to be specified.
         :param sc: An instance of SparkContext.
                    If specified, texts will be read as a DistributedTextSet.
                    Default is None and in this case texts will be read as a LocalTextSet.

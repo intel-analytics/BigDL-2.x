@@ -214,7 +214,7 @@ abstract class TextSet {
    * Each separate line will be "word id".
    *
    * For LocalTextSet, save txt to a local file system.
-   * For DistributedTextSet, save txt to a local file system or HDFS.
+   * For DistributedTextSet, save txt to a local or distributed file system (such as HDFS).
    *
    * @param path The path to the text file.
    */
@@ -235,7 +235,7 @@ abstract class TextSet {
    * transformation.
    *
    * For LocalTextSet, load txt from a local file system.
-   * For DistributedTextSet, load txt from a local file system or HDFS.
+   * For DistributedTextSet, load txt from a local or distributed file system (such as HDFS).
    *
    * @param path The path to the text file.
    */
@@ -276,8 +276,9 @@ object TextSet {
    * All texts will be given a label according to the subdirectory where it is located.
    * Labels start from 0.
    *
-   * @param path The folder path to texts. Local file system and HDFS are supported.
-   *             If you want to read from HDFS, sc needs to be specified.
+   * @param path The folder path to texts. Local or distributed file system (such as HDFS)
+   *             are supported. If you want to read from a distributed file system, sc
+   *             needs to be specified.
    * @param sc An instance of SparkContext.
    *           If specified, texts will be read as a DistributedTextSet.
    *           Default is null and in this case texts will be read as a LocalTextSet.
@@ -330,8 +331,9 @@ object TextSet {
    * Each record is supposed to contain the following two fields in order:
    * id(String) and text(String).
    *
-   * @param path The path to the csv file. Local file system and HDFS are supported.
-   *             If you want to read from HDFS, sc needs to be specified.
+   * @param path The path to the csv file. Local or distributed file system (such as HDFS)
+   *             are supported. If you want to read from a distributed file system, sc
+   *             needs to be specified.
    * @param sc An instance of SparkContext.
    *           If specified, texts will be read as a DistributedTextSet.
    *           Default is null and in this case texts will be read as a LocalTextSet.
