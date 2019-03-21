@@ -18,20 +18,31 @@ import argparse
 import cv2
 from pyspark.streaming import StreamingContext
 
+from PIL import Image
 from zoo.common.nncontext import *
 from zoo.models.image.objectdetection import *
 
 
+# TODO solve index problem
+index = 0
+
+
 def read_image_file(path):
-    # with open(path, "rb") as image_file:
-    #     bytes_array = image_file.read()
     print("Reading image from " + path)
-    return np.random.uniform(0, 1, (200, 200, 3))
+    img = Image.open(path)
+    nd_img = np.array(img)
+    # print(nd_img.shape)
+    return nd_img
 
 
 def write_image_file(image, output_path):
-    print("Writing image to " + output_path)
-    cv2.imwrite(output_path + '/' + str(image[:10]) + '.jpg', image)
+    # The only problem of output result is that
+    # image path is lost after converting to ND array.
+    # So, I added a index for it.
+    global index
+    print("Writing image to " + output_path + '/' + str(index))
+    cv2.imwrite(output_path + '/' + str(index) + '.jpg', image)
+    index += 1
 
 
 if __name__ == "__main__":
@@ -55,14 +66,15 @@ if __name__ == "__main__":
     def predict(batch_path):
         if batch_path.getNumPartitions() == 0:
             return
-        print(batch_path.top(1))
+        # print(batch_path.top(1))
         # Read local
         image_set = DistributedImageSet(batch_path.map(read_image_file))
         output = model.predict_image_set(image_set)
         # Save to output
         config = model.get_config()
         visualizer = Visualizer(config.label_map(), encoding="jpg")
-        visualizer(output).get_image(to_chw=False).map(lambda x: write_image_file(x, args.output_path))
+        visualizer(output).get_image(to_chw=False)\
+            .foreach(lambda x: write_image_file(x, args.output_path))
 
 
     lines.foreachRDD(predict)

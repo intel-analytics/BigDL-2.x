@@ -40,7 +40,6 @@ if __name__ == "__main__":
     parser.add_option("--partition_num", dest="partition_num", default="4")
     parser.add_option("--token_length", dest="token_length", default="200")
     parser.add_option("--sequence_length", dest="sequence_length", default="500")
-    parser.add_option("--max_words_num", dest="max_words_num", default="5000")
     parser.add_option("-b", "--batch_size", dest="batch_size", default="128")
     parser.add_option("-m", "--model", dest="model")
 
@@ -61,12 +60,12 @@ if __name__ == "__main__":
         # text_set.set_word_index(word2index)
         print("Processing text...")
         transformed = text_set.tokenize().normalize()\
-            .word2idx(remove_topN=10, max_words_num=int(options.max_words_num))\
+            .word2idx()\
             .shape_sequence(len=int(options.sequence_length)).generate_sample()
         predict_set = model.predict(transformed, batch_per_thread=int(options.partition_num))
         # Get the first five prediction probability distributions
         predicts = predict_set.get_predicts().take(5)
-        print("Probability distributions of the first five texts in the validation set:")
+        print("Probability distributions of the top-5 texts in the validation set:")
         for p in predicts:
             print(p)
 

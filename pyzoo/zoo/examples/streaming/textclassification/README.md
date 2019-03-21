@@ -10,7 +10,7 @@ Based on Streaming example NetworkWordCount and Zoo text classification example.
 * Pre-trained model & word index: Save trained text classification model and word index in [Text Classification](https://github.com/intel-analytics/analytics-zoo/blob/master/docs/docs/ProgrammingGuide/text-classification.md).
 
 ## Run this example
-Make sure all nodes can access model, word index and glove.
+Make sure all nodes can access model and word index.
 
 1. TERMINAL 1: Running Netcat
 ```
