@@ -16,9 +16,8 @@
 
 package com.intel.analytics.zoo.pipeline.api.keras.layers
 
-import com.intel.analytics.bigdl.nn.{BatchNormalization => BBatchNormalization}
-import com.intel.analytics.bigdl.nn.{Xavier, RandomUniform, RandomNormal}
-import com.intel.analytics.bigdl.nn.keras.{BatchNormalization => BKBatchNormalization}
+import com.intel.analytics.bigdl.nn.{RandomNormal, RandomUniform, SpatialBatchNormalization, Xavier, BatchNormalization => BBatchNormalization}
+import com.intel.analytics.bigdl.nn.keras.{KerasLayer, BatchNormalization => BKBatchNormalization}
 import com.intel.analytics.bigdl.nn.abstractnn.{AbstractModule, DataFormat}
 import com.intel.analytics.bigdl.tensor.Tensor
 import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric
@@ -52,14 +51,13 @@ import scala.reflect.ClassTag
  * @tparam T Numeric type of parameter(e.g. weight, bias). Only support float/double now.
  */
 class BatchNormalization[T: ClassTag](
-   override val epsilon: Double = 0.001,
-   override val momentum: Double = 0.99,
-   override val betaInit: String = "zero",
-   override val gammaInit: String = "one",
-   override val dimOrdering: DataFormat = DataFormat.NCHW,
-   override val inputShape: Shape = null)(implicit ev: TensorNumeric[T])
-  extends BKBatchNormalization[T](
-    epsilon, momentum, betaInit, gammaInit, dimOrdering, inputShape) with Net {
+   val epsilon: Double = 0.001,
+   val momentum: Double = 0.99,
+   val betaInit: String = "zero",
+   val gammaInit: String = "one",
+   val dimOrdering: DataFormat = DataFormat.NCHW,
+   val inputShape: Shape = null)(implicit ev: TensorNumeric[T])
+  extends KerasLayer[Tensor[T], Tensor[T], T](KerasUtils.addBatch(inputShape)) with Net {
 
   private def getInit(init: String, n: Int): Tensor[T] = {
     val weights = Tensor[T](n)
@@ -87,7 +85,19 @@ class BatchNormalization[T: ClassTag](
   override def doBuild(inputShape: Shape): AbstractModule[Tensor[T], Tensor[T], T] = {
     val input = inputShape.toSingle().toArray
     if(input.length == 4) {
-     super.doBuild(inputShape)
+      val nChannel = dimOrdering match {
+        case DataFormat.NCHW => input(1)
+        case DataFormat.NHWC => input(3)
+      }
+      // TODO: support arbitrary input shape
+      val layer = SpatialBatchNormalization(
+        nOutput = nChannel,
+        eps = epsilon,
+        momentum = momentum,
+        initWeight = getInit(gammaInit, nChannel),
+        initBias = getInit(betaInit, nChannel),
+        dataFormat = dimOrdering)
+      layer.asInstanceOf[AbstractModule[Tensor[T], Tensor[T], T]]
     } else {
       val nOutput = input(1)
       BBatchNormalization[T](nOutput,
