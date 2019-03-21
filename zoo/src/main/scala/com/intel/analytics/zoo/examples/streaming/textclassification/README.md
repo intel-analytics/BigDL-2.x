@@ -2,14 +2,14 @@
 Based on Streaming example NetworkWordCount and Zoo text classification example. Network inputs (Strings) are pre-processed and classified by zoo. We applied a simple text classification model based on zoo example.
 
 ## Environment
-* Apache Spark 1.6.0/2.1.0 (This version needs to be same with the version you use to build Analytics Zoo)
-* Analytics Zoo
+* Apache Spark (This version needs to be same with the version you use to build Analytics Zoo)
+* [Analytics Zoo](https://analytics-zoo.github.io/master/#ScalaUserGuide/install/)
 
 ## Datasets and pre-trained models
 * Pre-trained model & word index: Save trained text classification model and word index in [Text Classification](https://github.com/intel-analytics/analytics-zoo/blob/master/docs/docs/ProgrammingGuide/text-classification.md).
 
 ## Run this example
-Make sure all nodes can access model, word index and glove.
+Make sure all nodes can access pre-trained model and word index.
 
 1. TERMINAL 1: Running Netcat
 ```

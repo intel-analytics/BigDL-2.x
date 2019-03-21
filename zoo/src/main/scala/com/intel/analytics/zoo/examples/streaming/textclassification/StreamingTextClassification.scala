@@ -48,6 +48,7 @@ object StreamingTextClassification {
       opt[String]("indexPath")
         .text("Path of word to index text file")
         .action((x, c) => c.copy(indexPath = x))
+        .required()
       opt[Int]("partitionNum")
         .text("The number of partitions to cut the dataset into")
         .action((x, c) => c.copy(partitionNum = x))
@@ -60,6 +61,7 @@ object StreamingTextClassification {
       opt[String]('m', "model")
         .text("Model snapshot location if any")
         .action((x, c) => c.copy(model = Some(x)))
+        .required()
     }
 
 
@@ -86,7 +88,7 @@ object StreamingTextClassification {
           // Pre-processing
           val transformed = dataSet.setWordIndex(wordIndex)
             .tokenize().normalize()
-            .word2idx(removeTopN = 10)
+            .word2idx()
             .shapeSequence(param.sequenceLength).generateSample()
           val predictSet = model.predict(transformed,
             batchPerThread = param.partitionNum)

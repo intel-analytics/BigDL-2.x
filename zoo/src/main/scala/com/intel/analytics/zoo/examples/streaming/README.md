@@ -8,8 +8,8 @@ Quick example about integrating analytics-zoo inference/predict service into str
 2. [Streaming Text Classification](https://github.com/intel-analytics/analytics-zoo/tree/master/zoo/src/main/scala/com/intel/analytics/zoo/examples/streaming/textclassification) uses pre-trained CNN/LSTM model to classify text from network input.
 
 ## Environment
-* Apache Spark 1.6.0/2.1.0 (This version needs to be same with the version you use to build Analytics Zoo)
-* Analytics Zoo
+* Apache Spark (This version needs to be same with the version you use to build Analytics Zoo)
+* [Analytics Zoo](https://analytics-zoo.github.io/master/#ScalaUserGuide/install/)
 
 ## Datasets and pre-trained models
 **1. Streaming Object Detection**

@@ -4,8 +4,8 @@ Imagining we have pre-trained model and image files in file system, and we want 
 So, there are two applications in this example: ImagePathWriter and StreamingObjectDetection. ImagePathWriter will package image paths into text files. Meanwhile, StreamingObjectDetection read image path from those text files, then read image content and make prediction.
 
 ## Environment
-* Apache Spark 1.6.0/2.1.0 (This version needs to be same with the version you use to build Analytics Zoo)
-* Analytics Zoo
+* Apache Spark (This version needs to be same with the version you use to build Analytics Zoo)
+* [Analytics Zoo](https://analytics-zoo.github.io/master/#ScalaUserGuide/install/)
 
 ## Datasets and pre-trained models
 * Datasets: [COCO](http://cocodataset.org/#home)
