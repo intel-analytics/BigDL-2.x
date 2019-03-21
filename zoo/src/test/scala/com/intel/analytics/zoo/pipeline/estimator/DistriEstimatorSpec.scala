@@ -1,3 +1,18 @@
+/*
+ * Copyright 2018 Analytics Zoo Authors.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.intel.analytics.zoo.pipeline.estimator
 
 import com.intel.analytics.bigdl.Module
@@ -100,7 +115,8 @@ class DistriEstimatorSpec extends ZooSpecHelper {
   override def doBefore()= {
     sc = new SparkContext("local[1]", "RDDOptimizerSpec")
 
-    val rdd = sc.parallelize(1 to (256 * nodeNumber), nodeNumber).map(prepareData)
+    val rdd = sc.parallelize(1 to (256 * nodeNumber), nodeNumber)
+      .map(prepareData)
 
     dataSet = new DistributedFeatureSet[MiniBatch[Double]] {
       override def originRDD(): RDD[_] = rdd
@@ -131,7 +147,8 @@ class DistriEstimatorSpec extends ZooSpecHelper {
     RandomGenerator.RNG.setSeed(10)
     val mseModel = mse
     val estimator = Estimator(mseModel, new LBFGS[Double]())
-    estimator.train(dataSet, new MSECriterion[Double](), endTrigger = Some(Trigger.maxIteration(1000)))
+    estimator.train(dataSet, new MSECriterion[Double](),
+      endTrigger = Some(Trigger.maxIteration(1000)))
 
     val result1 = mseModel.forward(input1).asInstanceOf[Tensor[Double]]
     result1(Array(1)) should be(0.0 +- 1e-2)
@@ -145,7 +162,8 @@ class DistriEstimatorSpec extends ZooSpecHelper {
     val mm = mse
     mm.parameters()._1.foreach(_.fill(0.125))
     val estimator = Estimator(mm, new SGD[Double](20))
-    estimator.train(dataSet, new MSECriterion[Double](), Option(Trigger.maxEpoch(1)))
+    estimator.train(dataSet, new MSECriterion[Double](),
+      Option(Trigger.maxEpoch(1)))
 
     val result1 = mm.forward(input1).asInstanceOf[Tensor[Double]]
     result1(Array(1)) should be(0.0 +- 5e-2)
