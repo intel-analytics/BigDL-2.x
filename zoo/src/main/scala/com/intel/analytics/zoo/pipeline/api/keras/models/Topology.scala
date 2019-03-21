@@ -16,7 +16,6 @@
 
 package com.intel.analytics.zoo.pipeline.api.keras.models
 
-import java.io.File
 import java.text.SimpleDateFormat
 import java.util.Calendar
 
@@ -50,7 +49,6 @@ import org.apache.log4j.Logger
 import org.apache.spark.rdd.{RDD, ZippedPartitionsWithLocalityRDD}
 
 import scala.collection.JavaConverters._
-import scala.collection.immutable.HashMap
 import scala.collection.mutable.ArrayBuffer
 import scala.reflect.ClassTag
 import scala.language.implicitConversions

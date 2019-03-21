@@ -24,7 +24,6 @@ import com.intel.analytics.bigdl.utils.{Engine, LoggerFilter, T, Table}
 import com.intel.analytics.zoo.feature.pmem.MemoryType
 import com.intel.analytics.zoo.pipeline.api.keras.layers.utils.EngineRef
 import com.intel.analytics.zoo.pipeline.estimator.{Estimator}
-import org.apache.log4j.{Level, Logger}
 import org.apache.spark.SparkContext
 
 object TrainInceptionV1 {

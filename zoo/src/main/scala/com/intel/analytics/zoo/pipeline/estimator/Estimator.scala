@@ -95,7 +95,6 @@ class Estimator[T: ClassTag] private[zoo](
             .setCheckpointDir(modelDir)
             .setOptimMethods(optimMethods)
         case _ => throw new IllegalArgumentException("Unsupported FeatureSet type.")
-        // TODO
       }
     }
     internalEstimator.evaluate(validationSet, validationMethod)
