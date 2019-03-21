@@ -27,14 +27,13 @@ class AveragePoolMapper (OperatorMapper):
         rank = len(self.model_inputs[0].zvalue.shape)
         if (rank == 4):  # NCHW
             poolSize = [int(i) for i in self.onnx_attr['kernel_shape']]
-            strides = [int(i) for i in self.onnx_attr['strides']] if "strides" in self.onnx_attr else [1, 1]
+            strides = [int(i) for i in self.onnx_attr['strides']]
             count_include_pad = bool(self.onnx_attr['count_include_pad'])\
                 if "count_include_pad" in self.onnx_attr else False
             dim_ordering = "th"
             border_mode, pads = OnnxHelper.get_padds(self.onnx_attr)
             averagepool2d = zlayers.AveragePooling2D(pool_size=poolSize,
                                                      strides=strides,
-                                                     border_mode=border_mode,
                                                      dim_ordering=dim_ordering,
                                                      pads=pads,
                                                      count_include_pad=count_include_pad)
