@@ -6,7 +6,7 @@ import com.intel.analytics.bigdl.nn._
 import com.intel.analytics.bigdl.optim.{LBFGS, Loss, SGD, Trigger}
 import com.intel.analytics.bigdl.tensor.{Storage, Tensor}
 import com.intel.analytics.bigdl.utils.{Engine, LoggerFilter, RandomGenerator}
-import com.intel.analytics.zoo.feature.DistributedFeatureSet
+import com.intel.analytics.zoo.feature.{DistributedDataSetWrapper, DistributedFeatureSet}
 import com.intel.analytics.zoo.pipeline.api.keras.ZooSpecHelper
 import com.intel.analytics.zoo.pipeline.api.keras.models.InternalOptimizerUtil
 import org.apache.log4j.{Level, Logger}
@@ -110,6 +110,10 @@ class DistriEstimatorSpec extends ZooSpecHelper {
       override def size(): Long = rdd.count()
 
       override def shuffle(): Unit = {}
+
+      override def toDistributed(): DistributedDataSet[MiniBatch[Double]] = {
+        new DistributedDataSetWrapper[MiniBatch[Double]](this)
+      }
     }
 
     plusOne = 0.0
