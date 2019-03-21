@@ -63,14 +63,12 @@ class BERT[T: ClassTag] (
   override def doBuild(inputShape: Shape): AbstractModule[Activity, Activity, T] = {
     require(inputShape.isInstanceOf[MultiShape], "TransformerLayer input must" +
       " be a multiple shape")
-    val _inputShape = KerasUtils.removeBatch(inputShape)
-    val seqLen = _inputShape.toMulti().head.toSingle().head
+    val _inputShape = KerasUtils.removeBatch(inputShape).toMulti()
 
-    val wordInput = Variable(Shape(seqLen))
-    val tokenTypeInput = Variable(Shape(seqLen))
-    val positionInput = Variable(Shape(seqLen))
-
-    val attentionMask = Variable(Shape(1, 1, seqLen))
+    val wordInput = Variable(_inputShape(0))
+    val tokenTypeInput = Variable(_inputShape(1))
+    val positionInput = Variable(_inputShape(2))
+    val attentionMask = Variable(_inputShape(3))
 
     require(embeddingLayer.isInstanceOf[Net], "use layers from" +
       "com.intel.analytics.zoo.pipeline.api.keras and operators from" +
@@ -138,23 +136,21 @@ class BERT[T: ClassTag] (
     val q = TransformerLayer.splitHeads(query, nHead)
     val k = TransformerLayer.splitHeads(key, nHead, k = true)
     val v = TransformerLayer.splitHeads(value, nHead)
-    val a = attn(q, k, v, attention_mask, true) // // m: (batch, nhead, seqLen, hiddenSize/nhead)
+    val a = attn(q, k, v, attention_mask) // // m: (batch, nhead, seqLen, hiddenSize/nhead)
     val m = TransformerLayer.mergeHeads(a) // m: (batch, seqLen, hiddenSize)
 
     val n = Dense(hiddenSize).from(m) // n: (batch, seqLen, hiddenSize)
     Dropout(hiddenPDrop).from(n)
   }
 
-  def attn(q: Variable[T], k: Variable[T], v: Variable[T], attention_mask: Variable[T],
-    scale: Boolean = false): Variable[T] = {
+  def attn(q: Variable[T], k: Variable[T], v: Variable[T],
+    attention_mask: Variable[T]): Variable[T] = {
     // q, v:(batch, nHead, seqLen, hiddenSize/nHead)
     // k:(batch, nHead, hiddenSize/nHead, seqLen)
     var w = AutoGrad.mm(q, k) // w: (batch, nHead, seqLen, seqLen)
-    if (scale) w = w / scala.math.sqrt(v.getOutputShape().toSingle().toArray.last)
+    w = w / scala.math.sqrt(v.getOutputShape().toSingle().toArray.last)
+    w = w + attention_mask
 
-    if (attention_mask != null) {
-      w = w + attention_mask
-    }
     w = Activation[Float]("softmax").from(w)
     w = Dropout(attnPDrop).from(w)
 
@@ -205,7 +201,7 @@ object BERT {
       initWeight = Tensor.ones[T](hiddenSize).view(1, hiddenSize))
     val b = Parameter[T](Shape(1, hiddenSize),
       initWeight = Tensor[T](hiddenSize).view(1, hiddenSize))
-    val afterNorm = TransformerLayer.layerNorm(embeddings, e = 1e-12, weight = w, bias = b)
+    val afterNorm = TransformerLayer.layerNorm(embeddings, 1e-12, weight = w, bias = b)
     val h = Dropout(hiddenPDrop).from(afterNorm)
 
     val embeddingLayer = Model(Array(wordInput, tokenTypeInput, positionInput), h)
