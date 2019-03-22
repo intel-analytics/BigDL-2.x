@@ -72,7 +72,7 @@ class OnnxTestCase(ZooTestCase):
             input_data_with_batch = [np.array(data).astype(np.long)
                                      for data in input_data_with_batch]
         # coutput = caffe2.python.onnx.backend.run_model(onnx_model, input_data_with_batch)[0]
-        
+
         pytorch_model.eval()
         pytorch_out = pytorch_model.forward(self._convert_ndarray_to_tensor(input_data_with_batch))
         zmodel = OnnxLoader.from_path(onnx_path, is_training=False)
