@@ -529,7 +529,13 @@ with variable_creator_scope():
         all_required_inputs = _find_placeholders([loss])
         dataset = tf.get_collection(all_required_inputs[0].name)[0]
 
-        inputs = dataset.tensors
+        inputs = list(dataset.tensors)
+        inputs = []
+        for input in list(dataset.tensors):
+            if isinstance(input, dict):
+                inputs = inputs + input.values()
+            else:
+                inputs.append(input)
 
         _check_the_same(all_required_inputs, inputs)
 
@@ -958,10 +964,12 @@ def _to_tensor_structure(tensors):
     elif isinstance(tensors, list):
         tensor_structure = [TensorMeta(dtype=value[0], shape=value[1], name=idx)
                             for (idx, value) in enumerate(tensors)]
-    else:
+    elif isinstance(tensors, dict):
         tensor_structure = {}
-        for key, value in enumerate(tensors):
+        for key, value in tensors.items():
             tensor_structure[key] = TensorMeta(dtype=value[0], shape=value[1], name=key)
+    else:
+        raise ValueError("Structure of tensors should be tuple, list of tuple or dict of tuple")
     return tensor_structure
 
 
