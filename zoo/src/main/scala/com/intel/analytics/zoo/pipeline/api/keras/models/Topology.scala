@@ -1035,12 +1035,20 @@ private[zoo] class InternalDistriOptimizer[T: ClassTag] (
       }
     }
 
+    // get current iteration from optimMethod
+    val step = if (null != optimMethods && optimMethods.size != 0) {
+      val state = InternalOptimizerUtil.getStateFromOptiMethod(
+        optimMethods.values.head)
+      state.getOrElse[Int]("neval", -1)
+    } else {
+      -1
+    }
 
     InternalDistriOptimizer.validate(
       validationSet,
       validationMethod,
       models,
-      state,
+      step,
       validationSummary
     )
   }
@@ -1052,7 +1060,7 @@ object InternalDistriOptimizer {
   protected def validate[T](validationFeatureSet: FeatureSet[MiniBatch[T]],
                             validationMethods: Array[ValidationMethod[T]],
                             models: RDD[Cache[T]],
-                            state: Table,
+                            step: Int,
                             validationSummary: Option[ValidationSummary]
                            ): Map[ValidationMethod[T], ValidationResult] = {
     val vMethods = validationMethods
@@ -1100,12 +1108,11 @@ object InternalDistriOptimizer {
       // TODO:
       DistriOptimizer.logger.info(s"${r._2} is ${r._1}")
     })
-    state("score") = results(0)._1.result._1
-    if(validationSummary.isDefined) {
+    if (validationSummary.isDefined && step > 0) {
       results.foreach { r =>
         val result = r._1.result
         validationSummary.get.addScalar(r._2.toString(), result._1,
-          state[Int]("neval") - 1
+          step - 1
         )
       }
     }
