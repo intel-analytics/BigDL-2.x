@@ -23,15 +23,6 @@ from zoo.feature.text import DistributedTextSet
 from zoo.models.textclassification import TextClassifier
 
 
-def read_word_index(path):
-    word_to_index = dict()
-    with open(path, "r") as index_file:
-        for line in index_file:
-            word, index = line.split(" ")
-            word_to_index[word] = int(index)
-    return word_to_index
-
-
 if __name__ == "__main__":
     parser = OptionParser()
     parser.add_option("--host", dest="host", default="localhost")
@@ -50,14 +41,12 @@ if __name__ == "__main__":
     lines = ssc.socketTextStream(options.host, int(options.port))
 
     model = TextClassifier.load_model(options.model)
-    word2index = read_word_index(options.index_path)
 
     def predict(record):
         if record.getNumPartitions() == 0:
             return
         text_set = DistributedTextSet(record)
-        # TODO waiting for Kai's set_word_index pr
-        # text_set.set_word_index(word2index)
+        text_set.load_word_index(options.index_path)
         print("Processing text...")
         transformed = text_set.tokenize().normalize()\
             .word2idx()\
