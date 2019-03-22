@@ -30,6 +30,8 @@ object ImagePathWriter {
   def main(args: Array[String]): Unit = {
     Logger.getLogger("org").setLevel(Level.WARN)
 
+    val logger = Logger.getLogger(getClass)
+
     parser.parse(args, PathWriterParam()).foreach { params =>
       val path = new Path(params.imageSourcePath)
       // Support both local and remote file system
@@ -40,7 +42,7 @@ object ImagePathWriter {
         val outStream = fs.create(new Path(batchPath), true)
         batch.foreach(line => outStream.writeBytes(line + "\n"))
         outStream.close()
-        println("wrote " + batchPath)
+        logger.info("wrote " + batchPath)
         Thread.sleep(4000)
       }
     }

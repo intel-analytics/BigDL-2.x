@@ -16,8 +16,6 @@
 
 package com.intel.analytics.zoo.examples.streaming.textclassification
 
-import scala.collection.immutable._
-import scala.io.Source
 import com.intel.analytics.zoo.common.NNContext
 import com.intel.analytics.zoo.feature.text.{TextFeature, TextSet}
 import com.intel.analytics.zoo.models.textclassification.TextClassifier

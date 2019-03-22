@@ -70,8 +70,8 @@ object StreamingObjectDetection {
       val lines = ssc.textFileStream(params.streamingPath)
       lines.foreachRDD { batchPath =>
         // Read image files and load to RDD
-        println("batchPath partition " + batchPath.getNumPartitions)
-        println("batchPath count " + batchPath.count())
+        logger.debug("batchPath partition " + batchPath.getNumPartitions)
+        logger.debug("batchPath count " + batchPath.count())
         if (!batchPath.isEmpty()) {
           // RDD[String] => RDD[ImageFeature] => ImageSet
           val dataSet = ImageSet.rdd(batchPath.map(path => readFile(path)))
@@ -97,7 +97,7 @@ object StreamingObjectDetection {
    * @return ImageFeature
    */
   def readFile(path: String): ImageFeature = {
-    println("Read image file " + path)
+    logger.info("Read image file " + path)
     val fspath = new Path(path)
     val fs = FileSystem.get(fspath.toUri, new Configuration())
     // Read local or remote image
@@ -117,7 +117,7 @@ object StreamingObjectDetection {
    */
   def writeFile(outPath: String, path: String, content: Array[Byte]): Unit = {
     val fspath = getOutPath(outPath, path, "jpg")
-    println("Writing image file " + fspath.toString)
+    logger.info("Writing image file " + fspath.toString)
     val fs = FileSystem.get(fspath.toUri, new Configuration())
     val outStream = fs.create(
       fspath,
