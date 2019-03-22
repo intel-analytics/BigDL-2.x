@@ -95,29 +95,15 @@ class TransformerLayer[T: ClassTag](
     val b2 = Parameter[T](Shape(1, hiddenSize),
       initWeight = Tensor[T](hiddenSize).view(1, hiddenSize))
     val a = multiHeadSelfAttention(x, hiddenSize)
-    val n = layerNorm(x + a, weight = g, bias = b)
+    val n = TransformerLayer.layerNorm(x + a, weight = g, bias = b)
     val m = mlp(n, hiddenSize)
-    val h = layerNorm(n + m, weight = g2, bias = b2)
+    val h = TransformerLayer.layerNorm(n + m, weight = g2, bias = b2)
     h
-  }
-
-  def layerNorm(x: Variable[T], e: Double = 1e-5, weight: Parameter[T],
-                bias: Parameter[T]): Variable[T] = {
-    val sizes = x.getOutputShape().toSingle().toArray
-    val u = AutoGrad.mean(x, sizes.size - 1, true)
-    val s = AutoGrad.mean(AutoGrad.square(x - u), sizes.size -1, true)
-    val y = (x - u) / AutoGrad.sqrt(s + e)
-    y * weight + bias
-  }
-
-  def gelu(x: Variable[T]): Variable[T] = {
-    x * 0.5 * (Activation("tanh").from((AutoGrad.square(x) * x * 0.044715 + x)
-      * (scala.math.sqrt(2 / scala.math.Pi))) + 1)
   }
 
   def mlp(x: Variable[T], hiddenSize: Int): Variable[T] = {
     val h = new Convolution1D(hiddenSize * 4, 1, init = RandomNormal(0.0, 0.02)).from(x)
-    val a = gelu(h)
+    val a = TransformerLayer.gelu(h)
     val h2 = new Convolution1D(hiddenSize, 1, init = RandomNormal(0.0, 0.02)).from(a)
     Dropout(residPdrop).from(h2)
   }
