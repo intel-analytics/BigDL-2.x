@@ -21,6 +21,7 @@ import com.intel.analytics.bigdl.nn._
 import com.intel.analytics.bigdl.optim.{LBFGS, Loss, SGD, Trigger}
 import com.intel.analytics.bigdl.tensor.{Storage, Tensor}
 import com.intel.analytics.bigdl.utils.{Engine, LoggerFilter, RandomGenerator}
+import com.intel.analytics.zoo.common.NNContext
 import com.intel.analytics.zoo.feature.{DistributedDataSetWrapper, DistributedFeatureSet}
 import com.intel.analytics.zoo.pipeline.api.keras.ZooSpecHelper
 import com.intel.analytics.zoo.pipeline.api.keras.models.InternalOptimizerUtil
@@ -34,9 +35,8 @@ object DistriEstimatorSpec {
   private val input2: Tensor[Double] = Tensor[Double](Storage[Double](Array(1.0, 0.0, 1.0, 0.0)))
   private val output2 = 1.0
   private var plusOne = 0.0
-  private val nodeNumber = 4
+  private val nodeNumber = 1
   private val coreNumber = 4
-  Engine.init(nodeNumber, coreNumber, onSpark = true)
 
   private val batchSize = 2 * coreNumber
 
@@ -113,7 +113,8 @@ class DistriEstimatorSpec extends ZooSpecHelper {
   private var dataSet: DistributedFeatureSet[MiniBatch[Double]] = _
 
   override def doBefore(): Unit = {
-    sc = new SparkContext("local[1]", "RDDOptimizerSpec")
+    val conf = Engine.createSparkConf().setAppName("Test Estimator").setMaster("local[4]")
+    sc = NNContext.initNNContext(conf)
 
     val rdd = sc.parallelize(1 to (256 * nodeNumber), nodeNumber)
       .map(prepareData)
