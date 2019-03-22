@@ -113,7 +113,8 @@ class DistriEstimatorSpec extends ZooSpecHelper {
   private var dataSet: DistributedFeatureSet[MiniBatch[Double]] = _
 
   override def doBefore(): Unit = {
-    val conf = Engine.createSparkConf().setAppName("Test Estimator").setMaster("local[4]")
+    val conf = Engine.createSparkConf()
+      .setAppName("Test Estimator").setMaster("local[4]")
     sc = NNContext.initNNContext(conf)
 
     val rdd = sc.parallelize(1 to (256 * nodeNumber), nodeNumber)
