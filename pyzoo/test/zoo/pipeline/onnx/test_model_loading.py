@@ -1435,7 +1435,7 @@ class TestModelLoading(OnnxTestCase):
         np.testing.assert_almost_equal(output["y"], y, decimal=5)
 
     def test_mean_1D(self):
-        data=np.random.randn(2,)
+        data = np.random.randn(2,)
         parameter = Parameter(shape=(2,), init_weight=data)
         out = autograd.mean(parameter, axis=0)
         model = Model(input=parameter, output=out)
