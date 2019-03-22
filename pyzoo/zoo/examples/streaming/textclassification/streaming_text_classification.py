@@ -25,13 +25,19 @@ from zoo.models.textclassification import TextClassifier
 
 if __name__ == "__main__":
     parser = OptionParser()
-    parser.add_option("--host", dest="host", default="localhost")
-    parser.add_option("--port", dest="port", default="9999")
+    parser.add_option("--host", dest="host",
+                      default="localhost")
+    parser.add_option("--port", dest="port",
+                      default="9999")
     parser.add_option("--index_path", dest="index_path")
-    parser.add_option("--partition_num", dest="partition_num", default="4")
-    parser.add_option("--token_length", dest="token_length", default="200")
-    parser.add_option("--sequence_length", dest="sequence_length", default="500")
-    parser.add_option("-b", "--batch_size", dest="batch_size", default="128")
+    parser.add_option("--partition_num", dest="partition_num",
+                      default="4")
+    parser.add_option("--token_length", dest="token_length",
+                      default="200")
+    parser.add_option("--sequence_length", dest="sequence_length",
+                      default="500")
+    parser.add_option("-b", "--batch_size", dest="batch_size",
+                      default="128")
     parser.add_option("-m", "--model", dest="model")
 
     (options, args) = parser.parse_args(sys.argv)

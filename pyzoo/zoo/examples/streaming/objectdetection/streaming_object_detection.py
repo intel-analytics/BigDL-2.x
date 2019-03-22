@@ -19,12 +19,9 @@ import cv2
 from pyspark.streaming import StreamingContext
 
 from PIL import Image
+from datetime import datetime
 from zoo.common.nncontext import *
 from zoo.models.image.objectdetection import *
-
-
-# TODO solve index problem
-index = 0
 
 
 def read_image_file(path):
@@ -38,11 +35,12 @@ def read_image_file(path):
 def write_image_file(image, output_path):
     # The only problem of output result is that
     # image path is lost after converting to ND array.
-    # So, I added a index for it.
-    global index
-    print("Writing image to " + output_path + '/' + str(index))
-    cv2.imwrite(output_path + '/' + str(index) + '.jpg', image)
-    index += 1
+    # So, we set current filename as timestamp with first 10 number.
+    write_path = output_path + '/' \
+                 + datetime.now().strftime("%Y%m%d-%H%M%S") + '-'\
+                 + "".join([str(int(i * 100)) for i in image[:8, 0, 0]])
+    print("Writing image to " + write_path)
+    cv2.imwrite(write_path + '.jpg', image)
 
 
 if __name__ == "__main__":
@@ -75,7 +73,6 @@ if __name__ == "__main__":
         visualizer = Visualizer(config.label_map(), encoding="jpg")
         visualizer(output).get_image(to_chw=False)\
             .foreach(lambda x: write_image_file(x, args.output_path))
-
 
     lines.foreachRDD(predict)
     # Start the computation
