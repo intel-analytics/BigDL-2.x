@@ -877,7 +877,8 @@ object Sequential extends KerasLayerSerializable {
 }
 
 private[zoo] object InternalOptimizerUtil {
-  def getModelCacheFromOptimizer[T: ClassTag](optimizer: Optimizer[T, MiniBatch[T]]): RDD[Cache[T]] = {
+  def getModelCacheFromOptimizer[T: ClassTag](
+        optimizer: Optimizer[T, MiniBatch[T]]): RDD[Cache[T]] = {
     val field = classOf[DistriOptimizer[T]].getDeclaredField("models")
     field.setAccessible(true)
     val models = field.get(optimizer).asInstanceOf[RDD[Cache[T]]]
