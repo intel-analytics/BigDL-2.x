@@ -671,33 +671,34 @@ def model_fn_builder(bert_config, num_labels, init_checkpoint, learning_rate,
                       init_string)
 
     output_spec = None
-    if mode == tf.estimator.ModeKeys.TRAIN:
+    if mode == tf.estimator.ModeKeys.TRAIN or mode == tf.estimator.ModeKeys.EVAL:
 
       train_op = optimization.create_optimizer(
           total_loss, learning_rate, num_train_steps, num_warmup_steps, use_tpu)
 
       output_spec = TFEstimatorSpec(
           mode=mode,
+          predictions=logits,
           loss=total_loss)
-    elif mode == tf.estimator.ModeKeys.EVAL:
-
-      def metric_fn(per_example_loss, label_ids, logits, is_real_example):
-        predictions = tf.argmax(logits, axis=-1, output_type=tf.int32)
-        accuracy = tf.metrics.accuracy(
-            labels=label_ids, predictions=predictions, weights=is_real_example)
-        loss = tf.metrics.mean(values=per_example_loss, weights=is_real_example)
-        return {
-            "eval_accuracy": accuracy,
-            "eval_loss": loss,
-        }
-
-      eval_metrics = (metric_fn,
-                      [per_example_loss, label_ids, logits, is_real_example])
-      output_spec = tf.contrib.tpu.TPUEstimatorSpec(
-          mode=mode,
-          loss=total_loss,
-          eval_metrics=eval_metrics,
-          scaffold_fn=scaffold_fn)
+    # elif mode == tf.estimator.ModeKeys.EVAL:
+    #
+    #   def metric_fn(per_example_loss, label_ids, logits, is_real_example):
+    #     predictions = tf.argmax(logits, axis=-1, output_type=tf.int32)
+    #     accuracy = tf.metrics.accuracy(
+    #         labels=label_ids, predictions=predictions, weights=is_real_example)
+    #     loss = tf.metrics.mean(values=per_example_loss, weights=is_real_example)
+    #     return {
+    #         "eval_accuracy": accuracy,
+    #         "eval_loss": loss,
+    #     }
+    #
+    #   eval_metrics = (metric_fn,
+    #                   [per_example_loss, labels, logits, is_real_example])
+    #   output_spec = tf.contrib.tpu.TPUEstimatorSpec(
+    #       mode=mode,
+    #       loss=total_loss,
+    #       eval_metrics=eval_metrics,
+    #       scaffold_fn=scaffold_fn)
     else:
       output_spec = tf.contrib.tpu.TPUEstimatorSpec(
           mode=mode,
@@ -786,7 +787,7 @@ def to_dict_numpy(feature):
     res["input_mask"] = np.array(feature.input_mask)
     res["segment_ids"] = np.array(feature.segment_ids)
     # res["label_id"] = np.array(feature.label_id)
-    return (res, feature.label_id)
+    return res, feature.label_id
 
 
 def rdd_based_input_fn_builder(examples, label_list, max_seq_length, tokenizer, batch_size):
@@ -886,9 +887,9 @@ def main(_):
       config=run_config)
 
   if FLAGS.do_train:
-    train_file = os.path.join(FLAGS.output_dir, "train.tf_record")
-    file_based_convert_examples_to_features(
-        train_examples, label_list, FLAGS.max_seq_length, tokenizer, train_file)
+    # train_file = os.path.join(FLAGS.output_dir, "train.tf_record")
+    # file_based_convert_examples_to_features(
+    #     train_examples, label_list, FLAGS.max_seq_length, tokenizer, train_file)
     tf.logging.info("***** Running training *****")
     tf.logging.info("  Num examples = %d", len(train_examples))
     tf.logging.info("  Batch size = %d", FLAGS.train_batch_size)
@@ -909,9 +910,9 @@ def main(_):
       while len(eval_examples) % FLAGS.eval_batch_size != 0:
         eval_examples.append(PaddingInputExample())
 
-    eval_file = os.path.join(FLAGS.output_dir, "eval.tf_record")
-    file_based_convert_examples_to_features(
-        eval_examples, label_list, FLAGS.max_seq_length, tokenizer, eval_file)
+    # eval_file = os.path.join(FLAGS.output_dir, "eval.tf_record")
+    # file_based_convert_examples_to_features(
+    #     eval_examples, label_list, FLAGS.max_seq_length, tokenizer, eval_file)
 
     tf.logging.info("***** Running evaluation *****")
     tf.logging.info("  Num examples = %d (%d actual, %d padding)",
@@ -927,14 +928,17 @@ def main(_):
       assert len(eval_examples) % FLAGS.eval_batch_size == 0
       eval_steps = int(len(eval_examples) // FLAGS.eval_batch_size)
 
-    eval_drop_remainder = True if FLAGS.use_tpu else False
-    eval_input_fn = file_based_input_fn_builder(
-        input_file=eval_file,
-        seq_length=FLAGS.max_seq_length,
-        is_training=False,
-        drop_remainder=eval_drop_remainder)
+    # eval_drop_remainder = True if FLAGS.use_tpu else False
+    # eval_input_fn = file_based_input_fn_builder(
+    #     input_file=eval_file,
+    #     seq_length=FLAGS.max_seq_length,
+    #     is_training=False,
+    #     drop_remainder=eval_drop_remainder)
 
-    result = estimator.evaluate(input_fn=eval_input_fn, steps=eval_steps)
+    eval_input_fn = rdd_based_input_fn_builder(
+        eval_examples, label_list, FLAGS.max_seq_length, tokenizer, FLAGS.train_batch_size)
+
+    result = estimator.evaluate(input_fn=eval_input_fn, eval_methods=["acc"], steps=eval_steps)
 
     output_eval_file = os.path.join(FLAGS.output_dir, "eval_results.txt")
     with tf.gfile.GFile(output_eval_file, "w") as writer:
