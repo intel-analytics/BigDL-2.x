@@ -19,7 +19,6 @@ from test.zoo.pipeline.utils.test_utils_onnx import OnnxTestCase
 from zoo.pipeline.api.keras.layers import *
 import numpy as np
 
-
 np.random.seed(1337)  # for reproducibility
 import torch
 import onnx.helper as helper
