@@ -84,28 +84,29 @@ class BatchNormalization[T: ClassTag](
 
   override def doBuild(inputShape: Shape): AbstractModule[Tensor[T], Tensor[T], T] = {
     val input = inputShape.toSingle().toArray
-    if(input.length == 4) {
-      val nChannel = dimOrdering match {
-        case DataFormat.NCHW => input(1)
-        case DataFormat.NHWC => input(3)
-      }
-      // TODO: support arbitrary input shape
-      val layer = SpatialBatchNormalization(
-        nOutput = nChannel,
-        eps = epsilon,
-        momentum = momentum,
-        initWeight = getInit(gammaInit, nChannel),
-        initBias = getInit(betaInit, nChannel),
-        dataFormat = dimOrdering)
-      layer.asInstanceOf[AbstractModule[Tensor[T], Tensor[T], T]]
-    } else {
-      val nOutput = input(1)
-      BBatchNormalization[T](nOutput,
-        epsilon,
-        momentum,
-        affine = true,
-        initWeight = getInit(gammaInit, nOutput),
-        initBias = getInit(betaInit, nOutput))
+    input.length match {
+      case 4 => val nChannel = dimOrdering match {
+          case DataFormat.NCHW => input(1)
+          case DataFormat.NHWC => input(3)
+        }
+        // TODO: support arbitrary input shape
+        val layer = SpatialBatchNormalization(
+          nOutput = nChannel,
+          eps = epsilon,
+          momentum = momentum,
+          initWeight = getInit(gammaInit, nChannel),
+          initBias = getInit(betaInit, nChannel),
+          dataFormat = dimOrdering)
+        layer.asInstanceOf[AbstractModule[Tensor[T], Tensor[T], T]]
+      case 2 => val nOutput = input(1)
+        BBatchNormalization[T](nOutput,
+          epsilon,
+          momentum,
+          affine = true,
+          initWeight = getInit(gammaInit, nOutput),
+          initBias = getInit(betaInit, nOutput))
+      case _ => throw new IllegalArgumentException(s"BatchNormalization requires 4D or 2D input," +
+        s" but got input dim ${input.length}")
     }
   }
 }

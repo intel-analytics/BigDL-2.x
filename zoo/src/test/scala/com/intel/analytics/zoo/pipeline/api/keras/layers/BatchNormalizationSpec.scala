@@ -28,7 +28,7 @@ import scala.util.Random
 class BatchNormalizationSpec extends KerasBaseSpec {
 
   // Compared results with Keras on Python side
-  "BatchNormalization" should "work properly for 3D data" in {
+  "BatchNormalization" should "work properly for 4D input" in {
     val seq = Sequential[Float]()
     val layer = BatchNormalization[Float](betaInit = "glorot_uniform",
       gammaInit = "normal", inputShape = Shape(3, 12, 12))
@@ -39,7 +39,7 @@ class BatchNormalizationSpec extends KerasBaseSpec {
     val gradInput = seq.backward(input, output)
   }
 
-  "BatchNormalization" should "work properly for 1D data" in {
+  "BatchNormalization" should "work properly for 2D input" in {
     val seq = Sequential[Float]()
     val layer = BatchNormalization[Float](betaInit = "glorot_uniform",
       gammaInit = "normal", inputShape = Shape(12))
@@ -50,7 +50,7 @@ class BatchNormalizationSpec extends KerasBaseSpec {
     val gradInput = seq.backward(input, output)
   }
 
-  "BatchNormalization" should "not work properly for 2D data" in {
+  "BatchNormalization" should "not work properly for 3D input" in {
     val thrown = intercept[InvocationTargetException] {
       val seq = Sequential[Float]()
       val layer = BatchNormalization[Float](betaInit = "glorot_uniform",
