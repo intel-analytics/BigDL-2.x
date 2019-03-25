@@ -391,8 +391,16 @@ abstract class KerasNet[T](implicit val tag: ClassTag[T], implicit val ev: Tenso
       featurePaddingParam: PaddingParam[T] = null,
       labelPaddingParam: PaddingParam[T] = null)(implicit ev: TensorNumeric[T]): Unit = {
     KerasUtils.validateBatchSize(batchSize)
-    this.fit(toDataSet(x, batchSize, featurePaddingParam, labelPaddingParam),
-      nbEpoch, toDataSet(validationData, batchSize, featurePaddingParam, labelPaddingParam))
+    val trainData = toDataSet(x, batchSize, featurePaddingParam, labelPaddingParam)
+    val valData = toDataSet(validationData, batchSize, featurePaddingParam, labelPaddingParam)
+    this.fit(trainData, nbEpoch, valData)
+    // due to bigdl issue, need to call 2 times
+    trainData.toDistributed().unpersist()
+    trainData.toDistributed().originRDD().unpersist()
+    if (valData != null) {
+      valData.toDistributed().unpersist()
+      valData.toDistributed().originRDD().unpersist()
+    }
   }
 
   /**
@@ -592,7 +600,16 @@ class Model[T: ClassTag] private (private val _inputs : Seq[ModuleNode[T]],
   }
 
   override def newGraph(output: String): Model[T] = {
-    new Model[T](_inputs, nodes(Seq(output)).map(_.removeNextEdges()))
+    new Model[T](_inputs, nodes(Seq(output)).map(_.removeNextEdges())) {
+      /**
+        * Train a model for a fixed number of epochs on a DataSet.
+        *
+        * @param x              Training dataset. If x is an instance of LocalDataSet, train in local mode.
+        * @param nbEpoch        Number of epochs to train.
+        * @param validationData Dataset for validation, or null if validation is not configured.
+        */
+      override def fit(x: DataSet[MiniBatch[T]], nbEpoch: Int, validationData: DataSet[MiniBatch[T]])(implicit ev: TensorNumeric[T]): Unit = super.fit(x, nbEpoch, validationData)
+    }
   }
 
   override def newGraph(outputs: Seq[String]): Model[T] = {
