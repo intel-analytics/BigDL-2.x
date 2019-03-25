@@ -670,16 +670,20 @@ def model_fn_builder(bert_config, num_labels, init_checkpoint, learning_rate,
       tf.logging.info("  name = %s, shape = %s%s", var.name, var.shape,
                       init_string)
 
-    output_spec = None
+    # output_spec = None
     if mode == tf.estimator.ModeKeys.TRAIN or mode == tf.estimator.ModeKeys.EVAL:
 
-      train_op = optimization.create_optimizer(
-          total_loss, learning_rate, num_train_steps, num_warmup_steps, use_tpu)
+      # train_op = optimization.create_optimizer(
+      #     total_loss, learning_rate, num_train_steps, num_warmup_steps, use_tpu)
 
-      output_spec = TFEstimatorSpec(
-          mode=mode,
-          predictions=logits,
-          loss=total_loss)
+        output_spec = TFEstimatorSpec(
+              mode=mode,
+              predictions=logits,
+              loss=total_loss)
+    else:
+        output_spec = TFEstimatorSpec(
+              mode=mode,
+              predictions=logits)
     # elif mode == tf.estimator.ModeKeys.EVAL:
     #
     #   def metric_fn(per_example_loss, label_ids, logits, is_real_example):
@@ -699,11 +703,11 @@ def model_fn_builder(bert_config, num_labels, init_checkpoint, learning_rate,
     #       loss=total_loss,
     #       eval_metrics=eval_metrics,
     #       scaffold_fn=scaffold_fn)
-    else:
-      output_spec = tf.contrib.tpu.TPUEstimatorSpec(
-          mode=mode,
-          predictions={"probabilities": probabilities},
-          scaffold_fn=scaffold_fn)
+    # else:
+    #   output_spec = tf.contrib.tpu.TPUEstimatorSpec(
+    #       mode=mode,
+    #       predictions={"probabilities": probabilities},
+    #       scaffold_fn=scaffold_fn)
     return output_spec
 
   return model_fn
