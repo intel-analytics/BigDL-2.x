@@ -26,16 +26,7 @@ import os
 import json
 import copy
 
-
-def _variable_creator(next_creator, **kwargs):
-    kwargs["use_resource"] = False
-    return next_creator(**kwargs)
-
-
-@tf_contextlib.contextmanager
-def variable_creator_scope():
-    with variable_scope.variable_creator_scope(_variable_creator):
-        yield
+import tf_graph_util as graph_util
 
 
 def process_grad(grad):

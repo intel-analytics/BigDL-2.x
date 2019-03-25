@@ -1,4 +1,5 @@
-# this file is adapted from
+# This file is adapted from https://github.com/tensorflow/tensorflow/blob/master
+# /tensorflow/python/framework/graph_util_impl.py
 #
 # Copyright 2015 The TensorFlow Authors. All Rights Reserved.
 #
@@ -241,9 +242,9 @@ def convert_variables_to_constants(sess,
     def has_variable_as_input(node):
         """Checks if the input node has a variable in `variables_data_map`."""
         for name in node.input:
-            if name in variables_data_map or (
-                            name in identity_ops_input_map and
-                            identity_ops_input_map[name] in variables_data_map):
+            if name in variables_data_map or\
+                    (name in identity_ops_input_map
+                     and identity_ops_input_map[name] in variables_data_map):
                 return True
         return False
 
@@ -270,10 +271,10 @@ def convert_variables_to_constants(sess,
     for node in inference_graph.node:
         if node.op in ["Variable", "VariableV2", "VarHandleOp"]:
             variable_name = node.name
-            if ((variable_names_whitelist is not None and
-                         variable_name not in variable_names_whitelist) or
-                    (variable_names_blacklist is not None and
-                             variable_name in variable_names_blacklist)):
+            if ((variable_names_whitelist is not None
+                 and variable_name not in variable_names_whitelist) or
+                    (variable_names_blacklist is not None
+                     and variable_name in variable_names_blacklist)):
                 continue
             variable_dict_names.append(variable_name)
             if node.op == "VarHandleOp":
@@ -306,8 +307,8 @@ def convert_variables_to_constants(sess,
             output_node = create_const_op(input_node.name, input_node.attr["dtype"],
                                           data, data.shape)
             how_many_converted += 1
-        elif (input_node.op == "ReadVariableOp" and
-                  has_variable_as_input(input_node)):
+        elif (input_node.op == "ReadVariableOp"
+              and has_variable_as_input(input_node)):
             # The first branch converts all VarHandleOps of ResourceVariables to
             # constants, so we need to convert the associated ReadVariableOps to
             # Identity ops.
@@ -321,8 +322,8 @@ def convert_variables_to_constants(sess,
             output_node.attr["T"].CopyFrom(input_node.attr["dtype"])
             if "_class" in input_node.attr:
                 output_node.attr["_class"].CopyFrom(input_node.attr["_class"])
-        elif (input_node.op == "ResourceGather" and
-                  has_variable_as_input(input_node)):
+        elif (input_node.op == "ResourceGather"
+              and has_variable_as_input(input_node)):
             # The first branch converts all VarHandleOps of ResourceGather to
             # constants, so we need to convert the associated ResourceGather to Gather
             # ops with a Const axis feeding into it.
