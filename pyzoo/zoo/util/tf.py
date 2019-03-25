@@ -18,15 +18,13 @@ from tensorflow.core.framework import attr_value_pb2
 from tensorflow.core.framework import graph_pb2
 from tensorflow.core.framework import node_def_pb2
 from tensorflow.python.framework import ops
-from tensorflow.python.ops import variable_scope
 from tensorflow.python.platform import gfile
-from tensorflow.python.util import tf_contextlib
 import tensorflow as tf
 import os
 import json
 import copy
 
-import tf_graph_util as graph_util
+import zoo.util.tf_graph_util as graph_util
 
 
 def process_grad(grad):
