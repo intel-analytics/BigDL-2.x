@@ -15,6 +15,7 @@
 #
 
 from bigdl.util.common import *
+from bigdl.dataset.dataset import DataSet
 import sys
 
 if sys.version >= '3':
@@ -198,3 +199,24 @@ class ToTuple(Preprocessing):
     """
     def __init__(self, bigdl_type="float"):
         super(ToTuple, self).__init__(bigdl_type)
+
+class FeatureSet(DataSet):
+    def __init__(self, jvalue=None, bigdl_type="float"):
+        self.bigdl_type = bigdl_type
+        if jvalue:
+            self.value = jvalue
+
+    @classmethod
+    def image_frame(cls, image_frame, bigdl_type="float"):
+        jvalue = callBigDlFunc(bigdl_type, "createFeatureSetFromImageFrame", image_frame)
+        return FeatureSet(jvalue=jvalue)
+
+    @classmethod
+    def rdd(cls, rdd, bigdl_type="float"):
+        jvalue = callBigDlFunc(bigdl_type, "createFeatureSetFromRDD", rdd)
+        return FeatureSet(jvalue=jvalue)
+
+    def transform(self, transformer):
+        if isinstance(transformer, Preprocessing):
+            jvalue = callBigDlFunc(self.bigdl_type, "transformFeatureSet", self.value, transformer)
+            return FeatureSet(jvalue=jvalue)
