@@ -76,11 +76,11 @@ object EstimatorSpecModel {
   }
 
   def linear: Module[Double] = {
-    new Sequential[Double]
-      .add(new Linear(10, 5))
-      .add(new Sigmoid)
-      .add(new Linear(5, 1))
-      .add(new Sigmoid)
+    Sequential[Double]
+      .add(Linear(10, 5))
+      .add(Sigmoid())
+      .add(Linear(5, 1))
+      .add(Sigmoid())
   }
 
   def bn: Module[Double] = {
@@ -93,9 +93,9 @@ object EstimatorSpecModel {
   }
 
   def cre: Module[Double] = {
-    new Sequential[Double]
-      .add(new Linear(4, 2))
-      .add(new LogSoftMax)
+    Sequential[Double]
+      .add(Linear(4, 2))
+      .add(LogSoftMax())
   }
 
 }
@@ -149,7 +149,7 @@ class DistriEstimatorSpec extends ZooSpecHelper {
     RandomGenerator.RNG.setSeed(10)
     val mseModel = mse
     val estimator = Estimator(mseModel, new LBFGS[Double]())
-    estimator.train(dataSet, new MSECriterion[Double](),
+    estimator.train(dataSet, MSECriterion[Double](),
       endTrigger = Some(Trigger.maxIteration(1000)))
 
     val result1 = mseModel.forward(input1).asInstanceOf[Tensor[Double]]
@@ -164,7 +164,7 @@ class DistriEstimatorSpec extends ZooSpecHelper {
     val mm = mse
     mm.parameters()._1.foreach(_.fill(0.125))
     val estimator = Estimator(mm, new SGD[Double](20))
-    estimator.train(dataSet, new MSECriterion[Double](),
+    estimator.train(dataSet, MSECriterion[Double](),
       Option(Trigger.maxEpoch(1)))
 
     val result1 = mm.forward(input1).asInstanceOf[Tensor[Double]]
@@ -180,7 +180,7 @@ class DistriEstimatorSpec extends ZooSpecHelper {
     mm.parameters()._1.foreach(_.fill(0.125))
     val sgd = new SGD[Double](20)
     val estimator = Estimator(mm, sgd)
-    val mse = new MSECriterion[Double]()
+    val mse = MSECriterion[Double]()
     val state = InternalOptimizerUtil.getStateFromOptiMethod(sgd)
     estimator.train(dataSet, mse, endTrigger = Some(Trigger.maxIteration(128)))
     state[Int]("neval") should be (129)
@@ -198,8 +198,8 @@ class DistriEstimatorSpec extends ZooSpecHelper {
     val mm = mse
     mm.parameters()._1.foreach(_.fill(0.125))
     val estimator = Estimator(mm, new SGD[Double](20))
-    estimator.train(dataSet, new MSECriterion[Double](), Option(Trigger.maxEpoch(1)))
-    val result = estimator.evaluate(dataSet, Array(new Loss[Double](new MSECriterion[Double]())))
+    estimator.train(dataSet, MSECriterion[Double](), Option(Trigger.maxEpoch(1)))
+    val result = estimator.evaluate(dataSet, Array(new Loss[Double](MSECriterion[Double]())))
     result
   }
 
@@ -209,8 +209,8 @@ class DistriEstimatorSpec extends ZooSpecHelper {
     val mm = mse
     mm.parameters()._1.foreach(_.fill(0.125))
     val estimator = Estimator(mm, new SGD[Double](20), tmpdir)
-    estimator.train(dataSet, new MSECriterion[Double](), Option(Trigger.maxEpoch(1)))
-    val result = estimator.evaluate(dataSet, Array(new Loss[Double](new MSECriterion[Double]())))
+    estimator.train(dataSet, MSECriterion[Double](), Option(Trigger.maxEpoch(1)))
+    val result = estimator.evaluate(dataSet, Array(new Loss[Double](MSECriterion[Double]())))
     result
   }
 
@@ -219,7 +219,7 @@ class DistriEstimatorSpec extends ZooSpecHelper {
     val mm = mse
     mm.parameters()._1.foreach(_.fill(0.125))
     val estimator = Estimator(mm)
-    val result = estimator.evaluate(dataSet, Array(new Loss[Double](new MSECriterion[Double]())))
+    val result = estimator.evaluate(dataSet, Array(new Loss[Double](MSECriterion[Double]())))
     result
   }
 

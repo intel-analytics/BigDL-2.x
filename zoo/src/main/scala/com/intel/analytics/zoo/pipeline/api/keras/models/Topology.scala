@@ -1072,11 +1072,11 @@ object InternalDistriOptimizer {
       case _ => throw new IllegalArgumentException
     }
     // TODO: evaluate local
-    val bcVMethods = models.sparkContext.broadcast(vMethods)
     val results = ZippedPartitionsWithLocalityRDD(models, validateRDD)(
       (modelIter, dataIter) => {
         val cached = modelIter.next()
         val workingModels = cached.localModels
+        val localVMethods = cached.localMethods
 
         workingModels.foreach(_.evaluate())
         dataIter.map(batch => {
@@ -1090,7 +1090,7 @@ object InternalDistriOptimizer {
             val input = miniBatch.getInput()
             val target = miniBatch.getTarget()
             val output = workingModels(b).forward(input)
-            val validatMethods = bcVMethods.value.clone()
+            val validatMethods = localVMethods(b).get
             validatMethods.map(validation => {
               validation(output, target)
             })
