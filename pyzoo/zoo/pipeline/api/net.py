@@ -529,7 +529,12 @@ with variable_creator_scope():
         all_required_inputs = _find_placeholders([loss])
         dataset = tf.get_collection(all_required_inputs[0].name)[0]
 
-        inputs = dataset.tensors
+        inputs = []
+        for item in list(dataset.tensors):
+            if isinstance(item, dict):
+                inputs = inputs + list(item.values())
+            else:
+                inputs.append(item)
 
         _check_the_same(all_required_inputs, inputs)
 
@@ -565,7 +570,7 @@ with variable_creator_scope():
 
             if dataset.val_rdd is None and val_spilt == 0.0:
                 raise ValueError("Validation data is not specified. Please set " +
-                                 "val rdd in TFDataset, or set val_split larger than zero")
+                                 "val_rdd in TFDataset, or set val_split larger than zero")
             bigdl_val_methods =\
                 [to_bigdl_metric(m, keras_model.loss) for m in keras_model.metrics_names]
             val_outputs = keras_model.outputs
@@ -827,8 +832,8 @@ class TFDataset:
 
         if not isinstance(self._tensors, tuple):
             raise ValueError("To use feature_tensors, " +
-                             "the element in TFDataset must be a tuple of two component. " +
-                             "Please use Dataset.from_rdd(rdd, features=..., labels=...). ")
+                             "the element in TFDataset must be a tuple of two components. " +
+                             "Please use TFDataset.from_rdd(rdd, features=..., labels=...). ")
 
         return self._tensors[0]
 
@@ -841,8 +846,8 @@ class TFDataset:
 
         if not isinstance(self._tensors, tuple):
             raise ValueError("To use label_tensors, " +
-                             "the element in TFDataset must be a tuple of two component. " +
-                             "Please use Dataset.from_rdd(rdd, features=..., labels=...). ")
+                             "the element in TFDataset must be a tuple of two components. " +
+                             "Please use TFDataset.from_rdd(rdd, features=..., labels=...). ")
 
         return self._tensors[1]
 
@@ -958,10 +963,13 @@ def _to_tensor_structure(tensors):
     elif isinstance(tensors, list):
         tensor_structure = [TensorMeta(dtype=value[0], shape=value[1], name=idx)
                             for (idx, value) in enumerate(tensors)]
-    else:
+    elif isinstance(tensors, dict):
         tensor_structure = {}
-        for key, value in enumerate(tensors):
+        for key, value in tensors.items():
             tensor_structure[key] = TensorMeta(dtype=value[0], shape=value[1], name=key)
+    else:
+        raise ValueError("In TFDataset.from_rdd, features and labels should be a tuple, "
+                         "a list of tuples or a dict of tuples")
     return tensor_structure
 
 
