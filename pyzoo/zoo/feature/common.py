@@ -200,23 +200,54 @@ class ToTuple(Preprocessing):
     def __init__(self, bigdl_type="float"):
         super(ToTuple, self).__init__(bigdl_type)
 
+
 class FeatureSet(DataSet):
+    """
+    A set of data which is used in the model optimization process. The FeatureSet can be access in
+    a random data sample sequence. In the training process, the data sequence is a looped endless
+    sequence. While in the validation process, the data sequence is a limited length sequence.
+    And this FeatureSet could be cached to Intel Optane DC Persistent Memory, if you set memory_type
+    to PMEM when create FeatureSet.
+    """
     def __init__(self, jvalue=None, bigdl_type="float"):
         self.bigdl_type = bigdl_type
         if jvalue:
             self.value = jvalue
 
     @classmethod
-    def image_frame(cls, image_frame, bigdl_type="float"):
-        jvalue = callBigDlFunc(bigdl_type, "createFeatureSetFromImageFrame", image_frame)
+    def image_frame(cls, image_frame, memory_type="DRAM", bigdl_type="float"):
+        """
+        Create FeatureSet from ImageFrame.
+        :param image_frame: ImageFrame
+        :param memory_type: string, DRAM or PMEM
+                            If it's DRAM, will cache dataset into dynamic random-access memory
+                            If it's PMEM, will cache dataset into Intel Optane DC Persistent Memory
+        :param bigdl_type: numeric type
+        :return: A feature set
+        """
+        jvalue = callBigDlFunc(bigdl_type, "createFeatureSetFromImageFrame", image_frame, memory_type)
         return FeatureSet(jvalue=jvalue)
 
     @classmethod
-    def rdd(cls, rdd, bigdl_type="float"):
-        jvalue = callBigDlFunc(bigdl_type, "createFeatureSetFromRDD", rdd)
+    def rdd(cls, rdd, memory_type="DRAM", bigdl_type="float"):
+        """
+        Create FeatureSet from RDD.
+        :param rdd: A RDD
+        :param memory_type: string, DRAM or PMEM
+                            If it's DRAM, will cache dataset into dynamic random-access memory
+                            If it's PMEM, will cache dataset into Intel Optane DC Persistent Memory
+        :param bigdl_type:numeric type
+        :return: A feature set
+        """
+        jvalue = callBigDlFunc(bigdl_type, "createFeatureSetFromRDD", rdd, memory_type)
         return FeatureSet(jvalue=jvalue)
 
     def transform(self, transformer):
+        """
+        Helper function to transform the data type in the data set.
+        :param transformer: the transformers to transform this feature set.
+        :return: A feature set
+        """
         if isinstance(transformer, Preprocessing):
             jvalue = callBigDlFunc(self.bigdl_type, "transformFeatureSet", self.value, transformer)
             return FeatureSet(jvalue=jvalue)

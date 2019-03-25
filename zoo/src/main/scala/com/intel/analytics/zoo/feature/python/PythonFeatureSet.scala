@@ -21,7 +21,8 @@ import com.intel.analytics.bigdl.transform.vision.image._
 import com.intel.analytics.zoo.common.PythonZoo
 import com.intel.analytics.zoo.feature.FeatureSet
 import com.intel.analytics.zoo.feature.common.Preprocessing
-import org.apache.spark.api.java.{JavaRDD}
+import com.intel.analytics.zoo.feature.pmem.MemoryType
+import org.apache.spark.api.java.JavaRDD
 
 import scala.reflect.ClassTag
 
@@ -33,12 +34,16 @@ object PythonFeatureSet {
 }
 
 class PythonFeatureSet [T: ClassTag](implicit ev: TensorNumeric[T]) extends PythonZoo[T] {
-  def createFeatureSetFromImageFrame(imageFrame: ImageFrame): FeatureSet[ImageFeature] = {
-    FeatureSet.rdd(imageFrame.toDistributed().rdd)
+  def createFeatureSetFromImageFrame(
+        imageFrame: ImageFrame,
+        memoryType: String): FeatureSet[ImageFeature] = {
+    FeatureSet.rdd(imageFrame.toDistributed().rdd, MemoryType.fromString(memoryType))
   }
 
-  def createFeatureSetFromRDD(data: JavaRDD[Any]): FeatureSet[Any] = {
-    FeatureSet.rdd(data)
+  def createFeatureSetFromRDD(
+        data: JavaRDD[Any],
+        memoryType: String): FeatureSet[Any] = {
+    FeatureSet.rdd(data, MemoryType.fromString(memoryType))
   }
 
   def transformFeatureSet(featureSet: FeatureSet[Any],
