@@ -69,11 +69,13 @@ class OnnxHelper:
                                           'only SAME_UPPER and VALID are supported.'
                                           % onnx_attr['auto_pad'])
 
+        # In ONNX, pads format is [x1_begin, x2_begin...x1_end, x2_end,...].
+        # While pads format we supported should be [x1_begin, x1_end, x2_begin, x2_end...]
         if "pads" in onnx_attr.keys():
             pads = [int(i) for i in onnx_attr["pads"]]
             if len(pads) == 4:
-                assert pads[0] == pads[1]
-                assert pads[2] == pads[3]
+                assert pads[0] == pads[2]
+                assert pads[1] == pads[3]
                 pads = [pads[0], pads[1]]
             elif len(pads) == 2:
                 assert pads[0] == pads[1]
