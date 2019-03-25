@@ -17,7 +17,6 @@
 from tensorflow.core.framework import attr_value_pb2
 from tensorflow.core.framework import graph_pb2
 from tensorflow.core.framework import node_def_pb2
-from tensorflow.python.framework import graph_util
 from tensorflow.python.framework import ops
 from tensorflow.python.ops import variable_scope
 from tensorflow.python.platform import gfile
