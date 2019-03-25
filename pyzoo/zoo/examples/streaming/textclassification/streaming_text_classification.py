@@ -57,10 +57,10 @@ if __name__ == "__main__":
         transformed = text_set.tokenize().normalize()\
             .word2idx()\
             .shape_sequence(len=int(options.sequence_length)).generate_sample()
-        predict_set = model.predict(transformed, batch_per_thread=int(options.partition_num))
+        predict_set = model.predict(transformed, int(options.partition_num))
         # Get the first five prediction probability distributions
         predicts = predict_set.get_predicts().take(5)
-        print("Probability distributions of the top-5 texts in the validation set:")
+        print("Probability distributions of top-5 texts:")
         for p in predicts:
             print(p)
 
@@ -69,4 +69,3 @@ if __name__ == "__main__":
     ssc.start()
     # Wait for the computation to terminate
     ssc.awaitTermination()
-

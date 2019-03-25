@@ -25,6 +25,11 @@ from zoo.models.image.objectdetection import *
 
 
 def read_image_file(path):
+    """
+    Read image file into NDArray
+    :param path: String
+    :return: NDArray
+    """
     print("Reading image from " + path)
     img = Image.open(path)
     nd_img = np.array(img)
@@ -33,12 +38,18 @@ def read_image_file(path):
 
 
 def write_image_file(image, output_path):
+    """
+    Write image (NDArray) to file
+    :param image: NDArrary
+    :param output_path: String
+    :return:
+    """
     # The only problem of output result is that
     # image path is lost after converting to ND array.
     # So, we set current filename as timestamp with first 10 number.
     write_path = output_path + '/' \
-                 + datetime.now().strftime("%Y%m%d-%H%M%S") + '-'\
-                 + "".join([str(int(i * 100)) for i in image[:8, 0, 0]])
+        + datetime.now().strftime("%Y%m%d-%H%M%S") + '-'\
+        + "".join([str(int(i * 100)) for i in image[:8, 0, 0]])
     print("Writing image to " + write_path)
     cv2.imwrite(write_path + '.jpg', image)
 

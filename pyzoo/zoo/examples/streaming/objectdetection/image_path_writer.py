@@ -21,6 +21,15 @@ from os.path import isfile, join
 
 
 def package_path_to_text(streaming_path, file_path, batch=10, delay=3):
+    """
+    Package {batch} image paths into text files, such that spark
+    Streaming can read these paths
+    :param streaming_path:
+    :param file_path:
+    :param batch:
+    :param delay:
+    :return:
+    """
     files = []
     for f in listdir(file_path):
         if isfile(join(file_path, f)):
@@ -31,7 +40,6 @@ def package_path_to_text(streaming_path, file_path, batch=10, delay=3):
         last = min(curr + batch, len(files))
         with open(join(streaming_path, str(index) + ".txt"), "w") as text_file:
             print("Writing to " + text_file.name)
-            # print(''.join(files[curr:last]))
             text_file.writelines(files[curr:last])
         index += 1
         curr = last
