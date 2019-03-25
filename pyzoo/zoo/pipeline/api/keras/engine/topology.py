@@ -180,18 +180,18 @@ class KerasNet(ZooKerasLayer):
         distributed: Boolean. Whether to train the model in distributed mode or local mode.
                      Default is True. In local mode, x and y must both be Numpy arrays.
         """
-        if validation_data:
-            validation_data = to_sample_rdd(*validation_data)
-        elif validation_split != 0:
-            if validation_split > 1 or validation_split < 0:
-                raise TypeError("validation split must in range [0, 1]")
-            split_index = int(len(x) * (1 - validation_split))
-            validation_data = (x[split_index:], y[split_index:])
-            x, y = x[:split_index], y[:split_index]
-            validation_data = to_sample_rdd(*validation_data)
 
         if distributed:
             if isinstance(x, np.ndarray) and isinstance(y, np.ndarray):
+                if validation_data:
+                    validation_data = to_sample_rdd(*validation_data)
+                elif validation_split != 0:
+                    if validation_split > 1 or validation_split < 0:
+                        raise TypeError("validation split must in range [0, 1]")
+                    split_index = int(len(x) * (1 - validation_split))
+                    validation_data = (x[split_index:], y[split_index:])
+                    x, y = x[:split_index], y[:split_index]
+                    validation_data = to_sample_rdd(*validation_data)
                 training_data = to_sample_rdd(x, y)
             elif (isinstance(x, RDD) or isinstance(x, ImageSet) or isinstance(x, TextSet))\
                     and not y:
