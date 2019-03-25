@@ -532,7 +532,7 @@ with variable_creator_scope():
         inputs = []
         for item in list(dataset.tensors):
             if isinstance(item, dict):
-                inputs = inputs + item.values()
+                inputs = inputs + list(item.values())
             else:
                 inputs.append(item)
 
