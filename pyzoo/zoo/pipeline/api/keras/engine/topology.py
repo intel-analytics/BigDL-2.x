@@ -164,7 +164,8 @@ class KerasNet(ZooKerasLayer):
                       self.value)
         return self
 
-    def fit(self, x, y=None, batch_size=32, nb_epoch=10, validation_data=None, distributed=True):
+    def fit(self, x, y=None, batch_size=32, nb_epoch=10,
+            validation_split=0, validation_data=None, distributed=True):
         """
         Train a model for a fixed number of epochs on a DataSet.
 
@@ -179,6 +180,7 @@ class KerasNet(ZooKerasLayer):
         distributed: Boolean. Whether to train the model in distributed mode or local mode.
                      Default is True. In local mode, x and y must both be Numpy arrays.
         """
+        split_index = int(len(x) * (1 - validation_split))
         if distributed:
             if isinstance(x, np.ndarray) and isinstance(y, np.ndarray):
                 training_data = to_sample_rdd(x, y)
