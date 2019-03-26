@@ -150,11 +150,13 @@ class TransformerLayer[T: ClassTag](
 
     // mask attention
     if (maskAttention) {
-      w = w * maskValue + (maskValue * (-1) + 1) * -1e9
+      if (attention_mask != null) {
+        w = w + attention_mask
+      } else {
+        w = w * maskValue + (maskValue * (-1) + 1) * -1e9
+      }
     }
-    if (attention_mask != null) {
-      w = w + attention_mask
-    }
+
     w = Activation[Float]("softmax").from(w)
     w = Dropout(attnPDrop).from(w)
 

@@ -58,7 +58,7 @@ class BERT[T: ClassTag] (
   embeddingLayer: KerasLayer[Activity, Tensor[T], T],
   inputShape: Shape)(implicit ev: TensorNumeric[T])
   extends TransformerLayer[T](nBlock, hiddenPDrop, attnPDrop, nHead,
-    false, outputAllBlock, embeddingLayer, inputShape)
+    true, outputAllBlock, embeddingLayer, inputShape)
   with Net {
 
   override def doBuild(inputShape: Shape): AbstractModule[Activity, Activity, T] = {
