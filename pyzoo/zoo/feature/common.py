@@ -225,7 +225,8 @@ class FeatureSet(DataSet):
         :param bigdl_type: numeric type
         :return: A feature set
         """
-        jvalue = callBigDlFunc(bigdl_type, "createFeatureSetFromImageFrame", image_frame, memory_type)
+        jvalue = callBigDlFunc(bigdl_type, "createFeatureSetFromImageFrame",
+                               image_frame, memory_type)
         return cls(jvalue=jvalue)
 
     @classmethod
