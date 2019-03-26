@@ -168,7 +168,7 @@ class TFEstimator(object):
                         saver.restore(sess, checkpoint_path)
                     else:
                         sess.run(tf.global_variables_initializer())
-                    inputs = nest.flatten(result.feature_tensors)
+                    inputs = nest.flatten(result._original_tensors[0])
                     outputs = nest.flatten(spec.predictions)
                     tfnet = TFNet.from_session(sess, inputs=inputs, outputs=outputs)
 
@@ -205,7 +205,7 @@ class TFEstimator(object):
                         saver.restore(sess, checkpoint_path)
                     else:
                         sess.run(tf.global_variables_initializer())
-                    inputs = nest.flatten(result.feature_tensors)
+                    inputs = nest.flatten(result._original_tensors[0])
                     outputs = nest.flatten(spec.predictions)
                     tfnet = TFNet.from_session(sess, inputs=inputs, outputs=outputs)
 
