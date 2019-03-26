@@ -85,6 +85,50 @@ class TestFeatureCommon(ZooTestCase):
         predict_result = trained_model.predict_image(image_frame.transform(transformer))
         assert(predict_result.get_predict().count(), 8)
 
+    def test_simple_flow(self):
+        FEATURES_DIM = 2
+        data_len = 100
+        batch_size = 32
+        epoch_num = 5
+
+        def gen_rand_sample():
+            features = np.random.uniform(0, 1, (FEATURES_DIM))
+            label = np.array((2 * features).sum() + 0.4)
+            return Sample.from_ndarray(features, label)
+
+        trainingData = FeatureSet.rdd(self.sc.parallelize(range(0, data_len)).map(
+            lambda i: gen_rand_sample())).to_dataset()
+
+        model_test = Sequential()
+        l1_test = Linear(FEATURES_DIM, 1).set_init_method(Xavier(), Zeros()) \
+            .set_name("linear1_test")
+        assert "linear1_test" == l1_test.name()
+        model_test.add(l1_test)
+        model_test.add(Sigmoid())
+
+        model = Sequential()
+        l1 = Linear(FEATURES_DIM, 1).set_init_method(Xavier(), Zeros()).set_name("linear1")
+        assert "linear1" == l1.name()
+        model.add(l1)
+
+        optim_method = SGD(learningrate=0.01, learningrate_decay=0.0002, weightdecay=0.0,
+                           momentum=0.0, dampening=0.0, nesterov=False,
+                           leaningrate_schedule=Poly(0.5, int((data_len / batch_size) * epoch_num)))
+        optimizer = Optimizer.create(
+            model=model_test,
+            training_set=trainingData,
+            criterion=MSECriterion(),
+            optim_method=optim_method,
+            end_trigger=MaxEpoch(epoch_num),
+            batch_size=batch_size)
+        optimizer.set_validation(
+            batch_size=batch_size,
+            val_rdd=trainingData,
+            trigger=EveryEpoch(),
+            val_method=[Top1Accuracy()]
+        )
+        optimizer.optimize()
+
 
 if __name__ == "__main__":
     pytest.main([__file__])
