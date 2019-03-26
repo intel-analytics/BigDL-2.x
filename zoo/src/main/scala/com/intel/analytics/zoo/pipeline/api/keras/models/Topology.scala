@@ -600,16 +600,7 @@ class Model[T: ClassTag] private (private val _inputs : Seq[ModuleNode[T]],
   }
 
   override def newGraph(output: String): Model[T] = {
-    new Model[T](_inputs, nodes(Seq(output)).map(_.removeNextEdges())) {
-      /**
-        * Train a model for a fixed number of epochs on a DataSet.
-        *
-        * @param x              Training dataset. If x is an instance of LocalDataSet, train in local mode.
-        * @param nbEpoch        Number of epochs to train.
-        * @param validationData Dataset for validation, or null if validation is not configured.
-        */
-      override def fit(x: DataSet[MiniBatch[T]], nbEpoch: Int, validationData: DataSet[MiniBatch[T]])(implicit ev: TensorNumeric[T]): Unit = super.fit(x, nbEpoch, validationData)
-    }
+    new Model[T](_inputs, nodes(Seq(output)).map(_.removeNextEdges())) {    
   }
 
   override def newGraph(outputs: Seq[String]): Model[T] = {
