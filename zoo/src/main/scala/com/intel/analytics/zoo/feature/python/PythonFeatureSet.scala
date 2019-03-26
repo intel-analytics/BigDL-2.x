@@ -22,7 +22,6 @@ import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric
 import com.intel.analytics.bigdl.transform.vision.image._
 import com.intel.analytics.zoo.common.PythonZoo
 import com.intel.analytics.zoo.feature.FeatureSet
-import com.intel.analytics.zoo.feature.common.Preprocessing
 import com.intel.analytics.zoo.feature.pmem.MemoryType
 import org.apache.spark.api.java.JavaRDD
 
@@ -35,7 +34,7 @@ object PythonFeatureSet {
   def ofDouble(): PythonFeatureSet[Double] = new PythonFeatureSet[Double]()
 }
 
-class PythonFeatureSet [T: ClassTag](implicit ev: TensorNumeric[T]) extends PythonZoo[T] {
+class PythonFeatureSet[T: ClassTag](implicit ev: TensorNumeric[T]) extends PythonZoo[T] {
   def createFeatureSetFromImageFrame(
         imageFrame: ImageFrame,
         memoryType: String): FeatureSet[ImageFeature] = {
@@ -54,9 +53,8 @@ class PythonFeatureSet [T: ClassTag](implicit ev: TensorNumeric[T]) extends Pyth
     featureSet -> transformer
   }
 
-  def featureSetToDataSet(featureSet: FeatureSet[Any]): DataSet[Any] ={
+  def featureSetToDataSet(featureSet: FeatureSet[Any]): DataSet[Any] = {
     featureSet.toDataSet()
   }
-
 
 }
