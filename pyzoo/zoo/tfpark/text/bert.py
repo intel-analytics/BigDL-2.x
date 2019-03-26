@@ -22,8 +22,9 @@ def _bert_model_fn(features, labels, mode, params):
     input_ids = features["input_ids"]
     input_mask = features["input_mask"]
     segment_ids = features["segment_ids"]
+    bert_config = modeling.BertConfig.from_json_file(params["bert_config"])
     bert_model = modeling.BertModel(
-        config=params["bert_config"],
+        config=bert_config,
         is_training=(mode == tf.estimator.ModeKeys.TRAIN),
         input_ids=input_ids,
         input_mask=input_mask,
