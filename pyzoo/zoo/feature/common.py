@@ -248,6 +248,12 @@ class FeatureSet(DataSet):
         :param transformer: the transformers to transform this feature set.
         :return: A feature set
         """
-        if isinstance(transformer, Preprocessing):
-            jvalue = callBigDlFunc(self.bigdl_type, "transformFeatureSet", self.value, transformer)
-            return FeatureSet(jvalue=jvalue)
+        jvalue = callBigDlFunc(self.bigdl_type, "transformFeatureSet", self.value, transformer)
+        return FeatureSet(jvalue=jvalue)
+
+    def to_dataset(self):
+        """
+        To BigDL compatible DataSet
+        :return:
+        """
+        return FeatureSet(jvalue=callBigDlFunc(self.bigdl_type, "featureSetToDataSet", self.value))

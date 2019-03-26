@@ -15,7 +15,6 @@
 #
 
 import pytest
-from bigdl.transform.vision.image import *
 from bigdl.nn.layer import *
 from bigdl.nn.criterion import *
 from bigdl.optim.optimizer import *
@@ -59,7 +58,7 @@ class TestFeatureCommon(ZooTestCase):
         transformer = Pipeline([BytesToMat(), Resize(256, 256), CenterCrop(224, 224),
                                 ChannelNormalize(0.485, 0.456, 0.406, 0.229, 0.224, 0.225),
                                 MatToTensor(), ImageFrameToSample(target_keys=['label'])])
-        data_set = FeatureSet.image_frame(image_frame).transform(transformer)
+        data_set = FeatureSet.image_frame(image_frame).transform(transformer).to_dataset()
 
         model = Sequential()
         model.add(SpatialConvolution(3, 1, 5, 5))

@@ -16,6 +16,8 @@
 
 package com.intel.analytics.zoo.feature.python
 
+import com.intel.analytics.bigdl.DataSet
+import com.intel.analytics.bigdl.dataset.Transformer
 import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric
 import com.intel.analytics.bigdl.transform.vision.image._
 import com.intel.analytics.zoo.common.PythonZoo
@@ -47,8 +49,13 @@ class PythonFeatureSet [T: ClassTag](implicit ev: TensorNumeric[T]) extends Pyth
   }
 
   def transformFeatureSet(featureSet: FeatureSet[Any],
-                       transformer: Preprocessing[Any, Any]): FeatureSet[Any] = {
+                       transformer: Transformer[Any, Any]): FeatureSet[Any] = {
     featureSet -> transformer
   }
+
+  def featureSetToDataSet(featureSet: FeatureSet[Any]): DataSet[Any] ={
+    featureSet.toDataSet()
+  }
+
 
 }
