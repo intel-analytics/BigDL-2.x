@@ -135,7 +135,8 @@ private[zoo] class ImageFeatureConverter(
       // Move bytes in ImageFeature to PMEM, then remove bytes in ImageFeature to minimize
       // memory used in DRAM.
       val data = recordIterator.next()
-      require(data.contains(ImageFeature.bytes), s"Only support cache ImageFeature's bytes" +
+      require(data.contains(ImageFeature.bytes),
+        s"Only support cache ImageFeature's bytes" +
         s"to PMEM, but no bytes data found, please check your data.")
       nativeArray.set(i, data.bytes())
       data.update(ImageFeature.bytes, null)

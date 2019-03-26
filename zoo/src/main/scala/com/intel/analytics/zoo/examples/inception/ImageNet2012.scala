@@ -43,7 +43,8 @@ object ImageNet2012 {
    * @param classNum
    * @return
    */
-  private[inception] def readFromSeqFiles(url: String, sc: SparkContext, classNum: Int) = {
+  private[inception] def readFromSeqFiles(
+        url: String, sc: SparkContext, classNum: Int) = {
     val nodeNumber = EngineRef.getNodeNumber()
     val coreNumber = EngineRef.getCoreNumber()
     val rawData = sc.sequenceFile(url, classOf[Text], classOf[Text],
@@ -82,23 +83,30 @@ object ImageNet2012 {
   : FeatureSet[MiniBatch[Float]] = {
     if (opencvPreprocessing) {
       logger.info("Using opencv preprocessing for training set")
-      opencv(path, sc, imageSize, batchSize, nodeNumber, coresPerNode, classNumber, memoryType)
+      opencv(path, sc, imageSize, batchSize,
+        nodeNumber, coresPerNode, classNumber, memoryType)
     } else {
-      val rawData = readFromSeqFiles(path, sc, classNumber).setName("ImageNet2012 Training Set")
+      val rawData = readFromSeqFiles(path, sc, classNumber)
+        .setName("ImageNet2012 Training Set")
       val featureSet = FeatureSet.rdd(rawData, memoryType = memoryType)
       featureSet.transform(
         MTLabeledBGRImgToBatch[ByteRecord](
           width = imageSize,
           height = imageSize,
           batchSize = batchSize,
-          transformer = (BytesToBGRImg() -> BGRImgCropper(imageSize, imageSize)
-            -> DatasetHFlip(0.5) -> BGRImgNormalizer(0.485, 0.456, 0.406, 0.229, 0.224, 0.225))
+          transformer = (BytesToBGRImg()
+            -> BGRImgCropper(imageSize, imageSize)
+            -> DatasetHFlip(0.5)
+            -> BGRImgNormalizer(0.485, 0.456, 0.406, 0.229, 0.224, 0.225))
         ))
     }
   }
 
-  private[inception] def filesToImageFrame(url: String, sc: SparkContext,
-                                       classNum: Int, partitionNum: Option[Int] = None): ImageFrame = {
+  private[inception] def filesToImageFrame(
+        url: String,
+        sc: SparkContext,
+        classNum: Int,
+        partitionNum: Option[Int] = None): ImageFrame = {
     val num = partitionNum.get
     val rawData = sc.sequenceFile(url, classOf[Text], classOf[Text], num).map(image => {
       val rawBytes = image._2.copyBytes()
@@ -116,17 +124,16 @@ object ImageNet2012 {
   }
 
   def opencv(
-               path : String,
-               sc: SparkContext,
-               imageSize : Int,
-               batchSize : Int,
-               nodeNumber: Int,
-               coresPerNode: Int,
-               classNumber: Int,
-               memoryType: MemoryType = DRAM
-           )
-  : FeatureSet[MiniBatch[Float]] = {
-    val featureRdd = filesToImageFrame(path, sc, classNumber, Some(coresPerNode * coresPerNode)).toDistributed().rdd
+        path : String,
+        sc: SparkContext,
+        imageSize : Int,
+        batchSize : Int,
+        nodeNumber: Int,
+        coresPerNode: Int,
+        classNumber: Int,
+        memoryType: MemoryType = DRAM): FeatureSet[MiniBatch[Float]] = {
+    val featureRdd = filesToImageFrame(path, sc, classNumber,
+      Some(coresPerNode * coresPerNode)).toDistributed().rdd
       .setName("ImageNet2012 Training Set")
     val featureSet = FeatureSet.rdd(featureRdd, memoryType)
     val transformer = ImagePixelBytesToMat() ->
@@ -158,7 +165,8 @@ object ImageNet2012Val {
   ): FeatureSet[MiniBatch[Float]] = {
     if (opencvPreprocessing) {
       logger.info("Using opencv preprocessing for validation set")
-      opencv(path, sc, imageSize, batchSize, nodeNumber, coresPerNode, classNumber, memoryType)
+      opencv(path, sc, imageSize, batchSize,
+        nodeNumber, coresPerNode, classNumber, memoryType)
     } else {
       val rawData = ImageNet2012.readFromSeqFiles(path, sc, classNumber)
         .setName("ImageNet2012 Validation Set")
@@ -168,24 +176,24 @@ object ImageNet2012Val {
           width = imageSize,
           height = imageSize,
           batchSize = batchSize,
-          transformer = (BytesToBGRImg() -> BGRImgCropper(imageSize, imageSize, CropCenter)
+          transformer = (BytesToBGRImg()
+            -> BGRImgCropper(imageSize, imageSize, CropCenter)
             -> BGRImgNormalizer(0.485, 0.456, 0.406, 0.229, 0.224, 0.225))
         ))
     }
   }
 
   def opencv(
-                path : String,
-                sc: SparkContext,
-                imageSize : Int,
-                batchSize : Int,
-                nodeNumber: Int,
-                coresPerNode: Int,
-                classNumber: Int,
-                memoryType: MemoryType = DRAM
-            )
-  : FeatureSet[MiniBatch[Float]] = {
-    val featureRdd = ImageNet2012.filesToImageFrame(path, sc, classNumber, Some(coresPerNode * coresPerNode)).toDistributed().rdd
+        path : String,
+        sc: SparkContext,
+        imageSize : Int,
+        batchSize : Int,
+        nodeNumber: Int,
+        coresPerNode: Int,
+        classNumber: Int,
+        memoryType: MemoryType = DRAM): FeatureSet[MiniBatch[Float]] = {
+    val featureRdd = ImageNet2012.filesToImageFrame(path, sc, classNumber,
+      Some(coresPerNode * coresPerNode)).toDistributed().rdd
       .setName("ImageNet2012 Validation Set")
     val featureSet = FeatureSet.rdd(featureRdd, memoryType)
     val transformer = ImagePixelBytesToMat() ->
