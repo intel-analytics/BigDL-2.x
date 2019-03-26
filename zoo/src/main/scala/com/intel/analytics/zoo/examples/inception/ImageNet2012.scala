@@ -102,25 +102,17 @@ object ImageNet2012 {
     }
   }
 
-  private[inception] def filesToImageFrame(
-        url: String,
-        sc: SparkContext,
-        classNum: Int,
-        partitionNum: Option[Int] = None): ImageFrame = {
-    val num = partitionNum.get
-    val rawData = sc.sequenceFile(url, classOf[Text], classOf[Text], num).map(image => {
-      val rawBytes = image._2.copyBytes()
-      val label = Tensor[Float](T(readLabel(image._1).toFloat))
-      val imgBuffer = ByteBuffer.wrap(rawBytes)
-      val width = imgBuffer.getInt
-      val height = imgBuffer.getInt
-      val bytes = new Array[Byte](3 * width * height)
-      System.arraycopy(imgBuffer.array(), 8, bytes, 0, bytes.length)
-      val imf = ImageFeature(bytes, label)
-      imf(ImageFeature.originalSize) = (height, width, 3)
-      imf
-    }).filter(_[Tensor[Float]](ImageFeature.label).valueAt(1) <= classNum)
-    ImageFrame.rdd(rawData)
+  private[inception] def byteRecordToImageFeature(record: ByteRecord): ImageFeature = {
+    val rawBytes = record.data
+    val label = Tensor[Float](T(record.label))
+    val imgBuffer = ByteBuffer.wrap(rawBytes)
+    val width = imgBuffer.getInt
+    val height = imgBuffer.getInt
+    val bytes = new Array[Byte](3 * width * height)
+    System.arraycopy(imgBuffer.array(), 8, bytes, 0, bytes.length)
+    val imf = ImageFeature(bytes, label)
+    imf(ImageFeature.originalSize) = (height, width, 3)
+    imf
   }
 
   def opencv(
@@ -132,10 +124,10 @@ object ImageNet2012 {
         coresPerNode: Int,
         classNumber: Int,
         memoryType: MemoryType = DRAM): FeatureSet[MiniBatch[Float]] = {
-    val featureRdd = filesToImageFrame(path, sc, classNumber,
-      Some(coresPerNode * coresPerNode)).toDistributed().rdd
+    val rawData = readFromSeqFiles(path, sc, classNumber)
+      .map(byteRecordToImageFeature(_))
       .setName("ImageNet2012 Training Set")
-    val featureSet = FeatureSet.rdd(featureRdd, memoryType)
+    val featureSet = FeatureSet.rdd(rawData, memoryType = memoryType)
     val transformer = ImagePixelBytesToMat() ->
       ImageRandomCrop(imageSize, imageSize) ->
       ImageChannelNormalize(0.485f, 0.456f, 0.406f, 0.229f, 0.224f, 0.225f) ->
@@ -192,10 +184,10 @@ object ImageNet2012Val {
         coresPerNode: Int,
         classNumber: Int,
         memoryType: MemoryType = DRAM): FeatureSet[MiniBatch[Float]] = {
-    val featureRdd = ImageNet2012.filesToImageFrame(path, sc, classNumber,
-      Some(coresPerNode * coresPerNode)).toDistributed().rdd
+    val rawData = ImageNet2012.readFromSeqFiles(path, sc, classNumber)
+      .map(ImageNet2012.byteRecordToImageFeature(_))
       .setName("ImageNet2012 Validation Set")
-    val featureSet = FeatureSet.rdd(featureRdd, memoryType)
+    val featureSet = FeatureSet.rdd(rawData, memoryType = memoryType)
     val transformer = ImagePixelBytesToMat() ->
       ImageCenterCrop(imageSize, imageSize) ->
       ImageChannelNormalize(0.485f, 0.456f, 0.406f, 0.229f, 0.224f, 0.225f) ->
