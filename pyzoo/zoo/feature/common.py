@@ -257,5 +257,5 @@ class FeatureSet(DataSet):
         To BigDL compatible DataSet
         :return:
         """
-        jvalue=callBigDlFunc(self.bigdl_type, "featureSetToDataSet", self.value)
+        jvalue = callBigDlFunc(self.bigdl_type, "featureSetToDataSet", self.value)
         return FeatureSet(jvalue=jvalue)
