@@ -49,15 +49,16 @@ import scala.reflect.ClassTag
  * @param inputShape input shape, default is null
  */
 class BERT[T: ClassTag] (
-  val nBlock: Int = 12,
-  val nHead: Int = 12,
-  val intermediateSize: Int = 3072,
-  val hiddenPDrop: Double = 0.1,
-  val attnPDrop: Double = 0.1,
-  val outputAllBlock: Boolean = true,
-  val embeddingLayer: KerasLayer[Activity, Tensor[T], T],
-  var inputShape: Shape = null)(implicit ev: TensorNumeric[T])
-  extends KerasLayer[Activity, Activity, T](KerasUtils.addBatch(inputShape))
+  nBlock: Int = 12,
+  nHead: Int = 12,
+  intermediateSize: Int = 3072,
+  hiddenPDrop: Double = 0.1,
+  attnPDrop: Double = 0.1,
+  outputAllBlock: Boolean = true,
+  embeddingLayer: KerasLayer[Activity, Tensor[T], T],
+  inputShape: Shape)(implicit ev: TensorNumeric[T])
+  extends TransformerLayer[T](nBlock, hiddenPDrop, attnPDrop, nHead,
+    false, outputAllBlock, embeddingLayer, inputShape)
   with Net {
 
   override def doBuild(inputShape: Shape): AbstractModule[Activity, Activity, T] = {
@@ -87,7 +88,7 @@ class BERT[T: ClassTag] (
     modelOutput(0) = block(nextInput, hiddenSize, extended_attention_mask)
 
     for (i <- 1 until nBlock) {
-      val output = block(modelOutput(i - 1), hiddenSize, extended_attention_mask)
+      val output = block(modelOutput(i - 1), hiddenSize, extended_attention_mask, 1e-12)
       modelOutput(i) = output
     }
 
@@ -98,64 +99,29 @@ class BERT[T: ClassTag] (
     model.asInstanceOf[AbstractModule[Activity, Activity, T]]
   }
 
-  def block(x: Variable[T], hiddenSize: Int, attention_mask: Variable[T] = null): Variable[T] = {
-    // g, b for layerNorm
-    val g = Parameter[T](Shape(1, hiddenSize),
-      initWeight = Tensor.ones[T](hiddenSize).view(1, hiddenSize))
-    val b = Parameter[T](Shape(1, hiddenSize),
-      initWeight = Tensor[T](hiddenSize).view(1, hiddenSize))
-
-    // g, b for layerNorm
-    val g2 = Parameter[T](Shape(1, hiddenSize),
-      initWeight = Tensor.ones[T](hiddenSize).view(1, hiddenSize))
-    val b2 = Parameter[T](Shape(1, hiddenSize),
-      initWeight = Tensor[T](hiddenSize).view(1, hiddenSize))
-
-    val a = attention(x, attention_mask, hiddenSize)
-    val n = TransformerLayer.layerNorm(x + a, e = 1e-12, weight = g2, bias = b2)
-
-    val m = mlp(n, hiddenSize)
-    val h = TransformerLayer.layerNorm(n + m, e = 1e-12, weight = g, bias = b)
-    h
-  }
-
-  def mlp(x: Variable[T], hiddenSize: Int): Variable[T] = {
+  override def mlp(x: Variable[T], hiddenSize: Int): Variable[T] = {
     val h = Dense(intermediateSize).from(x)
-    val a = TransformerLayer.gelu(h)
+    val a = gelu(h)
 
     val h2 = Dense(hiddenSize).from(a)
     Dropout(hiddenPDrop).from(h2)
   }
 
-  def attention(x: Variable[T], attention_mask: Variable[T], hiddenSize: Int): Variable[T] = {
+  override def multiHeadSelfAttention(x: Variable[T], hiddenSize: Int,
+    attention_mask: Variable[T]): Variable[T] = {
     val attention_head_size = hiddenSize / nHead
     val all_head_size = nHead * attention_head_size
     val query = Dense(all_head_size).from(x)
     val key = Dense(all_head_size).from(x)
     val value = Dense(all_head_size).from(x)
-    val q = TransformerLayer.splitHeads(query, nHead)
-    val k = TransformerLayer.splitHeads(key, nHead, k = true)
-    val v = TransformerLayer.splitHeads(value, nHead)
-    val a = attn(q, k, v, attention_mask) // // m: (batch, nhead, seqLen, hiddenSize/nhead)
-    val m = TransformerLayer.mergeHeads(a) // m: (batch, seqLen, hiddenSize)
+    val q = splitHeads(query, nHead)
+    val k = splitHeads(key, nHead, k = true)
+    val v = splitHeads(value, nHead)
+    val a = attn(q, k, v, false, attention_mask) // // m: (batch, nhead, seqLen, hiddenSize/nhead)
+    val m = mergeHeads(a) // m: (batch, seqLen, hiddenSize)
 
     val n = Dense(hiddenSize).from(m) // n: (batch, seqLen, hiddenSize)
     Dropout(hiddenPDrop).from(n)
-  }
-
-  def attn(q: Variable[T], k: Variable[T], v: Variable[T],
-    attention_mask: Variable[T]): Variable[T] = {
-    // q, v:(batch, nHead, seqLen, hiddenSize/nHead)
-    // k:(batch, nHead, hiddenSize/nHead, seqLen)
-    var w = AutoGrad.mm(q, k) // w: (batch, nHead, seqLen, seqLen)
-    w = w / scala.math.sqrt(v.getOutputShape().toSingle().toArray.last)
-    w = w + attention_mask
-
-    w = Activation[Float]("softmax").from(w)
-    w = Dropout(attnPDrop).from(w)
-
-    w = AutoGrad.mm(w, v)
-    w
   }
 }
 
@@ -206,7 +172,8 @@ object BERT {
 
     val embeddingLayer = Model(Array(wordInput, tokenTypeInput, positionInput), h)
     new BERT[T](nBlock, nHead, intermediateSize, hiddenPDrop, attnPDrop,
-    outputAllBlock, embeddingLayer.asInstanceOf[KerasLayer[Activity, Tensor[T], T]])
+    outputAllBlock, embeddingLayer.asInstanceOf[KerasLayer[Activity, Tensor[T], T]],
+      Shape(List(Shape(seqLen), Shape(seqLen), Shape(seqLen), Shape(1, 1, seqLen))))
   }
 
   /**
@@ -229,6 +196,6 @@ object BERT {
     embeddingLayer: KerasLayer[Activity, Tensor[T], T])
     (implicit ev: TensorNumeric[T]): BERT[T] = {
     new BERT[T](nBlock, nHead, intermediateSize, hiddenPDrop, attnPDrop,
-      outputAllBlock, embeddingLayer)
+      outputAllBlock, embeddingLayer, null)
   }
 }

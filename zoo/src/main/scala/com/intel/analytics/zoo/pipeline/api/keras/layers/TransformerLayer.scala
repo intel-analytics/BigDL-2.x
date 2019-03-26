@@ -37,8 +37,8 @@ import scala.reflect.ClassTag
  * [:, :, 2] represents postions in the sentence
  * Output is a Tensor which output the states of Transformer layer
  * @param nBlock block number
- * @param residPdrop drop probability of projection
- * @param attnPdrop drop probability of attention
+ * @param hiddenPDrop drop probability of projection
+ * @param attnPDrop drop probability of attention
  * @param nHead head number
  * @param maskAttention whether unidirectional or bidirectional
  * @param outputAllBlock whether output all blocks' output
@@ -47,12 +47,12 @@ import scala.reflect.ClassTag
  */
 class TransformerLayer[T: ClassTag](
   val nBlock: Int,
-  val residPdrop: Double,
-  val attnPdrop: Double,
+  val hiddenPDrop: Double,
+  val attnPDrop: Double,
   val nHead: Int,
   val maskAttention: Boolean,
   val outputAllBlock: Boolean,
-  val embeddingLayer: KerasLayer[Tensor[T], Tensor[T], T],
+  val embeddingLayer: KerasLayer[Activity, Tensor[T], T],
   var inputShape: Shape = null)(implicit ev: TensorNumeric[T])
   extends KerasLayer[Activity, Activity, T](KerasUtils.addBatch(inputShape))
     with Net {
@@ -92,7 +92,8 @@ class TransformerLayer[T: ClassTag](
     model.asInstanceOf[AbstractModule[Activity, Activity, T]]
   }
 
-  def block(x: Variable[T], hiddenSize: Int): Variable[T] = {
+  def block(x: Variable[T], hiddenSize: Int, attention_mask: Variable[T] = null,
+            eplision: Double = 1e-5): Variable[T] = {
     // g, b for layerNorm
     val g = Parameter[T](Shape(1, hiddenSize),
       initWeight = Tensor.ones[T](hiddenSize).view(1, hiddenSize))
@@ -104,33 +105,34 @@ class TransformerLayer[T: ClassTag](
       initWeight = Tensor.ones[T](hiddenSize).view(1, hiddenSize))
     val b2 = Parameter[T](Shape(1, hiddenSize),
       initWeight = Tensor[T](hiddenSize).view(1, hiddenSize))
-    val a = multiHeadSelfAttention(x, hiddenSize)
-    val n = TransformerLayer.layerNorm(x + a, weight = g, bias = b)
+    val a = multiHeadSelfAttention(x, hiddenSize, attention_mask)
+    val n = TransformerLayer.layerNorm(x + a, eplision, weight = g, bias = b)
     val m = mlp(n, hiddenSize)
-    val h = TransformerLayer.layerNorm(n + m, weight = g2, bias = b2)
+    val h = TransformerLayer.layerNorm(n + m, eplision, weight = g2, bias = b2)
     h
   }
 
   def mlp(x: Variable[T], hiddenSize: Int): Variable[T] = {
     val h = new Convolution1D(hiddenSize * 4, 1, init = RandomNormal(0.0, 0.02)).from(x)
-    val a = TransformerLayer.gelu(h)
+    val a = gelu(h)
     val h2 = new Convolution1D(hiddenSize, 1, init = RandomNormal(0.0, 0.02)).from(a)
-    Dropout(residPdrop).from(h2)
+    Dropout(hiddenPDrop).from(h2)
   }
 
-  def multiHeadSelfAttention(x: Variable[T], hiddenSize: Int): Variable[T] = {
+  def multiHeadSelfAttention(x: Variable[T], hiddenSize: Int,
+    attention_mask: Variable[T] = null): Variable[T] = {
     val c = new Convolution1D(hiddenSize * 3, 1, init = RandomNormal(0.0, 0.02)).from(x)
     val query = c.slice(2, 0, hiddenSize)
     val key = c.slice(2, hiddenSize, hiddenSize)
     val value = c.slice(2, hiddenSize * 2, hiddenSize)
-    val q = TransformerLayer.splitHeads(query, nHead)
-    val k = TransformerLayer.splitHeads(key, nHead, k = true)
-    val v = TransformerLayer.splitHeads(value, nHead)
+    val q = splitHeads(query, nHead)
+    val k = splitHeads(key, nHead, k = true)
+    val v = splitHeads(value, nHead)
     val a = attn(q, k, v, true) // m: (batch, nhead, seqLen, hiddenSize/nhead)
-    val m = TransformerLayer.mergeHeads(a) // m: (batch, seqLen, hiddenSize)
+    val m = mergeHeads(a) // m: (batch, seqLen, hiddenSize)
     val n = new Convolution1D(hiddenSize, 1, init = RandomNormal(0.0, 0.02))
       .from(m) // n: (batch, seqLen, hiddenSize)
-    Dropout(residPdrop).from(n)
+    Dropout(hiddenPDrop).from(n)
   }
 
   lazy val maskValue = if (maskAttention) {
@@ -139,7 +141,8 @@ class TransformerLayer[T: ClassTag](
   } else null
 
   // scale shoule be set in Attention
-  def attn(q: Variable[T], k: Variable[T], v: Variable[T], scale: Boolean = false): Variable[T] = {
+  def attn(q: Variable[T], k: Variable[T], v: Variable[T], scale: Boolean = false,
+           attention_mask: Variable[T] = null): Variable[T] = {
     // q, v:(batch, nHead, seqLen, hiddenSize/nHead)
     // k:(batch, nHead, hiddenSize/nHead, seqLen)
     var w = AutoGrad.mm(q, k) // w: (batch, nHead, seqLen, seqLen)
@@ -149,10 +152,32 @@ class TransformerLayer[T: ClassTag](
     if (maskAttention) {
       w = w * maskValue + (maskValue * (-1) + 1) * -1e9
     }
+    if (attention_mask != null) {
+      w = w + attention_mask
+    }
     w = Activation[Float]("softmax").from(w)
-    w = Dropout(attnPdrop).from(w)
+    w = Dropout(attnPDrop).from(w)
 
     AutoGrad.mm(w, v)
+  }
+
+  def gelu(x: Variable[T]): Variable[T] = {
+    x * 0.5 * (Activation("tanh").from((AutoGrad.square(x) * x * 0.044715 + x)
+      * (scala.math.sqrt(2 / scala.math.Pi))) + 1)
+  }
+
+  def splitHeads(x: Variable[T], nHead: Int, k: Boolean = false): Variable[T] = {
+    val sizes = x.getOutputShape().toSingle().toArray
+    val newSizes = sizes.drop(1).dropRight(1) ++ Array(nHead, sizes.last / nHead)
+    val r = Reshape(newSizes).from(x)
+    if (k) Permute(Array(2, 3, 1)).from(r)
+    else Permute(Array(2, 1, 3)).from(r)
+  }
+
+  def mergeHeads(x: Variable[T]): Variable[T] = {
+    val p = AutoGrad.contiguous(Permute[T](Array(2, 1, 3)).from(x))
+    val sizes = p.getOutputShape().toSingle().toArray
+    Reshape(sizes.drop(1).dropRight(2) ++ Array(sizes.last * sizes(sizes.length - 2))).from(p)
   }
 }
 
@@ -191,11 +216,11 @@ object TransformerLayer {
       .add(Embedding(vocab, hiddenSize, inputLength = seqLen * 2))
       .add(Dropout(embeddingDrop))
       .add(Reshape(Array(seqLen, 2, hiddenSize)))
-        .add(new KerasLayerWrapper[T](bnn.Sum[T](dimension = 3,
-          squeeze = true).asInstanceOf[AbstractModule[Activity, Activity, T]]))
+      .add(new KerasLayerWrapper[T](bnn.Sum[T](dimension = 3,
+        squeeze = true).asInstanceOf[AbstractModule[Activity, Activity, T]]))
     new TransformerLayer[T](nBlock,
       residPdrop, attnPdrop, nHead, maskAttention, outputAllBlock,
-      embeddingLayer.asInstanceOf[KerasLayer[Tensor[T], Tensor[T], T]])
+      embeddingLayer.asInstanceOf[KerasLayer[Activity, Tensor[T], T]])
   }
 
   /**
@@ -215,10 +240,10 @@ object TransformerLayer {
     nHead: Int,
     maskAttention: Boolean,
     outputAllBlock: Boolean,
-    embeddingLayer: KerasLayer[Tensor[T], Tensor[T], T])
+    embeddingLayer: KerasLayer[Activity, Tensor[T], T])
     (implicit ev: TensorNumeric[T]): TransformerLayer[T] = {
-    new TransformerLayer[T](nBlock,
-      residPdrop, attnPdrop, nHead, maskAttention, outputAllBlock, embeddingLayer = embeddingLayer)
+    new TransformerLayer[T](nBlock, residPdrop, attnPdrop, nHead,
+      maskAttention, outputAllBlock, embeddingLayer = embeddingLayer)
   }
 
   def layerNorm[@specialized(Float, Double) T: ClassTag](x: Variable[T],
@@ -229,27 +254,5 @@ object TransformerLayer {
     val s = AutoGrad.mean(AutoGrad.square(x - u), sizes.size -1, true)
     val y = (x - u) / AutoGrad.sqrt(s + e)
     y * weight + bias
-  }
-
-  def gelu[@specialized(Float, Double) T: ClassTag](x: Variable[T])
-    (implicit ev: TensorNumeric[T]): Variable[T] = {
-    x * 0.5 * (Activation("tanh").from((AutoGrad.square(x) * x * 0.044715 + x)
-      * (scala.math.sqrt(2 / scala.math.Pi))) + 1)
-  }
-
-  def splitHeads[@specialized(Float, Double) T: ClassTag](x: Variable[T],
-    nHead: Int, k: Boolean = false)(implicit ev: TensorNumeric[T]): Variable[T] = {
-    val sizes = x.getOutputShape().toSingle().toArray
-    val newSizes = sizes.drop(1).dropRight(1) ++ Array(nHead, sizes.last / nHead)
-    val r = Reshape(newSizes).from(x)
-    if (k) Permute(Array(2, 3, 1)).from(r)
-    else Permute(Array(2, 1, 3)).from(r)
-  }
-
-  def mergeHeads[@specialized(Float, Double) T: ClassTag](x: Variable[T])
-    (implicit ev: TensorNumeric[T]): Variable[T] = {
-    val p = AutoGrad.contiguous(Permute[T](Array(2, 1, 3)).from(x))
-    val sizes = p.getOutputShape().toSingle().toArray
-    Reshape(sizes.drop(1).dropRight(2) ++ Array(sizes.last * sizes(sizes.length - 2))).from(p)
   }
 }

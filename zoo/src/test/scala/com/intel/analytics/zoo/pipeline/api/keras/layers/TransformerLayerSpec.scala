@@ -16,6 +16,7 @@
 
 package com.intel.analytics.zoo.pipeline.api.keras.layers
 
+import com.intel.analytics.bigdl.nn
 import com.intel.analytics.bigdl.nn.Sum
 import com.intel.analytics.bigdl.nn.abstractnn.{AbstractModule, Activity}
 import com.intel.analytics.bigdl.nn.keras.KerasLayer
@@ -55,7 +56,7 @@ class TransformerLayerSpec extends ZooSpecHelper {
     val model = TransformerLayer[Float](nBlock = 3,
       residPdrop = 0.1, attnPdrop = 0.1, nHead = 12, maskAttention = false,
       outputAllBlock = true,
-      embeddingLayer = embedding.asInstanceOf[KerasLayer[Tensor[Float], Tensor[Float], Float]])
+      embeddingLayer = embedding.asInstanceOf[KerasLayer[Activity, Tensor[Float], Float]])
 
     val shape = Shape(List(Shape(4, 77), Shape(4, 77)))
     model.build(shape)
