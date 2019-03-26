@@ -62,7 +62,7 @@ if __name__ == '__main__':
     # Data preparation and preprocessing
     processor = MrpcProcessor()
     label_list = processor.get_labels()
-    tokenizer = FullTokenizer(vocab_file, False)
+    tokenizer = FullTokenizer(vocab_file)
     train_examples = processor.get_train_examples(options.data_dir)
     train_dataset = generate_tf_dataset(train_examples, options.max_seq_length, options.batch_size)
     eval_examples = processor.get_dev_examples(options.data_dir)
@@ -76,7 +76,6 @@ if __name__ == '__main__':
                                                                  label_ids, len(label_list), False)
     tvars = tf.trainable_variables()
     initialized_variable_names = {}
-    scaffold_fn = None
     if init_checkpoint:
         assignment_map, initialized_variable_names = get_assignment_map_from_checkpoint(tvars, init_checkpoint)
         tf.train.init_from_checkpoint(init_checkpoint, assignment_map)
