@@ -127,6 +127,12 @@ def _extract_graph_summary(graph_def):
         n = _node_name(node.name)
         name_to_node[n] = node
         name_to_input_name[n] = [_node_name(x) for x in node.input]
+        if "_class" in node.attr:
+            for v in node.attr["_class"].list.s:
+                v_str = v.decode("utf-8")
+                if v_str.startswith("loc:@"):
+                    colocated_node = v_str[5:]
+                    name_to_input_name[n].append(colocated_node)
         name_to_seq_num[n] = seq
         seq += 1
     return name_to_input_name, name_to_node, name_to_seq_num
@@ -248,6 +254,42 @@ def convert_variables_to_constants(sess,
                 return True
         return False
 
+    def dfs_find_variable(origin_name, name_to_nodes):
+
+        if origin_name in variables_data_map:
+            return origin_name, set()
+
+        nodes_in_path = set()
+        found_variables = set()
+
+        def dfs(name):
+            node = name_to_nodes[name]
+            if node.op == "Switch":
+                inputs = [node.input[0]]
+            else:
+                inputs = node.input
+            for name in inputs:
+                name = _node_name(name)
+                if name in nodes_in_path:
+                    continue
+                elif name in variables_data_map:
+                    found_variables.add(name)
+                    continue
+                else:
+                    nodes_in_path.add(name)
+                    dfs(name)
+
+        nodes_in_path.add(origin_name)
+        dfs(origin_name)
+
+        if len(found_variables) > 1:
+            raise ValueError("found variables %s" % found_variables)
+
+        variable = None
+        for v in found_variables:
+            variable = v
+        return variable, nodes_in_path
+
     def create_const_op(node_name, dtype, data, data_shape=None):
         """Creates a Const op."""
         output_node = node_def_pb2.NodeDef()
@@ -268,7 +310,9 @@ def convert_variables_to_constants(sess,
     variable_names = []
     variable_dict_names = []
     identity_ops_input_map = {}
+    name_to_node = {}
     for node in inference_graph.node:
+        name_to_node[node.name] = node
         if node.op in ["Variable", "VariableV2", "VarHandleOp"]:
             variable_name = node.name
             if ((variable_names_whitelist is not None
@@ -298,6 +342,8 @@ def convert_variables_to_constants(sess,
     logging.info("Froze %d variables.", len(returned_variables))
 
     # Reconstruct the graph with constants in place of variables.
+
+    path_node_to_variables = {}
     output_graph_def = graph_pb2.GraphDef()
     how_many_converted = 0
     for input_node in inference_graph.node:
@@ -307,48 +353,101 @@ def convert_variables_to_constants(sess,
             output_node = create_const_op(input_node.name, input_node.attr["dtype"],
                                           data, data.shape)
             how_many_converted += 1
-        elif (input_node.op == "ReadVariableOp"
-              and has_variable_as_input(input_node)):
-            # The first branch converts all VarHandleOps of ResourceVariables to
-            # constants, so we need to convert the associated ReadVariableOps to
-            # Identity ops.
-            #
-            # Handles the following cases:
-            #   Variable --> ReadVariableOp
-            #   Variable --> Identity --> ReadVariableOp
-            output_node.op = "Identity"
-            output_node.name = input_node.name
-            output_node.input.extend([input_node.input[0]])
-            output_node.attr["T"].CopyFrom(input_node.attr["dtype"])
-            if "_class" in input_node.attr:
-                output_node.attr["_class"].CopyFrom(input_node.attr["_class"])
-        elif (input_node.op == "ResourceGather"
-              and has_variable_as_input(input_node)):
-            # The first branch converts all VarHandleOps of ResourceGather to
-            # constants, so we need to convert the associated ResourceGather to Gather
-            # ops with a Const axis feeding into it.
-            if input_node.attr["batch_dims"].i != 0:
-                raise ValueError("batch_dims != 0 is not supported by freeze_graph.")
-            axis_data = input_node.attr["batch_dims"].i
-            axis_node_name = input_node.name + "/axis"
-            axis_dtype = input_node.attr["Tindices"]
-            output_axis_node = create_const_op(axis_node_name, axis_dtype, axis_data)
-            output_graph_def.node.extend([output_axis_node])
+        elif input_node.op == "ReadVariableOp":
+            variable, nodes_in_path = dfs_find_variable(input_node.input[0], name_to_node)
+            if variable is not None:
+                # The first branch converts all VarHandleOps of ResourceVariables to
+                # constants, so we need to convert the associated ReadVariableOps to
+                # Identity ops.
+                #
+                # Handles the following cases:
+                #   Variable --> ReadVariableOp
+                #   Variable --> Identity --> ReadVariableOp
+                output_node.op = "Identity"
+                output_node.name = input_node.name
+                output_node.input.extend([input_node.input[0]])
+                output_node.attr["T"].CopyFrom(input_node.attr["dtype"])
+                if "_class" in input_node.attr:
+                    output_node.attr["_class"].CopyFrom(input_node.attr["_class"])
+                for name in nodes_in_path:
+                    path_node_to_variables[name] = variable
+            else:
+                raise ValueError("Cannot find variable for %s" % input_node.name)
 
-            output_node.op = "GatherV2"
-            output_node.name = input_node.name
-            output_node.input.extend(
-                [input_node.input[0], input_node.input[1], axis_node_name])
-            output_node.attr["Tparams"].CopyFrom(input_node.attr["dtype"])
-            output_node.attr["Tindices"].CopyFrom(input_node.attr["Tindices"])
-            output_node.attr["Taxis"].CopyFrom(axis_dtype)
-            if "_class" in input_node.attr:
-                output_node.attr["_class"].CopyFrom(input_node.attr["_class"])
+        elif input_node.op == "ResourceGather":
+
+            variable, nodes_in_path = dfs_find_variable(input_node.input[0], name_to_node)
+            if variable is not None:
+                # The first branch converts all VarHandleOps of ResourceGather to
+                # constants, so we need to convert the associated ResourceGather to Gather
+                # ops with a Const axis feeding into it.
+                if input_node.attr["batch_dims"].i != 0:
+                    raise ValueError("batch_dims != 0 is not supported by freeze_graph.")
+                axis_data = input_node.attr["batch_dims"].i
+                axis_node_name = input_node.name + "/axis"
+                axis_dtype = input_node.attr["Tindices"]
+                output_axis_node = create_const_op(axis_node_name, axis_dtype, axis_data)
+                output_graph_def.node.extend([output_axis_node])
+
+                output_node.op = "GatherV2"
+                output_node.name = input_node.name
+                output_node.input.extend(
+                    [input_node.input[0], input_node.input[1], axis_node_name])
+                output_node.attr["Tparams"].CopyFrom(input_node.attr["dtype"])
+                output_node.attr["Tindices"].CopyFrom(input_node.attr["Tindices"])
+                output_node.attr["Taxis"].CopyFrom(axis_dtype)
+                if "_class" in input_node.attr:
+                    output_node.attr["_class"].CopyFrom(input_node.attr["_class"])
+                for name in nodes_in_path:
+                    path_node_to_variables[name] = variable
+            else:
+                raise ValueError("Cannot find variable for %s" % input_node.name)
+        elif input_node.op == "VariableShape":
+
+            variable, nodes_in_path = dfs_find_variable(input_node.input[0], name_to_node)
+            if variable is not None:
+                input_variable = variable
+                output_node.op = "Shape"
+                output_node.name = input_node.name
+                output_node.input.extend([input_node.input[0]])
+                output_node.attr["T"].CopyFrom(input_variable.attr["dtype"])
+                output_node.attr["out_type"].CopyFrom(input_node.attr["out_type"])
+                for name in nodes_in_path:
+                    path_node_to_variables[name] = variable
+            else:
+                raise ValueError("Cannot find variable for %s" % input_node.name)
         else:
             output_node.CopyFrom(input_node)
         output_graph_def.node.extend([output_node])
 
     output_graph_def.library.CopyFrom(inference_graph.library)
+
+    inference_graph = output_graph_def
+    output_graph_def = graph_pb2.GraphDef()
+    for input_node in inference_graph.node:
+        output_node = node_def_pb2.NodeDef()
+        if input_node.name in path_node_to_variables:
+            input_variable = path_node_to_variables[input_node.name]
+            input_variable = name_to_node[input_variable]
+            output_node.op = input_node.op
+            output_node.name = input_node.name
+            if input_node.op == "Enter":
+                output_node.input.extend([input_node.input[0]])
+                output_node.attr["T"].CopyFrom(input_variable.attr["dtype"])
+                output_node.attr["frame_name"].CopyFrom(input_node.attr["frame_name"])
+                output_node.attr["is_constant"].CopyFrom(input_node.attr["is_constant"])
+                output_node.attr["parallel_iterations"].CopyFrom(input_node.attr["parallel_iterations"])
+            elif input_node.op == "Switch":
+                output_node.input.extend(input_node.input)
+                output_node.attr["T"].CopyFrom(input_variable.attr["dtype"])
+            else:
+                raise ValueError("cannot do type: %s" % input_node.op)
+        else:
+            output_node.CopyFrom(input_node)
+        output_graph_def.node.extend([output_node])
+
+    output_graph_def.library.CopyFrom(inference_graph.library)
+
     logging.info("Converted %d variables to const ops.", how_many_converted)
     return output_graph_def
 
