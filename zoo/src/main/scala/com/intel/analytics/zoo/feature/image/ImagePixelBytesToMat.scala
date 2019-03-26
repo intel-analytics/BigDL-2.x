@@ -23,7 +23,8 @@ import org.apache.log4j.Logger
  *
  * @param byteKey key that maps byte array
  */
-class ImagePixelBytesToMat(byteKey: String = ImageFeature.bytes) extends ImageProcessing {
+class ImagePixelBytesToMat(
+      byteKey: String = ImageFeature.bytes) extends ImageProcessing {
 
   private val internalTransformer = new PixelBytesToMat(byteKey)
   override def apply(prev: Iterator[ImageFeature]): Iterator[ImageFeature] = {
@@ -33,5 +34,7 @@ class ImagePixelBytesToMat(byteKey: String = ImageFeature.bytes) extends ImagePr
 
 object ImagePixelBytesToMat {
   val logger = Logger.getLogger(getClass)
-  def apply(byteKey: String = ImageFeature.bytes): ImagePixelBytesToMat = new ImagePixelBytesToMat(byteKey)
+  def apply(byteKey: String = ImageFeature.bytes): ImagePixelBytesToMat = {
+    new ImagePixelBytesToMat(byteKey)
+  }
 }
