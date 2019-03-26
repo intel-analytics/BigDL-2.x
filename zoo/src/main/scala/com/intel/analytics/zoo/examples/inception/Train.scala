@@ -23,12 +23,11 @@ import com.intel.analytics.bigdl.optim._
 import com.intel.analytics.bigdl.utils.{Engine, LoggerFilter, T, Table}
 import com.intel.analytics.zoo.feature.pmem.MemoryType
 import com.intel.analytics.zoo.pipeline.api.keras.layers.utils.EngineRef
-import org.apache.log4j.{Level, Logger}
+import com.intel.analytics.zoo.pipeline.estimator.{Estimator}
 import org.apache.spark.SparkContext
 
 object TrainInceptionV1 {
   LoggerFilter.redirectSparkInfoLogs()
-
 
   import Options._
 
@@ -79,7 +78,7 @@ object TrainInceptionV1 {
         OptimMethod.load[Float](param.stateSnapshot.get)
       } else {
         val warmupDelta = if (warmupIteration == 0) 0.0
-          else (param.maxLr.getOrElse(param.learningRate) - param.learningRate) / warmupIteration
+        else (param.maxLr.getOrElse(param.learningRate) - param.learningRate) / warmupIteration
         val polyIteration = maxIteration - warmupIteration
         val lrSchedule = SequentialSchedule(iterationPerEpoch)
           .add(Warmup(warmupDelta), warmupIteration).add(Poly(0.5, polyIteration), polyIteration)
@@ -87,12 +86,7 @@ object TrainInceptionV1 {
           weightDecay = param.weightDecay, momentum = 0.9, dampening = 0.0, nesterov = false,
           learningRateSchedule = lrSchedule)
       }
-
-      val optimizer = Optimizer(
-        model = model,
-        dataset = trainSet.toDataSet(),
-        criterion = new ClassNLLCriterion[Float]()
-      )
+      val estimator = Estimator[Float](model, optimMethod, param.checkpoint.get)
 
       val (checkpointTrigger, testTrigger, endTrigger) = if (param.maxEpoch.isDefined) {
         (Trigger.everyEpoch, Trigger.everyEpoch, Trigger.maxEpoch(param.maxEpoch.get))
@@ -101,32 +95,14 @@ object TrainInceptionV1 {
           Trigger.severalIteration(param.checkpointIteration),
           Trigger.severalIteration(param.checkpointIteration),
           Trigger.maxIteration(param.maxIteration)
-          )
+        )
       }
 
-      if (param.checkpoint.isDefined) {
-        optimizer.setCheckpoint(param.checkpoint.get, checkpointTrigger)
-      }
+      estimator.train(trainSet, ClassNLLCriterion[Float](),
+        endTrigger = Some(endTrigger),
+        checkPointTrigger = Some(checkpointTrigger),
+        valSet, Array(new Top1Accuracy[Float], new Top5Accuracy[Float]))
 
-      if (param.overWriteCheckpoint) {
-        optimizer.overWriteCheckpoint()
-      }
-
-      if (param.gradientMin.isDefined && param.gradientMax.isDefined) {
-        optimizer.setConstantGradientClipping(param.gradientMin.get.toFloat,
-          param.gradientMax.get.toFloat)
-      }
-
-      if (param.gradientL2NormThreshold.isDefined) {
-        optimizer.setGradientClippingByl2Norm(param.gradientL2NormThreshold.get.toFloat)
-      }
-
-      optimizer
-        .setOptimMethod(optimMethod)
-        .setValidation(testTrigger,
-          valSet.toDataSet(), Array(new Top1Accuracy[Float], new Top5Accuracy[Float]))
-        .setEndWhen(endTrigger)
-        .optimize()
       sc.stop()
     })
   }
