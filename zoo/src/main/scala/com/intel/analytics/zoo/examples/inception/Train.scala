@@ -47,7 +47,8 @@ object TrainInceptionV1 {
         EngineRef.getNodeNumber(),
         EngineRef.getCoreNumber(),
         param.classNumber,
-        MemoryType.fromString(param.memoryType)
+        MemoryType.fromString(param.memoryType),
+        param.opencv
       )
       val valSet = ImageNet2012Val(
         param.folder + "/val",
@@ -56,7 +57,8 @@ object TrainInceptionV1 {
         param.batchSize,
         EngineRef.getNodeNumber(),
         EngineRef.getCoreNumber(),
-        param.classNumber
+        param.classNumber,
+        opencvPreprocessing = param.opencv
       )
 
       val model = if (param.modelSnapshot.isDefined) {
