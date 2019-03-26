@@ -18,7 +18,6 @@ package com.intel.analytics.zoo.examples.inception
 
 import java.nio.ByteBuffer
 
-import com.intel.analytics.bigdl.DataSet
 import com.intel.analytics.bigdl.dataset._
 import com.intel.analytics.bigdl.dataset.image.CropCenter
 import com.intel.analytics.bigdl.dataset.image.{BGRImgCropper, BGRImgNormalizer, BytesToBGRImg, MTLabeledBGRImgToBatch, HFlip => DatasetHFlip}
@@ -128,6 +127,7 @@ object ImageNet2012 {
            )
   : FeatureSet[MiniBatch[Float]] = {
     val featureRdd = filesToImageFrame(path, sc, classNumber, Some(coresPerNode * coresPerNode)).toDistributed().rdd
+      .setName("ImageNet2012 Training Set")
     val featureSet = FeatureSet.rdd(featureRdd, memoryType)
     val transformer = ImagePixelBytesToMat() ->
       ImageRandomCrop(imageSize, imageSize) ->
@@ -186,6 +186,7 @@ object ImageNet2012Val {
             )
   : FeatureSet[MiniBatch[Float]] = {
     val featureRdd = ImageNet2012.filesToImageFrame(path, sc, classNumber, Some(coresPerNode * coresPerNode)).toDistributed().rdd
+      .setName("ImageNet2012 Validation Set")
     val featureSet = FeatureSet.rdd(featureRdd, memoryType)
     val transformer = ImagePixelBytesToMat() ->
       ImageCenterCrop(imageSize, imageSize) ->

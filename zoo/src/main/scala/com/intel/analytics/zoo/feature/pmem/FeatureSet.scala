@@ -116,23 +116,29 @@ private[zoo] case class SampleArray(
 }
 
 private[zoo] class ImageFeatureConverter(
-                                          memoryType: MemoryType = PMEM) extends NativeArrayConverter[ImageFeature] {
+      memoryType: MemoryType = PMEM) extends NativeArrayConverter[ImageFeature] {
 
   override def getBytesPerRecord(imageFeature: ImageFeature): Long = {
     imageFeature.bytes().length
   }
 
-  override def toArray(recordIterator: Iterator[ImageFeature],
-                       countPerPartition: Iterator[(Int, Long)]): Iterator[ArrayLike[ImageFeature]] = {
+  override def toArray(
+        recordIterator: Iterator[ImageFeature],
+        countPerPartition: Iterator[(Int, Long)]): Iterator[ArrayLike[ImageFeature]] = {
     val count = countPerPartition.next()
     val nativeArray = new VarLenBytesArray(count._1, count._2,
       memoryType = memoryType)
+    // cache ImageFeature without bytes.
     val metrics = new Array[ImageFeature](count._1)
     var i = 0
     while(recordIterator.hasNext) {
+      // Move bytes in ImageFeature to PMEM, then remove bytes in ImageFeature to minimize
+      // memory used in DRAM.
       val data = recordIterator.next()
+      require(data.contains(ImageFeature.bytes), s"Only support cache ImageFeature's bytes" +
+        s"to PMEM, but no bytes data found, please check your data.")
       nativeArray.set(i, data.bytes())
-      data.update("bytes", null)
+      data.update(ImageFeature.bytes, null)
       metrics(i) = data
       i += 1
     }
@@ -140,18 +146,24 @@ private[zoo] class ImageFeatureConverter(
   }
 }
 
-private[zoo] case class ImageFeatureArray(records: VarLenBytesArray,
+/**
+ * Cached ImageFeatures in PMEM.
+ * @param bytesData bytes in PMEM.
+ * @param metrics ImageFeature without bytes, just some metrics.
+ */
+private[zoo] case class ImageFeatureArray(
+      bytesData: VarLenBytesArray,
       metrics: Array[ImageFeature]) extends ArrayLike[ImageFeature] {
   override def length: Int = {
-    records.recordNum
+    bytesData.recordNum
   }
   override def apply(i: Int): ImageFeature = {
     val data = metrics(i).clone()
-    data.update("bytes", records.get(i))
+    data.update("bytes", bytesData.get(i))
     data
   }
   override def free(): Unit = {
-    records.free()
+    bytesData.free()
   }
 }
 
