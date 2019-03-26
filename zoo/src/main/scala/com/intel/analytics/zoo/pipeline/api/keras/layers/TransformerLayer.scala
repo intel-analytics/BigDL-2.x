@@ -22,7 +22,7 @@ import com.intel.analytics.bigdl.nn.abstractnn.{AbstractModule, Activity}
 import com.intel.analytics.bigdl.nn.keras.KerasLayer
 import com.intel.analytics.bigdl.tensor.Tensor
 import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric
-import com.intel.analytics.bigdl.utils.{Shape, SingleShape}
+import com.intel.analytics.bigdl.utils.{MultiShape, Shape}
 import com.intel.analytics.zoo.pipeline.api.Net
 import com.intel.analytics.zoo.pipeline.api.autograd.{AutoGrad, Constant, Parameter, Variable}
 import com.intel.analytics.zoo.pipeline.api.keras.layers.utils.KerasUtils
@@ -41,6 +41,7 @@ import scala.reflect.ClassTag
  * @param attnPdrop drop probability of attention
  * @param nHead head number
  * @param maskAttention whether unidirectional or bidirectional
+ * @param outputAllBlock whether output all blocks' output
  * @param embeddingLayer embedding layer
  * @param inputShape input shape, default is null
  */
@@ -50,36 +51,45 @@ class TransformerLayer[T: ClassTag](
   val attnPdrop: Double,
   val nHead: Int,
   val maskAttention: Boolean,
+  val outputAllBlock: Boolean,
   val embeddingLayer: KerasLayer[Tensor[T], Tensor[T], T],
   var inputShape: Shape = null)(implicit ev: TensorNumeric[T])
-  extends KerasLayer[Tensor[T], Tensor[T], T](KerasUtils.addBatch(inputShape))
+  extends KerasLayer[Activity, Activity, T](KerasUtils.addBatch(inputShape))
     with Net {
 
   var seqLen: Int = 0
-  override def doBuild(inputShape: Shape): AbstractModule[Tensor[T], Tensor[T], T] = {
-    require(inputShape.isInstanceOf[SingleShape], "TransformerLayer input must" +
-      " be a single shape")
-    val _inputShape = KerasUtils.removeBatch(inputShape)
-    seqLen = _inputShape.toSingle().head
+  override def doBuild(inputShape: Shape): AbstractModule[Activity, Activity, T] = {
+    require(inputShape.isInstanceOf[MultiShape], "TransformerLayer input must" +
+      " be a multiple shape")
+    val _inputShape = KerasUtils.removeBatch(inputShape).toMulti()
 
-    val input = Variable(_inputShape)
+    val wordInput = Variable(_inputShape(0))
+    val positionInput = Variable(_inputShape(1))
+
+    seqLen = _inputShape.head.toSingle().head
 
     require(embeddingLayer.isInstanceOf[Net], "use layers from" +
       "com.intel.analytics.zoo.pipeline.api.keras and operators from" +
       " com.intel.analytics.zoo.pipeline.api.autograd to construct the embedding layer")
     val embedding = embeddingLayer.asInstanceOf[Net]
-    val e = embedding.from(input)
+    val e = embedding.from(wordInput, positionInput)
     val hiddenSize = e.getOutputShape().toSingle().last
 
-    var nextInput: Variable[T] = e
+    val nextInput: Variable[T] = e
+    val modelOutputSize = nBlock
+    val modelOutput = new Array[Variable[T]](modelOutputSize)
+    modelOutput(0) = block(nextInput, hiddenSize)
 
-    for (i <- 0 until nBlock) {
-      val output = block(nextInput, hiddenSize)
-      nextInput = output
+    for (i <- 1 until nBlock) {
+      val output = block(modelOutput(i - 1), hiddenSize)
+      modelOutput(i) = output
     }
 
-    val model = Model(input, nextInput)
-    model.asInstanceOf[AbstractModule[Tensor[T], Tensor[T], T]]
+    val model = if (outputAllBlock) {
+      Model(Array(wordInput, positionInput), modelOutput)
+    } else Model(Array(wordInput, positionInput), modelOutput.last)
+
+    model.asInstanceOf[AbstractModule[Activity, Activity, T]]
   }
 
   def block(x: Variable[T], hiddenSize: Int): Variable[T] = {
@@ -158,6 +168,7 @@ object TransformerLayer {
    * @param hiddenSize is also embedding size
    * @param embeddingDrop drop probability of embedding layer, default is 0.1
    * @param maskAttention whether unidirectional or bidirectional, default is true(unidirectional)
+   * @param outputAllBlock whether output all blocks' output
    */
   def apply[@specialized(Float, Double) T: ClassTag](
     vocab: Int = 40990,
@@ -168,18 +179,22 @@ object TransformerLayer {
     nHead: Int = 12,
     hiddenSize: Int = 768,
     embeddingDrop: Double = 0,
-    maskAttention: Boolean = true)(implicit ev: TensorNumeric[T]): TransformerLayer[T] = {
+    maskAttention: Boolean = true,
+    outputAllBlock: Boolean = true)(implicit ev: TensorNumeric[T]): TransformerLayer[T] = {
     require(hiddenSize > 0, "hiddenSize must be great" +
       "than 0 with default embedding layer")
+    val wordInput = InputLayer[T](inputShape = Shape(seqLen))
+    val postionInput = InputLayer[T](inputShape = Shape(seqLen))
     val embeddingLayer = Sequential[T]()
-      .add(Reshape(Array(seqLen * 2), Shape(seqLen, 2)))
+      .add(Merge(layers = List(wordInput, postionInput), mode = "concat"))
+      .add(Reshape(Array(seqLen * 2)))
       .add(Embedding(vocab, hiddenSize, inputLength = seqLen * 2))
       .add(Dropout(embeddingDrop))
       .add(Reshape(Array(seqLen, 2, hiddenSize)))
         .add(new KerasLayerWrapper[T](bnn.Sum[T](dimension = 3,
           squeeze = true).asInstanceOf[AbstractModule[Activity, Activity, T]]))
     new TransformerLayer[T](nBlock,
-      residPdrop, attnPdrop, nHead, maskAttention,
+      residPdrop, attnPdrop, nHead, maskAttention, outputAllBlock,
       embeddingLayer.asInstanceOf[KerasLayer[Tensor[T], Tensor[T], T]])
   }
 
@@ -190,6 +205,7 @@ object TransformerLayer {
    * @param attnPdrop drop probability of attention
    * @param nHead head number
    * @param maskAttention whether unidirectional or bidirectional
+   * @param outputAllBlock whether output all blocks' output
    * @param embeddingLayer embedding layer
    */
   def apply[@specialized(Float, Double) T: ClassTag](
@@ -198,10 +214,11 @@ object TransformerLayer {
     attnPdrop: Double,
     nHead: Int,
     maskAttention: Boolean,
+    outputAllBlock: Boolean,
     embeddingLayer: KerasLayer[Tensor[T], Tensor[T], T])
     (implicit ev: TensorNumeric[T]): TransformerLayer[T] = {
     new TransformerLayer[T](nBlock,
-      residPdrop, attnPdrop, nHead, maskAttention, embeddingLayer = embeddingLayer)
+      residPdrop, attnPdrop, nHead, maskAttention, outputAllBlock, embeddingLayer = embeddingLayer)
   }
 
   def layerNorm[@specialized(Float, Double) T: ClassTag](x: Variable[T],

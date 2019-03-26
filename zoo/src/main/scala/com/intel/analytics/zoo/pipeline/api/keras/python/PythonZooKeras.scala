@@ -1316,9 +1316,10 @@ class PythonZooKeras[T: ClassTag](implicit ev: TensorNumeric[T]) extends PythonZ
     attnDrop: Double,
     headNum: Int,
     maskAttention: Boolean,
+    outputAllBlock: Boolean = true,
     embeddingLayer: KerasLayer[Tensor[T], Tensor[T], T]): TransformerLayer[T] = {
     TransformerLayer(nBlock = layerNum, residPdrop = residDrop,
       attnPdrop = attnDrop, nHead = headNum,
-      maskAttention = maskAttention, embeddingLayer = embeddingLayer)
+      maskAttention = maskAttention, outputAllBlock, embeddingLayer = embeddingLayer)
   }
 }
