@@ -39,6 +39,7 @@ class PythonFeatureSet [T: ClassTag](implicit ev: TensorNumeric[T]) extends Pyth
   def createFeatureSetFromImageFrame(
         imageFrame: ImageFrame,
         memoryType: String): FeatureSet[ImageFeature] = {
+    require(imageFrame.isDistributed(), "Only support distributed ImageFrame")
     FeatureSet.rdd(imageFrame.toDistributed().rdd, MemoryType.fromString(memoryType))
   }
 

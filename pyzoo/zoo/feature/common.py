@@ -203,11 +203,11 @@ class ToTuple(Preprocessing):
 
 class FeatureSet(DataSet):
     """
-    A set of data which is used in the model optimization process. The FeatureSet can be access in
+    A set of data which is used in the model optimization process. The FeatureSet can be accessed in
     a random data sample sequence. In the training process, the data sequence is a looped endless
     sequence. While in the validation process, the data sequence is a limited length sequence.
-    And this FeatureSet could be cached to Intel Optane DC Persistent Memory, if you set memory_type
-    to PMEM when create FeatureSet.
+    Different from BigDL's DataSet, this FeatureSet could be cached to Intel Optane DC Persistent
+    Memory, if you set memory_type to PMEM when creating FeatureSet.
     """
     def __init__(self, jvalue=None, bigdl_type="float"):
         self.bigdl_type = bigdl_type
@@ -226,7 +226,7 @@ class FeatureSet(DataSet):
         :return: A feature set
         """
         jvalue = callBigDlFunc(bigdl_type, "createFeatureSetFromImageFrame", image_frame, memory_type)
-        return FeatureSet(jvalue=jvalue)
+        return cls(jvalue=jvalue)
 
     @classmethod
     def rdd(cls, rdd, memory_type="DRAM", bigdl_type="float"):
@@ -240,7 +240,7 @@ class FeatureSet(DataSet):
         :return: A feature set
         """
         jvalue = callBigDlFunc(bigdl_type, "createFeatureSetFromRDD", rdd, memory_type)
-        return FeatureSet(jvalue=jvalue)
+        return cls(jvalue=jvalue)
 
     def transform(self, transformer):
         """
@@ -256,4 +256,5 @@ class FeatureSet(DataSet):
         To BigDL compatible DataSet
         :return:
         """
-        return FeatureSet(jvalue=callBigDlFunc(self.bigdl_type, "featureSetToDataSet", self.value))
+        jvalue=callBigDlFunc(self.bigdl_type, "featureSetToDataSet", self.value)
+        return FeatureSet(jvalue=jvalue)
