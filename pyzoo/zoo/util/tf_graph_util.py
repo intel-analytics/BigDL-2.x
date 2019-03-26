@@ -436,7 +436,8 @@ def convert_variables_to_constants(sess,
                 output_node.attr["T"].CopyFrom(input_variable.attr["dtype"])
                 output_node.attr["frame_name"].CopyFrom(input_node.attr["frame_name"])
                 output_node.attr["is_constant"].CopyFrom(input_node.attr["is_constant"])
-                output_node.attr["parallel_iterations"].CopyFrom(input_node.attr["parallel_iterations"])
+                output_node.attr["parallel_iterations"]\
+                    .CopyFrom(input_node.attr["parallel_iterations"])
             elif input_node.op == "Switch":
                 output_node.input.extend(input_node.input)
                 output_node.attr["T"].CopyFrom(input_variable.attr["dtype"])
