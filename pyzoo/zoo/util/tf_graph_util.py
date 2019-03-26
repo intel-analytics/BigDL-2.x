@@ -406,7 +406,7 @@ def convert_variables_to_constants(sess,
 
             variable, nodes_in_path = dfs_find_variable(input_node.input[0], name_to_node)
             if variable is not None:
-                input_variable = variable
+                input_variable = name_to_node[variable]
                 output_node.op = "Shape"
                 output_node.name = input_node.name
                 output_node.input.extend([input_node.input[0]])
