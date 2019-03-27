@@ -91,3 +91,15 @@ class TestOperatorSpecial(ZooTestCase):
         model = Model(input=parameter, output=out)
         result = model.forward(data)
         np.testing.assert_almost_equal(result, data.sum(axis=0), decimal=5)
+
+    def test_stack(self):
+        input1 = Parameter(shape=(2, 3))
+        input2 = Parameter(shape=(2, 3))
+        out = autograd.stack((input1, input2), axis=0)
+        model = Model(input=[input1, input2], output=out)
+        data1 = np.random.randn(2, 3)
+        data2 = np.random.rand(2, 3)
+        data = [data1, data2]
+        result = model.forward(data)
+        output = np.stack((data1, data2), axis=0)
+        np.testing.assert_almost_equal(result, output, decimal=5)
