@@ -183,7 +183,7 @@ class TFEstimator(object):
                         batch_size = result.batch_per_thread * result.total_core_num
 
                     eval_methods = [self._to_bigdl_metric(m) for m in eval_methods]
-                    print("batch_size is %s "% batch_size)
+                    print("batch_size is %s " % batch_size)
                     print("result.batch_size is %s " % result.batch_size)
                     print("result.batch_per_thread is %s " % result.batch_per_thread)
                     results = tfnet.evaluate(rdd, batch_size, eval_methods)
