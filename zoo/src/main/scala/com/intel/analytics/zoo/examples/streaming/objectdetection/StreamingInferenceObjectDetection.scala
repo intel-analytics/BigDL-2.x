@@ -64,27 +64,27 @@ object StreamingInferenceObjectDetection {
 
       // Load pre-trained model
 //      val model = ObjectDetector.loadModel[Float](params.model)
-      val model = new InferenceModel(10)
-      model.doLoad(params.model)
-
-      val visualizer = Visualizer(, encoding = "jpg")
-
-      val lines = ssc.textFileStream(params.streamingPath)
-      lines.foreachRDD { batchPath =>
-        // Read image files and load to RDD
-        logger.debug("batchPath partition " + batchPath.getNumPartitions)
-        logger.debug("batchPath count " + batchPath.count())
-        if (!batchPath.isEmpty()) {
-          // RDD[String] => RDD[ImageFeature]
-          val dataSet = ImageSet.rdd(batchPath.map(path => readFile(path)))
-          // Resize image
-          dataSet -> ImageBytesToMat(imageCodec = Imgcodecs.CV_LOAD_IMAGE_COLOR)
-          dataSet.rdd.foreach { img =>
-            val output = model.doPredict(img.toTensor(ImageFeature.imageTensor))
-            writeFile(params.outputFolder, img.uri(), output.toTensor[Float].toArray())
-          }
-        }
-      }
+//      val model = new InferenceModel(10)
+//      model.doLoad(params.model)
+//
+//      val visualizer = Visualizer(, encoding = "jpg")
+//
+//      val lines = ssc.textFileStream(params.streamingPath)
+//      lines.foreachRDD { batchPath =>
+//        // Read image files and load to RDD
+//        logger.debug("batchPath partition " + batchPath.getNumPartitions)
+//        logger.debug("batchPath count " + batchPath.count())
+//        if (!batchPath.isEmpty()) {
+//          // RDD[String] => RDD[ImageFeature]
+//          val dataSet = ImageSet.rdd(batchPath.map(path => readFile(path)))
+//          // Resize image
+//          dataSet -> ImageBytesToMat(imageCodec = Imgcodecs.CV_LOAD_IMAGE_COLOR)
+//          dataSet.rdd.foreach { img =>
+//            val output = model.doPredict(img.toTensor(ImageFeature.imageTensor))
+//            writeFile(params.outputFolder, img.uri(), output.toTensor[Float].toArray())
+//          }
+//        }
+//      }
       ssc.start()
       ssc.awaitTermination()
       logger.info(s"labeled images are saved to ${params.outputFolder}")
