@@ -16,14 +16,13 @@
 
 package com.intel.analytics.zoo.pipeline.api.keras.layers
 
-import com.intel.analytics.bigdl.nn.abstractnn.{AbstractModule, Activity}
+import com.intel.analytics.bigdl.nn.abstractnn.Activity
 import com.intel.analytics.bigdl.nn.keras.KerasLayer
 import com.intel.analytics.bigdl.tensor.Tensor
 import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric
-import com.intel.analytics.bigdl.utils.{MultiShape, Shape}
+import com.intel.analytics.bigdl.utils.Shape
 import com.intel.analytics.zoo.pipeline.api.Net
-import com.intel.analytics.zoo.pipeline.api.autograd.{AutoGrad, Parameter, Variable}
-import com.intel.analytics.zoo.pipeline.api.keras.layers.utils.KerasUtils
+import com.intel.analytics.zoo.pipeline.api.autograd.{Parameter, Variable}
 import com.intel.analytics.zoo.pipeline.api.keras.models.Model
 
 import scala.reflect.ClassTag
@@ -57,71 +56,12 @@ class BERT[T: ClassTag] (
   outputAllBlock: Boolean = true,
   embeddingLayer: KerasLayer[Activity, Tensor[T], T],
   inputShape: Shape)(implicit ev: TensorNumeric[T])
-  extends TransformerLayer[T](nBlock, hiddenPDrop, attnPDrop, nHead,
+  extends TransformerLayer[T](nBlock, hiddenPDrop, attnPDrop, nHead, intermediateSize,
     true, outputAllBlock, embeddingLayer, inputShape)
   with Net {
 
-  override def doBuild(inputShape: Shape): AbstractModule[Activity, Activity, T] = {
-    require(inputShape.isInstanceOf[MultiShape], "TransformerLayer input must" +
-      " be a multiple shape")
-    val _inputShape = KerasUtils.removeBatch(inputShape).toMulti()
-
-    val wordInput = Variable(_inputShape(0))
-    val tokenTypeInput = Variable(_inputShape(1))
-    val positionInput = Variable(_inputShape(2))
-    val attentionMask = Variable(_inputShape(3))
-
-    require(embeddingLayer.isInstanceOf[Net], "use layers from" +
-      "com.intel.analytics.zoo.pipeline.api.keras and operators from" +
-      " com.intel.analytics.zoo.pipeline.api.autograd to construct the embedding layer")
-    val embedding = embeddingLayer.asInstanceOf[Net]
-    val e = embedding.from(wordInput, tokenTypeInput, positionInput)
-    val hiddenSize = e.getOutputShape().toSingle().last
-
-    val nextInput: Variable[T] = e
-
-    // need user input attention_mask, and shape into the right dim
-    val extended_attention_mask = (- attentionMask + 1.0) * -10000.0
-
-    val modelOutputSize = nBlock
-    val modelOutput = new Array[Variable[T]](modelOutputSize)
-    modelOutput(0) = block(nextInput, hiddenSize, extended_attention_mask)
-
-    for (i <- 1 until nBlock) {
-      val output = block(modelOutput(i - 1), hiddenSize, extended_attention_mask, 1e-12)
-      modelOutput(i) = output
-    }
-
-    val model = if (outputAllBlock) {
-        Model(Array(wordInput, tokenTypeInput, positionInput, attentionMask), modelOutput)
-    } else Model(Array(wordInput, tokenTypeInput, positionInput, attentionMask), modelOutput.last)
-
-    model.asInstanceOf[AbstractModule[Activity, Activity, T]]
-  }
-
-  override def mlp(x: Variable[T], hiddenSize: Int): Variable[T] = {
-    val h = Dense(intermediateSize).from(x)
-    val a = gelu(h)
-
-    val h2 = Dense(hiddenSize).from(a)
-    Dropout(hiddenPDrop).from(h2)
-  }
-
-  override def multiHeadSelfAttention(x: Variable[T], hiddenSize: Int,
-    attention_mask: Variable[T]): Variable[T] = {
-    val attention_head_size = hiddenSize / nHead
-    val all_head_size = nHead * attention_head_size
-    val query = Dense(all_head_size).from(x)
-    val key = Dense(all_head_size).from(x)
-    val value = Dense(all_head_size).from(x)
-    val q = splitHeads(query, nHead)
-    val k = splitHeads(key, nHead, k = true)
-    val v = splitHeads(value, nHead)
-    val a = attn(q, k, v, false, attention_mask) // // m: (batch, nhead, seqLen, hiddenSize/nhead)
-    val m = mergeHeads(a) // m: (batch, seqLen, hiddenSize)
-
-    val n = Dense(hiddenSize).from(m) // n: (batch, seqLen, hiddenSize)
-    Dropout(hiddenPDrop).from(n)
+  override def projectLayers(outputSize: Int, config: Double*): Net = {
+    Dense(outputSize)
   }
 }
 
