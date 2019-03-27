@@ -124,6 +124,8 @@ class TFEstimator(object):
             assign_step = tf.assign_add(global_step_tensor, add_step_input)
             result = self.estimator._call_input_fn(input_fn, tf.estimator.ModeKeys.TRAIN)
             if isinstance(result, TFDataset):
+                if not result.has_batch:
+                    raise ValueError("The batch_size of TFDataset must be specified when used for training.")
                 spec = self._call_model_fn(result.feature_tensors,
                                            result.label_tensors,
                                            tf.estimator.ModeKeys.TRAIN,

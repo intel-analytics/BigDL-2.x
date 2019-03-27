@@ -123,7 +123,11 @@ class TestTFParkEstimator(ZooTestCase):
             return dataset
 
         estimator = TFEstimator(model_fn, tf.train.AdamOptimizer())
-        estimator.train(input_fn, steps=1)
+
+        self.intercept(lambda: estimator.train(input_fn, steps=1),
+                       "The batch_size of TFDataset must be specified when used for training.")
+
+        estimator.evaluate(input_fn, ["acc"])
         estimator.predict(input_fn).collect()
 
 
