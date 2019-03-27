@@ -26,6 +26,7 @@ JavaCreator.add_creator_class("com.intel.analytics.zoo.pipeline.api.keras.python
 JavaCreator.add_creator_class("com.intel.analytics.zoo.models.python.PythonZooModel")
 JavaCreator.add_creator_class("com.intel.analytics.zoo.pipeline.api.keras.python.PythonZooKeras2")
 JavaCreator.add_creator_class("com.intel.analytics.zoo.feature.python.PythonTextFeature")
+JavaCreator.add_creator_class("com.intel.analytics.zoo.feature.python.PythonFeatureSet")
 JavaCreator.add_creator_class("com.intel.analytics.zoo.pipeline.api.net.python.PythonZooNet")
 JavaCreator.add_creator_class("com.intel.analytics.zoo.pipeline.inference.PythonInferenceModel")
 for clz in creator_classes:
