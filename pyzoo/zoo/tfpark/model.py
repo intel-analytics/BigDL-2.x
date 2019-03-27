@@ -91,7 +91,8 @@ class KerasModel(object):
         if isinstance(x, TFDataset):
             # todo check arguments
             if not x.has_batch:
-                raise ValueError("The batch_size of TFDataset must be specified when used in KerasModel fit.")
+                raise ValueError("The batch_size of TFDataset must be " +
+                                 "specified when used in KerasModel fit.")
             x = _standarize_feature_label_dataset(x, self.model)
             self._fit_distributed(x, validation_split, epochs, **kwargs)
 

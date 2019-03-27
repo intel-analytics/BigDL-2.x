@@ -351,7 +351,8 @@ class TestTFParkModel(ZooTestCase):
         keras_model = self.create_model()
         model = KerasModel(keras_model)
         self.intercept(lambda: model.fit(dataset),
-                       "The batch_size of TFDataset must be specified when used in KerasModel fit.")
+                       "The batch_size of TFDataset must be" +
+                       " specified when used in KerasModel fit.")
 
         dataset = TFDataset.from_rdd(rdd,
                                      features=(tf.float32, [10]),
@@ -359,14 +360,16 @@ class TestTFParkModel(ZooTestCase):
                                      names=["features", "labels"],
                                      )
         self.intercept(lambda: model.evaluate(dataset),
-                       "The batch_per_thread of TFDataset must be specified when used in KerasModel evaluate.")
+                       "The batch_per_thread of TFDataset must be " +
+                       "specified when used in KerasModel evaluate.")
 
         dataset = TFDataset.from_rdd(rdd_x,
                                      features=(tf.float32, [10]),
                                      names=["features", "labels"],
                                      )
         self.intercept(lambda: model.predict(dataset),
-                       "The batch_per_thread of TFDataset must be specified when used in KerasModel predict.")
+                       "The batch_per_thread of TFDataset must be" +
+                       " specified when used in KerasModel predict.")
 
 
 if __name__ == "__main__":
