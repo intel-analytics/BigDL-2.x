@@ -37,13 +37,13 @@ def generate_tf_dataset(examples, seq_len, batch_size, mode="train"):
     if mode == "eval" or mode == "predict":
         return TFDataset.from_rdd(rdd,
                                   names=["input_ids", "input_mask", "segment_ids", "label_id"],
-                                  shapes=[[seq_len], [seq_len], [seq_len], [1]],
+                                  shapes=[[seq_len], [seq_len], [seq_len], []],
                                   types=[tf.int32, tf.int32, tf.int32, tf.int32],
                                   batch_per_thread=4)
     else:
         return TFDataset.from_rdd(rdd,
                                   names=["input_ids", "input_mask", "segment_ids", "label_id"],
-                                  shapes=[[seq_len], [seq_len], [seq_len], [1]],
+                                  shapes=[[seq_len], [seq_len], [seq_len], []],
                                   types=[tf.int32, tf.int32, tf.int32, tf.int32],
                                   batch_size=batch_size)
 
@@ -78,7 +78,6 @@ if __name__ == '__main__':
 
     # Model loading and construction
     input_ids, input_mask, segment_ids, label_ids = train_dataset.tensors
-    label_ids = tf.squeeze(label_ids)
     loss, per_example_loss, logits, probabilities = create_model(bert_config, True, input_ids, input_mask, segment_ids,
                                                                  label_ids, len(label_list), False)
 
@@ -98,7 +97,6 @@ if __name__ == '__main__':
     tf.reset_default_graph()
     sess = tf.Session()
     input_ids, input_mask, segment_ids, label_ids = eval_dataset.tensors
-    label_ids = tf.squeeze(label_ids)
     loss, per_example_loss, logits, probabilities = create_model(bert_config, False, input_ids, input_mask, segment_ids,
                                                                  label_ids, len(label_list), False)
     saver = tf.train.Saver()
