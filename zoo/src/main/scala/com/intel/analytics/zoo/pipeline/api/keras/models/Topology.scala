@@ -442,7 +442,6 @@ abstract class KerasNet[T](implicit val tag: ClassTag[T], implicit val ev: Tenso
 
     this.fit(trainData, nbEpoch, valData)
     releaseDataSets(Array(trainData, valData))
-
   }
 
   def fit(
