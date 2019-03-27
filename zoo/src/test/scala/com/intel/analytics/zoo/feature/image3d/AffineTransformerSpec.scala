@@ -24,9 +24,8 @@ import com.intel.analytics.zoo.feature.image.ImageSet
 import org.apache.spark.SparkContext
 import org.scalatest.{FlatSpec, Matchers}
 
-class AffineTransformerSpec extends TorchSpec{
+class AffineTransformerSpec extends FlatSpec with Matchers{
   "An AffineTransformer" should "generate correct output when dimension of depth is 1" in {
-    torchCheck()
     val seed = 100
     RNG.setSeed(seed)
     val input = Tensor[Double](1, 10, 10)
@@ -87,7 +86,6 @@ class AffineTransformerSpec extends TorchSpec{
   }
 
   "An AffineTransformer" should "generate correct output when dimension of height is 1" in {
-    torchCheck()
     val seed = 100
     RNG.setSeed(seed)
     val input = Tensor[Double](10, 1, 10)
@@ -143,7 +141,6 @@ class AffineTransformerSpec extends TorchSpec{
   }
 
   "An AffineTransformer" should "generate correct output when dimension of width is 1" in {
-    torchCheck()
     val seed = 100
     RNG.setSeed(seed)
     val input = Tensor[Double](10, 10, 1)
@@ -189,7 +186,6 @@ class AffineTransformerSpec extends TorchSpec{
       0.45021659374098083, 0.18498730051185502, 0.7016652106321166, 0.635941540821923, 0.3230204399592828, 0.048420564737170935, 0.048420564737170935, 0.048420564737170935, 0.048420564737170935, 0.048420564737170935,
       0.34397570975731173, 0.056832111041893445, 0.3606082114463558, 0.3104244235442204, 0.048420564737170935, 0.048420564737170935, 0.048420564737170935, 0.048420564737170935, 0.048420564737170935,0.048420564737170935,
       0.1624663604471237, 0.6682567507337012, 0.048420564737170935, 0.048420564737170935, 0.048420564737170935, 0.048420564737170935, 0.048420564737170935, 0.048420564737170935, 0.048420564737170935, 0.048420564737170935), Array(10, 10))
-    println(dstTorch)
     val dstTensor = Tensor[Double](
       storage = Storage[Double](dst[Tensor[Float]](ImageFeature.imageTensor).storage().array()
         .map(_.toDouble)), storageOffset = 1, size = Array(10, 10, 1))
