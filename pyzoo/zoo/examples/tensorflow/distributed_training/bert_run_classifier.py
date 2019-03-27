@@ -19,7 +19,7 @@ from optparse import OptionParser
 import tensorflow as tf
 from bigdl.optim.optimizer import Adam, MaxEpoch
 from zoo.common.nncontext import *
-from zoo.pipeline.api.net import TFDataset, TFOptimizer
+from zoo.pipeline.api.net import TFDataset, TFOptimizer, TFPredictor
 from tokenization import FullTokenizer
 from modeling import BertConfig, get_assignment_map_from_checkpoint
 from run_classifier import MrpcProcessor, convert_examples_to_features, create_model
@@ -30,15 +30,22 @@ def to_list_numpy(feature):
             np.array(feature.segment_ids), np.array(feature.label_id)]
 
 
-def generate_tf_dataset(examples, seq_len, batch_size):
+def generate_tf_dataset(examples, seq_len, batch_size, mode="train"):
     features = convert_examples_to_features(examples, label_list, seq_len, tokenizer)
     features = [to_list_numpy(feature) for feature in features]
     rdd = getOrCreateSparkContext().parallelize(features)
-    return TFDataset.from_rdd(rdd,
-                              names=["input_ids", "input_mask", "segment_ids", "label_id"],
-                              shapes=[[seq_len], [seq_len], [seq_len], [1]],
-                              types=[tf.int32, tf.int32, tf.int32, tf.int32],
-                              batch_size=batch_size)
+    if mode == "eval" or mode == "predict":
+        return TFDataset.from_rdd(rdd,
+                                  names=["input_ids", "input_mask", "segment_ids", "label_id"],
+                                  shapes=[[seq_len], [seq_len], [seq_len], [1]],
+                                  types=[tf.int32, tf.int32, tf.int32, tf.int32],
+                                  batch_per_thread=4)
+    else:
+        return TFDataset.from_rdd(rdd,
+                                  names=["input_ids", "input_mask", "segment_ids", "label_id"],
+                                  shapes=[[seq_len], [seq_len], [seq_len], [1]],
+                                  types=[tf.int32, tf.int32, tf.int32, tf.int32],
+                                  batch_size=batch_size)
 
 
 if __name__ == '__main__':
@@ -46,7 +53,7 @@ if __name__ == '__main__':
     parser.add_option("--bert_base_dir", dest="bert_base_dir")
     parser.add_option("--data_dir", dest="data_dir")
     parser.add_option("--output_dir", dest="output_dir")
-    parser.add_option("--batch_size", dest="batch_size", type=int, default=112)
+    parser.add_option("--batch_size", dest="batch_size", type=int, default=32)
     parser.add_option("--max_seq_length", dest="max_seq_length", type=int, default=128)
     parser.add_option("-e", "--nb_epoch", dest="nb_epoch", type=int, default=3)
     parser.add_option("-l", "--learning_rate", dest="learning_rate", type=float, default=2e-5)
@@ -56,6 +63,7 @@ if __name__ == '__main__':
     bert_config_file = options.bert_base_dir + "/bert_config.json"
     vocab_file = options.bert_base_dir + "/vocab.txt"
     init_checkpoint = options.bert_base_dir + "/bert_model.ckpt"
+    bert_config = BertConfig.from_json_file(bert_config_file)
 
     sc = init_nncontext("BERT MRPC Classification Example")
 
@@ -66,25 +74,19 @@ if __name__ == '__main__':
     train_examples = processor.get_train_examples(options.data_dir)
     train_dataset = generate_tf_dataset(train_examples, options.max_seq_length, options.batch_size)
     eval_examples = processor.get_dev_examples(options.data_dir)
-    eval_dataset = generate_tf_dataset(eval_examples, options.max_seq_length, options.batch_size)
+    eval_dataset = generate_tf_dataset(eval_examples, options.max_seq_length, options.batch_size, "eval")
 
     # Model loading and construction
     input_ids, input_mask, segment_ids, label_ids = train_dataset.tensors
     label_ids = tf.squeeze(label_ids)
-    bert_config = BertConfig.from_json_file(bert_config_file)
     loss, per_example_loss, logits, probabilities = create_model(bert_config, True, input_ids, input_mask, segment_ids,
                                                                  label_ids, len(label_list), False)
+
     tvars = tf.trainable_variables()
     initialized_variable_names = {}
     if init_checkpoint:
         assignment_map, initialized_variable_names = get_assignment_map_from_checkpoint(tvars, init_checkpoint)
         tf.train.init_from_checkpoint(init_checkpoint, assignment_map)
-    tf.logging.info("**** Trainable Variables ****")
-    for var in tvars:
-        init_string = ""
-        if var.name in initialized_variable_names:
-            init_string = ", *INIT_FROM_CKPT*"
-            tf.logging.info("  name = %s, shape = %s%s", var.name, var.shape, init_string)
 
     # Training
     optimizer = TFOptimizer(loss, Adam(options.learning_rate))
@@ -92,4 +94,17 @@ if __name__ == '__main__':
     saver = tf.train.Saver()
     saver.save(optimizer.sess, options.output_dir + "/model")
 
-    print("Finished")
+    # Evaluation
+    tf.reset_default_graph()
+    sess = tf.Session()
+    input_ids, input_mask, segment_ids, label_ids = eval_dataset.tensors
+    label_ids = tf.squeeze(label_ids)
+    loss, per_example_loss, logits, probabilities = create_model(bert_config, False, input_ids, input_mask, segment_ids,
+                                                                 label_ids, len(label_list), False)
+    saver = tf.train.Saver()
+    saver.restore(sess, options.output_dir + "/model")
+    predictions = tf.to_int32(tf.argmax(logits, axis=1))
+    correct = tf.expand_dims(tf.to_int32(tf.equal(predictions, label_ids)), axis=1)
+    predictor = TFPredictor(sess, [correct])
+    accuracy = predictor.predict().mean()
+    print("Evaluation accuracy is %s" % accuracy[0])
