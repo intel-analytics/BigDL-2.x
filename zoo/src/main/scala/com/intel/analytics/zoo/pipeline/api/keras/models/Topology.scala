@@ -376,6 +376,18 @@ abstract class KerasNet[T](implicit val tag: ClassTag[T], implicit val ev: Tenso
   }
 
   /**
+   * Release DataSet from memory. This method is used to release the rdd
+   * which is cached when toDataSet() method is called and rdd is cached
+   * TODO: modify this when BigDL fix this issue
+   *
+   * @param dataSet Target DataSet to release
+   */
+  def releaseDataSet(dataSet: DataSet[MiniBatch[T]]): Unit = {
+    dataSet.toDistributed().unpersist()
+    dataSet.toDistributed().originRDD().unpersist()
+  }
+
+  /**
    * Train a model for a fixed number of epochs on Sample RDD.
    *
    * @param x Training dataset, RDD of Sample.
@@ -394,12 +406,10 @@ abstract class KerasNet[T](implicit val tag: ClassTag[T], implicit val ev: Tenso
     val trainData = toDataSet(x, batchSize, featurePaddingParam, labelPaddingParam)
     val valData = toDataSet(validationData, batchSize, featurePaddingParam, labelPaddingParam)
     this.fit(trainData, nbEpoch, valData)
-    // due to bigdl issue, need to call 2 times
-    trainData.toDistributed().unpersist()
-    trainData.toDistributed().originRDD().unpersist()
+
+    releaseDataSet(trainData)
     if (valData != null) {
-      valData.toDistributed().unpersist()
-      valData.toDistributed().originRDD().unpersist()
+      releaseDataSet(valData)
     }
   }
 
@@ -417,7 +427,16 @@ abstract class KerasNet[T](implicit val tag: ClassTag[T], implicit val ev: Tenso
       nbEpoch: Int,
       validationData: ImageSet)(implicit ev: TensorNumeric[T]): Unit = {
     KerasUtils.validateBatchSize(batchSize)
+    val trainData = toDataSet(x, batchSize)
+    val valData = toDataSet(validationData, batchSize)
     this.fit(toDataSet(x, batchSize), nbEpoch, toDataSet(validationData, batchSize))
+
+    if (x.isDistributed()) {
+      releaseDataSet(trainData)
+      if (valData != null) {
+        releaseDataSet(valData)
+      }
+    }
   }
 
   def fit(
