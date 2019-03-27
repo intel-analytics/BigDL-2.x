@@ -19,8 +19,9 @@ package com.intel.analytics.zoo.examples.streaming.objectdetection
 
 import com.intel.analytics.bigdl.transform.vision.image.ImageFeature
 import com.intel.analytics.zoo.common.NNContext
+import com.intel.analytics.zoo.examples.streaming.objectdetection.StreamingObjectDetection.PredictParam
 import com.intel.analytics.zoo.feature.image.{ImageBytesToMat, ImageSet}
-import com.intel.analytics.zoo.models.image.objectdetection.{ObjectDetector, Visualizer}
+import com.intel.analytics.zoo.models.image.objectdetection.Visualizer
 import com.intel.analytics.zoo.pipeline.inference.InferenceModel
 import org.apache.hadoop.conf.Configuration
 import org.apache.hadoop.fs.{FileSystem, Path}
@@ -37,10 +38,6 @@ object StreamingInferenceObjectDetection {
 
   val logger = Logger.getLogger(getClass)
 
-  case class PredictParam(streamingPath: String = "file:///tmp/zoo/streaming",
-                          outputFolder: String = "file:///tmp/zoo/output",
-                          model: String = "",
-                          nPartition: Int = 1)
 
   val parser = new OptionParser[PredictParam]("Analytics Zoo Streaming Object Detection") {
     head("Analytics Zoo Streaming Object Detection")
@@ -70,6 +67,8 @@ object StreamingInferenceObjectDetection {
       val model = new InferenceModel(10)
       model.doLoad(params.model)
 
+      val visualizer = Visualizer(, encoding = "jpg")
+
       val lines = ssc.textFileStream(params.streamingPath)
       lines.foreachRDD { batchPath =>
         // Read image files and load to RDD
@@ -82,7 +81,7 @@ object StreamingInferenceObjectDetection {
           dataSet -> ImageBytesToMat(imageCodec = Imgcodecs.CV_LOAD_IMAGE_COLOR)
           dataSet.rdd.foreach { img =>
             val output = model.doPredict(img.toTensor(ImageFeature.imageTensor))
-            writeFile(params.outputFolder, img.uri(), output)
+            writeFile(params.outputFolder, img.uri(), output.toTensor[Float].toArray())
           }
         }
       }

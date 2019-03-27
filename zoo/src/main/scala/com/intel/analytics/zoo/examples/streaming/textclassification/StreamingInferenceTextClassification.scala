@@ -25,14 +25,6 @@ import org.apache.spark.streaming.{Seconds, StreamingContext}
 import scopt.OptionParser
 
 
-case class TextClassificationParams(
-                                     host: String = "localhost",
-                                     port: Int = 9999,
-                                     indexPath: String = "word2index.txt",
-                                     sequenceLength: Int = 500,
-                                     batchSize: Int = 128,
-                                     partitionNum: Int = 4, model: Option[String] = None)
-
 object StreamingTextInference {
 
   def main(args: Array[String]) {
