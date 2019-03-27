@@ -393,7 +393,7 @@ abstract class KerasNet[T](implicit val tag: ClassTag[T], implicit val ev: Tenso
    */
   def releaseDataSets(dataSets: Array[DataSet[MiniBatch[T]]]): Unit = {
     for (ds <- dataSets) {
-      if (ds != null) {
+      if (ds != null && ds.isInstanceOf[DistributedDataSet[T]]) {
         ds.toDistributed().unpersist()
         ds.toDistributed().originRDD().unpersist()
       }
