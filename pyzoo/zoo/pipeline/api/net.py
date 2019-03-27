@@ -530,7 +530,7 @@ with variable_creator_scope():
         dataset = tf.get_collection(all_required_inputs[0].name)[0]
 
         inputs = []
-        for item in list(dataset.tensors):
+        for item in list(dataset._original_tensors):
             if isinstance(item, dict):
                 inputs = inputs + list(item.values())
             else:
@@ -735,6 +735,7 @@ class TFDataset:
         if batch_size > 0 and batch_per_thread > 0:
             raise ValueError("bath_size and batch_per_thread should not be set simultaneously")
 
+        self.has_batch = True
         node_num, core_num = get_node_and_core_number()
         self.total_core_num = node_num * core_num
         if batch_size > 0:
@@ -746,6 +747,8 @@ class TFDataset:
         if batch_size <= 0 and batch_per_thread <= 0:
             batch_per_thread = 1
             batch_size = self.total_core_num
+            self.has_batch = False
+
         self.batch_size = batch_size
         self.batch_per_thread = batch_per_thread
         self.hard_code_batch_size = hard_code_batch_size
@@ -807,6 +810,13 @@ class TFDataset:
             tf.get_default_graph().clear_collection(tensor.name)
             tf.add_to_collection(tensor.name, self)
 
+        self._original_tensors = tensors
+        self._tensors = tensors
+
+        if not self.has_batch:
+            self._tensors = nest.pack_sequence_as(self.tensor_structure,
+                                                  [t[0] for t in nest.flatten(tensors)])
+
         return tensors
 
     @property
@@ -818,8 +828,7 @@ class TFDataset:
         '''
 
         if self._tensors is None:
-            tensors = self._create_placeholders()
-            self._tensors = tensors
+            self._create_placeholders()
 
         return self._tensors
 
@@ -827,8 +836,7 @@ class TFDataset:
     def feature_tensors(self):
 
         if self._tensors is None:
-            tensors = self._create_placeholders()
-            self._tensors = tensors
+            self._create_placeholders()
 
         if not isinstance(self._tensors, tuple):
             raise ValueError("To use feature_tensors, " +
@@ -841,8 +849,7 @@ class TFDataset:
     def label_tensors(self):
 
         if self._tensors is None:
-            tensors = self._create_placeholders()
-            self._tensors = tensors
+            self._create_placeholders()
 
         if not isinstance(self._tensors, tuple):
             raise ValueError("To use label_tensors, " +
