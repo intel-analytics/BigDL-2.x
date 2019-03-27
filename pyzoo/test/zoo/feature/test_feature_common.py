@@ -25,6 +25,13 @@ from zoo import init_nncontext, init_spark_conf
 
 class TestFeatureCommon(ZooTestCase):
 
+    def setup_method(self, method):
+        """ setup any state tied to the execution of the given method in a
+        class.  setup_method is invoked for every test method of a class.
+        """
+        sparkConf = init_spark_conf().setMaster("local[4]").setAppName("test feature set")
+        self.sc = init_nncontext(sparkConf)
+
     def test_BigDL_adapter(self):
         new_preprocessing = BigDLAdapter(Resize(1, 1))
         assert isinstance(new_preprocessing, Preprocessing)
@@ -41,7 +48,6 @@ class TestFeatureCommon(ZooTestCase):
 
     def test_train_FeatureSet(self):
 
-        sc = init_nncontext(init_spark_conf().setMaster("local[4]").setAppName("test feature set"))
         batch_size = 8
         epoch_num = 5
         images = []
@@ -52,8 +58,8 @@ class TestFeatureCommon(ZooTestCase):
             images.append(features)
             labels.append(label)
 
-        image_frame = DistributedImageFrame(sc.parallelize(images),
-                                            sc.parallelize(labels))
+        image_frame = DistributedImageFrame(self.sc.parallelize(images),
+                                            self.sc.parallelize(labels))
 
         transformer = Pipeline([BytesToMat(), Resize(256, 256), CenterCrop(224, 224),
                                 ChannelNormalize(0.485, 0.456, 0.406, 0.229, 0.224, 0.225),
@@ -85,49 +91,17 @@ class TestFeatureCommon(ZooTestCase):
         predict_result = trained_model.predict_image(image_frame.transform(transformer))
         assert(predict_result.get_predict().count(), 8)
 
-    def test_simple_flow(self):
-        FEATURES_DIM = 2
+    def create_feature_set_from_rdd(self):
+        dim = 2
         data_len = 100
-        batch_size = 32
-        epoch_num = 5
 
         def gen_rand_sample():
-            features = np.random.uniform(0, 1, (FEATURES_DIM))
+            features = np.random.uniform(0, 1, dim)
             label = np.array((2 * features).sum() + 0.4)
             return Sample.from_ndarray(features, label)
 
-        trainingData = FeatureSet.rdd(self.sc.parallelize(range(0, data_len)).map(
+        FeatureSet.rdd(self.sc.parallelize(range(0, data_len)).map(
             lambda i: gen_rand_sample())).to_dataset()
-
-        model_test = Sequential()
-        l1_test = Linear(FEATURES_DIM, 1).set_init_method(Xavier(), Zeros()) \
-            .set_name("linear1_test")
-        assert "linear1_test" == l1_test.name()
-        model_test.add(l1_test)
-        model_test.add(Sigmoid())
-
-        model = Sequential()
-        l1 = Linear(FEATURES_DIM, 1).set_init_method(Xavier(), Zeros()).set_name("linear1")
-        assert "linear1" == l1.name()
-        model.add(l1)
-
-        optim_method = SGD(learningrate=0.01, learningrate_decay=0.0002, weightdecay=0.0,
-                           momentum=0.0, dampening=0.0, nesterov=False,
-                           leaningrate_schedule=Poly(0.5, int((data_len / batch_size) * epoch_num)))
-        optimizer = Optimizer.create(
-            model=model_test,
-            training_set=trainingData,
-            criterion=MSECriterion(),
-            optim_method=optim_method,
-            end_trigger=MaxEpoch(epoch_num),
-            batch_size=batch_size)
-        optimizer.set_validation(
-            batch_size=batch_size,
-            val_rdd=trainingData,
-            trigger=EveryEpoch(),
-            val_method=[Top1Accuracy()]
-        )
-        optimizer.optimize()
 
 
 if __name__ == "__main__":
