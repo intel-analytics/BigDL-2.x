@@ -80,8 +80,8 @@ if __name__ == '__main__':
                                optimizer=tf.train.AdamOptimizer(options.learning_rate),
                                model_dir=options.output_dir + "/model")
     estimator.train(train_input_fn, steps=len(train_examples)*options.nb_epoch//options.batch_size)
-    result = estimator.evaluate(eval_input_fn, steps=len(eval_examples)//options.batch_size,
-                                eval_methods=["acc"])
+    result = estimator.evaluate(eval_input_fn, eval_methods=["acc"])
     print(result)
+    estimator.predict(eval_input_fn)
 
     print("Finished")
