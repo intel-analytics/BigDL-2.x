@@ -17,12 +17,12 @@
 package com.intel.analytics.zoo.examples.streaming.objectdetection
 
 
-import com.intel.analytics.bigdl.transform.vision.image.ImageFeature
+import com.intel.analytics.bigdl.transform.vision.image.{ImageFeature, MatToFloats}
 import com.intel.analytics.zoo.common.NNContext
 import com.intel.analytics.zoo.examples.streaming.objectdetection.StreamingObjectDetection.PredictParam
 import com.intel.analytics.zoo.feature.image.{ImageBytesToMat, ImageSet}
 import com.intel.analytics.zoo.models.image.objectdetection.Visualizer
-import com.intel.analytics.zoo.pipeline.inference.InferenceModel
+import com.intel.analytics.zoo.pipeline.inference.{FloatModel, InferenceModel, InferenceModelFactory}
 import org.apache.hadoop.conf.Configuration
 import org.apache.hadoop.fs.{FileSystem, Path}
 import org.apache.log4j.{Level, Logger}
@@ -62,29 +62,30 @@ object StreamingInferenceObjectDetection {
       val sc = NNContext.initNNContext("Analytics Zoo Streaming Object Detection")
       val ssc = new StreamingContext(sc, Seconds(3))
 
-      // Load pre-trained model
-//      val model = ObjectDetector.loadModel[Float](params.model)
-//      val model = new InferenceModel(10)
-//      model.doLoad(params.model)
-//
+      // Load pre-trained bigDL model
+      val model = InferenceModelFactory.loadFloatModel(params.model)
+
+
 //      val visualizer = Visualizer(, encoding = "jpg")
-//
-//      val lines = ssc.textFileStream(params.streamingPath)
-//      lines.foreachRDD { batchPath =>
-//        // Read image files and load to RDD
-//        logger.debug("batchPath partition " + batchPath.getNumPartitions)
-//        logger.debug("batchPath count " + batchPath.count())
-//        if (!batchPath.isEmpty()) {
-//          // RDD[String] => RDD[ImageFeature]
-//          val dataSet = ImageSet.rdd(batchPath.map(path => readFile(path)))
-//          // Resize image
-//          dataSet -> ImageBytesToMat(imageCodec = Imgcodecs.CV_LOAD_IMAGE_COLOR)
-//          dataSet.rdd.foreach { img =>
-//            val output = model.doPredict(img.toTensor(ImageFeature.imageTensor))
+
+      val lines = ssc.textFileStream(params.streamingPath)
+      lines.foreachRDD { batchPath =>
+        // Read image files and load to RDD
+        logger.debug("batchPath partition " + batchPath.getNumPartitions)
+        logger.debug("batchPath count " + batchPath.count())
+        if (!batchPath.isEmpty()) {
+          // RDD[String] => RDD[ImageFeature]
+          val dataSet = ImageSet.rdd(batchPath.map(path => readFile(path)))
+          // Resize image
+          dataSet -> ImageBytesToMat(imageCodec = Imgcodecs.CV_LOAD_IMAGE_COLOR)
+          dataSet-> MatToFloats()
+          dataSet.rdd.foreach { img =>
+            val output = model.predict(img.toTensor(ImageFeature.imageTensor)
+              .addSingletonDimension())
 //            writeFile(params.outputFolder, img.uri(), output.toTensor[Float].toArray())
-//          }
-//        }
-//      }
+          }
+        }
+      }
       ssc.start()
       ssc.awaitTermination()
       logger.info(s"labeled images are saved to ${params.outputFolder}")
