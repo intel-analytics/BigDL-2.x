@@ -29,7 +29,7 @@ def feature_to_input(feature):
     res["input_ids"] = np.array(feature.input_ids)
     res["input_mask"] = np.array(feature.input_mask)
     res["segment_ids"] = np.array(feature.segment_ids)
-    return res, feature.label_id
+    return res, np.array(feature.label_id)
 
 
 def input_fn_builder(examples, label_list, max_seq_length, tokenizer, batch_size):
@@ -46,11 +46,11 @@ def input_fn_builder(examples, label_list, max_seq_length, tokenizer, batch_size
                                       labels=(tf.int32, []),
                                       batch_size=batch_size)
         else:
-            return TFDataset.from_rdd(rdd,
+            return TFDataset.from_rdd(rdd.map(lambda x: x[0]),
                                       features={"input_ids": (tf.int32, [max_seq_length]),
                                                 "input_mask": (tf.int32, [max_seq_length]),
                                                 "segment_ids": (tf.int32, [max_seq_length])},
-                                      batch_size=batch_size)
+                                      batch_per_thread=4)
     return input_fn
 
 
@@ -58,8 +58,8 @@ if __name__ == '__main__':
     parser = OptionParser()
     parser.add_option("--bert_base_dir", dest="bert_base_dir")
     parser.add_option("--data_dir", dest="data_dir")
-    parser.add_option("--output_dir", dest="output_dir", default="/tmp/bert")
-    parser.add_option("--batch_size", dest="batch_size", type=int, default=112)
+    parser.add_option("--output_dir", dest="output_dir")
+    parser.add_option("--batch_size", dest="batch_size", type=int, default=32)
     parser.add_option("--max_seq_length", dest="max_seq_length", type=int, default=128)
     parser.add_option("-e", "--nb_epoch", dest="nb_epoch", type=int, default=3)
     parser.add_option("-l", "--learning_rate", dest="learning_rate", type=float, default=2e-5)
@@ -74,6 +74,8 @@ if __name__ == '__main__':
     train_input_fn = input_fn_builder(train_examples, label_list, options.max_seq_length, tokenizer, options.batch_size)
     eval_examples = processor.get_dev_examples(options.data_dir)
     eval_input_fn = input_fn_builder(eval_examples, label_list, options.max_seq_length, tokenizer, options.batch_size)
+    test_examples = processor.get_test_examples(options.data_dir)
+    test_input_fn = input_fn_builder(test_examples, label_list, options.max_seq_length, tokenizer, options.batch_size)
 
     estimator = BERTClassifier(len(label_list), bert_config=options.bert_base_dir + "/bert_config.json",
                                init_checkpoint=options.bert_base_dir + "/bert_model.ckpt",
@@ -82,6 +84,8 @@ if __name__ == '__main__':
     estimator.train(train_input_fn, steps=len(train_examples)*options.nb_epoch//options.batch_size)
     result = estimator.evaluate(eval_input_fn, eval_methods=["acc"])
     print(result)
-    estimator.predict(eval_input_fn)
+    predictions = estimator.predict(test_input_fn)
+    for prediction in predictions.take(5):
+        print(prediction)
 
     print("Finished")

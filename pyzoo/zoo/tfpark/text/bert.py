@@ -44,6 +44,7 @@ def _bert_model_fn(features, labels, mode, params):
 
         logits = tf.matmul(output_layer, output_weights, transpose_b=True)
         logits = tf.nn.bias_add(logits, output_bias)
+        probabilities = tf.nn.softmax(logits, axis=-1)
 
         tvars = tf.trainable_variables()
         if params["init_checkpoint"]:
@@ -52,13 +53,13 @@ def _bert_model_fn(features, labels, mode, params):
             tf.train.init_from_checkpoint(params["init_checkpoint"], assignment_map)
 
         if mode == tf.estimator.ModeKeys.PREDICT:
-            return TFEstimatorSpec(mode=mode, predictions=logits)
+            return TFEstimatorSpec(mode=mode, predictions=probabilities)
         else:
             log_probs = tf.nn.log_softmax(logits, axis=-1)
             one_hot_labels = tf.one_hot(labels, depth=params["num_labels"], dtype=tf.float32)
             per_example_loss = -tf.reduce_sum(one_hot_labels * log_probs, axis=-1)
             loss = tf.reduce_mean(per_example_loss)
-            return TFEstimatorSpec(mode=mode, predictions=logits, loss=loss)
+            return TFEstimatorSpec(mode=mode, predictions=probabilities, loss=loss)
 
 
 class BERTClassifier(TFEstimator):
