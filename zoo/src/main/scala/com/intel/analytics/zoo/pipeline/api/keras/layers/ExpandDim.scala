@@ -34,7 +34,6 @@ class ExpandDim[T: ClassTag](
   override def computeOutputShape(inputShape: Shape): Shape = {
     val output = inputShape.toSingle().toArray.toBuffer
     output.insert(dim, 1)
-    println("$$$$$" + output.toArray.mkString(","))
     Shape(output.toArray)
   }
 

@@ -538,11 +538,11 @@ class TestOperator(ZooTestCase):
                                Lambda(function=z_func, ), [[2, 3, 4], [2, 3, 4]])
 
     def test_ExpandDim(self):
-        input = Parameter(shape=(3,))
+        inputdata = np.array([2, 1, 6])
+        input = Parameter(shape=(3,), init_weight=inputdata)
         expand = ExpandDim(dim=0)(input)
         model = Model(input, expand)
         assert model.get_output_shape() == (1, 3)
-        inputdata = np.array([2, 1, 6])
         desired = inputdata.reshape(1, 3)
         outputdata = model.forward(inputdata)
         np.testing.assert_almost_equal(outputdata, desired, decimal=4)
