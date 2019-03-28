@@ -24,7 +24,6 @@ import torch
 import onnx.helper as helper
 import onnx
 import pytest
-import caffe2.python.onnx.backend as onnx_caffe2_backend
 from zoo.pipeline.api.onnx.onnx_loader import OnnxLoader
 from onnx import backend
 from onnx.backend import test
@@ -1431,58 +1430,3 @@ class TestModelLoading(OnnxTestCase):
 
         output = OnnxLoader.run_node(node, [x])
         np.testing.assert_almost_equal(output["y"], y, decimal=5)
-
-    def test_vgg(self):
-        ndarray_input = np.random.randn(1, 3, 224, 224).astype(np.float32)
-        onnx_model = onnx.load("/home/dingdi/models/vgg.onnx")
-        zmodel = OnnxLoader(onnx_model.graph).to_keras()
-        zmodel.training(is_training=False)
-        zoutput = zmodel.forward(ndarray_input)
-        rep = onnx_caffe2_backend.prepare(onnx_model, device="CPU")  # or "CPU"
-        outputs = rep.run(ndarray_input)
-        self.assert_allclose(zoutput, outputs[0])
-
-    def test_super_resolution(self):
-        x = torch.randn(4, 1, 85, 85, requires_grad=True)
-        onnx_model = onnx.load("/tmp/onnx_model_name.onnx")
-        W = {onnx_model.graph.input[0].name: x.data.numpy()}
-        prepared_backend = onnx_caffe2_backend.prepare(onnx_model, device="CPU")
-        coutput = prepared_backend.run(W)[0]
-        zmodel = OnnxLoader(onnx_model.graph).to_keras()
-        zoutput = zmodel.forward(W)
-        np.testing.assert_almost_equal(zoutput, coutput, decimal=3)
-        print("Exported model has been executed on Caffe2 backend, and the result looks good!")
-        if self.assert_allclose(coutput, zoutput, rtol=1e-6, atol=1e-6):
-            assert tuple(coutput.size()[1:]) == zmodel.get_output_shape()[1:]
-
-    def test_squeezenet(self):
-        ndarray_input = np.random.randn(1, 3, 224, 224).astype(np.float32)
-        onnx_model = onnx.load("/home/dingdi/models/squeezenet.onnx")
-        zmodel = OnnxLoader(onnx_model.graph).to_keras()
-        zmodel.training(is_training=True)
-        zoutput = zmodel.forward(ndarray_input)
-        rep = onnx_caffe2_backend.prepare(onnx_model, device="CPU")  # or "CPU"
-        outputs = rep.run(ndarray_input)
-        self.assert_allclose(zoutput, outputs[0])
-
-    def test_shufflenet(self):
-        ndarray_input = np.random.randn(1, 3, 224, 224).astype(np.float32)
-        onnx_model = onnx.load("/home/dingdi/models/shufflenet.onnx")
-        zmodel = OnnxLoader(onnx_model.graph).to_keras()
-        zmodel.training(is_training=False)
-        zoutput = zmodel.forward(ndarray_input)
-        rep = onnx_caffe2_backend.prepare(onnx_model, device="CPU")  # or "CPU"
-        outputs = rep.run(ndarray_input)
-        self.assert_allclose(zoutput, outputs[0])
-
-    def test_zfnet512(self):
-        ndarray_input = np.random.randn(1, 3, 224, 224).astype(np.float32)
-        onnx_model = onnx.load("/home/dingdi/models/zfnet512.onnx")
-        zmodel = OnnxLoader(onnx_model.graph).to_keras()
-        zmodel.training(is_training=False)
-        zoutput = zmodel.forward(ndarray_input)
-        rep = onnx_caffe2_backend.prepare(onnx_model, device="CPU")  # or "CPU"
-        outputs = rep.run(ndarray_input)
-        self.assert_allclose(zoutput, outputs[0])
-
-
