@@ -19,7 +19,7 @@ package com.intel.analytics.zoo.examples.streaming.textclassification
 import com.intel.analytics.zoo.common.NNContext
 import com.intel.analytics.zoo.feature.text.{TextFeature, TextSet}
 import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric.NumericFloat
-import com.intel.analytics.zoo.pipeline.inference.{FloatModel, InferenceModel, InferenceModelFactory}
+import com.intel.analytics.zoo.pipeline.inference.InferenceModel
 import org.apache.spark.storage.StorageLevel
 import org.apache.spark.streaming.{Seconds, StreamingContext}
 import scopt.OptionParser
@@ -83,6 +83,7 @@ object StreamingInferenceTextClassification {
             .shapeSequence(param.sequenceLength).generateSample()
           transformed.toDistributed().rdd.foreach { text =>
             val tensor = text.getSample.feature()
+            // Add one more dim because of batch requirement of model
             val predictSet = model.doPredict(tensor.addSingletonDimension())
             println(predictSet.toTensor
               .select(1, 1).toArray().mkString("\n"))

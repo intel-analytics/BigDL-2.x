@@ -17,13 +17,14 @@
 package com.intel.analytics.zoo.examples.streaming.objectdetection
 
 
-import com.intel.analytics.bigdl.nn.abstractnn.Activity
-import com.intel.analytics.bigdl.transform.vision.image.{ImageFeature, MatToFloats}
+import com.intel.analytics.bigdl.transform.vision.image.opencv.OpenCVMat
+import com.intel.analytics.bigdl.transform.vision.image.ImageFeature
 import com.intel.analytics.zoo.common.NNContext
 import com.intel.analytics.zoo.examples.streaming.objectdetection.StreamingObjectDetection.PredictParam
-import com.intel.analytics.zoo.feature.image.{ImageBytesToMat, ImageSet}
+import com.intel.analytics.zoo.feature.image.{ImageBytesToMat, ImageMatToFloats, ImageSet}
+import com.intel.analytics.zoo.models.image.objectdetection.LabelReader
 import com.intel.analytics.zoo.models.image.objectdetection.Visualizer
-import com.intel.analytics.zoo.pipeline.inference.{FloatModel, InferenceModel, InferenceModelFactory}
+import com.intel.analytics.zoo.pipeline.inference.InferenceModel
 import org.apache.hadoop.conf.Configuration
 import org.apache.hadoop.fs.{FileSystem, Path}
 import org.apache.log4j.{Level, Logger}
@@ -65,25 +66,31 @@ object StreamingInferenceObjectDetection {
 
       // Load pre-trained bigDL model
       val model = new InferenceModel(4)
-      model.doLoad(params.model)
 
-//      val visualizer = Visualizer(, encoding = "jpg")
+      // TODO Load labelMap, need API help
+      val labelMap = LabelReader.apply("COCO")
 
       val lines = ssc.textFileStream(params.streamingPath)
       lines.foreachRDD { batchPath =>
         // Read image files and load to RDD
         logger.debug("batchPath partition " + batchPath.getNumPartitions)
         logger.debug("batchPath count " + batchPath.count())
+        val visualizer = Visualizer(labelMap, encoding = "jpg")
         if (!batchPath.isEmpty()) {
           // RDD[String] => RDD[ImageFeature]
           val dataSet = ImageSet.rdd(batchPath.map(path => readFile(path)))
           // Resize image
           dataSet -> ImageBytesToMat(imageCodec = Imgcodecs.CV_LOAD_IMAGE_COLOR)
-          dataSet-> MatToFloats()
+          dataSet -> ImageMatToFloats()
           dataSet.rdd.foreach { img =>
+            // Add one more dim because of batch requirement of model
             val output = model.doPredict(img.toTensor(ImageFeature.imageTensor)
               .addSingletonDimension())
-//            writeFile(params.outputFolder, img.uri(), output.toTensor[Float].toArray())
+            // TODO Visualizer also need some changes
+            val result = visualizer.visualize(OpenCVMat.fromImageBytes(img.bytes()),
+              output.toTensor)
+            val resultImg = OpenCVMat.imencode(result, "jpg")
+            writeFile(params.outputFolder, img.uri(), resultImg)
           }
         }
       }
