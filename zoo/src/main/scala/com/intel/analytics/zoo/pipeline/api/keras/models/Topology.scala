@@ -30,11 +30,12 @@ import com.intel.analytics.bigdl.optim.DistriOptimizer.Cache
 import com.intel.analytics.bigdl.optim._
 import com.intel.analytics.bigdl.serialization.Bigdl.BigDLModule
 import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric
+import com.intel.analytics.bigdl.transform.vision.image.ImageFeature
 import com.intel.analytics.bigdl.utils._
 import com.intel.analytics.bigdl.utils.serializer.{DeserializeContext, ModuleData, ModuleSerializer, SerializeContext}
 import com.intel.analytics.bigdl.visualization.{TrainSummary, ValidationSummary}
 import com.intel.analytics.zoo.feature.{DistributedFeatureSet, FeatureSet}
-import com.intel.analytics.zoo.feature.image.ImageSet
+import com.intel.analytics.zoo.feature.image.{ImageFeatureToSample, ImageSet}
 import com.intel.analytics.zoo.feature.text._
 import com.intel.analytics.zoo.pipeline.api.{Net, Predictable}
 import com.intel.analytics.zoo.pipeline.api.autograd.{Lambda, Variable}
@@ -326,6 +327,27 @@ abstract class KerasNet[T](implicit val tag: ClassTag[T], implicit val ev: Tenso
     else null
   }
 
+  private def toDataSet[D: ClassTag](
+      x: FeatureSet[D], batchSize: Int): DataSet[MiniBatch[T]] = {
+    if (x != null) {
+      implicitly[ClassTag[D]].runtimeClass match {
+        case t if t == classOf[Sample[T]] =>
+          (x.asInstanceOf[FeatureSet[Sample[T]]]
+            -> SampleToMiniBatch[T](batchSize)
+            ).asInstanceOf[DataSet[MiniBatch[T]]]
+        case t if t == classOf[ImageFeature] =>
+          (x.asInstanceOf[FeatureSet[ImageFeature]]
+            -> ImageFeatureToSample[T]()
+            -> SampleToMiniBatch[T](batchSize)
+            ).asInstanceOf[DataSet[MiniBatch[T]]]
+        case _ =>
+          throw new IllegalArgumentException(
+            s"${implicitly[ClassTag[T]].runtimeClass} is not supported for now")
+      }
+    }
+      else null
+  }
+
   /**
    * Train a model for a fixed number of epochs on a DataSet.
    *
@@ -449,6 +471,21 @@ abstract class KerasNet[T](implicit val tag: ClassTag[T], implicit val ev: Tenso
       batchSize: Int,
       nbEpoch: Int)(implicit ev: TensorNumeric[T]): Unit = {
     this.fit(x, batchSize, nbEpoch, null)
+  }
+
+  def fit(
+      x: FeatureSet[Sample[T]],
+      batchSize: Int,
+      nbEpoch: Int)(implicit ev: TensorNumeric[T]): Unit = {
+    this.fit(toDataSet(x, batchSize), nbEpoch, null)
+  }
+
+  def fit[D: ClassTag](
+      x: FeatureSet[D],
+      batchSize: Int,
+      nbEpoch: Int,
+      validationData: FeatureSet[D])(implicit ev: TensorNumeric[T]): Unit = {
+    this.fit(toDataSet(x, batchSize), nbEpoch, toDataSet(validationData, batchSize))
   }
 
   /**

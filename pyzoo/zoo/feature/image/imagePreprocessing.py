@@ -40,6 +40,14 @@ class ImageBytesToMat(ImagePreprocessing):
     def __init__(self, byte_key="bytes", image_codec=-1, bigdl_type="float"):
         super(ImageBytesToMat, self).__init__(bigdl_type, byte_key, image_codec)
 
+class ImagePixelBytesToMat(ImagePreprocessing):
+    """
+    Transform byte array(pixels in byte) to OpenCVMat
+    :param byte_key key that maps byte array
+    """
+    def __init__(self, byte_key="bytes", bigdl_type="float"):
+        super(ImagePixelBytesToMat, self).__init__(bigdl_type, byte_key)
+
 
 class ImageResize(ImagePreprocessing):
     """
@@ -337,6 +345,14 @@ class ImageFeatureToTensor(Preprocessing):
     """
     def __init__(self, bigdl_type="float"):
         super(ImageFeatureToTensor, self).__init__(bigdl_type)
+
+
+class ImageFeatureToSample(Preprocessing):
+    """
+    a Transformer that get Sample from ImageFeature.
+    """
+    def __init__(self, bigdl_type="float"):
+        super(ImageFeatureToSample, self).__init__(bigdl_type)
 
 
 class RowToImageFeature(Preprocessing):
