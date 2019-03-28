@@ -17,6 +17,7 @@
 package com.intel.analytics.zoo.examples.streaming.objectdetection
 
 
+import com.intel.analytics.bigdl.nn.abstractnn.Activity
 import com.intel.analytics.bigdl.transform.vision.image.{ImageFeature, MatToFloats}
 import com.intel.analytics.zoo.common.NNContext
 import com.intel.analytics.zoo.examples.streaming.objectdetection.StreamingObjectDetection.PredictParam
@@ -63,8 +64,8 @@ object StreamingInferenceObjectDetection {
       val ssc = new StreamingContext(sc, Seconds(3))
 
       // Load pre-trained bigDL model
-      val model = InferenceModelFactory.loadFloatModel(params.model)
-
+      val model = new InferenceModel(4)
+      model.doLoad(params.model)
 
 //      val visualizer = Visualizer(, encoding = "jpg")
 
@@ -80,7 +81,7 @@ object StreamingInferenceObjectDetection {
           dataSet -> ImageBytesToMat(imageCodec = Imgcodecs.CV_LOAD_IMAGE_COLOR)
           dataSet-> MatToFloats()
           dataSet.rdd.foreach { img =>
-            val output = model.predict(img.toTensor(ImageFeature.imageTensor)
+            val output = model.doPredict(img.toTensor(ImageFeature.imageTensor)
               .addSingletonDimension())
 //            writeFile(params.outputFolder, img.uri(), output.toTensor[Float].toArray())
           }
