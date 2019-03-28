@@ -519,6 +519,7 @@ class Max(ZooKerasLayer):
                                   list(input_shape) if input_shape else None,
                                   **kwargs)
 
+
 class ExpandDim(ZooKerasLayer):
     """
     Expand_dim is an improved layer to suuport 1D input.
@@ -530,6 +531,6 @@ class ExpandDim(ZooKerasLayer):
     """
     def __init__(self, dim, input_shape=None, **kwargs):
         super(ExpandDim, self).__init__(None,
-                                         dim,
-                                         list(input_shape) if input_shape else None,
-                                         **kwargs)
+                                        dim,
+                                        list(input_shape) if input_shape else None,
+                                        **kwargs)
