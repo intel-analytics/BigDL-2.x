@@ -16,13 +16,15 @@
 
 package com.intel.analytics.zoo.pipeline.api.keras.layers
 
+import com.intel.analytics.bigdl.nn.RandomNormal
 import com.intel.analytics.bigdl.nn.abstractnn.Activity
 import com.intel.analytics.bigdl.nn.keras.KerasLayer
 import com.intel.analytics.bigdl.tensor.Tensor
 import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric
-import com.intel.analytics.bigdl.utils.Shape
+import com.intel.analytics.bigdl.utils.{MultiShape, Shape}
 import com.intel.analytics.zoo.pipeline.api.Net
 import com.intel.analytics.zoo.pipeline.api.autograd.{Parameter, Variable}
+import com.intel.analytics.zoo.pipeline.api.keras.layers.utils.KerasUtils
 import com.intel.analytics.zoo.pipeline.api.keras.models.Model
 
 import scala.reflect.ClassTag
@@ -43,6 +45,7 @@ import scala.reflect.ClassTag
  * @param intermediateSize The size of the "intermediate" (i.e., feed-forward)
  * @param hiddenPDrop The dropout probabilitiy for all fully connected layers
  * @param attnPDrop drop probability of attention
+ * @param initializerRange weight initialization range
  * @param outputAllBlock whether output all blocks' output
  * @param embeddingLayer embedding layer
  * @param inputShape input shape, default is null
@@ -53,15 +56,28 @@ class BERT[T: ClassTag] (
   intermediateSize: Int = 3072,
   hiddenPDrop: Double = 0.1,
   attnPDrop: Double = 0.1,
+  initializerRange: Double = 0.02,
   outputAllBlock: Boolean = true,
   embeddingLayer: KerasLayer[Activity, Tensor[T], T],
   inputShape: Shape)(implicit ev: TensorNumeric[T])
   extends TransformerLayer[T](nBlock, hiddenPDrop, attnPDrop, nHead, intermediateSize,
-    true, outputAllBlock, embeddingLayer, inputShape)
+    initializerRange, true, outputAllBlock, embeddingLayer, inputShape)
   with Net {
 
-  override def projectLayers(outputSize: Int, config: Double*): Net = {
-    Dense(outputSize)
+  override def projectLayer(outputSize: Int): Net = {
+    new Dense(outputSize, init = RandomNormal(0.0, 0.02))
+  }
+
+  override def buildInput(inputShape: Shape):
+  (Variable[T], List[Variable[T]], List[Variable[T]]) = {
+    require(inputShape.isInstanceOf[MultiShape] &&
+      inputShape.asInstanceOf[MultiShape].value.size == 4, "BERT input must be" +
+      " a list of 4 tensors (consisting of input sequence, sequence positions," +
+      "segment id, attention mask)")
+    val _inputShape = KerasUtils.removeBatch(inputShape).toMulti()
+
+    val inputs = _inputShape.map(Variable(_))
+    return ((- inputs.last + 1.0) * -10000.0, inputs.dropRight(1), inputs)
   }
 }
 
@@ -70,13 +86,14 @@ object BERT {
    * [[BERT]] A self attention keras like layer
    * @param vocab vocabulary size of training data, default is 40990
    * @param hiddenSize ize of the encoder layers, default is 768
-   * @param nBlock block number
-   * @param nHead head number
-   * @param seqLen sequence lenght
-   * @param intermediateSize The size of the "intermediate" (i.e., feed-forward)
-   * @param hiddenPDrop The dropout probabilitiy for all fully connected layers
-   * @param attnPDrop drop probability of attention
-   * @param outputAllBlock whether output all blocks' output
+   * @param nBlock block number, default is 12
+   * @param nHead head number, default is 12
+   * @param seqLen sequence length, default is 512
+   * @param intermediateSize The size of the "intermediate" (i.e., feed-forward), default is 3072
+   * @param hiddenPDrop The dropout probabilitiy for all fully connected layers, default is 0.1
+   * @param attnPDrop drop probability of attention, default is 0.1
+   * @param initializerRange weight initialization range, default is 0.02
+   * @param outputAllBlock whether output all blocks' output, default is true
    */
   def apply[@specialized(Float, Double) T: ClassTag](
     vocab: Int = 40990,
@@ -87,6 +104,7 @@ object BERT {
     intermediateSize: Int = 3072,
     hiddenPDrop: Double = 0.1,
     attnPDrop: Double = 0.1,
+    initializerRange: Double = 0.02,
     outputAllBlock: Boolean = true
     )(implicit ev: TensorNumeric[T]): BERT[T] = {
     require(hiddenSize > 0, "hiddenSize must be great" +
@@ -96,11 +114,12 @@ object BERT {
     val tokenTypeInput = Variable(Shape(seqLen))
     val positionInput = Variable(Shape(seqLen))
 
-    val wordEmbeddings = Embedding(vocab, hiddenSize, inputLength = seqLen).from(wordInput)
-    val positionEmbeddings = Embedding(seqLen, hiddenSize, inputLength = seqLen)
-      .from(positionInput)
-    val tokenTypeEmbeddings = Embedding(2, hiddenSize, inputLength = seqLen)
-      .from(tokenTypeInput)
+    val wordEmbeddings = new Embedding(vocab, hiddenSize, inputShape = Shape(seqLen),
+      init = RandomNormal(0.0, initializerRange)).from(wordInput)
+    val positionEmbeddings = new Embedding(seqLen, hiddenSize, inputShape = Shape(seqLen),
+      init = RandomNormal(0.0, initializerRange)).from(positionInput)
+    val tokenTypeEmbeddings = new Embedding(2, hiddenSize, inputShape = Shape(seqLen),
+      init = RandomNormal(0.0, initializerRange)).from(tokenTypeInput)
 
     val embeddings = wordEmbeddings + positionEmbeddings + tokenTypeEmbeddings
     val w = Parameter[T](Shape(1, hiddenSize),
@@ -111,7 +130,7 @@ object BERT {
     val h = Dropout(hiddenPDrop).from(afterNorm)
 
     val embeddingLayer = Model(Array(wordInput, tokenTypeInput, positionInput), h)
-    new BERT[T](nBlock, nHead, intermediateSize, hiddenPDrop, attnPDrop,
+    new BERT[T](nBlock, nHead, intermediateSize, hiddenPDrop, attnPDrop, initializerRange,
     outputAllBlock, embeddingLayer.asInstanceOf[KerasLayer[Activity, Tensor[T], T]],
       Shape(List(Shape(seqLen), Shape(seqLen), Shape(seqLen), Shape(1, 1, seqLen))))
   }
@@ -123,6 +142,7 @@ object BERT {
    * @param intermediateSize The size of the "intermediate" (i.e., feed-forward)
    * @param hiddenPDrop The dropout probabilitiy for all fully connected layers
    * @param attnPDrop drop probability of attention
+   * @param initializerRange weight initialization range
    * @param outputAllBlock whether output all blocks' output
    * @param embeddingLayer embedding layer
    */
@@ -132,10 +152,11 @@ object BERT {
     intermediateSize: Int,
     hiddenPDrop: Double,
     attnPDrop: Double,
+    initializerRange: Double,
     outputAllBlock: Boolean,
     embeddingLayer: KerasLayer[Activity, Tensor[T], T])
     (implicit ev: TensorNumeric[T]): BERT[T] = {
-    new BERT[T](nBlock, nHead, intermediateSize, hiddenPDrop, attnPDrop,
+    new BERT[T](nBlock, nHead, intermediateSize, hiddenPDrop, attnPDrop, initializerRange,
       outputAllBlock, embeddingLayer, null)
   }
 }

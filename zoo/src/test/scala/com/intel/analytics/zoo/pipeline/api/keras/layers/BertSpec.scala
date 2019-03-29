@@ -106,7 +106,7 @@ class BertSpec extends ZooSpecHelper {
     val embeddingLayer = Model(Array(wordInput, tokenTypeInput, positionInput), h)
 
     val layer = BERT[Float](nBlock = 3, nHead = 2,
-      intermediateSize = 64, hiddenPDrop = 0.1, attnPDrop = 0.1,
+      intermediateSize = 64, hiddenPDrop = 0.1, attnPDrop = 0.1, initializerRange = 0.02,
       outputAllBlock = false, embeddingLayer
         .asInstanceOf[KerasLayer[Activity, Tensor[Float], Float]])
     val shape = Shape(List(Shape(1, 10), Shape(1, 10), Shape(1, 10), Shape(1, 1, 1, 10)))

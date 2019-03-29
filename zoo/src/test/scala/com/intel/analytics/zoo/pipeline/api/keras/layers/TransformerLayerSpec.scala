@@ -54,7 +54,7 @@ class TransformerLayerSpec extends ZooSpecHelper {
         squeeze = true).asInstanceOf[AbstractModule[Activity, Activity, Float]]))
     val model = TransformerLayer[Float](nBlock = 3,
       residPdrop = 0.1, attnPdrop = 0.1, nHead = 12, maskAttention = false,
-      intermediateSize = 768 * 4, outputAllBlock = true,
+      intermediateSize = 768 * 4, initializerRange = 0.02, outputAllBlock = true,
       embeddingLayer = embedding.asInstanceOf[KerasLayer[Activity, Tensor[Float], Float]])
 
     val shape = Shape(List(Shape(4, 77), Shape(4, 77)))
@@ -69,7 +69,7 @@ class TransformerLayerSpec extends ZooSpecHelper {
   "TransformerLayer" should "be able to generate correct result" in {
     RNG.setSeed(42)
     val layer = TransformerLayer[Float](vocab = 10, hiddenSize = 4, seqLen = 2, nHead = 2,
-      residPdrop = 0, attnPdrop = 0, nBlock = 1, outputAllBlock = false, intermediateSize = 16)
+      residPdrop = 0, attnPdrop = 0, nBlock = 1, outputAllBlock = false)
     val data = Array[Float](6, 3, 7, 4, 6, 9, 2, 6, 7, 4, 3, 7, 7, 2, 5, 4)
     val shape = Shape(List(Shape(4, 2), Shape(4, 2)))
     layer.build(shape)
@@ -311,8 +311,7 @@ class TransformerLayerSpec extends ZooSpecHelper {
 
   "Attention" should "be able to generate correct result" in {
     val transformerLayer = TransformerLayer[Float](vocab = 10, hiddenSize = 4,
-      seqLen = 2, nHead = 2, intermediateSize = 16,
-      residPdrop = 0, attnPdrop = 0, nBlock = 1)
+      seqLen = 2, nHead = 2, residPdrop = 0, attnPdrop = 0, nBlock = 1)
     val shape = Shape(List(Shape(2, 2), Shape(2, 2)))
     transformerLayer.build(shape)
 
