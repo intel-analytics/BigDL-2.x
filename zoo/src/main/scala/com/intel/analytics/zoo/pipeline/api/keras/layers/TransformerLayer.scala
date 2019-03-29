@@ -228,7 +228,7 @@ object TransformerLayer {
     val embeddingLayer = Sequential[T]()
       .add(Merge(layers = List(wordInput, postionInput), mode = "concat"))
       .add(Reshape(Array(seqLen * 2)))
-      .add(new Embedding(vocab, hiddenSize,  inputShape = Shape(seqLen * 2),
+      .add(new Embedding(vocab, hiddenSize, inputShape = Shape(seqLen * 2),
         init = RandomNormal(0.0, initializerRange)))
       .add(Dropout(embeddingDrop))
       .add(Reshape(Array(seqLen, 2, hiddenSize)))
