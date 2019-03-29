@@ -40,11 +40,11 @@ import scala.reflect.ClassTag
  * @param hiddenPDrop drop probability of projection
  * @param attnPDrop drop probability of attention
  * @param nHead head number
- * @param intermediateSize The size of the "intermediate" (i.e., conv1d)
  * @param initializerRange weight initialization range
- * @param maskAttention whether unidirectional or bidirectional
+ * @param bidirectional whether unidirectional or bidirectional
  * @param outputAllBlock whether output all blocks' output
  * @param embeddingLayer embedding layer
+ * @param intermediateSize The size of the "intermediate" (i.e., conv1d)
  * @param inputShape input shape, default is null
  */
 class TransformerLayer[T: ClassTag](
@@ -52,11 +52,11 @@ class TransformerLayer[T: ClassTag](
   val hiddenPDrop: Double,
   val attnPDrop: Double,
   val nHead: Int,
-  val intermediateSize: Int,
   val initializerRange: Double,
-  val maskAttention: Boolean,
+  val bidirectional: Boolean,
   val outputAllBlock: Boolean,
   val embeddingLayer: KerasLayer[Activity, Tensor[T], T],
+  val intermediateSize: Int = 0,
   var inputShape: Shape = null)(implicit ev: TensorNumeric[T])
   extends KerasLayer[Activity, Activity, T](KerasUtils.addBatch(inputShape))
     with Net {
@@ -89,7 +89,7 @@ class TransformerLayer[T: ClassTag](
     model.asInstanceOf[AbstractModule[Activity, Activity, T]]
   }
 
-  def projectLayer(outputSize: Int): Net = {
+  def projectionLayer(outputSize: Int): Net = {
     new Convolution1D(outputSize, 1, init = RandomNormal(0.0, initializerRange))
   }
 
@@ -125,15 +125,16 @@ class TransformerLayer[T: ClassTag](
   }
 
   def mlp(x: Variable[T], hiddenSize: Int): Variable[T] = {
-    val h = projectLayer(intermediateSize).from(x)
+    val size = if (intermediateSize != 0) intermediateSize else hiddenSize * 4
+    val h = projectionLayer(size).from(x)
     val a = gelu(h)
-    val h2 = projectLayer(hiddenSize).from(a)
+    val h2 = projectionLayer(hiddenSize).from(a)
     Dropout(hiddenPDrop).from(h2)
   }
 
   def multiHeadSelfAttention(x: Variable[T], hiddenSize: Int,
     attention_mask: Variable[T] = null): Variable[T] = {
-    val c = projectLayer(hiddenSize * 3).from(x)
+    val c = projectionLayer(hiddenSize * 3).from(x)
     val query = c.slice(2, 0, hiddenSize)
     val key = c.slice(2, hiddenSize, hiddenSize)
     val value = c.slice(2, hiddenSize * 2, hiddenSize)
@@ -142,12 +143,12 @@ class TransformerLayer[T: ClassTag](
     val v = splitHeads(value, nHead)
     val a = attn(q, k, v, true, attention_mask) // a: (batch, nhead, seqLen, hiddenSize/nhead)
     val m = mergeHeads(a) // m: (batch, seqLen, hiddenSize)
-    val n = projectLayer(hiddenSize)
+    val n = projectionLayer(hiddenSize)
       .from(m) // n: (batch, seqLen, hiddenSize)
     Dropout(hiddenPDrop).from(n)
   }
 
-  lazy val maskValue = if (maskAttention) {
+  lazy val maskValue = if (!bidirectional) {
     val data = KerasUtils.tril(Tensor.ones(seqLen, seqLen)).view(1, seqLen, seqLen)
     new Constant[T](data)
   } else null
@@ -161,12 +162,11 @@ class TransformerLayer[T: ClassTag](
     if (scale) w = w / scala.math.sqrt(v.getOutputShape().toSingle().toArray.last)
 
     // mask attention
-    if (maskAttention) {
-      if (attention_mask != null) {
-        w = w + attention_mask
-      } else {
-        w = w * maskValue + (maskValue * (-1) + 1) * -1e9
-      }
+    if (!bidirectional) {
+      w = w * maskValue + (maskValue * (-1) + 1) * -1e9
+    }
+    if (attention_mask != null) {
+      w = w + attention_mask
     }
 
     w = Activation[Float]("softmax").from(w)
@@ -207,7 +207,7 @@ object TransformerLayer {
    * @param hiddenSize is also embedding size
    * @param embeddingDrop drop probability of embedding layer, default is 0.1
    * @param initializerRange weight initialization range, default is 0.02
-   * @param maskAttention whether unidirectional or bidirectional, default is true(unidirectional)
+   * @param bidirectional whether unidirectional or bidirectional, default is false
    * @param outputAllBlock whether output all blocks' output, default is false
    */
   def apply[@specialized(Float, Double) T: ClassTag](
@@ -220,7 +220,7 @@ object TransformerLayer {
     hiddenSize: Int = 768,
     embeddingDrop: Double = 0,
     initializerRange: Double = 0.02,
-    maskAttention: Boolean = true,
+    bidirectional: Boolean = false,
     outputAllBlock: Boolean = false)(implicit ev: TensorNumeric[T]): TransformerLayer[T] = {
     require(hiddenSize > 0, "hiddenSize must be great" +
       "than 0 with default embedding layer")
@@ -235,8 +235,8 @@ object TransformerLayer {
       .add(Reshape(Array(seqLen, 2, hiddenSize)))
       .add(new KerasLayerWrapper[T](bnn.Sum[T](dimension = 3,
         squeeze = true).asInstanceOf[AbstractModule[Activity, Activity, T]]))
-    new TransformerLayer[T](nBlock, residPdrop, attnPdrop, nHead, hiddenSize * 4,
-      initializerRange, maskAttention, outputAllBlock,
+    new TransformerLayer[T](nBlock, residPdrop, attnPdrop, nHead,
+      initializerRange, bidirectional, outputAllBlock,
       embeddingLayer.asInstanceOf[KerasLayer[Activity, Tensor[T], T]])
   }
 
@@ -246,9 +246,8 @@ object TransformerLayer {
    * @param residPdrop drop probability of projection
    * @param attnPdrop drop probability of attention
    * @param nHead head number
-   * @param intermediateSize The size of the "intermediate" (i.e., conv1d)
    * @param initializerRange weight initialization range
-   * @param maskAttention whether unidirectional or bidirectional
+   * @param bidirectional whether unidirectional or bidirectional
    * @param outputAllBlock whether output all blocks' output
    * @param embeddingLayer embedding layer
    */
@@ -257,14 +256,13 @@ object TransformerLayer {
     residPdrop: Double,
     attnPdrop: Double,
     nHead: Int,
-    intermediateSize: Int,
     initializerRange: Double,
-    maskAttention: Boolean,
+    bidirectional: Boolean,
     outputAllBlock: Boolean,
     embeddingLayer: KerasLayer[Activity, Tensor[T], T])
     (implicit ev: TensorNumeric[T]): TransformerLayer[T] = {
-    new TransformerLayer[T](nBlock, residPdrop, attnPdrop, nHead, intermediateSize,
-      initializerRange, maskAttention, outputAllBlock, embeddingLayer = embeddingLayer)
+    new TransformerLayer[T](nBlock, residPdrop, attnPdrop, nHead,
+      initializerRange, bidirectional, outputAllBlock, embeddingLayer = embeddingLayer)
   }
 
   def layerNorm[@specialized(Float, Double) T: ClassTag](x: Variable[T],

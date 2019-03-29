@@ -60,11 +60,11 @@ class BERT[T: ClassTag] (
   outputAllBlock: Boolean = true,
   embeddingLayer: KerasLayer[Activity, Tensor[T], T],
   inputShape: Shape)(implicit ev: TensorNumeric[T])
-  extends TransformerLayer[T](nBlock, hiddenPDrop, attnPDrop, nHead, intermediateSize,
-    initializerRange, true, outputAllBlock, embeddingLayer, inputShape)
+  extends TransformerLayer[T](nBlock, hiddenPDrop, attnPDrop, nHead,
+    initializerRange, true, outputAllBlock, embeddingLayer, intermediateSize, inputShape)
   with Net {
 
-  override def projectLayer(outputSize: Int): Net = {
+  override def projectionLayer(outputSize: Int): Net = {
     new Dense(outputSize, init = RandomNormal(0.0, 0.02))
   }
 
