@@ -933,7 +933,14 @@ class TFDataset:
 
 def _tensors_to_rdd(tensors, sc, splits):
     import tensorflow as tf
+    if isinstance(tensors, np.ndarray):
+        tensors = (tensors,)
+
     if isinstance(tensors, list):
+        for i in range(len(tensors)):
+            if tensors[i].dtype == np.dtype("float64"):
+                tensors[i] = np.float32(tensors[i])
+
         data_list = _splits(tensors)
         rdd = sc.parallelize(data_list, splits)
         tensor_structure = [TensorMeta(tf.as_dtype(t.dtype),
@@ -942,6 +949,9 @@ def _tensors_to_rdd(tensors, sc, splits):
                             for i, t in enumerate(tensors)]
     else:
         flattened = nest.flatten(tensors)
+        for i in range(len(flattened)):
+            if flattened[i].dtype == np.dtype("float64"):
+                flattened[i] = np.float32(flattened[i])
         data_list = _splits(flattened)
         rdd = sc.parallelize(data_list, splits)
         rdd = rdd.map(lambda x: nest.pack_sequence_as(tensors, x))
