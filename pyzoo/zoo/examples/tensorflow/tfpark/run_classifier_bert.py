@@ -19,7 +19,7 @@ from optparse import OptionParser
 import tensorflow as tf
 from zoo.common.nncontext import *
 from zoo.pipeline.api.net import TFDataset
-from zoo.tfpark.text import BERTClassifier
+from zoo.tfpark.text.estimator import BERTClassifier
 from bert.tokenization import FullTokenizer
 from bert.run_classifier import MrpcProcessor, convert_examples_to_features
 
