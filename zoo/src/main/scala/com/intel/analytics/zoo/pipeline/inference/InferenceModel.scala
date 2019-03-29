@@ -26,23 +26,25 @@ import com.intel.analytics.zoo.pipeline.inference.DeviceType.DeviceTypeEnumVal
 
 import scala.collection.JavaConverters._
 
-class InferenceModel(private var supportedConcurrentNum: Int = 1,
+class InferenceModel(private var autoScalingEnabled: Boolean = true,
+                     private var supportedConcurrentNum: Int = 1,
                      private var originalModel: AbstractModel = null,
                      private[inference] var modelQueue:
                      LinkedBlockingQueue[AbstractModel] = null)
   extends InferenceSupportive with Serializable {
-  this.modelQueue = new LinkedBlockingQueue[AbstractModel](supportedConcurrentNum)
+  // Creates a LinkedBlockingQueue with a capacity of Integer.MAX_VALUE.
+  this.modelQueue = new LinkedBlockingQueue[AbstractModel]()
   this.originalModel match {
     case null =>
     case _ => offerModelQueue()
   }
 
   /**
-   * loads a bigdl, analytics-zoo model
-   *
-   * @param modelPath  the file path of the model
-   * @param weightPath the file path of the weights
-   */
+    * loads a bigdl, analytics-zoo model
+    *
+    * @param modelPath  the file path of the model
+    * @param weightPath the file path of the weights
+    */
   def doLoad(modelPath: String, weightPath: String = null): Unit = {
     clearModelQueue()
     this.originalModel = InferenceModelFactory.loadFloatModel(modelPath, weightPath)
@@ -50,11 +52,11 @@ class InferenceModel(private var supportedConcurrentNum: Int = 1,
   }
 
   /**
-   * loads a caffe model
-   *
-   * @param modelPath  the path of the prototxt file
-   * @param weightPath the path of the caffemodel file
-   */
+    * loads a caffe model
+    *
+    * @param modelPath  the path of the prototxt file
+    * @param weightPath the path of the caffemodel file
+    */
   def doLoadCaffe(modelPath: String, weightPath: String): Unit = {
     clearModelQueue()
     this.originalModel = InferenceModelFactory.loadFloatModelForCaffe(modelPath, weightPath)
@@ -62,22 +64,22 @@ class InferenceModel(private var supportedConcurrentNum: Int = 1,
   }
 
   /**
-   * loads a TF model as TFNet
-   *
-   * @param modelPath the path of the tensorflow model file
-   */
+    * loads a TF model as TFNet
+    *
+    * @param modelPath the path of the tensorflow model file
+    */
   def doLoadTF(modelPath: String): Unit = {
     doLoadTensorflowModel(modelPath, 1, 1, true)
   }
 
   /**
-   * loads a TF model as TFNet
-   *
-   * @param modelPath                 the path of the tensorflow model
-   * @param intraOpParallelismThreads the num of intraOpParallelismThreads
-   * @param interOpParallelismThreads the num of interOpParallelismThreads
-   * @param usePerSessionThreads      whether to perSessionThreads
-   */
+    * loads a TF model as TFNet
+    *
+    * @param modelPath                 the path of the tensorflow model
+    * @param intraOpParallelismThreads the num of intraOpParallelismThreads
+    * @param interOpParallelismThreads the num of interOpParallelismThreads
+    * @param usePerSessionThreads      whether to perSessionThreads
+    */
   def doLoadTF(modelPath: String,
                intraOpParallelismThreads: Int,
                interOpParallelismThreads: Int,
@@ -90,14 +92,14 @@ class InferenceModel(private var supportedConcurrentNum: Int = 1,
   }
 
   /**
-   * loads a TF model as OpenVINO
-   *
-   * @param modelPath the path of the tensorflow model
-   * @param modelType the type of the tensorflow model,
-   *                  please refer to [[ModelType]]
-   *                  e.g. faster_rcnn_resnet101_coco, mask_rcnn_inception_v2_coco,
-   *                  rfcn_resnet101_coco, ssd_inception_v2_coco
-   */
+    * loads a TF model as OpenVINO
+    *
+    * @param modelPath the path of the tensorflow model
+    * @param modelType the type of the tensorflow model,
+    *                  please refer to [[ModelType]]
+    *                  e.g. faster_rcnn_resnet101_coco, mask_rcnn_inception_v2_coco,
+    *                  rfcn_resnet101_coco, ssd_inception_v2_coco
+    */
   def doLoadTF(modelPath: String, modelType: String): Unit = {
     doLoadTensorflowModelAsOpenVINO(
       modelPath,
@@ -108,12 +110,12 @@ class InferenceModel(private var supportedConcurrentNum: Int = 1,
   }
 
   /**
-   * loads a TF model as OpenVINO
-   *
-   * @param modelPath            the path of the tensorflow model
-   * @param pipelineConfigPath   the path of the pipeline configure file
-   * @param extensionsConfigPath the path of the extensions configure file
-   */
+    * loads a TF model as OpenVINO
+    *
+    * @param modelPath            the path of the tensorflow model
+    * @param pipelineConfigPath   the path of the pipeline configure file
+    * @param extensionsConfigPath the path of the extensions configure file
+    */
   def doLoadTF(modelPath: String,
                pipelineConfigPath: String,
                extensionsConfigPath: String): Unit = {
@@ -127,16 +129,16 @@ class InferenceModel(private var supportedConcurrentNum: Int = 1,
   }
 
   /**
-   * loads a TF model as OpenVINO
-   *
-   * @param modelPath            the path of the tensorflow model
-   * @param modelType            the type of the tensorflow model,
-   *                             please refer to [[ModelType]]
-   *                             e.g. faster_rcnn_resnet101_coco, mask_rcnn_inception_v2_coco,
-   *                             rfcn_resnet101_coco, ssd_inception_v2_coco
-   * @param pipelineConfigPath   the path of the pipeline configure file
-   * @param extensionsConfigPath the path of the extensions configure file
-   */
+    * loads a TF model as OpenVINO
+    *
+    * @param modelPath            the path of the tensorflow model
+    * @param modelType            the type of the tensorflow model,
+    *                             please refer to [[ModelType]]
+    *                             e.g. faster_rcnn_resnet101_coco, mask_rcnn_inception_v2_coco,
+    *                             rfcn_resnet101_coco, ssd_inception_v2_coco
+    * @param pipelineConfigPath   the path of the pipeline configure file
+    * @param extensionsConfigPath the path of the extensions configure file
+    */
   def doLoadTF(modelPath: String,
                modelType: String,
                pipelineConfigPath: String,
@@ -151,11 +153,11 @@ class InferenceModel(private var supportedConcurrentNum: Int = 1,
   }
 
   /**
-   * loads a openvino IR
-   *
-   * @param modelPath  the path of openvino ir xml file
-   * @param weightPath the path of openvino ir bin file
-   */
+    * loads a openvino IR
+    *
+    * @param modelPath  the path of openvino ir xml file
+    * @param weightPath the path of openvino ir bin file
+    */
   def doLoadOpenVINO(modelPath: String, weightPath: String): Unit = {
     if (supportedConcurrentNum > 1) {
       InferenceSupportive.logger.warn(s"supportedConcurrentNum is $supportedConcurrentNum > 1, " +
@@ -194,11 +196,11 @@ class InferenceModel(private var supportedConcurrentNum: Int = 1,
   }
 
   /**
-   * reloads the bigdl, analytics-zoo model
-   *
-   * @param modelPath  the file path of the model
-   * @param weightPath the file path of the weights
-   */
+    * reloads the bigdl, analytics-zoo model
+    *
+    * @param modelPath  the file path of the model
+    * @param weightPath the file path of the weights
+    */
   def doReload(modelPath: String, weightPath: String): Unit = {
     clearModelQueue()
     doLoad(modelPath, weightPath)
@@ -220,11 +222,11 @@ class InferenceModel(private var supportedConcurrentNum: Int = 1,
   }
 
   /**
-   * predicts the inference result
-   *
-   * @param inputs the input tensor with batch
-   * @return the output tensor with batch
-   */
+    * predicts the inference result
+    *
+    * @param inputs the input tensor with batch
+    * @return the output tensor with batch
+    */
   def doPredict(inputs: JList[JList[JTensor]]): JList[JList[JTensor]] = {
     timing(s"model predict for batch ${inputs.size()}") {
       val batchSize = inputs.size()
@@ -234,38 +236,55 @@ class InferenceModel(private var supportedConcurrentNum: Int = 1,
   }
 
   /**
-   * predicts the inference result
-   *
-   * @param inputActivity the input activity
-   * @return the output activity
-   */
+    * predicts the inference result
+    *
+    * @param inputActivity the input activity
+    * @return the output activity
+    */
   def doPredict(inputActivity: Activity): Activity = {
-    var model: AbstractModel = null
-    try {
-      model = modelQueue.take
-    } catch {
-      case e: InterruptedException => throw new InferenceRuntimeException("no model available", e);
+    timing(s"model predict for activity") {
+      predict(inputActivity)
     }
+  }
+
+  private def predict(inputActivity: Activity): Activity = {
+    val model: AbstractModel = retrieveModel()
     try {
-      val result = model.predict(inputActivity)
-      result
+      model.predict(inputActivity)
     } finally {
       modelQueue.offer(model)
     }
   }
 
   private def predict(inputs: JList[JList[JTensor]]): JList[JList[JTensor]] = {
-    var model: AbstractModel = null
-    try {
-      model = modelQueue.take
-    } catch {
-      case e: InterruptedException => throw new InferenceRuntimeException("no model available", e);
-    }
+    val model: AbstractModel = retrieveModel()
     try {
       model.predict(inputs)
     } finally {
       modelQueue.offer(model)
     }
+  }
+
+  private def retrieveModel(): AbstractModel = {
+    var model: AbstractModel = null
+    autoScalingEnabled match {
+      case false =>
+        // if auto-scaling is not enabled, will take a model, waiting if necessary.
+        try {
+          model = modelQueue.take
+        } catch {
+          case e: InterruptedException =>
+            throw new InferenceRuntimeException("no model available", e);
+        }
+      case true =>
+        // if auto-scaling is enabled, will poll a model, no waiting but scale 1 model if necessary.
+        model = modelQueue.poll()
+        model match {
+          case null => model = this.originalModel.copy(1)(0)
+          case _ =>
+        }
+    }
+    model
   }
 
   private def clearModelQueue(): Unit = {
@@ -291,6 +310,6 @@ class InferenceModel(private var supportedConcurrentNum: Int = 1,
   def getOriginalModel: AbstractModel = originalModel
 
   override def toString: String =
-    s"InferenceModel($supportedConcurrentNum, $originalModel, $modelQueue)"
+    s"InferenceModel($autoScalingEnabled, $supportedConcurrentNum, $originalModel, $modelQueue)"
 
 }
