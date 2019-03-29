@@ -528,6 +528,9 @@ class ExpandDim(ZooKerasLayer):
     # Arguments
     dim: The specified axis to expand dimension on.
     input_shape: A shape tuple, not including batch.
+
+    >>> expandDim = ExpandDim(dim=0, input_shape=(3, 2))
+    creating: createZooKerasExpandDim
     """
     def __init__(self, dim, input_shape=None, **kwargs):
         super(ExpandDim, self).__init__(None,
