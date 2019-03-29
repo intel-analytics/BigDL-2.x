@@ -15,7 +15,7 @@
 #
 
 from zoo.tfpark.estimator import *
-import modeling
+from bert import modeling
 
 
 def _bert_model_fn(features, labels, mode, params):

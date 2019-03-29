@@ -20,8 +20,8 @@ import tensorflow as tf
 from zoo.common.nncontext import *
 from zoo.pipeline.api.net import TFDataset
 from zoo.tfpark.text import BERTClassifier
-from tokenization import FullTokenizer
-from run_classifier import MrpcProcessor, convert_examples_to_features
+from bert.tokenization import FullTokenizer
+from bert.run_classifier import MrpcProcessor, convert_examples_to_features
 
 
 def feature_to_input(feature):
@@ -80,7 +80,7 @@ if __name__ == '__main__':
     estimator = BERTClassifier(len(label_list), bert_config=options.bert_base_dir + "/bert_config.json",
                                init_checkpoint=options.bert_base_dir + "/bert_model.ckpt",
                                optimizer=tf.train.AdamOptimizer(options.learning_rate),
-                               model_dir=options.output_dir + "/model")
+                               model_dir=options.output_dir)
     estimator.train(train_input_fn, steps=len(train_examples)*options.nb_epoch//options.batch_size)
     result = estimator.evaluate(eval_input_fn, eval_methods=["acc"])
     print(result)
