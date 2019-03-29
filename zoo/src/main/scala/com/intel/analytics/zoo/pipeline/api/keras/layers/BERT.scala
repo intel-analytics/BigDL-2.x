@@ -65,7 +65,7 @@ class BERT[T: ClassTag] (
   with Net {
 
   override def projectionLayer(outputSize: Int): Net = {
-    new Dense(outputSize, init = RandomNormal(0.0, 0.02))
+    new Dense(outputSize, init = RandomNormal(0.0, initializerRange))
   }
 
   override def buildInput(inputShape: Shape):

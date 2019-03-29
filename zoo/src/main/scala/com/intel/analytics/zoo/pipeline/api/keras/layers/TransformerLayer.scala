@@ -161,7 +161,6 @@ class TransformerLayer[T: ClassTag](
     var w = AutoGrad.mm(q, k) // w: (batch, nHead, seqLen, seqLen)
     if (scale) w = w / scala.math.sqrt(v.getOutputShape().toSingle().toArray.last)
 
-    // mask attention
     if (!bidirectional) {
       w = w * maskValue + (maskValue * (-1) + 1) * -1e9
     }
