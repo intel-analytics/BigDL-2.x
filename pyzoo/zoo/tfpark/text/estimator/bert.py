@@ -21,17 +21,27 @@ from bert import modeling
 def _bert_model_fn(features, labels, mode, params):
     input_ids = features["input_ids"]
     input_mask = features["input_mask"]
-    segment_ids = features["segment_ids"]
-    bert_config = modeling.BertConfig.from_json_file(params["bert_config"])
+    token_type_ids = features["token_type_ids"]
+    bert_config = modeling.BertConfig.from_json_file(params["bert_config_file"])
     bert_model = modeling.BertModel(
         config=bert_config,
         is_training=(mode == tf.estimator.ModeKeys.TRAIN),
         input_ids=input_ids,
         input_mask=input_mask,
-        token_type_ids=segment_ids,
+        token_type_ids=token_type_ids,
         use_one_hot_embeddings=params["use_one_hot_embeddings"])
-    output_layer = bert_model.get_pooled_output()
+    tvars = tf.trainable_variables()
+    if params["init_checkpoint"]:
+        assignment_map, initialized_variable_names = \
+            modeling.get_assignment_map_from_checkpoint(tvars, params["init_checkpoint"])
+        tf.train.init_from_checkpoint(params["init_checkpoint"], assignment_map)
+    # Return the BertModel class here so that users can choose to get the output they want.
+    return TFEstimatorSpec(mode=mode, predictions=bert_model)
 
+
+def _bert_classifier_model_fn(features, labels, mode, params):
+    output_layer = _bert_model_fn(features, labels, mode, params)\
+        .predictions.get_pooled_output()
     hidden_size = output_layer.shape[-1].value
     output_weights = tf.get_variable(
         "output_weights", [params["num_labels"], hidden_size],
@@ -45,33 +55,39 @@ def _bert_model_fn(features, labels, mode, params):
         logits = tf.matmul(output_layer, output_weights, transpose_b=True)
         logits = tf.nn.bias_add(logits, output_bias)
         probabilities = tf.nn.softmax(logits, axis=-1)
-
-        tvars = tf.trainable_variables()
-        if params["init_checkpoint"]:
-            assignment_map, initialized_variable_names =\
-                modeling.get_assignment_map_from_checkpoint(tvars, params["init_checkpoint"])
-            tf.train.init_from_checkpoint(params["init_checkpoint"], assignment_map)
-
-        if mode == tf.estimator.ModeKeys.PREDICT:
+        if mode == tf.estimator.ModeKeys.PREDICT or mode == tf.estimator.ModeKeys.EVAL:
             return TFEstimatorSpec(mode=mode, predictions=probabilities)
         else:
             log_probs = tf.nn.log_softmax(logits, axis=-1)
             one_hot_labels = tf.one_hot(labels, depth=params["num_labels"], dtype=tf.float32)
             per_example_loss = -tf.reduce_sum(one_hot_labels * log_probs, axis=-1)
             loss = tf.reduce_mean(per_example_loss)
-            return TFEstimatorSpec(mode=mode, predictions=probabilities, loss=loss)
+            return TFEstimatorSpec(mode=mode, loss=loss)
 
 
-class BERTClassifier(TFEstimator):
-    def __init__(self, num_labels, bert_config, init_checkpoint=None,
-                 use_one_hot_embeddings=False, optimizer=None, model_dir=None):
-        super(BERTClassifier, self).__init__(
-            model_fn=_bert_model_fn,
+class BERTBaseEstimator(TFEstimator):
+    def __init__(self, model_fn, bert_config_file, init_checkpoint=None,
+                 use_one_hot_embeddings=False, optimizer=None, model_dir=None, **kwargs):
+        params = {"bert_config_file": bert_config_file,
+                  "init_checkpoint": init_checkpoint,
+                  "use_one_hot_embeddings": use_one_hot_embeddings}
+        for k, v in kwargs.items():
+            params[k] = v
+        super(BERTBaseEstimator, self).__init__(
+            model_fn=model_fn,
             optimizer=optimizer,
             model_dir=model_dir,
-            params={
-                "num_labels": num_labels,
-                "bert_config": bert_config,
-                "init_checkpoint": init_checkpoint,
-                "use_one_hot_embeddings": use_one_hot_embeddings
-            })
+            params=params)
+
+
+class BERTClassifier(BERTBaseEstimator):
+    def __init__(self, num_labels, bert_config_file, init_checkpoint=None,
+                 use_one_hot_embeddings=False, optimizer=None, model_dir=None):
+        super(BERTClassifier, self).__init__(
+            model_fn=_bert_classifier_model_fn,
+            bert_config_file=bert_config_file,
+            init_checkpoint=init_checkpoint,
+            use_one_hot_embeddings=use_one_hot_embeddings,
+            optimizer=optimizer,
+            model_dir=model_dir,
+            num_labels=num_labels)

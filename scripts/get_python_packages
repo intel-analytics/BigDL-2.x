@@ -24,8 +24,8 @@ DEST_DIR=$1
 echo "DEST_DIR: $DEST_DIR"
 BIGDL_VERSION=$2
 NLP_ARCHITECT_VERSION="0.3.1"
-# Since bert doesn't have any released versions, use the version of the commit on Mar 21, 2019.
-BERT_COMMIT_ID="7c1a4bfb61cdd456c0d1887fd67d9bf3b19321fc"
+# Since bert doesn't have any released versions, use the version of the commit on Mar 29, 2019.
+BERT_COMMIT_ID="d66a146741588fb208450bde15aa7db143baaa69"
 
 rm -rf $DEST_DIR/*/
 

@@ -28,7 +28,7 @@ def feature_to_input(feature):
     res = dict()
     res["input_ids"] = np.array(feature.input_ids)
     res["input_mask"] = np.array(feature.input_mask)
-    res["segment_ids"] = np.array(feature.segment_ids)
+    res["token_type_ids"] = np.array(feature.segment_ids)
     return res, np.array(feature.label_id)
 
 
@@ -42,14 +42,14 @@ def input_fn_builder(examples, label_list, max_seq_length, tokenizer, batch_size
             return TFDataset.from_rdd(rdd,
                                       features={"input_ids": (tf.int32, [max_seq_length]),
                                                 "input_mask": (tf.int32, [max_seq_length]),
-                                                "segment_ids": (tf.int32, [max_seq_length])},
+                                                "token_type_ids": (tf.int32, [max_seq_length])},
                                       labels=(tf.int32, []),
                                       batch_size=batch_size)
         else:
             return TFDataset.from_rdd(rdd.map(lambda x: x[0]),
                                       features={"input_ids": (tf.int32, [max_seq_length]),
                                                 "input_mask": (tf.int32, [max_seq_length]),
-                                                "segment_ids": (tf.int32, [max_seq_length])},
+                                                "token_type_ids": (tf.int32, [max_seq_length])},
                                       batch_per_thread=4)
     return input_fn
 
@@ -77,7 +77,7 @@ if __name__ == '__main__':
     test_examples = processor.get_test_examples(options.data_dir)
     test_input_fn = input_fn_builder(test_examples, label_list, options.max_seq_length, tokenizer, options.batch_size)
 
-    estimator = BERTClassifier(len(label_list), bert_config=options.bert_base_dir + "/bert_config.json",
+    estimator = BERTClassifier(len(label_list), bert_config_file=options.bert_base_dir + "/bert_config.json",
                                init_checkpoint=options.bert_base_dir + "/bert_model.ckpt",
                                optimizer=tf.train.AdamOptimizer(options.learning_rate),
                                model_dir=options.output_dir)
