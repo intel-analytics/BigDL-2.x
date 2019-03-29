@@ -14,8 +14,7 @@
 # limitations under the License.
 #
 
-from zoo.tfpark.text.estimator.bert import *
+from .text_model import *
 from .intent_extraction import *
 from .ner import *
 from .pos_tagging import *
-from .text_model import *
