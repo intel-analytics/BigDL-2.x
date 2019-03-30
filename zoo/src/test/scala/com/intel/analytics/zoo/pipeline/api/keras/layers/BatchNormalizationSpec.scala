@@ -50,7 +50,7 @@ class BatchNormalizationSpec extends KerasBaseSpec {
     val gradInput = seq.backward(input, output)
   }
 
-  "BatchNormalization" should "not work properly for 3D input" in {
+  "BatchNormalization" should "not work properly for 3D inputMeanSquaredLogarithmicErrorSpec:" in {
     val thrown = intercept[InvocationTargetException] {
       val seq = Sequential[Float]()
       val layer = BatchNormalization[Float](betaInit = "glorot_uniform",

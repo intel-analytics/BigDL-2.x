@@ -56,8 +56,8 @@ class TestLayer(ZooTestCase):
                            WeightsConverter.convert_batchnormalization)
         K.set_image_dim_ordering("th")
         input_data = np.random.random_sample([2, 5])
-        zlayer = ZLayer.BatchNormalization(axis=1, input_shape=(5))
-        klayer = KLayer.BatchNormalization(axis=1, input_shape=(5))
+        zlayer = ZLayer.BatchNormalization(axis=1, input_shape=(5,))
+        klayer = KLayer.BatchNormalization(axis=1, input_shape=(5,))
         self.compare_layer(klayer, zlayer, input_data,
                            WeightsConverter.convert_batchnormalization)
 
