@@ -59,7 +59,7 @@ object Train {
     summaryDir: Option[String] = None,
     nPartition: Option[Int] = None,
     saveModelPath: String = "./final.model",
-    overWriteModel: Boolean = true
+    overWriteModel: Boolean = false
   )
 
   val trainParser = new OptionParser[TrainParams]("Analytics Zoo SSD Example") {
@@ -103,7 +103,7 @@ object Train {
       .text("class file")
       .action((x, c) => c.copy(className = x))
       .required()
-    opt[Unit]("overWriteCheckpoint")
+    opt[Unit]("overwriteCheckpoint")
       .text("overwrite checkpoint files")
       .action((_, c) => c.copy(overWriteCheckpoint = true))
     opt[String]("name")
@@ -118,7 +118,7 @@ object Train {
     opt[String]('s', "saveModelPath")
       .text("where to save trained model")
       .action((x, c) => c.copy(saveModelPath = x))
-    opt[Unit]("overWriteModel")
+    opt[Unit]("overwriteModel")
       .text("overwrite model file")
       .action((_, c) => c.copy(overWriteModel = true))
   }
