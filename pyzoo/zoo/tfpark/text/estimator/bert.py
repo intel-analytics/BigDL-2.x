@@ -18,7 +18,7 @@ from zoo.tfpark.estimator import *
 from bert import modeling
 
 
-def _bert_model_fn(features, labels, mode, params):
+def _bert_model(features, labels, mode, params):
     input_ids = features["input_ids"]
     input_mask = features["input_mask"]
     token_type_ids = features["token_type_ids"]
@@ -35,13 +35,11 @@ def _bert_model_fn(features, labels, mode, params):
         assignment_map, initialized_variable_names = \
             modeling.get_assignment_map_from_checkpoint(tvars, params["init_checkpoint"])
         tf.train.init_from_checkpoint(params["init_checkpoint"], assignment_map)
-    # Return the BertModel class here so that users can choose to get the output they want.
-    return TFEstimatorSpec(mode=mode, predictions=bert_model)
+    return bert_model
 
 
 def _bert_classifier_model_fn(features, labels, mode, params):
-    output_layer = _bert_model_fn(features, labels, mode, params)\
-        .predictions.get_pooled_output()
+    output_layer = _bert_model(features, labels, mode, params).get_pooled_output()
     hidden_size = output_layer.shape[-1].value
     output_weights = tf.get_variable(
         "output_weights", [params["num_labels"], hidden_size],
