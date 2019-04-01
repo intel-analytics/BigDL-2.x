@@ -2,6 +2,7 @@
 
 ## Summary
 This is examples for model inference, including model inference in simple pojo java application, web service, batch and streaming with sprak and flink.
+
 Briefly speaking, for web service example, after starting the web service application, user can post a request body that contains an article text to the server's url followed with directory "/predict", (eg: localhost:8080/predict).
 Then the server application will do a series of actions including preprocessing the texts, loading the model and doing the prediction.
 In the end, it will respond with the predicted class and predicted probability distribution of the tested texts.
