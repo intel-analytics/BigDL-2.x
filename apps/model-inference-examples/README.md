@@ -7,7 +7,7 @@ Briefly speaking, for web service example, after starting the web service applic
 Then the server application will do a series of actions including preprocessing the texts, loading the model and doing the prediction.
 In the end, it will respond with the predicted class and predicted probability distribution of the tested texts.
 
-In this directory, there are two projects
+In this directory, there are several projects
 
 1. `text-classification-training` is the utility project(written in Scala). It includes procedures of preprocessing and training.
 2. `text-classification-inference` is the web application sample project(written in Java). It loads the model and does the prediction.
