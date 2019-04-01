@@ -339,7 +339,7 @@
                         <configuration>
                             <arguments>
                                 <argument>${project.basedir}/../scripts/get_python_packages</argument>
-                                <argument>${project.build.directory}/python</argument>
+                                <argument>${project.basedir}/python_packages</argument>
                                 <argument>${bigdl.version}</argument>
                             </arguments>
 
