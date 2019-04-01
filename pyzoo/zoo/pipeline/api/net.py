@@ -529,12 +529,7 @@ with variable_creator_scope():
         all_required_inputs = _find_placeholders([loss])
         dataset = tf.get_collection(all_required_inputs[0].name)[0]
 
-        inputs = []
-        for item in list(dataset._original_tensors):
-            if isinstance(item, dict):
-                inputs = inputs + list(item.values())
-            else:
-                inputs.append(item)
+        inputs = nest.flatten(dataset._original_tensors)
 
         _check_the_same(all_required_inputs, inputs)
 
