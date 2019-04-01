@@ -32,8 +32,17 @@ class InferenceModel(private var autoScalingEnabled: Boolean = true,
                      private[inference] var modelQueue:
                      LinkedBlockingQueue[AbstractModel] = null)
   extends InferenceSupportive with Serializable {
-  // Creates a LinkedBlockingQueue with a capacity of Integer.MAX_VALUE.
-  this.modelQueue = new LinkedBlockingQueue[AbstractModel]()
+
+  def this() = this(true, 1, null, null)
+  def this(supportedConcurrentNum: Int) = this(false, supportedConcurrentNum, null, null)
+  def this(autoScalingEnabled: Boolean, supportedConcurrentNum: Int) =
+    this(autoScalingEnabled, supportedConcurrentNum, null, null)
+
+  this.modelQueue = autoScalingEnabled match {
+    // Creates a LinkedBlockingQueue with a capacity of Integer.MAX_VALUE.
+    case true => new LinkedBlockingQueue[AbstractModel]()
+    case false => new LinkedBlockingQueue[AbstractModel](supportedConcurrentNum)
+  }
   this.originalModel match {
     case null =>
     case _ => offerModelQueue()
@@ -292,7 +301,7 @@ class InferenceModel(private var autoScalingEnabled: Boolean = true,
       case null =>
       case _ => this.originalModel.release(); this.originalModel = null
     }
-    List.range(0, this.modelQueue.size()).map(i => {
+    List.range(0, this.modelQueue.size()).map(_ => {
       val model = this.modelQueue.take
       this.modelQueue.remove(model)
       model.release()
