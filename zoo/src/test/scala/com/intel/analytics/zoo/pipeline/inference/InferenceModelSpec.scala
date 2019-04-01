@@ -269,13 +269,16 @@ class InferenceModelSpec extends FlatSpec with Matchers with BeforeAndAfter
   "Autoscaling enabled InferenceModel" should "auto scaling" in {
     val aModel = new TestAutoScalingAbstractInferenceModel()
     aModel.loadCaffe(modelPath, weightPath)
-    val result = aModel.predict(bigInputTensorList)
+    val result: util.List[util.List[JTensor]] = aModel.predict(bigInputTensorList)
     println(aModel.modelQueue.size())
 
     val threads = List.range(0, 100).map(i => {
       new Thread() {
         override def run(): Unit = {
           val r1 = aModel.predict(bigInputTensorList)
+          r1.get(0).get(0).getData shouldEqual result.get(0).get(0).getData
+          r1.get(1).get(0).getData shouldEqual result.get(1).get(0).getData
+          r1.get(2).get(0).getData shouldEqual result.get(2).get(0).getData
         }
       }
     })
