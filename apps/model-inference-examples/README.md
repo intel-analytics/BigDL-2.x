@@ -1,8 +1,8 @@
-# Web Service Sample
+# Model Inference Examples
 
 ## Summary
-This is a web service sample for text classification model.
-Briefly speaking, after starting the web service application, user can post a request body that contains an article text to the server's url followed with directory "/predict", (eg: localhost:8080/predict).
+This is examples for model inference, including model inference in simple pojo java application, web service, batch and streaming with sprak and flink.
+Briefly speaking, for web service example, after starting the web service application, user can post a request body that contains an article text to the server's url followed with directory "/predict", (eg: localhost:8080/predict).
 Then the server application will do a series of actions including preprocessing the texts, loading the model and doing the prediction.
 In the end, it will respond with the predicted class and predicted probability distribution of the tested texts.
 
@@ -10,6 +10,8 @@ In this directory, there are two projects
 
 1. `text-classification-training` is the utility project(written in Scala). It includes procedures of preprocessing and training.
 2. `text-classification-inference` is the web application sample project(written in Java). It loads the model and does the prediction.
+3. `model-inference-spark` is the model inference in batch and streaming with sprak.
+4. `model-inference-flink` is the model inference in batch and streaming with flink.
 
 To run this sample, please follow the steps below.
 
