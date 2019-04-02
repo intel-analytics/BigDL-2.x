@@ -3,6 +3,8 @@ package com.intel.analytics.zoo.examples
 import scala.io.Source
 import java.io.File
 
+import com.intel.analytics.bigdl.nn.Module
+import com.intel.analytics.bigdl.nn.abstractnn.Activity
 import com.intel.analytics.bigdl.tensor.Tensor
 import com.intel.analytics.bigdl.utils.Shape
 import com.intel.analytics.zoo.pipeline.api.keras.layers.BERT
@@ -11,7 +13,7 @@ import scala.collection.mutable.ArrayBuffer
 
 object convertBert {
   def main(args: Array[String]): Unit = {
-    val vocab = 30552
+    val vocab = 30522
     val hiddenSize = 768
     val intermediateSize = 3072
     val seqLen = 512
@@ -21,6 +23,7 @@ object convertBert {
       Shape(1, seqLen), Shape(1, 1, 1, seqLen)))
     preTrainModel.build(testShape)
     val weight = preTrainModel.parameters()._1
+
     var i = 0
 
     val path = "/tmp/numpy/"
@@ -34,6 +37,7 @@ object convertBert {
       ))
     }
     var param = Tensor[Float](buf.flatten.toArray, Array(buf.size, buf.head.length))
+    require(param.size.deep == weight(i).size().deep)
     weight(i).set(param)
     i += 1
 
@@ -44,6 +48,7 @@ object convertBert {
       ))
     }
     param = Tensor[Float](buf.flatten.toArray, Array(buf.size, buf.head.length))
+    require(param.size.deep == weight(i).size().deep)
     weight(i).set(param)
     i += 1
 
@@ -54,6 +59,7 @@ object convertBert {
       ))
     }
     param = Tensor[Float](buf.flatten.toArray, Array(buf.size, buf.head.length))
+    require(param.size.deep == weight(i).size().deep)
     weight(i).set(param)
     i += 1
 
@@ -64,6 +70,7 @@ object convertBert {
       ))
     }
     param = Tensor[Float](buf.flatten.toArray, Array(buf.size, buf.head.length))
+//    require(param.size.deep == weight(i).size().deep)
     weight(i).set(param)
     i += 1
 
@@ -74,6 +81,7 @@ object convertBert {
       ))
     }
     param = Tensor[Float](buf.flatten.toArray, Array(buf.size, buf.head.length))
+//    require(param.size.deep == weight(i).size().deep)
     weight(i).set(param)
     i += 1
 
@@ -138,11 +146,14 @@ object convertBert {
         }
         val param = Tensor[Float](buf.flatten.toArray, Array(buf.size, buf.head.length))
         if (file.contains("bias")) param.squeeze(2)
+//        require(param.size.deep == weight(i).size().deep)
         weight(i).set(param)
         i += 1
       }
       blockId += 1
     }
+    preTrainModel.saveModule("/tmp/zoo-bert.model", overWrite = true)
     println("convert done!")
+    Module.loadModule[Float]("/tmp/zoo-bert.model").asInstanceOf[BERT[Float]]
   }
 }
