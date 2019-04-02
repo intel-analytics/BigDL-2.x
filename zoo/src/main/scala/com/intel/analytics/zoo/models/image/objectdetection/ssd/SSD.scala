@@ -36,22 +36,22 @@ abstract class SSD[T: ClassTag]()(implicit ev: TensorNumeric[T])
   extends ImageModel[T]
 
 /**
-  * SSD model based on VGG16
-  * @param classNum
-  * @param resolution
-  * @param dataset
-  * @param sizes
-  * @param shareLocation
-  * @param bgLabel
-  * @param nmsThresh
-  * @param nmsTopk
-  * @param keepTopK
-  * @param confThresh
-  * @param varianceEncodedInTarget
-  * @param ev$1
-  * @param ev
-  * @tparam T
-  */
+ * SSD model based on VGG16
+ * @param classNum
+ * @param resolution
+ * @param dataset
+ * @param sizes
+ * @param shareLocation
+ * @param bgLabel
+ * @param nmsThresh
+ * @param nmsTopk
+ * @param keepTopK
+ * @param confThresh
+ * @param varianceEncodedInTarget
+ * @param ev$1
+ * @param ev
+ * @tparam T
+ */
 class SSDVGG[T: ClassTag](classNum: Int, resolution: Int = 300,
                           dataset: String = "pascal", sizes: Array[Float] = null,
                           shareLocation: Boolean = true,
@@ -149,8 +149,8 @@ object SSDVGG {
       params += "conv9_2" -> ComponetParam(256, 4,
         minSizes = Array(priorBoxSizes(5)), maxSizes = Array(priorBoxSizes(6)),
         aspectRatios = Array(2), isFlip, isClip, variances, 300, 300)
-      SSDGraph[T](classNum, resolution, conv1_1, relu4_3, pool5, params, isLastPool = false,
-        normScale = 20f, shareLocation, bgLabel, nmsThresh, nmsTopk, keepTopK, confThresh,
+      SSDGraph[T](classNum, resolution, conv1_1, relu4_3, pool5, params, false,
+        20f, shareLocation, bgLabel, nmsThresh, nmsTopk, keepTopK, confThresh,
         varianceEncodedInTarget)
     } else {
       params += "conv4_3_norm" -> ComponetParam(512, 4,
@@ -174,8 +174,8 @@ object SSDVGG {
       params += "conv10_2" -> ComponetParam(256, 4,
         minSizes = Array(priorBoxSizes(6)), maxSizes = Array(priorBoxSizes(7)),
         aspectRatios = Array(2), isFlip, isClip, variances, 512, 512)
-      SSDGraph(classNum, resolution, conv1_1, relu4_3, pool5, params, isLastPool = false,
-        normScale = 20f, shareLocation, bgLabel, nmsThresh, nmsTopk, keepTopK, confThresh,
+      SSDGraph(classNum, resolution, conv1_1, relu4_3, pool5, params, false,
+        20f, shareLocation, bgLabel, nmsThresh, nmsTopk, keepTopK, confThresh,
         varianceEncodedInTarget)
     }
   }

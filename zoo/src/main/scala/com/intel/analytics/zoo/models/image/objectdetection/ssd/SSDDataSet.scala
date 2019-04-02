@@ -38,7 +38,7 @@ object SSDDataSet {
    */
   def loadSSDTrainSet(folder: String, sc: SparkContext, resolution: Int, batchSize: Int,
                       parNum: Option[Int])
-  : DistributedFeatureSet[SSDMiniBatch] = {
+  : FeatureSet[SSDMiniBatch] = {
     val trainRdd = Imdb.loadRoiSeqFiles(folder, sc, parNum)
     FeatureSet.rdd(trainRdd) -> RoiRecordToFeature(true) ->
       ImageBytesToMat() ->
@@ -62,8 +62,9 @@ object SSDDataSet {
    * @param parNum partition number
    * @return distributec featureset for SSD validation
    */
-  def loadSSDValSet(folder: String, sc: SparkContext, resolution: Int, batchSize: Int, parNum: Option[Int])
-  : DistributedFeatureSet[SSDMiniBatch] = {
+  def loadSSDValSet(folder: String, sc: SparkContext, resolution: Int, batchSize: Int,
+                    parNum: Option[Int])
+  : FeatureSet[SSDMiniBatch] = {
     val valRdd = Imdb.loadRoiSeqFiles(folder, sc, parNum)
     FeatureSet.rdd(valRdd) -> RoiRecordToFeature(true) ->
       ImageBytesToMat() ->

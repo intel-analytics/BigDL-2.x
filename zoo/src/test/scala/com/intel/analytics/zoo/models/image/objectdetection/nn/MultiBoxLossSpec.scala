@@ -18,7 +18,7 @@ package com.intel.analytics.zoo.models.image.objectdetection.nn
 
 import com.intel.analytics.bigdl.tensor.{Storage, Tensor}
 import com.intel.analytics.bigdl.utils.T
-import com.intel.analytics.zoo.models.image.objectdetection.common.nn.{MultiBoxLoss, MultiBoxLossParam}
+import com.intel.analytics.zoo.models.image.objectdetection.common.loss.{MultiBoxLoss, MultiBoxLossParam}
 import org.scalatest.{FlatSpec, Matchers}
 
 class MultiBoxLossSpec extends FlatSpec with Matchers {

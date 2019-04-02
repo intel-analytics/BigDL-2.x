@@ -23,13 +23,12 @@ import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric.NumericF
 import com.intel.analytics.bigdl.utils.LoggerFilter
 import com.intel.analytics.bigdl.visualization.{TrainSummary, ValidationSummary}
 import com.intel.analytics.zoo.common.NNContext
-import com.intel.analytics.zoo.feature.DistributedFeatureSet
+import com.intel.analytics.zoo.feature.{DistributedFeatureSet, FeatureSet}
 import com.intel.analytics.zoo.models.image.common.ImageModel
 import com.intel.analytics.zoo.models.image.objectdetection.common.ModuleUtil
-import com.intel.analytics.zoo.models.image.objectdetection.common.nn.MultiBoxLoss
-import com.intel.analytics.zoo.models.image.objectdetection.common.nn.MultiBoxLossParam
-import com.intel.analytics.zoo.models.image.objectdetection.common.optim.MeanAveragePrecision
-import com.intel.analytics.zoo.models.image.objectdetection.ssd.{SSDVGG, SSDDataSet, SSDMiniBatch}
+import com.intel.analytics.zoo.models.image.objectdetection.common.evaluation.MeanAveragePrecision
+import com.intel.analytics.zoo.models.image.objectdetection.common.loss.{MultiBoxLoss, MultiBoxLossParam}
+import com.intel.analytics.zoo.models.image.objectdetection.ssd.{SSDDataSet, SSDMiniBatch, SSDVGG}
 import org.apache.log4j.{Level, Logger}
 import org.apache.spark.SparkConf
 import scopt.OptionParser
@@ -58,7 +57,9 @@ object Train {
     maxEpoch: Int = 20,
     jobName: String = "Analytics Zoo SSD Train Messi Example",
     summaryDir: Option[String] = None,
-    nPartition: Option[Int] = None
+    nPartition: Option[Int] = None,
+    saveModelPath: String = "./final.model",
+    overWriteModel: Boolean = false
   )
 
   val trainParser = new OptionParser[TrainParams]("Analytics Zoo SSD Example") {
@@ -102,7 +103,7 @@ object Train {
       .text("class file")
       .action((x, c) => c.copy(className = x))
       .required()
-    opt[Unit]("overWrite")
+    opt[Unit]("overwriteCheckpoint")
       .text("overwrite checkpoint files")
       .action((_, c) => c.copy(overWriteCheckpoint = true))
     opt[String]("name")
@@ -114,26 +115,35 @@ object Train {
     opt[Int]('p', "partition")
       .text("number of partitions")
       .action((x, c) => c.copy(nPartition = Some(x)))
+    opt[String]('s', "saveModelPath")
+      .text("where to save trained model")
+      .action((x, c) => c.copy(saveModelPath = x))
+    opt[Unit]("overwriteModel")
+      .text("overwrite model file")
+      .action((_, c) => c.copy(overWriteModel = true))
   }
 
   val logger = Logger.getLogger(getClass.getName)
 
   def main(args: Array[String]): Unit = {
     trainParser.parse(args, TrainParams()).map(param => {
+      // initial zoo context
       val conf = new SparkConf().setAppName(param.jobName)
       val sc = NNContext.initNNContext(conf)
 
+      // load data
       val classes = Source.fromFile(param.className).getLines().toArray
       val trainSet = SSDDataSet.loadSSDTrainSet(param.trainFolder, sc, param.resolution,
         param.batchSize, param.nPartition)
-
       val valSet = SSDDataSet.loadSSDValSet(param.valFolder, sc, param.resolution, param.batchSize,
         param.nPartition)
 
+      // create ssd model and load weights from pretrained model
       val model = SSDVGG[Float](classes.length, param.resolution, param.dataset)
       val m = ImageModel.loadModel(param.modelSnapshot.get, modelType = "objectdetection")
       ModuleUtil.loadModelWeights(m, model, false)
 
+      // create optimizer and optimize
       val optimMethod = if (param.stateSnapshot.isDefined) {
         OptimMethod.load[Float](param.stateSnapshot.get)
       } else {
@@ -142,20 +152,20 @@ object Train {
       }
       optimize(model, trainSet, valSet, param, optimMethod,
         Trigger.maxEpoch(param.maxEpoch), classes)
-      model.saveModel("./final.model",overWrite = true)
+      model.saveModel(param.saveModelPath, overWrite = param.overWriteModel)
     })
   }
 
   private def optimize(model: SSDVGG[Float],
-                       trainSet: DistributedFeatureSet[SSDMiniBatch],
-                       valSet: DistributedFeatureSet[SSDMiniBatch],
+                       trainSet: FeatureSet[SSDMiniBatch],
+                       valSet: FeatureSet[SSDMiniBatch],
                        param: TrainParams,
                        optimMethod: OptimMethod[Float],
                        endTrigger: Trigger,
                        classes: Array[String]): SSDVGG[Float] = {
     val optimizer = Optimizer(
       model = model,
-      dataset = trainSet,
+      dataset = trainSet.toDataSet(),
       criterion = new MultiBoxLoss[Float](MultiBoxLossParam(nClasses = classes.length))
     )
 
@@ -177,7 +187,7 @@ object Train {
     optimizer
       .setOptimMethod(optimMethod)
       .setValidation(Trigger.everyEpoch,
-        valSet.asInstanceOf[DataSet[MiniBatch[Float]]],
+        valSet.toDataSet().asInstanceOf[DataSet[MiniBatch[Float]]],
         Array(new MeanAveragePrecision(true, normalized = true, classes = classes)))
       .setEndWhen(endTrigger)
       .optimize().asInstanceOf[SSDVGG[Float]]

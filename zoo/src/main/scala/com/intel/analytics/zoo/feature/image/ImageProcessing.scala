@@ -32,8 +32,8 @@ abstract class ImageProcessing extends FeatureTransformer with
 }
 
 /**
-  * A transformer chain two ImageProcessing together.
-  */
+ * A transformer chain two ImageProcessing together.
+ */
 class ChainedImageProcessing(first: ImageProcessing, last: ImageProcessing) extends
   ImageProcessing {
 
