@@ -25,11 +25,15 @@ import java.util.List;
 public abstract class AbstractInferenceModel extends InferenceModel implements Serializable {
 
   public AbstractInferenceModel() {
-    super(true, 1, null, null);
+    super();
   }
 
   public AbstractInferenceModel(int supportedConcurrentNum) {
-    super(false, supportedConcurrentNum, null, null);
+    super(supportedConcurrentNum);
+  }
+
+  public AbstractInferenceModel(boolean autoScalingEnabled, int supportedConcurrentNum, int maxConcurrentNum) {
+    super(autoScalingEnabled, supportedConcurrentNum, maxConcurrentNum);
   }
 
   public void load(String modelPath) {

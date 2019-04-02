@@ -30,17 +30,40 @@ class InferenceModel(private var autoScalingEnabled: Boolean = true,
                      private var supportedConcurrentNum: Int = 1,
                      private var originalModel: AbstractModel = null,
                      private[inference] var modelQueue:
-                     LinkedBlockingQueue[AbstractModel] = null)
+                     LinkedBlockingQueue[AbstractModel] = null,
+                     private var maxConcurrentNum: Int = 1000)
   extends InferenceSupportive with Serializable {
 
-  def this() = this(true, 1, null, null)
+  /**
+   * default constructor, will create a InferenceModel with auto-scaling enabled.
+   *
+   * @return an auto-scaling enabled InferenceModel
+   */
+  def this() = this(true, 1, null, null, 1000)
+
+  /**
+   * create an auto-scaling disabled InferenceModel with supportedConcurrentNum
+   *
+   * @param supportedConcurrentNum the supported concurrentNum of the InferenceModel
+   * @return an auto-scaling disabled InferenceModel
+   */
   def this(supportedConcurrentNum: Int) = this(false, supportedConcurrentNum, null, null)
-  def this(autoScalingEnabled: Boolean, supportedConcurrentNum: Int) =
-    this(autoScalingEnabled, supportedConcurrentNum, null, null)
+
+  /**
+   * create an InferenceModel with specified autoScalingEnabled, supportedConcurrentNum
+   * and maxConcurrentNum
+   *
+   * @param autoScalingEnabled     if auto-scaling is enabled
+   * @param supportedConcurrentNum the supported concurrentNum of the InferenceModel
+   * @param maxConcurrentNum       the max concurrentNum for the LinkedBlockingQueue
+   * @return a specified InferenceModel
+   */
+  def this(autoScalingEnabled: Boolean, supportedConcurrentNum: Int, maxConcurrentNum: Int) =
+    this(autoScalingEnabled, supportedConcurrentNum, null, null, maxConcurrentNum)
 
   this.modelQueue = autoScalingEnabled match {
-    // Creates a LinkedBlockingQueue with a capacity of Integer.MAX_VALUE.
-    case true => new LinkedBlockingQueue[AbstractModel]()
+    // Creates a LinkedBlockingQueue with a capacity of maxConcurrentNum
+    case true => new LinkedBlockingQueue[AbstractModel](maxConcurrentNum)
     case false => new LinkedBlockingQueue[AbstractModel](supportedConcurrentNum)
   }
   this.originalModel match {

@@ -30,6 +30,12 @@ class TestAbstractInferenceModel(supportedConcurrentNum: Integer = 1)
 class TestAutoScalingAbstractInferenceModel() extends AbstractInferenceModel() {
 }
 
+class TestAutoScalingAbstractInferenceModel2(autoScalingEnabled: Boolean = true,
+                                             supportedConcurrentNum: Int = 1,
+                                             maxConcurrentNum: Int = 100)
+  extends AbstractInferenceModel(autoScalingEnabled, supportedConcurrentNum, maxConcurrentNum) {
+}
+
 class InferenceModelSpec extends FlatSpec with Matchers with BeforeAndAfter
   with InferenceSupportive {
   val resource = getClass().getClassLoader().getResource("models")
@@ -286,5 +292,22 @@ class InferenceModelSpec extends FlatSpec with Matchers with BeforeAndAfter
     threads.foreach(_.join())
     println(aModel.modelQueue.size())
     aModel.modelQueue.size() should be > 1
+
+    val bModel = new TestAutoScalingAbstractInferenceModel2(true, 4, 50)
+    bModel.loadCaffe(modelPath, weightPath)
+    println(bModel.modelQueue.size())
+    bModel.modelQueue.size() should be (4)
+    val threads2 = List.range(0, 200).map(i => {
+      new Thread() {
+        override def run(): Unit = {
+          bModel.predict(bigInputTensorList)
+        }
+      }
+    })
+    threads2.foreach(_.start())
+    threads2.foreach(_.join())
+    println(bModel.modelQueue.size())
+    bModel.modelQueue.size() should be > 1
+    bModel.modelQueue.size() should be <= 50
   }
 }
