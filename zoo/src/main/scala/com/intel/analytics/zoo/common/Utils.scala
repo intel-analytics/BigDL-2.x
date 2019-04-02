@@ -18,8 +18,9 @@ package com.intel.analytics.zoo.common
 
 import java.io._
 
-import com.intel.analytics.bigdl.utils.File
 import org.apache.commons.io.filefilter.WildcardFileFilter
+import org.apache.hadoop.conf.Configuration
+import org.apache.hadoop.fs.{FileSystem, Path}
 import org.apache.log4j.Logger
 
 import scala.collection.mutable.ArrayBuffer
@@ -48,8 +49,83 @@ private[zoo] object Utils {
     }
   }
 
-  def saveBytes(bytes: Array[Byte], fileName: String, isOverwrite: Boolean = false) : Unit = {
-    File.saveBytes(bytes, fileName, isOverwrite)
+  /**
+   * List local or remote files (HDFS, S3, FTP etc) with FileSystem API
+   * @param path String path
+   * @param recursive Recursive or not
+   * @return Array[String]
+   */
+  def listFiles(path: String, recursive: Boolean = false): Array[String] = {
+    val fspath = new Path(path)
+    val fs = FileSystem.get(fspath.toUri, new Configuration())
+    // List remote or local files
+    val files = fs.listFiles(fspath, recursive)
+    // Add file paths (string) into ArrayBuffer
+    val res = new ArrayBuffer[String]()
+    while (files.hasNext) {
+      val file = files.next()
+      // Ignore dir
+      if (!file.isDirectory) {
+        res.append(file.getPath.toString)
+      }
+    }
+    res.toArray
+  }
+
+  /**
+   * Read bytes of local or remote file
+   * @param path String
+   * @return Array[Byte]
+   */
+  def readBytes(path: String): Array[Byte] = {
+    val fspath = new Path(path)
+    // Get FileSystem
+    val fs = FileSystem.get(fspath.toUri, new Configuration())
+    val inputStream = fs.open(fspath)
+    val data = new Array[Byte](fs.getFileStatus(new Path(path))
+      .getLen.toInt)
+    try {
+      // Read all file bytes
+      inputStream.readFully(data)
+    } finally {
+      inputStream.close()
+    }
+    data
+  }
+
+  /**
+   * Write string lines into given path (local or remote file system)
+   * @param path String path
+   * @param lines String content
+   */
+  def writeLines(path: String, lines: String): Unit = {
+    val fspath = new Path(path)
+    val fs = FileSystem.get(fspath.toUri, new Configuration())
+    val outStream = fs.create(fspath, true)
+    try {
+      outStream.writeBytes(lines)
+    } finally {
+      outStream.close()
+    }
+  }
+
+  /**
+   * Save bytes into given path (local or remote file system)
+   * @param bytes bytes
+   * @param fileName String path
+   * @param isOverwrite Overwrite exiting file or not
+   */
+  def saveBytes(bytes: Array[Byte], fileName: String, isOverwrite: Boolean = false): Unit = {
+    val fspath = new Path(fileName)
+    val fs = FileSystem.get(fspath.toUri, new Configuration())
+    val outStream = fs.create(
+      fspath,
+      isOverwrite)
+    try {
+      outStream.write(bytes)
+    } finally {
+      outStream.close()
+    }
   }
 
   def logUsageErrorAndThrowException(errMessage: String, cause: Throwable = null): Unit = {
