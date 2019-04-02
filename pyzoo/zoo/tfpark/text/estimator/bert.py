@@ -63,6 +63,24 @@ def _bert_classifier_model_fn(features, labels, mode, params):
             return TFEstimatorSpec(mode=mode, loss=loss)
 
 
+def bert_input_fn(rdd, max_seq_length, batch_size):
+    def input_fn(mode):
+        if mode == tf.estimator.ModeKeys.EVAL or mode == tf.estimator.ModeKeys.TRAIN:
+            return TFDataset.from_rdd(rdd,
+                                      features={"input_ids": (tf.int32, [max_seq_length]),
+                                                "input_mask": (tf.int32, [max_seq_length]),
+                                                "token_type_ids": (tf.int32, [max_seq_length])},
+                                      labels=(tf.int32, []),
+                                      batch_size=batch_size)
+        else:
+            return TFDataset.from_rdd(rdd,
+                                      features={"input_ids": (tf.int32, [max_seq_length]),
+                                                "input_mask": (tf.int32, [max_seq_length]),
+                                                "token_type_ids": (tf.int32, [max_seq_length])},
+                                      batch_per_thread=batch_size)
+    return input_fn
+
+
 class BERTBaseEstimator(TFEstimator):
     def __init__(self, model_fn, bert_config_file, init_checkpoint=None,
                  use_one_hot_embeddings=False, optimizer=None, model_dir=None, **kwargs):
