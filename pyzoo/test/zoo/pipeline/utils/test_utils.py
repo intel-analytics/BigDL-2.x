@@ -39,8 +39,8 @@ class ZooTestCase(TestCase):
         K.set_image_dim_ordering("th")
         sparkConf = init_spark_conf().setMaster("local[4]").setAppName("zoo test case")
         assert str(sparkConf.get("spark.shuffle.reduceLocality.enabled")) == "false"
-        assert str(sparkConf.get("spark.serializer")) \
-            == "org.apache.spark.serializer.JavaSerializer"
+        assert \
+            str(sparkConf.get("spark.serializer")) == "org.apache.spark.serializer.JavaSerializer"
         assert SparkContext._active_spark_context is None
         self.sc = init_nncontext(sparkConf)
         self.sc.setLogLevel("ERROR")
@@ -84,7 +84,7 @@ class ZooTestCase(TestCase):
             np.testing.assert_allclose(a, b, rtol=rtol, atol=atol, err_msg=msg)
 
     def assert_list_allclose(self, a, b, rtol=1e-6, atol=1e-6, msg=None):
-        for(i1, i2) in zip(a, b):
+        for (i1, i2) in zip(a, b):
             self.assert_allclose(i1, i2, rtol, atol, msg)
 
     def compare_loss(self, y_a, y_b, kloss, zloss, rtol=1e-6, atol=1e-6):
@@ -155,6 +155,21 @@ class ZooTestCase(TestCase):
         self.compare_output_and_grad_input(model, loaded_model, input_data, rtol, atol)
         os.remove(tmp_path)
 
+    def assert_tfpark_model_save_load(self, model, input_data, rtol=1e-6, atol=1e-6):
+        model_class = model.__class__
+        tmp_path = create_tmp_path() + ".h5"
+        model.save_model(tmp_path)
+        loaded_model = model_class.load_model(tmp_path)
+        assert isinstance(loaded_model, model_class)
+        # Calling predict will remove the impact of dropout.
+        output1 = model.predict(input_data)
+        output2 = loaded_model.predict(input_data, distributed=True)
+        if isinstance(output1, list):
+            self.assert_list_allclose(output1, output2, rtol, atol)
+        else:
+            self.assert_allclose(output1, output2, rtol, atol)
+        os.remove(tmp_path)
+
     def compare_output_and_grad_input(self, model1, model2, input_data, rtol=1e-6, atol=1e-6):
         # Set seed in case of random factors such as dropout.
         rng = RNG()
@@ -180,3 +195,17 @@ class ZooTestCase(TestCase):
         if model1.get_weights():
             model2.set_weights(model1.get_weights())
         self.compare_output_and_grad_input(model1, model2, input_data, rtol, atol)
+
+    def intercept(self, func, error_message):
+
+        error = False
+        try:
+            func()
+        except Exception as e:
+            if error_message not in str(e):
+                raise Exception("error_message not in the exception raised. " +
+                                "error_message: %s, exception: %s" % (error_message, e))
+            error = True
+
+        if not error:
+            raise Exception("exception is not raised")

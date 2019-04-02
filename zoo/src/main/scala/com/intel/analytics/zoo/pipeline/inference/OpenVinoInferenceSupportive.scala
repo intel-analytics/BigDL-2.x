@@ -83,8 +83,11 @@ object OpenVinoInferenceSupportive extends InferenceSupportive {
         && extensionsConfigPath != "",
         s"modeltype is not provided, extensionsConfigPath, " +
           s"extensionsConfigPath should be specified")
-      case _ => require(ModelType.isSupported(modelType), s"$modelType not supported, " +
-        s"supported modeltypes are listed: ${ModelType.object_detection_types}")
+      case _ => ModelType.isSupported(modelType) match {
+          case true => logger.info(s"$modelType is supported." )
+          case false => logger.warn(s"$modelType not supported, " +
+            s"supported modeltypes are listed: ${ModelType.object_detection_types}")
+        }
     }
 
     val actualPipelineConfigPath = pipelineConfigPath match {
@@ -105,26 +108,42 @@ object OpenVinoInferenceSupportive extends InferenceSupportive {
       val motfpyFilePath: String = s"$openvinoTempDirDirPath/model-optimizer/mo_tf.py"
       val tmpDir = Files.createTempDir()
       val outputPath: String = tmpDir.getCanonicalPath
-      val logFilePath = s"$outputPath/tensorflowmodeloptimize.log"
-      val log = new java.io.File(logFilePath)
-      timing("optimize tensorflow model") {
+      val stdout = new StringBuilder
+      val stderr = new StringBuilder
+      val log = ProcessLogger(stdout append _ + "\n", stderr append _ + "\n")
+      val exitCode = timing("optimize tensorflow model") {
         Seq("sh",
           loadTensorflowModelScriptPath,
           modelPath,
           actualPipelineConfigPath,
           actualExtensionsConfigPath,
           outputPath,
-          motfpyFilePath) #> log !
+          motfpyFilePath) ! log
       }
-      logger.info(s"tensorflow model optimized, please check the output log $logFilePath")
+      logger.info(s"tensorflow model optimized, log: \n" +
+        s"stderr: $stderr \n" +
+        s"stdout: $stdout \n" +
+        s"exitCode: $exitCode\n -----")
+      exitCode match {
+        case 0 => logger.info(s"tensorflow model optimization succeeded")
+        case _ =>
+          val message = stderr.toString().split("\n").filter(_ contains("ERROR")).mkString(",")
+          throw
+            new InferenceRuntimeException(s"Openvino optimize tf model error: $exitCode, $message")
+      }
       val modelFilePath: String = s"$outputPath/$modelName.xml"
       val weightFilePath: String = s"$outputPath/$modelName.bin"
       val mappingFilePath: String = s"$outputPath/$modelName.mapping"
-      val model = loadOpenVinoIR(modelFilePath, weightFilePath, deviceType)
+      val modelFile = new File(modelFilePath)
+      val weightFile = new File(weightFilePath)
+      val mappingFile = new File(mappingFilePath)
+      val model = (modelFile.exists(), weightFile.exists(), mappingFile.exists()) match {
+        case (true, true, true) =>
+          loadOpenVinoIR(modelFilePath, weightFilePath, deviceType)
+        case (_, _, _) => throw
+          new InferenceRuntimeException("Openvino optimize tf model error")
+      }
       timing("delete temporary model files") {
-        val modelFile = new File(modelFilePath)
-        val weightFile = new File(weightFilePath)
-        val mappingFile = new File(mappingFilePath)
         modelFile.delete()
         weightFile.delete()
         mappingFile.delete()
@@ -235,7 +254,7 @@ object ModelType {
 
   def resolveActualExtensionsConfigPath(modelType : String): String = {
     val category = modelType match {
-      case t if t.contains("ssd") => "ssd"
+      case t if t.contains("ssd") => "ssd_v2"
       case t if t.contains("faster_rcnn") => "faster_rcnn"
       case t if t.contains("mask_rcnn") => "mask_rcnn"
       case t if t.contains("rfcn") => "rfcn"

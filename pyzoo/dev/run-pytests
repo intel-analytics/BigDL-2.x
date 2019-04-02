@@ -26,7 +26,9 @@ export PYSPARK_DRIVER_PYTHON=python
 py_version="$(python -V 2>&1)"
 
 python -m pytest -v --doctest-modules ../zoo \
-    --ignore=../zoo/pipeline/api/keras2
+    --ignore=../zoo/pipeline/api/keras2 \
+    --ignore=../zoo/tfpark/text \
+    --ignore=../zoo/examples
 exit_status_1=$?
 if [ $exit_status_1 -ne 0 ];
 then
@@ -36,10 +38,12 @@ fi
 if [[ $py_version == *"Python 2.7"* ]]; then
     echo "Running Python 2.7"
     echo "Skipping OpenVINO tests"
+    echo "Skipping nlp-architect tests"
     python -m pytest -v ../test --ignore=../test/zoo/pipeline/utils/test_utils.py \
        --ignore=../test/zoo/pipeline/api/keras2/ \
        --ignore=../test/zoo/pipeline/autograd/ \
-       --ignore=../test/zoo/pipeline/inference/
+       --ignore=../test/zoo/pipeline/inference/ \
+       --ignore=../test/zoo/tfpark/test_text_models.py
     exit_status_2=$?
     if [ $exit_status_2 -ne 0 ];
     then

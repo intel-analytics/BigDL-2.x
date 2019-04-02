@@ -11,6 +11,10 @@
             <includes>
                 <include>**/*.py</include>
             </includes>
+            <excludes>
+                <exclude>test/**/*</exclude>
+                <exclude>docs/**/*</exclude>
+            </excludes>
             <outputDirectory>/..</outputDirectory>
             <directory>${project.parent.basedir}/pyzoo</directory>
         </fileSet>
@@ -24,7 +28,7 @@
                 <exclude>docs/**/*</exclude>
             </excludes>
             <outputDirectory>/..</outputDirectory>
-            <directory>${project.build.directory}/bigdl_python/sources</directory>
+            <directory>${project.parent.basedir}/zoo/python_packages/sources</directory>
         </fileSet>
 
         <fileSet>

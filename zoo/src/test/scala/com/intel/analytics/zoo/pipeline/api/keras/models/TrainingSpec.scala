@@ -20,6 +20,7 @@ import com.google.common.io.Files
 import com.intel.analytics.bigdl.dataset.{LocalDataSet, MiniBatch, Sample}
 import com.intel.analytics.bigdl.nn.MSECriterion
 import com.intel.analytics.bigdl.optim.{SGD, Top1Accuracy}
+import com.intel.analytics.bigdl.python.api.PythonBigDL
 import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric
 import com.intel.analytics.bigdl.tensor.{Storage, Tensor}
 import com.intel.analytics.bigdl.transform.vision.image.opencv.OpenCVMat
@@ -30,6 +31,7 @@ import com.intel.analytics.zoo.common.NNContext
 import com.intel.analytics.zoo.feature.image._
 import com.intel.analytics.zoo.pipeline.api.autograd.{Variable, AutoGrad => A}
 import com.intel.analytics.zoo.pipeline.api.keras.layers._
+import com.intel.analytics.zoo.pipeline.api.keras.python.PythonZooKeras
 import org.apache.spark.{SparkConf, SparkContext}
 import org.apache.spark.rdd.RDD
 import org.scalatest.{BeforeAndAfter, FlatSpec, Matchers}
@@ -200,6 +202,58 @@ class TrainingSpec extends FlatSpec with Matchers with BeforeAndAfter {
     val accuracy = model.evaluate(testData, batchSize = 8)
   }
 
+  "zooEvaluate" should "work" in {
+    val trainingData = generateData(Array(12, 12), 1, 100)
+    val model = Sequential[Float]()
+
+    model.add(Dense[Float](8, activation = "relu", inputShape = Shape(12, 12)))
+    model.add(Flatten[Float]())
+    model.add(Dense[Float](2, activation = "softmax"))
+
+    model.compile(optimizer = "sgd", loss = "sparse_categorical_crossentropy",
+      metrics = List("accuracy"))
+    model.fit(trainingData, batchSize = 8, nbEpoch = 2)
+
+    val api = new PythonZooKeras[Float]()
+    val bigdlApi = sc.broadcast(new PythonBigDL[Float]())
+
+    // python api require to take no type Sample and it takes JavaRDD as input
+    // use toPySample to convert to no type use toJavaRDD to convert to JavaRDD
+    val jd = trainingData.map(j => bigdlApi.value.toPySample(j)).toJavaRDD()
+    val res = api.zooEvaluate(model, jd, 8)
+    res
+  }
+
+  "tensorboard api" should "work" in {
+    val trainingData = generateData(Array(12, 12), 1, 100)
+    val model = Sequential[Float]()
+
+    model.add(Dense[Float](8, activation = "relu", inputShape = Shape(12, 12)))
+    model.add(Flatten[Float]())
+    model.add(Dense[Float](2, activation = "softmax"))
+
+    model.compile(optimizer = "sgd", loss = "sparse_categorical_crossentropy",
+      metrics = List("accuracy"))
+    val api = new PythonZooKeras[Float]()
+
+    model.setTensorBoard("./", "testTensorBoard")
+    model.fit(trainingData, batchSize = 8, nbEpoch = 2, validationData = trainingData)
+
+    val rawTrain = model.getTrainSummary("Loss")
+    val rawVal = model.getValidationSummary("Loss")
+
+    val trainArr = api.zooGetScalarFromSummary(model, "Loss", "Train")
+    val valArr = api.zooGetScalarFromSummary(model, "Loss", "Validation")
+
+    // delete test directory
+    import scala.reflect.io.Directory
+    import java.io.File
+    val dir = new Directory(new File("./testTensorBoard"))
+    if (dir.exists && dir.isDirectory) {
+      dir.deleteRecursively()
+    }
+    valArr
+  }
 }
 
 object DummyDataSet extends LocalDataSet[MiniBatch[Float]] {

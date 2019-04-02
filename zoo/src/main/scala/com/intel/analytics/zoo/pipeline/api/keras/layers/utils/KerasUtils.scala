@@ -26,7 +26,7 @@ import com.intel.analytics.bigdl.tensor.Tensor
 import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric
 import com.intel.analytics.bigdl.utils.{MultiShape, Shape, SingleShape}
 import com.intel.analytics.zoo.pipeline.api.Net
-import com.intel.analytics.zoo.pipeline.api.keras.metrics.{AUC, Accuracy, Top5Accuracy => ZooTop5Accuracy}
+import com.intel.analytics.zoo.pipeline.api.keras.metrics.{AUC, Accuracy, BinaryAccuracy, CategoricalAccuracy, SparseCategoricalAccuracy, Top5Accuracy => ZooTop5Accuracy}
 import com.intel.analytics.zoo.pipeline.api.keras.models.KerasNet
 import com.intel.analytics.zoo.pipeline.api.keras.objectives._
 import org.apache.spark.rdd.RDD
@@ -49,13 +49,24 @@ object KerasUtils {
     }
   }
 
-  def getInitMethod(init: String): InitializationMethod = {
+  def getInitMethod(init: String, limits: Array[Double] = null): InitializationMethod = {
     init.toLowerCase() match {
       case "glorot_uniform" => Xavier
       case "one" => Ones
       case "zero" => Zeros
-      case "uniform" => RandomUniform(-0.05, 0.05)
-      case "normal" => RandomNormal(0.0, 0.05)
+      case "uniform" =>
+        if (limits == null) {
+          RandomUniform(-0.05, 0.05)
+        }
+        else {
+          RandomUniform(limits.head, limits(1))
+        }
+      case "normal" =>
+        if (limits == null) {
+          RandomNormal(0.0, 0.05)
+        } else {
+          RandomNormal(limits.head, limits(1))
+        }
       case _ => throw new IllegalArgumentException(s"Unsupported initialization method: " +
         s"${init.toLowerCase()}")
     }
@@ -65,7 +76,7 @@ object KerasUtils {
     (implicit ev: TensorNumeric[T]): KerasLayer[Tensor[T], Tensor[T], T] = {
     if (activation == null) { return null }
     if (activation.toLowerCase() == "softmax") {
-      KSoftMax[T]()
+      com.intel.analytics.zoo.pipeline.api.keras.layers.SoftMax[T]()
     } else {
       val torchActivation = getTorchActivation(activation)
       new KerasIdentityWrapper[T](torchActivation)
@@ -178,15 +189,26 @@ object KerasUtils {
     }
   }
 
-  def toBigDLMetrics[T: ClassTag](metrics: List[String])
+  private def mappingForAcc[T: ClassTag](loss: String)(implicit ev: TensorNumeric[T])
+  : ValidationMethod[T] = {
+    loss.toLowerCase() match {
+      case "sparse_categorical_crossentropy" => new SparseCategoricalAccuracy[T]()
+      case "categorical_crossentropy" => new CategoricalAccuracy[T]()
+      case "binary_crossentropy" => new BinaryAccuracy[T]()
+      case _ => throw new IllegalArgumentException(
+        s"Unsupported metric: accuracy and loss: ${loss} combination")
+    }
+  }
+
+  def toBigDLMetrics[T: ClassTag](metrics: List[String], loss: String)
     (implicit ev: TensorNumeric[T]): List[ValidationMethod[T]] = {
     if (metrics == null) {
       null
     } else {
       metrics.map { metric =>
         metric.toLowerCase() match {
-          case "accuracy" => new Accuracy[T]()
-          case "acc" => new Accuracy[T]()
+          case "accuracy" => mappingForAcc(loss)
+          case "acc" => mappingForAcc(loss)
           case "top5accuracy" => new ZooTop5Accuracy[T]()
           case "top5acc" => new ZooTop5Accuracy[T]()
           case "mae" => new MAE[T]()
@@ -434,5 +456,18 @@ object KerasUtils {
     val totalCores = EngineRef.getCoreNumber() * EngineRef.getNodeNumber()
     require(batchSize % totalCores == 0,
       s"BatchSize: ${batchSize} cannot be divided by ${totalCores}")
+  }
+
+  def tril[T: ClassTag](x: Tensor[T])(implicit ev: TensorNumeric[T]): Tensor[T] = {
+    require(x.dim() == 2, "tril expects a matrix!")
+    val stride1 = x.stride(1)
+    val stride2 = x.stride(2)
+    for (i <- 0 until x.size(1)) {
+      for (c <- i + 1 until x.size(2)) {
+        val data = x.storage().array
+        data(i * stride1 + c * stride2) = ev.fromType(0)
+      }
+    }
+    x
   }
 }

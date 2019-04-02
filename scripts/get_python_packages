@@ -15,18 +15,19 @@
 # limitations under the License.
 
 if (( $# < 2)); then
-  echo "getting $* $#"
-  echo "Bad parameters. Usage example: bash get_bigdl_python.sh /tmp/bigdl_python/ 0.5.0"
+  echo "Getting $* $#"
+  echo "Bad parameters. Usage example: bash get_python_packages /tmp/analytics_zoo_python/ 0.7.2"
   exit -1
 fi
 
 DEST_DIR=$1
 echo "DEST_DIR: $DEST_DIR"
 BIGDL_VERSION=$2
-echo "BIGDL_VERSION: $BIGDL_VERSION"
+NLP_ARCHITECT_VERSION="0.3.1"
 
-rm -rf $DEST_DIR/*
+rm -rf $DEST_DIR/*/
 
+echo "Fetching BigDL ${BIGDL_VERSION}"
 GET_COMMAND="mvn org.apache.maven.plugins:maven-dependency-plugin:2.4:get \
 -DartifactId=dist-spark-2.2.0-scala-2.11.8-all \
 -DgroupId=com.intel.analytics.bigdl \
@@ -34,19 +35,34 @@ GET_COMMAND="mvn org.apache.maven.plugins:maven-dependency-plugin:2.4:get \
 -Dclassifier=python-api \
 -Dpackaging=zip \
 -Ddest=${DEST_DIR}/bigdl-python-api-${BIGDL_VERSION}.zip"
-
 echo "Running: $GET_COMMAND"
 $GET_COMMAND
-
 exit_status=$?
 if [ $exit_status -ne 0 ];
 then
     rm -rf ${DEST_DIR}
-    echo "Fail to get the BigDL python api from maven!!!!"
-    exit $exit_status_1
+    echo "Failed to get BigDL Python API from Maven."
+    exit $exit_status
+fi
+
+echo "Fetching nlp-architect ${NLP_ARCHITECT_VERSION}"
+GET_COMMAND="wget -nc https://github.com/NervanaSystems/nlp-architect/archive/v${NLP_ARCHITECT_VERSION}.zip -P $DEST_DIR"
+echo "Running: $GET_COMMAND"
+$GET_COMMAND
+exit_status=$?
+if [ $exit_status -ne 0 ];
+then
+    rm -rf ${DEST_DIR}
+    echo "Failed to get nlp-architect package from GitHub."
+    exit $exit_status
 fi
 
 cd ${DEST_DIR}
 mkdir sources
 unzip bigdl-python-api-${BIGDL_VERSION}.zip -d sources
 
+unzip v${NLP_ARCHITECT_VERSION}.zip -d sources
+cd sources/nlp-architect-${NLP_ARCHITECT_VERSION}
+mv nlp_architect/ ../
+cd ${DEST_DIR}
+rm -rf sources/nlp-architect-${NLP_ARCHITECT_VERSION}

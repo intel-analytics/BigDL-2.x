@@ -18,7 +18,6 @@ import sys
 import tempfile
 import warnings
 
-import logging
 import six
 import os
 import json
@@ -29,12 +28,14 @@ from pyspark import RDD
 from bigdl.nn.criterion import Criterion
 from bigdl.nn.layer import Model as BModel
 from bigdl.nn.layer import Layer
-from bigdl.util.common import to_list, callBigDlFunc, get_spark_context, \
+from bigdl.util.common import to_list, callBigDlFunc, \
     JavaValue, get_node_and_core_number
 from zoo.common import Sample, JTensor
+from zoo.common.nncontext import getOrCreateSparkContext
 from zoo.feature.image import ImageSet
 from zoo.pipeline.api.keras.engine.topology import ZooKerasLayer, KerasNet, to_bigdl_metric
-from bigdl.optim.optimizer import EveryEpoch, MaxEpoch, Optimizer, Adam
+from bigdl.optim.optimizer import EveryEpoch, MaxEpoch, Optimizer
+from zoo.util import nest
 
 if sys.version >= '3':
     long = int
@@ -262,7 +263,7 @@ class TFNet(Layer):
             return ImageSet(results)
         if distributed:
             if isinstance(x, np.ndarray):
-                data_rdd = to_sample_rdd(x, np.zeros([x.shape[0]]), get_spark_context())
+                data_rdd = to_sample_rdd(x, np.zeros([x.shape[0]]), getOrCreateSparkContext())
             elif isinstance(x, RDD):
                 data_rdd = x
             else:
@@ -377,7 +378,6 @@ class TFOptimizer:
         '''
 
         import tensorflow as tf
-        from tensorflow.python.data.util import nest
         from zoo.util.tf import export_tf
 
         if dataset is None:
@@ -404,6 +404,7 @@ class TFOptimizer:
         self.dataset = dataset
         self.inputs = inputs + additional_inputs
         self.graph = graph
+        self.session_config = session_config
 
         from zoo.util.tf import process_grad
         grads = [process_grad(grad) for grad in grads]
@@ -418,10 +419,13 @@ class TFOptimizer:
         else:
             outputs = [loss]
 
+        self.grads = grads
+        self.outputs = outputs
+
         self.export_dir = tempfile.mkdtemp()
         export_tf(self.sess, self.export_dir,
                   inputs=self.inputs,
-                  outputs=grads + outputs)
+                  outputs=self.grads + self.outputs)
 
         variable_names = [v.name for v in variables]
         grad_names = [g.name for g in grads]
@@ -472,8 +476,6 @@ with variable_creator_scope():
         batch_size = self.dataset.batch_size
 
         def to_sample(t):
-            if isinstance(t, list):
-                t = tuple(t)
             return Sample.from_ndarray(nest.flatten(t), [np.array([0.0])])
 
         sample_rdd = data.map(to_sample)
@@ -527,7 +529,12 @@ with variable_creator_scope():
         all_required_inputs = _find_placeholders([loss])
         dataset = tf.get_collection(all_required_inputs[0].name)[0]
 
-        inputs = dataset.tensors
+        inputs = []
+        for item in list(dataset._original_tensors):
+            if isinstance(item, dict):
+                inputs = inputs + list(item.values())
+            else:
+                inputs.append(item)
 
         _check_the_same(all_required_inputs, inputs)
 
@@ -554,18 +561,18 @@ with variable_creator_scope():
         grads = keras_optimizer.get_gradients(loss, variables)
 
         sess = K.get_session()
-        with sess.as_default():
-            optim_method = TFOptimizer.to_bigdl_optim_method(keras_optimizer)
+        optim_method = TFOptimizer.to_bigdl_optim_method(keras_optimizer)
 
-        if keras_model.metrics:
+        if keras_model.metrics and (dataset.val_rdd is not None or val_spilt != 0.0):
             if isinstance(keras_model.metrics, dict):
                 raise ValueError(
                     "different metrics for different outputs are not supported right now")
 
             if dataset.val_rdd is None and val_spilt == 0.0:
                 raise ValueError("Validation data is not specified. Please set " +
-                                 "val rdd in TFDataset, or set val_split larger than zero")
-            bigdl_val_methods = [to_bigdl_metric(m) for m in keras_model.metrics_names]
+                                 "val_rdd in TFDataset, or set val_split larger than zero")
+            bigdl_val_methods =\
+                [to_bigdl_metric(m, keras_model.loss) for m in keras_model.metrics_names]
             val_outputs = keras_model.outputs
             val_labels = keras_model.targets
         else:
@@ -588,47 +595,104 @@ with variable_creator_scope():
         import tensorflow.keras.backend as K
         import tensorflow.keras.optimizers as koptimizers
         import bigdl.optim.optimizer as boptimizer
-        lr = float(K.eval(koptim_method.lr))
-        decay = float(K.eval(koptim_method.decay))
-        if isinstance(koptim_method, koptimizers.Adagrad):
-            warnings.warn("For Adagrad, we don't support epsilon for now")
-            return boptimizer.Adagrad(learningrate=lr,
-                                      learningrate_decay=decay)
-        elif isinstance(koptim_method, koptimizers.SGD):
-            momentum = float(K.eval(koptim_method.momentum))
-            return boptimizer.SGD(learningrate=lr,
-                                  learningrate_decay=decay,
-                                  momentum=momentum,
-                                  nesterov=koptim_method.nesterov)
-        elif isinstance(koptim_method, koptimizers.Adam):
-            beta1 = float(K.eval(koptim_method.beta_1))
-            beta2 = float(K.eval(koptim_method.beta_2))
-            return boptimizer.Adam(learningrate=lr,
-                                   learningrate_decay=decay,
-                                   beta1=beta1,
-                                   beta2=beta2,
-                                   epsilon=koptim_method.epsilon)
-        elif isinstance(koptim_method, koptimizers.RMSprop):
-            rho = float(K.eval(koptim_method.rho))
-            return boptimizer.RMSprop(learningrate=lr,
+        import tensorflow.train as tftrain
+        import tensorflow as tf
+        from tensorflow.python.keras.optimizers import TFOptimizer
+
+        if isinstance(koptim_method, TFOptimizer):
+            koptim_method = koptim_method.optimizer
+
+        if isinstance(koptim_method, koptimizers.Optimizer):
+            lr = float(K.eval(koptim_method.lr))
+            decay = float(K.eval(koptim_method.decay))
+            if isinstance(koptim_method, koptimizers.Adagrad):
+                warnings.warn("For Adagrad, we don't support epsilon for now")
+                return boptimizer.Adagrad(learningrate=lr,
+                                          learningrate_decay=decay)
+            elif isinstance(koptim_method, koptimizers.SGD):
+                momentum = float(K.eval(koptim_method.momentum))
+                return boptimizer.SGD(learningrate=lr,
                                       learningrate_decay=decay,
-                                      decayrate=rho,
-                                      epsilon=koptim_method.epsilon)
-        elif isinstance(koptim_method, koptimizers.Adadelta):
-            warnings.warn(
-                "For Adadelta, we don't support learning rate and learning rate decay for now")
-            return boptimizer.Adadelta(decayrate=koptim_method.rho,
+                                      momentum=momentum,
+                                      nesterov=koptim_method.nesterov)
+            elif isinstance(koptim_method, koptimizers.Adam):
+                beta1 = float(K.eval(koptim_method.beta_1))
+                beta2 = float(K.eval(koptim_method.beta_2))
+                return boptimizer.Adam(learningrate=lr,
+                                       learningrate_decay=decay,
+                                       beta1=beta1,
+                                       beta2=beta2,
                                        epsilon=koptim_method.epsilon)
-        elif isinstance(koptim_method, koptimizers.Adamax):
-            beta1 = float(K.eval(koptim_method.beta_1))
-            beta2 = float(K.eval(koptim_method.beta_2))
-            warnings.warn("For Adamax, we don't support learning rate decay for now")
-            return boptimizer.Adamax(learningrate=lr,
-                                     beta1=beta1,
-                                     beta2=beta2,
-                                     epsilon=koptim_method.epsilon)
-        else:
-            raise Exception("We don't support %s for now" % koptim_method)
+            elif isinstance(koptim_method, koptimizers.RMSprop):
+                rho = float(K.eval(koptim_method.rho))
+                return boptimizer.RMSprop(learningrate=lr,
+                                          learningrate_decay=decay,
+                                          decayrate=rho,
+                                          epsilon=koptim_method.epsilon)
+            elif isinstance(koptim_method, koptimizers.Adadelta):
+                warnings.warn(
+                    "For Adadelta, we don't support learning rate and learning rate decay for now")
+                return boptimizer.Adadelta(decayrate=koptim_method.rho,
+                                           epsilon=koptim_method.epsilon)
+            elif isinstance(koptim_method, koptimizers.Adamax):
+                beta1 = float(K.eval(koptim_method.beta_1))
+                beta2 = float(K.eval(koptim_method.beta_2))
+                warnings.warn("For Adamax, we don't support learning rate decay for now")
+                return boptimizer.Adamax(learningrate=lr,
+                                         beta1=beta1,
+                                         beta2=beta2,
+                                         epsilon=koptim_method.epsilon)
+        elif isinstance(koptim_method, tftrain.Optimizer):
+            def get_value(v):
+                if isinstance(v, (tf.Tensor, tf.SparseTensor, tf.Variable)):
+                    return float(K.eval(v))
+                else:
+                    return float(v)
+            if isinstance(koptim_method, tftrain.GradientDescentOptimizer):
+                lr = get_value(koptim_method._learning_rate)
+                return boptimizer.SGD(learningrate=lr)
+            elif isinstance(koptim_method, tftrain.MomentumOptimizer):
+                lr = get_value(koptim_method._learning_rate)
+                momentum = get_value(koptim_method._momentum)
+                use_nesterov = koptim_method._use_nesterov
+                return boptimizer.SGD(learningrate=lr, momentum=momentum, nesterov=use_nesterov)
+            elif isinstance(koptim_method, tftrain.AdagradOptimizer):
+                lr = get_value(koptim_method._learning_rate)
+                return boptimizer.Adagrad(learningrate=lr)
+            elif isinstance(koptim_method, tftrain.AdamOptimizer):
+                lr = get_value(koptim_method._lr)
+                beta1 = get_value(koptim_method._beta1)
+                beta2 = get_value(koptim_method._beta2)
+                epsilon = get_value(koptim_method._epsilon)
+                return boptimizer.Adam(learningrate=lr, beta1=beta1, beta2=beta2, epsilon=epsilon)
+            elif isinstance(koptim_method, tftrain.RMSPropOptimizer):
+                lr = get_value(koptim_method._learning_rate)
+                decay = get_value(koptim_method._decay)
+                momentum = get_value(koptim_method._momentum)
+                epsilon = get_value(koptim_method._epsilon)
+                centered = get_value(koptim_method._centered)
+                if momentum != 0.0 or centered:
+                    warnings.warn(
+                        "For RMSPropOptimizer, we don't support momentum and centered for now")
+                return boptimizer.RMSprop(learningrate=lr,
+                                          learningrate_decay=decay,
+                                          epsilon=epsilon)
+            elif isinstance(koptim_method, tftrain.AdadeltaOptimizer):
+                lr = get_value(koptim_method._lr)
+                rho = get_value(koptim_method._rho)
+                epsilon = get_value(koptim_method._epsilon)
+                warnings.warn(
+                    "For Adadelta, we don't support learning rate for now")
+                return boptimizer.Adadelta(decayrate=rho, epsilon=epsilon)
+
+        raise ValueError("We don't support %s for now" % koptim_method)
+
+    def refresh_weights(self):
+        from zoo.util.tf import export_tf
+        export_tf(self.sess, self.export_dir,
+                  inputs=self.inputs,
+                  outputs=self.grads + self.outputs)
+        self.training_helper_layer = TFTrainingHelper(self.export_dir, self.session_config)
 
     def set_train_summary(self, summary):
         self.optimizer.set_train_summary(summary)
@@ -661,16 +725,17 @@ class TFDataset:
     def __init__(self, rdd, tensor_structure, batch_size,
                  batch_per_thread, hard_code_batch_size=False, val_rdd=None):
         '''
-        TFDatasets represents a distributed collection of elements to be feed into Tensorflow graph.
-        TFDatasets can be created using a RDD and each of its records is one or more numpy.ndarray
-        of the same nested structure, representing the tensors to be feed into TensorFlow
-        graph on each iteration. TFDatasets must be used with TFOptimizer or TFPredictor.
+        TFDatasets represents a distributed collection of elements to be feed into Tensorflow
+        graph. TFDatasets can be created using a RDD and each of its records is one or more
+        numpy.ndarray of the same nested structure, representing the tensors to be feed into
+        TensorFlow graph on each iteration. TFDatasets must be used with TFOptimizer or
+        TFPredictor.
         '''
-        import tensorflow as tf
 
         if batch_size > 0 and batch_per_thread > 0:
             raise ValueError("bath_size and batch_per_thread should not be set simultaneously")
 
+        self.has_batch = True
         node_num, core_num = get_node_and_core_number()
         self.total_core_num = node_num * core_num
         if batch_size > 0:
@@ -682,40 +747,42 @@ class TFDataset:
         if batch_size <= 0 and batch_per_thread <= 0:
             batch_per_thread = 1
             batch_size = self.total_core_num
+            self.has_batch = False
+
         self.batch_size = batch_size
         self.batch_per_thread = batch_per_thread
         self.hard_code_batch_size = hard_code_batch_size
         self.tensor_structure = tensor_structure
 
-        if isinstance(self.tensor_structure, list):
-            self.tensor_structure = tuple(tensor_structure)
-
         self.val_rdd = val_rdd
-        from tensorflow.python.data.util import nest
 
         if not self.hard_code_batch_size:
             self.output_shapes = nest.pack_sequence_as(
                 self.tensor_structure, [[None] + list(t.shape)
+                                        if t is not None else None
                                         for t in nest.flatten(self.tensor_structure)])
         else:
             if self.batch_per_thread > 0:
                 self.output_shapes = nest.pack_sequence_as(
                     self.tensor_structure, [[self.batch_per_thread] + t.shape
+                                            if t is not None else None
                                             for t in nest.flatten(self.tensor_structure)])
             else:
                 self.output_shapes = nest.pack_sequence_as(
                     self.tensor_structure, [[self.batch_size // self.total_core_num] + t.shape
+                                            if t is not None else None
                                             for t in nest.flatten(self.tensor_structure)])
 
         self.rdd = rdd
         self.input_names = nest.pack_sequence_as(
-            self.tensor_structure, [t.name for t in nest.flatten(self.tensor_structure)])
+            self.tensor_structure, [t.name
+                                    if t is not None else None
+                                    for t in nest.flatten(self.tensor_structure)])
 
         self._tensors = None
 
     def _create_placeholders(self):
         import tensorflow as tf
-        from tensorflow.python.data.util import nest
         if not self.hard_code_batch_size:
             tensors = nest.pack_sequence_as(
                 self.tensor_structure, [tf.placeholder(name=t.name,
@@ -743,6 +810,13 @@ class TFDataset:
             tf.get_default_graph().clear_collection(tensor.name)
             tf.add_to_collection(tensor.name, self)
 
+        self._original_tensors = tensors
+        self._tensors = tensors
+
+        if not self.has_batch:
+            self._tensors = nest.pack_sequence_as(self.tensor_structure,
+                                                  [t[0] for t in nest.flatten(tensors)])
+
         return tensors
 
     @property
@@ -754,8 +828,7 @@ class TFDataset:
         '''
 
         if self._tensors is None:
-            tensors = self._create_placeholders()
-            self._tensors = tensors
+            self._create_placeholders()
 
         return self._tensors
 
@@ -763,12 +836,12 @@ class TFDataset:
     def feature_tensors(self):
 
         if self._tensors is None:
-            tensors = self._create_placeholders()
-            self._tensors = tensors
+            self._create_placeholders()
 
         if not isinstance(self._tensors, tuple):
             raise ValueError("To use feature_tensors, " +
-                             "the element in TFDataset must be a tuple of two component")
+                             "the element in TFDataset must be a tuple of two components. " +
+                             "Please use TFDataset.from_rdd(rdd, features=..., labels=...). ")
 
         return self._tensors[0]
 
@@ -776,19 +849,20 @@ class TFDataset:
     def label_tensors(self):
 
         if self._tensors is None:
-            tensors = self._create_placeholders()
-            self._tensors = tensors
+            self._create_placeholders()
 
         if not isinstance(self._tensors, tuple):
-            raise ValueError("To use label_tensors, the element in " +
-                             "TFDataset must be a tuple of two component")
+            raise ValueError("To use label_tensors, " +
+                             "the element in TFDataset must be a tuple of two components. " +
+                             "Please use TFDataset.from_rdd(rdd, features=..., labels=...). ")
 
         return self._tensors[1]
 
     @staticmethod
     def from_rdd(rdd, names=None, shapes=None, types=None,
                  batch_size=-1, batch_per_thread=-1,
-                 hard_code_batch_size=False, val_rdd=None):
+                 hard_code_batch_size=False, val_rdd=None,
+                 features=None, labels=None):
         '''
         Create a TFDataset from a rdd, each element of the rdd must be a list of numpy.ndarray.
 
@@ -809,9 +883,20 @@ class TFDataset:
         '''
         import tensorflow as tf
 
+        if features is not None:
+            feature_structure = _to_tensor_structure(features)
+            if labels is not None:
+                label_structure = _to_tensor_structure(labels)
+                tensor_structure = (feature_structure, label_structure)
+
+            else:
+                tensor_structure = (feature_structure,)
+
+            return TFDataset(rdd, tensor_structure,
+                             batch_size, batch_per_thread,
+                             hard_code_batch_size, val_rdd)
+
         if names is not None or shapes is not None or types is not None:
-            logging.warning("Using argument names, shapes or types is deprecated," +
-                            " please use the tensor_structure argument")
             if not names:
                 names = ["features", "labels"]
             if not shapes:
@@ -830,24 +915,9 @@ class TFDataset:
                          hard_code_batch_size, val_rdd)
 
     @staticmethod
-    def from_tuple_rdd(rdd, features, labels=None, batch_size=-1, batch_per_thread=-1,
-                       hard_code_batch_size=False, val_rdd=None):
-        feature_structure = _to_tensor_structure(features)
-        if labels is not None:
-            label_structure = _to_tensor_structure(labels)
-
-        else:
-            label_structure = None
-
-        tensor_structure = (feature_structure, label_structure)
-        TFDataset(rdd, tensor_structure,
-                  batch_size, batch_per_thread,
-                  hard_code_batch_size, val_rdd)
-
-    @staticmethod
-    def from_tensors(tensors, batch_size=-1, batch_per_thread=-1,
-                     hard_code_batch_size=False, val_tensors=None):
-        sc = get_spark_context()
+    def from_ndarrays(tensors, batch_size=-1, batch_per_thread=-1,
+                      hard_code_batch_size=False, val_tensors=None):
+        sc = getOrCreateSparkContext()
         node_num, core_num = get_node_and_core_number()
         total_core_num = node_num * core_num
 
@@ -862,9 +932,15 @@ class TFDataset:
 
 
 def _tensors_to_rdd(tensors, sc, splits):
-    from tensorflow.python.data.util import nest
     import tensorflow as tf
+    if isinstance(tensors, np.ndarray):
+        tensors = (tensors,)
+
     if isinstance(tensors, list):
+        for i in range(len(tensors)):
+            if tensors[i].dtype == np.dtype("float64"):
+                tensors[i] = np.float32(tensors[i])
+
         data_list = _splits(tensors)
         rdd = sc.parallelize(data_list, splits)
         tensor_structure = [TensorMeta(tf.as_dtype(t.dtype),
@@ -873,6 +949,9 @@ def _tensors_to_rdd(tensors, sc, splits):
                             for i, t in enumerate(tensors)]
     else:
         flattened = nest.flatten(tensors)
+        for i in range(len(flattened)):
+            if flattened[i].dtype == np.dtype("float64"):
+                flattened[i] = np.float32(flattened[i])
         data_list = _splits(flattened)
         rdd = sc.parallelize(data_list, splits)
         rdd = rdd.map(lambda x: nest.pack_sequence_as(tensors, x))
@@ -898,10 +977,16 @@ def _splits(tensors):
 def _to_tensor_structure(tensors):
     if isinstance(tensors, tuple):
         tensor_structure = TensorMeta(dtype=tensors[0], shape=tensors[1], name="input0")
-    else:
+    elif isinstance(tensors, list):
+        tensor_structure = [TensorMeta(dtype=value[0], shape=value[1], name=idx)
+                            for (idx, value) in enumerate(tensors)]
+    elif isinstance(tensors, dict):
         tensor_structure = {}
-        for key, value in enumerate(tensors):
+        for key, value in tensors.items():
             tensor_structure[key] = TensorMeta(dtype=value[0], shape=value[1], name=key)
+    else:
+        raise ValueError("In TFDataset.from_rdd, features and labels should be a tuple, "
+                         "a list of tuples or a dict of tuples")
     return tensor_structure
 
 
@@ -957,6 +1042,7 @@ class TFPredictor:
     def from_keras(cls, keras_model, dataset):
         import tensorflow.keras.backend as K
         sess = K.get_session()
+
         outputs = keras_model.outputs
         inputs = keras_model.inputs
         return cls(sess, outputs, inputs, dataset)
