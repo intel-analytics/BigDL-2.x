@@ -125,7 +125,7 @@ class TransformerLayer[T: ClassTag](
   }
 
   def mlp(x: Variable[T], hiddenSize: Int): Variable[T] = {
-    val size = if (intermediateSize != 0) intermediateSize else hiddenSize * 4
+    val size = if (intermediateSize > 0) intermediateSize else hiddenSize * 4
     val h = projectionLayer(size).from(x)
     val a = gelu(h)
     val h2 = projectionLayer(hiddenSize).from(a)
