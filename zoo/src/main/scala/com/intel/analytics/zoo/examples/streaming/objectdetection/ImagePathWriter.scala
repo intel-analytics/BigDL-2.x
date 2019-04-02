@@ -22,7 +22,7 @@ import org.apache.log4j.{Level, Logger}
 import scopt.OptionParser
 
 /*
-  * Based on https://github.com/intel-analytics/meph-streaming
+  * Based on Yuhao's code (https://github.com/intel-analytics/meph-streaming)
   * Periodically write a text file to streamingPath, which contains 10 image paths.
   */
 object ImagePathWriter {
@@ -36,7 +36,7 @@ object ImagePathWriter {
       val lists = Utils.listFiles(params.imageSourcePath, false)
       lists.grouped(10).zipWithIndex.foreach { case (batch, id) =>
         val batchPath = new Path(params.streamingPath, id + ".txt").toString
-        val dataOutStream = Utils.createFile(batchPath, true)
+        val dataOutStream = Utils.create(batchPath, true)
         try {
           batch.foreach(line => dataOutStream.writeBytes(line + "\n"))
         } finally {

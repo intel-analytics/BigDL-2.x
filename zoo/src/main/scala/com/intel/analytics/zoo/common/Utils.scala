@@ -74,11 +74,14 @@ private[zoo] object Utils {
         res.append(file.getPath.toString)
       }
     }
+    fs.close()
     res.toArray
   }
 
   /**
-   * Read bytes of local or remote file
+   * Read all bytes of file (local or remote) and return bytes Array.
+   * WARNING: Don't use it to read large files. It may cause performance issue
+   * and OOM.
    * @param path String
    * @return Array[Byte]
    */
@@ -87,7 +90,10 @@ private[zoo] object Utils {
   }
 
   /**
-   * Read bytes of multiple files
+   * Read all bytes of multiple files (local or remote) and
+   * return 2 dim bytes Array.
+   * WARNING: Don't use it to read large files. It may cause performance issue
+   * and OOM.
    * @param paths String paths in Array
    * @return 2 dim Byte Array
    */
@@ -108,9 +114,10 @@ private[zoo] object Utils {
     } finally {
       outStream.close()
     }
+    fs.close()
   }
 
-  private def getFileSystem(fileName: String): FileSystem = {
+  def getFileSystem(fileName: String): FileSystem = {
     FileSystem.get(new Path(fileName).toUri, new Configuration())
   }
 
@@ -120,7 +127,7 @@ private[zoo] object Utils {
    * @param overwrite overwrite exiting file or not
    * @return
    */
-  def createFile(path: String, overwrite: Boolean = false): DataOutputStream = {
+  def create(path: String, overwrite: Boolean = false): DataOutputStream = {
     getFileSystem(path).create(new Path(path), overwrite)
   }
 
@@ -129,12 +136,14 @@ private[zoo] object Utils {
    * @param path String path
    * @return DataInputStream
    */
-  def openFile(path: String): DataInputStream = {
+  def open(path: String): DataInputStream = {
     getFileSystem(path).open(new Path(path))
   }
 
   /**
-   * Save bytes into given path (local or remote file system)
+   * Save bytes into given path (local or remote file system).
+   * WARNING: Don't use it to read large files. It may cause performance issue
+   * and OOM.
    * @param bytes bytes
    * @param fileName String path
    * @param isOverwrite Overwrite exiting file or not
