@@ -18,6 +18,7 @@ package com.intel.analytics.zoo.common
 
 import java.io._
 
+import com.intel.analytics.bigdl.utils.File
 import org.apache.commons.io.filefilter.WildcardFileFilter
 import org.apache.hadoop.conf.Configuration
 import org.apache.hadoop.fs.{FileSystem, Path}
@@ -61,10 +62,9 @@ private[zoo] object Utils {
    * @return Array[String]
    */
   def listFiles(path: String, recursive: Boolean = false): Array[String] = {
-    val fspath = new Path(path)
-    val fs = FileSystem.get(fspath.toUri, new Configuration())
+    val fs = getFileSystem(path)
     // List remote or local files
-    val files = fs.listFiles(fspath, recursive)
+    val files = fs.listFiles(new Path(path), recursive)
     // Add file paths (string) into ArrayBuffer
     val res = new ArrayBuffer[String]()
     while (files.hasNext) {
@@ -83,19 +83,7 @@ private[zoo] object Utils {
    * @return Array[Byte]
    */
   def readBytes(path: String): Array[Byte] = {
-    val fspath = new Path(path)
-    // Get FileSystem
-    val fs = FileSystem.get(fspath.toUri, new Configuration())
-    val inputStream = fs.open(fspath)
-    val data = new Array[Byte](fs.getFileStatus(new Path(path))
-      .getLen.toInt)
-    try {
-      // Read all file bytes
-      inputStream.readFully(data)
-    } finally {
-      inputStream.close()
-    }
-    data
+    File.readBytes(path)
   }
 
   /**
@@ -113,14 +101,17 @@ private[zoo] object Utils {
    * @param lines String content
    */
   def writeLines(path: String, lines: String): Unit = {
-    val fspath = new Path(path)
-    val fs = FileSystem.get(fspath.toUri, new Configuration())
-    val outStream = fs.create(fspath, true)
+    val fs = getFileSystem(path)
+    val outStream = fs.create(new Path(path), true)
     try {
       outStream.writeBytes(lines)
     } finally {
       outStream.close()
     }
+  }
+
+  private def getFileSystem(fileName: String): FileSystem = {
+    FileSystem.get(new Path(fileName).toUri, new Configuration())
   }
 
   /**
@@ -130,9 +121,7 @@ private[zoo] object Utils {
    * @return
    */
   def createFile(path: String, overwrite: Boolean = false): DataOutputStream = {
-    val fspath = new Path(path)
-    val fs = FileSystem.get(fspath.toUri, new Configuration())
-    fs.create(fspath, overwrite)
+    getFileSystem(path).create(new Path(path), overwrite)
   }
 
   /**
@@ -141,9 +130,7 @@ private[zoo] object Utils {
    * @return DataInputStream
    */
   def openFile(path: String): DataInputStream = {
-    val fspath = new Path(path)
-    val fs = FileSystem.get(fspath.toUri, new Configuration())
-    fs.open(fspath)
+    getFileSystem(path).open(new Path(path))
   }
 
   /**
@@ -153,16 +140,7 @@ private[zoo] object Utils {
    * @param isOverwrite Overwrite exiting file or not
    */
   def saveBytes(bytes: Array[Byte], fileName: String, isOverwrite: Boolean = false): Unit = {
-    val fspath = new Path(fileName)
-    val fs = FileSystem.get(fspath.toUri, new Configuration())
-    val outStream = fs.create(
-      fspath,
-      isOverwrite)
-    try {
-      outStream.write(bytes)
-    } finally {
-      outStream.close()
-    }
+    File.saveBytes(bytes, fileName, isOverwrite)
   }
 
   def logUsageErrorAndThrowException(errMessage: String, cause: Throwable = null): Unit = {
