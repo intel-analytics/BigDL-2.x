@@ -16,8 +16,8 @@
 
 package com.intel.analytics.zoo.examples.streaming.objectdetection
 
-import org.apache.hadoop.conf.Configuration
-import org.apache.hadoop.fs.{FileSystem, Path}
+import com.intel.analytics.zoo.common.Utils
+import org.apache.hadoop.fs.Path
 import org.apache.log4j.{Level, Logger}
 import scopt.OptionParser
 
@@ -33,15 +33,15 @@ object ImagePathWriter {
     val logger = Logger.getLogger(getClass)
 
     parser.parse(args, PathWriterParam()).foreach { params =>
-      val path = new Path(params.imageSourcePath)
-      // Support both local and remote file system
-      val fs = FileSystem.get(path.toUri, new Configuration())
-      val lists = fs.listStatus(path).map(_.getPath.toString)
+      val lists = Utils.listFiles(params.imageSourcePath, false)
       lists.grouped(10).zipWithIndex.foreach { case (batch, id) =>
         val batchPath = new Path(params.streamingPath, id + ".txt").toString
-        val outStream = fs.create(new Path(batchPath), true)
-        batch.foreach(line => outStream.writeBytes(line + "\n"))
-        outStream.close()
+        val dataOutStream = Utils.createFile(batchPath, true)
+        try {
+          batch.foreach(line => dataOutStream.writeBytes(line + "\n"))
+        } finally {
+          dataOutStream.close()
+        }
         logger.info("wrote " + batchPath)
         Thread.sleep(4000)
       }

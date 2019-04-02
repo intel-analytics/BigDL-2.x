@@ -35,6 +35,11 @@ private[zoo] object Utils {
     files.toArray
   }
 
+  /**
+   * List files in local file system
+   * @param path String
+   * @param files File handles will be appended to files
+   */
   def listFiles(path: String, files: ArrayBuffer[File]): Unit = {
     val file = new File(path)
     if (file.isDirectory) {
@@ -50,7 +55,7 @@ private[zoo] object Utils {
   }
 
   /**
-   * List local or remote files (HDFS, S3, FTP etc) with FileSystem API
+   * List local or remote files (HDFS, S3 and FTP etc) with FileSystem API
    * @param path String path
    * @param recursive Recursive or not
    * @return Array[String]
@@ -94,6 +99,15 @@ private[zoo] object Utils {
   }
 
   /**
+   * Read bytes of multiple files
+   * @param paths String paths in Array
+   * @return 2 dim Byte Array
+   */
+  def readBytes(paths: Array[String]): Array[Array[Byte]] = {
+    paths.map(readBytes)
+  }
+
+  /**
    * Write string lines into given path (local or remote file system)
    * @param path String path
    * @param lines String content
@@ -107,6 +121,29 @@ private[zoo] object Utils {
     } finally {
       outStream.close()
     }
+  }
+
+  /**
+   * Create file in FileSystem (local or remote)
+   * @param path String path
+   * @param overwrite overwrite exiting file or not
+   * @return
+   */
+  def createFile(path: String, overwrite: Boolean = false): DataOutputStream = {
+    val fspath = new Path(path)
+    val fs = FileSystem.get(fspath.toUri, new Configuration())
+    fs.create(fspath, overwrite)
+  }
+
+  /**
+   * Open file in FileSystem (local or remote)
+   * @param path String path
+   * @return DataInputStream
+   */
+  def openFile(path: String): DataInputStream = {
+    val fspath = new Path(path)
+    val fs = FileSystem.get(fspath.toUri, new Configuration())
+    fs.open(fspath)
   }
 
   /**
