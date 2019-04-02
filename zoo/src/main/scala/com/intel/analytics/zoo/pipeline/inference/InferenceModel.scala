@@ -31,7 +31,7 @@ class InferenceModel(private var autoScalingEnabled: Boolean = true,
                      private var originalModel: AbstractModel = null,
                      private[inference] var modelQueue:
                      LinkedBlockingQueue[AbstractModel] = null,
-                     private var maxConcurrentNum: Int = 1000)
+                     private var maxConcurrentNum: Int = 100)
   extends InferenceSupportive with Serializable {
 
   /**
@@ -39,7 +39,7 @@ class InferenceModel(private var autoScalingEnabled: Boolean = true,
    *
    * @return an auto-scaling enabled InferenceModel
    */
-  def this() = this(true, 1, null, null, 1000)
+  def this() = this(true, 1, null, null, 100)
 
   /**
    * create an auto-scaling disabled InferenceModel with supportedConcurrentNum
@@ -284,7 +284,11 @@ class InferenceModel(private var autoScalingEnabled: Boolean = true,
     try {
       model.predict(inputActivity)
     } finally {
-      modelQueue.offer(model)
+      val ifSuccessed = modelQueue.offer(model)
+      ifSuccessed match {
+        case true =>
+        case false => model.release()
+      }
     }
   }
 

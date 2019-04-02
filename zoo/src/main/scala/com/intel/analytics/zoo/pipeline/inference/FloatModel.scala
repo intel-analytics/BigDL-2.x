@@ -31,6 +31,8 @@ import scala.reflect.ClassTag
 class FloatModel(var model: AbstractModule[Activity, Activity, Float])
   extends AbstractModel with InferenceSupportive with Serializable {
 
+  val emptyModel: AbstractModule[Activity, Activity, Float] = makeEmptyModel(model)
+
   override def predict(inputs: JList[JList[JTensor]]): JList[JList[JTensor]] = {
     val batchSize = inputs.size()
     require(batchSize > 0, "inputs size should > 0")
@@ -54,7 +56,7 @@ class FloatModel(var model: AbstractModule[Activity, Activity, Float])
   }
 
   override def copy(num: Int): Array[AbstractModel] = {
-    cloneSharedWeightsModelsIntoArray(this, num)
+    doCopy(emptyModel, model.getWeightsBias(), num)
   }
 
   override def release(): Unit = {
@@ -70,19 +72,21 @@ class FloatModel(var model: AbstractModule[Activity, Activity, Float])
 
   override def toString: String = s"FloatInferenceModel($model)"
 
-  def cloneSharedWeightsModelsIntoArray(originalModel: FloatModel, num: Int):
+  def doCopy(metaModel: AbstractModule[Activity, Activity, Float],
+             weightsBias: Array[Tensor[Float]],
+             num: Int):
   Array[AbstractModel] = {
-    var modelList = ArrayBuffer[FloatModel]()
-    val emptyModel = originalModel.model.cloneModule()
-    clearWeightsBias(emptyModel)
-    var i = 0
-    while (i < num) {
-      val clonedModel = emptyModel.cloneModule
-      val newModel = makeUpModel(clonedModel, originalModel.model.getWeightsBias)
-      modelList.append(newModel)
-      i += 1
-    }
-    modelList.toArray
+    List.range(0, num).map(_ => {
+      val clonedModel = metaModel.cloneModule
+      makeUpModel(clonedModel, weightsBias)
+    }).toArray
+  }
+
+  private def makeEmptyModel(original: AbstractModule[Activity, Activity, Float]):
+  AbstractModule[Activity, Activity, Float] = {
+    val empty = original.cloneModule()
+    clearWeightsBias(empty)
+    empty
   }
 
   private def clearTensor[T: ClassTag](tensors: Array[Tensor[T]])(implicit ev: TensorNumeric[T]):
