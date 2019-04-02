@@ -7,6 +7,9 @@ target/
 /dist/
 pyzoo/.pytest_cache/
 
+# External Python packages
+python_packages/
+
 # SBT, Maven specific
 .cache
 .history

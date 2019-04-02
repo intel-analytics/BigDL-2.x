@@ -336,6 +336,13 @@ class TestModelLoading(OnnxTestCase):
         input_shape_with_batch = (1, 3, 224, 224)
         self.compare_with_pytorch(pytorch_model, input_shape_with_batch)
 
+    def test_onnx_maxpool2d_pads(self):
+        pytorch_model = torch.nn.Sequential(
+            torch.nn.MaxPool2d(kernel_size=3, padding=(0, 1))
+        )
+        input_shape_with_batch = (1, 3, 224, 224)
+        self.compare_with_pytorch(pytorch_model, input_shape_with_batch)
+
     def test_maxpool2d_pads(self):
         node = helper.make_node(
             'MaxPool',
@@ -360,6 +367,32 @@ class TestModelLoading(OnnxTestCase):
             [23, 24, 25, 25, 25]]]]).astype(np.float32)
         output = OnnxLoader.run_node(node, [x])
         np.testing.assert_almost_equal(output["y"], y, decimal=5)
+
+    def test_maxpool2d_pads01(self):
+        import pytest
+        with pytest.raises(Exception) as e_info:
+            node = onnx.helper.make_node(
+                'MaxPool',
+                inputs=['x'],
+                outputs=['y'],
+                kernel_shape=[3, 3],
+                pads=[0, 0, 1, 1]
+            )
+            x = np.random.randn(1, 3, 28, 28).astype(np.float32)
+            x_shape = np.shape(x)
+            kernel_shape = (3, 3)
+            strides = (1, 1)
+            pad_top = pad_left = 0
+            pad_bottom = pad_right = 1
+            pad_shape = [pad_top + pad_bottom, pad_left + pad_right]
+            out_shape = pool_op_common.get_output_shape('VALID', np.add(x_shape[2:], pad_shape),
+                                                        kernel_shape, strides)
+            padded = np.pad(x, ((0, 0), (0, 0), (pad_top, pad_bottom), (pad_left, pad_right)),
+                            mode='constant', constant_values=np.nan)
+            y = pool_op_common.pool(padded, x_shape, kernel_shape, strides,
+                                    out_shape, pad_shape, 'MAX')
+            output = OnnxLoader.run_node(node, [x])
+            np.testing.assert_almost_equal(output["y"], y, decimal=5)
 
     def test_maxpool2d_same_upper(self):
         node = helper.make_node(
@@ -1260,6 +1293,20 @@ class TestModelLoading(OnnxTestCase):
         output = OnnxLoader.run_node(node, [x])
         np.testing.assert_almost_equal(output["y"], y, decimal=5)
 
+    def test_unsqueeze_list(self):
+        node = onnx.helper.make_node(
+            'Unsqueeze',
+            inputs=['x'],
+            outputs=['y'],
+            axes=[0, 4],
+        )
+        x = np.random.randn(3, 4, 5).astype(np.float32)
+        y = np.expand_dims(x, axis=0)
+        y = np.expand_dims(y, axis=4)
+
+        output = OnnxLoader.run_node(node, [x])
+        np.testing.assert_almost_equal(output["y"], y, decimal=5)
+
     def test_onnx_transpose(self):
         pytorch_model = Transpose(2, 3)
         input_shape_with_batch = (3, 7, 8, 9)
@@ -1322,6 +1369,78 @@ class TestModelLoading(OnnxTestCase):
 
         x = np.random.randn(3, 4, 5).astype(np.float32)
         y = np.array(x.shape).astype(np.int64)
+
+        output = OnnxLoader.run_node(node, [x])
+        np.testing.assert_almost_equal(output["y"], y, decimal=5)
+
+    def test_globalaveragepool(self):
+        node = onnx.helper.make_node(
+            'GlobalAveragePool',
+            inputs=['x'],
+            outputs=['y'],
+        )
+        x = np.random.randn(2, 3, 7, 5).astype(np.float32)
+        spatial_shape = np.ndim(x) - 2
+        y = np.average(x, axis=tuple(range(spatial_shape, spatial_shape + 2)))
+        for _ in range(spatial_shape):
+            y = np.expand_dims(y, -1)
+        output = OnnxLoader.run_node(node, [x])
+        np.testing.assert_almost_equal(output["y"], y, decimal=5)
+
+    def test_onnx_globalaveragepool2(self):
+        pytorch_model = torch.nn.Sequential(
+            torch.nn.AdaptiveAvgPool2d((1, 1))
+        )
+        input_shape_with_batch = (1, 3, 224, 224)
+        self.compare_with_pytorch(pytorch_model, input_shape_with_batch)
+
+    def test_lrn_default(self):
+        import math
+        alpha = 0.0001
+        beta = 0.75
+        bias = 1.0
+        nsize = 3
+        node = onnx.helper.make_node(
+            'LRN',
+            inputs=['x'],
+            outputs=['y'],
+            size=3
+        )
+        x = np.random.randn(5, 5, 5, 5).astype(np.float32)
+        square_sum = np.zeros((5, 5, 5, 5)).astype(np.float32)
+        for n, c, h, w in np.ndindex(x.shape):
+            square_sum[n, c, h, w] = sum(
+                x[n, max(0, c - int(math.floor((nsize - 1) / 2))):
+                  min(5, c + int(math.ceil((nsize - 1) / 2)) + 1),
+                  h, w] ** 2)
+        y = x / ((bias + (alpha / nsize) * square_sum) ** beta)
+
+        output = OnnxLoader.run_node(node, [x])
+        np.testing.assert_almost_equal(output["y"], y, decimal=5)
+
+    def test_lrn(self):
+        import math
+        alpha = 0.0002
+        beta = 0.5
+        bias = 2.0
+        nsize = 3
+        node = onnx.helper.make_node(
+            'LRN',
+            inputs=['x'],
+            outputs=['y'],
+            alpha=alpha,
+            beta=beta,
+            bias=bias,
+            size=nsize
+        )
+        x = np.random.randn(5, 5, 5, 5).astype(np.float32)
+        square_sum = np.zeros((5, 5, 5, 5)).astype(np.float32)
+        for n, c, h, w in np.ndindex(x.shape):
+            square_sum[n, c, h, w] = sum(
+                x[n, max(0, c - int(math.floor((nsize - 1) / 2))):
+                  min(5, c + int(math.ceil((nsize - 1) / 2)) + 1),
+                  h, w] ** 2)
+        y = x / ((bias + (alpha / nsize) * square_sum) ** beta)
 
         output = OnnxLoader.run_node(node, [x])
         np.testing.assert_almost_equal(output["y"], y, decimal=5)
