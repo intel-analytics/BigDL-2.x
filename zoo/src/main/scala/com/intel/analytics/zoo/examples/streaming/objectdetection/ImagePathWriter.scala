@@ -22,8 +22,7 @@ import org.apache.log4j.{Level, Logger}
 import scopt.OptionParser
 
 /*
-  * Based on Yuhao's code (https://github.com/intel-analytics/meph-streaming)
-  * Periodically write a text file to streamingPath, which contains 10 image paths.
+  * Periodically write a text file (contains 10 image paths) to streamingPath
   */
 object ImagePathWriter {
 

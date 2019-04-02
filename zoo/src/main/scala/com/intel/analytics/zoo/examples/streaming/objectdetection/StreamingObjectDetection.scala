@@ -91,7 +91,7 @@ object StreamingObjectDetection {
   }
 
   /**
-   * Read files from local or remote dir
+   * Read image files from local or remote file system
    * @param path file path
    * @return ImageFeature
    */
@@ -102,7 +102,7 @@ object StreamingObjectDetection {
   }
 
   /**
-   * Write files to local or remote dir
+   * Write image file to local or remote file system
    * @param outPath output dir
    * @param path input file path
    * @param content file content
