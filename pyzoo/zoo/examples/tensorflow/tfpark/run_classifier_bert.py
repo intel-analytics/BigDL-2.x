@@ -14,12 +14,13 @@
 # limitations under the License.
 #
 
+import time
 from optparse import OptionParser
 
 import tensorflow as tf
 from zoo.common.nncontext import *
 from zoo.pipeline.api.net import TFDataset
-from zoo.tfpark.text.estimator import BERTClassifier
+from zoo.tfpark.text.estimator import BERTClassifier, bert_input_fn
 from bert import tokenization
 
 
@@ -268,6 +269,15 @@ def feature_to_input(feature):
     return res, np.array(feature.label_id)
 
 
+def generate_input_rdd(examples, label_list, max_seq_length, tokenizer, type="train"):
+    features = convert_examples_to_features(examples, label_list, max_seq_length, tokenizer)
+    features = [feature_to_input(feature) for feature in features]
+    if type == "test":
+        return sc.parallelize(features).map(lambda x: x[0])
+    else:
+        return sc.parallelize(features)
+
+
 def input_fn_builder(examples, label_list, max_seq_length, tokenizer, batch_size):
     features = convert_examples_to_features(examples, label_list, max_seq_length, tokenizer)
     features = [feature_to_input(feature) for feature in features]
@@ -291,6 +301,7 @@ def input_fn_builder(examples, label_list, max_seq_length, tokenizer, batch_size
 
 
 if __name__ == '__main__':
+    start_time = time.time()
     parser = OptionParser()
     parser.add_option("--bert_base_dir", dest="bert_base_dir")
     parser.add_option("--data_dir", dest="data_dir")
@@ -307,11 +318,14 @@ if __name__ == '__main__':
     label_list = processor.get_labels()
     tokenizer = tokenization.FullTokenizer(options.bert_base_dir + "/vocab.txt")
     train_examples = processor.get_train_examples(options.data_dir)
-    train_input_fn = input_fn_builder(train_examples, label_list, options.max_seq_length, tokenizer, options.batch_size)
+    train_rdd = generate_input_rdd(train_examples, label_list, options.max_seq_length, tokenizer, "train")
+    train_input_fn = bert_input_fn(train_rdd, options.max_seq_length, options.batch_size)
     eval_examples = processor.get_dev_examples(options.data_dir)
-    eval_input_fn = input_fn_builder(eval_examples, label_list, options.max_seq_length, tokenizer, options.batch_size)
+    eval_rdd = generate_input_rdd(eval_examples, label_list, options.max_seq_length, tokenizer, "eval")
+    eval_input_fn = bert_input_fn(eval_rdd, options.max_seq_length, options.batch_size)
     test_examples = processor.get_test_examples(options.data_dir)
-    test_input_fn = input_fn_builder(test_examples, label_list, options.max_seq_length, tokenizer, options.batch_size)
+    test_rdd = generate_input_rdd(test_examples, label_list, options.max_seq_length, tokenizer, "test")
+    test_input_fn = bert_input_fn(test_rdd, options.max_seq_length, options.batch_size)
 
     estimator = BERTClassifier(len(label_list), bert_config_file=options.bert_base_dir + "/bert_config.json",
                                init_checkpoint=options.bert_base_dir + "/bert_model.ckpt",
@@ -324,4 +338,6 @@ if __name__ == '__main__':
     for prediction in predictions.take(5):
         print(prediction)
 
+    end_time = time.time()
+    print("Time elapsed: %s minutes" % ((end_time-start_time)/60))
     print("Finished")

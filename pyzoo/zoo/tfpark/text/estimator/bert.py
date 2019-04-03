@@ -14,6 +14,7 @@
 # limitations under the License.
 #
 
+from bigdl.util.common import get_node_and_core_number
 from zoo.tfpark.estimator import *
 from bert import modeling
 
@@ -73,11 +74,12 @@ def bert_input_fn(rdd, max_seq_length, batch_size):
                                       labels=(tf.int32, []),
                                       batch_size=batch_size)
         else:
+            node_num, core_num = get_node_and_core_number()
             return TFDataset.from_rdd(rdd,
                                       features={"input_ids": (tf.int32, [max_seq_length]),
                                                 "input_mask": (tf.int32, [max_seq_length]),
                                                 "token_type_ids": (tf.int32, [max_seq_length])},
-                                      batch_per_thread=batch_size)
+                                      batch_per_thread=batch_size // (node_num * core_num))
     return input_fn
 
 

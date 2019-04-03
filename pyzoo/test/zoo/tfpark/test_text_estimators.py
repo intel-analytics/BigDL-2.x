@@ -47,7 +47,7 @@ class TestTextEstimators(ZooTestCase):
         eval_input_fn = bert_input_fn(rdd, 128, 4)
         print(estimator.evaluate(eval_input_fn, eval_methods=["acc"]))
         test_rdd = self.sc.parallelize([gen_record(has_label=False) for i in range(4)])
-        test_input_fn = bert_input_fn(test_rdd, 128, 1)
+        test_input_fn = bert_input_fn(test_rdd, 128, 4)
         predictions = estimator.predict(test_input_fn)
         for prediction in predictions.collect():
             assert prediction.shape == (2, )
