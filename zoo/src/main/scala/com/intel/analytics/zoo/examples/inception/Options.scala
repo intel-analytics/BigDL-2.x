@@ -39,7 +39,8 @@ object Options {
     gradientL2NormThreshold: Option[Double] = None,
     gradientMin: Option[Double] = None,
     gradientMax: Option[Double] = None,
-    memoryType: String = "DRAM"
+    memoryType: String = "DRAM",
+    opencv: Boolean = false
   )
 
   val trainParser = new OptionParser[TrainParams]("BigDL Inception Example") {
@@ -102,6 +103,9 @@ object Options {
     opt[String]("memoryType")
       .text("memory type")
       .action((x, c) => c.copy(memoryType = x))
+    opt[Unit]("opencv")
+      .text("use opencv preprocessing")
+      .action( (_, c) => c.copy(opencv = true) )
   }
 
   case class TestParams(

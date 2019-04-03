@@ -30,6 +30,7 @@ import com.intel.analytics.bigdl.nn.InitializationMethod
 import com.intel.analytics.bigdl.nn.Container
 import com.intel.analytics.bigdl.nn.abstractnn.{AbstractModule, Activity}
 import com.intel.analytics.bigdl.nn.keras.{KerasLayer, KerasModel}
+import com.intel.analytics.bigdl.nn.{BatchNormalization => BNBatchNormalization}
 import com.intel.analytics.bigdl.utils.{Shape, Table}
 import com.intel.analytics.zoo.feature.image.ImageSet
 import com.intel.analytics.zoo.pipeline.api.autograd.{Constant, _}
@@ -284,6 +285,16 @@ class PythonZooKeras[T: ClassTag](implicit ev: TensorNumeric[T]) extends PythonZ
       gammaInit, dimOrdering, toScalaShape(inputShape))
   }
 
+  def setRunningMean(module: BatchNormalization[T], runningMean: JTensor): Unit = {
+    module.labor.asInstanceOf[BNBatchNormalization[T]]
+      .runningMean.set(toTensor(runningMean))
+  }
+
+  def setRunningStd(module: BatchNormalization[T], runningStd: JTensor): Unit = {
+    module.labor.asInstanceOf[BNBatchNormalization[T]]
+      .runningVar.set(toTensor(runningStd))
+  }
+
   def createZooKerasConvolution2D(
       nbFilter: Int,
       nbRow: Int,
@@ -335,6 +346,12 @@ class PythonZooKeras[T: ClassTag](implicit ev: TensorNumeric[T]) extends PythonZ
       targetShape: JList[Int],
       inputShape: JList[Int] = null): Reshape[T] = {
     Reshape(toScalaArray(targetShape), toScalaShape(inputShape))
+  }
+
+  def createZooKerasExpandDim(
+      dim: Int,
+      inputShape: JList[Int] = null): ExpandDim[T] = {
+    ExpandDim(dim, toScalaShape(inputShape))
   }
 
   def createZooKerasDropout(
@@ -1213,6 +1230,10 @@ class PythonZooKeras[T: ClassTag](implicit ev: TensorNumeric[T]) extends PythonZ
     RankHinge[T](margin)
   }
 
+  def createZooKerasMAE(): ValidationMethod[T] = {
+    new zmetrics.MAE()
+  }
+
   def createZooKerasAccuracy(
       zeroBasedLabel: Boolean = true): ValidationMethod[T] = {
     new zmetrics.Accuracy(zeroBasedLabel)
@@ -1309,16 +1330,5 @@ class PythonZooKeras[T: ClassTag](implicit ev: TensorNumeric[T]) extends PythonZ
     index: Int,
     inputShape: JList[JList[Int]] = null): SelectTable[T] = {
     SelectTable[T](index, toScalaMultiShape(inputShape))
-  }
-
-  def createZooKerasTransformerLayer(layerNum: Int,
-    residDrop: Double,
-    attnDrop: Double,
-    headNum: Int,
-    maskAttention: Boolean,
-    embeddingLayer: KerasLayer[Tensor[T], Tensor[T], T]): TransformerLayer[T] = {
-    TransformerLayer(nBlock = layerNum, residPdrop = residDrop,
-      attnPdrop = attnDrop, nHead = headNum,
-      maskAttention = maskAttention, embeddingLayer = embeddingLayer)
   }
 }
