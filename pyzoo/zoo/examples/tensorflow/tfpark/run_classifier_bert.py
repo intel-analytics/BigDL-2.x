@@ -278,28 +278,6 @@ def generate_input_rdd(examples, label_list, max_seq_length, tokenizer, type="tr
         return sc.parallelize(features)
 
 
-def input_fn_builder(examples, label_list, max_seq_length, tokenizer, batch_size):
-    features = convert_examples_to_features(examples, label_list, max_seq_length, tokenizer)
-    features = [feature_to_input(feature) for feature in features]
-    rdd = sc.parallelize(features)
-
-    def input_fn(mode):
-        if mode == tf.estimator.ModeKeys.EVAL or mode == tf.estimator.ModeKeys.TRAIN:
-            return TFDataset.from_rdd(rdd,
-                                      features={"input_ids": (tf.int32, [max_seq_length]),
-                                                "input_mask": (tf.int32, [max_seq_length]),
-                                                "token_type_ids": (tf.int32, [max_seq_length])},
-                                      labels=(tf.int32, []),
-                                      batch_size=batch_size)
-        else:
-            return TFDataset.from_rdd(rdd.map(lambda x: x[0]),
-                                      features={"input_ids": (tf.int32, [max_seq_length]),
-                                                "input_mask": (tf.int32, [max_seq_length]),
-                                                "token_type_ids": (tf.int32, [max_seq_length])},
-                                      batch_per_thread=4)
-    return input_fn
-
-
 if __name__ == '__main__':
     start_time = time.time()
     parser = OptionParser()
