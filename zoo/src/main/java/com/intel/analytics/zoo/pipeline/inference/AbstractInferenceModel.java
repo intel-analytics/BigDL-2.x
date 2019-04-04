@@ -84,6 +84,10 @@ public abstract class AbstractInferenceModel extends InferenceModel implements S
     doReload(modelPath, weightPath);
   }
 
+  public void release() {
+    release();
+  }
+
   @Deprecated
   public List<Float> predict(List<Float> input, int... shape) {
     List<Integer> inputShape = new ArrayList<Integer>();

@@ -276,6 +276,13 @@ class InferenceModel(private var autoScalingEnabled: Boolean = true,
     }
   }
 
+  /**
+   * release original model and all the cloned ones in the queue
+   */
+  def release() = {
+    clearModelQueue()
+  }
+
   private def predict(inputActivity: Activity): Activity = {
     val model: AbstractModel = retrieveModel()
     try {
