@@ -33,6 +33,8 @@ class InferenceModel(private var autoScalingEnabled: Boolean = true,
                      LinkedBlockingQueue[AbstractModel] = null)
   extends InferenceSupportive with Serializable {
 
+  require(concurrentNum > 0, "concurrentNum should > 0")
+
   /**
    * default constructor, will create a InferenceModel with auto-scaling enabled.
    *
@@ -279,10 +281,14 @@ class InferenceModel(private var autoScalingEnabled: Boolean = true,
     try {
       model.predict(inputActivity)
     } finally {
-      val success = modelQueue.offer(model)
-      success match {
-        case true =>
-        case false => model.release()
+      model match {
+        case null =>
+        case _ =>
+          val success = modelQueue.offer(model)
+          success match {
+            case true =>
+            case false => model.release()
+          }
       }
     }
   }
@@ -292,10 +298,14 @@ class InferenceModel(private var autoScalingEnabled: Boolean = true,
     try {
       model.predict(inputs)
     } finally {
-      val success = modelQueue.offer(model)
-      success match {
-        case true =>
-        case false => model.release()
+      model match {
+        case null =>
+        case _ =>
+          val success = modelQueue.offer(model)
+          success match {
+            case true =>
+            case false => model.release()
+          }
       }
     }
   }
