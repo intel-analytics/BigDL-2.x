@@ -167,6 +167,8 @@ class FloatModelSpec extends FlatSpec with Matchers with BeforeAndAfter
     println(original.model, original.model.getWeightsBias()(0).storage(), original.metaModel)
     println(copy1.model, copy1.model.getWeightsBias()(0).storage(), copy1.metaModel)
     println(copy2.model, copy2.model.getWeightsBias()(0).storage(), copy2.metaModel)
+    assert(original.metaModel == copy1.metaModel)
+    assert(original.metaModel == copy2.metaModel)
     assert(originalWeightBias == copy1WeightBias)
     assert(originalWeightBias == copy2WeightBias)
     copy1.release()
@@ -175,7 +177,8 @@ class FloatModelSpec extends FlatSpec with Matchers with BeforeAndAfter
     println(original.model, originalWeightBiasAfterRelease, original.metaModel)
     println(copy1.model, copy1.metaModel)
     println(copy2.model, copy2WeightBiassAfterRelease, copy2.metaModel)
-    assert()
+    assert(copy1.model == null)
+    assert(copy1.metaModel == null)
     assert(originalWeightBias == originalWeightBiasAfterRelease)
     assert(originalWeightBias == copy2WeightBiassAfterRelease)
   }
