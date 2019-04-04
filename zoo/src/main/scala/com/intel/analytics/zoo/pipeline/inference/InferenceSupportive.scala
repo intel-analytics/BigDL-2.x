@@ -200,20 +200,26 @@ trait InferenceSupportive {
   }
 
   def clearWeightBias(model: Module[Float]): Unit = {
-    clearTensors(model.parameters()._1)
-    clearTensors(model.parameters()._2)
-  }
-
-  private def clearTensors[T: ClassTag](tensors: Array[Tensor[T]])
-                                       (implicit ev: TensorNumeric[T]) = {
+    model.reset()
+    val weightBias = model.parameters()._1
+    val clonedweightBias = model.parameters()._1.map(tensor => {
+      val newTensor = Tensor[Float]().resizeAs(tensor)
+      newTensor.copy(tensor)
+    })
+    val localWeightBias = model.parameters()._1
     var i = 0
-    while (i < tensors.length) {
-      tensors(i) = null
+    while (i < localWeightBias.length) {
+      if (localWeightBias(i) != null) {
+        localWeightBias(i).set(clonedweightBias(i))
+      }
       i += 1
     }
+    releaseTensors(model.parameters()._1)
+    releaseTensors(model.parameters()._2)
   }
 
   def releaseWeightBias(model: Module[Float]): Unit = {
+    model.reset()
     releaseTensors(model.parameters()._1)
     releaseTensors(model.parameters()._2)
   }
