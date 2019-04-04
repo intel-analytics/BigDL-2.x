@@ -30,14 +30,14 @@ object InferenceModelFactory extends InferenceSupportive {
     val model = ModelLoader.loadFloatModel(modelPath, weightPath)
     model.evaluate()
     val metaModel = makeMetaModel(model)
-    new FloatModel(model, metaModel)
+    new FloatModel(model, metaModel, true)
   }
 
   def loadFloatModelForCaffe(modelPath: String, weightPath: String): FloatModel = {
     val model = ModelLoader.loadFloatModelForCaffe(modelPath, weightPath)
     model.evaluate()
     val metaModel = makeMetaModel(model)
-    new FloatModel(model, metaModel)
+    new FloatModel(model, metaModel, true)
   }
 
   def loadFloatModelForTF(modelPath: String,
@@ -49,7 +49,7 @@ object InferenceModelFactory extends InferenceSupportive {
     val model = ModelLoader.loadFloatModelForTF(modelPath, sessionConfig)
     model.evaluate()
     val metaModel = makeMetaModel(model)
-    new FloatModel(model, metaModel)
+    new FloatModel(model, metaModel, true)
   }
 
   def loadOpenVINOModelForTF(modelPath: String,

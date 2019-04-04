@@ -29,7 +29,8 @@ import scala.collection.mutable.ArrayBuffer
 import scala.reflect.ClassTag
 
 class FloatModel(var model: AbstractModule[Activity, Activity, Float],
-                 var metaModel: AbstractModule[Activity, Activity, Float])
+                 var metaModel: AbstractModule[Activity, Activity, Float],
+                 var isOriginal: Boolean)
   extends AbstractModel with InferenceSupportive with Serializable {
 
   override def predict(inputs: JList[JList[JTensor]]): JList[JList[JTensor]] = {
@@ -62,7 +63,10 @@ class FloatModel(var model: AbstractModule[Activity, Activity, Float],
     isReleased match {
       case true =>
       case false =>
-        clearWeightBias(model)
+        isOriginal match {
+          case true => releaseWeightBias(model)
+          case false => clearWeightBias(model)
+        }
         model.release()
         model = null
         metaModel = null
@@ -83,7 +87,7 @@ class FloatModel(var model: AbstractModule[Activity, Activity, Float],
     List.range(0, num).map(_ => {
       val clonedModel = metaModel.cloneModule()
       val clonedModelWithWeightsBias = makeUpModel(clonedModel, weightBias)
-      new FloatModel(clonedModelWithWeightsBias, metaModel)
+      new FloatModel(clonedModelWithWeightsBias, metaModel, false)
     }).toArray
   }
 }
