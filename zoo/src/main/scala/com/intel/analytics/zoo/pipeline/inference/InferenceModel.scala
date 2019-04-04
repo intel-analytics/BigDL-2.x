@@ -27,11 +27,10 @@ import com.intel.analytics.zoo.pipeline.inference.DeviceType.DeviceTypeEnumVal
 import scala.collection.JavaConverters._
 
 class InferenceModel(private var autoScalingEnabled: Boolean = true,
-                     private var supportedConcurrentNum: Int = 1,
+                     private var concurrentNum: Int = 20,
                      private var originalModel: AbstractModel = null,
                      private[inference] var modelQueue:
-                     LinkedBlockingQueue[AbstractModel] = null,
-                     private var maxConcurrentNum: Int = 100)
+                     LinkedBlockingQueue[AbstractModel] = null)
   extends InferenceSupportive with Serializable {
 
   /**
@@ -39,33 +38,29 @@ class InferenceModel(private var autoScalingEnabled: Boolean = true,
    *
    * @return an auto-scaling enabled InferenceModel
    */
-  def this() = this(true, 1, null, null, 100)
+  def this() = this(true, 20, null, null)
 
   /**
    * create an auto-scaling disabled InferenceModel with supportedConcurrentNum
    *
-   * @param supportedConcurrentNum the supported concurrentNum of the InferenceModel
+   * @param concurrentNum the concurrentNum of the InferenceModel
    * @return an auto-scaling disabled InferenceModel
    */
-  def this(supportedConcurrentNum: Int) = this(false, supportedConcurrentNum, null, null)
+  def this(concurrentNum: Int) = this(false, concurrentNum, null, null)
 
   /**
    * create an InferenceModel with specified autoScalingEnabled, supportedConcurrentNum
    * and maxConcurrentNum
    *
    * @param autoScalingEnabled     if auto-scaling is enabled
-   * @param supportedConcurrentNum the supported concurrentNum of the InferenceModel
-   * @param maxConcurrentNum       the max concurrentNum for the LinkedBlockingQueue
+   * @param concurrentNum          the concurrentNum of the InferenceModel
    * @return a specified InferenceModel
    */
-  def this(autoScalingEnabled: Boolean, supportedConcurrentNum: Int, maxConcurrentNum: Int) =
-    this(autoScalingEnabled, supportedConcurrentNum, null, null, maxConcurrentNum)
+  def this(autoScalingEnabled: Boolean, concurrentNum: Int) =
+    this(autoScalingEnabled, concurrentNum, null, null)
 
-  this.modelQueue = autoScalingEnabled match {
-    // Creates a LinkedBlockingQueue with a capacity of maxConcurrentNum
-    case true => new LinkedBlockingQueue[AbstractModel](maxConcurrentNum)
-    case false => new LinkedBlockingQueue[AbstractModel](supportedConcurrentNum)
-  }
+  this.modelQueue = new LinkedBlockingQueue[AbstractModel](concurrentNum)
+
   this.originalModel match {
     case null =>
     case _ => offerModelQueue()
@@ -191,8 +186,8 @@ class InferenceModel(private var autoScalingEnabled: Boolean = true,
    * @param weightPath the path of openvino ir bin file
    */
   def doLoadOpenVINO(modelPath: String, weightPath: String): Unit = {
-    if (supportedConcurrentNum > 1) {
-      InferenceSupportive.logger.warn(s"supportedConcurrentNum is $supportedConcurrentNum > 1, " +
+    if (concurrentNum > 1) {
+      InferenceSupportive.logger.warn(s"concurrentNum is $concurrentNum > 1, " +
         s"openvino model does not support shared weights model copies")
     }
     clearModelQueue()
@@ -217,8 +212,8 @@ class InferenceModel(private var autoScalingEnabled: Boolean = true,
                                               pipelineConfigPath: String,
                                               extensionsConfigPath: String,
                                               deviceType: DeviceTypeEnumVal): Unit = {
-    if (supportedConcurrentNum > 1) {
-      InferenceSupportive.logger.warn(s"supportedConcurrentNum is $supportedConcurrentNum > 1, " +
+    if (concurrentNum > 1) {
+      InferenceSupportive.logger.warn(s"concurrentNum is $concurrentNum > 1, " +
         s"openvino model does not support shared weights model copies")
     }
     clearModelQueue()
@@ -284,8 +279,8 @@ class InferenceModel(private var autoScalingEnabled: Boolean = true,
     try {
       model.predict(inputActivity)
     } finally {
-      val ifSuccessed = modelQueue.offer(model)
-      ifSuccessed match {
+      val success = modelQueue.offer(model)
+      success match {
         case true =>
         case false => model.release()
       }
@@ -338,14 +333,18 @@ class InferenceModel(private var autoScalingEnabled: Boolean = true,
 
   private def offerModelQueue(): Unit = {
     require(this.originalModel != null, "original model can not be null")
-    require(this.supportedConcurrentNum > 0, "supported concurrent number should > 0")
-    val models = this.originalModel.copy(supportedConcurrentNum)
-    models.map(this.modelQueue.offer(_))
+    require(this.concurrentNum > 0, "supported concurrent number should > 0")
+    autoScalingEnabled match {
+      case true =>
+      case false =>
+        val models = this.originalModel.copy(concurrentNum)
+        models.map(this.modelQueue.offer(_))
+    }
   }
 
   def getOriginalModel: AbstractModel = originalModel
 
   override def toString: String =
-    s"InferenceModel($autoScalingEnabled, $supportedConcurrentNum, $originalModel, $modelQueue)"
+    s"InferenceModel($autoScalingEnabled, $concurrentNum, $originalModel, $modelQueue)"
 
 }

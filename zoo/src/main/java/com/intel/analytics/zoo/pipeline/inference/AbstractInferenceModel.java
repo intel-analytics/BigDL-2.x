@@ -28,12 +28,12 @@ public abstract class AbstractInferenceModel extends InferenceModel implements S
     super();
   }
 
-  public AbstractInferenceModel(int supportedConcurrentNum) {
-    super(supportedConcurrentNum);
+  public AbstractInferenceModel(int concurrentNum) {
+    super(concurrentNum);
   }
 
-  public AbstractInferenceModel(boolean autoScalingEnabled, int supportedConcurrentNum, int maxConcurrentNum) {
-    super(autoScalingEnabled, supportedConcurrentNum, maxConcurrentNum);
+  public AbstractInferenceModel(boolean autoScalingEnabled, int concurrentNum) {
+    super(autoScalingEnabled, concurrentNum);
   }
 
   public void load(String modelPath) {

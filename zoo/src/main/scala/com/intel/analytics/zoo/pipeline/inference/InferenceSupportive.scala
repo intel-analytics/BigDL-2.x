@@ -26,10 +26,13 @@ import java.lang.{Float => JFloat}
 import java.lang.{Integer => JInt}
 import java.util
 
-import com.intel.analytics.bigdl.nn.abstractnn.Activity
+import com.intel.analytics.bigdl.Module
+import com.intel.analytics.bigdl.nn.abstractnn.{AbstractModule, Activity}
+import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric
 import com.intel.analytics.bigdl.utils.{T, Table}
 
 import scala.collection.mutable.ArrayBuffer
+import scala.reflect.ClassTag
 
 
 trait InferenceSupportive {
@@ -189,6 +192,63 @@ trait InferenceSupportive {
     Tensor[Float](data.toArray, shape.toArray)
   }
 
+  def makeMetaModel(original: AbstractModule[Activity, Activity, Float]):
+  AbstractModule[Activity, Activity, Float] = {
+    val metaModel = original.cloneModule()
+    releaseWeightBias(metaModel)
+    metaModel
+  }
+
+  def clearWeightBias(model: Module[Float]): Unit = {
+    clearTensors(model.parameters()._1)
+    clearTensors(model.parameters()._2)
+  }
+
+  private def clearTensors[T: ClassTag](tensors: Array[Tensor[T]])
+                                       (implicit ev: TensorNumeric[T]) = {
+    var i = 0
+    while (i < tensors.length) {
+      tensors(i) = null
+      i += 1
+    }
+  }
+
+  def releaseWeightBias(model: Module[Float]): Unit = {
+    releaseTensors(model.parameters()._1)
+    releaseTensors(model.parameters()._2)
+  }
+
+  private def releaseTensors[T: ClassTag](tensors: Array[Tensor[T]])
+                                       (implicit ev: TensorNumeric[T]) = {
+    var i = 0
+    while (i < tensors.length) {
+      if (tensors(i) != null) {
+        tensors(i).set()
+      }
+      i += 1
+    }
+  }
+
+  def makeUpModel(metaModel: Module[Float], weightBias: Array[Tensor[Float]]):
+  AbstractModule[Activity, Activity, Float] = {
+    val cloned = metaModel.cloneModule()
+    putWeightBias(cloned, weightBias)
+    cloned.evaluate()
+    cloned
+  }
+
+  private def putWeightBias(target: Module[Float], weightBias: Array[Tensor[Float]]):
+  Module[Float] = {
+    val localWeightBias = target.parameters()._1
+    var i = 0
+    while (i < localWeightBias.length) {
+      if (localWeightBias(i) != null) {
+        localWeightBias(i).set(weightBias(i))
+      }
+      i += 1
+    }
+    target
+  }
 }
 
 object InferenceSupportive {

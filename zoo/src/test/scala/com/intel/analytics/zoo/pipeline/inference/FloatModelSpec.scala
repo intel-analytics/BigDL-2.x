@@ -155,4 +155,18 @@ class FloatModelSpec extends FlatSpec with Matchers with BeforeAndAfter
     val result3 = floatInferenceModel.predict(inputTensorBatch)
     assert(result3 != null)
   }
+
+  "floatInferenceModel" should "works well when copy and release" in {
+    val original = floatInferenceModel
+    val copies = original.copy(2)
+    val copy1 = copies(0).asInstanceOf[FloatModel]
+    val copy2 = copies(1).asInstanceOf[FloatModel]
+    println(original.model, original.model.getWeightsBias()(0).storage(), original.metaModel)
+    println(copy1.model, copy1.model.getWeightsBias()(0).storage(), copy1.metaModel)
+    println(copy2.model, copy2.model.getWeightsBias()(0).storage(), copy2.metaModel)
+    copy1.release()
+    println(original.model, original.model.getWeightsBias()(0).storage(), original.metaModel)
+    println(copy1.model, copy1.metaModel)
+    println(copy2.model, copy2.model.getWeightsBias()(0).storage(), copy2.metaModel)
+  }
 }
