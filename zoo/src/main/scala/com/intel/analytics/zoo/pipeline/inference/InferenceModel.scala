@@ -292,7 +292,11 @@ class InferenceModel(private var autoScalingEnabled: Boolean = true,
     try {
       model.predict(inputs)
     } finally {
-      modelQueue.offer(model)
+      val success = modelQueue.offer(model)
+      success match {
+        case true =>
+        case false => model.release()
+      }
     }
   }
 
