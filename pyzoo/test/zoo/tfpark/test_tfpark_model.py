@@ -302,22 +302,14 @@ class TestTFParkModel(ZooTestCase):
                                      shapes=[[], []],
                                      types=[tf.int32, tf.int32],
                                      batch_size=8)
-        from tensorflow.python.ops import variable_scope
-
-        def variable_creator(**kwargs):
-            kwargs["use_resource"] = False
-            return variable_scope.default_variable_creator(None, **kwargs)
-
-        getter = lambda next_creator, **kwargs: variable_creator(**kwargs)
-        with variable_scope.variable_creator_scope(getter):
-            words_input = tf.keras.layers.Input(shape=(), name='words_input')
-            embedding_layer = tf.keras.layers.Embedding(input_dim=10,
-                                                        output_dim=5, name='word_embedding')
-            word_embeddings = embedding_layer(words_input)
-            embedding = tf.keras.layers.Flatten()(word_embeddings)
-            output = tf.keras.layers.Dense(5, activation="softmax")(embedding)
-            model = tf.keras.models.Model(inputs=[words_input], outputs=[output])
-            model.compile(optimizer="sgd", loss="sparse_categorical_crossentropy")\
+        words_input = tf.keras.layers.Input(shape=(), name='words_input')
+        embedding_layer = tf.keras.layers.Embedding(input_dim=10,
+                                                    output_dim=5, name='word_embedding')
+        word_embeddings = embedding_layer(words_input)
+        embedding = tf.keras.layers.Flatten()(word_embeddings)
+        output = tf.keras.layers.Dense(5, activation="softmax")(embedding)
+        model = tf.keras.models.Model(inputs=[words_input], outputs=[output])
+        model.compile(optimizer="sgd", loss="sparse_categorical_crossentropy")
 
         optimizer = TFOptimizer.from_keras(model, dataset)
         optimizer.optimize()
@@ -339,6 +331,46 @@ class TestTFParkModel(ZooTestCase):
         x, y = self.create_training_data()
 
         keras_model.fit(x, y, batch_size=4, distributed=True)
+
+    def test_dataset_without_batch(self):
+        x = np.random.rand(20, 10)
+        y = np.random.randint(0, 2, (20))
+
+        rdd_x = self.sc.parallelize(x)
+        rdd_y = self.sc.parallelize(y)
+
+        rdd = rdd_x.zip(rdd_y)
+
+        dataset = TFDataset.from_rdd(rdd,
+                                     features=(tf.float32, [10]),
+                                     labels=(tf.int32, []),
+                                     names=["features", "labels"],
+                                     val_rdd=rdd
+                                     )
+
+        keras_model = self.create_model()
+        model = KerasModel(keras_model)
+        self.intercept(lambda: model.fit(dataset),
+                       "The batch_size of TFDataset must be" +
+                       " specified when used in KerasModel fit.")
+
+        dataset = TFDataset.from_rdd(rdd,
+                                     features=(tf.float32, [10]),
+                                     labels=(tf.int32, []),
+                                     names=["features", "labels"],
+                                     )
+        self.intercept(lambda: model.evaluate(dataset),
+                       "The batch_per_thread of TFDataset must be " +
+                       "specified when used in KerasModel evaluate.")
+
+        dataset = TFDataset.from_rdd(rdd_x,
+                                     features=(tf.float32, [10]),
+                                     names=["features", "labels"],
+                                     )
+        self.intercept(lambda: model.predict(dataset),
+                       "The batch_per_thread of TFDataset must be" +
+                       " specified when used in KerasModel predict.")
+
 
 if __name__ == "__main__":
     pytest.main([__file__])

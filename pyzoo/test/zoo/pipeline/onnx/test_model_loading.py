@@ -1293,6 +1293,20 @@ class TestModelLoading(OnnxTestCase):
         output = OnnxLoader.run_node(node, [x])
         np.testing.assert_almost_equal(output["y"], y, decimal=5)
 
+    def test_unsqueeze_list(self):
+        node = onnx.helper.make_node(
+            'Unsqueeze',
+            inputs=['x'],
+            outputs=['y'],
+            axes=[0, 4],
+        )
+        x = np.random.randn(3, 4, 5).astype(np.float32)
+        y = np.expand_dims(x, axis=0)
+        y = np.expand_dims(y, axis=4)
+
+        output = OnnxLoader.run_node(node, [x])
+        np.testing.assert_almost_equal(output["y"], y, decimal=5)
+
     def test_onnx_transpose(self):
         pytorch_model = Transpose(2, 3)
         input_shape_with_batch = (3, 7, 8, 9)

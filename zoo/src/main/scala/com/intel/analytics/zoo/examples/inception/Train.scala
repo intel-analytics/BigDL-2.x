@@ -47,7 +47,8 @@ object TrainInceptionV1 {
         EngineRef.getNodeNumber(),
         EngineRef.getCoreNumber(),
         param.classNumber,
-        MemoryType.fromString(param.memoryType)
+        MemoryType.fromString(param.memoryType),
+        param.opencv
       )
       val valSet = ImageNet2012Val(
         param.folder + "/val",
@@ -56,7 +57,8 @@ object TrainInceptionV1 {
         param.batchSize,
         EngineRef.getNodeNumber(),
         EngineRef.getCoreNumber(),
-        param.classNumber
+        param.classNumber,
+        opencvPreprocessing = param.opencv
       )
 
       val model = if (param.modelSnapshot.isDefined) {
@@ -86,16 +88,17 @@ object TrainInceptionV1 {
           weightDecay = param.weightDecay, momentum = 0.9, dampening = 0.0, nesterov = false,
           learningRateSchedule = lrSchedule)
       }
-      val estimator = Estimator[Float](model, optimMethod, param.checkpoint.get)
-
-      val (checkpointTrigger, testTrigger, endTrigger) = if (param.maxEpoch.isDefined) {
-        (Trigger.everyEpoch, Trigger.everyEpoch, Trigger.maxEpoch(param.maxEpoch.get))
+      val estimator = if (param.checkpoint.isDefined) {
+        Estimator[Float](model, optimMethod, param.checkpoint.get)
       } else {
-        (
-          Trigger.severalIteration(param.checkpointIteration),
-          Trigger.severalIteration(param.checkpointIteration),
-          Trigger.maxIteration(param.maxIteration)
-        )
+        Estimator[Float](model, optimMethod)
+      }
+
+      val (checkpointTrigger, endTrigger) = if (param.maxEpoch.isDefined) {
+        (Trigger.everyEpoch, Trigger.maxEpoch(param.maxEpoch.get))
+      } else {
+        (Trigger.severalIteration(param.checkpointIteration),
+          Trigger.maxIteration(param.maxIteration))
       }
 
       estimator.train(trainSet, ClassNLLCriterion[Float](),

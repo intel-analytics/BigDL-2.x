@@ -385,6 +385,22 @@ abstract class KerasNet[T](implicit val tag: ClassTag[T], implicit val ev: Tenso
   }
 
   /**
+   * Release DataSet from memory. This method is used to release the rdd
+   * which is cached when toDataSet() method is called and rdd is cached
+   * TODO: modify this when BigDL fix this issue
+   *
+   * @param dataSet Target DataSet to release
+   */
+  def releaseDataSets(dataSets: Array[DataSet[MiniBatch[T]]]): Unit = {
+    for (ds <- dataSets) {
+      if (ds != null && ds.isInstanceOf[DistributedDataSet[T]]) {
+        ds.toDistributed().unpersist()
+        ds.toDistributed().originRDD().unpersist()
+      }
+    }
+  }
+
+  /**
    * Train a model for a fixed number of epochs on Sample RDD.
    *
    * @param x Training dataset, RDD of Sample.
@@ -400,8 +416,11 @@ abstract class KerasNet[T](implicit val tag: ClassTag[T], implicit val ev: Tenso
       featurePaddingParam: PaddingParam[T] = null,
       labelPaddingParam: PaddingParam[T] = null)(implicit ev: TensorNumeric[T]): Unit = {
     KerasUtils.validateBatchSize(batchSize)
-    this.fit(toDataSet(x, batchSize, featurePaddingParam, labelPaddingParam),
-      nbEpoch, toDataSet(validationData, batchSize, featurePaddingParam, labelPaddingParam))
+    val trainData = toDataSet(x, batchSize, featurePaddingParam, labelPaddingParam)
+    val valData = toDataSet(validationData, batchSize, featurePaddingParam, labelPaddingParam)
+    this.fit(trainData, nbEpoch, valData)
+
+    releaseDataSets(Array(trainData, valData))
   }
 
   /**
@@ -418,7 +437,11 @@ abstract class KerasNet[T](implicit val tag: ClassTag[T], implicit val ev: Tenso
       nbEpoch: Int,
       validationData: ImageSet)(implicit ev: TensorNumeric[T]): Unit = {
     KerasUtils.validateBatchSize(batchSize)
-    this.fit(toDataSet(x, batchSize), nbEpoch, toDataSet(validationData, batchSize))
+    val trainData = toDataSet(x, batchSize)
+    val valData = toDataSet(validationData, batchSize)
+
+    this.fit(trainData, nbEpoch, valData)
+    releaseDataSets(Array(trainData, valData))
   }
 
   def fit(
@@ -979,7 +1002,7 @@ private[zoo] class InternalDistriOptimizer[T: ClassTag] (
       logger.info(s"Saving checkpoints to ${logPath.toUri.toString}")
       this.setCheckpoint(logPath.toUri.toString(), checkPointTrigger.get)
     }
-    if (validationMethod != null && validationSet != null) {
+    if (checkPointTrigger.isDefined && validationMethod != null && validationSet != null) {
       this.setValidation(checkPointTrigger.get, validationSet.toDataSet(), validationMethod)
     }
     this.optimize()

@@ -23,7 +23,7 @@ header="Copyright 2018 Analytics Zoo Authors"
 
 echo "Checking Analytics Zoo license for Python files..."
 
-find $DL_PYTHON_HOME ! -name "pep8-1.7.0.py" -name "*.py" -print0 | while read -d $'\0' file
+find $DL_PYTHON_HOME ! -name "pep8-1.7.0.py" ! -name "tf_graph_util.py" -name "*.py" -print0 | while read -d $'\0' file
 do
     if ! (grep -qF "$header" "$file");
     then

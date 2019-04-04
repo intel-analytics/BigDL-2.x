@@ -20,7 +20,6 @@ from tensorflow.python.keras import models
 
 from zoo.common.nncontext import getOrCreateSparkContext
 from zoo.pipeline.api.net import TFDataset, TFOptimizer, TFPredictor
-from zoo.tfpark import variable_creator_scope
 import tensorflow.keras.backend as K
 import tensorflow as tf
 import numpy as np
@@ -77,8 +76,7 @@ class KerasModel(object):
         :param path: String. The path to the pre-defined model.
         :return: KerasModel.
         """
-        with variable_creator_scope():
-            return KerasModel(models.load_model(path))
+        return KerasModel(models.load_model(path))
 
     def fit(self,
             x=None,
@@ -92,6 +90,9 @@ class KerasModel(object):
             ):
         if isinstance(x, TFDataset):
             # todo check arguments
+            if not x.has_batch:
+                raise ValueError("The batch_size of TFDataset must be " +
+                                 "specified when used in KerasModel fit.")
             x = _standarize_feature_label_dataset(x, self.model)
             self._fit_distributed(x, validation_split, epochs, **kwargs)
 
@@ -145,6 +146,9 @@ class KerasModel(object):
                  distributed=False
                  ):
         if isinstance(x, TFDataset):
+            if not x.has_batch:
+                raise ValueError("The batch_per_thread of TFDataset must be " +
+                                 "specified when used in KerasModel evaluate.")
             x = _standarize_feature_label_dataset(x, self.model)
             # todo check arguments
             return self._evaluate_distributed(x)
@@ -192,6 +196,9 @@ class KerasModel(object):
 
         if isinstance(x, TFDataset):
             # todo check arguments
+            if not x.has_batch:
+                raise ValueError("The batch_per_thread of TFDataset" +
+                                 " must be specified when used in KerasModel predict.")
             x = _standarize_feature_dataset(x, self.model)
             return self._predict_distributed(x)
         else:
