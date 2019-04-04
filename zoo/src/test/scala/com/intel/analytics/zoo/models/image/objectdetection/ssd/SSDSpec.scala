@@ -14,25 +14,17 @@
  * limitations under the License.
  */
 
-package com.intel.analytics.zoo.models.image.objectdetection
+package com.intel.analytics.zoo.models.image.objectdetection.ssd
 
-import java.io.File
-
-import com.google.common.io.Files
 import com.intel.analytics.bigdl.tensor.Tensor
-import com.intel.analytics.bigdl.transform.vision.image.ImageFeature
-import com.intel.analytics.bigdl.transform.vision.image.label.roi.RoiLabel
-import com.intel.analytics.bigdl.transform.vision.image.opencv.OpenCVMat
 import com.intel.analytics.zoo.common.NNContext
 import com.intel.analytics.zoo.feature.image._
 import com.intel.analytics.zoo.models.common.ZooModel
 import com.intel.analytics.zoo.models.image.imageclassification.ImageClassifier
 import com.intel.analytics.zoo.models.image.objectdetection.common.dataset.Imdb
-import com.intel.analytics.zoo.models.image.objectdetection.ssd.{RoiImageToSSDBatch, SSDVGG}
 import com.intel.analytics.zoo.pipeline.api.keras.ZooSpecHelper
 import com.intel.analytics.zoo.pipeline.api.keras.serializer.ModuleSerializationTest
 import org.apache.spark.{SparkConf, SparkContext}
-import org.opencv.imgcodecs.Imgcodecs
 import org.scalatest.{BeforeAndAfter, FlatSpec, Matchers}
 
 import scala.language.postfixOps
