@@ -171,6 +171,7 @@ class FloatModelSpec extends FlatSpec with Matchers with BeforeAndAfter
     assert(original.metaModel == copy2.metaModel)
     assert(originalWeightBias == copy1WeightBias)
     assert(originalWeightBias == copy2WeightBias)
+
     copy1.release()
     val originalWeightBiasAfterRelease = original.model.getWeightsBias()(0).storage()
     val copy2WeightBiassAfterRelease = copy2.model.getWeightsBias()(0).storage()
@@ -181,5 +182,9 @@ class FloatModelSpec extends FlatSpec with Matchers with BeforeAndAfter
     assert(copy1.metaModel == null)
     assert(originalWeightBias == originalWeightBiasAfterRelease)
     assert(originalWeightBias == copy2WeightBiassAfterRelease)
+
+    original.release()
+    assert(original.model == null)
+    assert(original.metaModel == null)
   }
 }
