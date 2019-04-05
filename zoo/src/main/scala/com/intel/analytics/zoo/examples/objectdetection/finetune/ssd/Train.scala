@@ -18,21 +18,21 @@ package com.intel.analytics.zoo.examples.objectdetection.finetune.ssd
 
 import com.intel.analytics.bigdl._
 import com.intel.analytics.bigdl.dataset.MiniBatch
-import com.intel.analytics.bigdl.optim.{Optimizer, _}
+import com.intel.analytics.bigdl.optim._
 import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric.NumericFloat
 import com.intel.analytics.bigdl.utils.LoggerFilter
-import com.intel.analytics.bigdl.visualization.{TrainSummary, ValidationSummary}
 import com.intel.analytics.zoo.common.NNContext
-import com.intel.analytics.zoo.feature.{DistributedFeatureSet, FeatureSet}
+import com.intel.analytics.zoo.feature.FeatureSet
 import com.intel.analytics.zoo.models.image.common.ImageModel
 import com.intel.analytics.zoo.models.image.objectdetection.common.ModuleUtil
 import com.intel.analytics.zoo.models.image.objectdetection.common.evaluation.MeanAveragePrecision
 import com.intel.analytics.zoo.models.image.objectdetection.common.loss.{MultiBoxLoss, MultiBoxLossParam}
 import com.intel.analytics.zoo.models.image.objectdetection.ssd.{SSDDataSet, SSDMiniBatch, SSDVGG}
+import com.intel.analytics.zoo.pipeline.estimator.Estimator
+
 import org.apache.log4j.{Level, Logger}
 import org.apache.spark.SparkConf
 import scopt.OptionParser
-
 import scala.io.Source
 
 object Train {
@@ -142,8 +142,9 @@ object Train {
       val model = SSDVGG[Float](classes.length, param.resolution, param.dataset)
       val m = ImageModel.loadModel(param.modelSnapshot.get, modelType = "objectdetection")
       ModuleUtil.loadModelWeights(m, model, false)
+      model.saveModel(param.saveModelPath + ".old", overWrite = param.overWriteModel)
 
-      // create optimizer and optimize
+      // create estimator and train
       val optimMethod = if (param.stateSnapshot.isDefined) {
         OptimMethod.load[Float](param.stateSnapshot.get)
       } else {
@@ -152,6 +153,7 @@ object Train {
       }
       optimize(model, trainSet, valSet, param, optimMethod,
         Trigger.maxEpoch(param.maxEpoch), classes)
+
       model.saveModel(param.saveModelPath, overWrite = param.overWriteModel)
     })
   }
@@ -162,34 +164,19 @@ object Train {
                        param: TrainParams,
                        optimMethod: OptimMethod[Float],
                        endTrigger: Trigger,
-                       classes: Array[String]): SSDVGG[Float] = {
-    val optimizer = Optimizer(
-      model = model,
-      dataset = trainSet.toDataSet(),
-      criterion = new MultiBoxLoss[Float](MultiBoxLossParam(nClasses = classes.length))
-    )
+                       classes: Array[String]): Unit = {
 
-    if (param.checkpoint.isDefined) {
-      optimizer.setCheckpoint(param.checkpoint.get, Trigger.everyEpoch)
+    val estimator = if (param.checkpoint.isDefined) {
+      Estimator[Float](model, optimMethod, param.checkpoint.get)
+    } else {
+      Estimator[Float](model, optimMethod)
     }
 
-    if (param.overWriteCheckpoint) {
-      optimizer.overWriteCheckpoint()
-    }
-
-    if (param.summaryDir.isDefined) {
-      val trainSummary = TrainSummary(param.summaryDir.get, param.jobName)
-      val validationSummary = ValidationSummary(param.summaryDir.get, param.jobName)
-      trainSummary.setSummaryTrigger("LearningRate", Trigger.severalIteration(1))
-      optimizer.setTrainSummary(trainSummary)
-      optimizer.setValidationSummary(validationSummary)
-    }
-    optimizer
-      .setOptimMethod(optimMethod)
-      .setValidation(Trigger.everyEpoch,
-        valSet.toDataSet().asInstanceOf[DataSet[MiniBatch[Float]]],
-        Array(new MeanAveragePrecision(true, normalized = true, classes = classes)))
-      .setEndWhen(endTrigger)
-      .optimize().asInstanceOf[SSDVGG[Float]]
+    estimator.train(trainSet.asInstanceOf[FeatureSet[MiniBatch[Float]]],
+      new MultiBoxLoss[Float](MultiBoxLossParam(nClasses = classes.length)),
+      Some(Trigger.maxEpoch(param.maxEpoch)),
+      Some(Trigger.everyEpoch),
+      valSet.asInstanceOf[FeatureSet[MiniBatch[Float]]],
+      Array(new MeanAveragePrecision(true, normalized = true, classes = classes)))
   }
 }
