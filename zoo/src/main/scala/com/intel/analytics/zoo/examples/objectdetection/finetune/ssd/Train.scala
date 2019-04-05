@@ -142,7 +142,6 @@ object Train {
       val model = SSDVGG[Float](classes.length, param.resolution, param.dataset)
       val m = ImageModel.loadModel(param.modelSnapshot.get, modelType = "objectdetection")
       ModuleUtil.loadModelWeights(m, model, false)
-      model.saveModel(param.saveModelPath + ".old", overWrite = param.overWriteModel)
 
       // create estimator and train
       val optimMethod = if (param.stateSnapshot.isDefined) {
