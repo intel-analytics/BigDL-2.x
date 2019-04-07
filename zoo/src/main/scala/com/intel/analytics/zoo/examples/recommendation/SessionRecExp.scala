@@ -1,56 +1,70 @@
+/*
+ * Copyright 2018 Analytics Zoo Authors.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package com.intel.analytics.zoo.examples.recommendation
 
-import com.intel.analytics.bigdl.dataset.{MiniBatch, Sample}
-import com.intel.analytics.bigdl.nn.Module
-import com.intel.analytics.bigdl.nn.abstractnn.{AbstractModule, Activity}
+import java.nio.file.Paths
+
+import com.intel.analytics.bigdl.dataset.{Sample, TensorSample}
 import com.intel.analytics.bigdl.optim._
 import com.intel.analytics.bigdl.tensor.Tensor
 import com.intel.analytics.bigdl.utils.T
-import com.intel.analytics.bigdl.visualization.{TrainSummary, ValidationSummary}
 import com.intel.analytics.zoo.common.NNContext
-import com.intel.analytics.zoo.pipeline.api.keras.layers.{Dense, Embedding, GRU}
-import com.intel.analytics.zoo.pipeline.api.keras.models.Sequential
-import com.intel.analytics.zoo.pipeline.api.keras.objectives.SparseCategoricalCrossEntropy
 import com.intel.analytics.zoo.models.recommendation.SessionRecommender
+import com.intel.analytics.zoo.pipeline.api.keras.objectives.SparseCategoricalCrossEntropy
 import org.apache.log4j.{Level, Logger}
 import org.apache.spark.SparkConf
-import org.apache.spark.ml.Pipeline
-import org.apache.spark.ml.feature.StringIndexer
 import org.apache.spark.rdd.RDD
-import org.apache.spark.sql.{Column, DataFrame, SQLContext}
 import org.apache.spark.sql.functions._
-import org.apache.spark.storage.StorageLevel
+import org.apache.spark.sql.{DataFrame, SparkSession}
 import scopt.OptionParser
 
 import scala.collection.mutable
 
-case class SessionParams(val nEpochs: Int = 2,
-                         val batchSize: Int = 4000,
-                         val inputDir: String = "/Users/guoqiong/intelWork/projects/sessionRec/yoochoose-data/yoochoose-test.dat",
-                         val outputDir: String = "/Users/guoqiong/intelWork/projects/sessionRec/modelOutput.bigdl/",
-                         val logDir: String = "./log/",
-                         val featureLength: Int = 10
+case class SessionParams(
+                          maxLength: Int = 5,
+                          maxEpoch: Int = 10,
+                          batchSize: Int = 1280,
+                          embedOutDim: Int = 300,
+                          learningRate: Double = 1e-3,
+                          learningRateDecay: Double = 1e-6,
+                          inputDir: String = "./data/",
+                          outputDir: String = "./model/",
+                          fileName: String = "atcHistory.json",
+                          modelName: String = "sessionRecommender"
                         )
 
-case class Session(session: String, timestamp: String, item: String, category: String)
-
 object SessionRecExp {
+
+  val currentDir: String = Paths.get(".").toAbsolutePath + "/"
 
   def main(args: Array[String]): Unit = {
 
     val defaultParams = SessionParams()
 
-    val parser = new OptionParser[SessionParams]("NCF Example") {
+    val parser = new OptionParser[SessionParams]("SessionRecExample") {
       opt[String]("inputDir")
         .text(s"inputDir")
         .action((x, c) => c.copy(inputDir = x))
+      opt[String]("outputDir")
+        .text(s"inputDir")
+        .action((x, c) => c.copy(outputDir = x))
       opt[Int]('b', "batchSize")
         .text(s"batchSize")
-        .action((x, c) => c.copy(batchSize = x.toInt))
-      opt[Int]('e', "nEpochs")
-        .text("epoch numbers")
-        .action((x, c) => c.copy(nEpochs = x))
-
+        .action((x, c) => c.copy(batchSize = x))
     }
 
     parser.parse(args, defaultParams).map {
@@ -62,117 +76,110 @@ object SessionRecExp {
   }
 
   def run(params: SessionParams): Unit = {
-    Logger.getLogger("org").setLevel(Level.ERROR)
+
+    Logger.getLogger("org").setLevel(Level.WARN)
+
+    // construct BigDL session
     val conf = new SparkConf()
-    conf.setAppName("SessionRecExample").set("spark.sql.crossJoin.enabled", "true")
+      .setAppName("SessionRecExp")
+      .setMaster("local[*]")
+
     val sc = NNContext.initNNContext(conf)
-    val sqlContext = SQLContext.getOrCreate(sc)
+    val spark = SparkSession.builder().config(sc.getConf).getOrCreate()
 
-    val (sessionDF, sessionCnt, itemCnt) = loadPublicData(sqlContext, params.inputDir)
-    println("records:" + sessionDF.count())
-    println("sessionCnt:" + sessionCnt)
-    println("itemCnt:" + itemCnt)
-
-    val featureRdds = assemblyFeature(sessionDF.sample(false, 0.1), params.featureLength)
-    val Array(train, validation) = featureRdds.randomSplit(Array(0.8, 0.2))
-
-    val model = SessionRecommender[Float](
-      itemCount = itemCnt.toInt,
-      itemEmbed = 20,
-      numClasses = itemCnt.toInt + 1
-      maxLength = params.featureLength,
-      includeHistory = false
+    val (sessionDF, itemCount) = loadPublicData(spark, params)
+    val trainSample = assemblyFeature(
+      spark,
+      sessionDF,
+      itemCount,
+      params.maxLength
     )
 
-    val optimizer: Optimizer[Float, MiniBatch[Float]] = Optimizer(
-      model = model,
-      sampleRDD = train,
+    val sr = SessionRecommender[Float](
+      itemCount = itemCount,
+      itemEmbed = params.embedOutDim,
+      includeHistory = true,
+      maxLength = params.maxLength
+    )
+
+    val Array(trainRdd, testRdd) = trainSample.randomSplit(Array(0.8, 0.2), 100)
+
+    println("trainRDD count = " + trainRdd.count())
+
+    val optimizer = Optimizer(
+      model = sr,
+      sampleRDD = trainRdd,
       criterion = new SparseCategoricalCrossEntropy[Float](logProbAsInput = true, zeroBasedLabel = false),
       batchSize = params.batchSize
     )
 
-    val trainSummary = TrainSummary(logDir = "./log", appName = "recommenderOD")
-    trainSummary.setSummaryTrigger("Loss", trigger = Trigger.severalIteration(1))
-    val valSummary = ValidationSummary(logDir = "./log", appName = "recommenderOD")
+    val optimMethod = new RMSprop[Float](
+      learningRate = params.learningRate,
+      learningRateDecay = params.learningRateDecay
+    )
 
-    optimizer
-      .setOptimMethod(new RMSprop[Float]())
-      .setValidation(Trigger.everyEpoch, validation, Array(new Top5Accuracy[Float]()), params.batchSize)
-      .setEndWhen(Trigger.maxEpoch(params.nEpochs))
-      .setTrainSummary(trainSummary)
-      .setValidationSummary(valSummary)
+    val trained_model = optimizer.setOptimMethod(optimMethod)
+      .setValidation(Trigger.everyEpoch, testRdd, Array(new Top5Accuracy[Float]()), params.batchSize)
+      .setEndWhen(Trigger.maxEpoch(params.maxEpoch))
+      .optimize()
 
-    val trained_model = optimizer.optimize()
-
-    trained_model.saveModule(params.outputDir, null, overWrite = true)
-
-    val loaded = Module.loadModule[Float](params.outputDir)
-    val results: RDD[Activity] = loaded.predict(validation)
-    results.take(10).foreach(println)
+    trained_model.saveModule(params.inputDir + params.modelName, null, overWrite = true)
+    println("Model has been saved")
 
   }
 
-  def loadPublicData(sqlContext: SQLContext, dataPath: String) = {
-    import sqlContext.implicits._
-    val sessions = sqlContext.read.text(dataPath).as[String]
-      .map(x => {
-        val line = x.split(",")
-        Session(line(0), line(1), line(2), line(3))
-      }).toDF()
-      .select("session", "item")
-      .filter(col("session").isNotNull && col("item").isNotNull)
+  //  Load data using spark session interface
+  def loadPublicData(spark: SparkSession, params: SessionParams): (DataFrame, Int) = {
 
-    val dataIndex1 = new StringIndexer().setInputCol("session").setOutputCol("sessionId")
-    val dataIndex2 = new StringIndexer().setInputCol("item").setOutputCol("itemId")
-    val pipeline = new Pipeline()
-      .setStages(Array(dataIndex1, dataIndex2))
-    val model = pipeline.fit(sessions)
-    val sessionsIndexed = model.transform(sessions)
-      .withColumn("sessionId", col("sessionId") + 1)
-      .withColumn("itemId", col("itemId") + 1)
-      .drop("session", "item")
-
-    val minMaxRow = sessionsIndexed.agg(max("sessionId"), max("itemId")).collect()(0)
-
-    val sessionsOut = sessionsIndexed
-      .groupBy("sessionId")
-      .agg(collect_list("itemId").alias("itemIds"))
-      .filter(col("itemIds").isNotNull && size(col("itemIds")) > 1)
-
-    (sessionsOut, minMaxRow.getDouble(0), minMaxRow.getDouble(1))
+    val sessionDF = spark.read.options(Map("header" -> "false", "delimiter" -> ",")).json(params.inputDir + params.fileName)
+    val atcMax = sessionDF.rdd.map(_.getAs[mutable.WrappedArray[Double]]("ATC_SEQ").max).collect().max.toInt
+    val purMax = sessionDF.rdd.map(_.getAs[mutable.WrappedArray[Double]]("PURCH_HIST").max).collect().max.toInt
+    val itemCount = Math.max(atcMax, purMax) + 1
+    println(itemCount.toString)
+    (sessionDF, itemCount)
   }
 
-  def assemblyFeature(sessions: DataFrame, maxLength: Int) = {
+  def assemblyFeature(
+                       spark: SparkSession,
+                       sessionDF: DataFrame,
+                       itemCount: Int,
+                       maxLength: Int
+                     ): RDD[Sample[Float]] = {
 
-    /*PrePad UDF*/
-    def getFeatures: mutable.WrappedArray[java.lang.Double] => Array[Float] = x => {
-      val padded = if (x.length > maxLength) x.array.map(_.toFloat)
-      else Array.fill[Float](maxLength - x.length + 1)(0) ++ x.array.map(_.toFloat)
-      padded.takeRight(maxLength + 1).dropRight(1)
+    // prePad UDF
+    def prePadding: mutable.WrappedArray[java.lang.Double] => Array[Float] = x => {
+      if (x.array.size <= maxLength) x.array.map(_.toFloat).dropRight(1).reverse.padTo(maxLength, 0f).reverse
+      else x.array.map(_.toFloat).dropRight(1).takeRight(maxLength)
     }
+    val prePaddingUDF = udf(prePadding)
 
-    val getFeaturesUDF = udf(getFeatures)
-
-    /*Get label UDF*/
+    // get label UDF
     def getLabel: mutable.WrappedArray[java.lang.Double] => Float = x => {
-      x.takeRight(1).head.floatValue() + 1
+      x.takeRight(1).head.floatValue()
     }
-
     val getLabelUDF = udf(getLabel)
 
-    val featuresDF = sessions
-      .withColumn("features", getFeaturesUDF(col("itemIds")))
-      .withColumn("label", getLabelUDF(col("itemIds")))
+    val rnnDF = sessionDF
+      .withColumn("ATC", prePaddingUDF(col("ATC_SEQ")))
+      .withColumn("PUR", prePaddingUDF(col("PURCH_HIST")))
+      .withColumn("label", getLabelUDF(col("ATC_SEQ")))
+      .select("ATC", "PUR", "label")
 
-    /*DataFrame to sample*/
-    val rddOfSample = featuresDF.rdd.map(r => {
+    // dataFrame to sample
+    val trainSample = rnnDF.rdd.map(r => {
       val label = Tensor[Float](T(r.getAs[Float]("label")))
-      val featureArray = r.getAs[mutable.WrappedArray[java.lang.Float]]("features").array.map(_.toFloat)
-      val feature = Tensor(featureArray, Array(maxLength))
-      Sample(feature, label)
+      val mlpFeature = r.getAs[mutable.WrappedArray[java.lang.Float]]("PUR").array.map(_.toFloat)
+      val rnnFeature = r.getAs[mutable.WrappedArray[java.lang.Float]]("ATC").array.map(_.toFloat)
+      val mlpSample = Tensor(mlpFeature, Array(maxLength))
+      val rnnSample = Tensor(rnnFeature, Array(maxLength))
+      TensorSample[Float](Array(mlpSample, rnnSample), Array(label))
     })
 
-    rddOfSample
+    println("Sample feature print: \n"+ trainSample.take(1).head.feature(0))
+    println("Sample feature print: \n"+ trainSample.take(1).head.feature(1))
+    println("Sample label print: \n" + trainSample.take(1).head.label())
+
+    trainSample
   }
 
 }
