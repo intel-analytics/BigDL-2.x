@@ -86,7 +86,7 @@ spark-submit \
     --conf "spark.serializer=org.apache.spark.serializer.JavaSerializer" \
     --class com.intel.analytics.zoo.examples.objectdetection.finetune.ssd.Train \
     ${ZOO_JAR_PATH} --resolution 300 --model analytics-zoo_ssd-vgg16-300x300_PASCAL_0.1.0.model \
-    --class xxx -f xxx -v xxx -e 1 --checkpoint folder
+    --class xxx -f xxx -v xxx -e 1 -b 8 --modelDir folder -l 0.0001 --learningRateDecay 0.0005
 ```
 * resolution: input resolution 300 or 512
 * model: model snapshot location
@@ -94,4 +94,7 @@ spark-submit \
 * f: url of hdfs or local folder store the train hadoop sequence image files.
 * v: url of hdfs or local folder store the validation hadoop sequence image files.
 * e: max epochs to run
-* checkpoint: folder to cache the model and state
+* b: mini-batch size. Should be multiple of total cores
+* modelDir: checkpoint directory, and related summary director
+* l: learning rate
+* learningRateDecay: learning rate decay

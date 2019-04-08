@@ -83,7 +83,7 @@ object Imdb {
     } else {
       sc.sequenceFile(seqFloder, classOf[Text], classOf[Text])
     }
-    raw.map(x => ByteRecord(x._2.copyBytes(), x._1.toString))
+    raw.map(x => new ByteRecord(x._2.copyBytes(), x._1.toString))
   }
 
   def roiSeqFilesToImageSet(url: String, sc: SparkContext, partitionNum: Option[Int] = None):

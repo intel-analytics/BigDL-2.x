@@ -16,4 +16,4 @@
 
 package com.intel.analytics.zoo.models.image.objectdetection.common.dataset
 
-case class ByteRecord(var data: Array[Byte], path: String)
+case class ByteRecord(var data: Array[Byte], path: String) extends Serializable

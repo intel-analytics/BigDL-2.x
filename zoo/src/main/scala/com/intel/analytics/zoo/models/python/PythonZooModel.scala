@@ -18,8 +18,9 @@ package com.intel.analytics.zoo.models.python
 
 import java.util.{List => JList, Map => JMap}
 
-import com.intel.analytics.bigdl.{Criterion, dataset}
+import com.intel.analytics.bigdl.{Criterion, Module, dataset}
 import com.intel.analytics.bigdl.dataset.PaddingParam
+import com.intel.analytics.bigdl.nn.DetectionOutputParam
 import com.intel.analytics.bigdl.nn.abstractnn.{AbstractModule, Activity}
 import com.intel.analytics.bigdl.nn.keras.{KerasLayer, KerasModel}
 import com.intel.analytics.bigdl.optim.{OptimMethod, ValidationMethod, ValidationResult}
@@ -37,13 +38,18 @@ import com.intel.analytics.zoo.models.common.{Ranker, ZooModel}
 import com.intel.analytics.zoo.models.image.common.{ImageConfigure, ImageModel}
 import com.intel.analytics.zoo.models.image.objectdetection._
 import com.intel.analytics.zoo.models.image.imageclassification.{ImageClassifier, LabelReader => IMCLabelReader}
+import com.intel.analytics.zoo.models.image.objectdetection.common.ModuleUtil
+import com.intel.analytics.zoo.models.image.objectdetection.common.dataset.{ByteRecord, Imdb}
+import com.intel.analytics.zoo.models.image.objectdetection.common.evaluation.MeanAveragePrecision
+import com.intel.analytics.zoo.models.image.objectdetection.common.loss.{MultiBoxLoss, MultiBoxLossParam}
+import com.intel.analytics.zoo.models.image.objectdetection.ssd.{RoiImageToSSDBatch, SSDVGG}
 import com.intel.analytics.zoo.models.recommendation.{NeuralCF, Recommender, UserItemFeature, UserItemPrediction}
 import com.intel.analytics.zoo.models.recommendation._
 import com.intel.analytics.zoo.models.seq2seq.{RNNDecoder, RNNEncoder, Seq2seq}
 import com.intel.analytics.zoo.models.textclassification.TextClassifier
 import com.intel.analytics.zoo.models.textmatching.KNRM
 import com.intel.analytics.zoo.pipeline.api.keras.layers.{Embedding, Recurrent, WordEmbedding}
-import org.apache.spark.api.java.JavaRDD
+import org.apache.spark.api.java.{JavaRDD, JavaSparkContext}
 import org.apache.spark.rdd.RDD
 import org.apache.spark.sql.{DataFrame, SQLContext}
 
@@ -294,6 +300,80 @@ class PythonZooModel[T: ClassTag](implicit ev: TensorNumeric[T]) extends PythonZ
 
   def createScaleDetection(): ScaleDetection = {
     ScaleDetection()
+  }
+
+  def createZooSSDVGG(classNum: Int, resolution: Int,
+                      dataset: String, sizes: JList[Double],
+                      postProcessParam: DetectionOutputParam): SSDVGG[T] = {
+    if (sizes != null) {
+      SSDVGG[T](classNum, resolution, dataset, sizes.asScala.toArray.map(_.toFloat), postProcessParam)
+    } else {
+      SSDVGG[T](classNum, resolution, dataset, null, postProcessParam)
+    }
+
+  }
+
+  def createMeanAveragePrecision(use07metric: Boolean, normalized: Boolean = true,
+                                 classes: JList[String]): MeanAveragePrecision = {
+    new MeanAveragePrecision(use07metric, normalized, classes.asScala.toArray)
+  }
+
+  def createMultiBoxLossParam(locWeight: Double,
+                              nClasses: Int,
+                              shareLocation: Boolean,
+                              overlapThreshold: Double,
+                              bgLabelInd: Int,
+                              useDifficultGt: Boolean,
+                              negPosRatio: Double,
+                              negOverlap: Double): MultiBoxLossParam = {
+    MultiBoxLossParam(locWeight,
+    nClasses,
+    shareLocation,
+    overlapThreshold,
+    bgLabelInd,
+    useDifficultGt,
+    negPosRatio,
+    negOverlap)
+  }
+
+  def createMultiBoxLoss(locWeight: Double,
+                         nClasses: Int,
+                         shareLocation: Boolean,
+                         overlapThreshold: Double,
+                         bgLabelInd: Int,
+                         useDifficultGt: Boolean,
+                         negPosRatio: Double,
+                         negOverlap: Double): MultiBoxLoss[T] = {
+    println("create multibox loss param")
+    val param = MultiBoxLossParam(locWeight,
+      nClasses,
+      shareLocation,
+      overlapThreshold,
+      bgLabelInd,
+      useDifficultGt,
+      negPosRatio,
+      negOverlap)
+    println("multibox loss param: class number: " + param.nClasses)
+    MultiBoxLoss[T](param)
+  }
+
+  def createRoiImageToSSDBatch(batchSize: Int, convertLabel: Boolean = true,
+                               partitionNum: Int = -1, keepImageFeature: Boolean = true,
+                               inputKey: String = ImageFeature.floats): RoiImageToSSDBatch = {
+    val pn = if (partitionNum == -1) None else Some(partitionNum)
+    RoiImageToSSDBatch(batchSize, convertLabel, pn, keepImageFeature, inputKey)
+  }
+
+  def loadRoiSeqFiles(url: String, sc: JavaSparkContext, partitionNum: Int= -1): ImageSet = {
+    println("call loadRoiSeqFiles")
+    val pn = if (partitionNum <= 0) None else Some(partitionNum)
+//    Imdb.loadRoiSeqFiles(url, sc, pn).toJavaRDD()
+    Imdb.roiSeqFilesToImageSet(url, sc, pn)
+  }
+
+  def loadModelWeights(srcModel: Module[Float], targetModel: Module[Float],
+                       matchAll: Boolean): Unit = {
+    ModuleUtil.loadModelWeights(srcModel, targetModel, matchAll)
   }
 
   def createPaddingParam(): PaddingParam[T] = {
