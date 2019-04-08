@@ -159,18 +159,18 @@ class ImageClassificationSpec extends ZooSpecHelper {
 
 class ImageClassifierSerialTest extends ModuleSerializationTest {
   override def test(): Unit = {
-//    val tmpFile = Files.createTempDir()
-//    val dir = new File(tmpFile.toString + "/models")
-//    val dirName = dir.getCanonicalPath
-//    val url = "https://s3-ap-southeast-1.amazonaws.com/bigdl-models/imageclassification/" +
-//      "imagenet/bigdl_inception-v1-quantize_imagenet_0.4.0.model"
-//    val modelFileName = url.split("/").last
-//    val cmd = s"wget -P $dirName $url"
-//    val cmd_result = cmd !
-//
-//    val model = ImageClassifier.loadModel[Float](dirName + "/" + modelFileName)
-//    val input = Tensor[Float](Array(3, 224, 224)).rand()
-//    ZooSpecHelper.testZooModelLoadSave(model.asInstanceOf[ZooModel[Tensor[Float], Tensor[Float],
-    // Float]], input, ImageClassifier.loadModel[Float])
+    val tmpFile = Files.createTempDir()
+    val dir = new File(tmpFile.toString + "/models")
+    val dirName = dir.getCanonicalPath
+    val url = "https://s3-ap-southeast-1.amazonaws.com/bigdl-models/imageclassification/" +
+      "imagenet/bigdl_inception-v1_imagenet_0.4.0.model"
+    val modelFileName = url.split("/").last
+    val cmd = s"wget -P $dirName $url"
+    val cmd_result = cmd !
+
+    val model = ImageClassifier.loadModel[Float](dirName + "/" + modelFileName)
+    val input = Tensor[Float](Array(1, 3, 224, 224)).rand()
+    ZooSpecHelper.testZooModelLoadSave(model.asInstanceOf[ZooModel[Tensor[Float], Tensor[Float],
+     Float]], input, ImageClassifier.loadModel[Float])
   }
 }
