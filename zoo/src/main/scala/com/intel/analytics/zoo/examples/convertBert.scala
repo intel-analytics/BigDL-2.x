@@ -13,6 +13,7 @@ import scala.collection.mutable.ArrayBuffer
 
 object convertBert {
   def main(args: Array[String]): Unit = {
+//    val t = BERT.loadModel[Float]("/tmp/zoo-bert.model")
     val vocab = 30522
     val hiddenSize = 768
     val intermediateSize = 3072
@@ -154,6 +155,5 @@ object convertBert {
     }
     preTrainModel.saveModule("/tmp/zoo-bert.model", overWrite = true)
     println("convert done!")
-    Module.loadModule[Float]("/tmp/zoo-bert.model").asInstanceOf[BERT[Float]]
   }
 }

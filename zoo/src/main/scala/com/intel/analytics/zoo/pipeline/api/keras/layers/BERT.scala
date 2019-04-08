@@ -16,18 +16,26 @@
 
 package com.intel.analytics.zoo.pipeline.api.keras.layers
 
-import com.intel.analytics.bigdl.nn.RandomNormal
-import com.intel.analytics.bigdl.nn.abstractnn.Activity
-import com.intel.analytics.bigdl.nn.keras.KerasLayer
+import com.intel.analytics.bigdl.nn.{Module, RandomNormal, StaticGraph}
+import com.intel.analytics.bigdl.nn.abstractnn.{AbstractModule, Activity}
+import com.intel.analytics.bigdl.nn.keras.{KerasLayer, KerasLayerSerializable}
+import com.intel.analytics.bigdl.serialization.Bigdl.{AttrValue, BigDLModule}
 import com.intel.analytics.bigdl.tensor.Tensor
 import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric
-import com.intel.analytics.bigdl.utils.{MultiShape, Shape}
+import com.intel.analytics.bigdl.utils.serializer.{DeserializeContext, ModuleData, ModuleSerializer, SerializeContext}
+import com.intel.analytics.bigdl.utils.serializer.converters.DataConverter
+import com.intel.analytics.bigdl.utils.{MultiShape, Shape, Table}
+import com.intel.analytics.zoo.models.seq2seq.RNNEncoder._
+import com.intel.analytics.zoo.models.seq2seq.{RNNDecoder, RNNEncoder}
 import com.intel.analytics.zoo.pipeline.api.Net
 import com.intel.analytics.zoo.pipeline.api.autograd.{Parameter, Variable}
-import com.intel.analytics.zoo.pipeline.api.keras.layers.utils.KerasUtils
+import com.intel.analytics.zoo.pipeline.api.keras.layers.utils.{GraphRef, KerasUtils}
 import com.intel.analytics.zoo.pipeline.api.keras.models.Model
+import com.intel.analytics.zoo.pipeline.api.keras.models.Model.{apply => _, _}
 
+import scala.collection.mutable.ArrayBuffer
 import scala.reflect.ClassTag
+import scala.reflect.runtime._
 
 /**
  * [[BERT]] A self attention keras like layer.
@@ -75,13 +83,18 @@ class BERT[T: ClassTag] (
       " a list of 4 tensors (consisting of input sequence, sequence positions," +
       "segment id, attention mask)")
     val _inputShape = KerasUtils.removeBatch(inputShape).toMulti()
+    seqLen = _inputShape.head.toSingle().head
 
     val inputs = _inputShape.map(Variable(_))
     return ((- inputs.last + 1.0) * -10000.0, inputs.dropRight(1), inputs)
   }
 }
 
-object BERT {
+object BERT extends KerasLayerSerializable {
+  ModuleSerializer.registerModule(
+    "com.intel.analytics.zoo.pipeline.api.keras.layers.BERT",
+    BERT)
+
   /**
    * [[BERT]] A self attention keras like layer
    * @param vocab vocabulary size of training data, default is 40990
@@ -158,5 +171,137 @@ object BERT {
     (implicit ev: TensorNumeric[T]): BERT[T] = {
     new BERT[T](nBlock, nHead, intermediateSize, hiddenPDrop, attnPDrop, initializerRange,
       outputAllBlock, embeddingLayer, null)
+  }
+
+  /**
+   * Load an existing model (with weights).
+   *
+   * @param path The path for the pre-defined model.
+   *             Local file system, HDFS and Amazon S3 are supported.
+   *             HDFS path should be like "hdfs://[host]:[port]/xxx".
+   *             Amazon S3 path should be like "s3a://bucket/xxx".
+   * @param weightPath The path for pre-trained weights if any. Default is null.
+   * @tparam T Numeric type of parameter(e.g. weight, bias). Only support float/double now.
+   */
+  def loadModel[T: ClassTag](path: String,
+    weightPath: String = null)(implicit ev: TensorNumeric[T]): BERT[T] = {
+    Module.loadModule[T](path, weightPath).asInstanceOf[BERT[T]]
+  }
+
+  override def doLoadModule[T: ClassTag](context : DeserializeContext)
+    (implicit ev: TensorNumeric[T]) : AbstractModule[Activity, Activity, T] = {
+
+    val attrMap = context.bigdlModule.getAttrMap
+
+    val nBlockAttr = attrMap.get("nBlock")
+    val nBlock =
+      DataConverter.getAttributeValue(context, nBlockAttr)
+        .asInstanceOf[Int]
+
+    val nHeadAttr = attrMap.get("nHead")
+    val nHead =
+      DataConverter.getAttributeValue(context, nHeadAttr)
+        .asInstanceOf[Int]
+
+    val intermediateSizeAttr = attrMap.get("intermediateSize")
+    val intermediateSize =
+      DataConverter.getAttributeValue(context, intermediateSizeAttr)
+        .asInstanceOf[Int]
+
+    val hiddenPDropAttr = attrMap.get("hiddenPDrop")
+    val hiddenPDrop =
+      DataConverter.getAttributeValue(context, hiddenPDropAttr)
+        .asInstanceOf[Double]
+
+    val attnPDropAttr = attrMap.get("attnPDrop")
+    val attnPDrop =
+      DataConverter.getAttributeValue(context, attnPDropAttr)
+        .asInstanceOf[Double]
+
+    val initializerRangeAttr = attrMap.get("initializerRange")
+    val initializerRange =
+      DataConverter.getAttributeValue(context, initializerRangeAttr)
+        .asInstanceOf[Double]
+
+    val outputAllBlockAttr = attrMap.get("outputAllBlock")
+    val outputAllBlock =
+      DataConverter.getAttributeValue(context, outputAllBlockAttr)
+        .asInstanceOf[Boolean]
+
+    import scala.collection.JavaConverters._
+    val subProtoModules = context.bigdlModule.getSubModulesList.asScala
+    val subModules = subProtoModules.map(module => {
+      val subModuleData = ModuleSerializer.load(DeserializeContext(module,
+        context.storages, context.storageType, _copyWeightAndBias))
+      subModuleData.module
+    })
+    val tGraph = subModules(0).asInstanceOf[StaticGraph[T]]
+    val embeddingLayer = Model(tGraph.inputs.toArray, new GraphRef(tGraph).getOutputs().toArray)
+
+    val shapeAttr = attrMap.get("seqLen")
+    val seqLen = DataConverter.getAttributeValue(context, shapeAttr).asInstanceOf[Int]
+
+    val shape = Shape(List(Shape(seqLen), Shape(seqLen), Shape(seqLen), Shape(1, 1, seqLen)))
+    val bert = BERT(nBlock, nHead, intermediateSize, hiddenPDrop, attnPDrop,
+      initializerRange, outputAllBlock,
+      embeddingLayer.asInstanceOf[KerasLayer[Activity, Tensor[T], T]])
+
+    bert.build(KerasUtils.addBatch(shape))
+    bert.asInstanceOf[AbstractModule[Activity, Activity, T]]
+  }
+
+  override def doSerializeModule[T: ClassTag](context: SerializeContext[T],
+    bertBuilder : BigDLModule.Builder)
+    (implicit ev: TensorNumeric[T]) : Unit = {
+
+    val bert = context.moduleData.module.asInstanceOf[BERT[T]]
+
+    val nBlockBuilder = AttrValue.newBuilder
+    DataConverter.setAttributeValue(context, nBlockBuilder,
+      bert.nBlock, universe.typeOf[Int])
+    bertBuilder.putAttr("nBlock", nBlockBuilder.build)
+
+    val nHeadBuilder = AttrValue.newBuilder
+    DataConverter.setAttributeValue(context, nHeadBuilder,
+      bert.nHead, universe.typeOf[Int])
+    bertBuilder.putAttr("nHead", nHeadBuilder.build)
+
+    val intermediateSizeBuilder = AttrValue.newBuilder
+    DataConverter.setAttributeValue(context, intermediateSizeBuilder,
+      bert.intermediateSize, universe.typeOf[Int])
+    bertBuilder.putAttr("intermediateSize", intermediateSizeBuilder.build)
+
+    val hiddenPDropBuilder = AttrValue.newBuilder
+    DataConverter.setAttributeValue(context, hiddenPDropBuilder,
+      bert.hiddenPDrop, universe.typeOf[Double])
+    bertBuilder.putAttr("hiddenPDrop", hiddenPDropBuilder.build)
+
+    val attnPDropBuilder = AttrValue.newBuilder
+    DataConverter.setAttributeValue(context, attnPDropBuilder,
+      bert.attnPDrop, universe.typeOf[Double])
+    bertBuilder.putAttr("attnPDrop", attnPDropBuilder.build)
+
+    val initializerRangeBuilder = AttrValue.newBuilder
+    DataConverter.setAttributeValue(context, initializerRangeBuilder,
+      bert.initializerRange, universe.typeOf[Double])
+    bertBuilder.putAttr("initializerRange", initializerRangeBuilder.build)
+
+    val outputAllBlockBuilder = AttrValue.newBuilder
+    DataConverter.setAttributeValue(context, outputAllBlockBuilder,
+      bert.outputAllBlock, universe.typeOf[Boolean])
+    bertBuilder.putAttr("outputAllBlock", outputAllBlockBuilder.build)
+
+    val embLabor = bert.embeddingLayer.labor.asInstanceOf[AbstractModule[Activity, Activity, T]]
+    val subModule = ModuleSerializer.serialize(SerializeContext(ModuleData(embLabor,
+      new ArrayBuffer[String](), new ArrayBuffer[String]()), context.storages,
+      context.storageType, _copyWeightAndBias))
+    bertBuilder.addSubModules(subModule.bigDLModule)
+
+    val seqLenBuilder = AttrValue.newBuilder
+    DataConverter.setAttributeValue(context, seqLenBuilder,
+      bert.seqLen, universe.typeOf[Int])
+    bertBuilder.putAttr("seqLen", seqLenBuilder.build)
+
+    appendKerasLabel(context, bertBuilder)
   }
 }
