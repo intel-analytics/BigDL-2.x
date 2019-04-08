@@ -770,7 +770,9 @@ class DistributedTextSet(var rdd: RDD[TextFeature],
 
   override def saveWordIndex(path: String): Unit = {
     super.saveWordIndex(path)
-    val fs = FileSystem.get(rdd.sparkContext.hadoopConfiguration)
+    // URI needs for the FileSystem to accept HDFS
+    val uri = StringUtils.stringToURI(Array(path))(0)
+    val fs = FileSystem.get(uri, rdd.sparkContext.hadoopConfiguration)
     val os = new BufferedOutputStream(fs.create(new Path(path)))
     for (item <- getWordIndex) {
       os.write((item._1 + " " + item._2 + "\n").getBytes("UTF-8"))

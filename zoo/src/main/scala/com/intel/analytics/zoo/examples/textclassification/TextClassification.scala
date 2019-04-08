@@ -34,7 +34,8 @@ case class TextClassificationParams(
    encoderOutputDim: Int = 256, maxWordsNum: Int = 5000,
    trainingSplit: Double = 0.8, batchSize: Int = 128,
    nbEpoch: Int = 20, learningRate: Double = 0.01,
-   partitionNum: Int = 4, model: Option[String] = None)
+   partitionNum: Int = 4, model: Option[String] = None,
+   outputPath: Option[String] = None)
 
 
 object TextClassification {
@@ -86,6 +87,9 @@ object TextClassification {
       opt[String]('m', "model")
         .text("Model snapshot location if any")
         .action((x, c) => c.copy(model = Some(x)))
+      opt[String]('o', "outputPath")
+        .text("The directory to save the model and word dictionary")
+        .action((x, c) => c.copy(outputPath = Some(x)))
     }
 
     parser.parse(args, TextClassificationParams()).map { param =>
@@ -124,6 +128,12 @@ object TextClassification {
       val predictSet = model.predict(valTextSet, batchPerThread = param.partitionNum)
       println("Probability distributions of the first five texts in the validation set:")
       predictSet.toDistributed().rdd.take(5).map(_.getPredict.toTensor).foreach(println)
+      if (param.outputPath.isDefined) {
+        val outputPath = param.outputPath.get
+        model.saveModel(outputPath + "/text_classifier.model")
+        transformed.saveWordIndex(outputPath + "/word_index.txt")
+        println("Trained model and word dictionary saved")
+      }
       sc.stop()
     }
   }
