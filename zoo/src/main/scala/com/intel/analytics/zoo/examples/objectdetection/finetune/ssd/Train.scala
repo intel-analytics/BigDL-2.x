@@ -23,16 +23,16 @@ import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric.NumericF
 import com.intel.analytics.bigdl.utils.LoggerFilter
 import com.intel.analytics.zoo.common.NNContext
 import com.intel.analytics.zoo.feature.FeatureSet
-import com.intel.analytics.zoo.models.image.common.ImageModel
+import com.intel.analytics.zoo.models.image.objectdetection.ObjectDetector
 import com.intel.analytics.zoo.models.image.objectdetection.common.ModuleUtil
 import com.intel.analytics.zoo.models.image.objectdetection.common.evaluation.MeanAveragePrecision
 import com.intel.analytics.zoo.models.image.objectdetection.common.loss.{MultiBoxLoss, MultiBoxLossParam}
 import com.intel.analytics.zoo.models.image.objectdetection.ssd.{SSDDataSet, SSDMiniBatch, SSDVGG}
 import com.intel.analytics.zoo.pipeline.estimator.Estimator
-
 import org.apache.log4j.{Level, Logger}
 import org.apache.spark.SparkConf
 import scopt.OptionParser
+
 import scala.io.Source
 
 object Train {
@@ -132,7 +132,7 @@ object Train {
 
       // create ssd model and load weights from pretrained model
       val model = SSDVGG[Float](classes.length, param.resolution, param.dataset)
-      val m = ImageModel.loadModel(param.modelSnapshot.get, modelType = "objectdetection")
+      val m = ObjectDetector.loadModel(param.modelSnapshot.get)
       ModuleUtil.loadModelWeights(m, model, false)
 
       // create estimator and train

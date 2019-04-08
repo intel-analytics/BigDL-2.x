@@ -20,7 +20,6 @@ import com.intel.analytics.bigdl.tensor.Tensor
 import com.intel.analytics.zoo.common.NNContext
 import com.intel.analytics.zoo.feature.image._
 import com.intel.analytics.zoo.models.common.ZooModel
-import com.intel.analytics.zoo.models.image.imageclassification.ImageClassifier
 import com.intel.analytics.zoo.models.image.objectdetection.common.dataset.Imdb
 import com.intel.analytics.zoo.pipeline.api.keras.ZooSpecHelper
 import com.intel.analytics.zoo.pipeline.api.keras.serializer.ModuleSerializationTest
@@ -85,6 +84,6 @@ class SSDVGGSerialTest extends ModuleSerializationTest {
     val out = imgAug(roidb)
     val input = out.next()
     ZooSpecHelper.testZooModelLoadSave(model.asInstanceOf[ZooModel[Tensor[Float], Tensor[Float],
-      Float]], input.input, ImageClassifier.loadModel[Float])
+      Float]], input.input, ZooModel.loadModel[Float])
   }
 }
