@@ -32,6 +32,7 @@ sc = init_nncontext(conf)
 max_features = 20000
 max_len = 200
 
+
 print('Loading data...')
 (x_train, y_train), (x_test, y_test) = imdb.load_data(num_words=max_features)
 print(len(x_train), 'train sequences')
@@ -48,11 +49,22 @@ xmb = np.zeros((len(x_train), max_len, 2), dtype=np.int32)
 xmb[:, :, 1] = np.arange(max_len)
 xmb[:, :, 0] = x_train
 
+position = np.zeros((len(x_train), max_len), dtype=np.int32)
+for i in range(0, len(x_train)):
+    position[i, :] = np.arange(max_len)
+
+xmb = [x_train, position]
+
+
 xmb_val = np.zeros((len(x_test), max_len, 2), dtype=np.int32)
 # Position information that is added to the input embeddings in the TransformerModel
 xmb_val[:, :, 1] = np.arange(max_len)
 xmb_val[:, :, 0] = x_test
-S_inputs = Input(shape=(max_len, 2))
+
+xmb_val = [x_test, np.arange(max_len)]
+
+shape = ((max_len,), (max_len,))
+S_inputs = Input(shape=shape)
 O_seq = TransformerLayer.init_with_default_embedding(
     vocab=max_features, hidden_size=128, n_head=8, seq_len=max_len)(S_inputs)
 O_seq = GlobalAveragePooling1D()(O_seq)

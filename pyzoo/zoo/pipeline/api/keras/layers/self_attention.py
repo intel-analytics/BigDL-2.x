@@ -38,30 +38,6 @@ def layer_norm(x, w, b, e=1e-5):
     y = y * w + b
     return y
 
-def gelu(x):
-    y = (auto.square(x) * x * 0.044715 + x) * (math.sqrt(2 / math.pi))
-    y = Activation("tanh")(y) + 1.0
-    y = x * 0.5 * y
-    return y
-
-def split_heads(x, n_head, k=False):
-    sizes = x.get_output_shape()[1:]
-    shape = list(sizes + (sizes[-1]/n_head,))
-    shape[-2] = n_head
-    r = Reshape(shape)(x)
-    if k:
-        f = Permute((2, 3, 1))(r)
-    else:
-        f = Permute((2, 1, 3))(r)
-    return f
-
-def merge_heads(x):
-    p = auto.contiguous(Permute((2, 1, 3))(x))
-    sizes = p.get_output_shape()[1:]
-    merge_sizes = list((sizes[0], sizes[-1]*sizes[-2]))
-    m = Reshape(merge_sizes)(p)
-    return m
-
 class TransformerLayer(ZooKerasLayer):
     """
     A self attention layer
@@ -74,82 +50,128 @@ class TransformerLayer(ZooKerasLayer):
     mask_attention: whether unidirectional or bidirectional
     embedding_layer: embedding layer
     """
-    def __init__(self, n_block, resid_drop, attn_drop,
-                 n_head, mask_attention, embedding_layer, input_shape, bigdl_type="float"):
-        self.resid_drop = resid_drop
+    def __init__(self, n_block, hidden_drop, attn_drop, n_head, initializer_range, bidirectional,
+                 output_all_block, embedding_layer, input_shape, intermediate_size=0,
+                 bigdl_type="float"):
+        self.hidden_drop = hidden_drop
         self.attn_drop = attn_drop
         self.n_head = n_head
-        self.mask_attention = mask_attention
-        self.seq_len = input_shape[0]
+        self.initializer_range = initializer_range
+        self.output_all_block = output_all_block
+        self.bidirectional = bidirectional
+        self.intermediate_size = intermediate_size
+        self.seq_len = input_shape[0][0]
         self.bigdl_type = bigdl_type
-        if mask_attention:
+        if not bidirectional:
             mask_value = np.tril(np.ones((self.seq_len, self.seq_len), dtype=bigdl_type))
             self.mask_value = auto.Constant(data=mask_value.reshape((1, 1,
                                                                      self.seq_len, self.seq_len)))
 
-        input = Input(shape=list(input_shape))
-        embedding = embedding_layer(input)
+        (extended_attention_mask, embedding_inputs, inputs) = self.build_input(input_shape)
+        embedding = embedding_layer(embedding_inputs)
         hidden_size = embedding.get_output_shape()[-1]
 
         next_input = embedding
 
-        for _ in range(n_block):
-            output = self.block(next_input, hidden_size)
-            next_input = output
+        output = [None]*n_block
+        output[0] = self.block(next_input, hidden_size, extended_attention_mask)
 
-        model = Model(input, next_input)
+        for index in range(n_block-1):
+            o = self.block(output[index], hidden_size, extended_attention_mask)
+            output[index+1] = o
+
+        model = Model(inputs, output) if output_all_block else Model(inputs, output[-1])
         self.value = model.value
 
-    def block(self, x, size):
+    def build_input(self, input_shape):
+        if any(not isinstance(i, tuple) and not isinstance(i, list) for i in input_shape):
+            raise TypeError('TransformerLayer input must be a list of ndarray (consisting'
+                            ' of input sequence, sequence positions, etc.)')
+
+        inputs = [Input(list(shape)) for shape in input_shape]
+        return None, inputs, inputs
+
+    def block(self, x, size, attention_mask=None, eplision=1e-5):
         g = auto.Parameter(shape=(1, size), init_weight=np.ones((1, size), dtype=self.bigdl_type))
         b = auto.Parameter(shape=(1, size), init_weight=np.zeros((1, size), dtype=self.bigdl_type))
         g2 = auto.Parameter(shape=(1, size), init_weight=np.ones((1, size), dtype=self.bigdl_type))
         b2 = auto.Parameter(shape=(1, size), init_weight=np.zeros((1, size), dtype=self.bigdl_type))
 
-        a = self.multi_head_self_attention(x, size)
-        n = self.layer_norm(x + a, w=g, b=b)
+        a = self.multi_head_self_attention(x, size, attention_mask)
+        n = layer_norm(x + a, w=g, b=b, e=eplision)
         m = self.mlp(n, size)
-        h = self.layer_norm(n + m, w=g2, b=b2)
+        h = layer_norm(n + m, w=g2, b=b2, e=eplision)
         return h
 
-    def multi_head_self_attention(self, x, size):
-        c = Convolution1D(size * 3, 1, "normal", (0.0, 0.02))(x)
+    def projection_layer(self, output_size):
+        return Convolution1D(output_size, 1, "normal", (0.0, self.initializer_range))
+
+    def multi_head_self_attention(self, x, size, attention_mask=None):
+        c = self.projection_layer(size*3)(x)
         query = c.slice(2, 0, size)
         key = c.slice(2, size, size)
         value = c.slice(2, size*2, size)
-        q = split_heads(query, self.n_head)
-        k = split_heads(key, self.n_head, k=True)
-        v = split_heads(value, self.n_head)
-        a = self.attn(q, k, v, True)
-        m = merge_heads(a)
-        n = Convolution1D(size, 1, "normal", (0.0, 0.02))(m)
-        d = Dropout(self.resid_drop)(n)
+        q = self.split_heads(query, self.n_head)
+        k = self.split_heads(key, self.n_head, k=True)
+        v = self.split_heads(value, self.n_head)
+        a = self.attn(q, k, v, True, attention_mask)
+        m = self.merge_heads(a)
+        n = self.projection_layer(size)(m)
+        d = Dropout(self.hidden_drop)(n)
         return d
 
-    def attn(self, q, k, v, scale=False):
+    def attn(self, q, k, v, scale=False, attention_mask=None):
         w = auto.mm(q, k)
         if scale:
             w = w / math.sqrt(v.get_output_shape()[-1])
 
-        if self.mask_attention:
+        if not self.bidirectional:
             w = w * self.mask_value + (self.mask_value * (-1.0) + 1.0) * (-1e9)
+        if attention_mask:
+            w = w + attention_mask
 
         w = Activation("softmax")(w)
         w = Dropout(self.attn_drop)(w)
         w = auto.mm(w, v)
         return w
 
-    def mlp(self, x, size):
-        h = Convolution1D(size*4, 1, init="normal", limits=(0.0, 0.02))(x)
-        a = gelu(h)
-        h2 = Convolution1D(size, 1, init="normal", limits=(0.0, 0.02))(a)
-        y = Dropout(self.resid_drop)(h2)
+    def mlp(self, x, hidden_size):
+        size = self.intermediate_size if self.intermediate_size > 0 else hidden_size * 4
+        h = self.projection_layer(size)(x)
+        a = self.gelu(h)
+        h2 = self.projection_layer(hidden_size)(a)
+        y = Dropout(self.hidden_drop)(h2)
         return y
 
+    def gelu(self, x):
+        y = (auto.square(x) * x * 0.044715 + x) * (math.sqrt(2 / math.pi))
+        y = Activation("tanh")(y) + 1.0
+        y = x * 0.5 * y
+        return y
+
+    def split_heads(self, x, n_head, k=False):
+        sizes = x.get_output_shape()[1:]
+        shape = list(sizes + (sizes[-1] / n_head,))
+        shape[-2] = n_head
+        r = Reshape(shape)(x)
+        if k:
+            f = Permute((2, 3, 1))(r)
+        else:
+            f = Permute((2, 1, 3))(r)
+        return f
+
+    def merge_heads(self, x):
+        p = auto.contiguous(Permute((2, 1, 3))(x))
+        sizes = p.get_output_shape()[1:]
+        merge_sizes = list(sizes[:-2] + (sizes[-1] * sizes[-2],))
+        m = Reshape(merge_sizes)(p)
+        return m
+
     @classmethod
-    def init_with_default_embedding(cls, vocab=40990, seq_len=77, n_block=12, resid_drop=0.1,
+    def init_with_default_embedding(cls, vocab=40990, seq_len=77, n_block=12, hidden_drop=0.1,
                                     attn_drop=0.1, n_head=12, hidden_size=768,
-                                    embedding_drop=0.1, mask_attention=True):
+                                    embedding_drop=0.1, initializer_range=0.02,
+                                    bidirectional=False, output_all_block=False):
         """
         vocab: vocabulary size of training data, default is 40990
         seq_len: max sequence length of training data, default is 77
@@ -161,21 +183,28 @@ class TransformerLayer(ZooKerasLayer):
         embedding_drop: drop probability of embedding layer, default is 0.1
         mask_attention: whether unidirectional or bidirectional, default is true(unidirectional)
         """
+        if hidden_size < 0:
+            raise TypeError('hidden_size must be greater than 0 with default embeddding layer')
         from bigdl.nn.layer import Squeeze
-        embedding = Sequential()
+        word_input = InputLayer(input_shape=(seq_len,))
+        postion_input = InputLayer(input_shape=(seq_len,))
 
-        embedding.add(Reshape([seq_len * 2], input_shape=(seq_len, 2)))\
-            .add(Embedding(vocab, hidden_size, input_length=seq_len * 2))\
+        embedding = Sequential()
+        embedding.add(Merge(layers=[word_input, postion_input], mode='concat'))\
+            .add(Reshape([seq_len * 2]))\
+            .add(Embedding(vocab, hidden_size, input_length=seq_len * 2,
+                           weights=np.random.normal(0.0, initializer_range, (vocab, hidden_size))))\
             .add(Dropout(embedding_drop))\
             .add(Reshape((seq_len, 2, hidden_size)))\
             .add(KerasLayerWrapper(Sum(dimension=3, squeeze=True)))
         # walk around for bug #1208, need remove this line after the bug fixed
         embedding.add(KerasLayerWrapper(Squeeze(dim=3)))
 
-        return TransformerLayer(n_block, resid_drop, attn_drop, n_head, mask_attention,
-                                embedding, input_shape=(seq_len, 2))
+        shape = ((seq_len,), (seq_len,))
+        return TransformerLayer(n_block, hidden_drop, attn_drop, n_head, initializer_range,
+                                bidirectional, output_all_block, embedding, input_shape=shape)
 
-class BERT(ZooKerasLayer):
+class BERT(TransformerLayer):
     """
     A self attention layer.
     Input is a List which consists of 4 ndarrays.
@@ -197,7 +226,7 @@ class BERT(ZooKerasLayer):
     output_all_block: whether output all blocks' output
     embedding_layer: embedding layer 
     """
-    def __init__(self, n_block, n_head, intermediate_size, hidden_drop, attn_drop,
+    def __init__(self, n_block, n_head, intermediate_size, hidden_drop, attn_drop, initializer_range,
                  output_all_block, embedding_layer, input_shape, bigdl_type="float"):
         self.hidden_drop = hidden_drop
         self.attn_drop = attn_drop
@@ -206,6 +235,8 @@ class BERT(ZooKerasLayer):
         self.output_all_block = output_all_block
         self.bigdl_type = bigdl_type
         self.seq_len = input_shape[0][0]
+        self.initializer_range = initializer_range
+        self.bidirectional = True
 
         word_input = Input(shape=input_shape[0])
         token_type_input = Input(shape=input_shape[1])
@@ -230,55 +261,21 @@ class BERT(ZooKerasLayer):
             model = Model([word_input, token_type_input, position_input, attention_mask], model_output[-1])
         self.value = model.value
 
-    def block(self, x, size, attention_mask):
-        g = auto.Parameter(shape=(1, size), init_weight=np.ones((1, size), dtype=self.bigdl_type))
-        b = auto.Parameter(shape=(1, size), init_weight=np.zeros((1, size), dtype=self.bigdl_type))
-        g2 = auto.Parameter(shape=(1, size), init_weight=np.ones((1, size), dtype=self.bigdl_type))
-        b2 = auto.Parameter(shape=(1, size), init_weight=np.zeros((1, size), dtype=self.bigdl_type))
+    def projection_layer(self, output_size):
+        return Dense(output_size, "normal", (0.0, self.initializer_range))
 
-        a = self.multi_head_self_attention(x, attention_mask, size)
-        n = layer_norm(x + a, w=g, b=b, e=1e-12)
-        m = self.mlp(n, size)
-        h = layer_norm(n + m, w=g2, b=b2, e=1e-12)
-        return h
-
-    def multi_head_self_attention(self, x, attention_mask, size):
-        attn_head_size = size / self.n_head
-        all_head_size = self.n_head * attn_head_size
-        query = Dense(all_head_size)(x)
-        key = Dense(all_head_size)(x)
-        value = Dense(all_head_size)(x)
-        q = split_heads(query, self.n_head)
-        k = split_heads(key, self.n_head, k=True)
-        v = split_heads(value, self.n_head)
-        a = self.attn(q, k, v, attention_mask)
-        m = merge_heads(a)
-        n = Dense(size)(m)
-        d = Dropout(self.hidden_drop)(n)
-        return d
-
-    def attn(self, q, k, v, attention_mask):
-        w = auto.mm(q, k)
-        w = w / math.sqrt(v.get_output_shape()[-1])
-
-        w = w + attention_mask
-
-        w = Activation("softmax")(w)
-        w = Dropout(self.attn_drop)(w)
-        w = auto.mm(w, v)
-        return w
-
-    def mlp(self, x, size):
-        h = Dense(self.intermediate_size)(x)
-        a = gelu(h)
-        h2 = Dense(size)(a)
-        y = Dropout(self.hidden_drop)(h2)
-        return y
+    def build_input(self, input_shape):
+        if any(not isinstance(i, list) and not isinstance(i, tuple) for i in input_shape) and len(input_shape) != 4:
+            raise TypeError('BERT input must be a list of 4 ndarray (consisting of input'
+                            ' sequence, sequence positions, segment id, attention mask)')
+        inputs = [Input(list(shape)) for shape in input_shape]
+        return (- inputs[-1] + 1.0) * -10000.0, inputs[:-1], inputs
 
     @classmethod
     def init_with_default_embedding(cls, vocab=40990, hidden_size=768, n_block=12, n_head=12,
-                                    seq_len=77, intermediate_size=3072, hidden_drop=0.1,
-                                    attn_drop=0.1, output_all_block=False, bigdl_type="float"):
+                                    seq_len=512, intermediate_size=3072, hidden_drop=0.1,
+                                    attn_drop=0.1, initializer_range=0.02, output_all_block=True,
+                                    bigdl_type="float"):
         """
         vocab: vocabulary size of training data, default is 40990
         hidden_size: size of the encoder layers, default is 768
@@ -293,9 +290,15 @@ class BERT(ZooKerasLayer):
         word_input = Input(shape=(seq_len,))
         token_type_input = Input(shape=(seq_len,))
         position_input = Input(shape=(seq_len,))
-        word_embedding = Embedding(vocab, hidden_size, input_length=seq_len)(word_input)
-        position_embedding = Embedding(seq_len, hidden_size, input_length=seq_len)(position_input)
-        token_type_embedding = Embedding(2, hidden_size, input_length=seq_len)(token_type_input)
+        word_embedding = Embedding(vocab, hidden_size, input_length=seq_len,
+                                   weights=np.random.normal(0.0, initializer_range,
+                                                            (vocab, hidden_size)))(word_input)
+        position_embedding = Embedding(seq_len, hidden_size, input_length=seq_len,
+                                       weights=np.random.normal(0.0, initializer_range,
+                                                                (seq_len, hidden_size)))(position_input)
+        token_type_embedding = Embedding(2, hidden_size, input_length=seq_len,
+                                         weights=np.random.normal(0.0, initializer_range,
+                                                                  (2, hidden_size)))(token_type_input)
         embedding = word_embedding + position_embedding + token_type_embedding
 
         w = auto.Parameter(shape=(1, hidden_size), init_weight=np.ones((1, hidden_size), dtype=bigdl_type))
@@ -306,5 +309,5 @@ class BERT(ZooKerasLayer):
         embedding_layer = Model([word_input, token_type_input, position_input], h)
         shape = ((seq_len,), (seq_len,), (seq_len,), (1, 1, seq_len))
 
-        return BERT(n_block, n_head, intermediate_size, hidden_drop, attn_drop, output_all_block,
-                                embedding_layer, input_shape=shape)
+        return BERT(n_block, n_head, intermediate_size, hidden_drop, attn_drop, initializer_range,
+                    output_all_block, embedding_layer, input_shape=shape)
