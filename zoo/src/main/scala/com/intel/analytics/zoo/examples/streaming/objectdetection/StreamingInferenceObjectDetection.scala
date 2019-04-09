@@ -84,7 +84,7 @@ object StreamingInferenceObjectDetection {
           dataSet -> ImageMatToFloats()
           dataSet.rdd.foreach { img =>
             // Add one more dim because of batch requirement of model
-            val output = model.doPredict(img.toTensor(ImageFeature.imageTensor)
+            val output = model.doPredict(img.toTensor(ImageFeature.floats)
               .addSingletonDimension())
             // TODO Visualizer also need some changes
             val result = visualizer.visualize(OpenCVMat.fromImageBytes(img.bytes()),
