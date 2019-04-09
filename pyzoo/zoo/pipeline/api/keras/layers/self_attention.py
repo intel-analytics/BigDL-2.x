@@ -30,6 +30,7 @@ if sys.version >= '3':
     long = int
     unicode = str
 
+
 def layer_norm(x, w, b, e=1e-5):
     sizes = x.get_output_shape()[1:]
     u = auto.mean(x, len(sizes), True)
@@ -38,17 +39,21 @@ def layer_norm(x, w, b, e=1e-5):
     y = y * w + b
     return y
 
+
 class TransformerLayer(ZooKerasLayer):
     """
     A self attention layer
 
     # Arguments
     nBlock: block number
-    resid_drop: drop probability off projection
+    hidden_drop: drop probability off projection
     attn_drop: drop probability of attention
     n_head: head number
-    mask_attention: whether unidirectional or bidirectional
+    initializer_range: weight initialization range
+    bidirectional: whether unidirectional or bidirectional
+    output_all_block: whether output all blocks' output
     embedding_layer: embedding layer
+    input_shape: input shape
     """
     def __init__(self, n_block, hidden_drop, attn_drop, n_head, initializer_range, bidirectional,
                  output_all_block, embedding_layer, input_shape, intermediate_size=0,
@@ -176,12 +181,14 @@ class TransformerLayer(ZooKerasLayer):
         vocab: vocabulary size of training data, default is 40990
         seq_len: max sequence length of training data, default is 77
         n_block: block number, default is 12
-        resid_drop: drop probability of projection, default is 0.1
+        hidden_drop: drop probability of projection, default is 0.1
         attn_drop: drop probability of attention, default is 0.1
         n_head: head number, default is 12
         hidden_size: is also embedding size
         embedding_drop: drop probability of embedding layer, default is 0.1
-        mask_attention: whether unidirectional or bidirectional, default is true(unidirectional)
+        initializer_range: weight initialization range, default is 0.02
+        bidirectional: whether unidirectional or bidirectional, default is unidirectional
+        output_all_block: whether output all blocks' output
         """
         if hidden_size < 0:
             raise TypeError('hidden_size must be greater than 0 with default embeddding layer')
@@ -204,6 +211,7 @@ class TransformerLayer(ZooKerasLayer):
         return TransformerLayer(n_block, hidden_drop, attn_drop, n_head, initializer_range,
                                 bidirectional, output_all_block, embedding, input_shape=shape)
 
+
 class BERT(TransformerLayer):
     """
     A self attention layer.
@@ -223,8 +231,10 @@ class BERT(TransformerLayer):
     intermediate_size: The size of the "intermediate" (i.e., feed-forward)
     hidden_drop: The dropout probabilitiy for all fully connected layers
     attn_drop: drop probability of attention
+    initializer_ranger: weight initialization range
     output_all_block: whether output all blocks' output
-    embedding_layer: embedding layer 
+    embedding_layer: embedding layer
+    input_shape: input shape
     """
     def __init__(self, n_block, n_head, intermediate_size, hidden_drop, attn_drop, initializer_range,
                  output_all_block, embedding_layer, input_shape, bigdl_type="float"):
@@ -285,7 +295,8 @@ class BERT(TransformerLayer):
         intermediate_size: The size of the "intermediate" (i.e., feed-forward)
         hidden_drop: drop probability of full connected layers, default is 0.1
         attn_drop: drop probability of attention, default is 0.1
-        output_all_block: whether output all blocks' output, default is False
+        initializer_ranger: weight initialization range, default is 0.02
+        output_all_block: whether output all blocks' output, default is True
         """
         word_input = Input(shape=(seq_len,))
         token_type_input = Input(shape=(seq_len,))

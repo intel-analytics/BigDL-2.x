@@ -115,8 +115,8 @@ object BERT {
     val positionInput = Variable(Shape(seqLen))
 
     val initWordEmbeddingW = Tensor[T](vocab, hiddenSize).randn(0.0, initializerRange)
-    val initPositionEmbeddingW = Tensor[T](vocab, hiddenSize).randn(0.0, initializerRange)
-    val initTokenEmbeddingW = Tensor[T](vocab, hiddenSize).randn(0.0, initializerRange)
+    val initPositionEmbeddingW = Tensor[T](seqLen, hiddenSize).randn(0.0, initializerRange)
+    val initTokenEmbeddingW = Tensor[T](2, hiddenSize).randn(0.0, initializerRange)
     val wordEmbeddings = new Embedding(vocab, hiddenSize, inputShape = Shape(seqLen),
       initWeights = initWordEmbeddingW).from(wordInput)
     val positionEmbeddings = new Embedding(seqLen, hiddenSize, inputShape = Shape(seqLen),
