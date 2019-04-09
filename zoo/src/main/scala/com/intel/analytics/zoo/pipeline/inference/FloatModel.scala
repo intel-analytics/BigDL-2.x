@@ -63,10 +63,6 @@ class FloatModel(var model: AbstractModule[Activity, Activity, Float],
     isReleased match {
       case true =>
       case false =>
-        isOriginal match {
-          case true => releaseWeightBias(model)
-          case false => clearWeightBias(model)
-        }
         model.release()
         model = null
         metaModel = null

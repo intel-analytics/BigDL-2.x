@@ -202,7 +202,7 @@ trait InferenceSupportive {
   def clearWeightBias(model: Module[Float]): Unit = {
     model.reset()
     val weightBias = model.parameters()._1
-    val clonedweightBias = model.parameters()._1.map(tensor => {
+    val clonedWeightBias = model.parameters()._1.map(tensor => {
       val newTensor = Tensor[Float]().resizeAs(tensor)
       newTensor.copy(tensor)
     })
@@ -210,7 +210,7 @@ trait InferenceSupportive {
     var i = 0
     while (i < localWeightBias.length) {
       if (localWeightBias(i) != null) {
-        localWeightBias(i).set(clonedweightBias(i))
+        localWeightBias(i).set(clonedWeightBias(i))
       }
       i += 1
     }
