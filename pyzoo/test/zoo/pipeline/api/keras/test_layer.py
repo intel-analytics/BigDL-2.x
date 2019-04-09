@@ -223,8 +223,8 @@ class TestLayer(ZooTestCase):
         self.assert_forward_backward(layer, input)
 
     def test_bert_forward_backward(self):
-        layer = BERT.init_with_default_embedding(intermediate_size=20,
-            vocab=200, hidden_size=128, n_head=8, seq_len=20)
+        layer = BERT.init_with_default_embedding(
+            vocab=200, hidden_size=128, n_head=8, seq_len=20, intermediate_size=20)
 
         train_token = np.random.randint(20, size=(2, 20))
         token_type_id = np.zeros((2, 20), dtype=np.int32)

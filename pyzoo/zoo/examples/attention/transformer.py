@@ -52,7 +52,7 @@ for i in range(0, len(x_train)):
 
 
 def build_sample(token_id, position_id, label):
-    samples=[]
+    samples = []
     for i in range(label.shape[0]):
         sample = Sample.from_ndarray([token_id[i], position_id[i]], np.array(label[i]))
         samples.append(sample)

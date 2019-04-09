@@ -236,8 +236,9 @@ class BERT(TransformerLayer):
     embedding_layer: embedding layer
     input_shape: input shape
     """
-    def __init__(self, n_block, n_head, intermediate_size, hidden_drop, attn_drop, initializer_range,
-                 output_all_block, embedding_layer, input_shape, bigdl_type="float"):
+    def __init__(self, n_block, n_head, intermediate_size, hidden_drop, attn_drop,
+                 initializer_range, output_all_block, embedding_layer,
+                 input_shape, bigdl_type="float"):
         self.hidden_drop = hidden_drop
         self.attn_drop = attn_drop
         self.n_head = n_head
@@ -266,16 +267,19 @@ class BERT(TransformerLayer):
             model_output[_+1] = output
 
         if output_all_block:
-            model = Model([word_input, token_type_input, position_input, attention_mask], model_output)
+            model = Model([word_input, token_type_input, position_input, attention_mask],
+                          model_output)
         else:
-            model = Model([word_input, token_type_input, position_input, attention_mask], model_output[-1])
+            model = Model([word_input, token_type_input, position_input, attention_mask],
+                          model_output[-1])
         self.value = model.value
 
     def projection_layer(self, output_size):
         return Dense(output_size, "normal", (0.0, self.initializer_range))
 
     def build_input(self, input_shape):
-        if any(not isinstance(i, list) and not isinstance(i, tuple) for i in input_shape) and len(input_shape) != 4:
+        if any(not isinstance(i, list) and not isinstance(i, tuple) for i in input_shape)\
+                and len(input_shape) != 4:
             raise TypeError('BERT input must be a list of 4 ndarray (consisting of input'
                             ' sequence, sequence positions, segment id, attention mask)')
         inputs = [Input(list(shape)) for shape in input_shape]
@@ -306,14 +310,18 @@ class BERT(TransformerLayer):
                                                             (vocab, hidden_size)))(word_input)
         position_embedding = Embedding(seq_len, hidden_size, input_length=seq_len,
                                        weights=np.random.normal(0.0, initializer_range,
-                                                                (seq_len, hidden_size)))(position_input)
+                                                                (seq_len, hidden_size)))(
+            position_input)
         token_type_embedding = Embedding(2, hidden_size, input_length=seq_len,
                                          weights=np.random.normal(0.0, initializer_range,
-                                                                  (2, hidden_size)))(token_type_input)
+                                                                  (2, hidden_size)))(
+            token_type_input)
         embedding = word_embedding + position_embedding + token_type_embedding
 
-        w = auto.Parameter(shape=(1, hidden_size), init_weight=np.ones((1, hidden_size), dtype=bigdl_type))
-        b = auto.Parameter(shape=(1, hidden_size), init_weight=np.zeros((1, hidden_size), dtype=bigdl_type))
+        w = auto.Parameter(shape=(1, hidden_size),
+                           init_weight=np.ones((1, hidden_size), dtype=bigdl_type))
+        b = auto.Parameter(shape=(1, hidden_size),
+                           init_weight=np.zeros((1, hidden_size), dtype=bigdl_type))
         after_norm = layer_norm(embedding, w, b, 1e-12)
         h = Dropout(hidden_drop)(after_norm)
 
