@@ -20,7 +20,6 @@ nc -lk [port]
 2. TERMINAL 2: Start StreamingTextClassification
 ```
 MASTER=...
-embeddingPath=... // glove path. Local file system/HDFS/Amazon S3 are supported
 model=... // model path. Local file system/HDFS/Amazon S3 are supported
 indexPath=... // word index path. Local file system/HDFS/Amazon S3 are supported
 ${ANALYTICS_ZOO_HOME}/bin/spark-submit-with-zoo.sh \
