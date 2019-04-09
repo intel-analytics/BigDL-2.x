@@ -94,7 +94,8 @@ class SSDVGGSerialTest extends ModuleSerializationTest {
     val model2 = ZooModel.loadModel[Float](serFile.getAbsolutePath)
     val output1 = model1.forward(input.getInput)
     val output2 = model2.forward(input.getInput)
-    output2.asInstanceOf[Table].keySet.sameElements(output1.asInstanceOf[Table].keySet) should be (true)
+    output2.asInstanceOf[Table].keySet.
+      sameElements(output1.asInstanceOf[Table].keySet) should be (true)
     output2.asInstanceOf[Table].equals(output1.asInstanceOf[Table]) should be (true)
     if (serFile.exists()) serFile.delete()
   }
