@@ -48,7 +48,7 @@ See [here](#options) for more configurable options for this example.
 ## Options
 * `--dataPath` This option is __required__. The directory containing the corpus and relations.
 * `--embeddingFile` This option is __required__. The file path to GloVe embeddings.
-* `--outputPath` If specified, the trained model `knrm.model` and word dictionary file `word_index.txt` will be saved under this path. It can be either local or distributed file system path.
+* `--outputPath` If specified, the trained model `knrm.model` and word dictionary file `word_index.txt` will be saved under this path. It can be either a local or distributed file system path.
 * `--questionLength` The sequence length of each question. Default is 10.
 * `--answerLength` The sequence length of each answer. Default is 40.
 * `--partitionNum` The number of partitions to cut the datasets into. Default is 4.
