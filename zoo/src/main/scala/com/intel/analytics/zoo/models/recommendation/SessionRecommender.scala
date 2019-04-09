@@ -17,6 +17,7 @@
 package com.intel.analytics.zoo.models.recommendation
 
 import com.intel.analytics.bigdl.nn.Graph.ModuleNode
+import com.intel.analytics.bigdl.nn.Sum
 import com.intel.analytics.bigdl.nn.abstractnn.AbstractModule
 import com.intel.analytics.bigdl.tensor.Tensor
 import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric
@@ -66,8 +67,8 @@ class SessionRecommender[T: ClassTag](
       // mlp part
       val itemTable1 = Embedding[T](itemCount, itemEmbed, inputLength = maxLength)
       val inputMLP: ModuleNode[T] = Input(inputShape = Shape(maxLength))
-      val flatten = Flatten().inputs(itemTable1.inputs(inputMLP))
-      var mlp = Dense(mlpHiddenLayers(0)).inputs(flatten)
+      val sum = new KerasLayerWrapper[T](Sum[T](2)).inputs(itemTable1.inputs(inputMLP))
+      var mlp = Dense(mlpHiddenLayers(0)).inputs(sum)
       for (i <- 1 until mlpHiddenLayers.length) {
         mlp = Dense(mlpHiddenLayers(i), activation = "relu").inputs(mlp)
       }

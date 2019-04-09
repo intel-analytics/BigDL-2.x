@@ -29,7 +29,7 @@ import org.apache.log4j.{Level, Logger}
 import org.apache.spark.SparkConf
 import org.apache.spark.rdd.RDD
 import org.apache.spark.sql.functions._
-import org.apache.spark.sql.{DataFrame, SparkSession}
+import org.apache.spark.sql.{DataFrame, SQLContext}
 import scopt.OptionParser
 
 import scala.collection.mutable
@@ -85,11 +85,10 @@ object SessionRecExp {
       .setMaster("local[*]")
 
     val sc = NNContext.initNNContext(conf)
-    val spark = SparkSession.builder().config(sc.getConf).getOrCreate()
+    val sqlContext = SQLContext.getOrCreate(sc)
 
-    val (sessionDF, itemCount) = loadPublicData(spark, params)
+    val (sessionDF, itemCount) = loadPublicData(sqlContext, params)
     val trainSample = assemblyFeature(
-      spark,
       sessionDF,
       itemCount,
       params.maxLength
@@ -129,9 +128,9 @@ object SessionRecExp {
   }
 
   //  Load data using spark session interface
-  def loadPublicData(spark: SparkSession, params: SessionParams): (DataFrame, Int) = {
+  def loadPublicData(sqlContext: SQLContext, params: SessionParams): (DataFrame, Int) = {
 
-    val sessionDF = spark.read.options(Map("header" -> "false", "delimiter" -> ",")).json(params.inputDir + params.fileName)
+    val sessionDF = sqlContext.read.options(Map("header" -> "false", "delimiter" -> ",")).json(params.inputDir + params.fileName)
     val atcMax = sessionDF.rdd.map(_.getAs[mutable.WrappedArray[Double]]("ATC_SEQ").max).collect().max.toInt
     val purMax = sessionDF.rdd.map(_.getAs[mutable.WrappedArray[Double]]("PURCH_HIST").max).collect().max.toInt
     val itemCount = Math.max(atcMax, purMax) + 1
@@ -140,7 +139,6 @@ object SessionRecExp {
   }
 
   def assemblyFeature(
-                       spark: SparkSession,
                        sessionDF: DataFrame,
                        itemCount: Int,
                        maxLength: Int
