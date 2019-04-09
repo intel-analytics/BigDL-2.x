@@ -170,5 +170,5 @@ object Train {
       validationSet = valSet.asInstanceOf[FeatureSet[MiniBatch[Float]]],
       validationMethod = Array(new MeanAveragePrecision(true,
         normalized = true, classes = classes)))
-  }
+    }
 }
