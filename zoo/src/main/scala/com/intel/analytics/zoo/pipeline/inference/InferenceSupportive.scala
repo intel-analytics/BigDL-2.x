@@ -235,12 +235,11 @@ trait InferenceSupportive {
     }
   }
 
-  def makeUpModel(metaModel: Module[Float], weightBias: Array[Tensor[Float]]):
+  def makeUpModel(clonedModel: Module[Float], weightBias: Array[Tensor[Float]]):
   AbstractModule[Activity, Activity, Float] = {
-    val cloned = metaModel.cloneModule()
-    putWeightBias(cloned, weightBias)
-    cloned.evaluate()
-    cloned
+    putWeightBias(clonedModel, weightBias)
+    clonedModel.evaluate()
+    clonedModel
   }
 
   private def putWeightBias(target: Module[Float], weightBias: Array[Tensor[Float]]):
