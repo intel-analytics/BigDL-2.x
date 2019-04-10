@@ -156,7 +156,7 @@ class TransformerLayer(ZooKerasLayer):
 
     def split_heads(self, x, n_head, k=False):
         sizes = x.get_output_shape()[1:]
-        shape = list(sizes + (sizes[-1] / n_head,))
+        shape = list(sizes + (int(sizes[-1] / n_head),))
         shape[-2] = n_head
         r = Reshape(shape)(x)
         if k:

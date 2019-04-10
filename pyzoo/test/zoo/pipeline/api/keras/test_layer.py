@@ -215,7 +215,7 @@ class TestLayer(ZooTestCase):
 
     def test_transformer_forward_backward(self):
         layer = ZLayer.TransformerLayer.init_with_default_embedding(
-            vocab=200, hidden_size=128, n_head=8, seq_len=20)
+            vocab=200, hidden_size=128, n_head=4, seq_len=20)
 
         train_token = np.random.randint(20, size=(2, 20))
         train_pos = np.zeros((2, 20), dtype=np.int32)
@@ -224,7 +224,7 @@ class TestLayer(ZooTestCase):
 
     def test_bert_forward_backward(self):
         layer = ZLayer.BERT.init_with_default_embedding(
-            vocab=200, hidden_size=128, n_head=8, seq_len=20, intermediate_size=20)
+            vocab=200, hidden_size=128, n_head=4, seq_len=20, intermediate_size=20)
 
         train_token = np.random.randint(20, size=(2, 20))
         token_type_id = np.zeros((2, 20), dtype=np.int32)
