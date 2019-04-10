@@ -32,6 +32,7 @@ class Test_Image_Set():
         resource_path = os.path.join(os.path.split(__file__)[0], "../../resources")
         self.image_path = os.path.join(resource_path, "pascal/000025.jpg")
         self.grayimage_path = os.path.join(resource_path, "gray/gray.bmp")
+        self.image_folder = os.path.join(resource_path, "imagenet")
 
     def teardown_method(self, method):
         """ teardown any state that was previously setup with a setup_method
@@ -110,6 +111,13 @@ class Test_Image_Set():
         transformed = image_set.transform(transformer)
         img = transformed.get_image()[0]
         assert img.shape == (3, 10, 10)
+
+    def test_image_set_from_image_folder(self):
+        image_set, label_map = ImageSet.from_image_folder(self.image_folder, sc=self.sc)
+
+        assert len(label_map) == 4
+        imgs = image_set.get_image().collect()
+        assert len(imgs) == 11
 
 
 if __name__ == "__main__":

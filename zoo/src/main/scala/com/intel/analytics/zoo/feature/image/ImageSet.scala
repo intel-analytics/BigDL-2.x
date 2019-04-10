@@ -17,6 +17,7 @@
 package com.intel.analytics.zoo.feature.image
 
 import com.intel.analytics.bigdl.DataSet
+import com.intel.analytics.bigdl.dataset.DataSet.ImageFolder
 import com.intel.analytics.bigdl.dataset._
 import com.intel.analytics.bigdl.transform.vision.image._
 import com.intel.analytics.zoo.common.Utils
@@ -27,6 +28,11 @@ import org.apache.spark.rdd.RDD
 import org.opencv.imgcodecs.Imgcodecs
 
 import scala.reflect.ClassTag
+import java.nio.file.Paths
+
+import com.intel.analytics.bigdl.dataset.image.LocalLabeledImagePath
+import com.intel.analytics.bigdl.tensor.Tensor
+import com.intel.analytics.bigdl.utils.T
 
 /**
  * ImageSet wraps a set of ImageFeature
@@ -209,6 +215,55 @@ object ImageSet {
       ImageSet.array(images)
     }
     transform(imageSet, resizeH, resizeW, imageCodec)
+  }
+
+
+  /**
+   * Generate a ImageSet from a local image folder. The image folder should have two levels. The
+   * first level is class folders, and the second level is images. All images belong to a same
+   * class should be put into the same class folder. So each image in the path is labeled by the
+   * folder it belongs.
+   *
+   * if sc is defined, Read image as DistributedImageSet
+   * if sc is null, Read image as LocalImageSet
+   *
+   * @param path the local image folder
+   * @param sc SparkContext
+   * @param partitions the number of partitions if read image as DistributedImageSet
+   * @param resizeH height after resize, by default is -1 which will not resize the image
+   * @param resizeW width after resize, by default is -1 which will not resize the image
+   * @param imageCodec specifying the color type of a loaded image, same as in OpenCV.imread.
+   *              By default is Imgcodecs.CV_LOAD_IMAGE_UNCHANGED
+   * @return a tuple, first the ImageSet, second a Map mapping label name to label index (1 based)
+   */
+  def fromImageFolder(path: String, sc: SparkContext = null, partitions: Int = -1,
+                      resizeH: Int = -1, resizeW: Int = -1,
+                      imageCodec: Int = Imgcodecs.CV_LOAD_IMAGE_UNCHANGED)
+  : (ImageSet, Map[String, Float]) = {
+    val imagePaths = ImageFolder.paths(Paths.get(path))
+      .data(false).toArray
+
+    val imageFeatures = imagePaths.map { p: LocalLabeledImagePath =>
+      ImageFeature(FileUtils.readFileToByteArray(p.p.toFile),
+        uri = p.p.toFile.getAbsolutePath, label = Tensor[Float](T(p.label)))
+    }
+
+    val labelMap = imagePaths.map { p =>
+      (p.p.getName(p.p.getNameCount - 2).toString, p.label)
+    }.toMap
+
+    val imageSet = if (null != sc) {
+      val rdd = if (partitions < 0) {
+        sc.parallelize(imageFeatures)
+      } else {
+        sc.parallelize(imageFeatures, partitions)
+      }
+      ImageSet.rdd(rdd)
+    } else {
+      ImageSet.array(imageFeatures)
+    }
+
+    (transform(imageSet, resizeH, resizeW, imageCodec), labelMap)
   }
 
   /**
