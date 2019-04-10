@@ -88,8 +88,8 @@ class ImageSet(JavaValue):
                label index (1 based)
         """
         j_imageset, label_map = callBigDlFunc(bigdl_type, "readImageSetFromImageFolder", path,
-                      sc, partitions, resize_height,
-                      resize_width, image_codec)
+                                              sc, partitions, resize_height,
+                                              resize_width, image_codec)
 
         return ImageSet(jvalue=j_imageset), label_map
 
