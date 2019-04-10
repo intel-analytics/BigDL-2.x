@@ -26,14 +26,16 @@ from py4j.protocol import Py4JJavaError
 from pyspark import RDD
 import importlib
 
+from bigdl.dataset.dataset import DataSet
 from bigdl.nn.criterion import Criterion
 from bigdl.nn.layer import Model as BModel
 from bigdl.nn.layer import Layer
+from bigdl.transform.vision.image import FeatureTransformer
 from bigdl.util.common import to_list, callBigDlFunc, \
     JavaValue, get_node_and_core_number
 from zoo.common import Sample, JTensor
 from zoo.common.nncontext import getOrCreateSparkContext
-from zoo.feature.image import ImageSet
+from zoo.feature.image import ImageSet, ImagePreprocessing
 from zoo.pipeline.api.keras.engine.topology import ZooKerasLayer, KerasNet, to_bigdl_metric
 from bigdl.optim.optimizer import EveryEpoch, MaxEpoch, Optimizer
 from zoo.util import nest
@@ -393,6 +395,17 @@ class IdentityCriterion(Criterion):
         super(IdentityCriterion, self).__init__(None, "float")
 
 
+class MergeFeatureLabel(ImagePreprocessing):
+    """
+    adjust the image brightness
+    :param deltaLow brightness parameter: low bound
+    :param deltaHigh brightness parameter: high bound
+    """
+
+    def __init__(self, bigdl_type="float"):
+        super(MergeFeatureLabel, self).__init__(bigdl_type)
+
+
 class TFTrainingHelper(Layer):
     def __init__(self, path, configProto):
         if configProto is not None:
@@ -518,16 +531,13 @@ with variable_creator_scope():
             else:
                 raise e
 
-        data = self.dataset.rdd
         batch_size = self.dataset.batch_size
 
-        def to_sample(t):
-            return Sample.from_ndarray(nest.flatten(t), [np.array([0.0])])
+        sample_rdd = self.dataset.get_data()
 
-        sample_rdd = data.map(to_sample)
         if val_outputs is not None and val_labels is not None:
-            if self.dataset.val_rdd is not None:
-                val_rdd = self.dataset.val_rdd.map(to_sample)
+            val_rdd = self.dataset.get_validation_data()
+            if val_rdd is not None:
                 val_method = [TFValidationMethod(m, len(val_outputs), len(val_labels))
                               for m in to_list(val_method)]
                 training_rdd = sample_rdd
@@ -612,7 +622,7 @@ with variable_creator_scope():
             if dataset.val_rdd is None and val_spilt == 0.0:
                 raise ValueError("Validation data is not specified. Please set " +
                                  "val_rdd in TFDataset, or set val_split larger than zero")
-            bigdl_val_methods =\
+            bigdl_val_methods = \
                 [to_bigdl_metric(m, keras_model.loss) for m in keras_model.metrics_names]
             val_outputs = keras_model.outputs
             val_labels = keras_model.targets
@@ -689,6 +699,7 @@ with variable_creator_scope():
                     return float(K.eval(v))
                 else:
                     return float(v)
+
             if isinstance(koptim_method, tftrain.GradientDescentOptimizer):
                 lr = get_value(koptim_method._learning_rate)
                 return boptimizer.SGD(learningrate=lr)
@@ -763,15 +774,8 @@ class TensorMeta(object):
 
 
 class TFDataset:
-    def __init__(self, rdd, tensor_structure, batch_size,
-                 batch_per_thread, hard_code_batch_size=False, val_rdd=None):
-        '''
-        TFDatasets represents a distributed collection of elements to be feed into Tensorflow
-        graph. TFDatasets can be created using a RDD and each of its records is one or more
-        numpy.ndarray of the same nested structure, representing the tensors to be feed into
-        TensorFlow graph on each iteration. TFDatasets must be used with TFOptimizer or
-        TFPredictor.
-        '''
+    def __init__(self, tensor_structure, batch_size,
+                 batch_per_thread, hard_code_batch_size=False):
 
         if batch_size > 0 and batch_per_thread > 0:
             raise ValueError("bath_size and batch_per_thread should not be set simultaneously")
@@ -795,8 +799,6 @@ class TFDataset:
         self.hard_code_batch_size = hard_code_batch_size
         self.tensor_structure = tensor_structure
 
-        self.val_rdd = val_rdd
-
         if not self.hard_code_batch_size:
             self.output_shapes = nest.pack_sequence_as(
                 self.tensor_structure, [[None] + list(t.shape)
@@ -814,7 +816,6 @@ class TFDataset:
                                             if t is not None else None
                                             for t in nest.flatten(self.tensor_structure)])
 
-        self.rdd = rdd
         self.input_names = nest.pack_sequence_as(
             self.tensor_structure, [t.name
                                     if t is not None else None
@@ -843,8 +844,7 @@ class TFDataset:
                     self.tensor_structure,
                     [tf.placeholder(name=t.name,
                                     dtype=t.dtype,
-                                    shape=[self.batch_size // self.total_core_num] +
-                                    list(t.shape))
+                                    shape=[self.batch_size // self.total_core_num] + list(t.shape))
                      for t in nest.flatten(self.tensor_structure)])
 
         for tensor in nest.flatten(tensors):
@@ -899,6 +899,116 @@ class TFDataset:
 
         return self._tensors[1]
 
+    def get_data(self):
+        raise NotImplementedError
+
+    def get_validation_data(self):
+        raise NotImplementedError
+
+    @staticmethod
+    def from_rdd(*args, **kwargs):
+        return TFNdarrayDataset.from_rdd(*args, **kwargs)
+
+    @staticmethod
+    def from_ndarrays(*args, **kwargs):
+        return TFNdarrayDataset.from_ndarrays(*args, **kwargs)
+
+    @staticmethod
+    def from_image_set(image_set, image, label=None,
+                       batch_size=-1, batch_per_thread=-1,
+                       hard_code_batch_size=False, validation_image_set=None):
+        feature_structure = _to_tensor_structure(image)
+        if label is not None:
+            label_structure = _to_tensor_structure(label)
+            tensor_structure = (feature_structure, label_structure)
+
+        else:
+            tensor_structure = (feature_structure,)
+        return TFImageDataset(image_set, tensor_structure, batch_size,
+                              batch_per_thread, hard_code_batch_size,
+                              validation_image_set)
+
+    @staticmethod
+    def from_text_set(text_set, text, label=None,
+                      batch_size=-1, batch_per_thread=-1,
+                      hard_code_batch_size=False, validation_image_set=None):
+        feature_structure = _to_tensor_structure(text)
+        if label is not None:
+            label_structure = _to_tensor_structure(label)
+            tensor_structure = (feature_structure, label_structure)
+
+        else:
+            tensor_structure = (feature_structure,)
+        return TFImageDataset(text_set, tensor_structure, batch_size,
+                              batch_per_thread, hard_code_batch_size,
+                              validation_image_set)
+
+
+class TFTextDataset(TFDataset):
+
+    def __init__(self, text_set, tensor_structure, batch_size,
+                 batch_per_thread, hard_code_batch_size=False, validation_text_set=None):
+        super(TFTextDataset, self).__init__(tensor_structure, batch_size,
+                                            batch_per_thread, hard_code_batch_size)
+        self.text_set = text_set
+        self.validation_text_set = validation_text_set
+
+    def get_data(self):
+        return self.text_set.get_samples().map(
+            lambda sample: Sample.from_jtensor(features=sample.features + sample.labels,
+                                               labels=JTensor.from_ndarray(np.array([0.0]))))
+
+    def get_validation_data(self):
+        if self.validation_text_set is not None:
+            return self.validation_text_set.get_samples().map(
+                lambda sample: Sample.from_jtensor(features=sample.features + sample.labels,
+                                                   labels=JTensor.from_ndarray(np.array([0.0]))))
+        return None
+
+
+class TFImageDataset(TFDataset):
+    def __init__(self, image_set, tensor_structure, batch_size,
+                 batch_per_thread, hard_code_batch_size=False, validation_image_set=None):
+        super(TFImageDataset, self).__init__(tensor_structure, batch_size,
+                                             batch_per_thread, hard_code_batch_size)
+        self.image_set = image_set
+        self.validation_image_set = validation_image_set
+
+    def get_data(self):
+        return DataSet.image_frame(self.image_set.transform(MergeFeatureLabel()).to_image_frame())
+
+    def get_validation_data(self):
+        if self.validation_image_set is not None:
+            return DataSet.image_frame(self.validation_image_set.
+                                       transform(MergeFeatureLabel()).to_image_frame())
+        return None
+
+
+class TFNdarrayDataset(TFDataset):
+    def __init__(self, rdd, tensor_structure, batch_size,
+                 batch_per_thread, hard_code_batch_size=False, val_rdd=None):
+        '''
+        TFDatasets represents a distributed collection of elements to be feed into Tensorflow
+        graph. TFDatasets can be created using a RDD and each of its records is one or more
+        numpy.ndarray of the same nested structure, representing the tensors to be feed into
+        TensorFlow graph on each iteration. TFDatasets must be used with TFOptimizer or
+        TFPredictor.
+        '''
+
+        super(TFNdarrayDataset, self).__init__(tensor_structure, batch_size,
+                                               batch_per_thread, hard_code_batch_size)
+
+        self.val_rdd = val_rdd
+        self.rdd = rdd
+
+    def get_data(self):
+        return self.rdd.map(lambda t: Sample.from_ndarray(nest.flatten(t), np.array([0.0])))
+
+    def get_validation_data(self):
+        if self.val_rdd is not None:
+            return self.val_rdd.map(lambda t: Sample.from_ndarray(nest.flatten(t), np.array([0.0])))
+        return None
+
     @staticmethod
     def from_rdd(rdd, names=None, shapes=None, types=None,
                  batch_size=-1, batch_per_thread=-1,
@@ -933,9 +1043,9 @@ class TFDataset:
             else:
                 tensor_structure = (feature_structure,)
 
-            return TFDataset(rdd, tensor_structure,
-                             batch_size, batch_per_thread,
-                             hard_code_batch_size, val_rdd)
+            return TFNdarrayDataset(rdd, tensor_structure,
+                                    batch_size, batch_per_thread,
+                                    hard_code_batch_size, val_rdd)
 
         if names is not None or shapes is not None or types is not None:
             if not names:
@@ -951,9 +1061,9 @@ class TFDataset:
         else:
             tensor_structure = [TensorMeta(dtype=tf.float32), TensorMeta(dtype=tf.float32)]
 
-        return TFDataset(rdd, tensor_structure,
-                         batch_size, batch_per_thread,
-                         hard_code_batch_size, val_rdd)
+        return TFNdarrayDataset(rdd, tensor_structure,
+                                batch_size, batch_per_thread,
+                                hard_code_batch_size, val_rdd)
 
     @staticmethod
     def from_ndarrays(tensors, batch_size=-1, batch_per_thread=-1,
@@ -968,8 +1078,8 @@ class TFDataset:
         if val_tensors is not None:
             val_rdd = _tensors_to_rdd(val_tensors, sc, total_core_num)
 
-        return TFDataset(rdd, tensor_structure, batch_size,
-                         batch_per_thread, hard_code_batch_size, val_rdd)
+        return TFNdarrayDataset(rdd, tensor_structure, batch_size,
+                                batch_per_thread, hard_code_batch_size, val_rdd)
 
 
 def _tensors_to_rdd(tensors, sc, splits):
