@@ -39,6 +39,7 @@ import org.apache.hadoop.fs.{LocatedFileStatus, Path}
 
 import scala.collection.mutable.ArrayBuffer
 
+
 /**
  * ImageSet wraps a set of ImageFeature
  */

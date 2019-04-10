@@ -83,6 +83,35 @@ class ImageSet(JavaValue):
                                              one_based_label))
 
     @classmethod
+    def from_image_folder(cls, path, sc=None, partitions=-1, resize_height=-1,
+                          resize_width=-1, image_codec=-1, bigdl_type="float"):
+        """
+        Generate a ImageSet from a local image folder. The image folder should have two levels. The
+        first level is class folders, and the second level is images. All images belong to a same
+        class should be put into the same class folder. So each image in the path is labeled by the
+        folder it belongs.
+
+        if sc is defined, Read image as DistributedImageSet
+        if sc is null, Read image as LocalImageSet
+
+        :param path: the local image folder
+        :param sc: SparkContext
+        :param partitions: the number of partitions if read image as DistributedImageSet
+        :param partitions A suggestion value of the minimal splitting number for input data.
+        :param resize_height height after resize, by default is -1 which will not resize the image
+        :param resize_width width after resize, by default is -1 which will not resize the image
+        :param image_codec specifying the color type of a loaded image, same as in OpenCV.imread.
+               By default is Imgcodecs.CV_LOAD_IMAGE_UNCHANGED(-1)
+        :return: a tuple, first the ImageSet, second a Map mapping label name to
+               label index (1 based)
+        """
+        j_imageset, label_map = callBigDlFunc(bigdl_type, "readImageSetFromImageFolder", path,
+                      sc, partitions, resize_height,
+                      resize_width, image_codec)
+
+        return ImageSet(jvalue=j_imageset), label_map
+
+    @classmethod
     def from_image_frame(cls, image_frame, bigdl_type="float"):
         return ImageSet(jvalue=callBigDlFunc(bigdl_type, "imageFrameToImageSet", image_frame))
 

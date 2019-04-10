@@ -74,6 +74,20 @@ class PythonImageFeature[T: ClassTag](implicit ev: TensorNumeric[T]) extends Pyt
     }
   }
 
+  def readImageSetFromImageFolder(path: String, sc: JavaSparkContext, partitions: Int,
+                   resizeH: Int, resizeW: Int, imageCodec: Int): JList[Object] = {
+    val (imageSet, labelMap) = if (sc == null) {
+      ImageSet.fromImageFolder(path, null, partitions, resizeH, resizeW, imageCodec)
+    } else {
+      ImageSet.fromImageFolder(path, sc.sc, partitions, resizeH, resizeW, imageCodec)
+    }
+
+    val result = new util.ArrayList[Object]()
+    result.add(imageSet)
+    result.add(labelMap.asJava)
+    result
+  }
+
   def isLocalImageSet(imageSet: ImageSet): Boolean = imageSet.isLocal()
 
   def isDistributedImageSet(imageSet: ImageSet): Boolean = imageSet.isDistributed()
