@@ -45,7 +45,7 @@ class ImageSet(JavaValue):
     @property
     def label_map(self):
         """
-        :return: the labelMap of this ImageSet, None if the ImageSet does not have a labelMap 
+        :return: the labelMap of this ImageSet, None if the ImageSet does not have a labelMap
         """
         return callBigDlFunc(self.bigdl_type, "imageSetGetLabelMap", self.value)
 
@@ -72,8 +72,8 @@ class ImageSet(JavaValue):
         :param resize_width width after resize, by default is -1 which will not resize the image
         :param image_codec specifying the color type of a loaded image, same as in OpenCV.imread.
                By default is Imgcodecs.CV_LOAD_IMAGE_UNCHANGED(-1)
-        :param with_label whether to treat folders in the path as image classification labels and read
-               the labels into ImageSet.
+        :param with_label whether to treat folders in the path as image classification labels
+               and read the labels into ImageSet.
         :return ImageSet
         """
         return ImageSet(jvalue=callBigDlFunc(bigdl_type, "readImageSet", path,
