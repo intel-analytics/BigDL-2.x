@@ -181,6 +181,13 @@ class InferenceModel(private var autoScalingEnabled: Boolean = true,
     )
   }
 
+  def doOptimizeTF(modelPath: String,
+                   modelType: String,
+                   pipelineConfigPath: String,
+                   extensionsConfigPath: String): Unit = {
+
+  }
+
   /**
    * loads a openvino IR
    *
@@ -223,6 +230,7 @@ class InferenceModel(private var autoScalingEnabled: Boolean = true,
       modelPath, modelType, pipelineConfigPath, extensionsConfigPath, deviceType)
     offerModelQueue()
   }
+
 
   /**
    * reloads the bigdl, analytics-zoo model
