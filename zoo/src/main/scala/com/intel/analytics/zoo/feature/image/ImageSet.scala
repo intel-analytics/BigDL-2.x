@@ -236,9 +236,9 @@ object ImageSet {
    *              By default is Imgcodecs.CV_LOAD_IMAGE_UNCHANGED
    * @return a tuple, first the ImageSet, second a Map mapping label name to label index (1 based)
    */
-  def fromImageFolder(path: String, sc: SparkContext = null, partitions: Int = -1,
-                      resizeH: Int = -1, resizeW: Int = -1,
-                      imageCodec: Int = Imgcodecs.CV_LOAD_IMAGE_UNCHANGED)
+  def readWithLabel(path: String, sc: SparkContext = null, partitions: Int = -1,
+                    resizeH: Int = -1, resizeW: Int = -1,
+                    imageCodec: Int = Imgcodecs.CV_LOAD_IMAGE_UNCHANGED)
   : (ImageSet, Map[String, Float]) = {
     val imagePaths = ImageFolder.paths(Paths.get(path))
       .data(false).toArray
