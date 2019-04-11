@@ -60,12 +60,20 @@ class ImageSet(JavaValue):
         :param path path to read images
         if sc is defined, path can be local or HDFS. Wildcard character are supported.
         if sc is null, path is local directory/image file/image file with wildcard character
+
+        if withLabel is set to true, path should be a directory that have two levels. The
+        first level is class folders, and the second is images. All images belong to a same
+        class should be put into the same class folder. So each image in the path is labeled by the
+        folder it belongs.
+
         :param sc SparkContext
         :param min_partitions A suggestion value of the minimal splitting number for input data.
         :param resize_height height after resize, by default is -1 which will not resize the image
         :param resize_width width after resize, by default is -1 which will not resize the image
         :param image_codec specifying the color type of a loaded image, same as in OpenCV.imread.
                By default is Imgcodecs.CV_LOAD_IMAGE_UNCHANGED(-1)
+        :param with_label whether to treat folders in the path as image classification labels and read
+               the labels into ImageSet.
         :return ImageSet
         """
         return ImageSet(jvalue=callBigDlFunc(bigdl_type, "readImageSet", path,
