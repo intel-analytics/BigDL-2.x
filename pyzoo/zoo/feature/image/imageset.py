@@ -83,8 +83,8 @@ class ImageSet(JavaValue):
                                              one_based_label))
 
     @classmethod
-    def from_image_folder(cls, path, sc=None, partitions=-1, resize_height=-1,
-                          resize_width=-1, image_codec=-1, bigdl_type="float"):
+    def read_with_label(cls, path, sc=None, partitions=-1, resize_height=-1,
+                        resize_width=-1, image_codec=-1, bigdl_type="float"):
         """
         Generate a ImageSet from a local image folder. The image folder should have two levels. The
         first level is class folders, and the second level is images. All images belong to a same
@@ -105,7 +105,7 @@ class ImageSet(JavaValue):
         :return: a tuple, first the ImageSet, second a Map mapping label name to
                label index (1 based)
         """
-        j_imageset, label_map = callBigDlFunc(bigdl_type, "readImageSetFromImageFolder", path,
+        j_imageset, label_map = callBigDlFunc(bigdl_type, "readImageSetWithLabel", path,
                                               sc, partitions, resize_height,
                                               resize_width, image_codec)
 
