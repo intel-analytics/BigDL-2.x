@@ -55,26 +55,20 @@ class PythonImageFeature[T: ClassTag](implicit ev: TensorNumeric[T]) extends Pyt
   }
 
   def readImageSet(path: String, sc: JavaSparkContext, minPartitions: Int,
-                   resizeH: Int, resizeW: Int, imageCodec: Int): ImageSet = {
+                   resizeH: Int, resizeW: Int, imageCodec: Int, withLabel: Boolean): ImageSet = {
     if (sc == null) {
-      ImageSet.read(path, null, minPartitions, resizeH, resizeW, imageCodec)
+      ImageSet.read(path, null, minPartitions, resizeH, resizeW, imageCodec, withLabel)
     } else {
-      ImageSet.read(path, sc.sc, minPartitions, resizeH, resizeW, imageCodec)
+      ImageSet.read(path, sc.sc, minPartitions, resizeH, resizeW, imageCodec, withLabel)
     }
   }
 
-  def readImageSetWithLabel(path: String, sc: JavaSparkContext, partitions: Int,
-                            resizeH: Int, resizeW: Int, imageCodec: Int): JList[Object] = {
-    val (imageSet, labelMap) = if (sc == null) {
-      ImageSet.readWithLabel(path, null, partitions, resizeH, resizeW, imageCodec)
+  def imageSetGetLabelMap(imageSet: ImageSet): util.Map[String, Int] = {
+    if (imageSet.labelMap.isEmpty) {
+      null
     } else {
-      ImageSet.readWithLabel(path, sc.sc, partitions, resizeH, resizeW, imageCodec)
+      imageSet.labelMap.get.asJava
     }
-
-    val result = new util.ArrayList[Object]()
-    result.add(imageSet)
-    result.add(labelMap.asJava)
-    result
   }
 
   def isLocalImageSet(imageSet: ImageSet): Boolean = imageSet.isLocal()

@@ -112,12 +112,27 @@ class Test_Image_Set():
         img = transformed.get_image()[0]
         assert img.shape == (3, 10, 10)
 
-    def test_image_set_from_image_folder(self):
-        image_set, label_map = ImageSet.read_with_label(self.image_folder, sc=self.sc)
-
+    def test_image_set_from_image_folder_with_sc(self):
+        image_set = ImageSet.read(self.image_folder, sc=self.sc, with_label=True)
+        label_map = image_set.label_map
         assert len(label_map) == 4
         imgs = image_set.get_image().collect()
         assert len(imgs) == 11
+        labels = image_set.get_label().collect()
+        labels = [l[0] for l in labels]
+        assert len(labels) == 11
+        assert len(set(labels)) == 4
+
+    def test_image_set_from_image_folder_without_sc(self):
+        image_set = ImageSet.read(self.image_folder, with_label=True)
+        label_map = image_set.label_map
+        assert len(label_map) == 4
+        imgs = image_set.get_image()
+        assert len(imgs) == 11
+        labels = image_set.get_label()
+        labels = [l[0] for l in labels]
+        assert len(labels) == 11
+        assert len(set(labels)) == 4
 
 
 if __name__ == "__main__":
