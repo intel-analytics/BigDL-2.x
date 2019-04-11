@@ -113,7 +113,7 @@ class Test_Image_Set():
         assert img.shape == (3, 10, 10)
 
     def test_image_set_from_image_folder(self):
-        image_set, label_map = ImageSet.from_image_folder(self.image_folder, sc=self.sc)
+        image_set, label_map = ImageSet.read_with_label(self.image_folder, sc=self.sc)
 
         assert len(label_map) == 4
         imgs = image_set.get_image().collect()
