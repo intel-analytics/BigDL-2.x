@@ -1060,6 +1060,44 @@ class BertSpec extends ZooSpecHelper {
       i -= 1
     }
   }
+
+  "Bert " should "save/load be able to work" in {
+    val layer = BERT[Float](vocab = 30000,
+      hiddenSize = 10,
+      nBlock = 1,
+      nHead = 2,
+      intermediateSize = 64,
+      hiddenPDrop = 0,
+      attnPDrop = 0,
+      seqLen = 11,
+      outputAllBlock = false)
+    val shape = Shape(List(Shape(1, 11), Shape(1, 11), Shape(1, 11), Shape(1, 1, 1, 11)))
+    layer.build(shape)
+
+    val inputIds = Tensor[Float](Array[Float](2040f, 2001, 3958, 27227, 1029, 3958, 103,
+      2001, 1037, 13997, 11510), Array(1, 11))
+    val segmentIds = Tensor[Float](Array[Float](0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1), Array(1, 11))
+    val positionIds = Tensor[Float](Array[Float](0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10), Array(1, 11))
+    val masks = Tensor[Float](1, 1, 1, 11).fill(1.0f)
+
+    val input = T(inputIds.clone(), segmentIds.clone(), positionIds.clone(), masks.clone())
+    val output = layer.forward(input).toTensor[Float].clone()
+    val gradOutput = Tensor[Float](1, 11, 10).rand()
+    val gradInput = layer.backward(input, gradOutput.clone()).toTable
+    val test = (1 to gradInput.length()).map(gradInput[Tensor[Float]](_).clone())
+    val gradInput2 = T.array(test.toArray)
+
+    val tmpFile = ZooSpecHelper.createTmpFile()
+    val absPath = tmpFile.getAbsolutePath
+    layer.saveModule(absPath, overWrite = true)
+    val layer2 = BERT.loadModel[Float](absPath)
+    val output2 = layer2.forward(T(inputIds, segmentIds, positionIds, masks)).toTensor[Float]
+    val gradInput3 = layer2.backward(T(inputIds, segmentIds, positionIds, masks), gradOutput).toTable
+    require(output.almostEqual(output2, 1e-8))
+    for (i <- 1 to gradInput.length()) {
+      require(gradInput2[Tensor[Float]](i).almostEqual(gradInput3[Tensor[Float]](i), 1e-5))
+    }
+  }
 }
 
 class BERTSerialTest extends ModuleSerializationTest {

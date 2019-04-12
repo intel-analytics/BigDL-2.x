@@ -70,8 +70,8 @@ object convertBert {
       buf.append(line.split(" ").map(_.toFloat
       ))
     }
-    param = Tensor[Float](buf.flatten.toArray, Array(buf.size, buf.head.length))
-//    require(param.size.deep == weight(i).size().deep)
+    param = Tensor[Float](buf.flatten.toArray, Array(buf.head.length, buf.size))
+    require(param.size.deep == weight(i).size().deep)
     weight(i).set(param)
     i += 1
 
@@ -81,8 +81,8 @@ object convertBert {
       buf.append(line.split(" ").map(_.toFloat
       ))
     }
-    param = Tensor[Float](buf.flatten.toArray, Array(buf.size, buf.head.length))
-//    require(param.size.deep == weight(i).size().deep)
+    param = Tensor[Float](buf.flatten.toArray, Array(buf.head.length, buf.size))
+    require(param.size.deep == weight(i).size().deep)
     weight(i).set(param)
     i += 1
 

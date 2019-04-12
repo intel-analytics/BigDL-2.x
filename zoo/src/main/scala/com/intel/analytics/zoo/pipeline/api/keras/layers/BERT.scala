@@ -24,14 +24,13 @@ import com.intel.analytics.bigdl.tensor.Tensor
 import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric
 import com.intel.analytics.bigdl.utils.serializer.{DeserializeContext, ModuleData, ModuleSerializer, SerializeContext}
 import com.intel.analytics.bigdl.utils.serializer.converters.DataConverter
-import com.intel.analytics.bigdl.utils.{MultiShape, Shape, Table}
-import com.intel.analytics.zoo.models.seq2seq.RNNEncoder._
-import com.intel.analytics.zoo.models.seq2seq.{RNNDecoder, RNNEncoder}
+import com.intel.analytics.bigdl.utils.{MultiShape, Shape}
 import com.intel.analytics.zoo.pipeline.api.Net
 import com.intel.analytics.zoo.pipeline.api.autograd.{Parameter, Variable}
 import com.intel.analytics.zoo.pipeline.api.keras.layers.utils.{GraphRef, KerasUtils}
 import com.intel.analytics.zoo.pipeline.api.keras.models.Model
 import com.intel.analytics.zoo.pipeline.api.keras.models.Model.{apply => _, _}
+import com.intel.analytics.zoo.pipeline.api.net.GraphNet._
 
 import scala.collection.mutable.ArrayBuffer
 import scala.reflect.ClassTag
@@ -190,7 +189,6 @@ object BERT extends KerasLayerSerializable {
 
   override def doLoadModule[T: ClassTag](context : DeserializeContext)
     (implicit ev: TensorNumeric[T]) : AbstractModule[Activity, Activity, T] = {
-
     val attrMap = context.bigdlModule.getAttrMap
 
     val nBlockAttr = attrMap.get("nBlock")
@@ -245,8 +243,11 @@ object BERT extends KerasLayerSerializable {
     val bert = BERT(nBlock, nHead, intermediateSize, hiddenPDrop, attnPDrop,
       initializerRange, outputAllBlock,
       embeddingLayer.asInstanceOf[KerasLayer[Activity, Tensor[T], T]])
+    val tGraph2 = subModules(1).asInstanceOf[StaticGraph[T]]
+    val labor = Model(tGraph2.inputs.toArray, new GraphRef(tGraph2).getOutputs().toArray)
+    bert.labor = labor
 
-    bert.build(KerasUtils.addBatch(shape))
+//    bert.build(KerasUtils.addBatch(shape))
     bert.asInstanceOf[AbstractModule[Activity, Activity, T]]
   }
 
@@ -254,7 +255,7 @@ object BERT extends KerasLayerSerializable {
     bertBuilder : BigDLModule.Builder)
     (implicit ev: TensorNumeric[T]) : Unit = {
 
-    val bert = context.moduleData.module.asInstanceOf[BERT[T]]
+        val bert = context.moduleData.module.asInstanceOf[BERT[T]]
 
     val nBlockBuilder = AttrValue.newBuilder
     DataConverter.setAttributeValue(context, nBlockBuilder,
@@ -296,6 +297,14 @@ object BERT extends KerasLayerSerializable {
       new ArrayBuffer[String](), new ArrayBuffer[String]()), context.storages,
       context.storageType, _copyWeightAndBias))
     bertBuilder.addSubModules(subModule.bigDLModule)
+
+    val model = bert.
+      asInstanceOf[KerasLayer[Activity, Activity, T]].labor
+    val labor = model.asInstanceOf[KerasLayer[Activity, Activity, T]].labor
+    val subModule2 = ModuleSerializer.serialize(SerializeContext(ModuleData(labor,
+      new ArrayBuffer[String](), new ArrayBuffer[String]()), context.storages,
+      context.storageType, _copyWeightAndBias))
+    bertBuilder.addSubModules(subModule2.bigDLModule)
 
     val seqLenBuilder = AttrValue.newBuilder
     DataConverter.setAttributeValue(context, seqLenBuilder,
