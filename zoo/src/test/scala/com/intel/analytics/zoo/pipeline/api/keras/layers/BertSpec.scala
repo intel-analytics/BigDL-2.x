@@ -40,7 +40,7 @@ class BertSpec extends ZooSpecHelper {
     val shape = Shape(List(Shape(1, 10), Shape(1, 10), Shape(1, 10), Shape(1, 1, 1, 10)))
     layer.build(shape)
     val w = layer.parameters()._1
-    require(w.length == 41)
+    require(w.length == 43)
     val inputIds = Tensor[Float](Array[Float](7, 20, 39, 27, 10,
       39, 30, 21, 17, 15), Array(1, 10))
     val segmentIds = Tensor[Float](Array[Float](0, 0, 0, 0, 0, 1, 1, 1, 1, 1), Array(1, 10))
@@ -48,7 +48,7 @@ class BertSpec extends ZooSpecHelper {
     val masks = Tensor[Float](1, 1, 1, 10).fill(1.0f)
 
     val output = layer.forward(T(inputIds, segmentIds, positionIds, masks))
-    val gradOutput = Tensor[Float](output.toTensor[Float].size()).rand()
+    val gradOutput = T(Tensor[Float](1, 10, 10).rand(), Tensor[Float](1, 10).rand())
     val gradInput = layer.backward(T(inputIds, segmentIds, positionIds, masks), gradOutput)
   }
 
@@ -66,7 +66,7 @@ class BertSpec extends ZooSpecHelper {
     val shape = Shape(List(Shape(1, 10), Shape(1, 10), Shape(1, 10), Shape(1, 1, 1, 10)))
     layer.build(shape)
     val w = layer.parameters()._1
-    require(w.length == 41)
+    require(w.length == 43)
     val inputIds = Tensor[Float](Array[Float](7, 20, 39, 27, 10,
       39, 30, 21, 17, 15), Array(1, 10))
     val segmentIds = Tensor[Float](Array[Float](0, 0, 0, 0, 0, 1, 1, 1, 1, 1), Array(1, 10))
@@ -119,8 +119,7 @@ class BertSpec extends ZooSpecHelper {
     val masks = Tensor[Float](1, 1, 1, 10).fill(1.0f)
 
     val output = layer.forward(T(inputIds, segmentIds, positionIds, masks))
-    val gradOutput = Tensor[Float](output.toTensor[Float].size()).rand()
-    val gradInput = layer.backward(T(inputIds, segmentIds, positionIds, masks), gradOutput)
+    val gradInput = layer.backward(T(inputIds, segmentIds, positionIds, masks), output)
   }
 
   "BERT" should "be able to generate correct result" in {
@@ -538,7 +537,7 @@ class BertSpec extends ZooSpecHelper {
     val attentionMask = Tensor[Float](2, 1, 1, 6).fill(1.0f)
     val finalInput = T(input, tokenTypeInput, positionInput,
       attentionMask)
-    val output = layer.forward(finalInput).toTensor[Float]
+    val output = layer.forward(finalInput).toTable
 
     val expect = Tensor[Float](Array[Float](0.5962f, 1.0420f, 0.1113f, -0.2090f, 0.9805f,
       -1.4064f, -0.1274f,
@@ -565,7 +564,7 @@ class BertSpec extends ZooSpecHelper {
       -1.5163f, -0.0971f, 0.8916f,
       -0.3329f, -0.3355f, 1.0987f, -1.9300f, 0.9568f, 0.5973f, -1.0527f,
       0.8440f, 1.0099f, -0.8555f), Array(2, 6, 10))
-    require(output.almostEqual(expect, 1e-2) == true)
+    require(output[Tensor[Float]](1).almostEqual(expect, 1e-2) == true)
 
     val gradOutput = Tensor[Float](Array[Float](21f, 52f, 1f, 87f, 29f, 37f,
       1f, 63f, 59f, 20f,
@@ -581,11 +580,12 @@ class BertSpec extends ZooSpecHelper {
       87f, 62f, 10f, 80f, 7f, 34f, 34f, 32f, 4f, 40f,
       27f, 6f, 72f, 71f, 11f, 33f, 32f, 47f, 22f, 61f
     ), Array(2, 6, 10))
+    val grad2 = Tensor[Float](2, 10)
 
-    layer.backward(finalInput, gradOutput)
+    layer.backward(finalInput, T(gradOutput, grad2))
     val grads = layer.parameters()._2
 
-    val expectGrad = new Array[Tensor[Float]](grads.size)
+    val expectGrad = new Array[Tensor[Float]](grads.size - 2)
     expectGrad(20 - 4) = Tensor[Float](Array[Float](429f, 578f, 472f, 800f, 598f, 478f,
       568f, 610f, 517f, 563f), Array(1, 10))
     expectGrad(19 - 4) = Tensor[Float](Array[Float](-308.3242f, 73.9104f, 415.4557f,
@@ -1064,7 +1064,7 @@ class BertSpec extends ZooSpecHelper {
   "Bert " should "save/load be able to work" in {
     val layer = BERT[Float](vocab = 30000,
       hiddenSize = 10,
-      nBlock = 1,
+      nBlock = 5,
       nHead = 2,
       intermediateSize = 64,
       hiddenPDrop = 0,
@@ -1081,9 +1081,11 @@ class BertSpec extends ZooSpecHelper {
     val masks = Tensor[Float](1, 1, 1, 11).fill(1.0f)
 
     val input = T(inputIds.clone(), segmentIds.clone(), positionIds.clone(), masks.clone())
-    val output = layer.forward(input).toTensor[Float].clone()
+    val output = layer.forward(input).toTable
+    val expectO = T(output[Tensor[Float]](1).clone(), output[Tensor[Float]](2).clone())
     val gradOutput = Tensor[Float](1, 11, 10).rand()
-    val gradInput = layer.backward(input, gradOutput.clone()).toTable
+    val gradO2 = Tensor[Float](1, 10)
+    val gradInput = layer.backward(input, T(gradOutput.clone(), gradO2)).toTable
     val test = (1 to gradInput.length()).map(gradInput[Tensor[Float]](_).clone())
     val gradInput2 = T.array(test.toArray)
 
@@ -1091,9 +1093,12 @@ class BertSpec extends ZooSpecHelper {
     val absPath = tmpFile.getAbsolutePath
     layer.saveModule(absPath, overWrite = true)
     val layer2 = BERT.loadModel[Float](absPath)
-    val output2 = layer2.forward(T(inputIds, segmentIds, positionIds, masks)).toTensor[Float]
-    val gradInput3 = layer2.backward(T(inputIds, segmentIds, positionIds, masks), gradOutput).toTable
-    require(output.almostEqual(output2, 1e-8))
+    val output2 = layer2.forward(T(inputIds, segmentIds, positionIds, masks)).toTable
+    val gradInput3 = layer2.backward(T(inputIds, segmentIds, positionIds, masks),
+      T(gradOutput, gradO2)).toTable
+    for (i <- 1 to output2.length()) {
+      require(output2[Tensor[Float]](i).almostEqual(expectO[Tensor[Float]](i), 1e-8))
+    }
     for (i <- 1 to gradInput.length()) {
       require(gradInput2[Tensor[Float]](i).almostEqual(gradInput3[Tensor[Float]](i), 1e-5))
     }

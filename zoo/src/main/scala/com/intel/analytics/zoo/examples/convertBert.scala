@@ -153,6 +153,27 @@ object convertBert {
       }
       blockId += 1
     }
+
+    buf.clear()
+    filename = path + "bert_pooler_dense_kernel_0.out"
+    for (line <- Source.fromFile(filename).getLines) {
+      buf.append(line.split(" ").map(_.toFloat
+      ))
+    }
+    param = Tensor[Float](buf.flatten.toArray, Array(buf.size, buf.head.length))
+    require(param.size.deep == weight(i).size().deep)
+    weight(i).set(param)
+    i += 1
+
+    buf.clear()
+    filename = path + "bert_pooler_dense_bias_0.out"
+    for (line <- Source.fromFile(filename).getLines) {
+      buf.append(line.split(" ").map(_.toFloat
+      ))
+    }
+    param = Tensor[Float](buf.flatten.toArray, Array(buf.size, buf.head.length))
+    weight(i).set(param)
+
     preTrainModel.saveModule("/tmp/zoo-bert.model", overWrite = true)
     println("convert done!")
   }
