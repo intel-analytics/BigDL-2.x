@@ -389,7 +389,7 @@ object TextSet {
     val joinedText2 = corpus2.toDistributed().rdd.keyBy(_.getURI)
       .join(joinedText1.keyBy(_._2.id2)).map(x => (x._2._2._1, x._2._1, x._2._2._2.label))
     val res = joinedText2.map(x => {
-      val textFeature = TextFeature(null, x._1.getURI + x._2.getURI)
+      val textFeature = TextFeature(null, uri = x._1.getURI + x._2.getURI, label = x._3)
       val text1 = x._1.getIndices
       val text2 = x._2.getIndices
       require(text1 != null,
