@@ -62,11 +62,8 @@ object OpenVinoInferenceSupportive extends InferenceSupportive {
     motfpyFilePath = s"$openvinoTempDirPath/model-optimizer/mo_tf.py"
 
     val OpenvinoNativeLoaderClass = (new OpenvinoNativeLoader()).getClass
-    val zooShPath = "/zoo-optimize-model.sh"
-    val zooShInputStream = OpenvinoNativeLoaderClass.getResourceAsStream(zooShPath)
-    writeFile(zooShInputStream, openvinoTempDirPath, zooShPath)
 
-    val optimizeTFODPath = optimizeImageClassificationRelativePath
+    val optimizeTFODPath = optimizeObjectDetectionRelativePath
     val optimizeTFODInputStream = OpenvinoNativeLoaderClass.getResourceAsStream(optimizeTFODPath)
     writeFile(optimizeTFODInputStream, openvinoTempDirPath, optimizeTFODPath)
 
@@ -84,7 +81,7 @@ object OpenVinoInferenceSupportive extends InferenceSupportive {
     val ieTarFile = writeFile(ieTarInputStream, openvinoTempDirPath, ieTarPath)
     s"tar -xzvf ${ieTarFile.getAbsolutePath} -C $openvinoTempDirPath" !;
 
-    val igTarPath = "inference-graphs.tar.gz"
+    val igTarPath = "/inference-graphs.tar.gz"
     val igTarInputStream = OpenvinoNativeLoaderClass.getResourceAsStream(igTarPath)
     val igTarFile = writeFile(igTarInputStream, openvinoTempDirPath, igTarPath)
     s"tar -xzvf ${igTarFile.getAbsolutePath} -C $openvinoTempDirPath" !;
@@ -99,26 +96,101 @@ object OpenVinoInferenceSupportive extends InferenceSupportive {
 
   def optimizeTFObjectDetectionModel(modelPath: String,
                                      modelType: String,
+                                     checkpointPath: String,
+                                     inputShape: Array[Int],
+                                     ifReverseInputChannels: Boolean,
+                                     meanValues: Array[Float],
+                                     scale: Float,
+                                     outputDir: String): Unit = {
+    logger.info(s"start to optimize tf image classification model from " +
+      s"$modelPath, $modelType, $checkpointPath, $inputShape, " +
+      s"$ifReverseInputChannels, $meanValues, $scale, to $outputDir")
+
+    modelType match {
+      case null | "" =>
+        require(modelPath != null && modelPath != "",
+          "modeltype is not provided, modelPath should be specified")
+      case _ =>
+        ModelType.isSupportedImageClassificationModel(modelType) match {
+          case true => logger.info(s"$modelType is supported." )
+          case false => logger.warn(s"$modelType not supported, " +
+            s"supported tf image classification model types are listed: " +
+            s"${ModelType.image_classification_types}")
+        }
+    }
+
+    val actualModelPath = modelPath match {
+      case null | "" =>
+        val path = ModelType.resolveActualInferenceGraphPath(modelType)
+        s"$openvinoTempDirPath/$path"
+      case _ => modelPath
+    }
+
+    timing("optimize tf image classification model to openvino IR") {
+      val outputPath: String = outputDir
+      val inputShapeStr = inputShape.mkString("[", ",", "]")
+      val ifReverseInputChannelsStr = ifReverseInputChannels match {
+        case true => "1"
+        case false => "0"
+      }
+      val meanValuesStr = meanValues.mkString("[", ",", "]")
+
+      val stdout = new StringBuilder
+      val stderr = new StringBuilder
+      val log = ProcessLogger(stdout append _ + "\n", stderr append _ + "\n")
+      val exitCode = timing("optimize tf image classification model") {
+        Seq("sh",
+          optimizeImageClassificationSHPath,
+          actualModelPath,
+          checkpointPath,
+          inputShapeStr,
+          ifReverseInputChannelsStr,
+          meanValuesStr,
+          scale,
+          outputPath,
+          motfpyFilePath) ! log
+      }
+      logger.info(s"tf object detection model optimized, log: \n" +
+        s"stderr: $stderr \n" +
+        s"stdout: $stdout \n" +
+        s"exitCode: $exitCode\n -----")
+      exitCode match {
+        case 0 => logger.info(s"tf image classification model optimization succeeded")
+        case _ =>
+          val message = stderr.toString().split("\n").filter(_ contains ("ERROR")).mkString(",")
+          throw
+            new InferenceRuntimeException(s"Openvino optimize tf image classification " +
+              s"model error: " +
+              s"$exitCode, $message")
+      }
+    }
+
+  }
+
+  def optimizeTFObjectDetectionModel(modelPath: String,
+                                     modelType: String,
                                      pipelineConfigPath: String,
                                      extensionsConfigPath: String,
                                      outputDir: String): Unit = {
     logger.info(s"start to optimize tf object detection model from " +
-      s"$modelPath, $modelType, $pipelineConfigPath, $extensionsConfigPath")
+      s"$modelPath, $modelType, $pipelineConfigPath, $extensionsConfigPath, to $outputDir")
 
     val modelName = modelPath.split("\\/").last.split("\\.").head
 
     modelType match {
-      case null | "" => require(pipelineConfigPath != null
-        && pipelineConfigPath != ""
-        && extensionsConfigPath != null
-        && extensionsConfigPath != "",
-        s"modeltype is not provided, extensionsConfigPath, " +
-          s"extensionsConfigPath should be specified")
-      case _ => ModelType.isSupportedObjectDetectionModel(modelType) match {
-        case true => logger.info(s"$modelType is supported." )
-        case false => logger.warn(s"$modelType not supported, " +
-          s"supported tf object detection model types are listed: " +
-          s"${ModelType.object_detection_types}")
+      case null | "" =>
+        require(pipelineConfigPath != null
+          && pipelineConfigPath != ""
+          && extensionsConfigPath != null
+          && extensionsConfigPath != "",
+          s"modeltype is not provided, extensionsConfigPath, " +
+            s"extensionsConfigPath should be specified")
+      case _ =>
+        ModelType.isSupportedObjectDetectionModel(modelType) match {
+          case true => logger.info(s"$modelType is supported." )
+          case false => logger.warn(s"$modelType not supported, " +
+            s"supported tf object detection model types are listed: " +
+            s"${ModelType.object_detection_types}")
       }
     }
 
@@ -242,6 +314,26 @@ object OpenVinoInferenceSupportive extends InferenceSupportive {
 
 object ModelType {
   val logger = LoggerFactory.getLogger(getClass)
+
+  val image_classification_types = List(
+    "inception_v1",
+    "inception_v2",
+    "inception_v3",
+    "inception_v4",
+    "inception_resnet_v2",
+    "mobilenet_v1",
+    "nasnet_large",
+    "nasnet_mobile",
+    "resnet_v1_50",
+    "resnet_v2_50",
+    "resnet_v1_101",
+    "resnet_v2_101",
+    "resnet_v1_152",
+    "resnet_v2_152",
+    "vgg_16",
+    "vgg_19"
+  )
+
   val object_detection_types = List(
     "embedded_ssd_mobilenet_v1_coco",
     "facessd_mobilenet_v2_quantized_320x320_open_image_v4",
@@ -291,8 +383,16 @@ object ModelType {
     "ssdlite_mobilenet_v2_coco"
   )
 
+  def isSupportedImageClassificationModel(modelType : String): Boolean = {
+    image_classification_types.contains(modelType)
+  }
+
   def isSupportedObjectDetectionModel(modelType : String): Boolean = {
     object_detection_types.contains(modelType)
+  }
+
+  def resolveActualInferenceGraphPath(modelType : String): String = {
+    s"inference-graphs/${modelType}_inference_graph.pb"
   }
 
   def resolveActualPipelineConfigPath(modelType : String): String = {

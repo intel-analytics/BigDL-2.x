@@ -108,7 +108,7 @@ class OpenVINOModelSuite extends FunSuite with Matchers with BeforeAndAfterAll
         faserrcnnPipelineConfigFilePath,
         null, fasterrcnnDeviceType)
     }
-    assert(thrown.getMessage.contains("Openvino optimize tf model error"))
+    assert(thrown.getMessage.contains("Openvino optimize tf object detection model error"))
   }
 
   test("openvino model should load successfully") {
