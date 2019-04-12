@@ -56,23 +56,29 @@ private[zoo] object Utils {
   }
 
   /**
-   * List local or remote files (HDFS, S3 and FTP etc) with FileSystem API
+   * List paths of local or remote files (HDFS, S3 and FTP etc)
+   * with FileSystem API
    * @param path String path
    * @param recursive Recursive or not
    * @return Array[String]
    */
-  def listFiles(path: String, recursive: Boolean = false): Array[String] = {
+  def listPaths(path: String, recursive: Boolean = false): Array[String] = {
     val fs = getFileSystem(path)
     // List remote or local files
-    val files = fs.listFiles(new Path(path), recursive)
-    // Add file paths (string) into ArrayBuffer
     val res = new ArrayBuffer[String]()
-    while (files.hasNext) {
-      val file = files.next()
-      // Ignore dir
-      if (!file.isDirectory) {
-        res.append(file.getPath.toString)
+    try {
+      val files = fs.listFiles(new Path(path), recursive)
+      while (files.hasNext) {
+        val file = files.next()
+        // Ignore dir
+        if (!file.isDirectory) {
+          // Add file paths (string) into ArrayBuffer
+          res.append(file.getPath.toString)
+        }
       }
+    } catch {
+      case _: FileNotFoundException => logger.warn(s"$path doesn't exist!")
+      case _: IOException => logger.error(s"List paths of $path error!")
     }
     fs.close()
     res.toArray

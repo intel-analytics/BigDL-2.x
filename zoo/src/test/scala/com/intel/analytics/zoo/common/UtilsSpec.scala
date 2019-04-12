@@ -26,9 +26,9 @@ class UtilsSpec extends FlatSpec with Matchers {
   val txtRelations: String = path + "/relations.txt"
 
   "Utils listFiles" should "work properly" in {
-    val files = Utils.listFiles(path)
+    val files = Utils.listPaths(path)
     assert(files.size == 3)
-    val recursiveFiles = Utils.listFiles(path, true)
+    val recursiveFiles = Utils.listPaths(path, true)
     assert(recursiveFiles.size == 13)
   }
 

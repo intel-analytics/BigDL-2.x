@@ -32,7 +32,7 @@ object ImagePathWriter {
     val logger = Logger.getLogger(getClass)
 
     parser.parse(args, PathWriterParam()).foreach { params =>
-      val lists = Utils.listFiles(params.imageSourcePath, false)
+      val lists = Utils.listPaths(params.imageSourcePath, false)
       lists.grouped(10).zipWithIndex.foreach { case (batch, id) =>
         val batchPath = new Path(params.streamingPath, id + ".txt").toString
         val dataOutStream = Utils.create(batchPath, true)
