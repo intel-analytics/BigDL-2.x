@@ -30,7 +30,7 @@ def main():
     def input_fn(mode):
 
         if mode == tf.estimator.ModeKeys.TRAIN:
-            image_set, label_map = ImageSet.from_image_folder("/home/yang/sources/datasets/cat_dog/demo_small", sc=sc)
+            image_set, label_map = ImageSet.read("/home/yang/sources/datasets/cat_dog/demo_small", sc=sc, with_label=True)
             transformer = ChainedPreprocessing([ImageResize(256, 256),
                                                 ImageRandomCrop(224, 224, True),
                                                 ImageChannelNormalize(123.0, 117.0, 104.0),

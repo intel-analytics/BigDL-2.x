@@ -899,6 +899,17 @@ class TFDataset:
 
         return self._tensors[1]
 
+    @staticmethod
+    def _to_tensor_structure(features, labels):
+        feature_structure = _to_tensor_structure(features)
+        if labels is not None:
+            label_structure = _to_tensor_structure(labels)
+            tensor_structure = (feature_structure, label_structure)
+
+        else:
+            tensor_structure = (feature_structure,)
+        return tensor_structure
+
     def get_data(self):
         raise NotImplementedError
 
@@ -917,13 +928,7 @@ class TFDataset:
     def from_image_set(image_set, image, label=None,
                        batch_size=-1, batch_per_thread=-1,
                        hard_code_batch_size=False, validation_image_set=None):
-        feature_structure = _to_tensor_structure(image)
-        if label is not None:
-            label_structure = _to_tensor_structure(label)
-            tensor_structure = (feature_structure, label_structure)
-
-        else:
-            tensor_structure = (feature_structure,)
+        tensor_structure = TFDataset._to_tensor_structure(image, label)
         return TFImageDataset(image_set, tensor_structure, batch_size,
                               batch_per_thread, hard_code_batch_size,
                               validation_image_set)
@@ -932,16 +937,34 @@ class TFDataset:
     def from_text_set(text_set, text, label=None,
                       batch_size=-1, batch_per_thread=-1,
                       hard_code_batch_size=False, validation_image_set=None):
-        feature_structure = _to_tensor_structure(text)
-        if label is not None:
-            label_structure = _to_tensor_structure(label)
-            tensor_structure = (feature_structure, label_structure)
+        tensor_structure = TFDataset._to_tensor_structure(text, label)
+        return TFTextDataset(text_set, tensor_structure, batch_size,
+                             batch_per_thread, hard_code_batch_size,
+                             validation_image_set)
+    @staticmethod
+    def from_bigdl_dataset(dataset, features, labels=None, batch_size=-1, batch_per_thread=-1,
+                       hard_code_batch_size=False, validation_dataset=None):
+        tensor_structure = TFDataset._to_tensor_structure(features, labels)
 
-        else:
-            tensor_structure = (feature_structure,)
-        return TFImageDataset(text_set, tensor_structure, batch_size,
-                              batch_per_thread, hard_code_batch_size,
-                              validation_image_set)
+
+class TFBigdlDataset(TFDataset):
+
+    def __init__(self, dataset, tensor_structure, batch_size,
+                 batch_per_thread, hard_code_batch_size=False, validation_dataset=None):
+        super(TFBigdlDataset, self).__init__(tensor_structure, batch_size,
+                                            batch_per_thread, hard_code_batch_size)
+        self.dataset = dataset
+        self.validation_datset = validation_dataset
+
+    def get_data(self):
+        return
+
+    def get_validation_data(self):
+        if self.validation_text_set is not None:
+            return self.validation_text_set.get_samples().map(
+                lambda sample: Sample.from_jtensor(features=sample.features + sample.labels,
+                                                   labels=JTensor.from_ndarray(np.array([0.0]))))
+        return None
 
 
 class TFTextDataset(TFDataset):
@@ -973,6 +996,7 @@ class TFImageDataset(TFDataset):
                                              batch_per_thread, hard_code_batch_size)
         self.image_set = image_set
         self.validation_image_set = validation_image_set
+
 
     def get_data(self):
         return DataSet.image_frame(self.image_set.transform(MergeFeatureLabel()).to_image_frame())
