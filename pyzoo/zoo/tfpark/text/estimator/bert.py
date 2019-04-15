@@ -21,7 +21,8 @@ from bert import modeling
 
 def _bert_model(features, labels, mode, params):
     """
-    Return an instance of BertModel and one can take its different outputs to perform specific tasks.
+    Return an instance of BertModel and one can take its different outputs to
+    perform specific tasks.
     """
     input_ids = features["input_ids"]
     if "input_mask" in features:
@@ -82,7 +83,8 @@ def _bert_classifier_model_fn(features, labels, mode, params):
             return TFEstimatorSpec(mode=mode, loss=loss)
 
 
-def bert_input_fn(rdd, max_seq_length, batch_size, labels=None, features={"input_ids", "input_mask", "token_type_ids"}):
+def bert_input_fn(rdd, max_seq_length, batch_size, labels=None,
+                  features={"input_ids", "input_mask", "token_type_ids"}):
     """
     Takes an RDD to create the input function for BERT related TFEstimators.
     For training and evaluation, each element in rdd should be a tuple: (dict of features, label).
@@ -112,8 +114,10 @@ def bert_input_fn(rdd, max_seq_length, batch_size, labels=None, features={"input
 class BERTBaseEstimator(TFEstimator):
     """
     The base class for BERT related TFEstimators.
-    Common arguments: bert_config_file, init_checkpoint, use_one_hot_embeddings, optimizer, model_dir.
-    For each subclass:
+    Common arguments:
+    bert_config_file, init_checkpoint, use_one_hot_embeddings, optimizer, model_dir.
+
+    For its subclass:
     - One can add additional arguments and access them via `params`.
     - One can utilize `_bert_model` to create model_fn and `bert_input_fn` to create input_fn.
     """
@@ -139,11 +143,13 @@ class BERTClassifier(BERTBaseEstimator):
     :param bert_config_file: The path to the json file for BERT configurations.
     :param init_checkpoint: The path to the initial checkpoint of the pre-trained BERT model if any.
                             Default is None.
-    :param use_one_hot_embeddings: Boolean. Whether to use one-hot for word embeddings. Default is False.
+    :param use_one_hot_embeddings: Boolean. Whether to use one-hot for word embeddings.
+                                   Default is False.
     :param optimizer: The optimizer used to train the estimator. It can either be an instance of
                       tf.train.Optimizer or the corresponding string representation.
                       Default is None if no training is involved.
-    :param model_dir: The output directory for model checkpoints to be written if any. Default is None.
+    :param model_dir: The output directory for model checkpoints to be written if any.
+                      Default is None.
     """
     def __init__(self, num_classes, bert_config_file, init_checkpoint=None,
                  use_one_hot_embeddings=False, optimizer=None, model_dir=None):
