@@ -111,7 +111,7 @@ class GraphNet(BModel):
 
 
 class JavaToPython:
-
+    # TODO: Add more mapping here as it only support Model and Sequential for now.
     def __init__(self, jvalue, bigdl_type="float"):
         self.jvaule = jvalue
         self.jfullname = callBigDlFunc(bigdl_type,
