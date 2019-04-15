@@ -291,7 +291,8 @@ class TextSet(JavaValue):
         return TextSet(jvalue=jvalue)
 
     def transform(self, transformer):
-        return TextSet(callBigDlFunc(self.bigdl_type, "transformTextSet", transformer, self.value), self.bigdl_type)
+        return TextSet(callBigDlFunc(self.bigdl_type, "transformTextSet",
+                                     transformer, self.value), self.bigdl_type)
 
     @classmethod
     def read(cls, path, sc=None, min_partitions=1, bigdl_type="float"):

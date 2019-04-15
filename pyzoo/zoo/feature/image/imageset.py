@@ -88,7 +88,8 @@ class ImageSet(JavaValue):
         """
         transformImageSet
         """
-        return ImageSet(callBigDlFunc(self.bigdl_type, "transformImageSet", transformer, self.value), self.bigdl_type)
+        return ImageSet(callBigDlFunc(self.bigdl_type, "transformImageSet",
+                                      transformer, self.value), self.bigdl_type)
 
     def get_image(self, key="floats", to_chw=True):
         """
