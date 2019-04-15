@@ -19,7 +19,6 @@ package com.intel.analytics.zoo.pipeline.api.keras.layers
 import com.intel.analytics.bigdl.nn.abstractnn.AbstractModule
 import com.intel.analytics.bigdl.tensor.Tensor
 import com.intel.analytics.bigdl.utils.Shape
-import com.intel.analytics.zoo.pipeline.api.Net
 import com.intel.analytics.zoo.pipeline.api.keras.models.{Model, Sequential}
 import com.intel.analytics.zoo.pipeline.api.keras.serializer.ModuleSerializationTest
 
@@ -42,13 +41,9 @@ class DenseSpec extends KerasBaseSpec {
     seq.add(input)
     val dense = Dense[Float](2, activation = "relu")
     seq.add(dense)
-    val modelPath = "/tmp/hello.model"
-    seq.saveModule(modelPath, overWrite=true)
-    val reloadedModel = Net.load[Float](modelPath)
-    reloadedModel
-//    seq.getOutputShape().toSingle().toArray should be (Array(-1, 2))
-//    checkOutputAndGrad(seq.asInstanceOf[AbstractModule[Tensor[Float], Tensor[Float], Float]],
-//      kerasCode, weightConverter)
+    seq.getOutputShape().toSingle().toArray should be (Array(-1, 2))
+    checkOutputAndGrad(seq.asInstanceOf[AbstractModule[Tensor[Float], Tensor[Float], Float]],
+      kerasCode, weightConverter)
   }
 
   "Dense nD input" should "be the same as Keras" in {
