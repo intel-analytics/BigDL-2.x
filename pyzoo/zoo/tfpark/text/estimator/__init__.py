@@ -14,4 +14,5 @@
 # limitations under the License.
 #
 
-from .bert import *
+from .bert_base import *
+from .bert_classifier import *
