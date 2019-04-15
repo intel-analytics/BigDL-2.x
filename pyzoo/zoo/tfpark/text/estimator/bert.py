@@ -52,10 +52,10 @@ def _bert_classifier_model_fn(features, labels, mode, params):
     """
     Model function for BERTClassifier.
 
-    :param features: Dict of feature tensors. Must include key "input_ids".
+    :param features: Dict of feature tensors. Must include the key "input_ids".
     :param labels: Label tensor for training.
     :param mode: 'train', 'eval' or 'infer'.
-    :param params: Must include key "num_classes".
+    :param params: Must include the key "num_classes".
     :return: TFEstimatorSpec.
     """
     output_layer = _bert_model(features, labels, mode, params).get_pooled_output()
@@ -88,6 +88,7 @@ def bert_input_fn(rdd, max_seq_length, batch_size, labels=None, features={"input
     For training and evaluation, each element in rdd should be a tuple: (dict of features, label).
     For prediction, each element in rdd should be a dict of features.
     """
+    assert features.issubset({"input_ids", "input_mask", "token_type_ids"})
     features_dict = {}
     for feature in features:
         features_dict[feature] = (tf.int32, [max_seq_length])
@@ -113,7 +114,7 @@ class BERTBaseEstimator(TFEstimator):
     The base class for BERT related TFEstimators.
     Common arguments: bert_config_file, init_checkpoint, use_one_hot_embeddings, optimizer, model_dir.
     For each subclass:
-    - One can add additional arguments and accessible via `params`.
+    - One can add additional arguments and access them via `params`.
     - One can utilize `_bert_model` to create model_fn and `bert_input_fn` to create input_fn.
     """
     def __init__(self, model_fn, bert_config_file, init_checkpoint=None,
