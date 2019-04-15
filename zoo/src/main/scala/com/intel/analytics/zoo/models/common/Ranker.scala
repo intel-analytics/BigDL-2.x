@@ -20,8 +20,11 @@ import com.intel.analytics.bigdl.models.utils.ModelBroadcast
 import com.intel.analytics.bigdl.nn.abstractnn.{AbstractModule, Activity}
 import com.intel.analytics.bigdl.tensor.Tensor
 import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric
+import com.intel.analytics.zoo.feature.common.Relation
 import com.intel.analytics.zoo.feature.text.{DistributedTextSet, LocalTextSet, TextSet}
+import com.intel.analytics.zoo.pipeline.api.keras.models.KerasNet
 import org.apache.log4j.Logger
+import org.apache.spark.rdd.RDD
 
 import scala.reflect.ClassTag
 import scala.util.Random
@@ -102,6 +105,14 @@ trait Ranker[T] {
     val ndcg = evaluate(x, Ranker.ndcg[T](k, threshold))
     logger.info(s"ndcg@$k: $ndcg")
     ndcg
+  }
+
+  def predictRelationLists(
+      relations: RDD[Relation],
+      corpus1: TextSet,
+      corpus2: TextSet): TextSet = {
+    val relationLists = TextSet.fromRelationLists(relations, corpus1, corpus2)
+    model.asInstanceOf[KerasNet[T]].predict(relationLists)
   }
 }
 
