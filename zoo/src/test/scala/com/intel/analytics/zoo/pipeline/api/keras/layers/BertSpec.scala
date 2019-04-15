@@ -19,7 +19,7 @@ package com.intel.analytics.zoo.pipeline.api.keras.layers
 import com.intel.analytics.bigdl.nn.abstractnn.Activity
 import com.intel.analytics.bigdl.nn.keras.KerasLayer
 import com.intel.analytics.bigdl.tensor.Tensor
-import com.intel.analytics.bigdl.utils.{Shape, T}
+import com.intel.analytics.bigdl.utils.{Shape, T, Table}
 import com.intel.analytics.zoo.pipeline.api.autograd.{Parameter, Variable}
 import com.intel.analytics.zoo.pipeline.api.keras.models.Model
 import com.intel.analytics.zoo.pipeline.api.keras.serializer.ModuleSerializationTest
@@ -1061,6 +1061,10 @@ class BertSpec extends ZooSpecHelper {
     }
   }
 
+  var absPath = ""
+  var expectO: Table = null
+  var gradOutput: Table = null
+  var expepctGradInput: Table = null
   "Bert " should "save/load be able to work" in {
     val layer = BERT[Float](vocab = 30000,
       hiddenSize = 10,
@@ -1082,27 +1086,50 @@ class BertSpec extends ZooSpecHelper {
 
     val input = T(inputIds.clone(), segmentIds.clone(), positionIds.clone(), masks.clone())
     val output = layer.forward(input).toTable
-    val expectO = T(output[Tensor[Float]](1).clone(), output[Tensor[Float]](2).clone())
-    val gradOutput = Tensor[Float](1, 11, 10).rand()
+    expectO = T(output[Tensor[Float]](1).clone(), output[Tensor[Float]](2).clone())
+    val gradOutput_1 = Tensor[Float](1, 11, 10).rand()
     val gradO2 = Tensor[Float](1, 10)
-    val gradInput = layer.backward(input, T(gradOutput.clone(), gradO2)).toTable
+    gradOutput = T(gradOutput_1, gradO2)
+    val gradInput = layer.backward(input, T(gradOutput_1.clone(), gradO2.clone())).toTable
     val test = (1 to gradInput.length()).map(gradInput[Tensor[Float]](_).clone())
-    val gradInput2 = T.array(test.toArray)
+    expepctGradInput = T.array(test.toArray)
 
     val tmpFile = ZooSpecHelper.createTmpFile()
-    val absPath = tmpFile.getAbsolutePath
+    absPath = tmpFile.getAbsolutePath
     layer.saveModule(absPath, overWrite = true)
     val layer2 = BERT.loadModel[Float](absPath)
     val output2 = layer2.forward(T(inputIds, segmentIds, positionIds, masks)).toTable
     val gradInput3 = layer2.backward(T(inputIds, segmentIds, positionIds, masks),
-      T(gradOutput, gradO2)).toTable
+      gradOutput).toTable
     for (i <- 1 to output2.length()) {
       require(output2[Tensor[Float]](i).almostEqual(expectO[Tensor[Float]](i), 1e-8))
     }
     for (i <- 1 to gradInput.length()) {
-      require(gradInput2[Tensor[Float]](i).almostEqual(gradInput3[Tensor[Float]](i), 1e-5))
+      require(expepctGradInput[Tensor[Float]](i).almostEqual(gradInput3[Tensor[Float]](i), 1e-5))
     }
   }
+
+  "Bert with pretrained model " should "be able to work" in {
+    val layer = BERT.loadModel[Float](absPath)
+
+    val inputIds = Tensor[Float](Array[Float](2040f, 2001, 3958, 27227, 1029, 3958, 103,
+      2001, 1037, 13997, 11510), Array(1, 11))
+    val segmentIds = Tensor[Float](Array[Float](0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1), Array(1, 11))
+    val positionIds = Tensor[Float](Array[Float](0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10), Array(1, 11))
+    val masks = Tensor[Float](1, 1, 1, 11).fill(1.0f)
+
+    val input = T(inputIds, segmentIds, positionIds, masks)
+    val output = layer.forward(input).toTable
+    val gradInput = layer.backward(input, gradOutput).toTable
+    for (i <- 1 to output.length()) {
+      require(output[Tensor[Float]](i).almostEqual(expectO[Tensor[Float]](i), 1e-8))
+    }
+    for (i <- 1 to gradInput.length()) {
+      require(expepctGradInput[Tensor[Float]](i).almostEqual(gradInput[Tensor[Float]](i), 1e-5))
+    }
+    val t = 0
+  }
+
 }
 
 class BERTSerialTest extends ModuleSerializationTest {

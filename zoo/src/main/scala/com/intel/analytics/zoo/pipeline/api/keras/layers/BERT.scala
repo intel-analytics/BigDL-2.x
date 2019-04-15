@@ -22,15 +22,14 @@ import com.intel.analytics.bigdl.nn.keras.{KerasLayer, KerasLayerSerializable}
 import com.intel.analytics.bigdl.serialization.Bigdl.{AttrValue, BigDLModule}
 import com.intel.analytics.bigdl.tensor.Tensor
 import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric
-import com.intel.analytics.bigdl.utils.serializer.{DeserializeContext, ModuleData, ModuleSerializer, SerializeContext}
+import com.intel.analytics.bigdl.utils.serializer._
 import com.intel.analytics.bigdl.utils.serializer.converters.DataConverter
 import com.intel.analytics.bigdl.utils.{MultiShape, Shape}
 import com.intel.analytics.zoo.pipeline.api.Net
 import com.intel.analytics.zoo.pipeline.api.autograd.{Parameter, Variable}
 import com.intel.analytics.zoo.pipeline.api.keras.layers.utils.{GraphRef, KerasUtils}
-import com.intel.analytics.zoo.pipeline.api.keras.models.Model
+import com.intel.analytics.zoo.pipeline.api.keras.models.{Model, Sequential}
 import com.intel.analytics.zoo.pipeline.api.keras.models.Model.{apply => _, _}
-import com.intel.analytics.zoo.pipeline.api.net.GraphNet._
 
 import scala.collection.mutable.ArrayBuffer
 import scala.reflect.ClassTag
@@ -90,6 +89,7 @@ class BERT[T: ClassTag] (
 }
 
 object BERT extends KerasLayerSerializable {
+  Model
   ModuleSerializer.registerModule(
     "com.intel.analytics.zoo.pipeline.api.keras.layers.BERT",
     BERT)
@@ -184,7 +184,8 @@ object BERT extends KerasLayerSerializable {
    */
   def loadModel[T: ClassTag](path: String,
     weightPath: String = null)(implicit ev: TensorNumeric[T]): BERT[T] = {
-    Module.loadModule[T](path, weightPath).asInstanceOf[BERT[T]]
+    ModuleLoader.loadFromFile(path, weightPath).asInstanceOf[BERT[T]]
+//    Net.load[T](path, weightPath).asInstanceOf[BERT[T]]
   }
 
   override def doLoadModule[T: ClassTag](context : DeserializeContext)
@@ -237,9 +238,9 @@ object BERT extends KerasLayerSerializable {
     val embeddingLayer = Model(tGraph.inputs.toArray, new GraphRef(tGraph).getOutputs().toArray)
 
     val shapeAttr = attrMap.get("seqLen")
-    val seqLen = DataConverter.getAttributeValue(context, shapeAttr).asInstanceOf[Int]
-
-    val shape = Shape(List(Shape(seqLen), Shape(seqLen), Shape(seqLen), Shape(1, 1, seqLen)))
+//    val seqLen = DataConverter.getAttributeValue(context, shapeAttr).asInstanceOf[Int]
+//
+//    val shape = Shape(List(Shape(seqLen), Shape(seqLen), Shape(seqLen), Shape(1, 1, seqLen)))
     val bert = BERT(nBlock, nHead, intermediateSize, hiddenPDrop, attnPDrop,
       initializerRange, outputAllBlock,
       embeddingLayer.asInstanceOf[KerasLayer[Activity, Tensor[T], T]])
@@ -306,10 +307,10 @@ object BERT extends KerasLayerSerializable {
       context.storageType, _copyWeightAndBias))
     bertBuilder.addSubModules(subModule2.bigDLModule)
 
-    val seqLenBuilder = AttrValue.newBuilder
-    DataConverter.setAttributeValue(context, seqLenBuilder,
-      bert.seqLen, universe.typeOf[Int])
-    bertBuilder.putAttr("seqLen", seqLenBuilder.build)
+//    val seqLenBuilder = AttrValue.newBuilder
+//    DataConverter.setAttributeValue(context, seqLenBuilder,
+//      bert.seqLen, universe.typeOf[Int])
+//    bertBuilder.putAttr("seqLen", seqLenBuilder.build)
 
     appendKerasLabel(context, bertBuilder)
   }
