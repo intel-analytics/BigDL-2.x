@@ -27,8 +27,7 @@ if sys.version >= '3':
 
 
 class KerasNet(ZooKerasLayer):
-
-    def save(self, path, over_write = False):
+    def save(self, path, over_write=False):
         raise Exception("This is a deprecated method. Please use saveModel instead.")
 
     def saveModel(self, modelPath, weightPath=None, over_write=False):

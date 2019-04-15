@@ -115,8 +115,8 @@ class JavaToPython:
     def __init__(self, jvalue, bigdl_type="float"):
         self.jvaule = jvalue
         self.jfullname = callBigDlFunc(bigdl_type,
-                                  "getRealClassNameOfJValue",
-                                  jvalue)
+                                       "getRealClassNameOfJValue",
+                                       jvalue)
 
     def get_python_class(self):
         """

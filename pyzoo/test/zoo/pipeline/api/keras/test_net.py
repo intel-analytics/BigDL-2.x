@@ -70,7 +70,7 @@ class TestLayer(ZooTestCase):
         input_data = np.random.random([10, 5])
         y = np.random.random([10, 10])
         model_reloaded.compile(optimizer="adam",
-                      loss="mse")
+                               loss="mse")
         model_reloaded.fit(x=input_data, y=y, batch_size=8, nb_epoch=2)
 
     def test_save_load_Sequential(self):
@@ -83,9 +83,8 @@ class TestLayer(ZooTestCase):
         input_data = np.random.random([10, 5])
         y = np.random.random([10, 10])
         model_reloaded.compile(optimizer="adam",
-                      loss="mse")
+                               loss="mse")
         model_reloaded.fit(x=input_data, y=y, batch_size=8, nb_epoch=1)
-
 
     def test_load(self):
         input = ZLayer.Input(shape=(5,))
