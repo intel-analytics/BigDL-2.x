@@ -13,3 +13,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
+
+from .intent_extraction import *
+from .ner import *
+from .pos_tagging import *
+from .text_model import *
