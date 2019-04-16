@@ -17,9 +17,11 @@
 package com.intel.analytics.zoo.pipeline.inference
 
 import java.io.File
-import java.util.{Arrays, Properties}
+import java.util
+import java.util.Arrays
 
 import com.google.common.io.Files
+import com.intel.analytics.bigdl.tensor.Tensor
 import org.codehaus.plexus.util.FileUtils
 import org.scalatest.{BeforeAndAfterAll, FunSuite, Matchers, _}
 import org.slf4j.LoggerFactory
@@ -33,111 +35,119 @@ class OpenVINOIRSpec extends FunSuite with Matchers with BeforeAndAfterAll
   with InferenceSupportive {
   val s3Url = "https://s3-ap-southeast-1.amazonaws.com"
   val s3DataUrl = s"$s3Url" +
-    s"/analytics-zoo-models/openvino/Tests_faster_rcnn_resnet101_coco_2018_01_28"
-  val url_ov_fasterrcnn_tests_inputdata1 = s"$s3DataUrl/inputdata_1"
-  val url_ov_fasterrcnn_tests_inputdata2 = s"$s3DataUrl/inputdata_2"
-
-  var modelZooUrl = "http://download.tensorflow.org"
-  try {
-    val prop = new Properties()
-    prop.load(this.getClass.getResourceAsStream("/app.properties"))
-    modelZooUrl = prop.getProperty("data-store-url")
-  } catch {
-    case e: Exception =>
-      modelZooUrl = "http://download.tensorflow.org"
-  }
+    s"/analytics-zoo-models/openvino/Tests_resnet50_imagetnet_2012"
+  val url_ov_resnet_tests_inputdata1 = s"$s3DataUrl/inputdata_1"
+  val url_ov_resnet_tests_inputdata2 = s"$s3DataUrl/inputdata_2"
 
   val logger = LoggerFactory.getLogger(getClass)
   var tmpDir: File = _
-
-  val fasterrcnnModelUrl = s"$modelZooUrl" +
-    s"/models/object_detection/faster_rcnn_resnet101_coco_2018_01_28.tar.gz"
-  val fasterrcnnModelTar = fasterrcnnModelUrl.split("/").last
-  val fasterrcnnModelDir = fasterrcnnModelTar.replaceAll(".tar.gz", "")
-  var fasterrcnnModel: OpenVINOModel = _
-  val fasterrcnnInferenceModel: InferenceModel = new InferenceModel(3)
-  val fasterrcnnInputShape = Array(4, 3, 224, 224)
-  var faserrcnnFrozenModelFilePath: String = _
-  var faserrcnnModelType: String = _
-  var faserrcnnPipelineConfigFilePath: String = _
-  val fasterrcnnDeviceType = DeviceType.CPU
-  var fasterrcnnInputdata1FilePath: String = _
-  var fasterrcnnInputdata2FilePath: String = _
+  s"/models/image_classification/resnet50_imagetnet_2012.tar.gz"
+  var resnetModel: OpenVINOModel = _
+  val Batch = 4
+  val resnetInferenceModel: InferenceModel = new InferenceModel(3)
+  val resnetInputShape = Array(Batch, 3, 224, 224)
+  var resnetModelFilePath: String = _
+  var resnetWeightFilePath: String = _
+  val resnetDeviceType = DeviceType.CPU
+  var resnetInputdata1FilePath: String = _
+  var resnetInputdata2FilePath: String = _
 
   override def beforeAll() {
     tmpDir = Files.createTempDir()
-    val dir = new File(s"${tmpDir.getAbsolutePath}/OpenVinoInferenceModelSpec").getCanonicalPath
+    val dir = new File(s"${tmpDir.getAbsolutePath}/OpenVINOIRSpec").getCanonicalPath
 
-    s"wget -P $dir $url_ov_fasterrcnn_tests_inputdata1" !;
-    s"wget -P $dir $url_ov_fasterrcnn_tests_inputdata2" !;
+//    s"wget -P $dir $url_ov_resnet_tests_inputdata1" !;
+//    s"wget -P $dir $url_ov_resnet_tests_inputdata2" !;
 
-    s"wget -P $dir $fasterrcnnModelUrl" !;
-    s"tar xvf $dir/$fasterrcnnModelTar -C $dir" !;
-    s"ls -alh $dir" !;
+//    s"ls -alh $dir" !;
 
-    faserrcnnFrozenModelFilePath = s"$dir/$fasterrcnnModelDir/frozen_inference_graph.pb"
-    faserrcnnModelType = "faster_rcnn_resnet101_coco"
-    faserrcnnPipelineConfigFilePath = s"$dir/$fasterrcnnModelDir/pipeline.config"
-    fasterrcnnInputdata1FilePath = s"$dir/inputdata_1"
-    fasterrcnnInputdata2FilePath = s"$dir/inputdata_2"
+    resnetInputdata1FilePath = s"$dir/inputdata_1"
+    resnetInputdata2FilePath = s"$dir/inputdata_2"
 
-    fasterrcnnModel = InferenceModelFactory.loadOpenVINOModelForTF(
-      faserrcnnFrozenModelFilePath,
-      faserrcnnModelType,
-      faserrcnnPipelineConfigFilePath,
-      null, fasterrcnnDeviceType)
-    fasterrcnnInferenceModel.doLoadTF(
-      faserrcnnFrozenModelFilePath,
-      faserrcnnModelType,
-      faserrcnnPipelineConfigFilePath,
-      null
+    resnetModel = InferenceModelFactory.loadOpenVINOModelForIR(
+      resnetModelFilePath,
+      resnetWeightFilePath,
+      resnetDeviceType
+    )
+    resnetInferenceModel.doLoadOpenVINO(
+      resnetModelFilePath,
+      resnetWeightFilePath
     )
   }
 
   override def afterAll() {
     FileUtils.deleteDirectory(tmpDir)
-    fasterrcnnModel.release()
+    resnetModel.release()
   }
 
   test("openvino model should throw exception if load failed") {
     val thrown = intercept[InferenceRuntimeException] {
-      InferenceModelFactory.loadOpenVINOModelForTF(
-        faserrcnnFrozenModelFilePath + "error",
-        faserrcnnModelType,
-        faserrcnnPipelineConfigFilePath,
-        null, fasterrcnnDeviceType)
+      InferenceModelFactory.loadOpenVINOModelForIR(
+        resnetModelFilePath + "error",
+        resnetWeightFilePath,
+        resnetDeviceType)
     }
     assert(thrown.getMessage.contains("Openvino optimize tf model error"))
   }
 
   test("openvino model should load successfully") {
-    println(s"fasterrcnnModel from tensorflow pb loaded as $fasterrcnnModel")
-    fasterrcnnModel shouldNot be(null)
-    println(s"fasterrcnnInferenceModel from tensorflow pb loaded as $fasterrcnnInferenceModel")
-    fasterrcnnInferenceModel shouldNot be(null)
+    println(s"resnetModel from IR loaded as $resnetModel")
+    resnetModel shouldNot be(null)
+    println(s"resnetInferenceModel from IR loaded as $resnetInferenceModel")
+    resnetInferenceModel shouldNot be(null)
+  }
+
+
+  test("OpenVinoModel should predict dummy tensor correctly") {
+    val arrayInputs = new util.ArrayList[util.List[JTensor]]()
+    for (_ <- 1 to Batch) {
+      val input = new JTensor(
+        Tensor[Float](Array(3, 224, 224)).rand().toArray(), resnetInputShape)
+      arrayInputs.add(Arrays.asList({input}))
+    }
+    val inputs = arrayInputs.subList(0, Batch - 1)
+
+    val results2 = resnetModel.predict(inputs)
+    val results4 = resnetInferenceModel.doPredict(inputs)
+
+    val threads2 = List.range(0, 5).map(i => {
+      new Thread() {
+        override def run(): Unit = {
+          val results = resnetInferenceModel.doPredict(inputs)
+        }
+      }
+    })
+    threads2.foreach(_.start())
+    threads2.foreach(_.join())
   }
 
   test("OpenVinoModel should predict correctly") {
-    val indata1 = Source.fromFile(fasterrcnnInputdata1FilePath).getLines().map(_.toFloat).toArray
-    val indata2 = Source.fromFile(fasterrcnnInputdata2FilePath).getLines().map(_.toFloat).toArray
-    println(indata1.length, indata2.length, 1 * 3 * 600 * 600)
-    val input1 = new JTensor(indata1, fasterrcnnInputShape)
-    val input2 = new JTensor(indata2, fasterrcnnInputShape)
+    val indata1 = Source.fromFile(resnetInputdata1FilePath).getLines().map(_.toFloat).toArray
+    val indata2 = Source.fromFile(resnetInputdata2FilePath).getLines().map(_.toFloat).toArray
+    println(indata1.length, indata2.length, 4 * 3 * 224 * 224)
+    val input1 = new JTensor(indata1, resnetInputShape)
+    val input2 = new JTensor(indata2, resnetInputShape)
     val inputs = Arrays.asList(
       Arrays.asList({
         input1
       }),
       Arrays.asList({
+        input1
+      }),
+      Arrays.asList({
+        input2
+      }),
+      Arrays.asList({
         input2
       }))
 
-    val results2 = fasterrcnnModel.predict(inputs)
-    val results4 = fasterrcnnInferenceModel.doPredict(inputs)
+    val results2 = resnetModel.predict(inputs)
+    val results4 = resnetInferenceModel.doPredict(inputs)
 
     val threads2 = List.range(0, 5).map(i => {
       new Thread() {
         override def run(): Unit = {
-          val results = fasterrcnnInferenceModel.doPredict(inputs)
+          val results = resnetInferenceModel.doPredict(inputs)
         }
       }
     })
