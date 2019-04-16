@@ -33,7 +33,7 @@ import com.intel.analytics.zoo.feature.common.Preprocessing
 import com.intel.analytics.zoo.feature.image._
 import com.intel.analytics.zoo.feature.text.TextSet
 import com.intel.analytics.zoo.models.anomalydetection.{AnomalyDetector, FeatureLabelIndex}
-import com.intel.analytics.zoo.models.common.{Ranker, ZooModel}
+import com.intel.analytics.zoo.models.common.{KerasZooModel, Ranker, ZooModel}
 import com.intel.analytics.zoo.models.image.common.{ImageConfigure, ImageModel}
 import com.intel.analytics.zoo.models.image.objectdetection._
 import com.intel.analytics.zoo.models.image.imageclassification.{ImageClassifier, LabelReader => IMCLabelReader}
@@ -43,6 +43,7 @@ import com.intel.analytics.zoo.models.seq2seq.{RNNDecoder, RNNEncoder, Seq2seq}
 import com.intel.analytics.zoo.models.textclassification.TextClassifier
 import com.intel.analytics.zoo.models.textmatching.KNRM
 import com.intel.analytics.zoo.pipeline.api.keras.layers.{Embedding, Recurrent, WordEmbedding}
+import com.intel.analytics.zoo.pipeline.api.keras.models.KerasNet
 import org.apache.spark.api.java.JavaRDD
 import org.apache.spark.rdd.RDD
 import org.apache.spark.sql.{DataFrame, SQLContext}
@@ -154,8 +155,8 @@ class PythonZooModel[T: ClassTag](implicit ev: TensorNumeric[T]) extends PythonZ
       AnomalyDetector.loadModel(path, weightPath)
   }
 
-  def anomalyDetectorCompile(
-      model: AnomalyDetector[T],
+  def kerasZooCompile(
+      model: KerasZooModel[Activity, Activity, T],
       optimizer: OptimMethod[T],
       loss: Criterion[T],
       metrics: JList[ValidationMethod[T]] = null): Unit = {
@@ -163,22 +164,22 @@ class PythonZooModel[T: ClassTag](implicit ev: TensorNumeric[T]) extends PythonZ
       if (metrics == null) null else metrics.asScala.toList)
   }
 
-  def anomalyDetectorSetTensorBoard(
-      model: AnomalyDetector[T],
+  def kerasZooSetTensorBoard(
+      model: KerasZooModel[Activity, Activity, T],
       logDir: String,
       appName: String): Unit = {
     model.setTensorBoard(logDir, appName)
   }
 
-  def anomalyDetectorSetCheckpoint(
-      model: AnomalyDetector[T],
+  def kerasZooSetCheckpoint(
+      model: KerasZooModel[Activity, Activity, T],
       path: String,
       overWrite: Boolean = true): Unit = {
     model.setCheckpoint(path, overWrite)
   }
 
-  def anomalyDetectorFit(
-      model: AnomalyDetector[T],
+  def kerasZooFit(
+      model: KerasZooModel[Activity, Activity, T],
       x: JavaRDD[Sample],
       batchSize: Int,
       nbEpoch: Int,
@@ -187,8 +188,8 @@ class PythonZooModel[T: ClassTag](implicit ev: TensorNumeric[T]) extends PythonZ
     model.fit(toJSample(x), batchSize, nbEpoch, validateRdd)
   }
 
-  def anomalyDetectorEvaluate(
-      model: AnomalyDetector[T],
+  def kerasZooEvaluate(
+      model: KerasZooModel[Activity, Activity, T],
       x: JavaRDD[Sample],
       batchSize: Int): JList[EvaluatedResult] = {
     val resultArray = model.evaluate(toJSample(x), batchSize)
@@ -505,5 +506,9 @@ class PythonZooModel[T: ClassTag](implicit ev: TensorNumeric[T]) extends PythonZ
       model.infer(toTensor(input), toTensor(startSign), maxSeqLen,
         toTensor(stopSign), buildOutput)
     toJTensor(result)
+  }
+
+  def getModule(model: KerasZooModel[Activity, Activity, T]): KerasNet[T] = {
+    model.model.asInstanceOf[KerasNet[T]]
   }
 }
