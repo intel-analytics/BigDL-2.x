@@ -155,47 +155,6 @@ class PythonZooModel[T: ClassTag](implicit ev: TensorNumeric[T]) extends PythonZ
       AnomalyDetector.loadModel(path, weightPath)
   }
 
-  def kerasZooCompile(
-      model: KerasZooModel[Activity, Activity, T],
-      optimizer: OptimMethod[T],
-      loss: Criterion[T],
-      metrics: JList[ValidationMethod[T]] = null): Unit = {
-    model.compile(optimizer, loss,
-      if (metrics == null) null else metrics.asScala.toList)
-  }
-
-  def kerasZooSetTensorBoard(
-      model: KerasZooModel[Activity, Activity, T],
-      logDir: String,
-      appName: String): Unit = {
-    model.setTensorBoard(logDir, appName)
-  }
-
-  def kerasZooSetCheckpoint(
-      model: KerasZooModel[Activity, Activity, T],
-      path: String,
-      overWrite: Boolean = true): Unit = {
-    model.setCheckpoint(path, overWrite)
-  }
-
-  def kerasZooFit(
-      model: KerasZooModel[Activity, Activity, T],
-      x: JavaRDD[Sample],
-      batchSize: Int,
-      nbEpoch: Int,
-      validationData: JavaRDD[Sample]): Unit = {
-    val validateRdd = if (validationData != null) toJSample(validationData) else null
-    model.fit(toJSample(x), batchSize, nbEpoch, validateRdd)
-  }
-
-  def kerasZooEvaluate(
-      model: KerasZooModel[Activity, Activity, T],
-      x: JavaRDD[Sample],
-      batchSize: Int): JList[EvaluatedResult] = {
-    val resultArray = model.evaluate(toJSample(x), batchSize)
-    processEvaluateResult(resultArray)
-  }
-
   def standardScaleDF(df: DataFrame): DataFrame = {
     val fields = df.columns
     com.intel.analytics.zoo.models.anomalydetection.Utils.standardScale(df, fields)
