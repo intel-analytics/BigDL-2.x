@@ -21,49 +21,50 @@ import java.util
 import java.util.Arrays
 
 import com.google.common.io.Files
-import com.intel.analytics.bigdl.tensor.Tensor
 import org.codehaus.plexus.util.FileUtils
-import org.scalatest.{BeforeAndAfterAll, FunSuite, Matchers, _}
+import org.scalatest.{BeforeAndAfterAll, FunSuite, Matchers}
 import org.slf4j.LoggerFactory
 
 import scala.io.Source
 import scala.language.postfixOps
 import sys.process._
+import scala.util.Random
+
 
 @OpenVinoTest
 class OpenVINOIRSpec extends FunSuite with Matchers with BeforeAndAfterAll
   with InferenceSupportive {
   val s3Url = "https://s3-ap-southeast-1.amazonaws.com"
   val s3DataUrl = s"$s3Url" +
-    s"/analytics-zoo-models/openvino/Tests_resnet50_imagetnet_2012"
+    s"/analytics-zoo-models/openvino/Tests_faster_rcnn_resnet101_coco_2018_01_28"
   val url_ov_resnet_tests_inputdata1 = s"$s3DataUrl/inputdata_1"
   val url_ov_resnet_tests_inputdata2 = s"$s3DataUrl/inputdata_2"
 
   val logger = LoggerFactory.getLogger(getClass)
   var tmpDir: File = _
-  s"/models/image_classification/resnet50_imagetnet_2012.tar.gz"
   var resnetModel: OpenVINOModel = _
   val Batch = 4
   val resnetInferenceModel: InferenceModel = new InferenceModel(3)
   val resnetInputShape = Array(Batch, 3, 224, 224)
-  var resnetModelFilePath: String = _
-  var resnetWeightFilePath: String = _
+  var resnetModelFilePath: String = "/home/intel/Data/DLModels/openvino/2018_R5/resnet_v1_50_i8.xml"
+  var resnetWeightFilePath: String = "/home/intel/Data/DLModels/openvino/2018_R5/resnet_v1_50_i8.bin"
   val resnetDeviceType = DeviceType.CPU
   var resnetInputdata1FilePath: String = _
   var resnetInputdata2FilePath: String = _
 
   override def beforeAll() {
     tmpDir = Files.createTempDir()
-    val dir = new File(s"${tmpDir.getAbsolutePath}/OpenVINOIRSpec").getCanonicalPath
+    //    val dir = "/home/intel/Data/DLDataset/imagenet/origin/val_bmp"
+    val dir = new File(s"${tmpDir.getAbsolutePath}/OpenVINOIRSpec")
+      .getCanonicalPath
 
-//    s"wget -P $dir $url_ov_resnet_tests_inputdata1" !;
-//    s"wget -P $dir $url_ov_resnet_tests_inputdata2" !;
+    s"wget -P $dir $url_ov_resnet_tests_inputdata1" !;
+    s"wget -P $dir $url_ov_resnet_tests_inputdata2" !;
 
-//    s"ls -alh $dir" !;
+    s"ls -alh $dir" !;
 
     resnetInputdata1FilePath = s"$dir/inputdata_1"
     resnetInputdata2FilePath = s"$dir/inputdata_2"
-
     resnetModel = InferenceModelFactory.loadOpenVINOModelForIR(
       resnetModelFilePath,
       resnetWeightFilePath,
@@ -80,15 +81,6 @@ class OpenVINOIRSpec extends FunSuite with Matchers with BeforeAndAfterAll
     resnetModel.release()
   }
 
-  test("openvino model should throw exception if load failed") {
-    val thrown = intercept[InferenceRuntimeException] {
-      InferenceModelFactory.loadOpenVINOModelForIR(
-        resnetModelFilePath + "error",
-        resnetWeightFilePath,
-        resnetDeviceType)
-    }
-    assert(thrown.getMessage.contains("Openvino optimize tf model error"))
-  }
 
   test("openvino model should load successfully") {
     println(s"resnetModel from IR loaded as $resnetModel")
@@ -101,8 +93,10 @@ class OpenVINOIRSpec extends FunSuite with Matchers with BeforeAndAfterAll
   test("OpenVinoModel should predict dummy tensor correctly") {
     val arrayInputs = new util.ArrayList[util.List[JTensor]]()
     for (_ <- 1 to Batch) {
-      val input = new JTensor(
-        Tensor[Float](Array(3, 224, 224)).rand().toArray(), resnetInputShape)
+
+      val input = new JTensor(Seq.fill(3 * 224 * 224)(Random.nextFloat)
+        .toArray[Float],
+        resnetInputShape)
       arrayInputs.add(Arrays.asList({input}))
     }
     val inputs = arrayInputs.subList(0, Batch - 1)
