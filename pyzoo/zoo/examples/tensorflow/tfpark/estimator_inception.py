@@ -17,12 +17,16 @@
 import tensorflow as tf
 import numpy as np
 
+from bigdl.dataset.dataset import DataSet
 from zoo import init_nncontext
 from zoo.feature.common import ChainedPreprocessing
 from zoo.feature.image import ImageSet, ImageSetToSample, ImageResize, ImageMatToTensor, ImageRandomCrop, \
     ImageChannelNormalize
 from zoo.tfpark import TFDataset
 from zoo.tfpark.estimator import TFEstimator, TFEstimatorSpec
+import os
+
+# os.environ['PYSPARK_SUBMIT_ARGS'] = "--driver-java-options \" -Xdebug -Xrunjdwp:transport=dt_socket,server=y,suspend=y,address=5050\" /home/yang/sources/zoo/pyzoo/zoo/examples/tensorflow/tfpark/estimator_inception.py"
 
 def main():
     sc = init_nncontext()
@@ -30,15 +34,15 @@ def main():
     def input_fn(mode):
 
         if mode == tf.estimator.ModeKeys.TRAIN:
-            image_set, label_map = ImageSet.read("/home/yang/sources/datasets/cat_dog/demo_small", sc=sc, with_label=True)
+            image_set = ImageSet.read("/home/yang/sources/datasets/cat_dog/demo_small", sc=sc, with_label=True)
             transformer = ChainedPreprocessing([ImageResize(256, 256),
                                                 ImageRandomCrop(224, 224, True),
                                                 ImageChannelNormalize(123.0, 117.0, 104.0),
                                                 ImageMatToTensor(format="NHWC"),
                                                 ImageSetToSample(input_keys=["imageTensor"], target_keys=["label"])])
             image_set = image_set.transform(transformer)
-            dataset = TFDataset.from_image_set(image_set, image=(tf.float32, [224, 224, 3]), label=(tf.int32, [1]),
-                                               batch_size=16)
+            dataset = DataSet.image_frame(image_set.to_image_frame())
+            dataset = TFDataset.from_bigdl_dataset(dataset, features=(tf.float32, [224, 224, 3]), labels=(tf.int32, [1]), batch_size=16)
         else:
             raise NotImplementedError
 
