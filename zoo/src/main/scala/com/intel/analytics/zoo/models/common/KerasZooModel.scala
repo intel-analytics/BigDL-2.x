@@ -52,7 +52,7 @@ abstract class KerasZooModel[A <: Activity : ClassTag, B <: Activity : ClassTag,
   def compile(
       optimizer: String,
       loss: String)(implicit ev: TensorNumeric[T]): Unit = {
-    model.asInstanceOf[KerasNet[T]].compile(optimizer, loss, null)
+    model.asInstanceOf[KerasNet[T]].compile(optimizer, loss)
   }
 
   def compile(
@@ -65,7 +65,7 @@ abstract class KerasZooModel[A <: Activity : ClassTag, B <: Activity : ClassTag,
   def compile(
       optimizer: OptimMethod[T],
       loss: (Variable[T], Variable[T]) => Variable[T])(implicit ev: TensorNumeric[T]): Unit = {
-    model.asInstanceOf[KerasNet[T]].compile(optimizer, loss, null)
+    model.asInstanceOf[KerasNet[T]].compile(optimizer, loss)
   }
 
   def setTensorBoard(logDir: String, appName: String): Unit = {
@@ -89,11 +89,11 @@ abstract class KerasZooModel[A <: Activity : ClassTag, B <: Activity : ClassTag,
   }
 
   def setConstantGradientClipping(min: Float, max: Float): Unit = {
-    model.asInstanceOf[KerasNet[T]].setConstantGradientClipping(min: Float, max: Float)
+    model.asInstanceOf[KerasNet[T]].setConstantGradientClipping(min, max)
   }
 
   def setGradientClippingByL2Norm(clipNorm: Float): Unit = {
-    model.asInstanceOf[KerasNet[T]].setGradientClippingByL2Norm(clipNorm: Float)
+    model.asInstanceOf[KerasNet[T]].setGradientClippingByL2Norm(clipNorm)
   }
 
   def fit(
@@ -107,14 +107,6 @@ abstract class KerasZooModel[A <: Activity : ClassTag, B <: Activity : ClassTag,
       x: DataSet[MiniBatch[T]],
       nbEpoch: Int)(implicit ev: TensorNumeric[T]): Unit = {
     model.asInstanceOf[KerasNet[T]].fit(x, nbEpoch)
-  }
-
-  def fit(
-      x: RDD[Sample[T]],
-      batchSize: Int = 32,
-      nbEpoch: Int = 10,
-      validationData: RDD[Sample[T]] = null)(implicit ev: TensorNumeric[T]): Unit = {
-    model.asInstanceOf[KerasNet[T]].fit(x, batchSize, nbEpoch, validationData)
   }
 
   def fit(
@@ -187,5 +179,4 @@ abstract class KerasZooModel[A <: Activity : ClassTag, B <: Activity : ClassTag,
       batchPerThread: Int): RDD[Activity] = {
     model.asInstanceOf[KerasNet[T]].predict(x, batchPerThread)
   }
-
 }
