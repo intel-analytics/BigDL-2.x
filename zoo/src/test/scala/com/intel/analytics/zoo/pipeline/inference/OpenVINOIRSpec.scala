@@ -46,8 +46,10 @@ class OpenVINOIRSpec extends FunSuite with Matchers with BeforeAndAfterAll
   val Batch = 4
   val resnetInferenceModel: InferenceModel = new InferenceModel(3)
   val resnetInputShape = Array(Batch, 3, 224, 224)
-  var resnetModelFilePath: String = "/home/intel/Data/DLModels/openvino/2018_R5/resnet_v1_50_i8.xml"
-  var resnetWeightFilePath: String = "/home/intel/Data/DLModels/openvino/2018_R5/resnet_v1_50_i8.bin"
+  var resnetModelFilePath: String =
+    "/home/intel/Data/DLModels/openvino/2018_R5/resnet_v1_50_i8.xml"
+  var resnetWeightFilePath: String =
+    "/home/intel/Data/DLModels/openvino/2018_R5/resnet_v1_50_i8.bin"
   val resnetDeviceType = DeviceType.CPU
   var resnetInputdata1FilePath: String = _
   var resnetInputdata2FilePath: String = _
@@ -101,8 +103,9 @@ class OpenVINOIRSpec extends FunSuite with Matchers with BeforeAndAfterAll
     }
     val inputs = arrayInputs.subList(0, Batch - 1)
 
-    val results2 = resnetModel.predict(inputs)
-    val results4 = resnetInferenceModel.doPredict(inputs)
+    val results1 = resnetModel.predict(inputs)
+    val results2 = resnetInferenceModel.doPredict(inputs)
+
 
     val threads2 = List.range(0, 5).map(i => {
       new Thread() {
@@ -135,8 +138,9 @@ class OpenVINOIRSpec extends FunSuite with Matchers with BeforeAndAfterAll
         input2
       }))
 
-    val results2 = resnetModel.predict(inputs)
-    val results4 = resnetInferenceModel.doPredict(inputs)
+    val results1 = resnetModel.predict(inputs)
+    val results2 = resnetInferenceModel.doPredict(inputs)
+    
 
     val threads2 = List.range(0, 5).map(i => {
       new Thread() {
@@ -147,6 +151,7 @@ class OpenVINOIRSpec extends FunSuite with Matchers with BeforeAndAfterAll
     })
     threads2.foreach(_.start())
     threads2.foreach(_.join())
+
   }
 
   def almostEqual(x: Float, y: Float, precision: Float): Boolean = {
@@ -156,10 +161,4 @@ class OpenVINOIRSpec extends FunSuite with Matchers with BeforeAndAfterAll
     }
   }
 
-  def almostEqual(x: Array[Float], y: Array[Float], precision: Float): Boolean = {
-    x.length == y.length match {
-      case true => x.zip(y).filter(t => !almostEqual(t._1, t._2, precision)).length == 0
-      case false => println(x.length, y.length); false
-    }
-  }
 }
