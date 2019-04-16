@@ -27,8 +27,6 @@ class ZooModelCreator(JavaValue):
     def jvm_class_constructor(self):
         name = "createZoo" + self.__class__.__name__
         print("creating: " + name)
-
-
         return name
 
 
@@ -36,7 +34,6 @@ class ZooModel(ZooModelCreator, Container):
     """
     The base class for models in Analytics Zoo.
     """
-
     def predict_classes(self, x, batch_size=32, zero_based_label=True):
         """
         Predict for classes. By default, label predictions start from 0.
@@ -94,11 +91,12 @@ class ZooModel(ZooModelCreator, Container):
         model.value = jmodel
         return model
 
+
 class KerasZooModel(ZooModel):
     """
-    The base class for Keras models in Analytics Zoo.
+    The base class for Keras style models in Analytics Zoo.
     """
-    # leverage compile fit of kerasNet and so on
+    # For the following method, please see documentation of KerasNet for details
     def compile(self, optimizer, loss, metrics=None):
         self.model.compile(optimizer, loss, metrics=None)
 
@@ -111,8 +109,29 @@ class KerasZooModel(ZooModel):
     def set_tensorboard(self, log_dir, app_name):
         self.model.set_tensorboard(log_dir, app_name)
 
+    def get_train_summary(self, tag=None):
+        self.model.get_train_summary(tag)
+
+    def get_validation_summary(self, tag=None):
+        self.model.get_validation_summary(tag)
+
+    def clear_gradient_clipping(self):
+        self.model.clear_gradient_clipping()
+
+    def set_constant_gradient_clipping(self, min, max):
+        self.model.set_constant_gradient_clipping(min, max)
+
+    def set_gradient_clipping_by_l2_norm(self, clip_norm):
+        self.model.set_gradient_clipping_by_l2_norm(clip_norm)
+
+    def set_evaluate_status(self):
+        self.model.set_evaluate_status()
+
     def evaluate(self, x, y=None, batch_size=32):
         self.model.evaluate(x, y, batch_size)
+
+    def predict(self, x, batch_per_thread=4, distributed=True):
+        self.model.predict(x, batch_per_thread, distributed)
 
     @staticmethod
     def _do_load(jmodel, bigdl_type="float"):
@@ -121,4 +140,3 @@ class KerasZooModel(ZooModel):
         labor_model = callBigDlFunc(bigdl_type, "getModule", jmodel)
         model.model = KerasNet(labor_model)
         return model
-
