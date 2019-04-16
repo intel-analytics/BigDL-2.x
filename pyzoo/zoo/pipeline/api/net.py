@@ -395,15 +395,14 @@ class IdentityCriterion(Criterion):
         super(IdentityCriterion, self).__init__(None, "float")
 
 
-class MergeFeatureLabel(ImagePreprocessing):
-    """
-    adjust the image brightness
-    :param deltaLow brightness parameter: low bound
-    :param deltaHigh brightness parameter: high bound
-    """
-
+class MergeFeatureLabelImagePreprocessing(ImagePreprocessing):
     def __init__(self, bigdl_type="float"):
-        super(MergeFeatureLabel, self).__init__(bigdl_type)
+        super(MergeFeatureLabelImagePreprocessing, self).__init__(bigdl_type)
+
+
+class MergeFeatureLabelFeatureTransformer(FeatureTransformer):
+    def __init__(self, bigdl_type="float"):
+        super(MergeFeatureLabelFeatureTransformer, self).__init__(bigdl_type)
 
 
 class TFTrainingHelper(Layer):
@@ -941,10 +940,14 @@ class TFDataset:
         return TFTextDataset(text_set, tensor_structure, batch_size,
                              batch_per_thread, hard_code_batch_size,
                              validation_image_set)
+
     @staticmethod
     def from_bigdl_dataset(dataset, features, labels=None, batch_size=-1, batch_per_thread=-1,
-                       hard_code_batch_size=False, validation_dataset=None):
+                           hard_code_batch_size=False, validation_dataset=None):
         tensor_structure = TFDataset._to_tensor_structure(features, labels)
+
+        return TFBigdlDataset(dataset, tensor_structure, batch_size,
+                              batch_per_thread, hard_code_batch_size, validation_dataset)
 
 
 class TFBigdlDataset(TFDataset):
@@ -954,16 +957,14 @@ class TFBigdlDataset(TFDataset):
         super(TFBigdlDataset, self).__init__(tensor_structure, batch_size,
                                             batch_per_thread, hard_code_batch_size)
         self.dataset = dataset
-        self.validation_datset = validation_dataset
+        self.validation_dataset = validation_dataset
 
     def get_data(self):
-        return
+        return self.dataset.transform(MergeFeatureLabelFeatureTransformer())
 
     def get_validation_data(self):
-        if self.validation_text_set is not None:
-            return self.validation_text_set.get_samples().map(
-                lambda sample: Sample.from_jtensor(features=sample.features + sample.labels,
-                                                   labels=JTensor.from_ndarray(np.array([0.0]))))
+        if self.validation_dataset is not None:
+            return self.validation_dataset.transform(MergeFeatureLabelFeatureTransformer())
         return None
 
 
@@ -997,14 +998,16 @@ class TFImageDataset(TFDataset):
         self.image_set = image_set
         self.validation_image_set = validation_image_set
 
-
     def get_data(self):
-        return DataSet.image_frame(self.image_set.transform(MergeFeatureLabel()).to_image_frame())
+        return DataSet.image_frame(self.image_set
+                                   .transform(MergeFeatureLabelImagePreprocessing())
+                                   .to_image_frame())
 
     def get_validation_data(self):
         if self.validation_image_set is not None:
             return DataSet.image_frame(self.validation_image_set.
-                                       transform(MergeFeatureLabel()).to_image_frame())
+                                       transform(MergeFeatureLabelImagePreprocessing())
+                                       .to_image_frame())
         return None
 
 

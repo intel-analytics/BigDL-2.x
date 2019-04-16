@@ -116,7 +116,11 @@ class PythonZooNet[T: ClassTag](implicit ev: TensorNumeric[T]) extends PythonZoo
     new IdentityCriterion()
   }
 
-  def createMergeFeatureLabel(): MergeFeatureLabel = {
+  def createMergeFeatureLabelImagePreprocessing(): MergeFeatureLabel = {
+    new MergeFeatureLabel()
+  }
+
+  def createMergeFeatureLabelFeatureTransformer(): MergeFeatureLabel = {
     new MergeFeatureLabel()
   }
 

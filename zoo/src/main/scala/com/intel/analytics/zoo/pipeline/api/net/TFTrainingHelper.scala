@@ -260,8 +260,9 @@ class MergeFeatureLabel() extends ImageProcessing {
     val oldSample = feature[Sample[Float]](ImageFeature.sample)
     val newSize = oldSample.getFeatureSize() ++ oldSample.getLabelSize()
     val newSample = Sample(oldSample.getData(), newSize, null)
-    feature(ImageFeature.sample) = newSample
-    feature
+    val newFeature = new ImageFeature()
+    newFeature(ImageFeature.sample) = newSample
+    newFeature
   }
 }
 
