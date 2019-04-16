@@ -18,10 +18,10 @@ package com.intel.analytics.zoo.models.python
 
 import java.util.{List => JList, Map => JMap}
 
-import com.intel.analytics.bigdl.{Criterion, dataset}
+import com.intel.analytics.bigdl.{Criterion}
 import com.intel.analytics.bigdl.dataset.PaddingParam
 import com.intel.analytics.bigdl.nn.abstractnn.{AbstractModule, Activity}
-import com.intel.analytics.bigdl.nn.keras.{KerasLayer, KerasModel}
+import com.intel.analytics.bigdl.nn.keras.KerasLayer
 import com.intel.analytics.bigdl.optim.{OptimMethod, ValidationMethod, ValidationResult}
 import com.intel.analytics.bigdl.python.api.{EvaluatedResult, JTensor, Sample}
 import com.intel.analytics.bigdl.tensor.Tensor
@@ -42,11 +42,11 @@ import com.intel.analytics.zoo.models.recommendation._
 import com.intel.analytics.zoo.models.seq2seq.{RNNDecoder, RNNEncoder, Seq2seq}
 import com.intel.analytics.zoo.models.textclassification.TextClassifier
 import com.intel.analytics.zoo.models.textmatching.KNRM
-import com.intel.analytics.zoo.pipeline.api.keras.layers.{Embedding, Recurrent, WordEmbedding}
+import com.intel.analytics.zoo.pipeline.api.keras.layers.{Embedding, WordEmbedding}
 import com.intel.analytics.zoo.pipeline.api.keras.models.KerasNet
 import org.apache.spark.api.java.JavaRDD
 import org.apache.spark.rdd.RDD
-import org.apache.spark.sql.{DataFrame, SQLContext}
+import org.apache.spark.sql.{DataFrame}
 
 import scala.reflect.ClassTag
 import scala.collection.JavaConverters._

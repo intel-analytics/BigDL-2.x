@@ -16,16 +16,14 @@
 
 package com.intel.analytics.zoo.models.anomalydetection
 
-import com.intel.analytics.bigdl.Criterion
 import com.intel.analytics.bigdl.dataset.Sample
-import com.intel.analytics.bigdl.nn.abstractnn.{AbstractModule, Activity}
-import com.intel.analytics.bigdl.optim.{OptimMethod, ValidationMethod, ValidationResult}
+import com.intel.analytics.bigdl.nn.abstractnn.AbstractModule
 import com.intel.analytics.bigdl.tensor.Tensor
 import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric
 import com.intel.analytics.bigdl.utils.Shape
 import com.intel.analytics.zoo.models.common.{KerasZooModel, ZooModel}
 import com.intel.analytics.zoo.pipeline.api.keras.layers._
-import com.intel.analytics.zoo.pipeline.api.keras.models.{KerasNet, Sequential}
+import com.intel.analytics.zoo.pipeline.api.keras.models.Sequential
 import org.apache.spark.rdd.RDD
 
 import scala.reflect.ClassTag
