@@ -181,13 +181,6 @@ class InferenceModel(private var autoScalingEnabled: Boolean = true,
     )
   }
 
-  def doOptimizeTF(modelPath: String,
-                   modelType: String,
-                   pipelineConfigPath: String,
-                   extensionsConfigPath: String): Unit = {
-
-  }
-
   /**
    * loads a openvino IR
    *
@@ -375,5 +368,52 @@ class InferenceModel(private var autoScalingEnabled: Boolean = true,
 
   override def toString: String =
     s"InferenceModel($autoScalingEnabled, $concurrentNum, $originalModel, $modelQueue)"
+
+}
+
+object InferenceModel {
+  /**
+    * optimize TF model as OpenVINO IR
+    *
+    * @param modelPath              the path of the tensorflow model
+    * @param modelType              the type of the tensorflow model
+    * @param pipelineConfigPath     the path of the pipeline configure file
+    * @param extensionsConfigPath   the path of the extensions configure file
+    * @param outputDir              the output dir
+    */
+  def doOptimizeTF(modelPath: String,
+                   modelType: String,
+                   pipelineConfigPath: String,
+                   extensionsConfigPath: String,
+                   outputDir: String): Unit = {
+    OpenVinoInferenceSupportive.optimizeTFObjectDetectionModel(
+      modelPath, modelType, pipelineConfigPath, extensionsConfigPath, outputDir)
+  }
+
+  /**
+    * optimize TF model as OpenVINO IR
+    *
+    * @param modelPath              the path of the tensorflow model
+    * @param modelType              the type of the tensorflow model
+    * @param checkpointPath         the path of the tensorflow checkpoint file
+    * @param inputShape             the input shape
+    * @param ifReverseInputChannels the boolean value of if need reverse input channels
+    * @param meanValues             the mean values
+    * @param scale                  the scale value
+    * @param outputDir              the output dir
+    */
+  def doOptimizeTF(modelPath: String,
+                   modelType: String,
+                   checkpointPath: String,
+                   inputShape: Array[Int],
+                   ifReverseInputChannels: Boolean,
+                   meanValues: Array[Float],
+                   scale: Float,
+                   outputDir: String): Unit = {
+    OpenVinoInferenceSupportive.optimizeTFImageClassificationModel(
+      modelPath, modelType, checkpointPath, inputShape,
+      ifReverseInputChannels, meanValues, scale, outputDir)
+  }
+
 
 }

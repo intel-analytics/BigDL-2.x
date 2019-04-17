@@ -58,7 +58,8 @@ object OpenVinoInferenceSupportive extends InferenceSupportive {
     val ovtmpDir = Files.createTempDir()
     openvinoTempDirPath = ovtmpDir.getCanonicalPath
     optimizeObjectDetectionSHPath = s"$openvinoTempDirPath$optimizeObjectDetectionRelativePath"
-    optimizeImageClassificationSHPath = s"$openvinoTempDirPath$optimizeImageClassificationSHPath"
+    optimizeImageClassificationSHPath =
+      s"$openvinoTempDirPath$optimizeImageClassificationRelativePath"
     motfpyFilePath = s"$openvinoTempDirPath/model-optimizer/mo_tf.py"
 
     val OpenvinoNativeLoaderClass = (new OpenvinoNativeLoader()).getClass
@@ -94,7 +95,7 @@ object OpenVinoInferenceSupportive extends InferenceSupportive {
     s"ls -alh $openvinoTempDirPath" !;
   }
 
-  def optimizeTFObjectDetectionModel(modelPath: String,
+  def optimizeTFImageClassificationModel(modelPath: String,
                                      modelType: String,
                                      checkpointPath: String,
                                      inputShape: Array[Int],
@@ -134,6 +135,7 @@ object OpenVinoInferenceSupportive extends InferenceSupportive {
         case false => "0"
       }
       val meanValuesStr = meanValues.mkString("[", ",", "]")
+      val scaleStr = scale + ""
 
       val stdout = new StringBuilder
       val stderr = new StringBuilder
@@ -146,11 +148,11 @@ object OpenVinoInferenceSupportive extends InferenceSupportive {
           inputShapeStr,
           ifReverseInputChannelsStr,
           meanValuesStr,
-          scale,
+          scaleStr,
           outputPath,
           motfpyFilePath) ! log
       }
-      logger.info(s"tf object detection model optimized, log: \n" +
+      logger.info(s"tf image classification model optimized, log: \n" +
         s"stderr: $stderr \n" +
         s"stdout: $stdout \n" +
         s"exitCode: $exitCode\n -----")

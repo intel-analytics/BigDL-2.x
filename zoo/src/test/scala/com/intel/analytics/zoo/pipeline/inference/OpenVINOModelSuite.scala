@@ -65,6 +65,16 @@ class OpenVINOModelSuite extends FunSuite with Matchers with BeforeAndAfterAll
   var fasterrcnnInputdata1FilePath: String = _
   var fasterrcnnInputdata2FilePath: String = _
 
+  val resnet_v1_50_url = s"$modelZooUrl" + s"/models/resnet_v1_50_2016_08_28.tar.gz"
+  val resnet_v1_50_tar = resnet_v1_50_url.split("/").last
+  val resnet_v1_50_dir = resnet_v1_50_tar.replaceAll(".tar.gz", "")
+  val resnet_v1_50_modelType = "resnet_v1_50"
+  var resnet_v1_50_checkpointPath: String = _
+  val resnet_v1_50_inputShape = Array(4, 224, 224, 3)
+  val resnet_v1_50_ifReverseInputChannels = true
+  val resnet_v1_50_meanValues = Array(123.68f, 116.78f, 103.94f)
+  val resnet_v1_50_scale = 1.0f
+
   override def beforeAll() {
     tmpDir = Files.createTempDir()
     val dir = new File(s"${tmpDir.getAbsolutePath}/OpenVinoInferenceModelSpec").getCanonicalPath
@@ -72,9 +82,15 @@ class OpenVINOModelSuite extends FunSuite with Matchers with BeforeAndAfterAll
     s"wget -P $dir $url_ov_fasterrcnn_tests_inputdata1" !;
     s"wget -P $dir $url_ov_fasterrcnn_tests_inputdata2" !;
 
+    s"wget -P $dir $resnet_v1_50_url" !;
+    s"tar xvf $dir/$resnet_v1_50_tar -C $dir" !;
+    s"ls -alh $dir" !;
+
     s"wget -P $dir $fasterrcnnModelUrl" !;
     s"tar xvf $dir/$fasterrcnnModelTar -C $dir" !;
     s"ls -alh $dir" !;
+
+    resnet_v1_50_checkpointPath = s"$dir/resnet_v1_50.ckpt"
 
     faserrcnnFrozenModelFilePath = s"$dir/$fasterrcnnModelDir/frozen_inference_graph.pb"
     faserrcnnModelType = "faster_rcnn_resnet101_coco"
@@ -93,11 +109,34 @@ class OpenVINOModelSuite extends FunSuite with Matchers with BeforeAndAfterAll
       faserrcnnPipelineConfigFilePath,
       null
     )
+
+
   }
 
   override def afterAll() {
     FileUtils.deleteDirectory(tmpDir)
     fasterrcnnModel.release()
+  }
+
+  test("openvino model should optimized") {
+    InferenceModel.doOptimizeTF(
+      faserrcnnFrozenModelFilePath,
+      faserrcnnModelType,
+      faserrcnnPipelineConfigFilePath,
+      null,
+      tmpDir.getAbsolutePath
+    )
+    InferenceModel.doOptimizeTF(
+      null,
+      resnet_v1_50_modelType,
+      resnet_v1_50_checkpointPath,
+      resnet_v1_50_inputShape,
+      resnet_v1_50_ifReverseInputChannels,
+      resnet_v1_50_meanValues,
+      resnet_v1_50_scale,
+      tmpDir.getAbsolutePath
+    )
+    tmpDir.listFiles().foreach(file => println(file.getAbsoluteFile))
   }
 
   test("openvino model should throw exception if load failed") {
