@@ -84,6 +84,17 @@ class OpenVINOIRSpec extends FunSuite with Matchers with BeforeAndAfterAll
   }
 
 
+  test("openvino model should throw exception if load failed") {
+    val thrown = intercept[InferenceRuntimeException] {
+      InferenceModelFactory.loadOpenVINOModelForIR(
+        resnetModelFilePath + "error",
+        resnetWeightFilePath,
+        resnetDeviceType
+      )
+    }
+    assert(thrown.getMessage.contains("xml"))
+  }
+
   test("openvino model should load successfully") {
     println(s"resnetModel from IR loaded as $resnetModel")
     resnetModel shouldNot be(null)
