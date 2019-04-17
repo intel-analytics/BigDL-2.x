@@ -247,7 +247,5 @@ class TestSimpleIntegration(ZooTestCase):
                       metrics=['accuracy', 'loss'])
         model.fit(X_train, y_train, validation_data=(X_test, y_test))
 
-
-
 if __name__ == "__main__":
     pytest.main([__file__])
