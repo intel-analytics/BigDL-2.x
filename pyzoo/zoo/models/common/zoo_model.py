@@ -100,8 +100,9 @@ class KerasZooModel(ZooModel):
     def compile(self, optimizer, loss, metrics=None):
         self.model.compile(optimizer, loss, metrics=None)
 
-    def fit(self, x, y=None, batch_size=32, nb_epoch=10, validation_data=None, distributed=True):
-        self.model.fit(x, y, batch_size, nb_epoch, validation_data, distributed)
+    def fit(self, x, y=None, batch_size=32, nb_epoch=10,
+            validation_split=0, validation_data=None, distributed=True):
+        self.model.fit(x, y, batch_size, nb_epoch, validation_split, validation_data, distributed)
 
     def set_checkpoint(self, path, over_write=True):
         self.model.set_checkpoint(path, over_write)
