@@ -415,5 +415,27 @@ object InferenceModel {
       ifReverseInputChannels, meanValues, scale, outputDir)
   }
 
+  /**
+   * calibrate tensorflow model
+   *
+   * @param networkType          Type of an inferred network,
+   *                             "C" to calibrate Classification,
+   *                             "OD" to calibrate Object Detection,
+   *                             "RawC" to collect only statistics for Classification,
+   *                             "RawOD" to collect only statistics for Object Detection
+   * @param modelPath            Path to an .xml file with a trained model
+   * @param validationFilePath   Path to a directory with validation images
+   * @param subset               Number of pictures from the whole validation set
+   *                             to create the calibration dataset.
+   * @param outputDir            the output directory
+   */
+  def doCalibrateTF(networkType: String,
+                    modelPath: String,
+                    validationFilePath: String,
+                    subset: Int,
+                    outputDir: String): Unit = {
+    OpenVinoInferenceSupportive.calibrateTensorflowModel(
+      networkType, modelPath, validationFilePath, subset, outputDir)
+  }
 
 }

@@ -49,10 +49,13 @@ object OpenVinoInferenceSupportive extends InferenceSupportive {
 
   val optimizeObjectDetectionRelativePath = "/zoo-optimize-model-tf-object-detection.sh"
   val optimizeImageClassificationRelativePath = "/zoo-optimize-model-tf-image-classification.sh"
+  val calibrateRelativePath = "/zoo-calibrate-model.sh"
   var openvinoTempDirPath: String = _
   var optimizeObjectDetectionSHPath: String = _
   var optimizeImageClassificationSHPath: String = _
   var motfpyFilePath: String = _
+  var calibrateSHPath: String = _
+  var calibrationToolPath: String = _
 
   timing("prepare openvino scripts") {
     val ovtmpDir = Files.createTempDir()
@@ -61,6 +64,8 @@ object OpenVinoInferenceSupportive extends InferenceSupportive {
     optimizeImageClassificationSHPath =
       s"$openvinoTempDirPath$optimizeImageClassificationRelativePath"
     motfpyFilePath = s"$openvinoTempDirPath/model-optimizer/mo_tf.py"
+    calibrateSHPath = s"$openvinoTempDirPath$calibrateRelativePath"
+    calibrationToolPath = s"$openvinoTempDirPath/inference-engine-bin/calibration_tool"
 
     val OpenvinoNativeLoaderClass = (new OpenvinoNativeLoader()).getClass
 
@@ -71,6 +76,10 @@ object OpenVinoInferenceSupportive extends InferenceSupportive {
     val optimizeTFICPath = optimizeImageClassificationRelativePath
     val optimizeTFICInputStream = OpenvinoNativeLoaderClass.getResourceAsStream(optimizeTFICPath)
     writeFile(optimizeTFICInputStream, openvinoTempDirPath, optimizeTFICPath)
+
+    val calibrateTFPath = calibrateRelativePath
+    val calibrateTFInputStream = OpenvinoNativeLoaderClass.getResourceAsStream(calibrateTFPath)
+    writeFile(calibrateTFInputStream, openvinoTempDirPath, calibrateTFPath)
 
     val moTarPath = "/model-optimizer.tar.gz"
     val moTarInputStream = OpenvinoNativeLoaderClass.getResourceAsStream(moTarPath)
@@ -140,7 +149,7 @@ object OpenVinoInferenceSupportive extends InferenceSupportive {
       val stdout = new StringBuilder
       val stderr = new StringBuilder
       val log = ProcessLogger(stdout append _ + "\n", stderr append _ + "\n")
-      val exitCode = timing("optimize tf image classification model") {
+      val exitCode = timing("optimize tf image classification model execution") {
         Seq("sh",
           optimizeImageClassificationSHPath,
           actualModelPath,
@@ -214,7 +223,7 @@ object OpenVinoInferenceSupportive extends InferenceSupportive {
       val stdout = new StringBuilder
       val stderr = new StringBuilder
       val log = ProcessLogger(stdout append _ + "\n", stderr append _ + "\n")
-      val exitCode = timing("optimize tf object detection model") {
+      val exitCode = timing("optimize tf object detection model execution") {
         Seq("sh",
           optimizeObjectDetectionSHPath,
           modelPath,
@@ -222,6 +231,40 @@ object OpenVinoInferenceSupportive extends InferenceSupportive {
           actualExtensionsConfigPath,
           outputPath,
           motfpyFilePath) ! log
+      }
+      logger.info(s"tf object detection model optimized, log: \n" +
+        s"stderr: $stderr \n" +
+        s"stdout: $stdout \n" +
+        s"exitCode: $exitCode\n -----")
+      exitCode match {
+        case 0 => logger.info(s"tf object detection model optimization succeeded")
+        case _ =>
+          val message = stderr.toString().split("\n").filter(_ contains ("ERROR")).mkString(",")
+          throw
+            new InferenceRuntimeException(s"Openvino optimize tf object detection model error: " +
+              s"$exitCode, $message")
+      }
+    }
+  }
+
+  def calibrateTensorflowModel(networkType: String,
+                               modelPath: String,
+                               validationFilePath: String,
+                               subset: Int,
+                               outputDir: String): Unit = {
+    timing("calibrate tf model") {
+      val outputPath: String = outputDir
+      val stdout = new StringBuilder
+      val stderr = new StringBuilder
+      val log = ProcessLogger(stdout append _ + "\n", stderr append _ + "\n")
+      val exitCode = timing("calibrate tf model execution") {
+        Seq("sh",
+          calibrateSHPath,
+          networkType,
+          validationFilePath,
+          subset + "",
+          outputPath,
+          calibrationToolPath) ! log
       }
       logger.info(s"tf object detection model optimized, log: \n" +
         s"stderr: $stderr \n" +
