@@ -373,14 +373,14 @@ class InferenceModel(private var autoScalingEnabled: Boolean = true,
 
 object InferenceModel {
   /**
-    * optimize TF model as OpenVINO IR
-    *
-    * @param modelPath              the path of the tensorflow model
-    * @param modelType              the type of the tensorflow model
-    * @param pipelineConfigPath     the path of the pipeline configure file
-    * @param extensionsConfigPath   the path of the extensions configure file
-    * @param outputDir              the output dir
-    */
+   * optimize TF model as OpenVINO IR
+   *
+   * @param modelPath              the path of the tensorflow model
+   * @param modelType              the type of the tensorflow model
+   * @param pipelineConfigPath     the path of the pipeline configure file
+   * @param extensionsConfigPath   the path of the extensions configure file
+   * @param outputDir              the output dir
+   */
   def doOptimizeTF(modelPath: String,
                    modelType: String,
                    pipelineConfigPath: String,
@@ -391,17 +391,17 @@ object InferenceModel {
   }
 
   /**
-    * optimize TF model as OpenVINO IR
-    *
-    * @param modelPath              the path of the tensorflow model
-    * @param modelType              the type of the tensorflow model
-    * @param checkpointPath         the path of the tensorflow checkpoint file
-    * @param inputShape             the input shape
-    * @param ifReverseInputChannels the boolean value of if need reverse input channels
-    * @param meanValues             the mean values
-    * @param scale                  the scale value
-    * @param outputDir              the output dir
-    */
+   * optimize TF model as OpenVINO IR
+   *
+   * @param modelPath              the path of the tensorflow model
+   * @param modelType              the type of the tensorflow model
+   * @param checkpointPath         the path of the tensorflow checkpoint file
+   * @param inputShape             the input shape
+   * @param ifReverseInputChannels the boolean value of if need reverse input channels
+   * @param meanValues             the mean values
+   * @param scale                  the scale value
+   * @param outputDir              the output dir
+   */
   def doOptimizeTF(modelPath: String,
                    modelType: String,
                    checkpointPath: String,
