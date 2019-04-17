@@ -35,6 +35,7 @@ from bigdl.util.common import to_list, callBigDlFunc, \
     JavaValue, get_node_and_core_number
 from zoo.common import Sample, JTensor
 from zoo.common.nncontext import getOrCreateSparkContext
+from zoo.feature.common import FeatureSet
 from zoo.feature.image import ImageSet, ImagePreprocessing
 from zoo.pipeline.api.keras.engine.topology import ZooKerasLayer, KerasNet, to_bigdl_metric
 from bigdl.optim.optimizer import EveryEpoch, MaxEpoch, Optimizer
@@ -532,7 +533,7 @@ with variable_creator_scope():
 
         batch_size = self.dataset.batch_size
 
-        sample_rdd = self.dataset.get_data()
+        sample_rdd = self.dataset.get_training_data()
 
         if val_outputs is not None and val_labels is not None:
             val_rdd = self.dataset.get_validation_data()
@@ -613,12 +614,12 @@ with variable_creator_scope():
         sess = K.get_session()
         optim_method = TFOptimizer.to_bigdl_optim_method(keras_optimizer)
 
-        if keras_model.metrics and (dataset.val_rdd is not None or val_spilt != 0.0):
+        if keras_model.metrics and (dataset.get_validation_data() is not None or val_spilt != 0.0):
             if isinstance(keras_model.metrics, dict):
                 raise ValueError(
                     "different metrics for different outputs are not supported right now")
 
-            if dataset.val_rdd is None and val_spilt == 0.0:
+            if dataset.get_validation_data() is None and val_spilt == 0.0:
                 raise ValueError("Validation data is not specified. Please set " +
                                  "val_rdd in TFDataset, or set val_split larger than zero")
             bigdl_val_methods = \
@@ -909,10 +910,19 @@ class TFDataset:
             tensor_structure = (feature_structure,)
         return tensor_structure
 
-    def get_data(self):
+    def get_prediction_data(self):
+        raise NotImplementedError
+
+    def get_evaluation_data(self):
+        raise NotImplementedError
+
+    def get_training_data(self):
         raise NotImplementedError
 
     def get_validation_data(self):
+        raise NotImplementedError
+
+    def get_num_partitions(self):
         raise NotImplementedError
 
     @staticmethod
@@ -942,30 +952,39 @@ class TFDataset:
                              validation_image_set)
 
     @staticmethod
-    def from_bigdl_dataset(dataset, features, labels=None, batch_size=-1, batch_per_thread=-1,
+    def from_feature_set(dataset, features, labels=None, batch_size=-1, batch_per_thread=-1,
                            hard_code_batch_size=False, validation_dataset=None):
         tensor_structure = TFDataset._to_tensor_structure(features, labels)
 
-        return TFBigdlDataset(dataset, tensor_structure, batch_size,
+        return TFFeatureDataset(dataset, tensor_structure, batch_size,
                               batch_per_thread, hard_code_batch_size, validation_dataset)
 
 
-class TFBigdlDataset(TFDataset):
+class TFFeatureDataset(TFDataset):
 
     def __init__(self, dataset, tensor_structure, batch_size,
                  batch_per_thread, hard_code_batch_size=False, validation_dataset=None):
-        super(TFBigdlDataset, self).__init__(tensor_structure, batch_size,
+        super(TFFeatureDataset, self).__init__(tensor_structure, batch_size,
                                             batch_per_thread, hard_code_batch_size)
         self.dataset = dataset
         self.validation_dataset = validation_dataset
 
-    def get_data(self):
+    def get_prediction_data(self):
+        return ImageSet.from_image_frame(self.dataset.get_image_frame())
+
+    def get_evaluation_data(self):
+        return self.dataset.get_image_frame()
+
+    def get_training_data(self):
         return self.dataset.transform(MergeFeatureLabelFeatureTransformer())
 
     def get_validation_data(self):
         if self.validation_dataset is not None:
             return self.validation_dataset.transform(MergeFeatureLabelFeatureTransformer())
         return None
+
+    def get_num_partitions(self):
+        return callBigDlFunc("float", "getNumPartitions", self.dataset)
 
 
 class TFTextDataset(TFDataset):
@@ -977,7 +996,15 @@ class TFTextDataset(TFDataset):
         self.text_set = text_set
         self.validation_text_set = validation_text_set
 
-    def get_data(self):
+    def get_prediction_data(self):
+        return self.text_set.get_samples().map(
+            lambda sample: Sample.from_jtensor(features=sample.features,
+                                               labels=JTensor.from_ndarray(np.array([0.0]))))
+
+    def get_evaluation_data(self):
+        return self.text_set.get_samples()
+
+    def get_training_data(self):
         return self.text_set.get_samples().map(
             lambda sample: Sample.from_jtensor(features=sample.features + sample.labels,
                                                labels=JTensor.from_ndarray(np.array([0.0]))))
@@ -989,6 +1016,9 @@ class TFTextDataset(TFDataset):
                                                    labels=JTensor.from_ndarray(np.array([0.0]))))
         return None
 
+    def get_num_partitions(self):
+        return self.text_set.get_samples().getNumPartitions()
+
 
 class TFImageDataset(TFDataset):
     def __init__(self, image_set, tensor_structure, batch_size,
@@ -998,7 +1028,13 @@ class TFImageDataset(TFDataset):
         self.image_set = image_set
         self.validation_image_set = validation_image_set
 
-    def get_data(self):
+    def get_prediction_data(self):
+        return self.image_set
+
+    def get_evaluation_data(self):
+        return self.image_set.to_image_frame()
+
+    def get_training_data(self):
         return DataSet.image_frame(self.image_set
                                    .transform(MergeFeatureLabelImagePreprocessing())
                                    .to_image_frame())
@@ -1009,6 +1045,9 @@ class TFImageDataset(TFDataset):
                                        transform(MergeFeatureLabelImagePreprocessing())
                                        .to_image_frame())
         return None
+
+    def get_num_partitions(self):
+        return self.image_set.get_image().getNumPartitions()
 
 
 class TFNdarrayDataset(TFDataset):
@@ -1028,13 +1067,25 @@ class TFNdarrayDataset(TFDataset):
         self.val_rdd = val_rdd
         self.rdd = rdd
 
-    def get_data(self):
+    def get_prediction_data(self):
+        data = self.rdd.map(lambda t: Sample.from_ndarray(nest.flatten(t[0] if isinstance(t, tuple) else t), np.array([0.0])))
+        return FeatureSet.rdd(data)
+
+    def get_evaluation_data(self):
+        if isinstance(self.tensor_structure, tuple):
+            return self.rdd.map(lambda t: Sample.from_ndarray(nest.flatten(t[0]), nest.flatten(t[1])))
+        return self.rdd.map(lambda t: Sample.from_ndarray(nest.flatten(t), np.array([0.0])))
+
+    def get_training_data(self):
         return self.rdd.map(lambda t: Sample.from_ndarray(nest.flatten(t), np.array([0.0])))
 
     def get_validation_data(self):
         if self.val_rdd is not None:
             return self.val_rdd.map(lambda t: Sample.from_ndarray(nest.flatten(t), np.array([0.0])))
         return None
+
+    def get_num_partitions(self):
+        return self.rdd.getNumPartitions()
 
     @staticmethod
     def from_rdd(rdd, names=None, shapes=None, types=None,
@@ -1226,7 +1277,5 @@ class TFPredictor:
         return cls(sess, outputs, inputs, dataset)
 
     def predict(self):
-        rdd = self.dataset.rdd
-        sample_rdd = rdd.map(lambda x: Sample.from_ndarray(x, np.array([0.0])))
 
-        return self.tfnet.predict(sample_rdd, self.dataset.batch_per_thread)
+        return self.tfnet.predict(self.dataset.get_prediction_data(), self.dataset.batch_per_thread)

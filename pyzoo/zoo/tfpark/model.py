@@ -19,7 +19,8 @@ from tensorflow.python.keras.engine import training_utils
 from tensorflow.python.keras import models
 
 from zoo.common.nncontext import getOrCreateSparkContext
-from zoo.pipeline.api.net import TFDataset, TFOptimizer, TFPredictor
+from zoo.pipeline.api.keras.utils import to_bigdl_metric, to_bigdl_criterion
+from zoo.pipeline.api.net import TFDataset, TFOptimizer, TFPredictor, TFNdarrayDataset, TFNet
 import tensorflow.keras.backend as K
 import tensorflow as tf
 import numpy as np
@@ -93,7 +94,8 @@ class KerasModel(object):
             if not x.has_batch:
                 raise ValueError("The batch_size of TFDataset must be " +
                                  "specified when used in KerasModel fit.")
-            x = _standarize_feature_label_dataset(x, self.model)
+            if isinstance(x, TFNdarrayDataset):
+                x = _standarize_feature_label_dataset(x, self.model)
             self._fit_distributed(x, validation_split, epochs, **kwargs)
 
         elif distributed:
@@ -149,7 +151,8 @@ class KerasModel(object):
             if not x.has_batch:
                 raise ValueError("The batch_per_thread of TFDataset must be " +
                                  "specified when used in KerasModel evaluate.")
-            x = _standarize_feature_label_dataset(x, self.model)
+            if isinstance(x, TFNdarrayDataset):
+                x = _standarize_feature_label_dataset(x, self.model)
             # todo check arguments
             return self._evaluate_distributed(x)
         else:
@@ -173,21 +176,24 @@ class KerasModel(object):
                                            batch_size=batch_per_thread)
 
     def _evaluate_distributed(self, dataset):
-        predictor = TFPredictor(K.get_session(), self.metrics_tensors,
-                                self.model.inputs + self.model.targets, dataset)
-        result = predictor.predict()
 
-        def elem_sum(arr1, arr2):
-            result = []
-            for i in range(len(arr1)):
-                result.append(arr1[i] + arr2[i])
-            return result
+        tfnet = TFNet.from_session(K.get_session(),
+                                   inputs=self.model.inputs,
+                                   outputs=self.model.outputs)
 
-        metrics_sum = result.map(lambda x: x + [np.array(1.0)]).reduce(lambda a, b: elem_sum(a, b))
-        length = len(metrics_sum) - 1
-        for i in range(length):
-            metrics_sum[i] /= metrics_sum[length]
-        return metrics_sum[:length]
+        data = dataset.get_evaluation_data()
+
+        if dataset.batch_per_thread < 0:
+            batch_size = dataset.batch_size
+        else:
+            batch_size = dataset.batch_per_thread * dataset.get_num_partitions()
+
+        eval_methods = [to_bigdl_metric(m, self.model.loss) for m in self.metrics_names if m != "loss"]
+
+        results = tfnet.evaluate(data, batch_size, eval_methods)
+        final_result = [r.result for r in results]
+
+        return final_result
 
     def predict(self,
                 x,
@@ -199,7 +205,8 @@ class KerasModel(object):
             if not x.has_batch:
                 raise ValueError("The batch_per_thread of TFDataset" +
                                  " must be specified when used in KerasModel predict.")
-            x = _standarize_feature_dataset(x, self.model)
+            if isinstance(x, TFNdarrayDataset):
+                x = _standarize_feature_dataset(x, self.model)
             return self._predict_distributed(x)
         else:
             if distributed:
@@ -284,8 +291,8 @@ def _standarize_feature_label_dataset(dataset, model):
     else:
         val_rdd = None
     tensor_structure = _training_reorder(dataset.tensor_structure, input_names, output_names)
-    new_dataset = TFDataset(rdd, tensor_structure, dataset.batch_size,
-                            -1, dataset.hard_code_batch_size, val_rdd)
+    new_dataset = TFNdarrayDataset(rdd, tensor_structure, dataset.batch_size,
+                                   -1, dataset.hard_code_batch_size, val_rdd)
     new_dataset.batch_per_thread = dataset.batch_per_thread
     return new_dataset
 
@@ -304,8 +311,8 @@ def _standarize_feature_dataset(dataset, model):
     rdd = dataset.rdd.map(lambda sample: _reorder(sample, input_names))
     feature_schema = _reorder(dataset.tensor_structure[0], input_names)
 
-    dataset = TFDataset(rdd, feature_schema, dataset.batch_size,
-                        -1, dataset.hard_code_batch_size)
+    dataset = TFNdarrayDataset(rdd, feature_schema, dataset.batch_size,
+                               -1, dataset.hard_code_batch_size)
     return dataset
 
 

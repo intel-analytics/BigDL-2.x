@@ -15,10 +15,13 @@
 #
 import pytest
 
+from zoo.feature.common import ChainedPreprocessing
+from zoo.feature.image import *
 from zoo.pipeline.api.net import TFOptimizer
 from test.zoo.pipeline.utils.test_utils import ZooTestCase
 import tensorflow as tf
 import numpy as np
+import os
 
 from zoo.tfpark import KerasModel, TFDataset
 
@@ -371,6 +374,65 @@ class TestTFParkModel(ZooTestCase):
                        "The batch_per_thread of TFDataset must be" +
                        " specified when used in KerasModel predict.")
 
+
+    def create_image_model(self):
+
+        data = tf.keras.layers.Input(shape=[224, 224, 3])
+        x = tf.keras.layers.Flatten()(data)
+        predictions = tf.keras.layers.Dense(10, activation='softmax')(x)
+
+        model = tf.keras.models.Model(inputs=data, outputs=predictions)
+        model.compile(optimizer='rmsprop',
+                      loss='sparse_categorical_crossentropy',
+                      metrics=['accuracy'])
+
+        return KerasModel(model)
+
+    def create_image_set(self, with_label):
+        resource_path = os.path.join(os.path.split(__file__)[0], "../resources")
+        if with_label:
+            image_folder = os.path.join(resource_path, "cat_dog")
+        else:
+            image_folder = os.path.join(resource_path, "cat_dog/*")
+        image_set = ImageSet.read(image_folder, with_label=with_label, sc=get_spark_context(),
+                                  one_based_label=False)
+        transformer = ChainedPreprocessing([ImageResize(256, 256),
+                                            ImageRandomCrop(224, 224, True),
+                                            ImageMatToTensor(format="NHWC"),
+                                            ImageSetToSample(input_keys=["imageTensor"],
+                                                             target_keys=["label"]
+                                                             if with_label else None)])
+        image_set = image_set.transform(transformer)
+        return image_set
+
+    def test_training_for_imageset(self):
+
+        model = self.create_image_model()
+        image_set = self.create_image_set(with_label=True)
+        training_dataset = TFDataset.from_image_set(image_set,
+                                                    image=(tf.float32, [224, 224, 3]),
+                                                    label=(tf.int32, [1]),
+                                                    batch_size=4)
+        model.fit(training_dataset)
+
+    def test_evaluation_for_imageset(self):
+
+        model = self.create_image_model()
+        image_set = self.create_image_set(with_label=True)
+        eval_dataset = TFDataset.from_image_set(image_set,
+                                                image=(tf.float32, [224, 224, 3]),
+                                                label=(tf.int32, [1]),
+                                                batch_per_thread=1)
+
+        model.evaluate(eval_dataset)
+
+    def test_predict_for_imageset(self):
+        model = self.create_image_model()
+        image_set = self.create_image_set(with_label=False)
+
+        predict_dataset = TFDataset.from_image_set(image_set, image=(tf.float32, [224, 224, 3]), batch_per_thread=1)
+        results = model.predict(predict_dataset).get_predict().collect()
+        assert all(r[1] is not None for r in results)
 
 if __name__ == "__main__":
     pytest.main([__file__])
