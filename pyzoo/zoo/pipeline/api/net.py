@@ -970,10 +970,10 @@ class TFFeatureDataset(TFDataset):
         self.validation_dataset = validation_dataset
 
     def get_prediction_data(self):
-        return ImageSet.from_image_frame(self.dataset.get_image_frame())
+        raise Exception("TFFeatureDataset is only supported in training")
 
     def get_evaluation_data(self):
-        return self.dataset.get_image_frame()
+        raise Exception("TFFeatureDataset is only supported in training")
 
     def get_training_data(self):
         return self.dataset.transform(MergeFeatureLabelFeatureTransformer())
@@ -982,9 +982,6 @@ class TFFeatureDataset(TFDataset):
         if self.validation_dataset is not None:
             return self.validation_dataset.transform(MergeFeatureLabelFeatureTransformer())
         return None
-
-    def get_num_partitions(self):
-        return callBigDlFunc("float", "getNumPartitions", self.dataset)
 
 
 class TFTextDataset(TFDataset):
