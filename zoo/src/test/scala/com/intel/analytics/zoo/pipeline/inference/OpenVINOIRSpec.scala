@@ -103,7 +103,7 @@ class OpenVINOIRSpec extends FunSuite with Matchers with BeforeAndAfterAll
   }
 
 
-  test("OpenVinoModel should predict dummy tensor correctly") {
+  /*test("OpenVinoModel should predict dummy tensor correctly") {
     val arrayInputs = new util.ArrayList[util.List[JTensor]]()
     for (_ <- 1 to Batch) {
 
@@ -127,7 +127,7 @@ class OpenVINOIRSpec extends FunSuite with Matchers with BeforeAndAfterAll
     })
     threads2.foreach(_.start())
     threads2.foreach(_.join())
-  }
+  }*/
 
   test("OpenVinoModel should predict correctly") {
     val indata1 = Source.fromFile(resnetInputdata1FilePath).getLines().map(_.toFloat).toArray
@@ -153,7 +153,7 @@ class OpenVINOIRSpec extends FunSuite with Matchers with BeforeAndAfterAll
     val results2 = resnetInferenceModel.doPredict(inputs)
     
 
-    val threads2 = List.range(0, 5).map(i => {
+    val threads2 = List.range(0, 5).map(_ => {
       new Thread() {
         override def run(): Unit = {
           val results = resnetInferenceModel.doPredict(inputs)
