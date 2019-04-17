@@ -74,12 +74,13 @@ class ImageSet(JavaValue):
                By default is Imgcodecs.CV_LOAD_IMAGE_UNCHANGED(-1)
         :param with_label whether to treat folders in the path as image classification labels
                and read the labels into ImageSet.
-        :param one_based_label whether to use one based label 
+        :param one_based_label whether to use one based label
         :return ImageSet
         """
         return ImageSet(jvalue=callBigDlFunc(bigdl_type, "readImageSet", path,
                                              sc, min_partitions, resize_height,
-                                             resize_width, image_codec, with_label, one_based_label))
+                                             resize_width, image_codec, with_label,
+                                             one_based_label))
 
     @classmethod
     def from_image_frame(cls, image_frame, bigdl_type="float"):

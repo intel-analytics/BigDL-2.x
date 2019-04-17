@@ -169,7 +169,7 @@ class Test_Image_Set():
                                   with_label=True, one_based_label=True)
         label_map = image_set.label_map
         for k in label_map:
-            assert label_map[k] > 0.0  and label_map[k] <= 4.0
+            assert label_map[k] > 0.0 and label_map[k] <= 4.0
 
         for label in image_set.get_label().collect():
             assert label > 0.0 and label <= 4.0
