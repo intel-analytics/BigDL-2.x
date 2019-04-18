@@ -17,13 +17,14 @@
 package com.intel.analytics.zoo.pipeline.api.keras.layers
 
 import com.intel.analytics.bigdl.nn.RandomNormal
-import com.intel.analytics.bigdl.nn.abstractnn.Activity
+import com.intel.analytics.bigdl.nn.abstractnn.{AbstractModule, Activity}
 import com.intel.analytics.bigdl.nn.keras.KerasLayer
 import com.intel.analytics.bigdl.tensor.Tensor
 import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric
 import com.intel.analytics.bigdl.utils.{MultiShape, Shape}
 import com.intel.analytics.zoo.pipeline.api.Net
 import com.intel.analytics.zoo.pipeline.api.autograd.{Parameter, Variable}
+import com.intel.analytics.zoo.pipeline.api.keras.layers.internal.InternalERF
 import com.intel.analytics.zoo.pipeline.api.keras.layers.utils.KerasUtils
 import com.intel.analytics.zoo.pipeline.api.keras.models.Model
 
@@ -66,6 +67,13 @@ class BERT[T: ClassTag] (
 
   override def projectionLayer(outputSize: Int): Net = {
     new Dense(outputSize, init = RandomNormal(0.0, initializerRange))
+  }
+
+  override def gelu(x: Variable[T]): Variable[T] = {
+    val y = x / math.sqrt(2.0)
+    val e = new KerasLayerWrapper[T](new InternalERF[T]()
+      .asInstanceOf[AbstractModule[Activity, Activity, T]]).from(y)
+    x * 0.5 * (e + 1.0)
   }
 
   override def buildInput(inputShape: Shape):
