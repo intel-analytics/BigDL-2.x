@@ -68,5 +68,4 @@ object TextClassificationStreaming {
     env.execute("Socket Window TextClassificationStreaming")
   }
 
-
 }
