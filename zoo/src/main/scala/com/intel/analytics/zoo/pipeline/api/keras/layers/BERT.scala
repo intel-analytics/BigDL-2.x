@@ -27,7 +27,6 @@ import com.intel.analytics.bigdl.utils.serializer.converters.DataConverter
 import com.intel.analytics.bigdl.utils.{MultiShape, Shape}
 import com.intel.analytics.zoo.pipeline.api.Net
 import com.intel.analytics.zoo.pipeline.api.autograd.{Parameter, Variable}
-import com.intel.analytics.zoo.pipeline.api.keras.layers.internal.InternalERF
 import com.intel.analytics.zoo.pipeline.api.keras.layers.utils.{GraphRef, KerasUtils}
 import com.intel.analytics.zoo.pipeline.api.keras.models.Model
 import com.intel.analytics.zoo.pipeline.api.keras.models.Model.{apply => _, _}
@@ -76,13 +75,6 @@ class BERT[T: ClassTag] (
 
   override def projectionLayer(outputSize: Int): Net = {
     new Dense(outputSize, init = RandomNormal(0.0, initializerRange))
-  }
-
-  override def gelu(x: Variable[T]): Variable[T] = {
-    val y = x / math.sqrt(2.0)
-    val e = new KerasLayerWrapper[T](new InternalERF[T]()
-      .asInstanceOf[AbstractModule[Activity, Activity, T]]).from(y)
-    x * 0.5 * (e + 1.0)
   }
 
   override def buildInput(inputShape: Shape):
