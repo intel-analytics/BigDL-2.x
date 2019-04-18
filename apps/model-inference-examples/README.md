@@ -11,8 +11,7 @@ In this directory, there are several projects
 
 1. `text-classification-training` is the utility project(written in Scala). It includes procedures of preprocessing and training.
 2. `text-classification-inference` is the web application sample project(written in Java). It loads the model and does the prediction.
-3. `model-inference-spark` is the model inference in batch and streaming with sprak.
-4. `model-inference-flink` is the model inference in batch and streaming with flink.
+3. `model-inference-flink` is the model inference in batch and streaming with flink.
 
 To run this sample, please follow the steps below.
 
@@ -40,7 +39,7 @@ The data folder structure after extraction should look like the following:
 	    ├── 20news-18828
 	    └── glove.6B
 
-### Training the Model
+### Training the Model in text-classification-training
 To prepare the model, you need to import the `text-classification-training` project. After the maven dependencies are successfully downloaded, set the environment variable as follow, this can be done by editing the run/debug configurations:
 
     VM options: -Xmx20g
@@ -50,7 +49,7 @@ Note that the batch size must be the multiple of the system core number. You can
 
 After the training is done, the model will be saved into the directory you set. Go back to the root directory of `text-classification-training` and execute the `mvn clean install` command, which prepares the jar file for `text-classification-inference`.
 
-### Run Application
+### Run Simple Java or Web Service examples in text-classification-training 
 In `text-classification-inference`, there are two ways to run the application: `SimpleDriver.java` and `WebServiceDriver.java`.
 
 In the first place, you need to edit the run/debug configurations as below:
@@ -60,3 +59,6 @@ In the first place, you need to edit the run/debug configurations as below:
 For `SimpleDriver.java`, simply running it can get the prediction result in the terminal.
 
 For `WebServiceDriver.java`, running it will start the web service application. To see the output, you can use tools such as `Postman` to send a POST request whose body contains an article text to the server's url followed with directory "/predict", (eg: localhost:8080/predict). Then the application will respond with the prediction result.
+
+### Run flink examples in model-inference-flink
+
