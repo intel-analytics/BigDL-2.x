@@ -661,9 +661,6 @@ object Model extends KerasLayerSerializable {
   ModuleSerializer.registerModule(
     "com.intel.analytics.zoo.pipeline.api.keras.models.Model",
     Model)
-//  ModuleSerializer.registerModule(
-//    "com.intel.analytics.zoo.pipeline.api.autograd.InternalParameter",
-//    InternalParameter)
 
   /**
    * Build a multiple-input, multiple-output graph container.
