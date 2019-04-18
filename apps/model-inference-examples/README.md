@@ -61,4 +61,21 @@ For `SimpleDriver.java`, simply running it can get the prediction result in the 
 For `WebServiceDriver.java`, running it will start the web service application. To see the output, you can use tools such as `Postman` to send a POST request whose body contains an article text to the server's url followed with directory "/predict", (eg: localhost:8080/predict). Then the application will respond with the prediction result.
 
 ### Run flink examples in model-inference-flink
+#### Run on Flink Cluster
+1. you may start a flink cluster if there is no runing one
+
+    ./path/to/your/flink-1.7.2/bin/start-cluster.sh
+
+2. start a socket to pass words
+
+    nc -l 9000
+
+3. build your flink job package and start the flink job for text classification model inference
+
+    mvn clean package
+    ./path/to/your/flink-1.7.2/bin/flink run ./path/to/your/analytics-zoo/apps/model-inference-examples/model-inference-flink/target/model-inference-flink-0.1.0-SNAPSHOT-jar-with-dependencies.jar --port 9000 --embeddingFilePath ./path/to/your/data/glove/glove.6B.100d.txt --modelPath ./path/to/your/models/text-classification.bigdl
+
+4. tests with echo word in nc -l 9000 console and check the output with
+
+    tail -f ./path/to/your/flink-1.7.2/log/flink-*-taskexecutor-*.out
 
