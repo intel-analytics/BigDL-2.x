@@ -19,7 +19,7 @@ object convertBert {
     val intermediateSize = 3072
     val seqLen = 512
     val preTrainModel = BERT[Float](vocab = vocab, hiddenSize = hiddenSize,
-      intermediateSize = intermediateSize, seqLen = seqLen)
+      intermediateSize = intermediateSize, maxPositionLen = seqLen)
     val testShape = Shape(List(Shape(1, seqLen), Shape(1, seqLen),
       Shape(1, seqLen), Shape(1, 1, 1, seqLen)))
     preTrainModel.build(testShape)
@@ -102,9 +102,9 @@ object convertBert {
         }
         Tensor[Float](buf.flatten.toArray, Array(buf.size, buf.head.length))
       }
-      weight(i).narrow(1, 1, hiddenSize).copy(qkv_w(0))
-      weight(i).narrow(1, 1 + hiddenSize, hiddenSize).copy(qkv_w(1))
-      weight(i).narrow(1, 1 + hiddenSize * 2, hiddenSize).copy(qkv_w(2))
+      weight(i).narrow(1, 1, hiddenSize).copy(qkv_w(0).t())
+      weight(i).narrow(1, 1 + hiddenSize, hiddenSize).copy(qkv_w(1).t())
+      weight(i).narrow(1, 1 + hiddenSize * 2, hiddenSize).copy(qkv_w(2).t())
       i += 1
 
       val qkv_b_files = Array(
@@ -148,7 +148,9 @@ object convertBert {
         val param = Tensor[Float](buf.flatten.toArray, Array(buf.size, buf.head.length))
         if (file.contains("bias")) param.squeeze(2)
 //        require(param.size.deep == weight(i).size().deep)
-        weight(i).set(param)
+        if (file.contains("kernel")) {
+          weight(i).set(param.t())
+        } else weight(i).set(param)
         i += 1
       }
       blockId += 1
@@ -162,7 +164,7 @@ object convertBert {
     }
     param = Tensor[Float](buf.flatten.toArray, Array(buf.size, buf.head.length))
     require(param.size.deep == weight(i).size().deep)
-    weight(i).set(param)
+    weight(i).set(param.t())
     i += 1
 
     buf.clear()

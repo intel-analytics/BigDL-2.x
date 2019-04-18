@@ -196,7 +196,7 @@ class TransformerLayer[T: ClassTag](
   }
 
   def pooler(x: Variable[T], hiddenSize: Int): Variable[T] = {
-    val firstToken = Select(1, 1).from(x)
+    val firstToken = Select(1, 0).from(x)
     val poolerOutput = Dense(hiddenSize).from(firstToken)
     Activation[Float]("tanh").from(poolerOutput)
   }
