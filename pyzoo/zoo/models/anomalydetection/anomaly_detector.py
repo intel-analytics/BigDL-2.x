@@ -86,8 +86,7 @@ class AnomalyDetector(KerasZooModel):
         weight_path: The path for pre-trained weights if any. Default is None.
         """
         jmodel = callBigDlFunc(bigdl_type, "loadAnomalyDetector", path, weight_path)
-        model = ZooModel._do_load(jmodel, bigdl_type)
-        model.model = KerasZooModel._do_load(jmodel, bigdl_type)
+        model = KerasZooModel._do_load(jmodel, bigdl_type)
         model.__class__ = AnomalyDetector
         return model
 

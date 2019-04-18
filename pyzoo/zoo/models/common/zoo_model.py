@@ -136,8 +136,7 @@ class KerasZooModel(ZooModel):
 
     @staticmethod
     def _do_load(jmodel, bigdl_type="float"):
-        model = Layer(jvalue=jmodel, bigdl_type=bigdl_type)
-        model.value = jmodel
+        model = ZooModel._do_load(jmodel, bigdl_type)
         labor_model = callBigDlFunc(bigdl_type, "getModule", jmodel)
         model.model = KerasNet(labor_model)
         return model
