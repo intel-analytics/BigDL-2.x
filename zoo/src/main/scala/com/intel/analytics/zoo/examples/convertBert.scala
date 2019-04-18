@@ -13,12 +13,13 @@ import scala.collection.mutable.ArrayBuffer
 
 object convertBert {
   def main(args: Array[String]): Unit = {
+//    val t = BERT.loadModel[Float]("/tmp/zoo-bert.model")
     val vocab = 30522
     val hiddenSize = 768
     val intermediateSize = 3072
     val seqLen = 512
     val preTrainModel = BERT[Float](vocab = vocab, hiddenSize = hiddenSize,
-      intermediateSize = intermediateSize, seqLen = seqLen)
+      intermediateSize = intermediateSize, maxPositionLen = seqLen)
     val testShape = Shape(List(Shape(1, seqLen), Shape(1, seqLen),
       Shape(1, seqLen), Shape(1, 1, 1, seqLen)))
     preTrainModel.build(testShape)
@@ -69,8 +70,8 @@ object convertBert {
       buf.append(line.split(" ").map(_.toFloat
       ))
     }
-    param = Tensor[Float](buf.flatten.toArray, Array(buf.size, buf.head.length))
-//    require(param.size.deep == weight(i).size().deep)
+    param = Tensor[Float](buf.flatten.toArray, Array(buf.head.length, buf.size))
+    require(param.size.deep == weight(i).size().deep)
     weight(i).set(param)
     i += 1
 
@@ -80,8 +81,8 @@ object convertBert {
       buf.append(line.split(" ").map(_.toFloat
       ))
     }
-    param = Tensor[Float](buf.flatten.toArray, Array(buf.size, buf.head.length))
-//    require(param.size.deep == weight(i).size().deep)
+    param = Tensor[Float](buf.flatten.toArray, Array(buf.head.length, buf.size))
+    require(param.size.deep == weight(i).size().deep)
     weight(i).set(param)
     i += 1
 
@@ -101,9 +102,9 @@ object convertBert {
         }
         Tensor[Float](buf.flatten.toArray, Array(buf.size, buf.head.length))
       }
-      weight(i).narrow(1, 1, hiddenSize).copy(qkv_w(0))
-      weight(i).narrow(1, 1 + hiddenSize, hiddenSize).copy(qkv_w(1))
-      weight(i).narrow(1, 1 + hiddenSize * 2, hiddenSize).copy(qkv_w(2))
+      weight(i).narrow(1, 1, hiddenSize).copy(qkv_w(0).t())
+      weight(i).narrow(1, 1 + hiddenSize, hiddenSize).copy(qkv_w(1).t())
+      weight(i).narrow(1, 1 + hiddenSize * 2, hiddenSize).copy(qkv_w(2).t())
       i += 1
 
       val qkv_b_files = Array(
@@ -147,13 +148,35 @@ object convertBert {
         val param = Tensor[Float](buf.flatten.toArray, Array(buf.size, buf.head.length))
         if (file.contains("bias")) param.squeeze(2)
 //        require(param.size.deep == weight(i).size().deep)
-        weight(i).set(param)
+        if (file.contains("kernel")) {
+          weight(i).set(param.t())
+        } else weight(i).set(param)
         i += 1
       }
       blockId += 1
     }
+
+    buf.clear()
+    filename = path + "bert_pooler_dense_kernel_0.out"
+    for (line <- Source.fromFile(filename).getLines) {
+      buf.append(line.split(" ").map(_.toFloat
+      ))
+    }
+    param = Tensor[Float](buf.flatten.toArray, Array(buf.size, buf.head.length))
+    require(param.size.deep == weight(i).size().deep)
+    weight(i).set(param.t())
+    i += 1
+
+    buf.clear()
+    filename = path + "bert_pooler_dense_bias_0.out"
+    for (line <- Source.fromFile(filename).getLines) {
+      buf.append(line.split(" ").map(_.toFloat
+      ))
+    }
+    param = Tensor[Float](buf.flatten.toArray, Array(buf.size, buf.head.length))
+    weight(i).set(param)
+
     preTrainModel.saveModule("/tmp/zoo-bert.model", overWrite = true)
     println("convert done!")
-    Module.loadModule[Float]("/tmp/zoo-bert.model").asInstanceOf[BERT[Float]]
   }
 }
