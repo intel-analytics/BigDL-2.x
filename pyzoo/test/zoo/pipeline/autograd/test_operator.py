@@ -297,6 +297,16 @@ class TestOperator(ZooTestCase):
         self.compare_unary_op(k_func,
                               Lambda(function=z_func, ), [2, 3])
 
+    def test_erf(self):
+        def z_func(x):
+            return erf(x)
+
+        def k_func(x):
+            return KK.erf(x)
+
+        self.compare_unary_op(k_func,
+                              Lambda(function=z_func, ), [2, 3])
+
     def test_exp(self):
         def z_func(x):
             return exp(x)
