@@ -134,6 +134,46 @@ class Test_Image_Set():
         assert len(labels) == 11
         assert len(set(labels)) == 4
 
+    def test_local_image_set_with_zero_based_label(self):
+        image_set = ImageSet.read(self.image_folder,
+                                  with_label=True, one_based_label=False)
+        label_map = image_set.label_map
+        for k in label_map:
+            assert label_map[k] < 4.0
+
+        for label in image_set.get_label():
+            assert label < 4.0
+
+    def test_distributed_image_set_with_zero_based_label(self):
+        image_set = ImageSet.read(self.image_folder, sc=self.sc,
+                                  with_label=True, one_based_label=False)
+        label_map = image_set.label_map
+        for k in label_map:
+            assert label_map[k] < 4.0
+
+        for label in image_set.get_label().collect():
+            assert label < 4.0
+
+    def test_local_image_set_with_one_based_label(self):
+        image_set = ImageSet.read(self.image_folder,
+                                  with_label=True, one_based_label=True)
+        label_map = image_set.label_map
+        for k in label_map:
+            assert label_map[k] <= 4.0 and label_map[k] > 0.0
+
+        for label in image_set.get_label():
+            assert label <= 4.0 and label > 0.0
+
+    def test_distributed_image_set_with_one_based_label(self):
+        image_set = ImageSet.read(self.image_folder, sc=self.sc,
+                                  with_label=True, one_based_label=True)
+        label_map = image_set.label_map
+        for k in label_map:
+            assert label_map[k] > 0.0 and label_map[k] <= 4.0
+
+        for label in image_set.get_label().collect():
+            assert label > 0.0 and label <= 4.0
+
 
 if __name__ == "__main__":
     pytest.main([__file__])
