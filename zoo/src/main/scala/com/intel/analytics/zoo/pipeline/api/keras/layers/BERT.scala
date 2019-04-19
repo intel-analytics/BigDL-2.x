@@ -51,7 +51,7 @@ import scala.reflect.ClassTag
  * @param embeddingLayer embedding layer
  * @param inputShape input shape, default is null
  */
-class BERT[T: ClassTag] (
+class BERT[T: ClassTag] private (
   nBlock: Int = 12,
   nHead: Int = 12,
   intermediateSize: Int = 3072,

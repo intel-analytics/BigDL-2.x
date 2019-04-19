@@ -47,7 +47,7 @@ import scala.reflect.ClassTag
  * @param intermediateSize The size of the "intermediate" (i.e., conv1d)
  * @param inputShape input shape, default is null
  */
-class TransformerLayer[T: ClassTag](
+private[layers] class TransformerLayer[T: ClassTag](
   val nBlock: Int,
   val hiddenPDrop: Double,
   val attnPDrop: Double,

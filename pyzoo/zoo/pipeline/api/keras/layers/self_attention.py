@@ -285,6 +285,12 @@ class BERT(TransformerLayer):
         inputs = [Input(list(shape)) for shape in input_shape]
         return (- inputs[-1] + 1.0) * -10000.0, inputs[:-1], inputs
 
+    def gelu(self, x):
+        y = x / math.sqrt(2.0)
+        e = auto.erf(y)
+        y = x * 0.5 * (e + 1.0)
+        return y
+
     @classmethod
     def init_with_default_embedding(cls, vocab=40990, hidden_size=768, n_block=12, n_head=12,
                                     seq_len=512, intermediate_size=3072, hidden_drop=0.1,
