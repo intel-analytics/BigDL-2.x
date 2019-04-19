@@ -16,16 +16,14 @@
 
 package com.intel.analytics.zoo.models.anomalydetection
 
-import com.intel.analytics.bigdl.Criterion
 import com.intel.analytics.bigdl.dataset.Sample
-import com.intel.analytics.bigdl.nn.abstractnn.{AbstractModule, Activity}
-import com.intel.analytics.bigdl.optim.{OptimMethod, ValidationMethod, ValidationResult}
+import com.intel.analytics.bigdl.nn.abstractnn.AbstractModule
 import com.intel.analytics.bigdl.tensor.Tensor
 import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric
 import com.intel.analytics.bigdl.utils.Shape
-import com.intel.analytics.zoo.models.common.ZooModel
+import com.intel.analytics.zoo.models.common.{KerasZooModel, ZooModel}
 import com.intel.analytics.zoo.pipeline.api.keras.layers._
-import com.intel.analytics.zoo.pipeline.api.keras.models.{KerasNet, Sequential}
+import com.intel.analytics.zoo.pipeline.api.keras.models.Sequential
 import org.apache.spark.rdd.RDD
 
 import scala.reflect.ClassTag
@@ -43,7 +41,7 @@ class AnomalyDetector[T: ClassTag] (val featureShape: Shape,
                                     val hiddenLayers: Array[Int] = Array(8, 32, 15),
                                     val dropouts: Array[Double] = Array(0.2, 0.2, 0.2))
                                    (implicit ev: TensorNumeric[T])
-  extends ZooModel[Tensor[T], Tensor[T], T] {
+  extends KerasZooModel[Tensor[T], Tensor[T], T] {
 
   override def buildModel(): AbstractModule[Tensor[T], Tensor[T], T] = {
 
@@ -62,37 +60,6 @@ class AnomalyDetector[T: ClassTag] (val featureShape: Shape,
     model.asInstanceOf[AbstractModule[Tensor[T], Tensor[T], T]]
   }
 
-  def compile(optimizer: OptimMethod[T],
-              loss: Criterion[T],
-              metrics: List[ValidationMethod[T]] = null)(implicit ev: TensorNumeric[T]): Unit = {
-    model.asInstanceOf[KerasNet[T]].compile(optimizer, loss, metrics)
-  }
-
-  def fit(x: RDD[Sample[T]],
-          batchSize: Int,
-          nbEpoch: Int,
-          validationData: RDD[Sample[T]] = null)(implicit ev: TensorNumeric[T]): Unit = {
-    model.asInstanceOf[KerasNet[T]].fit(x, batchSize, nbEpoch, validationData)
-  }
-
-  def evaluate(x: RDD[Sample[T]],
-               batchSize: Int)
-              (implicit ev: TensorNumeric[T]): Array[(ValidationResult, ValidationMethod[T])] = {
-    model.asInstanceOf[KerasNet[T]].evaluate(x, batchSize)
-  }
-
-  def predict(x: RDD[Sample[T]],
-              batchPerThread: Int): RDD[Activity] = {
-    model.asInstanceOf[KerasNet[T]].predict(x, batchPerThread)
-  }
-
-  def setTensorBoard(logDir: String, appName: String): Unit = {
-    model.asInstanceOf[KerasNet[T]].setTensorBoard(logDir, appName)
-  }
-
-  def setCheckpoint(path: String, overWrite: Boolean = true): Unit = {
-    model.asInstanceOf[KerasNet[T]].setCheckpoint(path, overWrite)
-  }
 }
 
 case class FeatureLabelIndex[T: ClassTag](feature: Array[Array[T]], label: T, index: Long) {

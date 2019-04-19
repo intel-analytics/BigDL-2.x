@@ -16,6 +16,7 @@
 
 from bigdl.nn.layer import Container, Layer
 from bigdl.util.common import *
+from zoo.pipeline.api.keras.engine.topology import KerasNet
 
 if sys.version >= '3':
     long = int
@@ -88,4 +89,54 @@ class ZooModel(ZooModelCreator, Container):
     def _do_load(jmodel, bigdl_type="float"):
         model = Layer(jvalue=jmodel, bigdl_type=bigdl_type)
         model.value = jmodel
+        return model
+
+
+class KerasZooModel(ZooModel):
+    """
+    The base class for Keras style models in Analytics Zoo.
+    """
+    # For the following method, please see documentation of KerasNet for details
+    def compile(self, optimizer, loss, metrics=None):
+        self.model.compile(optimizer, loss, metrics=None)
+
+    def fit(self, x, y=None, batch_size=32, nb_epoch=10,
+            validation_split=0, validation_data=None, distributed=True):
+        self.model.fit(x, y, batch_size, nb_epoch, validation_split, validation_data, distributed)
+
+    def set_checkpoint(self, path, over_write=True):
+        self.model.set_checkpoint(path, over_write)
+
+    def set_tensorboard(self, log_dir, app_name):
+        self.model.set_tensorboard(log_dir, app_name)
+
+    def get_train_summary(self, tag=None):
+        self.model.get_train_summary(tag)
+
+    def get_validation_summary(self, tag=None):
+        self.model.get_validation_summary(tag)
+
+    def clear_gradient_clipping(self):
+        self.model.clear_gradient_clipping()
+
+    def set_constant_gradient_clipping(self, min, max):
+        self.model.set_constant_gradient_clipping(min, max)
+
+    def set_gradient_clipping_by_l2_norm(self, clip_norm):
+        self.model.set_gradient_clipping_by_l2_norm(clip_norm)
+
+    def set_evaluate_status(self):
+        self.model.set_evaluate_status()
+
+    def evaluate(self, x, y=None, batch_size=32):
+        self.model.evaluate(x, y, batch_size)
+
+    def predict(self, x, batch_per_thread=4, distributed=True):
+        self.model.predict(x, batch_per_thread, distributed)
+
+    @staticmethod
+    def _do_load(jmodel, bigdl_type="float"):
+        model = ZooModel._do_load(jmodel, bigdl_type)
+        labor_model = callBigDlFunc(bigdl_type, "getModule", jmodel)
+        model.model = KerasNet(labor_model)
         return model
