@@ -27,6 +27,23 @@ if sys.version >= '3':
 
 
 class KerasNet(ZooKerasLayer):
+    def save(self, path, over_write=False):
+        raise Exception("This is a deprecated method. Please use saveModel instead.")
+
+    def saveModel(self, modelPath, weightPath=None, over_write=False):
+        """
+        Save this module to path with protobuf format.
+        :param modelPath: The path to save module, local file system,
+                          HDFS and Amazon S3 is supported.
+                          HDFS path should be like "hdfs://[host]:[port]/xxx"
+                          Amazon S3 path should be like "s3a://bucket/xxx"
+        :param weightPath: The Path for the parameters
+        :param over_write: override the existing model on modelPath or not.
+        """
+        super(KerasNet, self).saveModel(modelPath=modelPath,
+                                        weightPath=weightPath,
+                                        over_write=over_write)
+
     def compile(self, optimizer, loss, metrics=None):
         """
         Configure the learning process. It MUST be called before fit or evaluate.
@@ -43,17 +60,18 @@ class KerasNet(ZooKerasLayer):
         """
         if isinstance(optimizer, six.string_types):
             optimizer = to_bigdl_optim_method(optimizer)
+        criterion = loss
         if isinstance(loss, six.string_types):
-            loss = to_bigdl_criterion(loss)
+            criterion = to_bigdl_criterion(loss)
         if callable(loss):
             from zoo.pipeline.api.autograd import CustomLoss
-            loss = CustomLoss(loss, self.get_output_shape()[1:])
+            criterion = CustomLoss(loss, self.get_output_shape()[1:])
         if metrics and all(isinstance(metric, six.string_types) for metric in metrics):
             metrics = to_bigdl_metrics(metrics, loss)
         callBigDlFunc(self.bigdl_type, "zooCompile",
                       self.value,
                       optimizer,
-                      loss,
+                      criterion,
                       metrics)
 
     def set_tensorboard(self, log_dir, app_name):

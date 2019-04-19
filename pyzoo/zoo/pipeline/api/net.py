@@ -24,6 +24,7 @@ import json
 import numpy as np
 from py4j.protocol import Py4JJavaError
 from pyspark import RDD
+import importlib
 
 from bigdl.nn.criterion import Criterion
 from bigdl.nn.layer import Model as BModel
@@ -109,7 +110,52 @@ class GraphNet(BModel):
         return ZooKerasLayer.of(value, self.bigdl_type)
 
 
+class JavaToPython:
+    # TODO: Add more mapping here as it only support Model and Sequential for now.
+    def __init__(self, jvalue, bigdl_type="float"):
+        self.jvaule = jvalue
+        self.jfullname = callBigDlFunc(bigdl_type,
+                                       "getRealClassNameOfJValue",
+                                       jvalue)
+
+    def get_python_class(self):
+        """
+        Redirect the jvalue to the proper python class.
+        :param jvalue: Java object create by Py4j
+        :return: A proper Python wrapper which would be a Model, Sequential...
+        """
+
+        jpackage_name = ".".join(self.jfullname.split(".")[:-1])
+        pclass_name = self._get_py_name(self.jfullname.split(".")[-1])
+        base_module = self._load_ppackage_by_jpackage(jpackage_name)
+        if pclass_name in dir(base_module):
+            pclass = getattr(base_module, pclass_name)
+            assert "from_jvalue" in dir(pclass), \
+                "pclass: {} should implement from_jvalue method".format(pclass)
+            return pclass
+        raise Exception("No proper python class for: {}".format(self.jfullname))
+
+    def _get_py_name(self, jclass_name):
+        if jclass_name == "Model":
+            return "Model"
+        elif jclass_name == "Sequential":
+            return "Sequential"
+        else:
+            raise Exception("Not supported type: {}".format(jclass_name))
+
+    def _load_ppackage_by_jpackage(self, jpackage_name):
+        if "com.intel.analytics.zoo.pipeline.api.keras.models":
+            return importlib.import_module('zoo.pipeline.api.keras.models')
+        raise Exception("Not supported package: {}".format(jpackage_name))
+
+
 class Net:
+
+    @staticmethod
+    def from_jvalue(jvalue, bigdl_type="float"):
+        pclass = JavaToPython(jvalue).get_python_class()
+        return getattr(pclass, "from_jvalue")(jvalue, bigdl_type)
+
     @staticmethod
     def load_bigdl(model_path, weight_path=None, bigdl_type="float"):
         """
@@ -135,7 +181,7 @@ class Net:
         :return: An Analytics Zoo model.
         """
         jmodel = callBigDlFunc(bigdl_type, "netLoad", model_path, weight_path)
-        return KerasNet.of(jmodel, bigdl_type)
+        return Net.from_jvalue(jmodel, bigdl_type)
 
     @staticmethod
     def load_torch(path, bigdl_type="float"):
@@ -529,12 +575,7 @@ with variable_creator_scope():
         all_required_inputs = _find_placeholders([loss])
         dataset = tf.get_collection(all_required_inputs[0].name)[0]
 
-        inputs = []
-        for item in list(dataset._original_tensors):
-            if isinstance(item, dict):
-                inputs = inputs + list(item.values())
-            else:
-                inputs.append(item)
+        inputs = nest.flatten(dataset._original_tensors)
 
         _check_the_same(all_required_inputs, inputs)
 

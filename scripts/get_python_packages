@@ -24,6 +24,8 @@ DEST_DIR=$1
 echo "DEST_DIR: $DEST_DIR"
 BIGDL_VERSION=$2
 NLP_ARCHITECT_VERSION="0.3.1"
+# Since bert doesn't have any released versions, use the version of the commit on Mar 29, 2019.
+BERT_COMMIT_ID="d66a146741588fb208450bde15aa7db143baaa69"
 
 rm -rf $DEST_DIR/*/
 
@@ -57,6 +59,18 @@ then
     exit $exit_status
 fi
 
+echo "Fetching bert with ${BERT_COMMIT_ID}"
+GET_COMMAND="wget -nc https://github.com/google-research/bert/archive/${BERT_COMMIT_ID}.zip -P $DEST_DIR"
+echo "Running: $GET_COMMAND"
+$GET_COMMAND
+exit_status=$?
+if [ $exit_status -ne 0 ];
+then
+    rm -rf ${DEST_DIR}
+    echo "Failed to get bert package from GitHub."
+    exit $exit_status
+fi
+
 cd ${DEST_DIR}
 mkdir sources
 unzip bigdl-python-api-${BIGDL_VERSION}.zip -d sources
@@ -66,3 +80,7 @@ cd sources/nlp-architect-${NLP_ARCHITECT_VERSION}
 mv nlp_architect/ ../
 cd ${DEST_DIR}
 rm -rf sources/nlp-architect-${NLP_ARCHITECT_VERSION}
+
+unzip ${BERT_COMMIT_ID}.zip -d sources
+cd sources
+mv bert-${BERT_COMMIT_ID}/ bert/

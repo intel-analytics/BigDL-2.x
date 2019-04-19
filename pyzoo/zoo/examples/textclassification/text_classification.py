@@ -41,6 +41,7 @@ if __name__ == "__main__":
     parser.add_option("-l", "--learning_rate", dest="learning_rate", default="0.01")
     parser.add_option("--log_dir", dest="log_dir", default="/tmp/.analytics-zoo")
     parser.add_option("-m", "--model", dest="model")
+    parser.add_option("--output_path", dest="output_path")
 
     (options, args) = parser.parse_args(sys.argv)
     sc = init_nncontext("Text Classification Example")
@@ -82,4 +83,8 @@ if __name__ == "__main__":
     for predict in predicts:
         print(predict)
 
+    if options.output_path:
+        model.save_model(options.output_path + "/text_classifier.model")
+        transformed.save_word_index(options.output_path + "/word_index.txt")
+        print("Trained model and word dictionary saved")
     sc.stop()
