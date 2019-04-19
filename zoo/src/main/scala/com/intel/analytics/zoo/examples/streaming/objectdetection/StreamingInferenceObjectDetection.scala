@@ -80,12 +80,14 @@ object StreamingInferenceObjectDetection {
           // RDD[String] => RDD[ImageFeature]
           val dataSet = ImageSet.rdd(batchPath.map(path => readFile(path)))
           // Resize image
-          dataSet -> ImageBytesToMat(imageCodec = Imgcodecs.CV_LOAD_IMAGE_COLOR)
-          dataSet -> ImageMatToFloats()
+          dataSet -> ImageBytesToMat(imageCodec = Imgcodecs.CV_LOAD_IMAGE_COLOR) ->
+            ImageMatToFloats()
           dataSet.rdd.foreach { img =>
             // Add one more dim because of batch requirement of model
+            logger.info("Begin Predict " + img.uri())
             val output = model.doPredict(img.toTensor(ImageFeature.floats)
               .addSingletonDimension())
+            logger.info("Begin visualizing box for image " + img.uri())
             // TODO Visualizer also need some changes
             val result = visualizer.visualize(OpenCVMat.fromImageBytes(img.bytes()),
               output.toTensor)
