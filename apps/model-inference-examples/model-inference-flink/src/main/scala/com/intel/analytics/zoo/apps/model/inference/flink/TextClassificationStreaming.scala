@@ -20,6 +20,7 @@ object TextClassificationStreaming {
     var sequenceLength = 200
     var embeddingFilePath = "./glove.6B.300d.txt"
     var modelPath = "./text-classification.bigdl"
+    var parallelism = 2
 
     try {
       val params = ParameterTool.fromArgs(args)
@@ -30,11 +31,12 @@ object TextClassificationStreaming {
       sequenceLength = if(params.has("sequenceLength")) params.getInt("sequenceLength") else 200
       embeddingFilePath = if(params.has("embeddingFilePath")) params.get("embeddingFilePath") else "./glove.6B.300d.txt"
       modelPath = if(params.has("modelPath")) params.get("modelPath") else "./text-classification.bigdl"
+      parallelism = if(params.has("parallelism")) params.getInt("parallelism") else 2
     } catch {
       case e: Exception => {
         System.err.println("Please run 'TextClassificationStreaming --hostname <hostname> --port <port> " +
           "--supportedConcurrentNum <supportedConcurrentNum> --stopWordsCount <stopWordsCount> --sequenceLength <sequenceLength>" +
-          "--embeddingFilePath <embeddingFilePath> --modelPath <modelPath> '.")
+          "--embeddingFilePath <embeddingFilePath> --modelPath <modelPath> --parallelism <parallelism>'.")
         System.err.println("To start a simple text server, run 'netcat -l <port>' and type the input text into the command line")
         return
       }
