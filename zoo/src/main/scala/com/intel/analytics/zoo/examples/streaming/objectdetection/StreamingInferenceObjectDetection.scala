@@ -19,14 +19,14 @@ package com.intel.analytics.zoo.examples.streaming.objectdetection
 
 import com.intel.analytics.bigdl.transform.vision.image.opencv.OpenCVMat
 import com.intel.analytics.bigdl.transform.vision.image.ImageFeature
-import com.intel.analytics.zoo.common.NNContext
+import com.intel.analytics.zoo.common.{NNContext, Utils}
 import com.intel.analytics.zoo.examples.streaming.objectdetection.StreamingObjectDetection.PredictParam
-import com.intel.analytics.zoo.feature.image.{ImageBytesToMat, ImageMatToFloats, ImageSet}
+import com.intel.analytics.zoo.feature.image.{ImageBytesToMat, ImageMatToFloats, ImageResize, ImageSet}
 import com.intel.analytics.zoo.models.image.objectdetection.LabelReader
 import com.intel.analytics.zoo.models.image.objectdetection.Visualizer
+import com.intel.analytics.zoo.models.image.objectdetection.ssd.RoiImageToSSDBatch
 import com.intel.analytics.zoo.pipeline.inference.InferenceModel
-import org.apache.hadoop.conf.Configuration
-import org.apache.hadoop.fs.{FileSystem, Path}
+import org.apache.hadoop.fs.Path
 import org.apache.log4j.{Level, Logger}
 import org.apache.spark.streaming.{Seconds, StreamingContext}
 import org.opencv.imgcodecs.Imgcodecs
@@ -71,22 +71,24 @@ object StreamingInferenceObjectDetection {
       val labelMap = LabelReader.apply("COCO")
 
       val lines = ssc.textFileStream(params.streamingPath)
+      val visualizer = Visualizer(labelMap, encoding = "jpg")
       lines.foreachRDD { batchPath =>
         // Read image files and load to RDD
         logger.debug("batchPath partition " + batchPath.getNumPartitions)
         logger.debug("batchPath count " + batchPath.count())
-        val visualizer = Visualizer(labelMap, encoding = "jpg")
         if (!batchPath.isEmpty()) {
           // RDD[String] => RDD[ImageFeature]
           val dataSet = ImageSet.rdd(batchPath.map(path => readFile(path)))
           // Resize image
           dataSet -> ImageBytesToMat(imageCodec = Imgcodecs.CV_LOAD_IMAGE_COLOR) ->
-            ImageMatToFloats()
+            ImageResize(300, 300, -1) ->
+            ImageMatToFloats() ->
+            RoiImageToSSDBatch(4)
           dataSet.rdd.foreach { img =>
             // Add one more dim because of batch requirement of model
             logger.info("Begin Predict " + img.uri())
             val output = model.doPredict(img.toTensor(ImageFeature.floats)
-              .addSingletonDimension())
+              .addSingletonDimension().reshape(Array(4, 3, 300, 300)))
             logger.info("Begin visualizing box for image " + img.uri())
             // TODO Visualizer also need some changes
             val result = visualizer.visualize(OpenCVMat.fromImageBytes(img.bytes()),
@@ -103,25 +105,18 @@ object StreamingInferenceObjectDetection {
   }
 
   /**
-    * Read files from local or remote dir
+    * Read image files from local or remote file system
     * @param path file path
     * @return ImageFeature
     */
   def readFile(path: String): ImageFeature = {
     logger.info("Read image file " + path)
-    val fspath = new Path(path)
-    val fs = FileSystem.get(fspath.toUri, new Configuration())
-    // Read local or remote image
-    val inputStream = fs.open(fspath)
-    val data = new Array[Byte](fs.getFileStatus(new Path(path))
-      .getLen.toInt)
-    inputStream.readFully(data)
-    inputStream.close()
+    val data = Utils.readBytes(path)
     ImageFeature.apply(data, null, path)
   }
 
   /**
-    * Write files to local or remote dir
+    * Write image file to local or remote file system
     * @param outPath output dir
     * @param path input file path
     * @param content file content
@@ -129,12 +124,7 @@ object StreamingInferenceObjectDetection {
   def writeFile(outPath: String, path: String, content: Array[Byte]): Unit = {
     val fspath = getOutPath(outPath, path, "jpg")
     logger.info("Writing image file " + fspath.toString)
-    val fs = FileSystem.get(fspath.toUri, new Configuration())
-    val outStream = fs.create(
-      fspath,
-      true)
-    outStream.write(content)
-    outStream.close()
+    Utils.saveBytes(content, fspath.toString, true)
   }
 
   /**
