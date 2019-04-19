@@ -36,19 +36,24 @@ def main():
             #       cat images ...
             #    \dogs
             #       dog images ...
-            image_set = ImageSet.read("./datasets/cat_dog/demo_small", sc=sc, with_label=True, one_based_label=False)
+            image_set = ImageSet.read("./datasets/cat_dog/demo_small",
+                                      sc=sc, with_label=True, one_based_label=False)
             train_transformer = ChainedPreprocessing([ImageBytesToMat(),
                                                       ImageResize(256, 256),
                                                       ImageRandomCrop(224, 224),
                                                       ImageRandomPreprocessing(ImageHFlip(), 0.5),
-                                                      ImageChannelNormalize(0.485, 0.456, 0.406, 0.229, 0.224, 0.225),
+                                                      ImageChannelNormalize(
+                                                          0.485, 0.456, 0.406,
+                                                          0.229, 0.224, 0.225),
                                                       ImageMatToTensor(to_RGB=True, format="NHWC"),
                                                       ImageSetToSample(input_keys=["imageTensor"],
                                                                        target_keys=["label"])
                                                       ])
             feature_set = FeatureSet.image_frame(image_set.to_image_frame())
             feature_set = feature_set.transform(train_transformer)
-            dataset = TFDataset.from_feature_set(feature_set, features=(tf.float32, [224, 224, 3]), labels=(tf.int32, [1]), batch_size=16)
+            dataset = TFDataset.from_feature_set(feature_set,
+                                                 features=(tf.float32, [224, 224, 3]),
+                                                 labels=(tf.int32, [1]), batch_size=16)
         else:
             raise NotImplementedError
 

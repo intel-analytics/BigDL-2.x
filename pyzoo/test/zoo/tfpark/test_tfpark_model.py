@@ -405,7 +405,9 @@ class TestTFParkModel(ZooTestCase):
                                                   ImageResize(256, 256),
                                                   ImageRandomCrop(224, 224),
                                                   ImageRandomPreprocessing(ImageHFlip(), 0.5),
-                                                  ImageChannelNormalize(0.485, 0.456, 0.406, 0.229, 0.224, 0.225),
+                                                  ImageChannelNormalize(
+                                                      0.485, 0.456, 0.406,
+                                                      0.229, 0.224, 0.225),
                                                   ImageMatToTensor(to_RGB=True, format="NHWC"),
                                                   ImageSetToSample(input_keys=["imageTensor"],
                                                                    target_keys=["label"])
@@ -447,7 +449,9 @@ class TestTFParkModel(ZooTestCase):
         model = self.create_image_model()
         image_set = self.create_image_set(with_label=False)
 
-        predict_dataset = TFDataset.from_image_set(image_set, image=(tf.float32, [224, 224, 3]), batch_per_thread=1)
+        predict_dataset = TFDataset.from_image_set(image_set,
+                                                   image=(tf.float32, [224, 224, 3]),
+                                                   batch_per_thread=1)
         results = model.predict(predict_dataset).get_predict().collect()
         assert all(r[1] is not None for r in results)
 

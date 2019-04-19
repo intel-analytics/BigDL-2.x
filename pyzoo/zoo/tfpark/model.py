@@ -188,7 +188,8 @@ class KerasModel(object):
         else:
             batch_size = dataset.batch_per_thread * dataset.get_num_partitions()
 
-        eval_methods = [to_bigdl_metric(m, self.model.loss) for m in self.metrics_names if m != "loss"]
+        eval_methods = [to_bigdl_metric(m, self.model.loss)
+                        for m in self.metrics_names if m != "loss"]
 
         results = tfnet.evaluate(data, batch_size, eval_methods)
         final_result = [r.result for r in results]

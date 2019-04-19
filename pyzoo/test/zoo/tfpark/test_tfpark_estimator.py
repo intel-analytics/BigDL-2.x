@@ -167,7 +167,8 @@ class TestTFParkEstimator(ZooTestCase):
                 transformer = ChainedPreprocessing([ImageResize(256, 256),
                                                     ImageRandomCrop(224, 224, True),
                                                     ImageMatToTensor(format="NHWC"),
-                                                    ImageSetToSample(input_keys=["imageTensor"], target_keys=["label"])])
+                                                    ImageSetToSample(input_keys=["imageTensor"],
+                                                                     target_keys=["label"])])
                 image_set = image_set.transform(transformer)
                 dataset = TFDataset.from_image_set(image_set,
                                                    image=(tf.float32, [224, 224, 3]),
@@ -180,7 +181,8 @@ class TestTFParkEstimator(ZooTestCase):
                 transformer = ChainedPreprocessing([ImageResize(256, 256),
                                                     ImageRandomCrop(224, 224, True),
                                                     ImageMatToTensor(format="NHWC"),
-                                                    ImageSetToSample(input_keys=["imageTensor"])])
+                                                    ImageSetToSample(
+                                                        input_keys=["imageTensor"])])
                 image_set = image_set.transform(transformer)
                 dataset = TFDataset.from_image_set(image_set,
                                                    image=(tf.float32, [224, 224, 3]),
@@ -208,12 +210,16 @@ class TestTFParkEstimator(ZooTestCase):
                 train_transformer = ChainedPreprocessing([ImageBytesToMat(),
                                                           ImageResize(256, 256),
                                                           ImageRandomCrop(224, 224),
-                                                          ImageRandomPreprocessing(ImageHFlip(), 0.5),
-                                                          ImageChannelNormalize(0.485, 0.456, 0.406, 0.229, 0.224,
-                                                                                0.225),
-                                                          ImageMatToTensor(to_RGB=True, format="NHWC"),
-                                                          ImageSetToSample(input_keys=["imageTensor"],
-                                                                           target_keys=["label"])
+                                                          ImageRandomPreprocessing(
+                                                              ImageHFlip(), 0.5),
+                                                          ImageChannelNormalize(
+                                                              0.485, 0.456, 0.406,
+                                                              0.229, 0.224, 0.225),
+                                                          ImageMatToTensor(
+                                                              to_RGB=True, format="NHWC"),
+                                                          ImageSetToSample(
+                                                              input_keys=["imageTensor"],
+                                                              target_keys=["label"])
                                                           ])
                 feature_set = feature_set.transform(train_transformer)
                 training_dataset = TFDataset.from_feature_set(feature_set,
@@ -227,7 +233,7 @@ class TestTFParkEstimator(ZooTestCase):
 
     def test_estimator_for_feature_set(self):
         model_fn = self.create_model_fn()
-        input_fn = self.create_train_feature_Set_input_fn()
+        input_fn = self.create_train_feature_set_input_fn()
 
         estimator = TFEstimator(model_fn, tf.train.AdamOptimizer())
         estimator.train(input_fn, steps=1)

@@ -953,11 +953,11 @@ class TFDataset:
 
     @staticmethod
     def from_feature_set(dataset, features, labels=None, batch_size=-1, batch_per_thread=-1,
-                           hard_code_batch_size=False, validation_dataset=None):
+                         hard_code_batch_size=False, validation_dataset=None):
         tensor_structure = TFDataset._to_tensor_structure(features, labels)
 
         return TFFeatureDataset(dataset, tensor_structure, batch_size,
-                              batch_per_thread, hard_code_batch_size, validation_dataset)
+                                batch_per_thread, hard_code_batch_size, validation_dataset)
 
 
 class TFFeatureDataset(TFDataset):
@@ -965,7 +965,7 @@ class TFFeatureDataset(TFDataset):
     def __init__(self, dataset, tensor_structure, batch_size,
                  batch_per_thread, hard_code_batch_size=False, validation_dataset=None):
         super(TFFeatureDataset, self).__init__(tensor_structure, batch_size,
-                                            batch_per_thread, hard_code_batch_size)
+                                               batch_per_thread, hard_code_batch_size)
         self.dataset = dataset
         self.validation_dataset = validation_dataset
 
@@ -980,7 +980,8 @@ class TFFeatureDataset(TFDataset):
 
     def get_validation_data(self):
         if self.validation_dataset is not None:
-            return self.validation_dataset.transform(MergeFeatureLabelFeatureTransformer()).to_dataset()
+            return self.validation_dataset.transform(
+                MergeFeatureLabelFeatureTransformer()).to_dataset()
         return None
 
 
@@ -1065,12 +1066,14 @@ class TFNdarrayDataset(TFDataset):
         self.rdd = rdd
 
     def get_prediction_data(self):
-        data = self.rdd.map(lambda t: Sample.from_ndarray(nest.flatten(t[0] if isinstance(t, tuple) else t), np.array([0.0])))
+        data = self.rdd.map(lambda t: Sample.from_ndarray(
+            nest.flatten(t[0] if isinstance(t, tuple) else t), np.array([0.0])))
         return data
 
     def get_evaluation_data(self):
         if isinstance(self.tensor_structure, tuple):
-            return self.rdd.map(lambda t: Sample.from_ndarray(nest.flatten(t[0]), nest.flatten(t[1])))
+            return self.rdd.map(
+                lambda t: Sample.from_ndarray(nest.flatten(t[0]), nest.flatten(t[1])))
         return self.rdd.map(lambda t: Sample.from_ndarray(nest.flatten(t), np.array([0.0])))
 
     def get_training_data(self):
