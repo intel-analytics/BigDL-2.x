@@ -15,18 +15,14 @@
 #
 
 import tensorflow as tf
-import numpy as np
 
-from bigdl.dataset.dataset import DataSet
 from zoo import init_nncontext
-from zoo.feature.common import ChainedPreprocessing
-from zoo.feature.image import ImageSet, ImageSetToSample, ImageResize, ImageMatToTensor, ImageRandomCrop, \
-    ImageChannelNormalize
+from zoo.feature.common import *
+from zoo.feature.image.imagePreprocessing import *
+from zoo.feature.image.imageset import *
 from zoo.tfpark import TFDataset
 from zoo.tfpark.estimator import TFEstimator, TFEstimatorSpec
-import os
 
-# os.environ['PYSPARK_SUBMIT_ARGS'] = "--driver-java-options \" -Xdebug -Xrunjdwp:transport=dt_socket,server=y,suspend=y,address=5050\" /home/yang/sources/zoo/pyzoo/zoo/examples/tensorflow/tfpark/estimator_inception.py"
 
 def main():
     sc = init_nncontext()
@@ -34,15 +30,25 @@ def main():
     def input_fn(mode):
 
         if mode == tf.estimator.ModeKeys.TRAIN:
-            image_set = ImageSet.read("/home/yang/sources/datasets/cat_dog/demo_small", sc=sc, with_label=True)
-            transformer = ChainedPreprocessing([ImageResize(256, 256),
-                                                ImageRandomCrop(224, 224, True),
-                                                ImageChannelNormalize(123.0, 117.0, 104.0),
-                                                ImageMatToTensor(format="NHWC"),
-                                                ImageSetToSample(input_keys=["imageTensor"], target_keys=["label"])])
-            image_set = image_set.transform(transformer)
-            dataset = DataSet.image_frame(image_set.to_image_frame())
-            dataset = TFDataset.from_bigdl_dataset(dataset, features=(tf.float32, [224, 224, 3]), labels=(tf.int32, [1]), batch_size=16)
+            # demo_small directory structure
+            # \demo_small
+            #    \cats
+            #       cat images ...
+            #    \dogs
+            #       dog images ...
+            image_set = ImageSet.read("./datasets/cat_dog/demo_small", sc=sc, with_label=True, one_based_label=False)
+            train_transformer = ChainedPreprocessing([ImageBytesToMat(),
+                                                      ImageResize(256, 256),
+                                                      ImageRandomCrop(224, 224),
+                                                      ImageRandomPreprocessing(ImageHFlip(), 0.5),
+                                                      ImageChannelNormalize(0.485, 0.456, 0.406, 0.229, 0.224, 0.225),
+                                                      ImageMatToTensor(to_RGB=True, format="NHWC"),
+                                                      ImageSetToSample(input_keys=["imageTensor"],
+                                                                       target_keys=["label"])
+                                                      ])
+            feature_set = FeatureSet.image_frame(image_set.to_image_frame())
+            feature_set = feature_set.transform(train_transformer)
+            dataset = TFDataset.from_feature_set(feature_set, features=(tf.float32, [224, 224, 3]), labels=(tf.int32, [1]), batch_size=16)
         else:
             raise NotImplementedError
 
@@ -51,7 +57,7 @@ def main():
     def model_fn(features, labels, mode):
         from nets import inception
         slim = tf.contrib.slim
-        labels = tf.squeeze(labels, axis=1) - 1  # ImageSet's label is a 1-based vector
+        labels = tf.squeeze(labels, axis=1)
         with slim.arg_scope(inception.inception_v1_arg_scope()):
             logits, end_points = inception.inception_v1(features, num_classes=2, is_training=True)
 

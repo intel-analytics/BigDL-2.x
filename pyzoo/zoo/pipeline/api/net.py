@@ -976,11 +976,11 @@ class TFFeatureDataset(TFDataset):
         raise Exception("TFFeatureDataset is only supported in training")
 
     def get_training_data(self):
-        return self.dataset.transform(MergeFeatureLabelFeatureTransformer())
+        return self.dataset.transform(MergeFeatureLabelFeatureTransformer()).to_dataset()
 
     def get_validation_data(self):
         if self.validation_dataset is not None:
-            return self.validation_dataset.transform(MergeFeatureLabelFeatureTransformer())
+            return self.validation_dataset.transform(MergeFeatureLabelFeatureTransformer()).to_dataset()
         return None
 
 
@@ -1066,7 +1066,7 @@ class TFNdarrayDataset(TFDataset):
 
     def get_prediction_data(self):
         data = self.rdd.map(lambda t: Sample.from_ndarray(nest.flatten(t[0] if isinstance(t, tuple) else t), np.array([0.0])))
-        return FeatureSet.rdd(data)
+        return data
 
     def get_evaluation_data(self):
         if isinstance(self.tensor_structure, tuple):

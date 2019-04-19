@@ -15,7 +15,7 @@
 #
 import pytest
 
-from zoo.feature.common import ChainedPreprocessing
+from zoo.feature.common import ChainedPreprocessing, FeatureSet
 from zoo.feature.image import *
 from zoo.pipeline.api.net import TFOptimizer
 from test.zoo.pipeline.utils.test_utils import ZooTestCase
@@ -374,7 +374,6 @@ class TestTFParkModel(ZooTestCase):
                        "The batch_per_thread of TFDataset must be" +
                        " specified when used in KerasModel predict.")
 
-
     def create_image_model(self):
 
         data = tf.keras.layers.Input(shape=[224, 224, 3])
@@ -389,13 +388,7 @@ class TestTFParkModel(ZooTestCase):
         return KerasModel(model)
 
     def create_image_set(self, with_label):
-        resource_path = os.path.join(os.path.split(__file__)[0], "../resources")
-        if with_label:
-            image_folder = os.path.join(resource_path, "cat_dog")
-        else:
-            image_folder = os.path.join(resource_path, "cat_dog/*")
-        image_set = ImageSet.read(image_folder, with_label=with_label, sc=get_spark_context(),
-                                  one_based_label=False)
+        image_set = self.get_raw_image_set(with_label)
         transformer = ChainedPreprocessing([ImageResize(256, 256),
                                             ImageRandomCrop(224, 224, True),
                                             ImageMatToTensor(format="NHWC"),
@@ -405,6 +398,21 @@ class TestTFParkModel(ZooTestCase):
         image_set = image_set.transform(transformer)
         return image_set
 
+    def create_train_features_Set(self):
+        image_set = self.get_raw_image_set(with_label=True)
+        feature_set = FeatureSet.image_frame(image_set.to_image_frame())
+        train_transformer = ChainedPreprocessing([ImageBytesToMat(),
+                                                  ImageResize(256, 256),
+                                                  ImageRandomCrop(224, 224),
+                                                  ImageRandomPreprocessing(ImageHFlip(), 0.5),
+                                                  ImageChannelNormalize(0.485, 0.456, 0.406, 0.229, 0.224, 0.225),
+                                                  ImageMatToTensor(to_RGB=True, format="NHWC"),
+                                                  ImageSetToSample(input_keys=["imageTensor"],
+                                                                   target_keys=["label"])
+                                                  ])
+        feature_set = feature_set.transform(train_transformer)
+        return feature_set
+
     def test_training_for_imageset(self):
 
         model = self.create_image_model()
@@ -413,6 +421,15 @@ class TestTFParkModel(ZooTestCase):
                                                     image=(tf.float32, [224, 224, 3]),
                                                     label=(tf.int32, [1]),
                                                     batch_size=4)
+        model.fit(training_dataset)
+
+    def test_training_for_feature_set(self):
+        model = self.create_image_model()
+        feature_set = self.create_train_features_Set()
+        training_dataset = TFDataset.from_feature_set(feature_set,
+                                                      features=(tf.float32, [224, 224, 3]),
+                                                      labels=(tf.int32, [1]),
+                                                      batch_size=8)
         model.fit(training_dataset)
 
     def test_evaluation_for_imageset(self):
