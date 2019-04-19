@@ -66,10 +66,11 @@ object Predict {
       model.doLoadOpenVINO(param.model, param.weight)
 
       images -> ImageBytesToMat(imageCodec = Imgcodecs.CV_LOAD_IMAGE_COLOR)
-      images -> ImageMatToFloats()
+      images -> ImageMatToFloats(validHeight = 224, validWidth = 224)
       val output = images.toDistributed().rdd.foreach { img =>
         model.doPredict(img.toTensor(ImageFeature.floats))
       }
+
 
 //      val labelOutput = LabelOutput(model.getConfig().labelMap, "clses",
 //        "probs", probAsInput = false)
