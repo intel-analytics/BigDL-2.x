@@ -17,14 +17,18 @@
 package com.intel.analytics.zoo.examples.streaming.objectdetection
 
 
+import com.intel.analytics.bigdl.dataset.MiniBatch
 import com.intel.analytics.bigdl.transform.vision.image.opencv.OpenCVMat
 import com.intel.analytics.bigdl.transform.vision.image.ImageFeature
 import com.intel.analytics.zoo.common.{NNContext, Utils}
 import com.intel.analytics.zoo.examples.streaming.objectdetection.StreamingObjectDetection.PredictParam
+import com.intel.analytics.zoo.feature.FeatureSet
+import com.intel.analytics.zoo.feature.image.roi.RoiRecordToFeature
 import com.intel.analytics.zoo.feature.image.{ImageBytesToMat, ImageMatToFloats, ImageResize, ImageSet}
 import com.intel.analytics.zoo.models.image.objectdetection.LabelReader
 import com.intel.analytics.zoo.models.image.objectdetection.Visualizer
-import com.intel.analytics.zoo.models.image.objectdetection.ssd.RoiImageToSSDBatch
+import com.intel.analytics.zoo.models.image.objectdetection.common.dataset.ByteRecord
+import com.intel.analytics.zoo.models.image.objectdetection.ssd.{RoiImageToSSDBatch, SSDMiniBatch}
 import com.intel.analytics.zoo.pipeline.inference.InferenceModel
 import org.apache.hadoop.fs.Path
 import org.apache.log4j.{Level, Logger}
@@ -33,9 +37,9 @@ import org.opencv.imgcodecs.Imgcodecs
 import scopt.OptionParser
 
 object StreamingInferenceObjectDetection {
-  Logger.getLogger("org").setLevel(Level.ERROR)
-  Logger.getLogger("akka").setLevel(Level.ERROR)
-  Logger.getLogger("breeze").setLevel(Level.ERROR)
+//  Logger.getLogger("org").setLevel(Level.ERROR)
+//  Logger.getLogger("akka").setLevel(Level.ERROR)
+//  Logger.getLogger("breeze").setLevel(Level.ERROR)
   Logger.getLogger("com.intel.analytics.zoo").setLevel(Level.INFO)
 
   val logger = Logger.getLogger(getClass)
@@ -78,24 +82,26 @@ object StreamingInferenceObjectDetection {
         logger.debug("batchPath count " + batchPath.count())
         if (!batchPath.isEmpty()) {
           // RDD[String] => RDD[ImageFeature]
-          val dataSet = ImageSet.rdd(batchPath.map(path => readFile(path)))
-          // Resize image
-          dataSet -> ImageBytesToMat(imageCodec = Imgcodecs.CV_LOAD_IMAGE_COLOR) ->
+          val dataSet = FeatureSet.rdd(batchPath.map(path => readFile(path))) ->
+            RoiRecordToFeature(true) ->
+            ImageBytesToMat(imageCodec = Imgcodecs.CV_LOAD_IMAGE_COLOR) ->
             ImageResize(300, 300, -1) ->
             ImageMatToFloats() ->
             RoiImageToSSDBatch(4)
-          dataSet.rdd.foreach { img =>
-            // Add one more dim because of batch requirement of model
-            logger.info("Begin Predict " + img.uri())
-            val output = model.doPredict(img.toTensor(ImageFeature.floats)
-              .addSingletonDimension().reshape(Array(4, 3, 300, 300)))
-            logger.info("Begin visualizing box for image " + img.uri())
-            // TODO Visualizer also need some changes
-            val result = visualizer.visualize(OpenCVMat.fromImageBytes(img.bytes()),
-              output.toTensor)
-            val resultImg = OpenCVMat.imencode(result, "jpg")
-            writeFile(params.outputFolder, img.uri(), resultImg)
+          val batchedSet = dataSet.asInstanceOf[FeatureSet[MiniBatch[Float]]]
+          batchedSet.toDistributed().data(train = false).foreach { miniBatch =>
+            logger.info("Begin Predict ")
+            val output = model.doPredict(miniBatch.getInput)
+
           }
+//            // Add one more dim because of batch requirement of model
+//
+//            logger.info("Begin visualizing box for image " + img.uri())
+//            // TODO Visualizer also need some changes
+//            val result = visualizer.visualize(OpenCVMat.fromImageBytes(img.bytes()),
+//              output.toTensor)
+//            val resultImg = OpenCVMat.imencode(result, "jpg")
+//            writeFile(params.outputFolder, img.uri(), resultImg)
         }
       }
       ssc.start()
@@ -105,14 +111,14 @@ object StreamingInferenceObjectDetection {
   }
 
   /**
-    * Read image files from local or remote file system
+    * Read image files from local or remote filgde system
     * @param path file path
-    * @return ImageFeature
+    * @return ByteRecord
     */
-  def readFile(path: String): ImageFeature = {
+  def readFile(path: String): ByteRecord = {
     logger.info("Read image file " + path)
     val data = Utils.readBytes(path)
-    ImageFeature.apply(data, null, path)
+    ByteRecord.apply(data, path)
   }
 
   /**
