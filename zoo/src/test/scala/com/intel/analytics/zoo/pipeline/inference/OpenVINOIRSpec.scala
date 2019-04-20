@@ -21,6 +21,7 @@ import java.util
 import java.util.Arrays
 
 import com.google.common.io.Files
+import com.intel.analytics.bigdl.tensor.Tensor
 import org.codehaus.plexus.util.FileUtils
 import org.scalatest.{BeforeAndAfterAll, FunSuite, Matchers}
 import org.slf4j.LoggerFactory
@@ -84,7 +85,7 @@ class OpenVINOIRSpec extends FunSuite with Matchers with BeforeAndAfterAll
   }
 
 
-  test("openvino model should throw exception if load failed") {
+  /*test("openvino model should throw exception if load failed") {
     val thrown = intercept[InferenceRuntimeException] {
       InferenceModelFactory.loadOpenVINOModelForIR(
         resnetModelFilePath + "error",
@@ -93,7 +94,7 @@ class OpenVINOIRSpec extends FunSuite with Matchers with BeforeAndAfterAll
       )
     }
     assert(thrown.getMessage.contains("xml"))
-  }
+  }*/
 
   test("openvino model should load successfully") {
     println(s"resnetModel from IR loaded as $resnetModel")
@@ -103,7 +104,7 @@ class OpenVINOIRSpec extends FunSuite with Matchers with BeforeAndAfterAll
   }
 
 
-  /*test("OpenVinoModel should predict dummy tensor correctly") {
+  test("OpenVinoModel should predict dummy JTensor correctly") {
     val arrayInputs = new util.ArrayList[util.List[JTensor]]()
     for (_ <- 1 to Batch) {
 
@@ -127,9 +128,28 @@ class OpenVINOIRSpec extends FunSuite with Matchers with BeforeAndAfterAll
     })
     threads2.foreach(_.start())
     threads2.foreach(_.join())
-  }*/
+  }
 
-  test("OpenVinoModel should predict correctly") {
+  test("OpenVinoModel should predict dummy Tensor correctly") {
+
+    val inputs = Tensor(Array(Batch, 3, 224, 224)).rand().addSingletonDimension()
+    val results1 = resnetModel.predict(inputs)
+    val results2 = resnetInferenceModel.doPredict(inputs)
+
+
+    val threads2 = List.range(0, 5).map(i => {
+      new Thread() {
+        override def run(): Unit = {
+          val results = resnetInferenceModel.doPredict(inputs)
+        }
+      }
+    })
+    threads2.foreach(_.start())
+    threads2.foreach(_.join())
+  }
+
+
+  test("OpenVinoModel should predict Image JTensor correctly") {
     val indata1 = Source.fromFile(resnetInputdata1FilePath).getLines().map(_.toFloat).toArray
     val indata2 = Source.fromFile(resnetInputdata2FilePath).getLines().map(_.toFloat).toArray
     println(indata1.length, indata2.length, 4 * 3 * 224 * 224)
