@@ -42,7 +42,7 @@ object Perf {
         .required()
       opt[String]('w', "weight")
         .text("The path to the int8 ResNet50 model weight")
-        .action((x, c) => c.copy(model = x))
+        .action((v, p) => p.copy(weight = v))
       opt[Int]('b', "batchSize")
         .text("Batch size of input data")
         .action((v, p) => p.copy(batchSize = v))
@@ -53,7 +53,7 @@ object Perf {
 
     parser.parse(args, ResNet50PerfParams()).foreach { param =>
       val batchSize = param.batchSize
-      val batchInput = Tensor(Array(batchSize, 3, 224, 224)).rand()
+      val batchInput = Tensor(Array(batchSize, 3, 224, 224)).rand().addSingletonDimension()
 //      val singleInput = Tensor(Array(1, 3, 224, 224)).rand()
       Engine.init
 
