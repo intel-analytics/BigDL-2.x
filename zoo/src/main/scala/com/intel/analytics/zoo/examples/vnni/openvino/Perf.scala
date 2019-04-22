@@ -54,10 +54,9 @@ object Perf {
     parser.parse(args, ResNet50PerfParams()).foreach { param =>
       val batchSize = param.batchSize
       val batchInput = Tensor(Array(batchSize, 3, 224, 224)).rand().addSingletonDimension()
-//      val singleInput = Tensor(Array(1, 3, 224, 224)).rand()
       Engine.init
 
-      val model = new InferenceModel(4)
+      val model = new InferenceModel(1)
       model.doLoadOpenVINO(param.model, param.weight)
 
       var iteration = 0

@@ -62,12 +62,13 @@ object Predict {
       val sc = NNContext.initNNContext("ResNet50 Int8 Inference Example")
       // Read data
       val images = ImageSet.read(param.folder)
-      val model = new InferenceModel(4)
+      val model = new InferenceModel(1)
       model.doLoadOpenVINO(param.model, param.weight)
 
-      images -> ImageBytesToMat(imageCodec = Imgcodecs.CV_LOAD_IMAGE_COLOR)
-      images -> ImageMatToFloats(validHeight = 224, validWidth = 224)
-      val output = images.toDistributed().rdd.foreach { img =>
+      val input = images ->
+        ImageBytesToMat(imageCodec = Imgcodecs.CV_LOAD_IMAGE_COLOR) ->
+        ImageMatToFloats(validHeight = 224, validWidth = 224)
+      val output = input.toDistributed().rdd.foreach { img =>
         model.doPredict(img.toTensor(ImageFeature.floats))
       }
 

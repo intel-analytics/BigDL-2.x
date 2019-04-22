@@ -16,10 +16,12 @@
 
 package com.intel.analytics.zoo.examples.vnni.openvino
 
+import com.intel.analytics.bigdl.dataset.SampleToMiniBatch
 import com.intel.analytics.bigdl.transform.vision.image.ImageFeature
 import com.intel.analytics.bigdl.utils.LoggerFilter
 import com.intel.analytics.zoo.common.NNContext
-import com.intel.analytics.zoo.feature.image.{ImageBytesToMat, ImageMatToFloats, ImageSet}
+import com.intel.analytics.bigdl.numeric.NumericFloat
+import com.intel.analytics.zoo.feature.image.{ImageBytesToMat, ImageMatToTensor, ImageSet, ImageSetToSample}
 import com.intel.analytics.zoo.pipeline.inference.InferenceModel
 import org.apache.log4j.{Level, Logger}
 import org.opencv.imgcodecs.Imgcodecs
@@ -60,13 +62,17 @@ object ImageNetInference {
     parser.parse(args, ImageNetInferenceParams()).map(param => {
       val sc = NNContext.initNNContext("ImageNet2012 with Int8 Inference Example")
       val images = ImageSet.read(param.folder, sc)
-      val model = new InferenceModel(4)
+      val model = new InferenceModel(1)
       model.doLoadOpenVINO(param.model, param.weight)
 
-      images -> ImageBytesToMat(imageCodec = Imgcodecs.CV_LOAD_IMAGE_COLOR)
-      images -> ImageMatToFloats(validHeight = 224, validWidth = 224)
-      val output = images.toDistributed().rdd.foreach { img =>
-        model.doPredict(img.toTensor(ImageFeature.floats))
+      val input = images ->
+        ImageBytesToMat(imageCodec = Imgcodecs.CV_LOAD_IMAGE_COLOR) ->
+        ImageMatToTensor() ->
+        ImageSetToSample()
+      val batched = input.toDataSet() -> SampleToMiniBatch(param.batchSize)
+
+      batched.toDistributed().data(false).foreach { batch =>
+        model.doPredict(batch.getInput())
       }
       // Evaluation
       // Read val.txt
