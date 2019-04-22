@@ -30,32 +30,12 @@ import scala.reflect.ClassTag
  * @param sampleKey key to store sample
  */
 class ImageSetToSample[T: ClassTag](inputKeys: Array[String] = Array(ImageFeature.imageTensor),
-                       targetKeys: Array[String] = null,
+                       targetKeys: Array[String] = Array(ImageFeature.label),
                        sampleKey: String = ImageFeature.sample)(implicit ev: TensorNumeric[T])
   extends ImageProcessing {
-  private val internalTransformer = InternalImageFrameToSample[T](inputKeys, targetKeys, sampleKey)
   override def apply(prev: Iterator[ImageFeature]): Iterator[ImageFeature] = {
     prev.map(transform(_))
   }
-
-  override def transform(feature: ImageFeature): ImageFeature = {
-    internalTransformer.transform(feature)
-  }
-}
-
-object ImageSetToSample {
-  def apply[T: ClassTag](inputKeys: Array[String] = Array(ImageFeature.imageTensor),
-            targetKeys: Array[String] = null,
-            sampleKey: String = ImageFeature.sample)
-            (implicit ev: TensorNumeric[T]): ImageSetToSample[T] =
-    new ImageSetToSample(inputKeys, targetKeys, sampleKey)
-}
-
-class InternalImageFrameToSample[T: ClassTag](
-     inputKeys: Array[String] = Array(ImageFeature.imageTensor),
-     targetKeys: Array[String] = null,
-     sampleKey: String = ImageFeature.sample)
-   (implicit ev: TensorNumeric[T]) extends FeatureTransformer {
 
   override def transform(feature: ImageFeature): ImageFeature = {
     if (!feature.isValid) return feature
@@ -84,7 +64,7 @@ class InternalImageFrameToSample[T: ClassTag](
       case e: Exception =>
         e.printStackTrace()
         val uri = feature.uri()
-        InternalImageFrameToSample.logger.warn(s"convert imageframe to sample fail for $uri")
+        ImageSetToSample.logger.warn(s"The conversion from ImageFeature to Sample fails for $uri")
         feature(ImageFeature.originalSize) = (-1, -1, -1)
         feature.isValid = false
     }
@@ -92,14 +72,12 @@ class InternalImageFrameToSample[T: ClassTag](
   }
 }
 
-object InternalImageFrameToSample {
-  val logger = Logger.getLogger(getClass)
+object ImageSetToSample {
+  val logger: Logger = Logger.getLogger(getClass)
 
-  def apply[T: ClassTag](
-      inputKeys: Array[String] = Array(ImageFeature.imageTensor),
-      targetKeys: Array[String] = null,
-      sampleKey: String = ImageFeature.sample)
-    (implicit ev: TensorNumeric[T]): InternalImageFrameToSample[T] = {
-    new InternalImageFrameToSample[T](inputKeys, targetKeys, sampleKey)
-  }
+  def apply[T: ClassTag](inputKeys: Array[String] = Array(ImageFeature.imageTensor),
+            targetKeys: Array[String] = Array(ImageFeature.label),
+            sampleKey: String = ImageFeature.sample)
+            (implicit ev: TensorNumeric[T]): ImageSetToSample[T] =
+    new ImageSetToSample(inputKeys, targetKeys, sampleKey)
 }
