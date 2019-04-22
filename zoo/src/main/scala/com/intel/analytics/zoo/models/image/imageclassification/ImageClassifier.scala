@@ -47,9 +47,10 @@ object ImageClassifier {
    * @tparam T Numeric type of parameter(e.g. weight, bias). Only support float/double now.
    * @return
    */
-  def loadModel[T: ClassTag](path: String, weightPath: String = null)
+  def loadModel[T: ClassTag](path: String, weightPath: String = null, quantize: Boolean = false)
                             (implicit ev: TensorNumeric[T]): ImageClassifier[T] = {
-    ImageModel.loadModel(path, weightPath, "imageclassification").asInstanceOf[ImageClassifier[T]]
+    ImageModel.loadModel(path, weightPath, "imageclassification", quantize)
+      .asInstanceOf[ImageClassifier[T]]
   }
 
 }

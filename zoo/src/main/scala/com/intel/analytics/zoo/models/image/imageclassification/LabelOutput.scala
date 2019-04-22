@@ -16,15 +16,19 @@
 
 package com.intel.analytics.zoo.models.image.imageclassification
 
+import com.intel.analytics.bigdl.nn.SoftMax
 import com.intel.analytics.bigdl.tensor.Tensor
 import com.intel.analytics.bigdl.transform.vision.image.ImageFeature
-import com.intel.analytics.zoo.feature.image.{ImageProcessing, ImageSet}
+import com.intel.analytics.zoo.feature.image.ImageProcessing
 
-class LabelOutput(labelMap: Map[Int, String], clses : String, probs : String)
+class LabelOutput(labelMap: Map[Int, String], clses: String, probs: String,
+                  probAsInput: Boolean = true)
   extends ImageProcessing {
   override def transformMat(imageFeature: ImageFeature): Unit = {
-    val predictOutput = imageFeature[Tensor[Float]](ImageFeature.predict)
-    val total = predictOutput.nElement()
+    val predict = imageFeature[Tensor[Float]](ImageFeature.predict)
+    val predictOutput = if (! probAsInput) {
+      SoftMax[Float].forward(predict).toTensor[Float]
+    } else predict
     val start = predictOutput.storageOffset() - 1
     val end = predictOutput.storageOffset() - 1 + predictOutput.nElement()
     val clsNo = end - start
@@ -32,24 +36,24 @@ class LabelOutput(labelMap: Map[Int, String], clses : String, probs : String)
       zipWithIndex.sortWith(_._1 > _._1).toList.toArray
 
     val classes: Array[String] = new Array[String](clsNo)
-    val probilities  : Array[Float] = new Array[Float](clsNo)
+    val probabilities: Array[Float] = new Array[Float](clsNo)
 
-    var index = 0;
-
+    var index = 0
     while (index < clsNo) {
       val clsName = labelMap(sortedResult(index)._2)
       val prob = sortedResult(index)._1
       classes(index) = clsName
-      probilities(index) = prob
+      probabilities(index) = prob
       index += 1
     }
 
     imageFeature(clses) = classes
-    imageFeature(probs) = probilities
+    imageFeature(probs) = probabilities
   }
 }
 
 object LabelOutput {
-  def apply(labelMap: Map[Int, String], classes: String, probs: String): LabelOutput =
-    new LabelOutput(labelMap, classes, probs)
+  def apply(labelMap: Map[Int, String], classes: String,
+            probs: String, probAsInput: Boolean = true): LabelOutput =
+    new LabelOutput(labelMap, classes, probs, probAsInput)
 }

@@ -15,8 +15,11 @@
  */
 package com.intel.analytics.zoo.feature.image
 
+import com.intel.analytics.bigdl.dataset.ArraySample
+import com.intel.analytics.bigdl.tensor.Tensor
 import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric
-import com.intel.analytics.bigdl.transform.vision.image.{ImageFeature, ImageFrameToSample}
+import com.intel.analytics.bigdl.transform.vision.image.{FeatureTransformer, ImageFeature}
+import org.apache.log4j.Logger
 
 import scala.reflect.ClassTag
 
@@ -30,7 +33,7 @@ class ImageSetToSample[T: ClassTag](inputKeys: Array[String] = Array(ImageFeatur
                        targetKeys: Array[String] = null,
                        sampleKey: String = ImageFeature.sample)(implicit ev: TensorNumeric[T])
   extends ImageProcessing {
-  private val internalTransformer = ImageFrameToSample[T](inputKeys, targetKeys, sampleKey)
+  private val internalTransformer = InternalImageFrameToSample[T](inputKeys, targetKeys, sampleKey)
   override def apply(prev: Iterator[ImageFeature]): Iterator[ImageFeature] = {
     prev.map(transform(_))
   }
@@ -46,4 +49,57 @@ object ImageSetToSample {
             sampleKey: String = ImageFeature.sample)
             (implicit ev: TensorNumeric[T]): ImageSetToSample[T] =
     new ImageSetToSample(inputKeys, targetKeys, sampleKey)
+}
+
+class InternalImageFrameToSample[T: ClassTag](
+     inputKeys: Array[String] = Array(ImageFeature.imageTensor),
+     targetKeys: Array[String] = null,
+     sampleKey: String = ImageFeature.sample)
+   (implicit ev: TensorNumeric[T]) extends FeatureTransformer {
+
+  override def transform(feature: ImageFeature): ImageFeature = {
+    if (!feature.isValid) return feature
+    try {
+      val inputs = inputKeys.map(key => {
+        val input = feature[Tensor[T]](key)
+        require(input.isInstanceOf[Tensor[T]], s"the input $key should be tensor")
+        input.asInstanceOf[Tensor[T]]
+      })
+      val sample = if (targetKeys == null) {
+        ArraySample[T](inputs)
+      } else {
+        val targets = targetKeys.flatMap(key => {
+          if (feature.contains(key)) {
+            val target = feature[Tensor[T]](key)
+            require(target.isInstanceOf[Tensor[T]], s"the target $key should be tensor")
+            Some(target.asInstanceOf[Tensor[T]])
+          }
+          else None
+        })
+        if (targets.length > 0) ArraySample[T](inputs, targets)
+        else ArraySample[T](inputs)
+      }
+      feature(sampleKey) = sample
+    } catch {
+      case e: Exception =>
+        e.printStackTrace()
+        val uri = feature.uri()
+        InternalImageFrameToSample.logger.warn(s"convert imageframe to sample fail for $uri")
+        feature(ImageFeature.originalSize) = (-1, -1, -1)
+        feature.isValid = false
+    }
+    feature
+  }
+}
+
+object InternalImageFrameToSample {
+  val logger = Logger.getLogger(getClass)
+
+  def apply[T: ClassTag](
+      inputKeys: Array[String] = Array(ImageFeature.imageTensor),
+      targetKeys: Array[String] = null,
+      sampleKey: String = ImageFeature.sample)
+    (implicit ev: TensorNumeric[T]): InternalImageFrameToSample[T] = {
+    new InternalImageFrameToSample[T](inputKeys, targetKeys, sampleKey)
+  }
 }

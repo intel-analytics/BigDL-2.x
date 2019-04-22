@@ -16,8 +16,10 @@
 
 package com.intel.analytics.zoo.models.image.common
 
+import com.intel.analytics.bigdl.dataset.SampleToMiniBatch
 import com.intel.analytics.bigdl.nn.Module
 import com.intel.analytics.bigdl.nn.abstractnn.Activity
+import com.intel.analytics.bigdl.optim.{ValidationMethod, ValidationResult}
 import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric
 import com.intel.analytics.zoo.feature.image.ImageSet
 import com.intel.analytics.zoo.models.common.ZooModel
@@ -47,7 +49,7 @@ abstract class ImageModel[T: ClassTag]()(implicit ev: TensorNumeric[T])
     val predictConfig = if (null == configure) config else configure
 
     val result = if (predictConfig == null) {
-      ImageSet.fromImageFrame(predictImage(image.toImageFrame()))
+      ImageSet.fromImageFrame(model.predictImage(image.toImageFrame()))
     } else {
       // apply preprocessing if preProcessor is defined
       val data = if (null != predictConfig.preProcessor) {
@@ -56,8 +58,9 @@ abstract class ImageModel[T: ClassTag]()(implicit ev: TensorNumeric[T])
         image
       }
 
-      val imageSet = ImageSet.fromImageFrame(predictImage(data.toImageFrame(), batchPerPartition =
-        predictConfig.batchPerPartition, featurePaddingParam = predictConfig.featurePaddingParam))
+      val imageSet = ImageSet.fromImageFrame(model.predictImage(data.toImageFrame(),
+        batchPerPartition = predictConfig.batchPerPartition,
+        featurePaddingParam = predictConfig.featurePaddingParam))
 
       if (null != predictConfig.postProcessor) {
         imageSet -> predictConfig.postProcessor
@@ -65,6 +68,26 @@ abstract class ImageModel[T: ClassTag]()(implicit ev: TensorNumeric[T])
       else imageSet
     }
     result
+  }
+
+  def evaluateImageSet(
+     image: ImageSet,
+     batchSize: Int,
+     vMethods: Array[_ <:ValidationMethod[T]],
+     configure: ImageConfigure[T] = null): Array[(ValidationResult, ValidationMethod[T])] = {
+    val evalConfig = if (null == configure) config else configure
+
+    if (evalConfig == null) {
+      model.evaluateImage(image.toImageFrame(), vMethods, Some(batchSize))
+    } else {
+      val data = if (null != evalConfig.preProcessor) {
+        image -> evalConfig.preProcessor
+      } else {
+        image
+      }
+      val dataset = data.toDataSet[T]() -> SampleToMiniBatch[T](batchSize)
+      model.evaluate(dataset.toDistributed().data(train = false), vMethods)
+    }
   }
 
   def getConfig(): ImageConfigure[T] = config
@@ -85,9 +108,12 @@ object ImageModel {
    * @tparam T Numeric type of parameter(e.g. weight, bias). Only support float/double now.
    * @return
    */
-  def loadModel[T: ClassTag](path: String, weightPath: String = null, modelType: String = "")
+  def loadModel[T: ClassTag](path: String, weightPath: String = null, modelType: String = "",
+                             quantize: Boolean = false)
     (implicit ev: TensorNumeric[T]): ImageModel[T] = {
-    val model = Module.loadModule[T](path, weightPath)
+    var model = Module.loadModule[T](path, weightPath)
+    val modelName = model.getName()
+    if (quantize) model = model.quantize()
     val imageModel = if (model.isInstanceOf[ImageModel[T]]) {
       model.asInstanceOf[ImageModel[T]]
     } else {
@@ -101,9 +127,9 @@ object ImageModel {
               s"Only 'imageclassification' and 'objectdetection' are currently supported.")
       }
       specificModel.addModel(model)
-      specificModel.setName(model.getName())
+      specificModel.setName(modelName)
     }
-    imageModel.config = ImageConfigure.parse(model.getName())
+    imageModel.config = ImageConfigure.parse(modelName)
     imageModel
   }
 }
