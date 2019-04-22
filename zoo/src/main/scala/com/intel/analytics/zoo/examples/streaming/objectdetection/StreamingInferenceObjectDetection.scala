@@ -18,7 +18,9 @@ package com.intel.analytics.zoo.examples.streaming.objectdetection
 
 
 import com.intel.analytics.bigdl.dataset.SampleToMiniBatch
+import com.intel.analytics.bigdl.tensor.Tensor
 import com.intel.analytics.bigdl.transform.vision.image.ImageFeature
+import com.intel.analytics.bigdl.transform.vision.image.opencv.OpenCVMat
 import com.intel.analytics.zoo.common.{NNContext, Utils}
 import com.intel.analytics.zoo.examples.streaming.objectdetection.StreamingObjectDetection.PredictParam
 import com.intel.analytics.zoo.feature.image.{ImageBytesToMat, ImageChannelNormalize, ImageMatToTensor, ImageResize, ImageSet, ImageSetToSample}
@@ -67,6 +69,7 @@ object StreamingInferenceObjectDetection {
       // Load pre-trained bigDL model
       val model = new InferenceModel(1)
 
+      model.doLoad(params.model)
       // TODO Load labelMap, need API help
       val labelMap = LabelReader.apply("COCO")
 
@@ -84,24 +87,20 @@ object StreamingInferenceObjectDetection {
             ImageBytesToMat(imageCodec = Imgcodecs.CV_LOAD_IMAGE_COLOR) ->
             ImageResize(300, 300) ->
             ImageChannelNormalize(123f, 117f, 104f) ->
-            ImageMatToTensor[Float]() -> ImageSetToSample[Float]()
-          val batched = output.toDataSet[Float]() -> SampleToMiniBatch[Float](4)
-          batched.toDistributed().data(false).foreach { miniBatch =>
-            logger.info("Begin Predict " + miniBatch.size())
+            ImageMatToTensor[Float]()
+          output.toDistributed().rdd.foreach { img =>
+            logger.info("Begin Predict " + img.uri())
             // Add one more dim because of batch requirement of model
-            val predictSet = model.doPredict(miniBatch.getInput())
-            logger.info("Finish Predict " + miniBatch.size())
-            println(predictSet.toTensor[Float]
-              .select(1, 1).toArray().mkString("\n"))
+            val predict = model
+              .doPredict(img.apply[Tensor[Float]](ImageFeature.imageTensor)
+              .addSingletonDimension())
+            logger.info("Finish Predict " + img.uri())
+            logger.info("Begin visualizing box for image " + img.uri())
+            val result = visualizer.visualize(OpenCVMat.fromImageBytes(img.bytes()),
+              predict.toTensor[Float].apply(1))
+            val resultImg = OpenCVMat.imencode(result, "jpg")
+            writeFile(params.outputFolder, img.uri(), resultImg)
           }
-//            // Add one more dim because of batch requirement of model
-//
-//            logger.info("Begin visualizing box for image " + img.uri())
-//            // TODO Visualizer also need some changes
-//            val result = visualizer.visualize(OpenCVMat.fromImageBytes(img.bytes()),
-//              output.toTensor)
-//            val resultImg = OpenCVMat.imencode(result, "jpg")
-//            writeFile(params.outputFolder, img.uri(), resultImg)
         }
       }
       ssc.start()
