@@ -24,14 +24,14 @@ class ImageRandomCropper(cropWidth: Int, cropHeight: Int,
                          mirror: Boolean, cropperMethod: CropperMethod = CropRandom,
                          channels: Int = 3) extends ImageProcessing {
 
-  private val internalRandomCropper = InternalRandomCropper(cropWidth, cropHeight,
+  private val internalTransformer = InternalRandomCropper(cropWidth, cropHeight,
     mirror, cropperMethod, channels)
   override def apply(prev: Iterator[ImageFeature]): Iterator[ImageFeature] = {
-    internalRandomCropper.apply(prev)
+    internalTransformer.apply(prev)
   }
 
   override def transformMat(feature: ImageFeature): Unit = {
-    internalRandomCropper.transformMat(feature)
+    internalTransformer.transformMat(feature)
   }
 }
 

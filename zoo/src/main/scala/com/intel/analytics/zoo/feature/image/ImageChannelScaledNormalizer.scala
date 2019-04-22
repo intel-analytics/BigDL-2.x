@@ -23,14 +23,14 @@ import com.intel.analytics.bigdl.transform.vision.image.augmentation.ChannelScal
 class ImageChannelScaledNormalizer(meanR: Int, meanG: Int,
                                    meanB: Int, scale: Double) extends ImageProcessing {
 
-  private val internalChannelScaledNormalizer = InternalChannelScaledNormalizer(meanR,
+  private val internalTransformer = InternalChannelScaledNormalizer(meanR,
     meanG, meanB, scale)
   override def apply(prev: Iterator[ImageFeature]): Iterator[ImageFeature] = {
-    internalChannelScaledNormalizer.apply(prev)
+    internalTransformer.apply(prev)
   }
 
   override def transformMat(feature: ImageFeature): Unit = {
-    internalChannelScaledNormalizer.transformMat(feature)
+    internalTransformer.transformMat(feature)
   }
 }
 

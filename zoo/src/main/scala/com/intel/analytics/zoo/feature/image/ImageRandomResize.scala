@@ -21,13 +21,13 @@ import com.intel.analytics.bigdl.transform.vision.image.ImageFeature
 
 class ImageRandomResize(minSize: Int, maxSize : Int) extends ImageProcessing {
 
-  private val internalRandomResize = RandomResize(minSize, maxSize)
+  private val internalTransformer = RandomResize(minSize, maxSize)
   override def apply(prev: Iterator[ImageFeature]): Iterator[ImageFeature] = {
-    internalRandomResize.apply(prev)
+    internalTransformer.apply(prev)
   }
 
   override def transformMat(feature: ImageFeature): Unit = {
-    internalRandomResize.transformMat(feature)
+    internalTransformer.transformMat(feature)
   }
 }
 
