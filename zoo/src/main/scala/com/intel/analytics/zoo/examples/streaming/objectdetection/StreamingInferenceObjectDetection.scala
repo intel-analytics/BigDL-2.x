@@ -17,13 +17,20 @@
 package com.intel.analytics.zoo.examples.streaming.objectdetection
 
 
+<<<<<<< Updated upstream
 import com.intel.analytics.bigdl.dataset.MiniBatch
+=======
+import com.intel.analytics.bigdl.dataset.SampleToMiniBatch
+>>>>>>> Stashed changes
 import com.intel.analytics.bigdl.transform.vision.image.opencv.OpenCVMat
 import com.intel.analytics.bigdl.transform.vision.image.ImageFeature
 import com.intel.analytics.zoo.common.{NNContext, Utils}
 import com.intel.analytics.zoo.examples.streaming.objectdetection.StreamingObjectDetection.PredictParam
 import com.intel.analytics.zoo.feature.FeatureSet
+<<<<<<< Updated upstream
 import com.intel.analytics.zoo.feature.image.roi.RoiRecordToFeature
+=======
+>>>>>>> Stashed changes
 import com.intel.analytics.zoo.feature.image.{ImageBytesToMat, ImageMatToFloats, ImageResize, ImageSet}
 import com.intel.analytics.zoo.models.image.objectdetection.LabelReader
 import com.intel.analytics.zoo.models.image.objectdetection.Visualizer
@@ -82,17 +89,16 @@ object StreamingInferenceObjectDetection {
         logger.debug("batchPath count " + batchPath.count())
         if (!batchPath.isEmpty()) {
           // RDD[String] => RDD[ImageFeature]
-          val dataSet = FeatureSet.rdd(batchPath.map(path => readFile(path))) ->
-            RoiRecordToFeature(true) ->
-            ImageBytesToMat(imageCodec = Imgcodecs.CV_LOAD_IMAGE_COLOR) ->
-            ImageResize(300, 300, -1) ->
-            ImageMatToFloats() ->
-            RoiImageToSSDBatch(4)
-          val batchedSet = dataSet.asInstanceOf[FeatureSet[MiniBatch[Float]]]
-          batchedSet.toDistributed().data(train = false).foreach { miniBatch =>
+          val dataSet = ImageSet.rdd(batchPath.map(path => readFile(path)))
+          // Resize image
+          val output = dataSet -> ImageBytesToMat(imageCodec = Imgcodecs.CV_LOAD_IMAGE_COLOR) ->
+            ImageResize(300, 300) ->
+            ImageMatToFloats()
+          val batched = output.toDataSet() -> SampleToMiniBatch[Float](4)
+          val predicts = batched.toDistributed().data(false).map { minibatch =>
             logger.info("Begin Predict ")
-            val output = model.doPredict(miniBatch.getInput)
-
+            // Add one more dim because of batch requirement of model
+            model.doPredict(minibatch.getInput())
           }
 //            // Add one more dim because of batch requirement of model
 //
