@@ -16,9 +16,11 @@
 
 package com.intel.analytics.zoo.examples.vnni.openvino
 
+import com.intel.analytics.bigdl.dataset.SampleToMiniBatch
 import com.intel.analytics.bigdl.transform.vision.image.ImageFeature
 import com.intel.analytics.zoo.common.NNContext
-import com.intel.analytics.zoo.feature.image.{ImageBytesToMat, ImageMatToFloats, ImageSet}
+import com.intel.analytics.zoo.examples.vnni.openvino.ImageNetInference.logger
+import com.intel.analytics.zoo.feature.image.{ImageBytesToMat, ImageMatToFloats, ImageMatToTensor, ImageSet, ImageSetToSample}
 import com.intel.analytics.zoo.pipeline.inference.InferenceModel
 import org.apache.log4j.{Level, Logger}
 import org.opencv.imgcodecs.Imgcodecs
@@ -27,6 +29,7 @@ import scopt.OptionParser
 case class ImageClassificationParams(folder: String = "./",
                                      model: String = "",
                                      weight: String = "",
+                                     batchSize: Int = 4,
                                      topN: Int = 5,
                                      partitionNum: Int = 4)
 
@@ -57,20 +60,30 @@ object Predict {
       opt[Int]("partitionNum")
         .text("The number of partitions to cut the dataset into")
         .action((x, c) => c.copy(partitionNum = x))
+      opt[Int]('b', "batchSize")
+        .text("batch size")
+        .action((x, c) => c.copy(batchSize = x))
     }
     parser.parse(args, ImageClassificationParams()).map(param => {
       val sc = NNContext.initNNContext("ResNet50 Int8 Inference Example")
       // Read data
-      val images = ImageSet.read(param.folder)
+      val images = ImageSet.read(param.folder, sc)
       val model = new InferenceModel(1)
       model.doLoadOpenVINO(param.model, param.weight)
 
       val input = images ->
         ImageBytesToMat(imageCodec = Imgcodecs.CV_LOAD_IMAGE_COLOR) ->
-        ImageMatToFloats(validHeight = 224, validWidth = 224)
-      val output = input.toDistributed().rdd.foreach { img =>
-        model.doPredict(img.toTensor(ImageFeature.floats))
+        ImageMatToTensor() ->
+        ImageSetToSample()
+      val batched = input.toDataSet() -> SampleToMiniBatch(param.batchSize)
+      val start = System.nanoTime()
+      batched.toDistributed().data(false).foreach { batch =>
+        model.doPredict(batch.getInput())
       }
+      // TODO Evaluation ACC
+      val timeUsed = System.nanoTime() - start
+      val throughput = "%.2f".format(images.toDistributed().rdd.count().toFloat / (timeUsed / 1e9))
+      logger.info(s"Takes $timeUsed ns, throughput is $throughput imgs/sec")
 
 
 //      val labelOutput = LabelOutput(model.getConfig().labelMap, "clses",

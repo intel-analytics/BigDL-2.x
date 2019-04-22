@@ -17,7 +17,6 @@
 package com.intel.analytics.zoo.examples.vnni.openvino
 
 import com.intel.analytics.bigdl.dataset.SampleToMiniBatch
-import com.intel.analytics.bigdl.transform.vision.image.ImageFeature
 import com.intel.analytics.bigdl.utils.LoggerFilter
 import com.intel.analytics.zoo.common.NNContext
 import com.intel.analytics.bigdl.numeric.NumericFloat
@@ -71,11 +70,15 @@ object ImageNetInference {
         ImageSetToSample()
       val batched = input.toDataSet() -> SampleToMiniBatch(param.batchSize)
 
+      val start = System.nanoTime()
       batched.toDistributed().data(false).foreach { batch =>
         model.doPredict(batch.getInput())
       }
+      // TODO Evaluation ACC
+      val timeUsed = System.nanoTime() - start
+      val throughput = "%.2f".format(images.toDistributed().rdd.count().toFloat / (timeUsed / 1e9))
+      logger.info(s"Takes $timeUsed ns, throughput is $throughput imgs/sec")
       // Evaluation
-      // Read val.txt
       // Compare labels and output results
       sc.stop()
     })
