@@ -27,7 +27,8 @@ import tarfile
 np.random.seed(1337)  # for reproducibility
 
 resource_path = os.path.join(os.path.split(__file__)[0], "../../resources")
-property_path = os.path.join(os.path.split(__file__)[0], "../../../../../zoo/target/classes/app.properties")
+property_path = os.path.join(os.path.split(__file__)[0],
+                             "../../../../../zoo/target/classes/app.properties")
 data_url = "http://download.tensorflow.org"
 with open(property_path) as f:
     for _ in range(2):  # skip the first two lines
