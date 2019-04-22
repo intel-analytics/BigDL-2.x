@@ -17,10 +17,9 @@
 package com.intel.analytics.zoo.examples.vnni.openvino
 
 import com.intel.analytics.bigdl.dataset.SampleToMiniBatch
-import com.intel.analytics.bigdl.transform.vision.image.ImageFeature
+import com.intel.analytics.bigdl.numeric.NumericFloat
 import com.intel.analytics.zoo.common.NNContext
-import com.intel.analytics.zoo.examples.vnni.openvino.ImageNetInference.logger
-import com.intel.analytics.zoo.feature.image.{ImageBytesToMat, ImageMatToFloats, ImageMatToTensor, ImageSet, ImageSetToSample}
+import com.intel.analytics.zoo.feature.image.{ImageBytesToMat, ImageMatToTensor, ImageSet, ImageSetToSample}
 import com.intel.analytics.zoo.pipeline.inference.InferenceModel
 import org.apache.log4j.{Level, Logger}
 import org.opencv.imgcodecs.Imgcodecs
