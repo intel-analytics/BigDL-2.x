@@ -17,36 +17,25 @@
 package com.intel.analytics.zoo.examples.streaming.objectdetection
 
 
-<<<<<<< Updated upstream
-import com.intel.analytics.bigdl.dataset.MiniBatch
-=======
 import com.intel.analytics.bigdl.dataset.SampleToMiniBatch
->>>>>>> Stashed changes
-import com.intel.analytics.bigdl.transform.vision.image.opencv.OpenCVMat
 import com.intel.analytics.bigdl.transform.vision.image.ImageFeature
 import com.intel.analytics.zoo.common.{NNContext, Utils}
 import com.intel.analytics.zoo.examples.streaming.objectdetection.StreamingObjectDetection.PredictParam
-import com.intel.analytics.zoo.feature.FeatureSet
-<<<<<<< Updated upstream
-import com.intel.analytics.zoo.feature.image.roi.RoiRecordToFeature
-=======
->>>>>>> Stashed changes
-import com.intel.analytics.zoo.feature.image.{ImageBytesToMat, ImageMatToFloats, ImageResize, ImageSet}
+import com.intel.analytics.zoo.feature.image.{ImageBytesToMat, ImageChannelNormalize, ImageMatToTensor, ImageResize, ImageSet, ImageSetToSample}
 import com.intel.analytics.zoo.models.image.objectdetection.LabelReader
 import com.intel.analytics.zoo.models.image.objectdetection.Visualizer
-import com.intel.analytics.zoo.models.image.objectdetection.common.dataset.ByteRecord
-import com.intel.analytics.zoo.models.image.objectdetection.ssd.{RoiImageToSSDBatch, SSDMiniBatch}
 import com.intel.analytics.zoo.pipeline.inference.InferenceModel
-import org.apache.hadoop.fs.Path
+import org.apache.hadoop.conf.Configuration
+import org.apache.hadoop.fs.{FileSystem, Path}
 import org.apache.log4j.{Level, Logger}
 import org.apache.spark.streaming.{Seconds, StreamingContext}
 import org.opencv.imgcodecs.Imgcodecs
 import scopt.OptionParser
 
 object StreamingInferenceObjectDetection {
-//  Logger.getLogger("org").setLevel(Level.ERROR)
-//  Logger.getLogger("akka").setLevel(Level.ERROR)
-//  Logger.getLogger("breeze").setLevel(Level.ERROR)
+  Logger.getLogger("org").setLevel(Level.ERROR)
+  Logger.getLogger("akka").setLevel(Level.ERROR)
+  Logger.getLogger("breeze").setLevel(Level.ERROR)
   Logger.getLogger("com.intel.analytics.zoo").setLevel(Level.INFO)
 
   val logger = Logger.getLogger(getClass)
@@ -76,7 +65,7 @@ object StreamingInferenceObjectDetection {
       val ssc = new StreamingContext(sc, Seconds(3))
 
       // Load pre-trained bigDL model
-      val model = new InferenceModel(4)
+      val model = new InferenceModel(1)
 
       // TODO Load labelMap, need API help
       val labelMap = LabelReader.apply("COCO")
@@ -90,15 +79,20 @@ object StreamingInferenceObjectDetection {
         if (!batchPath.isEmpty()) {
           // RDD[String] => RDD[ImageFeature]
           val dataSet = ImageSet.rdd(batchPath.map(path => readFile(path)))
-          // Resize image
-          val output = dataSet -> ImageBytesToMat(imageCodec = Imgcodecs.CV_LOAD_IMAGE_COLOR) ->
+          // Pre-processing image
+          val output = dataSet ->
+            ImageBytesToMat(imageCodec = Imgcodecs.CV_LOAD_IMAGE_COLOR) ->
             ImageResize(300, 300) ->
-            ImageMatToFloats()
-          val batched = output.toDataSet() -> SampleToMiniBatch[Float](4)
-          val predicts = batched.toDistributed().data(false).map { minibatch =>
-            logger.info("Begin Predict ")
+            ImageChannelNormalize(123f, 117f, 104f) ->
+            ImageMatToTensor[Float]() -> ImageSetToSample[Float]()
+          val batched = output.toDataSet[Float]() -> SampleToMiniBatch[Float](4)
+          batched.toDistributed().data(false).foreach { miniBatch =>
+            logger.info("Begin Predict " + miniBatch.size())
             // Add one more dim because of batch requirement of model
-            model.doPredict(minibatch.getInput())
+            val predictSet = model.doPredict(miniBatch.getInput())
+            logger.info("Finish Predict " + miniBatch.size())
+            println(predictSet.toTensor[Float]
+              .select(1, 1).toArray().mkString("\n"))
           }
 //            // Add one more dim because of batch requirement of model
 //
@@ -121,10 +115,17 @@ object StreamingInferenceObjectDetection {
     * @param path file path
     * @return ByteRecord
     */
-  def readFile(path: String): ByteRecord = {
+  def readFile(path: String): ImageFeature = {
+    val fspath = new Path(path)
     logger.info("Read image file " + path)
-    val data = Utils.readBytes(path)
-    ByteRecord.apply(data, path)
+    val fs = FileSystem.newInstance(fspath.toUri, new Configuration())
+    // Read local or remote image
+    val inputStream = fs.open(fspath)
+    val data = new Array[Byte](fs.getFileStatus(new Path(path))
+      .getLen.toInt)
+    inputStream.readFully(data)
+    inputStream.close()
+    ImageFeature.apply(data, null, path)
   }
 
   /**
