@@ -23,7 +23,7 @@ import com.intel.analytics.bigdl.optim._
 import com.intel.analytics.bigdl.utils.{Engine, LoggerFilter, T, Table}
 import com.intel.analytics.zoo.feature.pmem.MemoryType
 import com.intel.analytics.zoo.pipeline.api.keras.layers.utils.EngineRef
-import com.intel.analytics.zoo.pipeline.estimator.{Estimator}
+import com.intel.analytics.zoo.pipeline.estimator.{ConstantClipping, Estimator, L2NormClipping}
 import org.apache.spark.SparkContext
 
 object TrainInceptionV1 {
@@ -100,11 +100,19 @@ object TrainInceptionV1 {
         (Trigger.severalIteration(param.checkpointIteration),
           Trigger.maxIteration(param.maxIteration))
       }
+      val gradientClipping = if (param.gradientL2NormThreshold.isDefined) {
+        L2NormClipping(param.gradientL2NormThreshold.get)
+      } else if (param.gradientMin.isDefined && param.gradientMax.isDefined) {
+        ConstantClipping(param.gradientMin.get, param.gradientMax.get)
+      } else {
+        null
+      }
 
       estimator.train(trainSet, ClassNLLCriterion[Float](),
         endTrigger = Some(endTrigger),
         checkPointTrigger = Some(checkpointTrigger),
-        valSet, Array(new Top1Accuracy[Float], new Top5Accuracy[Float]))
+        valSet, Array(new Top1Accuracy[Float], new Top5Accuracy[Float]),
+        gradientClipping)
 
       sc.stop()
     })

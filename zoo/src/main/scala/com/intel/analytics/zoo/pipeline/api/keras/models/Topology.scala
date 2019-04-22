@@ -42,7 +42,7 @@ import com.intel.analytics.zoo.pipeline.api.autograd._
 import com.intel.analytics.zoo.pipeline.api.keras.layers.Input
 import com.intel.analytics.zoo.pipeline.api.keras.layers.utils._
 import com.intel.analytics.zoo.pipeline.api.net.NetUtils
-import com.intel.analytics.zoo.pipeline.estimator.AbstractEstimator
+import com.intel.analytics.zoo.pipeline.estimator.{AbstractEstimator, ConstantClipping, GradientClipping, L2NormClipping}
 import org.apache.hadoop.conf.Configuration
 import org.apache.hadoop.fs.Path
 import org.apache.log4j.Logger
@@ -985,7 +985,8 @@ private[zoo] class InternalDistriOptimizer[T: ClassTag] (
         endTrigger: Option[Trigger] = None,
         checkPointTrigger: Option[Trigger] = None,
         validationSet: FeatureSet[MiniBatch[T]] = null,
-        validationMethod: Array[ValidationMethod[T]] = null): this.type = {
+        validationMethod: Array[ValidationMethod[T]] = null,
+        gradientClipping: GradientClipping = null): this.type = {
     this.dataset = trainSet.toDataSet()
     val endWhen = if (endTrigger.isDefined) {
       endTrigger.get
@@ -1004,6 +1005,18 @@ private[zoo] class InternalDistriOptimizer[T: ClassTag] (
     }
     if (checkPointTrigger.isDefined && validationMethod != null && validationSet != null) {
       this.setValidation(checkPointTrigger.get, validationSet.toDataSet(), validationMethod)
+    }
+    if (gradientClipping != null) {
+      gradientClipping match {
+        case constant: ConstantClipping =>
+          logger.info(s"Using constant clipping (${constant.min}, ${constant.max}).")
+          this.setConstantGradientClipping(constant.min, constant.max)
+        case l2norm: L2NormClipping =>
+          logger.info(s"Using L2 norm clipping ${l2norm.l2Norm}.")
+          this.setGradientClippingByl2Norm(l2norm.l2Norm)
+        case _ =>
+          throw new IllegalArgumentException(s"Unsupported gradient clipping type ${gradientClipping}")
+      }
     }
     this.optimize()
     this

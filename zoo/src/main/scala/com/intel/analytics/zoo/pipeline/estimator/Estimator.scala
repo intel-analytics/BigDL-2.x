@@ -34,13 +34,20 @@ trait AbstractEstimator[T]{
             endTrigger: Option[Trigger] = None,
             checkPointTrigger: Option[Trigger] = None,
             validationSet: FeatureSet[MiniBatch[T]] = null,
-            validationMethod: Array[ValidationMethod[T]] = null): this.type
+            validationMethod: Array[ValidationMethod[T]] = null,
+            gradientClipping: GradientClipping = null): this.type
 
   def evaluate(validationSet: FeatureSet[MiniBatch[T]],
                validationMethod: Array[ValidationMethod[T]]
               ): Map[ValidationMethod[T], ValidationResult]
 
 }
+
+trait GradientClipping
+
+case class L2NormClipping(l2Norm: Double) extends GradientClipping
+
+case class ConstantClipping(min: Double, max: Double) extends GradientClipping
 
 /**
  * Estimator class for training and evaluation BigDL models.
@@ -79,7 +86,8 @@ class Estimator[T: ClassTag] private[zoo](
             endTrigger: Option[Trigger] = None,
             checkPointTrigger: Option[Trigger] = None,
             validationSet: FeatureSet[MiniBatch[T]] = null,
-            validationMethod: Array[ValidationMethod[T]] = null): this.type = {
+            validationMethod: Array[ValidationMethod[T]] = null,
+            gradientClipping: GradientClipping = null): this.type = {
     if (internalEstimator == null) {
       internalEstimator = trainSet match {
         case d: DistributedFeatureSet[MiniBatch[T]] =>
@@ -90,7 +98,7 @@ class Estimator[T: ClassTag] private[zoo](
       }
     }
     internalEstimator.train(trainSet, criterion, endTrigger, checkPointTrigger,
-      validationSet, validationMethod)
+      validationSet, validationMethod, gradientClipping)
     this
   }
 
