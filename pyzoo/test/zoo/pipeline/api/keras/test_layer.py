@@ -214,7 +214,7 @@ class TestLayer(ZooTestCase):
                       metrics=['acc'])
 
     def test_transformer_forward_backward(self):
-        layer = ZLayer.TransformerLayer.init_with_default_embedding(
+        layer = ZLayer.TransformerLayer.init(
             vocab=200, hidden_size=128, n_head=4, seq_len=20)
 
         train_token = np.random.randint(20, size=(2, 20))
@@ -223,7 +223,7 @@ class TestLayer(ZooTestCase):
         self.assert_forward_backward(layer, input)
 
     def test_bert_forward_backward(self):
-        layer = ZLayer.BERT.init_with_default_embedding(
+        layer = ZLayer.BERT.init(
             vocab=200, hidden_size=128, n_head=4, seq_len=20, intermediate_size=20)
 
         train_token = np.random.randint(20, size=(2, 20))

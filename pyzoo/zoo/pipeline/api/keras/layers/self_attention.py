@@ -173,10 +173,10 @@ class TransformerLayer(ZooKerasLayer):
         return m
 
     @classmethod
-    def init_with_default_embedding(cls, vocab=40990, seq_len=77, n_block=12, hidden_drop=0.1,
-                                    attn_drop=0.1, n_head=12, hidden_size=768,
-                                    embedding_drop=0.1, initializer_range=0.02,
-                                    bidirectional=False, output_all_block=False):
+    def init(cls, vocab=40990, seq_len=77, n_block=12, hidden_drop=0.1,
+             attn_drop=0.1, n_head=12, hidden_size=768,
+             embedding_drop=0.1, initializer_range=0.02,
+             bidirectional=False, output_all_block=False):
         """
         vocab: vocabulary size of training data, default is 40990
         seq_len: max sequence length of training data, default is 77
@@ -292,10 +292,10 @@ class BERT(TransformerLayer):
         return y
 
     @classmethod
-    def init_with_default_embedding(cls, vocab=40990, hidden_size=768, n_block=12, n_head=12,
-                                    seq_len=512, intermediate_size=3072, hidden_drop=0.1,
-                                    attn_drop=0.1, initializer_range=0.02, output_all_block=True,
-                                    bigdl_type="float"):
+    def init(cls, vocab=40990, hidden_size=768, n_block=12, n_head=12,
+             seq_len=512, intermediate_size=3072, hidden_drop=0.1,
+             attn_drop=0.1, initializer_range=0.02, output_all_block=True,
+             bigdl_type="float"):
         """
         vocab: vocabulary size of training data, default is 40990
         hidden_size: size of the encoder layers, default is 768
