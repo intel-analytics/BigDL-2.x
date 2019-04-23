@@ -783,14 +783,13 @@ class TFDataset(object):
         
         :param tensor_structure: a nested structure of TensorMeta objects specifying the
         name, shape and data type of each element in this TFDataset
-        :param batch_size: TFDataset will automatically batch its elements when used in training,
-          this is the batch_size. Note this batch_size is the total number of elements that will be used in
-          training a single step. These elements may be located in different partitions.
-        :param batch_per_thread: TFDataset will automatically batch its elements on each partition when
-        used in evaluation and prediction. This is the batch_size on each partition. Generally, batch_size
-        equals to batch_per_thread * num_partitions
-        :param hard_code_batch_size: whether specify the size of the first dimension of Tensor when creating
-        TensorFlow graph. If False, it will be set to None, else it will be set to batch_per_thread
+        :param batch_size: the batch size, used for training, should be a multiple of
+        total core num
+        :param batch_per_thread: the batch size for each thread, used for inference or evaluation
+        :param hard_code_batch_size: whether to hard code the batch_size into tensorflow graph,
+        if True, the static size of the first dimension of the resulting tensors is
+        batch_size/total_core_num (training) or batch_per_thread for inference; if False,
+        it is None.
         '''
 
         if batch_size > 0 and batch_per_thread > 0:
@@ -972,7 +971,7 @@ class TFDataset(object):
         :param types: the types of the result tensors, should be a list of tf.dtype
         :param batch_size: the batch size, used for training, should be a multiple of
         total core num
-        :param batch_per_thread: the batch size for each thread, used for inference
+        :param batch_per_thread: the batch size for each thread, used for inference or evaluation
         :param hard_code_batch_size: whether to hard code the batch_size into tensorflow graph,
         if True, the static size of the first dimension of the resulting tensors is
         batch_size/total_core_num (training) or batch_per_thread for inference; if False,
@@ -985,9 +984,22 @@ class TFDataset(object):
     @staticmethod
     def from_ndarrays(*args, **kwargs):
         '''
-        C
-        :param args: 
-        :param kwargs: 
+        Create a TFDataset from a nested structure of numpy ndarrays. Each element
+        in the resulting TFDataset has the same structure of the argument tensors and
+        is created by indexing on the first dimension of each ndarray in the tensors
+        argument.
+
+        This method is equivalent to sc.parallize the tensors and call TFDataset.from_rdd
+
+        :param tensors: the numpy ndarrays
+        :param batch_size: the batch size, used for training, should be a multiple of
+        total core num
+        :param batch_per_thread: the batch size for each thread, used for inference or evaluation
+        :param hard_code_batch_size: whether to hard code the batch_size into tensorflow graph,
+        if True, the static size of the first dimension of the resulting tensors is
+        batch_size/total_core_num (training) or batch_per_thread for inference; if False,
+        it is None.
+        :param val_tensors: the numpy ndarrays used for validation during training
         :return: 
         '''
         return TFNdarrayDataset.from_ndarrays(*args, **kwargs)
@@ -996,6 +1008,25 @@ class TFDataset(object):
     def from_image_set(image_set, image, label=None,
                        batch_size=-1, batch_per_thread=-1,
                        hard_code_batch_size=False, validation_image_set=None):
+        '''
+        Create a TFDataset from a ImagetSet. Each ImageFeature in the ImageSet should
+        already has the "sample" field, i.e. the result of ImageSetToSample transformer
+
+        :param image_set: the ImageSet used to create this TFDataset
+        :param image: a tuple of two, the first element is the type of image, the second element
+        is the shape of this element, i.e. (tf.float32, [224, 224, 3]))
+        :param label: a tuple of two, the first element is the type of label, the second element
+        is the shape of this element, i.e. (tf.int32, [1]))
+        :param batch_size: the batch size, used for training, should be a multiple of
+        total core num
+        :param batch_per_thread: the batch size for each thread, used for inference or evaluation
+        :param hard_code_batch_size: whether to hard code the batch_size into tensorflow graph,
+        if True, the static size of the first dimension of the resulting tensors is
+        batch_size/total_core_num (training) or batch_per_thread for inference; if False,
+        it is None.
+        :param validation_image_set: the ImageSet used for validation during training
+        :return:
+        '''
         tensor_structure = TFDataset._to_tensor_structure(image, label)
         return TFImageDataset(image_set, tensor_structure, batch_size,
                               batch_per_thread, hard_code_batch_size,
@@ -1005,6 +1036,26 @@ class TFDataset(object):
     def from_text_set(text_set, text, label=None,
                       batch_size=-1, batch_per_thread=-1,
                       hard_code_batch_size=False, validation_image_set=None):
+        '''
+        Create a TFDataset from a TextSet. The TextSet must be transformed to Sample, i.e.
+        the result of TextFeatureToSample transformer.
+        :param text_set: the TextSet used to create this TFDataset
+        :param text: a tuple of two, the first element is the type of this input feature, the second element
+        is the shape of this element, i.e. (tf.float32, [10, 100, 4])). text can also be nested structure of
+        this tuple of two.
+        :param label: a tuple of two, the first element is the type of label, the second element
+        is the shape of this element, i.e. (tf.int32, [1])). label can also be nested structure of
+        this tuple of two.
+        :param batch_size: the batch size, used for training, should be a multiple of
+        total core num
+        :param batch_per_thread: the batch size for each thread, used for inference or evaluation
+        :param hard_code_batch_size: whether to hard code the batch_size into tensorflow graph,
+        if True, the static size of the first dimension of the resulting tensors is
+        batch_size/total_core_num (training) or batch_per_thread for inference; if False,
+        it is None.
+        :param validation_image_set: The TextSet used for validation during training
+        :return:
+        '''
         tensor_structure = TFDataset._to_tensor_structure(text, label)
         return TFTextDataset(text_set, tensor_structure, batch_size,
                              batch_per_thread, hard_code_batch_size,
@@ -1013,6 +1064,26 @@ class TFDataset(object):
     @staticmethod
     def from_feature_set(dataset, features, labels=None, batch_size=-1, batch_per_thread=-1,
                          hard_code_batch_size=False, validation_dataset=None):
+        '''
+        Create a TFDataset from a FeatureSet. Currently, the element in this Feature set must be a ImageFeature that
+        has a sample field, i.e. the result of ImageSetToSample transformer
+        :param dataset: the feature set used to create this TFDataset
+        :param features: a tuple of two, the first element is the type of this input feature, the second element
+        is the shape of this element, i.e. (tf.float32, [224, 224, 3])). text can also be nested structure of
+        this tuple of two.
+        :param labels: a tuple of two, the first element is the type of label, the second element
+        is the shape of this element, i.e. (tf.int32, [1])). label can also be nested structure of
+        this tuple of two.
+        :param batch_size: the batch size, used for training, should be a multiple of
+        total core num
+        :param batch_per_thread: the batch size for each thread, used for inference or evaluation
+        :param hard_code_batch_size: whether to hard code the batch_size into tensorflow graph,
+        if True, the static size of the first dimension of the resulting tensors is
+        batch_size/total_core_num (training) or batch_per_thread for inference; if False,
+        it is None.
+        :param validation_dataset: The FeatureSet used for validation during training
+        :return:
+        '''
         tensor_structure = TFDataset._to_tensor_structure(features, labels)
 
         return TFFeatureDataset(dataset, tensor_structure, batch_size,
@@ -1200,9 +1271,14 @@ class TFNdarrayDataset(TFDataset):
     def from_ndarrays(tensors, batch_size=-1, batch_per_thread=-1,
                       hard_code_batch_size=False, val_tensors=None):
         '''
-        Create a TFDataset from a nested structure of Tensors. Each element
-        in the resulting TFDataset
-        :param tensors: 
+        Create a TFDataset from a nested structure of numpy ndarrays. Each element
+        in the resulting TFDataset has the same structure of the argument tensors and
+        is created by indexing on the first dimension of each ndarray in the tensors
+        argument.
+
+        This method is equivalent to sc.parallize the tensors and call TFDataset.from_rdd
+
+        :param tensors: the nested structure of numpy ndarrays.
         :param batch_size: 
         :param batch_per_thread: 
         :param hard_code_batch_size: 
