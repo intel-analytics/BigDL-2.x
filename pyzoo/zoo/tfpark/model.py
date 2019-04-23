@@ -99,25 +99,7 @@ class KerasModel(object):
             self._fit_distributed(x, validation_split, epochs, **kwargs)
 
         elif distributed:
-            sc = getOrCreateSparkContext()
-            train_rdd, types, shapes = _create_rdd_x_y(x, y,
-                                                       self.model._feed_input_names,
-                                                       self.model._feed_output_names,
-                                                       sc)
-
-            val_rdd = None
-            if validation_data is not None:
-                val_rdd, _, _ = _create_rdd_x_y(validation_data[0], validation_data[1],
-                                                self.model._feed_input_names,
-                                                self.model._feed_output_names,
-                                                sc)
-            names = self.model._feed_input_names + self.model._feed_output_names
-            dataset = TFDataset.from_rdd(train_rdd,
-                                         names=names,
-                                         shapes=shapes,
-                                         types=types,
-                                         batch_size=batch_size if batch_size is not None else 32,
-                                         val_rdd=val_rdd)
+            dataset = TFDataset.from_ndarrays((x, y), val_tensors=validation_data)
             self._fit_distributed(dataset, validation_split, epochs, **kwargs)
 
         else:
@@ -157,18 +139,10 @@ class KerasModel(object):
             return self._evaluate_distributed(x)
         else:
             if distributed:
-                sc = getOrCreateSparkContext()
-                rdd, types, shapes = _create_rdd_x_y(x, y,
-                                                     self.model._feed_input_names,
-                                                     self.model._feed_output_names,
-                                                     sc)
-                names = self.model._feed_input_names + self.model._feed_output_names
-                dataset = TFDataset.from_rdd(rdd,
-                                             names=names,
-                                             types=types,
-                                             shapes=shapes,
-                                             batch_per_thread=-1 if batch_per_thread is None
-                                             else batch_per_thread)
+                dataset = TFDataset.from_ndarrays((x, y),
+                                                  batch_per_thread=-1 if batch_per_thread is None
+                                                  else batch_per_thread
+                                                  )
                 return self._evaluate_distributed(dataset)
             else:
                 return self.model.evaluate(x=x,
@@ -189,7 +163,7 @@ class KerasModel(object):
             batch_size = dataset.batch_per_thread * dataset.get_num_partitions()
 
         eval_methods = [to_bigdl_metric(m, self.model.loss)
-                        for m in self.metrics_names if m != "loss"]
+                        for m in self.metrics_names]
 
         results = tfnet.evaluate(data, batch_size, eval_methods)
         final_result = [r.result for r in results]
@@ -274,7 +248,7 @@ def _standarize_feature_label_dataset(dataset, model):
     def _training_reorder(x, input_names, output_names):
         assert isinstance(x, tuple)
 
-        return _reorder(x[0], input_names) + _reorder(x[1], output_names)
+        return (_reorder(x[0], input_names), _reorder(x[1], output_names))
 
     def _reorder(x, names):
         if isinstance(x, dict):
@@ -342,13 +316,18 @@ def _create_rdd_x_y(x, y, input_names, output_names, sc):
             else:
                 targets.append(y[j][i])
 
-        input_data.append(inputs + targets)
+        input_data.append((inputs, targets))
 
-    types = [x.dtype for x in input_data[0]]
-    shapes = [x.shape for x in input_data[0]]
+    x_meta = dict([(input_names[i],
+                    (input_data[0][0][i].dtype, input_data[0][0][i].shape))
+                   for i in range(len(input_names))])
+
+    y_meta = dict([(output_names[i],
+                    (input_data[0][1][i].dtype, input_data[0][1][i].shape))
+                   for i in range(len(input_names))])
 
     rdd = sc.parallelize(input_data)
-    return rdd, types, shapes
+    return rdd, x_meta, y_meta
 
 
 def _create_rdd_x(x, input_names, sc):

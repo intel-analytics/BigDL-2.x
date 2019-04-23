@@ -1154,7 +1154,7 @@ class TFNdarrayDataset(TFDataset):
 
         val_rdd = None
         if val_tensors is not None:
-            val_rdd = _tensors_to_rdd(val_tensors, sc, total_core_num)
+            val_rdd, _ = _tensors_to_rdd(val_tensors, sc, total_core_num)
 
         return TFNdarrayDataset(rdd, tensor_structure, batch_size,
                                 batch_per_thread, hard_code_batch_size, val_rdd)
