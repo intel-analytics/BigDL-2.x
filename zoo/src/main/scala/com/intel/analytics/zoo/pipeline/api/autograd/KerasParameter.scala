@@ -35,6 +35,12 @@ private[zoo] class KerasParameter[T: ClassTag] private[zoo](val inputShape: Shap
   extends KerasLayer[Activity, Activity, T](inputShape)
     with InternalWithoutInput with Net {
 
+  override def clearState() : this.type = {
+    output = Tensor[T]()
+    gradInput = Tensor[T]()
+    this
+  }
+
   def setWeight(tensor: Tensor[T]): Unit = {
     this.labor.asInstanceOf[InternalParameter[T]].setWeight(tensor)
   }
@@ -128,12 +134,12 @@ private[zoo] class InternalParameter[T: ClassTag](
   }
 
   override def updateOutput(input: Tensor[T]): Tensor[T] = {
-    output = weight.clone()
+    output = weight
     output
   }
 
   override def updateGradInput(input: Tensor[T], gradOutput: Tensor[T]): Tensor[T] = {
-    gradInput = gradOutput.clone()
+    gradInput = gradOutput
     gradInput
   }
 
