@@ -776,6 +776,22 @@ class TensorMeta(object):
 class TFDataset(object):
     def __init__(self, tensor_structure, batch_size,
                  batch_per_thread, hard_code_batch_size=False):
+        '''
+        
+        TFDataset represents a distributed collection of elements (backed by a RDD)
+        to be feed into Tensorflow graph.
+        
+        :param tensor_structure: a nested structure of TensorMeta objects specifying the
+        name, shape and data type of each element in this TFDataset
+        :param batch_size: TFDataset will automatically batch its elements when used in training,
+          this is the batch_size. Note this batch_size is the total number of elements that will be used in
+          training a single step. These elements may be located in different partitions.
+        :param batch_per_thread: TFDataset will automatically batch its elements on each partition when
+        used in evaluation and prediction. This is the batch_size on each partition. Generally, batch_size
+        equals to batch_per_thread * num_partitions
+        :param hard_code_batch_size: whether specify the size of the first dimension of Tensor when creating
+        TensorFlow graph. If False, it will be set to None, else it will be set to batch_per_thread
+        '''
 
         if batch_size > 0 and batch_per_thread > 0:
             raise ValueError("bath_size and batch_per_thread should not be set simultaneously")
@@ -911,26 +927,69 @@ class TFDataset(object):
         return tensor_structure
 
     def get_prediction_data(self):
+        '''
+        :return: an object that can be used for TFNet.predict
+        e.g. an RDD of Sample or a ImageSet
+        '''
         raise NotImplementedError
 
     def get_evaluation_data(self):
+        '''
+        :return: an object that can be used for TFNet.evaluate,
+        e.g. an RDD of Sample or a ImageSet
+        '''
         raise NotImplementedError
 
     def get_training_data(self):
+        '''
+        :return: an object that can be used to create a BigDL optimizer,
+        e.g. an RDD of Sample or a DataSet
+        '''
         raise NotImplementedError
 
     def get_validation_data(self):
+        '''
+        :return: an object that can be used to set validation in a BigDL optimizer,
+        e.g. an RDD of Sample or a DataSet
+        '''
         raise NotImplementedError
 
     def get_num_partitions(self):
+        '''
+        :return: the num of partitions of the underlying RDD 
+        '''
         raise NotImplementedError
 
     @staticmethod
     def from_rdd(*args, **kwargs):
+        '''
+        Create a TFDataset from a rdd, each element of the rdd must be a list of numpy.ndarray.
+
+        :param rdd: a rdd of list of numpy.ndarray each representing a tensor to feed into
+        tensorflow graph on each iteration
+        :param names: the names of the resulting tensors, should be a list of str
+        :param shapes: the shapes of the resulting tensors, should be a list of list of int
+        :param types: the types of the result tensors, should be a list of tf.dtype
+        :param batch_size: the batch size, used for training, should be a multiple of
+        total core num
+        :param batch_per_thread: the batch size for each thread, used for inference
+        :param hard_code_batch_size: whether to hard code the batch_size into tensorflow graph,
+        if True, the static size of the first dimension of the resulting tensors is
+        batch_size/total_core_num (training) or batch_per_thread for inference; if False,
+        it is None.
+        :param val_rdd: validation data with the same structure of rdd
+        :return: a TFDataset
+        '''
         return TFNdarrayDataset.from_rdd(*args, **kwargs)
 
     @staticmethod
     def from_ndarrays(*args, **kwargs):
+        '''
+        C
+        :param args: 
+        :param kwargs: 
+        :return: 
+        '''
         return TFNdarrayDataset.from_ndarrays(*args, **kwargs)
 
     @staticmethod
@@ -1049,15 +1108,9 @@ class TFImageDataset(TFDataset):
 
 
 class TFNdarrayDataset(TFDataset):
+
     def __init__(self, rdd, tensor_structure, batch_size,
                  batch_per_thread, hard_code_batch_size=False, val_rdd=None):
-        '''
-        TFDatasets represents a distributed collection of elements to be feed into Tensorflow
-        graph. TFDatasets can be created using a RDD and each of its records is one or more
-        numpy.ndarray of the same nested structure, representing the tensors to be feed into
-        TensorFlow graph on each iteration. TFDatasets must be used with TFOptimizer or
-        TFPredictor.
-        '''
 
         super(TFNdarrayDataset, self).__init__(tensor_structure, batch_size,
                                                batch_per_thread, hard_code_batch_size)
@@ -1146,6 +1199,16 @@ class TFNdarrayDataset(TFDataset):
     @staticmethod
     def from_ndarrays(tensors, batch_size=-1, batch_per_thread=-1,
                       hard_code_batch_size=False, val_tensors=None):
+        '''
+        Create a TFDataset from a nested structure of Tensors. Each element
+        in the resulting TFDataset
+        :param tensors: 
+        :param batch_size: 
+        :param batch_per_thread: 
+        :param hard_code_batch_size: 
+        :param val_tensors: 
+        :return: 
+        '''
         sc = getOrCreateSparkContext()
         node_num, core_num = get_node_and_core_number()
         total_core_num = node_num * core_num
