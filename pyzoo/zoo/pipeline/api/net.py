@@ -777,10 +777,10 @@ class TFDataset(object):
     def __init__(self, tensor_structure, batch_size,
                  batch_per_thread, hard_code_batch_size=False):
         '''
-        
+
         TFDataset represents a distributed collection of elements (backed by a RDD)
         to be feed into Tensorflow graph.
-        
+
         :param tensor_structure: a nested structure of TensorMeta objects specifying the
         name, shape and data type of each element in this TFDataset
         :param batch_size: the batch size, used for training, should be a multiple of
@@ -955,7 +955,7 @@ class TFDataset(object):
 
     def get_num_partitions(self):
         '''
-        :return: the num of partitions of the underlying RDD 
+        :return: the num of partitions of the underlying RDD
         '''
         raise NotImplementedError
 
@@ -1000,7 +1000,7 @@ class TFDataset(object):
         batch_size/total_core_num (training) or batch_per_thread for inference; if False,
         it is None.
         :param val_tensors: the numpy ndarrays used for validation during training
-        :return: 
+        :return:
         '''
         return TFNdarrayDataset.from_ndarrays(*args, **kwargs)
 
@@ -1040,9 +1040,9 @@ class TFDataset(object):
         Create a TFDataset from a TextSet. The TextSet must be transformed to Sample, i.e.
         the result of TextFeatureToSample transformer.
         :param text_set: the TextSet used to create this TFDataset
-        :param text: a tuple of two, the first element is the type of this input feature, the second element
-        is the shape of this element, i.e. (tf.float32, [10, 100, 4])). text can also be nested structure of
-        this tuple of two.
+        :param text: a tuple of two, the first element is the type of this input feature,
+        the second element is the shape of this element, i.e. (tf.float32, [10, 100, 4])).
+        text can also be nested structure of this tuple of two.
         :param label: a tuple of two, the first element is the type of label, the second element
         is the shape of this element, i.e. (tf.int32, [1])). label can also be nested structure of
         this tuple of two.
@@ -1065,12 +1065,12 @@ class TFDataset(object):
     def from_feature_set(dataset, features, labels=None, batch_size=-1, batch_per_thread=-1,
                          hard_code_batch_size=False, validation_dataset=None):
         '''
-        Create a TFDataset from a FeatureSet. Currently, the element in this Feature set must be a ImageFeature that
-        has a sample field, i.e. the result of ImageSetToSample transformer
+        Create a TFDataset from a FeatureSet. Currently, the element in this Feature set must be a
+        ImageFeature that has a sample field, i.e. the result of ImageSetToSample transformer
         :param dataset: the feature set used to create this TFDataset
-        :param features: a tuple of two, the first element is the type of this input feature, the second element
-        is the shape of this element, i.e. (tf.float32, [224, 224, 3])). text can also be nested structure of
-        this tuple of two.
+        :param features: a tuple of two, the first element is the type of this input feature,
+        the second element is the shape of this element, i.e. (tf.float32, [224, 224, 3])).
+        text can also be nested structure of this tuple of two.
         :param labels: a tuple of two, the first element is the type of label, the second element
         is the shape of this element, i.e. (tf.int32, [1])). label can also be nested structure of
         this tuple of two.
@@ -1205,7 +1205,8 @@ class TFNdarrayDataset(TFDataset):
 
     def get_validation_data(self):
         if self.val_rdd is not None:
-            return self.val_rdd.map(lambda t: Sample.from_ndarray(nest.flatten(t), np.array([0.0])))
+            return self.val_rdd.map(lambda t: Sample.from_ndarray(nest.flatten(t),
+                                                                  np.array([0.0])))
         return None
 
     def get_num_partitions(self):
@@ -1278,12 +1279,7 @@ class TFNdarrayDataset(TFDataset):
 
         This method is equivalent to sc.parallize the tensors and call TFDataset.from_rdd
 
-        :param tensors: the nested structure of numpy ndarrays.
-        :param batch_size: 
-        :param batch_per_thread: 
-        :param hard_code_batch_size: 
-        :param val_tensors: 
-        :return: 
+        :return:
         '''
         sc = getOrCreateSparkContext()
         node_num, core_num = get_node_and_core_number()
@@ -1364,7 +1360,8 @@ def _check_the_same(all_required_inputs, inputs_in_datasets):
         raise ValueError("You should not use any placeholder that are not defined in dataset, " +
                          "found %s" % inputs_not_in_dataset)
     if len(inputs_in_datasets) != len(all_required_inputs):
-        inputs_not_require_by_loss = [i for i in inputs_in_datasets if i not in all_required_inputs]
+        inputs_not_require_by_loss = [i for i in inputs_in_datasets if i not in
+                                      all_required_inputs]
         raise ValueError("You should use all the placeholders that are defined in dataset, " +
                          "%s are not used" % inputs_not_require_by_loss)
 
@@ -1417,4 +1414,5 @@ class TFPredictor:
 
     def predict(self):
 
-        return self.tfnet.predict(self.dataset.get_prediction_data(), self.dataset.batch_per_thread)
+        return self.tfnet.predict(self.dataset.get_prediction_data(),
+                                  self.dataset.batch_per_thread)
