@@ -66,7 +66,7 @@ token_shape = (max_len,)
 position_shape = (max_len,)
 token_input = Input(shape=token_shape)
 position_input = Input(shape=position_shape)
-O_seq = TransformerLayer.init_with_default_embedding(
+O_seq = TransformerLayer.init(
     vocab=max_features, hidden_size=128, n_head=8, seq_len=max_len)([token_input, position_input])
 O_seq = GlobalAveragePooling1D()(O_seq)
 O_seq = Dropout(0.2)(O_seq)
