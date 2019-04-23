@@ -85,7 +85,9 @@ class TransformerLayer(ZooKerasLayer):
             o = self.block(output[index], hidden_size, extended_attention_mask)
             output[index+1] = o
 
-        model = Model(inputs, output) if output_all_block else Model(inputs, output[-1])
+        pooler_output = self.pooler(output[-1], hidden_size)
+        model = Model(inputs, output.append(pooler_output)) if output_all_block\
+            else Model(inputs, (output[-1], pooler_output))
         self.value = model.value
 
     def build_input(self, input_shape):
@@ -171,6 +173,12 @@ class TransformerLayer(ZooKerasLayer):
         merge_sizes = list(sizes[:-2] + (sizes[-1] * sizes[-2],))
         m = Reshape(merge_sizes)(p)
         return m
+
+    def pooler(self, x, hidden_size):
+        first_token = Select(1, 0)(x)
+        pooler_output = Dense(hidden_size)(first_token)
+        o = Activation("tanh")(pooler_output)
+        return o
 
     @classmethod
     def init(cls, vocab=40990, seq_len=77, n_block=12, hidden_drop=0.1,
