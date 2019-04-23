@@ -773,7 +773,7 @@ class TensorMeta(object):
         self.shape = shape
 
 
-class TFDataset:
+class TFDataset(object):
     def __init__(self, tensor_structure, batch_size,
                  batch_per_thread, hard_code_batch_size=False):
 
