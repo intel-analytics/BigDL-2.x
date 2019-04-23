@@ -56,7 +56,7 @@ class TestTextModels(ZooTestCase):
         assert isinstance(output, list) and len(output) == 2
         assert output[0].shape == (10, 50, 5)
         assert output[1].shape == (10, 50, 10)
-        self.assert_tfpark_model_save_load(model, input_data)
+        self.assert_tfpark_model_save_load(model, input_data, rtol=1e-5, atol=1e-5)
 
     def test_sequence_tagger_crf(self):
         model = SequenceTagger(num_pos_labels=8, num_chunk_labels=8, word_vocab_size=50,
