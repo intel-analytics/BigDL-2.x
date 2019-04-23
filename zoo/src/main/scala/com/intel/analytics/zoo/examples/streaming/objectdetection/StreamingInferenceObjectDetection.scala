@@ -17,15 +17,12 @@
 package com.intel.analytics.zoo.examples.streaming.objectdetection
 
 
-import com.intel.analytics.bigdl.dataset.SampleToMiniBatch
 import com.intel.analytics.bigdl.tensor.Tensor
 import com.intel.analytics.bigdl.transform.vision.image.ImageFeature
-import com.intel.analytics.bigdl.transform.vision.image.opencv.OpenCVMat
-import com.intel.analytics.zoo.common.{NNContext, Utils}
+import com.intel.analytics.zoo.common.NNContext
 import com.intel.analytics.zoo.examples.streaming.objectdetection.StreamingObjectDetection.PredictParam
-import com.intel.analytics.zoo.feature.image.{ImageBytesToMat, ImageChannelNormalize, ImageMatToTensor, ImageResize, ImageSet, ImageSetToSample}
-import com.intel.analytics.zoo.models.image.objectdetection.LabelReader
-import com.intel.analytics.zoo.models.image.objectdetection.Visualizer
+import com.intel.analytics.zoo.feature.image.{ImageBytesToMat, ImageChannelNormalize, ImageMatToTensor, ImageResize, ImageSet}
+import com.intel.analytics.zoo.models.image.objectdetection.{LabelReader, ScaleDetection, Visualizer}
 import com.intel.analytics.zoo.pipeline.inference.InferenceModel
 import org.apache.hadoop.conf.Configuration
 import org.apache.hadoop.fs.{FileSystem, Path}
@@ -74,7 +71,6 @@ object StreamingInferenceObjectDetection {
       val labelMap = LabelReader.apply("COCO")
 
       val lines = ssc.textFileStream(params.streamingPath)
-      val visualizer = Visualizer(labelMap, encoding = "jpg")
       lines.foreachRDD { batchPath =>
         // Read image files and load to RDD
         logger.debug("batchPath partition " + batchPath.getNumPartitions)
@@ -88,19 +84,24 @@ object StreamingInferenceObjectDetection {
             ImageResize(300, 300) ->
             ImageChannelNormalize(123f, 117f, 104f) ->
             ImageMatToTensor[Float]()
-          output.toDistributed().rdd.foreach { img =>
-            logger.info("Begin Predict " + img.uri())
+          val predict = output.toDistributed().rdd.map { img =>
+            logger.debug("Begin Predict " + img.uri())
             // Add one more dim because of batch requirement of model
             val predict = model
               .doPredict(img.apply[Tensor[Float]](ImageFeature.imageTensor)
               .addSingletonDimension())
-            logger.info("Finish Predict " + img.uri())
-            logger.info("Begin visualizing box for image " + img.uri())
-            val result = visualizer.visualize(OpenCVMat.fromImageBytes(img.bytes()),
-              predict.toTensor[Float].apply(1))
-            val resultImg = OpenCVMat.imencode(result, "jpg")
-            writeFile(params.outputFolder, img.uri(), resultImg)
+            logger.debug("Finish Predict " + img.uri())
+            img(ImageFeature.predict) = predict.toTensor[Float].apply(1)
+            img
           }
+          // ROI to box
+          val boxedPredict = ImageSet.rdd(predict) -> ScaleDetection()
+          logger.info("Begin visualizing box for image")
+          val visualizer = Visualizer(labelMap, encoding = "jpg")
+          val visualized = visualizer(boxedPredict).toDistributed()
+          val result = visualized.rdd.map(imageFeature =>
+            (imageFeature.uri(), imageFeature[Array[Byte]](Visualizer.visualized))).collect()
+          result.foreach(x => writeFile(params.outputFolder, x._1, x._2))
         }
       }
       ssc.start()
@@ -136,7 +137,12 @@ object StreamingInferenceObjectDetection {
   def writeFile(outPath: String, path: String, content: Array[Byte]): Unit = {
     val fspath = getOutPath(outPath, path, "jpg")
     logger.info("Writing image file " + fspath.toString)
-    Utils.saveBytes(content, fspath.toString, true)
+    val fs = FileSystem.newInstance(fspath.toUri, new Configuration())
+    val outStream = fs.create(
+      fspath,
+      true)
+    outStream.write(content)
+    outStream.close()
   }
 
   /**

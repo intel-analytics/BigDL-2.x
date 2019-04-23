@@ -37,7 +37,7 @@ class Visualizer(labelMap: Map[Int, String], thresh: Float = 0.3f,
   }
 
 
-  def visualize(mat: OpenCVMat, rois: Tensor[Float]): OpenCVMat = {
+  private def visualize(mat: OpenCVMat, rois: Tensor[Float]): OpenCVMat = {
     (1 to rois.size(1)).foreach(i => {
       val score = rois.valueAt(i, 2)
       if (score > thresh) {
