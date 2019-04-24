@@ -17,7 +17,7 @@
 package com.intel.analytics.zoo.models.image.common
 
 import com.intel.analytics.bigdl.dataset.SampleToMiniBatch
-import com.intel.analytics.bigdl.nn.Module
+import com.intel.analytics.bigdl.nn.{MklInt8Convertible, Module, SpatialConvolution}
 import com.intel.analytics.bigdl.nn.abstractnn.Activity
 import com.intel.analytics.bigdl.optim.{ValidationMethod, ValidationResult}
 import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric
@@ -25,6 +25,7 @@ import com.intel.analytics.zoo.feature.image.ImageSet
 import com.intel.analytics.zoo.models.common.ZooModel
 import com.intel.analytics.zoo.models.image.imageclassification.ImageClassifier
 import com.intel.analytics.zoo.models.image.objectdetection.ObjectDetector
+import com.intel.analytics.zoo.pipeline.api.keras.layers.utils.MklInt8ConvertibleRef
 import org.apache.log4j.Logger
 
 import scala.reflect.ClassTag
@@ -108,12 +109,20 @@ object ImageModel {
    * @tparam T Numeric type of parameter(e.g. weight, bias). Only support float/double now.
    * @return
    */
-  def loadModel[T: ClassTag](path: String, weightPath: String = null, modelType: String = "",
-                             quantize: Boolean = false)
+  def loadModel[T: ClassTag](path: String, weightPath: String = null, modelType: String = "")
     (implicit ev: TensorNumeric[T]): ImageModel[T] = {
-    var model = Module.loadModule[T](path, weightPath)
-    val modelName = model.getName()
-    if (quantize) model = model.quantize()
+    val labor = Module.loadModule[T](path, weightPath)
+    // Calling quantize may not keep the original name. Thus record modelName here.
+    val modelName = labor.getName()
+    val isInt8Model = labor.toGraph().getForwardExecutions().map(_.element)
+      .exists(x => x.isInstanceOf[SpatialConvolution[T]] &&
+        MklInt8ConvertibleRef.getWeightScalesBuffer(
+        x.asInstanceOf[MklInt8Convertible]).nonEmpty)
+    val model = if (isInt8Model) {
+      logger.info("Loading an int8 convertible model. " +
+        "Quantize to an int8 model for better performance")
+      labor.quantize()
+    } else labor
     val imageModel = if (model.isInstanceOf[ImageModel[T]]) {
       model.asInstanceOf[ImageModel[T]]
     } else {

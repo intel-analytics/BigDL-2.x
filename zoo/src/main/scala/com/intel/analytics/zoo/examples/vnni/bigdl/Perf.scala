@@ -55,7 +55,7 @@ object Perf {
       val singleInput = Tensor(Array(1, 3, 224, 224)).rand()
       Engine.init
 
-      val model = ImageClassifier.loadModel[Float](param.model, quantize = true)
+      val model = ImageClassifier.loadModel[Float](param.model)
       model.setEvaluateStatus()
 
       var iteration = 0
@@ -69,7 +69,7 @@ object Perf {
         iteration += 1
       }
 
-      val model2 = ImageClassifier.loadModel[Float](param.model, quantize = true)
+      val model2 = ImageClassifier.loadModel[Float](param.model)
       model2.setEvaluateStatus()
 
       iteration = 0

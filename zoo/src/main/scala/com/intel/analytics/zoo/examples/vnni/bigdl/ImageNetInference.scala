@@ -54,7 +54,7 @@ object ImageNetInference {
     parser.parse(args, ImageNetInferenceParams()).map(param => {
       val sc = NNContext.initNNContext("ImageNet2012 with Int8 Inference Example")
       val images = ImageSet.readSeqFiles(param.folder, sc)
-      val model = ImageClassifier.loadModel[Float](param.model, quantize = true)
+      val model = ImageClassifier.loadModel[Float](param.model)
       val result = model.evaluateImageSet(images, param.batchSize,
         Array(new Top1Accuracy[Float], new Top5Accuracy[Float]))
 

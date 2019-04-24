@@ -56,7 +56,7 @@ object Predict {
     parser.parse(args, ImageClassificationParams()).map(param => {
       val sc = NNContext.initNNContext("ResNet50 Int8 Inference Example")
       val images = ImageSet.read(param.folder)
-      val model = ImageClassifier.loadModel[Float](param.model, quantize = true)
+      val model = ImageClassifier.loadModel[Float](param.model)
       val output = model.predictImageSet(images)
       val labelOutput = LabelOutput(model.getConfig().labelMap, "clses",
         "probs", probAsInput = false)
