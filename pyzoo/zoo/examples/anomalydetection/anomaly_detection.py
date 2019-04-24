@@ -53,8 +53,7 @@ if __name__ == "__main__":
     model = AnomalyDetector(feature_shape=(int(options.unroll_len), feature_size),
                             hidden_layers=[8, 32, 15], dropouts=[0.2, 0.2, 0.2])
     model.compile(loss='mse', optimizer='rmsprop', metrics=['mae'])
-    model.fit(train, batch_size=int(options.batch_size), nb_epoch=int(options.nb_epoch),
-              validation_data=test)
+    model.fit(train, batch_size=int(options.batch_size), nb_epoch=int(options.nb_epoch))
     test.cache()
     y_predict = model.predict(test).map(lambda x: float(x[0]))
     y_truth = test.map(lambda x: float(x.label.to_ndarray()[0]))

@@ -32,6 +32,7 @@ class Test_Image_Set():
         resource_path = os.path.join(os.path.split(__file__)[0], "../../resources")
         self.image_path = os.path.join(resource_path, "pascal/000025.jpg")
         self.grayimage_path = os.path.join(resource_path, "gray/gray.bmp")
+        self.image_folder = os.path.join(resource_path, "imagenet")
 
     def teardown_method(self, method):
         """ teardown any state that was previously setup with a setup_method
@@ -110,6 +111,68 @@ class Test_Image_Set():
         transformed = image_set.transform(transformer)
         img = transformed.get_image()[0]
         assert img.shape == (3, 10, 10)
+
+    def test_image_set_from_image_folder_with_sc(self):
+        image_set = ImageSet.read(self.image_folder, sc=self.sc, with_label=True)
+        label_map = image_set.label_map
+        assert len(label_map) == 4
+        imgs = image_set.get_image().collect()
+        assert len(imgs) == 11
+        labels = image_set.get_label().collect()
+        labels = [l[0] for l in labels]
+        assert len(labels) == 11
+        assert len(set(labels)) == 4
+
+    def test_image_set_from_image_folder_without_sc(self):
+        image_set = ImageSet.read(self.image_folder, with_label=True)
+        label_map = image_set.label_map
+        assert len(label_map) == 4
+        imgs = image_set.get_image()
+        assert len(imgs) == 11
+        labels = image_set.get_label()
+        labels = [l[0] for l in labels]
+        assert len(labels) == 11
+        assert len(set(labels)) == 4
+
+    def test_local_image_set_with_zero_based_label(self):
+        image_set = ImageSet.read(self.image_folder,
+                                  with_label=True, one_based_label=False)
+        label_map = image_set.label_map
+        for k in label_map:
+            assert label_map[k] < 4.0
+
+        for label in image_set.get_label():
+            assert label < 4.0
+
+    def test_distributed_image_set_with_zero_based_label(self):
+        image_set = ImageSet.read(self.image_folder, sc=self.sc,
+                                  with_label=True, one_based_label=False)
+        label_map = image_set.label_map
+        for k in label_map:
+            assert label_map[k] < 4.0
+
+        for label in image_set.get_label().collect():
+            assert label < 4.0
+
+    def test_local_image_set_with_one_based_label(self):
+        image_set = ImageSet.read(self.image_folder,
+                                  with_label=True, one_based_label=True)
+        label_map = image_set.label_map
+        for k in label_map:
+            assert label_map[k] <= 4.0 and label_map[k] > 0.0
+
+        for label in image_set.get_label():
+            assert label <= 4.0 and label > 0.0
+
+    def test_distributed_image_set_with_one_based_label(self):
+        image_set = ImageSet.read(self.image_folder, sc=self.sc,
+                                  with_label=True, one_based_label=True)
+        label_map = image_set.label_map
+        for k in label_map:
+            assert label_map[k] > 0.0 and label_map[k] <= 4.0
+
+        for label in image_set.get_label().collect():
+            assert label > 0.0 and label <= 4.0
 
 
 if __name__ == "__main__":

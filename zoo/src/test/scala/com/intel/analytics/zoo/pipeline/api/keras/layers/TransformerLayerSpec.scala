@@ -30,16 +30,20 @@ import com.intel.analytics.zoo.pipeline.api.keras.serializer.ModuleSerialization
 
 class TransformerLayerSpec extends ZooSpecHelper {
   "TransformerLayer" should "be able to work" in {
-    val model = TransformerLayer[Float](vocab = 100, hiddenSize = 768, nBlock = 3)
-    val shape = Shape(List(Shape(4, 77), Shape(4, 77)))
-    model.build(shape)
-    val w = model.parameters()._1
-    require(w.length == 37)
-    val wordInput = Tensor[Float](Array(4, 77)).rand()
-    val positionInput = Tensor[Float](Array(4, 77)).rand()
-    val input = T(wordInput, positionInput)
-    val output = model.forward(input)
-    val gradInput = model.backward(input, output)
+    val shape1 = Shape(20)
+    val shape2 = Shape(20)
+    val input1 = Variable[Float](shape1)
+    val input2 = Variable[Float](shape2)
+    val input = Array(input1, input2)
+    val seq = TransformerLayer[Float](200, hiddenSize = 128, nHead = 8,
+      seqLen = 20, nBlock = 1).from(input: _*)
+    val model = Model[Float](input, seq)
+
+    val trainToken = Tensor[Float](1, 20).rand()
+    val trainPos = Tensor.ones[Float](1, 20)
+    val input3 = T(trainToken, trainPos)
+    val output = model.forward(input3)
+    val gradInput = model.backward(input3, output)
   }
 
   "TransformerLayer with configured embedding" should "be able to work" in {
@@ -133,7 +137,7 @@ class TransformerLayerSpec extends ZooSpecHelper {
 
     val ori = Tensor[Float](data, Array(4, 2, 2))
     val input = T.array(ori.split(2))
-    val output = layer.forward(input).toTensor[Float]
+    val output = layer.forward(input).toTable
 
     val expect = Tensor[Float](Array[Float](1.1891f, -0.0895f, -1.5431f, 0.4436f,
     -0.1075f, 1.4737f, -0.0185f, -1.3477f,
@@ -143,7 +147,7 @@ class TransformerLayerSpec extends ZooSpecHelper {
     -0.7912f, 1.1205f, -1.1806f, 0.8513f,
     -0.6202f, 1.6365f, -0.9668f, -0.0495f,
     0.5538f, 0.7061f, 0.4657f, -1.7256f), Array(4, 2, 4))
-    require(output.almostEqual(expect, 7e-3) == true)
+    require(output[Tensor[Float]](1).almostEqual(expect, 7e-3) == true)
 
     val gradOutput = Tensor[Float](Array[Float](1f, 23f, 43f, 29f,
       37f, 1f, 20f, 32f,
@@ -168,7 +172,8 @@ class TransformerLayerSpec extends ZooSpecHelper {
 
       0.1142f, 0.3764f, 0.8374f, 0.5837f,
       0.1197f, 0.0989f, 0.7487f, 0.1281f), Array(4, 2, 4))
-    layer.backward(input, gradOutput2)
+    val gradO2 = Tensor[Float](4, 4)
+    layer.backward(input, T(gradOutput2, gradO2))
     val grads = layer.parameters()._2
 
 //    val expectGrad = Array(Tensor[Float](Array[Float](0.0000f, 0.0000f, 0.0000f, 0.0000f,
@@ -301,7 +306,7 @@ class TransformerLayerSpec extends ZooSpecHelper {
       Tensor[Float](Array[Float](0.5485f, 2.1720f, -0.9802f, -2.3583f), Array(4)),
       Tensor[Float](Array[Float](1.8915f, 4.1225f, 5.2788f, 4.0728f), Array(4)))
 
-    var i = grads.length - 1
+    var i = expectGrad2.length - 1
     while (i >= 0) {
       // gradout2 is smaller than gradoutput, if use gradoutput, the diff is smaller than 7
       require(grads(i).squeeze().almostEqual(expectGrad2(i), 0.3) == true)
