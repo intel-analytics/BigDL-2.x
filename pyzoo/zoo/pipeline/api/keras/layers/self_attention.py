@@ -87,7 +87,7 @@ class TransformerLayer(ZooKerasLayer):
 
         pooler_output = self.pooler(output[-1], hidden_size)
         model = Model(inputs, output.append(pooler_output)) if output_all_block\
-            else Model(inputs, (output[-1], pooler_output))
+            else Model(inputs, [output[-1], pooler_output])
         self.value = model.value
 
     def build_input(self, input_shape):
@@ -256,6 +256,7 @@ class BERT(TransformerLayer):
         self.seq_len = input_shape[0][0]
         self.initializer_range = initializer_range
         self.bidirectional = True
+        self.n_block = n_block
 
         word_input = Input(shape=input_shape[0])
         token_type_input = Input(shape=input_shape[1])
@@ -274,12 +275,15 @@ class BERT(TransformerLayer):
             output = self.block(model_output[_], self.hidden_size, extended_attention_mask)
             model_output[_+1] = output
 
+        pooler_output = self.pooler(model_output[-1], self.hidden_size)
+
         if output_all_block:
+            model_output.append(pooler_output)
             model = Model([word_input, token_type_input, position_input, attention_mask],
                           model_output)
         else:
             model = Model([word_input, token_type_input, position_input, attention_mask],
-                          model_output[-1])
+                          [model_output[-1], pooler_output])
         self.value = model.value
 
     def projection_layer(self, output_size):
