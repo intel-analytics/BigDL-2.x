@@ -65,13 +65,14 @@ class BERT[T: ClassTag] private (
   initializerRange: Double = 0.02,
   outputAllBlock: Boolean = true,
   embeddingLayer: KerasLayer[Activity, Tensor[T], T],
-  val vocab: Int = 0,
-  val hiddenSize: Int = 0,
-  val maxPositionLen: Int = 0,
   inputShape: Shape)(implicit ev: TensorNumeric[T])
   extends TransformerLayer[T](nBlock, hiddenPDrop, attnPDrop, nHead,
     initializerRange, true, outputAllBlock, embeddingLayer, intermediateSize, inputShape)
   with Net {
+
+  private var vocab: Int = 0
+  private var hiddenSize: Int = 0
+  private var maxPositionLen: Int = 0
 
   override def projectionLayer(outputSize: Int): Net = {
     new Dense(outputSize, init = RandomNormal(0.0, initializerRange))
@@ -109,7 +110,7 @@ object BERT extends KerasLayerSerializable {
    * @param hiddenSize ize of the encoder layers, default is 768
    * @param nBlock block number, default is 12
    * @param nHead head number, default is 12
-   * @param seqLen sequence length, default is 512
+   * @param maxPositionLen sequence length, default is 512
    * @param intermediateSize The size of the "intermediate" (i.e., feed-forward), default is 3072
    * @param hiddenPDrop The dropout probabilitiy for all fully connected layers, default is 0.1
    * @param attnPDrop drop probability of attention, default is 0.1
@@ -131,19 +132,18 @@ object BERT extends KerasLayerSerializable {
     )(implicit ev: TensorNumeric[T]): BERT[T] = {
     require(hiddenSize > 0, "hiddenSize must be great" +
       "than 0 with default embedding layer")
-
-    val seqLen = if (inputSeqLen > 0) inputSeqLen else maxPositionLen
-    val wordInput = Variable(Shape(seqLen))
-    val tokenTypeInput = Variable(Shape(seqLen))
-    val positionInput = Variable(Shape(seqLen))
+    val len = if (inputSeqLen > 0) inputSeqLen else maxPositionLen
+    val wordInput = Variable(Shape(len))
+    val tokenTypeInput = Variable(Shape(len))
+    val positionInput = Variable(Shape(len))
     val initWordEmbeddingW = Tensor[T](vocab, hiddenSize).randn(0.0, initializerRange)
-    val initPositionEmbeddingW = Tensor[T](seqLen, hiddenSize).randn(0.0, initializerRange)
+    val initPositionEmbeddingW = Tensor[T](maxPositionLen, hiddenSize).randn(0.0, initializerRange)
     val initTokenEmbeddingW = Tensor[T](2, hiddenSize).randn(0.0, initializerRange)
-    val wordEmbeddings = new Embedding(vocab, hiddenSize, inputShape = Shape(seqLen),
+    val wordEmbeddings = new Embedding(vocab, hiddenSize,
       initWeights = initWordEmbeddingW).from(wordInput)
-    val positionEmbeddings = new Embedding(seqLen, hiddenSize, inputShape = Shape(seqLen),
+    val positionEmbeddings = new Embedding(maxPositionLen, hiddenSize,
       initWeights = initPositionEmbeddingW).from(positionInput)
-    val tokenTypeEmbeddings = new Embedding(2, hiddenSize, inputShape = Shape(seqLen),
+    val tokenTypeEmbeddings = new Embedding(2, hiddenSize,
       initWeights = initTokenEmbeddingW).from(tokenTypeInput)
 
     val embeddings = wordEmbeddings + positionEmbeddings + tokenTypeEmbeddings
@@ -155,10 +155,12 @@ object BERT extends KerasLayerSerializable {
     val h = Dropout(hiddenPDrop).from(afterNorm)
 
     val embeddingLayer = Model(Array(wordInput, tokenTypeInput, positionInput), h)
-    new BERT[T](nBlock, nHead, intermediateSize, hiddenPDrop, attnPDrop, initializerRange,
-    outputAllBlock, embeddingLayer.asInstanceOf[KerasLayer[Activity, Tensor[T], T]], vocab,
-      hiddenSize, maxPositionLen,
-      inputShape = Shape(List(Shape(seqLen), Shape(seqLen), Shape(seqLen), Shape(1, 1, seqLen))))
+    val bert = new BERT[T](nBlock, nHead, intermediateSize, hiddenPDrop, attnPDrop, initializerRange,
+    outputAllBlock, embeddingLayer.asInstanceOf[KerasLayer[Activity, Tensor[T], T]], null)
+    bert.vocab = vocab
+    bert.hiddenSize = hiddenSize
+    bert.maxPositionLen = maxPositionLen
+    bert
   }
 
   /**
@@ -183,7 +185,7 @@ object BERT extends KerasLayerSerializable {
     embeddingLayer: KerasLayer[Activity, Tensor[T], T])
     (implicit ev: TensorNumeric[T]): BERT[T] = {
     new BERT[T](nBlock, nHead, intermediateSize, hiddenPDrop, attnPDrop, initializerRange,
-      outputAllBlock, embeddingLayer, inputShape = null)
+      outputAllBlock, embeddingLayer, null)
   }
 
   /**
@@ -199,6 +201,8 @@ object BERT extends KerasLayerSerializable {
   def loadModel[T: ClassTag](path: String, weightPath: String = null, inputSeqLen: Int = -1,
     hiddenPDrop: Double = -1, attnPDrop: Double = -1)(implicit ev: TensorNumeric[T]): BERT[T] = {
     val loadedModel = ModuleLoader.loadFromFile(path, weightPath).asInstanceOf[BERT[T]]
+    if (loadedModel.vocab == 0) return loadedModel
+
     val seqLength = if (inputSeqLen < 0) loadedModel.seqLen else inputSeqLen
     val hDrop = if (hiddenPDrop < 0) loadedModel.hiddenPDrop else hiddenPDrop
     val aDrop = if (attnPDrop < 0) loadedModel.attnPDrop else attnPDrop
@@ -212,7 +216,7 @@ object BERT extends KerasLayerSerializable {
     val newParameter = newModel.parameters()._1
     var i = 0
     while(i < parameter.length) {
-      newParameter(i).set(parameter(i))
+      newParameter(i).copy(parameter(i))
       i += 1
     }
     newModel
@@ -277,23 +281,24 @@ object BERT extends KerasLayerSerializable {
     val tGraph = subModules(0).asInstanceOf[StaticGraph[T]]
     val embeddingLayer = Model(tGraph.inputs.toArray, new GraphRef(tGraph).getOutputs().toArray)
 
-    val shapeAttr = attrMap.get("seqLen")
-    val seqLen = DataConverter.getAttributeValue(context, shapeAttr).asInstanceOf[Int]
+    val seqLenAttr = attrMap.get("seqLen")
+    val seqLen = DataConverter.getAttributeValue(context, seqLenAttr).asInstanceOf[Int]
 
-    val maxPositionAttr = attrMap.get("maxPosition")
-    val maxPosition = DataConverter.getAttributeValue(context, maxPositionAttr).asInstanceOf[Int]
-//
-//    val shape = Shape(List(Shape(seqLen), Shape(seqLen), Shape(seqLen), Shape(1, 1, seqLen)))
+    val maxPositionLenAttr = attrMap.get("maxPositionLen")
+    val maxPositionLen =
+      DataConverter.getAttributeValue(context, maxPositionLenAttr).asInstanceOf[Int]
+
     val bert = new BERT(nBlock, nHead, intermediateSize, hiddenPDrop, attnPDrop,
       initializerRange, outputAllBlock,
-      embeddingLayer.asInstanceOf[KerasLayer[Activity, Tensor[T], T]],
-      vocab, hiddenSize, maxPosition, null)
+      embeddingLayer.asInstanceOf[KerasLayer[Activity, Tensor[T], T]], null)
     val tGraph2 = subModules(1).asInstanceOf[StaticGraph[T]]
     val labor = Model(tGraph2.inputs.toArray, new GraphRef(tGraph2).getOutputs().toArray)
     bert.labor = labor
     bert.seqLen = seqLen
+    bert.vocab = vocab
+    bert.hiddenSize = hiddenSize
+    bert.maxPositionLen = maxPositionLen
 
-//    bert.build(KerasUtils.addBatch(shape))
     bert.asInstanceOf[AbstractModule[Activity, Activity, T]]
   }
 
@@ -322,11 +327,6 @@ object BERT extends KerasLayerSerializable {
     DataConverter.setAttributeValue(context, nHeadBuilder,
       bert.nHead, universe.typeOf[Int])
     bertBuilder.putAttr("nHead", nHeadBuilder.build)
-
-    val maxPositionBuilder = AttrValue.newBuilder
-    DataConverter.setAttributeValue(context, maxPositionBuilder,
-      bert.maxPositionLen, universe.typeOf[Int])
-    bertBuilder.putAttr("maxPosition", maxPositionBuilder.build)
 
     val intermediateSizeBuilder = AttrValue.newBuilder
     DataConverter.setAttributeValue(context, intermediateSizeBuilder,
@@ -371,6 +371,11 @@ object BERT extends KerasLayerSerializable {
     DataConverter.setAttributeValue(context, seqLenBuilder,
       bert.seqLen, universe.typeOf[Int])
     bertBuilder.putAttr("seqLen", seqLenBuilder.build)
+
+    val maxPositionLenBuilder = AttrValue.newBuilder
+    DataConverter.setAttributeValue(context, maxPositionLenBuilder,
+      bert.maxPositionLen, universe.typeOf[Int])
+    bertBuilder.putAttr("maxPositionLen", maxPositionLenBuilder.build)
 
     appendKerasLabel(context, bertBuilder)
   }
