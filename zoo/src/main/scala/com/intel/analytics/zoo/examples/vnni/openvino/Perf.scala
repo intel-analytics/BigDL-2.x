@@ -27,7 +27,8 @@ import scopt.OptionParser
 case class ResNet50PerfParams(model: String = "",
                               weight: String = "",
                               batchSize: Int = 4,
-                              iteration: Int = 1000)
+                              numBatch: Int = 10,
+                              iteration: Int = 4)
 
 object Perf {
 
@@ -46,6 +47,9 @@ object Perf {
       opt[Int]('b', "batchSize")
         .text("Batch size of input data")
         .action((v, p) => p.copy(batchSize = v))
+      opt[Int]('n', "numBatch")
+        .text("Num of Batch of input data")
+        .action((v, p) => p.copy(numBatch = v))
       opt[Int]('i', "iteration")
         .text("Iteration of perf test. The result will be average of each iteration time cost")
         .action((v, p) => p.copy(iteration = v))
@@ -53,23 +57,38 @@ object Perf {
 
     parser.parse(args, ResNet50PerfParams()).foreach { param =>
       val batchSize = param.batchSize
-      val batchInput = Tensor(Array(batchSize, 3, 224, 224)).rand().addSingletonDimension()
+      val numBatch = param.numBatch
+      val batchInput = Tensor(Array(numBatch, batchSize, 3, 224, 224)).rand()
       Engine.init
 
       val model = new InferenceModel(1)
-      model.doLoadOpenVINO(param.model, param.weight)
+      // model.doLoadOpenVINO(param.model, param.weight)
 
-      var iteration = 0
-      while (iteration < param.iteration) {
-        val start = System.nanoTime()
-        model.doPredict(batchInput)
-        val timeUsed = System.nanoTime() - start
-        val throughput = "%.2f".format(batchSize.toFloat / (timeUsed / 1e9))
-        logger.info(s"Iteration $iteration, takes $timeUsed ns, throughput is $throughput imgs/sec")
-
-        iteration += 1
-      }
-
+//      var iteration = 0
+//      val predictStart = System.nanoTime()
+//      while (iteration < param.iteration) {
+//        val start = System.nanoTime()
+//        model.doPredict(batchInput)
+//        val timeUsed = System.nanoTime() - start
+//        val throughput = "%.2f".format(batchSize.toFloat / (timeUsed / 1e9))
+//        logger.info(s"Iteration $iteration, takes $timeUsed ns, throughput is $throughput imgs/sec")
+//        iteration += 1
+//      }
+      val predictStart = System.nanoTime()
+      val threads = List.range(0, param.iteration).map(_ => {
+        new Thread() {
+          override def run(): Unit = {
+            model.doLoadOpenVINO(param.model, param.weight)
+            model.doPredict(batchInput)
+          }
+        }
+      })
+      threads.foreach(_.start())
+      threads.foreach(_.join())
+      val totalTimeUsed = System.nanoTime() - predictStart
+      val totalThroughput = "%.2f".format(batchSize * param.iteration
+        * numBatch.toFloat / (totalTimeUsed / 1e9))
+      logger.info(s"Takes $totalTimeUsed ns, throughput is $totalThroughput imgs/sec")
     }
   }
 }
