@@ -24,9 +24,9 @@ import org.apache.log4j.Logger
 import scopt.OptionParser
 
 
-case class ResNet50PerfParams(model: String = "",
-                              batchSize: Int = 32,
-                              iteration: Int = 1000)
+case class PerfParams(model: String = "",
+                      batchSize: Int = 32,
+                      iteration: Int = 1000)
 
 object Perf {
 
@@ -36,7 +36,7 @@ object Perf {
     System.setProperty("bigdl.localMode", "true")
     System.setProperty("bigdl.engineType", "mkldnn")
 
-    val parser = new OptionParser[ResNet50PerfParams]("ResNet50 Int8 Performance Test") {
+    val parser = new OptionParser[PerfParams]("ResNet50 Int8 Performance Test") {
       opt[String]('m', "model")
         .text("The path to the int8 quantized ResNet50 model snapshot")
         .action((v, p) => p.copy(model = v))
@@ -49,7 +49,7 @@ object Perf {
         .action((v, p) => p.copy(iteration = v))
     }
 
-    parser.parse(args, ResNet50PerfParams()).foreach { param =>
+    parser.parse(args, PerfParams()).foreach { param =>
       val batchSize = param.batchSize
       val batchInput = Tensor(Array(batchSize, 3, 224, 224)).rand()
       val singleInput = Tensor(Array(1, 3, 224, 224)).rand()
