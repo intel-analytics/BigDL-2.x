@@ -26,7 +26,7 @@ import com.intel.analytics.bigdl.utils.serializer._
 import com.intel.analytics.bigdl.utils.serializer.converters.DataConverter
 import com.intel.analytics.bigdl.utils.{MultiShape, Shape}
 import com.intel.analytics.zoo.pipeline.api.Net
-import com.intel.analytics.zoo.pipeline.api.autograd.{Parameter, Variable}
+import com.intel.analytics.zoo.pipeline.api.autograd.{AutoGrad, Parameter, Variable}
 import com.intel.analytics.zoo.pipeline.api.keras.layers.utils.{GraphRef, KerasUtils}
 import com.intel.analytics.zoo.pipeline.api.keras.models.Model
 import com.intel.analytics.zoo.pipeline.api.keras.models.Model.{apply => _, _}
@@ -56,7 +56,7 @@ import scala.reflect.runtime._
  * @param embeddingLayer embedding layer
  * @param inputShape input shape, default is null
  */
-class BERT[T: ClassTag] (
+class BERT[T: ClassTag] private (
   nBlock: Int = 12,
   nHead: Int = 12,
   intermediateSize: Int = 3072,
@@ -75,6 +75,12 @@ class BERT[T: ClassTag] (
 
   override def projectionLayer(outputSize: Int): Net = {
     new Dense(outputSize, init = RandomNormal(0.0, initializerRange))
+  }
+
+  override def gelu(x: Variable[T]): Variable[T] = {
+    val y = x / math.sqrt(2.0)
+    val e = AutoGrad.erf(y)
+    x * 0.5 * (e + 1.0)
   }
 
   override def buildInput(inputShape: Shape):
@@ -130,13 +136,15 @@ object BERT extends KerasLayerSerializable {
     val wordInput = Variable(Shape(seqLen))
     val tokenTypeInput = Variable(Shape(seqLen))
     val positionInput = Variable(Shape(seqLen))
-
-    val wordEmbeddings = new Embedding(vocab, hiddenSize,
-      init = RandomNormal(0.0, initializerRange)).from(wordInput)
-    val positionEmbeddings = new Embedding(maxPositionLen, hiddenSize,
-      init = RandomNormal(0.0, initializerRange)).from(positionInput)
-    val tokenTypeEmbeddings = new Embedding(2, hiddenSize,
-      init = RandomNormal(0.0, initializerRange)).from(tokenTypeInput)
+    val initWordEmbeddingW = Tensor[T](vocab, hiddenSize).randn(0.0, initializerRange)
+    val initPositionEmbeddingW = Tensor[T](seqLen, hiddenSize).randn(0.0, initializerRange)
+    val initTokenEmbeddingW = Tensor[T](2, hiddenSize).randn(0.0, initializerRange)
+    val wordEmbeddings = new Embedding(vocab, hiddenSize, inputShape = Shape(seqLen),
+      initWeights = initWordEmbeddingW).from(wordInput)
+    val positionEmbeddings = new Embedding(seqLen, hiddenSize, inputShape = Shape(seqLen),
+      initWeights = initPositionEmbeddingW).from(positionInput)
+    val tokenTypeEmbeddings = new Embedding(2, hiddenSize, inputShape = Shape(seqLen),
+      initWeights = initTokenEmbeddingW).from(tokenTypeInput)
 
     val embeddings = wordEmbeddings + positionEmbeddings + tokenTypeEmbeddings
     val w = Parameter[T](Shape(1, hiddenSize),

@@ -37,6 +37,7 @@ if __name__ == "__main__":
     parser.add_option("-e", "--nb_epoch", dest="nb_epoch", default="30")
     parser.add_option("-l", "--learning_rate", dest="learning_rate", default="0.001")
     parser.add_option("-m", "--model", dest="model")
+    parser.add_option("--output_path", dest="output_path")
 
     (options, args) = parser.parse_args(sys.argv)
     sc = init_nncontext("QARanker Example")
@@ -73,4 +74,9 @@ if __name__ == "__main__":
         knrm.evaluate_ndcg(validate_set, 3)
         knrm.evaluate_ndcg(validate_set, 5)
         knrm.evaluate_map(validate_set)
+
+    if options.output_path:
+        knrm.save_model(options.output_path + "/knrm.model")
+        a_set.save_word_index(options.output_path + "/word_index.txt")
+        print("Trained model and word dictionary saved")
     sc.stop()

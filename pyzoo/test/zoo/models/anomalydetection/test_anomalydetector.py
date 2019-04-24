@@ -43,5 +43,16 @@ class TestAnomalyDetector(ZooTestCase):
         input_data = np.random.rand(100, 10, 3)
         self.assert_zoo_model_save_load(model, input_data)
 
+    def test_compile_fit(self):
+        model = AnomalyDetector(feature_shape=(5, 3), hidden_layers=[8],
+                                dropouts=[0.2])
+        input_data = [[float(i), float(i + 1), float(i + 2)] for i in range(20)]
+        rdd = self.sc.parallelize(input_data)
+        unrolled = AnomalyDetector.unroll(rdd, 5, 1)
+        [train, validation] = AnomalyDetector.train_test_split(unrolled, 10)
+        model.compile(loss='mse', optimizer='rmsprop', metrics=['mae'])
+        model.fit(train, batch_size=4, nb_epoch=1, validation_data=validation)
+
+
 if __name__ == "__main__":
     pytest.main([__file__])

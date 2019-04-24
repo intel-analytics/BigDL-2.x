@@ -18,10 +18,10 @@ package com.intel.analytics.zoo.models.python
 
 import java.util.{List => JList, Map => JMap}
 
-import com.intel.analytics.bigdl.{Criterion, dataset}
+import com.intel.analytics.bigdl.{Criterion}
 import com.intel.analytics.bigdl.dataset.PaddingParam
 import com.intel.analytics.bigdl.nn.abstractnn.{AbstractModule, Activity}
-import com.intel.analytics.bigdl.nn.keras.{KerasLayer, KerasModel}
+import com.intel.analytics.bigdl.nn.keras.KerasLayer
 import com.intel.analytics.bigdl.optim.{OptimMethod, ValidationMethod, ValidationResult}
 import com.intel.analytics.bigdl.python.api.{EvaluatedResult, JTensor, Sample}
 import com.intel.analytics.bigdl.tensor.Tensor
@@ -33,7 +33,7 @@ import com.intel.analytics.zoo.feature.common.Preprocessing
 import com.intel.analytics.zoo.feature.image._
 import com.intel.analytics.zoo.feature.text.TextSet
 import com.intel.analytics.zoo.models.anomalydetection.{AnomalyDetector, FeatureLabelIndex}
-import com.intel.analytics.zoo.models.common.{Ranker, ZooModel}
+import com.intel.analytics.zoo.models.common.{KerasZooModel, Ranker, ZooModel}
 import com.intel.analytics.zoo.models.image.common.{ImageConfigure, ImageModel}
 import com.intel.analytics.zoo.models.image.objectdetection._
 import com.intel.analytics.zoo.models.image.imageclassification.{ImageClassifier, LabelReader => IMCLabelReader}
@@ -42,10 +42,11 @@ import com.intel.analytics.zoo.models.recommendation._
 import com.intel.analytics.zoo.models.seq2seq.{RNNDecoder, RNNEncoder, Seq2seq}
 import com.intel.analytics.zoo.models.textclassification.TextClassifier
 import com.intel.analytics.zoo.models.textmatching.KNRM
-import com.intel.analytics.zoo.pipeline.api.keras.layers.{Embedding, Recurrent, WordEmbedding}
+import com.intel.analytics.zoo.pipeline.api.keras.layers.{Embedding, WordEmbedding}
+import com.intel.analytics.zoo.pipeline.api.keras.models.KerasNet
 import org.apache.spark.api.java.JavaRDD
 import org.apache.spark.rdd.RDD
-import org.apache.spark.sql.{DataFrame, SQLContext}
+import org.apache.spark.sql.{DataFrame}
 
 import scala.reflect.ClassTag
 import scala.collection.JavaConverters._
@@ -152,47 +153,6 @@ class PythonZooModel[T: ClassTag](implicit ev: TensorNumeric[T]) extends PythonZ
       path: String,
       weightPath: String = null): AnomalyDetector[T] = {
       AnomalyDetector.loadModel(path, weightPath)
-  }
-
-  def anomalyDetectorCompile(
-      model: AnomalyDetector[T],
-      optimizer: OptimMethod[T],
-      loss: Criterion[T],
-      metrics: JList[ValidationMethod[T]] = null): Unit = {
-    model.compile(optimizer, loss,
-      if (metrics == null) null else metrics.asScala.toList)
-  }
-
-  def anomalyDetectorSetTensorBoard(
-      model: AnomalyDetector[T],
-      logDir: String,
-      appName: String): Unit = {
-    model.setTensorBoard(logDir, appName)
-  }
-
-  def anomalyDetectorSetCheckpoint(
-      model: AnomalyDetector[T],
-      path: String,
-      overWrite: Boolean = true): Unit = {
-    model.setCheckpoint(path, overWrite)
-  }
-
-  def anomalyDetectorFit(
-      model: AnomalyDetector[T],
-      x: JavaRDD[Sample],
-      batchSize: Int,
-      nbEpoch: Int,
-      validationData: JavaRDD[Sample]): Unit = {
-    val validateRdd = if (validationData != null) toJSample(validationData) else null
-    model.fit(toJSample(x), batchSize, nbEpoch, validateRdd)
-  }
-
-  def anomalyDetectorEvaluate(
-      model: AnomalyDetector[T],
-      x: JavaRDD[Sample],
-      batchSize: Int): JList[EvaluatedResult] = {
-    val resultArray = model.evaluate(toJSample(x), batchSize)
-    processEvaluateResult(resultArray)
   }
 
   def standardScaleDF(df: DataFrame): DataFrame = {
@@ -505,5 +465,9 @@ class PythonZooModel[T: ClassTag](implicit ev: TensorNumeric[T]) extends PythonZ
       model.infer(toTensor(input), toTensor(startSign), maxSeqLen,
         toTensor(stopSign), buildOutput)
     toJTensor(result)
+  }
+
+  def getModule(model: KerasZooModel[Activity, Activity, T]): KerasNet[T] = {
+    model.model.asInstanceOf[KerasNet[T]]
   }
 }

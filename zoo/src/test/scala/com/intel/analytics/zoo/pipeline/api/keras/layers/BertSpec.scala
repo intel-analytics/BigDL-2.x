@@ -1355,9 +1355,9 @@ class BertSpec extends ZooSpecHelper {
     val xValue = Tensor[Float](Array[Float](2f, 3f, 4f, 5f, 6f, 7f, 8f, 9f,
       10f, 11f, 12f, 13f, 14f, 15f, 16f, 17f), Array(2, 2, 4))
     val gradOValue = Tensor[Float](Array[Float](20f, 21f, 22f, 23f,
-    24f, 25f, 26f, 27f,
-    28f, 29f, 30f, 31f,
-    32f, 33f, 34f, 35f), Array(2, 2, 4))
+      24f, 25f, 26f, 27f,
+      28f, 29f, 30f, 31f,
+      32f, 33f, 34f, 35f), Array(2, 2, 4))
     val x = Variable[Float](inputShape = Shape(2, 4))
 
     val y = layer.gelu(x)
@@ -1365,8 +1365,8 @@ class BertSpec extends ZooSpecHelper {
 
     val output2 = model.forward(xValue).toTensor[Float]
     val expectOutput = Tensor[Float](Array[Float](1.9545f, 2.9960f, 3.9999f, 5.0000f,
-    6.0000f, 7.0000f, 8.0000f, 9.0000f,
-    10.0000f, 11.0000f, 12.0000f, 13.0000f,
+      6.0000f, 7.0000f, 8.0000f, 9.0000f,
+      10.0000f, 11.0000f, 12.0000f, 13.0000f,
       14.0000f, 15.0000f, 16.0000f, 17.0000f), Array(2, 2, 4))
     require(output2.almostEqual(expectOutput, 5e-5) == true)
 
