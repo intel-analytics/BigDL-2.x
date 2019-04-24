@@ -22,10 +22,10 @@ import com.intel.analytics.zoo.models.image.imageclassification.{ImageClassifier
 import org.apache.log4j.{Level, Logger}
 import scopt.OptionParser
 
-case class ImageClassificationParams(folder: String = "./",
-                                     model: String = "",
-                                     topN: Int = 5,
-                                     partitionNum: Int = 4)
+case class PredictParams(folder: String = "./",
+                         model: String = "",
+                         topN: Int = 5,
+                         partitionNum: Int = 4)
 
 object Predict {
   Logger.getLogger("org").setLevel(Level.ERROR)
@@ -37,7 +37,7 @@ object Predict {
 
   def main(args: Array[String]): Unit = {
     System.setProperty("bigdl.engineType", "mkldnn")
-    val parser = new OptionParser[ImageClassificationParams]("ResNet50 Int8 Inference Example") {
+    val parser = new OptionParser[PredictParams]("ResNet50 Int8 Inference Example") {
       opt[String]('f', "folder")
         .text("The path to the image data")
         .action((x, c) => c.copy(folder = x))
@@ -53,7 +53,7 @@ object Predict {
         .text("The number of partitions to cut the dataset into")
         .action((x, c) => c.copy(partitionNum = x))
     }
-    parser.parse(args, ImageClassificationParams()).map(param => {
+    parser.parse(args, PredictParams()).map(param => {
       val sc = NNContext.initNNContext("ResNet50 Int8 Inference Example")
       val images = ImageSet.read(param.folder)
       val model = ImageClassifier.loadModel[Float](param.model)

@@ -25,7 +25,6 @@ import com.intel.analytics.zoo.models.image.imageclassification.ImageClassifier
 import org.apache.log4j.{Level, Logger}
 import scopt.OptionParser
 
-
 case class ImageNetInferenceParams(folder: String = "./",
                                    model: String = "",
                                    batchSize: Int = 128)

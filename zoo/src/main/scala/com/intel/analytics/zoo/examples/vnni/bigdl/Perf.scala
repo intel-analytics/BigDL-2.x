@@ -23,7 +23,6 @@ import com.intel.analytics.zoo.models.image.imageclassification.ImageClassifier
 import org.apache.log4j.Logger
 import scopt.OptionParser
 
-
 case class PerfParams(model: String = "",
                       batchSize: Int = 32,
                       iteration: Int = 1000)
