@@ -30,9 +30,21 @@ sc = init_nncontext(conf)
 
 # bert_base_dir = "/home/ding/pretrain_model/bert/google/uncased_L-12_H-768_A-12"
 # data_dir = "/home/ding/data/mrpc/glue_data/MRPC"
+# model_path = "/tmp/UnitTest585434629966183762AnalyticsZooSpecBase"
+# max_seq_length = 64
+# max_features = 50000
+# hidden_size = 128
+
 bert_base_dir = "/root/dingding/bert/uncased_L-12_H-768_A-12"
 data_dir = "/root/dingding/bert/MRPC"
-max_seq_length = 64
+model_path = "/root/dingding/bert/zoo-bert.model"
+max_seq_length = 128
+num_labels = 2
+
+# bert2 = BERT.init(
+#     vocab=max_features, hidden_size=12, n_head=2, seq_len=max_seq_length)
+# bert = BERT.load_model(model_path, input_seq_len=max_seq_length)
+
 print('Loading data...')
 processor = MrpcProcessor()
 label_list = processor.get_labels()
@@ -45,20 +57,20 @@ def build_sample(feature):
 
 
 train_examples = processor.get_train_examples(data_dir)
-features = convert_examples_to_features(train_examples, label_list, max_seq_length, tokenizer)
-train_samples = [build_sample(feature) for feature in features]
+train_features = convert_examples_to_features(train_examples, label_list, max_seq_length, tokenizer)
+train_samples = [build_sample(feature) for feature in train_features]
 
-# eval_examples = processor.get_dev_examples(options.data_dir)
-# eval_rdd = generate_input_rdd(eval_examples, label_list, max_seq_length, tokenizer, "eval")
-#
-# test_examples = processor.get_test_examples(options.data_dir)
-# test_rdd = generate_input_rdd(test_examples, label_list, max_seq_length, tokenizer, "test")
+eval_examples = processor.get_dev_examples(data_dir)
+eval_features = convert_examples_to_features(eval_examples, label_list, max_seq_length, tokenizer)
+eval_samples = [build_sample(feature) for feature in eval_features]
 
-num_labels = 2
-max_features = 50000
-hidden_size = 128
+test_examples = processor.get_test_examples(data_dir)
+test_features = convert_examples_to_features(test_examples, label_list, max_seq_length, tokenizer)
+test_samples = [build_sample(feature) for feature in test_features]
 
 train_data = sc.parallelize(train_samples)
+eval_data = sc.parallelize(eval_samples)
+test_data = sc.parallelize(test_samples)
 
 token_shape = (max_seq_length,)
 position_shape = (max_seq_length,)
@@ -69,10 +81,10 @@ token_input = Input(shape=token_shape)
 position_input = Input(shape=position_shape)
 segment_input = Input(shape=segment_shape)
 mask_input = Input(shape=mask_shape)
-bert = BERT.init(
-    vocab=max_features, hidden_size=12, n_head=2, seq_len=max_seq_length)
+bert = BERT.load_model(model_path, input_seq_len=max_seq_length)
 O_seq = bert([token_input, segment_input, position_input, mask_input])
-O_seq = SelectTable(bert.n_block)(O_seq)
+# O_seq = SelectTable(bert.n_block)(O_seq)
+O_seq = SelectTable(12)(O_seq)
 O_seq = Dropout(0.2)(O_seq)
 outputs = Dense(num_labels)(O_seq)
 
@@ -97,6 +109,6 @@ model.fit(train_data,
           nb_epoch=1)
 print("Train finished.")
 
-# print('Evaluating...')
-# score = model.evaluate(xmb_val, batch_size=160)[0]
-# print(score)
+print('Evaluating...')
+score = model.evaluate(eval_data, batch_size=160)
+print(score)

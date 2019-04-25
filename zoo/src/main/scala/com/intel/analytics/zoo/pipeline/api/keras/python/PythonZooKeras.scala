@@ -1333,4 +1333,12 @@ class PythonZooKeras[T: ClassTag](implicit ev: TensorNumeric[T]) extends PythonZ
     inputShape: JList[JList[Int]] = null): SelectTable[T] = {
     SelectTable[T](index, toScalaMultiShape(inputShape))
   }
+
+  def loadBERT(path: String,
+    weightPath: String = null,
+    inputSeqLen: Int = -1,
+    hiddenDrop: Double = -1,
+    attnDrop: Double = -1): BERT[T] = {
+    BERT.loadModel(path, weightPath, inputSeqLen, hiddenDrop, attnDrop)
+  }
 }

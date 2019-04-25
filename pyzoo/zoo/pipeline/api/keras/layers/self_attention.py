@@ -19,7 +19,10 @@ import numpy as np
 import math
 
 from bigdl.nn.layer import Sum
+from bigdl.nn.layer import Layer
+from bigdl.util.common import callBigDlFunc
 
+from zoo.models.common import ZooModel
 from zoo.pipeline.api.keras.engine import ZooKerasLayer
 from zoo.pipeline.api.keras.layers import *
 from zoo.pipeline.api.keras.models import Sequential
@@ -348,3 +351,27 @@ class BERT(TransformerLayer):
 
         return BERT(n_block, n_head, intermediate_size, hidden_drop, attn_drop, initializer_range,
                     output_all_block, embedding_layer, input_shape=shape)
+
+    @staticmethod
+    def load_model(path, weight_path=None, input_seq_len=-1.0, hidden_drop=-1.0,
+                   attn_drop=-1.0, bigdl_type="float"):
+        """
+        Load an existing BERT model (with weights).
+
+        # Arguments
+        path: The path for the pre-defined model.
+              Local file system, HDFS and Amazon S3 are supported.
+              HDFS path should be like 'hdfs://[host]:[port]/xxx'.
+              Amazon S3 path should be like 's3a://bucket/xxx'.
+        weight_path: The path for pre-trained weights if any. Default is None.
+        """
+        jlayer = callBigDlFunc(bigdl_type, "loadBERT", path, weight_path, input_seq_len,
+                               hidden_drop, attn_drop)
+        # layer = Layer(jvalue=jlayer, bigdl_type=bigdl_type)
+        # return layer
+        # model = ZooModel._do_load(jlayer, bigdl_type)
+
+        model = Layer(jvalue=jlayer, bigdl_type=bigdl_type)
+        model.__class__ = BERT
+        return model
+

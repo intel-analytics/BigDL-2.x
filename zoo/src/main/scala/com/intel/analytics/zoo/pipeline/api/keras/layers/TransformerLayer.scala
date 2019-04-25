@@ -63,32 +63,37 @@ private[layers] class TransformerLayer[T: ClassTag](
 
   var seqLen: Int = 0
   override def doBuild(inputShape: Shape): AbstractModule[Activity, Activity, T] = {
-    val (extendedAttentionMask, embeddingInputs, inputs) = buildInput(inputShape)
+    val layer = if (!this.isBuilt()) {
+      val (extendedAttentionMask, embeddingInputs, inputs) = buildInput(inputShape)
 
-    require(embeddingLayer.isInstanceOf[Net], "use layers from" +
-      "com.intel.analytics.zoo.pipeline.api.keras and operators from" +
-      " com.intel.analytics.zoo.pipeline.api.autograd to construct the embedding layer")
-    val embedding = embeddingLayer.asInstanceOf[Net]
-    val e = embedding.from(embeddingInputs: _*)
-    val hiddenSize = e.getOutputShape().toSingle().last
+      require(embeddingLayer.isInstanceOf[Net], "use layers from" +
+        "com.intel.analytics.zoo.pipeline.api.keras and operators from" +
+        " com.intel.analytics.zoo.pipeline.api.autograd to construct the embedding layer")
+      val embedding = embeddingLayer.asInstanceOf[Net]
+      val e = embedding.from(embeddingInputs: _*)
+      val hiddenSize = e.getOutputShape().toSingle().last
 
-    val nextInput: Variable[T] = e
-    val modelOutputSize = nBlock
-    val modelOutput = new Array[Variable[T]](modelOutputSize)
-    modelOutput(0) = block(nextInput, hiddenSize, extendedAttentionMask)
+      val nextInput: Variable[T] = e
+      val modelOutputSize = nBlock
+      val modelOutput = new Array[Variable[T]](modelOutputSize)
+      modelOutput(0) = block(nextInput, hiddenSize, extendedAttentionMask)
 
-    for (i <- 1 until nBlock) {
-      val output = block(modelOutput(i - 1), hiddenSize, extendedAttentionMask)
-      modelOutput(i) = output
+      for (i <- 1 until nBlock) {
+        val output = block(modelOutput(i - 1), hiddenSize, extendedAttentionMask)
+        modelOutput(i) = output
+      }
+
+      val output = pooler(modelOutput.last, hiddenSize)
+
+      val model = if (outputAllBlock) {
+        Model(inputs.toArray, modelOutput :+ output)
+      } else Model(inputs.toArray, Array(modelOutput.last, output))
+
+      model.asInstanceOf[AbstractModule[Activity, Activity, T]]
+    } else {
+      labor
     }
-
-    val output = pooler(modelOutput.last, hiddenSize)
-
-    val model = if (outputAllBlock) {
-      Model(inputs.toArray, modelOutput :+ output)
-    } else Model(inputs.toArray, Array(modelOutput.last, output))
-
-    model.asInstanceOf[AbstractModule[Activity, Activity, T]]
+    layer
   }
 
   def projectionLayer(outputSize: Int): Net = {

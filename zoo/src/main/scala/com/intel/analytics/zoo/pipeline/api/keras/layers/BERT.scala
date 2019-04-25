@@ -96,6 +96,8 @@ class BERT[T: ClassTag] private (
     val inputs = _inputShape.map(Variable(_))
     return ((- inputs.last + 1.0) * -10000.0, inputs.dropRight(1), inputs)
   }
+
+  override def allowRebuilt = true
 }
 
 object BERT extends KerasLayerSerializable {
@@ -216,7 +218,7 @@ object BERT extends KerasLayerSerializable {
     val newParameter = newModel.parameters()._1
     var i = 0
     while(i < parameter.length) {
-      newParameter(i).set(parameter(i))
+      newParameter(i).copy(parameter(i))
       i += 1
     }
     newModel
