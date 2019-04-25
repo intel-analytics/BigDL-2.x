@@ -30,6 +30,7 @@ import com.intel.analytics.zoo.pipeline.api.autograd.{AutoGrad, Parameter, Varia
 import com.intel.analytics.zoo.pipeline.api.keras.layers.utils.{GraphRef, KerasUtils}
 import com.intel.analytics.zoo.pipeline.api.keras.models.Model
 import com.intel.analytics.zoo.pipeline.api.keras.models.Model.{apply => _, _}
+import org.apache.log4j.Logger
 
 import scala.collection.mutable.ArrayBuffer
 import scala.reflect.ClassTag
@@ -40,7 +41,7 @@ import scala.reflect.runtime._
  * Input is a Table which consists of 4 tensors.
  * 1. Token id tensor: shape [batch, seqLen] with the word token indices in the vocabulary
  * 2. Token type id tensor: shape [batch, seqLen] with the token types in [0, 1].
- *    0 menas `sentence A` and 1 means a `sentence B` (see BERT paper for more details).
+ *    0 means `sentence A` and 1 means a `sentence B` (see BERT paper for more details).
  * 3. Position id tensor: shape [batch, seqLen] with positions in the sentence.
  * 4. Attention_mask tensor: shape [batch, seqLen] with indices in [0, 1].
  *   It's a mask to be used if the input sequence length is smaller than seqLen in
@@ -49,7 +50,7 @@ import scala.reflect.runtime._
  * @param nBlock block number
  * @param nHead head number
  * @param intermediateSize The size of the "intermediate" (i.e., feed-forward)
- * @param hiddenPDrop The dropout probabilitiy for all fully connected layers
+ * @param hiddenPDrop The dropout probability for all fully connected layers
  * @param attnPDrop drop probability of attention
  * @param initializerRange weight initialization range
  * @param outputAllBlock whether output all blocks' output
@@ -104,6 +105,8 @@ object BERT extends KerasLayerSerializable {
     "com.intel.analytics.zoo.pipeline.api.keras.layers.BERT",
     BERT)
 
+  private val logger = Logger.getLogger(getClass)
+
   /**
    * [[BERT]] A self attention keras like layer
    * @param vocab vocabulary size of training data, default is 40990
@@ -112,10 +115,12 @@ object BERT extends KerasLayerSerializable {
    * @param nHead head number, default is 12
    * @param maxPositionLen sequence length, default is 512
    * @param intermediateSize The size of the "intermediate" (i.e., feed-forward), default is 3072
-   * @param hiddenPDrop The dropout probabilitiy for all fully connected layers, default is 0.1
+   * @param hiddenPDrop The dropout probability for all fully connected layers, default is 0.1
    * @param attnPDrop drop probability of attention, default is 0.1
    * @param initializerRange weight initialization range, default is 0.02
    * @param outputAllBlock whether output all blocks' output, default is true
+   * @param inputSeqLen sequence length of input, default is -1
+   *                    which means the same with maxPositionLen
    */
   def apply[@specialized(Float, Double) T: ClassTag](
     vocab: Int = 40990,
@@ -155,8 +160,9 @@ object BERT extends KerasLayerSerializable {
     val h = Dropout(hiddenPDrop).from(afterNorm)
 
     val embeddingLayer = Model(Array(wordInput, tokenTypeInput, positionInput), h)
-    val bert = new BERT[T](nBlock, nHead, intermediateSize, hiddenPDrop, attnPDrop, initializerRange,
-    outputAllBlock, embeddingLayer.asInstanceOf[KerasLayer[Activity, Tensor[T], T]], null)
+    val bert = new BERT[T](nBlock, nHead, intermediateSize, hiddenPDrop, attnPDrop,
+      initializerRange, outputAllBlock,
+      embeddingLayer.asInstanceOf[KerasLayer[Activity, Tensor[T], T]], null)
     bert.vocab = vocab
     bert.hiddenSize = hiddenSize
     bert.maxPositionLen = maxPositionLen
@@ -168,7 +174,7 @@ object BERT extends KerasLayerSerializable {
    * @param nBlock block number
    * @param nHead head number
    * @param intermediateSize The size of the "intermediate" (i.e., feed-forward)
-   * @param hiddenPDrop The dropout probabilitiy for all fully connected layers
+   * @param hiddenPDrop The dropout probability for all fully connected layers
    * @param attnPDrop drop probability of attention
    * @param initializerRange weight initialization range
    * @param outputAllBlock whether output all blocks' output
@@ -189,26 +195,36 @@ object BERT extends KerasLayerSerializable {
   }
 
   /**
-   * Load an existing model (with weights).
+   * create BERT from an existing model (with weights).
    *
    * @param path The path for the pre-defined model.
    *             Local file system, HDFS and Amazon S3 are supported.
    *             HDFS path should be like "hdfs://[host]:[port]/xxx".
    *             Amazon S3 path should be like "s3a://bucket/xxx".
-   * @param weightPath The path for pre-trained weights if any. Default is null.
-   * @tparam T Numeric type of parameter(e.g. weight, bias). Only support float/double now.
+   * @param weightPath The path for pre-trained weights if any.
+   * @param inputSeqLen sequence length of input, will be ignored if existing model is built with
+    *                   customized embedding
+   * @param hiddenPDrop The dropout probability for all fully connected layers, will be
+    *                   ignored if existing model is built with customized embedding
+   * @param attnPDrop drop probability of attention, will be ignored if existing model is
+    *                  built with customized embedding
    */
-  def loadModel[T: ClassTag](path: String, weightPath: String = null, inputSeqLen: Int = -1,
-    hiddenPDrop: Double = -1, attnPDrop: Double = -1)(implicit ev: TensorNumeric[T]): BERT[T] = {
+  def apply[T: ClassTag](path: String, weightPath: String, inputSeqLen: Int,
+    hiddenPDrop: Double, attnPDrop: Double, outputAllBlock: Boolean)
+    (implicit ev: TensorNumeric[T]): BERT[T] = {
     val loadedModel = ModuleLoader.loadFromFile(path, weightPath).asInstanceOf[BERT[T]]
-    if (loadedModel.vocab == 0) return loadedModel
+    if (loadedModel.vocab == 0) {
+      logger.warn("Configuration of inputSeqLen/hiddenPDrop/attnPDrop/outputAllBlock will be" +
+        "ignored since pretrained model is built with customized embedding layer.")
+      return loadedModel
+    }
 
     val seqLength = if (inputSeqLen < 0) loadedModel.seqLen else inputSeqLen
     val hDrop = if (hiddenPDrop < 0) loadedModel.hiddenPDrop else hiddenPDrop
     val aDrop = if (attnPDrop < 0) loadedModel.attnPDrop else attnPDrop
     val newModel = BERT(loadedModel.vocab, loadedModel.hiddenSize, loadedModel.nBlock,
       loadedModel.nHead, loadedModel.maxPositionLen, loadedModel.intermediateSize, hDrop,
-      aDrop, loadedModel.initializerRange, loadedModel.outputAllBlock, seqLength)
+      aDrop, loadedModel.initializerRange, outputAllBlock, seqLength)
     val shape = Shape(List(Shape(seqLength), Shape(seqLength), Shape(seqLength),
       Shape(1, 1, seqLength)))
     newModel.build(KerasUtils.addBatch(shape))
