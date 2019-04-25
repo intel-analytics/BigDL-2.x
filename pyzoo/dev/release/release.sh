@@ -44,9 +44,6 @@ elif [ "$platform" == "linux" ]; then
     echo "Building Analytics Zoo for linux system"
     dist_profile="-P linux -P without_bigdl $profiles"
     verbose_pname="manylinux1_x86_64"
-elif [ "$platform" == "windows" ]; then
-    echo "Building Analytics Zoo for windows system"
-    dist_profile="-P windows -P without_bigdl $profiles"
 else
     echo "Unsupported platform. Only linux and mac are supported for now."
 fi
