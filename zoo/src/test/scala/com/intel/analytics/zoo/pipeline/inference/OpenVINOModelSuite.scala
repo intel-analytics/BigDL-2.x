@@ -129,7 +129,8 @@ class OpenVINOModelSuite extends FunSuite with Matchers with BeforeAndAfterAll
   }
 
   override def afterAll() {
-    FileUtils.deleteDirectory(tmpDir)
+    // FileUtils.deleteDirectory(tmpDir)
+    s"rm -rf $tmpDir" !;
   }
 
   test("openvino model should be optimized") {
