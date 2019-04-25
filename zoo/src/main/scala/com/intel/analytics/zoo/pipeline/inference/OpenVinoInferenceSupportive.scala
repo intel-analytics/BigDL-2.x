@@ -56,6 +56,7 @@ object OpenVinoInferenceSupportive extends InferenceSupportive {
   var motfpyFilePath: String = _
   var calibrateSHPath: String = _
   var calibrationToolPath: String = _
+  var calibrationLibPath: String = _
 
   timing("prepare openvino scripts") {
     val ovtmpDir = Files.createTempDir()
@@ -66,6 +67,7 @@ object OpenVinoInferenceSupportive extends InferenceSupportive {
     motfpyFilePath = s"$openvinoTempDirPath/model-optimizer/mo_tf.py"
     calibrateSHPath = s"$openvinoTempDirPath$calibrateRelativePath"
     calibrationToolPath = s"$openvinoTempDirPath/inference-engine-bin/calibration_tool"
+    calibrationLibPath = s"$openvinoTempDirPath/inference-engine-bin/lib"
 
     val OpenvinoNativeLoaderClass = (new OpenvinoNativeLoader()).getClass
 
@@ -251,9 +253,12 @@ object OpenVinoInferenceSupportive extends InferenceSupportive {
                                modelPath: String,
                                validationFilePath: String,
                                subset: Int,
+                               opencvLibPath: String,
                                outputDir: String): Unit = {
     timing("calibrate tf model") {
-      val outputPath: String = outputDir
+
+      val modelName = modelPath.split("\\/").last.split("\\.").head
+      val outputPath: String = s"$outputDir/$modelName-calibrated"
       val stdout = new StringBuilder
       val stderr = new StringBuilder
       val log = ProcessLogger(stdout append _ + "\n", stderr append _ + "\n")
@@ -261,21 +266,25 @@ object OpenVinoInferenceSupportive extends InferenceSupportive {
         Seq("sh",
           calibrateSHPath,
           networkType,
+          modelPath,
           validationFilePath,
           subset + "",
           outputPath,
-          calibrationToolPath) ! log
+          calibrationToolPath,
+          opencvLibPath,
+          calibrationLibPath
+        ) ! log
       }
       logger.info(s"tf object detection model optimized, log: \n" +
         s"stderr: $stderr \n" +
         s"stdout: $stdout \n" +
         s"exitCode: $exitCode\n -----")
       exitCode match {
-        case 0 => logger.info(s"tf object detection model optimization succeeded")
+        case 0 => logger.info(s"tf object detection model calibrate succeeded")
         case _ =>
           val message = stderr.toString().split("\n").filter(_ contains ("ERROR")).mkString(",")
           throw
-            new InferenceRuntimeException(s"Openvino optimize tf object detection model error: " +
+            new InferenceRuntimeException(s"Openvino calibrate tf object detection model error: " +
               s"$exitCode, $message")
       }
     }

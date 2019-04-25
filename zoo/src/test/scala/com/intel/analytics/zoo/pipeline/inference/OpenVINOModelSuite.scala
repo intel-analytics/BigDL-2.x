@@ -75,6 +75,10 @@ class OpenVINOModelSuite extends FunSuite with Matchers with BeforeAndAfterAll
   val resnet_v1_50_meanValues = Array(123.68f, 116.78f, 103.94f)
   val resnet_v1_50_scale = 1.0f
 
+  val calibrateValTarUrl = s"$s3Url/analytics-zoo-models/openvino/val_bmp_32.tar"
+  val calibrateValTar = calibrateValTarUrl.split("/").last
+  var calibrateValFilePath: String = _
+
   override def beforeAll() {
     tmpDir = Files.createTempDir()
     val dir = new File(s"${tmpDir.getAbsolutePath}/OpenVinoInferenceModelSpec").getCanonicalPath
@@ -90,7 +94,12 @@ class OpenVINOModelSuite extends FunSuite with Matchers with BeforeAndAfterAll
     s"tar xvf $dir/$fasterrcnnModelTar -C $dir" !;
     s"ls -alh $dir" !;
 
+    s"wget -P $dir $calibrateValTarUrl" !;
+    s"tar xvf $dir/$calibrateValTar -C $dir" !;
+    s"ls -alh $dir" !;
+
     resnet_v1_50_checkpointPath = s"$dir/resnet_v1_50.ckpt"
+    calibrateValFilePath = s"$dir/val_bmp_32/val.txt"
 
     faserrcnnFrozenModelFilePath = s"$dir/$fasterrcnnModelDir/frozen_inference_graph.pb"
     faserrcnnModelType = "faster_rcnn_resnet101_coco"
@@ -110,7 +119,6 @@ class OpenVINOModelSuite extends FunSuite with Matchers with BeforeAndAfterAll
       null
     )
 
-
   }
 
   override def afterAll() {
@@ -118,7 +126,7 @@ class OpenVINOModelSuite extends FunSuite with Matchers with BeforeAndAfterAll
     fasterrcnnModel.release()
   }
 
-  test("openvino model should optimized") {
+  test("openvino model should be optimized") {
     InferenceModel.doOptimizeTF(
       faserrcnnFrozenModelFilePath,
       faserrcnnModelType,
@@ -126,6 +134,10 @@ class OpenVINOModelSuite extends FunSuite with Matchers with BeforeAndAfterAll
       null,
       tmpDir.getAbsolutePath
     )
+    tmpDir.listFiles().foreach(file => println(file.getAbsoluteFile))
+  }
+
+  test("openvino model should be optimized and calibrated") {
     InferenceModel.doOptimizeTF(
       null,
       resnet_v1_50_modelType,
@@ -134,6 +146,17 @@ class OpenVINOModelSuite extends FunSuite with Matchers with BeforeAndAfterAll
       resnet_v1_50_ifReverseInputChannels,
       resnet_v1_50_meanValues,
       resnet_v1_50_scale,
+      tmpDir.getAbsolutePath
+    )
+    val model_IR_path = s"${tmpDir.getAbsolutePath}/${resnet_v1_50_modelType}_inference_graph.xml"
+    val opencvLibPath = "/home/glorysdj/analytics-zoo-core/openvino/openvino-java-linux/target/" +
+      "openvino/dldt/inference-engine/temp/opencv_4.0.0_ubuntu/lib"
+    InferenceModel.doCalibrateTF(
+      "C",
+      model_IR_path,
+      calibrateValFilePath,
+      32,
+      opencvLibPath,
       tmpDir.getAbsolutePath
     )
     tmpDir.listFiles().foreach(file => println(file.getAbsoluteFile))

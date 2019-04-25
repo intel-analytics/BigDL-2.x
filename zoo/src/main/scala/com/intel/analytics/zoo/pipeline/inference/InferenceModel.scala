@@ -382,12 +382,12 @@ object InferenceModel {
    * @param outputDir              the output dir
    */
   def doOptimizeTF(modelPath: String,
-                   modelType: String,
+                   objectDetectionModelType: String,
                    pipelineConfigPath: String,
                    extensionsConfigPath: String,
                    outputDir: String): Unit = {
     OpenVinoInferenceSupportive.optimizeTFObjectDetectionModel(
-      modelPath, modelType, pipelineConfigPath, extensionsConfigPath, outputDir)
+      modelPath, objectDetectionModelType, pipelineConfigPath, extensionsConfigPath, outputDir)
   }
 
   /**
@@ -396,14 +396,16 @@ object InferenceModel {
    * @param modelPath              the path of the tensorflow model
    * @param modelType              the type of the tensorflow model
    * @param checkpointPath         the path of the tensorflow checkpoint file
-   * @param inputShape             the input shape
-   * @param ifReverseInputChannels the boolean value of if need reverse input channels
-   * @param meanValues             the mean values
-   * @param scale                  the scale value
+   * @param inputShape             input shape that should be fed to an input node(s) of the model
+   * @param ifReverseInputChannels the boolean value of if need reverse input channels.
+   *                               switch the input channels order from RGB to BGR (or vice versa).
+   * @param meanValues             all input values coming from original network inputs
+   *                               will be divided by this value.
+   * @param scale                  the scale value, to be used for the input image per channel.
    * @param outputDir              the output dir
    */
   def doOptimizeTF(modelPath: String,
-                   modelType: String,
+                   imageClassificationModelType: String,
                    checkpointPath: String,
                    inputShape: Array[Int],
                    ifReverseInputChannels: Boolean,
@@ -411,7 +413,7 @@ object InferenceModel {
                    scale: Float,
                    outputDir: String): Unit = {
     OpenVinoInferenceSupportive.optimizeTFImageClassificationModel(
-      modelPath, modelType, checkpointPath, inputShape,
+      modelPath, imageClassificationModelType, checkpointPath, inputShape,
       ifReverseInputChannels, meanValues, scale, outputDir)
   }
 
@@ -427,15 +429,19 @@ object InferenceModel {
    * @param validationFilePath   Path to a directory with validation images
    * @param subset               Number of pictures from the whole validation set
    *                             to create the calibration dataset.
+   * @param opencvLibPath        the lib path whwere libopencv_imgcodecs.so.4.0,
+   *                             libopencv_core.so.4.0
+   *                             and libopencv_imgproc.so.4.0 can be found
    * @param outputDir            the output directory
    */
   def doCalibrateTF(networkType: String,
                     modelPath: String,
                     validationFilePath: String,
                     subset: Int,
+                    opencvLibPath: String,
                     outputDir: String): Unit = {
     OpenVinoInferenceSupportive.calibrateTensorflowModel(
-      networkType, modelPath, validationFilePath, subset, outputDir)
+      networkType, modelPath, validationFilePath, subset, opencvLibPath, outputDir)
   }
 
 }
