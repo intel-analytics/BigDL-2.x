@@ -74,10 +74,41 @@ class PythonInferenceModel[T: ClassTag](implicit ev: TensorNumeric[T]) extends P
 
   def inferenceModelOpenVINOLoadTF(model: InferenceModel,
                                    modelPath: String,
-                                   modelType: String,
+                                   objectDetectionModelType: String,
                                    pipelineConfigFilePath: String,
                                    extensionsConfigFilePath: String): Unit = {
-    model.doLoadTF(modelPath, modelType, pipelineConfigFilePath, extensionsConfigFilePath)
+    model.doLoadTF(modelPath, objectDetectionModelType,
+      pipelineConfigFilePath, extensionsConfigFilePath)
+  }
+
+  def inferenceModelTensorFlowLoadTF(model: InferenceModel,
+                                     modelPath: String,
+                                     imageClassificationModelType: String,
+                                     checkpointPath: String,
+                                     inputShape: Array[Int],
+                                     ifReverseInputChannels: Boolean,
+                                     meanValues: Array[Float],
+                                     scale: Float
+                                    ): Unit = {
+    model.doLoadTF(modelPath, imageClassificationModelType,
+      checkpointPath, inputShape, ifReverseInputChannels, meanValues, scale)
+  }
+
+  def inferenceModelTensorFlowLoadTFAsCalibratedOpenVINO(model: InferenceModel,
+                                                         modelPath: String,
+                                                         imageClassificationModelType: String,
+                                                         checkpointPath: String,
+                                                         inputShape: Array[Int],
+                                                         ifReverseInputChannels: Boolean,
+                                                         meanValues: Array[Float],
+                                                         scale: Float,
+                                                         networkType: String,
+                                                         validationFilePath: String,
+                                                         subset: Int,
+                                                         opencvLibPath: String): Unit = {
+    model.doLoadTFAsCalibratedOpenVINO(modelPath, imageClassificationModelType,
+      checkpointPath, inputShape, ifReverseInputChannels, meanValues, scale,
+      networkType, validationFilePath, subset, opencvLibPath)
   }
 
   def inferenceModelTensorFlowLoadTF(
@@ -97,5 +128,37 @@ class PythonInferenceModel[T: ClassTag](implicit ev: TensorNumeric[T]) extends P
     val inputActivity = jTensorsToActivity(inputs, inputIsTable)
     val outputActivity = model.doPredict(inputActivity)
     activityToList(outputActivity)
+  }
+
+  def inferenceModelOptimizeTF(modelPath: String,
+                               objectDetectionModelType: String,
+                               pipelineConfigPath: String,
+                               extensionsConfigPath: String,
+                               outputDir: String): Unit = {
+    InferenceModel.doOptimizeTF(
+      modelPath, objectDetectionModelType, pipelineConfigPath, extensionsConfigPath, outputDir)
+  }
+
+  def inferenceModelOptimizeTF(modelPath: String,
+                               imageClassificationModelType: String,
+                               checkpointPath: String,
+                               inputShape: Array[Int],
+                               ifReverseInputChannels: Boolean,
+                               meanValues: Array[Float],
+                               scale: Float,
+                               outputDir: String): Unit = {
+    InferenceModel.doOptimizeTF(
+      modelPath, imageClassificationModelType, checkpointPath, inputShape,
+      ifReverseInputChannels, meanValues, scale, outputDir)
+  }
+
+  def inferenceModelCalibrateTF(modelPath: String,
+                                networkType: String,
+                                validationFilePath: String,
+                                subset: Int,
+                                opencvLibPath: String,
+                                outputDir: String): Unit = {
+    InferenceModel.doCalibrateTF(
+      modelPath, networkType, validationFilePath, subset, opencvLibPath, outputDir)
   }
 }
