@@ -157,8 +157,8 @@ class OpenVINOModelSuite extends FunSuite with Matchers with BeforeAndAfterAll
     )
     val model_IR_path = s"${tmpDir.getAbsolutePath}/${resnet_v1_50_modelType}_inference_graph.xml"
     InferenceModel.doCalibrateTF(
-      "C",
       model_IR_path,
+      "C",
       calibrateValFilePath,
       32,
       opencvLibPath,

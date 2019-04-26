@@ -249,8 +249,8 @@ object OpenVinoInferenceSupportive extends InferenceSupportive {
     }
   }
 
-  def calibrateTensorflowModel(networkType: String,
-                               modelPath: String,
+  def calibrateTensorflowModel(modelPath: String,
+                               networkType: String,
                                validationFilePath: String,
                                subset: Int,
                                opencvLibPath: String,
@@ -390,7 +390,7 @@ object OpenVinoInferenceSupportive extends InferenceSupportive {
       val mappingFile = new File(mappingFilePath)
       val model = (modelFile.exists(), weightFile.exists(), mappingFile.exists()) match {
         case (true, true, true) =>
-          calibrateTensorflowModel(networkType, modelFilePath,
+          calibrateTensorflowModel(modelFilePath, networkType,
             validationFilePath, subset, opencvLibPath, tempDir)
         case (_, _, _) => throw
           new InferenceRuntimeException("Openvino optimize tf model error")
