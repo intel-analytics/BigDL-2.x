@@ -18,10 +18,10 @@ package com.intel.analytics.zoo.pipeline.inference
 
 import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric
 import com.intel.analytics.zoo.common.PythonZoo
-import com.intel.analytics.zoo.pipeline.inference.DeviceType.DeviceTypeEnumVal
 import java.util.{List => JList}
 
 import scala.reflect.ClassTag
+import scala.collection.JavaConverters._
 
 object PythonInferenceModel {
 
@@ -85,29 +85,32 @@ class PythonInferenceModel[T: ClassTag](implicit ev: TensorNumeric[T]) extends P
                                      modelPath: String,
                                      imageClassificationModelType: String,
                                      checkpointPath: String,
-                                     inputShape: Array[Int],
+                                     inputShape: JList[Int],
                                      ifReverseInputChannels: Boolean,
-                                     meanValues: Array[Float],
+                                     meanValues: JList[Float],
                                      scale: Float
                                     ): Unit = {
+
     model.doLoadTF(modelPath, imageClassificationModelType,
-      checkpointPath, inputShape, ifReverseInputChannels, meanValues, scale)
+      checkpointPath, inputShape.asScala.toArray,
+      ifReverseInputChannels, meanValues.asScala.toArray, scale)
   }
 
   def inferenceModelTensorFlowLoadTFAsCalibratedOpenVINO(model: InferenceModel,
                                                          modelPath: String,
                                                          imageClassificationModelType: String,
                                                          checkpointPath: String,
-                                                         inputShape: Array[Int],
+                                                         inputShape: JList[Int],
                                                          ifReverseInputChannels: Boolean,
-                                                         meanValues: Array[Float],
+                                                         meanValues: JList[Float],
                                                          scale: Float,
                                                          networkType: String,
                                                          validationFilePath: String,
                                                          subset: Int,
                                                          opencvLibPath: String): Unit = {
     model.doLoadTFAsCalibratedOpenVINO(modelPath, imageClassificationModelType,
-      checkpointPath, inputShape, ifReverseInputChannels, meanValues, scale,
+      checkpointPath, inputShape.asScala.toArray,
+      ifReverseInputChannels, meanValues.asScala.toArray, scale,
       networkType, validationFilePath, subset, opencvLibPath)
   }
 
@@ -142,14 +145,14 @@ class PythonInferenceModel[T: ClassTag](implicit ev: TensorNumeric[T]) extends P
   def inferenceModelOptimizeTF(modelPath: String,
                                imageClassificationModelType: String,
                                checkpointPath: String,
-                               inputShape: Array[Int],
+                               inputShape: JList[Int],
                                ifReverseInputChannels: Boolean,
-                               meanValues: Array[Float],
+                               meanValues: JList[Float],
                                scale: Float,
                                outputDir: String): Unit = {
     InferenceModel.doOptimizeTF(
-      modelPath, imageClassificationModelType, checkpointPath, inputShape,
-      ifReverseInputChannels, meanValues, scale, outputDir)
+      modelPath, imageClassificationModelType, checkpointPath, inputShape.asScala.toArray,
+      ifReverseInputChannels, meanValues.asScala.toArray, scale, outputDir)
   }
 
   def inferenceModelCalibrateTF(modelPath: String,

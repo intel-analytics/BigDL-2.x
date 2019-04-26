@@ -205,7 +205,7 @@ class InferenceModel(private var autoScalingEnabled: Boolean = true,
   }
 
   /**
-   * load TF model as OpenVINO IR
+   * load TF model as Calibrated OpenVINO IR
    *
    * @param modelPath              the path of the tensorflow model
    * @param imageClassificationModelType the type of the tensorflow model
@@ -221,7 +221,7 @@ class InferenceModel(private var autoScalingEnabled: Boolean = true,
    *                               "OD" to calibrate Object Detection,
    *                               "RawC" to collect only statistics for Classification,
    *                               "RawOD" to collect only statistics for Object Detection
-   * @param validationFilePath     Path to a directory with validation images
+   * @param validationFilePath     Path to a file with validation images
    * @param subset                 Number of pictures from the whole validation set
    *                               to create the calibration dataset.
    * @param opencvLibPath          the lib path whwere libopencv_imgcodecs.so.4.0,

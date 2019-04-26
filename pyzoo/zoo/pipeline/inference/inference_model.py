@@ -114,6 +114,105 @@ class InferenceModel(JavaValue):
         else:
             raise ValueError("Currently only tensorflow and openvino are supported as backend")
 
+    def load_tf(self,
+                model_path,
+                object_detection_model_type,
+                pipeline_config_path,
+                extensions_config_path
+                ):
+        """
+        load TF model as OpenVINO IR
+        :param model_path: String, the path of the tensorflow model
+        :param object_detection_model_type: String, the type of the tensorflow model
+        :param pipeline_config_path: String, the path of the pipeline configure file
+        :param extensions_config_path: String, the path of the extensions configure file
+        :return:
+        """
+        callBigDlFunc(self.bigdl_type,
+                      "inferenceModelTensorFlowLoadTF",
+                      self.value,
+                      model_path,
+                      object_detection_model_type,
+                      pipeline_config_path,
+                      extensions_config_path)
+
+    def load_tf(self,
+                model_path,
+                image_classification_model_type,
+                checkpoint_path,
+                input_shape,
+                if_reverse_input_channels,
+                meanValues,
+                scale):
+        """
+        load TF model as OpenVINO IR
+        :param model_path: String, the path of the tensorflow model
+        :param image_classification_model_type: String, the type of the tensorflow model
+        :param checkpoint_path: String, the path of the tensorflow checkpoint file
+        :param input_shape: List of Int, input shape that should be fed to an input node(s) of the model
+        :param if_reverse_input_channels: Boolean, the boolean value of if need reverse input channels.
+        :param meanValues: List of Float, all input values coming from original network inputs
+                            will be divided by this value.
+        :param scale: Float, the scale value, to be used for the input image per channel.
+        :return:
+        """
+        callBigDlFunc(self.bigdl_type,
+                      "inferenceModelTensorFlowLoadTF",
+                      self.value,
+                      model_path,
+                      image_classification_model_type,
+                      checkpoint_path,
+                      input_shape,
+                      if_reverse_input_channels,
+                      meanValues,
+                      scale)
+
+    def load_tf_as_calibrated_openvino(self,
+                                       model_path,
+                                       image_classification_model_type,
+                                       checkpoint_path,
+                                       input_shape,
+                                       if_reverse_input_channels,
+                                       meanValues,
+                                       scale,
+                                       network_type,
+                                       validation_file_path,
+                                       subset,
+                                       opencv_lib_path):
+        """
+        load TF model as Calibrated OpenVINO IR
+        :param model_path: String, the path of the tensorflow model
+        :param image_classification_model_type: String, the type of the tensorflow model
+        :param checkpoint_path: String, the path of the tensorflow checkpoint file
+        :param input_shape: List of Int, input shape that should be fed to an input node(s) of the model
+        :param if_reverse_input_channels: Boolean, the boolean value of if need reverse input channels.
+        :param meanValues: List of Float, all input values coming from original network inputs
+                will be divided by this value.
+        :param scale: Float, the scale value, to be used for the input image per channel.
+        :param network_type: String, Type of an inferred network, "C" to calibrate Classification,
+                "OD" to calibrate Object Detection, "RawC" to collect only statistics for Classification,
+                "RawOD" to collect only statistics for Object Detection
+        :param validation_file_path: String. path to a file with validation images
+        :param subset: String, number of pictures from the whole validation set to create the calibration dataset.
+        :param opencv_lib_path: String, the lib path whwere libopencv_imgcodecs.so.4.0,
+                ibopencv_core.so.4.0 and libopencv_imgproc.so.4.0 can be found
+        :return:
+        """
+        callBigDlFunc(self.bigdl_type,
+                      "inferenceModelTensorFlowLoadTFAsCalibratedOpenVINO",
+                      self.value,
+                      model_path,
+                      image_classification_model_type,
+                      checkpoint_path,
+                      input_shape,
+                      if_reverse_input_channels,
+                      meanValues,
+                      scale,
+                      network_type,
+                      validation_file_path,
+                      subset,
+                      opencv_lib_path)
+
     def predict(self, inputs):
         """
         Do prediction on inputs.
