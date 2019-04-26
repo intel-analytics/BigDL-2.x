@@ -62,7 +62,7 @@ object Perf {
       Engine.init
 
       val model = new InferenceModel(1)
-      // model.doLoadOpenVINO(param.model, param.weight)
+       model.doLoadOpenVINO(param.model, param.weight)
 
 //      var iteration = 0
 //      val predictStart = System.nanoTime()
@@ -74,11 +74,11 @@ object Perf {
 //        logger.info(s"Iteration $iteration, takes $timeUsed ns, throughput is $throughput imgs/sec")
 //        iteration += 1
 //      }
+      model.doLoadOpenVINO(param.model, param.weight)
       val predictStart = System.nanoTime()
       val threads = List.range(0, param.iteration).map(_ => {
         new Thread() {
           override def run(): Unit = {
-            model.doLoadOpenVINO(param.model, param.weight)
             model.doPredict(batchInput)
           }
         }
