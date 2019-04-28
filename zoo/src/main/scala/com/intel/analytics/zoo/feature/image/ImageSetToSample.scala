@@ -48,6 +48,10 @@ class ImageSetToSample[T: ClassTag](inputKeys: Array[String] = Array(ImageFeatur
       val sample = if (targetKeys == null) {
         ArraySample[T](inputs)
       } else {
+        // If an ImageFeature doesn't contain the specified target(s), the result Sample
+        // won't contain labels.
+        // In this case the same preprocessor for ImageModels can both handle images with labels
+        // (for evaluation) or without labels (for inference).
         val targets = targetKeys.flatMap(key => {
           if (feature.contains(key)) {
             val target = feature[Tensor[T]](key)

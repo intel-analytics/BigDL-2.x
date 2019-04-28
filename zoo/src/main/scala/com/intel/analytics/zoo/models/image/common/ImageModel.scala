@@ -16,12 +16,11 @@
 
 package com.intel.analytics.zoo.models.image.common
 
-import com.intel.analytics.bigdl.dataset.SampleToMiniBatch
 import com.intel.analytics.bigdl.nn.{MklInt8Convertible, Module, SpatialConvolution}
 import com.intel.analytics.bigdl.nn.abstractnn.Activity
 import com.intel.analytics.bigdl.optim.{ValidationMethod, ValidationResult}
 import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric
-import com.intel.analytics.zoo.feature.image.ImageSet
+import com.intel.analytics.zoo.feature.image.{DistributedImageSet, ImageSet}
 import com.intel.analytics.zoo.models.common.ZooModel
 import com.intel.analytics.zoo.models.image.imageclassification.ImageClassifier
 import com.intel.analytics.zoo.models.image.objectdetection.ObjectDetector
@@ -71,23 +70,33 @@ abstract class ImageModel[T: ClassTag]()(implicit ev: TensorNumeric[T])
     result
   }
 
+  /**
+   * Evaluate the ImageSet given validation methods.
+   *
+   * @param image DistributedImageSet in which each image should have a label.
+   * @param vMethods Array of ValidationMethod to evaluate the ImageSet.
+   * @param batchSize Total batch size of all partitions.
+   * @param configure An instance of [[ImageConfigure]]. Default is null and it will
+   *                  be pre-defined together with each ImageModel.
+   */
   def evaluateImageSet(
-     image: ImageSet,
-     batchSize: Int,
-     vMethods: Array[_ <:ValidationMethod[T]],
-     configure: ImageConfigure[T] = null): Array[(ValidationResult, ValidationMethod[T])] = {
+      image: DistributedImageSet,
+      vMethods: Array[_ <:ValidationMethod[T]],
+      batchSize: Int,
+      configure: ImageConfigure[T] = null): Array[(ValidationResult, ValidationMethod[T])] = {
     val evalConfig = if (null == configure) config else configure
-
+    // Remark: BigDL currently only supports evaluation on DistributedImageSet.
     if (evalConfig == null) {
       model.evaluateImage(image.toImageFrame(), vMethods, Some(batchSize))
     } else {
+      // Remark: ImageConfigure only has batchPerPartition while evaluate needs
+      // total batchSize. Thus add a batchSize argument here first.
       val data = if (null != evalConfig.preProcessor) {
         image -> evalConfig.preProcessor
       } else {
         image
       }
-      val dataset = data.toDataSet[T]() -> SampleToMiniBatch[T](batchSize)
-      model.evaluate(dataset.toDistributed().data(train = false), vMethods)
+      model.evaluateImage(data.toImageFrame(), vMethods, Some(batchSize))
     }
   }
 
@@ -112,8 +121,10 @@ object ImageModel {
   def loadModel[T: ClassTag](path: String, weightPath: String = null, modelType: String = "")
     (implicit ev: TensorNumeric[T]): ImageModel[T] = {
     val labor = Module.loadModule[T](path, weightPath)
-    // Calling quantize may not keep the original name. Thus record modelName here.
+    // Calling quantize may not keep the original name. Thus first get modelName here.
     val modelName = labor.getName()
+    // If there exists a SpatialConvolution layer in the model that has weight scales,
+    // then it should be an int8 model with scales generated.
     val isInt8Model = labor.toGraph().getForwardExecutions().map(_.element)
       .exists(x => x.isInstanceOf[SpatialConvolution[T]] &&
         MklInt8ConvertibleRef.getWeightScalesBuffer(

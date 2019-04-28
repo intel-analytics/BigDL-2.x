@@ -19,12 +19,19 @@ package com.intel.analytics.zoo.feature.image
 import com.intel.analytics.bigdl.transform.vision.image.ImageFeature
 import com.intel.analytics.bigdl.transform.vision.image.augmentation.ChannelScaledNormalizer
 
-
+/**
+ * Channel normalization with scale factor.
+ *
+ * @param meanR Integer. The mean value for channel R.
+ * @param meanG Integer. The mean value for channel G.
+ * @param meanB Integer. The mean value for channel R.
+ * @param scale Double. The scale value applied for all channels.
+ */
 class ImageChannelScaledNormalizer(meanR: Int, meanG: Int,
                                    meanB: Int, scale: Double) extends ImageProcessing {
-
-  private val internalTransformer = InternalChannelScaledNormalizer(meanR,
+  private val internalTransformer = new InternalChannelScaledNormalizer(meanR,
     meanG, meanB, scale)
+
   override def apply(prev: Iterator[ImageFeature]): Iterator[ImageFeature] = {
     internalTransformer.apply(prev)
   }
@@ -36,22 +43,18 @@ class ImageChannelScaledNormalizer(meanR: Int, meanG: Int,
 
 object ImageChannelScaledNormalizer {
   def apply(meanR: Int, meanG: Int,
-            meanB: Int, scale: Double): ImageChannelScaledNormalizer =
+            meanB: Int, scale: Double): ImageChannelScaledNormalizer = {
     new ImageChannelScaledNormalizer(meanR, meanG, meanB, scale)
-
+  }
 }
 
 // transformMat in BigDL RandomCropper is protected and can't be directly accessed.
-class InternalChannelScaledNormalizer(meanR: Int, meanG: Int, meanB: Int, scale: Double)
+// Thus add an InternalChannelScaledNormalizer here to override transformMat and make it accessible.
+private[image] class InternalChannelScaledNormalizer(meanR: Int, meanG: Int,
+                                                     meanB: Int, scale: Double)
   extends ChannelScaledNormalizer(meanR, meanG, meanB, scale) {
 
   override def transformMat(feature: ImageFeature): Unit = {
     super.transformMat(feature)
-  }
-}
-
-object InternalChannelScaledNormalizer {
-  def apply(meanR: Int, meanG: Int, meanB: Int, scale: Double): InternalChannelScaledNormalizer = {
-    new InternalChannelScaledNormalizer(meanR, meanG, meanB, scale)
   }
 }

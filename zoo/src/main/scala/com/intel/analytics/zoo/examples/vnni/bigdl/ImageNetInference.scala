@@ -38,7 +38,7 @@ object ImageNetInference {
   def main(args: Array[String]): Unit = {
     System.setProperty("bigdl.engineType", "mkldnn")
 
-    val parser = new OptionParser[ImageNetInferenceParams]("ImageNet Int8 Example") {
+    val parser = new OptionParser[ImageNetInferenceParams]("ImageNet Int8 Inference Example") {
       opt[String]('f', "folder")
         .text("The folder path that contains ImageNet no-resize sequence files")
         .action((x, c) => c.copy(folder = x))
@@ -55,11 +55,9 @@ object ImageNetInference {
       val sc = NNContext.initNNContext("ImageNet2012 with Int8 Inference Example")
       val images = ImageSet.readSequenceFiles(param.folder, sc)
       val model = ImageClassifier.loadModel[Float](param.model)
-      val result = model.evaluateImageSet(images, param.batchSize,
-        Array(new Top1Accuracy[Float], new Top5Accuracy[Float]))
-
+      val result = model.evaluateImageSet(images,
+        Array(new Top1Accuracy[Float], new Top5Accuracy[Float]), param.batchSize)
       result.foreach(r => println(s"${r._2} is ${r._1}"))
-
       sc.stop()
     })
   }

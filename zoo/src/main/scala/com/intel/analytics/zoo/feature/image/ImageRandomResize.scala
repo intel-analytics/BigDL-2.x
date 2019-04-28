@@ -19,9 +19,16 @@ package com.intel.analytics.zoo.feature.image
 import com.intel.analytics.bigdl.transform.vision.image.augmentation.RandomResize
 import com.intel.analytics.bigdl.transform.vision.image.ImageFeature
 
+/**
+ * Randomly resize an image between minSize and maxSize and
+ * scale height and width to each other.
+ *
+ * @param minSize Integer. The minimum size to resize to.
+ * @param maxSize Integer. The maximum size to resize to.
+ */
 class ImageRandomResize(minSize: Int, maxSize : Int) extends ImageProcessing {
-
   private val internalTransformer = RandomResize(minSize, maxSize)
+
   override def apply(prev: Iterator[ImageFeature]): Iterator[ImageFeature] = {
     internalTransformer.apply(prev)
   }
