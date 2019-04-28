@@ -37,14 +37,15 @@ object Perf {
 
     val parser = new OptionParser[PerfParams]("ResNet50 Int8 Performance Test") {
       opt[String]('m', "model")
-        .text("The path to the int8 quantized ResNet50 model snapshot")
+        .text("The path to the pre-trained int8 ResNet50 model snapshot")
         .action((v, p) => p.copy(model = v))
         .required()
       opt[Int]('b', "batchSize")
-        .text("Batch size of input data")
+        .text("The batch size of input data")
         .action((v, p) => p.copy(batchSize = v))
       opt[Int]('i', "iteration")
-        .text("Iteration of perf test. The result will be average of each iteration time cost")
+        .text("The number of iterations to run the perf test. " +
+          "The result will be the average of each iteration time cost")
         .action((v, p) => p.copy(iteration = v))
     }
 
@@ -63,8 +64,8 @@ object Perf {
         model.forward(batchInput)
         val timeUsed = System.nanoTime() - start
         val throughput = "%.2f".format(batchSize.toFloat / (timeUsed / 1e9))
-        logger.info(s"Iteration $iteration, takes $timeUsed ns, throughput is $throughput imgs/sec")
-
+        logger.info(s"Iteration $iteration, batch $batchSize, takes $timeUsed ns, " +
+          s"throughput is $throughput imgs/sec")
         iteration += 1
       }
 
@@ -76,8 +77,7 @@ object Perf {
         val start = System.nanoTime()
         model2.forward(singleInput)
         val latency = System.nanoTime() - start
-        logger.info(s"Iteration $iteration, latency is ${latency / 1e6} ms")
-
+        logger.info(s"Iteration $iteration, latency for a single image is ${latency / 1e6} ms")
         iteration += 1
       }
     }

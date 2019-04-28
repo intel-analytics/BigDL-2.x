@@ -37,22 +37,23 @@ object ImageNetInference {
 
   def main(args: Array[String]): Unit = {
     System.setProperty("bigdl.engineType", "mkldnn")
+
     val parser = new OptionParser[ImageNetInferenceParams]("ImageNet Int8 Example") {
       opt[String]('f', "folder")
-        .text("The path to the imagenet dataset for inference")
+        .text("The folder path that contains ImageNet no-resize sequence files")
         .action((x, c) => c.copy(folder = x))
         .required()
       opt[String]('m', "model")
-        .text("The path to the int8 quantized ResNet50 model snapshot")
+        .text("The path to the pre-trained int8 ResNet50 model snapshot")
         .action((x, c) => c.copy(model = x))
         .required()
       opt[Int]('b', "batchSize")
-        .text("batch size")
+        .text("The total batch size for inference")
         .action((x, c) => c.copy(batchSize = x))
     }
     parser.parse(args, ImageNetInferenceParams()).map(param => {
       val sc = NNContext.initNNContext("ImageNet2012 with Int8 Inference Example")
-      val images = ImageSet.readSeqFiles(param.folder, sc)
+      val images = ImageSet.readSequenceFiles(param.folder, sc)
       val model = ImageClassifier.loadModel[Float](param.model)
       val result = model.evaluateImageSet(images, param.batchSize,
         Array(new Top1Accuracy[Float], new Top5Accuracy[Float]))

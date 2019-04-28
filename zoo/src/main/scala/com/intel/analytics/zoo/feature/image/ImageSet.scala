@@ -318,8 +318,19 @@ object ImageSet {
 
   }
 
-  def readSeqFiles(path: String, sc: SparkContext,
-                   minPartitions: Int = 1, classNum: Int = 1000): DistributedImageSet = {
+  /**
+   * Read images (with labels) from Hadoop SequenceFiles as ImageSet.
+   *
+   * @param path The folder path that contains sequence files.
+   *             Local or distributed file system (such as HDFS) are supported.
+   * @param sc An instance of SparkContext.
+   * @param minPartitions Integer. A suggestion value of the minimal partition number for input
+   *                      texts. Default is 1.
+   * @param classNum Integer. The number of image categories. Default is 1000 for ImageNet.
+   * @return DistributedImageSet.
+   */
+  def readSequenceFiles(path: String, sc: SparkContext,
+                        minPartitions: Int = 1, classNum: Int = 1000): DistributedImageSet = {
     val images = sc.sequenceFile(path, classOf[Text], classOf[Text], minPartitions).map(image => {
       val rawBytes = image._2.copyBytes()
       val label = Tensor[Float](T(readLabel(image._1).toFloat))
