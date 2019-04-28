@@ -68,7 +68,7 @@ object Predict {
         val clses = imageFeature("clses").asInstanceOf[Array[String]]
         val probs = imageFeature("probs").asInstanceOf[Array[Float]]
         for (i <- 0 until param.topN) {
-          logger.info(s"\t class : ${clses(i)}, credit : ${probs(i)}")
+          logger.info(s"\t class: ${clses(i)}, credit: ${probs(i)}")
         }
       })
 
