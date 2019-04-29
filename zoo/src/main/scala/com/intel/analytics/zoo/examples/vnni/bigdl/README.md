@@ -14,17 +14,21 @@ This folder contains three examples for BigDL VNNI support:
 - [Perf](#perf)
 
 __Remarks:__
-- You may need to set memory configurations depends on the size of your input data.
-- You can `-Dbigdl.mklNumThreads` if necessary.
+- If you are using an int8 quantized model pre-trained in Analytics Zoo, you can find the following info in console log:
+```
+INFO  ImageModel$:133 - Loading an int8 convertible model. Quantize to an int8 model for better performance
+```
+- You may need to enlarge memory configurations depending on the size of your input data.
+- You can set `-Dbigdl.mklNumThreads` if necessary.
 
 ### Predict
-This example demonstrates how to do image classification with the pre-trained int8 quantized model.
+This example demonstrates how to do image classification with the pre-trained int8 model.
 
 ```bash
 export SPARK_HOME=the root directory of Spark
 export ANALYTICS_ZOO_HOME=the folder where you extract the downloaded Analytics Zoo zip package
 MASTER=local[*]
-imagePath=the local folder path which contains images to be predicted 
+imagePath=the folder path containing images
 modelPath=the path to the downloaded int8 model
 
 ${ANALYTICS_ZOO_HOME}/bin/spark-shell-with-zoo.sh \
@@ -34,7 +38,20 @@ ${ANALYTICS_ZOO_HOME}/bin/spark-shell-with-zoo.sh \
 ```
 
 __Options:__
+- `-f` `--folder`: The folder path that contains image data for prediction.
+- `-m` `--model`: The path to the downloaded int8 model.
+- `--topN`: The top N classes with highest probabilities as output. Default is 5.
+- `--partitionNum`: The number of partitions to cut the dataset into. Default is 4.
 
+__Sample console log output__:
+```
+INFO  Predict$:67 - image : 1.jpg, top 5
+INFO  Predict$:71 - 	 class: kelpie, credit: 0.96370447
+INFO  Predict$:71 - 	 class: Rottweiler, credit: 0.026292335
+INFO  Predict$:71 - 	 class: Eskimo dog, husky, credit: 0.0019479054
+INFO  Predict$:71 - 	 class: German shepherd, German shepherd dog, German police dog, alsatian, credit: 0.001165287
+INFO  Predict$:71 - 	 class: Doberman, Doberman pinscher, credit: 8.323631E-4
+```
 
 ### ImageNetInference
 This example evaluates the pre-trained int8 model using Hadoop SequenceFiles for ImageNet no-resize images.

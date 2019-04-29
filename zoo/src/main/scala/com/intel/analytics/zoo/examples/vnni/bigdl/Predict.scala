@@ -37,15 +37,15 @@ object Predict {
     System.setProperty("bigdl.localMode", "true")
     val parser = new OptionParser[PredictParams]("ResNet50 Int8 Inference Example") {
       opt[String]('f', "folder")
-        .text("The path to the image data")
+        .text("The folder path that contains image data for prediction")
         .action((x, c) => c.copy(folder = x))
         .required()
       opt[String]('m', "model")
-        .text("The path to the int8 quantized ResNet50 model snapshot")
+        .text("The path to the int8 model")
         .action((x, c) => c.copy(model = x))
         .required()
       opt[Int]("topN")
-        .text("top N number")
+        .text("The top N classes with highest probabilities as output")
         .action((x, c) => c.copy(topN = x))
     }
     parser.parse(args, PredictParams()).map(param => {
