@@ -63,7 +63,31 @@ class TestInferenceModel(ZooTestCase):
                       ov_extensions_config_path=None)
         input_data = np.random.random([4, 1, 3, 600, 600])
         output_data = model.predict(input_data)
+        model2 = InferenceModel(3)
+        model2.load_tf_object_detection_as_openvino(model_path=extracted_to + "/frozen_inference_graph.pb",
+                                                    object_detection_model_type="faster_rcnn_resnet101_coco",
+                                                    pipeline_config_path=extracted_to + "/pipeline.config",
+                                                    extensions_config_path=None)
+        model2.predict(input_data)
 
+    def test_load_tf_openvino_ic(self):
+        local_path = self.create_temp_dir()
+        url = data_url + "/models/resnet_v1_50_2016_08_28.tar.gz"
+        file_abs_path = maybe_download("resnet_v1_50_2016_08_28.tar.gz", local_path, url)
+        tar = tarfile.open(file_abs_path, "r:gz")
+        extracted_to = os.path.join(local_path, "resnet_v1_50_2016_08_28")
+        if not os.path.exists(extracted_to):
+            print("Extracting %s to %s" % (file_abs_path, extracted_to))
+            tar.extractall(local_path)
+            tar.close()
+        model = InferenceModel(3)
+        model.load_tf_image_classification_as_openvino(model_path=None,
+                                                       image_classification_model_type="resnet_v1_50",
+                                                       checkpoint_path=extracted_to + "resnet_v1_50.ckpt",
+                                                       input_shape=[4, 224, 224, 3],
+                                                       if_reverse_input_channels=True,
+                                                       meanValues=[123.68, 116.78, 103.94],
+                                                       scale=1.0)
 
 if __name__ == "__main__":
     pytest.main([__file__])

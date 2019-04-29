@@ -208,7 +208,7 @@ class InferenceModel(private var autoScalingEnabled: Boolean = true,
    * load TF model as Calibrated OpenVINO IR
    *
    * @param modelPath              the path of the tensorflow model
-   * @param imageClassificationModelType the type of the tensorflow model
+   * @param modelType              the type of the tensorflow model
    * @param checkpointPath         the path of the tensorflow checkpoint file
    * @param inputShape             input shape that should be fed to an input node(s) of the model
    * @param ifReverseInputChannels the boolean value of if need reverse input channels.
@@ -229,7 +229,7 @@ class InferenceModel(private var autoScalingEnabled: Boolean = true,
    *                               and libopencv_imgproc.so.4.0 can be found
    */
   def doLoadTFAsCalibratedOpenVINO(modelPath: String,
-                                   imageClassificationModelType: String,
+                                   modelType: String,
                                    checkpointPath: String,
                                    inputShape: Array[Int],
                                    ifReverseInputChannels: Boolean,
@@ -240,7 +240,7 @@ class InferenceModel(private var autoScalingEnabled: Boolean = true,
                                    subset: Int,
                                    opencvLibPath: String): Unit = {
     doLoadTensorflowModelAsCalibratedOpenVINO(
-      modelPath, imageClassificationModelType, checkpointPath,
+      modelPath, modelType, checkpointPath,
       inputShape, ifReverseInputChannels, meanValues, scale,
       networkType, validationFilePath, subset, opencvLibPath)
   }
@@ -306,7 +306,7 @@ class InferenceModel(private var autoScalingEnabled: Boolean = true,
   }
 
   private def doLoadTensorflowModelAsCalibratedOpenVINO(modelPath: String,
-                                                        imageClassificationModelType: String,
+                                                        modelType: String,
                                                         checkpointPath: String,
                                                         inputShape: Array[Int],
                                                         ifReverseInputChannels: Boolean,
@@ -322,7 +322,7 @@ class InferenceModel(private var autoScalingEnabled: Boolean = true,
     }
     clearModelQueue()
     this.originalModel = InferenceModelFactory.loadCalibratedOpenVINOModelForTF(
-      modelPath, imageClassificationModelType, checkpointPath,
+      modelPath, modelType, checkpointPath,
       inputShape, ifReverseInputChannels, meanValues, scale,
       networkType, validationFilePath, subset, opencvLibPath)
     offerModelQueue()

@@ -76,9 +76,9 @@ public abstract class AbstractInferenceModel extends InferenceModel implements S
     doLoadTF(modelPath, imageClassificationModelType, checkpointPath, inputShape, ifReverseInputChannels, meanValues, scale);
   }
 
-  public void dloadTFAsCalibratedOpenVINO(String modelPath, String imageClassificationModelType, String checkpointPath, int[] inputShape, boolean ifReverseInputChannels, float[] meanValues, float scale,
+  public void dloadTFAsCalibratedOpenVINO(String modelPath, String modelType, String checkpointPath, int[] inputShape, boolean ifReverseInputChannels, float[] meanValues, float scale,
                                           String networkType, String validationFilePath, int subset, String opencvLibPath) {
-    doLoadTFAsCalibratedOpenVINO(modelPath, imageClassificationModelType, checkpointPath, inputShape, ifReverseInputChannels, meanValues, scale, networkType, validationFilePath, subset, opencvLibPath);
+    doLoadTFAsCalibratedOpenVINO(modelPath, modelType, checkpointPath, inputShape, ifReverseInputChannels, meanValues, scale, networkType, validationFilePath, subset, opencvLibPath);
   }
 
   public void loadOpenVINO(String modelFilePath, String weightFilePath) {

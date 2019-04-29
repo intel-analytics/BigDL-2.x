@@ -18,7 +18,7 @@ package com.intel.analytics.zoo.pipeline.inference
 
 import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric
 import com.intel.analytics.zoo.common.PythonZoo
-import java.util.{List => JList}
+import java.util.{List => JList, ArrayList}
 
 import scala.reflect.ClassTag
 import scala.collection.JavaConverters._
@@ -81,36 +81,35 @@ class PythonInferenceModel[T: ClassTag](implicit ev: TensorNumeric[T]) extends P
       pipelineConfigFilePath, extensionsConfigFilePath)
   }
 
-  def inferenceModelTensorFlowLoadTF(model: InferenceModel,
-                                     modelPath: String,
-                                     imageClassificationModelType: String,
-                                     checkpointPath: String,
-                                     inputShape: JList[Int],
-                                     ifReverseInputChannels: Boolean,
-                                     meanValues: JList[Float],
-                                     scale: Float
-                                    ): Unit = {
-
+  def inferenceModelOpenVINOLoadTF(model: InferenceModel,
+                                   modelPath: String,
+                                   imageClassificationModelType: String,
+                                   checkpointPath: String,
+                                   inputShape: ArrayList[Int],
+                                   ifReverseInputChannels: Boolean,
+                                   meanValues: ArrayList[Double],
+                                   scale: java.lang.Double
+                                  ): Unit = {
     model.doLoadTF(modelPath, imageClassificationModelType,
       checkpointPath, inputShape.asScala.toArray,
-      ifReverseInputChannels, meanValues.asScala.toArray, scale)
+      ifReverseInputChannels, meanValues.asScala.toArray.map(_.toFloat), scale.toFloat)
   }
 
-  def inferenceModelTensorFlowLoadTFAsCalibratedOpenVINO(model: InferenceModel,
-                                                         modelPath: String,
-                                                         imageClassificationModelType: String,
-                                                         checkpointPath: String,
-                                                         inputShape: JList[Int],
-                                                         ifReverseInputChannels: Boolean,
-                                                         meanValues: JList[Float],
-                                                         scale: Float,
-                                                         networkType: String,
-                                                         validationFilePath: String,
-                                                         subset: Int,
-                                                         opencvLibPath: String): Unit = {
-    model.doLoadTFAsCalibratedOpenVINO(modelPath, imageClassificationModelType,
+  def inferenceModelOpenVINOLoadTFAsCalibratedOpenVINO(model: InferenceModel,
+                                                       modelPath: String,
+                                                       modelType: String,
+                                                       checkpointPath: String,
+                                                       inputShape: ArrayList[Int],
+                                                       ifReverseInputChannels: Boolean,
+                                                       meanValues: ArrayList[Double],
+                                                       scale: Double,
+                                                       networkType: String,
+                                                       validationFilePath: String,
+                                                       subset: Int,
+                                                       opencvLibPath: String): Unit = {
+    model.doLoadTFAsCalibratedOpenVINO(modelPath, modelType,
       checkpointPath, inputShape.asScala.toArray,
-      ifReverseInputChannels, meanValues.asScala.toArray, scale,
+      ifReverseInputChannels, meanValues.asScala.toArray.map(_.toFloat), scale.toFloat,
       networkType, validationFilePath, subset, opencvLibPath)
   }
 

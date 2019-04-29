@@ -114,14 +114,14 @@ class InferenceModel(JavaValue):
         else:
             raise ValueError("Currently only tensorflow and openvino are supported as backend")
 
-    def load_tf(self,
-                model_path,
-                object_detection_model_type,
-                pipeline_config_path,
-                extensions_config_path
-                ):
+    def load_tf_object_detection_as_openvino(self,
+                                             model_path,
+                                             object_detection_model_type,
+                                             pipeline_config_path,
+                                             extensions_config_path
+                                             ):
         """
-        load TF model as OpenVINO IR
+        load object detection TF model as OpenVINO IR
         :param model_path: String, the path of the tensorflow model
         :param object_detection_model_type: String, the type of the tensorflow model
         :param pipeline_config_path: String, the path of the pipeline configure file
@@ -129,23 +129,23 @@ class InferenceModel(JavaValue):
         :return:
         """
         callBigDlFunc(self.bigdl_type,
-                      "inferenceModelTensorFlowLoadTF",
+                      "inferenceModelOpenVINOLoadTF",
                       self.value,
                       model_path,
                       object_detection_model_type,
                       pipeline_config_path,
                       extensions_config_path)
 
-    def load_tf(self,
-                model_path,
-                image_classification_model_type,
-                checkpoint_path,
-                input_shape,
-                if_reverse_input_channels,
-                meanValues,
-                scale):
+    def load_tf_image_classification_as_openvino(self,
+                                                 model_path,
+                                                 image_classification_model_type,
+                                                 checkpoint_path,
+                                                 input_shape,
+                                                 if_reverse_input_channels,
+                                                 meanValues,
+                                                 scale):
         """
-        load TF model as OpenVINO IR
+        load image classification TF model as OpenVINO IR
         :param model_path: String, the path of the tensorflow model
         :param image_classification_model_type: String, the type of the tensorflow model
         :param checkpoint_path: String, the path of the tensorflow checkpoint file
@@ -157,7 +157,7 @@ class InferenceModel(JavaValue):
         :return:
         """
         callBigDlFunc(self.bigdl_type,
-                      "inferenceModelTensorFlowLoadTF",
+                      "inferenceModelOpenVINOLoadTF",
                       self.value,
                       model_path,
                       image_classification_model_type,
@@ -165,11 +165,12 @@ class InferenceModel(JavaValue):
                       input_shape,
                       if_reverse_input_channels,
                       meanValues,
-                      scale)
+                      scale
+                    )
 
     def load_tf_as_calibrated_openvino(self,
                                        model_path,
-                                       image_classification_model_type,
+                                       model_type,
                                        checkpoint_path,
                                        input_shape,
                                        if_reverse_input_channels,
@@ -182,7 +183,7 @@ class InferenceModel(JavaValue):
         """
         load TF model as Calibrated OpenVINO IR
         :param model_path: String, the path of the tensorflow model
-        :param image_classification_model_type: String, the type of the tensorflow model
+        :param model_type: String, the type of the tensorflow model
         :param checkpoint_path: String, the path of the tensorflow checkpoint file
         :param input_shape: List of Int, input shape that should be fed to an input node(s) of the model
         :param if_reverse_input_channels: Boolean, the boolean value of if need reverse input channels.
@@ -199,10 +200,10 @@ class InferenceModel(JavaValue):
         :return:
         """
         callBigDlFunc(self.bigdl_type,
-                      "inferenceModelTensorFlowLoadTFAsCalibratedOpenVINO",
+                      "inferenceModelOpenVINOLoadTFAsCalibratedOpenVINO",
                       self.value,
                       model_path,
-                      image_classification_model_type,
+                      model_type,
                       checkpoint_path,
                       input_shape,
                       if_reverse_input_channels,
