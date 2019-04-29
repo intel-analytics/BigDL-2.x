@@ -99,10 +99,17 @@ java -cp ${ANALYTICS_ZOO_JAR}:${SPARK_HOME}/jars/* com.intel.analytics.zoo.examp
 __Options:__
 - `-m` `--model`: The path to the downloaded int8 model.
 - `-b` `--batchSize`: The batch size of input data. Default is 32.
-- `-i` `--iteration`: The number of iterations to run the performance test.
+- `-i` `--iteration`: The number of iterations to run the performance test. Default is 1000. The result will be the average of each iteration time cost.
 
 __Sample console log output__:
 ```
-Top1Accuracy is Accuracy(correct: 1387, count: 1806, accuracy: 0.7679955703211517)
-Top5Accuracy is Accuracy(correct: 1672, count: 1806, accuracy: 0.9258028792912514)
+......
+INFO  Perf$:67 - Iteration 796, batch 64, takes 29802474 ns, throughput is 2147.47 imgs/sec
+INFO  Perf$:67 - Iteration 797, batch 64, takes 30284076 ns, throughput is 2113.32 imgs/sec
+INFO  Perf$:67 - Iteration 798, batch 64, takes 29884174 ns, throughput is 2141.60 imgs/sec
+......
+INFO  Perf$:80 - Iteration 928, latency for a single image is 1.683318 ms
+INFO  Perf$:80 - Iteration 929, latency for a single image is 1.748185 ms
+INFO  Perf$:80 - Iteration 930, latency for a single image is 1.622709 ms
+......
 ```
