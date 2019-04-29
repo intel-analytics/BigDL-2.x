@@ -18,6 +18,7 @@ package com.intel.analytics.zoo.models.image.imageclassification
 
 import java.net.URL
 
+import com.intel.analytics.bigdl.dataset.image.CropCenter
 import com.intel.analytics.bigdl.numeric.NumericFloat
 import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric
 import com.intel.analytics.bigdl.transform.vision.image.ImageFeature
@@ -37,6 +38,7 @@ object ImageClassificationConfig {
     "inception-v3-quantize",
     "resnet-50",
     "resnet-50-quantize",
+    "resnet-50-int8",
     "vgg-16",
     "vgg-16-quantize",
     "vgg-19",
@@ -79,6 +81,8 @@ object ImagenetConfig {
         labelMap = imagenetLabelMap)
       case "resnet-50" |
            "resnet-50-quantize" => ImageConfigure(preProcessor = resnetPreprocessor,
+        labelMap = imagenetLabelMap)
+      case "resnet-50-int8" => ImageConfigure(preProcessor = bigdlResNetPreprocessor,
         labelMap = imagenetLabelMap)
       case "vgg-16" |
            "vgg-16-quantize" => ImageConfigure(preProcessor = vggPreprocessor,
@@ -125,8 +129,17 @@ object ImagenetConfig {
     commonPreprocessor(320, 299, 128, 128, 128, 128, 128, 128)
   }
 
+  // Preprocessor for ResNet50 pre-trained in Caffe
   def resnetPreprocessor() : Preprocessing[ImageFeature, ImageFeature] = {
     commonPreprocessor(Consts.IMAGENET_RESIZE, 224, 123, 117, 104)
+  }
+
+  // Preprocessor for ResNet50 pre-trained in BigDL
+  def bigdlResNetPreprocessor(): Preprocessing[ImageFeature, ImageFeature] = {
+      ImageRandomResize(256, 256) ->
+      ImageRandomCropper(224, 224, mirror = false, cropperMethod = CropCenter) ->
+      ImageChannelScaledNormalizer(104, 117, 123, 0.0078125) ->
+      ImageMatToTensor() -> ImageSetToSample()
   }
 
   def vggPreprocessor(): Preprocessing[ImageFeature, ImageFeature] = {
