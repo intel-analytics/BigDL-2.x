@@ -1,17 +1,23 @@
 # Summary
-This folder contains three examples to illustrate the support of [VNNI](https://en.wikichip.org/wiki/x86/avx512vnni) using BigDL MKL-DNN in Analytics Zoo, which aims at accelerating inference by utilizing low numerical precision (Int8) computing. 
-Int8 quantized models can give you better performance on Intel Xeon scalable processors.
+We hereby illustrate the support of [VNNI](https://en.wikichip.org/wiki/x86/avx512vnni) using BigDL [MKL-DNN](https://github.com/intel/mkl-dnn) as backend in Analytics Zoo, which aims at accelerating inference by utilizing low numerical precision (Int8) computing. 
 
-- You can run the [Predict](#predict) example to do inference on images with the pre-trained model.
-- You can run the [ImageNetInference](#imagenetinference) example to evaluate the pre-trained model using no-resize sequence files for images.
-- You can run the [Perf](#perf) example to collect performance data for the pre-trained model.
+Int8 quantized models can give you better performance on Intel Xeon scalable processors.
 
 ## Download Analytics Zoo and pre-trained model
 - You can download Analytics Zoo prebuilt release and nightly build package from [here](https://analytics-zoo.github.io/master/#release-download/) and extract it.
-- Download pre-trained int8 quantized ResNet50 model.
+- Download pre-trained int8 quantized ResNet50 model from [here](https://drive.google.com/file/d/1xAXX6wHHMlVZU5TlmFANGFsna83Tbnpk/view?usp=sharing).
 
+## Examples
+This folder contains three examples for BigDL VNNI support:
+- [Predict](#predict)
+- [ImageNetInference](#imagenetinference)
+- [Perf](#perf)
 
-## Predict
+__Remarks:__
+- You may need to set memory configurations depends on the size of your input data.
+- You can `-Dbigdl.mklNumThreads` if necessary.
+
+### Predict
 This example demonstrates how to do image classification with the pre-trained int8 quantized model.
 
 ```bash
@@ -30,7 +36,7 @@ ${ANALYTICS_ZOO_HOME}/bin/spark-shell-with-zoo.sh \
 __Options:__
 
 
-## ImageNetInference
+### ImageNetInference
 This example evaluates the pre-trained int8 model using Hadoop SequenceFiles for ImageNet no-resize images.
 
 You may refer to this [script](https://github.com/intel-analytics/BigDL/blob/master/spark/dl/src/main/scala/com/intel/analytics/bigdl/models/utils/ImageNetSeqFileGenerator.scala) to generate sequence files for images.
@@ -49,7 +55,7 @@ ${ANALYTICS_ZOO_HOME}/bin/spark-shell-with-zoo.sh \
 ```
 
 
-## Perf
+### Perf
 This example runs in local mode and calculates performance data (i.e. throughput and latency) for the pre-trained int8 model.
 
 ```bash
