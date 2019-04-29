@@ -67,7 +67,7 @@ modelPath=the path to the downloaded int8 model
 
 ${ANALYTICS_ZOO_HOME}/bin/spark-shell-with-zoo.sh \
     --master ${MASTER} \
-    --class --class com.intel.analytics.zoo.examples.vnni.bigdl.ImageNetInference \
+    --class com.intel.analytics.zoo.examples.vnni.bigdl.ImageNetInference \
     -f ${imagePath} -m ${modelPath}
 ```
 
