@@ -37,7 +37,7 @@ object Predict {
     System.setProperty("bigdl.localMode", "true")
     val parser = new OptionParser[PredictParams]("ResNet50 Int8 Inference Example") {
       opt[String]('f', "folder")
-        .text("The folder path that contains image data for prediction")
+        .text("The local folder path that contains images for prediction")
         .action((x, c) => c.copy(folder = x))
         .required()
       opt[String]('m', "model")
