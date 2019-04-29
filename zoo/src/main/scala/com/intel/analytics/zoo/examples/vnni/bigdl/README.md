@@ -99,7 +99,7 @@ java -cp ${ANALYTICS_ZOO_JAR}:${SPARK_HOME}/jars/* com.intel.analytics.zoo.examp
 __Options:__
 - `-m` `--model`: The path to the downloaded int8 model.
 - `-b` `--batchSize`: The batch size of input data. Default is 32.
-- `-i` `--iteration`: The number of iterations to run the performance test. Default is 1000. The result will be the average of each iteration time cost.
+- `-i` `--iteration`: The number of iterations to run the performance test. Default is 200. The result will be the average of each iteration time cost.
 
 __Sample console log output__:
 ```
