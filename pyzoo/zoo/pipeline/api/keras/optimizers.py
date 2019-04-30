@@ -61,3 +61,44 @@ class Adam(OptimMethod, ZooKerasCreator):
             schedule if (schedule) else Default()
         )
         self.bigdl_type = bigdl_type
+
+class BERTAdam(OptimMethod, ZooKerasCreator):
+    """
+    >>> adam = BERTAdam()
+    creating: createZooKerasAdam
+    """
+    def __init__(self,
+                 lr=1e-3,
+                 warmup_portion=-1.0,
+                 total=-1,
+                 schedule="linear",
+                 beta1=0.9,
+                 beta2=0.999,
+                 epsilon=1e-6,
+                 weight_decay=0.01,
+                 bigdl_type="float"):
+        """
+        :param lr learning rate
+        :param beta_1 first moment coefficient
+        :param beta_2 second moment coefficient
+        :param epsilon for numerical stability
+        :param decay learning rate decay
+        :param schedule learning rate schedule, e.g. Warmup or Poly from BigDL
+        """
+
+        # explicitly reimplement the constructor since:
+        # 1. This class need to be a subclass of OptimMethod
+        # 2. The constructor of OptimMethod invokes JavaValue.jvm_class_constructor() directly
+        #    and does not take the polymorphism.
+        self.value = callBigDlFunc(
+            bigdl_type, ZooKerasCreator.jvm_class_constructor(self),
+            lr,
+            warmup_portion,
+            total,
+            schedule,
+            beta1,
+            beta2,
+            epsilon,
+            weight_decay)
+        self.bigdl_type = bigdl_type
+

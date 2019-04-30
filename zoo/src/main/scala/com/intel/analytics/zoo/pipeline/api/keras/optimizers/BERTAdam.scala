@@ -14,16 +14,14 @@
  * limitations under the License.
  */
 
-//package com.intel.analytics.zoo.pipeline.api.optim
-package com.intel.analytics.bigdl.optim
+package com.intel.analytics.zoo.pipeline.api.keras.optimizers
 
-import breeze.linalg.*
 import com.intel.analytics.bigdl.optim.OptimMethod
 import com.intel.analytics.bigdl.tensor.Tensor
 import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric
-import com.intel.analytics.bigdl.utils.{T, Table}
+import com.intel.analytics.bigdl.utils.Table
+import com.intel.analytics.zoo.pipeline.api.keras.layers.utils.SGDRef
 
-import scala.math._
 import scala.reflect.ClassTag
 
 /**
@@ -36,27 +34,26 @@ import scala.reflect.ClassTag
  * @tparam T
  */
 class BERTAdam[@specialized(Float, Double) T: ClassTag](
-                                                         var learningRate: Double = 1e-3,
-                                                         var warmupPortion: Double = -1,
-                                                         var total: Int = -1,
-                                                         var schedule: String = "warmupLinear",
-                                                         var beta1: Double = 0.9,
-                                                         var beta2: Double = 0.999,
-                                                         var epsilon: Double = 1e-6,
-                                                         var weightDecay: Double = 0.01,
-                                                         var maxGradNorm: Double = 1.0)(implicit ev: TensorNumeric[T]) extends OptimMethod[T] {
+   var learningRate: Double = 1e-3,
+   var warmupPortion: Double = -1,
+   var total: Int = -1,
+   var schedule: String = "linear",
+   var beta1: Double = 0.9,
+   var beta2: Double = 0.999,
+   var epsilon: Double = 1e-6,
+   var weightDecay: Double = 0.01)(implicit ev: TensorNumeric[T]) extends OptimMethod[T] {
 
   @transient
   private var buffer: Tensor[T] = null
 
-  def warmupMethod(x: Double, warmup: Double =0.002, schedules: String = "linear"): Double = {
+  def warmupMethod(x: Double, warmup: Double =0.002): Double = {
     if (x < warmup) {
       x / warmup
-    } else if (schedules.equalsIgnoreCase("cosine")) {
+    } else if (schedule.equalsIgnoreCase("cosine")) {
       0.5 * (1.0 + math.cos(math.Pi * x))
-    } else if (schedules.equalsIgnoreCase("constant")) {
+    } else if (schedule.equalsIgnoreCase("constant")) {
       1.0
-    } else if (schedules.equalsIgnoreCase("linear")) {
+    } else if (schedule.equalsIgnoreCase("linear")) {
       1.0 - x
     } else {
       throw new UnsupportedOperationException("Only support cosine|constant|linear schedules")
@@ -64,7 +61,6 @@ class BERTAdam[@specialized(Float, Double) T: ClassTag](
   }
 
   /**
-   * An implementation of Adam http://arxiv.org/pdf/1412.6980.pdf
    *
    * @param feval     a function that takes a single input (X), the point of a evaluation, and
    *                  returns f(X) and df/dX
@@ -81,7 +77,8 @@ class BERTAdam[@specialized(Float, Double) T: ClassTag](
 
     val (fx, dfdx) = feval(parameter)
 
-    var timestep = state.getOrElse[Int]("evalCounter", 0)
+    val state = SGDRef.getstate(this)
+    var timestep = state.getOrElse[Double]("evalCounter", 0.0)
 
     if (!state.get[Tensor[T]]("s").isDefined) {
       state("s") = Tensor[T]().resizeAs(dfdx).zero()
@@ -96,9 +93,9 @@ class BERTAdam[@specialized(Float, Double) T: ClassTag](
 
 
     /**
-      * m_t = beta_1 * m_t-1 + (1 - beta_1) * g_t
-      * v_t = beta_2 * v_t-1 + (1 - beta_2) * g_t * g_t
-      */
+     * m_t = beta_1 * m_t-1 + (1 - beta_1) * g_t
+     * v_t = beta_2 * v_t-1 + (1 - beta_2) * g_t * g_t
+     */
     _s.mul(ev.fromType[Double](beta1)).add(ev.fromType[Double](1-beta1), dfdx)
     // buffer = dfdx * dfdx
     buffer.resizeAs(dfdx).cmul(dfdx, dfdx)
@@ -109,22 +106,22 @@ class BERTAdam[@specialized(Float, Double) T: ClassTag](
     buffer.fill(ev.one)
     _denom.add(ev.fromType(eps), buffer)
 
-    val update = _s.div(_denom)
+    val update = _s.clone().div(_denom)
 
+    // TODO: DON'T DECAY FOR BIAS AND LAYNORM
     if(weightDecay > 0)
     // update += group['weight_decay'] * p.data
-      update.add(parameter.mul(ev.fromType(weightDecay)))
+      update.add(parameter.clone().mul(ev.fromType(weightDecay)))
 
     // TODO: make update currentLR configurable
     //lr_this_step = args.learning_rate * warmup_linear(global_step/t_total, args.warmup_proportion)
-    val currentLR = learningRate * warmupMethod(timestep / total, warmupPortion, "linear")
+//    val currentLR = learningRate * warmupMethod(timestep / total, warmupPortion, "linear")
+    val currentLR = updateHyperParameter(timestep)
     val lrScheduled = if(total != -1) {
       // schedule_fct = SCHEDULES[group['schedule']]
       // lr_scheduled = group['lr'] * schedule_fct(state['step']/group['t_total'], group['warmup'])
-      currentLR * warmupMethod(timestep / total, warmupPortion, schedule)
-    }
-    else
-      currentLR
+      currentLR.toDouble * warmupMethod(timestep / total, warmupPortion)
+    } else currentLR
 
     // update_with_lr = lr_scheduled * update
     // p.data.add_(-update_with_lr)
@@ -133,8 +130,15 @@ class BERTAdam[@specialized(Float, Double) T: ClassTag](
 
     timestep = timestep + 1
     state("evalCounter") = timestep // A tmp tensor to hold the sqrt(v) + epsilon
+    state("s") = _s // 1st moment variables
+    state("r") = _r // 2nd moment variables
+    state("denom") = _denom // 3nd moment variables
 
     (parameter, Array(fx))
+  }
+
+  def updateHyperParameter(timeStep: Double): Double = {
+    learningRate * warmupMethod(timeStep / total, warmupPortion)
   }
 
   override def loadFromTable(config: Table): this.type = {
@@ -147,12 +151,11 @@ class BERTAdam[@specialized(Float, Double) T: ClassTag](
     this.epsilon = config.get[Double]("Epsilon").getOrElse(this.epsilon)
     this.weightDecay = config.get[Double]("weightDecay")
       .getOrElse(this.weightDecay)
-    this.maxGradNorm = config.get[Double]("maxGradNorm")
-      .getOrElse(this.maxGradNorm)
     this
   }
 
   override def clearHistory(): Unit = {
+    val state = SGDRef.getstate(this)
     state.delete("s")
     state.delete("r")
   }
