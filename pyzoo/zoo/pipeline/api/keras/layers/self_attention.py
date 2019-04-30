@@ -354,7 +354,7 @@ class BERT(TransformerLayer):
 
     @staticmethod
     def load_model(path, weight_path=None, input_seq_len=-1.0, hidden_drop=-1.0,
-                   attn_drop=-1.0, bigdl_type="float"):
+                   attn_drop=-1.0, output_all_block=True, bigdl_type="float"):
         """
         Load an existing BERT model (with weights).
 
@@ -366,7 +366,7 @@ class BERT(TransformerLayer):
         weight_path: The path for pre-trained weights if any. Default is None.
         """
         jlayer = callBigDlFunc(bigdl_type, "loadBERT", path, weight_path, input_seq_len,
-                               hidden_drop, attn_drop)
+                               hidden_drop, attn_drop, output_all_block)
         # layer = Layer(jvalue=jlayer, bigdl_type=bigdl_type)
         # return layer
         # model = ZooModel._do_load(jlayer, bigdl_type)

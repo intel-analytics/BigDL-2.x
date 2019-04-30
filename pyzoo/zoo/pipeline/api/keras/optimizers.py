@@ -62,6 +62,7 @@ class Adam(OptimMethod, ZooKerasCreator):
         )
         self.bigdl_type = bigdl_type
 
+
 class BERTAdam(OptimMethod, ZooKerasCreator):
     """
     >>> adam = BERTAdam()

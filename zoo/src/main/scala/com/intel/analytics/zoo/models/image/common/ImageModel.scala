@@ -16,13 +16,15 @@
 
 package com.intel.analytics.zoo.models.image.common
 
-import com.intel.analytics.bigdl.nn.Module
+import com.intel.analytics.bigdl.nn.{MklInt8Convertible, Module, SpatialConvolution}
 import com.intel.analytics.bigdl.nn.abstractnn.Activity
+import com.intel.analytics.bigdl.optim.{ValidationMethod, ValidationResult}
 import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric
-import com.intel.analytics.zoo.feature.image.ImageSet
+import com.intel.analytics.zoo.feature.image.{DistributedImageSet, ImageSet}
 import com.intel.analytics.zoo.models.common.ZooModel
 import com.intel.analytics.zoo.models.image.imageclassification.ImageClassifier
 import com.intel.analytics.zoo.models.image.objectdetection.ObjectDetector
+import com.intel.analytics.zoo.pipeline.api.keras.layers.utils.MklInt8ConvertibleRef
 import org.apache.log4j.Logger
 
 import scala.reflect.ClassTag
@@ -47,7 +49,7 @@ abstract class ImageModel[T: ClassTag]()(implicit ev: TensorNumeric[T])
     val predictConfig = if (null == configure) config else configure
 
     val result = if (predictConfig == null) {
-      ImageSet.fromImageFrame(predictImage(image.toImageFrame()))
+      ImageSet.fromImageFrame(model.predictImage(image.toImageFrame()))
     } else {
       // apply preprocessing if preProcessor is defined
       val data = if (null != predictConfig.preProcessor) {
@@ -56,8 +58,9 @@ abstract class ImageModel[T: ClassTag]()(implicit ev: TensorNumeric[T])
         image
       }
 
-      val imageSet = ImageSet.fromImageFrame(predictImage(data.toImageFrame(), batchPerPartition =
-        predictConfig.batchPerPartition, featurePaddingParam = predictConfig.featurePaddingParam))
+      val imageSet = ImageSet.fromImageFrame(model.predictImage(data.toImageFrame(),
+        batchPerPartition = predictConfig.batchPerPartition,
+        featurePaddingParam = predictConfig.featurePaddingParam))
 
       if (null != predictConfig.postProcessor) {
         imageSet -> predictConfig.postProcessor
@@ -65,6 +68,36 @@ abstract class ImageModel[T: ClassTag]()(implicit ev: TensorNumeric[T])
       else imageSet
     }
     result
+  }
+
+  /**
+   * Evaluate the ImageSet given validation methods.
+   *
+   * @param image DistributedImageSet in which each image should have a label.
+   * @param vMethods Array of ValidationMethod to evaluate the ImageSet.
+   * @param batchSize Total batch size of all partitions.
+   * @param configure An instance of [[ImageConfigure]]. Default is null and it will
+   *                  be pre-defined together with each ImageModel.
+   */
+  def evaluateImageSet(
+      image: DistributedImageSet,
+      vMethods: Array[_ <:ValidationMethod[T]],
+      batchSize: Int,
+      configure: ImageConfigure[T] = null): Array[(ValidationResult, ValidationMethod[T])] = {
+    val evalConfig = if (null == configure) config else configure
+    // Remark: BigDL currently only supports evaluation on DistributedImageSet.
+    if (evalConfig == null) {
+      model.evaluateImage(image.toImageFrame(), vMethods, Some(batchSize))
+    } else {
+      // Remark: ImageConfigure only has batchPerPartition while evaluate needs
+      // total batchSize. Thus add a batchSize argument here first.
+      val data = if (null != evalConfig.preProcessor) {
+        image -> evalConfig.preProcessor
+      } else {
+        image
+      }
+      model.evaluateImage(data.toImageFrame(), vMethods, Some(batchSize))
+    }
   }
 
   def getConfig(): ImageConfigure[T] = config
@@ -87,7 +120,20 @@ object ImageModel {
    */
   def loadModel[T: ClassTag](path: String, weightPath: String = null, modelType: String = "")
     (implicit ev: TensorNumeric[T]): ImageModel[T] = {
-    val model = Module.loadModule[T](path, weightPath)
+    val labor = Module.loadModule[T](path, weightPath)
+    // Calling quantize may not keep the original name. Thus first get modelName here.
+    val modelName = labor.getName()
+    // If there exists a SpatialConvolution layer in the model that has weight scales,
+    // then it should be an int8 model with scales generated.
+    val isInt8Model = labor.toGraph().getForwardExecutions().map(_.element)
+      .exists(x => x.isInstanceOf[SpatialConvolution[T]] &&
+        MklInt8ConvertibleRef.getWeightScalesBuffer(
+        x.asInstanceOf[MklInt8Convertible]).nonEmpty)
+    val model = if (isInt8Model) {
+      logger.info("Loading an int8 convertible model. " +
+        "Quantize to an int8 model for better performance")
+      labor.quantize()
+    } else labor
     val imageModel = if (model.isInstanceOf[ImageModel[T]]) {
       model.asInstanceOf[ImageModel[T]]
     } else {
@@ -101,9 +147,9 @@ object ImageModel {
               s"Only 'imageclassification' and 'objectdetection' are currently supported.")
       }
       specificModel.addModel(model)
-      specificModel.setName(model.getName())
+      specificModel.setName(modelName)
     }
-    imageModel.config = ImageConfigure.parse(model.getName())
+    imageModel.config = ImageConfigure.parse(modelName)
     imageModel
   }
 }

@@ -83,11 +83,11 @@ private[layers] class TransformerLayer[T: ClassTag](
         modelOutput(i) = output
       }
 
-      val output = pooler(modelOutput.last, hiddenSize)
+    val output = pooler(modelOutput.last, hiddenSize)
 
-      val model = if (outputAllBlock) {
-        Model(inputs.toArray, modelOutput :+ output)
-      } else Model(inputs.toArray, Array(modelOutput.last, output))
+    val model = if (outputAllBlock) {
+      Model(inputs.toArray, modelOutput :+ output)
+    } else Model(inputs.toArray, Array(modelOutput.last, output))
 
       model.asInstanceOf[AbstractModule[Activity, Activity, T]]
     } else {

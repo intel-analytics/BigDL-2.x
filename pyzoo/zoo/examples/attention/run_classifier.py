@@ -15,9 +15,9 @@
 #
 
 
-from bigdl.optim.optimizer import Adam
 from zoo.pipeline.api.keras.models import Model
 from zoo.pipeline.api.keras.layers import *
+from zoo.pipeline.api.keras.optimizers import *
 from zoo.pipeline.api.autograd import *
 from zoo.common.nncontext import init_spark_conf
 from zoo.common.nncontext import init_nncontext
@@ -97,7 +97,7 @@ model.summary()
 # t4=np.random.randint(1, size=(1, max_seq_length))
 # output = model.forward([t1, t2, t4, t3])
 
-model.compile(optimizer=Adam(5e-5),
+model.compile(optimizer=BERTAdam(lr=2e-5, warmup_portion=0.1, total=343),
               loss="sparse_categorical_crossentropy",
               metrics=['accuracy'])
 
@@ -107,7 +107,7 @@ batch_size = 32
 print('Train...')
 model.fit(train_data,
           batch_size=batch_size,
-          nb_epoch=1)
+          nb_epoch=3)
 print("Train finished.")
 
 print('Evaluating...')
