@@ -22,7 +22,7 @@ import com.intel.analytics.bigdl.{Criterion, Module}
 import com.intel.analytics.bigdl.dataset.{DataSet, LocalDataSet, MiniBatch}
 
 import scala.collection.JavaConverters._
-import com.intel.analytics.bigdl.optim._
+import com.intel.analytics.bigdl.optim.{_}
 import com.intel.analytics.bigdl.python.api.{EvaluatedResult, JTensor, Sample}
 import com.intel.analytics.bigdl.tensor.Tensor
 import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric
@@ -38,7 +38,7 @@ import com.intel.analytics.zoo.pipeline.api.keras.layers.{KerasLayerWrapper, _}
 import com.intel.analytics.zoo.pipeline.api.keras.layers.utils.KerasUtils
 import com.intel.analytics.zoo.pipeline.api.keras.models.{KerasNet, Model, Sequential}
 import com.intel.analytics.zoo.pipeline.api.keras.objectives._
-import com.intel.analytics.zoo.pipeline.api.keras.optimizers.Adam
+import com.intel.analytics.zoo.pipeline.api.keras.optimizers.{Adam, BERTAdam}
 import org.apache.spark.api.java.JavaRDD
 import com.intel.analytics.zoo.common.PythonZoo
 import com.intel.analytics.zoo.feature.text.TextSet
@@ -1340,5 +1340,18 @@ class PythonZooKeras[T: ClassTag](implicit ev: TensorNumeric[T]) extends PythonZ
     hiddenDrop: Double = -1,
     attnDrop: Double = -1): BERT[T] = {
     BERT.loadModel(path, weightPath, inputSeqLen, hiddenDrop, attnDrop)
+  }
+
+  def createZooKerasBERTAdam(
+    learningRate: Double = 1e-3,
+    warmupPortion: Double = -1,
+    total: Int = -1,
+    schedule: String = "linear",
+    beta1: Double = 0.9,
+    beta2: Double = 0.999,
+    epsilon: Double = 1e-6,
+    weightDecay: Double = 0.01): BERTAdam[T] = {
+    new BERTAdam[T](learningRate, warmupPortion, total, schedule, beta1, beta2,
+      epsilon, weightDecay)
   }
 }
