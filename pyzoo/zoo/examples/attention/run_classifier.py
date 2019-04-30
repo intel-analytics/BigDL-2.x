@@ -97,11 +97,12 @@ model.summary()
 # t4=np.random.randint(1, size=(1, max_seq_length))
 # output = model.forward([t1, t2, t4, t3])
 
-model.compile(optimizer=Adam(),
+model.compile(optimizer=Adam(5e-5),
               loss="sparse_categorical_crossentropy",
               metrics=['accuracy'])
 
-batch_size = 160
+model.set_gradient_clipping_by_l2_norm(1.0)
+batch_size = 32
 # batch_size = 4
 print('Train...')
 model.fit(train_data,
@@ -110,5 +111,5 @@ model.fit(train_data,
 print("Train finished.")
 
 print('Evaluating...')
-score = model.evaluate(eval_data, batch_size=160)
+score = model.evaluate(eval_data, batch_size=32)
 print(score)
