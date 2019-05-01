@@ -13,7 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-
+from bigdl.optim.optimizer import Adam
 
 from zoo.pipeline.api.keras.models import Model
 from zoo.pipeline.api.keras.layers import *
@@ -86,7 +86,7 @@ O_seq = bert([token_input, segment_input, position_input, mask_input])
 # O_seq = SelectTable(bert.n_block)(O_seq)
 O_seq = SelectTable(12)(O_seq)
 O_seq = Dropout(0.2)(O_seq)
-outputs = Dense(num_labels)(O_seq)
+outputs = Dense(num_labels, "normal", (0.0, 0.02), activation='softmax')(O_seq)
 
 model = Model([token_input, segment_input, position_input, mask_input], outputs)
 model.summary()
@@ -97,7 +97,9 @@ model.summary()
 # t4=np.random.randint(1, size=(1, max_seq_length))
 # output = model.forward([t1, t2, t4, t3])
 
-model.compile(optimizer=BERTAdam(lr=2e-5, warmup_portion=0.1, total=343),
+model.compile(
+    optimizer=BERTAdam(lr=2e-5, warmup_portion=0.1, total=343),
+    # optimizer=Adam(2e-5),
               loss="sparse_categorical_crossentropy",
               metrics=['accuracy'])
 
