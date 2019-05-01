@@ -27,10 +27,14 @@ import scala.reflect.ClassTag
 /**
  * Implements BERT version of Adam algorithm
  * @param learningRate learning rate
- * @param learningRateDecay learning rate decay
+ * @param warmupPortion portion of total for the warmup, -1 means no warmup. Default: -1
+ * @param total total number of training steps for the learning
+ *           rate schedule, -1 means constant learning rate. Default: -1
+ * @param schedule schedule to use for the warmup. Default: 'linear'
  * @param beta1 first moment coefficient
  * @param beta2 second moment coefficient
  * @param epsilon for numerical stability
+ * @param weightDecay weight decay
  * @tparam T
  */
 class BERTAdam[@specialized(Float, Double) T: ClassTag](
@@ -46,7 +50,7 @@ class BERTAdam[@specialized(Float, Double) T: ClassTag](
   @transient
   private var buffer: Tensor[T] = null
 
-  def warmupMethod(x: Double, warmup: Double =0.002): Double = {
+  def warmupMethod(x: Double, warmup: Double = 0.002): Double = {
     if (x < warmup) {
       x / warmup
     } else if (schedule.equalsIgnoreCase("cosine")) {
@@ -70,7 +74,6 @@ class BERTAdam[@specialized(Float, Double) T: ClassTag](
   override def optimize(feval: (Tensor[T]) => (T, Tensor[T]),
                         parameter: Tensor[T]): (Tensor[T], Array[T]) = {
     if (buffer == null) buffer = Tensor[T]()
-    val lr = this.learningRate
     val beta1 = this.beta1
     val beta2 = this.beta2
     val eps = this.epsilon
@@ -89,15 +92,11 @@ class BERTAdam[@specialized(Float, Double) T: ClassTag](
     val (_s, _r, _denom) = (state.get[Tensor[T]]("s").get, state.get[Tensor[T]]("r").get,
       state.get[Tensor[T]]("denom").get.resizeAs(dfdx))
 
-    // Optimizer has to set L2 norm clipping
-
-
     /**
      * m_t = beta_1 * m_t-1 + (1 - beta_1) * g_t
      * v_t = beta_2 * v_t-1 + (1 - beta_2) * g_t * g_t
      */
     _s.mul(ev.fromType[Double](beta1)).add(ev.fromType[Double](1-beta1), dfdx)
-    // buffer = dfdx * dfdx
     buffer.resizeAs(dfdx).cmul(dfdx, dfdx)
     _r.mul(ev.fromType[Double](beta2)).add(ev.fromType[Double](1-beta2), buffer)
     _denom.sqrt(_r)
@@ -108,23 +107,15 @@ class BERTAdam[@specialized(Float, Double) T: ClassTag](
 
     val update = _s.clone().div(_denom)
 
-    // TODO: DON'T DECAY FOR BIAS AND LAYNORM
-    if(weightDecay > 0)
-    // update += group['weight_decay'] * p.data
+    if(weightDecay > 0) {
       update.add(parameter.clone().mul(ev.fromType(weightDecay)))
+    }
 
-    // TODO: make update currentLR configurable
-    //lr_this_step = args.learning_rate * warmup_linear(global_step/t_total, args.warmup_proportion)
-//    val currentLR = learningRate * warmupMethod(timestep / total, warmupPortion, "linear")
     val currentLR = updateHyperParameter(timestep)
-    val lrScheduled = if(total != -1) {
-      // schedule_fct = SCHEDULES[group['schedule']]
-      // lr_scheduled = group['lr'] * schedule_fct(state['step']/group['t_total'], group['warmup'])
+    val lrScheduled = if (total != -1) {
       currentLR.toDouble * warmupMethod(timestep / total, warmupPortion)
     } else currentLR
 
-    // update_with_lr = lr_scheduled * update
-    // p.data.add_(-update_with_lr)
     val updateLR = update.mul(ev.fromType(lrScheduled))
     parameter.add(-updateLR)
 

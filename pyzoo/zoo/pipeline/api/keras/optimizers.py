@@ -62,6 +62,7 @@ class Adam(OptimMethod, ZooKerasCreator):
         )
         self.bigdl_type = bigdl_type
 
+
 class BERTAdam(OptimMethod, ZooKerasCreator):
     """
     >>> adam = BERTAdam()
@@ -79,11 +80,14 @@ class BERTAdam(OptimMethod, ZooKerasCreator):
                  bigdl_type="float"):
         """
         :param lr learning rate
-        :param beta_1 first moment coefficient
-        :param beta_2 second moment coefficient
+        :param warmupPortion portion of total for the warmup, -1 means no warmup. Default: -1
+        :param total total number of training steps for the learning
+         rate schedule, -1 means constant learning rate. Default: -1
+        :param schedule schedule to use for the warmup. Default: 'linear'
+        :param beta1 first moment coefficient
+        :param beta2 second moment coefficient
         :param epsilon for numerical stability
-        :param decay learning rate decay
-        :param schedule learning rate schedule, e.g. Warmup or Poly from BigDL
+        :param weightDecay weight decay
         """
 
         # explicitly reimplement the constructor since:
@@ -101,4 +105,3 @@ class BERTAdam(OptimMethod, ZooKerasCreator):
             epsilon,
             weight_decay)
         self.bigdl_type = bigdl_type
-
