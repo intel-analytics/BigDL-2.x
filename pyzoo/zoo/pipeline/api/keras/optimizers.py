@@ -66,7 +66,7 @@ class Adam(OptimMethod, ZooKerasCreator):
 class BERTAdam(OptimMethod, ZooKerasCreator):
     """
     >>> adam = BERTAdam()
-    creating: createZooKerasAdam
+    creating: createZooKerasBERTAdam
     """
     def __init__(self,
                  lr=1e-3,
