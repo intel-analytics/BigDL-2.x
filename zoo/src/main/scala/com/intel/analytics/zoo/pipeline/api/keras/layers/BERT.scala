@@ -235,7 +235,7 @@ object BERT extends KerasLayerSerializable {
     val newParameter = newModel.parameters()._1
     var i = 0
     while(i < parameter.length) {
-      newParameter(i).copy(parameter(i))
+      newParameter(i).set(parameter(i))
       i += 1
     }
     newModel
