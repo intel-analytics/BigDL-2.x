@@ -168,6 +168,7 @@ object Train {
       endTrigger = Some(Trigger.maxEpoch(param.maxEpoch)),
       checkPointTrigger = Some(Trigger.everyEpoch),
       validationSet = valSet.asInstanceOf[FeatureSet[MiniBatch[Float]]],
-      validationMethod = Array(new MeanAveragePrecision(true, normalized = true, classes = classes)))
-  }
+      validationMethod = Array(new MeanAveragePrecision(true,
+        normalized = true, classes = classes)))
+    }
 }

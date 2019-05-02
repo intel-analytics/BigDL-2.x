@@ -43,24 +43,36 @@ x_test = sequence.pad_sequences(x_test, maxlen=max_len)
 print('x_train shape:', x_train.shape)
 print('x_test shape:', x_test.shape)
 
-xmb = np.zeros((len(x_train), max_len, 2), dtype=np.int32)
-# Position information that is added to the input embeddings in the TransformerModel
-xmb[:, :, 1] = np.arange(max_len)
-xmb[:, :, 0] = x_train
 
-xmb_val = np.zeros((len(x_test), max_len, 2), dtype=np.int32)
-# Position information that is added to the input embeddings in the TransformerModel
-xmb_val[:, :, 1] = np.arange(max_len)
-xmb_val[:, :, 0] = x_test
-S_inputs = Input(shape=(max_len, 2))
-O_seq = TransformerLayer.init_with_default_embedding(
-    vocab=max_features, hidden_size=128, n_head=8, seq_len=max_len)(S_inputs)
+train_pos = np.zeros((len(x_train), max_len), dtype=np.int32)
+val_pos = np.zeros((len(x_test), max_len), dtype=np.int32)
+for i in range(0, len(x_train)):
+    train_pos[i, :] = np.arange(max_len)
+    val_pos[i, :] = np.arange(max_len)
+
+
+def build_sample(token_id, position_id, label):
+    samples = []
+    for i in range(label.shape[0]):
+        sample = Sample.from_ndarray([token_id[i], position_id[i]], np.array(label[i]))
+        samples.append(sample)
+    return samples
+train_samples = build_sample(x_train, train_pos, y_train)
+xmb = sc.parallelize(train_samples)
+val_samples = build_sample(x_test, val_pos, y_test)
+xmb_val = sc.parallelize(val_samples)
+
+token_shape = (max_len,)
+position_shape = (max_len,)
+token_input = Input(shape=token_shape)
+position_input = Input(shape=position_shape)
+O_seq = TransformerLayer.init(
+    vocab=max_features, hidden_size=128, n_head=8, seq_len=max_len)([token_input, position_input])
 O_seq = GlobalAveragePooling1D()(O_seq)
 O_seq = Dropout(0.2)(O_seq)
 outputs = Dense(2, activation='softmax')(O_seq)
 
-
-model = Model(S_inputs, outputs)
+model = Model([token_input, position_input], outputs)
 model.summary()
 
 model.compile(optimizer=Adam(),
@@ -69,11 +81,11 @@ model.compile(optimizer=Adam(),
 
 batch_size = 160
 print('Train...')
-model.fit(xmb, y_train,
+model.fit(xmb,
           batch_size=batch_size,
           nb_epoch=1)
 print("Train finished.")
 
 print('Evaluating...')
-score = model.evaluate(xmb_val, y_test, batch_size=160)[0]
+score = model.evaluate(xmb_val, batch_size=160)[0]
 print(score)

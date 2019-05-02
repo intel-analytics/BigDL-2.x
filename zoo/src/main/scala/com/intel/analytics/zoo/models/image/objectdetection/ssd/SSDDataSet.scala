@@ -87,15 +87,6 @@ object SSDDataSet {
       ImageChannelNormalize(123f, 117f, 104f) ->
       ImageMatToFloats(validHeight = resolution, validWidth = resolution) ->
       RoiImageToSSDBatch(batchSize)
-
-//    val imageset = ImageSet.rdd(RoiRecordToFeature(true)(valRdd))
-//    val finalImageset = imageset ->
-//      ImageBytesToMat() ->
-//      ImageRoiNormalize() ->
-//      ImageResize(resolution, resolution) ->
-//      ImageChannelNormalize(123f, 117f, 104f) ->
-//      ImageMatToFloats(validHeight = resolution, validWidth = resolution)
-//    FeatureSet.imageSet(finalImageset) -> RoiImageToSSDBatch(batchSize)
   }
 
 }
