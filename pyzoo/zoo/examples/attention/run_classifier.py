@@ -14,6 +14,8 @@
 # limitations under the License.
 #
 
+import argparse
+
 from zoo.pipeline.api.keras.models import Model
 from zoo.pipeline.api.keras.layers import *
 from zoo.pipeline.api.keras.optimizers import *
@@ -27,16 +29,22 @@ conf.set("spark.executor.extraJavaOptions", "-Xss512m")
 conf.set("spark.driver.extraJavaOptions", "-Xss512m")
 sc = init_nncontext(conf)
 
-bert_base_dir = "/root/dingding/bert/uncased_L-12_H-768_A-12"
-data_dir = "/root/dingding/bert/MRPC"
-model_path = "/root/dingding/bert/zoo-bert.model"
+parser = argparse.ArgumentParser()
+parser.add_argument('model_path', help="Path where the model is stored")
+parser.add_argument('vocab_path', help="Path where the vocab.txt is stored")
+parser.add_argument('data_dir', help="Path to store the training data")
+
+args = parser.parse_args()
+# vocab_path = "/root/dingding/bert/uncased_L-12_H-768_A-12"
+# data_dir = "/root/dingding/bert/MRPC"
+# model_path = "/root/dingding/bert/zoo-bert.model"
 max_seq_length = 128
 num_labels = 2
 
 print('Loading data...')
 processor = MrpcProcessor()
 label_list = processor.get_labels()
-tokenizer = tokenization.FullTokenizer(bert_base_dir + "/vocab.txt")
+tokenizer = tokenization.FullTokenizer(args.vocab_path)
 
 def build_sample(feature):
     sample = Sample.from_ndarray([feature.input_ids, feature.segment_ids, feature.pos_ids, feature.input_mask],
@@ -44,11 +52,11 @@ def build_sample(feature):
     return sample
 
 
-train_examples = processor.get_train_examples(data_dir)
+train_examples = processor.get_train_examples(args.data_dir)
 train_features = convert_examples_to_features(train_examples, label_list, max_seq_length, tokenizer)
 train_samples = [build_sample(feature) for feature in train_features]
 
-eval_examples = processor.get_dev_examples(data_dir)
+eval_examples = processor.get_dev_examples(args.data_dir)
 eval_features = convert_examples_to_features(eval_examples, label_list, max_seq_length, tokenizer)
 eval_samples = [build_sample(feature) for feature in eval_features]
 
@@ -64,7 +72,7 @@ token_input = Input(shape=token_shape)
 position_input = Input(shape=position_shape)
 segment_input = Input(shape=segment_shape)
 mask_input = Input(shape=mask_shape)
-bert = BERT.load_model(model_path, input_seq_len=max_seq_length)
+bert = BERT.init_from_existing_model(args.model_path, input_seq_len=max_seq_length)
 O_seq = bert([token_input, segment_input, position_input, mask_input])
 O_seq = SelectTable(12)(O_seq)
 O_seq = Dropout(0.2)(O_seq)
