@@ -16,18 +16,31 @@
 
 package com.intel.analytics.zoo.models.image.objectdetection.ssd
 
-import com.intel.analytics.zoo.feature.{DistributedFeatureSet, FeatureSet}
+
+import com.intel.analytics.bigdl.transform.vision.image.ImageFeature
+import com.intel.analytics.zoo.feature.FeatureSet
 import com.intel.analytics.zoo.feature.image._
 import com.intel.analytics.zoo.feature.image.roi.RoiRecordToFeature
 import com.intel.analytics.zoo.models.image.objectdetection.common.dataset.Imdb
 import org.apache.spark.SparkContext
+
+
+class ImageFeatureToImageFeature extends ImageProcessing {
+  override def apply(prev: Iterator[ImageFeature]): Iterator[ImageFeature] = {
+    prev.map(transform(_))
+  }
+
+  override def transform(feature: ImageFeature): ImageFeature = {
+    feature.clone()
+  }
+}
 
 /**
  * SSD Dataset accession
  */
 object SSDDataSet {
 
-  /**
+   /**
    * Load train data from sequence file and do transformation before SSD training
    * @param folder sequence file folder
    * @param sc spark context
@@ -40,7 +53,8 @@ object SSDDataSet {
                       parNum: Option[Int])
   : FeatureSet[SSDMiniBatch] = {
     val trainRdd = Imdb.loadRoiSeqFiles(folder, sc, parNum)
-    FeatureSet.rdd(trainRdd) -> RoiRecordToFeature(true) ->
+    val imageset = ImageSet.rdd(RoiRecordToFeature(true)(trainRdd))
+    FeatureSet.imageSet(imageset) ->
       ImageBytesToMat() ->
       ImageRoiNormalize() ->
       ImageColorJitter() ->
@@ -73,6 +87,15 @@ object SSDDataSet {
       ImageChannelNormalize(123f, 117f, 104f) ->
       ImageMatToFloats(validHeight = resolution, validWidth = resolution) ->
       RoiImageToSSDBatch(batchSize)
+
+//    val imageset = ImageSet.rdd(RoiRecordToFeature(true)(valRdd))
+//    val finalImageset = imageset ->
+//      ImageBytesToMat() ->
+//      ImageRoiNormalize() ->
+//      ImageResize(resolution, resolution) ->
+//      ImageChannelNormalize(123f, 117f, 104f) ->
+//      ImageMatToFloats(validHeight = resolution, validWidth = resolution)
+//    FeatureSet.imageSet(finalImageset) -> RoiImageToSSDBatch(batchSize)
   }
 
 }

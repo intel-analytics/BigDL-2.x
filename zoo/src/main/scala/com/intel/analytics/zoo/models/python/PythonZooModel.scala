@@ -29,7 +29,8 @@ import com.intel.analytics.bigdl.tensor.Tensor
 import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric
 import com.intel.analytics.bigdl.transform.vision.image.ImageFeature
 import com.intel.analytics.bigdl.utils.{Shape, Table}
-import com.intel.analytics.zoo.common.PythonZoo
+import com.intel.analytics.zoo.common.{NNContext, PythonZoo}
+import com.intel.analytics.zoo.feature.FeatureSet
 import com.intel.analytics.zoo.feature.common.Preprocessing
 import com.intel.analytics.zoo.feature.image._
 import com.intel.analytics.zoo.feature.text.TextSet
@@ -42,7 +43,7 @@ import com.intel.analytics.zoo.models.image.objectdetection.common.ModuleUtil
 import com.intel.analytics.zoo.models.image.objectdetection.common.dataset.{ByteRecord, Imdb}
 import com.intel.analytics.zoo.models.image.objectdetection.common.evaluation.MeanAveragePrecision
 import com.intel.analytics.zoo.models.image.objectdetection.common.loss.{MultiBoxLoss, MultiBoxLossParam}
-import com.intel.analytics.zoo.models.image.objectdetection.ssd.{RoiImageToSSDBatch, SSDVGG}
+import com.intel.analytics.zoo.models.image.objectdetection.ssd.{RoiImageToSSDBatch, SSDMiniBatch, SSDVGG}
 import com.intel.analytics.zoo.models.recommendation.{NeuralCF, Recommender, UserItemFeature, UserItemPrediction}
 import com.intel.analytics.zoo.models.recommendation._
 import com.intel.analytics.zoo.models.seq2seq.{RNNDecoder, RNNEncoder, Seq2seq}
@@ -52,6 +53,8 @@ import com.intel.analytics.zoo.pipeline.api.keras.layers.{Embedding, Recurrent, 
 import org.apache.spark.api.java.{JavaRDD, JavaSparkContext}
 import org.apache.spark.rdd.RDD
 import org.apache.spark.sql.{DataFrame, SQLContext}
+import com.intel.analytics.bigdl.tensor.Tensor
+import org.apache.spark.{SparkConf, SparkContext}
 
 import scala.reflect.ClassTag
 import scala.collection.JavaConverters._
@@ -310,7 +313,6 @@ class PythonZooModel[T: ClassTag](implicit ev: TensorNumeric[T]) extends PythonZ
     } else {
       SSDVGG[T](classNum, resolution, dataset, null, postProcessParam)
     }
-
   }
 
   def createMeanAveragePrecision(use07metric: Boolean, normalized: Boolean = true,
@@ -344,7 +346,7 @@ class PythonZooModel[T: ClassTag](implicit ev: TensorNumeric[T]) extends PythonZ
                          useDifficultGt: Boolean,
                          negPosRatio: Double,
                          negOverlap: Double): MultiBoxLoss[T] = {
-    println("create multibox loss param")
+//    println("create multibox loss param")
     val param = MultiBoxLossParam(locWeight,
       nClasses,
       shareLocation,
@@ -353,8 +355,22 @@ class PythonZooModel[T: ClassTag](implicit ev: TensorNumeric[T]) extends PythonZ
       useDifficultGt,
       negPosRatio,
       negOverlap)
-    println("multibox loss param: class number: " + param.nClasses)
+//    println("multibox loss param: class number: " + param.nClasses)
     MultiBoxLoss[T](param)
+  }
+
+  def toFloatTensor(jtensor: JTensor): Tensor[Float] = {
+    Tensor[Float](jtensor.storage, jtensor.shape)
+  }
+
+
+  def createFeatureSetSSDMiniBatch(feature: JTensor, label: JTensor, iminfo: JTensor): FeatureSet[SSDMiniBatch] = {
+    val batch = SSDMiniBatch(toFloatTensor(feature), toFloatTensor(label), toFloatTensor(iminfo))
+    val conf = new SparkConf().setAppName("ssd")
+    val sc = NNContext.initNNContext(conf)
+    val rdd = sc.parallelize(Array[SSDMiniBatch](batch))
+    val featureset = FeatureSet.rdd[SSDMiniBatch](rdd)
+    featureset
   }
 
   def createRoiImageToSSDBatch(batchSize: Int, convertLabel: Boolean = true,
@@ -365,9 +381,7 @@ class PythonZooModel[T: ClassTag](implicit ev: TensorNumeric[T]) extends PythonZ
   }
 
   def loadRoiSeqFiles(url: String, sc: JavaSparkContext, partitionNum: Int= -1): ImageSet = {
-    println("call loadRoiSeqFiles")
     val pn = if (partitionNum <= 0) None else Some(partitionNum)
-//    Imdb.loadRoiSeqFiles(url, sc, pn).toJavaRDD()
     Imdb.roiSeqFilesToImageSet(url, sc, pn)
   }
 

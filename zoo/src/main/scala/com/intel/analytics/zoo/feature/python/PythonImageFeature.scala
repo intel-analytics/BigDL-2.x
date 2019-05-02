@@ -217,15 +217,6 @@ class PythonImageFeature[T: ClassTag](implicit ev: TensorNumeric[T]) extends Pyt
     ImageFeatureToTensor()
   }
 
-  def createImageChannelNormalizer(
-                                  meanR: Double, meanG: Double, meanB: Double,
-                                  stdR: Double = 1, stdG: Double = 1, stdB: Double = 1
-                                ): ImageChannelNormalize = {
-
-    ImageChannelNormalize(meanR.toFloat, meanG.toFloat, meanB.toFloat,
-      stdR.toFloat, stdG.toFloat, stdB.toFloat)
-  }
-
   def createPerImageNormalize(min: Double, max: Double, normType: Int = 32): PerImageNormalize = {
     PerImageNormalize(min, max, normType)
   }

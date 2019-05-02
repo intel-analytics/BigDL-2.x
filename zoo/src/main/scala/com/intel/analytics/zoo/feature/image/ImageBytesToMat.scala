@@ -19,6 +19,7 @@ import com.intel.analytics.bigdl.opencv.OpenCV
 import org.apache.log4j.Logger
 import com.intel.analytics.bigdl.transform.vision.image.ImageFeature
 import com.intel.analytics.bigdl.transform.vision.image.opencv.OpenCVMat
+import org.apache.commons.lang3.SerializationUtils
 import org.opencv.imgcodecs.Imgcodecs
 
 /**
@@ -48,22 +49,24 @@ object ImageBytesToMat {
 
   def transform(feature: ImageFeature, byteKey: String, imageCodec: Int): ImageFeature = {
     if (!feature.isValid) return feature
-    val bytes = feature[Array[Byte]](byteKey)
+    // deep clone to avoid share reference
+    val featureOut = SerializationUtils.clone(feature)
+    val bytes = featureOut[Array[Byte]](byteKey)
     var mat: OpenCVMat = null
     try {
       require(null != bytes && bytes.length > 0, "image file bytes should not be empty")
       mat = OpenCVMethod.fromImageBytes(bytes, imageCodec)
-      feature(ImageFeature.mat) = mat
-      feature(ImageFeature.originalSize) = mat.shape()
+      featureOut(ImageFeature.mat) = mat
+      featureOut(ImageFeature.originalSize) = mat.shape()
     } catch {
       case e: Exception =>
         e.printStackTrace()
         val uri = feature.uri()
         logger.warn(s"convert byte to mat fail for $uri")
-        feature(ImageFeature.originalSize) = (-1, -1, -1)
-        feature.isValid = false
+        featureOut(ImageFeature.originalSize) = (-1, -1, -1)
+        featureOut.isValid = false
     }
-    feature
+    featureOut
   }
 }
 
