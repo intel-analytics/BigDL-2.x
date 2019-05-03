@@ -32,10 +32,6 @@ import scala.collection.Iterator
  */
 class RoiRecordToFeature(convertLabel: Boolean = false, outKey: String = ImageFeature.bytes)
   extends Preprocessing[ByteRecord, ImageFeature] {
-//  @transient var data: Array[Byte] = _
-//  @transient var gtClasses: Tensor[Float] = _
-//  @transient var gtBoxes: Tensor[Float] = _
-//  val feature = new ImageFeature()
 
   override def apply(prev: Iterator[ByteRecord]): Iterator[ImageFeature] = {
       prev.map(record => {

@@ -40,7 +40,7 @@ object SSDDataSet {
                       parNum: Option[Int])
   : FeatureSet[SSDMiniBatch] = {
     val trainRdd = Imdb.loadRoiSeqFiles(folder, sc, parNum)
-    FeatureSet.rdd(trainRdd) -> RoiRecordToFeature(true)
+    FeatureSet.rdd(trainRdd) -> RoiRecordToFeature(true) ->
       ImageBytesToMat() ->
       ImageRoiNormalize() ->
       ImageColorJitter() ->

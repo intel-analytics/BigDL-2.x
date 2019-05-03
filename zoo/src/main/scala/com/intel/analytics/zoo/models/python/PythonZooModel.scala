@@ -328,7 +328,7 @@ class PythonZooModel[T: ClassTag](implicit ev: TensorNumeric[T]) extends PythonZ
     RoiImageToSSDBatch(batchSize, convertLabel, pn, keepImageFeature, inputKey)
   }
 
-  def loadRoiSeqFiles(url: String, sc: JavaSparkContext, partitionNum: Int= -1): ImageSet = {
+  def loadRoiSeqFilesToImageSet(url: String, sc: JavaSparkContext, partitionNum: Int= -1): ImageSet = {
     val pn = if (partitionNum <= 0) None else Some(partitionNum)
     Imdb.roiSeqFilesToImageSet(url, sc, pn)
   }

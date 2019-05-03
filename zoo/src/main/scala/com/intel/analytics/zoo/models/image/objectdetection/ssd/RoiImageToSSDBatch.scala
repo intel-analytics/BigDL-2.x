@@ -63,7 +63,7 @@ class RoiImageToSSDBatch(totalBatch: Int,
 
       override def hasNext: Boolean = prev.hasNext
 
-      override def next(): SSDMiniBatch = this.synchronized{
+      override def next(): SSDMiniBatch = {
         if (prev.hasNext) {
           var i = 0
           if (labelData != null) labelData.clear()
