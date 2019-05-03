@@ -82,7 +82,7 @@ model = Model([token_input, segment_input, position_input, mask_input], outputs)
 model.summary()
 
 model.compile(
-    optimizer=BERTAdam(lr=2e-5, warmup_portion=0.1, total=343),
+    optimizer=AdamWeightDecay(lr=2e-5, warmup_portion=0.1, total=343),
               loss="sparse_categorical_crossentropy",
               metrics=['accuracy'])
 
