@@ -1334,7 +1334,7 @@ class PythonZooKeras[T: ClassTag](implicit ev: TensorNumeric[T]) extends PythonZ
     SelectTable[T](index, toScalaMultiShape(inputShape))
   }
 
-  def createZooKerasBERTAdam(
+  def createZooKerasAdamWeightDecay(
     learningRate: Double = 1e-3,
     warmupPortion: Double = -1,
     total: Int = -1,
