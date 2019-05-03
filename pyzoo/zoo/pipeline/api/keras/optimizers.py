@@ -63,10 +63,10 @@ class Adam(OptimMethod, ZooKerasCreator):
         self.bigdl_type = bigdl_type
 
 
-class BERTAdam(OptimMethod, ZooKerasCreator):
+class AdamWeightDecay(OptimMethod, ZooKerasCreator):
     """
-    >>> adam = BERTAdam()
-    creating: createZooKerasBERTAdam
+    >>> adam = AdamWeightDecay()
+    creating: createZooKerasAdamWeightDecay
     """
     def __init__(self,
                  lr=1e-3,

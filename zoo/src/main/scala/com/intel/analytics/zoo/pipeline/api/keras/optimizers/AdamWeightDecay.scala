@@ -16,7 +16,7 @@
 
 package com.intel.analytics.zoo.pipeline.api.keras.optimizers
 
-import com.intel.analytics.bigdl.optim.OptimMethod
+import com.intel.analytics.bigdl.optim.{OptimMethod, SGD}
 import com.intel.analytics.bigdl.tensor.Tensor
 import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric
 import com.intel.analytics.bigdl.utils.Table
@@ -26,7 +26,7 @@ import scala.reflect.ClassTag
 
 /**
  * Implements BERT version of Adam algorithm
- * @param learningRate learning rate
+ * @param lr learning rate
  * @param warmupPortion portion of total for the warmup, -1 means no warmup. Default: -1
  * @param total total number of training steps for the learning
  *           rate schedule, -1 means constant learning rate. Default: -1
@@ -37,15 +37,16 @@ import scala.reflect.ClassTag
  * @param weightDecay weight decay
  * @tparam T
  */
-class BERTAdam[@specialized(Float, Double) T: ClassTag](
-   var learningRate: Double = 1e-3,
-   var warmupPortion: Double = -1,
-   var total: Int = -1,
-   var schedule: String = "linear",
-   var beta1: Double = 0.9,
-   var beta2: Double = 0.999,
-   var epsilon: Double = 1e-6,
-   var weightDecay: Double = 0.01)(implicit ev: TensorNumeric[T]) extends OptimMethod[T] {
+class AdamWeightDecay[@specialized(Float, Double) T: ClassTag](
+  var lr: Double = 1e-3,
+  var warmupPortion: Double = -1,
+  var total: Int = -1,
+  var schedule: String = "linear",
+  var beta1: Double = 0.9,
+  var beta2: Double = 0.999,
+  var epsilon: Double = 1e-6,
+  weightDecay: Double = 0.01)(implicit ev: TensorNumeric[T]) extends SGD[T](learningRate = lr,
+  weightDecay = weightDecay) {
 
   @transient
   private var buffer: Tensor[T] = null
@@ -105,10 +106,10 @@ class BERTAdam[@specialized(Float, Double) T: ClassTag](
     buffer.fill(ev.one)
     _denom.add(ev.fromType(eps), buffer)
 
-    val update = _s.clone().div(_denom)
+    val update = _s / (_denom)
 
     if(weightDecay > 0) {
-      update.add(parameter.clone().mul(ev.fromType(weightDecay)))
+      update.add(parameter * (ev.fromType(weightDecay)))
     }
 
     val currentLR = updateHyperParameter(timestep)
@@ -129,27 +130,26 @@ class BERTAdam[@specialized(Float, Double) T: ClassTag](
   }
 
   def updateHyperParameter(timeStep: Double): Double = {
-    learningRate * warmupMethod(timeStep / total, warmupPortion)
+    lr * warmupMethod(timeStep / total, warmupPortion)
   }
 
   override def loadFromTable(config: Table): this.type = {
-    this.learningRate = config.get[Double]("learningRate").getOrElse(this.learningRate)
+    super.loadFromTable(config)
     this.warmupPortion = config.get[Double]("warmupPortion").getOrElse(this.warmupPortion)
     this.total = config.get[Int]("total").getOrElse(this.total)
     this.schedule = config.get[String]("schedule").getOrElse(this.schedule)
     this.beta1 = config.get[Double]("beta1").getOrElse(this.beta1)
     this.beta2 = config.get[Double]("beta2").getOrElse(this.beta2)
     this.epsilon = config.get[Double]("Epsilon").getOrElse(this.epsilon)
-    this.weightDecay = config.get[Double]("weightDecay")
-      .getOrElse(this.weightDecay)
     this
   }
 
   override def clearHistory(): Unit = {
+    super.clearHistory()
     val state = SGDRef.getstate(this)
     state.delete("s")
     state.delete("r")
   }
 
-  override def getLearningRate(): Double = this.learningRate
+  override def getLearningRate(): Double = this.lr
 }

@@ -95,7 +95,7 @@ class OptimizersSpec extends FlatSpec with Matchers with BeforeAndAfter {
     (x.size(1), g)
   }
 
-  "BERTAdam " should "be able to generate correct result" in {
+  "AdamWeightDecay " should "be able to generate correct result" in {
     val w = Tensor[Float](Array[Float](0.2418f, 0.2625f, -0.0741f, 0.2905f, -0.0693f, 0.0638f,
       -0.1540f, 0.1857f, 0.2788f, -0.2320f,
       0.2749f, 0.0592f, 0.2336f, 0.0428f, 0.1525f, -0.0446f, 0.2438f, 0.0467f,
@@ -105,7 +105,7 @@ class OptimizersSpec extends FlatSpec with Matchers with BeforeAndAfter {
       0.2856f, -0.2686f, 0.2441f, 0.0526f, -0.1027f, 0.1954f, 0.0493f, 0.2555f,
       0.0346f, -0.0997f), Array(4, 10))
     val expectW = w.clone()
-    val optm = new BERTAdam[Float](learningRate = 5e-5, beta1 = 0.9, beta2 = 0.999,
+    val optm = new AdamWeightDecay[Float](lr = 5e-5, beta1 = 0.9, beta2 = 0.999,
       epsilon = 1e-6, weightDecay = 0.01, total = 343, schedule = "linear",
       warmupPortion = 0.1)
     optm.optimize(rosenBrock, w)

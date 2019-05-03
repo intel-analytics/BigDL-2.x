@@ -38,7 +38,7 @@ import com.intel.analytics.zoo.pipeline.api.keras.layers.{KerasLayerWrapper, _}
 import com.intel.analytics.zoo.pipeline.api.keras.layers.utils.KerasUtils
 import com.intel.analytics.zoo.pipeline.api.keras.models.{KerasNet, Model, Sequential}
 import com.intel.analytics.zoo.pipeline.api.keras.objectives._
-import com.intel.analytics.zoo.pipeline.api.keras.optimizers.{Adam, BERTAdam}
+import com.intel.analytics.zoo.pipeline.api.keras.optimizers.{Adam, AdamWeightDecay}
 import org.apache.spark.api.java.JavaRDD
 import com.intel.analytics.zoo.common.PythonZoo
 import com.intel.analytics.zoo.feature.text.TextSet
@@ -1342,8 +1342,8 @@ class PythonZooKeras[T: ClassTag](implicit ev: TensorNumeric[T]) extends PythonZ
     beta1: Double = 0.9,
     beta2: Double = 0.999,
     epsilon: Double = 1e-6,
-    weightDecay: Double = 0.01): BERTAdam[T] = {
-    new BERTAdam[T](learningRate, warmupPortion, total, schedule, beta1, beta2,
+    weightDecay: Double = 0.01): AdamWeightDecay[T] = {
+    new AdamWeightDecay[T](learningRate, warmupPortion, total, schedule, beta1, beta2,
       epsilon, weightDecay)
   }
 }
