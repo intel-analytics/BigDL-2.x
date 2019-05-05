@@ -26,8 +26,7 @@ import org.apache.log4j.{Level, Logger}
 import scopt.OptionParser
 
 case class ImageNetInferenceParams(folder: String = "./",
-                                   model: String = "",
-                                   batchSize: Int = 128)
+                                   model: String = "")
 
 object ImageNetInference {
   LoggerFilter.redirectSparkInfoLogs()
@@ -47,16 +46,13 @@ object ImageNetInference {
         .text("The path to the pre-trained int8 ResNet50 model snapshot")
         .action((x, c) => c.copy(model = x))
         .required()
-      opt[Int]('b', "batchSize")
-        .text("The total batch size for inference")
-        .action((x, c) => c.copy(batchSize = x))
     }
     parser.parse(args, ImageNetInferenceParams()).map(param => {
       val sc = NNContext.initNNContext("ImageNet2012 with Int8 Inference Example")
       val images = ImageSet.readSequenceFiles(param.folder, sc)
       val model = ImageClassifier.loadModel[Float](param.model)
       val result = model.evaluateImageSet(images,
-        Array(new Top1Accuracy[Float], new Top5Accuracy[Float]), param.batchSize)
+        Array(new Top1Accuracy[Float], new Top5Accuracy[Float]))
       result.foreach(r => println(s"${r._2} is ${r._1}"))
       sc.stop()
     })

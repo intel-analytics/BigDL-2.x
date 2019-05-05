@@ -16,7 +16,7 @@
 
 package com.intel.analytics.zoo.examples.vnni.bigdl
 
-import com.intel.analytics.zoo.common.NNContext
+import com.intel.analytics.bigdl.utils.Engine
 import com.intel.analytics.zoo.feature.image.ImageSet
 import com.intel.analytics.zoo.models.image.imageclassification.{ImageClassifier, LabelOutput}
 import org.apache.log4j.{Level, Logger}
@@ -36,6 +36,7 @@ object Predict {
 
   def main(args: Array[String]): Unit = {
     System.setProperty("bigdl.engineType", "mkldnn")
+    System.setProperty("bigdl.localMode", "true")
     val parser = new OptionParser[PredictParams]("ResNet50 Int8 Inference Example") {
       opt[String]('f', "folder")
         .text("The path to the image data")
@@ -50,24 +51,23 @@ object Predict {
         .action((x, c) => c.copy(topN = x))
     }
     parser.parse(args, PredictParams()).map(param => {
-      val sc = NNContext.initNNContext("ResNet50 Int8 Inference Example")
+      Engine.init
       val images = ImageSet.read(param.folder)
       val model = ImageClassifier.loadModel[Float](param.model)
       val output = model.predictImageSet(images)
       val labelOutput = LabelOutput(model.getConfig().labelMap, probAsOutput = false)
-      val result = labelOutput(output).toLocal().array
+      val results = labelOutput(output).toLocal().array
 
-      logger.info(s"Prediction result")
-      result.foreach(imageFeature => {
-        logger.info(s"image : ${imageFeature.uri}, top ${param.topN}")
+      logger.info(s"Prediction results")
+      results.foreach(imageFeature => {
+        logger.info(s"image: ${imageFeature.uri}, top ${param.topN}")
         val classes = imageFeature("classes").asInstanceOf[Array[String]]
         val probs = imageFeature("probs").asInstanceOf[Array[Float]]
         for (i <- 0 until param.topN) {
           logger.info(s"\t class: ${classes(i)}, credit: ${probs(i)}")
         }
       })
-
-      sc.stop()
+      logger.info(s"Prediction finished")
     })
   }
 }
