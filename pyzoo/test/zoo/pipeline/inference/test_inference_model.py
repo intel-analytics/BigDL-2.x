@@ -64,10 +64,9 @@ class TestInferenceModel(ZooTestCase):
         input_data = np.random.random([4, 1, 3, 600, 600])
         output_data = model.predict(input_data)
         model2 = InferenceModel(3)
-        model2.load_tf_object_detection_as_openvino(model_path=
-            extracted_to + "/frozen_inference_graph.pb",
-            object_detection_model_type=
-            "faster_rcnn_resnet101_coco",
+        model2.load_tf_object_detection_as_openvino(
+            model_path=extracted_to + "/frozen_inference_graph.pb",
+            object_detection_model_type="faster_rcnn_resnet101_coco",
             pipeline_config_path=extracted_to + "/pipeline.config",
             extensions_config_path=None)
         model2.predict(input_data)
@@ -82,7 +81,8 @@ class TestInferenceModel(ZooTestCase):
         tar.extractall(local_path)
         tar.close()
         model = InferenceModel(3)
-        model.load_tf_image_classification_as_openvino(model_path=None,
+        model.load_tf_image_classification_as_openvino(
+            model_path=None,
             image_classification_model_type="resnet_v1_50",
             checkpoint_path=local_path + "/resnet_v1_50.ckpt",
             input_shape=[4, 224, 224, 3],
@@ -106,7 +106,8 @@ class TestInferenceModel(ZooTestCase):
         validation_file_path = local_path + "/val_bmp_32/val.txt"
         opencv_lib_path = local_path + "/lib"
         model2 = InferenceModel(3)
-        model2.load_tf_as_calibrated_openvino(model_path=None,
+        model2.load_tf_as_calibrated_openvino(
+            model_path=None,
             model_type="resnet_v1_50",
             checkpoint_path=local_path + "/resnet_v1_50.ckpt",
             input_shape=[4, 224, 224, 3],
