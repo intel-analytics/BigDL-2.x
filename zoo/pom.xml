@@ -104,7 +104,7 @@
         <profile>
             <id>linux</id>
             <properties>
-                <core.artifactId>zoo-core-dist-linux</core.artifactId>
+                <core.artifactId>zoo-core-dist-linux64</core.artifactId>
                 <core.dependencyType>pom</core.dependencyType>
             </properties>
         </profile>
