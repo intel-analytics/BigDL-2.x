@@ -100,19 +100,16 @@ object TrainInceptionV1 {
         (Trigger.severalIteration(param.checkpointIteration),
           Trigger.maxIteration(param.maxIteration))
       }
-      val gradientClipping = if (param.gradientL2NormThreshold.isDefined) {
-        L2NormClipping(param.gradientL2NormThreshold.get)
+      if (param.gradientL2NormThreshold.isDefined) {
+        estimator.setGradientClippingByL2Norm(param.gradientL2NormThreshold.get)
       } else if (param.gradientMin.isDefined && param.gradientMax.isDefined) {
-        ConstantClipping(param.gradientMin.get, param.gradientMax.get)
-      } else {
-        null
+        estimator.setConstantGradientClipping(param.gradientMin.get, param.gradientMax.get)
       }
 
       estimator.train(trainSet, ClassNLLCriterion[Float](),
         endTrigger = Some(endTrigger),
         checkPointTrigger = Some(checkpointTrigger),
-        valSet, Array(new Top1Accuracy[Float], new Top5Accuracy[Float]),
-        gradientClipping)
+        valSet, Array(new Top1Accuracy[Float], new Top5Accuracy[Float]))
 
       sc.stop()
     })
