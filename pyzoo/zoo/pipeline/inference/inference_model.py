@@ -201,8 +201,9 @@ class InferenceModel(JavaValue):
         :param validation_file_path: String. path to a file with validation images
         :param subset: String, number of pictures
                 from the whole validation set to create the calibration dataset.
-        :param opencv_lib_path: String, the lib path whwere libopencv_imgcodecs.so.4.0,
-                ibopencv_core.so.4.0 and libopencv_imgproc.so.4.0 can be found
+        :param opencv_lib_path: String, the lib path where libopencv_imgcodecs.so.4.0,
+                libopencv_core.so.4.0 and libopencv_imgproc.so.4.0 can be found.
+                please also refer to https://github.com/opencv/opencv.
         :return:
         """
         callBigDlFunc(self.bigdl_type,

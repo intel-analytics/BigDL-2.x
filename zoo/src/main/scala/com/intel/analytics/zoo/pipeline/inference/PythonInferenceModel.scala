@@ -137,36 +137,4 @@ class PythonInferenceModel[T: ClassTag](implicit ev: TensorNumeric[T]) extends P
     val outputActivity = model.doPredict(inputActivity)
     activityToList(outputActivity)
   }
-
-  def inferenceModelOptimizeTF(modelPath: String,
-                               objectDetectionModelType: String,
-                               pipelineConfigPath: String,
-                               extensionsConfigPath: String,
-                               outputDir: String): Unit = {
-    InferenceModel.doOptimizeTF(
-      modelPath, objectDetectionModelType, pipelineConfigPath, extensionsConfigPath, outputDir)
-  }
-
-  def inferenceModelOptimizeTF(modelPath: String,
-                               imageClassificationModelType: String,
-                               checkpointPath: String,
-                               inputShape: JList[Int],
-                               ifReverseInputChannels: Boolean,
-                               meanValues: JList[Float],
-                               scale: Float,
-                               outputDir: String): Unit = {
-    InferenceModel.doOptimizeTF(
-      modelPath, imageClassificationModelType, checkpointPath, inputShape.asScala.toArray,
-      ifReverseInputChannels, meanValues.asScala.toArray, scale, outputDir)
-  }
-
-  def inferenceModelCalibrateTF(modelPath: String,
-                                networkType: String,
-                                validationFilePath: String,
-                                subset: Int,
-                                opencvLibPath: String,
-                                outputDir: String): Unit = {
-    InferenceModel.doCalibrateTF(
-      modelPath, networkType, validationFilePath, subset, opencvLibPath, outputDir)
-  }
 }
