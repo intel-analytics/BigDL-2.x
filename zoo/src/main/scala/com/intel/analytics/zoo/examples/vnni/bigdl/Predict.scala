@@ -24,8 +24,7 @@ import scopt.OptionParser
 
 case class PredictParams(folder: String = "./",
                          model: String = "",
-                         topN: Int = 5,
-                         partitionNum: Int = 4)
+                         topN: Int = 5)
 
 object Predict {
   Logger.getLogger("org").setLevel(Level.ERROR)
@@ -49,26 +48,22 @@ object Predict {
       opt[Int]("topN")
         .text("top N number")
         .action((x, c) => c.copy(topN = x))
-      opt[Int]("partitionNum")
-        .text("The number of partitions to cut the dataset into")
-        .action((x, c) => c.copy(partitionNum = x))
     }
     parser.parse(args, PredictParams()).map(param => {
       val sc = NNContext.initNNContext("ResNet50 Int8 Inference Example")
       val images = ImageSet.read(param.folder)
       val model = ImageClassifier.loadModel[Float](param.model)
       val output = model.predictImageSet(images)
-      val labelOutput = LabelOutput(model.getConfig().labelMap, "clses",
-        "probs", probAsInput = false)
+      val labelOutput = LabelOutput(model.getConfig().labelMap, probAsOutput = false)
       val result = labelOutput(output).toLocal().array
 
       logger.info(s"Prediction result")
       result.foreach(imageFeature => {
         logger.info(s"image : ${imageFeature.uri}, top ${param.topN}")
-        val clses = imageFeature("clses").asInstanceOf[Array[String]]
+        val classes = imageFeature("classes").asInstanceOf[Array[String]]
         val probs = imageFeature("probs").asInstanceOf[Array[Float]]
         for (i <- 0 until param.topN) {
-          logger.info(s"\t class: ${clses(i)}, credit: ${probs(i)}")
+          logger.info(s"\t class: ${classes(i)}, credit: ${probs(i)}")
         }
       })
 

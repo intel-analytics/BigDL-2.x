@@ -65,6 +65,6 @@ class LabelOutput(labelMap: Map[Int, String], clses: String = "classes",
 
 object LabelOutput {
   def apply(labelMap: Map[Int, String], classes: String = "classes",
-            probs: String = "probs", probAsInput: Boolean = true): LabelOutput =
-    new LabelOutput(labelMap, classes, probs, probAsInput)
+            probs: String = "probs", probAsOutput: Boolean = true): LabelOutput =
+    new LabelOutput(labelMap, classes, probs, probAsOutput)
 }
