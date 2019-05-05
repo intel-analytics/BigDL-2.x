@@ -89,8 +89,6 @@ abstract class ImageModel[T: ClassTag]()(implicit ev: TensorNumeric[T])
       val batchSize = 4 * numPartitions
       model.evaluateImage(image.toImageFrame(), vMethods, Some(batchSize))
     } else {
-      // Remark: ImageConfigure only has batchPerPartition while evaluate needs
-      // total batchSize. Thus add a batchSize argument here first.
       val data = if (null != evalConfig.preProcessor) {
         image -> evalConfig.preProcessor
       } else {

@@ -27,8 +27,8 @@ import com.intel.analytics.zoo.feature.image.ImageProcessing
  * @param labelMap The map of class ID (Integer) and name (String).
  * @param clses The key to store names of class labels. Default is "classes".
  * @param probs The key to store probabilities of each class. Default is "probs".
- *              The result probability array together with class name array will be
- *              sorted by probabilities in descending order.
+ *              The result probability array together with the corresponding class name
+ *              array will be sorted by probabilities in descending order.
  * @param probAsOutput Boolean. Whether the prediction output is a probability distribution.
  *                     Default is true. If false, the output will be first applied with SoftMax.
  */
