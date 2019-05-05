@@ -65,12 +65,11 @@ class TestInferenceModel(ZooTestCase):
         output_data = model.predict(input_data)
         model2 = InferenceModel(3)
         model2.load_tf_object_detection_as_openvino(model_path=
-                                                    extracted_to + "/frozen_inference_graph.pb",
-                                                    object_detection_model_type=
-                                                    "faster_rcnn_resnet101_coco",
-                                                    pipeline_config_path=
-                                                    extracted_to + "/pipeline.config",
-                                                    extensions_config_path=None)
+            extracted_to + "/frozen_inference_graph.pb",
+            object_detection_model_type=
+            "faster_rcnn_resnet101_coco",
+            pipeline_config_path=extracted_to + "/pipeline.config",
+            extensions_config_path=None)
         model2.predict(input_data)
 
     def test_load_tf_openvino_ic(self):
@@ -84,14 +83,12 @@ class TestInferenceModel(ZooTestCase):
         tar.close()
         model = InferenceModel(3)
         model.load_tf_image_classification_as_openvino(model_path=None,
-                                                       image_classification_model_type=
-                                                       "resnet_v1_50",
-                                                       checkpoint_path=
-                                                       local_path + "/resnet_v1_50.ckpt",
-                                                       input_shape=[4, 224, 224, 3],
-                                                       if_reverse_input_channels=True,
-                                                       mean_values=[123.68, 116.78, 103.94],
-                                                       scale=1)
+            image_classification_model_type="resnet_v1_50",
+            checkpoint_path=local_path + "/resnet_v1_50.ckpt",
+            input_shape=[4, 224, 224, 3],
+            if_reverse_input_channels=True,
+            mean_values=[123.68, 116.78, 103.94],
+            scale=1)
         print(model)
         s3url = "https://s3-ap-southeast-1.amazonaws.com/"
         var_url = s3url + "analytics-zoo-models/openvino/val_bmp_32.tar"
@@ -110,18 +107,16 @@ class TestInferenceModel(ZooTestCase):
         opencv_lib_path = local_path + "/lib"
         model2 = InferenceModel(3)
         model2.load_tf_as_calibrated_openvino(model_path=None,
-                                              model_type="resnet_v1_50",
-                                              checkpoint_path=
-                                              local_path + "/resnet_v1_50.ckpt",
-                                              input_shape=[4, 224, 224, 3],
-                                              if_reverse_input_channels=True,
-                                              mean_values=[123.68, 116.78, 103.94],
-                                              scale=1,
-                                              network_type='C',
-                                              validation_file_path=
-                                              validation_file_path,
-                                              subset=32,
-                                              opencv_lib_path=opencv_lib_path)
+            model_type="resnet_v1_50",
+            checkpoint_path=local_path + "/resnet_v1_50.ckpt",
+            input_shape=[4, 224, 224, 3],
+            if_reverse_input_channels=True,
+            mean_values=[123.68, 116.78, 103.94],
+            scale=1,
+            network_type='C',
+            validation_file_path=validation_file_path,
+            subset=32,
+            opencv_lib_path=opencv_lib_path)
         print(model2)
 
 if __name__ == "__main__":
