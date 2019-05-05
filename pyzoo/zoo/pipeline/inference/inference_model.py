@@ -142,7 +142,7 @@ class InferenceModel(JavaValue):
                                                  checkpoint_path,
                                                  input_shape,
                                                  if_reverse_input_channels,
-                                                 meanValues,
+                                                 mean_values,
                                                  scale):
         """
         load image classification TF model as OpenVINO IR
@@ -151,7 +151,7 @@ class InferenceModel(JavaValue):
         :param checkpoint_path: String, the path of the tensorflow checkpoint file
         :param input_shape: List of Int, input shape that should be fed to an input node(s) of the model
         :param if_reverse_input_channels: Boolean, the boolean value of if need reverse input channels.
-        :param meanValues: List of Float, all input values coming from original network inputs
+        :param mean_values: List of Float, all input values coming from original network inputs
                             will be divided by this value.
         :param scale: Float, the scale value, to be used for the input image per channel.
         :return:
@@ -164,8 +164,8 @@ class InferenceModel(JavaValue):
                       checkpoint_path,
                       input_shape,
                       if_reverse_input_channels,
-                      meanValues,
-                      scale
+                      [float(value) for value in mean_values],
+                      float(scale)
                     )
 
     def load_tf_as_calibrated_openvino(self,
@@ -174,7 +174,7 @@ class InferenceModel(JavaValue):
                                        checkpoint_path,
                                        input_shape,
                                        if_reverse_input_channels,
-                                       meanValues,
+                                       mean_values,
                                        scale,
                                        network_type,
                                        validation_file_path,
@@ -187,7 +187,7 @@ class InferenceModel(JavaValue):
         :param checkpoint_path: String, the path of the tensorflow checkpoint file
         :param input_shape: List of Int, input shape that should be fed to an input node(s) of the model
         :param if_reverse_input_channels: Boolean, the boolean value of if need reverse input channels.
-        :param meanValues: List of Float, all input values coming from original network inputs
+        :param mean_values: List of Float, all input values coming from original network inputs
                 will be divided by this value.
         :param scale: Float, the scale value, to be used for the input image per channel.
         :param network_type: String, Type of an inferred network, "C" to calibrate Classification,
@@ -207,8 +207,8 @@ class InferenceModel(JavaValue):
                       checkpoint_path,
                       input_shape,
                       if_reverse_input_channels,
-                      meanValues,
-                      scale,
+                      [float(value) for value in mean_values],
+                      float(scale),
                       network_type,
                       validation_file_path,
                       subset,

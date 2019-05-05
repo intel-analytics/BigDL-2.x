@@ -72,22 +72,49 @@ class TestInferenceModel(ZooTestCase):
 
     def test_load_tf_openvino_ic(self):
         local_path = self.create_temp_dir()
+        print(local_path)
         url = data_url + "/models/resnet_v1_50_2016_08_28.tar.gz"
         file_abs_path = maybe_download("resnet_v1_50_2016_08_28.tar.gz", local_path, url)
         tar = tarfile.open(file_abs_path, "r:gz")
-        extracted_to = os.path.join(local_path, "resnet_v1_50_2016_08_28")
-        if not os.path.exists(extracted_to):
-            print("Extracting %s to %s" % (file_abs_path, extracted_to))
-            tar.extractall(local_path)
-            tar.close()
+        print("Extracting %s to %s" % (file_abs_path, local_path))
+        tar.extractall(local_path)
+        tar.close()
         model = InferenceModel(3)
         model.load_tf_image_classification_as_openvino(model_path=None,
                                                        image_classification_model_type="resnet_v1_50",
-                                                       checkpoint_path=extracted_to + "resnet_v1_50.ckpt",
+                                                       checkpoint_path=local_path + "/resnet_v1_50.ckpt",
                                                        input_shape=[4, 224, 224, 3],
                                                        if_reverse_input_channels=True,
-                                                       meanValues=[123.68, 116.78, 103.94],
-                                                       scale=1.0)
+                                                       mean_values=[123.68, 116.78, 103.94],
+                                                       scale=1)
+        print(model)
+        var_url = "https://s3-ap-southeast-1.amazonaws.com/analytics-zoo-models/openvino/val_bmp_32.tar"
+        lib_url = "https://s3-ap-southeast-1.amazonaws.com/analytics-zoo-models/openvino/opencv_4.0.0_ubuntu_lib.tar"
+        var_file_abs_path = maybe_download("val_bmp_32.tar", local_path, var_url)
+        lib_file_abs_path = maybe_download("opencv_4.0.0_ubuntu_lib.tar", local_path, lib_url)
+        var_tar = tarfile.open(var_file_abs_path, "r")
+        print("Extracting %s to %s" % (var_file_abs_path, local_path))
+        var_tar.extractall(local_path)
+        var_tar.close()
+        lib_tar = tarfile.open(lib_file_abs_path, "r")
+        print("Extracting %s to %s" % (lib_file_abs_path, local_path))
+        lib_tar.extractall(local_path)
+        lib_tar.close()
+        validation_file_path = local_path + "/val_bmp_32/val.txt"
+        opencv_lib_path = local_path + "/lib"
+        model2 = InferenceModel(3)
+        model2.load_tf_as_calibrated_openvino(model_path=None,
+                                              model_type="resnet_v1_50",
+                                              checkpoint_path=local_path + "/resnet_v1_50.ckpt",
+                                              input_shape=[4, 224, 224, 3],
+                                              if_reverse_input_channels=True,
+                                              mean_values=[123.68, 116.78, 103.94],
+                                              scale=1,
+                                              network_type='C',
+                                              validation_file_path=validation_file_path,
+                                              subset=32,
+                                              opencv_lib_path=opencv_lib_path)
+        print(model2)
 
 if __name__ == "__main__":
     pytest.main([__file__])

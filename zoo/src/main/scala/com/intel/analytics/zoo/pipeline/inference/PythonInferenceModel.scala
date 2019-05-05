@@ -85,11 +85,14 @@ class PythonInferenceModel[T: ClassTag](implicit ev: TensorNumeric[T]) extends P
                                    modelPath: String,
                                    imageClassificationModelType: String,
                                    checkpointPath: String,
-                                   inputShape: ArrayList[Int],
+                                   inputShape: JList[Int],
                                    ifReverseInputChannels: Boolean,
-                                   meanValues: ArrayList[Double],
-                                   scale: java.lang.Double
+                                   meanValues: JList[Double],
+                                   scale: Double
                                   ): Unit = {
+    require(inputShape != null, "inputShape can not be null")
+    require(meanValues != null, "meanValues can not be null")
+    require(scale != null, "scale can not be null")
     model.doLoadTF(modelPath, imageClassificationModelType,
       checkpointPath, inputShape.asScala.toArray,
       ifReverseInputChannels, meanValues.asScala.toArray.map(_.toFloat), scale.toFloat)
@@ -99,14 +102,17 @@ class PythonInferenceModel[T: ClassTag](implicit ev: TensorNumeric[T]) extends P
                                                        modelPath: String,
                                                        modelType: String,
                                                        checkpointPath: String,
-                                                       inputShape: ArrayList[Int],
+                                                       inputShape: JList[Int],
                                                        ifReverseInputChannels: Boolean,
-                                                       meanValues: ArrayList[Double],
+                                                       meanValues: JList[Double],
                                                        scale: Double,
                                                        networkType: String,
                                                        validationFilePath: String,
                                                        subset: Int,
                                                        opencvLibPath: String): Unit = {
+    require(inputShape != null, "inputShape can not be null")
+    require(meanValues != null, "meanValues can not be null")
+    require(scale != null, "scale can not be null")
     model.doLoadTFAsCalibratedOpenVINO(modelPath, modelType,
       checkpointPath, inputShape.asScala.toArray,
       ifReverseInputChannels, meanValues.asScala.toArray.map(_.toFloat), scale.toFloat,
