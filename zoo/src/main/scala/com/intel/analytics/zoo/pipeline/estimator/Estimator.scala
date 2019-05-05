@@ -68,7 +68,7 @@ class Estimator[T: ClassTag] private[zoo](
   import Estimator.logger
   protected var internalEstimator: AbstractEstimator[T] = null
 
-  protected var gradientClipping: ArrayBuffer[GradientClipping] = new ArrayBuffer[GradientClipping]()
+  protected val gradientClipping: ArrayBuffer[GradientClipping] = new ArrayBuffer[GradientClipping]()
 
   /**
    * Clear gradient clipping parameters. In this case, gradient clipping will not be applied.
