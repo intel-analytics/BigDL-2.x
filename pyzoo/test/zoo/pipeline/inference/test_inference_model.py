@@ -93,10 +93,9 @@ class TestInferenceModel(ZooTestCase):
                                                        mean_values=[123.68, 116.78, 103.94],
                                                        scale=1)
         print(model)
-        var_url = "https://s3-ap-southeast-1.amazonaws.com/"+\
-                  "analytics-zoo-models/openvino/val_bmp_32.tar"
-        lib_url = "https://s3-ap-southeast-1.amazonaws.com/"+\
-                  "analytics-zoo-models/openvino/opencv_4.0.0_ubuntu_lib.tar"
+        s3url = "https://s3-ap-southeast-1.amazonaws.com/"
+        var_url = s3url + "analytics-zoo-models/openvino/val_bmp_32.tar"
+        lib_url = s3url + "analytics-zoo-models/openvino/opencv_4.0.0_ubuntu_lib.tar"
         var_file_abs_path = maybe_download("val_bmp_32.tar", local_path, var_url)
         lib_file_abs_path = maybe_download("opencv_4.0.0_ubuntu_lib.tar", local_path, lib_url)
         var_tar = tarfile.open(var_file_abs_path, "r")
