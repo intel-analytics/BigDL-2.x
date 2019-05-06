@@ -26,6 +26,7 @@ import com.intel.analytics.bigdl.tensor.Storage
 import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric
 import com.intel.analytics.zoo.models.image.objectdetection.common.ModuleUtil
 import com.intel.analytics.bigdl.nn.DetectionOutputSSD
+import com.intel.analytics.bigdl.utils.Node
 import org.apache.log4j.Logger
 
 import scala.reflect.ClassTag
@@ -146,20 +147,20 @@ object SSDGraph {
       (conf, loc, priors)
     }
 
-    val model = Graph(input, Array(loc, conf, priors))
+    val out1 = Array(loc, conf, priors)
+    val model = Graph(input, out1)
     model.setScaleB(2)
     ModuleUtil.stopGradient(model)
-    val ssd = Sequential[T]()
-    ssd.add(model)
-    ssd.add(new DetectionOutputSSD[T](numClasses, shareLocation,
+    setRegularizer(model, _wRegularizer, bRegularizer)
+    val graphNode = new ModuleNode[T](model)
+    val out = new DetectionOutputSSD[T](numClasses, shareLocation,
       bgLabel,
       nmsThresh,
       nmsTopk,
       keepTopK,
       confThresh,
-      varianceEncodedInTarget))
-    setRegularizer(model, _wRegularizer, bRegularizer)
-    ssd
+      varianceEncodedInTarget).inputs(graphNode)
+    Graph(graphNode, out)
   }
 
 
