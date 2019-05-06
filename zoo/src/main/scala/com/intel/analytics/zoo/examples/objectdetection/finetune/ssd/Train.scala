@@ -119,8 +119,6 @@ object Train {
 
   def main(args: Array[String]): Unit = {
     trainParser.parse(args, TrainParams()).map(param => {
-      System.setProperty("bigdl.failure.retryTimes", "1")
-
       // initial zoo context
       val conf = new SparkConf().setAppName(param.jobName)
       val sc = NNContext.initNNContext(conf)
