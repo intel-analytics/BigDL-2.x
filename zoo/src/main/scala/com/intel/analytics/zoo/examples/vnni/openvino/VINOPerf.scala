@@ -16,21 +16,16 @@
 
 package com.intel.analytics.zoo.examples.vnni.openvino
 
-import com.intel.analytics.bigdl.numeric.NumericFloat
-import com.intel.analytics.bigdl.tensor.Tensor
-import com.intel.analytics.bigdl.utils.Engine
-import com.intel.analytics.zoo.pipeline.inference.InferenceModel
+import java.util.Arrays
+
+import com.intel.analytics.zoo.pipeline.inference.{InferenceModel, JTensor}
 import org.apache.log4j.Logger
 import scopt.OptionParser
 
+import scala.util.Random
 
-case class ResNet50PerfParams(model: String = "",
-                              weight: String = "",
-                              batchSize: Int = 4,
-                              numBatch: Int = 1,
-                              iteration: Int = 1)
 
-object Perf {
+object VINOPerf {
 
   val logger: Logger = Logger.getLogger(getClass)
 
@@ -58,35 +53,25 @@ object Perf {
     parser.parse(args, ResNet50PerfParams()).foreach { param =>
       val batchSize = param.batchSize
       val numBatch = param.numBatch
-      val batchInput = Tensor(Array(numBatch, batchSize, 3, 224, 224)).rand()
-      Engine.init
+
+      val randomData = Seq.fill(batchSize * 3 * 224 * 224)(Random.nextFloat())
+        .toArray
+      val input = new JTensor(randomData, Array(batchSize, 3, 224, 224))
+      val batchInput = Arrays.asList(
+        Arrays.asList({
+          input
+        }))
 
       val model = new InferenceModel(1)
-       model.doLoadOpenVINO(param.model, param.weight)
 
-//      var iteration = 0
-//      val predictStart = System.nanoTime()
-//      while (iteration < param.iteration) {
-//        val start = System.nanoTime()
-//        model.doPredict(batchInput)
-//        val timeUsed = System.nanoTime() - start
-//        val throughput = "%.2f".format(batchSize.toFloat / (timeUsed / 1e9))
-//        logger.info(s"Iteration $iteration, takes $timeUsed ns, throughput is $throughput imgs/sec")
-//        iteration += 1
-//      }
+      model.doLoadOpenVINO(param.model, param.weight)
       val predictStart = System.nanoTime()
-      val threads = List.range(0, param.iteration).map(_ => {
-        new Thread() {
-          override def run(): Unit = {
+      List.range(0, param.iteration).map(_ => {
             model.doPredict(batchInput)
-          }
-        }
       })
-      threads.foreach(_.start())
-      threads.foreach(_.join())
       val totalTimeUsed = System.nanoTime() - predictStart
       val totalThroughput = "%.2f".format(batchSize * param.iteration
-        * numBatch.toFloat / (totalTimeUsed / 1e9))
+        / (totalTimeUsed / 1e9))
       logger.info(s"Takes $totalTimeUsed ns, throughput is $totalThroughput imgs/sec")
     }
   }
