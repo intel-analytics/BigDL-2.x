@@ -106,10 +106,10 @@ class AdamWeightDecay[@specialized(Float, Double) T: ClassTag](
     buffer.fill(ev.one)
     _denom.add(ev.fromType(eps), buffer)
 
-    val update = _s / (_denom)
+    val update = _s.clone.div(_denom)
 
     if(weightDecay > 0) {
-      update.add(parameter * (ev.fromType(weightDecay)))
+      update.add(parameter.clone().mul(ev.fromType(weightDecay)))
     }
 
     val currentLR = updateHyperParameter(timestep)

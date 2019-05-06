@@ -35,9 +35,6 @@ parser.add_argument('vocab_path', help="Path where the vocab.txt is stored")
 parser.add_argument('data_dir', help="Path to store the training data")
 
 args = parser.parse_args()
-# vocab_path = "/root/dingding/bert/uncased_L-12_H-768_A-12"
-# data_dir = "/root/dingding/bert/MRPC"
-# model_path = "/root/dingding/bert/zoo-bert.model"
 max_seq_length = 128
 num_labels = 2
 
