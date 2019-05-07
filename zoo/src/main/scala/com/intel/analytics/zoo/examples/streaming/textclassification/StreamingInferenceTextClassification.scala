@@ -49,7 +49,7 @@ object StreamingInferenceTextClassification {
         .text("The number of samples per gradient update")
         .action((x, c) => c.copy(batchSize = x))
       opt[String]('m', "model")
-        .text("Model snapshot location if any")
+        .text("Path of pre-trained Model")
         .action((x, c) => c.copy(model = x))
         .required()
     }
