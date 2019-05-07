@@ -53,7 +53,7 @@ object ImageNetInference {
         .required()
       opt[String]('w', "weight")
         .text("The path to the int8 ResNet50 model weight")
-        .action((x, c) => c.copy(model = x))
+        .action((x, c) => c.copy(weight = x))
       opt[Int]('b', "batchSize")
         .text("batch size")
         .action((x, c) => c.copy(batchSize = x))

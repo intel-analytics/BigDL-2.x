@@ -52,7 +52,7 @@ object Predict {
         .required()
       opt[String]('w', "weight")
         .text("The path to the int8 ResNet50 model weight")
-        .action((x, c) => c.copy(model = x))
+        .action((x, c) => c.copy(weight = x))
       opt[Int]("topN")
         .text("top N number")
         .action((x, c) => c.copy(topN = x))

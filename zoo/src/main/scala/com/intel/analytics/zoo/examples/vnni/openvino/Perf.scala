@@ -64,17 +64,7 @@ object Perf {
       val model = new InferenceModel(1)
        model.doLoadOpenVINO(param.model, param.weight)
 
-//      var iteration = 0
-//      val predictStart = System.nanoTime()
-//      while (iteration < param.iteration) {
-//        val start = System.nanoTime()
-//        model.doPredict(batchInput)
-//        val timeUsed = System.nanoTime() - start
-//        val throughput = "%.2f".format(batchSize.toFloat / (timeUsed / 1e9))
-//        logger.info(s"Iteration $iteration, takes $timeUsed ns, throughput is $throughput imgs/sec")
-//        iteration += 1
-//      }
-      val predictStart = System.nanoTime()
+      /*val predictStart = System.nanoTime()
       val threads = List.range(0, param.iteration).map(_ => {
         new Thread() {
           override def run(): Unit = {
@@ -83,7 +73,11 @@ object Perf {
         }
       })
       threads.foreach(_.start())
-      threads.foreach(_.join())
+      threads.foreach(_.join())*/
+      val predictStart = System.nanoTime()
+      List.range(0, param.iteration).map(_ => {
+        model.doPredict(batchInput)
+      })
       val totalTimeUsed = System.nanoTime() - predictStart
       val totalThroughput = "%.2f".format(batchSize * param.iteration
         * numBatch.toFloat / (totalTimeUsed / 1e9))

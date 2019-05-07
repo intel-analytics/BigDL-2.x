@@ -42,9 +42,6 @@ object VINOPerf {
       opt[Int]('b', "batchSize")
         .text("Batch size of input data")
         .action((v, p) => p.copy(batchSize = v))
-      opt[Int]('n', "numBatch")
-        .text("Num of Batch of input data")
-        .action((v, p) => p.copy(numBatch = v))
       opt[Int]('i', "iteration")
         .text("Iteration of perf test. The result will be average of each iteration time cost")
         .action((v, p) => p.copy(iteration = v))
@@ -52,7 +49,6 @@ object VINOPerf {
 
     parser.parse(args, ResNet50PerfParams()).foreach { param =>
       val batchSize = param.batchSize
-      val numBatch = param.numBatch
 
       val randomData = Seq.fill(batchSize * 3 * 224 * 224)(Random.nextFloat())
         .toArray
