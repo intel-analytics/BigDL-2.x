@@ -18,11 +18,10 @@ package com.intel.analytics.zoo.examples.streaming.objectdetection
 
 
 import com.intel.analytics.bigdl.transform.vision.image.ImageFeature
-import com.intel.analytics.zoo.common.NNContext
+import com.intel.analytics.zoo.common.{NNContext, Utils}
 import com.intel.analytics.zoo.feature.image.{ImageBytesToMat, ImageSet}
 import com.intel.analytics.zoo.models.image.objectdetection.{ObjectDetector, Visualizer}
-import org.apache.hadoop.conf.Configuration
-import org.apache.hadoop.fs.{FileSystem, Path}
+import org.apache.hadoop.fs.Path
 import org.apache.log4j.{Level, Logger}
 import org.apache.spark.streaming.{Seconds, StreamingContext}
 import org.opencv.imgcodecs.Imgcodecs
@@ -92,25 +91,18 @@ object StreamingObjectDetection {
   }
 
   /**
-   * Read files from local or remote dir
+   * Read image files from local or remote file system
    * @param path file path
    * @return ImageFeature
    */
   def readFile(path: String): ImageFeature = {
     logger.info("Read image file " + path)
-    val fspath = new Path(path)
-    val fs = FileSystem.get(fspath.toUri, new Configuration())
-    // Read local or remote image
-    val inputStream = fs.open(fspath)
-    val data = new Array[Byte](fs.getFileStatus(new Path(path))
-      .getLen.toInt)
-    inputStream.readFully(data)
-    inputStream.close()
+    val data = Utils.readBytes(path)
     ImageFeature.apply(data, null, path)
   }
 
   /**
-   * Write files to local or remote dir
+   * Write image file to local or remote file system
    * @param outPath output dir
    * @param path input file path
    * @param content file content
@@ -118,12 +110,7 @@ object StreamingObjectDetection {
   def writeFile(outPath: String, path: String, content: Array[Byte]): Unit = {
     val fspath = getOutPath(outPath, path, "jpg")
     logger.info("Writing image file " + fspath.toString)
-    val fs = FileSystem.get(fspath.toUri, new Configuration())
-    val outStream = fs.create(
-      fspath,
-      true)
-    outStream.write(content)
-    outStream.close()
+    Utils.saveBytes(content, fspath.toString, true)
   }
 
   /**

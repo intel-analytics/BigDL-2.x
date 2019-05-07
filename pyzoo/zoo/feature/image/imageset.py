@@ -13,7 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-
+from bigdl.transform.vision.image import ImageFrame
 from bigdl.util.common import *
 
 
@@ -42,9 +42,17 @@ class ImageSet(JavaValue):
         """
         return callBigDlFunc(self.bigdl_type, "isDistributedImageSet", self.value)
 
+    @property
+    def label_map(self):
+        """
+        :return: the labelMap of this ImageSet, None if the ImageSet does not have a labelMap
+        """
+        return callBigDlFunc(self.bigdl_type, "imageSetGetLabelMap", self.value)
+
     @classmethod
     def read(cls, path, sc=None, min_partitions=1, resize_height=-1,
-             resize_width=-1, image_codec=-1, bigdl_type="float"):
+             resize_width=-1, image_codec=-1, with_label=False, one_based_label=True,
+             bigdl_type="float"):
         """
         Read images as Image Set
         if sc is defined, Read image as DistributedImageSet from local file system or HDFS
@@ -52,28 +60,38 @@ class ImageSet(JavaValue):
         :param path path to read images
         if sc is defined, path can be local or HDFS. Wildcard character are supported.
         if sc is null, path is local directory/image file/image file with wildcard character
+
+        if withLabel is set to true, path should be a directory that have two levels. The
+        first level is class folders, and the second is images. All images belong to a same
+        class should be put into the same class folder. So each image in the path is labeled by the
+        folder it belongs.
+
         :param sc SparkContext
         :param min_partitions A suggestion value of the minimal splitting number for input data.
         :param resize_height height after resize, by default is -1 which will not resize the image
         :param resize_width width after resize, by default is -1 which will not resize the image
         :param image_codec specifying the color type of a loaded image, same as in OpenCV.imread.
                By default is Imgcodecs.CV_LOAD_IMAGE_UNCHANGED(-1)
+        :param with_label whether to treat folders in the path as image classification labels
+               and read the labels into ImageSet.
+        :param one_based_label whether to use one based label
         :return ImageSet
         """
         return ImageSet(jvalue=callBigDlFunc(bigdl_type, "readImageSet", path,
                                              sc, min_partitions, resize_height,
-                                             resize_width, image_codec))
+                                             resize_width, image_codec, with_label,
+                                             one_based_label))
 
     @classmethod
     def from_image_frame(cls, image_frame, bigdl_type="float"):
         return ImageSet(jvalue=callBigDlFunc(bigdl_type, "imageFrameToImageSet", image_frame))
 
-    def transform(self, transformer, bigdl_type="float"):
+    def transform(self, transformer):
         """
         transformImageSet
         """
-        self.value = callBigDlFunc(bigdl_type, "transformImageSet", transformer, self.value)
-        return self
+        return ImageSet(callBigDlFunc(self.bigdl_type, "transformImageSet",
+                                      transformer, self.value), self.bigdl_type)
 
     def get_image(self, key="floats", to_chw=True):
         """
@@ -94,7 +112,7 @@ class ImageSet(JavaValue):
         return self.image_set.get_predict(key)
 
     def to_image_frame(self, bigdl_type="float"):
-        return callBigDlFunc(bigdl_type, "imageSetToImageFrame", self.value)
+        return ImageFrame(callBigDlFunc(bigdl_type, "imageSetToImageFrame", self.value), bigdl_type)
 
 
 class LocalImageSet(ImageSet):

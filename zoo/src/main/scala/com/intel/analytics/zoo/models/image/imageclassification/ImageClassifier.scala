@@ -16,12 +16,10 @@
 
 package com.intel.analytics.zoo.models.image.imageclassification
 
-import com.intel.analytics.bigdl.nn.Module
-
 import scala.reflect.ClassTag
 import com.intel.analytics.bigdl.nn.abstractnn.{AbstractModule, Activity}
 import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric
-import com.intel.analytics.zoo.models.image.common.{ImageConfigure, ImageModel}
+import com.intel.analytics.zoo.models.image.common.ImageModel
 
 /**
  * An Image Classification model.

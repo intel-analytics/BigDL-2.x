@@ -26,12 +26,43 @@ import com.intel.analytics.zoo.pipeline.inference.DeviceType.DeviceTypeEnumVal
 
 import scala.collection.JavaConverters._
 
-class InferenceModel(private var supportedConcurrentNum: Int = 1,
+class InferenceModel(private var autoScalingEnabled: Boolean = true,
+                     private var concurrentNum: Int = 20,
                      private var originalModel: AbstractModel = null,
                      private[inference] var modelQueue:
                      LinkedBlockingQueue[AbstractModel] = null)
   extends InferenceSupportive with Serializable {
-  this.modelQueue = new LinkedBlockingQueue[AbstractModel](supportedConcurrentNum)
+
+  require(concurrentNum > 0, "concurrentNum should > 0")
+
+  /**
+   * default constructor, will create a InferenceModel with auto-scaling enabled.
+   *
+   * @return an auto-scaling enabled InferenceModel
+   */
+  def this() = this(true, 20, null, null)
+
+  /**
+   * create an auto-scaling disabled InferenceModel with supportedConcurrentNum
+   *
+   * @param concurrentNum the concurrentNum of the InferenceModel
+   * @return an auto-scaling disabled InferenceModel
+   */
+  def this(concurrentNum: Int) = this(false, concurrentNum, null, null)
+
+  /**
+   * create an InferenceModel with specified autoScalingEnabled, supportedConcurrentNum
+   * and maxConcurrentNum
+   *
+   * @param autoScalingEnabled     if auto-scaling is enabled
+   * @param concurrentNum          the concurrentNum of the InferenceModel
+   * @return a specified InferenceModel
+   */
+  def this(autoScalingEnabled: Boolean, concurrentNum: Int) =
+    this(autoScalingEnabled, concurrentNum, null, null)
+
+  this.modelQueue = new LinkedBlockingQueue[AbstractModel](concurrentNum)
+
   this.originalModel match {
     case null =>
     case _ => offerModelQueue()
@@ -93,18 +124,17 @@ class InferenceModel(private var supportedConcurrentNum: Int = 1,
    * loads a TF model as OpenVINO
    *
    * @param modelPath the path of the tensorflow model
-   * @param modelType the type of the tensorflow model,
+   * @param objectDetectionModelType the type of the tensorflow model,
    *                  please refer to [[ModelType]]
    *                  e.g. faster_rcnn_resnet101_coco, mask_rcnn_inception_v2_coco,
    *                  rfcn_resnet101_coco, ssd_inception_v2_coco
    */
-  def doLoadTF(modelPath: String, modelType: String): Unit = {
+  def doLoadTF(modelPath: String, objectDetectionModelType: String): Unit = {
     doLoadTensorflowModelAsOpenVINO(
       modelPath,
-      modelType,
+      objectDetectionModelType,
       null,
-      null,
-      DeviceType.CPU)
+      null)
   }
 
   /**
@@ -121,8 +151,7 @@ class InferenceModel(private var supportedConcurrentNum: Int = 1,
       modelPath,
       null,
       pipelineConfigPath,
-      extensionsConfigPath,
-      DeviceType.CPU
+      extensionsConfigPath
     )
   }
 
@@ -130,7 +159,7 @@ class InferenceModel(private var supportedConcurrentNum: Int = 1,
    * loads a TF model as OpenVINO
    *
    * @param modelPath            the path of the tensorflow model
-   * @param modelType            the type of the tensorflow model,
+   * @param objectDetectionModelType  the type of the tensorflow model,
    *                             please refer to [[ModelType]]
    *                             e.g. faster_rcnn_resnet101_coco, mask_rcnn_inception_v2_coco,
    *                             rfcn_resnet101_coco, ssd_inception_v2_coco
@@ -138,16 +167,82 @@ class InferenceModel(private var supportedConcurrentNum: Int = 1,
    * @param extensionsConfigPath the path of the extensions configure file
    */
   def doLoadTF(modelPath: String,
-               modelType: String,
+               objectDetectionModelType: String,
                pipelineConfigPath: String,
                extensionsConfigPath: String): Unit = {
     doLoadTensorflowModelAsOpenVINO(
       modelPath,
-      modelType,
+      objectDetectionModelType,
       pipelineConfigPath,
-      extensionsConfigPath,
-      DeviceType.CPU
+      extensionsConfigPath
     )
+  }
+
+  /**
+   * load TF model as OpenVINO IR
+   *
+   * @param modelPath              the path of the tensorflow model
+   * @param imageClassificationModelType the type of the tensorflow model
+   * @param checkpointPath         the path of the tensorflow checkpoint file
+   * @param inputShape             input shape that should be fed to an input node(s) of the model
+   * @param ifReverseInputChannels the boolean value of if need reverse input channels.
+   *                               switch the input channels order from RGB to BGR (or vice versa).
+   * @param meanValues             all input values coming from original network inputs
+   *                               will be divided by this value.
+   * @param scale                  the scale value, to be used for the input image per channel.
+   * @param outputDir              the output dir
+   */
+  def doLoadTF(modelPath: String,
+               imageClassificationModelType: String,
+               checkpointPath: String,
+               inputShape: Array[Int],
+               ifReverseInputChannels: Boolean,
+               meanValues: Array[Float],
+               scale: Float): Unit = {
+    doLoadTensorflowModelAsOpenVINO(
+      modelPath, imageClassificationModelType, checkpointPath,
+      inputShape, ifReverseInputChannels, meanValues, scale)
+  }
+
+  /**
+   * load TF model as Calibrated OpenVINO IR
+   *
+   * @param modelPath              the path of the tensorflow model
+   * @param modelType              the type of the tensorflow model
+   * @param checkpointPath         the path of the tensorflow checkpoint file
+   * @param inputShape             input shape that should be fed to an input node(s) of the model
+   * @param ifReverseInputChannels the boolean value of if need reverse input channels.
+   *                               switch the input channels order from RGB to BGR (or vice versa).
+   * @param meanValues             all input values coming from original network inputs
+   *                               will be divided by this value.
+   * @param scale                  the scale value, to be used for the input image per channel.
+   * @param networkType            Type of an inferred network,
+   *                               "C" to calibrate Classification,
+   *                               "OD" to calibrate Object Detection,
+   *                               "RawC" to collect only statistics for Classification,
+   *                               "RawOD" to collect only statistics for Object Detection
+   * @param validationFilePath     Path to a file with validation images
+   * @param subset                 Number of pictures from the whole validation set
+   *                               to create the calibration dataset.
+   * @param opencvLibPath          the lib path whwere libopencv_imgcodecs.so.4.0,
+   *                               libopencv_core.so.4.0
+   *                               and libopencv_imgproc.so.4.0 can be found
+   */
+  def doLoadTFAsCalibratedOpenVINO(modelPath: String,
+                                   modelType: String,
+                                   checkpointPath: String,
+                                   inputShape: Array[Int],
+                                   ifReverseInputChannels: Boolean,
+                                   meanValues: Array[Float],
+                                   scale: Float,
+                                   networkType: String,
+                                   validationFilePath: String,
+                                   subset: Int,
+                                   opencvLibPath: String): Unit = {
+    doLoadTensorflowModelAsCalibratedOpenVINO(
+      modelPath, modelType, checkpointPath,
+      inputShape, ifReverseInputChannels, meanValues, scale,
+      networkType, validationFilePath, subset, opencvLibPath)
   }
 
   /**
@@ -157,8 +252,8 @@ class InferenceModel(private var supportedConcurrentNum: Int = 1,
    * @param weightPath the path of openvino ir bin file
    */
   def doLoadOpenVINO(modelPath: String, weightPath: String): Unit = {
-    if (supportedConcurrentNum > 1) {
-      InferenceSupportive.logger.warn(s"supportedConcurrentNum is $supportedConcurrentNum > 1, " +
+    if (concurrentNum > 1) {
+      InferenceSupportive.logger.warn(s"concurrentNum is $concurrentNum > 1, " +
         s"openvino model does not support shared weights model copies")
     }
     clearModelQueue()
@@ -181,17 +276,58 @@ class InferenceModel(private var supportedConcurrentNum: Int = 1,
   private def doLoadTensorflowModelAsOpenVINO(modelPath: String,
                                               modelType: String,
                                               pipelineConfigPath: String,
-                                              extensionsConfigPath: String,
-                                              deviceType: DeviceTypeEnumVal): Unit = {
-    if (supportedConcurrentNum > 1) {
-      InferenceSupportive.logger.warn(s"supportedConcurrentNum is $supportedConcurrentNum > 1, " +
+                                              extensionsConfigPath: String): Unit = {
+    if (concurrentNum > 1) {
+      InferenceSupportive.logger.warn(s"concurrentNum is $concurrentNum > 1, " +
         s"openvino model does not support shared weights model copies")
     }
     clearModelQueue()
     this.originalModel = InferenceModelFactory.loadOpenVINOModelForTF(
-      modelPath, modelType, pipelineConfigPath, extensionsConfigPath, deviceType)
+      modelPath, modelType, pipelineConfigPath, extensionsConfigPath)
     offerModelQueue()
   }
+
+  private def doLoadTensorflowModelAsOpenVINO(modelPath: String,
+                                              imageClassificationModelType: String,
+                                              checkpointPath: String,
+                                              inputShape: Array[Int],
+                                              ifReverseInputChannels: Boolean,
+                                              meanValues: Array[Float],
+                                              scale: Float): Unit = {
+    if (concurrentNum > 1) {
+      InferenceSupportive.logger.warn(s"concurrentNum is $concurrentNum > 1, " +
+        s"openvino model does not support shared weights model copies")
+    }
+    clearModelQueue()
+    this.originalModel = InferenceModelFactory.loadOpenVINOModelForTF(
+      modelPath, imageClassificationModelType, checkpointPath,
+      inputShape, ifReverseInputChannels, meanValues, scale)
+    offerModelQueue()
+  }
+
+  private def doLoadTensorflowModelAsCalibratedOpenVINO(modelPath: String,
+                                                        modelType: String,
+                                                        checkpointPath: String,
+                                                        inputShape: Array[Int],
+                                                        ifReverseInputChannels: Boolean,
+                                                        meanValues: Array[Float],
+                                                        scale: Float,
+                                                        networkType: String,
+                                                        validationFilePath: String,
+                                                        subset: Int,
+                                                        opencvLibPath: String): Unit = {
+    if (concurrentNum > 1) {
+      InferenceSupportive.logger.warn(s"concurrentNum is $concurrentNum > 1, " +
+        s"openvino model does not support shared weights model copies")
+    }
+    clearModelQueue()
+    this.originalModel = InferenceModelFactory.loadCalibratedOpenVINOModelForTF(
+      modelPath, modelType, checkpointPath,
+      inputShape, ifReverseInputChannels, meanValues, scale,
+      networkType, validationFilePath, subset, opencvLibPath)
+    offerModelQueue()
+  }
+
 
   /**
    * reloads the bigdl, analytics-zoo model
@@ -240,32 +376,72 @@ class InferenceModel(private var supportedConcurrentNum: Int = 1,
    * @return the output activity
    */
   def doPredict(inputActivity: Activity): Activity = {
-    var model: AbstractModel = null
-    try {
-      model = modelQueue.take
-    } catch {
-      case e: InterruptedException => throw new InferenceRuntimeException("no model available", e);
+    timing(s"model predict for activity") {
+      predict(inputActivity)
     }
+  }
+
+  /**
+   * release original model and all the cloned ones in the queue
+   */
+  def release(): Unit = {
+    clearModelQueue()
+  }
+
+  private def predict(inputActivity: Activity): Activity = {
+    val model: AbstractModel = retrieveModel()
     try {
-      val result = model.predict(inputActivity)
-      result
+      model.predict(inputActivity)
     } finally {
-      modelQueue.offer(model)
+      model match {
+        case null =>
+        case _ =>
+          val success = modelQueue.offer(model)
+          success match {
+            case true =>
+            case false => model.release()
+          }
+      }
     }
   }
 
   private def predict(inputs: JList[JList[JTensor]]): JList[JList[JTensor]] = {
-    var model: AbstractModel = null
-    try {
-      model = modelQueue.take
-    } catch {
-      case e: InterruptedException => throw new InferenceRuntimeException("no model available", e);
-    }
+    val model: AbstractModel = retrieveModel()
     try {
       model.predict(inputs)
     } finally {
-      modelQueue.offer(model)
+      model match {
+        case null =>
+        case _ =>
+          val success = modelQueue.offer(model)
+          success match {
+            case true =>
+            case false => model.release()
+          }
+      }
     }
+  }
+
+  private def retrieveModel(): AbstractModel = {
+    var model: AbstractModel = null
+    autoScalingEnabled match {
+      case false =>
+        // if auto-scaling is not enabled, will take a model, waiting if necessary.
+        try {
+          model = modelQueue.take
+        } catch {
+          case e: InterruptedException =>
+            throw new InferenceRuntimeException("no model available", e);
+        }
+      case true =>
+        // if auto-scaling is enabled, will poll a model, no waiting but scale 1 model if necessary.
+        model = modelQueue.poll()
+        model match {
+          case null => model = this.originalModel.copy(1)(0)
+          case _ =>
+        }
+    }
+    model
   }
 
   private def clearModelQueue(): Unit = {
@@ -273,7 +449,7 @@ class InferenceModel(private var supportedConcurrentNum: Int = 1,
       case null =>
       case _ => this.originalModel.release(); this.originalModel = null
     }
-    List.range(0, this.modelQueue.size()).map(i => {
+    List.range(0, this.modelQueue.size()).map(_ => {
       val model = this.modelQueue.take
       this.modelQueue.remove(model)
       model.release()
@@ -283,14 +459,93 @@ class InferenceModel(private var supportedConcurrentNum: Int = 1,
 
   private def offerModelQueue(): Unit = {
     require(this.originalModel != null, "original model can not be null")
-    require(this.supportedConcurrentNum > 0, "supported concurrent number should > 0")
-    val models = this.originalModel.copy(supportedConcurrentNum)
-    models.map(this.modelQueue.offer(_))
+    require(this.concurrentNum > 0, "supported concurrent number should > 0")
+    autoScalingEnabled match {
+      case true =>
+      case false =>
+        val models = this.originalModel.copy(concurrentNum)
+        models.map(this.modelQueue.offer(_))
+    }
   }
 
   def getOriginalModel: AbstractModel = originalModel
 
   override def toString: String =
-    s"InferenceModel($supportedConcurrentNum, $originalModel, $modelQueue)"
+    s"InferenceModel($autoScalingEnabled, $concurrentNum, $originalModel, $modelQueue)"
+
+}
+
+object InferenceModel {
+  /**
+   * optimize TF model as OpenVINO IR
+   *
+   * @param modelPath              the path of the tensorflow model
+   * @param objectDetectionModelType  the type of the tensorflow model
+   * @param pipelineConfigPath     the path of the pipeline configure file
+   * @param extensionsConfigPath   the path of the extensions configure file
+   * @param outputDir              the output dir
+   */
+  def doOptimizeTF(modelPath: String,
+                   objectDetectionModelType: String,
+                   pipelineConfigPath: String,
+                   extensionsConfigPath: String,
+                   outputDir: String): Unit = {
+    OpenVinoInferenceSupportive.optimizeTFObjectDetectionModel(
+      modelPath, objectDetectionModelType, pipelineConfigPath, extensionsConfigPath, outputDir)
+  }
+
+  /**
+   * optimize TF model as OpenVINO IR
+   *
+   * @param modelPath              the path of the tensorflow model
+   * @param imageClassificationModelType  the type of the tensorflow model
+   * @param checkpointPath         the path of the tensorflow checkpoint file
+   * @param inputShape             input shape that should be fed to an input node(s) of the model
+   * @param ifReverseInputChannels the boolean value of if need reverse input channels.
+   *                               switch the input channels order from RGB to BGR (or vice versa).
+   * @param meanValues             all input values coming from original network inputs
+   *                               will be divided by this value.
+   * @param scale                  the scale value, to be used for the input image per channel.
+   * @param outputDir              the output dir
+   */
+  def doOptimizeTF(modelPath: String,
+                   imageClassificationModelType: String,
+                   checkpointPath: String,
+                   inputShape: Array[Int],
+                   ifReverseInputChannels: Boolean,
+                   meanValues: Array[Float],
+                   scale: Float,
+                   outputDir: String): Unit = {
+    OpenVinoInferenceSupportive.optimizeTFImageClassificationModel(
+      modelPath, imageClassificationModelType, checkpointPath, inputShape,
+      ifReverseInputChannels, meanValues, scale, outputDir)
+  }
+
+  /**
+   * calibrate tensorflow model
+   *
+   * @param modelPath            Path to an .xml file with a trained model
+   * @param networkType          Type of an inferred network,
+   *                             "C" to calibrate Classification,
+   *                             "OD" to calibrate Object Detection,
+   *                             "RawC" to collect only statistics for Classification,
+   *                             "RawOD" to collect only statistics for Object Detection
+   * @param validationFilePath   Path to a directory with validation images
+   * @param subset               Number of pictures from the whole validation set
+   *                             to create the calibration dataset.
+   * @param opencvLibPath        the lib path whwere libopencv_imgcodecs.so.4.0,
+   *                             libopencv_core.so.4.0
+   *                             and libopencv_imgproc.so.4.0 can be found
+   * @param outputDir            the output directory
+   */
+  def doCalibrateTF(modelPath: String,
+                    networkType: String,
+                    validationFilePath: String,
+                    subset: Int,
+                    opencvLibPath: String,
+                    outputDir: String): Unit = {
+    OpenVinoInferenceSupportive.calibrateTensorflowModel(
+      modelPath, networkType, validationFilePath, subset, opencvLibPath, outputDir)
+  }
 
 }

@@ -19,7 +19,7 @@ package com.intel.analytics.zoo.pipeline.inference
 import com.intel.analytics.zoo.pipeline.api.net.TFNet
 import com.intel.analytics.zoo.pipeline.inference.DeviceType.DeviceTypeEnumVal
 
-object InferenceModelFactory {
+object InferenceModelFactory extends InferenceSupportive {
 
   def loadFloatModel(modelPath: String): FloatModel = {
     loadFloatModel(modelPath, null)
@@ -29,13 +29,15 @@ object InferenceModelFactory {
   : FloatModel = {
     val model = ModelLoader.loadFloatModel(modelPath, weightPath)
     model.evaluate()
-    new FloatModel(model)
+    val metaModel = makeMetaModel(model)
+    new FloatModel(model, metaModel, true)
   }
 
   def loadFloatModelForCaffe(modelPath: String, weightPath: String): FloatModel = {
     val model = ModelLoader.loadFloatModelForCaffe(modelPath, weightPath)
     model.evaluate()
-    new FloatModel(model)
+    val metaModel = makeMetaModel(model)
+    new FloatModel(model, metaModel, true)
   }
 
   def loadFloatModelForTF(modelPath: String,
@@ -46,16 +48,44 @@ object InferenceModelFactory {
       interOpParallelismThreads, usePerSessionThreads)
     val model = ModelLoader.loadFloatModelForTF(modelPath, sessionConfig)
     model.evaluate()
-    new FloatModel(model)
+    val metaModel = makeMetaModel(model)
+    new FloatModel(model, metaModel, true)
   }
 
   def loadOpenVINOModelForTF(modelPath: String,
                              modelType: String,
                              pipelineConfigPath: String,
-                             extensionsConfigPath: String,
-                             deviceType: DeviceTypeEnumVal): OpenVINOModel = {
+                             extensionsConfigPath: String): OpenVINOModel = {
     OpenVinoInferenceSupportive.loadTensorflowModel(
-      modelPath, modelType, pipelineConfigPath, extensionsConfigPath, deviceType)
+      modelPath, modelType, pipelineConfigPath, extensionsConfigPath)
+  }
+
+  def loadOpenVINOModelForTF(modelPath: String,
+                             imageClassificationModelType: String,
+                             checkpointPath: String,
+                             inputShape: Array[Int],
+                             ifReverseInputChannels: Boolean,
+                             meanValues: Array[Float],
+                             scale: Float): OpenVINOModel = {
+    OpenVinoInferenceSupportive.loadTensorflowModel(modelPath, imageClassificationModelType,
+      checkpointPath, inputShape, ifReverseInputChannels, meanValues, scale)
+  }
+
+  def loadCalibratedOpenVINOModelForTF(modelPath: String,
+                                       modelType: String,
+                                       checkpointPath: String,
+                                       inputShape: Array[Int],
+                                       ifReverseInputChannels: Boolean,
+                                       meanValues: Array[Float],
+                                       scale: Float,
+                                       networkType: String,
+                                       validationFilePath: String,
+                                       subset: Int,
+                                       opencvLibPath: String): OpenVINOModel = {
+    OpenVinoInferenceSupportive.loadTensorflowModelAsCalibrated(
+      modelPath, modelType, checkpointPath,
+      inputShape, ifReverseInputChannels, meanValues, scale,
+      networkType, validationFilePath, subset, opencvLibPath)
   }
 
   def loadOpenVINOModelForIR(modelFilePath: String,

@@ -23,7 +23,9 @@ import com.intel.analytics.bigdl.nn.abstractnn.{AbstractCriterion, AbstractModul
 import com.intel.analytics.bigdl.optim._
 import com.intel.analytics.bigdl.python.api.{PythonBigDLKeras, Sample => JSample}
 import com.intel.analytics.bigdl.tensor.{Storage, Tensor}
+import com.intel.analytics.bigdl.transform.vision.image.{FeatureTransformer, ImageFeature}
 import com.intel.analytics.bigdl.utils.T
+import com.intel.analytics.zoo.feature.image.ImageProcessing
 import com.intel.analytics.zoo.pipeline.api.keras.metrics.{Accuracy, BinaryAccuracy, CategoricalAccuracy, SparseCategoricalAccuracy}
 import org.apache.spark.api.java.JavaRDD
 import org.apache.spark.rdd.RDD
@@ -252,18 +254,15 @@ class TFValidationMethod(val valMethod: ValidationMethod[Float],
   }
 }
 
-class MergeFeatureLabel() extends Transformer[Sample[Float], Sample[Float]] {
-  override def apply(prev: Iterator[Sample[Float]]): Iterator[Sample[Float]] = {
-    new Iterator[Sample[Float]] {
+class MergeFeatureLabel() extends ImageProcessing {
 
-      override def hasNext: Boolean = prev.hasNext
-
-      override def next(): Sample[Float] = {
-        val oldSample = prev.next()
-        val newSize = oldSample.getFeatureSize() ++ oldSample.getLabelSize()
-        Sample(oldSample.getData(), newSize, null)
-      }
-    }
+  override def transform(feature: ImageFeature): ImageFeature = {
+    val oldSample = feature[Sample[Float]](ImageFeature.sample)
+    val newSize = oldSample.getFeatureSize() ++ oldSample.getLabelSize()
+    val newSample = Sample(oldSample.getData(), newSize, null)
+    val newFeature = new ImageFeature()
+    newFeature(ImageFeature.sample) = newSample
+    newFeature
   }
 }
 

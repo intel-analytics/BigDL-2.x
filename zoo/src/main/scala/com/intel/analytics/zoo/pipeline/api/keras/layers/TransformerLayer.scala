@@ -47,7 +47,7 @@ import scala.reflect.ClassTag
  * @param intermediateSize The size of the "intermediate" (i.e., conv1d)
  * @param inputShape input shape, default is null
  */
-class TransformerLayer[T: ClassTag](
+private[layers] class TransformerLayer[T: ClassTag](
   val nBlock: Int,
   val hiddenPDrop: Double,
   val attnPDrop: Double,
@@ -82,9 +82,11 @@ class TransformerLayer[T: ClassTag](
       modelOutput(i) = output
     }
 
+    val output = pooler(modelOutput.last, hiddenSize)
+
     val model = if (outputAllBlock) {
-      Model(inputs.toArray, modelOutput)
-    } else Model(inputs.toArray, modelOutput.last)
+      Model(inputs.toArray, modelOutput :+ output)
+    } else Model(inputs.toArray, Array(modelOutput.last, output))
 
     model.asInstanceOf[AbstractModule[Activity, Activity, T]]
   }
@@ -192,6 +194,12 @@ class TransformerLayer[T: ClassTag](
     val sizes = p.getOutputShape().toSingle().toArray
     Reshape(sizes.drop(1).dropRight(2) ++ Array(sizes.last * sizes(sizes.length - 2))).from(p)
   }
+
+  def pooler(x: Variable[T], hiddenSize: Int): Variable[T] = {
+    val firstToken = Select(1, 0).from(x)
+    val poolerOutput = Dense(hiddenSize).from(firstToken)
+    Activation[Float]("tanh").from(poolerOutput)
+  }
 }
 
 object TransformerLayer {
@@ -221,15 +229,16 @@ object TransformerLayer {
     initializerRange: Double = 0.02,
     bidirectional: Boolean = false,
     outputAllBlock: Boolean = false)(implicit ev: TensorNumeric[T]): TransformerLayer[T] = {
-    require(hiddenSize > 0, "hiddenSize must be great" +
+    require(hiddenSize > 0, "hiddenSize must be greater" +
       "than 0 with default embedding layer")
     val wordInput = InputLayer[T](inputShape = Shape(seqLen))
     val postionInput = InputLayer[T](inputShape = Shape(seqLen))
+    val initEmbeddingW = Tensor[T](vocab, hiddenSize).randn(0.0, initializerRange)
     val embeddingLayer = Sequential[T]()
       .add(Merge(layers = List(wordInput, postionInput), mode = "concat"))
       .add(Reshape(Array(seqLen * 2)))
       .add(new Embedding(vocab, hiddenSize, inputShape = Shape(seqLen * 2),
-        init = RandomNormal(0.0, initializerRange)))
+        initWeights = initEmbeddingW))
       .add(Dropout(embeddingDrop))
       .add(Reshape(Array(seqLen, 2, hiddenSize)))
       .add(new KerasLayerWrapper[T](bnn.Sum[T](dimension = 3,
