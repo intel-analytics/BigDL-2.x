@@ -67,7 +67,7 @@ object StreamingInferenceObjectDetection {
       val model = new InferenceModel(1)
 
       model.doLoad(params.model)
-      // TODO Load labelMap, need API help
+
       val labelMap = LabelReader.apply("COCO")
 
       val lines = ssc.textFileStream(params.streamingPath)
@@ -111,10 +111,10 @@ object StreamingInferenceObjectDetection {
   }
 
   /**
-    * Read image files from local or remote filgde system
-    * @param path file path
-    * @return ByteRecord
-    */
+   * Read image files from local or remote file system
+   * @param path file path
+   * @return ImageFeature
+   */
   def readFile(path: String): ImageFeature = {
     val fspath = new Path(path)
     logger.info("Read image file " + path)
@@ -129,11 +129,12 @@ object StreamingInferenceObjectDetection {
   }
 
   /**
-    * Write image file to local or remote file system
-    * @param outPath output dir
-    * @param path input file path
-    * @param content file content
-    */
+   * Write image file to local or remote file system
+   * @param outPath accessible output dir. Output file will be
+   *                {outPath}/detection_{path}
+   * @param path    original image path
+   * @param content image Array[byte]
+   */
   def writeFile(outPath: String, path: String, content: Array[Byte]): Unit = {
     val fspath = getOutPath(outPath, path, "jpg")
     logger.info("Writing image file " + fspath.toString)
@@ -146,12 +147,12 @@ object StreamingInferenceObjectDetection {
   }
 
   /**
-    * Generate final file path for predicted images
-    * @param outPath
-    * @param path
-    * @param encoding
-    * @return
-    */
+   * Generate final file path for predicted images
+   * @param outPath  accessible output dir
+   * @param path     original image path
+   * @param encoding image encoding, e.g., JPG
+   * @return Final file path, e.g., {outPath}/detection_{path}
+   */
   private def getOutPath(outPath: String, path: String, encoding: String): Path = {
     val finalName = s"detection_${ path.substring(path.lastIndexOf("/") + 1,
       path.lastIndexOf(".")) }.${encoding}"
