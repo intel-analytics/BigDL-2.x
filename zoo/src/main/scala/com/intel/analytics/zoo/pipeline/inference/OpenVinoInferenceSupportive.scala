@@ -33,8 +33,21 @@ class OpenVinoInferenceSupportive {
                              weightFilePath: String,
                              deviceTypeValue: Int): Long
 
+  @native def loadOpenVinoIRInt8(modelFilePath: String,
+                                 weightFilePath: String,
+                                 deviceTypeValue: Int,
+                                 batchSize: Int): Long
+
   @native def predict(executableNetworkReference: Long,
                       data: Array[Float],
+                      shape: Array[Int]): JTensor
+
+  @native def predictInt8(executableNetworkReference: Long,
+                      data: Array[Float],
+                      shape: Array[Int]): JTensor
+
+  @native def predictInt8(executableNetworkReference: Long,
+                      data: Array[Byte],
                       shape: Array[Int]): JTensor
 
   @native def releaseOpenVINOIR(executableNetworkReference: Long): Unit
