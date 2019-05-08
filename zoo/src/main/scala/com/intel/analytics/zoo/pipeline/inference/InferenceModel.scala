@@ -268,7 +268,7 @@ class InferenceModel(private var autoScalingEnabled: Boolean = true,
    * @param modelPath  the path of openvino ir xml file
    * @param weightPath the path of openvino ir bin file
    */
-  def doLoadOpenVINO(modelPath: String, weightPath: String, batchSize: Int): Unit = {
+  def doLoadOpenVINOInt8(modelPath: String, weightPath: String, batchSize: Int): Unit = {
     if (concurrentNum > 1) {
       InferenceSupportive.logger.warn(s"concurrentNum is $concurrentNum > 1, " +
         s"openvino model does not support shared weights model copies")
@@ -469,7 +469,7 @@ class InferenceModel(private var autoScalingEnabled: Boolean = true,
   private def predictInt8(inputActivity: Activity): Activity = {
     val model: AbstractModel = retrieveModel()
     try {
-      model.asInstanceOf[OpenVINOModel].predict(inputActivity)
+      model.asInstanceOf[OpenVINOModel].predictInt8(inputActivity)
     } finally {
       model match {
         case null =>
