@@ -428,6 +428,20 @@ object OpenVinoInferenceSupportive extends InferenceSupportive {
     }
   }
 
+  def loadOpenVinoIRInt8(modelFilePath: String,
+                         weightFilePath: String,
+                         deviceType: DeviceTypeEnumVal,
+                         batchSize: Int): OpenVINOModel = {
+    timing("load openvino IR Int8") {
+      val supportive: OpenVinoInferenceSupportive = new OpenVinoInferenceSupportive()
+      val executableNetworkReference: Long =
+        supportive.loadOpenVinoIRInt8(modelFilePath, weightFilePath,
+          deviceType.value, batchSize)
+      new OpenVINOModel(executableNetworkReference, supportive)
+    }
+  }
+
+
   def load(path: String): Unit = {
     logger.info(s"start to load library: $path.")
     val inputStream = OpenVinoInferenceSupportive.getClass.getResourceAsStream(s"/${path}")
