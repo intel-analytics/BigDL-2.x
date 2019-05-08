@@ -393,7 +393,7 @@ class InferenceModel(private var autoScalingEnabled: Boolean = true,
    * @param inputs the input tensor with batch
    * @return the output tensor with batch
    */
-  def doPredict(inputs: JList[JList[JTensor]]): JList[JList[JTensor]] = {
+  def doPredictInt8(inputs: JList[JList[JTensor]]): JList[JList[JTensor]] = {
     timing(s"model predict for batch ${inputs.size()}") {
       val batchSize = inputs.size()
       require(batchSize > 0, "inputs size should > 0")
