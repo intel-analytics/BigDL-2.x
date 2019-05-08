@@ -50,7 +50,7 @@ class TransformerSpec extends FlatSpec with Matchers{
     val cropped_image = cropper.transform(imageClone)
 
     // compare chain transformer result with torch result
-    val dstTorch = Tensor[Double](Array[Double](0.0	, 0.0, 0.29262194, 0.4249478, 0.31712994,
+    val dstTorch = Tensor[Double](Array[Double](0.0, 0.0, 0.29262194, 0.4249478, 0.31712994,
       0.09275303, 0.08961805, 0.0, 0.0, 0.0, 0.0, 0.29755187, 0.32578096, 0.5626346, 0.4365354,
       0.40343443, 0.41490048, 0.32817173, 0.22530137, 0.0, 0.0, 0.4672376, 0.4677945, 0.70909166,
       0.50209534, 0.6593656, 0.91172934, 0.7242027, 0.37856963, 0.39695457, 0.12731975, 0.66596985,
