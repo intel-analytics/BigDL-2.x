@@ -62,7 +62,7 @@ class ImageSetToSample[T: ClassTag](inputKeys: Array[String] = Array(ImageFeatur
             Some(target.asInstanceOf[Tensor[T]])
           }
           else {
-            logger.warn(s"The ImageFeature doesn't contain targetKey $key, ignoring it")
+            logger.debug(s"The ImageFeature doesn't contain targetKey $key, ignoring it")
             None
           }
         })
