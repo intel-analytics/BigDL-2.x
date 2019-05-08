@@ -69,6 +69,8 @@ object Perf {
         iteration += 1
       }
 
+      // mkldnn model would forward a fixed batch size.
+      // Thus need a new model to test for latency.
       val model2 = ImageClassifier.loadModel[Float](param.model)
       model2.setEvaluateStatus()
 
