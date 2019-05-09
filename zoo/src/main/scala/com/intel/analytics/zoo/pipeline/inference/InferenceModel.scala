@@ -469,7 +469,10 @@ class InferenceModel(private var autoScalingEnabled: Boolean = true,
   private def predictInt8(inputActivity: Activity): Activity = {
     val model: AbstractModel = retrieveModel()
     try {
-      model.asInstanceOf[OpenVINOModel].predictInt8(inputActivity)
+      model.predictInt8(inputActivity)
+    } catch {
+      case e: RuntimeException =>
+        throw new InferenceRuntimeException("Model doesn't support PredictInt8", e);
     } finally {
       model match {
         case null =>
@@ -486,7 +489,10 @@ class InferenceModel(private var autoScalingEnabled: Boolean = true,
   private def predictInt8(inputs: JList[JList[JTensor]]): JList[JList[JTensor]] = {
     val model: AbstractModel = retrieveModel()
     try {
-      model.asInstanceOf[OpenVINOModel].predictInt8(inputs)
+      model.predictInt8(inputs)
+    } catch {
+      case e: RuntimeException =>
+        throw new InferenceRuntimeException("Model doesn't support PredictInt8", e);
     } finally {
       model match {
         case null =>
