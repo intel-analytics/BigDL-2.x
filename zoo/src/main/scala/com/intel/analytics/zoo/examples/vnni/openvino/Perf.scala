@@ -58,13 +58,15 @@ object Perf {
     parser.parse(args, ResNet50PerfParams()).foreach { param =>
       val batchSize = param.batchSize
       val numBatch = param.numBatch
+      val iteration = param.iteration
       val batchInput = Tensor(Array(numBatch, batchSize, 3, 224, 224)).rand()
       Engine.init
 
       val model = new InferenceModel(1)
        model.doLoadOpenVINO(param.model, param.weight)
 
-      /*val predictStart = System.nanoTime()
+      /*
+      val predictStart = System.nanoTime()
       val threads = List.range(0, param.iteration).map(_ => {
         new Thread() {
           override def run(): Unit = {
@@ -73,14 +75,22 @@ object Perf {
         }
       })
       threads.foreach(_.start())
-      threads.foreach(_.join())*/
+      threads.foreach(_.join())
+      */
+
       val predictStart = System.nanoTime()
-      List.range(0, param.iteration).map(_ => {
+      var averageLatency = 0L
+      List.range(0, iteration).foreach { _ =>
+        val start = System.nanoTime()
         model.doPredict(batchInput)
-      })
+        val latency = System.nanoTime() - start
+        averageLatency += latency
+        logger.info(s"Iteration $iteration latency is ${latency / 1e6} ms")
+      }
       val totalTimeUsed = System.nanoTime() - predictStart
-      val totalThroughput = "%.2f".format(batchSize * param.iteration
+      val totalThroughput = "%.2f".format(batchSize * iteration
         * numBatch.toFloat / (totalTimeUsed / 1e9))
+      logger.info(s"Average latency for iteration is ${averageLatency / iteration / 1e6} imgs/sec")
       logger.info(s"Takes $totalTimeUsed ns, throughput is $totalThroughput imgs/sec")
     }
   }

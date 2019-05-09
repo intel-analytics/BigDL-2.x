@@ -16,14 +16,14 @@
 
 package com.intel.analytics.zoo.examples.vnni.openvino
 
-import com.intel.analytics.bigdl.dataset.SampleToMiniBatch
 import com.intel.analytics.bigdl.utils.LoggerFilter
 import com.intel.analytics.zoo.common.NNContext
 import com.intel.analytics.bigdl.numeric.NumericFloat
-import com.intel.analytics.zoo.feature.image.{ImageBytesToMat, ImageMatToTensor, ImageSet, ImageSetToSample}
+import com.intel.analytics.bigdl.tensor.Tensor
+import com.intel.analytics.bigdl.transform.vision.image.ImageFeature
+import com.intel.analytics.zoo.feature.image.{ImageCenterCrop, ImageMatToTensor, ImageResize, ImageSet, ImageSetToSample}
 import com.intel.analytics.zoo.pipeline.inference.InferenceModel
 import org.apache.log4j.{Level, Logger}
-import org.opencv.imgcodecs.Imgcodecs
 import scopt.OptionParser
 
 
@@ -58,23 +58,25 @@ object ImageNetInference {
         .text("batch size")
         .action((x, c) => c.copy(batchSize = x))
     }
-    parser.parse(args, ImageNetInferenceParams()).map(param => {
+    parser.parse(args, ImageNetInferenceParams()).foreach(param => {
       val sc = NNContext.initNNContext("ImageNet2012 with Int8 Inference Example")
-      val images = ImageSet.read(param.folder, sc)
+
       val model = new InferenceModel(1)
       model.doLoadOpenVINO(param.model, param.weight)
 
-      val input = images ->
-        ImageBytesToMat(imageCodec = Imgcodecs.CV_LOAD_IMAGE_COLOR) ->
-        ImageMatToTensor() ->
-        ImageSetToSample()
-      val batched = input.toDataSet() -> SampleToMiniBatch(param.batchSize)
+      val images = ImageSet.read(param.folder, sc)
+      val inputs = images ->
+        ImageResize(256, 256) ->
+        ImageCenterCrop(224, 224) ->
+        ImageMatToTensor()
+//      val batched = input.toDataSet() -> SampleToMiniBatch(param.batchSize)
 
+      logger.debug("Begin Prediction")
       val start = System.nanoTime()
-      batched.toDistributed().data(false).foreach { batch =>
-        model.doPredict(batch.getInput())
+      inputs.toDistributed().rdd.map { img =>
+        model.doPredict(img.apply[Tensor[Float]](ImageFeature.imageTensor)
+          .addSingletonDimension())
       }
-      // TODO Evaluation ACC
       val timeUsed = System.nanoTime() - start
       val throughput = "%.2f".format(images.toDistributed().rdd.count().toFloat / (timeUsed / 1e9))
       logger.info(s"Takes $timeUsed ns, throughput is $throughput imgs/sec")
