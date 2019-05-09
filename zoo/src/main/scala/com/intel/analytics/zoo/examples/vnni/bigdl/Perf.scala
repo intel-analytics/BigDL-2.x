@@ -25,7 +25,7 @@ import scopt.OptionParser
 
 case class PerfParams(model: String = "",
                       batchSize: Int = 32,
-                      iteration: Int = 200)
+                      iteration: Int = 1000)
 
 object Perf {
 
