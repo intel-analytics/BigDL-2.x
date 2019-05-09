@@ -16,11 +16,12 @@ This folder contains three examples for BigDL VNNI support:
 __Remarks:__
 - If you are using an int8 quantized model pre-trained in Analytics Zoo, you can find the following info in console log:
 ```
-INFO  ImageModel$:133 - Loading an int8 convertible model. Quantize to an int8 model for better performance
+INFO  ImageModel$:132 - Loading an int8 convertible model. Quantize to an int8 model for better performance
 ```
 - You may need to enlarge memory configurations depending on the size of your input data.
 - You can set `-Dbigdl.mklNumThreads` if necessary.
 
+---
 ### Predict
 This example runs in local mode and demonstrates how to do image classification with the pre-trained int8 model.
 
@@ -48,6 +49,7 @@ INFO  Predict$:66 - 	 class: German shepherd, German shepherd dog, German police
 INFO  Predict$:66 - 	 class: Doberman, Doberman pinscher, credit: 8.323631E-4
 ```
 
+---
 ### ImageNetEvaluation
 This example evaluates the pre-trained int8 model using Hadoop SequenceFiles of ImageNet no-resize images.
 
@@ -77,7 +79,7 @@ Top1Accuracy is Accuracy(correct: 37912, count: 50000, accuracy: 0.75824)
 Top5Accuracy is Accuracy(correct: 46332, count: 50000, accuracy: 0.92664)
 ```
 
-
+---
 ### Perf
 This example runs in local mode and calculates performance data (i.e. throughput and latency) for the pre-trained int8 model using dummy input.
 
