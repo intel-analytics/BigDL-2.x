@@ -27,10 +27,8 @@ case class PredictParams(folder: String = "./",
                          topN: Int = 5)
 
 object Predict {
-  Logger.getLogger("org").setLevel(Level.ERROR)
-  Logger.getLogger("akka").setLevel(Level.ERROR)
-  Logger.getLogger("breeze").setLevel(Level.ERROR)
-  Logger.getLogger("com.intel.analytics.zoo").setLevel(Level.INFO)
+  Logger.getLogger("com.intel.analytics.bigdl.transform.vision").setLevel(Level.ERROR)
+  Logger.getLogger("com.intel.analytics.zoo.feature.image").setLevel(Level.ERROR)
 
   val logger: Logger = Logger.getLogger(getClass)
 
@@ -54,11 +52,12 @@ object Predict {
       Engine.init
       val images = ImageSet.read(param.folder)
       val model = ImageClassifier.loadModel[Float](param.model)
+      logger.info(s"Start inference on images under ${param.folder}...")
       val output = model.predictImageSet(images)
       val labelOutput = LabelOutput(model.getConfig().labelMap, probAsOutput = false)
       val results = labelOutput(output).toLocal().array
 
-      logger.info(s"Prediction results")
+      logger.info(s"Prediction results:")
       results.foreach(imageFeature => {
         logger.info(s"image: ${imageFeature.uri}, top ${param.topN}")
         val classes = imageFeature("classes").asInstanceOf[Array[String]]
@@ -67,7 +66,7 @@ object Predict {
           logger.info(s"\t class: ${classes(i)}, credit: ${probs(i)}")
         }
       })
-      logger.info(s"Prediction finished")
+      logger.info(s"Prediction finished.")
     })
   }
 }

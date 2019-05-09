@@ -62,7 +62,8 @@ class ImageSetToSample[T: ClassTag](inputKeys: Array[String] = Array(ImageFeatur
             Some(target.asInstanceOf[Tensor[T]])
           }
           else {
-            logger.debug(s"The ImageFeature doesn't contain targetKey $key, ignoring it")
+            // You are safe to ignore this warning if you are doing inference.
+            logger.warn(s"The ImageFeature doesn't contain targetKey $key, ignoring it")
             None
           }
         })
@@ -74,7 +75,7 @@ class ImageSetToSample[T: ClassTag](inputKeys: Array[String] = Array(ImageFeatur
       case e: Exception =>
         e.printStackTrace()
         val uri = feature.uri()
-        logger.warn(s"The conversion from ImageFeature to Sample fails for $uri")
+        logger.error(s"The conversion from ImageFeature to Sample fails for $uri")
         feature(ImageFeature.originalSize) = (-1, -1, -1)
         feature.isValid = false
     }
