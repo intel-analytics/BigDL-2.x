@@ -59,7 +59,7 @@ object ImageNetEvaluation {
       // total batchSize we calculate (partitionNum * batchPerPartition) would be
       // too large for inference.
       // mkldnn runs a single model and single partition on a single node.
-      if (images.rdd.partitions.length != param.partitionNum) {
+      if (images.rdd.partitions.length > param.partitionNum) {
         images.rdd = images.rdd.coalesce(param.partitionNum, shuffle = false)
       }
       val model = ImageClassifier.loadModel[Float](param.model)
