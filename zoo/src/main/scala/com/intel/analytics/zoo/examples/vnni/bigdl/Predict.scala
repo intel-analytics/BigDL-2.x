@@ -16,7 +16,7 @@
 
 package com.intel.analytics.zoo.examples.vnni.bigdl
 
-import com.intel.analytics.zoo.common.NNContext
+import com.intel.analytics.bigdl.utils.Engine
 import com.intel.analytics.zoo.feature.image.ImageSet
 import com.intel.analytics.zoo.models.image.imageclassification.{ImageClassifier, LabelOutput}
 import org.apache.log4j.{Level, Logger}
@@ -24,19 +24,17 @@ import scopt.OptionParser
 
 case class PredictParams(folder: String = "./",
                          model: String = "",
-                         topN: Int = 5,
-                         partitionNum: Int = 4)
+                         topN: Int = 5)
 
 object Predict {
-  Logger.getLogger("org").setLevel(Level.ERROR)
-  Logger.getLogger("akka").setLevel(Level.ERROR)
-  Logger.getLogger("breeze").setLevel(Level.ERROR)
-  Logger.getLogger("com.intel.analytics.zoo").setLevel(Level.INFO)
+  Logger.getLogger("com.intel.analytics.bigdl.transform.vision").setLevel(Level.ERROR)
+  Logger.getLogger("com.intel.analytics.zoo.feature.image").setLevel(Level.ERROR)
 
   val logger: Logger = Logger.getLogger(getClass)
 
   def main(args: Array[String]): Unit = {
     System.setProperty("bigdl.engineType", "mkldnn")
+    System.setProperty("bigdl.localMode", "true")
     val parser = new OptionParser[PredictParams]("ResNet50 Int8 Inference Example") {
       opt[String]('f', "folder")
         .text("The path to the image data")
@@ -49,30 +47,26 @@ object Predict {
       opt[Int]("topN")
         .text("top N number")
         .action((x, c) => c.copy(topN = x))
-      opt[Int]("partitionNum")
-        .text("The number of partitions to cut the dataset into")
-        .action((x, c) => c.copy(partitionNum = x))
     }
     parser.parse(args, PredictParams()).map(param => {
-      val sc = NNContext.initNNContext("ResNet50 Int8 Inference Example")
+      Engine.init
       val images = ImageSet.read(param.folder)
       val model = ImageClassifier.loadModel[Float](param.model)
+      logger.info(s"Start inference on images under ${param.folder}...")
       val output = model.predictImageSet(images)
-      val labelOutput = LabelOutput(model.getConfig().labelMap, "clses",
-        "probs", probAsInput = false)
-      val result = labelOutput(output).toLocal().array
+      val labelOutput = LabelOutput(model.getConfig().labelMap, probAsOutput = false)
+      val results = labelOutput(output).toLocal().array
 
-      logger.info(s"Prediction result")
-      result.foreach(imageFeature => {
-        logger.info(s"image : ${imageFeature.uri}, top ${param.topN}")
-        val clses = imageFeature("clses").asInstanceOf[Array[String]]
+      logger.info(s"Prediction results:")
+      results.foreach(imageFeature => {
+        logger.info(s"image: ${imageFeature.uri}, top ${param.topN}")
+        val classes = imageFeature("classes").asInstanceOf[Array[String]]
         val probs = imageFeature("probs").asInstanceOf[Array[Float]]
         for (i <- 0 until param.topN) {
-          logger.info(s"\t class: ${clses(i)}, credit: ${probs(i)}")
+          logger.info(s"\t class: ${classes(i)}, credit: ${probs(i)}")
         }
       })
-
-      sc.stop()
+      logger.info(s"Prediction finished.")
     })
   }
 }

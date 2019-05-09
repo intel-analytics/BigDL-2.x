@@ -25,20 +25,21 @@ import com.intel.analytics.zoo.models.image.imageclassification.ImageClassifier
 import org.apache.log4j.{Level, Logger}
 import scopt.OptionParser
 
-case class ImageNetInferenceParams(folder: String = "./",
-                                   model: String = "",
-                                   batchSize: Int = 128)
+case class ImageNetEvaluationParams(folder: String = "./",
+                                    model: String = "",
+                                    partitionNum: Int = 32)
 
-object ImageNetInference {
+object ImageNetEvaluation {
   LoggerFilter.redirectSparkInfoLogs()
   Logger.getLogger("com.intel.analytics.bigdl.optim").setLevel(Level.INFO)
+  Logger.getLogger("com.intel.analytics.bigdl.transform.vision").setLevel(Level.ERROR)
 
   val logger: Logger = Logger.getLogger(getClass)
 
   def main(args: Array[String]): Unit = {
     System.setProperty("bigdl.engineType", "mkldnn")
 
-    val parser = new OptionParser[ImageNetInferenceParams]("ImageNet Int8 Inference Example") {
+    val parser = new OptionParser[ImageNetEvaluationParams]("ImageNet Int8 Inference Example") {
       opt[String]('f', "folder")
         .text("The folder path that contains ImageNet no-resize sequence files")
         .action((x, c) => c.copy(folder = x))
@@ -47,17 +48,26 @@ object ImageNetInference {
         .text("The path to the pre-trained int8 ResNet50 model snapshot")
         .action((x, c) => c.copy(model = x))
         .required()
-      opt[Int]('b', "batchSize")
-        .text("The total batch size for inference")
-        .action((x, c) => c.copy(batchSize = x))
+      opt[Int]("partitionNum")
+        .text("Dataset partition number")
+        .action((x, c) => c.copy(partitionNum = x))
     }
-    parser.parse(args, ImageNetInferenceParams()).map(param => {
+    parser.parse(args, ImageNetEvaluationParams()).map(param => {
       val sc = NNContext.initNNContext("ImageNet2012 with Int8 Inference Example")
-      val images = ImageSet.readSequenceFiles(param.folder, sc)
+      val images = ImageSet.readSequenceFiles(param.folder, sc, param.partitionNum)
+      // If the actual partitionNum of sequence files is too large, then the
+      // total batchSize we calculate (partitionNum * batchPerPartition) would be
+      // too large for inference.
+      // mkldnn runs a single model and single partition on a single node.
+      if (images.rdd.partitions.length != param.partitionNum) {
+        images.rdd = images.rdd.coalesce(param.partitionNum, shuffle = false)
+      }
       val model = ImageClassifier.loadModel[Float](param.model)
+      logger.info(s"Start evaluation on dataset under ${param.folder}...")
       val result = model.evaluateImageSet(images,
-        Array(new Top1Accuracy[Float], new Top5Accuracy[Float]), param.batchSize)
+        Array(new Top1Accuracy[Float], new Top5Accuracy[Float]))
       result.foreach(r => println(s"${r._2} is ${r._1}"))
+      logger.info("Evaluation finished.")
       sc.stop()
     })
   }
