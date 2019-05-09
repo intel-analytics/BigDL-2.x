@@ -41,7 +41,7 @@ object Predict {
         .action((x, c) => c.copy(folder = x))
         .required()
       opt[String]('m', "model")
-        .text("The path to the int8 model")
+        .text("The path to the downloaded int8 model snapshot")
         .action((x, c) => c.copy(model = x))
         .required()
       opt[Int]("topN")

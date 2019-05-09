@@ -22,35 +22,30 @@ INFO  ImageModel$:133 - Loading an int8 convertible model. Quantize to an int8 m
 - You can set `-Dbigdl.mklNumThreads` if necessary.
 
 ### Predict
-This example demonstrates how to do image classification with the pre-trained int8 model.
+This example runs in local mode and demonstrates how to do image classification with the pre-trained int8 model.
 
 ```bash
 export SPARK_HOME=the root directory of Spark
 export ANALYTICS_ZOO_HOME=the folder where you extract the downloaded Analytics Zoo zip package
-MASTER=local[*]
 imagePath=the folder path containing images
 modelPath=the path to the downloaded int8 model
 
-${ANALYTICS_ZOO_HOME}/bin/spark-shell-with-zoo.sh \
-    --master ${MASTER} \
-    --class com.intel.analytics.zoo.examples.vnni.bigdl.Predict \
-    -f ${imagePath} -m ${modelPath}
+java -cp ${ANALYTICS_ZOO_JAR}:${SPARK_HOME}/jars/* com.intel.analytics.zoo.examples.vnni.bigdl.Predict -f ${imagePath} -m ${modelPath}
 ```
 
 __Options:__
 - `-f` `--folder`: The folder path that contains images for prediction.
 - `-m` `--model`: The path to the downloaded int8 model.
 - `--topN`: The top N classes with highest probabilities as output. Default is 5.
-- `--partitionNum`: The number of partitions to cut the dataset into. Default is 4.
 
 __Sample console log output__:
 ```
-INFO  Predict$:67 - image : 1.jpg, top 5
-INFO  Predict$:71 - 	 class: kelpie, credit: 0.96370447
-INFO  Predict$:71 - 	 class: Rottweiler, credit: 0.026292335
-INFO  Predict$:71 - 	 class: Eskimo dog, husky, credit: 0.0019479054
-INFO  Predict$:71 - 	 class: German shepherd, German shepherd dog, German police dog, alsatian, credit: 0.001165287
-INFO  Predict$:71 - 	 class: Doberman, Doberman pinscher, credit: 8.323631E-4
+INFO  Predict$:62 - image : 1.jpg, top 5
+INFO  Predict$:66 - 	 class: kelpie, credit: 0.96370447
+INFO  Predict$:66 - 	 class: Rottweiler, credit: 0.026292335
+INFO  Predict$:66 - 	 class: Eskimo dog, husky, credit: 0.0019479054
+INFO  Predict$:66 - 	 class: German shepherd, German shepherd dog, German police dog, alsatian, credit: 0.001165287
+INFO  Predict$:66 - 	 class: Doberman, Doberman pinscher, credit: 8.323631E-4
 ```
 
 ### ImageNetEvaluation
@@ -74,13 +69,12 @@ ${ANALYTICS_ZOO_HOME}/bin/spark-shell-with-zoo.sh \
 __Options:__
 - `-f` `--folder`: The folder path that contains sequence files of ImageNet no-resize images for evaluation.
 - `-m` `--model`: The path to the downloaded int8 model.
-- `-b` `--batchSize`: The total batch size for evaluation. Default is 128.
-- `--partitionNum`: The number of partitions to cut the dataset into. Default is 4.
+- `--partitionNum`: The partition number of the dataset. Default is 32.
 
 __Sample console log output__:
 ```
-Top1Accuracy is Accuracy(correct: 1387, count: 1806, accuracy: 0.7679955703211517)
-Top5Accuracy is Accuracy(correct: 1672, count: 1806, accuracy: 0.9258028792912514)
+Top1Accuracy is Accuracy(correct: 37912, count: 50000, accuracy: 0.75824)
+Top5Accuracy is Accuracy(correct: 46332, count: 50000, accuracy: 0.92664)
 ```
 
 
@@ -99,7 +93,7 @@ java -cp ${ANALYTICS_ZOO_JAR}:${SPARK_HOME}/jars/* com.intel.analytics.zoo.examp
 __Options:__
 - `-m` `--model`: The path to the downloaded int8 model.
 - `-b` `--batchSize`: The batch size of input data. Default is 32.
-- `-i` `--iteration`: The number of iterations to run the performance test. Default is 200. The result will be the average of each iteration time cost.
+- `-i` `--iteration`: The number of iterations to run the performance test. Default is 1000. The result will be the average of each iteration time cost.
 
 __Sample console log output__:
 ```
@@ -108,8 +102,8 @@ INFO  Perf$:67 - Iteration 796, batch 64, takes 29802474 ns, throughput is 2147.
 INFO  Perf$:67 - Iteration 797, batch 64, takes 30284076 ns, throughput is 2113.32 imgs/sec
 INFO  Perf$:67 - Iteration 798, batch 64, takes 29884174 ns, throughput is 2141.60 imgs/sec
 ......
-INFO  Perf$:80 - Iteration 928, latency for a single image is 1.683318 ms
-INFO  Perf$:80 - Iteration 929, latency for a single image is 1.748185 ms
-INFO  Perf$:80 - Iteration 930, latency for a single image is 1.622709 ms
+INFO  Perf$:82 - Iteration 928, latency for a single image is 1.683318 ms
+INFO  Perf$:82 - Iteration 929, latency for a single image is 1.748185 ms
+INFO  Perf$:82 - Iteration 930, latency for a single image is 1.622709 ms
 ......
 ```

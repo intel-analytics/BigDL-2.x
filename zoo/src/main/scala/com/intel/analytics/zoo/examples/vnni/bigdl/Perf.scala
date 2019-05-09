@@ -37,7 +37,7 @@ object Perf {
 
     val parser = new OptionParser[PerfParams]("ResNet50 Int8 Performance Test") {
       opt[String]('m', "model")
-        .text("The path to the pre-trained int8 ResNet50 model snapshot")
+        .text("The path to the downloaded int8 model snapshot")
         .action((v, p) => p.copy(model = v))
         .required()
       opt[Int]('b', "batchSize")

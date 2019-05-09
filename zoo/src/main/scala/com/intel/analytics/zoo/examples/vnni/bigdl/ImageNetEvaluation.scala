@@ -45,11 +45,11 @@ object ImageNetEvaluation {
         .action((x, c) => c.copy(folder = x))
         .required()
       opt[String]('m', "model")
-        .text("The path to the pre-trained int8 ResNet50 model snapshot")
+        .text("The path to the downloaded int8 model snapshot")
         .action((x, c) => c.copy(model = x))
         .required()
       opt[Int]("partitionNum")
-        .text("Dataset partition number")
+        .text("The partition number of the dataset")
         .action((x, c) => c.copy(partitionNum = x))
     }
     parser.parse(args, ImageNetEvaluationParams()).map(param => {
