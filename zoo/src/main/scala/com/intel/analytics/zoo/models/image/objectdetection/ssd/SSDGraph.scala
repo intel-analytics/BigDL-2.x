@@ -147,20 +147,18 @@ object SSDGraph {
       (conf, loc, priors)
     }
 
-    val out1 = Array(loc, conf, priors)
-    val model = Graph(input, out1)
-    model.setScaleB(2)
-    ModuleUtil.stopGradient(model)
-    setRegularizer(model, _wRegularizer, bRegularizer)
-    val graphNode = new ModuleNode[T](model)
     val out = new DetectionOutputSSD[T](numClasses, shareLocation,
       bgLabel,
       nmsThresh,
       nmsTopk,
       keepTopK,
       confThresh,
-      varianceEncodedInTarget).inputs(graphNode)
-    Graph(graphNode, out)
+      varianceEncodedInTarget).inputs(Array(loc, conf, priors))
+    val model = Graph(input, out)
+    ModuleUtil.setScaleB(model, 2, "DetectionOutputSSD")
+    ModuleUtil.stopGradient(model)
+    setRegularizer(model, _wRegularizer, bRegularizer)
+    model
   }
 
 
