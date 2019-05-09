@@ -5,12 +5,12 @@ Int8 quantized models can give you better performance on Intel Xeon scalable pro
 
 ## Download Analytics Zoo and pre-trained model
 - You can download Analytics Zoo prebuilt release and nightly build package from [here](https://analytics-zoo.github.io/master/#release-download/) and extract it.
-- Download pre-trained int8 quantized ResNet50 model from [here](https://drive.google.com/file/d/1xAXX6wHHMlVZU5TlmFANGFsna83Tbnpk/view?usp=sharing).
+- Download pre-trained int8 quantized ResNet50 model from [here](https://s3-ap-southeast-1.amazonaws.com/analytics-zoo-models/imageclassification/imagenet/analytics-zoo_resnet-50-int8_imagenet_0.5.0.model).
 
 ## Examples
 This folder contains three examples for BigDL VNNI support:
 - [Predict](#predict)
-- [ImageNetInference](#imagenetinference)
+- [ImageNetEvaluation](#imagenetevaluation)
 - [Perf](#perf)
 
 __Remarks:__
@@ -53,7 +53,7 @@ INFO  Predict$:71 - 	 class: German shepherd, German shepherd dog, German police
 INFO  Predict$:71 - 	 class: Doberman, Doberman pinscher, credit: 8.323631E-4
 ```
 
-### ImageNetInference
+### ImageNetEvaluation
 This example evaluates the pre-trained int8 model using Hadoop SequenceFiles of ImageNet no-resize images.
 
 You may refer to this [script](https://github.com/intel-analytics/BigDL/blob/master/spark/dl/src/main/scala/com/intel/analytics/bigdl/models/utils/ImageNetSeqFileGenerator.scala) to generate sequence files for images.
@@ -67,7 +67,7 @@ modelPath=the path to the downloaded int8 model
 
 ${ANALYTICS_ZOO_HOME}/bin/spark-shell-with-zoo.sh \
     --master ${MASTER} \
-    --class com.intel.analytics.zoo.examples.vnni.bigdl.ImageNetInference \
+    --class com.intel.analytics.zoo.examples.vnni.bigdl.ImageNetEvaluation \
     -f ${imagePath} -m ${modelPath}
 ```
 
