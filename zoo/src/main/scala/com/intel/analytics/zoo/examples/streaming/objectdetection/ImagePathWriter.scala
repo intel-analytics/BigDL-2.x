@@ -22,7 +22,7 @@ import org.apache.log4j.{Level, Logger}
 import scopt.OptionParser
 
 /*
-  * Periodically write a text file (contains 10 image paths) to streamingPath
+  * Periodically write a text file (contains 16 image paths) to streamingPath
   */
 object ImagePathWriter {
 
@@ -33,7 +33,7 @@ object ImagePathWriter {
 
     parser.parse(args, PathWriterParam()).foreach { params =>
       val lists = Utils.listPaths(params.imageSourcePath, false)
-      lists.grouped(10).zipWithIndex.foreach { case (batch, id) =>
+      lists.grouped(16).zipWithIndex.foreach { case (batch, id) =>
         val batchPath = new Path(params.streamingPath, id + ".txt").toString
         val dataOutStream = Utils.create(batchPath, true)
         try {
