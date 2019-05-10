@@ -145,11 +145,16 @@ object SessionRecExp {
                      ): RDD[Sample[Float]] = {
 
     // prePad UDF
-    def prePadding: mutable.WrappedArray[java.lang.Double] => Array[Float] = x => {
+    def prePadding1: mutable.WrappedArray[java.lang.Double] => Array[Float] = x => {
       if (x.array.size <= maxLength) x.array.map(_.toFloat).dropRight(1).reverse.padTo(maxLength, 0f).reverse
       else x.array.map(_.toFloat).dropRight(1).takeRight(maxLength)
     }
-    val prePaddingUDF = udf(prePadding)
+    val prePaddingUDF1 = udf(prePadding1)
+    def prePadding2: mutable.WrappedArray[java.lang.Double] => Array[Float] = x => {
+      if (x.array.size < maxLength) x.array.map(_.toFloat).reverse.padTo(maxLength, 0f).reverse
+      else x.array.map(_.toFloat).takeRight(maxLength)
+    }
+    val prePaddingUDF2 = udf(prePadding2)
 
     // get label UDF
     def getLabel: mutable.WrappedArray[java.lang.Double] => Float = x => {
@@ -158,8 +163,8 @@ object SessionRecExp {
     val getLabelUDF = udf(getLabel)
 
     val rnnDF = sessionDF
-      .withColumn("ATC", prePaddingUDF(col("ATC_SEQ")))
-      .withColumn("PUR", prePaddingUDF(col("PURCH_HIST")))
+      .withColumn("ATC", prePaddingUDF1(col("ATC_SEQ")))
+      .withColumn("PUR", prePaddingUDF2(col("PURCH_HIST")))
       .withColumn("label", getLabelUDF(col("ATC_SEQ")))
       .select("ATC", "PUR", "label")
 
