@@ -45,7 +45,7 @@ object Perf {
         .action((v, p) => p.copy(batchSize = v))
       opt[Int]('i', "iteration")
         .text("The number of iterations to run the performance test. " +
-          "The result will be the average of each iteration time cost")
+          "The result should be the average of each iteration time cost")
         .action((v, p) => p.copy(iteration = v))
     }
 

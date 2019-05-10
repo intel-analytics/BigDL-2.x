@@ -1,9 +1,9 @@
 # Summary
 We hereby illustrate the support of [VNNI](https://en.wikichip.org/wiki/x86/avx512vnni) using BigDL [MKL-DNN](https://github.com/intel/mkl-dnn) as backend in Analytics Zoo, which aims at accelerating inference by utilizing low numerical precision (Int8) computing. 
 
-Int8 quantized models can give you better performance on Intel Xeon scalable processors.
+Int8 quantized models can generally give you better performance on Intel Xeon scalable processors.
 
-## Download Analytics Zoo and pre-trained model
+## Download Analytics Zoo and the pre-trained model
 - You can download Analytics Zoo prebuilt release and nightly build package from [here](https://analytics-zoo.github.io/master/#release-download/) and extract it.
 - Download pre-trained int8 quantized ResNet50 model from [here](https://s3-ap-southeast-1.amazonaws.com/analytics-zoo-models/imageclassification/imagenet/analytics-zoo_resnet-50-int8_imagenet_0.5.0.model).
 
@@ -28,6 +28,7 @@ This example runs in local mode and demonstrates how to do image classification 
 ```bash
 export SPARK_HOME=the root directory of Spark
 export ANALYTICS_ZOO_HOME=the folder where you extract the downloaded Analytics Zoo zip package
+export ANALYTICS_ZOO_JAR=export ANALYTICS_ZOO_JAR=`find ${ANALYTICS_ZOO_HOME}/lib -type f -name "analytics-zoo*jar-with-dependencies.jar"`
 imagePath=the folder path containing images
 modelPath=the path to the downloaded int8 model
 
@@ -35,7 +36,7 @@ java -cp ${ANALYTICS_ZOO_JAR}:${SPARK_HOME}/jars/* com.intel.analytics.zoo.examp
 ```
 
 __Options:__
-- `-f` `--folder`: The folder path that contains images for prediction.
+- `-f` `--folder`: The local folder path that contains images for prediction.
 - `-m` `--model`: The path to the downloaded int8 model.
 - `--topN`: The top N classes with highest probabilities as output. Default is 5.
 
@@ -51,7 +52,7 @@ INFO  Predict$:66 - 	 class: Doberman, Doberman pinscher, credit: 8.323631E-4
 
 ---
 ### ImageNetEvaluation
-This example evaluates the pre-trained int8 model using Hadoop SequenceFiles of ImageNet no-resize images.
+This example evaluates the pre-trained int8 model using Hadoop SequenceFiles of ImageNet no-resize validation images.
 
 You may refer to this [script](https://github.com/intel-analytics/BigDL/blob/master/spark/dl/src/main/scala/com/intel/analytics/bigdl/models/utils/ImageNetSeqFileGenerator.scala) to generate sequence files for images.
 
@@ -59,7 +60,7 @@ You may refer to this [script](https://github.com/intel-analytics/BigDL/blob/mas
 export SPARK_HOME=the root directory of Spark
 export ANALYTICS_ZOO_HOME=the folder where you extract the downloaded Analytics Zoo zip package
 MASTER=...
-imagePath=the folder path which contains sequence files of ImageNet no-resize images.
+imagePath=the folder path that contains sequence files of ImageNet no-resize validation images.
 modelPath=the path to the downloaded int8 model
 
 ${ANALYTICS_ZOO_HOME}/bin/spark-shell-with-zoo.sh \
@@ -69,7 +70,7 @@ ${ANALYTICS_ZOO_HOME}/bin/spark-shell-with-zoo.sh \
 ```
 
 __Options:__
-- `-f` `--folder`: The folder path that contains sequence files of ImageNet no-resize images for evaluation.
+- `-f` `--folder`: The folder path that contains sequence files of ImageNet no-resize validation images.
 - `-m` `--model`: The path to the downloaded int8 model.
 - `--partitionNum`: The partition number of the dataset. Default is 32.
 
@@ -95,7 +96,7 @@ java -cp ${ANALYTICS_ZOO_JAR}:${SPARK_HOME}/jars/* com.intel.analytics.zoo.examp
 __Options:__
 - `-m` `--model`: The path to the downloaded int8 model.
 - `-b` `--batchSize`: The batch size of input data. Default is 32.
-- `-i` `--iteration`: The number of iterations to run the performance test. Default is 1000. The result will be the average of each iteration time cost.
+- `-i` `--iteration`: The number of iterations to run the performance test. Default is 1000. The result should be the average of each iteration time cost.
 
 __Sample console log output__:
 ```
