@@ -4,6 +4,7 @@ from math import ceil
 from zoo.common.nncontext import *
 from zoo.feature.image import *
 from zoo.pipeline.api.net import *
+from zoo.pipeline.api.keras.metrics import *
 from zoo.pipeline.nnframes import *
 from bigdl.optim.optimizer import *
 from bigdl.util.common import *
@@ -104,7 +105,10 @@ if __name__ == "__main__":
     images, labels = dataset.tensors
 
     with slim.arg_scope(inception_v1.inception_v1_arg_scope()):
-        logits, end_points = inception_v1.inception_v1(images, num_classes=1000, is_training=True)
+        logits, end_points = inception_v1.inception_v1(images,
+                                                       dropout_keep_prob=0.6,
+                                                       num_classes=1000,
+                                                       is_training=True)
     # As sequence file's label is one-based, so labels need to subtract 1.
     loss = tf.reduce_mean(tf.losses.sparse_softmax_cross_entropy(logits=logits, labels=labels - 1))
 
@@ -147,7 +151,7 @@ if __name__ == "__main__":
         test_trigger = SeveralIteration(options.checkpointIteration)
         end_trigger = MaxIteration(options.maxIteration)
 
-    optimizer = TFOptimizer(loss, optim, val_outputs=[logits], val_labels=[labels], val_method=Top1Accuracy())
+    optimizer = TFOptimizer(loss, optim, val_outputs=[logits], val_labels=[labels-1], val_method=Accuracy())
     optimizer.set_train_summary(TrainSummary("/tmp/logs/inceptionV1", "inceptionV1"))
     optimizer.set_val_summary(ValidationSummary("/tmp/logs/inceptionV1", "inceptionV1"))
     optimizer.optimize(end_trigger=end_trigger)
