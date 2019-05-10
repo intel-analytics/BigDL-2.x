@@ -18,7 +18,6 @@ package com.intel.analytics.zoo.models.image.imageclassification
 
 import java.net.URL
 
-import com.intel.analytics.bigdl.dataset.image.CropCenter
 import com.intel.analytics.bigdl.numeric.NumericFloat
 import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric
 import com.intel.analytics.bigdl.transform.vision.image.ImageFeature
