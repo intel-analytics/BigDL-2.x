@@ -18,7 +18,6 @@ package com.intel.analytics.zoo.models.image.imageclassification
 
 import java.net.URL
 
-import com.intel.analytics.bigdl.dataset.image.CropCenter
 import com.intel.analytics.bigdl.numeric.NumericFloat
 import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric
 import com.intel.analytics.bigdl.transform.vision.image.ImageFeature
@@ -137,7 +136,7 @@ object ImagenetConfig {
   // Preprocessor for ResNet50 pre-trained in BigDL
   def bigdlResNetPreprocessor(): Preprocessing[ImageFeature, ImageFeature] = {
       ImageRandomResize(256, 256) ->
-      ImageRandomCropper(224, 224, mirror = false, cropperMethod = CropCenter) ->
+      ImageCenterCrop(224, 224) ->
       ImageChannelScaledNormalizer(104, 117, 123, 0.0078125) ->
       ImageMatToTensor() -> ImageSetToSample()
   }
