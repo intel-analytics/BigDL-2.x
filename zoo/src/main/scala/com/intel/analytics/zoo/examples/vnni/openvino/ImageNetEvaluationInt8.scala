@@ -74,7 +74,7 @@ object ImageNetEvaluationInt8 {
       val start = System.nanoTime()
       val results = batched.toDistributed().data(false).map { miniBatch =>
         logger.info("Batch begin at" + System.nanoTime())
-        model.doPredictInt8(miniBatch.getInput)
+        model.doPredictInt8(miniBatch.getInput.toTensor.addSingletonDimension())
       }
       val timeUsed = System.nanoTime() - start
       val throughput = "%.2f".format(images.toDistributed().rdd.count()

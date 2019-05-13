@@ -78,7 +78,7 @@ object ImageNetEvaluation {
       val start = System.nanoTime()
       val results = batched.toDistributed().data(false).map { miniBatch =>
         logger.info("Batch begin at" + System.nanoTime())
-        model.doPredict(miniBatch.getInput)
+        model.doPredict(miniBatch.getInput.toTensor.addSingletonDimension())
       }
       val timeUsed = System.nanoTime() - start
       // Post-processing
