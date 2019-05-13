@@ -73,6 +73,7 @@ object ImageNetEvaluation {
       logger.debug("Begin Prediction")
       val start = System.nanoTime()
       batched.toDistributed().data(false).map { miniBatch =>
+        logger.info("Batch begin at" + System.nanoTime())
         model.doPredict(miniBatch.getInput)
       }
       val timeUsed = System.nanoTime() - start
