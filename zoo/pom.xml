@@ -27,7 +27,7 @@
         <bigdl.version>0.8.0</bigdl.version>
         <core.artifactId>zoo-core-dist-all</core.artifactId>
         <core.dependencyType>jar</core.dependencyType>
-        <data-store-url>https://s3-ap-southeast-1.amazonaws.com</data-store-url>
+        <data-store-url>http://download.tensorflow.org</data-store-url>
     </properties>
 
     <distributionManagement>
