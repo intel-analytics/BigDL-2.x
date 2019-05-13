@@ -62,10 +62,12 @@ object ImageNetEvaluationInt8 {
       model.doLoadOpenVINOInt8(param.model, param.weight, param.batchSize)
 
       val images = ImageSet.read(param.folder, sc).toDistributed()
+      // Pre-processing
       val inputs = images ->
         ImageResize(256, 256) ->
         ImageCenterCrop(224, 224) ->
-        ImageMatToTensor()
+        ImageMatToTensor() ->
+        ImageSetToSample()
       val batched = inputs.toDataSet() -> SampleToMiniBatch(param.batchSize)
 
       logger.debug("Begin Prediction")

@@ -63,13 +63,17 @@ object ImageNetEvaluation {
       val model = new InferenceModel(1)
       model.doLoadOpenVINO(param.model, param.weight)
 
+      // Read ImageNet val
       val images = ImageSet.read(param.folder, sc).toDistributed()
+      // Pre-processing
       val inputs = images ->
         ImageResize(256, 256) ->
         ImageCenterCrop(224, 224) ->
-        ImageMatToTensor()
+        ImageMatToTensor() ->
+        ImageSetToSample()
       val batched = inputs.toDataSet() -> SampleToMiniBatch(param.batchSize)
 
+      // Predict
       logger.debug("Begin Prediction")
       val start = System.nanoTime()
       val results = batched.toDistributed().data(false).map { miniBatch =>
@@ -77,6 +81,7 @@ object ImageNetEvaluation {
         model.doPredict(miniBatch.getInput)
       }
       val timeUsed = System.nanoTime() - start
+      // Post-processing
       val throughput = "%.2f".format(images.toDistributed().rdd.count()
         .toFloat / (timeUsed / 1e9))
       val batchLatency = "%.2f".format(timeUsed / 1e6 / results.count().toFloat)
