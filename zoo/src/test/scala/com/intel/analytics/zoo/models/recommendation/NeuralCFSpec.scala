@@ -68,7 +68,6 @@ class NeuralCFSpec extends ZooSpecHelper {
       val feature: Tensor[Float] = Tensor(T(T(uid, iid)))
       println(feature.size().toList)
       val label = Math.abs(ran.nextInt(4)).toFloat + 1
-      println(feature.size())
       feature
     })
     data.map { input =>
@@ -128,7 +127,7 @@ class NeuralCFSpec extends ZooSpecHelper {
     assert(accuracy >= 0.40)
   }
 
-  "NeuralCF recommendForItem and recommendForItem" should "have correct predictions" in {
+  "NeuralCF recommendForItem and recommendForUser" should "have correct predictions" in {
 
     val ncf = NeuralCF[Float](100, 100, 5, 5, 5, Array(10, 5), false)
     val data = datain

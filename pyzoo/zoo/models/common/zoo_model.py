@@ -134,6 +134,9 @@ class KerasZooModel(ZooModel):
     def predict(self, x, batch_per_thread=4, distributed=True):
         self.model.predict(x, batch_per_thread, distributed)
 
+    def predict_classes(self, x, batch_per_thread=4, distributed=True):
+        self.model.predict_classes(x, batch_per_thread, distributed)
+
     @staticmethod
     def _do_load(jmodel, bigdl_type="float"):
         model = ZooModel._do_load(jmodel, bigdl_type)

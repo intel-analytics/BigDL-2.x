@@ -18,7 +18,7 @@ package com.intel.analytics.zoo.examples.recommendation
 
 import scopt.OptionParser
 
-case class WNDParams(dataset: String = "",
+case class WNDParams(dataset: String = "ml-1m",
                      modelType: String = "wide_n_deep",
                      inputDir: String = "./data/ml-1m/",
                      onSpark: Boolean = true,
@@ -32,7 +32,7 @@ object WideAndDeepExample {
     val parser = new OptionParser[WNDParams]("WideAndDeep Example") {
       opt[String]("dataset")
         .text(s"dataset name, ml-1m or census")
-        .required()
+       .required()
         .action((x, c) => c.copy(dataset = x))
       opt[String]("modelType")
         .text(s"modelType")

@@ -18,7 +18,7 @@ import sys
 
 from pyspark import RDD
 
-from zoo.models.common import ZooModel
+from zoo.models.common import *
 from bigdl.util.common import callBigDlFunc
 
 
@@ -75,7 +75,7 @@ class UserItemPrediction(object):
             self.user_id, self.item_id, self.prediction, self.probability)
 
 
-class Recommender(ZooModel):
+class Recommender(KerasZooModel):
     """
     The base class for recommendation models in Analytics Zoo.
     """
@@ -121,6 +121,16 @@ class Recommender(ZooModel):
                                    self._to_tuple_rdd(feature_rdd),
                                    int(max_users))
         return self._to_prediction_rdd(result_rdd)
+
+    def predict(self, x, batch_per_thread=8):
+        """
+        Precict on RDD[Sample].
+        """
+        results = callBigDlFunc(self.bigdl_type, "modelPredictRDD",
+                                self.value,
+                                x,
+                                batch_per_thread)
+        return results.map(lambda data: data.to_ndarray())
 
     @staticmethod
     def _to_tuple_rdd(feature_rdd):

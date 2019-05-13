@@ -18,13 +18,13 @@ package com.intel.analytics.zoo.examples.recommendation
 
 import com.intel.analytics.bigdl._
 import com.intel.analytics.bigdl.dataset.Sample
-import com.intel.analytics.bigdl.nn.ClassNLLCriterion
 import com.intel.analytics.bigdl.numeric.NumericFloat
-import com.intel.analytics.bigdl.optim.{Adam, Optimizer, Trigger}
+import com.intel.analytics.bigdl.optim.{Adam, Top1Accuracy}
 import com.intel.analytics.bigdl.tensor.Tensor
 import com.intel.analytics.bigdl.utils.T
 import com.intel.analytics.zoo.common.NNContext
 import com.intel.analytics.zoo.models.recommendation.{NeuralCF, UserItemFeature, Utils}
+import com.intel.analytics.zoo.pipeline.api.keras.objectives.SparseCategoricalCrossEntropy
 import org.apache.log4j.{Level, Logger}
 import org.apache.spark.SparkConf
 import org.apache.spark.rdd.RDD
@@ -96,20 +96,16 @@ object NeuralCFexample {
     val trainRdds = trainpairFeatureRdds.map(x => x.sample)
     val validationRdds = validationpairFeatureRdds.map(x => x.sample)
 
-    val optimizer = Optimizer(
-      model = ncf,
-      sampleRDD = trainRdds,
-      criterion = ClassNLLCriterion[Float](),
-      batchSize = param.batchSize)
-
     val optimMethod = new Adam[Float](
       learningRate = param.learningRate,
       learningRateDecay = param.learningRateDecay)
 
-    optimizer
-      .setOptimMethod(optimMethod)
-      .setEndWhen(Trigger.maxEpoch(param.nEpochs))
-      .optimize()
+    ncf.compile(optimizer = optimMethod,
+      loss = SparseCategoricalCrossEntropy[Float](zeroBasedLabel = false),
+      metrics = List(new Top1Accuracy[Float]()))
+
+    ncf.fit(trainRdds, batchSize = param.batchSize,
+      nbEpoch = param.nEpochs, validationData = validationRdds)
 
     val results = ncf.predict(validationRdds)
     results.take(5).foreach(println)

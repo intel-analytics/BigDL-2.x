@@ -16,9 +16,10 @@
 
 import pytest
 
-import numpy as np
 import random
-from bigdl.util.common import Sample
+from zoo.common.nncontext import *
+from zoo.pipeline.api.keras.objectives import SparseCategoricalCrossEntropy
+
 
 from zoo.models.recommendation import UserItemFeature
 from zoo.models.recommendation import NeuralCF
@@ -26,12 +27,10 @@ from test.zoo.pipeline.utils.test_utils import ZooTestCase
 
 np.random.seed(1337)  # for reproducibility
 
-
 class TestNeuralCF(ZooTestCase):
 
     def test_forward_backward_without_mf(self):
         model = NeuralCF(30, 30, 2, include_mf=False)
-        model.summary()
         input_data = np.random.randint(1, 30,  size=(10, 2))
         self.assert_forward_backward(model, input_data)
 
@@ -46,14 +45,12 @@ class TestNeuralCF(ZooTestCase):
         self.assert_zoo_model_save_load(model, input_data)
 
     def test_predict_recommend(self):
-
         def gen_rand_user_item_feature(user_num, item_num, class_num):
             user_id = random.randint(1, user_num)
             item_id = random.randint(1, item_num)
             rating = random.randint(1, class_num)
             sample = Sample.from_ndarray(np.array([user_id, item_id]), np.array([rating]))
             return UserItemFeature(user_id, item_id, sample)
-
         model = NeuralCF(200, 80, 5)
         data = self.sc.parallelize(range(0, 50))\
             .map(lambda i: gen_rand_user_item_feature(200, 80, 5))
@@ -64,6 +61,23 @@ class TestNeuralCF(ZooTestCase):
         recommended_users = model.recommend_for_item(data, max_users=4).collect()
         print(recommended_users[0])
 
+    def test_compile_fit(self):
+        def gen_rand_user_item_feature(user_num, item_num, class_num):
+            user_id = random.randint(1, user_num)
+            item_id = random.randint(1, item_num)
+            rating = random.randint(1, class_num)
+            sample = Sample.from_ndarray(np.array([user_id, item_id]), np.array([rating]))
+            return UserItemFeature(user_id, item_id, sample)
+        model = NeuralCF(200, 80, 5)
+        model.summary()
+        data = self.sc.parallelize(range(0, 50)) \
+            .map(lambda i: gen_rand_user_item_feature(200, 80, 5)) \
+            .map(lambda pair: pair.sample)
+        model.compile(loss= SparseCategoricalCrossEntropy(zero_based_label = False),
+                      optimizer= "adam",
+                      metrics=['loss','top1accuracy']
+                      )
+        model.fit(data, nb_epoch=1)
 
 if __name__ == "__main__":
     pytest.main([__file__])

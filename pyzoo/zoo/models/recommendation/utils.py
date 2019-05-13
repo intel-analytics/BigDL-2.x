@@ -65,38 +65,66 @@ def get_wide_tensor(row, column_info):
     shape = np.array([sum(wide_dims)])
     return JTensor.sparse(values, np.array(indices), shape)
 
+def get_deep_tensors(row, column_info):
 
-def get_deep_tensor(row, column_info):
-    deep_columns1 = column_info.indicator_cols
-    deep_columns2 = column_info.embed_cols + column_info.continuous_cols
-    deep_dims1 = column_info.indicator_dims
-    deep_length = sum(deep_dims1) + len(deep_columns2)
-    deep_tensor = np.zeros((deep_length, ))
+    ind_col = column_info.indicator_cols
+    emb_col = column_info.embed_cols
+    cont_col = column_info.continuous_cols
+
+    ind_tensor = np.zeros(sum(column_info.indicator_dims),)
+    # setup indicators
     acc = 0
-    for i in range(0, len(deep_columns1)):
-        index = row[deep_columns1[i]]
+    for i in range(0, len(ind_col)):
+        index = row[ind_col[i]]
         if i == 0:
             res = index
         else:
-            acc += deep_dims1[i-1]
+            acc += column_info.indicator_dims[i-1]
             res = acc + index
-        deep_tensor[res] = 1
-    for i in range(0, len(deep_columns2)):
-        deep_tensor[i + sum(deep_dims1)] = float(row[deep_columns2[i]])
+        ind_tensor[res] = 1
+
+    emb_tensor = np.zeros(len(emb_col),)
+    for i in range(0, len(emb_col)):
+        emb_tensor[i] = float(row[emb_col[i]])
+
+    cont_tensor = np.zeros(len(cont_col),)
+    for i in range(0, len(cont_col)):
+        cont_tensor[i] = float(row[cont_col[i]])
+
+    has_ind = len(ind_col) > 0
+    has_emd = len(emb_col) > 0
+    has_cont = len(cont_col) > 0
+    if (has_ind and has_emd and has_cont):
+        deep_tensor = [ind_tensor, emb_tensor, cont_tensor]
+    elif ((not has_ind) and has_emd and has_cont):
+        deep_tensor = [emb_tensor, cont_tensor]
+    elif (has_ind and (not has_emd) and has_cont):
+        deep_tensor = [ind_tensor, cont_tensor]
+    elif (has_ind and has_emd and (not has_cont)):
+        deep_tensor = [ind_tensor, emb_tensor]
+    elif ((not has_ind) and (not has_emd) and has_cont):
+        deep_tensor = [cont_tensor]
+    elif ((not has_ind) and has_emd and (not has_cont)):
+        deep_tensor = [emb_tensor]
+    elif (has_ind and (not has_emd) and (not has_cont)):
+        deep_tensor = [ind_tensor]
+    else:
+        raise TypeError("Empty deep tensors")
     return deep_tensor
 
 
 def row_to_sample(row, column_info, model_type="wide_n_deep"):
     wide_tensor = get_wide_tensor(row, column_info)
-    deep_tensor = JTensor.from_ndarray(get_deep_tensor(row, column_info))
+    deep_tensor = get_deep_tensors(row, column_info)
+    deep_tensors = [JTensor.from_ndarray(ele) for ele in deep_tensor]
     label = row[column_info.label]
     model_type = model_type.lower()
     if model_type == "wide_n_deep":
-        feature = [wide_tensor, deep_tensor]
+        feature = [wide_tensor] + deep_tensors
     elif model_type == "wide":
         feature = wide_tensor
     elif model_type == "deep":
-        feature = deep_tensor
+        feature = deep_tensors
     else:
         raise TypeError("Unsupported model_type: %s" % model_type)
     return Sample.from_jtensor(feature, label)
