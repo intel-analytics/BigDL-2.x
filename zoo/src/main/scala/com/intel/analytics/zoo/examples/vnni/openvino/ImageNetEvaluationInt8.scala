@@ -27,12 +27,8 @@ import org.apache.log4j.{Level, Logger}
 import scopt.OptionParser
 
 
-case class ImageNetInferenceParams(folder: String = "./",
-                                   model: String = "",
-                                   weight: String = "",
-                                   batchSize: Int = 4)
 
-object ImageNetInference {
+object ImageNetEvaluationInt8 {
   LoggerFilter.redirectSparkInfoLogs()
   Logger.getLogger("org").setLevel(Level.ERROR)
   Logger.getLogger("akka").setLevel(Level.ERROR)
@@ -42,7 +38,7 @@ object ImageNetInference {
   val logger: Logger = Logger.getLogger(getClass)
 
   def main(args: Array[String]): Unit = {
-    val parser = new OptionParser[ImageNetInferenceParams]("ImageNet Int8 Example") {
+    val parser = new OptionParser[ImageNetEvaluationParams]("ImageNet Int8 Example") {
       opt[String]('f', "folder")
         .text("The path to the imagenet dataset for inference")
         .action((x, c) => c.copy(folder = x))
@@ -58,13 +54,13 @@ object ImageNetInference {
         .text("batch size")
         .action((x, c) => c.copy(batchSize = x))
     }
-    parser.parse(args, ImageNetInferenceParams()).foreach(param => {
+    parser.parse(args, ImageNetEvaluationParams()).foreach(param => {
       val sc = NNContext.initNNContext("ImageNet2012 with Int8 Inference Example")
 
       val model = new InferenceModel(1)
-      model.doLoadOpenVINO(param.model, param.weight)
+      model.doLoadOpenVINOInt8(param.model, param.weight, param.batchSize)
 
-      val images = ImageSet.read(param.folder, sc)
+      val images = ImageSet.read(param.folder, sc).toDistributed()
       val inputs = images ->
         ImageResize(256, 256) ->
         ImageCenterCrop(224, 224) ->
@@ -74,7 +70,7 @@ object ImageNetInference {
       logger.debug("Begin Prediction")
       val start = System.nanoTime()
       inputs.toDistributed().rdd.map { img =>
-        model.doPredict(img.apply[Tensor[Float]](ImageFeature.imageTensor)
+        model.doPredictInt8(img.apply[Tensor[Float]](ImageFeature.imageTensor)
           .addSingletonDimension())
       }
       val timeUsed = System.nanoTime() - start
