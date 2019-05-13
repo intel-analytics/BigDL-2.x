@@ -97,8 +97,8 @@ class KerasZooModel(ZooModel):
     The base class for Keras style models in Analytics Zoo.
     """
     # For the following method, please see documentation of KerasNet for details
-    def compile(self, optimizer, loss, metrics=None):
-        self.model.compile(optimizer, loss, metrics=None)
+    def compile(self, optimizer, loss, metrics):
+        self.model.compile(optimizer, loss, metrics)
 
     def fit(self, x, y=None, batch_size=32, nb_epoch=10,
             validation_split=0, validation_data=None, distributed=True):

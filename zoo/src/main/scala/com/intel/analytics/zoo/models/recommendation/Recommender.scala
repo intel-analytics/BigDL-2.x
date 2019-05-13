@@ -92,7 +92,7 @@ abstract class Recommender[T: ClassTag](implicit ev: TensorNumeric[T])
     val predictProb = raw.map { x =>
       val _output = x.toTensor[T]
       val predict: Int = ev.toType[Int](_output.max(1)._2.valueAt(1))
-      val probability = Math.exp(_output.valueAt(predict).asInstanceOf[Float])
+      val probability = _output.valueAt(predict).asInstanceOf[Float]
       (predict, probability)
     }
     val outRdd: RDD[UserItemPrediction] = idPairs.zip(predictProb)
