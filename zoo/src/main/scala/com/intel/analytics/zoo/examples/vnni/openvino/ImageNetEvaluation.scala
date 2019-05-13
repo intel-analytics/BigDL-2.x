@@ -58,7 +58,7 @@ object ImageNetEvaluation {
         .action((x, c) => c.copy(batchSize = x))
     }
     parser.parse(args, ImageNetEvaluationParams()).foreach(param => {
-      val sc = NNContext.initNNContext("ImageNet2012 with Int8 Inference Example")
+      val sc = NNContext.initNNContext("ImageNet2012 with OpenVINO Int8 Inference Example")
 
       val model = new InferenceModel(1)
       model.doLoadOpenVINO(param.model, param.weight)
@@ -72,13 +72,16 @@ object ImageNetEvaluation {
 
       logger.debug("Begin Prediction")
       val start = System.nanoTime()
-      batched.toDistributed().data(false).map { miniBatch =>
+      val results = batched.toDistributed().data(false).map { miniBatch =>
         logger.info("Batch begin at" + System.nanoTime())
         model.doPredict(miniBatch.getInput)
       }
       val timeUsed = System.nanoTime() - start
-      val throughput = "%.2f".format(images.toDistributed().rdd.count().toFloat / (timeUsed / 1e9))
+      val throughput = "%.2f".format(images.toDistributed().rdd.count()
+        .toFloat / (timeUsed / 1e9))
+      val batchLatency = "%.2f".format(timeUsed / 1e6 / results.count().toFloat)
       logger.info(s"Takes $timeUsed ns, throughput is $throughput imgs/sec")
+      logger.info(s"Average Predict latency is $batchLatency ms")
       // Evaluation
       // Compare labels and output results
       sc.stop()

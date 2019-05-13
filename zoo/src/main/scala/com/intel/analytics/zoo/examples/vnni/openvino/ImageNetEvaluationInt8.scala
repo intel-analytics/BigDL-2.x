@@ -16,6 +16,7 @@
 
 package com.intel.analytics.zoo.examples.vnni.openvino
 
+import com.intel.analytics.bigdl.dataset.SampleToMiniBatch
 import com.intel.analytics.bigdl.utils.LoggerFilter
 import com.intel.analytics.zoo.common.NNContext
 import com.intel.analytics.bigdl.numeric.NumericFloat
@@ -65,17 +66,20 @@ object ImageNetEvaluationInt8 {
         ImageResize(256, 256) ->
         ImageCenterCrop(224, 224) ->
         ImageMatToTensor()
-//      val batched = input.toDataSet() -> SampleToMiniBatch(param.batchSize)
+      val batched = inputs.toDataSet() -> SampleToMiniBatch(param.batchSize)
 
       logger.debug("Begin Prediction")
       val start = System.nanoTime()
-      inputs.toDistributed().rdd.map { img =>
-        model.doPredictInt8(img.apply[Tensor[Float]](ImageFeature.imageTensor)
-          .addSingletonDimension())
+      val results = batched.toDistributed().data(false).map { miniBatch =>
+        logger.info("Batch begin at" + System.nanoTime())
+        model.doPredictInt8(miniBatch.getInput)
       }
       val timeUsed = System.nanoTime() - start
-      val throughput = "%.2f".format(images.toDistributed().rdd.count().toFloat / (timeUsed / 1e9))
+      val throughput = "%.2f".format(images.toDistributed().rdd.count()
+        .toFloat / (timeUsed / 1e9))
+      val batchLatency = "%.2f".format(timeUsed / 1e6 / results.count().toFloat)
       logger.info(s"Takes $timeUsed ns, throughput is $throughput imgs/sec")
+      logger.info(s"Average Predict latency is $batchLatency ms")
       // Evaluation
       // Compare labels and output results
       sc.stop()
