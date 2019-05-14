@@ -79,14 +79,9 @@ object Predict {
       }
 
       // Read ImageNet val
-      val images = ImageSet.read(param.folder, sc).toDistributed()
-      // If the actual partitionNum of sequence files is too large, then the
-      // total batchSize we calculate (partitionNum * batchPerPartition) would be
-      // too large for inference.
-      // mkldnn runs a single model and single partition on a single node.
-      if (images.rdd.partitions.length > param.partitionNum) {
-        images.rdd = images.rdd.coalesce(param.partitionNum, shuffle = false)
-      }
+      val images = ImageSet.read(param.folder).toLocal()
+
+      val start = System.nanoTime()
       // Pre-processing
       val inputs = images ->
         ImageResize(256, 256) ->
@@ -95,25 +90,29 @@ object Predict {
         ImageSetToSample()
       val batched = inputs.toDataSet() -> SampleToMiniBatch(param.batchSize)
 
-      val imageNum = images.toDistributed().rdd.count()
-        .toFloat
+      val preProcessTime = System.nanoTime() - start
+      val imageNum = images.array.length
 
       // Predict
       logger.debug("Begin Prediction")
-      val start = System.nanoTime()
-      val results = batched.toDistributed().data(false).map { miniBatch =>
+
+      val results = batched.toLocal().data(false).map { miniBatch =>
         if (param.isInt8) {
           model.doPredictInt8(miniBatch.getInput.toTensor.addSingletonDimension())
         } else {
           model.doPredict(miniBatch.getInput.toTensor.addSingletonDimension())
         }
       }
-      val batchNum = results.count().toFloat
+      val batchNum = results.length
       val timeUsed = System.nanoTime() - start
       // Post-processing
       val throughput = "%.2f".format(imageNum / (timeUsed / 1e9))
       val batchLatency = "%.2f".format(timeUsed / 1e6 / batchNum)
-      logger.info(s"Takes $timeUsed ns, throughput is $throughput FPS (imgs/sec)")
+      logger.info(s"Pre-Processing: Takes ${preProcessTime / 1e6} ms")
+      logger.info(s"Predict: Takes ${(timeUsed - preProcessTime) / 1e6} ms, " +
+        s"throughput is ${imageNum / (timeUsed - preProcessTime) * 1e6} FPS (imgs/sec)")
+      logger.info(s"End to End: Takes ${timeUsed / 1e6} ms, " +
+        s"throughput is $throughput FPS (imgs/sec)")
       logger.info(s"Average Predict latency is $batchLatency ms")
       // Evaluation
       // Compare labels and output results
