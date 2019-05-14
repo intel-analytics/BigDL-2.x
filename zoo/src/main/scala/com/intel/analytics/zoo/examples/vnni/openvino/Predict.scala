@@ -24,12 +24,13 @@ import com.intel.analytics.zoo.pipeline.inference.InferenceModel
 import org.apache.log4j.{Level, Logger}
 import scopt.OptionParser
 
-case class ImageClassificationParams(folder: String = "./",
-                                     model: String = "",
-                                     weight: String = "",
-                                     batchSize: Int = 4,
-                                     topN: Int = 5,
-                                     partitionNum: Int = 4)
+case class PredictParams(folder: String = "./",
+                         model: String = "",
+                         weight: String = "",
+                         batchSize: Int = 4,
+                         topN: Int = 5,
+                         partitionNum: Int = 4,
+                         isInt8: Boolean = true)
 
 object Predict {
   Logger.getLogger("org").setLevel(Level.ERROR)
@@ -41,7 +42,7 @@ object Predict {
   val logger: Logger = Logger.getLogger(getClass)
 
   def main(args: Array[String]): Unit = {
-    val parser = new OptionParser[ImageClassificationParams]("ResNet50 Int8 Inference Example") {
+    val parser = new OptionParser[PredictParams]("ResNet50 Int8 Inference Example") {
       opt[String]('f', "folder")
         .text("The path to the image data")
         .action((x, c) => c.copy(folder = x))
@@ -62,12 +63,20 @@ object Predict {
       opt[Int]('b', "batchSize")
         .text("batch size")
         .action((x, c) => c.copy(batchSize = x))
+      opt[Boolean]("isInt8")
+        .text("Is Int8 optimized model?")
+        .action((x, c) => c.copy(isInt8 = x))
     }
-    parser.parse(args, ImageClassificationParams()).map(param => {
+    parser.parse(args, PredictParams()).map(param => {
       val sc = NNContext.initNNContext("ImageNet2012 with OpenVINO Int8 Inference Example")
 
       val model = new InferenceModel(1)
-      model.doLoadOpenVINOInt8(param.model, param.weight, param.batchSize)
+
+      if (param.isInt8) {
+        model.doLoadOpenVINOInt8(param.model, param.weight, param.batchSize)
+      } else {
+        model.doLoadOpenVINO(param.model, param.weight)
+      }
 
       // Read ImageNet val
       val images = ImageSet.read(param.folder, sc).toDistributed()
@@ -86,18 +95,25 @@ object Predict {
         ImageSetToSample()
       val batched = inputs.toDataSet() -> SampleToMiniBatch(param.batchSize)
 
+      val imageNum = images.toDistributed().rdd.count()
+        .toFloat
+
       // Predict
       logger.debug("Begin Prediction")
       val start = System.nanoTime()
       val results = batched.toDistributed().data(false).map { miniBatch =>
-        model.doPredictInt8(miniBatch.getInput.toTensor.addSingletonDimension())
+        if (param.isInt8) {
+          model.doPredictInt8(miniBatch.getInput.toTensor.addSingletonDimension())
+        } else {
+          model.doPredict(miniBatch.getInput.toTensor.addSingletonDimension())
+        }
       }
+      val batchNum = results.count().toFloat
       val timeUsed = System.nanoTime() - start
       // Post-processing
-      val throughput = "%.2f".format(images.toDistributed().rdd.count()
-        .toFloat / (timeUsed / 1e9))
-      val batchLatency = "%.2f".format(timeUsed / 1e6 / results.count().toFloat)
-      logger.info(s"Takes $timeUsed ns, throughput is $throughput imgs/sec")
+      val throughput = "%.2f".format(imageNum / (timeUsed / 1e9))
+      val batchLatency = "%.2f".format(timeUsed / 1e6 / batchNum)
+      logger.info(s"Takes $timeUsed ns, throughput is $throughput FPS (imgs/sec)")
       logger.info(s"Average Predict latency is $batchLatency ms")
       // Evaluation
       // Compare labels and output results

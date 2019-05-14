@@ -28,7 +28,8 @@ case class ResNet50PerfParams(model: String = "",
                               weight: String = "",
                               batchSize: Int = 4,
                               numBatch: Int = 1,
-                              iteration: Int = 1)
+                              iteration: Int = 1,
+                              isInt8: Boolean = true)
 
 object Perf {
 
@@ -53,6 +54,9 @@ object Perf {
       opt[Int]('i', "iteration")
         .text("Iteration of perf test. The result will be average of each iteration time cost")
         .action((v, p) => p.copy(iteration = v))
+      opt[Boolean]("isInt8")
+        .text("Is Int8 optimized model?")
+        .action((x, c) => c.copy(isInt8 = x))
     }
 
     parser.parse(args, ResNet50PerfParams()).foreach { param =>
@@ -63,7 +67,12 @@ object Perf {
       Engine.init
 
       val model = new InferenceModel(1)
-       model.doLoadOpenVINO(param.model, param.weight)
+
+      if (param.isInt8) {
+        model.doLoadOpenVINOInt8(param.model, param.weight, param.batchSize)
+      } else {
+        model.doLoadOpenVINO(param.model, param.weight)
+      }
 
       /*
       val predictStart = System.nanoTime()
@@ -82,7 +91,11 @@ object Perf {
       var averageLatency = 0L
       List.range(0, iteration).foreach { _ =>
         val start = System.nanoTime()
-        model.doPredict(batchInput)
+        if (param.isInt8) {
+          model.doPredictInt8(batchInput)
+        } else {
+          model.doPredict(batchInput)
+        }
         val latency = System.nanoTime() - start
         averageLatency += latency
         logger.info(s"Iteration $iteration latency is ${latency / 1e6} ms")
@@ -90,8 +103,9 @@ object Perf {
       val totalTimeUsed = System.nanoTime() - predictStart
       val totalThroughput = "%.2f".format(batchSize * iteration
         * numBatch.toFloat / (totalTimeUsed / 1e9))
-      logger.info(s"Average latency for iteration is ${averageLatency / iteration / 1e6} imgs/sec")
-      logger.info(s"Takes $totalTimeUsed ns, throughput is $totalThroughput imgs/sec")
+      logger.info(s"Average latency for iteration is " +
+        s"${averageLatency / iteration / 1e6} FPS (imgs/sec)")
+      logger.info(s"Takes $totalTimeUsed ns, throughput is $totalThroughput FPS (imgs/sec)")
     }
   }
 }
