@@ -37,6 +37,7 @@ object ImageNetEvaluation {
   Logger.getLogger("org").setLevel(Level.ERROR)
   Logger.getLogger("akka").setLevel(Level.ERROR)
   Logger.getLogger("breeze").setLevel(Level.ERROR)
+  Logger.getLogger("com.intel.analytics.zoo.feature.image").setLevel(Level.ERROR)
   Logger.getLogger("com.intel.analytics.zoo").setLevel(Level.INFO)
 
   val logger: Logger = Logger.getLogger(getClass)

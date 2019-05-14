@@ -34,6 +34,7 @@ object ImageNetEvaluationInt8 {
   Logger.getLogger("org").setLevel(Level.ERROR)
   Logger.getLogger("akka").setLevel(Level.ERROR)
   Logger.getLogger("breeze").setLevel(Level.ERROR)
+  Logger.getLogger("com.intel.analytics.zoo.feature.image").setLevel(Level.ERROR)
   Logger.getLogger("com.intel.analytics.zoo").setLevel(Level.INFO)
 
   val logger: Logger = Logger.getLogger(getClass)
@@ -61,7 +62,16 @@ object ImageNetEvaluationInt8 {
       val model = new InferenceModel(1)
       model.doLoadOpenVINOInt8(param.model, param.weight, param.batchSize)
 
-      val images = ImageSet.read(param.folder, sc).toDistributed()
+      // Read ImageNet val
+      val images = ImageSet.readSequenceFiles(param.folder, sc, param.partitionNum)
+      // If the actual partitionNum of sequence files is too large, then the
+      // total batchSize we calculate (partitionNum * batchPerPartition) would be
+      // too large for inference.
+      // mkldnn runs a single model and single partition on a single node.
+      if (images.rdd.partitions.length > param.partitionNum) {
+        images.rdd = images.rdd.coalesce(param.partitionNum, shuffle = false)
+      }
+      
       // Pre-processing
       val inputs = images ->
         ImageResize(256, 256) ->
