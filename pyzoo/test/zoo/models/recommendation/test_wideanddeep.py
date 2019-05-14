@@ -112,7 +112,7 @@ class TestWideAndDeep(ZooTestCase):
             .map(lambda user_item_feature: user_item_feature.sample)
         model.compile(loss=SparseCategoricalCrossEntropy(zero_based_label=False),
                       optimizer="adam",
-                      metrics=['loss', 'top1accuracy'])
+                      metrics=["mae"])
         model.fit(data, nb_epoch=1)
 
     def test_deep_merge(self):
