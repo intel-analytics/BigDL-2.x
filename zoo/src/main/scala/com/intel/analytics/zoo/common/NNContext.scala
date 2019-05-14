@@ -22,6 +22,7 @@ import java.util.Properties
 import com.intel.analytics.bigdl.utils.Engine
 import org.apache.log4j.Logger
 import org.apache.spark.{SPARK_VERSION, SparkConf, SparkContext, SparkException}
+import sys.env
 
 /**
  * [[NNContext]] wraps a spark context in Analytics Zoo.
@@ -131,6 +132,12 @@ object NNContext {
    */
   def initNNContext(conf: SparkConf, appName: String): SparkContext = {
     val zooConf = createSparkConf(conf)
+
+    // If not set use default value OMP_NUM_THREADS=1
+    if (env.contains("OMP_NUM_THREADS")) {
+      zooConf.setExecutorEnv("OMP_NUM_THREADS", env("OMP_NUM_THREADS"))
+    }
+
     if (appName != null) {
       zooConf.setAppName(appName)
     }
