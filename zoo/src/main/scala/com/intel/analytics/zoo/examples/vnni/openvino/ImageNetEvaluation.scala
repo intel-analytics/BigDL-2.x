@@ -27,9 +27,10 @@ import scopt.OptionParser
 
 
 case class ImageNetEvaluationParams(folder: String = "./",
-                                   model: String = "",
-                                   weight: String = "",
-                                   batchSize: Int = 4)
+                                    model: String = "",
+                                    weight: String = "",
+                                    batchSize: Int = 4,
+                                    partitionNum: Int = 32)
 
 object ImageNetEvaluation {
   LoggerFilter.redirectSparkInfoLogs()
@@ -56,6 +57,9 @@ object ImageNetEvaluation {
       opt[Int]('b', "batchSize")
         .text("batch size")
         .action((x, c) => c.copy(batchSize = x))
+      opt[Int]("partitionNum")
+        .text("The partition number of the dataset")
+        .action((x, c) => c.copy(partitionNum = x))
     }
     parser.parse(args, ImageNetEvaluationParams()).foreach(param => {
       val sc = NNContext.initNNContext("ImageNet2012 with OpenVINO Int8 Inference Example")
@@ -64,7 +68,14 @@ object ImageNetEvaluation {
       model.doLoadOpenVINO(param.model, param.weight)
 
       // Read ImageNet val
-      val images = ImageSet.read(param.folder, sc).toDistributed()
+      val images = ImageSet.readSequenceFiles(param.folder, sc, param.partitionNum)
+      // If the actual partitionNum of sequence files is too large, then the
+      // total batchSize we calculate (partitionNum * batchPerPartition) would be
+      // too large for inference.
+      // mkldnn runs a single model and single partition on a single node.
+      if (images.rdd.partitions.length > param.partitionNum) {
+        images.rdd = images.rdd.coalesce(param.partitionNum, shuffle = false)
+      }
       // Pre-processing
       val inputs = images ->
         ImageResize(256, 256) ->
@@ -77,7 +88,6 @@ object ImageNetEvaluation {
       logger.debug("Begin Prediction")
       val start = System.nanoTime()
       val results = batched.toDistributed().data(false).map { miniBatch =>
-        logger.info("Batch begin at" + System.nanoTime())
         model.doPredict(miniBatch.getInput.toTensor.addSingletonDimension())
       }
       val timeUsed = System.nanoTime() - start
