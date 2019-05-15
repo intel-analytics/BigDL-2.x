@@ -51,7 +51,7 @@ object Predict {
     }
     parser.parse(args, PredictParams()).map(param => {
       Engine.init
-      val images = ImageSet.read(param.folder, imageCodec = Imgcodecs.CV_LOAD_IMAGE_UNCHANGED)
+      val images = ImageSet.read(param.folder, imageCodec = Imgcodecs.CV_LOAD_IMAGE_COLOR)
       val model = ImageClassifier.loadModel[Float](param.model)
       logger.info(s"Start inference on images under ${param.folder}...")
       val output = model.predictImageSet(images)
