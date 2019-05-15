@@ -17,13 +17,18 @@ export ANALYTICS_ZOO_PY_ZIP=`find ${ANALYTICS_ZOO_HOME}/lib -type f -name "analy
 export ANALYTICS_ZOO_CONF=${ANALYTICS_ZOO_HOME}/conf/spark-analytics-zoo.conf
 export PYTHONPATH=${ANALYTICS_ZOO_PY_ZIP}:${PYTHONPATH}
 export KMP_AFFINITY=granularity=fine,compact,1,0
-export KMP_SETTINGS=1
 
 if [ -z "${ZOO_NUM_MKLTHREADS}" ]; then
     export OMP_NUM_THREADS=1
     export KMP_BLOCKTIME=0
 else
     export OMP_NUM_THREADS=${ZOO_NUM_MKLTHREADS}
+if
+
+# verbose for OpenMP
+if [[ $* == *"verbose"* ]]; then
+    export KMP_SETTINGS=1
+    export KMP_AFFINITY=${KMP_AFFINITY},verbose
 if
 
 # Check files
