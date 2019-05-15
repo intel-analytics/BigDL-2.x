@@ -65,6 +65,7 @@ def get_wide_tensor(row, column_info):
     shape = np.array([sum(wide_dims)])
     return JTensor.sparse(values, np.array(indices), shape)
 
+
 def get_deep_tensors(row, column_info):
 
     ind_col = column_info.indicator_cols

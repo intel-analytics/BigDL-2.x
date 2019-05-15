@@ -103,13 +103,13 @@ class WideAndDeep(Recommender):
     """
     def __init__(self, class_num, column_info, model_type="wide_n_deep",
                  hidden_layers=(40, 20, 10), bigdl_type="float"):
-        assert (len(column_info.wide_base_cols) == len(column_info.wide_base_dims), \
+        assert (len(column_info.wide_base_cols) == len(column_info.wide_base_dims),
                 "size of wide_base_columns should match")
-        assert (len(column_info.wide_cross_cols) == len(column_info.wide_cross_dims), \
+        assert (len(column_info.wide_cross_cols) == len(column_info.wide_cross_dims),
                 "size of wide_cross_columns should match")
-        assert (len(column_info.indicator_cols) == len(column_info.indicator_dims), \
+        assert (len(column_info.indicator_cols) == len(column_info.indicator_dims),
                 "size of wide_indicator_columns should match")
-        assert (len(column_info.embed_cols) == len(column_info.embed_in_dims) \
+        assert (len(column_info.embed_cols) == len(column_info.embed_in_dims)
                 == len(column_info.embed_out_dims), "size of wide_indicator_columns should match")
 
         self.class_num = int(class_num)
@@ -143,12 +143,13 @@ class WideAndDeep(Recommender):
                                           self.embed_out_dims,
                                           self.continuous_cols,
                                           self.label)
+
     def build_model(self):
         wide_dims = sum(self.wide_base_dims) + sum(self.wide_cross_dims)
-        input_wide = Input(shape= (wide_dims,))
-        input_ind = Input(shape= (sum(self.indicator_dims),))
-        input_emb = Input(shape= (len(self.embed_in_dims),))
-        input_con = Input(shape= (len(self.continuous_cols),))
+        input_wide = Input(shape=(wide_dims,))
+        input_ind = Input(shape=(sum(self.indicator_dims),))
+        input_emb = Input(shape=(len(self.embed_in_dims),))
+        input_con = Input(shape=(len(self.continuous_cols),))
 
         wide_linear = SparseDense(self.class_num)(input_wide)
 
@@ -182,7 +183,7 @@ class WideAndDeep(Recommender):
         for ilayer in range(1, len(self.hidden_layers)):
             linear_mid = Dense(self.hidden_layers[ilayer], activation="relu")(linear)
             linear = linear_mid
-        last = Dense(self.class_num, activation= "relu")(linear)
+        last = Dense(self.class_num, activation="relu")(linear)
         return last
 
     def deep_merge(self, input_ind, input_emb, input_cont):
@@ -191,7 +192,7 @@ class WideAndDeep(Recommender):
         for i in range(0, len(self.embed_in_dims)):
             flat_select = Flatten()(Select(1, embed_width)(input_emb))
             iembed = Embedding(self.embed_in_dims[i] + 1, self.embed_out_dims[i],
-                               init= "normal")(flat_select)
+                               init="normal")(flat_select)
             flat_embed = Flatten()(iembed)
             embed.append(flat_embed)
             embed_width = embed_width + 1

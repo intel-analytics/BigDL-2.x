@@ -39,7 +39,7 @@ class NeuralCF(Recommender):
     include_mf: Whether to include Matrix Factorization. Boolean. Default is True.
     mf_embed: Units of matrix factorization embedding. Positive int. Default is 20.
     """
-    def  __init__(self, user_count, item_count, class_num, user_embed=20,
+    def __init__(self, user_count, item_count, class_num, user_embed=20,
                  item_embed=20, hidden_layers=(40, 20, 10), include_mf=True,
                  mf_embed=20, bigdl_type="float"):
         self.user_count = int(user_count)
@@ -63,7 +63,7 @@ class NeuralCF(Recommender):
                                        self.mf_embed)
 
     def build_model(self):
-        input = Input(shape = (2, ))
+        input = Input(shape=(2, ))
         user_flat = Flatten()(Select(1, 0)(input))
         item_flat = Flatten()(Select(1, 1)(input))
         mlp_user_embed = Embedding(self.user_count + 1, self.user_embed, init="normal")(user_flat)
@@ -71,10 +71,10 @@ class NeuralCF(Recommender):
         mlp_user_flat = Flatten()(mlp_user_embed)
         mlp_item_flat = Flatten()(mlp_item_embed)
         mlp_latent = merge(inputs=[mlp_user_flat, mlp_item_flat], mode="concat")
-        linear1 = Dense(self.hidden_layers[0], activation= "relu")(mlp_latent)
+        linear1 = Dense(self.hidden_layers[0], activation="relu")(mlp_latent)
         mlp_linear = linear1
         for ilayer in range(1, len(self.hidden_layers)):
-            linear_mid = Dense(self.hidden_layers[ilayer], activation= "relu")(mlp_linear)
+            linear_mid = Dense(self.hidden_layers[ilayer], activation="relu")(mlp_linear)
             mlp_linear = linear_mid
 
         if (self.include_mf):
@@ -84,7 +84,7 @@ class NeuralCF(Recommender):
             mf_user_flatten = Flatten()(mf_user_embed)
             mf_item_flatten = Flatten()(mf_item_embed)
             mf_latent = merge(inputs=[mf_user_flatten, mf_item_flatten], mode="mul")
-            concated_model = merge(inputs=[mlp_linear, mf_latent], mode = "concat")
+            concated_model = merge(inputs=[mlp_linear, mf_latent], mode="concat")
             linear_last = Dense(self.class_num, activation="softmax")(concated_model)
         else:
             linear_last = Dense(self.class_num, activation="softmax")(mlp_linear)

@@ -25,6 +25,7 @@ from test.zoo.pipeline.utils.test_utils import ZooTestCase
 
 np.random.seed(1337)  # for reproducibility
 
+
 class TestNeuralCF(ZooTestCase):
 
     def test_forward_backward_without_mf(self):
@@ -71,17 +72,17 @@ class TestNeuralCF(ZooTestCase):
         data = self.sc.parallelize(range(0, 50)) \
             .map(lambda i: gen_rand_user_item_feature(200, 80, 5)) \
             .map(lambda pair: pair.sample)
-        model.compile(optimizer= "adam",
-                      loss= SparseCategoricalCrossEntropy(zero_based_label = False),
+        model.compile(optimizer="adam",
+                      loss=SparseCategoricalCrossEntropy(zero_based_label=False),
                       metrics=['accuracy'])
         tmp_log_dir = create_tmp_path()
         model.set_tensorboard(tmp_log_dir, "training_test")
-        model.fit(data, nb_epoch=1, batch_size= 32, validation_data=data)
+        model.fit(data, nb_epoch=1, batch_size=32, validation_data=data)
         train_loss = model.get_train_summary("Loss")
         val_loss = model.get_validation_summary("Loss")
         print(np.array(train_loss))
         print(np.array(val_loss))
-        
+
 
 if __name__ == "__main__":
     pytest.main([__file__])

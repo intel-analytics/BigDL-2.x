@@ -122,16 +122,6 @@ class Recommender(KerasZooModel):
                                    int(max_users))
         return self._to_prediction_rdd(result_rdd)
 
-    def predict(self, x, batch_per_thread=8):
-        """
-        Precict on RDD[Sample].
-        """
-        results = callBigDlFunc(self.bigdl_type, "modelPredictRDD",
-                                self.value,
-                                x,
-                                batch_per_thread)
-        return results.map(lambda data: data.to_ndarray())
-
     @staticmethod
     def _to_tuple_rdd(feature_rdd):
         assert isinstance(feature_rdd, RDD), "feature_rdd should be RDD of UserItemFeature"

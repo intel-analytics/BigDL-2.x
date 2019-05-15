@@ -23,6 +23,7 @@ from test.zoo.pipeline.utils.test_utils import ZooTestCase
 
 np.random.seed(1337)  # for reproducibility
 
+
 class TestWideAndDeep(ZooTestCase):
     def setup_method(self, method):
         sparkConf = init_spark_conf().setMaster("local[4]") \
@@ -62,7 +63,7 @@ class TestWideAndDeep(ZooTestCase):
             indicator_cols=["occupation", "gender"],
             indicator_dims=[21, 3])
         model = WideAndDeep(5, column_info, "deep")
-        input = np.random.randint(2, size = (2,24))
+        input = np.random.randint(2, size=(2,24))
         self.assert_forward_backward(model, input)
 
     def test_deep_embedding_forward_backward(self):
@@ -88,7 +89,7 @@ class TestWideAndDeep(ZooTestCase):
             indicator_cols=["occupation", "gender"],
             indicator_dims=[21, 3])
         model = WideAndDeep(5, column_info, "deep")
-        input_data = np.random.randint(2, size = (2,24))
+        input_data = np.random.randint(2, size=(2,24))
         self.assert_zoo_model_save_load(model, input_data)
 
     def test_predict_recommend(self):
@@ -142,9 +143,9 @@ class TestWideAndDeep(ZooTestCase):
         assert len(merged_list2) == 3
 
         column_info3 = ColumnFeatureInfo(
-        indicator_cols=["occupation", "gender"],
-        indicator_dims=[21, 3],
-        continuous_cols=["age"])
+            indicator_cols=["occupation", "gender"],
+            indicator_dims=[21, 3],
+            continuous_cols=["age"])
         model3 = WideAndDeep(5, column_info3, "deep")
         (input_ind3, input_emb3, input_con3) = get_input(column_info3)
         (input3, merged_list3) = model3.deep_merge(input_ind3, input_emb3, input_con3)
