@@ -117,8 +117,10 @@ private[zoo] class TFTrainingHelper(tfnet: TFNet,
 
     val fetches = tfnet.forward(feeds).toTable.toSeq[Tensor[Float]].toArray
 
-    gradWeights.zipWithIndex.foreach { case (grad, idx) =>
-      grad.resizeAs(weights(idx)).add(fetches(idx))
+    if (isTraining()) {
+      gradWeights.zipWithIndex.foreach { case (grad, idx) =>
+        grad.resizeAs(weights(idx)).add(fetches(idx))
+      }
     }
 
     val realOutputs = fetches.slice(weights.length, fetches.length)
