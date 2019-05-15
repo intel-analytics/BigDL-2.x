@@ -133,12 +133,33 @@ object NNContext {
   def initNNContext(conf: SparkConf, appName: String): SparkContext = {
     val zooConf = createSparkConf(conf)
 
-    // If ZOO_NUM_MKLTHREADS is set, then set OMP_NUM_THREADS
-    // If not set, then use default (OMP_NUM_THREADS=1)
-    if (env.contains("ZOO_NUM_MKLTHREADS")) {
-      zooConf.setExecutorEnv("OMP_NUM_THREADS", env("ZOO_NUM_MKLTHREADS"))
-      zooConf.remove("KMP_BLOCKTIME")
+    // check env and set spark conf
+    if (!env.contains("KMP_SETTINGS")) {
+      zooConf.setExecutorEnv("KMP_SETTINGS", env("1"))
     }
+    if (!env.contains("KMP_AFFINITY")) {
+      zooConf.setExecutorEnv("KMP_AFFINITY", env("granularity=fine,compact,1,0"))
+    }
+    if (!env.contains("KMP_BLOCKTIME")) {
+      zooConf.setExecutorEnv("KMP_BLOCKTIME", env("0"))
+    }
+
+    if (env.contains("OMP_NUM_THREADS")) {
+      zooConf.setExecutorEnv("OMP_NUM_THREADS", env("OMP_NUM_THREADS"))
+    } else {
+      if (env.contains("ZOO_NUM_MKLTHREADS")) {
+        if (env("ZOO_NUM_MKLTHREADS").equalsIgnoreCase("all")) {
+          val cores = Runtime.getRuntime.availableProcessors()
+          zooConf.setExecutorEnv("OMP_NUM_THREADS", cores.toString)
+        } else {
+          zooConf.setExecutorEnv("OMP_NUM_THREADS", env("ZOO_NUM_MKLTHREADS"))
+        }
+      } else {
+        zooConf.setExecutorEnv("OMP_NUM_THREADS", "1")
+      }
+    }
+
+
 
     if (appName != null) {
       zooConf.setAppName(appName)

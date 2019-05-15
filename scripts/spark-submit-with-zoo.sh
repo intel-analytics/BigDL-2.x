@@ -18,11 +18,20 @@ export ANALYTICS_ZOO_CONF=${ANALYTICS_ZOO_HOME}/conf/spark-analytics-zoo.conf
 export PYTHONPATH=${ANALYTICS_ZOO_PY_ZIP}:${PYTHONPATH}
 export KMP_AFFINITY=granularity=fine,compact,1,0
 
-if [ -z "${ZOO_NUM_MKLTHREADS}" ]; then
-    export OMP_NUM_THREADS=1
+if [ -z "${OMP_NUM_THREADS}" ]; then
+    if [ -z "${ZOO_NUM_MKLTHREADS}" ]; then
+        export OMP_NUM_THREADS=1
+    else
+        if [ "${ZOO_NUM_MKLTHREADS}" == "all" ] || [ "${ZOO_NUM_MKLTHREADS}" == "ALL" ]; then
+            export OMP_NUM_THREADS=`nproc`
+        else
+            export OMP_NUM_THREADS=${ZOO_NUM_MKLTHREADS}
+        if
+    if
+if
+
+if [ -z "${KMP_BLOCKTIME}" ]; then
     export KMP_BLOCKTIME=0
-else
-    export OMP_NUM_THREADS=${ZOO_NUM_MKLTHREADS}
 if
 
 # verbose for OpenMP
