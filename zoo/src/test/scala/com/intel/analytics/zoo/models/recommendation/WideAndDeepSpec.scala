@@ -143,7 +143,7 @@ class WideAndDeepSpec extends ZooSpecHelper {
       .rdd.map(r => Utils.getDeepTensors(r, columnInfo))
 
     data.map { input =>
-      val feature: Table = T.array(input.map(x=> x.reshape(Array(1, x.size(1)))))
+      val feature: Table = T.array(input.map(x => x.reshape(Array(1, x.size(1)))))
       val output = model.forward(feature)
       val gradInput = model.backward(feature, output)
     }.count()
@@ -167,7 +167,7 @@ class WideAndDeepSpec extends ZooSpecHelper {
       .rdd.map(r => {
       val wideTensor: Tensor[Float] = Utils.getWideTensor(r, columnInfo).resize(Array(1, 124), 3)
       val deepTensor: Array[Tensor[Float]] = Utils.getDeepTensors(r, columnInfo)
-          .map(x=> x.reshape(Array(1, x.size(1))))
+          .map(x => x.reshape(Array(1, x.size(1))))
       T.array(Array(wideTensor) ++ deepTensor)
     })
     data.map { input =>
