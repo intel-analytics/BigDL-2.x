@@ -38,7 +38,7 @@ case class SessionParams(
                           maxLength: Int = 5,
                           maxEpoch: Int = 10,
                           batchSize: Int = 1280,
-                          embedOutDim: Int = 300,
+                          embedOutDim: Int = 20,
                           learningRate: Double = 1e-3,
                           learningRateDecay: Double = 1e-6,
                           inputDir: String = "./data/",
@@ -88,7 +88,9 @@ object SessionRecExp {
     val sqlContext = SQLContext.getOrCreate(sc)
 
     val (sessionDF, itemCount) = loadPublicData(sqlContext, params)
+
     val trainSample = assemblyFeature(
+      sqlContext,
       sessionDF,
       itemCount,
       params.maxLength
@@ -139,33 +141,36 @@ object SessionRecExp {
   }
 
   def assemblyFeature(
+                       sqlContext: SQLContext,
                        sessionDF: DataFrame,
                        itemCount: Int,
                        maxLength: Int
                      ): RDD[Sample[Float]] = {
 
     // prePad UDF
-    def prePadding1: mutable.WrappedArray[java.lang.Double] => Array[Float] = x => {
-      if (x.array.size <= maxLength) x.array.map(_.toFloat).dropRight(1).reverse.padTo(maxLength, 0f).reverse
-      else x.array.map(_.toFloat).dropRight(1).takeRight(maxLength)
-    }
-    val prePaddingUDF1 = udf(prePadding1)
-    def prePadding2: mutable.WrappedArray[java.lang.Double] => Array[Float] = x => {
+    def prePadding: mutable.WrappedArray[java.lang.Double] => Array[Float] = x => {
       if (x.array.size < maxLength) x.array.map(_.toFloat).reverse.padTo(maxLength, 0f).reverse
       else x.array.map(_.toFloat).takeRight(maxLength)
     }
-    val prePaddingUDF2 = udf(prePadding2)
+    val prePaddingUDF = udf(prePadding)
 
-    // get label UDF
-    def getLabel: mutable.WrappedArray[java.lang.Double] => Float = x => {
-      x.takeRight(1).head.floatValue()
-    }
-    val getLabelUDF = udf(getLabel)
+    import sqlContext.implicits._
+    val sessionDFExpand = sessionDF.rdd.flatMap( x => {
+      val raws = x.getAs[mutable.WrappedArray[java.lang.Double]]("ATC_SEQ").array
+      val pur = x.getAs[mutable.WrappedArray[java.lang.Double]]("PURCH_HIST").array
+      val out = for ( raw <- raws.dropRight(1)) yield {
+        val idx = raws.indexOf(raw) + 1
+        val input = raws.take(idx)
+        val output = raws.diff(input).take(1)
+        (input, output, pur)
+      }
+      out
+    }).toDF("ATC_SEQ", "label", "PURCH_HIST")
 
-    val rnnDF = sessionDF
-      .withColumn("ATC", prePaddingUDF1(col("ATC_SEQ")))
-      .withColumn("PUR", prePaddingUDF2(col("PURCH_HIST")))
-      .withColumn("label", getLabelUDF(col("ATC_SEQ")))
+    val rnnDF = sessionDFExpand
+      .withColumn("ATC", prePaddingUDF(col("ATC_SEQ")))
+      .withColumn("PUR", prePaddingUDF(col("PURCH_HIST")))
+      .withColumn("label", col("label").getItem(0))
       .select("ATC", "PUR", "label")
 
     // dataFrame to sample

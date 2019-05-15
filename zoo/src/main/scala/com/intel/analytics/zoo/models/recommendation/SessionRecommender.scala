@@ -33,16 +33,16 @@ import scala.reflect.ClassTag
   *
   * @param itemCount The number of distinct items. Positive integer.
   * @param itemEmbed The output size of embedding layer. Positive integer.
-  * @param mlpHiddenLayers Units of hidden layers for the mlp model. Array of positive integers. Default is Array(200, 200, 100).
-  * @param rnnHiddenLayers Units of hidden layers for the mlp model. Array of positive integers. Default is Array(200, 200).
+  * @param mlpHiddenLayers Units of hidden layers for the mlp model. Array of positive integers. Default is Array(20, 20, 20).
+  * @param rnnHiddenLayers Units of hidden layers for the mlp model. Array of positive integers. Default is Array(20, 20).
   * @param includeHistory Whether to include purchase history. Boolean. Default is true.
   * @param maxLength The max number of tokens
   */
 class SessionRecommender[T: ClassTag](
                                        val itemCount: Int,
                                        val itemEmbed: Int = 300,
-                                       val mlpHiddenLayers: Array[Int] = Array(200, 200, 100),
-                                       val rnnHiddenLayers: Array[Int] = Array(200, 200),
+                                       val mlpHiddenLayers: Array[Int] = Array(20, 20, 20),
+                                       val rnnHiddenLayers: Array[Int] = Array(20, 20),
                                        val includeHistory: Boolean = true,
                                        val maxLength: Int = 5
                                      )(implicit ev: TensorNumeric[T]) extends Recommender[T] {
@@ -87,16 +87,16 @@ object SessionRecommender {
     *
     * @param itemCount       The number of distinct items. Positive integer.
     * @param itemEmbed       The output size of embedding layer. Positive integer.
-    * @param mlpHiddenLayers Units of hidden layers for the deep model. Array of positive integers. Default is Array(200, 200, 100).
-    * @param rnnHiddenLayers Units of hidden layers for the mlp model. Array of positive integers. Default is Array(200, 200).
+    * @param mlpHiddenLayers Units of hidden layers for the deep model. Array of positive integers. Default is Array(20, 20, 20).
+    * @param rnnHiddenLayers Units of hidden layers for the mlp model. Array of positive integers. Default is Array(20, 20).
     * @param includeHistory  Whether to include purchase history. Boolean. Default is true.
     * @param maxLength       The max number of tokens
     */
   def apply[@specialized(Float, Double) T: ClassTag](
                                                       itemCount: Int,
                                                       itemEmbed: Int,
-                                                      mlpHiddenLayers: Array[Int] = Array(200, 200, 100),
-                                                      rnnHiddenLayers: Array[Int] = Array(200, 200),
+                                                      mlpHiddenLayers: Array[Int] = Array(20, 20, 20),
+                                                      rnnHiddenLayers: Array[Int] = Array(20, 20),
                                                       includeHistory: Boolean = true,
                                                       maxLength: Int = 5)
                                                     (implicit ev: TensorNumeric[T]): SessionRecommender[T] = {
