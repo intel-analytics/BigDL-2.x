@@ -26,7 +26,7 @@ import com.intel.analytics.bigdl.transform.vision.image._
 import com.intel.analytics.bigdl.utils.{Engine, T}
 import com.intel.analytics.zoo.feature.image._
 import com.intel.analytics.zoo.feature.{DistributedFeatureSet, FeatureSet}
-import com.intel.analytics.zoo.feature.pmem.{DRAM, MemoryType, PMEM}
+import com.intel.analytics.zoo.feature.pmem.{DRAM, Incremental, MemoryType, PMEM}
 import com.intel.analytics.zoo.pipeline.api.keras.layers.utils.EngineRef
 import org.apache.hadoop.io.Text
 import org.apache.log4j.Logger
@@ -88,7 +88,7 @@ object ImageNet2012 {
     } else {
       val rawData = readFromSeqFiles(path, sc, classNumber)
         .setName("ImageNet2012 Training Set")
-      val featureSet = FeatureSet.rdd(rawData, memoryType = memoryType)
+      val featureSet = FeatureSet.rdd(rawData, memoryType = memoryType, Incremental(3))
       featureSet.transform(
         MTLabeledBGRImgToBatch[ByteRecord](
           width = imageSize,

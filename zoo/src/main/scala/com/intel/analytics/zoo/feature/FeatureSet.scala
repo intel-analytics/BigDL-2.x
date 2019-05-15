@@ -25,6 +25,7 @@ import com.intel.analytics.zoo.feature.common.{ArrayLike, ArrayLikeWrapper}
 import com.intel.analytics.zoo.feature.pmem._
 import com.intel.analytics.zoo.pipeline.api.keras.layers.utils.EngineRef
 import org.apache.spark.rdd.RDD
+import org.apache.spark.storage.StorageLevel
 import org.slf4j.{Logger, LoggerFactory}
 
 import scala.reflect.ClassTag
@@ -295,6 +296,66 @@ class CachedDistributedFeatureSet[T: ClassTag]
   }
 }
 
+/**
+ * Wrap a RDD as a FeatureSet.
+ * @param buffer
+ */
+// T is the returning value type. like ByteRecord
+class IncrementalFeatureSet[T: ClassTag]
+(buffers: Array[DistributedFeatureSet[T]])
+  extends DistributedFeatureSet[T]{
+
+  protected lazy val count: Long = buffers.map{featureset =>
+    val size = featureset.toDistributed().size()
+    featureset.unpersist()
+    size
+  }.sum
+
+  protected var currentRdds = -1
+
+  override def data(train: Boolean): RDD[T] = {
+    if (currentRdds == -1) {
+      currentRdds += 1
+    } else {
+      buffers(currentRdds).unpersist()
+      currentRdds = (currentRdds + 1) % buffers.length
+    }
+    buffers(currentRdds).originRDD().cache()
+    buffers(currentRdds).cache()
+    buffers(currentRdds).data(train)
+  }
+
+  override def size(): Long = count
+
+  override def shuffle(): Unit = {
+    buffers.foreach(_.shuffle())
+  }
+
+  override def originRDD(): RDD[_] = getCurrentFeatureset().originRDD()
+
+  override def cache(): Unit = {
+    getCurrentFeatureset().cache()
+    isCached = true
+  }
+
+  override def unpersist(): Unit = {
+    getCurrentFeatureset().unpersist()
+    isCached = false
+  }
+
+  override def toDistributed(): DistributedDataSet[T] = {
+    new DistributedDataSetWrapper[T](this)
+  }
+
+  protected def getCurrentFeatureset(): DistributedFeatureSet[T] = {
+    if (currentRdds == -1) {
+      buffers(0)
+    } else {
+      buffers(currentRdds)
+    }
+  }
+}
+
 object DRAMFeatureSet {
   def rdd[T: ClassTag](data: RDD[T]): DistributedFeatureSet[T] = {
     val arrayLikeRDD = data.mapPartitions(iter => {
@@ -311,25 +372,40 @@ object FeatureSet {
        data: RDD[T],
        memoryType: MemoryType = DRAM,
        dataStrategy: DataStrategy = PARTITIONED): DistributedFeatureSet[T] = {
-    if (dataStrategy == PARTITIONED) {
-      val nodeNumber = EngineRef.getNodeNumber()
-      val repartitionedData = data.coalesce(nodeNumber, true).setName(data.name)
-      memoryType match {
-        case DRAM =>
-          DRAMFeatureSet.rdd(repartitionedData)
-        case PMEM =>
-          logger.info("~~~~~~~ Caching with AEP ~~~~~~~")
-          PmemFeatureSet.rdd(repartitionedData, PMEM)
-        case DIRECT =>
-          logger.info("~~~~~~~ Caching with DIRECT ~~~~~~~")
-          PmemFeatureSet.rdd[T](repartitionedData, DIRECT)
-        case _ =>
-          throw new IllegalArgumentException(
-            s"MemoryType: ${memoryType} is not supported at the moment")
-      }
-    } else {
-      throw new IllegalArgumentException(
-        s"DataStrategy ${dataStrategy} is not supported at the moment")
+    dataStrategy match {
+      case PARTITIONED =>
+        val nodeNumber = EngineRef.getNodeNumber()
+        val repartitionedData = data.coalesce(nodeNumber, true).setName(data.name)
+        memoryType match {
+          case DRAM =>
+            DRAMFeatureSet.rdd(repartitionedData)
+          case PMEM =>
+            logger.info("~~~~~~~ Caching with AEP ~~~~~~~")
+            PmemFeatureSet.rdd(repartitionedData, PMEM)
+          case DIRECT =>
+            logger.info("~~~~~~~ Caching with DIRECT ~~~~~~~")
+            PmemFeatureSet.rdd[T](repartitionedData, DIRECT)
+          case _ =>
+            throw new IllegalArgumentException(
+              s"MemoryType: ${memoryType} is not supported at the moment")
+        }
+
+      case incremental: Incremental =>
+        val splits = Array.tabulate(incremental.nRdds)(_ => 1.0 / incremental.nRdds)
+        val sliceRdds = data.randomSplit(splits)
+        var i = 0
+        sliceRdds.foreach(_.persist(StorageLevel.DISK_ONLY).setName(s"RandomSplit${i+=1;i}"))
+        memoryType match {
+          case DRAM =>
+            new IncrementalFeatureSet[T](sliceRdds.map(rdd => FeatureSet.rdd(rdd)))
+          case _ =>
+            throw new IllegalArgumentException(
+              s"MemoryType: ${memoryType} is not supported at the moment")
+        }
+      case _ =>
+        throw new IllegalArgumentException(
+          s"DataStrategy ${dataStrategy} is not supported at the moment")
+
     }
   }
 }

@@ -32,6 +32,8 @@ case object PARTITIONED extends DataStrategy
 
 case object REPLICATED extends DataStrategy
 
+case class Incremental(nRdds: Int) extends DataStrategy
+
 object MemoryType {
   def fromString(str: String): MemoryType = {
     str.toUpperCase() match {
