@@ -20,7 +20,7 @@ if [ -z "${OMP_NUM_THREADS}" ]; then
     if [ -z "${ZOO_NUM_MKLTHREADS}" ]; then
         export OMP_NUM_THREADS=1
     else
-        if [ "${ZOO_NUM_MKLTHREADS}" == all ] || [ "${ZOO_NUM_MKLTHREADS}" == ALL ]; then
+        if [ "${ZOO_NUM_MKLTHREADS}" == "all" ] || [ "${ZOO_NUM_MKLTHREADS}" == "ALL" ]; then
             export OMP_NUM_THREADS=`nproc`
         else
             export OMP_NUM_THREADS=${ZOO_NUM_MKLTHREADS}

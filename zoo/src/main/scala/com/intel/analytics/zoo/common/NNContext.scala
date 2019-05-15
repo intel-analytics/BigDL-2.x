@@ -134,16 +134,15 @@ object NNContext {
     val zooConf = createSparkConf(conf)
 
     // check env and set spark conf
-    if (!env.contains("KMP_SETTINGS")) {
-      zooConf.setExecutorEnv("KMP_SETTINGS", env("1"))
-    }
     if (!env.contains("KMP_AFFINITY")) {
       zooConf.setExecutorEnv("KMP_AFFINITY", env("granularity=fine,compact,1,0"))
     }
     if (!env.contains("KMP_BLOCKTIME")) {
       zooConf.setExecutorEnv("KMP_BLOCKTIME", env("0"))
     }
-
+    if (!env.contains("KMP_SETTINGS")) {
+      zooConf.setExecutorEnv("KMP_SETTINGS", env("1"))
+    }
     if (env.contains("OMP_NUM_THREADS")) {
       zooConf.setExecutorEnv("OMP_NUM_THREADS", env("OMP_NUM_THREADS"))
     } else {
@@ -158,8 +157,6 @@ object NNContext {
         zooConf.setExecutorEnv("OMP_NUM_THREADS", "1")
       }
     }
-
-
 
     if (appName != null) {
       zooConf.setAppName(appName)
