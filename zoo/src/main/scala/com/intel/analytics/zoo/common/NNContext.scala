@@ -135,13 +135,14 @@ object NNContext {
 
     // check env and set spark conf
     if (!env.contains("KMP_AFFINITY")) {
-      zooConf.setExecutorEnv("KMP_AFFINITY", env("granularity=fine,compact,1,0"))
+      zooConf.setExecutorEnv("spark.executorEnv.KMP_AFFINITY",
+        env("granularity=fine,compact,1,0"))
     }
     if (!env.contains("KMP_BLOCKTIME")) {
-      zooConf.setExecutorEnv("KMP_BLOCKTIME", env("0"))
+      zooConf.setExecutorEnv("spark.executorEnv.KMP_BLOCKTIME", env("0"))
     }
     if (!env.contains("KMP_SETTINGS")) {
-      zooConf.setExecutorEnv("KMP_SETTINGS", env("1"))
+      zooConf.setExecutorEnv("spark.executorEnv.KMP_SETTINGS", env("1"))
     }
     if (env.contains("OMP_NUM_THREADS")) {
       zooConf.setExecutorEnv("OMP_NUM_THREADS", env("OMP_NUM_THREADS"))
@@ -149,12 +150,14 @@ object NNContext {
       if (env.contains("ZOO_NUM_MKLTHREADS")) {
         if (env("ZOO_NUM_MKLTHREADS").equalsIgnoreCase("all")) {
           val cores = Runtime.getRuntime.availableProcessors()
-          zooConf.setExecutorEnv("OMP_NUM_THREADS", cores.toString)
+          zooConf.setExecutorEnv("spark.executorEnv.OMP_NUM_THREADS",
+            cores.toString)
         } else {
-          zooConf.setExecutorEnv("OMP_NUM_THREADS", env("ZOO_NUM_MKLTHREADS"))
+          zooConf.setExecutorEnv("spark.executorEnv.OMP_NUM_THREADS",
+            env("ZOO_NUM_MKLTHREADS"))
         }
       } else {
-        zooConf.setExecutorEnv("OMP_NUM_THREADS", "1")
+        zooConf.setExecutorEnv("spark.executorEnv.OMP_NUM_THREADS", "1")
       }
     }
 
