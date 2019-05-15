@@ -73,7 +73,7 @@ class NeuralCF(Recommender):
         mlp_latent = merge(inputs=[mlp_user_flat, mlp_item_flat], mode="concat")
         linear1 = Dense(self.hidden_layers[0], activation= "relu")(mlp_latent)
         mlp_linear = linear1
-        for ilayer in range(1, len(self.hidden_layers) - 1):
+        for ilayer in range(1, len(self.hidden_layers)):
             linear_mid = Dense(self.hidden_layers[ilayer], activation= "relu")(mlp_linear)
             mlp_linear = linear_mid
 

@@ -52,8 +52,8 @@ object Ml1mWideAndDeep {
       wideCrossDims = Array(bucketSize),
       indicatorCols = Array("genres", "gender"),
       indicatorDims = Array(19, 3),
-      embedCols = Array("genres", "occupation"),
-      embedInDims = Array(19, 21),
+      embedCols = Array("userId", "itemId"),
+      embedInDims = Array(userCount, itemCount),
       embedOutDims = Array(64, 64),
       continuousCols = Array("age"))
 

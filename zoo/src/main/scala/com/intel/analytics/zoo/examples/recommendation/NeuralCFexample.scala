@@ -33,7 +33,7 @@ import org.apache.spark.sql.functions._
 import scopt.OptionParser
 
 case class NeuralCFParams(val inputDir: String = "./data/ml-1m",
-                          val batchSize: Int = 8000,
+                          val batchSize: Int = 2800,
                           val nEpochs: Int = 10,
                           val learningRate: Double = 1e-3,
                           val learningRateDecay: Double = 1e-6
@@ -86,7 +86,7 @@ object NeuralCFexample {
       numClasses = 5,
       userEmbed = 20,
       itemEmbed = 20,
-      hiddenLayers = Array(40, 20, 10))
+      hiddenLayers = Array(20, 10))
 
     val pairFeatureRdds: RDD[UserItemFeature[Float]] =
       assemblyFeature(isImplicit, ratings, userCount, itemCount)
@@ -121,6 +121,7 @@ object NeuralCFexample {
 
     userRecs.take(10).foreach(println)
     itemRecs.take(10).foreach(println)
+    ncf.summary()
   }
 
   def loadPublicData(sqlContext: SQLContext, dataPath: String): (DataFrame, Int, Int) = {

@@ -173,14 +173,13 @@ class WideAndDeep(Recommender):
         return model
 
     def deep_hidden(self, merge_list):
-        print(len(merge_list))
         if (len(merge_list) == 1):
             merged = merge_list[0]
         else:
             merged = merge(merge_list, "concat")
         linear = Dense(self.hidden_layers[0], activation="relu")(merged)
 
-        for ilayer in range(1, len(self.hidden_layers) - 1):
+        for ilayer in range(1, len(self.hidden_layers)):
             linear_mid = Dense(self.hidden_layers[ilayer], activation="relu")(linear)
             linear = linear_mid
         last = Dense(self.class_num, activation= "relu")(linear)
