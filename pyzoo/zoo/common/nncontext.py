@@ -105,10 +105,10 @@ def get_analytics_zoo_conf():
 def init_spark_conf():
     zoo_conf = get_analytics_zoo_conf()
     # Set bigDL and TF conf
-    zoo_conf["KMP_AFFINITY"] = os.environ["KMP_AFFINITY"]
-    zoo_conf["KMP_SETTINGS"] = os.environ["KMP_SETTINGS"]
-    zoo_conf["OMP_NUM_THREADS"] = os.environ["OMP_NUM_THREADS"]
-    zoo_conf["KMP_BLOCKTIME"] = os.environ["KMP_BLOCKTIME"]
+    zoo_conf["spark.executorEnv.KMP_AFFINITY"] = os.environ["KMP_AFFINITY"]
+    zoo_conf["spark.executorEnv.KMP_SETTINGS"] = os.environ["KMP_SETTINGS"]
+    zoo_conf["spark.executorEnv.OMP_NUM_THREADS"] = os.environ["OMP_NUM_THREADS"]
+    zoo_conf["spark.executorEnv.KMP_BLOCKTIME"] = os.environ["KMP_BLOCKTIME"]
 
     sparkConf = SparkConf()
     sparkConf.setAll(zoo_conf.items())
