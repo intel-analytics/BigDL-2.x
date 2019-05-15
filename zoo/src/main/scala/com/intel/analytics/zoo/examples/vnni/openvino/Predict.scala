@@ -22,6 +22,7 @@ import com.intel.analytics.zoo.common.NNContext
 import com.intel.analytics.zoo.feature.image.{ImageCenterCrop, ImageMatToTensor, ImageResize, ImageSet, ImageSetToSample}
 import com.intel.analytics.zoo.pipeline.inference.InferenceModel
 import org.apache.log4j.{Level, Logger}
+import org.opencv.imgcodecs.Imgcodecs
 import scopt.OptionParser
 
 case class PredictParams(folder: String = "./",
@@ -79,7 +80,8 @@ object Predict {
       }
 
       // Read ImageNet val
-      val images = ImageSet.read(param.folder).toLocal()
+      val images = ImageSet.read(param.folder,
+        imageCodec = Imgcodecs.CV_LOAD_IMAGE_COLOR).toLocal()
 
       val start = System.nanoTime()
       // Pre-processing
