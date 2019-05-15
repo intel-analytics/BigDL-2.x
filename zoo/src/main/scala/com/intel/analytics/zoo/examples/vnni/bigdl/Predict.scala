@@ -20,6 +20,7 @@ import com.intel.analytics.bigdl.utils.Engine
 import com.intel.analytics.zoo.feature.image.ImageSet
 import com.intel.analytics.zoo.models.image.imageclassification.{ImageClassifier, LabelOutput}
 import org.apache.log4j.{Level, Logger}
+import org.opencv.imgcodecs.Imgcodecs
 import scopt.OptionParser
 
 case class PredictParams(folder: String = "./",
@@ -50,7 +51,7 @@ object Predict {
     }
     parser.parse(args, PredictParams()).map(param => {
       Engine.init
-      val images = ImageSet.read(param.folder)
+      val images = ImageSet.read(param.folder, imageCodec = Imgcodecs.CV_LOAD_IMAGE_UNCHANGED)
       val model = ImageClassifier.loadModel[Float](param.model)
       logger.info(s"Start inference on images under ${param.folder}...")
       val output = model.predictImageSet(images)
