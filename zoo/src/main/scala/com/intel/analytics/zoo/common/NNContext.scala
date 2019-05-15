@@ -133,9 +133,11 @@ object NNContext {
   def initNNContext(conf: SparkConf, appName: String): SparkContext = {
     val zooConf = createSparkConf(conf)
 
-    // If not set use default value OMP_NUM_THREADS=1
-    if (env.contains("OMP_NUM_THREADS")) {
-      zooConf.setExecutorEnv("OMP_NUM_THREADS", env("OMP_NUM_THREADS"))
+    // If ZOO_NUM_MKLTHREADS is set, then set OMP_NUM_THREADS
+    // If not set, then use default (OMP_NUM_THREADS=1)
+    if (env.contains("ZOO_NUM_MKLTHREADS")) {
+      zooConf.setExecutorEnv("OMP_NUM_THREADS", env("ZOO_NUM_MKLTHREADS"))
+      zooConf.remove("KMP_BLOCKTIME")
     }
 
     if (appName != null) {
