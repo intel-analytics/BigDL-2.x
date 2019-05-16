@@ -132,34 +132,7 @@ object NNContext {
    */
   def initNNContext(conf: SparkConf, appName: String): SparkContext = {
     val zooConf = createSparkConf(conf)
-
-    // check env and set spark conf
-    if (!env.contains("KMP_AFFINITY")) {
-      zooConf.setExecutorEnv("spark.executorEnv.KMP_AFFINITY",
-        env("granularity=fine,compact,1,0"))
-    }
-    if (!env.contains("KMP_BLOCKTIME")) {
-      zooConf.setExecutorEnv("spark.executorEnv.KMP_BLOCKTIME", env("0"))
-    }
-    if (!env.contains("KMP_SETTINGS")) {
-      zooConf.setExecutorEnv("spark.executorEnv.KMP_SETTINGS", env("1"))
-    }
-    if (env.contains("OMP_NUM_THREADS")) {
-      zooConf.setExecutorEnv("OMP_NUM_THREADS", env("OMP_NUM_THREADS"))
-    } else {
-      if (env.contains("ZOO_NUM_MKLTHREADS")) {
-        if (env("ZOO_NUM_MKLTHREADS").equalsIgnoreCase("all")) {
-          val cores = Runtime.getRuntime.availableProcessors()
-          zooConf.setExecutorEnv("spark.executorEnv.OMP_NUM_THREADS",
-            cores.toString)
-        } else {
-          zooConf.setExecutorEnv("spark.executorEnv.OMP_NUM_THREADS",
-            env("ZOO_NUM_MKLTHREADS"))
-        }
-      } else {
-        zooConf.setExecutorEnv("spark.executorEnv.OMP_NUM_THREADS", "1")
-      }
-    }
+    initConf(zooConf)
 
     if (appName != null) {
       zooConf.setAppName(appName)
@@ -224,6 +197,43 @@ object NNContext {
     lines.map(_.split("\\s+")).map(d => (d(0), d(1))).toSeq
       .filter(_._1 != "spark.shuffle.blockTransferService" ||
         System.getProperty("bigdl.network.nio", "true").toBoolean)
+  }
+
+  /**
+   * Spark conf with pre-set env
+   * Currently, focus on KMP_AFFINITY, KMP_BLOCKTIME
+   * KMP_SETTINGS, OMP_NUM_THREADS and ZOO_NUM_MKLTHREADS
+   *
+   * @param zooConf SparkConf
+   */
+  private[zoo] def initConf(zooConf: SparkConf) : Unit = {
+    // check env and set spark conf
+    if (!env.contains("KMP_AFFINITY")) {
+      zooConf.setExecutorEnv("spark.executorEnv.KMP_AFFINITY",
+        "granularity=fine,compact,1,0")
+    }
+    if (!env.contains("KMP_BLOCKTIME")) {
+      zooConf.setExecutorEnv("spark.executorEnv.KMP_BLOCKTIME", "0")
+    }
+    if (!env.contains("KMP_SETTINGS")) {
+      zooConf.setExecutorEnv("spark.executorEnv.KMP_SETTINGS", "1")
+    }
+    if (env.contains("OMP_NUM_THREADS")) {
+      zooConf.setExecutorEnv("OMP_NUM_THREADS", env("OMP_NUM_THREADS"))
+    } else {
+      if (env.contains("ZOO_NUM_MKLTHREADS")) {
+        if (env("ZOO_NUM_MKLTHREADS").equalsIgnoreCase("all")) {
+          val cores = Runtime.getRuntime.availableProcessors()
+          zooConf.setExecutorEnv("spark.executorEnv.OMP_NUM_THREADS",
+            cores.toString)
+        } else {
+          zooConf.setExecutorEnv("spark.executorEnv.OMP_NUM_THREADS",
+            env("ZOO_NUM_MKLTHREADS"))
+        }
+      } else {
+        zooConf.setExecutorEnv("spark.executorEnv.OMP_NUM_THREADS", "1")
+      }
+    }
   }
 
   def createSparkConf(existingConf: SparkConf = null) : SparkConf = {
