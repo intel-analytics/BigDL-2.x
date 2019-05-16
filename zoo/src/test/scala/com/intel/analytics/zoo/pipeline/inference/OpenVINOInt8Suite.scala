@@ -107,7 +107,7 @@ class OpenVINOInt8Suite extends FunSuite with Matchers with BeforeAndAfterAll
   }
 
 
-  /*test("openvino model should be optimized and calibrated") {
+/*  test("openvino model should be optimized and calibrated") {
     InferenceModel.doOptimizeTF(
       null,
       resnet_v1_50_modelType,
@@ -164,7 +164,7 @@ class OpenVINOInt8Suite extends FunSuite with Matchers with BeforeAndAfterAll
     println(classes.mkString(","))
   }
 
-  test("openvino image classification model should load successfully") {
+  test("openvino image classification model should CHW load successfully") {
     val model = new InferenceModel(3)
     model.doLoadTF(null,
       resnet_v1_50_modelType,
@@ -192,7 +192,6 @@ class OpenVINOInt8Suite extends FunSuite with Matchers with BeforeAndAfterAll
       }))
     val results: util.List[util.List[JTensor]] = model.doPredict(inputs)
     val classes = results.toArray().map(list => {
-      println(s"Output List size ${list.asInstanceOf[util.List[JTensor]].size()}")
       val inner = list.asInstanceOf[util.List[JTensor]].get(0)
       val class1 = inner.getData.slice(0, 1000).zipWithIndex.maxBy(_._1)._2
       val class2 = inner.getData.slice(1000, 2000).zipWithIndex.maxBy(_._1)._2
@@ -318,7 +317,7 @@ class OpenVINOInt8Suite extends FunSuite with Matchers with BeforeAndAfterAll
     println(classes.mkString(","))
   }
 
-  test("openvino resnet50 should predictInt image successfully") {
+  test("openvino resnet50 should CHW predictInt image successfully") {
     val model = new InferenceModel(3)
     model.doLoadTF(null,
       resnet_v1_50_modelType,
@@ -446,15 +445,23 @@ class OpenVINOInt8Suite extends FunSuite with Matchers with BeforeAndAfterAll
   }*/
 
   def fromHWC2CHW(data: Array[Float]): Array[Float] = {
-    val tempArray = new Array[Float](3 * 224 * 224)
+    val tmpArray = Array.ofDim[Float](224, 224, 3)
+    val resArray = new Array[Float](3 * 224 * 224)
     for (h <- 0 to 223) {
       for (w <- 0 to 223) {
-        for (c <- 0 to 2) {
-          tempArray(c * h + w) = data(h * w + c)
+        for (c <- 0 to 3) {
+          tmpArray(h)(w)(c) = data(h * w * c + w * c + c)
         }
       }
     }
-    return tempArray
+    for (c <- 1 to 3) {
+      for (h <- 1 to 224) {
+        for (w <- 1 to 224) {
+          resArray(c * h * w + h * w + w) = tmpArray(h)(w)(c)
+        }
+      }
+    }
+    resArray
   }
 
   def almostEqual(x: Float, y: Float, precision: Float): Boolean = {
