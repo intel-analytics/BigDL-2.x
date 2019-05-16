@@ -135,7 +135,7 @@ object ImagenetConfig {
 
   // Preprocessor for ResNet50 pre-trained in BigDL
   def bigdlResNetPreprocessor(): Preprocessing[ImageFeature, ImageFeature] = {
-      ImageResize(256, 256) ->
+      ImageRandomResize(256, 256) ->
       ImageCenterCrop(224, 224) ->
       ImageChannelScaledNormalizer(104, 117, 123, 0.0078125) ->
       ImageMatToTensor() -> ImageSetToSample()

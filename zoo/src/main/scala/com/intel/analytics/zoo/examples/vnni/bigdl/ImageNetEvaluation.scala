@@ -53,7 +53,7 @@ object ImageNetEvaluation {
         .action((x, c) => c.copy(partitionNum = x))
     }
     parser.parse(args, ImageNetEvaluationParams()).map(param => {
-      val sc = NNContext.initNNContext("ImageNet2012 with Int8 Inference Example")
+      val sc = NNContext.initNNContext("ImageNet evaluation example with int8 quantized model")
       val images = ImageSet.readSequenceFiles(param.folder, sc, param.partitionNum)
       // If the actual partitionNum of sequence files is too large, then the
       // total batchSize we calculate (partitionNum * batchPerPartition) would be
