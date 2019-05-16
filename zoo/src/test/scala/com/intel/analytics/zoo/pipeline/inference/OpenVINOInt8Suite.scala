@@ -213,8 +213,10 @@ class OpenVINOInt8Suite extends FunSuite with Matchers with BeforeAndAfterAll
       opencvLibPath)
     println(s"resnet_v1_50_model from tf loaded as $model")
     model shouldNot be(null)
-    val indata1 = Source.fromFile(image_input_65_filePath).getLines().map(_.toFloat).toArray
-    val indata2 = Source.fromFile(image_input_970_filePath).getLines().map(_.toFloat).toArray
+    val indata1 = fromCWH2CHW(Source.fromFile(image_input_65_filePath)
+      .getLines().map(_.toFloat).toArray)
+    val indata2 = fromCWH2CHW(Source.fromFile(image_input_970_filePath)
+      .getLines().map(_.toFloat).toArray)
     val labels = Array(65f, 970f)
     val data = indata1 ++ indata2 ++ indata1 ++ indata2
     val input1 = new JTensor(data, resnet_v1_50_shape)
@@ -259,8 +261,8 @@ class OpenVINOInt8Suite extends FunSuite with Matchers with BeforeAndAfterAll
     // batchSize = 4, but given 3 and 5
     val data1 = indata1 ++ indata2 ++ indata1
     val data2 = indata1 ++ indata2 ++ indata1 ++ indata2 ++ indata1
-    val input1 = new JTensor(data1, resnet_v1_50_shape)
-    val input2 = new JTensor(data2, resnet_v1_50_shape)
+    val input1 = new JTensor(data1, Array(3, 3, 224, 224))
+    val input2 = new JTensor(data2, Array(5, 3, 224, 224))
     val inputs = Arrays.asList(
       Arrays.asList({
         input1
@@ -276,6 +278,18 @@ class OpenVINOInt8Suite extends FunSuite with Matchers with BeforeAndAfterAll
     })
     almostEqual(classes, labels, 0.1f)
     println(classes.mkString(","))
+  }
+
+  def fromCWH2CHW(data: Array[Float]): Array[Float] = {
+    val tempArray = new Array[Float](3 * 224 * 224)
+    for (h <- 0 to 223) {
+      for (w <- 0 to 223) {
+        for (c <- 0 to 2) {
+          tempArray(h * w + c) = data(w * h + c)
+        }
+      }
+    }
+    return tempArray
   }
 
   def almostEqual(x: Float, y: Float, precision: Float): Boolean = {
