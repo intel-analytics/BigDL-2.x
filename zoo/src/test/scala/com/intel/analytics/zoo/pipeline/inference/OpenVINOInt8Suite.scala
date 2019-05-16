@@ -449,15 +449,15 @@ class OpenVINOInt8Suite extends FunSuite with Matchers with BeforeAndAfterAll
     val resArray = new Array[Float](3 * 224 * 224)
     for (h <- 0 to 223) {
       for (w <- 0 to 223) {
-        for (c <- 0 to 3) {
-          tmpArray(h)(w)(c) = data(h * w * c + w * c + c)
+        for (c <- 0 to 2) {
+          tmpArray(h)(w)(c) = data(h * 224 * 3 + w * 3 + c)
         }
       }
     }
-    for (c <- 1 to 3) {
-      for (h <- 1 to 224) {
-        for (w <- 1 to 224) {
-          resArray(c * h * w + h * w + w) = tmpArray(h)(w)(c)
+    for (c <- 0 to 2) {
+      for (h <- 0 to 223) {
+        for (w <- 0 to 223) {
+          resArray(c * 224 * 224 + h * 224 + w) = tmpArray(h)(w)(c)
         }
       }
     }
