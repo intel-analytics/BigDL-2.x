@@ -609,16 +609,16 @@ object TextSet {
                     corpus1: TextSet,
                     corpus2: TextSet): DistributedTextSet = {
 
-    def createClassificationTextFeature(qtf: TextFeature, atf: TextFeature, labelValue: Float) = {
+    def createClassificationTextFeature(qtf: TextFeature, atf: TextFeature, labelValue: Int) = {
 
       val classificationIndices = qtf.getIndices ++ atf.getIndices
 
       val feature = Tensor(classificationIndices, Array(classificationIndices.length))
-      val label = Tensor(Array(labelValue), Array(1))
+      val label = Tensor(Array(labelValue.toFloat), Array(1))
       val sample = Sample(feature, label)
 
       val textFeature = TextFeature(null, qtf.getURI + atf.getURI)
-      textFeature(TextFeature.label) = labelValue.toInt
+      textFeature(TextFeature.label) = labelValue
       textFeature(TextFeature.sample) = sample
       textFeature
     }
@@ -636,7 +636,7 @@ object TextSet {
           createClassificationTextFeature(
             text1,
             text2,
-            rel.label.toFloat
+            rel.label
           )
         }
 
