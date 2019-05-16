@@ -216,9 +216,9 @@ class OpenVINOInt8Suite extends FunSuite with Matchers with BeforeAndAfterAll
       opencvLibPath)
     println(s"resnet_v1_50_model from tf loaded as $model")
     model shouldNot be(null)
-    val indata1 = fromCWH2CHW(Source.fromFile(image_input_65_filePath)
+    val indata1 = fromHWC2CHW(Source.fromFile(image_input_65_filePath)
       .getLines().map(_.toFloat).toArray)
-    val indata2 = fromCWH2CHW(Source.fromFile(image_input_970_filePath)
+    val indata2 = fromHWC2CHW(Source.fromFile(image_input_970_filePath)
       .getLines().map(_.toFloat).toArray)
     val labels = Array(65f, 970f)
     val data = indata1 ++ indata2 ++ indata1 ++ indata2
@@ -259,9 +259,9 @@ class OpenVINOInt8Suite extends FunSuite with Matchers with BeforeAndAfterAll
     OpenCVMat.toFloatPixels(OpenCVMat.read(calibrateValDirPath +
       "ILSVRC2012_val_00000001.bmp"), indata1)
     OpenCVMat.toFloatPixels(OpenCVMat.read(calibrateValDirPath +
-      "ILSVRC2012_val_00000002.bmp"), indata1)
-    indata1 = fromCWH2CHW(indata1)
-    indata2 = fromCWH2CHW(indata2)
+      "ILSVRC2012_val_00000002.bmp"), indata2)
+    indata1 = fromHWC2CHW(indata1)
+    indata2 = fromHWC2CHW(indata2)
     val labels = Array(65f, 970f)
     val data = indata1 ++ indata2 ++ indata1 ++ indata2
     val input1 = new JTensor(data, resnet_v1_50_shape)
@@ -305,7 +305,7 @@ class OpenVINOInt8Suite extends FunSuite with Matchers with BeforeAndAfterAll
     OpenCVMat.toFloatPixels(OpenCVMat.read(calibrateValDirPath +
       "ILSVRC2012_val_00000001.bmp"), indata1)
     OpenCVMat.toFloatPixels(OpenCVMat.read(calibrateValDirPath +
-      "ILSVRC2012_val_00000002.bmp"), indata1)
+      "ILSVRC2012_val_00000002.bmp"), indata2)
     val labels = Array(65f, 970f)
     val data = indata1 ++ indata2 ++ indata1 ++ indata2
     val input1 = new JTensor(data, resnet_v1_50_shape)
@@ -370,12 +370,12 @@ class OpenVINOInt8Suite extends FunSuite with Matchers with BeforeAndAfterAll
     println(classes.mkString(","))
   }
 
-  def fromCWH2CHW(data: Array[Float]): Array[Float] = {
+  def fromHWC2CHW(data: Array[Float]): Array[Float] = {
     val tempArray = new Array[Float](3 * 224 * 224)
     for (h <- 0 to 223) {
       for (w <- 0 to 223) {
         for (c <- 0 to 2) {
-          tempArray(h * w + c) = data(w * h + c)
+          tempArray(c * h + w) = data(w * h + c)
         }
       }
     }
