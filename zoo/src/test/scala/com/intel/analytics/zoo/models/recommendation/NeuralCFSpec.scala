@@ -20,11 +20,15 @@ import java.net.URL
 
 import com.intel.analytics.bigdl.dataset.Sample
 import com.intel.analytics.bigdl.nn.ClassNLLCriterion
-import com.intel.analytics.bigdl.optim.{Adam, Optimizer, Trigger}
+import com.intel.analytics.bigdl.optim.{Adam, Optimizer, Top1Accuracy, Trigger}
 import com.intel.analytics.bigdl.tensor.Tensor
 import com.intel.analytics.bigdl.utils.T
 import com.intel.analytics.zoo.common.NNContext
+import com.intel.analytics.zoo.models.python.PythonZooModel
 import com.intel.analytics.zoo.pipeline.api.keras.ZooSpecHelper
+import com.intel.analytics.zoo.pipeline.api.keras.models.KerasNet
+import com.intel.analytics.zoo.pipeline.api.keras.objectives.SparseCategoricalCrossEntropy
+import com.intel.analytics.zoo.pipeline.api.keras.python.PythonZooKeras
 import com.intel.analytics.zoo.pipeline.api.keras.serializer.ModuleSerializationTest
 import org.apache.log4j.{Level, Logger}
 import org.apache.spark.{SparkConf, SparkContext}
@@ -163,6 +167,32 @@ class NeuralCFSpec extends ZooSpecHelper {
     assert(itemRecs.count() <= 200)
     assert(userRecs.count() <= 200)
   }
+
+  "NeuralCF compile and fit" should "work properly" in {
+
+    val ncf: NeuralCF[Float] = NeuralCF[Float](100, 100, 5, 5, 5, Array(10, 5), false)
+    val data = datain
+      .rdd.map(r => {
+      val uid = r.getAs[Int]("userId")
+      val iid = r.getAs[Int]("itemId")
+      val label = r.getAs[Int]("label")
+      val feature: Tensor[Float] = Tensor[Float](T(uid.toFloat, iid.toFloat))
+
+      UserItemFeature(uid, iid, Sample(feature, Tensor[Float](T(label))))
+    })
+    val trainRdds = data.map(x => x.sample)
+
+    val optimMethod = new Adam[Float](
+      learningRate = 1e-3,
+      learningRateDecay = 1e-6)
+
+    ncf.compile(optimizer = optimMethod,
+      loss = SparseCategoricalCrossEntropy[Float](zeroBasedLabel = false),
+      metrics = List(new Top1Accuracy[Float]()))
+
+    ncf.fit(trainRdds, batchSize = 458, nbEpoch = 1, validationData = null)
+  }
+
 
 }
 

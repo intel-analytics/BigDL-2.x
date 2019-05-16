@@ -114,16 +114,11 @@ class WideAndDeep(Recommender):
 
         self.class_num = int(class_num)
         self.wide_base_dims = column_info.wide_base_dims
-        self.wide_base_cols = column_info.wide_base_cols
         self.wide_cross_dims = column_info.wide_cross_dims
-        self.wide_cross_cols = column_info.wide_cross_cols
-        self.indicator_cols = column_info.indicator_cols
         self.indicator_dims = column_info.indicator_dims
-        self.embed_cols = column_info.embed_cols
         self.embed_in_dims = column_info.embed_in_dims
         self.embed_out_dims = column_info.embed_out_dims
         self.continuous_cols = column_info.continuous_cols
-        self.label = column_info.label
         self.model_type = model_type
         self.hidden_layers = [int(unit) for unit in hidden_layers]
         self.bigdl_type = bigdl_type
@@ -132,17 +127,12 @@ class WideAndDeep(Recommender):
                                           self.model_type,
                                           self.class_num,
                                           self.hidden_layers,
-                                          self.wide_base_cols,
                                           self.wide_base_dims,
-                                          self.wide_cross_cols,
                                           self.wide_cross_dims,
-                                          self.indicator_cols,
                                           self.indicator_dims,
-                                          self.embed_cols,
                                           self.embed_in_dims,
                                           self.embed_out_dims,
                                           self.continuous_cols,
-                                          self.label,
                                           self.model)
 
     def build_model(self):
