@@ -23,6 +23,7 @@ import java.util.{Arrays, Properties}
 import com.google.common.io.Files
 import org.scalatest._
 import org.slf4j.LoggerFactory
+import com.intel.analytics.bigdl.transform.vision.image.opencv.OpenCVMat
 
 import scala.io.Source
 import scala.language.postfixOps
@@ -60,6 +61,7 @@ class OpenVINOInt8Suite extends FunSuite with Matchers with BeforeAndAfterAll
   val calibrateValTarUrl = s"$s3Url/analytics-zoo-models/openvino/val_bmp_32.tar"
   val calibrateValTar = calibrateValTarUrl.split("/").last
   var calibrateValFilePath: String = _
+  var calibrateValDirPath: String = _
 
   val resnet_v1_50_shape = Array(4, 3, 224, 224)
   val image_input_65_url = s"$s3Url/analytics-zoo-models/openvino/ic_input_65"
@@ -91,6 +93,7 @@ class OpenVINOInt8Suite extends FunSuite with Matchers with BeforeAndAfterAll
 
     resnet_v1_50_checkpointPath = s"$dir/resnet_v1_50.ckpt"
     calibrateValFilePath = s"$dir/val_bmp_32/val.txt"
+    calibrateValDirPath = s"$dir/val_bmp_32/"
 
     image_input_65_filePath = s"$dir/ic_input_65"
     image_input_970_filePath = s"$dir/ic_input_970"
@@ -220,7 +223,7 @@ class OpenVINOInt8Suite extends FunSuite with Matchers with BeforeAndAfterAll
     val labels = Array(65f, 970f)
     val data = indata1 ++ indata2 ++ indata1 ++ indata2
     val input1 = new JTensor(data, resnet_v1_50_shape)
-    val input2 = new JTensor(data.reverse, resnet_v1_50_shape)
+    val input2 = new JTensor(data, resnet_v1_50_shape)
     val inputs = Arrays.asList(
       Arrays.asList({
         input1
@@ -238,6 +241,93 @@ class OpenVINOInt8Suite extends FunSuite with Matchers with BeforeAndAfterAll
     almostEqual(classes, labels, 0.1f)
     println(classes.mkString(","))
   }
+
+  test("openvino resnet50 should predictInt image successfully") {
+    val model = new InferenceModel(3)
+    model.doLoadTF(null,
+      resnet_v1_50_modelType,
+      resnet_v1_50_checkpointPath,
+      resnet_v1_50_inputShape,
+      resnet_v1_50_ifReverseInputChannels,
+      resnet_v1_50_meanValues,
+      resnet_v1_50_scale)
+    println(s"resnet_v1_50_model from tf loaded as $model")
+    model shouldNot be(null)
+
+    var indata1 = new Array[Float](3 * 224 * 224)
+    var indata2 = new Array[Float](3 * 224 * 224)
+    OpenCVMat.toFloatPixels(OpenCVMat.read(calibrateValDirPath +
+      "ILSVRC2012_val_00000001.bmp"), indata1)
+    OpenCVMat.toFloatPixels(OpenCVMat.read(calibrateValDirPath +
+      "ILSVRC2012_val_00000002.bmp"), indata1)
+    indata1 = fromCWH2CHW(indata1)
+    indata2 = fromCWH2CHW(indata2)
+    val labels = Array(65f, 970f)
+    val data = indata1 ++ indata2 ++ indata1 ++ indata2
+    val input1 = new JTensor(data, resnet_v1_50_shape)
+    val input2 = new JTensor(data, resnet_v1_50_shape)
+    val inputs = Arrays.asList(
+      Arrays.asList({
+        input1
+      }),
+      Arrays.asList({
+        input2
+      }))
+    val results: util.List[util.List[JTensor]] = model.doPredict(inputs)
+    val classes = results.toArray().map(list => {
+      val inner = list.asInstanceOf[util.List[JTensor]].get(0)
+      val class1 = inner.getData.slice(0, 1000).zipWithIndex.maxBy(_._1)._2
+      val class2 = inner.getData.slice(1000, 2000).zipWithIndex.maxBy(_._1)._2
+      class1.toFloat
+    })
+    almostEqual(classes, labels, 0.1f)
+    println(classes.mkString(","))
+  }
+
+  test("openvino resnet50 In8 should predictInt8(float) image successfully") {
+    val model = new InferenceModel(3)
+    model.doLoadTFAsCalibratedOpenVINO(null,
+      resnet_v1_50_modelType,
+      resnet_v1_50_checkpointPath,
+      resnet_v1_50_inputShape,
+      resnet_v1_50_ifReverseInputChannels,
+      resnet_v1_50_meanValues,
+      resnet_v1_50_scale,
+      "C",
+      calibrateValFilePath,
+      32,
+      opencvLibPath)
+    println(s"resnet_v1_50_model from tf loaded as $model")
+    model shouldNot be(null)
+
+    val indata1 = new Array[Float](3 * 224 * 224)
+    val indata2 = new Array[Float](3 * 224 * 224)
+    OpenCVMat.toFloatPixels(OpenCVMat.read(calibrateValDirPath +
+      "ILSVRC2012_val_00000001.bmp"), indata1)
+    OpenCVMat.toFloatPixels(OpenCVMat.read(calibrateValDirPath +
+      "ILSVRC2012_val_00000002.bmp"), indata1)
+    val labels = Array(65f, 970f)
+    val data = indata1 ++ indata2 ++ indata1 ++ indata2
+    val input1 = new JTensor(data, resnet_v1_50_shape)
+    val input2 = new JTensor(data, resnet_v1_50_shape)
+    val inputs = Arrays.asList(
+      Arrays.asList({
+        input1
+      }),
+      Arrays.asList({
+        input2
+      }))
+    val results: util.List[util.List[JTensor]] = model.doPredictInt8(inputs)
+    val classes = results.toArray().map(list => {
+      val inner = list.asInstanceOf[util.List[JTensor]].get(0)
+      val class1 = inner.getData.slice(0, 1000).zipWithIndex.maxBy(_._1)._2
+      val class2 = inner.getData.slice(1000, 2000).zipWithIndex.maxBy(_._1)._2
+      class1.toFloat
+    })
+    almostEqual(classes, labels, 0.1f)
+    println(classes.mkString(","))
+  }
+
 
 
   test("openvino should handle wrong batchSize correctly") {
@@ -260,7 +350,7 @@ class OpenVINOInt8Suite extends FunSuite with Matchers with BeforeAndAfterAll
     val labels = Array(65f, 65f)
     // batchSize = 4, but given 3 and 5
     val data1 = indata1 ++ indata2 ++ indata1
-    val data2 = indata1 ++ indata2 ++ indata1 ++ indata2 ++ indata1
+    val data2 = indata2 ++ indata1 ++ indata2 ++ indata1 ++ indata2
     val input1 = new JTensor(data1, Array(3, 3, 224, 224))
     val input2 = new JTensor(data2, Array(5, 3, 224, 224))
     val inputs = Arrays.asList(
