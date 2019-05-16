@@ -88,11 +88,14 @@ def init_env():
     # Currently, focused on ZOO_NUM_MKLTHREADS,
     # OMP_NUM_THREADS, KMP_BLOCKTIME, KMP_AFFINITY
     # and KMP_SETTINGS
+    if "KMP_AFFINITY" in os.environ:
+        kmp_affinity = os.environ["KMP_AFFINITY"]
+    if "KMP_SETTINGS" in os.environ:
+        kmp_settings = os.environ["KMP_SETTINGS"]
     if "OMP_NUM_THREADS" in os.environ:
         omp_num_threads = os.environ["OMP_NUM_THREADS"]
     elif "ZOO_NUM_MKLTHREADS" in os.environ:
-        if os.environ["ZOO_NUM_MKLTHREADS"] == "ALL" \
-                or os.environ["ZOO_NUM_MKLTHREADS"] == "all":
+        if os.environ["ZOO_NUM_MKLTHREADS"].lower() == "all":
             omp_num_threads = multiprocessing.cpu_count()
         else:
             omp_num_threads = os.environ["ZOO_NUM_MKLTHREADS"]
