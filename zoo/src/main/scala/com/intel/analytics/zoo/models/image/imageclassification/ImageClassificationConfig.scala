@@ -24,7 +24,6 @@ import com.intel.analytics.bigdl.transform.vision.image.ImageFeature
 import com.intel.analytics.zoo.feature.common.Preprocessing
 import com.intel.analytics.zoo.feature.image._
 import com.intel.analytics.zoo.models.image.common.ImageConfigure
-import org.opencv.imgproc.Imgproc
 
 import scala.io.Source
 import scala.reflect.ClassTag
