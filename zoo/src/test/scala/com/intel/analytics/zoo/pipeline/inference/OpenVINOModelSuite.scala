@@ -81,9 +81,9 @@ class OpenVINOModelSuite extends FunSuite with Matchers with BeforeAndAfterAll
 
   val resnet_v1_50_shape = Array(4, 3, 224, 224)
   val image_input_65_url = s"$s3Url/analytics-zoo-models/openvino/ic_input_65"
-  val image_input_970_url = s"$s3Url/analytics-zoo-models/openvino/ic_input_970"
+  val image_input_230_url = s"$s3Url/analytics-zoo-models/openvino/ic_input_230"
   var image_input_65_filePath: String = _
-  var image_input_970_filePath: String = _
+  var image_input_230_filePath: String = _
 
   val opencvLibTarURL = s"$s3Url/analytics-zoo-models/openvino/opencv_4.0.0_ubuntu_lib.tar"
   val opencvLibTar = opencvLibTarURL.split("/").last
@@ -106,7 +106,7 @@ class OpenVINOModelSuite extends FunSuite with Matchers with BeforeAndAfterAll
     s"tar xvf $dir/$calibrateValTar -C $dir" !;
 
     s"wget -P $dir $image_input_65_url" !;
-    s"wget -P $dir $image_input_970_url" !;
+    s"wget -P $dir $image_input_230_url" !;
 
     s"wget -P $dir $opencvLibTarURL" !;
     s"tar xvf $dir/$opencvLibTar -C $dir" !;
@@ -123,7 +123,7 @@ class OpenVINOModelSuite extends FunSuite with Matchers with BeforeAndAfterAll
     fasterrcnnInputdata2FilePath = s"$dir/inputdata_2"
 
     image_input_65_filePath = s"$dir/ic_input_65"
-    image_input_970_filePath = s"$dir/ic_input_970"
+    image_input_230_filePath = s"$dir/ic_input_230"
 
     opencvLibPath = s"$dir/lib"
   }
@@ -178,7 +178,7 @@ class OpenVINOModelSuite extends FunSuite with Matchers with BeforeAndAfterAll
     assert(thrown.getMessage.contains("Openvino optimize tf object detection model error"))
   }
 
-  test("openvino object dection model should load successfully and predict correctly") {
+  test("openvino object detection model should load successfully and predict correctly") {
     fasterrcnnModel = InferenceModelFactory.loadOpenVINOModelForTF(
       faserrcnnFrozenModelFilePath,
       faserrcnnModelType,
@@ -239,7 +239,7 @@ class OpenVINOModelSuite extends FunSuite with Matchers with BeforeAndAfterAll
     model shouldNot be(null)
 
     val indata1 = Source.fromFile(image_input_65_filePath).getLines().map(_.toFloat).toArray
-    val indata2 = Source.fromFile(image_input_970_filePath).getLines().map(_.toFloat).toArray
+    val indata2 = Source.fromFile(image_input_230_filePath).getLines().map(_.toFloat).toArray
     val data = indata1 ++ indata2 ++ indata1 ++ indata2
     val input1 = new JTensor(data, resnet_v1_50_shape)
     val input2 = new JTensor(data, resnet_v1_50_shape)
@@ -276,7 +276,7 @@ class OpenVINOModelSuite extends FunSuite with Matchers with BeforeAndAfterAll
     println(s"resnet_v1_50_model from tf loaded as $model")
     model shouldNot be(null)
     val indata1 = Source.fromFile(image_input_65_filePath).getLines().map(_.toFloat).toArray
-    val indata2 = Source.fromFile(image_input_970_filePath).getLines().map(_.toFloat).toArray
+    val indata2 = Source.fromFile(image_input_230_filePath).getLines().map(_.toFloat).toArray
     val data = indata1 ++ indata2 ++ indata1 ++ indata2
     val input1 = new JTensor(data, resnet_v1_50_shape)
     val input2 = new JTensor(data, resnet_v1_50_shape)
@@ -297,7 +297,7 @@ class OpenVINOModelSuite extends FunSuite with Matchers with BeforeAndAfterAll
     println(classes.mkString(","))
   }
 
-  test("openvino image classification with In8 model should load as calibrated successfully") {
+  test("openvino resnet50 In8 should be calibrated and predictInt8(float) successfully") {
     val model = new InferenceModel(3)
     model.doLoadTFAsCalibratedOpenVINO(null,
       resnet_v1_50_modelType,
@@ -313,10 +313,11 @@ class OpenVINOModelSuite extends FunSuite with Matchers with BeforeAndAfterAll
     println(s"resnet_v1_50_model from tf loaded as $model")
     model shouldNot be(null)
     val indata1 = Source.fromFile(image_input_65_filePath).getLines().map(_.toFloat).toArray
-    val indata2 = Source.fromFile(image_input_970_filePath).getLines().map(_.toFloat).toArray
+    val indata2 = Source.fromFile(image_input_230_filePath).getLines().map(_.toFloat).toArray
+    val labels = Array(65f, 230f)
     val data = indata1 ++ indata2 ++ indata1 ++ indata2
     val input1 = new JTensor(data, resnet_v1_50_shape)
-    val input2 = new JTensor(data, resnet_v1_50_shape)
+    val input2 = new JTensor(data.reverse, resnet_v1_50_shape)
     val inputs = Arrays.asList(
       Arrays.asList({
         input1
@@ -329,12 +330,14 @@ class OpenVINOModelSuite extends FunSuite with Matchers with BeforeAndAfterAll
       val inner = list.asInstanceOf[util.List[JTensor]].get(0)
       val class1 = inner.getData.slice(0, 1000).zipWithIndex.maxBy(_._1)._2
       val class2 = inner.getData.slice(1000, 2000).zipWithIndex.maxBy(_._1)._2
-      (class1, class2)
+      class1.toFloat
     })
+    almostEqual(classes, labels, 0.1f)
     println(classes.mkString(","))
   }
 
-  test("openvino wrong batchSize should be successfully") {
+
+  test("openvino should handle wrong batchSize correctly") {
     val model = new InferenceModel(3)
     model.doLoadTFAsCalibratedOpenVINO(null,
       resnet_v1_50_modelType,
@@ -350,10 +353,11 @@ class OpenVINOModelSuite extends FunSuite with Matchers with BeforeAndAfterAll
     println(s"resnet_v1_50_model from tf loaded as $model")
     model shouldNot be(null)
     val indata1 = Source.fromFile(image_input_65_filePath).getLines().map(_.toFloat).toArray
-    val indata2 = Source.fromFile(image_input_970_filePath).getLines().map(_.toFloat).toArray
+    val indata2 = Source.fromFile(image_input_230_filePath).getLines().map(_.toFloat).toArray
+    val labels = Array(65f, 65f)
     // batchSize = 4, but given 3 and 5
     val data1 = indata1 ++ indata2 ++ indata1
-    val data2 = indata1 ++ indata2 ++ indata1 ++ indata2 ++ indata2
+    val data2 = indata1 ++ indata2 ++ indata1 ++ indata2 ++ indata1
     val input1 = new JTensor(data1, resnet_v1_50_shape)
     val input2 = new JTensor(data2, resnet_v1_50_shape)
     val inputs = Arrays.asList(
@@ -367,9 +371,9 @@ class OpenVINOModelSuite extends FunSuite with Matchers with BeforeAndAfterAll
     val classes = results.toArray().map(list => {
       val inner = list.asInstanceOf[util.List[JTensor]].get(0)
       val class1 = inner.getData.slice(0, 1000).zipWithIndex.maxBy(_._1)._2
-      val class2 = inner.getData.slice(1000, 2000).zipWithIndex.maxBy(_._1)._2
-      (class1, class2)
+      class1.toFloat
     })
+    almostEqual(classes, labels, 0.1f)
     println(classes.mkString(","))
   }
 
