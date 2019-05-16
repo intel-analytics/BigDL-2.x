@@ -375,7 +375,7 @@ class OpenVINOInt8Suite extends FunSuite with Matchers with BeforeAndAfterAll
     for (h <- 0 to 223) {
       for (w <- 0 to 223) {
         for (c <- 0 to 2) {
-          tempArray(c * h + w) = data(w * h + c)
+          tempArray(c * h + w) = data(h * w + c)
         }
       }
     }
