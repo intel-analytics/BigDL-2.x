@@ -208,32 +208,37 @@ object NNContext {
    */
   private[zoo] def initConf(zooConf: SparkConf) : Unit = {
     // check env and set spark conf
-    if (!env.contains("KMP_AFFINITY")) {
-      zooConf.setExecutorEnv("spark.executorEnv.KMP_AFFINITY",
-        "granularity=fine,compact,1,0")
+    // Set default value
+    var kmpAffinity = "granularity=fine,compact,1,0"
+    var kmpBlockTime = "0"
+    var kmpSettings = "1"
+    var ompNumThreads = "1"
+    // Set value with env
+    if (env.contains("KMP_AFFINITY")) {
+      kmpAffinity = env("KMP_AFFINITY")
     }
-    if (!env.contains("KMP_BLOCKTIME")) {
-      zooConf.setExecutorEnv("spark.executorEnv.KMP_BLOCKTIME", "0")
+    if (env.contains("KMP_BLOCKTIME")) {
+      kmpBlockTime = env("KMP_BLOCKTIME")
     }
-    if (!env.contains("KMP_SETTINGS")) {
-      zooConf.setExecutorEnv("spark.executorEnv.KMP_SETTINGS", "1")
+    if (env.contains("KMP_SETTINGS")) {
+      kmpSettings = env("KMP_SETTINGS")
     }
     if (env.contains("OMP_NUM_THREADS")) {
-      zooConf.setExecutorEnv("OMP_NUM_THREADS", env("OMP_NUM_THREADS"))
-    } else {
-      if (env.contains("ZOO_NUM_MKLTHREADS")) {
-        if (env("ZOO_NUM_MKLTHREADS").equalsIgnoreCase("all")) {
-          val cores = Runtime.getRuntime.availableProcessors()
-          zooConf.setExecutorEnv("spark.executorEnv.OMP_NUM_THREADS",
-            cores.toString)
-        } else {
-          zooConf.setExecutorEnv("spark.executorEnv.OMP_NUM_THREADS",
-            env("ZOO_NUM_MKLTHREADS"))
-        }
+      ompNumThreads = env("OMP_NUM_THREADS")
+    } else if (env.contains("ZOO_NUM_MKLTHREADS")) {
+      if (env("ZOO_NUM_MKLTHREADS").equalsIgnoreCase("all")) {
+        val cores = Runtime.getRuntime.availableProcessors()
+        ompNumThreads = cores.toString
       } else {
-        zooConf.setExecutorEnv("spark.executorEnv.OMP_NUM_THREADS", "1")
+        ompNumThreads = env("ZOO_NUM_MKLTHREADS")
       }
     }
+    // Set Spark Conf
+    zooConf.setExecutorEnv("spark.executorEnv.KMP_AFFINITY", kmpAffinity)
+    zooConf.setExecutorEnv("spark.executorEnv.KMP_BLOCKTIME", kmpBlockTime)
+    zooConf.setExecutorEnv("spark.executorEnv.KMP_SETTINGS", kmpSettings)
+    zooConf.setExecutorEnv("spark.executorEnv.OMP_NUM_THREADS", ompNumThreads)
+
   }
 
   def createSparkConf(existingConf: SparkConf = null) : SparkConf = {
