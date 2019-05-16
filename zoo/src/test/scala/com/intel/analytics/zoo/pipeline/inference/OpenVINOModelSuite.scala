@@ -81,9 +81,9 @@ class OpenVINOModelSuite extends FunSuite with Matchers with BeforeAndAfterAll
 
   val resnet_v1_50_shape = Array(4, 3, 224, 224)
   val image_input_65_url = s"$s3Url/analytics-zoo-models/openvino/ic_input_65"
-  val image_input_230_url = s"$s3Url/analytics-zoo-models/openvino/ic_input_230"
+  val image_input_970_url = s"$s3Url/analytics-zoo-models/openvino/ic_input_970"
   var image_input_65_filePath: String = _
-  var image_input_230_filePath: String = _
+  var image_input_970_filePath: String = _
 
   val opencvLibTarURL = s"$s3Url/analytics-zoo-models/openvino/opencv_4.0.0_ubuntu_lib.tar"
   val opencvLibTar = opencvLibTarURL.split("/").last
@@ -106,7 +106,7 @@ class OpenVINOModelSuite extends FunSuite with Matchers with BeforeAndAfterAll
     s"tar xvf $dir/$calibrateValTar -C $dir" !;
 
     s"wget -P $dir $image_input_65_url" !;
-    s"wget -P $dir $image_input_230_url" !;
+    s"wget -P $dir $image_input_970_url" !;
 
     s"wget -P $dir $opencvLibTarURL" !;
     s"tar xvf $dir/$opencvLibTar -C $dir" !;
@@ -123,7 +123,7 @@ class OpenVINOModelSuite extends FunSuite with Matchers with BeforeAndAfterAll
     fasterrcnnInputdata2FilePath = s"$dir/inputdata_2"
 
     image_input_65_filePath = s"$dir/ic_input_65"
-    image_input_230_filePath = s"$dir/ic_input_230"
+    image_input_970_filePath = s"$dir/ic_input_970"
 
     opencvLibPath = s"$dir/lib"
   }
@@ -239,7 +239,7 @@ class OpenVINOModelSuite extends FunSuite with Matchers with BeforeAndAfterAll
     model shouldNot be(null)
 
     val indata1 = Source.fromFile(image_input_65_filePath).getLines().map(_.toFloat).toArray
-    val indata2 = Source.fromFile(image_input_230_filePath).getLines().map(_.toFloat).toArray
+    val indata2 = Source.fromFile(image_input_970_filePath).getLines().map(_.toFloat).toArray
     val data = indata1 ++ indata2 ++ indata1 ++ indata2
     val input1 = new JTensor(data, resnet_v1_50_shape)
     val input2 = new JTensor(data, resnet_v1_50_shape)
@@ -276,7 +276,7 @@ class OpenVINOModelSuite extends FunSuite with Matchers with BeforeAndAfterAll
     println(s"resnet_v1_50_model from tf loaded as $model")
     model shouldNot be(null)
     val indata1 = Source.fromFile(image_input_65_filePath).getLines().map(_.toFloat).toArray
-    val indata2 = Source.fromFile(image_input_230_filePath).getLines().map(_.toFloat).toArray
+    val indata2 = Source.fromFile(image_input_970_filePath).getLines().map(_.toFloat).toArray
     val data = indata1 ++ indata2 ++ indata1 ++ indata2
     val input1 = new JTensor(data, resnet_v1_50_shape)
     val input2 = new JTensor(data, resnet_v1_50_shape)
@@ -313,8 +313,8 @@ class OpenVINOModelSuite extends FunSuite with Matchers with BeforeAndAfterAll
     println(s"resnet_v1_50_model from tf loaded as $model")
     model shouldNot be(null)
     val indata1 = Source.fromFile(image_input_65_filePath).getLines().map(_.toFloat).toArray
-    val indata2 = Source.fromFile(image_input_230_filePath).getLines().map(_.toFloat).toArray
-    val labels = Array(65f, 230f)
+    val indata2 = Source.fromFile(image_input_970_filePath).getLines().map(_.toFloat).toArray
+    val labels = Array(65f, 970f)
     val data = indata1 ++ indata2 ++ indata1 ++ indata2
     val input1 = new JTensor(data, resnet_v1_50_shape)
     val input2 = new JTensor(data.reverse, resnet_v1_50_shape)
@@ -353,7 +353,7 @@ class OpenVINOModelSuite extends FunSuite with Matchers with BeforeAndAfterAll
     println(s"resnet_v1_50_model from tf loaded as $model")
     model shouldNot be(null)
     val indata1 = Source.fromFile(image_input_65_filePath).getLines().map(_.toFloat).toArray
-    val indata2 = Source.fromFile(image_input_230_filePath).getLines().map(_.toFloat).toArray
+    val indata2 = Source.fromFile(image_input_970_filePath).getLines().map(_.toFloat).toArray
     val labels = Array(65f, 65f)
     // batchSize = 4, but given 3 and 5
     val data1 = indata1 ++ indata2 ++ indata1
