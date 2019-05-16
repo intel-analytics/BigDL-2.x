@@ -31,31 +31,6 @@ def init_nncontext(conf=None):
 
     :param conf: User defined Spark conf
     """
-    # Default env
-    kmp_affinity = "granularity=fine,compact,1,0"
-    kmp_settings = "1"
-    omp_num_threads = "1"
-    kmp_blocktime = "0"
-
-    # Check env and override if necessary
-    # Currently focused on ZOO_NUM_MKLTHREADS, OMP_NUM_THREADS and KMP_BLOCKTIME
-    if "OMP_NUM_THREADS" in os.environ:
-        omp_num_threads = os.environ["OMP_NUM_THREADS"]
-    elif "ZOO_NUM_MKLTHREADS" in os.environ:
-        if os.environ["ZOO_NUM_MKLTHREADS"] == "ALL" \
-                or os.environ["ZOO_NUM_MKLTHREADS"] == "all":
-            omp_num_threads = multiprocessing.cpu_count()
-        else:
-            omp_num_threads = os.environ["ZOO_NUM_MKLTHREADS"]
-    if "KMP_BLOCKTIME" in os.environ:
-        kmp_blocktime = os.environ["KMP_BLOCKTIME"]
-
-    # Set env
-    os.environ["KMP_AFFINITY"] = kmp_affinity
-    os.environ["KMP_SETTINGS"] = kmp_settings
-    os.environ["OMP_NUM_THREADS"] = omp_num_threads
-    os.environ["KMP_BLOCKTIME"] = kmp_blocktime
-
     if isinstance(conf, six.string_types):
         sc = getOrCreateSparkContext(conf=None, appName=conf)
     else:
@@ -102,7 +77,37 @@ def get_analytics_zoo_conf():
     return {}
 
 
+def init_env():
+    # Default env
+    kmp_affinity = "granularity=fine,compact,1,0"
+    kmp_settings = "1"
+    omp_num_threads = "1"
+    kmp_blocktime = "0"
+
+    # Check env and override if necessary
+    # Currently, focused on ZOO_NUM_MKLTHREADS,
+    # OMP_NUM_THREADS, KMP_BLOCKTIME, KMP_AFFINITY
+    # and KMP_SETTINGS
+    if "OMP_NUM_THREADS" in os.environ:
+        omp_num_threads = os.environ["OMP_NUM_THREADS"]
+    elif "ZOO_NUM_MKLTHREADS" in os.environ:
+        if os.environ["ZOO_NUM_MKLTHREADS"] == "ALL" \
+                or os.environ["ZOO_NUM_MKLTHREADS"] == "all":
+            omp_num_threads = multiprocessing.cpu_count()
+        else:
+            omp_num_threads = os.environ["ZOO_NUM_MKLTHREADS"]
+    if "KMP_BLOCKTIME" in os.environ:
+        kmp_blocktime = os.environ["KMP_BLOCKTIME"]
+
+    # Set env
+    os.environ["KMP_AFFINITY"] = kmp_affinity
+    os.environ["KMP_SETTINGS"] = kmp_settings
+    os.environ["OMP_NUM_THREADS"] = omp_num_threads
+    os.environ["KMP_BLOCKTIME"] = kmp_blocktime
+
+
 def init_spark_conf():
+    init_env()
     zoo_conf = get_analytics_zoo_conf()
     # Set bigDL and TF conf
     zoo_conf["spark.executorEnv.KMP_AFFINITY"] = os.environ["KMP_AFFINITY"]
