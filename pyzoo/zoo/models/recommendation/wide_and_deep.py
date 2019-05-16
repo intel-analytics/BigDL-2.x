@@ -102,7 +102,7 @@ class WideAndDeep(Recommender):
                    Tuple of positive int. Default is (40, 20, 10).
     """
     def __init__(self, class_num, column_info, model_type="wide_n_deep",
-                 hidden_layers=(40, 20, 10), bigdl_type="float"):
+                 hidden_layers=[40, 20, 10], bigdl_type="float"):
         assert (len(column_info.wide_base_cols) == len(column_info.wide_base_dims),
                 "size of wide_base_columns should match")
         assert (len(column_info.wide_cross_cols) == len(column_info.wide_cross_dims),
@@ -142,7 +142,8 @@ class WideAndDeep(Recommender):
                                           self.embed_in_dims,
                                           self.embed_out_dims,
                                           self.continuous_cols,
-                                          self.label)
+                                          self.label,
+                                          self.model)
 
     def build_model(self):
         wide_dims = sum(self.wide_base_dims) + sum(self.wide_cross_dims)

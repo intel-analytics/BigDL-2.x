@@ -16,9 +16,10 @@
 
 import sys
 
-from zoo.models.common import *
+from zoo.models.common import KerasZooModel
 from zoo.models.recommendation import Recommender
 from zoo.pipeline.api.keras.layers import *
+from zoo.pipeline.api.keras.models import *
 
 if sys.version >= '3':
     long = int
@@ -40,7 +41,7 @@ class NeuralCF(Recommender):
     mf_embed: Units of matrix factorization embedding. Positive int. Default is 20.
     """
     def __init__(self, user_count, item_count, class_num, user_embed=20,
-                 item_embed=20, hidden_layers=(40, 20, 10), include_mf=True,
+                 item_embed=20, hidden_layers=[40, 20, 10], include_mf=True,
                  mf_embed=20, bigdl_type="float"):
         self.user_count = int(user_count)
         self.item_count = int(item_count)
@@ -60,14 +61,15 @@ class NeuralCF(Recommender):
                                        self.item_embed,
                                        self.hidden_layers,
                                        self.include_mf,
-                                       self.mf_embed)
+                                       self.mf_embed,
+                                       self.model)
 
     def build_model(self):
         input = Input(shape=(2, ))
         user_flat = Flatten()(Select(1, 0)(input))
         item_flat = Flatten()(Select(1, 1)(input))
-        mlp_user_embed = Embedding(self.user_count + 1, self.user_embed, init="normal")(user_flat)
-        mlp_item_embed = Embedding(self.item_count + 1, self.item_embed, init="normal")(item_flat)
+        mlp_user_embed = Embedding(self.user_count + 1, self.user_embed, init="uniform")(user_flat)
+        mlp_item_embed = Embedding(self.item_count + 1, self.item_embed, init="uniform")(item_flat)
         mlp_user_flat = Flatten()(mlp_user_embed)
         mlp_item_flat = Flatten()(mlp_item_embed)
         mlp_latent = merge(inputs=[mlp_user_flat, mlp_item_flat], mode="concat")
@@ -79,8 +81,8 @@ class NeuralCF(Recommender):
 
         if (self.include_mf):
             assert(self.mf_embed > 0)
-            mf_user_embed = Embedding(self.user_count + 1, self.mf_embed, init="normal")(user_flat)
-            mf_item_embed = Embedding(self.item_count + 1, self.mf_embed, init="normal")(item_flat)
+            mf_user_embed = Embedding(self.user_count + 1, self.mf_embed, init="uniform")(user_flat)
+            mf_item_embed = Embedding(self.item_count + 1, self.mf_embed, init="uniform")(item_flat)
             mf_user_flatten = Flatten()(mf_user_embed)
             mf_item_flatten = Flatten()(mf_item_embed)
             mf_latent = merge(inputs=[mf_user_flatten, mf_item_flatten], mode="mul")
