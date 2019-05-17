@@ -31,7 +31,7 @@ case class ImageNetEvaluationParams(folder: String = "./",
                                     weight: String = "",
                                     batchSize: Int = 4,
                                     partitionNum: Int = 32,
-                                    isInt8: Boolean = true)
+                                    isInt8: Boolean = false)
 
 object ImageNetEvaluation {
   LoggerFilter.redirectSparkInfoLogs()

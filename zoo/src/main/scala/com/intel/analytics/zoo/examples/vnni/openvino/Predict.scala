@@ -17,9 +17,12 @@
 package com.intel.analytics.zoo.examples.vnni.openvino
 
 import com.intel.analytics.bigdl.dataset.SampleToMiniBatch
+import com.intel.analytics.bigdl.nn.SoftMax
 import com.intel.analytics.bigdl.numeric.NumericFloat
+import com.intel.analytics.bigdl.tensor.Tensor
 import com.intel.analytics.zoo.common.NNContext
 import com.intel.analytics.zoo.feature.image.{ImageCenterCrop, ImageMatToTensor, ImageResize, ImageSet, ImageSetToSample}
+import com.intel.analytics.zoo.models.image.imageclassification.{LabelOutput, LabelReader}
 import com.intel.analytics.zoo.pipeline.inference.InferenceModel
 import org.apache.log4j.{Level, Logger}
 import org.opencv.imgcodecs.Imgcodecs
@@ -31,7 +34,7 @@ case class PredictParams(folder: String = "./",
                          batchSize: Int = 4,
                          topN: Int = 5,
                          partitionNum: Int = 4,
-                         isInt8: Boolean = true)
+                         isInt8: Boolean = false)
 
 object Predict {
   Logger.getLogger("org").setLevel(Level.ERROR)
@@ -94,17 +97,24 @@ object Predict {
 
       val preProcessTime = System.nanoTime() - start
       val imageNum = images.array.length
+      val labelMap = LabelReader.apply("IMAGENET")
 
       // Predict
       logger.debug("Begin Prediction")
 
       val results = batched.toLocal().data(false).map { miniBatch =>
-        if (param.isInt8) {
+        val predict = if (param.isInt8) {
           model.doPredictInt8(miniBatch.getInput.toTensor.addSingletonDimension())
         } else {
           model.doPredict(miniBatch.getInput.toTensor.addSingletonDimension())
         }
+        // Compute SoftMax
+        for (i <- 0 until miniBatch.size()) {
+          getSoftMaxResult(predict.toTensor.apply(i), labelMap, param.topN)
+        }
+        predict
       }
+
       val batchNum = results.length
       val timeUsed = System.nanoTime() - start
       // Post-processing
@@ -120,5 +130,28 @@ object Predict {
       // Compare labels and output results
       sc.stop()
     })
+  }
+
+  private def getSoftMaxResult(predict: Tensor[Float],
+                               labelMap: Map[Int, String], topN: Int): Unit = {
+    val predictOutput = SoftMax[Float].forward(predict).toTensor[Float]
+    val start = predictOutput.storageOffset() - 1
+    val end = predictOutput.storageOffset() - 1 + predictOutput.nElement()
+    val clsNo = end - start
+    val sortedResult = predictOutput.storage().array().slice(start, end).
+      zipWithIndex.sortWith(_._1 > _._1).toList.toArray
+    val classes: Array[String] = new Array[String](clsNo)
+    val probabilities: Array[Float] = new Array[Float](clsNo)
+    var index = 0
+    while (index < clsNo) {
+      val clsName = labelMap(sortedResult(index)._2)
+      val prob = sortedResult(index)._1
+      classes(index) = clsName
+      probabilities(index) = prob
+      index += 1
+    }
+    for (i <- 0 until topN) {
+      logger.info(s"\t class: ${classes(i)}, credit: ${probabilities(i)}")
+    }
   }
 }

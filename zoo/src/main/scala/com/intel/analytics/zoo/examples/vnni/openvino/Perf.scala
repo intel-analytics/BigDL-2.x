@@ -29,7 +29,7 @@ case class ResNet50PerfParams(model: String = "",
                               batchSize: Int = 4,
                               numBatch: Int = 1,
                               iteration: Int = 1,
-                              isInt8: Boolean = true)
+                              isInt8: Boolean = false)
 
 object Perf {
 
