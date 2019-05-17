@@ -18,13 +18,18 @@ package com.intel.analytics.zoo.common
 
 import java.io._
 
+import com.intel.analytics.bigdl.mkl.MKL
+import com.intel.analytics.bigdl.tensor.Tensor
 import com.intel.analytics.bigdl.utils.File
+import com.intel.analytics.zoo.common.ZooTensorNumeric
+
 import org.apache.commons.io.filefilter.WildcardFileFilter
 import org.apache.hadoop.conf.Configuration
 import org.apache.hadoop.fs.{FileSystem, Path}
 import org.apache.log4j.Logger
 
 import scala.collection.mutable.ArrayBuffer
+import scala.reflect.ClassTag
 
 private[zoo] object Utils {
 
@@ -162,6 +167,16 @@ private[zoo] object Utils {
     logger.error(s"********************************Usage Error****************************\n"
       + errMessage)
     throw new AnalyticsZooException(errMessage, cause)
+  }
+
+  def erf[T: ClassTag](tensor: Tensor[T])
+                      (implicit ev: ZooTensorNumeric[T]): Unit = {
+    if (MKL.isMKLLoaded && tensor.isContiguous()) {
+      ev.erf(tensor.nElement(), tensor.storage().array(), tensor.storageOffset() - 1)
+    } else {
+      logger.warn("MKL is not used for erf, watch out the performance")
+      tensor.erf()
+    }
   }
 }
 
