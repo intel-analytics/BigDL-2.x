@@ -130,19 +130,19 @@ object SSDGraph {
     }
 
    val (conf, loc, priors) = if (resolution == 300) {
-      val conf = JoinTable[T](1, 1)
+      val conf = JoinTable[T](2, 0)
         .inputs(norm4_3Out._1, fc7Out._1, c6Out._1, c7Out._1, c8Out._1, c9Out._1)
-      val loc = JoinTable[T](1, 1)
+      val loc = JoinTable[T](2, 0)
         .inputs(norm4_3Out._2, fc7Out._2, c6Out._2, c7Out._2, c8Out._2, c9Out._2)
-      val priors = JoinTable[T](2, 2)
+      val priors = JoinTable[T](3, 0)
         .inputs(norm4_3Out._3, fc7Out._3, c6Out._3, c7Out._3, c8Out._3, c9Out._3)
       (conf, loc, priors)
     } else {
-      val conf = JoinTable[T](1, 1)
+      val conf = JoinTable[T](2, 0)
         .inputs(norm4_3Out._1, fc7Out._1, c6Out._1, c7Out._1, c8Out._1, c9Out._1, c10Out._1)
-      val loc = JoinTable[T](1, 1)
+      val loc = JoinTable[T](2, 0)
         .inputs(norm4_3Out._2, fc7Out._2, c6Out._2, c7Out._2, c8Out._2, c9Out._2, c10Out._2)
-      val priors = JoinTable[T](2, 2)
+      val priors = JoinTable[T](3, 0)
         .inputs(norm4_3Out._3, fc7Out._3, c6Out._3, c7Out._3, c8Out._3, c9Out._3, c10Out._3)
       (conf, loc, priors)
     }
@@ -153,9 +153,9 @@ object SSDGraph {
       nmsTopk,
       keepTopK,
       confThresh,
-      varianceEncodedInTarget).inputs(Array(loc, conf, priors))
+      varianceEncodedInTarget).setName("detection_out").inputs(Array(loc, conf, priors))
     val model = Graph(input, out)
-    ModuleUtil.setScaleB(model, 2, "DetectionOutputSSD")
+    ModuleUtil.setScaleB(model, 2, "detection_out")
     ModuleUtil.stopGradient(model)
     setRegularizer(model, _wRegularizer, bRegularizer)
     model

@@ -183,14 +183,14 @@ object ModuleUtil {
     *
     * @param model the graph model
     * @param b the value of the scale of gradientBias
-    * @param exclude exclude layer class name
+    * @param exclude exclude layer name
     * @tparam T
     */
   def setScaleB[@specialized(Float, Double) T: ClassTag](model: Graph[T],
                                                          b: Double,
                                                          exclude: String): Unit = {
     val scaleModules = model.modules
-      .filterNot(_.getClass.getName.endsWith(exclude))
+      .filterNot(_.getName.endsWith(exclude))
       .toArray
     scaleModules.foreach(m => m.setScaleB(b))
   }
