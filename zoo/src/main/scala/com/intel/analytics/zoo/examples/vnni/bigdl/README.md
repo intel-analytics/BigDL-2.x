@@ -23,7 +23,7 @@ INFO  ImageModel$:132 - Loading an int8 convertible model. Quantize to an int8 m
 
 ---
 ### Predict
-This example runs in local mode and demonstrates how to do image classification with the pre-trained int8 model.
+This example demonstrates how to do image classification with the pre-trained int8 model.
 
 ```bash
 export SPARK_HOME=the root directory of Spark
