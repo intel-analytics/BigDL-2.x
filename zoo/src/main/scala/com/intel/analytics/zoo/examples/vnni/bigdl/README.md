@@ -23,16 +23,18 @@ INFO  ImageModel$:132 - Loading an int8 convertible model. Quantize to an int8 m
 
 ---
 ### Predict
-This example runs in local mode and demonstrates how to do image classification with the pre-trained int8 model.
+This example demonstrates how to do image classification with the pre-trained int8 model.
 
 ```bash
 export SPARK_HOME=the root directory of Spark
 export ANALYTICS_ZOO_HOME=the folder where you extract the downloaded Analytics Zoo zip package
-export ANALYTICS_ZOO_JAR=export ANALYTICS_ZOO_JAR=`find ${ANALYTICS_ZOO_HOME}/lib -type f -name "analytics-zoo*jar-with-dependencies.jar"`
 imagePath=the folder path containing images
 modelPath=the path to the downloaded int8 model
 
-java -cp ${ANALYTICS_ZOO_JAR}:${SPARK_HOME}/jars/* com.intel.analytics.zoo.examples.vnni.bigdl.Predict -f ${imagePath} -m ${modelPath}
+${ANALYTICS_ZOO_HOME}/bin/spark-shell-with-zoo.sh \
+    --master local[*] \
+    --class com.intel.analytics.zoo.examples.vnni.bigdl.Predict \
+    -f ${imagePath} -m ${modelPath}
 ```
 
 __Options:__
@@ -42,12 +44,12 @@ __Options:__
 
 __Sample console log output__:
 ```
-INFO  Predict$:62 - image : 1.jpg, top 5
-INFO  Predict$:66 - 	 class: kelpie, credit: 0.96370447
-INFO  Predict$:66 - 	 class: Rottweiler, credit: 0.026292335
-INFO  Predict$:66 - 	 class: Eskimo dog, husky, credit: 0.0019479054
-INFO  Predict$:66 - 	 class: German shepherd, German shepherd dog, German police dog, alsatian, credit: 0.001165287
-INFO  Predict$:66 - 	 class: Doberman, Doberman pinscher, credit: 8.323631E-4
+INFO  Predict$:64 - image : 1.jpg, top 5
+INFO  Predict$:68 - 	 class: kelpie, credit: 0.96370447
+INFO  Predict$:68 - 	 class: Rottweiler, credit: 0.026292335
+INFO  Predict$:68 - 	 class: Eskimo dog, husky, credit: 0.0019479054
+INFO  Predict$:68 - 	 class: German shepherd, German shepherd dog, German police dog, alsatian, credit: 0.001165287
+INFO  Predict$:68 - 	 class: Doberman, Doberman pinscher, credit: 8.323631E-4
 ```
 
 ---
@@ -87,7 +89,7 @@ This example runs in local mode and calculates performance data (i.e. throughput
 ```bash
 export SPARK_HOME=the root directory of Spark
 export ANALYTICS_ZOO_HOME=the folder where you extract the downloaded Analytics Zoo zip package
-export ANALYTICS_ZOO_JAR=export ANALYTICS_ZOO_JAR=`find ${ANALYTICS_ZOO_HOME}/lib -type f -name "analytics-zoo*jar-with-dependencies.jar"`
+export ANALYTICS_ZOO_JAR=`find ${ANALYTICS_ZOO_HOME}/lib -type f -name "analytics-zoo*jar-with-dependencies.jar"`
 modelPath=the path to the downloaded int8 model
 
 java -cp ${ANALYTICS_ZOO_JAR}:${SPARK_HOME}/jars/* com.intel.analytics.zoo.examples.vnni.bigdl.Perf -m ${modelPath} -b 64
