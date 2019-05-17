@@ -44,12 +44,12 @@ __Options:__
 
 __Sample console log output__:
 ```
-INFO  Predict$:62 - image : 1.jpg, top 5
-INFO  Predict$:66 - 	 class: kelpie, credit: 0.96370447
-INFO  Predict$:66 - 	 class: Rottweiler, credit: 0.026292335
-INFO  Predict$:66 - 	 class: Eskimo dog, husky, credit: 0.0019479054
-INFO  Predict$:66 - 	 class: German shepherd, German shepherd dog, German police dog, alsatian, credit: 0.001165287
-INFO  Predict$:66 - 	 class: Doberman, Doberman pinscher, credit: 8.323631E-4
+INFO  Predict$:64 - image : 1.jpg, top 5
+INFO  Predict$:68 - 	 class: kelpie, credit: 0.96370447
+INFO  Predict$:68 - 	 class: Rottweiler, credit: 0.026292335
+INFO  Predict$:68 - 	 class: Eskimo dog, husky, credit: 0.0019479054
+INFO  Predict$:68 - 	 class: German shepherd, German shepherd dog, German police dog, alsatian, credit: 0.001165287
+INFO  Predict$:68 - 	 class: Doberman, Doberman pinscher, credit: 8.323631E-4
 ```
 
 ---
