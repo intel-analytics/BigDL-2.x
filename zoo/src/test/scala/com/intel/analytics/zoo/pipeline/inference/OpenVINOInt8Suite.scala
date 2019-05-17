@@ -161,9 +161,9 @@ class OpenVINOInt8Suite extends FunSuite with Matchers with BeforeAndAfterAll
       val inner = list.asInstanceOf[util.List[JTensor]].get(0)
       val class1 = inner.getData.slice(0, 1000).zipWithIndex.maxBy(_._1)._2
       val class2 = inner.getData.slice(1000, 2000).zipWithIndex.maxBy(_._1)._2
+      println(s"(${class1}, {class2})")
       (class1, class2)
     })
-    println(classes.mkString(","))
   }
 
 /*  test("openvino image classification model should CHW load successfully") {
@@ -239,9 +239,9 @@ class OpenVINOInt8Suite extends FunSuite with Matchers with BeforeAndAfterAll
       val inner = list.asInstanceOf[util.List[JTensor]].get(0)
       val class1 = inner.getData.slice(0, 1000).zipWithIndex.maxBy(_._1)._2
       val class2 = inner.getData.slice(1000, 2000).zipWithIndex.maxBy(_._1)._2
+      println(s"(${class1}, {class2})")
       Array(class1.toFloat, class2.toFloat)
     })
-    println(classes.mkString(","))
     classes.foreach { output =>
       assert(almostEqual(output, labels, 0.1f))
     }
@@ -252,9 +252,9 @@ class OpenVINOInt8Suite extends FunSuite with Matchers with BeforeAndAfterAll
       val inner = list.asInstanceOf[util.List[JTensor]].get(0)
       val class1 = inner.getData.slice(0, 1000).zipWithIndex.maxBy(_._1)._2
       val class2 = inner.getData.slice(1000, 2000).zipWithIndex.maxBy(_._1)._2
+      println(s"(${class1}, {class2})")
       Array(class1.toFloat, class2.toFloat)
     })
-    println(classesInt8.mkString(","))
     classesInt8.foreach { output =>
       assert(almostEqual(output, labels, 0.1f))
     }
@@ -298,9 +298,9 @@ class OpenVINOInt8Suite extends FunSuite with Matchers with BeforeAndAfterAll
       val inner = list.asInstanceOf[util.List[JTensor]].get(0)
       val class1 = inner.getData.slice(0, 1000).zipWithIndex.maxBy(_._1)._2
       val class2 = inner.getData.slice(1000, 2000).zipWithIndex.maxBy(_._1)._2
+      println(s"(${class1}, {class2})")
       Array(class1.toFloat, class2.toFloat)
     })
-    println(classes.mkString(","))
     classes.foreach { output =>
       assert(almostEqual(output, labels, 0.1f))
     }
@@ -311,9 +311,9 @@ class OpenVINOInt8Suite extends FunSuite with Matchers with BeforeAndAfterAll
       val inner = list.asInstanceOf[util.List[JTensor]].get(0)
       val class1 = inner.getData.slice(0, 1000).zipWithIndex.maxBy(_._1)._2
       val class2 = inner.getData.slice(1000, 2000).zipWithIndex.maxBy(_._1)._2
+      println(s"(${class1}, {class2})")
       Array(class1.toFloat, class2.toFloat)
     })
-    println(classesInt8.mkString(","))
     classesInt8.foreach { output =>
       assert(almostEqual(output, labels, 0.1f))
     }
@@ -400,6 +400,15 @@ class OpenVINOInt8Suite extends FunSuite with Matchers with BeforeAndAfterAll
     })
     almostEqual(classes, labels, 0.1f)
     println(classes.mkString(","))
+
+    val resultsInt8: util.List[util.List[JTensor]] = model.doPredictInt8(inputs)
+    val classesInt8 = resultsInt8.toArray().map(list => {
+      val inner = list.asInstanceOf[util.List[JTensor]].get(0)
+      val class1 = inner.getData.slice(0, 1000).zipWithIndex.maxBy(_._1)._2
+      class1.toFloat
+    })
+    almostEqual(classesInt8, labels, 0.1f)
+    println(classesInt8.mkString(","))
   }
 
   def fromHWC2CHW(data: Array[Float]): Array[Float] = {
