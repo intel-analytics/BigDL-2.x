@@ -120,10 +120,51 @@ model.fit(transformedTextSet, batchSize, nbEpoch)
 model.fit(transformed_text_set, batch_size, nb_epoch)
 ```
 
+---
+## **WordIndex Save and Load**
+
+#### **Save WordIndex**
+After training the model, you can save the word index to text file, which can be used for future inference. Each separate line will be "word id".
+
+For LocalTextSet, save txt to a local file system.
+
+For DistributedTextSet, save txt to a local or distributed file system (such as HDFS).
+
+**Scala**
+```scala
+transformedTextSet.saveWordIndex(path)
+```
+
+**Python**
+```python
+transformed_text_set.save_word_index(path)
+```
+
+#### **Load WordIndex**
+
+During text prediction, you can load the saved word index back, so that the prediction TextSet uses exactly the same word index as the training process. Each separate line should be "word id".
+
+For LocalTextSet, load txt to a local file system.
+
+For DistributedTextSet, load txt to a local or distributed file system (such as HDFS).
+
+**Scala**
+```scala
+textSet.loadWordIndex(path)
+```
+
+**Python**
+```python
+text_set.load_word_index(path)
+```
 
 ---
 ## **Text Prediction**
-You can also directly input the transformed TextSet into the model for prediction and the prediction result will be stored in each TextFeature.
+Given a raw TextSet to do prediction, you need to first load the saved word index back as instructed [above](#load-wordindex) and go through the same transformation
+process as what you did in your training. Note that here you do not need to specify any argument when calling `word2idx` in the preprocessing pipeline as now you are using exactly
+the loaded word index.
+
+Then you can directly put the transformed TextSet into the model for prediction and the prediction result will be stored in each TextFeature.
 
 **Scala**
 ```scala
