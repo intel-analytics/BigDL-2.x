@@ -103,14 +103,14 @@ class WideAndDeep(Recommender):
     """
     def __init__(self, class_num, column_info, model_type="wide_n_deep",
                  hidden_layers=[40, 20, 10], bigdl_type="float"):
-        assert (len(column_info.wide_base_cols) == len(column_info.wide_base_dims),
-                "size of wide_base_columns should match")
-        assert (len(column_info.wide_cross_cols) == len(column_info.wide_cross_dims),
-                "size of wide_cross_columns should match")
-        assert (len(column_info.indicator_cols) == len(column_info.indicator_dims),
-                "size of wide_indicator_columns should match")
-        assert (len(column_info.embed_cols) == len(column_info.embed_in_dims)
-                == len(column_info.embed_out_dims), "size of wide_indicator_columns should match")
+        assert len(column_info.wide_base_cols) == len(column_info.wide_base_dims),\
+                "size of wide_base_columns should match"
+        assert len(column_info.wide_cross_cols) == len(column_info.wide_cross_dims),\
+                "size of wide_cross_columns should match"
+        assert len(column_info.indicator_cols) == len(column_info.indicator_dims),\
+                "size of wide_indicator_columns should match"
+        assert len(column_info.embed_cols) == len(column_info.embed_in_dims)\
+                == len(column_info.embed_out_dims), "size of wide_indicator_columns should match"
 
         self.class_num = int(class_num)
         self.wide_base_dims = column_info.wide_base_dims
