@@ -21,12 +21,23 @@ import com.intel.analytics.bigdl.tensor.Tensor
 import com.intel.analytics.bigdl.transform.vision.image.ImageFeature
 import com.intel.analytics.zoo.feature.image.ImageProcessing
 
-class LabelOutput(labelMap: Map[Int, String], clses: String, probs: String,
-                  probAsInput: Boolean = true)
+/**
+ * Transform image prediction output to class name labels with probabilities.
+ *
+ * @param labelMap The map of class ID (Integer) and name (String).
+ * @param clses The key to store names of class labels. Default is "classes".
+ * @param probs The key to store probabilities of each class. Default is "probs".
+ *              The result probability array together with the corresponding class name
+ *              array will be sorted by probabilities in descending order.
+ * @param probAsOutput Boolean. Whether the prediction output is a probability distribution.
+ *                     Default is true. If false, the output will be first applied with SoftMax.
+ */
+class LabelOutput(labelMap: Map[Int, String], clses: String = "classes",
+                  probs: String = "probs", probAsOutput: Boolean = true)
   extends ImageProcessing {
   override def transformMat(imageFeature: ImageFeature): Unit = {
     val predict = imageFeature[Tensor[Float]](ImageFeature.predict)
-    val predictOutput = if (! probAsInput) {
+    val predictOutput = if (! probAsOutput) {
       SoftMax[Float].forward(predict).toTensor[Float]
     } else predict
     val start = predictOutput.storageOffset() - 1
@@ -53,7 +64,7 @@ class LabelOutput(labelMap: Map[Int, String], clses: String, probs: String,
 }
 
 object LabelOutput {
-  def apply(labelMap: Map[Int, String], classes: String,
-            probs: String, probAsInput: Boolean = true): LabelOutput =
-    new LabelOutput(labelMap, classes, probs, probAsInput)
+  def apply(labelMap: Map[Int, String], classes: String = "classes",
+            probs: String = "probs", probAsOutput: Boolean = true): LabelOutput =
+    new LabelOutput(labelMap, classes, probs, probAsOutput)
 }

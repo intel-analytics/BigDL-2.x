@@ -76,13 +76,17 @@ public abstract class AbstractInferenceModel extends InferenceModel implements S
     doLoadTF(modelPath, imageClassificationModelType, checkpointPath, inputShape, ifReverseInputChannels, meanValues, scale);
   }
 
-  public void dloadTFAsCalibratedOpenVINO(String modelPath, String modelType, String checkpointPath, int[] inputShape, boolean ifReverseInputChannels, float[] meanValues, float scale,
+  public void loadTFAsCalibratedOpenVINO(String modelPath, String modelType, String checkpointPath, int[] inputShape, boolean ifReverseInputChannels, float[] meanValues, float scale,
                                           String networkType, String validationFilePath, int subset, String opencvLibPath) {
     doLoadTFAsCalibratedOpenVINO(modelPath, modelType, checkpointPath, inputShape, ifReverseInputChannels, meanValues, scale, networkType, validationFilePath, subset, opencvLibPath);
   }
 
   public void loadOpenVINO(String modelFilePath, String weightFilePath) {
     doLoadOpenVINO(modelFilePath, weightFilePath);
+  }
+
+  public void loadOpenVINOInt8(String modelFilePath, String weightFilePath, int batchSize) {
+    doLoadOpenVINOInt8(modelFilePath, weightFilePath, batchSize);
   }
 
   public void reload(String modelPath) {
@@ -110,8 +114,16 @@ public abstract class AbstractInferenceModel extends InferenceModel implements S
     return doPredict(inputs);
   }
 
+  public List<List<JTensor>> predictInt8(List<List<JTensor>> inputs) {
+    return doPredictInt8(inputs);
+  }
+
   public List<List<JTensor>> predict(List<JTensor>[] inputs) {
     return predict(Arrays.asList(inputs));
+  }
+
+  public List<List<JTensor>> predictInt8(List<JTensor>[] inputs) {
+    return predictInt8(Arrays.asList(inputs));
   }
 
   @Override

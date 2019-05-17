@@ -35,4 +35,10 @@ ${ANALYTICS_ZOO_HOME}/bin/spark-shell-with-zoo.sh \
 hello world
 It's a fine day
 ```
-Then, you can see output in TERMINAL 2.
+
+**Then, you can see output in TERMINAL 2.**
+
+## Better Performance with Inference Model
+[Inference Model](https://analytics-zoo.github.io/0.4.0/#ProgrammingGuide/inference/#inference-model) is a thread-safe package in Analytics Zoo aiming to provide high level APIs to speed-up development.
+
+To enable this feature, simply replace `--class com.intel.analytics.zoo.examples.streaming.textclassification.TextClassification \` with `--class com.intel.analytics.zoo.examples.streaming.textclassification.StreamingInferenceTextClassification \` in Step 2.
