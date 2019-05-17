@@ -296,16 +296,16 @@ class WideAndDeepSpec extends ZooSpecHelper {
       assert(itemRecs.count() <= 200)
       assert(userRecs.count() <= 200)
     }
-
 }
 
 class WideAndDeepSerialTest extends ModuleSerializationTest {
   override def test(): Unit = {
     val columnInfo = ColumnFeatureInfo(
-      indicatorCols = Array("occupation", "gender"),
-      indicatorDims = Array(21, 3))
+      embedCols = Array("occupation", "gender"),
+      embedInDims = Array(21, 21),
+      embedOutDims = Array(4, 4))
     val model = WideAndDeep[Float]("deep", 5, columnInfo)
-    val input = Tensor[Float](Array(100, 50))
+    val input = Tensor[Float](Array(100, 2))
       .fill(new Random(System.nanoTime()).nextInt(20).toFloat + 1)
     ZooSpecHelper.testZooModelLoadSave(model, input, WideAndDeep.loadModel[Float])
   }
