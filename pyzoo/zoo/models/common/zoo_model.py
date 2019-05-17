@@ -98,7 +98,7 @@ class KerasZooModel(ZooModel):
     """
     # For the following method, please see documentation of KerasNet for details
     def compile(self, optimizer, loss, metrics=None):
-        self.model.compile(optimizer, loss, metrics=None)
+        self.model.compile(optimizer, loss, metrics)
 
     def fit(self, x, y=None, batch_size=32, nb_epoch=10,
             validation_split=0, validation_data=None, distributed=True):
@@ -111,10 +111,10 @@ class KerasZooModel(ZooModel):
         self.model.set_tensorboard(log_dir, app_name)
 
     def get_train_summary(self, tag=None):
-        self.model.get_train_summary(tag)
+        return self.model.get_train_summary(tag)
 
     def get_validation_summary(self, tag=None):
-        self.model.get_validation_summary(tag)
+        return self.model.get_validation_summary(tag)
 
     def clear_gradient_clipping(self):
         self.model.clear_gradient_clipping()
@@ -126,13 +126,16 @@ class KerasZooModel(ZooModel):
         self.model.set_gradient_clipping_by_l2_norm(clip_norm)
 
     def set_evaluate_status(self):
-        self.model.set_evaluate_status()
+        return self.model.set_evaluate_status()
 
     def evaluate(self, x, y=None, batch_size=32):
-        self.model.evaluate(x, y, batch_size)
+        return self.model.evaluate(x, y, batch_size)
 
     def predict(self, x, batch_per_thread=4, distributed=True):
-        self.model.predict(x, batch_per_thread, distributed)
+        return self.model.predict(x, batch_per_thread, distributed)
+
+    def predict_classes(self, x, batch_per_thread=4, distributed=True):
+        return self.model.predict_classes(x, batch_per_thread, distributed)
 
     @staticmethod
     def _do_load(jmodel, bigdl_type="float"):

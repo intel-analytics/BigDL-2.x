@@ -19,7 +19,7 @@ package com.intel.analytics.zoo.models.recommendation
 import com.intel.analytics.bigdl.dataset.Sample
 import com.intel.analytics.bigdl.tensor.Tensor
 import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric
-import com.intel.analytics.zoo.models.common.ZooModel
+import com.intel.analytics.zoo.models.common.{KerasZooModel, ZooModel}
 import org.apache.spark.rdd.RDD
 
 import scala.reflect.ClassTag
@@ -34,7 +34,7 @@ case class UserItemPrediction(userId: Int, itemId: Int, prediction: Int, probabi
  * @tparam T Numeric type of parameter(e.g. weight, bias). Only support float/double now.
  */
 abstract class Recommender[T: ClassTag](implicit ev: TensorNumeric[T])
-  extends ZooModel[Tensor[T], Tensor[T], T] {
+  extends KerasZooModel[Tensor[T], Tensor[T], T] {
 
   /**
    * Recommend a number of items for each user given a rdd of user item pair features.
@@ -92,7 +92,7 @@ abstract class Recommender[T: ClassTag](implicit ev: TensorNumeric[T])
     val predictProb = raw.map { x =>
       val _output = x.toTensor[T]
       val predict: Int = ev.toType[Int](_output.max(1)._2.valueAt(1))
-      val probability = Math.exp(_output.valueAt(predict).asInstanceOf[Float])
+      val probability = _output.valueAt(predict).asInstanceOf[Float]
       (predict, probability)
     }
     val outRdd: RDD[UserItemPrediction] = idPairs.zip(predictProb)

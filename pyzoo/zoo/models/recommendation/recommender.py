@@ -18,7 +18,7 @@ import sys
 
 from pyspark import RDD
 
-from zoo.models.common import ZooModel
+from zoo.models.common import *
 from bigdl.util.common import callBigDlFunc
 
 
@@ -75,7 +75,7 @@ class UserItemPrediction(object):
             self.user_id, self.item_id, self.prediction, self.probability)
 
 
-class Recommender(ZooModel):
+class Recommender(KerasZooModel):
     """
     The base class for recommendation models in Analytics Zoo.
     """

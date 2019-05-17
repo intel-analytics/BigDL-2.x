@@ -90,23 +90,23 @@ object Utils {
   def row2Sample(r: Row, columnInfo: ColumnFeatureInfo, modelType: String): Sample[Float] = {
 
     val wideTensor: Tensor[Float] = getWideTensor(r, columnInfo)
-    val deepTensor: Tensor[Float] = getDeepTensor(r, columnInfo)
+    val deepTensor: Array[Tensor[Float]] = getDeepTensors(r, columnInfo)
     val l = r.getAs[Int](columnInfo.label)
-
     val label = Tensor[Float](T(l))
     label.resize(1, 1)
 
     modelType match {
       case "wide_n_deep" =>
-        TensorSample[Float](Array(wideTensor, deepTensor), Array(label))
+        TensorSample[Float](Array(wideTensor) ++ deepTensor, Array(label))
       case "wide" =>
         TensorSample[Float](Array(wideTensor), Array(label))
       case "deep" =>
-        TensorSample[Float](Array(deepTensor), Array(label))
+        TensorSample[Float](deepTensor, Array(label))
       case _ =>
         throw new IllegalArgumentException("unknown type")
     }
   }
+
 
   // setup wide tensor
   def getWideTensor(r: Row, columnInfo: ColumnFeatureInfo): Tensor[Float] = {
@@ -125,9 +125,63 @@ object Utils {
     val values = indices.map(_ + 1.0f)
     val shape = Array(wideDims.sum)
 
-    Tensor.sparse(Array(indices), values, shape)
+    val x: Array[Array[Int]] = Array(indices)
+
+    val out = Tensor.sparse(Array(indices), values, shape)
+
+    out
   }
 
+  def getDeepTensors(r: Row, columnInfo: ColumnFeatureInfo): Array[Tensor[Float]] = {
+
+    val indCol = columnInfo.indicatorCols.length
+    val embCol = columnInfo.embedCols.length
+    val contCol = columnInfo.continuousCols.length
+
+    val indTensor = Tensor[Float](columnInfo.indicatorDims.sum).fill(0)
+
+    // setup indicators
+    (0 to indCol - 1).map {
+      i =>
+        val index = r.getAs[Int](columnInfo.indicatorCols(i))
+        val accIndex = if (i == 0) {
+          index }
+        else {
+         columnInfo.indicatorDims(i - 1)
+        }
+        indTensor.setValue(accIndex + 1, 1)
+    }
+
+    val embTensor = Tensor[Float](embCol).fill(0)
+    (0 to embCol - 1).map(i =>
+      embTensor.setValue(i + 1, r.getAs[Int](columnInfo.embedCols(i)).toFloat))
+
+
+    val contTensor = Tensor[Float](contCol).fill(0)
+    (0 to contCol - 1).map(i =>
+      contTensor.setValue(i + 1, r.getAs[Int](columnInfo.continuousCols(i)).toFloat))
+
+    (indCol > 0, embCol > 0, contCol > 0) match {
+
+      case (true, true, true) =>
+        Array(indTensor, embTensor, contTensor)
+      case (false, true, true) =>
+        Array(embTensor, contTensor)
+      case (true, false, true) =>
+        Array(indTensor, contTensor)
+      case (true, true, false) =>
+        Array(indTensor, embTensor)
+      case (false, true, false) =>
+        Array(embTensor)
+      case (false, false, true) =>
+        Array(contTensor)
+      case (true, false, false) =>
+        Array(indTensor)
+      case _ =>
+        Array[Tensor[Float]]()
+    }
+
+  }
   // setup deep tensor
   def getDeepTensor(r: Row, columnInfo: ColumnFeatureInfo): Tensor[Float] = {
     val deepColumns1 = columnInfo.indicatorCols
