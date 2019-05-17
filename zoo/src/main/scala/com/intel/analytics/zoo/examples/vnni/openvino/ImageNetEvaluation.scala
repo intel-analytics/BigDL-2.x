@@ -17,7 +17,6 @@
 package com.intel.analytics.zoo.examples.vnni.openvino
 
 import com.intel.analytics.bigdl.dataset.SampleToMiniBatch
-import com.intel.analytics.bigdl.nn.abstractnn.DataFormat
 import com.intel.analytics.bigdl.utils.LoggerFilter
 import com.intel.analytics.zoo.common.NNContext
 import com.intel.analytics.bigdl.numeric.NumericFloat
@@ -90,7 +89,7 @@ object ImageNetEvaluation {
       val inputs = images ->
         ImageResize(256, 256) ->
         ImageCenterCrop(224, 224) ->
-        ImageMatToTensor(format = DataFormat.NHWC) ->
+        ImageMatToTensor() ->
         ImageSetToSample()
       val batched = inputs.toDataSet() -> SampleToMiniBatch(param.batchSize)
 
