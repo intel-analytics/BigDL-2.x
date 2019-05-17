@@ -20,6 +20,7 @@ import com.intel.analytics.bigdl.dataset.SampleToMiniBatch
 import com.intel.analytics.bigdl.nn.SoftMax
 import com.intel.analytics.bigdl.numeric.NumericFloat
 import com.intel.analytics.bigdl.tensor.Tensor
+import com.intel.analytics.bigdl.transform.vision.image.ImageFeature
 import com.intel.analytics.zoo.common.NNContext
 import com.intel.analytics.zoo.feature.image.{ImageCenterCrop, ImageMatToTensor, ImageResize, ImageSet, ImageSetToSample}
 import com.intel.analytics.zoo.models.image.imageclassification.{LabelOutput, LabelReader}
@@ -97,27 +98,36 @@ object Predict {
 
       val preProcessTime = System.nanoTime() - start
       val imageNum = images.array.length
-      val labelMap = LabelReader.apply("IMAGENET")
 
       // Predict
       logger.debug("Begin Prediction")
 
-      val results = batched.toLocal().data(false).map { miniBatch =>
+      // map minibatch to image feature
+      val predicts = batched.toLocal().data(false).toIterable.flatMap(miniBatch => {
         val predict = if (param.isInt8) {
           model.doPredictInt8(miniBatch.getInput.toTensor.addSingletonDimension())
         } else {
           model.doPredict(miniBatch.getInput.toTensor.addSingletonDimension())
         }
-        logger.info(s"Predict Tensor.Shape ${predict.toTensor.size().mkString(",")}")
-        logger.info(s"Tensor size ${predict.toTensor.size(2)}")
-        // Compute SoftMax
-        for (i <- 1 to miniBatch.getInput.toTensor.size(2)) {
-          getSoftMaxResult(predict.toTensor.apply(1).select(1, i), labelMap, param.topN)
-        }
-        predict
-      }
+        predict.toTensor.squeeze().split(1)
+      })
+      images.array.zip(predicts).foreach(tuple => {
+        tuple._1(ImageFeature.predict) = tuple._2
+      })
+      val labelOutput = LabelOutput(LabelReader.apply("IMAGENET"), probAsOutput = false)
+      val results = labelOutput(images).toLocal().array
 
-      val batchNum = results.length
+      results.foreach(imageFeature => {
+        logger.info(s"image: ${imageFeature.uri}, top ${param.topN}")
+        val classes = imageFeature("classes").asInstanceOf[Array[String]]
+        val probs = imageFeature("probs").asInstanceOf[Array[Float]]
+        for (i <- 0 until param.topN) {
+          logger.info(s"\t class: ${classes(i)}, credit: ${probs(i)}")
+        }
+      })
+      logger.info(s"Prediction finished.")
+
+      val batchNum = batched.toLocal().size()
       val timeUsed = System.nanoTime() - start
       // Post-processing
       val throughput = "%.2f".format(imageNum / (timeUsed / 1e9))

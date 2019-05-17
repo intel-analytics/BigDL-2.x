@@ -21,7 +21,7 @@ This folder contains four examples for OpenVINO VNNI support:
 - [Predict](#predict)
 
 Environment Setting:
-- Set `ZOO_NUM_THREADS` to determine cores used by OpenVINO, e.g, `export ZOO_NUM_THREADS=10`. If it is set to `export ZOO_NUM_THREADS=10`, then OpenVINO will utilize all physical cores for Prediction. 
+- Set `ZOO_NUM_THREADS` to determine cores used by OpenVINO, e.g, `export ZOO_NUM_THREADS=10`. If it is set to `all`, e.g., `export ZOO_NUM_THREADS=all`, then OpenVINO will utilize all physical cores for Prediction. 
 
 ---
 ### Perf
@@ -64,7 +64,7 @@ JNI Throughput: 1014.16 FPS
 
 ---
 ### VINOPerf
-VINOPerf provides a dependency-reduced solution based on [Inference Model](). It can be integrated into existing applications without Spark.
+VINOPerf is a dependency-reduced Perf based on [Inference Model](https://analytics-zoo.github.io/0.4.0/#ProgrammingGuide/inference/#inference-model). It runs locally and calculates performance data (i.e. throughput and latency) for the pre-trained int8 model using dummy input.
 
 ```bash
 export SPARK_HOME=the root directory of Spark
