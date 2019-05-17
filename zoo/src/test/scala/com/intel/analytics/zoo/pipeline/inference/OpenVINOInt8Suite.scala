@@ -142,10 +142,10 @@ class OpenVINOInt8Suite extends FunSuite with Matchers with BeforeAndAfterAll
     println(s"resnet_v1_50_model from tf loaded as $model")
     model shouldNot be(null)
 
-    val indata1 = Source.fromFile(image_input_65_filePath)
-      .getLines().map(_.toFloat).toArray
-    val indata2 = Source.fromFile(image_input_970_filePath)
-      .getLines().map(_.toFloat).toArray
+    val indata1 = fromHWC2CHW(Source.fromFile(image_input_65_filePath)
+      .getLines().map(_.toFloat).toArray)
+    val indata2 = fromHWC2CHW(Source.fromFile(image_input_970_filePath)
+      .getLines().map(_.toFloat).toArray)
     val data = indata1 ++ indata2 ++ indata1 ++ indata2
     val input1 = new JTensor(data, resnet_v1_50_shape)
     val input2 = new JTensor(data, resnet_v1_50_shape)
@@ -217,10 +217,10 @@ class OpenVINOInt8Suite extends FunSuite with Matchers with BeforeAndAfterAll
       opencvLibPath)
     println(s"resnet_v1_50_model from tf loaded as $model")
     model shouldNot be(null)
-    val indata1 = Source.fromFile(image_input_65_filePath)
-      .getLines().map(_.toFloat).toArray
-    val indata2 = Source.fromFile(image_input_970_filePath)
-      .getLines().map(_.toFloat).toArray
+    val indata1 = fromHWC2CHW(Source.fromFile(image_input_65_filePath)
+      .getLines().map(_.toFloat).toArray)
+    val indata2 = fromHWC2CHW(Source.fromFile(image_input_970_filePath)
+      .getLines().map(_.toFloat).toArray)
     // 65's top1 is 65, 970's top1 is 795
     val labels = Array(65f, 795f)
     val data = indata1 ++ indata2 ++ indata1 ++ indata2
@@ -278,7 +278,9 @@ class OpenVINOInt8Suite extends FunSuite with Matchers with BeforeAndAfterAll
       "ILSVRC2012_val_00000001.bmp"), indata1)
     OpenCVMat.toFloatPixels(OpenCVMat.read(calibrateValDirPath +
       "ILSVRC2012_val_00000002.bmp"), indata2)
-    val labels = Array(65f, 970f)
+    indata1 = fromHWC2CHW(indata1)
+    indata2 = fromHWC2CHW(indata2)
+    val labels = Array(65f, 795f)
     val data = indata1 ++ indata2 ++ indata1 ++ indata2
     val input1 = new JTensor(data, resnet_v1_50_shape)
     val input2 = new JTensor(data, resnet_v1_50_shape)
@@ -373,9 +375,11 @@ class OpenVINOInt8Suite extends FunSuite with Matchers with BeforeAndAfterAll
       opencvLibPath)
     println(s"resnet_v1_50_model from tf loaded as $model")
     model shouldNot be(null)
-    val indata1 = Source.fromFile(image_input_65_filePath).getLines().map(_.toFloat).toArray
-    val indata2 = Source.fromFile(image_input_970_filePath).getLines().map(_.toFloat).toArray
-    val labels = Array(65f, 65f)
+    val indata1 = fromHWC2CHW(Source.fromFile(image_input_65_filePath)
+      .getLines().map(_.toFloat).toArray)
+    val indata2 = fromHWC2CHW(Source.fromFile(image_input_970_filePath)
+      .getLines().map(_.toFloat).toArray)
+    val labels = Array(65f, 795f)
     // batchSize = 4, but given 3 and 5
     val data1 = indata1 ++ indata2 ++ indata1
     val data2 = indata2 ++ indata1 ++ indata2 ++ indata1 ++ indata2
