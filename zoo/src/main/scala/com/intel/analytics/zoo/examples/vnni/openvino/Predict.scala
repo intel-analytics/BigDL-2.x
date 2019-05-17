@@ -17,9 +17,8 @@
 package com.intel.analytics.zoo.examples.vnni.openvino
 
 import com.intel.analytics.bigdl.dataset.SampleToMiniBatch
-import com.intel.analytics.bigdl.nn.SoftMax
+import com.intel.analytics.bigdl.nn.abstractnn.Activity
 import com.intel.analytics.bigdl.numeric.NumericFloat
-import com.intel.analytics.bigdl.tensor.Tensor
 import com.intel.analytics.bigdl.transform.vision.image.ImageFeature
 import com.intel.analytics.zoo.common.NNContext
 import com.intel.analytics.zoo.feature.image.{ImageCenterCrop, ImageMatToTensor, ImageResize, ImageSet, ImageSetToSample}
@@ -103,15 +102,15 @@ object Predict {
       logger.debug("Begin Prediction")
 
       // map minibatch to image feature
-      val predicts = batched.toLocal().data(false).toIterable.flatMap(miniBatch => {
+      val predicts = batched.toLocal().data(false).flatMap(miniBatch => {
         val predict = if (param.isInt8) {
           model.doPredictInt8(miniBatch.getInput.toTensor.addSingletonDimension())
         } else {
           model.doPredict(miniBatch.getInput.toTensor.addSingletonDimension())
         }
-        predict.toTensor.squeeze().split(1)
+        predict.toTensor.squeeze.split(1).asInstanceOf[Array[Activity]]
       })
-      images.array.zip(predicts).foreach(tuple => {
+      images.array.zip(predicts.toIterable).foreach(tuple => {
         tuple._1(ImageFeature.predict) = tuple._2
       })
       val labelOutput = LabelOutput(LabelReader.apply("IMAGENET"), probAsOutput = false)
@@ -142,28 +141,5 @@ object Predict {
       // Compare labels and output results
       sc.stop()
     })
-  }
-
-  private def getSoftMaxResult(predict: Tensor[Float],
-                               labelMap: Map[Int, String], topN: Int): Unit = {
-    val predictOutput = SoftMax[Float].forward(predict).toTensor[Float]
-    val start = predictOutput.storageOffset() - 1
-    val end = predictOutput.storageOffset() - 1 + predictOutput.nElement()
-    val clsNo = end - start
-    val sortedResult = predictOutput.storage().array().slice(start, end).
-      zipWithIndex.sortWith(_._1 > _._1).toList.toArray
-    val classes: Array[String] = new Array[String](clsNo)
-    val probabilities: Array[Float] = new Array[Float](clsNo)
-    var index = 0
-    while (index < clsNo) {
-      val clsName = labelMap(sortedResult(index)._2)
-      val prob = sortedResult(index)._1
-      classes(index) = clsName
-      probabilities(index) = prob
-      index += 1
-    }
-    for (i <- 0 until topN) {
-      logger.info(s"\t class: ${classes(i)}, credit: ${probabilities(i)}")
-    }
   }
 }
