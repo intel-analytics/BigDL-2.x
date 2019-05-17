@@ -72,7 +72,7 @@ object Predict {
         .action((x, c) => c.copy(isInt8 = x))
     }
     parser.parse(args, PredictParams()).map(param => {
-      val sc = NNContext.initNNContext("ImageNet2012 with OpenVINO Int8 Inference Example")
+      val sc = NNContext.initNNContext("Predict Image with OpenVINO Int8 Inference Example")
 
       val model = new InferenceModel(1)
 
@@ -108,9 +108,11 @@ object Predict {
         } else {
           model.doPredict(miniBatch.getInput.toTensor.addSingletonDimension())
         }
+        logger.info(s"Predict Tensor.Shape ${predict.toTensor.size().mkString(",")}")
+        logger.info(s"Tensor size ${predict.toTensor.size(2)}")
         // Compute SoftMax
-        for (i <- 0 until miniBatch.size()) {
-          getSoftMaxResult(predict.toTensor.apply(i), labelMap, param.topN)
+        for (i <- 1 to miniBatch.getInput.toTensor.size(2)) {
+          getSoftMaxResult(predict.toTensor.apply(1).select(1, i), labelMap, param.topN)
         }
         predict
       }

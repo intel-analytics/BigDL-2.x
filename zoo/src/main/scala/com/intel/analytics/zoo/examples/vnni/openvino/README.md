@@ -31,10 +31,15 @@ This example runs in local mode and calculates performance data (i.e. throughput
 export SPARK_HOME=the root directory of Spark
 export ANALYTICS_ZOO_HOME=the folder where you extract the downloaded Analytics Zoo zip package
 export ANALYTICS_ZOO_JAR=export ANALYTICS_ZOO_JAR=`find ${ANALYTICS_ZOO_HOME}/lib -type f -name "analytics-zoo*jar-with-dependencies.jar"`
+
+MASTER=...
 modelPath=path of the downloaded int8 model
 weightPath=path of the downloaded int8 model weight
 
-{ANALYTICS_ZOO_HOME}/bin/spark-shell-with-zoo.sh  --master local[*] --driver-memory 10g --class com.intel.analytics.zoo.examples.vnni.openvino.Perf -m ${modelPath} -w ${weightPath}
+{ANALYTICS_ZOO_HOME}/bin/spark-shell-with-zoo.sh  \
+    --master ${MASTER} --driver-memory 2g \
+    --class com.intel.analytics.zoo.examples.vnni.openvino.Perf \
+    -m ${modelPath} -w ${weightPath}
 ```
 
 __Options:__
@@ -69,10 +74,14 @@ export ANALYTICS_ZOO_JAR=export ANALYTICS_ZOO_JAR=`find ${ANALYTICS_ZOO_HOME}/li
 modelPath=path of the downloaded int8 model
 weightPath=path of the downloaded int8 model weight
 
-java -cp ${ANALYTICS_ZOO_JAR}:${SPARK_HOME}/jars/* com.intel.analytics.zoo.examples.vnni.openvino.VINOPerf -m ${modelPath} -w ${weightPath}
+java -cp ${ANALYTICS_ZOO_JAR}:${SPARK_HOME}/jars/* \
+    com.intel.analytics.zoo.examples.vnni.openvino.VINOPerf \
+    -m ${modelPath} -w ${weightPath}
 ```
 
 __Options:__
+- `-m` `--model`: The path to the downloaded int8 model.
+- `-w` `--weight`: The path to the downloaded int8 model weight.
 - `-b` `--batchSize`: The batch size of input data. Default is 4.
 - `-i` `--iteration`: The number of iterations to run the performance test. Default is 1.
 
