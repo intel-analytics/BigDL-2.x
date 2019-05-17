@@ -16,7 +16,7 @@
 
 package com.intel.analytics.zoo.examples.vnni.bigdl
 
-import com.intel.analytics.bigdl.utils.Engine
+import com.intel.analytics.zoo.common.NNContext
 import com.intel.analytics.zoo.feature.image.ImageSet
 import com.intel.analytics.zoo.models.image.imageclassification.{ImageClassifier, LabelOutput}
 import org.apache.log4j.{Level, Logger}
@@ -35,7 +35,7 @@ object Predict {
 
   def main(args: Array[String]): Unit = {
     System.setProperty("bigdl.engineType", "mkldnn")
-    System.setProperty("bigdl.localMode", "true")
+
     val parser = new OptionParser[PredictParams]("ResNet50 Int8 Inference Example") {
       opt[String]('f', "folder")
         .text("The local folder path that contains images for prediction")
@@ -50,7 +50,8 @@ object Predict {
         .action((x, c) => c.copy(topN = x))
     }
     parser.parse(args, PredictParams()).map(param => {
-      Engine.init
+      val sc = NNContext.initNNContext(
+        "Image classification inference example using int8 quantized model")
       val images = ImageSet.read(param.folder, imageCodec = Imgcodecs.CV_LOAD_IMAGE_COLOR)
       val model = ImageClassifier.loadModel[Float](param.model)
       logger.info(s"Start inference on images under ${param.folder}...")
@@ -68,6 +69,7 @@ object Predict {
         }
       })
       logger.info(s"Prediction finished.")
+      sc.stop()
     })
   }
 }

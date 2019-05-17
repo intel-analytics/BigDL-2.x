@@ -28,11 +28,13 @@ This example runs in local mode and demonstrates how to do image classification 
 ```bash
 export SPARK_HOME=the root directory of Spark
 export ANALYTICS_ZOO_HOME=the folder where you extract the downloaded Analytics Zoo zip package
-export ANALYTICS_ZOO_JAR=export ANALYTICS_ZOO_JAR=`find ${ANALYTICS_ZOO_HOME}/lib -type f -name "analytics-zoo*jar-with-dependencies.jar"`
 imagePath=the folder path containing images
 modelPath=the path to the downloaded int8 model
 
-java -cp ${ANALYTICS_ZOO_JAR}:${SPARK_HOME}/jars/* com.intel.analytics.zoo.examples.vnni.bigdl.Predict -f ${imagePath} -m ${modelPath}
+${ANALYTICS_ZOO_HOME}/bin/spark-shell-with-zoo.sh \
+    --master local[*] \
+    --class com.intel.analytics.zoo.examples.vnni.bigdl.Predict \
+    -f ${imagePath} -m ${modelPath}
 ```
 
 __Options:__
@@ -87,7 +89,7 @@ This example runs in local mode and calculates performance data (i.e. throughput
 ```bash
 export SPARK_HOME=the root directory of Spark
 export ANALYTICS_ZOO_HOME=the folder where you extract the downloaded Analytics Zoo zip package
-export ANALYTICS_ZOO_JAR=export ANALYTICS_ZOO_JAR=`find ${ANALYTICS_ZOO_HOME}/lib -type f -name "analytics-zoo*jar-with-dependencies.jar"`
+export ANALYTICS_ZOO_JAR=`find ${ANALYTICS_ZOO_HOME}/lib -type f -name "analytics-zoo*jar-with-dependencies.jar"`
 modelPath=the path to the downloaded int8 model
 
 java -cp ${ANALYTICS_ZOO_JAR}:${SPARK_HOME}/jars/* com.intel.analytics.zoo.examples.vnni.bigdl.Perf -m ${modelPath} -b 64
