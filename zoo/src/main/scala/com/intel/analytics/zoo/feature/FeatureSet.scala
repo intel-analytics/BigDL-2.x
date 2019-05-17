@@ -227,7 +227,7 @@ class CachedDistributedFeatureSet[T: ClassTag]
 
   protected var indexes: RDD[Array[Int]] = buffer.mapPartitions(iter => {
     Iterator.single[Array[Int]]((0 until iter.next().length).toArray[Int])
-  }).setName("original index").cache()
+  }).setName(s"origin index of ${buffer.name}").cache()
 
 
   override def data(train: Boolean): RDD[T] = {
@@ -272,7 +272,7 @@ class CachedDistributedFeatureSet[T: ClassTag]
     indexes.unpersist()
     indexes = buffer.mapPartitions(iter => {
       Iterator.single(RandomGenerator.shuffle((0 until iter.next().length).toArray))
-    }).setName("shuffled index").cache()
+    }).setName(s"shuffled index of ${buffer.name}").cache()
   }
 
   override def originRDD(): RDD[_] = buffer
@@ -302,57 +302,46 @@ class CachedDistributedFeatureSet[T: ClassTag]
  */
 // T is the returning value type. like ByteRecord
 class IncrementalFeatureSet[T: ClassTag]
-(buffers: Array[DistributedFeatureSet[T]])
+(origin: RDD[T], cachePercentage: Double)
   extends DistributedFeatureSet[T]{
+  protected val buffer = origin.coalesce(EngineRef.getNodeNumber(), true)
+    .persist(StorageLevel.DISK_ONLY)
+  protected lazy val count: Long = buffer.count()
 
-  protected lazy val count: Long = buffers.map{featureset =>
-    val size = featureset.toDistributed().size()
-    featureset.unpersist()
-    size
-  }.sum
-
-  protected var currentRdds = -1
+  protected var currentSlice = buffer.sample(false, cachePercentage)
+  protected var currentFeatureSet: DistributedFeatureSet[T] = FeatureSet.rdd(currentSlice)
 
   override def data(train: Boolean): RDD[T] = {
-    if (currentRdds == -1) {
-      currentRdds += 1
+    if (train) {
+      if (currentFeatureSet != null) {
+        currentFeatureSet.unpersist()
+      }
+      currentSlice = buffer.sample(false, cachePercentage)
+      currentFeatureSet = DRAMFeatureSet.rdd(currentSlice)
+      currentFeatureSet.data(train)
     } else {
-      buffers(currentRdds).unpersist()
-      currentRdds = (currentRdds + 1) % buffers.length
+      buffer
     }
-    buffers(currentRdds).originRDD().cache()
-    buffers(currentRdds).cache()
-    buffers(currentRdds).data(train)
   }
 
   override def size(): Long = count
 
   override def shuffle(): Unit = {
-    buffers.foreach(_.shuffle())
   }
 
-  override def originRDD(): RDD[_] = getCurrentFeatureset().originRDD()
+  override def originRDD(): RDD[_] = currentFeatureSet.originRDD()
 
   override def cache(): Unit = {
-    getCurrentFeatureset().cache()
-    isCached = true
+    buffer.persist(StorageLevel.DISK_ONLY)
+    buffer.count()
   }
 
   override def unpersist(): Unit = {
-    getCurrentFeatureset().unpersist()
-    isCached = false
+    buffer.unpersist()
   }
 
   override def toDistributed(): DistributedDataSet[T] = {
     new DistributedDataSetWrapper[T](this)
-  }
-
-  protected def getCurrentFeatureset(): DistributedFeatureSet[T] = {
-    if (currentRdds == -1) {
-      buffers(0)
-    } else {
-      buffers(currentRdds)
-    }
   }
 }
 
@@ -390,18 +379,8 @@ object FeatureSet {
               s"MemoryType: ${memoryType} is not supported at the moment")
         }
 
-      case incremental: Incremental =>
-        val splits = Array.tabulate(incremental.nRdds)(_ => 1.0 / incremental.nRdds)
-        val sliceRdds = data.randomSplit(splits)
-        var i = 0
-        sliceRdds.foreach(_.persist(StorageLevel.DISK_ONLY).setName(s"RandomSplit${i+=1;i}"))
-        memoryType match {
-          case DRAM =>
-            new IncrementalFeatureSet[T](sliceRdds.map(rdd => FeatureSet.rdd(rdd)))
-          case _ =>
-            throw new IllegalArgumentException(
-              s"MemoryType: ${memoryType} is not supported at the moment")
-        }
+      case incremental: INCREMENTAL =>
+        new IncrementalFeatureSet[T](data, incremental.cachePercentage)
       case _ =>
         throw new IllegalArgumentException(
           s"DataStrategy ${dataStrategy} is not supported at the moment")

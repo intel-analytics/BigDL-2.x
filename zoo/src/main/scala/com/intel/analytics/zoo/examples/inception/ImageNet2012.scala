@@ -19,14 +19,13 @@ package com.intel.analytics.zoo.examples.inception
 import java.nio.ByteBuffer
 
 import com.intel.analytics.bigdl.dataset._
-import com.intel.analytics.bigdl.dataset.image.CropCenter
-import com.intel.analytics.bigdl.dataset.image.{BGRImgCropper, BGRImgNormalizer, BytesToBGRImg, MTLabeledBGRImgToBatch, HFlip => DatasetHFlip}
+import com.intel.analytics.bigdl.dataset.image.{BGRImgCropper, BGRImgNormalizer, BGRImgToSample, BytesToBGRImg, CropCenter, MTLabeledBGRImgToBatch, HFlip => DatasetHFlip}
 import com.intel.analytics.bigdl.tensor.Tensor
 import com.intel.analytics.bigdl.transform.vision.image._
 import com.intel.analytics.bigdl.utils.{Engine, T}
 import com.intel.analytics.zoo.feature.image._
 import com.intel.analytics.zoo.feature.{DistributedFeatureSet, FeatureSet}
-import com.intel.analytics.zoo.feature.pmem.{DRAM, Incremental, MemoryType, PMEM}
+import com.intel.analytics.zoo.feature.pmem._
 import com.intel.analytics.zoo.pipeline.api.keras.layers.utils.EngineRef
 import org.apache.hadoop.io.Text
 import org.apache.log4j.Logger
@@ -78,27 +77,24 @@ object ImageNet2012 {
     coresPerNode: Int,
     classNumber: Int,
     memoryType: MemoryType = DRAM,
-    opencvPreprocessing: Boolean = false
+    opencvPreprocessing: Boolean = false,
+    dataStrategy: DataStrategy = PARTITIONED
   )
   : FeatureSet[MiniBatch[Float]] = {
     if (opencvPreprocessing) {
       logger.info("Using opencv preprocessing for training set")
       opencv(path, sc, imageSize, batchSize,
-        nodeNumber, coresPerNode, classNumber, memoryType)
+        nodeNumber, coresPerNode, classNumber, memoryType, dataStrategy)
     } else {
       val rawData = readFromSeqFiles(path, sc, classNumber)
         .setName("ImageNet2012 Training Set")
-      val featureSet = FeatureSet.rdd(rawData, memoryType = memoryType, Incremental(3))
-      featureSet.transform(
-        MTLabeledBGRImgToBatch[ByteRecord](
-          width = imageSize,
-          height = imageSize,
-          batchSize = batchSize,
-          transformer = (BytesToBGRImg()
+      val featureSet = FeatureSet.rdd(rawData, memoryType = memoryType, dataStrategy)
+      featureSet.transform(BytesToBGRImg()
             -> BGRImgCropper(imageSize, imageSize)
             -> DatasetHFlip(0.5)
-            -> BGRImgNormalizer(0.485, 0.456, 0.406, 0.229, 0.224, 0.225))
-        ))
+            -> BGRImgNormalizer(0.485, 0.456, 0.406, 0.229, 0.224, 0.225)
+            -> BGRImgToSample()
+            -> SampleToMiniBatch(batchSize))
     }
   }
 
@@ -123,11 +119,12 @@ object ImageNet2012 {
         nodeNumber: Int,
         coresPerNode: Int,
         classNumber: Int,
-        memoryType: MemoryType = DRAM): FeatureSet[MiniBatch[Float]] = {
+        memoryType: MemoryType = DRAM,
+        dataStrategy: DataStrategy = PARTITIONED): FeatureSet[MiniBatch[Float]] = {
     val rawData = readFromSeqFiles(path, sc, classNumber)
       .map(byteRecordToImageFeature(_))
       .setName("ImageNet2012 Training Set")
-    val featureSet = FeatureSet.rdd(rawData, memoryType = memoryType)
+    val featureSet = FeatureSet.rdd(rawData, memoryType = memoryType, INCREMENTAL(20))
     val transformer = ImagePixelBytesToMat() ->
       ImageRandomCrop(imageSize, imageSize) ->
       ImageChannelNormalize(0.485f, 0.456f, 0.406f, 0.229f, 0.224f, 0.225f) ->

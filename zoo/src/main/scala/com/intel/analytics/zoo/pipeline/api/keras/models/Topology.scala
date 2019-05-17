@@ -33,7 +33,7 @@ import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric
 import com.intel.analytics.bigdl.utils._
 import com.intel.analytics.bigdl.utils.serializer.{DeserializeContext, ModuleData, ModuleSerializer, SerializeContext}
 import com.intel.analytics.bigdl.visualization.{TrainSummary, ValidationSummary}
-import com.intel.analytics.zoo.feature.{DistributedFeatureSet, FeatureSet}
+import com.intel.analytics.zoo.feature.{DistributedFeatureSet, FeatureSet, IncrementalFeatureSet}
 import com.intel.analytics.zoo.feature.image.ImageSet
 import com.intel.analytics.zoo.feature.text._
 import com.intel.analytics.zoo.pipeline.api.{Net, Predictable}
@@ -957,6 +957,18 @@ private[zoo] class InternalDistriOptimizer[T: ClassTag] (
   with AbstractEstimator[T]{
   import InternalDistriOptimizer.logger
   protected var checkpointDir: Option[String] = None
+  protected var cachePercentage: Double = 1.0
+
+  def setCachePercentage(percentage: Double): this.type = {
+    require(percentage > 0 && percentage <= 1, s"excepted percentage in (0, 1]," +
+      s" but got $percentage")
+    cachePercentage = percentage
+    this
+  }
+
+  def getCachePercentage(): Double = {
+    cachePercentage
+  }
 
   def setCheckpointDir(path: Option[String]): this.type = {
     if (path.isDefined) {
@@ -978,6 +990,7 @@ private[zoo] class InternalDistriOptimizer[T: ClassTag] (
     InternalOptimizerUtil.endEpoch(this)
     this
   }
+
 
   override def train(
         trainSet: FeatureSet[MiniBatch[T]],
@@ -1005,7 +1018,24 @@ private[zoo] class InternalDistriOptimizer[T: ClassTag] (
     if (checkPointTrigger.isDefined && validationMethod != null && validationSet != null) {
       this.setValidation(checkPointTrigger.get, validationSet.toDataSet(), validationMethod)
     }
-    this.optimize()
+    if (cachePercentage < 1) {
+      val state = InternalOptimizerUtil.getStateFromOptiMethod(
+        optimMethods.values.head)
+      val batchSize = dataset.toDistributed().data(train = true).first().size() *
+        EngineRef.getNodeNumber()
+      val counts = trainSet.size()
+      val iterations = Math.ceil(counts.toDouble * cachePercentage / batchSize).toInt
+      println(s"$counts $cachePercentage $batchSize $iterations")
+      var i = 1
+      while(!endWhen(state)) {
+        val newEndWhen = Trigger.or(endWhen, Trigger.maxIteration(i * iterations))
+        this.setEndWhen(newEndWhen)
+        this.optimize()
+        i += 1
+      }
+    } else {
+      this.optimize()
+    }
     this
   }
 

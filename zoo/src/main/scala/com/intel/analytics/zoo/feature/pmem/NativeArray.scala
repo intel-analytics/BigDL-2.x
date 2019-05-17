@@ -32,7 +32,7 @@ case object PARTITIONED extends DataStrategy
 
 case object REPLICATED extends DataStrategy
 
-case class Incremental(nRdds: Int) extends DataStrategy
+case class INCREMENTAL(cachePercentage: Double) extends DataStrategy
 
 object MemoryType {
   def fromString(str: String): MemoryType = {

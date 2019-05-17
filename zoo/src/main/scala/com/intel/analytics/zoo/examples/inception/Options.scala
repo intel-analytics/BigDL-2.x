@@ -40,7 +40,8 @@ object Options {
     gradientMin: Option[Double] = None,
     gradientMax: Option[Double] = None,
     memoryType: String = "DRAM",
-    opencv: Boolean = false
+    opencv: Boolean = false,
+    cachePercentage: Double = 1
   )
 
   val trainParser = new OptionParser[TrainParams]("BigDL Inception Example") {
@@ -100,6 +101,9 @@ object Options {
     opt[Double]("gradientMin")
       .text("min gradient clipping by")
       .action((x, c) => c.copy(gradientMin = Some(x)))
+    opt[Double]("cachePercentage")
+      .text("percentage of train set in memory")
+      .action((x, c) => c.copy(cachePercentage = x))
     opt[String]("memoryType")
       .text("memory type")
       .action((x, c) => c.copy(memoryType = x))

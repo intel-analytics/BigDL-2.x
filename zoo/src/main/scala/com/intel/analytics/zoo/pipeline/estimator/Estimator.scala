@@ -71,6 +71,19 @@ class Estimator[T: ClassTag] private[zoo](
   protected val gradientClipping: ArrayBuffer[GradientClipping] =
     new ArrayBuffer[GradientClipping]()
 
+  protected var cachePercentage: Double = 1.0
+
+  def setCachePercentage(percentage: Double): this.type = {
+    require(percentage > 0 && percentage <= 1, s"excepted percentage in (0, 1]," +
+      s" but got $percentage")
+    cachePercentage = percentage
+    this
+  }
+
+  def getCachePercentage(): Double = {
+    cachePercentage
+  }
+
   /**
    * Clear gradient clipping parameters. In this case, gradient clipping will not be applied.
    * In order to take effect, it needs to be called before fit.
@@ -126,6 +139,7 @@ class Estimator[T: ClassTag] private[zoo](
           new InternalDistriOptimizer[T](model, null, criterion)
             .setCheckpointDir(modelDir)
             .setOptimMethods(optimMethods)
+            .setCachePercentage(cachePercentage)
         case _ => throw new IllegalArgumentException("Unsupported FeatureSet type.")
       }
     }
@@ -167,6 +181,7 @@ class Estimator[T: ClassTag] private[zoo](
           new InternalDistriOptimizer[T](model, null, null)
             .setCheckpointDir(modelDir)
             .setOptimMethods(optimMethods)
+            .setCachePercentage(cachePercentage)
         case _ => throw new IllegalArgumentException("Unsupported FeatureSet type.")
       }
     }
