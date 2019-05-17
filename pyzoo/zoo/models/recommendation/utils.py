@@ -48,6 +48,14 @@ def get_negative_samples(indexed):
 
 
 def get_wide_tensor(row, column_info):
+    """
+    convert a row to tensor given column feature information of a WideAndDeep model
+
+    :param row: Row of userId, itemId, features and label
+    :param column_info: ColumnFeatureInfo specify information of different features
+    :return: an array of tensors as input for wide part of a WideAndDeep model
+    """
+
     wide_columns = column_info.wide_base_cols + column_info.wide_cross_cols
     wide_dims = column_info.wide_base_dims + column_info.wide_cross_dims
     wide_length = len(wide_columns)
@@ -67,6 +75,13 @@ def get_wide_tensor(row, column_info):
 
 
 def get_deep_tensors(row, column_info):
+    """
+    convert a row to tensors given column feature information of a WideAndDeep model
+
+    :param row: Row of userId, itemId, features and label
+    :param column_info: ColumnFeatureInfo specify information of different features
+    :return: an array of tensors as input for deep part of a WideAndDeep model
+    """
 
     ind_col = column_info.indicator_cols
     emb_col = column_info.embed_cols
@@ -115,6 +130,14 @@ def get_deep_tensors(row, column_info):
 
 
 def row_to_sample(row, column_info, model_type="wide_n_deep"):
+    """
+    convert a row to sample given column feature information of a WideAndDeep model
+
+    :param row: Row of userId, itemId, features and label
+    :param column_info: ColumnFeatureInfo specify information of different features
+    :return: TensorSample as input for WideAndDeep model
+    """
+
     wide_tensor = get_wide_tensor(row, column_info)
     deep_tensor = get_deep_tensors(row, column_info)
     deep_tensors = [JTensor.from_ndarray(ele) for ele in deep_tensor]
@@ -132,5 +155,12 @@ def row_to_sample(row, column_info, model_type="wide_n_deep"):
 
 
 def to_user_item_feature(row, column_info, model_type="wide_n_deep"):
+    """
+    convert a row to UserItemFeature given column feature information of a WideAndDeep model
+
+    :param row: Row of userId, itemId, features and label
+    :param column_info: ColumnFeatureInfo specify information of different features
+    :return: UserItemFeature for recommender model
+    """
     return UserItemFeature(row["userId"], row["itemId"],
                            row_to_sample(row, column_info, model_type))

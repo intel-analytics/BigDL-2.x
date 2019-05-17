@@ -140,7 +140,7 @@ class WideAndDeep[T: ClassTag](
     }
   }
 
-  def deepHidden(mergeList: List[ModuleNode[T]]): ModuleNode[T] = {
+  private def deepHidden(mergeList: List[ModuleNode[T]]): ModuleNode[T] = {
 
     val merge1 = if (mergeList.size == 1) mergeList(0) else Merge.merge(mergeList, "concat")
 
@@ -154,7 +154,7 @@ class WideAndDeep[T: ClassTag](
 
   }
 
-  def deepMerge(ind: ModuleNode[T], emb: ModuleNode[T], cont: ModuleNode[T]) :
+  private def deepMerge(ind: ModuleNode[T], emb: ModuleNode[T], cont: ModuleNode[T]) :
   (Array[ModuleNode[T]], List[ModuleNode[T]]) = {
 
     var embedWidth = 0
