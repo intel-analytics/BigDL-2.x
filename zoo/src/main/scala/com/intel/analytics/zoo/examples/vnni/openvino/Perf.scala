@@ -63,7 +63,7 @@ object Perf {
       val batchSize = param.batchSize
       val numBatch = param.numBatch
       val iteration = param.iteration
-      val batchInput = Tensor(Array(numBatch, batchSize, 3, 224, 224)).rand()
+      val batchInput = Tensor(Array(numBatch, batchSize, 224, 224, 3)).rand()
       Engine.init
 
       val model = new InferenceModel(1)
@@ -73,19 +73,6 @@ object Perf {
       } else {
         model.doLoadOpenVINO(param.model, param.weight)
       }
-
-      /*
-      val predictStart = System.nanoTime()
-      val threads = List.range(0, param.iteration).map(_ => {
-        new Thread() {
-          override def run(): Unit = {
-            model.doPredict(batchInput)
-          }
-        }
-      })
-      threads.foreach(_.start())
-      threads.foreach(_.join())
-      */
 
       val predictStart = System.nanoTime()
       var averageLatency = 0L

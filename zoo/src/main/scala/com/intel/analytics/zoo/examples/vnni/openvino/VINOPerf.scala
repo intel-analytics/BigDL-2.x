@@ -54,9 +54,9 @@ object VINOPerf {
       val batchSize = param.batchSize
       val iteration = param.iteration
 
-      val randomData = Seq.fill(batchSize * 3 * 224 * 224)(Random.nextFloat())
+      val randomData = Seq.fill(batchSize * 224 * 224 * 3)(Random.nextFloat())
         .toArray
-      val input = new JTensor(randomData, Array(batchSize, 3, 224, 224))
+      val input = new JTensor(randomData, Array(batchSize, 224, 224, 3))
       val batchInput = Arrays.asList(
         Arrays.asList({
           input
