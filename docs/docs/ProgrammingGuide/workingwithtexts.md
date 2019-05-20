@@ -22,7 +22,7 @@ Each text will be a given a label according to the directory where it is located
 textSet = TextSet.read(path, sc = null, minPartitions = 1)
 ```
 
-* `path`: String. Folder path to texts. Local file system and HDFS are supported. If you want to read from HDFS, sc needs to be specified.
+* `path`: String. Folder path to texts. Local or distributed file system (such as HDFS) are supported. If you want to read from HDFS, sc needs to be specified.
 * `sc`: An instance of SparkContext. If specified, texts will be read as a DistributedTextSet. 
 Default is null and in this case texts will be read as a LocalTextSet. 
 * `minPartitions`: Integer. A suggestion value of the minimal partition number for input texts.
@@ -34,7 +34,7 @@ Only need to specify this when sc is not null. Default is 1.
 text_set = TextSet.read(path, sc=None, min_partitions=1)
 ```
 
-* `path`: String. Folder path to texts. Local file system and HDFS are supported. If you want to read from HDFS, sc needs to be defined.
+* `path`: String. Folder path to texts. Local or distributed file system (such as HDFS) are supported. If you want to read from HDFS, sc needs to be defined.
 * `sc`: An instance of SparkContext. If specified, texts will be read as a DistributedTextSet. 
 Default is None and in this case texts will be read as a LocalTextSet. 
 * `min_partitions`: Int. A suggestion value of the minimal partition number for input texts.
@@ -53,7 +53,7 @@ Note that the csv file should be without header.
 textSet = TextSet.readCSV(path, sc = null, minPartitions = 1)
 ```
 
-* `path`: String. The path to the csv file. Local file system and HDFS are supported. If you want to read from HDFS, sc needs to be specified.
+* `path`: String. The path to the csv file. Local or distributed file system (such as HDFS) are supported. If you want to read from HDFS, sc needs to be specified.
 * `sc`: An instance of SparkContext. If specified, texts will be read as a DistributedTextSet. 
 Default is null and in this case texts will be read as a LocalTextSet. 
 * `minPartitions`: Integer. A suggestion value of the minimal partition number for input texts.
@@ -64,7 +64,7 @@ Only need to specify this when sc is not null. Default is 1.
 text_set = TextSet.read_csv(path, sc=None, min_partitions=1)
 ```
 
-* `path`: String. The path to the csv file. Local file system and HDFS are supported. If you want to read from HDFS, sc needs to be defined.
+* `path`: String. The path to the csv file. Local or distributed file system (such as HDFS) are supported. If you want to read from HDFS, sc needs to be defined.
 * `sc`: An instance of SparkContext. If specified, texts will be read as a DistributedTextSet. 
 Default is None and in this case texts will be read as a LocalTextSet. 
 * `min_partitions`: Int. A suggestion value of the minimal partition number for input texts.
