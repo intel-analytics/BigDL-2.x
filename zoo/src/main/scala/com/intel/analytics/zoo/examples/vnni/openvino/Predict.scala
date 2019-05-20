@@ -72,7 +72,7 @@ object Predict {
         .action((x, c) => c.copy(isInt8 = x))
     }
     parser.parse(args, PredictParams()).map(param => {
-      val sc = NNContext.initNNContext("Predict Image with OpenVINO Int8 Inference Example")
+      val sc = NNContext.initNNContext("Predict Image with OpenVINO Int8 Example")
 
       val model = new InferenceModel(1)
 
@@ -97,26 +97,30 @@ object Predict {
 
       val preProcessTime = System.nanoTime() - start
       val imageNum = images.array.length
+      val batchNum = batched.toLocal().data(false).size
 
       // Predict
       logger.debug("Begin Prediction")
-
-      // map minibatch to image feature
       val predicts = batched.toLocal().data(false).flatMap(miniBatch => {
         val predict = if (param.isInt8) {
-          model.doPredictInt8(miniBatch.getInput.toTensor.addSingletonDimension())
+          model.doPredictInt8(miniBatch
+            .getInput.toTensor.addSingletonDimension())
         } else {
-          model.doPredict(miniBatch.getInput.toTensor.addSingletonDimension())
+          model.doPredict(miniBatch
+            .getInput.toTensor.addSingletonDimension())
         }
         predict.toTensor.squeeze.split(1).asInstanceOf[Array[Activity]]
       })
+      // Add prediction into imageset
       images.array.zip(predicts.toIterable).foreach(tuple => {
         tuple._1(ImageFeature.predict) = tuple._2
       })
+      // Transform prediction into Labels and probs
       val labelOutput = LabelOutput(LabelReader.apply("IMAGENET"),
         probAsOutput = false)
       val results = labelOutput(images).toLocal().array
 
+      // Output results
       results.foreach(imageFeature => {
         logger.info(s"image: ${imageFeature.uri}, top ${param.topN}")
         val classes = imageFeature("classes").asInstanceOf[Array[String]]
@@ -127,17 +131,22 @@ object Predict {
       })
       logger.info(s"Prediction finished.")
 
-      val batchNum = batched.toLocal().size()
       val timeUsed = System.nanoTime() - start
       // Post-processing
-      val throughput = "%.2f".format(imageNum / (timeUsed / 1e9))
+      val throughput = "%.2f"
+        .format(imageNum / (timeUsed / 1e9))
+      val predictThroughput = "%.2f"
+        .format(imageNum / ((timeUsed - preProcessTime)/ 1e9))
+      val batchPredictLatency = "%.2f"
+        .format((timeUsed - preProcessTime) / 1e6 / batchNum)
       val batchLatency = "%.2f".format(timeUsed / 1e6 / batchNum)
       logger.info(s"Pre-Processing: Takes ${preProcessTime / 1e6} ms")
       logger.info(s"Predict: Takes ${(timeUsed - preProcessTime) / 1e6} ms, " +
-        s"throughput is ${imageNum / (timeUsed - preProcessTime) * 1e6} FPS (imgs/sec)")
+        s"throughput is ${predictThroughput} FPS (imgs/sec)")
+      logger.info(s"Average Batch Predict latency is $batchPredictLatency ms")
       logger.info(s"End to End: Takes ${timeUsed / 1e6} ms, " +
         s"throughput is $throughput FPS (imgs/sec)")
-      logger.info(s"Average Predict latency is $batchLatency ms")
+      logger.info(s"Average End to End Batch Predict latency is $batchLatency ms")
       // Evaluation
       // Compare labels and output results
       sc.stop()

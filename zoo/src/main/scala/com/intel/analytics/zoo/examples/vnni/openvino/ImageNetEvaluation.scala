@@ -68,7 +68,7 @@ object ImageNetEvaluation {
         .action((x, c) => c.copy(isInt8 = x))
     }
     parser.parse(args, ImageNetEvaluationParams()).foreach(param => {
-      val sc = NNContext.initNNContext("ImageNet2012 with OpenVINO Inference Example")
+      val sc = NNContext.initNNContext("ImageNet2012 with OpenVINO Evaluation Example")
 
 
       val model = new InferenceModel(1)
@@ -106,9 +106,11 @@ object ImageNetEvaluation {
       val start = System.nanoTime()
       val results = batched.toDistributed().data(false).map {miniBatch =>
         val predict = if (param.isInt8) {
-          model.doPredictInt8(miniBatch.getInput.toTensor.addSingletonDimension())
+          model.doPredictInt8(miniBatch
+            .getInput.toTensor.addSingletonDimension())
         } else {
-          model.doPredict(miniBatch.getInput.toTensor.addSingletonDimension())
+          model.doPredict(miniBatch
+            .getInput.toTensor.addSingletonDimension())
         }
         val localMethod = validations.value
         localMethod.map(valMethod => {
