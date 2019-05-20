@@ -91,7 +91,7 @@ object Predict {
       val inputs = images ->
         ImageResize(256, 256) ->
         ImageCenterCrop(224, 224) ->
-        ImageMatToTensor() ->
+        ImageMatToTensor(shareBuffer = false) ->
         ImageSetToSample()
       val batched = inputs.toDataSet() -> SampleToMiniBatch(param.batchSize)
 
@@ -113,7 +113,8 @@ object Predict {
       images.array.zip(predicts.toIterable).foreach(tuple => {
         tuple._1(ImageFeature.predict) = tuple._2
       })
-      val labelOutput = LabelOutput(LabelReader.apply("IMAGENET"), probAsOutput = false)
+      val labelOutput = LabelOutput(LabelReader.apply("IMAGENET"),
+        probAsOutput = false)
       val results = labelOutput(images).toLocal().array
 
       results.foreach(imageFeature => {

@@ -128,9 +128,11 @@ __Options:__
 
 __Sample console log output__:
 ```
-Top1Accuracy is Accuracy(correct: 37912, count: 50000, accuracy: 0.75824)
-Top5Accuracy is Accuracy(correct: 46332, count: 50000, accuracy: 0.92664)
+Evaluation Results:
+Top1Accuracy is Accuracy(correct: 36432, count: 50000, accuracy: 0.72864)
+Top5Accuracy is Accuracy(correct: 45589, count: 50000, accuracy: 0.91178)
 ```
+Note that: int8 model's accuracy is a bit lower than normal model, due to int8 related optimization.
 
 ---
 ### Predict

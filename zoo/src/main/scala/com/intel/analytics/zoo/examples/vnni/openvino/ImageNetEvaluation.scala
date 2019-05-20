@@ -20,6 +20,7 @@ import com.intel.analytics.bigdl.dataset.SampleToMiniBatch
 import com.intel.analytics.bigdl.utils.LoggerFilter
 import com.intel.analytics.zoo.common.NNContext
 import com.intel.analytics.bigdl.numeric.NumericFloat
+import com.intel.analytics.bigdl.optim.{Top1Accuracy, Top5Accuracy}
 import com.intel.analytics.zoo.feature.image.{ImageCenterCrop, ImageMatToTensor, ImageResize, ImageSet, ImageSetToSample}
 import com.intel.analytics.zoo.pipeline.inference.InferenceModel
 import org.apache.log4j.{Level, Logger}
@@ -69,6 +70,7 @@ object ImageNetEvaluation {
     parser.parse(args, ImageNetEvaluationParams()).foreach(param => {
       val sc = NNContext.initNNContext("ImageNet2012 with OpenVINO Inference Example")
 
+
       val model = new InferenceModel(1)
       if (param.isInt8) {
         model.doLoadOpenVINOInt8(param.model, param.weight, param.batchSize)
@@ -78,6 +80,8 @@ object ImageNetEvaluation {
 
       // Read ImageNet val
       val images = ImageSet.readSequenceFiles(param.folder, sc, param.partitionNum)
+      val vMethods = Array(new Top1Accuracy[Float], new Top5Accuracy[Float])
+      val validations = images.rdd.sparkContext.broadcast(vMethods)
       // If the actual partitionNum of sequence files is too large, then the
       // total batchSize we calculate (partitionNum * batchPerPartition) would be
       // too large for inference.
@@ -86,6 +90,7 @@ object ImageNetEvaluation {
         images.rdd = images.rdd.coalesce(param.partitionNum, shuffle = false)
       }
       // Pre-processing
+
       val inputs = images ->
         ImageResize(256, 256) ->
         ImageCenterCrop(224, 224) ->
@@ -99,20 +104,25 @@ object ImageNetEvaluation {
       // Predict
       logger.debug("Begin Prediction")
       val start = System.nanoTime()
-      val results = batched.toDistributed().data(false).map { miniBatch =>
-        if (param.isInt8) {
+      val results = batched.toDistributed().data(false).map {miniBatch =>
+        val predict = if (param.isInt8) {
           model.doPredictInt8(miniBatch.getInput.toTensor.addSingletonDimension())
         } else {
           model.doPredict(miniBatch.getInput.toTensor.addSingletonDimension())
         }
-      }
-      val batchNum = results.count().toFloat
+        val localMethod = validations.value
+        localMethod.map(valMethod => {
+          valMethod(predict.toTensor.apply(1), miniBatch.getTarget())
+        })
+      }.reduce((left, right) => {
+        left.zip(right).map { case (l, r) => l + r }
+      }).zip(vMethods)
+      println("Evaluation Results:")
+      results.foreach(r => println(s"${r._2} is ${r._1}"))
       val timeUsed = System.nanoTime() - start
       // Post-processing
       val throughput = "%.2f".format(imageNum / (timeUsed / 1e9))
-      val batchLatency = "%.2f".format(timeUsed / 1e6 / batchNum)
       logger.info(s"Takes $timeUsed ns, throughput is $throughput FPS (imgs/sec)")
-      logger.info(s"Average Predict latency is $batchLatency ms")
       // Evaluation
       // Compare labels and output results
       sc.stop()
