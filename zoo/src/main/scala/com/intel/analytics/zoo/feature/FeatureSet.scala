@@ -111,7 +111,7 @@ trait DistributedFeatureSet[T] extends AbstractFeatureSet[T, RDD[T]] {
     val cachedTransformer =
       preFeatureSet.originRDD().mapPartitions(_ => Iterator
         .single(broadcast.value.cloneTransformer())
-      ).setName("Cached Transformer").persist()
+      ).setName(s"Cached Transformer of ${preFeatureSet.originRDD().name}").persist()
 
     new DistributedFeatureSet[C] {
       override def size(): Long = preFeatureSet.size()
@@ -306,6 +306,7 @@ class IncrementalFeatureSet[T: ClassTag]
   extends DistributedFeatureSet[T]{
   protected val buffer = origin.coalesce(EngineRef.getNodeNumber(), true)
     .persist(StorageLevel.DISK_ONLY)
+    .setName("Origin Data Cached on Disk")
   protected lazy val count: Long = buffer.count()
 
   protected var currentSlice = buffer.sample(false, cachePercentage)
@@ -317,6 +318,7 @@ class IncrementalFeatureSet[T: ClassTag]
         currentFeatureSet.unpersist()
       }
       currentSlice = buffer.sample(false, cachePercentage)
+        .setName(s"${cachePercentage * 100}% of ${origin.name}")
       currentFeatureSet = DRAMFeatureSet.rdd(currentSlice)
       currentFeatureSet.data(train)
     } else {
@@ -329,7 +331,7 @@ class IncrementalFeatureSet[T: ClassTag]
   override def shuffle(): Unit = {
   }
 
-  override def originRDD(): RDD[_] = currentFeatureSet.originRDD()
+  override def originRDD(): RDD[_] = buffer
 
   override def cache(): Unit = {
     buffer.persist(StorageLevel.DISK_ONLY)
