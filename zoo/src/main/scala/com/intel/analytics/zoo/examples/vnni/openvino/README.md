@@ -136,7 +136,7 @@ Note that: int8 model's accuracy is a bit lower than normal model, due to int8 r
 
 ---
 ### Predict
-This example runs in local mode and demonstrates how to do image classification with the pre-trained int8 model.
+This example runs in local mode and demonstrates how to do image classification with the pre-trained int8 model. Note that current example uses local mode to evaluate throughput and latency. If you want to run prediction on Spark cluster, please refer to ImageNetEvaluation or change `toLocal` to `toDistributed`.
 
 ```bash
 export SPARK_HOME=the root directory of Spark
@@ -157,14 +157,13 @@ __Options:__
 - `-w` `--weight`: The path to the downloaded int8 model weight.
 - `-b` `--batchSize`: The batch size of input data. Default is 4.
 - `-f` `--folder`: The folder path that contains sequence files of ImageNet no-resize validation images.
-- `--partitionNum`: The partition number of the dataset. Default is 32.
 
 __Sample console log output__:
 ```
-INFO  Predict$:62 - image : 1.jpg, top 5
-INFO  Predict$:66 - 	 class: kelpie, credit: 0.96370447
-INFO  Predict$:66 - 	 class: Rottweiler, credit: 0.026292335
-INFO  Predict$:66 - 	 class: Eskimo dog, husky, credit: 0.0019479054
-INFO  Predict$:66 - 	 class: German shepherd, German shepherd dog, German police dog, alsatian, credit: 0.001165287
-INFO  Predict$:66 - 	 class: Doberman, Doberman pinscher, credit: 8.323631E-4
+INFO  Predict$:129 - image : 1.jpg, top 5
+Predict$:129 - 	 class: collie, credit: 0.0024525642
+Predict$:129 - 	 class: Shetland sheepdog, Shetland sheep dog, Shetland, credit: 0.0010984923
+Predict$:129 - 	 class: borzoi, Russian wolfhound, credit: 0.0010027748
+Predict$:129 - 	 class: groenendael, credit: 9.985587E-4
+Predict$:129 - 	 class: briard, credit: 9.98535E-4
 ```
