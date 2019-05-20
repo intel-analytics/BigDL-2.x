@@ -126,7 +126,7 @@ class KerasModel(object):
             `validation_data` will override `validation_split`.
             `validation_data` could be:
               - tuple `(x_val, y_val)` of Numpy arrays or tensors
-              - TFDataset
+              - `TFDataset`
         :param distributed: Boolean. Whether to do prediction in distributed mode or local mode.
                      Default is True. In local mode, x must be a Numpy array.
         """

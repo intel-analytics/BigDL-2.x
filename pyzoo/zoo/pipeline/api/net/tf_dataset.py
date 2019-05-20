@@ -299,9 +299,14 @@ class TFDataset(object):
 
         :param rdd: a rdd of list of numpy.ndarray each representing a tensor to feed into
         tensorflow graph on each iteration
-        :param names: the names of the resulting tensors, should be a list of str
-        :param shapes: the shapes of the resulting tensors, should be a list of list of int
-        :param types: the types of the result tensors, should be a list of tf.dtype
+        :param features: the structure of input features, should one the following:
+               - a tuple (dtype, shape), e.g. (tf.float32, [28, 28, 1]) 
+               - a list of such tuple [(dtype1, shape1), (dtype2, shape2)],
+                     e.g. [(tf.float32, [10]), (tf.float32, [20])],
+               - a dict of such tuple, mapping string names to tuple {"name": (dtype, shape},
+                     e.g. {"input1":(tf.float32, [10]), "input2": (tf.float32, [20])}
+                    
+        :param labels: the structure of input labels, format is the same as features
         :param batch_size: the batch size, used for training, should be a multiple of
         total core num
         :param batch_per_thread: the batch size for each thread, used for inference or evaluation

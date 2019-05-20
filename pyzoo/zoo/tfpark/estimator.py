@@ -276,7 +276,7 @@ class TFEstimator(object):
     def predict(self, input_fn, checkpoint_path=None):
         """Outputs predictions for given features.
 
-        input_fn: A function that constructs the features.
+        :param input_fn: A function that constructs the features.
               * A `TFDataset` object, each elements of which is a tuple `(features, None)`.
               * A `tf.data.Dataset` object: Outputs of `Dataset` object must have
                 same constraints as below.
@@ -285,7 +285,7 @@ class TFEstimator(object):
                 the expectation of `model_fn` from inputs.
               * A tuple, in which case the first item is extracted as features.
 
-          checkpoint_path: Path of a specific checkpoint to predict. If `None`, the
+        :param checkpoint_path: Path of a specific checkpoint to predict. If `None`, the
             latest checkpoint in `model_dir` is used.  If there are no checkpoints
             in `model_dir`, prediction is run with newly initialized `Variables`
             instead of ones restored from checkpoint.
