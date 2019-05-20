@@ -142,6 +142,7 @@ class PythonZooNet[T: ClassTag](implicit ev: TensorNumeric[T]) extends PythonZoo
       toJSample(x).asInstanceOf[RDD[JSample[Float]]], batchSize)
   }
 
+<<<<<<< HEAD
   val processToBeKill = new CopyOnWriteArrayList[String]()
   registerKiller()
 
@@ -179,6 +180,10 @@ class PythonZooNet[T: ClassTag](implicit ev: TensorNumeric[T]) extends PythonZoo
 
   def jvmGuardRegisterPids(pids: ArrayList[Integer]): Unit = {
     pids.asScala.foreach(pid => processToBeKill.add(pid + ""))
+  }
+
+  def createTorchNet(path: String): TorchNet = {
+    TorchNet(path)
   }
 
 }
