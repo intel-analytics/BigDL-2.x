@@ -116,8 +116,7 @@ object Predict {
         tuple._1(ImageFeature.predict) = tuple._2
       })
       // Transform prediction into Labels and probs
-      val labelOutput = LabelOutput(LabelReader.apply("IMAGENET"),
-        probAsOutput = false)
+      val labelOutput = LabelOutput(LabelReader.apply("IMAGENET"))
       val results = labelOutput(images).toLocal().array
 
       // Output results

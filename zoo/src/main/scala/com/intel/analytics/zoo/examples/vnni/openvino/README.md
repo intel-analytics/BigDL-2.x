@@ -161,9 +161,9 @@ __Options:__
 __Sample console log output__:
 ```
 INFO  Predict$:129 - image : 1.jpg, top 5
-Predict$:129 - 	 class: collie, credit: 0.0024525642
-Predict$:129 - 	 class: Shetland sheepdog, Shetland sheep dog, Shetland, credit: 0.0010984923
-Predict$:129 - 	 class: borzoi, Russian wolfhound, credit: 0.0010027748
-Predict$:129 - 	 class: groenendael, credit: 9.985587E-4
-Predict$:129 - 	 class: briard, credit: 9.98535E-4
+Predict$:129 - 	 class: sea snake, credit: 0.8946274
+Predict$:129 - 	 class: water snake, credit: 0.077680744
+Predict$:129 - 	 class: hognose snake, puff adder, sand viper, credit: 0.008171927
+Predict$:129 - 	 class: rock python, rock snake, Python sebae, credit: 0.006575753
+Predict$:129 - 	 class: Indian cobra, Naja naja, credit: 0.0048251627
 ```
