@@ -204,11 +204,11 @@ transformed_text_set = text_set.shape_sequence(len, trunc_mode="pre", pad_elemen
 ```
 
 * `len`: Positive int. The target length.
-* `truncMode`: String. Truncation mode if the original sequence is longer than the target length. Either 'pre' or 'post'. 
+* `trunc_mode`: String. Truncation mode if the original sequence is longer than the target length. Either 'pre' or 'post'. 
 If 'pre', the sequence will be truncated from the beginning. 
 If 'post', the sequence will be truncated from the end. 
 Default is 'post'.
-* `padElement`: Int. The index element to be padded to the end of the sequence if the original length is smaller than the target length.
+* `pad_element`: Int. The index element to be padded to the end of the sequence if the original length is smaller than the target length.
 Default is 0 with the convention that we reserve index 0 for unknown words.
 
 
