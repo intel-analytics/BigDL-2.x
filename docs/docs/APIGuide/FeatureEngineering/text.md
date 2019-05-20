@@ -143,6 +143,9 @@ Need to tokenize first.
 
 After word2idx, you can get the generated word index vocabulary by calling ```getWordIndex``` (Scala) or ```get_word_index()``` (Python) of the transformed TextSet.
 
+Also, you can call ```saveWordIndex(path)``` (Scala) ```save_word_index(path)``` (Python) to [save](../../ProgrammingGuide/workingwithtexts/#save-word-index) this word index vocabulary to be used in
+future training.
+
 
 **Inference**
 
@@ -151,7 +154,7 @@ training stage instead of generating a new one. Need to tokenize first.
 
 Thus please be aware that you do not need to specify any of the below arguments.
 
-You need to call ```loadWordIndex(path)``` (Scala) or ```load_word_index(path)``` (Python) beforehand for [word index loading](../../ProgrammingGuide/workingwithtexts/#load-word-index).
+You need to call ```loadWordIndex(path)``` (Scala) or ```load_word_index(path)``` (Python) beforehand for word index [loading](../../ProgrammingGuide/workingwithtexts/#load-word-index).
 
 **Scala**
 ```scala
