@@ -32,7 +32,7 @@ object WideAndDeepExample {
     val parser = new OptionParser[WNDParams]("WideAndDeep Example") {
       opt[String]("dataset")
         .text(s"dataset name, ml-1m or census")
-       .required()
+        .required()
         .action((x, c) => c.copy(dataset = x))
       opt[String]("modelType")
         .text(s"modelType")

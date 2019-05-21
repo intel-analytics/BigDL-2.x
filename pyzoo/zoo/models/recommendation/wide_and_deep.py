@@ -148,13 +148,13 @@ class WideAndDeep(Recommender):
             out = Activation("softmax")(wide_linear)
             model = Model(input_wide, out)
         elif(self.model_type == "deep"):
-            (input_deep, merge_list) = self.deep_merge(input_ind, input_emb, input_con)
-            deep_linear = self.deep_hidden(merge_list)
+            (input_deep, merge_list) = self._deep_merge(input_ind, input_emb, input_con)
+            deep_linear = self._deep_hidden(merge_list)
             out = Activation("softmax")(deep_linear)
             model = Model(input_deep, out)
         elif(self.model_type == "wide_n_deep"):
-            (input_deep, merge_list) = self.deep_merge(input_ind, input_emb, input_con)
-            deep_linear = self.deep_hidden(merge_list)
+            (input_deep, merge_list) = self._deep_merge(input_ind, input_emb, input_con)
+            deep_linear = self._deep_hidden(merge_list)
             merged = merge([wide_linear, deep_linear], "sum")
             out = Activation("softmax")(merged)
             model = Model([input_wide] + input_deep, out)
@@ -164,7 +164,7 @@ class WideAndDeep(Recommender):
 
         return model
 
-    def deep_hidden(self, merge_list):
+    def _deep_hidden(self, merge_list):
         if (len(merge_list) == 1):
             merged = merge_list[0]
         else:
@@ -177,7 +177,7 @@ class WideAndDeep(Recommender):
         last = Dense(self.class_num, activation="relu")(linear)
         return last
 
-    def deep_merge(self, input_ind, input_emb, input_cont):
+    def _deep_merge(self, input_ind, input_emb, input_cont):
         embed_width = 0
         embed = []
         for i in range(0, len(self.embed_in_dims)):

@@ -126,7 +126,7 @@ class TestWideAndDeep(ZooTestCase):
         column_info1 = self.column_info
         model1 = WideAndDeep(5, column_info1, "deep")
         (input_ind1, input_emb1, input_con1) = get_input(column_info1)
-        (input1, merged_list1) = model1.deep_merge(input_ind1, input_emb1, input_con1)
+        (input1, merged_list1) = model1._deep_merge(input_ind1, input_emb1, input_con1)
         assert len(input1) == 3
         assert len(merged_list1) == 4
 
@@ -138,7 +138,7 @@ class TestWideAndDeep(ZooTestCase):
             embed_out_dims=[20, 20])
         model2 = WideAndDeep(5, column_info2, "deep")
         (input_ind2, input_emb2, input_con2) = get_input(column_info2)
-        (input2, merged_list2) = model2.deep_merge(input_ind2, input_emb2, input_con2)
+        (input2, merged_list2) = model2._deep_merge(input_ind2, input_emb2, input_con2)
         assert len(input2) == 2
         assert len(merged_list2) == 3
 
@@ -148,7 +148,7 @@ class TestWideAndDeep(ZooTestCase):
             continuous_cols=["age"])
         model3 = WideAndDeep(5, column_info3, "deep")
         (input_ind3, input_emb3, input_con3) = get_input(column_info3)
-        (input3, merged_list3) = model3.deep_merge(input_ind3, input_emb3, input_con3)
+        (input3, merged_list3) = model3._deep_merge(input_ind3, input_emb3, input_con3)
         assert len(input3) == 2
         assert len(merged_list3) == 2
 

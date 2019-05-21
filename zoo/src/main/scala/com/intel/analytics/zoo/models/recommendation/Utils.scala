@@ -26,6 +26,12 @@ import scala.util.Random
 
 object Utils {
 
+  /**
+   * generate negative samples given a dataframe of positive records, label >=2.
+   *
+   * @param indexed dataframe positive of userId, itemId and label.
+   * @return a dataframe of negative samples(label=1) with the same size as indexed dataframe
+   */
   def getNegativeSamples(indexed: DataFrame): DataFrame = {
     val schema = indexed.schema
     require(schema.fieldNames.contains("userId"), s"Column userId should exist")
@@ -87,6 +93,15 @@ object Utils {
     func
   }
 
+
+  /**
+   * convert a row to sample given column information of WideAndDeep model.
+   *
+   * @param r Row of userId, itemId, features and label
+   * @param columnInfo ColumnFeatureInfo specify information of different features
+   * @param modelType support "wide_n_deep", "wide", "deep" only
+   * @return TensorSample as input for WideAndDeep model
+   */
   def row2Sample(r: Row, columnInfo: ColumnFeatureInfo, modelType: String): Sample[Float] = {
 
     val wideTensor: Tensor[Float] = getWideTensor(r, columnInfo)
@@ -108,7 +123,13 @@ object Utils {
   }
 
 
-  // setup wide tensor
+  /**
+   * convert a row to tensor given column feature information of WideAndDeep model.
+   *
+   * @param r Row of userId, itemId, features and label
+   * @param columnInfo ColumnFeatureInfo specify information of different features
+   * @return a tensor as input for wide part of a WideAndDeep model
+   */
   def getWideTensor(r: Row, columnInfo: ColumnFeatureInfo): Tensor[Float] = {
     val wideColumns = columnInfo.wideBaseCols ++ columnInfo.wideCrossCols
     val wideDims = columnInfo.wideBaseDims ++ columnInfo.wideCrossDims
@@ -132,6 +153,13 @@ object Utils {
     out
   }
 
+  /**
+   * convert a row to tensors given column feature information of WideAndDeep model.
+   *
+   * @param r Row of userId, itemId, features and label
+   * @param columnInfo ColumnFeatureInfo specify information of different features
+   * @return an array of tensors as input for deep part of a WideAndDeep model
+   */
   def getDeepTensors(r: Row, columnInfo: ColumnFeatureInfo): Array[Tensor[Float]] = {
 
     val indCol = columnInfo.indicatorCols.length
