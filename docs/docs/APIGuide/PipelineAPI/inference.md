@@ -75,7 +75,7 @@ We just need to specify the model path and optionally weight path if exists wher
 
 `loadOpenVINO` method is to load an OpenVINO Intermediate Representation(IR).
 
-***loadOpenVINO***
+***loadOpenVINOInt8***
 
 `loadOpenVINO` method is to load an OpenVINO Int8 Intermediate Representation(IR).
 
