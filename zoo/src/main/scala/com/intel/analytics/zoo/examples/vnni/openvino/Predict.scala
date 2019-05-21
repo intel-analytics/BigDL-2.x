@@ -36,6 +36,18 @@ case class PredictParams(folder: String = "./",
                          partitionNum: Int = 4,
                          isInt8: Boolean = false)
 
+
+case class CalibrationParams(modelType: String = "resnet_v1_50",
+                             inputShare: Array[Int] = Array(4, 224, 224, 3),
+                             ifReverseInputChannels: Boolean = true,
+                             meanValues: Array[Float] = Array(123.68f,
+                               116.78f, 103.94f),
+                             scala: Float = 1f,
+                             networkType: String = "C",
+                             calibrationValFiles: String = "",
+                             subset: Int = 32,
+                             openCVLibs: String = "/tmp")
+
 object Predict {
   Logger.getLogger("org").setLevel(Level.ERROR)
   Logger.getLogger("akka").setLevel(Level.ERROR)
