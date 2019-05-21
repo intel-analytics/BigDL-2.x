@@ -62,43 +62,50 @@ class TFNet(private val graphDef: TFGraphHolder,
   // maybe create a resource manager to handle tensor creation and destruction
 
   class ResourceManager() extends java.io.Serializable {
-    private var tensorList: List[TTensor[_]] = List()
+    private val tensorList: mutable.Set[TTensor[_]] = mutable.Set[TTensor[_]]()
     def createTFTensor(shape: Array[Long], buffer: FloatBuffer): TTensor[_] = {
       val TFTensor : TTensor[_] = TTensor.create(shape, buffer)
-      tensorList = TFTensor :: tensorList
+      tensorList += TFTensor
       return TFTensor
     }
     def createTFTensor(shape: Array[Long], buffer: ByteBuffer): TTensor[_] = {
       val TFTensor : TTensor[_] = TTensor.create(classOf[UInt8], shape, buffer)
-      tensorList = TFTensor :: tensorList
+      tensorList += TFTensor
       return TFTensor
     }
     def createTFTensor(shape: Array[Long], buffer: IntBuffer): TTensor[_] = {
       val TFTensor : TTensor[_] = TTensor.create(shape, buffer)
-      tensorList = TFTensor :: tensorList
+      tensorList += TFTensor
       return TFTensor
     }
     def createTFTensor(shape: Array[Long], buffer: LongBuffer): TTensor[_] = {
       val TFTensor : TTensor[_] = TTensor.create(shape, buffer)
-      tensorList = TFTensor :: tensorList
+      tensorList += TFTensor
       return TFTensor
     }
     def createTFTensor(shape: Array[Long], buffer: DoubleBuffer): TTensor[_] = {
       val TFTensor : TTensor[_] = TTensor.create(shape, buffer)
-      tensorList = TFTensor :: tensorList
+      tensorList += TFTensor
       return TFTensor
     }
 
     def createBoolTFTensor(shape: Array[Long], bytes: ByteBuffer): TTensor[_] = {
       val TFTensor : TTensor[_] = TTensor.create(classOf[java.lang.Boolean], shape, bytes)
-      tensorList = TFTensor :: tensorList
+      tensorList += TFTensor
       return TFTensor
+    }
+
+    def releaseTensor(t: TTensor[_]): Unit = {
+      t.close()
+      tensorList -= t
     }
 
     def destructTFTensors(): Unit = {
       for (tensor <- tensorList) {
         tensor.close()
       }
+
+      tensorList.clear()
     }
   }
 
@@ -298,7 +305,7 @@ class TFNet(private val graphDef: TFGraphHolder,
   private def emptyTFTensorArray(arr: Array[TTensor[_]]): Unit = {
     var i = 0
     while (i < arr.length) {
-      arr(i).close()
+      tensorManager.releaseTensor(arr(i))
       arr(i) = null
       i += 1
     }
@@ -307,7 +314,7 @@ class TFNet(private val graphDef: TFGraphHolder,
   private def emptyTFTensorArray(arr: mutable.Buffer[TTensor[_]]): Unit = {
     var i = 0
     while (i < arr.length) {
-      arr(i).close()
+      tensorManager.releaseTensor(arr(i))
       arr(i) = null
       i += 1
     }
