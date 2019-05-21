@@ -57,6 +57,8 @@ pages:
   - TFPark API:
     - KerasModel: APIGuide/TFPark/model.md
     - TFEstimator: APIGuide/TFPark/estimator.md
+    - Text Models: APIGuide/TFPark/text-models.md
+    - BERT Classifier: APIGuide/TFPark/bert-classifier.md
   - Feature Engineering:
     - FeatureSet: APIGuide/FeatureEngineering/featureset.md
     - Relation: APIGuide/FeatureEngineering/relation.md
