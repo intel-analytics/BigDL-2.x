@@ -28,8 +28,7 @@ import org.apache.commons.io.FileUtils
 import scala.reflect.ClassTag
 
 /**
- * [[TorchNet]] wraps a Pytorch script model as a layer, and internally use libtorch to
- * conduct the actual calculation.
+ * [[TorchNet]] wraps a TorchScript model as a single layer.
  */
 class TorchNet private(private val path: String)
   extends AbstractModule[Tensor[Float], Tensor[Float], Float] with Predictable[Float] {
@@ -57,7 +56,6 @@ class TorchNet private(private val path: String)
 
   override def updateOutput(input: Tensor[Float]): Tensor[Float] = {
     require(input.isContiguous())
-
     val data = input.storage().array()
     val size = input.size()
     val offset = input.storageOffset()
@@ -73,10 +71,15 @@ class TorchNet private(private val path: String)
 
 object TorchNet {
 
-  // run once per JVM
-  loadPytorch()
+  loadPytorch() // run once per JVM
 
+  /**
+   * Create a TorchNet from a saved TorchScript Model
+   * @param path Path to the TorchScript Model.
+   * @return
+   */
   def apply(path: String): TorchNet = {
+    //TODO: add support for HDFS path
     new TorchNet(path)
   }
 

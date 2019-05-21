@@ -27,12 +27,21 @@ from zoo.pipeline.api.net.tfnet import to_sample_rdd
 
 
 class TorchNet(Layer):
+    """
+    TorchNet wraps a TorchScript model as a single layer, thus the Pytorch model can be used for
+    distributed inference or training.
+    :param path: path to the TorchScript model.
+    """
+
     def __init__(self, path, bigdl_type="float"):
         super(TorchNet, self).__init__(None, bigdl_type, path)
 
     @staticmethod
     def from_pytorch(module, dummpy_input):
-
+        """
+        Create a TorchNet directly from PyTorch model, e.g. model in torchvision.models
+        :param module: a PyTorch model
+        """
         temp = tempfile.mkdtemp()
         traced_script_module = torch.jit.trace(module, dummpy_input)
         path = os.path.join(temp, "model.pt")
