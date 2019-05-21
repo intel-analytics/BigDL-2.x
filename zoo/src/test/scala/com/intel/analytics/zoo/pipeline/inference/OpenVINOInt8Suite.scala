@@ -214,7 +214,7 @@ class OpenVINOInt8Suite extends FunSuite with Matchers with BeforeAndAfterAll
     }
 
     // PredictInt8
-    /*val resultsInt8: util.List[util.List[JTensor]] = model.doPredictInt8(inputs)
+    /* val resultsInt8: util.List[util.List[JTensor]] = model.doPredictInt8(inputs)
     val classesInt8 = resultsInt8.toArray().map(list => {
       val inner = list.asInstanceOf[util.List[JTensor]].get(0)
       val class1 = inner.getData.slice(0, 1000).zipWithIndex.maxBy(_._1)._2
@@ -224,7 +224,7 @@ class OpenVINOInt8Suite extends FunSuite with Matchers with BeforeAndAfterAll
     })
     classesInt8.foreach { output =>
       assert(almostEqual(output, labels, 0.1f))
-    }*/
+    } */
   }
 
   test("openvino resnet50 should predictInt image successfully") {
@@ -273,7 +273,7 @@ class OpenVINOInt8Suite extends FunSuite with Matchers with BeforeAndAfterAll
     }
 
     // PredictInt8
-    /*val resultsInt8: util.List[util.List[JTensor]] = model.doPredictInt8(inputs)
+    /* val resultsInt8: util.List[util.List[JTensor]] = model.doPredictInt8(inputs)
     val classesInt8 = resultsInt8.toArray().map(list => {
       val inner = list.asInstanceOf[util.List[JTensor]].get(0)
       val class1 = inner.getData.slice(0, 1000).zipWithIndex.maxBy(_._1)._2
@@ -283,10 +283,10 @@ class OpenVINOInt8Suite extends FunSuite with Matchers with BeforeAndAfterAll
     })
     classesInt8.foreach { output =>
       assert(almostEqual(output, labels, 0.1f))
-    }*/
+    } */
   }
 
-  /*test("openvino should handle wrong batchSize correctly") {
+  /* test("openvino should handle wrong batchSize correctly") {
     val model = new InferenceModel(3)
     model.doLoadTFAsCalibratedOpenVINO(null,
       resnet_v1_50_modelType,
@@ -335,7 +335,7 @@ class OpenVINOInt8Suite extends FunSuite with Matchers with BeforeAndAfterAll
     })
     almostEqual(classesInt8, labels, 0.1f)
     println(classesInt8.mkString(","))
-  }*/
+  } */
 
   def fromHWC2CHW(data: Array[Float]): Array[Float] = {
     val resArray = new Array[Float](3 * 224 * 224)
