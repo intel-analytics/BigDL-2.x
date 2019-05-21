@@ -21,7 +21,6 @@ ENV LC_ALL 		en_US.UTF-8
 
 ADD ./run-slave.sh 	/opt/work/jenkins/run-slave.sh
 ADD ./slave.groovy 	/opt/work/jenkins/slave.groovy
-ADD ./pip.conf		/root/.pip/pip.conf
 
 RUN apt-get update --fix-missing && \
     apt-get install -y vim curl nano wget unzip maven git bzip2 && \
