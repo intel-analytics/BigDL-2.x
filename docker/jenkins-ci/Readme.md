@@ -68,9 +68,3 @@ sudo docker run -itd --net=host \
                intelanalytics/jenkins-slave
 ```
 Note that 8080 is the default Jenkins master port. After that, you can browse to http://yourJenkinsmasterhost:8080 to check information and status of both Jenkins master and slave agents.
-
-## 3. Configure Github and Git plugins
-If you want to link Jenkins with Github, you should conduct some configurations when you first start Jenkins and log in.
-* In **Manage Jenkins -> Configure System**, you should add a Github server with API URL: https://api.github.com/ and set global configurations in Git plugin part as you set Git at the first time.
-* In **Credentials -> Systems -> Add domains**, you should add a domain with the name api.github.com. Then you need to add credentials in the domain **api.github.com** with the kind Username and password. The username and password should correspond to those of github accounts of users.
-* When creating a new job, you should modify the setting of git in **Source Code Management** part of job configuration.
