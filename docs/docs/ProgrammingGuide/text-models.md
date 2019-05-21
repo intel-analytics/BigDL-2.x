@@ -19,7 +19,7 @@ model = NER(num_entities, word_vocab_size, char_vocab_size, word_length)
 
 ---
 ## **Data Preparation**
-The NER model has two inputs: word indices and character indices respectively.
+The NER model has two inputs: word indices and character indices.
 
 Thus, each raw text record needs to go through word-wise tokenization, character-wise segmentation and alignment to the same target length for preprocessing.
 
