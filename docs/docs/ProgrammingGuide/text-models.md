@@ -2,7 +2,7 @@ There are a number of built-in __compiled__ text models in Analytics Zoo TFPark 
 
 See [this page](../APIGuide/TFPark/text-models/) for more details about how to construct built-in models for intent extraction, named entity extraction and pos tagging. etc.
 
-In this page, we show the steps how to train and evaluate an [NER](../APIGuide/TFPark/text-models/#named-entity-recognition) model in a distributed fashion and use this model for distributed inference.
+In this page, we show the general steps how to train and evaluate an [NER](../APIGuide/TFPark/text-models/#named-entity-recognition) model in a distributed fashion and use this model for distributed inference.
 For other models, the steps are more or less quite similar.
 
 
@@ -77,4 +77,3 @@ You can easily call [predict](../APIGuide/TFPark/model/#predict) to use the trai
 ```python
 predictions = model.predict(x, distributed=True)
 ```
-

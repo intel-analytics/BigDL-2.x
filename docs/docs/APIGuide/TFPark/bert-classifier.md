@@ -1,4 +1,4 @@
-We provide a built-in BERTClassifier in Analytics Zoo TFPark for Natural Language Processing (NLP) classification tasks based on [TFEstimator](../TFPark/estimator/) and BERT.
+Analytics Zoo provides a built-in BERTClassifier in TFPark for Natural Language Processing (NLP) classification tasks based on [TFEstimator](../TFPark/estimator/) and BERT.
 
 Bidirectional Encoder Representations from Transformers (BERT) is Google's state-of-the-art pre-trained NLP model.
 You may refer to [here](https://github.com/google-research/bert) for more details.
