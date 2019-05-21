@@ -6,6 +6,7 @@
 target/
 /dist/
 pyzoo/.pytest_cache/
+pyzoo/ray_poc.zip
 
 # External Python packages
 python_packages/
