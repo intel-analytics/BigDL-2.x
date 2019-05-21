@@ -284,29 +284,21 @@ class TFNet(private val graphDef: TFGraphHolder,
         }
       }
       if (!this.isTraining()) {
-        // clean up input tensorflow tensors
-        emptyTFTensorArray(tempTFTensors)
+        // clean up all tensorflow tensors
+        tensorManager.destructTFTensors()
       } else {
         // clean up variable tensorflow tensors
         emptyTFTensorArray(weightTFTensors)
-      }
+        // clean up model output tensorflow tensors
+        emptyTFTensorArray(outputs.asScala.slice(0, outputNames.length))
 
-      // clean up model output tensorflow tensors
-      emptyTFTensorArray(outputs.asScala.slice(0, outputNames.length))
-      // tempTensors will be cleaned up after backward
+        // tempTensors will be cleaned up after backward
+      }
 
     } catch {
       case ex: Throwable =>
         tensorManager.destructTFTensors()
         throw ex
-    }
-
-    if (!this.isTraining()) {
-      if (!tensorManager.isEmpty) {
-        TFNet.logger.warn("Some Tensors are not released in tensorManager during forward," +
-          " release them all")
-        tensorManager.destructTFTensors()
-      }
     }
 
     output
@@ -412,17 +404,7 @@ class TFNet(private val graphDef: TFGraphHolder,
         gradWeight.add(gradWeightBuffer)
       }
 
-      // clean up grad weights tf tensors
-      emptyTFTensorArray(gradWeightTFTensors)
-    } catch {
-      case ex: Throwable =>
-        tensorManager.destructTFTensors()
-        throw ex
-    }
-
-    if (!tensorManager.isEmpty) {
-      TFNet.logger.warn("Some Tensors are not released in tensorManager after backward," +
-        " release them all")
+    } finally {
       tensorManager.destructTFTensors()
     }
   }

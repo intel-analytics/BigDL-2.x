@@ -170,6 +170,7 @@ object TFTrainingHelper {
       TFNet.defaultSessionConfig.toByteArray()
     }
     val tfnet = TFNet(graphDef, model, newMeta, config)
+    tfnet.evaluate()
 
 
     new TFTrainingHelper(tfnet,
