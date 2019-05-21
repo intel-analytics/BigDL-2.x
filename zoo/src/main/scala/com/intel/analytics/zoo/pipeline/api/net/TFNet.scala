@@ -58,9 +58,6 @@ class TFNet(private val graphDef: TFGraphHolder,
   implicit val ev = TensorNumeric.NumericFloat
   implicit val tag: ClassTag[Float] = ClassTag.Float
 
-  // todo if an exception is thrown during forward or backward, there will be memory leak
-  // maybe create a resource manager to handle tensor creation and destruction
-
   class ResourceManager() extends java.io.Serializable {
     private val tensorList: mutable.Set[TTensor[_]] = mutable.Set[TTensor[_]]()
     def createTFTensor(shape: Array[Long], buffer: FloatBuffer): TTensor[_] = {
@@ -98,6 +95,10 @@ class TFNet(private val graphDef: TFGraphHolder,
     def releaseTensor(t: TTensor[_]): Unit = {
       t.close()
       tensorList -= t
+    }
+
+    def isEmpty: Boolean = {
+      tensorList.isEmpty
     }
 
     def destructTFTensors(): Unit = {
@@ -294,12 +295,21 @@ class TFNet(private val graphDef: TFGraphHolder,
       emptyTFTensorArray(outputs.asScala.slice(0, outputNames.length))
       // tempTensors will be cleaned up after backward
 
-      output
     } catch {
       case ex: Throwable =>
         tensorManager.destructTFTensors()
         throw ex
     }
+
+    if (!this.isTraining()) {
+      if (!tensorManager.isEmpty) {
+        TFNet.logger.warn("Some Tensors are not released in tensorManager during forward," +
+          " release them all")
+        tensorManager.destructTFTensors()
+      }
+    }
+
+    output
   }
 
   private def emptyTFTensorArray(arr: Array[TTensor[_]]): Unit = {
@@ -408,6 +418,12 @@ class TFNet(private val graphDef: TFGraphHolder,
       case ex: Throwable =>
         tensorManager.destructTFTensors()
         throw ex
+    }
+
+    if (!tensorManager.isEmpty) {
+      TFNet.logger.warn("Some Tensors are not released in tensorManager after backward," +
+        " release them all")
+      tensorManager.destructTFTensors()
     }
   }
 
@@ -588,6 +604,8 @@ object TFNet {
 
   @transient
   private lazy val inDriver = NetUtils.isDriver
+
+  val logger = LoggerFactory.getLogger(getClass)
 
   private val graphRegistry = new RegistryMap[ClosableGraph]()
 
