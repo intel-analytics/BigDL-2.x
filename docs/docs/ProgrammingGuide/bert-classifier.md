@@ -7,6 +7,14 @@ BERTClassifier is a pre-built TFEstimator that takes the hidden state of the fir
 
 In this page, we show the general steps how to train and evaluate an [BERTClassifier](../APIGuide/TFPark/bert-classifier/) in a distributed fashion and use this estimator for distributed inference.
 
+__Remarks__:
+
+- You need to install __tensorflow==1.10__ on your driver node.
+- Your operating system (OS) is required to be one of the following 64-bit systems:
+__Ubuntu 16.04 or later__, __macOS 10.12.6 or later__ and __Windows 7 or later__.
+- To run on other systems, you need to manually compile the TensorFlow source code. Instructions can
+  be found [here](https://github.com/tensorflow/tensorflow/tree/v1.10.0/tensorflow/java).
+
 
 ---
 ## **BERTClassifier Construction**

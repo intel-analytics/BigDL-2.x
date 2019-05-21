@@ -1,7 +1,8 @@
 There are a number of built-in __compiled__ text models in Analytics Zoo TFPark for Natural Language Processing (NLP) tasks based on [KerasModel](../TFPark/model/).
 
 After constructing a text model, you can directly call [fit](../TFPark/model/#fit), [evaluate](../TFPark/model/#evaluate) or [predict](../TFPark/model/#predict) 
-in a distributed fashion.
+in a distributed fashion. 
+See [here](../../ProgrammingGuide/text-models/) for more instructions.
 
 __Remarks__:
 
