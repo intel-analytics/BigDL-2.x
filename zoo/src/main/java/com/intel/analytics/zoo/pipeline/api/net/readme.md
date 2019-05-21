@@ -12,7 +12,7 @@ javah -d path-to-analytics-zoo/zoo/src/main/java/com/intel/analytics/zoo/pipelin
 
 Update the path in CMakeLists.txt to add your JDK path
 ```bash
-cd path-to-analytics-zoo/analytics-zoo/zoo/src/main/java/com/intel/analytics/zoo/pytorch/native/build
+cd path-to-analytics-zoo/analytics-zoo/zoo/src/main/java/com/intel/analytics/zoo/pipeline/api/net/native/build
 cmake -DCMAKE_PREFIX_PATH=unzipped-libtorch-folder ..
 make
 ```
