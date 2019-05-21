@@ -32,23 +32,30 @@ object ImagePathWriter {
     val logger = Logger.getLogger(getClass)
 
     parser.parse(args, PathWriterParam()).foreach { params =>
+      val fs = Utils.getFileSystem(params.imageSourcePath)
       val lists = Utils.listPaths(params.imageSourcePath, false)
       lists.grouped(16).zipWithIndex.foreach { case (batch, id) =>
-        val batchPath = new Path(params.streamingPath, id + ".txt").toString
-        val dataOutStream = Utils.create(batchPath, true)
+
+        val tmpbatchPath = new Path(params.tmpStreamingPath, id + ".txt")
+
+        val finalBatchPath = new Path(params.streamingPath, id + ".txt")
+        val dataOutStream = Utils.create(tmpbatchPath.toString, true)
         try {
           batch.foreach(line => dataOutStream.writeBytes(line + "\n"))
         } finally {
           dataOutStream.close()
+          fs.rename(tmpbatchPath, finalBatchPath)
         }
-        logger.info("wrote " + batchPath)
+        logger.info("wrote " + tmpbatchPath)
         Thread.sleep(4000)
       }
+      fs.close()
     }
   }
 
   private case class PathWriterParam(imageSourcePath: String = "",
-                                     streamingPath: String = "file:///tmp/zoo/streaming")
+                                     streamingPath: String = "file:///tmp/zoo/streaming",
+                                     tmpStreamingPath: String = "file:///tmp/zoo_streaming")
 
   private val parser = new OptionParser[PathWriterParam]("PathWriterParam") {
     head("PathWriterParam")
@@ -59,5 +66,8 @@ object ImagePathWriter {
     opt[String]("streamingPath")
       .text("folder that used to store the streaming paths, i.e. file:///path")
       .action((x, c) => c.copy(streamingPath = x))
+    opt[String]("tmpStreamingPath")
+      .text("Temp folder that used to create temp streaming paths, i.e. file:///path")
+      .action((x, c) => c.copy(tmpStreamingPath = x))
   }
 }

@@ -6,7 +6,7 @@ Based on Streaming example NetworkWordCount and Zoo text classification example.
 * [Analytics Zoo](https://analytics-zoo.github.io/master/#ScalaUserGuide/install/)
 
 ## Datasets and pre-trained models
-* Pre-trained model & word index: Save trained text classification model and word index in [Text Classification](https://github.com/intel-analytics/analytics-zoo/blob/master/docs/docs/ProgrammingGuide/text-classification.md).
+* Get Pre-trained model & word index from [Text Classification Example](https://github.com/intel-analytics/analytics-zoo/blob/master/docs/docs/ProgrammingGuide/text-classification.md).
 
 ## Run this example
 Make sure all nodes can access pre-trained model and word index.

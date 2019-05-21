@@ -33,7 +33,7 @@ ${ANALYTICS_ZOO_HOME}/bin/spark-shell-with-zoo.sh \
 MASTER=...
 imageSourcePath=... // image path. Local file system/HDFS/Amazon S3 are supported
 streamingPath=... // text files. Local file system/HDFS/Amazon S3 are supported
-${SPARK_HOME}/bin/spark-submit-with-zoo.sh \
+${ANALYTICS_ZOO_HOME}/bin/spark-shell-with-zoo.sh \
     --master ${MASTER} \
     --driver-memory 2g \
     --executor-memory 5g \
