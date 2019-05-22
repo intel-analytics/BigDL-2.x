@@ -24,7 +24,7 @@ import com.intel.analytics.bigdl.transform.vision.image.ImageFeature
 import com.intel.analytics.zoo.common.NNContext
 import com.intel.analytics.zoo.examples.streaming.objectdetection.StreamingObjectDetection.PredictParam
 import com.intel.analytics.zoo.feature.image.{ImageBytesToMat, ImageChannelNormalize, ImageMatToTensor, ImageResize, ImageSet, ImageSetToSample}
-import com.intel.analytics.zoo.models.image.objectdetection.{LabelReader, ScaleDetection, Visualizer}
+import com.intel.analytics.zoo.models.image.objectdetection.{LabelReader, Visualizer}
 import com.intel.analytics.zoo.pipeline.inference.InferenceModel
 import org.apache.hadoop.conf.Configuration
 import org.apache.hadoop.fs.{FileSystem, Path}

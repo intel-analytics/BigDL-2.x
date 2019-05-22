@@ -46,4 +46,4 @@ ${ANALYTICS_ZOO_HOME}/bin/spark-shell-with-zoo.sh \
 ## Better Performance with Inference Model
 [Inference Model](https://analytics-zoo.github.io/0.4.0/#ProgrammingGuide/inference/#inference-model) is a thread-safe package in Analytics Zoo aiming to provide high level APIs to speed-up development. 
 
-To enable this feature, simply replace `--class com.intel.analytics.zoo.examples.streaming.StreamingObjectDetection.TextClassification \` with `--class com.intel.analytics.zoo.examples.streaming.textclassification.StreamingInferenceObjectDetection \` in Step 1.
+To enable this feature, simply replace `--class com.intel.analytics.zoo.examples.streaming.objectdetection.StreamingObjectDetection` with `--class com.intel.analytics.zoo.examples.streaming.objectdetection.StreamingInferenceObjectDetection` in Step 1.
