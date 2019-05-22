@@ -35,7 +35,7 @@ else
 fi
 
 
-if [ $RUN_PART1 = 1]; then
+if [ $RUN_PART1 = 1 ]; then
 echo "#1 start app test for anomaly-detection"
 start=$(date "+%s")
 
@@ -301,7 +301,7 @@ echo "#10 dogs-vs-cats time used:$time10 seconds"
 
 fi
 
-if [ $RUN_PART2 = 1]; then
+if [ $RUN_PART2 = 1 ]; then
 
 echo "#11 start app test for image-augmentation-3d"
 # timer
@@ -426,7 +426,7 @@ echo "#6 using_variational_autoencoder_to_generate_faces time used:$time6 second
 fi
 
 
-if [ $RUN_PART3 = 1]; then
+if [ $RUN_PART3 = 1 ]; then
 echo "#7 start app test for using_variational_autoencoder_and_deep_feature_loss_to_generate_faces"
 #timer
 start=$(date "+%s")
