@@ -35,10 +35,10 @@ Run Spark Test
 #   Run Shell                        ${submit} --master ${spark_master} --driver-memory 1g --executor-memory 1g --total-executor-cores 32 --executor-cores 8 --class com.intel.analytics.zoo.examples.objectdetection.inference.Predict ${jar_path} --image ${public_hdfs_master}:9000/kaggle/train_100 --output /tmp/objectdetection/output --modelPath ${integration_data_dir}/models/analytics-zoo_ssd-mobilenet-300x300_PASCAL_0.1.0.model --partition 32
 #   Log To Console                   begin recommendation wideAndDeep on ml-1m
 #   Run Shell                        ${submit} --master ${spark_master} --driver-memory 5g --executor-memory 5g --total-executor-cores 32 --executor-cores 8 --class com.intel.analytics.zoo.examples.recommendation.WideAndDeepExample ${jar_path} --inputDir ${public_hdfs_master}:9000/ml-1m --dataset ml-1m
-   Log To Console                   begin recommendation wideAndDeep on census
-   Run Shell                        ${submit} --master ${spark_master} --driver-memory 5g --executor-memory 5g --total-executor-cores 32 --executor-cores 8 --class com.intel.analytics.zoo.examples.recommendation.WideAndDeepExample ${jar_path} --inputDir ${public_hdfs_master}:9000/census --dataset census
-#   Log To Console                   begin recommendation NCF
-#   Run Shell                        ${submit} --master ${spark_master} --driver-memory 5g --executor-memory 5g --total-executor-cores 32 --executor-cores 8 --class com.intel.analytics.zoo.examples.recommendation.NeuralCFexample ${jar_path} --inputDir ${public_hdfs_master}:9000/ml-1m
+#   Log To Console                   begin recommendation wideAndDeep on census
+#   Run Shell                        ${submit} --master ${spark_master} --driver-memory 5g --executor-memory 5g --total-executor-cores 32 --executor-cores 8 --class com.intel.analytics.zoo.examples.recommendation.WideAndDeepExample ${jar_path} --inputDir ${public_hdfs_master}:9000/census --dataset census
+   Log To Console                   begin recommendation NCF
+   Run Shell                        ${submit} --master ${spark_master} --driver-memory 5g --executor-memory 5g --total-executor-cores 32 --executor-cores 8 --class com.intel.analytics.zoo.examples.recommendation.NeuralCFexample ${jar_path} --inputDir ${public_hdfs_master}:9000/ml-1m --batchSize 8000
 #   Log To Console                   begin anomalydetection AnomalyDetection
 #   Run Shell                        ${submit} --master ${spark_master} --driver-memory 5g --executor-memory 10g --total-executor-cores 32 --executor-cores 8 --class com.intel.analytics.zoo.examples.anomalydetection.AnomalyDetection ${jar_path} --inputDir ${public_hdfs_master}:9000/NAB/nyc_taxi
 #   Log To Console                   begin finetune
@@ -51,8 +51,8 @@ Run Spark Test
 #   Run Shell                        ${submit} --master ${spark_master} --driver-memory 3g --executor-memory 3g  --total-executor-cores 32 --executor-cores 8 --class com.intel.analytics.zoo.examples.qaranker.QARanker ${jar_path} --dataPath ${public_hdfs_master}:9000/WikiQAProcessed --embeddingFile ${integration_data_dir}/text_data/glove.6B/glove.6B.100d.txt --batchSize 192 --nbEpoch 2
 #   Log To Console                   begin train inceptionv1
 #   Run Shell                        ${submit} --master ${spark_master} --driver-memory 3g --executor-memory 50g  --total-executor-cores 32 --executor-cores 8 --class com.intel.analytics.zoo.examples.inception.TrainInceptionV1 ${jar_path} -f ${public_hdfs_master}:9000/imagenet-small -b 128 -i 20 --learningRate 0.001
-   Log To Console                   begin train inceptionv1 opencv
-   Run Shell                        ${submit} --master ${spark_master} --driver-memory 3g --executor-memory 50g  --total-executor-cores 32 --executor-cores 8 --class com.intel.analytics.zoo.examples.inception.TrainInceptionV1 ${jar_path} -f ${public_hdfs_master}:9000/imagenet-small -b 128 -i 20 --opencv --learningRate 0.001
+#   Log To Console                   begin train inceptionv1 opencv
+#   Run Shell                        ${submit} --master ${spark_master} --driver-memory 3g --executor-memory 50g  --total-executor-cores 32 --executor-cores 8 --class com.intel.analytics.zoo.examples.inception.TrainInceptionV1 ${jar_path} -f ${public_hdfs_master}:9000/imagenet-small -b 128 -i 20 --opencv --learningRate 0.001
    Remove Directory                 /tmp/objectdetection        recursive=True
 
 Spark2.1 Test Suite
@@ -79,10 +79,10 @@ Yarn Test Suite
 #   Run Shell                        ${submit} --master yarn --deploy-mode client --conf "spark.serializer=org.apache.spark.serializer.JavaSerializer" --conf spark.yarn.executor.memoryOverhead=40000 --executor-cores 8 --num-executors 4 --driver-memory 1g --executor-memory 1g --class com.intel.analytics.zoo.examples.objectdetection.inference.Predict ${jar_path} --image ${public_hdfs_master}:9000/kaggle/train_100 --output /tmp/objectdetection/output --modelPath ${integration_data_dir}/models/analytics-zoo_ssd-mobilenet-300x300_PASCAL_0.1.0.model --partition 32
 #   Log To Console                   begin recommendation wideAndDeep on ml-1m
 #   Run Shell                        ${submit} --master yarn --deploy-mode client --conf "spark.serializer=org.apache.spark.serializer.JavaSerializer" --conf spark.yarn.executor.memoryOverhead=40000 --executor-cores 8 --num-executors 4 --driver-memory 5g --executor-memory 10g --class com.intel.analytics.zoo.examples.recommendation.WideAndDeepExample ${jar_path} --inputDir ${public_hdfs_master}:9000/ml-1m --dataset ml-1m
-   Log To Console                   begin recommendation wideAndDeep on census
-   Run Shell                        ${submit} --master yarn --deploy-mode client --conf "spark.serializer=org.apache.spark.serializer.JavaSerializer" --conf spark.yarn.executor.memoryOverhead=40000 --executor-cores 8 --num-executors 4 --driver-memory 5g --executor-memory 10g --class com.intel.analytics.zoo.examples.recommendation.WideAndDeepExample ${jar_path} --inputDir ${public_hdfs_master}:9000/census --dataset census
-#   Log To Console                   begin recommendation NCF
-#   Run Shell                        ${submit} --master yarn --deploy-mode client --conf "spark.serializer=org.apache.spark.serializer.JavaSerializer" --conf spark.yarn.executor.memoryOverhead=40000 --executor-cores 8 --num-executors 4 --driver-memory 5g --executor-memory 10g --class com.intel.analytics.zoo.examples.recommendation.NeuralCFexample ${jar_path} --inputDir ${public_hdfs_master}:9000/ml-1m
+#   Log To Console                   begin recommendation wideAndDeep on census
+#   Run Shell                        ${submit} --master yarn --deploy-mode client --conf "spark.serializer=org.apache.spark.serializer.JavaSerializer" --conf spark.yarn.executor.memoryOverhead=40000 --executor-cores 8 --num-executors 4 --driver-memory 5g --executor-memory 10g --class com.intel.analytics.zoo.examples.recommendation.WideAndDeepExample ${jar_path} --inputDir ${public_hdfs_master}:9000/census --dataset census
+   Log To Console                   begin recommendation NCF
+   Run Shell                        ${submit} --master yarn --deploy-mode client --conf "spark.serializer=org.apache.spark.serializer.JavaSerializer" --conf spark.yarn.executor.memoryOverhead=40000 --executor-cores 8 --num-executors 4 --driver-memory 5g --executor-memory 10g --class com.intel.analytics.zoo.examples.recommendation.NeuralCFexample ${jar_path} --inputDir ${public_hdfs_master}:9000/ml-1m --batchSize 8000
 #   Log To Console                   begin anomalydetection AnomalyDetection
 #   Run Shell                        ${submit} --master yarn --deploy-mode client --conf "spark.serializer=org.apache.spark.serializer.JavaSerializer" --conf spark.yarn.executor.memoryOverhead=40000 --executor-cores 8 --num-executors 4 --driver-memory 5g --executor-memory 10g --class com.intel.analytics.zoo.examples.anomalydetection.AnomalyDetection ${jar_path} --inputDir ${public_hdfs_master}:9000/NAB/nyc_taxi
 #   Log To Console                   begin finetune
