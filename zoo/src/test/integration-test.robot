@@ -63,7 +63,7 @@ Spark2.1 Test Suite
    Run Spark Test                   ${submit}                ${spark_210_3_master}
 
 Yarn Test Suite
-   Log To Console                   (2/2) Start the Yarn Test SuiteYarn
+   Log To Console                   (2/2) Start the Yarn Test Suite
    Create Directory                 /tmp/objectdetection/output
    Build SparkJar                   spark_2.x
    Set Environment Variable         SPARK_HOME               /opt/work/spark-2.1.0-bin-hadoop2.7
