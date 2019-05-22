@@ -37,22 +37,22 @@ object PrepareOpenVINOResNet {
   def main(args: Array[String]): Unit = {
     val parser = new OptionParser[PrepareOpenVINOResNetParams]("Prepare ResNet50 Int8 Model") {
       opt[String]('m', "model")
-        .text("The path to TensorFlow model")
+        .text("Dir that contains to TensorFlow model checkpoint")
         .action((x, c) => c.copy(model = x))
         .required()
       opt[String]('v', "validationFilePath")
-        .text("Model type of this model, e.g., ")
+        .text("Dir of Validation images and val.txt")
         .action((x, c) => c.copy(validationFilePath = x))
         .required()
       opt[Int]("subset")
-        .text("Model type of this model, e.g., ")
+        .text("Number of images in val.txt, default 32")
         .action((x, c) => c.copy(subset = x))
       opt[String]('l', "openCVLibs")
-        .text("Model type of this model, e.g., ")
+        .text("Dir of downloaded OpenCV libs")
         .action((x, c) => c.copy(openCVLibs = x))
         .required()
       opt[Int]('b', "batchSize")
-        .text("batch size")
+        .text("Input batch size")
         .action((x, c) => c.copy(batchSize = x))
     }
     parser.parse(args, PrepareOpenVINOResNetParams()).foreach(param => {
