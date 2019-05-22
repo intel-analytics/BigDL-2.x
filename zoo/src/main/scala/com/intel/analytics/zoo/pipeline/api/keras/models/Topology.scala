@@ -1026,10 +1026,20 @@ private[zoo] class InternalDistriOptimizer[T: ClassTag] (
       val counts = trainSet.size()
       val iterations = Math.ceil(counts.toDouble * cachePercentage / batchSize).toInt
       println(s"$counts $cachePercentage $batchSize $iterations")
-      var i = 1
+      var i = if (state.contains("neval")) {
+        // resume training
+        math.ceil(state[Int]("neval").toDouble / iterations).toInt
+      } else {
+        1
+      }
       while(!endWhen(state)) {
         val newEndWhen = Trigger.or(endWhen, Trigger.maxIteration(i * iterations))
         this.setEndWhen(newEndWhen)
+        if (checkPointTrigger.isDefined && checkpointDir.isDefined) {
+          // we should setCheckpoint every time before we call optimize(),
+          // as BigDL will overwrite checkpointPath to its subfolder.
+          this.setCheckpoint(checkpointDir.get, checkPointTrigger.get)
+        }
         this.optimize()
         i += 1
       }

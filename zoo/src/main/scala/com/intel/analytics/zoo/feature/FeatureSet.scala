@@ -320,6 +320,7 @@ class IncrementalFeatureSet[T: ClassTag]
       currentSlice = buffer.sample(false, cachePercentage)
         .setName(s"${cachePercentage * 100}% of ${origin.name}")
       currentFeatureSet = DRAMFeatureSet.rdd(currentSlice)
+      currentFeatureSet.cache()
       currentFeatureSet.data(train)
     } else {
       buffer
