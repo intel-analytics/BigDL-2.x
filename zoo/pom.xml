@@ -115,6 +115,20 @@
                 <core.artifactId>zoo-core-dist-mac</core.artifactId>
                 <core.dependencyType>pom</core.dependencyType>
             </properties>
+            <!--these are not supported right now, added to make the project compiles-->
+            <dependencies>
+                <dependency>
+                    <groupId>com.intel.analytics.zoo</groupId>
+                    <artifactId>zoo-core-openvino-java-linux</artifactId>
+                    <version>0.5.0</version>
+                </dependency>
+                <dependency>
+                    <groupId>com.intel.analytics.zoo</groupId>
+                    <artifactId>zoo-core-pmem-java-linux</artifactId>
+                    <version>0.5.0</version>
+                </dependency>
+            </dependencies>
+
         </profile>
 
         <profile>
@@ -123,6 +137,19 @@
                 <core.artifactId>zoo-core-dist-windows</core.artifactId>
                 <core.dependencyType>pom</core.dependencyType>
             </properties>
+            <!--these are not supported right now, added to make the project compiles-->
+            <dependencies>
+                <dependency>
+                    <groupId>com.intel.analytics.zoo</groupId>
+                    <artifactId>zoo-core-openvino-java-linux</artifactId>
+                    <version>0.5.0</version>
+                </dependency>
+                <dependency>
+                    <groupId>com.intel.analytics.zoo</groupId>
+                    <artifactId>zoo-core-pmem-java-linux</artifactId>
+                    <version>0.5.0</version>
+                </dependency>
+            </dependencies>
         </profile>
 
         <profile>
