@@ -16,7 +16,7 @@ We hereby illustrate the support of [VNNI](https://en.wikichip.org/wiki/x86/avx5
 ### PrepareOpenVINOResNet
 TensorFlow models cannot be directly loaded by OpenVINO. It should be converted to OpenVINO optimized model and int8 optimized model first. You can use PrepareOpenVINOResNet or [OpenVINO toolkit](https://docs.openvinotoolkit.org/2018_R5/_docs_MO_DG_prepare_model_convert_model_Convert_Model_From_TensorFlow.html) to finish this job. Herein, we focused on PrepareOpenVINOResNet.
 
-Download [TensorFlow ResNet50_v1](http://download.tensorflow.org/models/resnet_v1_50_2016_08_28.tar.gz), [validation image set]([TensorFlow ResNet50_v1](http://download.tensorflow.org/models/resnet_v1_50_2016_08_28.tar.gz)) and [OpenCVLibs](https://s3-ap-southeast-1.amazonaws.com/analytics-zoo-models/openvino/opencv_4.0.0_ubuntu_lib.tar). Extract files from these packages. 
+Download [TensorFlow ResNet50_v1](http://download.tensorflow.org/models/resnet_v1_50_2016_08_28.tar.gz), [validation image set](https://s3-ap-southeast-1.amazonaws.com/analytics-zoo-models/openvino/val_bmp_32.tar) and [OpenCVLibs](https://s3-ap-southeast-1.amazonaws.com/analytics-zoo-models/openvino/opencv_4.0.0_ubuntu_lib.tar). Extract files from these packages. 
 
 ```bash
 export ANALYTICS_ZOO_JAR=export ANALYTICS_ZOO_JAR=`find ${ANALYTICS_ZOO_HOME}/lib -type f -name "analytics-zoo*jar-with-dependencies.jar"`
