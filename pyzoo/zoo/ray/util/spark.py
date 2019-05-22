@@ -1,5 +1,9 @@
 import os
 
+from zoo.common.nncontext import get_analytics_zoo_conf, init_spark_conf
+
+from zoo import init_nncontext
+
 
 class SparkRunner():
     def __init__(self):
@@ -55,13 +59,12 @@ class SparkRunner():
 
     def _create_sc(self, submit_args, conf):
         from pyspark.sql import SparkSession
+        print("pyspark_submit_args is: {}".format(submit_args))
         os.environ['PYSPARK_SUBMIT_ARGS'] = submit_args
-        spark_conf = SparkSession.builder
+        zoo_conf = init_spark_conf()
         for key, value in conf.items():
-            spark_conf.config(key=key, value=value)
-        # .config(key="spark.executor.pyspark.memory", value=spark_executor_pyspark_memory)
-        spark = spark_conf.getOrCreate()
-        sc = spark.sparkContext
+            zoo_conf.set(key=key, value=value)
+        sc = init_nncontext(conf=zoo_conf)
         sc.setLogLevel("INFO")
 
         return sc
@@ -92,7 +95,8 @@ class SparkRunner():
                    spark_yarn_jars=None,
                    penv_archive=None,
                    hadoop_conf=None,
-                   hadoop_user_name=None):
+                   hadoop_user_name=None,
+                   jars=None):
         os.environ["HADOOP_CONF_DIR"] = hadoop_conf
         os.environ['HADOOP_USER_NAME'] = hadoop_user_name
         os.environ['PYSPARK_PYTHON'] = "python_env/bin/python"
@@ -100,10 +104,20 @@ class SparkRunner():
         if not python_zip_file:
             python_zip_file = ""
 
-        def _yarn_opt():
-            return " --archives {}#python_env --num-executors {} " \
-                   " --executor-cores {} --executor-memory {} --py-files {}  ".format(
+        def _yarn_opt(jars):
+            from zoo.util.engine import get_analytics_zoo_classpath
+            command = " --archives {}#python_env --num-executors {} " \
+                   " --executor-cores {} --executor-memory {} --py-files {} ".format(
                 penv_archive, num_executor, executor_cores, executor_memory, python_zip_file)
+            path_to_zoo_jar = get_analytics_zoo_classpath()
+            if jars:
+                command = command + " --jars {},{} ".format(jars, path_to_zoo_jar)
+            elif path_to_zoo_jar:
+                command = command + " --jars {} ".format(path_to_zoo_jar)
+
+            if path_to_zoo_jar:
+                command = command + " --conf spark.driver.extraClassPath={} ".format(get_analytics_zoo_classpath())
+            return command
 
         def _submit_opt(master):
             conf = {
@@ -115,7 +129,7 @@ class SparkRunner():
                 conf["spark.executor.memoryOverhead"] = extra_executor_memory_for_ray
             if spark_yarn_jars:
                 conf.insert("spark.yarn.archive", spark_yarn_jars)
-            return self._common_opt(master) + _yarn_opt() + 'pyspark-shell', conf
+            return self._common_opt(master) + _yarn_opt(jars) + 'pyspark-shell', conf
 
         submit_args, conf = _submit_opt(master)
         return self._create_sc(submit_args, conf)
@@ -133,7 +147,8 @@ class SparkRunner():
                            penv_archive=None,
                            master="yarn",
                            hadoop_user_name="root",
-        spark_yarn_jars=None):
+        spark_yarn_jars=None,
+                           jars=None):
         pack_env = False
         assert penv_archive or conda_name,\
             "You should either specify penv_archive or conda_name explicitly"
@@ -152,7 +167,8 @@ class SparkRunner():
                               driver_cores=driver_cores,
      extra_executor_memory_for_ray=extra_executor_memory_for_ray,
                               master=master,
-                              hadoop_user_name=hadoop_user_name)
+                              hadoop_user_name=hadoop_user_name,
+                                 jars=jars)
         finally:
             if conda_name and penv_archive and pack_env:
                 os.remove(penv_archive)

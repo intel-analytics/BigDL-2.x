@@ -19,10 +19,42 @@ import re
 import time
 
 from pyspark import BarrierTaskContext
-
-from zoo.ray.util.process import session_execute, ProcessMonitor
+from zoo.ray.util.process import session_execute, ProcessMonitor, pids_from_gpid
 from zoo.ray.util.utils import resourceToBytes
 
+
+class JVMGuard():
+    """
+    The registered pids would be put into the killing list of Spark Executor.
+    """
+    @staticmethod
+    def registerPids(pids):
+        from bigdl.util.common import callBigDlFunc
+        import zoo
+
+        from bigdl.util.common import JavaCreator
+        creator_classes = JavaCreator.get_creator_class()[:]
+        JavaCreator.set_creator_class([])
+        JavaCreator.add_creator_class(
+            "com.intel.analytics.zoo.pipeline.nnframes.python.PythonNNFrames")
+        JavaCreator.add_creator_class("com.intel.analytics.zoo.feature.python.PythonImageFeature")
+        JavaCreator.add_creator_class(
+            "com.intel.analytics.zoo.pipeline.api.keras.python.PythonAutoGrad")
+        JavaCreator.add_creator_class("com.intel.analytics.zoo.models.python.PythonZooModel")
+        JavaCreator.add_creator_class(
+            "com.intel.analytics.zoo.pipeline.api.keras.python.PythonZooKeras2")
+        JavaCreator.add_creator_class("com.intel.analytics.zoo.feature.python.PythonTextFeature")
+        JavaCreator.add_creator_class("com.intel.analytics.zoo.feature.python.PythonFeatureSet")
+        JavaCreator.add_creator_class(
+            "com.intel.analytics.zoo.pipeline.api.net.python.PythonZooNet")
+        JavaCreator.add_creator_class(
+            "com.intel.analytics.zoo.pipeline.inference.PythonInferenceModel")
+        for clz in creator_classes:
+            JavaCreator.add_creator_class(clz)
+
+        callBigDlFunc("float",
+                      "jvmGuardRegisterPids",
+                      pids)
 
 class RayServiceFuncGenerator(object):
     """
@@ -78,12 +110,10 @@ class RayServiceFuncGenerator(object):
 
     def gen_stop(self):
         def _stop(iter):
-            # TODO: print some ip info back?
             command = "{} stop".format(self.ray_exec)
             print("Start to end the ray services: {}".format(command))
-            session_execute(command, fail_fast=True)
+            session_execute(command=command, fail_fast=True)
             return iter
-
         return _stop
 
     def _start_master(self):
@@ -100,7 +130,8 @@ class RayServiceFuncGenerator(object):
         if self.object_store_memory:
             command = command + "--object-store-memory {} ".format(str(self.object_store_memory))
         print("Starting ray master by running: {}".format(command))
-        process_info = session_execute(command, env=modified_env, tag="ray_master")
+        process_info = session_execute(command=command, env=modified_env, tag="ray_master")
+        JVMGuard.registerPids(process_info.pids)
         time.sleep(self.WAITING_TIME_SEC)
         return process_info
 
@@ -119,7 +150,9 @@ class RayServiceFuncGenerator(object):
 
         modified_env = self._prepare_env(self.mkl_cores)
         time.sleep(self.WAITING_TIME_SEC)
-        return session_execute(command, env=modified_env, tag="raylet")
+        process_info = session_execute(command=command, env=modified_env, tag="raylet")
+        JVMGuard.registerPids(process_info.pids)
+        return process_info
 
     def _get_ray_exec(self):
         python_bin_dir = "/".join(self.python_loc.split("/")[:-1])
@@ -161,6 +194,7 @@ class RayRunner(object):
     # TODO: redis_port should be retrieved by random searched
     def __init__(self, sc, redis_port="5346", password="123456", object_store_memory=None,
                  force_purge=False, verbose=False):
+        print("hello")
         self.sc = sc
         self.ray_node_cpu_cores = self._get_ray_node_cpu_cores()
         self.num_ray_nodes = self._get_num_ray_nodes()
@@ -175,12 +209,16 @@ class RayRunner(object):
             verbose=verbose)
         if force_purge:
             self.stop()
+        from bigdl.util.common import init_executor_gateway
+        print("Start to launch the JVM guarding process")
+        init_executor_gateway(sc)
+        print("JVM guarding process has been successfully launched")
 
     @classmethod
     def from_spark(cls, hadoop_conf,
                    slave_num, slave_cores, slave_memory,
                    driver_cores,driver_memory, conda_name,
-                   extra_pmodule_zip=None, penv_archive=None,
+                   extra_pmodule_zip=None, penv_archive=None, jars=None,
                    force_purge=False,
                    verbose=False):
         from zoo.ray.util.spark import SparkRunner
@@ -195,7 +233,8 @@ class RayRunner(object):
             executor_memory="2g",
             driver_memory=driver_memory,
             driver_cores=driver_cores,
-            extra_executor_memory_for_ray=slave_memory)
+            extra_executor_memory_for_ray=slave_memory,
+        jars=jars)
         return cls(sc=sc, force_purge=force_purge, verbose=verbose)
 
     def stop(self):
@@ -252,8 +291,8 @@ class RayRunner(object):
                   "--redis-password  {} --num-cpus {} --object-store-memory {}".format(
             redis_address, redis_password, num_cores, object_store_memory)
         print("".format(command))
-        process_info = session_execute(command, fail_fast=True)
-        ProcessMonitor.register_shutdown_hook_local(process_info.pgid)
+        process_info = session_execute(command=command, fail_fast=True)
+        ProcessMonitor.register_shutdown_hook(pgid=process_info.pgid)
 
     def _start_driver(self, object_store_memory="10g"):
         import ray

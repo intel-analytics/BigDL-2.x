@@ -35,6 +35,8 @@ import scala.collection.JavaConverters._
 import scala.io.Source
 import scala.reflect.ClassTag
 import scala.reflect.io.Path
+import scala.collection.mutable.ListBuffer
+import java.util.ArrayList
 
 object PythonZooNet {
 
@@ -135,6 +137,41 @@ class PythonZooNet[T: ClassTag](implicit ev: TensorNumeric[T]) extends PythonZoo
                         batchSize: Int = 32): TFOptimizer = {
     new TFOptimizer(modelPath, optimMethod,
       toJSample(x).asInstanceOf[RDD[JSample[Float]]], batchSize)
+  }
+
+  val processToBeKill = new ArrayList[String]()
+  registerKiller()
+
+  private def killPids(killingList: ArrayList[String], killCommand: String): Unit = {
+    val iter = killingList.iterator()
+    while(iter.hasNext) {
+      val pid = iter.next()
+      println("Killing pid " +  pid)
+      val process = Runtime.getRuntime().exec(killCommand + pid)
+      if (process.exitValue() == 0) {
+        iter.remove()
+      }
+    }
+  }
+
+  private def registerKiller(): Unit = {
+      Runtime.getRuntime().addShutdownHook(new Thread {
+          override def run(): Unit = {
+            val killingList = processToBeKill
+            // Give it a chance to be gracefully killed
+            killPids(killingList, "kill ")
+            Thread.sleep(2000)
+            killPids(killingList, "kill -9")
+          }
+      })
+  }
+
+//  def jvmGuardRegisterPids(pids: ArrayList[String]): Unit = this.synchronized {
+//      pids.asScala.foreach(pid => processToBeKill.add(pid))
+//  }
+
+  def jvmGuardRegisterPids(pids: ArrayList[Integer]): Unit = this.synchronized {
+    pids.asScala.foreach(pid => processToBeKill.add(pid + ""))
   }
 
 }

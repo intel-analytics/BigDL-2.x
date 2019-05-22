@@ -19,19 +19,39 @@ import subprocess
 import signal
 import atexit
 import sys
+import psutil
+
 
 from zoo.ray.util import gen_shutdown_per_node, is_local
 
 class ProcessInfo(object):
-    def __init__(self, out, err, errorcode, pgid, pid=None, node_ip=None):
-        self.out=out
-        self.err=err
+    def __init__(self, out, err, errorcode, pgid, tag="default", pids=None, node_ip=None):
+        self.out=str(out.strip())
+        self.err=str(err.strip())
         self.pgid=pgid
-        self.pid=pid
+        self.pids=pids
         self.errorcode=errorcode
-        self.tag="default"
+        self.tag=tag
         self.master_addr=None
         self.node_ip=node_ip
+
+    def __str__(self):
+        return "pgid: {}, pids: {}, returncode: {}, \
+                tag: {}, master_addr: {}, node_ip {} \n {} {}".format(self.pgid,
+                                                                      self.pids,
+                                                                      self.errorcode,
+                                                                      self.tag,
+                                                                      self.master_addr,
+                                                                      self.node_ip,
+                                                                      self.out,
+                                                                      self.err)
+
+
+def pids_from_gpid(gpid):
+    processes = psutil.process_iter()
+
+    return [proc.pid for proc in processes if os.getpgid(proc.pid) == gpid]
+
 
 def session_execute(command, env=None, tag=None, fail_fast=False, timeout=120):
     pro = subprocess.Popen(
@@ -51,14 +71,17 @@ def session_execute(command, env=None, tag=None, fail_fast=False, timeout=120):
     print(err)
     errorcode=pro.returncode
     if errorcode != 0:
-        # https://bip.weizmann.ac.il/course/python/PyMOTW/PyMOTW/docs/atexit/index.html
-        # http://www.pybloggers.com/2016/02/how-to-always-execute-exit-functions-in-python/    register for signal handling
         if fail_fast:
             raise Exception(err)
         print(err)
     else:
         print(out)
-    return ProcessInfo(out, err, pro.returncode, pgid, tag)
+    return ProcessInfo(out=out,
+                       err=err,
+                       errorcode=pro.returncode,
+                       pgid=pgid,
+                       pids=pids_from_gpid(pgid),
+                       tag=tag)
 
 
 class ProcessMonitor:
@@ -74,53 +97,41 @@ class ProcessMonitor:
                 self.master.append(process_info)
             else:
                 self.slaves.append(process_info)
-        self.register_cluster_shutdown_hook()
-        assert len(self.master) == 1, "We should got 1 master only, but we got {}".format(len(self.master))
+        ProcessMonitor.register_shutdown_hook(extra_close_fn=self._clean_fn)
+        assert len(self.master) == 1,\
+            "We should got 1 master only, but we got {}".format(len(self.master))
         self.master = self.master[0]
         if not is_local(self.sc):
             self.print_ray_remote_err_out()
 
-
-
     def print_ray_remote_err_out(self):
         if self.master.errorcode != 0:
-            raise Exception(self.master.err)
+            raise Exception(str(self.master))
         for slave in self.slaves:
             if slave.errorcode != 0:
-                raise Exception(slave.err)
+                raise Exception(str(slave))
 
-        print(self.master.out)
+        print(self.master)
         for slave in self.slaves:
-            # TODO: implement __str__ for class ProcessInfo
-            print(slave.out)
+            print(slave)
 
-    def register_cluster_shutdown_hook(self):
-        def _shutdown():
-            import ray
-            ray.shutdown()
-            self.ray_rdd.map(gen_shutdown_per_node(self.pgids)).collect()
-
-        def _signal_shutdown(_signo, _stack_frame):
-            _shutdown()
-            sys.exit(0)
-
-        atexit.register(_shutdown)
-        signal.signal(signal.SIGTERM, _signal_shutdown)
-        signal.signal(signal.SIGINT, _signal_shutdown)
+    def _clean_fn(self):
+        import ray
+        ray.shutdown()
+        self.ray_rdd.map(gen_shutdown_per_node(self.pgids)).collect()
 
     @staticmethod
-    def register_shutdown_hook_local(pgid):
+    def register_shutdown_hook(pgid=None, extra_close_fn=None):
         def _shutdown():
-            gen_shutdown_per_node(pgid)
+            if pgid:
+                gen_shutdown_per_node(pgid)(0)
+            if extra_close_fn:
+                extra_close_fn()
 
         def _signal_shutdown(_signo, _stack_frame):
             _shutdown()
             sys.exit(0)
 
-        # TODO: are there any other signal we want to handle?
         atexit.register(_shutdown)
         signal.signal(signal.SIGTERM, _signal_shutdown)
         signal.signal(signal.SIGINT, _signal_shutdown)
-
-        # pgids=list(itertools.chain.from_iterable(pgids))
-        # exceptions=list(itertools.chain.from_iterable(exceptions))
