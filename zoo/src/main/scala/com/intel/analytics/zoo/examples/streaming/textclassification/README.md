@@ -19,15 +19,15 @@ nc -lk [port]
 2. TERMINAL 2: Start StreamingTextClassification
 ```
 MASTER=...
-embeddingPath=... // glove path. Local file system/HDFS/Amazon S3 are supported
 model=... // model path. Local file system/HDFS/Amazon S3 are supported
 indexPath=... // word index path. Local file system/HDFS/Amazon S3 are supported
+port=... // The same port with nc command
 ${ANALYTICS_ZOO_HOME}/bin/spark-shell-with-zoo.sh \
     --master ${MASTER} \
     --driver-memory 2g \
     --executor-memory 5g \
-    --class com.intel.analytics.zoo.examples.streaming.textclassification.TextClassification \
-    --model ${model} --indexPath ${indexPath}
+    --class com.intel.analytics.zoo.examples.streaming.textclassification.StreamingTextClassification \
+    --model ${model} --indexPath ${indexPath} --port ${port}
 ```
 
 3. TERMINAL 1: Input text in Netcat
@@ -41,4 +41,4 @@ It's a fine day
 ## Better Performance with Inference Model
 [Inference Model](https://analytics-zoo.github.io/0.4.0/#ProgrammingGuide/inference/#inference-model) is a thread-safe package in Analytics Zoo aiming to provide high level APIs to speed-up development.
 
-To enable this feature, simply replace `--class com.intel.analytics.zoo.examples.streaming.textclassification.TextClassification` with `--class com.intel.analytics.zoo.examples.streaming.textclassification.StreamingInferenceTextClassification` in Step 2.
+To enable this feature, simply replace `--class com.intel.analytics.zoo.examples.streaming.textclassification.StreamingTextClassification` with `--class com.intel.analytics.zoo.examples.streaming.textclassification.StreamingInferenceTextClassification` in Step 2.
