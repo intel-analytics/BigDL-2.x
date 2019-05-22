@@ -37,6 +37,15 @@ It's a fine day
 ```
 
 **Then, you can see output in TERMINAL 2.**
+```
+Predicts:
+0.84158087 soc.religion.christian
+0.08710906 talk.religion.misc
+0.06145671 alt.atheism
+0.0035352204 talk.politics.guns
+9.059753E-4 rec.sport.baseball
+```
+
 
 ## Better Performance with Inference Model
 [Inference Model](https://analytics-zoo.github.io/0.4.0/#ProgrammingGuide/inference/#inference-model) is a thread-safe package in Analytics Zoo aiming to provide high level APIs to speed-up development.

@@ -46,6 +46,28 @@ if __name__ == "__main__":
 
     model = TextClassifier.load_model(options.model)
 
+    labels = ["alt.atheism",
+              "comp.graphics",
+              "comp.os.ms-windows.misc",
+              "comp.sys.ibm.pc.hardware",
+              "comp.sys.mac.hardware",
+              "comp.windows.x",
+              "misc.forsale",
+              "rec.autos",
+              "rec.motorcycles",
+              "rec.sport.baseball",
+              "rec.sport.hockey",
+              "sci.crypt",
+              "sci.electronics",
+              "sci.med",
+              "sci.space",
+              "soc.religion.christian",
+              "talk.politics.guns",
+              "talk.politics.mideast",
+              "talk.politics.misc",
+              "talk.religion.misc"]
+
+
     def predict(record):
         if record.getNumPartitions() == 0:
             return
@@ -57,10 +79,11 @@ if __name__ == "__main__":
             .shape_sequence(len=int(options.sequence_length)).generate_sample()
         predict_set = model.predict(transformed, int(options.partition_num))
         # Get the first five prediction probability distributions
-        predicts = predict_set.get_predicts().take(5)
+        predicts = predict_set.get_predicts().collect()
         print("Probability distributions of top-5 texts:")
         for p in predicts:
-            print(p)
+            for k, v in sorted(enumerate(p), key=lambda x: x[2])[:5]:
+                print(labels[k] + " " + str(v) + "\n")
 
     lines.foreachRDD(predict)
     # Start the computation

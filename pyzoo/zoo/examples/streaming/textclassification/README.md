@@ -17,17 +17,18 @@ Make sure all nodes can access model and word index.
 nc -lk [port]
 ```
 
-2. TERMINAL 2: Start StreamingTextClassification
+2. TERMINAL 2: Start streaming_text_classification
 ```
 MASTER=...
 model=... // model path. Local file system/HDFS/Amazon S3 are supported
 indexPath=... // word index path. Local file system/HDFS/Amazon S3 are supported
+port=... // The same port with nc command
 ${ANALYTICS_ZOO_HOME}/bin/spark-submit-with-zoo.sh \
     --master ${MASTER} \
     --driver-memory 2g \
     --executor-memory 5g \
     streaming_text_classification.py \
-    --model ${model} --indexPath ${indexPath}
+    --model ${model} --indexPath ${indexPath} --port ${port}
 ```
 
 3. TERMINAL 1: Input text in Netcat
@@ -35,4 +36,13 @@ ${ANALYTICS_ZOO_HOME}/bin/spark-submit-with-zoo.sh \
 hello world
 It's a fine day
 ```
+
 Then, you can see output in TERMINAL 2.
+```
+Predicts:
+0.84158087 soc.religion.christian
+0.08710906 talk.religion.misc
+0.06145671 alt.atheism
+0.0035352204 talk.politics.guns
+9.059753E-4 rec.sport.baseball
+```
