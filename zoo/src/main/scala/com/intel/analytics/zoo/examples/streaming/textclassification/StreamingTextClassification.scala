@@ -63,6 +63,27 @@ object StreamingTextClassification {
         .required()
     }
 
+    // Labels of 20 Newsgroup dataset
+    val labels = Array("alt.atheism",
+      "comp.graphics",
+      "comp.os.ms-windows.misc",
+      "comp.sys.ibm.pc.hardware",
+      "comp.sys.mac.hardware",
+      "comp.windows.x",
+      "misc.forsale",
+      "rec.autos",
+      "rec.motorcycles",
+      "rec.sport.baseball",
+      "rec.sport.hockey",
+      "sci.crypt",
+      "sci.electronics",
+      "sci.med",
+      "sci.space",
+      "soc.religion.christian",
+      "talk.politics.guns",
+      "talk.politics.mideast",
+      "talk.politics.misc",
+      "talk.religion.misc")
 
     parser.parse(args, TextClassificationParams()).map { param =>
       val sc = NNContext.initNNContext("Analytics Zoo Streaming Text Classification")
@@ -90,10 +111,15 @@ object StreamingTextClassification {
           val predictSet = model.predict(transformed,
             batchPerThread = param.partitionNum)
           // Print result
+          println("Top 5 results")
           predictSet.toDistributed()
-            .rdd.take(5)
-            .map(_.getPredict.toTensor)
-            .foreach(println)
+            .rdd.collect()
+            .map(_.getPredict.toTensor.toArray
+              .zipWithIndex.sortBy(_._1).reverse.slice(0, 5))
+            .foreach { x =>
+              println("Probability distributions of top-5:")
+              x.foreach(t => println(s"${labels(t._2)} ${t._1}"))
+            }
         }
       }
       ssc.start()
