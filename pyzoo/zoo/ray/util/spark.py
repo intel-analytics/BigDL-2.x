@@ -101,15 +101,16 @@ class SparkRunner():
         os.environ['HADOOP_USER_NAME'] = hadoop_user_name
         os.environ['PYSPARK_PYTHON'] = "python_env/bin/python"
 
-        if not python_zip_file:
-            python_zip_file = ""
-
         def _yarn_opt(jars):
             from zoo.util.engine import get_analytics_zoo_classpath
             command = " --archives {}#python_env --num-executors {} " \
-                   " --executor-cores {} --executor-memory {} --py-files {} ".format(
-                penv_archive, num_executor, executor_cores, executor_memory, python_zip_file)
+                   " --executor-cores {} --executor-memory {}".format(
+                penv_archive, num_executor, executor_cores, executor_memory)
             path_to_zoo_jar = get_analytics_zoo_classpath()
+
+            if python_zip_file:
+                command = command + " --py-files {} ".format(python_zip_file)
+
             if jars:
                 command = command + " --jars {},{} ".format(jars, path_to_zoo_jar)
             elif path_to_zoo_jar:

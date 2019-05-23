@@ -16,8 +16,10 @@
 
 import ray
 from zoo.ray.util.rayrunner import RayRunner
-# "
+# analytics-zoo-bigdl_0.7.1-spark_2.1.0-0.4.0-jar-with-dependencies.jar
 # /home/zhichao/god/rayonspark/dist/lib/analytics-zoo-bigdl_0.8.0-spark_2.1.0-0.5.0-SNAPSHOT-python-api.zip"
+# update python in pip: cp -rf ~/god/rayonspark/pyzoo/zoo/* /home/zhichao/anaconda2/envs/ray36/lib/python3.6/site-pac
+# kages/zoo/
 slave_num = 3
 rayrunner = RayRunner.from_spark(hadoop_conf="/home/zhichao/god/yarn35_config",
                      slave_num=slave_num,
@@ -26,9 +28,9 @@ rayrunner = RayRunner.from_spark(hadoop_conf="/home/zhichao/god/yarn35_config",
                      driver_cores=4,
                      driver_memory="10g",
                      conda_name="ray36",
-                 extra_pmodule_zip="/home/zhichao/god/rayonspark/pyzoo/zoo.zip",
-                                 jars="/home/zhichao/god/rayonspark/dist/lib/analytics-zoo-bigdl_0.8.0-spark_2.1.0-0.5.0-SNAPSHOT-jar-with-dependencies.jar",
-                     force_purge=True,
+                     # extra_pmodule_zip="/home/zhichao/god/rayonspark/pyzoo/zoo.zip",
+                     # jars="/home/zhichao/god/rayonspark/dist/lib/analytics-zoo-bigdl_0.8.0-spark_2.1.0-0.5.0-SNAPSHOT-jar-with-dependencies.jar",
+                     force_purge=False,
                      verbose=True)
 rayrunner.start()
 

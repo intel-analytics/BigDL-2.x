@@ -3,8 +3,8 @@
 1) You should install Conda first and create a conda-env named "ray36"
 
 2) Install some essential dependencies on the conda env
+pip install analytics-zoo
 pip install pyspark==2.4
-pip install BigDL
 pip install ray[debug]
 pip install conda-pack
 pip install psutil

@@ -31,27 +31,6 @@ class JVMGuard():
     def registerPids(pids):
         from bigdl.util.common import callBigDlFunc
         import zoo
-
-        from bigdl.util.common import JavaCreator
-        creator_classes = JavaCreator.get_creator_class()[:]
-        JavaCreator.set_creator_class([])
-        JavaCreator.add_creator_class(
-            "com.intel.analytics.zoo.pipeline.nnframes.python.PythonNNFrames")
-        JavaCreator.add_creator_class("com.intel.analytics.zoo.feature.python.PythonImageFeature")
-        JavaCreator.add_creator_class(
-            "com.intel.analytics.zoo.pipeline.api.keras.python.PythonAutoGrad")
-        JavaCreator.add_creator_class("com.intel.analytics.zoo.models.python.PythonZooModel")
-        JavaCreator.add_creator_class(
-            "com.intel.analytics.zoo.pipeline.api.keras.python.PythonZooKeras2")
-        JavaCreator.add_creator_class("com.intel.analytics.zoo.feature.python.PythonTextFeature")
-        JavaCreator.add_creator_class("com.intel.analytics.zoo.feature.python.PythonFeatureSet")
-        JavaCreator.add_creator_class(
-            "com.intel.analytics.zoo.pipeline.api.net.python.PythonZooNet")
-        JavaCreator.add_creator_class(
-            "com.intel.analytics.zoo.pipeline.inference.PythonInferenceModel")
-        for clz in creator_classes:
-            JavaCreator.add_creator_class(clz)
-
         callBigDlFunc("float",
                       "jvmGuardRegisterPids",
                       pids)

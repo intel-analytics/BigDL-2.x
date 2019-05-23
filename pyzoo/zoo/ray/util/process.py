@@ -36,11 +36,10 @@ class ProcessInfo(object):
         self.node_ip=node_ip
 
     def __str__(self):
-        return "pgid: {}, pids: {}, returncode: {}, \
-                tag: {}, master_addr: {}, node_ip {} \n {} {}".format(self.pgid,
+        return "tag: {}, pgid: {}, pids: {}, returncode: {}, \
+                master_addr: {}, node_ip {} \n {} {}".format(self.tag, self.pgid,
                                                                       self.pids,
                                                                       self.errorcode,
-                                                                      self.tag,
                                                                       self.master_addr,
                                                                       self.node_ip,
                                                                       self.out,
@@ -49,7 +48,6 @@ class ProcessInfo(object):
 
 def pids_from_gpid(gpid):
     processes = psutil.process_iter()
-
     return [proc.pid for proc in processes if os.getpgid(proc.pid) == gpid]
 
 
@@ -97,7 +95,7 @@ class ProcessMonitor:
                 self.master.append(process_info)
             else:
                 self.slaves.append(process_info)
-        ProcessMonitor.register_shutdown_hook(extra_close_fn=self._clean_fn)
+        # ProcessMonitor.register_shutdown_hook(extra_close_fn=self._clean_fn)
         assert len(self.master) == 1,\
             "We should got 1 master only, but we got {}".format(len(self.master))
         self.master = self.master[0]

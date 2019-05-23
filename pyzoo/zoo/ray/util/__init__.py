@@ -23,14 +23,13 @@ from zoo.ray.util.utils import to_list
 def gen_shutdown_per_node(pgids):
     pgids = to_list(pgids)
     def _shutdown_per_node(iter):
-        pass
-        # print("shutting down pgid: {}".format(pgids))
-        # for pgid in pgids:
-        #     print("killing {}".format(pgid))
-        #     try:
-        #         os.killpg(pgid, signal.SIGTERM)
-        #     except ProcessLookupError:
-        #         print("WARNING: cannot find pgid: {}".format(pgid))
+        print("shutting down pgid: {}".format(pgids))
+        for pgid in pgids:
+            print("killing {}".format(pgid))
+            try:
+                os.killpg(pgid, signal.SIGTERM)
+            except ProcessLookupError:
+                print("WARNING: cannot find pgid: {}".format(pgid))
 
     return _shutdown_per_node
 
