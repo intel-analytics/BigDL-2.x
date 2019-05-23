@@ -27,8 +27,8 @@ The data used in this example are:
 
 You need to prepare the data by yourself beforehand. The following scripts we prepare will serve to download and extract the data:
 
-    bash ${ANALYTICS_ZOO_HOME}/bin/data/news20/get_news20.sh dir
-    bash ${ANALYTICS_ZOO_HOME}/bin/data/glove/get_glove.sh dir
+    bash ${ANALYTICS_ZOO_HOME}/scripts/data/news20/get_news20.sh dir
+    bash ${ANALYTICS_ZOO_HOME}/scripts/data/glove/get_glove.sh dir
 
 where `ANALYTICS_ZOO_HOME` is the folder where you extract the downloaded package and `dir` is the directory you wish to locate the downloaded data. If `dir` is not specified, the data will be downloaded to the current working directory. 20 Newsgroup dataset and GloVe word embeddings are supposed to be placed under the same directory.
 
@@ -43,18 +43,18 @@ The data folder structure after extraction should look like the following:
 To prepare the model, you need to import the `text-classification-training` project. After the maven dependencies are successfully downloaded, set the environment variable as follow, this can be done by editing the run/debug configurations:
 
     VM options: -Xmx20g
-    Program arguments: --batchSize xxx --trainDataDir "/YOURDIR/data/20news-18828"/ --embeddingFile "/YOURDIR/data/glove/glove.6B.100d.txt" --modelSaveDirPath "/YOURDIR/models/text-classification.bigdl"
+    Program arguments: --batchSize xxx --trainDataDir "/YOURDIR/data/20news/20news-18828"/ --embeddingFile "/YOURDIR/data/glove/glove.6B/glove.6B.100d.txt" --modelSaveDirPath "/YOURDIR/models/text-classification.bigdl"
 
 Note that the batch size must be the multiple of the system core number. You can check the core number of your system with the command `lscpu` and change the batch size by adding `--batchSize xxx` in Program arguments.
 
 After the training is done, the model will be saved into the directory you set. Go back to the root directory of `text-classification-training` and execute the `mvn clean install` command, which prepares the jar file for `text-classification-inference`.
 
-### Run Simple Java or Web Service examples in text-classification-training 
+### Run Simple Java or Web Service examples in text-classification-inference
 In `text-classification-inference`, there are two ways to run the application: `SimpleDriver.java` and `WebServiceDriver.java`.
 
 In the first place, you need to edit the run/debug configurations as below:
 
-    VM options: -DEMBEDDING_FILE_PATH=/YOURDIR/data/glove/glove.6B.50d.txt -DMODEL_PATH=/YOURDIR/models/text-classification.bigdl
+    VM options: -DEMBEDDING_FILE_PATH=/YOURDIR/data/glove/glove.6B/glove.6B.50d.txt -DMODEL_PATH=/YOURDIR/models/text-classification.bigdl
 
 For `SimpleDriver.java`, simply running it can get the prediction result in the terminal.
 
