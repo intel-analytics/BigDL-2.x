@@ -19,8 +19,8 @@ Make sure all nodes can access image files, model and text files. Local file sys
 ```
 MASTER=...
 model=... // model path. Local file system/HDFS/Amazon S3 are supported
-streamingPath=... // text files location. Local file system/HDFS/Amazon S3 are supported
-output=... // output path of prediction result. Local file system/HDFS/Amazon S3 are supported
+streamingPath=... // text files location. Only local file system is supported
+output=... // output path of prediction result. Only local file system is supported
 ${ANALYTICS_ZOO_HOME}/bin/spark-submit-with-zoo.sh \
     --master ${MASTER} \
     --driver-memory 5g \
@@ -32,8 +32,8 @@ ${ANALYTICS_ZOO_HOME}/bin/spark-submit-with-zoo.sh \
 2. Start image_path_writer
 ```
 MASTER=...
-imageSourcePath=... // image path. Local file system/HDFS/Amazon S3 are supported
-streamingPath=... // text files. Local file system/HDFS/Amazon S3 are supported
+imageSourcePath=... // image path. Only local file system is supported
+streamingPath=... // text files. Only local file system is supported
 ${ANALYTICS_ZOO_HOME}/bin/spark-submit-with-zoo.sh \
     --master ${MASTER} \
     --driver-memory 5g \

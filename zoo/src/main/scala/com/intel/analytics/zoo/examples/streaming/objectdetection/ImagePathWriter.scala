@@ -34,19 +34,25 @@ object ImagePathWriter {
     parser.parse(args, PathWriterParam()).foreach { params =>
       val fs = Utils.getFileSystem(params.imageSourcePath)
       val lists = Utils.listPaths(params.imageSourcePath, false)
+      // Local file system requires create and move
+      var isLocal = false
+      if (fs.getScheme.equals("file")) isLocal = true
       lists.grouped(16).zipWithIndex.foreach { case (batch, id) =>
-
-        val tmpbatchPath = new Path(params.tmpStreamingPath, id + ".txt")
-
+        val localTmpPath = new Path(params.tmpStreamingPath, id + ".txt")
         val finalBatchPath = new Path(params.streamingPath, id + ".txt")
-        val dataOutStream = Utils.create(tmpbatchPath.toString, true)
+        val dataOutStream = if (isLocal) {
+          Utils.create(localTmpPath.toString, true)
+        } else {
+          Utils.create(finalBatchPath.toString, true)
+        }
         try {
           batch.foreach(line => dataOutStream.writeBytes(line + "\n"))
         } finally {
           dataOutStream.close()
-          fs.rename(tmpbatchPath, finalBatchPath)
+          if (isLocal) {
+            fs.rename(localTmpPath, finalBatchPath)}
         }
-        logger.info("wrote " + tmpbatchPath)
+        logger.info("wrote " + finalBatchPath)
         Thread.sleep(4000)
       }
       fs.close()
