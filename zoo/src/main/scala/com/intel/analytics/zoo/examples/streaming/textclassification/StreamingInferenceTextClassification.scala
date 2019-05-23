@@ -63,6 +63,7 @@ object StreamingInferenceTextClassification {
       val model = new InferenceModel(4)
       model.doLoad(param.model)
 
+      // Labels of 20 Newsgroup dataset
       val labels = Array("alt.atheism",
         "comp.graphics",
         "comp.os.ms-windows.misc",
@@ -107,10 +108,10 @@ object StreamingInferenceTextClassification {
             val tensor = text.getSample.feature()
             // Add one more dim because of batch requirement of model
             val predictSet = model.doPredict(tensor.addSingletonDimension())
-            println("Predicts:")
+            println("Probability distributions of top-5:")
             predictSet.toTensor.select(1, 1).toArray
               .zipWithIndex.sortBy(_._1).reverse.slice(0, 5)
-              .foreach(t => println(s"${t._1} ${labels(t._2)}"))
+              .foreach(t => println(s"${labels(t._2)} ${t._1}"))
           }
         }
       }

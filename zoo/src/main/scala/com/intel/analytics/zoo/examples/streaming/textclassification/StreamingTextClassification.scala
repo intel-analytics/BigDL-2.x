@@ -63,6 +63,7 @@ object StreamingTextClassification {
         .required()
     }
 
+    // Labels of 20 Newsgroup dataset
     val labels = Array("alt.atheism",
       "comp.graphics",
       "comp.os.ms-windows.misc",
@@ -116,8 +117,8 @@ object StreamingTextClassification {
             .map(_.getPredict.toTensor.toArray
               .zipWithIndex.sortBy(_._1).reverse.slice(0, 5))
             .foreach { x =>
-              println("Predicts:")
-              x.foreach(t => println(s"${t._1} ${labels(t._2)}"))
+              println("Probability distributions of top-5:")
+              x.foreach(t => println(s"${labels(t._2)} ${t._1}"))
             }
         }
       }

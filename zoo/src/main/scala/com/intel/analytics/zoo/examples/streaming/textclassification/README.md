@@ -38,12 +38,12 @@ It's a fine day
 
 **Then, you can see output in TERMINAL 2.**
 ```
-Predicts:
-0.84158087 soc.religion.christian
-0.08710906 talk.religion.misc
-0.06145671 alt.atheism
-0.0035352204 talk.politics.guns
-9.059753E-4 rec.sport.baseball
+Probability distributions of top-5:
+alt.atheism 0.009092145
+sci.crypt 0.01049567
+rec.motorcycles 0.010525138
+talk.politics.mideast 0.011516748
+rec.sport.hockey 0.014714912
 ```
 
 

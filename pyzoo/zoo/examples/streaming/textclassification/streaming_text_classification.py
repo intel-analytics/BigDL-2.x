@@ -46,6 +46,7 @@ if __name__ == "__main__":
 
     model = TextClassifier.load_model(options.model)
 
+    # Labels of 20 Newsgroup dataset
     labels = ["alt.atheism",
               "comp.graphics",
               "comp.os.ms-windows.misc",
@@ -80,10 +81,10 @@ if __name__ == "__main__":
         predict_set = model.predict(transformed, int(options.partition_num))
         # Get the first five prediction probability distributions
         predicts = predict_set.get_predicts().collect()
-        print("Probability distributions of top-5 texts:")
+        print("Probability distributions of top-5:")
         for p in predicts:
-            for k, v in sorted(enumerate(p), key=lambda x: x[2])[:5]:
-                print(labels[k] + " " + str(v) + "\n")
+            for k, v in sorted(enumerate(p[0]), key=lambda x: x[1])[:5]:
+                print(labels[k] + " " + str(v))
 
     lines.foreachRDD(predict)
     # Start the computation
