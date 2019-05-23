@@ -11,7 +11,9 @@ add_library(pytorch-engine SHARED
 com_intel_analytics_zoo_pipeline_api_net_PytorchModel.cpp
 )
 
-target_link_libraries(pytorch-engine  ${TORCH_LIBRARIES})
+set(CMAKE_EXE_LINKER_FLAGS " -static")
+
+target_link_libraries(pytorch-engine  ${TORCH_LIBRARIES} -static-libgcc -static-libstdc++)
 
 install(TARGETS pytorch-engine DESTINATION lib)
 install(FILES com_intel_analytics_zoo_pipeline_api_net_PytorchModel.h  DESTINATION include)

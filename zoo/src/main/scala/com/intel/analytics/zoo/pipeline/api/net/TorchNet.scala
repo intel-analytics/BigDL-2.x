@@ -33,8 +33,8 @@ import org.apache.commons.io.FileUtils
 import scala.reflect.ClassTag
 
 /**
-  * [[TorchNet]] wraps a TorchScript model as a single layer.
-  */
+ * [[TorchNet]] wraps a TorchScript model as a single layer.
+ */
 class TorchNet private(private val modelHolder: TorchModelHolder,
                        // TODO: separate it to TorchCriterion?
                        private val lossHolder: TorchModelHolder)
@@ -48,9 +48,9 @@ class TorchNet private(private val modelHolder: TorchModelHolder,
   var gradients: Tensor[Float] = _
 
   /**
-    * sequential id in cpp: std::vector<std::shared_ptr<torch::jit::script::Module>> handles;
-    * mark the model as transient and reload TorchNet from byteArray on executors
-    */
+   * sequential id in cpp: std::vector<std::shared_ptr<torch::jit::script::Module>> handles;
+   * mark the model as transient and reload TorchNet from byteArray on executors
+   */
   @transient
   lazy val nativeRef: Long = {
     println("TorchNet loading in " + this)
@@ -172,10 +172,10 @@ object TorchNet {
   }
 
   /**
-    * Create a TorchNet from a saved TorchScript Model
-    * @param path Path to the TorchScript Model.
-    * @return
-    */
+   * Create a TorchNet from a saved TorchScript Model
+   * @param path Path to the TorchScript Model.
+   * @return
+   */
   def apply(path: String): TorchNet = {
     // TODO: add support for HDFS path
     val modelbytes = Files.readAllBytes(Paths.get(path))
