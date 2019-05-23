@@ -41,7 +41,7 @@ case class SessionParams(
                           embedOutDim: Int = 20,
                           learningRate: Double = 1e-3,
                           learningRateDecay: Double = 1e-6,
-                          inputDir: String = "./data/",
+                          inputDir: String = "/Users/guoqiong/intelWork/projects/officeDepot/sampleData/",
                           outputDir: String = "./model/",
                           fileName: String = "atcHistory.json",
                           modelName: String = "sessionRecommender"
@@ -88,43 +88,30 @@ object SessionRecExp {
     val sqlContext = SQLContext.getOrCreate(sc)
 
     val (sessionDF, itemCount) = loadPublicData(sqlContext, params)
-
-    val trainSample = assemblyFeature(
-      sqlContext,
-      sessionDF,
-      itemCount,
-      params.maxLength
-    )
-
-    val sr = SessionRecommender[Float](
-      itemCount = itemCount,
-      itemEmbed = params.embedOutDim,
-      includeHistory = true,
-      maxLength = params.maxLength
-    )
-
+    val trainSample = assemblyFeature(sqlContext, sessionDF, itemCount, params.maxLength)
     val Array(trainRdd, testRdd) = trainSample.randomSplit(Array(0.8, 0.2), 100)
 
-    println("trainRDD count = " + trainRdd.count())
+    val model = SessionRecommender[Float](
+      itemCount = itemCount,
+      itemEmbed = params.embedOutDim,
+      mlpHiddenLayers = Array(20, 10),
+      seqLength = 5,
+      includeHistory = true)
 
-    val optimizer = Optimizer(
-      model = sr,
-      sampleRDD = trainRdd,
-      criterion = new SparseCategoricalCrossEntropy[Float](logProbAsInput = true, zeroBasedLabel = false),
-      batchSize = params.batchSize
-    )
 
     val optimMethod = new RMSprop[Float](
       learningRate = params.learningRate,
-      learningRateDecay = params.learningRateDecay
-    )
+      learningRateDecay = params.learningRateDecay)
 
-    val trained_model = optimizer.setOptimMethod(optimMethod)
-      .setValidation(Trigger.everyEpoch, testRdd, Array(new Top5Accuracy[Float]()), params.batchSize)
-      .setEndWhen(Trigger.maxEpoch(params.maxEpoch))
-      .optimize()
+    model.compile(
+      optimizer = optimMethod,
+      loss = new SparseCategoricalCrossEntropy[Float](zeroBasedLabel = false),
+      metrics = List(new Top5Accuracy[Float]()))
 
-    trained_model.saveModule(params.inputDir + params.modelName, null, overWrite = true)
+    model.fit(trainRdd, batchSize = 1024, validationData = testRdd)
+
+
+    model.saveModule(params.inputDir + params.modelName, null, overWrite = true)
     println("Model has been saved")
 
   }
@@ -133,10 +120,10 @@ object SessionRecExp {
   def loadPublicData(sqlContext: SQLContext, params: SessionParams): (DataFrame, Int) = {
 
     val sessionDF = sqlContext.read.options(Map("header" -> "false", "delimiter" -> ",")).json(params.inputDir + params.fileName)
+    sessionDF.show(10, false)
     val atcMax = sessionDF.rdd.map(_.getAs[mutable.WrappedArray[Double]]("ATC_SEQ").max).collect().max.toInt
     val purMax = sessionDF.rdd.map(_.getAs[mutable.WrappedArray[Double]]("PURCH_HIST").max).collect().max.toInt
-    val itemCount = Math.max(atcMax, purMax) + 1
-    println(itemCount.toString)
+    val itemCount = Math.max(atcMax, purMax)
     (sessionDF, itemCount)
   }
 
@@ -152,10 +139,19 @@ object SessionRecExp {
       if (x.array.size < maxLength) x.array.map(_.toFloat).reverse.padTo(maxLength, 0f).reverse
       else x.array.map(_.toFloat).takeRight(maxLength)
     }
+
     val prePaddingUDF = udf(prePadding)
 
+ // slide UDF
+    def slide: mutable.WrappedArray[java.lang.Double] => Array[mutable.WrappedArray[java.lang.Double]] = x => {
+      x.grouped(maxLength + 1).toArray
+    }
+    val slideUDF = udf(slide)
+
+    val sessionDFSlided = sessionDF.withColumn("ATC_SEQ", explode(slideUDF(col("ATC_SEQ"))))
+
     import sqlContext.implicits._
-    val sessionDFExpand = sessionDF.rdd.flatMap( x => {
+    val sessionDFExpand = sessionDFSlided.rdd.flatMap( x => {
       val raws = x.getAs[mutable.WrappedArray[java.lang.Double]]("ATC_SEQ").array
       val pur = x.getAs[mutable.WrappedArray[java.lang.Double]]("PURCH_HIST").array
       val out = for ( raw <- raws.dropRight(1)) yield {
@@ -165,7 +161,7 @@ object SessionRecExp {
         (input, output, pur)
       }
       out
-    }).toDF("ATC_SEQ", "label", "PURCH_HIST")
+    }).toDF("ATC_SEQ", "label", "PURCH_HIST").na.drop()
 
     val rnnDF = sessionDFExpand
       .withColumn("ATC", prePaddingUDF(col("ATC_SEQ")))
@@ -173,7 +169,7 @@ object SessionRecExp {
       .withColumn("label", col("label").getItem(0))
       .select("ATC", "PUR", "label")
 
-    // dataFrame to sample
+    // dataFrame to rdd of sample
     val trainSample = rnnDF.rdd.map(r => {
       val label = Tensor[Float](T(r.getAs[Float]("label")))
       val mlpFeature = r.getAs[mutable.WrappedArray[java.lang.Float]]("PUR").array.map(_.toFloat)
@@ -183,8 +179,8 @@ object SessionRecExp {
       TensorSample[Float](Array(mlpSample, rnnSample), Array(label))
     })
 
-    println("Sample feature print: \n"+ trainSample.take(1).head.feature(0))
-    println("Sample feature print: \n"+ trainSample.take(1).head.feature(1))
+    println("Sample feature print: \n" + trainSample.take(1).head.feature(0))
+    println("Sample feature print: \n" + trainSample.take(1).head.feature(1))
     println("Sample label print: \n" + trainSample.take(1).head.label())
 
     trainSample

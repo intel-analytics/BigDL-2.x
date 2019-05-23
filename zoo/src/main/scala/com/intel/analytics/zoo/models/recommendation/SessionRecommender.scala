@@ -29,97 +29,104 @@ import com.intel.analytics.zoo.pipeline.api.keras.models.Model
 import scala.reflect.ClassTag
 
 /**
-  * The factory method to create a SessionRecommender instance.
-  *
-  * @param itemCount The number of distinct items. Positive integer.
-  * @param itemEmbed The output size of embedding layer. Positive integer.
-  * @param mlpHiddenLayers Units of hidden layers for the mlp model. Array of positive integers. Default is Array(20, 20, 20).
-  * @param rnnHiddenLayers Units of hidden layers for the mlp model. Array of positive integers. Default is Array(20, 20).
-  * @param includeHistory Whether to include purchase history. Boolean. Default is true.
-  * @param maxLength The max number of tokens
-  */
+ * The session based recommender model.
+ *
+ * @param itemCount       The number of distinct items. Positive integer.
+ * @param itemEmbed       The output size of embedding layer. Positive integer.
+ * @param mlpHiddenLayers Units of hidden layers for the mlp model. Array of positive integers. Default is Array(20, 20, 20).
+ * @param seqLength       The max number of items in the sequence of a session
+ * @param rnnHiddenLayers Units of hidden layers for the mlp model. Array of positive integers. Default is Array(20, 20).
+ * @param includeHistory  Whether to include purchase history. Boolean. Default is true.
+ * @param hisLength       The max number of items in the sequence of historical purchase
+ */
 class SessionRecommender[T: ClassTag](
                                        val itemCount: Int,
                                        val itemEmbed: Int = 300,
-                                       val mlpHiddenLayers: Array[Int] = Array(20, 20, 20),
                                        val rnnHiddenLayers: Array[Int] = Array(20, 20),
+                                       val seqLength: Int = 5,
                                        val includeHistory: Boolean = true,
-                                       val maxLength: Int = 5
+                                       val mlpHiddenLayers: Array[Int] = Array(20, 20, 20),
+                                       val hisLength: Int = 10
                                      )(implicit ev: TensorNumeric[T]) extends Recommender[T] {
 
   override def buildModel(): AbstractModule[Tensor[T], Tensor[T], T] = {
-
-    // input variables
-    val inputRNN: ModuleNode[T] = Input(inputShape = Shape(maxLength))
+    val inputRnn: ModuleNode[T] = Input(inputShape = Shape(seqLength))
 
     // item embedding layer
-    val itemTable = Embedding[T](itemCount, itemEmbed, inputLength = maxLength)
+    val sessionTable = Embedding[T](itemCount + 1, itemEmbed, "normal", inputLength = seqLength).inputs(inputRnn)
 
     // rnn part
-    var gru = GRU[T](rnnHiddenLayers(0), returnSequences = true).inputs(itemTable.inputs(inputRNN))
+    var gru = GRU[T](rnnHiddenLayers(0), returnSequences = true).inputs(sessionTable)
     for (i <- 1 until rnnHiddenLayers.length - 1) {
       gru = GRU[T](rnnHiddenLayers(i), returnSequences = true).inputs(gru)
     }
     val gruLast = GRU[T](rnnHiddenLayers.last, returnSequences = false).inputs(gru)
-    val rnn = Dense[T](itemCount, activation = "log_softmax").inputs(gruLast)
+    val rnn = Dense[T](itemCount).inputs(gruLast)
 
+    // mlp part
     if (includeHistory) {
-      // mlp part
-      val itemTable1 = Embedding[T](itemCount, itemEmbed, inputLength = maxLength)
-      val inputMLP: ModuleNode[T] = Input(inputShape = Shape(maxLength))
-      val sum = new KerasLayerWrapper[T](Sum[T](2)).inputs(itemTable1.inputs(inputMLP))
-      var mlp = Dense(mlpHiddenLayers(0)).inputs(sum)
+      val inputMlp: ModuleNode[T] = Input(inputShape = Shape(hisLength))
+      val hisTable = Embedding[T](itemCount + 1, itemEmbed, inputLength = hisLength).inputs(inputMlp)
+      val sum = new KerasLayerWrapper[T](Sum[T](2)).inputs(hisTable)
+      var mlp = Dense(mlpHiddenLayers(0), activation = "relu").inputs(sum)
       for (i <- 1 until mlpHiddenLayers.length) {
         mlp = Dense(mlpHiddenLayers(i), activation = "relu").inputs(mlp)
       }
-      val mlpLast = Dense(itemCount, activation = "log_softmax").inputs(mlp)
-      // combine rnn and mlp parts
-      val model = Merge.merge[T](List(mlpLast, rnn), "sum")
-      Model(Array(inputMLP, inputRNN), model).asInstanceOf[AbstractModule[Tensor[T], Tensor[T], T]]
+      val mlpLast = Dense(itemCount).inputs(mlp)
+      // combine rnn and mlp
+      val merged = Merge.merge[T](List(mlpLast, rnn), "sum")
+      val out = Activation("softmax").inputs(merged)
+      Model(Array(inputMlp, inputRnn), out).asInstanceOf[AbstractModule[Tensor[T], Tensor[T], T]]
     }
-    else Model(inputRNN, rnn).asInstanceOf[AbstractModule[Tensor[T], Tensor[T], T]]
+    else {
+      val out = Activation("softmax").inputs(rnn)
+      Model(inputRnn, out).asInstanceOf[AbstractModule[Tensor[T], Tensor[T], T]]
+    }
   }
 }
 
 object SessionRecommender {
   /**
-    * The factory method to create a SessionRecommender instance.
-    *
-    * @param itemCount       The number of distinct items. Positive integer.
-    * @param itemEmbed       The output size of embedding layer. Positive integer.
-    * @param mlpHiddenLayers Units of hidden layers for the deep model. Array of positive integers. Default is Array(20, 20, 20).
-    * @param rnnHiddenLayers Units of hidden layers for the mlp model. Array of positive integers. Default is Array(20, 20).
-    * @param includeHistory  Whether to include purchase history. Boolean. Default is true.
-    * @param maxLength       The max number of tokens
-    */
+   * The factory method to create a SessionRecommender instance.
+   *
+   * @param itemCount       The number of distinct items. Positive integer.
+   * @param itemEmbed       The output size of embedding layer. Positive integer.
+   * @param mlpHiddenLayers Units of hidden layers for the mlp model. Array of positive integers. Default is Array(20, 20, 20).
+   * @param seqLength       The max number of items in the sequence of a session
+   * @param rnnHiddenLayers Units of hidden layers for the mlp model. Array of positive integers. Default is Array(20, 20).
+   * @param includeHistory  Whether to include purchase history. Boolean. Default is true.
+   * @param hisLength       The max number of items in the sequence of historical purchase
+   */
   def apply[@specialized(Float, Double) T: ClassTag](
                                                       itemCount: Int,
-                                                      itemEmbed: Int,
-                                                      mlpHiddenLayers: Array[Int] = Array(20, 20, 20),
+                                                      itemEmbed: Int = 100,
                                                       rnnHiddenLayers: Array[Int] = Array(20, 20),
+                                                      seqLength: Int = 5,
                                                       includeHistory: Boolean = true,
-                                                      maxLength: Int = 5)
+                                                      mlpHiddenLayers: Array[Int] = Array(20, 20, 20),
+                                                      hisLength: Int = 10)
                                                     (implicit ev: TensorNumeric[T]): SessionRecommender[T] = {
     new SessionRecommender[T](
       itemCount,
       itemEmbed,
-      mlpHiddenLayers,
       rnnHiddenLayers,
+      seqLength,
       includeHistory,
-      maxLength
+      mlpHiddenLayers,
+      hisLength
     ).build()
   }
 
   /**
-    * Load an existing SeqRecommender model (with weights).
-    *
-    * @param path       The path for the pre-defined model.
-    *                   Local file system, HDFS and Amazon S3 are supported.
-    *                   HDFS path should be like "hdfs://[host]:[port]/xxx".
-    *                   Amazon S3 path should be like "s3a://bucket/xxx".
-    * @param weightPath The path for pre-trained weights if any. Default is null.
-    * @tparam T Numeric type of parameter(e.g. weight, bias). Only support float/double now.
-    */
+   * Load an existing SessionRecommender model (with weights).
+   *
+   * @param path       The path for the pre-defined model.
+   *                   Local file system, HDFS and Amazon S3 are supported.
+   *                   HDFS path should be like "hdfs://[host]:[port]/xxx".
+   *                   Amazon S3 path should be like "s3a://bucket/xxx".
+   * @param weightPath The path for pre-trained weights if any. Default is null.
+   * @tparam T Numeric type of parameter(e.g. weight, bias). Only support float/double now.
+   */
   def loadModel[T: ClassTag](
                               path: String,
                               weightPath: String = null
