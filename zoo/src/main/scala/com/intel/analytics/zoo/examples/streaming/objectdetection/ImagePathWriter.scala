@@ -65,8 +65,7 @@ object ImagePathWriter {
   }
 
   private case class PathWriterParam(imageSourcePath: String = "",
-                                     streamingPath: String = "file:///tmp/zoo/streaming",
-                                     tmpStreamingPath: String = "file:///tmp/zoo_streaming")
+                                     streamingPath: String = "file:///tmp/zoo/streaming")
 
   private val parser = new OptionParser[PathWriterParam]("PathWriterParam") {
     head("PathWriterParam")
