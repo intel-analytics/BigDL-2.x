@@ -19,7 +19,7 @@ package com.intel.analytics.zoo.pipeline.api.keras.layers.internal
 import com.intel.analytics.bigdl.nn.abstractnn.TensorModule
 import com.intel.analytics.bigdl.tensor.Tensor
 import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric
-import com.intel.analytics.zoo.common.Utils
+import com.intel.analytics.zoo.common.{Utils}
 
 import scala.reflect.ClassTag
 
