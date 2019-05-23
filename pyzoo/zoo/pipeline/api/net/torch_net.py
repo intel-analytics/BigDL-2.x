@@ -37,13 +37,14 @@ class TorchNet(Layer):
         super(TorchNet, self).__init__(None, bigdl_type, path)
 
     @staticmethod
-    def from_pytorch(module, dummpy_input):
+    def from_pytorch(module, input_shape):
         """
         Create a TorchNet directly from PyTorch model, e.g. model in torchvision.models
         :param module: a PyTorch model
+        :param input_shape: list of integers. E.g. for ResNet, this may be [1, 3, 224, 224]
         """
         temp = tempfile.mkdtemp()
-        traced_script_module = torch.jit.trace(module, dummpy_input)
+        traced_script_module = torch.jit.trace(module, torch.rand(input_shape))
         path = os.path.join(temp, "model.pt")
         traced_script_module.save(path)
         net = TorchNet(path)

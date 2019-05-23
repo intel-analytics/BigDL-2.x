@@ -34,15 +34,20 @@ import scala.reflect.ClassTag
 /**
  * [[TorchNet]] wraps a TorchScript model as a single layer.
  */
-class TorchNet private(private val registryID: String)
+class TorchNet private(private val path: String)
   extends AbstractModule[Tensor[Float], Tensor[Float], Float] with Predictable[Float] {
+
+  /**
+   * binary content of model in {path}, used as model serialization during broadcast.
+   */
+  private val modelbytes = Files.readAllBytes(Paths.get(path))
 
   /**
    * mark the model as transient and reload TorchNet from byteArray on executors
    */
   @transient
   private lazy val torchModel = {
-    TorchNet.load(registryID)
+    TorchNet.load(modelbytes)
   }
 
   override def parameters(): (Array[Tensor[Float]], Array[Tensor[Float]]) = {
@@ -72,8 +77,6 @@ object TorchNet {
 
   loadPytorch() // load once per JVM
 
-  private val modelRegistry = mutable.HashMap.empty[String, Array[Byte]]
-
   /**
    * Create a TorchNet from a saved TorchScript Model
    * @param path Path to the TorchScript Model.
@@ -81,10 +84,7 @@ object TorchNet {
    */
   def apply(path: String): TorchNet = {
     //TODO: add support for HDFS path
-    val modelbytes = Files.readAllBytes(Paths.get(path))
-    val uuid = UUID.randomUUID().toString
-    modelRegistry.put(uuid, modelbytes)
-    new TorchNet(uuid)
+    new TorchNet(path)
   }
 
   // extract libs from zoo jar file
@@ -130,8 +130,8 @@ object TorchNet {
     }
   }
 
-  private def load(uuid: String): PytorchModel = {
-    new PytorchModel().load(modelRegistry(uuid))
+  private def load(bytes: Array[Byte]): PytorchModel = {
+    new PytorchModel().load(bytes)
   }
 
 }
