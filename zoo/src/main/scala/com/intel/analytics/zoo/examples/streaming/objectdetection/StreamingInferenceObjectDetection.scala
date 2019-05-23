@@ -17,14 +17,12 @@
 package com.intel.analytics.zoo.examples.streaming.objectdetection
 
 
-import com.intel.analytics.bigdl.dataset.SampleToMiniBatch
-import com.intel.analytics.bigdl.nn.abstractnn.Activity
-import com.intel.analytics.bigdl.numeric.NumericFloat
+import com.intel.analytics.bigdl.tensor.Tensor
 import com.intel.analytics.bigdl.transform.vision.image.ImageFeature
 import com.intel.analytics.zoo.common.NNContext
 import com.intel.analytics.zoo.examples.streaming.objectdetection.StreamingObjectDetection.PredictParam
-import com.intel.analytics.zoo.feature.image.{ImageBytesToMat, ImageChannelNormalize, ImageMatToTensor, ImageResize, ImageSet, ImageSetToSample}
-import com.intel.analytics.zoo.models.image.objectdetection.{LabelReader, Visualizer}
+import com.intel.analytics.zoo.feature.image.{ImageBytesToMat, ImageChannelNormalize, ImageMatToTensor, ImageResize, ImageSet}
+import com.intel.analytics.zoo.models.image.objectdetection.{LabelReader, ScaleDetection, Visualizer}
 import com.intel.analytics.zoo.pipeline.inference.InferenceModel
 import org.apache.hadoop.conf.Configuration
 import org.apache.hadoop.fs.{FileSystem, Path}
@@ -59,9 +57,6 @@ object StreamingInferenceObjectDetection {
     opt[Int]('p', "partition")
       .text("number of partitions")
       .action((x, c) => c.copy(nPartition = x))
-    opt[Int]('b', "batchSize")
-      .text("The number of samples per gradient update")
-      .action((x, c) => c.copy(batchSize = x))
   }
 
   def main(args: Array[String]): Unit = {
@@ -85,28 +80,26 @@ object StreamingInferenceObjectDetection {
           // RDD[String] => RDD[ImageFeature]
           val dataSet = ImageSet.rdd(batchPath.map(path => readFile(path)))
           // Pre-processing image
-          val images = dataSet ->
+          val output = dataSet ->
             ImageBytesToMat(imageCodec = Imgcodecs.CV_LOAD_IMAGE_COLOR) ->
             ImageResize(300, 300) ->
             ImageChannelNormalize(123f, 117f, 104f) ->
-            ImageMatToTensor() ->
-            ImageSetToSample()
-          // To miniBatch
-          val batched = images.toDataSet() ->
-            SampleToMiniBatch(params.batchSize)
-
-          val predicts = batched.toDistributed()
-            .data(false).flatMap { miniBatch =>
-            val predict = model.doPredict(miniBatch
-              .getInput.toTensor.addSingletonDimension().asInstanceOf[Activity])
-            predict.toTensor.squeeze.split(1).asInstanceOf[Array[Activity]]
+            ImageMatToTensor[Float]()
+          val predict = output.toDistributed().rdd.map { img =>
+            logger.debug("Begin Predict " + img.uri())
+            // Add one more dim because of batch requirement of model
+            val predict = model
+              .doPredict(img.apply[Tensor[Float]](ImageFeature.imageTensor)
+              .addSingletonDimension())
+            logger.debug("Finish Predict " + img.uri())
+            img(ImageFeature.predict) = predict.toTensor[Float].apply(1)
+            img
           }
-          images.toDistributed().rdd.zip(predicts).foreach(tuple => {
-            tuple._1(ImageFeature.predict) = tuple._2
-          })
+          // ROI to box
+          val boxedPredict = ImageSet.rdd(predict) -> ScaleDetection()
           logger.info("Begin visualizing box for image")
           val visualizer = Visualizer(labelMap, encoding = "jpg")
-          val visualized = visualizer(images).toDistributed()
+          val visualized = visualizer(boxedPredict).toDistributed()
           val result = visualized.rdd.map(imageFeature =>
             (imageFeature.uri(), imageFeature[Array[Byte]](Visualizer.visualized))).collect()
           result.foreach(x => writeFile(params.outputFolder, x._1, x._2))

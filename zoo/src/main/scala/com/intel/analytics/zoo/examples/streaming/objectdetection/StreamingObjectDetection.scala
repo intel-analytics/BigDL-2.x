@@ -39,8 +39,7 @@ object StreamingObjectDetection {
   case class PredictParam(streamingPath: String = "file:///tmp/zoo/streaming",
                           outputFolder: String = "file:///tmp/zoo/output",
                           model: String = "",
-                          nPartition: Int = 1,
-                          batchSize: Int = 4)
+                          nPartition: Int = 1)
 
   val parser = new OptionParser[PredictParam]("Analytics Zoo Streaming Object Detection") {
     head("Analytics Zoo Streaming Object Detection")
