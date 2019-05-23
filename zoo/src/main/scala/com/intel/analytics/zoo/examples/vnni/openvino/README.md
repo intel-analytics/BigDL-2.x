@@ -116,7 +116,7 @@ modelPath=the path of downloaded int8 model
 weightPath=the path of downloaded int8 model weight
 
 ${ANALYTICS_ZOO_HOME}/bin/spark-shell-with-zoo.sh \
-    --master ${MASTER} \
+    --master ${MASTER} --driver-memory 100g \
     --class com.intel.analytics.zoo.examples.vnni.openvino.ImageNetEvaluation \
     -f ${imagePath} -m ${modelPath} -w ${weightPath}
 ```
@@ -149,7 +149,7 @@ modelPath=the path of downloaded int8 model
 weightPath=the path of downloaded int8 model weight
 
 ${ANALYTICS_ZOO_HOME}/bin/spark-shell-with-zoo.sh \
-    --master ${MASTER} \
+    --master ${MASTER} --driver-memory 10g \
     --class com.intel.analytics.zoo.examples.vnni.openvino.Predict \
     -f ${imagePath} -m ${modelPath} -w ${weightPath}
 ```
