@@ -20,7 +20,7 @@ Inference provides multiple Scala interfaces.
 
 **InferenceModel**
 
-`InferenceModel` is a thead-safe wrapper of AbstractModels, which can be used to load models and do the predictions.
+`InferenceModel` is a thread-safe wrapper of AbstractModels, which can be used to load models and do the predictions.
 
 ***doLoad***
 
