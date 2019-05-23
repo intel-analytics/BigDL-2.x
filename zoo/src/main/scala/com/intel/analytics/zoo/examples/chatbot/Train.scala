@@ -118,9 +118,10 @@ object Train {
       val padFeature = Tensor[Float](T(padId))
       val padLabel = Tensor[Float](T(padId))
 
-      val encoder = RNNEncoder[Float]("lstm", 3, param.embedDim,
+      val numLayers = 3
+      val encoder = RNNEncoder[Float]("lstm", numLayers, param.embedDim,
         embEnc)
-      val decoder = RNNDecoder[Float]("lstm", 3, param.embedDim,
+      val decoder = RNNDecoder[Float]("lstm", numLayers, param.embedDim,
         embDec)
 
       val generator = Sequential[Float]()
