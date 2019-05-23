@@ -7,6 +7,10 @@ We hereby illustrate the support of [VNNI](https://en.wikichip.org/wiki/x86/avx5
 * Apache Spark (This version needs to be same with the version you use to build Analytics Zoo)
 * [Analytics Zoo](https://analytics-zoo.github.io/master/#ScalaUserGuide/install/)
 
+Environment Setting:
+- Set `ZOO_NUM_THREADS` to determine cores used by OpenVINO, e.g, `export ZOO_NUM_THREADS=10`. If it is set to `all`, e.g., `export ZOO_NUM_THREADS=all`, then OpenVINO will utilize all physical cores for Prediction.
+- Set `KMP_BLOCKTIME=200`, i.e., `export KMP_BLOCKTIME=200`
+
 ## Datasets and pre-trained models
 * Datasets: [ImageNet2012 Val](http://image-net.org/challenges/LSVRC/2012/index)
 * Pre-trained model: [TensorFlow ResNet50_v1](http://download.tensorflow.org/models/resnet_v1_50_2016_08_28.tar.gz)
@@ -19,13 +23,15 @@ TensorFlow models cannot be directly loaded by OpenVINO. It should be converted 
 Download [TensorFlow ResNet50_v1](http://download.tensorflow.org/models/resnet_v1_50_2016_08_28.tar.gz), [validation image set](https://s3-ap-southeast-1.amazonaws.com/analytics-zoo-models/openvino/val_bmp_32.tar) and [OpenCVLibs](https://s3-ap-southeast-1.amazonaws.com/analytics-zoo-models/openvino/opencv_4.0.0_ubuntu_lib.tar). Extract files from these packages. 
 
 ```bash
+export SPARK_HOME=the root directory of Spark
+export ANALYTICS_ZOO_HOME=the folder where you extract the downloaded Analytics Zoo zip package
 export ANALYTICS_ZOO_JAR=export ANALYTICS_ZOO_JAR=`find ${ANALYTICS_ZOO_HOME}/lib -type f -name "analytics-zoo*jar-with-dependencies.jar"`
 
 MODEL_PATH=dir of resetNet 50 checkpoint, i.e., resnet_v1_50.ckpt
 VALIDATION=dir of validation images and val.txt, i.e., val_bmp_32
 OPENCVLIBS=dir of OpenCV libs
 
-java -cp ${ANALYTICS_ZOO_JAR} \
+java -cp ${ANALYTICS_ZOO_JAR}:${SPARK_HOME}/jars/* \
     com.intel.analytics.zoo.examples.vnni.openvino.PrepareOpenVINOResNet \
     -m ${MODEL_PATH} -v ${VALIDATION} -l ${OPENCVLIBS}
 ```
@@ -50,16 +56,14 @@ resnet_v1_50_inference_graph.xml
 
 Amount them, `resnet_v1_50_inference_graph.xml` and `resnet_v1_50_inference_graph.bin` are OpenVINO optimized ResNet_v1_50 model and weight, `resnet_v1_50_inference_graph-calibrated.xml` and `resnet_v1_50_inference_graph-calibrated.bin` are OpenVINO int8 optimized ResNet_v1_50 model and weight. Both of them can be loaded by OpenVINO or Zoo.
 
+__Note that int8 optimized model promises better performance (~2X) with slightly lower accuracy. When using int8 optimized model in `Perf` `ImageNetEvaluation` and `Predict`, pls add `--isInt8 true` at the end of the running command.__
+
 
 ## Examples
-This folder contains four examples for OpenVINO VNNI support:
+This folder contains 3 examples for OpenVINO VNNI support:
 - [Perf](#perf)
-- [VINOPerf](#vinoperf)
 - [ImageNetEvaluation](#imagenetevaluation)
 - [Predict](#predict)
-
-Environment Setting:
-- Set `ZOO_NUM_THREADS` to determine cores used by OpenVINO, e.g, `export ZOO_NUM_THREADS=10`. If it is set to `all`, e.g., `export ZOO_NUM_THREADS=all`, then OpenVINO will utilize all physical cores for Prediction. 
 
 ---
 ### Perf
@@ -74,7 +78,7 @@ MASTER=...
 modelPath=path of the downloaded int8 model
 weightPath=path of the downloaded int8 model weight
 
-{ANALYTICS_ZOO_HOME}/bin/spark-shell-with-zoo.sh  \
+${ANALYTICS_ZOO_HOME}/bin/spark-shell-with-zoo.sh  \
     --master ${MASTER} --driver-memory 2g \
     --class com.intel.analytics.zoo.examples.vnni.openvino.Perf \
     -m ${modelPath} -w ${weightPath}
@@ -101,43 +105,6 @@ JNI Throughput: 1014.16 FPS
 ```
 
 ---
-### VINOPerf
-VINOPerf is a dependency-reduced Perf based on [Inference Model](https://analytics-zoo.github.io/0.4.0/#ProgrammingGuide/inference/#inference-model). It runs locally and calculates performance data (i.e. throughput and latency) for the pre-trained int8 model using dummy input.
-
-```bash
-export SPARK_HOME=the root directory of Spark
-export ANALYTICS_ZOO_HOME=the folder where you extract the downloaded Analytics Zoo zip package
-export ANALYTICS_ZOO_JAR=export ANALYTICS_ZOO_JAR=`find ${ANALYTICS_ZOO_HOME}/lib -type f -name "analytics-zoo*jar-with-dependencies.jar"`
-
-modelPath=path of the downloaded int8 model
-weightPath=path of the downloaded int8 model weight
-
-java -cp ${ANALYTICS_ZOO_JAR}:${SPARK_HOME}/jars/* \
-    com.intel.analytics.zoo.examples.vnni.openvino.VINOPerf \
-    -m ${modelPath} -w ${weightPath}
-```
-
-__Options:__
-- `-m` `--model`: The path to the downloaded int8 model.
-- `-w` `--weight`: The path to the downloaded int8 model weight.
-- `-b` `--batchSize`: The batch size of input data. Default is 4.
-- `-i` `--iteration`: The number of iterations to run the performance test. Default is 1.
-
-__Sample console log output__:
-```
-2019-05-17 10:00:30 INFO  InferenceSupportive$:45 - model predict for batch 1 time elapsed [0 s, 5 ms].
-2019-05-17 10:00:30 INFO  VINOPerf$:84 - Iteration 1 latency is 4.993594 ms
-[ INFO ] Start inference (1 iterations)
-
-Total inference time: 2.40128 ms
-Average running time of one iteration: 2.40128 ms
-Throughput: 1665.78 FPS
-
-JNI total predict time: 4.0567 ms
-JNI Throughput: 986.023 FPS
-```
-
----
 ### ImageNetEvaluation
 This example evaluates the pre-trained int8 model using Hadoop SequenceFiles of ImageNet no-resize validation images.
 
@@ -152,9 +119,9 @@ modelPath=the path of downloaded int8 model
 weightPath=the path of downloaded int8 model weight
 
 ${ANALYTICS_ZOO_HOME}/bin/spark-shell-with-zoo.sh \
-    --master ${MASTER} \
+    --master ${MASTER} --driver-memory 100g \
     --class com.intel.analytics.zoo.examples.vnni.openvino.ImageNetEvaluation \
-    -f ${imagePath} -m ${modelPath} -w {weightPath}
+    -f ${imagePath} -m ${modelPath} -w ${weightPath}
 ```
 
 __Options:__
@@ -170,7 +137,6 @@ Evaluation Results:
 Top1Accuracy is Accuracy(correct: 36432, count: 50000, accuracy: 0.72864)
 Top5Accuracy is Accuracy(correct: 45589, count: 50000, accuracy: 0.91178)
 ```
-Note that: int8 model's accuracy is a bit lower than normal model, due to int8 related optimization.
 
 ---
 ### Predict
@@ -185,9 +151,9 @@ modelPath=the path of downloaded int8 model
 weightPath=the path of downloaded int8 model weight
 
 ${ANALYTICS_ZOO_HOME}/bin/spark-shell-with-zoo.sh \
-    --master ${MASTER} \
+    --master ${MASTER} --driver-memory 10g \
     --class com.intel.analytics.zoo.examples.vnni.openvino.Predict \
-    -f ${imagePath} -m ${modelPath} -w {weightPath}
+    -f ${imagePath} -m ${modelPath} -w ${weightPath}
 ```
 
 __Options:__
