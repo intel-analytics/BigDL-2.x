@@ -88,11 +88,11 @@ model.load_caffe(modelPath, weightPath)
 * `weightPath`: String. Path of pre-trained model weight.
 
 ### **Load TensorFlow model**
-There are two backends to load a tensorflow model: TensorFlow and OpenVINO. When using TensorFlow as backend, tensorflow model will be loaded into `TFNet`. Otherwise, it will be coverted into OpenVINO model, and loaded into `OpenVINOModel`.
+There are two backends to load a tensorflow model: TensorFlow and OpenVINO. When using TensorFlow as backend, tensorflow model will be loaded into `FloatModel`. Otherwise, it will be coverted into OpenVINO model, and loaded into `OpenVINOModel`.
 
 **1. Load with TensorFlow backend**
 
-Load model into `TFNet` with TensorFlow backend, with corresponding `loadTF` methods (`loadTF` for Java, `doLoadTF` for Scala and `load_tf` Python)
+Load model into `FloatModel` with TensorFlow backend, with corresponding `loadTF` methods (`loadTF` for Java, `doLoadTF` for Scala and `load_tf` Python)
 
 **Java**
 
