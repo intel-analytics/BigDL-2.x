@@ -59,7 +59,9 @@ def main(option):
         slim = tf.contrib.slim
         labels = tf.squeeze(labels, axis=1)
         with slim.arg_scope(inception.inception_v1_arg_scope()):
-            logits, end_points = inception.inception_v1(features, num_classes=int(params["num_classes"]), is_training=True)
+            logits, end_points = inception.inception_v1(features,
+                                                        num_classes=int(params["num_classes"]),
+                                                        is_training=True)
 
         if mode == tf.estimator.ModeKeys.TRAIN:
             loss = tf.reduce_mean(
@@ -68,7 +70,10 @@ def main(option):
         else:
             raise NotImplementedError
 
-    estimator = TFEstimator(model_fn, tf.train.AdamOptimizer(), params={"image_path": option.image_path, "num_classes": option.num_classes})
+    estimator = TFEstimator(model_fn,
+                            tf.train.AdamOptimizer(),
+                            params={"image_path": option.image_path,
+                                    "num_classes": option.num_classes})
 
     estimator.train(input_fn, steps=100)
 
