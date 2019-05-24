@@ -42,6 +42,7 @@ trait AbstractEstimator[T]{
                validationMethod: Array[ValidationMethod[T]]
               ): Map[ValidationMethod[T], ValidationResult]
 
+  def close(): Unit
 }
 
 private[estimator] trait GradientClipping
@@ -186,6 +187,12 @@ class Estimator[T: ClassTag] private[zoo](
       }
     }
     internalEstimator.evaluate(validationSet, validationMethod)
+  }
+
+  override def close(): Unit = {
+    if (internalEstimator != null) {
+      internalEstimator.close()
+    }
   }
 }
 

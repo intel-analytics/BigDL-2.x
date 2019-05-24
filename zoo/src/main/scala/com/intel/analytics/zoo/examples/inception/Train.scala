@@ -116,6 +116,7 @@ object TrainInceptionV1 {
         checkPointTrigger = Some(checkpointTrigger),
         valSet, Array(new Top1Accuracy[Float], new Top5Accuracy[Float]))
 
+      estimator.close()
       sc.stop()
     })
   }
