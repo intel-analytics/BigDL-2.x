@@ -1,4 +1,4 @@
-Inference Model is a package in Analytics Zoo aiming to provide high level APIs to speed-up development. It allows user to conveniently use pre-trained models from Analytics Zoo, Caffe, Tensorflow and OpenVINO Intermediate Representation(IR). Inference Model provides Java, Scala and Python interfaces.
+Inference Model is a package in Analytics Zoo aiming to provide high-level APIs to speed-up development. It allows user to conveniently use pre-trained models from Analytics Zoo, Caffe, Tensorflow and OpenVINO Intermediate Representation(IR). Inference Model provides Java, Scala and Python interfaces.
 
 **Highlights**
 
@@ -12,7 +12,14 @@ Inference Model is a package in Analytics Zoo aiming to provide high level APIs 
 2. Load pre-trained models with corresponding `load` methods, e.g, doLoad for Analytics Zoo, and doLoadTF for TensorFlow.
 3. Do prediction with `predict` method.
 
-Note that OpenVINO required extra [dependencies](https://github.com/opencv/dldt/blob/2018_R5/inference-engine/install_dependencies.sh).
+**OpenVINO requirements:**
+
+    tensorflow>=1.2.0
+    mxnet>=1.0.0,<=1.3.1
+    networkx>=1.11
+    numpy>=1.12.0
+    protobuf==3.6.1
+    onnx>=1.1.2
 
 **Supported models:**
 
@@ -188,10 +195,10 @@ model.load_openvino(modelPath, weightPath)
 ## **Predict with loaded model**
 After loading pre-trained models with load methods, we can make prediction with unified `predict` method.
 
-* `predictInput`: JList[JList[JTensor]] or [Tensor](https://github.com/intel-analytics/BigDL/tree/master/spark/dl/src/main/scala/com/intel/analytics/bigdl/tensor) for Scale and Java, Numpy for Python. Input data for prediction. [JTensor](https://github.com/intel-analytics/analytics-zoo/blob/master/zoo/src/main/java/com/intel/analytics/zoo/pipeline/inference/JTensor.java) is a 1D Tensor with shape.
+* `predictInput`: JList[JList[JTensor]] or [Tensor](https://github.com/intel-analytics/BigDL/tree/master/spark/dl/src/main/scala/com/intel/analytics/bigdl/tensor) for Scale and Java, Numpy for Python. Input data for prediction. [JTensor](https://github.com/intel-analytics/analytics-zoo/blob/master/zoo/src/main/java/com/intel/analytics/zoo/pipeline/inference/JTensor.java) is a 1D List, with Array[Int] shape.
 * `predictOutput`: JList[JList[JTensor]] or [Tensor](https://github.com/intel-analytics/BigDL/tree/master/spark/dl/src/main/scala/com/intel/analytics/bigdl/tensor) for Scale and Java, Numpy for Python. Prediction result.
 
-**predict**
+### **predict**
 
 Do prediction with `predict` methods (`predict` for Java and Python, `doPredict` for Scala).
 
@@ -213,7 +220,7 @@ val predictOutput = model.doPredict(predictInput)
 predict_output = model.predict(predict_input)
 ```
 
-**predictInt8** and **loadTFAsCalibratedOpenVINO**
+### **predictInt8** and **loadTFAsCalibratedOpenVINO**
 
 Do prediction with int8 optimized model. Powered by [VNNI](https://en.wikichip.org/wiki/x86/avx512vnni) and [Intel Deep Learning Boost](https://www.intel.ai/intel-deep-learning-boost/). Currently, this API is only for OpenVINO. For Analytics Zoo model, int8 optimized model can directly make prediction with `predict` method.
 
