@@ -29,7 +29,6 @@ Inference Model is a package in Analytics Zoo aiming to provide high-level APIs 
 **OpenVINO requirements:**
 
     tensorflow>=1.2.0
-    mxnet>=1.0.0,<=1.3.1
     networkx>=1.11
     numpy>=1.12.0
     protobuf==3.6.1
