@@ -68,7 +68,6 @@ if __name__ == "__main__":
               "talk.politics.misc",
               "talk.religion.misc"]
 
-
     def predict(record):
         if record.getNumPartitions() == 0:
             return
