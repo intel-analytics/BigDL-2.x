@@ -83,7 +83,7 @@ model.load_caffe(modelPath, weightPath)
 ### **Load TensorFlow model**
 There are two backends to load a tensorflow model: TensorFlow and OpenVINO. When using TensorFlow as backend, tensorflow model will be loaded into `TFNet`. Otherwise, it will be coverted into OpenVINO model, and loaded into `OpenVINOModel`.
 
-1. **Load with TensorFlow backend**
+**1. Load with TensorFlow backend**
 
 Load model into `TFNet` with TensorFlow backend, with corresponding `loadTF` methods (`loadTF` for Java, `doLoadTF` for Scala and `load_tf` Python)
 
@@ -112,7 +112,7 @@ model.load_tf(modelPath)
 
 * `modelPath`: String. Path of pre-trained model.
 
-2. **Load with OpenVINO backend**
+**2. Load with OpenVINO backend**
 
 Load model into `OpenVINOModel` with OpenVINO backend, with corresponding `loadTF` methods (`loadTF` for Java, `doLoadTF` for Scala and `load_tf` Python). Note that OpenVINO cannot directly load TensorFlow models. We need to [covert TensorFlow models into OpenVINO models]((https://docs.openvinotoolkit.org/2018_R5/_docs_MO_DG_prepare_model_convert_model_Convert_Model_From_TensorFlow.html)), then load models into OpenVINO.
 
@@ -127,7 +127,7 @@ Herein Zoo, we merge these two steps into one, and provide `loadOpenVINOModelFor
 * `scale`: Float. Scale value, to be used for the input image per channel.
 * `outputDir`: String. Path of pre-trained tensorflow model.
 
-Note that we prepare several implementation with less parameters based on this method.
+Note that we prepare several implementations with less parameters based on this method, e.g., `loadTF(modelPath, modelType)`.
 
 **Java**
 
@@ -135,21 +135,21 @@ Note that we prepare several implementation with less parameters based on this m
 public class ExtendedInferenceModel extends AbstractInferenceModel {
 }
 ExtendedInferenceModel model = new ExtendedInferenceModel();
-model.loadTF(modelPath, weightPath);
+model.loadTF(modelPath, modelType);
 ```
 
 **Scala**
 
 ```scala
 val model = new InferenceModel()
-model.doLoadTF(modelPath, weightPath)
+model.doLoadTF(modelPath, modelType)
 ```
 
 **Python**
 
 ```python
 model = InferenceModel()
-model.load_tf(modelPath, weightPath)
+model.load_tf(modelPath, modelType)
 ```
 
 * `modelPath`: String. Path of pre-trained model.
@@ -217,18 +217,23 @@ predictOutput = model.predict(predictInput)
 
 Do prediction with int8 optimized model. Powered by [VNNI](https://en.wikichip.org/wiki/x86/avx512vnni) and [Intel Deep Learning Boost](https://www.intel.ai/intel-deep-learning-boost/). Currently, this API is only for OpenVINO. For Zoo model, int8 optimized model can directly make prediction with `predict` method.
 
-To load an OpenVINO int8 optimized model from TensorFlow, we can use `loadTFAsCalibratedOpenVINO`.
+To load an OpenVINO int8 optimized model from TensorFlow, we build `loadTFAsCalibratedOpenVINO` methods with 4 more parameters than `loadOpenVINOModelForTF`.
+
+* `networkType`: String. Type of an inferred network, "C" to calibrate Classification, "OD" to calibrate Object Detection, "RawC" to collect only statistics for Classification, "RawOD" to collect only statistics for Object Detection.
+* `validationFilePath`: String. Path to a file with validation images path and target labels.
+* `subset`: Int. Number of pictures from the whole validation set to create the calibration dataset.
+* `opencvLibPath`: String. lib path where libopencv_imgcodecs.so.4.0, libopencv_core.so.4.0 and libopencv_imgproc.so.4.0 can be found.
+
+**Java**
+
+```java
+List<List<JTensor>> predictOutput = model.predictInt8(predictInput);
+```
 
 **Scala**
 
 ```scala
 val predictOutput = model.doPredictInt8(predictInput)
-```
-
-**Python**
-
-```python
-predictOutput = model.predictInt8(predictInput)
 ```
 
 ## **Supportive classes**
