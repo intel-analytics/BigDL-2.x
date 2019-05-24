@@ -8,7 +8,7 @@ Inference Model is a package in Analytics Zoo aiming to provide high level APIs 
 
 **Basic usage of Inference Model:**
 
-1. Directly use InferenceModel or write a subclass extends `InferenceModel` (`AbstractinferenceModel` in Java).
+1. Directly use InferenceModel or write a subclass extends `InferenceModel` (`AbstractInferenceModel` in Java).
 2. Load pre-trained models with corresponding `load` methods, e.g, doLoad for Zoo, and doLoadTF for TensorFlow.
 3. Do prediction with `predict` method.
 
@@ -188,8 +188,8 @@ model.load_openvino(modelPath, weightPath)
 ## **Predict with loaded model**
 After loading pre-trained models with load methods, we can make prediction with unified `predict` method.
 
-* `predictInput`: JList[JList[JTensor]] or Tensor. Input data for prediction.
-* `predictOutput`: JList[JList[JTensor]] or Tensor. Prediction result.
+* `predictInput`: JList[JList[JTensor]] or [Tensor](https://github.com/intel-analytics/BigDL/tree/master/spark/dl/src/main/scala/com/intel/analytics/bigdl/tensor) for Scale and Java, Numpy for Python. Input data for prediction. [JTensor](https://github.com/intel-analytics/analytics-zoo/blob/master/zoo/src/main/java/com/intel/analytics/zoo/pipeline/inference/JTensor.java) is a 1D Tensor with shape.
+* `predictOutput`: JList[JList[JTensor]] or [Tensor](https://github.com/intel-analytics/BigDL/tree/master/spark/dl/src/main/scala/com/intel/analytics/bigdl/tensor) for Scale and Java, Numpy for Python. Prediction result.
 
 **predict**
 
@@ -210,7 +210,7 @@ val predictOutput = model.doPredict(predictInput)
 **Python**
 
 ```python
-predictOutput = model.predict(predictInput)
+predict_output = model.predict(predict_input)
 ```
 
 **predictInt8** and **loadTFAsCalibratedOpenVINO**
@@ -276,4 +276,4 @@ The load result of it is a `FloatModel` or an `OpenVINOModel`.
 
 **OpenVinoInferenceSupportive**
 
-`OpenVinoInferenceSupportive` is an extending object of `InferenceSupportive` and focus on the implementation of loading pre-trained models, including tensorflow models and OpenVINO Intermediate Representations(IR).
+`OpenVinoInferenceSupportive` is an extending object of `InferenceSupportive` and focuses on the implementation of loading pre-trained models, including tensorflow models and OpenVINO Intermediate Representations(IR).

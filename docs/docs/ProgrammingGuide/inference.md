@@ -1,4 +1,4 @@
-Inference Model is a package in Analytics Zoo aiming to provide high level APIs to speed-up development. It allows user to conveniently use pre-trained models from Analytics Zoo, Caffe, Tensorflow and OpenVINO Intermediate Representation(IR). Inference Model provides Java, Scala and Python interfaces.
+Inference Model is a package in Analytics Zoo aiming to provide high-level APIs to speed-up development. It allows user to conveniently use pre-trained models from Analytics Zoo, Caffe, Tensorflow and OpenVINO Intermediate Representation(IR). Inference Model provides Java, Scala and Python interfaces.
 
 **Highlights**
 
@@ -9,8 +9,8 @@ Inference Model is a package in Analytics Zoo aiming to provide high level APIs 
 ## **Load and predict with pre-trained model**
 **Basic usage of Inference Model:**
 
-1. Directly use InferenceModel or write a subclass extends `InferenceModel` (`AbstractinferenceModel` in Java).
-2. Load pre-trained models with corresponding `load` methods, e.g, `doLoad` for Zoo, and `doLoadTF` for TensorFlow.
+1. Directly use InferenceModel or write a subclass extends `InferenceModel` (`AbstractInferenceModel` in Java).
+2. Load pre-trained models with corresponding `load` methods, e.g, `doLoad` for Analytics Zoo, and `doLoadTF` for TensorFlow.
 3. Do prediction with `predict` method.
 
 **Supported models:**
@@ -20,9 +20,15 @@ Inference Model is a package in Analytics Zoo aiming to provide high level APIs 
 3. [TensorFlow Models](https://github.com/tensorflow/models)
 4. [OpenVINO models](https://software.intel.com/en-us/openvino-toolkit/documentation/pretrained-models)
 
+**predict**
+
+* `predictInput`: JList[JList[JTensor]] or [Tensor](https://github.com/intel-analytics/BigDL/tree/master/spark/dl/src/main/scala/com/intel/analytics/bigdl/tensor) for Scale and Java, Numpy for Python. Input data for prediction. [JTensor](https://github.com/intel-analytics/analytics-zoo/blob/master/zoo/src/main/java/com/intel/analytics/zoo/pipeline/inference/JTensor.java) is a 1D Tensor with shape.
+* `predictOutput`: JList[JList[JTensor]] or [Tensor](https://github.com/intel-analytics/BigDL/tree/master/spark/dl/src/main/scala/com/intel/analytics/bigdl/tensor) for Scale and Java, Numpy for Python. Prediction result.
+
+
 **Java**
 
-Write a subclass that extends `AbstractinferenceModel`, implement or override methods. Then, load model with corresponding `load` methods (load Zoo, caffe, OpenVINO and TensorFlow model with `load`, `loadCaffe`, `doLoadCaffe` and `loadTF`), and do prediction with `predict` method. 
+Write a subclass that extends `AbstractInferenceModel`, implement or override methods. Then, load model with corresponding `load` methods (load Analytics Zoo, caffe, OpenVINO and TensorFlow model with `load`, `loadCaffe`, `doLoadOpenVINO` and `loadTF`), and do prediction with `predict` method. 
 
 ```java
 import com.intel.analytics.zoo.pipeline.inference.AbstractInferenceModel;
@@ -34,7 +40,7 @@ public class ExtendedInferenceModel extends AbstractInferenceModel {
     }
 }
 ExtendedInferenceModel model = new ExtendedInferenceModel();
-// Load Zoo model
+// Load Analytics Zoo model
 model.load(modelPath, weightPath);
 // Predict
 List<List<JTensor>> result = model.predict(inputList);
@@ -42,13 +48,13 @@ List<List<JTensor>> result = model.predict(inputList);
 
 **Scala**
 
-New instance with `InferenceModel`, and load model with corresponding `load` methods (load Zoo, caffe, OpenVINO and TensorFlow model with `doLoad`, `doLoadCaffe`, `doLoadOpenVINO` and `doLoadTF`), then do prediction with `predict` method.
+New an instance of `InferenceModel`, and load model with corresponding `load` methods (load Analytics Zoo, caffe, OpenVINO and TensorFlow model with `doLoad`, `doLoadCaffe`, `doLoadOpenVINO` and `doLoadTF`), then do prediction with `predict` method.
 
 ```scala
 import com.intel.analytics.zoo.pipeline.inference.InferenceModel
 
 val model = new InferenceModel()
-// Load Zoo model
+// Load Analytics Zoo model
 model.doLoad(modelPath, weightPath)
 // Predict
 val result = model.doPredict(inputList)
@@ -64,7 +70,7 @@ class ExtendedInferenceModel extends InferenceModel {
 }
 
 val model = new ExtendedInferenceModel()
-// Load Zoo model
+// Load Analytics Zoo model
 model.doLoad(modelPath, weightPath)
 // Predict
 val result = model.doPredict(inputList)
@@ -72,19 +78,19 @@ val result = model.doPredict(inputList)
 
 **Python**
 
-New instance `InferenceModel`, and load Zoo model with corresponding `load` methods (load Zoo, caffe, OpenVINO and TensorFlow model with `load`, `load_caffe`, `load_openvino` and `load_tf`), then do prediction with `predict` method.
+New an instance of `InferenceModel`, and load Zoo model with corresponding `load` methods (load Analytics Zoo, caffe, OpenVINO and TensorFlow model with `load`, `load_caffe`, `load_openvino` and `load_tf`), then do prediction with `predict` method.
 
 ```python
 from zoo.pipeline.inference import InferenceModel
 
 model = InferenceModel()
-# Load Zoo model
-model.load(modelPath, weightPath)
+# Load Analytics Zoo model
+model.load(model_path, weight_path)
 # Predict
-result = model.predict(inputList)
+result = model.predict(input_list)
 ```
 
-In some cases, you may want to write a subclass that extends `InferenceModel`, implement or override methods. Then, load Zoo model with corresponding `doLoad` methods, and do prediction with `predict` method.
+In some cases, you may want to write a subclass that extends `InferenceModel`, implement or override methods. Then, load model with corresponding `load` methods, and do prediction with `predict` method.
 
 ```python
 from zoo.pipeline.inference import InferenceModel
@@ -92,10 +98,10 @@ from zoo.pipeline.inference import InferenceModel
 class ExtendedInferenceModel(InferenceModel):
 
 model = ExtendedInferenceModel()
-# Load Zoo model
-model.load(modelPath, weightPath)
+# Load Analytics Zoo model
+model.load(model_path, weight_path)
 # Predict
-result = model.predict(inputList)
+result = model.predict(input_list)
 ```
 
 ## **Examples**
