@@ -114,9 +114,20 @@ model.load_tf(modelPath)
 
 2. **Load with OpenVINO backend**
 
-Load model into `OpenVINOModel` with OpenVINO backend, with corresponding `loadTF` methods (`loadTF` for Java, `doLoadTF` for Scala and `load_tf` Python)
+Load model into `OpenVINOModel` with OpenVINO backend, with corresponding `loadTF` methods (`loadTF` for Java, `doLoadTF` for Scala and `load_tf` Python). Note that OpenVINO cannot directly load TensorFlow models. We need to [covert TensorFlow models into OpenVINO models]((https://docs.openvinotoolkit.org/2018_R5/_docs_MO_DG_prepare_model_convert_model_Convert_Model_From_TensorFlow.html)), then load models into OpenVINO.
 
-Note that OpenVINO cannot directly load TensorFlow models. We need to [covert TensorFlow models into OpenVINO models]((https://docs.openvinotoolkit.org/2018_R5/_docs_MO_DG_prepare_model_convert_model_Convert_Model_From_TensorFlow.html)), then load models into OpenVINO.
+Herein Zoo, we merge these two steps into one, and provide `loadOpenVINOModelForTF` with the following parameters:
+
+* `modelPath`: String. Path of pre-trained tensorflow model.
+* `modelType`: String. Type the type of the tensorflow model.
+* `checkpointPath`: String. Path of the tensorflow checkpoint file
+* `inputShape`: Array[Int]. Input shape that should be fed to an input node(s) of the model
+* `ifReverseInputChannels`: Boolean. If need reverse input channels. switch the input channels order from RGB to BGR (or vice versa).
+* `meanValues`: Array[Int]. All input values coming from original network inputs will be divided by this value.
+* `scale`: Float. Scale value, to be used for the input image per channel.
+* `outputDir`: String. Path of pre-trained tensorflow model.
+
+Note that we prepare several implementation with less parameters based on this method.
 
 **Java**
 
@@ -202,9 +213,11 @@ val predictOutput = model.doPredict(predictInput)
 predictOutput = model.predict(predictInput)
 ```
 
-**predictInt8**
+**predictInt8** and **loadTFAsCalibratedOpenVINO**
 
-Do prediction with int8 optimized model. Powered by [VNNI](https://en.wikichip.org/wiki/x86/avx512vnni). Currently, this API is only for OpenVINO. For Zoo model, int8 optimized model can directly make prediction with `predict` method.
+Do prediction with int8 optimized model. Powered by [VNNI](https://en.wikichip.org/wiki/x86/avx512vnni) and [Intel Deep Learning Boost](https://www.intel.ai/intel-deep-learning-boost/). Currently, this API is only for OpenVINO. For Zoo model, int8 optimized model can directly make prediction with `predict` method.
+
+To load an OpenVINO int8 optimized model from TensorFlow, we can use `loadTFAsCalibratedOpenVINO`.
 
 **Scala**
 
@@ -219,6 +232,16 @@ predictOutput = model.predictInt8(predictInput)
 ```
 
 ## **Supportive classes**
+
+**InferenceModel**
+
+`doOptimizeTF` method in Scala is designed for coverting TensorFlow model into OpenVINO model.
+
+`doCalibrateTF` method in Scala is designed for optimizing OpenVINO model into OpenVINO int8 optimized model.
+
+Pipline of these API:
+
+TensorFlow model -`doOptimizeTF`-> OpenVINO model -`doCalibrateTF`-> OpenVINO int8 optimized model
 
 **InferenceSupportive**
 
@@ -243,11 +266,9 @@ to [`JTensor`](https://github.com/intel-analytics/analytics-zoo/blob/88afc2d921b
 
 **InferenceModelFactory**
 
-`InferenceModelFactory` is an object with APIs for loading pre-trained Analytics Zoo models, Caffe models, Tensorflow models and OpenVINO Intermediate Representations(IR).
-Analytics Zoo models, Caffe models, Tensorflow models can be loaded as FloatModels. The load result of it is a `FloatModel`
-Tensorflow models and OpenVINO Intermediate Representations(IR) can be loaded as OpenVINOModels. The load result of it is an `OpenVINOModel`. 
+`InferenceModelFactory` is an object with APIs for loading pre-trained Analytics Zoo models, Caffe models, Tensorflow models and OpenVINO Intermediate Representations(IR). Analytics Zoo models, Caffe models, Tensorflow models can be loaded as FloatModels. The load result of it is a `FloatModel` Tensorflow models and OpenVINO Intermediate Representations(IR) can be loaded as OpenVINOModels. The load result of it is an `OpenVINOModel`. 
 The load result of it is a `FloatModel` or an `OpenVINOModel`.
 
 **OpenVinoInferenceSupportive**
 
-`OpenVinoInferenceSupportive` is an extending object of `InferenceSupportive` and focus on the implementation of loading pre-trained models, including tensorflow models and OpenVINO Intermediate Representations(IR). 
+`OpenVinoInferenceSupportive` is an extending object of `InferenceSupportive` and focus on the implementation of loading pre-trained models, including tensorflow models and OpenVINO Intermediate Representations(IR).
