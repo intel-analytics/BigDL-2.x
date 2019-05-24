@@ -21,8 +21,8 @@ Note that OpenVINO required extra [dependencies](https://github.com/opencv/dldt/
 3. [TensorFlow Models](https://github.com/tensorflow/models)
 4. [OpenVINO models](https://software.intel.com/en-us/openvino-toolkit/documentation/pretrained-models)
 
-## Load pre-trained model
-### Load pre-trained Zoo/bigDL model
+## **Load pre-trained model**
+### **Load pre-trained Zoo/bigDL model**
 Load Zoo/bigDL model with corresponding `load` methods (`load` for Java and Python, `doLoad` for Scala).
 
 **Java**
@@ -51,7 +51,7 @@ model.load(modelPath, weightPath)
 * `modelPath`: String. Path of pre-trained model.
 * `weightPath`: String. Path of pre-trained model weight. Default is `null`.
 
-### Load pre-trained Caffe model
+### **Load pre-trained Caffe model**
 Load Caffe model with `loadCaffe` methods (`loadCaffe` for Java, `doLoadCaffe` for Scala and `load_caffe` Python).
 
 **Java**
@@ -80,7 +80,7 @@ model.load_caffe(modelPath, weightPath)
 * `modelPath`: String. Path of pre-trained model.
 * `weightPath`: String. Path of pre-trained model weight.
 
-### Load TensorFlow model
+### **Load TensorFlow model**
 There are two backends to load a tensorflow model: TensorFlow and OpenVINO. When using TensorFlow as backend, tensorflow model will be loaded into `TFNet`. Otherwise, it will be coverted into OpenVINO model, and loaded into `OpenVINOModel`.
 
 1. **Load with TensorFlow backend**
@@ -144,7 +144,7 @@ model.load_tf(modelPath, weightPath)
 * `modelPath`: String. Path of pre-trained model.
 * `weightPath`: String. Path of pre-trained model weight.
 
-### Load OpenVINO model
+### **Load OpenVINO model**
 
 Load OpenVINO model with `loadOpenVINO` methods (`loadOpenVINO` for Java, `doLoadOpenVINO` for Scala and `load_openvino` Python).
 
@@ -174,13 +174,14 @@ model.load_openvino(modelPath, weightPath)
 * `modelPath`: String. Path of pre-trained OpenVINO model.
 * `weightPath`: String. Path of pre-trained OpenVINO model weight.
 
-## Predict with loaded model
+## **Predict with loaded model**
 After loading pre-trained models with load methods, we can make prediction with unified `predict` method.
 
 * `predictInput`: JList[JList[JTensor]] or Tensor. Input data for prediction.
 * `predictOutput`: JList[JList[JTensor]] or Tensor. Prediction result.
 
 **predict**
+
 Do prediction with `predict` methods (`predict` for Java and Python, `doPredict` for Scala).
 
 **Java**
@@ -202,6 +203,7 @@ predictOutput = model.predict(predictInput)
 ```
 
 **predictInt8**
+
 Do prediction with int8 optimized model. Powered by [VNNI](https://en.wikichip.org/wiki/x86/avx512vnni). Currently, this API is only for OpenVINO. For Zoo model, int8 optimized model can directly make prediction with `predict` method.
 
 **Scala**
@@ -216,7 +218,7 @@ val predictOutput = model.doPredictInt8(predictInput)
 predictOutput = model.predictInt8(predictInput)
 ```
 
-## Supportive classes
+## **Supportive classes**
 
 **InferenceSupportive**
 
@@ -249,5 +251,3 @@ The load result of it is a `FloatModel` or an `OpenVINOModel`.
 **OpenVinoInferenceSupportive**
 
 `OpenVinoInferenceSupportive` is an extending object of `InferenceSupportive` and focus on the implementation of loading pre-trained models, including tensorflow models and OpenVINO Intermediate Representations(IR). 
-There are two backends to load a tensorflow model: TFNet and OpenVINO. For OpenVINO backend, [supported tensorflow models](#jump) are listed in the section of `doLoadTF` method of `InferenceModel` API above. 
-
