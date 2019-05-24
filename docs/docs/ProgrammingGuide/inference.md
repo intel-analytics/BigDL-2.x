@@ -15,7 +15,7 @@ Inference Model is a package in Analytics Zoo aiming to provide high-level APIs 
 
 **Supported models:**
 
-1. [Zoo Models](https://analytics-zoo.github.io/master/##built-in-deep-learning-models)
+1. [Analytics Zoo Models](https://analytics-zoo.github.io/master/##built-in-deep-learning-models)
 2. [Caffe Models](https://github.com/BVLC/caffe/wiki/Model-Zoo)
 3. [TensorFlow Models](https://github.com/tensorflow/models)
 4. [OpenVINO models](https://software.intel.com/en-us/openvino-toolkit/documentation/pretrained-models)
@@ -96,6 +96,9 @@ In some cases, you may want to write a subclass that extends `InferenceModel`, i
 from zoo.pipeline.inference import InferenceModel
 
 class ExtendedInferenceModel(InferenceModel):
+
+    def __init__(self):
+        pass
 
 model = ExtendedInferenceModel()
 # Load Analytics Zoo model

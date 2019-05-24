@@ -9,21 +9,21 @@ Inference Model is a package in Analytics Zoo aiming to provide high level APIs 
 **Basic usage of Inference Model:**
 
 1. Directly use InferenceModel or write a subclass extends `InferenceModel` (`AbstractInferenceModel` in Java).
-2. Load pre-trained models with corresponding `load` methods, e.g, doLoad for Zoo, and doLoadTF for TensorFlow.
+2. Load pre-trained models with corresponding `load` methods, e.g, doLoad for Analytics Zoo, and doLoadTF for TensorFlow.
 3. Do prediction with `predict` method.
 
 Note that OpenVINO required extra [dependencies](https://github.com/opencv/dldt/blob/2018_R5/inference-engine/install_dependencies.sh).
 
 **Supported models:**
 
-1. [Zoo Models](https://analytics-zoo.github.io/master/##built-in-deep-learning-models)
+1. [Analytics Zoo Models](https://analytics-zoo.github.io/master/##built-in-deep-learning-models)
 2. [Caffe Models](https://github.com/BVLC/caffe/wiki/Model-Zoo)
 3. [TensorFlow Models](https://github.com/tensorflow/models)
 4. [OpenVINO models](https://software.intel.com/en-us/openvino-toolkit/documentation/pretrained-models)
 
 ## **Load pre-trained model**
-### **Load pre-trained Zoo/bigDL model**
-Load Zoo/bigDL model with corresponding `load` methods (`load` for Java and Python, `doLoad` for Scala).
+### **Load pre-trained Analytics Zoo model**
+Load Analytics Zoo model with corresponding `load` methods (`load` for Java and Python, `doLoad` for Scala).
 
 **Java**
 
@@ -116,7 +116,7 @@ model.load_tf(modelPath)
 
 Load model into `OpenVINOModel` with OpenVINO backend, with corresponding `loadTF` methods (`loadTF` for Java, `doLoadTF` for Scala and `load_tf` Python). Note that OpenVINO cannot directly load TensorFlow models. We need to [covert TensorFlow models into OpenVINO models]((https://docs.openvinotoolkit.org/2018_R5/_docs_MO_DG_prepare_model_convert_model_Convert_Model_From_TensorFlow.html)), then load models into OpenVINO.
 
-Herein Zoo, we merge these two steps into one, and provide `loadOpenVINOModelForTF` with the following parameters:
+Herein Analytics Zoo, we merge these two steps into one, and provide `loadOpenVINOModelForTF` with the following parameters:
 
 * `modelPath`: String. Path of pre-trained tensorflow model.
 * `modelType`: String. Type the type of the tensorflow model.
@@ -215,7 +215,7 @@ predict_output = model.predict(predict_input)
 
 **predictInt8** and **loadTFAsCalibratedOpenVINO**
 
-Do prediction with int8 optimized model. Powered by [VNNI](https://en.wikichip.org/wiki/x86/avx512vnni) and [Intel Deep Learning Boost](https://www.intel.ai/intel-deep-learning-boost/). Currently, this API is only for OpenVINO. For Zoo model, int8 optimized model can directly make prediction with `predict` method.
+Do prediction with int8 optimized model. Powered by [VNNI](https://en.wikichip.org/wiki/x86/avx512vnni) and [Intel Deep Learning Boost](https://www.intel.ai/intel-deep-learning-boost/). Currently, this API is only for OpenVINO. For Analytics Zoo model, int8 optimized model can directly make prediction with `predict` method.
 
 To load an OpenVINO int8 optimized model from TensorFlow, we build `loadTFAsCalibratedOpenVINO` methods with 4 more parameters than `loadOpenVINOModelForTF`.
 
