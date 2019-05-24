@@ -2,19 +2,15 @@
 
 ## Overview
 
-Abstract inference model is an abstract class in Analytics Zoo aiming to provide support for 
-java implementation in loading a collection of pre-trained models(including Caffe models, 
-Tensorflow models, OpenVINO Intermediate Representations(IR), etc.) and for model prediction.
-AbstractInferenceModel contains a mix of methods declared with implementation for loading models and prediction.
+Abstract inference model is an abstract class in Analytics Zoo aiming to provide support for java implementation in loading a collection of pre-trained models(including Caffe models, Tensorflow models, OpenVINO Intermediate Representations(IR), etc.) and for model prediction. AbstractInferenceModel contains a mix of methods declared with implementation for loading models and prediction.
+
 You will need to create a subclass which extends the AbstractInferenceModel to 
 develop your java applications.
 
 ### Highlights
 
 1. Easy-to-use java API for loading and prediction with deep learning models.
-
 2. In a few lines, run large scale inference from pre-trained models of Analytics-Zoo, Caffe, Tensorflow and OpenVINO Intermediate Representation(IR).
-
 3. Transparently support the OpenVINO toolkit, which deliver a significant boost for inference speed  ([up to 19.9x](https://software.intel.com/en-us/blogs/2018/05/15/accelerate-computer-vision-from-edge-to-cloud-with-openvino-toolkit)).
 
 
@@ -93,8 +89,7 @@ The predictInt8 result of`AbstractInferenceModel` is a `List<List<JTensor>>` by 
 
 ## Examples
 
-It's very easy to apply abstract inference model for inference with below code piece.
-You will need to write a subclass that extends AbstractinferenceModel.
+It's very easy to apply abstract inference model for inference with below code piece. You will need to write a subclass that extends AbstractinferenceModel.
 ```java
 import com.intel.analytics.zoo.pipeline.inference.AbstractInferenceModel;
 import com.intel.analytics.zoo.pipeline.inference.JTensor;

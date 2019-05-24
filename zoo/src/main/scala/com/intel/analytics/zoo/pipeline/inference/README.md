@@ -1,3 +1,4 @@
+# Inference Model
 Inference Model is a package in Analytics Zoo aiming to provide high-level APIs to speed-up development. It allows user to conveniently use pre-trained models from Analytics Zoo, Caffe, Tensorflow and OpenVINO Intermediate Representation(IR). Inference Model provides Java, Scala and Python interfaces.
 
 **Highlights**
@@ -15,6 +16,7 @@ Inference Model is a package in Analytics Zoo aiming to provide high-level APIs 
 **OpenVINO requirements:**
 
     tensorflow>=1.2.0
+    mxnet>=1.0.0,<=1.3.1
     networkx>=1.11
     numpy>=1.12.0
     protobuf==3.6.1
@@ -87,11 +89,11 @@ model.load_caffe(modelPath, weightPath)
 * `weightPath`: String. Path of pre-trained model weight.
 
 ### **Load TensorFlow model**
-There are two backends to load a tensorflow model: TensorFlow and OpenVINO. When using TensorFlow as backend, tensorflow model will be loaded into `FloatModel`. Otherwise, it will be coverted into OpenVINO model, and loaded into `OpenVINOModel`.
+There are two backends to load a tensorflow model: TensorFlow and OpenVINO. When using TensorFlow as backend, tensorflow model will be loaded into `TFNet`. Otherwise, it will be coverted into OpenVINO model, and loaded into `OpenVINOModel`.
 
 **1. Load with TensorFlow backend**
 
-Load model into `FloatModel` with TensorFlow backend, with corresponding `loadTF` methods (`loadTF` for Java, `doLoadTF` for Scala and `load_tf` Python)
+Load model into `TFNet` with TensorFlow backend, with corresponding `loadTF` methods (`loadTF` for Java, `doLoadTF` for Scala and `load_tf` Python)
 
 **Java**
 
