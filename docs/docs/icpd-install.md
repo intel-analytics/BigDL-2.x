@@ -4,7 +4,7 @@
 ## **Prerequisites**
 To deploy Analytics Zoo on ICP4D, the following prerequisites must be met:
 1. Having an ICP4D account with IBM and a working installation of ICP4D on your cluster.
-2. Having sufficient privileges to that cluster so that you can run kubectl/helm and log in to the ICP4D internal docker registry. How to do this is described in the ICP4D documentation.
+2. Having sufficient privileges to that cluster so that you can run kubectl/helm and log in to the ICP4D internal docker registry. How to do this is described in the [ICP4D documentation](https://docs-icpdata.mybluemix.net/docs/content/SSQNUZ_current/com.ibm.icpdata.doc/zen/overview/overview.html).
 
 ## **Work Flow**
 Deploying Analytics Zoo on ICP4D uses the following workflow:
@@ -14,21 +14,20 @@ Deploying Analytics Zoo on ICP4D uses the following workflow:
 3. You are then forwarded in your browser to this page (the one you are reading) on Analytics Zoo's doc site.
 
 ## **Installation**
+Follow the steps to have the Analytics Zoo up and running on your cluster.
 
 1.  SSH to the ICP4D cluster
-
 ```
 ssh root@<ICP4D-cluster-master-node>
 ```
-
 2. Edit your /etc/hosts file on your system (Linux/MacOS) or equivalent (Windows) to add a DNS entry for the ICP4D cluster you'll be connecting to (this is needed for the Docker steps below):
 ```bash
 <IP to your ICP4D cluster provided by your system administrator> mycluster.icp
 Example:
 169.55.96.201 mycluster.icp
 ```
-3.Ensure that you have the correct Kubectl, Helm, Cloudctl, and Docker versions that you have downloaded directly from the ICP4D environment.
-```$xslt
+3. Ensure that you have the correct Kubectl, Helm, Cloudctl, and Docker versions that you have downloaded directly from the ICP4D environment.
+```
 If you haven't done so already, get the kubectl/helm/cloudctl binaries corresponding to your platform. Here are the versions used to validate these instructions:
 Kubectl v1.11.1
 Helm v2.9.1
@@ -38,7 +37,7 @@ Those binaries can be downloaded from the ICP4D cluster itself at:
 <HTTPS address of your ICP4D cluster provided by your system administrator>:8443/api/cli/
 Please refer to the ICP4D command line documentation for more information on those.
 ```
-4.Edit your Docker configuration to allow the push to insecure registries:
+4. Edit your Docker configuration to allow the push to insecure registries:
 
 * If using Linux, edit /etc/docker/daemon.json and add :
 ```bash
@@ -56,24 +55,39 @@ Please refer to the ICP4D command line documentation for more information on tho
     d. Restart the Docker Daemon.
 * NOTE: It isn't recommended to edit Docker config files manually when on Mac/Windows. It is recommended to use Docker Desktop.
 
-5.From your terminal, pull the Analytics Zoo image form Dockerhub with:
+5. From your terminal, pull the Analytics Zoo image form Dockerhub with:
 ```bash
 docker pull intelanalytics/analytics-zoo:latest
 ```
-6.Push the docker image from your node to the docker registry using the following commands:
+6. Push the docker image from your node to the docker registry using the following commands:
 
-a. Tag the image
-```bash
-docker tag intelanalytics/analytics-zoo:latest mycluster.icp:8500/zen/intelanalytics/analytics-zoo:latest
-```
-b. Push the image to the private image registry.
-```bash
-docker push mycluster.icp:8500/zen/intelanalytics/analytics-zoo:latest
-```
+    a. Tag the image
+    ```bash
+    docker tag intelanalytics/analytics-zoo:latest mycluster.icp:8500/zen/intelanalytics/analytics-zoo:latest
+    ```
+    b. Push the image to the private image registry.
+    ```bash
+    docker push mycluster.icp:8500/zen/intelanalytics/analytics-zoo:latest
+    ```
 
-6. Clone the github repository intel-analytics/analytics-zoo to receive a copy of the helmchart. Browse to the helm charts directory.
+7. Clone the github repository intel-analytics/analytics-zoo to receive a copy of the helmchart. Browse to the helm charts directory.
 ```bash
 git clone https://github.com/intel-analytics/analytics-zoo.git
 cd analytics-zoo/helmcharts
 ```
-7. Install the helmchart archive with the following command
+8. Install the helmchart archive with the following command:
+```bash
+helm install helmchart --name analytics-zoo --namespace zen/intelanalytics --tls
+```
+Run the following kubectl commands to verify the deployment.
+```bash
+kubectl get svc -n zen/intelanalytics|grep analytics-zoo
+kubectl get pod -n zen/intelanalytics|grep analytics-zoo
+kubectl describe pod <the_pod_it_made> -n zen/intelanalytics
+```
+
+## Uninstalling the chart
+To uninstall/delete the analytics-zoo deployment:
+```bash
+helm delete --purge analytics-zoo --tls
+```
