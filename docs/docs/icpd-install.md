@@ -1,6 +1,5 @@
 # Setup Analytics Zoo On ICP4D
 
----
 ## **Prerequisites**
 To deploy Analytics Zoo on ICP4D, the following prerequisites must be met:
 1. Having an ICP4D account with IBM and a working installation of ICP4D on your cluster.
@@ -73,7 +72,7 @@ docker pull intelanalytics/analytics-zoo:latest
 7. Clone the github repository intel-analytics/analytics-zoo to receive a copy of the helmchart. Browse to the helm charts directory.
 ```bash
 git clone https://github.com/intel-analytics/analytics-zoo.git
-cd analytics-zoo/helmcharts
+cd analytics-zoo/helmchart
 ```
 8. Install the helmchart archive with the following command:
 ```bash
