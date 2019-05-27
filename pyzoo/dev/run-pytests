@@ -51,7 +51,7 @@ if [[ $py_version == *"Python 2.7"* ]]; then
     fi
 else
     echo "Running Python 3"
-    python -m pytest -v ../test --ignore=../test/zoo/pipeline/utils/test_utils.py \
+    python -m pytest -v ../test --ignore=../test/zoo/pipeline/utils/test_utils.py -s -k "test_tfpark_model"\
        --ignore=../test/zoo/pipeline/api/keras2/ \
        --ignore=../test/zoo/pipeline/autograd/
     exit_status_3=$?
