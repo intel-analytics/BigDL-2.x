@@ -323,7 +323,7 @@ class IncrementalFeatureSet[T: ClassTag]
       currentFeatureSet.cache()
       currentFeatureSet.data(train)
     } else {
-      buffer
+      currentFeatureSet.data(train)
     }
   }
 

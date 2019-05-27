@@ -1006,7 +1006,7 @@ private[zoo] class InternalDistriOptimizer[T: ClassTag] (
   protected var modelBroadcast: ModelBroadcast[T] = null
   protected var parameters: Map[String, AllReduceParameter[T]] = null
 
-  def optimize2(initModel: Boolean = true): Module[T] = {
+  def optimize2(): Module[T] = {
     val distDataset = dataset.toDistributed()
     val trainingModel = if (EngineRef.getEngineType() == MklDnn && !model.isInstanceOf[MklDnnModule]
       && !model.isInstanceOf[Graph[T]]) {
@@ -1255,7 +1255,11 @@ private[zoo] class InternalDistriOptimizer[T: ClassTag] (
         1
       }
       while(!endWhen(state)) {
-        val newEndWhen = Trigger.or(endWhen, Trigger.maxIteration(i * iterations))
+        val trueEpoch = Math.floor(state[Int]("neval").toDouble * batchSize / counts).toInt + 1
+        InternalOptimizerUtil.endEpoch(this)
+        state("epoch") = trueEpoch
+        val newEndWhen = Trigger.or(endWhen, Trigger.maxIteration(i * iterations),
+          Trigger.maxEpoch(trueEpoch))
         this.setEndWhen(newEndWhen)
         if (checkPointTrigger.isDefined && checkpointDir.isDefined) {
           // we should setCheckpoint every time before we call optimize(),
