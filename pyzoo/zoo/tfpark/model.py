@@ -140,7 +140,7 @@ class KerasModel(object):
             self._fit_distributed(x, validation_split, epochs, **kwargs)
 
         elif distributed:
-            dataset = TFDataset.from_ndarrays((x, y), val_tensors=validation_data)
+            dataset = TFDataset.from_ndarrays((x, y), batch_size=batch_size, val_tensors=validation_data)
             self._fit_distributed(dataset, validation_split, epochs, **kwargs)
 
         else:
