@@ -253,7 +253,7 @@ class OpenVINOInt8Suite extends FunSuite with Matchers with BeforeAndAfterAll
       assert(almostEqual(output, labels, 0.1f))
     }
   }
-  
+
   test("openvino should handle wrong batchSize correctly") {
     val model = new InferenceModel(3)
     model.doLoadOpenVINOInt8(s"${resnet_v1_50_int8_path}.xml",
