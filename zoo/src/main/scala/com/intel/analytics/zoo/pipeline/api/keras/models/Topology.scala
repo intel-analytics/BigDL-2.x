@@ -1006,7 +1006,7 @@ private[zoo] class InternalDistriOptimizer[T: ClassTag] (
   protected var modelBroadcast: ModelBroadcast[T] = null
   protected var parameters: Map[String, AllReduceParameter[T]] = null
 
-  def optimize2(): Module[T] = {
+  def train(): Module[T] = {
     val distDataset = dataset.toDistributed()
     val trainingModel = if (EngineRef.getEngineType() == MklDnn && !model.isInstanceOf[MklDnnModule]
       && !model.isInstanceOf[Graph[T]]) {
@@ -1246,7 +1246,6 @@ private[zoo] class InternalDistriOptimizer[T: ClassTag] (
         EngineRef.getNodeNumber()
       val counts = trainSet.size()
       val iterations = Math.ceil(counts.toDouble * cachePercentage / batchSize).toInt
-      println(s"$counts $cachePercentage $batchSize $iterations")
 
       var i = if (state.contains("neval")) {
         // resume training
@@ -1266,11 +1265,11 @@ private[zoo] class InternalDistriOptimizer[T: ClassTag] (
           // as BigDL will overwrite checkpointPath to its subfolder.
           this.setCheckpoint(checkpointDir.get, checkPointTrigger.get)
         }
-        this.optimize2()
+        this.train()
         i += 1
       }
     } else {
-      this.optimize2()
+      this.train()
     }
     this
   }

@@ -124,7 +124,7 @@ object ImageNet2012 {
     val rawData = readFromSeqFiles(path, sc, classNumber)
       .map(byteRecordToImageFeature(_))
       .setName("ImageNet2012 Training Set")
-    val featureSet = FeatureSet.rdd(rawData, memoryType = memoryType, INCREMENTAL(20))
+    val featureSet = FeatureSet.rdd(rawData, memoryType = memoryType, dataStrategy)
     val transformer = ImagePixelBytesToMat() ->
       ImageRandomCrop(imageSize, imageSize) ->
       ImageChannelNormalize(0.485f, 0.456f, 0.406f, 0.229f, 0.224f, 0.225f) ->
