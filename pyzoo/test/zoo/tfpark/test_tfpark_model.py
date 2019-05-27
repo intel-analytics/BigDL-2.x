@@ -174,7 +174,7 @@ class TestTFParkModel(ZooTestCase):
         val_x, val_y = self.create_training_data()
 
         model.fit([x, x], [y, y], validation_data=([val_x, val_x], [val_y, val_y]),
-                  batch_size=4, distributed=True)
+                  distributed=True)
 
     def test_training_and_validation_with_dataset(self):
         keras_model = self.create_model()
