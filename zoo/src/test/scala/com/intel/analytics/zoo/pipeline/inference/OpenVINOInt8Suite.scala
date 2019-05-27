@@ -57,6 +57,8 @@ class OpenVINOInt8Suite extends FunSuite with Matchers with BeforeAndAfterAll
   val resnet_v1_50_ifReverseInputChannels = true
   val resnet_v1_50_meanValues = Array(123.68f, 116.78f, 103.94f)
   val resnet_v1_50_scale = 1.0f
+  var resnet_v1_50_path: String = _
+  var resnet_v1_50_int8_path: String = _
 
   val calibrateValTarUrl = s"$s3Url/analytics-zoo-models/openvino/val_bmp_32.tar"
   val calibrateValTar = calibrateValTarUrl.split("/").last
@@ -91,6 +93,9 @@ class OpenVINOInt8Suite extends FunSuite with Matchers with BeforeAndAfterAll
 
     s"ls -alh $dir" !;
 
+    resnet_v1_50_path = s"$dir/resnet_v1_50_inference_graph"
+    resnet_v1_50_int8_path = s"$dir/resnet_v1_50_inference_graph-calibrated"
+
     resnet_v1_50_checkpointPath = s"$dir/resnet_v1_50.ckpt"
     calibrateValFilePath = s"$dir/val_bmp_32/val.txt"
     calibrateValDirPath = s"$dir/val_bmp_32/"
@@ -99,14 +104,8 @@ class OpenVINOInt8Suite extends FunSuite with Matchers with BeforeAndAfterAll
     image_input_970_filePath = s"$dir/ic_input_970"
 
     opencvLibPath = s"$dir/lib"
-  }
 
-  override def afterAll() {
-    // FileUtils.deleteDirectory(tmpDir)
-    s"rm -rf $tmpDir" !;
-  }
-
-  test("openvino model should be optimized and calibrated") {
+    // Optimize model
     InferenceModel.doOptimizeTF(
       null,
       resnet_v1_50_modelType,
@@ -117,27 +116,33 @@ class OpenVINOInt8Suite extends FunSuite with Matchers with BeforeAndAfterAll
       resnet_v1_50_scale,
       tmpDir.getAbsolutePath
     )
-    val model_IR_path = s"${tmpDir.getAbsolutePath}/${resnet_v1_50_modelType}_inference_graph.xml"
+    // int8 optimized model
+    resnet_v1_50_path = s"${tmpDir.getAbsolutePath}/${resnet_v1_50_modelType}" +
+      s"_inference_graph"
     InferenceModel.doCalibrateTF(
-      model_IR_path,
+      resnet_v1_50_path + ".xml",
       "C",
       calibrateValFilePath,
       32,
       opencvLibPath,
       tmpDir.getAbsolutePath
     )
+    resnet_v1_50_int8_path = s"${tmpDir.getAbsolutePath}/${resnet_v1_50_modelType}" +
+      s"_inference_graph-calibrated"
     tmpDir.listFiles().foreach(file => println(file.getAbsoluteFile))
+
   }
 
-  test("openvino image classification model should load successfully") {
+  override def afterAll() {
+    // FileUtils.deleteDirectory(tmpDir)
+    s"rm -rf $tmpDir" !;
+  }
+
+
+  test("openvino doLoadOpenVINO(float) and predict(float)") {
     val model = new InferenceModel(3)
-    model.doLoadTF(null,
-      resnet_v1_50_modelType,
-      resnet_v1_50_checkpointPath,
-      resnet_v1_50_inputShape,
-      resnet_v1_50_ifReverseInputChannels,
-      resnet_v1_50_meanValues,
-      resnet_v1_50_scale)
+    model.doLoadOpenVINO(s"${resnet_v1_50_path}.xml",
+      s"${resnet_v1_50_path}.bin")
     println(s"resnet_v1_50_model from tf loaded as $model")
     model shouldNot be(null)
 
@@ -169,19 +174,11 @@ class OpenVINOInt8Suite extends FunSuite with Matchers with BeforeAndAfterAll
     }
   }
 
-  test("openvino doLoadIR and Predict(float) and PredictInt8(float)") {
+  test("openvino doLoadInt8 and PredictInt8(float)") {
     val model = new InferenceModel(3)
-    model.doLoadTFAsCalibratedOpenVINO(null,
-      resnet_v1_50_modelType,
-      resnet_v1_50_checkpointPath,
-      resnet_v1_50_inputShape,
-      resnet_v1_50_ifReverseInputChannels,
-      resnet_v1_50_meanValues,
-      resnet_v1_50_scale,
-      "C",
-      calibrateValFilePath,
-      32,
-      opencvLibPath)
+    model.doLoadOpenVINOInt8(s"${resnet_v1_50_int8_path}.xml",
+      s"${resnet_v1_50_int8_path}.bin",
+      resnet_v1_50_inputShape.apply(0))
     println(s"resnet_v1_50_model from tf loaded as $model")
     model shouldNot be(null)
     val indata1 = fromHWC2CHW(Source.fromFile(image_input_65_filePath)
@@ -200,19 +197,8 @@ class OpenVINOInt8Suite extends FunSuite with Matchers with BeforeAndAfterAll
       Arrays.asList({
         input2
       }))
-    // Predict
-    val results: util.List[util.List[JTensor]] = model.doPredict(inputs)
-    val classes = results.toArray().map(list => {
-      val inner = list.asInstanceOf[util.List[JTensor]].get(0)
-      val class1 = inner.getData.slice(0, 1000).zipWithIndex.maxBy(_._1)._2
-      val class2 = inner.getData.slice(1000, 2000).zipWithIndex.maxBy(_._1)._2
-      println(s"(${class1}, ${class2})")
-      Array(class1.toFloat, class2.toFloat)
-    })
-    classes.foreach { output =>
-      assert(almostEqual(output, labels, 0.1f))
-    }
 
+    // Load float32 and predict int8 leads to 65 to wrong results
     // PredictInt8
     val resultsInt8: util.List[util.List[JTensor]] = model.doPredictInt8(inputs)
     val classesInt8 = resultsInt8.toArray().map(list => {
@@ -229,13 +215,8 @@ class OpenVINOInt8Suite extends FunSuite with Matchers with BeforeAndAfterAll
 
   test("openvino resnet50 should predictInt image successfully") {
     val model = new InferenceModel(3)
-    model.doLoadTF(null,
-      resnet_v1_50_modelType,
-      resnet_v1_50_checkpointPath,
-      resnet_v1_50_inputShape,
-      resnet_v1_50_ifReverseInputChannels,
-      resnet_v1_50_meanValues,
-      resnet_v1_50_scale)
+    model.doLoadOpenVINO(s"${resnet_v1_50_int8_path}.xml",
+      s"${resnet_v1_50_int8_path}.bin")
     println(s"resnet_v1_50_model from tf loaded as $model")
     model shouldNot be(null)
 
@@ -259,7 +240,7 @@ class OpenVINOInt8Suite extends FunSuite with Matchers with BeforeAndAfterAll
         input2
       }))
 
-    // Predict
+    // PredictInt8
     val results: util.List[util.List[JTensor]] = model.doPredict(inputs)
     val classes = results.toArray().map(list => {
       val inner = list.asInstanceOf[util.List[JTensor]].get(0)
@@ -271,34 +252,13 @@ class OpenVINOInt8Suite extends FunSuite with Matchers with BeforeAndAfterAll
     classes.foreach { output =>
       assert(almostEqual(output, labels, 0.1f))
     }
-
-    // PredictInt8
-    val resultsInt8: util.List[util.List[JTensor]] = model.doPredictInt8(inputs)
-    val classesInt8 = resultsInt8.toArray().map(list => {
-      val inner = list.asInstanceOf[util.List[JTensor]].get(0)
-      val class1 = inner.getData.slice(0, 1000).zipWithIndex.maxBy(_._1)._2
-      val class2 = inner.getData.slice(1000, 2000).zipWithIndex.maxBy(_._1)._2
-      println(s"(${class1}, ${class2})")
-      Array(class1.toFloat, class2.toFloat)
-    })
-    classesInt8.foreach { output =>
-      assert(almostEqual(output, labels, 0.1f))
-    }
   }
 
   test("openvino should handle wrong batchSize correctly") {
     val model = new InferenceModel(3)
-    model.doLoadTFAsCalibratedOpenVINO(null,
-      resnet_v1_50_modelType,
-      resnet_v1_50_checkpointPath,
-      resnet_v1_50_inputShape,
-      resnet_v1_50_ifReverseInputChannels,
-      resnet_v1_50_meanValues,
-      resnet_v1_50_scale,
-      "C",
-      calibrateValFilePath,
-      32,
-      opencvLibPath)
+    model.doLoadOpenVINOInt8(s"${resnet_v1_50_int8_path}.xml",
+      s"${resnet_v1_50_int8_path}.bin",
+      resnet_v1_50_inputShape.apply(0))
     println(s"resnet_v1_50_model from tf loaded as $model")
     model shouldNot be(null)
     val indata1 = fromHWC2CHW(Source.fromFile(image_input_65_filePath)
@@ -318,14 +278,6 @@ class OpenVINOInt8Suite extends FunSuite with Matchers with BeforeAndAfterAll
       Arrays.asList({
         input2
       }))
-    val results: util.List[util.List[JTensor]] = model.doPredict(inputs)
-    val classes = results.toArray().map(list => {
-      val inner = list.asInstanceOf[util.List[JTensor]].get(0)
-      val class1 = inner.getData.slice(0, 1000).zipWithIndex.maxBy(_._1)._2
-      class1.toFloat
-    })
-    almostEqual(classes, labels, 0.1f)
-    println(classes.mkString(","))
 
     val resultsInt8: util.List[util.List[JTensor]] = model.doPredictInt8(inputs)
     val classesInt8 = resultsInt8.toArray().map(list => {
@@ -333,7 +285,7 @@ class OpenVINOInt8Suite extends FunSuite with Matchers with BeforeAndAfterAll
       val class1 = inner.getData.slice(0, 1000).zipWithIndex.maxBy(_._1)._2
       class1.toFloat
     })
-    almostEqual(classesInt8, labels, 0.1f)
+    assert(almostEqual(classesInt8, labels, 0.1f))
     println(classesInt8.mkString(","))
   }
 
