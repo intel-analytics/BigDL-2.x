@@ -29,11 +29,18 @@ class JVMGuard():
     """
     @staticmethod
     def registerPids(pids):
-        from bigdl.util.common import callBigDlFunc
-        import zoo
-        callBigDlFunc("float",
-                      "jvmGuardRegisterPids",
-                      pids)
+        import logging
+        import traceback
+        try:
+            from bigdl.util.common import callBigDlFunc
+            import zoo
+            callBigDlFunc("float",
+                          "jvmGuardRegisterPids",
+                          pids)
+        except Exception as err:
+            logging.warn(traceback.format_exc())
+            logging.warn("Cannot sucessfully register pid into JVMGuard")
+
 
 class RayServiceFuncGenerator(object):
     """
@@ -50,6 +57,8 @@ class RayServiceFuncGenerator(object):
 
     def _prepare_env(self, cores=None):
         modified_env = os.environ.copy()
+        if self.env:
+            modified_env.update(self.env)
         cwd = os.getcwd()
         modified_env["PATH"] = "{}/{}:{}".format(cwd, "/".join(self.python_loc.split("/")[:-1]),
                                                  os.environ["PATH"])
@@ -74,7 +83,8 @@ class RayServiceFuncGenerator(object):
         return modified_env
 
     def __init__(self, python_loc, redis_port, ray_node_cpu_cores, mkl_cores,
-                 password, object_store_memory, waitting_time=10, verbose=False):
+                 password, object_store_memory, waitting_time=10, verbose=False, env=None):
+        self.env=env
         self.python_loc = python_loc
         self.redis_port = redis_port
         self.password = password
@@ -85,7 +95,6 @@ class RayServiceFuncGenerator(object):
         self.WAITING_TIME_SEC = waitting_time
         self.verbose = verbose
         self.labels = """--resources='{"trainer": %s, "ps": %s }' """ % (1, 1)
-        print(self.labels)
 
     def gen_stop(self):
         def _stop(iter):
@@ -172,8 +181,7 @@ class RayRunner(object):
 
     # TODO: redis_port should be retrieved by random searched
     def __init__(self, sc, redis_port="5346", password="123456", object_store_memory=None,
-                 force_purge=False, verbose=False):
-        print("hello")
+                 force_purge=False, verbose=False, env=None):
         self.sc = sc
         self.ray_node_cpu_cores = self._get_ray_node_cpu_cores()
         self.num_ray_nodes = self._get_num_ray_nodes()
@@ -185,7 +193,7 @@ class RayRunner(object):
             mkl_cores=self._get_mkl_cores(),
             password=password,
             object_store_memory=resourceToBytes(object_store_memory) if object_store_memory else None,
-            verbose=verbose)
+            verbose=verbose, env=env)
         if force_purge:
             self.stop()
         from bigdl.util.common import init_executor_gateway
@@ -197,7 +205,7 @@ class RayRunner(object):
     def from_spark(cls, hadoop_conf,
                    slave_num, slave_cores, slave_memory,
                    driver_cores,driver_memory, conda_name,
-                   extra_pmodule_zip=None, penv_archive=None, jars=None,
+                   extra_pmodule_zip=None, penv_archive=None, jars=None, env=None,
                    force_purge=False,
                    verbose=False):
         from zoo.ray.util.spark import SparkRunner
@@ -214,7 +222,7 @@ class RayRunner(object):
             driver_cores=driver_cores,
             extra_executor_memory_for_ray=slave_memory,
         jars=jars)
-        return cls(sc=sc, force_purge=force_purge, verbose=verbose)
+        return cls(sc=sc, force_purge=force_purge, verbose=verbose, env=env)
 
     def stop(self):
         import ray

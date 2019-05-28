@@ -4,7 +4,7 @@
 
 2) Install some essential dependencies on the conda env
 pip install analytics-zoo
-pip install pyspark==2.4
+pip install pyspark==2.4.0 # pyspark>=2.4.1 would require scala 2.12.x rather than 2.11.x
 pip install ray[debug]
 pip install conda-pack
 pip install psutil

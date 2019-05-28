@@ -95,7 +95,7 @@ class ProcessMonitor:
                 self.master.append(process_info)
             else:
                 self.slaves.append(process_info)
-        # ProcessMonitor.register_shutdown_hook(extra_close_fn=self._clean_fn)
+        ProcessMonitor.register_shutdown_hook(extra_close_fn=self._clean_fn)
         assert len(self.master) == 1,\
             "We should got 1 master only, but we got {}".format(len(self.master))
         self.master = self.master[0]
