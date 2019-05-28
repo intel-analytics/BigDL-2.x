@@ -22,10 +22,13 @@ import com.intel.analytics.bigdl.nn.abstractnn.Activity
 import scala.collection.JavaConverters._
 
 class OpenVINOModel(var executableNetworkReference: Long = -1,
-                    var supportive: OpenVinoInferenceSupportive)
+                    var supportive: OpenVinoInferenceSupportive,
+                    var isInt8: Boolean = false)
   extends AbstractModel with InferenceSupportive with Serializable {
 
   override def predict(inputs: JList[JList[JTensor]]): JList[JList[JTensor]] = {
+    // Avoid load int8 model and predict with float
+    if (isInt8) return predictInt8(inputs)
     val outputs = new ArrayList[JList[JTensor]]()
     inputs.asScala.map(input => {
       val tensor = input.get(0)
@@ -38,6 +41,8 @@ class OpenVINOModel(var executableNetworkReference: Long = -1,
   }
 
   override def predict(inputActivity: Activity): Activity = {
+    // Avoid load int8 model and predict with float
+    if (isInt8) return predictInt8(inputActivity)
     val (inputList, batchSize) = inputActivity.isTable match {
       case true =>
         val inputTable = inputActivity.toTable
@@ -53,6 +58,8 @@ class OpenVINOModel(var executableNetworkReference: Long = -1,
   }
 
   override def predictInt8(inputs: JList[JList[JTensor]]): JList[JList[JTensor]] = {
+    // Avoid load float model and predict with int8
+    if (!isInt8) return predict(inputs)
     val outputs = new ArrayList[JList[JTensor]]()
     inputs.asScala.map(input => {
       val tensor = input.get(0)
@@ -66,6 +73,8 @@ class OpenVINOModel(var executableNetworkReference: Long = -1,
   }
 
   override def predictInt8(inputActivity: Activity): Activity = {
+    // Avoid load float model and predict with int8
+    if (!isInt8) return predict(inputActivity)
     val (inputList, batchSize) = inputActivity.isTable match {
       case true =>
         val inputTable = inputActivity.toTable
