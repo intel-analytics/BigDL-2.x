@@ -17,7 +17,7 @@
 import sys
 
 from bigdl.nn.layer import Layer, Node
-from bigdl.util.common import callBigDlFunc, to_list
+from bigdl.util.common import callBigDlFunc, to_list, JTensor
 
 import zoo.pipeline.api.keras.base as kbase
 from zoo.pipeline.api.keras.objectives import LossFunction
@@ -241,6 +241,15 @@ def mm(x, y, axes=None):
     :return: A variable.
     """
     return Variable.from_jvalue(callBigDlFunc("float", "mm", x, y, axes))
+
+
+def erf(x):
+    """
+    Computes the error function(Gauss error function) of each element.
+    :param x: A variable.
+    :return: A variable.
+    """
+    return Variable.from_jvalue(callBigDlFunc("float", "erf", x))
 
 
 class VariableOperator(object):
@@ -482,6 +491,17 @@ class Parameter(kbase.ZooKerasLayer, VariableOperator):
                       "setParameterWeight",
                       self,
                       kbase.JTensor.from_ndarray(value))
+
+
+class Constant(kbase.ZooKerasCreator, VariableOperator):
+    """
+    A constant Variable without weights.
+    :param data: value of the Variable.
+    :param name: Optional. Name of the Variable
+    """
+    def __init__(self, data, name=None, bigdl_type="float"):
+        self.data = data
+        super(Constant, self).__init__(None, bigdl_type, JTensor.from_ndarray(data), name)
 
 
 class CustomLoss(LossFunction):

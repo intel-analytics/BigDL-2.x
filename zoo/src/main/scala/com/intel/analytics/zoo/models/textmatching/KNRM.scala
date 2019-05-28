@@ -44,14 +44,14 @@ import scala.reflect.ClassTag
  * @param embedWeights Tensor. Pre-trained word embedding weights if any. Default is null and in
  *                     this case, initial weights will be randomized.
  * @param trainEmbed Boolean. Whether to train the embedding layer or not. Default is true.
- * @param kernelNum Integer. The number of kernels to use. Default is 21.
+ * @param kernelNum Integer > 1. The number of kernels to use. Default is 21.
  * @param sigma Double. Defines the kernel width, or the range of its softTF count.
  *              Default is 0.1.
  * @param exactSigma Double. The sigma used for the kernel that harvests exact matches
  *                   in the case where RBF mu=1.0. Default is 0.001.
  * @param targetMode String. The target mode of the model. Either 'ranking' or 'classification'.
  *                   For ranking, the output will be the relevance score between text1 and text2 and
- *                   you are recommended to use RankHinge as loss for pairwise training.
+ *                   you are recommended to use 'rank_hinge' as loss for pairwise training.
  *                   For classification, the last layer will be sigmoid and the output will be the
  *                   probability between 0 and 1 indicating whether text1 is related to text2 and
  *                   you are recommended to use 'binary_crossentropy' as loss for binary
@@ -69,6 +69,8 @@ class KNRM[T: ClassTag] private(
     val exactSigma: Double = 0.001,
     override val targetMode: String = "ranking")(implicit ev: TensorNumeric[T])
   extends TextMatcher[T](text1Length, vocabSize, embedSize, embedWeights, trainEmbed, targetMode) {
+
+  require(kernelNum > 1, s"kernelNum must be an integer greater than 1, but got $kernelNum")
 
   override def buildModel(): AbstractModule[Activity, Activity, T] = {
     // Remark: Share weights for embedding is not supported.
@@ -91,7 +93,7 @@ class KNRM[T: ClassTag] private(
       val mmLog = A.log(mmDocSum + 1.0)
       // Remark: Keep the reduced dimension for the last sum and squeeze after stack.
       // Otherwise, when batch=1, the output will become a Scalar not compatible stack.
-      val mmSum = A.sum(mmLog, 1, keepDims = true)
+      val mmSum = A.sum(mmLog, axis = 1, keepDims = true)
       KM.append(mmSum)
     }
     val Phi = Squeeze(2).inputs(A.stack(KM.toList).node)

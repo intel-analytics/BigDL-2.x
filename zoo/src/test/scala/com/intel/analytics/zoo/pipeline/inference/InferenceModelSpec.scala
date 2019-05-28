@@ -16,14 +16,23 @@
 
 package com.intel.analytics.zoo.pipeline.inference
 
-import java.io.{ByteArrayInputStream, ByteArrayOutputStream, ObjectInputStream, ObjectOutputStream}
+import java.io._
 import java.util
 
 import com.intel.analytics.bigdl.tensor.Tensor
+import com.intel.analytics.zoo.common.CheckedObjectInputStream
 import org.scalatest.{BeforeAndAfter, FlatSpec, Matchers}
 
 class TestAbstractInferenceModel(supportedConcurrentNum: Integer = 1)
   extends AbstractInferenceModel(supportedConcurrentNum) {
+}
+
+class TestAutoScalingAbstractInferenceModel() extends AbstractInferenceModel() {
+}
+
+class TestAutoScalingAbstractInferenceModel2(autoScalingEnabled: Boolean = true,
+                                             concurrentNum: Int = 100)
+  extends AbstractInferenceModel(autoScalingEnabled, concurrentNum) {
 }
 
 class InferenceModelSpec extends FlatSpec with Matchers with BeforeAndAfter
@@ -32,7 +41,7 @@ class InferenceModelSpec extends FlatSpec with Matchers with BeforeAndAfter
   val modelPath = resource.getPath + "/caffe/test_persist.prototxt"
   val weightPath = resource.getPath + "/caffe/test_persist.caffemodel"
 
-  var floatInferenceModel: FloatInferenceModel = _
+  var floatInferenceModel: FloatModel = _
 
   val inputTensor1 = Tensor[Float](3, 5, 5).rand()
   val inputTensor2 = Tensor[Float](3, 5, 5).rand()
@@ -46,10 +55,40 @@ class InferenceModelSpec extends FlatSpec with Matchers with BeforeAndAfter
   val inputTensorList2 = util.Arrays.asList(inputJTensor2)
   val inputTensorList3 = util.Arrays.asList(inputJTensor3)
   val inputTensorList = util.Arrays.asList(inputTensorList1, inputTensorList2, inputTensorList3)
+  val bigInputTensorList = util.Arrays.asList(inputTensorList1, inputTensorList2, inputTensorList3,
+    inputTensorList1, inputTensorList2, inputTensorList3,
+    inputTensorList1, inputTensorList2, inputTensorList3,
+    inputTensorList1, inputTensorList2, inputTensorList3,
+    inputTensorList1, inputTensorList2, inputTensorList3,
+    inputTensorList1, inputTensorList2, inputTensorList3,
+    inputTensorList1, inputTensorList2, inputTensorList3,
+    inputTensorList1, inputTensorList2, inputTensorList3,
+    inputTensorList1, inputTensorList2, inputTensorList3,
+    inputTensorList1, inputTensorList2, inputTensorList3,
+    inputTensorList1, inputTensorList2, inputTensorList3,
+    inputTensorList1, inputTensorList2, inputTensorList3,
+    inputTensorList1, inputTensorList2, inputTensorList3,
+    inputTensorList1, inputTensorList2, inputTensorList3,
+    inputTensorList1, inputTensorList2, inputTensorList3,
+    inputTensorList1, inputTensorList2, inputTensorList3,
+    inputTensorList1, inputTensorList2, inputTensorList3,
+    inputTensorList1, inputTensorList2, inputTensorList3,
+    inputTensorList1, inputTensorList2, inputTensorList3,
+    inputTensorList1, inputTensorList2, inputTensorList3,
+    inputTensorList1, inputTensorList2, inputTensorList3,
+    inputTensorList1, inputTensorList2, inputTensorList3,
+    inputTensorList1, inputTensorList2, inputTensorList3,
+    inputTensorList1, inputTensorList2, inputTensorList3,
+    inputTensorList1, inputTensorList2, inputTensorList3,
+    inputTensorList1, inputTensorList2, inputTensorList3,
+    inputTensorList1, inputTensorList2, inputTensorList3,
+    inputTensorList1, inputTensorList2, inputTensorList3,
+    inputTensorList1, inputTensorList2, inputTensorList3,
+    inputTensorList1, inputTensorList2, inputTensorList3,
+    inputTensorList1, inputTensorList2, inputTensorList3)
 
   before {
-    floatInferenceModel = InferenceModelFactory.
-      loadFloatInferenceModelForCaffe(modelPath, weightPath)
+    floatInferenceModel = InferenceModelFactory.loadFloatModelForCaffe(modelPath, weightPath)
   }
 
   after {
@@ -67,15 +106,17 @@ class InferenceModelSpec extends FlatSpec with Matchers with BeforeAndAfter
 
     val begin2 = System.currentTimeMillis()
     val fModels = List.range(0, supportedConcurrentNum).map(i => InferenceModelFactory.
-      loadFloatInferenceModelForCaffe(modelPath, weightPath))
+      loadFloatModelForCaffe(modelPath, weightPath))
     val end2 = System.currentTimeMillis()
     val time2 = end2 - begin2
 
     println(s"load $supportedConcurrentNum shared wights models used $time1 ms," +
       s"load $supportedConcurrentNum single models used $time2 ms.")
 
-    val weightsForAModel1 = aModel.modelQueue.take().model.getWeightsBias()(0).storage()
-    val weightsForAModel2 = aModel.modelQueue.take().model.getWeightsBias()(0).storage()
+    val weightsForAModel1 = aModel.modelQueue.take().asInstanceOf[FloatModel].
+      model.getWeightsBias()(0).storage()
+    val weightsForAModel2 = aModel.modelQueue.take().asInstanceOf[FloatModel].
+      model.getWeightsBias()(0).storage()
     assert(weightsForAModel1 == weightsForAModel2)
 
     val weightsForFModel1 = fModels(0).model.getWeightsBias()(0).storage()
@@ -104,8 +145,10 @@ class InferenceModelSpec extends FlatSpec with Matchers with BeforeAndAfter
     val aModel2 = in4AModel.readObject.asInstanceOf[InferenceModel]
     in4AModel.close()
 
-    val weightsForAModel3 = aModel2.modelQueue.take().model.getWeightsBias()(0).storage()
-    val weightsForAModel4 = aModel2.modelQueue.take().model.getWeightsBias()(0).storage()
+    val weightsForAModel3 = aModel2.modelQueue.take().asInstanceOf[FloatModel]
+      .model.getWeightsBias()(0).storage()
+    val weightsForAModel4 = aModel2.modelQueue.take().asInstanceOf[FloatModel]
+      .model.getWeightsBias()(0).storage()
     assert(weightsForAModel3 == weightsForAModel4)
 
     val inputTensor = Tensor[Float](3, 5, 5).rand()
@@ -159,15 +202,17 @@ class InferenceModelSpec extends FlatSpec with Matchers with BeforeAndAfter
 
     val begin2 = System.currentTimeMillis()
     val fModels = List.range(0, supportedConcurrentNum).map(i => InferenceModelFactory.
-      loadFloatInferenceModelForCaffe(modelPath, weightPath))
+      loadFloatModelForCaffe(modelPath, weightPath))
     val end2 = System.currentTimeMillis()
     val time2 = end2 - begin2
 
     println(s"load $supportedConcurrentNum shared wights models used $time1 ms," +
       s"load $supportedConcurrentNum single models used $time2 ms.")
 
-    val weightsForAModel1 = aModel.modelQueue.take().model.getWeightsBias()(0).storage()
-    val weightsForAModel2 = aModel.modelQueue.take().model.getWeightsBias()(0).storage()
+    val weightsForAModel1 = aModel.modelQueue.take().asInstanceOf[FloatModel]
+      .model.getWeightsBias()(0).storage()
+    val weightsForAModel2 = aModel.modelQueue.take().asInstanceOf[FloatModel]
+      .model.getWeightsBias()(0).storage()
     assert(weightsForAModel1 == weightsForAModel2)
 
     val weightsForFModel1 = fModels(0).model.getWeightsBias()(0).storage()
@@ -192,12 +237,14 @@ class InferenceModelSpec extends FlatSpec with Matchers with BeforeAndAfter
     assert(bytes4AModel.length < bytes4FModel.length)
 
     val bis4AModel = new ByteArrayInputStream(bytes4AModel)
-    val in4AModel = new ObjectInputStream(bis4AModel)
+    val in4AModel = new CheckedObjectInputStream(classOf[TestAbstractInferenceModel], bis4AModel)
     val aModel2 = in4AModel.readObject.asInstanceOf[TestAbstractInferenceModel]
     in4AModel.close()
 
-    val weightsForAModel3 = aModel2.modelQueue.take().model.getWeightsBias()(0).storage()
-    val weightsForAModel4 = aModel2.modelQueue.take().model.getWeightsBias()(0).storage()
+    val weightsForAModel3 = aModel2.modelQueue.take().asInstanceOf[FloatModel]
+      .model.getWeightsBias()(0).storage()
+    val weightsForAModel4 = aModel2.modelQueue.take().asInstanceOf[FloatModel]
+      .model.getWeightsBias()(0).storage()
     assert(weightsForAModel3 == weightsForAModel4)
 
     val currentNum = 10
@@ -222,5 +269,44 @@ class InferenceModelSpec extends FlatSpec with Matchers with BeforeAndAfter
     val shape = Array(1, 4)
     val jTensor = new JTensor(data, shape)
     jTensor.toString should be("JTensor{data=[1.0, 2.0, 3.0, 4.0], shape=[1, 4]}")
+  }
+
+  "Autoscaling enabled InferenceModel" should "auto scaling" in {
+    val aModel = new TestAutoScalingAbstractInferenceModel()
+    aModel.loadCaffe(modelPath, weightPath)
+    val result: util.List[util.List[JTensor]] = aModel.predict(bigInputTensorList)
+    println(aModel.modelQueue.size())
+
+    val threads = List.range(0, 100).map(i => {
+      new Thread() {
+        override def run(): Unit = {
+          val r1 = aModel.predict(bigInputTensorList)
+          r1.get(0).get(0).getData shouldEqual result.get(0).get(0).getData
+          r1.get(1).get(0).getData shouldEqual result.get(1).get(0).getData
+          r1.get(2).get(0).getData shouldEqual result.get(2).get(0).getData
+        }
+      }
+    })
+    threads.foreach(_.start())
+    threads.foreach(_.join())
+    println(aModel.modelQueue.size())
+    aModel.modelQueue.size() should be > 1
+
+    val bModel = new TestAutoScalingAbstractInferenceModel2(true, 50)
+    bModel.loadCaffe(modelPath, weightPath)
+    println(bModel.modelQueue.size())
+    bModel.modelQueue.size() should be (0)
+    val threads2 = List.range(0, 300).map(i => {
+      new Thread() {
+        override def run(): Unit = {
+          bModel.predict(bigInputTensorList)
+        }
+      }
+    })
+    threads2.foreach(_.start())
+    threads2.foreach(_.join())
+    println(bModel.modelQueue.size())
+    bModel.modelQueue.size() should be > 1
+    bModel.modelQueue.size() should be <= 50
   }
 }

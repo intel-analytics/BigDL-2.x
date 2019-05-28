@@ -16,10 +16,9 @@
 
 import pytest
 
-import numpy as np
 import random
-from bigdl.util.common import Sample
 
+from zoo.pipeline.api.keras.layers import *
 from zoo.models.recommendation import UserItemFeature
 from zoo.models.recommendation import NeuralCF
 from test.zoo.pipeline.utils.test_utils import ZooTestCase
@@ -30,30 +29,27 @@ np.random.seed(1337)  # for reproducibility
 class TestNeuralCF(ZooTestCase):
 
     def test_forward_backward_without_mf(self):
-        model = NeuralCF(30, 12, 2, include_mf=False)
-        model.summary()
-        input_data = np.random.randint(10, size=(10, 2))
+        model = NeuralCF(30, 30, 2, include_mf=False)
+        input_data = np.random.randint(1, 30,  size=(10, 2))
         self.assert_forward_backward(model, input_data)
 
     def test_forward_backward_with_mf(self):
         model = NeuralCF(10, 10, 5, 5, 5)
-        input_data = np.random.randint(10, size=(3, 2))
+        input_data = np.random.randint(1, 10, size=(3, 2))
         self.assert_forward_backward(model, input_data)
 
     def test_save_load(self):
         model = NeuralCF(10000, 2000, 10)
-        input_data = np.random.randint(1500, size=(300, 2))
+        input_data = np.random.randint(100, 2000, size=(300, 2))
         self.assert_zoo_model_save_load(model, input_data)
 
     def test_predict_recommend(self):
-
         def gen_rand_user_item_feature(user_num, item_num, class_num):
             user_id = random.randint(1, user_num)
             item_id = random.randint(1, item_num)
             rating = random.randint(1, class_num)
             sample = Sample.from_ndarray(np.array([user_id, item_id]), np.array([rating]))
             return UserItemFeature(user_id, item_id, sample)
-
         model = NeuralCF(200, 80, 5)
         data = self.sc.parallelize(range(0, 50))\
             .map(lambda i: gen_rand_user_item_feature(200, 80, 5))
@@ -63,6 +59,29 @@ class TestNeuralCF(ZooTestCase):
         print(recommended_items[0])
         recommended_users = model.recommend_for_item(data, max_users=4).collect()
         print(recommended_users[0])
+
+    def test_compile_fit(self):
+        def gen_rand_user_item_feature(user_num, item_num, class_num):
+            user_id = random.randint(1, user_num)
+            item_id = random.randint(1, item_num)
+            rating = random.randint(1, class_num)
+            sample = Sample.from_ndarray(np.array([user_id, item_id]), np.array([rating]))
+            return UserItemFeature(user_id, item_id, sample)
+        model = NeuralCF(200, 80, 5)
+        model.summary()
+        data = self.sc.parallelize(range(0, 50)) \
+            .map(lambda i: gen_rand_user_item_feature(200, 80, 5)) \
+            .map(lambda pair: pair.sample)
+        model.compile(optimizer="adam",
+                      loss=SparseCategoricalCrossEntropy(zero_based_label=False),
+                      metrics=['accuracy'])
+        tmp_log_dir = create_tmp_path()
+        model.set_tensorboard(tmp_log_dir, "training_test")
+        model.fit(data, nb_epoch=1, batch_size=32, validation_data=data)
+        train_loss = model.get_train_summary("Loss")
+        val_loss = model.get_validation_summary("Loss")
+        print(np.array(train_loss))
+        print(np.array(val_loss))
 
 
 if __name__ == "__main__":

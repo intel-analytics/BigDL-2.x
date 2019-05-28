@@ -65,6 +65,11 @@ class TestTextFeature(ZooTestCase):
         assert list(sample.feature.storage) == [1., 3., 2., 1., 0.]
         assert list(sample.label.storage) == [0.]
 
+    def test_text_feature_with_uri(self):
+        feature = TextFeature(uri="A1")
+        assert feature.get_text() is None
+        assert feature.get_uri() == "A1"
+
 
 if __name__ == "__main__":
     pytest.main([__file__])

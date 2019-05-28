@@ -10,14 +10,14 @@ You can download Analytics Zoo prebuilt release and nightly build package from [
 
 ## Data Preparation
 __QA Dataset:__
+- For convenience, you are __recommended to directly download__ our processed WikiQA dataset from [here](https://s3.amazonaws.com/analytics-zoo-data/WikiQAProcessed.zip) and unzip it.
 - [WikiQA](https://www.microsoft.com/en-us/download/details.aspx?id=52419) is a new publicly available set of question and sentence pairs.
-- Instead of using original WikiQA dataset format directly, we refer to [MatchZoo](https://github.com/NTMC-Community/MatchZoo) to process the raw data into corpus and relations.
+- Instead of using original WikiQA dataset format directly, we refer to [MatchZoo](https://github.com/NTMC-Community/MatchZoo) to process raw data into corpus and relations.
 Thus this example expects the following input files put under the same directory, which ought to applicable for general question answering tasks:
     - `question_corpus.csv`: Each record contains QuestionID and content separated by comma.
     - `answer_corpus.csv`: Each record contains AnswerID and content separated by comma.
     - `relation_train.csv` and `relation_valid.csv`: Question and answer correspondence for training and validation respectively. Each record contains QuestionID, AnswerID and label (0 or 1) separated by comma.
-- For convenience, you are __recommended to directly download__ our processed WikiQA dataset from [here](https://s3.amazonaws.com/analytics-zoo-data/WikiQAProcessed.zip) and unzip it.
-- Alternatively, you can follow similar steps listed in this [script](https://github.com/NTMC-Community/MatchZoo/blob/master/data/WikiQA/run_data.sh) to process raw WikiQA dataset if you wish.
+- If you wish, you can also follow similar steps listed in this [script](https://github.com/NTMC-Community/MatchZoo/blob/v1.0/data/WikiQA/run_data.sh) to process the raw WikiQA dataset.
 
 __Word Embeddings:__
 - We use [`glove.840B.300d.txt`](http://nlp.stanford.edu/data/glove.840B.300d.zip) in this example.
@@ -48,13 +48,16 @@ See [here](#options) for more configurable options for this example.
 ## Options
 * `--dataPath` This option is __required__. The directory containing the corpus and relations.
 * `--embeddingFile` This option is __required__. The file path to GloVe embeddings.
+* `--outputPath` If specified, the trained model `knrm.model` and word dictionary file `word_index.txt` will be saved under this path. It can be either a local or distributed file system path.
 * `--questionLength` The sequence length of each question. Default is 10.
 * `--answerLength` The sequence length of each answer. Default is 40.
 * `--partitionNum` The number of partitions to cut the datasets into. Default is 4.
 * `-b` `--batchSize` The number of samples per gradient update. Default is 200.
 * `-e` `--nbEpoch` The number of iterations to train the model. Default is 30.
 * `-l` `--learningRate` The learning rate for the model. Default is 0.001.
+* `--memoryType` Memory type used for caching training data. Default is `DRAM`. You can change it to `PMEM` if you have Intel Optane DC Persistent Memory.
 * `-m` `--model` Specify this option only if you want to load an existing KNRM model and in this case its path should be provided.
+
 
 
 ## Results
@@ -62,7 +65,7 @@ We use [NDCG](https://en.wikipedia.org/wiki/Evaluation_measures_(information_ret
 
 You can find the validation information from the console log during the training process:
 ```
-INFO  TextMatcher$:86 - ndcg@3: 0.6417297245909217
-INFO  TextMatcher$:86 - ndcg@5: 0.688879313318335
-INFO  TextMatcher$:77 - map: 0.6373270433829106
+INFO  Ranker$:103 - ndcg@3: 0.6449269813235653
+INFO  Ranker$:103 - ndcg@5: 0.6953062444306408
+INFO  Ranker$:84 - map: 0.6560713265739151
 ```

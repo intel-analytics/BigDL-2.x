@@ -23,6 +23,7 @@ from unittest import TestCase
 import keras.backend as K
 
 from zoo.common.nncontext import *
+from zoo.feature.image import ImageSet
 
 np.random.seed(1337)  # for reproducibility
 
@@ -37,10 +38,11 @@ class ZooTestCase(TestCase):
         It is invoked for every test method of a class.
         """
         K.set_image_dim_ordering("th")
-        sparkConf = init_spark_conf().setMaster("local[4]").setAppName("zoo test case")
+        sparkConf = init_spark_conf().setMaster("local[4]").setAppName("zoo test case")\
+            .set("spark.driver.memory", "5g")
         assert str(sparkConf.get("spark.shuffle.reduceLocality.enabled")) == "false"
-        assert str(sparkConf.get("spark.serializer")) \
-            == "org.apache.spark.serializer.JavaSerializer"
+        assert \
+            str(sparkConf.get("spark.serializer")) == "org.apache.spark.serializer.JavaSerializer"
         assert SparkContext._active_spark_context is None
         self.sc = init_nncontext(sparkConf)
         self.sc.setLogLevel("ERROR")
@@ -82,6 +84,10 @@ class ZooTestCase(TestCase):
             print("not close tol = ", atol + rtol * np.abs(y))
             print("dtype = %s, shape = %s" % (a.dtype, a.shape))
             np.testing.assert_allclose(a, b, rtol=rtol, atol=atol, err_msg=msg)
+
+    def assert_list_allclose(self, a, b, rtol=1e-6, atol=1e-6, msg=None):
+        for (i1, i2) in zip(a, b):
+            self.assert_allclose(i1, i2, rtol, atol, msg)
 
     def compare_loss(self, y_a, y_b, kloss, zloss, rtol=1e-6, atol=1e-6):
         """
@@ -151,6 +157,21 @@ class ZooTestCase(TestCase):
         self.compare_output_and_grad_input(model, loaded_model, input_data, rtol, atol)
         os.remove(tmp_path)
 
+    def assert_tfpark_model_save_load(self, model, input_data, rtol=1e-6, atol=1e-6):
+        model_class = model.__class__
+        tmp_path = create_tmp_path() + ".h5"
+        model.save_model(tmp_path)
+        loaded_model = model_class.load_model(tmp_path)
+        assert isinstance(loaded_model, model_class)
+        # Calling predict will remove the impact of dropout.
+        output1 = model.predict(input_data)
+        output2 = loaded_model.predict(input_data, distributed=True)
+        if isinstance(output1, list):
+            self.assert_list_allclose(output1, output2, rtol, atol)
+        else:
+            self.assert_allclose(output1, output2, rtol, atol)
+        os.remove(tmp_path)
+
     def compare_output_and_grad_input(self, model1, model2, input_data, rtol=1e-6, atol=1e-6):
         # Set seed in case of random factors such as dropout.
         rng = RNG()
@@ -158,15 +179,45 @@ class ZooTestCase(TestCase):
         output1 = model1.forward(input_data)
         rng.set_seed(1000)
         output2 = model2.forward(input_data)
-        self.assert_allclose(output1, output2, rtol, atol)
+        if isinstance(output1, list):
+            self.assert_list_allclose(output1, output2, rtol, atol)
+        else:
+            self.assert_allclose(output1, output2, rtol, atol)
         rng.set_seed(1000)
         grad_input1 = model1.backward(input_data, output1)
         rng.set_seed(1000)
         grad_input2 = model2.backward(input_data, output1)
-        self.assert_allclose(grad_input1, grad_input2, rtol, atol)
+        if isinstance(grad_input1, list):
+            self.assert_list_allclose(grad_input1, grad_input2, rtol, atol)
+        else:
+            self.assert_allclose(grad_input1, grad_input2, rtol, atol)
 
     def compare_output_and_grad_input_set_weights(self, model1, model2, input_data,
                                                   rtol=1e-6, atol=1e-6):
         if model1.get_weights():
             model2.set_weights(model1.get_weights())
         self.compare_output_and_grad_input(model1, model2, input_data, rtol, atol)
+
+    def intercept(self, func, error_message):
+
+        error = False
+        try:
+            func()
+        except Exception as e:
+            if error_message not in str(e):
+                raise Exception("error_message not in the exception raised. " +
+                                "error_message: %s, exception: %s" % (error_message, e))
+            error = True
+
+        if not error:
+            raise Exception("exception is not raised")
+
+    def get_raw_image_set(self, with_label):
+        resource_path = os.path.join(os.path.split(__file__)[0], "../../resources")
+        if with_label:
+            image_folder = os.path.join(resource_path, "cat_dog")
+        else:
+            image_folder = os.path.join(resource_path, "cat_dog/*")
+        image_set = ImageSet.read(image_folder, with_label=with_label, sc=get_spark_context(),
+                                  one_based_label=False)
+        return image_set

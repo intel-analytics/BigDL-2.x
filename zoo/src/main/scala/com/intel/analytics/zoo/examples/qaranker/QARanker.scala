@@ -17,7 +17,6 @@
 package com.intel.analytics.zoo.examples.qaranker
 
 import com.intel.analytics.bigdl.optim.SGD
-import com.intel.analytics.bigdl.optim.SGD.Poly
 import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric.NumericFloat
 import com.intel.analytics.bigdl.utils.Shape
 import com.intel.analytics.zoo.common.NNContext
@@ -26,6 +25,7 @@ import com.intel.analytics.zoo.pipeline.api.keras.layers.TimeDistributed
 import com.intel.analytics.zoo.pipeline.api.keras.objectives.RankHinge
 import com.intel.analytics.zoo.models.textmatching.KNRM
 import com.intel.analytics.zoo.feature.common.Relations
+import com.intel.analytics.zoo.feature.pmem.MemoryType
 import com.intel.analytics.zoo.feature.text.TextSet
 import scopt.OptionParser
 
@@ -35,7 +35,8 @@ case class QARankerParams(
     questionLength: Int = 10, answerLength: Int = 40,
     partitionNum: Int = 4, batchSize: Int = 200,
     nbEpoch: Int = 30, learningRate: Double = 0.001,
-    model: Option[String] = None)
+    model: Option[String] = None, memoryType: String = "DRAM",
+    outputPath: Option[String] = None)
 
 
 object QARanker {
@@ -70,6 +71,12 @@ object QARanker {
       opt[String]('m', "model")
         .text("KNRM model snapshot location if any")
         .action((x, c) => c.copy(model = Some(x)))
+      opt[String]("memoryType")
+        .text("memory type")
+        .action((x, c) => c.copy(memoryType = x))
+      opt[String]('o', "outputPath")
+        .text("The directory to save the model and word dictionary")
+        .action((x, c) => c.copy(outputPath = Some(x)))
     }
 
     parser.parse(args, QARankerParams()).map { param =>
@@ -80,11 +87,11 @@ object QARanker {
       val aSet = TextSet.readCSV(param.dataPath + "/answer_corpus.csv", sc, param.partitionNum)
         .tokenize().normalize().word2idx(minFreq = 2, existingMap = qSet.getWordIndex)
         .shapeSequence(param.answerLength)
-      val wordIndex = aSet.getWordIndex
 
       val trainRelations = Relations.read(param.dataPath + "/relation_train.csv",
         sc, param.partitionNum)
-      val trainSet = TextSet.fromRelationPairs(trainRelations, qSet, aSet)
+      val trainSet = TextSet.fromRelationPairs(trainRelations, qSet, aSet,
+        MemoryType.fromString(param.memoryType))
       val validateRelations = Relations.read(param.dataPath + "/relation_valid.csv",
         sc, param.partitionNum)
       val validateSet = TextSet.fromRelationLists(validateRelations, qSet, aSet)
@@ -92,18 +99,24 @@ object QARanker {
       val knrm = if (param.model.isDefined) {
         KNRM.loadModel(param.model.get)
       } else {
+        val wordIndex = aSet.getWordIndex
         KNRM(param.questionLength, param.answerLength, param.embeddingFile, wordIndex)
       }
       val model = Sequential().add(TimeDistributed(
         knrm, inputShape = Shape(2, param.questionLength + param.answerLength)))
-      val optimizer = new SGD(learningRate = param.learningRate,
-        learningRateSchedule = Poly(0.5, 50 * 400))
-      model.compile(optimizer = optimizer, loss = RankHinge[Float]())
+      model.compile(optimizer = new SGD(learningRate = param.learningRate),
+        loss = RankHinge[Float]())
       for (i <- 1 to param.nbEpoch) {
         model.fit(trainSet, batchSize = param.batchSize, nbEpoch = 1)
         knrm.evaluateNDCG(validateSet, 3)
         knrm.evaluateNDCG(validateSet, 5)
         knrm.evaluateMAP(validateSet)
+      }
+      if (param.outputPath.isDefined) {
+        val outputPath = param.outputPath.get
+        knrm.saveModel(outputPath + "/knrm.model")
+        aSet.saveWordIndex(outputPath + "/word_index.txt")
+        println("Trained model and word dictionary saved")
       }
       sc.stop()
     }

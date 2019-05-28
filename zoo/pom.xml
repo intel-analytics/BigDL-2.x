@@ -7,7 +7,7 @@
     <parent>
         <artifactId>zoo-parent</artifactId>
         <groupId>com.intel.analytics.zoo</groupId>
-        <version>0.4.0-SNAPSHOT</version>
+        <version>0.5.0-SNAPSHOT</version>
     </parent>
 
     <artifactId>analytics-zoo-bigdl_${bigdl.version}-spark_${spark.version}</artifactId>
@@ -24,7 +24,10 @@
         <scala.macros.version>2.1.0</scala.macros.version>
         <scalatest.version>2.2.4</scalatest.version>
         <spark.version>2.1.0</spark.version>
-        <bigdl.version>0.7.1</bigdl.version>
+        <bigdl.version>0.8.0</bigdl.version>
+        <core.artifactId>zoo-core-dist-all</core.artifactId>
+        <core.dependencyType>jar</core.dependencyType>
+        <data-store-url>http://download.tensorflow.org</data-store-url>
     </properties>
 
     <distributionManagement>
@@ -35,6 +38,7 @@
     </distributionManagement>
 
     <profiles>
+
         <profile>
             <id>spark_1.6</id>
             <properties>
@@ -95,6 +99,57 @@
             <properties>
                 <spark-scope>compile</spark-scope>
             </properties>
+        </profile>
+
+        <profile>
+            <id>linux</id>
+            <properties>
+                <core.artifactId>zoo-core-dist-linux64</core.artifactId>
+                <core.dependencyType>pom</core.dependencyType>
+            </properties>
+        </profile>
+
+        <profile>
+            <id>mac</id>
+            <properties>
+                <core.artifactId>zoo-core-dist-mac</core.artifactId>
+                <core.dependencyType>pom</core.dependencyType>
+            </properties>
+            <!--these are not supported right now, added to make the project compiles-->
+            <dependencies>
+                <dependency>
+                    <groupId>com.intel.analytics.zoo</groupId>
+                    <artifactId>zoo-core-openvino-java-linux</artifactId>
+                    <version>0.5.0</version>
+                </dependency>
+                <dependency>
+                    <groupId>com.intel.analytics.zoo</groupId>
+                    <artifactId>zoo-core-pmem-java-linux</artifactId>
+                    <version>0.5.0</version>
+                </dependency>
+            </dependencies>
+
+        </profile>
+
+        <profile>
+            <id>windows</id>
+            <properties>
+                <core.artifactId>zoo-core-dist-windows</core.artifactId>
+                <core.dependencyType>pom</core.dependencyType>
+            </properties>
+            <!--these are not supported right now, added to make the project compiles-->
+            <dependencies>
+                <dependency>
+                    <groupId>com.intel.analytics.zoo</groupId>
+                    <artifactId>zoo-core-openvino-java-linux</artifactId>
+                    <version>0.5.0</version>
+                </dependency>
+                <dependency>
+                    <groupId>com.intel.analytics.zoo</groupId>
+                    <artifactId>zoo-core-pmem-java-linux</artifactId>
+                    <version>0.5.0</version>
+                </dependency>
+            </dependencies>
         </profile>
 
         <profile>
@@ -248,13 +303,19 @@
         </dependency>
         <dependency>
             <groupId>org.tensorflow</groupId>
-            <artifactId>tensorflow</artifactId>
-            <version>1.10.0</version>
+            <artifactId>libtensorflow</artifactId>
+            <version>1.13.1</version>
         </dependency>
         <dependency>
             <groupId>org.tensorflow</groupId>
             <artifactId>proto</artifactId>
-            <version>1.10.0</version>
+            <version>1.13.1</version>
+        </dependency>
+        <dependency>
+            <groupId>com.intel.analytics.zoo</groupId>
+            <artifactId>${core.artifactId}</artifactId>
+            <version>0.5.1</version>
+            <type>${core.dependencyType}</type>
         </dependency>
     </dependencies>
 
@@ -262,6 +323,7 @@
         <resources>
             <resource>
                 <directory>${project.basedir}/src/main/resources</directory>
+                <filtering>true</filtering>
             </resource>
             <resource>
                 <!-- Include the properties file to provide the build information. -->
@@ -327,12 +389,12 @@
                         </goals>
                     </execution>
                     <execution>
-                        <id>bigdl_python</id>
+                        <id>python_packages</id>
                         <phase>package</phase>
                         <configuration>
                             <arguments>
-                                <argument>${project.basedir}/../scripts/get_bigdl_python</argument>
-                                <argument>${project.build.directory}/bigdl_python</argument>
+                                <argument>${project.basedir}/../scripts/get_python_packages</argument>
+                                <argument>${project.basedir}/python_packages</argument>
                                 <argument>${bigdl.version}</argument>
                             </arguments>
 
@@ -372,6 +434,20 @@
                 <configuration>
                     <createDependencyReducedPom>true</createDependencyReducedPom>
                     <shadedArtifactAttached>false</shadedArtifactAttached>
+                    <filters>
+                        <filter>
+                            <!-->
+                            To work around https://github.com/intel-analytics/BigDL/issues/2734,
+                            we use shade to inplace BigDL's ZippedPartitionsWithLocalityRDD.
+                            <-->
+                            <artifact>com.intel.analytics.bigdl.spark-version:*</artifact>
+                            <excludes>
+                                <execlude>
+                                    org/apache/spark/rdd/ZippedPartitionsWithLocalityRDD*
+                                </execlude>
+                            </excludes>
+                        </filter>
+                    </filters>
                 </configuration>
                 <executions>
                     <execution>
@@ -382,6 +458,7 @@
                                 <includes>
                                     <include>org.spark-project.spark:unused</include>
                                 </includes>
+
                             </artifactSet>
                         </configuration>
                         <goals>
@@ -570,6 +647,24 @@
                     <nexusUrl>https://oss.sonatype.org/</nexusUrl>
                     <autoReleaseAfterClose>false</autoReleaseAfterClose>
                 </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>properties-maven-plugin</artifactId>
+                <version>1.0.0</version>
+                <executions>
+                    <execution>
+                        <phase>generate-resources</phase>
+                        <goals>
+                            <goal>write-project-properties</goal>
+                        </goals>
+                        <configuration>
+                            <outputFile>
+                                ${project.build.outputDirectory}/app.properties
+                            </outputFile>
+                        </configuration>
+                    </execution>
+                </executions>
             </plugin>
         </plugins>
     </build>

@@ -15,11 +15,75 @@
 #
 
 from bigdl.util.common import *
+from bigdl.dataset.dataset import DataSet
 import sys
 
 if sys.version >= '3':
     long = int
     unicode = str
+
+
+class Relation(object):
+    """
+    It represents the relationship between two items.
+    """
+    def __init__(self, id1, id2, label, bigdl_type="float"):
+        self.id1 = id1
+        self.id2 = id2
+        self.label = int(label)
+        self.bigdl_type = bigdl_type
+
+    def __reduce__(self):
+        return Relation, (self.id1, self.id2, self.label)
+
+    def __str__(self):
+        return "Relation [id1: %s, id2: %s, label: %s]" % (
+            self.id1, self.id2, self.label)
+
+    def to_tuple(self):
+        return self.id1, self.id2, self.label
+
+
+class Relations(object):
+    @staticmethod
+    def read(path, sc=None, min_partitions=1, bigdl_type="float"):
+        """
+        Read relations from csv or txt file.
+        Each record is supposed to contain the following three fields in order:
+        id1(string), id2(string) and label(int).
+
+        For csv file, it should be without header.
+        For txt file, each line should contain one record with fields separated by comma.
+
+        :param path: The path to the relations file, which can either be a local or disrtibuted file
+                     system (such as HDFS) path.
+        :param sc: An instance of SparkContext.
+                   If specified, return RDD of Relation.
+                   Default is None and in this case return list of Relation.
+        :param min_partitions: Int. A suggestion value of the minimal partition number for input
+                               texts. Only need to specify this when sc is not None. Default is 1.
+        """
+        if sc:
+            jvalue = callBigDlFunc(bigdl_type, "readRelations", path, sc, min_partitions)
+            res = jvalue.map(lambda x: Relation(str(x[0]), str(x[1]), int(x[2])))
+        else:
+            jvalue = callBigDlFunc(bigdl_type, "readRelations", path)
+            res = [Relation(str(x[0]), str(x[1]), int(x[2])) for x in jvalue]
+        return res
+
+    @staticmethod
+    def read_parquet(path, sc, bigdl_type="float"):
+        """
+        Read relations from parquet file.
+        Schema should be the following:
+        "id1"(string), "id2"(string) and "label"(int).
+
+        :param path: The path to the parquet file.
+        :param sc: An instance of SparkContext.
+        :return: RDD of Relation.
+        """
+        jvalue = callBigDlFunc(bigdl_type, "readRelationsParquet", path, sc)
+        return jvalue.map(lambda x: Relation(str(x[0]), str(x[1]), int(x[2])))
 
 
 class Preprocessing(JavaValue):
@@ -135,3 +199,63 @@ class ToTuple(Preprocessing):
     """
     def __init__(self, bigdl_type="float"):
         super(ToTuple, self).__init__(bigdl_type)
+
+
+class FeatureSet(DataSet):
+    """
+    A set of data which is used in the model optimization process. The FeatureSet can be accessed in
+    a random data sample sequence. In the training process, the data sequence is a looped endless
+    sequence. While in the validation process, the data sequence is a limited length sequence.
+    Different from BigDL's DataSet, this FeatureSet could be cached to Intel Optane DC Persistent
+    Memory, if you set memory_type to PMEM when creating FeatureSet.
+    """
+    def __init__(self, jvalue=None, bigdl_type="float"):
+        self.bigdl_type = bigdl_type
+        if jvalue:
+            self.value = jvalue
+
+    @classmethod
+    def image_frame(cls, image_frame, memory_type="DRAM", bigdl_type="float"):
+        """
+        Create FeatureSet from ImageFrame.
+        :param image_frame: ImageFrame
+        :param memory_type: string, DRAM or PMEM
+                            If it's DRAM, will cache dataset into dynamic random-access memory
+                            If it's PMEM, will cache dataset into Intel Optane DC Persistent Memory
+        :param bigdl_type: numeric type
+        :return: A feature set
+        """
+        jvalue = callBigDlFunc(bigdl_type, "createFeatureSetFromImageFrame",
+                               image_frame, memory_type)
+        return cls(jvalue=jvalue)
+
+    @classmethod
+    def rdd(cls, rdd, memory_type="DRAM", bigdl_type="float"):
+        """
+        Create FeatureSet from RDD.
+        :param rdd: A RDD
+        :param memory_type: string, DRAM or PMEM
+                            If it's DRAM, will cache dataset into dynamic random-access memory
+                            If it's PMEM, will cache dataset into Intel Optane DC Persistent Memory
+        :param bigdl_type:numeric type
+        :return: A feature set
+        """
+        jvalue = callBigDlFunc(bigdl_type, "createFeatureSetFromRDD", rdd, memory_type)
+        return cls(jvalue=jvalue)
+
+    def transform(self, transformer):
+        """
+        Helper function to transform the data type in the data set.
+        :param transformer: the transformers to transform this feature set.
+        :return: A feature set
+        """
+        jvalue = callBigDlFunc(self.bigdl_type, "transformFeatureSet", self.value, transformer)
+        return FeatureSet(jvalue=jvalue)
+
+    def to_dataset(self):
+        """
+        To BigDL compatible DataSet
+        :return:
+        """
+        jvalue = callBigDlFunc(self.bigdl_type, "featureSetToDataSet", self.value)
+        return FeatureSet(jvalue=jvalue)

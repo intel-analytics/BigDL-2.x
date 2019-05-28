@@ -19,14 +19,13 @@ import java.io.{File, FileInputStream, InputStream}
 import java.nio._
 
 import com.intel.analytics.bigdl.Module
-import com.intel.analytics.bigdl.dataset.{PaddingParam, Sample}
 import com.intel.analytics.bigdl.nn.abstractnn.{AbstractModule, Activity}
 import com.intel.analytics.bigdl.tensor.Tensor
 import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric
 import com.intel.analytics.bigdl.utils.{MultiShape, Shape, T}
-import com.intel.analytics.zoo.pipeline.api.{Predictable, Predictor}
+import com.intel.analytics.zoo.core.TFNetNative
+import com.intel.analytics.zoo.pipeline.api.Predictable
 import com.intel.analytics.zoo.pipeline.api.net.TFNet.TFGraphHolder
-import org.apache.spark.rdd.RDD
 import org.tensorflow.framework.GraphDef
 import org.tensorflow.types.UInt8
 import org.tensorflow.{DataType, Graph, Session, Tensor => TTensor}
@@ -59,41 +58,55 @@ class TFNet(private val graphDef: TFGraphHolder,
   implicit val ev = TensorNumeric.NumericFloat
   implicit val tag: ClassTag[Float] = ClassTag.Float
 
-  // todo if an exception is thrown during forward or backward, there will be memory leak
-  // maybe create a resource manager to handle tensor creation and destruction
-
   class ResourceManager() extends java.io.Serializable {
-    private var tensorList: List[TTensor[_]] = List()
+    private val tensorList: mutable.Set[TTensor[_]] = mutable.Set[TTensor[_]]()
     def createTFTensor(shape: Array[Long], buffer: FloatBuffer): TTensor[_] = {
       val TFTensor : TTensor[_] = TTensor.create(shape, buffer)
-      tensorList = TFTensor :: tensorList
+      tensorList += TFTensor
       return TFTensor
     }
     def createTFTensor(shape: Array[Long], buffer: ByteBuffer): TTensor[_] = {
       val TFTensor : TTensor[_] = TTensor.create(classOf[UInt8], shape, buffer)
-      tensorList = TFTensor :: tensorList
+      tensorList += TFTensor
       return TFTensor
     }
     def createTFTensor(shape: Array[Long], buffer: IntBuffer): TTensor[_] = {
       val TFTensor : TTensor[_] = TTensor.create(shape, buffer)
-      tensorList = TFTensor :: tensorList
+      tensorList += TFTensor
       return TFTensor
     }
     def createTFTensor(shape: Array[Long], buffer: LongBuffer): TTensor[_] = {
       val TFTensor : TTensor[_] = TTensor.create(shape, buffer)
-      tensorList = TFTensor :: tensorList
+      tensorList += TFTensor
       return TFTensor
     }
     def createTFTensor(shape: Array[Long], buffer: DoubleBuffer): TTensor[_] = {
       val TFTensor : TTensor[_] = TTensor.create(shape, buffer)
-      tensorList = TFTensor :: tensorList
+      tensorList += TFTensor
       return TFTensor
+    }
+
+    def createBoolTFTensor(shape: Array[Long], bytes: ByteBuffer): TTensor[_] = {
+      val TFTensor : TTensor[_] = TTensor.create(classOf[java.lang.Boolean], shape, bytes)
+      tensorList += TFTensor
+      return TFTensor
+    }
+
+    def releaseTensor(t: TTensor[_]): Unit = {
+      t.close()
+      tensorList -= t
+    }
+
+    def isEmpty: Boolean = {
+      tensorList.isEmpty
     }
 
     def destructTFTensors(): Unit = {
       for (tensor <- tensorList) {
         tensor.close()
       }
+
+      tensorList.clear()
     }
   }
 
@@ -271,29 +284,32 @@ class TFNet(private val graphDef: TFGraphHolder,
         }
       }
       if (!this.isTraining()) {
-        // clean up input tensorflow tensors
-        emptyTFTensorArray(tempTFTensors)
+        // clean up all tensorflow tensors
+        tensorManager.destructTFTensors()
+        // outputs is returned by tensorflow and cannot be freed using tensorManager
+        emptyTFTensorArray(outputs.asScala.slice(0, outputNames.length))
       } else {
         // clean up variable tensorflow tensors
         emptyTFTensorArray(weightTFTensors)
+        // clean up model output tensorflow tensors
+        emptyTFTensorArray(outputs.asScala.slice(0, outputNames.length))
+
+        // tempTensors will be cleaned up after backward
       }
 
-      // clean up model output tensorflow tensors
-      emptyTFTensorArray(outputs.asScala.slice(0, outputNames.length))
-      // tempTensors will be cleaned up after backward
-
-      output
     } catch {
       case ex: Throwable =>
         tensorManager.destructTFTensors()
         throw ex
     }
+
+    output
   }
 
   private def emptyTFTensorArray(arr: Array[TTensor[_]]): Unit = {
     var i = 0
     while (i < arr.length) {
-      arr(i).close()
+      tensorManager.releaseTensor(arr(i))
       arr(i) = null
       i += 1
     }
@@ -302,7 +318,7 @@ class TFNet(private val graphDef: TFGraphHolder,
   private def emptyTFTensorArray(arr: mutable.Buffer[TTensor[_]]): Unit = {
     var i = 0
     while (i < arr.length) {
-      arr(i).close()
+      tensorManager.releaseTensor(arr(i))
       arr(i) = null
       i += 1
     }
@@ -389,13 +405,11 @@ class TFNet(private val graphDef: TFGraphHolder,
         }
         gradWeight.add(gradWeightBuffer)
       }
-
-      // clean up grad weights tf tensors
+      // gradWeightTFTensors is returned by tensorflow and cannot be freed using tensorManager
       emptyTFTensorArray(gradWeightTFTensors)
-    } catch {
-      case ex: Throwable =>
-        tensorManager.destructTFTensors()
-        throw ex
+
+    } finally {
+      tensorManager.destructTFTensors()
     }
   }
 
@@ -457,6 +471,7 @@ class TFNet(private val graphDef: TFGraphHolder,
   private def name2type(name: String): DataType = {
     val Array(op, idx) = name.split(":")
     val operation = graph.operation(op)
+    if (operation == null) throw new Exception(s"Operation $op not found")
     val output = operation.output(idx.toInt)
     output.dataType()
   }
@@ -498,6 +513,9 @@ class TFNet(private val graphDef: TFGraphHolder,
     } else if (dataType == DataType.DOUBLE) {
       val buffer = DoubleBuffer.wrap(TFNet.floatToDouble(arr), offset, length)
       tensorManager.createTFTensor(shape, buffer)
+    } else if (dataType == DataType.BOOL) {
+      val buffer = ByteBuffer.wrap(TFNet.floatToBool(arr), offset, length)
+      tensorManager.createBoolTFTensor(shape, buffer)
     } else {
       throw new Exception(s"data type ${dataType} are not supported")
     }
@@ -568,8 +586,12 @@ class TFNet(private val graphDef: TFGraphHolder,
 
 object TFNet {
 
+  assert(TFNetNative.isLoaded)
+
   @transient
   private lazy val inDriver = NetUtils.isDriver
+
+  val logger = LoggerFactory.getLogger(getClass)
 
   private val graphRegistry = new RegistryMap[ClosableGraph]()
 
@@ -608,6 +630,7 @@ object TFNet {
         val len = in.readInt()
         require(len != 0, "GraphDef length should not be zero," +
           "please set logging level to debug for more information")
+        assert(len >= 0, "GraphDef length should be an non-negative integer")
         val graphDef = new Array[Byte](len)
         timing("reading graph def from stream") {
           var numOfBytes = 0
@@ -621,6 +644,7 @@ object TFNet {
 
       if (!graphDefIsCreated) {
         val len = in.readInt()
+        assert(len >= 0, "GraphDef length should be an non-negative integer")
         in.skip(len)
       }
 
@@ -711,6 +735,16 @@ object TFNet {
     var i = 0
     while (i < array.length) {
       result(i) = array(i).toByte
+      i = i + 1
+    }
+    result
+  }
+
+  private def floatToBool(array: Array[Float]): Array[Byte] = {
+    val result = new Array[Byte](array.length)
+    var i = 0
+    while (i < array.length) {
+      result(i) = if (array(i) == 0.0) 0.toByte else 1.toByte
       i = i + 1
     }
     result

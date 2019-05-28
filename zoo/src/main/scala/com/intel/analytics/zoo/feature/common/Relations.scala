@@ -20,6 +20,7 @@ import org.apache.spark.SparkContext
 import org.apache.spark.rdd.RDD
 import org.apache.spark.sql.SQLContext
 
+import scala.collection.mutable.{Map => MMap, ArrayBuffer}
 import scala.io.Source
 
 object Relations {
@@ -32,7 +33,8 @@ object Relations {
    * For csv file, it should be without header.
    * For txt file, each line should contain one record with fields separated by comma.
    *
-   * @param path The path to the relations file, which can either be a local file path or HDFS path.
+   * @param path The path to the relations file, which can either be a local or disrtibuted file
+   *             system (such as HDFS) path.
    * @param sc An instance of SparkContext.
    * @param minPartitions Integer. A suggestion value of the minimal partition number for input
    *                      texts. Default is 1.
@@ -96,6 +98,47 @@ object Relations {
       posIDs.flatMap(y => negIDs.map(z => RelationPair(x._1, y, z)))
     })
   }
+
+  /**
+   * generateRelationPairs for Relation array
+   */
+  def generateRelationPairs(relations: Array[Relation]): Array[RelationPair] = {
+    val relSet: MMap[String, MMap[Int, ArrayBuffer[String]]] = MMap()
+    val pairList: ArrayBuffer[RelationPair] = ArrayBuffer()
+    for (relation <- relations) {
+      if (! relSet.contains(relation.id1)) {
+        val id2Array: ArrayBuffer[String] = ArrayBuffer()
+        id2Array.append(relation.id2)
+        relSet(relation.id1) = MMap(relation.label -> id2Array)
+      }
+      else {
+        val labelMap = relSet(relation.id1)
+        if (! labelMap.contains(relation.label)) {
+          val id2Array: ArrayBuffer[String] = ArrayBuffer()
+          id2Array.append(relation.id2)
+          labelMap(relation.label) = id2Array
+          relSet(relation.id1) = labelMap
+        }
+        else {
+          labelMap(relation.label).append(relation.id2)
+        }
+      }
+    }
+
+    for ((id1, labelMap) <- relSet) {
+      if (labelMap.contains(0) && labelMap.contains(1)) {
+        val negatives = labelMap(0).toArray
+        val positives = labelMap(1).toArray
+        for (id2Positive <- positives) {
+          for (id2Negative <- negatives) {
+            val pair = RelationPair(id1, id2Positive, id2Negative)
+            pairList.append(pair)
+          }
+        }
+      }
+    }
+    pairList.toArray
+  }
 }
 
 /**
@@ -104,7 +147,7 @@ object Relations {
 case class Relation(id1: String, id2: String, label: Int)
 
 /**
- * A relation pair is made up of two relations:
+ * A relation pair is made up of two relations of the same id1:
  * Relation(id1, id2Positive, label>0) [Positive Relation]
  * Relation(id1, id2Negative, label=0) [Negative Relation]
  */

@@ -17,13 +17,14 @@
 from tensorflow.core.framework import attr_value_pb2
 from tensorflow.core.framework import graph_pb2
 from tensorflow.core.framework import node_def_pb2
-from tensorflow.python.framework import graph_util
 from tensorflow.python.framework import ops
 from tensorflow.python.platform import gfile
 import tensorflow as tf
 import os
 import json
 import copy
+
+import zoo.util.tf_graph_util as graph_util
 
 
 def process_grad(grad):
@@ -71,7 +72,7 @@ def export_tf(sess, folder, inputs, outputs,
     non_placeholder_input_names = []
     type_enums = []
     for input_tensor in inputs:
-        if input_tensor.op.type != "Placeholder":
+        if input_tensor.op.type not in ["Placeholder", "PlaceholderWithDefault"]:
             non_placeholder_input_names.append(input_tensor.name)
             type_enums.append(input_tensor.dtype.as_datatype_enum)
 

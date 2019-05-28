@@ -16,16 +16,14 @@
 
 package com.intel.analytics.zoo.models.anomalydetection
 
-import com.intel.analytics.bigdl.Criterion
 import com.intel.analytics.bigdl.dataset.Sample
-import com.intel.analytics.bigdl.nn.abstractnn.{AbstractModule, Activity}
-import com.intel.analytics.bigdl.optim.{OptimMethod, ValidationMethod, ValidationResult}
+import com.intel.analytics.bigdl.nn.abstractnn.AbstractModule
 import com.intel.analytics.bigdl.tensor.Tensor
 import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric
 import com.intel.analytics.bigdl.utils.Shape
-import com.intel.analytics.zoo.models.common.ZooModel
+import com.intel.analytics.zoo.models.common.{KerasZooModel, ZooModel}
 import com.intel.analytics.zoo.pipeline.api.keras.layers._
-import com.intel.analytics.zoo.pipeline.api.keras.models.{KerasNet, Sequential}
+import com.intel.analytics.zoo.pipeline.api.keras.models.Sequential
 import org.apache.spark.rdd.RDD
 
 import scala.reflect.ClassTag
@@ -39,11 +37,11 @@ import scala.reflect.ClassTag
  * @tparam T Numeric type of parameter(e.g. weight, bias). Only support float/double now.
  */
 
-class AnomalyDetector[T: ClassTag] private(val featureShape: Shape,
-                                           val hiddenLayers: Array[Int] = Array(8, 32, 15),
-                                           val dropouts: Array[Float] = Array(0.2f, 0.2f, 0.2f))
-                                          (implicit ev: TensorNumeric[T])
-  extends ZooModel[Tensor[T], Tensor[T], T] {
+class AnomalyDetector[T: ClassTag] (val featureShape: Shape,
+                                    val hiddenLayers: Array[Int] = Array(8, 32, 15),
+                                    val dropouts: Array[Double] = Array(0.2, 0.2, 0.2))
+                                   (implicit ev: TensorNumeric[T])
+  extends KerasZooModel[Tensor[T], Tensor[T], T] {
 
   override def buildModel(): AbstractModule[Tensor[T], Tensor[T], T] = {
 
@@ -60,30 +58,6 @@ class AnomalyDetector[T: ClassTag] private(val featureShape: Shape,
       .add(Dense(outputDim = 1))
 
     model.asInstanceOf[AbstractModule[Tensor[T], Tensor[T], T]]
-  }
-
-  def compile(optimizer: OptimMethod[T],
-              loss: Criterion[T],
-              metrics: List[ValidationMethod[T]] = null)(implicit ev: TensorNumeric[T]): Unit = {
-    model.asInstanceOf[KerasNet[T]].compile(optimizer, loss, metrics)
-  }
-
-  def fit(x: RDD[Sample[T]],
-          batchSize: Int,
-          nbEpoch: Int,
-          validationData: RDD[Sample[T]] = null)(implicit ev: TensorNumeric[T]): Unit = {
-    model.asInstanceOf[KerasNet[T]].fit(x, batchSize, nbEpoch, validationData)
-  }
-
-  def evaluate(x: RDD[Sample[T]],
-               batchSize: Int)
-              (implicit ev: TensorNumeric[T]): Array[(ValidationResult, ValidationMethod[T])] = {
-    model.asInstanceOf[KerasNet[T]].evaluate(x, batchSize)
-  }
-
-  def predict(x: RDD[Sample[T]],
-              batchPerThread: Int): RDD[Activity] = {
-    model.asInstanceOf[KerasNet[T]].predict(x, batchPerThread)
   }
 
 }
@@ -106,8 +80,10 @@ object AnomalyDetector {
   def apply[@specialized(Float, Double) T: ClassTag](
       featureShape: Shape,
       hiddenLayers: Array[Int] = Array(8, 32, 15),
-      dropouts: Array[Float] = Array(0.2f, 0.2f, 0.2f))
+      dropouts: Array[Double] = Array(0.2, 0.2, 0.2))
       (implicit ev: TensorNumeric[T]): AnomalyDetector[T] = {
+    require(hiddenLayers.size == dropouts.size,
+      s"size of hiddenLayers and dropouts should be the same")
     new AnomalyDetector[T](featureShape, hiddenLayers, dropouts).build()
   }
 
@@ -130,21 +106,20 @@ object AnomalyDetector {
   * Compare predictions and truth to detect anomalies by ranking the absolute differences。
   * Most distant values are considered as anomalies.
   *
-  * @param yTruth          Truth to be compared
-  * @param yPredict        Predictions
-  * @param anomalyFraction Int. What percentage of the number of total values compared to be
-  *                        considered as anomalies.
+  * @param yTruth      RDD[T]. Truth to be compared
+  * @param yPredict    RDD[T]. Predictions
+  * @param anomalySize Int. The size to be considered as anomalies.
   */
   def detectAnomalies[T: ClassTag](yTruth: RDD[T],
                                    yPredict: RDD[T],
-                                   anomalyFraction: Int = 5): RDD[(T, T, Any)] = {
+                                   anomalySize: Int = 5): RDD[(T, T, Any)] = {
     require(yTruth.count() == yPredict.count(), s"length of predictions and truth should match")
     val totalCount = yTruth.count()
 
     val threshold: Float = yTruth.zip(yPredict)
       .map(x => absdiff(x._1, x._2))
       .sortBy(x => -x)
-      .take((totalCount * anomalyFraction.toFloat / 100).toInt)
+      .take((totalCount * anomalySize.toFloat / 100).toInt)
       .min
 
     detectAnomalies(yTruth, yPredict, threshold)
@@ -158,12 +133,13 @@ object AnomalyDetector {
    * @param yPredict  Predictions
    * @param threshold Float. The threshold of absolute difference, data points with a difference
    *                  above the threshold is considered as anomalies.
+   * @return RDD[(yTruth, yPredict, anomaly)], anomaly is null or yTruth
    */
   def detectAnomalies[T: ClassTag](yTruth: RDD[T],
                                    yPredict: RDD[T],
                                    threshold: Float): RDD[(T, T, Any)] = {
     require(yTruth.count() == yPredict.count(), s"length of predictions and truth should match")
-    val anomalies = yTruth.zip(yPredict).map { x =>
+    val anomalies: RDD[(T, T, Any)] = yTruth.zip(yPredict).map { x =>
       val d = absdiff(x._1, x._2)
       val anomaly = if (d > threshold) x._1 else null
       (x._1, x._2, anomaly) // yTruth, yPredict, anomaly
@@ -171,7 +147,7 @@ object AnomalyDetector {
     anomalies
   }
 
-  def absdiff[T: ClassTag](A: T, B: T): Float = {
+  private def absdiff[T: ClassTag](A: T, B: T): Float = {
     if (A.isInstanceOf[Float]) {
       Math.abs(A.asInstanceOf[Float] - B.asInstanceOf[Float])
     } else {
@@ -182,9 +158,9 @@ object AnomalyDetector {
   /**
    * Unroll a rdd of arrays to prepare features and labels.
    *
-   * @param dataRdd      data to be unrolled with a length.
-   * @param unrollLength the length of precious values to predict future value.
-   * @param predictStep  use precious values to predict future value, default is 1.
+   * @param dataRdd      RDD[Array[T]]. Features to be unrolled.
+   * @param unrollLength Int. The length of precious values to predict future value.
+   * @param predictStep  Int. how many time steps to predict future value, default is 1.
    *
    *                     a simple example
    *                     data: (1,2,3,4,5,6); unrollLength: 2, predictStep: 1

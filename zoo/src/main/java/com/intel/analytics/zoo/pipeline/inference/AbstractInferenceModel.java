@@ -25,11 +25,15 @@ import java.util.List;
 public abstract class AbstractInferenceModel extends InferenceModel implements Serializable {
 
   public AbstractInferenceModel() {
-    super(1, null, null);
+    super();
   }
 
-  public AbstractInferenceModel(int supportedConcurrentNum) {
-    super(supportedConcurrentNum, null, null);
+  public AbstractInferenceModel(int concurrentNum) {
+    super(concurrentNum);
+  }
+
+  public AbstractInferenceModel(boolean autoScalingEnabled, int concurrentNum) {
+    super(autoScalingEnabled, concurrentNum);
   }
 
   public void load(String modelPath) {
@@ -49,11 +53,40 @@ public abstract class AbstractInferenceModel extends InferenceModel implements S
   }
 
   public void loadTF(String modelPath) {
-    doLoadTF(modelPath, 1, 1, true);
+    doLoadTF(modelPath);
   }
 
   public void loadTF(String modelPath, int intraOpParallelismThreads, int interOpParallelismThreads, boolean usePerSessionThreads) {
     doLoadTF(modelPath, intraOpParallelismThreads, interOpParallelismThreads, usePerSessionThreads);
+  }
+
+  public void loadTF(String modelPath, String objectDetectionModelType) {
+    doLoadTF(modelPath, objectDetectionModelType);
+  }
+
+  public void loadTF(String modelPath, String pipelineConfigFilePath, String extensionsConfigFilePath) {
+    doLoadTF(modelPath, pipelineConfigFilePath, extensionsConfigFilePath);
+  }
+
+  public void loadTF(String modelPath, String objectDetectionModelType, String pipelineConfigFilePath, String extensionsConfigFilePath) {
+    doLoadTF(modelPath, objectDetectionModelType, pipelineConfigFilePath, extensionsConfigFilePath);
+  }
+
+  public void loadTF(String modelPath, String imageClassificationModelType, String checkpointPath, int[] inputShape, boolean ifReverseInputChannels, float[] meanValues, float scale) {
+    doLoadTF(modelPath, imageClassificationModelType, checkpointPath, inputShape, ifReverseInputChannels, meanValues, scale);
+  }
+
+  public void loadTFAsCalibratedOpenVINO(String modelPath, String modelType, String checkpointPath, int[] inputShape, boolean ifReverseInputChannels, float[] meanValues, float scale,
+                                          String networkType, String validationFilePath, int subset, String opencvLibPath) {
+    doLoadTFAsCalibratedOpenVINO(modelPath, modelType, checkpointPath, inputShape, ifReverseInputChannels, meanValues, scale, networkType, validationFilePath, subset, opencvLibPath);
+  }
+
+  public void loadOpenVINO(String modelFilePath, String weightFilePath) {
+    doLoadOpenVINO(modelFilePath, weightFilePath);
+  }
+
+  public void loadOpenVINOInt8(String modelFilePath, String weightFilePath, int batchSize) {
+    doLoadOpenVINOInt8(modelFilePath, weightFilePath, batchSize);
   }
 
   public void reload(String modelPath) {
@@ -62,6 +95,10 @@ public abstract class AbstractInferenceModel extends InferenceModel implements S
 
   public void reload(String modelPath, String weightPath) {
     doReload(modelPath, weightPath);
+  }
+
+  public void release() {
+    release();
   }
 
   @Deprecated
@@ -77,7 +114,32 @@ public abstract class AbstractInferenceModel extends InferenceModel implements S
     return doPredict(inputs);
   }
 
+  public List<List<JTensor>> predictInt8(List<List<JTensor>> inputs) {
+    return doPredictInt8(inputs);
+  }
+
   public List<List<JTensor>> predict(List<JTensor>[] inputs) {
     return predict(Arrays.asList(inputs));
+  }
+
+  public List<List<JTensor>> predictInt8(List<JTensor>[] inputs) {
+    return predictInt8(Arrays.asList(inputs));
+  }
+
+  @Override
+  public String toString() {
+    return super.toString();
+  }
+
+  public static void optimizeTF(String modelPath, String objectDetectionModelType, String pipelineConfigPath, String extensionsConfigPath, String outputDir) {
+    InferenceModel.doOptimizeTF(modelPath, objectDetectionModelType, pipelineConfigPath, extensionsConfigPath, outputDir);
+  }
+
+  public static void optimizeTF(String modelPath, String imageClassificationModelType, String checkpointPath, int[] inputShape, boolean ifReverseInputChannels, float[] meanValues, float scale, String outputDir) {
+    InferenceModel.doOptimizeTF(modelPath, imageClassificationModelType, checkpointPath, inputShape, ifReverseInputChannels, meanValues, scale, outputDir);
+  }
+
+  public static void calibrateTF(String modelPath, String networkType, String validationFilePath, int subset, String opencvLibPath, String outputDir) {
+    InferenceModel.doCalibrateTF(modelPath, networkType, validationFilePath, subset, opencvLibPath, outputDir);
   }
 }

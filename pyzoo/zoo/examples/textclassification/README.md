@@ -68,6 +68,7 @@ See [here](https://analytics-zoo.github.io/master/#PythonUserGuide/run/#run-with
 ## Options
 * `--data_path` This option is __required__. The path where News20 dataset locate.
 * `--embedding_path` This option is __required__. The path where GloVe embeddings locate.
+* `--output_path` If specified, the trained model `text_classifier.model` and word dictionary file `word_index.txt` will be saved under this path. It can be either a local or distributed file system path.
 * `--class_num` The number of classes to do classification. Default is 20 for News20 dataset.
 * `--partition_num` The number of partitions to cut the dataset into. Default is 4.
 * `--token_length` The size of each word vector. GloVe supports token_length 50, 100, 200 and 300. Default is 200.
@@ -77,10 +78,10 @@ See [here](https://analytics-zoo.github.io/master/#PythonUserGuide/run/#run-with
 * `--encoder_output_dim` The output dimension of the encoder. Default is 256.
 * `--training_split` The split portion of the data for training. Default is 0.8.
 * `-b` `--batch_size` The number of samples per gradient update. Default is 128.
-* `--nb_epoch` The number of iterations to train the model. Default is 20.
+* `-e` `--nb_epoch` The number of iterations to train the model. Default is 20.
 * `-l` `--learning_rate` The learning rate for the TextClassifier model. Default is 0.01.
 * `--log_dir` The path to store training and validation summary. Default is `/tmp/.analytics-zoo`.
-* `--model` Specify this option only if you want to load an existing TextClassifier model and in this case its path should be provided.
+* `-m` `--model` Specify this option only if you want to load an existing TextClassifier model and in this case its path should be provided.
 
 
 ## Results

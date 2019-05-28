@@ -25,7 +25,7 @@ import com.intel.analytics.bigdl.nn._
 import com.intel.analytics.bigdl.optim._
 import com.intel.analytics.bigdl.tensor.Tensor
 import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric.NumericFloat
-import com.intel.analytics.bigdl.utils.Engine
+import com.intel.analytics.bigdl.utils.{Engine, Shape}
 import com.intel.analytics.bigdl.utils.RandomGenerator.RNG
 import com.intel.analytics.bigdl.visualization.{TrainSummary, ValidationSummary}
 import com.intel.analytics.zoo.common.NNContext
@@ -52,7 +52,7 @@ class NNEstimatorSpec extends FlatSpec with Matchers with BeforeAndAfter {
   before {
     Random.setSeed(42)
     RNG.setSeed(42)
-    val conf = Engine.createSparkConf().setAppName("Test NNEstimator").setMaster("local[1]")
+    val conf = Engine.createSparkConf().setAppName("Test NNEstimator").setMaster("local[2]")
     sc = NNContext.initNNContext(conf)
     sqlContext = new SQLContext(sc)
     smallData = NNEstimatorSpec.generateTestInput(
@@ -88,7 +88,7 @@ class NNEstimatorSpec extends FlatSpec with Matchers with BeforeAndAfter {
       NNEstimator(model, criterion),
       NNEstimator(model, criterion, Array(6), Array(1)),
       NNEstimator(model, criterion, SeqToTensor(Array(6)), ScalarToTensor())
-    ).foreach(e => e.setEndWhen(Trigger.maxIteration(1)).fit(df))
+    ).foreach(e => e.setEndWhen(Trigger.maxIteration(1)).setBatchSize(2).fit(df))
   }
 
   "An NNEstimator" should "get reasonable accuracy" in {
@@ -245,7 +245,7 @@ class NNEstimatorSpec extends FlatSpec with Matchers with BeforeAndAfter {
     val model = new Sequential().add(Linear[Float](6, 2)).add(LogSoftMax[Float])
     val criterion = ClassNLLCriterion[Float]()
     val estimator = NNEstimator(model, criterion, Array(6), Array(1))
-      .setBatchSize(51)
+      .setBatchSize(52)
       .setMaxEpoch(maxEpoch)
     val data = sc.parallelize(smallData)
     val df: DataFrame = sqlContext.createDataFrame(data).toDF("features", "label")
@@ -452,6 +452,26 @@ class NNEstimatorSpec extends FlatSpec with Matchers with BeforeAndAfter {
     result2 shouldEqual result
   }
 
+  "An NNModel" should "support save/load keras model" in {
+    val modelLocation = getClass.getClassLoader.getResource("models/nnframes_keras").getFile
+    /**   code to generate model
+     *  import com.intel.analytics.zoo.pipeline.api.keras.layers.{Dense, Embedding, Input}
+     *  import com.intel.analytics.zoo.pipeline.api.keras.models.Model
+     *  val input = Input(inputShape = Shape(6))
+     *  val output = Dense(2).inputs(input)
+     *  val module = Model(input, output)
+     *  val nnModel = NNModel(module, Array(6)).setBatchSize(10)
+     *  nnModel.write.overwrite().save(modelLocation)
+     */
+    var appSparkVersion = org.apache.spark.SPARK_VERSION
+    if (appSparkVersion.trim.startsWith("2")) {
+      val data = sqlContext.createDataFrame(smallData).toDF("features", "label")
+      NNModel.load(modelLocation).setBatchSize(8) // try load multiple times.
+      val loadedModel = NNModel.load(modelLocation).setBatchSize(8)
+      loadedModel.transform(data).collect()
+    }
+  }
+
   "An NNEstimator" should "supports deep copy" in {
     val model = new Sequential().add(Linear[Float](6, 2)).add(LogSoftMax[Float])
     val criterion = ClassNLLCriterion[Float]()
@@ -497,7 +517,7 @@ class NNEstimatorSpec extends FlatSpec with Matchers with BeforeAndAfter {
       smallData.map(p => (org.apache.spark.mllib.linalg.Vectors.dense(p._1), p._2)))
     val df: DataFrame = sqlContext.createDataFrame(data).toDF("abc", "la")
     val estimator = NNEstimator( model, criterion, Array(6), Array(1))
-      .setBatchSize(31)
+      .setBatchSize(32)
       .setOptimMethod(new LBFGS[Float]())
       .setLearningRate(0.123)
       .setLearningRateDecay(0.432)

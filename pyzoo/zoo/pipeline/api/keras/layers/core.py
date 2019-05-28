@@ -16,6 +16,7 @@
 
 import sys
 
+from bigdl.util.common import INTMIN
 from ..engine.topology import ZooKerasLayer
 
 if sys.version >= '3':
@@ -324,7 +325,7 @@ class Dense(ZooKerasLayer):
     >>> dense = Dense(10, input_dim=8, name="dense1")
     creating: createZooKerasDense
     """
-    def __init__(self, output_dim, init="glorot_uniform", activation=None,
+    def __init__(self, output_dim, init="glorot_uniform", limits=None, activation=None,
                  W_regularizer=None, b_regularizer=None,
                  bias=True, input_dim=None, input_shape=None, **kwargs):
         if input_dim:
@@ -332,12 +333,33 @@ class Dense(ZooKerasLayer):
         super(Dense, self).__init__(None,
                                     output_dim,
                                     init,
+                                    list(limits) if limits else None,
                                     activation,
                                     W_regularizer,
                                     b_regularizer,
                                     bias,
                                     list(input_shape) if input_shape else None,
                                     **kwargs)
+
+
+class GetShape(ZooKerasLayer):
+    """
+    GetShape gets the value of input_shape.
+    For example, if input_shape = (2, 3, 4),
+    then output will be (2, 3, 4).
+
+    When you use this layer as the first layer of a model, you need to provide the argument
+    input_shape (a shape tuple, does not include the batch dimension).
+
+    # Arguments
+    input_shape: A shape tuple, not including batch.
+    >>> getShape = GetShape(input_shape=(3, 4, 5))
+    creating: createZooKerasGetShape
+    """
+    def __init__(self, input_shape=None, **kwargs):
+        super(GetShape, self).__init__(None,
+                                       list(input_shape) if input_shape else None,
+                                       **kwargs)
 
 
 class SparseDense(ZooKerasLayer):
@@ -475,3 +497,44 @@ class Highway(ZooKerasLayer):
                                       bias,
                                       list(input_shape) if input_shape else None,
                                       **kwargs)
+
+
+class Max(ZooKerasLayer):
+    """
+    Applies a max operation over dimension `dim`
+
+    # Arguments
+    dim: max along this dimension
+    num_input_dims: Optional. If in a batch model, set to the inputDims.
+    return_value: Optional. Config whether return value or indices
+    input_shape: A shape tuple, not including batch.
+
+    >>> max = Max(dim=1, input_shape=(3, 5))
+    creating: createZooKerasMax
+    """
+    def __init__(self, dim, num_input_dims=INTMIN, return_value=True, input_shape=None, **kwargs):
+        super(Max, self).__init__(None,
+                                  dim,
+                                  num_input_dims,
+                                  return_value,
+                                  list(input_shape) if input_shape else None,
+                                  **kwargs)
+
+
+class ExpandDim(ZooKerasLayer):
+    """
+    Expand_dim is an improved layer to suuport 1D input.
+    For example, if we get an 1D input with shape(3),
+    we will return the shape(1, 3) after we use expand_dim(0, input).
+    # Arguments
+    dim: The specified axis to expand dimension on.
+    input_shape: A shape tuple, not including batch.
+
+    >>> expandDim = ExpandDim(dim=0, input_shape=(3, 2))
+    creating: createZooKerasExpandDim
+    """
+    def __init__(self, dim, input_shape=None, **kwargs):
+        super(ExpandDim, self).__init__(None,
+                                        dim,
+                                        list(input_shape) if input_shape else None,
+                                        **kwargs)

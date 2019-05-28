@@ -14,7 +14,7 @@
 # limitations under the License.
 #
 
-from zoo.models.common.zoo_model import ZooModel
+from zoo.models.common import ZooModel
 from zoo.models.image.common.image_config import ImageConfigure
 from zoo.feature.image.imageset import *
 
