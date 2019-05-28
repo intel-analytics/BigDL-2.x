@@ -14,7 +14,6 @@
 # limitations under the License.
 #
 
-import torch
 import torchvision
 import numpy as np
 import pytest
@@ -27,8 +26,7 @@ class TestTF(ZooTestCase):
 
     def test_torch_net_predict(self):
         model = torchvision.models.resnet18()
-        dummpy_input = torch.rand(1, 3, 224, 224)
-        net = TorchNet.from_pytorch(model, dummpy_input)
+        net = TorchNet.from_pytorch(model, [1, 3, 224, 224])
 
         result = net.predict(np.random.rand(1, 3, 224, 224))
         print(result.collect())
