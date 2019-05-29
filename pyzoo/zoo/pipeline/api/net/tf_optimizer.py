@@ -310,8 +310,8 @@ with variable_creator_scope():
                    grads, variables, loss.graph, val_outputs, val_labels,
                    bigdl_val_methods, val_spilt,
                    tensors_with_value=tensor_with_value,
-                   clipnorm=clip_norm,
-                   clipvalue=clip_value, **kwargs)
+                   clip_norm=clip_norm,
+                   clip_value=clip_value, **kwargs)
 
     @staticmethod
     def to_bigdl_optim_method(koptim_method):
