@@ -26,7 +26,7 @@ echo $ANALYTICS_ZOO_PYTHON_DIR
 
 if (( $# < 1)); then
   echo "Bad parameters. Usage example: bash release.sh linux"
-  echo "If needed, you can also add other profiles such as: -Dspark.version=2.3.2 -Dbigdl.artifactId=bigdl-SPARK_2.3 -P spark_2.x"
+  echo "If needed, you can also add other profiles such as: -Dspark.version=2.4.3 -Dbigdl.artifactId=bigdl-SPARK_2.4 -P spark_2.x"
   exit -1
 fi
 
