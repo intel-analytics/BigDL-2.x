@@ -252,7 +252,8 @@ with variable_creator_scope():
 
             if not isinstance(clip_value, tuple):
                 raise ValueError("The clip_value argument should be" +
-                                 " a positive float/int which clips to (-clip_value, clip_value); " +
+                                 " a positive float/int which clips to" +
+                                 " (-clip_value, clip_value); " +
                                  "or a tuple which clips to (min_value, max_value)")
 
         return cls(*(args + [val_split]),
