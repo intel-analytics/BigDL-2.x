@@ -18,19 +18,24 @@ import os
 import signal
 
 from zoo.ray.util.utils import to_list
+import ray.services as rservices
 
 
-def gen_shutdown_per_node(pgids):
+def gen_shutdown_per_node(pgids, node_ips=None):
     pgids = to_list(pgids)
     def _shutdown_per_node(iter):
         print("shutting down pgid: {}".format(pgids))
+        if node_ips:
+            current_node_ip = rservices.get_node_ip_address()
+            effect_pgids = [pair[0] for pair in zip(pgids, node_ips) if pair[1] == current_node_ip]
+        else:
+            effect_pgids = pgids
         for pgid in pgids:
             print("killing {}".format(pgid))
             try:
                 os.killpg(pgid, signal.SIGTERM)
             except ProcessLookupError:
                 print("WARNING: cannot find pgid: {}".format(pgid))
-
     return _shutdown_per_node
 
 def is_local(sc):

@@ -36,12 +36,11 @@ class ProcessInfo(object):
         self.node_ip=node_ip
 
     def __str__(self):
-        return "tag: {}, pgid: {}, pids: {}, returncode: {}, \
-                master_addr: {}, node_ip {} \n {} {}".format(self.tag, self.pgid,
+        return "node_ip: {} tag: {}, pgid: {}, pids: {}, returncode: {}, \
+                master_addr: {},  \n {} {}".format( self.node_ip, self.tag, self.pgid,
                                                                       self.pids,
                                                                       self.errorcode,
                                                                       self.master_addr,
-                                                                      self.node_ip,
                                                                       self.out,
                                                                       self.err)
 
@@ -89,13 +88,15 @@ class ProcessMonitor:
         self.master = []
         self.slaves = []
         self.pgids=[] # TODO: change me to dict
+        self.node_ips = []
         for process_info in process_infos:
             self.pgids.append(process_info.pgid)
+            self.node_ips.append(process_info.node_ip)
             if process_info.master_addr:
                 self.master.append(process_info)
             else:
                 self.slaves.append(process_info)
-        ProcessMonitor.register_shutdown_hook(extra_close_fn=self._clean_fn)
+        ProcessMonitor.register_shutdown_hook(extra_close_fn=self.clean_fn)
         assert len(self.master) == 1,\
             "We should got 1 master only, but we got {}".format(len(self.master))
         self.master = self.master[0]
@@ -113,10 +114,10 @@ class ProcessMonitor:
         for slave in self.slaves:
             print(slave)
 
-    def _clean_fn(self):
+    def clean_fn(self):
         import ray
         ray.shutdown()
-        self.ray_rdd.map(gen_shutdown_per_node(self.pgids)).collect()
+        self.ray_rdd.map(gen_shutdown_per_node(self.pgids, self.node_ips)).collect()
 
     @staticmethod
     def register_shutdown_hook(pgid=None, extra_close_fn=None):

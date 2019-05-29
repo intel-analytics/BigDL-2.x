@@ -6,7 +6,9 @@ from zoo import init_nncontext
 
 
 class SparkRunner():
-    def __init__(self):
+    def __init__(self, spark_log_level="WARN", redirect_spark_log=True):
+        self.spark_log_level = spark_log_level
+        self.redirect_spark_log = redirect_spark_log
         import pyspark
         print("Current pyspark location is : {}".format(pyspark.__file__))
 
@@ -64,20 +66,9 @@ class SparkRunner():
         zoo_conf = init_spark_conf()
         for key, value in conf.items():
             zoo_conf.set(key=key, value=value)
-        sc = init_nncontext(conf=zoo_conf)
-        sc.setLogLevel("INFO")
+        sc = init_nncontext(conf=zoo_conf, redirect_spark_log=self.redirect_spark_log)
+        sc.setLogLevel(self.spark_log_level)
 
-        return sc
-
-    def init_spark_on_local(self,
-                   python_loc,
-                   driver_memory,
-                   master=None):
-        # os.environ['PYSPARK_PYTHON'] = session_execute("which python").out
-        # TODO: remove python_loc, "which python" would generate /usr/bin/python
-        os.environ['PYSPARK_PYTHON'] = python_loc
-        sc = self._create_sc(self._common_opt(master) + 'pyspark-shell',
-                        {"spark.driver.memory": driver_memory})
         return sc
 
 

@@ -32,10 +32,12 @@ rayrunner = RayRunner.from_spark(hadoop_conf="/opt/work/almaren-yarn-config/",
                                  driver_cores=4,
                                  driver_memory="10g",
                                  conda_name="ray36-dev",
+                                 object_store_memory_ratio=0.6,
                                  extra_pmodule_zip="/opt/work/rayonspark/pyzoo/zoo.zip",
                                  jars="/opt/work/rayonspark/dist/lib/analytics-zoo-bigdl_0.8.0-spark_2.4.0-0.5.0-SNAPSHOT-jar-with-dependencies.jar",
                                  force_purge=False,
                                  verbose=True,
+                                 spark_log_level="INFO",
                                  env={"http_proxy": "http://child-prc.intel.com:913",
                                       "http_proxys": "http://child-prc.intel.com:913"})
 rayrunner.start()
@@ -46,10 +48,10 @@ class TestRay():
         import socket
         return socket.gethostname()
 
-    # def check_cv2(self):
-    # conda install -c conda-forge opencv==3.4.2
-    #     import cv2
-    #     return cv2.__version__
+    def check_cv2(self):
+        # conda install -c conda-forge opencv==3.4.2
+        import cv2
+        return cv2.__version__
 
     def ip(self):
         import ray.services as rservices
@@ -58,7 +60,7 @@ class TestRay():
     def network(self):
         from urllib.request import urlopen
         try:
-            urlopen('http://www.baidu.com', timeout=1)
+            urlopen('http://www.baidu.com', timeout=3)
             return True
         except Exception as err:
             return False
@@ -68,7 +70,6 @@ actors = [TestRay.remote() for i in range(0, slave_num)]
 print([ray.get(actor.hostname.remote()) for actor in actors])
 print([ray.get(actor.ip.remote()) for actor in actors])
 print([ray.get(actor.network.remote()) for actor in actors])
-
 
 rayrunner.stop()
 

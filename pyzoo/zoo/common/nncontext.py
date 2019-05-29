@@ -20,7 +20,7 @@ import multiprocessing
 import os
 
 
-def init_nncontext(conf=None):
+def init_nncontext(conf=None, redirect_spark_log=True):
     """
     Creates or gets a SparkContext with optimized configuration for BigDL performance.
     The method will also initialize the BigDL engine.
@@ -36,8 +36,9 @@ def init_nncontext(conf=None):
     else:
         sc = getOrCreateSparkContext(conf=conf)
     check_version()
-    redire_spark_logs()
-    show_bigdl_info_logs()
+    if redirect_spark_log:
+        redire_spark_logs()
+        show_bigdl_info_logs()
     init_engine()
     return sc
 
