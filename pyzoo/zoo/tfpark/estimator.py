@@ -232,12 +232,6 @@ class TFEstimator(object):
                                                 session=sess,
                                                 clip_norm=self.gradient_clipping_norm,
                                                 clip_value=self.gradient_clipping_constant)
-                    if self.gradient_clipping_constant:
-                        min_value, max_value = self.gradient_clipping_constant
-                        opt.set_constant_gradient_clipping(min_value, max_value)
-                    if self.gradient_clipping_norm:
-                        norm = self.gradient_clipping_norm
-                        opt.set_gradient_clipping_by_l2_norm(norm)
                     opt.optimize(MaxIteration(steps))
                     sess.run(assign_step, feed_dict={add_step_input: steps})
                     final_step = sess.run(global_step_tensor)
