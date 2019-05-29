@@ -29,7 +29,6 @@ class JVMGuard():
     """
     The registered pids would be put into the killing list of Spark Executor.
     """
-
     @staticmethod
     def registerPids(pids):
         import logging
@@ -165,8 +164,6 @@ class RayServiceFuncGenerator(object):
             master_ip = task_addrs[0].split(":")[0]
             print("current address {}".format(task_addrs[tc.partitionId()]))
             print("master address {}".format(master_ip))
-            # We might need to get rid of this restriction:"spark.task.cpus": executor_cores
-            # for splitting the ray launching tasks evenly across spark executors.
             redis_address = "{}:{}".format(master_ip, self.redis_port)
             if tc.partitionId() == 0:
                 print("partition id is : {}".format(tc.partitionId()))
@@ -208,8 +205,7 @@ class RayRunner(object):
         print("JVM guarding process has been successfully launched")
 
     def _gather_cluster_ips(self):
-        # You should update this if the task.cpu is changed.
-        total_tasks = int(self._get_num_ray_nodes())
+        total_cores = int(self._get_num_ray_nodes()) * int(self._get_ray_node_cpu_cores())
 
         def info_fn(iter):
             tc = BarrierTaskContext.get()
@@ -217,9 +213,8 @@ class RayRunner(object):
             yield task_addrs
             tc.barrier()
 
-        ips = self.sc.range(0,
-                            total_tasks,
-                            numSlices=total_tasks).barrier().mapPartitions(info_fn).collect()
+        ips = self.sc.range(0, total_cores,
+                            numSlices=total_cores).barrier().mapPartitions(info_fn).collect()
         return ips[0]
 
     @classmethod
