@@ -22,7 +22,7 @@ import com.intel.analytics.bigdl.mkl.{MKL => BMKL}
 import com.intel.analytics.bigdl.tensor.Tensor
 import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric
 import com.intel.analytics.bigdl.utils.File
-import com.intel.analytics.zoo.mkl.{MKL => ZMKL}
+import com.intel.analytics.zoo.mkl.MKL.{vsErf, vdErf}
 import org.apache.commons.io.filefilter.WildcardFileFilter
 import org.apache.hadoop.conf.Configuration
 import org.apache.hadoop.fs.{FileSystem, Path}
@@ -172,15 +172,13 @@ private[zoo] object Utils {
   def erf[T: ClassTag](tensor: Tensor[T])
                       (implicit ev: TensorNumeric[T]): Unit = {
     if (BMKL.isMKLLoaded && tensor.isContiguous()) {
-//      ev.erf(tensor.nElement(), tensor.storage().array(), tensor.storageOffset() - 1,
-//        tensor.storage().array(), tensor.storageOffset() - 1)
       if (tensor.isInstanceOf[Tensor[Float]]) {
         val value = tensor.storage().array().asInstanceOf[Array[Float]]
-        ZMKL.vsErf(tensor.nElement(), value, tensor.storageOffset() - 1,
+        vsErf(tensor.nElement(), value, tensor.storageOffset() - 1,
           value, tensor.storageOffset() - 1)
       } else if (tensor.isInstanceOf[Tensor[Double]]) {
         val value = tensor.storage().array().asInstanceOf[Array[Double]]
-        ZMKL.vdErf(tensor.nElement(), value, tensor.storageOffset() - 1,
+        vdErf(tensor.nElement(), value, tensor.storageOffset() - 1,
           value, tensor.storageOffset() - 1)
       } else {
         throw new UnsupportedOperationException("Erf in MKL only support Float|Double")
