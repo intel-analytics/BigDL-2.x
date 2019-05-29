@@ -425,6 +425,24 @@ with variable_creator_scope():
     def set_val_summary(self, summary):
         self.optimizer.set_val_summary(summary)
 
+    def set_constant_gradient_clipping(self, min_value, max_value):
+        """
+        Configure constant clipping settings.
+
+
+        :param min_value: the minimum value to clip by
+        :param max_value: the maxmimum value to clip by
+        """
+        self.optimizer.set_gradclip_const(min_value, max_value)
+
+    def set_gradient_clipping_by_l2_norm(self, clip_norm):
+        """
+        Configure L2 norm clipping settings.
+
+
+        :param clip_norm: gradient L2-Norm threshold
+        """
+        self.optimizer.set_gradclip_l2norm(clip_norm)
 
     def optimize(self, end_trigger=None):
         if end_trigger is None:
