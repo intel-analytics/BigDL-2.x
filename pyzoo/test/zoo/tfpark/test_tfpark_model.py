@@ -478,7 +478,7 @@ class TestTFParkModel(ZooTestCase):
 
         current_weight = model.get_weights()
 
-        np.all((current_weight[0] - pre_weights[0]) < 1e-7)
+        np.all(np.abs((current_weight[0] - pre_weights[0])) < 1e-7)
 
 
 if __name__ == "__main__":

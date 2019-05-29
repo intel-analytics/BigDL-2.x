@@ -244,16 +244,16 @@ with variable_creator_scope():
         args = TFOptimizer._get_arguments_from_loss(loss, optim_method,
                                                     session, val_outputs,
                                                     val_labels, val_method)
+        if clip_value is not None:
+            if isinstance(clip_value, float) or isinstance(clip_value, int):
+                if clip_value <= 0:
+                    ValueError("The clip_value argument should be positive number")
+                clip_value = (-float(clip_value), float(clip_value))
 
-        if isinstance(clip_value, float) or isinstance(clip_value, int):
-            if clip_value <= 0:
-                ValueError("The clip_value argument should be positive number")
-            clip_value = (-float(clip_value), float(clip_value))
-
-        if not isinstance(clip_value, tuple):
-            raise ValueError("The clip_value argument should be" +
-                             " a positive float/int which clips to (-clip_value, clip_value); " +
-                             "or a tuple which clips to (min_value, max_value)")
+            if not isinstance(clip_value, tuple):
+                raise ValueError("The clip_value argument should be" +
+                                 " a positive float/int which clips to (-clip_value, clip_value); " +
+                                 "or a tuple which clips to (min_value, max_value)")
 
         return cls(*(args + [val_split]),
                    clip_norm=clip_norm,
