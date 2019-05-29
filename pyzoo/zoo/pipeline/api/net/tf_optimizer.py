@@ -58,7 +58,8 @@ class TFOptimizer:
     def __init__(self, loss, optim_method, sess=None, dataset=None, inputs=None,
                  grads=None, variables=None, graph=None,
                  val_outputs=None, val_labels=None, val_method=None, val_split=0.0,
-                 tensors_with_value=None, session_config=None):
+                 tensors_with_value=None, session_config=None,
+                 clip_norm=None, clip_value=None):
         '''
         TFOptimizer is used for distributed training of TensorFlow
         on Spark/BigDL.
@@ -97,6 +98,8 @@ class TFOptimizer:
         self.inputs = inputs + additional_inputs
         self.graph = graph
         self.session_config = session_config
+        self.clip_norm = clip_norm
+        self.clip_constant = clip_value
 
         from zoo.util.tf import process_grad
         grads = [process_grad(grad) for grad in grads]
@@ -200,6 +203,12 @@ with variable_creator_scope():
                                               batch_size=batch_size,
                                               optim_method=self.optim_method)
 
+        if self.clip_norm:
+            self.optimizer.set_gradclip_l2norm(self.clip_norm)
+        if self.clip_constant:
+            min_value, max_value = self.clip_constant
+            self.optimizer.set_gradclip_const(min_value, max_value)
+
     @staticmethod
     def _get_arguments_from_loss(loss, optim_method, session, val_outputs, val_labels, val_method):
         import tensorflow as tf
@@ -227,12 +236,15 @@ with variable_creator_scope():
 
     @classmethod
     def from_loss(cls, loss, optim_method, session=None, val_outputs=None,
-                  val_labels=None, val_method=None, val_split=0.0, **kwargs):
+                  val_labels=None, val_method=None, val_split=0.0,
+                  clip_norm=None, clip_value=None, **kwargs):
         args = TFOptimizer._get_arguments_from_loss(loss, optim_method,
                                                     session, val_outputs,
                                                     val_labels, val_method)
 
-        return cls(*(args + [val_split]), **kwargs)
+        return cls(*(args + [val_split]),
+                   clip_norm=clip_norm,
+                   clip_value=clip_value, **kwargs)
 
     @classmethod
     def from_keras(cls, keras_model, dataset, val_spilt=0.0, **kwargs):
@@ -242,7 +254,20 @@ with variable_creator_scope():
 
         variables = keras_model._collected_trainable_weights
         keras_optimizer = keras_model.optimizer
-        grads = keras_optimizer.get_gradients(loss, variables)
+
+        grads = K.gradients(loss, variables)
+        if None in grads:
+            raise ValueError('An operation has `None` for gradient. '
+                             'Please make sure that all of your ops have a '
+                             'gradient defined (i.e. are differentiable). '
+                             'Common ops without gradient: '
+                             'K.argmax, K.round, K.eval.')
+        clip_norm = None
+        clip_value = None
+        if hasattr(keras_optimizer, 'clipnorm'):
+            clip_norm = keras_optimizer.clipnorm
+        if hasattr(keras_optimizer, 'clipvalue'):
+            clip_value = (-keras_optimizer.clipvalue, keras_optimizer.clipvalue)
 
         sess = K.get_session()
         optim_method = TFOptimizer.to_bigdl_optim_method(keras_optimizer)
@@ -271,7 +296,9 @@ with variable_creator_scope():
         return cls(loss, optim_method, sess, dataset, inputs,
                    grads, variables, loss.graph, val_outputs, val_labels,
                    bigdl_val_methods, val_spilt,
-                   tensors_with_value=tensor_with_value, **kwargs)
+                   tensors_with_value=tensor_with_value,
+                   clipnorm=clip_norm,
+                   clipvalue=clip_value, **kwargs)
 
     @staticmethod
     def to_bigdl_optim_method(koptim_method):
@@ -384,6 +411,7 @@ with variable_creator_scope():
 
     def set_val_summary(self, summary):
         self.optimizer.set_val_summary(summary)
+
 
     def optimize(self, end_trigger=None):
         if end_trigger is None:
