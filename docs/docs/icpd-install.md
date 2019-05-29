@@ -84,7 +84,9 @@ kubectl get svc -n zen/intelanalytics|grep analytics-zoo
 kubectl get pod -n zen/intelanalytics|grep analytics-zoo
 kubectl describe pod <the_pod_it_made> -n zen/intelanalytics
 ```
-
+## Using Analytics Zoo
+After you install the Analytics Zoo Add-on, you can open web browser, go to http://<MASTER_1_IP>:<port_number> to access the Jupyter notebook with anlytics zoo. 
+To get the detail information of how to use analytics zoo, please check [Analytics Zoo documentation](https://analytics-zoo.github.io)
 ## Uninstalling the chart
 To uninstall/delete the analytics-zoo deployment:
 ```bash
