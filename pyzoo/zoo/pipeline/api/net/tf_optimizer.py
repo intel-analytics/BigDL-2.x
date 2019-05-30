@@ -205,6 +205,7 @@ with variable_creator_scope():
                                               IdentityCriterion(),
                                               batch_size=batch_size,
                                               optim_method=self.optim_method)
+
         if self.clip_norm:
             self.optimizer.set_gradclip_l2norm(self.clip_norm)
         if self.clip_constant:
