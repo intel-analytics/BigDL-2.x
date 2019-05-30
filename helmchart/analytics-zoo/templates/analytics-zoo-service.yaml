@@ -1,18 +1,18 @@
 apiVersion: v1
 kind: Service
 metadata:
-  name: {{ template "name" . }}
+  name: {{ template "analytics-zoo-fullname" . }}
     labels:
       heritage: {{ .Release.Service | quote }}
       release: {{ .Release.Name | quote }}
       chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
-      component: "{{ .Release.Name }}-{{ .Values.Analytics-Zoo.Component }}"
+      component: "{{ .Release.Name }}-{{ .Values.AnalyticsZoo.Component }}"
 spec:
-  type: {{ .Values.Analytics-Zoo.ServiceType }}
+  type: {{ .Values.AnalyticsZoo.ServiceType }}
   ports:
     - name: http
-      port: {{ .Values.Analytics-Zoo.ServicePort }}
-      targetPort: {{ .Values.Analytics-Zoo.ContainerPort }}
+      port: {{ .Values.AnalyticsZoo.ServicePort }}
+      targetPort: {{ .Values.AnalyticsZoo.ContainerPort }}
       protocol: TCP
   selector:
-    component: "{{ .Release.Name }}-{{ .Values.Analytics-Zoo.Component }}"
+    component: "{{ .Release.Name }}-{{ .Values.AnalyticsZoo.Component }}"

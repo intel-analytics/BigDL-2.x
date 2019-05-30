@@ -1,62 +1,64 @@
 apiVersion: apps/v1beta2
 kind: Deployment
 metadata:
-  name: {{ template "name" . }}
+  name: {{ template "analytics-zoo-fullname" . }}
   labels:
     heritage: {{ .Release.Service | quote }}
     release: {{ .Release.Name | quote }}
     chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
-    component: "{{ .Release.Name }}-{{ .Values.Analytics-Zoo.Component }}"
+    component: "{{ .Release.Name }}-{{ .Values.AnalyticsZoo.Component }}"
 spec:
-  replicas: {{ default 1 .Values.Analytics-Zoo.Replicas }}
+  replicas: {{ default 1 .Values.AnalyticsZoo.Replicas }}
   selector:
     matchLabels:
-      component: "{{ .Release.Name }}-{{ .Values.Analytics-Zoo.Component }}"
+      component: "{{ .Release.Name }}-{{ .Values.AnalyticsZoo.Component }}"
   template:
     metadata:
       labels:
         heritage: {{ .Release.Service | quote }}
         release: {{ .Release.Name | quote }}
         chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
-        component: "{{ .Release.Name }}-{{ .Values.Analytics-Zoo.Component }}"
+        component: "{{ .Release.Name }}-{{ .Values.AnalyticsZoo.Component }}"
     spec:
       volumes:
         - name: user-home-mount
+        {{- if .Values.AnalyticsZoo.Persistence.Enabled }}
           persistentVolumeClaim:
-           claimName: user-home-pvc
+            claimName: {{ template "analytics-zoo-fullname" . }}-notebook
+        {{- else }}
+          emptyDir: {}
+        {{- end -}}
       containers:
         - name: {{ .Chart.Name }}
-          image: "{{ .Values.Analytics-Zoo.Image }}:{{ .Values.Analytics-Zoo.ImageTag }}"
-          imagePullPolicy: {{ .Values.Analytics-Zoo.PullPolicy }}
+          image: "{{ .Values.AnalyticsZoo.Image }}:{{ .Values.AnalyticsZoo.ImageTag }}"
+          imagePullPolicy: {{ .Values.AnalyticsZoo.PullPolicy }}
           volumeMounts:
           - mountPath: /user-home
             name: user-home-mount
           ports:
-          - containerPort: {{ .Values.Analytics-Zoo.ContainerPort }}
+          - containerPort: {{ .Values.AnalyticsZoo.ContainerPort }}
             protocol: TCP
           resources:
             requests:
-              cpu: "{{ .Values.Analytics-zoo.Cpu }}"
-              memory: "{{ .Values.Analytics-zoo.Memory }}"
+              cpu: "{{ .Values.AnalyticsZoo.Cpu }}"
+              memory: "{{ .Values.AnalyticsZoo.Memory }}"
           env:
-            - name: SPARK_MASTER
-              value: "spark://{{ template "master-fullname" . }}:{{ .Values.Master.ServicePort }}"
-            - name: RUNTIME_DRIVER_CORES
-              value: "{{ .Values.Analytics-zoo.DriverCores }}"
-            - name: RUNTIME_DRIVER_MEMORY
-              value: "{{ .Values.Analytics-zoo.DriverMem }}"
-            - name: RUNTIME_EXECUTOR_CORES_ENV
-              value: "{{ .Values.Analytics-zoo.ExecutorCores }}"
-            - name: RUNTIME_EXECUTOR_MEMORY_ENV
-              value: "{{ .Values.Analytics-zoo.ExecutorMem }}"
-            - name: RUNTIME_TOTAL_EXECUTOR_CORES_ENV
-              value: "{{ .Values.Analytics-zoo.TotalExecutorCores }}"
-            - name: ANALYTICS_ZOO_VERSION
-              value: "{{ .Values.Analytics-zoo.AnalyticsZooVersion }}"
-            - name: BIGDL_VERSION
-              value: "{{ .Values.Analytics-zoo.BigDLVesion }}"
-            - name: SPARK_VERSION
-              value: "{{ .Values.Analytics-zoo.SparkVersion }}"
+          - name: RUNTIME_DRIVER_CORES
+            value: "{{ .Values.AnalyticsZoo.DriverCores }}"
+          - name: RUNTIME_DRIVER_MEMORY
+            value: "{{ .Values.AnalyticsZoo.DriverMem }}"
+          - name: RUNTIME_EXECUTOR_CORES_ENV
+            value: "{{ .Values.AnalyticsZoo.ExecutorCores }}"
+          - name: RUNTIME_EXECUTOR_MEMORY_ENV
+            value: "{{ .Values.AnalyticsZoo.ExecutorMem }}"
+          - name: RUNTIME_TOTAL_EXECUTOR_CORES_ENV
+            value: "{{ .Values.AnalyticsZoo.TotalExecutorCores }}"
+          - name: ANALYTICS_ZOO_VERSION
+            value: "{{ .Values.AnalyticsZoo.AnalyticsZooVersion }}"
+          - name: BIGDL_VERSION
+            value: "{{ .Values.AnalyticsZoo.BigDLVesion }}"
+          - name: SPARK_VERSION
+            value: "{{ .Values.AnalyticsZoo.SparkVersion }}"
 
 
 
