@@ -49,7 +49,8 @@ def bert_model(features, labels, mode, params):
     return model
 
 
-def bert_input_fn(rdd, max_seq_length, batch_size, features={"input_ids", "input_mask", "token_type_ids"},
+def bert_input_fn(rdd, max_seq_length, batch_size,
+                  features={"input_ids", "input_mask", "token_type_ids"},
                   extra_features=None, labels=None):
     """
     Takes an RDD to create the input function for BERT related TFEstimators.
@@ -58,11 +59,11 @@ def bert_input_fn(rdd, max_seq_length, batch_size, features={"input_ids", "input
     Note that currently only integer labels are supported.
     For prediction, each element in rdd should be a dict of features.
 
-    Features in each RDD element should contain "input_ids", "input_mask" and "token_type_ids", each of
-    shape max_sequence_length.
-    If you have other extra features in your dict of features, you need to explicitly specify the argument
-    `extra_features`, which is supposed to the dictionary with feature name as key and tuple of
-    (dtype, shape) as its value.
+    Features in each RDD element should contain "input_ids", "input_mask" and "token_type_ids",
+    each of shape max_sequence_length.
+    If you have other extra features in your dict of features, you need to explicitly specify
+    the argument `extra_features`, which is supposed to be the dict with feature name as key
+    and tuple of (dtype, shape) as its value.
     """
     assert features.issubset({"input_ids", "input_mask", "token_type_ids"})
     features_dict = {}
@@ -85,7 +86,8 @@ def bert_input_fn(rdd, max_seq_length, batch_size, features={"input_ids", "input
             for label in labels:
                 res_labels[label] = (tf.int32, [])
     else:
-        raise ValueError("Wrong labels. labels should be a set of label names if you have multiple labels")
+        raise ValueError("Wrong labels. "
+                         "labels should be a set of label names if you have multiple labels")
 
     def input_fn(mode):
         if mode == tf.estimator.ModeKeys.EVAL or mode == tf.estimator.ModeKeys.TRAIN:

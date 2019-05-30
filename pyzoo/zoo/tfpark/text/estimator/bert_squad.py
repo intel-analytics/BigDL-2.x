@@ -68,14 +68,15 @@ def _bert_squad_model_fn(features, labels, mode, params):
         }
         return TFEstimatorSpec(mode=mode, predictions=predictions)
     else:
-        raise ValueError("Currently only TRAIN and PREDICT modes are supported. SQuAD uses a separate script "
-                         "for EVAL")
+        raise ValueError("Currently only TRAIN and PREDICT modes are supported. "
+                         "SQuAD uses a separate script for EVAL")
 
 
 class BERTSQuAD(BERTBaseEstimator):
     """
     A pre-built TFEstimator that performs training and prediction on SQuAD dataset.
-    The Stanford Question Answering Dataset (SQuAD) is a popular question answering benchmark dataset.
+    The Stanford Question Answering Dataset (SQuAD) is a popular question answering
+    benchmark dataset.
 
     :param bert_config_file: The path to the json file for BERT configurations.
     :param init_checkpoint: The path to the initial checkpoint of the pre-trained BERT model if any.

@@ -353,10 +353,10 @@ class TFEstimator(object):
 
                     results = tfnet.predict(rdd, result.batch_per_thread)
 
-                    # If predictions is a dictionary, add back the keys and results will be a dictionary as well.
+                    # If predictions is a dict, add back the keys and results is a dict as well.
                     if isinstance(spec.predictions, dict):
-
-                        def zip_key(outs, keys):  # result is a list of outputs; return a dict of outputs.
+                        # Given a list of outputs; return a dict of outputs.
+                        def zip_key(outs, keys):
                             assert len(outs) == len(keys)
                             res_dict = {}
                             for out, key in zip(outs, keys):
