@@ -433,6 +433,7 @@ class Variable[T: ClassTag] private[zoo] (private[zoo] var node: ModuleNode[T],
   }
 
   def +(a: Double): Variable[T] = {
+//    Variable(AddConstant[T](a, inplace = true).inputs(Array(this.node)))
     Variable(AddConstant[T](a).inputs(Array(this.node)))
   }
 
@@ -520,7 +521,8 @@ class Variable[T: ClassTag] private[zoo] (private[zoo] var node: ModuleNode[T],
   def slice(dim: Int, startIndex: Int, length: Int): Variable[T] = {
     val layer = Narrow[T](dim = dim,
       offset = startIndex,
-      length = length)
+      length = length,
+      inplace = true)
     Variable(layer.inputs(this.node))
   }
 

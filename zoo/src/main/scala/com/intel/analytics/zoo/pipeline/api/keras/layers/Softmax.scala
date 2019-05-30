@@ -16,39 +16,53 @@
 
 package com.intel.analytics.zoo.pipeline.api.keras.layers
 
-import com.intel.analytics.bigdl.nn.abstractnn.{AbstractModule}
+import com.intel.analytics.bigdl.nn.abstractnn.AbstractModule
 import com.intel.analytics.bigdl.nn.keras.{SoftMax => KSoftMax}
 import com.intel.analytics.bigdl.tensor.Tensor
-import com.intel.analytics.bigdl.utils.{Shape}
+import com.intel.analytics.bigdl.utils.Shape
 import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric
-import com.intel.analytics.bigdl.nn.{Transpose, Sequential => TSequential,
-TimeDistributed => TTimeDistributed}
+import com.intel.analytics.bigdl.nn.{InternalSoftmax, Transpose, Sequential => TSequential, TimeDistributed => TTimeDistributed}
+import com.intel.analytics.zoo.pipeline.api.Net
 
 import scala.reflect.ClassTag
 
 class SoftMax[T: ClassTag](override val inputShape: Shape = null)(implicit ev: TensorNumeric[T])
-  extends KSoftMax[T](inputShape) {
+  extends KSoftMax[T](inputShape) with Net {
 
-  override def doBuild(inputShape: Shape): AbstractModule[Tensor[T], Tensor[T], T] = {
+//  override def doBuild(inputShape: Shape): AbstractModule[Tensor[T], Tensor[T], T] = {
+//    val input = inputShape.toSingle().toArray
+//    require(input.length < 5, "SoftMax only support 2d/3d/4d input")
+//    val layer = com.intel.analytics.bigdl.nn.SoftMax()
+//    if (input.length <= 2) {
+//      layer.asInstanceOf[AbstractModule[Tensor[T], Tensor[T], T]]
+//    }
+//    else {
+//      val seq = TSequential[T]()
+//      seq.add(Transpose(Array((1, 3))))
+//      seq.add(layer)
+//      seq.add(Transpose(Array((1, 3))))
+//
+//      val model = if (input.length > 3) {
+//        TTimeDistributed[T](seq.asInstanceOf[AbstractModule[Tensor[T], Tensor[T], T]])
+//      }
+//      else seq
+//
+//      model.asInstanceOf[AbstractModule[Tensor[T], Tensor[T], T]]
+//    }
+//  }
+override def doBuild(inputShape: Shape): AbstractModule[Tensor[T], Tensor[T], T] = {
+  val input = inputShape.toSingle().toArray
+  require(input.length < 5, "SoftMax only support 2d/3d/4d input")
+  val layer = InternalSoftmax()
+
+    layer.asInstanceOf[AbstractModule[Tensor[T], Tensor[T], T]]
+}
+
+  override def computeOutputShape(inputShape: Shape): Shape = {
     val input = inputShape.toSingle().toArray
-    require(input.length < 5, "SoftMax only support 2d/3d/4d input")
-    val layer = com.intel.analytics.bigdl.nn.SoftMax()
-    if (input.length <= 2) {
-      layer.asInstanceOf[AbstractModule[Tensor[T], Tensor[T], T]]
-    }
-    else {
-      val seq = TSequential[T]()
-      seq.add(Transpose(Array((1, 3))))
-      seq.add(layer)
-      seq.add(Transpose(Array((1, 3))))
-
-      val model = if (input.length > 3) {
-        TTimeDistributed[T](seq.asInstanceOf[AbstractModule[Tensor[T], Tensor[T], T]])
-      }
-      else seq
-
-      model.asInstanceOf[AbstractModule[Tensor[T], Tensor[T], T]]
-    }
+    require(input.length < 5,
+      s"SoftMax requires 2D|3D|4D input, but got input dim ${input.length}")
+    inputShape
   }
 }
 
