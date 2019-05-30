@@ -15,11 +15,13 @@
 #
 from unittest import TestCase
 
-import pytest
 import numpy as np
+import pytest
+
 import zoo.ray.util.utils as rutils
 
 np.random.seed(1337)  # for reproducibility
+
 
 class TestUtil(TestCase):
 
@@ -37,6 +39,7 @@ class TestUtil(TestCase):
         assert 10000 == rutils.resourceToBytes("10k")
         assert 10000000 == rutils.resourceToBytes("10m")
         assert 10000000000 == rutils.resourceToBytes("10g")
+
 
 if __name__ == "__main__":
     pytest.main([__file__])

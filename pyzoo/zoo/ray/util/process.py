@@ -21,28 +21,28 @@ import atexit
 import sys
 import psutil
 
-
 from zoo.ray.util import gen_shutdown_per_node, is_local
+
 
 class ProcessInfo(object):
     def __init__(self, out, err, errorcode, pgid, tag="default", pids=None, node_ip=None):
-        self.out=str(out.strip())
-        self.err=str(err.strip())
-        self.pgid=pgid
-        self.pids=pids
-        self.errorcode=errorcode
-        self.tag=tag
-        self.master_addr=None
-        self.node_ip=node_ip
+        self.out = str(out.strip())
+        self.err = str(err.strip())
+        self.pgid = pgid
+        self.pids = pids
+        self.errorcode = errorcode
+        self.tag = tag
+        self.master_addr = None
+        self.node_ip = node_ip
 
     def __str__(self):
         return "node_ip: {} tag: {}, pgid: {}, pids: {}, returncode: {}, \
-                master_addr: {},  \n {} {}".format( self.node_ip, self.tag, self.pgid,
-                                                                      self.pids,
-                                                                      self.errorcode,
-                                                                      self.master_addr,
-                                                                      self.out,
-                                                                      self.err)
+                master_addr: {},  \n {} {}".format(self.node_ip, self.tag, self.pgid,
+                                                   self.pids,
+                                                   self.errorcode,
+                                                   self.master_addr,
+                                                   self.out,
+                                                   self.err)
 
 
 def pids_from_gpid(gpid):
@@ -62,11 +62,11 @@ def session_execute(command, env=None, tag=None, fail_fast=False, timeout=120):
     pgid = os.getpgid(pro.pid)
     print("The pgid for the current session is: {}".format(pgid))
     out, err = pro.communicate(timeout=timeout)
-    out=out.decode("utf-8")
-    err=err.decode("utf-8")
+    out = out.decode("utf-8")
+    err = err.decode("utf-8")
     print(out)
     print(err)
-    errorcode=pro.returncode
+    errorcode = pro.returncode
     if errorcode != 0:
         if fail_fast:
             raise Exception(err)
@@ -87,7 +87,7 @@ class ProcessMonitor:
         self.ray_rdd = ray_rdd
         self.master = []
         self.slaves = []
-        self.pgids=[] # TODO: change me to dict
+        self.pgids = []  # TODO: change me to dict
         self.node_ips = []
         for process_info in process_infos:
             self.pgids.append(process_info.pgid)
@@ -97,7 +97,7 @@ class ProcessMonitor:
             else:
                 self.slaves.append(process_info)
         ProcessMonitor.register_shutdown_hook(extra_close_fn=self.clean_fn)
-        assert len(self.master) == 1,\
+        assert len(self.master) == 1, \
             "We should got 1 master only, but we got {}".format(len(self.master))
         self.master = self.master[0]
         if not is_local(self.sc):

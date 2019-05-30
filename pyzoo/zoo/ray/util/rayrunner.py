@@ -29,6 +29,7 @@ class JVMGuard():
     """
     The registered pids would be put into the killing list of Spark Executor.
     """
+
     @staticmethod
     def registerPids(pids):
         import logging
@@ -118,9 +119,9 @@ class RayServiceFuncGenerator(object):
         modified_env = self._prepare_env(self.mkl_cores)
 
         command = "{} start --head " \
-                  "--include-webui --redis-port {} --redis-password {} --num-cpus {} ".format(
-            self.ray_exec, self.redis_port, self.password,
-            self.ray_node_cpu_cores)
+                  "--include-webui --redis-port {} \
+                  --redis-password {} --num-cpus {} ". \
+            format(self.ray_exec, self.redis_port, self.password, self.ray_node_cpu_cores)
         if self.object_store_memory:
             command = command + "--object-store-memory {} ".format(str(self.object_store_memory))
         print("Starting ray master by running: {}".format(command))
@@ -194,7 +195,8 @@ class RayRunner(object):
             ray_node_cpu_cores=self.ray_node_cpu_cores,
             mkl_cores=self._get_mkl_cores(),
             password=password,
-            object_store_memory=resourceToBytes(str(object_store_memory)) if object_store_memory else None,
+            object_store_memory=resourceToBytes(
+                str(object_store_memory)) if object_store_memory else None,
             verbose=verbose, env=env)
         self._gather_cluster_ips()
         if force_purge:
@@ -228,7 +230,8 @@ class RayRunner(object):
                    spark_log_level="WARN",
                    redirect_spark_log=True):
         from zoo.ray.util.spark import SparkRunner
-        spark_runner = SparkRunner(spark_log_level=spark_log_level, redirect_spark_log=redirect_spark_log)
+        spark_runner = SparkRunner(spark_log_level=spark_log_level,
+                                   redirect_spark_log=redirect_spark_log)
         sc = spark_runner.init_spark_on_yarn(
             hadoop_conf=hadoop_conf,
             penv_archive=penv_archive,
@@ -236,14 +239,16 @@ class RayRunner(object):
             extra_pmodule_zip=extra_pmodule_zip,
             num_executor=slave_num,
             executor_cores=slave_cores,
-            executor_memory="{}b".format(int(resourceToBytes(slave_memory) * (1 - object_store_memory_ratio))),
+            executor_memory="{}b".format(
+                int(resourceToBytes(slave_memory) * (1 - object_store_memory_ratio))),
             driver_memory=driver_memory,
             driver_cores=driver_cores,
             extra_executor_memory_for_ray="{}b".format(
                 int(resourceToBytes(slave_memory) * (object_store_memory_ratio))),
             jars=jars)
         return cls(sc=sc, force_purge=force_purge, verbose=verbose, env=env,
-                   object_store_memory="{}b".format(int(resourceToBytes(slave_memory) * object_store_memory_ratio)))
+                   object_store_memory="{}b".format(
+                       int(resourceToBytes(slave_memory) * object_store_memory_ratio)))
 
     def stop(self):
         import ray
@@ -298,8 +303,8 @@ class RayRunner(object):
     def _start_restricted_worker(self, redis_address, redis_password, object_store_memory):
         num_cores = 0
         command = "ray start --redis-address {} " \
-                  "--redis-password  {} --num-cpus {} --object-store-memory {}".format(
-            redis_address, redis_password, num_cores, object_store_memory)
+                  "--redis-password  {} --num-cpus {} --object-store-memory {}".\
+            format(redis_address, redis_password, num_cores, object_store_memory)
         print("".format(command))
         process_info = session_execute(command=command, fail_fast=True)
         ProcessMonitor.register_shutdown_hook(pgid=process_info.pgid)

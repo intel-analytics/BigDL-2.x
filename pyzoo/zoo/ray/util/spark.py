@@ -71,7 +71,6 @@ class SparkRunner():
 
         return sc
 
-
     def _init_yarn(self,
                    python_zip_file,
                    driver_memory,
@@ -95,8 +94,8 @@ class SparkRunner():
         def _yarn_opt(jars):
             from zoo.util.engine import get_analytics_zoo_classpath
             command = " --archives {}#python_env --num-executors {} " \
-                   " --executor-cores {} --executor-memory {}".format(
-                penv_archive, num_executor, executor_cores, executor_memory)
+                      " --executor-cores {} --executor-memory {}".\
+                format(penv_archive, num_executor, executor_cores, executor_memory)
             path_to_zoo_jar = get_analytics_zoo_classpath()
 
             if python_zip_file:
@@ -108,7 +107,8 @@ class SparkRunner():
                 command = command + " --jars {} ".format(path_to_zoo_jar)
 
             if path_to_zoo_jar:
-                command = command + " --conf spark.driver.extraClassPath={} ".format(get_analytics_zoo_classpath())
+                command = command + " --conf spark.driver.extraClassPath={} ".\
+                    format(get_analytics_zoo_classpath())
             return command
 
         def _submit_opt(master):
@@ -116,7 +116,7 @@ class SparkRunner():
                 "spark.driver.memory": driver_memory,
                 "spark.driver.cores": driver_cores,
                 "spark.scheduler.minRegisterreResourcesRatio": "1.0"}
-                # "spark.task.cpus": executor_cores}
+            # "spark.task.cpus": executor_cores}
             if extra_executor_memory_for_ray:
                 conf["spark.executor.memoryOverhead"] = extra_executor_memory_for_ray
             if spark_yarn_jars:
@@ -128,7 +128,6 @@ class SparkRunner():
 
     def init_spark_on_yarn(self,
                            hadoop_conf,
-                           extra_pmodule_zip,
                            num_executor,
                            conda_name,
                            executor_cores,
@@ -136,33 +135,33 @@ class SparkRunner():
                            driver_memory="1g",
                            driver_cores=10,
                            extra_executor_memory_for_ray=None,
+                           extra_pmodule_zip=None,
                            penv_archive=None,
                            master="yarn",
                            hadoop_user_name="root",
-        spark_yarn_jars=None,
+                           spark_yarn_jars=None,
                            jars=None):
         pack_env = False
-        assert penv_archive or conda_name,\
+        assert penv_archive or conda_name, \
             "You should either specify penv_archive or conda_name explicitly"
         try:
             if not penv_archive:
                 penv_archive = self.pack_penv(conda_name)
                 pack_env = True
             sc = self._init_yarn(hadoop_conf=hadoop_conf,
-                              spark_yarn_jars=spark_yarn_jars,
-                              penv_archive=penv_archive,
-                              python_zip_file=extra_pmodule_zip,
-                              num_executor=num_executor,
-                              executor_cores=executor_cores,
-                              executor_memory=executor_memory,
-                              driver_memory=driver_memory,
-                              driver_cores=driver_cores,
-     extra_executor_memory_for_ray=extra_executor_memory_for_ray,
-                              master=master,
-                              hadoop_user_name=hadoop_user_name,
+                                 spark_yarn_jars=spark_yarn_jars,
+                                 penv_archive=penv_archive,
+                                 python_zip_file=extra_pmodule_zip,
+                                 num_executor=num_executor,
+                                 executor_cores=executor_cores,
+                                 executor_memory=executor_memory,
+                                 driver_memory=driver_memory,
+                                 driver_cores=driver_cores,
+                                 extra_executor_memory_for_ray=extra_executor_memory_for_ray,
+                                 master=master,
+                                 hadoop_user_name=hadoop_user_name,
                                  jars=jars)
         finally:
             if conda_name and penv_archive and pack_env:
                 os.remove(penv_archive)
         return sc
-

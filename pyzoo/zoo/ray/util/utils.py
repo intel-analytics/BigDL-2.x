@@ -16,11 +16,13 @@
 
 import re
 
+
 def to_list(input):
     if isinstance(input, (list, tuple)):
         return list(input)
     else:
         return [input]
+
 
 def resourceToBytes(resource_str):
     matched = re.compile("([0-9]+)([a-z]+)?").match(resource_str.lower())

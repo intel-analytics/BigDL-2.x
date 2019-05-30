@@ -37,6 +37,7 @@ import scala.reflect.ClassTag
 import scala.reflect.io.Path
 import scala.collection.mutable.ListBuffer
 import java.util.ArrayList
+import java.util.concurrent.CopyOnWriteArrayList
 
 object PythonZooNet {
 
@@ -139,14 +140,14 @@ class PythonZooNet[T: ClassTag](implicit ev: TensorNumeric[T]) extends PythonZoo
       toJSample(x).asInstanceOf[RDD[JSample[Float]]], batchSize)
   }
 
-  val processToBeKill = new ArrayList[String]()
+  val processToBeKill = new CopyOnWriteArrayList[String]()
   registerKiller()
 
-  private def killPids(killingList: ArrayList[String], killCommand: String): Unit = {
+  private def killPids(killingList: JList[String], killCommand: String): Unit = {
     val iter = killingList.iterator()
     while(iter.hasNext) {
       val pid = iter.next()
-      println("Killing pid " +  pid)
+      println("JVM is killing process: " +  pid)
       val process = Runtime.getRuntime().exec(killCommand + pid)
       if (process.exitValue() == 0) {
         iter.remove()
@@ -157,20 +158,15 @@ class PythonZooNet[T: ClassTag](implicit ev: TensorNumeric[T]) extends PythonZoo
   private def registerKiller(): Unit = {
       Runtime.getRuntime().addShutdownHook(new Thread {
           override def run(): Unit = {
-            val killingList = processToBeKill
             // Give it a chance to be gracefully killed
-            killPids(killingList, "kill ")
+            killPids(processToBeKill, "kill ")
             Thread.sleep(2000)
-            killPids(killingList, "kill -9")
+            killPids(processToBeKill, "kill -9")
           }
       })
   }
 
-//  def jvmGuardRegisterPids(pids: ArrayList[String]): Unit = this.synchronized {
-//      pids.asScala.foreach(pid => processToBeKill.add(pid))
-//  }
-
-  def jvmGuardRegisterPids(pids: ArrayList[Integer]): Unit = this.synchronized {
+  def jvmGuardRegisterPids(pids: ArrayList[Integer]): Unit = {
     pids.asScala.foreach(pid => processToBeKill.add(pid + ""))
   }
 

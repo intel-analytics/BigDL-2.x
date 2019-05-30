@@ -14,33 +14,31 @@
 # limitations under the License.
 #
 
+
 import ray
-from zoo.ray.util.rayrunner import RayRunner
-
-
-
-# update python in pip: cp -rf ~/god/rayonspark/pyzoo/zoo/* /home/zhichao/anaconda2/envs/ray36/lib/python3.6/site-pac
-# This is required if run on pycharm
-import sys
-sys.path.insert(0, "/root/anaconda2/envs/ray36/lib/python3.6/site-packages/zoo/share/conf/spark-analytics-zoo.conf")
+from zoo.ray.util.spark import SparkRunner
 
 slave_num = 3
-rayrunner = RayRunner.from_spark(hadoop_conf="/opt/work/almaren-yarn-config/",
-                                 slave_num=slave_num,
-                                 slave_cores=28,
-                                 slave_memory="60g",
-                                 driver_cores=4,
-                                 driver_memory="10g",
-                                 conda_name="ray36-dev",
-                                 object_store_memory_ratio=0.6,
-                                 extra_pmodule_zip="/opt/work/rayonspark/pyzoo/zoo.zip",
-                                 jars="/opt/work/rayonspark/dist/lib/analytics-zoo-bigdl_0.8.0-spark_2.4.0-0.5.0-SNAPSHOT-jar-with-dependencies.jar",
-                                 force_purge=False,
-                                 verbose=True,
-                                 spark_log_level="INFO",
-                                 env={"http_proxy": "http://child-prc.intel.com:913",
-                                      "http_proxys": "http://child-prc.intel.com:913"})
-rayrunner.start()
+
+spark_runner = SparkRunner()
+
+sc = spark_runner.init_spark_on_yarn(
+    hadoop_conf="/opt/work/almaren-yarn-config/",
+    conda_name="ray36-dev",
+    num_executor=slave_num,
+    executor_cores=28,
+    executor_memory="10g",
+    driver_memory="2g",
+    driver_cores=4,
+    extra_executor_memory_for_ray="30g")
+
+from zoo.ray.util.rayrunner import RayRunner
+rayRunner = RayRunner(sc=sc,
+                      object_store_memory="25g",
+                      env={"http_proxy": "http://child-prc.intel.com:913",
+                           "http_proxys": "http://child-prc.intel.com:913"})
+rayRunner.start()
+
 
 @ray.remote
 class TestRay():
@@ -71,6 +69,4 @@ print([ray.get(actor.hostname.remote()) for actor in actors])
 print([ray.get(actor.ip.remote()) for actor in actors])
 print([ray.get(actor.network.remote()) for actor in actors])
 
-rayrunner.stop()
-
-
+rayRunner.stop()
