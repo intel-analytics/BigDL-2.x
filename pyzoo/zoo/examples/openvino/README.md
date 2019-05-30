@@ -21,7 +21,7 @@ In this example, we use `frozen_inference_graph.pb` of the `faster_rcnn_resnet10
 ```bash
 export SPARK_DRIVER_MEMORY=10g
 image_path=directory path that contain images
-model_path=path to frozen_inference_graph.pb
+model_path=dir contains frozen_inference_graph.pb and pipeline.config
 
 python predict.py --image ${image_path} --model ${model_path}
 ```
@@ -35,7 +35,7 @@ export SPARK_HOME=the root directory of Spark
 export ANALYTICS_ZOO_HOME=the directory where you extract the downloaded Analytics Zoo zip package
 MASTER=local[*]
 image_path=directory path that contain images
-model_path=path to frozen_inference_graph.pb
+model_path=dir contains frozen_inference_graph.pb and pipeline.config
 
 ${ANALYTICS_ZOO_HOME}/bin/spark-submit-with-zoo.sh \
     --master $MASTER \
