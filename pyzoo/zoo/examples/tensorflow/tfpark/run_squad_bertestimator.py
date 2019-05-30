@@ -26,7 +26,7 @@ from zoo.tfpark.text.estimator import BERTSQuAD, bert_input_fn
 from zoo.pipeline.api.keras.optimizers import AdamWeightDecay
 from bert import tokenization
 
-# Copy code from BERT run_squad.py since import run_classifier will have error in imports such as
+# Copy code from BERT run_squad.py since import run_squad will have error in imports such as
 # import modeling
 
 
