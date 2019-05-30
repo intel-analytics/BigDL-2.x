@@ -9,8 +9,8 @@ AnalyticsZoo:
   PullPolicy: IfNotPresent
   Replicas: 1
   Component: "analytics-zoo"
-  Cpu: "1"
-  Memory: "2g"
+  Cpu: "4"
+  Memory: "40G"
   ServicePort: 8888
   ContainerPort: 8888
   ServiceType: LoadBalancer
