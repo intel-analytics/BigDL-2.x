@@ -10,9 +10,9 @@ metadata:
 spec:
   type: {{ .Values.AnalyticsZoo.ServiceType }}
   ports:
-    - name: http
-      port: {{ .Values.AnalyticsZoo.ServicePort }}
-      targetPort: {{ .Values.AnalyticsZoo.ContainerPort }}
-      protocol: TCP
+  - name: http
+    port: {{ .Values.AnalyticsZoo.ServicePort }}
+    targetPort: {{ .Values.AnalyticsZoo.ContainerPort }}
+    protocol: TCP
   selector:
     component: "{{ .Release.Name }}-{{ .Values.AnalyticsZoo.Component }}"

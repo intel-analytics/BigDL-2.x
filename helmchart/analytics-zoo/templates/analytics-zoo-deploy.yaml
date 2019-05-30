@@ -20,45 +20,46 @@ spec:
         chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
         component: "{{ .Release.Name }}-{{ .Values.AnalyticsZoo.Component }}"
     spec:
-      volumes:
-        - name: user-home-mount
-        {{- if .Values.AnalyticsZoo.Persistence.Enabled }}
-          persistentVolumeClaim:
-            claimName: {{ template "analytics-zoo-fullname" . }}-notebook
-        {{- else }}
-          emptyDir: {}
-        {{- end -}}
       containers:
-        - name: {{ .Chart.Name }}
-          image: "{{ .Values.AnalyticsZoo.Image }}:{{ .Values.AnalyticsZoo.ImageTag }}"
-          imagePullPolicy: {{ .Values.AnalyticsZoo.PullPolicy }}
-          volumeMounts:
-          - mountPath: /user-home
-            name: user-home-mount
-          ports:
-          - containerPort: {{ .Values.AnalyticsZoo.ContainerPort }}
-            protocol: TCP
-          resources:
-            requests:
-              cpu: "{{ .Values.AnalyticsZoo.Cpu }}"
-              memory: "{{ .Values.AnalyticsZoo.Memory }}"
-          env:
-          - name: RUNTIME_DRIVER_CORES
-            value: "{{ .Values.AnalyticsZoo.DriverCores }}"
-          - name: RUNTIME_DRIVER_MEMORY
-            value: "{{ .Values.AnalyticsZoo.DriverMem }}"
-          - name: RUNTIME_EXECUTOR_CORES_ENV
-            value: "{{ .Values.AnalyticsZoo.ExecutorCores }}"
-          - name: RUNTIME_EXECUTOR_MEMORY_ENV
-            value: "{{ .Values.AnalyticsZoo.ExecutorMem }}"
-          - name: RUNTIME_TOTAL_EXECUTOR_CORES_ENV
-            value: "{{ .Values.AnalyticsZoo.TotalExecutorCores }}"
-          - name: ANALYTICS_ZOO_VERSION
-            value: "{{ .Values.AnalyticsZoo.AnalyticsZooVersion }}"
-          - name: BIGDL_VERSION
-            value: "{{ .Values.AnalyticsZoo.BigDLVesion }}"
-          - name: SPARK_VERSION
-            value: "{{ .Values.AnalyticsZoo.SparkVersion }}"
+      - name: {{ .Chart.Name }}
+        image: "{{ .Values.AnalyticsZoo.Image }}:{{ .Values.AnalyticsZoo.ImageTag }}"
+        imagePullPolicy: {{ .Values.AnalyticsZoo.PullPolicy }}
+        volumeMounts:
+        - mountPath: /user-home
+          name: user-home-mount
+        ports:
+        - containerPort: {{ .Values.AnalyticsZoo.ContainerPort }}
+          protocol: TCP
+        resources:
+          requests:
+            cpu: "{{ .Values.AnalyticsZoo.Cpu }}"
+            memory: "{{ .Values.AnalyticsZoo.Memory }}"
+        env:
+        - name: RUNTIME_DRIVER_CORES
+          value: "{{ .Values.AnalyticsZoo.DriverCores }}"
+        - name: RUNTIME_DRIVER_MEMORY
+          value: "{{ .Values.AnalyticsZoo.DriverMem }}"
+        - name: RUNTIME_EXECUTOR_CORES_ENV
+          value: "{{ .Values.AnalyticsZoo.ExecutorCores }}"
+        - name: RUNTIME_EXECUTOR_MEMORY_ENV
+          value: "{{ .Values.AnalyticsZoo.ExecutorMem }}"
+        - name: RUNTIME_TOTAL_EXECUTOR_CORES_ENV
+          value: "{{ .Values.AnalyticsZoo.TotalExecutorCores }}"
+        - name: ANALYTICS_ZOO_VERSION
+          value: "{{ .Values.AnalyticsZoo.AnalyticsZooVersion }}"
+        - name: BIGDL_VERSION
+          value: "{{ .Values.AnalyticsZoo.BigDLVesion }}"
+        - name: SPARK_VERSION
+          value: "{{ .Values.AnalyticsZoo.SparkVersion }}"
+      volumes:
+      - name: user-home-mount
+      {{- if .Values.AnalyticsZoo.Persistence.Enabled }}
+        persistentVolumeClaim:
+          claimName: {{ template "analytics-zoo-fullname" . }}-notebook
+      {{- else }}
+        emptyDir: {}
+      {{- end -}}
+
 
 
 
