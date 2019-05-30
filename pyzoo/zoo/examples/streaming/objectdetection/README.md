@@ -1,7 +1,7 @@
 # Analytics Zoo Streaming Object Detection
 Imagining we have pre-trained model and image files in file system, and we want to detect objects in these images. In streaming case, it's not an easy task to read image files with help of a third part framework (such as HDFS or Kafka). To simplify this example, we package image paths into text files. Then, these image paths will be passed to executors through streaming API. Executors will read image content from file systems, and make prediction. The predicted results (images with boxes) will be stored to output dir.
 
-So, there are two applications in this example: image_path_writer and streaming_object_detection. ImagePathWriter will package image paths into text files. Meanwhile, StreamingObjectDetection read image path from those text files, then read image content and make prediction.
+So, there are two applications in this example: image_path_writer and streaming_object_detection. image_path_writer will package image paths into text files. Meanwhile, streaming_object_detection read image path from those text files, then read image content and make prediction.
 
 ## Environment
 * Python (2.7, 3.5 or 3.6)
@@ -19,26 +19,26 @@ Make sure all nodes can access image files, model and text files. Local file sys
 ```
 MASTER=...
 model=... // model path. Local file system/HDFS/Amazon S3 are supported
-streamingPath=... // text files location. Only local file system is supported
-output=... // output path of prediction result. Only local file system is supported
+streaming_path=... // text files location. Only local file system is supported
+output_path=... // output path of prediction result. Only local file system is supported
 ${ANALYTICS_ZOO_HOME}/bin/spark-submit-with-zoo.sh \
     --master ${MASTER} \
     --driver-memory 5g \
     --executor-memory 5g \
     streaming_object_detection.py \
-    --streamingPath ${streamingPath} --model ${model} --output ${output}
+    --streaming_path ${streaming_path} --model ${model} --output_path ${output_path}
 ```
 
 2. Start image_path_writer
 ```
 MASTER=...
-imageSourcePath=... // image path. Only local file system is supported
-streamingPath=... // text files. Only local file system is supported
+img_path=... // image path. Only local file system is supported
+streaming_path=... // text files. Only local file system is supported
 ${ANALYTICS_ZOO_HOME}/bin/spark-submit-with-zoo.sh \
     --master ${MASTER} \
     --driver-memory 5g \
     image_path_writer.py \
-    --streamingPath ${streamingPath} --imageSourcePath ${imageSourcePath}
+    --streaming_path ${streaming_path} --img_path ${img_path}
 ```
 
 ## Results
