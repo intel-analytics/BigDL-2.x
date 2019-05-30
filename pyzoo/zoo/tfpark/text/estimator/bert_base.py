@@ -49,25 +49,49 @@ def bert_model(features, labels, mode, params):
     return model
 
 
-def bert_input_fn(rdd, max_seq_length, batch_size, labels=None,
-                  features={"input_ids", "input_mask", "token_type_ids"}):
+def bert_input_fn(rdd, max_seq_length, batch_size, features={"input_ids", "input_mask", "token_type_ids"},
+                  extra_features=None, labels=None):
     """
     Takes an RDD to create the input function for BERT related TFEstimators.
-    For training and evaluation, each element in rdd should be a tuple: (dict of features, label).
+    For training and evaluation, each element in rdd should be a tuple:
+    (dict of features, a single label or dict of labels)
+    Note that currently only integer labels are supported.
     For prediction, each element in rdd should be a dict of features.
+
+    Features in each RDD element should contain "input_ids", "input_mask" and "token_type_ids", each of
+    shape max_sequence_length.
+    If you have other extra features in your dict of features, you need to explicitly specify the argument
+    `extra_features`, which is supposed to the dictionary with feature name as key and tuple of
+    (dtype, shape) as its value.
     """
     assert features.issubset({"input_ids", "input_mask", "token_type_ids"})
     features_dict = {}
     for feature in features:
         features_dict[feature] = (tf.int32, [max_seq_length])
+    if extra_features is not None:
+        assert isinstance(extra_features, dict), "extra_features should be a dictionary"
+        for k, v in extra_features.items():
+            assert isinstance(k, six.string_types)
+            assert isinstance(v, tuple)
+            features_dict[k] = v
     if labels is None:
-        labels = (tf.int32, [])
+        res_labels = (tf.int32, [])
+    elif isinstance(labels, list) or isinstance(labels, set):
+        labels = set(labels)
+        if len(labels) == 1:
+            res_labels = (tf.int32, [])
+        else:
+            res_labels = {}
+            for label in labels:
+                res_labels[label] = (tf.int32, [])
+    else:
+        raise ValueError("Wrong labels. labels should be a set of label names if you have multiple labels")
 
     def input_fn(mode):
         if mode == tf.estimator.ModeKeys.EVAL or mode == tf.estimator.ModeKeys.TRAIN:
             return TFDataset.from_rdd(rdd,
                                       features=features_dict,
-                                      labels=labels,
+                                      labels=res_labels,
                                       batch_size=batch_size)
         else:
             node_num, core_num = get_node_and_core_number()
