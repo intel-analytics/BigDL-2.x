@@ -41,7 +41,9 @@ if __name__ == "__main__":
                            resize_height=600, resize_width=600).get_image().collect()
     input_data = np.concatenate([image.reshape((1, 1) + image.shape) for image in images], axis=0)
     model = InferenceModel()
-    model.load_tf(options.model_path, backend="openvino", model_type=options.model_type)
+    slash_index = options.model_path.model_path.rfind("/")
+    model.load_tf(options.model_path, backend="openvino", model_type=options.model_type,
+                  ov_pipeline_config_path=options.model_path[:slash_index + 1] + "pipeline.config")
     predictions = model.predict(input_data)
     # Print the detection result of the first image.
     print(predictions[0])
