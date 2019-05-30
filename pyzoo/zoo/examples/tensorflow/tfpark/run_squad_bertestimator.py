@@ -800,6 +800,7 @@ if __name__ == '__main__':
         steps = int(len(train_examples) / options.batch_size * options.nb_epoch)
         optimizer = AdamWeightDecay(lr=options.learning_rate, warmup_portion=0.1, total=steps)
         estimator.set_optimizer(optimizer)
+        estimator.set_gradient_clipping_by_l2_norm(1.0)
         train_features = convert_examples_to_features(
             examples=train_examples,
             tokenizer=tokenizer,
