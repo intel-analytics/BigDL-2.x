@@ -14,7 +14,6 @@
 # limitations under the License.
 #
 
-from bigdl.util.common import get_node_and_core_number
 from zoo.tfpark.estimator import *
 from bert import modeling
 
@@ -51,12 +50,12 @@ def bert_model(features, labels, mode, params):
 
 def bert_input_fn(rdd, max_seq_length, batch_size,
                   features={"input_ids", "input_mask", "token_type_ids"},
-                  extra_features=None, labels=None):
+                  extra_features=None, labels=None, label_size=None):
     """
     Takes an RDD to create the input function for BERT related TFEstimators.
     For training and evaluation, each element in rdd should be a tuple:
     (dict of features, a single label or dict of labels)
-    Note that currently only integer labels are supported.
+    Note that currently only integer or labels are supported.
     For prediction, each element in rdd should be a dict of features.
 
     Features in each RDD element should contain "input_ids", "input_mask" and "token_type_ids",
@@ -75,16 +74,20 @@ def bert_input_fn(rdd, max_seq_length, batch_size,
             assert isinstance(k, six.string_types)
             assert isinstance(v, tuple)
             features_dict[k] = v
+    if label_size is None:
+        label_size = []
+    else:
+        label_size = [label_size]
     if labels is None:
-        res_labels = (tf.int32, [])
+        res_labels = (tf.int32, label_size)
     elif isinstance(labels, list) or isinstance(labels, set):
         labels = set(labels)
         if len(labels) == 1:
-            res_labels = (tf.int32, [])
+            res_labels = (tf.int32, label_size)
         else:
             res_labels = {}
             for label in labels:
-                res_labels[label] = (tf.int32, [])
+                res_labels[label] = (tf.int32, label_size)
     else:
         raise ValueError("Wrong labels. "
                          "labels should be a set of label names if you have multiple labels")
@@ -96,10 +99,9 @@ def bert_input_fn(rdd, max_seq_length, batch_size,
                                       labels=res_labels,
                                       batch_size=batch_size)
         else:
-            node_num, core_num = get_node_and_core_number()
             return TFDataset.from_rdd(rdd,
                                       features=features_dict,
-                                      batch_per_thread=batch_size // (node_num * core_num))
+                                      batch_per_thread=batch_size // rdd.getNumPartitions())
     return input_fn
 
 

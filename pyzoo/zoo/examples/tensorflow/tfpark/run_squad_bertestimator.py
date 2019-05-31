@@ -787,7 +787,6 @@ if __name__ == '__main__':
     sc = init_nncontext("BERT SQuAD1.1 Example")  # Just demonstrate SQuAD1.1 here; SQuAD2.0 is more or less similar.
 
     tokenizer = tokenization.FullTokenizer(os.path.join(options.bert_base_dir, "vocab.txt"))
-
     estimator = BERTSQuAD(bert_config_file=os.path.join(options.bert_base_dir, "bert_config.json"),
                           init_checkpoint=os.path.join(options.bert_base_dir, "bert_model.ckpt"),
                           # optimizer=tf.train.AdamOptimizer(options.learning_rate),

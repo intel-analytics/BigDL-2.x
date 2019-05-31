@@ -23,12 +23,11 @@ from optparse import OptionParser
 
 import tensorflow as tf
 from zoo.common.nncontext import *
-from zoo.tfpark.text.estimator import BERTSQuAD, bert_input_fn
+from zoo.tfpark.text.estimator import BERTNER, bert_input_fn
 from zoo.pipeline.api.keras.optimizers import AdamWeightDecay
 from bert import tokenization
 
-# Copy code from BERT BERT_NER.py since import run_squad will have error in imports such as
-# import modeling
+# Copy code from BERT BERT_NER.py
 
 class InputExample(object):
   """A single training/test example for simple sequence classification."""
@@ -132,7 +131,7 @@ class NerProcessor(DataProcessor):
         return examples
 
 
-def convert_single_example(ex_index, example, label_list, max_seq_length, tokenizer, mode):
+def convert_single_example(ex_index, example, label_list, max_seq_length, tokenizer):
     """
     :param ex_index: example num
     :param example:
@@ -206,12 +205,23 @@ def convert_single_example(ex_index, example, label_list, max_seq_length, tokeni
     return feature,ntokens,label_ids
 
 
+def convert_examples_to_features(examples, label_list, max_seq_length,
+                                 tokenizer):
+  """Convert a set of `InputExample`s to a list of `InputFeatures`."""
+
+  features = []
+  for (ex_index, example) in enumerate(examples):
+      feature, ntokens, label_ids = convert_single_example(ex_index, example, label_list, max_seq_length, tokenizer)
+      features.append(feature)
+  return features
+
+
 def feature_to_input(feature):
     res = dict()
     res["input_ids"] = np.array(feature.input_ids)
-    res["input_mask"] = np.array(feature.input_mask)
+    res["input_mask"] = np.array(feature.mask)
     res["token_type_ids"] = np.array(feature.segment_ids)
-    return res, np.array(feature.label_id)
+    return res, np.array(feature.label_ids)
 
 
 def generate_input_rdd(examples, label_list, max_seq_length, tokenizer, type="train"):
@@ -234,6 +244,7 @@ if __name__ == '__main__':
     parser.add_option("-e", "--nb_epoch", dest="nb_epoch", type=int, default=3)
     parser.add_option("-l", "--learning_rate", dest="learning_rate", type=float, default=2e-5)
     parser.add_option("--do_train", dest="do_train", type=int, default=1)
+    parser.add_option("--do_eval", dest="do_eval", type=int, default=1)
     parser.add_option("--do_predict", dest="do_predict", type=int, default=1)
 
     (options, args) = parser.parse_args(sys.argv)
@@ -241,28 +252,51 @@ if __name__ == '__main__':
 
     processor = NerProcessor()
     label_list = processor.get_labels()
-    tokenizer = tokenization.FullTokenizer(options.bert_base_dir + "/vocab.txt")
-    train_examples = processor.get_train_examples(options.data_dir)
-    train_rdd = generate_input_rdd(train_examples, label_list, options.max_seq_length, tokenizer, "train")
-    train_input_fn = bert_input_fn(train_rdd, options.max_seq_length, options.batch_size)
-    eval_examples = processor.get_dev_examples(options.data_dir)
-    eval_rdd = generate_input_rdd(eval_examples, label_list, options.max_seq_length, tokenizer, "eval")
-    eval_input_fn = bert_input_fn(eval_rdd, options.max_seq_length, options.batch_size)
-    test_examples = processor.get_test_examples(options.data_dir)
-    test_rdd = generate_input_rdd(test_examples, label_list, options.max_seq_length, tokenizer, "test")
-    test_input_fn = bert_input_fn(test_rdd, options.max_seq_length, options.batch_size)
+    # Recommended to use cased model for NER
+    tokenizer = tokenization.FullTokenizer(os.path.join(options.bert_base_dir, "vocab.txt"), do_lower_case=False)
+    estimator = BERTNER(len(label_list),
+                        bert_config_file=os.path.join(options.bert_base_dir, "bert_config.json"),
+                        init_checkpoint=os.path.join(options.bert_base_dir, "bert_model.ckpt"),
+                        model_dir=options.output_dir)
 
-    estimator = BERTClassifier(len(label_list), bert_config_file=options.bert_base_dir + "/bert_config.json",
-                               init_checkpoint=options.bert_base_dir + "/bert_model.ckpt",
-                               optimizer=tf.train.AdamOptimizer(options.learning_rate),
-                               model_dir=options.output_dir)
-    estimator.train(train_input_fn, steps=len(train_examples)*options.nb_epoch//options.batch_size)
-    result = estimator.evaluate(eval_input_fn, eval_methods=["acc"])
-    print(result)
-    predictions = estimator.predict(test_input_fn)
-    for prediction in predictions.take(5):
-        print(prediction)
+    # Training
+    if options.do_train:
+        train_examples = processor.get_train_examples(options.data_dir)
+        steps = len(train_examples) * options.nb_epoch // options.batch_size
+        optimizer = AdamWeightDecay(lr=options.learning_rate, warmup_portion=0.1, total=steps)
+        estimator.set_optimizer(optimizer)
+        estimator.set_gradient_clipping_by_l2_norm(1.0)
+        train_rdd = generate_input_rdd(train_examples, label_list, options.max_seq_length, tokenizer, "train")
+        train_input_fn = bert_input_fn(train_rdd, options.max_seq_length, options.batch_size,
+                                       label_size=options.max_seq_length)
+        train_start_time = time.time()
+        estimator.train(train_input_fn, steps=steps)
+        train_end_time = time.time()
+        print("Train time: %s minutes" % ((train_end_time - train_start_time) / 60))
+
+    # Evaluation
+    # Confusion matrix is not supported and thus use utilities for evaluation
+    if options.do_eval:
+        eval_examples = processor.get_dev_examples(options.data_dir)
+        eval_rdd = generate_input_rdd(eval_examples, label_list, options.max_seq_length, tokenizer, "eval")
+        eval_input_fn = bert_input_fn(eval_rdd, options.max_seq_length, options.batch_size)
+        result = estimator.predict(eval_input_fn).collect()
+
+    # Inference
+    if options.do_predict:
+        test_examples = processor.get_test_examples(options.data_dir)
+        test_rdd = generate_input_rdd(test_examples, label_list, options.max_seq_length, tokenizer, "test")
+        test_input_fn = bert_input_fn(test_rdd, options.max_seq_length, options.batch_size)
+        predictions = estimator.predict(test_input_fn)
+        pred_start_time = time.time()
+        predictions.collect()
+        pred_end_time = time.time()
+        print("Inference time: %s minutes" % ((pred_end_time - pred_start_time) / 60))
+        print("Inference throughput: %s records/s" % (len(test_examples) / (pred_end_time - pred_start_time)))
+        for prediction in predictions.take(5):
+            print(prediction)
 
     end_time = time.time()
-    print("Time elapsed: %s minutes" % ((end_time-start_time)/60))
+
+    print("Time elapsed: %s minutes" % ((end_time - start_time) / 60))
     print("Finished")

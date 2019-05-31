@@ -20,14 +20,10 @@ from zoo.tfpark.text.estimator import *
 def _bert_ner_model_fn(features, labels, mode, params):
     output_layer = bert_model(features, labels, mode, params).get_sequence_output()
     if mode == tf.estimator.ModeKeys.TRAIN:
-        output_layer = tf.keras.layers.Dropout(rate=0.1)(output_layer)
-    logits = tf.keras.layers.Dense(params["num_entities"])(output_layer)
-    logits = tf.reshape(logits, [-1, params["num_entities"]])
-    if mode == tf.estimator.ModeKeys.PREDICT or mode == tf.estimator.ModeKeys.EVAL:
-        probabilities = tf.nn.softmax(logits, axis=-1)
-        predict = tf.argmax(probabilities, axis=-1)
-        return TFEstimatorSpec(mode=mode, predictions=predict)
-    else:
+        output_layer = tf.nn.dropout(output_layer, keep_prob=0.9)
+    logits = tf.layers.dense(output_layer, params["num_entities"])
+    if mode == tf.estimator.ModeKeys.TRAIN:
+        logits = tf.reshape(logits, [-1, params["num_entities"]])
         labels = tf.reshape(labels, [-1])
         mask = tf.cast(features["input_mask"], dtype=tf.float32)
         one_hot_labels = tf.one_hot(labels, depth=params["num_entities"], dtype=tf.float32)
@@ -38,6 +34,12 @@ def _bert_ner_model_fn(features, labels, mode, params):
         total_size += 1e-12  # to avoid division by 0 for all-0 weights
         loss /= total_size
         return TFEstimatorSpec(mode=mode, loss=loss)
+    elif mode == tf.estimator.ModeKeys.PREDICT:
+        probabilities = tf.nn.softmax(logits, axis=-1)
+        predict = tf.argmax(probabilities, axis=-1)
+        return TFEstimatorSpec(mode=mode, predictions=predict)
+    else:
+        raise ValueError("Currently only TRAIN and PREDICT modes are supported for NER")
 
 
 class BERTNER(BERTBaseEstimator):

@@ -27,7 +27,6 @@ def _bert_squad_model_fn(features, labels, mode, params):
     output_weights = tf.get_variable(
         "cls/squad/output_weights", [2, hidden_size],
         initializer=tf.truncated_normal_initializer(stddev=0.02))
-
     output_bias = tf.get_variable(
         "cls/squad/output_bias", [2], initializer=tf.zeros_initializer())
 
@@ -38,9 +37,7 @@ def _bert_squad_model_fn(features, labels, mode, params):
 
     logits = tf.reshape(logits, [batch_size, seq_length, 2])
     logits = tf.transpose(logits, [2, 0, 1])
-
     unstacked_logits = tf.unstack(logits, axis=0)
-
     (start_logits, end_logits) = (unstacked_logits[0], unstacked_logits[1])
 
     if mode == tf.estimator.ModeKeys.TRAIN:
@@ -57,7 +54,6 @@ def _bert_squad_model_fn(features, labels, mode, params):
 
         start_loss = compute_loss(start_logits, start_positions)
         end_loss = compute_loss(end_logits, end_positions)
-
         total_loss = (start_loss + end_loss) / 2.0
         return TFEstimatorSpec(mode=mode, loss=total_loss)
     elif mode == tf.estimator.ModeKeys.PREDICT:
