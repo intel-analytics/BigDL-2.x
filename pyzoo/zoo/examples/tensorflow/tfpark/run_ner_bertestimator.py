@@ -15,19 +15,15 @@
 #
 
 import time
-import json
-import math
 import pickle
-import collections
 from optparse import OptionParser
 
-import tensorflow as tf
 from zoo.common.nncontext import *
 from zoo.tfpark.text.estimator import BERTNER, bert_input_fn
 from zoo.pipeline.api.keras.optimizers import AdamWeightDecay
 from bert import tokenization
 
-# Copy code from BERT BERT_NER.py
+# Copy code from BERT BERT_NER.py https://github.com/kyzhouhzau/BERT-NER
 
 class InputExample(object):
   """A single training/test example for simple sequence classification."""
@@ -297,6 +293,5 @@ if __name__ == '__main__':
             print(prediction)
 
     end_time = time.time()
-
     print("Time elapsed: %s minutes" % ((end_time - start_time) / 60))
     print("Finished")

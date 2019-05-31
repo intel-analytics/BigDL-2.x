@@ -342,6 +342,5 @@ if __name__ == '__main__':
             print(prediction)
 
     end_time = time.time()
-
     print("Time elapsed: %s minutes" % ((end_time - start_time) / 60))
     print("Finished")

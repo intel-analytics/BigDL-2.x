@@ -55,7 +55,7 @@ def bert_input_fn(rdd, max_seq_length, batch_size,
     Takes an RDD to create the input function for BERT related TFEstimators.
     For training and evaluation, each element in rdd should be a tuple:
     (dict of features, a single label or dict of labels)
-    Note that currently only integer or labels are supported.
+    Note that currently only integer or integer array labels are supported.
     For prediction, each element in rdd should be a dict of features.
 
     Features in each RDD element should contain "input_ids", "input_mask" and "token_type_ids",

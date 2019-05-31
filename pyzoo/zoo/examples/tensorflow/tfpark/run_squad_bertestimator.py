@@ -850,6 +850,5 @@ if __name__ == '__main__':
                           output_nbest_file=os.path.join(options.output_dir, "nbest_predictions.json"))
 
     end_time = time.time()
-
     print("Time elapsed: %s minutes" % ((end_time - start_time) / 60))
     print("Finished")
