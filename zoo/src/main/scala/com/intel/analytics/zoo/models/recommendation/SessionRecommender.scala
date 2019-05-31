@@ -25,6 +25,7 @@ import com.intel.analytics.bigdl.utils.Shape
 import com.intel.analytics.zoo.models.common.ZooModel
 import com.intel.analytics.zoo.pipeline.api.keras.layers._
 import com.intel.analytics.zoo.pipeline.api.keras.models.Model
+import org.apache.spark.rdd.RDD
 
 import scala.reflect.ClassTag
 
@@ -83,6 +84,12 @@ class SessionRecommender[T: ClassTag](
       Model(inputRnn, out).asInstanceOf[AbstractModule[Tensor[T], Tensor[T], T]]
     }
   }
+
+  override def recommendForUser(featureRdd: RDD[UserItemFeature[T]],
+                                maxItems: Int): RDD[UserItemPrediction] = {
+    throw new UnsupportedOperationException(s"user item: Unimplemented method")
+  }
+
 }
 
 object SessionRecommender {

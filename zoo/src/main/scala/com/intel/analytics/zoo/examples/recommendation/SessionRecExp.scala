@@ -31,20 +31,21 @@ import org.apache.spark.rdd.RDD
 import org.apache.spark.sql.functions._
 import org.apache.spark.sql.{DataFrame, SQLContext}
 import scopt.OptionParser
+import com.intel.analytics.zoo.models.recommendation.Utils._
 
 import scala.collection.mutable
 
-case class SessionParams(
-                          maxLength: Int = 5,
-                          maxEpoch: Int = 10,
-                          batchSize: Int = 1280,
-                          embedOutDim: Int = 20,
-                          learningRate: Double = 1e-3,
-                          learningRateDecay: Double = 1e-6,
-                          inputDir: String = "/Users/guoqiong/intelWork/projects/officeDepot/sampleData/",
-                          outputDir: String = "./model/",
-                          fileName: String = "atcHistory.json",
-                          modelName: String = "sessionRecommender"
+case class SessionParams(sessionLength: Int = 5,
+                         historyLength: Int = 5,
+                         maxEpoch: Int = 10,
+                         batchSize: Int = 1280,
+                         embedOutDim: Int = 20,
+                         learningRate: Double = 1e-3,
+                         learningRateDecay: Double = 1e-6,
+                         inputDir: String = "/Users/guoqiong/intelWork/projects/officeDepot/sampleData/",
+                         outputDir: String = "./model/",
+                         fileName: String = "atcHistory.json",
+                         modelName: String = "sessionRecommender"
                         )
 
 object SessionRecExp {
@@ -88,16 +89,16 @@ object SessionRecExp {
     val sqlContext = SQLContext.getOrCreate(sc)
 
     val (sessionDF, itemCount) = loadPublicData(sqlContext, params)
-    val trainSample = assemblyFeature(sqlContext, sessionDF, itemCount, params.maxLength)
+    val trainSample = assemblyFeature(sessionDF, params.sessionLength, includeHistory = true, params.historyLength)
     val Array(trainRdd, testRdd) = trainSample.randomSplit(Array(0.8, 0.2), 100)
 
     val model = SessionRecommender[Float](
       itemCount = itemCount,
       itemEmbed = params.embedOutDim,
       mlpHiddenLayers = Array(20, 10),
-      seqLength = 5,
-      includeHistory = true)
-
+      seqLength = params.sessionLength,
+      includeHistory = true,
+      hisLength = params.historyLength)
 
     val optimMethod = new RMSprop[Float](
       learningRate = params.learningRate,
@@ -108,7 +109,7 @@ object SessionRecExp {
       loss = new SparseCategoricalCrossEntropy[Float](zeroBasedLabel = false),
       metrics = List(new Top5Accuracy[Float]()))
 
-    model.fit(trainRdd, batchSize = 1024, validationData = testRdd)
+    model.fit(trainRdd, batchSize = params.batchSize, validationData = testRdd)
 
 
     model.saveModule(params.inputDir + params.modelName, null, overWrite = true)
@@ -116,69 +117,59 @@ object SessionRecExp {
 
   }
 
-  //  Load data using spark session interface
   def loadPublicData(sqlContext: SQLContext, params: SessionParams): (DataFrame, Int) = {
 
-    val sessionDF = sqlContext.read.options(Map("header" -> "false", "delimiter" -> ",")).json(params.inputDir + params.fileName)
-    sessionDF.show(10, false)
-    val atcMax = sessionDF.rdd.map(_.getAs[mutable.WrappedArray[Double]]("ATC_SEQ").max).collect().max.toInt
-    val purMax = sessionDF.rdd.map(_.getAs[mutable.WrappedArray[Double]]("PURCH_HIST").max).collect().max.toInt
+    val toFloat = {
+      val func: ((mutable.WrappedArray[Double]) => mutable.WrappedArray[Float]) = (seq => seq.map(_.toFloat))
+      udf(func)
+    }
+
+    val sessionDF = sqlContext.read
+      .options(Map("header" -> "false", "delimiter" -> ",")).json(params.inputDir + params.fileName)
+      .withColumn("session", toFloat(col("ATC_SEQ")))
+      .withColumn("purchase_history", toFloat(col("PURCH_HIST")))
+      .select("session", "purchase_history")
+
+    val atcMax = sessionDF.rdd.map(_.getAs[mutable.WrappedArray[Float]]("session").max).collect().max.toInt
+    val purMax = sessionDF.rdd.map(_.getAs[mutable.WrappedArray[Float]]("purchase_history").max).collect().max.toInt
     val itemCount = Math.max(atcMax, purMax)
     (sessionDF, itemCount)
   }
 
-  def assemblyFeature(
-                       sqlContext: SQLContext,
-                       sessionDF: DataFrame,
-                       itemCount: Int,
-                       maxLength: Int
-                     ): RDD[Sample[Float]] = {
+  def assemblyFeature(sessionDF: DataFrame,
+                      sessionLength: Int,
+                      includeHistory: Boolean = true,
+                      historyLength: Int = 10): RDD[Sample[Float]] = {
 
-    // prePad UDF
-    def prePadding: mutable.WrappedArray[java.lang.Double] => Array[Float] = x => {
-      if (x.array.size < maxLength) x.array.map(_.toFloat).reverse.padTo(maxLength, 0f).reverse
-      else x.array.map(_.toFloat).takeRight(maxLength)
+    val expandedDF = slideSession(sessionDF, sessionLength)
+
+    expandedDF.show(10, false)
+    val padSession = udf(prePadding(sessionLength))
+
+    val sessionPaddedDF = expandedDF
+      .withColumn("sessionPadded", padSession(col("session")))
+      .drop("session")
+      .withColumnRenamed("sessionPadded", "session")
+
+    sessionPaddedDF.show(10, false)
+    val paddedDF = if (includeHistory) {
+      val padHistory = udf(prePadding(historyLength))
+      sessionPaddedDF
+        .withColumn("purchasePadded", padHistory(col("purchase_history")))
+        .drop("purchase_history")
+        .withColumnRenamed("purchasePadded", "purchase_history")
     }
+    else sessionPaddedDF
 
-    val prePaddingUDF = udf(prePadding)
-
- // slide UDF
-    def slide: mutable.WrappedArray[java.lang.Double] => Array[mutable.WrappedArray[java.lang.Double]] = x => {
-      x.grouped(maxLength + 1).toArray
-    }
-    val slideUDF = udf(slide)
-
-    val sessionDFSlided = sessionDF.withColumn("ATC_SEQ", explode(slideUDF(col("ATC_SEQ"))))
-
-    import sqlContext.implicits._
-    val sessionDFExpand = sessionDFSlided.rdd.flatMap( x => {
-      val raws = x.getAs[mutable.WrappedArray[java.lang.Double]]("ATC_SEQ").array
-      val pur = x.getAs[mutable.WrappedArray[java.lang.Double]]("PURCH_HIST").array
-      val out = for ( raw <- raws.dropRight(1)) yield {
-        val idx = raws.indexOf(raw) + 1
-        val input = raws.take(idx)
-        val output = raws.diff(input).take(1)
-        (input, output, pur)
-      }
-      out
-    }).toDF("ATC_SEQ", "label", "PURCH_HIST").na.drop()
-
-    val rnnDF = sessionDFExpand
-      .withColumn("ATC", prePaddingUDF(col("ATC_SEQ")))
-      .withColumn("PUR", prePaddingUDF(col("PURCH_HIST")))
-      .withColumn("label", col("label").getItem(0))
-      .select("ATC", "PUR", "label")
+    println("----------------------------")
+    paddedDF.show(10, false)
 
     // dataFrame to rdd of sample
-    val trainSample = rnnDF.rdd.map(r => {
-      val label = Tensor[Float](T(r.getAs[Float]("label")))
-      val mlpFeature = r.getAs[mutable.WrappedArray[java.lang.Float]]("PUR").array.map(_.toFloat)
-      val rnnFeature = r.getAs[mutable.WrappedArray[java.lang.Float]]("ATC").array.map(_.toFloat)
-      val mlpSample = Tensor(mlpFeature, Array(maxLength))
-      val rnnSample = Tensor(rnnFeature, Array(maxLength))
-      TensorSample[Float](Array(mlpSample, rnnSample), Array(label))
+    val trainSample = paddedDF.rdd.map(r => {
+      rows2sample(r, sessionLength, true, historyLength)
     })
 
+    println(trainSample.take(10))
     println("Sample feature print: \n" + trainSample.take(1).head.feature(0))
     println("Sample feature print: \n" + trainSample.take(1).head.feature(1))
     println("Sample label print: \n" + trainSample.take(1).head.label())
