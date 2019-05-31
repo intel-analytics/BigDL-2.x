@@ -16,28 +16,31 @@
 
 
 import ray
-from zoo.ray.util.spark import SparkRunner
+
+from zoo import init_zoo_on_yarn, init_zoo_on_local
+from zoo.ray.util.raycontext import RayContext
 
 slave_num = 3
 
-spark_runner = SparkRunner()
+# sc = init_zoo_on_yarn(
+#     hadoop_conf="/opt/work/almaren-yarn-config/",
+#     conda_name="ray36-dev",
+#     num_executor=slave_num,
+#     executor_cores=28,
+#     executor_memory="10g",
+#     driver_memory="2g",
+#     driver_cores=4,
+#     extra_executor_memory_for_ray="30g")
 
-sc = spark_runner.init_spark_on_yarn(
-    hadoop_conf="/opt/work/almaren-yarn-config/",
-    conda_name="ray36-dev",
-    num_executor=slave_num,
-    executor_cores=28,
-    executor_memory="10g",
-    driver_memory="2g",
-    driver_cores=4,
-    extra_executor_memory_for_ray="30g")
-
-from zoo.ray.util.rayrunner import RayRunner
-rayRunner = RayRunner(sc=sc,
-                      object_store_memory="25g",
-                      env={"http_proxy": "http://child-prc.intel.com:913",
+sc = init_zoo_on_local(cores=4)
+ray_ctx = RayContext(sc=sc,
+                       env={"http_proxy": "http://child-prc.intel.com:913",
                            "http_proxys": "http://child-prc.intel.com:913"})
-rayRunner.start()
+# ray_ctx = RayContext(sc=sc,
+#                        object_store_memory="25g",
+#                        env={"http_proxy": "http://child-prc.intel.com:913",
+#                            "http_proxys": "http://child-prc.intel.com:913"})
+ray_ctx.init()
 
 
 @ray.remote
@@ -69,4 +72,4 @@ print([ray.get(actor.hostname.remote()) for actor in actors])
 print([ray.get(actor.ip.remote()) for actor in actors])
 print([ray.get(actor.network.remote()) for actor in actors])
 
-rayRunner.stop()
+ray_ctx.stop()

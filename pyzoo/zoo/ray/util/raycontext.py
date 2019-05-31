@@ -20,10 +20,11 @@ import time
 import signal
 
 from pyspark import BarrierTaskContext
+
+from zoo.ray.util import is_local
 from zoo.ray.util.process import session_execute, ProcessMonitor
 from zoo.ray.util.utils import resourceToBytes
 import ray.services as rservices
-
 
 class JVMGuard():
     """
@@ -89,7 +90,7 @@ class RayServiceFuncGenerator(object):
         return modified_env
 
     def __init__(self, python_loc, redis_port, ray_node_cpu_cores, mkl_cores,
-                 password, object_store_memory, waitting_time=10, verbose=False, env=None):
+                 password, object_store_memory, waitting_time=6, verbose=False, env=None):
         self.env = env
         self.python_loc = python_loc
         self.redis_port = redis_port
@@ -111,51 +112,38 @@ class RayServiceFuncGenerator(object):
 
         return _stop
 
-    def _start_master(self):
-        """
-        Start the Master for Ray
-        :return:
-        """
-        modified_env = self._prepare_env(self.mkl_cores)
-
+    def _gen_master_command(self):
         command = "{} start --head " \
                   "--include-webui --redis-port {} \
                   --redis-password {} --num-cpus {} ". \
             format(self.ray_exec, self.redis_port, self.password, self.ray_node_cpu_cores)
         if self.object_store_memory:
             command = command + "--object-store-memory {} ".format(str(self.object_store_memory))
-        print("Starting ray master by running: {}".format(command))
-        process_info = session_execute(command=command, env=modified_env, tag="ray_master")
-        JVMGuard.registerPids(process_info.pids)
-        process_info.node_ip = rservices.get_node_ip_address()
-        time.sleep(self.WAITING_TIME_SEC)
-        return process_info
+        return command
 
-    def _start_raylet(self, redis_address):
-        """
-        Start the Slave for Ray
-        :return:
-        """
+    def _get_raylet_command(self, redis_address):
         command = "{} start --redis-address {} --redis-password  {} --num-cpus {} {}  ".format(
             self.ray_exec, redis_address, self.password, self.ray_node_cpu_cores, self.labels)
 
         if self.object_store_memory:
             command = command + "--object-store-memory {} ".format(str(self.object_store_memory))
+        return command
 
-        print("Starting raylet by running: {}".format(command))
-
+    def _start_ray_node(self, command, tag, wait_before=2, wait_after=2):
         modified_env = self._prepare_env(self.mkl_cores)
-        time.sleep(self.WAITING_TIME_SEC)
-        process_info = session_execute(command=command, env=modified_env, tag="raylet")
+        print("Starting ray master by running: {}".format(command))
+        time.sleep(wait_before)
+        process_info = session_execute(command=command, env=modified_env, tag=tag)
         JVMGuard.registerPids(process_info.pids)
         process_info.node_ip = rservices.get_node_ip_address()
+        time.sleep(wait_after)
         return process_info
 
     def _get_ray_exec(self):
         python_bin_dir = "/".join(self.python_loc.split("/")[:-1])
         return "{}/python {}/ray".format(python_bin_dir, python_bin_dir)
 
-    def gen_ray_booter(self):
+    def gen_ray_start(self):
         def _start_ray_services(iter):
             tc = BarrierTaskContext.get()
             # The address is sorted by partitionId according to the comments
@@ -168,19 +156,23 @@ class RayServiceFuncGenerator(object):
             redis_address = "{}:{}".format(master_ip, self.redis_port)
             if tc.partitionId() == 0:
                 print("partition id is : {}".format(tc.partitionId()))
-                process_info = self._start_master()
+                process_info = self._start_ray_node(command=self._gen_master_command(),
+                                                    tag="ray-master")
                 process_info.master_addr = redis_address
                 yield process_info
             else:
                 print("partition id is : {}".format(tc.partitionId()))
-                process_info = self._start_raylet(redis_address=redis_address)
+                process_info = self._start_ray_node(
+                    command=self._get_raylet_command(redis_address=redis_address),
+                    tag="raylet",
+                    wait_after=self.WAITING_TIME_SEC)
                 yield process_info
             tc.barrier()
 
         return _start_ray_services
 
 
-class RayRunner(object):
+class RayContext(object):
     # TODO: redis_port should be retrieved by random searched
     def __init__(self, sc, redis_port="5346", password="123456", object_store_memory=None,
                  force_purge=False, verbose=False, env=None):
@@ -189,22 +181,31 @@ class RayRunner(object):
         self.num_ray_nodes = self._get_num_ray_nodes()
         self.python_loc = os.environ['PYSPARK_PYTHON']
         self.ray_processesMonitor = None
+        self.verbose = verbose
         self.ray_context = RayServiceFuncGenerator(
             python_loc=self.python_loc,
             redis_port=redis_port,
             ray_node_cpu_cores=self.ray_node_cpu_cores,
             mkl_cores=self._get_mkl_cores(),
             password=password,
-            object_store_memory=resourceToBytes(
-                str(object_store_memory)) if object_store_memory else None,
+            object_store_memory=self._enrich_object_sotre_memory(sc, object_store_memory),
             verbose=verbose, env=env)
         self._gather_cluster_ips()
         if force_purge:
             self.stop()
-        from bigdl.util.common import init_executor_gateway
-        print("Start to launch the JVM guarding process")
-        init_executor_gateway(sc)
-        print("JVM guarding process has been successfully launched")
+        if not is_local(sc):
+            from bigdl.util.common import init_executor_gateway
+            print("Start to launch the JVM guarding process")
+            init_executor_gateway(sc)
+            print("JVM guarding process has been successfully launched")
+
+    def _enrich_object_sotre_memory(self, sc, object_store_memory):
+        if is_local(sc):
+            assert not object_store_memory, "you should not set object_store_memory on spark local"
+            return self._get_ray_driver_memory()
+        else:
+            return resourceToBytes(
+                str(object_store_memory)) if object_store_memory else None
 
     def _gather_cluster_ips(self):
         total_cores = int(self._get_num_ray_nodes()) * int(self._get_ray_node_cpu_cores())
@@ -236,7 +237,7 @@ class RayRunner(object):
             hadoop_conf=hadoop_conf,
             penv_archive=penv_archive,
             conda_name=conda_name,
-            extra_pmodule_zip=extra_pmodule_zip,
+            extra_python_lib=extra_pmodule_zip,
             num_executor=slave_num,
             executor_cores=slave_cores,
             executor_memory="{}b".format(
@@ -276,7 +277,10 @@ class RayRunner(object):
 
     def _get_ray_driver_memory(self):
         if "local" in self.sc.master:
-            return "1g"
+            from psutil import virtual_memory
+            # Memory in bytes
+            total_mem = virtual_memory().total
+            return "{}b".format(int(total_mem / self._get_num_ray_nodes()))
         else:
             return self.sc._conf.get("spark.driver.memory")
 
@@ -286,7 +290,7 @@ class RayRunner(object):
         else:
             return int(self.sc._conf.get("spark.executor.instances"))
 
-    def start(self):
+    def init(self):
         self._start_cluster()
         self._start_driver(object_store_memory=self._get_ray_driver_memory())
 
@@ -294,9 +298,10 @@ class RayRunner(object):
         ray_rdd = self.sc.range(0, self.num_ray_nodes,
                                 numSlices=self.num_ray_nodes)
         process_infos = ray_rdd.barrier().mapPartitions(
-            self.ray_context.gen_ray_booter()).collect()
+            self.ray_context.gen_ray_start()).collect()
 
-        self.ray_processesMonitor = ProcessMonitor(process_infos, self.sc, ray_rdd)
+        self.ray_processesMonitor = ProcessMonitor(process_infos, self.sc, ray_rdd,
+                                                   verbose=self.verbose)
         self.redis_address = self.ray_processesMonitor.master.master_addr
         return self
 

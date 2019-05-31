@@ -20,6 +20,48 @@ import multiprocessing
 import os
 
 
+def init_zoo_on_local(cores, python_location=None, spark_log_level="WARN",
+                      redirect_spark_log=True):
+    from zoo.ray.util.spark import SparkRunner
+    sparkrunner = SparkRunner(spark_log_level=spark_log_level,
+                              redirect_spark_log=redirect_spark_log)
+    return sparkrunner.init_spark_on_local(cores=cores,
+                                           python_location=python_location)
+
+
+def init_zoo_on_yarn(hadoop_conf,
+                     conda_name,
+                     num_executor,
+                     executor_cores,
+                     executor_memory="10g",
+                     driver_memory="1g",
+                     driver_cores=4,
+                     extra_executor_memory_for_ray=None,
+                     extra_python_lib=None,
+                     penv_archive=None,
+                     hadoop_user_name="root",
+                     spark_yarn_archive=None,
+                     spark_log_level="WARN",
+                     redirect_spark_log=True):
+    from zoo.ray.util.spark import SparkRunner
+    sparkrunner = SparkRunner(spark_log_level=spark_log_level,
+                              redirect_spark_log=redirect_spark_log)
+    sc = sparkrunner.init_spark_on_yarn(
+        hadoop_conf=hadoop_conf,
+        conda_name=conda_name,
+        num_executor=num_executor,
+        executor_cores=executor_cores,
+        executor_memory=executor_memory,
+        driver_memory=driver_memory,
+        driver_cores=driver_cores,
+        extra_executor_memory_for_ray=extra_executor_memory_for_ray,
+        extra_python_lib=extra_python_lib,
+        penv_archive=penv_archive,
+        hadoop_user_name=hadoop_user_name,
+        spark_yarn_archive=spark_yarn_archive,
+        jars=None)
+    return sc
+
 def init_nncontext(conf=None, redirect_spark_log=True):
     """
     Creates or gets a SparkContext with optimized configuration for BigDL performance.

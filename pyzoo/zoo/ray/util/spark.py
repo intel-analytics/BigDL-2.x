@@ -1,5 +1,7 @@
 import os
 
+from pyspark import SparkContext
+
 from zoo.common.nncontext import get_analytics_zoo_conf, init_spark_conf
 
 from zoo import init_nncontext
@@ -9,6 +11,10 @@ class SparkRunner():
     def __init__(self, spark_log_level="WARN", redirect_spark_log=True):
         self.spark_log_level = spark_log_level
         self.redirect_spark_log = redirect_spark_log
+        with SparkContext._lock:
+            if SparkContext._active_spark_context:
+                raise Exception("There's existing SparkContext. Please close it first.")
+
         import pyspark
         print("Current pyspark location is : {}".format(pyspark.__file__))
 
@@ -56,8 +62,6 @@ class SparkRunner():
         print("Packing has been completed: {}".format(tmp_path))
         return tmp_path
 
-    def _common_opt(self, master):
-        return '--master {} '.format(master)
 
     def _create_sc(self, submit_args, conf):
         from pyspark.sql import SparkSession
@@ -71,22 +75,50 @@ class SparkRunner():
 
         return sc
 
-    def _init_yarn(self,
-                   python_zip_file,
-                   driver_memory,
-                   driver_cores,
-                   master=None,
-                   # settings for cluster mode
-                   executor_cores=None,
-                   executor_memory=None,
-                   extra_executor_memory_for_ray=None,
-                   #  settings for yarn only
-                   num_executor=None,
-                   spark_yarn_jars=None,
-                   penv_archive=None,
-                   hadoop_conf=None,
-                   hadoop_user_name=None,
-                   jars=None):
+    def _detect_python_location(self):
+        from zoo.ray.util.process import session_execute
+        process_info = session_execute("command -v python")
+        if 0 != process_info.errorcode:
+            raise Exception(
+                "Cannot detect current python location. Please set it manually by python_location")
+        return process_info.out
+
+    # def init_spark_on_local(self, cores, python_location=None):
+    #     os.environ['PYSPARK_PYTHON'] =\
+    #         python_location if python_location else self._detect_python_location()
+    #     master = "local[{}]".format(cores)
+    #     submit_args = ' --master {} '.format(master) + ' pyspark-shell '
+    #     from zoo.util.engine import get_analytics_zoo_classpath
+    #     path_to_zoo_jar = get_analytics_zoo_classpath()
+    #     if path_to_zoo_jar:
+    #         submit_args = submit_args + " --conf spark.driver.extraClassPath={} ". \
+    #             format(get_analytics_zoo_classpath())
+    #     sc = self._create_sc(submit_args, conf={})
+    #     return sc
+
+    def init_spark_on_local(self, cores, python_location=None):
+        os.environ['PYSPARK_PYTHON'] =\
+            python_location if python_location else self._detect_python_location()
+        master = "local[{}]".format(cores)
+        zoo_conf = init_spark_conf().setMaster(master)
+        sc = init_nncontext(conf=zoo_conf, redirect_spark_log=self.redirect_spark_log)
+        sc.setLogLevel(self.spark_log_level)
+        return sc
+
+    def init_spark_on_yarn(self,
+                           hadoop_conf,
+                           conda_name,
+                           num_executor,
+                           executor_cores,
+                           executor_memory="10g",
+                           driver_memory="1g",
+                           driver_cores=4,
+                           extra_executor_memory_for_ray=None,
+                           extra_python_lib=None,
+                           penv_archive=None,
+                           hadoop_user_name="root",
+                           spark_yarn_archive=None,
+                           jars=None):
         os.environ["HADOOP_CONF_DIR"] = hadoop_conf
         os.environ['HADOOP_USER_NAME'] = hadoop_user_name
         os.environ['PYSPARK_PYTHON'] = "python_env/bin/python"
@@ -98,8 +130,8 @@ class SparkRunner():
                 format(penv_archive, num_executor, executor_cores, executor_memory)
             path_to_zoo_jar = get_analytics_zoo_classpath()
 
-            if python_zip_file:
-                command = command + " --py-files {} ".format(python_zip_file)
+            if extra_python_lib:
+                command = command + " --py-files {} ".format(extra_python_lib)
 
             if jars:
                 command = command + " --jars {},{} ".format(jars, path_to_zoo_jar)
@@ -111,7 +143,7 @@ class SparkRunner():
                     format(get_analytics_zoo_classpath())
             return command
 
-        def _submit_opt(master):
+        def _submit_opt():
             conf = {
                 "spark.driver.memory": driver_memory,
                 "spark.driver.cores": driver_cores,
@@ -119,28 +151,10 @@ class SparkRunner():
             # "spark.task.cpus": executor_cores}
             if extra_executor_memory_for_ray:
                 conf["spark.executor.memoryOverhead"] = extra_executor_memory_for_ray
-            if spark_yarn_jars:
-                conf.insert("spark.yarn.archive", spark_yarn_jars)
-            return self._common_opt(master) + _yarn_opt(jars) + 'pyspark-shell', conf
+            if spark_yarn_archive:
+                conf.insert("spark.yarn.archive", spark_yarn_archive)
+            return self._common_opt("yarn") + _yarn_opt(jars) + 'pyspark-shell', conf
 
-        submit_args, conf = _submit_opt(master)
-        return self._create_sc(submit_args, conf)
-
-    def init_spark_on_yarn(self,
-                           hadoop_conf,
-                           num_executor,
-                           conda_name,
-                           executor_cores,
-                           executor_memory="10g",
-                           driver_memory="1g",
-                           driver_cores=10,
-                           extra_executor_memory_for_ray=None,
-                           extra_pmodule_zip=None,
-                           penv_archive=None,
-                           master="yarn",
-                           hadoop_user_name="root",
-                           spark_yarn_jars=None,
-                           jars=None):
         pack_env = False
         assert penv_archive or conda_name, \
             "You should either specify penv_archive or conda_name explicitly"
@@ -148,19 +162,9 @@ class SparkRunner():
             if not penv_archive:
                 penv_archive = self.pack_penv(conda_name)
                 pack_env = True
-            sc = self._init_yarn(hadoop_conf=hadoop_conf,
-                                 spark_yarn_jars=spark_yarn_jars,
-                                 penv_archive=penv_archive,
-                                 python_zip_file=extra_pmodule_zip,
-                                 num_executor=num_executor,
-                                 executor_cores=executor_cores,
-                                 executor_memory=executor_memory,
-                                 driver_memory=driver_memory,
-                                 driver_cores=driver_cores,
-                                 extra_executor_memory_for_ray=extra_executor_memory_for_ray,
-                                 master=master,
-                                 hadoop_user_name=hadoop_user_name,
-                                 jars=jars)
+
+            submit_args, conf = _submit_opt()
+            sc = self._create_sc(submit_args, conf)
         finally:
             if conda_name and penv_archive and pack_env:
                 os.remove(penv_archive)

@@ -82,8 +82,9 @@ def session_execute(command, env=None, tag=None, fail_fast=False, timeout=120):
 
 
 class ProcessMonitor:
-    def __init__(self, process_infos, sc, ray_rdd):
+    def __init__(self, process_infos, sc, ray_rdd, verbose=False):
         self.sc = sc
+        self.verbose=verbose
         self.ray_rdd = ray_rdd
         self.master = []
         self.slaves = []
@@ -109,10 +110,10 @@ class ProcessMonitor:
         for slave in self.slaves:
             if slave.errorcode != 0:
                 raise Exception(str(slave))
-
-        print(self.master)
-        for slave in self.slaves:
-            print(slave)
+        if self.verbose:
+            print(self.master)
+            for slave in self.slaves:
+                print(slave)
 
     def clean_fn(self):
         import ray
