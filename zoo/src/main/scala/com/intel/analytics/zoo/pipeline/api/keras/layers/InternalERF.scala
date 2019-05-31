@@ -27,7 +27,6 @@ private[zoo] class InternalERF[T: ClassTag]()(
   implicit ev: TensorNumeric[T]) extends TensorModule[T] {
   val derivativeFactor = ev.fromType(1.1283791670955126)
   override def updateOutput(input: Tensor[T]): Tensor[T] = {
-//    output.resizeAs(input).copy(input).erf()
     output.resizeAs(input).copy(input)
     Utils.erf(output)
     output
