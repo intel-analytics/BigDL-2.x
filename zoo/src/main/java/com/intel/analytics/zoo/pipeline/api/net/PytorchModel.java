@@ -18,8 +18,7 @@ class PytorchModel {
      */
     private long nativeRef;
 
-    PytorchModel load(byte[] bytes) throws IOException
-    {
+    PytorchModel load(byte[] bytes) throws IOException {
         try {
             File tmpFile = File.createTempFile("TorchNet", "_pt");
             Files.write(Paths.get(tmpFile.toURI()), bytes);
@@ -36,12 +35,19 @@ class PytorchModel {
         return forwardNative(this.nativeRef, storage, offset, shape);
     }
 
-    private void load(String path)
-    {
+    private void load(String path) {
         this.nativeRef = loadNative(path);
+    }
+
+    protected void finalize() {
+        releaseNative(this.nativeRef);
     }
 
     native long loadNative(String path);
 
     native JTensor forwardNative(long nativeRef, float[] storage, int offset, int[] shape);
+
+    native void releaseNative(long nativeRef);
+
+
 }

@@ -42,6 +42,7 @@ class TorchNet private(private val modelHolder: TorchModelHolder)
    */
   @transient
   private lazy val torchModel = {
+    println("TorchNet loading in " + this)
     TorchNet.load(modelHolder.torchBytes)
   }
 
@@ -59,7 +60,7 @@ class TorchNet private(private val modelHolder: TorchModelHolder)
     val size = input.size()
     val offset = input.storageOffset()
     val result = torchModel.forward(data, offset, size)
-    val resultTensor  = Tensor(result.getData, result.getShape)
+    val resultTensor = Tensor(result.getData, result.getShape)
     output.set(resultTensor)
   }
 
@@ -125,7 +126,7 @@ object TorchNet {
    * @return
    */
   def apply(path: String): TorchNet = {
-    //TODO: add support for HDFS path
+    // TODO: add support for HDFS path
     val modelbytes = Files.readAllBytes(Paths.get(path))
     new TorchNet(new TorchModelHolder(modelbytes, path))
   }

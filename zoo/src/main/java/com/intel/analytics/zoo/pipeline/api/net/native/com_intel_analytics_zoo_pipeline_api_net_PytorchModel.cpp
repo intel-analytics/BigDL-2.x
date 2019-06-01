@@ -34,7 +34,9 @@ using namespace std;
 extern "C" {
 
 std::mutex mtx;
-std::vector<std::shared_ptr<torch::jit::script::Module>> handles;
+std::unordered_map<int, std::shared_ptr<torch::jit::script::Module>> handles;
+long modelID;
+
 
 JNIEXPORT jlong JNICALL Java_com_intel_analytics_zoo_pipeline_api_net_PytorchModel_loadNative
   (JNIEnv *jenv, jobject jobj, jstring jmodel_path) {
@@ -45,8 +47,10 @@ JNIEXPORT jlong JNICALL Java_com_intel_analytics_zoo_pipeline_api_net_PytorchMod
     assert(model_ptr != nullptr);
 
     mtx.lock();
-    handles.push_back(model_ptr);
-    int id = handles.size() - 1;
+    modelID++;
+    long id = modelID;
+    handles.insert(std::make_pair(id, model_ptr));
+    std::cout << "handles.size() is: " << handles.size() << std::endl;
     mtx.unlock();
 
     jenv->ReleaseStringUTFChars(jmodel_path, p_model_path);
@@ -80,7 +84,7 @@ JNIEXPORT jobject JNICALL Java_com_intel_analytics_zoo_pipeline_api_net_PytorchM
     std::vector<torch::jit::IValue> inputs;
     inputs.push_back(torch_input_tensor);
 
-    std::shared_ptr<torch::jit::script::Module> model_ptr = handles.at(nativeRef);
+    std::shared_ptr<torch::jit::script::Module> model_ptr = handles[nativeRef];
 
     // Execute the model and turn its output into a tensor.
     at::Tensor output = model_ptr->forward(inputs).toTensor();
@@ -116,6 +120,14 @@ JNIEXPORT jobject JNICALL Java_com_intel_analytics_zoo_pipeline_api_net_PytorchM
     jobject result = jenv -> NewObject(jtensor_class, jtensor_constructor, result_storage, result_shape);
 
     return result;
+  }
+
+
+JNIEXPORT void JNICALL Java_com_intel_analytics_zoo_pipeline_api_net_PytorchModel_releaseNative
+  (JNIEnv * jenv, jobject jobj, jlong nativeRef) {
+    mtx.lock();
+    handles.erase(nativeRef);
+    mtx.unlock();
   }
 
 }

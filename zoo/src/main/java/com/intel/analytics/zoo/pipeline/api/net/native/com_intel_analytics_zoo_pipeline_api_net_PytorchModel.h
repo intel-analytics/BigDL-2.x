@@ -38,6 +38,14 @@ JNIEXPORT jlong JNICALL Java_com_intel_analytics_zoo_pipeline_api_net_PytorchMod
 JNIEXPORT jobject JNICALL Java_com_intel_analytics_zoo_pipeline_api_net_PytorchModel_forwardNative
   (JNIEnv *, jobject, jlong, jfloatArray, jint, jintArray);
 
+/*
+ * Class:     com_intel_analytics_zoo_pipeline_api_net_PytorchModel
+ * Method:    releaseNative
+ * Signature: (J)V
+ */
+JNIEXPORT void JNICALL Java_com_intel_analytics_zoo_pipeline_api_net_PytorchModel_releaseNative
+  (JNIEnv *, jobject, jlong);
+
 #ifdef __cplusplus
 }
 #endif
