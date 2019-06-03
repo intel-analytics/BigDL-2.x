@@ -37,7 +37,9 @@ import scala.reflect.ClassTag
 import scala.reflect.io.Path
 import scala.collection.mutable.ListBuffer
 import java.util.ArrayList
-import java.util.concurrent.CopyOnWriteArrayList
+import java.util.concurrent.{CopyOnWriteArrayList, TimeUnit}
+
+import org.apache.log4j.{Level, Logger}
 
 object PythonZooNet {
 
@@ -144,19 +146,26 @@ class PythonZooNet[T: ClassTag](implicit ev: TensorNumeric[T]) extends PythonZoo
   registerKiller()
 
   private def killPids(killingList: JList[String], killCommand: String): Unit = {
-    val iter = killingList.iterator()
-    while(iter.hasNext) {
-      val pid = iter.next()
-      println("JVM is killing process: " +  pid)
-      val process = Runtime.getRuntime().exec(killCommand + pid)
-      if (process.exitValue() == 0) {
-        iter.remove()
+    try {
+      val iter = killingList.iterator()
+      while(iter.hasNext) {
+        val pid = iter.next()
+        println("JVM is stopping process: " +  pid)
+        val process = Runtime.getRuntime().exec(killCommand + pid)
+        process.waitFor(2, TimeUnit.SECONDS)
+        if (process.exitValue() == 0) {
+          iter.remove()
+        }
       }
+    } catch {
+      case e :Exception =>
     }
   }
 
   private def registerKiller(): Unit = {
-      Runtime.getRuntime().addShutdownHook(new Thread {
+    Logger.getLogger("py4j.reflection.ReflectionEngine").setLevel(Level.ERROR)
+    Logger.getLogger("py4j.GatewayConnection").setLevel(Level.ERROR)
+    Runtime.getRuntime().addShutdownHook(new Thread {
           override def run(): Unit = {
             // Give it a chance to be gracefully killed
             killPids(processToBeKill, "kill ")

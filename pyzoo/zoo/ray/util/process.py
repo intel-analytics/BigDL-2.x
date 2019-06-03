@@ -47,7 +47,15 @@ class ProcessInfo(object):
 
 def pids_from_gpid(gpid):
     processes = psutil.process_iter()
-    return [proc.pid for proc in processes if os.getpgid(proc.pid) == gpid]
+    result = []
+    for proc in processes:
+        try:
+            if os.getpgid(proc.pid) == gpid:
+                result.append(proc.pid)
+        except Exception:
+            pass
+    return result
+
 
 
 def session_execute(command, env=None, tag=None, fail_fast=False, timeout=120):
@@ -60,7 +68,6 @@ def session_execute(command, env=None, tag=None, fail_fast=False, timeout=120):
         stderr=subprocess.PIPE,
         preexec_fn=os.setsid)
     pgid = os.getpgid(pro.pid)
-    print("The pgid for the current session is: {}".format(pgid))
     out, err = pro.communicate(timeout=timeout)
     out = out.decode("utf-8")
     err = err.decode("utf-8")
@@ -118,7 +125,10 @@ class ProcessMonitor:
     def clean_fn(self):
         import ray
         ray.shutdown()
-        self.ray_rdd.map(gen_shutdown_per_node(self.pgids, self.node_ips)).collect()
+        if not is_local(self.sc):
+            self.ray_rdd.map(gen_shutdown_per_node(self.pgids, self.node_ips)).collect()
+        else:
+            gen_shutdown_per_node(self.pgids, self.node_ips)([])
 
     @staticmethod
     def register_shutdown_hook(pgid=None, extra_close_fn=None):

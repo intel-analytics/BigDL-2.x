@@ -20,7 +20,7 @@ import ray
 from zoo import init_zoo_on_yarn, init_zoo_on_local
 from zoo.ray.util.raycontext import RayContext
 
-slave_num = 3
+slave_num = 2
 
 # sc = init_zoo_on_yarn(
 #     hadoop_conf="/opt/work/almaren-yarn-config/",
@@ -70,6 +70,6 @@ class TestRay():
 actors = [TestRay.remote() for i in range(0, slave_num)]
 print([ray.get(actor.hostname.remote()) for actor in actors])
 print([ray.get(actor.ip.remote()) for actor in actors])
-print([ray.get(actor.network.remote()) for actor in actors])
+# print([ray.get(actor.network.remote()) for actor in actors])
 
 ray_ctx.stop()

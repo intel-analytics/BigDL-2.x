@@ -83,26 +83,15 @@ class SparkRunner():
                 "Cannot detect current python location. Please set it manually by python_location")
         return process_info.out
 
-    # def init_spark_on_local(self, cores, python_location=None):
-    #     os.environ['PYSPARK_PYTHON'] =\
-    #         python_location if python_location else self._detect_python_location()
-    #     master = "local[{}]".format(cores)
-    #     submit_args = ' --master {} '.format(master) + ' pyspark-shell '
-    #     from zoo.util.engine import get_analytics_zoo_classpath
-    #     path_to_zoo_jar = get_analytics_zoo_classpath()
-    #     if path_to_zoo_jar:
-    #         submit_args = submit_args + " --conf spark.driver.extraClassPath={} ". \
-    #             format(get_analytics_zoo_classpath())
-    #     sc = self._create_sc(submit_args, conf={})
-    #     return sc
-
     def init_spark_on_local(self, cores, python_location=None):
+        print("Start to getOrCreate SparkContext")
         os.environ['PYSPARK_PYTHON'] =\
             python_location if python_location else self._detect_python_location()
         master = "local[{}]".format(cores)
         zoo_conf = init_spark_conf().setMaster(master)
         sc = init_nncontext(conf=zoo_conf, redirect_spark_log=self.redirect_spark_log)
         sc.setLogLevel(self.spark_log_level)
+        print("Successfully got a SparkContext")
         return sc
 
     def init_spark_on_yarn(self,

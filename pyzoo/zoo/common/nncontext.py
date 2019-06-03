@@ -22,6 +22,7 @@ import os
 
 def init_zoo_on_local(cores, python_location=None, spark_log_level="WARN",
                       redirect_spark_log=True):
+
     from zoo.ray.util.spark import SparkRunner
     sparkrunner = SparkRunner(spark_log_level=spark_log_level,
                               redirect_spark_log=redirect_spark_log)

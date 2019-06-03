@@ -9,6 +9,7 @@ pip install ray[debug]
 pip install conda-pack
 pip install psutil
 pip install aiohttp
+pip install setproctitle
 # You can also download and set environment variable(JAVA_HOME) manually.
 conda install -c anaconda openjdk=8.0.152
 
