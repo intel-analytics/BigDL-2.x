@@ -184,14 +184,13 @@ Parameters:
 TODO: add link
 
 ### **Reading metrics with build-in API**
-To get scalar metrics with build-in API, you can use following API.
+To get scalar metrics with build-in API, you can use following API. 
 
 **scala**
 ```scala
 getTrainSummary(tag)
 ```
-Get training metrics by tag.
-Parameters
+Get training metrics by tag. Parameters:  
 
 * `tag`: The string variable represents the parameter you want to return supported tags are "LearningRate", "Loss", "Throughput".
 
@@ -199,10 +198,24 @@ Parameters
 ```scala
 getValidationSummary(tag)
 ```
-Get validation metrics by tag.
-Parameters
+Get validation metrics by tag. Parameters:  
 
 * `tag`: The string variable represents the parameter you want to return supported tags are 'AUC', 'Accuracy', 'BinaryAccuracy', 'CategoricalAccuracy', 'HitRatio', 'Loss', 'MAE', 'NDCG', 'SparseCategoricalAccuracy', 'TFValidationMethod', 'Top1Accuracy', 'Top5Accuracy', 'TreeNNAccuracy'.
 
 
+**python**
+```python
+get_train_summary(tag)
+```
+Get training metrics by tag. Parameters:  
+
+* `tag`: The string variable represents the parameter you want to return supported tags are "LearningRate", "Loss", "Throughput".
+
+**python**
+```python
+get_validation_summary(tag)
+```
+Get validation metrics by tag. Parameters:  
+
+* `tag`: The string variable represents the parameter you want to return supported tags are 'AUC', 'Accuracy', 'BinaryAccuracy', 'CategoricalAccuracy', 'HitRatio', 'Loss', 'MAE', 'NDCG', 'SparseCategoricalAccuracy', 'TFValidationMethod', 'Top1Accuracy', 'Top5Accuracy', 'TreeNNAccuracy'.
 
