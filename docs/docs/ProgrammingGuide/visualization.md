@@ -4,7 +4,7 @@ To enable visualization support, you need first properly configure to collect st
 
 ## **Generating summary in KerasAPI**
 
-# "Visualization"
+# *Visualization*
 ## **Retrieving summary from TrainSummary and ValidationSummary**
 
 You can use provided API `readScalar`(Scala) and `read_scalar`(Python) to retrieve the summaries into readable format, and export them to other tools for further analysis or visualization.
