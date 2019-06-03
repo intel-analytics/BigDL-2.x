@@ -153,3 +153,9 @@ Parameters:
         When distributed is False the total batch size is batch_per_thread * numOfCores.
 * `zero_based_label`: Boolean. Whether result labels start from 0.
                       Default is True. If False, result labels start from 1.
+
+## **Visualization**
+
+Analytics-zoo use tensorbroad-compatible tevent file to store the training and validation metrics. Then user could use tensorboard to visualize the training, or use analytics-zoo build-in API to read the metrics.
+
+
