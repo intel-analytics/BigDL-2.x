@@ -104,11 +104,10 @@ class TestTimeSequencePipeline:
 
         dirname = tempfile.mkdtemp(prefix="saved_pipeline")
         try:
-            save_pipeline_file = dirname
+            save_pipeline_file = os.path.join(dirname, "my.ppl")
             pipeline.save(save_pipeline_file)
-
-            new_pipeline = TimeSequencePipeline()
-            new_pipeline.restore(save_pipeline_file)
+            assert os.path.isfile(save_pipeline_file)
+            new_pipeline = load_ts_pipeline(save_pipeline_file)
 
             new_pred = new_pipeline.predict(test_df)
             np.testing.assert_allclose(pred["value"].values, new_pred["value"].values)

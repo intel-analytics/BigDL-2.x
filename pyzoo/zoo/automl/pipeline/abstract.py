@@ -50,11 +50,3 @@ class Pipeline(ABC):
         """
         pass
 
-    @abstractmethod
-    def restore(self, file):
-        """
-        restore the pipeline from a file
-        :param file: the pipeline file
-        :return:
-        """
-        pass
