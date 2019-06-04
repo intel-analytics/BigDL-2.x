@@ -23,8 +23,8 @@ tsp = TimeSequencePredictor(dt_col="datetime", target_col="value", extra_feature
 pipeline = tsp.fit(train_df, metric="mean_squared_error")
 ```
 
-### Prediction and Evaluation using _Pipeline_ 
-A _Pipeline_ is a  which includes feature transformation and model inference. Pipeline can be saved and loaded for future deployment.     
+### Prediction and Evaluation using _TimeSequencePipeline_ 
+A _TimeSequencePipeline_ contains a chain of feature transformers and models, which does end2end time sequence prediction on input data. _TimeSequencePipeline_ can be saved and loaded for future deployment.     
  1. Prediction using _Pipeline_ object 
  ```python
  result_df = pipeline.predict(test_df)
@@ -43,7 +43,7 @@ A _Pipeline_ is a  which includes feature transformation and model inference. Pi
  pipeline = load_ts_pipeline("/tmp/saved_pipeline/my.ppl")
  ```
 
-## Implement your own AutoML
+## Extensions and new AutoML applications
 - _BaseFeatureTransformer```
 
 - _Model_
