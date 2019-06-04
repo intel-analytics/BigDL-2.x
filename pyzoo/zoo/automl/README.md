@@ -8,7 +8,7 @@ This library provides a framework and implementations for automatic feature engi
 
 ## Automated training of Time Series Prediction Model 
 
-### Training a model using _TimeSeuqencePredictor_
+### Training using _TimeSeuqencePredictor_
 
 You can use _TimeSequencePredictor_ to train a time series regression model. It trains a model on history time sequence data, and predict future sequences. Current implementation only supports univariant prediction, which means features can be multivariant, while target value should only be one on each data point of the sequence.  
 
@@ -23,7 +23,7 @@ tsp = TimeSequencePredictor(dt_col="datetime", target_col="value", extra_feature
 pipeline = tsp.fit(train_df, metric="mean_squared_error")
 ```
 
-### Prediction and Evaluation using _Pipeline_ object
+### Prediction and Evaluation using _Pipeline_ 
 A _Pipeline_ is a  which includes feature transformation and model inference. Pipeline can be saved and loaded for future deployment.     
  1. Prediction using _Pipeline_ object 
  ```python
@@ -39,7 +39,8 @@ A _Pipeline_ is a  which includes feature transformation and model inference. Pi
  ```
  4. Load the _Pipeline_ object from a file
  ```python
- pipeline.load("/tmp/saved_pipeline/my.pipeline")
+ from zoo.automl.pipeline.time_sequence import TimeSequencePipeline
+ pipeline = TimeSequencePipeline.load("/tmp/saved_pipeline/my.ppl")
  ```
 
 ## Implement your own Automated ML model
