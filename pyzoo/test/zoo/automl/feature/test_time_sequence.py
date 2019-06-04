@@ -184,14 +184,38 @@ class TestTimeSequenceFeature:
         finally:
             shutil.rmtree(dirname)
 
-    def test_post_processing(self):
+    def test_post_processing_train(self):
         dates = pd.date_range('1/1/2019', periods=8)
         values = np.random.randn(8)
-        df = pd.DataFrame({"datetime": dates, "values": values})
+        dt_col = "datetime"
+        value_col = "values"
+        df = pd.DataFrame({dt_col: dates, value_col: values})
 
+        past_seq_len = 2
+        future_seq_len = 1
         config = {"selected_features": ['IS_AWAKE(datetime)', 'IS_BUSY_HOURS(datetime)', 'HOUR(datetime)'],
-                  "past_seq_len": 2}
-        feat = TimeSequenceFeatureTransformer(future_seq_len=1, dt_col="datetime",
+                  "past_seq_len": past_seq_len}
+        feat = TimeSequenceFeatureTransformer(future_seq_len=future_seq_len, dt_col="datetime",
+                                              target_col="values", drop_missing=True)
+
+        train_x, train_y = feat.fit_transform(df, **config)
+        y_unscale, y_unscale_1 = feat.post_processing(df, train_y, is_train=True)
+        y_input = df[past_seq_len:][[value_col]].values
+        assert np.allclose(y_unscale, y_unscale_1), "y_unscale is {}, y_unscale_1 is {}".format(y_unscale, y_unscale_1)
+        assert np.array_equal(y_unscale, y_input), "y_unscale is {}, y_input is {}".format(y_unscale, y_input)
+
+    def test_post_processing_test(self):
+        dates = pd.date_range('1/1/2019', periods=8)
+        values = np.random.randn(8)
+        dt_col = "datetime"
+        value_col = "values"
+        df = pd.DataFrame({dt_col: dates, value_col: values})
+
+        past_seq_len = 2
+        future_seq_len = 1
+        config = {"selected_features": ['IS_AWAKE(datetime)', 'IS_BUSY_HOURS(datetime)', 'HOUR(datetime)'],
+                  "past_seq_len": past_seq_len}
+        feat = TimeSequenceFeatureTransformer(future_seq_len=future_seq_len, dt_col="datetime",
                                               target_col="values", drop_missing=True)
 
         train_x, train_y = feat.fit_transform(df, **config)
@@ -202,12 +226,13 @@ class TestTimeSequenceFeature:
             new_ft = TimeSequenceFeatureTransformer()
             restore(dirname, feature_transformers=new_ft, config=config)
 
-            new_ft.transform(df[:-1], is_train=False)
-            output_value_df = new_ft.post_processing(train_y)
-            target_df = df[2:].copy().reset_index(drop=True)
+            test_df = df[:-future_seq_len]
+            new_ft.transform(test_df, is_train=False)
+            output_value_df = new_ft.post_processing(test_df, train_y, is_train=False)
+            target_df = df[past_seq_len:].copy().reset_index(drop=True)
 
-            assert output_value_df["datetime"].equals(target_df["datetime"])
-            assert np.sum(np.square(output_value_df["values"].values - target_df["values"].values)) < 1e-7
+            assert output_value_df[dt_col].equals(target_df[dt_col])
+            assert np.allclose(output_value_df[value_col].values, target_df[value_col].values)
 
         finally:
             shutil.rmtree(dirname)
