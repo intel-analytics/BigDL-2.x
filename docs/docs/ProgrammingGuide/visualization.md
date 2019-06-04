@@ -37,26 +37,40 @@ Prerequisites:
 
 1. Python verison: 2.7, 3.4, 3.5, or 3.6
 2. Pip version >= 9.0.1
-
-To install TensorBoard using Python 2, you may run the command:
-```bash
-pip install tensorboard==1.0.0a4
-```
-
-To install TensorBoard using Python 3, you may run the command:
-```bash
-pip3 install tensorboard==1.0.0a4
-```
-
-Please refer to [this page](https://github.com/intel-analytics/BigDL/tree/master/spark/dl/src/main/scala/com/intel/analytics/bigdl/visualization#known-issues) for possible issues when installing TensorBoard.
+3. tensorflow 1.13.1
 
 * **Launching TensorBoard**
 
+***Loading from  local directory***
+
 You can launch TensorBoard using the command below:
 ```bash
-tensorboard --logdir=/tmp/bigdl_summaries
+tensorboard --logdir=[logdir path]
 ```
 After that, navigate to the TensorBoard dashboard using a browser. You can find the URL in the console output after TensorBoard is successfully launched; by default the URL is http://your_node:6006
+
+***Loading from HDFS***
+If the logdir is a HDFS folder, you need to configure the HDFS environment before running `tensorboard`.  
+Prerequisites:
+1. Java >= 1.8, set env JAVA_HOME 
+2. Hadoop >= 2.7, set env HADOOP_HOME
+
+Set env before running `tensorboard`:
+```
+export JAVA_HOME=
+export HADOOP_HOME=
+source ${HADOOP_HOME}/libexec/hadoop-config.sh
+export LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:${JAVA_HOME}/jre/lib/amd64/server
+```
+If the Hadoop cluster is in secure mode, also set the environment variable `KRB5CCNAME`:
+```
+export KRB5CCNAME={Path of Kerberos ticket cache file}
+```
+Run tensorboard, for example:
+```
+CLASSPATH=$(${HADOOP_HOME}/bin/hadoop classpath --glob) tensorboard --logdir=hdfs://[ip:port]/[hdfs path]
+```
+
 
 * **Visualizations in TensorBoard**
 
