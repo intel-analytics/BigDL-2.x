@@ -17,29 +17,26 @@
 
 import ray
 
-from zoo import init_zoo_on_yarn, init_zoo_on_local
+from zoo import init_on_yarn
 from zoo.ray.util.raycontext import RayContext
 
 slave_num = 2
 
-# sc = init_zoo_on_yarn(
-#     hadoop_conf="/opt/work/almaren-yarn-config/",
-#     conda_name="ray36-dev",
-#     num_executor=slave_num,
-#     executor_cores=28,
-#     executor_memory="10g",
-#     driver_memory="2g",
-#     driver_cores=4,
-#     extra_executor_memory_for_ray="30g")
+sc = init_on_yarn(
+    hadoop_conf="/opt/work/almaren-yarn-config/",
+    conda_name="ray36-dev",
+    num_executor=slave_num,
+    executor_cores=28,
+    executor_memory="10g",
+    driver_memory="2g",
+    driver_cores=4,
+    extra_executor_memory_for_ray="30g")
 
-sc = init_zoo_on_local(cores=4)
 ray_ctx = RayContext(sc=sc,
+                       object_store_memory="25g",
+                       waitting_time_sec=10,
                        env={"http_proxy": "http://child-prc.intel.com:913",
                            "http_proxys": "http://child-prc.intel.com:913"})
-# ray_ctx = RayContext(sc=sc,
-#                        object_store_memory="25g",
-#                        env={"http_proxy": "http://child-prc.intel.com:913",
-#                            "http_proxys": "http://child-prc.intel.com:913"})
 ray_ctx.init()
 
 

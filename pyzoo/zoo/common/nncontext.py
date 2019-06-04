@@ -20,21 +20,29 @@ import multiprocessing
 import os
 
 
-def init_zoo_on_local(cores, python_location=None, spark_log_level="WARN",
+def init_on_local(cores=2, conf=None, python_location=None, spark_log_level="WARN",
                       redirect_spark_log=True):
-
+    """
+    Create and return a SparkContext together with Zoo configuration on local machine.
+    :param cores: The default value is 2 and you can also set it to *
+     which meaning all of the available cores. i.e `init_on_local(cores="*")`
+    :param conf: A key value dictionary which be appended to SparkConf.
+    :param python_location: The path to your running python executable.
+    :param spark_log_level: Log level of Spark
+    :param redirect_spark_log: Direct the Spark log to local file or not.
+    :return:
+    """
     from zoo.ray.util.spark import SparkRunner
     sparkrunner = SparkRunner(spark_log_level=spark_log_level,
                               redirect_spark_log=redirect_spark_log)
-    return sparkrunner.init_spark_on_local(cores=cores,
+    return sparkrunner.init_spark_on_local(cores=cores,conf=conf,
                                            python_location=python_location)
 
-
-def init_zoo_on_yarn(hadoop_conf,
+def init_on_yarn(hadoop_conf,
                      conda_name,
                      num_executor,
                      executor_cores,
-                     executor_memory="10g",
+                     executor_memory="2g",
                      driver_memory="1g",
                      driver_cores=4,
                      extra_executor_memory_for_ray=None,
@@ -44,6 +52,28 @@ def init_zoo_on_yarn(hadoop_conf,
                      spark_yarn_archive=None,
                      spark_log_level="WARN",
                      redirect_spark_log=True):
+    """
+    Create and return a SparkContext together with Zoo configuration on Yarn cluster.
+    You should create a conda env and create the python dependencies on that env.
+    Conda env and the python dependencies only required on the driver machine.
+    It's not necessary create and install those on the whole yarn cluster.
+
+    :param hadoop_conf: path to the yarn configuration folder.
+    :param conda_name: Name of the conda env.
+    :param num_executor: Number of the Executors.
+    :param executor_cores: Cores for each Executor.
+    :param executor_memory: Memory for each Executor.
+    :param driver_memory: Memory for the Driver.
+    :param driver_cores: Number of cores for the Driver.
+    :param extra_executor_memory_for_ray: Memory size for the Ray services.
+    :param extra_python_lib:
+    :param penv_archive: Ideally, program would auto-pack the conda env which is specified by
+           `conda_name`, but you can also pass the path to packed file in "tar.gz" format here.
+    :param hadoop_user_name: User name for running in yarn cluster. Default value is: root
+    :param spark_log_level: Log level of Spark
+    :param redirect_spark_log:
+    :return: Direct the Spark log to local file or not.
+    """
     from zoo.ray.util.spark import SparkRunner
     sparkrunner = SparkRunner(spark_log_level=spark_log_level,
                               redirect_spark_log=redirect_spark_log)

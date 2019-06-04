@@ -95,8 +95,9 @@ class ProcessMonitor:
         self.ray_rdd = ray_rdd
         self.master = []
         self.slaves = []
-        self.pgids = []  # TODO: change me to dict
+        self.pgids = []
         self.node_ips = []
+        self.process_infos = process_infos
         for process_info in process_infos:
             self.pgids.append(process_info.pgid)
             self.node_ips.append(process_info.node_ip)

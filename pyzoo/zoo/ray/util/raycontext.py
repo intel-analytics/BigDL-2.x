@@ -19,6 +19,7 @@ import re
 import time
 import signal
 import random
+import multiprocessing
 
 from pyspark import BarrierTaskContext
 
@@ -90,7 +91,8 @@ class RayServiceFuncGenerator(object):
         return modified_env
 
     def __init__(self, python_loc, redis_port, ray_node_cpu_cores, mkl_cores,
-                 password, object_store_memory, waitting_time=6, verbose=False, env=None):
+                 password, object_store_memory, waitting_time_sec=6, verbose=False, env=None):
+        """object_store_memory: integer in bytes"""
         self.env = env
         self.python_loc = python_loc
         self.redis_port = redis_port
@@ -98,8 +100,8 @@ class RayServiceFuncGenerator(object):
         self.ray_node_cpu_cores = ray_node_cpu_cores
         self.mkl_cores = mkl_cores
         self.ray_exec = self._get_ray_exec()
-        self.object_store_memory = resourceToBytes(object_store_memory)
-        self.WAITING_TIME_SEC = waitting_time
+        self.object_store_memory = object_store_memory
+        self.waiting_time_sec = waitting_time_sec
         self.verbose = verbose
         self.labels = """--resources='{"trainer": %s, "ps": %s }' """ % (1, 1)
 
@@ -129,13 +131,15 @@ class RayServiceFuncGenerator(object):
             command = command + "--object-store-memory {} ".format(str(self.object_store_memory))
         return command
 
-    def _start_ray_node(self, command, tag, wait_before=2, wait_after=2):
+    def _start_ray_node(self, command, tag, wait_before=5, wait_after=5):
         modified_env = self._prepare_env(self.mkl_cores)
-        print("Starting ray master by running: {}".format(command))
+        print("Starting {} by running: {}".format(tag, command))
+        print("Wait for {} sec before launching {}".format(wait_before, tag))
         time.sleep(wait_before)
         process_info = session_execute(command=command, env=modified_env, tag=tag)
         JVMGuard.registerPids(process_info.pids)
         process_info.node_ip = rservices.get_node_ip_address()
+        print("Wait for {} sec before return process info for {}".format(wait_after, tag))
         time.sleep(wait_after)
         return process_info
 
@@ -157,7 +161,8 @@ class RayServiceFuncGenerator(object):
             if tc.partitionId() == 0:
                 print("partition id is : {}".format(tc.partitionId()))
                 process_info = self._start_ray_node(command=self._gen_master_command(),
-                                                    tag="ray-master")
+                                                    tag="ray-master",
+                                                    wait_after=self.waiting_time_sec)
                 process_info.master_addr = redis_address
                 yield process_info
             else:
@@ -165,7 +170,7 @@ class RayServiceFuncGenerator(object):
                 process_info = self._start_ray_node(
                     command=self._get_raylet_command(redis_address=redis_address),
                     tag="raylet",
-                    wait_after=self.WAITING_TIME_SEC)
+                    wait_before=self.waiting_time_sec)
                 yield process_info
             tc.barrier()
 
@@ -173,10 +178,24 @@ class RayServiceFuncGenerator(object):
 
 
 class RayContext(object):
-    # TODO: redis_port should be retrieved by random searched
     def __init__(self, sc, redis_port=None, password="123456", object_store_memory=None,
-                 verbose=False, env=None):
+                 verbose=False, env=None, local_ray_node_num=2, waitting_time_sec=6):
+        """
+        The RayContext would init a ray cluster on top of the configuration of the SparkContext.
+        For spark cluster mode: The number of raylets is equal to number of executors.
+        For Spark local mode: The number of raylets is controlled by local_ray_node_num and
+        cpu cores for each raylet is spark_cores/local_ray_node_num
+        :param sc:
+        :param redis_port: redis port for the "head" node.
+               The value would be randomly picked if not specified
+        :param local_ray_node_num number of raylets to be created.
+        :param object_store_memory: Memory size for the object_store.
+        :param env: The environment variable dict for running Ray.
+        """
         self.sc = sc
+        self.stopped = False
+        self.is_local = is_local(sc)
+        self.local_ray_node_num = local_ray_node_num
         self.ray_node_cpu_cores = self._get_ray_node_cpu_cores()
         self.num_ray_nodes = self._get_num_ray_nodes()
         self.python_loc = os.environ['PYSPARK_PYTHON']
@@ -190,7 +209,9 @@ class RayContext(object):
             mkl_cores=self._get_mkl_cores(),
             password=password,
             object_store_memory=self._enrich_object_sotre_memory(sc, object_store_memory),
-            verbose=verbose, env=env)
+            verbose=verbose,
+            env=env,
+            waitting_time_sec=waitting_time_sec)
         self._gather_cluster_ips()
         from bigdl.util.common import init_executor_gateway
         print("Start to launch the JVM guarding process")
@@ -203,7 +224,7 @@ class RayContext(object):
     def _enrich_object_sotre_memory(self, sc, object_store_memory):
         if is_local(sc):
             assert not object_store_memory, "you should not set object_store_memory on spark local"
-            return self._get_ray_plasma_memory_local()
+            return resourceToBytes(self._get_ray_plasma_memory_local())
         else:
             return resourceToBytes(
                 str(object_store_memory)) if object_store_memory else None
@@ -222,23 +243,29 @@ class RayContext(object):
         return ips[0]
 
     def stop(self):
+        if self.stopped:
+            print("This instance has been stopped.")
+            return
         import ray
         ray.shutdown()
         if not self.ray_processesMonitor:
             print("Please start the runner first before closing it")
         else:
             self.ray_processesMonitor.clean_fn()
-        self.sc.stop()
+        self.stopped = True
 
     def raw_stop(self):
         """
         Invoke ray stop to clean ray processes
         """
+        if self.stopped:
+            print("This instance has been stopped.")
+            return
         self.sc.range(0,
                       self.num_ray_nodes,
                       numSlices=self.num_ray_nodes).barrier().mapPartitions(
             self.ray_context.gen_stop()).collect()
-
+        self.stopped = True
 
     def _get_mkl_cores(self):
         if "local" in self.sc.master:
@@ -248,7 +275,11 @@ class RayContext(object):
 
     def _get_ray_node_cpu_cores(self):
         if "local" in self.sc.master:
-            return 1
+
+            assert self._get_spark_local_cores() % self.local_ray_node_num == 0, \
+            "Spark cores number: {} should be divided by local_ray_node_num {} ".format(
+                self._get_spark_local_cores(), self.local_ray_node_num)
+            return int(self._get_spark_local_cores() / self.local_ray_node_num)
         else:
             return self.sc._conf.get("spark.executor.cores")
 
@@ -267,11 +298,16 @@ class RayContext(object):
     def _get_ray_plasma_memory_local(self):
         return "{}b".format(int(self._get_ray_driver_memory() / self._get_num_ray_nodes() * 0.4))
 
-
+    def _get_spark_local_cores(self):
+        local_symbol = re.match(r"local\[(.*)\]", self.sc.master).group(1)
+        if local_symbol == "*":
+            return multiprocessing.cpu_count()
+        else:
+            return int(local_symbol)
 
     def _get_num_ray_nodes(self):
         if "local" in self.sc.master:
-            return int(re.match(r"local\[(.*)\]", self.sc.master).group(1))
+            return int(self.local_ray_node_num)
         else:
             return int(self.sc._conf.get("spark.executor.instances"))
 
@@ -303,8 +339,9 @@ class RayContext(object):
     def _start_driver(self, object_store_memory="10g"):
         print("Start to launch ray on local")
         import ray
-        self._start_restricted_worker(self.redis_address, self.ray_context.password,
-                                      object_store_memory=resourceToBytes(object_store_memory))
+        if not self.is_local:
+            self._start_restricted_worker(self.redis_address, self.ray_context.password,
+                                          object_store_memory=resourceToBytes(object_store_memory))
         ray.shutdown()
         ray.init(redis_address=self.redis_address,
                  redis_password=self.ray_context.password)

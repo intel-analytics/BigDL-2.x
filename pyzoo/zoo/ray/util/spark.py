@@ -83,12 +83,14 @@ class SparkRunner():
                 "Cannot detect current python location. Please set it manually by python_location")
         return process_info.out
 
-    def init_spark_on_local(self, cores, python_location=None):
+    def init_spark_on_local(self, cores, conf=None, python_location=None):
         print("Start to getOrCreate SparkContext")
         os.environ['PYSPARK_PYTHON'] =\
             python_location if python_location else self._detect_python_location()
         master = "local[{}]".format(cores)
         zoo_conf = init_spark_conf().setMaster(master)
+        if conf:
+            zoo_conf.setAll(conf.items())
         sc = init_nncontext(conf=zoo_conf, redirect_spark_log=self.redirect_spark_log)
         sc.setLogLevel(self.spark_log_level)
         print("Successfully got a SparkContext")
@@ -142,7 +144,7 @@ class SparkRunner():
                 conf["spark.executor.memoryOverhead"] = extra_executor_memory_for_ray
             if spark_yarn_archive:
                 conf.insert("spark.yarn.archive", spark_yarn_archive)
-            return self._common_opt("yarn") + _yarn_opt(jars) + 'pyspark-shell', conf
+            return " --master yarn " + _yarn_opt(jars) + 'pyspark-shell', conf
 
         pack_env = False
         assert penv_archive or conda_name, \
