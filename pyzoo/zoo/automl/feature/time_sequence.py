@@ -104,22 +104,30 @@ class TimeSequenceFeatureTransformer(BaseFeatureTransformer):
             return x, y
         else:
             x = self._roll_test(data_n, past_seq_len=self.past_seq_len)
-            self._get_y_pred_dt(input_df, self.past_seq_len)
             return x
 
-    def post_processing(self, y_pred):
+    def _unscale(self, y):
+        # for standard scalar
+        value_mean = self.scaler.mean_[0]
+        value_scale = self.scaler.scale_[0]
+        y_unscale = y * value_scale + value_mean
+        return y_unscale
+
+    def post_processing(self, input_df, y_pred, is_train):
         """
         Used only in pipeline predict, after calling self.transform(input_df, is_train=False).
         Post_processing includes converting the predicted array to dataframe and scalar inverse transform.
         :param y_pred: Model prediction result (ndarray).
         :return: Un_scaled dataframe with datetime.
         """
-        # for standard scalar
-        value_mean = self.scaler.mean_[0]
-        value_scale = self.scaler.scale_[0]
-        y_unscale = y_pred * value_scale + value_mean
-        self.y_pred_dt[self.target_col] = y_unscale
-        return self.y_pred_dt
+        y_pred_unscale = self._unscale(y_pred)
+        if is_train:
+            _, y_unscale = self._roll_train(input_df[[self.target_col]], self.past_seq_len, self.future_seq_len)
+            return y_unscale, y_pred_unscale
+        else:
+            y_pred_dt = self._get_y_pred_dt(input_df, self.past_seq_len)
+            y_pred_dt[self.target_col] = y_pred_unscale
+            return y_pred_dt
 
     def save(self, file_path, replace=False):
         """
@@ -259,7 +267,7 @@ class TimeSequenceFeatureTransformer(BaseFeatureTransformer):
         if past_seq_len > max_past_seq_len:
             raise ValueError("past_seq_len {} exceeds the maximum value {}".format(past_seq_len, future_seq_len))
         x = dataframe[0:-future_seq_len].values
-        y = dataframe[past_seq_len:][0].values
+        y = dataframe.iloc[past_seq_len:, 0].values
         output_x, mask_x = self._roll_data(x, past_seq_len)
         output_y, mask_y = self._roll_data(y, future_seq_len)
         # assert output_x.shape[0] == output_y.shape[0], "The shape of output_x and output_y doesn't match! "
@@ -294,7 +302,8 @@ class TimeSequenceFeatureTransformer(BaseFeatureTransformer):
         time_delta = pre_pred_dt.iloc[-1] - pre_pred_dt.iloc[-2]
         last_time = pre_pred_dt.iloc[-1] + time_delta
         last_df = pd.DataFrame({self.dt_col: last_time})
-        self.y_pred_dt = pre_pred_dt.append(last_df, ignore_index=True)
+        y_pred_dt = pre_pred_dt.append(last_df, ignore_index=True)
+        return y_pred_dt
 
     def _scale(self, data):
         """
