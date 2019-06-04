@@ -41,7 +41,7 @@ class TestVanillaLSTM:
             "dropout_2": 0.2,
             "batch_size": 32,
         }
-        model = VanillaLSTM(check_optional_config=False, future_seq_len=future_seq_len)
+        model = VanillaLSTM(check_optional_config=False)
         print("fit_eval:", model.fit_eval(x_train, y_train, **config))
 
     def test_evaluate(self):
@@ -62,7 +62,7 @@ class TestVanillaLSTM:
             "dropout_2": 0.2,
             "batch_size": 32,
         }
-        model = VanillaLSTM(check_optional_config=False, future_seq_len=future_seq_len)
+        model = VanillaLSTM(check_optional_config=False)
         model.fit_eval(x_train, y_train, **config)
         print("evaluate:", model.evaluate(x_val, y_val))
 
@@ -86,7 +86,7 @@ class TestVanillaLSTM:
             "dropout_2": 0.2,
             "batch_size": 32,
         }
-        model = VanillaLSTM(check_optional_config=False, future_seq_len=future_seq_len)
+        model = VanillaLSTM(check_optional_config=False)
         model.fit_eval(x_train, y_train, **config)
         y_pred = model.predict(x_test)
         assert y_pred.shape == (x_test.shape[0], 1)
@@ -112,20 +112,14 @@ class TestVanillaLSTM:
             "batch_size": 32,
         }
 
+        model = VanillaLSTM(check_optional_config=False)
+        model.fit_eval(x_train, y_train, **config)
+        predict_before = model.predict(x_test)
+
         dirname = tempfile.mkdtemp(prefix="automl_test_vanilla")
         try:
-            model = VanillaLSTM(check_optional_config=False, future_seq_len=future_seq_len)
-            model.fit_eval(x_train, y_train, **config)
-            predict_before = model.predict(x_test)
-
-            model_path = os.path.join(dirname, "testmodel.h5")
-            config_path = os.path.join(dirname, "local_config.json")
-
-            model.save(model_path=model_path, config_path=config_path)
-
-            local_config = load_config(config_path)
-            config.update(local_config)
-            model.restore(model_path=model_path, **config)
+            save(dirname, model=model)
+            restore(dirname, model=model, config=config)
             predict_after = model.predict(x_test)
             assert np.allclose(predict_before, predict_after)
         finally:
