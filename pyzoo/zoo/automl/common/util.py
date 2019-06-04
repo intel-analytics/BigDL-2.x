@@ -13,7 +13,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-
+import shutil
+import tempfile
+import zipfile
 
 import numpy as np
 import pandas as pd
@@ -88,6 +90,21 @@ def save(file, feature_transformers=None, model=None, config=None):
         save_config(config_path, config)
 
 
+def save_zip(file, feature_transformers=None, model=None, config=None):
+    dirname = tempfile.mkdtemp(prefix="automl_save_")
+    try:
+        save(dirname,
+             feature_transformers=feature_transformers,
+             model=model,
+             config=config)
+        with zipfile.ZipFile(file, 'w') as f:
+            for dirpath, dirnames, filenames in os.walk(dirname):
+                for filename in filenames:
+                    f.write(os.path.join(dirpath, filename), filename)
+    finally:
+        shutil.rmtree(dirname)
+
+
 def restore(file, feature_transformers=None, model=None, config=None):
     model_path = os.path.join(file, "weights_tune.h5")
     config_path = os.path.join(file, "config.json")
@@ -102,3 +119,16 @@ def restore(file, feature_transformers=None, model=None, config=None):
     if feature_transformers:
         feature_transformers.restore(**all_config)
     return all_config
+
+
+def restore_zip(file, feature_transformers=None, model=None, config=None):
+    dirname = tempfile.mkdtemp(prefix="automl_save_")
+    try:
+        with zipfile.ZipFile(file) as zf:
+            zf.extractall(dirname)
+
+        all_config = restore(dirname, feature_transformers, model, config)
+    finally:
+        shutil.rmtree(dirname)
+    return all_config
+
