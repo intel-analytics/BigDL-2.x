@@ -61,8 +61,9 @@ class NumpyEncoder(json.JSONEncoder):
 def save_config(file_path, config, replace=False):
     if os.path.isfile(file_path) and not replace:
         with open(file_path, "r") as input_file:
-            data = json.load(input_file)
-        config.update(data)
+            old_config = json.load(input_file)
+        old_config.update(config)
+        config = old_config.copy()
 
     with open(file_path, "w") as output_file:
         json.dump(config, output_file, cls=NumpyEncoder)
@@ -72,3 +73,32 @@ def load_config(file_path):
     with open(file_path, "r") as input_file:
         data = json.load(input_file)
     return data
+
+
+def save(file, feature_transformers=None, model=None, config=None):
+    if not os.path.isdir(file):
+        os.mkdir(file)
+    config_path = os.path.join(file, "config.json")
+    model_path = os.path.join(file, "weights_tune.h5")
+    if feature_transformers is not None:
+        feature_transformers.save(config_path, replace=True)
+    if model is not None:
+        model.save(model_path, config_path)
+    if config is not None:
+        save_config(config_path, config)
+
+
+def restore(file, feature_transformers=None, model=None, config=None):
+    model_path = os.path.join(file, "weights_tune.h5")
+    config_path = os.path.join(file, "config.json")
+    local_config = load_config(config_path)
+    if config is not None:
+        all_config = config.copy()
+        all_config.update(local_config)
+    else:
+        all_config = local_config
+    if model:
+        model.restore(model_path, **all_config)
+    if feature_transformers:
+        feature_transformers.restore(**all_config)
+    return all_config

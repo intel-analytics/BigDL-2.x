@@ -15,8 +15,9 @@
 #
 import os
 
+from zoo.automl.common.metrics import Evaluator
 from zoo.automl.pipeline.abstract import Pipeline
-from zoo.automl.common.util import save_config, load_config
+from zoo.automl.common.util import *
 from zoo.automl.feature.time_sequence import TimeSequenceFeatureTransformer
 from zoo.automl.model import VanillaLSTM
 
@@ -64,14 +65,7 @@ class TimeSequencePipeline(Pipeline):
         :param file:
         :return:
         """
-        if not os.path.isdir(file):
-            os.mkdir(file)
-        model_path = os.path.join(file, "weights_tune.h5")
-        config_path = os.path.join(file, "all_config.json")
-        self.feature_transformers.save(config_path, replace=True)
-        self.model.save(model_path, config_path)
-        # check if ** is needed
-        save_config(config_path, self.config)
+        save(file, self.feature_transformers, self.model, self.config)
 
     def restore(self, file):
         """
@@ -79,9 +73,5 @@ class TimeSequencePipeline(Pipeline):
         :param file:
         :param config:
         :return:
-        """       
-        model_path = os.path.join(file, "weights_tune.h5")
-        config_path = os.path.join(file, "all_config.json")
-        all_config = load_config(config_path)
-        self.model.restore(model_path, **all_config)
-        self.feature_transformers.restore(**all_config)
+        """
+        restore(file, self.feature_transformers, self.model)

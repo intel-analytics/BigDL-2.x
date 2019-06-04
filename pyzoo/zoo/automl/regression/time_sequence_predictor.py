@@ -20,11 +20,13 @@ import tempfile
 import zipfile
 import os
 import shutil
+
+
 from zoo.automl.search.abstract import *
 from zoo.automl.search.RayTuneSearchEngine import RayTuneSearchEngine
 
 from zoo.automl.feature.time_sequence import TimeSequenceFeatureTransformer
-from zoo.automl.model.time_sequence import TimeSequenceModel
+
 from zoo.automl.model import VanillaLSTM
 from zoo.automl.pipeline.time_sequence import TimeSequencePipeline
 from zoo.automl.common.util import *
@@ -138,7 +140,7 @@ class TimeSequencePredictor(object):
 
         feature_list = ft.get_feature_list(input_df)
         # model
-        model = VanillaLSTM(check_optional_config=False, future_seq_len=self.future_seq_len)
+        model = VanillaLSTM(check_optional_config=False)
 
         search_space = {
             # -------- feature related parameters
@@ -162,7 +164,7 @@ class TimeSequencePredictor(object):
 
         stop = {
             "reward_metric": -0.05,
-            "training_iteration": 10
+            "training_iteration": 1
         }
 
         searcher = RayTuneSearchEngine(logs_dir=self.logs_dir, ray_num_cpus=6, resources_per_trial={"cpu": 2})
@@ -182,7 +184,7 @@ class TimeSequencePredictor(object):
                                        feature_transformers=ft,
                                        # feature_transformers=TimeSequenceFeatures(
                                        #     file_path='../../../../data/nyc_taxi_rolled_split.npz'),
-                                       model=VanillaLSTM(check_optional_config=False))
+                                       model=model)
         return pipeline
 
     def _print_config(self, best_config):
@@ -201,16 +203,8 @@ class TimeSequencePredictor(object):
         try:
             with zipfile.ZipFile(trial.model_path) as zf:
                 zf.extractall(dirname)
-                # print("files are extracted into" + dirname)
-                # print(os.listdir(dirname))
 
-            model_path = os.path.join(dirname, "weights_tune.h5")
-            config_path = os.path.join(dirname, "local_config.json")
-            local_config = load_config(config_path)
-            all_config = trial.config.copy()
-            all_config.update(local_config)
-            model.restore(model_path, **all_config)
-            feature_transformers.restore(**all_config)
+            all_config = restore(dirname, feature_transformers, model, trial.config)
         finally:
             shutil.rmtree(dirname)
 
