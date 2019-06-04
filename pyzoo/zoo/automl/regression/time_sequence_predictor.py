@@ -199,14 +199,15 @@ class TimeSequencePredictor(object):
         # temp restore from two files
 
         self._print_config(trial.config)
-        dirname = tempfile.mkdtemp(prefix="automl_")
-        try:
-            with zipfile.ZipFile(trial.model_path) as zf:
-                zf.extractall(dirname)
-
-            all_config = restore(dirname, feature_transformers, model, trial.config)
-        finally:
-            shutil.rmtree(dirname)
+        all_config = restore_zip(trial.model_path, feature_transformers, model, trial.config)
+        # dirname = tempfile.mkdtemp(prefix="automl_")
+        # try:
+        #     with zipfile.ZipFile(trial.model_path) as zf:
+        #         zf.extractall(dirname)
+        #
+        #     all_config = restore(dirname, feature_transformers, model, trial.config)
+        # finally:
+        #     shutil.rmtree(dirname)
 
         # model.restore(model_path)
         # feature_transformers.restore(config_path, **trial.config)
