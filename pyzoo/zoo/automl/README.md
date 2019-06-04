@@ -39,15 +39,15 @@ A _Pipeline_ is a  which includes feature transformation and model inference. Pi
  ```
  4. Load the _Pipeline_ object from a file
  ```python
- from zoo.automl.pipeline.time_sequence import TimeSequencePipeline
- pipeline = TimeSequencePipeline.load("/tmp/saved_pipeline/my.ppl")
+ from zoo.automl.pipeline.time_sequence import load_ts_pipeline
+ pipeline = load_ts_pipeline("/tmp/saved_pipeline/my.ppl")
  ```
 
 ## Implement your own AutoML
 - _BaseFeatureTransformer```
 
-- ```Model```
+- _Model_
 
-- ```Pipeline```
+- _Pipeline_
 
-- ```SearchEngine```
+- _SearchEngine_
