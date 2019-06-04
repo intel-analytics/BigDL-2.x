@@ -26,7 +26,7 @@ import pandas as pd
 
 class TestTimeSequencePipeline:
 
-    def test_valuate(self):
+    def test_evaluate(self):
         # sample_num should > past_seq_len, the default value of which is 50
         sample_num = 100
         train_df = pd.DataFrame({"datetime": pd.date_range('1/1/2019', periods=sample_num),
@@ -37,9 +37,11 @@ class TestTimeSequencePipeline:
 
         tsp = TimeSequencePredictor(dt_col="datetime",
                                     target_col="value",
+                                    future_seq_len=1,
                                     extra_features_col=None, )
         pipeline = tsp.fit(train_df)
-        print("evaluate:", pipeline.evaluate(test_df, metric=["mean_squared_error", "r_square"]))
+        evaluate_value = pipeline.evaluate(test_df, metric=["mean_squared_error", "r_square"])
+        print("evaluate:", evaluate_value)
 
     def test_predict(self):
         # sample_num should > past_seq_len, the default value of which is 50
@@ -52,12 +54,39 @@ class TestTimeSequencePipeline:
 
         tsp = TimeSequencePredictor(dt_col="datetime",
                                     target_col="value",
+                                    future_seq_len=1,
                                     extra_features_col=None, )
         pipeline = tsp.fit(train_df)
         y_pred = pipeline.predict(test_df)
 
         default_past_seq_len = 50
         assert y_pred.shape == (test_sample_num - default_past_seq_len + 1, 2)
+
+    def test_evaluate_predict(self):
+        future_seq_len = 1
+        sample_num = 100
+        dt_col = "datetime"
+        target_col = "value"
+        train_df = pd.DataFrame({dt_col: pd.date_range('1/1/2019', periods=sample_num),
+                                 target_col: np.random.randn(sample_num)})
+        test_sample_num = 64
+        test_df = pd.DataFrame({dt_col: pd.date_range('1/10/2019', periods=test_sample_num),
+                                target_col: np.random.randn(test_sample_num)})
+
+        tsp = TimeSequencePredictor(dt_col="datetime",
+                                    target_col="value",
+                                    future_seq_len=future_seq_len,
+                                    extra_features_col=None, )
+        pipeline = tsp.fit(train_df)
+        y_pred_df = pipeline.predict(test_df[:-future_seq_len])
+        default_past_seq_len = 50
+        y_df = test_df[default_past_seq_len:]
+        e = Evaluator()
+        metric = ["mean_squared_error", "r_square"]
+        mse1, rs1 = [e.evaluate(m, y_df[target_col].values, y_pred_df[target_col].values) for m in metric]
+        mse2, rs2 = pipeline.evaluate(test_df, metric)
+        assert mse1 == mse2
+        assert rs1 == rs2
 
     def test_save_restore(self):
         sample_num = 100
