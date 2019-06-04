@@ -256,9 +256,9 @@ object Utils {
     val sample = if (includeHistory) {
       val mlpFeature: Array[Float] = r.getAs[mutable.WrappedArray[java.lang.Float]]("purchase_history").array.map(_.toFloat)
       val mlpTensor = Tensor(mlpFeature, Array(historyLength))
-      TensorSample[Float](Array(mlpTensor, rnnTensor), Array(label))
+      Sample[Float](Array(mlpTensor, rnnTensor), Array(label))
     } else
-      TensorSample[Float](Array(rnnTensor), Array(label))
+      Sample[Float](Array(rnnTensor), Array(label))
     sample
   }
 

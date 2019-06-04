@@ -16,13 +16,10 @@
 
 package com.intel.analytics.zoo.examples.recommendation
 
-import java.nio.file.Paths
-
-import com.intel.analytics.bigdl.dataset.{Sample, TensorSample}
+import com.intel.analytics.bigdl.dataset.Sample
 import com.intel.analytics.bigdl.optim._
-import com.intel.analytics.bigdl.tensor.Tensor
-import com.intel.analytics.bigdl.utils.T
 import com.intel.analytics.zoo.common.NNContext
+import com.intel.analytics.bigdl.numeric.NumericFloat
 import com.intel.analytics.zoo.models.recommendation.SessionRecommender
 import com.intel.analytics.zoo.pipeline.api.keras.objectives.SparseCategoricalCrossEntropy
 import org.apache.log4j.{Level, Logger}
@@ -38,19 +35,14 @@ import scala.collection.mutable
 case class SessionParams(sessionLength: Int = 5,
                          historyLength: Int = 5,
                          maxEpoch: Int = 10,
-                         batchSize: Int = 1280,
-                         embedOutDim: Int = 20,
-                         learningRate: Double = 1e-3,
-                         learningRateDecay: Double = 1e-6,
-                         inputDir: String = "/Users/guoqiong/intelWork/projects/officeDepot/sampleData/",
-                         outputDir: String = "./model/",
-                         fileName: String = "atcHistory.json",
-                         modelName: String = "sessionRecommender"
-                        )
+                         batchSize: Int = 1024,
+                         embedOutDim: Int = 100,
+                         learningRate: Double = 3e-3,
+                         learningRateDecay: Double = 5e-5,
+                         input: String = "/Users/guoqiong/intelWork/projects/officeDepot/sampleData/atcHistory.json",
+                         outputDir: String = "./model/bigDLmodel")
 
 object SessionRecExp {
-
-  val currentDir: String = Paths.get(".").toAbsolutePath + "/"
 
   def main(args: Array[String]): Unit = {
 
@@ -59,13 +51,16 @@ object SessionRecExp {
     val parser = new OptionParser[SessionParams]("SessionRecExample") {
       opt[String]("inputDir")
         .text(s"inputDir")
-        .action((x, c) => c.copy(inputDir = x))
+        .action((x, c) => c.copy(input = x))
       opt[String]("outputDir")
         .text(s"inputDir")
         .action((x, c) => c.copy(outputDir = x))
       opt[Int]('b', "batchSize")
         .text(s"batchSize")
         .action((x, c) => c.copy(batchSize = x))
+      opt[Int]('e', "maxEpoch")
+        .text(s"max epoch, default is 10")
+        .action((x, c) => c.copy(maxEpoch = x))
     }
 
     parser.parse(args, defaultParams).map {
@@ -77,20 +72,18 @@ object SessionRecExp {
   }
 
   def run(params: SessionParams): Unit = {
-
-    Logger.getLogger("org").setLevel(Level.WARN)
-
-    // construct BigDL session
-    val conf = new SparkConf()
-      .setAppName("SessionRecExp")
-      .setMaster("local[*]")
-
+    Logger.getLogger("org").setLevel(Level.ERROR)
+    val conf = new SparkConf().setAppName("SessionRecExp")
     val sc = NNContext.initNNContext(conf)
     val sqlContext = SQLContext.getOrCreate(sc)
 
-    val (sessionDF, itemCount) = loadPublicData(sqlContext, params)
+    val (sessionDF, itemCount, itemStart) = loadPublicData(sqlContext, params)
+    println(itemCount)
+    println(itemStart)
+
     val trainSample = assemblyFeature(sessionDF, params.sessionLength, includeHistory = true, params.historyLength)
     val Array(trainRdd, testRdd) = trainSample.randomSplit(Array(0.8, 0.2), 100)
+    testRdd.cache()
 
     val model = SessionRecommender[Float](
       itemCount = itemCount,
@@ -111,13 +104,28 @@ object SessionRecExp {
 
     model.fit(trainRdd, batchSize = params.batchSize, validationData = testRdd)
 
+    val results = model.predict(testRdd)
+    results.take(5).foreach(println)
 
-    model.saveModule(params.inputDir + params.modelName, null, overWrite = true)
+    val resultsClass = model.predictClasses(testRdd)
+    resultsClass.take(5).foreach(println)
+
+    model.saveModule(params.outputDir, null, overWrite = true)
     println("Model has been saved")
+    val loaded = SessionRecommender.loadModel(params.outputDir)
+    val results1 = loaded.predict(testRdd)
+    results1.take(5).foreach(println)
+
+    val resultsClass1 = loaded.predictClasses(testRdd)
+    resultsClass1.take(5).foreach(println)
+
+    val recommendations = model.recommendForSession(testRdd, 5, false)
+
+    recommendations.take(20).map( x=> println(x.toList))
 
   }
 
-  def loadPublicData(sqlContext: SQLContext, params: SessionParams): (DataFrame, Int) = {
+  def loadPublicData(sqlContext: SQLContext, params: SessionParams): (DataFrame, Int, Int) = {
 
     val toFloat = {
       val func: ((mutable.WrappedArray[Double]) => mutable.WrappedArray[Float]) = (seq => seq.map(_.toFloat))
@@ -125,7 +133,7 @@ object SessionRecExp {
     }
 
     val sessionDF = sqlContext.read
-      .options(Map("header" -> "false", "delimiter" -> ",")).json(params.inputDir + params.fileName)
+      .options(Map("header" -> "false", "delimiter" -> ",")).json(params.input)
       .withColumn("session", toFloat(col("ATC_SEQ")))
       .withColumn("purchase_history", toFloat(col("PURCH_HIST")))
       .select("session", "purchase_history")
@@ -133,7 +141,12 @@ object SessionRecExp {
     val atcMax = sessionDF.rdd.map(_.getAs[mutable.WrappedArray[Float]]("session").max).collect().max.toInt
     val purMax = sessionDF.rdd.map(_.getAs[mutable.WrappedArray[Float]]("purchase_history").max).collect().max.toInt
     val itemCount = Math.max(atcMax, purMax)
-    (sessionDF, itemCount)
+
+    val atcMin = sessionDF.rdd.map(_.getAs[mutable.WrappedArray[Float]]("session").min).collect().min.toInt
+    val purMin = sessionDF.rdd.map(_.getAs[mutable.WrappedArray[Float]]("purchase_history").min).collect().min.toInt
+    val itemStart = Math.max(atcMin, purMin)
+
+    (sessionDF, itemCount, itemStart)
   }
 
   def assemblyFeature(sessionDF: DataFrame,
@@ -143,7 +156,6 @@ object SessionRecExp {
 
     val expandedDF = slideSession(sessionDF, sessionLength)
 
-    expandedDF.show(10, false)
     val padSession = udf(prePadding(sessionLength))
 
     val sessionPaddedDF = expandedDF
@@ -151,7 +163,6 @@ object SessionRecExp {
       .drop("session")
       .withColumnRenamed("sessionPadded", "session")
 
-    sessionPaddedDF.show(10, false)
     val paddedDF = if (includeHistory) {
       val padHistory = udf(prePadding(historyLength))
       sessionPaddedDF
@@ -161,20 +172,10 @@ object SessionRecExp {
     }
     else sessionPaddedDF
 
-    println("----------------------------")
-    paddedDF.show(10, false)
-
     // dataFrame to rdd of sample
-    val trainSample = paddedDF.rdd.map(r => {
+    val samples = paddedDF.rdd.map(r => {
       rows2sample(r, sessionLength, true, historyLength)
     })
-
-    println(trainSample.take(10))
-    println("Sample feature print: \n" + trainSample.take(1).head.feature(0))
-    println("Sample feature print: \n" + trainSample.take(1).head.feature(1))
-    println("Sample label print: \n" + trainSample.take(1).head.label())
-
-    trainSample
+    samples
   }
-
 }
