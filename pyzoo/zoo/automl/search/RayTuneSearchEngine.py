@@ -192,23 +192,15 @@ class RayTuneSearchEngine(SearchEngine):
                     reward_m = result
                 else:
                     raise ValueError("metric can only be \"mean_squared_error\" or \"r_square\"")
+                ckpt_name = "best.ckpt"
                 if reward_m > best_reward_m:
                     best_reward_m = reward_m
-
-                    dirname = tempfile.mkdtemp(prefix="automl_")
-                    try:
-                        save(dirname, trial_ft, trial_model)
-                        with zipfile.ZipFile("all.zip", 'w') as f:
-                            for dirpath, dirnames, filenames in os.walk(dirname):
-                                for filename in filenames:
-                                    f.write(os.path.join(dirpath, filename), filename)
-                    finally:
-                        shutil.rmtree(dirname)
+                    save_zip(ckpt_name, trial_ft, trial_model)
 
                 tune_reporter(
                     training_iteration=i,
                     reward_metric=reward_m,
-                    checkpoint="all.zip"
+                    checkpoint="best.ckpt"
                 )
 
         return train_func
