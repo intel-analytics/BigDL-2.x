@@ -50,13 +50,16 @@ class TimeSequencePipeline(Pipeline):
         :return:
         """
         x, y = self.feature_transformers.transform(input_df, is_train=True)
-        return self.model.evaluate(x, y, metric)
+        y_pred = self.model.predict(x)
+        y_unscale, y_pred_unscale = self.feature_transformers.post_processing(input_df, y_pred, is_train=True)
+        e = Evaluator()
+        return [e.evaluate(m, y_unscale, y_pred_unscale) for m in metric]
 
     def predict(self, input_df):
         # there might be no y in the data, TODO needs to fix in TimeSquenceFeatures
         x = self.feature_transformers.transform(input_df, is_train=False)
         y_pred = self.model.predict(x)
-        y_output = self.feature_transformers.post_processing(y_pred)
+        y_output = self.feature_transformers.post_processing(input_df, y_pred, is_train=False)
         return y_output
 
     def save(self, file):
