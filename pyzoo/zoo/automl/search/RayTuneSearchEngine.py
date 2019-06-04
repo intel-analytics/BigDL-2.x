@@ -23,11 +23,8 @@ import shutil
 from ray import tune
 from copy import copy, deepcopy
 
-import tensorflow as tf
-
-tf.keras.models.save_model
-
 from zoo.automl.search.abstract import *
+from zoo.automl.common.util import *
 
 
 class RayTuneSearchEngine(SearchEngine):
@@ -200,12 +197,7 @@ class RayTuneSearchEngine(SearchEngine):
 
                     dirname = tempfile.mkdtemp(prefix="automl_")
                     try:
-                        model_path = os.path.join(dirname, "weights_tune.h5")
-                        config_path = os.path.join(dirname, "local_config.json")
-
-                        trial_model.save(model_path=model_path, config_path=config_path)
-                        trial_ft.save(file_path=config_path)
-
+                        save(dirname, trial_ft, trial_model)
                         with zipfile.ZipFile("all.zip", 'w') as f:
                             for dirpath, dirnames, filenames in os.walk(dirname):
                                 for filename in filenames:
