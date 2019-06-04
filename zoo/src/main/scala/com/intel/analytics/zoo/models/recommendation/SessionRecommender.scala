@@ -138,28 +138,28 @@ object SessionRecommender {
    * @param itemCount       The number of distinct items. Positive integer.
    * @param itemEmbed       The output size of embedding layer. Positive integer.
    * @param mlpHiddenLayers Units of hidden layers for the mlp model. Array of positive integers. Default is Array(20, 20, 20).
-   * @param seqLength       The max number of items in the sequence of a session
+   * @param sessionLength       The max number of items in the sequence of a session
    * @param rnnHiddenLayers Units of hidden layers for the mlp model. Array of positive integers. Default is Array(20, 20).
    * @param includeHistory  Whether to include purchase history. Boolean. Default is true.
-   * @param hisLength       The max number of items in the sequence of historical purchase
+   * @param historyLength       The max number of items in the sequence of historical purchase
    */
   def apply[@specialized(Float, Double) T: ClassTag](
                                                       itemCount: Int,
                                                       itemEmbed: Int = 100,
                                                       rnnHiddenLayers: Array[Int] = Array(40, 20),
-                                                      seqLength: Int = 5,
+                                                      sessionLength: Int = 5,
                                                       includeHistory: Boolean = true,
                                                       mlpHiddenLayers: Array[Int] = Array(40, 20),
-                                                      hisLength: Int = 10)
+                                                      historyLength: Int = 10)
                                                     (implicit ev: TensorNumeric[T]): SessionRecommender[T] = {
     new SessionRecommender[T](
       itemCount,
       itemEmbed,
       rnnHiddenLayers,
-      seqLength,
+      sessionLength,
       includeHistory,
       mlpHiddenLayers,
-      hisLength
+      historyLength
     ).build()
   }
 

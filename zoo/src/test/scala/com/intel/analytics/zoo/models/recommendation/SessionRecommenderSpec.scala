@@ -16,40 +16,28 @@
 
 package com.intel.analytics.zoo.models.recommendation
 
-import java.net.URL
-
 import com.intel.analytics.bigdl.dataset.Sample
-import com.intel.analytics.bigdl.nn.ClassNLLCriterion
-import com.intel.analytics.bigdl.optim.{Adam, Optimizer, Top1Accuracy, Trigger}
 import com.intel.analytics.bigdl.tensor.Tensor
 import com.intel.analytics.bigdl.utils.T
 import com.intel.analytics.zoo.common.NNContext
 import com.intel.analytics.zoo.pipeline.api.keras.ZooSpecHelper
-import com.intel.analytics.zoo.pipeline.api.keras.objectives.SparseCategoricalCrossEntropy
-import com.intel.analytics.zoo.pipeline.api.keras.serializer.ModuleSerializationTest
 import org.apache.log4j.{Level, Logger}
-import org.apache.spark.sql.functions.col
+import org.apache.spark.rdd.RDD
 import org.apache.spark.sql.{DataFrame, SQLContext}
 import org.apache.spark.{SparkConf, SparkContext}
 
 import scala.util.Random
 
-class NeuralCFSpec extends ZooSpecHelper {
+class SessionRecommenderSpec extends ZooSpecHelper {
 
   var sqlContext: SQLContext = _
   var sc: SparkContext = _
-  var datain: DataFrame = _
-  val userCount = 100
-  val itemCount = 100
 
   override def doBefore(): Unit = {
     Logger.getLogger("org").setLevel(Level.ERROR)
     val conf = new SparkConf().setMaster("local[1]").setAppName("NCFTest")
     sc = NNContext.initNNContext(conf)
     sqlContext = SQLContext.getOrCreate(sc)
-    val resource: URL = getClass.getClassLoader.getResource("recommender")
-    datain = sqlContext.read.parquet(resource.getFile)
-      .select("userId", "itemId", "label")
   }
 
   override def doAfter(): Unit = {
@@ -58,146 +46,101 @@ class NeuralCFSpec extends ZooSpecHelper {
     }
   }
 
-  "NeuralCF without MF forward and backward" should "work properly" in {
+  "SessionRecommender without history forward and backward" should "work properly" in {
 
-    val model = NeuralCF[Float](userCount, itemCount, 5, 5, 5, Array(10, 5), false)
-    model.summary()
+    val itemCount = 100
+    val sessionLength = 10
+    val model = SessionRecommender[Float](itemCount, sessionLength, includeHistory = false)
     val ran = new Random(42L)
-    val data: Seq[Tensor[Float]] = (1 to 50).map(i => {
-      val uid = Math.abs(ran.nextInt(userCount - 1)).toFloat + 1
-      val iid = Math.abs(ran.nextInt(userCount - 1)).toFloat + 1
-      val feature: Tensor[Float] = Tensor(T(T(uid, iid)))
-      println(feature.size().toList)
-      val label = Math.abs(ran.nextInt(4)).toFloat + 1
-      feature
-    })
+    val data = (1 to 100).map { x =>
+      val items: Seq[Float] = for (i <- 1 to sessionLength) yield ran.nextInt(itemCount - 1).toFloat + 1
+      Tensor(items.toArray, Array(sessionLength)).resize(1, sessionLength)
+    }
     data.map { input =>
       val output = model.forward(input)
       val gradInput = model.backward(input, output)
     }
   }
 
-  "NeuralCF with MF forward and backward" should "work properly" in {
-    val model = NeuralCF[Float](userCount, itemCount, 5, 5, 5, Array(10, 5), true, 3)
+  "SessionRecommender with history forward and backward" should "work properly" in {
+    val itemCount = 100
+    val sessionLength = 10
+    val historyLength = 5
+    val model = SessionRecommender[Float](itemCount, sessionLength,
+      includeHistory = true, historyLength = historyLength)
     val ran = new Random(42L)
-    val data: Seq[Tensor[Float]] = (1 to 50).map(i => {
-      val uid = Math.abs(ran.nextInt(userCount - 1)).toFloat + 1
-      val iid = Math.abs(ran.nextInt(userCount - 1)).toFloat + 1
-      val feature: Tensor[Float] = Tensor(T(T(uid, iid)))
-      val label = Math.abs(ran.nextInt(4)).toFloat + 1
-      feature
-    })
+    val data = (1 to 100).map { x =>
+      val items1: Seq[Float] = for (i <- 1 to sessionLength) yield ran.nextInt(itemCount - 1).toFloat + 1
+      val items2: Seq[Float] = for (i <- 1 to historyLength) yield ran.nextInt(itemCount - 1).toFloat + 1
+      val input1 = Tensor(items1.toArray, Array(sessionLength)).resize(1, sessionLength)
+      val input2 = Tensor(items2.toArray, Array(historyLength)).resize(1, historyLength)
+      T(input1, input2)
+    }
     data.map { input =>
       val output = model.forward(input)
       val gradInput = model.backward(input, output)
     }
   }
 
-  "NeuralCF predictUserItemPair" should "have correct predictions" in {
+  "SessionRecommender recommendForSession" should "work properly" in {
+    val itemCount = 100
+    val sessionLength = 10
+    val historyLength = 5
+    val model = SessionRecommender[Float](itemCount, sessionLength,
+      includeHistory = true, historyLength = historyLength)
+    val ran = new Random(42L)
+    val data1: RDD[Sample[Float]] = sc.parallelize(1 to 100)
+      .map { x =>
+        val items1: Seq[Float] = for (i <- 1 to sessionLength) yield ran.nextInt(itemCount).toFloat
+        val items2: Seq[Float] = for (i <- 1 to historyLength) yield ran.nextInt(itemCount).toFloat
+        val input1 = Tensor(items1.toArray, Array(sessionLength))
+        val input2 = Tensor(items2.toArray, Array(historyLength))
+        Sample[Float](Array(input1, input2))
+      }
 
-    val ncf = NeuralCF[Float](100, 100, 5, 5, 5, Array(10, 5), false)
-    val data = datain
-      .rdd.map(r => {
-      val uid = r.getAs[Int]("userId")
-      val iid = r.getAs[Int]("itemId")
-      val label = r.getAs[Int]("label")
-      val feature: Tensor[Float] = Tensor[Float](T(uid.toFloat, iid.toFloat))
+    val recommedations1 = model.recommendForSession(data1, 3, zeroBasedLabel = false)
+    recommedations1.take(10)
+      .map { x =>
+        assert(x.size == 3)
+        assert(x(0)._2 >= x(1)._2)
+      }
 
-      UserItemFeature(uid, iid, Sample(feature, Tensor[Float](T(label))))
-    })
-    val trainRdds = data.map(x => x.sample)
+    val data2: Array[Sample[Float]] = (1 to 10)
+      .map { x =>
+        val items1: Seq[Float] = for (i <- 1 to sessionLength) yield ran.nextInt(itemCount).toFloat
+        val items2: Seq[Float] = for (i <- 1 to historyLength) yield ran.nextInt(itemCount).toFloat
+        val input1 = Tensor(items1.toArray, Array(sessionLength))
+        val input2 = Tensor(items2.toArray, Array(historyLength))
+        Sample[Float](Array(input1, input2))
+      }.toArray
 
-    val optimizer = Optimizer(
-      model = ncf,
-      sampleRDD = trainRdds,
-      criterion = ClassNLLCriterion[Float](),
-      batchSize = 458)
-
-    optimizer
-      .setOptimMethod(new Adam[Float](learningRate = 1e-2, learningRateDecay = 1e-5))
-      .setEndWhen(Trigger.maxEpoch(100))
-      .optimize()
-
-    val pairPredictions = ncf.predictUserItemPair(data)
-    val pairPredictionsDF = sqlContext.createDataFrame(pairPredictions).toDF()
-    val out = pairPredictionsDF.join(datain, Array("userId", "itemId"))
-    val correctCounts = out.filter(col("prediction") === col("label")).count()
-
-    val accuracy = correctCounts.toDouble / 458
-    // the reference accuracy is 0.679
-    assert(accuracy >= 0.40)
+    val recommedations2 = model.recommendForSession(data2, 4, zeroBasedLabel = false)
+    recommedations2.map { x =>
+      assert(x.size == 4)
+      assert(x(0)._2 >= x(1)._2)
+    }
   }
 
-  "NeuralCF recommendForItem and recommendForUser" should "have correct predictions" in {
+  "SessionRecommender compile and fit" should "work properly" in {
 
-    val ncf = NeuralCF[Float](100, 100, 5, 5, 5, Array(10, 5), false)
-    val data = datain
-      .rdd.map(r => {
-      val uid = r.getAs[Int]("userId")
-      val iid = r.getAs[Int]("itemId")
-      val label = r.getAs[Int]("label")
-      val feature: Tensor[Float] = Tensor[Float](T(uid.toFloat, iid.toFloat))
-
-      UserItemFeature(uid, iid, Sample(feature, Tensor[Float](T(label))))
-    })
-    val trainRdds = data.map(x => x.sample)
-
-    val optimizer = Optimizer(
-      model = ncf,
-      sampleRDD = trainRdds,
-      criterion = ClassNLLCriterion[Float](),
-      batchSize = 458)
-
-    optimizer
-      .setOptimMethod(new Adam[Float](learningRate = 1e-2, learningRateDecay = 1e-5))
-      .setEndWhen(Trigger.maxEpoch(100))
-      .optimize()
-
-    val itemRecs = ncf.recommendForItem(data, 2)
-    val userRecs = ncf.recommendForUser(data, 2)
-
-    itemRecs.map(x => x.probability).sample(false, 0.1, 1L).collect()
-      .map(x => assert(x >= 0.2))
-    userRecs.map(x => x.probability).sample(false, 0.1, 1L).collect()
-      .map(x => assert(x >= 0.2))
-
-    assert(itemRecs.count() <= 200)
-    assert(userRecs.count() <= 200)
+    val itemCount = 100
+    val sessionLength = 10
+    val historyLength = 5
+    val model = SessionRecommender[Float](itemCount, sessionLength,
+      includeHistory = true, historyLength = historyLength)
+    val ran = new Random(42L)
+    val data1 = sc.parallelize(1 to 100)
+      .map { x =>
+        val items1: Seq[Float] = for (i <- 1 to sessionLength) yield ran.nextInt(itemCount).toFloat
+        val items2: Seq[Float] = for (i <- 1 to historyLength) yield ran.nextInt(itemCount).toFloat
+        val input1 = Tensor(items1.toArray, Array(sessionLength))
+        val input2 = Tensor(items2.toArray, Array(historyLength))
+        val label = Tensor[Float](T(ran.nextInt(itemCount).toFloat))
+        Sample(Array(input1, input2), Array(label))
+      }
+    model.compile(optimizer = "rmsprop", loss = "sparse_categorical_crossentropy")
+    model.fit(data1, nbEpoch = 1)
   }
-
-  "NeuralCF compile and fit" should "work properly" in {
-
-    val ncf: NeuralCF[Float] = NeuralCF[Float](100, 100, 5, 5, 5, Array(10, 5), false)
-    val data = datain
-      .rdd.map(r => {
-      val uid = r.getAs[Int]("userId")
-      val iid = r.getAs[Int]("itemId")
-      val label = r.getAs[Int]("label")
-      val feature: Tensor[Float] = Tensor[Float](T(uid.toFloat, iid.toFloat))
-
-      UserItemFeature(uid, iid, Sample(feature, Tensor[Float](T(label))))
-    })
-    val trainRdds = data.map(x => x.sample)
-
-    val optimMethod = new Adam[Float](
-      learningRate = 1e-3,
-      learningRateDecay = 1e-6)
-
-    ncf.compile(optimizer = optimMethod,
-      loss = SparseCategoricalCrossEntropy[Float](zeroBasedLabel = false),
-      metrics = List(new Top1Accuracy[Float]()))
-
-    ncf.fit(trainRdds, batchSize = 458, nbEpoch = 1, validationData = null)
-  }
-
 
 }
 
-class NeuralCFSerialTest extends ModuleSerializationTest {
-  override def test(): Unit = {
-    val model = NeuralCF[Float](100, 100, 5, 5, 5, Array(10, 5), false)
-    val input = Tensor[Float](Array(100, 2))
-      .fill(new Random(System.nanoTime()).nextInt(100 - 1).toFloat + 1)
-    ZooSpecHelper.testZooModelLoadSave(model, input, NeuralCF.loadModel[Float])
-  }
-}

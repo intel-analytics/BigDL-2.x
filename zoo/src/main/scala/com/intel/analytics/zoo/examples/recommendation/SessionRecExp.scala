@@ -89,9 +89,9 @@ object SessionRecExp {
       itemCount = itemCount,
       itemEmbed = params.embedOutDim,
       mlpHiddenLayers = Array(20, 10),
-      seqLength = params.sessionLength,
+      sessionLength = params.sessionLength,
       includeHistory = true,
-      hisLength = params.historyLength)
+      historyLength = params.historyLength)
 
     val optimMethod = new RMSprop[Float](
       learningRate = params.learningRate,
@@ -104,20 +104,15 @@ object SessionRecExp {
 
     model.fit(trainRdd, batchSize = params.batchSize, validationData = testRdd)
 
-    val results = model.predict(testRdd)
-    results.take(5).foreach(println)
-
-    val resultsClass = model.predictClasses(testRdd)
-    resultsClass.take(5).foreach(println)
-
     model.saveModule(params.outputDir, null, overWrite = true)
     println("Model has been saved")
-    val loaded = SessionRecommender.loadModel(params.outputDir)
-    val results1 = loaded.predict(testRdd)
-    results1.take(5).foreach(println)
 
-    val resultsClass1 = loaded.predictClasses(testRdd)
-    resultsClass1.take(5).foreach(println)
+    val loaded = SessionRecommender.loadModel(params.outputDir)
+    val results = loaded.predict(testRdd)
+    results.take(5).foreach(println)
+
+    val resultsClass = loaded.predictClasses(testRdd, zeroBasedLabel = false)
+    resultsClass.take(5).foreach(println)
 
     val recommendations = model.recommendForSession(testRdd, 5, false)
 
