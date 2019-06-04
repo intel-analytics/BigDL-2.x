@@ -14,6 +14,7 @@
 # limitations under the License.
 #
 import os
+import tempfile
 
 from zoo.automl.common.metrics import Evaluator
 from zoo.automl.pipeline.abstract import Pipeline
@@ -68,13 +69,13 @@ class TimeSequencePipeline(Pipeline):
         :param file:
         :return:
         """
-        save(file, self.feature_transformers, self.model, self.config)
+        save_zip(file, self.feature_transformers, self.model, self.config)
 
-    def restore(self, file):
-        """
-        restore pipeline from file
-        :param file:
-        :param config:
-        :return:
-        """
-        restore(file, self.feature_transformers, self.model)
+
+def load_ts_pipeline(file):
+    feature_transformers = TimeSequenceFeatureTransformer()
+    model = VanillaLSTM(check_optional_config=False)
+    restore_zip(file, feature_transformers, model)
+    ts_pipeline = TimeSequencePipeline(feature_transformers, model)
+    return ts_pipeline
+
