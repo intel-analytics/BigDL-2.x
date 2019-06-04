@@ -25,28 +25,28 @@ pipeline = tsp.fit(train_df, metric="mean_squared_error")
 
 ### Prediction and Evaluation using _TimeSequencePipeline_ 
 A _TimeSequencePipeline_ contains a chain of feature transformers and models, which does end2end time sequence prediction on input data. _TimeSequencePipeline_ can be saved and loaded for future deployment.     
- 1. Prediction using _Pipeline_ object 
+ * Prediction using _Pipeline_ object 
  ```python
  result_df = pipeline.predict(test_df)
  ```
- 2. Evaluation using _Pipeline_ object
+ * Evaluation using _Pipeline_ object
  ```python
  mse, rs = pipeline.evaluate(test_df, metric=["mean_squared_error", "r_square"])
  ```
- 3. Save the _Pipeline_ object to a file
+ * Save the _Pipeline_ object to a file
  ```python
  pipeline.save("/tmp/saved_pipeline/my.ppl")
  ```
- 4. Load the _Pipeline_ object from a file
+ * Load the _Pipeline_ object from a file
  ```python
  from zoo.automl.pipeline.time_sequence import load_ts_pipeline
  pipeline = load_ts_pipeline("/tmp/saved_pipeline/my.ppl")
  ```
 
 ## Extensions and new AutoML applications
-- _BaseFeatureTransformer```
+- _BaseFeatureTransformer_
 
-- _Model_
+- _BaseModel_
 
 - _Pipeline_
 
