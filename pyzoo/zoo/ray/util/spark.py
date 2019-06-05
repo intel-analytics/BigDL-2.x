@@ -18,7 +18,7 @@ class SparkRunner():
         import pyspark
         print("Current pyspark location is : {}".format(pyspark.__file__))
 
-    # This is adopted from conda pack.
+    # This is adopted from conda-pack.
     def _pack_conda_main(self, args):
         import sys
         import traceback
@@ -61,7 +61,6 @@ class SparkRunner():
         self._pack_conda_main(["--output", tmp_path, "--n-threads", "8", "--name", conda_name])
         print("Packing has been completed: {}".format(tmp_path))
         return tmp_path
-
 
     def _create_sc(self, submit_args, conf):
         from pyspark.sql import SparkSession

@@ -25,6 +25,7 @@ from zoo.ray.util.raycontext import RayContext
 
 np.random.seed(1337)  # for reproducibility
 
+
 @ray.remote
 class TestRay():
     def hostname(self):
@@ -47,6 +48,7 @@ class TestUtil(TestCase):
             for pid in process_info.pids:
                 assert not psutil.pid_exists(pid)
         sc.stop()
+
 
 if __name__ == "__main__":
     pytest.main([__file__])

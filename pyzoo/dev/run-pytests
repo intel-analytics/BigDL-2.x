@@ -43,7 +43,8 @@ if [[ $py_version == *"Python 2.7"* ]]; then
        --ignore=../test/zoo/pipeline/api/keras2/ \
        --ignore=../test/zoo/pipeline/autograd/ \
        --ignore=../test/zoo/pipeline/inference/ \
-       --ignore=../test/zoo/tfpark/test_text_models.py
+       --ignore=../test/zoo/tfpark/test_text_models.py \
+       --ignore=../test/zoo/ray/integration/
     exit_status_2=$?
     if [ $exit_status_2 -ne 0 ];
     then
@@ -53,7 +54,8 @@ else
     echo "Running Python 3"
     python -m pytest -v ../test --ignore=../test/zoo/pipeline/utils/test_utils.py \
        --ignore=../test/zoo/pipeline/api/keras2/ \
-       --ignore=../test/zoo/pipeline/autograd/
+       --ignore=../test/zoo/pipeline/autograd/ \
+        --ignore=../test/zoo/ray/integration/
     exit_status_3=$?
     if [ $exit_status_3 -ne 0 ];
     then

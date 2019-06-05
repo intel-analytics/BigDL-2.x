@@ -33,10 +33,9 @@ sc = init_on_yarn(
     extra_executor_memory_for_ray="30g")
 
 ray_ctx = RayContext(sc=sc,
-                       object_store_memory="25g",
-                       waitting_time_sec=10,
-                       env={"http_proxy": "http://child-prc.intel.com:913",
-                           "http_proxys": "http://child-prc.intel.com:913"})
+                     object_store_memory="25g",
+                     env={"http_proxy": "http://child-prc.intel.com:913",
+                          "http_proxys": "http://child-prc.intel.com:913"})
 ray_ctx.init()
 
 

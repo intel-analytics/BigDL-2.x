@@ -21,7 +21,7 @@ import os
 
 
 def init_on_local(cores=2, conf=None, python_location=None, spark_log_level="WARN",
-                      redirect_spark_log=True):
+                  redirect_spark_log=True):
     """
     Create and return a SparkContext together with Zoo configuration on local machine.
     :param cores: The default value is 2 and you can also set it to *
@@ -35,23 +35,24 @@ def init_on_local(cores=2, conf=None, python_location=None, spark_log_level="WAR
     from zoo.ray.util.spark import SparkRunner
     sparkrunner = SparkRunner(spark_log_level=spark_log_level,
                               redirect_spark_log=redirect_spark_log)
-    return sparkrunner.init_spark_on_local(cores=cores,conf=conf,
+    return sparkrunner.init_spark_on_local(cores=cores, conf=conf,
                                            python_location=python_location)
 
+
 def init_on_yarn(hadoop_conf,
-                     conda_name,
-                     num_executor,
-                     executor_cores,
-                     executor_memory="2g",
-                     driver_memory="1g",
-                     driver_cores=4,
-                     extra_executor_memory_for_ray=None,
-                     extra_python_lib=None,
-                     penv_archive=None,
-                     hadoop_user_name="root",
-                     spark_yarn_archive=None,
-                     spark_log_level="WARN",
-                     redirect_spark_log=True):
+                 conda_name,
+                 num_executor,
+                 executor_cores,
+                 executor_memory="2g",
+                 driver_memory="1g",
+                 driver_cores=4,
+                 extra_executor_memory_for_ray=None,
+                 extra_python_lib=None,
+                 penv_archive=None,
+                 hadoop_user_name="root",
+                 spark_yarn_archive=None,
+                 spark_log_level="WARN",
+                 redirect_spark_log=True):
     """
     Create and return a SparkContext together with Zoo configuration on Yarn cluster.
     You should create a conda env and create the python dependencies on that env.
@@ -92,6 +93,7 @@ def init_on_yarn(hadoop_conf,
         spark_yarn_archive=spark_yarn_archive,
         jars=None)
     return sc
+
 
 def init_nncontext(conf=None, redirect_spark_log=True):
     """

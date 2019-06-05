@@ -158,7 +158,7 @@ class PythonZooNet[T: ClassTag](implicit ev: TensorNumeric[T]) extends PythonZoo
         }
       }
     } catch {
-      case e :Exception =>
+      case e : Exception =>
     }
   }
 

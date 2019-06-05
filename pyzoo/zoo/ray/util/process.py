@@ -57,7 +57,6 @@ def pids_from_gpid(gpid):
     return result
 
 
-
 def session_execute(command, env=None, tag=None, fail_fast=False, timeout=120):
     pro = subprocess.Popen(
         command,
@@ -91,7 +90,7 @@ def session_execute(command, env=None, tag=None, fail_fast=False, timeout=120):
 class ProcessMonitor:
     def __init__(self, process_infos, sc, ray_rdd, verbose=False):
         self.sc = sc
-        self.verbose=verbose
+        self.verbose = verbose
         self.ray_rdd = ray_rdd
         self.master = []
         self.slaves = []

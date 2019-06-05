@@ -28,6 +28,7 @@ from zoo.ray.util.process import session_execute, ProcessMonitor
 from zoo.ray.util.utils import resourceToBytes
 import ray.services as rservices
 
+
 class JVMGuard():
     """
     The registered pids would be put into the killing list of Spark Executor.
@@ -179,12 +180,12 @@ class RayServiceFuncGenerator(object):
 
 class RayContext(object):
     def __init__(self, sc, redis_port=None, password="123456", object_store_memory=None,
-                 verbose=False, env=None, local_ray_node_num=2, waitting_time_sec=6):
+                 verbose=False, env=None, local_ray_node_num=2, waitting_time_sec=8):
         """
         The RayContext would init a ray cluster on top of the configuration of the SparkContext.
         For spark cluster mode: The number of raylets is equal to number of executors.
-        For Spark local mode: The number of raylets is controlled by local_ray_node_num and
-        cpu cores for each raylet is spark_cores/local_ray_node_num
+        For Spark local mode: The number of raylets is controlled by local_ray_node_num.
+        CPU cores for each raylet equals to spark_cores/local_ray_node_num.
         :param sc:
         :param redis_port: redis port for the "head" node.
                The value would be randomly picked if not specified
@@ -277,8 +278,8 @@ class RayContext(object):
         if "local" in self.sc.master:
 
             assert self._get_spark_local_cores() % self.local_ray_node_num == 0, \
-            "Spark cores number: {} should be divided by local_ray_node_num {} ".format(
-                self._get_spark_local_cores(), self.local_ray_node_num)
+                "Spark cores number: {} should be divided by local_ray_node_num {} ".format(
+                    self._get_spark_local_cores(), self.local_ray_node_num)
             return int(self._get_spark_local_cores() / self.local_ray_node_num)
         else:
             return self.sc._conf.get("spark.executor.cores")
