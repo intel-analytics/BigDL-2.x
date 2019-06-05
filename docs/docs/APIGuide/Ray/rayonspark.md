@@ -2,13 +2,15 @@
 
 AnalyticsZoo has already provided a mechanism to deploy Python dependencies and Ray services automatically
 across yarn cluster,meaning python user would be able to run `Analytics-Zoo` or `Ray`
-in a more pythonic way on yarn without `spark-submit` or installing Analytics-Zoo or Ray across all cluster nodes.
+in a pythonic way on yarn without `spark-submit` or installing Analytics-Zoo or Ray across all cluster nodes.
 
 ## Here are the steps to run RayOnSpark:
 
 1) You should install Conda first and create a conda-env named "ray36"
 
-2) Install some essential dependencies on the conda env
+2) Install some essential dependencies inthe conda env
+
+```
 pip install analytics-zoo
 pip install pyspark==2.4.0 # 2.4.3 is OK as well.
 pip install ray
@@ -16,14 +18,15 @@ pip install conda-pack
 pip install psutil
 pip install aiohttp
 pip install setproctitle
+```
 
-3) Download JDK8 and set the environment variable: JAVA_HOME (recommended)
-   You can also install JDK via conda without setting the JAVA_HOME manually:
-   conda install -c anaconda openjdk=8.0.152
+3) Download JDK8 and set the environment variable: JAVA_HOME (recommended).
+   - You can also install JDK via conda without setting the JAVA_HOME manually:
+   `conda install -c anaconda openjdk=8.0.152`
 
 4) Start python and then execute the following example
 
-Create a SparkContext on Yarn
+- Create a SparkContext on Yarn
 
 ``` python
 import ray
@@ -35,7 +38,7 @@ slave_num = 2
 
 sc = init_on_yarn(
     hadoop_conf="/opt/work/almaren-yarn-config/",
-    conda_name="ray36-dev",
+    conda_name="ray36",
     num_executor=slave_num,
     executor_cores=4,
     executor_memory="8g",
@@ -44,7 +47,7 @@ sc = init_on_yarn(
     extra_executor_memory_for_ray="10g")
 ```
 
-[Optional] If you don't have a yarn cluster, you can also test locally by creating `SparkContext`
+- [Optional] If you don't have a yarn cluster, this can also be test locally by creating `SparkContext`
 with `init_on_local`
 
 ```Python
@@ -54,10 +57,10 @@ sc = init_on_local(cores=4)
 ```
 
 
-Once the SparkContext created, we can write more python logic here either training Analytics-Zoo model
-or launch ray on spark.
+- Once the SparkContext created, we can write more logic here either training Analytics-Zoo model
+or launching ray on spark.
 
-The following code would launch a ray cluster on top of the SparkContext configuration and also verify with a simple Ray example.
+- The following code would launch a ray cluster on top of the SparkContext configuration and also verify with a simple Ray example.
 
 ```python
 
