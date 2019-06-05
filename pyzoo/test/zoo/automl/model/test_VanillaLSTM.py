@@ -31,7 +31,9 @@ class TestVanillaLSTM:
 
         # use roll method in time_sequence
         tsft = TimeSequenceFeatureTransformer()
-        x_train, y_train = tsft._roll_train(train_data, past_seq_len=past_seq_len, future_seq_len=future_seq_len)
+        x_train, y_train = tsft._roll_train(train_data,
+                                            past_seq_len=past_seq_len,
+                                            future_seq_len=future_seq_len)
         config = {
             'epochs': 2,
             "lr": 0.001,
@@ -51,8 +53,12 @@ class TestVanillaLSTM:
         past_seq_len = 6
         # use roll method in time_sequence
         tsft = TimeSequenceFeatureTransformer()
-        x_train, y_train = tsft._roll_train(train_data, past_seq_len=past_seq_len, future_seq_len=future_seq_len)
-        x_val, y_val = tsft._roll_train(val_data, past_seq_len=past_seq_len, future_seq_len=future_seq_len)
+        x_train, y_train = tsft._roll_train(train_data,
+                                            past_seq_len=past_seq_len,
+                                            future_seq_len=future_seq_len)
+        x_val, y_val = tsft._roll_train(val_data,
+                                        past_seq_len=past_seq_len,
+                                        future_seq_len=future_seq_len)
         config = {
             'epochs': 1,
             "lr": 0.001,
@@ -64,7 +70,9 @@ class TestVanillaLSTM:
         }
         model = VanillaLSTM(check_optional_config=False)
         model.fit_eval(x_train, y_train, **config)
-        print("evaluate:", model.evaluate(x_val, y_val))
+        mse, rs = model.evaluate(x_val, y_val, metric=['mean_squared_error', 'r_square'])
+        print("Mean squared error is:", mse)
+        print("R square is:", rs)
 
     def test_predict(self):
         train_data = pd.DataFrame(data=np.random.randn(64, 4))
@@ -74,7 +82,9 @@ class TestVanillaLSTM:
 
         # use roll method in time_sequence
         tsft = TimeSequenceFeatureTransformer()
-        x_train, y_train = tsft._roll_train(train_data, past_seq_len=past_seq_len, future_seq_len=future_seq_len)
+        x_train, y_train = tsft._roll_train(train_data,
+                                            past_seq_len=past_seq_len,
+                                            future_seq_len=future_seq_len)
         x_test = tsft._roll_test(test_data, past_seq_len=past_seq_len)
 
         config = {
@@ -99,7 +109,9 @@ class TestVanillaLSTM:
 
         # use roll method in time_sequence
         tsft = TimeSequenceFeatureTransformer()
-        x_train, y_train = tsft._roll_train(train_data, past_seq_len=past_seq_len, future_seq_len=future_seq_len)
+        x_train, y_train = tsft._roll_train(train_data,
+                                            past_seq_len=past_seq_len,
+                                            future_seq_len=future_seq_len)
         x_test = tsft._roll_test(test_data, past_seq_len=past_seq_len)
 
         config = {

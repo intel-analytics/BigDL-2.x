@@ -31,7 +31,7 @@ class Evaluator(object):
     def evaluate(self, metric, y_true, y_pred):
         if metric not in self.metrics_func.keys():
             raise ValueError("metric" + metric + "is not supported")
-        return self.metrics_func[metric](y_true, y_pred)
+        return self.metrics_func[metric](y_true, y_pred, multioutput='raw_values')
 
 
 

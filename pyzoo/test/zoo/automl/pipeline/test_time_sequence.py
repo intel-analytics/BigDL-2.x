@@ -35,13 +35,29 @@ class TestTimeSequencePipeline:
         test_df = pd.DataFrame({"datetime": pd.date_range('1/10/2019', periods=sample_num),
                                  "value": np.random.randn(sample_num)})
 
+        future_seq_len = 1
         tsp = TimeSequencePredictor(dt_col="datetime",
                                     target_col="value",
-                                    future_seq_len=1,
+                                    future_seq_len=future_seq_len,
                                     extra_features_col=None, )
         pipeline = tsp.fit(train_df)
-        evaluate_value = pipeline.evaluate(test_df, metric=["mean_squared_error", "r_square"])
-        print("evaluate:", evaluate_value)
+        mse, rs = pipeline.evaluate(test_df, metric=["mean_squared_error", "r_square"])
+        assert len(mse) == future_seq_len
+        assert len(rs) == future_seq_len
+        print("Mean square error (future_seq_len=1) is:", mse)
+        print("R square (future_seq_len=1) is:", rs)
+
+        future_seq_len = 3
+        tsp = TimeSequencePredictor(dt_col="datetime",
+                                    target_col="value",
+                                    future_seq_len=future_seq_len,
+                                    extra_features_col=None, )
+        pipeline = tsp.fit(train_df)
+        mse, rs = pipeline.evaluate(test_df, metric=["mean_squared_error", "r_square"])
+        assert len(mse) == future_seq_len
+        assert len(rs) == future_seq_len
+        print("Mean square error (future_seq_len=3) is:", mse)
+        print("R square (future_seq_len=3) is:", rs)
 
     def test_predict(self):
         # sample_num should > past_seq_len, the default value of which is 50
@@ -62,7 +78,7 @@ class TestTimeSequencePipeline:
         default_past_seq_len = 50
         assert y_pred.shape == (test_sample_num - default_past_seq_len + 1, 2)
 
-    def test_evaluate_predict(self):
+    def test_evaluate_predict_1(self):
         future_seq_len = 1
         sample_num = 100
         dt_col = "datetime"
