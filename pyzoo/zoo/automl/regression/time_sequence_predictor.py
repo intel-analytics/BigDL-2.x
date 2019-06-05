@@ -164,7 +164,7 @@ class TimeSequencePredictor(object):
 
         stop = {
             "reward_metric": -0.05,
-            "training_iteration": 1
+            "training_iteration": 10
         }
 
         searcher = RayTuneSearchEngine(logs_dir=self.logs_dir, ray_num_cpus=6, resources_per_trial={"cpu": 2})
@@ -200,17 +200,6 @@ class TimeSequencePredictor(object):
 
         self._print_config(trial.config)
         all_config = restore_zip(trial.model_path, feature_transformers, model, trial.config)
-        # dirname = tempfile.mkdtemp(prefix="automl_")
-        # try:
-        #     with zipfile.ZipFile(trial.model_path) as zf:
-        #         zf.extractall(dirname)
-        #
-        #     all_config = restore(dirname, feature_transformers, model, trial.config)
-        # finally:
-        #     shutil.rmtree(dirname)
-
-        # model.restore(model_path)
-        # feature_transformers.restore(config_path, **trial.config)
 
         return TimeSequencePipeline(feature_transformers=feature_transformers, model=model, config=all_config)
 

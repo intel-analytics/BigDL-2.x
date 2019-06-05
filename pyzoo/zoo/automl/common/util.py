@@ -23,6 +23,32 @@ import os
 import json
 
 
+def split_input_df(input_df, val_split_ratio=0, test_split_ratio=0.1):
+    """
+    split input dataframe into train_df, val_df and test_df according to split ratio.
+    covert pandas timestamp to datetime.
+    :param input_df
+    :param val_split_ratio:
+    :param test_split_ratio:
+    :return:
+    """
+    # suitable to nyc taxi dataset.
+    input_df.insert(loc=0, column="datetime", value=pd.to_datetime(input_df["timestamp"]))
+    # input_df["datetime"] = pd.to_datetime(input_df["timestamp"])
+    input_df = input_df.drop(columns="timestamp")
+
+    val_size = int(len(input_df) * val_split_ratio)
+    test_size = int(len(input_df) * test_split_ratio)
+
+    train_df = input_df.iloc[:-(test_size + val_size)].copy()
+    val_df = input_df.iloc[-(test_size + val_size):-test_size].copy()
+    test_df = input_df.iloc[-test_size:].copy()
+
+    val_df = val_df.reset_index(drop=True)
+    test_df = test_df.reset_index(drop=True)
+    return train_df, val_df, test_df
+
+
 def load_nytaxi_data_df(csv_path=None, val_split_ratio=0, test_split_ratio=0.1):
     if csv_path is None:
         curr_dir = os.path.dirname(os.path.abspath(__file__))
@@ -91,6 +117,10 @@ def save(file, feature_transformers=None, model=None, config=None):
 
 
 def save_zip(file, feature_transformers=None, model=None, config=None):
+    file_dirname = os.path.dirname(file)
+    if file_dirname and not os.path.exists(file_dirname):
+        os.mkdir(file_dirname)
+
     dirname = tempfile.mkdtemp(prefix="automl_save_")
     try:
         save(dirname,
