@@ -23,13 +23,13 @@ import os
 def init_on_local(cores=2, conf=None, python_location=None, spark_log_level="WARN",
                   redirect_spark_log=True):
     """
-    Create and return a SparkContext together with Zoo configuration on local machine.
+    Create a SparkContext with Zoo configuration in local machine.
     :param cores: The default value is 2 and you can also set it to *
-     which meaning all of the available cores. i.e `init_on_local(cores="*")`
-    :param conf: A key value dictionary which be appended to SparkConf.
+     meaning all of the available cores. i.e `init_on_local(cores="*")`
+    :param conf: A key value dictionary appended to SparkConf.
     :param python_location: The path to your running python executable.
     :param spark_log_level: Log level of Spark
-    :param redirect_spark_log: Direct the Spark log to local file or not.
+    :param redirect_spark_log: Redirect the Spark log to local file or not.
     :return:
     """
     from zoo.ray.util.spark import SparkRunner
@@ -54,9 +54,9 @@ def init_on_yarn(hadoop_conf,
                  spark_log_level="WARN",
                  redirect_spark_log=True):
     """
-    Create and return a SparkContext together with Zoo configuration on Yarn cluster.
-    You should create a conda env and create the python dependencies on that env.
-    Conda env and the python dependencies only required on the driver machine.
+    Create a SparkContext with Zoo configuration on Yarn cluster.
+    You should create a conda env and install the python dependencies in that env.
+    Conda env and the python dependencies only need to be installed in the driver machine.
     It's not necessary create and install those on the whole yarn cluster.
 
     :param hadoop_conf: path to the yarn configuration folder.
@@ -69,7 +69,7 @@ def init_on_yarn(hadoop_conf,
     :param extra_executor_memory_for_ray: Memory size for the Ray services.
     :param extra_python_lib:
     :param penv_archive: Ideally, program would auto-pack the conda env which is specified by
-           `conda_name`, but you can also pass the path to packed file in "tar.gz" format here.
+           `conda_name`, but you can also pass the path to a packed file in "tar.gz" format here.
     :param hadoop_user_name: User name for running in yarn cluster. Default value is: root
     :param spark_log_level: Log level of Spark
     :param redirect_spark_log:
