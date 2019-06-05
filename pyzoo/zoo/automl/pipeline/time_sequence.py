@@ -25,21 +25,15 @@ from zoo.automl.model import VanillaLSTM
 
 class TimeSequencePipeline(Pipeline):
 
-    def __init__(self, feature_transformers=None, model=None, config=None):
+    def __init__(self, feature_transformers, model, config=None):
         """
         initialize a pipeline
         :param model: the internal model
         :param feature_transformers: the feature transformers
         """
-        if feature_transformers is None:
-            assert model is None and config is None
-            self.feature_transformers = TimeSequenceFeatureTransformer()
-            self.model = VanillaLSTM(check_optional_config=False)
-            print("Initialize new time sequence pipeline.")
-        else:
-            self.feature_transformers = feature_transformers
-            self.model = model
-            self.config = config
+        self.feature_transformers = feature_transformers
+        self.model = model
+        self.config = config
 
     def evaluate(self,
                  input_df,
@@ -70,6 +64,7 @@ class TimeSequencePipeline(Pipeline):
         :return:
         """
         save_zip(file, self.feature_transformers, self.model, self.config)
+        print("Pipeline is saved in", file)
 
 
 def load_ts_pipeline(file):
@@ -77,5 +72,6 @@ def load_ts_pipeline(file):
     model = VanillaLSTM(check_optional_config=False)
     restore_zip(file, feature_transformers, model)
     ts_pipeline = TimeSequencePipeline(feature_transformers, model)
+    print("Restore pipeline from", file)
     return ts_pipeline
 
