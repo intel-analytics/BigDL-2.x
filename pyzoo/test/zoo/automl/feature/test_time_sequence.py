@@ -31,8 +31,13 @@ class TestTimeSequenceFeature:
         df = pd.DataFrame({"datetime": dates, "values": values})
         feat = TimeSequenceFeatureTransformer(dt_col="datetime", target_col="values", drop_missing=True)
         feature_list = feat.get_feature_list(df)
-        assert set(feature_list) == set(['IS_AWAKE(datetime)', 'IS_BUSY_HOURS(datetime)', 'HOUR(datetime)', 'DAY(datetime)',
-                                'IS_WEEKEND(datetime)', 'WEEKDAY(datetime)', 'MONTH(datetime)'])
+        assert set(feature_list) == {'IS_AWAKE(datetime)',
+                                     'IS_BUSY_HOURS(datetime)',
+                                     'HOUR(datetime)',
+                                     'DAY(datetime)',
+                                     'IS_WEEKEND(datetime)',
+                                     'WEEKDAY(datetime)',
+                                     'MONTH(datetime)'}
 
     def test_fit_transform(self):
         sample_num = 8
