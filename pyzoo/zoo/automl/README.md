@@ -25,7 +25,7 @@ tsp = TimeSequencePredictor(dt_col="datetime", target_col="value", extra_feature
 ```
 
  2. Train on historical time sequence. 
-   * ```recipe``` contains parameters to control the search space, stop criteria and number of samples (e.g. for random search strategy, how many samples are taken from the search space). Some recipe with large number of samples may lead to a large trial pool and take a long while to finish. Avaiable recipes are: _BasicRecipe_ and _RandomRecipe_, both have argument ```num_samples``` to control the number of samples. Note that for BasicRecipe, the actual number of trials generated will be 2*```num_samples```, because it needs to do grid search from 2 possble values for "lstm_1".   
+   * ```recipe``` contains parameters to control the search space, stop criteria and number of samples (e.g. for random search strategy, how many samples are taken from the search space). Some recipe with large number of samples may lead to a large trial pool and take very long time to finish. Current avaiable recipes are: _BasicRecipe_ and _RandomRecipe_, both have argument ```num_samples``` to control the number of samples. Note that for BasicRecipe, the actual number of trials generated will be 2*```num_samples```, as it needs to do a grid search from 2 possble values for every random sample.   
    * ```fit``` returns a _Pipeline_ object (see next section for details). 
    * Now we don't support resume training - i.e. calling ```fit``` multiple times retrains on the input data from scratch. 
    * input train dataframe look like below: 
