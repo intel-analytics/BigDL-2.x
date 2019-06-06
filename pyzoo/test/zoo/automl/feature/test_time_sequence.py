@@ -209,7 +209,7 @@ class TestTimeSequenceFeature:
         assert np.allclose(y_unscale, y_unscale_1), "y_unscale is {}, y_unscale_1 is {}".format(y_unscale, y_unscale_1)
         assert np.array_equal(y_unscale, y_input), "y_unscale is {}, y_input is {}".format(y_unscale, y_input)
 
-    def test_post_processing_test(self):
+    def test_post_processing_test_1(self):
         dates = pd.date_range('1/1/2019', periods=8)
         values = np.random.randn(8)
         dt_col = "datetime"
@@ -238,6 +238,47 @@ class TestTimeSequenceFeature:
 
             assert output_value_df[dt_col].equals(target_df[dt_col])
             assert np.allclose(output_value_df[value_col].values, target_df[value_col].values)
+
+        finally:
+            shutil.rmtree(dirname)
+
+    def test_post_processing_test_2(self):
+        sample_num = 8
+        dates = pd.date_range('1/1/2019', periods=sample_num)
+        values = np.random.randn(sample_num)
+        dt_col = "datetime"
+        value_col = "values"
+        df = pd.DataFrame({dt_col: dates, value_col: values})
+
+        past_seq_len = 2
+        future_seq_len = 2
+        config = {"selected_features": ['IS_AWAKE(datetime)', 'IS_BUSY_HOURS(datetime)', 'HOUR(datetime)'],
+                  "past_seq_len": past_seq_len}
+        feat = TimeSequenceFeatureTransformer(future_seq_len=future_seq_len, dt_col="datetime",
+                                              target_col="values", drop_missing=True)
+
+        train_x, train_y = feat.fit_transform(df, **config)
+
+        dirname = tempfile.mkdtemp(prefix="automl_test_feature_")
+        try:
+            save(dirname, feature_transformers=feat)
+            new_ft = TimeSequenceFeatureTransformer()
+            restore(dirname, feature_transformers=new_ft, config=config)
+
+            test_df = df[:-future_seq_len]
+            new_ft.transform(test_df, is_train=False)
+            output_value_df = new_ft.post_processing(test_df, train_y, is_train=False)
+            assert output_value_df.shape == (sample_num-past_seq_len-future_seq_len+1, future_seq_len + 1)
+
+            columns = ["value_{}".format(i) for i in range(future_seq_len)]
+            output_value = output_value_df[columns].values
+            target_df = df[past_seq_len:].copy().reset_index(drop=True)
+            target_value = feat._roll_test(target_df["values"], future_seq_len)
+
+            assert output_value_df[dt_col].equals(target_df[:-future_seq_len+1][dt_col])
+            assert np.allclose(output_value, target_value), \
+                "output_value is {}, target_value is {}".format(output_value, target_value)
+            # assert np.allclose(output_value_df[value_col].values, target_df[value_col].values)
 
         finally:
             shutil.rmtree(dirname)
