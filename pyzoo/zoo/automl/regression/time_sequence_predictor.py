@@ -93,20 +93,18 @@ class RandomRecipe(Recipe):
             "selected_features": RandomSample(
                 lambda spec: np.random.choice(
                     all_available_features,
-                    size=np.random.randint(low=3, high=len(all_available_features), size=1),
-                    replace=False)),
+                    size=np.random.randint(low=3, high=len(all_available_features), size=1))
+            ),
 
             # --------- model parameters
-            "lstm_1_units": RandomSample(lambda spec: np.random.choice([8, 16, 32, 64, 128]), size=1, replace=False),
+            "lstm_1_units": RandomSample(lambda spec: np.random.choice([8, 16, 32, 64, 128], size=1)[0]),
             "dropout_1": RandomSample(lambda spec: np.random.uniform(0.2, 0.5)),
-            "lstm_2_units": RandomSample(lambda spec: np.random.choice([8, 16, 32, 64, 128]), size=1, replace=False),
+            "lstm_2_units": RandomSample(lambda spec: np.random.choice([8, 16, 32, 64, 128], size=1)[0]),
             "dropout_2": RandomSample(lambda spec: np.random.uniform(0.2, 0.5)),
-            "lstm_3_units": RandomSample(lambda spec: np.random.choice([8, 16, 32, 64, 128]), size=1, replace=False),
-            "dropout_3": RandomSample(lambda spec: np.random.uniform(0.2, 0.5)),
 
             # ----------- optimization parameters
             "lr": RandomSample(lambda spec: np.random.uniform(0.001, 0.01)),
-            "batch_size": RandomSample(lambda spec: np.random.choice([32, 64, 1024]), size=1, replace=False),
+            "batch_size": RandomSample(lambda spec: np.random.choice([32, 64, 1024], size=1, replace=False)[0]),
         }
 
     def runtime_params(self):
@@ -137,8 +135,7 @@ class TimeSequencePredictor(object):
                  dt_col="datetime",
                  target_col="value",
                  extra_features_col=None,
-                 drop_missing=True,
-                 recipe=None):
+                 drop_missing=True):
         """
         Constructor of Time Sequence Predictor
         :param logs_dir where the automl tune logs file located
@@ -156,15 +153,11 @@ class TimeSequencePredictor(object):
         self.extra_features_col = extra_features_col
         self.drop_missing = drop_missing
 
-        if recipe is None:
-            self.recipe = BasicRecipe(1)
-        else:
-            self.recipe = recipe
-
     def fit(self,
             input_df,
             validation_df=None,
-            metric="mean_squared_error"):
+            metric="mean_squared_error",
+            recipe=BasicRecipe(1)):
         """
         Trains the model for time sequence prediction.
         If future sequence length > 1, use seq2seq model, else use vanilla LSTM model.
@@ -175,13 +168,17 @@ class TimeSequencePredictor(object):
         :param validation_df: validation data
         :param metric: String. Metric used for train and validation. Available values are "mean_squared_error" or
         "r_square"
+        :param recipe: a Recipe object. Various recipes covers different search space and stopping criteria.
+        Default is BasicRecipe(1).
         :return: self
         """
+
         if not Evaluator.check_metric(metric):
             raise ValueError("metric" + metric + "is not supported")
         self.pipeline = self._hp_search(input_df,
                                         validation_df=validation_df,
-                                        metric=metric)
+                                        metric=metric,
+                                        recipe=recipe)
         return self.pipeline
 
     def evaluate(self,
@@ -220,7 +217,8 @@ class TimeSequencePredictor(object):
     def _hp_search(self,
                    input_df,
                    validation_df,
-                   metric):
+                   metric,
+                   recipe):
 
         ft = TimeSequenceFeatureTransformer(self.future_seq_len, self.dt_col, self.target_col, self.extra_features_col,
                                             self.drop_missing)
@@ -230,8 +228,8 @@ class TimeSequencePredictor(object):
         model = VanillaLSTM(check_optional_config=False)
 
         # prepare parameters for search engine
-        search_space = self.recipe.search_space(feature_list)
-        runtime_params = self.recipe.runtime_params()
+        search_space = recipe.search_space(feature_list)
+        runtime_params = recipe.runtime_params()
         num_samples = runtime_params['num_samples']
         stop = dict(runtime_params)
         del stop['num_samples']

@@ -36,7 +36,21 @@ class TestTimeSequencePredictor:
         assert isinstance(pipeline.model, BaseModel)
         assert pipeline.config is not None
 
+    def test_fit_RandomRecipe(self):
+        # sample_num should > past_seq_len, the default value of which is 50
+        sample_num = 100
+        dates = pd.date_range('1/1/2019', periods=sample_num)
+        values = np.random.randn(sample_num)
+        train_df = pd.DataFrame({"datetime": dates, "value": values})
+        tsp = TimeSequencePredictor(dt_col="datetime",
+                                    target_col="value",
+                                    extra_features_col=None, )
+        pipeline = tsp.fit(train_df, recipe=RandomRecipe(1))
+        assert isinstance(pipeline, TimeSequencePipeline)
+        assert isinstance(pipeline.feature_transformers, TimeSequenceFeatureTransformer)
+        assert isinstance(pipeline.model, BaseModel)
+        assert pipeline.config is not None
+
 
 if __name__ == '__main__':
     pytest.main([__file__])
-
