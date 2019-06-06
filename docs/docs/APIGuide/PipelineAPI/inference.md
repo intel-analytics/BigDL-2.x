@@ -244,7 +244,7 @@ val predictOutput = model.doPredictInt8(predictInput)
 
 **Python**
 
-```scala
+```python
 predict_output = model.predict_int8(predict_input)
 ```
 
