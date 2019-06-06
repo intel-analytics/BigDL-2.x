@@ -42,7 +42,9 @@ class RayTuneSearchEngine(SearchEngine):
         self.train_func = None
         self.resources_per_trail = resources_per_trial
         self.trials = None
-        ray.init(num_cpus=ray_num_cpus, include_webui=False, ignore_reinit_error=True)
+        # TODO change to rayOnSpark style
+        if not ray.is_initialized():
+            ray.init(num_cpus=ray_num_cpus, include_webui=False, ignore_reinit_error=True)
 
     def compile(self,
                 input_df,
