@@ -1,12 +1,13 @@
 # (Experimental) AutoML
 _A distributed **Automated Machine Learning** libary based on **ray** and **tensorflow, keras**_
 
+
 ---
 
 This library provides a framework and implementations for automatic feature engineering, model selection and hyper parameter optimization. It also provides a built-in automatically optimized model: _**TimeSequencePredictor**_ , which can be used for time series data analysis or anomaly detection. 
 
 
-## Automated Time Series Prediction 
+## 1 Automated Time Series Prediction 
 
 ### Training a model using _TimeSeuqencePredictor_
 
@@ -41,8 +42,9 @@ pipeline = tsp.fit(train_df, metric="mean_squared_error", recipe=RandomRecipe(nu
 ### Prediction and Evaluation using _TimeSequencePipeline_ 
 A _TimeSequencePipeline_ contains a chain of feature transformers and models, which does end-to-end time sequence prediction on input data. _TimeSequencePipeline_ can be saved and loaded for future deployment.      
  
- 1. Prediction using _Pipeline_ object
- Output dataframe will in the format as below (assume predict n values forward). col `datetime` is the starting timestamp.  
+ * Prediction using _Pipeline_ object
+
+Output dataframe look likes below (assume predict n values forward). col `datetime` is the starting timestamp.  
 
   |datetime|value_0|value_1|...|value_{n-1}|
   | --------|----- | ------|---|---- |
@@ -51,7 +53,7 @@ A _TimeSequencePipeline_ contains a chain of feature transformers and models, wh
  result_df = pipeline.predict(test_df)
  ```
  
- 2. Evaluation using _Pipeline_ object
+ * Evaluation using _Pipeline_ object
  ```python
  mse, rs = pipeline.evaluate(test_df, metric=["mean_squared_error", "r_square"])
  ```
@@ -64,10 +66,11 @@ A _TimeSequencePipeline_ contains a chain of feature transformers and models, wh
  * Load the _Pipeline_ object from a file
  ```python
  from zoo.automl.pipeline.time_sequence import load_ts_pipeline
+ 
  pipeline = load_ts_pipeline("/tmp/saved_pipeline/my.ppl")
  ```
 
-## AutoML Framework Overview
+## 2 AutoML Framework Overview
 - _BaseFeatureTransformer_
 
 - _BaseModel_
