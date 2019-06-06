@@ -107,9 +107,8 @@ class VanillaLSTM(BaseModel):
         :param metric: a list of metrics in string format
         :return: a list of metric evaluation results
         """
-        e = Evaluator()
         y_pred = self.predict(x)
-        return [e.evaluate(m, y, y_pred) for m in metric]
+        return [Evaluator.evaluate(m, y, y_pred) for m in metric]
 
     def predict(self, x):
         """
@@ -126,8 +125,8 @@ class VanillaLSTM(BaseModel):
         :param config_path: the config file
         :return:
         """
-        self.model.save("vanilla_lstm_tmp.h5")
-        os.rename("vanilla_lstm_tmp.h5", model_path)
+        self.model.save(model_path)
+        #os.rename("vanilla_lstm_tmp.h5", model_path)
 
         config_to_save = {
             "future_seq_len": self.future_seq_len
