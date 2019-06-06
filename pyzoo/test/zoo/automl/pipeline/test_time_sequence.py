@@ -104,6 +104,37 @@ class TestTimeSequencePipeline:
         assert mse1 == mse2
         assert rs1 == rs2
 
+    def test_evaluate_predict_2(self):
+        future_seq_len = 2
+        sample_num = 100
+        dt_col = "datetime"
+        target_col = "value"
+        train_df = pd.DataFrame({dt_col: pd.date_range('1/1/2019', periods=sample_num),
+                                 target_col: np.random.randn(sample_num)})
+        test_sample_num = 64
+        test_df = pd.DataFrame({dt_col: pd.date_range('1/10/2019', periods=test_sample_num),
+                                target_col: np.random.randn(test_sample_num)})
+
+        tsp = TimeSequencePredictor(dt_col=dt_col,
+                                    target_col=target_col,
+                                    future_seq_len=future_seq_len,
+                                    extra_features_col=None, )
+        pipeline = tsp.fit(train_df)
+        y_pred_df = pipeline.predict(test_df[:-future_seq_len])
+        columns = ["value_{}".format(i) for i in range(future_seq_len)]
+        y_pred_value = y_pred_df[columns].values
+
+        default_past_seq_len = 50
+        y_df = test_df[default_past_seq_len:]
+        y_value = TimeSequenceFeatureTransformer()._roll_test(y_df[target_col], future_seq_len)
+        e = Evaluator()
+        metric = ["mean_squared_error", "r_square"]
+        # mse1, rs1 = [e.evaluate(m, y_df[target_col].values, y_pred_df[target_col].values) for m in metric]
+        mse1, rs1 = [e.evaluate(m, y_value, y_pred_value) for m in metric]
+        mse2, rs2 = pipeline.evaluate(test_df, metric)
+        assert np.array_equal(mse1, mse2)
+        assert np.array_equal(rs1, rs2)
+
     def test_save_restore(self):
         sample_num = 100
         train_df = pd.DataFrame({"datetime": pd.date_range('1/1/2019', periods=sample_num),
