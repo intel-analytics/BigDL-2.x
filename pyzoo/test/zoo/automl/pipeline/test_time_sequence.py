@@ -97,9 +97,9 @@ class TestTimeSequencePipeline:
         y_pred_df = pipeline.predict(test_df[:-future_seq_len])
         default_past_seq_len = 50
         y_df = test_df[default_past_seq_len:]
-        e = Evaluator()
+
         metric = ["mean_squared_error", "r_square"]
-        mse1, rs1 = [e.evaluate(m, y_df[target_col].values, y_pred_df[target_col].values) for m in metric]
+        mse1, rs1 = [Evaluator.evaluate(m, y_df[target_col].values, y_pred_df[target_col].values) for m in metric]
         mse2, rs2 = pipeline.evaluate(test_df, metric)
         assert mse1 == mse2
         assert rs1 == rs2
@@ -127,10 +127,10 @@ class TestTimeSequencePipeline:
         default_past_seq_len = 50
         y_df = test_df[default_past_seq_len:]
         y_value = TimeSequenceFeatureTransformer()._roll_test(y_df[target_col], future_seq_len)
-        e = Evaluator()
+
         metric = ["mean_squared_error", "r_square"]
         # mse1, rs1 = [e.evaluate(m, y_df[target_col].values, y_pred_df[target_col].values) for m in metric]
-        mse1, rs1 = [e.evaluate(m, y_value, y_pred_value) for m in metric]
+        mse1, rs1 = [Evaluator.evaluate(m, y_value, y_pred_value) for m in metric]
         mse2, rs2 = pipeline.evaluate(test_df, metric)
         assert np.array_equal(mse1, mse2)
         assert np.array_equal(rs1, rs2)
