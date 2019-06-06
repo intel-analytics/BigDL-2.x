@@ -71,10 +71,13 @@ Output dataframe look likes below (assume predict n values forward). col `dateti
  ```
 
 ## 2 AutoML Framework Overview
-- _BaseFeatureTransformer_
 
-- _BaseModel_
+FeatureTransformers (implementations of _BaseFeatureTransformer_) and Models (implementations of _BaseModel_) are basic components of AutoML framework, each of which bears a set of hyper paramters that can be automatically configured using hyper parameter search engine (_SearchEngine_). Once the best configuration is found after several trials, such configuration is used to configure feature transformers and models, which are in turn used to compose a pipeline (implementation of _Pipeline_). Pipeline can be saved to file and loaded later for inference.    
 
-- _Pipeline_
+* _zoo.automl.feature.abstract.BaseFeatureTransformer_ - abstract interface of feature transformer
+* _zoo.automl.model.abstract.BaseModel_ - abstract interface of model
+* _zoo.automl.search.abstract.SearchEngine_ - abstract interface of hyper paramter optimization engine.
+* _zoo.automl.pipeline.abstract.Pipeline_ - abstract interface of pipeline, which is composed by a series of feature transfomers and models.
 
-- _SearchEngine_
+ 
+
