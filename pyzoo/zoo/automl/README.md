@@ -6,9 +6,9 @@ _A distributed **Automated Machine Learning** libary based on **ray** and **tens
 This library provides a framework and implementations for automatic feature engineering, model selection and hyper parameter optimization. It also provides a built-in automatically optimized model: _**TimeSequencePredictor**_ , which can be used for time series data analysis or anomaly detection. 
 
 
-## Automated training of Time Series Prediction Model 
+## Automated Time Series Prediction 
 
-### Training using _TimeSeuqencePredictor_
+### Training a model using _TimeSeuqencePredictor_
 
 _TimeSequencePredictor_ can be used to train a model on historical time sequence data and predict future sequences. Note that: 
   * Current implementation only supports univariant prediction, which means target value should only be a scalar on each data point of the sequence. Input features can be multivariant.  
