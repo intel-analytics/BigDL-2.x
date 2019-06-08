@@ -33,16 +33,17 @@ def split_input_df(input_df, val_split_ratio=0, test_split_ratio=0.1):
     :return:
     """
     # suitable to nyc taxi dataset.
-    input_df.insert(loc=0, column="datetime", value=pd.to_datetime(input_df["timestamp"]))
+    df = input_df.copy()
+    df.insert(loc=0, column="datetime", value=pd.to_datetime(input_df["timestamp"]))
     # input_df["datetime"] = pd.to_datetime(input_df["timestamp"])
-    input_df = input_df.drop(columns="timestamp")
+    df = df.drop(columns="timestamp")
 
-    val_size = int(len(input_df) * val_split_ratio)
-    test_size = int(len(input_df) * test_split_ratio)
+    val_size = int(len(df) * val_split_ratio)
+    test_size = int(len(df) * test_split_ratio)
 
-    train_df = input_df.iloc[:-(test_size + val_size)].copy()
-    val_df = input_df.iloc[-(test_size + val_size):-test_size].copy()
-    test_df = input_df.iloc[-test_size:].copy()
+    train_df = df.iloc[:-(test_size + val_size)]
+    val_df = df.iloc[-(test_size + val_size):-test_size]
+    test_df = df.iloc[-test_size:]
 
     val_df = val_df.reset_index(drop=True)
     test_df = test_df.reset_index(drop=True)
