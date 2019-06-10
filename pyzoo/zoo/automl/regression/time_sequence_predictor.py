@@ -27,7 +27,7 @@ from zoo.automl.search.RayTuneSearchEngine import RayTuneSearchEngine
 
 from zoo.automl.feature.time_sequence import TimeSequenceFeatureTransformer
 
-from zoo.automl.model import VanillaLSTM
+from zoo.automl.model import *
 from zoo.automl.pipeline.time_sequence import TimeSequencePipeline
 from zoo.automl.common.util import *
 
@@ -140,8 +140,9 @@ class TimeSequencePredictor(object):
 
         feature_list = ft.get_feature_list(input_df)
         # model
-        model = VanillaLSTM(check_optional_config=False)
-
+        # model = VanillaLSTM(check_optional_config=False)
+        model = TimeSequenceModel(check_optional_config=False, future_seq_len=self.future_seq_len)
+        # Maybe search space needs to change according to different models.
         search_space = {
             # -------- feature related parameters
             "selected_features": RandomSample(
@@ -160,6 +161,9 @@ class TimeSequencePredictor(object):
             "lstm_2_units": 10,
             "dropout_2": RandomSample(lambda spec: np.random.uniform(0.2, 0.5)),
             "batch_size": 1024,
+            # for seq2seq
+            "latent_dim": 256,
+            "dropout": 0.2
         }
 
         stop = {

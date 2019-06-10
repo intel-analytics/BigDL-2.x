@@ -23,6 +23,7 @@ class BaseModel(ABC):
     """
 
     check_optional_config = False
+    future_seq_len = None
 
     @abstractmethod
     def fit_eval(self, x, y, validation_data=None, **config):
