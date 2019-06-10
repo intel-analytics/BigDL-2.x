@@ -31,12 +31,12 @@ pip install setproctitle
 ``` python
 import ray
 
-from zoo import init_on_yarn
+from zoo import init_spark_on_yarn
 from zoo.ray.util.raycontext import RayContext
 
 slave_num = 2
 
-sc = init_on_yarn(
+sc = init_spark_on_yarn(
     hadoop_conf="/opt/work/almaren-yarn-config/",
     conda_name="ray36",
     num_executor=slave_num,
@@ -48,11 +48,11 @@ sc = init_on_yarn(
 ```
 
 - [Optional] If you don't have a yarn cluster, this can also be test locally by creating `SparkContext`
-with `init_on_local`
+with `init_spark_on_local`
 
 ```Python
-from zoo import init_on_local
-sc = init_on_local(cores=4)
+from zoo import init_spark_on_local
+sc = init_spark_on_local(cores=4)
 
 ```
 

@@ -17,12 +17,12 @@
 
 import ray
 
-from zoo import init_on_yarn
+from zoo import init_spark_on_yarn
 from zoo.ray.util.raycontext import RayContext
 
 slave_num = 2
 
-sc = init_on_yarn(
+sc = init_spark_on_yarn(
     hadoop_conf="/opt/work/almaren-yarn-config/",
     conda_name="ray36-dev",
     num_executor=slave_num,

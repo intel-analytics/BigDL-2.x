@@ -203,7 +203,7 @@ class RayContext(object):
         self.ray_processesMonitor = None
         self.verbose = verbose
         self.redis_port = self._new_port() if not redis_port else redis_port
-        self.ray_context = RayServiceFuncGenerator(
+        self.ray_service = RayServiceFuncGenerator(
             python_loc=self.python_loc,
             redis_port=self.redis_port,
             ray_node_cpu_cores=self.ray_node_cpu_cores,
@@ -255,7 +255,7 @@ class RayContext(object):
             self.ray_processesMonitor.clean_fn()
         self.stopped = True
 
-    def raw_stop(self):
+    def purge(self):
         """
         Invoke ray stop to clean ray processes
         """
@@ -265,7 +265,7 @@ class RayContext(object):
         self.sc.range(0,
                       self.num_ray_nodes,
                       numSlices=self.num_ray_nodes).barrier().mapPartitions(
-            self.ray_context.gen_stop()).collect()
+            self.ray_service.gen_stop()).collect()
         self.stopped = True
 
     def _get_mkl_cores(self):
@@ -321,7 +321,7 @@ class RayContext(object):
         ray_rdd = self.sc.range(0, self.num_ray_nodes,
                                 numSlices=self.num_ray_nodes)
         process_infos = ray_rdd.barrier().mapPartitions(
-            self.ray_context.gen_ray_start()).collect()
+            self.ray_service.gen_ray_start()).collect()
 
         self.ray_processesMonitor = ProcessMonitor(process_infos, self.sc, ray_rdd,
                                                    verbose=self.verbose)
@@ -341,8 +341,8 @@ class RayContext(object):
         print("Start to launch ray on local")
         import ray
         if not self.is_local:
-            self._start_restricted_worker(self.redis_address, self.ray_context.password,
+            self._start_restricted_worker(self.redis_address, self.ray_service.password,
                                           object_store_memory=resourceToBytes(object_store_memory))
         ray.shutdown()
         ray.init(redis_address=self.redis_address,
-                 redis_password=self.ray_context.password)
+                 redis_password=self.ray_service.password)

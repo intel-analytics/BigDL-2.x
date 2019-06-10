@@ -46,5 +46,5 @@ def resourceToBytes(resource_str):
         return value
     except Exception:
         raise Exception("Size must be specified as bytes(b),"
-                        "kilobytes(k), megabytes(m), gibabytes(g). "
+                        "kilobytes(k), megabytes(m), gigabytes(g). "
                         "E.g. 50b, 100k, 250m, 30g")

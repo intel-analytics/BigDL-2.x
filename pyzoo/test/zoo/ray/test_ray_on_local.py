@@ -20,7 +20,7 @@ import psutil
 import pytest
 import ray
 
-from zoo import init_on_local
+from zoo import init_spark_on_local
 from zoo.ray.util.raycontext import RayContext
 
 np.random.seed(1337)  # for reproducibility
@@ -37,7 +37,7 @@ class TestUtil(TestCase):
 
     def test_local(self):
         node_num = 4
-        sc = init_on_local(cores=node_num)
+        sc = init_spark_on_local(cores=node_num)
         ray_ctx = RayContext(sc=sc)
         ray_ctx.init()
         actors = [TestRay.remote() for i in range(0, node_num)]

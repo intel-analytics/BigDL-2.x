@@ -154,7 +154,6 @@ class SparkRunner():
                 "spark.driver.memory": driver_memory,
                 "spark.driver.cores": driver_cores,
                 "spark.scheduler.minRegisterreResourcesRatio": "1.0"}
-            # "spark.task.cpus": executor_cores}
             if extra_executor_memory_for_ray:
                 conf["spark.executor.memoryOverhead"] = extra_executor_memory_for_ray
             if spark_yarn_archive:

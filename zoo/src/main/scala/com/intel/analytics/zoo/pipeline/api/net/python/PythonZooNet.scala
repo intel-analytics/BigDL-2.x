@@ -169,7 +169,7 @@ class PythonZooNet[T: ClassTag](implicit ev: TensorNumeric[T]) extends PythonZoo
           override def run(): Unit = {
             // Give it a chance to be gracefully killed
             killPids(processToBeKill, "kill ")
-            if (processToBeKill.isEmpty) {
+            if (!processToBeKill.isEmpty) {
               Thread.sleep(2000)
               killPids(processToBeKill, "kill -9")
             }

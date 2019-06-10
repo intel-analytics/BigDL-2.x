@@ -20,8 +20,8 @@ import multiprocessing
 import os
 
 
-def init_on_local(cores=2, conf=None, python_location=None, spark_log_level="WARN",
-                  redirect_spark_log=True):
+def init_spark_on_local(cores=2, conf=None, python_location=None, spark_log_level="WARN",
+                        redirect_spark_log=True):
     """
     Create a SparkContext with Zoo configuration in local machine.
     :param cores: The default value is 2 and you can also set it to *
@@ -39,22 +39,22 @@ def init_on_local(cores=2, conf=None, python_location=None, spark_log_level="WAR
                                            python_location=python_location)
 
 
-def init_on_yarn(hadoop_conf,
-                 conda_name,
-                 num_executor,
-                 executor_cores,
-                 executor_memory="2g",
-                 driver_memory="1g",
-                 driver_cores=4,
-                 extra_executor_memory_for_ray=None,
-                 extra_python_lib=None,
-                 penv_archive=None,
-                 hadoop_user_name="root",
-                 spark_yarn_archive=None,
-                 spark_log_level="WARN",
-                 redirect_spark_log=True):
+def init_spark_on_yarn(hadoop_conf,
+                       conda_name,
+                       num_executor,
+                       executor_cores,
+                       executor_memory="2g",
+                       driver_memory="1g",
+                       driver_cores=4,
+                       extra_executor_memory_for_ray=None,
+                       extra_python_lib=None,
+                       penv_archive=None,
+                       hadoop_user_name="root",
+                       spark_yarn_archive=None,
+                       spark_log_level="WARN",
+                       redirect_spark_log=True):
     """
-    Create a SparkContext with Zoo configuration on Yarn cluster.
+    Create a SparkContext with Zoo configuration on Yarn cluster on "Yarn-client" mode.
     You should create a conda env and install the python dependencies in that env.
     Conda env and the python dependencies only need to be installed in the driver machine.
     It's not necessary create and install those on the whole yarn cluster.
