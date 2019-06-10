@@ -1,3 +1,14 @@
+## **Release 0.6.0 nightly build**
+
+| | BigDL 0.8.0 | 
+| ------------- | --------- |
+| Spark 1.6.2   | [download](https://oss.sonatype.org/content/repositories/snapshots/com/intel/analytics/zoo/analytics-zoo-bigdl_0.8.0-spark_1.6.2/)| 
+| Spark 2.1.1   | [download](https://oss.sonatype.org/content/repositories/snapshots/com/intel/analytics/zoo/analytics-zoo-bigdl_0.8.0-spark_2.1.1/)|
+| Spark 2.2.0   | [download](https://oss.sonatype.org/content/repositories/snapshots/com/intel/analytics/zoo/analytics-zoo-bigdl_0.8.0-spark_2.2.0/)|
+| Spark 2.3.1   | [download](https://oss.sonatype.org/content/repositories/snapshots/com/intel/analytics/zoo/analytics-zoo-bigdl_0.8.0-spark_2.3.1/)|
+| Spark 2.4.3   | [download]()|
+
+---
 ## **Release 0.5.0**
 
 | | BigDL 0.8.0 | 
