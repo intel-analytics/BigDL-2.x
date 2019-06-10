@@ -29,7 +29,7 @@ python -m pytest -v --doctest-modules ../zoo \
     --ignore=../zoo/pipeline/api/keras2 \
     --ignore=../zoo/tfpark/text \
     --ignore=../zoo/examples \
-    --ignore=../test/zoo/ray/
+    --ignore=../zoo/ray/
 
 exit_status_1=$?
 if [ $exit_status_1 -ne 0 ];
@@ -57,8 +57,8 @@ else
     python -m pytest -v ../test --ignore=../test/zoo/pipeline/utils/test_utils.py \
        --ignore=../test/zoo/pipeline/api/keras2/ \
        --ignore=../test/zoo/pipeline/autograd/ \
-        --ignore=../test/zoo/ray/integration/ \
-        --ignore=../test/zoo/ray/
+       --ignore=../test/zoo/ray/integration/ \
+       --ignore=../test/zoo/ray/
     exit_status_3=$?
     if [ $exit_status_3 -ne 0 ];
     then
