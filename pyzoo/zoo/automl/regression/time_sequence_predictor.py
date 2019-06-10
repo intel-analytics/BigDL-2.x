@@ -21,15 +21,98 @@ import zipfile
 import os
 import shutil
 
-
 from zoo.automl.search.abstract import *
 from zoo.automl.search.RayTuneSearchEngine import RayTuneSearchEngine
-
+from zoo.automl.common.metrics import Evaluator
 from zoo.automl.feature.time_sequence import TimeSequenceFeatureTransformer
 
-from zoo.automl.model import *
+from zoo.automl.model import TimeSequenceModel
 from zoo.automl.pipeline.time_sequence import TimeSequencePipeline
 from zoo.automl.common.util import *
+from abc import ABC, abstractmethod
+
+
+class Recipe(ABC):
+
+    @abstractmethod
+    def search_space(self, all_available_features):
+        pass
+
+    @abstractmethod
+    def runtime_params(self):
+        pass
+
+
+class BasicRecipe(Recipe):
+    """
+    A basic recipe which can be used to get a taste of how it works.
+    tsp = TimeSequencePredictor(...,recipe = BasicRecipe(1))
+    """
+
+    def __init__(self, num_samples=1):
+        self.num_samples = num_samples
+
+    def search_space(self, all_available_features):
+        return {
+            # -------- feature related parameters
+            "selected_features": RandomSample(
+                lambda spec: np.random.choice(
+                    all_available_features,
+                    size=np.random.randint(low=3, high=len(all_available_features), size=1),
+                    replace=False)),
+
+            # --------- model related parameters
+            "lr": 0.001,
+            "lstm_1_units": GridSearch([16, 32]),
+            "dropout_1": 0.2,
+            "lstm_2_units": 8,
+            "dropout_2": RandomSample(lambda spec: np.random.uniform(0.2, 0.5)),
+            "batch_size": 1024,
+        }
+
+    def runtime_params(self):
+        return {
+            "training_iteration": 10,
+            "num_samples": self.num_samples,
+        }
+
+
+class RandomRecipe(Recipe):
+    """
+    Pure random sample Recipe. Often used as baseline.
+    tsp = TimeSequencePredictor(...,recipe = RandomRecipe(5))
+    """
+
+    def __init__(self, num_samples=5, reward_metric=-0.05):
+        self.num_samples = num_samples
+        self.reward_metric = reward_metric
+
+    def search_space(self, all_available_features):
+        return {
+            # -------- feature related parameters
+            "selected_features": RandomSample(
+                lambda spec: np.random.choice(
+                    all_available_features,
+                    size=np.random.randint(low=3, high=len(all_available_features), size=1))
+            ),
+
+            # --------- model parameters
+            "lstm_1_units": RandomSample(lambda spec: np.random.choice([8, 16, 32, 64, 128], size=1)[0]),
+            "dropout_1": RandomSample(lambda spec: np.random.uniform(0.2, 0.5)),
+            "lstm_2_units": RandomSample(lambda spec: np.random.choice([8, 16, 32, 64, 128], size=1)[0]),
+            "dropout_2": RandomSample(lambda spec: np.random.uniform(0.2, 0.5)),
+
+            # ----------- optimization parameters
+            "lr": RandomSample(lambda spec: np.random.uniform(0.001, 0.01)),
+            "batch_size": RandomSample(lambda spec: np.random.choice([32, 64, 1024], size=1, replace=False)[0]),
+        }
+
+    def runtime_params(self):
+        return {
+            "reward_metric": self.reward_metric,
+            "training_iteration": 10,
+            "num_samples": self.num_samples,
+        }
 
 
 class TimeSequencePredictor(object):
@@ -73,7 +156,8 @@ class TimeSequencePredictor(object):
     def fit(self,
             input_df,
             validation_df=None,
-            metric="mean_squared_error"):
+            metric="mean_squared_error",
+            recipe=BasicRecipe(1)):
         """
         Trains the model for time sequence prediction.
         If future sequence length > 1, use seq2seq model, else use vanilla LSTM model.
@@ -84,11 +168,17 @@ class TimeSequencePredictor(object):
         :param validation_df: validation data
         :param metric: String. Metric used for train and validation. Available values are "mean_squared_error" or
         "r_square"
+        :param recipe: a Recipe object. Various recipes covers different search space and stopping criteria.
+        Default is BasicRecipe(1).
         :return: self
         """
+
+        if not Evaluator.check_metric(metric):
+            raise ValueError("metric" + metric + "is not supported")
         self.pipeline = self._hp_search(input_df,
                                         validation_df=validation_df,
-                                        metric=metric)
+                                        metric=metric,
+                                        recipe=recipe)
         return self.pipeline
 
     def evaluate(self,
@@ -104,6 +194,8 @@ class TimeSequencePredictor(object):
         :param metric: A list of Strings Available string values are "mean_squared_error", "r_square".
         :return: a list of metric evaluation results.
         """
+        if not Evaluator.check_metric(metric):
+            raise ValueError("metric" + metric + "is not supported")
         return self.pipeline.evaluate(input_df, metric)
 
     def predict(self,
@@ -117,59 +209,31 @@ class TimeSequencePredictor(object):
         :return: a data frame with 2 columns, the 1st is the datetime, which is the last datetime of the past sequence.
             values are the predicted future sequence values.
             Example :
-            datetime    values
-            2019-01-03  np.array([2, 3, ... 9])
+            datetime    value_0     value_1   ...     value_2
+            2019-01-03  2           3                   9
         """
         return self.pipeline.predict(input_df)
 
     def _hp_search(self,
                    input_df,
                    validation_df,
-                   metric):
-        # features
-        # feature_list = ["WEEKDAY(datetime)", "HOUR(datetime)",
-        #                "PERCENTILE(value)", "IS_WEEKEND(datetime)",
-        #                "IS_AWAKE(datetime)", "IS_BUSY_HOURS(datetime)"
-        #                # "DAY(datetime)","MONTH(datetime)", #probabaly not useful
-        #                ]
-        # target_list = ["value"]
-        # ft = TimeSequenceFeatures(self.future_seq_len, self.dt_col, self.target_col, self.extra_features_col)
+                   metric,
+                   recipe):
 
-        # ft = DummyTimeSequenceFeatures(file_path='../../../../data/nyc_taxi_rolled_split.npz')
-        ft = TimeSequenceFeatureTransformer(self.future_seq_len, self.dt_col, self.target_col, self.extra_features_col, self.drop_missing)
+        ft = TimeSequenceFeatureTransformer(self.future_seq_len, self.dt_col, self.target_col, self.extra_features_col,
+                                            self.drop_missing)
 
         feature_list = ft.get_feature_list(input_df)
-        # model
+
         # model = VanillaLSTM(check_optional_config=False)
         model = TimeSequenceModel(check_optional_config=False, future_seq_len=self.future_seq_len)
-        # Maybe search space needs to change according to different models.
-        search_space = {
-            # -------- feature related parameters
-            "selected_features": RandomSample(
-               lambda spec: np.random.choice(
-                   feature_list,
-                   size=np.random.randint(low=3, high=len(feature_list), size=1),
-                   replace=False)),
 
-            # --------- model related parameters
-            # 'input_shape_x': x_train.shape[1],
-            # 'input_shape_y': x_train.shape[-1],
-            'out_units': self.future_seq_len,
-            "lr": 0.001,
-            "lstm_1_units": GridSearch([16, 32]),
-            "dropout_1": 0.2,
-            "lstm_2_units": 10,
-            "dropout_2": RandomSample(lambda spec: np.random.uniform(0.2, 0.5)),
-            "batch_size": 1024,
-            # for seq2seq
-            "latent_dim": 256,
-            "dropout": 0.2
-        }
-
-        stop = {
-            "reward_metric": -0.05,
-            "training_iteration": 10
-        }
+        # prepare parameters for search engine
+        search_space = recipe.search_space(feature_list)
+        runtime_params = recipe.runtime_params()
+        num_samples = runtime_params['num_samples']
+        stop = dict(runtime_params)
+        del stop['num_samples']
 
         searcher = RayTuneSearchEngine(logs_dir=self.logs_dir, ray_num_cpus=6, resources_per_trial={"cpu": 2})
         searcher.compile(input_df,
@@ -179,7 +243,8 @@ class TimeSequencePredictor(object):
                          feature_transformers=ft,  # use dummy features for testing the rest
                          model=model,
                          validation_df=validation_df,
-                         metric=metric)
+                         metric=metric,
+                         num_samples=num_samples)
         # searcher.test_run()
 
         trials = searcher.run()

@@ -22,17 +22,18 @@ class Evaluator(object):
     """
     Evaluate metrics for y_true and y_pred
     """
-    def __init__(self):
-        self.metrics_func = {
-            'mean_squared_error': mean_squared_error,
-            'r_square': r2_score
-        }
 
-    def evaluate(self, metric, y_true, y_pred):
-        if metric not in self.metrics_func.keys():
+    metrics_func = {
+        'mean_squared_error': mean_squared_error,
+        'r_square': r2_score
+    }
+
+    @staticmethod
+    def evaluate(metric, y_true, y_pred):
+        if not Evaluator.check_metric(metric):
             raise ValueError("metric" + metric + "is not supported")
-        return self.metrics_func[metric](y_true, y_pred, multioutput='raw_values')
+        return Evaluator.metrics_func[metric](y_true, y_pred, multioutput='raw_values')
 
-
-
-
+    @staticmethod
+    def check_metric(metric):
+        return True if metric in Evaluator.metrics_func.keys() else False
