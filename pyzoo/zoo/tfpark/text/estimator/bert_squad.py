@@ -70,7 +70,8 @@ def _bert_squad_model_fn(features, labels, mode, params):
 
 class BERTSQuAD(BERTBaseEstimator):
     """
-    A pre-built TFEstimator that performs training and prediction on SQuAD dataset.
+    A pre-built TFEstimator that that takes the hidden state of the final encoder layer of BERT
+    to perform training and prediction on SQuAD dataset.
     The Stanford Question Answering Dataset (SQuAD) is a popular question answering
     benchmark dataset.
 

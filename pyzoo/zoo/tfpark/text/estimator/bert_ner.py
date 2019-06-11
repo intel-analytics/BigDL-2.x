@@ -44,8 +44,9 @@ def _bert_ner_model_fn(features, labels, mode, params):
 
 class BERTNER(BERTBaseEstimator):
     """
-    A pre-built TFEstimator that takes the hidden state of the final encoder layer
+    A pre-built TFEstimator that takes the hidden state of the final encoder layer of BERT
     for named entity recognition based on SoftMax classification.
+    Note that cased BERT models are recommended for NER.
 
     :param num_entities: Positive int. The number of entity labels to be classified.
     :param bert_config_file: The path to the json file for BERT configurations.

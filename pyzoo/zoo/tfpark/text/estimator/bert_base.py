@@ -59,7 +59,7 @@ def bert_input_fn(rdd, max_seq_length, batch_size,
     For prediction, each element in rdd should be a dict of features.
 
     Features in each RDD element should contain "input_ids", "input_mask" and "token_type_ids",
-    each of shape max_sequence_length.
+    each of shape max_seq_length.
     If you have other extra features in your dict of features, you need to explicitly specify
     the argument `extra_features`, which is supposed to be the dict with feature name as key
     and tuple of (dtype, shape) as its value.
