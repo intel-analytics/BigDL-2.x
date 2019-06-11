@@ -14,9 +14,6 @@
 # limitations under the License.
 #
 
-import shutil
-import tempfile
-
 import pytest
 from zoo.automl.model.VanillaLSTM import *
 from zoo.automl.feature.time_sequence import TimeSequenceFeatureTransformer
@@ -43,7 +40,7 @@ class TestVanillaLSTM:
             "dropout_2": 0.2,
             "batch_size": 32,
         }
-        model = VanillaLSTM(check_optional_config=False)
+        model = VanillaLSTM(check_optional_config=False, future_seq_len=future_seq_len)
         print("fit_eval:", model.fit_eval(x_train, y_train, **config))
 
     def test_evaluate(self):
@@ -68,7 +65,7 @@ class TestVanillaLSTM:
             "dropout_2": 0.2,
             "batch_size": 32,
         }
-        model = VanillaLSTM(check_optional_config=False)
+        model = VanillaLSTM(check_optional_config=False, future_seq_len=future_seq_len)
         model.fit_eval(x_train, y_train, **config)
         mse, rs = model.evaluate(x_val, y_val, metric=['mean_squared_error', 'r_square'])
         print("Mean squared error is:", mse)
@@ -96,7 +93,7 @@ class TestVanillaLSTM:
             "dropout_2": 0.2,
             "batch_size": 32,
         }
-        model = VanillaLSTM(check_optional_config=False)
+        model = VanillaLSTM(check_optional_config=False, future_seq_len=future_seq_len)
         model.fit_eval(x_train, y_train, **config)
         y_pred = model.predict(x_test)
         assert y_pred.shape == (x_test.shape[0], 1)
@@ -124,7 +121,7 @@ class TestVanillaLSTM:
             "batch_size": 32,
         }
 
-        model = VanillaLSTM(check_optional_config=False)
+        model = VanillaLSTM(check_optional_config=False, future_seq_len=future_seq_len)
         model.fit_eval(x_train, y_train, **config)
         predict_before = model.predict(x_test)
 
