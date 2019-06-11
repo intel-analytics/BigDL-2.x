@@ -27,7 +27,7 @@ from zoo.automl.common.metrics import Evaluator
 from zoo.automl.feature.time_sequence import TimeSequenceFeatureTransformer
 
 from zoo.automl.model import TimeSequenceModel
-from zoo.automl.pipeline.time_sequence import TimeSequencePipeline
+from zoo.automl.pipeline.time_sequence import TimeSequencePipeline, load_ts_pipeline
 from zoo.automl.common.util import *
 from abc import ABC, abstractmethod
 
@@ -289,13 +289,14 @@ if __name__ == "__main__":
     pred = pipeline.predict(test_df)
     print("predict:", pred.shape)
 
-    save_pipeline_file = "../../../saved_pipeline/"
+    save_pipeline_file = "tmp/my.ppl"
     pipeline.save(save_pipeline_file)
 
-    new_pipeline = TimeSequencePipeline()
+    new_pipeline = load_ts_pipeline(save_pipeline_file)
     new_pipeline.restore(save_pipeline_file)
     print("evaluate:", new_pipeline.evaluate(test_df, metric=["mean_squared_error", "r_square"]))
 
     new_pred = new_pipeline.predict(test_df)
     print("predict:", pred.shape)
     np.testing.assert_allclose(pred["value"].values, new_pred["value"].values)
+    os.remove("tmp")
