@@ -25,6 +25,7 @@ import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric
 import com.intel.analytics.bigdl.utils.{MultiShape, Shape}
 import com.intel.analytics.zoo.pipeline.api.Net
 import com.intel.analytics.zoo.pipeline.api.autograd.{AutoGrad, Constant, Parameter, Variable}
+import com.intel.analytics.zoo.pipeline.api.keras.layers.internal.InternalLayerNorm
 import com.intel.analytics.zoo.pipeline.api.keras.layers.utils.KerasUtils
 import com.intel.analytics.zoo.pipeline.api.keras.models.{Model, Sequential}
 
@@ -113,21 +114,25 @@ private[layers] class TransformerLayer[T: ClassTag](
 
   def block(x: Variable[T], hiddenSize: Int, attention_mask: Variable[T] = null,
             eplision: Double = 1e-5): Variable[T] = {
-    // g, b for layerNorm
-    val g = Parameter[T](Shape(1, hiddenSize),
-      initWeight = Tensor.ones[T](hiddenSize).view(1, hiddenSize))
-    val b = Parameter[T](Shape(1, hiddenSize),
-      initWeight = Tensor[T](hiddenSize).view(1, hiddenSize))
-
-    // g, b for layerNorm
-    val g2 = Parameter[T](Shape(1, hiddenSize),
-      initWeight = Tensor.ones[T](hiddenSize).view(1, hiddenSize))
-    val b2 = Parameter[T](Shape(1, hiddenSize),
-      initWeight = Tensor[T](hiddenSize).view(1, hiddenSize))
+//    // g, b for layerNorm
+//    val g = Parameter[T](Shape(1, hiddenSize),
+//      initWeight = Tensor.ones[T](hiddenSize).view(1, hiddenSize))
+//    val b = Parameter[T](Shape(1, hiddenSize),
+//      initWeight = Tensor[T](hiddenSize).view(1, hiddenSize))
+//
+//    // g, b for layerNorm
+//    val g2 = Parameter[T](Shape(1, hiddenSize),
+//      initWeight = Tensor.ones[T](hiddenSize).view(1, hiddenSize))
+//    val b2 = Parameter[T](Shape(1, hiddenSize),
+//      initWeight = Tensor[T](hiddenSize).view(1, hiddenSize))
     val a = multiHeadSelfAttention(x, hiddenSize, attention_mask)
-    val n = TransformerLayer.layerNorm(x + a, eplision, weight = g, bias = b)
+//    val n = TransformerLayer.layerNorm(x + a, eplision, weight = g, bias = b)
+    val n = new KerasLayerWrapper[T](new InternalLayerNorm[T](hiddenSize, eplision)
+      .asInstanceOf[AbstractModule[Activity, Activity, T]]).from(x + a)
     val m = mlp(n, hiddenSize)
-    val h = TransformerLayer.layerNorm(n + m, eplision, weight = g2, bias = b2)
+//    val h = TransformerLayer.layerNorm(n + m, eplision, weight = g2, bias = b2)
+    val h = new KerasLayerWrapper[T](new InternalLayerNorm[T](hiddenSize, eplision)
+      .asInstanceOf[AbstractModule[Activity, Activity, T]]).from(n + m)
     h
   }
 
