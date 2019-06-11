@@ -52,7 +52,7 @@ class LSTMSeq2Seq(BaseModel):
         """
         super()._check_config(**config)
         self.metric = config.get('metric', 'mean_squared_error')
-        self.latent_dim = config.get('latent_dim', 256)
+        self.latent_dim = config.get('latent_dim', 128)
         self.dropout = config.get('dropout', 0.2)
         self.lr = config.get('lr', 0.001)
 
@@ -253,10 +253,9 @@ class LSTMSeq2Seq(BaseModel):
         :param metric: a list of metrics in string format
         :return: a list of metric evaluation results
         """
-        e = Evaluator()
         y_pred = self.predict(x)
         # y = np.squeeze(y, axis=2)
-        return [e.evaluate(m, y, y_pred) for m in metric]
+        return [Evaluator.evaluate(m, y, y_pred) for m in metric]
 
     def predict(self, x):
         """
