@@ -51,7 +51,11 @@ class TimeSequencePipeline(Pipeline):
         return [Evaluator.evaluate(m, y_unscale, y_pred_unscale) for m in metric]
 
     def predict(self, input_df):
-        # there might be no y in the data, TODO needs to fix in TimeSequenceFeatures
+        """
+        predict test data with the pipeline fitted
+        :param input_df:
+        :return:
+        """
         x = self.feature_transformers.transform(input_df, is_train=False)
         y_pred = self.model.predict(x)
         y_output = self.feature_transformers.post_processing(input_df, y_pred, is_train=False)
