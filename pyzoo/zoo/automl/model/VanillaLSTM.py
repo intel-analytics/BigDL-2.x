@@ -26,16 +26,13 @@ from zoo.automl.common.metrics import Evaluator
 
 class VanillaLSTM(BaseModel):
 
-    def __init__(self, check_optional_config=True):
+    def __init__(self, check_optional_config=True, future_seq_len=1):
         """
         Constructor of Vanilla LSTM model
         """
         self.model = None
         self.check_optional_config = check_optional_config
-        self.future_seq_len = None
-
-    def _get_len(self, y):
-        self.future_seq_len = y.shape[1]
+        self.future_seq_len = future_seq_len
 
     def _build(self, **config):
         """
@@ -78,7 +75,6 @@ class VanillaLSTM(BaseModel):
         :param config: optimization hyper parameters
         :return: the resulting metric
         """
-        self._get_len(y)
         # if model is not initialized, __build the model
         if self.model is None:
             self._build(**config)

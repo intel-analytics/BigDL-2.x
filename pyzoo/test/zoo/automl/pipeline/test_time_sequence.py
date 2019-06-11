@@ -135,7 +135,8 @@ class TestTimeSequencePipeline:
         assert np.array_equal(mse1, mse2)
         assert np.array_equal(rs1, rs2)
 
-    def test_save_restore(self):
+    def test_save_restore_1(self):
+        future_seq_len = 1
         sample_num = 100
         train_df = pd.DataFrame({"datetime": pd.date_range('1/1/2019', periods=sample_num),
                                  "value": np.random.randn(sample_num)})
@@ -145,6 +146,7 @@ class TestTimeSequencePipeline:
 
         tsp = TimeSequencePredictor(dt_col="datetime",
                                     target_col="value",
+                                    future_seq_len=future_seq_len,
                                     extra_features_col=None, )
         pipeline = tsp.fit(train_df)
         pred = pipeline.predict(test_df)
@@ -158,6 +160,37 @@ class TestTimeSequencePipeline:
 
             new_pred = new_pipeline.predict(test_df)
             np.testing.assert_allclose(pred["value"].values, new_pred["value"].values)
+        finally:
+            shutil.rmtree(dirname)
+
+    def test_save_restore_2(self):
+        future_seq_len = 2
+        sample_num = 100
+        train_df = pd.DataFrame({"datetime": pd.date_range('1/1/2019', periods=sample_num),
+                                 "value": np.random.randn(sample_num)})
+        sample_num = 64
+        test_df = pd.DataFrame({"datetime": pd.date_range('1/10/2019', periods=sample_num),
+                                "value": np.random.randn(sample_num)})
+
+        tsp = TimeSequencePredictor(dt_col="datetime",
+                                    target_col="value",
+                                    future_seq_len=future_seq_len,
+                                    extra_features_col=None, )
+        pipeline = tsp.fit(train_df)
+        pred = pipeline.predict(test_df)
+
+        dirname = tempfile.mkdtemp(prefix="saved_pipeline")
+        try:
+            save_pipeline_file = os.path.join(dirname, "my.ppl")
+            pipeline.save(save_pipeline_file)
+            assert os.path.isfile(save_pipeline_file)
+            new_pipeline = load_ts_pipeline(save_pipeline_file)
+
+            new_pred = new_pipeline.predict(test_df)
+            print(pred)
+            print(new_pred)
+            columns = ["value_{}".format(i) for i in range(future_seq_len)]
+            np.testing.assert_allclose(pred[columns].values, new_pred[columns].values)
         finally:
             shutil.rmtree(dirname)
 
