@@ -159,7 +159,7 @@ And “weights”, “bias”, “gradientWeights” and “gradientBias” unde
 
 If you're using Jupyter notebook, you can also draw the training curves using popular plotting tools (e.g. matplotlib) and show the plots inline. 
 
-First, retrieve the summaries as instructed in [Retrieve Summary](#retrieving-summary-info-as-readable-format). The retrieved summary is a list of tuples. Each tuple is a recorded event in format (iteration count, recorded value, timestamp). You can convert it to numpy array or dataframe to plot it. See example below:  
+First, retrieve the summaries as instructed in [Retrieve Summary](#retrieving-summary-from-build-in-api). The retrieved summary is a list of tuples. Each tuple is a recorded event in format (iteration count, recorded value, timestamp). You can convert it to numpy array or dataframe to plot it. See example below:  
 
 * _**Example: Plot the train/validation loss in Jupyter**_
 
