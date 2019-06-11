@@ -1,8 +1,10 @@
 # *Visualization*
-To enable visualization support, you need first properly configure to collect statistics summary in different stages of training. It should be done before the training starts. See examples below: 
-* **Generating summary in NNEstimator**
 
-***scala***
+## **Generating Summary**
+To enable visualization support, you need first properly configure to collect statistics summary in different stages of training. It should be done before the training starts. See examples below: 
+* **Generating summary in NNEstimator** 
+
+****scala****
 ```scala
 val estimator = NNEstimator(...)
 ...
@@ -16,7 +18,7 @@ estimator.setValidationSummary(validationSummary)
 val nnModel = estimator.fit(...)
 ```
 
-***python***
+****python****
 ```python
 from bigdl.optim.optimizer import TrainSummary, ValidationSummary
 
@@ -31,8 +33,9 @@ estimator.set_val_summary(val_summary)
 ...
 nnModel = estimator.fit(...)
 ```
-* **Generating summary in KerasAPI**
-***scala***
+* **Generating summary in KerasAPI**  
+
+****scala****
 ```scala
 val model = [...new keras model]
 ...
@@ -42,7 +45,8 @@ model.setTensorBoard(logdir, appName)
 ...
 model.fit(...)
 ```
-***python***
+
+****python****
 ```python
 model = [...new keras model]
 ...
@@ -53,30 +57,33 @@ model.set_tensorboard(log_dir, app_name)
 model.fit(...)
 ```
 
-* **Retrieving summary from build-in API**
+## **Retrieving summary from build-in API**
 
 You can use provided API to retrieve the summaries into readable format, and export them to other tools for further analysis or visualization.
 
-_**Example: Reading summary info in NNestimator**_
-***scala***
+* _**Example: Reading summary info in NNestimator**_ 
+
+****scala****
 ```scala
 ...
 val trainLoss = trainSummary.readScalar("Loss")
 val valLoss = validationSummary.readScalar("Loss")
 ```
-***python***
+
+****python****
 ```python
 ...
 train_loss = np.array(train_summary.read_scalar('Loss'))
 val_loss = np.array(val_summary.read_scalar('Loss'))
 ```
-_**Example: Reading summary info in keras API**_
-***scala***
+* _**Example: Reading summary info in keras API**_
+
+****scala****
 ```scala
 val trainLoss = model.getTrainSummary("loss")
 val valLoss = model.getValidationSummary("loss")
 ```
-***python***
+****python****
 ```python
 train_loss = model.get_train_summary('loss')
 val_loss = model.get_validation_summary('loss')
@@ -88,10 +95,10 @@ You can re-create the TrainingSummary and ValidationSummary with the same `logDi
 
 ---
 
-* **Visualizing training with TensorBoard**
+# **Visualizing training with TensorBoard**
 With the summary info generated, we can then use [TensorBoard](https://pypi.python.org/pypi/tensorboard) to visualize the behaviors of the BigDL program.  
 
-* **Installing TensorBoard**
+### ***Installing TensorBoard***
 
 Prerequisites:
 
@@ -99,9 +106,9 @@ Prerequisites:
 2. Pip version >= 9.0.1
 3. tensorflow 1.13.1
 
-* **Launching TensorBoard**
+### ***Launching TensorBoard***
 
-***Loading from  local directory***
+* ****Loading from  local directory****
 
 You can launch TensorBoard using the command below:
 ```bash
@@ -109,7 +116,8 @@ tensorboard --logdir=[logdir path]
 ```
 After that, navigate to the TensorBoard dashboard using a browser. You can find the URL in the console output after TensorBoard is successfully launched; by default the URL is http://your_node:6006
 
-***Loading from HDFS***
+* ****Loading from HDFS****
+
 If the logdir is a HDFS folder, you need to configure the HDFS environment before running `tensorboard`.  
 Prerequisites:
 1. Java >= 1.8, set env JAVA_HOME 
@@ -132,7 +140,7 @@ CLASSPATH=$(${HADOOP_HOME}/bin/hadoop classpath --glob) tensorboard --logdir=hdf
 ```
 
 
-* **Visualizations in TensorBoard**
+### ***Visualizations in TensorBoard***
 
 Within the TensorBoard dashboard, you will be able to read the visualizations of each run, including the “Loss” and “Throughput” curves under the SCALARS tab (as illustrated below):
 ![Scalar](../Image/tensorboard-scalar.png)
@@ -149,7 +157,7 @@ If you're using Jupyter notebook, you can also draw the training curves using po
 
 First, retrieve the summaries as instructed in [Retrieve Summary](#retrieving-summary-info-as-readable-format). The retrieved summary is a list of tuples. Each tuple is a recorded event in format (iteration count, recorded value, timestamp). You can convert it to numpy array or dataframe to plot it. See example below:  
 
-_**Example: Plot the train/validation loss in Jupyter**_
+* _**Example: Plot the train/validation loss in Jupyter**_
 
 ```python
 #retrieve train and validation summary object and read the loss data into ndarray's. 
