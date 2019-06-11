@@ -19,9 +19,9 @@ package com.intel.analytics.zoo.pipeline.api.keras.layers.internal
 import com.intel.analytics.bigdl.tensor.Tensor
 import com.intel.analytics.zoo.pipeline.api.keras.serializer.ModuleSerializationTest
 
-class InternalSoftmaxSerialTest extends ModuleSerializationTest {
+class InternalSoftMaxSerialTest extends ModuleSerializationTest {
   override def test(): Unit = {
-    val layer = new InternalSoftmax[Float]().setName("InternalSoftmax")
+    val layer = new InternalSoftMax[Float]().setName("InternalSoftMax")
     val input = Tensor[Float](4, 4).rand()
     runSerializationTest(layer, input)
   }

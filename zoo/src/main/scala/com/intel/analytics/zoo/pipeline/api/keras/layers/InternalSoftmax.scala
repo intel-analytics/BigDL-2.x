@@ -23,8 +23,15 @@ import com.intel.analytics.bigdl.utils.Shape
 
 import scala.reflect.ClassTag
 
-class InternalSoftmax[T: ClassTag]()(implicit ev: TensorNumeric[T]) extends TensorModule[T] {
-
+/**
+ * Applies the SoftMax function to an n-dimensional input Tensor, rescaling them so that the
+ * elements of the n-dimensional output Tensor lie in the range (0, 1) and sum to 1.
+ * Softmax is defined as: f_i(x) = exp(x_i - shift) / sum_j exp(x_j - shift)
+ * where shift = max_i(x_i).
+ * Currently only support apply softmax normalization to the last dim.
+ */
+private[zoo] class InternalSoftMax[T: ClassTag]()(implicit ev: TensorNumeric[T])
+  extends TensorModule[T] {
   override def updateOutput(input: Tensor[T]): Tensor[T] = {
     val dim = input.dim()
     val sizes = input.size()
@@ -44,15 +51,11 @@ class InternalSoftmax[T: ClassTag]()(implicit ev: TensorNumeric[T]) extends Tens
     gradInput = output.clone().cmul(gradOutput - sum.expand(input.size()))
     gradInput
   }
-
-  override def computeOutputShape(inputShape: Shape): Shape = {
-    inputShape
-  }
 }
 
-object InternalSoftmax{
+private[zoo] object InternalSoftMax{
   def apply[@specialized(Float, Double) T: ClassTag]()
-    (implicit ev: TensorNumeric[T]) : InternalSoftmax[T] = {
-    new InternalSoftmax[T]()
+    (implicit ev: TensorNumeric[T]) : InternalSoftMax[T] = {
+    new InternalSoftMax[T]()
   }
 }

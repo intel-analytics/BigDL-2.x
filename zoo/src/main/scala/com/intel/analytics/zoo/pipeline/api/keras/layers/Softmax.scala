@@ -22,7 +22,7 @@ import com.intel.analytics.bigdl.tensor.Tensor
 import com.intel.analytics.bigdl.utils.Shape
 import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric
 import com.intel.analytics.zoo.pipeline.api.Net
-import com.intel.analytics.zoo.pipeline.api.keras.layers.internal.InternalSoftmax
+import com.intel.analytics.zoo.pipeline.api.keras.layers.internal.InternalSoftMax
 import com.intel.analytics.zoo.pipeline.api.keras.layers.utils.KerasUtils
 
 import scala.reflect.ClassTag
@@ -32,13 +32,14 @@ import scala.reflect.ClassTag
  * elements of the n-dimensional output Tensor lie in the range (0, 1) and sum to 1.
  * Softmax is defined as: f_i(x) = exp(x_i - shift) / sum_j exp(x_j - shift)
  * where shift = max_i(x_i).
+ * Currently only support apply softmax normalization to the last dim.
  */
 class SoftMax[T: ClassTag](val inputShape: Shape = null)(implicit ev: TensorNumeric[T])
   extends KerasLayer[Tensor[T], Tensor[T], T](KerasUtils.addBatch(inputShape))
     with IdentityOutputShape with Net {
 
   override def doBuild(inputShape: Shape): AbstractModule[Tensor[T], Tensor[T], T] = {
-    val layer = InternalSoftmax()
+    val layer = InternalSoftMax()
     layer.asInstanceOf[AbstractModule[Tensor[T], Tensor[T], T]]
   }
 }
