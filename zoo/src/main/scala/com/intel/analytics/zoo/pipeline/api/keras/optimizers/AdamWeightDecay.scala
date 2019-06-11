@@ -106,26 +106,19 @@ class AdamWeightDecay[@specialized(Float, Double) T: ClassTag](
     buffer.fill(ev.one)
     _denom.add(ev.fromType(eps), buffer)
 
+    val update = _s / (_denom)
+
+    if(weightDecay > 0) {
+      update.add(parameter * (ev.fromType(weightDecay)))
+    }
+
     val currentLR = updateHyperParameter(timestep)
     val lrScheduled = if (total != -1) {
       currentLR.toDouble * warmupMethod(timestep / total, warmupPortion)
     } else currentLR
 
-    /**
-     * val update = _s / (_denom)
-     * if(weightDecay > 0) {
-     *   update.add(parameter * (ev.fromType(weightDecay)))
-     * }
-     * val updateLR = update.mul(ev.fromType(lrScheduled))
-     * parameter.add(-updateLR)
-     */
-    if (weightDecay > 0) {
-      val update = parameter * ev.fromType((-lrScheduled) * weightDecay)
-      parameter.addcdiv(ev.fromType(-lrScheduled), _s, _denom)
-      parameter.add(update)
-    } else {
-      parameter.addcdiv(ev.fromType(-lrScheduled), _s, _denom)
-    }
+    val updateLR = update.mul(ev.fromType(lrScheduled))
+    parameter.add(-updateLR)
 
     timestep = timestep + 1
     state("evalCounter") = timestep // A tmp tensor to hold the sqrt(v) + epsilon
