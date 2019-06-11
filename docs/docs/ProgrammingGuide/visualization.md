@@ -152,6 +152,8 @@ Within the TensorBoard dashboard, you will be able to read the visualizations of
 And “weights”, “bias”, “gradientWeights” and “gradientBias” under the DISTRIBUTIONS and HISTOGRAMS tabs (as illustrated below):
 ![histogram1](../Image/tensorboard-histo1.png)
 ![histogram2](../Image/tensorboard-histo2.png)
+As getting DISTRIBUTIONS and HISTOGRAMS may affect the training performance, so we don't enable this option by default. For example you want to fetch this parameters every 20 iteartions, you should call `trainSummary.setSummaryTrigger("Parameters", Trigger.severalIteration(20))`(`set_summary_trigger` in python API) before calling `setTrainSummary`.
+
 
 ---
 
