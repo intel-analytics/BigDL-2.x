@@ -1,10 +1,56 @@
-# *Enable visualization*
+# *Visualization*
 To enable visualization support, you need first properly configure to collect statistics summary in different stages of training. It should be done before the training starts. See examples below: 
 ## **Generating summary in NNEstimator**
+***scala***
+```scala
+val estimator = NNEstimator(...)
+...
+val logdir = "mylogdir"
+val appName = "myapp"
+val trainSummary = TrainSummary(logdir, appName)
+val validationSummary = ValidationSummary(logdir, appName)
+estimator.setTrainSummary(trainSummary)
+estimator.setValidationSummary(validationSummary)
+...
+val nnModel = estimator.fit(...)
+```
+***python***
+```python
+from bigdl.optim.optimizer import TrainSummary, ValidationSummary
 
+estimator = NNEstimator(...)
+...
+log_dir = 'mylogdir'
+app_name = 'myapp'
+train_summary = TrainSummary(log_dir=log_dir, app_name=app_name)
+val_summary = ValidationSummary(log_dir=log_dir, app_name=app_name)
+estimator.set_train_summary(train_summary)
+estimator.set_val_summary(val_summary)
+...
+nnModel = estimator.fit(...)
+```
 ## **Generating summary in KerasAPI**
+***scala***
+```scala
+val model = ...new keras model
+...
+val logdir = "mylogdir"
+val appName = "myapp"
+model.setTensorBoard(logdir, appName)
+...
+model.fit(...)
+```
+***python***
+```python
+model = ...new keras model
+...
+log_dir = 'mylogdir'
+app_name = 'myapp'
+model.set_tensorboard(log_dir, app_name)
+...
+model.fit(...)
+```
 
-# *Visualization*
 ## **Retrieving summary from TrainSummary and ValidationSummary**
 
 You can use provided API `readScalar`(Scala) and `read_scalar`(Python) to retrieve the summaries into readable format, and export them to other tools for further analysis or visualization.
