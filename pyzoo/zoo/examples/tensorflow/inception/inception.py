@@ -57,6 +57,7 @@ def config_option_parser():
     parser.add_option("--gradientMax", type=float, dest="gradientMax", default=0.0, help="max gradient clipping by")
     parser.add_option("--gradientL2NormThreshold", type=float, dest="gradientL2NormThreshold", default=0.0,
                       help="gradient L2-Norm threshold")
+    parser.add_option("--memoryType", type=str, dest="memoryType", default="DRAM", help="memory storage type, DRAM or PMEM")
 
     return parser
 
@@ -83,7 +84,7 @@ if __name__ == "__main__":
                                   ImageSetToSample(input_keys=["imageTensor"], target_keys=["label"])
                                   ])
     raw_train_data = get_inception_data(options.folder, sc, "train")
-    train_data = FeatureSet.image_frame(raw_train_data).transform(train_transformer)
+    train_data = FeatureSet.image_frame(raw_train_data, options.memoryType).transform(train_transformer)
 
     val_transformer = ChainedPreprocessing([ImagePixelBytesToMat(),
                                 ImageCenterCrop(image_size, image_size),
