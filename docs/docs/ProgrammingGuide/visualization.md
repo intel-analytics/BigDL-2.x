@@ -32,7 +32,7 @@ nnModel = estimator.fit(...)
 ## **Generating summary in KerasAPI**
 ***scala***
 ```scala
-val model = ...new keras model
+val model = [...new keras model]
 ...
 val logdir = "mylogdir"
 val appName = "myapp"
@@ -42,7 +42,7 @@ model.fit(...)
 ```
 ***python***
 ```python
-model = ...new keras model
+model = [...new keras model]
 ...
 log_dir = 'mylogdir'
 app_name = 'myapp'
