@@ -1,5 +1,7 @@
 # *Visualization*
 
+---
+
 ## **Generating Summary**
 To enable visualization support, you need first properly configure to collect statistics summary in different stages of training. It should be done before the training starts. See examples below: 
 * **Generating summary in NNEstimator** 
@@ -56,6 +58,8 @@ model.set_tensorboard(log_dir, app_name)
 ...
 model.fit(...)
 ```
+
+---
 
 ## **Retrieving summary from build-in API**
 
