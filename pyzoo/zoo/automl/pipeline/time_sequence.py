@@ -20,7 +20,7 @@ from zoo.automl.common.metrics import Evaluator
 from zoo.automl.pipeline.abstract import Pipeline
 from zoo.automl.common.util import *
 from zoo.automl.feature.time_sequence import TimeSequenceFeatureTransformer
-from zoo.automl.model import VanillaLSTM
+from zoo.automl.model import TimeSequenceModel
 
 
 class TimeSequencePipeline(Pipeline):
@@ -69,7 +69,8 @@ class TimeSequencePipeline(Pipeline):
 
 def load_ts_pipeline(file):
     feature_transformers = TimeSequenceFeatureTransformer()
-    model = VanillaLSTM(check_optional_config=False)
+    model = TimeSequenceModel(check_optional_config=False)
+
     restore_zip(file, feature_transformers, model)
     ts_pipeline = TimeSequencePipeline(feature_transformers, model)
     print("Restore pipeline from", file)
