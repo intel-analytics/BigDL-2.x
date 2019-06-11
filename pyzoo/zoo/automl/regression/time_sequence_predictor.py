@@ -26,7 +26,7 @@ from zoo.automl.search.RayTuneSearchEngine import RayTuneSearchEngine
 from zoo.automl.common.metrics import Evaluator
 from zoo.automl.feature.time_sequence import TimeSequenceFeatureTransformer
 
-from zoo.automl.model import VanillaLSTM
+from zoo.automl.model import TimeSequenceModel
 from zoo.automl.pipeline.time_sequence import TimeSequencePipeline
 from zoo.automl.common.util import *
 from abc import ABC, abstractmethod
@@ -224,8 +224,9 @@ class TimeSequencePredictor(object):
                                             self.drop_missing)
 
         feature_list = ft.get_feature_list(input_df)
-        # model
-        model = VanillaLSTM(check_optional_config=False)
+
+        # model = VanillaLSTM(check_optional_config=False)
+        model = TimeSequenceModel(check_optional_config=False, future_seq_len=self.future_seq_len)
 
         # prepare parameters for search engine
         search_space = recipe.search_space(feature_list)
