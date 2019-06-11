@@ -121,7 +121,7 @@ class TestTimeSequencePipeline:
                                     extra_features_col=None, )
         pipeline = tsp.fit(train_df)
         y_pred_df = pipeline.predict(test_df[:-future_seq_len])
-        columns = ["value_{}".format(i) for i in range(future_seq_len)]
+        columns = ["{}_{}".format(target_col, i) for i in range(future_seq_len)]
         y_pred_value = y_pred_df[columns].values
 
         default_past_seq_len = 50
@@ -166,14 +166,16 @@ class TestTimeSequencePipeline:
     def test_save_restore_2(self):
         future_seq_len = 2
         sample_num = 100
-        train_df = pd.DataFrame({"datetime": pd.date_range('1/1/2019', periods=sample_num),
-                                 "value": np.random.randn(sample_num)})
+        dt_col = "dt"
+        target_col = "v"
+        train_df = pd.DataFrame({dt_col: pd.date_range('1/1/2019', periods=sample_num),
+                                 target_col: np.random.randn(sample_num)})
         sample_num = 64
-        test_df = pd.DataFrame({"datetime": pd.date_range('1/10/2019', periods=sample_num),
-                                "value": np.random.randn(sample_num)})
+        test_df = pd.DataFrame({dt_col: pd.date_range('1/10/2019', periods=sample_num),
+                                target_col: np.random.randn(sample_num)})
 
-        tsp = TimeSequencePredictor(dt_col="datetime",
-                                    target_col="value",
+        tsp = TimeSequencePredictor(dt_col=dt_col,
+                                    target_col=target_col,
                                     future_seq_len=future_seq_len,
                                     extra_features_col=None, )
         pipeline = tsp.fit(train_df)
@@ -189,7 +191,7 @@ class TestTimeSequencePipeline:
             new_pred = new_pipeline.predict(test_df)
             print(pred)
             print(new_pred)
-            columns = ["value_{}".format(i) for i in range(future_seq_len)]
+            columns = ["{}_{}".format(target_col, i) for i in range(future_seq_len)]
             np.testing.assert_allclose(pred[columns].values, new_pred[columns].values)
         finally:
             shutil.rmtree(dirname)
