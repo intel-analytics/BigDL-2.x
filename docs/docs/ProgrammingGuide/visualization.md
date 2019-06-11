@@ -1,6 +1,7 @@
 # *Visualization*
 To enable visualization support, you need first properly configure to collect statistics summary in different stages of training. It should be done before the training starts. See examples below: 
-## **Generating summary in NNEstimator**
+* **Generating summary in NNEstimator**
+
 ***scala***
 ```scala
 val estimator = NNEstimator(...)
@@ -14,6 +15,7 @@ estimator.setValidationSummary(validationSummary)
 ...
 val nnModel = estimator.fit(...)
 ```
+
 ***python***
 ```python
 from bigdl.optim.optimizer import TrainSummary, ValidationSummary
@@ -29,7 +31,7 @@ estimator.set_val_summary(val_summary)
 ...
 nnModel = estimator.fit(...)
 ```
-## **Generating summary in KerasAPI**
+* **Generating summary in KerasAPI**
 ***scala***
 ```scala
 val model = [...new keras model]
@@ -51,30 +53,42 @@ model.set_tensorboard(log_dir, app_name)
 model.fit(...)
 ```
 
-## **Retrieving summary from TrainSummary and ValidationSummary**
+* **Retrieving summary from build-in API**
 
-You can use provided API `readScalar`(Scala) and `read_scalar`(Python) to retrieve the summaries into readable format, and export them to other tools for further analysis or visualization.
+You can use provided API to retrieve the summaries into readable format, and export them to other tools for further analysis or visualization.
 
-_**Example: Reading summary info in Scala**_
+_**Example: Reading summary info in NNestimator**_
+***scala***
 ```scala
+...
 val trainLoss = trainSummary.readScalar("Loss")
-val validationLoss = validationSummary.readScalar("Loss")
-...
+val valLoss = validationSummary.readScalar("Loss")
 ```
-
-_**Example: Reading summary info in Python**_
+***python***
 ```python
-loss = np.array(train_summary.read_scalar('Loss'))
-valloss = np.array(val_summary.read_scalar('Loss'))
 ...
+train_loss = np.array(train_summary.read_scalar('Loss'))
+val_loss = np.array(val_summary.read_scalar('Loss'))
+```
+_**Example: Reading summary info in keras API**_
+***scala***
+```scala
+val trainLoss = model.getTrainSummary("loss")
+val valLoss = model.getValidationSummary("loss")
+```
+***python***
+```python
+train_loss = model.get_train_summary('loss')
+val_loss = model.get_validation_summary('loss')
 ```
 
-If your training job has finished and existed, but another visualize program wants retrieving summary with 'readScalar'(`read_scalar` in python) API. 
+
+If your training job has finished and existed, but another visualize program wants retrieving summary with `readScalar`(`read_scalar` in python) API. 
 You can re-create the TrainingSummary and ValidationSummary with the same `logDir` and `appName` in your training job. 
 
 ---
 
-## **Visualizing training with TensorBoard**
+* **Visualizing training with TensorBoard**
 With the summary info generated, we can then use [TensorBoard](https://pypi.python.org/pypi/tensorboard) to visualize the behaviors of the BigDL program.  
 
 * **Installing TensorBoard**
