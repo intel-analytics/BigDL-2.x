@@ -224,8 +224,9 @@ with variable_creator_scope():
         variables = []
         grads = []
         for (grad, var) in grads_vars:
-            variables.append(var)
-            grads.append(grad)
+            if grad is not None:
+                variables.append(var)
+                grads.append(grad)
 
         all_required_inputs = _find_placeholders([loss])
         dataset = tf.get_collection(all_required_inputs[0].name)[0]
@@ -327,7 +328,9 @@ with variable_creator_scope():
         if isinstance(koptim_method, TFOptimizer):
             koptim_method = koptim_method.optimizer
 
-        if isinstance(koptim_method, koptimizers.Optimizer):
+        if isinstance(koptim_method, boptimizer.OptimMethod):
+            return koptim_method
+        elif isinstance(koptim_method, koptimizers.Optimizer):
             lr = float(K.eval(koptim_method.lr))
             decay = float(K.eval(koptim_method.decay))
             if isinstance(koptim_method, koptimizers.Adagrad):
