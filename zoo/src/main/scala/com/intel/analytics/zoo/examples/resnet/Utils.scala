@@ -30,6 +30,7 @@ import com.intel.analytics.zoo.feature.pmem.{DRAM, MemoryType}
 import com.intel.analytics.zoo.pipeline.api.keras.layers.utils.EngineRef
 import org.apache.hadoop.io.Text
 import org.apache.spark.SparkContext
+import org.apache.spark.rdd.RDD
 import scopt.OptionParser
 
 object Utils {
@@ -124,8 +125,7 @@ object Utils {
     }
   }
 
-  def readFromSeqFiles(
-                        url: String, sc: SparkContext, classNum: Int) = {
+  def readFromSeqFiles(url: String, sc: SparkContext, classNum: Int): RDD[ByteRecord] = {
     val nodeNumber = EngineRef.getNodeNumber()
     val coreNumber = EngineRef.getCoreNumber()
     val rawData = sc.sequenceFile(url, classOf[Text], classOf[Text],
@@ -149,7 +149,7 @@ object Utils {
   }
 
   def loadImageNetTrainDataSet(path: String, sc: SparkContext, imageSize: Int, batchSize: Int,
-                       classNum: Int=1000, memoryType: MemoryType =DRAM)
+                       classNum: Int = 1000, memoryType: MemoryType = DRAM)
   : FeatureSet[MiniBatch[Float]] = {
     val rawData = readFromSeqFiles(path, sc, classNum)
       .map(byteRecordToImageFeature(_))
