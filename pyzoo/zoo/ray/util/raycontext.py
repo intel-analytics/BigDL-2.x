@@ -104,7 +104,7 @@ class RayServiceFuncGenerator(object):
         self.ray_exec = self._get_ray_exec()
         self.object_store_memory = object_store_memory
         self.waiting_time_sec = waitting_time_sec
-        self.extra_params=extra_params
+        self.extra_params = extra_params
         self.verbose = verbose
         self.labels = """--resources='{"trainer": %s, "ps": %s }' """ % (1, 1)
 
