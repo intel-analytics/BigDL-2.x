@@ -34,8 +34,6 @@ class SparseEmbeddingSpec extends ZooSpecHelper {
     val input = Tensor.sparse(Array(indices1, indices2), values, Array(3, 4))
 
     val blayer = LookupTableSparse[Float](10, 4, "sum")
-
-    val o = blayer.forward(input)
     val zlayer = SparseEmbedding[Float](inputDim = 10, outputDim = 4,
       combiner = "sum", inputShape = Shape(10))
     zlayer.build(Shape(-1, 10))
