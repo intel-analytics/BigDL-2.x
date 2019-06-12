@@ -18,9 +18,11 @@ package com.intel.analytics.zoo.models.recommendation
 
 import com.intel.analytics.bigdl.dataset.Sample
 import com.intel.analytics.bigdl.tensor.Tensor
-import com.intel.analytics.bigdl.utils.T
+import com.intel.analytics.bigdl.utils.{Shape, T}
 import com.intel.analytics.zoo.common.NNContext
+import com.intel.analytics.zoo.models.anomalydetection.AnomalyDetector
 import com.intel.analytics.zoo.pipeline.api.keras.ZooSpecHelper
+import com.intel.analytics.zoo.pipeline.api.keras.serializer.ModuleSerializationTest
 import org.apache.log4j.{Level, Logger}
 import org.apache.spark.rdd.RDD
 import org.apache.spark.sql.{DataFrame, SQLContext}
@@ -144,6 +146,18 @@ class SessionRecommenderSpec extends ZooSpecHelper {
     model.compile(optimizer = "rmsprop", loss = "sparse_categorical_crossentropy")
     model.fit(data1, nbEpoch = 1)
   }
-
 }
 
+
+class SessionReommenderSerialTest extends ModuleSerializationTest {
+  override def test(): Unit = {
+    val ran = new Random(42L)
+    val itemCount = 100
+    val sessionLength = 10
+    val model = SessionRecommender[Float](100, 10, includeHistory = false)
+    val items: Seq[Float] = for (i <- 1 to sessionLength) yield
+      ran.nextInt(itemCount - 1).toFloat + 1
+    val data = Tensor(items.toArray, Array(sessionLength)).resize(1, sessionLength)
+    ZooSpecHelper.testZooModelLoadSave(model, data, SessionRecommender.loadModel[Float])
+  }
+}
