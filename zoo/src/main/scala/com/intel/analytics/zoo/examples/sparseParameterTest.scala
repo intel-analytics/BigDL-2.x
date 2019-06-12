@@ -14,8 +14,8 @@ object sparseParameterTest {
     val output1 = 0.0f
     val output2 = 1.0f
     var plusOne = 0.0f
-    val nodeNumber = 4
-    val coreNumber = 4
+    val nodeNumber = args(0).toInt
+    val coreNumber = args(1).toInt
     val batchSize = coreNumber
 
     val prepareData: Int => (MiniBatch[Float]) = index => {
@@ -63,7 +63,8 @@ object sparseParameterTest {
     optimizer.setSparseParameterProcessor(new sudoSparseSGD[Float]())
     optimizer.optimize()
     val (sparseW, sparseG) = layer.getSparseParameters()
-
-    val t = 0
+    println("oriW: " + oriW)
+    println("sparseW: " + sparseW)
+    println("sparseG: " + sparseG)
   }
 }
