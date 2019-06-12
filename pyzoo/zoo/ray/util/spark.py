@@ -98,6 +98,18 @@ class SparkRunner():
                 "Cannot detect current python location. Please set it manually by python_location")
         return process_info.out
 
+    def _gather_essential_jars(self):
+        from bigdl.util.engine import get_bigdl_classpath
+        from zoo.util.engine import get_analytics_zoo_classpath
+        bigdl_classpath = get_bigdl_classpath()
+        zoo_classpath = get_analytics_zoo_classpath()
+        assert bigdl_classpath, "Cannot find bigdl classpath"
+        assert zoo_classpath, "Cannot find Analytics-Zoo classpath"
+        if bigdl_classpath == zoo_classpath:
+            return [zoo_classpath]
+        else:
+            return [zoo_classpath, bigdl_classpath]
+
     def init_spark_on_local(self, cores, conf=None, python_location=None):
         print("Start to getOrCreate SparkContext")
         os.environ['PYSPARK_PYTHON'] =\
@@ -131,23 +143,17 @@ class SparkRunner():
         os.environ['PYSPARK_PYTHON'] = "python_env/bin/python"
 
         def _yarn_opt(jars):
-            from zoo.util.engine import get_analytics_zoo_classpath
             command = " --archives {}#python_env --num-executors {} " \
                       " --executor-cores {} --executor-memory {}".\
                 format(penv_archive, num_executor, executor_cores, executor_memory)
-            path_to_zoo_jar = get_analytics_zoo_classpath()
+            jars_list = self._gather_essential_jars()
+            if jars:
+                jars_list.append(jars)
 
             if extra_python_lib:
                 command = command + " --py-files {} ".format(extra_python_lib)
 
-            if jars:
-                command = command + " --jars {},{} ".format(jars, path_to_zoo_jar)
-            elif path_to_zoo_jar:
-                command = command + " --jars {} ".format(path_to_zoo_jar)
-
-            if path_to_zoo_jar:
-                command = command + " --conf spark.driver.extraClassPath={} ".\
-                    format(get_analytics_zoo_classpath())
+            command = command + " --jars {}".format(",".join(jars_list))
             return command
 
         def _submit_opt():
@@ -159,7 +165,7 @@ class SparkRunner():
                 conf["spark.executor.memoryOverhead"] = extra_executor_memory_for_ray
             if spark_yarn_archive:
                 conf.insert("spark.yarn.archive", spark_yarn_archive)
-            return " --master yarn --deploy-mode client" + _yarn_opt(jars) + 'pyspark-shell', conf
+            return " --master yarn --deploy-mode client" + _yarn_opt(jars) + ' pyspark-shell ', conf
 
         pack_env = False
         assert penv_archive or conda_name, \
