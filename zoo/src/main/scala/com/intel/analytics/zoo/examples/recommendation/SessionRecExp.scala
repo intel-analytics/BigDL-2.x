@@ -39,8 +39,8 @@ case class SessionParams(sessionLength: Int = 5,
                          embedOutDim: Int = 100,
                          learningRate: Double = 3e-3,
                          learningRateDecay: Double = 5e-5,
-                         input: String = "/Users/guoqiong/intelWork/projects/officeDepot/sampleData/atcHistory.json",
-                         outputDir: String = "./model/bigDLmodel")
+                         input: String = " ",
+                         outputDir: String = " ")
 
 object SessionRecExp {
 
@@ -49,11 +49,13 @@ object SessionRecExp {
     val defaultParams = SessionParams()
 
     val parser = new OptionParser[SessionParams]("SessionRecExample") {
-      opt[String]("inputDir")
-        .text(s"inputDir")
+      opt[String]("input")
+        .text(s"input")
+        .required()
         .action((x, c) => c.copy(input = x))
       opt[String]("outputDir")
-        .text(s"inputDir")
+        .text(s"outputDir")
+        .required()
         .action((x, c) => c.copy(outputDir = x))
       opt[Int]('b', "batchSize")
         .text(s"batchSize")
