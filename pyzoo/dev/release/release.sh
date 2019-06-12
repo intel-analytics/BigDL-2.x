@@ -24,16 +24,23 @@ echo $ANALYTICS_ZOO_HOME
 ANALYTICS_ZOO_PYTHON_DIR="$(cd ${RUN_SCRIPT_DIR}/../../../pyzoo; pwd)"
 echo $ANALYTICS_ZOO_PYTHON_DIR
 
-if (( $# < 1)); then
-  echo "Bad parameters. Usage example: bash release.sh linux"
+if (( $# < 2)); then
+  echo "Bad parameters"
+  echo "Usage example: bash release.sh linux default"
+  echo "Usage example: bash release.sh linux 0.6.0.dev0"
   echo "If needed, you can also add other profiles such as: -Dspark.version=2.4.3 -Dbigdl.artifactId=bigdl-SPARK_2.4 -P spark_2.x"
   exit -1
 fi
 
 platform=$1
-profiles=${*:2}
-version=`cat $ANALYTICS_ZOO_PYTHON_DIR/zoo/__init__.py | grep "__version__" | awk '{print $NF}' | tr -d '"'`
+version=$2
+profiles=${*:3}
 
+if [ "${version}" == "default" ]; then
+    version=`cat $ANALYTICS_ZOO_PYTHON_DIR/zoo/__init__.py | grep "__version__" | awk '{print $NF}' | tr -d '"'`
+fi
+
+echo "Using version: ${version}"
 
 cd ${ANALYTICS_ZOO_HOME}
 if [ "$platform" ==  "mac" ]; then
