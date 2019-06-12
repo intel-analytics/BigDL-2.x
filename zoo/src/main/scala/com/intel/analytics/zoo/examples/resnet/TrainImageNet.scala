@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 The BigDL Authors.
+ * Copyright 2018 Analytics Zoo Authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,7 +27,7 @@ import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric._
 import com.intel.analytics.bigdl.utils._
 import com.intel.analytics.zoo.common.NNContext
 import com.intel.analytics.zoo.examples.resnet.Utils._
-import com.intel.analytics.zoo.feature.pmem.{DIRECT, DRAM, PMEM}
+import com.intel.analytics.zoo.feature.pmem.{DIRECT, DRAM, MemoryType, PMEM}
 import com.intel.analytics.zoo.pipeline.api.keras.layers.utils.EngineRef
 import com.intel.analytics.zoo.pipeline.estimator.Estimator
 import org.apache.log4j.{Level, Logger}
@@ -62,25 +62,12 @@ object TrainImageNet {
       val (imageSize, dataSetType, maxEpoch) =
         (224, DatasetType.ImageNet, param.nepochs)
 
-      val memType = param.memoryType match {
-        case "dram" =>
-          DRAM
-        case "pmem" =>
-          logger.info("~~~~~~~ Caching with AEP ~~~~~~~")
-          PMEM
-        case "direct" =>
-          logger.info("~~~~~~~ Caching with DIRECT ~~~~~~~")
-          DIRECT
-        case _ =>
-          throw new IllegalArgumentException(
-            s"MemoryType: ${param.memoryType} is not supported at the moment")
-      }
 
       val trainDataSet = loadImageNetTrainDataSet(param.folder + "/train", sc, imageSize,
-        batchSize, memoryType = memType)
+        batchSize, memoryType = MemoryType.fromString(param.memoryType))
 
       val validateDataSet = loadImageNetValDataSet(param.folder + "/val", sc, imageSize,
-        batchSize, memoryType = memType)
+        batchSize)
 
       val shortcut: ShortcutType = ShortcutType.B
 
