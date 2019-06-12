@@ -259,18 +259,22 @@ object Utils {
         .getAs[mutable.WrappedArray[java.lang.Float]]("purchase_history").array.map(_.toFloat)
       val mlpTensor = Tensor(mlpFeature, Array(historyLength))
       Sample[Float](Array(mlpTensor, rnnTensor), Array(label))
-    } else
+    }
+    else {
       Sample[Float](Array(rnnTensor), Array(label))
+    }
     sample
   }
 
-  def prePadding(maxLength: Int):mutable.WrappedArray[java.lang.Float] => Array[Float] = {
+  def prePadding(maxLength: Int): mutable.WrappedArray[java.lang.Float] => Array[Float] = {
 
     (seq: mutable.WrappedArray[java.lang.Float]) => {
-      if (seq.array.size < maxLength)
+      if (seq.array.size < maxLength) {
         seq.array.map(_.toFloat).reverse.padTo(maxLength, 0f).reverse
-      else
+      }
+      else {
         seq.array.map(_.toFloat).takeRight(maxLength)
+      }
     }
   }
 
