@@ -83,7 +83,8 @@ object SessionRecExp {
     println(itemCount)
     println(itemStart)
 
-    val trainSample = assemblyFeature(sessionDF, params.sessionLength, includeHistory = true, params.historyLength)
+    val trainSample =
+      assemblyFeature(sessionDF, params.sessionLength, includeHistory = true, params.historyLength)
     val Array(trainRdd, testRdd) = trainSample.randomSplit(Array(0.8, 0.2), 100)
     testRdd.cache()
 
@@ -118,14 +119,15 @@ object SessionRecExp {
 
     val recommendations = model.recommendForSession(testRdd, 5, false)
 
-    recommendations.take(20).map( x=> println(x.toList))
+    recommendations.take(20).map( x => println(x.toList))
 
   }
 
   def loadPublicData(sqlContext: SQLContext, params: SessionParams): (DataFrame, Int, Int) = {
 
     val toFloat = {
-      val func: ((mutable.WrappedArray[Double]) => mutable.WrappedArray[Float]) = (seq => seq.map(_.toFloat))
+      val func: ((mutable.WrappedArray[Double]) => mutable.WrappedArray[Float]) =
+        (seq => seq.map(_.toFloat))
       udf(func)
     }
 
@@ -135,12 +137,17 @@ object SessionRecExp {
       .withColumn("purchase_history", toFloat(col("PURCH_HIST")))
       .select("session", "purchase_history")
 
-    val atcMax = sessionDF.rdd.map(_.getAs[mutable.WrappedArray[Float]]("session").max).collect().max.toInt
-    val purMax = sessionDF.rdd.map(_.getAs[mutable.WrappedArray[Float]]("purchase_history").max).collect().max.toInt
+    val atcMax = sessionDF.rdd
+      .map(_.getAs[mutable.WrappedArray[Float]]("session").max).collect().max.toInt
+    val purMax = sessionDF.rdd
+      .map(_.getAs[mutable.WrappedArray[Float]]("purchase_history").max)
+      .collect().max.toInt
     val itemCount = Math.max(atcMax, purMax)
 
-    val atcMin = sessionDF.rdd.map(_.getAs[mutable.WrappedArray[Float]]("session").min).collect().min.toInt
-    val purMin = sessionDF.rdd.map(_.getAs[mutable.WrappedArray[Float]]("purchase_history").min).collect().min.toInt
+    val atcMin = sessionDF.rdd
+      .map(_.getAs[mutable.WrappedArray[Float]]("session").min).collect().min.toInt
+    val purMin = sessionDF.rdd
+      .map(_.getAs[mutable.WrappedArray[Float]]("purchase_history").min).collect().min.toInt
     val itemStart = Math.max(atcMin, purMin)
 
     (sessionDF, itemCount, itemStart)

@@ -53,7 +53,8 @@ class SessionRecommenderSpec extends ZooSpecHelper {
     val model = SessionRecommender[Float](itemCount, sessionLength, includeHistory = false)
     val ran = new Random(42L)
     val data = (1 to 100).map { x =>
-      val items: Seq[Float] = for (i <- 1 to sessionLength) yield ran.nextInt(itemCount - 1).toFloat + 1
+      val items: Seq[Float] = for (i <- 1 to sessionLength) yield
+        ran.nextInt(itemCount - 1).toFloat + 1
       Tensor(items.toArray, Array(sessionLength)).resize(1, sessionLength)
     }
     data.map { input =>
@@ -70,8 +71,10 @@ class SessionRecommenderSpec extends ZooSpecHelper {
       includeHistory = true, historyLength = historyLength)
     val ran = new Random(42L)
     val data = (1 to 100).map { x =>
-      val items1: Seq[Float] = for (i <- 1 to sessionLength) yield ran.nextInt(itemCount - 1).toFloat + 1
-      val items2: Seq[Float] = for (i <- 1 to historyLength) yield ran.nextInt(itemCount - 1).toFloat + 1
+      val items1: Seq[Float] = for (i <- 1 to sessionLength) yield
+        ran.nextInt(itemCount - 1).toFloat + 1
+      val items2: Seq[Float] = for (i <- 1 to historyLength) yield
+        ran.nextInt(itemCount - 1).toFloat + 1
       val input1 = Tensor(items1.toArray, Array(sessionLength)).resize(1, sessionLength)
       val input2 = Tensor(items2.toArray, Array(historyLength)).resize(1, historyLength)
       T(input1, input2)

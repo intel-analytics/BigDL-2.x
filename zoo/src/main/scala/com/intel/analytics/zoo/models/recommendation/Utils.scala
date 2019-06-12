@@ -250,11 +250,13 @@ object Utils {
                   includeHistory: Boolean,
                   historyLength: Int): Sample[Float] = {
     val label = Tensor[Float](T(r.getAs[Float]("label")))
-    val rnnFeature: Array[Float] = r.getAs[mutable.WrappedArray[java.lang.Float]]("session").array.map(_.toFloat)
+    val rnnFeature: Array[Float] = r
+      .getAs[mutable.WrappedArray[java.lang.Float]]("session").array.map(_.toFloat)
     val rnnTensor = Tensor(rnnFeature, Array(sessionLength))
 
     val sample = if (includeHistory) {
-      val mlpFeature: Array[Float] = r.getAs[mutable.WrappedArray[java.lang.Float]]("purchase_history").array.map(_.toFloat)
+      val mlpFeature: Array[Float] = r
+        .getAs[mutable.WrappedArray[java.lang.Float]]("purchase_history").array.map(_.toFloat)
       val mlpTensor = Tensor(mlpFeature, Array(historyLength))
       Sample[Float](Array(mlpTensor, rnnTensor), Array(label))
     } else
@@ -262,10 +264,9 @@ object Utils {
     sample
   }
 
-  def prePadding(maxLength: Int):mutable.WrappedArray[java.lang.Float]=> Array[Float] = {
+  def prePadding(maxLength: Int):mutable.WrappedArray[java.lang.Float] => Array[Float] = {
 
     (seq: mutable.WrappedArray[java.lang.Float]) => {
-
       if (seq.array.size < maxLength)
         seq.array.map(_.toFloat).reverse.padTo(maxLength, 0f).reverse
       else

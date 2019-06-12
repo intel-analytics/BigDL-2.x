@@ -43,20 +43,20 @@ import scala.reflect.ClassTag
  * @param historyLength   The max number of items in the sequence of historical purchase
  */
 class SessionRecommender[T: ClassTag](
-                                       val itemCount: Int,
-                                       val itemEmbed: Int = 100,
-                                       val rnnHiddenLayers: Array[Int] = Array(40, 20),
-                                       val sessionLength: Int = 5,
-                                       val includeHistory: Boolean = true,
-                                       val mlpHiddenLayers: Array[Int] = Array(40, 20),
-                                       val historyLength: Int = 10
-                                     )(implicit ev: TensorNumeric[T]) extends Recommender[T] {
+      val itemCount: Int,
+      val itemEmbed: Int = 100,
+      val rnnHiddenLayers: Array[Int] = Array(40, 20),
+      val sessionLength: Int = 5,
+      val includeHistory: Boolean = true,
+      val mlpHiddenLayers: Array[Int] = Array(40, 20),
+      val historyLength: Int = 10)(implicit ev: TensorNumeric[T]) extends Recommender[T] {
 
   override def buildModel(): AbstractModule[Tensor[T], Tensor[T], T] = {
     val inputRnn: ModuleNode[T] = Input(inputShape = Shape(sessionLength))
 
     // item embedding layer
-    val sessionTable = Embedding[T](itemCount + 1, itemEmbed, "normal", inputLength = sessionLength).inputs(inputRnn)
+    val sessionTable = Embedding[T](
+      itemCount + 1, itemEmbed, "normal", inputLength = sessionLength).inputs(inputRnn)
 
     // rnn part
     var gru = GRU[T](rnnHiddenLayers(0), returnSequences = true).inputs(sessionTable)
@@ -69,7 +69,8 @@ class SessionRecommender[T: ClassTag](
     // mlp part
     if (includeHistory) {
       val inputMlp: ModuleNode[T] = Input(inputShape = Shape(historyLength))
-      val hisTable = Embedding[T](itemCount + 1, itemEmbed, inputLength = historyLength).inputs(inputMlp)
+      val hisTable = Embedding[T](itemCount + 1, itemEmbed, inputLength = historyLength)
+        .inputs(inputMlp)
       val sum = new KerasLayerWrapper[T](Sum[T](2)).inputs(hisTable)
       var mlp = Dense(mlpHiddenLayers(0), activation = "relu").inputs(sum)
       for (i <- 1 until mlpHiddenLayers.length) {
@@ -87,7 +88,9 @@ class SessionRecommender[T: ClassTag](
     }
   }
 
-  private def topk(_output: Tensor[T], maxItems: Int, zeroBasedLabel: Boolean = true): Array[(Int, Float)] = {
+  private def topk(_output: Tensor[T],
+                   maxItems: Int,
+                   zeroBasedLabel: Boolean = true): Array[(Int, Float)] = {
 
     val results: (Tensor[T], Tensor[T]) = _output.topk(maxItems, 1, false)
 
@@ -126,7 +129,8 @@ class SessionRecommender[T: ClassTag](
   }
 
   override def predictUserItemPair(featureRdd: RDD[UserItemFeature[T]]): RDD[UserItemPrediction] = {
-    throw new UnsupportedOperationException(s"predictUserItemPair: Unsupported for SessionRecommender")
+    throw new UnsupportedOperationException(
+      s"predictUserItemPair: Unsupported for SessionRecommender")
   }
 
 }
@@ -137,21 +141,20 @@ object SessionRecommender {
    *
    * @param itemCount       The number of distinct items. Positive integer.
    * @param itemEmbed       The output size of embedding layer. Positive integer.
-   * @param mlpHiddenLayers Units of hidden layers for the mlp model. Array of positive integers. Default is Array(20, 20, 20).
+   * @param mlpHiddenLayers Units of hidden layers for the mlp model. Array of positive integers.
    * @param sessionLength       The max number of items in the sequence of a session
-   * @param rnnHiddenLayers Units of hidden layers for the mlp model. Array of positive integers. Default is Array(20, 20).
+   * @param rnnHiddenLayers Units of hidden layers for the mlp model. Array of positive integers.
    * @param includeHistory  Whether to include purchase history. Boolean. Default is true.
    * @param historyLength       The max number of items in the sequence of historical purchase
    */
   def apply[@specialized(Float, Double) T: ClassTag](
-                                                      itemCount: Int,
-                                                      itemEmbed: Int = 100,
-                                                      rnnHiddenLayers: Array[Int] = Array(40, 20),
-                                                      sessionLength: Int = 5,
-                                                      includeHistory: Boolean = true,
-                                                      mlpHiddenLayers: Array[Int] = Array(40, 20),
-                                                      historyLength: Int = 10)
-                                                    (implicit ev: TensorNumeric[T]): SessionRecommender[T] = {
+      itemCount: Int,
+      itemEmbed: Int = 100,
+      rnnHiddenLayers: Array[Int] = Array(40, 20),
+      sessionLength: Int = 5,
+      includeHistory: Boolean = true,
+      mlpHiddenLayers: Array[Int] = Array(40, 20),
+      historyLength: Int = 10)(implicit ev: TensorNumeric[T]): SessionRecommender[T] = {
     new SessionRecommender[T](
       itemCount,
       itemEmbed,
@@ -174,9 +177,8 @@ object SessionRecommender {
    * @tparam T Numeric type of parameter(e.g. weight, bias). Only support float/double now.
    */
   def loadModel[T: ClassTag](
-                              path: String,
-                              weightPath: String = null
-                            )(implicit ev: TensorNumeric[T]): SessionRecommender[T] = {
+      path: String,
+      weightPath: String = null)(implicit ev: TensorNumeric[T]): SessionRecommender[T] = {
     ZooModel.loadModel(path, weightPath).asInstanceOf[SessionRecommender[T]]
   }
 }
