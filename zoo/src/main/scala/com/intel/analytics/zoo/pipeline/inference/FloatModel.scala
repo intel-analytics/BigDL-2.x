@@ -19,14 +19,9 @@ package com.intel.analytics.zoo.pipeline.inference
 import java.io._
 import java.util.{List => JList}
 
-import com.intel.analytics.bigdl.Module
 import com.intel.analytics.bigdl.nn.abstractnn.{AbstractModule, Activity}
 import com.intel.analytics.bigdl.tensor.Tensor
-import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric
 import com.intel.analytics.bigdl.utils.Table
-
-import scala.collection.mutable.ArrayBuffer
-import scala.reflect.ClassTag
 
 class FloatModel(var model: AbstractModule[Activity, Activity, Float],
                  var metaModel: AbstractModule[Activity, Activity, Float],
@@ -51,16 +46,8 @@ class FloatModel(var model: AbstractModule[Activity, Activity, Float],
     outputs
   }
 
-  override def predictInt8(inputs: JList[JList[JTensor]]): JList[JList[JTensor]] = {
-    throw new RuntimeException(s"$model does not support predictInt8")
-  }
-
   override def predict(inputActivity: Activity): Activity = {
     model.forward(inputActivity)
-  }
-
-  override def predictInt8(inputActivity: Activity): Activity = {
-    throw new RuntimeException(s"$model does not support predictInt8")
   }
 
   override def copy(num: Int): Array[AbstractModel] = {

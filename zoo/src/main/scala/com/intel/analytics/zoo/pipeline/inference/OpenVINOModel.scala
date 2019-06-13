@@ -27,12 +27,16 @@ class OpenVINOModel(var executableNetworkReference: Long = -1,
   extends AbstractModel with InferenceSupportive with Serializable {
 
   override def predict(inputs: JList[JList[JTensor]]): JList[JList[JTensor]] = {
-    // Avoid load int8 model and predict with float
-    if (isInt8) return predictInt8(inputs)
     val outputs = new ArrayList[JList[JTensor]]()
     inputs.asScala.map(input => {
       val tensor = input.get(0)
-      val output = supportive.predict(executableNetworkReference, tensor.getData, tensor.getShape)
+      val output = if (isInt8) {
+        supportive.predictInt8(executableNetworkReference,
+          tensor.getData, tensor.getShape)
+      } else {
+        supportive.predict(executableNetworkReference,
+          tensor.getData, tensor.getShape)
+      }
       outputs.add(Arrays.asList({
         output
       }))
@@ -41,8 +45,6 @@ class OpenVINOModel(var executableNetworkReference: Long = -1,
   }
 
   override def predict(inputActivity: Activity): Activity = {
-    // Avoid load int8 model and predict with float
-    if (isInt8) return predictInt8(inputActivity)
     val (inputList, batchSize) = inputActivity.isTable match {
       case true =>
         val inputTable = inputActivity.toTable
@@ -54,38 +56,6 @@ class OpenVINOModel(var executableNetworkReference: Long = -1,
         (transferBatchTensorToJListOfJListOfJTensor(inputTensor, batchSize), batchSize)
     }
     val outputs = predict(inputList)
-    transferListOfActivityToActivityOfBatch(outputs, batchSize)
-  }
-
-  override def predictInt8(inputs: JList[JList[JTensor]]): JList[JList[JTensor]] = {
-    // Avoid load float model and predict with int8
-    if (!isInt8) return predict(inputs)
-    val outputs = new ArrayList[JList[JTensor]]()
-    inputs.asScala.map(input => {
-      val tensor = input.get(0)
-      val output = supportive.predictInt8(executableNetworkReference,
-        tensor.getData, tensor.getShape)
-      outputs.add(Arrays.asList({
-        output
-      }))
-    })
-    outputs
-  }
-
-  override def predictInt8(inputActivity: Activity): Activity = {
-    // Avoid load float model and predict with int8
-    if (!isInt8) return predict(inputActivity)
-    val (inputList, batchSize) = inputActivity.isTable match {
-      case true =>
-        val inputTable = inputActivity.toTable
-        val batchSize = inputTable.length()
-        (transferBatchTableToJListOfJListOfJTensor(inputTable, batchSize), batchSize)
-      case false =>
-        val inputTensor = inputActivity.toTensor[Float]
-        val batchSize = inputTensor.size(1)
-        (transferBatchTensorToJListOfJListOfJTensor(inputTensor, batchSize), batchSize)
-    }
-    val outputs = predictInt8(inputList)
     transferListOfActivityToActivityOfBatch(outputs, batchSize)
   }
 

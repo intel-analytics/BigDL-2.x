@@ -16,12 +16,13 @@
 
 package com.intel.analytics.zoo.pipeline.inference
 
+import java.util.{List => JList}
+
 import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric
 import com.intel.analytics.zoo.common.PythonZoo
-import java.util.{List => JList, ArrayList}
 
-import scala.reflect.ClassTag
 import scala.collection.JavaConverters._
+import scala.reflect.ClassTag
 
 object PythonInferenceModel {
 
@@ -143,15 +144,6 @@ class PythonInferenceModel[T: ClassTag](implicit ev: TensorNumeric[T]) extends P
       inputIsTable: Boolean): JList[Object] = {
     val inputActivity = jTensorsToActivity(inputs, inputIsTable)
     val outputActivity = model.doPredict(inputActivity)
-    activityToList(outputActivity)
-  }
-
-  def inferenceModelPredictInt8(
-                             model: InferenceModel,
-                             inputs: JList[com.intel.analytics.bigdl.python.api.JTensor],
-                             inputIsTable: Boolean): JList[Object] = {
-    val inputActivity = jTensorsToActivity(inputs, inputIsTable)
-    val outputActivity = model.doPredictInt8(inputActivity)
     activityToList(outputActivity)
   }
 }

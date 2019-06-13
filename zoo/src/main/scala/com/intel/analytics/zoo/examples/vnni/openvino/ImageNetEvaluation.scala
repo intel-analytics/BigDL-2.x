@@ -105,13 +105,8 @@ object ImageNetEvaluation {
       logger.debug("Begin Prediction")
       val start = System.nanoTime()
       val results = batched.toDistributed().data(false).map {miniBatch =>
-        val predict = if (param.isInt8) {
-          model.doPredictInt8(miniBatch
-            .getInput.toTensor.addSingletonDimension())
-        } else {
-          model.doPredict(miniBatch
-            .getInput.toTensor.addSingletonDimension())
-        }
+        val predict = model.doPredict(miniBatch
+          .getInput.toTensor.addSingletonDimension())
         val localMethod = validations.value
         localMethod.map(valMethod => {
           valMethod(predict.toTensor.apply(1), miniBatch.getTarget())
