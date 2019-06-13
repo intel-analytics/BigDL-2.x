@@ -33,14 +33,8 @@ if (( $# < 2)); then
 fi
 
 platform=$1
-version=$2
+effect_version=$2
 profiles=${*:3}
-
-if [ "${version}" == "default" ]; then
-    version=`cat $ANALYTICS_ZOO_PYTHON_DIR/zoo/__init__.py | grep "__version__" | awk '{print $NF}' | tr -d '"'`
-fi
-
-echo "Using version: ${version}"
 
 cd ${ANALYTICS_ZOO_HOME}
 if [ "$platform" ==  "mac" ]; then
@@ -56,7 +50,7 @@ else
 fi
 
 build_command="${ANALYTICS_ZOO_HOME}/make-dist.sh ${dist_profile}"
-$build_command
+#$build_command
 
 cd $ANALYTICS_ZOO_PYTHON_DIR
 sdist_command="python setup.py sdist"
@@ -81,6 +75,15 @@ if [ -d "${ANALYTICS_ZOO_HOME}/pyzoo/analytics_zoo.egg-info" ]; then
    rm -r ${ANALYTICS_ZOO_HOME}/pyzoo/analytics_zoo.egg-info
 fi
 
-upload_command="twine upload dist/analytics_zoo-${version}-py2.py3-none-${verbose_pname}.whl"
+default_version=`cat $ANALYTICS_ZOO_PYTHON_DIR/zoo/__init__.py | grep "__version__" | awk '{print $NF}' | tr -d '"'`
+if [ "${effect_version}" == "default" ]; then
+    effect_version=${default_version}
+else
+    # setup.py always use the default version, so we need to rename the file here.
+    echo "Using version: ${effect_version}, not the default version: ${default_version}"
+    mv dist/analytics_zoo-${default_version}-py2.py3-none-${verbose_pname}.whl dist/analytics_zoo-${effect_version}-py2.py3-none-${verbose_pname}.whl
+fi
+
+upload_command="twine upload dist/analytics_zoo-${effect_version}-py2.py3-none-${verbose_pname}.whl"
 echo "Command for uploading to pypi: $upload_command"
 $upload_command
