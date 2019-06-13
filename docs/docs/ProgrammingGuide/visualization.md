@@ -96,13 +96,13 @@ After that, navigate to the TensorBoard dashboard using a browser. You can find 
 
 If the logdir is a HDFS folder, you need to configure the HDFS environment before running `tensorboard`.  
 Prerequisites:
-1. Java >= 1.8, set env JAVA_HOME 
-2. Hadoop >= 2.7, set env HADOOP_HOME
+1. JDK >= 1.8, Orcale JDK recommended 
+2. Hadoop >= 2.7
 
 Set env before running `tensorboard`:
 ```
-export JAVA_HOME=
-export HADOOP_HOME=
+export JAVA_HOME=[your java home path]
+export HADOOP_HOME=[your hadoop home path]
 source ${HADOOP_HOME}/libexec/hadoop-config.sh
 export LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:${JAVA_HOME}/jre/lib/amd64/server
 ```
