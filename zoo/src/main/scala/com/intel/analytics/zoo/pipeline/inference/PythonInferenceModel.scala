@@ -16,13 +16,12 @@
 
 package com.intel.analytics.zoo.pipeline.inference
 
-import java.util.{List => JList}
-
 import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric
 import com.intel.analytics.zoo.common.PythonZoo
+import java.util.{List => JList}
 
-import scala.collection.JavaConverters._
 import scala.reflect.ClassTag
+import scala.collection.JavaConverters._
 
 object PythonInferenceModel {
 
