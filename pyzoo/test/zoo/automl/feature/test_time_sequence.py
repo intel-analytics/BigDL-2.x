@@ -27,9 +27,13 @@ class TestTimeSequenceFeature:
 
     def test_get_feature_list(self):
         dates = pd.date_range('1/1/2019', periods=8)
-        values = np.random.randn(8)
-        df = pd.DataFrame({"datetime": dates, "values": values})
-        feat = TimeSequenceFeatureTransformer(dt_col="datetime", target_col="values", drop_missing=True)
+        data = np.random.randn(8, 3)
+        df = pd.DataFrame({"datetime": dates, "values": data[:, 0],
+                           "A": data[:, 1], "B": data[:, 2]})
+        feat = TimeSequenceFeatureTransformer(dt_col="datetime",
+                                              target_col="values",
+                                              extra_features_col=["A", "B"],
+                                              drop_missing=True)
         feature_list = feat.get_feature_list(df)
         assert set(feature_list) == {'IS_AWAKE(datetime)',
                                      'IS_BUSY_HOURS(datetime)',
@@ -37,20 +41,23 @@ class TestTimeSequenceFeature:
                                      'DAY(datetime)',
                                      'IS_WEEKEND(datetime)',
                                      'WEEKDAY(datetime)',
-                                     'MONTH(datetime)'}
+                                     'MONTH(datetime)',
+                                     'A',
+                                     'B'}
 
     def test_fit_transform(self):
         sample_num = 8
         past_seq_len = 2
         dates = pd.date_range('1/1/2019', periods=sample_num)
-        values = np.random.randn(sample_num)
-        df = pd.DataFrame({"datetime": dates, "values": values})
-        config = {"selected_features": ['IS_AWAKE(datetime)', 'IS_BUSY_HOURS(datetime)', 'HOUR(datetime)'],
+        data = np.random.randn(sample_num, 3)
+        df = pd.DataFrame({"datetime": dates, "values": data[:, 0],
+                           "A": data[:, 1], "B": data[:, 2]})
+        config = {"selected_features": ['IS_AWAKE(datetime)', 'IS_BUSY_HOURS(datetime)', 'HOUR(datetime)', 'A'],
                   "past_seq_len": past_seq_len}
         feat = TimeSequenceFeatureTransformer(future_seq_len=1, dt_col="datetime",
                                               target_col="values", drop_missing=True)
         x, y = feat.fit_transform(df, **config)
-        assert x.shape == (sample_num-past_seq_len, past_seq_len, 4)
+        assert x.shape == (sample_num-past_seq_len, past_seq_len, len(config["selected_features"]) + 1)
         assert y.shape == (sample_num-past_seq_len, 1)
         assert np.mean(np.concatenate((x[0, :, 0], y[:, 0]), axis=None)) < 1e-5
 
@@ -101,13 +108,15 @@ class TestTimeSequenceFeature:
 
     def test_fit_transform_input_data(self):
         # if there is NaN in data other than datetime, drop the training sample.
-        dates = pd.date_range('1/1/2019', periods=8)
-        values = np.random.randn(8)
+        num_samples = 8
+        dates = pd.date_range('1/1/2019', periods=num_samples)
+        values = np.random.randn(num_samples)
         df = pd.DataFrame({"datetime": dates, "values": values})
         df.loc[2, "values"] = None
+        past_seq_len = 2
 
         config = {"selected_features": ['IS_AWAKE(datetime)', 'IS_BUSY_HOURS(datetime)', 'HOUR(datetime)'],
-                  "past_seq_len": 2}
+                  "past_seq_len": past_seq_len}
         feat = TimeSequenceFeatureTransformer(future_seq_len=1, dt_col="datetime",
                                               target_col="values", drop_missing=True)
 
@@ -115,37 +124,50 @@ class TestTimeSequenceFeature:
         # mask_x = [1, 0, 0, 1, 1, 1]
         # mask_y = [0, 1, 1, 1, 1, 1]
         # mask   = [0, 0, 0, 1, 1, 1]
-        assert x.shape == (3, 2, 4)
+        assert x.shape == (3, past_seq_len, len(config["selected_features"]) + 1)
         assert y.shape == (3, 1)
 
     def test_transform_train_true(self):
-        dates = pd.date_range('1/1/2019', periods=16)
-        values = np.random.randn(16)
-        df = pd.DataFrame({"datetime": dates, "values": values})
+        num_samples = 16
+        dates = pd.date_range('1/1/2019', periods=num_samples)
+        values = np.random.randn(num_samples, 2)
+        df = pd.DataFrame({"datetime": dates, "values": values[:, 0], "feature_1": values[:, 1]})
+        train_sample_num = 10
+        train_df = df[:train_sample_num]
+        val_df = df[train_sample_num:]
+        past_seq_len = 2
 
-        config = {"selected_features": ['IS_AWAKE(datetime)', 'IS_BUSY_HOURS(datetime)', 'HOUR(datetime)'],
-                  "past_seq_len": 2}
+        config = {"selected_features": ['IS_AWAKE(datetime)', 'IS_BUSY_HOURS(datetime)', 'HOUR(datetime)', "feature_1"],
+                  "past_seq_len": past_seq_len}
         feat = TimeSequenceFeatureTransformer(future_seq_len=1, dt_col="datetime",
-                                              target_col="values", drop_missing=True)
+                                              target_col="values",
+                                              extra_features_col="feature_1",
+                                              drop_missing=True)
 
-        feat.fit_transform(df[:10], **config)
-        val_x, val_y = feat.transform(df[10:], is_train=True)
-        assert val_x.shape == (4, 2, 4)
-        assert val_y.shape == (4, 1)
+        feat.fit_transform(train_df, **config)
+        val_x, val_y = feat.transform(val_df, is_train=True)
+        assert val_x.shape == (val_df.shape[0] - past_seq_len, past_seq_len, len(config["selected_features"]) + 1)
+        assert val_y.shape == (val_df.shape[0] - past_seq_len, 1)
 
     def test_transform_train_false(self):
-        dates = pd.date_range('1/1/2019', periods=16)
-        values = np.random.randn(16)
-        df = pd.DataFrame({"datetime": dates, "values": values})
+        num_samples = 16
+        dates = pd.date_range('1/1/2019', periods=num_samples)
+        values = np.random.randn(num_samples, 2)
+        df = pd.DataFrame({"datetime": dates, "values": values[:, 0], "feature_1": values[:, 1]})
+        train_sample_num = 10
+        train_df = df[:train_sample_num]
+        test_df = df[train_sample_num:]
+        past_seq_len = 2
 
-        config = {"selected_features": ['IS_AWAKE(datetime)', 'IS_BUSY_HOURS(datetime)', 'HOUR(datetime)'],
-                  "past_seq_len": 2}
+        config = {"selected_features": ['IS_AWAKE(datetime)', 'IS_BUSY_HOURS(datetime)', 'HOUR(datetime)', "feature_1"],
+                  "past_seq_len": past_seq_len}
         feat = TimeSequenceFeatureTransformer(future_seq_len=1, dt_col="datetime",
-                                              target_col="values", drop_missing=True)
-
-        feat.fit_transform(df[:10], **config)
-        test_x = feat.transform(df[10:], is_train=False)
-        assert test_x.shape == (5, 2, 4)
+                                              target_col="values",
+                                              extra_features_col="feature_1",
+                                              drop_missing=True)
+        feat.fit_transform(train_df, **config)
+        test_x = feat.transform(test_df, is_train=False)
+        assert test_x.shape == (test_df.shape[0] - past_seq_len + 1, past_seq_len, len(config["selected_features"]) + 1)
 
     def test_save_restore(self):
         dates = pd.date_range('1/1/2019', periods=8)

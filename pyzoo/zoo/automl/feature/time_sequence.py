@@ -32,7 +32,11 @@ class TimeSequenceFeatureTransformer(BaseFeatureTransformer):
     TimeSequence feature engineering
     """
 
-    def __init__(self, future_seq_len=1, dt_col="datetime", target_col="value", extra_features_col=None, drop_missing=True):
+    def __init__(self, future_seq_len=1,
+                 dt_col="datetime",
+                 target_col="value",
+                 extra_features_col=None,
+                 drop_missing=True):
         """
         Constructor.
         :param drop_missing: whether to drop missing values in the curve, if this is set to False, an error will be
@@ -187,7 +191,16 @@ class TimeSequenceFeatureTransformer(BaseFeatureTransformer):
 
     def get_feature_list(self, input_df):
         feature_matrix, feature_defs = self._generate_features(input_df)
-        return [feat.generate_name() for feat in feature_defs if isinstance(feat, TransformFeature)]
+        # return [feat.generate_name() for feat in feature_defs if isinstance(feat, TransformFeature)]
+        feature_list = []
+        for feat in feature_defs:
+            feature_name = feat.generate_name()
+            # todo: need to change if more than one target cols are supported
+            # if there is any circumstances that feature list need to be [generated features + extra features] instead
+            # of only excluding target column?
+            if feature_name != self.target_col:
+                feature_list.append(feature_name)
+        return feature_list
 
     def _get_feat_config(self, **config):
         """
@@ -366,8 +379,10 @@ class TimeSequenceFeatureTransformer(BaseFeatureTransformer):
         feature_matrix, feature_defs = self._generate_features(input_df)
         # self.write_generate_feature_list(feature_defs)
         feature_cols = np.asarray(config.get("selected_features"))
-        target_cols = np.array([self.target_col])
-        cols = np.concatenate([target_cols, feature_cols])
+        # we do not include target col in candidates.
+        # the first column is designed to be the default position of target column in feature transformer output.
+        target_col = np.array([self.target_col])
+        cols = np.concatenate([target_col, feature_cols])
         target_feature_matrix = feature_matrix[cols]
         return target_feature_matrix.astype(float)
 
