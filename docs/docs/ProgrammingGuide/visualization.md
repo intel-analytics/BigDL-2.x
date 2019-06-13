@@ -4,7 +4,8 @@
 
 ## **Generating Summary**
 To enable visualization support, you need first properly configure to collect statistics summary in different stages of training. It should be done before the training starts. See examples below: 
-* **Generating summary in NNEstimator** 
+
+### **Generating summary in NNEstimator** 
 
 ****scala****
 ```scala
@@ -35,7 +36,7 @@ estimator.set_val_summary(val_summary)
 ...
 nnModel = estimator.fit(...)
 ```
-* **Generating summary in KerasAPI**  
+### **Generating summary in KerasAPI**  
 
 ****scala****
 ```scala
@@ -59,48 +60,19 @@ model.set_tensorboard(log_dir, app_name)
 model.fit(...)
 ```
 
----
+**Notice**:  
 
-## **Retrieving summary from build-in API**
+If logdir is relative path, like `logdir/inpcetion_log`, the log will be stored in your local file system;  
 
-You can use provided API to retrieve the summaries into readable format, and export them to other tools for further analysis or visualization.
+If logdir is absolute path started with `/`, like `/user/logdir/inpcetion_log`, the log will be stored in your local file system;  
 
-* _**Example: Reading summary info in NNestimator**_ 
+If logdir is URI started with `hdfs://[host:port]/`, like `hdfs://172.168.0.101:8020/user/logdir/inpcetion_log`, the log will be stored to HDFS;  
 
-****scala****
-```scala
-...
-val trainLoss = trainSummary.readScalar("Loss")
-val valLoss = validationSummary.readScalar("Loss")
-```
-
-****python****
-```python
-...
-train_loss = np.array(train_summary.read_scalar('Loss'))
-val_loss = np.array(val_summary.read_scalar('Loss'))
-```
-* _**Example: Reading summary info in keras API**_
-
-****scala****
-```scala
-val trainLoss = model.getTrainSummary("loss")
-val valLoss = model.getValidationSummary("loss")
-```
-****python****
-```python
-train_loss = model.get_train_summary('loss')
-val_loss = model.get_validation_summary('loss')
-```
-
-
-If your training job has finished and existed, but another visualize program wants retrieving summary with `readScalar`(`read_scalar` in python) API. 
-You can re-create the TrainingSummary and ValidationSummary with the same `logDir` and `appName` in your training job. 
 
 ---
 
 # **Visualizing training with TensorBoard**
-With the summary info generated, we can then use [TensorBoard](https://pypi.python.org/pypi/tensorboard) to visualize the behaviors of the BigDL program.  
+With the summary info generated, we can then use [TensorBoard](https://pypi.python.org/pypi/tensorboard) to visualize the behaviors of the training program.  
 
 ### ***Installing TensorBoard***
 
@@ -153,6 +125,63 @@ And “weights”, “bias”, “gradientWeights” and “gradientBias” unde
 ![histogram1](../Image/tensorboard-histo1.png)
 ![histogram2](../Image/tensorboard-histo2.png)
 As getting DISTRIBUTIONS and HISTOGRAMS may affect the training performance, so we don't enable this option by default. For example you want to fetch this parameters every 20 iteartions, you should call `trainSummary.setSummaryTrigger("Parameters", Trigger.severalIteration(20))`(`set_summary_trigger` in python API) before calling `setTrainSummary`.
+
+---
+
+## **Retrieving summary from build-in API**
+
+You can use provided API to retrieve the summaries into readable format, and export them to other tools for further analysis or visualization.
+
+* _**Example: Reading summary info in NNestimator**_ 
+
+****scala****
+```scala
+val estimator = NNEstimator(...)
+...
+val logdir = "mylogdir"
+val appName = "myapp"
+val trainSummary = TrainSummary(logdir, appName)
+val validationSummary = ValidationSummary(logdir, appName)
+estimator.setTrainSummary(trainSummary)
+estimator.setValidationSummary(validationSummary)
+...
+val nnModel = estimator.fit(...)
+val trainLoss = trainSummary.readScalar("Loss")
+val valLoss = validationSummary.readScalar("Loss")
+```
+
+****python****
+```python
+from bigdl.optim.optimizer import TrainSummary, ValidationSummary
+
+estimator = NNEstimator(...)
+...
+log_dir = 'mylogdir'
+app_name = 'myapp'
+train_summary = TrainSummary(log_dir=log_dir, app_name=app_name)
+val_summary = ValidationSummary(log_dir=log_dir, app_name=app_name)
+estimator.set_train_summary(train_summary)
+estimator.set_val_summary(val_summary)
+...
+train_loss = np.array(train_summary.read_scalar('Loss'))
+val_loss = np.array(val_summary.read_scalar('Loss'))
+```
+* _**Example: Reading summary info in keras API**_
+
+****scala****
+```scala
+val trainLoss = model.getTrainSummary("loss")
+val valLoss = model.getValidationSummary("loss")
+```
+****python****
+```python
+train_loss = model.get_train_summary('loss')
+val_loss = model.get_validation_summary('loss')
+```
+
+
+If your training job has finished and existed, but a new program wants retrieving summary with `readScalar`(`read_scalar` in python) API. 
+You can re-create the TrainingSummary and ValidationSummary with the same `logDir` and `appName` in your new job. 
 
 
 ---
