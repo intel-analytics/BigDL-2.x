@@ -24,17 +24,25 @@ echo $ANALYTICS_ZOO_HOME
 ANALYTICS_ZOO_PYTHON_DIR="$(cd ${RUN_SCRIPT_DIR}/../../../pyzoo; pwd)"
 echo $ANALYTICS_ZOO_PYTHON_DIR
 
-if (( $# < 2)); then
-  echo "Bad parameters"
-  echo "Usage example: bash release.sh linux default"
-  echo "Usage example: bash release.sh linux 0.6.0.dev0"
+if (( $# < 3)); then
+  echo "Usage: release.sh platform version upload mvn_parameters"
+  echo "Usage example: bash release.sh linux default true"
+  echo "Usage example: bash release.sh linux 0.6.0.dev0 true -Dspark.version=2.4.3 -Dbigdl.artifactId=bigdl-SPARK_2.4 -P spark_2.x"
   echo "If needed, you can also add other profiles such as: -Dspark.version=2.4.3 -Dbigdl.artifactId=bigdl-SPARK_2.4 -P spark_2.x"
   exit -1
 fi
 
 platform=$1
-effect_version=$2
-profiles=${*:3}
+version=$2
+upload=$3
+profiles=${*:4}
+
+if [ "${version}" != "default" ]; then
+    echo "User specified version: ${version}"
+    sed -i "s/\(__version__ =\)\(.*\)/\1 \"${version}\"/" $ANALYTICS_ZOO_PYTHON_DIR/zoo/__init__.py
+fi
+effect_version=`cat $ANALYTICS_ZOO_PYTHON_DIR/zoo/__init__.py | grep "__version__" | awk '{print $NF}' | tr -d '"'`
+echo "The effective version is: ${effect_version}"
 
 cd ${ANALYTICS_ZOO_HOME}
 if [ "$platform" ==  "mac" ]; then
@@ -50,6 +58,7 @@ else
 fi
 
 build_command="${ANALYTICS_ZOO_HOME}/make-dist.sh ${dist_profile}"
+echo "Build command: ${build_command}"
 $build_command
 
 cd $ANALYTICS_ZOO_PYTHON_DIR
@@ -75,15 +84,12 @@ if [ -d "${ANALYTICS_ZOO_HOME}/pyzoo/analytics_zoo.egg-info" ]; then
    rm -r ${ANALYTICS_ZOO_HOME}/pyzoo/analytics_zoo.egg-info
 fi
 
-default_version=`cat $ANALYTICS_ZOO_PYTHON_DIR/zoo/__init__.py | grep "__version__" | awk '{print $NF}' | tr -d '"'`
-if [ "${effect_version}" == "default" ]; then
-    effect_version=${default_version}
-else
-    # setup.py always use the default version, so we need to rename the file here.
-    echo "Using version: ${effect_version}, not the default version: ${default_version}"
-    mv dist/analytics_zoo-${default_version}-py2.py3-none-${verbose_pname}.whl dist/analytics_zoo-${effect_version}-py2.py3-none-${verbose_pname}.whl
+created_whl="dist/analytics_zoo-${effect_version}-py2.py3-none-${verbose_pname}.whl"
+echo "whl is created at: ${created_whl}"
+
+if [ ${upload} == true ]; then
+    upload_command="twine upload ${created_whl}"
+    echo "Command for uploading to pypi: $upload_command"
+    $upload_command
 fi
 
-upload_command="twine upload dist/analytics_zoo-${effect_version}-py2.py3-none-${verbose_pname}.whl"
-echo "Command for uploading to pypi: $upload_command"
-$upload_command
