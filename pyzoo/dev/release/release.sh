@@ -50,7 +50,7 @@ else
 fi
 
 build_command="${ANALYTICS_ZOO_HOME}/make-dist.sh ${dist_profile}"
-#$build_command
+$build_command
 
 cd $ANALYTICS_ZOO_PYTHON_DIR
 sdist_command="python setup.py sdist"
