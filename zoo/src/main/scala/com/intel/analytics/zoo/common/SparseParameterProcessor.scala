@@ -6,6 +6,7 @@ import com.intel.analytics.bigdl.optim.{Metrics, OptimMethod}
 import com.intel.analytics.bigdl.tensor.{SparseTensorUtils, Tensor, sudoLookupTableSparse}
 import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric
 import com.intel.analytics.bigdl.utils.Table
+import org.apache.spark.broadcast.Broadcast
 import org.apache.spark.rdd.RDD
 
 import scala.reflect.ClassTag
@@ -13,9 +14,9 @@ import scala.reflect.ClassTag
 // U is walk around for collectGlobalData[T] is not ClassTag
 class SparseParameterProcessor[U: ClassTag](optimMethods: OptimMethod[U])(implicit ev: TensorNumeric[U])
   extends ParameterProcessor {
-  var cachedModels: RDD[Cache[U]] = null
   var globalSparseG: Tensor[U] = null
   var globalW: Tensor[U] = null
+  var bcGlobalW: Broadcast[Tensor[U]] = null
 
   override def collectGlobalData[T](models: RDD[Cache[T]],
                                     parameters: AllReduceParameter[T],
@@ -52,13 +53,20 @@ class SparseParameterProcessor[U: ClassTag](optimMethods: OptimMethod[U])(implic
 
     // update weight in the cluster
     val sc = models.sparkContext
-    val broadcastW = sc.broadcast(globalW)
-    models.mapPartitions(modelIter => {
-      val modelCache = modelIter.next()
+    bcGlobalW = sc.broadcast(globalW)
+//    models.mapPartitions(modelIter => {
+//      val modelCache = modelIter.next()
+//      modelCache.localModels.head
+//        .asInstanceOf[sudoLookupTableSparse[U]].setSparseParameters(broadcastW.value, null)
+//      Iterator.empty
+//    }).count()
+  }
+
+  override def processParameters[T](parameters: AllReduceParameter[T],
+                                    modelCache: Cache[T],
+                                    state: Table)(implicit ev: TensorNumeric[T]): Unit = {
       modelCache.localModels.head
-        .asInstanceOf[sudoLookupTableSparse[U]].setSparseParameters(broadcastW.value, null)
-      Iterator.empty
-    }).count()
+        .asInstanceOf[sudoLookupTableSparse[U]].setSparseParameters(bcGlobalW.value, null)
   }
 
   // TODO: support sparseG for local mode
