@@ -435,29 +435,6 @@ class TransformerLayerSpec extends ZooSpecHelper {
       require(grads(i).almostEqual(expectGrad(i), 1e-8) == true)
     }
   }
-
-  "TransformerLayer layerNorm" should "be able to generate correct result" in {
-    RNG.setSeed(42)
-    val hiddenSize = 4
-    val xValue = Tensor[Float](Array[Float](4f, 6f, 2f, 9f,
-      3f, 5f, 7f, 4f,
-
-      2f, 5f, 5f, 1f,
-      4f, 3f, 6f, 4f), Array(2, 2, hiddenSize))
-    val gradOValue = Tensor[Float](Array[Float](3f, 4f, 2f, 4f,
-      4f, 1f, 2f, 2f,
-
-      2f, 4f, 3f, 2f,
-      4f, 1f, 3f, 1f), Array(2, 2, hiddenSize))
-
-    val model = new InternalLayerNorm[Float](hiddenSize, 1e-5)
-
-    val output2 = model.forward(xValue).toTensor[Float]
-    val gradInput = model.backward(xValue, gradOValue)
-    val gradients = model.parameters()._2
-
-    val t = 0
-  }
 }
 
 class TransformerLayerSerialTest extends ModuleSerializationTest {

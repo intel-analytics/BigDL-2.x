@@ -23,6 +23,23 @@ from zoo.models.image.objectdetection import *
 
 sc = init_nncontext("Object Detection Example")
 
+
+from zoo.models.seq2seq import *
+input_data = [np.random.randint(20, size=(1, 2, 4)),
+              np.random.randint(20, size=(1, 2, 4))]
+encoder = RNNEncoder.initialize("LSTM", 1, 4)
+decoder = RNNDecoder.initialize("LSTM", 1, 4)
+bridge = Bridge.initialize("dense", 4)
+model = Seq2seq(encoder, decoder, [2, 4], [2, 4], bridge)
+
+sent1 = np.random.randint(20, size=(1, 2, 4))
+sent2 = np.random.randint(20, size=(1, 4))
+result = model.infer(sent1, sent2, 3)
+
+t = encoder.forward(sent1)
+
+
+
 parser = argparse.ArgumentParser()
 parser.add_argument('model_path', help="Path where the model is stored")
 parser.add_argument('img_path', help="Path where the images are stored")

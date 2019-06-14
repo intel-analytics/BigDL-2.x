@@ -155,11 +155,6 @@ object BERT extends KerasLayerSerializable {
       initWeights = initTokenEmbeddingW).from(tokenTypeInput)
 
     val embeddings = wordEmbeddings + positionEmbeddings + tokenTypeEmbeddings
-    val w = Parameter[T](Shape(1, hiddenSize),
-      initWeight = Tensor.ones[T](hiddenSize).view(1, hiddenSize))
-    val b = Parameter[T](Shape(1, hiddenSize),
-      initWeight = Tensor[T](hiddenSize).view(1, hiddenSize))
-//    val afterNorm = TransformerLayer.layerNorm(embeddings, 1e-12, weight = w, bias = b)
     val afterNorm = new KerasLayerWrapper[T](
       new InternalLayerNorm[T](nOutput = hiddenSize, eps = 1e-12)
       .asInstanceOf[AbstractModule[Activity, Activity, T]]).from(embeddings)
