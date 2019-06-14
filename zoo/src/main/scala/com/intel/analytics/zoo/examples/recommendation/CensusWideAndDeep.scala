@@ -16,19 +16,19 @@
 
 package com.intel.analytics.zoo.examples.recommendation
 
-import com.intel.analytics.bigdl.dataset.{DataSet, Sample, SampleToMiniBatch, TensorSample}
-import com.intel.analytics.bigdl.nn.{ClassNLLCriterion, Graph}
+import com.intel.analytics.bigdl.dataset.{Sample, SampleToMiniBatch}
+import com.intel.analytics.bigdl.nn.{ClassNLLCriterion}
 import com.intel.analytics.bigdl.numeric.NumericFloat
 import com.intel.analytics.bigdl.optim._
 import com.intel.analytics.bigdl.utils.{RandomGenerator, T}
-import com.intel.analytics.bigdl.visualization.{TrainSummary, ValidationSummary}
 import com.intel.analytics.zoo.common.NNContext
+import com.intel.analytics.zoo.feature.FeatureSet
 import com.intel.analytics.zoo.models.recommendation._
+import com.intel.analytics.zoo.pipeline.estimator.Estimator
 import org.apache.log4j.{Level, Logger}
 import org.apache.spark.SparkConf
 import org.apache.spark.sql.functions._
-import org.apache.spark.sql.{DataFrame, Row, SQLContext}
-import scopt.OptionParser
+import org.apache.spark.sql.{DataFrame, SQLContext}
 import org.apache.spark.rdd.RDD
 import org.apache.spark.sql.types.{IntegerType, StringType, StructField, StructType}
 
@@ -129,40 +129,30 @@ object CensusWideAndDeep {
     }
 
     val sample2batch = SampleToMiniBatch(batchSize)
-    // Local optimizer
     val (trainRdds, validationRdds) = if (onSpark) {
-      (DataSet.rdd(trainpairFeatureRdds.map(x => x.sample).cache()) ->
+      (FeatureSet.rdd(trainpairFeatureRdds.map(x => x.sample).cache()) ->
         sample2batch,
-        DataSet.rdd(validationpairFeatureRdds.map(x => x.sample).cache()) ->
+        FeatureSet.rdd(validationpairFeatureRdds.map(x => x.sample).cache()) ->
           sample2batch)
     } else {
-      (DataSet.array(trainpairFeatureRdds.map(x => x.sample).collect()) ->
-        sample2batch,
-        DataSet.array(validationpairFeatureRdds.map(x => x.sample).collect()) ->
-          sample2batch)
+      throw new IllegalArgumentException(s"This example should run on spark")
     }
 
-    val optimizer = Optimizer(
-      model = wideAndDeep,
-      dataset = trainRdds,
-      criterion = ClassNLLCriterion[Float]())
-    optimizer
-      .setOptimMethod(optimMethod)
-      .setValidation(Trigger.everyEpoch, validationRdds,
-        Array(new Top1Accuracy[Float], new Loss[Float]()))
-      .setEndWhen(Trigger.maxEpoch(maxEpoch))
-
-    if (params.logDir.isDefined) {
+    val estimator = if (params.logDir.isDefined) {
       val logdir = params.logDir.get
-      val appName = "/census_wnd" + System.nanoTime()
-      optimizer
-        .setTrainSummary(new TrainSummary(logdir, appName))
-        .setValidationSummary(new ValidationSummary(logdir, appName))
-        .setCheckpoint(logdir + appName, Trigger.everyEpoch)
+      val appName = "/census_wnd"
+      Estimator[Float](wideAndDeep, optimMethod, modelDir = logdir + appName)
+    } else {
+      Estimator[Float](wideAndDeep, optimMethod)
     }
 
-    optimizer
-      .optimize()
+    val (checkpointTrigger, testTrigger, endTrigger) =
+      (Trigger.everyEpoch, Trigger.everyEpoch, Trigger.maxEpoch(maxEpoch))
+
+    estimator.train(trainRdds, ClassNLLCriterion[Float](),
+      Some(endTrigger),
+      Some(checkpointTrigger),
+      validationRdds, Array(new Top1Accuracy[Float], new Loss[Float]()))
   }
 
   def loadCensusData(sqlContext: SQLContext, dataPath: String): (DataFrame, DataFrame) = {
