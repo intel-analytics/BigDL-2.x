@@ -200,7 +200,7 @@ class OpenVINOInt8Suite extends FunSuite with Matchers with BeforeAndAfterAll
 
     // Load float32 and predict int8 leads to 65 to wrong results
     // PredictInt8
-    val resultsInt8: util.List[util.List[JTensor]] = model.doPredictInt8(inputs)
+    val resultsInt8: util.List[util.List[JTensor]] = model.doPredict(inputs)
     val classesInt8 = resultsInt8.toArray().map(list => {
       val inner = list.asInstanceOf[util.List[JTensor]].get(0)
       val class1 = inner.getData.slice(0, 1000).zipWithIndex.maxBy(_._1)._2
@@ -279,7 +279,7 @@ class OpenVINOInt8Suite extends FunSuite with Matchers with BeforeAndAfterAll
         input2
       }))
 
-    val resultsInt8: util.List[util.List[JTensor]] = model.doPredictInt8(inputs)
+    val resultsInt8: util.List[util.List[JTensor]] = model.doPredict(inputs)
     val classesInt8 = resultsInt8.toArray().map(list => {
       val inner = list.asInstanceOf[util.List[JTensor]].get(0)
       val class1 = inner.getData.slice(0, 1000).zipWithIndex.maxBy(_._1)._2
