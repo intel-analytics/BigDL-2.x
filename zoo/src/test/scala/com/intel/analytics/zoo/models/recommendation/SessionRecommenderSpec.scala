@@ -148,7 +148,7 @@ class SessionRecommenderSpec extends ZooSpecHelper {
   }
 }
 
-class SessionReommenderSerialTest extends ModuleSerializationTest {
+class SessionRecommenderSerialTest extends ModuleSerializationTest {
   override def test(): Unit = {
     val ran = new Random(42L)
     val itemCount = 100
