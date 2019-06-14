@@ -15,7 +15,7 @@ class SparseParameterProcessor[U: ClassTag](optimMethods: OptimMethod[U])(implic
   extends ParameterProcessor {
   var cachedModels: RDD[Cache[U]] = null
   var globalSparseG: Tensor[U] = null
-  var globalSparseW: Tensor[U] = null
+  var globalW: Tensor[U] = null
 
   override def collectGlobalData[T](models: RDD[Cache[T]],
                                     parameters: AllReduceParameter[T],
@@ -44,15 +44,15 @@ class SparseParameterProcessor[U: ClassTag](optimMethods: OptimMethod[U])(implic
     //TODO: support cliping sparseG
 
     // update weight with global gradients in driver
-    if (globalSparseW == null) {
-      globalSparseW = models.take(1).head.localModels.head
+    if (globalW == null) {
+      globalW = models.take(1).head.localModels.head
         .asInstanceOf[sudoLookupTableSparse[U]].getSparseParameters()._1
     }
-    globalSparseW = optimMethods.optimize(_ => (ev.fromType(1.0f), globalSparseG), globalSparseW)._1
+    globalW = optimMethods.optimize(_ => (ev.fromType(1.0f), globalSparseG), globalW)._1
 
     // update weight in the cluster
     val sc = models.sparkContext
-    val broadcastW = sc.broadcast(globalSparseW)
+    val broadcastW = sc.broadcast(globalW)
     models.mapPartitions(modelIter => {
       val modelCache = modelIter.next()
       modelCache.localModels.head
@@ -68,6 +68,6 @@ class SparseParameterProcessor[U: ClassTag](optimMethods: OptimMethod[U])(implic
 
   def getSparseParameters(model: Module[U]): Unit = {
     // TODO: remove asInstanceOf
-    model.asInstanceOf[sudoLookupTableSparse[U]].setSparseParameters(globalSparseW, globalSparseG)
+    model.asInstanceOf[sudoLookupTableSparse[U]].setSparseParameters(globalW, globalSparseG)
   }
 }

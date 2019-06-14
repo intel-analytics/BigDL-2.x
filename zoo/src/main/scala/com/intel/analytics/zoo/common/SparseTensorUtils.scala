@@ -71,8 +71,8 @@ object SparseTensorUtils {
       sparseT._shape, sparseT._shape.length)
   }
 
-  def addConstant[T: ClassTag](tensor: Tensor[T], constant: T)
-                              (implicit ev: TensorNumeric[T]): SparseTensor[T] = {
+  def addSparseTensorValueByConstant[T: ClassTag](tensor: Tensor[T], constant: T)
+    (implicit ev: TensorNumeric[T]): SparseTensor[T] = {
     val sparseT = tensor.asInstanceOf[SparseTensor[T]]
     val values = sparseT._values.array()
 

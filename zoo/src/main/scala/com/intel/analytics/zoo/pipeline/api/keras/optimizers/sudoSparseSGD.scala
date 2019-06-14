@@ -39,7 +39,7 @@ class sudoSparseSGD[@specialized(Float, Double) T: ClassTag](
   override def optimize(feval: (Tensor[T]) => (T, Tensor[T]), x: Tensor[T])
   : (Tensor[T], Array[T]) = {
     val (fx, dfdx) = feval(x)
-    val updateW = SparseTensorUtils.addConstant(x, ev.fromType(1))
+    val updateW = SparseTensorUtils.addSparseTensorValueByConstant(x, ev.fromType(1))
     (updateW, Array(fx))
   }
 
