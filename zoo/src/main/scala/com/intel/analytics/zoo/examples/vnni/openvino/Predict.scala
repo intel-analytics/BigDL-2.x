@@ -102,13 +102,8 @@ object Predict {
       // Predict
       logger.debug("Begin Prediction")
       val predicts = batched.toLocal().data(false).flatMap(miniBatch => {
-        val predict = if (param.isInt8) {
-          model.doPredictInt8(miniBatch
-            .getInput.toTensor.addSingletonDimension())
-        } else {
-          model.doPredict(miniBatch
-            .getInput.toTensor.addSingletonDimension())
-        }
+        val predict = model.doPredict(miniBatch
+          .getInput.toTensor.addSingletonDimension())
         predict.toTensor.squeeze.split(1).asInstanceOf[Array[Activity]]
       })
       // Add prediction into imageset
