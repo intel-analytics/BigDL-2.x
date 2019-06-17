@@ -18,18 +18,20 @@ package com.intel.analytics.zoo.models.recommendation
 
 import java.net.URL
 
-import com.intel.analytics.bigdl.dataset.Sample
-import com.intel.analytics.bigdl.nn.ClassNLLCriterion
-import com.intel.analytics.bigdl.optim.{Adam, Optimizer, Top1Accuracy, Trigger}
+import com.intel.analytics.bigdl.dataset.{Sample, SampleToMiniBatch}
+import com.intel.analytics.bigdl.nn.{ClassNLLCriterion, MSECriterion}
+import com.intel.analytics.bigdl.optim.{Adam, LBFGS, Optimizer, Top1Accuracy, Trigger}
 import com.intel.analytics.bigdl.tensor.Tensor
 import com.intel.analytics.bigdl.utils.T
 import com.intel.analytics.zoo.common.NNContext
+import com.intel.analytics.zoo.feature.FeatureSet
 import com.intel.analytics.zoo.models.python.PythonZooModel
 import com.intel.analytics.zoo.pipeline.api.keras.ZooSpecHelper
 import com.intel.analytics.zoo.pipeline.api.keras.models.KerasNet
 import com.intel.analytics.zoo.pipeline.api.keras.objectives.SparseCategoricalCrossEntropy
 import com.intel.analytics.zoo.pipeline.api.keras.python.PythonZooKeras
 import com.intel.analytics.zoo.pipeline.api.keras.serializer.ModuleSerializationTest
+import com.intel.analytics.zoo.pipeline.estimator.Estimator
 import org.apache.log4j.{Level, Logger}
 import org.apache.spark.{SparkConf, SparkContext}
 import org.apache.spark.sql.functions.col
@@ -110,16 +112,24 @@ class NeuralCFSpec extends ZooSpecHelper {
     })
     val trainRdds = data.map(x => x.sample)
 
-    val optimizer = Optimizer(
-      model = ncf,
-      sampleRDD = trainRdds,
-      criterion = ClassNLLCriterion[Float](),
-      batchSize = 458)
+//    val optimizer = Optimizer(
+//      model = ncf,
+//      sampleRDD = trainRdds,
+//      criterion = ClassNLLCriterion[Float](),
+//      batchSize = 458)
+//
+//    optimizer
+//      .setOptimMethod(new Adam[Float](learningRate = 1e-2, learningRateDecay = 1e-5))
+//      .setEndWhen(Trigger.maxEpoch(100))
+//      .optimize()
 
-    optimizer
-      .setOptimMethod(new Adam[Float](learningRate = 1e-2, learningRateDecay = 1e-5))
-      .setEndWhen(Trigger.maxEpoch(100))
-      .optimize()
+    val optimMethod = new Adam[Float](learningRate = 1e-2, learningRateDecay = 1e-5)
+
+    ncf.compile(optimizer = optimMethod, loss = SparseCategoricalCrossEntropy[Float](zeroBasedLabel = false))
+
+    ncf.fit(trainRdds, batchSize = 458, nbEpoch = 100)
+
+    ncf.summary()
 
     val pairPredictions = ncf.predictUserItemPair(data)
     val pairPredictionsDF = sqlContext.createDataFrame(pairPredictions).toDF()
