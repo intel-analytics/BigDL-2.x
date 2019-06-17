@@ -21,7 +21,6 @@ import scopt.OptionParser
 case class WNDParams(dataset: String = "ml-1m",
                      modelType: String = "wide_n_deep",
                      inputDir: String = "./data/ml-1m/",
-                     onSpark: Boolean = true,
                      batchSize: Int = 2048,
                      maxEpoch: Int = 10,
                      logDir: Option[String] = None)
@@ -40,9 +39,6 @@ object WideAndDeepExample {
       opt[String]("inputDir")
         .text(s"inputDir")
         .action((x, c) => c.copy(inputDir = x))
-      opt[Boolean]("onSpark")
-        .text(s"whether run on spark, default is true")
-        .action((x, c) => c.copy(onSpark = x))
       opt[Int]('b', "batchSize")
         .text(s"batch size, default is 40")
         .action((x, c) => c.copy(batchSize = x))

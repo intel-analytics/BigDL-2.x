@@ -79,7 +79,6 @@ object CensusWideAndDeep {
 
     val batchSize = params.batchSize
     val maxEpoch = params.maxEpoch
-    val onSpark = params.onSpark
     val modelType = params.modelType
 
     val conf = new SparkConf().setAppName("WideAndDeepExample")
@@ -129,14 +128,8 @@ object CensusWideAndDeep {
     }
 
     val sample2batch = SampleToMiniBatch(batchSize)
-    val (trainRdds, validationRdds) = if (onSpark) {
-      (FeatureSet.rdd(trainpairFeatureRdds.map(x => x.sample).cache()) ->
-        sample2batch,
-        FeatureSet.rdd(validationpairFeatureRdds.map(x => x.sample).cache()) ->
-          sample2batch)
-    } else {
-      throw new IllegalArgumentException(s"This example should run on spark")
-    }
+    val trainRdds = FeatureSet.rdd(trainpairFeatureRdds.map(x => x.sample).cache()) -> sample2batch
+    val validationRdds = FeatureSet.rdd(validationpairFeatureRdds.map(x => x.sample).cache()) -> sample2batch
 
     val estimator = if (params.logDir.isDefined) {
       val logdir = params.logDir.get
