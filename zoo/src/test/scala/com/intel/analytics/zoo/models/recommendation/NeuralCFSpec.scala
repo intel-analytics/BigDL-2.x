@@ -112,20 +112,10 @@ class NeuralCFSpec extends ZooSpecHelper {
     })
     val trainRdds = data.map(x => x.sample)
 
-//    val optimizer = Optimizer(
-//      model = ncf,
-//      sampleRDD = trainRdds,
-//      criterion = ClassNLLCriterion[Float](),
-//      batchSize = 458)
-//
-//    optimizer
-//      .setOptimMethod(new Adam[Float](learningRate = 1e-2, learningRateDecay = 1e-5))
-//      .setEndWhen(Trigger.maxEpoch(100))
-//      .optimize()
-
     val optimMethod = new Adam[Float](learningRate = 1e-2, learningRateDecay = 1e-5)
 
-    ncf.compile(optimizer = optimMethod, loss = SparseCategoricalCrossEntropy[Float](zeroBasedLabel = false))
+    ncf.compile(optimizer = optimMethod, loss = SparseCategoricalCrossEntropy[Float](zeroBasedLabel = false),
+      metrics = List(new Top1Accuracy[Float]()))
 
     ncf.fit(trainRdds, batchSize = 458, nbEpoch = 100)
 
@@ -155,16 +145,14 @@ class NeuralCFSpec extends ZooSpecHelper {
     })
     val trainRdds = data.map(x => x.sample)
 
-    val optimizer = Optimizer(
-      model = ncf,
-      sampleRDD = trainRdds,
-      criterion = ClassNLLCriterion[Float](),
-      batchSize = 458)
+    val optimMethod = new Adam[Float](learningRate = 1e-2, learningRateDecay = 1e-5)
 
-    optimizer
-      .setOptimMethod(new Adam[Float](learningRate = 1e-2, learningRateDecay = 1e-5))
-      .setEndWhen(Trigger.maxEpoch(100))
-      .optimize()
+    ncf.compile(optimizer = optimMethod, loss = SparseCategoricalCrossEntropy[Float](zeroBasedLabel = false),
+      metrics = List(new Top1Accuracy[Float]()))
+
+    ncf.fit(trainRdds, batchSize = 458, nbEpoch = 100)
+
+    ncf.summary()
 
     val itemRecs = ncf.recommendForItem(data, 2)
     val userRecs = ncf.recommendForUser(data, 2)
