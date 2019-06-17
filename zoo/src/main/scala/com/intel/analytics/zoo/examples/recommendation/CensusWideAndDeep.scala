@@ -142,10 +142,10 @@ object CensusWideAndDeep {
     val (checkpointTrigger, testTrigger, endTrigger) =
       (Trigger.everyEpoch, Trigger.everyEpoch, Trigger.maxEpoch(maxEpoch))
 
-    estimator.train(trainRdds, ClassNLLCriterion[Float](),
+    estimator.train(trainRdds, ClassNLLCriterion[Float](logProbAsInput = false),
       Some(endTrigger),
       Some(checkpointTrigger),
-      validationRdds, Array(new Top1Accuracy[Float], new Loss[Float]()))
+      validationRdds, Array(new Top1Accuracy[Float], new Loss[Float](ClassNLLCriterion[Float](logProbAsInput = false))))
   }
 
   def loadCensusData(sqlContext: SQLContext, dataPath: String): (DataFrame, DataFrame) = {
