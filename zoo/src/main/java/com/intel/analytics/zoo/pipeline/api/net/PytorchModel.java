@@ -39,7 +39,7 @@ class PytorchModel {
         this.nativeRef = loadNative(path);
     }
 
-    protected void finalize() {
+    protected void release() {
         releaseNative(this.nativeRef);
     }
 

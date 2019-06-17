@@ -67,6 +67,13 @@ class TorchNet private(private val modelHolder: TorchModelHolder)
   override def updateGradInput(input: Tensor[Float], gradOutput: Tensor[Float]): Tensor[Float] = {
     throw new NotImplementedError("backward is not supported for now")
   }
+
+  override def release(): Unit = {
+    super.release()
+    if (torchModel != null) {
+      torchModel.release()
+    }
+  }
 }
 
 object TorchNet {
