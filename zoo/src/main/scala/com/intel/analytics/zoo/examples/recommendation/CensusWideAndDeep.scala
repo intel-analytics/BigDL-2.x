@@ -128,8 +128,10 @@ object CensusWideAndDeep {
     }
 
     val sample2batch = SampleToMiniBatch(batchSize)
-    val trainRdds = FeatureSet.rdd(trainpairFeatureRdds.map(x => x.sample).cache()) -> sample2batch
-    val validationRdds = FeatureSet.rdd(validationpairFeatureRdds.map(x => x.sample).cache()) -> sample2batch
+    val trainRdds = FeatureSet.rdd(trainpairFeatureRdds.map(x => x.sample).cache()) ->
+      sample2batch
+    val validationRdds = FeatureSet.rdd(validationpairFeatureRdds.map(x => x.sample).cache()) ->
+      sample2batch
 
     val estimator = if (params.logDir.isDefined) {
       val logdir = params.logDir.get
@@ -145,7 +147,9 @@ object CensusWideAndDeep {
     estimator.train(trainRdds, ClassNLLCriterion[Float](logProbAsInput = false),
       Some(endTrigger),
       Some(checkpointTrigger),
-      validationRdds, Array(new Top1Accuracy[Float], new Loss[Float](ClassNLLCriterion[Float](logProbAsInput = false))))
+      validationRdds,
+      Array(new Top1Accuracy[Float],
+        new Loss[Float](ClassNLLCriterion[Float](logProbAsInput = false))))
   }
 
   def loadCensusData(sqlContext: SQLContext, dataPath: String): (DataFrame, DataFrame) = {
