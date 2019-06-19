@@ -7,7 +7,6 @@ import java.util.List;
 public class JTensor {
   private float[] data;
   private int[] shape;
-  private String layout = "NCHW";
 
   public JTensor() {
   }
@@ -111,14 +110,6 @@ public class JTensor {
     this.shape = shape;
   }
 
-  public String getLayout() {
-    return layout;
-  }
-
-  public void setLayout(String layout) {
-    this.layout = layout;
-  }
-
   public static String toString(int[] a) {
     if (a == null)
       return "null";
@@ -167,43 +158,5 @@ public class JTensor {
             "data=" + toString(data) +
             ", shape=" + toString(shape) +
             '}';
-  }
-
-  public void changeLayout(String newLayout) {
-    if (!"NHWCNCHW".contains(newLayout))
-      return;
-    if (newLayout.equals(layout)) {
-      return;
-    } else if ("NHWC".equals(newLayout)) {
-      fromCHW2HWC();
-    } else {
-      fromHWC2CHW();
-    }
-  }
-
-  private void fromHWC2CHW() {
-    float[] resArray = new float[data.length];
-    for (int h = 0; h < 224; h++) {
-      for (int w = 0; w < 224; w++) {
-        for (int c = 0; c < 3; c++) {
-          resArray[c * 224 * 224 + h * 224 + w] =
-              this.data[h * 224 * 3 + w * 3 + c];
-        }
-      }
-    }
-    this.data = resArray;
-  }
-
-  private void fromCHW2HWC() {
-    float[] resArray = new float[data.length];
-    for (int c = 0; c < 3; c++) {
-      for (int h = 0; h < 224; h++) {
-        for (int w = 0; w < 3; w++) {
-          resArray[h * 224 * 3 + w * 3 + c] =
-              this.data[c * 224 * 224 + h * 224 + w];
-        }
-      }
-    }
-    this.data = resArray;
   }
 }
