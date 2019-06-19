@@ -35,6 +35,8 @@ object sparseParameterTest {
       MiniBatch(input, target)
     }
 
+    System.setProperty("bigdl.ModelBroadcastFactory",
+      "com.intel.analytics.bigdl.models.utils.ZooModelBroadcastFactory")
     val sc = NNContext.initNNContext("sparse parameter test Example")
 
     val rdd = sc.parallelize(1 to (256 * nodeNumber), nodeNumber).map(prepareData)
@@ -53,8 +55,9 @@ object sparseParameterTest {
 
     val layer = new sudoLookupTableSparse[Float]()
 
-    val oriW = Tensor.sparse(Tensor[Float](6, 5).setValue(1, 3, 1.5f)
-      .setValue(2, 2, 3.0f).setValue(4, 5, 2.0f).setValue(6, 1, 1.0f))
+//    val oriW = Tensor.sparse(Tensor[Float](6, 5).setValue(1, 3, 1.5f)
+//      .setValue(2, 2, 3.0f).setValue(4, 5, 2.0f).setValue(6, 1, 1.0f))
+    val oriW = Tensor[Float](Array(6, 5)).rand()
     layer.sparseWeight = oriW
     val optimizer = new ZooOptimizer[Float](layer.asInstanceOf[Module[Float]],
       dataSet, new MSECriterion[Float]().asInstanceOf[Criterion[Float]])
@@ -63,7 +66,7 @@ object sparseParameterTest {
     optimizer.setSparseParameterProcessor(new sudoSparseSGD[Float]())
     optimizer.optimize()
     val (sparseW, sparseG) = layer.getSparseParameters()
-    println("oriW: " + oriW)
+    require(sparseW.almostEqual(oriW.add(1.0f), 1e-8))
     println("sparseW: " + sparseW)
     println("sparseG: " + sparseG)
   }

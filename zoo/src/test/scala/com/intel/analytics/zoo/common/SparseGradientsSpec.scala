@@ -110,9 +110,13 @@ class SparseGradientsSpec extends FlatSpec with Matchers with BeforeAndAfter {
     LoggerFilter.redirectSparkInfoLogs()
     val layer = new sudoLookupTableSparse[Float]()
 
-    val oriW = Tensor.sparse(Tensor[Float](6, 5).setValue(1, 3, 1.5f)
-      .setValue(2, 2, 3.0f).setValue(4, 5, 2.0f).setValue(6, 1, 1.0f))
-    layer.sparseWeight = oriW
+    System.setProperty("bigdl.ModelBroadcastFactory",
+      "com.intel.analytics.bigdl.models.utils.ZooModelBroadcastFactory")
+
+//    val oriW = Tensor.sparse(Tensor[Float](6, 5).setValue(1, 3, 1.5f)
+//      .setValue(2, 2, 3.0f).setValue(4, 5, 2.0f).setValue(6, 1, 1.0f))
+    val oriW = Tensor[Float](Array(6, 5)).rand()
+    layer.sparseWeight = oriW.clone()
     val optimizer = new ZooOptimizer[Float](layer.asInstanceOf[Module[Float]],
       dataSet, new MSECriterion[Float]().asInstanceOf[Criterion[Float]])
       .setState(T("learningRate" -> 20.0))
@@ -121,13 +125,14 @@ class SparseGradientsSpec extends FlatSpec with Matchers with BeforeAndAfter {
     optimizer.optimize()
     val (sparseW, sparseG) = layer.getSparseParameters()
 
-    require(sparseW.asInstanceOf[SparseTensor[Float]]._indices.head.array().deep
-      == Array(0, 1, 3, 5).deep)
-    require(sparseW.asInstanceOf[SparseTensor[Float]]._indices.last.array().deep
-      == Array(2, 1, 4, 0).deep)
-    require(sparseW.asInstanceOf[SparseTensor[Float]]._values.array().deep
-      == Array(2.5f, 4.0f, 3.0f, 2.0f).deep)
+//    require(sparseW.asInstanceOf[SparseTensor[Float]]._indices.head.array().deep
+//      == Array(0, 1, 3, 5).deep)
+//    require(sparseW.asInstanceOf[SparseTensor[Float]]._indices.last.array().deep
+//      == Array(2, 1, 4, 0).deep)
+//    require(sparseW.asInstanceOf[SparseTensor[Float]]._values.array().deep
+//      == Array(2.5f, 4.0f, 3.0f, 2.0f).deep)
 
+    require(sparseW.almostEqual(oriW.add(1.0f), 1e-8))
     require(sparseG.asInstanceOf[SparseTensor[Float]]._indices.head.array().deep
       == Array(0, 0, 1, 2, 3, 4, 4, 5).deep)
     require(sparseG.asInstanceOf[SparseTensor[Float]]._indices.last.array().deep

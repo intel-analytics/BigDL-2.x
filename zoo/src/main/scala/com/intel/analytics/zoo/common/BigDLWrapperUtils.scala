@@ -16,8 +16,11 @@
 
 package com.intel.analytics.bigdl.nn
 
+import com.intel.analytics.bigdl._
+
 import scala.reflect.ClassTag
-import com.intel.analytics.bigdl.tensor.Tensor
+import com.intel.analytics.bigdl.tensor._
+import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric
 
 import scala.collection.mutable.ArrayBuffer
 
@@ -28,5 +31,29 @@ object BigDLWrapperUtils {
 
   def copy[T: ClassTag](src: ArrayBuffer[Tensor[T]], dst: Tensor[T]): Unit = {
     Recurrent.copy(src, dst)
+  }
+
+  def putSparseGWeightBias[T: ClassTag](
+    broadcastWeightBias: Array[Tensor[T]],
+    localModel: Module[T])(implicit ev: TensorNumeric[T]): Unit = {
+    val localWeightBias = localModel.asInstanceOf[sudoLookupTableSparse[T]].sparseParameters()._1
+    var i = 0
+    while (i < localWeightBias.length) {
+      if (localWeightBias(i) != null) {
+        clearAndSet(localWeightBias(i), broadcastWeightBias(i))
+      }
+      i += 1
+    }
+
+    def clearAndSet(old: Tensor[T], other: Tensor[T]): Unit = {
+      if (old.getTensorType == QuantizedType && other.getTensorType == QuantizedType) {
+        val quantOld = old.asInstanceOf[QuantizedTensor[T]]
+        val quantOther = other.asInstanceOf[QuantizedTensor[T]]
+        if (quantOld.getNativeStorage != quantOther.getNativeStorage) {
+          quantOld.release()
+        }
+      }
+      old.set(other)
+    }
   }
 }

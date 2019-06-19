@@ -66,6 +66,10 @@ class sudoLookupTableSparse[T: ClassTag]()(implicit ev: TensorNumeric[T])
     (this.sparseWeight, this.sparseGradWeight)
   }
 
+  def sparseParameters(): (Array[Tensor[T]], Array[Tensor[T]]) = {
+    (Array(this.sparseWeight), Array(this.sparseGradWeight))
+  }
+
   override def parameters(): (Array[Tensor[T]], Array[Tensor[T]]) = {
     (Array(Tensor[T](10, 10)), Array(Tensor[T](10, 10)))
   }
