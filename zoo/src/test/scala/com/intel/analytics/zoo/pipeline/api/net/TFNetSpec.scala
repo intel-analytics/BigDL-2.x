@@ -66,11 +66,6 @@ class TFNetSpec extends FlatSpec with Matchers with BeforeAndAfter {
     result.toTensor[Float].size() should be(Array(2, 2))
   }
 
-  "123" should "4565" in {
-    PytorchModel.load()
-    PytorchModel.loadNative("/tmp/torchnet")
-  }
-
   "TFNet" should "should be serializable by java" in {
 
     val resource = getClass().getClassLoader().getResource("tfnet")
