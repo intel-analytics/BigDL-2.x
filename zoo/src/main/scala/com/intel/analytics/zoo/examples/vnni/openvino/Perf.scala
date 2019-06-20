@@ -78,11 +78,7 @@ object Perf {
       var averageLatency = 0L
       List.range(0, iteration).foreach { _ =>
         val start = System.nanoTime()
-        if (param.isInt8) {
-          model.doPredictInt8(batchInput)
-        } else {
-          model.doPredict(batchInput)
-        }
+        model.doPredict(batchInput)
         val latency = System.nanoTime() - start
         averageLatency += latency
         logger.info(s"Iteration $iteration latency is ${latency / 1e6} ms")
