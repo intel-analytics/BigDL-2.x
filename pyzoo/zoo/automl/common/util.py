@@ -23,20 +23,28 @@ import os
 import json
 
 
-def split_input_df(input_df, val_split_ratio=0, test_split_ratio=0.1):
+def split_input_df(input_df, ts_col="timestamp",val_split_ratio=0, test_split_ratio=0.1):
     """
     split input dataframe into train_df, val_df and test_df according to split ratio.
-    covert pandas timestamp to datetime.
-    :param input_df
-    :param val_split_ratio:
-    :param test_split_ratio:
+    covert pandas timestamp to datetime. The dataframe is splitted in its originally order in timeline.
+    e.g. |......... train_df(80%) ........ | ... val_df(10%) ...| ...test_df(10%)...| 
+    :param input_df: input dataframe to be splitted
+    :param ts_col: the time stamp column name
+    :param val_split_ratio: validation ratio
+    :param test_split_ratio: test ratio
     :return:
     """
     # suitable to nyc taxi dataset.
     df = input_df.copy()
-    df.insert(loc=0, column="datetime", value=pd.to_datetime(input_df["timestamp"]))
+    
+    inserted_col = "datetime"
+    if ts_col == "datetime":
+        inserted_col = "tmp_datetime"
+    
+    df.insert(loc=0, column=inserted_col, value=pd.to_datetime(input_df[ts_col]))
     # input_df["datetime"] = pd.to_datetime(input_df["timestamp"])
-    df = df.drop(columns="timestamp")
+    df.drop(columns=ts_col,inplace=True)
+    df.rename(columns={inserted_col:"datetime"},inplace=True)
 
     val_size = int(len(df) * val_split_ratio)
     test_size = int(len(df) * test_split_ratio)
