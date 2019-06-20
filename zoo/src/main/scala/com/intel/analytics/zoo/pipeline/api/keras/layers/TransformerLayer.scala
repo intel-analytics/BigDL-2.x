@@ -114,20 +114,25 @@ private[layers] class TransformerLayer[T: ClassTag](
   def block(x: Variable[T], hiddenSize: Int, attention_mask: Variable[T] = null,
             eplision: Double = 1e-5): Variable[T] = {
     // g, b for layerNorm
-    val g = Parameter[T](Shape(1, hiddenSize),
-      initWeight = Tensor.ones[T](hiddenSize).view(1, hiddenSize))
-    val b = Parameter[T](Shape(1, hiddenSize),
-      initWeight = Tensor[T](hiddenSize).view(1, hiddenSize))
-
-    // g, b for layerNorm
-    val g2 = Parameter[T](Shape(1, hiddenSize),
-      initWeight = Tensor.ones[T](hiddenSize).view(1, hiddenSize))
-    val b2 = Parameter[T](Shape(1, hiddenSize),
-      initWeight = Tensor[T](hiddenSize).view(1, hiddenSize))
+//    val g = Parameter[T](Shape(1, hiddenSize),
+//      initWeight = Tensor.ones[T](hiddenSize).view(1, hiddenSize))
+//    val b = Parameter[T](Shape(1, hiddenSize),
+//      initWeight = Tensor[T](hiddenSize).view(1, hiddenSize))
+//
+//    // g, b for layerNorm
+//    val g2 = Parameter[T](Shape(1, hiddenSize),
+//      initWeight = Tensor.ones[T](hiddenSize).view(1, hiddenSize))
+//    val b2 = Parameter[T](Shape(1, hiddenSize),
+//      initWeight = Tensor[T](hiddenSize).view(1, hiddenSize))
     val a = multiHeadSelfAttention(x, hiddenSize, attention_mask)
-    val n = TransformerLayer.layerNorm(x + a, eplision, weight = g, bias = b)
+//    val n = TransformerLayer.layerNorm(x + a, eplision, weight = g, bias = b)
+    val n = new KerasLayerWrapper[T](new InternalLayerNorm[T]()
+      .asInstanceOf[AbstractModule[Activity, Activity, T]]).from(x + a)
+
     val m = mlp(n, hiddenSize)
-    val h = TransformerLayer.layerNorm(n + m, eplision, weight = g2, bias = b2)
+//    val h = TransformerLayer.layerNorm(n + m, eplision, weight = g2, bias = b2)
+val h = new KerasLayerWrapper[T](new InternalLayerNorm[T]()
+  .asInstanceOf[AbstractModule[Activity, Activity, T]]).from(n + m)
     h
   }
 
@@ -170,16 +175,17 @@ private[layers] class TransformerLayer[T: ClassTag](
            attention_mask: Variable[T] = null): Variable[T] = {
     // q, v:(batch, nHead, seqLen, hiddenSize/nHead)
     // k:(batch, nHead, hiddenSize/nHead, seqLen)
-    var w = AutoGrad.mm(q, k) // w: (batch, nHead, seqLen, seqLen)
-    if (scale) w = w / scala.math.sqrt(v.getOutputShape().toSingle().toArray.last)
-
-    if (!bidirectional) {
-      w = w * maskValue + (maskValue * (-1) + 1) * -1e9
-    }
-
-    if (attention_mask != null) {
-      w = w + attention_mask
-    }
+//    var w = AutoGrad.mm(q, k) // w: (batch, nHead, seqLen, seqLen)
+//    if (scale) w = w / scala.math.sqrt(v.getOutputShape().toSingle().toArray.last)
+//
+//    if (!bidirectional) {
+//      w = w * maskValue + (maskValue * (-1) + 1) * -1e9
+//    }
+//
+//    if (attention_mask != null) {
+//      w = w + attention_mask
+//    }
+    var w = AutoGrad.attn(q, k, attention_mask)
 
 //    w = Activation[Float]("softmax").from(w)
     w = com.intel.analytics.zoo.pipeline.api.keras.layers.SoftMax[T]().from(w)
@@ -292,8 +298,9 @@ object TransformerLayer {
     (implicit ev: TensorNumeric[T]): Variable[T] = {
     val sizes = x.getOutputShape().toSingle().toArray
     val u = AutoGrad.mean(x, sizes.size - 1, true)
-    val s = AutoGrad.mean(AutoGrad.square(x - u), sizes.size -1, true)
-    val y = (x - u) / AutoGrad.sqrt(s + e)
+    val t = x - u
+    val s = AutoGrad.mean(AutoGrad.square(t), sizes.size -1, true)
+    val y = (t) / AutoGrad.sqrt(s + e)
     y * weight + bias
   }
 }

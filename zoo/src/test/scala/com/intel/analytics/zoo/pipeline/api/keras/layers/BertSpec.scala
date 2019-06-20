@@ -16,7 +16,7 @@
 
 package com.intel.analytics.zoo.pipeline.api.keras.layers
 
-import com.intel.analytics.bigdl.nn.abstractnn.Activity
+import com.intel.analytics.bigdl.nn.abstractnn.{AbstractModule, Activity}
 import com.intel.analytics.bigdl.nn.keras.KerasLayer
 import com.intel.analytics.bigdl.tensor.Tensor
 import com.intel.analytics.bigdl.utils.RandomGenerator._
@@ -65,6 +65,23 @@ class BertSpec extends ZooSpecHelper {
     val e = System.nanoTime()
     val ss = (e - s) / 1e9f
     println(ss)
+  }
+
+  "Bert " should "test" in {
+    val batchSize = 2
+    val hiddenSize = 5
+    val seqLen = 3
+    val eplision = 1e-5
+    val input = Tensor[Float](Array(batchSize, seqLen, hiddenSize)).rand()
+    val x = Variable[Float](Shape(seqLen, hiddenSize))
+
+    val h = new KerasLayerWrapper[Float](new InternalLayerNorm[Float]()
+      .asInstanceOf[AbstractModule[Activity, Activity, Float]]).from(x)
+    val model2 = Model[Float](input = x, output = h)
+    val start2 = System.nanoTime()
+    val o2 = model2.forward(input)
+    val end2 = System.nanoTime()
+    println("time2 is: " + (end2 - start2) / 1e9)
   }
 
   "Bert " should "be able to work" in {
@@ -1147,10 +1164,24 @@ class BertSpec extends ZooSpecHelper {
     }
   }
 
+  "Bert with pretrained model " should "be able to work2" in {
+    // TODO: put zoo model in a public place
+    val layer = BERT[Float]("/tmp/zoo-bert3.model", null, inputSeqLen = 11, hiddenPDrop = 0.0,
+      attnPDrop = 0.0, true)
+
+    val inputIds = Tensor[Float](Array(2, 11)).rand()
+    val segmentIds = Tensor[Float](Array(2, 11)).fill(1.0f)
+    val positionIds = Tensor[Float](Array(2, 11)).fill(2.0f)
+    val masks = Tensor[Float](2, 1, 1, 11).fill(1.0f)
+
+    val input = T(inputIds, segmentIds, positionIds, masks)
+    val output = layer.forward(input).toTable
+  }
+
   // TODO: uncomment this ut after we have put zoo model in a public place
   "Bert with pretrained model " should "be able to work" in {
     // TODO: put zoo model in a public place
-    val layer = BERT[Float]("/tmp/zoo-bert2.model", null, inputSeqLen = 11, hiddenPDrop = 0.0,
+    val layer = BERT[Float]("/tmp/zoo-bert3.model", null, inputSeqLen = 11, hiddenPDrop = 0.0,
       attnPDrop = 0.0, true)
 
     val inputIds = Tensor[Float](Array[Float](2040f, 2001, 3958, 27227, 1029, 3958, 103,
