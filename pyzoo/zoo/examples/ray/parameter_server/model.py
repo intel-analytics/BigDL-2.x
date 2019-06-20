@@ -82,7 +82,7 @@ class SimpleCNN(object):
             self.grads = self.optimizer.compute_gradients(self.cross_entropy)
             self.grads_placeholder = [(tf.placeholder(
                 "float", shape=grad[1].get_shape()), grad[1])
-                                      for grad in self.grads]
+                for grad in self.grads]
             self.apply_grads_placeholder = self.optimizer.apply_gradients(
                 self.grads_placeholder)
 
