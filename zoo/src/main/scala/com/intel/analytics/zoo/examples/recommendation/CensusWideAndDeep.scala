@@ -50,7 +50,7 @@ case class Record(
                    hours_per_week: Int,
                    native_country: String,
                    income_bracket: String
-               )
+                 )
 
 object CensusWideAndDeep {
 
@@ -118,13 +118,12 @@ object CensusWideAndDeep {
     val validationpairFeatureRdds =
       assemblyFeature(isImplicit, valDf, localColumnInfo, params.modelType)
 
-    val optimMethods = if (modelType == "wide_n_deep") {
-      Map("deepPart" -> new Adagrad[Float](0.001),
-        "widePart" -> new Ftrl[Float](math.min(5e-3, 1 / math.sqrt(3049))))
+    val optimMethod = if (modelType == "wide_n_deep") {
+      new Adagrad[Float](0.001)
     } else if (modelType == "wide") {
-      Map("widePart" -> new Ftrl[Float](math.min(5e-3, 1 / math.sqrt(3049))))
+      new Ftrl[Float](math.min(5e-3, 1 / math.sqrt(3049)))
     } else if (modelType == "deep") {
-      Map("deepPart" -> new Adagrad[Float](0.001))
+      new Adagrad[Float](0.001)
     } else {
       throw new IllegalArgumentException(s"Unkown modelType ${modelType}")
     }
@@ -148,7 +147,7 @@ object CensusWideAndDeep {
       dataset = trainRdds,
       criterion = ClassNLLCriterion[Float]())
     optimizer
-      .setOptimMethods(optimMethods)
+      .setOptimMethod(optimMethod)
       .setValidation(Trigger.everyEpoch, validationRdds,
         Array(new Top1Accuracy[Float], new Loss[Float]()))
       .setEndWhen(Trigger.maxEpoch(maxEpoch))
@@ -205,7 +204,7 @@ object CensusWideAndDeep {
     val maritalStatusVocab = Array("Married-civ-spouse", "Divorced", "Married-spouse-absent",
       "Never-married", "Separated", "Married-AF-spouse", "Widowed")
     val relationshipVocab = Array("Husband", "Not-in-family", "Wife", "Own-child", "Unmarried",
-      "Other-relative")  // 6
+      "Other-relative") // 6
     val workclassVocab = Array("Self-emp-not-inc", "Private", "State-gov", "Federal-gov",
       "Local-gov", "?", "Self-emp-inc", "Without-pay", "Never-worked") // 9
     val genderVocab = Array("Female", "Male")

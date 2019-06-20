@@ -72,30 +72,29 @@ abstract class ImageModel[T: ClassTag]()(implicit ev: TensorNumeric[T])
 
   /**
    * Evaluate the ImageSet given validation methods.
+   * Currently only DistributedImageSet is supported.
    *
    * @param image DistributedImageSet in which each image should have a label.
    * @param vMethods Array of ValidationMethod to evaluate the ImageSet.
-   * @param batchSize Total batch size of all partitions.
    * @param configure An instance of [[ImageConfigure]]. Default is null and it will
    *                  be pre-defined together with each ImageModel.
    */
   def evaluateImageSet(
       image: DistributedImageSet,
       vMethods: Array[_ <:ValidationMethod[T]],
-      batchSize: Int,
       configure: ImageConfigure[T] = null): Array[(ValidationResult, ValidationMethod[T])] = {
     val evalConfig = if (null == configure) config else configure
-    // Remark: BigDL currently only supports evaluation on DistributedImageSet.
+    val numPartitions = image.toDistributed().rdd.partitions.length
     if (evalConfig == null) {
+      val batchSize = 4 * numPartitions
       model.evaluateImage(image.toImageFrame(), vMethods, Some(batchSize))
     } else {
-      // Remark: ImageConfigure only has batchPerPartition while evaluate needs
-      // total batchSize. Thus add a batchSize argument here first.
       val data = if (null != evalConfig.preProcessor) {
         image -> evalConfig.preProcessor
       } else {
         image
       }
+      val batchSize = evalConfig.batchPerPartition * numPartitions
       model.evaluateImage(data.toImageFrame(), vMethods, Some(batchSize))
     }
   }

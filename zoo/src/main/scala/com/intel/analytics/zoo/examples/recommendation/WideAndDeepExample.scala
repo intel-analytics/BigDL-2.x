@@ -18,12 +18,12 @@ package com.intel.analytics.zoo.examples.recommendation
 
 import scopt.OptionParser
 
-case class WNDParams(dataset: String = "",
+case class WNDParams(dataset: String = "ml-1m",
                      modelType: String = "wide_n_deep",
                      inputDir: String = "./data/ml-1m/",
                      onSpark: Boolean = true,
                      batchSize: Int = 2048,
-                     maxEpoch: Int = 40,
+                     maxEpoch: Int = 10,
                      logDir: Option[String] = None)
 
 object WideAndDeepExample {

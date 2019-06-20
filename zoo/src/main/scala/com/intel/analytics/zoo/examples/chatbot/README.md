@@ -36,13 +36,18 @@ export ANALYTICS_ZOO_HOME=the folder where you extract the downloaded Analytics 
 dataPath=... // data path. Local file system is supported.
 
 ${ANALYTICS_ZOO_HOME}/bin/spark-shell-with-zoo.sh \
---verbose \
 --master $master \
 --driver-memory 20g \
 --executor-memory 20g \
 --class com.intel.analytics.zoo.examples.chatbot.Train \
 -f ${dataPath}
 ```
+__Options:__
+- `-f` `--dataFolder`: The local folder path that contains training data
+- `-b` `--batchSize`: training batch size
+- `-r` `--learningRate`: learning rate
+- `-e` `--nEpochs`: training epoch
+- `--embedDims`: Dimension of the dense embedding
 
 ### Results
 You can find infered answers for given query at end of each epoch.

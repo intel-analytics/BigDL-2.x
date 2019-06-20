@@ -32,6 +32,7 @@ object StreamingObjectDetection {
   Logger.getLogger("akka").setLevel(Level.ERROR)
   Logger.getLogger("breeze").setLevel(Level.ERROR)
   Logger.getLogger("com.intel.analytics.zoo").setLevel(Level.INFO)
+  Logger.getLogger("com.intel.analytics.zoo.feature.image").setLevel(Level.ERROR)
 
   val logger = Logger.getLogger(getClass)
 
@@ -103,9 +104,10 @@ object StreamingObjectDetection {
 
   /**
    * Write image file to local or remote file system
-   * @param outPath output dir
-   * @param path input file path
-   * @param content file content
+   * @param outPath accessible output dir. Output file will be
+   *                {outPath}/detection_{path}
+   * @param path    original image path
+   * @param content image Array[byte]
    */
   def writeFile(outPath: String, path: String, content: Array[Byte]): Unit = {
     val fspath = getOutPath(outPath, path, "jpg")
@@ -115,10 +117,10 @@ object StreamingObjectDetection {
 
   /**
    * Generate final file path for predicted images
-   * @param outPath
-   * @param path
-   * @param encoding
-   * @return
+   * @param outPath  accessible output dir
+   * @param path     original image path
+   * @param encoding image encoding, e.g., JPG
+   * @return Final file path, e.g., {outPath}/detection_{path}
    */
   private def getOutPath(outPath: String, path: String, encoding: String): Path = {
     val finalName = s"detection_${ path.substring(path.lastIndexOf("/") + 1,

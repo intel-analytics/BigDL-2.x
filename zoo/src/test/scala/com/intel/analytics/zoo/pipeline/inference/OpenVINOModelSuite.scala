@@ -17,6 +17,7 @@
 package com.intel.analytics.zoo.pipeline.inference
 
 import java.io.File
+import java.util
 import java.util.{Arrays, Properties}
 
 import com.google.common.io.Files
@@ -61,9 +62,9 @@ class OpenVINOModelSuite extends FunSuite with Matchers with BeforeAndAfterAll
   var faserrcnnFrozenModelFilePath: String = _
   var faserrcnnModelType: String = _
   var faserrcnnPipelineConfigFilePath: String = _
-  val fasterrcnnDeviceType = DeviceType.CPU
   var fasterrcnnInputdata1FilePath: String = _
   var fasterrcnnInputdata2FilePath: String = _
+
 
   override def beforeAll() {
     tmpDir = Files.createTempDir()
@@ -74,6 +75,7 @@ class OpenVINOModelSuite extends FunSuite with Matchers with BeforeAndAfterAll
 
     s"wget -P $dir $fasterrcnnModelUrl" !;
     s"tar xvf $dir/$fasterrcnnModelTar -C $dir" !;
+
     s"ls -alh $dir" !;
 
     faserrcnnFrozenModelFilePath = s"$dir/$fasterrcnnModelDir/frozen_inference_graph.pb"
@@ -81,23 +83,22 @@ class OpenVINOModelSuite extends FunSuite with Matchers with BeforeAndAfterAll
     faserrcnnPipelineConfigFilePath = s"$dir/$fasterrcnnModelDir/pipeline.config"
     fasterrcnnInputdata1FilePath = s"$dir/inputdata_1"
     fasterrcnnInputdata2FilePath = s"$dir/inputdata_2"
-
-    fasterrcnnModel = InferenceModelFactory.loadOpenVINOModelForTF(
-      faserrcnnFrozenModelFilePath,
-      faserrcnnModelType,
-      faserrcnnPipelineConfigFilePath,
-      null, fasterrcnnDeviceType)
-    fasterrcnnInferenceModel.doLoadTF(
-      faserrcnnFrozenModelFilePath,
-      faserrcnnModelType,
-      faserrcnnPipelineConfigFilePath,
-      null
-    )
   }
 
   override def afterAll() {
-    FileUtils.deleteDirectory(tmpDir)
-    fasterrcnnModel.release()
+    // FileUtils.deleteDirectory(tmpDir)
+    s"rm -rf $tmpDir" !;
+  }
+
+  test("openvino model should be optimized") {
+    InferenceModel.doOptimizeTF(
+      faserrcnnFrozenModelFilePath,
+      faserrcnnModelType,
+      faserrcnnPipelineConfigFilePath,
+      null,
+      tmpDir.getAbsolutePath
+    )
+    tmpDir.listFiles().foreach(file => println(file.getAbsoluteFile))
   }
 
   test("openvino model should throw exception if load failed") {
@@ -106,19 +107,29 @@ class OpenVINOModelSuite extends FunSuite with Matchers with BeforeAndAfterAll
         faserrcnnFrozenModelFilePath + "error",
         faserrcnnModelType,
         faserrcnnPipelineConfigFilePath,
-        null, fasterrcnnDeviceType)
+        null)
     }
-    assert(thrown.getMessage.contains("Openvino optimize tf model error"))
+    assert(thrown.getMessage.contains("Openvino optimize tf object detection model error"))
   }
 
-  test("openvino model should load successfully") {
+  test("openvino object detection model should load successfully and predict correctly") {
+    fasterrcnnModel = InferenceModelFactory.loadOpenVINOModelForTF(
+      faserrcnnFrozenModelFilePath,
+      faserrcnnModelType,
+      faserrcnnPipelineConfigFilePath,
+      null)
+    fasterrcnnInferenceModel.doLoadTF(
+      faserrcnnFrozenModelFilePath,
+      faserrcnnModelType,
+      faserrcnnPipelineConfigFilePath,
+      null
+    )
+
     println(s"fasterrcnnModel from tensorflow pb loaded as $fasterrcnnModel")
     fasterrcnnModel shouldNot be(null)
     println(s"fasterrcnnInferenceModel from tensorflow pb loaded as $fasterrcnnInferenceModel")
     fasterrcnnInferenceModel shouldNot be(null)
-  }
 
-  test("OpenVinoModel should predict correctly") {
     val indata1 = Source.fromFile(fasterrcnnInputdata1FilePath).getLines().map(_.toFloat).toArray
     val indata2 = Source.fromFile(fasterrcnnInputdata2FilePath).getLines().map(_.toFloat).toArray
     println(indata1.length, indata2.length, 1 * 3 * 600 * 600)
@@ -144,6 +155,9 @@ class OpenVINOModelSuite extends FunSuite with Matchers with BeforeAndAfterAll
     })
     threads2.foreach(_.start())
     threads2.foreach(_.join())
+
+    fasterrcnnModel.release()
+    fasterrcnnInferenceModel.release()
   }
 
   def almostEqual(x: Float, y: Float, precision: Float): Boolean = {

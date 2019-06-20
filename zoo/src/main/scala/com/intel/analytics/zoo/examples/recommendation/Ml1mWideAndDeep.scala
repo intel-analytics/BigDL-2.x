@@ -18,10 +18,10 @@ package com.intel.analytics.zoo.examples.recommendation
 
 import com.intel.analytics.bigdl.nn.ClassNLLCriterion
 import com.intel.analytics.bigdl.numeric.NumericFloat
-import com.intel.analytics.bigdl.optim.{Adam, Optimizer, Trigger}
-import com.intel.analytics.bigdl.visualization.{TrainSummary, ValidationSummary}
+import com.intel.analytics.bigdl.optim.{Adam, Top1Accuracy}
 import com.intel.analytics.zoo.common.NNContext
 import com.intel.analytics.zoo.models.recommendation._
+import com.intel.analytics.zoo.pipeline.api.keras.objectives.SparseCategoricalCrossEntropy
 import org.apache.log4j.{Level, Logger}
 import org.apache.spark.SparkConf
 import org.apache.spark.sql.functions._
@@ -43,6 +43,7 @@ object Ml1mWideAndDeep {
     val (ratingsDF, userDF, itemDF, userCount, itemCount) =
       loadPublicData(sqlContext, params.inputDir)
 
+    ratingsDF.groupBy("label").count().show()
     val bucketSize = 100
     val localColumnInfo = ColumnFeatureInfo(
       wideBaseCols = Array("occupation", "gender"),
@@ -70,30 +71,16 @@ object Ml1mWideAndDeep {
     val trainRdds = trainpairFeatureRdds.map(x => x.sample)
     val validationRdds = validationpairFeatureRdds.map(x => x.sample)
 
-    val optimizer = Optimizer(
-      model = wideAndDeep,
-      sampleRDD = trainRdds,
-      criterion = ClassNLLCriterion[Float](),
-      batchSize = params.batchSize)
-
     val optimMethod = new Adam[Float](
       learningRate = 1e-2,
       learningRateDecay = 1e-5)
 
-    optimizer
-      .setOptimMethod(optimMethod)
-      .setEndWhen(Trigger.maxEpoch(params.maxEpoch))
-
-    if (params.logDir.isDefined) {
-      val logdir = params.logDir.get
-      val appName = "/census_wnd" + System.nanoTime()
-      optimizer
-        .setTrainSummary(new TrainSummary(logdir, appName))
-        .setValidationSummary(new ValidationSummary(logdir, appName))
-        .setCheckpoint(logdir + appName, Trigger.everyEpoch)
-    }
-    optimizer
-      .optimize()
+    wideAndDeep.compile(optimizer = optimMethod,
+      loss = SparseCategoricalCrossEntropy[Float](zeroBasedLabel = false),
+      metrics = List(new Top1Accuracy[Float]())
+    )
+    wideAndDeep.fit(trainRdds, batchSize = params.batchSize,
+      nbEpoch = params.maxEpoch, validationData = validationRdds)
 
     val results = wideAndDeep.predict(validationRdds)
     results.take(5).foreach(println)

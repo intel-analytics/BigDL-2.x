@@ -38,7 +38,7 @@ Run Spark Test
    Log To Console                   begin recommendation wideAndDeep on census
    Run Shell                        ${submit} --master ${spark_master} --driver-memory 5g --executor-memory 5g --total-executor-cores 32 --executor-cores 8 --class com.intel.analytics.zoo.examples.recommendation.WideAndDeepExample ${jar_path} --inputDir ${public_hdfs_master}:9000/census --dataset census
    Log To Console                   begin recommendation NCF
-   Run Shell                        ${submit} --master ${spark_master} --driver-memory 5g --executor-memory 5g --total-executor-cores 32 --executor-cores 8 --class com.intel.analytics.zoo.examples.recommendation.NeuralCFexample ${jar_path} --inputDir ${public_hdfs_master}:9000/ml-1m
+   Run Shell                        ${submit} --master ${spark_master} --driver-memory 5g --executor-memory 5g --total-executor-cores 32 --executor-cores 8 --class com.intel.analytics.zoo.examples.recommendation.NeuralCFexample ${jar_path} --inputDir ${public_hdfs_master}:9000/ml-1m --batchSize 8000
    Log To Console                   begin anomalydetection AnomalyDetection
    Run Shell                        ${submit} --master ${spark_master} --driver-memory 5g --executor-memory 10g --total-executor-cores 32 --executor-cores 8 --class com.intel.analytics.zoo.examples.anomalydetection.AnomalyDetection ${jar_path} --inputDir ${public_hdfs_master}:9000/NAB/nyc_taxi
    Log To Console                   begin finetune
@@ -48,11 +48,11 @@ Run Spark Test
    Log To Console                   begin imageTransferLearning
    Run Shell                        ${submit} --master ${spark_master} --driver-memory 5g --executor-memory 10g --total-executor-cores 32 --executor-cores 8 --class com.intel.analytics.zoo.examples.nnframes.imageTransferLearning.ImageTransferLearning ${jar_path} --caffeDefPath ${integration_data_dir}/models/nnframes/deploy.prototxt --caffeWeightsPath ${integration_data_dir}/models/nnframes/bvlc_googlenet.caffemodel --batchSize 32 --imagePath ${public_hdfs_master}:9000/dogs_cats/samples --nEpochs 20
    Log To Console                   begin QARanker
-   Run Shell                        ${submit} --master ${spark_master} --driver-memory 3g --executor-memory 3g  --total-executor-cores 32 --executor-cores 8 --class com.intel.analytics.zoo.examples.qaranker.QARanker ${jar_path} --dataPath ${public_hdfs_master}:9000/WikiQAProcessed --embeddingFile ${integration_data_dir}/text_data/glove.6B/glove.6B.100d.txt --batchSize 192 --nbEpoch 2
+   Run Shell                        ${submit} --master ${spark_master} --driver-memory 3g --executor-memory 3g --total-executor-cores 32 --executor-cores 8 --class com.intel.analytics.zoo.examples.qaranker.QARanker ${jar_path} --dataPath ${public_hdfs_master}:9000/WikiQAProcessed --embeddingFile ${integration_data_dir}/text_data/glove.6B/glove.6B.100d.txt --batchSize 192 --nbEpoch 2
    Log To Console                   begin train inceptionv1
-   Run Shell                        ${submit} --master ${spark_master} --driver-memory 3g --executor-memory 50g  --total-executor-cores 32 --executor-cores 8 --class com.intel.analytics.zoo.examples.inception.TrainInceptionV1 ${jar_path} -f ${public_hdfs_master}:9000/imagenet-small -b 128 -i 20 --learningRate 0.001
+   Run Shell                        ${submit} --master ${spark_master} --driver-memory 3g --executor-memory 50g --total-executor-cores 32 --executor-cores 8 --class com.intel.analytics.zoo.examples.inception.TrainInceptionV1 ${jar_path} -f ${public_hdfs_master}:9000/imagenet-small -b 128 -i 20 --learningRate 0.001
    Log To Console                   begin train inceptionv1 opencv
-   Run Shell                        ${submit} --master ${spark_master} --driver-memory 3g --executor-memory 50g  --total-executor-cores 32 --executor-cores 8 --class com.intel.analytics.zoo.examples.inception.TrainInceptionV1 ${jar_path} -f ${public_hdfs_master}:9000/imagenet-small -b 128 -i 20 --opencv --learningRate 0.001
+   Run Shell                        ${submit} --master ${spark_master} --driver-memory 3g --executor-memory 50g --total-executor-cores 32 --executor-cores 8 --class com.intel.analytics.zoo.examples.inception.TrainInceptionV1 ${jar_path} -f ${public_hdfs_master}:9000/imagenet-small -b 128 -i 20 --opencv --learningRate 0.001
    Remove Directory                 /tmp/objectdetection        recursive=True
 
 Spark2.1 Test Suite
@@ -82,7 +82,7 @@ Yarn Test Suite
    Log To Console                   begin recommendation wideAndDeep on census
    Run Shell                        ${submit} --master yarn --deploy-mode client --conf "spark.serializer=org.apache.spark.serializer.JavaSerializer" --conf spark.yarn.executor.memoryOverhead=40000 --executor-cores 8 --num-executors 4 --driver-memory 5g --executor-memory 10g --class com.intel.analytics.zoo.examples.recommendation.WideAndDeepExample ${jar_path} --inputDir ${public_hdfs_master}:9000/census --dataset census
    Log To Console                   begin recommendation NCF
-   Run Shell                        ${submit} --master yarn --deploy-mode client --conf "spark.serializer=org.apache.spark.serializer.JavaSerializer" --conf spark.yarn.executor.memoryOverhead=40000 --executor-cores 8 --num-executors 4 --driver-memory 5g --executor-memory 10g --class com.intel.analytics.zoo.examples.recommendation.NeuralCFexample ${jar_path} --inputDir ${public_hdfs_master}:9000/ml-1m
+   Run Shell                        ${submit} --master yarn --deploy-mode client --conf "spark.serializer=org.apache.spark.serializer.JavaSerializer" --conf spark.yarn.executor.memoryOverhead=40000 --executor-cores 8 --num-executors 4 --driver-memory 5g --executor-memory 10g --class com.intel.analytics.zoo.examples.recommendation.NeuralCFexample ${jar_path} --inputDir ${public_hdfs_master}:9000/ml-1m --batchSize 8000
    Log To Console                   begin anomalydetection AnomalyDetection
    Run Shell                        ${submit} --master yarn --deploy-mode client --conf "spark.serializer=org.apache.spark.serializer.JavaSerializer" --conf spark.yarn.executor.memoryOverhead=40000 --executor-cores 8 --num-executors 4 --driver-memory 5g --executor-memory 10g --class com.intel.analytics.zoo.examples.anomalydetection.AnomalyDetection ${jar_path} --inputDir ${public_hdfs_master}:9000/NAB/nyc_taxi
    Log To Console                   begin finetune

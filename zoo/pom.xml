@@ -7,7 +7,7 @@
     <parent>
         <artifactId>zoo-parent</artifactId>
         <groupId>com.intel.analytics.zoo</groupId>
-        <version>0.5.0-SNAPSHOT</version>
+        <version>0.6.0-SNAPSHOT</version>
     </parent>
 
     <artifactId>analytics-zoo-bigdl_${bigdl.version}-spark_${spark.version}</artifactId>
@@ -27,7 +27,7 @@
         <bigdl.version>0.8.0</bigdl.version>
         <core.artifactId>zoo-core-dist-all</core.artifactId>
         <core.dependencyType>jar</core.dependencyType>
-        <data-store-url>https://s3-ap-southeast-1.amazonaws.com</data-store-url>
+        <data-store-url>http://download.tensorflow.org</data-store-url>
     </properties>
 
     <distributionManagement>
@@ -104,7 +104,7 @@
         <profile>
             <id>linux</id>
             <properties>
-                <core.artifactId>zoo-core-dist-linux</core.artifactId>
+                <core.artifactId>zoo-core-dist-linux64</core.artifactId>
                 <core.dependencyType>pom</core.dependencyType>
             </properties>
         </profile>
@@ -115,6 +115,20 @@
                 <core.artifactId>zoo-core-dist-mac</core.artifactId>
                 <core.dependencyType>pom</core.dependencyType>
             </properties>
+            <!--these are not supported right now, added to make the project compiles-->
+            <dependencies>
+                <dependency>
+                    <groupId>com.intel.analytics.zoo</groupId>
+                    <artifactId>zoo-core-openvino-java-linux</artifactId>
+                    <version>0.6.0-SNAPSHOT</version>
+                </dependency>
+                <dependency>
+                    <groupId>com.intel.analytics.zoo</groupId>
+                    <artifactId>zoo-core-pmem-java-linux</artifactId>
+                    <version>0.6.0-SNAPSHOT</version>
+                </dependency>
+            </dependencies>
+
         </profile>
 
         <profile>
@@ -123,6 +137,19 @@
                 <core.artifactId>zoo-core-dist-windows</core.artifactId>
                 <core.dependencyType>pom</core.dependencyType>
             </properties>
+            <!--these are not supported right now, added to make the project compiles-->
+            <dependencies>
+                <dependency>
+                    <groupId>com.intel.analytics.zoo</groupId>
+                    <artifactId>zoo-core-openvino-java-linux</artifactId>
+                    <version>0.6.0-SNAPSHOT</version>
+                </dependency>
+                <dependency>
+                    <groupId>com.intel.analytics.zoo</groupId>
+                    <artifactId>zoo-core-pmem-java-linux</artifactId>
+                    <version>0.6.0-SNAPSHOT</version>
+                </dependency>
+            </dependencies>
         </profile>
 
         <profile>
@@ -289,7 +316,7 @@
         <dependency>
             <groupId>com.intel.analytics.zoo</groupId>
             <artifactId>${core.artifactId}</artifactId>
-            <version>0.5.0-SNAPSHOT</version>
+            <version>0.5.1</version>
             <type>${core.dependencyType}</type>
         </dependency>
     </dependencies>
@@ -422,7 +449,19 @@
                                 </execlude>
                             </excludes>
                         </filter>
+                        <filter>
+                            <artifact>com.google.protobuf</artifact>
+                            <excludes>
+                                <exclude>META-INF/maven/com.google.protobuf/protobuf-java/*</exclude>
+                            </excludes>
+                        </filter>
                     </filters>
+                    <relocations>
+                        <relocation>
+                            <pattern>com.google.protobuf</pattern>
+                            <shadedPattern>com.intel.analytics.zoo.shaded.protobuf</shadedPattern>
+                        </relocation>
+                    </relocations>
                 </configuration>
                 <executions>
                     <execution>
@@ -432,8 +471,8 @@
                             <artifactSet>
                                 <includes>
                                     <include>org.spark-project.spark:unused</include>
+                                    <include>com.google.protobuf</include>
                                 </includes>
-
                             </artifactSet>
                         </configuration>
                         <goals>

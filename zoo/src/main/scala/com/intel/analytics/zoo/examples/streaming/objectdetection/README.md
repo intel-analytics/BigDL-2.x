@@ -33,12 +33,17 @@ ${ANALYTICS_ZOO_HOME}/bin/spark-shell-with-zoo.sh \
 MASTER=...
 imageSourcePath=... // image path. Local file system/HDFS/Amazon S3 are supported
 streamingPath=... // text files. Local file system/HDFS/Amazon S3 are supported
-${SPARK_HOME}/bin/spark-submit-with-zoo.sh \
+${ANALYTICS_ZOO_HOME}/bin/spark-shell-with-zoo.sh \
     --master ${MASTER} \
     --driver-memory 2g \
     --executor-memory 5g \
     --class com.intel.analytics.zoo.examples.streaming.objectdetection.ImagePathWriter \
     --streamingPath ${streamingPath} --imageSourcePath ${imageSourcePath}
 ```
-## Results
-Images with objects boxes will be save to ${output} dir.
+
+**Images with objects boxes will be save to ${output} dir.**
+
+## Better Performance with Inference Model
+[Inference Model](https://analytics-zoo.github.io/0.4.0/#ProgrammingGuide/inference/#inference-model) is a thread-safe package in Analytics Zoo aiming to provide high level APIs to speed-up development. 
+
+To enable this feature, simply replace `--class com.intel.analytics.zoo.examples.streaming.objectdetection.StreamingObjectDetection` with `--class com.intel.analytics.zoo.examples.streaming.objectdetection.StreamingInferenceObjectDetection` in Step 1.

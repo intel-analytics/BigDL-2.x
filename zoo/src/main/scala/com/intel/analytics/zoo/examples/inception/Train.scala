@@ -23,7 +23,7 @@ import com.intel.analytics.bigdl.optim._
 import com.intel.analytics.bigdl.utils.{Engine, LoggerFilter, T, Table}
 import com.intel.analytics.zoo.feature.pmem.MemoryType
 import com.intel.analytics.zoo.pipeline.api.keras.layers.utils.EngineRef
-import com.intel.analytics.zoo.pipeline.estimator.{Estimator}
+import com.intel.analytics.zoo.pipeline.estimator.{ConstantClipping, Estimator, L2NormClipping}
 import org.apache.spark.SparkContext
 
 object TrainInceptionV1 {
@@ -83,7 +83,7 @@ object TrainInceptionV1 {
         else (param.maxLr.getOrElse(param.learningRate) - param.learningRate) / warmupIteration
         val polyIteration = maxIteration - warmupIteration
         val lrSchedule = SequentialSchedule(iterationPerEpoch)
-          .add(Warmup(warmupDelta), warmupIteration).add(Poly(0.5, polyIteration), polyIteration)
+          .add(Warmup(warmupDelta), warmupIteration).add(Poly(0.5, maxIteration), polyIteration)
         new SGD[Float](learningRate = param.learningRate, learningRateDecay = 0.0,
           weightDecay = param.weightDecay, momentum = 0.9, dampening = 0.0, nesterov = false,
           learningRateSchedule = lrSchedule)
@@ -99,6 +99,11 @@ object TrainInceptionV1 {
       } else {
         (Trigger.severalIteration(param.checkpointIteration),
           Trigger.maxIteration(param.maxIteration))
+      }
+      if (param.gradientL2NormThreshold.isDefined) {
+        estimator.setGradientClippingByL2Norm(param.gradientL2NormThreshold.get)
+      } else if (param.gradientMin.isDefined && param.gradientMax.isDefined) {
+        estimator.setConstantGradientClipping(param.gradientMin.get, param.gradientMax.get)
       }
 
       estimator.train(trainSet, ClassNLLCriterion[Float](),

@@ -16,17 +16,19 @@
 
 package com.intel.analytics.zoo.models.recommendation
 
-import com.intel.analytics.bigdl.tensor.Tensor
-import com.intel.analytics.bigdl.nn._
+import com.intel.analytics.bigdl.nn.Graph.ModuleNode
 import com.intel.analytics.bigdl.nn.abstractnn.AbstractModule
+import com.intel.analytics.bigdl.tensor.Tensor
 import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric
+import com.intel.analytics.bigdl.utils.Shape
 import com.intel.analytics.zoo.models.common.ZooModel
+import com.intel.analytics.zoo.pipeline.api.keras.layers._
+import com.intel.analytics.zoo.pipeline.api.keras.models.Model
 
 import scala.reflect.ClassTag
 
 /**
  * The neural collaborative filtering model used for recommendation.
- *
  * @param userCount    The number of users. Positive integer.
  * @param itemCount    The number of items. Positive integer.
  * @param numClasses   The number of classes. Positive integer.
@@ -52,43 +54,49 @@ class NeuralCF[T: ClassTag](
   extends Recommender[T] {
 
   override def buildModel(): AbstractModule[Tensor[T], Tensor[T], T] = {
-    val model = Sequential[T]()
+    val input = Input[T](inputShape = Shape(2))
 
-    val mlpUserTable = LookupTable[T](userCount, userEmbed)
-    val mlpItemTable = LookupTable[T](itemCount, itemEmbed)
-    mlpUserTable.setWeightsBias(Array(Tensor[T](userCount, userEmbed).randn(0, 0.1)))
-    mlpItemTable.setWeightsBias(Array(Tensor[T](itemCount, itemEmbed).randn(0, 0.1)))
-    val mlpEmbeddedLayer = Concat[T](2)
-      .add(Sequential[T]().add(Select(2, 1)).add(mlpUserTable))
-      .add(Sequential[T]().add(Select(2, 2)).add(mlpItemTable))
-    val mlpModel = Sequential[T]()
-    mlpModel.add(mlpEmbeddedLayer)
-    val linear1 = Linear[T](itemEmbed + userEmbed, hiddenLayers(0))
-    mlpModel.add(linear1).add(ReLU())
+    val userSelect = Select[T](1, 0).inputs(input)
+    val itemSelect = Select[T](1, 1).inputs(input)
+
+    val userFlat = Flatten().inputs(userSelect)
+    val itemFlat = Flatten().inputs(itemSelect)
+
+    val mlpUserTable = Embedding[T](userCount + 1, userEmbed, init = "normal")
+    val mlpItemTable = Embedding[T](itemCount + 1, itemEmbed, init = "normal")
+
+    val mlpUserLatent: ModuleNode[T] = Flatten().inputs(mlpUserTable.inputs(userFlat))
+    val mlpItemLatent: ModuleNode[T] = Flatten().inputs(mlpItemTable.inputs(itemFlat))
+
+    val mlpEmbeddedLayer = Merge.merge[T](List(mlpUserLatent, mlpItemLatent), "concat", 1)
+
+    val linear1 = Dense[T](hiddenLayers(0), activation = "relu").inputs(mlpEmbeddedLayer)
+    var mlpLinear = linear1
     for (i <- 1 to hiddenLayers.length - 1) {
-      mlpModel.add(Linear(hiddenLayers(i - 1), hiddenLayers(i))).add(ReLU())
+      val linearMid = Dense(hiddenLayers(i), activation = "relu").inputs(mlpLinear)
+      mlpLinear = linearMid
     }
 
-    if (includeMF) {
+    val linearLast = if (includeMF) {
       require(mfEmbed > 0, s"please provide meaningful number of embedding units")
-      val mfUserTable: LookupTable[T] = LookupTable[T](userCount, mfEmbed)
-      val mfItemTable = LookupTable[T](itemCount, mfEmbed)
-      mfUserTable.setWeightsBias(Array(Tensor[T](userCount, mfEmbed).randn(0, 0.1)))
-      mfItemTable.setWeightsBias(Array(Tensor[T](itemCount, mfEmbed).randn(0, 0.1)))
-      val mfEmbeddedLayer = ConcatTable()
-        .add(Sequential[T]().add(Select(2, 1)).add(mfUserTable))
-        .add(Sequential[T]().add(Select(2, 2)).add(mfItemTable))
-      val mfModel = Sequential[T]()
-      mfModel.add(mfEmbeddedLayer).add(CMulTable())
-      val concatedModel = Concat(2).add(mfModel).add(mlpModel)
-      model.add(concatedModel)
-        .add(Linear(mfEmbed + hiddenLayers.last, numClasses))
+
+      val mfUserTable = Embedding[T](userCount + 1, mfEmbed, init = "normal")
+      val mfItemTable = Embedding[T](itemCount + 1, mfEmbed, init = "normal")
+
+      val mfUserLatent: ModuleNode[T] = Flatten().inputs(mfUserTable.inputs(userFlat))
+      val mfItemLatent: ModuleNode[T] = Flatten().inputs(mfItemTable.inputs(itemFlat))
+
+      val mfEmbeddedLayer = Merge.merge[T](List(mfUserLatent, mfItemLatent), "mul", 1)
+
+      val concatedModel = Merge.merge[T](List(mlpLinear, mfEmbeddedLayer), "concat", 1)
+
+      Dense(numClasses, activation = "softmax").inputs(concatedModel)
     }
     else {
-      model.add(mlpModel).
-        add(Linear(hiddenLayers.last, numClasses))
+      Dense(numClasses, activation = "softmax").inputs(mlpLinear)
     }
-    model.add(LogSoftMax[T]())
+
+    val model = Model[T](input, linearLast)
 
     model.asInstanceOf[AbstractModule[Tensor[T], Tensor[T], T]]
   }
@@ -114,10 +122,10 @@ object NeuralCF {
   /**
    * Load an existing NeuralCF model (with weights).
    *
-   * @param path The path for the pre-defined model.
-   *             Local file system, HDFS and Amazon S3 are supported.
-   *             HDFS path should be like "hdfs://[host]:[port]/xxx".
-   *             Amazon S3 path should be like "s3a://bucket/xxx".
+   * @param path       The path for the pre-defined model.
+   *                   Local file system, HDFS and Amazon S3 are supported.
+   *                   HDFS path should be like "hdfs://[host]:[port]/xxx".
+   *                   Amazon S3 path should be like "s3a://bucket/xxx".
    * @param weightPath The path for pre-trained weights if any. Default is null.
    * @tparam T Numeric type of parameter(e.g. weight, bias). Only support float/double now.
    */
