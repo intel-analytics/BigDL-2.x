@@ -162,17 +162,17 @@ private[layers] class TransformerLayer[T: ClassTag](
            attention_mask: Variable[T] = null): Variable[T] = {
     // q, v:(batch, nHead, seqLen, hiddenSize/nHead)
     // k:(batch, nHead, hiddenSize/nHead, seqLen)
-//    var w = AutoGrad.mm(q, k) // w: (batch, nHead, seqLen, seqLen)
-//    if (scale) w = w / scala.math.sqrt(v.getOutputShape().toSingle().toArray.last)
-//
-//    if (!bidirectional) {
-//      w = w * maskValue + (maskValue * (-1) + 1) * -1e9
-//    }
-//
-//    if (attention_mask != null) {
-//      w = w + attention_mask
-//    }
-    var w = AutoGrad.attn(q, k, attention_mask)
+    var w = AutoGrad.mm(q, k) // w: (batch, nHead, seqLen, seqLen)
+    if (scale) w = w / scala.math.sqrt(v.getOutputShape().toSingle().toArray.last)
+
+    if (!bidirectional) {
+      w = w * maskValue + (maskValue * (-1) + 1) * -1e9
+    }
+
+    if (attention_mask != null) {
+      w = w + attention_mask
+    }
+//    var w = AutoGrad.attn(q, k, attention_mask)
 
 //    w = Activation[Float]("softmax").from(w)
     w = com.intel.analytics.zoo.pipeline.api.keras.layers.SoftMax[T]().from(w)
