@@ -21,7 +21,6 @@ from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
 import os
-os.environ["LANG"]="C.UTF-8"
 import argparse
 import numpy as np
 import os
@@ -31,6 +30,7 @@ import gym
 from zoo import init_spark_on_yarn, init_spark_on_local
 from zoo.ray.util.raycontext import RayContext
 
+os.environ["LANG"] = "C.UTF-8"
 # Define some hyperparameters.
 
 # The number of hidden layer neurons.
@@ -82,10 +82,10 @@ def discount_rewards(r):
 # x is a vector that holds the preprocessed pixel information
 def policy_forward(x, model):
     # neurons in the hidden layer (W1) can detect various game senarios
-    h = np.dot(model["W1"], x) # compute hidden layer neuron activations
+    h = np.dot(model["W1"], x)   # compute hidden layer neuron activations
     h[h < 0] = 0  # ReLU nonlinearity. threhold at zero
     # weights in W2 can then decide if each case we should go UP or DOWN
-    logp = np.dot(model["W2"], h) # compuate the log probability of going up
+    logp = np.dot(model["W2"], h)   # compuate the log probability of going up
     p = sigmoid(logp)
     # Return probability of taking action 2, and hidden state.
     return p, h
@@ -93,7 +93,9 @@ def policy_forward(x, model):
 
 def policy_backward(eph, epx, epdlogp, model):
     """backward pass. (eph is array of intermediate hidden states)"""
-    # the way to change the policy’s parameters is to do some rollouts, take the gradient of the sampled actions, multiply it by the score and add everything
+# the way to change the policy’s parameters is to
+# do some rollouts, take the gradient of the sampled actions
+#  multiply it by the score and add everything
     dW2 = np.dot(eph.T, epdlogp).ravel()
     dh = np.outer(epdlogp, model["W2"])
     # Backprop relu.
@@ -116,8 +118,8 @@ class PongEnv(object):
 
     def compute_gradient(self, model):
         # model = {'W1':W1, 'W2':W2}
-        # given a model, run for one episode and return the parameter to be updated and sum(reward) 
-        
+        # given a model, run for one episode and return the parameter
+        # to be updated and sum(reward)
         # Reset the game.
         observation = self.env.reset()
         # Note that prev_x is used in computing the difference frame.
@@ -130,7 +132,8 @@ class PongEnv(object):
             x = cur_x - prev_x if prev_x is not None else np.zeros(D)
             prev_x = cur_x
 
-            # feed difference frames into the network, so that it can detect motion
+            # feed difference frames into the network
+            # so that it can detect motion
             aprob, h = policy_forward(x, model)
             # Sample an action.
             action = 2 if np.random.uniform() < aprob else 3
@@ -172,11 +175,12 @@ class PongEnv(object):
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="Train an RL agent using RayOnSpark")
+    parser = argparse.ArgumentParser(description="Train an RL agent")
 
-    parser.add_argument("--hadoop_conf", 
-        type=str,
-        help="turn on yarn mode by passing the path to the hadoop configuration folder. Otherwise, turn on local mode.")
+    parser.add_argument("--hadoop_conf",
+                        type=str,
+                        help="turn on yarn mode by passing the hadoop path"
+                        "configuration folder. Otherwise, turn on local mode.")
     parser.add_argument(
         "--batch-size",
         default=10,
@@ -201,15 +205,14 @@ if __name__ == "__main__":
             driver_memory="2g",
             driver_cores=4,
             extra_executor_memory_for_ray="30g")
-        ray_ctx = RayContext(sc=sc,
-                               object_store_memory="25g")
+        ray_ctx = RayContext(sc=sc, object_store_memory="25g")
     else:
         sc = init_spark_on_local(cores=4)
         ray_ctx = RayContext(sc=sc)
     ray_ctx.init()
 
     batch_size = args.batch_size
-    # Run the reinforcement learning.  
+    # Run the reinforcement learning.
     running_reward = None
     batch_num = 1
     model = {}
@@ -234,7 +237,8 @@ if __name__ == "__main__":
             action_id = actors[i].compute_gradient.remote(model_id)
             actions.append(action_id)
         for i in range(batch_size):
-            # wait for one actor to finish its operation, action_id is the ready object id
+            # wait for one actor to finish its operation
+            # action_id is the ready object id
             action_id, actions = ray.wait(actions)
             grad, reward_sum = ray.get(action_id[0])
             # Accumulate the gradient of each weight parameter over batch.
@@ -258,4 +262,3 @@ if __name__ == "__main__":
         batch_num += 1
 
     ray_ctx.stop()
-

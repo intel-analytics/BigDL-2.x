@@ -18,7 +18,6 @@ from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
 import os
-os.environ["LANG"]="C.UTF-8"
 import argparse
 import time
 
@@ -28,12 +27,14 @@ import model
 from zoo import init_spark_on_yarn, init_spark_on_local
 from zoo.ray.util.raycontext import RayContext
 
+os.environ["LANG"] = "C.UTF-8"
 parser = argparse.ArgumentParser(description="Run the asynchronous parameter "
                                              "server example.")
 parser.add_argument("--num-workers", default=4, type=int,
                     help="The number of workers to use.")
 parser.add_argument("--hadoop_conf", type=str,
-                    help="turn on yarn mode by passing the path to the hadoop configuration folder. Otherwise, turn on local mode.")
+                    help="turn on yarn mode by passing the path to the hadoop"
+                    "Configuration folder. Otherwise, turn on local mode.")
 
 
 @ray.remote
@@ -86,8 +87,7 @@ if __name__ == "__main__":
             driver_memory="2g",
             driver_cores=4,
             extra_executor_memory_for_ray="30g")
-        ray_ctx = RayContext(sc=sc,
-                               object_store_memory="25g")
+        ray_ctx = RayContext(sc=sc, object_store_memory="25g")
     else:
         sc = init_spark_on_local(cores=4)
         ray_ctx = RayContext(sc=sc)

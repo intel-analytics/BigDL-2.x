@@ -13,8 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-
-#Most of the tensorflow code is adapted from Tensorflow's tutorial on using
+# Most of the tensorflow code is adapted from Tensorflow's tutorial on using
 # CNNs to train MNIST
 # https://www.tensorflow.org/get_started/mnist/pros#build-a-multilayer-convolutional-network.  # noqa: E501
 
