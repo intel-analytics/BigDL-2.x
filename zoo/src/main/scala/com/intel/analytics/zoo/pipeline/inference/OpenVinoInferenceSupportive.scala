@@ -44,9 +44,19 @@ class OpenVinoInferenceSupportive extends InferenceSupportive with Serializable 
                       data: Array[Float],
                       shape: Array[Int]): JTensor
 
+  @native def predictAsync(executableNetworkReference: Long,
+                      data: Array[Float],
+                      shape: Array[Int],
+                      nireq: Int): JTensor
+
   @native def predictInt8(executableNetworkReference: Long,
                       data: Array[Float],
                       shape: Array[Int]): JTensor
+
+  @native def predictAsyncInt8(executableNetworkReference: Long,
+                      data: Array[Float],
+                      shape: Array[Int],
+                      nireq: Int): JTensor
 
   @native def predictInt8(executableNetworkReference: Long,
                       data: Array[Byte],

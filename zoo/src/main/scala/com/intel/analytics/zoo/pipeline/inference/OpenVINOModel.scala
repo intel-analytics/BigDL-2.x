@@ -44,6 +44,25 @@ class OpenVINOModel(var executableNetworkReference: Long = -1,
     outputs
   }
 
+  override def predict(inputs: JList[JList[JTensor]], nireq: Int): JList[JList[JTensor]] = {
+    val outputs = new ArrayList[JList[JTensor]]()
+    inputs.asScala.map(input => {
+      val tensor = input.get(0)
+      val output = if (isInt8) {
+        supportive.predictAsyncInt8(executableNetworkReference,
+          tensor.getData, tensor.getShape, nireq)
+      } else {
+        supportive.predictAsync(executableNetworkReference,
+          tensor.getData, tensor.getShape, nireq)
+      }
+      outputs.add(Arrays.asList({
+        output
+      }))
+    })
+    outputs
+  }
+
+
   override def predict(inputActivity: Activity): Activity = {
     val (inputList, batchSize) = inputActivity.isTable match {
       case true =>

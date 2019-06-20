@@ -511,6 +511,20 @@ class InferenceModel(private var autoScalingEnabled: Boolean = true,
   /**
    * predicts the inference result
    *
+   * @param inputs the input tensor with batch
+   * @return the output tensor with batch
+   */
+  def doPredict(inputs: JList[JList[JTensor]], nireq: Int): JList[JList[JTensor]] = {
+    timing(s"model predict for batch ${inputs.size()}") {
+      val batchSize = inputs.size()
+      require(batchSize > 0, "inputs size should > 0")
+      predict(inputs, nireq)
+    }
+  }
+
+  /**
+   * predicts the inference result
+   *
    * @param inputActivity the input activity
    * @return the output activity
    */
@@ -548,6 +562,23 @@ class InferenceModel(private var autoScalingEnabled: Boolean = true,
     val model: AbstractModel = retrieveModel()
     try {
       model.predict(inputs)
+    } finally {
+      model match {
+        case null =>
+        case _ =>
+          val success = modelQueue.offer(model)
+          success match {
+            case true =>
+            case false => model.release()
+          }
+      }
+    }
+  }
+
+  private def predict(inputs: JList[JList[JTensor]], nireq: Int): JList[JList[JTensor]] = {
+    val model: AbstractModel = retrieveModel()
+    try {
+      model.predict(inputs, nireq)
     } finally {
       model match {
         case null =>
