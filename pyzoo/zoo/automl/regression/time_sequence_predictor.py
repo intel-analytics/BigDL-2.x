@@ -172,9 +172,21 @@ class TimeSequencePredictor(object):
         Default is BasicRecipe(1).
         :return: self
         """
+        #check if cols are in the df
+        cols_list = [self.dt_col,self.target_col]
+        if self.extra_features_col is not None:
+            if not isinstance(self.extra_features_col, (list,)):
+                raise ValueError("extra_features_col needs to be either None or a list")
+            cols_list.extend(self.extra_features_col)
+
+        missing_cols = set(cols_list) - set(input_df.columns)
+        if len(missing_cols) != 0:
+            raise ValueError("Missing Columns in the input dataframe:"+ ','.join(list(missing_cols)))
+
 
         if not Evaluator.check_metric(metric):
             raise ValueError("metric" + metric + "is not supported")
+
         self.pipeline = self._hp_search(input_df,
                                         validation_df=validation_df,
                                         metric=metric,
