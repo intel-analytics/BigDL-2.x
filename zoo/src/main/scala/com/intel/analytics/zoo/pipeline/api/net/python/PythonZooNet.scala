@@ -142,7 +142,6 @@ class PythonZooNet[T: ClassTag](implicit ev: TensorNumeric[T]) extends PythonZoo
       toJSample(x).asInstanceOf[RDD[JSample[Float]]], batchSize)
   }
 
-<<<<<<< HEAD
   val processToBeKill = new CopyOnWriteArrayList[String]()
   registerKiller()
 

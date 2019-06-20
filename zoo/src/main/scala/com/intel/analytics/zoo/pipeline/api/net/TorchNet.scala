@@ -26,6 +26,7 @@ import com.intel.analytics.bigdl.tensor.Tensor
 import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric
 import com.intel.analytics.zoo.pipeline.api.Predictable
 import com.intel.analytics.zoo.pipeline.api.net.TorchNet.TorchModelHolder
+import com.intel.analytics.zoo.pipeline.inference.JTensor
 import org.apache.commons.io.FileUtils
 
 import scala.collection.mutable
@@ -46,6 +47,10 @@ class TorchNet private(private val modelHolder: TorchModelHolder)
     TorchNet.load(modelHolder.torchBytes)
   }
 
+  private def forward(storage: Array[Float] , offset: Int, shape: Array[Int]): JTensor = {
+    PytorchModel.forwardNative(this.torchModel, storage, offset, shape).asInstanceOf[JTensor]
+  }
+
   override def parameters(): (Array[Tensor[Float]], Array[Tensor[Float]]) = {
     (Array.empty, Array.empty)
   }
@@ -59,7 +64,7 @@ class TorchNet private(private val modelHolder: TorchModelHolder)
     val data = input.storage().array()
     val size = input.size()
     val offset = input.storageOffset()
-    val result = torchModel.forward(data, offset, size)
+    val result = forward(data, offset, size)
     val resultTensor = Tensor(result.getData, result.getShape)
     output.set(resultTensor)
   }
@@ -71,14 +76,12 @@ class TorchNet private(private val modelHolder: TorchModelHolder)
   override def release(): Unit = {
     super.release()
     if (torchModel != null) {
-      torchModel.release()
+      PytorchModel.releaseNative(torchModel)
     }
   }
 }
 
 object TorchNet {
-
-  loadPytorchNatives() // load once per JVM
 
   private val modelBytesRegistry = new RegistryMap[Array[Byte]]()
 
@@ -138,51 +141,18 @@ object TorchNet {
     new TorchNet(new TorchModelHolder(modelbytes, path))
   }
 
-  // extract libs from zoo jar file
-  private def loadPytorchNatives(): Unit = {
-    val tmpDir = com.google.common.io.Files.createTempDir()
-    val libStream = TorchNet.getClass.getResourceAsStream(s"/pytorch/lib.zip")
-    unzip(libStream, tmpDir)
-
+  private def load(bytes: Array[Byte]): Long = {
     try {
-      System.load(tmpDir + "/libtorch.so")
-      System.load(tmpDir + "/libpytorch-engine.so")
-    }
-    finally {
-      FileUtils.deleteDirectory(tmpDir)
-    }
-  }
-
-  private def unzip(inputStream: InputStream, outputPath: File) {
-    try {
-      val buffer = new Array[Byte](2048)
-      val istream = new ZipInputStream(inputStream)
-      var entry = istream.getNextEntry
-      while (entry != null) {
-        val entryDestination = new File(outputPath, entry.getName)
-        if (entry.isDirectory) entryDestination.mkdirs
-        else {
-          entryDestination.getParentFile.mkdirs
-          val fos = new FileOutputStream(entryDestination)
-          val bos = new BufferedOutputStream(fos, buffer.length)
-          var len = istream.read(buffer)
-          while (len > 0) {
-            bos.write(buffer, 0, len)
-            len = istream.read(buffer)
-          }
-          bos.close()
-        }
-        entry = istream.getNextEntry
-      }
+      val tmpFile = File.createTempFile("TorchNet", "_pt")
+      Files.write(Paths.get(tmpFile.toURI()), bytes)
+      val ref = PytorchModel.loadNative(tmpFile.getAbsolutePath())
+      FileUtils.deleteQuietly(tmpFile)
+      ref
     } catch {
       case io: IOException =>
-        System.out.println("error during loading loading pytorch libs")
-        throw io
+      System.out.println("error during loading Torch model")
+      throw io;
     }
-  }
-
-  private def load(bytes: Array[Byte]): PytorchModel = {
-    new PytorchModel().load(bytes)
   }
 
 }
