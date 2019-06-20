@@ -19,71 +19,16 @@ package com.intel.analytics.zoo.pipeline.api.keras.layers
 import com.intel.analytics.bigdl.nn.abstractnn.{AbstractModule, Activity}
 import com.intel.analytics.bigdl.nn.keras.KerasLayer
 import com.intel.analytics.bigdl.tensor.Tensor
-import com.intel.analytics.bigdl.utils.RandomGenerator._
-import com.intel.analytics.bigdl.utils.{Shape, T, Table}
-import com.intel.analytics.zoo.pipeline.api.autograd.{Parameter, Variable}
+import com.intel.analytics.bigdl.utils.{Shape, T}
+import com.intel.analytics.zoo.pipeline.api.autograd.Variable
 import com.intel.analytics.zoo.pipeline.api.keras.models.Model
 import com.intel.analytics.zoo.pipeline.api.keras.serializer.ModuleSerializationTest
 import com.intel.analytics.zoo.pipeline.api.keras.ZooSpecHelper
+import com.intel.analytics.zoo.pipeline.api.keras.layers.internal.InternalLayerNorm
 
 import scala.util.Random
 
 class BertSpec extends ZooSpecHelper {
-  RNG.setSeed(100)
-  Random.setSeed(100)
-  "keras layers " should "be able to work" in {
-    val t = Tensor[Float](2, 3, 4, 4)
-    t.apply1(_ => Random.nextInt(10))
-    val t2 = t.clone()
-    val l = SoftMax[Float]()
-    l.build(Shape(2, 3, 4, 4))
-
-//    val t2 = t.max(4)._1
-//    val t3 = t-t2.expand(Array(2, 3, 4, 4))
-//    val t5 = t3.exp()
-//
-//    val t6 = t5.sum(4)
-//    val o2 = t5/t6.expand(Array(2, 3, 4, 4))
-
-    val dim = t.dim()
-    val sizes = t.size()
-    val shift = t.max(dim)._1
-
-    val input2 = t
-    val shiftedInput = input2 - shift.expand(sizes)
-    val exp = shiftedInput.exp()
-
-    val sum = exp.sum(dim)
-    val o2 = exp / sum.expand(sizes)
-
-//    val t = Tensor[Float](56, 11, 768).rand()
-//    val l = Dense[Float](3072)
-//    l.build(Shape(56, 11, 768))
-
-    val s = System.nanoTime()
-    val o = l.forward(t2)
-    val e = System.nanoTime()
-    val ss = (e - s) / 1e9f
-    println(ss)
-  }
-
-  "Bert " should "test" in {
-    val batchSize = 2
-    val hiddenSize = 5
-    val seqLen = 3
-    val eplision = 1e-5
-    val input = Tensor[Float](Array(batchSize, seqLen, hiddenSize)).rand()
-    val x = Variable[Float](Shape(seqLen, hiddenSize))
-
-    val h = new KerasLayerWrapper[Float](new InternalLayerNorm[Float]()
-      .asInstanceOf[AbstractModule[Activity, Activity, Float]]).from(x)
-    val model2 = Model[Float](input = x, output = h)
-    val start2 = System.nanoTime()
-    val o2 = model2.forward(input)
-    val end2 = System.nanoTime()
-    println("time2 is: " + (end2 - start2) / 1e9)
-  }
-
   "Bert " should "be able to work" in {
     val layer = BERT[Float](vocab = 100,
     hiddenSize = 10,
@@ -154,12 +99,9 @@ class BertSpec extends ZooSpecHelper {
 
     val embeddings =
       wordEmbeddings.asInstanceOf[Variable[Float]] + positionEmbeddings + tokenTypeEmbeddings
-    val embeddingG = Parameter[Float](Shape(1, hiddenSize),
-      initWeight = Tensor.ones[Float](hiddenSize).view(1, hiddenSize))
-    val embeddingB = Parameter[Float](Shape(1, hiddenSize),
-      initWeight = Tensor[Float](hiddenSize).view(1, hiddenSize))
-    val afterNorm = TransformerLayer.layerNorm[Float](embeddings,
-      1e-5, embeddingG, embeddingB)
+    val afterNorm = new KerasLayerWrapper[Float](
+      new InternalLayerNorm[Float](nOutput = hiddenSize, eps = 1e-12)
+        .asInstanceOf[AbstractModule[Activity, Activity, Float]]).from(embeddings)
     val h = Dropout[Float](hiddenPDrop).from(afterNorm)
 
     val embeddingLayer = Model(Array(wordInput, tokenTypeInput, positionInput), h)
