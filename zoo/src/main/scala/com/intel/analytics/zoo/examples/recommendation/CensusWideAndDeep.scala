@@ -170,7 +170,7 @@ object CensusWideAndDeep {
 
     val validation = sqlContext.sparkContext
       .textFile(dataPath + "/adult.test")
-      .map(_.dropRight(1))
+      .map(_.dropRight(1))  // remove dot at the end of each line in adult.test
       .map(_.split(",").map(_.trim))
       .filter(_.size == 15).map(array =>
       Record(
