@@ -114,7 +114,8 @@ class NeuralCFSpec extends ZooSpecHelper {
 
     val optimMethod = new Adam[Float](learningRate = 1e-2, learningRateDecay = 1e-5)
 
-    ncf.compile(optimizer = optimMethod, loss = SparseCategoricalCrossEntropy[Float](zeroBasedLabel = false),
+    ncf.compile(optimizer = optimMethod,
+      loss = SparseCategoricalCrossEntropy[Float](zeroBasedLabel = false),
       metrics = List(new Top1Accuracy[Float]()))
 
     ncf.fit(trainRdds, batchSize = 458, nbEpoch = 100)
@@ -147,7 +148,8 @@ class NeuralCFSpec extends ZooSpecHelper {
 
     val optimMethod = new Adam[Float](learningRate = 1e-2, learningRateDecay = 1e-5)
 
-    ncf.compile(optimizer = optimMethod, loss = SparseCategoricalCrossEntropy[Float](zeroBasedLabel = false),
+    ncf.compile(optimizer = optimMethod,
+      loss = SparseCategoricalCrossEntropy[Float](zeroBasedLabel = false),
       metrics = List(new Top1Accuracy[Float]()))
 
     ncf.fit(trainRdds, batchSize = 458, nbEpoch = 100)
