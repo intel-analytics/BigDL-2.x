@@ -122,6 +122,35 @@ object Utils {
     }
   }
 
+  /**
+    * convert a row to sample given column information of WideAndDeep Sequential model.
+    *
+    * @param r Row of userId, itemId, features and label
+    * @param columnInfo ColumnFeatureInfo specify information of different features
+    * @param modelType support "wide_n_deep", "wide", "deep" only
+    * @return TensorSample as input for WideAndDeep Sequential model
+    */
+  def row2SampleSequential(r: Row, columnInfo: ColumnFeatureInfo, modelType: String): Sample[Float]
+  = {
+    val wideTensor: Tensor[Float] = getWideTensor(r, columnInfo)
+    val deepTensor: Tensor[Float] = getDeepTensor(r, columnInfo)
+    val l = r.getAs[Int](columnInfo.label)
+
+    val label = Tensor[Float](T(l))
+    label.resize(1, 1)
+
+    modelType match {
+      case "wide_n_deep" =>
+        TensorSample[Float](Array(wideTensor, deepTensor), Array(label))
+      case "wide" =>
+        TensorSample[Float](Array(wideTensor), Array(label))
+      case "deep" =>
+        TensorSample[Float](Array(deepTensor), Array(label))
+      case _ =>
+        throw new IllegalArgumentException("unknown type")
+    }
+  }
+
 
   /**
    * convert a row to tensor given column feature information of WideAndDeep model.
@@ -146,11 +175,7 @@ object Utils {
     val values = indices.map(_ + 1.0f)
     val shape = Array(wideDims.sum)
 
-    val x: Array[Array[Int]] = Array(indices)
-
-    val out = Tensor.sparse(Array(indices), values, shape)
-
-    out
+    Tensor.sparse(Array(indices), values, shape)
   }
 
   /**
