@@ -47,7 +47,7 @@ class TorchNet private(private val modelHolder: TorchModelHolder)
     TorchNet.load(modelHolder.torchBytes)
   }
 
-  private def forward(storage: Array[Float] , offset: Int, shape: Array[Int]): JTensor = {
+  private def forward(storage: Array[Float], offset: Int, shape: Array[Int]): JTensor = {
     PytorchModel.forwardNative(this.torchModel, storage, offset, shape).asInstanceOf[JTensor]
   }
 

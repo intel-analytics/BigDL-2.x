@@ -26,7 +26,7 @@
         <spark.version>2.1.0</spark.version>
         <bigdl.version>0.8.0</bigdl.version>
         <core.artifactId>zoo-core-dist-all</core.artifactId>
-        <core.dependencyType>jar</core.dependencyType>
+        <core.dependencyType>pom</core.dependencyType>
         <data-store-url>http://download.tensorflow.org</data-store-url>
     </properties>
 
