@@ -123,13 +123,13 @@ object Utils {
   }
 
   /**
-    * convert a row to sample given column information of WideAndDeep Sequential model.
-    *
-    * @param r Row of userId, itemId, features and label
-    * @param columnInfo ColumnFeatureInfo specify information of different features
-    * @param modelType support "wide_n_deep", "wide", "deep" only
-    * @return TensorSample as input for WideAndDeep Sequential model
-    */
+   * convert a row to sample given column information of WideAndDeep Sequential model.
+   *
+   * @param r Row of userId, itemId, features and label
+   * @param columnInfo ColumnFeatureInfo specify information of different features
+   * @param modelType support "wide_n_deep", "wide", "deep" only
+   * @return TensorSample as input for WideAndDeep Sequential model
+   */
   def row2SampleSequential(r: Row, columnInfo: ColumnFeatureInfo, modelType: String): Sample[Float]
   = {
     val wideTensor: Tensor[Float] = getWideTensor(r, columnInfo)
