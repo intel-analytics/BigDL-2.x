@@ -275,9 +275,10 @@ class OpenVINOInt8Suite extends FunSuite with Matchers with BeforeAndAfterAll
       Arrays.asList({
         input2
       }))
-    val results: util.List[util.List[JTensor]] = model.doPredict(inputs, 20)
+    val results: util.List[util.List[JTensor]] = model.doPredict(inputs, 1)
     val classes = results.toArray().map(list => {
       val inner = list.asInstanceOf[util.List[JTensor]].get(0)
+      println(inner.getShape().mkString(","))
       val class1 = inner.getData.slice(0, 1000).zipWithIndex.maxBy(_._1)._2
       val class2 = inner.getData.slice(1000, 2000).zipWithIndex.maxBy(_._1)._2
       println(s"(${class1}, ${class2})")
