@@ -18,12 +18,18 @@ class PytorchModel {
      */
     private long nativeRef;
 
-    PytorchModel load(byte[] bytes) throws IOException {
+    PytorchModel load(byte[] bytes, byte[] lossBytes) throws IOException {
         try {
             File tmpFile = File.createTempFile("TorchNet", "_pt");
             Files.write(Paths.get(tmpFile.toURI()), bytes);
-            this.load(tmpFile.getAbsolutePath());
+
+            File lossFile = File.createTempFile("TorchNet", "_lpt");
+            Files.write(Paths.get(lossFile.toURI()), lossBytes);
+
+            this.load(tmpFile.getAbsolutePath(), lossFile.getAbsolutePath());
+
             FileUtils.deleteQuietly(tmpFile);
+            FileUtils.deleteQuietly(lossFile);
         } catch (IOException io) {
             System.out.println("error during loading Torch model");
             throw io;
@@ -35,17 +41,23 @@ class PytorchModel {
         return forwardNative(this.nativeRef, storage, offset, shape);
     }
 
-    private void load(String path) {
-        this.nativeRef = loadNative(path);
+    JTensor backward(float[] storage, int offset, int[] shape) {
+        return backwardNative(this.nativeRef, storage, offset, shape);
+    }
+
+    private void load(String modelPath, String lossPath) {
+        this.nativeRef = loadNative(modelPath, lossPath);
     }
 
     protected void finalize() {
         releaseNative(this.nativeRef);
     }
 
-    native long loadNative(String path);
+    native long loadNative(String modelPath, String lossPath);
 
     native JTensor forwardNative(long nativeRef, float[] storage, int offset, int[] shape);
+
+    native JTensor backwardNative(long nativeRef, float[] storage, int offset, int[] shape);
 
     native void releaseNative(long nativeRef);
 
