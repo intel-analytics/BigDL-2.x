@@ -19,7 +19,7 @@ import tempfile
 import pytest
 
 from zoo.automl.pipeline.time_sequence import *
-from zoo.automl.regression.time_sequence_predictor import TimeSequencePredictor
+from zoo.automl.regression.time_sequence_predictor import *
 import numpy as np
 import pandas as pd
 
@@ -59,6 +59,39 @@ class TestTimeSequencePipeline:
         print("Mean square error (future_seq_len=3) is:", mse)
         print("R square (future_seq_len=3) is:", rs)
 
+    def test_evaluate_RandomRecipe(self):
+        # sample_num should > past_seq_len, the default value of which is 50
+        sample_num = 100
+        train_df = pd.DataFrame({"datetime": pd.date_range('1/1/2019', periods=sample_num),
+                                 "value": np.random.randn(sample_num)})
+        sample_num = 64
+        test_df = pd.DataFrame({"datetime": pd.date_range('1/10/2019', periods=sample_num),
+                                "value": np.random.randn(sample_num)})
+
+        future_seq_len = 1
+        tsp = TimeSequencePredictor(dt_col="datetime",
+                                    target_col="value",
+                                    future_seq_len=future_seq_len,
+                                    extra_features_col=None, )
+        pipeline = tsp.fit(train_df)
+        mse, rs = pipeline.evaluate(test_df, metric=["mean_squared_error", "r_square"])
+        assert len(mse) == future_seq_len
+        assert len(rs) == future_seq_len
+        print("Mean square error (future_seq_len=1) is:", mse)
+        print("R square (future_seq_len=1) is:", rs)
+
+        future_seq_len = 3
+        tsp = TimeSequencePredictor(dt_col="datetime",
+                                    target_col="value",
+                                    future_seq_len=future_seq_len,
+                                    extra_features_col=None, )
+        pipeline = tsp.fit(train_df, recipe=RandomRecipe(1))
+        mse, rs = pipeline.evaluate(test_df, metric=["mean_squared_error", "r_square"])
+        assert len(mse) == future_seq_len
+        assert len(rs) == future_seq_len
+        print("Mean square error (future_seq_len=3) is:", mse)
+        print("R square (future_seq_len=3) is:", rs)
+
     def test_predict(self):
         # sample_num should > past_seq_len, the default value of which is 50
         sample_num = 100
@@ -73,6 +106,25 @@ class TestTimeSequencePipeline:
                                     future_seq_len=1,
                                     extra_features_col=None, )
         pipeline = tsp.fit(train_df)
+        y_pred = pipeline.predict(test_df)
+
+        default_past_seq_len = 50
+        assert y_pred.shape == (test_sample_num - default_past_seq_len + 1, 2)
+
+    def test_predict_RandomRecipe(self):
+        # sample_num should > past_seq_len, the default value of which is 50
+        sample_num = 100
+        train_df = pd.DataFrame({"datetime": pd.date_range('1/1/2019', periods=sample_num),
+                                 "value": np.random.randn(sample_num)})
+        test_sample_num = 64
+        test_df = pd.DataFrame({"datetime": pd.date_range('1/10/2019', periods=test_sample_num),
+                                "value": np.random.randn(test_sample_num)})
+
+        tsp = TimeSequencePredictor(dt_col="datetime",
+                                    target_col="value",
+                                    future_seq_len=1,
+                                    extra_features_col=None, )
+        pipeline = tsp.fit(train_df, recipe=RandomRecipe(1))
         y_pred = pipeline.predict(test_df)
 
         default_past_seq_len = 50
@@ -193,6 +245,34 @@ class TestTimeSequencePipeline:
             print(new_pred)
             columns = ["{}_{}".format(target_col, i) for i in range(future_seq_len)]
             np.testing.assert_allclose(pred[columns].values, new_pred[columns].values)
+        finally:
+            shutil.rmtree(dirname)
+
+    def test_save_restore_1_RandomRecipe(self):
+        future_seq_len = 1
+        sample_num = 100
+        train_df = pd.DataFrame({"datetime": pd.date_range('1/1/2019', periods=sample_num),
+                                 "value": np.random.randn(sample_num)})
+        sample_num = 64
+        test_df = pd.DataFrame({"datetime": pd.date_range('1/10/2019', periods=sample_num),
+                                "value": np.random.randn(sample_num)})
+
+        tsp = TimeSequencePredictor(dt_col="datetime",
+                                    target_col="value",
+                                    future_seq_len=future_seq_len,
+                                    extra_features_col=None, )
+        pipeline = tsp.fit(train_df, recipe=RandomRecipe(1))
+        pred = pipeline.predict(test_df)
+
+        dirname = tempfile.mkdtemp(prefix="saved_pipeline")
+        try:
+            save_pipeline_file = os.path.join(dirname, "my.ppl")
+            pipeline.save(save_pipeline_file)
+            assert os.path.isfile(save_pipeline_file)
+            new_pipeline = load_ts_pipeline(save_pipeline_file)
+
+            new_pred = new_pipeline.predict(test_df)
+            np.testing.assert_allclose(pred["value"].values, new_pred["value"].values)
         finally:
             shutil.rmtree(dirname)
 
