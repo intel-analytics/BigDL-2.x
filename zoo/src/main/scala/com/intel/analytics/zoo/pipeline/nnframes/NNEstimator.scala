@@ -159,7 +159,7 @@ private[nnframes] trait NNParams[@specialized(Float, Double) T] extends HasFeatu
     }
   }
   // set default here to apply to both estimator and model
-  setDefault(batchSize -> 1)
+  setDefault(batchSize -> 32)
 }
 
 /**
@@ -200,6 +200,7 @@ class NNEstimator[T: ClassTag] private[zoo] (
 
   /**
    * Set global batch size across the cluster. Global batch size = Batch per thread * num of cores.
+   * default is 32.
    */
   def setBatchSize(value: Int): this.type = set(batchSize, value)
 
@@ -452,7 +453,7 @@ class NNEstimator[T: ClassTag] private[zoo] (
     copyValues(dlModel.setParent(this))
     val clonedTransformer = ToTuple() -> $(samplePreprocessing)
       .asInstanceOf[Preprocessing[(Any, Option[Any]), Sample[T]]].clonePreprocessing()
-    dlModel.setSamplePreprocessing(clonedTransformer)
+    dlModel.setSamplePreprocessing(clonedTransformer).clear(dlModel.batchSize)
   }
 
   /**
@@ -607,7 +608,12 @@ class NNModel[T: ClassTag] private[zoo] (
     // note that here we use batch per thread, but not batch per partition. For inference,
     // GlobalBatchSize = batchPerThread * coreNumber() appears to be more intuitive for the users
     val totalNumCores = EngineRef.getCoreNumber() * EngineRef.getNodeNumber()
-    val batchPerThread = Math.ceil($(batchSize).toDouble / totalNumCores).toInt
+    val batchPerThread = if (isSet(batchSize)) {
+      Math.ceil($(batchSize).toDouble / totalNumCores).toInt
+    } else {
+      4
+    }
+
     if ($(batchSize) % totalNumCores != 0) {
       logger.warn(s"Global batch size (${$(batchSize)}) cannot be divided by total core number" +
         s"($totalNumCores). Setting batch per thread as ($batchPerThread), and actual Global" +

@@ -423,8 +423,7 @@ class NNEstimator(JavaEstimator, HasFeaturesCol, HasLabelCol, HasPredictionCol, 
             .setSamplePreprocessing(ChainedPreprocessing([ToTuple(), estPreprocessing]))
 
         nnModel.setFeaturesCol(self.getFeaturesCol()) \
-            .setPredictionCol(self.getPredictionCol()) \
-            .setBatchSize(self.getBatchSize())
+            .setPredictionCol(self.getPredictionCol())
         return nnModel
 
 
@@ -524,8 +523,7 @@ class NNClassifier(NNEstimator):
             .setSamplePreprocessing(ChainedPreprocessing([ToTuple(), estPreprocessing]))
 
         classifierModel.setFeaturesCol(self.getFeaturesCol()) \
-            .setPredictionCol(self.getPredictionCol()) \
-            .setBatchSize(self.getBatchSize())
+            .setPredictionCol(self.getPredictionCol())
         return classifierModel
 
 
