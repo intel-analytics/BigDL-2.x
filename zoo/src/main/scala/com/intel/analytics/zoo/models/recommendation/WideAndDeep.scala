@@ -16,7 +16,10 @@
 
 package com.intel.analytics.zoo.models.recommendation
 
+import com.intel.analytics.bigdl.Module
 import com.intel.analytics.bigdl.nn.Graph.ModuleNode
+import com.intel.analytics.bigdl.nn.{CAddTable, Concat, Linear, LogSoftMax
+  , LookupTable, LookupTableSparse, ParallelTable, ReLU, Sequential, Zeros}
 import com.intel.analytics.bigdl.nn.abstractnn.AbstractModule
 import com.intel.analytics.zoo.pipeline.api.keras.models.Model
 import com.intel.analytics.bigdl.tensor.Tensor
@@ -185,6 +188,88 @@ class WideAndDeep[T: ClassTag](
     (input, mergeList)
   }
 
+
+  /**
+   * Build WideAndDeep sequential model
+   *
+   * @return WideAndDeep sequential model
+   */
+  def buildSequentialModel(): AbstractModule[Tensor[T], Tensor[T], T] = {
+
+    val fullModel = Sequential[T]()
+
+    val wideModel = Sequential().setName("widePart")
+
+    wideModel.add(LookupTableSparse[T](
+      wideBaseDims.sum + wideCrossDims.sum, numClasses).setInitMethod(Zeros))
+      .add(com.intel.analytics.bigdl.nn.CAdd(Array(numClasses)))
+
+    // deep model
+    val deepModel = Sequential[T]().setName("deepPart")
+    val deepColumn = Concat[T](2)
+
+    // add indicator encoded columns
+    var indicatorWidth = 0
+    if (indicatorDims.length > 0) {
+      indicatorWidth = indicatorDims.sum
+      deepColumn.add(Sequential[T]().add(com.intel.analytics.bigdl.nn.Narrow[T](2,
+        1, indicatorWidth)))
+        .setName("indicator")
+    }
+
+    // add embedding columns
+    require(embedInDims.length == embedOutDims.length, s"size of embedingColumns should match")
+    var embedWidth = 0
+    var embedOutputDimSum = 0
+    if (embedInDims.length > 0) {
+      embedOutputDimSum = embedOutDims.sum
+      for (i <- 0 until embedInDims.length) {
+        val lookupTable = LookupTable[T](embedInDims(i), embedOutDims(i))
+        lookupTable.setWeightsBias(
+          Array(Tensor(embedInDims(i), embedOutDims(i)).randn(0, 0.1)))
+        deepColumn.add(
+          Sequential[T]().add(com.intel.analytics.bigdl.nn.Select[T](2
+            , indicatorWidth + 1 + embedWidth))
+            .add(lookupTable))
+        embedWidth += 1
+      }
+    }
+
+    // add continuous columns
+    var continuousWidth = 0
+    if (continuousCols.length > 0) {
+      continuousWidth = continuousCols.length
+      deepColumn.add(
+        Sequential[T]()
+          .add(com.intel.analytics.bigdl.nn.Narrow[T](2, indicatorWidth + embedWidth + 1
+            , continuousWidth)))
+    }
+
+    // add hidden layers
+    deepModel.add(deepColumn)
+      .add(Linear[T](indicatorWidth + embedOutputDimSum + continuousWidth, hiddenLayers(0)))
+      .add(ReLU())
+    for (i <- 1 to hiddenLayers.length - 1) {
+      deepModel.add(Linear[T](hiddenLayers(i - 1), hiddenLayers(i))).add(ReLU())
+    }
+    deepModel.add(Linear[T](hiddenLayers.last, numClasses))
+
+    // create whole model
+    modelType match {
+      case "wide_n_deep" =>
+        fullModel.add(ParallelTable().add(wideModel).add(deepModel))
+          .add(CAddTable()).add(LogSoftMax())
+        fullModel.asInstanceOf[AbstractModule[Tensor[T], Tensor[T], T]]
+      case "wide" =>
+        wideModel.add(LogSoftMax())
+        wideModel.asInstanceOf[AbstractModule[Tensor[T], Tensor[T], T]]
+      case "deep" =>
+        deepModel.add(LogSoftMax())
+        deepModel.asInstanceOf[AbstractModule[Tensor[T], Tensor[T], T]]
+      case _ =>
+        throw new IllegalArgumentException("unknown type")
+    }
+  }
 }
 
 object WideAndDeep {
@@ -226,6 +311,43 @@ object WideAndDeep {
   }
 
   /**
+   * The factory method to create a WideAndDeep Sequential Model instance.
+   *
+   * @param modelType String. "wide", "deep", "wide_n_deep" are supported.
+   *                  Default is "wide_n_deep".
+   * @param numClasses The number of classes. Positive integer.
+   * @param columnInfo An instance of ColumnFeatureInfo.
+   * @param hiddenLayers Units of hidden layers for the deep model. Array of positive integers.
+   *                     Default is Array(40, 20, 10).
+   */
+  def sequential[@specialized(Float, Double) T: ClassTag](
+                                                      modelType: String = "wide_n_deep",
+                                                      numClasses: Int,
+                                                      columnInfo: ColumnFeatureInfo,
+                                                      hiddenLayers: Array[Int] = Array(40, 20, 10))
+                                                    (implicit ev: TensorNumeric[T]): Module[T] = {
+    require(columnInfo.wideBaseCols.length == columnInfo.wideBaseDims.length,
+      s"size of wideBaseColumns should match")
+    require(columnInfo.wideCrossCols.length == columnInfo.wideCrossDims.length,
+      s"size of wideCrossColumns should match")
+    require(columnInfo.indicatorCols.length == columnInfo.indicatorDims.length,
+      s"size of indicatorColumns should match")
+    require(columnInfo.embedCols.length == columnInfo.embedInDims.length &&
+      columnInfo.embedCols.length == columnInfo.embedOutDims.length,
+      s"size of embeddingColumns should match")
+
+    new WideAndDeep[T](modelType,
+      numClasses,
+      columnInfo.wideBaseDims,
+      columnInfo.wideCrossDims,
+      columnInfo.indicatorDims,
+      columnInfo.embedInDims,
+      columnInfo.embedOutDims,
+      columnInfo.continuousCols,
+      hiddenLayers).buildSequentialModel()
+  }
+
+  /**
    * Load an existing WideAndDeep model (with weights).
    *
    * @param path       The path for the pre-defined model.
@@ -241,4 +363,3 @@ object WideAndDeep {
     ZooModel.loadModel(path, weightPath).asInstanceOf[WideAndDeep[T]]
   }
 }
-
