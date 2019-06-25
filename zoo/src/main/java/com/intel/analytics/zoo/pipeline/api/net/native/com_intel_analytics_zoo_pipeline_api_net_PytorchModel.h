@@ -33,6 +33,22 @@ JNIEXPORT jobject JNICALL Java_com_intel_analytics_zoo_pipeline_api_net_PytorchM
 
 /*
  * Class:     com_intel_analytics_zoo_pipeline_api_net_PytorchModel
+ * Method:    getGradientNative
+ * Signature: (J)Lcom/intel/analytics/zoo/pipeline/inference/JTensor;
+ */
+JNIEXPORT jobject JNICALL Java_com_intel_analytics_zoo_pipeline_api_net_PytorchModel_getGradientNative
+  (JNIEnv *, jobject, jlong);
+
+/*
+ * Class:     com_intel_analytics_zoo_pipeline_api_net_PytorchModel
+ * Method:    updateGradientNative
+ * Signature: (J[FI[I)Lcom/intel/analytics/zoo/pipeline/inference/JTensor;
+ */
+JNIEXPORT jobject JNICALL Java_com_intel_analytics_zoo_pipeline_api_net_PytorchModel_updateWeightNative
+  (JNIEnv *, jobject, jlong, jfloatArray);
+
+/*
+ * Class:     com_intel_analytics_zoo_pipeline_api_net_PytorchModel
  * Method:    releaseNative
  * Signature: (J)V
  */

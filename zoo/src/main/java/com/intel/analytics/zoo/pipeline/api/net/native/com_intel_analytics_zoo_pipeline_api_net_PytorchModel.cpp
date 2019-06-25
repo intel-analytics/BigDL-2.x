@@ -56,7 +56,6 @@ JNIEXPORT jlong JNICALL Java_com_intel_analytics_zoo_pipeline_api_net_PytorchMod
     long id = modelID;
     handles.insert(std::make_pair(id, model_ptr));
     lossHandles.insert(std::make_pair(id, loss_ptr));
-    std::cout << "handles.size() is: " << handles.size() << std::endl;
     mtx.unlock();
 
     jenv->ReleaseStringUTFChars(jmodel_path, p_model_path);
@@ -168,7 +167,12 @@ JNIEXPORT jobject JNICALL Java_com_intel_analytics_zoo_pipeline_api_net_PytorchM
     lossInputs.push_back(label_tensor);
 
     std::shared_ptr<torch::jit::script::Module> loss_ptr = lossHandles[nativeRef];
+    std::cout << "lossInputs is: " << std::endl;
+    std::cout << y << std::endl;
+    std::cout << label_tensor << std::endl;
     at::Tensor loss = loss_ptr->forward(lossInputs).toTensor();
+    std::cout << "loss is: " << std::endl;
+    std::cout << loss << std::endl;
     loss.backward();
 
     // Release critical part
@@ -203,6 +207,70 @@ JNIEXPORT jobject JNICALL Java_com_intel_analytics_zoo_pipeline_api_net_PytorchM
 
     return lossJTensor;
 
+  }
+
+
+JNIEXPORT jobject JNICALL Java_com_intel_analytics_zoo_pipeline_api_net_PytorchModel_getGradientNative
+  (JNIEnv * jenv, jobject jobj, jlong nativeRef) {
+    std::shared_ptr<torch::jit::script::Module> model_ptr = handles[nativeRef];
+    std::vector<float> xv;
+
+    for (const auto& child : model_ptr -> get_modules()) {
+
+        auto slots = child -> get_parameters();
+        for (size_t i = 0; i < slots.size(); ++i) {
+             auto& x = slots[i];
+             std::cout << "param: " << x.value().toTensor() << std::endl;
+             std::cout << "grad: " << x.value().toTensor().grad() << std::endl;
+
+             size_t x_size = x.value().toTensor().grad().numel();
+             auto p = static_cast<float*>(x.value().toTensor().grad().storage().data());
+             for(size_t i=0; i<x_size; i++)
+             {
+               xv.push_back(p[i]);
+             }
+        }
+    }
+
+    std::cout << "xv: " << xv << std::endl;
+    jclass jtensor_class = jenv -> FindClass("com/intel/analytics/zoo/pipeline/inference/JTensor");
+    jmethodID jtensor_constructor = jenv -> GetMethodID(jtensor_class, "<init>", "([F[I)V");
+
+    int result_storage_len = xv.size();
+    jfloatArray result_storage = jenv -> NewFloatArray(result_storage_len);
+    jenv -> SetFloatArrayRegion(result_storage, 0, result_storage_len, &xv[0]);
+
+    int pytorch_result_shape[1] = {xv.size()};
+    jintArray result_shape = jenv -> NewIntArray(1);
+    jenv -> SetIntArrayRegion(result_shape, 0, 1, pytorch_result_shape);
+
+    jobject gradientJTensor = jenv -> NewObject(jtensor_class, jtensor_constructor, result_storage, result_shape);
+
+    return gradientJTensor;
+  }
+
+
+JNIEXPORT jobject JNICALL Java_com_intel_analytics_zoo_pipeline_api_net_PytorchModel_updateWeightNative
+  (JNIEnv * jenv, jobject jobj, jlong nativeRef, jfloatArray jstorage) {
+    std::shared_ptr<torch::jit::script::Module> model_ptr = handles[nativeRef];
+    std::vector<float> xv;
+
+    for (const auto& child : model_ptr -> get_modules()) {
+
+        auto slots = child -> get_parameters();
+        for (size_t i = 0; i < slots.size(); ++i) {
+             auto& x = slots[i];
+             std::cout << "param: " << x.value().toTensor() << std::endl;
+             std::cout << "grad: " << x.value().toTensor().grad() << std::endl;
+
+             size_t x_size = x.value().toTensor().grad().numel();
+             auto p = static_cast<float*>(x.value().toTensor().grad().storage().data());
+             for(size_t i=0; i<x_size; i++)
+             {
+               xv.push_back(p[i]);
+             }
+        }
+    }
   }
 
 }

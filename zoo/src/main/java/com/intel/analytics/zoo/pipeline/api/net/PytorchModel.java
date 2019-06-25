@@ -59,6 +59,10 @@ class PytorchModel {
 
     native JTensor backwardNative(long nativeRef, float[] storage, int offset, int[] shape);
 
+    native JTensor getGradientNative(long nativeRef);
+
+    native JTensor updateWeightNative(long nativeRef, float[] storage);
+
     native void releaseNative(long nativeRef);
 
 
