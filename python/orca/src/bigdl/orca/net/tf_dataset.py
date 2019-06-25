@@ -34,7 +34,8 @@ def _to_tensor_structure(tensors):
     if isinstance(tensors, tuple):
         tensor_structure = TensorMeta(dtype=tensors[0], shape=tensors[1], name="input0")
     elif isinstance(tensors, list):
-        tensor_structure = [TensorMeta(dtype=value[0], shape=value[1], name=idx)
+        tensor_structure = [TensorMeta(dtype=value[0], shape=value[1],
+                                       name="list_input_" + str(idx))
                             for (idx, value) in enumerate(tensors)]
     elif isinstance(tensors, dict):
         tensor_structure = {}
