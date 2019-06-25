@@ -416,13 +416,6 @@ with variable_creator_scope():
 
         raise ValueError("We don't support %s for now" % koptim_method)
 
-    def refresh_weights(self):
-        from zoo.util.tf import export_tf
-        export_tf(self.sess, self.export_dir,
-                  inputs=self.inputs,
-                  outputs=self.grads + self.outputs)
-        self.training_helper_layer = TFTrainingHelper(self.export_dir, self.session_config)
-
     def set_train_summary(self, summary):
         self.optimizer.set_train_summary(summary)
 
