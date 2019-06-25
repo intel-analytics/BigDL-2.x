@@ -141,7 +141,7 @@ class KerasModel(object):
 
     def _fit_distributed(self, dataset, validation_split, epochs, **kwargs):
         self.tf_optimizer = TFOptimizer.from_keras(self.model, dataset,
-                                                   val_spilt=validation_split, **kwargs)()
+                                                   val_spilt=validation_split, **kwargs)
         self.tf_optimizer.optimize(MaxEpoch(epochs))
 
     def evaluate(self,
