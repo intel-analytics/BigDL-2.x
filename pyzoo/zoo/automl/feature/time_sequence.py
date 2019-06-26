@@ -71,7 +71,7 @@ class TimeSequenceFeatureTransformer(BaseFeatureTransformer):
             length > 1, or 1-d numpy array in format (no. of samples, ) if future sequence length = 1
         """
         self.config = self._get_feat_config(**config)
-        self._check_input(input_df)
+        self._check_input(input_df, mode="train")
         # print(input_df.shape)
         feature_data = self._get_features(input_df, self.config)
         self.scaler.fit(feature_data)
@@ -98,7 +98,8 @@ class TimeSequenceFeatureTransformer(BaseFeatureTransformer):
         """
         if self.config is None or self.past_seq_len is None:
             raise Exception("Needs to call fit_transform or restore first before calling transform")
-        self._check_input(input_df)
+        mode = "val" if is_train else "test"
+        self._check_input(input_df, mode)
         # generate features
         feature_data = self._get_features(input_df, self.config)
         # select and standardize data
@@ -219,7 +220,7 @@ class TimeSequenceFeatureTransformer(BaseFeatureTransformer):
         self.past_seq_len = feat_config.get("past_seq_len", 50)
         return feat_config
 
-    def _check_input(self, input_df):
+    def _check_input(self, input_df, mode="train"):
         """
         Check dataframe for integrity. Requires time sequence to come in uniform sampling intervals.
         :param input_df:
@@ -251,6 +252,26 @@ class TimeSequenceFeatureTransformer(BaseFeatureTransformer):
         current_time = np.datetime64('today', 's')
         if last_datetime > current_time:
             raise ValueError("Last date time is bigger than current time!")
+
+        # check the length of input data is smaller than requested.
+        if mode == "test":
+            min_input_len = self.past_seq_len
+            error_msg = "Length of {} data should be larger than " \
+                        "the past sequence length selected by automl.\n" \
+                        "{} data length: {}\n" \
+                        "past sequence length selected: {}\n" \
+                .format(mode, mode, len(input_df), self.past_seq_len)
+        else:
+            min_input_len = self.past_seq_len + self.future_seq_len
+            error_msg = "Length of {} data should be larger than " \
+                        "the sequence length you want to predict plus the past sequence length selected by automl.\n"\
+                        "{} data length: {}\n"\
+                        "predict sequence length: {}\n"\
+                        "past sequence length selected: {}\n"\
+                .format(mode, mode, len(input_df), self.future_seq_len, self.past_seq_len)
+        if len(input_df) < min_input_len:
+            raise ValueError(error_msg)
+
         return input_df
 
     def _roll_data(self, data, seq_len):
@@ -280,9 +301,6 @@ class TimeSequenceFeatureTransformer(BaseFeatureTransformer):
             y: y is 2-d numpy array in format (no. of samples, future sequence length) if future sequence
             length > 1, or 1-d numpy array in format (no. of samples, ) if future sequence length = 1
         """
-        max_past_seq_len = len(dataframe) - future_seq_len
-        if past_seq_len > max_past_seq_len:
-            raise ValueError("past_seq_len {} exceeds the maximum value {}".format(past_seq_len, future_seq_len))
         x = dataframe[0:-future_seq_len].values
         y = dataframe.iloc[past_seq_len:, 0].values
         output_x, mask_x = self._roll_data(x, past_seq_len)
