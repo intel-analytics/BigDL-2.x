@@ -92,19 +92,34 @@ class TestTimeSequenceFeature:
         with pytest.raises(ValueError, match=r".* current .*"):
             feat.fit_transform(df, **config)
 
-    def test_fit_transform_past_seq_len(self):
-        # if the past_seq_len exceeds (sample_num - future_seq_len), raise an error
-        sample_num = 8
-        past_seq_len = 10
+    def test_input_data_len(self):
+        sample_num = 100
+        past_seq_len = 20
         dates = pd.date_range('1/1/2019', periods=sample_num)
         values = np.random.randn(sample_num)
         df = pd.DataFrame({"datetime": dates, "values": values})
         config = {"selected_features": ['IS_AWAKE(datetime)', 'IS_BUSY_HOURS(datetime)', 'HOUR(datetime)'],
                   "past_seq_len": past_seq_len}
+        train_df, val_df, test_df = split_input_df(df,
+                                                   ts_col="datetime",
+                                                   overlap=10,
+                                                   val_split_ratio=0.1,
+                                                   test_split_ratio=0.1)
+        # print("Length of train_df is", len(train_df))
+        # print("Length of val_df is", len(val_df))
+        # print("Length of test_df is", len(test_df))
         feat = TimeSequenceFeatureTransformer(future_seq_len=1, dt_col="datetime",
                                               target_col="values", drop_missing=True)
-        with pytest.raises(ValueError, match=r".*past_seq_len.*"):
-            x, y = feat.fit_transform(df, **config)
+        with pytest.raises(ValueError, match=r".*past sequence length.*"):
+            feat.fit_transform(train_df[:10], **config)
+
+        with pytest.raises(ValueError, match=r".*past sequence length.*"):
+            feat.fit_transform(train_df, **config)
+            feat.transform(val_df, is_train=True)
+
+        with pytest.raises(ValueError, match=r".*past sequence length.*"):
+            feat.fit_transform(train_df, **config)
+            feat.transform(test_df[:-1], is_train=False)
 
     def test_fit_transform_input_data(self):
         # if there is NaN in data other than datetime, drop the training sample.
