@@ -125,7 +125,14 @@ class TFNet(Layer):
                                     batch_per_thread)
             return results.map(lambda result: Layer.convert_output(result))
         else:
-            self.forward(x)
+            start_idx = 0
+            results = []
+            while start_idx < len(x):
+                end_idx = min(start_idx + batch_per_thread, len(x))
+                results.append(self.forward(x[start_idx:end_idx]))
+                start_idx += batch_per_thread
+
+            return np.concatenate(results, axis=0)
 
     @staticmethod
     def from_export_folder(folder, tf_session_config=None):
