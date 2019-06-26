@@ -24,7 +24,6 @@ from zoo.pipeline.api.net.torch_net import TorchNet
 
 
 class TestTF(ZooTestCase):
-
     def test_torch_net_predict(self):
         model = torchvision.models.resnet18(pretrained=True).eval()
         net = TorchNet.from_pytorch(model, [1, 3, 224, 224])
@@ -32,8 +31,9 @@ class TestTF(ZooTestCase):
         dummpy_input = torch.ones(1, 3, 224, 224)
         result = net.predict(dummpy_input.numpy()).collect()
         assert np.allclose(result[0][0:5].tolist(),
-            np.asarray([-0.03913354128599167, 0.11446280777454376, -1.7967549562454224,
-                        -1.2342952489852905, -0.819004476070404]))
+                           np.asarray(
+                               [-0.03913354128599167, 0.11446280777454376, -1.7967549562454224,
+                                -1.2342952489852905, -0.819004476070404]))
 
 
 if __name__ == "__main__":
