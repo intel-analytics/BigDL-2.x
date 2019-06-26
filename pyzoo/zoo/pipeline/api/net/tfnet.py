@@ -140,7 +140,11 @@ class TFNet(Layer):
         Create a TFNet from an exported folder produced by `export_tf`
         :param folder: the folder the TensorFlow model exported to
         :param tf_session_config: an optional tf.ConfigProto object to
-                       set the session config in java side
+                       set the session config in java side.
+                       This config does not necessarily be the same with your current session.
+                       E.g. sess_config = tf.ConfigProto(inter_op_parallelism_threads=1,
+                                                         intra_op_parallelism_threads=1)
+                            net = TFNet.from_session(sess, inputs, outputs, sess_config)
         :return: a TFNet
         """
         if not os.path.isdir(folder):
@@ -165,7 +169,11 @@ class TFNet(Layer):
         :param allow_non_differentiable_input: if set to yes, when input are not differentiable,
         the gradient will be set to zero. if set to false, an error will be thrown.
         :param tf_session_config: an optional tf.ConfigProto object to
-                       set the session config in java side
+                       set the session config in java side.
+                       This config does not necessarily be the same with your current session.
+                       E.g. sess_config = tf.ConfigProto(inter_op_parallelism_threads=1,
+                                                         intra_op_parallelism_threads=1)
+                            net = TFNet.from_session(sess, inputs, outputs, sess_config)
         :return a TFNet
         """
         from zoo.util.tf import export_tf
