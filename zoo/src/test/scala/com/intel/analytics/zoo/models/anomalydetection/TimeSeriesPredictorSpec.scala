@@ -16,6 +16,8 @@
 
 package com.intel.analytics.zoo.models.anomalydetection
 
+import org.apache.spark.ml.feature.StandardScaler
+import org.apache.spark.ml.linalg.Vectors
 import com.intel.analytics.bigdl.tensor.Tensor
 import com.intel.analytics.bigdl.utils.Shape
 import com.intel.analytics.zoo.common.NNContext
@@ -43,6 +45,31 @@ class TimeSeriesPredictorSpec  extends ZooSpecHelper {
     if (sc != null) {
       sc.stop()
     }
+  }
+
+  "scalar should " should "work properly" in {
+
+    val data = Array(
+      Vectors.dense(0.0, 10.3, 1.0, 4.0, 5.0),
+      Vectors.dense(2.0, 0.0, 3.0, 4.0, 5.0),
+      Vectors.dense(4.0, 0.0, 0.0, 6.0, 7.0)
+    )
+
+    val df = sqlContext.createDataFrame(data.map(Tuple1.apply)).toDF("features")
+
+    val scaler = new StandardScaler()
+      .setInputCol("features")
+      .setOutputCol("scaledFeatures")
+      .setWithStd(true)
+      .setWithMean(false)
+
+    val scalerModel = scaler.fit(df)
+
+    scalerModel.transform(df).show(100)
+
+    println(scalerModel.std +"," + scalerModel.mean)
+
+
   }
 
   "TimeSeriesPredictor unroll multiple features " should "work properly" in {

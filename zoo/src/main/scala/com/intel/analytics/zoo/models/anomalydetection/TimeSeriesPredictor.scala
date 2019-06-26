@@ -153,7 +153,7 @@ object TimeSeriesPredictor {
     featureLabelIndex
   }
 
-  def toSampleRddTrain[T: ClassTag](rdd: RDD[MFeatureLabelIndex[T]])
+  def toSampleRdd[T: ClassTag](rdd: RDD[MFeatureLabelIndex[T]])
                               (implicit ev: TensorNumeric[T]): RDD[Sample[T]] = {
     rdd.map(x => {
 
@@ -172,8 +172,8 @@ object TimeSeriesPredictor {
 
   }
 
-  def encoderOnly[T: ClassTag](rdd: RDD[MFeatureLabelIndex[T]])
-                              (implicit ev: TensorNumeric[T]): RDD[Sample[T]] = {
+  def toEncoderRdd[T: ClassTag](rdd: RDD[MFeatureLabelIndex[T]])
+                               (implicit ev: TensorNumeric[T]): RDD[Sample[T]] = {
     rdd.map(x => {
 
       val shape1: Array[Int] = Array(x.feature1.length, x.feature1(0).length)
@@ -202,9 +202,9 @@ object TimeSeriesPredictor {
 
     val cutPoint = unrolled.count() - testSize
 
-    val train =toSampleRddTrain(unrolled.filter(x => x.index < cutPoint))
-    val test = toSampleRddTrain(unrolled.filter(x => x.index >= cutPoint))
-    val encoderRdd = encoderOnly(unrolled)
+    val train =toSampleRdd(unrolled.filter(x => x.index < cutPoint))
+    val test = toSampleRdd(unrolled.filter(x => x.index >= cutPoint))
+    val encoderRdd = toEncoderRdd(unrolled)
 
     (train, test, encoderRdd)
   }

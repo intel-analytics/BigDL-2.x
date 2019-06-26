@@ -17,12 +17,11 @@
 package com.intel.analytics.zoo.examples.anomalydetection
 
 import com.intel.analytics.bigdl.dataset.Sample
-import com.intel.analytics.bigdl.nn.SelectTable
-import com.intel.analytics.bigdl.nn.{Sequential => TSequential}
+import com.intel.analytics.bigdl.nn.{MSECriterion, SelectTable, TimeDistributedCriterion, TimeDistributedMaskCriterion, Sequential => TSequential}
 import com.intel.analytics.bigdl.nn.abstractnn.Activity
 import com.intel.analytics.bigdl.nn.keras.KerasLayer
 import com.intel.analytics.bigdl.numeric.NumericFloat
-import com.intel.analytics.bigdl.optim._
+import com.intel.analytics.bigdl.optim.{RMSprop, Adam}
 import com.intel.analytics.bigdl.tensor.Tensor
 import com.intel.analytics.bigdl.utils.Shape
 import com.intel.analytics.zoo.common.NNContext
@@ -31,8 +30,12 @@ import com.intel.analytics.zoo.models.seq2seq.{RNNDecoder, RNNEncoder, Seq2seq}
 import com.intel.analytics.zoo.pipeline.api.keras.layers.{Dense, InputLayer, TimeDistributed}
 import com.intel.analytics.zoo.pipeline.api.keras.models.Sequential
 import com.intel.analytics.zoo.pipeline.api.keras.objectives.MeanSquaredError
+import com.intel.analytics.zoo.pipeline.api.keras.metrics.MAE
 import org.apache.log4j.{Level, Logger}
 import org.apache.spark.SparkConf
+import org.apache.spark.ml.feature.StandardScaler
+import org.apache.spark.ml.linalg.Vectors
+import org.apache.spark.ml.linalg.Vector
 import org.apache.spark.rdd.RDD
 import org.apache.spark.sql.{DataFrame, SQLContext}
 import org.apache.spark.sql.functions._
@@ -44,8 +47,8 @@ case class PredictorParams(val inputDir: String = "./data/NAB/nyc_taxi/",
                            val encoderLength: Int = 50,
                            val decoderLength: Int = 10,
                            val hiddenSize: Int = 80,
-                           val batchSize: Int = 1024,
-                           val nEpochs: Int = 20,
+                           val batchSize: Int = 200,
+                           val nEpochs: Int = 2,
                            val testSize: Int = 1000
                           )
 
@@ -83,56 +86,67 @@ object TimeSeriesPrediction {
     val sqlContext = SQLContext.getOrCreate(sc)
     val featureDF = loadData(sqlContext, param.inputDir)
     val featureShape = Shape(param.encoderLength, 3)
-    val unrolled: RDD[MFeatureLabelIndex[Float]] =
-      assemblyFeature(featureDF, true, param.encoderLength, param.decoderLength)
-    val (trainRdd, testRdd, encoderRdd) = TimeSeriesPredictor.trainTestSplit(unrolled, param.testSize)
+
+    val (scaleModel, scaledDF) = scaleFeature(featureDF, true)
+
+    val dataRdd: RDD[Array[Float]] = scaledDF.rdd.map(row => row.getAs[Vector](0).toArray.map(x => x.toFloat))
+
+    val unrolled = TimeSeriesPredictor.unroll(dataRdd, param.encoderLength, param.decoderLength)
+
+    val (trainRdd, valRdd, encoderRdd) = TimeSeriesPredictor.trainTestSplit(unrolled, param.testSize)
 
     val numLayers = 2
     val encoder = RNNEncoder[Float]("lstm", numLayers, param.hiddenSize)
     val decoder = RNNDecoder[Float]("lstm", numLayers, param.hiddenSize)
 
-   val  generator = Sequential[Float]()
-     .add(InputLayer[Float](inputShape = Shape(param.decoderLength, param.hiddenSize)))
-     .add(TimeDistributed(Dense(1).asInstanceOf[KerasLayer[Activity, Tensor[Float], Float]]))
+    val generator = Sequential[Float]()
+      .add(InputLayer[Float](inputShape = Shape(param.decoderLength, param.hiddenSize)))
+      .add(TimeDistributed(Dense(1).asInstanceOf[KerasLayer[Activity, Tensor[Float], Float]]))
 
-   val  autoEncoder = Seq2seq(encoder, decoder, Shape(param.encoderLength, 3),
-     Shape(param.decoderLength, 1), null, generator)
+    val autoEncoder = Seq2seq(encoder, decoder, Shape(param.encoderLength, 3),
+      Shape(param.decoderLength, 1), null, generator)
 
     autoEncoder.compile(optimizer = new RMSprop(learningRate = 0.001, decayRate = 0.9),
       loss = MeanSquaredError[Float](),
-      metrics = List( new MAE[Float]()))
+      metrics = List(new MAE[Float]()))
 
     autoEncoder.fit(trainRdd, batchSize = param.batchSize, nbEpoch = param.nEpochs,
-      validationData = testRdd)
+      validationData = valRdd)
 
     val features: RDD[Activity] = autoEncoder.encoder.predict(encoderRdd)
     val resutlsPrint = features.take(1)
+    println(resutlsPrint)
 
     val module = TSequential().add(SelectTable(2)).add(SelectTable(1)).add(SelectTable(2))
 
-    val encoderStates = features.map{ x => module.forward(x) }
+    val encoderStates = features.map { x => module.forward(x) }
     val labels = encoderRdd.map { x => x.label.valueAt(1) }
 
-    val samplesForPredictor = encoderStates.zip(labels).map{ x=>
-      val feature = x._1.toTensor
-      val sample = Sample(feature, x._2)
-      print(sample)
-      sample
-    }.zipWithIndex()
+    val samplesForPredictor = encoderStates.zip(labels).map { x => Sample(x._1.toTensor, x._2) }
+      .zipWithIndex()
 
     val predictor = TimeSeriesPredictor[Float](Shape(param.hiddenSize))
     predictor.compile(optimizer = new Adam[Float](learningRate = 0.001, learningRateDecay = 1e-6),
       loss = MeanSquaredError[Float](),
-      metrics = List( new MAE[Float]()))
+      metrics = List(new MAE[Float]()))
 
     val cutPoint = unrolled.count() - param.testSize
 
-    val train2 = samplesForPredictor.filter(x=> x._2 <= cutPoint ).map( x=> x._1)
-    val test2 = samplesForPredictor.filter(x=> x._2 > cutPoint ).map( x=> x._1)
+    val train2 = samplesForPredictor.filter(x => x._2 < cutPoint).map(x => x._1)
+    val test2 = samplesForPredictor.filter(x => x._2 >= cutPoint).map(x => x._1)
 
-    predictor.fit(train2,batchSize = param.batchSize, nbEpoch = param.nEpochs,
-      validationData = test2 )
+    predictor.fit(train2, batchSize = param.batchSize, nbEpoch = param.nEpochs,
+      validationData = test2)
 
+    val predictions: RDD[Activity] = predictor.predict(test2)
+    val yPredict = predictions.map ( x => scaleModel.std(0) * x.toTensor.value() + scaleModel.mean(0))
+    val yTruth = test2.map(x => scaleModel.std(0) * x.label.valueAt(1) +  scaleModel.mean(0))
+
+    val mse = yPredict.zip(yTruth)
+        .map(x => (x._1 - x._2) * (x._1 - x._2))
+        .reduce(_+_)/1000
+
+    println("mse: " + mse)
   }
 
 
@@ -157,22 +171,29 @@ object TimeSeriesPrediction {
     featureDF
   }
 
-  def assemblyFeature(featureDF: DataFrame,
-                      ifScale: Boolean = true,
-                      encoderLength: Int,
-                      decoderLength:Int): RDD[MFeatureLabelIndex[Float]] = {
+  def scaleFeature(featureDF: DataFrame, ifScale: Boolean = true) = {
 
-    val scaledDF = if (ifScale) {
-      Utils.standardScale(featureDF, Seq("value", "hour", "awake"))
+
+    val features = udf((value: Float, hour: Float, awake: Float) => Vectors.dense(value, hour, awake))
+    val scalerFeatureDF = featureDF.withColumn("features", features(col("value"), col("hour"), col("awake")))
+
+    if (ifScale) {
+
+      // Utils.standardScale(featureDF, Seq("value", "hour", "awake"))
+
+      val scaler = new StandardScaler()
+        .setInputCol("features")
+        .setOutputCol("scaledFeatures")
+        .setWithStd(true)
+        .setWithMean(false)
+
+      val scalerModel = scaler.fit(scalerFeatureDF)
+      val sDF = scalerModel.transform(scalerFeatureDF)
+      (scalerModel, sDF.select("scaledFeatures"))
+
     } else {
-      featureDF
+      (null, featureDF.select("features"))
     }
-
-    val featureLen = scaledDF.columns.length
-    val dataRdd: RDD[Array[Float]] = scaledDF.rdd
-      .map(row => (0 to featureLen - 1).toArray.map(x => row.getAs[Float](x)))
-
-    TimeSeriesPredictor.unroll(dataRdd, encoderLength, decoderLength)
   }
 
 }
