@@ -111,6 +111,16 @@ class TestTF(ZooTestCase):
             optimizer.optimize(end_trigger=MaxEpoch(1))
             optimizer.sess.close()
 
+    def test_tf_net_predict(self):
+        resource_path = os.path.join(os.path.split(__file__)[0], "../../resources")
+        tfnet_path = os.path.join(resource_path, "tfnet")
+        import tensorflow as tf
+        tf_session_config = tf.ConfigProto(inter_op_parallelism_threads=1,
+                                           intra_op_parallelism_threads=1)
+        net = TFNet.from_export_folder(tfnet_path, tf_session_config=tf_session_config)
+        output = net.predict(np.random.rand(16, 4), batch_per_thread=5, distributed=False)
+        assert output.shape == (16, 2)
+
 
 if __name__ == "__main__":
     pytest.main([__file__])
