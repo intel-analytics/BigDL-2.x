@@ -1,0 +1,78 @@
+from __future__ import absolute_import
+from __future__ import division
+from __future__ import print_function
+import numpy as np
+import tensorflow as tf
+
+
+def unflatten(vector, shapes):
+    i = 0
+    arrays = []
+    for shape in shapes:
+        size = np.prod(shape, dtype=np.int)
+        array = vector[i:(i + size)].reshape(shape)
+        arrays.append(array)
+        i += size
+    return arrays
+
+
+class GVHelper(object):
+
+    def __init__(self, sess, grad_vars):
+        self.grads = []
+        self.vars = []
+        self.sess = sess
+        self.grad_vars = grad_vars
+        for gv in grad_vars:
+            self.grads.append(gv[0])
+            self.vars.append(gv[1])
+        self.placeholders = {}
+        self.assignment_nodes = {}
+
+        # Create new placeholders to put in custom weights.
+        for var in self.vars:
+            self.placeholders[var.op.node_def.name] = tf.placeholder(
+                var.value().dtype,
+                var.get_shape().as_list(),
+                name="Placeholder_" + var.op.node_def.name)
+            self.assignment_nodes[var.op.node_def.name] = var.assign(self.placeholders[var.op.node_def.name])
+
+    def get_flat_size(self):
+        """Returns the total length of all of the flattened variables.
+
+        Returns:
+            The length of all flattened variables concatenated.
+        """
+        return sum(
+            np.prod(v.get_shape().as_list()) for v in self.vars)
+
+
+    def get_flat(self):
+        """Gets the weights and returns them as a flat array.
+
+        Returns:
+            1D Array containing the flattened weights.
+        """
+        return np.concatenate([
+            v.eval(session=self.sess).flatten()
+            for v in self.vars
+        ])
+
+    def set_flat(self, new_weights):
+        """Sets the weights to new_weights, converting from a flat array.
+
+        Note:
+            You can only set all weights in the network using this function,
+            i.e., the length of the array must match get_flat_size.
+
+        Args:
+            new_weights (np.ndarray): Flat array containing weights.
+        """
+        shapes = [v.get_shape().as_list() for v in self.vars]
+        arrays = unflatten(new_weights, shapes)
+        placeholders = [
+            self.placeholders[v.op.node_def.name] for v in self.vars
+        ]
+        self.sess.run(
+            list(self.assignment_nodes.values()),
+            feed_dict=dict(zip(placeholders, arrays)))
