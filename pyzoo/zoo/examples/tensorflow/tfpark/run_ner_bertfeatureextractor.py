@@ -279,7 +279,7 @@ if __name__ == '__main__':
         train_rdd_bert = estimator.predict(train_input_fn).zip(train_rdd.map(lambda x: x[1]))
         train_dataset = TFDataset.from_rdd(train_rdd_bert,
                                            features=(tf.float32, [options.max_seq_length, 768]),
-                                           labels=(tf.int32, [options.max_seq_length]),
+                                           labels=(tf.int32, [options.max_seq_length, len(label_list)]),
                                            names=["features", "labels"],
                                            batch_size=options.batch_size)
         # from zoo.feature.common import FeatureSet
