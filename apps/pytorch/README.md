@@ -21,7 +21,7 @@ to install analytics-zoo via __download the prebuilt package__.
 * Run the following bash command to start the jupyter notebook. Change parameter settings as you need, ie `MASTER = local[physcial_core_number]`.
 ```bash
 MASTER=local[*]
-${ANALYTICS_ZOO_HOME}/bin/jupyter-with-zoo.sh \
+bash ${ANALYTICS_ZOO_HOME}/bin/jupyter-with-zoo.sh \
     --master ${MASTER} \
     --driver-memory 10g
 ```
