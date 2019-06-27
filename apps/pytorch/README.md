@@ -22,5 +22,6 @@ to install analytics-zoo via __download the prebuilt package__.
 ```bash
 MASTER=local[*]
 ${ANALYTICS_ZOO_HOME}/bin/jupyter-with-zoo.sh \
+    --master ${MASTER} \
     --driver-memory 10g
 ```
