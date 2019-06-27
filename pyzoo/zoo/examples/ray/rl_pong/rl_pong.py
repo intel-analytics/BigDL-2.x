@@ -1,3 +1,19 @@
+#
+# Copyright 2018 Analytics Zoo Authors.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+
 # This code is copied and adapted from Andrej Karpathy's code for learning to
 # play Pong https://gist.github.com/karpathy/a4166c7fe253700972fcbc77e4ea32c5.
 
@@ -12,7 +28,10 @@ import ray
 import time
 
 import gym
+from zoo import init_spark_on_yarn, init_spark_on_local
+from zoo.ray.util.raycontext import RayContext
 
+os.environ["LANG"] = "C.UTF-8"
 # Define some hyperparameters.
 
 # The number of hidden layer neurons.
@@ -152,20 +171,36 @@ if __name__ == "__main__":
         type=int,
         help="The number of rollouts to do per batch.")
     parser.add_argument(
-        "--redis-address",
-        default=None,
-        type=str,
-        help="The Redis address of the cluster.")
-    parser.add_argument(
         "--iterations",
         default=-1,
         type=int,
         help="The number of model updates to perform. By "
         "default, training will not terminate.")
+    parser.add_argument(
+        "--hadoop_conf",
+        type=str,
+        help="turn on yarn mode by passing the hadoop path"
+        "configuration folder. Otherwise, turn on local mode.")
     args = parser.parse_args()
-    batch_size = args.batch_size
 
-    ray.init(redis_address=args.redis_address)
+    if args.hadoop_conf:
+        slave_num = 2
+        sc = init_spark_on_yarn(
+            hadoop_conf=args.hadoop_conf,
+            conda_name="ray36",
+            num_executor=slave_num,
+            executor_cores=28,
+            executor_memory="10g",
+            driver_memory="2g",
+            driver_cores=4,
+            extra_executor_memory_for_ray="30g")
+        ray_ctx = RayContext(sc=sc, object_store_memory="25g")
+    else:
+        sc = init_spark_on_local(cores=4)
+        ray_ctx = RayContext(sc=sc)
+    ray_ctx.init()
+
+    batch_size = args.batch_size
 
     # Run the reinforcement learning.
 
@@ -211,3 +246,5 @@ if __name__ == "__main__":
             # Reset the batch gradient buffer.
             grad_buffer[k] = np.zeros_like(v)
         batch_num += 1
+
+    ray_ctx.stop()
