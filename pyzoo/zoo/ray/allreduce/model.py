@@ -1,20 +1,21 @@
 import tensorflow as tf
 
 from zoo.ray.allreduce.gvhelper import GVHelper
+from zoo.ray.allreduce.ps import ShardedParameterServer
+from zoo.ray.allreduce.sgd import ModelWorker
 from zoo.ray.util import utils
+import time
+import ray
+import logging
+logger = logging.getLogger(__name__)
 
-
-class RayModel(object):
-    """
-    You should add your definition at model_fn
-    and then return (input, output, target, loss, optimizer)
-    """
-    def __init__(self, model_bytes=None, model_fn=None, resolved=False):
+class TFModelLite(object):
+    def __init__(self, model_bytes, model_fn):
         self.model_bytes = model_bytes
         self.model_fn = model_fn
 
     def resolve(self):
-        rayModel = RayModel(self.model_bytes, self.model_fn)
+        rayModel = TFModelLite(self.model_bytes, self.model_fn)
         rayModel._action()
         return rayModel
 
@@ -32,7 +33,7 @@ class RayModel(object):
         self.targets = utils.to_list(target)
         self.loss = loss
         self.sess = tf.compat.v1.Session(config=tf.compat.v1.ConfigProto(
-   intra_op_parallelism_threads=22, inter_op_parallelism_threads=22))
+            intra_op_parallelism_threads=22, inter_op_parallelism_threads=22))
         self.sess.run(tf.global_variables_initializer())
 
         # A list of (gradient, variable) pairs
@@ -43,6 +44,43 @@ class RayModel(object):
         self.gv_helper = GVHelper(
             sess=self.sess, grad_vars=self.grad_vars)
         return self
+
+    def compute_gradients(self, feed_dict_data):
+        """
+        :param inputs:
+        :return: The returning gradient is not a flat gradient and it's divided by vars
+        """
+        gradients = self.sess.run(
+            [grad[0] for grad in self.grad_vars],
+            feed_dict=feed_dict_data)
+        loss = self.sess.run(
+            self.loss,
+            feed_dict=feed_dict_data)
+        return gradients, loss
+
+    def set_flat_parameters(self, parameters):
+        """
+        :param parameters: 1D vector
+        :return:
+        """
+        assert len(parameters.shape) == 1, \
+            "we only accept 1D vector here, but got: {}".format(len(parameters.shape))
+        self.gv_helper.set_flat(parameters)
+
+        # The order is the same with optimizer.compute_gradient
+
+    def get_flat_parameters(self):
+        return self.gv_helper.get_flat()
+
+
+class RayModel(object):
+    """
+    You should add your definition at model_fn
+    and then return (input, output, target, loss, optimizer)
+    """
+    def __init__(self, model_bytes=None, model_fn=None):
+        self.model_lite = TFModelLite(model_bytes = model_bytes,
+                                      model_fn = model_fn)
 
     @staticmethod
     def extract_from_keras_model(kerasmodel):
@@ -73,44 +111,82 @@ class RayModel(object):
     def evaluate(self, ray_dataset, metric_fn=calc_accuracy):
         result = 0
         count = 0
-        while ray_dataset.has_next():
-            input_data, output_data = ray_dataset.next_batch()
-            a = metric_fn(self.sess,
-                      self.inputs,
-                      self.outputs,
-                      self.targets,
-                      input_data, output_data)
-            result = result + a
-            count = count + 1
-            print(count)
+        ray_dataset.action()
+        try:
+            while True:
+                input_data, output_data = ray_dataset.next_batch()
+                a = metric_fn(self.sess,
+                          self.inputs,
+                          self.outputs,
+                          self.targets,
+                          input_data, output_data)
+                result = result + a
+                count = count + 1
+                print(count)
+        except Exception:
+            pass
         return result/count
 
+    # we can support x, y later
+    def fit(self, ray_dataset_train, num_worker=2, steps=10):
+        self.ray_dataset_train = ray_dataset_train
+        self.num_worker = num_worker
+        self.batch_size = ray_dataset_train.get_batchsize()
+        self.resolved_model = self.model_lite.resolve()
+        self._init_distributed_engine()
+        for i in range(1, steps + 1):
+            self.step(i)
+
+        self.resolved_model.set_flat_parameters(ray.get(self.workers[0].get_weights.remote()))
+        return self
+
+    def _init_distributed_engine(self):
+        weights = self.resolved_model.get_flat_parameters()
+        sharded_weights = utils.split(weights, self.num_worker)
+        # This weights would be used for both PS and ModelWorker
+        sharded_weight_ids = [ray.put(w) for w in sharded_weights]
+        self.workers = []
+        self.pss = []
+        logger.info(
+            "Creating parameter server ({} total)".format(
+                self.num_worker))
+
+        for ps_index in range(self.num_worker):
+            self.pss.append(
+                ShardedParameterServer.remote(sharded_weight_ids[ps_index],
+                                              ray_model=self.model_lite))
+
+        logger.info(
+            "Creating model workers ({} total)".format(
+                self.num_worker))
+        for worker_index in range(self.num_worker):
+            self.workers.append(
+                ModelWorker.remote(self.model_lite, self.ray_dataset_train, self.num_worker))
 
 
-    def compute_gradients(self, feed_dict_data):
-        """
-        :param inputs:
-        :return: The returning gradient is not a flat gradient and it's divided by vars
-        """
-        gradients = self.sess.run(
-            [grad[0] for grad in self.grad_vars],
-            feed_dict=feed_dict_data)
-        loss = self.sess.run(
-            self.loss,
-            feed_dict=feed_dict_data)
-        return gradients, loss
+    def step(self, step_id):
+        start = time.time()
+        # workers of sharded_grads
+        sharded_grad_ids = []
+        results = []
+        for worker in self.workers:
+            # 1) pull the latest weights from ps
+            parameters = [ps.get_parameters.remote() for ps in self.pss]
+            # 2) compute the grads
+            sharded_grad = worker.set_parameters_compute_gradients._remote(args=parameters, kwargs=None, num_return_vals=self.num_worker)
+            sharded_grad_ids.append(sharded_grad)
 
+        # print("Iteration: {}, loss is {}".format(step_id, np.mean([ray.get(loss) for loss in losses])))
 
-    def set_flat_parameters(self, parameters):
-        """
-        :param parameters: 1D vector
-        :return:
-        """
-        assert len(parameters.shape) == 1,\
-            "we only accept 1D vector here, but got: {}".format(len(parameters.shape))
-        self.gv_helper.set_flat(parameters)
+        grads_per_ps = list(zip(*sharded_grad_ids))
+        assert len(grads_per_ps[0]) == self.num_worker, "we should get correct grads for each ps"
+        # 3) push and aggregate grads on ps
+        for index, grads in enumerate(grads_per_ps):
+            results.append(self.pss[index].apply_gradients.remote(*grads))
+        # wait for complete
+        ray.wait(object_ids=results, num_returns=len(results))
+        end = time.time()
+        print("Iteration: {}, throughput: {}".format(step_id, self.batch_size * self.num_worker / (
+        end - start)))
 
-    # The order is the same with optimizer.compute_gradient
-    def get_flat_parameters(self):
-        return self.gv_helper.get_flat()
 
