@@ -63,7 +63,7 @@ class TorchNet private(private val modelHolder: TorchModelHolder)
     require(input.isContiguous())
     val data = input.storage().array()
     val size = input.size()
-    val offset = input.storageOffset()
+    val offset = input.storageOffset() - 1
     val result = forward(data, offset, size)
     val resultTensor = Tensor(result.getData, result.getShape)
     output.set(resultTensor)
