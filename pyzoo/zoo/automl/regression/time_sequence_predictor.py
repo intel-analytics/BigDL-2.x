@@ -72,7 +72,7 @@ class BasicRecipe(Recipe):
 
     def runtime_params(self):
         return {
-            "training_iteration": 10,
+            "training_iteration": 1,
             "num_samples": self.num_samples,
         }
 
@@ -135,7 +135,8 @@ class TimeSequencePredictor(object):
                  dt_col="datetime",
                  target_col="value",
                  extra_features_col=None,
-                 drop_missing=True):
+                 drop_missing=True,
+                 ):
         """
         Constructor of Time Sequence Predictor
         :param logs_dir where the automl tune logs file located
@@ -286,13 +287,37 @@ class TimeSequencePredictor(object):
 
 
 if __name__ == "__main__":
-    train_df, val_df, test_df = load_nytaxi_data_df("../../../../data/nyc_taxi.csv")
+    dataset_path = os.getenv("ANALYTICS_ZOO_HOME") + "/bin/data/NAB/nyc_taxi/nyc_taxi.csv"
+    df = pd.read_csv(dataset_path)
+    from zoo.automl.common.util import split_input_df
+
+    train_df, val_df, test_df = split_input_df(df, val_split_ratio=0.1, test_split_ratio=0.1)
+
     # print(train_df.describe())
     # print(test_df.describe())
 
+    # rayOnSpark style init
+    # from zoo import init_spark_on_yarn
+    # from zoo.ray.util.raycontext import RayContext
+    # slave_num = 2
+    # sc = init_spark_on_yarn(
+    #     hadoop_conf="/opt/work/hadoop-2.7.2/etc/hadoop",
+    #     conda_name="ray36",
+    #     num_executor=slave_num,
+    #     executor_cores=4,
+    #     executor_memory="8g",
+    #     driver_memory="2g",
+    #     driver_cores=4,
+    #     extra_executor_memory_for_ray="10g")
+    #
+    # ray_ctx = RayContext(sc=sc,
+    #                      object_store_memory="5g")
+    # ray_ctx.init()
+
     tsp = TimeSequencePredictor(dt_col="datetime",
                                 target_col="value",
-                                extra_features_col=None, )
+                                extra_features_col=None,
+                                )
     pipeline = tsp.fit(train_df,
                        validation_df=val_df,
                        metric="mean_squared_error")
@@ -301,14 +326,16 @@ if __name__ == "__main__":
     pred = pipeline.predict(test_df)
     print("predict:", pred.shape)
 
-    save_pipeline_file = "tmp/my.ppl"
+    save_pipeline_file = "tmp.ppl"
     pipeline.save(save_pipeline_file)
 
     new_pipeline = load_ts_pipeline(save_pipeline_file)
-    new_pipeline.restore(save_pipeline_file)
     print("evaluate:", new_pipeline.evaluate(test_df, metric=["mean_squared_error", "r_square"]))
 
     new_pred = new_pipeline.predict(test_df)
     print("predict:", pred.shape)
     np.testing.assert_allclose(pred["value"].values, new_pred["value"].values)
-    os.remove("tmp")
+    os.remove(save_pipeline_file)
+    # ray_ctx.stop()
+
+
