@@ -46,9 +46,9 @@ import org.joda.time.format.DateTimeFormat
 case class PredictorParams(val inputDir: String = "./data/NAB/nyc_taxi/",
                            val encoderLength: Int = 50,
                            val decoderLength: Int = 10,
-                           val hiddenSize: Int = 80,
-                           val batchSize: Int = 200,
-                           val nEpochs: Int = 2,
+                           val hiddenSize: Int = 100,
+                           val batchSize: Int = 1024,
+                           val nEpochs: Int = 20,
                            val testSize: Int = 1000
                           )
 
@@ -95,7 +95,7 @@ object TimeSeriesPrediction {
 
     val (trainRdd, valRdd, encoderRdd) = TimeSeriesPredictor.trainTestSplit(unrolled, param.testSize)
 
-    val numLayers = 2
+    val numLayers = 1
     val encoder = RNNEncoder[Float]("lstm", numLayers, param.hiddenSize)
     val decoder = RNNDecoder[Float]("lstm", numLayers, param.hiddenSize)
 
@@ -103,7 +103,7 @@ object TimeSeriesPrediction {
       .add(InputLayer[Float](inputShape = Shape(param.decoderLength, param.hiddenSize)))
       .add(TimeDistributed(Dense(1).asInstanceOf[KerasLayer[Activity, Tensor[Float], Float]]))
 
-    val autoEncoder = Seq2seq(encoder, decoder, Shape(param.encoderLength, 3),
+    val autoEncoder = Seq2seq(encoder, decoder, Shape(param.encoderLength, 1),
       Shape(param.decoderLength, 1), null, generator)
 
     autoEncoder.compile(optimizer = new RMSprop(learningRate = 0.001, decayRate = 0.9),
@@ -131,7 +131,6 @@ object TimeSeriesPrediction {
       metrics = List(new MAE[Float]()))
 
     val cutPoint = unrolled.count() - param.testSize
-
     val train2 = samplesForPredictor.filter(x => x._2 < cutPoint).map(x => x._1)
     val test2 = samplesForPredictor.filter(x => x._2 >= cutPoint).map(x => x._1)
 
@@ -174,8 +173,8 @@ object TimeSeriesPrediction {
   def scaleFeature(featureDF: DataFrame, ifScale: Boolean = true) = {
 
 
-    val features = udf((value: Float, hour: Float, awake: Float) => Vectors.dense(value, hour, awake))
-    val scalerFeatureDF = featureDF.withColumn("features", features(col("value"), col("hour"), col("awake")))
+    val features = udf((value: Float) => Vectors.dense(value))
+    val scalerFeatureDF = featureDF.withColumn("features", features(col("value")))
 
     if (ifScale) {
 
