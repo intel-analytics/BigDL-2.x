@@ -234,11 +234,11 @@ RUN git clone https://github.com/BVLC/caffe.git && \
     cp /opt/work/caffe/Makefile.config.example Makefile.config && \
     echo "CPU_ONLY := 1" >> Makefile.config && \
     export ANACONDA_HOME=/opt/work/conda/envs/py27 && \
-    sed -i '71,75d' Makefile.config && \
-    sed -i '71s/^#//' Makefile.config && \
+    sed -i '71s/^[^#]/#&/' Makefile.config && \
+    sed -i '76s/^#//' Makefile.config && \
     sed -i 's/# $(ANA/$(ANA/g' Makefile.config && \
-    sed -i '81d' Makefile.config && \
-    sed -i '81s/^#//' Makefile.config && \
+    sed -i '86s/^[^#]/#&/' Makefile.config && \
+    sed -i '87s/^#//' Makefile.config && \
     sed -i 's/LIBRARIES += opencv_core opencv_highgui opencv_imgproc/LIBRARIES += opencv_core opencv_highgui opencv_imgproc opencv_imgcodecs/g' Makefile && \
     apt-get install -y software-properties-common && \
     add-apt-repository ppa:ubuntu-toolchain-r/test && \
