@@ -71,26 +71,18 @@ class RayModel(object):
                             feed_dict={targets_op[0]: output_data, inputs_op[0]: input_data})
 
     def evaluate(self, ray_dataset, metric_fn=calc_accuracy):
-        mnist = tf.keras.datasets.mnist
-        (x_train, y_train), (x_test, y_test) = mnist.load_data()
-        x_train = x_train.reshape((-1, 28, 28, 1))
-        y_train = y_train.reshape((-1, 1))
-        x_test = x_test.reshape((-1, 28, 28, 1))
-        y_test = y_test.reshape((-1, 1))
-        x_train, x_test = x_train / 255.0, x_test / 255.0
         result = 0
         count = 0
-        # while ray_dataset.has_next():
-        #     input_data, output_data = ray_dataset.next_batch()
-        input_data , output_data = x_test, y_test
-        a = metric_fn(self.sess,
-                  self.inputs,
-                  self.outputs,
-                  self.targets,
-                  input_data, output_data)
-        result = result + a
-        count = count + 1
-        print(count)
+        while ray_dataset.has_next():
+            input_data, output_data = ray_dataset.next_batch()
+            a = metric_fn(self.sess,
+                      self.inputs,
+                      self.outputs,
+                      self.targets,
+                      input_data, output_data)
+            result = result + a
+            count = count + 1
+            print(count)
         return result/count
 
 

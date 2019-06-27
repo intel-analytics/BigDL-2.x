@@ -50,7 +50,7 @@ class ModelWorker(object):
     def get_weights(self):
         return self.ray_model.get_flat_parameters()
 
-    # TODO: Get rid of this and use the raw dataset only.
+    # TODO: Get rid of this and use the raw dataset instead.
     def _generate_feed_dict(self, inputs_op, inputs, targets_op, targets):
         fdict = {}
         if inputs:
@@ -119,7 +119,6 @@ class DistributedEstimator(object):
             sharded_grad = worker.set_parameters_compute_gradients._remote(args=parameters, kwargs=None, num_return_vals=self.num_worker)
             sharded_grad_ids.append(sharded_grad)
 
-        # TODO: we don't need to print this for every iteration
         # print("Iteration: {}, loss is {}".format(step_id, np.mean([ray.get(loss) for loss in losses])))
 
         grads_per_ps = list(zip(*sharded_grad_ids))
