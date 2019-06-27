@@ -6,13 +6,13 @@ metadata:
     heritage: {{ .Release.Service | quote }}
     release: {{ .Release.Name | quote }}
     chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
-    component: "{{ .Release.Name }}-{{ .Values.AnalyticsZoo.Component }}"
+    component: "{{ .Release.Name }}-{{ .Values.Component }}"
 spec:
-  type: {{ .Values.AnalyticsZoo.ServiceType }}
+  type: {{ .Values.ServiceType }}
   ports:
   - name: http
-    port: {{ .Values.AnalyticsZoo.ServicePort }}
-    targetPort: {{ .Values.AnalyticsZoo.ContainerPort }}
+    port: {{ .Values.ServicePort }}
+    targetPort: {{ .Values.ContainerPort }}
     protocol: TCP
   selector:
-    component: "{{ .Release.Name }}-{{ .Values.AnalyticsZoo.Component }}"
+    component: "{{ .Release.Name }}-{{ .Values.Component }}"

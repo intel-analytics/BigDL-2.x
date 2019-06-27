@@ -56,36 +56,41 @@ Please refer to the ICP4D command line documentation for more information on tho
 
 5. From your terminal, pull the Analytics Zoo image form Dockerhub with:
 ```bash
-docker pull intelanalytics/analytics-zoo:latest
+docker pull intelanalytics/analytics-zoo:0.5.1-2.2.1-0.8.0-py3
 ```
 6. Push the docker image from your node to the docker registry using the following commands:
 
     a. Tag the image
     ```bash
-    docker tag intelanalytics/analytics-zoo:latest mycluster.icp:8500/zen/intelanalytics/analytics-zoo:latest
+    docker tag intelanalytics/analytics-zoo:0.5.1-2.2.1-0.8.0-py3 mycluster.icp:8500/zen/intelanalytics/analytics-zoo:0.5.1-2.2.1-0.8.0-py3
     ```
     b. Push the image to the private image registry.
     ```bash
-    docker push mycluster.icp:8500/zen/intelanalytics/analytics-zoo:latest
+    docker push mycluster.icp:8500/zen/intelanalytics/analytics-zoo:0.5.1-2.2.1-0.8.0-py3
     ```
 
 7. Clone the github repository intel-analytics/analytics-zoo to receive a copy of the helmchart. Browse to the helm charts directory.
 ```bash
 git clone https://github.com/intel-analytics/analytics-zoo.git
-cd analytics-zoo/helmchart
+cd analytics-zoo/helmchart/analytics-zoo
 ```
 8. Install the helmchart archive with the following command:
 ```bash
-helm install helmchart --name analytics-zoo --namespace zen/intelanalytics --tls
+helm install . --name analytics-zoo --namespace zen --tls
 ```
 Run the following kubectl commands to verify the deployment.
 ```bash
-kubectl get svc -n zen/intelanalytics|grep analytics-zoo
-kubectl get pod -n zen/intelanalytics|grep analytics-zoo
-kubectl describe pod <the_pod_it_made> -n zen/intelanalytics
+kubectl get svc -n zen|grep analytics-zoo
+kubectl get pod -n zen|grep analytics-zoo
+kubectl describe pod <the_pod_it_made> -n zen
 ```
+```bash
+kubectl describe svc analytics-zoo-analytics-zoo -n zen
+```
+From the output of above command, you can find the NodePort of the service. You can use this port to access analytics zoo service in web browser. 
+
 ## Using Analytics Zoo
-After you install the Analytics Zoo Add-on, you can open web browser, go to http://<MASTER_1_IP>:<port_number> to access the Jupyter notebook with anlytics zoo. 
+After you install the Analytics Zoo Add-on, you can open web browser, go to http://<MASTER_1_IP>:<port_number> to access the Jupyter notebook with anlytics zoo. The port number is the NodePort number.
 To get the detail information of how to use analytics zoo, please check [Analytics Zoo documentation](https://analytics-zoo.github.io)
 ## Uninstalling the chart
 To uninstall/delete the analytics-zoo deployment:

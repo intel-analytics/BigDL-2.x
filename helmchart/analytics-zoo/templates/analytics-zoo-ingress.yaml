@@ -1,4 +1,4 @@
-{{- $ingress := .Values.AnalyticsZoo.Ingress -}}
+{{- $ingress := .Values.Ingress -}}
 {{- $fullName := include "analytics-zoo-fullname" . -}}
 {{- if $ingress.Enabled }}
 apiVersion: extensions/v1beta1
@@ -13,7 +13,7 @@ metadata:
     heritage: {{ .Release.Service | quote }}
     release: {{ .Release.Name | quote }}
     chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
-    component: "{{ .Release.Name }}-{{ .Values.AnalyticsZoo.Component }}"
+    component: "{{ .Release.Name }}-{{ .Values.Component }}"
 spec:
 {{- if $ingress.Tls }}
   tls:

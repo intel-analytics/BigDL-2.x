@@ -1,4 +1,4 @@
-{{ $persistence := .Values.AnalyticsZoo.Persistence }}
+{{ $persistence := .Values.Persistence }}
 {{- if $persistence.Enabled }}
 kind: PersistentVolumeClaim
 apiVersion: v1
