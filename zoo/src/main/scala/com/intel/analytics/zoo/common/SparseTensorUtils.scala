@@ -7,7 +7,7 @@ import scala.reflect.ClassTag
 
 object SparseTensorUtils {
   def addSparseTensor[T: ClassTag](tensor: Tensor[T], tensor2: Tensor[T])
-                                  (implicit ev: TensorNumeric[T]): SparseTensor[T] = {
+                                  (implicit ev: TensorNumeric[T]): Tensor[T] = {
     val sparseT = tensor.asInstanceOf[SparseTensor[T]]
     val sparseT2 = tensor2.asInstanceOf[SparseTensor[T]]
     require(sparseT._indices.length == 2 && sparseT2._indices.length == 2,
@@ -71,6 +71,18 @@ object SparseTensorUtils {
       sparseT._shape, sparseT._shape.length)
   }
 
+  def addSparseTensor[T: ClassTag](tensor: Array[Tensor[T]], tensor2: Array[Tensor[T]])
+                                  (implicit ev: TensorNumeric[T]): Array[Tensor[T]] = {
+    require(tensor.length == tensor2.length, "tensor and tensor2 should have the same length")
+    var i = 0
+    val res = ArrayBuffer[Tensor[T]]()
+    while (i < tensor.length) {
+      res += addSparseTensor(tensor(i), tensor2(i))
+      i += 1
+    }
+    res.toArray
+  }
+
   def addSparseTensorValueByConstant[T: ClassTag](tensor: Tensor[T], constant: T)
     (implicit ev: TensorNumeric[T]): SparseTensor[T] = {
     val sparseT = tensor.asInstanceOf[SparseTensor[T]]
@@ -81,14 +93,100 @@ object SparseTensorUtils {
       sparseT._shape, sparseT._shape.length)
   }
 
-  def copySparseTensor[T: ClassTag](src: SparseTensor[T], dst: SparseTensor[T])
-    (implicit ev: TensorNumeric[T]): Unit = {
-    require(src._indices.head.size == dst._indices.head.size &&
-      src._indices.last.size == dst._indices.last.size &&
-      src._values.size == dst._values.size, "dst must has the same size with src")
+  def copySparseTensor[T](src: Tensor[T], dst: Tensor[T]): Unit = {
+    require(src.isInstanceOf[SparseTensor[T]] && dst.isInstanceOf[SparseTensor[T]])
+    val sparseSrc = src.asInstanceOf[SparseTensor[T]]
+    val sparseDst = dst.asInstanceOf[SparseTensor[T]]
+    require(sparseSrc._indices.head.size == sparseDst._indices.head.size &&
+      sparseSrc._indices.last.size == sparseDst._indices.last.size &&
+      sparseSrc._values.size == sparseDst._values.size, "dst must has the same size with src")
 
-    dst._indices.head.copy(src._indices.head)
-    dst._indices.last.copy(src._indices.last)
-    dst._values.copy(src._values)
+    sparseDst._indices.head.copy(sparseSrc._indices.head)
+    sparseDst._indices.last.copy(sparseSrc._indices.last)
+    sparseDst._values.copy(sparseSrc._values)
+  }
+
+  // res = alpha * mat1 * mat2
+  def mm[@specialized(Float, Double) T: ClassTag](
+    alpha: T,
+    mat1: Tensor[T],
+    mat2: Tensor[T]
+  )(implicit ev: TensorNumeric[T]) : Tensor[T] = {
+    require(mat1.isInstanceOf[DenseTensor[T]] && mat2.isInstanceOf[SparseTensor[T]],
+    "mm only support dense matrix with sparse matrix")
+    val dTensor = mat1.asInstanceOf[DenseTensor[T]]
+    val sTensor = mat2.asInstanceOf[SparseTensor[T]]
+
+    val kB: Int = sTensor.size(1)
+    val nB: Int = sTensor.size(2)
+    val mA: Int = dTensor.size(1)
+    val kA: Int = dTensor.size(2)
+
+    val Avals = dTensor.storage().array()
+    val aOffset = dTensor.storageOffset() - 1
+
+    val Bvals = sTensor._values.array()
+    val BstorageOffset = sTensor.storageOffset() - 1
+    val BrowIndices = sTensor._indices(0)
+    val BrowIndicesOffset = sTensor._indicesOffset(0)
+    val BcolIndices = sTensor._indices(1)
+    val BcolIndicesOffset = sTensor._indicesOffset(1)
+
+    val indice = ArrayBuffer[ArrayBuffer[Int]]()
+    val indice2 = ArrayBuffer[ArrayBuffer[Int]]()
+    val value = ArrayBuffer[ArrayBuffer[T]]()
+
+    // Perform matrix multiplication. The rows of sTensor are multiplied by the columns of dTensor
+    var index = 0
+    if (dTensor.stride(2) == 1 && dTensor.size(2) == dTensor.stride(1)) {
+      while (index < sTensor.nElement()) {
+        val curKB = BrowIndices(index + BstorageOffset) - BrowIndicesOffset
+        val curNB = BcolIndices(index + BstorageOffset) - BcolIndicesOffset
+
+        value += ArrayBuffer[T]()
+        indice += ArrayBuffer[Int]()
+        indice2 += ArrayBuffer[Int]()
+        var n = 0
+        while (n < mA) {
+          value(index) +=
+          ev.times(ev.times(alpha, Bvals(index + BstorageOffset)),
+            Avals(n * kA + curKB + aOffset))
+          indice(index) += n
+          indice2(index) += curNB
+          n += 1
+        }
+        index += 1
+      }
+    } else {
+      while (index < sTensor.nElement()) {
+        val curKB = BrowIndices(index + BstorageOffset) - BrowIndicesOffset
+        val curNB = BcolIndices(index + BstorageOffset) - BcolIndicesOffset
+
+        value += ArrayBuffer[T]()
+        indice += ArrayBuffer[Int]()
+        indice2 += ArrayBuffer[Int]()
+        var n = 0
+        while (n < mA) {
+          value(index) +=
+          ev.times(ev.times(alpha, Bvals(index + BstorageOffset)),
+            Avals(n + mA * curKB + aOffset))
+          indice(index) += n
+          indice2(index) += curNB
+          n += 1
+        }
+        index += 1
+      }
+    }
+
+    var res = SparseTensor(Array(indice.head.toArray, indice2.head.toArray),
+      Storage[T](value.head.toArray), Array(mA, nB), 2)
+    index = 1
+    while (index < value.length) {
+      val s = SparseTensor(Array(indice(index).toArray, indice2(index).toArray),
+        Storage[T](value(index).toArray), Array(mA, nB), 2)
+      res = addSparseTensor(res, s).asInstanceOf[SparseTensor[T]]
+      index += 1
+    }
+    res
   }
 }

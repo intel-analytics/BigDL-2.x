@@ -15,7 +15,7 @@
  */
 package com.intel.analytics.bigdl.tensor
 
-import com.intel.analytics.bigdl.nn.abstractnn.{AbstractModule, Activity, Initializable}
+import com.intel.analytics.bigdl.nn.abstractnn.{AbstractModule, Activity, Initializable, SparseAbstractModule}
 import com.intel.analytics.bigdl.optim.Regularizer
 import com.intel.analytics.bigdl.tensor.{SparseType, Tensor}
 import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric
@@ -38,9 +38,9 @@ import scala.reflect.ClassTag
 
   */
 class sudoLookupTableSparse[T: ClassTag]()(implicit ev: TensorNumeric[T])
-  extends AbstractModule[Tensor[T], Tensor[T], T] with Initializable {
-  var sparseWeight: Tensor[T] = null
-  var sparseGradWeight: Tensor[T] = null
+  extends AbstractModule[Tensor[T], Tensor[T], T] with SparseAbstractModule[T] with Initializable {
+  sWeight = Array(Tensor[T](6, 5).rand())
+  sparseGradWeight = Array(Tensor[T]())
 
   override def updateOutput(input: Tensor[T]): Tensor[T] = {
     output = input
@@ -53,29 +53,16 @@ class sudoLookupTableSparse[T: ClassTag]()(implicit ev: TensorNumeric[T])
 
   override def accGradParameters(input: Tensor[T], gradOutput: Tensor[T]): Unit = {
     sparseGradWeight = if (input.value() == 1) {
-      Tensor.sparse(Tensor[Float](6, 5).setValue(1, 3, 1.5f)
-        .setValue(2, 2, 3.0f).setValue(4, 5, 2.0f).setValue(6, 1, 1.0f)).asInstanceOf[Tensor[T]]
+      Array(Tensor.sparse(Tensor[Float](6, 5).setValue(1, 3, 1.5f)
+        .setValue(2, 2, 3.0f).setValue(4, 5, 2.0f).setValue(6, 1, 1.0f)).asInstanceOf[Tensor[T]])
     } else {
-      Tensor.sparse(Tensor[Float](6, 5).setValue(1, 2, 0.5f)
+      Array(Tensor.sparse(Tensor[Float](6, 5).setValue(1, 2, 0.5f)
         .setValue(2, 2, 1.0f).setValue(3, 4, 1.5f).setValue(5, 1, 1.0f).setValue(5, 4, 1.0f))
-        .asInstanceOf[Tensor[T]]
+        .asInstanceOf[Tensor[T]])
     }
-  }
-
-  def getSparseParameters(): (Tensor[T], Tensor[T]) = {
-    (this.sparseWeight, this.sparseGradWeight)
-  }
-
-  def sparseParameters(): (Array[Tensor[T]], Array[Tensor[T]]) = {
-    (Array(this.sparseWeight), Array(this.sparseGradWeight))
   }
 
   override def parameters(): (Array[Tensor[T]], Array[Tensor[T]]) = {
     (Array(Tensor[T](10, 10)), Array(Tensor[T](10, 10)))
-  }
-
-  def setSparseParameters(sparseWeight: Tensor[T], sparseGradients: Tensor[T]): Unit = {
-    this.sparseWeight = sparseWeight
-    this.sparseGradWeight = sparseGradients
   }
 }

@@ -1,9 +1,10 @@
 package com.intel.analytics.bigdl.parameters
 
 import com.intel.analytics.bigdl._
+import com.intel.analytics.bigdl.nn.abstractnn.SparseAbstractModule
 import com.intel.analytics.bigdl.optim.DistriOptimizer.Cache
 import com.intel.analytics.bigdl.optim.{Metrics, OptimMethod}
-import com.intel.analytics.bigdl.tensor.{SparseTensorUtils, Tensor, sudoLookupTableSparse}
+import com.intel.analytics.bigdl.tensor.{SparseTensorUtils, Tensor}
 import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric
 import com.intel.analytics.bigdl.utils.Table
 import org.apache.spark.broadcast.Broadcast
@@ -14,9 +15,9 @@ import scala.reflect.ClassTag
 // U is walk around for collectGlobalData[T] is not ClassTag
 class SparseParameterProcessor[U: ClassTag](optimMethods: OptimMethod[U])(implicit ev: TensorNumeric[U])
   extends ParameterProcessor {
-  var globalSparseG: Tensor[U] = null
-  var globalW: Tensor[U] = null
-  var bcGlobalW: Broadcast[Tensor[U]] = null
+  var globalSparseG: Array[Tensor[U]] = null
+  var globalW: Array[Tensor[U]] = null
+  var bcGlobalW: Broadcast[Array[Tensor[U]]] = null
 
   override def collectGlobalData[T](models: RDD[Cache[T]],
                                     parameters: AllReduceParameter[T],
@@ -28,7 +29,7 @@ class SparseParameterProcessor[U: ClassTag](optimMethods: OptimMethod[U])(implic
       val cached = modelIter.next()
       val sparseG = cached.localModels.map(
         // TODO: remove asInstanceOf
-        _.asInstanceOf[sudoLookupTableSparse[U]].getSparseParameters()._2)
+        _.asInstanceOf[SparseAbstractModule[U]].sparseParameters()._2)
 
       // aggregate sparseG first in each node
       if (sparseG.length > 1) {
@@ -47,9 +48,12 @@ class SparseParameterProcessor[U: ClassTag](optimMethods: OptimMethod[U])(implic
     // update weight with global gradients in driver
     if (globalW == null) {
       globalW = models.take(1).head.localModels.head
-        .asInstanceOf[sudoLookupTableSparse[U]].getSparseParameters()._1
+        .asInstanceOf[SparseAbstractModule[U]].sparseParameters()._1
     }
-    globalW = optimMethods.optimize(_ => (ev.fromType(1.0f), globalSparseG), globalW)._1
+//    globalW = optimMethods.optimize(_ => (ev.fromType(1.0f), globalSparseG), globalW)._1
+
+    globalW = globalW.zip(globalSparseG).map { case(w, g) =>
+      optimMethods.optimize(_ => (ev.fromType(1.0f), g), w)._1}
 
     // update weight in the cluster
     val sc = models.sparkContext
@@ -66,7 +70,8 @@ class SparseParameterProcessor[U: ClassTag](optimMethods: OptimMethod[U])(implic
                                     modelCache: Cache[T],
                                     state: Table)(implicit ev: TensorNumeric[T]): Unit = {
       modelCache.localModels.head
-        .asInstanceOf[sudoLookupTableSparse[U]].setSparseParameters(bcGlobalW.value, null)
+        .asInstanceOf[SparseAbstractModule[U]].sparseParameters()._1.zip(bcGlobalW.value)
+        .foreach {case (w, bw) => w.set(bw)}
   }
 
   // TODO: support sparseG for local mode
@@ -75,7 +80,6 @@ class SparseParameterProcessor[U: ClassTag](optimMethods: OptimMethod[U])(implic
   }
 
   def getSparseParameters(model: Module[U]): Unit = {
-    // TODO: remove asInstanceOf
-    model.asInstanceOf[sudoLookupTableSparse[U]].setSparseParameters(globalW, globalSparseG)
+    model.asInstanceOf[SparseAbstractModule[U]].setSparseParameters(globalW, globalSparseG)
   }
 }

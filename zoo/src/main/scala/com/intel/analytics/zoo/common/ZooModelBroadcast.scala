@@ -1,8 +1,9 @@
 package com.intel.analytics.bigdl.models.utils
 
 import com.intel.analytics.bigdl._
+import com.intel.analytics.bigdl.nn.abstractnn.SparseAbstractModule
 import com.intel.analytics.bigdl.nn.{BigDLWrapperUtils, Container}
-import com.intel.analytics.bigdl.tensor.{Tensor, sudoLookupTableSparse}
+import com.intel.analytics.bigdl.tensor.{Tensor}
 import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric
 import com.intel.analytics.bigdl.utils.Engine
 import com.intel.analytics.bigdl.utils.Util._
@@ -48,7 +49,7 @@ class ZooModelBroadcast[T: ClassTag]()
     // broadcast weight and model
     val weightsBias = getAndClearWeightBias(model.parameters())
     val sparseGWeightsBias =
-      getAndClearWeightBias(model.asInstanceOf[sudoLookupTableSparse[T]].sparseParameters())
+      getAndClearWeightBias(model.asInstanceOf[SparseAbstractModule[T]].sparseParameters())
     broadcastModel = sc.broadcast(ModelInfo[T](uuid, model))
     broadcastParameters = sc.broadcast(weightsBias)
     broadcastSparseParameters = sc.broadcast(sparseGWeightsBias)

@@ -17,7 +17,7 @@
 package com.intel.analytics.zoo.models.recommendation
 
 import com.intel.analytics.bigdl.nn.Graph.ModuleNode
-import com.intel.analytics.bigdl.nn.abstractnn.AbstractModule
+import com.intel.analytics.bigdl.nn.abstractnn.{AbstractModule, SparseAbstractModule}
 import com.intel.analytics.zoo.pipeline.api.keras.models.Model
 import com.intel.analytics.bigdl.tensor.Tensor
 import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric
