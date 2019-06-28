@@ -9,7 +9,7 @@ class RayDataSet(object):
         raise Exception("not implemented")
 
     @staticmethod
-    def from_input_fn(input_fn, batch_size, repeat=True, shuffle=True):
+    def from_dataset_generator(input_fn, batch_size, repeat=True, shuffle=True):
         return TFDataSetWrapper(input_fn=input_fn, batch_size=batch_size, repeat=repeat, shuffle=shuffle)
 
 # TODO: haven't finished yet
@@ -78,6 +78,7 @@ class TFDataSetWrapper(RayDataSet):
         self.session = tf.compat.v1.Session(config=tf.compat.v1.ConfigProto(
             intra_op_parallelism_threads=22, inter_op_parallelism_threads=22))
         self.x, self.y = self.tf_dataset.make_one_shot_iterator().get_next()
+        return self
 
     def next_batch(self):
         if not self.init:

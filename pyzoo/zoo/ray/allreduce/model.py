@@ -7,6 +7,9 @@ from zoo.ray.util import utils
 import time
 import ray
 import logging
+import io
+import tempfile
+import os
 logger = logging.getLogger(__name__)
 
 class TFModelLite(object):
@@ -22,11 +25,11 @@ class TFModelLite(object):
     def _action(self):
         if self.model_fn:
             self.model_fn = self.model_fn
-            input, output, target, loss, optimizer = self.model_fn()
+            input, output, target, loss, optimizer, grad_vars = self.extract_from_model_fn()
         else:
             self.model_bytes = self.model_bytes
-            input, output, target, loss, optimizer = \
-                RayModel.extract_from_keras_model(self.model_bytes)
+            input, output, target, loss, optimizer, grad_vars = \
+                TFModelLite.extract_from_keras_model(self.model_bytes)
         self.optimizer = optimizer
         self.inputs = utils.to_list(input)
         self.outputs = utils.to_list(output)
@@ -35,15 +38,64 @@ class TFModelLite(object):
         self.sess = tf.compat.v1.Session(config=tf.compat.v1.ConfigProto(
             intra_op_parallelism_threads=22, inter_op_parallelism_threads=22))
         self.sess.run(tf.global_variables_initializer())
+        self.grad_vars = grad_vars
 
-        # A list of (gradient, variable) pairs
-        self.grad_vars = [
-            t for t in optimizer.compute_gradients(self.loss)
-            if t[0] is not None
-        ]
         self.gv_helper = GVHelper(
             sess=self.sess, grad_vars=self.grad_vars)
         return self
+
+    def extract_from_model_fn(self):
+        input, output, target, loss, optimizer = self.model_fn()
+        # A list of (gradient, variable) pairs
+        grad_vars = [
+            t for t in optimizer.compute_gradients(loss)
+            if t[0] is not None
+        ]
+        return  input, output, target, loss, optimizer, grad_vars
+
+    @staticmethod
+    def deserialize_model(model_bytes):
+        model_dir = tempfile.mkdtemp()
+        model_path = os.path.join(model_dir, "model.h5")
+        try:
+            with open(model_path, "wb") as f:
+                f.write(model_bytes)
+        # TODO: remove file and add more exception handling
+        except Exception as e:
+            raise e
+        loaded_model = tf.keras.models.load_model(model_path)
+        return loaded_model
+
+    @staticmethod
+    def serialize_model(model):
+        """Serialize model into byte array."""
+        try:
+            model_dir = tempfile.mkdtemp()
+            model_path = os.path.join(model_dir, "model.h5")
+            model.save(str(model_path))
+            with open(model_path, "rb") as file:
+                return file.read()
+        finally:
+            # TODO: remove file here
+            pass
+
+
+    @staticmethod
+    def extract_from_keras_model(model_bytes):
+        """return input, output, target, loss, optimizer """
+        import tensorflow.keras.backend as K
+        try:
+            keras_model = TFModelLite.deserialize_model(model_bytes)
+            loss = keras_model.total_loss
+            inputs = keras_model.inputs
+            outputs = keras_model.outputs
+            targets = keras_model._targets
+            vars = keras_model._collected_trainable_weights
+            grads = K.gradients(loss, vars)
+            optimizer = keras_model.optimizer
+        except Exception as e:
+            raise e
+        return inputs, outputs, targets, loss, optimizer, list(zip(grads, vars))
 
     def compute_gradients(self, feed_dict_data):
         """
@@ -71,31 +123,6 @@ class TFModelLite(object):
 
     def get_flat_parameters(self):
         return self.gv_helper.get_flat()
-
-
-class RayModel(object):
-    """
-    You should add your definition at model_fn
-    and then return (input, output, target, loss, optimizer)
-    """
-    def __init__(self, model_bytes=None, model_fn=None):
-        self.model_lite = TFModelLite(model_bytes = model_bytes,
-                                      model_fn = model_fn)
-
-    @staticmethod
-    def extract_from_keras_model(kerasmodel):
-        pass
-
-    @classmethod
-    def from_model_fn(cls, model_fn):
-        return cls(model_fn=model_fn)
-
-    @classmethod
-    def from_keras_model(cls, keras_model):
-        # keras_model.save(path)
-        # bytearray = load from path()
-        # cls()
-        pass
 
     def calc_accuracy(sess, inputs_op, outputs_op, targets_op, input_data, output_data):
         with tf.name_scope('accuracy'):
@@ -127,6 +154,25 @@ class RayModel(object):
             pass
         return result/count
 
+
+class RayModel(object):
+    """
+    You should add your definition at model_fn
+    and then return (input, output, target, loss, optimizer)
+    """
+    def __init__(self, model_bytes=None, model_fn=None):
+        self.model_lite = TFModelLite(model_bytes = model_bytes,
+                                      model_fn = model_fn)
+
+    @classmethod
+    def from_model_fn(cls, model_fn):
+        return cls(model_fn=model_fn)
+
+    @classmethod
+    def from_keras_model(cls, keras_model):
+        model_bytes = TFModelLite.serialize_model(keras_model)
+        return cls(model_bytes = model_bytes)
+
     # we can support x, y later
     def fit(self, ray_dataset_train, num_worker=2, steps=10):
         self.ray_dataset_train = ray_dataset_train
@@ -136,7 +182,6 @@ class RayModel(object):
         self._init_distributed_engine()
         for i in range(1, steps + 1):
             self.step(i)
-
         self.resolved_model.set_flat_parameters(ray.get(self.workers[0].get_weights.remote()))
         return self
 

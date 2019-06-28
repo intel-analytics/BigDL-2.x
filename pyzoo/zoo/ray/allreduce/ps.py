@@ -20,6 +20,7 @@ class ShardedParameterServer(object):
 
         self.weight_var = tf.Variable(
             initial_value=parameters,
+            use_resource=True,  # otherwise it would use float32_ref rather than float32
             dtype=tf.float32,
             name="variable_weights")
 
