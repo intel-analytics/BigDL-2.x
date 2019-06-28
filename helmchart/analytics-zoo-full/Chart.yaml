@@ -1,8 +1,0 @@
-apiVersion: v1
-name: analytics-zoo
-version: 0.1.0
-appVersion: 0.5.0
-description: A unified analytics + AI platform for distributed Tensorflow, Keras and BigDL on Apache Spark
-home: https://github.com/intel-analytics/analytics-zoo
-sources: https://github.com/intel-analytics/analytics-zoo
-icon: https://github.com/analytics-zoo/analytics-zoo.github.io/raw/master/img/logo.jpg
