@@ -10,7 +10,6 @@ ENV JAVA_HOME           ${JAVA_8_HOME}
 ENV SCALA_HOME          /opt/work/scala
 ENV CONDA_HOME          /opt/work/conda
 ENV JENKINS_HOME        /opt/work/jenkins
-ENV SPARK_1_6_HOME      /opt/work/spark-1.6.3
 ENV SPARK_2_1_HOME      /opt/work/spark-2.1.3
 ENV SPARK_2_2_HOME      /opt/work/spark-2.2.2
 ENV SPARK_2_3_HOME      /opt/work/spark-2.3.2
@@ -56,11 +55,7 @@ RUN wget https://build.funtoo.org/distfiles/oracle-java/jdk-8u152-linux-x64.tar.
     chmod a+x /opt/work/jenkins/slave.groovy && \
     wget http://repo.jenkins-ci.org/releases/org/jenkins-ci/main/remoting/3.14/remoting-3.14.jar && \
     mv remoting-3.14.jar ${JENKINS_HOME} && \
-#spark 1.6.3 2.1.3 2.2.2 2.3.2 2.4.0
-    wget http://archive.apache.org/dist/spark/spark-1.6.3/spark-1.6.3-bin-hadoop2.6.tgz && \
-    tar -xf spark-1.6.3-bin-hadoop2.6.tgz -C /opt/work && \
-    rm spark-1.6.3-bin-hadoop2.6.tgz && \
-    ln -s /opt/work/spark-1.6.3-bin-hadoop2.6 ${SPARK_1_6_HOME} && \
+#spark 2.1.3 2.2.2 2.3.2 2.4.0
     wget http://archive.apache.org/dist/spark/spark-2.1.3/spark-2.1.3-bin-hadoop2.7.tgz && \
     tar -xf spark-2.1.3-bin-hadoop2.7.tgz -C /opt/work && \
     rm spark-2.1.3-bin-hadoop2.7.tgz && \
@@ -223,7 +218,7 @@ RUN apt-get install -y libprotobuf-dev libleveldb-dev libsnappy-dev libhdf5-seri
     apt-get install -y libopencv-dev libopencv-contrib-dev && \
     apt-get install -y --no-install-recommends libboost-all-dev && \
     apt-get install -y libatlas-base-dev && \
-    apt-get install -y python-dev python-pip gfortran && \
+    apt-get install -y python-dev python-pip gfortran-7 && \
     apt-get install -y libgflags-dev libgoogle-glog-dev liblmdb-dev && \
     apt-get install -y --no-install-recommends build-essential tcl tk gettext autoconf zlib1g-dev gcc && \
     apt-get install -y --no-install-recommends python-dev python3-dev libcurl4-openssl-dev 
@@ -247,7 +242,6 @@ RUN git clone https://github.com/BVLC/caffe.git && \
     update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-7 60 \
                          --slave /usr/bin/g++ g++ /usr/bin/g++-7 && \
     update-alternatives --config gcc && \
-    apt-get install -y gfortran-7 && \
     /bin/bash -c "source activate py27 && \
         easy_install -U pytest && \
         pip install -r /opt/work/caffe/python/requirements.txt && \
