@@ -1,5 +1,7 @@
 # Setup Analytics Zoo On ICP4D
 
+Analytics Zoo is an open source project which is licensed under [Apache License 2.0](https://github.com/intel-analytics/analytics-zoo/blob/master/LICENSE).
+
 ## **Prerequisites**
 To deploy Analytics Zoo on ICP4D, the following prerequisites must be met:
 1. Having an ICP4D account with IBM and a working installation of ICP4D on your cluster.
