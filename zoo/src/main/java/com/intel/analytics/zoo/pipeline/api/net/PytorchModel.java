@@ -45,6 +45,18 @@ class PytorchModel {
         return backwardNative(this.nativeRef, storage, offset, shape);
     }
 
+    float[] getGradient() {
+        return getGradientNative(this.nativeRef);
+    }
+
+    float[] getWeight() {
+        return getWeightNative(this.nativeRef);
+    }
+
+    void updateWeight(float[] weights) {
+        updateWeightNative(this.nativeRef, weights);
+    }
+
     private void load(String modelPath, String lossPath) {
         this.nativeRef = loadNative(modelPath, lossPath);
     }
@@ -59,9 +71,11 @@ class PytorchModel {
 
     native JTensor backwardNative(long nativeRef, float[] storage, int offset, int[] shape);
 
-    native JTensor getGradientNative(long nativeRef);
+    native float[] getGradientNative(long nativeRef);
 
-    native JTensor updateWeightNative(long nativeRef, float[] storage);
+    native void updateWeightNative(long nativeRef, float[] storage);
+
+    native float[] getWeightNative(long nativeRef);
 
     native void releaseNative(long nativeRef);
 

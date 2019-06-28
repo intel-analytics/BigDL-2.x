@@ -206,11 +206,10 @@ JNIEXPORT jobject JNICALL Java_com_intel_analytics_zoo_pipeline_api_net_PytorchM
     jobject lossJTensor = jenv -> NewObject(jtensor_class, jtensor_constructor, result_storage, result_shape);
 
     return lossJTensor;
-
   }
 
 
-JNIEXPORT jobject JNICALL Java_com_intel_analytics_zoo_pipeline_api_net_PytorchModel_getGradientNative
+JNIEXPORT jfloatArray JNICALL Java_com_intel_analytics_zoo_pipeline_api_net_PytorchModel_getGradientNative
   (JNIEnv * jenv, jobject jobj, jlong nativeRef) {
     std::shared_ptr<torch::jit::script::Module> model_ptr = handles[nativeRef];
     std::vector<float> xv;
@@ -233,44 +232,58 @@ JNIEXPORT jobject JNICALL Java_com_intel_analytics_zoo_pipeline_api_net_PytorchM
     }
 
     std::cout << "xv: " << xv << std::endl;
-    jclass jtensor_class = jenv -> FindClass("com/intel/analytics/zoo/pipeline/inference/JTensor");
-    jmethodID jtensor_constructor = jenv -> GetMethodID(jtensor_class, "<init>", "([F[I)V");
-
-    int result_storage_len = xv.size();
-    jfloatArray result_storage = jenv -> NewFloatArray(result_storage_len);
-    jenv -> SetFloatArrayRegion(result_storage, 0, result_storage_len, &xv[0]);
-
-    int pytorch_result_shape[1] = {xv.size()};
-    jintArray result_shape = jenv -> NewIntArray(1);
-    jenv -> SetIntArrayRegion(result_shape, 0, 1, pytorch_result_shape);
-
-    jobject gradientJTensor = jenv -> NewObject(jtensor_class, jtensor_constructor, result_storage, result_shape);
-
-    return gradientJTensor;
+    jfloatArray result_storage = jenv -> NewFloatArray(xv.size());
+    jenv -> SetFloatArrayRegion(result_storage, 0, xv.size(), &xv[0]);
+    return result_storage;
   }
 
-
-JNIEXPORT jobject JNICALL Java_com_intel_analytics_zoo_pipeline_api_net_PytorchModel_updateWeightNative
+JNIEXPORT void JNICALL Java_com_intel_analytics_zoo_pipeline_api_net_PytorchModel_updateWeightNative
   (JNIEnv * jenv, jobject jobj, jlong nativeRef, jfloatArray jstorage) {
+    jfloat* c_storage = (jfloat*) jenv -> GetPrimitiveArrayCritical(jstorage, JNI_FALSE);
     std::shared_ptr<torch::jit::script::Module> model_ptr = handles[nativeRef];
-    std::vector<float> xv;
-
+    auto storage_start = c_storage;
+    int index = 0;
     for (const auto& child : model_ptr -> get_modules()) {
-
         auto slots = child -> get_parameters();
         for (size_t i = 0; i < slots.size(); ++i) {
-             auto& x = slots[i];
-             std::cout << "param: " << x.value().toTensor() << std::endl;
-             std::cout << "grad: " << x.value().toTensor().grad() << std::endl;
-
-             size_t x_size = x.value().toTensor().grad().numel();
-             auto p = static_cast<float*>(x.value().toTensor().grad().storage().data());
-             for(size_t i=0; i<x_size; i++)
-             {
-               xv.push_back(p[i]);
-             }
+          std::cout << "updating: " << slots[i].name() << std::endl;
+          auto slot_tensor = slots[i].value().toTensor();
+          auto slot_element_size = slot_tensor.nbytes() / slot_tensor.element_size();
+          auto slot_shape = slot_tensor.sizes();
+          auto new_tensor = torch::from_blob(storage_start + index, slot_shape, at::kFloat);
+          slot_tensor.set_requires_grad(false);
+          slot_tensor.copy_(new_tensor);
+          index += slot_element_size;
         }
     }
+
+    jenv -> ReleasePrimitiveArrayCritical(jstorage, c_storage, 0);
+    return;
+  }
+
+JNIEXPORT jfloatArray JNICALL Java_com_intel_analytics_zoo_pipeline_api_net_PytorchModel_getWeightNative
+  (JNIEnv * jenv, jobject jobj, jlong nativeRef) {
+      std::shared_ptr<torch::jit::script::Module> model_ptr = handles[nativeRef];
+      std::vector<float> xv;
+
+      for (const auto& child : model_ptr -> get_modules()) {
+
+          auto slots = child -> get_parameters();
+          for (size_t i = 0; i < slots.size(); ++i) {
+               auto& x = slots[i];
+               size_t x_size = x.value().toTensor().grad().numel();
+               auto p = static_cast<float*>(x.value().toTensor().storage().data());
+               for(size_t i=0; i<x_size; i++)
+               {
+                 xv.push_back(p[i]);
+               }
+          }
+      }
+
+      std::cout << "xv: " << xv << std::endl;
+      jfloatArray result_storage = jenv -> NewFloatArray(xv.size());
+      jenv -> SetFloatArrayRegion(result_storage, 0, xv.size(), &xv[0]);
+      return result_storage;
   }
 
 }
