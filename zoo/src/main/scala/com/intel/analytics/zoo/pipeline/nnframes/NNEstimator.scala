@@ -450,10 +450,10 @@ class NNEstimator[T: ClassTag] private[zoo] (
    */
   protected def wrapBigDLModel(m: Module[T]): NNModel[T] = {
     val dlModel = new NNModel[T](m)
-    copyValues(dlModel.setParent(this))
+    copyValues(dlModel.setParent(this)).setDefaultBatchSize()
     val clonedTransformer = ToTuple() -> $(samplePreprocessing)
       .asInstanceOf[Preprocessing[(Any, Option[Any]), Sample[T]]].clonePreprocessing()
-    dlModel.setSamplePreprocessing(clonedTransformer).clear(dlModel.batchSize)
+    dlModel.setSamplePreprocessing(clonedTransformer)
   }
 
   /**
@@ -587,6 +587,12 @@ class NNModel[T: ClassTag] private[zoo] (
    */
   def setBatchSize(value: Int): this.type = set(batchSize, value)
 
+  private[nnframes] def setDefaultBatchSize(): this.type = {
+    val totalNumCores = EngineRef.getCoreNumber() * EngineRef.getNodeNumber()
+    set(batchSize, 4 * totalNumCores)
+    this
+  }
+
   /**
    * set Preprocessing.
    * @param value: A [[Preprocessing]] that transforms the feature data to a Sample[T].
@@ -608,12 +614,7 @@ class NNModel[T: ClassTag] private[zoo] (
     // note that here we use batch per thread, but not batch per partition. For inference,
     // GlobalBatchSize = batchPerThread * coreNumber() appears to be more intuitive for the users
     val totalNumCores = EngineRef.getCoreNumber() * EngineRef.getNodeNumber()
-    val batchPerThread = if (isSet(batchSize)) {
-      Math.ceil($(batchSize).toDouble / totalNumCores).toInt
-    } else {
-      4
-    }
-
+    val batchPerThread = Math.ceil($(batchSize).toDouble / totalNumCores).toInt
     if ($(batchSize) % totalNumCores != 0) {
       logger.warn(s"Global batch size (${$(batchSize)}) cannot be divided by total core number" +
         s"($totalNumCores). Setting batch per thread as ($batchPerThread), and actual Global" +
@@ -689,6 +690,7 @@ object NNModel extends MLReadable[NNModel[_]] {
     )(implicit ev: TensorNumeric[T]): NNModel[T] = {
     new NNModel(model)
       .setSamplePreprocessing(SeqToTensor() -> TensorToSample())
+      .setDefaultBatchSize()
   }
 
   /**
@@ -704,6 +706,7 @@ object NNModel extends MLReadable[NNModel[_]] {
     )(implicit ev: TensorNumeric[T]): NNModel[T] = {
     new NNModel(model)
       .setSamplePreprocessing(SeqToTensor(featureSize) -> TensorToSample())
+      .setDefaultBatchSize()
   }
 
   /**
@@ -717,6 +720,7 @@ object NNModel extends MLReadable[NNModel[_]] {
       featurePreprocessing: Preprocessing[F, Tensor[T]]
     )(implicit ev: TensorNumeric[T]): NNModel[T] = {
     new NNModel(model).setSamplePreprocessing(featurePreprocessing -> TensorToSample())
+      .setDefaultBatchSize()
   }
 
   import scala.language.existentials

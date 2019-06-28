@@ -75,7 +75,7 @@ class NNClassifierSpec extends FlatSpec with Matchers with BeforeAndAfter {
     assert(estimator.getFeaturesCol == "features")
     assert(estimator.getLabelCol == "label")
     assert(estimator.getMaxEpoch == 50)
-    assert(estimator.getBatchSize == 1)
+    assert(estimator.getBatchSize == 32)
     assert(estimator.getLearningRate == 1e-3)
     assert(estimator.getLearningRateDecay == 0)
   }
@@ -271,6 +271,23 @@ class NNClassifierSpec extends FlatSpec with Matchers with BeforeAndAfter {
     estimator.fit(imageDF)
   }
 
+  "NNClasifierModel" should "has default batchperthread as 4" in {
+    val model = new Sequential().add(Linear[Float](6, 2)).add(LogSoftMax[Float])
+    val criterion = ClassNLLCriterion[Float]()
+    Seq(new LBFGS[Float], new Adam[Float]).foreach { optimMethod =>
+      val classifier = NNClassifier(model, criterion, Array(6))
+        .setBatchSize(nRecords)
+        .setMaxEpoch(2)
+        .setOptimMethod(optimMethod)
+        .setLearningRate(0.1)
+      val data = sc.parallelize(smallData)
+      val df = sqlContext.createDataFrame(data).toDF("features", "label")
+      val nnModel = classifier.fit(df)
+      nnModel.isInstanceOf[NNClassifierModel[_]] should be(true)
+      nnModel.getBatchSize should be(4)
+    }
+  }
+
   "NNClasifierModel" should "return same results after saving and loading" in {
     val data = sqlContext.createDataFrame(smallData).toDF("features", "label")
     val module = new Sequential[Double]().add(Linear[Double](6, 2)).add(LogSoftMax[Double])
@@ -305,7 +322,10 @@ class NNClassifierSpec extends FlatSpec with Matchers with BeforeAndAfter {
       NNClassifierModel(model),
       NNClassifierModel(model, Array(6)),
       NNClassifierModel(model, SeqToTensor(Array(6)))
-    ).foreach(e => e.transform(df).count())
+    ).foreach { e =>
+      e.transform(df).count()
+      assert(e.getBatchSize == 4)
+    }
   }
 
   "NNClassifier" should "supports deep copy" in {

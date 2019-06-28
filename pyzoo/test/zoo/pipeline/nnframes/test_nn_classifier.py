@@ -106,6 +106,7 @@ class TestNNClassifer():
                   NNModel(linear_model, SeqToTensor([2]))]:
             res = e.transform(df)
             assert type(res).__name__ == 'DataFrame'
+            assert e.getBatchSize() == 4
 
     def test_nnClassiferModel_construct_with_differnt_params(self):
         linear_model = Sequential().add(Linear(2, 2))
@@ -115,6 +116,7 @@ class TestNNClassifer():
                   NNClassifierModel(linear_model, SeqToTensor([2]))]:
             res = e.transform(df)
             assert type(res).__name__ == 'DataFrame'
+            assert e.getBatchSize() == 4
 
     def test_all_set_get_methods(self):
         linear_model = Sequential().add(Linear(2, 2))
