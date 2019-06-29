@@ -6,8 +6,8 @@ import scala.collection.mutable.ArrayBuffer
 import scala.reflect.ClassTag
 
 object SparseTensorUtils {
-  def addSparseTensor[T: ClassTag](tensor: Tensor[T], tensor2: Tensor[T])
-                                  (implicit ev: TensorNumeric[T]): Tensor[T] = {
+  def addSparseTensor[@specialized(Float, Double) T: ClassTag](tensor: Tensor[T],
+    tensor2: Tensor[T])(implicit ev: TensorNumeric[T]): Tensor[T] = {
     val sparseT = tensor.asInstanceOf[SparseTensor[T]]
     val sparseT2 = tensor2.asInstanceOf[SparseTensor[T]]
     require(sparseT._indices.length == 2 && sparseT2._indices.length == 2,
@@ -71,8 +71,28 @@ object SparseTensorUtils {
       sparseT._shape, sparseT._shape.length)
   }
 
-  def addSparseTensor[T: ClassTag](tensor: Array[Tensor[T]], tensor2: Array[Tensor[T]])
-                                  (implicit ev: TensorNumeric[T]): Array[Tensor[T]] = {
+  def addDenseSparseTensor[@specialized(Float, Double) T: ClassTag](tensor: Tensor[T],
+    tensor2: Tensor[T])(implicit ev: TensorNumeric[T]): Tensor[T] = {
+    require(tensor.isInstanceOf[DenseTensor[T]] && tensor2.isInstanceOf[SparseTensor[T]])
+    val denseT = tensor.asInstanceOf[DenseTensor[T]]
+    val dValues = denseT.storage().array()
+
+    val sparseT = tensor2.asInstanceOf[SparseTensor[T]]
+    val kB: Int = sparseT.size(1)
+    val rows = sparseT._indices.head.array()
+    val cols = sparseT._indices.last.array()
+    val values = sparseT._values.array()
+
+    var i = 0
+    while (i < rows.length) {
+      dValues(rows(i) * kB + cols(i)) = ev.plus(values(i), dValues(rows(i) * kB + cols(i)))
+      i += 1
+    }
+    tensor
+  }
+
+  def addSparseTensor[@specialized(Float, Double) T: ClassTag](tensor: Array[Tensor[T]],
+    tensor2: Array[Tensor[T]])(implicit ev: TensorNumeric[T]): Array[Tensor[T]] = {
     require(tensor.length == tensor2.length, "tensor and tensor2 should have the same length")
     var i = 0
     val res = ArrayBuffer[Tensor[T]]()
@@ -83,13 +103,20 @@ object SparseTensorUtils {
     res.toArray
   }
 
-  def addSparseTensorValueByConstant[T: ClassTag](tensor: Tensor[T], constant: T)
-    (implicit ev: TensorNumeric[T]): SparseTensor[T] = {
+  def addSparseTensorValueByConstant[@specialized(Float, Double) T: ClassTag](tensor: Tensor[T],
+    constant: T)(implicit ev: TensorNumeric[T]): Unit = {
+    val sparseT = tensor.asInstanceOf[SparseTensor[T]]
+    val values = sparseT._values.array()
+    values.foreach(ev.plus(_, constant))
+  }
+
+  def resizeAsSparseTensor[@specialized(Float, Double) T: ClassTag](tensor: Tensor[T])
+    (implicit ev: TensorNumeric[T]): Tensor[T] = {
     val sparseT = tensor.asInstanceOf[SparseTensor[T]]
     val values = sparseT._values.array()
 
-    SparseTensor(sparseT._indices.map(_.toArray.clone()),
-      Storage[T](values.map(ev.plus(_, constant))),
+    SparseTensor(sparseT._indices.map(x => new Array[Int](x.toArray.length)),
+      Storage[T](new Array[T](values.length)),
       sparseT._shape, sparseT._shape.length)
   }
 
@@ -107,7 +134,7 @@ object SparseTensorUtils {
   }
 
   // res = alpha * mat1 * mat2
-  def mm[@specialized(Float, Double) T: ClassTag](
+  def mmSparseTensor[@specialized(Float, Double) T: ClassTag](
     alpha: T,
     mat1: Tensor[T],
     mat2: Tensor[T]
@@ -188,5 +215,125 @@ object SparseTensorUtils {
       index += 1
     }
     res
+  }
+
+  def dotSparseTensor[@specialized(Float, Double) T: ClassTag](
+    mat1: Tensor[T],
+    mat2: Tensor[T]
+  )(implicit ev: TensorNumeric[T]): Tensor[T] = {
+    val sparseT = mat1.asInstanceOf[SparseTensor[T]]
+    val sparseT2 = mat2.asInstanceOf[SparseTensor[T]]
+    require(sparseT._indices.length == 2 && sparseT2._indices.length == 2,
+      "Only support 2D sparse tensor")
+    require(sparseT._shape.deep  == sparseT2._shape.deep,
+      "added sparse tensors should have the same shape")
+    val tIndice1 = sparseT._indices.head.array()
+    val tIndice2 = sparseT._indices.last.array()
+    val tValue = sparseT.storage().array()
+
+    val t2Indice1 = sparseT2._indices.head.array()
+    val t2Indice2 = sparseT2._indices.last.array()
+    val t2Value = sparseT2.storage().array()
+
+    val indice = ArrayBuffer[Int]()
+    val indice2 = ArrayBuffer[Int]()
+    val value = ArrayBuffer[T]()
+
+    var i = 0
+    var j = 0
+
+    while (i < tIndice1.length && j < t2Indice1.length) {
+      if (tIndice1(i) == t2Indice1(j)) {
+        if (tIndice2(i) == t2Indice2(j)) {
+          indice += tIndice1(i)
+          indice2 += tIndice2(i)
+          value += (ev.times(tValue(i), t2Value(j)))
+          i += 1
+          j += 1
+        } else if (tIndice2(i) < t2Indice2(j)) {
+          i += 1
+        } else {
+          j += 1
+        }
+      } else if (tIndice1(i) > t2Indice1(j)) {
+        j += 1
+      } else {
+        i += 1
+      }
+    }
+    SparseTensor(Array(indice.toArray, indice2.toArray), Storage[T](value.toArray),
+      sparseT._shape, sparseT._shape.length)
+  }
+
+  def divSparseTensor[@specialized(Float, Double) T: ClassTag](
+    mat1: Tensor[T],
+    mat2: Tensor[T]
+  )(implicit ev: TensorNumeric[T]): Tensor[T] = {
+    val sparseT = mat1.asInstanceOf[SparseTensor[T]]
+    val sparseT2 = mat2.asInstanceOf[SparseTensor[T]]
+    require(sparseT._indices.length == 2 && sparseT2._indices.length == 2,
+      "Only support 2D sparse tensor")
+    require(sparseT._shape.deep  == sparseT2._shape.deep,
+      "added sparse tensors should have the same shape")
+    val tIndice1 = sparseT._indices.head.array()
+    val tIndice2 = sparseT._indices.last.array()
+    val tValue = sparseT.storage().array()
+
+    val t2Indice1 = sparseT2._indices.head.array()
+    val t2Indice2 = sparseT2._indices.last.array()
+    val t2Value = sparseT2.storage().array()
+
+    val indice = ArrayBuffer[Int]()
+    val indice2 = ArrayBuffer[Int]()
+    val value = ArrayBuffer[T]()
+
+    var i = 0
+    var j = 0
+
+    while (i < tIndice1.length && j < t2Indice1.length) {
+      if (tIndice1(i) == t2Indice1(j)) {
+        if (tIndice2(i) == t2Indice2(j)) {
+          indice += tIndice1(i)
+          indice2 += tIndice2(i)
+          value += (ev.divide(tValue(i), t2Value(j)))
+          i += 1
+          j += 1
+        } else if (tIndice2(i) < t2Indice2(j)) {
+          i += 1
+        } else {
+          j += 1
+        }
+      } else if (tIndice1(i) > t2Indice1(j)) {
+        j += 1
+      } else {
+        i += 1
+      }
+    }
+    SparseTensor(Array(indice.toArray, indice2.toArray), Storage[T](value.toArray),
+      sparseT._shape, sparseT._shape.length)
+  }
+
+  def addcmulSparseTensor[@specialized(Float, Double) T: ClassTag](tensor: Tensor[T],
+    value: T, tensor1: Tensor[T], tensor2: Tensor[T])(implicit ev: TensorNumeric[T]): Tensor[T] = {
+    val t = dotSparseTensor(tensor1, tensor2)
+    t.asInstanceOf[SparseTensor[T]]._values.foreach(ev.times(_, value))
+    addSparseTensor(tensor, t)
+  }
+
+  def addcdivSparseTensor[@specialized(Float, Double) T: ClassTag](tensor: Tensor[T],
+    value: T, tensor1: Tensor[T], tensor2: Tensor[T])(implicit ev: TensorNumeric[T]): Tensor[T] = {
+    val t = divSparseTensor(tensor1, tensor2)
+    t.asInstanceOf[SparseTensor[T]]._values.foreach(ev.times(_, value))
+    if (tensor.isInstanceOf[SparseTensor[T]]) addSparseTensor(tensor, t)
+    else {
+      addDenseSparseTensor(tensor, t)
+    }
+  }
+
+  def sqrtSparseTensor[@specialized(Float, Double) T: ClassTag](tensor: Tensor[T])
+    (implicit ev: TensorNumeric[T]): Unit = {
+    val sparseT = tensor.asInstanceOf[SparseTensor[T]]
+    val values = sparseT._values.array()
+    values.foreach(ev.sqrt(_))
   }
 }

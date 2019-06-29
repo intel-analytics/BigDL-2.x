@@ -157,7 +157,7 @@ object CensusWideAndDeep {
     val optimizer = new ZooOptimizer[Float](wideAndDeep,
       trainRdds.asInstanceOf[DistributedDataSet[MiniBatch[Float]]],
       ClassNLLCriterion[Float]())
-    optimizer.setSparseParameterProcessor(new sudoSparseSGD[Float]())
+    optimizer.setSparseParameterProcessor(new SparseAdagrad[Float](0.001))
       .setOptimMethod(optimMethod)
       .setValidation(Trigger.everyEpoch, validationRdds,
         Array(new Top1Accuracy[Float], new Loss[Float]()))

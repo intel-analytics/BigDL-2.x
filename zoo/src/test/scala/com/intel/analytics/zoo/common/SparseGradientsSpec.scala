@@ -111,7 +111,7 @@ class SparseGradientsSpec extends FlatSpec with Matchers with BeforeAndAfter {
     val sparseM = Tensor.sparse(Tensor[Float](3, 2).setValue(2, 2, 1).setValue(3, 1, 1))
     val denseM = Tensor[Float](2, 3).range(1, 12, 2)
 
-    val res = SparseTensorUtils.mm[Float](2.0f, denseM, sparseM).asInstanceOf[SparseTensor[Float]]
+    val res = SparseTensorUtils.mmSparseTensor[Float](2.0f, denseM, sparseM).asInstanceOf[SparseTensor[Float]]
     require(res._indices.head.array().deep == Array(0, 0, 1, 1).deep)
     require(res._indices.last.array().deep == Array(0, 1, 0, 1).deep)
     require(res.storage().array().deep ==
@@ -123,7 +123,7 @@ class SparseGradientsSpec extends FlatSpec with Matchers with BeforeAndAfter {
       .setValue(3, 2, 1))
     val denseM = Tensor[Float](2, 3).range(1, 12, 2)
 
-    val res = SparseTensorUtils.mm[Float](1.0f, denseM, sparseM).asInstanceOf[SparseTensor[Float]]
+    val res = SparseTensorUtils.mmSparseTensor[Float](1.0f, denseM, sparseM).asInstanceOf[SparseTensor[Float]]
     require(res._indices.head.array().deep == Array(0, 0, 1, 1).deep)
     require(res._indices.last.array().deep == Array(0, 1, 0, 1).deep)
     require(res.storage().array().deep ==

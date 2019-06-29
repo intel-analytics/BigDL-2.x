@@ -57,7 +57,7 @@ class InternalSparseLinear[T: ClassTag](
       "SparseLinear: " + ErrorInfo.constrainInputAsVectorOrBatch)
 
     if (scaleW != 0) {
-      sparseGradWeight = Array(SparseTensorUtils.mm(ev.fromType[Double](scaleW), gradOutput.t, input))
+      sparseGradWeight = Array(SparseTensorUtils.mmSparseTensor(ev.fromType[Double](scaleW), gradOutput.t, input))
     }
 
     if (withBias && scaleB != 0) {

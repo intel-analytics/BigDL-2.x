@@ -17,6 +17,7 @@
 package com.intel.analytics.bigdl.nn
 
 import com.intel.analytics.bigdl._
+import com.intel.analytics.bigdl.nn.abstractnn.SparseAbstractModule
 
 import scala.reflect.ClassTag
 import com.intel.analytics.bigdl.tensor._
@@ -36,7 +37,7 @@ object BigDLWrapperUtils {
   def putSparseGWeightBias[T: ClassTag](
     broadcastWeightBias: Array[Tensor[T]],
     localModel: Module[T])(implicit ev: TensorNumeric[T]): Unit = {
-    val localWeightBias = localModel.asInstanceOf[sudoLookupTableSparse[T]].sparseParameters()._1
+    val localWeightBias = localModel.asInstanceOf[SparseAbstractModule[T]].sparseParameters()._1
     var i = 0
     while (i < localWeightBias.length) {
       if (localWeightBias(i) != null) {
