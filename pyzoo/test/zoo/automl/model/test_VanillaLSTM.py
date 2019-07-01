@@ -112,25 +112,29 @@ class TestVanillaLSTM:
         x_test = tsft._roll_test(test_data, past_seq_len=past_seq_len)
 
         config = {
-            'epochs': 2,
+            'epochs': 20,
             "lr": 0.001,
             "lstm_1_units": 16,
-            "dropout_1": 0.2,
+            "dropout_1": 0,
             "lstm_2_units": 10,
-            "dropout_2": 0.2,
-            "batch_size": 32,
+            "dropout_2": 0,
+            "batch_size": 8,
         }
 
         model = VanillaLSTM(check_optional_config=False, future_seq_len=future_seq_len)
+        new_model = VanillaLSTM(check_optional_config=False)
         model.fit_eval(x_train, y_train, **config)
         predict_before = model.predict(x_test)
 
         dirname = tempfile.mkdtemp(prefix="automl_test_vanilla")
         try:
             save(dirname, model=model)
-            restore(dirname, model=model, config=config)
-            predict_after = model.predict(x_test)
+            restore(dirname, model=new_model, config=config)
+            predict_after = new_model.predict(x_test)
             assert np.allclose(predict_before, predict_after)
+            new_config = {'epochs': 2}
+            new_model.fit_eval(x_train, y_train, **new_config)
+
         finally:
             shutil.rmtree(dirname)
 

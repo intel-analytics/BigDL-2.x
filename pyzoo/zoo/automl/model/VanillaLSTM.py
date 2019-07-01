@@ -33,6 +33,8 @@ class VanillaLSTM(BaseModel):
         self.model = None
         self.check_optional_config = check_optional_config
         self.future_seq_len = future_seq_len
+        self.metric = None
+        self.batch_size = None
 
     def _build(self, **config):
         """
@@ -42,6 +44,8 @@ class VanillaLSTM(BaseModel):
         """
         super()._check_config(**config)
         self.metric = config.get('metric', 'mean_squared_error')
+        self.batch_size = config.get('batch_size', 1024)
+
         self.model = Sequential()
         self.model.add(LSTM(
             # input_shape=(config.get('input_shape_x', 20),
@@ -81,7 +85,7 @@ class VanillaLSTM(BaseModel):
 
         hist = self.model.fit(x, y,
                               validation_data=validation_data,
-                              batch_size=config.get('batch_size', 1024),
+                              batch_size=self.batch_size,
                               epochs=config.get('epochs', 20),
                               verbose=0
                               )
@@ -125,7 +129,9 @@ class VanillaLSTM(BaseModel):
         #os.rename("vanilla_lstm_tmp.h5", model_path)
 
         config_to_save = {
-            "future_seq_len": self.future_seq_len
+            "future_seq_len": self.future_seq_len,
+            "metric": self.metric,
+            "batch_size": self.batch_size
         }
         save_config(config_path, config_to_save)
 
@@ -142,6 +148,9 @@ class VanillaLSTM(BaseModel):
         #self.model.load_weights(file_path)
 
         self.future_seq_len = config["future_seq_len"]
+        # for continuous training
+        self.metric = config["metric"]
+        self.batch_size = config["batch_size"]
 
     def _get_required_parameters(self):
         return {
