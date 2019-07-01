@@ -364,59 +364,32 @@ ${SPARK_HOME}/bin/spark-submit \
 now=$(date "+%s")
 time8=$((now-start))
 
-start=$(date "+%s")
-python ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/ray/rl_pong/rl_pong.py
-exit_status=$?
-if [ $exit_status -ne 0 ];
-then
-    clear_up
-    echo "rl_pong failed"
-    exit $exit_status
-fi
-now=$(date "+%s")
-time9=$((now-start))
+execute_ray_test () {
+    echo "start example $1"
+    start=$(date "+%s")
+    python $2
+    exit_status=$?
+    if [ $exit_status -ne 0 ];
+    then
+        clear_up
+        echo "$1 failed"
+        exit $exit_status
+    fi
+    now=$(date "+%s")
+    return $((now-start))
+}
 
+execute_ray_test rl_pong ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/ray/rl_pong/rl_pong.py
+time9 = $?
 
-echo "start example sync_parameter_server"
-start=$(date "+%s")
-python ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/ray/parameter_server/sync_parameter_server.py
-exit_status=$?
-if [ $exit_status -ne 0 ];
-then
-    clear_up
-    echo "sync_parameter_server failed"
-    exit $exit_status
-fi
-now=$(date "+%s")
-time10=$((now-start))
+execute_ray_test sync_parameter_server ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/ray/parameter_server/sync_parameter_server.py
+time10 = $?
 
+execute_ray_test async_parameter_server ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/ray/parameter_server/async_parameter_server.py
+time11 = $?
 
-echo "start example async_parameter_server"
-start=$(date "+%s")
-python ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/ray/parameter_server/async_parameter_server.py
-exit_status=$?
-if [ $exit_status -ne 0 ];
-then
-    clear_up
-    echo "async_parameter_server failed"
-    exit $exit_status
-fi
-now=$(date "+%s")
-time11=$((now-start))
-
-
-echo "start example multiagent_two_trainers"
-start=$(date "+%s")
-python ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/ray/rllib/multiagent_two_trainers.py
-exit_status=$?
-if [ $exit_status -ne 0 ];
-then
-    clear_up
-    echo "multiagent_two_trainers failed"
-    exit $exit_status
-fi
-now=$(date "+%s")
-time12=$((now-start))
+execute_ray_test multiagent_two_trainers ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/ray/rllib/multiagent_two_trainers.py
+time12 = $?
 
 echo "#1 textclassification time used:$time1 seconds"
 echo "#2 customized loss and layer time used:$time2 seconds"
