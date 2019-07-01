@@ -1,5 +1,6 @@
 #
-# Copyright 2018 Analytics Zoo Authors.
+# Copyright 2015 The TensorFlow Authors, 2019 Analytics Zoo Authors.
+# All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -12,9 +13,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#
-
-# This code is copied and adapted from Andrej Karpathy's code for learning to
+# ==============================================================================
 # play Pong https://gist.github.com/karpathy/a4166c7fe253700972fcbc77e4ea32c5.
 
 from __future__ import absolute_import
