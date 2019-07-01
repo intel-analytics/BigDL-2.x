@@ -15,7 +15,18 @@
 #
 
 import re
+import os
 
+class MKLSetting(object):
+    def __init__(self, cores):
+        self.cores = cores
+
+    def get_cores(self):
+        if self.cores:
+            return self.cores
+        if "OMP_NUM_THREADS" in os.environ :
+            return int(os.environ.get("OMP_NUM_THREADS"))
+        return 0
 
 def to_list(input):
     if isinstance(input, (list, tuple)):

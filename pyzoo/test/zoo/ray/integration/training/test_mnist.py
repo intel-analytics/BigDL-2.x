@@ -1,7 +1,7 @@
 import ray
 import tensorflow as tf
 
-from zoo.ray.allreduce.model import RayModel
+from zoo.ray.distribute.model import RayModel
 from zoo.ray.data.dataset import RayDataSet
 import numpy as np
 
@@ -53,7 +53,7 @@ def test_input_fn():
 
 
 rayModel = RayModel.from_model_fn(model_fn)
-rayModel.fit(ray_dataset_train=RayDataSet.from_dataset_generator(input_fn, batch_size=batch_size),
+rayModel.fit(x=RayDataSet.from_dataset_generator(input_fn, batch_size=batch_size),
              num_worker=num_worker,
              steps=1000)
 
