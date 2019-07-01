@@ -1020,7 +1020,9 @@ class InternalDistriOptimizer[T: ClassTag] (
 
   override def optimize(): Module[T] = {
     val model = super.optimize()
-    sparseParameterProcessor.getSparseParameters(model)
+    if (sparseParameterProcessor != null) {
+      sparseParameterProcessor.getSparseParameters(model)
+    }
     model
   }
 
