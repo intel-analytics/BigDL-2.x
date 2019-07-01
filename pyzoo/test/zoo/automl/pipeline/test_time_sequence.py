@@ -276,6 +276,37 @@ class TestTimeSequencePipeline:
         finally:
             shutil.rmtree(dirname)
 
+    def test_fit(self):
+        # sample_num should > past_seq_len, the default value of which is 50
+        sample_num = 100
+        train_df = pd.DataFrame({"datetime": pd.date_range('1/1/2019', periods=sample_num),
+                                 "value": np.random.randn(sample_num)})
+        sample_num = 64
+        test_df = pd.DataFrame({"datetime": pd.date_range('1/10/2019', periods=sample_num),
+                                "value": np.random.randn(sample_num)})
+
+        future_seq_len = 1
+        tsp = TimeSequencePredictor(dt_col="datetime",
+                                    target_col="value",
+                                    future_seq_len=future_seq_len,
+                                    extra_features_col=None, )
+        pipeline = tsp.fit(train_df)
+        mse, rs = pipeline.evaluate(test_df, metric=["mean_squared_error", "r_square"])
+        print("Evaluation result: Mean square error is: {}, R square is: {}.".format(mse, rs))
+
+        dirname = tempfile.mkdtemp(prefix="saved_pipeline")
+        try:
+            save_pipeline_file = os.path.join(dirname, "my.ppl")
+            pipeline.save(save_pipeline_file)
+            new_pipeline = load_ts_pipeline(save_pipeline_file)
+        finally:
+            shutil.rmtree(dirname)
+
+        new_pipeline.fit(train_df, epoch_num=10)
+        new_mse, new_rs = new_pipeline.evaluate(test_df, metric=["mean_squared_error", "r_square"])
+        print("Evaluation result after restore and fit: "
+              "Mean square error is: {}, R square is: {}.".format(new_mse, new_rs))
+
 
 if __name__ == '__main__':
     pytest.main([__file__])

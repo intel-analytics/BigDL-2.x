@@ -100,6 +100,10 @@ class TestSeq2Seq:
         assert predict_2.shape == (x_test_2.shape[0], 2)
 
     def test_save_restore(self):
+        """
+        test save and restore function in the cases of different future_seq_lens (1 and 2)
+        1. if predict values are the same before and after restore.
+        """
         train_data = pd.DataFrame(data=np.random.randn(64, 4))
         test_data = pd.DataFrame(data=np.random.randn(16, 4))
 
@@ -113,7 +117,8 @@ class TestSeq2Seq:
 
         config = {
             'batch_size': 32,
-            'epochs': 1
+            'epochs': 10,
+            'dropout': 0
         }
 
         model_1 = LSTMSeq2Seq(check_optional_config=False, future_seq_len=1)
@@ -135,6 +140,8 @@ class TestSeq2Seq:
             assert np.allclose(predict_1_before, predict_1_after), \
                 "Prediction values are not the same after restore: " \
                 "predict before is {}, and predict after is {}".format(predict_1_before, predict_1_after)
+            new_config = {'epochs': 2}
+            new_model_1.fit_eval(x_train_1, y_train_1, **new_config)
 
             save(dirname, model=model_2)
             restore(dirname, model=new_model_2, config=config)
@@ -142,6 +149,7 @@ class TestSeq2Seq:
             assert np.allclose(predict_2_before, predict_2_after), \
                 "Prediction values are not the same after restore: " \
                 "predict before is {}, and predict after is {}".format(predict_2_before, predict_2_after)
+            new_model_2.fit_eval(x_train_2, y_train_2, **new_config)
         finally:
             shutil.rmtree(dirname)
 
