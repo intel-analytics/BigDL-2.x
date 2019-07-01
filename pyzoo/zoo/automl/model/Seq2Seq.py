@@ -42,6 +42,7 @@ class LSTMSeq2Seq(BaseModel):
         self.target_col_num = None
         self.metric = None
         self.latent_dim = None
+        self.batch_size = None
         self.check_optional_config = check_optional_config
 
     def _build_train(self, **config):
@@ -55,6 +56,8 @@ class LSTMSeq2Seq(BaseModel):
         self.latent_dim = config.get('latent_dim', 128)
         self.dropout = config.get('dropout', 0.2)
         self.lr = config.get('lr', 0.001)
+        # for restore in continuous training
+        self.batch_size = config.get('batch_size', 64)
 
         # Define an input sequence and process it.
         self.encoder_inputs = Input(shape=(None, self.feature_num), name="encoder_inputs")
@@ -222,15 +225,15 @@ class LSTMSeq2Seq(BaseModel):
         if self.model is None:
             self._build_train(**config)
 
-        batch_size = config.get('batch_size', 64)
+        # batch_size = config.get('batch_size', 64)
         epochs = config.get('epochs', 10)
-        lr = self.lr
+        # lr = self.lr
         # name = "seq2seq-batch_size-{}-epochs-{}-lr-{}-time-{}".format(batch_size, epochs, lr, time())
         # tensorboard = TensorBoard(log_dir="logs/" + name)
 
         hist = self.model.fit([x, decoder_input_data], y,
                               validation_data=validation_data,
-                              batch_size=batch_size,
+                              batch_size=self.batch_size,
                               epochs=epochs,
                               verbose=0,
                               # callbacks=[tensorboard]
@@ -282,7 +285,8 @@ class LSTMSeq2Seq(BaseModel):
                           "future_seq_len": self.future_seq_len,
                           "target_col_num": self.target_col_num,
                           "metric": self.metric,
-                          "latent_dim": self.latent_dim}
+                          "latent_dim": self.latent_dim,
+                          "batch_size": self.batch_size}
         save_config(config_path, config_to_save)
 
     def restore(self, model_path, **config):
@@ -299,6 +303,7 @@ class LSTMSeq2Seq(BaseModel):
         self.target_col_num = config["target_col_num"]
         self.metric = config["metric"]
         self.latent_dim = config["latent_dim"]
+        self.batch_size = config["batch_size"]
 
         self.model = keras.models.load_model(model_path)
         self._restore_model()

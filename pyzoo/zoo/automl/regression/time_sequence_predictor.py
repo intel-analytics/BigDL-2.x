@@ -330,12 +330,18 @@ if __name__ == "__main__":
     pipeline.save(save_pipeline_file)
 
     new_pipeline = load_ts_pipeline(save_pipeline_file)
+    os.remove(save_pipeline_file)
+
     print("evaluate:", new_pipeline.evaluate(test_df, metric=["mean_squared_error", "r_square"]))
 
     new_pred = new_pipeline.predict(test_df)
     print("predict:", pred.shape)
     np.testing.assert_allclose(pred["value"].values, new_pred["value"].values)
-    os.remove(save_pipeline_file)
+
+    new_pipeline.fit(train_df, val_df, epoch_num=5)
+    print("evaluate:", new_pipeline.evaluate(test_df, metric=["mean_squared_error", "r_square"]))
+
+
     # ray_ctx.stop()
 
 
