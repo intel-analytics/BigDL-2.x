@@ -138,4 +138,3 @@ if __name__ == "__main__":
         dqn_trainer.set_weights(ppo_trainer.get_weights(["ppo_policy"]))
         ppo_trainer.set_weights(dqn_trainer.get_weights(["dqn_policy"]))
     ray_ctx.stop()
-
