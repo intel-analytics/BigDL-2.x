@@ -224,8 +224,9 @@ with variable_creator_scope():
         variables = []
         grads = []
         for (grad, var) in grads_vars:
-            variables.append(var)
-            grads.append(grad)
+            if grad is not None:
+                variables.append(var)
+                grads.append(grad)
 
         all_required_inputs = _find_placeholders([loss])
         dataset = tf.get_collection(all_required_inputs[0].name)[0]
@@ -327,7 +328,9 @@ with variable_creator_scope():
         if isinstance(koptim_method, TFOptimizer):
             koptim_method = koptim_method.optimizer
 
-        if isinstance(koptim_method, koptimizers.Optimizer):
+        if isinstance(koptim_method, boptimizer.OptimMethod):
+            return koptim_method
+        elif isinstance(koptim_method, koptimizers.Optimizer):
             lr = float(K.eval(koptim_method.lr))
             decay = float(K.eval(koptim_method.decay))
             if isinstance(koptim_method, koptimizers.Adagrad):
@@ -412,13 +415,6 @@ with variable_creator_scope():
                 return boptimizer.Adadelta(decayrate=rho, epsilon=epsilon)
 
         raise ValueError("We don't support %s for now" % koptim_method)
-
-    def refresh_weights(self):
-        from zoo.util.tf import export_tf
-        export_tf(self.sess, self.export_dir,
-                  inputs=self.inputs,
-                  outputs=self.grads + self.outputs)
-        self.training_helper_layer = TFTrainingHelper(self.export_dir, self.session_config)
 
     def set_train_summary(self, summary):
         self.optimizer.set_train_summary(summary)

@@ -57,6 +57,14 @@ class PythonInferenceModel[T: ClassTag](implicit ev: TensorNumeric[T]) extends P
     model.doLoadOpenVINO(modelPath, weightPath)
   }
 
+  def inferenceModelLoadOpenVINOInt8(
+      model: InferenceModel,
+      modelPath: String,
+      weightPath: String,
+      batchSize: Int): Unit = {
+    model.doLoadOpenVINOInt8(modelPath, weightPath, batchSize)
+  }
+
   def inferenceModelOpenVINOLoadTF(
       model: InferenceModel,
       modelPath: String,

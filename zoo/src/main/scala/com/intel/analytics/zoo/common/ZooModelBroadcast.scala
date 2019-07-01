@@ -49,7 +49,7 @@ class ZooModelBroadcast[T: ClassTag]()
     // broadcast weight and model
     val weightsBias = getAndClearWeightBias(model.parameters())
     val sparseGWeightsBias =
-      getAndClearWeightBias(model.asInstanceOf[SparseAbstractModule[T]].sparseParameters())
+      BigDLWrapperUtils.getAndClearWeightBias(model.asInstanceOf[SparseAbstractModule[T]].sparseParameters()._1)
     broadcastModel = sc.broadcast(ModelInfo[T](uuid, model))
     broadcastParameters = sc.broadcast(weightsBias)
     broadcastSparseParameters = sc.broadcast(sparseGWeightsBias)

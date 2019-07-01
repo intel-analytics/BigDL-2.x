@@ -16,10 +16,9 @@
 
 package com.intel.analytics.zoo.pipeline.inference;
 
-import scala.actors.threadpool.Arrays;
-
 import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 public abstract class AbstractInferenceModel extends InferenceModel implements Serializable {
@@ -114,16 +113,8 @@ public abstract class AbstractInferenceModel extends InferenceModel implements S
     return doPredict(inputs);
   }
 
-  public List<List<JTensor>> predictInt8(List<List<JTensor>> inputs) {
-    return doPredictInt8(inputs);
-  }
-
   public List<List<JTensor>> predict(List<JTensor>[] inputs) {
     return predict(Arrays.asList(inputs));
-  }
-
-  public List<List<JTensor>> predictInt8(List<JTensor>[] inputs) {
-    return predictInt8(Arrays.asList(inputs));
   }
 
   @Override

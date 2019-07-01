@@ -39,6 +39,8 @@ In these two examples, we demostrate how to use BigDL to build neural network re
    --executor-memory 4g \
    --class com.intel.analytics.zoo.examples.recommendation.WideAndDeepExample \
    --inputDir ./data/census \
+   --batchSize 320 \
+   --maxEpoch 20 \
    --dataset census
 ```
 

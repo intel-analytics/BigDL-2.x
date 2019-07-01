@@ -16,13 +16,17 @@
 
 package com.intel.analytics.zoo.models.recommendation
 
+import java.lang
+
 import com.intel.analytics.bigdl.dataset.{Sample, TensorSample}
 import com.intel.analytics.bigdl.tensor.Tensor
 import com.intel.analytics.bigdl.utils.T
-import org.apache.spark.sql.functions.max
+import org.apache.spark.sql.functions.{max, udf}
 import org.apache.spark.sql.{DataFrame, Row}
 
+import scala.collection.mutable
 import scala.util.Random
+import scala.collection.JavaConverters._
 
 object Utils {
 
@@ -75,7 +79,7 @@ object Utils {
   def bucketizedColumn(boundaries: Array[Float]): Float => Int = {
     col1: Float => {
       var index = 0
-      while(index < boundaries.length && col1 >= boundaries(index)) {
+      while (index < boundaries.length && col1 >= boundaries(index)) {
         index += 1
       }
       index
@@ -97,9 +101,9 @@ object Utils {
   /**
    * convert a row to sample given column information of WideAndDeep model.
    *
-   * @param r Row of userId, itemId, features and label
+   * @param r          Row of userId, itemId, features and label
    * @param columnInfo ColumnFeatureInfo specify information of different features
-   * @param modelType support "wide_n_deep", "wide", "deep" only
+   * @param modelType  support "wide_n_deep", "wide", "deep" only
    * @return TensorSample as input for WideAndDeep model
    */
   def row2Sample(r: Row, columnInfo: ColumnFeatureInfo, modelType: String): Sample[Float] = {
@@ -122,11 +126,40 @@ object Utils {
     }
   }
 
+  /**
+   * convert a row to sample given column information of WideAndDeep Sequential model.
+   *
+   * @param r Row of userId, itemId, features and label
+   * @param columnInfo ColumnFeatureInfo specify information of different features
+   * @param modelType support "wide_n_deep", "wide", "deep" only
+   * @return TensorSample as input for WideAndDeep Sequential model
+   */
+  def row2SampleSequential(r: Row, columnInfo: ColumnFeatureInfo, modelType: String): Sample[Float]
+  = {
+    val wideTensor: Tensor[Float] = getWideTensor(r, columnInfo)
+    val deepTensor: Tensor[Float] = getDeepTensor(r, columnInfo)
+    val l = r.getAs[Int](columnInfo.label)
+
+    val label = Tensor[Float](T(l))
+    label.resize(1, 1)
+
+    modelType match {
+      case "wide_n_deep" =>
+        TensorSample[Float](Array(wideTensor, deepTensor), Array(label))
+      case "wide" =>
+        TensorSample[Float](Array(wideTensor), Array(label))
+      case "deep" =>
+        TensorSample[Float](Array(deepTensor), Array(label))
+      case _ =>
+        throw new IllegalArgumentException("unknown type")
+    }
+  }
+
 
   /**
    * convert a row to tensor given column feature information of WideAndDeep model.
    *
-   * @param r Row of userId, itemId, features and label
+   * @param r          Row of userId, itemId, features and label
    * @param columnInfo ColumnFeatureInfo specify information of different features
    * @return a tensor as input for wide part of a WideAndDeep model
    */
@@ -146,17 +179,13 @@ object Utils {
     val values = indices.map(_ + 1.0f)
     val shape = Array(wideDims.sum)
 
-    val x: Array[Array[Int]] = Array(indices)
-
-    val out = Tensor.sparse(Array(indices), values, shape)
-
-    out
+    Tensor.sparse(Array(indices), values, shape)
   }
 
   /**
    * convert a row to tensors given column feature information of WideAndDeep model.
    *
-   * @param r Row of userId, itemId, features and label
+   * @param r          Row of userId, itemId, features and label
    * @param columnInfo ColumnFeatureInfo specify information of different features
    * @return an array of tensors as input for deep part of a WideAndDeep model
    */
@@ -173,9 +202,10 @@ object Utils {
       i =>
         val index = r.getAs[Int](columnInfo.indicatorCols(i))
         val accIndex = if (i == 0) {
-          index }
+          index
+        }
         else {
-         columnInfo.indicatorDims(i - 1)
+          columnInfo.indicatorDims(i - 1)
         }
         indTensor.setValue(accIndex + 1, 1)
     }
@@ -210,6 +240,7 @@ object Utils {
     }
 
   }
+
   // setup deep tensor
   def getDeepTensor(r: Row, columnInfo: ColumnFeatureInfo): Tensor[Float] = {
     val deepColumns1 = columnInfo.indicatorCols
@@ -238,4 +269,58 @@ object Utils {
     }
     deepTensor
   }
+
+  def rows2sample(r: Row,
+                  sessionLength: Int,
+                  includeHistory: Boolean,
+                  historyLength: Int): Sample[Float] = {
+    val label = Tensor[Float](T(r.getAs[Float]("label")))
+    val rnnFeature: Array[Float] = r
+      .getAs[mutable.WrappedArray[java.lang.Float]]("session").array.map(_.toFloat)
+    val rnnTensor = Tensor(rnnFeature, Array(sessionLength))
+
+    val sample = if (includeHistory) {
+      val mlpFeature: Array[Float] = r
+        .getAs[mutable.WrappedArray[java.lang.Float]]("purchase_history").array.map(_.toFloat)
+      val mlpTensor = Tensor(mlpFeature, Array(historyLength))
+      Sample[Float](Array(mlpTensor, rnnTensor), Array(label))
+    }
+    else {
+      Sample[Float](Array(rnnTensor), Array(label))
+    }
+    sample
+  }
+
+  def prePadding(maxLength: Int): mutable.WrappedArray[java.lang.Float] => Array[Float] = {
+
+    (seq: mutable.WrappedArray[java.lang.Float]) => {
+      if (seq.array.size < maxLength) {
+        seq.array.map(_.toFloat).reverse.padTo(maxLength, 0f).reverse
+      }
+      else {
+        seq.array.map(_.toFloat).takeRight(maxLength)
+      }
+    }
+  }
+
+  def slideSession(df: DataFrame, sessionLength: Int): DataFrame = {
+    val sqlContext = df.sqlContext
+    import sqlContext.implicits._
+
+    val dfSlided = df.rdd.flatMap(x => {
+      val session: Array[Float] = x.getAs[mutable.WrappedArray[java.lang.Float]]("session")
+        .array.map(_.toFloat)
+      val feature2 = x.getAs[mutable.WrappedArray[java.lang.Float]]("purchase_history")
+        .array.map(_.toFloat)
+      val featureLabel = for (label <- session.slice(1, session.size)) yield {
+        val endIdx = session.indexOf(label)
+        val beginIdx = if (session.size <= sessionLength) 0 else endIdx - sessionLength
+        val feature1 = session.slice(beginIdx, endIdx)
+        (feature1, feature2, label)
+      }
+      featureLabel
+    }).toDF("session", "purchase_history", "label").na.drop()
+    dfSlided
+  }
+
 }

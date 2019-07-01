@@ -6,7 +6,8 @@ import com.intel.analytics.bigdl.nn.MSECriterion
 import com.intel.analytics.bigdl.optim.{Trigger, sudoSparseSGD}
 import com.intel.analytics.bigdl.tensor.{SparseTensor, Tensor, sudoLookupTableSparse}
 import com.intel.analytics.bigdl.utils.{Engine, T}
-import com.intel.analytics.zoo.common.{NNContext, ZooOptimizer}
+import com.intel.analytics.zoo.common.NNContext
+import com.intel.analytics.zoo.pipeline.api.keras.models.InternalDistriOptimizer
 import org.apache.spark.rdd.RDD
 
 object sparseParameterTest {
@@ -59,7 +60,7 @@ object sparseParameterTest {
 //      .setValue(2, 2, 3.0f).setValue(4, 5, 2.0f).setValue(6, 1, 1.0f))
     val oriW = Tensor[Float](Array(6, 5)).rand()
     layer.setSparseParameters(Array(oriW.clone()), null)
-    val optimizer = new ZooOptimizer[Float](layer.asInstanceOf[Module[Float]],
+    val optimizer = new InternalDistriOptimizer[Float](layer.asInstanceOf[Module[Float]],
       dataSet, new MSECriterion[Float]().asInstanceOf[Criterion[Float]])
       .setState(T("learningRate" -> 20.0))
       .setEndWhen(Trigger.maxIteration(1))

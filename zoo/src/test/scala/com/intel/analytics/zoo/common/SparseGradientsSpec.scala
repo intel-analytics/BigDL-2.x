@@ -21,7 +21,7 @@ import com.intel.analytics.bigdl.dataset.{DistributedDataSet, MiniBatch}
 import com.intel.analytics.bigdl.nn.{MSECriterion, Sequential, SoftMax}
 import com.intel.analytics.bigdl.optim.{DistriOptimizer, Trigger, sudoSparseSGD}
 import com.intel.analytics.bigdl.utils.{Engine, LoggerFilter, T}
-import com.intel.analytics.zoo.common.ZooOptimizer
+import com.intel.analytics.zoo.pipeline.api.keras.models.InternalDistriOptimizer
 import org.apache.spark.SparkContext
 import org.apache.spark.rdd.RDD
 import org.scalatest.{BeforeAndAfter, FlatSpec, Matchers}
@@ -134,14 +134,14 @@ class SparseGradientsSpec extends FlatSpec with Matchers with BeforeAndAfter {
     LoggerFilter.redirectSparkInfoLogs()
     val layer = new sudoLookupTableSparse[Float]()
 
-//    System.setProperty("bigdl.ModelBroadcastFactory",
-//      "com.intel.analytics.bigdl.models.utils.ZooModelBroadcastFactory")
+    System.setProperty("bigdl.ModelBroadcastFactory",
+      "com.intel.analytics.bigdl.models.utils.ZooModelBroadcastFactory")
 
 //    val oriW = Tensor.sparse(Tensor[Float](6, 5).setValue(1, 3, 1.5f)
 //      .setValue(2, 2, 3.0f).setValue(4, 5, 2.0f).setValue(6, 1, 1.0f))
     val oriW = Tensor[Float](Array(6, 5)).rand()
     layer.setSparseParameters(Array(oriW.clone()), null)
-    val optimizer = new ZooOptimizer[Float](layer.asInstanceOf[Module[Float]],
+    val optimizer = new InternalDistriOptimizer[Float](layer.asInstanceOf[Module[Float]],
       dataSet, new MSECriterion[Float]().asInstanceOf[Criterion[Float]])
       .setState(T("learningRate" -> 20.0))
       .setEndWhen(Trigger.maxIteration(1))
