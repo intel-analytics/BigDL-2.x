@@ -114,13 +114,16 @@ class NeuralCFSpec extends ZooSpecHelper {
 
     val optimMethod = new Adam[Float](learningRate = 1e-2, learningRateDecay = 1e-5)
 
-    ncf.compile(optimizer = optimMethod,
-      loss = SparseCategoricalCrossEntropy[Float](zeroBasedLabel = false),
-      metrics = List(new Top1Accuracy[Float]()))
+    val sample2batch = SampleToMiniBatch[Float](458)
+    val trainSet = FeatureSet.rdd(trainRdds.cache()) -> sample2batch
 
-    ncf.fit(trainRdds, batchSize = 458, nbEpoch = 100)
+    val estimator = Estimator[Float](ncf, optimMethod)
 
-    ncf.summary()
+    val (checkpointTrigger, endTrigger) =
+      (Trigger.everyEpoch, Trigger.maxEpoch(100))
+
+    estimator.train(trainSet, SparseCategoricalCrossEntropy[Float](zeroBasedLabel = false),
+      Some(endTrigger), Some(checkpointTrigger), null, Array(new Top1Accuracy[Float]()))
 
     val pairPredictions = ncf.predictUserItemPair(data)
     val pairPredictionsDF = sqlContext.createDataFrame(pairPredictions).toDF()
@@ -148,13 +151,16 @@ class NeuralCFSpec extends ZooSpecHelper {
 
     val optimMethod = new Adam[Float](learningRate = 1e-2, learningRateDecay = 1e-5)
 
-    ncf.compile(optimizer = optimMethod,
-      loss = SparseCategoricalCrossEntropy[Float](zeroBasedLabel = false),
-      metrics = List(new Top1Accuracy[Float]()))
+    val sample2batch = SampleToMiniBatch[Float](458)
+    val trainSet = FeatureSet.rdd(trainRdds.cache()) -> sample2batch
 
-    ncf.fit(trainRdds, batchSize = 458, nbEpoch = 100)
+    val estimator = Estimator[Float](ncf, optimMethod)
 
-    ncf.summary()
+    val (checkpointTrigger, endTrigger) =
+      (Trigger.everyEpoch, Trigger.maxEpoch(100))
+
+    estimator.train(trainSet, SparseCategoricalCrossEntropy[Float](zeroBasedLabel = false),
+      Some(endTrigger), Some(checkpointTrigger), null, Array(new Top1Accuracy[Float]()))
 
     val itemRecs = ncf.recommendForItem(data, 2)
     val userRecs = ncf.recommendForUser(data, 2)
