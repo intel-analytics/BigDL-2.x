@@ -35,6 +35,16 @@ class TimeSequencePipeline(Pipeline):
         self.model = model
         self.config = config
 
+    def fit(self, input_df, validation_df=None, epoch_num=20):
+        x, y = self.feature_transformers.transform(input_df, is_train=True)
+        if validation_df is not None and not validation_df.empty:
+            validation_data = self.feature_transformers.transform(validation_df)
+        else:
+            validation_data = None
+        new_config = {'epochs': epoch_num}
+        self.model.fit_eval(x, y, validation_data, **new_config)
+        print('Fit done!')
+
     def evaluate(self,
                  input_df,
                  metric=["mean_squared_error"]):
