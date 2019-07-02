@@ -94,7 +94,7 @@ From the output of above command, you can find the NodePort of the service. You 
 ## Using Analytics Zoo
 After you install the Analytics Zoo Add-on, you can open web browser, go to http://<MASTER_1_IP>:<port_number> to access the Jupyter notebook with analytics zoo. The port number is the NodePort number. 
 
-You can find many use cases/examples under current directory. Click one example and open one notebook to run. 
+You can find many use cases/examples under current directory. Click one example and follow the README to open one notebook to run. 
 
 Or you can create your own notebook with Analytics Zoo APIs to do your deep learning analytics. 
 
