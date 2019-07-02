@@ -117,7 +117,7 @@ class TestSeq2Seq:
 
         config = {
             'batch_size': 32,
-            'epochs': 10,
+            'epochs': 2,
             'dropout': 0
         }
 
