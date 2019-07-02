@@ -76,9 +76,9 @@ docker pull intelanalytics/analytics-zoo:0.5.1-2.2.1-0.8.0-py3
 git clone https://github.com/intel-analytics/analytics-zoo.git
 cd analytics-zoo/helmchart/analytics-zoo
 ```
-8. Install the helmchart archive with the following command:
+8. Install the helmchart archive and connect to a spark master:
 ```bash
-helm install . --name analytics-zoo --namespace zen --tls
+helm install . --name analytics-zoo --namespace zen --set SparkMaster=local[*] --tls
 ```
 Run the following kubectl commands to verify the deployment.
 ```bash
@@ -92,8 +92,10 @@ kubectl describe svc analytics-zoo-analytics-zoo -n zen
 From the output of above command, you can find the NodePort of the service. You can use this port to access analytics zoo service in web browser. 
 
 ## Using Analytics Zoo
-After you install the Analytics Zoo Add-on, you can open web browser, go to http://<MASTER_1_IP>:<port_number> to access the Jupyter notebook with anlytics zoo. The port number is the NodePort number.
+After you install the Analytics Zoo Add-on, you can open web browser, go to http://<MASTER_1_IP>:<port_number> to access the Jupyter notebook with analytics zoo. The port number is the NodePort number. You can find many use cases/examples under current directory. Click one example and open one notebook to run. 
+
 To get the detail information of how to use analytics zoo, please check [Analytics Zoo documentation](https://analytics-zoo.github.io)
+
 ## Uninstalling the chart
 To uninstall/delete the analytics-zoo deployment:
 ```bash
