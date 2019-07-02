@@ -93,7 +93,7 @@ def policy_forward(x, model):
 
 def policy_backward(eph, epx, epdlogp, model):
     """backward pass. (eph is array of intermediate hidden states)"""
-# the way to change the policy’s parameters is to
+# the way to change the policy parameters is to
 # do some rollouts, take the gradient of the sampled actions
 #  multiply it by the score and add everything
     dW2 = np.dot(eph.T, epdlogp).ravel()
