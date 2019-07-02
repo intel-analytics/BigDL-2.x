@@ -154,6 +154,15 @@ class TimeSequencePredictor(object):
         self.extra_features_col = extra_features_col
         self.drop_missing = drop_missing
 
+    def describe(self):
+        print('Pipeline is initialized with:')
+        print('log_dir:', self.logs_dir)
+        print('future_seq_len:', self.future_seq_len)
+        print('dt_col:', self.dt_col)
+        print('target_col:', self.target_col)
+        print('extra_feature_col:', self.extra_features_col)
+        print('drop_missing:', self.drop_missing)
+
     def fit(self,
             input_df,
             validation_df=None,
@@ -318,6 +327,7 @@ if __name__ == "__main__":
                                 target_col="value",
                                 extra_features_col=None,
                                 )
+    tsp.describe()
     pipeline = tsp.fit(train_df,
                        validation_df=val_df,
                        metric="mean_squared_error")
