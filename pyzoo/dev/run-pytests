@@ -28,8 +28,7 @@ py_version="$(python -V 2>&1)"
 python -m pytest -v --doctest-modules ../zoo \
     --ignore=../zoo/pipeline/api/keras2 \
     --ignore=../zoo/tfpark/text \
-    --ignore=../zoo/examples \
-    --ignore=../zoo/ray/
+    --ignore=../zoo/examples
 
 exit_status_1=$?
 if [ $exit_status_1 -ne 0 ];
