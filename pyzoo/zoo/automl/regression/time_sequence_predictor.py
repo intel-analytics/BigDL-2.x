@@ -193,7 +193,6 @@ class TimeSequencePredictor(object):
         if len(missing_cols) != 0:
             raise ValueError("Missing Columns in the input dataframe:"+ ','.join(list(missing_cols)))
 
-
         if not Evaluator.check_metric(metric):
             raise ValueError("metric" + metric + "is not supported")
 

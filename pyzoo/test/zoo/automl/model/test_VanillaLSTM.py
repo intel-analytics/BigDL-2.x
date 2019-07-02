@@ -112,7 +112,7 @@ class TestVanillaLSTM:
         x_test = tsft._roll_test(test_data, past_seq_len=past_seq_len)
 
         config = {
-            'epochs': 20,
+            'epochs': 2,
             "lr": 0.001,
             "lstm_1_units": 16,
             "dropout_1": 0,

@@ -18,9 +18,11 @@ import json
 from time import time
 from keras.callbacks import TensorBoard
 from keras.models import Sequential
-from keras.models import Model
-from keras.layers import Input, LSTM, Dense
-import keras
+from tensorflow.keras.models import Model
+from tensorflow.keras.layers import Input, LSTM, Dense
+# import keras
+import tensorflow.keras as keras
+
 import os
 
 from zoo.automl.feature.time_sequence import TimeSequenceFeatureTransformer
