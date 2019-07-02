@@ -14,9 +14,9 @@
 # limitations under the License.
 #
 
-from keras.models import Sequential
-from keras.layers import Dense, LSTM, Dropout
-import keras
+from tensorflow.keras.models import Sequential
+from tensorflow.keras.layers import Dense, LSTM, Dropout
+import tensorflow.keras as keras
 import os
 
 from zoo.automl.model.abstract import BaseModel
