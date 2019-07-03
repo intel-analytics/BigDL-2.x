@@ -174,9 +174,7 @@ class NeuralCFSpec extends ZooSpecHelper {
     assert(userRecs.count() <= 200)
   }
 
-  "NeuralCF compile and fit" should "work properly" in {
-
-    val ncf: NeuralCF[Float] = NeuralCF[Float](100, 100, 5, 5, 5, Array(10, 5), false)
+  "NeuralCF compile and fit" should "has similar performance to Estimator" in {
     val data = datain
       .rdd.map(r => {
       val uid = r.getAs[Int]("userId")
@@ -189,14 +187,46 @@ class NeuralCFSpec extends ZooSpecHelper {
     val trainRdds = data.map(x => x.sample)
 
     val optimMethod = new Adam[Float](
-      learningRate = 1e-3,
-      learningRateDecay = 1e-6)
+      learningRate = 1e-2,
+      learningRateDecay = 1e-5)
 
+    // Use Estimator API
+    val ncfEst = NeuralCF[Float](100, 100, 5, 5, 5, Array(10, 5), false)
+    val sample2batch = SampleToMiniBatch[Float](458)
+    val trainSet = FeatureSet.rdd(trainRdds.cache()) -> sample2batch
+
+    val estimator = Estimator[Float](ncfEst, optimMethod)
+
+    val (checkpointTrigger, endTrigger) =
+      (Trigger.everyEpoch, Trigger.maxEpoch(100))
+
+    estimator.train(trainSet, SparseCategoricalCrossEntropy[Float](zeroBasedLabel = false),
+      Some(endTrigger), Some(checkpointTrigger), null, Array(new Top1Accuracy[Float]()))
+
+    val pairPredictionsEst = ncfEst.predictUserItemPair(data)
+    val pairPredictionsEstDF = sqlContext.createDataFrame(pairPredictionsEst).toDF()
+    val outEst = pairPredictionsEstDF.join(datain, Array("userId", "itemId"))
+    val correctCountsEst = outEst.filter(col("prediction") === col("label")).count()
+
+    val accuracyEst = correctCountsEst.toDouble / 458
+
+    // Use compile and fit API
+    val ncf = NeuralCF[Float](100, 100, 5, 5, 5, Array(10, 5), false)
     ncf.compile(optimizer = optimMethod,
       loss = SparseCategoricalCrossEntropy[Float](zeroBasedLabel = false),
       metrics = List(new Top1Accuracy[Float]()))
 
-    ncf.fit(trainRdds, batchSize = 458, nbEpoch = 1, validationData = null)
+    ncf.fit(trainRdds, batchSize = 458, nbEpoch = 100, validationData = null)
+
+    val pairPredictions = ncf.predictUserItemPair(data)
+    val pairPredictionsDF = sqlContext.createDataFrame(pairPredictions).toDF()
+    val out = pairPredictionsDF.join(datain, Array("userId", "itemId"))
+    val correctCounts = out.filter(col("prediction") === col("label")).count()
+
+    val accuracy = correctCounts.toDouble / 458
+
+    // the reference accuracy is 0.679
+    assert(Math.abs(accuracy - accuracyEst) <= 0.1)
   }
 
 
