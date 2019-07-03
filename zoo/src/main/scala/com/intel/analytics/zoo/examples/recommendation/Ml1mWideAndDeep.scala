@@ -16,11 +16,15 @@
 
 package com.intel.analytics.zoo.examples.recommendation
 
+import com.intel.analytics.bigdl.Criterion
+import com.intel.analytics.bigdl.dataset.{DataSet, DistributedDataSet, MiniBatch, SampleToMiniBatch}
 import com.intel.analytics.bigdl.nn.ClassNLLCriterion
 import com.intel.analytics.bigdl.numeric.NumericFloat
-import com.intel.analytics.bigdl.optim.{Adam, Top1Accuracy}
+import com.intel.analytics.bigdl.optim._
 import com.intel.analytics.zoo.common.NNContext
+import com.intel.analytics.zoo.feature.FeatureSet
 import com.intel.analytics.zoo.models.recommendation._
+import com.intel.analytics.zoo.pipeline.api.keras.models.InternalDistriOptimizer
 import com.intel.analytics.zoo.pipeline.api.keras.objectives.SparseCategoricalCrossEntropy
 import org.apache.log4j.{Level, Logger}
 import org.apache.spark.SparkConf
@@ -70,17 +74,38 @@ object Ml1mWideAndDeep {
       featureRdds.randomSplit(Array(0.8, 0.2))
     val trainRdds = trainpairFeatureRdds.map(x => x.sample)
     val validationRdds = validationpairFeatureRdds.map(x => x.sample)
+    val trainBatch = DataSet.rdd(trainpairFeatureRdds.map(x => x.sample).cache()) ->
+      SampleToMiniBatch[Float](params.batchSize)
+    val validationBatch = DataSet.rdd(validationpairFeatureRdds.map(x => x.sample).cache()) ->
+      SampleToMiniBatch[Float](params.batchSize)
 
-    val optimMethod = new Adam[Float](
-      learningRate = 1e-2,
-      learningRateDecay = 1e-5)
+//    val optimMethod = new Adam[Float](
+//      learningRate = 1e-2,
+//      learningRateDecay = 1e-5)
 
-    wideAndDeep.compile(optimizer = optimMethod,
-      loss = SparseCategoricalCrossEntropy[Float](zeroBasedLabel = false),
-      metrics = List(new Top1Accuracy[Float]())
-    )
-    wideAndDeep.fit(trainRdds, batchSize = params.batchSize,
-      nbEpoch = params.maxEpoch, validationData = validationRdds)
+    val optimMethod = new Adagrad[Float](0.01)
+
+    //    Due to https://github.com/intel-analytics/analytics-zoo/issues/1363,
+//    have to use InternalDistriOptimizer to set optimMethod for sparse layer
+//    wideAndDeep.compile(optimizer = optimMethod,
+//      loss = SparseCategoricalCrossEntropy[Float](zeroBasedLabel = false),
+//      metrics = List(new Top1Accuracy[Float]())
+//    )
+//    wideAndDeep.fit(trainRdds, batchSize = params.batchSize,
+//      nbEpoch = params.maxEpoch, validationData = validationRdds)
+
+    val optimizer = new InternalDistriOptimizer[Float](wideAndDeep,
+      trainBatch.asInstanceOf[DistributedDataSet[MiniBatch[Float]]],
+      SparseCategoricalCrossEntropy[Float](zeroBasedLabel = false)
+        .asInstanceOf[Criterion[Float]])
+    optimizer.setSparseParameterProcessor(new SparseAdagrad[Float](0.001))
+      .setOptimMethod(optimMethod)
+      .setValidation(Trigger.everyEpoch,
+        validationBatch.asInstanceOf[DistributedDataSet[MiniBatch[Float]]],
+        Array(new Top1Accuracy[Float], new Loss[Float]()))
+      .setEndWhen(Trigger.maxEpoch(params.maxEpoch))
+
+    optimizer.optimize()
 
     val results = wideAndDeep.predict(validationRdds)
     results.take(5).foreach(println)

@@ -68,8 +68,7 @@ class SparseAdagrad[T: ClassTag](
 //    parameter.addcdiv(ev.fromType[Double](-clr), dfdx, _paramStd.add(ev.fromType[Double](1e-10)))
     _paramVariance = SparseTensorUtils.addcmulSparseTensor(_paramVariance,
       ev.fromType[Double](1.0), dfdx, dfdx)
-    _paramStd = SparseTensorUtils.resizeAsSparseTensor(_paramVariance)
-    SparseTensorUtils.copySparseTensor(_paramVariance, _paramStd)
+    _paramStd = SparseTensorUtils.cloneSparseTensor(_paramVariance)
     SparseTensorUtils.sqrtSparseTensor(_paramStd)
     SparseTensorUtils.addSparseTensorValueByConstant(_paramStd, ev.fromType[Double](1e-10))
     val newParameter = SparseTensorUtils.addcdivSparseTensor(parameter, ev.fromType[Double](-clr),
