@@ -26,7 +26,6 @@ from pyspark import BarrierTaskContext
 from zoo.ray.util import is_local
 from zoo.ray.util.process import session_execute, ProcessMonitor
 from zoo.ray.util.utils import resourceToBytes
-import ray.services as rservices
 
 
 class JVMGuard():
@@ -138,6 +137,7 @@ class RayServiceFuncGenerator(object):
         return self._enrich_command(command)
 
     def _start_ray_node(self, command, tag, wait_before=5, wait_after=5):
+        import ray.services as rservices
         modified_env = self._prepare_env(self.mkl_cores)
         print("Starting {} by running: {}".format(tag, command))
         print("Wait for {} sec before launching {}".format(wait_before, tag))
