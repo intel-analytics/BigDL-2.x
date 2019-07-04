@@ -13,71 +13,18 @@ import java.nio.file.Paths;
  */
 class PytorchModel {
 
-    /**
-     * sequential id in cpp: std::vector<std::shared_ptr<torch::jit::script::Module>> handles;
-     */
-    private long nativeRef;
+    static native long loadNative(String modelPath, String lossPath);
 
-    PytorchModel load(byte[] bytes, byte[] lossBytes) throws IOException {
-        try {
-            File tmpFile = File.createTempFile("TorchNet", "_pt");
-            Files.write(Paths.get(tmpFile.toURI()), bytes);
+    static native JTensor forwardNative(long nativeRef, float[] storage, int offset, int[] shape);
 
-            File lossFile = File.createTempFile("TorchNet", "_lpt");
-            Files.write(Paths.get(lossFile.toURI()), lossBytes);
+    static native JTensor backwardNative(long nativeRef, float[] storage, int offset, int[] shape);
 
-            this.load(tmpFile.getAbsolutePath(), lossFile.getAbsolutePath());
+    static native float[] getGradientNative(long nativeRef);
 
-            FileUtils.deleteQuietly(tmpFile);
-            FileUtils.deleteQuietly(lossFile);
-        } catch (IOException io) {
-            System.out.println("error during loading Torch model");
-            throw io;
-        }
-        return this;
-    }
+    static native void updateWeightNative(long nativeRef, float[] storage);
 
-    JTensor forward(float[] storage, int offset, int[] shape) {
-        return forwardNative(this.nativeRef, storage, offset, shape);
-    }
+    static native float[] getWeightNative(long nativeRef);
 
-    JTensor backward(float[] storage, int offset, int[] shape) {
-        return backwardNative(this.nativeRef, storage, offset, shape);
-    }
-
-    float[] getGradient() {
-        return getGradientNative(this.nativeRef);
-    }
-
-    float[] getWeight() {
-        return getWeightNative(this.nativeRef);
-    }
-
-    void updateWeight(float[] weights) {
-        updateWeightNative(this.nativeRef, weights);
-    }
-
-    private void load(String modelPath, String lossPath) {
-        this.nativeRef = loadNative(modelPath, lossPath);
-    }
-
-    protected void finalize() {
-        releaseNative(this.nativeRef);
-    }
-
-    native long loadNative(String modelPath, String lossPath);
-
-    native JTensor forwardNative(long nativeRef, float[] storage, int offset, int[] shape);
-
-    native JTensor backwardNative(long nativeRef, float[] storage, int offset, int[] shape);
-
-    native float[] getGradientNative(long nativeRef);
-
-    native void updateWeightNative(long nativeRef, float[] storage);
-
-    native float[] getWeightNative(long nativeRef);
-
-    native void releaseNative(long nativeRef);
-
+    static native void releaseNative(long nativeRef);
 
 }

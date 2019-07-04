@@ -40,6 +40,85 @@ std::unordered_map<int, at::Tensor> outputs;
 long modelID;
 
 
+auto getWeights(std::shared_ptr<torch::jit::script::Module> m, std::vector<float> &xv) -> int {
+    auto children = m->get_modules();
+
+    if (children.size() == 0) {
+        auto slots = m -> get_parameters();
+        std::cout << "slot size: " << slots.size() << std::endl;
+        for (size_t i = 0; i < slots.size(); ++i) {
+            auto& x = slots[i];
+            size_t x_size = x.value().toTensor().numel();
+            auto p = static_cast<float*>(x.value().toTensor().storage().data());
+            for(size_t i = 0; i < x_size; i++)
+            {
+                xv.push_back(p[i]);
+            }
+        }
+    } else {
+        for (const auto& child : children) {
+            getWeights(child, xv);
+        }
+    }
+
+    return 1;
+}
+
+auto getGradients(std::shared_ptr<torch::jit::script::Module> m, std::vector<float> &xv) -> int {
+    auto children = m->get_modules();
+
+    if (children.size() == 0) {
+        auto slots = m -> get_parameters();
+
+        for (size_t i = 0; i < slots.size(); ++i) {
+            auto& x = slots[i];
+            if (x.value().toTensor().grad().defined()) {
+                size_t x_size = x.value().toTensor().grad().numel();
+                auto p = static_cast<float*>(x.value().toTensor().grad().storage().data());
+                for(size_t i = 0; i < x_size; i++)
+                {
+                    xv.push_back(p[i]);
+                }
+            }
+        }
+    } else {
+        for (const auto& child : children) {
+            getGradients(child, xv);
+        }
+    }
+
+    return 1;
+}
+
+
+auto updateWeights(std::shared_ptr<torch::jit::script::Module> m, float* xv, int* index) -> int {
+    auto children = m->get_modules();
+
+    if (children.size() == 0) {
+        auto slots = m -> get_parameters();
+        for (size_t i = 0; i < slots.size(); ++i) {
+            std::cout << "updating: " << slots[i].name() << std::endl;
+            auto slot_tensor = slots[i].value().toTensor();
+            auto num_slot_parameters = slot_tensor.nbytes() / slot_tensor.element_size();
+            auto slot_shape = slot_tensor.sizes();
+            std::cout << "index: " << *index << std::endl;
+
+            auto new_tensor = torch::from_blob(xv + *index, slot_shape, at::kFloat);
+            slot_tensor.set_requires_grad(false);
+            slot_tensor.copy_(new_tensor);
+            slot_tensor.set_requires_grad(true);
+            *index += num_slot_parameters;
+        }
+    } else {
+        for (const auto& child : children) {
+            updateWeights(child, xv, index);
+        }
+    }
+
+    return 1;
+}
+
+
 JNIEXPORT jlong JNICALL Java_com_intel_analytics_zoo_pipeline_api_net_PytorchModel_loadNative
   (JNIEnv *jenv, jobject jobj, jstring jmodel_path, jstring jloss_path) {
     const char* p_model_path = jenv->GetStringUTFChars(jmodel_path, NULL);
@@ -62,7 +141,6 @@ JNIEXPORT jlong JNICALL Java_com_intel_analytics_zoo_pipeline_api_net_PytorchMod
     jenv->ReleaseStringUTFChars(jloss_path, p_loss_path);
     return id;
   }
-
 
 
 /*
@@ -212,78 +290,36 @@ JNIEXPORT jobject JNICALL Java_com_intel_analytics_zoo_pipeline_api_net_PytorchM
 JNIEXPORT jfloatArray JNICALL Java_com_intel_analytics_zoo_pipeline_api_net_PytorchModel_getGradientNative
   (JNIEnv * jenv, jobject jobj, jlong nativeRef) {
     std::shared_ptr<torch::jit::script::Module> model_ptr = handles[nativeRef];
-    std::vector<float> xv;
+    std::vector<float> gradients;
+    getGradients(model_ptr, gradients);
 
-    for (const auto& child : model_ptr -> get_modules()) {
-
-        auto slots = child -> get_parameters();
-        for (size_t i = 0; i < slots.size(); ++i) {
-             auto& x = slots[i];
-             std::cout << "param: " << x.value().toTensor() << std::endl;
-             std::cout << "grad: " << x.value().toTensor().grad() << std::endl;
-
-             size_t x_size = x.value().toTensor().grad().numel();
-             auto p = static_cast<float*>(x.value().toTensor().grad().storage().data());
-             for(size_t i=0; i<x_size; i++)
-             {
-               xv.push_back(p[i]);
-             }
-        }
-    }
-
-    std::cout << "xv: " << xv << std::endl;
-    jfloatArray result_storage = jenv -> NewFloatArray(xv.size());
-    jenv -> SetFloatArrayRegion(result_storage, 0, xv.size(), &xv[0]);
+    jfloatArray result_storage = jenv -> NewFloatArray(gradients.size());
+    jenv -> SetFloatArrayRegion(result_storage, 0, gradients.size(), &gradients[0]);
     return result_storage;
   }
+
 
 JNIEXPORT void JNICALL Java_com_intel_analytics_zoo_pipeline_api_net_PytorchModel_updateWeightNative
   (JNIEnv * jenv, jobject jobj, jlong nativeRef, jfloatArray jstorage) {
     jfloat* c_storage = (jfloat*) jenv -> GetPrimitiveArrayCritical(jstorage, JNI_FALSE);
     std::shared_ptr<torch::jit::script::Module> model_ptr = handles[nativeRef];
-    auto storage_start = c_storage;
+
     int index = 0;
-    for (const auto& child : model_ptr -> get_modules()) {
-        auto slots = child -> get_parameters();
-        for (size_t i = 0; i < slots.size(); ++i) {
-          std::cout << "updating: " << slots[i].name() << std::endl;
-          auto slot_tensor = slots[i].value().toTensor();
-          auto slot_element_size = slot_tensor.nbytes() / slot_tensor.element_size();
-          auto slot_shape = slot_tensor.sizes();
-          auto new_tensor = torch::from_blob(storage_start + index, slot_shape, at::kFloat);
-          slot_tensor.set_requires_grad(false);
-          slot_tensor.copy_(new_tensor);
-          index += slot_element_size;
-        }
-    }
+    updateWeights(model_ptr, c_storage, &index);
 
     jenv -> ReleasePrimitiveArrayCritical(jstorage, c_storage, 0);
     return;
   }
 
+
 JNIEXPORT jfloatArray JNICALL Java_com_intel_analytics_zoo_pipeline_api_net_PytorchModel_getWeightNative
   (JNIEnv * jenv, jobject jobj, jlong nativeRef) {
       std::shared_ptr<torch::jit::script::Module> model_ptr = handles[nativeRef];
-      std::vector<float> xv;
+      std::vector<float> weights;
+      getWeights(model_ptr, weights);
 
-      for (const auto& child : model_ptr -> get_modules()) {
-
-          auto slots = child -> get_parameters();
-          for (size_t i = 0; i < slots.size(); ++i) {
-               auto& x = slots[i];
-               size_t x_size = x.value().toTensor().grad().numel();
-               auto p = static_cast<float*>(x.value().toTensor().storage().data());
-               for(size_t i=0; i<x_size; i++)
-               {
-                 xv.push_back(p[i]);
-               }
-          }
-      }
-
-      std::cout << "xv: " << xv << std::endl;
-      jfloatArray result_storage = jenv -> NewFloatArray(xv.size());
-      jenv -> SetFloatArrayRegion(result_storage, 0, xv.size(), &xv[0]);
+      jfloatArray result_storage = jenv -> NewFloatArray(weights.size());
+      jenv -> SetFloatArrayRegion(result_storage, 0, weights.size(), &weights[0]);
       return result_storage;
   }
-
 }
