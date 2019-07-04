@@ -16,12 +16,36 @@
 
 import os
 import glob
-
+import subprocess
 from pyspark import SparkContext
 
 from zoo.common.nncontext import init_spark_conf
 
 from zoo import init_nncontext
+
+def session_execute(command, env=None, tag=None, fail_fast=False, timeout=120):
+    pro = subprocess.Popen(
+        command,
+        shell=True,
+        env=env,
+        cwd=None,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        preexec_fn=os.setsid)
+    pgid = os.getpgid(pro.pid)
+    out, err = pro.communicate(timeout=timeout)
+    out = out.decode("utf-8")
+    err = err.decode("utf-8")
+    print(out)
+    print(err)
+    errorcode = pro.returncode
+    if errorcode != 0:
+        if fail_fast:
+            raise Exception(err)
+        print(err)
+    else:
+        print(out)
+    return errorcode, out
 
 
 class SparkRunner():
@@ -90,14 +114,13 @@ class SparkRunner():
         sc.setLogLevel(self.spark_log_level)
 
         return sc
-
+    
     def _detect_python_location(self):
-        from zoo.ray.util.process import session_execute
-        process_info = session_execute("command -v python")
-        if 0 != process_info.errorcode:
+        errorcode, out = session_execute("command -v python")
+        if 0 != errorcode:
             raise Exception(
                 "Cannot detect current python location. Please set it manually by python_location")
-        return process_info.out
+        return out
 
     def _get_bigdl_jar_name_on_driver(self):
         from bigdl.util.engine import get_bigdl_classpath
