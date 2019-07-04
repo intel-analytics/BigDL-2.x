@@ -1,6 +1,6 @@
 # Distributed Face Generation on Spark
 
-This example demonstrates how to run distributed inference using a pre-trained Pytorch Model from Pytorch Hub.
+This example is migrated from [PROGRESSIVE GROWING OF GANS](https://pytorch.org/hub/facebookresearch_pytorch-gan-zoo_pgan/), and demonstrates how to run distributed inference using a pre-trained Pytorch Model.
 
 ## Environment
 * Python 3.6
@@ -18,7 +18,7 @@ pip install analytics-zoo==0.6.0.dev4
 ```
 
 ## Run Jupyter
-
+If you want to run spark local, just start jupyter notebook:
 ```
 jupyter notebook
 ```
