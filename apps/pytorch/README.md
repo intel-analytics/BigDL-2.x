@@ -4,6 +4,7 @@ This example demonstrates how to run distributed inference using a pre-trained P
 
 ## Environment
 * Python 3.6
+* JDK 1.8
 * Pytorch & TorchVision 1.1.0
 * Apache Spark 2.4.3(pyspark)
 * Analytics-Zoo 0.6.0-SNAPSHOT.dev4 and above
