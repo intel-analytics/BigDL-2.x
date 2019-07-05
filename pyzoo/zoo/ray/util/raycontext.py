@@ -137,14 +137,14 @@ class RayServiceFuncGenerator(object):
         return self._enrich_command(command)
 
     def _start_ray_node(self, command, tag, wait_before=5, wait_after=5):
-        import ray.services as rservices
+        #import ray.services as rservices
         modified_env = self._prepare_env(self.mkl_cores)
         print("Starting {} by running: {}".format(tag, command))
         print("Wait for {} sec before launching {}".format(wait_before, tag))
         time.sleep(wait_before)
         process_info = session_execute(command=command, env=modified_env, tag=tag)
         JVMGuard.registerPids(process_info.pids)
-        process_info.node_ip = rservices.get_node_ip_address()
+        #process_info.node_ip = rservices.get_node_ip_address()
         print("Wait for {} sec before return process info for {}".format(wait_after, tag))
         time.sleep(wait_after)
         return process_info
