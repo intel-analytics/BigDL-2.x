@@ -14,16 +14,31 @@
 # limitations under the License.
 #
 import torch
+import torch.nn as nn
 import os
 import tempfile
 import numpy as np
 
 from pyspark import RDD
 from bigdl.nn.layer import Layer
+from bigdl.nn.criterion import Criterion
 from zoo import getOrCreateSparkContext
 from zoo.feature.image import ImageSet
 from bigdl.util.common import callBigDlFunc
 from zoo.pipeline.api.net.tfnet import to_sample_rdd
+
+class TempModule(nn.Module):
+    def __init__(self, lossFunc):
+        super(TempModule, self).__init__()
+        self.func = lossFunc
+
+    def forward(self, x, y):
+        return self.func(x, y)
+
+class TorchIdentityCriterion(Criterion):
+    def __init__(self):
+        super(TorchIdentityCriterion, self).__init__(None, "float")
+
 
 
 class TorchNet(Layer):
@@ -33,21 +48,31 @@ class TorchNet(Layer):
     :param path: path to the TorchScript model.
     """
 
-    def __init__(self, path, bigdl_type="float"):
-        super(TorchNet, self).__init__(None, bigdl_type, path)
+    def __init__(self, path, lossPath=None, bigdl_type="float"):
+        super(TorchNet, self).__init__(None, bigdl_type, path, lossPath)
 
     @staticmethod
-    def from_pytorch(module, input_shape):
+    def from_pytorch(module, input_shape, lossFunc=None, pred_shape=None, label_shape=None):
         """
         Create a TorchNet directly from PyTorch model, e.g. model in torchvision.models
         :param module: a PyTorch model
         :param input_shape: list of integers. E.g. for ResNet, this may be [1, 3, 224, 224]
         """
         temp = tempfile.mkdtemp()
+
+        # save model
         traced_script_module = torch.jit.trace(module, torch.rand(input_shape))
         path = os.path.join(temp, "model.pt")
         traced_script_module.save(path)
-        net = TorchNet(path)
+
+        if lossFunc:
+            traced_script_loss = torch.jit.trace(TempModule(lossFunc).eval(),
+                (torch.rand(pred_shape), torch.rand(label_shape)))
+            lossPath = os.path.join(temp, "loss.pt")
+            traced_script_loss.save(lossPath)
+            net = TorchNet(path, lossPath)
+        else:
+            net = TorchNet(path)
 
         return net
 
