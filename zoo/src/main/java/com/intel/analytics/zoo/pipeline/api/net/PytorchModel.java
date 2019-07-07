@@ -27,4 +27,6 @@ class PytorchModel {
 
     static native void releaseNative(long nativeRef);
 
+    static native int test();
+
 }

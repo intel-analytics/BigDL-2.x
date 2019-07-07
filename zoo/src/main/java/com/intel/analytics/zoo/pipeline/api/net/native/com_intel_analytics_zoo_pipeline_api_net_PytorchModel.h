@@ -13,7 +13,7 @@ extern "C" {
  * Signature: (Ljava/lang/String;Ljava/lang/String;)J
  */
 JNIEXPORT jlong JNICALL Java_com_intel_analytics_zoo_pipeline_api_net_PytorchModel_loadNative
-  (JNIEnv *, jobject, jstring, jstring);
+  (JNIEnv *, jclass, jstring, jstring);
 
 /*
  * Class:     com_intel_analytics_zoo_pipeline_api_net_PytorchModel
@@ -21,7 +21,7 @@ JNIEXPORT jlong JNICALL Java_com_intel_analytics_zoo_pipeline_api_net_PytorchMod
  * Signature: (J[FI[I)Lcom/intel/analytics/zoo/pipeline/inference/JTensor;
  */
 JNIEXPORT jobject JNICALL Java_com_intel_analytics_zoo_pipeline_api_net_PytorchModel_forwardNative
-  (JNIEnv *, jobject, jlong, jfloatArray, jint, jintArray);
+  (JNIEnv *, jclass, jlong, jfloatArray, jint, jintArray);
 
 /*
  * Class:     com_intel_analytics_zoo_pipeline_api_net_PytorchModel
@@ -29,7 +29,7 @@ JNIEXPORT jobject JNICALL Java_com_intel_analytics_zoo_pipeline_api_net_PytorchM
  * Signature: (J[FI[I)Lcom/intel/analytics/zoo/pipeline/inference/JTensor;
  */
 JNIEXPORT jobject JNICALL Java_com_intel_analytics_zoo_pipeline_api_net_PytorchModel_backwardNative
-  (JNIEnv *, jobject, jlong, jfloatArray, jint, jintArray);
+  (JNIEnv *, jclass, jlong, jfloatArray, jint, jintArray);
 
 /*
  * Class:     com_intel_analytics_zoo_pipeline_api_net_PytorchModel
@@ -37,7 +37,7 @@ JNIEXPORT jobject JNICALL Java_com_intel_analytics_zoo_pipeline_api_net_PytorchM
  * Signature: (J)[F
  */
 JNIEXPORT jfloatArray JNICALL Java_com_intel_analytics_zoo_pipeline_api_net_PytorchModel_getGradientNative
-  (JNIEnv *, jobject, jlong);
+  (JNIEnv *, jclass, jlong);
 
 /*
  * Class:     com_intel_analytics_zoo_pipeline_api_net_PytorchModel
@@ -45,7 +45,7 @@ JNIEXPORT jfloatArray JNICALL Java_com_intel_analytics_zoo_pipeline_api_net_Pyto
  * Signature: (J[F)V
  */
 JNIEXPORT void JNICALL Java_com_intel_analytics_zoo_pipeline_api_net_PytorchModel_updateWeightNative
-  (JNIEnv *, jobject, jlong, jfloatArray);
+  (JNIEnv *, jclass, jlong, jfloatArray);
 
 /*
  * Class:     com_intel_analytics_zoo_pipeline_api_net_PytorchModel
@@ -53,7 +53,7 @@ JNIEXPORT void JNICALL Java_com_intel_analytics_zoo_pipeline_api_net_PytorchMode
  * Signature: (J)[F
  */
 JNIEXPORT jfloatArray JNICALL Java_com_intel_analytics_zoo_pipeline_api_net_PytorchModel_getWeightNative
-  (JNIEnv *, jobject, jlong);
+  (JNIEnv *, jclass, jlong);
 
 /*
  * Class:     com_intel_analytics_zoo_pipeline_api_net_PytorchModel
@@ -61,7 +61,15 @@ JNIEXPORT jfloatArray JNICALL Java_com_intel_analytics_zoo_pipeline_api_net_Pyto
  * Signature: (J)V
  */
 JNIEXPORT void JNICALL Java_com_intel_analytics_zoo_pipeline_api_net_PytorchModel_releaseNative
-  (JNIEnv *, jobject, jlong);
+  (JNIEnv *, jclass, jlong);
+
+/*
+ * Class:     com_intel_analytics_zoo_pipeline_api_net_PytorchModel
+ * Method:    test
+ * Signature: ()V
+ */
+JNIEXPORT int JNICALL Java_com_intel_analytics_zoo_pipeline_api_net_PytorchModel_test
+  (JNIEnv *, jclass);
 
 #ifdef __cplusplus
 }

@@ -91,23 +91,21 @@ auto getGradients(std::shared_ptr<torch::jit::script::Module> m, std::vector<flo
 }
 
 
-auto updateWeights(std::shared_ptr<torch::jit::script::Module> m, float* xv, int* index) -> int {
+auto updateWeights(std::shared_ptr<torch::jit::script::Module> m, float* xv, int& index) -> int {
     auto children = m->get_modules();
 
     if (children.size() == 0) {
         auto slots = m -> get_parameters();
         for (size_t i = 0; i < slots.size(); ++i) {
-            std::cout << "updating: " << slots[i].name() << std::endl;
             auto slot_tensor = slots[i].value().toTensor();
             auto num_slot_parameters = slot_tensor.nbytes() / slot_tensor.element_size();
             auto slot_shape = slot_tensor.sizes();
-            std::cout << "index: " << *index << std::endl;
 
-            auto new_tensor = torch::from_blob(xv + *index, slot_shape, at::kFloat);
+            auto new_tensor = torch::from_blob(xv + index, slot_shape, at::kFloat);
             slot_tensor.set_requires_grad(false);
-            slot_tensor.copy_(new_tensor);
+            slot_tensor.mul_(0.0).add_(new_tensor);
             slot_tensor.set_requires_grad(true);
-            *index += num_slot_parameters;
+            index += num_slot_parameters;
         }
     } else {
         for (const auto& child : children) {
@@ -120,7 +118,7 @@ auto updateWeights(std::shared_ptr<torch::jit::script::Module> m, float* xv, int
 
 
 JNIEXPORT jlong JNICALL Java_com_intel_analytics_zoo_pipeline_api_net_PytorchModel_loadNative
-  (JNIEnv *jenv, jobject jobj, jstring jmodel_path, jstring jloss_path) {
+  (JNIEnv *jenv, jclass jobj, jstring jmodel_path, jstring jloss_path) {
     const char* p_model_path = jenv->GetStringUTFChars(jmodel_path, NULL);
     const char* p_loss_path = jenv->GetStringUTFChars(jloss_path, NULL);
 
@@ -133,8 +131,8 @@ JNIEXPORT jlong JNICALL Java_com_intel_analytics_zoo_pipeline_api_net_PytorchMod
     mtx.lock();
     modelID++;
     long id = modelID;
-    handles.insert(std::make_pair(id, model_ptr));
-    lossHandles.insert(std::make_pair(id, loss_ptr));
+    handles[id] = model_ptr;
+    lossHandles[id] = loss_ptr;
     mtx.unlock();
 
     jenv->ReleaseStringUTFChars(jmodel_path, p_model_path);
@@ -149,7 +147,7 @@ JNIEXPORT jlong JNICALL Java_com_intel_analytics_zoo_pipeline_api_net_PytorchMod
  * Signature: ([F[I)Lcom/intel/analytics/zoo/pipeline/inference/JTensor;
  */
 JNIEXPORT jobject JNICALL Java_com_intel_analytics_zoo_pipeline_api_net_PytorchModel_forwardNative
-  (JNIEnv * jenv, jobject jobj, jlong nativeRef, jfloatArray jstorage, jint joffset, jintArray jshape) {
+  (JNIEnv * jenv, jclass jobj, jlong nativeRef, jfloatArray jstorage, jint joffset, jintArray jshape) {
 
     // to Torch Tensor
     jfloat* c_storage = (jfloat*) jenv -> GetPrimitiveArrayCritical(jstorage, JNI_FALSE);
@@ -175,7 +173,7 @@ JNIEXPORT jobject JNICALL Java_com_intel_analytics_zoo_pipeline_api_net_PytorchM
     // Execute the model and turn its output into a tensor.
     at::Tensor output = model_ptr->forward(inputs).toTensor();
     mtx.lock();
-    outputs.insert(std::make_pair(nativeRef, output));
+    outputs[nativeRef] = output;
     mtx.unlock();
 
     // Release critical part
@@ -213,14 +211,14 @@ JNIEXPORT jobject JNICALL Java_com_intel_analytics_zoo_pipeline_api_net_PytorchM
 
 
 JNIEXPORT void JNICALL Java_com_intel_analytics_zoo_pipeline_api_net_PytorchModel_releaseNative
-  (JNIEnv * jenv, jobject jobj, jlong nativeRef) {
+  (JNIEnv * jenv, jclass jobj, jlong nativeRef) {
     mtx.lock();
     handles.erase(nativeRef);
     mtx.unlock();
   }
 
 JNIEXPORT jobject JNICALL Java_com_intel_analytics_zoo_pipeline_api_net_PytorchModel_backwardNative
-  (JNIEnv * jenv, jobject jobj, jlong nativeRef, jfloatArray jstorage, jint joffset, jintArray jshape) {
+  (JNIEnv * jenv, jclass jobj, jlong nativeRef, jfloatArray jstorage, jint joffset, jintArray jshape) {
 
     // to Torch Tensor
     jfloat* c_storage = (jfloat*) jenv -> GetPrimitiveArrayCritical(jstorage, JNI_FALSE);
@@ -288,7 +286,7 @@ JNIEXPORT jobject JNICALL Java_com_intel_analytics_zoo_pipeline_api_net_PytorchM
 
 
 JNIEXPORT jfloatArray JNICALL Java_com_intel_analytics_zoo_pipeline_api_net_PytorchModel_getGradientNative
-  (JNIEnv * jenv, jobject jobj, jlong nativeRef) {
+  (JNIEnv * jenv, jclass jobj, jlong nativeRef) {
     std::shared_ptr<torch::jit::script::Module> model_ptr = handles[nativeRef];
     std::vector<float> gradients;
     getGradients(model_ptr, gradients);
@@ -300,12 +298,12 @@ JNIEXPORT jfloatArray JNICALL Java_com_intel_analytics_zoo_pipeline_api_net_Pyto
 
 
 JNIEXPORT void JNICALL Java_com_intel_analytics_zoo_pipeline_api_net_PytorchModel_updateWeightNative
-  (JNIEnv * jenv, jobject jobj, jlong nativeRef, jfloatArray jstorage) {
+  (JNIEnv * jenv, jclass jobj, jlong nativeRef, jfloatArray jstorage) {
     jfloat* c_storage = (jfloat*) jenv -> GetPrimitiveArrayCritical(jstorage, JNI_FALSE);
     std::shared_ptr<torch::jit::script::Module> model_ptr = handles[nativeRef];
 
     int index = 0;
-    updateWeights(model_ptr, c_storage, &index);
+    updateWeights(model_ptr, c_storage, index);
 
     jenv -> ReleasePrimitiveArrayCritical(jstorage, c_storage, 0);
     return;
@@ -313,7 +311,7 @@ JNIEXPORT void JNICALL Java_com_intel_analytics_zoo_pipeline_api_net_PytorchMode
 
 
 JNIEXPORT jfloatArray JNICALL Java_com_intel_analytics_zoo_pipeline_api_net_PytorchModel_getWeightNative
-  (JNIEnv * jenv, jobject jobj, jlong nativeRef) {
+  (JNIEnv * jenv, jclass jobj, jlong nativeRef) {
       std::shared_ptr<torch::jit::script::Module> model_ptr = handles[nativeRef];
       std::vector<float> weights;
       getWeights(model_ptr, weights);
@@ -322,4 +320,39 @@ JNIEXPORT jfloatArray JNICALL Java_com_intel_analytics_zoo_pipeline_api_net_Pyto
       jenv -> SetFloatArrayRegion(result_storage, 0, weights.size(), &weights[0]);
       return result_storage;
   }
+}
+
+
+JNIEXPORT int JNICALL Java_com_intel_analytics_zoo_pipeline_api_net_PytorchModel_test
+  (JNIEnv * jenv, jclass jobj){
+
+    auto p_model_path = "/home/yuhao/PycharmProjects/pytorch_test/pts/model_221.pt";
+    std::shared_ptr<torch::jit::script::Module> model_ptr = torch::jit::load(p_model_path);
+
+    auto p_loss_path = "/home/yuhao/PycharmProjects/pytorch_test/pts/loss.pt";
+    std::shared_ptr<torch::jit::script::Module> loss_ptr = torch::jit::load(p_loss_path);
+
+    for (int ii = 0; ii < 5; ii++) {
+        std::cout << "\n------------------------iteration: " << ii <<  "\n";
+
+        std::vector<torch::jit::IValue> modelInputs;
+        modelInputs.push_back(torch::ones({2, 2}));
+
+        auto output = model_ptr->forward(modelInputs).toTensor();
+
+        std::vector<torch::jit::IValue> lossInputs;
+        lossInputs.push_back(output);
+        lossInputs.push_back(torch::ones({2, 1}));
+
+        auto loss = loss_ptr->forward(lossInputs).toTensor();
+        std::cout << "\nbackwarding: \n";
+        loss.backward();
+
+        std::cout << "\nupdate weights: \n";
+        int index = 0;
+        float arr4[9] = { 1, 2 };
+        updateWeights(model_ptr, arr4, index);
+
+    }
+    return 1;
 }
