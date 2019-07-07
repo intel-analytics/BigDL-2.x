@@ -45,7 +45,6 @@ auto getWeights(std::shared_ptr<torch::jit::script::Module> m, std::vector<float
 
     if (children.size() == 0) {
         auto slots = m -> get_parameters();
-        std::cout << "slot size: " << slots.size() << std::endl;
         for (size_t i = 0; i < slots.size(); ++i) {
             auto& x = slots[i];
             size_t x_size = x.value().toTensor().numel();
@@ -243,12 +242,9 @@ JNIEXPORT jobject JNICALL Java_com_intel_analytics_zoo_pipeline_api_net_PytorchM
     lossInputs.push_back(label_tensor);
 
     std::shared_ptr<torch::jit::script::Module> loss_ptr = lossHandles[nativeRef];
-    std::cout << "lossInputs is: " << std::endl;
-    std::cout << y << std::endl;
-    std::cout << label_tensor << std::endl;
+
     at::Tensor loss = loss_ptr->forward(lossInputs).toTensor();
-    std::cout << "loss is: " << std::endl;
-    std::cout << loss << std::endl;
+
     loss.backward();
 
     // Release critical part
