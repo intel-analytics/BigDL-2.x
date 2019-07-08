@@ -18,11 +18,11 @@ package com.intel.analytics.zoo.pipeline.api.keras.python
 
 import java.util.{List => JList, Map => JMap}
 
-import com.intel.analytics.bigdl.{Criterion, Module}
-import com.intel.analytics.bigdl.dataset.{DataSet, LocalDataSet, MiniBatch}
+import com.intel.analytics.bigdl.{Criterion, DataSet, Module}
+import com.intel.analytics.bigdl.dataset.{Sample => JSample, Identity => DIdentity, _}
 
 import scala.collection.JavaConverters._
-import com.intel.analytics.bigdl.optim.{_}
+import com.intel.analytics.bigdl.optim._
 import com.intel.analytics.bigdl.python.api.{EvaluatedResult, JTensor, Sample}
 import com.intel.analytics.bigdl.tensor.Tensor
 import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric
@@ -1354,5 +1354,44 @@ class PythonZooKeras[T: ClassTag](implicit ev: TensorNumeric[T]) extends PythonZ
     weightDecay: Double = 0.01): AdamWeightDecay[T] = {
     new AdamWeightDecay[T](learningRate, warmupPortion, total, schedule, beta1, beta2,
       epsilon, weightDecay)
+  }
+
+  def batchingWithPaddingStrategy(dataset: DataSet[JSample[T]], batchSize: Int)
+  : DataSet[MiniBatch[T]] = {
+    println("Using Feature Padding Strategy")
+    val featurePaddingParam = PaddingParam[T](Some(Array(Tensor[T](1).fill(ev.fromType(-1.0)))))
+    dataset.transform(SampleToMiniBatch(
+      batchSize = batchSize, featurePaddingParam = Some(featurePaddingParam)))
+  }
+
+  override def createDistriOptimizerFromRDD(model: AbstractModule[Activity, Activity, T],
+                            trainingRdd: JavaRDD[Sample],
+                            criterion: Criterion[T],
+                            optimMethod: JMap[String, OptimMethod[T]],
+                            endTrigger: Trigger,
+                            batchSize: Int): Optimizer[T, MiniBatch[T]] = {
+    val sampleRDD = toJSample(trainingRdd)
+
+    val optimizer = new DistriOptimizer(
+      _model = model,
+      _dataset = batchingWithPaddingStrategy(DataSet.rdd(sampleRDD), batchSize)
+        .asInstanceOf[DistributedDataSet[MiniBatch[T]]],
+      _criterion = criterion
+    ).asInstanceOf[Optimizer[T, MiniBatch[T]]]
+    enrichOptimizer(optimizer, endTrigger, optimMethod.asScala.toMap)
+  }
+
+  private def enrichOptimizer[T](
+    optimizer: Optimizer[T, MiniBatch[T]],
+    endTrigger: Trigger,
+    optimMethod: Map[String, OptimMethod[T]]): Optimizer[T, MiniBatch[T]] = {
+    optimizer.setEndWhen(endTrigger)
+
+    optimizer.setOptimMethods(optimMethod)
+
+    // TODO: remove this
+    optimizer.disableCheckSingleton()
+
+    optimizer
   }
 }
