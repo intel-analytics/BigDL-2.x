@@ -450,7 +450,8 @@ class NNEstimator[T: ClassTag] private[zoo] (
    */
   protected def wrapBigDLModel(m: Module[T]): NNModel[T] = {
     val dlModel = new NNModel[T](m)
-    copyValues(dlModel.setParent(this)).setDefaultBatchSize()
+    val originBatchsize = dlModel.getBatchSize
+    copyValues(dlModel.setParent(this)).setBatchSize(originBatchsize)
     val clonedTransformer = ToTuple() -> $(samplePreprocessing)
       .asInstanceOf[Preprocessing[(Any, Option[Any]), Sample[T]]].clonePreprocessing()
     dlModel.setSamplePreprocessing(clonedTransformer)
@@ -578,6 +579,8 @@ class NNModel[T: ClassTag] private[zoo] (
   @transient
   private val logger = Logger.getLogger(getClass)
 
+  setDefault(this.batchSize, EngineRef.getCoreNumber() * EngineRef.getNodeNumber() * 4)
+
   def setFeaturesCol(featuresColName: String): this.type = set(featuresCol, featuresColName)
 
   def setPredictionCol(value: String): this.type = set(predictionCol, value)
@@ -586,12 +589,6 @@ class NNModel[T: ClassTag] private[zoo] (
    * Set global batch size across the cluster. Global batch size = Batch per thread * num of cores.
    */
   def setBatchSize(value: Int): this.type = set(batchSize, value)
-
-  private[nnframes] def setDefaultBatchSize(): this.type = {
-    val totalNumCores = EngineRef.getCoreNumber() * EngineRef.getNodeNumber()
-    set(batchSize, 4 * totalNumCores)
-    this
-  }
 
   /**
    * set Preprocessing.
@@ -614,9 +611,10 @@ class NNModel[T: ClassTag] private[zoo] (
     // note that here we use batch per thread, but not batch per partition. For inference,
     // GlobalBatchSize = batchPerThread * coreNumber() appears to be more intuitive for the users
     val totalNumCores = EngineRef.getCoreNumber() * EngineRef.getNodeNumber()
-    val batchPerThread = Math.ceil($(batchSize).toDouble / totalNumCores).toInt
-    if ($(batchSize) % totalNumCores != 0) {
-      logger.warn(s"Global batch size (${$(batchSize)}) cannot be divided by total core number" +
+    val globalBatchSize = getBatchSize
+    val batchPerThread = Math.ceil(globalBatchSize.toDouble / totalNumCores).toInt
+    if (globalBatchSize % totalNumCores != 0) {
+      logger.warn(s"Global batch size $globalBatchSize cannot be divided by total core number" +
         s"($totalNumCores). Setting batch per thread as ($batchPerThread), and actual Global" +
         s" batch size is updated to ${totalNumCores * batchPerThread}")
     } else {
@@ -690,7 +688,6 @@ object NNModel extends MLReadable[NNModel[_]] {
     )(implicit ev: TensorNumeric[T]): NNModel[T] = {
     new NNModel(model)
       .setSamplePreprocessing(SeqToTensor() -> TensorToSample())
-      .setDefaultBatchSize()
   }
 
   /**
@@ -706,7 +703,6 @@ object NNModel extends MLReadable[NNModel[_]] {
     )(implicit ev: TensorNumeric[T]): NNModel[T] = {
     new NNModel(model)
       .setSamplePreprocessing(SeqToTensor(featureSize) -> TensorToSample())
-      .setDefaultBatchSize()
   }
 
   /**
@@ -720,7 +716,6 @@ object NNModel extends MLReadable[NNModel[_]] {
       featurePreprocessing: Preprocessing[F, Tensor[T]]
     )(implicit ev: TensorNumeric[T]): NNModel[T] = {
     new NNModel(model).setSamplePreprocessing(featurePreprocessing -> TensorToSample())
-      .setDefaultBatchSize()
   }
 
   import scala.language.existentials

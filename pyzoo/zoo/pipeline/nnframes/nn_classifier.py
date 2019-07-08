@@ -37,7 +37,7 @@ class HasBatchSize(Params):
         super(HasBatchSize, self).__init__()
         #: param for batch size.
         self.batchSize = Param(self, "batchSize", "batchSize")
-        self._setDefault(batchSize=1)
+        self._setDefault(batchSize=32)
 
     def setBatchSize(self, val):
         """
@@ -423,7 +423,8 @@ class NNEstimator(JavaEstimator, HasFeaturesCol, HasLabelCol, HasPredictionCol, 
             .setSamplePreprocessing(ChainedPreprocessing([ToTuple(), estPreprocessing]))
 
         nnModel.setFeaturesCol(self.getFeaturesCol()) \
-            .setPredictionCol(self.getPredictionCol())
+            .setPredictionCol(self.getPredictionCol()) \
+            .setBatchSize(java_model.getBatchSize())
         return nnModel
 
 
@@ -471,6 +472,7 @@ class NNModel(JavaTransformer, HasFeaturesCol, HasPredictionCol, HasBatchSize,
         self.model = model
         self._java_obj = self.value
         self.bigdl_type = bigdl_type
+        self.setBatchSize(self.value.getBatchSize())
 
     def save(self, path):
         self._transfer_params_to_java()
@@ -523,7 +525,8 @@ class NNClassifier(NNEstimator):
             .setSamplePreprocessing(ChainedPreprocessing([ToTuple(), estPreprocessing]))
 
         classifierModel.setFeaturesCol(self.getFeaturesCol()) \
-            .setPredictionCol(self.getPredictionCol())
+            .setPredictionCol(self.getPredictionCol()) \
+            .setBatchSize(java_model.getBatchSize())
         return classifierModel
 
 
