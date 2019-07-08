@@ -32,7 +32,14 @@ class RayTuneSearchEngine(SearchEngine):
     Tune driver
     """
 
-    def __init__(self, logs_dir="", ray_num_cpus=6, resources_per_trial=None):
+    def __init__(self,
+                 logs_dir="",
+                 ray_num_cpus=6,
+                 resources_per_trial=None,
+                 name="",
+                 remote_dir=None,
+                 ray_ctx=None,
+                 redis_address=None):
         """
         Constructor
         :param ray_num_cpus: the total number of cpus for ray
@@ -42,9 +49,16 @@ class RayTuneSearchEngine(SearchEngine):
         self.train_func = None
         self.resources_per_trail = resources_per_trial
         self.trials = None
+        self.remote_dir = remote_dir
+        self.name = name
+        if ray_ctx is not None:
+            ray_ctx.init()
         # TODO change to rayOnSpark style
-        if not ray.is_initialized():
+        if redis_address:
+            ray.init(redis_address=redis_address)
+        elif not ray.is_initialized():
             ray.init(num_cpus=ray_num_cpus, include_webui=False, ignore_reinit_error=True)
+
 
     def compile(self,
                 input_df,
@@ -74,7 +88,8 @@ class RayTuneSearchEngine(SearchEngine):
                                                    feature_transformers,
                                                    model,
                                                    validation_df,
-                                                   metric)
+                                                   metric,
+                                                   self.remote_dir)
 
     def run(self):
         """
@@ -83,6 +98,7 @@ class RayTuneSearchEngine(SearchEngine):
         """
         trials = tune.run(
             self.train_func,
+            name=self.name,
             stop=self.stop_criteria,
             config=self.search_space,
             num_samples=self.num_samples,
@@ -142,7 +158,8 @@ class RayTuneSearchEngine(SearchEngine):
                             feature_transformers,
                             model,
                             validation_df=None,
-                            metric="mean_squared_error"
+                            metric="mean_squared_error",
+                            remote_dir=None
                             ):
         """
         Prepare the train function for ray tune
@@ -156,7 +173,6 @@ class RayTuneSearchEngine(SearchEngine):
         input_df_id = ray.put(input_df)
         ft_id = ray.put(feature_transformers)
         model_id = ray.put(model)
-
         if validation_df is not None and not validation_df.empty:
             validation_df_id = ray.put(validation_df)
 
@@ -198,6 +214,8 @@ class RayTuneSearchEngine(SearchEngine):
                 if reward_m > best_reward_m:
                     best_reward_m = reward_m
                     save_zip(ckpt_name, trial_ft, trial_model)
+                    if remote_dir is not None:
+                        upload_ppl_hdfs(remote_dir, ckpt_name)
 
                 tune_reporter(
                     training_iteration=i,
