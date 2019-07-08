@@ -16,6 +16,7 @@
 
 import re
 import os
+import numpy as np
 
 class MKLSetting(object):
     def __init__(self, cores):
@@ -33,6 +34,30 @@ def to_list(input):
         return list(input)
     else:
         return [input]
+
+def unflatten(vector, shapes):
+    """
+    :param vector: 1D tensor
+    :param shapes:
+    :return: list of ndarray
+    """
+    i = 0
+    arrays = []
+    for shape in shapes:
+        size = np.prod(shape, dtype=np.int)
+        array = vector[i:(i + size)].reshape(shape)
+        arrays.append(array)
+        i += size
+    return arrays
+
+
+def flatten(inputs):
+    """
+    :param inputs: list of ndarray
+    :return:
+    """
+    return np.concatenate([
+        i.flatten() for i in inputs])
 
 def split(v, num_slices):
     """

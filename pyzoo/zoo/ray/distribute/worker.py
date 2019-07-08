@@ -18,7 +18,7 @@ import tensorflow as tf
 import numpy as np
 import ray
 import os
-import logging
+
 
 from zoo.ray.util.utils import MKLSetting
 from zoo.ray.util import utils
@@ -30,6 +30,7 @@ class ModelWorker(object):
         self.num_workers = num_workers
         self.modelAdapter = modelLite.to_adapter()
         self.ray_data_set = ray_data_set.action()
+        self.loss = 0
 
     # @ray.remote(num_return_vals=2)
     def pull_and_execute(self, *parameters):
@@ -38,15 +39,15 @@ class ModelWorker(object):
         Each parameter should be a 1-D vector
         """
         flat_parameters = np.concatenate(parameters)
-        self.modelAdapter.set_flat_parameters(flat_parameters)
+        self.modelAdapter.set_flat_trainable_weights(flat_parameters)
 
         input_data, label_data = self.ray_data_set.next_batch()
 
-        loss_gradients = self.modelAdapter.execute(self._generate_feed_dict(self.modelAdapter.inputs,
-                                                                         utils.to_list(input_data),
-                                                                         self.modelAdapter.targets, utils.to_list(label_data)))
+        loss_gradients = self.modelAdapter.execute(utils.to_list(input_data),
+                                                   utils.to_list(label_data))
         self.loss = loss_gradients[0]
         grads = loss_gradients[1:]
+        print("loss is {}".format(self.loss))
         flat_grads = np.concatenate([g.flatten() for g in grads])
         print("flat_grads {}".format(flat_grads.shape))
         sharded_grads = utils.split(flat_grads, self.num_workers)
@@ -57,15 +58,6 @@ class ModelWorker(object):
         # in this way (loss, List(grad1, grad2))
         return self.loss
 
-    def get_weights(self):
-        return self.modelAdapter.get_flat_parameters()
+    def get_flat_trainable_weights(self):
+        return self.modelAdapter.get_flat_weights()
 
-    # TODO: Get rid of this and use the raw dataset instead.
-    def _generate_feed_dict(self, inputs_op, inputs, targets_op, targets):
-        fdict = {}
-        if inputs:
-            # we don't need to feed data with dataset API
-            fdict.update(dict(zip(inputs_op, inputs)))
-        if targets:
-            fdict.update(dict(zip(targets_op, targets)))
-        return fdict

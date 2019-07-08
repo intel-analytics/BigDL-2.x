@@ -20,28 +20,14 @@ from __future__ import print_function
 import numpy as np
 import tensorflow as tf
 
-
-def unflatten(vector, shapes):
-    i = 0
-    arrays = []
-    for shape in shapes:
-        size = np.prod(shape, dtype=np.int)
-        array = vector[i:(i + size)].reshape(shape)
-        arrays.append(array)
-        i += size
-    return arrays
+from zoo.ray.util.utils import unflatten
 
 
-class GVHelper(object):
+class TFVariableUpdater(object):
 
-    def __init__(self, sess, grad_vars):
-        self.grads = []
-        self.vars = []
+    def __init__(self, sess, vars):
         self.sess = sess
-        self.grad_vars = grad_vars
-        for gv in grad_vars:
-            self.grads.append(gv[0])
-            self.vars.append(gv[1])
+        self.vars = vars
         self.placeholders = {}
         self.assignment_nodes = {}
 
@@ -53,6 +39,9 @@ class GVHelper(object):
                 name="Placeholder_" + var.op.node_def.name)
             self.assignment_nodes[var.op.node_def.name] = var.assign(self.placeholders[var.op.node_def.name])
 
+    def set_session(self, session):
+        self.sess = sess
+
     def get_flat_size(self):
         """Returns the total length of all of the flattened variables.
 
@@ -61,7 +50,6 @@ class GVHelper(object):
         """
         return sum(
             np.prod(v.get_shape().as_list()) for v in self.vars)
-
 
     def get_flat(self):
         """Gets the weights and returns them as a flat array.
