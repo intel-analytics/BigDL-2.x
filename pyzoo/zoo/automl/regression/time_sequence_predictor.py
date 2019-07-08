@@ -128,14 +128,17 @@ class TimeSequencePredictor(object):
         result = tsp.predict(test_df)
 
     """
-
     def __init__(self,
+                 name="automl",
                  logs_dir="~/zoo_automl_logs",
                  future_seq_len=1,
                  dt_col="datetime",
                  target_col="value",
                  extra_features_col=None,
                  drop_missing=True,
+                 remote_root=None,
+                 ray_ctx=None,
+                 redis_address=None
                  ):
         """
         Constructor of Time Sequence Predictor
@@ -153,6 +156,16 @@ class TimeSequencePredictor(object):
         self.target_col = target_col
         self.extra_features_col = extra_features_col
         self.drop_missing = drop_missing
+        self.name = name
+        self.ray_ctx = ray_ctx
+        self.redis_address = redis_address
+        if remote_root is not None:
+            self.remote_dir = os.path.join(remote_root, "ray_results", name)
+            if name not in get_remote_list(os.path.join(remote_root, "ray_results")):
+                cmd = "hadoop fs -mkdir -p {}".format(self.remote_dir)
+                process(cmd)
+        else:
+            self.remote_dir = None
 
     def describe(self):
         print('Pipeline is initialized with:')
@@ -256,7 +269,13 @@ class TimeSequencePredictor(object):
         stop = dict(runtime_params)
         del stop['num_samples']
 
-        searcher = RayTuneSearchEngine(logs_dir=self.logs_dir, ray_num_cpus=6, resources_per_trial={"cpu": 2})
+        searcher = RayTuneSearchEngine(logs_dir=self.logs_dir,
+                                       ray_num_cpus=6,
+                                       resources_per_trial={"cpu": 2},
+                                       name=self.name,
+                                       remote_dir=self.remote_dir,
+                                       ray_ctx=self.ray_ctx,
+                                       redis_address=self.redis_address)
         searcher.compile(input_df,
                          search_space=search_space,
                          stop=stop,
@@ -289,7 +308,10 @@ class TimeSequencePredictor(object):
         # temp restore from two files
 
         self._print_config(trial.config)
-        all_config = restore_zip(trial.model_path, feature_transformers, model, trial.config)
+        if self.remote_dir is not None:
+            all_config = restore_hdfs(trial.model_path, self.remote_dir, feature_transformers, model, trial.config)
+        else:
+            all_config = restore_zip(trial.model_path, feature_transformers, model, trial.config)
 
         return TimeSequencePipeline(feature_transformers=feature_transformers, model=model, config=all_config)
 
@@ -303,30 +325,61 @@ if __name__ == "__main__":
 
     # print(train_df.describe())
     # print(test_df.describe())
+    import argparse
+    parser = argparse.ArgumentParser(description='Process some integers.')
+    parser.add_argument("--redis_address",
+                        default=None,
+                        type=str,
+                        help="redis address of ray cluster")
+    parser.add_argument("--hadoop_conf",
+                        default=None,
+                        type=str,
+                        help="turn on yarn mode by passing the path to the hadoop configuration folder.")
+    parser.add_argument("--spark_local",
+                        default=False,
+                        type=bool,
+                        help="Run on spark local")
+    args = parser.parse_args()
 
-    # rayOnSpark style init
-    # from zoo import init_spark_on_yarn
-    # from zoo.ray.util.raycontext import RayContext
-    # slave_num = 2
-    # sc = init_spark_on_yarn(
-    #     hadoop_conf="/opt/work/hadoop-2.7.2/etc/hadoop",
-    #     conda_name="ray36",
-    #     num_executor=slave_num,
-    #     executor_cores=4,
-    #     executor_memory="8g",
-    #     driver_memory="2g",
-    #     driver_cores=4,
-    #     extra_executor_memory_for_ray="10g")
-    #
-    # ray_ctx = RayContext(sc=sc,
-    #                      object_store_memory="5g")
-    # ray_ctx.init()
+    if not args.hadoop_conf and not args.redis_address and not args.spark_local:
+        print("*****Run automl on local*****")
+        remote_root = None
+        ray_ctx = None
+    else:
+        remote_root = "hdfs://172.16.0.103:9000"
+        if args.hadoop_conf:
+            print("*****Run automl with RayOnSpark*****")
+            from zoo import init_spark_on_yarn
+            from zoo.ray.util.raycontext import RayContext
+            slave_num = 2
+            sc = init_spark_on_yarn(
+                hadoop_conf=args.hadoop_conf,
+                conda_name="ray36",
+                num_executor=slave_num,
+                executor_cores=4,
+                executor_memory="8g ",
+                driver_memory="2g",
+                driver_cores=4,
+                extra_executor_memory_for_ray="10g")
+            ray_ctx = RayContext(sc=sc, object_store_memory="5g")
+        elif args.spark_local:
+            from zoo import init_spark_on_local
+            from zoo.ray.util.raycontext import RayContext
+            print("*****Run automl on spark local*****")
+            sc = init_spark_on_local(cores=4)
+            ray_ctx = RayContext(sc=sc)
+        else:
+            print("*****Run automl with ray cluster. Redis_address is {}*****".format(args.redis_address))
+            ray_ctx = None
 
     tsp = TimeSequencePredictor(dt_col="datetime",
                                 target_col="value",
                                 extra_features_col=None,
+                                remote_root=remote_root,
+                                ray_ctx=ray_ctx,
+                                redis_address=args.redis_address
                                 )
-    tsp.describe()
+    # tsp.describe()
     pipeline = tsp.fit(train_df,
                        validation_df=val_df,
                        metric="mean_squared_error")
@@ -337,6 +390,7 @@ if __name__ == "__main__":
 
     save_pipeline_file = "tmp.ppl"
     pipeline.save(save_pipeline_file)
+    tsp.describe()
 
     new_pipeline = load_ts_pipeline(save_pipeline_file)
     os.remove(save_pipeline_file)
