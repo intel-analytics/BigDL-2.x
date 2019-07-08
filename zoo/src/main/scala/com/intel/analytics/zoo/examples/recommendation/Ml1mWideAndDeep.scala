@@ -21,6 +21,7 @@ import com.intel.analytics.bigdl.dataset.{DataSet, DistributedDataSet, MiniBatch
 import com.intel.analytics.bigdl.nn.ClassNLLCriterion
 import com.intel.analytics.bigdl.numeric.NumericFloat
 import com.intel.analytics.bigdl.optim._
+import com.intel.analytics.bigdl.utils.RandomGenerator
 import com.intel.analytics.zoo.common.NNContext
 import com.intel.analytics.zoo.feature.FeatureSet
 import com.intel.analytics.zoo.models.recommendation._
@@ -94,11 +95,13 @@ object Ml1mWideAndDeep {
 //    wideAndDeep.fit(trainRdds, batchSize = params.batchSize,
 //      nbEpoch = params.maxEpoch, validationData = validationRdds)
 
+    System.setProperty("bigdl.ModelBroadcastFactory",
+      "com.intel.analytics.bigdl.models.utils.ZooModelBroadcastFactory")
     val optimizer = new InternalDistriOptimizer[Float](wideAndDeep,
       trainBatch.asInstanceOf[DistributedDataSet[MiniBatch[Float]]],
       SparseCategoricalCrossEntropy[Float](zeroBasedLabel = false)
         .asInstanceOf[Criterion[Float]])
-    optimizer.setSparseParameterProcessor(new SparseAdagrad[Float](0.001))
+    optimizer.setSparseParameterProcessor(new SparseAdagrad[Float](0.01))
       .setOptimMethod(optimMethod)
       .setValidation(Trigger.everyEpoch,
         validationBatch.asInstanceOf[DistributedDataSet[MiniBatch[Float]]],

@@ -73,8 +73,8 @@ abstract class ZooModel[A <: Activity: ClassTag, B <: Activity: ClassTag, T: Cla
     } else if (m.isInstanceOf[SparseAbstractModule[T]]) {
       val params = m.asInstanceOf[SparseAbstractModule[T]].sparseParameters()
       if (params != null) {
-        params._1.foreach(weights += _)
-        params._2.foreach(gradW += _)
+        if (params._1 != null) params._1.foreach(weights += _)
+        if (params._2 != null) params._2.foreach(gradW += _)
       }
     }
   }

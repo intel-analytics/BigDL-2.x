@@ -6,6 +6,12 @@ import scala.collection.mutable.ArrayBuffer
 import scala.reflect.ClassTag
 
 object SparseTensorUtils {
+  def updateValues[U](tensor: Tensor[U],
+    value: Array[U]): Tensor[U] = {
+    Array.copy(value, 0, tensor.asInstanceOf[SparseTensor[U]]._values.array(), 0, value.length)
+    tensor
+  }
+
   def addSparseTensor[@specialized(Float, Double) T: ClassTag](tensor: Tensor[T],
     tensor2: Tensor[T])(implicit ev: TensorNumeric[T]): Tensor[T] = {
     val sparseT = tensor.asInstanceOf[SparseTensor[T]]
@@ -76,9 +82,9 @@ object SparseTensorUtils {
     require(tensor.isInstanceOf[DenseTensor[T]] && tensor2.isInstanceOf[SparseTensor[T]])
     val denseT = tensor.asInstanceOf[DenseTensor[T]]
     val dValues = denseT.storage().array()
+    val kB: Int = denseT.size(2)
 
     val sparseT = tensor2.asInstanceOf[SparseTensor[T]]
-    val kB: Int = sparseT.size(1)
     val rows = sparseT._indices.head.array()
     val cols = sparseT._indices.last.array()
     val values = sparseT._values.array()
@@ -353,9 +359,9 @@ object SparseTensorUtils {
     require(tensor2.isInstanceOf[DenseTensor[T]] && tensor.isInstanceOf[SparseTensor[T]])
     val denseT = tensor2.asInstanceOf[DenseTensor[T]]
     val dValues = denseT.storage().array()
+    val kB: Int = denseT.size(2)
 
     val sparseT = tensor.asInstanceOf[SparseTensor[T]]
-    val kB: Int = sparseT.size(1)
     val rows = sparseT._indices.head.array()
     val cols = sparseT._indices.last.array()
     val values = sparseT._values.array()
