@@ -22,6 +22,8 @@ import pandas as pd
 import os
 import json
 
+IDENTIFIER_LEN = 27
+
 
 def split_input_df(input_df, ts_col="timestamp", overlap=0, val_split_ratio=0, test_split_ratio=0.1):
     """
@@ -118,11 +120,11 @@ def load_config(file_path):
     return data
 
 
-def save(file, feature_transformers=None, model=None, config=None):
-    if not os.path.isdir(file):
-        os.mkdir(file)
-    config_path = os.path.join(file, "config.json")
-    model_path = os.path.join(file, "weights_tune.h5")
+def save(file_path, feature_transformers=None, model=None, config=None):
+    if not os.path.isdir(file_path):
+        os.mkdir(file_path)
+    config_path = os.path.join(file_path, "config.json")
+    model_path = os.path.join(file_path, "weights_tune.h5")
     if feature_transformers is not None:
         feature_transformers.save(config_path, replace=True)
     if model is not None:
@@ -132,7 +134,7 @@ def save(file, feature_transformers=None, model=None, config=None):
 
 
 def save_zip(file, feature_transformers=None, model=None, config=None):
-    file_dirname = os.path.dirname(file)
+    file_dirname = os.path.dirname(os.path.abspath(file))
     if file_dirname and not os.path.exists(file_dirname):
         os.mkdir(file_dirname)
 
@@ -148,6 +150,48 @@ def save_zip(file, feature_transformers=None, model=None, config=None):
                     f.write(os.path.join(dirpath, filename), filename)
     finally:
         shutil.rmtree(dirname)
+
+
+def process(cmd):
+    import subprocess
+    proc = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
+    # process.wait()
+    outs, errors = proc.communicate()
+    if outs:
+        print("hdfs std out:", outs)
+    if errors:
+        print("hdfs errors:", errors)
+    return outs, errors
+
+
+def get_remote_list(dir_in):
+    # dir_in = "hdfs://172.16.0.103:9000/yushan/"
+    args = "hdfs dfs -ls " + dir_in + " | awk '{print $8}'"
+    s_output, _ = process(args)
+
+    all_dart_dirs = s_output.split()
+    names = []
+    for filename in all_dart_dirs:
+        filename = filename.decode()
+        name_list = filename.split('/')
+        names.append(name_list[-1])
+    # print(names)
+    return names
+
+
+def upload_ppl_hdfs(upload_dir, ckpt_name):
+    # the default upload_dir is {remote_root}/ray_results/automl
+    # since the checkpoint dirname of ray is train_func_0_{config}_{time}_{tmp}, with max identifier length of 130
+    # if there is a list([]) in config and is truncated, then it can't be identified in hadoop command
+    # therefore we use the last IDENTIFIER_LEN=27, which is {time}_{tmp} to avoid misinterpretation.
+    cur_dir = os.path.abspath(".")
+    log_name = os.path.basename(cur_dir)[-IDENTIFIER_LEN:]
+    remote_log_dir = os.path.join(upload_dir, log_name)
+    sync_cmd = "hadoop fs -mkdir {remote_log_dir}; hadoop fs -put {local_file} {remote_log_dir}".format(
+        local_file=ckpt_name,
+        remote_log_dir=remote_log_dir)
+    # print("upload hdfs cmd is:", sync_cmd)
+    process(sync_cmd)
 
 
 def restore(file, feature_transformers=None, model=None, config=None):
@@ -175,5 +219,24 @@ def restore_zip(file, feature_transformers=None, model=None, config=None):
         all_config = restore(dirname, feature_transformers, model, config)
     finally:
         shutil.rmtree(dirname)
+    return all_config
+
+
+def restore_hdfs(model_path, remote_dir, feature_transformers=None, model=None, config=None):
+    model_name = os.path.basename(model_path)
+    local_best_dirname = os.path.basename(os.path.dirname(model_path))
+    remote_model = os.path.join(remote_dir, local_best_dirname[-IDENTIFIER_LEN:], model_name)
+    tmp_dir = tempfile.mkdtemp(prefix="automl_save_")
+    try:
+        cmd = "hadoop fs -get {} {}".format(remote_model, tmp_dir)
+        # print("get hdfs cmd is:", cmd)
+        process(cmd)
+        with zipfile.ZipFile(os.path.join(tmp_dir, model_name)) as zf:
+            zf.extractall(tmp_dir)
+            print(os.listdir(tmp_dir))
+
+        all_config = restore(tmp_dir, feature_transformers, model, config)
+    finally:
+        shutil.rmtree(tmp_dir)
     return all_config
 
