@@ -38,8 +38,7 @@ class RayTuneSearchEngine(SearchEngine):
                  resources_per_trial=None,
                  name="",
                  remote_dir=None,
-                 ray_ctx=None,
-                 redis_address=None):
+                 ):
         """
         Constructor
         :param ray_num_cpus: the total number of cpus for ray
@@ -51,14 +50,13 @@ class RayTuneSearchEngine(SearchEngine):
         self.trials = None
         self.remote_dir = remote_dir
         self.name = name
-        if ray_ctx is not None:
-            ray_ctx.init()
-        # TODO change to rayOnSpark style
-        if redis_address:
-            ray.init(redis_address=redis_address)
-        elif not ray.is_initialized():
-            ray.init(num_cpus=ray_num_cpus, include_webui=False, ignore_reinit_error=True)
-
+        # if ray_ctx is not None:
+        #     ray_ctx.init()
+        # # TODO change to rayOnSpark style
+        # if redis_address:
+        #     ray.init(redis_address=redis_address)
+        # elif not ray.is_initialized():
+        #     ray.init(num_cpus=ray_num_cpus, include_webui=False, ignore_reinit_error=True)
 
     def compile(self,
                 input_df,
