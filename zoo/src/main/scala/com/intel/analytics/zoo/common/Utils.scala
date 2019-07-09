@@ -18,18 +18,13 @@ package com.intel.analytics.zoo.common
 
 import java.io._
 
-import com.intel.analytics.bigdl.mkl.{MKL => BMKL}
-import com.intel.analytics.bigdl.tensor.{DoubleType, FloatType, Tensor}
-import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric
 import com.intel.analytics.bigdl.utils.File
-import com.intel.analytics.zoo.mkl.MKL.{vdErf, vsErf}
 import org.apache.commons.io.filefilter.WildcardFileFilter
 import org.apache.hadoop.conf.Configuration
 import org.apache.hadoop.fs.{FileSystem, Path}
 import org.apache.log4j.Logger
 
 import scala.collection.mutable.ArrayBuffer
-import scala.reflect.ClassTag
 
 private[zoo] object Utils {
 
@@ -193,26 +188,6 @@ private[zoo] object Utils {
     logger.error(s"********************************Usage Error****************************\n"
       + errMessage)
     throw new AnalyticsZooException(errMessage, cause)
-  }
-
-  def erf[T: ClassTag](tensor: Tensor[T])
-                      (implicit ev: TensorNumeric[T]): Unit = {
-    if (BMKL.isMKLLoaded && tensor.isContiguous()) {
-      ev.getType() match {
-        case FloatType =>
-          val value = tensor.storage().array().asInstanceOf[Array[Float]]
-          vsErf(tensor.nElement(), value, tensor.storageOffset() - 1,
-            value, tensor.storageOffset() - 1)
-        case DoubleType =>
-          val value = tensor.storage().array().asInstanceOf[Array[Double]]
-          vdErf(tensor.nElement(), value, tensor.storageOffset() - 1,
-            value, tensor.storageOffset() - 1)
-        case _ => throw new UnsupportedOperationException(s"Only Float/Double supported")
-      }
-    } else {
-      logger.warn("MKL is not used for erf, watch out the performance")
-      tensor.erf()
-    }
   }
 }
 
