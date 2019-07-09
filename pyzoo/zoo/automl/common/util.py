@@ -187,7 +187,7 @@ def upload_ppl_hdfs(upload_dir, ckpt_name):
     cur_dir = os.path.abspath(".")
     log_name = os.path.basename(cur_dir)[-IDENTIFIER_LEN:]
     remote_log_dir = os.path.join(upload_dir, log_name)
-    sync_cmd = "hadoop fs -mkdir {remote_log_dir}; hadoop fs -put {local_file} {remote_log_dir}".format(
+    sync_cmd = "hadoop fs -mkdir {remote_log_dir}; hadoop fs -put -f {local_file} {remote_log_dir}".format(
         local_file=ckpt_name,
         remote_log_dir=remote_log_dir)
     # print("upload hdfs cmd is:", sync_cmd)
@@ -233,7 +233,7 @@ def restore_hdfs(model_path, remote_dir, feature_transformers=None, model=None, 
         process(cmd)
         with zipfile.ZipFile(os.path.join(tmp_dir, model_name)) as zf:
             zf.extractall(tmp_dir)
-            print(os.listdir(tmp_dir))
+            # print(os.listdir(tmp_dir))
 
         all_config = restore(tmp_dir, feature_transformers, model, config)
     finally:

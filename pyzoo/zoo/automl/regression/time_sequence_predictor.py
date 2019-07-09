@@ -168,13 +168,14 @@ class TimeSequencePredictor(object):
             self.remote_dir = None
 
     def describe(self):
-        print('Pipeline is initialized with:')
+        print('== Initialization info ==')
         print('log_dir:', self.logs_dir)
         print('future_seq_len:', self.future_seq_len)
         print('dt_col:', self.dt_col)
         print('target_col:', self.target_col)
         print('extra_feature_col:', self.extra_features_col)
         print('drop_missing:', self.drop_missing)
+        print('\n')
 
     def fit(self,
             input_df,
@@ -196,7 +197,7 @@ class TimeSequencePredictor(object):
         :return: self
         """
         #check if cols are in the df
-        cols_list = [self.dt_col,self.target_col]
+        cols_list = [self.dt_col, self.target_col]
         if self.extra_features_col is not None:
             if not isinstance(self.extra_features_col, (list,)):
                 raise ValueError("extra_features_col needs to be either None or a list")
