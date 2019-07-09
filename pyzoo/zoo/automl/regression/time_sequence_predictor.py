@@ -20,6 +20,7 @@ import tempfile
 import zipfile
 import os
 import shutil
+import ray
 
 from zoo.automl.search.abstract import *
 from zoo.automl.search.RayTuneSearchEngine import RayTuneSearchEngine
@@ -72,7 +73,7 @@ class BasicRecipe(Recipe):
 
     def runtime_params(self):
         return {
-            "training_iteration": 1,
+            "training_iteration": 10,
             "num_samples": self.num_samples,
         }
 
@@ -136,9 +137,6 @@ class TimeSequencePredictor(object):
                  target_col="value",
                  extra_features_col=None,
                  drop_missing=True,
-                 remote_root=None,
-                 ray_ctx=None,
-                 redis_address=None
                  ):
         """
         Constructor of Time Sequence Predictor
@@ -157,15 +155,6 @@ class TimeSequencePredictor(object):
         self.extra_features_col = extra_features_col
         self.drop_missing = drop_missing
         self.name = name
-        self.ray_ctx = ray_ctx
-        self.redis_address = redis_address
-        if remote_root is not None:
-            self.remote_dir = os.path.join(remote_root, "ray_results", name)
-            if name not in get_remote_list(os.path.join(remote_root, "ray_results")):
-                cmd = "hadoop fs -mkdir -p {}".format(self.remote_dir)
-                process(cmd)
-        else:
-            self.remote_dir = None
 
     def describe(self):
         print('== Initialization info ==')
@@ -181,7 +170,10 @@ class TimeSequencePredictor(object):
             input_df,
             validation_df=None,
             metric="mean_squared_error",
-            recipe=BasicRecipe(1)):
+            recipe=BasicRecipe(1),
+            distributed=False,
+            hdfs_url=None
+            ):
         """
         Trains the model for time sequence prediction.
         If future sequence length > 1, use seq2seq model, else use vanilla LSTM model.
@@ -210,10 +202,22 @@ class TimeSequencePredictor(object):
         if not Evaluator.check_metric(metric):
             raise ValueError("metric" + metric + "is not supported")
 
+        if distributed:
+            if hdfs_url is not None:
+                remote_dir = os.path.join(hdfs_url, "ray_results", self.name)
+            else:
+                remote_dir = os.path.join(os.sep, "ray_results", self.name)
+            if self.name not in get_remote_list(os.path.dirname(remote_dir)):
+                cmd = "hadoop fs -mkdir -p {}".format(remote_dir)
+                process(cmd)
+        else:
+            remote_dir = None
+
         self.pipeline = self._hp_search(input_df,
                                         validation_df=validation_df,
                                         metric=metric,
-                                        recipe=recipe)
+                                        recipe=recipe,
+                                        remote_dir=remote_dir)
         return self.pipeline
 
     def evaluate(self,
@@ -253,7 +257,8 @@ class TimeSequencePredictor(object):
                    input_df,
                    validation_df,
                    metric,
-                   recipe):
+                   recipe,
+                   remote_dir):
 
         ft = TimeSequenceFeatureTransformer(self.future_seq_len, self.dt_col, self.target_col, self.extra_features_col,
                                             self.drop_missing)
@@ -274,9 +279,8 @@ class TimeSequencePredictor(object):
                                        ray_num_cpus=6,
                                        resources_per_trial={"cpu": 2},
                                        name=self.name,
-                                       remote_dir=self.remote_dir,
-                                       ray_ctx=self.ray_ctx,
-                                       redis_address=self.redis_address)
+                                       remote_dir=remote_dir,
+                                       )
         searcher.compile(input_df,
                          search_space=search_space,
                          stop=stop,
@@ -294,7 +298,8 @@ class TimeSequencePredictor(object):
                                        feature_transformers=ft,
                                        # feature_transformers=TimeSequenceFeatures(
                                        #     file_path='../../../../data/nyc_taxi_rolled_split.npz'),
-                                       model=model)
+                                       model=model,
+                                       remote_dir=remote_dir)
         return pipeline
 
     def _print_config(self, best_config):
@@ -302,18 +307,18 @@ class TimeSequencePredictor(object):
         for name, value in best_config.items():
             print(name, ":", value)
 
-    def _make_pipeline(self, trial, feature_transformers, model):
+    def _make_pipeline(self, trial, feature_transformers, model, remote_dir):
         isinstance(trial, TrialOutput)
         # TODO we need to save fitted parameters (not in config, e.g. min max for scalers, model weights)
         # for both transformers and model
         # temp restore from two files
 
         self._print_config(trial.config)
-        if self.remote_dir is not None:
-            all_config = restore_hdfs(trial.model_path, self.remote_dir, feature_transformers, model, trial.config)
+        if remote_dir is not None:
+            all_config = restore_hdfs(trial.model_path, remote_dir, feature_transformers, model, trial.config)
         else:
             all_config = restore_zip(trial.model_path, feature_transformers, model, trial.config)
-
+        print(all_config)
         return TimeSequencePipeline(feature_transformers=feature_transformers, model=model, config=all_config)
 
 
@@ -328,10 +333,6 @@ if __name__ == "__main__":
     # print(test_df.describe())
     import argparse
     parser = argparse.ArgumentParser(description='Process some integers.')
-    parser.add_argument("--redis_address",
-                        default=None,
-                        type=str,
-                        help="redis address of ray cluster")
     parser.add_argument("--hadoop_conf",
                         default=None,
                         type=str,
@@ -342,69 +343,74 @@ if __name__ == "__main__":
                         help="Run on spark local")
     args = parser.parse_args()
 
-    if not args.hadoop_conf and not args.redis_address and not args.spark_local:
+    if not args.hadoop_conf and not args.spark_local:
         print("*****Run automl on local*****")
-        remote_root = None
-        ray_ctx = None
+        distributed = False
+        ray.init(num_cpus=6,
+                 include_webui=False,
+                 ignore_reinit_error=True)
+    elif args.hadoop_conf:
+        print("*****Run automl with RayOnSpark*****")
+        distributed = True
+        from zoo import init_spark_on_yarn
+        from zoo.ray.util.raycontext import RayContext
+        slave_num = 2
+        sc = init_spark_on_yarn(
+            hadoop_conf=args.hadoop_conf,
+            conda_name="ray36",
+            num_executor=slave_num,
+            executor_cores=4,
+            executor_memory="8g ",
+            driver_memory="2g",
+            driver_cores=4,
+            extra_executor_memory_for_ray="10g")
+        ray_ctx = RayContext(sc=sc, object_store_memory="5g")
+        ray_ctx.init()
     else:
-        remote_root = "hdfs://172.16.0.103:9000"
-        if args.hadoop_conf:
-            print("*****Run automl with RayOnSpark*****")
-            from zoo import init_spark_on_yarn
-            from zoo.ray.util.raycontext import RayContext
-            slave_num = 2
-            sc = init_spark_on_yarn(
-                hadoop_conf=args.hadoop_conf,
-                conda_name="ray36",
-                num_executor=slave_num,
-                executor_cores=4,
-                executor_memory="8g ",
-                driver_memory="2g",
-                driver_cores=4,
-                extra_executor_memory_for_ray="10g")
-            ray_ctx = RayContext(sc=sc, object_store_memory="5g")
-        elif args.spark_local:
-            from zoo import init_spark_on_local
-            from zoo.ray.util.raycontext import RayContext
-            print("*****Run automl on spark local*****")
-            sc = init_spark_on_local(cores=4)
-            ray_ctx = RayContext(sc=sc)
-        else:
-            print("*****Run automl with ray cluster. Redis_address is {}*****".format(args.redis_address))
-            ray_ctx = None
+        print("*****Run automl on spark local*****")
+        distributed = False
+        from zoo import init_spark_on_local
+        from zoo.ray.util.raycontext import RayContext
+        sc = init_spark_on_local(cores=4)
+        ray_ctx = RayContext(sc=sc)
+        ray_ctx.init()
+
+    hdfs_url = "hdfs://172.16.0.103:9000"
 
     tsp = TimeSequencePredictor(dt_col="datetime",
                                 target_col="value",
                                 extra_features_col=None,
-                                remote_root=remote_root,
-                                ray_ctx=ray_ctx,
-                                redis_address=args.redis_address
                                 )
     # tsp.describe()
     pipeline = tsp.fit(train_df,
                        validation_df=val_df,
-                       metric="mean_squared_error")
+                       metric="mean_squared_error",
+                       recipe=RandomRecipe(1),
+                       distributed=distributed,
+                       hdfs_url=hdfs_url)
 
     print("evaluate:", pipeline.evaluate(test_df, metric=["mean_squared_error", "r_square"]))
     pred = pipeline.predict(test_df)
     print("predict:", pred.shape)
 
-    save_pipeline_file = "tmp.ppl"
-    pipeline.save(save_pipeline_file)
-    tsp.describe()
+    if args.hadoop_conf or args.spark_local:
+        ray_ctx.stop()
 
-    new_pipeline = load_ts_pipeline(save_pipeline_file)
-    os.remove(save_pipeline_file)
-
-    print("evaluate:", new_pipeline.evaluate(test_df, metric=["mean_squared_error", "r_square"]))
-
-    new_pred = new_pipeline.predict(test_df)
-    print("predict:", pred.shape)
-    np.testing.assert_allclose(pred["value"].values, new_pred["value"].values)
-
-    new_pipeline.fit(train_df, val_df, epoch_num=5)
-    print("evaluate:", new_pipeline.evaluate(test_df, metric=["mean_squared_error", "r_square"]))
-
+    # save_pipeline_file = "tmp.ppl"
+    # pipeline.save(save_pipeline_file)
+    # tsp.describe()
+    #
+    # new_pipeline = load_ts_pipeline(save_pipeline_file)
+    # os.remove(save_pipeline_file)
+    #
+    # print("evaluate:", new_pipeline.evaluate(test_df, metric=["mean_squared_error", "r_square"]))
+    #
+    # new_pred = new_pipeline.predict(test_df)
+    # print("predict:", pred.shape)
+    # np.testing.assert_allclose(pred["value"].values, new_pred["value"].values)
+    #
+    # new_pipeline.fit(train_df, val_df, epoch_num=5)
+    # print("evaluate:", new_pipeline.evaluate(test_df, metric=["mean_squared_error", "r_square"]))
 
     # ray_ctx.stop()
 
