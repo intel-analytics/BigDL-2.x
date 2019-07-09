@@ -42,6 +42,14 @@ class SparseParameterProcessor[U: ClassTag](optimMethods: OptimMethod[U])(implic
         Iterator(res)
       } else Iterator(sparseG.head)
     }).reduce(SparseTensorUtils.addSparseTensor[U](_, _))
+    globalSparseG.foreach(x =>
+      SparseTensorUtils.dotSparseTensorValueByConstant[U](x,
+        ev.fromType(1.0 / state[Int]("numFinishedModel"))))
+
+//    val t = Array[Float](0.0025634766f,0.0053710938f,0.0067443848f,10.9375f,22.875f,28.875f,
+//      0.020019531f,0.041748047f,0.052734375f,0.008361816f,0.017456055f,0.021972656f,-10.9375f,
+//      -22.875f,-28.875f)
+//    SparseTensorUtils.updateValues(globalSparseG.head, t.asInstanceOf[Array[U]])
 
     //TODO: support cliping sparseG
 
@@ -71,7 +79,7 @@ class SparseParameterProcessor[U: ClassTag](optimMethods: OptimMethod[U])(implic
                                     state: Table)(implicit ev: TensorNumeric[T]): Unit = {
       modelCache.localModels.head
         .asInstanceOf[SparseAbstractModule[U]].sparseParameters()._1.zip(bcGlobalW.value)
-        .foreach {case (w, bw) => w.set(bw)}
+        .foreach {case (w, bw) => w.copy(bw)}
   }
 
   // TODO: support sparseG for local mode
