@@ -16,19 +16,19 @@
 
 package com.intel.analytics.zoo.examples.recommendation
 
-import com.intel.analytics.bigdl.dataset.{DataSet, Sample, SampleToMiniBatch, TensorSample}
-import com.intel.analytics.bigdl.nn.{ClassNLLCriterion, Graph}
+import com.intel.analytics.bigdl.dataset.{Sample, SampleToMiniBatch}
+import com.intel.analytics.bigdl.nn.{ClassNLLCriterion}
 import com.intel.analytics.bigdl.numeric.NumericFloat
 import com.intel.analytics.bigdl.optim._
 import com.intel.analytics.bigdl.utils.{RandomGenerator, T}
-import com.intel.analytics.bigdl.visualization.{TrainSummary, ValidationSummary}
 import com.intel.analytics.zoo.common.NNContext
+import com.intel.analytics.zoo.feature.FeatureSet
 import com.intel.analytics.zoo.models.recommendation._
+import com.intel.analytics.zoo.pipeline.estimator.Estimator
 import org.apache.log4j.{Level, Logger}
 import org.apache.spark.SparkConf
 import org.apache.spark.sql.functions._
-import org.apache.spark.sql.{DataFrame, Row, SQLContext}
-import scopt.OptionParser
+import org.apache.spark.sql.{DataFrame, SQLContext}
 import org.apache.spark.rdd.RDD
 import org.apache.spark.sql.types.{IntegerType, StringType, StructField, StructType}
 
@@ -79,7 +79,6 @@ object CensusWideAndDeep {
 
     val batchSize = params.batchSize
     val maxEpoch = params.maxEpoch
-    val onSpark = params.onSpark
     val modelType = params.modelType
 
     val conf = new SparkConf().setAppName("WideAndDeepExample")
@@ -105,7 +104,7 @@ object CensusWideAndDeep {
         "capital_loss", "hours_per_week"))
 
     RandomGenerator.RNG.setSeed(1)
-    val wideAndDeep: WideAndDeep[Float] = WideAndDeep[Float](
+    val wideAndDeep = WideAndDeep.sequential[Float](
       params.modelType,
       numClasses = 2,
       columnInfo = localColumnInfo,
@@ -115,54 +114,45 @@ object CensusWideAndDeep {
     val trainpairFeatureRdds =
       assemblyFeature(isImplicit, trainDf, localColumnInfo, params.modelType)
 
+    val sample1 = trainpairFeatureRdds.take(10)
+
     val validationpairFeatureRdds =
       assemblyFeature(isImplicit, valDf, localColumnInfo, params.modelType)
 
-    val optimMethod = if (modelType == "wide_n_deep") {
-      new Adagrad[Float](0.001)
+    val optimMethods = if (modelType == "wide_n_deep") {
+      Map("deepPart" -> new Adagrad[Float](0.001),
+        "widePart" -> new Ftrl[Float](math.min(5e-3, 1 / math.sqrt(3049))))
     } else if (modelType == "wide") {
-      new Ftrl[Float](math.min(5e-3, 1 / math.sqrt(3049)))
+      Map("widePart" -> new Ftrl[Float](math.min(5e-3, 1 / math.sqrt(3049))))
     } else if (modelType == "deep") {
-      new Adagrad[Float](0.001)
+      Map("deepPart" -> new Adagrad[Float](0.001))
     } else {
       throw new IllegalArgumentException(s"Unkown modelType ${modelType}")
     }
 
     val sample2batch = SampleToMiniBatch(batchSize)
-    // Local optimizer
-    val (trainRdds, validationRdds) = if (onSpark) {
-      (DataSet.rdd(trainpairFeatureRdds.map(x => x.sample).cache()) ->
-        sample2batch,
-        DataSet.rdd(validationpairFeatureRdds.map(x => x.sample).cache()) ->
-          sample2batch)
-    } else {
-      (DataSet.array(trainpairFeatureRdds.map(x => x.sample).collect()) ->
-        sample2batch,
-        DataSet.array(validationpairFeatureRdds.map(x => x.sample).collect()) ->
-          sample2batch)
-    }
+    val trainRdds = FeatureSet.rdd(trainpairFeatureRdds.map(x => x.sample).cache()) ->
+      sample2batch
+    val validationRdds = FeatureSet.rdd(validationpairFeatureRdds.map(x => x.sample).cache()) ->
+      sample2batch
 
-    val optimizer = Optimizer(
-      model = wideAndDeep,
-      dataset = trainRdds,
-      criterion = ClassNLLCriterion[Float]())
-    optimizer
-      .setOptimMethod(optimMethod)
-      .setValidation(Trigger.everyEpoch, validationRdds,
-        Array(new Top1Accuracy[Float], new Loss[Float]()))
-      .setEndWhen(Trigger.maxEpoch(maxEpoch))
-
-    if (params.logDir.isDefined) {
+    val estimator = if (params.logDir.isDefined) {
       val logdir = params.logDir.get
-      val appName = "/census_wnd" + System.nanoTime()
-      optimizer
-        .setTrainSummary(new TrainSummary(logdir, appName))
-        .setValidationSummary(new ValidationSummary(logdir, appName))
-        .setCheckpoint(logdir + appName, Trigger.everyEpoch)
+      val appName = "/census_wnd"
+      Estimator[Float](wideAndDeep, optimMethods, modelDir = logdir + appName)
+    } else {
+      Estimator[Float](wideAndDeep, optimMethods)
     }
 
-    optimizer
-      .optimize()
+    val (checkpointTrigger, testTrigger, endTrigger) =
+      (Trigger.everyEpoch, Trigger.everyEpoch, Trigger.maxEpoch(maxEpoch))
+
+    estimator.train(trainRdds, ClassNLLCriterion[Float](),
+      Some(endTrigger),
+      Some(checkpointTrigger),
+      validationRdds,
+      Array(new Top1Accuracy[Float],
+        new Loss[Float]()))
   }
 
   def loadCensusData(sqlContext: SQLContext, dataPath: String): (DataFrame, DataFrame) = {
@@ -180,6 +170,7 @@ object CensusWideAndDeep {
 
     val validation = sqlContext.sparkContext
       .textFile(dataPath + "/adult.test")
+      .map(_.dropRight(1))  // remove dot at the end of each line in adult.test
       .map(_.split(",").map(_.trim))
       .filter(_.size == 15).map(array =>
       Record(
@@ -237,7 +228,7 @@ object CensusWideAndDeep {
       .withColumn("label", incomeUdf(col("income_bracket")))
 
     val rddOfSample = data.rdd.map(r => {
-      RecordSample(Utils.row2Sample(r, columnInfo, modelType))
+      RecordSample(Utils.row2SampleSequential(r, columnInfo, modelType))
     })
     rddOfSample
   }
