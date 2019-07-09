@@ -187,11 +187,16 @@ def upload_ppl_hdfs(upload_dir, ckpt_name):
     cur_dir = os.path.abspath(".")
     log_name = os.path.basename(cur_dir)[-IDENTIFIER_LEN:]
     remote_log_dir = os.path.join(upload_dir, log_name)
-    sync_cmd = "hadoop fs -mkdir {remote_log_dir}; hadoop fs -put -f {local_file} {remote_log_dir}".format(
-        local_file=ckpt_name,
-        remote_log_dir=remote_log_dir)
+    if log_name not in get_remote_list(upload_dir):
+        cmd = "hadoop fs -mkdir {remote_log_dir}; hadoop fs -put -f {local_file} {remote_log_dir}".format(
+            local_file=ckpt_name,
+            remote_log_dir=remote_log_dir)
+    else:
+        cmd = " hadoop fs -put -f {local_file} {remote_log_dir}".format(
+            local_file=ckpt_name,
+            remote_log_dir=remote_log_dir)
     # print("upload hdfs cmd is:", sync_cmd)
-    process(sync_cmd)
+    process(cmd)
 
 
 def restore(file, feature_transformers=None, model=None, config=None):
