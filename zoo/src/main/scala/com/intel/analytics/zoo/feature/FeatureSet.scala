@@ -114,6 +114,8 @@ trait DistributedFeatureSet[T] extends AbstractFeatureSet[T, RDD[T]] {
       ).setName(s"Cached Transformer of ${preFeatureSet.originRDD().name}").persist()
 
     new DistributedFeatureSet[C] {
+      originFeatureSet = preFeatureSet.originFeatureSet
+
       override def size(): Long = preFeatureSet.size()
 
       override def shuffle(): Unit = preFeatureSet.shuffle()
@@ -167,6 +169,11 @@ trait DistributedFeatureSet[T] extends AbstractFeatureSet[T, RDD[T]] {
       isCached = false
     }
   }
+
+  protected var originFeatureSet: DistributedFeatureSet[Any] =
+    this.asInstanceOf[DistributedFeatureSet[Any]]
+
+  def originSet(): DistributedFeatureSet[Any] = originFeatureSet
 
   /**
    * Check if rdd is cached.
@@ -301,16 +308,16 @@ class CachedDistributedFeatureSet[T: ClassTag]
  * @param buffer
  */
 // T is the returning value type. like ByteRecord
-class IncrementalFeatureSet[T: ClassTag]
-(origin: RDD[T], cachePercentage: Double)
+class DiskFeatureSet[T: ClassTag]
+(origin: RDD[T], val cachePercentage: Double)
   extends DistributedFeatureSet[T]{
   protected val buffer = origin.coalesce(EngineRef.getNodeNumber(), true)
     .persist(StorageLevel.DISK_ONLY)
     .setName("Origin Data Cached on Disk")
   protected lazy val count: Long = buffer.count()
 
-  protected var currentSlice = buffer.sample(false, cachePercentage)
-  protected var currentFeatureSet: DistributedFeatureSet[T] = FeatureSet.rdd(currentSlice)
+  protected var currentSlice: RDD[T] = null
+  protected var currentFeatureSet: DistributedFeatureSet[T] = null
 
   override def data(train: Boolean): RDD[T] = {
     if (train) {
@@ -323,7 +330,7 @@ class IncrementalFeatureSet[T: ClassTag]
       currentFeatureSet.cache()
       currentFeatureSet.data(train)
     } else {
-      currentFeatureSet.data(train)
+      buffer
     }
   }
 
@@ -377,13 +384,13 @@ object FeatureSet {
           case DIRECT =>
             logger.info("~~~~~~~ Caching with DIRECT ~~~~~~~")
             PmemFeatureSet.rdd[T](repartitionedData, DIRECT)
+          case diskM: DISK_AND_DRAM =>
+            new DiskFeatureSet[T](data, diskM.dramPercentage)
           case _ =>
             throw new IllegalArgumentException(
               s"MemoryType: ${memoryType} is not supported at the moment")
         }
 
-      case incremental: INCREMENTAL =>
-        new IncrementalFeatureSet[T](data, incremental.cachePercentage)
       case _ =>
         throw new IllegalArgumentException(
           s"DataStrategy ${dataStrategy} is not supported at the moment")

@@ -19,7 +19,7 @@ import com.intel.analytics.bigdl.{Criterion, Module}
 import com.intel.analytics.bigdl.dataset.MiniBatch
 import com.intel.analytics.bigdl.optim._
 import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric
-import com.intel.analytics.zoo.feature.{DistributedFeatureSet, FeatureSet}
+import com.intel.analytics.zoo.feature.{DiskFeatureSet, DistributedFeatureSet, FeatureSet}
 import com.intel.analytics.zoo.pipeline.api.keras.models.InternalDistriOptimizer
 import org.apache.log4j.Logger
 
@@ -72,19 +72,6 @@ class Estimator[T: ClassTag] private[zoo](
   protected val gradientClipping: ArrayBuffer[GradientClipping] =
     new ArrayBuffer[GradientClipping]()
 
-  protected var cachePercentage: Double = 1.0
-
-  def setCachePercentage(percentage: Double): this.type = {
-    require(percentage > 0 && percentage <= 1, s"excepted percentage in (0, 1]," +
-      s" but got $percentage")
-    cachePercentage = percentage
-    this
-  }
-
-  def getCachePercentage(): Double = {
-    cachePercentage
-  }
-
   /**
    * Clear gradient clipping parameters. In this case, gradient clipping will not be applied.
    * In order to take effect, it needs to be called before fit.
@@ -134,15 +121,22 @@ class Estimator[T: ClassTag] private[zoo](
             checkPointTrigger: Option[Trigger] = None,
             validationSet: FeatureSet[MiniBatch[T]] = null,
             validationMethod: Array[ValidationMethod[T]] = null): this.type = {
-    if (internalEstimator == null) {
-      internalEstimator = trainSet match {
-        case d: DistributedFeatureSet[MiniBatch[T]] =>
-          new InternalDistriOptimizer[T](model, null, criterion)
+    trainSet match {
+      case d: DistributedFeatureSet[MiniBatch[T]] =>
+        if (internalEstimator == null) {
+          internalEstimator = new InternalDistriOptimizer[T](model, null, criterion)
             .setCheckpointDir(modelDir)
             .setOptimMethods(optimMethods)
+        }
+        if (d.originSet().isInstanceOf[DiskFeatureSet[Any]]) {
+          // set cache percentage
+          val cachePercentage =  d.originSet()
+            .asInstanceOf[DiskFeatureSet[Any]].cachePercentage
+          internalEstimator.asInstanceOf[InternalDistriOptimizer[T]]
             .setCachePercentage(cachePercentage)
-        case _ => throw new IllegalArgumentException("Unsupported FeatureSet type.")
-      }
+        }
+
+      case _ => throw new IllegalArgumentException("Unsupported FeatureSet type.")
     }
     if (gradientClipping.nonEmpty) {
       // as internalEstimator will deal with the duplicated type of clipping,
@@ -182,7 +176,6 @@ class Estimator[T: ClassTag] private[zoo](
           new InternalDistriOptimizer[T](model, null, null)
             .setCheckpointDir(modelDir)
             .setOptimMethods(optimMethods)
-            .setCachePercentage(cachePercentage)
         case _ => throw new IllegalArgumentException("Unsupported FeatureSet type.")
       }
     }

@@ -37,7 +37,7 @@ import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric
 import com.intel.analytics.bigdl.utils._
 import com.intel.analytics.bigdl.utils.serializer.{DeserializeContext, ModuleData, ModuleSerializer, SerializeContext}
 import com.intel.analytics.bigdl.visualization.{TrainSummary, ValidationSummary}
-import com.intel.analytics.zoo.feature.{DistributedFeatureSet, FeatureSet, IncrementalFeatureSet}
+import com.intel.analytics.zoo.feature.{DistributedFeatureSet, FeatureSet, DiskFeatureSet}
 import com.intel.analytics.zoo.feature.image.ImageSet
 import com.intel.analytics.zoo.feature.text._
 import com.intel.analytics.zoo.pipeline.api.{Net, Predictable}

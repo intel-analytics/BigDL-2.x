@@ -21,7 +21,7 @@ import com.intel.analytics.bigdl.nn._
 import com.intel.analytics.bigdl.optim.SGD.{Poly, SequentialSchedule, Warmup}
 import com.intel.analytics.bigdl.optim._
 import com.intel.analytics.bigdl.utils.{Engine, LoggerFilter, T, Table}
-import com.intel.analytics.zoo.feature.pmem.{INCREMENTAL, MemoryType, PARTITIONED}
+import com.intel.analytics.zoo.feature.pmem.{MemoryType, PARTITIONED}
 import com.intel.analytics.zoo.pipeline.api.keras.layers.utils.EngineRef
 import com.intel.analytics.zoo.pipeline.estimator.{ConstantClipping, Estimator, L2NormClipping}
 import org.apache.spark.SparkContext
@@ -48,8 +48,7 @@ object TrainInceptionV1 {
         EngineRef.getCoreNumber(),
         param.classNumber,
         MemoryType.fromString(param.memoryType),
-        param.opencv,
-        if (param.cachePercentage != 1) INCREMENTAL(param.cachePercentage) else PARTITIONED
+        param.opencv
       )
       val valSet = ImageNet2012Val(
         param.folder + "/val",
@@ -105,10 +104,6 @@ object TrainInceptionV1 {
         estimator.setGradientClippingByL2Norm(param.gradientL2NormThreshold.get)
       } else if (param.gradientMin.isDefined && param.gradientMax.isDefined) {
         estimator.setConstantGradientClipping(param.gradientMin.get, param.gradientMax.get)
-      }
-
-      if (param.cachePercentage != 1) {
-        estimator.setCachePercentage(param.cachePercentage)
       }
 
       estimator.train(trainSet, ClassNLLCriterion[Float](),

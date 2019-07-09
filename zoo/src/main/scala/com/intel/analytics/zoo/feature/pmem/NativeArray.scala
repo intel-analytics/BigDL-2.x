@@ -26,13 +26,13 @@ case object DRAM extends MemoryType
 
 case object DIRECT extends MemoryType
 
+case class DISK_AND_DRAM(dramPercentage: Double) extends MemoryType
+
 sealed trait DataStrategy
 
 case object PARTITIONED extends DataStrategy
 
 case object REPLICATED extends DataStrategy
-
-case class INCREMENTAL(cachePercentage: Double) extends DataStrategy
 
 object MemoryType {
   def fromString(str: String): MemoryType = {
@@ -40,6 +40,18 @@ object MemoryType {
       case "PMEM" => PMEM
       case "DRAM" => DRAM
       case "DIRECT" => DIRECT
+      case default =>
+        try {
+          val dramPercentage = default.toDouble
+          require(dramPercentage > 0 && dramPercentage < 1,
+            "DISK_AND_DRAM excepted a number in (0, 1).")
+          DISK_AND_DRAM(dramPercentage)
+        } catch {
+          case nfe: NumberFormatException =>
+            throw new IllegalArgumentException(s"Unknown memory type $default," +
+              s"excepted PMEM, DRAM, DIRECT or a number in (0, 1).")
+        }
+
     }
   }
 }
