@@ -99,7 +99,7 @@ class ImageSet(JavaValue):
         if label_rdd is not None:
             label_rdd = label_rdd.map(lambda x: JTensor.from_ndarray(x))
         return ImageSet(jvalue=callBigDlFunc(bigdl_type, "createDistributedImageSet",
-                                      image_rdd, label_rdd), bigdl_type=bigdl_type)
+                                             image_rdd, label_rdd), bigdl_type=bigdl_type)
 
     def transform(self, transformer):
         """
