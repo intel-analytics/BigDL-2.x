@@ -207,7 +207,7 @@ class LSTMSeq2Seq(BaseModel):
             validation_data = ([val_x, val_decoder_input], val_y)
         return x, y, decoder_input_data, validation_data
 
-    def fit_eval(self, x, y, validation_data=None, **config):
+    def fit_eval(self, x, y, validation_data=None, verbose=0, **config):
         """
         fit for one iteration
         :param x: 3-d array in format (no. of samples, past sequence length, 2+feature length), in the last
@@ -237,7 +237,7 @@ class LSTMSeq2Seq(BaseModel):
                               validation_data=validation_data,
                               batch_size=self.batch_size,
                               epochs=epochs,
-                              verbose=0,
+                              verbose=verbose,
                               # callbacks=[tensorboard]
                               )
         # print(hist.history)

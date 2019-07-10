@@ -156,16 +156,6 @@ class TimeSequencePredictor(object):
         self.drop_missing = drop_missing
         self.name = name
 
-    def describe(self):
-        print('== Initialization info ==')
-        print('log_dir:', self.logs_dir)
-        print('future_seq_len:', self.future_seq_len)
-        print('dt_col:', self.dt_col)
-        print('target_col:', self.target_col)
-        print('extra_feature_col:', self.extra_features_col)
-        print('drop_missing:', self.drop_missing)
-        print('\n')
-
     def fit(self,
             input_df,
             validation_df=None,
@@ -318,7 +308,6 @@ class TimeSequencePredictor(object):
             all_config = restore_hdfs(trial.model_path, remote_dir, feature_transformers, model, trial.config)
         else:
             all_config = restore_zip(trial.model_path, feature_transformers, model, trial.config)
-        print(all_config)
         return TimeSequencePipeline(feature_transformers=feature_transformers, model=model, config=all_config)
 
 
@@ -381,7 +370,7 @@ if __name__ == "__main__":
                                 target_col="value",
                                 extra_features_col=None,
                                 )
-    # tsp.describe()
+
     pipeline = tsp.fit(train_df,
                        validation_df=val_df,
                        metric="mean_squared_error",
@@ -393,25 +382,22 @@ if __name__ == "__main__":
     pred = pipeline.predict(test_df)
     print("predict:", pred.shape)
 
+    save_pipeline_file = "tmp.ppl"
+    pipeline.save(save_pipeline_file)
+
+    new_pipeline = load_ts_pipeline(save_pipeline_file)
+    os.remove(save_pipeline_file)
+
+    new_pipeline.describe()
+    print("evaluate:", new_pipeline.evaluate(test_df, metric=["mean_squared_error", "r_square"]))
+
+    new_pred = new_pipeline.predict(test_df)
+    print("predict:", pred.shape)
+    np.testing.assert_allclose(pred["value"].values, new_pred["value"].values)
+
+    new_pipeline.fit(train_df, val_df, epoch_num=5)
+    print("evaluate:", new_pipeline.evaluate(test_df, metric=["mean_squared_error", "r_square"]))
+
     if args.hadoop_conf or args.spark_local:
         ray_ctx.stop()
-
-    # save_pipeline_file = "tmp.ppl"
-    # pipeline.save(save_pipeline_file)
-    # tsp.describe()
-    #
-    # new_pipeline = load_ts_pipeline(save_pipeline_file)
-    # os.remove(save_pipeline_file)
-    #
-    # print("evaluate:", new_pipeline.evaluate(test_df, metric=["mean_squared_error", "r_square"]))
-    #
-    # new_pred = new_pipeline.predict(test_df)
-    # print("predict:", pred.shape)
-    # np.testing.assert_allclose(pred["value"].values, new_pred["value"].values)
-    #
-    # new_pipeline.fit(train_df, val_df, epoch_num=5)
-    # print("evaluate:", new_pipeline.evaluate(test_df, metric=["mean_squared_error", "r_square"]))
-
-    # ray_ctx.stop()
-
 
