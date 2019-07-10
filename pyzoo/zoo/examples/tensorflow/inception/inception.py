@@ -1,5 +1,6 @@
 from optparse import OptionParser
 from math import ceil
+from datetime import datetime
 
 from zoo.common.nncontext import *
 from zoo.feature.image import *
@@ -13,7 +14,7 @@ from bigdl.util.common import *
 import tensorflow as tf
 
 #sys.path.append("/root/manfei/models/research/slim/")  # add the slim library
-sys.path.append("/home/xin/IdeaProjects/models/research/slim")  # add the slim library
+sys.path.append("/opt/work/models/research/slim")  # add the slim library
 from nets import inception_v1
 
 slim = tf.contrib.slim
@@ -137,7 +138,8 @@ if __name__ == "__main__":
         lrSchedule.add(Warmup(warmupDelta), warmup_iteration)
         lrSchedule.add(Poly(0.5, polyIteration), polyIteration)
         ## can we use SGD in this way?
-        optim = SGD(learningrate=options.learningRate, learningrate_decay=0.0, weightdecay=options.weightDecay,
+        optim = SGD(learningrate=options.learningRate, learningrate_decay=0.16,
+                    weightdecay=options.weightDecay,
                     momentum=0.9, dampening=0.0, nesterov=False,
                     leaningrate_schedule=lrSchedule)
 
@@ -152,10 +154,18 @@ if __name__ == "__main__":
         test_trigger = SeveralIteration(options.checkpointIteration)
         end_trigger = MaxIteration(options.maxIteration)
 
-    optimizer = TFOptimizer(loss, optim, val_outputs=[logits], val_labels=[labels-1], val_method=Accuracy())
-    optimizer.set_train_summary(TrainSummary("/tmp/logs/inceptionV1", "inceptionV1"))
-    optimizer.set_val_summary(ValidationSummary("/tmp/logs/inceptionV1", "inceptionV1"))
-    optimizer.optimize(end_trigger=end_trigger)
+    timeStamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+
+    optimizer = TFOptimizer(loss, optim, val_outputs=[logits], val_labels=[labels-1],
+                            val_method=[Accuracy(), Top5Accuracy()])
+    train_summary = TrainSummary("/tmp/logs/inceptionV1", "inceptionV1" + timeStamp)
+    train_summary.set_summary_trigger("Parameters", SeveralIteration(10))
+    optimizer.set_train_summary(train_summary)
+    optimizer.set_val_summary(ValidationSummary("/tmp/logs/inceptionV1", "inceptionV1" + timeStamp))
+    if options.checkpoint != "":
+        optimizer.set_checkpoint(options.checkpoint + timeStamp, options.overwrite)
+
+    optimizer.optimize(end_trigger=end_trigger, checkpoint_trigger=checkpoint_trigger)
 
     saver = tf.train.Saver()
     saver.save(optimizer.sess, "/root/manfei/model")
