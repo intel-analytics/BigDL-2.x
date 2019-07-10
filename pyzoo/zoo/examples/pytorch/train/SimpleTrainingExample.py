@@ -1,5 +1,6 @@
 import torch.nn as nn
 import torch.nn.functional as F
+from torch.nn.modules.loss import BCELoss
 from bigdl.nn.criterion import *
 from bigdl.nn.layer import *
 from bigdl.optim.optimizer import Adam
@@ -13,19 +14,14 @@ from zoo.pipeline.nnframes import *
 # create training data as Spark DataFrame
 def get_df(sqlContext):
     data = sc.parallelize([
-        ((2.0, 1.0), (1.0, 0.0, 3.0)),
-        ((1.0, 2.0), (1.0, 2.0, 3.0)),
-        ((2.0, 1.0), (1.0, 0.0, 3.0)),
-        ((1.0, 2.0), (1.0, 2.0, 3.0)),
-        ((2.0, 1.0), (1.0, 0.0, 3.0)),
-        ((1.0, 2.0), (1.0, 2.0, 3.0)),
-        ((2.0, 1.0), (1.0, 0.0, 3.0)),
-        ((1.0, 2.0), (1.0, 2.0, 3.0))
-    ])
+        ((2.0, 1.0), 1.0),
+        ((1.0, 2.0), 0.0),
+        ((2.0, 1.0), 1.0),
+        ((1.0, 2.0), 0.0)])
 
     schema = StructType([
         StructField("features", ArrayType(DoubleType(), False), False),
-        StructField("label", ArrayType(DoubleType(), False), False)])
+        StructField("label", DoubleType(), False)])
     df = sqlContext.createDataFrame(data, schema)
     return df
 
@@ -35,12 +31,12 @@ class SimpleTorchModel(nn.Module):
         super(SimpleTorchModel, self).__init__()
         self.dense1 = nn.Linear(2, 4)
         self.dense2 = nn.Linear(4, 8)
-        self.dense3 = nn.Linear(8, 3)
+        self.dense3 = nn.Linear(8, 1)
 
     def forward(self, x):
         x = self.dense1(x)
         x = self.dense2(x)
-        x = F.relu(self.dense3(x))
+        x = F.sigmoid(self.dense3(x))
         return x
 
 if __name__ == '__main__':
@@ -50,16 +46,21 @@ if __name__ == '__main__':
     df = get_df(sqlContext)
 
     torch_model = SimpleTorchModel()
-    def customLoss(output, label):
-        return ((output - label) * (output - label)).sum()
+    becloss = BCELoss()
 
-    model = TorchNet.from_pytorch(torch_model, [1, 2], customLoss, [1, 1], [1, 1])
-    classifier = NNEstimator(model, TorchIdentityCriterion(), SeqToTensor([2]), SeqToTensor([3])) \
-        .setBatchSize(4) \
+    model = TorchNet.from_pytorch(module=torch_model,
+                                  input_shape=[1, 2],
+                                  lossFunc=becloss.forward,
+                                  pred_shape=[1, 1], label_shape=[1, 1])
+    classifier = NNEstimator(model, TorchIdentityCriterion(), SeqToTensor([2])) \
+        .setBatchSize(2) \
         .setOptimMethod(Adam()) \
-        .setLearningRate(0.1).setMaxEpoch(10)
+        .setLearningRate(0.1) \
+        .setMaxEpoch(20)
 
     nnClassifierModel = classifier.fit(df)
+
+    print("After training: ")
     res = nnClassifierModel.transform(df)
     res.show(10, False)
 

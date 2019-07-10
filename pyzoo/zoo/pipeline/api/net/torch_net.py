@@ -52,7 +52,8 @@ class TorchNet(Layer):
         super(TorchNet, self).__init__(None, bigdl_type, path, lossPath)
 
     @staticmethod
-    def from_pytorch(module, input_shape, lossFunc=None, pred_shape=None, label_shape=None):
+    def from_pytorch(module, input_shape, lossFunc=None, pred_shape=None, label_shape=None,
+                     pred_input=None, label_input=None):
         """
         Create a TorchNet directly from PyTorch model, e.g. model in torchvision.models
         :param module: a PyTorch model
@@ -66,8 +67,11 @@ class TorchNet(Layer):
         traced_script_module.save(path)
 
         if lossFunc:
+            pred_input = pred_input if pred_input is not None else torch.rand(pred_shape)
+            label_input = label_input if label_input is not None else torch.rand(label_shape)
+
             traced_script_loss = torch.jit.trace(TempModule(lossFunc).eval(),
-                (torch.rand(pred_shape), torch.rand(label_shape)))
+                (pred_input, label_input))
             lossPath = os.path.join(temp, "loss.pt")
             traced_script_loss.save(lossPath)
             net = TorchNet(path, lossPath)
