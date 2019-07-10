@@ -416,6 +416,20 @@
                             <goal>exec</goal>
                         </goals>
                     </execution>
+                    <execution>
+                        <id>download_libtorch</id>
+                        <phase>initialize</phase>
+                        <configuration>
+                            <arguments>
+                                <argument>${project.basedir}/../scripts/get_libtorch</argument>
+                                <argument>${project.basedir}/src/main/resources/pytorch/lib</argument>
+                            </arguments>
+                            <executable>bash</executable>
+                        </configuration>
+                        <goals>
+                            <goal>exec</goal>
+                        </goals>
+                    </execution>
                 </executions>
             </plugin>
             <plugin>
