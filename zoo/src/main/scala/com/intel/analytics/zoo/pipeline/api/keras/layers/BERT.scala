@@ -26,8 +26,7 @@ import com.intel.analytics.bigdl.utils.serializer._
 import com.intel.analytics.bigdl.utils.serializer.converters.DataConverter
 import com.intel.analytics.bigdl.utils.{MultiShape, Shape}
 import com.intel.analytics.zoo.pipeline.api.Net
-import com.intel.analytics.zoo.pipeline.api.autograd.{AutoGrad, Parameter, Variable}
-import com.intel.analytics.zoo.pipeline.api.keras.layers.internal.InternalLayerNorm
+import com.intel.analytics.zoo.pipeline.api.autograd.{AutoGrad, Variable}
 import com.intel.analytics.zoo.pipeline.api.keras.layers.utils.{GraphRef, KerasUtils}
 import com.intel.analytics.zoo.pipeline.api.keras.models.Model
 import com.intel.analytics.zoo.pipeline.api.keras.models.Model.{apply => _, _}
@@ -155,9 +154,7 @@ object BERT extends KerasLayerSerializable {
       initWeights = initTokenEmbeddingW).from(tokenTypeInput)
 
     val embeddings = wordEmbeddings + positionEmbeddings + tokenTypeEmbeddings
-    val afterNorm = new KerasLayerWrapper[T](
-      new InternalLayerNorm[T](nOutput = hiddenSize, eps = 1e-12)
-      .asInstanceOf[AbstractModule[Activity, Activity, T]]).from(embeddings)
+    val afterNorm = LayerNorm[T](nOutput = hiddenSize, eps = 1e-12).from(embeddings)
     val h = Dropout(hiddenPDrop).from(afterNorm)
 
     val embeddingLayer = Model(Array(wordInput, tokenTypeInput, positionInput), h)

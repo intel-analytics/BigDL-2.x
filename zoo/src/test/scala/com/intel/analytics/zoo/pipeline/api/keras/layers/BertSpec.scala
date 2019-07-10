@@ -99,9 +99,7 @@ class BertSpec extends ZooSpecHelper {
 
     val embeddings =
       wordEmbeddings.asInstanceOf[Variable[Float]] + positionEmbeddings + tokenTypeEmbeddings
-    val afterNorm = new KerasLayerWrapper[Float](
-      new InternalLayerNorm[Float](nOutput = hiddenSize, eps = 1e-12)
-        .asInstanceOf[AbstractModule[Activity, Activity, Float]]).from(embeddings)
+    val afterNorm = LayerNorm[Float](nOutput = hiddenSize, eps = 1e-12).from(embeddings)
     val h = Dropout[Float](hiddenPDrop).from(afterNorm)
 
     val embeddingLayer = Model(Array(wordInput, tokenTypeInput, positionInput), h)
