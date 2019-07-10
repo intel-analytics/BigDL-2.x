@@ -1181,7 +1181,7 @@ private[zoo] class InternalDistriOptimizer[T: ClassTag] (
 
 
   def setCachePercentage(percentage: Double): this.type = {
-    require(percentage > 0 && percentage <= 1, s"excepted percentage in (0, 1]," +
+    require(percentage >= 0 && percentage <= 1, s"excepted percentage in [0, 1]," +
       s" but got $percentage")
     cachePercentage = percentage
     this
@@ -1242,9 +1242,9 @@ private[zoo] class InternalDistriOptimizer[T: ClassTag] (
     if (cachePercentage < 1) {
       val state = InternalOptimizerUtil.getStateFromOptiMethod(
         optimMethods.values.head)
+      val counts = trainSet.size()
       val batchSize = dataset.toDistributed().data(train = true).first().size() *
         EngineRef.getNodeNumber()
-      val counts = trainSet.size()
       val iterations = Math.ceil(counts.toDouble * cachePercentage / batchSize).toInt
 
       var i = if (state.contains("neval")) {
@@ -1254,9 +1254,8 @@ private[zoo] class InternalDistriOptimizer[T: ClassTag] (
         1
       }
       while(!endWhen(state)) {
-        val trueEpoch = Math.floor(state[Int]("neval").toDouble * batchSize / counts).toInt + 1
-        InternalOptimizerUtil.endEpoch(this)
-        state("epoch") = trueEpoch
+        val trueEpoch = Math.floor((state[Int]("neval").toDouble - 1)
+          * batchSize / counts).toInt + 1
         val newEndWhen = Trigger.or(endWhen, Trigger.maxIteration(i * iterations),
           Trigger.maxEpoch(trueEpoch))
         this.setEndWhen(newEndWhen)
@@ -1266,6 +1265,10 @@ private[zoo] class InternalDistriOptimizer[T: ClassTag] (
           this.setCheckpoint(checkpointDir.get, checkPointTrigger.get)
         }
         this.train()
+        InternalOptimizerUtil.endEpoch(this)
+        // (neval - 1) is true iteration
+        state("epoch") = Math.floor((state[Int]("neval").toDouble - 1)
+          * batchSize / counts).toInt + 1
         i += 1
       }
     } else {

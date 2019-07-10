@@ -102,6 +102,7 @@ trait AbstractFeatureSet[D, DataSequence] extends AbstractDataSet[D, DataSequenc
  * @tparam T
  */
 trait DistributedFeatureSet[T] extends AbstractFeatureSet[T, RDD[T]] {
+  def memoryPercentage: Double = 1.0
 
   override def transform[C: ClassTag](transformer: Transformer[T, C]): DistributedFeatureSet[C] = {
     val preFeatureSet = this
@@ -115,6 +116,8 @@ trait DistributedFeatureSet[T] extends AbstractFeatureSet[T, RDD[T]] {
 
     new DistributedFeatureSet[C] {
       originFeatureSet = preFeatureSet.originFeatureSet
+
+      override def memoryPercentage: Double = originFeatureSet.memoryPercentage
 
       override def size(): Long = preFeatureSet.size()
 
@@ -172,8 +175,6 @@ trait DistributedFeatureSet[T] extends AbstractFeatureSet[T, RDD[T]] {
 
   protected var originFeatureSet: DistributedFeatureSet[Any] =
     this.asInstanceOf[DistributedFeatureSet[Any]]
-
-  def originSet(): DistributedFeatureSet[Any] = originFeatureSet
 
   /**
    * Check if rdd is cached.
@@ -304,13 +305,22 @@ class CachedDistributedFeatureSet[T: ClassTag]
 }
 
 /**
- * Wrap a RDD as a FeatureSet.
- * @param buffer
+ * Wrap a RDD as a FeatureSet. RDD will be persist on local disk, and will load
+ * some of the data to memory for the training.
+ * @param origin cached rdd
+ * @param cachePercentage percentage cached in memory
  */
 // T is the returning value type. like ByteRecord
 class DiskFeatureSet[T: ClassTag]
 (origin: RDD[T], val cachePercentage: Double)
   extends DistributedFeatureSet[T]{
+  require(cachePercentage >=0 && cachePercentage < 1,
+    s"excepted cache percentage in [0, 1), but got $cachePercentage")
+
+  override def memoryPercentage: Double = cachePercentage
+
+  protected val eps = 0.01
+
   protected val buffer = origin.coalesce(EngineRef.getNodeNumber(), true)
     .persist(StorageLevel.DISK_ONLY)
     .setName("Origin Data Cached on Disk")
@@ -320,17 +330,25 @@ class DiskFeatureSet[T: ClassTag]
   protected var currentFeatureSet: DistributedFeatureSet[T] = null
 
   override def data(train: Boolean): RDD[T] = {
-    if (train) {
+    if (cachePercentage == 0) {
+      if (train) {
+        throw new IllegalArgumentException("No training data in memory," +
+          "because cachePercentage is zero. CachePercentage should greater than 0 " +
+          "for a training FeatureSet.")
+      } else {
+        buffer
+      }
+    } else if (train) {
       if (currentFeatureSet != null) {
         currentFeatureSet.unpersist()
       }
-      currentSlice = buffer.sample(false, cachePercentage)
+      currentSlice = buffer.sample(false, cachePercentage * (1 + eps))
         .setName(s"${cachePercentage * 100}% of ${origin.name}")
       currentFeatureSet = DRAMFeatureSet.rdd(currentSlice)
       currentFeatureSet.cache()
       currentFeatureSet.data(train)
     } else {
-      buffer
+      currentFeatureSet.data(train)
     }
   }
 
@@ -385,7 +403,7 @@ object FeatureSet {
             logger.info("~~~~~~~ Caching with DIRECT ~~~~~~~")
             PmemFeatureSet.rdd[T](repartitionedData, DIRECT)
           case diskM: DISK_AND_DRAM =>
-            new DiskFeatureSet[T](data, diskM.dramPercentage)
+            new DiskFeatureSet[T](data, diskM.cachePercentage)
           case _ =>
             throw new IllegalArgumentException(
               s"MemoryType: ${memoryType} is not supported at the moment")

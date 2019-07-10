@@ -127,15 +127,8 @@ class Estimator[T: ClassTag] private[zoo](
           internalEstimator = new InternalDistriOptimizer[T](model, null, criterion)
             .setCheckpointDir(modelDir)
             .setOptimMethods(optimMethods)
+            .setCachePercentage(d.memoryPercentage)
         }
-        if (d.originSet().isInstanceOf[DiskFeatureSet[Any]]) {
-          // set cache percentage
-          val cachePercentage =  d.originSet()
-            .asInstanceOf[DiskFeatureSet[Any]].cachePercentage
-          internalEstimator.asInstanceOf[InternalDistriOptimizer[T]]
-            .setCachePercentage(cachePercentage)
-        }
-
       case _ => throw new IllegalArgumentException("Unsupported FeatureSet type.")
     }
     if (gradientClipping.nonEmpty) {

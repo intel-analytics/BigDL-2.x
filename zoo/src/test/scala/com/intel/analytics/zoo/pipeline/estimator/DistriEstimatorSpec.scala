@@ -16,13 +16,14 @@
 package com.intel.analytics.zoo.pipeline.estimator
 
 import com.intel.analytics.bigdl.Module
-import com.intel.analytics.bigdl.dataset.{DistributedDataSet, MiniBatch}
+import com.intel.analytics.bigdl.dataset.{DistributedDataSet, MiniBatch, Sample, SampleToMiniBatch}
 import com.intel.analytics.bigdl.nn._
 import com.intel.analytics.bigdl.optim.{LBFGS, Loss, SGD, Trigger}
 import com.intel.analytics.bigdl.tensor.{Storage, Tensor}
 import com.intel.analytics.bigdl.utils.{Engine, LoggerFilter, RandomGenerator}
 import com.intel.analytics.zoo.common.NNContext
-import com.intel.analytics.zoo.feature.{DistributedDataSetWrapper, DistributedFeatureSet}
+import com.intel.analytics.zoo.feature.pmem.DISK_AND_DRAM
+import com.intel.analytics.zoo.feature.{DistributedDataSetWrapper, DistributedFeatureSet, FeatureSet}
 import com.intel.analytics.zoo.pipeline.api.keras.ZooSpecHelper
 import com.intel.analytics.zoo.pipeline.api.keras.models.InternalOptimizerUtil
 import org.apache.log4j.{Level, Logger}
@@ -253,4 +254,66 @@ class DistriEstimatorSpec extends ZooSpecHelper {
     result
   }
 
+  "Estimator" should "works fine with DiskFeatureSet" in {
+    val rdd = sc.parallelize(1 to (256 * nodeNumber), nodeNumber)
+      .map(_ => Sample[Double](Tensor[Double](4).rand(), Tensor[Double](1).rand()))
+    val dset = FeatureSet.rdd(rdd, DISK_AND_DRAM(0.5)) -> SampleToMiniBatch(batchSize = batchSize)
+    val mm = EstimatorSpecModel.mse
+    mm.parameters()._1.foreach(_.fill(0.125))
+    val sgd = new SGD[Double](20)
+    val estimator = Estimator(mm, sgd)
+    val mse = MSECriterion[Double]()
+    val state = InternalOptimizerUtil.getStateFromOptiMethod(sgd)
+    estimator.train(dset, mse, endTrigger = Some(Trigger.maxEpoch(2)))
+
+    state[Int]("neval") should be >= 64
+    state[Int]("epoch") should be (3)
+  }
+
+  "Estimator" should "works fine with DiskFeatureSet2" in {
+    val rdd = sc.parallelize(1 to (1024 * nodeNumber), nodeNumber)
+      .map(_ => Sample[Double](Tensor[Double](4).rand(), Tensor[Double](1).rand()))
+    val dset = FeatureSet.rdd(rdd, DISK_AND_DRAM(0.2)) -> SampleToMiniBatch(batchSize = batchSize)
+    val mm = EstimatorSpecModel.mse
+    mm.parameters()._1.foreach(_.fill(0.125))
+    val sgd = new SGD[Double](20)
+    val mse = MSECriterion[Double]()
+    val estimator = Estimator(mm, sgd)
+    val state = InternalOptimizerUtil.getStateFromOptiMethod(sgd)
+    estimator.train(dset, mse, endTrigger = Some(Trigger.maxEpoch(2)))
+
+    state[Int]("neval") should be >= 256
+    state[Int]("epoch") should be (3)
+  }
+
+  "Estimator" should "works fine with DiskFeatureSet3" in {
+    val rdd = sc.parallelize(1 to (1024 * nodeNumber), nodeNumber)
+      .map(_ => Sample[Double](Tensor[Double](4).rand(), Tensor[Double](1).rand()))
+    val dset = FeatureSet.rdd(rdd, DISK_AND_DRAM(0.2)) -> SampleToMiniBatch(batchSize = batchSize)
+    val mm = EstimatorSpecModel.mse
+    mm.parameters()._1.foreach(_.fill(0.125))
+    val sgd = new SGD[Double](20)
+    val mse = MSECriterion[Double]()
+    val estimator = Estimator(mm, sgd)
+    val state = InternalOptimizerUtil.getStateFromOptiMethod(sgd)
+    estimator.train(dset, mse, endTrigger = Some(Trigger.maxIteration(200)))
+
+    state[Int]("neval") should be (201)
+    state[Int]("epoch") should be (2)
+  }
+
+  "Estimator" should "throw exception when cache percentage == 0" in {
+    val rdd = sc.parallelize(1 to (1024 * nodeNumber), nodeNumber)
+      .map(_ => Sample[Double](Tensor[Double](4).rand(), Tensor[Double](1).rand()))
+    val dset = FeatureSet.rdd(rdd, DISK_AND_DRAM(0)) -> SampleToMiniBatch(batchSize = batchSize)
+    val mm = EstimatorSpecModel.mse
+    mm.parameters()._1.foreach(_.fill(0.125))
+    val sgd = new SGD[Double](20)
+    val mse = MSECriterion[Double]()
+    val estimator = Estimator(mm, sgd)
+    intercept[Exception] {
+      estimator.train(dset, mse, endTrigger = Some(Trigger.maxIteration(200)))
+    }
+    estimator.train(dset, mse, endTrigger = Some(Trigger.maxIteration(200)))
+  }
 }
