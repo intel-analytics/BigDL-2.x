@@ -35,6 +35,13 @@ class TimeSequencePipeline(Pipeline):
         self.model = model
         self.config = config
 
+    def describe(self):
+        init_info = ['future_seq_len', 'dt_col', 'target_col', 'extra_features_col', 'drop_missing']
+        print("**** Initialization info ****")
+        for info in init_info:
+            print(info + ":", self.config[info])
+        print("\n")
+
     def fit(self, input_df, validation_df=None, epoch_num=20):
         x, y = self.feature_transformers.transform(input_df, is_train=True)
         if validation_df is not None and not validation_df.empty:
@@ -42,7 +49,7 @@ class TimeSequencePipeline(Pipeline):
         else:
             validation_data = None
         new_config = {'epochs': epoch_num}
-        self.model.fit_eval(x, y, validation_data, **new_config)
+        self.model.fit_eval(x, y, validation_data, verbose=1, **new_config)
         print('Fit done!')
 
     def evaluate(self,
@@ -85,8 +92,8 @@ def load_ts_pipeline(file):
     feature_transformers = TimeSequenceFeatureTransformer()
     model = TimeSequenceModel(check_optional_config=False)
 
-    restore_zip(file, feature_transformers, model)
-    ts_pipeline = TimeSequencePipeline(feature_transformers, model)
+    all_config = restore_zip(file, feature_transformers, model)
+    ts_pipeline = TimeSequencePipeline(feature_transformers, model, all_config)
     print("Restore pipeline from", file)
     return ts_pipeline
 

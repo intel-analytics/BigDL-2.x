@@ -65,7 +65,7 @@ class VanillaLSTM(BaseModel):
                            optimizer=keras.optimizers.RMSprop(lr=config.get('lr', 0.001)))
         return self.model
 
-    def fit_eval(self, x, y, validation_data=None, **config):
+    def fit_eval(self, x, y, validation_data=None, verbose=0, **config):
         """
         fit for one iteration
         :param x: 3-d array in format (no. of samples, past sequence length, 2+feature length), in the last
@@ -87,7 +87,7 @@ class VanillaLSTM(BaseModel):
                               validation_data=validation_data,
                               batch_size=self.batch_size,
                               epochs=config.get('epochs', 20),
-                              verbose=0
+                              verbose=verbose
                               )
         # print(hist.history)
 
