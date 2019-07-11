@@ -196,7 +196,7 @@ class InferenceModel(private var autoScalingEnabled: Boolean = true,
                checkpointPath: String,
                inputShape: Array[Int],
                ifReverseInputChannels: Boolean = true,
-               meanValues: Array[Float] = Array(0f, 0f, 0f),
+               meanValues: Array[Float] = null,
                scale: Float = 1.0f): Unit = {
     doLoadTensorflowModelAsOpenVINO(
       modelPath, imageClassificationModelType, checkpointPath,
@@ -301,7 +301,7 @@ class InferenceModel(private var autoScalingEnabled: Boolean = true,
                                    checkpointPath: String,
                                    inputShape: Array[Int],
                                    ifReverseInputChannels: Boolean = true,
-                                   meanValues: Array[Float] = Array(0f, 0f, 0f),
+                                   meanValues: Array[Float] = null,
                                    scale: Float = 1.0f,
                                    networkType: String,
                                    validationFilePath: String,
@@ -381,7 +381,7 @@ class InferenceModel(private var autoScalingEnabled: Boolean = true,
                                               checkpointPath: String,
                                               inputShape: Array[Int],
                                               ifReverseInputChannels: Boolean = true,
-                                              meanValues: Array[Float] = Array(0f, 0f, 0f),
+                                              meanValues: Array[Float] = null,
                                               scale: Float = 1.0f): Unit = {
     if (concurrentNum > 1) {
       InferenceSupportive.logger.warn(s"concurrentNum is $concurrentNum > 1, " +
@@ -450,7 +450,7 @@ class InferenceModel(private var autoScalingEnabled: Boolean = true,
                                                         inputShape: Array[Int],
                                                         ifReverseInputChannels: Boolean = true,
                                                         meanValues: Array[Float]
-                                                          = Array(0f, 0f, 0f),
+                                                          = null,
                                                         scale: Float = 1.0f,
                                                         networkType: String,
                                                         validationFilePath: String,
@@ -653,7 +653,7 @@ object InferenceModel {
                    checkpointPath: String,
                    inputShape: Array[Int],
                    ifReverseInputChannels: Boolean = true,
-                   meanValues: Array[Float] = Array(0f, 0f, 0f),
+                   meanValues: Array[Float] = null,
                    scale: Float = 1.0f,
                    outputDir: String): Unit = {
     OpenVinoInferenceSupportive.optimizeTFImageClassificationModel(

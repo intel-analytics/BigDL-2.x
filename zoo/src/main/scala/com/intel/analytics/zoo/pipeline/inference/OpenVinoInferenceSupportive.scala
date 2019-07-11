@@ -170,7 +170,11 @@ object OpenVinoInferenceSupportive extends InferenceSupportive with Serializable
         case true => "1"
         case false => "0"
       }
-      val meanValuesStr = meanValues.mkString("[", ",", "]")
+      val meanValuesStr = if (meanValues == null) {
+        "[]"
+      } else {
+        meanValues.mkString("[", ",", "]")
+      }
       val scaleStr = scale + ""
 
       val stdout = new StringBuilder

@@ -65,7 +65,7 @@ object InferenceModelFactory extends InferenceSupportive {
                              checkpointPath: String,
                              inputShape: Array[Int],
                              ifReverseInputChannels: Boolean = true,
-                             meanValues: Array[Float] = Array(0f, 0f, 0f),
+                             meanValues: Array[Float] = null,
                              scale: Float = 1.0f): OpenVINOModel = {
     OpenVinoInferenceSupportive.loadTensorflowModel(modelPath, imageClassificationModelType,
       checkpointPath, inputShape, ifReverseInputChannels, meanValues, scale)
@@ -107,7 +107,7 @@ object InferenceModelFactory extends InferenceSupportive {
                                        checkpointPath: String,
                                        inputShape: Array[Int],
                                        ifReverseInputChannels: Boolean = true,
-                                       meanValues: Array[Float] = Array(0f, 0f, 0f),
+                                       meanValues: Array[Float] = null,
                                        scale: Float = 1.0f,
                                        networkType: String,
                                        validationFilePath: String,
