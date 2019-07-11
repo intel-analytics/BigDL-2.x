@@ -16,11 +16,9 @@
 import json
 
 from time import time
-from keras.callbacks import TensorBoard
-from keras.models import Sequential
+from tensorflow.keras.callbacks import TensorBoard
 from tensorflow.keras.models import Model
 from tensorflow.keras.layers import Input, LSTM, Dense
-# import keras
 import tensorflow.keras as keras
 
 import os
@@ -116,7 +114,8 @@ class LSTMSeq2Seq(BaseModel):
         decoder_state_input_c = Input(shape=(self.latent_dim,))
         decoder_states_inputs = [decoder_state_input_h, decoder_state_input_c]
 
-        decoder_outputs, state_h, state_c = self.decoder_lstm(self.decoder_inputs, initial_state=decoder_states_inputs)
+        decoder_outputs, state_h, state_c = self.decoder_lstm(self.decoder_inputs,
+                                                              initial_state=decoder_states_inputs)
         decoder_states = [state_h, state_c]
 
         decoder_outputs = self.decoder_dense(decoder_outputs)
@@ -210,14 +209,16 @@ class LSTMSeq2Seq(BaseModel):
     def fit_eval(self, x, y, validation_data=None, verbose=0, **config):
         """
         fit for one iteration
-        :param x: 3-d array in format (no. of samples, past sequence length, 2+feature length), in the last
-        dimension, the 1st col is the time index (data type needs to be numpy datetime type, e.g. "datetime64"),
+        :param x: 3-d array in format (no. of samples, past sequence length, 2+feature length),
+        in the last dimension, the 1st col is the time index (data type needs to be numpy datetime
+        type, e.g. "datetime64"),
         the 2nd col is the target value (data type should be numeric)
-        :param y: 2-d numpy array in format (no. of samples, future sequence length) if future sequence length > 1,
+        :param y: 2-d numpy array in format (no. of samples, future sequence length)
+        if future sequence length > 1,
         or 1-d numpy array in format (no. of samples, ) if future sequence length = 1
-        :param validation_data: tuple in format (x_test,y_test), data used for validation. If this is specified,
-        validation result will be the optimization target for automl. Otherwise, train metric will be the optimization
-        target.
+        :param validation_data: tuple in format (x_test,y_test), data used for validation.
+        If this is specified, validation result will be the optimization target for automl.
+        Otherwise, train metric will be the optimization target.
         :param config: optimization hyper parameters
         :return: the resulting metric
         """
@@ -230,7 +231,8 @@ class LSTMSeq2Seq(BaseModel):
         # batch_size = config.get('batch_size', 64)
         epochs = config.get('epochs', 10)
         # lr = self.lr
-        # name = "seq2seq-batch_size-{}-epochs-{}-lr-{}-time-{}".format(batch_size, epochs, lr, time())
+        # name = "seq2seq-batch_size-{}-epochs-{}-lr-{}-time-{}"\
+        #     .format(batch_size, epochs, lr, time())
         # tensorboard = TensorBoard(log_dir="logs/" + name)
 
         hist = self.model.fit([x, decoder_input_data], y,
@@ -281,7 +283,7 @@ class LSTMSeq2Seq(BaseModel):
         """
 
         self.model.save(model_path)
-        
+
         config_to_save = {"past_seq_len": self.past_seq_len,
                           "feature_num": self.feature_num,
                           "future_seq_len": self.future_seq_len,
@@ -309,7 +311,7 @@ class LSTMSeq2Seq(BaseModel):
 
         self.model = keras.models.load_model(model_path)
         self._restore_model()
-        #self.model.load_weights(file_path)
+        # self.model.load_weights(file_path)
 
     def _get_required_parameters(self):
         return {
