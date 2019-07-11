@@ -257,7 +257,7 @@ class DistriEstimatorSpec extends ZooSpecHelper {
   "Estimator" should "works fine with DiskFeatureSet" in {
     val rdd = sc.parallelize(1 to (256 * nodeNumber), nodeNumber)
       .map(_ => Sample[Double](Tensor[Double](4).rand(), Tensor[Double](1).rand()))
-    val dset = FeatureSet.rdd(rdd, DISK_AND_DRAM(0.5)) -> SampleToMiniBatch(batchSize = batchSize)
+    val dset = FeatureSet.rdd(rdd, DISK_AND_DRAM(2)) -> SampleToMiniBatch(batchSize = batchSize)
     val mm = EstimatorSpecModel.mse
     mm.parameters()._1.foreach(_.fill(0.125))
     val sgd = new SGD[Double](20)
@@ -273,7 +273,7 @@ class DistriEstimatorSpec extends ZooSpecHelper {
   "Estimator" should "works fine with DiskFeatureSet2" in {
     val rdd = sc.parallelize(1 to (1024 * nodeNumber), nodeNumber)
       .map(_ => Sample[Double](Tensor[Double](4).rand(), Tensor[Double](1).rand()))
-    val dset = FeatureSet.rdd(rdd, DISK_AND_DRAM(0.2)) -> SampleToMiniBatch(batchSize = batchSize)
+    val dset = FeatureSet.rdd(rdd, DISK_AND_DRAM(5)) -> SampleToMiniBatch(batchSize = batchSize)
     val mm = EstimatorSpecModel.mse
     mm.parameters()._1.foreach(_.fill(0.125))
     val sgd = new SGD[Double](20)
@@ -289,7 +289,7 @@ class DistriEstimatorSpec extends ZooSpecHelper {
   "Estimator" should "works fine with DiskFeatureSet3" in {
     val rdd = sc.parallelize(1 to (1024 * nodeNumber), nodeNumber)
       .map(_ => Sample[Double](Tensor[Double](4).rand(), Tensor[Double](1).rand()))
-    val dset = FeatureSet.rdd(rdd, DISK_AND_DRAM(0.2)) -> SampleToMiniBatch(batchSize = batchSize)
+    val dset = FeatureSet.rdd(rdd, DISK_AND_DRAM(5)) -> SampleToMiniBatch(batchSize = batchSize)
     val mm = EstimatorSpecModel.mse
     mm.parameters()._1.foreach(_.fill(0.125))
     val sgd = new SGD[Double](20)

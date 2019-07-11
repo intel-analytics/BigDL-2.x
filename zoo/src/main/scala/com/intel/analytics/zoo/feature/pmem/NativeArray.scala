@@ -26,7 +26,7 @@ case object DRAM extends MemoryType
 
 case object DIRECT extends MemoryType
 
-case class DISK_AND_DRAM(cachePercentage: Double) extends MemoryType
+case class DISK_AND_DRAM(numSlice: Int) extends MemoryType
 
 sealed trait DataStrategy
 
@@ -42,11 +42,11 @@ object MemoryType {
       case "DIRECT" => DIRECT
       case default =>
         try {
-          DISK_AND_DRAM(str.toDouble)
+          DISK_AND_DRAM(str.toInt)
         } catch {
           case nfe: NumberFormatException =>
             throw new IllegalArgumentException(s"Unknown memory type $default," +
-              s"excepted PMEM, DRAM, DIRECT or a number in [0, 1).")
+              s"excepted PMEM, DRAM, DIRECT or a int number.")
         }
 
     }

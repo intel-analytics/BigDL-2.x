@@ -102,7 +102,7 @@ trait AbstractFeatureSet[D, DataSequence] extends AbstractDataSet[D, DataSequenc
  * @tparam T
  */
 trait DistributedFeatureSet[T] extends AbstractFeatureSet[T, RDD[T]] {
-  def memoryPercentage: Double = 1.0
+  def numOfSlice: Int = 1
 
   override def transform[C: ClassTag](transformer: Transformer[T, C]): DistributedFeatureSet[C] = {
     val preFeatureSet = this
@@ -117,7 +117,7 @@ trait DistributedFeatureSet[T] extends AbstractFeatureSet[T, RDD[T]] {
     new DistributedFeatureSet[C] {
       originFeatureSet = preFeatureSet.originFeatureSet
 
-      override def memoryPercentage: Double = originFeatureSet.memoryPercentage
+      override def numOfSlice: Int = originFeatureSet.numOfSlice
 
       override def size(): Long = preFeatureSet.size()
 
@@ -306,20 +306,23 @@ class CachedDistributedFeatureSet[T: ClassTag]
 
 /**
  * Wrap a RDD as a FeatureSet. RDD will be persist on local disk, and will load
- * some of the data to memory for the training.
+ * one slice of the data to memory for the training.
  * @param origin cached rdd
- * @param cachePercentage percentage cached in memory
+ * @param numSlice number of RDD slice. During the training, only 1/numSlice of
+ *                 originRDD is loaded into memory.
  */
 // T is the returning value type. like ByteRecord
 class DiskFeatureSet[T: ClassTag]
-(origin: RDD[T], val cachePercentage: Double)
+(origin: RDD[T], val numSlice: Int)
   extends DistributedFeatureSet[T]{
-  require(cachePercentage >=0 && cachePercentage < 1,
-    s"excepted cache percentage in [0, 1), but got $cachePercentage")
+  require(numSlice != 1,
+    s"Detected numSlice = 1, Please use MemoryType DRAM to " +
+      s"cache all data into memory.")
 
-  override def memoryPercentage: Double = cachePercentage
+  require(numSlice == 0 || numSlice >= 2,
+    s"excepted numSlice == 0 or >= 2, but got $numSlice")
 
-  protected val eps = 0.01
+  override def numOfSlice: Int = numSlice
 
   protected val buffer = origin.coalesce(EngineRef.getNodeNumber(), true)
     .persist(StorageLevel.DISK_ONLY)
@@ -328,27 +331,37 @@ class DiskFeatureSet[T: ClassTag]
 
   protected var currentSlice: RDD[T] = null
   protected var currentFeatureSet: DistributedFeatureSet[T] = null
+  protected var trained: Boolean = false
+  newSample()
+
+  private def newSample() = {
+    currentSlice = buffer.sample(false, 1.0 / numSlice)
+      .setName(s"1/${numSlice} of ${origin.name}")
+    currentFeatureSet = DRAMFeatureSet.rdd(currentSlice)
+    trained = false
+  }
 
   override def data(train: Boolean): RDD[T] = {
-    if (cachePercentage == 0) {
+    if (numSlice == 0) {
       if (train) {
         throw new IllegalArgumentException("No training data in memory," +
-          "because cachePercentage is zero. CachePercentage should greater than 0 " +
-          "for a training FeatureSet.")
+          "because numSlice is zero. numSlice should >= 2 " +
+          "in a training FeatureSet.")
       } else {
         buffer
       }
-    } else if (train) {
-      if (currentFeatureSet != null) {
-        currentFeatureSet.unpersist()
-      }
-      currentSlice = buffer.sample(false, cachePercentage * (1 + eps))
-        .setName(s"${cachePercentage * 100}% of ${origin.name}")
-      currentFeatureSet = DRAMFeatureSet.rdd(currentSlice)
-      currentFeatureSet.cache()
-      currentFeatureSet.data(train)
     } else {
-      currentFeatureSet.data(train)
+      if (train) {
+        if (currentFeatureSet != null && trained) {
+          currentFeatureSet.unpersist()
+          newSample()
+        }
+        currentFeatureSet.cache()
+        trained = true
+        currentFeatureSet.data(train)
+      } else {
+        currentFeatureSet.data(train)
+      }
     }
   }
 
@@ -403,7 +416,7 @@ object FeatureSet {
             logger.info("~~~~~~~ Caching with DIRECT ~~~~~~~")
             PmemFeatureSet.rdd[T](repartitionedData, DIRECT)
           case diskM: DISK_AND_DRAM =>
-            new DiskFeatureSet[T](data, diskM.cachePercentage)
+            new DiskFeatureSet[T](data, diskM.numSlice)
           case _ =>
             throw new IllegalArgumentException(
               s"MemoryType: ${memoryType} is not supported at the moment")

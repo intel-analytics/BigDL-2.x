@@ -1001,7 +1001,7 @@ private[zoo] class InternalDistriOptimizer[T: ClassTag] (
   with AbstractEstimator[T]{
   import InternalDistriOptimizer._
   protected var checkpointDir: Option[String] = None
-  protected var cachePercentage: Double = 1.0
+  protected var numSlice: Int = 1
   protected var cachedModels: RDD[DistriOptimizer.Cache[T]] = null
   protected var modelBroadcast: ModelBroadcast[T] = null
   protected var parameters: Map[String, AllReduceParameter[T]] = null
@@ -1180,15 +1180,15 @@ private[zoo] class InternalDistriOptimizer[T: ClassTag] (
   }
 
 
-  def setCachePercentage(percentage: Double): this.type = {
-    require(percentage >= 0 && percentage <= 1, s"excepted percentage in [0, 1]," +
-      s" but got $percentage")
-    cachePercentage = percentage
+  def setNumOfSlice(numOfSlice: Int): this.type = {
+    require(numOfSlice >= 0, s"excepted numOfSlice >= 0," +
+      s" but got $numOfSlice")
+    this.numSlice = numOfSlice
     this
   }
 
-  def getCachePercentage(): Double = {
-    cachePercentage
+  def getNumOfSlice(): Int = {
+    this.numSlice
   }
 
   def setCheckpointDir(path: Option[String]): this.type = {
@@ -1239,37 +1239,32 @@ private[zoo] class InternalDistriOptimizer[T: ClassTag] (
     if (checkPointTrigger.isDefined && validationMethod != null && validationSet != null) {
       this.setValidation(checkPointTrigger.get, validationSet.toDataSet(), validationMethod)
     }
-    if (cachePercentage < 1) {
+    if (numSlice != 1) {
       val state = InternalOptimizerUtil.getStateFromOptiMethod(
         optimMethods.values.head)
-      val counts = trainSet.size()
-      val batchSize = dataset.toDistributed().data(train = true).first().size() *
-        EngineRef.getNodeNumber()
-      val iterations = Math.ceil(counts.toDouble * cachePercentage / batchSize).toInt
-
-      var i = if (state.contains("neval")) {
-        // resume training
-        math.ceil(state[Int]("neval").toDouble / iterations).toInt
-      } else {
-        1
+      if (checkPointTrigger.isDefined && validationMethod != null && validationSet != null) {
+        this.setValidation(getEpoch(state, checkPointTrigger.get),
+          validationSet.toDataSet(), validationMethod)
       }
+      if (!state.contains("numSlice")) {
+        state("numSlice") = numSlice
+        state("currentSlice") = 0
+      }
+
       while(!endWhen(state)) {
-        val trueEpoch = Math.floor((state[Int]("neval").toDouble - 1)
-          * batchSize / counts).toInt + 1
-        val newEndWhen = Trigger.or(endWhen, Trigger.maxIteration(i * iterations),
-          Trigger.maxEpoch(trueEpoch))
+        val trueEpoch = Math.floor(state[Int]("currentSlice").toDouble / numSlice).toInt + 1
+        val newEndWhen = Trigger.or(endWhen, Trigger.maxEpoch(trueEpoch))
         this.setEndWhen(newEndWhen)
         if (checkPointTrigger.isDefined && checkpointDir.isDefined) {
           // we should setCheckpoint every time before we call optimize(),
           // as BigDL will overwrite checkpointPath to its subfolder.
           this.setCheckpoint(checkpointDir.get, checkPointTrigger.get)
         }
+        state("currentSlice") = state[Int]("currentSlice") + 1
         this.train()
         InternalOptimizerUtil.endEpoch(this)
         // (neval - 1) is true iteration
-        state("epoch") = Math.floor((state[Int]("neval").toDouble - 1)
-          * batchSize / counts).toInt + 1
-        i += 1
+        state("epoch") = Math.floor(state[Int]("currentSlice").toDouble / numSlice).toInt + 1
       }
     } else {
       this.train()
@@ -1348,6 +1343,43 @@ private[zoo] class InternalDistriOptimizer[T: ClassTag] (
 
 object InternalDistriOptimizer {
   val logger = Logger.getLogger(this.getClass)
+
+  protected def getEpoch(s: Table, trigger: Trigger): Trigger = {
+    try {
+      val clazz = trigger.getClass()
+      // use reflection to make sure if the trigger is every epoch.
+      clazz.getDeclaredField("lastEpoch")
+    } catch {
+      case e: NoSuchFieldException =>
+        return trigger
+    }
+    Trigger.and(trigger, endEpoch(s))
+  }
+
+  protected def endEpoch(s: Table): Trigger = {
+    new Trigger() {
+      private var lastEpoch = -1
+
+      override def apply(state: Table): Boolean = {
+        if (lastEpoch == -1) {
+          lastEpoch = state[Int]("epoch")
+          false
+        } else {
+          if (state[Int]("epoch") <= lastEpoch) {
+            false
+          } else {
+            if (s.contains("numSlice") && s.contains("currentSlice")
+              && s[Int]("currentSlice") % s[Int]("numSlice") == 0) {
+              lastEpoch = state[Int]("epoch")
+              true
+            } else {
+              false
+            }
+          }
+        }
+      }
+    }
+  }
 
   protected def validate[T](validationFeatureSet: FeatureSet[MiniBatch[T]],
                             validationMethods: Array[ValidationMethod[T]],

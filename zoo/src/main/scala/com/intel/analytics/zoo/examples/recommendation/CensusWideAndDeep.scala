@@ -17,12 +17,13 @@
 package com.intel.analytics.zoo.examples.recommendation
 
 import com.intel.analytics.bigdl.dataset.{Sample, SampleToMiniBatch}
-import com.intel.analytics.bigdl.nn.{ClassNLLCriterion}
+import com.intel.analytics.bigdl.nn.ClassNLLCriterion
 import com.intel.analytics.bigdl.numeric.NumericFloat
 import com.intel.analytics.bigdl.optim._
 import com.intel.analytics.bigdl.utils.{RandomGenerator, T}
 import com.intel.analytics.zoo.common.NNContext
 import com.intel.analytics.zoo.feature.FeatureSet
+import com.intel.analytics.zoo.feature.pmem.DISK_AND_DRAM
 import com.intel.analytics.zoo.models.recommendation._
 import com.intel.analytics.zoo.pipeline.estimator.Estimator
 import org.apache.log4j.{Level, Logger}
@@ -131,7 +132,7 @@ object CensusWideAndDeep {
     }
 
     val sample2batch = SampleToMiniBatch(batchSize)
-    val trainRdds = FeatureSet.rdd(trainpairFeatureRdds.map(x => x.sample).cache()) ->
+    val trainRdds = FeatureSet.rdd(trainpairFeatureRdds.map(x => x.sample).cache(), DISK_AND_DRAM(2)) ->
       sample2batch
     val validationRdds = FeatureSet.rdd(validationpairFeatureRdds.map(x => x.sample).cache()) ->
       sample2batch
@@ -144,8 +145,8 @@ object CensusWideAndDeep {
       Estimator[Float](wideAndDeep, optimMethods)
     }
 
-    val (checkpointTrigger, testTrigger, endTrigger) =
-      (Trigger.everyEpoch, Trigger.everyEpoch, Trigger.maxEpoch(maxEpoch))
+    val (checkpointTrigger, endTrigger) =
+      (Trigger.everyEpoch, Trigger.maxEpoch(maxEpoch))
 
     estimator.train(trainRdds, ClassNLLCriterion[Float](),
       Some(endTrigger),

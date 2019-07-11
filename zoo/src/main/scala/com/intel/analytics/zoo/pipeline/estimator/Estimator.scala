@@ -127,7 +127,7 @@ class Estimator[T: ClassTag] private[zoo](
           internalEstimator = new InternalDistriOptimizer[T](model, null, criterion)
             .setCheckpointDir(modelDir)
             .setOptimMethods(optimMethods)
-            .setCachePercentage(d.memoryPercentage)
+            .setNumOfSlice(d.numOfSlice)
         }
       case _ => throw new IllegalArgumentException("Unsupported FeatureSet type.")
     }
@@ -259,5 +259,6 @@ object Estimator {
         model: Module[T])(implicit ev: TensorNumeric[T]): Estimator[T] = {
     new Estimator[T](model, Map())
   }
+
 
 }
