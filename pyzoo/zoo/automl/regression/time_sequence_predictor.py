@@ -73,7 +73,7 @@ class BasicRecipe(Recipe):
 
     def runtime_params(self):
         return {
-            "training_iteration": 10,
+            "training_iteration": 1,
             "num_samples": self.num_samples,
         }
 
@@ -98,14 +98,17 @@ class RandomRecipe(Recipe):
             ),
 
             # --------- model parameters
-            "lstm_1_units": RandomSample(lambda spec: np.random.choice([8, 16, 32, 64, 128], size=1)[0]),
+            "lstm_1_units": RandomSample(lambda spec:
+                                         np.random.choice([8, 16, 32, 64, 128], size=1)[0]),
             "dropout_1": RandomSample(lambda spec: np.random.uniform(0.2, 0.5)),
-            "lstm_2_units": RandomSample(lambda spec: np.random.choice([8, 16, 32, 64, 128], size=1)[0]),
+            "lstm_2_units": RandomSample(lambda spec:
+                                         np.random.choice([8, 16, 32, 64, 128], size=1)[0]),
             "dropout_2": RandomSample(lambda spec: np.random.uniform(0.2, 0.5)),
 
             # ----------- optimization parameters
             "lr": RandomSample(lambda spec: np.random.uniform(0.001, 0.01)),
-            "batch_size": RandomSample(lambda spec: np.random.choice([32, 64, 1024], size=1, replace=False)[0]),
+            "batch_size": RandomSample(lambda spec:
+                                       np.random.choice([32, 64, 1024], size=1, replace=False)[0]),
         }
 
     def runtime_params(self):
@@ -172,13 +175,13 @@ class TimeSequencePredictor(object):
          2019-01-01 1.9 1   2
          2019-01-02 2.3 0   2
         :param validation_df: validation data
-        :param metric: String. Metric used for train and validation. Available values are "mean_squared_error" or
-        "r_square"
-        :param recipe: a Recipe object. Various recipes covers different search space and stopping criteria.
-        Default is BasicRecipe(1).
+        :param metric: String. Metric used for train and validation. Available values are
+                       "mean_squared_error" or "r_square"
+        :param recipe: a Recipe object. Various recipes covers different search space and stopping
+                      criteria. Default is BasicRecipe(1).
         :return: self
         """
-        #check if cols are in the df
+        # check if cols are in the df
         cols_list = [self.dt_col, self.target_col]
         if self.extra_features_col is not None:
             if not isinstance(self.extra_features_col, (list,)):
@@ -187,7 +190,8 @@ class TimeSequencePredictor(object):
 
         missing_cols = set(cols_list) - set(input_df.columns)
         if len(missing_cols) != 0:
-            raise ValueError("Missing Columns in the input dataframe:"+ ','.join(list(missing_cols)))
+            raise ValueError("Missing Columns in the input dataframe:" +
+                             ','.join(list(missing_cols)))
 
         if not Evaluator.check_metric(metric):
             raise ValueError("metric" + metric + "is not supported")
@@ -220,7 +224,8 @@ class TimeSequencePredictor(object):
          datetime   value   "extra feature 1"   "extra feature 2"
          2019-01-01 1.9 1   2
          2019-01-02 2.3 0   2
-        :param metric: A list of Strings Available string values are "mean_squared_error", "r_square".
+        :param metric: A list of Strings Available string values are "mean_squared_error",
+                      "r_square".
         :return: a list of metric evaluation results.
         """
         if not Evaluator.check_metric(metric):
@@ -235,7 +240,8 @@ class TimeSequencePredictor(object):
          datetime   value   "extra feature 1"   "extra feature 2"
          2019-01-01 1.9 1   2
          2019-01-02 2.3 0   2
-        :return: a data frame with 2 columns, the 1st is the datetime, which is the last datetime of the past sequence.
+        :return: a data frame with 2 columns, the 1st is the datetime, which is the last datetime of
+            the past sequence.
             values are the predicted future sequence values.
             Example :
             datetime    value_0     value_1   ...     value_2
@@ -250,7 +256,10 @@ class TimeSequencePredictor(object):
                    recipe,
                    remote_dir):
 
-        ft = TimeSequenceFeatureTransformer(self.future_seq_len, self.dt_col, self.target_col, self.extra_features_col,
+        ft = TimeSequenceFeatureTransformer(self.future_seq_len,
+                                            self.dt_col,
+                                            self.target_col,
+                                            self.extra_features_col,
                                             self.drop_missing)
 
         feature_list = ft.get_feature_list(input_df)
@@ -286,8 +295,6 @@ class TimeSequencePredictor(object):
         best = searcher.get_best_trials(k=1)[0]  # get the best one trial, later could be n
         pipeline = self._make_pipeline(best,
                                        feature_transformers=ft,
-                                       # feature_transformers=TimeSequenceFeatures(
-                                       #     file_path='../../../../data/nyc_taxi_rolled_split.npz'),
                                        model=model,
                                        remote_dir=remote_dir)
         return pipeline
@@ -299,16 +306,21 @@ class TimeSequencePredictor(object):
 
     def _make_pipeline(self, trial, feature_transformers, model, remote_dir):
         isinstance(trial, TrialOutput)
-        # TODO we need to save fitted parameters (not in config, e.g. min max for scalers, model weights)
-        # for both transformers and model
-        # temp restore from two files
-
         self._print_config(trial.config)
         if remote_dir is not None:
-            all_config = restore_hdfs(trial.model_path, remote_dir, feature_transformers, model, trial.config)
+            all_config = restore_hdfs(trial.model_path,
+                                      remote_dir,
+                                      feature_transformers,
+                                      model,
+                                      trial.config)
         else:
-            all_config = restore_zip(trial.model_path, feature_transformers, model, trial.config)
-        return TimeSequencePipeline(feature_transformers=feature_transformers, model=model, config=all_config)
+            all_config = restore_zip(trial.model_path,
+                                     feature_transformers,
+                                     model,
+                                     trial.config)
+        return TimeSequencePipeline(feature_transformers=feature_transformers,
+                                    model=model,
+                                    config=all_config)
 
 
 if __name__ == "__main__":
@@ -325,7 +337,7 @@ if __name__ == "__main__":
     parser.add_argument("--hadoop_conf",
                         default=None,
                         type=str,
-                        help="turn on yarn mode by passing the path to the hadoop configuration folder.")
+                        help="turn on yarn mode by passing path to hadoop configuration folder.")
     parser.add_argument("--spark_local",
                         default=False,
                         type=bool,
@@ -374,7 +386,7 @@ if __name__ == "__main__":
     pipeline = tsp.fit(train_df,
                        validation_df=val_df,
                        metric="mean_squared_error",
-                       recipe=RandomRecipe(1),
+                       # recipe=RandomRecipe(1),
                        distributed=distributed,
                        hdfs_url=hdfs_url)
 
@@ -400,4 +412,3 @@ if __name__ == "__main__":
 
     if args.hadoop_conf or args.spark_local:
         ray_ctx.stop()
-

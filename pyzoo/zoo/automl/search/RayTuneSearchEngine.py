@@ -121,7 +121,7 @@ class RayTuneSearchEngine(SearchEngine):
             config=self.search_space,
             checkpoint_freq=1,
             checkpoint_at_end=True,
-            resume="prompt",
+            # resume="prompt",
             num_samples=self.num_samples,
             resources_per_trial=self.resources_per_trail,
             verbose=1,
@@ -323,7 +323,7 @@ class RayTuneSearchEngine(SearchEngine):
                     self.best_reward_m = self.reward_m
                     save_zip(ckpt_name, self.trial_ft, self.trial_model, self.config)
                     if remote_dir is not None:
-                        upload_ppl_hdfs(remote_dir, ckpt_name, func_based=False)
+                        upload_ppl_hdfs(remote_dir, ckpt_name)
                 return path
 
             def _restore(self, checkpoint_path):

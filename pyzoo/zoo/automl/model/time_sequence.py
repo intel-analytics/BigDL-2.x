@@ -46,14 +46,16 @@ class TimeSequenceModel(BaseModel):
     def fit_eval(self, x, y, validation_data=None, verbose=0, **config):
         """
         fit for one iteration
-        :param x: 3-d array in format (no. of samples, past sequence length, 2+feature length), in the last
-        dimension, the 1st col is the time index (data type needs to be numpy datetime type, e.g. "datetime64"),
+        :param x: 3-d array in format (no. of samples, past sequence length, 2+feature length),
+        in the last dimension, the 1st col is the time index (data type needs to be numpy datetime
+        type, e.g. "datetime64"),
         the 2nd col is the target value (data type should be numeric)
-        :param y: 2-d numpy array in format (no. of samples, future sequence length) if future sequence length > 1,
-        or 1-d numpy array in format (no. of samples, ) if future sequence length = 1
-        :param validation_data: tuple in format (x_test,y_test), data used for validation. If this is specified,
-        validation result will be the optimization target for automl. Otherwise, train metric will be the optimization
-        target.
+        :param y: 2-d numpy array in format (no. of samples, future sequence length)
+        if future sequence length > 1, or 1-d numpy array in format (no. of samples, )
+        if future sequence length = 1
+        :param validation_data: tuple in format (x_test,y_test), data used for validation.
+        If this is specified, validation result will be the optimization target for automl.
+        Otherwise, train metric will be the optimization target.
         :param config: optimization hyper parameters
         :return: the resulting metric
         """
@@ -95,8 +97,3 @@ class TimeSequenceModel(BaseModel):
 
     def _get_optional_parameters(self):
         return self.model._get_optional_parameters()
-
-
-
-
-

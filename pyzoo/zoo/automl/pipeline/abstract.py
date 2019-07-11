@@ -49,4 +49,3 @@ class Pipeline(ABC):
         :return: a pipeline object
         """
         pass
-

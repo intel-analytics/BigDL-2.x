@@ -18,13 +18,26 @@ import tempfile
 
 import pytest
 
+from test.zoo.pipeline.utils.test_utils import ZooTestCase
 from zoo.automl.pipeline.time_sequence import *
 from zoo.automl.regression.time_sequence_predictor import *
 import numpy as np
 import pandas as pd
+import ray
 
 
-class TestTimeSequencePipeline:
+class TestTimeSequencePipeline(ZooTestCase):
+
+    def setup_method(self, method):
+        super().setup_method(method)
+        ray.init()
+
+    def teardown_method(self, method):
+        """
+        Teardown any state that was previously setup with a setup_method call.
+        """
+        super().teardown_method(method)
+        ray.shutdown()
 
     def test_evaluate(self):
         # sample_num should > past_seq_len, the default value of which is 50
@@ -33,7 +46,7 @@ class TestTimeSequencePipeline:
                                  "value": np.random.randn(sample_num)})
         sample_num = 64
         test_df = pd.DataFrame({"datetime": pd.date_range('1/10/2019', periods=sample_num),
-                                 "value": np.random.randn(sample_num)})
+                                "value": np.random.randn(sample_num)})
 
         future_seq_len = 1
         tsp = TimeSequencePredictor(dt_col="datetime",
@@ -151,7 +164,8 @@ class TestTimeSequencePipeline:
         y_df = test_df[default_past_seq_len:]
 
         metric = ["mean_squared_error", "r_square"]
-        mse1, rs1 = [Evaluator.evaluate(m, y_df[target_col].values, y_pred_df[target_col].values) for m in metric]
+        mse1, rs1 = [Evaluator.evaluate(m, y_df[target_col].values,
+                                        y_pred_df[target_col].values) for m in metric]
         mse2, rs2 = pipeline.evaluate(test_df, metric)
         assert mse1 == mse2
         assert rs1 == rs2
@@ -181,7 +195,6 @@ class TestTimeSequencePipeline:
         y_value = TimeSequenceFeatureTransformer()._roll_test(y_df[target_col], future_seq_len)
 
         metric = ["mean_squared_error", "r_square"]
-        # mse1, rs1 = [e.evaluate(m, y_df[target_col].values, y_pred_df[target_col].values) for m in metric]
         mse1, rs1 = [Evaluator.evaluate(m, y_value, y_pred_value) for m in metric]
         mse2, rs2 = pipeline.evaluate(test_df, metric)
         assert np.array_equal(mse1, mse2)
