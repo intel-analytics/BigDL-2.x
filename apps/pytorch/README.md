@@ -11,7 +11,7 @@ This example is migrated from [PROGRESSIVE GROWING OF GANS](https://pytorch.org/
 * Jupyter Notebook, matplotlib
 
 ## Prepare environments
-We recommend you to use [Anaconda](https://www.anaconda.com/distribution/#linux) to prepare the enviroments. Especially, you want to run on a yarn cluster(yarn-client mode). 
+We recommend you to use [Anaconda](https://www.anaconda.com/distribution/#linux) to prepare the enviroments, especially if you want to run on a yarn cluster(yarn-client mode only). 
 ```
 conda create -n zoo python=3.6 #zoo is conda enviroment name, you can set another name you like.
 conda activate zoo
@@ -25,7 +25,7 @@ If you want to run spark local, just start jupyter notebook:
 jupyter notebook
 ```
 
-If you want to run on a yarn cluster(yarn-client mode), export env `HADOOP_CONF_DIR` and `ZOO_CONDA_NAME` before starting jupyter notebook.
+If you want to run on a yarn cluster(yarn-client mode only), export env `HADOOP_CONF_DIR` and `ZOO_CONDA_NAME` before starting jupyter notebook.
 ```
 export HADOOP_CONF_DIR=[path to your hadoop conf directory]
 export ZOO_CONDA_NAME=[conda environment name you just prepared above]
