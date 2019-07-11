@@ -25,26 +25,32 @@ import json
 IDENTIFIER_LEN = 27
 
 
-def split_input_df(input_df, ts_col="timestamp", overlap=0, val_split_ratio=0, test_split_ratio=0.1):
+def split_input_df(input_df,
+                   ts_col="timestamp",
+                   overlap=0,
+                   val_split_ratio=0,
+                   test_split_ratio=0.1):
     """
     split input dataframe into train_df, val_df and test_df according to split ratio.
-    covert pandas timestamp to datetime. The dataframe is splitted in its originally order in timeline.
-    e.g. |......... train_df(80%) ........ | ... val_df(10%) ...| ...test_df(10%)...| 
+    covert pandas timestamp to datetime.
+    The dataframe is splitted in its originally order in timeline.
+    e.g. |......... train_df(80%) ........ | ... val_df(10%) ...| ...test_df(10%)...|
     :param input_df: input dataframe to be splitted
     :param ts_col: the time stamp column name
-    :param overlap: the overlap length between train_df and val_df as well as val_df and test_df. You can set overlap
-                    value to the length of sequence you want to look back for prediction. The default value is 0.
+    :param overlap: the overlap length between train_df and val_df as well as val_df and test_df.
+                    You can set overlap value to the length of sequence you want to look back for
+                    prediction. The default value is 0.
     :param val_split_ratio: validation ratio
     :param test_split_ratio: test ratio
     :return:
     """
     # suitable to nyc taxi dataset.
     df = input_df.copy()
-    
+
     inserted_col = "datetime"
     if ts_col == "datetime":
         inserted_col = "tmp_datetime"
-    
+
     df.insert(loc=0, column=inserted_col, value=pd.to_datetime(input_df[ts_col]))
     # input_df["datetime"] = pd.to_datetime(input_df["timestamp"])
     df.drop(columns=ts_col, inplace=True)
@@ -148,6 +154,7 @@ def save_zip(file, feature_transformers=None, model=None, config=None):
             for dirpath, dirnames, filenames in os.walk(dirname):
                 for filename in filenames:
                     f.write(os.path.join(dirpath, filename), filename)
+        assert os.path.isfile(file)
     finally:
         shutil.rmtree(dirname)
 
@@ -180,17 +187,20 @@ def get_remote_list(dir_in):
 
 
 def upload_ppl_hdfs(upload_dir, ckpt_name):
-    # the default upload_dir is {remote_root}/ray_results/automl
-    # since the checkpoint dirname of ray is train_func_0_{config}_{time}_{tmp}, with max identifier length of 130
-    # if there is a list([]) in config and is truncated, then it can't be identified in hadoop command
-    # therefore we use the last IDENTIFIER_LEN=27, which is {time}_{tmp} to avoid misinterpretation.
-    cur_dir = os.path.abspath(".")
-    log_name = os.path.basename(cur_dir)[-IDENTIFIER_LEN:]
+    # The default upload_dir is {remote_root}/ray_results/automl
+    # The name of ray checkpoint_dir is train_func_0_{config}_{time}_{tmp},
+    # with a max identifier length of 130.
+    # If there is a list([]) in config and is truncated into part of [],
+    # then the path name can't be identified by hadoop command.
+    # Therefore we use the last IDENTIFIER_LEN=27 of checkpoint_dir as upload_dir_name,
+    # with a format of {time}_{tmp}, in order to avoid misinterpretation.
+    log_dir = os.path.abspath(".")
+    log_name = os.path.basename(log_dir)[-IDENTIFIER_LEN:]
     remote_log_dir = os.path.join(upload_dir, log_name)
     if log_name not in get_remote_list(upload_dir):
-        cmd = "hadoop fs -mkdir {remote_log_dir}; hadoop fs -put -f {local_file} {remote_log_dir}".format(
-            local_file=ckpt_name,
-            remote_log_dir=remote_log_dir)
+        cmd = "hadoop fs -mkdir {remote_log_dir};" \
+              " hadoop fs -put -f {local_file} {remote_log_dir}"\
+            .format(local_file=ckpt_name, remote_log_dir=remote_log_dir)
     else:
         cmd = " hadoop fs -put -f {local_file} {remote_log_dir}".format(
             local_file=ckpt_name,
@@ -244,4 +254,3 @@ def restore_hdfs(model_path, remote_dir, feature_transformers=None, model=None, 
     finally:
         shutil.rmtree(tmp_dir)
     return all_config
-

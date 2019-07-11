@@ -68,14 +68,16 @@ class VanillaLSTM(BaseModel):
     def fit_eval(self, x, y, validation_data=None, verbose=0, **config):
         """
         fit for one iteration
-        :param x: 3-d array in format (no. of samples, past sequence length, 2+feature length), in the last
-        dimension, the 1st col is the time index (data type needs to be numpy datetime type, e.g. "datetime64"),
+        :param x: 3-d array in format (no. of samples, past sequence length, 2+feature length),
+        in the last dimension, the 1st col is the time index (data type needs to be numpy datetime
+        type, e.g. "datetime64"),
         the 2nd col is the target value (data type should be numeric)
-        :param y: 2-d numpy array in format (no. of samples, future sequence length) if future sequence length > 1,
-        or 1-d numpy array in format (no. of samples, ) if future sequence length = 1
-        :param validation_data: tuple in format (x_test,y_test), data used for validation. If this is specified,
-        validation result will be the optimization target for automl. Otherwise, train metric will be the optimization
-        target.
+        :param y: 2-d numpy array in format (no. of samples, future sequence length)
+        if future sequence length > 1, or 1-d numpy array in format (no. of samples, )
+        if future sequence length = 1
+        :param validation_data: tuple in format (x_test,y_test), data used for validation.
+        If this is specified, validation result will be the optimization target for automl.
+        Otherwise, train metric will be the optimization target.
         :param config: optimization hyper parameters
         :return: the resulting metric
         """
@@ -126,7 +128,7 @@ class VanillaLSTM(BaseModel):
         :return:
         """
         self.model.save(model_path)
-        #os.rename("vanilla_lstm_tmp.h5", model_path)
+        # os.rename("vanilla_lstm_tmp.h5", model_path)
 
         config_to_save = {
             "future_seq_len": self.future_seq_len,
@@ -142,10 +144,10 @@ class VanillaLSTM(BaseModel):
         :param config: the trial config
         :return: the restored model
         """
-        #self.model = None
-        #self._build(**config)
+        # self.model = None
+        # self._build(**config)
         self.model = keras.models.load_model(model_path)
-        #self.model.load_weights(file_path)
+        # self.model.load_weights(file_path)
 
         self.future_seq_len = config["future_seq_len"]
         # for continuous training
@@ -170,25 +172,3 @@ class VanillaLSTM(BaseModel):
             'epochs',
             'batch_size'
         }
-
-
-if __name__ == "__main__":
-    model = VanillaLSTM(check_optional_config=False)
-    x_train, y_train, x_test, y_test = load_nytaxi_data('../../../../data/nyc_taxi_rolled_split.npz')
-    config = {
-        # 'input_shape_x': x_train.shape[1],
-        # 'input_shape_y': x_train.shape[-1],
-        'out_units': 1,
-        'dummy1': 1,
-        'batch_size': 1024,
-        'epochs': 1
-    }
-
-    print("fit_eval:",model.fit_eval(x_train, y_train, validation_data=(x_test, y_test), **config))
-    print("evaluate:",model.evaluate(x_test, y_test))
-    print("saving model")
-    model.save("testmodel.tmp.h5",**config)
-    print("restoring model")
-    model.restore("testmodel.tmp.h5",**config)
-    print("evaluate after retoring:",model.evaluate(x_test, y_test))
-    os.remove("testmodel.tmp.h5")

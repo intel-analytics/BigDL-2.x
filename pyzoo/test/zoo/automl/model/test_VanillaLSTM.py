@@ -15,11 +15,13 @@
 #
 
 import pytest
+
+from test.zoo.pipeline.utils.test_utils import ZooTestCase
 from zoo.automl.model.VanillaLSTM import *
 from zoo.automl.feature.time_sequence import TimeSequenceFeatureTransformer
 
 
-class TestVanillaLSTM:
+class TestVanillaLSTM(ZooTestCase):
 
     def test_fit_eval(self):
         train_data = pd.DataFrame(data=np.random.randn(64, 4))

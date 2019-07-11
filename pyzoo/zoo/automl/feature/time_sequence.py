@@ -39,8 +39,9 @@ class TimeSequenceFeatureTransformer(BaseFeatureTransformer):
                  drop_missing=True):
         """
         Constructor.
-        :param drop_missing: whether to drop missing values in the curve, if this is set to False, an error will be
-        reported if missing values are found. If True, will drop the missing values and won't raise errors.
+        :param drop_missing: whether to drop missing values in the curve, if this is set to False,
+                             an error will be reported if missing values are found. If True, will
+                             drop the missing values and won't raise errors.
         """
         # self.scaler = MinMaxScaler()
         self.scaler = StandardScaler()
@@ -56,7 +57,8 @@ class TimeSequenceFeatureTransformer(BaseFeatureTransformer):
 
     def fit_transform(self, input_df, **config):
         """
-        Fit data and transform the raw data to features. This is used in training for hyper parameter searching.
+        Fit data and transform the raw data to features. This is used in training for hyper
+        parameter searching.
         This method will refresh the parameters (e.g. min and max of the MinMaxScaler) if any
         :param input_df: The input time series data frame, Example:
          datetime   value   "extra feature 1"   "extra feature 2"
@@ -64,11 +66,13 @@ class TimeSequenceFeatureTransformer(BaseFeatureTransformer):
          2019-01-02 2.3 0   2
         :param config: tunable parameters
         :return: tuple (x,y)
-            x: 3-d array in format (no. of samples, past sequence length, 2+feature length), in the last
-            dimension, the 1st col is the time index (data type needs to be numpy datetime type, e.g. "datetime64"),
+            x: 3-d array in format (no. of samples, past sequence length, 2+feature length),
+            in the last dimension, the 1st col is the time index
+            (data type needs to be numpy datetime type, e.g. "datetime64"),
             the 2nd col is the target value (data type should be numeric)
-            y: y is 2-d numpy array in format (no. of samples, future sequence length) if future sequence
-            length > 1, or 1-d numpy array in format (no. of samples, ) if future sequence length = 1
+            y: y is 2-d numpy array in format (no. of samples, future sequence length)
+            if future sequence length > 1, or 1-d numpy array in format (no. of samples, )
+            if future sequence length = 1
         """
         self.config = self._get_feat_config(**config)
         self._check_input(input_df, mode="train")
@@ -77,7 +81,9 @@ class TimeSequenceFeatureTransformer(BaseFeatureTransformer):
         self.scaler.fit(feature_data)
         data_n = self._scale(feature_data)
         assert np.mean(data_n[0]) < 1e-5
-        (x, y) = self._roll_train(data_n, past_seq_len=self.past_seq_len, future_seq_len=self.future_seq_len)
+        (x, y) = self._roll_train(data_n,
+                                  past_seq_len=self.past_seq_len,
+                                  future_seq_len=self.future_seq_len)
 
         return x, y
 
@@ -90,11 +96,13 @@ class TimeSequenceFeatureTransformer(BaseFeatureTransformer):
          2019-01-02 2.3 0   2
         :param is_train: If the input_df is for training.
         :return: tuple (x,y)
-            x: 3-d array in format (no. of samples, past sequence length, 2+feature length), in the last
-            dimension, the 1st col is the time index (data type needs to be numpy datetime type, e.g. "datetime64"),
+            x: 3-d array in format (no. of samples, past sequence length, 2+feature length),
+            in the last dimension, the 1st col is the time index
+            (data type needs to be numpy datetime type, e.g. "datetime64"),
             the 2nd col is the target value (data type should be numeric)
-            y: y is 2-d numpy array in format (no. of samples, future sequence length) if future sequence
-            length > 1, or 1-d numpy array in format (no. of samples, ) if future sequence length = 1
+            y: y is 2-d numpy array in format (no. of samples, future sequence length)
+            if future sequence length > 1, or 1-d numpy array in format (no. of samples, )
+            if future sequence length = 1
         """
         if self.config is None or self.past_seq_len is None:
             raise Exception("Needs to call fit_transform or restore first before calling transform")
@@ -105,7 +113,9 @@ class TimeSequenceFeatureTransformer(BaseFeatureTransformer):
         # select and standardize data
         data_n = self._scale(feature_data)
         if is_train:
-            (x, y) = self._roll_train(data_n, past_seq_len=self.past_seq_len, future_seq_len=self.future_seq_len)
+            (x, y) = self._roll_train(data_n,
+                                      past_seq_len=self.past_seq_len,
+                                      future_seq_len=self.future_seq_len)
             return x, y
         else:
             x = self._roll_test(data_n, past_seq_len=self.past_seq_len)
@@ -121,13 +131,16 @@ class TimeSequenceFeatureTransformer(BaseFeatureTransformer):
     def post_processing(self, input_df, y_pred, is_train):
         """
         Used only in pipeline predict, after calling self.transform(input_df, is_train=False).
-        Post_processing includes converting the predicted array to dataframe and scalar inverse transform.
+        Post_processing includes converting the predicted array into dataframe and scalar inverse
+        transform.
         :param y_pred: Model prediction result (ndarray).
         :return: Un_scaled dataframe with datetime.
         """
         y_pred_unscale = self._unscale(y_pred)
         if is_train:
-            _, y_unscale = self._roll_train(input_df[[self.target_col]], self.past_seq_len, self.future_seq_len)
+            _, y_unscale = self._roll_train(input_df[[self.target_col]],
+                                            self.past_seq_len,
+                                            self.future_seq_len)
             return y_unscale, y_pred_unscale
         else:
             y_pred_dt = self._get_y_pred_dt(input_df, self.past_seq_len)
@@ -155,12 +168,6 @@ class TimeSequenceFeatureTransformer(BaseFeatureTransformer):
                         "drop_missing": self.drop_missing
                         }
         save_config(file_path, data_to_save, replace=replace)
-
-        # with open(file_path, 'w') as output_file:
-        #     # for StandardScaler()
-        #     json.dump({"mean": self.scaler.mean_.tolist(), "scale": self.scaler.scale_.tolist()}, output_file)
-            # for minmaxScaler()
-            # json.dump({"min": self.scaler.min_.tolist(), "scale": self.scaler.scale_.tolist()}, output_file)
 
     def restore(self, **config):
         """
@@ -192,20 +199,19 @@ class TimeSequenceFeatureTransformer(BaseFeatureTransformer):
 
     def get_feature_list(self, input_df):
         feature_matrix, feature_defs = self._generate_features(input_df)
-        # return [feat.generate_name() for feat in feature_defs if isinstance(feat, TransformFeature)]
+    # return [feat.generate_name() for feat in feature_defs if isinstance(feat, TransformFeature)]
         feature_list = []
         for feat in feature_defs:
             feature_name = feat.generate_name()
             # todo: need to change if more than one target cols are supported
-            # if there is any circumstances that feature list need to be [generated features + extra features] instead
-            # of only excluding target column?
             if feature_name != self.target_col:
                 feature_list.append(feature_name)
         return feature_list
 
     def _get_feat_config(self, **config):
         """
-        Get feature related arguments from global hyper parameter config and do necessary error checking
+        Get feature related arguments from global hyper parameter config and do necessary error
+        checking
         :param config: the global config (usually from hyper parameter tuning)
         :return: config only for feature engineering
         """
@@ -247,7 +253,8 @@ class TimeSequenceFeatureTransformer(BaseFeatureTransformer):
             if is_nan.any(axis=None):
                 raise ValueError("Missing values in input dataframe!")
 
-        # check if the last datetime is large than current time. In that case, feature tools generate NaN.from
+        # check if the last datetime is large than current time.
+        # In that case, feature tools generate NaN.
         last_datetime = dt.iloc[-1]
         current_time = np.datetime64('today', 's')
         if last_datetime > current_time:
@@ -264,7 +271,8 @@ class TimeSequenceFeatureTransformer(BaseFeatureTransformer):
         else:
             min_input_len = self.past_seq_len + self.future_seq_len
             error_msg = "Length of {} data should be larger than " \
-                        "the sequence length you want to predict plus the past sequence length selected by automl.\n"\
+                        "the sequence length you want to predict " \
+                        "plus the past sequence length selected by automl.\n"\
                         "{} data length: {}\n"\
                         "predict sequence length: {}\n"\
                         "past sequence length selected: {}\n"\
@@ -295,17 +303,20 @@ class TimeSequenceFeatureTransformer(BaseFeatureTransformer):
         :param past_seq_len: the length of the past sequence
         :param future_seq_len: the length of the future sequence
         :return: tuple (x,y)
-            x: 3-d array in format (no. of samples, past sequence length, 2+feature length), in the last
-            dimension, the 1st col is the time index (data type needs to be numpy datetime type, e.g. "datetime64"),
+            x: 3-d array in format (no. of samples, past sequence length, 2+feature length), in the
+            last dimension, the 1st col is the time index (data type needs to be numpy datetime type
+            , e.g. "datetime64"),
             the 2nd col is the target value (data type should be numeric)
-            y: y is 2-d numpy array in format (no. of samples, future sequence length) if future sequence
-            length > 1, or 1-d numpy array in format (no. of samples, ) if future sequence length = 1
+            y: y is 2-d numpy array in format (no. of samples, future sequence length) if future
+            sequence length > 1, or 1-d numpy array in format (no. of samples, ) if future sequence
+            length = 1
         """
         x = dataframe[0:-future_seq_len].values
         y = dataframe.iloc[past_seq_len:, 0].values
         output_x, mask_x = self._roll_data(x, past_seq_len)
         output_y, mask_y = self._roll_data(y, future_seq_len)
-        # assert output_x.shape[0] == output_y.shape[0], "The shape of output_x and output_y doesn't match! "
+        # assert output_x.shape[0] == output_y.shape[0],
+        # "The shape of output_x and output_y doesn't match! "
         mask = (mask_x == 1) & (mask_y == 1)
         return output_x[mask], output_y[mask]
 
@@ -316,13 +327,15 @@ class TimeSequenceFeatureTransformer(BaseFeatureTransformer):
         :param df: a dataframe which has been resampled in uniform frequency.
         :param past_seq_len: the length of the past sequence
         :return: x
-            x: 3-d array in format (no. of samples, past sequence length, 2+feature length), in the last
-            dimension, the 1st col is the time index (data type needs to be numpy datetime type, e.g. "datetime64"),
+            x: 3-d array in format (no. of samples, past sequence length, 2+feature length), in the
+            last dimension, the 1st col is the time index (data type needs to be numpy datetime type
+            , e.g. "datetime64"),
             the 2nd col is the target value (data type should be numeric)
         """
         x = dataframe.values
         output_x, mask_x = self._roll_data(x, past_seq_len)
-        # assert output_x.shape[0] == output_y.shape[0], "The shape of output_x and output_y doesn't match! "
+        # assert output_x.shape[0] == output_y.shape[0],
+        # "The shape of output_x and output_y doesn't match! "
         mask = (mask_x == 1)
         return output_x[mask]
 
@@ -357,7 +370,9 @@ class TimeSequenceFeatureTransformer(BaseFeatureTransformer):
         :return:
         """
         cols = input_df.columns.tolist()
-        new_cols = [self.dt_col, self.target_col] + [col for col in cols if col != self.dt_col and col != self.target_col]
+        new_cols = [self.dt_col,
+                    self.target_col] + [col for col in cols
+                                        if col != self.dt_col and col != self.target_col]
         rearranged_data = input_df[new_cols].copy
         return rearranged_data
 
@@ -398,7 +413,7 @@ class TimeSequenceFeatureTransformer(BaseFeatureTransformer):
         # self.write_generate_feature_list(feature_defs)
         feature_cols = np.asarray(config.get("selected_features"))
         # we do not include target col in candidates.
-        # the first column is designed to be the default position of target column in feature transformer output.
+        # the first column is designed to be the default position of target column.
         target_col = np.array([self.target_col])
         cols = np.concatenate([target_col, feature_cols])
         target_feature_matrix = feature_matrix[cols]
