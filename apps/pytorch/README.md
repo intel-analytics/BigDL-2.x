@@ -2,7 +2,7 @@
 
 This example is migrated from [PROGRESSIVE GROWING OF GANS](https://pytorch.org/hub/facebookresearch_pytorch-gan-zoo_pgan/), and demonstrates how to run distributed inference using a pre-trained Pytorch Model.
 
-## Requisition
+## Requirement
 * Python 3.6
 * JDK 1.8
 * Pytorch & TorchVision 1.1.0
