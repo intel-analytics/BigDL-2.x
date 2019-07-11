@@ -25,7 +25,7 @@ from copy import copy, deepcopy
 
 from zoo.automl.search.abstract import *
 from zoo.automl.common.util import *
-
+from ray.tune import Trainable
 
 class RayTuneSearchEngine(SearchEngine):
     """
@@ -94,11 +94,24 @@ class RayTuneSearchEngine(SearchEngine):
         Run trials
         :return: trials result
         """
+        # function based
         trials = tune.run(
             self.train_func,
             name=self.name,
             stop=self.stop_criteria,
             config=self.search_space,
+            num_samples=self.num_samples,
+            resources_per_trial=self.resources_per_trail,
+            verbose=1,
+            reuse_actors=True
+        )
+        # class based
+        trials = tune.run(
+            self.train_func,
+            name=self.name,
+            stop=self.stop_criteria,
+            config=self.search_space,
+            checkpoint_at_end=True,
             num_samples=self.num_samples,
             resources_per_trial=self.resources_per_trail,
             verbose=1,
@@ -140,8 +153,9 @@ class RayTuneSearchEngine(SearchEngine):
             raise GoodError("This works.")
 
         try:
-            self.train_func({'out_units': 1, 'selected_features': ["MONTH(datetime)", "WEEKDAY(datetime)"]}, mock_reporter)
+            # self.train_func({'out_units': 1, 'selected_features': ["MONTH(datetime)", "WEEKDAY(datetime)"]}, mock_reporter)
             # self.train_func(self.search_space, mock_reporter)
+            self.train_func
 
         except TypeError as e:
             print("Forgot to modify function signature?")
@@ -221,7 +235,67 @@ class RayTuneSearchEngine(SearchEngine):
                     checkpoint="best.ckpt"
                 )
 
-        return train_func
+        # return train_func
+
+        class TrainableClass(Trainable):
+
+            def _setup(self, config):
+                global_ft = ray.get(ft_id)
+                global_model = ray.get(model_id)
+                self.trial_ft = deepcopy(global_ft)
+                self.trial_model = deepcopy(global_model)
+
+                # handling input
+                global_input_df = ray.get(input_df_id)
+                trial_input_df = deepcopy(global_input_df)
+                (self.x_train, self.y_train) = self.trial_ft.fit_transform(trial_input_df, **config)
+                # trial_ft.fit(trial_input_df, **config)
+
+                # handling validation data
+                self.validation_data = None
+                if validation_df is not None and not validation_df.empty:
+                    global_validation_df = ray.get(validation_df_id)
+                    trial_validation_df = deepcopy(global_validation_df)
+                    self.validation_data = self.trial_ft.transform(trial_validation_df)
+
+                # no need to call build since it is called the first time fit_eval is called.
+                # callbacks = [TuneCallback(tune_reporter)]
+                # fit model
+                self.best_reward_m = -999
+                self.reward_m = -999
+                self.ckpt_name = "pipeline.ckpt"
+
+            def _train(self):
+                result = self.trial_model.fit_eval(self.x_train, self.y_train,
+                                                   validation_data=self.validation_data,
+                                                   verbose=1,
+                                                   **self.config)
+                if metric == "mean_squared_error":
+                    reward_m = (-1) * result
+                    # print("running iteration: ",i)
+                elif metric == "r_square":
+                    reward_m = result
+                else:
+                    raise ValueError("metric can only be \"mean_squared_error\" or \"r_square\"")
+                return {"reward_metric": reward_m, "checkpoint":self.ckpt_name}
+
+            def _save(self, checkpoint_dir):
+                ckpt_name = self.ckpt_name
+                path = os.path.join(checkpoint_dir, "checkpoint")
+                if self.reward_m > self.best_reward_m:
+                    self.best_reward_m = self.reward_m
+                    save_zip(ckpt_name, self.trial_ft, self.trial_model, self.config)
+                    if remote_dir is not None:
+                        upload_ppl_hdfs(remote_dir, ckpt_name, func_based=False)
+                return path
+
+            def _restore(self, checkpoint_path):
+                if remote_dir is not None:
+                    restore_hdfs(checkpoint_path, remote_dir, self.trial_ft, self.trial_model)
+                else:
+                    restore_zip(checkpoint_path, self.trial_ft, self.trial_model)
+
+        return TrainableClass
 
     def _prepare_tune_config(self, space):
         tune_config = {}
@@ -233,3 +307,7 @@ class RayTuneSearchEngine(SearchEngine):
             else:
                 tune_config[k] = v
         return tune_config
+
+
+
+
