@@ -15,11 +15,16 @@
 #
 import pytest
 
+from test.zoo.pipeline.utils.test_utils import ZooTestCase
 from zoo.automl.model import BaseModel
 from zoo.automl.regression.time_sequence_predictor import *
 
 
-class TestTimeSequencePredictor:
+class TestTimeSequencePredictor(ZooTestCase):
+
+    def setup_method(self, method):
+        super().setup_method(method)
+        ray.init()
 
     def test_fit(self):
         # sample_num should > past_seq_len, the default value of which is 50
@@ -50,6 +55,13 @@ class TestTimeSequencePredictor:
         assert isinstance(pipeline.feature_transformers, TimeSequenceFeatureTransformer)
         assert isinstance(pipeline.model, BaseModel)
         assert pipeline.config is not None
+
+    def teardown_method(self, method):
+        """
+        Teardown any state that was previously setup with a setup_method call.
+        """
+        super().teardown_method(method)
+        ray.shutdown()
 
 
 if __name__ == '__main__':

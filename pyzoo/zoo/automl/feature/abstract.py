@@ -58,8 +58,9 @@ class BaseFeatureTransformer(ABC):
     def restore(self, **config):
         """
         Restore variables from file
-        :param file_path: file contain saved parameters. i.e. some parameters are obtained during training,
-            not in trial config, e.g. scaler fit params)
+        :param file_path: file contain saved parameters.
+                          i.e. some parameters are obtained during training,
+                          not in trial config, e.g. scaler fit params)
         :param config: the trial config
         :return:
         """
@@ -89,7 +90,8 @@ class BaseFeatureTransformer(ABC):
         if not config_parameters.issuperset(self._get_required_parameters()):
             raise ValueError("Missing required parameters in configuration. " +
                              "Required parameters are: " + str(self._get_required_parameters()))
-        if self.check_optional_config and not config_parameters.issuperset(self._get_optional_parameters()):
+        if self.check_optional_config and \
+                not config_parameters.issuperset(self._get_optional_parameters()):
             raise ValueError("Missing optional parameters in configuration. " +
                              "Optional parameters are: " + str(self._get_optional_parameters()))
         return True
