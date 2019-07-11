@@ -48,7 +48,7 @@ class TFValidationMethod(JavaValue):
 class TFTrainingHelper(Layer):
     def __init__(self, path, configProto):
         if configProto is not None:
-            byte_arr = configProto.SerializeToString()
+            byte_arr = bytearray(configProto.SerializeToString())
         else:
             byte_arr = None
         super(TFTrainingHelper, self).__init__(None, "float", path, byte_arr)
@@ -97,6 +97,11 @@ class TFOptimizer:
         self.dataset = dataset
         self.inputs = inputs + additional_inputs
         self.graph = graph
+        if session_config is not None:
+            import tensorflow as tf
+            assert isinstance(session_config, tf.ConfigProto),\
+                "session_config should be a tf.ConfigProto"
+            session_config.use_per_session_threads = True
         self.session_config = session_config
 
         self.clip_norm = clip_norm
