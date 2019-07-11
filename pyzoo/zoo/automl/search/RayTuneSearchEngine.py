@@ -27,6 +27,7 @@ from zoo.automl.search.abstract import *
 from zoo.automl.common.util import *
 from ray.tune import Trainable
 
+
 class RayTuneSearchEngine(SearchEngine):
     """
     Tune driver
@@ -46,6 +47,7 @@ class RayTuneSearchEngine(SearchEngine):
         """
         self.pipeline = None
         self.train_func = None
+        self.trainable_class = None
         self.resources_per_trail = resources_per_trial
         self.trials = None
         self.remote_dir = remote_dir
@@ -88,6 +90,12 @@ class RayTuneSearchEngine(SearchEngine):
                                                    validation_df,
                                                    metric,
                                                    self.remote_dir)
+        self.trainable_class = self._prepare_trainable_class(input_df,
+                                                             feature_transformers,
+                                                             model,
+                                                             validation_df,
+                                                             metric,
+                                                             self.remote_dir)
 
     def run(self):
         """
@@ -95,23 +103,25 @@ class RayTuneSearchEngine(SearchEngine):
         :return: trials result
         """
         # function based
-        trials = tune.run(
-            self.train_func,
-            name=self.name,
-            stop=self.stop_criteria,
-            config=self.search_space,
-            num_samples=self.num_samples,
-            resources_per_trial=self.resources_per_trail,
-            verbose=1,
-            reuse_actors=True
-        )
+        # trials = tune.run(
+        #     self.train_func,
+        #     name=self.name,
+        #     stop=self.stop_criteria,
+        #     config=self.search_space,
+        #     num_samples=self.num_samples,
+        #     resources_per_trial=self.resources_per_trail,
+        #     verbose=1,
+        #     reuse_actors=True
+        # )
         # class based
         trials = tune.run(
-            self.train_func,
+            self.trainable_class,
             name=self.name,
             stop=self.stop_criteria,
             config=self.search_space,
+            checkpoint_freq=1,
             checkpoint_at_end=True,
+            resume="prompt",
             num_samples=self.num_samples,
             resources_per_trial=self.resources_per_trail,
             verbose=1,
@@ -153,9 +163,10 @@ class RayTuneSearchEngine(SearchEngine):
             raise GoodError("This works.")
 
         try:
-            # self.train_func({'out_units': 1, 'selected_features': ["MONTH(datetime)", "WEEKDAY(datetime)"]}, mock_reporter)
+            self.train_func({'out_units': 1,
+                             'selected_features': ["MONTH(datetime)", "WEEKDAY(datetime)"]},
+                            mock_reporter)
             # self.train_func(self.search_space, mock_reporter)
-            self.train_func
 
         except TypeError as e:
             print("Forgot to modify function signature?")
@@ -214,7 +225,10 @@ class RayTuneSearchEngine(SearchEngine):
             best_reward_m = -999
             reward_m = -999
             for i in range(1, 101):
-                result = trial_model.fit_eval(x_train, y_train, validation_data=validation_data, **config)
+                result = trial_model.fit_eval(x_train,
+                                              y_train,
+                                              validation_data=validation_data,
+                                              **config)
                 if metric == "mean_squared_error":
                     reward_m = (-1) * result
                     # print("running iteration: ",i)
@@ -235,7 +249,30 @@ class RayTuneSearchEngine(SearchEngine):
                     checkpoint="best.ckpt"
                 )
 
-        # return train_func
+        return train_func
+
+    @staticmethod
+    def _prepare_trainable_class(input_df,
+                                 feature_transformers,
+                                 model,
+                                 validation_df=None,
+                                 metric="mean_squared_error",
+                                 remote_dir=None
+                                 ):
+        """
+        Prepare the train function for ray tune
+        :param input_df: input dataframe
+        :param feature_transformers: feature transformers
+        :param model: model or model selector
+        :param validation_df: validation dataframe
+        :param metric: the rewarding metric
+        :return: the train function
+        """
+        input_df_id = ray.put(input_df)
+        ft_id = ray.put(feature_transformers)
+        model_id = ray.put(model)
+        if validation_df is not None and not validation_df.empty:
+            validation_df_id = ray.put(validation_df)
 
         class TrainableClass(Trainable):
 
@@ -268,20 +305,20 @@ class RayTuneSearchEngine(SearchEngine):
             def _train(self):
                 result = self.trial_model.fit_eval(self.x_train, self.y_train,
                                                    validation_data=self.validation_data,
-                                                   verbose=1,
                                                    **self.config)
                 if metric == "mean_squared_error":
-                    reward_m = (-1) * result
+                    self.reward_m = (-1) * result
                     # print("running iteration: ",i)
                 elif metric == "r_square":
-                    reward_m = result
+                    self.reward_m = result
                 else:
                     raise ValueError("metric can only be \"mean_squared_error\" or \"r_square\"")
-                return {"reward_metric": reward_m, "checkpoint":self.ckpt_name}
+                return {"reward_metric": self.reward_m, "checkpoint": self.ckpt_name}
 
             def _save(self, checkpoint_dir):
                 ckpt_name = self.ckpt_name
-                path = os.path.join(checkpoint_dir, "checkpoint")
+                # save in the working dir (without "checkpoint_{}".format(training_iteration))
+                path = os.path.join(checkpoint_dir, "..", ckpt_name)
                 if self.reward_m > self.best_reward_m:
                     self.best_reward_m = self.reward_m
                     save_zip(ckpt_name, self.trial_ft, self.trial_model, self.config)
@@ -307,7 +344,3 @@ class RayTuneSearchEngine(SearchEngine):
             else:
                 tune_config[k] = v
         return tune_config
-
-
-
-
