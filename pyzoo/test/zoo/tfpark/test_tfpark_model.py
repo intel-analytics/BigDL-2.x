@@ -316,6 +316,33 @@ class TestTFParkModel(ZooTestCase):
         optimizer = TFOptimizer.from_keras(model, dataset)
         optimizer.optimize()
 
+    def test_tf_optimizer_variable_length(self):
+        from random import randrange
+        ids = [np.random.randint(0, 10, size=[randrange(20)+1]) for i in range(0, 20)]
+        labels = [np.array([1]) for i in range(0, 20)]
+        id_rdd = self.sc.parallelize(ids)
+        label_rdd = self.sc.parallelize(labels)
+        training_rdd = id_rdd.zip(label_rdd)
+        dataset = TFDataset.from_rdd(training_rdd,
+                                     features=(tf.int32, [None]),
+                                     labels=(tf.int32, [1]),
+                                     names=["features", "labels"],
+                                     )
+        # model = tf.keras.models.Sequential()
+        # model.add(tf.keras.layers.Dense(2, input_shape=(20, ), activation="softmax"))
+        # model.compile(optimizer="sgd", loss="sparse_categorical_crossentropy")
+        words_input = tf.keras.layers.Input(shape=(20, ), name='words_input')
+        embedding_layer = tf.keras.layers.Embedding(input_dim=10,
+                                                    output_dim=5, name='word_embedding')
+        word_embeddings = embedding_layer(words_input)
+        embedding = tf.keras.layers.Flatten()(word_embeddings)
+        model = tf.keras.models.Model(inputs=[words_input], outputs=[embedding])
+        model.compile(optimizer="sgd", loss="mse")
+        optimizer = TFOptimizer.from_keras(model, dataset)
+        optimizer.optimize()
+        print("111")
+
+
     def test_tensorflow_optimizer(self):
         data = tf.keras.layers.Input(shape=[10])
 

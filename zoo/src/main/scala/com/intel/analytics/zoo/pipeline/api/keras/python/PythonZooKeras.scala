@@ -19,7 +19,7 @@ package com.intel.analytics.zoo.pipeline.api.keras.python
 import java.util.{List => JList, Map => JMap}
 
 import com.intel.analytics.bigdl.{Criterion, DataSet, Module}
-import com.intel.analytics.bigdl.dataset.{Sample => JSample, Identity => DIdentity, _}
+import com.intel.analytics.bigdl.dataset.{Identity => DIdentity, Sample => JSample, _}
 
 import scala.collection.JavaConverters._
 import com.intel.analytics.bigdl.optim._
@@ -36,7 +36,7 @@ import com.intel.analytics.zoo.feature.image.ImageSet
 import com.intel.analytics.zoo.pipeline.api.autograd.{Constant, _}
 import com.intel.analytics.zoo.pipeline.api.keras.layers.{KerasLayerWrapper, _}
 import com.intel.analytics.zoo.pipeline.api.keras.layers.utils.KerasUtils
-import com.intel.analytics.zoo.pipeline.api.keras.models.{KerasNet, Model, Sequential}
+import com.intel.analytics.zoo.pipeline.api.keras.models.{InternalDistriOptimizer, KerasNet, Model, Sequential}
 import com.intel.analytics.zoo.pipeline.api.keras.objectives._
 import com.intel.analytics.zoo.pipeline.api.keras.optimizers.{Adam, AdamWeightDecay}
 import org.apache.spark.api.java.JavaRDD
@@ -1359,12 +1359,13 @@ class PythonZooKeras[T: ClassTag](implicit ev: TensorNumeric[T]) extends PythonZ
   def batchingWithPaddingStrategy(dataset: DataSet[JSample[T]], batchSize: Int)
   : DataSet[MiniBatch[T]] = {
     println("Using Feature Padding Strategy")
-    val featurePaddingParam = PaddingParam[T](Some(Array(Tensor[T](1).fill(ev.fromType(-1.0)))))
+    val paddingTensor = Tensor[T](1).fill(ev.fromType(-1.0))
+    val featurePaddingParam = PaddingParam[T](Some(Array.fill[Tensor[T]](13)(paddingTensor)))
     dataset.transform(SampleToMiniBatch(
       batchSize = batchSize, featurePaddingParam = Some(featurePaddingParam)))
   }
 
-  override def createDistriOptimizerFromRDD(model: AbstractModule[Activity, Activity, T],
+  def createDistriOptimizerFromRDD(model: AbstractModule[Activity, Activity, T],
                             trainingRdd: JavaRDD[Sample],
                             criterion: Criterion[T],
                             optimMethod: JMap[String, OptimMethod[T]],
@@ -1372,7 +1373,7 @@ class PythonZooKeras[T: ClassTag](implicit ev: TensorNumeric[T]) extends PythonZ
                             batchSize: Int): Optimizer[T, MiniBatch[T]] = {
     val sampleRDD = toJSample(trainingRdd)
 
-    val optimizer = new DistriOptimizer(
+    val optimizer = new InternalDistriOptimizer(
       _model = model,
       _dataset = batchingWithPaddingStrategy(DataSet.rdd(sampleRDD), batchSize)
         .asInstanceOf[DistributedDataSet[MiniBatch[T]]],
@@ -1393,5 +1394,15 @@ class PythonZooKeras[T: ClassTag](implicit ev: TensorNumeric[T]) extends PythonZ
     optimizer.disableCheckSingleton()
 
     optimizer
+  }
+
+  def setValidationWithPaddingStrategy(optimizer: Optimizer[T, MiniBatch[T]],
+                    batchSize: Int,
+                    trigger: Trigger,
+                    valRdd: JavaRDD[Sample],
+                    vMethods: JList[ValidationMethod[T]]): Unit = {
+    val sampleRDD = toJSample(valRdd)
+    optimizer.setValidation(trigger, batchingWithPaddingStrategy(DataSet.rdd(sampleRDD), batchSize),
+      vMethods.asScala.toArray)
   }
 }

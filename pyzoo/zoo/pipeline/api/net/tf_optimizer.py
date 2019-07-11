@@ -24,8 +24,9 @@ from py4j.protocol import Py4JJavaError
 from bigdl.nn.criterion import Criterion
 from bigdl.nn.layer import Layer
 from bigdl.util.common import to_list, JavaValue
-from bigdl.optim.optimizer import EveryEpoch, MaxEpoch, Optimizer
+from bigdl.optim.optimizer import EveryEpoch, MaxEpoch
 from zoo.pipeline.api.keras.engine.topology import to_bigdl_metric
+from zoo.pipeline.api.keras.optimizers import DistriOptimizer
 from zoo.pipeline.api.net.utils import _find_placeholders, _check_the_same
 from zoo.util import nest
 
@@ -194,7 +195,7 @@ with variable_creator_scope():
                 raise ValueError("Validation data is not specified. Please set " +
                                  "val rdd in TFDataset, or set val_split larger than zero")
 
-            self.optimizer = Optimizer.create(self.training_helper_layer,
+            self.optimizer = DistriOptimizer(self.training_helper_layer,
                                               training_rdd,
                                               IdentityCriterion(),
                                               batch_size=batch_size,
@@ -205,7 +206,7 @@ with variable_creator_scope():
                                           val_method)
         else:
             training_rdd = sample_rdd
-            self.optimizer = Optimizer.create(self.training_helper_layer,
+            self.optimizer = DistriOptimizer(self.training_helper_layer,
                                               training_rdd,
                                               IdentityCriterion(),
                                               batch_size=batch_size,

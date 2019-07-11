@@ -105,3 +105,55 @@ class AdamWeightDecay(OptimMethod, ZooKerasCreator):
             epsilon,
             weight_decay)
         self.bigdl_type = bigdl_type
+
+
+from bigdl.optim.optimizer import DistriOptimizer as BDistriOptimizer, SGD
+
+
+class DistriOptimizer(BDistriOptimizer):
+    def __init__(self,
+                 model,
+                 training_rdd,
+                 criterion,
+                 end_trigger=None,
+                 batch_size=32,
+                 optim_method=None,
+                 bigdl_type="float"):
+        """
+        Create an optimizer.
+
+
+        :param model: the neural net model
+        :param training_data: the training dataset
+        :param criterion: the loss function
+        :param optim_method: the algorithm to use for optimization,
+           e.g. SGD, Adagrad, etc. If optim_method is None, the default algorithm is SGD.
+        :param end_trigger: when to end the optimization
+        :param batch_size: training batch size
+        """
+        if not optim_method:
+            optim_methods = {model.name(): SGD()}
+        elif isinstance(optim_method, OptimMethod):
+            optim_methods = {model.name(): optim_method}
+        elif isinstance(optim_method, JavaObject):
+            optim_methods = {model.name(): OptimMethod(optim_method, bigdl_type)}
+        else:
+            optim_methods = optim_method
+        if isinstance(training_rdd, RDD):
+            self.bigdl_type = bigdl_type
+            self.value = callBigDlFunc(self.bigdl_type, "createDistriOptimizerFromRDD",
+                                       model.value, training_rdd, criterion,
+                                       optim_methods, end_trigger, batch_size)
+
+    def set_validation(self, batch_size, val_rdd, trigger, val_method=None):
+        """
+        Configure validation settings.
+
+
+        :param batch_size: validation batch size
+        :param val_rdd: validation dataset
+        :param trigger: validation interval
+        :param val_method: the ValidationMethod to use,e.g. "Top1Accuracy", "Top5Accuracy", "Loss"
+        """
+        callBigDlFunc(self.bigdl_type, "setValidationWithPaddingStrategy", self.value, batch_size,
+                      trigger, val_rdd, to_list(val_method))
