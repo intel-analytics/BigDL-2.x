@@ -63,7 +63,9 @@ class TimeSequencePipeline(Pipeline):
         """
         x, y = self.feature_transformers.transform(input_df, is_train=True)
         y_pred = self.model.predict(x)
-        y_unscale, y_pred_unscale = self.feature_transformers.post_processing(input_df, y_pred, is_train=True)
+        y_unscale, y_pred_unscale = self.feature_transformers.post_processing(input_df,
+                                                                              y_pred,
+                                                                              is_train=True)
 
         return [Evaluator.evaluate(m, y_unscale, y_pred_unscale) for m in metric]
 
@@ -96,4 +98,3 @@ def load_ts_pipeline(file):
     ts_pipeline = TimeSequencePipeline(feature_transformers, model, all_config)
     print("Restore pipeline from", file)
     return ts_pipeline
-

@@ -18,11 +18,13 @@ import shutil
 import tempfile
 
 import pytest
+
+from test.zoo.pipeline.utils.test_utils import ZooTestCase
 from zoo.automl.model.Seq2Seq import *
 from zoo.automl.feature.time_sequence import TimeSequenceFeatureTransformer
 
 
-class TestSeq2Seq:
+class TestSeq2Seq(ZooTestCase):
 
     def test_fit_eval(self):
         train_data = pd.DataFrame(data=np.random.randn(64, 4))
@@ -66,11 +68,17 @@ class TestSeq2Seq:
 
         model_1 = LSTMSeq2Seq(check_optional_config=False, future_seq_len=1)
         model_1.fit_eval(x_train_1, y_train_1, **config)
-        print("evaluate_future_seq_len_1:", model_1.evaluate(x_val_1, y_val_1, metric=['mean_squared_error', 'r_square']))
+        print("evaluate_future_seq_len_1:", model_1.evaluate(x_val_1,
+                                                             y_val_1,
+                                                             metric=['mean_squared_error',
+                                                                     'r_square']))
 
         model_2 = LSTMSeq2Seq(check_optional_config=False, future_seq_len=2)
         model_2.fit_eval(x_train_2, y_train_2, **config)
-        print("evaluate_future_seq_len_2:", model_2.evaluate(x_val_2, y_val_2, metric=['mean_squared_error', 'r_square']))
+        print("evaluate_future_seq_len_2:", model_2.evaluate(x_val_2,
+                                                             y_val_2,
+                                                             metric=['mean_squared_error',
+                                                                     'r_square']))
 
     def test_predict(self):
         train_data = pd.DataFrame(data=np.random.randn(64, 4))
@@ -117,7 +125,7 @@ class TestSeq2Seq:
 
         config = {
             'batch_size': 32,
-            'epochs': 2,
+            'epochs': 1,
             'dropout': 0
         }
 
@@ -139,8 +147,9 @@ class TestSeq2Seq:
             predict_1_after = new_model_1.predict(x_test_1)
             assert np.allclose(predict_1_before, predict_1_after), \
                 "Prediction values are not the same after restore: " \
-                "predict before is {}, and predict after is {}".format(predict_1_before, predict_1_after)
-            new_config = {'epochs': 2}
+                "predict before is {}, and predict after is {}".format(predict_1_before,
+                                                                       predict_1_after)
+            new_config = {'epochs': 1}
             new_model_1.fit_eval(x_train_1, y_train_1, **new_config)
 
             save(dirname, model=model_2)
@@ -148,7 +157,8 @@ class TestSeq2Seq:
             predict_2_after = new_model_2.predict(x_test_2)
             assert np.allclose(predict_2_before, predict_2_after), \
                 "Prediction values are not the same after restore: " \
-                "predict before is {}, and predict after is {}".format(predict_2_before, predict_2_after)
+                "predict before is {}, and predict after is {}".format(predict_2_before,
+                                                                       predict_2_after)
             new_model_2.fit_eval(x_train_2, y_train_2, **new_config)
         finally:
             shutil.rmtree(dirname)

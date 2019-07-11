@@ -61,7 +61,7 @@ class BaseModel(ABC):
         :param model_path: the model file path to be saved to.
         :param config_path: the config file path to be saved to.
         :return:
-        """     
+        """
         pass
 
     @abstractmethod
@@ -73,7 +73,6 @@ class BaseModel(ABC):
         :return: the restored model
         """
         pass
-
 
     @abstractmethod
     def _get_required_parameters(self):
@@ -99,7 +98,8 @@ class BaseModel(ABC):
         if not config_parameters.issuperset(self._get_required_parameters()):
             raise ValueError("Missing required parameters in configuration. " +
                              "Required parameters are: " + str(self._get_required_parameters()))
-        if self.check_optional_config and not config_parameters.issuperset(self._get_optional_parameters()):
+        if self.check_optional_config and \
+                not config_parameters.issuperset(self._get_optional_parameters()):
             raise ValueError("Missing optional parameters in configuration. " +
                              "Optional parameters are: " + str(self._get_optional_parameters()))
         return True
