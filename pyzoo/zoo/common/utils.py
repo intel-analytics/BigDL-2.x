@@ -38,7 +38,7 @@ def to_list_of_numpy(elements):
     return results
 
 
-def set_core_num(num):
+def set_core_number(num):
     callBigDlFunc("float", "setCoreNumber", num)
 
 
