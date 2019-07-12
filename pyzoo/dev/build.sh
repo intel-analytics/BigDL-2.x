@@ -32,8 +32,4 @@ platform=$1
 version=$2
 profiles=${*:3}
 
-echo $platform
-echo $version
-echo $profiles
-
 bash ${RUN_SCRIPT_DIR}/release.sh ${platform} ${version} false ${profiles}
