@@ -29,6 +29,7 @@ sc = init_nncontext()
 3. You need to install Java __>= JDK8__ before running Analytics Zoo, which is required by `pyspark`.
 4. `pyspark==2.4.3`, `bigdl==0.8.0` and their dependencies will automatically be installed if they haven't been detected in the current Python environment.
 
+---
 ## **Install from pip for yarn cluster**
 
 You only need to following these steps on your driver node and we only support yarn-client mode for now.
@@ -40,7 +41,6 @@ You only need to following these steps on your driver node and we only support y
 ```
 source activate zoo
 pip install analytics-zoo
-
 ```
 3) Download JDK8 and set the environment variable: JAVA_HOME (recommended).
    - You can also install JDK via conda without setting the JAVA_HOME manually:
@@ -51,7 +51,6 @@ pip install analytics-zoo
 - Create a SparkContext on Yarn
 
 ``` python
-
 from zoo import init_spark_on_yarn
 
 sc = init_spark_on_yarn(
