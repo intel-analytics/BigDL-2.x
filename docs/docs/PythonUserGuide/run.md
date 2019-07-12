@@ -52,9 +52,9 @@ export BIGDL_PACKAGES=...
 ---
 ## **Run on yarn after pip install**
 
-Start python and then execute the following code:
+You should use `init_spark_on_yarn` rather than `init_nncontext()` here to create a SparkContext on Yarn.
 
-Remark: You should use `init_spark_on_yarn` rather than `init_nncontext()` here to create a SparkContext on Yarn.
+Start python and then execute the following code:
 
 ``` python
 from zoo import init_spark_on_yarn
@@ -68,7 +68,6 @@ sc = init_spark_on_yarn(
     driver_memory="2g",
     driver_cores=4,
     extra_executor_memory_for_ray="10g")
-
 ```
 
 ---
