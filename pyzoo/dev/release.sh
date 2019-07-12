@@ -19,15 +19,15 @@
 set -e
 RUN_SCRIPT_DIR=$(cd $(dirname $0) ; pwd)
 echo $RUN_SCRIPT_DIR
-export ANALYTICS_ZOO_HOME="$(cd ${RUN_SCRIPT_DIR}/../../../; pwd)"
+export ANALYTICS_ZOO_HOME="$(cd ${RUN_SCRIPT_DIR}/../../; pwd)"
 echo $ANALYTICS_ZOO_HOME
-ANALYTICS_ZOO_PYTHON_DIR="$(cd ${RUN_SCRIPT_DIR}/../../../pyzoo; pwd)"
+ANALYTICS_ZOO_PYTHON_DIR="$(cd ${RUN_SCRIPT_DIR}/../../pyzoo; pwd)"
 echo $ANALYTICS_ZOO_PYTHON_DIR
 
 if (( $# < 3)); then
   echo "Usage: release.sh platform version upload mvn_parameters"
   echo "Usage example: bash release.sh linux default true"
-  echo "Usage example: bash release.sh linux 0.6.0.dev0 true -Dspark.version=2.4.3 -Dbigdl.artifactId=bigdl-SPARK_2.4 -P spark_2.x"
+  echo "Usage example: bash release.sh linux 0.6.0.dev0 true"
   echo "If needed, you can also add other profiles such as: -Dspark.version=2.4.3 -Dbigdl.artifactId=bigdl-SPARK_2.4 -P spark_2.x"
   exit -1
 fi
@@ -92,4 +92,3 @@ if [ ${upload} == true ]; then
     echo "Command for uploading to pypi: $upload_command"
     $upload_command
 fi
-
