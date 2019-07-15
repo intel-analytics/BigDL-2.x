@@ -105,7 +105,15 @@ case class MinLoss(min: Float) extends ZooTrigger {
  * @param first first trigger
  * @param others others triggers
  */
-case class And(first : Trigger, others : Trigger*) extends ZooTrigger {
+case class And(first : ZooTrigger, others : ZooTrigger*) extends ZooTrigger {
+  override def setZooState(zooState: Table): Unit = {
+    super.setZooState(zooState)
+    first.setZooState(zooState)
+    others.foreach{zt =>
+      zt.setZooState(zooState)
+    }
+  }
+
   override def apply(state: Table): Boolean = {
     first.apply(state) && others.forall(_.apply(state))
   }
@@ -116,7 +124,15 @@ case class And(first : Trigger, others : Trigger*) extends ZooTrigger {
  * @param first first trigger
  * @param others others triggers
  */
-case class Or(first : Trigger, others : Trigger*) extends ZooTrigger {
+case class Or(first : ZooTrigger, others : ZooTrigger*) extends ZooTrigger {
+  override def setZooState(zooState: Table): Unit = {
+    super.setZooState(zooState)
+    first.setZooState(zooState)
+    others.foreach{zt =>
+      zt.setZooState(zooState)
+    }
+  }
+
   override def apply(state: Table): Boolean = {
     first.apply(state) || others.exists(_.apply(state))
   }
