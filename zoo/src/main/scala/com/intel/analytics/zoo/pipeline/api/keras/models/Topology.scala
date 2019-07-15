@@ -1349,43 +1349,6 @@ private[zoo] class InternalDistriOptimizer[T: ClassTag] (
 object InternalDistriOptimizer {
   val logger = Logger.getLogger(this.getClass)
 
-  protected def getEpoch(s: Table, trigger: Trigger): Trigger = {
-    try {
-      val clazz = trigger.getClass()
-      // use reflection to make sure if the trigger is every epoch.
-      clazz.getDeclaredField("lastEpoch")
-    } catch {
-      case e: NoSuchFieldException =>
-        return trigger
-    }
-    Trigger.and(trigger, endEpoch(s))
-  }
-
-  protected def endEpoch(s: Table): Trigger = {
-    new Trigger() {
-      private var lastEpoch = -1
-
-      override def apply(state: Table): Boolean = {
-        if (lastEpoch == -1) {
-          lastEpoch = state[Int]("epoch")
-          false
-        } else {
-          if (state[Int]("epoch") <= lastEpoch) {
-            false
-          } else {
-            if (s.contains("numSlice") && s.contains("currentSlice")
-              && s[Int]("currentSlice") % s[Int]("numSlice") == 0) {
-              lastEpoch = state[Int]("epoch")
-              true
-            } else {
-              false
-            }
-          }
-        }
-      }
-    }
-  }
-
   protected def validate[T](validationFeatureSet: FeatureSet[MiniBatch[T]],
                             validationMethods: Array[ValidationMethod[T]],
                             models: RDD[Cache[T]],
