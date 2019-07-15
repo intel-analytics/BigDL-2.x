@@ -437,7 +437,7 @@ object OpenVinoInferenceSupportive extends InferenceSupportive with Serializable
         supportive.loadOpenVinoIR(modelFilePath, weightFilePath,
           deviceType.value, batchSize)
       }
-      new OpenVINOModel(executableNetworkReference, supportive)
+      new OpenVINOModel(executableNetworkReference, supportive, isInt8 > 0)
     }
   }
 
