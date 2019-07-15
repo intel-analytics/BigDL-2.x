@@ -1255,6 +1255,12 @@ private[zoo] class InternalDistriOptimizer[T: ClassTag] (
         state("numSlice") = numSlice
         state("currentSlice") = 0
       }
+      if (!state.contains("Loss")) {
+        state.update("Loss", Float.PositiveInfinity)
+      }
+      if (!state.contains("score")) {
+        state.update("score", 0f)
+      }
 
       while(!endWhen(state)) {
         val trueEpoch = Math.floor(state[Int]("currentSlice").toDouble / numSlice).toInt + 1

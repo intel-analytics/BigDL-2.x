@@ -332,7 +332,9 @@ class DiskFeatureSet[T: ClassTag]
   protected var currentSlice: RDD[T] = null
   protected var currentFeatureSet: DistributedFeatureSet[T] = null
   protected var trained: Boolean = false
-  newSample()
+  if (numSlice != 0) {
+    newSample()
+  }
 
   private def newSample() = {
     currentSlice = buffer.sample(false, 1.0 / numSlice)

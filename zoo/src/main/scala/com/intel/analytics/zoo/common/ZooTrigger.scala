@@ -3,14 +3,22 @@ package com.intel.analytics.zoo.common
 import com.intel.analytics.bigdl.optim.Trigger
 import com.intel.analytics.bigdl.utils.{T, Table}
 
+/**
+ * A trigger specifies a timespot or several timespots during training,
+ * and a corresponding action will be taken when the timespot(s)
+ * is reached.
+ */
 trait ZooTrigger extends Trigger {
   protected var zooState: Table = T()
 
-  def setZooState(zooState: Table): Unit = {
+  /**
+   * We also hold some training metrics to control trigger.
+   * @param zooState zoo state table
+   */
+  private[Zoo] def setZooState(zooState: Table): Unit = {
     this.zooState = zooState
   }
 }
-
 
 /**
  * A trigger that triggers an action when each epoch finishs.
@@ -48,7 +56,7 @@ case class EveryEpoch() extends ZooTrigger{
  */
 case class SeveralIteration(interval: Int) extends ZooTrigger{
   override def apply(state: Table): Boolean = {
-    val curIteration = state[Int]("neval")
+    val curIteration = state[Int]("neval") - 1
     curIteration != 0 && curIteration % interval == 0
   }
 }
