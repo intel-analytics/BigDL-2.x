@@ -21,7 +21,7 @@ import com.intel.analytics.bigdl.nn.ClassNLLCriterion
 import com.intel.analytics.bigdl.numeric.NumericFloat
 import com.intel.analytics.bigdl.optim._
 import com.intel.analytics.bigdl.utils.{RandomGenerator, T}
-import com.intel.analytics.zoo.common.NNContext
+import com.intel.analytics.zoo.common.{EveryEpoch, MaxEpoch, NNContext}
 import com.intel.analytics.zoo.feature.FeatureSet
 import com.intel.analytics.zoo.feature.pmem.DISK_AND_DRAM
 import com.intel.analytics.zoo.models.recommendation._
@@ -146,7 +146,7 @@ object CensusWideAndDeep {
     }
 
     val (checkpointTrigger, endTrigger) =
-      (Trigger.everyEpoch, Trigger.maxEpoch(maxEpoch))
+      (EveryEpoch(), MaxEpoch(maxEpoch))
 
     estimator.train(trainRdds, ClassNLLCriterion[Float](),
       Some(endTrigger),

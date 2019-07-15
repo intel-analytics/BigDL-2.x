@@ -1,0 +1,123 @@
+package com.intel.analytics.zoo.common
+
+import com.intel.analytics.bigdl.optim.Trigger
+import com.intel.analytics.bigdl.utils.{T, Table}
+
+trait ZooTrigger extends Trigger {
+  protected var zooState: Table = T()
+
+  def setZooState(zooState: Table): Unit = {
+    this.zooState = zooState
+  }
+}
+
+
+/**
+ * A trigger that triggers an action when each epoch finishs.
+ * Could be used as trigger in setValidation and setCheckpoint
+ * in Optimizer, and also in TrainSummary.setSummaryTrigger.
+ */
+case class EveryEpoch() extends ZooTrigger{
+  private var lastEpoch = -1
+
+  override def apply(state: Table): Boolean = {
+    if (lastEpoch == -1) {
+      lastEpoch = state[Int]("epoch")
+      false
+    } else {
+      if (state[Int]("epoch") <= lastEpoch) {
+        false
+      } else {
+        if (zooState.contains("numSlice") && zooState.contains("currentSlice")
+          && zooState[Int]("currentSlice") % zooState[Int]("numSlice") == 0) {
+          lastEpoch = state[Int]("epoch")
+          true
+        } else {
+          false
+        }
+      }
+    }
+  }
+}
+/**
+ * A trigger that triggers an action every "n" iterations.
+ * Could be used as trigger in setValidation and setCheckpoint
+ * in Optimizer, and also in TrainSummary.setSummaryTrigger.
+ *
+ * @param interval - trigger interval "n"
+ */
+case class SeveralIteration(interval: Int) extends ZooTrigger{
+  override def apply(state: Table): Boolean = {
+    val curIteration = state[Int]("neval")
+    curIteration != 0 && curIteration % interval == 0
+  }
+}
+
+/**
+ * A trigger that triggers an action when training reaches
+ * the number of epochs specified by "max".
+ * Usually used in Optimizer.setEndWhen.
+ *
+ * @param max the epoch when the action takes place
+ */
+case class MaxEpoch(max: Int) extends ZooTrigger{
+  override def apply(state: Table): Boolean = {
+    state[Int]("epoch") > max
+  }
+}
+
+/**
+ * A trigger that triggers an action when training reaches
+ * the number of iterations specified by "max".
+ * Usually used in Optimizer.setEndWhen.
+ *
+ * @param max the iteration when the action takes place
+ *
+ */
+case class MaxIteration(max: Int) extends ZooTrigger {
+  override def apply(state: Table): Boolean = {
+    state[Int]("neval") > max
+  }
+}
+
+/**
+ * A trigger that triggers an action when validation score larger than "max" score
+ * @param max max score
+ */
+case class MaxScore(max: Float) extends ZooTrigger {
+  override def apply(state: Table): Boolean = {
+    state[Float]("score") > max
+  }
+}
+
+/**
+ * A trigger that triggers an action when training loss less than "min" loss
+ * @param min min loss
+ */
+case class MinLoss(min: Float) extends ZooTrigger {
+  override def apply(state: Table): Boolean = {
+    state[Float]("Loss") < min
+  }
+}
+
+/**
+ * A trigger contains other triggers and triggers when all of them trigger (logical AND)
+ * @param first first trigger
+ * @param others others triggers
+ */
+case class And(first : Trigger, others : Trigger*) extends ZooTrigger {
+  override def apply(state: Table): Boolean = {
+    first.apply(state) && others.forall(_.apply(state))
+  }
+}
+
+/**
+ * A trigger contains other triggers and triggers when any of them trigger (logical OR)
+ * @param first first trigger
+ * @param others others triggers
+ */
+case class Or(first : Trigger, others : Trigger*) extends ZooTrigger {
+  override def apply(state: Table): Boolean = {
+    first.apply(state) || others.exists(_.apply(state))
+  }
+}

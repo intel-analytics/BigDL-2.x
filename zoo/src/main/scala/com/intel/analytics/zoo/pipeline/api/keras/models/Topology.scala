@@ -37,7 +37,8 @@ import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric
 import com.intel.analytics.bigdl.utils._
 import com.intel.analytics.bigdl.utils.serializer.{DeserializeContext, ModuleData, ModuleSerializer, SerializeContext}
 import com.intel.analytics.bigdl.visualization.{TrainSummary, ValidationSummary}
-import com.intel.analytics.zoo.feature.{DistributedFeatureSet, FeatureSet, DiskFeatureSet}
+import com.intel.analytics.zoo.common.ZooTrigger
+import com.intel.analytics.zoo.feature.{DiskFeatureSet, DistributedFeatureSet, FeatureSet}
 import com.intel.analytics.zoo.feature.image.ImageSet
 import com.intel.analytics.zoo.feature.text._
 import com.intel.analytics.zoo.pipeline.api.{Net, Predictable}
@@ -1242,9 +1243,13 @@ private[zoo] class InternalDistriOptimizer[T: ClassTag] (
     if (numSlice != 1) {
       val state = InternalOptimizerUtil.getStateFromOptiMethod(
         optimMethods.values.head)
-      if (checkPointTrigger.isDefined && validationMethod != null && validationSet != null) {
-        this.setValidation(getEpoch(state, checkPointTrigger.get),
-          validationSet.toDataSet(), validationMethod)
+      if (checkPointTrigger.isDefined) {
+        if(checkPointTrigger.get.isInstanceOf[ZooTrigger]) {
+          checkPointTrigger.get.asInstanceOf[ZooTrigger].setZooState(state)
+        } else {
+          throw new IllegalArgumentException(s"Excepted com.intel.analytics.zoo.common.ZooTrigger." +
+            s" Please change your trigger to an instance of ZooTrigger.")
+        }
       }
       if (!state.contains("numSlice")) {
         state("numSlice") = numSlice
