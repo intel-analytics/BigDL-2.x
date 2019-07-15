@@ -16,9 +16,10 @@
 
 import sys
 
-from zoo.models.common import ZooModel
+from zoo.models.common import *
 from zoo.models.recommendation import Recommender
 from bigdl.util.common import callBigDlFunc
+from zoo.pipeline.api.keras.layers import *
 
 if sys.version >= '3':
     long = int
@@ -101,22 +102,120 @@ class WideAndDeep(Recommender):
                    Tuple of positive int. Default is (40, 20, 10).
     """
     def __init__(self, class_num, column_info, model_type="wide_n_deep",
-                 hidden_layers=(40, 20, 10), bigdl_type="float"):
-        super(WideAndDeep, self).__init__(None, bigdl_type,
-                                          model_type,
-                                          int(class_num),
-                                          [int(unit) for unit in hidden_layers],
-                                          column_info.wide_base_cols,
-                                          column_info.wide_base_dims,
-                                          column_info.wide_cross_cols,
-                                          column_info.wide_cross_dims,
-                                          column_info.indicator_cols,
-                                          column_info.indicator_dims,
-                                          column_info.embed_cols,
-                                          column_info.embed_in_dims,
-                                          column_info.embed_out_dims,
-                                          column_info.continuous_cols,
-                                          column_info.label)
+                 hidden_layers=[40, 20, 10], bigdl_type="float"):
+        assert len(column_info.wide_base_cols) == len(column_info.wide_base_dims),\
+            "size of wide_base_columns should match"
+        assert len(column_info.wide_cross_cols) == len(column_info.wide_cross_dims),\
+            "size of wide_cross_columns should match"
+        assert len(column_info.indicator_cols) == len(column_info.indicator_dims),\
+            "size of wide_indicator_columns should match"
+        assert len(column_info.embed_cols) == len(column_info.embed_in_dims) \
+            == len(column_info.embed_out_dims), "size of wide_indicator_columns should match"
+
+        self.class_num = int(class_num)
+        self.wide_base_dims = column_info.wide_base_dims
+        self.wide_cross_dims = column_info.wide_cross_dims
+        self.indicator_dims = column_info.indicator_dims
+        self.embed_in_dims = column_info.embed_in_dims
+        self.embed_out_dims = column_info.embed_out_dims
+        self.continuous_cols = column_info.continuous_cols
+        self.model_type = model_type
+        self.hidden_layers = [int(unit) for unit in hidden_layers]
+        self.bigdl_type = bigdl_type
+        self.model = self.build_model()
+        super(WideAndDeep, self).__init__(None, self.bigdl_type,
+                                          self.model_type,
+                                          self.class_num,
+                                          self.hidden_layers,
+                                          self.wide_base_dims,
+                                          self.wide_cross_dims,
+                                          self.indicator_dims,
+                                          self.embed_in_dims,
+                                          self.embed_out_dims,
+                                          self.continuous_cols,
+                                          self.model)
+
+    def build_model(self):
+        wide_dims = sum(self.wide_base_dims) + sum(self.wide_cross_dims)
+        input_wide = Input(shape=(wide_dims,))
+        input_ind = Input(shape=(sum(self.indicator_dims),))
+        input_emb = Input(shape=(len(self.embed_in_dims),))
+        input_con = Input(shape=(len(self.continuous_cols),))
+
+        wide_linear = SparseDense(self.class_num)(input_wide)
+
+        if (self.model_type == "wide"):
+            out = Activation("softmax")(wide_linear)
+            model = Model(input_wide, out)
+        elif(self.model_type == "deep"):
+            (input_deep, merge_list) = self._deep_merge(input_ind, input_emb, input_con)
+            deep_linear = self._deep_hidden(merge_list)
+            out = Activation("softmax")(deep_linear)
+            model = Model(input_deep, out)
+        elif(self.model_type == "wide_n_deep"):
+            (input_deep, merge_list) = self._deep_merge(input_ind, input_emb, input_con)
+            deep_linear = self._deep_hidden(merge_list)
+            merged = merge([wide_linear, deep_linear], "sum")
+            out = Activation("softmax")(merged)
+            model = Model([input_wide] + input_deep, out)
+
+        else:
+            raise TypeError("Unsupported model_type: %s" % self.model_type)
+
+        return model
+
+    def _deep_hidden(self, merge_list):
+        if (len(merge_list) == 1):
+            merged = merge_list[0]
+        else:
+            merged = merge(merge_list, "concat")
+        linear = Dense(self.hidden_layers[0], activation="relu")(merged)
+
+        for ilayer in range(1, len(self.hidden_layers)):
+            linear_mid = Dense(self.hidden_layers[ilayer], activation="relu")(linear)
+            linear = linear_mid
+        last = Dense(self.class_num, activation="relu")(linear)
+        return last
+
+    def _deep_merge(self, input_ind, input_emb, input_cont):
+        embed_width = 0
+        embed = []
+        for i in range(0, len(self.embed_in_dims)):
+            flat_select = Flatten()(Select(1, embed_width)(input_emb))
+            iembed = Embedding(self.embed_in_dims[i] + 1, self.embed_out_dims[i],
+                               init="normal")(flat_select)
+            flat_embed = Flatten()(iembed)
+            embed.append(flat_embed)
+            embed_width = embed_width + 1
+
+        has_ind = len(self.indicator_dims) > 0
+        has_emd = len(self.embed_in_dims) > 0
+        has_cont = len(self.continuous_cols) > 0
+        if (has_ind and has_emd and has_cont):
+            input = [input_ind, input_emb, input_cont]
+            merged_list = [input_ind] + embed + [input_cont]
+        elif (not has_ind and has_emd and has_cont):
+            input = [input_emb, input_cont]
+            merged_list = embed + [input_cont]
+        elif (has_ind and (not has_emd) and has_cont):
+            input = [input_ind, input_cont]
+            merged_list = [input_ind, input_cont]
+        elif (has_ind and has_emd and (not has_cont)):
+            input = [input_ind, input_emb]
+            merged_list = [input_ind] + embed
+        elif ((not has_ind) and (not has_emd) and has_cont):
+            input = [input_cont]
+            merged_list = [input_cont]
+        elif ((not has_ind) and has_emd and (not has_cont)):
+            input = [input_emb]
+            merged_list = embed
+        elif (has_ind and (not has_emd) and not (has_cont)):
+            input = [input_ind]
+            merged_list = [input_ind]
+        else:
+            raise TypeError("Empty deep model for: %s" % self.model_type)
+
+        return (input, merged_list)
 
     @staticmethod
     def load_model(path, weight_path=None, bigdl_type="float"):
@@ -132,5 +231,7 @@ class WideAndDeep(Recommender):
         """
         jmodel = callBigDlFunc(bigdl_type, "loadWideAndDeep", path, weight_path)
         model = ZooModel._do_load(jmodel, bigdl_type)
+        labor_model = KerasZooModel._do_load(jmodel, bigdl_type)
+        model.model = labor_model
         model.__class__ = WideAndDeep
         return model

@@ -17,14 +17,14 @@
 package com.intel.analytics.zoo.pipeline.api.keras.layers
 
 import com.intel.analytics.bigdl.{nn => bnn}
-import com.intel.analytics.bigdl.nn.RandomNormal
+import com.intel.analytics.bigdl.nn.{RandomNormal, Tanh}
 import com.intel.analytics.bigdl.nn.abstractnn.{AbstractModule, Activity}
 import com.intel.analytics.bigdl.nn.keras.KerasLayer
 import com.intel.analytics.bigdl.tensor.Tensor
 import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric
 import com.intel.analytics.bigdl.utils.{MultiShape, Shape}
 import com.intel.analytics.zoo.pipeline.api.Net
-import com.intel.analytics.zoo.pipeline.api.autograd.{AutoGrad, Constant, Parameter, Variable}
+import com.intel.analytics.zoo.pipeline.api.autograd.{AutoGrad, Constant, Variable}
 import com.intel.analytics.zoo.pipeline.api.keras.layers.utils.KerasUtils
 import com.intel.analytics.zoo.pipeline.api.keras.models.{Model, Sequential}
 
@@ -32,9 +32,9 @@ import scala.reflect.ClassTag
 
 /**
  * [[TransformerLayer]] A self attention keras like layer
- * Input is a Tensor with shape [batch, seqLen, 2].
- * [:, :, 1] represents token id
- * [:, :, 2] represents postions in the sentence
+ * Input is a Table which consists of 2 tensors.
+ * 1. Token id tensor: shape [batch, seqLen] with the word token indices in the vocabulary
+ * 2. Position id tensor: shape [batch, seqLen] with positions in the sentence.
  * Output is a Tensor which output the states of Transformer layer
  * @param nBlock block number
  * @param hiddenPDrop drop probability of projection
@@ -63,24 +63,25 @@ private[layers] class TransformerLayer[T: ClassTag](
 
   var seqLen: Int = 0
   override def doBuild(inputShape: Shape): AbstractModule[Activity, Activity, T] = {
-    val (extendedAttentionMask, embeddingInputs, inputs) = buildInput(inputShape)
+    val layer = if (!this.isBuilt()) {
+      val (extendedAttentionMask, embeddingInputs, inputs) = buildInput(inputShape)
 
-    require(embeddingLayer.isInstanceOf[Net], "use layers from" +
-      "com.intel.analytics.zoo.pipeline.api.keras and operators from" +
-      " com.intel.analytics.zoo.pipeline.api.autograd to construct the embedding layer")
-    val embedding = embeddingLayer.asInstanceOf[Net]
-    val e = embedding.from(embeddingInputs: _*)
-    val hiddenSize = e.getOutputShape().toSingle().last
+      require(embeddingLayer.isInstanceOf[Net], "use layers from" +
+        "com.intel.analytics.zoo.pipeline.api.keras and operators from" +
+        " com.intel.analytics.zoo.pipeline.api.autograd to construct the embedding layer")
+      val embedding = embeddingLayer.asInstanceOf[Net]
+      val e = embedding.from(embeddingInputs: _*)
+      val hiddenSize = e.getOutputShape().toSingle().last
 
-    val nextInput: Variable[T] = e
-    val modelOutputSize = nBlock
-    val modelOutput = new Array[Variable[T]](modelOutputSize)
-    modelOutput(0) = block(nextInput, hiddenSize, extendedAttentionMask)
+      val nextInput: Variable[T] = e
+      val modelOutputSize = nBlock
+      val modelOutput = new Array[Variable[T]](modelOutputSize)
+      modelOutput(0) = block(nextInput, hiddenSize, extendedAttentionMask)
 
-    for (i <- 1 until nBlock) {
-      val output = block(modelOutput(i - 1), hiddenSize, extendedAttentionMask)
-      modelOutput(i) = output
-    }
+      for (i <- 1 until nBlock) {
+        val output = block(modelOutput(i - 1), hiddenSize, extendedAttentionMask)
+        modelOutput(i) = output
+      }
 
     val output = pooler(modelOutput.last, hiddenSize)
 
@@ -88,7 +89,11 @@ private[layers] class TransformerLayer[T: ClassTag](
       Model(inputs.toArray, modelOutput :+ output)
     } else Model(inputs.toArray, Array(modelOutput.last, output))
 
-    model.asInstanceOf[AbstractModule[Activity, Activity, T]]
+      model.asInstanceOf[AbstractModule[Activity, Activity, T]]
+    } else {
+      labor
+    }
+    layer
   }
 
   def projectionLayer(outputSize: Int): Net = {
@@ -108,21 +113,10 @@ private[layers] class TransformerLayer[T: ClassTag](
 
   def block(x: Variable[T], hiddenSize: Int, attention_mask: Variable[T] = null,
             eplision: Double = 1e-5): Variable[T] = {
-    // g, b for layerNorm
-    val g = Parameter[T](Shape(1, hiddenSize),
-      initWeight = Tensor.ones[T](hiddenSize).view(1, hiddenSize))
-    val b = Parameter[T](Shape(1, hiddenSize),
-      initWeight = Tensor[T](hiddenSize).view(1, hiddenSize))
-
-    // g, b for layerNorm
-    val g2 = Parameter[T](Shape(1, hiddenSize),
-      initWeight = Tensor.ones[T](hiddenSize).view(1, hiddenSize))
-    val b2 = Parameter[T](Shape(1, hiddenSize),
-      initWeight = Tensor[T](hiddenSize).view(1, hiddenSize))
     val a = multiHeadSelfAttention(x, hiddenSize, attention_mask)
-    val n = TransformerLayer.layerNorm(x + a, eplision, weight = g, bias = b)
+    val n = LayerNorm[T](hiddenSize, eplision).from(x + a)
     val m = mlp(n, hiddenSize)
-    val h = TransformerLayer.layerNorm(n + m, eplision, weight = g2, bias = b2)
+    val h = LayerNorm[T](hiddenSize, eplision).from(n + m)
     h
   }
 
@@ -271,15 +265,5 @@ object TransformerLayer {
     (implicit ev: TensorNumeric[T]): TransformerLayer[T] = {
     new TransformerLayer[T](nBlock, residPdrop, attnPdrop, nHead,
       initializerRange, bidirectional, outputAllBlock, embeddingLayer = embeddingLayer)
-  }
-
-  def layerNorm[@specialized(Float, Double) T: ClassTag](x: Variable[T],
-    e: Double = 1e-5, weight: Parameter[T], bias: Parameter[T])
-    (implicit ev: TensorNumeric[T]): Variable[T] = {
-    val sizes = x.getOutputShape().toSingle().toArray
-    val u = AutoGrad.mean(x, sizes.size - 1, true)
-    val s = AutoGrad.mean(AutoGrad.square(x - u), sizes.size -1, true)
-    val y = (x - u) / AutoGrad.sqrt(s + e)
-    y * weight + bias
   }
 }

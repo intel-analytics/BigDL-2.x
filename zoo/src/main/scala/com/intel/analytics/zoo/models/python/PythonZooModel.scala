@@ -268,9 +268,11 @@ class PythonZooModel[T: ClassTag](implicit ev: TensorNumeric[T]) extends PythonZ
       itemEmbed: Int = 20,
       hiddenLayers: JList[Int],
       includeMF: Boolean = true,
-      mfEmbed: Int = 20): NeuralCF[T] = {
-    NeuralCF[T](userCount, itemCount, numClasses, userEmbed, itemEmbed,
+      mfEmbed: Int = 20,
+      model: AbstractModule[Activity, Activity, T]): NeuralCF[T] = {
+    new NeuralCF[T](userCount, itemCount, numClasses, userEmbed, itemEmbed,
       hiddenLayers.asScala.toArray, includeMF, mfEmbed)
+      .addModel(model.asInstanceOf[AbstractModule[Tensor[T], Tensor[T], T]])
   }
 
   def loadNeuralCF(
@@ -283,30 +285,23 @@ class PythonZooModel[T: ClassTag](implicit ev: TensorNumeric[T]) extends PythonZ
       modelType: String = "wide_n_deep",
       numClasses: Int,
       hiddenLayers: JList[Int],
-      wideBaseCols: JList[String],
       wideBaseDims: JList[Int],
-      wideCrossCols: JList[String],
       wideCrossDims: JList[Int],
-      indicatorCols: JList[String],
       indicatorDims: JList[Int],
-      embedCols: JList[String],
       embedInDims: JList[Int],
       embedOutDims: JList[Int],
       continuousCols: JList[String],
-      label: String = "label"): WideAndDeep[T] = {
-    val columnFeatureInfo = ColumnFeatureInfo(
-      wideBaseCols = wideBaseCols.asScala.toArray,
-      wideBaseDims = wideBaseDims.asScala.toArray,
-      wideCrossCols = wideCrossCols.asScala.toArray,
-      wideCrossDims = wideCrossDims.asScala.toArray,
-      indicatorCols = indicatorCols.asScala.toArray,
-      indicatorDims = indicatorDims.asScala.toArray,
-      embedCols = embedCols.asScala.toArray,
-      embedInDims = embedInDims.asScala.toArray,
-      embedOutDims = embedOutDims.asScala.toArray,
-      continuousCols = continuousCols.asScala.toArray,
-      label = label)
-    WideAndDeep[T](modelType, numClasses, columnFeatureInfo, hiddenLayers.asScala.toArray)
+      model: AbstractModule[Activity, Activity, T]): WideAndDeep[T] = {
+    new WideAndDeep[T](modelType,
+      numClasses,
+      wideBaseDims.asScala.toArray,
+      wideCrossDims.asScala.toArray,
+      indicatorDims.asScala.toArray,
+      embedInDims.asScala.toArray,
+      embedOutDims.asScala.toArray,
+      continuousCols.asScala.toArray,
+      hiddenLayers.asScala.toArray)
+        .addModel(model.asInstanceOf[AbstractModule[Tensor[T], Tensor[T], T]])
   }
 
   def loadWideAndDeep(

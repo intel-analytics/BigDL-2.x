@@ -16,10 +16,9 @@
 
 package com.intel.analytics.zoo.pipeline.inference;
 
-import scala.actors.threadpool.Arrays;
-
 import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 public abstract class AbstractInferenceModel extends InferenceModel implements Serializable {
@@ -83,6 +82,10 @@ public abstract class AbstractInferenceModel extends InferenceModel implements S
 
   public void loadOpenVINO(String modelFilePath, String weightFilePath) {
     doLoadOpenVINO(modelFilePath, weightFilePath);
+  }
+
+  public void loadOpenVINOInt8(String modelFilePath, String weightFilePath, int batchSize) {
+    doLoadOpenVINOInt8(modelFilePath, weightFilePath, batchSize);
   }
 
   public void reload(String modelPath) {

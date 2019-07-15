@@ -26,7 +26,7 @@ import com.intel.analytics.bigdl.utils.serializer._
 import com.intel.analytics.bigdl.utils.serializer.converters.DataConverter
 import com.intel.analytics.bigdl.utils.{MultiShape, Shape}
 import com.intel.analytics.zoo.pipeline.api.Net
-import com.intel.analytics.zoo.pipeline.api.autograd.{AutoGrad, Parameter, Variable}
+import com.intel.analytics.zoo.pipeline.api.autograd.{AutoGrad, Variable}
 import com.intel.analytics.zoo.pipeline.api.keras.layers.utils.{GraphRef, KerasUtils}
 import com.intel.analytics.zoo.pipeline.api.keras.models.Model
 import com.intel.analytics.zoo.pipeline.api.keras.models.Model.{apply => _, _}
@@ -97,6 +97,8 @@ class BERT[T: ClassTag] private (
     val inputs = _inputShape.map(Variable(_))
     return ((- inputs.last + 1.0) * -10000.0, inputs.dropRight(1), inputs)
   }
+
+  override def allowRebuilt: Boolean = true
 }
 
 object BERT extends KerasLayerSerializable {
@@ -110,7 +112,7 @@ object BERT extends KerasLayerSerializable {
   /**
    * [[BERT]] A self attention keras like layer
    * @param vocab vocabulary size of training data, default is 40990
-   * @param hiddenSize ize of the encoder layers, default is 768
+   * @param hiddenSize size of the encoder layers, default is 768
    * @param nBlock block number, default is 12
    * @param nHead head number, default is 12
    * @param maxPositionLen sequence length, default is 512
@@ -152,11 +154,7 @@ object BERT extends KerasLayerSerializable {
       initWeights = initTokenEmbeddingW).from(tokenTypeInput)
 
     val embeddings = wordEmbeddings + positionEmbeddings + tokenTypeEmbeddings
-    val w = Parameter[T](Shape(1, hiddenSize),
-      initWeight = Tensor.ones[T](hiddenSize).view(1, hiddenSize))
-    val b = Parameter[T](Shape(1, hiddenSize),
-      initWeight = Tensor[T](hiddenSize).view(1, hiddenSize))
-    val afterNorm = TransformerLayer.layerNorm(embeddings, 1e-12, weight = w, bias = b)
+    val afterNorm = LayerNorm[T](nOutput = hiddenSize, eps = 1e-12).from(embeddings)
     val h = Dropout(hiddenPDrop).from(afterNorm)
 
     val embeddingLayer = Model(Array(wordInput, tokenTypeInput, positionInput), h)
@@ -203,11 +201,11 @@ object BERT extends KerasLayerSerializable {
    *             Amazon S3 path should be like "s3a://bucket/xxx".
    * @param weightPath The path for pre-trained weights if any.
    * @param inputSeqLen sequence length of input, will be ignored if existing model is built with
-    *                   customized embedding
+   *                   customized embedding
    * @param hiddenPDrop The dropout probability for all fully connected layers, will be
-    *                   ignored if existing model is built with customized embedding
+   *                   ignored if existing model is built with customized embedding
    * @param attnPDrop drop probability of attention, will be ignored if existing model is
-    *                  built with customized embedding
+   *                  built with customized embedding
    */
   def apply[T: ClassTag](path: String, weightPath: String, inputSeqLen: Int,
     hiddenPDrop: Double, attnPDrop: Double, outputAllBlock: Boolean)
@@ -304,7 +302,7 @@ object BERT extends KerasLayerSerializable {
     val maxPositionLen =
       DataConverter.getAttributeValue(context, maxPositionLenAttr).asInstanceOf[Int]
 
-    val bert = new BERT(nBlock, nHead, intermediateSize, hiddenPDrop, attnPDrop,
+    val bert = new BERT[T](nBlock, nHead, intermediateSize, hiddenPDrop, attnPDrop,
       initializerRange, outputAllBlock,
       embeddingLayer.asInstanceOf[KerasLayer[Activity, Tensor[T], T]], null)
     val tGraph2 = subModules(1).asInstanceOf[StaticGraph[T]]

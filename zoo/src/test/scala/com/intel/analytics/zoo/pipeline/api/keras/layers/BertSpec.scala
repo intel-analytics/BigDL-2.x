@@ -19,8 +19,8 @@ package com.intel.analytics.zoo.pipeline.api.keras.layers
 import com.intel.analytics.bigdl.nn.abstractnn.Activity
 import com.intel.analytics.bigdl.nn.keras.KerasLayer
 import com.intel.analytics.bigdl.tensor.Tensor
-import com.intel.analytics.bigdl.utils.{Shape, T, Table}
-import com.intel.analytics.zoo.pipeline.api.autograd.{Parameter, Variable}
+import com.intel.analytics.bigdl.utils.{Shape, T}
+import com.intel.analytics.zoo.pipeline.api.autograd.Variable
 import com.intel.analytics.zoo.pipeline.api.keras.models.Model
 import com.intel.analytics.zoo.pipeline.api.keras.serializer.ModuleSerializationTest
 import com.intel.analytics.zoo.pipeline.api.keras.ZooSpecHelper
@@ -96,12 +96,7 @@ class BertSpec extends ZooSpecHelper {
 
     val embeddings =
       wordEmbeddings.asInstanceOf[Variable[Float]] + positionEmbeddings + tokenTypeEmbeddings
-    val embeddingG = Parameter[Float](Shape(1, hiddenSize),
-      initWeight = Tensor.ones[Float](hiddenSize).view(1, hiddenSize))
-    val embeddingB = Parameter[Float](Shape(1, hiddenSize),
-      initWeight = Tensor[Float](hiddenSize).view(1, hiddenSize))
-    val afterNorm = TransformerLayer.layerNorm[Float](embeddings,
-      1e-5, embeddingG, embeddingB)
+    val afterNorm = LayerNorm[Float](nOutput = hiddenSize, eps = 1e-12).from(embeddings)
     val h = Dropout[Float](hiddenPDrop).from(afterNorm)
 
     val embeddingLayer = Model(Array(wordInput, tokenTypeInput, positionInput), h)
@@ -1383,26 +1378,7 @@ class BertSpec extends ZooSpecHelper {
 }
 
 class BERTSerialTest extends ModuleSerializationTest {
+  // remove the test since it's duplicate with "Bert " should "save/load be able to work"
   override def test(): Unit = {
-    val layer = BERT[Float](vocab = 100,
-      hiddenSize = 768,
-      nBlock = 12,
-      nHead = 12,
-      intermediateSize = 1024,
-      hiddenPDrop = 0.1,
-      attnPDrop = 0.1,
-      maxPositionLen = 6,
-      outputAllBlock = false)
-    val inputIds = Tensor[Float](2, 6).rand()
-    val segmentIds = Tensor[Float](Array[Float](0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1),
-      Array(2, 6))
-    val positionIds = Tensor[Float](Array[Float](0, 1, 2, 3, 4, 5, 0, 1, 2, 3, 4, 5),
-      Array(2, 6))
-    val masks = Tensor[Float](2, 1, 1, 6).fill(1.0f)
-
-    val shape = Shape(List(Shape(2, 6), Shape(2, 6), Shape(2, 6), Shape(2, 1, 1, 6)))
-    layer.build(shape)
-
-    runSerializationTest(layer, T(inputIds, segmentIds, positionIds, masks))
   }
 }

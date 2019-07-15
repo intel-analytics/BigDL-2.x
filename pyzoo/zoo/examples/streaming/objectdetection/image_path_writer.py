@@ -15,8 +15,9 @@
 #
 
 import argparse
+import random
 from time import sleep
-from os import listdir
+from os import listdir, rename, mkdir, remove
 from os.path import isfile, join
 
 
@@ -36,14 +37,25 @@ def package_path_to_text(streaming_path, file_path, batch=10, delay=3):
             files.append(join(file_path, f) + '\n')
     index = 0
     curr = 0
+    tmpDir = join("/tmp", str(random.randint(1, 10000)))
+    mkdir(tmpDir)
+    print("Tmp dir at " + tmpDir)
     while curr < len(files):
         last = min(curr + batch, len(files))
-        with open(join(streaming_path, str(index) + ".txt"), "w") as text_file:
-            print("Writing to " + text_file.name)
+        # Because spark textFileStream requires create and move
+        # Write to tmp location
+
+        batch_file_name = join(streaming_path, str(index))
+        with open(join(tmpDir, str(index) + ".txt"), "w") as text_file:
             text_file.writelines(files[curr:last])
+        # Move to streaming location
+        rename(text_file.name,
+               batch_file_name)
+        print("Writing to " + batch_file_name)
         index += 1
         curr = last
         sleep(delay)
+    remove(tmpDir)
 
 
 if __name__ == "__main__":
@@ -51,6 +63,5 @@ if __name__ == "__main__":
     parser.add_argument('--img_path', help="Path where the images are stored")
     parser.add_argument('--streaming_path', help="Path for streaming text",
                         default="/tmp/zoo/streaming")
-
     args = parser.parse_args()
     package_path_to_text(args.streaming_path, args.img_path)

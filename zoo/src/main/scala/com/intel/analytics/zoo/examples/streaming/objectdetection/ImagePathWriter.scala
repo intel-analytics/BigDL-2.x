@@ -16,13 +16,14 @@
 
 package com.intel.analytics.zoo.examples.streaming.objectdetection
 
+import com.google.common.io.Files
 import com.intel.analytics.zoo.common.Utils
 import org.apache.hadoop.fs.Path
 import org.apache.log4j.{Level, Logger}
 import scopt.OptionParser
 
 /*
-  * Periodically write a text file (contains 10 image paths) to streamingPath
+  * Periodically write a text file (contains 16 image paths) to streamingPath
   */
 object ImagePathWriter {
 
@@ -32,18 +33,34 @@ object ImagePathWriter {
     val logger = Logger.getLogger(getClass)
 
     parser.parse(args, PathWriterParam()).foreach { params =>
+      val fs = Utils.getFileSystem(params.imageSourcePath)
       val lists = Utils.listPaths(params.imageSourcePath, false)
-      lists.grouped(10).zipWithIndex.foreach { case (batch, id) =>
-        val batchPath = new Path(params.streamingPath, id + ".txt").toString
-        val dataOutStream = Utils.create(batchPath, true)
+      // Local file system requires create and move
+      var isLocal = false
+      val tmpStreamingPath = Files.createTempDir().toString
+      if (fs.getScheme.equals("file")) {
+        logger.info("Tmp dir at" + tmpStreamingPath)
+        isLocal = true
+      }
+      lists.grouped(16).zipWithIndex.foreach { case (batch, id) =>
+        val localTmpPath = new Path(tmpStreamingPath, id + ".txt")
+        val finalBatchPath = new Path(params.streamingPath, id + ".txt")
+        val dataOutStream = if (isLocal) {
+          Utils.create(localTmpPath.toString, true)
+        } else {
+          Utils.create(finalBatchPath.toString, true)
+        }
         try {
           batch.foreach(line => dataOutStream.writeBytes(line + "\n"))
         } finally {
           dataOutStream.close()
+          if (isLocal) fs.rename(localTmpPath, finalBatchPath)
         }
-        logger.info("wrote " + batchPath)
+        logger.info("wrote " + finalBatchPath)
         Thread.sleep(4000)
       }
+      fs.delete(new Path(tmpStreamingPath), true)
+      fs.close()
     }
   }
 

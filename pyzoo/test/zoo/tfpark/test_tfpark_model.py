@@ -77,7 +77,6 @@ class TestTFParkModel(ZooTestCase):
         dataset = TFDataset.from_rdd(rdd,
                                      features=(tf.float32, [10]),
                                      labels=(tf.int32, []),
-                                     names=["features", "labels"],
                                      batch_size=4,
                                      val_rdd=rdd
                                      )
@@ -454,6 +453,52 @@ class TestTFParkModel(ZooTestCase):
                                                    batch_per_thread=1)
         results = model.predict(predict_dataset).get_predict().collect()
         assert all(r[1] is not None for r in results)
+
+    def test_gradient_clipping(self):
+
+        data = tf.keras.layers.Input(shape=[10])
+
+        x = tf.keras.layers.Flatten()(data)
+        x = tf.keras.layers.Dense(10, activation='relu')(x)
+        predictions = tf.keras.layers.Dense(2, activation='softmax')(x)
+
+        model = tf.keras.models.Model(inputs=data, outputs=predictions)
+        model.compile(optimizer=tf.keras.optimizers.SGD(lr=1, clipvalue=1e-8),
+                      loss='sparse_categorical_crossentropy',
+                      metrics=['accuracy'])
+        model = KerasModel(model)
+
+        pre_weights = model.get_weights()
+
+        dataset = self.create_training_dataset()
+
+        # 5 iterations
+        model.fit(dataset)
+
+        current_weight = model.get_weights()
+
+        np.all(np.abs((current_weight[0] - pre_weights[0])) < 1e-7)
+
+    def test_tf_dataset_with_list_feature(self):
+        np.random.seed(20)
+        x = np.random.rand(20, 10)
+        y = np.random.randint(0, 2, (20))
+
+        rdd_x = self.sc.parallelize(x)
+        rdd_y = self.sc.parallelize(y)
+
+        rdd = rdd_x.zip(rdd_y)
+
+        dataset = TFDataset.from_rdd(rdd,
+                                     features=[(tf.float32, [10]), (tf.float32, [10])],
+                                     labels=(tf.int32, []),
+                                     batch_size=4,
+                                     val_rdd=rdd
+                                     )
+
+        for idx, tensor in enumerate(dataset.feature_tensors):
+            assert tensor.name == "list_input_" + str(idx) + ":0"
+
 
 if __name__ == "__main__":
     pytest.main([__file__])

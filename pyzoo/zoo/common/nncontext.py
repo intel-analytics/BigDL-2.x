@@ -16,9 +16,92 @@
 
 from bigdl.util.common import *
 import warnings
+import multiprocessing
+import os
 
 
-def init_nncontext(conf=None):
+def init_spark_on_local(cores=2, conf=None, python_location=None, spark_log_level="WARN",
+                        redirect_spark_log=True):
+    """
+    Create a SparkContext with Zoo configuration in local machine.
+    :param cores: The default value is 2 and you can also set it to *
+     meaning all of the available cores. i.e `init_on_local(cores="*")`
+    :param conf: A key value dictionary appended to SparkConf.
+    :param python_location: The path to your running python executable.
+    :param spark_log_level: Log level of Spark
+    :param redirect_spark_log: Redirect the Spark log to local file or not.
+    :return:
+    """
+    from zoo.util.spark import SparkRunner
+    sparkrunner = SparkRunner(spark_log_level=spark_log_level,
+                              redirect_spark_log=redirect_spark_log)
+    return sparkrunner.init_spark_on_local(cores=cores, conf=conf,
+                                           python_location=python_location)
+
+
+def init_spark_on_yarn(hadoop_conf,
+                       conda_name,
+                       num_executor,
+                       executor_cores,
+                       executor_memory="2g",
+                       driver_memory="1g",
+                       driver_cores=4,
+                       extra_executor_memory_for_ray=None,
+                       extra_python_lib=None,
+                       penv_archive=None,
+                       hadoop_user_name="root",
+                       spark_yarn_archive=None,
+                       spark_log_level="WARN",
+                       redirect_spark_log=True,
+                       jars=None,
+                       spark_conf=None):
+    """
+    Create a SparkContext with Zoo configuration on Yarn cluster on "Yarn-client" mode.
+    You should create a conda env and install the python dependencies in that env.
+    Conda env and the python dependencies only need to be installed in the driver machine.
+    It's not necessary create and install those on the whole yarn cluster.
+
+    :param hadoop_conf: path to the yarn configuration folder.
+    :param conda_name: Name of the conda env.
+    :param num_executor: Number of the Executors.
+    :param executor_cores: Cores for each Executor.
+    :param executor_memory: Memory for each Executor.
+    :param driver_memory: Memory for the Driver.
+    :param driver_cores: Number of cores for the Driver.
+    :param extra_executor_memory_for_ray: Memory size for the Ray services.
+    :param extra_python_lib:
+    :param penv_archive: Ideally, program would auto-pack the conda env which is specified by
+           `conda_name`, but you can also pass the path to a packed file in "tar.gz" format here.
+    :param hadoop_user_name: User name for running in yarn cluster. Default value is: root
+    :param spark_log_level: Log level of Spark
+    :param redirect_spark_log: Direct the Spark log to local file or not.
+    :param jars: Comma-separated list of jars to include on the driver and executor classpaths.
+    :param spark_conf: You can append extra spark conf here in key value format.
+                       i.e spark_conf={"spark.executor.extraJavaOptions": "-XX:+PrintGCDetails"}
+    :return: SparkContext
+    """
+    from zoo.util.spark import SparkRunner
+    sparkrunner = SparkRunner(spark_log_level=spark_log_level,
+                              redirect_spark_log=redirect_spark_log)
+    sc = sparkrunner.init_spark_on_yarn(
+        hadoop_conf=hadoop_conf,
+        conda_name=conda_name,
+        num_executor=num_executor,
+        executor_cores=executor_cores,
+        executor_memory=executor_memory,
+        driver_memory=driver_memory,
+        driver_cores=driver_cores,
+        extra_executor_memory_for_ray=extra_executor_memory_for_ray,
+        extra_python_lib=extra_python_lib,
+        penv_archive=penv_archive,
+        hadoop_user_name=hadoop_user_name,
+        spark_yarn_archive=spark_yarn_archive,
+        jars=jars,
+        spark_conf=spark_conf)
+    return sc
+
+
+def init_nncontext(conf=None, redirect_spark_log=True):
     """
     Creates or gets a SparkContext with optimized configuration for BigDL performance.
     The method will also initialize the BigDL engine.
@@ -34,8 +117,9 @@ def init_nncontext(conf=None):
     else:
         sc = getOrCreateSparkContext(conf=conf)
     check_version()
-    redire_spark_logs()
-    show_bigdl_info_logs()
+    if redirect_spark_log:
+        redire_spark_logs()
+        show_bigdl_info_logs()
     init_engine()
     return sc
 
@@ -46,7 +130,6 @@ def getOrCreateSparkContext(conf=None, appName=None):
     :param conf: combining bigdl configs into spark conf
     :return: SparkContext
     """
-
     with SparkContext._lock:
         if SparkContext._active_spark_context is None:
             spark_conf = init_spark_conf() if conf is None else conf
@@ -76,8 +159,47 @@ def get_analytics_zoo_conf():
     return {}
 
 
+def init_env():
+    # Default env
+    kmp_affinity = "granularity=fine,compact,1,0"
+    kmp_settings = "1"
+    omp_num_threads = "1"
+    kmp_blocktime = "0"
+
+    # Check env and override if necessary
+    # Currently, focused on ZOO_NUM_MKLTHREADS,
+    # OMP_NUM_THREADS, KMP_BLOCKTIME, KMP_AFFINITY
+    # and KMP_SETTINGS
+    if "KMP_AFFINITY" in os.environ:
+        kmp_affinity = os.environ["KMP_AFFINITY"]
+    if "KMP_SETTINGS" in os.environ:
+        kmp_settings = os.environ["KMP_SETTINGS"]
+    if "OMP_NUM_THREADS" in os.environ:
+        omp_num_threads = os.environ["OMP_NUM_THREADS"]
+    elif "ZOO_NUM_MKLTHREADS" in os.environ:
+        if os.environ["ZOO_NUM_MKLTHREADS"].lower() == "all":
+            omp_num_threads = multiprocessing.cpu_count()
+        else:
+            omp_num_threads = os.environ["ZOO_NUM_MKLTHREADS"]
+    if "KMP_BLOCKTIME" in os.environ:
+        kmp_blocktime = os.environ["KMP_BLOCKTIME"]
+
+    # Set env
+    os.environ["KMP_AFFINITY"] = kmp_affinity
+    os.environ["KMP_SETTINGS"] = kmp_settings
+    os.environ["OMP_NUM_THREADS"] = omp_num_threads
+    os.environ["KMP_BLOCKTIME"] = kmp_blocktime
+
+
 def init_spark_conf():
+    init_env()
     zoo_conf = get_analytics_zoo_conf()
+    # Set bigDL and TF conf
+    zoo_conf["spark.executorEnv.KMP_AFFINITY"] = os.environ["KMP_AFFINITY"]
+    zoo_conf["spark.executorEnv.KMP_SETTINGS"] = os.environ["KMP_SETTINGS"]
+    zoo_conf["spark.executorEnv.OMP_NUM_THREADS"] = os.environ["OMP_NUM_THREADS"]
+    zoo_conf["spark.executorEnv.KMP_BLOCKTIME"] = os.environ["KMP_BLOCKTIME"]
+
     sparkConf = SparkConf()
     sparkConf.setAll(zoo_conf.items())
     if os.environ.get("BIGDL_JARS", None) and not is_spark_below_2_2():

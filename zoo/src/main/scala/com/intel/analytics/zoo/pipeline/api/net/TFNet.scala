@@ -58,47 +58,55 @@ class TFNet(private val graphDef: TFGraphHolder,
   implicit val ev = TensorNumeric.NumericFloat
   implicit val tag: ClassTag[Float] = ClassTag.Float
 
-  // todo if an exception is thrown during forward or backward, there will be memory leak
-  // maybe create a resource manager to handle tensor creation and destruction
-
   class ResourceManager() extends java.io.Serializable {
-    private var tensorList: List[TTensor[_]] = List()
+    private val tensorList: mutable.Set[TTensor[_]] = mutable.Set[TTensor[_]]()
     def createTFTensor(shape: Array[Long], buffer: FloatBuffer): TTensor[_] = {
       val TFTensor : TTensor[_] = TTensor.create(shape, buffer)
-      tensorList = TFTensor :: tensorList
+      tensorList += TFTensor
       return TFTensor
     }
     def createTFTensor(shape: Array[Long], buffer: ByteBuffer): TTensor[_] = {
       val TFTensor : TTensor[_] = TTensor.create(classOf[UInt8], shape, buffer)
-      tensorList = TFTensor :: tensorList
+      tensorList += TFTensor
       return TFTensor
     }
     def createTFTensor(shape: Array[Long], buffer: IntBuffer): TTensor[_] = {
       val TFTensor : TTensor[_] = TTensor.create(shape, buffer)
-      tensorList = TFTensor :: tensorList
+      tensorList += TFTensor
       return TFTensor
     }
     def createTFTensor(shape: Array[Long], buffer: LongBuffer): TTensor[_] = {
       val TFTensor : TTensor[_] = TTensor.create(shape, buffer)
-      tensorList = TFTensor :: tensorList
+      tensorList += TFTensor
       return TFTensor
     }
     def createTFTensor(shape: Array[Long], buffer: DoubleBuffer): TTensor[_] = {
       val TFTensor : TTensor[_] = TTensor.create(shape, buffer)
-      tensorList = TFTensor :: tensorList
+      tensorList += TFTensor
       return TFTensor
     }
 
     def createBoolTFTensor(shape: Array[Long], bytes: ByteBuffer): TTensor[_] = {
       val TFTensor : TTensor[_] = TTensor.create(classOf[java.lang.Boolean], shape, bytes)
-      tensorList = TFTensor :: tensorList
+      tensorList += TFTensor
       return TFTensor
+    }
+
+    def releaseTensor(t: TTensor[_]): Unit = {
+      t.close()
+      tensorList -= t
+    }
+
+    def isEmpty: Boolean = {
+      tensorList.isEmpty
     }
 
     def destructTFTensors(): Unit = {
       for (tensor <- tensorList) {
         tensor.close()
       }
+
+      tensorList.clear()
     }
   }
 
@@ -215,6 +223,7 @@ class TFNet(private val graphDef: TFGraphHolder,
 
   override def updateOutput(input: Activity): Activity = {
     try {
+      val start = System.nanoTime()
       val runner = sess.runner()
 
       require(activityLength(input) == inputTypes.length,
@@ -276,29 +285,35 @@ class TFNet(private val graphDef: TFGraphHolder,
         }
       }
       if (!this.isTraining()) {
-        // clean up input tensorflow tensors
-        emptyTFTensorArray(tempTFTensors)
+        // clean up all tensorflow tensors
+        tensorManager.destructTFTensors()
+        // outputs is returned by tensorflow and cannot be freed using tensorManager
+        emptyTFTensorArray(outputs.asScala.slice(0, outputNames.length))
       } else {
         // clean up variable tensorflow tensors
         emptyTFTensorArray(weightTFTensors)
+        // clean up model output tensorflow tensors
+        emptyTFTensorArray(outputs.asScala.slice(0, outputNames.length))
+
+        // tempTensors will be cleaned up after backward
       }
 
-      // clean up model output tensorflow tensors
-      emptyTFTensorArray(outputs.asScala.slice(0, outputNames.length))
-      // tempTensors will be cleaned up after backward
+      val end = System.nanoTime()
+      TFNet.logger.debug(s"TFNet forward time ${(end - start)/1e9} " )
 
-      output
     } catch {
       case ex: Throwable =>
         tensorManager.destructTFTensors()
         throw ex
     }
+
+    output
   }
 
   private def emptyTFTensorArray(arr: Array[TTensor[_]]): Unit = {
     var i = 0
     while (i < arr.length) {
-      arr(i).close()
+      tensorManager.releaseTensor(arr(i))
       arr(i) = null
       i += 1
     }
@@ -307,7 +322,7 @@ class TFNet(private val graphDef: TFGraphHolder,
   private def emptyTFTensorArray(arr: mutable.Buffer[TTensor[_]]): Unit = {
     var i = 0
     while (i < arr.length) {
-      arr(i).close()
+      tensorManager.releaseTensor(arr(i))
       arr(i) = null
       i += 1
     }
@@ -394,13 +409,11 @@ class TFNet(private val graphDef: TFGraphHolder,
         }
         gradWeight.add(gradWeightBuffer)
       }
-
-      // clean up grad weights tf tensors
+      // gradWeightTFTensors is returned by tensorflow and cannot be freed using tensorManager
       emptyTFTensorArray(gradWeightTFTensors)
-    } catch {
-      case ex: Throwable =>
-        tensorManager.destructTFTensors()
-        throw ex
+
+    } finally {
+      tensorManager.destructTFTensors()
     }
   }
 
@@ -581,6 +594,8 @@ object TFNet {
 
   @transient
   private lazy val inDriver = NetUtils.isDriver
+
+  val logger = LoggerFactory.getLogger(getClass)
 
   private val graphRegistry = new RegistryMap[ClosableGraph]()
 
@@ -764,9 +779,16 @@ object TFNet {
             inputNames: Array[String],
             outputNames: Array[String],
             config: SessionConfig): TFNet = {
+    TFNet(path, inputNames, outputNames, config.toByteArray())
+  }
+
+  def apply(path: String,
+            inputNames: Array[String],
+            outputNames: Array[String],
+            config: Array[Byte]): TFNet = {
     val graphDef = parseGraph(path)
     val graphMeta = Meta(inputNames = inputNames, outputNames = outputNames)
-    TFNet(graphDef, path, graphMeta, config.toByteArray())
+    TFNet(graphDef, path, graphMeta, config)
   }
 
   /**
@@ -784,9 +806,13 @@ object TFNet {
 
 
   def apply(folder: String, config: SessionConfig = TFNet.SessionConfig()): TFNet = {
+    TFNet(folder, config.toByteArray())
+  }
+
+  def apply(folder: String, config: Array[Byte]): TFNet = {
     val (model, meta) = NetUtils.processTFFolder(folder)
     val graphDef = parseGraph(model)
-    TFNet(graphDef, model, meta, config.toByteArray())
+    TFNet(graphDef, model, meta, config)
   }
 
   private[zoo] def parseGraph(graphProtoTxt: String) : GraphDef = {

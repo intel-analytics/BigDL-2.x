@@ -101,11 +101,6 @@ def __prepare_analytics_zoo_env():
             if package not in sys.path:
                 sys.path.insert(0, package)
 
-    os.environ["KMP_BLOCKTIME"] = "0"
-    os.environ["KMP_AFFINITY"] = "granularity=fine,verbose,compact,1,0"
-    os.environ["KMP_SETTINGS"] = "1"
-    os.environ["OMP_NUM_THREADS"] = "1"
-
 
 def get_analytics_zoo_classpath():
     """
@@ -118,6 +113,9 @@ def get_analytics_zoo_classpath():
     if jar_paths:
         assert len(jar_paths) == 1, "Expecting one jar: %s" % len(jar_paths)
         return jar_paths[0]
+    import logging
+    logging.warning(
+        "Trying to search from: {}, but can not find the jar for Analytics-Zoo".format(jar_dir))
     return ""
 
 

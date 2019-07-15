@@ -58,7 +58,8 @@ class TFOptimizer:
     def __init__(self, loss, optim_method, sess=None, dataset=None, inputs=None,
                  grads=None, variables=None, graph=None,
                  val_outputs=None, val_labels=None, val_method=None, val_split=0.0,
-                 tensors_with_value=None, session_config=None):
+                 tensors_with_value=None, session_config=None,
+                 clip_norm=None, clip_value=None):
         '''
         TFOptimizer is used for distributed training of TensorFlow
         on Spark/BigDL.
@@ -97,6 +98,11 @@ class TFOptimizer:
         self.inputs = inputs + additional_inputs
         self.graph = graph
         self.session_config = session_config
+
+        self.clip_norm = clip_norm
+        if clip_value is not None and not isinstance(clip_value, tuple):
+            raise ValueError("The clip_value argument should be a tuple (min_value, max_value)")
+        self.clip_constant = clip_value
 
         from zoo.util.tf import process_grad
         grads = [process_grad(grad) for grad in grads]
@@ -200,6 +206,12 @@ with variable_creator_scope():
                                               batch_size=batch_size,
                                               optim_method=self.optim_method)
 
+        if self.clip_norm:
+            self.optimizer.set_gradclip_l2norm(self.clip_norm)
+        if self.clip_constant:
+            min_value, max_value = self.clip_constant
+            self.optimizer.set_gradclip_const(min_value, max_value)
+
     @staticmethod
     def _get_arguments_from_loss(loss, optim_method, session, val_outputs, val_labels, val_method):
         import tensorflow as tf
@@ -212,8 +224,9 @@ with variable_creator_scope():
         variables = []
         grads = []
         for (grad, var) in grads_vars:
-            variables.append(var)
-            grads.append(grad)
+            if grad is not None:
+                variables.append(var)
+                grads.append(grad)
 
         all_required_inputs = _find_placeholders([loss])
         dataset = tf.get_collection(all_required_inputs[0].name)[0]
@@ -227,12 +240,26 @@ with variable_creator_scope():
 
     @classmethod
     def from_loss(cls, loss, optim_method, session=None, val_outputs=None,
-                  val_labels=None, val_method=None, val_split=0.0, **kwargs):
+                  val_labels=None, val_method=None, val_split=0.0,
+                  clip_norm=None, clip_value=None, **kwargs):
         args = TFOptimizer._get_arguments_from_loss(loss, optim_method,
                                                     session, val_outputs,
                                                     val_labels, val_method)
+        if clip_value is not None:
+            if isinstance(clip_value, float) or isinstance(clip_value, int):
+                if clip_value <= 0:
+                    ValueError("The clip_value argument should be positive number")
+                clip_value = (-float(clip_value), float(clip_value))
 
-        return cls(*(args + [val_split]), **kwargs)
+            if not isinstance(clip_value, tuple):
+                raise ValueError("The clip_value argument should be" +
+                                 " a positive float/int which clips to" +
+                                 " (-clip_value, clip_value); " +
+                                 "or a tuple which clips to (min_value, max_value)")
+
+        return cls(*(args + [val_split]),
+                   clip_norm=clip_norm,
+                   clip_value=clip_value, **kwargs)
 
     @classmethod
     def from_keras(cls, keras_model, dataset, val_spilt=0.0, **kwargs):
@@ -242,7 +269,20 @@ with variable_creator_scope():
 
         variables = keras_model._collected_trainable_weights
         keras_optimizer = keras_model.optimizer
-        grads = keras_optimizer.get_gradients(loss, variables)
+
+        grads = K.gradients(loss, variables)
+        if None in grads:
+            raise ValueError('An operation has `None` for gradient. '
+                             'Please make sure that all of your ops have a '
+                             'gradient defined (i.e. are differentiable). '
+                             'Common ops without gradient: '
+                             'K.argmax, K.round, K.eval.')
+        clip_norm = None
+        clip_value = None
+        if hasattr(keras_optimizer, 'clipnorm'):
+            clip_norm = keras_optimizer.clipnorm
+        if hasattr(keras_optimizer, 'clipvalue'):
+            clip_value = (-keras_optimizer.clipvalue, keras_optimizer.clipvalue)
 
         sess = K.get_session()
         optim_method = TFOptimizer.to_bigdl_optim_method(keras_optimizer)
@@ -271,7 +311,9 @@ with variable_creator_scope():
         return cls(loss, optim_method, sess, dataset, inputs,
                    grads, variables, loss.graph, val_outputs, val_labels,
                    bigdl_val_methods, val_spilt,
-                   tensors_with_value=tensor_with_value, **kwargs)
+                   tensors_with_value=tensor_with_value,
+                   clip_norm=clip_norm,
+                   clip_value=clip_value, **kwargs)
 
     @staticmethod
     def to_bigdl_optim_method(koptim_method):
@@ -286,7 +328,9 @@ with variable_creator_scope():
         if isinstance(koptim_method, TFOptimizer):
             koptim_method = koptim_method.optimizer
 
-        if isinstance(koptim_method, koptimizers.Optimizer):
+        if isinstance(koptim_method, boptimizer.OptimMethod):
+            return koptim_method
+        elif isinstance(koptim_method, koptimizers.Optimizer):
             lr = float(K.eval(koptim_method.lr))
             decay = float(K.eval(koptim_method.decay))
             if isinstance(koptim_method, koptimizers.Adagrad):
@@ -372,18 +416,30 @@ with variable_creator_scope():
 
         raise ValueError("We don't support %s for now" % koptim_method)
 
-    def refresh_weights(self):
-        from zoo.util.tf import export_tf
-        export_tf(self.sess, self.export_dir,
-                  inputs=self.inputs,
-                  outputs=self.grads + self.outputs)
-        self.training_helper_layer = TFTrainingHelper(self.export_dir, self.session_config)
-
     def set_train_summary(self, summary):
         self.optimizer.set_train_summary(summary)
 
     def set_val_summary(self, summary):
         self.optimizer.set_val_summary(summary)
+
+    def set_constant_gradient_clipping(self, min_value, max_value):
+        """
+        Configure constant clipping settings.
+
+
+        :param min_value: the minimum value to clip by
+        :param max_value: the maxmimum value to clip by
+        """
+        self.optimizer.set_gradclip_const(min_value, max_value)
+
+    def set_gradient_clipping_by_l2_norm(self, clip_norm):
+        """
+        Configure L2 norm clipping settings.
+
+
+        :param clip_norm: gradient L2-Norm threshold
+        """
+        self.optimizer.set_gradclip_l2norm(clip_norm)
 
     def optimize(self, end_trigger=None):
         if end_trigger is None:

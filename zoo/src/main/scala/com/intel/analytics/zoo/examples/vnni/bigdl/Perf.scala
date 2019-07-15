@@ -37,15 +37,15 @@ object Perf {
 
     val parser = new OptionParser[PerfParams]("ResNet50 Int8 Performance Test") {
       opt[String]('m', "model")
-        .text("The path to the pre-trained int8 ResNet50 model snapshot")
+        .text("The path to the downloaded int8 model snapshot")
         .action((v, p) => p.copy(model = v))
         .required()
       opt[Int]('b', "batchSize")
         .text("The batch size of input data")
         .action((v, p) => p.copy(batchSize = v))
       opt[Int]('i', "iteration")
-        .text("The number of iterations to run the perf test. " +
-          "The result will be the average of each iteration time cost")
+        .text("The number of iterations to run the performance test. " +
+          "The result should be the average of each iteration time cost")
         .action((v, p) => p.copy(iteration = v))
     }
 
@@ -69,6 +69,8 @@ object Perf {
         iteration += 1
       }
 
+      // mkldnn model would forward a fixed batch size.
+      // Thus need a new model to test for latency.
       val model2 = ImageClassifier.loadModel[Float](param.model)
       model2.setEvaluateStatus()
 

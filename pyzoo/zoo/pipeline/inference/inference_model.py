@@ -61,6 +61,17 @@ class InferenceModel(JavaValue):
         callBigDlFunc(self.bigdl_type, "inferenceModelLoadOpenVINO",
                       self.value, model_path, weight_path)
 
+    def load_openvino_int8(self, model_path, weight_path, batch_size):
+        """
+        Load an OpenVINI int8 IR.
+
+        :param model_path: String. The file path to the OpenVINO IR xml file.
+        :param weight_path: String. The file path to the OpenVINO IR bin file.
+        :param batch_size: Int. Batch Size of input data
+        """
+        callBigDlFunc(self.bigdl_type, "inferenceModelLoadOpenVINOInt8",
+                      self.value, model_path, weight_path, batch_size)
+
     def load_tf(self, model_path, backend="tensorflow",
                 intra_op_parallelism_threads=1, inter_op_parallelism_threads=1,
                 use_per_session_threads=True, model_type=None,

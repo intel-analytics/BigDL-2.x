@@ -34,7 +34,8 @@ def _to_tensor_structure(tensors):
     if isinstance(tensors, tuple):
         tensor_structure = TensorMeta(dtype=tensors[0], shape=tensors[1], name="input0")
     elif isinstance(tensors, list):
-        tensor_structure = [TensorMeta(dtype=value[0], shape=value[1], name=idx)
+        tensor_structure = [TensorMeta(dtype=value[0], shape=value[1],
+                                       name="list_input_" + str(idx))
                             for (idx, value) in enumerate(tensors)]
     elif isinstance(tensors, dict):
         tensor_structure = {}
@@ -109,7 +110,7 @@ class TensorMeta(object):
 class TFDataset(object):
     def __init__(self, tensor_structure, batch_size,
                  batch_per_thread, hard_code_batch_size=False):
-        '''
+        """
 
         TFDataset represents a distributed collection of elements (backed by a RDD)
         to be feed into Tensorflow graph.
@@ -123,7 +124,7 @@ class TFDataset(object):
         if True, the static size of the first dimension of the resulting tensors is
         batch_size/total_core_num (training) or batch_per_thread for inference; if False,
         it is None.
-        '''
+        """
 
         if batch_size > 0 and batch_per_thread > 0:
             raise ValueError("bath_size and batch_per_thread should not be set simultaneously")
@@ -210,11 +211,11 @@ class TFDataset(object):
 
     @property
     def tensors(self):
-        '''
+        """
         a nested structure of TensorFlow tensor object in TensorFlow graph.
         The elements of this dataset will be fed into these tensors on each iteration.
         :return: the nested structure of TensorFlow tensor object
-        '''
+        """
 
         if self._tensors is None:
             self._create_placeholders()
@@ -259,49 +260,79 @@ class TFDataset(object):
         return tensor_structure
 
     def get_prediction_data(self):
-        '''
+        """
         :return: an object that can be used for TFNet.predict
         e.g. an RDD of Sample or a ImageSet
-        '''
+        """
         raise NotImplementedError
 
     def get_evaluation_data(self):
-        '''
+        """
         :return: an object that can be used for TFNet.evaluate,
         e.g. an RDD of Sample or a ImageSet
-        '''
+        """
         raise NotImplementedError
 
     def get_training_data(self):
-        '''
+        """
         :return: an object that can be used to create a BigDL optimizer,
         e.g. an RDD of Sample or a DataSet
-        '''
+        """
         raise NotImplementedError
 
     def get_validation_data(self):
-        '''
+        """
         :return: an object that can be used to set validation in a BigDL optimizer,
         e.g. an RDD of Sample or a DataSet
-        '''
+        """
         raise NotImplementedError
 
     def get_num_partitions(self):
-        '''
+        """
         :return: the num of partitions of the underlying RDD
-        '''
+        """
         raise NotImplementedError
 
     @staticmethod
     def from_rdd(*args, **kwargs):
-        '''
-        Create a TFDataset from a rdd, each element of the rdd must be a list of numpy.ndarray.
+        """
+        Create a TFDataset from a rdd.
 
-        :param rdd: a rdd of list of numpy.ndarray each representing a tensor to feed into
-        tensorflow graph on each iteration
-        :param names: the names of the resulting tensors, should be a list of str
-        :param shapes: the shapes of the resulting tensors, should be a list of list of int
-        :param types: the types of the result tensors, should be a list of tf.dtype
+        For training and evaluation, both `features` and `labels` arguments should be specified.
+        The element of the rdd should be a tuple of two, (features, labels), each has the
+        same structure of numpy.ndarrays of the argument `features`, `labels`.
+
+        E.g. if `features` is [(tf.float32, [10]), (tf.float32, [20])],
+        and `labels` is {"label1":(tf.float32, [10]), "label2": (tf.float32, [20])}
+        then a valid element of the rdd could be
+
+        (
+        [np.zeros(dtype=float, shape=(10,), np.zeros(dtype=float, shape=(10,)))],
+         {"label1": np.zeros(dtype=float, shape=(10,)),
+          "label2":np.zeros(dtype=float, shape=(10,))))}
+        )
+
+        If `labels` is not specified,
+        then the above element should be changed to
+        [np.zeros(dtype=float, shape=(10,), np.zeros(dtype=float, shape=(10,)))]
+
+        For inference, `labels` can be not specified.
+        The element of the rdd should be some ndarrays of the same structure of the `features`
+        argument.
+
+        A note on the legacy api: if you are using `names`, `shapes`, `types` arguments,
+        each element of the rdd should be a list of numpy.ndarray.
+
+        :param rdd: a rdd containing the numpy.ndarrays to be used
+        for training/evaluation/inference
+        :param features: the structure of input features, should one the following:
+               - a tuple (dtype, shape), e.g. (tf.float32, [28, 28, 1])
+               - a list of such tuple [(dtype1, shape1), (dtype2, shape2)],
+                     e.g. [(tf.float32, [10]), (tf.float32, [20])],
+               - a dict of such tuple, mapping string names to tuple {"name": (dtype, shape},
+                     e.g. {"input1":(tf.float32, [10]), "input2": (tf.float32, [20])}
+
+        :param labels: the structure of input labels, format is the same as features
         :param batch_size: the batch size, used for training, should be a multiple of
         total core num
         :param batch_per_thread: the batch size for each thread, used for inference or evaluation
@@ -311,12 +342,12 @@ class TFDataset(object):
         it is None.
         :param val_rdd: validation data with the same structure of rdd
         :return: a TFDataset
-        '''
+        """
         return TFNdarrayDataset.from_rdd(*args, **kwargs)
 
     @staticmethod
     def from_ndarrays(*args, **kwargs):
-        '''
+        """
         Create a TFDataset from a nested structure of numpy ndarrays. Each element
         in the resulting TFDataset has the same structure of the argument tensors and
         is created by indexing on the first dimension of each ndarray in the tensors
@@ -334,14 +365,14 @@ class TFDataset(object):
         it is None.
         :param val_tensors: the numpy ndarrays used for validation during training
         :return:
-        '''
+        """
         return TFNdarrayDataset.from_ndarrays(*args, **kwargs)
 
     @staticmethod
     def from_image_set(image_set, image, label=None,
                        batch_size=-1, batch_per_thread=-1,
                        hard_code_batch_size=False, validation_image_set=None):
-        '''
+        """
         Create a TFDataset from a ImagetSet. Each ImageFeature in the ImageSet should
         already has the "sample" field, i.e. the result of ImageSetToSample transformer
 
@@ -359,7 +390,7 @@ class TFDataset(object):
         it is None.
         :param validation_image_set: the ImageSet used for validation during training
         :return:
-        '''
+        """
         tensor_structure = TFDataset._to_tensor_structure(image, label)
         return TFImageDataset(image_set, tensor_structure, batch_size,
                               batch_per_thread, hard_code_batch_size,
@@ -369,7 +400,7 @@ class TFDataset(object):
     def from_text_set(text_set, text, label=None,
                       batch_size=-1, batch_per_thread=-1,
                       hard_code_batch_size=False, validation_image_set=None):
-        '''
+        """
         Create a TFDataset from a TextSet. The TextSet must be transformed to Sample, i.e.
         the result of TextFeatureToSample transformer.
         :param text_set: the TextSet used to create this TFDataset
@@ -388,7 +419,7 @@ class TFDataset(object):
         it is None.
         :param validation_image_set: The TextSet used for validation during training
         :return:
-        '''
+        """
         tensor_structure = TFDataset._to_tensor_structure(text, label)
         return TFTextDataset(text_set, tensor_structure, batch_size,
                              batch_per_thread, hard_code_batch_size,
@@ -397,7 +428,7 @@ class TFDataset(object):
     @staticmethod
     def from_feature_set(dataset, features, labels=None, batch_size=-1, batch_per_thread=-1,
                          hard_code_batch_size=False, validation_dataset=None):
-        '''
+        """
         Create a TFDataset from a FeatureSet. Currently, the element in this Feature set must be a
         ImageFeature that has a sample field, i.e. the result of ImageSetToSample transformer
         :param dataset: the feature set used to create this TFDataset
@@ -416,7 +447,7 @@ class TFDataset(object):
         it is None.
         :param validation_dataset: The FeatureSet used for validation during training
         :return:
-        '''
+        """
         tensor_structure = TFDataset._to_tensor_structure(features, labels)
 
         return TFFeatureDataset(dataset, tensor_structure, batch_size,
@@ -550,24 +581,7 @@ class TFNdarrayDataset(TFDataset):
                  batch_size=-1, batch_per_thread=-1,
                  hard_code_batch_size=False, val_rdd=None,
                  features=None, labels=None):
-        '''
-        Create a TFDataset from a rdd, each element of the rdd must be a list of numpy.ndarray.
 
-        :param rdd: a rdd of list of numpy.ndarray each representing a tensor to feed into
-        tensorflow graph on each iteration
-        :param names: the names of the resulting tensors, should be a list of str
-        :param shapes: the shapes of the resulting tensors, should be a list of list of int
-        :param types: the types of the result tensors, should be a list of tf.dtype
-        :param batch_size: the batch size, used for training, should be a multiple of
-        total core num
-        :param batch_per_thread: the batch size for each thread, used for inference
-        :param hard_code_batch_size: whether to hard code the batch_size into tensorflow graph,
-        if True, the static size of the first dimension of the resulting tensors is
-        batch_size/total_core_num (training) or batch_per_thread for inference; if False,
-        it is None.
-        :param val_rdd: validation data with the same structure of rdd
-        :return: a TFDataset
-        '''
         import tensorflow as tf
 
         if features is not None:
@@ -604,16 +618,6 @@ class TFNdarrayDataset(TFDataset):
     @staticmethod
     def from_ndarrays(tensors, batch_size=-1, batch_per_thread=-1,
                       hard_code_batch_size=False, val_tensors=None):
-        '''
-        Create a TFDataset from a nested structure of numpy ndarrays. Each element
-        in the resulting TFDataset has the same structure of the argument tensors and
-        is created by indexing on the first dimension of each ndarray in the tensors
-        argument.
-
-        This method is equivalent to sc.parallize the tensors and call TFDataset.from_rdd
-
-        :return:
-        '''
         sc = getOrCreateSparkContext()
         node_num, core_num = get_node_and_core_number()
         total_core_num = node_num * core_num

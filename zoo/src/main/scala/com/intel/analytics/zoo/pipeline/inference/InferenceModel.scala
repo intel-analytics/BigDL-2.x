@@ -262,6 +262,24 @@ class InferenceModel(private var autoScalingEnabled: Boolean = true,
     offerModelQueue()
   }
 
+  /**
+   * loads a openvino IR Int8
+   *
+   * @param modelPath  the path of openvino ir xml file
+   * @param weightPath the path of openvino ir bin file
+   */
+  def doLoadOpenVINOInt8(modelPath: String, weightPath: String, batchSize: Int): Unit = {
+    if (concurrentNum > 1) {
+      InferenceSupportive.logger.warn(s"concurrentNum is $concurrentNum > 1, " +
+        s"openvino model does not support shared weights model copies")
+    }
+    clearModelQueue()
+    this.originalModel =
+      InferenceModelFactory.loadOpenVINOModelForIRInt8(modelPath, weightPath,
+        DeviceType.CPU, batchSize)
+    offerModelQueue()
+  }
+
   private def doLoadTensorflowModel(modelPath: String,
                                     intraOpParallelismThreads: Int,
                                     interOpParallelismThreads: Int,

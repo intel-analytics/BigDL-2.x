@@ -22,14 +22,21 @@ import com.intel.analytics.bigdl.nn.abstractnn.Activity
 import scala.collection.JavaConverters._
 
 class OpenVINOModel(var executableNetworkReference: Long = -1,
-                    var supportive: OpenVinoInferenceSupportive)
+                    var supportive: OpenVinoInferenceSupportive,
+                    var isInt8: Boolean = false)
   extends AbstractModel with InferenceSupportive with Serializable {
 
   override def predict(inputs: JList[JList[JTensor]]): JList[JList[JTensor]] = {
     val outputs = new ArrayList[JList[JTensor]]()
     inputs.asScala.map(input => {
       val tensor = input.get(0)
-      val output = supportive.predict(executableNetworkReference, tensor.getData, tensor.getShape)
+      val output = if (isInt8) {
+        supportive.predictInt8(executableNetworkReference,
+          tensor.getData, tensor.getShape)
+      } else {
+        supportive.predict(executableNetworkReference,
+          tensor.getData, tensor.getShape)
+      }
       outputs.add(Arrays.asList({
         output
       }))

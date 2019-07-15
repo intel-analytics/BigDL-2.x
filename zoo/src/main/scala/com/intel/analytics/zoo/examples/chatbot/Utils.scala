@@ -42,10 +42,6 @@ object Utils {
       .text("learning rate")
       .action((x, c) => c.copy(learningRate = x))
 
-    opt[Int]("vocab")
-      .text("dictionary length | vocabulary size")
-      .action((x, c) => c.copy(vocabSize = x))
-
     opt[Int]('e', "nEpochs")
       .text("epoch numbers")
       .action((x, c) => c.copy(nEpochs = x))
