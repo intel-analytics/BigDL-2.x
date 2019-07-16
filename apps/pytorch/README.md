@@ -19,6 +19,8 @@ pip install analytics-zoo==0.6.0.dev6 jupyter matplotlib
 conda install pytorch-cpu torchvision-cpu -c pytorch
 ```
 
+If you want install the latest analytics-zoo, you need to build the whl package by yourself, see [build-whl-package-for-pip-install](https://analytics-zoo.github.io/master/#DeveloperGuide/python/#build-whl-package-for-pip-install) for details.
+
 ## Run Jupyter
 If you want to run spark local, just start jupyter notebook:
 ```
