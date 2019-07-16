@@ -48,7 +48,7 @@ class TFValidationMethod(JavaValue):
 class TFTrainingHelper(Layer):
     def __init__(self, path, configProto):
         if configProto is not None:
-            byte_arr = configProto.SerializeToString()
+            byte_arr = bytearray(configProto.SerializeToString())
         else:
             byte_arr = None
         super(TFTrainingHelper, self).__init__(None, "float", path, byte_arr)
@@ -97,6 +97,11 @@ class TFOptimizer:
         self.dataset = dataset
         self.inputs = inputs + additional_inputs
         self.graph = graph
+        if session_config is not None:
+            import tensorflow as tf
+            assert isinstance(session_config, tf.ConfigProto),\
+                "session_config should be a tf.ConfigProto"
+            session_config.use_per_session_threads = True
         self.session_config = session_config
 
         self.clip_norm = clip_norm
@@ -415,13 +420,6 @@ with variable_creator_scope():
                 return boptimizer.Adadelta(decayrate=rho, epsilon=epsilon)
 
         raise ValueError("We don't support %s for now" % koptim_method)
-
-    def refresh_weights(self):
-        from zoo.util.tf import export_tf
-        export_tf(self.sess, self.export_dir,
-                  inputs=self.inputs,
-                  outputs=self.grads + self.outputs)
-        self.training_helper_layer = TFTrainingHelper(self.export_dir, self.session_config)
 
     def set_train_summary(self, summary):
         self.optimizer.set_train_summary(summary)

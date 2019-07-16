@@ -48,19 +48,37 @@ def to_sample_rdd(x, y, sc, num_slices=None):
 
 
 class TFNet(Layer):
-    def __init__(self, path, input_names=None, output_names=None, bigdl_type="float"):
+    def __init__(self, path, input_names=None, output_names=None,
+                 tf_session_config=None, bigdl_type="float"):
+        config_bytes = None
+        if tf_session_config is not None:
+            import tensorflow as tf
+            assert isinstance(tf_session_config, tf.ConfigProto)
+            tf_session_config.use_per_session_threads = True
+            config_bytes = bytearray(tf_session_config.SerializeToString())
         if input_names is None and output_names is None:
-            super(TFNet, self).__init__(None, bigdl_type,
-                                        path)
+            if tf_session_config is None:
+                super(TFNet, self).__init__(None, bigdl_type,
+                                            path)
+            else:
+                super(TFNet, self).__init__(None, bigdl_type,
+                                            path, config_bytes)
+
         else:
             if isinstance(input_names, six.string_types):
                 input_names = [input_names]
             if isinstance(output_names, six.string_types):
                 output_names = [output_names]
-            super(TFNet, self).__init__(None, bigdl_type,
-                                        path,
-                                        input_names,
-                                        output_names)
+            if tf_session_config is None:
+                super(TFNet, self).__init__(None, bigdl_type,
+                                            path,
+                                            input_names,
+                                            output_names)
+            else:
+                super(TFNet, self).__init__(None, bigdl_type,
+                                            path,
+                                            input_names,
+                                            output_names, config_bytes)
 
     @staticmethod
     def check_input(input):
@@ -107,30 +125,63 @@ class TFNet(Layer):
                                     batch_per_thread)
             return results.map(lambda result: Layer.convert_output(result))
         else:
-            if isinstance(x, np.ndarray) or isinstance(x, list):
-                results = callBigDlFunc(self.bigdl_type, "zooPredict",
-                                        self.value,
-                                        self._to_jtensors(x),
-                                        batch_per_thread)
-                return [Layer.convert_output(result) for result in results]
-            else:
-                raise TypeError("Unsupported prediction data type: %s" % type(x))
+            start_idx = 0
+            results = []
+            while start_idx < len(x):
+                end_idx = min(start_idx + batch_per_thread, len(x))
+                results.append(self.forward(x[start_idx:end_idx]))
+                start_idx += batch_per_thread
+
+            return np.concatenate(results, axis=0)
 
     @staticmethod
-    def from_export_folder(folder):
+    def from_export_folder(folder, tf_session_config=None):
+        """
+        Create a TFNet from an exported folder produced by `export_tf`
+        :param folder: the folder the TensorFlow model exported to
+        :param tf_session_config: an optional tf.ConfigProto object to
+                       set the session config in java side.
+                       This config does not necessarily be the same with your current session.
+                       E.g. sess_config = tf.ConfigProto(inter_op_parallelism_threads=1,
+                                                         intra_op_parallelism_threads=1)
+                            net = TFNet.from_session(sess, inputs, outputs, sess_config)
+        :return: a TFNet
+        """
         if not os.path.isdir(folder):
             raise ValueError(folder + " does not exist")
-        return TFNet(folder)
+        return TFNet(folder, tf_session_config=tf_session_config)
 
     @staticmethod
     def from_session(sess, inputs, outputs,
-                     generate_backward=False, allow_non_differentiable_input=True):
+                     generate_backward=False,
+                     allow_non_differentiable_input=True,
+                     tf_session_config=None):
+        """
+        Create a TFNet from an a session and the inputs and outpus endpoints
+        of the TensorFlow graph.
+        :param sess: the TensorFlow session contain all the variables
+        :param inputs: a list of TensorFlow Tensor represents the input endpoints
+        of the TensorFlow graph
+        :param outputs: a list of TensorFlow Tensor represents the output endpoints
+        of the TensorFlow graph
+        :param generate_backward: whether to generated a the backward graph, set true
+        if you want to train this TFNet
+        :param allow_non_differentiable_input: if set to yes, when input are not differentiable,
+        the gradient will be set to zero. if set to false, an error will be thrown.
+        :param tf_session_config: an optional tf.ConfigProto object to
+                       set the session config in java side.
+                       This config does not necessarily be the same with your current session.
+                       E.g. sess_config = tf.ConfigProto(inter_op_parallelism_threads=1,
+                                                         intra_op_parallelism_threads=1)
+                            net = TFNet.from_session(sess, inputs, outputs, sess_config)
+        :return a TFNet
+        """
         from zoo.util.tf import export_tf
         temp = tempfile.mkdtemp()
         try:
             export_tf(sess, temp, inputs, outputs,
                       generate_backward, allow_non_differentiable_input)
-            net = TFNet.from_export_folder(temp)
+            net = TFNet.from_export_folder(temp, tf_session_config)
         finally:
             import shutil
             shutil.rmtree(temp)

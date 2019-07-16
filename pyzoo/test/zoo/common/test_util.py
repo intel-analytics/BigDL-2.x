@@ -14,26 +14,27 @@
 # limitations under the License.
 #
 
-import torch
-import torchvision
-import numpy as np
 import pytest
 
+from bigdl.util.common import get_node_and_core_number
 from test.zoo.pipeline.utils.test_utils import ZooTestCase
-from zoo.pipeline.api.net.torch_net import TorchNet
+from zoo.common import set_core_number
 
 
-class TestTF(ZooTestCase):
-    def test_torch_net_predict(self):
-        model = torchvision.models.resnet18(pretrained=True).eval()
-        net = TorchNet.from_pytorch(model, [1, 3, 224, 224])
+class TestUtil(ZooTestCase):
 
-        dummpy_input = torch.ones(1, 3, 224, 224)
-        result = net.predict(dummpy_input.numpy()).collect()
-        assert np.allclose(result[0][0:5].tolist(),
-                           np.asarray(
-                               [-0.03913354128599167, 0.11446280777454376, -1.7967549562454224,
-                                -1.2342952489852905, -0.819004476070404]))
+    def test_set_core_num(self):
+        _, core_num = get_node_and_core_number()
+
+        set_core_number(core_num + 1)
+
+        _, new_core_num = get_node_and_core_number()
+
+        assert new_core_num == core_num + 1, \
+            "set_core_num failed, set the core" \
+            " number to be {} but got {}".format(core_num + 1, new_core_num)
+
+        set_core_number(core_num)
 
 
 if __name__ == "__main__":

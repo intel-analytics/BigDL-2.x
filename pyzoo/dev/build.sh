@@ -1,3 +1,5 @@
+#!/usr/bin/env bash
+
 #
 # Copyright 2018 Analytics Zoo Authors.
 #
@@ -14,5 +16,20 @@
 # limitations under the License.
 #
 
-from zoo.pipeline.api.net import TFDataset, TFOptimizer, TFPredictor
-from zoo.tfpark.model import KerasModel
+set -e
+RUN_SCRIPT_DIR=$(cd $(dirname $0) ; pwd)
+echo $RUN_SCRIPT_DIR
+
+if (( $# < 2)); then
+  echo "Usage: build.sh platform version mvn_parameters"
+  echo "Usage example: bash release.sh linux default"
+  echo "Usage example: bash release.sh linux 0.6.0.dev0"
+  echo "If needed, you can also add other profiles such as: -Dspark.version=2.4.3 -Dbigdl.artifactId=bigdl-SPARK_2.4 -P spark_2.x"
+  exit -1
+fi
+
+platform=$1
+version=$2
+profiles=${*:3}
+
+bash ${RUN_SCRIPT_DIR}/release.sh ${platform} ${version} false ${profiles}
