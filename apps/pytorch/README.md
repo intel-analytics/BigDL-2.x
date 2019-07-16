@@ -2,12 +2,12 @@
 
 This example is migrated from [PROGRESSIVE GROWING OF GANS](https://pytorch.org/hub/facebookresearch_pytorch-gan-zoo_pgan/), and demonstrates how to run distributed inference using a pre-trained Pytorch Model.
 
-## Requirement
+## Requirements
 * Python 3.6
 * JDK 1.8
 * Pytorch & TorchVision 1.1.0
 * Apache Spark 2.4.3(pyspark)
-* Analytics-Zoo 0.6.0-SNAPSHOT.dev5 and above
+* Analytics-Zoo 0.6.0-SNAPSHOT.dev6 and above
 * Jupyter Notebook, matplotlib
 
 ## Prepare environments
@@ -15,7 +15,7 @@ We recommend you to use [Anaconda](https://www.anaconda.com/distribution/#linux)
 ```
 conda create -n zoo python=3.6 #zoo is conda enviroment name, you can set another name you like.
 conda activate zoo
-pip install analytics-zoo==0.6.0.dev5 jupyter matplotlib
+pip install analytics-zoo==0.6.0.dev6 jupyter matplotlib
 conda install pytorch-cpu torchvision-cpu -c pytorch
 ```
 
