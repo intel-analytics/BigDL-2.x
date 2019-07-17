@@ -186,16 +186,17 @@ class NeuralCFSpec extends ZooSpecHelper {
     })
     val trainRdds = data.map(x => x.sample)
 
-    val optimMethod = new Adam[Float](
-      learningRate = 1e-2,
-      learningRateDecay = 1e-5)
+
 
     // Use Estimator API
     val ncfEst = NeuralCF[Float](100, 100, 5, 5, 5, Array(10, 5), false)
+    val ncf = ncfEst.cloneModule()
     val sample2batch = SampleToMiniBatch[Float](458)
     val trainSet = FeatureSet.rdd(trainRdds.cache()) -> sample2batch
-
-    val estimator = Estimator[Float](ncfEst, optimMethod)
+    val estOptimMethod = new Adam[Float](
+      learningRate = 1e-2,
+      learningRateDecay = 1e-5)
+    val estimator = Estimator[Float](ncfEst, estOptimMethod)
 
     val (checkpointTrigger, endTrigger) =
       (Trigger.everyEpoch, Trigger.maxEpoch(100))
@@ -211,7 +212,9 @@ class NeuralCFSpec extends ZooSpecHelper {
     val accuracyEst = correctCountsEst.toDouble / 458
 
     // Use compile and fit API
-    val ncf = NeuralCF[Float](100, 100, 5, 5, 5, Array(10, 5), false)
+    val optimMethod = new Adam[Float](
+      learningRate = 1e-2,
+      learningRateDecay = 1e-5)
     ncf.compile(optimizer = optimMethod,
       loss = SparseCategoricalCrossEntropy[Float](zeroBasedLabel = false),
       metrics = List(new Top1Accuracy[Float]()))
@@ -226,7 +229,7 @@ class NeuralCFSpec extends ZooSpecHelper {
     val accuracy = correctCounts.toDouble / 458
 
     // the reference accuracy is 0.679
-    assert(Math.abs(accuracy - accuracyEst) <= 0.2)
+    assert(Math.abs(accuracy - accuracyEst) < 0.1)
   }
 
 
