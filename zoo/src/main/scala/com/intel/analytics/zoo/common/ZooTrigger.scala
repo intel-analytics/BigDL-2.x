@@ -15,7 +15,7 @@ trait ZooTrigger extends Trigger {
    * We also hold some training metrics to control trigger.
    * @param zooState zoo state table
    */
-  private[Zoo] def setZooState(zooState: Table): Unit = {
+  private[zoo] def setZooState(zooState: Table): Unit = {
     this.zooState = zooState
   }
 }
