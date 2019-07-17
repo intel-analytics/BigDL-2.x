@@ -1405,4 +1405,8 @@ class PythonZooKeras[T: ClassTag](implicit ev: TensorNumeric[T]) extends PythonZ
     optimizer.setValidation(trigger, batchingWithPaddingStrategy(DataSet.rdd(sampleRDD), batchSize),
       vMethods.asScala.toArray)
   }
+
+  def createEpochStep(stepSize: Int, gamma: Double): SGD.EpochStep = {
+    SGD.EpochStep(stepSize, gamma)
+  }
 }

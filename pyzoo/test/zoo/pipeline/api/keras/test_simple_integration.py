@@ -63,7 +63,8 @@ class TestSimpleIntegration(ZooTestCase):
         y_train = np.random.randint(4, size=(200, ))
         X_test = np.random.random([40, 32, 32])
         y_test = np.random.randint(4, size=(40, ))
-        model.compile(optimizer="adam",
+        from zoo.pipeline.api.keras.optimizers import Adam, EpochStep
+        model.compile(optimizer=Adam(lr=0.003, schedule=EpochStep(1, 0.75)),
                       loss="sparse_categorical_crossentropy",
                       metrics=['accuracy'])
         tmp_log_dir = create_tmp_path()
@@ -72,7 +73,7 @@ class TestSimpleIntegration(ZooTestCase):
         model.set_tensorboard(tmp_log_dir, "training_test")
         model.set_checkpoint(tmp_checkpoint_path)
         model.set_constant_gradient_clipping(0.01, 0.03)
-        model.fit(X_train, y_train, batch_size=112, nb_epoch=2, validation_data=(X_test, y_test))
+        model.fit(X_train, y_train, batch_size=32, nb_epoch=20, validation_data=(X_test, y_test))
         model.clear_gradient_clipping()
         model.fit(X_train, y_train, batch_size=112, nb_epoch=2, validation_data=(X_test, y_test))
         model.set_gradient_clipping_by_l2_norm(0.2)

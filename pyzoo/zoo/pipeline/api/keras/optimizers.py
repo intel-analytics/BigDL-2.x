@@ -157,3 +157,8 @@ class DistriOptimizer(BDistriOptimizer):
         """
         callBigDlFunc(self.bigdl_type, "setValidationWithPaddingStrategy", self.value, batch_size,
                       trigger, val_rdd, to_list(val_method))
+
+
+class EpochStep(JavaValue):
+    def __init__(self, step_size, gamma, bigdl_type="float"):
+            JavaValue.__init__(self, None, bigdl_type, step_size, float(gamma))
