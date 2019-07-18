@@ -36,12 +36,16 @@ case class EveryEpoch() extends ZooTrigger{
       if (state[Int]("epoch") <= lastEpoch) {
         false
       } else {
-        if (zooState.contains("numSlice") && zooState.contains("currentSlice")
-          && zooState[Int]("currentSlice") % zooState[Int]("numSlice") == 0) {
+        if (zooState.contains("numSlice") && zooState.contains("currentSlice")) {
+          if (zooState[Int]("currentSlice") % zooState[Int]("numSlice") == 0) {
+            lastEpoch = state[Int]("epoch")
+            true
+          } else {
+            false
+          }
+        } else {
           lastEpoch = state[Int]("epoch")
           true
-        } else {
-          false
         }
       }
     }

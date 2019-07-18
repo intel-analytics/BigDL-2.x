@@ -359,6 +359,7 @@ class DiskFeatureSet[T: ClassTag]
           newSample()
         }
         currentFeatureSet.cache()
+        currentFeatureSet.shuffle()
         trained = true
         currentFeatureSet.data(train)
       } else {

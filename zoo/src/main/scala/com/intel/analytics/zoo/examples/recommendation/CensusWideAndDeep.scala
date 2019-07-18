@@ -132,9 +132,9 @@ object CensusWideAndDeep {
     }
 
     val sample2batch = SampleToMiniBatch(batchSize)
-    val trainRdds = FeatureSet.rdd(trainpairFeatureRdds.map(x => x.sample).cache(), DISK_AND_DRAM(2)) ->
+    val trainRdds = FeatureSet.rdd(trainpairFeatureRdds.map(x => x.sample), DISK_AND_DRAM(2)) ->
       sample2batch
-    val validationRdds = FeatureSet.rdd(validationpairFeatureRdds.map(x => x.sample).cache()) ->
+    val validationRdds = FeatureSet.rdd(validationpairFeatureRdds.map(x => x.sample)) ->
       sample2batch
 
     val estimator = if (params.logDir.isDefined) {
