@@ -71,7 +71,7 @@ class TorchNet(Layer):
             label_input = label_input if label_input is not None else torch.rand(label_shape)
 
             traced_script_loss = torch.jit.trace(TempModule(lossFunc).eval(),
-                (pred_input, label_input))
+                                                 (pred_input, label_input))
             lossPath = os.path.join(temp, "loss.pt")
             traced_script_loss.save(lossPath)
             net = TorchNet(path, lossPath)

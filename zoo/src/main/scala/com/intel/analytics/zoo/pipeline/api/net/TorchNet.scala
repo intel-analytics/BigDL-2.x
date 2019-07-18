@@ -19,7 +19,6 @@ package com.intel.analytics.zoo.pipeline.api.net
 import java.io._
 import java.nio.channels.Channels
 import java.nio.file.{Files, Paths}
-import java.util.zip.ZipInputStream
 
 import com.intel.analytics.bigdl.Module
 import com.intel.analytics.bigdl.models.utils.ModelBroadcast
@@ -192,17 +191,7 @@ object TorchNet {
 
   // extract libs from zoo jar file
   private def loadPytorchNatives(): Unit = {
-    val tmpDir = com.google.common.io.Files.createTempDir()
-    val libStream = TorchNet.getClass.getResourceAsStream(s"/pytorch/lib/libtorch-shared-with-deps-latest.zip")
-    unzip(libStream, tmpDir)
-
-    try {
-      System.load(tmpDir + "/libtorch/lib/libtorch.so")
       loadNative("pytorch/libpytorch-engine.so")
-    }
-    finally {
-      FileUtils.deleteDirectory(tmpDir)
-    }
   }
 
   private def loadNative(path: String): Unit = {
@@ -221,33 +210,6 @@ object TorchNet {
     }
   }
 
-  private def unzip(inputStream: InputStream, outputPath: File) {
-    try {
-      val buffer = new Array[Byte](2048)
-      val istream = new ZipInputStream(inputStream)
-      var entry = istream.getNextEntry
-      while (entry != null) {
-        val entryDestination = new File(outputPath, entry.getName)
-        if (entry.isDirectory) entryDestination.mkdirs
-        else {
-          entryDestination.getParentFile.mkdirs
-          val fos = new FileOutputStream(entryDestination)
-          val bos = new BufferedOutputStream(fos, buffer.length)
-          var len = istream.read(buffer)
-          while (len > 0) {
-            bos.write(buffer, 0, len)
-            len = istream.read(buffer)
-          }
-          bos.close()
-        }
-        entry = istream.getNextEntry
-      }
-    } catch {
-      case io: IOException =>
-        System.out.println("error during loading loading pytorch libs")
-        throw io
-    }
-  }
 
   private[net] def loadPytorchModel(bytes: Array[Byte], lossBytes: Array[Byte]): Long = {
     var nativeRef = -1L
