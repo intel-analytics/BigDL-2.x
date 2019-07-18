@@ -60,16 +60,8 @@ model.set_tensorboard(log_dir, app_name)
 model.fit(...)
 ```
 
-**Notice**:  
-
-If logdir is relative path, like `logdir/inpcetion_log`, the log will be stored in your local file system;  
-
-If logdir is absolute path started with `/`, like `/user/logdir/inpcetion_log`, the log will be stored in your local file system;  
-
-If logdir is URI started with `hdfs://[host:port]/`, like `hdfs://172.168.0.101:8020/user/logdir/inpcetion_log`, the log will be stored to HDFS;  
-
-### **Generating summary in KerasModel**
-****python****
+### Generating summary in KerasModel
+**python**
 ```python
 import tensorflow as tf
 from zoo.tfpark import KerasModel
@@ -86,8 +78,8 @@ model.set_val_summary(ValidationSummary(log_dir, app_name))
 model.fit(...)
 ```
 
-### **Generating summary in TFEstimator**
-****python****
+### Generating summary in TFEstimator
+**python**
 ```python
 from zoo.tfpark.estimator import TFEstimator
 from bigdl.optim.optimizer import TrainSummary, ValidationSummary
@@ -101,6 +93,14 @@ estimator.set_val_summary(ValidationSummary(log_dir, app_name))
 ...
 estimator.train(...)
 ```
+
+**Notice**:  
+
+If logdir is relative path, like `logdir/inpcetion_log`, the log will be stored in your local file system;  
+
+If logdir is absolute path started with `/`, like `/user/logdir/inpcetion_log`, the log will be stored in your local file system;  
+
+If logdir is URI started with `hdfs://[host:port]/`, like `hdfs://172.168.0.101:8020/user/logdir/inpcetion_log`, the log will be stored to HDFS;  
 
 ---
 

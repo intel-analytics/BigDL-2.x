@@ -73,9 +73,19 @@ class KerasModel(object):
         return KerasModel(models.load_model(path))
 
     def set_train_summary(self, summary):
+        """
+        Set training summary for visualization.
+
+        :param summary: bigdl.optim.optimizer.TrainSummary
+        """
         self.train_summary = summary
 
     def set_val_summary(self, summary):
+        """
+        Set validation summary for visualization.
+
+        :param summary: bigdl.optim.optimizer.ValidationSummary
+        """
         self.val_summary = summary
 
     def fit(self,

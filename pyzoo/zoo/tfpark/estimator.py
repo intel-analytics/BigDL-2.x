@@ -188,9 +188,19 @@ class TFEstimator(object):
         self.gradient_clipping_norm = clip_norm
 
     def set_train_summary(self, summary):
+        """
+        Set training summary for visualization.
+
+        :param summary: bigdl.optim.optimizer.TrainSummary
+        """
         self.train_summary = summary
 
     def set_val_summary(self, summary):
+        """
+        Set validation summary for visualization.
+
+        :param summary: bigdl.optim.optimizer.ValidationSummary
+        """
         self.val_summary = summary
 
     def set_optimizer(self, optimizer):
