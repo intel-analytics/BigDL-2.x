@@ -13,22 +13,21 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intel.analytics.zoo.models.common
+package com.intel.analytics.zoo.models.caffe
 
 import java.io.{InputStream, InputStreamReader}
 
 import caffe.Caffe
 import caffe.Caffe._
-import com.intel.analytics.bigdl.shaded.protobuf.TextFormat.ParseException
-import com.intel.analytics.bigdl.shaded.protobuf.{CodedInputStream, GeneratedMessage, TextFormat}
 import com.intel.analytics.bigdl.Module
 import com.intel.analytics.bigdl.nn.Graph.ModuleNode
 import com.intel.analytics.bigdl.nn._
+import com.intel.analytics.bigdl.shaded.protobuf.TextFormat.ParseException
+import com.intel.analytics.bigdl.shaded.protobuf.{CodedInputStream, GeneratedMessage, TextFormat}
 import com.intel.analytics.bigdl.tensor.Tensor
 import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric
 import com.intel.analytics.bigdl.utils.Table
-import com.intel.analytics.bigdl.utils.caffe._
-
+import com.intel.analytics.bigdl.utils.caffe.{CaffeConversionException, LayerConverter, V1LayerConverter}
 import com.intel.analytics.zoo.utils.FileReader
 import org.apache.log4j.Logger
 
