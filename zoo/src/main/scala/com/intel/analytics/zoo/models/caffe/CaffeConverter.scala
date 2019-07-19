@@ -34,12 +34,12 @@ import scala.reflect.ClassTag
 /**
   * An abstract class to define interfaces when loading from/to caffe models
   * Caffe supports two kinds of layer definition LayerParameter & V1LayerParameter
-  * Implementation [[com.intel.analytics.bigdl.utils.caffe.V1LayerConverter]] and [[com.intel.analytics.bigdl.utils.caffe.LayerConverter]]
+  * Implementation [[com.intel.analytics.zoo.models.caffe.V1LayerConverter]] and [[com.intel.analytics.zoo.models.caffe.LayerConverter]]
   * V1LayerParameter is not recommended any more but we need to support old-versioned model
   */
 abstract class Converter[T: ClassTag](implicit ev: TensorNumeric[T]) {
 
-  // support user to customized BigDL compatible module to support those we have no mappings now
+  // support user to customized Zoo compatible module to support those we have no mappings now
   private val customizedConverter =
     new mutable.HashMap[String, (GeneratedMessage) => Seq[ModuleNode[T]]]()
 
@@ -63,7 +63,7 @@ abstract class Converter[T: ClassTag](implicit ev: TensorNumeric[T]) {
     if (customizedConverter.contains(layerType)) {
       return customizedConverter(layerType)(layer)
     }
-    throw new CaffeConversionException(s"$layerType is not supported in BigDL for now")
+    throw new CaffeConversionException(s"$layerType is not supported in Zoo for now")
   }
 
   def convertLayerFromCaffe(layer : GeneratedMessage) : Seq[ModuleNode[T]] = {

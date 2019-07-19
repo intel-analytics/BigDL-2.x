@@ -49,7 +49,7 @@ abstract class Customizable[T: ClassTag](implicit ev: TensorNumeric[T]) {
 }
 /**
   * An utility to load pre-trained caffe model from prototxt and binary
-  * and convert it to BigDL equivalent modules
+  * and convert it to Zoo equivalent modules
   * @param prototxtPath caffe model define prototxt path
   * @param modelPath    caffe serialized binary model path
   * @param matchAll     if match all modules with parameters
@@ -218,9 +218,9 @@ class CaffeLoader[T: ClassTag](prototxtPath: String, modelPath: String,
       val caffeWeightData = caffeWeight.get.getDataList
       val weight = params[Tensor[T]]("weight")
       require(params != null && weight.nElement() == caffeWeightData.size(),
-        s"weight element number is not equal between caffe layer and bigdl module $name, " +
+        s"weight element number is not equal between caffe layer and zoo module $name, " +
           s"data shape in caffe is ${ caffeWeight.get.getShape() }," +
-          s" while data shape in bigdl is ${ weight.size().mkString(",") }")
+          s" while data shape in zoo is ${ weight.size().mkString(",") }")
       var i = 0
       val weightData = weight.storage().array()
       var offset = weight.storageOffset() - 1
@@ -237,9 +237,9 @@ class CaffeLoader[T: ClassTag](prototxtPath: String, modelPath: String,
       val caffeBiasList = caffeBias.get.getDataList
       val bias = params[Tensor[T]]("bias")
       require(bias.nElement() == caffeBiasList.size(),
-        s"bias element number is not equal between caffe layer and bigdl module $name, " +
+        s"bias element number is not equal between caffe layer and zoo module $name, " +
           s"data shape in caffe is ${ caffeBias.get.getShape() }," +
-          s" while data shape in bigdl is ${ bias.size().mkString(",") }")
+          s" while data shape in zoo is ${ bias.size().mkString(",") }")
       var i = 0
       val biasData = bias.storage().array()
       var offset = bias.storageOffset() - 1
@@ -281,9 +281,9 @@ class CaffeLoader[T: ClassTag](prototxtPath: String, modelPath: String,
 
   /**
     * Load caffe model from prototxt file and binary pre-trained model and converted
-    * to BigDL graph module
+    * to Zoo graph module
     * @param outputNames additional output layer names besides the default(layers without next nodes)
-    * @return BigDL model and criterion
+    * @return Zoo model and criterion
     */
   def createCaffeModel(outputNames: Array[String] = Array[String]())
   : (Module[T], ParallelCriterion[T]) = {
@@ -460,7 +460,6 @@ class CaffeLoader[T: ClassTag](prototxtPath: String, modelPath: String,
 
             if (layerType == "SCALE" && lastLayerName == "BATCHNORM") {
 
-
               val bnTable = layers.last.element.getParametersTable()
               val scaleTable = curr.element.getParametersTable()
               scaleTable.keySet.map(_.toString).foreach { layerName =>
@@ -469,14 +468,7 @@ class CaffeLoader[T: ClassTag](prototxtPath: String, modelPath: String,
 
                 bnTable[Table](bnLayerName).add(scaleTable[Table](layerName))
 
-                //                scaleTable[Table](layerName).keySet.foreach { param =>
-                //                  bnTable[Table](bnLayerName).apply[Tensor[Float]](param).copy(
-                //                    scaleTable[Table](layerName)[Tensor[Float]](param)
-                //                  )
-                //                }
-
               }
-              val bb = layers.last.element.getParametersTable()
             }
             else {
               layers.append(curr)
