@@ -194,8 +194,7 @@ class ImageClassifierSerialTest extends ModuleSerializationTest {
     val cmd = s"wget -P $dirName $url"
     val cmd_result = cmd !
 
-    //val model = ImageClassifier.loadModel[Float](dirName + "/" + modelFileName)
-    val model = ImageClassifier.loadModel[Float]("/home/yina/Documents/intel/model/analytics-zoo_resnet-50_imagenet_0.1.0.model")
+    val model = ImageClassifier.loadModel[Float](dirName + "/" + modelFileName)
     val input = Tensor[Float](Array(1, 3, 224, 224)).rand()
     ZooSpecHelper.testZooModelLoadSave(model.asInstanceOf[ZooModel[Tensor[Float], Tensor[Float],
      Float]], input, ImageClassifier.loadModel[Float])

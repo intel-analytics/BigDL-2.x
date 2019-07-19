@@ -20,7 +20,6 @@ import com.intel.analytics.bigdl.nn.{MklInt8Convertible, Module, SpatialConvolut
 import com.intel.analytics.bigdl.nn.abstractnn.Activity
 import com.intel.analytics.bigdl.optim.{ValidationMethod, ValidationResult}
 import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric
-import com.intel.analytics.bigdl.transform.vision.image.{DistributedImageFrame, LocalImageFrame}
 import com.intel.analytics.zoo.feature.image.{DistributedImageSet, ImageSet, LocalImageSet}
 import com.intel.analytics.zoo.models.common.ZooModel
 import com.intel.analytics.zoo.models.image.imageclassification.ImageClassifier
